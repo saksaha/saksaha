@@ -3,31 +3,17 @@ internalsPath = $(rootPath)/internals
 buildPath = $(rootPath)/build
 binPath = $(buildPath)/bin
 
-.PHONY: check_rust
-check_rust:
-	@echo "\n>> make check_rust"
-	internals/build/check_rust.sh
-
-clean:
-	@echo "\n>> make clean"
-	cd $(buildPath) && rm -rf ./*
-
 .PHONY: build
-build: check_rust
+build:
 	@echo "\n>>> make build"
-	env PROJECT_ROOT=$(rootPath) $(buildPath)/build
+	ROOT_PATH=$(shell pwd) ./internals/ci/build.sh
 
-create_build:
-	@echo "\n>>> make create_build"
-	cd internals/build && go build -o $(buildPath)/build
-.PHONY: create_build
-
-dev: build
+dev:
 	@echo "\n>>> make dev"
-	$(binPath)/sak $(filter-out $@,$(MAKECMDGOALS))
+	ROOT_PATH=$(shell pwd) ./internals/ci/dev.sh
 .PHONY: dev
 
 test:
 	@echo "\n>>> make test"
-	go test -v ./...
+	ROOT_PATH=$(shell pwd) ./internals/ci/test.sh
 .PHONY: test
