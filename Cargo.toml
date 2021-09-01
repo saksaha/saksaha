@@ -1,0 +1,6 @@
+[workspace]
+
+members = [
+  "packages/saksaha",
+  "packages/temp-2"
+]
