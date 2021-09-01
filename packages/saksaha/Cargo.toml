@@ -1,0 +1,15 @@
+[package]
+name = "saksaha"
+version = "0.1.0"
+edition = "2018"
+default-run = "rsak"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+temp-2 = { path = "../temp-2" }
+clap = "3.0.0-beta.4"
+
+[[bin]]
+name = "rsak"
+path = "src/bin/rsak/main.rs"
