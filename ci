@@ -1,0 +1,27 @@
+#!/bin/bash
+
+set -e
+
+curr_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+
+# Check rust
+is_rustc=$(which rustc)
+if [ $? -eq 0 ]; then
+    rustc_version=$(rustc --version)
+    printf "Found rustc at: %s, version: %s\n" "$is_rustc" "$rustc_version"
+else
+    echo "Rustc is not installed, exiting the program"
+    exit 1
+fi
+
+is_cargo=$(which cargo)
+if [ $? -eq 0 ]; then
+    cargo_version=$(cargo --version)
+    printf "Found cargo at: %s, version: %s\n" "$is_cargo" "$cargo_version"
+else
+    echo "Cargo is not installed, exiting the program"
+    exit 1
+fi
+
+ci_cargo="$curr_dir/internals/ci/Cargo.toml"
+PROJECT_ROOT=$curr_dir cargo run --manifest-path=$ci_cargo -- "$@"
