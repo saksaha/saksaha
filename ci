@@ -1,0 +1,29 @@
+#!/bin/bash
+
+set -e
+
+currDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+
+if [ "$#" -lt 1 ]; then
+    printf "%s 3\n" \
+  "You have to specify a command which corresponds to the filename \
+   in internals/ci"
+fi
+
+check_rust="$currDir/internals/ci/_check_rust.sh"
+
+if ! $check_rust; then
+    printf "Error checking if rust is sane in your system\n"
+    exit 1
+fi
+
+command=$1
+
+filePath="$currDir/internals/ci/$command.sh"
+
+if [[ ! -f $filePath ]]; then
+    printf "Error finding a command [%s] at %s\n" $command $filePath
+    exit 1
+fi
+
+ROOT_PATH=$currDir $filePath "${@:2}"

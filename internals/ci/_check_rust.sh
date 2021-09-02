@@ -1,7 +1,5 @@
 #!/bin/bash
 
-echo "Start checking rust toolchain..."
-
 isRustc=$(which rustc)
 if [ $? -eq 0 ]; then
     rustcVersion=$(rustc --version)
