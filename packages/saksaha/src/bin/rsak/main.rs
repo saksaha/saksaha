@@ -1,6 +1,10 @@
 use clap::{App, Arg};
 
+// use saksaha::foo;
+
 fn main() {
+    // foo();
+
     let matches = App::new("Saksaha rust")
         .version("0.1")
         .author("Saksaha <team@saksaha.com>")
@@ -21,7 +25,8 @@ fn main() {
         println!("Value for config: {}", c);
     }
 
-    println!("{}", 123)
+    println!("{}", 123);
+
 
     // let pattern = std::env::args().nth(1).expect("no pattern given");
     // let path = std::env::args().nth(2).expect("no path given");
