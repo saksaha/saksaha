@@ -9,6 +9,7 @@ default-run = "rsak"
 [dependencies]
 temp-2 = { path = "../temp-2" }
 clap = "3.0.0-beta.4"
+directories = "3.0"
 
 [[bin]]
 name = "rsak"

@@ -1,10 +1,10 @@
 use clap::{App, Arg};
-
-// use saksaha::foo;
+use saksaha::pconfig::{
+    self,
+    PConfig,
+};
 
 fn main() {
-    // foo();
-
     let matches = App::new("Saksaha rust")
         .version("0.1")
         .author("Saksaha <team@saksaha.com>")
@@ -20,6 +20,12 @@ fn main() {
                 .takes_value(true),
         )
         .get_matches();
+
+    let pconf = PConfig::new();
+    pconfig::path::default_path();
+
+    let a = pconf.p2p.private_key.unwrap_or(String::from("power"));
+    println!("33 {}", a);
 
     if let Some(c) = matches.value_of("config") {
         println!("Value for config: {}", c);
