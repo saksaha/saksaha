@@ -7,7 +7,7 @@ default-run = "rsak"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-temp-2 = { path = "../temp-2" }
+saksaha-aux = { path = "../saksaha-aux" }
 clap = "3.0.0-beta.4"
 directories = "3.0"
 

@@ -2,10 +2,17 @@ use crate::common::errors::Error;
 use directories::{BaseDirs, ProjectDirs, UserDirs};
 use std::{env, fs, io};
 
+// use crate::logger::bar;
+// use crate::loger::bar1;
+use crate::logger::bar1;
+
 pub fn default_path() -> Result<bool, Error> {
     let os = env::consts::OS;
+    let log = logger::get_instance();
 
-    println!("{}", os);
+    log.debug();
+
+    // println!("{}", os);
 
     if let Some(proj_dirs) = ProjectDirs::from("com", "Saksaha", "Saksaha") {
         let p = proj_dirs.config_dir();
@@ -15,10 +22,10 @@ pub fn default_path() -> Result<bool, Error> {
 
             let mut dir = fs::create_dir(p);
             match dir {
-                OK => {
+                Ok(_v) => {
                     print!("power\n")
                 },
-                Err(e) => {
+                Err(_e) => {
                     print!("power11111\n")
                 }
             }
