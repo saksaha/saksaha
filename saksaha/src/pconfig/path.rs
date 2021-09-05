@@ -5,7 +5,8 @@ use std::{env, fs, io};
 // use crate::logger::bar;
 // use crate::loger::bar1;
 // use crate::logger::bar1;
-use logger::log;
+use logger::{log};
+
 
 // const v = log1!(1);
 
@@ -13,7 +14,11 @@ use logger::log;
 pub fn default_path() -> Result<bool, Error> {
     let os = env::consts::OS;
 
-    log!(add 1,2);
+    let a = format!("{}", 333);
+    print!("44 {}\n", a);
+
+    // log!(1,2);
+    // print!("{}\n", aa);
     // print!("{}\n", v[0]);
 
     // log.debug();
