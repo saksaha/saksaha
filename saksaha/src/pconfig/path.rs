@@ -4,13 +4,19 @@ use std::{env, fs, io};
 
 // use crate::logger::bar;
 // use crate::loger::bar1;
-use crate::logger::bar1;
+// use crate::logger::bar1;
+use logger::log;
+
+// const v = log1!(1);
+
 
 pub fn default_path() -> Result<bool, Error> {
     let os = env::consts::OS;
-    let log = logger::get_instance();
 
-    log.debug();
+    log!(add 1,2);
+    // print!("{}\n", v[0]);
+
+    // log.debug();
 
     // println!("{}", os);
 

@@ -2,5 +2,5 @@
 
 members = [
   "saksaha",
-  "saksaha-aux"
+  "logger"
 ]

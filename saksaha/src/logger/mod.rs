@@ -28,18 +28,18 @@ pub fn get_instance() -> &'static Log {
     // log1!()
 }
 
-#[macro_export]
-macro_rules! log1 {
-    ( $( $x:expr ),* ) => {
-        {
-            let mut temp_vec = Vec::new();
-            $(
-                temp_vec.push($x);
-            )*
-            temp_vec
-        }
-    };
-}
+// #[macro_export]
+// macro_rules! log1 {
+//     ( $( $x:expr ),* ) => {
+//         {
+//             let mut temp_vec = Vec::new();
+//             $(
+//                 temp_vec.push($x);
+//             )*
+//             temp_vec
+//         }
+//     };
+// }
 
 
 // #[macro_use]
