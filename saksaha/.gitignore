@@ -1,1 +1,3 @@
 /target
+tests/testdump/*
+!tests/testdump/kk.gitkeep

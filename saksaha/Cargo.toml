@@ -18,3 +18,6 @@ path = "src/bin/rsak/main.rs"
 [[bin]]
 name = "faucet"
 path = "src/bin/faucet/main.rs"
+
+[lib]
+doctest = false # until stable beta is released
