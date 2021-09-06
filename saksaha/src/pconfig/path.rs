@@ -1,55 +1,40 @@
-use crate::common::errors::Error;
-use directories::{BaseDirs, ProjectDirs, UserDirs};
-use std::{env, fs, io};
-
-// use crate::logger::bar;
-// use crate::loger::bar1;
-// use crate::logger::bar1;
-use logger::{log};
-
-
-// const v = log1!(1);
-
+use crate::errors::Error;
+use directories::ProjectDirs;
+use logger::log;
+use std::fs::{self};
 
 pub fn default_path() -> Result<bool, Error> {
-    let os = env::consts::OS;
-
-    let a = format!("{}", 333);
-    print!("44 {}\n", a);
-
-    // log!(1,2);
-    // print!("{}\n", aa);
-    // print!("{}\n", v[0]);
-
-    // log.debug();
-
-    // println!("{}", os);
-
     if let Some(proj_dirs) = ProjectDirs::from("com", "Saksaha", "Saksaha") {
         let p = proj_dirs.config_dir();
+        let pstr = p.to_str().unwrap_or("");
+
+        if pstr == "" {
+            let err = Error::new(format!("Error converting path to string"));
+            return Err(err);
+        }
+
         if p.exists() {
+            log!(DEBUG "Found a config path at: {}", p.to_str().unwrap());
             // load
         } else {
+            log!(DEBUG "Couldn't find a config path, creating one...");
 
             let mut dir = fs::create_dir(p);
+
             match dir {
-                Ok(_v) => {
-                    print!("power\n")
-                },
+                Ok(_) => {
+                    log!(DEBUG "Created a config path at: {}", pstr);
+                }
                 Err(_e) => {
                     print!("power11111\n")
                 }
             }
         }
         // let some_number = Some(9);
-
-        // Lin: /home/alice/.config/barapp
-        // Win: C:\Users\Alice\AppData\Roaming\Foo Corp\Bar App\config
-        // Mac: /Users/Alice/Library/Application Support/com.Foo-Corp.Bar-App
         return Ok(true);
     } else {
         print!("{}\n", 123123);
-        return Ok(true)
+        return Ok(true);
         // return io::Error::new();
     }
     // directories::config_dir()

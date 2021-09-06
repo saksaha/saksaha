@@ -1,47 +1,16 @@
-pub struct Log;
-
-static mut DEFAULT_LOGGER: Log = Log {};
-
-impl Log {
-    pub fn new() {}
-
-    pub fn debug(&self) {
-        print!("444\n");
-    }
-}
-
-pub fn add_one(x: i32) -> i32 {
-    return x + 1;
-}
-
 #[macro_export]
 macro_rules! log {
-    ($($addend: expr),+) => {
-        // static const a: i32 = 3;
-        let mut sum = 0;
-        $(sum += $addend;)*
-        std::println!("{}", 3);
-        println!("Sum: {}", sum);
-    }
+    (DEBUG $str_format: expr) => {
+        let f = std::file!();
+        let ln = std::line!();
 
-    // ($(#[$attr:meta])* static ref $N:ident : $T:ty = $e:expr; $($t:tt)*) => {
-    //     // use `()` to explicitly forward the information about private items
-    //     __lazy_static_internal!($(#[$attr])* () static ref $N : $T = $e; $($t)*);
-    // };
-}
+        println!("{}:{} {}", f, ln, format_args!($str_format));
+    };
 
-// #[macro_export]
-// macro_rules! format {
-//     ($($arg:tt)*) => {{
-//         let res = $crate::fmt::format($crate::__export::format_args!($($arg)*));
-//         res
-//     }}
-// }
+    (DEBUG $str_format: expr, $($arg:tt)*) => {
+        let f = std::file!();
+        let ln = std::line!();
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
+        println!("{}:{} {}", f, ln, format_args!($str_format, $($arg)*));
+    };
 }
