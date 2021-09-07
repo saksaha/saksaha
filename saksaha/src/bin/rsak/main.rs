@@ -5,7 +5,7 @@ use saksaha::pconfig::{
 };
 
 fn main() {
-    let matches = App::new("Saksaha rust")
+    let flags = App::new("Saksaha rust")
         .version("0.1")
         .author("Saksaha <team@saksaha.com>")
         .about("Saksaha node rust client")
@@ -21,15 +21,15 @@ fn main() {
         )
         .get_matches();
 
-    let pconf = PConfig::new();
-    pconfig::path::default_path();
+    let pconf = PConfig::new(flags.value_of("config"));
+    // pconfig::path::default_path();
 
     let a = pconf.p2p.private_key.unwrap_or(String::from("power"));
     println!("33 {}", a);
 
-    if let Some(c) = matches.value_of("config") {
-        println!("Value for config: {}", c);
-    }
+    // if let Some(c) = matches.value_of("config") {
+    //     println!("Value for config: {}", c);
+    // }
 
     println!("{}", 123);
 

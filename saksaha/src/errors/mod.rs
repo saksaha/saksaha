@@ -8,6 +8,10 @@ impl Error {
     pub fn new(msg: String) -> Error {
         return Error { msg };
     }
+
+    pub fn result<T>(msg: String) -> Result<T, Error> {
+        return Err(Error::new(msg));
+    }
 }
 
 impl fmt::Display for Error {
