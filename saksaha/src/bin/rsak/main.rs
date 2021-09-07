@@ -1,8 +1,6 @@
 use clap::{App, Arg};
-use saksaha::pconfig::{
-    self,
-    PConfig,
-};
+use logger::log;
+use saksaha::pconfig::{self, PConfig};
 
 fn main() {
     let flags = App::new("Saksaha rust")
@@ -15,14 +13,26 @@ fn main() {
                 .short('c')
                 .long("config")
                 .value_name("FILE")
-                .about("Saksaha configuration file, usually created at \
-                    [[OS default config path]]/saksaha/config.json")
+                .about(
+                    "Saksaha configuration file, usually created at \
+                    [[OS default config path]]/saksaha/config.json",
+                )
                 .takes_value(true),
         )
         .get_matches();
 
     let pconf = PConfig::new(flags.value_of("config"));
-    // pconfig::path::default_path();
+
+    if let Err(err) = pconf {
+        log!(
+            DEBUG,
+            "Error creating a persisted configuration, err: {}\n",
+            err
+        );
+        std::process::exit(1);
+    }
+
+    let pconf = pconf.unwrap();
 
     let a = pconf.p2p.private_key.unwrap_or(String::from("power"));
     println!("33 {}", a);
@@ -32,7 +42,6 @@ fn main() {
     // }
 
     println!("{}", 123);
-
 
     // let pattern = std::env::args().nth(1).expect("no pattern given");
     // let path = std::env::args().nth(2).expect("no path given");

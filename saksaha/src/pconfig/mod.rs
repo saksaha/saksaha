@@ -2,8 +2,11 @@ use crate::errors::Error;
 use directories::ProjectDirs;
 use logger::log;
 use std::path::{Path, PathBuf};
+use std::{fs};
 
-pub mod path;
+pub mod parse;
+
+static DEFAULT_CONFIG_FILE_NAME: &str = "config.json";
 
 pub struct PConfig {
     pub p2p: PersistedP2PConfig,
@@ -15,64 +18,80 @@ pub struct PersistedP2PConfig {
 }
 
 impl PConfig {
-    pub fn new(path: Option<&str>) -> Self {
-        load_or_create_config(path);
-
-        PConfig {
-            p2p: PersistedP2PConfig {
-                private_key: None,
-                public_key: None,
-            },
-        }
+    pub fn new(path: Option<&str>) -> Result<Self, Error> {
+        return load_or_create_config(path);
     }
 }
 
-fn load_or_create_config(path: Option<&str>) -> Result<PathBuf, Error> {
+fn load_or_create_config(path: Option<&str>) -> Result<PConfig, Error> {
     if let Some(p) = path {
-        log!(DEBUG, "Config path is given, probing: {}\n", p);
+        log!(DEBUG, "Config path is given, probing a path: {}\n", p);
 
         let path = PathBuf::from(p);
 
-        if path.exists() {
-            log!(DEBUG, "Found config file, loading...\n");
-            return Ok(path);
-        } else {
+        if !path.exists() {
             return Error::result(format!("Config file does not exist"));
         }
+
+        if path.is_dir() {
+            return Error::result(format!(
+                "Config path must be a file, not directory"
+            ));
+        }
+
+        log!(DEBUG, "Found config file, loading...\n");
+        return parse::from(path);
     } else {
         log!(
             DEBUG,
             "Config path is not given, creating the default one\n"
         );
 
-        let path = get_default_path();
+        let app_path = create_or_get_app_path();
 
-        let err =
-            Error::result(format!("Error creating a default config path"));
+        if let Err(e) = app_path {
+            return Error::result(format!(
+                "Error setting up an app path, err: {}",
+                e
+            ));
+        }
 
-        match path {
-            Some(p) => {
-                if let Ok(_) = create_path(p.as_path()) {
-                    return Ok(p);
-                } else {
-                    return err;
-                }
-            }
-            None => return err,
+        let app_path = app_path.unwrap();
+        let config_path = app_path.join(DEFAULT_CONFIG_FILE_NAME);
+
+        if config_path.exists() {
+            return parse::from(app_path);
+        } else {
+            return create_default_config(config_path);
         }
     }
 }
 
-fn create_path(p: &Path) -> std::io::Result<()> {
-    return std::fs::create_dir(p);
+fn create_or_get_app_path() -> Result<PathBuf, Error> {
+    if let Some(dir) = ProjectDirs::from("com", "Saksaha", "Saksaha") {
+        let app_path = dir.config_dir();
+        if !app_path.exists() {
+            match fs::create_dir(app_path) {
+                Ok(_) => {
+                    return Ok(app_path.to_path_buf());
+                }
+                Err(err) => {
+                    return Error::result(format!(
+                        "Error creating a path, {}",
+                        err
+                    ));
+                }
+            }
+        }
+        return Ok(app_path.to_path_buf());
+    } else {
+        return Error::result(format!("Error forming an app path"));
+    }
 }
 
-fn get_default_path() -> Option<PathBuf> {
-    if let Some(dir) = ProjectDirs::from("com", "Saksaha", "Saksaha") {
-        return Some(dir.config_dir().to_path_buf());
-    } else {
-        return None;
-    }
+fn create_default_config(config_path: PathBuf) -> Result<PConfig, Error> {
+    return Error::result(format!("power"));
+    // return Some(path);
 }
 
 #[cfg(test)]
@@ -83,12 +102,20 @@ mod test {
     use std::path::PathBuf;
 
     #[test]
-    fn it_creates_default_config_path() {
+    fn it_creates_config_path() {
         testenv::run_test(|test_env| {
-            let path = Some("saksaha-config");
-            super::load_or_create_config(path);
+            let testdump = test_env
+                .testdump
+                .as_ref()
+                .expect("Test dump path should be provided");
 
-            let testdump = test_env.testdump.as_ref().unwrap();
+            let path = testdump.join("saksaha-config");
+            let path = path.to_str().expect("Error making test config path");
+
+            let _ = super::load_or_create_config(Some(path))
+                .expect("Error creating config");
+
+            // PathBuf::from(path_name);
 
             println!("{:?}", testdump);
         })
