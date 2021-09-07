@@ -1,8 +1,8 @@
 use crate::errors::Error;
 use directories::ProjectDirs;
 use logger::log;
+use std::fs;
 use std::path::{Path, PathBuf};
-use std::{fs};
 
 pub mod parse;
 
@@ -60,8 +60,20 @@ fn load_or_create_config(path: Option<&str>) -> Result<PConfig, Error> {
         let config_path = app_path.join(DEFAULT_CONFIG_FILE_NAME);
 
         if config_path.exists() {
+            log!(
+                DEBUG,
+                "Found the existing config file, start reading at: %{}\n",
+                config_path.to_str().unwrap(),
+            );
+
             return parse::from(app_path);
         } else {
+            log!(
+                DEBUG,
+                "Couldn't find a default config, creating at: {}\n",
+                config_path.to_str().unwrap(),
+            );
+
             return create_default_config(config_path);
         }
     }
