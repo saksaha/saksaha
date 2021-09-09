@@ -10,7 +10,8 @@ default-run = "rsak"
 logger = { path = "../logger" }
 clap = "3.0.0-beta.4"
 directories = "3.0"
-k256 = "0.9.6"
+k256 = { version = "0.9.6", features = ["ecdh"] }
+rand_core = "0.6.3"
 
 [[bin]]
 name = "rsak"

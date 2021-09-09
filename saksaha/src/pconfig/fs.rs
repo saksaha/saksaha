@@ -99,9 +99,6 @@ fn create_or_get_app_path() -> Result<PathBuf, Error> {
 #[cfg(test)]
 mod test {
     use crate::testenv;
-    use std::fs;
-    use std::path::Path;
-    use std::path::PathBuf;
 
     #[test]
     fn it_creates_config_path() {
