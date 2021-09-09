@@ -1,6 +1,8 @@
 use std::path::PathBuf;
 use super::{PConfig, PersistedP2PConfig};
-use crate::errors::Error;
+use crate::{
+    common::errors::Error
+};
 
 pub fn from(path: PathBuf) -> Result<super::PConfig, Error> {
     Ok(PConfig {

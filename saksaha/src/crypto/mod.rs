@@ -29,6 +29,14 @@ pub fn generate_key() -> EphemeralSecret {
     return secret;
 }
 
+pub fn to_hex(secret: EphemeralSecret) {
+    // let pk = secret.public_key();
+    // secret.
+    // EncodedPoint::from(secret);
+    // let pk = EncodedPoint::from(secret.public_key());
+
+}
+
 #[test]
 fn b() {
     // Signing
@@ -67,8 +75,7 @@ fn a() {
         write!(&mut f, "{:02x}", b).unwrap();
     }
 
-
-    print!("44 {:?}\n", f);
+    // print!("44 {:?}\n", alice_secret);
 
     // c.join(" ");
     // println!("5 {}", b);

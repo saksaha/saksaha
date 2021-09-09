@@ -1,6 +1,6 @@
 pub mod pconfig;
 
-pub mod errors;
+pub mod common;
 
 pub mod testenv;
 

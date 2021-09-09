@@ -1,4 +1,7 @@
-use crate::errors::Error;
+use crate::{
+    common::errors::Error,
+    crypto,
+};
 use directories::ProjectDirs;
 use logger::log;
 use std::path::{Path, PathBuf};
@@ -18,6 +21,8 @@ pub struct PersistedP2PConfig {
 
 impl PConfig {
     pub fn new(path: Option<&str>) -> Result<Self, Error> {
+        let sk = crypto::generate_key();
+        sk.public_key();
         return Error::result(format!("f"));
     }
 }

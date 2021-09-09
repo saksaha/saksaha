@@ -1,5 +1,5 @@
 use super::{parse, PConfig};
-use crate::errors::Error;
+use crate::common::errors::Error;
 use directories::ProjectDirs;
 use logger::log;
 use std::fs;
