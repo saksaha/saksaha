@@ -2,7 +2,8 @@ use k256::{EncodedPoint, PublicKey, SecretKey, ecdh::EphemeralSecret, ecdsa::{
         signature::{Signer, Verifier},
         Signature, SigningKey, VerifyingKey,
     }, elliptic_curve::sec1::ToEncodedPoint};
-use rand_core::OsRng; // requires 'getrandom' feature
+use rand_core::OsRng;
+// requires 'getrandom' feature
 use std::{fmt::Write, num::ParseIntError};
 
 pub fn decode_hex(s: &str) -> Result<Vec<u8>, ParseIntError> {
@@ -18,6 +19,17 @@ pub fn encode_hex(bytes: &[u8]) -> String {
         write!(&mut s, "{:02x}", b).unwrap();
     }
     s
+}
+
+pub fn encode_key_pair(sk: SecretKey) -> (String, String) {
+    let pk = sk.public_key();
+
+    let sk_str = encode_hex(sk.to_bytes().as_slice());
+    let pk_str = encode_hex(pk.to_encoded_point(false).as_bytes());
+
+    // print!("11, {}\n{}\n", sk_str, pk_str);
+
+    return (sk_str, pk_str);
 }
 
 pub fn generate_key() -> SecretKey {

@@ -7,67 +7,75 @@ use std::path::{Path, PathBuf};
 
 static DEFAULT_CONFIG_FILE_NAME: &str = "config.json";
 
-impl super::PConfig {
-    pub fn load(path: Option<&str>) -> Result<Self, Error> {
-        return load_or_create_config(path);
+impl PConfig {
+    pub fn persist(&self) {
+
+    }
+
+    pub fn load(path: &str) {
+
     }
 }
 
-fn load_or_create_config(path: Option<&str>) -> Result<PConfig, Error> {
-    if let Some(p) = path {
-        log!(DEBUG, "Config path is given, probing a path: {}\n", p);
+    // pub fn load(path: Option<&str>) -> Result<Self, Error> {
+    //     return load_or_create_config(path);
+    // }
 
-        let path = PathBuf::from(p);
+// fn load_or_create_config(path: Option<&str>) -> Result<PConfig, Error> {
+//     if let Some(p) = path {
+//         log!(DEBUG, "Config path is given, probing a path: {}\n", p);
 
-        if !path.exists() {
-            return Error::result(format!("Config file does not exist"));
-        }
+//         let path = PathBuf::from(p);
 
-        if path.is_dir() {
-            return Error::result(format!(
-                "Config path must be a file, not directory"
-            ));
-        }
+//         if !path.exists() {
+//             return Error::result(format!("Config file does not exist"));
+//         }
 
-        log!(DEBUG, "Found config file, loading...\n");
-        return parse::from(path);
-    } else {
-        log!(
-            DEBUG,
-            "Config path is not given, creating the default one\n"
-        );
+//         if path.is_dir() {
+//             return Error::result(format!(
+//                 "Config path must be a file, not directory"
+//             ));
+//         }
 
-        let app_path = create_or_get_app_path();
+//         log!(DEBUG, "Found config file, loading...\n");
+//         return parse::from(path);
+//     } else {
+//         log!(
+//             DEBUG,
+//             "Config path is not given, creating the default one\n"
+//         );
 
-        if let Err(e) = app_path {
-            return Error::result(format!(
-                "Error setting up an app path, err: {}",
-                e
-            ));
-        }
+//         let app_path = create_or_get_app_path();
 
-        let app_path = app_path.unwrap();
-        let config_path = app_path.join(DEFAULT_CONFIG_FILE_NAME);
+//         if let Err(e) = app_path {
+//             return Error::result(format!(
+//                 "Error setting up an app path, err: {}",
+//                 e
+//             ));
+//         }
 
-        if config_path.exists() {
-            log!(
-                DEBUG,
-                "Found the existing config file, start reading at: %{}\n",
-                config_path.to_str().unwrap(),
-            );
+//         let app_path = app_path.unwrap();
+//         let config_path = app_path.join(DEFAULT_CONFIG_FILE_NAME);
 
-            return parse::from(app_path);
-        } else {
-            log!(
-                DEBUG,
-                "Couldn't find a default config, creating at: {}\n",
-                config_path.to_str().unwrap(),
-            );
+//         if config_path.exists() {
+//             log!(
+//                 DEBUG,
+//                 "Found the existing config file, start reading at: %{}\n",
+//                 config_path.to_str().unwrap(),
+//             );
 
-            return create_default_config(config_path);
-        }
-    }
-}
+//             return parse::from(app_path);
+//         } else {
+//             log!(
+//                 DEBUG,
+//                 "Couldn't find a default config, creating at: {}\n",
+//                 config_path.to_str().unwrap(),
+//             );
+
+//             return create_default_config(config_path);
+//         }
+//     }
+// }
 
 fn create_default_config(config_path: PathBuf) -> Result<PConfig, Error> {
     return Error::result(format!("power"));

@@ -34,8 +34,8 @@ fn main() {
 
     let pconf = pconf.unwrap();
 
-    let a = pconf.p2p.private_key.unwrap_or(String::from("power"));
-    println!("33 {}", a);
+    // let a = pconf.p2p.private_key.unwrap_or(String::from("power"));
+    // println!("33 {}", a);
 
     // if let Some(c) = matches.value_of("config") {
     //     println!("Value for config: {}", c);
