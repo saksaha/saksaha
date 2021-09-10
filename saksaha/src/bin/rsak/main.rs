@@ -21,7 +21,7 @@ fn main() {
         )
         .get_matches();
 
-    let pconf = PConfig::new(flags.value_of("config"));
+    let pconf = PConfig::of(flags.value_of("config"));
 
     if let Err(err) = pconf {
         log!(
@@ -41,7 +41,7 @@ fn main() {
     //     println!("Value for config: {}", c);
     // }
 
-    println!("{}", 123);
+    println!("{:?}", pconf);
 
     // let pattern = std::env::args().nth(1).expect("no pattern given");
     // let path = std::env::args().nth(2).expect("no path given");

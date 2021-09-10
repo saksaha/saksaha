@@ -1,85 +1,65 @@
 use super::{parse, PConfig};
-use crate::common::errors::Error;
+use crate::{err_res, err_resk};
+use crate::common::errors::{Error, ErrorKind};
 use directories::ProjectDirs;
 use logger::log;
 use std::fs;
+use std::io::Write;
 use std::path::{Path, PathBuf};
 
-static DEFAULT_CONFIG_FILE_NAME: &str = "config.json";
+const CONFIG_FILE_NAME: &str = "config.json";
 
 impl PConfig {
-    pub fn persist(&self) {
+    pub fn persist(&self) -> Result<PathBuf, Error> {
+        let serialized = serde_json::to_string_pretty(&self).unwrap();
+        let app_path = create_or_get_app_path()?;
+        let config_path = app_path.join(CONFIG_FILE_NAME);
 
+        if config_path.exists() {
+            return err_res!("Config file already exists, something is wrong");
+        }
+
+        match fs::write(config_path.to_owned(), serialized) {
+            Ok(_) => Ok(config_path),
+            Err(err) => err_res!("Error writing the config, err: {}", err),
+        }
     }
 
-    pub fn load(path: &str) {
-
+    pub fn load(config_path: &str) -> Result<PConfig, Error> {
+        return Self::load_config(config_path);
     }
-}
 
-    // pub fn load(path: Option<&str>) -> Result<Self, Error> {
-    //     return load_or_create_config(path);
-    // }
+    pub fn load_from_default() -> Result<PConfig, Error> {
+        let app_path = create_or_get_app_path()?;
+        let config_path = app_path.join(CONFIG_FILE_NAME);
+        let config_path = config_path.to_str()
+            .expect("config path must be properly constructed");
 
-// fn load_or_create_config(path: Option<&str>) -> Result<PConfig, Error> {
-//     if let Some(p) = path {
-//         log!(DEBUG, "Config path is given, probing a path: {}\n", p);
+        return PConfig::load_config(config_path);
+    }
 
-//         let path = PathBuf::from(p);
+    fn load_config(path: &str) -> Result<PConfig, Error> {
+        if !PathBuf::from(path).exists() {
+            return err_resk!(ErrorKind::FileNotExist, "");
+        }
 
-//         if !path.exists() {
-//             return Error::result(format!("Config file does not exist"));
-//         }
+        let f = fs::read_to_string(path);
 
-//         if path.is_dir() {
-//             return Error::result(format!(
-//                 "Config path must be a file, not directory"
-//             ));
-//         }
+        if let Err(err) = f {
+            return err_res!(
+                "Error reading file, path: {}, err: {}",
+                path,
+                err
+            );
+        }
 
-//         log!(DEBUG, "Found config file, loading...\n");
-//         return parse::from(path);
-//     } else {
-//         log!(
-//             DEBUG,
-//             "Config path is not given, creating the default one\n"
-//         );
-
-//         let app_path = create_or_get_app_path();
-
-//         if let Err(e) = app_path {
-//             return Error::result(format!(
-//                 "Error setting up an app path, err: {}",
-//                 e
-//             ));
-//         }
-
-//         let app_path = app_path.unwrap();
-//         let config_path = app_path.join(DEFAULT_CONFIG_FILE_NAME);
-
-//         if config_path.exists() {
-//             log!(
-//                 DEBUG,
-//                 "Found the existing config file, start reading at: %{}\n",
-//                 config_path.to_str().unwrap(),
-//             );
-
-//             return parse::from(app_path);
-//         } else {
-//             log!(
-//                 DEBUG,
-//                 "Couldn't find a default config, creating at: {}\n",
-//                 config_path.to_str().unwrap(),
-//             );
-
-//             return create_default_config(config_path);
-//         }
-//     }
-// }
-
-fn create_default_config(config_path: PathBuf) -> Result<PConfig, Error> {
-    return Error::result(format!("power"));
-    // return Some(path);
+        match serde_json::from_str(f.unwrap().as_str()) {
+            Ok(pconf) => return Ok(pconf),
+            Err(err) => {
+                return err_res!("Error deserializing config, err: {}", err);
+            }
+        }
+    }
 }
 
 fn create_or_get_app_path() -> Result<PathBuf, Error> {
@@ -91,16 +71,13 @@ fn create_or_get_app_path() -> Result<PathBuf, Error> {
                     return Ok(app_path.to_path_buf());
                 }
                 Err(err) => {
-                    return Error::result(format!(
-                        "Error creating a path, {}",
-                        err
-                    ));
+                    return err_res!("Error creating a path, {}", err);
                 }
             }
         }
         return Ok(app_path.to_path_buf());
     } else {
-        return Error::result(format!("Error forming an app path"));
+        return err_res!("Error forming an app path");
     }
 }
 

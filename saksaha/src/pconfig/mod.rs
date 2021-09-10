@@ -1,4 +1,7 @@
-use crate::{common::errors::Error, crypto};
+use crate::{
+    common::errors::{Error, ErrorKind},
+    crypto, err_res,
+};
 use directories::ProjectDirs;
 use k256::elliptic_curve::sec1::ToEncodedPoint;
 use logger::log;
@@ -21,36 +24,39 @@ pub struct PersistedP2PConfig {
 }
 
 impl PConfig {
-    pub fn new(path: Option<&str>) -> Result<Self, Error> {
-        if let None = path {
+    pub fn of(config_path: Option<&str>) -> Result<PConfig, Error> {
+        if let None = config_path {
             log!(DEBUG, "Config path is not given, creating a new config\n");
 
-            let sk = crypto::generate_key();
-            let (sk, pk) = crypto::encode_key_pair(sk);
-            let pconf = PConfig {
-                p2p: PersistedP2PConfig {
-                    secret: sk,
-                    public_key: pk,
-                },
-            };
-            pconf.persist();
-
-            let serialized = serde_json::to_string(&pconf).unwrap();
-            print!("{}\n", serialized);
-            // match serialized {
-            //    Ok(s) => {return Ok(pconf)},
-            //    _ => {return Error::result(format!("f"))}
-            // }
+            match PConfig::load_from_default() {
+                Err(err) => {
+                    if let ErrorKind::FileNotExist = err.kind() {
+                        return PConfig::new();
+                    } else {
+                        return Err(err);
+                    }
+                }
+                Ok(pconf) => return Ok(pconf),
+            }
         } else {
-            PConfig::load(path.unwrap());
+            PConfig::load(config_path.unwrap());
+            err_res!("power")
         }
+    }
 
-        // let pk = sk.public_key();
+    fn new() -> Result<PConfig, Error> {
+        let sk = crypto::generate_key();
+        let (sk, pk) = crypto::encode_key_pair(sk);
+        let pconf = PConfig {
+            p2p: PersistedP2PConfig {
+                secret: sk,
+                public_key: pk,
+            },
+        };
 
-        // crypto::encode_hex(sk.to_bytes().as_slice());
-        // let bb = pk.to_encoded_point(false);
-
-        // crypto::encode_hex(pk.as_affine());
-        return Error::result(format!("f"));
+        match pconf.persist() {
+            Ok(_) => Ok(pconf),
+            Err(err) => Err(err),
+        }
     }
 }
