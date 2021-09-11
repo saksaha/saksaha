@@ -32,7 +32,16 @@ fn main() {
         std::process::exit(1);
     }
 
+    // const c: &String = &format!("{}{}", a, b);
+    // const c: &String = &format!("this parameter is for (default: {})", 1);
+    // concat!(a, b);
+    // const c: &str = b.to_string();
+
+    // const c: String = format!("{}{}", a, b);
+    // print!("44 {}\n", c);
+
     let pconf = pconf.unwrap();
+    println!("Obtained configuration: {:?}", pconf);
 
     // let a = pconf.p2p.private_key.unwrap_or(String::from("power"));
     // println!("33 {}", a);
@@ -40,8 +49,6 @@ fn main() {
     // if let Some(c) = matches.value_of("config") {
     //     println!("Value for config: {}", c);
     // }
-
-    println!("{:?}", pconf);
 
     // let pattern = std::env::args().nth(1).expect("no pattern given");
     // let path = std::env::args().nth(2).expect("no path given");

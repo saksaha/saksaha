@@ -40,7 +40,7 @@ impl PConfig {
 
         log!(
             DEBUG,
-            "1Loading configuration from default path, at: {}\n",
+            "Loading configuration from default path, at: {}\n",
             config_path
         );
 
