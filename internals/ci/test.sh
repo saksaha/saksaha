@@ -6,4 +6,9 @@ currDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 $currDir/_check_env.sh
 
 cd $ROOT_PATH
-cargo test -- --nocapture
+cmd="cargo test -- --nocapture"
+# cmd="cargo test -- $@"
+
+echo "Executing: $cmd"
+
+$cmd

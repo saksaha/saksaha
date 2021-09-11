@@ -1,6 +1,6 @@
 use super::{parse, PConfig};
-use crate::{err_res, err_resk};
 use crate::common::errors::{Error, ErrorKind};
+use crate::{err_res, err_resk};
 use directories::ProjectDirs;
 use logger::log;
 use std::fs;
@@ -13,11 +13,13 @@ impl PConfig {
     pub fn persist(&self) -> Result<PathBuf, Error> {
         let serialized = serde_json::to_string_pretty(&self).unwrap();
         let app_path = create_or_get_app_path()?;
-        let config_path = app_path.join(CONFIG_FILE_NAME);
+        let config_path = app_path.join(CONFIG_FILE_NAME).to_owned();
 
         if config_path.exists() {
             return err_res!("Config file already exists, something is wrong");
         }
+
+        log!(DEBUG, "Writing a config, at: {:?}\n", config_path);
 
         match fs::write(config_path.to_owned(), serialized) {
             Ok(_) => Ok(config_path),
@@ -32,8 +34,15 @@ impl PConfig {
     pub fn load_from_default() -> Result<PConfig, Error> {
         let app_path = create_or_get_app_path()?;
         let config_path = app_path.join(CONFIG_FILE_NAME);
-        let config_path = config_path.to_str()
+        let config_path = config_path
+            .to_str()
             .expect("config path must be properly constructed");
+
+        log!(
+            DEBUG,
+            "1Loading configuration from default path, at: {}\n",
+            config_path
+        );
 
         return PConfig::load_config(config_path);
     }
