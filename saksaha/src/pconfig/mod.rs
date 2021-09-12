@@ -1,14 +1,10 @@
 use crate::{
-    common::errors::{Error, ErrorKind},
-    crypto, err_res,
+    common::errors::{Error},
+    crypto,
 };
-use directories::ProjectDirs;
-use k256::elliptic_curve::sec1::ToEncodedPoint;
 use logger::log;
 use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
-
-pub mod parse;
+use std::path::{PathBuf};
 
 pub mod fs;
 
@@ -28,19 +24,16 @@ impl PConfig {
         if let None = config_path {
             log!(DEBUG, "Config path is not given, creating a new config\n");
 
-            match PConfig::load_from_default() {
-                Err(err) => {
-                    if let ErrorKind::FileNotExist = err.kind() {
-                        return PConfig::new();
-                    } else {
-                        return Err(err);
-                    }
-                }
-                Ok(pconf) => return Ok(pconf),
+            let default_path = PConfig::get_default_path()?;
+
+            if default_path.exists() {
+                return PConfig::load(default_path);
+            } else {
+                return PConfig::new();
             }
         } else {
-            PConfig::load(config_path.unwrap());
-            err_res!("power")
+            let config_path = PathBuf::from(config_path.unwrap());
+            PConfig::load(config_path)
         }
     }
 

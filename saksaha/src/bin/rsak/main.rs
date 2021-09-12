@@ -1,6 +1,6 @@
 use clap::{App, Arg};
 use logger::log;
-use saksaha::pconfig::{self, PConfig};
+use saksaha::pconfig::{PConfig};
 
 fn main() {
     let flags = App::new("Saksaha rust")

@@ -1,9 +1,12 @@
-use k256::{EncodedPoint, PublicKey, SecretKey, ecdh::EphemeralSecret, ecdsa::{
-        signature::{Signer, Verifier},
-        Signature, SigningKey, VerifyingKey,
-    }, elliptic_curve::sec1::ToEncodedPoint};
+pub use k256::{
+    ecdh::EphemeralSecret,
+    ecdsa::{Signature, SigningKey, VerifyingKey},
+    elliptic_curve::sec1::ToEncodedPoint,
+    SecretKey,
+    EncodedPoint,
+    PublicKey,
+};
 use rand_core::OsRng;
-// requires 'getrandom' feature
 use std::{fmt::Write, num::ParseIntError};
 
 pub fn decode_hex(s: &str) -> Result<Vec<u8>, ParseIntError> {
@@ -37,97 +40,113 @@ pub fn generate_key() -> SecretKey {
     return secret;
 }
 
-pub fn to_hex(secret: EphemeralSecret) {
+pub fn to_hex(_: EphemeralSecret) {
     // let pk = secret.public_key();
     // secret.
     // EncodedPoint::from(secret);
     // let pk = EncodedPoint::from(secret.public_key());
-
 }
 
-#[test]
-fn b() {
-    // Signing
-    let signing_key = SigningKey::random(&mut OsRng); // Serialize with `::to_bytes()`
-    let message = b"ECDSA proves knowledge of a secret number in the context of a single message";
+#[cfg(test)]
+mod test {
+    pub use k256::ecdsa::{
+        signature::{Signer, Verifier},
+        Signature, SigningKey, VerifyingKey,
+    };
+    use super::{
+        OsRng,
+        EphemeralSecret,
+        ToEncodedPoint,
+        EncodedPoint,
+        SecretKey,
+        PublicKey,
+    };
 
-    // Note: the signature type must be annotated or otherwise inferrable as
-    // `Signer` has many impls of the `Signer` trait (for both regular and
-    // recoverable signature types).
-    let signature: Signature = signing_key.sign(message);
+    #[test]
+    fn b() {
+        // Signing
+        let signing_key = SigningKey::random(&mut OsRng); // Serialize with `::to_bytes()`
+        let message = b"ECDSA proves knowledge of a secret number in the context of a single message";
 
-    // Verification
-    let verify_key = VerifyingKey::from(&signing_key); // Serialize with `::to_encoded_point()`
-    assert!(verify_key.verify(message, &signature).is_ok());
-}
+        // Note: the signature type must be annotated or otherwise inferrable as
+        // `Signer` has many impls of the `Signer` trait (for both regular and
+        // recoverable signature types).
+        let signature: Signature = signing_key.sign(message);
 
-#[test]
-fn a() {
-    // Alice
-    let alice_secret = EphemeralSecret::random(&mut OsRng);
-    let alice_pk_bytes = EncodedPoint::from(alice_secret.public_key());
+        // Verification
+        let verify_key = VerifyingKey::from(&signing_key); // Serialize with `::to_encoded_point()`
+        assert!(verify_key.verify(message, &signature).is_ok());
+    }
 
-    let sk = SecretKey::random(&mut OsRng);
-    let sk_bytes = sk.to_bytes();
+    #[test]
+    fn a() {
+        // Alice
+        let alice_secret = EphemeralSecret::random(&mut OsRng);
+        let alice_pk_bytes = EncodedPoint::from(alice_secret.public_key());
 
-    print!("secret key: {:?}\n", sk);
-    print!("secret key bytes: {:?}\n", alice_pk_bytes);
+        let sk = SecretKey::random(&mut OsRng);
+        let sk_bytes = sk.to_bytes();
 
-    let sk_rec = SecretKey::from_bytes(sk_bytes).unwrap();
-    print!("recovered secret key {:?}\n", sk_rec);
+        print!("secret key: {:?}\n", sk);
+        print!("secret key bytes: {:?}\n", alice_pk_bytes);
 
-    let public_key = sk.public_key();
-    let enc_point = public_key.to_encoded_point(false);
-    let enc_point_bytes = enc_point.as_bytes();
+        let sk_rec = SecretKey::from_bytes(sk_bytes).unwrap();
+        print!("recovered secret key {:?}\n", sk_rec);
 
-    print!("public key: {:?}\n", public_key);
-    print!("encoded point: {:?}\n", enc_point);
-    print!("encoded point as bytes: {:?}\n", enc_point_bytes);
+        let public_key = sk.public_key();
+        let enc_point = public_key.to_encoded_point(false);
+        let enc_point_bytes = enc_point.as_bytes();
 
-    let public_key_rec = PublicKey::from_sec1_bytes(enc_point_bytes).unwrap();
-    let enc_point_rec = public_key_rec.to_encoded_point(false);
+        print!("public key: {:?}\n", public_key);
+        print!("encoded point: {:?}\n", enc_point);
+        print!("encoded point as bytes: {:?}\n", enc_point_bytes);
 
-    print!("public key rec: {:?}\n", public_key_rec);
-    print!("encoded point rec: {:?}\n", &enc_point_rec);
+        let public_key_rec =
+            PublicKey::from_sec1_bytes(enc_point_bytes).unwrap();
+        let enc_point_rec = public_key_rec.to_encoded_point(false);
 
-    assert_eq!(enc_point, enc_point_rec);
-    // PublicKey::fr
+        print!("public key rec: {:?}\n", public_key_rec);
+        print!("encoded point rec: {:?}\n", &enc_point_rec);
 
-    // // Bob
-    // let bob_secret = EphemeralSecret::random(&mut OsRng);
-    // let bob_pk_bytes = EncodedPoint::from(bob_secret.public_key());
+        assert_eq!(enc_point, enc_point_rec);
+        // PublicKey::fr
 
-    // // Alice decodes Bob's serialized public key and computes a shared secret from it
-    // let bob_public = PublicKey::from_sec1_bytes(bob_pk_bytes.as_ref())
-    //     .expect("bob's public key is invalid!"); // In real usage, don't panic, handle this!
+        // // Bob
+        // let bob_secret = EphemeralSecret::random(&mut OsRng);
+        // let bob_pk_bytes = EncodedPoint::from(bob_secret.public_key());
 
-    // let alice_shared = alice_secret.diffie_hellman(&bob_public);
-    // let a = alice_shared.as_bytes().as_slice();
+        // // Alice decodes Bob's serialized public key and computes a shared secret from it
+        // let bob_public = PublicKey::from_sec1_bytes(bob_pk_bytes.as_ref())
+        //     .expect("bob's public key is invalid!"); // In real usage, don't panic, handle this!
 
-    // let mut f = String::new();
-    // for &b in a {
-    //     write!(&mut f, "{:02x}", b).unwrap();
-    // }
+        // let alice_shared = alice_secret.diffie_hellman(&bob_public);
+        // let a = alice_shared.as_bytes().as_slice();
 
-    // // print!("44 {:?}\n", alice_secret);
+        // let mut f = String::new();
+        // for &b in a {
+        //     write!(&mut f, "{:02x}", b).unwrap();
+        // }
 
-    // // c.join(" ");
-    // // println!("5 {}", b);
-    // // a.join("");
+        // // print!("44 {:?}\n", alice_secret);
 
-    // print!("31 {:x?}\n", alice_shared.as_bytes());
-    // print!("33 {:x?}\n", a);
+        // // c.join(" ");
+        // // println!("5 {}", b);
+        // // a.join("");
 
-    // // for n in 0..a.
+        // print!("31 {:x?}\n", alice_shared.as_bytes());
+        // print!("33 {:x?}\n", a);
 
-    // // Bob deocdes Alice's serialized public key and computes the same shared secret
-    // let alice_public = PublicKey::from_sec1_bytes(alice_pk_bytes.as_ref())
-    //     .expect("alice's public key is invalid!"); // In real usage, don't panic, handle this!
+        // // for n in 0..a.
 
-    // let bob_shared = bob_secret.diffie_hellman(&alice_public);
+        // // Bob deocdes Alice's serialized public key and computes the same shared secret
+        // let alice_public = PublicKey::from_sec1_bytes(alice_pk_bytes.as_ref())
+        //     .expect("alice's public key is invalid!"); // In real usage, don't panic, handle this!
 
-    // print!("44 {:?}\n", bob_shared.as_bytes());
+        // let bob_shared = bob_secret.diffie_hellman(&alice_public);
 
-    // // Both participants arrive on the same shared secret
-    // assert_eq!(alice_shared.as_bytes(), bob_shared.as_bytes());
+        // print!("44 {:?}\n", bob_shared.as_bytes());
+
+        // // Both participants arrive on the same shared secret
+        // assert_eq!(alice_shared.as_bytes(), bob_shared.as_bytes());
+    }
 }

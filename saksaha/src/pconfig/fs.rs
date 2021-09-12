@@ -1,11 +1,10 @@
-use super::{parse, PConfig};
+use super::PConfig;
 use crate::common::errors::{Error, ErrorKind};
 use crate::{err_res, err_resk};
 use directories::ProjectDirs;
 use logger::log;
 use std::fs;
-use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 const CONFIG_FILE_NAME: &str = "config.json";
 
@@ -27,36 +26,22 @@ impl PConfig {
         }
     }
 
-    pub fn load(config_path: &str) -> Result<PConfig, Error> {
+    pub fn load(config_path: PathBuf) -> Result<PConfig, Error> {
+        log!(DEBUG, "Load configuration, path: {:?}\n", config_path);
+
         return Self::load_config(config_path);
     }
 
-    pub fn load_from_default() -> Result<PConfig, Error> {
-        let app_path = create_or_get_app_path()?;
-        let config_path = app_path.join(CONFIG_FILE_NAME);
-        let config_path = config_path
-            .to_str()
-            .expect("config path must be properly constructed");
-
-        log!(
-            DEBUG,
-            "Loading configuration from default path, at: {}\n",
-            config_path
-        );
-
-        return PConfig::load_config(config_path);
-    }
-
-    fn load_config(path: &str) -> Result<PConfig, Error> {
-        if !PathBuf::from(path).exists() {
+    fn load_config(path: PathBuf) -> Result<PConfig, Error> {
+        if path.exists() {
             return err_resk!(ErrorKind::FileNotExist, "");
         }
 
-        let f = fs::read_to_string(path);
+        let f = fs::read_to_string(path.to_owned());
 
         if let Err(err) = f {
             return err_res!(
-                "Error reading file, path: {}, err: {}",
+                "Error reading file, path: {:?}, err: {}",
                 path,
                 err
             );
@@ -68,6 +53,12 @@ impl PConfig {
                 return err_res!("Error deserializing config, err: {}", err);
             }
         }
+    }
+
+    pub fn get_default_path() -> Result<PathBuf, Error> {
+        let app_path = create_or_get_app_path()?;
+        let config_path = app_path.join(CONFIG_FILE_NAME);
+        Ok(config_path)
     }
 }
 
@@ -87,30 +78,5 @@ fn create_or_get_app_path() -> Result<PathBuf, Error> {
         return Ok(app_path.to_path_buf());
     } else {
         return err_res!("Error forming an app path");
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use crate::testenv;
-
-    #[test]
-    fn it_creates_config_path() {
-        testenv::run_test(|test_env| {
-            let testdump = test_env
-                .testdump
-                .as_ref()
-                .expect("Test dump path should be provided");
-
-            let path = testdump.join("saksaha-config");
-            let path = path.to_str().expect("Error making test config path");
-
-            // let _ = super::load_or_create_config(Some(path))
-            //     .expect("Error creating config");
-
-            // PathBuf::from(path_name);
-
-            println!("{:?}", testdump);
-        })
     }
 }
