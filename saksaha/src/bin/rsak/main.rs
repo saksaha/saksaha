@@ -23,6 +23,8 @@ fn main() {
 
     let pconf = PConfig::of(flags.value_of("config"));
 
+    // String::from("alkwj").chars();
+
     if let Err(err) = pconf {
         log!(
             DEBUG,
