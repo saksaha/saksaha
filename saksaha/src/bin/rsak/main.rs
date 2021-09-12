@@ -1,6 +1,9 @@
 use clap::{App, Arg};
 use logger::log;
-use saksaha::pconfig::{PConfig};
+use saksaha::{
+    node::{Node},
+    pconfig::{PConfig},
+};
 
 fn main() {
     let flags = App::new("Saksaha rust")
@@ -21,7 +24,13 @@ fn main() {
         )
         .get_matches();
 
-    let pconf = PConfig::of(flags.value_of("config"));
+    let pconf = make_config(flags.value_of("config"));
+
+    let n = Node::new();
+}
+
+fn make_config(config_path: Option<&str>) -> PConfig {
+    let pconf = PConfig::of(config_path);
 
     if let Err(err) = pconf {
         log!(
@@ -34,6 +43,5 @@ fn main() {
 
     let pconf = pconf.unwrap();
     log!(DEBUG, "Successfully loaded config, {:?}\n", pconf);
-
-
+    pconf
 }
