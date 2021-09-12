@@ -1,3 +1,3 @@
-pub kostruct ThreadPool {
+pub struct ThreadPool {
 
 }
