@@ -27,6 +27,8 @@ impl PConfig {
             let default_path = PConfig::get_default_path()?;
 
             if default_path.exists() {
+                log!(DEBUG, "Found a config at the default location\n");
+
                 return PConfig::load(default_path);
             } else {
                 return PConfig::new();
@@ -38,6 +40,8 @@ impl PConfig {
     }
 
     fn new() -> Result<PConfig, Error> {
+        log!(DEBUG, "Creating a new config\n");
+
         let sk = crypto::generate_key();
         let (sk, pk) = crypto::encode_key_pair(sk);
         let pconf = PConfig {

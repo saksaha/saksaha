@@ -3,9 +3,9 @@ use std::str;
 pub fn make_fd(f: &str, ln: u32) -> String {
     let s = format!("{}:{}", f, ln);
     let s = s.as_bytes();
-    let mut fd: [u8; 16] = [b'.'; 16];
+    let mut fd: [u8; 18] = [b'.'; 18];
 
-    for i in 0..13 {
+    for i in 0..16 {
         fd[fd.len() - 1 - i] = s[s.len() - 1 - i];
     }
 

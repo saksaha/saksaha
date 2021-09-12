@@ -33,8 +33,12 @@ impl PConfig {
     }
 
     fn load_config(path: PathBuf) -> Result<PConfig, Error> {
-        if path.exists() {
-            return err_resk!(ErrorKind::FileNotExist, "");
+        if !path.exists() {
+            return err_resk!(
+                ErrorKind::FileNotExist,
+                "Config does not exist at path: {:?}\n",
+                path
+            );
         }
 
         let f = fs::read_to_string(path.to_owned());

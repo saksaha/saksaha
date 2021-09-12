@@ -23,8 +23,6 @@ fn main() {
 
     let pconf = PConfig::of(flags.value_of("config"));
 
-    // String::from("alkwj").chars();
-
     if let Err(err) = pconf {
         log!(
             DEBUG,
@@ -34,30 +32,8 @@ fn main() {
         std::process::exit(1);
     }
 
-    // const c: &String = &format!("{}{}", a, b);
-    // const c: &String = &format!("this parameter is for (default: {})", 1);
-    // concat!(a, b);
-    // const c: &str = b.to_string();
-
-    // const c: String = format!("{}{}", a, b);
-    // print!("44 {}\n", c);
-
     let pconf = pconf.unwrap();
-    println!("Obtained configuration: {:?}", pconf);
+    log!(DEBUG, "Successfully loaded config, {:?}\n", pconf);
 
-    // let a = pconf.p2p.private_key.unwrap_or(String::from("power"));
-    // println!("33 {}", a);
 
-    // if let Some(c) = matches.value_of("config") {
-    //     println!("Value for config: {}", c);
-    // }
-
-    // let pattern = std::env::args().nth(1).expect("no pattern given");
-    // let path = std::env::args().nth(2).expect("no path given");
-    // // let args = Cli {
-    // //     pattern: pattern,
-    // //     path: std::path::PathBuf::from(path),
-    // // };
-
-    // println!("Hello, world! {} {} ", pattern, path);
 }
