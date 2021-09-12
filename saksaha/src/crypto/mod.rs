@@ -104,7 +104,6 @@ mod test {
             print!("encoded point rec: {:?}\n", &enc_point_rec);
 
             assert_eq!(enc_point, enc_point_rec);
-
         });
     }
 }

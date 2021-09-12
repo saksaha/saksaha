@@ -44,6 +44,8 @@ fn init() {
     })
 }
 
+/// This is still experimental.
+/// At the moment, it doesn't do anything substantial.
 pub fn run_test<T>(test: T)
 where
     T: FnOnce(&TestEnv),

@@ -3,6 +3,7 @@ use logger::log;
 use saksaha::{
     node::{Node},
     pconfig::{PConfig},
+    p2p::{Host},
 };
 
 fn main() {
@@ -20,13 +21,40 @@ fn main() {
                     "Saksaha configuration file, usually created at \
                     [[OS default config path]]/saksaha/config.json",
                 )
-                .takes_value(true),
+        )
+        .arg(
+            Arg::new("bootstrap_peers")
+                .long("bootstrap-peers")
+                .value_name("ENDPOINT")
+                .use_delimiter(true)
+                .about(
+                    "Bootstrap peers to start discovery for",
+                ),
+        )
+        .arg(
+            Arg::new("rpc_port")
+                .long("rpc-port")
+                .value_name("PORT")
+                .about(
+                    "RPC port number",
+                )
         )
         .get_matches();
 
     let pconf = make_config(flags.value_of("config"));
 
-    let n = Node::new();
+    let hconf = Host::new_config(
+        flags.value_of("rpc_port"),
+        flags.values_of("bootstrap_peers"),
+        pconf.p2p.public_key,
+        pconf.p2p.secret,
+    );
+
+    let n = Node::new(
+        hconf,
+    );
+
+    n.start();
 }
 
 fn make_config(config_path: Option<&str>) -> PConfig {
