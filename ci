@@ -19,11 +19,13 @@ fi
 
 command=$1
 
-filePath="$currDir/internals/ci/$command.sh"
 
-if [[ ! -f $filePath ]]; then
-    printf "Error finding a command [%s] at %s\n" $command $filePath
-    exit 1
-fi
 
-ROOT_PATH=$currDir $filePath "${@:2}"
+# filePath="$currDir/internals/ci/$command.sh"
+
+# if [[ ! -f $filePath ]]; then
+#     printf "Error finding a command [%s] at %s\n" $command $filePath
+#     exit 1
+# fi
+
+# ROOT_PATH=$currDir $filePath "${@:2}"

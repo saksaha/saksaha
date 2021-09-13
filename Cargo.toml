@@ -4,3 +4,7 @@ members = [
   "saksaha",
   "logger"
 ]
+
+exclude = [
+  "internals/ci"
+]
