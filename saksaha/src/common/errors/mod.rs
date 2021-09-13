@@ -10,10 +10,7 @@ pub struct Error {
 
 impl Error {
     pub fn new(kind: ErrorKind, msg: String) -> Error {
-        return Error {
-            kind,
-            msg,
-        };
+        return Error { kind, msg };
     }
 
     pub fn kind(&self) -> ErrorKind {
@@ -43,13 +40,18 @@ impl fmt::Debug for Error {
 #[macro_export]
 macro_rules! err_res {
     ($str: expr) => {
-        Err(Error::new(ErrorKind::Default, format!($str)))
+        {
+            Err(Error::new($crate::common::errors::ErrorKind::Default,
+                format!($str)))
+        }
     };
 
-    ($str_format: expr, $($arg:tt)*) => {{
-        let msg = format!("{}", format_args!($str_format, $($arg)*));
-        Err(Error::new(ErrorKind::Default, msg))
-    }};
+    ($str_format: expr, $($arg:tt)*) => {
+        {
+            let msg = format!("{}", format_args!($str_format, $($arg)*));
+            Err(Error::new($crate::common::errors::ErrorKind::Default, msg))
+        }
+    };
 }
 
 #[macro_export]

@@ -50,8 +50,13 @@ fn main() {
         pconf.p2p.secret,
     );
 
+    if let Err(ref err) = hconf {
+        log!(DEBUG, "power");
+        // return;
+    }
+
     let n = Node::new(
-        hconf,
+        hconf.unwrap(),
     );
 
     n.start();

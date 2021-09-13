@@ -1,3 +1,7 @@
+use crate::{
+    common::errors::Error,
+    err_res,
+};
 pub use k256::{
     ecdh::EphemeralSecret,
     ecdsa::{Signature, SigningKey, VerifyingKey},
@@ -6,6 +10,17 @@ pub use k256::{
 };
 use rand_core::OsRng;
 use std::{fmt::Write, num::ParseIntError};
+
+pub fn make_secret_key_from_bytes(
+    bytes: impl AsRef<[u8]>,
+) -> Result<SecretKey, Error> {
+    match SecretKey::from_bytes(bytes) {
+        Ok(s) => return Ok(s),
+        Err(err) => {
+            return err_res!("Error making secret out of bytes, err: {}", err);
+        }
+    }
+}
 
 pub fn decode_hex(s: &str) -> Result<Vec<u8>, ParseIntError> {
     (0..s.len())

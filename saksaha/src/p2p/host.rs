@@ -1,3 +1,7 @@
+use crate::{
+    common::errors::Error,
+    err_res,
+};
 use clap;
 
 pub struct Host {
@@ -21,15 +25,19 @@ impl Host {
         bootstrap_peers: Option<clap::Values>,
         public_key: String,
         secret: String,
-    ) -> Config {
+    ) -> Result<Config, Error> {
         let mut c = Config {
             rpc_port: 0,
             bootstrap_peers: Vec::new(),
         };
 
         if let Some(p) = rpc_port {
-            let rpc_port = p.parse::<usize>().unwrap();
-            c.rpc_port = rpc_port;
+            let rpc_port = p.parse::<usize>();
+            match rpc_port {
+               Ok(rpc_port) => { c.rpc_port = rpc_port },
+            //    Err(err) => err_res!("Error parsing rpc_port, err: {}", err)
+               Err(err) => { return err_res!(""); }
+            }
         }
 
         if let Some(b) = bootstrap_peers {
@@ -37,8 +45,6 @@ impl Host {
             c.bootstrap_peers = bootstrap_peers;
         }
 
-
-
-        return c;
+        return Ok(c);
     }
 }
