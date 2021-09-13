@@ -6,3 +6,6 @@ edition = "2018"
 [[bin]]
 name = "ci"
 path = "main.rs"
+
+[dependencies]
+clap = "2"

@@ -2,7 +2,7 @@
 
 set -e
 
-currDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+curr_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
 if [ "$#" -lt 1 ]; then
     printf "%s 3\n" \
@@ -10,16 +10,15 @@ if [ "$#" -lt 1 ]; then
    in internals/ci"
 fi
 
-check_rust="$currDir/internals/ci/_check_rust.sh"
+check_rust="$curr_dir/internals/ci/_check_rust.sh"
 
 if ! $check_rust; then
     printf "Error checking if rust is sane in your system\n"
     exit 1
 fi
 
-command=$1
-
-
+ci_cargo="$curr_dir/internals/ci/Cargo.toml"
+PROJECT_ROOT=$curr_dir cargo run --manifest-path=$ci_cargo -- "$@"
 
 # filePath="$currDir/internals/ci/$command.sh"
 
