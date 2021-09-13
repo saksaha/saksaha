@@ -51,15 +51,20 @@ fn main() {
     );
 
     if let Err(ref err) = hconf {
-        log!(DEBUG, "power");
-        // return;
+        log!(DEBUG, "Error loading a config, err: {}\n", err);
+        std::process::exit(1);
     }
 
-    let n = Node::new(
+    let node = Node::new(
         hconf.unwrap(),
     );
 
-    n.start();
+    if let Err(ref err) = node {
+        log!(DEBUG, "Error creating a node, err: {}\n", err);
+        std::process::exit(1);
+    }
+
+    node.unwrap().start();
 }
 
 fn make_config(config_path: Option<&str>) -> PConfig {

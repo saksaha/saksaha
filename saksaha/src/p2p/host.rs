@@ -1,8 +1,6 @@
-use crate::{
-    common::errors::Error,
-    err_res,
-};
+use crate::{common::errors::Error, err_res, thread::ThreadPool};
 use clap;
+use logger::log;
 
 pub struct Host {
 
@@ -46,5 +44,10 @@ impl Host {
         }
 
         return Ok(c);
+    }
+}
+
+impl Host {
+    pub fn start(&self, tpool: &ThreadPool) {
     }
 }
