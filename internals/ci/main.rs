@@ -1,7 +1,8 @@
 mod macros;
+mod commands;
 
 use clap::{App, Arg, SubCommand};
-use std::{arch::x86_64::_mm_load_ps1, path::PathBuf};
+
 
 fn main() {
     let curr_dir = match std::env::current_dir() {
@@ -40,34 +41,17 @@ fn main() {
             root with `ci` script");
     }
 
-    let matches = App::new("My Super Program")
-        .version("1.0")
-        .author("Kevin K. <kbknapp@gmail.com>")
-        .about("Does awesome things")
-        .arg(
-            Arg::with_name("config")
-                .short("c")
-                .long("config")
-                .value_name("FILE")
-                .help("Sets a custom config file")
-                .takes_value(true),
-        )
-        .arg(
-            Arg::with_name("v")
-                .short("v")
-                .multiple(true)
-                .help("Sets the level of verbosity"),
-        )
+    let matches = App::new("CI")
+        .version("0.1")
+        .author("Saksaha <team@saksaha.com>")
+        .about("Rust saksaha continuous integration toolsuite")
         .subcommand(
             SubCommand::with_name("dev")
-                .about("controls testing features")
-                .version("1.3")
-                .author("Someone E. <someone_else@other.com>")
-                // .arg(
-                //     Arg::with_name("debug")
-                //         .short("d")
-                //         .help("print debug information verbosely"),
-                // ),
+                .version("0.1")
+                .arg(
+                    Arg::with_name("args")
+                        .multiple(true)
+                ),
         )
         .get_matches();
 
@@ -80,7 +64,12 @@ fn main() {
         }
 
         if let Some(matches) = matches.subcommand_matches("dev") {
-            log!("power");
+            if let Some(args) = matches.values_of("args") {
+                let args: Vec<_> = args.collect();
+
+            }
+
+            // print!("{:?}\n", b);
             // "$ myapp test" was run
             // if matches.is_present("list") {
             //     // "$ myapp test -l" was run
@@ -89,5 +78,4 @@ fn main() {
             //     println!("Not printing testing lists...");
             // }
         }
-
 }

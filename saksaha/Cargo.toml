@@ -2,7 +2,7 @@
 name = "saksaha"
 version = "0.1.0"
 edition = "2018"
-default-run = "rsak"
+default-run = "sak"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -16,8 +16,8 @@ serde = { version = "1.0.130", features = ["derive"] }
 serde_json = "1.0.59"
 
 [[bin]]
-name = "rsak"
-path = "src/bin/rsak/main.rs"
+name = "sak"
+path = "src/bin/sak/main.rs"
 
 [[bin]]
 name = "faucet"

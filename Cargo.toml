@@ -2,9 +2,8 @@
 
 members = [
   "saksaha",
-  "logger"
-]
+  "logger",
 
-exclude = [
+  # internals
   "internals/ci"
 ]

@@ -10,7 +10,13 @@ const CONFIG_FILE_NAME: &str = "config.json";
 
 impl PConfig {
     pub fn persist(&self) -> Result<PathBuf, Error> {
-        let serialized = serde_json::to_string_pretty(&self).unwrap();
+        let serialized = match serde_json::to_string_pretty(&self) {
+            Ok(s) => s,
+            Err(err) => {
+                return err_res!("Cannot serialize configuration, err: {}", err);
+            }
+        };
+
         let app_path = create_or_get_app_path()?;
         let config_path = app_path.join(CONFIG_FILE_NAME).to_owned();
 
@@ -41,17 +47,18 @@ impl PConfig {
             );
         }
 
-        let f = fs::read_to_string(path.to_owned());
+        let file = match fs::read_to_string(path.to_owned()) {
+            Ok(f) => f,
+            Err(err) => {
+                return err_res!(
+                    "Error reading file, path: {:?}, err: {}",
+                    path,
+                    err
+                );
+            }
+        };
 
-        if let Err(err) = f {
-            return err_res!(
-                "Error reading file, path: {:?}, err: {}",
-                path,
-                err
-            );
-        }
-
-        match serde_json::from_str(f.unwrap().as_str()) {
+        match serde_json::from_str(file.as_str()) {
             Ok(pconf) => return Ok(pconf),
             Err(err) => {
                 return err_res!("Error deserializing config, err: {}", err);

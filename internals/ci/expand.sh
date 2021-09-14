@@ -40,7 +40,7 @@ done
 
 # binaries
 declare -A bins=(
-    [saksaha]=rsak
+    [saksaha]=sak
 )
 
 for pkg in "${!bins[@]}"; do

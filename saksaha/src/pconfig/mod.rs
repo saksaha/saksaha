@@ -1,10 +1,7 @@
-use crate::{
-    common::errors::{Error},
-    crypto,
-};
+use crate::{common::errors::Error, crypto};
 use logger::log;
 use serde::{Deserialize, Serialize};
-use std::path::{PathBuf};
+use std::path::PathBuf;
 
 pub mod fs;
 
@@ -21,22 +18,27 @@ pub struct PersistedP2PConfig {
 
 impl PConfig {
     pub fn of(config_path: Option<&str>) -> Result<PConfig, Error> {
-        if let None = config_path {
-            log!(DEBUG, "Config path is not given, creating a new config\n");
+        let config_path = match config_path {
+            Some(c) => c,
+            None => {
+                log!(
+                    DEBUG,
+                    "Config path is not given, creating a new config\n"
+                );
 
-            let default_path = PConfig::get_default_path()?;
+                let default_path = PConfig::get_default_path()?;
+                if default_path.exists() {
+                    log!(DEBUG, "Found a config at the default location\n");
 
-            if default_path.exists() {
-                log!(DEBUG, "Found a config at the default location\n");
-
-                return PConfig::load(default_path);
-            } else {
-                return PConfig::new();
+                    return PConfig::load(default_path);
+                } else {
+                    return PConfig::new();
+                }
             }
-        } else {
-            let config_path = PathBuf::from(config_path.unwrap());
-            PConfig::load(config_path)
-        }
+        };
+
+        let config_path = PathBuf::from(config_path);
+        PConfig::load(config_path)
     }
 
     fn new() -> Result<PConfig, Error> {

@@ -43,20 +43,21 @@ fn main() {
 
     let pconf = make_config(flags.value_of("config"));
 
-    let hconf = Host::new_config(
+    let hconf = match Host::new_config(
         flags.value_of("rpc_port"),
         flags.values_of("bootstrap_peers"),
         pconf.p2p.public_key,
         pconf.p2p.secret,
-    );
-
-    if let Err(ref err) = hconf {
-        log!(DEBUG, "Error loading a config, err: {}\n", err);
-        std::process::exit(1);
-    }
+    ) {
+        Ok(h) => h,
+        Err(err) => {
+            log!(DEBUG, "Error loading a config, err: {}\n", err);
+            std::process::exit(1);
+        }
+    };
 
     let node = Node::new(
-        hconf.unwrap(),
+        hconf,
     );
 
     if let Err(ref err) = node {
@@ -68,18 +69,18 @@ fn main() {
 }
 
 fn make_config(config_path: Option<&str>) -> PConfig {
-    let pconf = PConfig::of(config_path);
+    let pconf = match PConfig::of(config_path) {
+        Ok(p) => p,
+        Err(err) => {
+            log!(
+                DEBUG,
+                "Error creating a persisted configuration, err: {}\n",
+                err
+            );
+            std::process::exit(1);
+        }
+    };
 
-    if let Err(err) = pconf {
-        log!(
-            DEBUG,
-            "Error creating a persisted configuration, err: {}\n",
-            err
-        );
-        std::process::exit(1);
-    }
-
-    let pconf = pconf.unwrap();
     log!(DEBUG, "Successfully loaded config, {:?}\n", pconf);
     pconf
 }
