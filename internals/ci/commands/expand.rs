@@ -1,6 +1,11 @@
 use crate::log;
 use clap::{App, Arg, ArgMatches, SubCommand};
-use std::{process::{Command, Stdio}, str::FromStr};
+use std::{
+    io::ErrorKind,
+    path::PathBuf,
+    process::{Command, Stdio},
+    str::FromStr,
+};
 
 const NAME: &str = "expand";
 
@@ -20,9 +25,22 @@ pub fn expand_exec(matches: &ArgMatches) {
             None => vec![],
         };
 
-        let dest = std::path::PathBuf::from_str("f");
+        let dest = PathBuf::from_str(r"target/expand/debug")
+            .expect("destination path");
 
-        // fs::remove_dir_all()
+        match std::fs::remove_dir_all(dest.to_owned()) {
+            Err(err) if err.kind() == ErrorKind::NotFound => (),
+            Err(err) => panic!("Cannot remove destination, err: {}", err),
+            Ok(_) => (),
+        }
+
+        std::fs::create_dir_all(dest)
+            .expect("Destination should be re-created");
+
+        vec!("bin", "lib").iter().map(|p| {
+            // std::fs::create_dir_all(dest.to_owned().join("bin").as_path())
+            //     .expect("Destination should be re-created");
+        });
 
         // let expand = std::path::PathBuf
 
