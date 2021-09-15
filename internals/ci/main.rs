@@ -2,7 +2,9 @@ mod commands;
 mod macros;
 
 use clap::{App, Arg, SubCommand};
-use commands::COMMANDS;
+use commands::{
+    COMMANDS
+};
 
 fn main() {
     let curr_dir = match std::env::current_dir() {
