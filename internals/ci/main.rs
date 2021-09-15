@@ -41,6 +41,8 @@ fn main() {
             root with `ci` script");
     }
 
+    commands::t();
+
     let matches = App::new("CI")
         .version("0.1")
         .author("Saksaha <team@saksaha.com>")
