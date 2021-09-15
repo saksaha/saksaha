@@ -29,7 +29,13 @@ impl Worker {
 
             match job {
                 Ok(job) => {
-                    let job = job.recv().unwrap();
+                    let job = match job.recv() {
+                        Ok(j) => j,
+                        Err(err) => {
+                            log!(DEBUG, "Error receiving job, err: {}\n", err);
+                            panic!();
+                        }
+                    };
                     println!("Worker {} got a job; executing.\n", id);
                     job();
                 },
