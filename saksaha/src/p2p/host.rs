@@ -9,48 +9,37 @@ pub struct Host {
     disc: Disc,
 }
 
-pub struct Config {
-    rpc_port: usize,
-    bootstrap_peers: Vec<String>,
-}
-
 impl Host {
     pub fn new(
-        conf: Config,
-    ) -> Self {
-        let disc = Disc::new();
-
-        return Host {
-            disc,
-        };
-    }
-
-    pub fn new_config(
         rpc_port: Option<&str>,
         bootstrap_peers: Option<clap::Values>,
         public_key: String,
         secret: String,
-    ) -> Result<Config, Error> {
-        let mut c = Config {
-            rpc_port: 0,
-            bootstrap_peers: Vec::new(),
+    ) -> Result<Self, Error> {
+        let rpc_port = match rpc_port {
+            Some(p) => {
+                if let Err(err) = p.parse::<usize>() {
+                    return err_res!("Error parsing the rpc port, err: {}", err)
+                }
+                p.parse::<usize>().unwrap()
+            },
+            None => 0,
         };
 
-        if let Some(p) = rpc_port {
-            let rpc_port = p.parse::<usize>();
-            match rpc_port {
-               Ok(rpc_port) => { c.rpc_port = rpc_port },
-            //    Err(err) => err_res!("Error parsing rpc_port, err: {}", err)
-               Err(err) => { return err_res!(""); }
-            }
-        }
+        let bootstrap_peers = match bootstrap_peers {
+            Some(b) => b.map(str::to_string).collect(),
+            None => Vec::new(),
+        };
 
-        if let Some(b) = bootstrap_peers {
-            let bootstrap_peers = b.map(str::to_string).collect();
-            c.bootstrap_peers = bootstrap_peers;
-        }
+        let tpool = ThreadPool::new(30)?;
+        let disc = Disc::new(
+            tpool,
+            bootstrap_peers,
+        );
 
-        return Ok(c);
+        Ok(Host {
+            disc,
+        })
     }
 }
 

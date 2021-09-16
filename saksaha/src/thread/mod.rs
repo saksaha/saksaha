@@ -76,3 +76,19 @@ impl ThreadPool {
         self.sender.send(job).unwrap();
     }
 }
+
+#[cfg(test)]
+mod test {
+
+    #[test]
+    fn it_needs_to_handle_many_requests() {
+        let tpool =
+            super::ThreadPool::new(5).expect("Thread pool needs to be created");
+
+        for i in 0..20 {
+            tpool.execute(move || {
+                println!("33 {}", i);
+            });
+        }
+    }
+}

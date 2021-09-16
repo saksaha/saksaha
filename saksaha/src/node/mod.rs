@@ -1,23 +1,34 @@
 use crate::{
-    p2p::host::{Config as HostConfig, Host},
-    thread::ThreadPool,
     common::errors::Error,
+    err_res,
+    p2p::host::{Host},
+    thread::ThreadPool,
 };
 use logger::log;
 
 pub struct Node {
     host: Host,
-    tpool: ThreadPool,
 }
 
 impl Node {
-    pub fn new(host_config: HostConfig) -> Result<Node, Error> {
-        let host = Host::new(host_config);
-        let tpool = ThreadPool::new(30)?;
+    pub fn new(
+        rpc_port: Option<&str>,
+        bootstrap_peers: Option<clap::Values>,
+        public_key: String,
+        secret: String,
+    ) -> Result<Node, Error> {
+        // let tpool = ThreadPool::new(30)?;
+        let host =
+            match Host::new(rpc_port, bootstrap_peers, public_key, secret) {
+                Ok(h) => h,
+                Err(err) => {
+                    return err_res!("Error creating a new host, err: {}", err);
+                }
+            };
 
-        let n = Node { host, tpool };
+        let node = Node { host };
 
-        return Ok(n);
+        return Ok(node);
     }
 
     pub fn start(&self) {
