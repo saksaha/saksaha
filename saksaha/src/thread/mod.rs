@@ -32,7 +32,7 @@ impl Worker {
                         }
                     };
 
-                    println!("Worker {} got a job; executing.\n", id);
+                    println!("Worker {} got a job; executing.", id);
 
                     job(id);
                 }

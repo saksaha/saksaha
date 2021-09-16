@@ -31,7 +31,7 @@ impl Host {
             None => Vec::new(),
         };
 
-        let tpool = ThreadPool::new(30)?;
+        let tpool = ThreadPool::new(10)?;
         let disc = Disc::new(
             tpool,
             bootstrap_peers,
