@@ -10,21 +10,24 @@ if [ "$#" -lt 1 ]; then
    in internals/ci"
 fi
 
-check_rust="$curr_dir/internals/ci/_check_rust.sh"
+# Check rust
+is_rustc=$(which rustc)
+if [ $? -eq 0 ]; then
+    rustc_version=$(rustc --version)
+    printf "Found rustc at: %s, version: %s\n" "$is_rustc" "$rustc_version"
+else
+    echo "Rustc is not installed, exiting the program"
+    exit 1
+fi
 
-if ! $check_rust; then
-    printf "Error checking if rust is sane in your system\n"
+is_cargo=$(which cargo)
+if [ $? -eq 0 ]; then
+    cargo_version=$(cargo --version)
+    printf "Found cargo at: %s, version: %s\n" "$is_cargo" "$cargo_version"
+else
+    echo "Cargo is not installed, exiting the program"
     exit 1
 fi
 
 ci_cargo="$curr_dir/internals/ci/Cargo.toml"
 PROJECT_ROOT=$curr_dir cargo run --manifest-path=$ci_cargo -- "$@"
-
-# filePath="$currDir/internals/ci/$command.sh"
-
-# if [[ ! -f $filePath ]]; then
-#     printf "Error finding a command [%s] at %s\n" $command $filePath
-#     exit 1
-# fi
-
-# ROOT_PATH=$currDir $filePath "${@:2}"
