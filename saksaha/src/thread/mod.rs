@@ -1,12 +1,9 @@
+use crate::{common::errors::Error, err_res};
+use logger::log;
 use std::{
-    sync::{Arc, Mutex, mpsc},
+    sync::{mpsc, Arc, Mutex},
     thread,
 };
-use crate::{
-    common::errors::Error,
-    err_res,
-};
-use logger::log;
 
 pub struct ThreadPool {
     workers: Vec<Worker>,
@@ -25,8 +22,6 @@ impl Worker {
         let thread = thread::spawn(move || loop {
             let job = receiver.lock();
 
-            println!("{}", 444);
-
             match job {
                 Ok(job) => {
                     let job = match job.recv() {
@@ -36,9 +31,11 @@ impl Worker {
                             panic!();
                         }
                     };
+
                     println!("Worker {} got a job; executing.\n", id);
+
                     job();
-                },
+                }
                 Err(err) => {
                     log!(DEBUG, "Error getting a job, err: {}\n", err);
                     panic!("33")
@@ -64,10 +61,18 @@ impl ThreadPool {
         let mut workers = Vec::with_capacity(size);
 
         for id in 0..size {
-            println!("{}", id);
             workers.push(Worker::new(id, Arc::clone(&receiver)));
         }
 
         Ok(ThreadPool { workers, sender })
+    }
+
+    pub fn execute<F>(&self, f: F)
+    where
+        F: FnOnce() + Send + 'static,
+    {
+        let job = Box::new(f);
+
+        self.sender.send(job).unwrap();
     }
 }

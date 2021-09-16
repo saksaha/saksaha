@@ -4,4 +4,4 @@ pub mod host;
 
 pub mod dialer;
 
-pub use host::Host;
+pub mod discovery;

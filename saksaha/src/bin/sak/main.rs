@@ -3,7 +3,7 @@ use logger::log;
 use saksaha::{
     node::{Node},
     pconfig::{PConfig},
-    p2p::{Host},
+    p2p::host::{Host},
 };
 
 fn main() {

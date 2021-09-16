@@ -23,6 +23,6 @@ impl Node {
     pub fn start(&self) {
         log!(DEBUG, "Start node...\n");
 
-        self.host.start(&self.tpool);
+        self.host.start();
     }
 }

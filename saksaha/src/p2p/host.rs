@@ -1,9 +1,12 @@
+use super::discovery::{
+    Disc,
+};
 use crate::{common::errors::Error, err_res, thread::ThreadPool};
 use clap;
 use logger::log;
 
 pub struct Host {
-
+    disc: Disc,
 }
 
 pub struct Config {
@@ -15,7 +18,11 @@ impl Host {
     pub fn new(
         conf: Config,
     ) -> Self {
-        return Host {};
+        let disc = Disc::new();
+
+        return Host {
+            disc,
+        };
     }
 
     pub fn new_config(
@@ -48,6 +55,9 @@ impl Host {
 }
 
 impl Host {
-    pub fn start(&self, tpool: &ThreadPool) {
+    pub fn start(&self) {
+        log!(DEBUG, "Starting host...\n");
+
+        self.disc.start();
     }
 }
