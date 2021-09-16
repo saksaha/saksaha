@@ -1,37 +1,31 @@
 mod build;
-mod dev;
 mod clean;
+mod dev;
+mod run;
 mod expand;
+mod expand_release;
+mod test;
 
 use clap::{App, ArgMatches};
 use once_cell::sync::Lazy;
-use std::{
-    sync::Mutex,
-};
+use std::sync::Mutex;
 
-pub static COMMANDS: Lazy<Mutex<Vec<Command>>> = Lazy::new(|| {
-    let v = vec![
-        Command {
-            def: Box::new(build::build_command),
-            exec: Box::new(build::build_exec),
-        },
-        Command {
-            def: Box::new(dev::dev_command),
-            exec: Box::new(dev::dev_exec),
-        },
-        Command {
-            def: Box::new(clean::clean_command),
-            exec: Box::new(clean::clean_exec),
-        },
-        Command {
-            def: Box::new(expand::expand_command),
-            exec: Box::new(expand::expand_exec),
-        },
-    ];
-    Mutex::new(v)
-});
+pub static COMMANDS: Lazy<Mutex<Vec<Box<dyn Commandify + Send>>>> =
+    Lazy::new(|| {
+        let v: Vec<Box<dyn Commandify + Send>> = vec![
+            Box::new(build::Build {}),
+            Box::new(dev::Dev {}),
+            Box::new(run::Run {}),
+            Box::new(clean::Clean {}),
+            Box::new(expand::Expand {}),
+            Box::new(expand_release::ExpandRelease {}),
+            Box::new(test::Test {}),
+        ];
+        Mutex::new(v)
+    });
 
-pub struct Command<'a, 'b> {
-    pub def: Box<dyn Fn(App<'a, 'b>) -> App<'a, 'b> + Send>,
-    pub exec: Box<dyn Fn(&ArgMatches) -> () + Send>,
+pub trait Commandify {
+    fn def<'a, 'b>(&self, app: App<'a, 'b>) -> App<'a, 'b>;
+
+    fn exec(&self, matches: &ArgMatches);
 }

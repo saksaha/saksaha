@@ -3,11 +3,11 @@ use crate::log;
 use clap::{App, Arg, ArgMatches, SubCommand};
 use std::process::{Command, Stdio};
 
-const NAME: &str = "dev";
+const NAME: &str = "run";
 
-pub struct Dev;
+pub struct Run;
 
-impl Commandify for Dev {
+impl Commandify for Run {
     fn def<'a, 'b>(&self, app: App<'a, 'b>) -> App<'a, 'b> {
         app.subcommand(
             SubCommand::with_name(NAME)
@@ -21,9 +21,10 @@ impl Commandify for Dev {
             let program = "cargo";
             let args = match matches.values_of("args") {
                 Some(a) => a.collect(),
-                None => vec!(),
+                None => vec![],
             };
-            let args = [vec!("run", "-p", "saksaha", "--"), args].concat();
+            let args = [vec!["run", "--release", "-p", "saksaha", "--"], args]
+                .concat();
 
             log!("Executing `{} {:?}`\n", program, args);
 

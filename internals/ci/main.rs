@@ -1,7 +1,7 @@
 mod commands;
 mod macros;
 
-use clap::{App, Arg, SubCommand};
+use clap::{App};
 use commands::{
     COMMANDS
 };
@@ -55,12 +55,12 @@ fn main() {
         .expect("cli command definitions must be loaded");
 
     for e in comm.iter() {
-        app = (&e.def)(app);
+        app = e.def(app.to_owned());
     }
 
     let matches = app.get_matches();
 
     for e in comm.iter() {
-        (e.exec)(&matches);
+        e.exec(&matches);
     }
 }
