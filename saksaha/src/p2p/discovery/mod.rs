@@ -21,31 +21,60 @@ impl Disc {
 
         println!("addr: {}", addr);
 
-        for stream in listener.incoming() {
-            match stream {
-                Ok(s) => {
-                    self.tpool.execute(|| {
-                        handle_connection(s);
-                    })
-                },
-                Err(ref e) if e.kind () == std::io::ErrorKind::WouldBlock => {
-                    break;
-                    // continue;
-                },
-                Err(err) => {
-                    log!(DEBUG, "Error, err: {}", err);
-                },
+        let handle = std::thread::spawn(|| {
+
+            // everything in here runs
+            // in its own separate thread
+            for i in 0..10 {
+
+                println!("Loop 2 iteration: {}", i);
+                std::thread::sleep(std::time::Duration::from_millis(500));
             }
+        });
+
+        // main thread
+        for i in 0..5 {
+
+            println!("Loop 1 iteration: {}", i);
+            std::thread::sleep(std::time::Duration::from_millis(500));
         }
+
+        handle.join().unwrap();
+
+        // for i in 0..30 {
+        //     self.tpool.execute(move |id| {
+        //         handle_connection(i, id);
+        //     });
+        // }
+
+        // for stream in listener.incoming() {
+        //     println!("{:?}", stream);
+        // }
     }
 }
 
-fn handle_connection(mut stream: TcpStream) {
-    let mut buffer = [0; 1024];
+fn handle_connection(i: i32, id: usize) {
+    println!("handle() i: {}, id: {}", i, id);
 
-    stream.read(&mut buffer).unwrap();
+    // let mut buffer = [0; 1024];
 
-    println!("request: {}", String::from_utf8_lossy(&buffer));
+    // stream.read(&mut buffer).unwrap();
+
+    std::thread::sleep(std::time::Duration::from_secs(3));
+
+    println!("handle done() i: {}, id: {}", i, id);
+
+    // println!("request: {}", String::from_utf8_lossy(&buffer));
 }
 
-fn get_available_port() {}
+// fn handle_connection(id: usize, mut stream: TcpStream) {
+//     let mut buffer = [0; 1024];
+
+//     println!("handle(): id: {}", id);
+
+//     // stream.read(&mut buffer).unwrap();
+
+//     std::thread::sleep(std::time::Duration::from_secs(3));
+
+//     // println!("request: {}", String::from_utf8_lossy(&buffer));
+// }

@@ -15,7 +15,7 @@ struct Worker {
     thread: thread::JoinHandle<()>,
 }
 
-type Job = Box<dyn FnOnce() + Send + 'static>;
+type Job = Box<dyn FnOnce(usize) + Send + 'static>;
 
 impl Worker {
     fn new(id: usize, receiver: Arc<Mutex<mpsc::Receiver<Job>>>) -> Worker {
@@ -34,7 +34,7 @@ impl Worker {
 
                     println!("Worker {} got a job; executing.\n", id);
 
-                    job();
+                    job(id);
                 }
                 Err(err) => {
                     log!(DEBUG, "Error getting a job, err: {}\n", err);
@@ -69,9 +69,11 @@ impl ThreadPool {
 
     pub fn execute<F>(&self, f: F)
     where
-        F: FnOnce() + Send + 'static,
+        F: FnOnce(usize) + Send + 'static,
     {
         let job = Box::new(f);
+
+        println!("execute");
 
         self.sender.send(job).unwrap();
     }
@@ -79,15 +81,23 @@ impl ThreadPool {
 
 #[cfg(test)]
 mod test {
-
     #[test]
     fn it_needs_to_handle_many_requests() {
         let tpool =
             super::ThreadPool::new(5).expect("Thread pool needs to be created");
 
         for i in 0..20 {
-            tpool.execute(move || {
-                println!("33 {}", i);
+            tpool.execute(move |id| {
+                println!("33 i: {}, id: {}", i, id);
+
+                // std::thread::sleep(std::time::Duration::from_millis(3000));
+
+                let mut bb = 0;
+                for e in 0..1000000 {
+                    bb += 1;
+                }
+
+                println!("44 i:{}, id: {}", i, bb);
             });
         }
     }
