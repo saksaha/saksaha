@@ -32,6 +32,20 @@ impl Host {
         };
 
         let tpool = ThreadPool::new(10)?;
+
+        let mut t = crate::thread::Timer::new();
+
+        t.start(|| println!("11"));
+
+        std::thread::sleep(std::time::Duration::from_millis(100));
+
+        println!("33");
+
+        t.stop();
+
+        // tpool.join();
+        // let b = tpool.threads.as_ref();
+
         let disc = Disc::new(
             tpool,
             bootstrap_peers,

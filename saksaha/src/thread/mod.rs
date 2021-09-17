@@ -12,7 +12,7 @@ pub struct ThreadPool {
 
 pub struct Worker {
     id: usize,
-    thread: thread::JoinHandle<()>,
+    pub thread: thread::JoinHandle<()>,
 }
 
 type Job = Box<dyn FnOnce(usize) -> Option<bool> + Send + 'static>;
@@ -59,6 +59,7 @@ impl Worker {
 
         Worker { id, thread }
     }
+
 }
 
 impl ThreadPool {
@@ -70,7 +71,7 @@ impl ThreadPool {
 
         let (sender, receiver) = mpsc::channel();
 
-        let receiver = Arc::new(Mutex::new(receiver));
+        let receiver: Arc<Mutex<mpsc::Receiver<Job>>> = Arc::new(Mutex::new(receiver));
 
         let mut workers = Vec::with_capacity(size);
 
@@ -81,6 +82,10 @@ impl ThreadPool {
         Ok(ThreadPool { workers, sender })
     }
 
+    pub fn stop(&self) {
+
+    }
+
     pub fn execute<F>(&self, f: F)
     where
         F: FnOnce(usize) -> Option<bool> + Send + 'static,
@@ -88,6 +93,46 @@ impl ThreadPool {
         let job = Box::new(f);
 
         self.sender.send(job).unwrap();
+    }
+}
+
+use std::{sync, time};
+use std::sync::atomic::{AtomicBool, Ordering};
+
+pub struct Timer {
+    handle: Option<thread::JoinHandle<()>>,
+    alive: sync::Arc<AtomicBool>,
+}
+
+impl Timer {
+    pub fn new() -> Timer {
+        Timer {
+            handle: None,
+            alive: sync::Arc::new(AtomicBool::new(false)),
+        }
+    }
+
+    pub fn start<F>(&mut self, fun: F)
+        where F: 'static + Send + FnMut() -> ()
+    {
+        self.alive.store(true, Ordering::SeqCst);
+
+        let alive = self.alive.clone();
+
+        self.handle = Some(thread::spawn(move || {
+            let mut fun = fun;
+            while alive.load(Ordering::SeqCst) {
+                fun();
+                thread::sleep(time::Duration::from_millis(10));
+            }
+        }));
+    }
+
+    pub fn stop(&mut self) {
+        self.alive.store(false, Ordering::SeqCst);
+        self.handle
+            .take().expect("Called stop on non-running thread")
+            .join().expect("Could not join spawned thread");
     }
 }
 
@@ -104,20 +149,13 @@ mod test {
 
         let tpool = ThreadPool::new(5).unwrap();
 
-        // let b: Vec<thread::JoinHandle<()>> =
-        //     tpool.workers.into_iter().map(|v| v.thread).collect();
-
-        // b.into_iter().for_each(|h| {
-        //     h.join().unwrap();
-        // });
-
         println!("t2");
 
         for i in 0..10 {
             tpool.execute(move |id| {
                 println!("33 id: {}, v: {}", id, i);
 
-                std::thread::sleep(std::time::Duration::from_millis(1000));
+                std::thread::sleep(std::time::Duration::from_millis(500));
 
                 println!("44 id: {}, v: {}", id, i);
 
@@ -125,11 +163,16 @@ mod test {
             });
         }
 
-        let b: Vec<thread::JoinHandle<()>> =
-            tpool.workers.into_iter().map(|v| v.thread).collect();
+        // tpool.workers;
 
-        b.into_iter().for_each(|h| {
-            h.join().unwrap();
-        });
+        // let b: Vec<Box<thread::JoinHandle<()>>> = tpool
+        //     .workers
+        //     .into_iter()
+        //     .map(|v| Box::new(v.thread))
+        //     .collect();
+
+        // b.into_iter().for_each(|h| {
+        //     h.join().unwrap();
+        // });
     }
 }
