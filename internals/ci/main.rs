@@ -2,7 +2,7 @@ mod commands;
 mod macros;
 
 use clap::App;
-use commands::COMMANDS;
+use commands::{COMMANDS, Commandify};
 
 fn main() {
     let curr_dir = match std::env::current_dir() {
@@ -59,6 +59,12 @@ fn main() {
     let matches = app.get_matches();
 
     for e in comm.iter() {
-        e.exec(&matches);
+        if let Some(_) = e.exec(&matches) {
+            log!("Command has been executed, name: {}\n", e.name());
+
+            std::process::exit(0);
+        }
     }
+
+    log!("Couldn't find any command to exeucte, Check the argument\n")
 }

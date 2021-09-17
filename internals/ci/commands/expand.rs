@@ -9,26 +9,30 @@ use std::{
     str::FromStr,
 };
 
-const NAME: &str = "expand";
-
 pub struct Expand;
 
 impl Commandify for Expand {
+    fn name(&self) -> &str {
+        "expand"
+    }
+
     fn def<'a, 'b>(&self, app: App<'a, 'b>) -> App<'a, 'b> {
         app.subcommand(
-            SubCommand::with_name(NAME)
+            SubCommand::with_name(self.name())
                 .setting(clap::AppSettings::AllowLeadingHyphen)
                 .arg(Arg::with_name("args").multiple(true)),
         )
     }
 
-    fn exec(&self, matches: &ArgMatches) {
-        if let Some(_) = matches.subcommand_matches(NAME) {
+    fn exec(&self, matches: &ArgMatches) -> Option<bool> {
+        if let Some(_) = matches.subcommand_matches(self.name()) {
             let dest = PathBuf::from_str(r"target/expand/debug")
                 .expect("destination path");
 
             expand(dest);
+            return Some(true);
         }
+        None
     }
 }
 
