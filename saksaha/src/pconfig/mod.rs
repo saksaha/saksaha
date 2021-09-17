@@ -1,4 +1,4 @@
-use crate::{common::errors::Error, crypto};
+use crate::{common::SakResult, crypto};
 use logger::log;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
@@ -17,7 +17,7 @@ pub struct PersistedP2PConfig {
 }
 
 impl PConfig {
-    pub fn of(config_path: Option<&str>) -> Result<PConfig, Error> {
+    pub fn of(config_path: Option<&str>) -> SakResult<PConfig> {
         let config_path = match config_path {
             Some(c) => c,
             None => {
@@ -41,7 +41,7 @@ impl PConfig {
         PConfig::load(config_path)
     }
 
-    fn new() -> Result<PConfig, Error> {
+    fn new() -> SakResult<PConfig> {
         log!(DEBUG, "Creating a new config\n");
 
         let sk = crypto::generate_key();

@@ -1,4 +1,4 @@
-use crate::{common::errors::Error, err_res};
+use crate::{common::SakResult, err_res};
 use logger::log;
 use std::{
     sync::{mpsc, Arc, Mutex},
@@ -62,7 +62,7 @@ impl Worker {
 }
 
 impl ThreadPool {
-    pub fn new(size: usize) -> Result<ThreadPool, Error> {
+    pub fn new(size: usize) -> SakResult<ThreadPool> {
         assert!(size > 0);
         if size < 1 {
             return err_res!("Size must be greater than 0");
@@ -92,6 +92,13 @@ impl ThreadPool {
         let job = Box::new(f);
 
         self.sender.send(job).unwrap();
+    }
+
+    pub fn join(tp: ThreadPool) -> SakResult<bool> {
+        for w in tp.workers {
+            // w.thread.join();
+        }
+        Ok(true)
     }
 }
 

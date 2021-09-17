@@ -1,5 +1,8 @@
 use super::PConfig;
-use crate::common::errors::{Error, ErrorKind};
+use crate::common::{
+    SakResult,
+    ErrorKind,
+};
 use crate::{err_res, err_resk};
 use directories::ProjectDirs;
 use logger::log;
@@ -9,7 +12,7 @@ use std::path::PathBuf;
 const CONFIG_FILE_NAME: &str = "config.json";
 
 impl PConfig {
-    pub fn persist(&self) -> Result<PathBuf, Error> {
+    pub fn persist(&self) -> SakResult<PathBuf> {
         let serialized = match serde_json::to_string_pretty(&self) {
             Ok(s) => s,
             Err(err) => {
@@ -32,13 +35,13 @@ impl PConfig {
         }
     }
 
-    pub fn load(config_path: PathBuf) -> Result<PConfig, Error> {
+    pub fn load(config_path: PathBuf) -> SakResult<PConfig> {
         log!(DEBUG, "Load configuration, path: {:?}\n", config_path);
 
         return Self::load_config(config_path);
     }
 
-    fn load_config(path: PathBuf) -> Result<PConfig, Error> {
+    fn load_config(path: PathBuf) -> SakResult<PConfig> {
         if !path.exists() {
             return err_resk!(
                 ErrorKind::FileNotExist,
@@ -66,14 +69,14 @@ impl PConfig {
         }
     }
 
-    pub fn get_default_path() -> Result<PathBuf, Error> {
+    pub fn get_default_path() -> SakResult<PathBuf> {
         let app_path = create_or_get_app_path()?;
         let config_path = app_path.join(CONFIG_FILE_NAME);
         Ok(config_path)
     }
 }
 
-fn create_or_get_app_path() -> Result<PathBuf, Error> {
+fn create_or_get_app_path() -> SakResult<PathBuf> {
     if let Some(dir) = ProjectDirs::from("com", "Saksaha", "Saksaha") {
         let app_path = dir.config_dir();
         if !app_path.exists() {

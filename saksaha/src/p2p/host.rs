@@ -1,7 +1,5 @@
-use super::discovery::{
-    Disc,
-};
-use crate::{common::errors::Error, err_res, thread::ThreadPool};
+use super::discovery::Disc;
+use crate::{common::SakResult, err_res, thread::ThreadPool};
 use clap;
 use logger::log;
 
@@ -15,14 +13,14 @@ impl Host {
         bootstrap_peers: Option<clap::Values>,
         public_key: String,
         secret: String,
-    ) -> Result<Self, Error> {
+    ) -> SakResult<Self> {
         let rpc_port = match rpc_port {
             Some(p) => {
                 if let Err(err) = p.parse::<usize>() {
-                    return err_res!("Error parsing the rpc port, err: {}", err)
+                    return err_res!("Error parsing the rpc port, err: {}", err);
                 }
                 p.parse::<usize>().unwrap()
-            },
+            }
             None => 0,
         };
 
@@ -33,14 +31,9 @@ impl Host {
 
         let tpool = ThreadPool::new(10)?;
 
-        let disc = Disc::new(
-            tpool,
-            bootstrap_peers,
-        );
+        let disc = Disc::new(tpool, bootstrap_peers);
 
-        Ok(Host {
-            disc,
-        })
+        Ok(Host { disc })
     }
 }
 

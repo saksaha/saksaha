@@ -1,5 +1,5 @@
 use crate::{
-    common::errors::Error,
+    common::SakResult,
     err_res,
     p2p::host::{Host},
 };
@@ -15,7 +15,7 @@ impl Node {
         bootstrap_peers: Option<clap::Values>,
         public_key: String,
         secret: String,
-    ) -> Result<Node, Error> {
+    ) -> SakResult<Node> {
         let host =
             match Host::new(rpc_port, bootstrap_peers, public_key, secret) {
                 Ok(h) => h,

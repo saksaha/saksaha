@@ -1,6 +1,4 @@
-mod errorkind;
-
-pub use errorkind::ErrorKind;
+use super::errorkind::ErrorKind;
 use std::fmt;
 
 pub struct Error {
@@ -41,7 +39,7 @@ impl fmt::Debug for Error {
 macro_rules! err_res {
     ($str: expr) => {
         {
-            Err(Error::new($crate::common::errors::ErrorKind::Default,
+            Err($crate::common::Error::new($crate::common::ErrorKind::Default,
                 format!($str)))
         }
     };
@@ -49,7 +47,8 @@ macro_rules! err_res {
     ($str_format: expr, $($arg:tt)*) => {
         {
             let msg = format!("{}", format_args!($str_format, $($arg)*));
-            Err(Error::new($crate::common::errors::ErrorKind::Default, msg))
+            Err($crate::common::Error::new(
+                $crate::common::ErrorKind::Default, msg))
         }
     };
 }
@@ -62,6 +61,6 @@ macro_rules! err_resk {
 
     ($err_kind: expr, $str_format: expr, $($arg:tt)*) => {{
         let msg = format!("{}", format_args!($str_format, $($arg)*));
-        Err(Error::new($err_kind, msg))
+        Err($crate::common::Error::new($err_kind, msg))
     }};
 }

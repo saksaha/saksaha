@@ -1,5 +1,5 @@
 use crate::{
-    common::errors::Error,
+    common::Error,
     err_res,
 };
 pub use k256::{
