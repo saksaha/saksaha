@@ -26,6 +26,8 @@ impl Disc {
 
             self.tpool.execute(|id| {
                 handle_connection(id, stream);
+
+                None
             });
         }
     }

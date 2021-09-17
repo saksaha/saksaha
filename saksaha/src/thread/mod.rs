@@ -6,16 +6,16 @@ use std::{
 };
 
 pub struct ThreadPool {
-    workers: Vec<Worker>,
+    pub workers: Vec<Worker>,
     sender: mpsc::Sender<Job>,
 }
 
-struct Worker {
+pub struct Worker {
     id: usize,
     thread: thread::JoinHandle<()>,
 }
 
-type Job = Box<dyn FnOnce(usize) + Send + 'static>;
+type Job = Box<dyn FnOnce(usize) -> Option<bool> + Send + 'static>;
 
 impl Worker {
     fn new(id: usize, receiver: Arc<Mutex<mpsc::Receiver<Job>>>) -> Worker {
@@ -50,7 +50,11 @@ impl Worker {
 
             println!("Worker {} got a job; executing.", id);
 
-            job(id);
+            if let Some(b) = job(id) {
+                if b {
+                    return;
+                }
+            }
         });
 
         Worker { id, thread }
@@ -79,7 +83,7 @@ impl ThreadPool {
 
     pub fn execute<F>(&self, f: F)
     where
-        F: FnOnce(usize) + Send + 'static,
+        F: FnOnce(usize) -> Option<bool> + Send + 'static,
     {
         let job = Box::new(f);
 
@@ -91,29 +95,41 @@ impl ThreadPool {
 mod test {
     #[test]
     fn it_needs_to_handle_many_requests() {
-        let tpool =
-        super::ThreadPool::new(5).expect("Thread pool needs to be created");
+        use super::ThreadPool;
+        use rand::prelude::*;
+        use std::thread;
+        use std::time::Duration;
 
-        // struct S {
-        //     pub val: i32,
-        // }
+        println!("t");
 
-        // let a = S {
-        //     val: 0,
-        // };
+        let tpool = ThreadPool::new(5).unwrap();
 
-        let a = 3;
-        let a = super::Arc::new(a);
+        // let b: Vec<thread::JoinHandle<()>> =
+        //     tpool.workers.into_iter().map(|v| v.thread).collect();
 
-        for i in 0..20 {
-            let v = super::Arc::clone(&a);
+        // b.into_iter().for_each(|h| {
+        //     h.join().unwrap();
+        // });
 
+        println!("t2");
+
+        for i in 0..10 {
             tpool.execute(move |id| {
-                println!("33 id: {}, v: {}", id, v);
-                // std::thread::sleep(std::time::Duration::from_millis(3000));
+                println!("33 id: {}, v: {}", id, i);
 
-                println!("44 id: {}, v: {}", id, v);
+                std::thread::sleep(std::time::Duration::from_millis(1000));
+
+                println!("44 id: {}, v: {}", id, i);
+
+                Some(true)
             });
         }
+
+        let b: Vec<thread::JoinHandle<()>> =
+            tpool.workers.into_iter().map(|v| v.thread).collect();
+
+        b.into_iter().for_each(|h| {
+            h.join().unwrap();
+        });
     }
 }

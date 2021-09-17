@@ -47,6 +47,7 @@ impl Host {
     pub fn start(&self) {
         log!(DEBUG, "Starting host...\n");
 
-        self.disc.start();
+        // ThreadPool::t();
+        // self.disc.start();
     }
 }
