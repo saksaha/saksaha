@@ -20,12 +20,12 @@ type Job = Box<dyn FnOnce(usize) + Send + 'static>;
 impl Worker {
     fn new(id: usize, receiver: Arc<Mutex<mpsc::Receiver<Job>>>) -> Worker {
         let thread = thread::spawn(move || loop {
-            let job = match receiver.lock() {
+            let guard = match receiver.lock() {
                 Ok(j) => j,
                 Err(err) => {
                     log!(
                         DEBUG,
-                        "Error getting the mutex lock, tid: {}, err: {}\n",
+                        "Error acquiring the mutex, tid: {}, err: {}\n",
                         id,
                         err
                     );
@@ -33,7 +33,7 @@ impl Worker {
                 }
             };
 
-            let job = match job.recv() {
+            let job = match guard.recv() {
                 Ok(j) => j,
                 Err(err) => {
                     log!(
@@ -46,29 +46,11 @@ impl Worker {
                 }
             };
 
+            std::mem::drop(guard);
+
             println!("Worker {} got a job; executing.", id);
 
             job(id);
-
-            // match job {
-            //     Ok(job) => {
-            //         let job = match job.recv() {
-            //             Ok(j) => j,
-            //             Err(err) => {
-            //                 log!(DEBUG, "Error receiving job, err: {}\n", err);
-            //                 panic!();
-            //             }
-            //         };
-
-            //         println!("Worker {} got a job; executing.", id);
-
-            //         job(id);
-            //     }
-            //     Err(err) => {
-            //         log!(DEBUG, "Error getting a job, err: {}\n", err);
-            //         panic!("33")
-            //     }
-            // }
         });
 
         Worker { id, thread }
@@ -100,8 +82,6 @@ impl ThreadPool {
         F: FnOnce(usize) + Send + 'static,
     {
         let job = Box::new(f);
-
-        println!("execute");
 
         self.sender.send(job).unwrap();
     }

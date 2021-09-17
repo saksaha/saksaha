@@ -2,7 +2,6 @@ use crate::{
     common::errors::Error,
     err_res,
     p2p::host::{Host},
-    thread::ThreadPool,
 };
 use logger::log;
 
@@ -17,8 +16,6 @@ impl Node {
         public_key: String,
         secret: String,
     ) -> Result<Node, Error> {
-        // let tpool = ThreadPool::new(30)?;
-
         let host =
             match Host::new(rpc_port, bootstrap_peers, public_key, secret) {
                 Ok(h) => h,

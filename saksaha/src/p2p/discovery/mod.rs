@@ -16,7 +16,7 @@ impl Disc {
 
 impl Disc {
     pub fn start(&self) {
-        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
         let addr = listener.local_addr().unwrap();
 
         println!("addr: {}", addr);
@@ -36,32 +36,18 @@ fn handle_connection(id: usize, mut stream: TcpStream) {
 
     stream.read(&mut buffer).unwrap();
 
-    println!("handle() id: {}", id);
-
     let get = b"GET / HTTP/1.1\r\n";
     let sleep = b"GET /sleep HTTP/1.1\r\n";
 
     let () = if buffer.starts_with(get) {
-        println!("1");
+        println!("get");
         // format!("HTTP/1.1 200 OK", "hello.html");
     } else if buffer.starts_with(sleep) {
         std::thread::sleep(std::time::Duration::from_secs(5));
-        println!("2");
+        println!("sleep");
         // ("HTTP/1.1 200 OK", "hello.html")
     } else {
-        println!("3");
+        println!("not defined");
         // ("HTTP/1.1 404 NOT FOUND", "404.html")
     };
 }
-
-// fn handle_connection(id: usize, mut stream: TcpStream) {
-//     let mut buffer = [0; 1024];
-
-//     println!("handle(): id: {}", id);
-
-//     // stream.read(&mut buffer).unwrap();
-
-//     std::thread::sleep(std::time::Duration::from_secs(3));
-
-//     // println!("request: {}", String::from_utf8_lossy(&buffer));
-// }

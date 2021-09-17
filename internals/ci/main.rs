@@ -2,7 +2,7 @@ mod commands;
 mod macros;
 
 use clap::App;
-use commands::{COMMANDS, Commandify};
+use commands::{COMMANDS};
 
 fn main() {
     let curr_dir = match std::env::current_dir() {
@@ -66,5 +66,5 @@ fn main() {
         }
     }
 
-    log!("Couldn't find any command to exeucte, Check the argument\n")
+    log!("Couldn't find any command to exeucte, Check the argument\n");
 }
