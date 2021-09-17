@@ -7,7 +7,7 @@ pub struct Test;
 
 impl Commandify for Test {
     fn name(&self) -> &str {
-        "run"
+        "test"
     }
 
     fn def<'a, 'b>(&self, app: App<'a, 'b>) -> App<'a, 'b> {
@@ -25,7 +25,7 @@ impl Commandify for Test {
                 Some(a) => a.collect(),
                 None => vec![],
             };
-            let args = [vec!["test", "--", "--nocapture", "--show-output"], args]
+            let args = [vec!["test", "--", "--show-output"], args]
                 .concat();
 
             // let args = [vec!["test", "--"], args]

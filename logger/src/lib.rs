@@ -13,10 +13,6 @@ pub fn make_fd(f: &str, ln: u32) -> String {
     fd
 }
 
-pub fn aaa(fd: String, s: String) {
-    print!("{}  {}", fd, s);
-}
-
 #[macro_export]
 macro_rules! log {
     (DEBUG, $str_format: expr) => {
@@ -40,4 +36,9 @@ macro_rules! log {
             print!("{}  {}", fd, format_args!($str_format, $($arg)*));
         }
     };
+}
+
+#[test]
+fn test_logger() {
+    assert_eq!(1, 1);
 }

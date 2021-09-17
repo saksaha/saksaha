@@ -92,20 +92,27 @@ mod test {
     #[test]
     fn it_needs_to_handle_many_requests() {
         let tpool =
-            super::ThreadPool::new(5).expect("Thread pool needs to be created");
+        super::ThreadPool::new(5).expect("Thread pool needs to be created");
+
+        // struct S {
+        //     pub val: i32,
+        // }
+
+        // let a = S {
+        //     val: 0,
+        // };
+
+        let a = 3;
+        let a = super::Arc::new(a);
 
         for i in 0..20 {
-            tpool.execute(move |id| {
-                println!("33 i: {}, id: {}", i, id);
+            let v = super::Arc::clone(&a);
 
+            tpool.execute(move |id| {
+                println!("33 id: {}, v: {}", id, v);
                 // std::thread::sleep(std::time::Duration::from_millis(3000));
 
-                let mut bb = 0;
-                for e in 0..1000000 {
-                    bb += 1;
-                }
-
-                println!("44 i:{}, id: {}", i, bb);
+                println!("44 id: {}, v: {}", id, v);
             });
         }
     }
