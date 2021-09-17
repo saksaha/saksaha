@@ -5,7 +5,7 @@ use std::net::TcpListener;
 use std::net::TcpStream;
 
 pub struct Disc {
-    tpool: ThreadPool,
+    pub tpool: ThreadPool,
 }
 
 impl Disc {
