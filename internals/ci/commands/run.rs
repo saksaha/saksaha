@@ -34,6 +34,11 @@ impl Commandify for Run {
                 .stderr(Stdio::inherit())
                 .output()
                 .expect("failed to run");
+
+            // return Some(true);
+            // None
         }
+
+        // None
     }
 }

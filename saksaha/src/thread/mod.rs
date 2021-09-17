@@ -20,27 +20,55 @@ type Job = Box<dyn FnOnce(usize) + Send + 'static>;
 impl Worker {
     fn new(id: usize, receiver: Arc<Mutex<mpsc::Receiver<Job>>>) -> Worker {
         let thread = thread::spawn(move || loop {
-            let job = receiver.lock();
-
-            match job {
-                Ok(job) => {
-                    let job = match job.recv() {
-                        Ok(j) => j,
-                        Err(err) => {
-                            log!(DEBUG, "Error receiving job, err: {}\n", err);
-                            panic!();
-                        }
-                    };
-
-                    println!("Worker {} got a job; executing.", id);
-
-                    job(id);
-                }
+            let job = match receiver.lock() {
+                Ok(j) => j,
                 Err(err) => {
-                    log!(DEBUG, "Error getting a job, err: {}\n", err);
-                    panic!("33")
+                    log!(
+                        DEBUG,
+                        "Error getting the mutex lock, tid: {}, err: {}\n",
+                        id,
+                        err
+                    );
+                    continue;
                 }
-            }
+            };
+
+            let job = match job.recv() {
+                Ok(j) => j,
+                Err(err) => {
+                    log!(
+                        DEBUG,
+                        "Error receiving the job, tid: {}, err: {}\n",
+                        id,
+                        err
+                    );
+                    continue;
+                }
+            };
+
+            println!("Worker {} got a job; executing.", id);
+
+            job(id);
+
+            // match job {
+            //     Ok(job) => {
+            //         let job = match job.recv() {
+            //             Ok(j) => j,
+            //             Err(err) => {
+            //                 log!(DEBUG, "Error receiving job, err: {}\n", err);
+            //                 panic!();
+            //             }
+            //         };
+
+            //         println!("Worker {} got a job; executing.", id);
+
+            //         job(id);
+            //     }
+            //     Err(err) => {
+            //         log!(DEBUG, "Error getting a job, err: {}\n", err);
+            //         panic!("33")
+            //     }
+            // }
         });
 
         Worker { id, thread }

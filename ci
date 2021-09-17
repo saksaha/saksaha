@@ -4,12 +4,6 @@ set -e
 
 curr_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
-if [ "$#" -lt 1 ]; then
-    printf "%s 3\n" \
-  "You have to specify a command which corresponds to the filename \
-   in internals/ci"
-fi
-
 # Check rust
 is_rustc=$(which rustc)
 if [ $? -eq 0 ]; then
