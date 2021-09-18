@@ -75,6 +75,8 @@ impl ThreadPool {
 
         let mut workers = Vec::with_capacity(size);
 
+        println!("workers count: {}", size);
+
         for id in 0..size {
             workers.push(Worker::new(id, Arc::clone(&receiver)));
         }
@@ -111,17 +113,17 @@ mod test {
         use std::thread;
         use std::time::Duration;
 
-        println!("t");
+        println!("Start");
 
         let tpool = ThreadPool::new(5).unwrap();
 
-        println!("t2");
-
         for i in 0..10 {
+            println!("for, {}", i);
+
             tpool.execute(move |id| {
                 println!("33 id: {}, v: {}", id, i);
 
-                std::thread::sleep(std::time::Duration::from_millis(500));
+                std::thread::sleep(std::time::Duration::from_millis(2000));
 
                 println!("44 id: {}, v: {}", id, i);
 
@@ -129,14 +131,16 @@ mod test {
             });
         }
 
-        let b: Vec<Box<thread::JoinHandle<()>>> = tpool
+        let handles: Vec<Box<thread::JoinHandle<()>>> = tpool
             .workers
             .into_iter()
             .map(|v| Box::new(v.thread))
             .collect();
 
-        b.into_iter().for_each(|h| {
+        for h in handles {
             h.join().unwrap();
-        });
+        }
+
+        std::thread::sleep(std::time::Duration::from_millis(20000));
     }
 }

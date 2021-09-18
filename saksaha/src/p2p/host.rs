@@ -1,5 +1,5 @@
 use super::discovery::Disc;
-use crate::{common::SakResult, err_res, thread::ThreadPool};
+use crate::{common::SakResult, err_res, sync::ThreadPool};
 use clap;
 use logger::log;
 
@@ -29,7 +29,7 @@ impl Host {
             None => Vec::new(),
         };
 
-        let tpool = ThreadPool::new(10)?;
+        let tpool = ThreadPool::new(2)?;
 
         let disc = Disc::new(tpool, bootstrap_peers);
 

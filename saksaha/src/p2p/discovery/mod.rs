@@ -1,4 +1,4 @@
-use crate::thread::ThreadPool;
+use crate::sync::ThreadPool;
 use logger::log;
 use std::io::prelude::*;
 use std::net::TcpListener;
@@ -41,15 +41,24 @@ fn handle_connection(id: usize, mut stream: TcpStream) {
     let get = b"GET / HTTP/1.1\r\n";
     let sleep = b"GET /sleep HTTP/1.1\r\n";
 
-    let () = if buffer.starts_with(get) {
+    let (a, b) = if buffer.starts_with(get) {
         println!("get");
-        // format!("HTTP/1.1 200 OK", "hello.html");
+        ("HTTP/1.1 200 OK", "hello.html")
     } else if buffer.starts_with(sleep) {
-        std::thread::sleep(std::time::Duration::from_secs(5));
         println!("sleep");
-        // ("HTTP/1.1 200 OK", "hello.html")
+        std::thread::sleep(std::time::Duration::from_secs(20));
+        ("HTTP/1.1 200 OK", "hello.html")
     } else {
         println!("not defined");
-        // ("HTTP/1.1 404 NOT FOUND", "404.html")
+        ("HTTP/1.1 404 NOT FOUND", "404.html")
     };
+
+    let contents = "response\n";
+    let response = format!(
+        "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}",
+        contents.len(),
+        contents
+    );
+    stream.write(response.as_bytes()).unwrap();
+    stream.flush().unwrap();
 }
