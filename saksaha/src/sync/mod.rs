@@ -81,6 +81,10 @@ impl ThreadPool {
             workers.push(Worker::new(id, Arc::clone(&receiver)));
         }
 
+        let a = async {
+
+        };
+
         Ok(ThreadPool {
             workers: workers,
             sender,
