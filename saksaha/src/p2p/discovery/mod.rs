@@ -8,33 +8,23 @@ use crate::{common::SakResult, err_res, sync::ThreadPool};
 
 
 pub struct Disc {
+    disc_port: usize,
     // pub tpool: ThreadPool,
 }
 
 impl Disc {
-    pub fn new(bootstrap_peers: Vec<String>) -> Self {
-        Disc { }
+    pub fn new(disc_port: usize, bootstrap_peers: Vec<String>) -> Self {
+        Disc { disc_port }
     }
 }
 
 impl Disc {
     pub async fn start(&self) -> SakResult<TcpListener> {
-        // let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
-        // let addr = listener.local_addr().unwrap();
+        let local_addr = format!("127.0.0.1:{}", self.disc_port);
 
-        // println!("addr: {}", addr);
+        log!(DEBUG, "Start discovery, addr: {}\n", local_addr);
 
-        // for stream in listener.incoming() {
-        //     let stream = stream.unwrap();
-
-        //     self.tpool.execute(|id| {
-        //         handle_connection(id, stream);
-
-        //         None
-        //     });
-        // }
-
-        let listener = match TcpListener::bind("127.0.0.1:8080").await {
+        let listener = match TcpListener::bind(local_addr).await {
             Ok(l) => (l),
             Err(_) => {
                 return err_res!("Error start listeneing");

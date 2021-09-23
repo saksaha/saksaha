@@ -1,15 +1,17 @@
-use super::discovery::Disc;
-use crate::{common::SakResult, err_res, sync::ThreadPool};
+use super::{discovery::Disc, listener::Listener};
+use crate::{common::SakResult, err_res};
 use clap;
 use logger::log;
 
 pub struct Host {
     disc: Disc,
+    listener: Listener,
 }
 
 impl Host {
     pub fn new(
         rpc_port: Option<&str>,
+        disc_port: Option<&str>,
         bootstrap_peers: Option<clap::Values>,
         public_key: String,
         secret: String,
@@ -17,7 +19,23 @@ impl Host {
         let rpc_port = match rpc_port {
             Some(p) => {
                 if let Err(err) = p.parse::<usize>() {
-                    return err_res!("Error parsing the rpc port, err: {}", err);
+                    return err_res!(
+                        "Error parsing the rpc port, err: {}",
+                        err
+                    );
+                }
+                p.parse::<usize>().unwrap()
+            }
+            None => 0,
+        };
+
+        let disc_port = match disc_port {
+            Some(p) => {
+                if let Err(err) = p.parse::<usize>() {
+                    return err_res!(
+                        "ERror parsing the rpc port, err: {}",
+                        err
+                    );
                 }
                 p.parse::<usize>().unwrap()
             }
@@ -29,18 +47,42 @@ impl Host {
             None => Vec::new(),
         };
 
-        // let tpool = ThreadPool::new(2)?;
+        let disc = Disc::new(disc_port, bootstrap_peers);
 
-        let disc = Disc::new(bootstrap_peers);
+        let listener = match Listener::new() {
+            Ok(l) => l,
+            Err(err) => {
+                return err_res!("Error initializing listener, err: {}", err);
+            }
+        };
 
-        Ok(Host { disc })
+        let host = Host { disc, listener };
+
+        Ok(host)
     }
 }
 
 impl Host {
-    pub async fn start(&self) {
+    pub async fn start(&self) -> SakResult<bool> {
         log!(DEBUG, "Starting host...\n");
 
-        let _ = self.disc.start().await;
+        let (disc, listener) =
+            tokio::join!(self.disc.start(), self.listener.start());
+
+        let _ = match disc {
+            Ok(d) => d,
+            Err(err) => {
+                return err_res!("Error starting discovery, err: {}", err);
+            },
+        };
+
+        let _ = match listener {
+            Ok(l) => l,
+            Err(err) => {
+                return err_res!("Error starting listener, err: {}", err);
+            }
+        };
+
+        return Ok(true);
     }
 }

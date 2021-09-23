@@ -37,6 +37,7 @@ fn main() {
 
     let node = match Node::new(
         flags.value_of("rpc_port"),
+        flags.value_of("disc_port"),
         flags.values_of("bootstrap_peers"),
         pconf.p2p.public_key,
         pconf.p2p.secret,

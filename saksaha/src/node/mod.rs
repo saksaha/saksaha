@@ -9,34 +9,47 @@ pub struct Node {
 impl Node {
     pub fn new(
         rpc_port: Option<&str>,
+        disc_port: Option<&str>,
         bootstrap_peers: Option<clap::Values>,
         public_key: String,
         secret: String,
     ) -> SakResult<Node> {
-        let host =
-            match Host::new(rpc_port, bootstrap_peers, public_key, secret) {
-                Ok(h) => h,
-                Err(err) => {
-                    return err_res!("Error creating a new host, err: {}", err);
-                }
-            };
+        let host = match Host::new(
+            rpc_port,
+            disc_port,
+            bootstrap_peers,
+            public_key,
+            secret,
+        ) {
+            Ok(h) => h,
+            Err(err) => {
+                return err_res!("Error creating a new host, err: {}", err);
+            }
+        };
 
         let node = Node { host };
 
         return Ok(node);
     }
 
-    pub fn start(&self) -> SakResult<()> {
-        log!(DEBUG, "Start node...\n");
+    pub fn start(&self) -> SakResult<bool> {
+        log!(DEBUG, "Starting node...\n");
 
-        return match tokio::runtime::Builder::new_multi_thread()
+        let runtime = match tokio::runtime::Builder::new_multi_thread()
             .enable_all()
             .build()
         {
             Ok(r) => r.block_on(async {
-                // println!("232323");
-                self.host.start().await;
-                return Ok(());
+                match self.host.start().await {
+                    Ok(_) => (),
+                    Err(err) => {
+                        return err_res!("Error starting host, err: {}", err);
+                    }
+                }
+
+                log!(DEBUG, "Successfully started node");
+
+                Ok(true)
             }),
             Err(err) => {
                 return err_res!(
@@ -45,5 +58,7 @@ impl Node {
                 );
             }
         };
+
+        runtime
     }
 }
