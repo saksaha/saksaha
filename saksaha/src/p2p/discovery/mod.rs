@@ -1,15 +1,12 @@
+mod listen;
+mod dial;
+
 use tokio::net::TcpListener;
 use logger::log;
-// use crate::sync::ThreadPool;
-// use std::io::prelude::*;
-// use std::net::TcpListener;
-// use std::net::TcpStream;
 use crate::{common::SakResult, err_res, sync::ThreadPool};
-
 
 pub struct Disc {
     disc_port: usize,
-    // pub tpool: ThreadPool,
 }
 
 impl Disc {
@@ -20,40 +17,7 @@ impl Disc {
 
 impl Disc {
     pub async fn start(&self) -> SakResult<TcpListener> {
-        let local_addr = format!("127.0.0.1:{}", self.disc_port);
-
-        log!(DEBUG, "Start discovery, addr: {}\n", local_addr);
-
-        let listener = match TcpListener::bind(local_addr).await {
-            Ok(l) => (l),
-            Err(_) => {
-                return err_res!("Error start listeneing");
-            },
-        };
-
-        loop {
-            let (mut stream, addr) = match listener.accept().await {
-                Ok(res) => res,
-                Err(err) => {
-                    return err_res!("Error accepting a request, err: {}", err);
-                }
-            };
-
-            tokio::spawn(async move {
-                let mut buf = [0; 1024];
-
-                loop {
-                    // let n = match
-                }
-            });
-        }
-
-        //     Ok(l) => l,
-        //     Err(err) => {
-        //         return err_res!("Error start listening");
-        //     }
-        // };
-        return Ok(listener);
+        return self.start_listening().await;
     }
 }
 

@@ -29,7 +29,13 @@ fn main() {
             Arg::new("rpc_port")
                 .long("rpc-port")
                 .value_name("PORT")
-                .about("RPC port number"),
+                .about("RPC port"),
+        )
+        .arg(
+            Arg::new("disc_port")
+                .long("disc-port")
+                .value_name("PORT")
+                .about("Discovery port"),
         )
         .get_matches();
 
