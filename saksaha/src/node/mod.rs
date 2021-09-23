@@ -1,9 +1,6 @@
-use crate::{
-    common::SakResult,
-    err_res,
-    p2p::host::{Host},
-};
+use crate::{common::SakResult, err_res, p2p::host::Host};
 use logger::log;
+use tokio;
 
 pub struct Node {
     host: Host,
@@ -29,9 +26,24 @@ impl Node {
         return Ok(node);
     }
 
-    pub fn start(&self) {
+    pub fn start(&self) -> SakResult<()> {
         log!(DEBUG, "Start node...\n");
 
-        self.host.start();
+        return match tokio::runtime::Builder::new_multi_thread()
+            .enable_all()
+            .build()
+        {
+            Ok(r) => r.block_on(async {
+                // println!("232323");
+                self.host.start().await;
+                return Ok(());
+            }),
+            Err(err) => {
+                return err_res!(
+                    "Cannot start the async runtime, err: {}",
+                    err
+                );
+            }
+        };
     }
 }

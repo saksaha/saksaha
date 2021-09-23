@@ -29,18 +29,18 @@ impl Host {
             None => Vec::new(),
         };
 
-        let tpool = ThreadPool::new(2)?;
+        // let tpool = ThreadPool::new(2)?;
 
-        let disc = Disc::new(tpool, bootstrap_peers);
+        let disc = Disc::new(bootstrap_peers);
 
         Ok(Host { disc })
     }
 }
 
 impl Host {
-    pub fn start(&self) {
+    pub async fn start(&self) {
         log!(DEBUG, "Starting host...\n");
 
-        self.disc.start();
+        let _ = self.disc.start().await;
     }
 }

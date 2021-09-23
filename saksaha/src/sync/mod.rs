@@ -81,9 +81,9 @@ impl ThreadPool {
             workers.push(Worker::new(id, Arc::clone(&receiver)));
         }
 
-        let a = async {
+        // let a = async {
 
-        };
+        // };
 
         Ok(ThreadPool {
             workers: workers,
@@ -92,8 +92,7 @@ impl ThreadPool {
     }
 
     pub fn execute<F>(&self, f: F)
-    where
-        F: FnOnce(usize) -> Option<bool> + Send + 'static,
+    where F: FnOnce(usize) -> Option<bool> + Send + 'static,
     {
         let job = Box::new(f);
 
