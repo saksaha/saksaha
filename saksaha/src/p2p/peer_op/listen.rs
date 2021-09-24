@@ -2,16 +2,16 @@ use logger::log;
 use crate::{common::SakResult, err_res};
 use tokio::net::TcpListener;
 
-pub struct Listener;
+pub struct Listen;
 
-impl Listener {
-    pub fn new() -> SakResult<Self> {
-        let l = Listener {};
+impl Listen {
+    pub fn new() -> SakResult<Listen> {
+        let l = Listen {};
         Ok(l)
     }
 }
 
-impl Listener {
+impl Listen {
     pub async fn start(&self) -> SakResult<bool> {
         let local_addr = format!("127.0.0.1:0");
 

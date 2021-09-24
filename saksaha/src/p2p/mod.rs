@@ -1,7 +1,5 @@
-pub mod listener;
-
 pub mod host;
 
-pub mod dialer;
+pub mod peer_op;
 
 pub mod discovery;

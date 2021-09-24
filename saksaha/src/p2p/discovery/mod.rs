@@ -3,7 +3,7 @@ mod dial;
 
 use tokio::net::TcpListener;
 use logger::log;
-use crate::{common::SakResult, err_res, sync::ThreadPool};
+use crate::{common::SakResult, err_res};
 
 pub struct Disc {
     disc_port: usize,
