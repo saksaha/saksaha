@@ -7,7 +7,7 @@ impl Disc {
     pub async fn start_listening(&self) -> SakResult<TcpListener> {
         let local_addr = format!("127.0.0.1:{}", self.disc_port);
 
-        log!(DEBUG, "Start discovery, addr: {}\n", local_addr);
+        log!(DEBUG, "Start disc listening, addr: {}\n", local_addr);
 
         let listener = match TcpListener::bind(local_addr).await {
             Ok(l) => (l),

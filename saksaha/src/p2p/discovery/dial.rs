@@ -1,14 +1,9 @@
 use logger::log;
 use crate::{common::SakResult, err_res};
+use super::Disc;
 
-pub struct Dial {
+impl Disc {
+    pub async fn start_dial(&self) {
 
-}
-
-impl Dial {
-
-}
-
-impl Dial {
-
+    }
 }
