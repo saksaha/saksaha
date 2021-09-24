@@ -1,6 +1,6 @@
 use crate::{common::SakResult, err_res, p2p::host::Host};
 use logger::log;
-use tokio;
+use tokio::{self, signal::ctrl_c, time};
 
 pub struct Node {
     host: Host,
@@ -35,9 +35,10 @@ impl Node {
     pub fn start(self) -> SakResult<bool> {
         log!(DEBUG, "Start node...\n");
 
+
         let runtime = match tokio::runtime::Builder::new_multi_thread()
-            .enable_all()
-            .build()
+        .enable_all()
+        .build()
         {
             Ok(r) => r.block_on(async {
                 match self.host.start().await {
@@ -47,14 +48,16 @@ impl Node {
                     }
                 }
 
-                let (send, mut receive) =
-                    tokio::sync::mpsc::channel::<usize>(1);
+                if let Ok(_) = ctrl_c().await {
+                    println!("344");
 
-                println!("455");
 
-                while let Some(v) = receive.recv().await {
-                    println!("333");
+                    for i in 0..100000 {
+                        println!("{}", i);
+                    }
                 }
+
+                time::sleep(std::time::Duration::from_millis(2000)).await;
 
                 println!("444");
 

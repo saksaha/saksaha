@@ -66,11 +66,8 @@ impl Host {
     pub async fn start(self) -> SakResult<bool> {
         log!(DEBUG, "Start host...\n");
 
-        let (disc, peer_op) =
-            tokio::join!(self.disc.start(), self.peer_op.start());
+        tokio::join!(self.disc.start(), self.peer_op.start());
 
-        let a = peer_op.await;
-
-        return Ok(true);
+        Ok(true)
     }
 }

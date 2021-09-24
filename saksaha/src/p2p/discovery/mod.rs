@@ -17,14 +17,14 @@ impl Disc {
 }
 
 impl Disc {
-    pub async fn start(self) -> JoinHandle<(SakResult<bool>, SakResult<bool>)> {
-        let handle = tokio::spawn(async move {
+    pub async fn start(self) -> SakResult<bool> {
+        tokio::spawn(async move {
             tokio::join!(
                 self.start_dialing(),
                 self.start_listening(),
             )
         });
 
-        handle
+        Ok(true)
     }
 }
