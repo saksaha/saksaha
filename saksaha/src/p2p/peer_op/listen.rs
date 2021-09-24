@@ -1,21 +1,13 @@
 use logger::log;
 use crate::{common::SakResult, err_res};
 use tokio::net::TcpListener;
+use super::PeerOp;
 
-pub struct Listen;
-
-impl Listen {
-    pub fn new() -> SakResult<Listen> {
-        let l = Listen {};
-        Ok(l)
-    }
-}
-
-impl Listen {
-    pub async fn start(&self) -> SakResult<bool> {
+impl PeerOp {
+    pub async fn start_listening(&self) -> SakResult<bool> {
         let local_addr = format!("127.0.0.1:0");
 
-        log!(DEBUG, "Start p2p listener, addr: {}\n", local_addr);
+        log!(DEBUG, "Start p2p listening, addr: {}\n", local_addr);
 
         let listener = match TcpListener::bind(local_addr).await {
             Ok(l) => (l),

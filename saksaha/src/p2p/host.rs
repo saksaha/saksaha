@@ -63,7 +63,7 @@ impl Host {
 }
 
 impl Host {
-    pub async fn start(self: &Self) -> SakResult<bool> {
+    pub async fn start(self) -> SakResult<bool> {
         log!(DEBUG, "Starting host...\n");
 
         let (disc, peer_op) =

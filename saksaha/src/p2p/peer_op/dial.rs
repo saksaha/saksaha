@@ -1,18 +1,11 @@
 use logger::log;
 use crate::{common::SakResult, err_res};
+use super::PeerOp;
 
-pub struct Dial;
+impl PeerOp {
+    pub async fn start_dialing(&self) -> SakResult<bool> {
+        log!(DEBUG, "start p2p dialing\n");
 
-impl Dial {
-    pub fn new() -> SakResult<Dial> {
-        let dial = Dial {};
-
-        Ok(dial)
-    }
-}
-
-impl Dial {
-    pub fn start(&self) -> SakResult<bool> {
         Ok(true)
     }
 }
