@@ -1,4 +1,4 @@
-use crate::{common::SakResult, err_res, p2p::host::Host};
+use crate::{common::SakResult, err_res, p2p::host::Host, sync::Sync};
 use logger::log;
 use tokio::{self, signal::ctrl_c, time};
 
@@ -35,13 +35,16 @@ impl Node {
     pub fn start(self) -> SakResult<bool> {
         log!(DEBUG, "Start node...\n");
 
-
         let runtime = match tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()
         {
             Ok(r) => r.block_on(async {
-                match self.host.start().await {
+                let sync = Sync::new();
+
+                let host = self.host.start(sync).await;
+
+                match host {
                     Ok(_) => (),
                     Err(err) => {
                         return err_res!("Error starting host, err: {}", err);
@@ -51,13 +54,12 @@ impl Node {
                 if let Ok(_) = ctrl_c().await {
                     println!("344");
 
-
-                    for i in 0..100000 {
-                        println!("{}", i);
-                    }
+                    // for i in 0..100000 {
+                    //     println!("{}", i);
+                    // }
                 }
 
-                time::sleep(std::time::Duration::from_millis(2000)).await;
+                // time::sleep(std::time::Duration::from_millis(2000)).await;
 
                 println!("444");
 

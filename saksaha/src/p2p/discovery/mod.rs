@@ -19,10 +19,15 @@ impl Disc {
 impl Disc {
     pub async fn start(self) -> SakResult<bool> {
         tokio::spawn(async move {
-            tokio::join!(
+            match tokio::try_join!(
                 self.start_dialing(),
                 self.start_listening(),
-            )
+            ) {
+                Ok(a) => (),
+                Err(err) => {
+
+                },
+            };
         });
 
         Ok(true)

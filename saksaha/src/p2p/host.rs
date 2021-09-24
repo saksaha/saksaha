@@ -1,5 +1,5 @@
 use super::{discovery::Disc, peer_op::PeerOp};
-use crate::{common::SakResult, err_res};
+use crate::{common::SakResult, err_res, sync::Sync};
 use clap;
 use logger::log;
 
@@ -63,10 +63,14 @@ impl Host {
 }
 
 impl Host {
-    pub async fn start(self) -> SakResult<bool> {
+    pub async fn start(self, sync: Sync) -> SakResult<bool> {
         log!(DEBUG, "Start host...\n");
 
-        tokio::join!(self.disc.start(), self.peer_op.start());
+        sync.spawn(async move {
+            self.disc.start().await;
+        });
+        // tokio::join!(self.disc.start(), self.peer_op.start());
+
 
         Ok(true)
     }
