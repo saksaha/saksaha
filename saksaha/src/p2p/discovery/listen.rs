@@ -4,7 +4,7 @@ use crate::{common::SakResult, err_res,};
 use super::Disc;
 
 impl Disc {
-    pub async fn start_listening(&self) -> SakResult<TcpListener> {
+    pub async fn start_listening(&self) -> SakResult<bool> {
         let local_addr = format!("127.0.0.1:{}", self.disc_port);
 
         log!(DEBUG, "Start disc listening, addr: {}\n", local_addr);

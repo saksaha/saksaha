@@ -4,7 +4,7 @@ mod listen;
 use crate::{common::SakResult, err_res};
 use logger::log;
 use std::future::Future;
-use tokio::{net::TcpListener, signal::ctrl_c};
+use tokio::{net::TcpListener, signal::ctrl_c, task::JoinHandle};
 
 pub struct Disc {
     disc_port: usize,
@@ -17,47 +17,14 @@ impl Disc {
 }
 
 impl Disc {
-    pub async fn start(self) -> SakResult<bool> {
-        tokio::spawn(async move {
-            tokio::join!(self.start_dialing(), self.start_listening());
-            // let dial = self.start_dial();
-            // let listen = self.start_listen();
-
-            // tokio::join!(dial, listen);
+    pub async fn start(self) -> JoinHandle<(SakResult<bool>, SakResult<bool>)> {
+        let handle = tokio::spawn(async move {
+            tokio::join!(
+                self.start_dialing(),
+                self.start_listening(),
+            )
         });
-        //     Ok(true)
-        // }
-        Ok(true)
-        // return self.start_listening().await;
+
+        handle
     }
 }
-
-// fn handle_connection(id: usize, mut stream: TcpStream) {
-//     let mut buffer = [0; 1024];
-
-//     stream.read(&mut buffer).unwrap();
-
-//     let get = b"GET / HTTP/1.1\r\n";
-//     let sleep = b"GET /sleep HTTP/1.1\r\n";
-
-//     let (a, b) = if buffer.starts_with(get) {
-//         println!("get");
-//         ("HTTP/1.1 200 OK", "hello.html")
-//     } else if buffer.starts_with(sleep) {
-//         println!("sleep");
-//         std::thread::sleep(std::time::Duration::from_secs(20));
-//         ("HTTP/1.1 200 OK", "hello.html")
-//     } else {
-//         println!("not defined");
-//         ("HTTP/1.1 404 NOT FOUND", "404.html")
-//     };
-
-//     let contents = "response\n";
-//     let response = format!(
-//         "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}",
-//         contents.len(),
-//         contents
-//     );
-//     stream.write(response.as_bytes()).unwrap();
-//     stream.flush().unwrap();
-// }

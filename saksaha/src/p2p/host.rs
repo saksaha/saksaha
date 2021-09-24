@@ -64,24 +64,12 @@ impl Host {
 
 impl Host {
     pub async fn start(self) -> SakResult<bool> {
-        log!(DEBUG, "Starting host...\n");
+        log!(DEBUG, "Start host...\n");
 
         let (disc, peer_op) =
             tokio::join!(self.disc.start(), self.peer_op.start());
 
-        let _ = match disc {
-            Ok(d) => d,
-            Err(err) => {
-                return err_res!("Error starting discovery, err: {}", err);
-            },
-        };
-
-        let _ = match peer_op {
-            Ok(l) => l,
-            Err(err) => {
-                return err_res!("Error starting listener, err: {}", err);
-            }
-        };
+        let a = peer_op.await;
 
         return Ok(true);
     }

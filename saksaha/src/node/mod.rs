@@ -33,7 +33,7 @@ impl Node {
     }
 
     pub fn start(self) -> SakResult<bool> {
-        log!(DEBUG, "Starting node...\n");
+        log!(DEBUG, "Start node...\n");
 
         let runtime = match tokio::runtime::Builder::new_multi_thread()
             .enable_all()
