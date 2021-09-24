@@ -1,6 +1,6 @@
 use logger::log;
 use tokio::net::TcpListener;
-use crate::{common::SakResult, err_res, sync::ThreadPool};
+use crate::{common::SakResult, err_res,};
 use super::Disc;
 
 impl Disc {

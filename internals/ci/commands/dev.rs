@@ -29,6 +29,8 @@ impl Commandify for Dev {
 
             log!("Executing `{} {:?}`\n", program, args);
 
+            std::env::set_var("RUST_BACKTRACE", "1");
+
             Command::new(program)
                 .args(args)
                 .stdout(Stdio::inherit())

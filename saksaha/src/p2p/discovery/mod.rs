@@ -4,7 +4,7 @@ mod listen;
 use crate::{common::SakResult, err_res};
 use logger::log;
 use std::future::Future;
-use tokio::net::TcpListener;
+use tokio::{net::TcpListener, signal::ctrl_c};
 
 pub struct Disc {
     disc_port: usize,
@@ -17,17 +17,14 @@ impl Disc {
 }
 
 impl Disc {
-    pub async fn start<'a>(&'a self) -> SakResult<bool> {
-        let _ = self.start_listening().await;
-        // async move {
+    pub async fn start(self) -> SakResult<bool> {
+        tokio::spawn(async move {
+            tokio::join!(self.start_dialing(), self.start_listening());
+            // let dial = self.start_dial();
+            // let listen = self.start_listen();
 
-        //     // tokio::spawn(async move {
-        //     //     let b = self.start_dial();
-        //     //     // let dial = self.start_dial();
-        //     //     // let listen = self.start_listen();
-
-        //     //     // tokio::join!(dial, listen);
-        //     // });
+            // tokio::join!(dial, listen);
+        });
         //     Ok(true)
         // }
         Ok(true)

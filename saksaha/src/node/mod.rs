@@ -47,7 +47,16 @@ impl Node {
                     }
                 }
 
-                log!(DEBUG, "Successfully started node");
+                let (send, mut receive) =
+                    tokio::sync::mpsc::channel::<usize>(1);
+
+                println!("455");
+
+                while let Some(v) = receive.recv().await {
+                    println!("333");
+                }
+
+                println!("444");
 
                 Ok(true)
             }),
