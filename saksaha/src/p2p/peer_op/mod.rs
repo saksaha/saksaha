@@ -1,14 +1,10 @@
 mod dial;
 mod listen;
 
-use tokio::task::JoinHandle;
-
 use crate::{common::SakResult, err_res};
 
-pub struct PeerOp {
-    // pub listen: listen::Listen,
-// pub dial: dial::Dial,
-}
+#[derive(Clone, Copy)]
+pub struct PeerOp {}
 
 impl PeerOp {
     pub fn new() -> SakResult<PeerOp> {
@@ -19,11 +15,15 @@ impl PeerOp {
 }
 
 impl PeerOp {
-    pub async fn start(self) -> JoinHandle<(SakResult<bool>, SakResult<bool>)> {
-        let handle = tokio::spawn(async move {
-            tokio::join!(self.start_dialing(), self.start_listening())
+    pub async fn start(self) -> SakResult<bool> {
+        tokio::spawn(async move {
+            self.start_dialing().await;
         });
 
-        handle
+        tokio::spawn(async move {
+            self.start_listening().await;
+        });
+
+        Ok(true)
     }
 }

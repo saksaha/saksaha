@@ -32,7 +32,7 @@ impl Node {
         Ok(node)
     }
 
-    pub fn start(self) -> SakResult<bool> {
+    pub fn start(&self) -> SakResult<bool> {
         log!(DEBUG, "Start node...\n");
 
         let runtime = match tokio::runtime::Builder::new_multi_thread()
@@ -40,7 +40,13 @@ impl Node {
             .build()
         {
             Ok(r) => r.block_on(async {
-                self.host.start().await;
+                match self.host.start().await {
+                    Ok(_) => (),
+                    Err(err) => {
+                        log!(DEBUG, "Error starting host, err: {}", err);
+                        std::process::exit(1);
+                    },
+                };
 
                 match signal::ctrl_c().await {
                     Ok(_) => {

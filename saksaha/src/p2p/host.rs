@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use super::{discovery::Disc, peer_op::PeerOp};
 use crate::{common::SakResult, err_res, sync::Sync};
 use clap;
@@ -5,7 +7,7 @@ use logger::log;
 
 pub struct Host {
     disc: Disc,
-    // peer_op: PeerOp,
+    peer_op: PeerOp,
 }
 
 impl Host {
@@ -56,38 +58,26 @@ impl Host {
             }
         };
 
-        let host = Host { disc,  };
+        let host = Host { disc, peer_op };
 
         Ok(host)
     }
 }
 
 impl Host {
-    pub async fn start(self) -> SakResult<bool> {
+    pub async fn start(&self) -> SakResult<bool> {
         log!(DEBUG, "Start host...\n");
-
-        // let a = std::sync::Arc::new(self.disc);
-        // let a = a.clone();
-
-        tokio::spawn(async move {
-            self.disc.start().await;
-        });
-
-        // let disc = std::sync::Arc::new(&self.disc);
-        // let disc = disc.clone();
-
-        // let disc = std::sync::Arc::new(Disc {});
-        // let disc = disc.clone();
-
-        // let a = std::sync::Arc::new(self);
-        // let b = a.clone();
+        // let host = Arc::new(self);
+        // let cloned = host.clone();
 
         // tokio::spawn(async move {
-        //     disc.start().await;
+        //     cloned.disc.start().await;
         // });
 
-        // tokio::join!(self.disc.start(), self.peer_op.start());
-
+        // let cloned = host.clone();
+        // tokio::spawn(async move {
+        //     cloned.peer_op.start().await;
+        // });
 
         Ok(true)
     }

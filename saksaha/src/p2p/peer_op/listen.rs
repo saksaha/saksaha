@@ -4,7 +4,7 @@ use tokio::net::TcpListener;
 use super::PeerOp;
 
 impl PeerOp {
-    pub async fn start_listening(&self) -> SakResult<bool> {
+    pub async fn start_listening(self) -> SakResult<bool> {
         let local_addr = format!("127.0.0.1:0");
 
         log!(DEBUG, "Start p2p listening, addr: {}\n", local_addr);

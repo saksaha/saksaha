@@ -3,9 +3,10 @@ mod listen;
 
 use crate::{common::SakResult, err_res};
 use logger::log;
-use std::future::Future;
+use std::{future::Future, sync::Arc};
 use tokio::{net::TcpListener, signal::ctrl_c, task::JoinHandle};
 
+#[derive(Clone, Copy)]
 pub struct Disc {
     disc_port: usize,
 }
@@ -21,16 +22,15 @@ impl Disc {
 
 impl Disc {
     pub async fn start(self) -> SakResult<bool> {
+        let disc = Arc::new(self);
+        let clone = disc.clone();
         tokio::spawn(async move {
-            // match tokio::try_join!(
-            //     self.start_dialing(),
-            //     self.start_listening(),
-            // ) {
-            //     Ok(a) => (),
-            //     Err(err) => {
+            clone.start_listening().await;
+        });
 
-            //     },
-            // };
+        let clone = disc.clone();
+        tokio::spawn(async move {
+            clone.start_dialing().await;
         });
 
         Ok(true)
