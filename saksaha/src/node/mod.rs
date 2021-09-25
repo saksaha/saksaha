@@ -1,6 +1,6 @@
-use crate::{common::SakResult, err_res, p2p::host::Host, sync::Sync};
+use crate::{common::{Error, SakResult}, err_res, p2p::host::Host};
 use logger::log;
-use tokio::{self, signal::ctrl_c, time};
+use tokio::{self, signal};
 
 pub struct Node {
     host: Host,
@@ -29,41 +29,34 @@ impl Node {
 
         let node = Node { host };
 
-        return Ok(node);
+        Ok(node)
     }
 
     pub fn start(self) -> SakResult<bool> {
         log!(DEBUG, "Start node...\n");
 
         let runtime = match tokio::runtime::Builder::new_multi_thread()
-        .enable_all()
-        .build()
+            .enable_all()
+            .build()
         {
             Ok(r) => r.block_on(async {
-                let sync = Sync::new();
+                self.host.start().await;
 
-                let host = self.host.start(sync).await;
-
-                match host {
-                    Ok(_) => (),
+                match signal::ctrl_c().await {
+                    Ok(_) => {
+                        log!(
+                            DEBUG,
+                            "ctrl+c received. Tearing down the application."
+                        );
+                        std::process::exit(1);
+                    }
                     Err(err) => {
-                        return err_res!("Error starting host, err: {}", err);
+                        return err_res!(
+                            "Error setting up ctrl+k handler, err: {}",
+                            err
+                        );
                     }
                 }
-
-                if let Ok(_) = ctrl_c().await {
-                    println!("344");
-
-                    // for i in 0..100000 {
-                    //     println!("{}", i);
-                    // }
-                }
-
-                // time::sleep(std::time::Duration::from_millis(2000)).await;
-
-                println!("444");
-
-                Ok(true)
             }),
             Err(err) => {
                 return err_res!(
@@ -75,4 +68,17 @@ impl Node {
 
         runtime
     }
+
+    // pub async fn handle_ctrl_c(&self) {
+    //     if let Ok(_) = signal::ctrl_c().await {
+    //         log!(DEBUG, "You pressed ctrl+c. If you press again, saksaha will be closed.\n");
+    //     }
+
+    //     println!("333");
+
+    //     if let Ok(_) = signal::ctrl_c().await {
+    //         log!(DEBUG, "`ctrl+c` pressed. Closing saksaha\n");
+    //         std::process::exit(1);
+    //     }
+    // }
 }

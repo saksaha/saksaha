@@ -11,7 +11,10 @@ pub struct Disc {
 }
 
 impl Disc {
-    pub fn new(disc_port: usize, bootstrap_peers: Vec<String>) -> Self {
+    pub fn new(
+        disc_port: usize,
+        bootstrap_peers: Vec<String>
+    ) -> Self {
         Disc { disc_port }
     }
 }
@@ -19,15 +22,15 @@ impl Disc {
 impl Disc {
     pub async fn start(self) -> SakResult<bool> {
         tokio::spawn(async move {
-            match tokio::try_join!(
-                self.start_dialing(),
-                self.start_listening(),
-            ) {
-                Ok(a) => (),
-                Err(err) => {
+            // match tokio::try_join!(
+            //     self.start_dialing(),
+            //     self.start_listening(),
+            // ) {
+            //     Ok(a) => (),
+            //     Err(err) => {
 
-                },
-            };
+            //     },
+            // };
         });
 
         Ok(true)

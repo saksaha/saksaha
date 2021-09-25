@@ -5,7 +5,7 @@ use logger::log;
 
 pub struct Host {
     disc: Disc,
-    peer_op: PeerOp,
+    // peer_op: PeerOp,
 }
 
 impl Host {
@@ -56,19 +56,36 @@ impl Host {
             }
         };
 
-        let host = Host { disc, peer_op };
+        let host = Host { disc,  };
 
         Ok(host)
     }
 }
 
 impl Host {
-    pub async fn start(self, sync: Sync) -> SakResult<bool> {
+    pub async fn start(self) -> SakResult<bool> {
         log!(DEBUG, "Start host...\n");
 
-        sync.spawn(async move {
+        // let a = std::sync::Arc::new(self.disc);
+        // let a = a.clone();
+
+        tokio::spawn(async move {
             self.disc.start().await;
         });
+
+        // let disc = std::sync::Arc::new(&self.disc);
+        // let disc = disc.clone();
+
+        // let disc = std::sync::Arc::new(Disc {});
+        // let disc = disc.clone();
+
+        // let a = std::sync::Arc::new(self);
+        // let b = a.clone();
+
+        // tokio::spawn(async move {
+        //     disc.start().await;
+        // });
+
         // tokio::join!(self.disc.start(), self.peer_op.start());
 
 
