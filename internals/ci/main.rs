@@ -2,7 +2,7 @@ mod commands;
 mod macros;
 
 use clap::App;
-use commands::{COMMANDS};
+use commands::COMMANDS;
 
 fn main() {
     let curr_dir = match std::env::current_dir() {
@@ -16,7 +16,7 @@ fn main() {
             std::process::exit(1);
         }
     };
-    
+
     let project_root = match std::env::var("PROJECT_ROOT") {
         Ok(p) => p,
         Err(_) => {
