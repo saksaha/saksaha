@@ -109,13 +109,13 @@ fn main() {
         }
     };
 
-    // match node.start() {
-    //     Ok(_) => (),
-    //     Err(err) => {
-    //         log!(DEBUG, "Error starting a node, err: {}", err);
-    //         std::process::exit(1);
-    //     }
-    // }
+    match node.start() {
+        Ok(_) => (),
+        Err(err) => {
+            log!(DEBUG, "Error starting a node, err: {}", err);
+            std::process::exit(1);
+        }
+    }
 }
 
 fn make_pconfig(config_path: Option<String>) -> PConfig {

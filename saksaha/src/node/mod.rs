@@ -37,9 +37,9 @@ impl Node {
         let host = Host::new(
             self.rpc_port,
             self.disc_port,
-            // self.bootstrap_peers,
-            // self.public_key,
-            // self.secret,
+            self.bootstrap_peers.to_owned(),
+            self.public_key.to_owned(),
+            self.secret.to_owned(),
         );
         host
     }
@@ -52,13 +52,20 @@ impl Node {
             .build()
         {
             Ok(r) => r.block_on(async {
-                // match self.host.start().await {
-                //     Ok(_) => (),
-                //     Err(err) => {
-                //         log!(DEBUG, "Error starting host, err: {}", err);
-                //         std::process::exit(1);
-                //     }
-                // };
+                let host = match self.make_host() {
+                    Ok(h) => h,
+                    Err(err) => {
+                        return err_res!("Error making host, err: {}", err);
+                    }
+                };
+
+                match host.start().await {
+                    Ok(_) => (),
+                    Err(err) => {
+                        log!(DEBUG, "Error starting host, err: {}", err);
+                        std::process::exit(1);
+                    }
+                };
 
                 match signal::ctrl_c().await {
                     Ok(_) => {
@@ -86,17 +93,4 @@ impl Node {
 
         runtime
     }
-
-    // pub async fn handle_ctrl_c(&self) {
-    //     if let Ok(_) = signal::ctrl_c().await {
-    //         log!(DEBUG, "You pressed ctrl+c. If you press again, saksaha will be closed.\n");
-    //     }
-
-    //     println!("333");
-
-    //     if let Ok(_) = signal::ctrl_c().await {
-    //         log!(DEBUG, "`ctrl+c` pressed. Closing saksaha\n");
-    //         std::process::exit(1);
-    //     }
-    // }
 }

@@ -6,32 +6,54 @@ use logger::log;
 use std::{future::Future, sync::Arc};
 use tokio::{net::TcpListener, signal::ctrl_c, task::JoinHandle};
 
-#[derive(Clone, Copy)]
 pub struct Disc {
-    disc_port: usize,
+    pub disc_port: usize,
+    pub bootstrap_peers: Option<Vec<String>>,
 }
 
 impl Disc {
     pub fn new(
         disc_port: usize,
-        bootstrap_peers: Vec<String>
+        bootstrap_peers: Option<Vec<String>>,
     ) -> Self {
-        Disc { disc_port }
+        Disc { disc_port, bootstrap_peers }
     }
-}
 
-impl Disc {
     pub async fn start(self) -> SakResult<bool> {
-        let disc = Arc::new(self);
-        let clone = disc.clone();
-        tokio::spawn(async move {
-            clone.start_listening().await;
+        let listen = listen::Listen {
+            disc_port: self.disc_port,
+        };
+
+
+        let listen_handle = tokio::spawn(async move {
+            match listen.start_listening().await {
+                Ok(_) => Ok(()),
+                Err(err) => {
+                    return err_res!("Error start disc listening, err: {}", err);
+                }
+            }
         });
 
-        let clone = disc.clone();
-        tokio::spawn(async move {
-            clone.start_dialing().await;
+        let dialer = dial::Dial {
+            bootstrap_peers: self.bootstrap_peers,
+        };
+
+        let dial_handle = tokio::spawn(async move {
+            match dialer.start_dialing().await {
+                Ok(_) => Ok(()),
+                Err(err) => {
+                    return err_res!("Error start disc dialing, err: {}", err);
+                }
+            }
         });
+
+        if let Err(_) = listen_handle.await {
+            // Shall we re-spawn?
+        }
+
+        if let Err(_) = dial_handle.await {
+            // Shall we re-spawn?
+        }
 
         Ok(true)
     }

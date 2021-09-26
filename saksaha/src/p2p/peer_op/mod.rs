@@ -17,11 +17,15 @@ impl PeerOp {
 impl PeerOp {
     pub async fn start(self) -> SakResult<bool> {
         tokio::spawn(async move {
-            self.start_dialing().await;
+            if let Err(err) = self.start_dialing().await {
+
+            }
         });
 
         tokio::spawn(async move {
-            self.start_listening().await;
+            if let Err(err) = self.start_listening().await {
+
+            }
         });
 
         Ok(true)
