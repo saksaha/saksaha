@@ -3,7 +3,6 @@ mod listen;
 
 use crate::{common::SakResult, err_res};
 
-#[derive(Clone, Copy)]
 pub struct PeerOp {}
 
 impl PeerOp {
@@ -16,15 +15,31 @@ impl PeerOp {
 
 impl PeerOp {
     pub async fn start(self) -> SakResult<bool> {
-        tokio::spawn(async move {
-            if let Err(err) = self.start_dialing().await {
+        let listen = listen::Listen {};
 
+        tokio::spawn(async move {
+            match listen.start_listening().await {
+                Ok(_) => Ok(()),
+                Err(err) => {
+                    return err_res!(
+                        "Error start peer op listening, err: {}",
+                        err
+                    );
+                }
             }
         });
 
-        tokio::spawn(async move {
-            if let Err(err) = self.start_listening().await {
+        let dial = dial::Dial {};
 
+        tokio::spawn(async move {
+            match dial.start_dialing().await {
+                Ok(_) => Ok(()),
+                Err(err) => {
+                    return err_res!(
+                        "Error start peer op dialing, err: {}",
+                        err
+                    );
+                }
             }
         });
 

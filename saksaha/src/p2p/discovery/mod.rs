@@ -24,8 +24,7 @@ impl Disc {
             disc_port: self.disc_port,
         };
 
-
-        let listen_handle = tokio::spawn(async move {
+        tokio::spawn(async move {
             match listen.start_listening().await {
                 Ok(_) => Ok(()),
                 Err(err) => {
@@ -38,7 +37,7 @@ impl Disc {
             bootstrap_peers: self.bootstrap_peers,
         };
 
-        let dial_handle = tokio::spawn(async move {
+        tokio::spawn(async move {
             match dialer.start_dialing().await {
                 Ok(_) => Ok(()),
                 Err(err) => {
@@ -46,14 +45,6 @@ impl Disc {
                 }
             }
         });
-
-        if let Err(_) = listen_handle.await {
-            // Shall we re-spawn?
-        }
-
-        if let Err(_) = dial_handle.await {
-            // Shall we re-spawn?
-        }
 
         Ok(true)
     }

@@ -3,7 +3,9 @@ use crate::{common::SakResult, err_res};
 use tokio::net::TcpListener;
 use super::PeerOp;
 
-impl PeerOp {
+pub struct Listen {}
+
+impl Listen {
     pub async fn start_listening(self) -> SakResult<bool> {
         let local_addr = format!("127.0.0.1:0");
 
