@@ -16,7 +16,7 @@ fn main() {
             std::process::exit(1);
         }
     };
-
+    
     let project_root = match std::env::var("PROJECT_ROOT") {
         Ok(p) => p,
         Err(_) => {
