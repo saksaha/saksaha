@@ -4,6 +4,7 @@ mod dev;
 mod run;
 mod expand;
 mod expand_release;
+mod postcommit;
 mod test;
 
 use clap::{App, ArgMatches};
@@ -19,6 +20,7 @@ pub static COMMANDS: Lazy<Mutex<Vec<Box<dyn Commandify + Send>>>> =
             Box::new(clean::Clean),
             Box::new(expand::Expand),
             Box::new(expand_release::ExpandRelease),
+            Box::new(postcommit::Postcommit),
             Box::new(test::Test),
         ];
         Mutex::new(v)
