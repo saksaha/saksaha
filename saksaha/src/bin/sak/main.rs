@@ -1,8 +1,15 @@
 use clap::{App, Arg};
 use logger::log;
-use saksaha::{node::Node, pconfig::PConfig};
+use saksaha::{common::SakResult, err_res, node::Node, pconfig::PConfig};
 
-fn main() {
+struct Args {
+    config: Option<String>,
+    rpc_port: usize,
+    disc_port: usize,
+    bootstrap_peers: Option<Vec<String>>,
+}
+
+fn get_args() -> SakResult<Args> {
     let flags = App::new("Saksaha rust")
         .version("0.1")
         .author("Saksaha <team@saksaha.com>")
@@ -39,12 +46,59 @@ fn main() {
         )
         .get_matches();
 
-    let pconf = make_pconfig(flags.value_of("config"));
+    let config = match flags.value_of("config") {
+        Some(c) => Some(String::from(c)),
+        None => None,
+    };
+
+    let rpc_port = match flags.value_of("rpc_port") {
+        Some(p) => {
+            if let Err(err) = p.parse::<usize>() {
+                return err_res!("Error parsing the rpc port, err: {}", err);
+            }
+            p.parse::<usize>().unwrap()
+        }
+        None => 0,
+    };
+
+    let disc_port = match flags.value_of("disc_port") {
+        Some(p) => {
+            if let Err(err) = p.parse::<usize>() {
+                return err_res!("ERror parsing the rpc port, err: {}", err);
+            }
+            p.parse::<usize>().unwrap()
+        }
+        None => 0,
+    };
+
+    let bootstrap_peers = match flags.values_of("bootstrap_peers") {
+        Some(b) => Some(b.map(str::to_string).collect()),
+        None => None,
+    };
+
+    Ok(Args {
+        config,
+        rpc_port,
+        disc_port,
+        bootstrap_peers,
+    })
+}
+
+fn main() {
+    let args = match get_args() {
+        Ok(a) => a,
+        Err(err) => {
+            log!(DEBUG, "Error parsing command line arguments, err: {}", err);
+            std::process::exit(1);
+        }
+    };
+
+    let pconf = make_pconfig(args.config);
 
     let node = match Node::new(
-        flags.value_of("rpc_port"),
-        flags.value_of("disc_port"),
-        flags.values_of("bootstrap_peers"),
+        args.rpc_port,
+        args.disc_port,
+        args.bootstrap_peers,
         pconf.p2p.public_key,
         pconf.p2p.secret,
     ) {
@@ -55,16 +109,16 @@ fn main() {
         }
     };
 
-    match node.start() {
-        Ok(_) => (),
-        Err(err) => {
-            log!(DEBUG, "Error starting a node, err: {}", err);
-            std::process::exit(1);
-        }
-    }
+    // match node.start() {
+    //     Ok(_) => (),
+    //     Err(err) => {
+    //         log!(DEBUG, "Error starting a node, err: {}", err);
+    //         std::process::exit(1);
+    //     }
+    // }
 }
 
-fn make_pconfig(config_path: Option<&str>) -> PConfig {
+fn make_pconfig(config_path: Option<String>) -> PConfig {
     let pconf = match PConfig::of(config_path) {
         Ok(p) => p,
         Err(err) => {

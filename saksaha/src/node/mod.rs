@@ -1,35 +1,47 @@
-use crate::{common::{Error, SakResult}, err_res, p2p::host::Host};
+use crate::{
+    common::{Error, SakResult},
+    err_res,
+    p2p::host::Host,
+};
 use logger::log;
 use tokio::{self, signal};
 
 pub struct Node {
-    host: Host,
+    rpc_port: usize,
+    disc_port: usize,
+    bootstrap_peers: Option<Vec<String>>,
+    public_key: String,
+    secret: String,
 }
 
 impl Node {
     pub fn new(
-        rpc_port: Option<&str>,
-        disc_port: Option<&str>,
-        bootstrap_peers: Option<clap::Values>,
+        rpc_port: usize,
+        disc_port: usize,
+        bootstrap_peers: Option<Vec<String>>,
         public_key: String,
         secret: String,
     ) -> SakResult<Node> {
-        let host = match Host::new(
+        let node = Node {
             rpc_port,
             disc_port,
             bootstrap_peers,
             public_key,
             secret,
-        ) {
-            Ok(h) => h,
-            Err(err) => {
-                return err_res!("Error creating a new host, err: {}", err);
-            }
         };
 
-        let node = Node { host };
-
         Ok(node)
+    }
+
+    pub fn make_host(&self) -> SakResult<Host> {
+        let host = Host::new(
+            self.rpc_port,
+            self.disc_port,
+            // self.bootstrap_peers,
+            // self.public_key,
+            // self.secret,
+        );
+        host
     }
 
     pub fn start(&self) -> SakResult<bool> {
@@ -40,13 +52,13 @@ impl Node {
             .build()
         {
             Ok(r) => r.block_on(async {
-                match self.host.start().await {
-                    Ok(_) => (),
-                    Err(err) => {
-                        log!(DEBUG, "Error starting host, err: {}", err);
-                        std::process::exit(1);
-                    },
-                };
+                // match self.host.start().await {
+                //     Ok(_) => (),
+                //     Err(err) => {
+                //         log!(DEBUG, "Error starting host, err: {}", err);
+                //         std::process::exit(1);
+                //     }
+                // };
 
                 match signal::ctrl_c().await {
                     Ok(_) => {

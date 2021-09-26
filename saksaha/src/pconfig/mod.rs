@@ -17,7 +17,7 @@ pub struct PersistedP2PConfig {
 }
 
 impl PConfig {
-    pub fn of(config_path: Option<&str>) -> SakResult<PConfig> {
+    pub fn of(config_path: Option<String>) -> SakResult<PConfig> {
         let config_path = match config_path {
             Some(c) => c,
             None => {
