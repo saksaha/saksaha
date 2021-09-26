@@ -9,3 +9,5 @@ pub mod node;
 pub mod p2p;
 
 pub mod sync;
+
+pub mod rpc;

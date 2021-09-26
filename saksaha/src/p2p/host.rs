@@ -33,10 +33,14 @@ impl Host {
     pub async fn start(&self) -> SakResult<bool> {
         log!(DEBUG, "Start host...\n");
 
-        let disc = Disc {
-            disc_port: self.disc_port,
-            bootstrap_peers: self.bootstrap_peers.to_owned(),
-        };
+        let peer_store = Arc::new(PeerStore {});
+        let peer_store_clone = peer_store.clone();
+
+        let disc = Disc::new(
+            self.disc_port,
+            self.bootstrap_peers.to_owned(),
+            peer_store_clone,
+        );
 
         tokio::spawn(async move {
             match disc.start().await {
@@ -47,9 +51,10 @@ impl Host {
             }
         });
 
-        let peer_op = PeerOp {
-
-        };
+        let peer_store_clone = peer_store.clone();
+        let peer_op = PeerOp::new(
+            peer_store_clone,
+        );
 
         tokio::spawn(async move {
             match peer_op.start().await {
@@ -62,4 +67,8 @@ impl Host {
 
         Ok(true)
     }
+}
+
+pub struct PeerStore {
+
 }

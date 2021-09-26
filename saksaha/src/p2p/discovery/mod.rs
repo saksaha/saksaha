@@ -5,18 +5,21 @@ use crate::{common::SakResult, err_res};
 use logger::log;
 use std::{future::Future, sync::Arc};
 use tokio::{net::TcpListener, signal::ctrl_c, task::JoinHandle};
+use super::{host::PeerStore};
 
 pub struct Disc {
-    pub disc_port: usize,
-    pub bootstrap_peers: Option<Vec<String>>,
+    disc_port: usize,
+    bootstrap_peers: Option<Vec<String>>,
+    peer_store: Arc<PeerStore>,
 }
 
 impl Disc {
     pub fn new(
         disc_port: usize,
         bootstrap_peers: Option<Vec<String>>,
+        peer_store: Arc<PeerStore>,
     ) -> Self {
-        Disc { disc_port, bootstrap_peers }
+        Disc { disc_port, bootstrap_peers, peer_store }
     }
 
     pub async fn start(self) -> SakResult<bool> {

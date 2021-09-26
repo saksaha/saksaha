@@ -1,15 +1,19 @@
 mod dial;
 mod listen;
 
+use std::sync::Arc;
 use crate::{common::SakResult, err_res};
+use super::{host::PeerStore};
 
-pub struct PeerOp {}
+pub struct PeerOp {
+    peer_store: Arc<PeerStore>,
+}
 
 impl PeerOp {
-    pub fn new() -> SakResult<PeerOp> {
-        let peer_op = PeerOp {};
+    pub fn new(peer_store: Arc<PeerStore>) -> PeerOp {
+        let peer_op = PeerOp { peer_store };
 
-        Ok(peer_op)
+        peer_op
     }
 }
 

@@ -49,8 +49,6 @@ impl Listen {
             }
 
             println!("{:?}", buf);
-
         }
-
     }
 }

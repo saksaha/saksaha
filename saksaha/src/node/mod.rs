@@ -2,6 +2,7 @@ use crate::{
     common::{Error, SakResult},
     err_res,
     p2p::host::Host,
+    rpc::RPC,
 };
 use logger::log;
 use tokio::{self, signal};
@@ -44,6 +45,11 @@ impl Node {
         host
     }
 
+    pub fn make_rpc(&self) -> SakResult<RPC> {
+        let rpc = RPC::new();
+        Ok(rpc)
+    }
+
     pub fn start(&self) -> SakResult<bool> {
         log!(DEBUG, "Start node...\n");
 
@@ -66,6 +72,16 @@ impl Node {
                         std::process::exit(1);
                     }
                 };
+
+                let rpc = match self.make_rpc() {
+                    Ok(r) => r,
+                    Err(err) => {
+                        log!(DEBUG, "Error starting rpc, err: {}", err);
+                        std::process::exit(1);
+                    },
+                };
+
+                rpc.start().await;
 
                 match signal::ctrl_c().await {
                     Ok(_) => {
