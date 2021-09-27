@@ -22,9 +22,23 @@ impl Listen {
             },
         };
 
-        let _ = self.peer_store.take_empty_slot(&|peer: &Peer| async move {
-            // return false;
-            println!("{}", peer.i);
+        println!("44");
+
+        let _ = self.peer_store.take_empty_slot(|peer: &mut Peer| {
+            // *peer = 45;
+            let a = Box::pin(async move {
+                println!("55: {:?}", peer.i);
+                peer.i = 4;
+                return true;
+            });
+
+            a
+
+            // println!("{}", peer);
+
+            // *peer = 3;
+            // return true;
+            // return;
             // async {
             //     let (stream, addr) = match tcp_listener.accept().await {
             //         Ok(res) => res,
@@ -40,8 +54,8 @@ impl Listen {
             //     // });
 
             // };
-            return true;
-        });
+            // return true;
+        }).await;
 
         // loop {
         //     let (stream, addr) = match tcp_listener.accept().await {

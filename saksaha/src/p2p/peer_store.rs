@@ -9,14 +9,14 @@ use std::{
 pub struct PeerStore {
     capacity: usize,
     curr_idx: usize,
-    slots: Vec<Mutex<Peer>>,
+    slots: Vec<tokio::sync::Mutex<Peer>>,
 }
 
 impl PeerStore {
     pub fn new(capacity: usize) -> PeerStore {
         let mut slots = Vec::with_capacity(capacity);
         for i in 0..capacity {
-            let p = Mutex::new(Peer::new(i));
+            let p = tokio::sync::Mutex::new(Peer::new(i));
             slots.push(p);
         }
 
@@ -27,12 +27,11 @@ impl PeerStore {
         }
     }
 
-    pub fn take_empty_slot<'a, F, Fut>(&self, callback: F) -> SakResult<bool>
+    pub async fn take_empty_slot<F>(&self, callback: F) -> SakResult<bool>
     where
-        F: Fn(&'a Peer) -> Fut,
-        F: 'static,
-        Fut: Future<Output = bool> + 'a,
+        F: for<'a> Fn(&'a mut Peer) -> futures::future::BoxFuture<'a, bool>,
     {
+        println!("333");
         let cap = self.capacity;
 
         for i in 0..cap {
@@ -47,7 +46,7 @@ impl PeerStore {
                 }
             };
 
-            let peer = match peer.try_lock() {
+            let mut peer = match peer.try_lock() {
                 Ok(p) => {
                     log!(DEBUG, "Acquired a peer, at idx: {}\n", idx);
                     p
@@ -57,7 +56,9 @@ impl PeerStore {
                 }
             };
 
-            callback(&peer);
+            callback(&mut peer).await;
+
+            println!("44: {}", peer.i);
             return Ok(true);
         }
 
@@ -65,6 +66,7 @@ impl PeerStore {
     }
 }
 
+#[derive(Debug)]
 pub struct Peer {
     pub i: usize,
 }
