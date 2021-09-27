@@ -49,7 +49,12 @@ impl Listen {
         );
 
         loop {
-            let slots = self.peer_store.slots.lock().await;
+            // let slots = self.peer_store.slots.lock().await;
+            // peer_store.mutex.lock();
+            // get_idx(); // return
+            // slots[idx].lock(); // call
+
+            let slots = &self.peer_store.slots;
             let cap = self.peer_store.capacity;
             for i in 0..cap {
                 let idx = self.peer_store.curr_idx + i % cap;
@@ -73,6 +78,9 @@ impl Listen {
                 }
             };
 
+
+            // peer.lock();
+
             println!("55, {}", peer.i);
 
             let (stream, addr) = match tcp_listener.accept().await {
@@ -85,6 +93,8 @@ impl Listen {
             println!("new: {}, {}", addr, peer.i);
 
             let h = Handler { stream };
+
+            // peer.i = 3;
         }
 
 

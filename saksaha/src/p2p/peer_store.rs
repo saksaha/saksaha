@@ -10,7 +10,7 @@ use std::{
 pub struct PeerStore {
     pub capacity: usize,
     pub curr_idx: usize,
-    pub slots: Mutex<Vec<Mutex<Peer>>>,
+    pub slots: Vec<Mutex<Peer>>,
 }
 
 impl PeerStore {
@@ -23,7 +23,7 @@ impl PeerStore {
 
         PeerStore {
             curr_idx: 0,
-            slots: Mutex::new(slots),
+            slots,
             capacity,
         }
     }
@@ -32,6 +32,7 @@ impl PeerStore {
         // return slots
     }
 
+    //
     pub async fn take_empty_slot<F>(&self, callback: F) -> SakResult<bool>
     where
         F: for<'b> Fn(&'b mut Peer) -> futures::future::BoxFuture<'b, ()>,
@@ -77,10 +78,11 @@ impl PeerStore {
 #[derive(Debug)]
 pub struct Peer {
     pub i: usize,
+    pub reserved: bool,
 }
 
 impl Peer {
     pub fn new(i: usize) -> Peer {
-        Peer { i }
+        Peer { i, reserved: false, }
     }
 }
