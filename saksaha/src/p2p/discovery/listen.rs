@@ -22,16 +22,16 @@ pub struct Handler<'a> {
 }
 
 impl<'a> Handler<'a> {
-    pub async fn run(&mut self) {
+    pub async fn run(&mut self) -> SakResult<bool> {
         let mut buf = vec![0; 1024];
 
         log!(DEBUG, "Parsing msg, peer id: {}\n", self.peer.i);
 
         loop {
-            let n = self.stream.read(&mut buf).await.unwrap();
+            let n = self.stream.read(&mut buf).await?;
 
             if n == 0 {
-                return;
+                return Ok(true);
             }
 
             println!("{:?}", buf);
@@ -115,21 +115,5 @@ impl Listen {
         }
 
         Ok(true)
-    }
-
-    async fn handle_connection(mut stream: tokio::net::TcpStream) {
-        println!("{:?}", stream);
-
-        let mut buf = vec![0; 1024];
-
-        loop {
-            let n = stream.read(&mut buf).await.unwrap();
-
-            if n == 0 {
-                return;
-            }
-
-            println!("{:?}", buf);
-        }
     }
 }
