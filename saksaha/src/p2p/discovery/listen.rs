@@ -4,17 +4,27 @@ use crate::{
     p2p::peer_store::{Peer, PeerStore},
 };
 use logger::log;
-use std::sync::{Arc, Mutex};
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tokio::net::{TcpListener, TcpStream};
+use std::sync::Arc;
+use tokio::{
+    io::{AsyncReadExt, AsyncWriteExt},
+    net::{TcpListener, TcpStream},
+    sync::{Mutex, MutexGuard},
+};
 
 pub struct Listen {
     pub disc_port: usize,
     pub peer_store: Arc<PeerStore>,
 }
 
-pub struct Handler {
+pub struct Handler<'a> {
     stream: TcpStream,
+    peer: MutexGuard<'a, Peer>,
+}
+
+impl<'a> Handler<'a> {
+    pub fn run(&self) {
+        println!("123123 {}", self.peer.i);
+    }
 }
 
 impl Listen {
@@ -49,39 +59,12 @@ impl Listen {
         );
 
         loop {
-            // let slots = self.peer_store.slots.lock().await;
-            // peer_store.mutex.lock();
-            // get_idx(); // return
-            // slots[idx].lock(); // call
-
-            let slots = &self.peer_store.slots;
-            let cap = self.peer_store.capacity;
-            for i in 0..cap {
-                let idx = self.peer_store.curr_idx + i % cap;
-                let peer = match slots.get(idx) {
-                    Some(p) => p,
-                    None => {
-                        return err_res!(
-                            "Error getting peer in the slot, \
-                            it may have been accidentally removed"
-                        );
-                    }
-                };
-
-            let mut peer = match peer.try_lock() {
-                Ok(p) => {
-                    log!(DEBUG, "Acquired a peer, at idx: {}\n", idx);
-                    p
-                }
-                Err(_) => {
+            let idx = match self.peer_store.reserve_slot() {
+                Some(i) => i,
+                None => {
                     continue;
                 }
             };
-
-
-            // peer.lock();
-
-            println!("55, {}", peer.i);
 
             let (stream, addr) = match tcp_listener.accept().await {
                 Ok(res) => res,
@@ -90,53 +73,31 @@ impl Listen {
                 }
             };
 
-            println!("new: {}, {}", addr, peer.i);
+            log!(DEBUG, "Accepted incoming request, addr: {}\n", addr);
 
-            let h = Handler { stream };
+            let peer_store = self.peer_store.clone();
 
-            // peer.i = 3;
+            tokio::spawn(async move {
+                let peer = if let Some(p) = peer_store.slots.get(idx) {
+                    if let Ok(p) = p.try_lock() {
+                        p
+                    } else {
+                        log!(
+                            DEBUG,
+                            "Error getting mutex, something \
+                        might be wrong, idx: {}",
+                            idx
+                        );
+                        return;
+                    }
+                } else {
+                    return;
+                };
+
+                let h = Handler { stream, peer };
+                h.run();
+            });
         }
-
-
-
-
-            // self.peer_store.take_empty_slot(|peer| {
-            //     Box::pin(async move {
-            //         tokio::spawn(async {
-            //             println!("peer: {}", peer.i);
-            //         });
-            //     })
-
-            //     // h;
-            //     // let h = Handler { stream };
-            //     // let b = Handler { stream, };
-            // }).await;
-
-            // tokio::spawn(async move {
-            //     stream;
-            //     // clone.take_empty_slot(|| async move {
-            //     //     // Listen::handle_connection(stream).await;
-            //     //     // return false;
-            //     //     return false;
-            //     // });
-
-            // });
-        }
-
-        // loop {
-        //     let (stream, addr) = match tcp_listener.accept().await {
-        //         Ok(res) => res,
-        //         Err(err) => {
-        //             return err_res!("Error accepting a request, err: {}", err);
-        //         }
-        //     };
-
-        //     log!(DEBUG, "New incoming disc connection, addr: {}\n", addr);
-
-        // tokio::spawn(async move {
-        //     Listen::handle_connection(stream).await;
-        // });
-        // }
 
         Ok(true)
     }

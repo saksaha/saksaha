@@ -1,11 +1,11 @@
 use crate::{common::SakResult, err_res};
 use logger::log;
-use tokio::sync::Mutex;
 use std::{
     convert::TryInto,
     future::Future,
     // sync::{Mutex},
 };
+use tokio::sync::Mutex;
 
 pub struct PeerStore {
     pub capacity: usize,
@@ -28,8 +28,34 @@ impl PeerStore {
         }
     }
 
-    pub async fn f() {
-        // return slots
+    pub fn reserve_slot(&self) -> Option<usize> {
+        let cap = self.capacity;
+
+        for i in 0..cap {
+            let idx = self.curr_idx + i % cap;
+            let peer = match self.slots.get(idx) {
+                Some(p) => p,
+                None => {
+                    return None;
+                }
+            };
+
+            match peer.try_lock() {
+                Ok(mut p) => {
+                    if !p.reserved {
+                        p.reserved = true;
+                        log!(DEBUG, "Acquired a peer, at idx: {}\n", idx);
+                        return Some(idx);
+                    }
+                    continue;
+                }
+                Err(_) => {
+                    continue;
+                }
+            }
+        }
+
+        None
     }
 
     //
@@ -83,6 +109,6 @@ pub struct Peer {
 
 impl Peer {
     pub fn new(i: usize) -> Peer {
-        Peer { i, reserved: false, }
+        Peer { i, reserved: false }
     }
 }
