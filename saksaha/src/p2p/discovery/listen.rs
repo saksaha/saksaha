@@ -6,7 +6,7 @@ use crate::{
 use logger::log;
 use std::sync::Arc;
 use tokio::{
-    io::{AsyncReadExt, AsyncWriteExt},
+    io::{AsyncReadExt, AsyncWriteExt, BufWriter},
     net::{TcpListener, TcpStream},
     sync::{Mutex, MutexGuard},
 };
@@ -22,8 +22,20 @@ pub struct Handler<'a> {
 }
 
 impl<'a> Handler<'a> {
-    pub fn run(&self) {
-        println!("123123 {}", self.peer.i);
+    pub async fn run(&mut self) {
+        let mut buf = vec![0; 1024];
+
+        log!(DEBUG, "Parsing msg, peer id: {}\n", self.peer.i);
+
+        loop {
+            let n = self.stream.read(&mut buf).await.unwrap();
+
+            if n == 0 {
+                return;
+            }
+
+            println!("{:?}", buf);
+        }
     }
 }
 
@@ -94,8 +106,11 @@ impl Listen {
                     return;
                 };
 
-                let h = Handler { stream, peer };
-                h.run();
+                let mut h = Handler {
+                    stream: stream,
+                    peer,
+                };
+                h.run().await;
             });
         }
 
