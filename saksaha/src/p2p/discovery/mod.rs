@@ -5,7 +5,7 @@ use crate::{common::SakResult, err_res};
 use logger::log;
 use std::{future::Future, sync::Arc};
 use tokio::{net::TcpListener, signal::ctrl_c, task::JoinHandle};
-use super::{host::PeerStore};
+use super::{peer_store::PeerStore};
 
 pub struct Disc {
     disc_port: usize,
@@ -25,6 +25,7 @@ impl Disc {
     pub async fn start(self) -> SakResult<bool> {
         let listen = listen::Listen {
             disc_port: self.disc_port,
+            peer_store: self.peer_store,
         };
 
         tokio::spawn(async move {
@@ -32,7 +33,7 @@ impl Disc {
                 Ok(_) => Ok(()),
                 Err(err) => {
                     return err_res!("Error start disc listening, err: {}", err);
-                }
+                },
             }
         });
 

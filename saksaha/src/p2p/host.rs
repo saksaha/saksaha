@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use super::{discovery::Disc, peer_op::PeerOp};
+use super::{discovery::Disc, peer_op::PeerOp, peer_store::PeerStore};
 use crate::{common::SakResult, err_res, sync::Sync};
 use clap;
 use logger::log;
@@ -33,7 +33,7 @@ impl Host {
     pub async fn start(&self) -> SakResult<bool> {
         log!(DEBUG, "Start host...\n");
 
-        let peer_store = Arc::new(PeerStore {});
+        let peer_store = Arc::new(PeerStore::new(10));
         let peer_store_clone = peer_store.clone();
 
         let disc = Disc::new(
@@ -67,8 +67,4 @@ impl Host {
 
         Ok(true)
     }
-}
-
-pub struct PeerStore {
-
 }

@@ -3,7 +3,7 @@ mod listen;
 
 use std::sync::Arc;
 use crate::{common::SakResult, err_res};
-use super::{host::PeerStore};
+use super::{peer_store::PeerStore};
 
 pub struct PeerOp {
     peer_store: Arc<PeerStore>,
