@@ -1,3 +1,4 @@
+use super::whoareyou::WhoAreYou;
 use crate::{
     common::SakResult,
     err_res,
@@ -23,9 +24,14 @@ pub struct Handler<'a> {
 
 impl<'a> Handler<'a> {
     pub async fn run(&mut self) -> SakResult<bool> {
-        let mut buf = vec![0; 1024];
+        // let a = &self.stream;
+        let way = WhoAreYou::new(&self.stream);
+        let mut buf: [u8; 1024] = [0; 1024];
+        // let mut buf = way.buf;
 
-        log!(DEBUG, "Parsing msg, peer id: {}\n", self.peer.i);
+        // log!(DEBUG, "Parsing msg, peer id: {}\n", self.peer.i);
+
+        // way.read(self.stream);
 
         loop {
             let n = self.stream.read(&mut buf).await?;
@@ -36,6 +42,7 @@ impl<'a> Handler<'a> {
 
             println!("{:?}", buf);
         }
+        Ok(true)
     }
 }
 
