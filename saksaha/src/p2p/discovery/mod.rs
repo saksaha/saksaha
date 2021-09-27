@@ -23,9 +23,10 @@ impl Disc {
     }
 
     pub async fn start(self) -> SakResult<bool> {
+        let clone = self.peer_store.clone();
         let listen = listen::Listen {
             disc_port: self.disc_port,
-            peer_store: self.peer_store,
+            peer_store: clone,
         };
 
         tokio::spawn(async move {
