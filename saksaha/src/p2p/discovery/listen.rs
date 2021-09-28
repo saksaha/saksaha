@@ -14,7 +14,7 @@ use tokio::{
 
 pub struct Listen {
     pub disc_port: usize,
-    pub peer_store: Arc<PeerStore>,
+    pub peer_store: Arc<Mutex<PeerStore>>,
 }
 
 pub struct Handler<'a> {
@@ -41,7 +41,7 @@ impl Listen {
                         Err(err) => {
                             return err_res!(
                                 "Error getting the local address of \
-                            disc listener, err: {}",
+                                disc listener, err: {}",
                                 err
                             );
                         }
@@ -61,7 +61,9 @@ impl Listen {
         );
 
         loop {
-            let idx = match self.peer_store.reserve_slot() {
+            let mut peer_store = self.peer_store.lock().await;
+
+            let idx = match peer_store.reserve_slot() {
                 Some(i) => i,
                 None => {
                     // TODO: need to sleep for a while until making new attempts
@@ -81,6 +83,8 @@ impl Listen {
             let peer_store = self.peer_store.clone();
 
             tokio::spawn(async move {
+                let peer_store = peer_store.lock().await;
+
                 let peer = if let Some(p) = peer_store.slots.get(idx) {
                     if let Ok(p) = p.try_lock() {
                         p

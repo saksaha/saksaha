@@ -1,9 +1,9 @@
-use std::sync::Arc;
-
+use std::sync::{Arc,};
 use super::{discovery::Disc, peer_op::PeerOp, peer_store::PeerStore};
 use crate::{common::SakResult, err_res, sync::Sync};
 use clap;
 use logger::log;
+use tokio::{sync::Mutex};
 
 pub struct Host {
     rpc_port: usize,
@@ -33,7 +33,7 @@ impl Host {
     pub async fn start(&self) -> SakResult<bool> {
         log!(DEBUG, "Start host...\n");
 
-        let peer_store = Arc::new(PeerStore::new(10));
+        let peer_store = Arc::new(Mutex::new(PeerStore::new(10)));
         let peer_store_clone = peer_store.clone();
 
         let disc = Disc::new(

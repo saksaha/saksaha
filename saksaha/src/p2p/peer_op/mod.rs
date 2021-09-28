@@ -1,16 +1,17 @@
 mod dial;
 mod listen;
 
-use std::sync::Arc;
+use std::sync::{Arc,};
 use crate::{common::SakResult, err_res};
 use super::{peer_store::PeerStore};
+use tokio::{sync::Mutex};
 
 pub struct PeerOp {
-    peer_store: Arc<PeerStore>,
+    peer_store: Arc<Mutex<PeerStore>>,
 }
 
 impl PeerOp {
-    pub fn new(peer_store: Arc<PeerStore>) -> PeerOp {
+    pub fn new(peer_store: Arc<Mutex<PeerStore>>) -> PeerOp {
         let peer_op = PeerOp { peer_store };
 
         peer_op

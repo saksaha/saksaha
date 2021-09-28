@@ -4,21 +4,21 @@ mod whoareyou;
 
 use crate::{common::SakResult, err_res};
 use logger::log;
-use std::{future::Future, sync::Arc};
-use tokio::{net::TcpListener, signal::ctrl_c, task::JoinHandle};
+use std::{sync::{Arc}};
 use super::{peer_store::PeerStore};
+use tokio::{sync::Mutex};
 
 pub struct Disc {
     disc_port: usize,
     bootstrap_peers: Option<Vec<String>>,
-    peer_store: Arc<PeerStore>,
+    peer_store: Arc<Mutex<PeerStore>>,
 }
 
 impl Disc {
     pub fn new(
         disc_port: usize,
         bootstrap_peers: Option<Vec<String>>,
-        peer_store: Arc<PeerStore>,
+        peer_store: Arc<Mutex<PeerStore>>,
     ) -> Self {
         Disc { disc_port, bootstrap_peers, peer_store }
     }

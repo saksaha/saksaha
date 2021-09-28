@@ -1,10 +1,5 @@
 use crate::{common::SakResult, err_res};
 use logger::log;
-use std::{
-    convert::TryInto,
-    future::Future,
-    // sync::{Mutex},
-};
 use tokio::sync::Mutex;
 
 pub struct PeerStore {
@@ -28,7 +23,7 @@ impl PeerStore {
         }
     }
 
-    pub fn reserve_slot(&self) -> Option<usize> {
+    pub fn reserve_slot(&mut self) -> Option<usize> {
         let cap = self.capacity;
 
         for i in 0..cap {
@@ -43,9 +38,11 @@ impl PeerStore {
             match peer.try_lock() {
                 Ok(mut p) => {
                     if !p.reserved {
-                        // self.curr_idx = idx;
+                        self.curr_idx = idx;
                         p.reserved = true;
+
                         log!(DEBUG, "Acquired a peer, at idx: {}\n", idx);
+
                         return Some(idx);
                     }
                     continue;
