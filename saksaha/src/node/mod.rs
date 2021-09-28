@@ -6,18 +6,18 @@ use crate::{
 };
 use futures::{FutureExt, TryStreamExt, stream::FuturesUnordered};
 use logger::log;
-use tokio::{self, signal, task::JoinHandle};
+use tokio::{self, signal, sync::mpsc, task::JoinHandle};
 
 pub struct Tasks {
     pub unordered: FuturesUnordered<JoinHandle<Result<bool, Error>>>,
 }
 
-impl <'a> Tasks {
-    // pub fn new() -> Tasks {
-    //     Tasks {
-    //         // unordered: &FuturesUnordered::new(),
-    //     }
-    // }
+impl Tasks {
+    pub fn new() -> Tasks {
+        Tasks {
+            unordered: FuturesUnordered::new(),
+        }
+    }
 
     pub fn push_all(&self, handles: Vec<JoinHandle<Result<bool, Error>>>) {
         for h in handles.into_iter() {
@@ -25,24 +25,23 @@ impl <'a> Tasks {
         }
     }
 
-    pub async fn join_all(&self) {
-        // (*self.unordered);
-        // for t in self.unordered.try_next() {
-        //     match t.await {
-        //         Ok(t) => {
-        //             if let Err(err) = t {
-        //                 println!("error: {}", err);
-        //             }
-        //         }
-        //         Err(join_err) => {
-        //             log!(
-        //                 DEBUG,
-        //                 "Error joining tasks, err: {}",
-        //                 join_err
-        //             );
-        //         }
-        //     }
-        // }
+    pub async fn join_all(self) {
+        for t in self.unordered.into_iter() {
+            match t.await {
+                Ok(t) => {
+                    if let Err(err) = t {
+                        println!("error: {}", err);
+                    }
+                }
+                Err(join_err) => {
+                    log!(
+                        DEBUG,
+                        "Error joining tasks, err: {}",
+                        join_err
+                    );
+                }
+            }
+        }
     }
 }
 
@@ -116,6 +115,7 @@ impl Node {
         {
             Ok(r) => r.block_on(async {
                 let tasks = Tasks::new();
+                let (tx, mut rx) = mpsc::channel::<bool>(10);
 
                 let host = match self.make_host() {
                     Ok(h) => h,
@@ -124,9 +124,14 @@ impl Node {
                     }
                 };
 
-                let host_start_handles = match host.start().await {
-                    Ok(h) => (h),
+                let host_start_handles = match host.start(tx).await {
+                    Ok(h) => {
+                        println!("333443");
+                        h
+                    },
                     Err(err) => {
+
+                        println!("3333");
                         return err_res!(
                             "Error joining host start handles, err: {}",
                             err
@@ -134,9 +139,15 @@ impl Node {
                     }
                 };
 
-                tasks.push_all(host_start_handles);
+                loop {
+                    if let Some(r) = rx.recv().await {
+                        println!("555, {}", r);
+                    }
+                }
 
-                tasks.join_all();
+                // tasks.push_all(host_start_handles);
+
+                // tasks.join_all().await;
 
                 Node::wait_for_ctrl_p().await;
 
