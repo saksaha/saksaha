@@ -1,32 +1,36 @@
 use tokio::{io::AsyncReadExt, net::TcpStream};
 
-pub struct WhoAreYou<'a> {
-    pub buf: [u8; 1024],
-    stream: &'a TcpStream,
+use crate::{common::SakResult, err_res};
+
+pub struct WhoAreYou {
+    // signature,
+    p2p_port: usize,
 }
 
 pub struct WhoAreYouAck {}
 
-impl <'a> WhoAreYou<'a> {
-    pub fn new(stream: &'a TcpStream) -> WhoAreYou {
-        WhoAreYou {
-            buf: [0; 1024],
-            stream,
+impl WhoAreYou {
+    pub async fn parse(stream: &mut TcpStream) -> SakResult<WhoAreYou> {
+        let mut buf = vec![0; 1024];
+
+        loop {
+            let n = match stream.read(&mut buf).await {
+                Ok(n) => n,
+                Err(err) => {
+                    return err_res!(
+                        "Error parsing `who_are_you` request`, err: {}",
+                        err
+                    );
+                }
+            };
+
+            if n == 0 {
+                let w = WhoAreYou {
+                    p2p_port: 0,
+                };
+                return Ok(w);
+            }
         }
-    }
-
-    pub async fn read(&self) {
-        let a = self.stream.read_buf(self.buf);
-        // self.stream.read_
-        // loop {
-        //     let n = self.stream.read(&mut buf).await?;
-
-        //     if n == 0 {
-        //         return Ok(true);
-        //     }
-
-        //     println!("{:?}", buf);
-        // }
     }
 }
 

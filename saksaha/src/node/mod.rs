@@ -89,6 +89,7 @@ impl Node {
                             DEBUG,
                             "ctrl+c received. Tearing down the application."
                         );
+
                         std::process::exit(1);
                     }
                     Err(err) => {

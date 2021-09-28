@@ -1,3 +1,5 @@
+use logger::log;
+
 pub struct RPC {}
 
 impl RPC {
@@ -6,6 +8,6 @@ impl RPC {
     }
 
     pub async fn start(&self) {
-
+        log!(DEBUG, "Start rpc...\n");
     }
 }

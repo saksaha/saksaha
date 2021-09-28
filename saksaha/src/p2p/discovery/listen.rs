@@ -24,24 +24,7 @@ pub struct Handler<'a> {
 
 impl<'a> Handler<'a> {
     pub async fn run(&mut self) -> SakResult<bool> {
-        // let a = &self.stream;
-        let way = WhoAreYou::new(&self.stream);
-        let mut buf: [u8; 1024] = [0; 1024];
-        // let mut buf = way.buf;
-
-        // log!(DEBUG, "Parsing msg, peer id: {}\n", self.peer.i);
-
-        // way.read(self.stream);
-
-        loop {
-            let n = self.stream.read(&mut buf).await?;
-
-            if n == 0 {
-                return Ok(true);
-            }
-
-            println!("{:?}", buf);
-        }
+        let way = WhoAreYou::parse(&mut self.stream).await;
         Ok(true)
     }
 }
@@ -81,6 +64,7 @@ impl Listen {
             let idx = match self.peer_store.reserve_slot() {
                 Some(i) => i,
                 None => {
+                    // TODO: need to sleep for a while until making new attempts
                     continue;
                 }
             };
@@ -104,7 +88,7 @@ impl Listen {
                         log!(
                             DEBUG,
                             "Error getting mutex, something \
-                        might be wrong, idx: {}",
+                            might be wrong, idx: {}",
                             idx
                         );
                         return;
@@ -113,10 +97,7 @@ impl Listen {
                     return;
                 };
 
-                let mut h = Handler {
-                    stream: stream,
-                    peer,
-                };
+                let mut h = Handler { stream, peer };
                 h.run().await;
             });
         }
