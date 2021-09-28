@@ -1,6 +1,6 @@
 use super::whoareyou::WhoAreYou;
 use crate::{
-    common::SakResult,
+    common::{testenv::run_test, SakResult},
     err_res,
     p2p::peer_store::{Peer, PeerStore},
 };
@@ -30,7 +30,7 @@ impl<'a> Handler<'a> {
 }
 
 impl Listen {
-    pub async fn start_listening(self) -> SakResult<bool> {
+    pub async fn start_listening(&self) -> SakResult<bool> {
         let local_addr = format!("127.0.0.1:{}", self.disc_port);
 
         let (tcp_listener, local_addr) =
@@ -60,6 +60,10 @@ impl Listen {
             local_addr
         );
 
+        return self.run_loop(tcp_listener).await;
+    }
+
+    pub async fn run_loop(&self, tcp_listener: TcpListener) -> SakResult<bool> {
         loop {
             let mut peer_store = self.peer_store.lock().await;
 
@@ -105,7 +109,5 @@ impl Listen {
                 h.run().await;
             });
         }
-
-        Ok(true)
     }
 }
