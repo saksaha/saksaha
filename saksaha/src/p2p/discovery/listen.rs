@@ -30,6 +30,13 @@ impl<'a> Handler<'a> {
 }
 
 impl Listen {
+    pub fn new(disc_port: usize, peer_store: Arc<Mutex<PeerStore>>) -> Listen {
+        Listen {
+            disc_port,
+            peer_store,
+        }
+    }
+
     pub async fn start_listening(&self) -> SakResult<bool> {
         let local_addr = format!("127.0.0.1:{}", self.disc_port);
 

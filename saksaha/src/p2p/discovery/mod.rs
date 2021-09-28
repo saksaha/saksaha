@@ -24,11 +24,8 @@ impl Disc {
     }
 
     pub async fn start(self) -> SakResult<bool> {
-        let clone = self.peer_store.clone();
-        let listen = listen::Listen {
-            disc_port: self.disc_port,
-            peer_store: clone,
-        };
+        let peer_store = self.peer_store.clone();
+        let listen = listen::Listen::new(self.disc_port, peer_store);
 
         tokio::spawn(async move {
             match listen.start_listening().await {
@@ -39,9 +36,8 @@ impl Disc {
             }
         });
 
-        let dialer = dial::Dial {
-            bootstrap_peers: self.bootstrap_peers,
-        };
+        let peer_store = self.peer_store.clone();
+        let dialer = dial::Dial::new(self.bootstrap_peers, peer_store);
 
         tokio::spawn(async move {
             match dialer.start_dialing().await {
