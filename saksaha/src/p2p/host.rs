@@ -3,7 +3,9 @@ use super::{discovery::Disc, peer_op::PeerOp, peer_store::PeerStore};
 use crate::{common::SakResult, err_res, sync::Sync};
 use clap;
 use logger::log;
-use tokio::{sync::Mutex};
+use tokio::{sync::Mutex, task::JoinHandle};
+
+// type HostReturn =
 
 pub struct Host {
     rpc_port: usize,
@@ -30,7 +32,7 @@ impl Host {
 }
 
 impl Host {
-    pub async fn start(&self) -> SakResult<bool> {
+    pub async fn start(&self) -> SakResult<Vec<JoinHandle<SakResult<bool>>>> {
         log!(DEBUG, "Start host...\n");
 
         let peer_store = Arc::new(Mutex::new(PeerStore::new(10)));
@@ -42,11 +44,11 @@ impl Host {
             peer_store_clone,
         );
 
-        tokio::spawn(async move {
+        let disc_handle = tokio::spawn(async move {
             match disc.start().await {
-                Ok(_) => (),
+                Ok(_) => Ok(true),
                 Err(err) => {
-                    log!(DEBUG, "Error spawning disc, err: {}", err);
+                    Err(err)
                 }
             }
         });
@@ -56,15 +58,16 @@ impl Host {
             peer_store_clone,
         );
 
-        tokio::spawn(async move {
+        let peer_op_handle = tokio::spawn(async move {
             match peer_op.start().await {
-                Ok(_) => (),
+                Ok(_) => Ok(true),
                 Err(err) => {
-                    log!(DEBUG, "Error spawning disc, err: {}", err);
+                    log!(DEBUG, "Error spawning peer_op, err: {}", err);
+                    Err(err)
                 }
             }
         });
 
-        Ok(true)
+        Ok(vec!(disc_handle, peer_op_handle))
     }
 }

@@ -56,8 +56,8 @@ impl Listen {
 
                     (l, local_addr)
                 }
-                Err(_) => {
-                    return err_res!("Error start listeneing");
+                Err(err) => {
+                    return err_res!("Error start disc listening, err: {}", err);
                 }
             };
 

@@ -14,7 +14,7 @@ impl Listen {
         let listener = match TcpListener::bind(local_addr).await {
             Ok(l) => (l),
             Err(_) => {
-                return err_res!("Error start listeneing");
+                return err_res!("Error start peer_op listening");
             },
         };
 
