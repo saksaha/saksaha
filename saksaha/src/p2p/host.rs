@@ -1,16 +1,20 @@
 use std::sync::{Arc,};
-use super::{discovery::Disc, peer_op::PeerOp, peer_store::PeerStore};
-use crate::{common::SakResult, err_res, sync::Sync};
+use super::{
+    discovery::Disc,
+    peer_op::PeerOp,
+    peer_store::PeerStore,
+};
+use crate::{common::SakResult, err_res, node::task_manager::{Msg, MsgType, TaskManager}, sync::Sync};
 use clap;
+use futures::poll;
 use logger::log;
 use tokio::{sync::{Mutex, mpsc::Sender}, task::JoinHandle};
-
-// type HostReturn =
 
 pub struct Host {
     rpc_port: usize,
     disc_port: usize,
     bootstrap_peers: Option<Vec<String>>,
+    task_mng: Arc<TaskManager>,
 }
 
 impl Host {
@@ -20,11 +24,13 @@ impl Host {
         bootstrap_peers: Option<Vec<String>>,
         public_key: String,
         secret: String,
+        task_mng: Arc<TaskManager>,
     ) -> SakResult<Host> {
         let host = Host {
             rpc_port,
             disc_port,
             bootstrap_peers,
+            task_mng,
         };
 
         Ok(host)
@@ -32,24 +38,32 @@ impl Host {
 }
 
 impl Host {
-    pub async fn start(&self, tx: Sender<bool>) -> SakResult<()> {
+    pub async fn start(&self) {
         log!(DEBUG, "Start host...\n");
 
         let peer_store = Arc::new(Mutex::new(PeerStore::new(10)));
         let peer_store_clone = peer_store.clone();
 
+        let task_mng = self.task_mng.clone();
+
         let disc = Disc::new(
             self.disc_port,
             self.bootstrap_peers.to_owned(),
             peer_store_clone,
+            task_mng,
         );
 
         tokio::spawn(async move {
             match disc.start().await {
                 Ok(_) => Ok(true),
                 Err(err) => {
-                    println!("44444444444");
-                    tx.send(false).await;
+                    // let m = Msg {
+                    //     msg_type: MsgType::SetupFailure,
+                    //     msg: "power".into(),
+                    // };
+
+                    // let b = task_mng.send(m).await;
+                    // println!("11");
                     Err(err)
                 }
             }
@@ -68,7 +82,5 @@ impl Host {
                 }
             }
         });
-
-        Ok(())
     }
 }

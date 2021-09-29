@@ -1,49 +1,19 @@
+pub mod task_manager;
+
+use std::sync::Arc;
+
 use crate::{
     common::{Error, SakResult},
     err_res,
     p2p::host::Host,
     rpc::RPC,
 };
+
 use futures::{FutureExt, TryStreamExt, stream::FuturesUnordered};
 use logger::log;
 use tokio::{self, signal, sync::mpsc, task::JoinHandle};
+use task_manager::{TaskManager};
 
-pub struct Tasks {
-    pub unordered: FuturesUnordered<JoinHandle<Result<bool, Error>>>,
-}
-
-impl Tasks {
-    pub fn new() -> Tasks {
-        Tasks {
-            unordered: FuturesUnordered::new(),
-        }
-    }
-
-    pub fn push_all(&self, handles: Vec<JoinHandle<Result<bool, Error>>>) {
-        for h in handles.into_iter() {
-            self.unordered.push(h);
-        }
-    }
-
-    pub async fn join_all(self) {
-        for t in self.unordered.into_iter() {
-            match t.await {
-                Ok(t) => {
-                    if let Err(err) = t {
-                        println!("error: {}", err);
-                    }
-                }
-                Err(join_err) => {
-                    log!(
-                        DEBUG,
-                        "Error joining tasks, err: {}",
-                        join_err
-                    );
-                }
-            }
-        }
-    }
-}
 
 pub struct Node {
     rpc_port: usize,
@@ -90,18 +60,19 @@ impl Node {
         return 0;
     }
 
-    pub fn make_host(&self) -> SakResult<Host> {
+    pub fn make_host(&self, task_mng: Arc<TaskManager>) -> SakResult<Host> {
         let host = Host::new(
             self.rpc_port,
             self.disc_port,
             self.bootstrap_peers.to_owned(),
             self.public_key.to_owned(),
             self.secret.to_owned(),
+            task_mng,
         );
         host
     }
 
-    pub fn make_rpc(&self) -> SakResult<RPC> {
+    pub fn make_rpc(&self, task_mng: Arc<TaskManager>) -> SakResult<RPC> {
         let rpc = RPC::new();
         Ok(rpc)
     }
@@ -114,42 +85,40 @@ impl Node {
             .build()
         {
             Ok(r) => r.block_on(async {
-                let tasks = Tasks::new();
-                let (tx, mut rx) = mpsc::channel::<bool>(10);
+                let task_mng = Arc::new(TaskManager::new());
+                let task_mng_clone = task_mng.clone();
 
-                let host = match self.make_host() {
+                let host = match self.make_host(task_mng_clone) {
                     Ok(h) => h,
                     Err(err) => {
                         return err_res!("Error making host, err: {}", err);
                     }
                 };
 
-                let host_start_handles = match host.start(tx).await {
-                    Ok(h) => {
-                        println!("333443");
-                        h
-                    },
-                    Err(err) => {
+                host.start().await;
 
-                        println!("3333");
-                        return err_res!(
-                            "Error joining host start handles, err: {}",
-                            err
-                        );
-                    }
+                let task_mng_clone = task_mng.clone();
+
+                let rpc = match self.make_rpc(task_mng_clone) {
+                    Ok(r) => r,
+                    Err(err) => {
+                        log!(DEBUG, "Error starting rpc, err: {}", err);
+                        std::process::exit(1);
+                    },
                 };
 
-                loop {
-                    if let Some(r) = rx.recv().await {
-                        println!("555, {}", r);
-                    }
-                }
+                rpc.start().await;
 
-                // tasks.push_all(host_start_handles);
+                let task_mng_clone = task_mng.clone();
 
-                // tasks.join_all().await;
+                task_mng_clone.receive().await;
 
                 Node::wait_for_ctrl_p().await;
+
+                // tokio::select!
+                // join!
+
+
 
                 // for t in tasks.into_iter() {
                 //     match t.await {
