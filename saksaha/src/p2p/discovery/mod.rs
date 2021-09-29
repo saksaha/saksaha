@@ -3,7 +3,7 @@ mod listen;
 mod whoareyou;
 
 use self::listen::Listen;
-use super::peer_store::PeerStore;
+use super::{address::AddressBook, peer_store::PeerStore};
 use crate::{common::SakResult, err_res, node::task_manager::TaskManager};
 use logger::log;
 use std::sync::Arc;
@@ -23,6 +23,9 @@ impl Disc {
         peer_store: Arc<Mutex<PeerStore>>,
         task_mng: Arc<TaskManager>,
     ) -> Self {
+        let address_book = AddressBook::new();
+
+
         Disc {
             disc_port,
             bootstrap_peers,

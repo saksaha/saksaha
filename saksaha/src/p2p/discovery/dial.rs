@@ -17,7 +17,7 @@ impl Dial {
         peer_store: Arc<Mutex<PeerStore>>,
         disc_port: usize,
     ) -> Dial {
-        let default_peers = crate::default_bootstrap_peers!()
+        let default_peers = crate::default_bootstrap_urls!()
             .into_iter()
             .map(|s| s.to_string())
             .collect::<Vec<String>>();
@@ -85,7 +85,7 @@ impl Handler {
 }
 
 #[macro_export]
-macro_rules! default_bootstrap_peers {
+macro_rules! default_bootstrap_urls {
     () => {
         vec!["sak://041efae14ece202c@127.0.0.1:35518"]
     };
