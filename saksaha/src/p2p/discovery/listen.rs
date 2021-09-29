@@ -6,7 +6,7 @@ use crate::{
     p2p::peer_store::{Peer, PeerStore},
 };
 use logger::log;
-use std::sync::Arc;
+use std::sync::{Arc, mpsc::SendError};
 use tokio::{
     net::{TcpListener, TcpStream},
     sync::{Mutex, MutexGuard},
@@ -54,11 +54,22 @@ impl Listen {
                 let local_addr = match l.local_addr() {
                     Ok(a) => a,
                     Err(err) => {
-                        let msg =
-                            Msg::new(err.to_string(), MsgKind::SetupFailure);
-                        task_mng.send(msg).await;
+                        let msg = msg_err!(
+                            MsgKind::SetupFailure,
+                            "Error getting the local addr, disc listen, {}",
+                            err
+                        );
 
-                        return;
+                        if let Err(err) = task_mng.send(msg).await {
+                            log!(
+                                DEBUG,
+                                "Error sending a msg to task manager, err: {}",
+                                err
+                            );
+
+                            self.task_mng.shutdown_program();
+                        }
+                        unreachable!()
                     }
                 };
 
@@ -80,6 +91,12 @@ impl Listen {
                 match self.task_mng.send(msg).await {
                     Ok(_) => (),
                     Err(err) => {
+                        log!(
+                            DEBUG,
+                            "Error sending a msg to task manager, err: {}",
+                            err
+                        );
+
                         self.task_mng.shutdown_program();
                     }
                 }
