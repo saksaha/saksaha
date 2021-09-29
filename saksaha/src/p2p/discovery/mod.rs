@@ -31,67 +31,24 @@ impl Disc {
         }
     }
 
-    pub async fn start(self) -> SakResult<bool> {
+    pub async fn start(&self) {
         let peer_store = self.peer_store.clone();
-        let listen = listen::Listen::new(self.disc_port, peer_store);
+        let task_mng = self.task_mng.clone();
+
+        let listen = Listen::new(self.disc_port, peer_store, task_mng);
 
         tokio::spawn(async move {
-            match listen.start_listening().await {
-                Ok(_) => Ok(1),
-                Err(err) => {
-                    return err_res!(
-                        "Error start disc listening, err: {}",
-                        err
-                    );
-                }
-            }
+            listen.start_listening().await;
         });
 
         let peer_store = self.peer_store.clone();
-        let dialer = dial::Dial::new(self.bootstrap_peers, peer_store);
+        let dialer = dial::Dial::new(self.bootstrap_peers.to_owned(), peer_store);
 
         tokio::spawn(async move {
             match dialer.start_dialing().await {
                 Ok(_) => Ok(()),
                 Err(err) => {
                     return err_res!("Error start disc dialing, err: {}", err);
-                }
-            }
-        });
-
-        Ok(true)
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[tokio::test]
-    async fn test_create_new_disc() {
-        let peer_store = Arc::new(Mutex::new(PeerStore::new(10)));
-        let disc_port = 61232;
-        let bootstrap_peers = Some(vec![String::from("test")]);
-        let task_mng = Arc::new(TaskManager::new());
-        let disc = Disc::new(disc_port, bootstrap_peers, peer_store, task_mng);
-        let _result = match disc.start().await {
-            Ok(res) => assert!(res),
-            Err(_err) => {
-                panic!("Test Failed {}", _err);
-            }
-        };
-    }
-
-    #[tokio::test]
-    async fn test_start_listening() {
-        let peer_store = Arc::new(Mutex::new(PeerStore::new(12)));
-        let disc_port = 39450;
-        let listen = listen::Listen::new(disc_port, peer_store);
-        let _result = tokio::spawn(async move {
-            match listen.start_listening().await {
-                Ok(_) => (),
-                Err(_err) => {
-                    panic!("Test Failed {}", _err);
                 }
             }
         });

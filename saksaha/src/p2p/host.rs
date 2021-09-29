@@ -1,14 +1,18 @@
-use std::sync::{Arc,};
-use super::{
-    discovery::Disc,
-    peer_op::PeerOp,
-    peer_store::PeerStore,
+use super::{discovery::Disc, peer_op::PeerOp, peer_store::PeerStore};
+use crate::{
+    common::SakResult,
+    err_res,
+    node::task_manager::{Msg, MsgKind, TaskManager},
+    sync::Sync,
 };
-use crate::{common::SakResult, err_res, node::task_manager::{Msg, MsgType, TaskManager}, sync::Sync};
 use clap;
 use futures::poll;
 use logger::log;
-use tokio::{sync::{Mutex, mpsc::Sender}, task::JoinHandle};
+use std::sync::Arc;
+use tokio::{
+    sync::{mpsc::Sender, Mutex},
+    task::JoinHandle,
+};
 
 pub struct Host {
     rpc_port: usize,
@@ -54,33 +58,14 @@ impl Host {
         );
 
         tokio::spawn(async move {
-            match disc.start().await {
-                Ok(_) => Ok(true),
-                Err(err) => {
-                    // let m = Msg {
-                    //     msg_type: MsgType::SetupFailure,
-                    //     msg: "power".into(),
-                    // };
-
-                    // let b = task_mng.send(m).await;
-                    // println!("11");
-                    Err(err)
-                }
-            }
+            disc.start().await;
         });
 
         let peer_store_clone = peer_store.clone();
-        let peer_op = PeerOp::new(
-            peer_store_clone,
-        );
+        let peer_op = PeerOp::new(peer_store_clone);
 
         tokio::spawn(async move {
-            match peer_op.start().await {
-                Ok(_) => Ok(true),
-                Err(err) => {
-                    Err(err)
-                }
-            }
+            peer_op.start().await;
         });
     }
 }

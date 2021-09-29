@@ -42,7 +42,7 @@ impl Node {
         Ok(node)
     }
 
-    pub async fn wait_for_ctrl_p() -> usize {
+    pub async fn wait_for_ctrl_p() {
         match signal::ctrl_c().await {
             Ok(_) => {
                 log!(DEBUG, "ctrl+c received. Tearing down the application.");
@@ -56,8 +56,6 @@ impl Node {
                 // );
             }
         };
-
-        return 0;
     }
 
     pub fn make_host(&self, task_mng: Arc<TaskManager>) -> SakResult<Host> {
@@ -111,9 +109,22 @@ impl Node {
 
                 let task_mng_clone = task_mng.clone();
 
-                task_mng_clone.receive().await;
+                println!("12");
 
-                Node::wait_for_ctrl_p().await;
+                tokio::select!(
+                    v = task_mng_clone.receive() => {
+                        println!("55555555");
+                    },
+                    _ = Node::wait_for_ctrl_p() => {
+                        unreachable!();
+                    },
+                );
+
+                println!("!1");
+
+                // task_mng_clone.receive().await;
+
+                // Node::wait_for_ctrl_p().await;
 
                 // tokio::select!
                 // join!
