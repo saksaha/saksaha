@@ -1,19 +1,15 @@
 pub mod task_manager;
 
-use std::sync::Arc;
-
 use crate::{
     common::{Error, SakResult},
     err_res,
     p2p::host::Host,
     rpc::RPC,
 };
-
-use futures::{FutureExt, TryStreamExt, stream::FuturesUnordered};
 use logger::log;
+use std::sync::Arc;
+use task_manager::{MsgKind, TaskManager};
 use tokio::{self, signal, sync::mpsc, task::JoinHandle};
-use task_manager::{TaskManager};
-
 
 pub struct Node {
     rpc_port: usize,
@@ -42,20 +38,10 @@ impl Node {
         Ok(node)
     }
 
-    pub async fn wait_for_ctrl_p() {
-        match signal::ctrl_c().await {
-            Ok(_) => {
-                log!(DEBUG, "ctrl+c received. Tearing down the application.");
+    pub fn shutdown(&self) {
+        println!("shut down");
 
-                std::process::exit(1);
-            }
-            Err(err) => {
-                // return err_res!(
-                //     "Error setting up ctrl+k handler, err: {}",
-                //     err
-                // );
-            }
-        };
+        std::process::exit(1);
     }
 
     pub fn make_host(&self, task_mng: Arc<TaskManager>) -> SakResult<Host> {
@@ -71,7 +57,7 @@ impl Node {
     }
 
     pub fn make_rpc(&self, task_mng: Arc<TaskManager>) -> SakResult<RPC> {
-        let rpc = RPC::new();
+        let rpc = RPC::new(task_mng);
         Ok(rpc)
     }
 
@@ -93,100 +79,42 @@ impl Node {
                     }
                 };
 
-                host.start().await;
-
                 let task_mng_clone = task_mng.clone();
 
                 let rpc = match self.make_rpc(task_mng_clone) {
                     Ok(r) => r,
                     Err(err) => {
-                        log!(DEBUG, "Error starting rpc, err: {}", err);
-                        std::process::exit(1);
-                    },
+                        return err_res!("Error making rpc, err: {}", err);
+                    }
                 };
 
-                rpc.start().await;
-
-                let task_mng_clone = task_mng.clone();
-
-                println!("12");
+                tokio::join!(host.start(), rpc.start(),);
 
                 tokio::select!(
-                    v = task_mng_clone.receive() => {
-                        println!("55555555");
+                    msg_kind = task_mng.start_receiving() => {
+                        if let MsgKind::SetupFailure = msg_kind {
+                            self.shutdown();
+                        }
                     },
-                    _ = Node::wait_for_ctrl_p() => {
-                        unreachable!();
+                    c = signal::ctrl_c() => {
+                        match c {
+                            Ok(_) => {
+                                log!(DEBUG, "ctrl+k is pressed.\n");
+                                self.shutdown();
+                            }
+                            Err(err) => {
+                                log!(
+                                    DEBUG,
+                                    "Unexpected error while waiting for \
+                                        ctrl+p, err: {}",
+                                    err
+                                );
+
+                                self.shutdown();
+                            }
+                        }
                     },
                 );
-
-                println!("!1");
-
-                // task_mng_clone.receive().await;
-
-                // Node::wait_for_ctrl_p().await;
-
-                // tokio::select!
-                // join!
-
-
-
-                // for t in tasks.into_iter() {
-                //     match t.await {
-                //         Ok(t) => {
-                //             if let Err(err) = t {
-                //                 println!("error: {}", err);
-                //             }
-                //         }
-                //         Err(join_err) => {
-                //             log!(
-                //                 DEBUG,
-                //                 "Error joining tasks, err: {}",
-                //                 join_err
-                //             );
-                //         }
-                //     }
-                // }
-
-                // let a = futures::future::join_all(host_start_handles).await;
-                // println!("1313");
-
-                // futures.next().await;
-
-                // match host.start().await {
-                //     Ok(_) => (),
-                //     Err(err) => {
-                //         log!(DEBUG, "Error starting host, err: {}", err);
-                //         std::process::exit(1);
-                //     }
-                // };
-
-                // let rpc = match self.make_rpc() {
-                //     Ok(r) => r,
-                //     Err(err) => {
-                //         log!(DEBUG, "Error starting rpc, err: {}", err);
-                //         std::process::exit(1);
-                //     },
-                // };
-
-                // rpc.start().await;
-
-                // match signal::ctrl_c().await {
-                //     Ok(_) => {
-                //         log!(
-                //             DEBUG,
-                //             "ctrl+c received. Tearing down the application."
-                //         );
-
-                //         std::process::exit(1);
-                //     }
-                //     Err(err) => {
-                //         return err_res!(
-                //             "Error setting up ctrl+k handler, err: {}",
-                //             err
-                //         );
-                //     }
-                // };
 
                 Ok(true)
             }),

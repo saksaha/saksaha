@@ -1,7 +1,7 @@
 use super::whoareyou::WhoAreYou;
 use crate::{
-    common::{SakResult},
-    err_res, msg_err,
+    common::SakResult,
+    err_res, msg_err, msg_errd,
     node::task_manager::{Msg, MsgKind, TaskManager},
     p2p::peer_store::{Peer, PeerStore},
 };
@@ -65,14 +65,24 @@ impl Listen {
                 (l, local_addr)
             }
             Err(err) => {
-                log!(DEBUG, "Error getting the endpoint, disc listen, {}", err);
+                log!(
+                    DEBUG,
+                    "Error getting the endpoint, disc listen, {}\n",
+                    err
+                );
 
                 let msg = msg_err!(
                     MsgKind::SetupFailure,
                     "Error getting the endpoint, disc listen, {}",
                     err
                 );
-                self.task_mng.send(msg).await;
+
+                match self.task_mng.send(msg).await {
+                    Ok(_) => (),
+                    Err(err) => {
+                        self.task_mng.shutdown_program();
+                    }
+                }
 
                 return;
             }
@@ -104,8 +114,8 @@ impl Listen {
             let (stream, addr) = match tcp_listener.accept().await {
                 Ok(res) => res,
                 Err(err) => {
-                    return;
-                    // return err_res!("Error accepting a request, err: {}", err);
+                    log!(DEBUG, "Error accepting request, err: {}", err);
+                    continue;
                 }
             };
 
