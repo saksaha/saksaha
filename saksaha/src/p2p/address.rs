@@ -1,6 +1,6 @@
 use std::collections::LinkedList;
 
-use crate::common::SakResult;
+use crate::{common::SakResult, err_res};
 
 pub struct Address {
     peer_id: String,
@@ -9,31 +9,40 @@ pub struct Address {
 
 impl Address {
     pub fn parse(url: String) -> SakResult<Address> {
-        let a = url.split_at(5);
-        let endpoint: Vec<&str> = url.split("@").collect();
-        let endpoint = match endpoint.get(1) {
-            Some(e) => e,
-            None => {
-                log!(
-                    DEBUG,
-                    "Cannot get endpoint out of url. \
-                            Something might be wrong\n"
-                );
-                continue;
+        let (peer_id, endpoint) = {
+            match url.get(6..) {
+                Some(u) => match u.split_once('@') {
+                    Some((peer_id, endpoint)) => {
+                        (peer_id.to_string(), endpoint.to_string())
+                    }
+                    None => {
+                        return err_res!("url is not valid, url: {}", url);
+                    }
+                },
+                None => {
+                    return err_res!("url might be too short, url: {}", url);
+                }
             }
         };
+
+        let addr = Address {
+            peer_id,
+            endpoint,
+        };
+
+        Ok(addr)
     }
 }
 
 pub struct AddressBook {
-    pub addrs: LinkedList<Address>,
+    pub addrs: Vec<Address>,
 }
 
 impl AddressBook {
     pub fn new(bootstrap_urls: Option<Vec<String>>) -> SakResult<AddressBook> {
         let default_urls = crate::default_bootstrap_urls!()
             .into_iter()
-            .map(|s| s.to_string())
+            .map(|url| url.to_string())
             .collect::<Vec<String>>();
 
         let bootstrap_urls = match bootstrap_urls {
@@ -43,10 +52,15 @@ impl AddressBook {
 
         let node_urls = [default_urls, bootstrap_urls].concat();
 
-        let addrs = LinkedList::new();
-        // addrs.push_back(1);
+        let mut addrs = Vec::new();
 
-        for url in node_urls {}
+        for url in node_urls {
+            if let Ok(addr) = Address::parse(url) {
+                addrs.push(addr);
+            }
+        }
+
+        let b=  addrs.iter().next().unwrap();
 
         // let address_book: Vec<String> = match bootstrap_urls {
         //     Some(b) => b,
