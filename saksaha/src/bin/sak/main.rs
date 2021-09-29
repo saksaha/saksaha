@@ -6,7 +6,7 @@ struct Args {
     config: Option<String>,
     rpc_port: usize,
     disc_port: usize,
-    bootstrap_peers: Option<Vec<String>>,
+    bootstrap_urls: Option<Vec<String>>,
 }
 
 fn get_args() -> SakResult<Args> {
@@ -26,8 +26,8 @@ fn get_args() -> SakResult<Args> {
                 ),
         )
         .arg(
-            Arg::new("bootstrap_peers")
-                .long("bootstrap-peers")
+            Arg::new("bootstrap_urls")
+                .long("bootstrap-urls")
                 .value_name("ENDPOINT")
                 .use_delimiter(true)
                 .about("Bootstrap peers to start discovery for"),
@@ -71,7 +71,7 @@ fn get_args() -> SakResult<Args> {
         None => 0,
     };
 
-    let bootstrap_peers = match flags.values_of("bootstrap_peers") {
+    let bootstrap_urls = match flags.values_of("bootstrap_urls") {
         Some(b) => Some(b.map(str::to_string).collect()),
         None => None,
     };
@@ -80,7 +80,7 @@ fn get_args() -> SakResult<Args> {
         config,
         rpc_port,
         disc_port,
-        bootstrap_peers,
+        bootstrap_urls,
     })
 }
 
@@ -98,7 +98,7 @@ fn main() {
     let node = match Node::new(
         args.rpc_port,
         args.disc_port,
-        args.bootstrap_peers,
+        args.bootstrap_urls,
         pconf.p2p.public_key,
         pconf.p2p.secret,
     ) {

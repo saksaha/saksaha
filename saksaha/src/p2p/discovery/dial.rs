@@ -13,24 +13,9 @@ pub struct Dial {
 
 impl Dial {
     pub fn new(
-        bootstrap_peers: Option<Vec<String>>,
         peer_store: Arc<Mutex<PeerStore>>,
         disc_port: usize,
     ) -> Dial {
-        let default_peers = crate::default_bootstrap_urls!()
-            .into_iter()
-            .map(|s| s.to_string())
-            .collect::<Vec<String>>();
-
-        let address_book = match bootstrap_peers {
-            Some(b) => b,
-            None => Vec::new(),
-        };
-
-        let address_book = [default_peers, address_book].concat();
-        for (idx, addr) in address_book.iter().enumerate() {
-            log!(DEBUG, "address book [{}]: {}\n", idx, addr);
-        }
 
         Dial {
             address_book,
@@ -82,11 +67,4 @@ impl Handler {
     pub fn run(&self) {
 
     }
-}
-
-#[macro_export]
-macro_rules! default_bootstrap_urls {
-    () => {
-        vec!["sak://041efae14ece202c@127.0.0.1:35518"]
-    };
 }

@@ -14,7 +14,7 @@ use tokio::{self, signal, sync::mpsc, task::JoinHandle};
 pub struct Node {
     rpc_port: usize,
     disc_port: usize,
-    bootstrap_peers: Option<Vec<String>>,
+    bootstrap_urls: Option<Vec<String>>,
     public_key: String,
     secret: String,
 }
@@ -23,14 +23,14 @@ impl Node {
     pub fn new(
         rpc_port: usize,
         disc_port: usize,
-        bootstrap_peers: Option<Vec<String>>,
+        bootstrap_urls: Option<Vec<String>>,
         public_key: String,
         secret: String,
     ) -> SakResult<Node> {
         let node = Node {
             rpc_port,
             disc_port,
-            bootstrap_peers,
+            bootstrap_urls,
             public_key,
             secret,
         };
@@ -48,7 +48,7 @@ impl Node {
         let host = Host::new(
             self.rpc_port,
             self.disc_port,
-            self.bootstrap_peers.to_owned(),
+            self.bootstrap_urls.to_owned(),
             self.public_key.to_owned(),
             self.secret.to_owned(),
             task_mng,

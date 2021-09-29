@@ -11,7 +11,6 @@ use tokio::sync::Mutex;
 
 pub struct Disc {
     disc_port: usize,
-    bootstrap_peers: Option<Vec<String>>,
     peer_store: Arc<Mutex<PeerStore>>,
     task_mng: Arc<TaskManager>,
 }
@@ -19,16 +18,24 @@ pub struct Disc {
 impl Disc {
     pub fn new(
         disc_port: usize,
-        bootstrap_peers: Option<Vec<String>>,
+        bootstrap_urls: Option<Vec<String>>,
         peer_store: Arc<Mutex<PeerStore>>,
         task_mng: Arc<TaskManager>,
     ) -> Self {
-        let address_book = AddressBook::new();
+        let address_book = AddressBook::new(bootstrap_urls);
 
+        // let address_book = match bootstrap_urls {
+        //     Some(b) => b,
+        //     None => Vec::new(),
+        // };
+
+        // let address_book = [default_urls, address_book].concat();
+        // for (idx, addr) in address_book.iter().enumerate() {
+        //     log!(DEBUG, "address book [{}]: {}\n", idx, addr);
+        // }
 
         Disc {
             disc_port,
-            bootstrap_peers,
             peer_store,
             task_mng,
         }
@@ -46,7 +53,7 @@ impl Disc {
 
         let peer_store = self.peer_store.clone();
         let dialer = dial::Dial::new(
-            self.bootstrap_peers.to_owned(),
+            // self.bootstrap_peers.to_owned(),
             peer_store,
             self.disc_port,
         );
