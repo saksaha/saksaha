@@ -19,7 +19,7 @@ impl PeerOp {
 }
 
 impl PeerOp {
-    pub async fn start(self) -> SakResult<bool> {
+    pub async fn start(self) {
         let listen = listen::Listen {};
 
         tokio::spawn(async move {
@@ -47,7 +47,5 @@ impl PeerOp {
                 }
             }
         });
-
-        Ok(true)
     }
 }

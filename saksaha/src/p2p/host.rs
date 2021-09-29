@@ -57,7 +57,7 @@ impl Host {
             task_mng,
         );
 
-        let f = tokio::spawn(async move {
+        tokio::spawn(async move {
             disc.start().await;
         });
 
@@ -67,8 +67,5 @@ impl Host {
         tokio::spawn(async move {
             peer_op.start().await;
         });
-
-        println!("22");
-
     }
 }

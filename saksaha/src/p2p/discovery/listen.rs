@@ -182,14 +182,4 @@ mod test {
             },
         }
     }
-
-    #[tokio::test]
-    async fn test_start_listening() {
-        // let peer_store = Arc::new(Mutex::new(PeerStore::new(12)));
-        // let disc_port = 39450;
-        // let task_mng = Arc::new(TaskManager::new());
-
-        // let listen = listen::Listen::new(disc_port, peer_store, task_mng);
-        // listen.start_listening().await;
-    }
 }
