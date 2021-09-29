@@ -10,6 +10,7 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 
 pub struct Disc {
+    address_book: Arc<AddressBook>,
     disc_port: usize,
     peer_store: Arc<Mutex<PeerStore>>,
     task_mng: Arc<TaskManager>,
@@ -22,19 +23,10 @@ impl Disc {
         peer_store: Arc<Mutex<PeerStore>>,
         task_mng: Arc<TaskManager>,
     ) -> Self {
-        let address_book = AddressBook::new(bootstrap_urls);
-
-        // let address_book = match bootstrap_urls {
-        //     Some(b) => b,
-        //     None => Vec::new(),
-        // };
-
-        // let address_book = [default_urls, address_book].concat();
-        // for (idx, addr) in address_book.iter().enumerate() {
-        //     log!(DEBUG, "address book [{}]: {}\n", idx, addr);
-        // }
+        let address_book = Arc::new(AddressBook::new(bootstrap_urls));
 
         Disc {
+            address_book,
             disc_port,
             peer_store,
             task_mng,
@@ -52,8 +44,9 @@ impl Disc {
         });
 
         let peer_store = self.peer_store.clone();
+        let address_book = self.address_book.clone();
         let dialer = dial::Dial::new(
-            // self.bootstrap_peers.to_owned(),
+            address_book,
             peer_store,
             self.disc_port,
         );

@@ -1,24 +1,28 @@
 use std::sync::Arc;
 
 use super::Disc;
-use crate::{common::SakResult, err_res, p2p::peer_store::PeerStore};
+use crate::{
+    common::SakResult,
+    err_res,
+    p2p::{address::AddressBook, peer_store::PeerStore},
+};
 use logger::log;
 use tokio::{net::TcpStream, sync::Mutex};
 
 pub struct Dial {
-    // pub address_book: Vec<String>,
+    pub address_book: Arc<AddressBook>,
     pub peer_store: Arc<Mutex<PeerStore>>,
     disc_port: usize,
 }
 
 impl Dial {
     pub fn new(
+        address_book: Arc<AddressBook>,
         peer_store: Arc<Mutex<PeerStore>>,
         disc_port: usize,
     ) -> Dial {
-
         Dial {
-            // address_book,
+            address_book,
             peer_store,
             disc_port,
         }
@@ -64,7 +68,5 @@ impl Handler {
         Handler {}
     }
 
-    pub fn run(&self) {
-
-    }
+    pub fn run(&self) {}
 }

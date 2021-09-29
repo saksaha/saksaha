@@ -5,8 +5,6 @@ use crate::{
     node::task_manager::{Msg, MsgKind, TaskManager},
     sync::Sync,
 };
-use clap;
-use futures::poll;
 use logger::log;
 use std::sync::Arc;
 use tokio::{

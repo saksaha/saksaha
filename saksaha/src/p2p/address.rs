@@ -36,7 +36,7 @@ pub struct AddressBook {
 }
 
 impl AddressBook {
-    pub fn new(bootstrap_urls: Option<Vec<String>>) -> SakResult<AddressBook> {
+    pub fn new(bootstrap_urls: Option<Vec<String>>) -> AddressBook {
         let default_urls = crate::default_bootstrap_urls!()
             .into_iter()
             .map(|url| url.to_string())
@@ -72,7 +72,7 @@ impl AddressBook {
         log!(DEBUG, "<<<<<<<<<<<<<<<<<<<<<<\n");
 
         let book = AddressBook { addrs };
-        Ok(book)
+        book
     }
 }
 
