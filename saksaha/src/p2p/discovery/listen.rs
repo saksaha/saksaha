@@ -1,9 +1,13 @@
 use super::whoareyou::WhoAreYou;
-use crate::{common::{testenv::run_test, SakResult}, err_res, msg_err, node::task_manager::{Msg, MsgKind, TaskManager}, p2p::peer_store::{Peer, PeerStore}};
+use crate::{
+    common::{SakResult},
+    err_res, msg_err,
+    node::task_manager::{Msg, MsgKind, TaskManager},
+    p2p::peer_store::{Peer, PeerStore},
+};
 use logger::log;
 use std::sync::Arc;
 use tokio::{
-    io::{AsyncReadExt, AsyncWriteExt, BufWriter},
     net::{TcpListener, TcpStream},
     sync::{Mutex, MutexGuard},
 };
@@ -51,7 +55,7 @@ impl Listen {
                     Ok(a) => a,
                     Err(err) => {
                         let msg =
-                        Msg::new(err.to_string(), MsgKind::SetupFailure);
+                            Msg::new(err.to_string(), MsgKind::SetupFailure);
                         task_mng.send(msg).await;
 
                         return;
@@ -61,11 +65,15 @@ impl Listen {
                 (l, local_addr)
             }
             Err(err) => {
-                println!("ee");
-                let msg = msg_err!(MsgKind::SetupFailure, "Err1, {}", err);
+                log!(DEBUG, "Error getting the endpoint, disc listen, {}", err);
+
+                let msg = msg_err!(
+                    MsgKind::SetupFailure,
+                    "Error getting the endpoint, disc listen, {}",
+                    err
+                );
                 self.task_mng.send(msg).await;
 
-                println!("ee2");
                 return;
             }
         };
@@ -77,6 +85,8 @@ impl Listen {
         );
 
         self.run_loop(tcp_listener).await;
+
+        unreachable!();
     }
 
     pub async fn run_loop(&self, tcp_listener: TcpListener) {
@@ -135,61 +145,32 @@ mod test {
 
     #[tokio::test]
     async fn test_create_new_disc() {
-        println!("333333333");
-
         let peer_store = Arc::new(Mutex::new(PeerStore::new(10)));
         let task_mng = Arc::new(TaskManager::new());
 
         let disc_port = 13131;
-        let listen = Listen::new(disc_port, peer_store.clone(), task_mng.clone());
-
-        let listen2 = Listen::new(disc_port, peer_store.clone(), task_mng.clone());
-
-        let h1 = tokio::spawn(async move {
-            task_mng.clone().receive().await;
-            println!("h1");
-        });
+        let listen =
+            Listen::new(disc_port, peer_store.clone(), task_mng.clone());
+        let listen2 =
+            Listen::new(disc_port, peer_store.clone(), task_mng.clone());
 
         let h2 = tokio::spawn(async move {
             listen.start_listening().await;
-
-            println!("h2");
+            println!("h3");
         });
 
         let h3 = tokio::spawn(async move {
             listen2.start_listening().await;
-            println!("h3");
+            return true;
         });
 
-        println!("#33");
-
-
-
-        // tokio::select!(
-        //     (_) = h1 => {
-        //         println!("h1");
-        //     },
-        //     (_) = h2 => {
-        //         println!("h2");
-        //     },
-        //     (_) = task_mng.clone().receive() => {
-        //         println!("receive");
-        //     }
-        // );
-
-        // let queue = task_mng.msg_queue.lock().await;
-
-
-        // for elem in queue.iter() {
-        //     println!("11, {}", elem.label);
-        // }
-
-        println!("4444");
-
-        // task_mng.receive().await;
-
-
-        // succeed
+        tokio::select! {
+            _ = h2 => (),
+            res = h3 => {
+                assert!(res.unwrap(),
+                    "Listen should fail while attempting to use the taken port")
+            },
+        }
     }
 
     #[tokio::test]
