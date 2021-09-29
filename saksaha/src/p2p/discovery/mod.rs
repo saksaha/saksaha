@@ -42,15 +42,14 @@ impl Disc {
         });
 
         let peer_store = self.peer_store.clone();
-        let dialer = dial::Dial::new(self.bootstrap_peers.to_owned(), peer_store);
+        let dialer = dial::Dial::new(
+            self.bootstrap_peers.to_owned(),
+            peer_store,
+            self.disc_port,
+        );
 
         tokio::spawn(async move {
-            match dialer.start_dialing().await {
-                Ok(_) => Ok(()),
-                Err(err) => {
-                    return err_res!("Error start disc dialing, err: {}", err);
-                }
-            }
+            dialer.start_dialing().await;
         });
     }
 }
