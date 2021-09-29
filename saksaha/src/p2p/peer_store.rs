@@ -55,48 +55,6 @@ impl PeerStore {
 
         None
     }
-
-    //
-    pub async fn take_empty_slot<F>(&self, callback: F) -> SakResult<bool>
-    where
-        F: for<'b> Fn(&'b mut Peer) -> futures::future::BoxFuture<'b, ()>,
-        // F: Fn() -> () + Send + 'static,
-        // Fut: Future<Output = bool>,
-        // C: Fn(&'a Peer) -> Peer
-    {
-        println!("333");
-        let cap = self.capacity;
-
-        // for i in 0..cap {
-        //     let idx = self.curr_idx + i % cap;
-        //     let peer = match self.slots.get(idx) {
-        //         Some(p) => p,
-        //         None => {
-        //             return err_res!(
-        //                 "Error getting peer in the slot, \
-        //                 it may have been accidentally removed"
-        //             );
-        //         }
-        //     };
-
-        //     let mut peer = match peer.try_lock() {
-        //         Ok(p) => {
-        //             log!(DEBUG, "Acquired a peer, at idx: {}\n", idx);
-        //             p
-        //         }
-        //         Err(_) => {
-        //             continue;
-        //         }
-        //     };
-
-        //     callback(&mut peer).await;
-
-        //     println!("44: {}", peer.i);
-        //     return Ok(true);
-        // }
-
-        Ok(false)
-    }
 }
 
 #[derive(Debug)]
