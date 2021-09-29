@@ -77,7 +77,7 @@ mod test {
         let _result = match disc.start().await {
             Ok(res) => assert!(res),
             Err(_err) => {
-                panic!("Test Failed");
+                panic!("Test Failed {}", _err);
             }
         };
     }
@@ -85,19 +85,15 @@ mod test {
     #[tokio::test]
     async fn test_start_listening() {
         let peer_store = Arc::new(Mutex::new(PeerStore::new(12)));
-        let disc_port = 39442;
+        let disc_port = 39450;
         let listen = listen::Listen::new(disc_port, peer_store);
-        let listen_handle = tokio::spawn(async move {
+        let _result = tokio::spawn(async move {
             match listen.start_listening().await {
-                Ok(_) => Ok(1),
-                Err(err) => {
-                    return err_res!(
-                        "Error start disc listening, err: {}",
-                        err
-                    );
+                Ok(_) => (),
+                Err(_err) => {
+                    panic!("Test Failed {}", _err);
                 }
             }
         });
-        assert!(listen_handle.await.unwrap().is_ok());
     }
 }

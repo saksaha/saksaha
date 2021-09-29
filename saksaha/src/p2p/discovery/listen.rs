@@ -39,6 +39,7 @@ impl Listen {
 
     pub async fn start_listening(&self) -> SakResult<bool> {
         let local_addr = format!("127.0.0.1:{}", self.disc_port);
+        println!("77777 {}", self.disc_port);
 
         let (tcp_listener, local_addr) =
             match TcpListener::bind(local_addr).await {
@@ -57,6 +58,7 @@ impl Listen {
                     (l, local_addr)
                 }
                 Err(err) => {
+                    println!("66666{}", err);
                     return err_res!("Error start disc listening, err: {}", err);
                 }
             };
