@@ -1,6 +1,6 @@
-use std::collections::LinkedList;
-
 use crate::{common::SakResult, err_res};
+use logger::log;
+use std::collections::LinkedList;
 
 pub struct Address {
     peer_id: String,
@@ -25,10 +25,7 @@ impl Address {
             }
         };
 
-        let addr = Address {
-            peer_id,
-            endpoint,
-        };
+        let addr = Address { peer_id, endpoint };
 
         Ok(addr)
     }
@@ -53,26 +50,28 @@ impl AddressBook {
         let node_urls = [default_urls, bootstrap_urls].concat();
 
         let mut addrs = Vec::new();
+        let mut count = 0;
 
+        log!(DEBUG, ">>>>>>>>>>>>>>>>>>>>>>\n");
+        log!(DEBUG, "Address book\n");
         for url in node_urls {
             if let Ok(addr) = Address::parse(url) {
+                log!(
+                    DEBUG,
+                    "Address book [{}]: {} @ {}\n",
+                    count,
+                    addr.peer_id,
+                    addr.endpoint
+                );
                 addrs.push(addr);
+                count += 1;
             }
         }
 
-        let b=  addrs.iter().next().unwrap();
-
-        // let address_book: Vec<String> = match bootstrap_urls {
-        //     Some(b) => b,
-        //     None => vec!(),
-        // };
-
-        // for (idx, addr) in address_book.iter().enumerate() {
-        //     log!(DEBUG, "address book [{}]: {}\n", idx, addr);
-        // }
+        log!(DEBUG, "Address book size: {}\n", count);
+        log!(DEBUG, "<<<<<<<<<<<<<<<<<<<<<<\n");
 
         let book = AddressBook { addrs };
-
         Ok(book)
     }
 }
