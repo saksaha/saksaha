@@ -1,10 +1,12 @@
 use crate::{common::SakResult, err_res};
 use logger::log;
-use std::{collections::LinkedList, sync::{Arc, Mutex}};
+use tokio::sync::Mutex;
+use std::{collections::LinkedList, sync::{Arc,}};
 
+#[derive(Debug)]
 pub struct Address {
-    peer_id: String,
-    endpoint: String,
+    pub peer_id: String,
+    pub endpoint: String,
 }
 
 impl Address {
@@ -79,19 +81,21 @@ impl AddressBook {
         book
     }
 
-    pub fn next(&self) -> Option<Arc<Mutex<Address>>> {
-        let addrs = self.addrs.clone();
-        let addrs = addrs.lock().unwrap();
-        let mut idx = self.curr_idx.lock().unwrap();
+    pub async fn next(&self) -> Option<(Arc<Mutex<Address>>, usize)> {
+        let addrs = &self.addrs;
+        let addrs = addrs.lock().await;
+        let mut idx = self.curr_idx.lock().await;
 
         if let Some(a) = addrs.get(*idx + 1) {
+            let p = Some((a.clone(), idx.to_owned()));
             *idx += 1;
-            return Some(a.clone())
+            return p;
         } else {
             *idx = 0;
-            match addrs.get(0) {
+            match addrs.get(*idx) {
                 Some(a) => {
-                    return Some(a.clone());
+                    let p = Some((a.clone(), idx.to_owned()));
+                    return p;
                 },
                 None => {
                     return None;
@@ -99,11 +103,28 @@ impl AddressBook {
             }
         };
     }
+
+    pub async fn remove(&self, idx: usize) -> SakResult<Arc<Mutex<Address>>> {
+        let addrs = self.addrs.clone();
+        let mut addrs = addrs.lock().await;
+
+        println!("remove: {}", idx);
+
+        if idx <= addrs.len() {
+            let addr = addrs.remove(idx);
+            return Ok(addr);
+        } else {
+            return err_res!("Index out of bounds, idx:{}", idx);
+        }
+    }
 }
 
 #[macro_export]
 macro_rules! default_bootstrap_urls {
     () => {
-        vec!["sak://041efae14ece202c@127.0.0.1:35518"]
+        vec![
+            "sak://041efae14ece202c@127.0.0.1:35518",
+            // "sak://041efae14ece202c@127.0.0.1:35519"
+        ]
     };
 }

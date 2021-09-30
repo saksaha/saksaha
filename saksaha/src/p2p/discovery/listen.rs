@@ -14,7 +14,7 @@ use tokio::{
 
 pub struct Listen {
     disc_port: usize,
-    peer_store: Arc<Mutex<PeerStore>>,
+    peer_store: Arc<PeerStore>,
     task_mng: Arc<TaskManager>,
 }
 
@@ -33,7 +33,7 @@ impl<'a> Handler<'a> {
 impl Listen {
     pub fn new(
         disc_port: usize,
-        peer_store: Arc<Mutex<PeerStore>>,
+        peer_store: Arc<PeerStore>,
         task_mng: Arc<TaskManager>,
     ) -> Listen {
         Listen {
@@ -118,50 +118,50 @@ impl Listen {
 
     pub async fn run_loop(&self, tcp_listener: TcpListener) {
         loop {
-            let mut peer_store = self.peer_store.lock().await;
+            // let mut peer_store = self.peer_store.lock().await;
 
-            let idx = match peer_store.reserve_slot() {
-                Some(i) => i,
-                None => {
-                    // TODO: need to sleep for a while until making new attempts
-                    continue;
-                }
-            };
+            // let idx = match peer_store.reserve_slot() {
+            //     Some(i) => i,
+            //     None => {
+            //         // TODO: need to sleep for a while until making new attempts
+            //         continue;
+            //     }
+            // };
 
-            let (stream, addr) = match tcp_listener.accept().await {
-                Ok(res) => res,
-                Err(err) => {
-                    log!(DEBUG, "Error accepting request, err: {}", err);
-                    continue;
-                }
-            };
+            // let (stream, addr) = match tcp_listener.accept().await {
+            //     Ok(res) => res,
+            //     Err(err) => {
+            //         log!(DEBUG, "Error accepting request, err: {}", err);
+            //         continue;
+            //     }
+            // };
 
-            log!(DEBUG, "Accepted incoming request, addr: {}\n", addr);
+            // log!(DEBUG, "Accepted incoming request, addr: {}\n", addr);
 
-            let peer_store = self.peer_store.clone();
+            // let peer_store = self.peer_store.clone();
 
-            tokio::spawn(async move {
-                let peer_store = peer_store.lock().await;
+            // tokio::spawn(async move {
+            //     let peer_store = peer_store.lock().await;
 
-                let peer = if let Some(p) = peer_store.slots.get(idx) {
-                    if let Ok(p) = p.try_lock() {
-                        p
-                    } else {
-                        log!(
-                            DEBUG,
-                            "Error getting mutex, something \
-                            might be wrong, idx: {}",
-                            idx
-                        );
-                        return;
-                    }
-                } else {
-                    return;
-                };
+            //     let peer = if let Some(p) = peer_store.slots.get(idx) {
+            //         if let Ok(p) = p.try_lock() {
+            //             p
+            //         } else {
+            //             log!(
+            //                 DEBUG,
+            //                 "Error getting mutex, something \
+            //                 might be wrong, idx: {}",
+            //                 idx
+            //             );
+            //             return;
+            //         }
+            //     } else {
+            //         return;
+            //     };
 
-                let mut h = Handler { stream, peer };
-                h.run().await;
-            });
+            //     let mut h = Handler { stream, peer };
+            //     h.run().await;
+            // });
         }
     }
 }
@@ -172,7 +172,7 @@ mod test {
 
     #[tokio::test]
     async fn test_create_new_disc() {
-        let peer_store = Arc::new(Mutex::new(PeerStore::new(10)));
+        let peer_store = Arc::new(PeerStore::new(10));
         let task_mng = Arc::new(TaskManager::new());
 
         let disc_port = 13131;

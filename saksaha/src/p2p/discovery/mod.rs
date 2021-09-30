@@ -12,7 +12,7 @@ use tokio::sync::Mutex;
 pub struct Disc {
     address_book: Arc<AddressBook>,
     disc_port: usize,
-    peer_store: Arc<Mutex<PeerStore>>,
+    peer_store: Arc<PeerStore>,
     task_mng: Arc<TaskManager>,
 }
 
@@ -20,7 +20,7 @@ impl Disc {
     pub fn new(
         disc_port: usize,
         bootstrap_urls: Option<Vec<String>>,
-        peer_store: Arc<Mutex<PeerStore>>,
+        peer_store: Arc<PeerStore>,
         task_mng: Arc<TaskManager>,
     ) -> Self {
         let address_book =

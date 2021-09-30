@@ -43,7 +43,7 @@ impl Host {
     pub async fn start(&self) {
         log!(DEBUG, "Start host...\n");
 
-        let peer_store = Arc::new(Mutex::new(PeerStore::new(10)));
+        let peer_store = Arc::new(PeerStore::new(10));
         let peer_store_clone = peer_store.clone();
 
         let task_mng = self.task_mng.clone();
