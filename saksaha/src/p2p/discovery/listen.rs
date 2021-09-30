@@ -1,10 +1,5 @@
 use super::whoareyou::WhoAreYou;
-use crate::{
-    common::SakResult,
-    err_res, msg_err, msg_errd,
-    node::task_manager::{Msg, MsgKind, TaskManager},
-    p2p::peer_store::{Peer, PeerStore},
-};
+use crate::{common::SakResult, err_res, msg_err, msg_errd, node::task_manager::{Msg, MsgKind, TaskManager}, p2p::{credential::Credential, peer_store::{Peer, PeerStore}}};
 use logger::log;
 use std::{
     sync::{mpsc::SendError, Arc},
@@ -20,6 +15,7 @@ pub struct Listen {
     disc_port: usize,
     peer_store: Arc<PeerStore>,
     task_mng: Arc<TaskManager>,
+    credential: Arc<Credential>,
 }
 
 impl Listen {
@@ -27,11 +23,13 @@ impl Listen {
         disc_port: usize,
         peer_store: Arc<PeerStore>,
         task_mng: Arc<TaskManager>,
+        credential: Arc<Credential>,
     ) -> Listen {
         Listen {
             disc_port,
             peer_store,
             task_mng,
+            credential,
         }
     }
 
@@ -56,7 +54,7 @@ impl Listen {
                                 DEBUG,
                                 "Error sending a msg to task manager, err: {}",
                                 err
-                            );
+                                );
 
                                 self.task_mng.shutdown_program();
                             }
@@ -79,18 +77,10 @@ impl Listen {
                         err
                     );
 
-                    match self.task_mng.send(msg).await {
-                        Ok(_) => (),
-                        Err(err) => {
-                            log!(
-                                DEBUG,
-                                "Error sending a msg to task manager, err: {}",
-                                err
-                            );
-
-                            self.task_mng.shutdown_program();
-                        }
-                    }
+                    self.task_mng
+                        .send(msg)
+                        .await
+                        .expect("Fatal message should be delivered");
 
                     return;
                 }
@@ -150,26 +140,26 @@ impl Handler {
     }
 
     pub async fn run(&mut self) -> SakResult<bool> {
-        // let way = match WhoAreYou::parse(&mut self.stream).await {
-        //     Ok(w) => w,
-        //     Err(err) => {
-        //         return err_res!("Error parsing who are you request, err: {}", err);
-        //     }
-        // };
-
-        let mut buf = vec![0; 1024];
-
-        let n = match self.stream.read(&mut buf).await {
-            Ok(n) => n,
+        // let mut buf = vec![0; 1024];
+        let way = match WhoAreYou::parse(&mut self.stream).await {
+            Ok(w) => w,
             Err(err) => {
-                return err_res!(
-                    "Error parsing `who_are_you` request`, err: {}",
-                    err
-                );
+                return err_res!("Error parsing who are you request, err: {}", err);
             }
         };
 
-        println!("received, buf: {:?}", buf);
+
+        // let n = match self.stream.read(&mut buf).await {
+        //     Ok(n) => n,
+        //     Err(err) => {
+        //         return err_res!(
+        //             "Error parsing `who_are_you` request`, err: {}",
+        //             err
+        //         );
+        //     }
+        // };
+
+        // println!("received, buf: {:?}", buf);
 
         self.stream.write_all(b"hello\n").await;
 
@@ -185,29 +175,29 @@ mod test {
     async fn test_create_new_disc() {
         let peer_store = Arc::new(PeerStore::new(10));
         let task_mng = Arc::new(TaskManager::new());
-
         let disc_port = 13131;
-        let listen =
-            Listen::new(disc_port, peer_store.clone(), task_mng.clone());
-        let listen2 =
-            Listen::new(disc_port, peer_store.clone(), task_mng.clone());
 
-        let h2 = tokio::spawn(async move {
-            listen.start_listening().await;
-            println!("h3");
-        });
+        // let listen =
+        //     Listen::new(disc_port, peer_store.clone(), task_mng.clone());
+        // let listen2 =
+        //     Listen::new(disc_port, peer_store.clone(), task_mng.clone());
 
-        let h3 = tokio::spawn(async move {
-            listen2.start_listening().await;
-            return true;
-        });
+        // let h2 = tokio::spawn(async move {
+        //     listen.start_listening().await;
+        //     println!("h3");
+        // });
 
-        tokio::select! {
-            _ = h2 => (),
-            res = h3 => {
-                assert!(res.unwrap(),
-                    "Listen should fail while attempting to use the taken port")
-            },
-        }
+        // let h3 = tokio::spawn(async move {
+        //     listen2.start_listening().await;
+        //     return true;
+        // });
+
+        // tokio::select! {
+        //     _ = h2 => (),
+        //     res = h3 => {
+        //         assert!(res.unwrap(),
+        //             "Listen should fail while attempting to use the taken port")
+        //     },
+        // }
     }
 }

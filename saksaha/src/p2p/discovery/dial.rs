@@ -1,12 +1,15 @@
-use super::{Disc, whoareyou::WhoAreYou};
+use super::{whoareyou::WhoAreYou, Disc};
 use crate::{
     common::SakResult,
     err_res,
+    node::task_manager::TaskManager,
     p2p::{
         address::AddressBook,
+        credential::Credential,
         peer_store::{Peer, PeerStore},
     },
 };
+use k256::ecdsa::SigningKey;
 use logger::log;
 use std::{
     sync::Arc,
@@ -24,6 +27,8 @@ pub struct Dial {
     pub address_book: Arc<AddressBook>,
     pub peer_store: Arc<PeerStore>,
     disc_port: usize,
+    task_mng: Arc<TaskManager>,
+    credential: Arc<Credential>,
 }
 
 impl Dial {
@@ -31,11 +36,15 @@ impl Dial {
         address_book: Arc<AddressBook>,
         peer_store: Arc<PeerStore>,
         disc_port: usize,
+        task_mng: Arc<TaskManager>,
+        credential: Arc<Credential>,
     ) -> Dial {
         Dial {
             address_book,
             peer_store,
             disc_port,
+            task_mng,
+            credential,
         }
     }
 
@@ -87,9 +96,10 @@ impl Dial {
                         }
                     };
 
-                let mut handler = Handler::new(stream, peer);
-                handler.run().await;
-
+                let credential = self.credential.clone();
+                let mut handler = Handler::new(stream, peer, credential);
+                let state = handler.run().await;
+                // Handler::run(stream, peer, credential).await;
 
                 // let (mut rd, mut wr) = io::split(stream);
 
@@ -141,22 +151,29 @@ impl Dial {
 pub struct Handler {
     stream: TcpStream,
     peer: Arc<Mutex<Peer>>,
+    credential: Arc<Credential>,
 }
 
 impl Handler {
-    pub fn new(stream: TcpStream, peer: Arc<Mutex<Peer>>) -> Handler {
+    pub fn new(
+        stream: TcpStream,
+        peer: Arc<Mutex<Peer>>,
+        credential: Arc<Credential>,
+    ) -> Handler {
         Handler {
             stream: stream,
             peer,
+            credential,
         }
     }
 
     pub async fn run(&mut self) -> SakResult<bool> {
-        let buf = WhoAreYou::create();
-        let v = [0; 1024];
-        self.stream.write_all(&v);
+        let secret_key = &self.credential.secret_key;
+        let sk = SigningKey::from(secret_key);
+        let buf = WhoAreYou::create(sk);
 
-        // let way = WhoAreYou::parse(&mut self.stream).await;
+        self.stream.write_all(&buf).await;
+
         Ok(true)
     }
 }

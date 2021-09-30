@@ -7,3 +7,5 @@ pub mod discovery;
 pub mod peer_store;
 
 pub mod address;
+
+pub mod credential;

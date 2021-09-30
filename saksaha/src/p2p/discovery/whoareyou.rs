@@ -8,6 +8,7 @@ use k256::{
 };
 use rand_core::OsRng;
 use tokio::{io::AsyncReadExt, net::TcpStream};
+use std::convert::{TryInto};
 
 const SAKSAHA: &[u8; 7] = b"saksaha";
 
@@ -19,38 +20,36 @@ pub struct WhoAreYou {
 pub struct WhoAreYouAck {}
 
 impl WhoAreYou {
-    pub fn create() -> [u8; 1024] {
+    pub fn create(signing_key: SigningKey) -> Vec<u8> {
         let buf = [0; 1024];
 
-        let signing_key = SigningKey::random(&mut OsRng); // Serialize with `::to_bytes()`
+        // let signing_key = SigningKey::random(&mut OsRng); // Serialize with `::to_bytes()`
+
         let message = SAKSAHA;
-
-        // let message = b"ECDSA proves knowled";
-
-        // Note: the signature type must be annotated or otherwise inferrable as
-        // `Signer` has many impls of the `Signer` trait (for both regular and
-        // recoverable signature types).
         let signature: Signature = signing_key.sign(message);
-        let verify_key = VerifyingKey::from(&signing_key);
-        let b = verify_key.verify(message, &signature);
+        let a = signature.to_der().to_bytes().to_vec();
 
-        // signature.
-        let a = signature.to_der().to_bytes();
+        println!("44, {}", a.len());
 
-        let signature2 = Signature::from_der(&a).unwrap();
-        let verify_key = VerifyingKey::from(&signing_key);
-        let b = verify_key.verify(message, &signature).unwrap();
+        // let b: [u8; 1024] = a.to_vec().try_into()
+        //     .unwrap();
 
-        let c = verify_key.verify(message, &signature2).unwrap();
+        // return &b[0..245];
 
-        println!("22");
+        // let signature2 = Signature::from_der(&a).unwrap();
+        // let verify_key = VerifyingKey::from(&signing_key);
+        // let b = verify_key.verify(message, &signature).unwrap();
+
+        // let c = verify_key.verify(message, &signature2).unwrap();
+
+        // println!("22, {:?}", b);
 
         // Signature::from_scalars(r, s)
 
         // let verify_key = VerifyingKey::from(&signing_key);
         // verify_key.verify(message,)
 
-        buf
+        a
     }
 
     pub async fn parse(stream: &mut TcpStream) -> SakResult<WhoAreYou> {
@@ -69,6 +68,8 @@ impl WhoAreYou {
 
             if n == 0 {
                 let w = WhoAreYou { p2p_port: 0 };
+
+                println!("55: {:?}", buf);
                 return Ok(w);
             }
         }

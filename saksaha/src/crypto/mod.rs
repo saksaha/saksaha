@@ -19,63 +19,50 @@ impl Crypto {
     pub fn encode_into_key_pair(sk: SecretKey) -> (String, String) {
         let pk = sk.public_key();
 
-        let sk_str = encode_hex(sk.to_bytes().as_slice());
-        let pk_str = encode_hex(pk.to_encoded_point(false).as_bytes());
+        let sk_str = Crypto::encode_hex(sk.to_bytes().as_slice());
+        let pk_str = Crypto::encode_hex(pk.to_encoded_point(false).as_bytes());
 
         return (sk_str, pk_str);
     }
 
-    pub fn decodesecret_key() {
-
+    pub fn decode_hex(s: String) -> Result<Vec<u8>, ParseIntError> {
+        (0..s.len())
+            .step_by(2)
+            .map(|i| u8::from_str_radix(&s[i..i + 2], 16))
+            .collect()
     }
-}
 
-pub fn make_secret_key_from_bytes(
-    bytes: impl AsRef<[u8]>,
-) -> Result<SecretKey, Error> {
-    match SecretKey::from_bytes(bytes) {
-        Ok(s) => return Ok(s),
-        Err(err) => {
-            return err_res!("Error making secret out of bytes, err: {}", err);
+    pub fn encode_hex(bytes: &[u8]) -> String {
+        let mut s = String::with_capacity(bytes.len() * 2);
+        for &b in bytes {
+            write!(&mut s, "{:02x}", b).unwrap();
         }
+        s
     }
 }
 
-pub fn decode_hex(s: &str) -> Result<Vec<u8>, ParseIntError> {
-    (0..s.len())
-        .step_by(2)
-        .map(|i| u8::from_str_radix(&s[i..i + 2], 16))
-        .collect()
-}
+// pub fn make_secret_key_from_bytes(
+//     bytes: impl AsRef<[u8]>,
+// ) -> Result<SecretKey, Error> {
+//     match SecretKey::from_bytes(bytes) {
+//         Ok(s) => return Ok(s),
+//         Err(err) => {
+//             return err_res!("Error making secret out of bytes, err: {}", err);
+//         }
+//     }
+// }
 
-pub fn encode_hex(bytes: &[u8]) -> String {
-    let mut s = String::with_capacity(bytes.len() * 2);
-    for &b in bytes {
-        write!(&mut s, "{:02x}", b).unwrap();
-    }
-    s
-}
+// pub fn generate_key() -> SecretKey {
+//     let secret = SecretKey::random(&mut OsRng);
+//     return secret;
+// }
 
-pub fn encode_key_pair(sk: SecretKey) -> (String, String) {
-    let pk = sk.public_key();
-
-    let sk_str = encode_hex(sk.to_bytes().as_slice());
-    let pk_str = encode_hex(pk.to_encoded_point(false).as_bytes());
-
-    return (sk_str, pk_str);
-}
-
-pub fn generate_key() -> SecretKey {
-    let secret = SecretKey::random(&mut OsRng);
-    return secret;
-}
-
-pub fn to_hex(_: EphemeralSecret) {
-    // let pk = secret.public_key();
-    // secret.
-    // EncodedPoint::from(secret);
-    // let pk = EncodedPoint::from(secret.public_key());
-}
+// pub fn to_hex(_: EphemeralSecret) {
+//     // let pk = secret.public_key();
+//     // secret.
+//     // EncodedPoint::from(secret);
+//     // let pk = EncodedPoint::from(secret.public_key());
+// }
 
 #[cfg(test)]
 mod test {

@@ -1,4 +1,4 @@
-use crate::{common::SakResult, crypto};
+use crate::{common::SakResult, crypto::Crypto};
 use logger::log;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
@@ -44,8 +44,8 @@ impl PConfig {
     fn new() -> SakResult<PConfig> {
         log!(DEBUG, "Creating a new config\n");
 
-        let sk = crypto::generate_key();
-        let (sk, pk) = crypto::encode_key_pair(sk);
+        let sk = Crypto::generate_key();
+        let (sk, pk) = Crypto::encode_into_key_pair(sk);
         let pconf = PConfig {
             p2p: PersistedP2PConfig {
                 secret: sk,
