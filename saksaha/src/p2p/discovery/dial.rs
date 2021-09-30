@@ -27,7 +27,7 @@ pub struct Dial {
     pub address_book: Arc<AddressBook>,
     pub peer_store: Arc<PeerStore>,
     disc_port: u16,
-    p2p_port: u16,
+    peer_op_port: u16,
     task_mng: Arc<TaskManager>,
     credential: Arc<Credential>,
 }
@@ -37,7 +37,7 @@ impl Dial {
         address_book: Arc<AddressBook>,
         peer_store: Arc<PeerStore>,
         disc_port: u16,
-        p2p_port: u16,
+        peer_op_port: u16,
         task_mng: Arc<TaskManager>,
         credential: Arc<Credential>,
     ) -> Dial {
@@ -45,7 +45,7 @@ impl Dial {
             address_book,
             peer_store,
             disc_port,
-            p2p_port,
+            peer_op_port,
             task_mng,
             credential,
         }
@@ -100,9 +100,14 @@ impl Dial {
                     };
 
                 let credential = self.credential.clone();
-                let mut handler =
-                    Handler::new(stream, peer, credential, self.disc_port, self.p2p_port);
-                let state = handler.run().await;
+                let mut handler = Handler::new(
+                    stream,
+                    peer,
+                    credential,
+                    self.disc_port,
+                    self.peer_op_port,
+                );
+                handler.run().await;
                 // Handler::run(stream, peer, credential).await;
 
                 // let (mut rd, mut wr) = io::split(stream);
@@ -157,7 +162,7 @@ pub struct Handler {
     peer: Arc<Mutex<Peer>>,
     credential: Arc<Credential>,
     disc_port: u16,
-    p2p_port: u16,
+    peer_op_port: u16,
 }
 
 impl Handler {
@@ -166,21 +171,28 @@ impl Handler {
         peer: Arc<Mutex<Peer>>,
         credential: Arc<Credential>,
         disc_port: u16,
-        p2p_port: u16,
+        peer_op_port: u16,
     ) -> Handler {
         Handler {
             stream: stream,
             peer,
             credential,
             disc_port,
-            p2p_port,
+            peer_op_port,
         }
     }
 
     pub async fn run(&mut self) -> SakResult<bool> {
         let secret_key = &self.credential.secret_key;
-        let sk = SigningKey::from(secret_key);
-        let buf = match WhoAreYou::create(sk, self.disc_port, self.p2p_port) {
+        let signing_key = SigningKey::from(secret_key);
+
+        let way = WhoAreYou {
+            signing_key,
+            disc_port: self.disc_port,
+            peer_op_port: self.peer_op_port,
+        };
+
+        let buf = match way.to_bytes() {
             Ok(b) => b,
             Err(err) => {
                 return err_res!(

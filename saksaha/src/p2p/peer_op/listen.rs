@@ -8,13 +8,11 @@ impl Listen {
     pub async fn start_listening(&self, tx: Sender<u16>) -> SakResult<bool> {
         let local_addr = format!("127.0.0.1:0");
 
-        log!(DEBUG, "Start p2p listening, addr: {}\n", local_addr);
-
         let listener = match TcpListener::bind(local_addr).await {
             Ok(l) => {
-                match l.local_addr() {
+                let local_addr = match l.local_addr() {
                     Ok(addr) => match tx.send(addr.port()) {
-                        Ok(_) => (),
+                        Ok(_) => (addr),
                         Err(err) => {
                             return err_res!(
                                 "Error sending peer op port, err: {}",
@@ -29,6 +27,8 @@ impl Listen {
                         );
                     }
                 };
+
+                log!(DEBUG, "Start peer op listening, addr: {}\n", local_addr);
 
                 l
             }

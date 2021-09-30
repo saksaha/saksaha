@@ -140,14 +140,12 @@ impl Handler {
     }
 
     pub async fn run(&mut self) -> SakResult<bool> {
-        // let mut buf = vec![0; 1024];
         let way = match WhoAreYou::parse(&mut self.stream).await {
             Ok(w) => w,
             Err(err) => {
                 return err_res!("Error parsing who are you request, err: {}", err);
             }
         };
-
 
         // let n = match self.stream.read(&mut buf).await {
         //     Ok(n) => n,
