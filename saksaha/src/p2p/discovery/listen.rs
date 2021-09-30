@@ -147,17 +147,7 @@ impl Handler {
             }
         };
 
-        // let n = match self.stream.read(&mut buf).await {
-        //     Ok(n) => n,
-        //     Err(err) => {
-        //         return err_res!(
-        //             "Error parsing `who_are_you` request`, err: {}",
-        //             err
-        //         );
-        //     }
-        // };
-
-        // println!("received, buf: {:?}", buf);
+        println!("received: {:?}, {}", way.sig, way.peer_op_port);
 
         self.stream.write_all(b"hello\n").await;
 

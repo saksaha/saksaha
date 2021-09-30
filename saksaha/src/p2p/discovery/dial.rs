@@ -1,15 +1,6 @@
 use super::{whoareyou::WhoAreYou, Disc};
-use crate::{
-    common::SakResult,
-    err_res,
-    node::task_manager::TaskManager,
-    p2p::{
-        address::AddressBook,
-        credential::Credential,
-        peer_store::{Peer, PeerStore},
-    },
-};
-use k256::ecdsa::SigningKey;
+use crate::{common::SakResult, err_res, node::task_manager::TaskManager, p2p::{address::AddressBook, credential::Credential, discovery::whoareyou, peer_store::{Peer, PeerStore}}};
+use k256::ecdsa::{Signature, SigningKey, signature::Signer};
 use logger::log;
 use std::{
     sync::Arc,
@@ -185,10 +176,10 @@ impl Handler {
     pub async fn run(&mut self) -> SakResult<bool> {
         let secret_key = &self.credential.secret_key;
         let signing_key = SigningKey::from(secret_key);
+        let sig: Signature = signing_key.sign(whoareyou::MESSAGE);
 
         let way = WhoAreYou {
-            signing_key,
-            disc_port: self.disc_port,
+            sig,
             peer_op_port: self.peer_op_port,
         };
 
