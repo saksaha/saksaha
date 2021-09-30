@@ -25,8 +25,8 @@ pub struct WhoAreYouAck;
 impl WhoAreYou {
     pub fn create(
         signing_key: SigningKey,
-        disc_port: usize,
-        p2p_port: usize,
+        disc_port: u16,
+        peer_op_port: u16,
     ) -> SakResult<[u8; 128]> {
         let mut buf = [0; 128];
 
@@ -42,7 +42,8 @@ impl WhoAreYou {
             return err_res!("Signature does not fit the size, len: {}", len);
         }
 
-        buf[71] = disc_port as u8;
+        buf[71..73].copy_from_slice(&disc_port.to_be_bytes());
+        buf[72..74].copy_from_slice(&peer_op_port.to_be_bytes());
 
 
         Ok(buf)

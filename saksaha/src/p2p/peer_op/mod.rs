@@ -4,7 +4,7 @@ mod listen;
 use super::peer_store::PeerStore;
 use crate::{common::SakResult, err_res};
 use std::sync::Arc;
-use tokio::sync::Mutex;
+use tokio::sync::{Mutex, oneshot::Sender};
 
 pub struct PeerOp {
     peer_store: Arc<PeerStore>,
@@ -19,11 +19,11 @@ impl PeerOp {
 }
 
 impl PeerOp {
-    pub async fn start(&self) {
+    pub async fn start(&self, tx: Sender<u16>) {
         let listen = listen::Listen {};
 
         tokio::spawn(async move {
-            match listen.start_listening().await {
+            match listen.start_listening(tx).await {
                 Ok(_) => Ok(()),
                 Err(err) => {
                     return err_res!(

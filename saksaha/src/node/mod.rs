@@ -1,19 +1,14 @@
 pub mod task_manager;
 
-use crate::{
-    common::{Error, SakResult},
-    err_res,
-    p2p::host::Host,
-    rpc::RPC,
-};
+use crate::{common::SakResult, err_res, p2p::host::Host, rpc::RPC};
 use logger::log;
 use std::sync::Arc;
 use task_manager::{MsgKind, TaskManager};
-use tokio::{self, signal, sync::mpsc, task::JoinHandle};
+use tokio::{self, signal};
 
 pub struct Node {
-    rpc_port: usize,
-    disc_port: usize,
+    rpc_port: u16,
+    disc_port: u16,
     bootstrap_urls: Option<Vec<String>>,
     public_key: String,
     secret: String,
@@ -21,8 +16,8 @@ pub struct Node {
 
 impl Node {
     pub fn new(
-        rpc_port: usize,
-        disc_port: usize,
+        rpc_port: u16,
+        disc_port: u16,
         bootstrap_urls: Option<Vec<String>>,
         public_key: String,
         secret: String,

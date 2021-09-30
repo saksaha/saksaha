@@ -12,7 +12,7 @@ use tokio::{
 };
 
 pub struct Listen {
-    disc_port: usize,
+    disc_port: u16,
     peer_store: Arc<PeerStore>,
     task_mng: Arc<TaskManager>,
     credential: Arc<Credential>,
@@ -20,7 +20,7 @@ pub struct Listen {
 
 impl Listen {
     pub fn new(
-        disc_port: usize,
+        disc_port: u16,
         peer_store: Arc<PeerStore>,
         task_mng: Arc<TaskManager>,
         credential: Arc<Credential>,

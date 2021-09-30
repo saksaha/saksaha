@@ -1,4 +1,3 @@
-use crate::{common::Error, err_res};
 pub use k256::{
     ecdh::EphemeralSecret,
     ecdsa::{Signature, SigningKey, VerifyingKey},
@@ -41,29 +40,6 @@ impl Crypto {
     }
 }
 
-// pub fn make_secret_key_from_bytes(
-//     bytes: impl AsRef<[u8]>,
-// ) -> Result<SecretKey, Error> {
-//     match SecretKey::from_bytes(bytes) {
-//         Ok(s) => return Ok(s),
-//         Err(err) => {
-//             return err_res!("Error making secret out of bytes, err: {}", err);
-//         }
-//     }
-// }
-
-// pub fn generate_key() -> SecretKey {
-//     let secret = SecretKey::random(&mut OsRng);
-//     return secret;
-// }
-
-// pub fn to_hex(_: EphemeralSecret) {
-//     // let pk = secret.public_key();
-//     // secret.
-//     // EncodedPoint::from(secret);
-//     // let pk = EncodedPoint::from(secret.public_key());
-// }
-
 #[cfg(test)]
 mod test {
     use super::{
@@ -76,17 +52,12 @@ mod test {
     #[test]
     fn it_creates_signature() {
         testenv::run_test(|_| {
-            // Signing
             let signing_key = SigningKey::random(&mut OsRng); // Serialize with `::to_bytes()`
             let message = b"ECDSA proves knowledge of a secret number in the context of a single message";
 
-            // Note: the signature type must be annotated or otherwise inferrable as
-            // `Signer` has many impls of the `Signer` trait (for both regular and
-            // recoverable signature types).
             let signature: Signature = signing_key.sign(message);
-
-            // Verification
             let verify_key = VerifyingKey::from(&signing_key); // Serialize with `::to_encoded_point()`
+
             assert!(verify_key.verify(message, &signature).is_ok());
         })
     }

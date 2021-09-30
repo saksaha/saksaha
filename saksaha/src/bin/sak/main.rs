@@ -4,8 +4,8 @@ use saksaha::{common::SakResult, err_res, node::Node, pconfig::PConfig};
 
 struct Args {
     config: Option<String>,
-    rpc_port: usize,
-    disc_port: usize,
+    rpc_port: u16,
+    disc_port: u16,
     bootstrap_urls: Option<Vec<String>>,
 }
 
@@ -53,20 +53,24 @@ fn get_args() -> SakResult<Args> {
 
     let rpc_port = match flags.value_of("rpc_port") {
         Some(p) => {
-            if let Err(err) = p.parse::<usize>() {
-                return err_res!("Error parsing the rpc port, err: {}", err);
+            match p.parse::<u16>() {
+                Ok(p) => p,
+                Err(err) => {
+                    return err_res!("Error parsing the rpc port, err: {}", err);
+                }
             }
-            p.parse::<usize>().unwrap()
         }
         None => 0,
     };
 
     let disc_port = match flags.value_of("disc_port") {
         Some(p) => {
-            if let Err(err) = p.parse::<usize>() {
-                return err_res!("ERror parsing the rpc port, err: {}", err);
+            match p.parse::<u16>() {
+                Ok(p) => p,
+                Err(err) => {
+                    return err_res!("ERror parsing the rpc port, err: {}", err);
+                }
             }
-            p.parse::<usize>().unwrap()
         }
         None => 0,
     };

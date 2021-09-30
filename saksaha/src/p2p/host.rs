@@ -10,11 +10,11 @@ use crate::{
 };
 use logger::log;
 use std::sync::Arc;
-use tokio::{sync::Mutex, task::JoinHandle};
+use tokio::{sync::{Mutex, oneshot}, task::JoinHandle};
 
 pub struct Host {
-    rpc_port: usize,
-    disc_port: usize,
+    rpc_port: u16,
+    disc_port: u16,
     bootstrap_peers: Option<Vec<String>>,
     task_mng: Arc<TaskManager>,
     secret: String,
@@ -22,8 +22,8 @@ pub struct Host {
 
 impl Host {
     pub fn new(
-        rpc_port: usize,
-        disc_port: usize,
+        rpc_port: u16,
+        disc_port: u16,
         bootstrap_peers: Option<Vec<String>>,
         public_key: String,
         secret: String,
@@ -73,12 +73,37 @@ impl Host {
         let peer_store_clone = peer_store.clone();
         let peer_op = PeerOp::new(peer_store_clone);
 
+        let (tx, rx) = oneshot::channel();
+
         tokio::spawn(async move {
-            peer_op.start().await;
+            peer_op.start(tx).await;
         });
 
-        let peer_store_clone = peer_store.clone();
+        let peer_op_port = match rx.await {
+            Ok(port) => port,
+            Err(err) => {
+                log!(
+                    DEBUG,
+                    "Fatal error. Cannot retrieve peer op port, err: {}\n",
+                    err
+                );
 
+                let msg = msg_err!(
+                    MsgKind::SetupFailure,
+                    "Error retrieving peer op port, err: {}",
+                    err
+                );
+
+                self.task_mng
+                    .send(msg)
+                    .await
+                    .expect("Fatal message should be delivered");
+
+                return;
+            }
+        };
+
+        let peer_store_clone = peer_store.clone();
         let task_mng = self.task_mng.clone();
 
         let disc = Disc::new(

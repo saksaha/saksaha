@@ -26,8 +26,8 @@ use tokio::{
 pub struct Dial {
     pub address_book: Arc<AddressBook>,
     pub peer_store: Arc<PeerStore>,
-    disc_port: usize,
-    p2p_port: usize,
+    disc_port: u16,
+    p2p_port: u16,
     task_mng: Arc<TaskManager>,
     credential: Arc<Credential>,
 }
@@ -36,8 +36,8 @@ impl Dial {
     pub fn new(
         address_book: Arc<AddressBook>,
         peer_store: Arc<PeerStore>,
-        disc_port: usize,
-        p2p_port: usize,
+        disc_port: u16,
+        p2p_port: u16,
         task_mng: Arc<TaskManager>,
         credential: Arc<Credential>,
     ) -> Dial {
@@ -156,8 +156,8 @@ pub struct Handler {
     stream: TcpStream,
     peer: Arc<Mutex<Peer>>,
     credential: Arc<Credential>,
-    disc_port: usize,
-    p2p_port: usize,
+    disc_port: u16,
+    p2p_port: u16,
 }
 
 impl Handler {
@@ -165,8 +165,8 @@ impl Handler {
         stream: TcpStream,
         peer: Arc<Mutex<Peer>>,
         credential: Arc<Credential>,
-        disc_port: usize,
-        p2p_port: usize,
+        disc_port: u16,
+        p2p_port: u16,
     ) -> Handler {
         Handler {
             stream: stream,
