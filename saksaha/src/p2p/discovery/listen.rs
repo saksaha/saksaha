@@ -134,12 +134,15 @@ impl Listen {
                 }
             };
 
+            let credential = self.credential.clone();
+            let peer_op_port = self.peer_op_port;
+
             tokio::spawn(async move {
                 let mut handler = Handler::new(
                     stream,
-                    peer,
-                    self.credential,
-                    self.peer_op_port,
+                    peer.clone(),
+                    credential,
+                    peer_op_port,
                 );
 
                 match handler.run().await {
@@ -193,13 +196,13 @@ impl Handler {
 
         println!("received: {:?}, {}", way.sig, way.peer_op_port);
 
-        let secret_key = &self.credential.secret_key;
-        let signing_key = SigningKey::from(secret_key);
-        let sig: Signature = signing_key.sign(whoareyou::MESSAGE);
+        // let secret_key = &self.credential.secret_key;
+        // let signing_key = SigningKey::from(secret_key);
+        // let sig: Signature = signing_key.sign(whoareyou::MESSAGE);
 
-        let way_ack = WhoAreYouAck::new(sig, self.peer_op_port);
+        // let way_ack = WhoAreYouAck::new(sig, self.peer_op_port);
 
-        self.stream.write_all(b"hello\n").await;
+        // self.stream.write_all(b"hello\n").await;
 
         Ok(true)
     }
