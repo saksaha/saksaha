@@ -7,6 +7,7 @@ use std::{collections::LinkedList, sync::{Arc,}};
 pub struct Address {
     pub peer_id: String,
     pub endpoint: String,
+    pub fail_count: usize,
 }
 
 impl Address {
@@ -27,7 +28,7 @@ impl Address {
             }
         };
 
-        let addr = Address { peer_id, endpoint };
+        let addr = Address { peer_id, endpoint, fail_count: 0 };
 
         Ok(addr)
     }

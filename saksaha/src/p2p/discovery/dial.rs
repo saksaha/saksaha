@@ -1,9 +1,24 @@
-use std::{sync::Arc, thread, time::{Duration, SystemTime}};
-
-use super::Disc;
-use crate::{common::SakResult, err_res, p2p::{address::AddressBook, peer_store::{Peer, PeerStore}}};
+use super::{Disc, whoareyou::WhoAreYou};
+use crate::{
+    common::SakResult,
+    err_res,
+    p2p::{
+        address::AddressBook,
+        peer_store::{Peer, PeerStore},
+    },
+};
 use logger::log;
-use tokio::{net::TcpStream, sync::{Mutex, MutexGuard}, time};
+use std::{
+    sync::Arc,
+    thread,
+    time::{Duration, SystemTime},
+};
+use tokio::{
+    io::{self, AsyncReadExt, AsyncWriteExt},
+    net::TcpStream,
+    sync::{Mutex, MutexGuard},
+    time,
+};
 
 pub struct Dial {
     pub address_book: Arc<AddressBook>,
@@ -34,7 +49,7 @@ impl Dial {
                 Some(a) => a,
                 None => {
                     println!("Addr not available");
-                    time::sleep(Duration::from_millis(1000));
+                    time::sleep(Duration::from_millis(1000)).await;
                     continue;
                 }
             };
@@ -44,23 +59,73 @@ impl Dial {
                 Some(p) => p,
                 None => {
                     println!("Peer not available");
-                    time::sleep(Duration::from_millis(1000));
+                    time::sleep(Duration::from_millis(1000)).await;
                     continue;
                 }
             };
 
-            let peer = peer.lock().await;
-
-            println!("33 {:?} {}", addr, addr.endpoint == my_disc_endpoint);
+            println!("33 {:?}, {:?}", addr, peer);
             if addr.endpoint != my_disc_endpoint {
-                println!("444");
-                let stream = TcpStream::connect(addr.endpoint.to_owned()).await;
+                let stream =
+                    match TcpStream::connect(addr.endpoint.to_owned()).await {
+                        Ok(s) => {
+                            log!(
+                                DEBUG,
+                                "Successfully connected to endpoint, {}\n",
+                                addr.endpoint
+                            );
+                            s
+                        }
+                        Err(err) => {
+                            log!(
+                                DEBUG,
+                                "Error connecting to addr, {:?}, err: {}",
+                                addr,
+                                err
+                            );
+                            continue;
+                        }
+                    };
+
+                let mut handler = Handler::new(stream, peer);
+                handler.run().await;
+
+
+                // let (mut rd, mut wr) = io::split(stream);
+
+                // println!("31355");
+
+                // wr.write_all(b"power\n").await.unwrap();
+
+                // let mut buf = vec![0; 128];
+
+                // println!("313");
+
+                // loop {
+                //     let n = rd.read(&mut buf).await.unwrap();
+
+                //     if n == 0 {
+                //         break;
+                //     }
+
+                //     println!("GOT {:?}", &buf[..n]);
+                // }
+
+                // println!("31344");
 
                 // let h = Handler::new(stream);
                 // h.run();
             } else {
-                self.address_book.remove(idx);
+                println!("!313");
+                match self.address_book.remove(idx).await {
+                    Ok(_) => (),
+                    Err(err) => {
+                        println!("err: {}", err);
+                    }
+                }
             }
+
+            return;
 
             tokio::time::sleep(Duration::new(1, 0)).await;
             match start.elapsed() {
@@ -73,17 +138,24 @@ impl Dial {
     }
 }
 
-pub struct Handler<'a> {
+pub struct Handler {
     stream: TcpStream,
-    peer: MutexGuard<'a, Peer>,
+    peer: Arc<Mutex<Peer>>,
 }
 
-impl<'a> Handler<'a> {
-    pub fn new(stream: TcpStream, peer: MutexGuard<'a, Peer>) -> Handler<'a> {
-        Handler { stream: stream, peer }
+impl Handler {
+    pub fn new(stream: TcpStream, peer: Arc<Mutex<Peer>>) -> Handler {
+        Handler {
+            stream: stream,
+            peer,
+        }
     }
 
     pub async fn run(&mut self) -> SakResult<bool> {
+        let buf = WhoAreYou::create();
+        let v = [0; 1024];
+        self.stream.write_all(&v);
+
         // let way = WhoAreYou::parse(&mut self.stream).await;
         Ok(true)
     }

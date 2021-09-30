@@ -6,8 +6,12 @@ use crate::{
     p2p::peer_store::{Peer, PeerStore},
 };
 use logger::log;
-use std::sync::{Arc, mpsc::SendError};
+use std::{
+    sync::{mpsc::SendError, Arc},
+    time::Duration,
+};
 use tokio::{
+    io::{AsyncReadExt, AsyncWriteExt},
     net::{TcpListener, TcpStream},
     sync::{Mutex, MutexGuard},
 };
@@ -16,18 +20,6 @@ pub struct Listen {
     disc_port: usize,
     peer_store: Arc<PeerStore>,
     task_mng: Arc<TaskManager>,
-}
-
-pub struct Handler<'a> {
-    stream: TcpStream,
-    peer: MutexGuard<'a, Peer>,
-}
-
-impl<'a> Handler<'a> {
-    pub async fn run(&mut self) -> SakResult<bool> {
-        let way = WhoAreYou::parse(&mut self.stream).await;
-        Ok(true)
-    }
 }
 
 impl Listen {
@@ -47,20 +39,49 @@ impl Listen {
         let local_addr = format!("127.0.0.1:{}", self.disc_port);
         let task_mng = self.task_mng.clone();
 
-        let (tcp_listener, local_addr) = match TcpListener::bind(local_addr)
-            .await
-        {
-            Ok(l) => {
-                let local_addr = match l.local_addr() {
-                    Ok(a) => a,
-                    Err(err) => {
-                        let msg = msg_err!(
-                            MsgKind::SetupFailure,
-                            "Error getting the local addr, disc listen, {}",
-                            err
-                        );
+        let (tcp_listener, local_addr) =
+            match TcpListener::bind(local_addr).await {
+                Ok(l) => {
+                    let local_addr = match l.local_addr() {
+                        Ok(a) => a,
+                        Err(err) => {
+                            let msg = msg_err!(
+                                MsgKind::SetupFailure,
+                                "Error getting the local addr, disc listen, {}",
+                                err
+                            );
 
-                        if let Err(err) = task_mng.send(msg).await {
+                            if let Err(err) = task_mng.send(msg).await {
+                                log!(
+                                DEBUG,
+                                "Error sending a msg to task manager, err: {}",
+                                err
+                            );
+
+                                self.task_mng.shutdown_program();
+                            }
+                            unreachable!()
+                        }
+                    };
+
+                    (l, local_addr)
+                }
+                Err(err) => {
+                    log!(
+                        DEBUG,
+                        "Error getting the endpoint, disc listen, {}\n",
+                        err
+                    );
+
+                    let msg = msg_err!(
+                        MsgKind::SetupFailure,
+                        "Error getting the endpoint, disc listen, {}",
+                        err
+                    );
+
+                    match self.task_mng.send(msg).await {
+                        Ok(_) => (),
+                        Err(err) => {
                             log!(
                                 DEBUG,
                                 "Error sending a msg to task manager, err: {}",
@@ -69,41 +90,11 @@ impl Listen {
 
                             self.task_mng.shutdown_program();
                         }
-                        unreachable!()
                     }
-                };
 
-                (l, local_addr)
-            }
-            Err(err) => {
-                log!(
-                    DEBUG,
-                    "Error getting the endpoint, disc listen, {}\n",
-                    err
-                );
-
-                let msg = msg_err!(
-                    MsgKind::SetupFailure,
-                    "Error getting the endpoint, disc listen, {}",
-                    err
-                );
-
-                match self.task_mng.send(msg).await {
-                    Ok(_) => (),
-                    Err(err) => {
-                        log!(
-                            DEBUG,
-                            "Error sending a msg to task manager, err: {}",
-                            err
-                        );
-
-                        self.task_mng.shutdown_program();
-                    }
+                    return;
                 }
-
-                return;
-            }
-        };
+            };
 
         log!(
             DEBUG,
@@ -118,51 +109,71 @@ impl Listen {
 
     pub async fn run_loop(&self, tcp_listener: TcpListener) {
         loop {
-            // let mut peer_store = self.peer_store.lock().await;
+            println!("start loop");
+            let mut peer_store = self.peer_store.clone();
 
-            // let idx = match peer_store.reserve_slot() {
-            //     Some(i) => i,
-            //     None => {
-            //         // TODO: need to sleep for a while until making new attempts
-            //         continue;
-            //     }
-            // };
+            let peer = match peer_store.next().await {
+                Some(p) => p,
+                None => {
+                    tokio::time::sleep(Duration::from_millis(1000)).await;
+                    continue;
+                }
+            };
 
-            // let (stream, addr) = match tcp_listener.accept().await {
-            //     Ok(res) => res,
-            //     Err(err) => {
-            //         log!(DEBUG, "Error accepting request, err: {}", err);
-            //         continue;
-            //     }
-            // };
+            let (stream, addr) = match tcp_listener.accept().await {
+                Ok(res) => {
+                    log!(DEBUG, "Accepted incoming request, addr: {}\n", res.1);
+                    res
+                }
+                Err(err) => {
+                    log!(DEBUG, "Error accepting request, err: {}", err);
+                    continue;
+                }
+            };
 
-            // log!(DEBUG, "Accepted incoming request, addr: {}\n", addr);
-
-            // let peer_store = self.peer_store.clone();
-
-            // tokio::spawn(async move {
-            //     let peer_store = peer_store.lock().await;
-
-            //     let peer = if let Some(p) = peer_store.slots.get(idx) {
-            //         if let Ok(p) = p.try_lock() {
-            //             p
-            //         } else {
-            //             log!(
-            //                 DEBUG,
-            //                 "Error getting mutex, something \
-            //                 might be wrong, idx: {}",
-            //                 idx
-            //             );
-            //             return;
-            //         }
-            //     } else {
-            //         return;
-            //     };
-
-            //     let mut h = Handler { stream, peer };
-            //     h.run().await;
-            // });
+            tokio::spawn(async move {
+                let mut handler = Handler::new(stream, peer);
+                handler.run().await;
+            });
         }
+    }
+}
+
+pub struct Handler {
+    stream: TcpStream,
+    peer: Arc<Mutex<Peer>>,
+}
+
+impl Handler {
+    pub fn new(stream: TcpStream, peer: Arc<Mutex<Peer>>) -> Handler {
+        Handler { stream, peer }
+    }
+
+    pub async fn run(&mut self) -> SakResult<bool> {
+        // let way = match WhoAreYou::parse(&mut self.stream).await {
+        //     Ok(w) => w,
+        //     Err(err) => {
+        //         return err_res!("Error parsing who are you request, err: {}", err);
+        //     }
+        // };
+
+        let mut buf = vec![0; 1024];
+
+        let n = match self.stream.read(&mut buf).await {
+            Ok(n) => n,
+            Err(err) => {
+                return err_res!(
+                    "Error parsing `who_are_you` request`, err: {}",
+                    err
+                );
+            }
+        };
+
+        println!("received, buf: {:?}", buf);
+
+        self.stream.write_all(b"hello\n").await;
+
+        Ok(true)
     }
 }
 

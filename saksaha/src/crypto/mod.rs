@@ -1,7 +1,4 @@
-use crate::{
-    common::Error,
-    err_res,
-};
+use crate::{common::Error, err_res};
 pub use k256::{
     ecdh::EphemeralSecret,
     ecdsa::{Signature, SigningKey, VerifyingKey},
@@ -10,6 +7,28 @@ pub use k256::{
 };
 use rand_core::OsRng;
 use std::{fmt::Write, num::ParseIntError};
+
+pub struct Crypto;
+
+impl Crypto {
+    pub fn generate_key() -> SecretKey {
+        let secret = SecretKey::random(&mut OsRng);
+        return secret;
+    }
+
+    pub fn encode_into_key_pair(sk: SecretKey) -> (String, String) {
+        let pk = sk.public_key();
+
+        let sk_str = encode_hex(sk.to_bytes().as_slice());
+        let pk_str = encode_hex(pk.to_encoded_point(false).as_bytes());
+
+        return (sk_str, pk_str);
+    }
+
+    pub fn decodesecret_key() {
+
+    }
+}
 
 pub fn make_secret_key_from_bytes(
     bytes: impl AsRef<[u8]>,
@@ -42,8 +61,6 @@ pub fn encode_key_pair(sk: SecretKey) -> (String, String) {
 
     let sk_str = encode_hex(sk.to_bytes().as_slice());
     let pk_str = encode_hex(pk.to_encoded_point(false).as_bytes());
-
-    // print!("11, {}\n{}\n", sk_str, pk_str);
 
     return (sk_str, pk_str);
 }

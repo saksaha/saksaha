@@ -22,6 +22,7 @@ impl Disc {
         bootstrap_urls: Option<Vec<String>>,
         peer_store: Arc<PeerStore>,
         task_mng: Arc<TaskManager>,
+        secret: String,
     ) -> Self {
         let address_book =
             Arc::new(AddressBook::new(bootstrap_urls));
@@ -31,6 +32,7 @@ impl Disc {
             disc_port,
             peer_store,
             task_mng,
+            // secret,
         }
     }
 
