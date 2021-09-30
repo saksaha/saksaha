@@ -1,10 +1,10 @@
 mod dial;
 mod listen;
 
-use std::sync::{Arc,};
+use super::peer_store::PeerStore;
 use crate::{common::SakResult, err_res};
-use super::{peer_store::PeerStore};
-use tokio::{sync::Mutex};
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
 pub struct PeerOp {
     peer_store: Arc<PeerStore>,
@@ -19,7 +19,7 @@ impl PeerOp {
 }
 
 impl PeerOp {
-    pub async fn start(self) {
+    pub async fn start(&self) {
         let listen = listen::Listen {};
 
         tokio::spawn(async move {

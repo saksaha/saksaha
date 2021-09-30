@@ -7,29 +7,45 @@ use k256::{
     SecretKey,
 };
 use rand_core::OsRng;
+use std::convert::TryInto;
 use tokio::{io::AsyncReadExt, net::TcpStream};
-use std::convert::{TryInto};
 
-const SAKSAHA: &[u8; 7] = b"saksaha";
+const MESSAGE: &[u8; 7] = b"saksaha";
 
-pub struct WhoAreYou {
-    // signature,
-    p2p_port: usize,
+#[derive(Copy, Clone)]
+pub enum Type {
+    SYN = 0x0,
+    ACK,
 }
 
-pub struct WhoAreYouAck {}
+pub struct WhoAreYou;
+
+pub struct WhoAreYouAck;
 
 impl WhoAreYou {
-    pub fn create(signing_key: SigningKey) -> Vec<u8> {
-        let buf = [0; 1024];
+    pub fn create(
+        signing_key: SigningKey,
+        disc_port: usize,
+        p2p_port: usize,
+    ) -> SakResult<[u8; 128]> {
+        let mut buf = [0; 128];
 
-        // let signing_key = SigningKey::random(&mut OsRng); // Serialize with `::to_bytes()`
+        buf[0] = Type::SYN as u8;
 
-        let message = SAKSAHA;
-        let signature: Signature = signing_key.sign(message);
-        let a = signature.to_der().to_bytes().to_vec();
+        let sig: Signature = signing_key.sign(MESSAGE);
+        let sig_bytes = sig.to_der().to_bytes();
+        let len = sig_bytes.len();
 
-        println!("44, {}", a.len());
+        if len == 70 {
+            buf[1..71].copy_from_slice(&sig_bytes);
+        } else {
+            return err_res!("Signature does not fit the size, len: {}", len);
+        }
+
+        buf[71] = disc_port as u8;
+
+
+        Ok(buf)
 
         // let b: [u8; 1024] = a.to_vec().try_into()
         //     .unwrap();
@@ -48,12 +64,11 @@ impl WhoAreYou {
 
         // let verify_key = VerifyingKey::from(&signing_key);
         // verify_key.verify(message,)
-
-        a
     }
 
     pub async fn parse(stream: &mut TcpStream) -> SakResult<WhoAreYou> {
-        let mut buf = vec![0; 1024];
+        // let mut buf = vec![0; 1024];
+        let mut buf = [0; 256];
 
         loop {
             let n = match stream.read(&mut buf).await {
@@ -67,7 +82,7 @@ impl WhoAreYou {
             };
 
             if n == 0 {
-                let w = WhoAreYou { p2p_port: 0 };
+                let w = WhoAreYou {};
 
                 println!("55: {:?}", buf);
                 return Ok(w);

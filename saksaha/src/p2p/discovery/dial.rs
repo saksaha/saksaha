@@ -27,6 +27,7 @@ pub struct Dial {
     pub address_book: Arc<AddressBook>,
     pub peer_store: Arc<PeerStore>,
     disc_port: usize,
+    p2p_port: usize,
     task_mng: Arc<TaskManager>,
     credential: Arc<Credential>,
 }
@@ -36,6 +37,7 @@ impl Dial {
         address_book: Arc<AddressBook>,
         peer_store: Arc<PeerStore>,
         disc_port: usize,
+        p2p_port: usize,
         task_mng: Arc<TaskManager>,
         credential: Arc<Credential>,
     ) -> Dial {
@@ -43,6 +45,7 @@ impl Dial {
             address_book,
             peer_store,
             disc_port,
+            p2p_port,
             task_mng,
             credential,
         }
@@ -97,7 +100,8 @@ impl Dial {
                     };
 
                 let credential = self.credential.clone();
-                let mut handler = Handler::new(stream, peer, credential);
+                let mut handler =
+                    Handler::new(stream, peer, credential, self.disc_port, self.p2p_port);
                 let state = handler.run().await;
                 // Handler::run(stream, peer, credential).await;
 
@@ -152,6 +156,8 @@ pub struct Handler {
     stream: TcpStream,
     peer: Arc<Mutex<Peer>>,
     credential: Arc<Credential>,
+    disc_port: usize,
+    p2p_port: usize,
 }
 
 impl Handler {
@@ -159,18 +165,32 @@ impl Handler {
         stream: TcpStream,
         peer: Arc<Mutex<Peer>>,
         credential: Arc<Credential>,
+        disc_port: usize,
+        p2p_port: usize,
     ) -> Handler {
         Handler {
             stream: stream,
             peer,
             credential,
+            disc_port,
+            p2p_port,
         }
     }
 
     pub async fn run(&mut self) -> SakResult<bool> {
         let secret_key = &self.credential.secret_key;
         let sk = SigningKey::from(secret_key);
-        let buf = WhoAreYou::create(sk);
+        let buf = match WhoAreYou::create(sk, self.disc_port, self.p2p_port) {
+            Ok(b) => b,
+            Err(err) => {
+                return err_res!(
+                    "Error creating WhoAreYou request, err: {}",
+                    err
+                );
+            }
+        };
+
+        println!("1, {:?}", buf);
 
         self.stream.write_all(&buf).await;
 

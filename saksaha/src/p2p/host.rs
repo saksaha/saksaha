@@ -7,20 +7,10 @@ use crate::{
     crypto::Crypto,
     err_res, msg_err,
     node::task_manager::{Msg, MsgKind, TaskManager},
-    sync::Sync,
-};
-use k256::{
-    ecdh::EphemeralSecret,
-    ecdsa::{Signature, SigningKey, VerifyingKey},
-    elliptic_curve::sec1::ToEncodedPoint,
-    EncodedPoint, PublicKey, SecretKey,
 };
 use logger::log;
 use std::sync::Arc;
-use tokio::{
-    sync::{mpsc::Sender, Mutex},
-    task::JoinHandle,
-};
+use tokio::{sync::Mutex, task::JoinHandle};
 
 pub struct Host {
     rpc_port: usize,
@@ -81,11 +71,19 @@ impl Host {
 
         let peer_store = Arc::new(PeerStore::new(10));
         let peer_store_clone = peer_store.clone();
+        let peer_op = PeerOp::new(peer_store_clone);
+
+        tokio::spawn(async move {
+            peer_op.start().await;
+        });
+
+        let peer_store_clone = peer_store.clone();
 
         let task_mng = self.task_mng.clone();
 
         let disc = Disc::new(
             self.disc_port,
+            peer_op_port,
             self.bootstrap_peers.to_owned(),
             peer_store_clone,
             task_mng,
@@ -94,13 +92,6 @@ impl Host {
 
         tokio::spawn(async move {
             disc.start().await;
-        });
-
-        let peer_store_clone = peer_store.clone();
-        let peer_op = PeerOp::new(peer_store_clone);
-
-        tokio::spawn(async move {
-            peer_op.start().await;
         });
     }
 }

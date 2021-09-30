@@ -15,6 +15,7 @@ use tokio::sync::Mutex;
 pub struct Disc {
     address_book: Arc<AddressBook>,
     disc_port: usize,
+    p2p_port: usize,
     peer_store: Arc<PeerStore>,
     task_mng: Arc<TaskManager>,
     credential: Arc<Credential>,
@@ -23,6 +24,7 @@ pub struct Disc {
 impl Disc {
     pub fn new(
         disc_port: usize,
+        p2p_port: usize,
         bootstrap_urls: Option<Vec<String>>,
         peer_store: Arc<PeerStore>,
         task_mng: Arc<TaskManager>,
@@ -33,6 +35,7 @@ impl Disc {
         Disc {
             address_book,
             disc_port,
+            p2p_port,
             peer_store,
             task_mng,
             credential,
@@ -60,6 +63,7 @@ impl Disc {
             address_book,
             peer_store,
             self.disc_port,
+            self.p2p_port,
             task_mng,
             credential,
         );
