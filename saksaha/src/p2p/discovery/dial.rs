@@ -95,7 +95,6 @@ impl Dial {
                     stream,
                     peer,
                     credential,
-                    self.disc_port,
                     self.peer_op_port,
                 );
                 handler.run().await;
@@ -152,7 +151,6 @@ pub struct Handler {
     stream: TcpStream,
     peer: Arc<Mutex<Peer>>,
     credential: Arc<Credential>,
-    disc_port: u16,
     peer_op_port: u16,
 }
 
@@ -161,14 +159,12 @@ impl Handler {
         stream: TcpStream,
         peer: Arc<Mutex<Peer>>,
         credential: Arc<Credential>,
-        disc_port: u16,
         peer_op_port: u16,
     ) -> Handler {
         Handler {
             stream: stream,
             peer,
             credential,
-            disc_port,
             peer_op_port,
         }
     }
@@ -178,10 +174,10 @@ impl Handler {
         let signing_key = SigningKey::from(secret_key);
         let sig: Signature = signing_key.sign(whoareyou::MESSAGE);
 
-        let way = WhoAreYou {
+        let way = WhoAreYou::new(
             sig,
-            peer_op_port: self.peer_op_port,
-        };
+            self.peer_op_port,
+        );
 
         let buf = match way.to_bytes() {
             Ok(b) => b,

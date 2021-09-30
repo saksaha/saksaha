@@ -1,4 +1,4 @@
-use crate::{common::SakResult, err_res};
+use crate::{common::SakResult, err_res, p2p::peer_op};
 use k256::ecdsa::{
     signature::{Signer, Verifier},
     Signature, SigningKey, VerifyingKey,
@@ -19,8 +19,11 @@ pub struct WhoAreYou {
     pub peer_op_port: u16,
 }
 
-
 impl WhoAreYou {
+    pub fn new(sig: Signature, peer_op_port: u16) -> WhoAreYou {
+        WhoAreYou { sig, peer_op_port }
+    }
+
     pub fn to_bytes(&self) -> SakResult<[u8; 128]> {
         let mut buf = [0; 128];
 
@@ -66,7 +69,10 @@ impl WhoAreYou {
             Ok(b) => match Signature::from_der(b) {
                 Ok(s) => s,
                 Err(err) => {
-                    return err_res!("Error recovering signature, err: {}", err);
+                    return err_res!(
+                        "Error recovering signature, err: {}",
+                        err
+                    );
                 }
             },
             Err(err) => {
@@ -81,19 +87,29 @@ impl WhoAreYou {
             }
         };
 
-        let way = WhoAreYou {
-            sig,
-            peer_op_port,
-
-        };
+        let way = WhoAreYou { sig, peer_op_port };
 
         Ok(way)
     }
 }
 
-pub struct WhoAreYouAck;
+pub struct WhoAreYouAck {
+    way: WhoAreYou,
+}
 
 impl WhoAreYouAck {
+    pub fn new(sig: Signature, peer_op_port: u16) -> WhoAreYouAck {
+        let way = WhoAreYou::new(sig, peer_op_port);
+
+        WhoAreYouAck {
+            way,
+        }
+    }
+
+    pub fn to_bytes(&self) -> SakResult<[u8; 128]> {
+        return self.way.to_bytes();
+    }
+
     pub async fn parse(stream: &mut TcpStream) -> SakResult<WhoAreYouAck> {
         let mut buf = [0; 128];
 
@@ -104,9 +120,9 @@ impl WhoAreYouAck {
             }
         };
 
-        println!("22, {:?}", buf);
+        // println!("22, {:?}", buf);
 
-        let waya = WhoAreYouAck {};
+        let way_ack = WhoAreYouAck {};
 
         Ok(waya)
     }

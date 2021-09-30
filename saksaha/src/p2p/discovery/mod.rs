@@ -15,7 +15,7 @@ use tokio::sync::Mutex;
 pub struct Disc {
     address_book: Arc<AddressBook>,
     disc_port: u16,
-    p2p_port: u16,
+    peer_op_port: u16,
     peer_store: Arc<PeerStore>,
     task_mng: Arc<TaskManager>,
     credential: Arc<Credential>,
@@ -24,7 +24,7 @@ pub struct Disc {
 impl Disc {
     pub fn new(
         disc_port: u16,
-        p2p_port: u16,
+        peer_op_port: u16,
         bootstrap_urls: Option<Vec<String>>,
         peer_store: Arc<PeerStore>,
         task_mng: Arc<TaskManager>,
@@ -35,7 +35,7 @@ impl Disc {
         Disc {
             address_book,
             disc_port,
-            p2p_port,
+            peer_op_port,
             peer_store,
             task_mng,
             credential,
@@ -47,8 +47,13 @@ impl Disc {
         let task_mng = self.task_mng.clone();
         let credential = self.credential.clone();
 
-        let listen =
-            Listen::new(self.disc_port, peer_store, task_mng, credential);
+        let listen = Listen::new(
+            self.disc_port,
+            self.peer_op_port,
+            peer_store,
+            task_mng,
+            credential,
+        );
 
         tokio::spawn(async move {
             listen.start_listening().await;
@@ -63,7 +68,7 @@ impl Disc {
             address_book,
             peer_store,
             self.disc_port,
-            self.p2p_port,
+            self.peer_op_port,
             task_mng,
             credential,
         );

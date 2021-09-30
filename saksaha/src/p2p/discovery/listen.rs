@@ -5,9 +5,11 @@ use crate::{
     node::task_manager::{Msg, MsgKind, TaskManager},
     p2p::{
         credential::Credential,
+        discovery::whoareyou::{self, WhoAreYouAck},
         peer_store::{Peer, PeerStore},
     },
 };
+use k256::ecdsa::{signature::Signer, Signature, SigningKey};
 use logger::log;
 use std::{
     sync::{mpsc::SendError, Arc},
@@ -21,6 +23,7 @@ use tokio::{
 
 pub struct Listen {
     disc_port: u16,
+    peer_op_port: u16,
     peer_store: Arc<PeerStore>,
     task_mng: Arc<TaskManager>,
     credential: Arc<Credential>,
@@ -29,12 +32,14 @@ pub struct Listen {
 impl Listen {
     pub fn new(
         disc_port: u16,
+        peer_op_port: u16,
         peer_store: Arc<PeerStore>,
         task_mng: Arc<TaskManager>,
         credential: Arc<Credential>,
     ) -> Listen {
         Listen {
             disc_port,
+            peer_op_port,
             peer_store,
             task_mng,
             credential,
@@ -130,7 +135,13 @@ impl Listen {
             };
 
             tokio::spawn(async move {
-                let mut handler = Handler::new(stream, peer);
+                let mut handler = Handler::new(
+                    stream,
+                    peer,
+                    self.credential,
+                    self.peer_op_port,
+                );
+
                 match handler.run().await {
                     Ok(_) => (),
                     Err(err) => {
@@ -150,11 +161,23 @@ impl Listen {
 pub struct Handler {
     stream: TcpStream,
     peer: Arc<Mutex<Peer>>,
+    credential: Arc<Credential>,
+    peer_op_port: u16,
 }
 
 impl Handler {
-    pub fn new(stream: TcpStream, peer: Arc<Mutex<Peer>>) -> Handler {
-        Handler { stream, peer }
+    pub fn new(
+        stream: TcpStream,
+        peer: Arc<Mutex<Peer>>,
+        credential: Arc<Credential>,
+        peer_op_port: u16,
+    ) -> Handler {
+        Handler {
+            stream,
+            peer,
+            credential,
+            peer_op_port,
+        }
     }
 
     pub async fn run(&mut self) -> SakResult<bool> {
@@ -169,6 +192,12 @@ impl Handler {
         };
 
         println!("received: {:?}, {}", way.sig, way.peer_op_port);
+
+        let secret_key = &self.credential.secret_key;
+        let signing_key = SigningKey::from(secret_key);
+        let sig: Signature = signing_key.sign(whoareyou::MESSAGE);
+
+        let way_ack = WhoAreYouAck::new(sig, self.peer_op_port);
 
         self.stream.write_all(b"hello\n").await;
 
