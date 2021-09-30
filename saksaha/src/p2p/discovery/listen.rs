@@ -1,5 +1,13 @@
 use super::whoareyou::WhoAreYou;
-use crate::{common::SakResult, err_res, msg_err, msg_errd, node::task_manager::{Msg, MsgKind, TaskManager}, p2p::{credential::Credential, peer_store::{Peer, PeerStore}}};
+use crate::{
+    common::SakResult,
+    err_res, msg_err, msg_errd,
+    node::task_manager::{Msg, MsgKind, TaskManager},
+    p2p::{
+        credential::Credential,
+        peer_store::{Peer, PeerStore},
+    },
+};
 use logger::log;
 use std::{
     sync::{mpsc::SendError, Arc},
@@ -123,7 +131,17 @@ impl Listen {
 
             tokio::spawn(async move {
                 let mut handler = Handler::new(stream, peer);
-                handler.run().await;
+                match handler.run().await {
+                    Ok(_) => (),
+                    Err(err) => {
+                        log!(
+                            DEBUG,
+                            "Error processing request, addr: {}, err: {}",
+                            addr,
+                            err
+                        );
+                    }
+                }
             });
         }
     }
@@ -143,7 +161,10 @@ impl Handler {
         let way = match WhoAreYou::parse(&mut self.stream).await {
             Ok(w) => w,
             Err(err) => {
-                return err_res!("Error parsing who are you request, err: {}", err);
+                return err_res!(
+                    "Error parsing who are you request, err: {}",
+                    err
+                );
             }
         };
 

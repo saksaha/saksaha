@@ -19,7 +19,6 @@ pub struct WhoAreYou {
     pub peer_op_port: u16,
 }
 
-pub struct WhoAreYouAck;
 
 impl WhoAreYou {
     pub fn to_bytes(&self) -> SakResult<[u8; 128]> {
@@ -89,5 +88,26 @@ impl WhoAreYou {
         };
 
         Ok(way)
+    }
+}
+
+pub struct WhoAreYouAck;
+
+impl WhoAreYouAck {
+    pub async fn parse(stream: &mut TcpStream) -> SakResult<WhoAreYouAck> {
+        let mut buf = [0; 128];
+
+        match stream.read(&mut buf).await {
+            Ok(b) => b,
+            Err(err) => {
+                return err_res!("Error reading whoAreYouAck, err: {}", err);
+            }
+        };
+
+        println!("22, {:?}", buf);
+
+        let waya = WhoAreYouAck {};
+
+        Ok(waya)
     }
 }

@@ -1,6 +1,6 @@
 use super::{whoareyou::WhoAreYou, Disc};
-use crate::{common::SakResult, err_res, node::task_manager::TaskManager, p2p::{address::AddressBook, credential::Credential, discovery::whoareyou, peer_store::{Peer, PeerStore}}};
-use k256::ecdsa::{Signature, SigningKey, signature::Signer};
+use crate::{common::SakResult, err_res, node::task_manager::TaskManager, p2p::{address::AddressBook, credential::Credential, discovery::whoareyou::{self, WhoAreYouAck}, peer_store::{Peer, PeerStore}}};
+use k256::ecdsa::{signature::Signer, Signature, SigningKey};
 use logger::log;
 use std::{
     sync::Arc,
@@ -195,7 +195,20 @@ impl Handler {
 
         println!("1, {:?}", buf);
 
-        self.stream.write_all(&buf).await;
+        match self.stream.write_all(&buf).await {
+            Ok(_) => (),
+            Err(err) => {
+                return err_res!(
+                    "Error sending the whoAreYou buffer, err: {}",
+                    err
+                );
+            }
+        }
+
+        let way = WhoAreYouAck::parse(&mut self.stream).await;
+
+
+        // self.stream.read_buf()
 
         Ok(true)
     }
