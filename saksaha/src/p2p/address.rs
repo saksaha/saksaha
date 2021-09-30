@@ -86,7 +86,7 @@ impl AddressBook {
         let addrs = addrs.lock().await;
         let mut idx = self.curr_idx.lock().await;
 
-        if let Some(a) = addrs.get(*idx + 1) {
+        if let Some(a) = addrs.get(*idx) {
             let p = Some((a.clone(), idx.to_owned()));
             *idx += 1;
             return p;
@@ -95,6 +95,7 @@ impl AddressBook {
             match addrs.get(*idx) {
                 Some(a) => {
                     let p = Some((a.clone(), idx.to_owned()));
+                    *idx += 1;
                     return p;
                 },
                 None => {
