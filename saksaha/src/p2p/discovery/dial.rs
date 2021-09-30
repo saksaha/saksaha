@@ -29,35 +29,47 @@ impl Dial {
     }
 
     pub async fn start_dialing(&self) {
-        // let address_book = &self.address_book;
-
         let my_disc_endpoint = format!("127.0.0.1:{}", self.disc_port);
 
-        // loop {
-        //     for addr in address_book.iter() {
-        //         let endpoint: Vec<&str> = addr.split("@").collect();
-        //         let endpoint = match endpoint.get(1) {
-        //             Some(e) => e,
-        //             None => {
-        //                 log!(
-        //                     DEBUG,
-        //                     "Cannot get endpoint out of url. \
-        //                     Something might be wrong\n"
-        //                 );
-        //                 continue;
-        //             }
-        //         };
+        loop {
+            let addr = {
+                // let address_book = self.address_book.lock().await;
+                self.address_book.next();
+                // let addr = address_book.next().unwrap();
+                // addr.clone()
+                // &addr
+            };
 
-        //         if *endpoint == my_disc_endpoint {
-        //             continue;
-        //         }
 
-        //         let stream = TcpStream::connect(endpoint).await;
 
-        //         let h = Handler::new();
-        //         h.run();
-        //     }
-        // }
+            // let a = addr.endpoint;
+            // if addr.endpoint != my_disc_endpoint {
+
+            // }
+            // for addr in address_book.iter() {
+            //     let endpoint: Vec<&str> = addr.split("@").collect();
+            //     let endpoint = match endpoint.get(1) {
+            //         Some(e) => e,
+            //         None => {
+            //             log!(
+            //                 DEBUG,
+            //                 "Cannot get endpoint out of url. \
+            //                 Something might be wrong\n"
+            //             );
+            //             continue;
+            //         }
+            //     };
+
+            //     if *endpoint == my_disc_endpoint {
+            //         continue;
+            //     }
+
+            //     let stream = TcpStream::connect(endpoint).await;
+
+            //     let h = Handler::new();
+            //     h.run();
+            // }
+        }
     }
 }
 

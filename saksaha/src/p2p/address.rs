@@ -1,6 +1,6 @@
 use crate::{common::SakResult, err_res};
 use logger::log;
-use std::collections::LinkedList;
+use std::{collections::LinkedList, sync::{Arc, Mutex}};
 
 pub struct Address {
     peer_id: String,
@@ -32,7 +32,8 @@ impl Address {
 }
 
 pub struct AddressBook {
-    pub addrs: Vec<Address>,
+    pub addrs: Arc<Mutex<Vec<Arc<Mutex<Address>>>>>,
+    pub curr_idx: Mutex<usize>,
 }
 
 impl AddressBook {
@@ -63,7 +64,7 @@ impl AddressBook {
                     addr.peer_id,
                     addr.endpoint
                 );
-                addrs.push(addr);
+                addrs.push(Arc::new(Mutex::new(addr)));
                 count += 1;
             }
         }
@@ -71,8 +72,32 @@ impl AddressBook {
         log!(DEBUG, "Address book size: {}\n", count);
         log!(DEBUG, "<<<<<<<<<<<<<<<<<<<<<<\n");
 
-        let book = AddressBook { addrs };
+        let book = AddressBook {
+            addrs: Arc::new(Mutex::new(addrs)),
+            curr_idx: Mutex::new(0),
+        };
         book
+    }
+
+    pub fn next(&self) -> Option<Arc<Mutex<Address>>> {
+        let addrs = self.addrs.clone();
+        let addrs = addrs.lock().unwrap();
+        let mut idx = self.curr_idx.lock().unwrap();
+
+        if let Some(a) = addrs.get(*idx + 1) {
+            *idx += 1;
+            return Some(a.clone())
+        } else {
+            *idx = 0;
+            match addrs.get(0) {
+                Some(a) => {
+                    return Some(a.clone());
+                },
+                None => {
+                    return None;
+                }
+            }
+        };
     }
 }
 

@@ -23,7 +23,8 @@ impl Disc {
         peer_store: Arc<Mutex<PeerStore>>,
         task_mng: Arc<TaskManager>,
     ) -> Self {
-        let address_book = Arc::new(AddressBook::new(bootstrap_urls));
+        let address_book =
+            Arc::new(AddressBook::new(bootstrap_urls));
 
         Disc {
             address_book,
@@ -45,11 +46,7 @@ impl Disc {
 
         let peer_store = self.peer_store.clone();
         let address_book = self.address_book.clone();
-        let dialer = dial::Dial::new(
-            address_book,
-            peer_store,
-            self.disc_port,
-        );
+        let dialer = dial::Dial::new(address_book, peer_store, self.disc_port);
 
         tokio::spawn(async move {
             dialer.start_dialing().await;
