@@ -64,7 +64,9 @@ impl WhoAreYou {
             }
         };
 
-        let
+        let signing_key = '';
+        let disc_port = '';
+        let peer_op_port = '';
 
         let way = WhoAreYou {
 
