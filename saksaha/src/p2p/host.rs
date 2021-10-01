@@ -9,8 +9,8 @@ use crate::{
     node::task_manager::{Msg, MsgKind, TaskManager},
 };
 use logger::log;
-use std::sync::Arc;
-use tokio::{sync::{Mutex, oneshot}, task::JoinHandle};
+use std::{sync::Arc, time::Duration};
+use tokio::{sync::{Mutex, mpsc, oneshot}, task::JoinHandle};
 
 pub struct Host {
     rpc_port: u16,
@@ -71,15 +71,26 @@ impl Host {
 
         let peer_store = Arc::new(PeerStore::new(10));
         let peer_store_clone = peer_store.clone();
-        let peer_op = PeerOp::new(peer_store_clone);
 
-        let (tx, rx) = oneshot::channel();
+        let (peer_op_port_tx, peer_op_port_rx) = mpsc::channel(5);
+        let (dial_loop_tx, dial_loop_rx) = mpsc::channel::<usize>(5);
+
+        let peer_op = PeerOp::new(peer_store_clone, peer_op_port_tx);
+
+        // tokio::spawn(async move {
+        //     loop {
+        //         tokio::time::sleep(Duration::from_millis(7000)).await;
+
+        //         println!("3333333333333");
+        //         dial_loop_tx.send(0).await;
+        //     }
+        // });
 
         tokio::spawn(async move {
-            peer_op.start(tx).await;
+            peer_op.start(peer_op_port_tx).await;
         });
 
-        let peer_op_port = match rx.await {
+        let peer_op_port = match peer_op_port_rx.await {
             Ok(port) => port,
             Err(err) => {
                 log!(
@@ -113,6 +124,7 @@ impl Host {
             peer_store_clone,
             task_mng,
             Arc::new(credential),
+            Arc::new(Mutex::new(dial_loop_rx)),
         );
 
         tokio::spawn(async move {

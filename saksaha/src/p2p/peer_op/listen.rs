@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::{common::SakResult, err_res};
 use logger::log;
 use tokio::{net::TcpListener, sync::oneshot::Sender};
@@ -5,13 +7,22 @@ use tokio::{net::TcpListener, sync::oneshot::Sender};
 pub struct Listen;
 
 impl Listen {
-    pub async fn start_listening(&self, tx: Sender<u16>) -> SakResult<bool> {
+    pub async fn start_listening(
+        &self,
+        peer_op_port_tx: Arc<Sender<u16>>,
+    ) -> SakResult<bool> {
         let local_addr = format!("127.0.0.1:0");
+        let peer_op_port_tx = peer_op_port_tx.to_owned();
+
+        (*peer_op_port_tx).send(1);
+
+        return Ok(true);
 
         let listener = match TcpListener::bind(local_addr).await {
             Ok(l) => {
                 let local_addr = match l.local_addr() {
-                    Ok(addr) => match tx.send(addr.port()) {
+                    // peer_op_port_tx;
+                    Ok(addr) => match (*peer_op_port_tx).send(addr.port()) {
                         Ok(_) => (addr),
                         Err(err) => {
                             return err_res!(

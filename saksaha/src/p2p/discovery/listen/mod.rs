@@ -1,9 +1,14 @@
 mod handler;
 
-use crate::{common::{Error, SakResult}, err_res, msg_err, msg_errd, node::task_manager::{Msg, MsgKind, TaskManager}, p2p::{
+use crate::{
+    common::{Error, SakResult},
+    err_res, msg_err, msg_errd,
+    node::task_manager::{Msg, MsgKind, TaskManager},
+    p2p::{
         credential::Credential,
         peer::{peer_store::PeerStore, Peer},
-    }};
+    },
+};
 use handler::Handler;
 use logger::log;
 use std::sync::Arc;
@@ -34,8 +39,12 @@ impl Listen {
         }
     }
 
-    pub fn shutdown(displayable: &std::fmt::Display, task_mng: Arc<TaskManager>) {
+    pub async fn shutdown(msg: Msg, task_mng: Arc<TaskManager>) {
+        if let Err(err) = task_mng.send(msg).await {
+            log!(DEBUG, "Error sending a msg to task manager, err: {}", err);
 
+            task_mng.shutdown_program();
+        }
     }
 
     pub async fn start_listening(&self) {
@@ -44,43 +53,24 @@ impl Listen {
 
         let (tcp_listener, local_addr) =
             match TcpListener::bind(local_addr).await {
-                Ok(listener) => {
-                    match listener.local_addr() {
-                        Ok(local_addr) => return (listener, local_addr),
-                        Err(err) => {
-                            Listen::shutdown(&err, task_mng);
-                        }
-                    };
+                Ok(listener) => match listener.local_addr() {
+                    Ok(local_addr) => (listener, local_addr),
+                    Err(err) => {
+                        log!(
+                            DEBUG,
+                            "Error getting discovery local addr, err: {}",
+                            err
+                        );
 
-                    // else {
-                    // }
+                        let msg = msg_err!(
+                            MsgKind::SetupFailure,
+                            "Error getting the local addr, disc listen, {}",
+                            err,
+                        );
 
-
-                    // // let local_addr = match l.local_addr() {
-                    // //     Ok(a) => a,
-                    // //     Err(err) => {
-                    // //         Listen::shutdown(&err, task_mng);
-                    // //         let msg = msg_err!(
-                    // //             MsgKind::SetupFailure,
-                    // //             "Error getting the local addr, disc listen, {}",
-                    // //             err
-                    // //         );
-
-                    // //         // if let Err(err) = task_mng.send(msg).await {
-                    // //         //     log!(
-                    // //         //     DEBUG,
-                    // //         //     "Error sending a msg to task manager, err: {}",
-                    // //         //     err
-                    // //         //     );
-
-                    // //         //     self.task_mng.shutdown_program();
-                    // //         // }
-                    // //         unreachable!()
-                    // //     }
-                    // // };
-
-                    // (l, local_addr)
-                }
+                        return Listen::shutdown(msg, task_mng).await;
+                    }
+                },
                 Err(err) => {
                     log!(
                         DEBUG,
@@ -94,12 +84,7 @@ impl Listen {
                         err
                     );
 
-                    self.task_mng
-                        .send(msg)
-                        .await
-                        .expect("Fatal message should be delivered");
-
-                    return;
+                    return Listen::shutdown(msg, task_mng).await;
                 }
             };
 
