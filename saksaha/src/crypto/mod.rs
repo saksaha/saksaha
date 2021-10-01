@@ -1,7 +1,3 @@
-use crate::{
-    common::Error,
-    err_res,
-};
 pub use k256::{
     ecdh::EphemeralSecret,
     ecdsa::{Signature, SigningKey, VerifyingKey},
@@ -11,53 +7,67 @@ pub use k256::{
 use rand_core::OsRng;
 use std::{fmt::Write, num::ParseIntError};
 
-pub fn make_secret_key_from_bytes(
-    bytes: impl AsRef<[u8]>,
-) -> Result<SecretKey, Error> {
-    match SecretKey::from_bytes(bytes) {
-        Ok(s) => return Ok(s),
-        Err(err) => {
-            return err_res!("Error making secret out of bytes, err: {}", err);
+use crate::{common::SakResult, err_res};
+
+pub struct Crypto;
+
+impl Crypto {
+    pub fn generate_key() -> SecretKey {
+        let secret = SecretKey::random(&mut OsRng);
+        return secret;
+    }
+
+    pub fn encode_into_key_pair(sk: SecretKey) -> (String, String) {
+        let pk = sk.public_key();
+
+        let sk_str = Crypto::encode_hex(sk.to_bytes().as_slice());
+        let pk_str = Crypto::encode_hex(pk.to_encoded_point(false).as_bytes());
+
+        return (sk_str, pk_str);
+    }
+
+    pub fn decode_hex(s: String) -> Result<Vec<u8>, ParseIntError> {
+        (0..s.len())
+            .step_by(2)
+            .map(|i| u8::from_str_radix(&s[i..i + 2], 16))
+            .collect()
+    }
+
+    pub fn encode_hex(bytes: &[u8]) -> String {
+        let mut s = String::with_capacity(bytes.len() * 2);
+        for &b in bytes {
+            write!(&mut s, "{:02x}", b).unwrap();
         }
+        s
     }
-}
 
-pub fn decode_hex(s: &str) -> Result<Vec<u8>, ParseIntError> {
-    (0..s.len())
-        .step_by(2)
-        .map(|i| u8::from_str_radix(&s[i..i + 2], 16))
-        .collect()
-}
+    pub fn convert_public_key_to_verifying_key(
+        public_key_bytes: [u8; 65],
+    ) -> SakResult<VerifyingKey> {
+        let encoded_point = match EncodedPoint::from_bytes(public_key_bytes) {
+            Ok(e) => e,
+            Err(err) => {
+                return err_res!(
+                    "Error making EncodedPoint from bytes, err: {}",
+                    err
+                );
+            }
+        };
 
-pub fn encode_hex(bytes: &[u8]) -> String {
-    let mut s = String::with_capacity(bytes.len() * 2);
-    for &b in bytes {
-        write!(&mut s, "{:02x}", b).unwrap();
+        let verifying_key = match VerifyingKey::from_encoded_point(
+            &encoded_point,
+        ) {
+            Ok(v) => v,
+            Err(err) => {
+                return err_res!(
+                    "Cannot create VerifyingKey from encoded point, err: {}",
+                    err
+                );
+            }
+        };
+
+        Ok(verifying_key)
     }
-    s
-}
-
-pub fn encode_key_pair(sk: SecretKey) -> (String, String) {
-    let pk = sk.public_key();
-
-    let sk_str = encode_hex(sk.to_bytes().as_slice());
-    let pk_str = encode_hex(pk.to_encoded_point(false).as_bytes());
-
-    // print!("11, {}\n{}\n", sk_str, pk_str);
-
-    return (sk_str, pk_str);
-}
-
-pub fn generate_key() -> SecretKey {
-    let secret = SecretKey::random(&mut OsRng);
-    return secret;
-}
-
-pub fn to_hex(_: EphemeralSecret) {
-    // let pk = secret.public_key();
-    // secret.
-    // EncodedPoint::from(secret);
-    // let pk = EncodedPoint::from(secret.public_key());
 }
 
 #[cfg(test)]
@@ -72,17 +82,12 @@ mod test {
     #[test]
     fn it_creates_signature() {
         testenv::run_test(|_| {
-            // Signing
             let signing_key = SigningKey::random(&mut OsRng); // Serialize with `::to_bytes()`
             let message = b"ECDSA proves knowledge of a secret number in the context of a single message";
 
-            // Note: the signature type must be annotated or otherwise inferrable as
-            // `Signer` has many impls of the `Signer` trait (for both regular and
-            // recoverable signature types).
             let signature: Signature = signing_key.sign(message);
-
-            // Verification
             let verify_key = VerifyingKey::from(&signing_key); // Serialize with `::to_encoded_point()`
+
             assert!(verify_key.verify(message, &signature).is_ok());
         })
     }

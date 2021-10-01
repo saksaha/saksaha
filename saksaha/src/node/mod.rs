@@ -1,31 +1,31 @@
-use crate::{
-    common::{Error, SakResult},
-    err_res,
-    p2p::host::Host,
-};
+pub mod task_manager;
+
+use crate::{common::SakResult, err_res, p2p::host::Host, rpc::RPC};
 use logger::log;
+use std::sync::Arc;
+use task_manager::{MsgKind, TaskManager};
 use tokio::{self, signal};
 
 pub struct Node {
-    rpc_port: usize,
-    disc_port: usize,
-    bootstrap_peers: Option<Vec<String>>,
+    rpc_port: u16,
+    disc_port: u16,
+    bootstrap_urls: Option<Vec<String>>,
     public_key: String,
     secret: String,
 }
 
 impl Node {
     pub fn new(
-        rpc_port: usize,
-        disc_port: usize,
-        bootstrap_peers: Option<Vec<String>>,
+        rpc_port: u16,
+        disc_port: u16,
+        bootstrap_urls: Option<Vec<String>>,
         public_key: String,
         secret: String,
     ) -> SakResult<Node> {
         let node = Node {
             rpc_port,
             disc_port,
-            bootstrap_peers,
+            bootstrap_urls,
             public_key,
             secret,
         };
@@ -33,15 +33,27 @@ impl Node {
         Ok(node)
     }
 
-    pub fn make_host(&self) -> SakResult<Host> {
+    pub fn shutdown(&self) {
+        println!("shut down");
+
+        std::process::exit(1);
+    }
+
+    pub fn make_host(&self, task_mng: Arc<TaskManager>) -> SakResult<Host> {
         let host = Host::new(
             self.rpc_port,
             self.disc_port,
-            // self.bootstrap_peers,
-            // self.public_key,
-            // self.secret,
+            self.bootstrap_urls.to_owned(),
+            self.public_key.to_owned(),
+            self.secret.to_owned(),
+            task_mng,
         );
         host
+    }
+
+    pub fn make_rpc(&self, task_mng: Arc<TaskManager>) -> SakResult<RPC> {
+        let rpc = RPC::new(task_mng);
+        Ok(rpc)
     }
 
     pub fn start(&self) -> SakResult<bool> {
@@ -52,29 +64,54 @@ impl Node {
             .build()
         {
             Ok(r) => r.block_on(async {
-                // match self.host.start().await {
-                //     Ok(_) => (),
-                //     Err(err) => {
-                //         log!(DEBUG, "Error starting host, err: {}", err);
-                //         std::process::exit(1);
-                //     }
-                // };
+                let task_mng = Arc::new(TaskManager::new());
+                let task_mng_clone = task_mng.clone();
 
-                match signal::ctrl_c().await {
-                    Ok(_) => {
-                        log!(
-                            DEBUG,
-                            "ctrl+c received. Tearing down the application."
-                        );
-                        std::process::exit(1);
-                    }
+                let host = match self.make_host(task_mng_clone) {
+                    Ok(h) => h,
                     Err(err) => {
-                        return err_res!(
-                            "Error setting up ctrl+k handler, err: {}",
-                            err
-                        );
+                        return err_res!("Error making host, err: {}", err);
                     }
-                }
+                };
+
+                let task_mng_clone = task_mng.clone();
+
+                let rpc = match self.make_rpc(task_mng_clone) {
+                    Ok(r) => r,
+                    Err(err) => {
+                        return err_res!("Error making rpc, err: {}", err);
+                    }
+                };
+
+                tokio::join!(host.start(), rpc.start(),);
+
+                tokio::select!(
+                    msg_kind = task_mng.start_receiving() => {
+                        if let MsgKind::SetupFailure = msg_kind {
+                            self.shutdown();
+                        }
+                    },
+                    c = signal::ctrl_c() => {
+                        match c {
+                            Ok(_) => {
+                                log!(DEBUG, "ctrl+k is pressed.\n");
+                                self.shutdown();
+                            }
+                            Err(err) => {
+                                log!(
+                                    DEBUG,
+                                    "Unexpected error while waiting for \
+                                        ctrl+p, err: {}",
+                                    err
+                                );
+
+                                self.shutdown();
+                            }
+                        }
+                    },
+                );
+
+                Ok(true)
             }),
             Err(err) => {
                 return err_res!(
@@ -86,17 +123,4 @@ impl Node {
 
         runtime
     }
-
-    // pub async fn handle_ctrl_c(&self) {
-    //     if let Ok(_) = signal::ctrl_c().await {
-    //         log!(DEBUG, "You pressed ctrl+c. If you press again, saksaha will be closed.\n");
-    //     }
-
-    //     println!("333");
-
-    //     if let Ok(_) = signal::ctrl_c().await {
-    //         log!(DEBUG, "`ctrl+c` pressed. Closing saksaha\n");
-    //         std::process::exit(1);
-    //     }
-    // }
 }
