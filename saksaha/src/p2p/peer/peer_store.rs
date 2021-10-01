@@ -13,9 +13,11 @@ pub struct PeerStore {
 impl PeerStore {
     pub fn new(capacity: usize) -> PeerStore {
         let mut slots = Vec::with_capacity(capacity);
-        for i in 0..capacity {
+
+        for _ in 0..capacity {
             let peer =
-                Peer::new("".into(), "".into(), PeerStatus::NOT_INITIALZED);
+                Peer::new("".into(), "".into(), PeerStatus::NotInitialized);
+
             slots.push(Arc::new(Mutex::new(peer)));
         }
 

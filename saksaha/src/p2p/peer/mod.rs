@@ -2,7 +2,10 @@ pub mod peer_store;
 
 #[derive(Debug)]
 pub enum PeerStatus {
-    NOT_INITIALZED,
+    NotInitialized,
+
+    Discovered,
+
 }
 
 #[derive(Debug)]
