@@ -1,5 +1,15 @@
 use super::{whoareyou::WhoAreYou, Disc};
-use crate::{common::SakResult, err_res, node::task_manager::TaskManager, p2p::{address::AddressBook, credential::Credential, discovery::whoareyou::{self, WhoAreYouAck}, peer_store::{Peer, PeerStore}}};
+use crate::{
+    common::SakResult,
+    err_res,
+    node::task_manager::TaskManager,
+    p2p::{
+        address::AddressBook,
+        credential::Credential,
+        discovery::whoareyou::{self, WhoAreYouAck},
+        peer_store::{Peer, PeerStore},
+    },
+};
 use k256::ecdsa::{signature::Signer, Signature, SigningKey};
 use logger::log;
 use std::{
@@ -67,70 +77,56 @@ impl Dial {
                 }
             };
 
-            println!("33 {:?}, {:?}", addr, peer);
-            if addr.endpoint != my_disc_endpoint {
-                let stream =
-                    match TcpStream::connect(addr.endpoint.to_owned()).await {
-                        Ok(s) => {
-                            log!(
-                                DEBUG,
-                                "Successfully connected to endpoint, {}\n",
-                                addr.endpoint
-                            );
-                            s
-                        }
-                        Err(err) => {
-                            log!(
-                                DEBUG,
-                                "Error connecting to addr, {:?}, err: {}",
-                                addr,
-                                err
-                            );
-                            continue;
-                        }
-                    };
-
-                let credential = self.credential.clone();
-                let mut handler = Handler::new(
-                    stream,
-                    peer,
-                    credential,
-                    self.peer_op_port,
-                );
-                handler.run().await;
-                // Handler::run(stream, peer, credential).await;
-
-                // let (mut rd, mut wr) = io::split(stream);
-
-                // println!("31355");
-
-                // wr.write_all(b"power\n").await.unwrap();
-
-                // let mut buf = vec![0; 128];
-
-                // println!("313");
-
-                // loop {
-                //     let n = rd.read(&mut buf).await.unwrap();
-
-                //     if n == 0 {
-                //         break;
-                //     }
-
-                //     println!("GOT {:?}", &buf[..n]);
-                // }
-
-                // println!("31344");
-
-                // let h = Handler::new(stream);
-                // h.run();
-            } else {
-                println!("!313");
+            if addr.endpoint == my_disc_endpoint {
                 match self.address_book.remove(idx).await {
                     Ok(_) => (),
                     Err(err) => {
-                        println!("err: {}", err);
+                        log!(
+                            DEBUG,
+                            "Error removing address, idx: {}, endpoint: {}",
+                            idx,
+                            addr.endpoint
+                        );
                     }
+                }
+                continue;
+            }
+
+            let stream =
+                match TcpStream::connect(addr.endpoint.to_owned()).await {
+                    Ok(s) => {
+                        log!(
+                            DEBUG,
+                            "Successfully connected to endpoint, {}\n",
+                            addr.endpoint
+                        );
+                        s
+                    }
+                    Err(err) => {
+                        log!(
+                            DEBUG,
+                            "Error connecting to addr, {:?}, err: {}",
+                            addr,
+                            err
+                        );
+                        continue;
+                    }
+                };
+
+            let credential = self.credential.clone();
+
+            let mut handler =
+                Handler::new(stream, peer, credential, self.peer_op_port);
+
+            match handler.run().await {
+                Ok(_) => (),
+                Err(err) => {
+                    log!(
+                        DEBUG,
+                        "Error processing request, endpoint: {}, err: {}",
+                        addr.endpoint,
+                        err,
+                    );
                 }
             }
 
@@ -174,10 +170,9 @@ impl Handler {
         let signing_key = SigningKey::from(secret_key);
         let sig: Signature = signing_key.sign(whoareyou::MESSAGE);
 
-        let way = WhoAreYou::new(
-            sig,
-            self.peer_op_port,
-        );
+        println!("333");
+
+        let way = WhoAreYou::new(sig, self.peer_op_port);
 
         let buf = match way.to_bytes() {
             Ok(b) => b,
@@ -189,7 +184,7 @@ impl Handler {
             }
         };
 
-        println!("1, {:?}", buf);
+        println!("123, {:?}", buf);
 
         match self.stream.write_all(&buf).await {
             Ok(_) => (),
@@ -201,10 +196,14 @@ impl Handler {
             }
         }
 
-        let way = WhoAreYouAck::parse(&mut self.stream).await;
+        let way_ack = match WhoAreYouAck::parse(&mut self.stream).await {
+            Ok(w) => w,
+            Err(err) => {
+                return err_res!("Cannot process WhoAreyouAck, err: {}", err);
+            }
+        };
 
-
-        // self.stream.read_buf()
+        println!("way_ack: {:?}", way_ack.to_bytes());
 
         Ok(true)
     }

@@ -49,21 +49,12 @@ impl WhoAreYou {
     pub async fn parse(stream: &mut TcpStream) -> SakResult<WhoAreYou> {
         let mut buf = [0; 128];
 
-        loop {
-            let n = match stream.read(&mut buf).await {
-                Ok(n) => n,
-                Err(err) => {
-                    return err_res!(
-                        "Error parsing `who_are_you` request`, err: {}",
-                        err
-                    );
-                }
-            };
-
-            if n == 0 {
-                break;
+        match stream.read(&mut buf).await {
+            Ok(b) => b,
+            Err(err) => {
+                return err_res!("Error reading whoAreYou, err: {}", err);
             }
-        }
+        };
 
         let sig: Signature = match buf[1..71].try_into() {
             Ok(b) => match Signature::from_der(b) {
@@ -83,7 +74,7 @@ impl WhoAreYou {
         let peer_op_port: u16 = match buf[71..73].try_into() {
             Ok(p) => u16::from_be_bytes(p),
             Err(err) => {
-                return err_res!("Error parsing peer_op_port");
+                return err_res!("Error parsing peer_op_port, err: {}", err);
             }
         };
 
@@ -94,7 +85,7 @@ impl WhoAreYou {
 }
 
 pub struct WhoAreYouAck {
-    way: WhoAreYou,
+    pub way: WhoAreYou,
 }
 
 impl WhoAreYouAck {
@@ -120,10 +111,17 @@ impl WhoAreYouAck {
             }
         };
 
-        // println!("22, {:?}", buf);
+        let way = match WhoAreYou::parse(stream).await {
+            Ok(w) => w,
+            Err(err) => {
+                return err_res!("Error parsing WhoAreYouAck, err: {}", err);
+            }
+        };
 
-        let way_ack = WhoAreYouAck {};
+        let way_ack = WhoAreYouAck {
+            way,
+        };
 
-        Ok(waya)
+        Ok(way_ack)
     }
 }

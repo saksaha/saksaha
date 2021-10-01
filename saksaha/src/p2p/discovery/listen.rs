@@ -194,15 +194,7 @@ impl Handler {
             }
         };
 
-        println!("received: {:?}, {}", way.sig, way.peer_op_port);
-
-        // let secret_key = &self.credential.secret_key;
-        // let signing_key = SigningKey::from(secret_key);
-        // let sig: Signature = signing_key.sign(whoareyou::MESSAGE);
-
-        // let way_ack = WhoAreYouAck::new(sig, self.peer_op_port);
-
-        // self.stream.write_all(b"hello\n").await;
+        println!("received: {:?}\n", way.to_bytes());
 
         Ok(true)
     }

@@ -110,10 +110,9 @@ impl AddressBook {
         let addrs = self.addrs.clone();
         let mut addrs = addrs.lock().await;
 
-        println!("remove: {}", idx);
-
         if idx <= addrs.len() {
             let addr = addrs.remove(idx);
+            log!(DEBUG, "Address removed, idx: {}\n", idx);
             return Ok(addr);
         } else {
             return err_res!("Index out of bounds, idx:{}", idx);
