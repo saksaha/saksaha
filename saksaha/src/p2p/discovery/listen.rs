@@ -112,7 +112,7 @@ impl Listen {
 
     pub async fn run_loop(&self, tcp_listener: TcpListener) {
         loop {
-            println!("start loop");
+            println!("start listen loop");
             let mut peer_store = self.peer_store.clone();
 
             let peer = match peer_store.next().await {
@@ -194,7 +194,16 @@ impl Handler {
             }
         };
 
-        println!("received: {:?}\n", way.to_bytes());
+        // let secret_key = &self.credential.secret_key;
+        // let signing_key = SigningKey::from(secret_key);
+        // let sig: Signature = signing_key.sign(whoareyou::MESSAGE);
+
+        // let way_ack = WhoAreYouAck::new(sig, )
+
+
+        // println!("way_ack: {:?}", way_ack.to_bytes());
+
+        println!("listen received way: {:?}\n", way.to_bytes());
 
         Ok(true)
     }

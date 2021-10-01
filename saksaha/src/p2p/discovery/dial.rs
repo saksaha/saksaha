@@ -62,6 +62,7 @@ impl Dial {
                 Some(a) => a,
                 None => {
                     println!("Addr not available");
+                    return;
                     time::sleep(Duration::from_millis(1000)).await;
                     continue;
                 }
@@ -123,7 +124,7 @@ impl Dial {
                 Err(err) => {
                     log!(
                         DEBUG,
-                        "Error processing request, endpoint: {}, err: {}",
+                        "Error processing request, endpoint: {}, err: {}\n",
                         addr.endpoint,
                         err,
                     );
@@ -184,7 +185,7 @@ impl Handler {
             }
         };
 
-        println!("123, {:?}", buf);
+        println!("dial sending way, {:?}", buf);
 
         match self.stream.write_all(&buf).await {
             Ok(_) => (),

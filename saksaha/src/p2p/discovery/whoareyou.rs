@@ -104,12 +104,18 @@ impl WhoAreYouAck {
     pub async fn parse(stream: &mut TcpStream) -> SakResult<WhoAreYouAck> {
         let mut buf = [0; 128];
 
-        match stream.read(&mut buf).await {
+        // let a = stream.local_addr().unwrap();
+        let a =stream.peer_addr().unwrap();
+        println!("22, {}", a);
+
+        let n = match stream.read(&mut buf).await {
             Ok(b) => b,
             Err(err) => {
                 return err_res!("Error reading whoAreYouAck, err: {}", err);
             }
         };
+
+        println!("whoareyouack parsing, n: {}, buf: {:?}", n, buf);
 
         let way = match WhoAreYou::parse(stream).await {
             Ok(w) => w,
