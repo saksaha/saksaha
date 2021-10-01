@@ -1,29 +1,51 @@
 mod dial;
 mod listen;
 
+use super::peer::peer_store::PeerStore;
 use crate::{common::SakResult, err_res};
+use std::sync::Arc;
+use tokio::sync::{Mutex, oneshot::Sender};
 
-#[derive(Clone, Copy)]
-pub struct PeerOp {}
+pub struct PeerOp {
+    peer_store: Arc<PeerStore>,
+}
 
 impl PeerOp {
-    pub fn new() -> SakResult<PeerOp> {
-        let peer_op = PeerOp {};
+    pub fn new(peer_store: Arc<PeerStore>) -> PeerOp {
+        let peer_op = PeerOp { peer_store };
 
-        Ok(peer_op)
+        peer_op
     }
 }
 
 impl PeerOp {
-    pub async fn start(self) -> SakResult<bool> {
-        tokio::spawn(async move {
-            self.start_dialing().await;
-        });
+    pub async fn start(&self, tx: Sender<u16>) {
+        let listen = listen::Listen {};
 
         tokio::spawn(async move {
-            self.start_listening().await;
+            match listen.start_listening(tx).await {
+                Ok(_) => Ok(()),
+                Err(err) => {
+                    return err_res!(
+                        "Error start peer op listening, err: {}",
+                        err
+                    );
+                }
+            }
         });
 
-        Ok(true)
+        let dial = dial::Dial {};
+
+        tokio::spawn(async move {
+            match dial.start_dialing().await {
+                Ok(_) => Ok(()),
+                Err(err) => {
+                    return err_res!(
+                        "Error start peer op dialing, err: {}",
+                        err
+                    );
+                }
+            }
+        });
     }
 }
