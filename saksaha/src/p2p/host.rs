@@ -1,6 +1,6 @@
 use super::{
     credential::Credential, discovery::Disc, peer_op::PeerOp,
-    peer_store::PeerStore,
+    peer::peer_store::PeerStore,
 };
 use crate::{
     common::SakResult,

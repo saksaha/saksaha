@@ -1,7 +1,7 @@
 mod dial;
 mod listen;
 
-use super::peer_store::PeerStore;
+use super::peer::peer_store::PeerStore;
 use crate::{common::SakResult, err_res};
 use std::sync::Arc;
 use tokio::sync::{Mutex, oneshot::Sender};

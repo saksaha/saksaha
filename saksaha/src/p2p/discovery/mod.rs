@@ -4,7 +4,7 @@ mod whoareyou;
 
 use self::listen::Listen;
 use super::{
-    address::AddressBook, credential::Credential, peer_store::PeerStore,
+    address::AddressBook, credential::Credential, peer::peer_store::PeerStore,
 };
 use crate::{common::SakResult, err_res, node::task_manager::TaskManager};
 use k256::SecretKey;

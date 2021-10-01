@@ -7,6 +7,8 @@ pub use k256::{
 use rand_core::OsRng;
 use std::{fmt::Write, num::ParseIntError};
 
+use crate::{common::SakResult, err_res};
+
 pub struct Crypto;
 
 impl Crypto {
@@ -37,6 +39,34 @@ impl Crypto {
             write!(&mut s, "{:02x}", b).unwrap();
         }
         s
+    }
+
+    pub fn convert_public_key_to_verifying_key(
+        public_key_bytes: [u8; 65],
+    ) -> SakResult<VerifyingKey> {
+        let encoded_point = match EncodedPoint::from_bytes(public_key_bytes) {
+            Ok(e) => e,
+            Err(err) => {
+                return err_res!(
+                    "Error making EncodedPoint from bytes, err: {}",
+                    err
+                );
+            }
+        };
+
+        let verifying_key = match VerifyingKey::from_encoded_point(
+            &encoded_point,
+        ) {
+            Ok(v) => v,
+            Err(err) => {
+                return err_res!(
+                    "Cannot create VerifyingKey from encoded point, err: {}",
+                    err
+                );
+            }
+        };
+
+        Ok(verifying_key)
     }
 }
 

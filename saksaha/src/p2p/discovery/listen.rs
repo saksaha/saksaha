@@ -6,7 +6,7 @@ use crate::{
     p2p::{
         credential::Credential,
         discovery::whoareyou::{self, WhoAreYouAck},
-        peer_store::{Peer, PeerStore},
+        peer::{peer_store::PeerStore, Peer},
     },
 };
 use k256::ecdsa::{signature::Signer, Signature, SigningKey};
@@ -194,14 +194,35 @@ impl Handler {
             }
         };
 
-        // let secret_key = &self.credential.secret_key;
-        // let signing_key = SigningKey::from(secret_key);
-        // let sig: Signature = signing_key.sign(whoareyou::MESSAGE);
+        let secret_key = &self.credential.secret_key;
+        let signing_key = SigningKey::from(secret_key);
+        let sig: Signature = signing_key.sign(whoareyou::MESSAGE);
 
-        // let way_ack = WhoAreYouAck::new(sig, )
+        let way_ack = WhoAreYouAck::new(
+            sig,
+            self.peer_op_port,
+            self.credential.public_key_bytes,
+        );
 
+        let buf = match way_ack.to_bytes() {
+            Ok(b) => b,
+            Err(err) => {
+                return err_res!(
+                    "Error converting WhoAreYouAck to bytes, err: {}",
+                    err
+                );
+            }
+        };
 
-        // println!("way_ack: {:?}", way_ack.to_bytes());
+        match self.stream.write_all(&buf).await {
+            Ok(_) => (),
+            Err(err) => {
+                return err_res!(
+                    "Error sending the whoAreYou buffer, err: {}",
+                    err
+                );
+            }
+        }
 
         println!("listen received way: {:?}\n", way.to_bytes());
 

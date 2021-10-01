@@ -1,9 +1,10 @@
-use k256::SecretKey;
+use k256::{elliptic_curve::sec1::ToEncodedPoint, SecretKey};
 
 use crate::{common::SakResult, crypto::Crypto, err_res};
 
 pub struct Credential {
     pub secret_key: SecretKey,
+    pub public_key_bytes: [u8; 65],
 }
 
 impl Credential {
@@ -25,8 +26,23 @@ impl Credential {
             }
         };
 
+        let public_key_bytes: [u8; 65] = {
+            let b = secret_key.public_key().to_encoded_point(false).to_bytes();
+
+            if b.len() != 65 {
+                return err_res!(
+                    "Error encoding public key into bytes, size does not fit"
+                );
+            }
+
+            let mut buf = [0; 65];
+            buf.clone_from_slice(&b);
+            buf
+        };
+
         let credential = Credential {
             secret_key,
+            public_key_bytes,
         };
 
         Ok(credential)

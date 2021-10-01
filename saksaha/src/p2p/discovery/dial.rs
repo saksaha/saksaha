@@ -1,16 +1,24 @@
 use super::{whoareyou::WhoAreYou, Disc};
 use crate::{
     common::SakResult,
+    crypto::Crypto,
     err_res,
     node::task_manager::TaskManager,
     p2p::{
         address::AddressBook,
         credential::Credential,
         discovery::whoareyou::{self, WhoAreYouAck},
-        peer_store::{Peer, PeerStore},
+        peer::{Peer, peer_store::PeerStore},
     },
 };
-use k256::ecdsa::{signature::Signer, Signature, SigningKey};
+use k256::{
+    ecdsa::{
+        signature::{Signer, Verifier},
+        Signature, SigningKey, VerifyingKey,
+    },
+    elliptic_curve::sec1::ToEncodedPoint,
+    EncodedPoint,
+};
 use logger::log;
 use std::{
     sync::Arc,
@@ -171,9 +179,11 @@ impl Handler {
         let signing_key = SigningKey::from(secret_key);
         let sig: Signature = signing_key.sign(whoareyou::MESSAGE);
 
-        println!("333");
-
-        let way = WhoAreYou::new(sig, self.peer_op_port);
+        let way = WhoAreYou::new(
+            sig,
+            self.peer_op_port,
+            self.credential.public_key_bytes,
+        );
 
         let buf = match way.to_bytes() {
             Ok(b) => b,
@@ -184,8 +194,6 @@ impl Handler {
                 );
             }
         };
-
-        println!("dial sending way, {:?}", buf);
 
         match self.stream.write_all(&buf).await {
             Ok(_) => (),
@@ -204,7 +212,26 @@ impl Handler {
             }
         };
 
-        println!("way_ack: {:?}", way_ack.to_bytes());
+        println!("dial received way_ack: {:?}", way_ack.to_bytes());
+
+        let verifying_key = match Crypto::convert_public_key_to_verifying_key(
+            way_ack.way.public_key_bytes,
+        ) {
+            Ok(v) => v,
+            Err(err) => {
+                return err_res!("Error creating verifying key, err: {}", err);
+            }
+        };
+        let sig = way_ack.way.sig;
+
+        match verifying_key.verify(whoareyou::MESSAGE, &sig) {
+            Ok(_) => (),
+            Err(err) => {
+                return err_res!("Signature is invalid, err: {}", err);
+            }
+        };
+
+        let peer = self.peer.lock().await;
 
         Ok(true)
     }

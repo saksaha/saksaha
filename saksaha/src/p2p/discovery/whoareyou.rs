@@ -16,24 +16,33 @@ pub enum Type {
 
 pub struct WhoAreYou {
     pub sig: Signature,
+    pub public_key_bytes: [u8; 65],
     pub peer_op_port: u16,
 }
 
 impl WhoAreYou {
-    pub fn new(sig: Signature, peer_op_port: u16) -> WhoAreYou {
-        WhoAreYou { sig, peer_op_port }
+    pub fn new(
+        sig: Signature,
+        peer_op_port: u16,
+        public_key_bytes: [u8; 65],
+    ) -> WhoAreYou {
+        WhoAreYou {
+            sig,
+            peer_op_port,
+            public_key_bytes,
+        }
     }
 
-    pub fn to_bytes(&self) -> SakResult<[u8; 128]> {
-        let mut buf = [0; 128];
+    pub fn to_bytes(&self) -> SakResult<[u8; 140]> {
+        let mut buf = [0; 140];
 
         buf[0] = Type::SYN as u8;
 
         let sig_bytes = self.sig.to_der().to_bytes();
         let sig_len = sig_bytes.len();
 
-        if sig_len == 70 {
-            buf[1..71].copy_from_slice(&sig_bytes);
+        if sig_len == 71 {
+            buf[1..72].copy_from_slice(&sig_bytes);
         } else {
             return err_res!(
                 "Signature does not fit the size, len: {}",
@@ -41,22 +50,24 @@ impl WhoAreYou {
             );
         }
 
-        buf[71..73].copy_from_slice(&self.peer_op_port.to_be_bytes());
+        buf[72..74].copy_from_slice(&self.peer_op_port.to_be_bytes());
+
+        buf[74..139].copy_from_slice(&self.public_key_bytes);
 
         Ok(buf)
     }
 
     pub async fn parse(stream: &mut TcpStream) -> SakResult<WhoAreYou> {
-        let mut buf = [0; 128];
+        let mut buf = [0; 140];
 
-        match stream.read(&mut buf).await {
+        match stream.read_exact(&mut buf).await {
             Ok(b) => b,
             Err(err) => {
                 return err_res!("Error reading whoAreYou, err: {}", err);
             }
         };
 
-        let sig: Signature = match buf[1..71].try_into() {
+        let sig: Signature = match buf[1..72].try_into() {
             Ok(b) => match Signature::from_der(b) {
                 Ok(s) => s,
                 Err(err) => {
@@ -71,14 +82,21 @@ impl WhoAreYou {
             }
         };
 
-        let peer_op_port: u16 = match buf[71..73].try_into() {
+        let peer_op_port: u16 = match buf[72..74].try_into() {
             Ok(p) => u16::from_be_bytes(p),
             Err(err) => {
                 return err_res!("Error parsing peer_op_port, err: {}", err);
             }
         };
 
-        let way = WhoAreYou { sig, peer_op_port };
+        let mut public_key_bytes = [0; 65];
+        public_key_bytes.copy_from_slice(&buf[74..139]);
+
+        let way = WhoAreYou {
+            sig,
+            peer_op_port,
+            public_key_bytes,
+        };
 
         Ok(way)
     }
@@ -89,34 +107,21 @@ pub struct WhoAreYouAck {
 }
 
 impl WhoAreYouAck {
-    pub fn new(sig: Signature, peer_op_port: u16) -> WhoAreYouAck {
-        let way = WhoAreYou::new(sig, peer_op_port);
+    pub fn new(
+        sig: Signature,
+        peer_op_port: u16,
+        public_key_bytes: [u8; 65],
+    ) -> WhoAreYouAck {
+        let way = WhoAreYou::new(sig, peer_op_port, public_key_bytes);
 
-        WhoAreYouAck {
-            way,
-        }
+        WhoAreYouAck { way }
     }
 
-    pub fn to_bytes(&self) -> SakResult<[u8; 128]> {
+    pub fn to_bytes(&self) -> SakResult<[u8; 140]> {
         return self.way.to_bytes();
     }
 
     pub async fn parse(stream: &mut TcpStream) -> SakResult<WhoAreYouAck> {
-        let mut buf = [0; 128];
-
-        // let a = stream.local_addr().unwrap();
-        let a =stream.peer_addr().unwrap();
-        println!("22, {}", a);
-
-        let n = match stream.read(&mut buf).await {
-            Ok(b) => b,
-            Err(err) => {
-                return err_res!("Error reading whoAreYouAck, err: {}", err);
-            }
-        };
-
-        println!("whoareyouack parsing, n: {}, buf: {:?}", n, buf);
-
         let way = match WhoAreYou::parse(stream).await {
             Ok(w) => w,
             Err(err) => {
@@ -124,9 +129,7 @@ impl WhoAreYouAck {
             }
         };
 
-        let way_ack = WhoAreYouAck {
-            way,
-        };
+        let way_ack = WhoAreYouAck { way };
 
         Ok(way_ack)
     }
