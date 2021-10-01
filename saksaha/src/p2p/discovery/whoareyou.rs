@@ -1,4 +1,4 @@
-use crate::{common::SakResult, err_res, p2p::peer_op};
+use crate::{common::SakResult, crypto::Crypto, err_res, p2p::peer_op};
 use k256::ecdsa::{
     signature::{Signer, Verifier},
     Signature, SigningKey, VerifyingKey,
@@ -55,6 +55,10 @@ impl WhoAreYou {
         buf[74..139].copy_from_slice(&self.public_key_bytes);
 
         Ok(buf)
+    }
+
+    pub fn get_peer_id(&self) -> String {
+        Crypto::encode_hex(&self.public_key_bytes)
     }
 
     pub async fn parse(stream: &mut TcpStream) -> SakResult<WhoAreYou> {
