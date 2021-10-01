@@ -18,6 +18,14 @@ use logger::log;
 use std::{sync::Arc, time::Duration};
 use tokio::{io::AsyncWriteExt, net::TcpStream, sync::Mutex, time};
 
+pub enum HandleResult {
+    AddressNotFound,
+
+    LocalAddrIdentical,
+
+    Success,
+}
+
 pub struct Handler {
     peer: Arc<Mutex<Peer>>,
     credential: Arc<Credential>,
@@ -43,13 +51,13 @@ impl Handler {
         }
     }
 
-    pub async fn run(&mut self) -> SakResult<bool> {
+    pub async fn run(&mut self) -> SakResult<HandleResult> {
         let (addr, idx) = match self.address_book.next().await {
             Some(a) => a,
             None => {
                 log!(DEBUG, "Cannot acquire next address\n");
 
-                return Ok(true);
+                return Ok(HandleResult::AddressNotFound);
             }
         };
 
@@ -73,7 +81,7 @@ impl Handler {
                     );
                 }
             }
-            return Ok(true);
+            return Ok(HandleResult::LocalAddrIdentical);
         }
 
         let mut stream =
@@ -87,13 +95,11 @@ impl Handler {
                     s
                 }
                 Err(err) => {
-                    log!(
-                        DEBUG,
-                        "Error connecting to addr, {:?}, err: {}",
+                    return err_res!(
+                        "Error connecting to addr: {:?}, err: {}",
                         addr,
                         err
                     );
-                    return Ok(true);
                 }
             };
 
@@ -162,6 +168,6 @@ impl Handler {
             println!("Start synchroize");
         });
 
-        return Ok(true);
+        Ok(HandleResult::Success)
     }
 }

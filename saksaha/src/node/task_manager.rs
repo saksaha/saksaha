@@ -59,7 +59,9 @@ impl TaskManager {
     }
 
     pub fn shutdown_program(&self) {
+        println!("Shut down");
 
+        std::process::exit(1);
     }
 }
 
