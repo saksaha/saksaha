@@ -65,7 +65,6 @@ impl Dial {
                         Ok(res) => {
                             println!("res: ");
                             if let HandleResult::AddressNotFound = res {
-                                println!("11");
                                 break 'main;
                             }
                         },
@@ -99,7 +98,12 @@ impl Dial {
                 }
             }
 
-            dial_loop_rx.recv().await.unwrap();
+            match dial_loop_rx.recv().await {
+                Some(_) => (),
+                None => {
+                    // todo
+                }
+            }
         }
     }
 }
