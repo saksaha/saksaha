@@ -1,6 +1,6 @@
 use super::{
-    credential::Credential, discovery::Disc, peer_op::PeerOp,
-    peer::peer_store::PeerStore,
+    credential::Credential, discovery::Disc, peer::peer_store::PeerStore,
+    peer_op::PeerOp,
 };
 use crate::{
     common::SakResult,
@@ -10,7 +10,10 @@ use crate::{
 };
 use logger::log;
 use std::{sync::Arc, time::Duration};
-use tokio::{sync::{Mutex, mpsc, oneshot}, task::JoinHandle};
+use tokio::{
+    sync::{mpsc, oneshot, Mutex},
+    task::JoinHandle,
+};
 
 pub struct Host {
     rpc_port: u16,
@@ -72,37 +75,27 @@ impl Host {
         let peer_store = Arc::new(PeerStore::new(10));
         let peer_store_clone = peer_store.clone();
 
-        let (peer_op_port_tx, peer_op_port_rx) = mpsc::channel(5);
+        let (peer_op_port_tx, mut peer_op_port_rx) = mpsc::channel(1);
         let (dial_loop_tx, dial_loop_rx) = mpsc::channel::<usize>(5);
 
-        let peer_op = PeerOp::new(peer_store_clone, peer_op_port_tx);
-
-        // tokio::spawn(async move {
-        //     loop {
-        //         tokio::time::sleep(Duration::from_millis(7000)).await;
-
-        //         println!("3333333333333");
-        //         dial_loop_tx.send(0).await;
-        //     }
-        // });
+        let peer_op = PeerOp::new(
+            peer_store_clone,
+            Arc::new(peer_op_port_tx),
+            Arc::new(dial_loop_tx),
+        );
 
         tokio::spawn(async move {
-            peer_op.start(peer_op_port_tx).await;
+            peer_op.start().await;
         });
 
-        let peer_op_port = match peer_op_port_rx.await {
-            Ok(port) => port,
-            Err(err) => {
-                log!(
-                    DEBUG,
-                    "Fatal error. Cannot retrieve peer op port, err: {}\n",
-                    err
-                );
+        let peer_op_port = match peer_op_port_rx.recv().await {
+            Some(port) => port,
+            None => {
+                log!(DEBUG, "Fatal error. Cannot retrieve peer op port\n",);
 
                 let msg = msg_err!(
                     MsgKind::SetupFailure,
-                    "Error retrieving peer op port, err: {}",
-                    err
+                    "Error retrieving peer op port",
                 );
 
                 self.task_mng
