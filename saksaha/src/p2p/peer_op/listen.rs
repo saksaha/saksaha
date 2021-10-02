@@ -1,6 +1,9 @@
 use std::sync::Arc;
 
-use crate::{err_res, node::task_manager::TaskManager};
+use crate::{
+    err_res, msg_err,
+    node::task_manager::{MsgKind, TaskManager},
+};
 use logger::log;
 use tokio::{
     net::TcpListener, sync::mpsc::Sender as MpscSender,
@@ -31,11 +34,13 @@ impl Listen {
                 let local_addr = match l.local_addr() {
                     Ok(addr) => addr,
                     Err(err) => {
-                        return;
-                        // return err_res!(
-                        //     "Error getting peer op local addr, err: {}",
-                        //     err
-                        // );
+                        let msg = msg_err!(
+                            MsgKind::SetupFailure,
+                            "Error getting peer op local addr, err: {}",
+                            err
+                        );
+
+                        return self.task_mng.send(msg).await;
                     }
                 };
 
@@ -44,15 +49,26 @@ impl Listen {
                 match peer_op_port_tx.send(local_addr.port()) {
                     Ok(_) => (),
                     Err(err) => {
-                        // todo
+                        let msg = msg_err!(
+                            MsgKind::SetupFailure,
+                            "Error getting peer op port, err: {}",
+                            err
+                        );
+
+                        return self.task_mng.send(msg).await;
                     }
                 };
 
                 l
             }
-            Err(_) => {
-                // return err_res!("Error start peer_op listening");
-                return;
+            Err(err) => {
+                let msg = msg_err!(
+                    MsgKind::SetupFailure,
+                    "Error binding peer op endpoint, err: {}",
+                    err
+                );
+
+                return self.task_mng.send(msg).await;
             }
         };
 

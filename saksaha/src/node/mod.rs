@@ -48,7 +48,8 @@ impl Node {
     }
 
     pub fn make_rpc(&self, task_mng: Arc<TaskManager>) -> SakResult<RPC> {
-        let rpc = RPC::new(task_mng);
+        let rpc = RPC::new(task_mng, self.rpc_port);
+
         Ok(rpc)
     }
 
@@ -62,17 +63,19 @@ impl Node {
             Ok(r) => r.block_on(async {
                 let task_mng = Arc::new(TaskManager::new());
 
-                let host = match self.make_host(task_mng.clone()) {
-                    Ok(h) => h,
-                    Err(err) => {
-                        return err_res!("Error making host, err: {}", err);
-                    }
-                };
-
                 let rpc = match self.make_rpc(task_mng.clone()) {
                     Ok(r) => r,
                     Err(err) => {
                         return err_res!("Error making rpc, err: {}", err);
+                    }
+                };
+
+                // todo: wait for rpc port
+
+                let host = match self.make_host(task_mng.clone()) {
+                    Ok(h) => h,
+                    Err(err) => {
+                        return err_res!("Error making host, err: {}", err);
                     }
                 };
 
