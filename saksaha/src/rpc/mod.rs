@@ -9,7 +9,7 @@ pub struct RPC {
 }
 
 impl RPC {
-    pub fn new(task_mng: Arc<TaskManager>) -> RPC {
+    pub fn new(task_mng: Arc<TaskManager>, rpc_port: u16) -> RPC {
         return RPC {
             task_mng,
         };
