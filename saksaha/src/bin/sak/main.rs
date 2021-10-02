@@ -1,6 +1,6 @@
 use clap::{App, Arg};
 use logger::log;
-use saksaha::{common::SakResult, err_res, node::Node, pconfig::PConfig};
+use saksaha::{common::Result, err_res, node::Node, pconfig::PConfig};
 
 struct Args {
     config: Option<String>,
@@ -9,7 +9,7 @@ struct Args {
     bootstrap_urls: Option<Vec<String>>,
 }
 
-fn get_args() -> SakResult<Args> {
+fn get_args() -> Result<Args> {
     let flags = App::new("Saksaha rust")
         .version("0.1")
         .author("Saksaha <team@saksaha.com>")

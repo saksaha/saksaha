@@ -1,6 +1,6 @@
 pub mod fs;
 
-use crate::{common::SakResult, crypto::Crypto, err_res};
+use crate::{common::Result, crypto::Crypto, err_res};
 use fs::FS;
 use logger::log;
 use serde::{Deserialize, Serialize};
@@ -18,7 +18,7 @@ pub struct PersistedP2PConfig {
 }
 
 impl PConfig {
-    pub fn from_path(config_path: Option<String>) -> SakResult<PConfig> {
+    pub fn from_path(config_path: Option<String>) -> Result<PConfig> {
         let config_path = match config_path {
             Some(c) => c,
             None => {
@@ -63,7 +63,7 @@ impl PConfig {
         FS::load(config_path)
     }
 
-    fn new() -> SakResult<PConfig> {
+    fn new() -> Result<PConfig> {
         log!(DEBUG, "Creating a new config\n");
 
         let sk = Crypto::generate_key();

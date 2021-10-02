@@ -3,7 +3,7 @@ use super::{
     peer_op::PeerOp,
 };
 use crate::{
-    common::SakResult,
+    common::Result,
     msg_err,
     node::task_manager::{MsgKind, TaskManager},
 };
@@ -28,7 +28,7 @@ impl Host {
         task_mng: Arc<TaskManager>,
         secret: String,
         public_key: String,
-    ) -> SakResult<Host> {
+    ) -> Result<Host> {
         let host = Host {
             rpc_port,
             disc_port,

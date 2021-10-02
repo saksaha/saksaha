@@ -2,9 +2,9 @@ mod dial;
 mod listen;
 
 use super::peer::peer_store::PeerStore;
-use crate::{node::task_manager::TaskManager};
-use listen::Listen;
+use crate::node::task_manager::TaskManager;
 use dial::Dial;
+use listen::Listen;
 use std::sync::Arc;
 use tokio::sync::{
     mpsc::Sender as MpscSender, oneshot::Sender as OneshotSender,
@@ -37,10 +37,16 @@ impl PeerOp {
     pub async fn start(&self, peer_op_port_tx: OneshotSender<u16>) {
         let dial_loop_tx = self.dial_loop_tx.clone();
 
-        let listen = Listen::new(dial_loop_tx, self.task_mng.clone());
+        let listen =
+            match Listen::new(dial_loop_tx, self.task_mng.clone()).await {
+                Ok(l) => l,
+                Err(err) => {
+                    return;
+                }
+            };
 
         tokio::spawn(async move {
-            listen.start_listening(peer_op_port_tx).await;
+            listen.start_listening().await;
         });
 
         let dial = Dial::new(self.task_mng.clone());

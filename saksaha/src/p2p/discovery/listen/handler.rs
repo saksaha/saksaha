@@ -1,5 +1,5 @@
 use crate::{
-    common::SakResult,
+    common::Result,
     err_res,
     p2p::{
         credential::Credential,
@@ -33,7 +33,7 @@ impl Handler {
         }
     }
 
-    pub async fn run(&mut self) -> SakResult<bool> {
+    pub async fn run(&mut self) -> Result<bool> {
         let way = match WhoAreYou::parse(&mut self.stream).await {
             Ok(w) => w,
             Err(err) => {

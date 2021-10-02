@@ -5,6 +5,8 @@ use tokio::sync::{
     Mutex,
 };
 
+use crate::common::Error;
+
 pub struct TaskManager {
     pub tx: Sender<Msg>,
     pub rx: Arc<Mutex<Receiver<Msg>>>,
@@ -91,6 +93,13 @@ pub struct Msg {
 impl Msg {
     pub fn new(label: String, kind: MsgKind) -> Msg {
         Msg { label, kind }
+    }
+}
+
+impl From<Msg> for Error {
+    fn from(m: Msg) -> Error {
+        let err = Error::new(crate::common::ErrorKind::Default, "".into());
+        err
     }
 }
 
