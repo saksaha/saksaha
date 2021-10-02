@@ -4,7 +4,7 @@ use super::{
 };
 use crate::{
     common::Result,
-    msg_err,
+    err_res, msg_err,
     node::task_manager::{MsgKind, TaskManager},
 };
 use logger::log;
@@ -63,46 +63,68 @@ impl Host {
         };
 
         let peer_store = Arc::new(PeerStore::new(10));
-
-        let (peer_op_port_tx, peer_op_port_rx) = oneshot::channel();
         let (dial_loop_tx, dial_loop_rx) = mpsc::channel::<usize>(5);
+        let peer_op = PeerOp::new();
+        let rpc_port = self.rpc_port;
+        let task_mng = self.task_mng.clone();
 
-        let peer_op = PeerOp::new(
-            peer_store.clone(),
-            Arc::new(dial_loop_tx),
-            self.rpc_port,
-            self.task_mng.clone(),
-        );
+        let peer_op_port = tokio::spawn(async move {
+            let port = peer_op
+                .start(
+                    peer_store.clone(),
+                    Arc::new(dial_loop_tx),
+                    rpc_port,
+                    task_mng,
+                )
+                .await;
 
-        tokio::spawn(async move {
-            peer_op.start(peer_op_port_tx).await;
+            let port = match port {
+                Ok(p) => p,
+                Err(err) => {
+                    return err_res!("Error starting peer op, err: {}", err);
+                }
+            };
+
+            Ok(port)
         });
 
-        let peer_op_port = match peer_op_port_rx.await {
-            Ok(port) => port,
+        let peer_op_port = match peer_op_port.await {
+            Ok(p) => {
+                p
+            },
             Err(err) => {
-                let msg = msg_err!(
-                    MsgKind::SetupFailure,
-                    "Error retrieving peer op port, err: {}",
-                    err,
-                );
-
-                return self.task_mng.send(msg).await;
+                log!(DEBUG, "Error joining peer op start thread, err: {}", err);
+                return;
             }
         };
 
-        let disc = Disc::new(
-            self.disc_port,
-            peer_op_port,
-            self.bootstrap_peers.to_owned(),
-            peer_store.clone(),
-            self.task_mng.clone(),
-            Arc::new(credential),
-            Arc::new(Mutex::new(dial_loop_rx)),
-        );
+        println!("22, {}", peer_op_port.unwrap());
 
-        tokio::spawn(async move {
-            disc.start().await;
-        });
+        // let peer_op_port = match peer_op_port_rx.await {
+        //     Ok(port) => port,
+        //     Err(err) => {
+        //         let msg = msg_err!(
+        //             MsgKind::SetupFailure,
+        //             "Error retrieving peer op port, err: {}",
+        //             err,
+        //         );
+
+        //         return self.task_mng.send(msg).await;
+        //     }
+        // };
+
+        // let disc = Disc::new(
+        //     self.disc_port,
+        //     peer_op_port,
+        //     self.bootstrap_peers.to_owned(),
+        //     peer_store.clone(),
+        //     self.task_mng.clone(),
+        //     Arc::new(credential),
+        //     Arc::new(Mutex::new(dial_loop_rx)),
+        // );
+
+        // tokio::spawn(async move {
+        //     disc.start().await;
+        // });
     }
 }

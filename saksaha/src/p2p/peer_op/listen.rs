@@ -1,16 +1,18 @@
 use std::sync::Arc;
 
-use crate::{common::{Error, Result}, err_res, msg_err, node::task_manager::{MsgKind, TaskManager}};
-use logger::log;
-use tokio::{
-    net::TcpListener, sync::mpsc::Sender as MpscSender,
+use crate::{
+    common::{Error, Result},
+    err_res, msg_err,
+    node::task_manager::{MsgKind, TaskManager},
 };
+use logger::log;
+use tokio::{net::TcpListener, sync::mpsc::Sender as MpscSender};
 
 pub struct Listen {
     dial_loop_tx: Arc<MpscSender<usize>>,
     task_mng: Arc<TaskManager>,
     listener: Arc<TcpListener>,
-    port: u16,
+    pub port: u16,
 }
 
 impl Listen {
@@ -39,7 +41,7 @@ impl Listen {
                 log!(DEBUG, "Start peer op listening, addr: {}\n", local_addr);
 
                 (l, local_addr.port())
-            },
+            }
             Err(err) => {
                 let msg = msg_err!(
                     MsgKind::SetupFailure,
@@ -82,6 +84,7 @@ impl Listen {
                         // let n = match
                     }
                 });
+                println!("22222");
             }
         });
 
