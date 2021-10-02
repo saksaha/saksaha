@@ -1,13 +1,18 @@
-use logger::log;
-use crate::{common::SakResult, err_res};
-use super::PeerOp;
+use std::sync::Arc;
 
-pub struct Dial {}
+use logger::log;
+use crate::{node::task_manager::TaskManager};
+
+pub struct Dial {
+    task_mng: Arc<TaskManager>,
+}
 
 impl Dial {
-    pub async fn start_dialing(self) -> SakResult<bool> {
-        log!(DEBUG, "start p2p dialing\n");
+    pub fn new(task_mng: Arc<TaskManager>) -> Dial {
+        Dial { task_mng }
+    }
 
-        Ok(true)
+    pub async fn start_dialing(self) {
+        log!(DEBUG, "start p2p dialing\n");
     }
 }
