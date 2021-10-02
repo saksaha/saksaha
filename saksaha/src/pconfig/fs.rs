@@ -1,5 +1,5 @@
 use crate::common::{
-    SakResult,
+    Result,
     ErrorKind,
 };
 use crate::pconfig::PConfig;
@@ -18,7 +18,7 @@ impl FS {
         FS {}
     }
 
-    pub fn persist(pconfig: PConfig) -> SakResult<PConfig> {
+    pub fn persist(pconfig: PConfig) -> Result<PConfig> {
         let serialized = match serde_json::to_string_pretty(&pconfig) {
             Ok(s) => s,
             Err(err) => {
@@ -43,7 +43,7 @@ impl FS {
         }
     }
 
-    pub fn load(path: PathBuf) -> SakResult<PConfig> {
+    pub fn load(path: PathBuf) -> Result<PConfig> {
         log!(DEBUG, "Load configuration, path: {:?}\n", path);
 
         if !path.exists() {
@@ -73,7 +73,7 @@ impl FS {
         }
     }
 
-    pub fn get_default_path() -> SakResult<PathBuf> {
+    pub fn get_default_path() -> Result<PathBuf> {
         let app_path = create_or_get_app_path()?;
         let config_path = app_path.join(CONFIG_FILE_NAME);
 
@@ -81,7 +81,7 @@ impl FS {
     }
 }
 
-fn create_or_get_app_path() -> SakResult<PathBuf> {
+fn create_or_get_app_path() -> Result<PathBuf> {
     if let Some(dir) = ProjectDirs::from("com", "Saksaha", "Saksaha") {
         let app_path = dir.config_dir();
         if !app_path.exists() {

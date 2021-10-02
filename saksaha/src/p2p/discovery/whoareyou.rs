@@ -1,4 +1,4 @@
-use crate::{common::SakResult, crypto::Crypto, err_res};
+use crate::{common::Result, crypto::Crypto, err_res};
 use k256::ecdsa::Signature;
 use std::convert::TryInto;
 use tokio::{io::AsyncReadExt, net::TcpStream};
@@ -30,7 +30,7 @@ impl WhoAreYou {
         }
     }
 
-    pub fn to_bytes(&self) -> SakResult<[u8; 140]> {
+    pub fn to_bytes(&self) -> Result<[u8; 140]> {
         let mut buf = [0; 140];
 
         buf[0] = Type::SYN as u8;
@@ -58,7 +58,7 @@ impl WhoAreYou {
         Crypto::encode_hex(&self.public_key_bytes)
     }
 
-    pub async fn parse(stream: &mut TcpStream) -> SakResult<WhoAreYou> {
+    pub async fn parse(stream: &mut TcpStream) -> Result<WhoAreYou> {
         let mut buf = [0; 140];
 
         match stream.read_exact(&mut buf).await {
@@ -118,11 +118,11 @@ impl WhoAreYouAck {
         WhoAreYouAck { way }
     }
 
-    pub fn to_bytes(&self) -> SakResult<[u8; 140]> {
+    pub fn to_bytes(&self) -> Result<[u8; 140]> {
         return self.way.to_bytes();
     }
 
-    pub async fn parse(stream: &mut TcpStream) -> SakResult<WhoAreYouAck> {
+    pub async fn parse(stream: &mut TcpStream) -> Result<WhoAreYouAck> {
         let way = match WhoAreYou::parse(stream).await {
             Ok(w) => w,
             Err(err) => {

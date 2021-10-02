@@ -7,7 +7,7 @@ pub use k256::{
 use rand_core::OsRng;
 use std::{fmt::Write, num::ParseIntError};
 
-use crate::{common::SakResult, err_res};
+use crate::{common::Result, err_res};
 
 pub struct Crypto;
 
@@ -26,7 +26,9 @@ impl Crypto {
         return (sk_str, pk_str);
     }
 
-    pub fn decode_hex(s: String) -> Result<Vec<u8>, ParseIntError> {
+    pub fn decode_hex(
+        s: String,
+    ) -> std::result::Result<Vec<u8>, ParseIntError> {
         (0..s.len())
             .step_by(2)
             .map(|i| u8::from_str_radix(&s[i..i + 2], 16))
@@ -43,7 +45,7 @@ impl Crypto {
 
     pub fn convert_public_key_to_verifying_key(
         public_key_bytes: [u8; 65],
-    ) -> SakResult<VerifyingKey> {
+    ) -> Result<VerifyingKey> {
         let encoded_point = match EncodedPoint::from_bytes(public_key_bytes) {
             Ok(e) => e,
             Err(err) => {
@@ -54,17 +56,16 @@ impl Crypto {
             }
         };
 
-        let verifying_key = match VerifyingKey::from_encoded_point(
-            &encoded_point,
-        ) {
-            Ok(v) => v,
-            Err(err) => {
-                return err_res!(
+        let verifying_key =
+            match VerifyingKey::from_encoded_point(&encoded_point) {
+                Ok(v) => v,
+                Err(err) => {
+                    return err_res!(
                     "Cannot create VerifyingKey from encoded point, err: {}",
                     err
                 );
-            }
-        };
+                }
+            };
 
         Ok(verifying_key)
     }

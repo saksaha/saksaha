@@ -1,4 +1,4 @@
-use crate::{common::SakResult, err_res};
+use crate::{common::Result, err_res};
 use logger::log;
 use tokio::sync::Mutex;
 use std::{sync::{Arc,}};
@@ -11,7 +11,7 @@ pub struct Address {
 }
 
 impl Address {
-    pub fn parse(url: String) -> SakResult<Address> {
+    pub fn parse(url: String) -> Result<Address> {
         let (peer_id, endpoint) = {
             match url.get(6..) {
                 Some(u) => match u.split_once('@') {
@@ -106,7 +106,7 @@ impl AddressBook {
         };
     }
 
-    pub async fn remove(&self, idx: usize) -> SakResult<Arc<Mutex<Address>>> {
+    pub async fn remove(&self, idx: usize) -> Result<Arc<Mutex<Address>>> {
         let addrs = self.addrs.clone();
         let mut addrs = addrs.lock().await;
 

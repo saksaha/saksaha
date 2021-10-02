@@ -1,7 +1,7 @@
 pub mod task_manager;
 
 use crate::{
-    common::SakResult, err_res, p2p::host::Host, pconfig::PConfig, rpc::RPC,
+    common::Result, err_res, p2p::host::Host, pconfig::PConfig, rpc::RPC,
 };
 use logger::log;
 use std::sync::Arc;
@@ -21,7 +21,7 @@ impl Node {
         disc_port: u16,
         bootstrap_urls: Option<Vec<String>>,
         pconfig: PConfig,
-    ) -> SakResult<Node> {
+    ) -> Result<Node> {
         let node = Node {
             rpc_port,
             disc_port,
@@ -32,7 +32,7 @@ impl Node {
         Ok(node)
     }
 
-    pub fn make_host(&self, task_mng: Arc<TaskManager>) -> SakResult<Host> {
+    pub fn make_host(&self, task_mng: Arc<TaskManager>) -> Result<Host> {
         let secret = self.pconfig.p2p.secret.to_owned();
         let public_key = self.pconfig.p2p.public_key.to_owned();
 
@@ -47,13 +47,13 @@ impl Node {
         host
     }
 
-    pub fn make_rpc(&self, task_mng: Arc<TaskManager>) -> SakResult<RPC> {
+    pub fn make_rpc(&self, task_mng: Arc<TaskManager>) -> Result<RPC> {
         let rpc = RPC::new(task_mng, self.rpc_port);
 
         Ok(rpc)
     }
 
-    pub fn start(&self) -> SakResult<bool> {
+    pub fn start(&self) -> Result<bool> {
         log!(DEBUG, "Start node...\n");
 
         let runtime = match tokio::runtime::Builder::new_multi_thread()

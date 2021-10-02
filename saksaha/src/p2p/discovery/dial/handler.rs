@@ -1,6 +1,6 @@
 use super::whoareyou::WhoAreYou;
 use crate::{
-    common::SakResult,
+    common::Result,
     crypto::Crypto,
     err_res,
     p2p::{
@@ -51,7 +51,7 @@ impl Handler {
         }
     }
 
-    pub async fn run(&mut self) -> SakResult<HandleResult> {
+    pub async fn run(&mut self) -> Result<HandleResult> {
         let (addr, idx) = match self.address_book.next().await {
             Some(a) => a,
             None => {

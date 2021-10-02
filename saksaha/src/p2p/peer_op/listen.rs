@@ -1,35 +1,26 @@
 use std::sync::Arc;
 
-use crate::{
-    err_res, msg_err,
-    node::task_manager::{MsgKind, TaskManager},
-};
+use crate::{common::{Error, Result}, err_res, msg_err, node::task_manager::{MsgKind, TaskManager}};
 use logger::log;
 use tokio::{
     net::TcpListener, sync::mpsc::Sender as MpscSender,
-    sync::oneshot::Sender as OneshotSender,
 };
 
 pub struct Listen {
     dial_loop_tx: Arc<MpscSender<usize>>,
     task_mng: Arc<TaskManager>,
+    listener: Arc<TcpListener>,
+    port: u16,
 }
 
 impl Listen {
-    pub fn new(
+    pub async fn new(
         dial_loop_tx: Arc<MpscSender<usize>>,
         task_mng: Arc<TaskManager>,
-    ) -> Listen {
-        Listen {
-            dial_loop_tx,
-            task_mng,
-        }
-    }
-
-    pub async fn start_listening(&self, peer_op_port_tx: OneshotSender<u16>) {
+    ) -> Result<Listen> {
         let local_addr = format!("127.0.0.1:0");
 
-        let listener = match TcpListener::bind(local_addr).await {
+        let (listener, port) = match TcpListener::bind(local_addr).await {
             Ok(l) => {
                 let local_addr = match l.local_addr() {
                     Ok(addr) => addr,
@@ -40,27 +31,15 @@ impl Listen {
                             err
                         );
 
-                        return self.task_mng.send(msg).await;
+                        task_mng.send(msg.to_owned()).await;
+                        return Err(Error::from(msg));
                     }
                 };
 
                 log!(DEBUG, "Start peer op listening, addr: {}\n", local_addr);
 
-                match peer_op_port_tx.send(local_addr.port()) {
-                    Ok(_) => (),
-                    Err(err) => {
-                        let msg = msg_err!(
-                            MsgKind::SetupFailure,
-                            "Error getting peer op port, err: {}",
-                            err
-                        );
-
-                        return self.task_mng.send(msg).await;
-                    }
-                };
-
-                l
-            }
+                (l, local_addr.port())
+            },
             Err(err) => {
                 let msg = msg_err!(
                     MsgKind::SetupFailure,
@@ -68,26 +47,44 @@ impl Listen {
                     err
                 );
 
-                return self.task_mng.send(msg).await;
+                task_mng.send(msg).await;
+                return err_res!("a");
             }
         };
 
-        loop {
-            let (mut stream, addr) = match listener.accept().await {
-                Ok(res) => res,
-                Err(err) => {
-                    return;
-                    // return err_res!("Error accepting a request, err: {}", err);
-                }
-            };
+        let listen = Listen {
+            dial_loop_tx,
+            task_mng,
+            listener: Arc::new(listener),
+            port,
+        };
 
-            tokio::spawn(async move {
-                let mut buf = [0; 1024];
+        Ok(listen)
+    }
 
-                loop {
-                    // let n = match
-                }
-            });
-        }
+    pub async fn start_listening(&self) {
+        let listener = self.listener.clone();
+
+        tokio::spawn(async move {
+            loop {
+                let (mut stream, addr) = match listener.accept().await {
+                    Ok(res) => res,
+                    Err(err) => {
+                        return;
+                        // return err_res!("Error accepting a request, err: {}", err);
+                    }
+                };
+
+                tokio::spawn(async move {
+                    let mut buf = [0; 1024];
+
+                    loop {
+                        // let n = match
+                    }
+                });
+            }
+        });
+
+        // Ok(listener)
     }
 }

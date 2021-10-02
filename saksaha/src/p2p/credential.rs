@@ -1,6 +1,6 @@
 use k256::{elliptic_curve::sec1::ToEncodedPoint, SecretKey};
 
-use crate::{common::SakResult, crypto::Crypto, err_res};
+use crate::{common::Result, crypto::Crypto, err_res};
 
 pub struct Credential {
     pub secret_key: SecretKey,
@@ -8,7 +8,7 @@ pub struct Credential {
 }
 
 impl Credential {
-    pub fn new(secret: String, public_key: String) -> SakResult<Credential> {
+    pub fn new(secret: String, public_key: String) -> Result<Credential> {
         let secret_bytes = match Crypto::decode_hex(secret.to_owned()) {
             Ok(v) => v,
             Err(err) => {
