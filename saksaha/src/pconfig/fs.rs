@@ -1,8 +1,8 @@
-use super::PConfig;
 use crate::common::{
     SakResult,
     ErrorKind,
 };
+use crate::pconfig::PConfig;
 use crate::{err_res, err_resk};
 use directories::ProjectDirs;
 use logger::log;
@@ -11,9 +11,15 @@ use std::path::PathBuf;
 
 const CONFIG_FILE_NAME: &str = "config.json";
 
-impl PConfig {
-    pub fn persist(&self) -> SakResult<PathBuf> {
-        let serialized = match serde_json::to_string_pretty(&self) {
+pub struct FS;
+
+impl FS {
+    pub fn new() -> FS {
+        FS {}
+    }
+
+    pub fn persist(pconfig: PConfig) -> SakResult<PConfig> {
+        let serialized = match serde_json::to_string_pretty(&pconfig) {
             Ok(s) => s,
             Err(err) => {
                 return err_res!("Cannot serialize configuration, err: {}", err);
@@ -30,7 +36,9 @@ impl PConfig {
         log!(DEBUG, "Writing a config, at: {:?}\n", config_path);
 
         match fs::write(config_path.to_owned(), serialized) {
-            Ok(_) => Ok(config_path),
+            Ok(_) => {
+                Ok(pconfig)
+            },
             Err(err) => err_res!("Error writing the config, err: {}", err),
         }
     }

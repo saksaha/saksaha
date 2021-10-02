@@ -4,16 +4,12 @@ use super::{
 };
 use crate::{
     common::SakResult,
-    crypto::Crypto,
-    err_res, msg_err,
-    node::task_manager::{Msg, MsgKind, TaskManager},
+    msg_err,
+    node::task_manager::{MsgKind, TaskManager},
 };
 use logger::log;
-use std::{sync::Arc, time::Duration};
-use tokio::{
-    sync::{mpsc, oneshot, Mutex},
-    task::JoinHandle,
-};
+use std::sync::Arc;
+use tokio::sync::{mpsc, oneshot, Mutex};
 
 pub struct Host {
     rpc_port: u16,
@@ -28,7 +24,6 @@ impl Host {
         rpc_port: u16,
         disc_port: u16,
         bootstrap_peers: Option<Vec<String>>,
-        public_key: String,
         secret: String,
         task_mng: Arc<TaskManager>,
     ) -> SakResult<Host> {
@@ -62,12 +57,15 @@ impl Host {
         };
 
         let peer_store = Arc::new(PeerStore::new(10));
-        let peer_store_clone = peer_store.clone();
 
         let (peer_op_port_tx, peer_op_port_rx) = oneshot::channel();
         let (dial_loop_tx, dial_loop_rx) = mpsc::channel::<usize>(5);
 
-        let peer_op = PeerOp::new(peer_store_clone, Arc::new(dial_loop_tx));
+        let peer_op = PeerOp::new(
+            peer_store.clone(),
+            Arc::new(dial_loop_tx),
+            self.rpc_port,
+        );
 
         tokio::spawn(async move {
             peer_op.start(peer_op_port_tx).await;
@@ -86,14 +84,13 @@ impl Host {
             }
         };
 
-        let peer_store_clone = peer_store.clone();
         let task_mng = self.task_mng.clone();
 
         let disc = Disc::new(
             self.disc_port,
             peer_op_port,
             self.bootstrap_peers.to_owned(),
-            peer_store_clone,
+            peer_store.clone(),
             task_mng,
             Arc::new(credential),
             Arc::new(Mutex::new(dial_loop_rx)),

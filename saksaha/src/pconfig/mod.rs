@@ -1,9 +1,10 @@
-use crate::{common::SakResult, crypto::Crypto};
+pub mod fs;
+
+use crate::{common::SakResult, crypto::Crypto, err_res};
+use fs::FS;
 use logger::log;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
-
-pub mod fs;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct PConfig {
@@ -17,7 +18,7 @@ pub struct PersistedP2PConfig {
 }
 
 impl PConfig {
-    pub fn of(config_path: Option<String>) -> SakResult<PConfig> {
+    pub fn from_path(config_path: Option<String>) -> SakResult<PConfig> {
         let config_path = match config_path {
             Some(c) => c,
             None => {
@@ -26,19 +27,40 @@ impl PConfig {
                     "Config path is not given, creating a new config\n"
                 );
 
-                let default_path = PConfig::get_default_path()?;
+                let default_path = FS::get_default_path()?;
+
                 if default_path.exists() {
                     log!(DEBUG, "Found a config at the default location\n");
 
-                    return PConfig::load(default_path);
+                    return FS::load(default_path);
                 } else {
-                    return PConfig::new();
+                    let pconfig = match PConfig::new() {
+                        Ok(p) => p,
+                        Err(err) => {
+                            return err_res!(
+                                "Error initializing pconfig, err: {}",
+                                err
+                            );
+                        }
+                    };
+
+                    let pconf = match FS::persist(pconfig) {
+                        Ok(p) => p,
+                        Err(err) => {
+                            return err_res!(
+                                "Cannot persist pconfig, err: {}",
+                                err
+                            );
+                        }
+                    };
+
+                    return Ok(pconf);
                 }
             }
         };
 
         let config_path = PathBuf::from(config_path);
-        PConfig::load(config_path)
+        FS::load(config_path)
     }
 
     fn new() -> SakResult<PConfig> {
@@ -53,9 +75,6 @@ impl PConfig {
             },
         };
 
-        match pconf.persist() {
-            Ok(_) => Ok(pconf),
-            Err(err) => Err(err),
-        }
+        Ok(pconf)
     }
 }

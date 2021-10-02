@@ -33,18 +33,11 @@ impl Node {
         Ok(node)
     }
 
-    pub fn shutdown(&self) {
-        println!("shut down");
-
-        std::process::exit(1);
-    }
-
     pub fn make_host(&self, task_mng: Arc<TaskManager>) -> SakResult<Host> {
         let host = Host::new(
             self.rpc_port,
             self.disc_port,
             self.bootstrap_urls.to_owned(),
-            self.public_key.to_owned(),
             self.secret.to_owned(),
             task_mng,
         );
@@ -65,38 +58,38 @@ impl Node {
         {
             Ok(r) => r.block_on(async {
                 let task_mng = Arc::new(TaskManager::new());
-                let task_mng_clone = task_mng.clone();
 
-                let host = match self.make_host(task_mng_clone) {
+                let host = match self.make_host(task_mng.clone()) {
                     Ok(h) => h,
                     Err(err) => {
                         return err_res!("Error making host, err: {}", err);
                     }
                 };
 
-                let task_mng_clone = task_mng.clone();
-
-                let rpc = match self.make_rpc(task_mng_clone) {
+                let rpc = match self.make_rpc(task_mng.clone()) {
                     Ok(r) => r,
                     Err(err) => {
                         return err_res!("Error making rpc, err: {}", err);
                     }
                 };
 
+                let task_mng_clone = task_mng.clone();
+
                 tokio::join!(host.start(), rpc.start(),);
 
                 tokio::select!(
                     msg_kind = task_mng.start_receiving() => {
                         if let MsgKind::SetupFailure = msg_kind {
-                            self.shutdown();
+                            task_mng_clone.shutdown_program();
                         }
                     },
                     c = signal::ctrl_c() => {
                         match c {
                             Ok(_) => {
                                 log!(DEBUG, "ctrl+k is pressed.\n");
-                                self.shutdown();
-                            }
+
+                                task_mng_clone.shutdown_program();
+                            },
                             Err(err) => {
                                 log!(
                                     DEBUG,
@@ -105,7 +98,7 @@ impl Node {
                                     err
                                 );
 
-                                self.shutdown();
+                                task_mng_clone.shutdown_program();
                             }
                         }
                     },

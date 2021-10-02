@@ -6,8 +6,7 @@ use self::listen::Listen;
 use super::{
     address::AddressBook, credential::Credential, peer::peer_store::PeerStore,
 };
-use crate::{common::SakResult, err_res, node::task_manager::TaskManager};
-use logger::log;
+use crate::{node::task_manager::TaskManager};
 use std::sync::Arc;
 use tokio::sync::{Mutex, mpsc::{Receiver}};
 

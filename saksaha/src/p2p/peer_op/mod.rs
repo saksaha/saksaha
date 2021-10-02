@@ -2,11 +2,11 @@ mod dial;
 mod listen;
 
 use super::peer::peer_store::PeerStore;
-use crate::{common::SakResult, err_res};
+use crate::{err_res};
 use listen::Listen;
 use std::sync::Arc;
 use tokio::sync::{
-    mpsc::Sender as MpscSender, oneshot::Sender as OneshotSender, Mutex,
+    mpsc::Sender as MpscSender, oneshot::Sender as OneshotSender,
 };
 
 pub struct PeerOp {
@@ -18,6 +18,7 @@ impl PeerOp {
     pub fn new(
         peer_store: Arc<PeerStore>,
         dial_loop_tx: Arc<MpscSender<usize>>,
+        rpc_port: u16,
     ) -> PeerOp {
         let peer_op = PeerOp {
             peer_store,

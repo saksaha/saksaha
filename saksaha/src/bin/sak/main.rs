@@ -123,7 +123,7 @@ fn main() {
 }
 
 fn make_pconfig(config_path: Option<String>) -> PConfig {
-    let pconf = match PConfig::of(config_path) {
+    let pconf = match PConfig::from_path(config_path) {
         Ok(p) => p,
         Err(err) => {
             log!(

@@ -1,7 +1,7 @@
 use crate::{common::SakResult, err_res};
 use logger::log;
 use tokio::sync::Mutex;
-use std::{collections::LinkedList, sync::{Arc,}};
+use std::{sync::{Arc,}};
 
 #[derive(Debug)]
 pub struct Address {
