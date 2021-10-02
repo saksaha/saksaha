@@ -3,10 +3,7 @@ mod handler;
 use crate::{
     msg_err,
     node::task_manager::{MsgKind, TaskManager},
-    p2p::{
-        credential::Credential,
-        peer::{peer_store::PeerStore,},
-    },
+    p2p::{credential::Credential, peer::peer_store::PeerStore},
 };
 use handler::Handler;
 use logger::log;
@@ -72,12 +69,12 @@ impl Listen {
             local_addr
         );
 
-        self.run_loop(tcp_listener,).await;
+        self.run_loop(tcp_listener).await;
 
         unreachable!();
     }
 
-    pub async fn run_loop(&self, tcp_listener: TcpListener,) {
+    pub async fn run_loop(&self, tcp_listener: TcpListener) {
         loop {
             println!("start listen loop");
             let peer_store = self.peer_store.clone();

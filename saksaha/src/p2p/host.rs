@@ -71,6 +71,7 @@ impl Host {
             peer_store.clone(),
             Arc::new(dial_loop_tx),
             self.rpc_port,
+            self.task_mng.clone(),
         );
 
         tokio::spawn(async move {
@@ -90,14 +91,12 @@ impl Host {
             }
         };
 
-        let task_mng = self.task_mng.clone();
-
         let disc = Disc::new(
             self.disc_port,
             peer_op_port,
             self.bootstrap_peers.to_owned(),
             peer_store.clone(),
-            task_mng,
+            self.task_mng.clone(),
             Arc::new(credential),
             Arc::new(Mutex::new(dial_loop_rx)),
         );

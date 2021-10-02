@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::{common::SakResult, err_res};
+use crate::{err_res, node::task_manager::TaskManager};
 use logger::log;
 use tokio::{
     net::TcpListener, sync::mpsc::Sender as MpscSender,
@@ -8,25 +8,22 @@ use tokio::{
 };
 
 pub struct Listen {
-    // peer_op_port_tx: Arc<Sender<u16>>,
     dial_loop_tx: Arc<MpscSender<usize>>,
+    task_mng: Arc<TaskManager>,
 }
 
 impl Listen {
     pub fn new(
-        // peer_op_port_tx: Arc<Sender<u16>>,
         dial_loop_tx: Arc<MpscSender<usize>>,
+        task_mng: Arc<TaskManager>,
     ) -> Listen {
         Listen {
-            // peer_op_port_tx,
             dial_loop_tx,
+            task_mng,
         }
     }
 
-    pub async fn start_listening(
-        &self,
-        peer_op_port_tx: OneshotSender<u16>,
-    ) -> SakResult<bool> {
+    pub async fn start_listening(&self, peer_op_port_tx: OneshotSender<u16>) {
         let local_addr = format!("127.0.0.1:0");
 
         let listener = match TcpListener::bind(local_addr).await {
@@ -34,10 +31,11 @@ impl Listen {
                 let local_addr = match l.local_addr() {
                     Ok(addr) => addr,
                     Err(err) => {
-                        return err_res!(
-                            "Error getting peer op local addr, err: {}",
-                            err
-                        );
+                        return;
+                        // return err_res!(
+                        //     "Error getting peer op local addr, err: {}",
+                        //     err
+                        // );
                     }
                 };
 
@@ -53,7 +51,8 @@ impl Listen {
                 l
             }
             Err(_) => {
-                return err_res!("Error start peer_op listening");
+                // return err_res!("Error start peer_op listening");
+                return;
             }
         };
 
@@ -61,7 +60,8 @@ impl Listen {
             let (mut stream, addr) = match listener.accept().await {
                 Ok(res) => res,
                 Err(err) => {
-                    return err_res!("Error accepting a request, err: {}", err);
+                    return;
+                    // return err_res!("Error accepting a request, err: {}", err);
                 }
             };
 
