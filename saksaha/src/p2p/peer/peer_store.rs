@@ -1,6 +1,4 @@
 use super::{Peer, PeerStatus};
-use crate::{common::SakResult, err_res};
-use logger::log;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 

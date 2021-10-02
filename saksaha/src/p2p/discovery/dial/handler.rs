@@ -1,4 +1,4 @@
-use super::{whoareyou::WhoAreYou, Disc};
+use super::whoareyou::WhoAreYou;
 use crate::{
     common::SakResult,
     crypto::Crypto,
@@ -7,16 +7,16 @@ use crate::{
         address::AddressBook,
         credential::Credential,
         discovery::whoareyou::{self, WhoAreYouAck},
-        peer::{peer_store::PeerStore, Peer, PeerStatus},
+        peer::{Peer, PeerStatus},
     },
 };
 use k256::ecdsa::{
     signature::{Signer, Verifier},
-    Signature, SigningKey, VerifyingKey,
+    Signature, SigningKey,
 };
 use logger::log;
-use std::{sync::Arc, time::Duration};
-use tokio::{io::AsyncWriteExt, net::TcpStream, sync::Mutex, time};
+use std::sync::Arc;
+use tokio::{io::AsyncWriteExt, net::TcpStream, sync::Mutex};
 
 pub enum HandleResult {
     AddressNotFound,
@@ -75,9 +75,10 @@ impl Handler {
                 Err(err) => {
                     log!(
                         DEBUG,
-                        "Error removing address, idx: {}, endpoint: {}",
+                        "Cannot remove address, idx: {}, endpoint: {}, err: {}",
                         idx,
-                        addr.endpoint
+                        addr.endpoint,
+                        err,
                     );
                 }
             }

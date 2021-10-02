@@ -7,10 +7,9 @@ use super::{
     address::AddressBook, credential::Credential, peer::peer_store::PeerStore,
 };
 use crate::{common::SakResult, err_res, node::task_manager::TaskManager};
-use k256::SecretKey;
 use logger::log;
 use std::sync::Arc;
-use tokio::sync::{Mutex, mpsc::{self, Receiver}};
+use tokio::sync::{Mutex, mpsc::{Receiver}};
 
 pub struct Disc {
     address_book: Arc<AddressBook>,
@@ -46,9 +45,6 @@ impl Disc {
     }
 
     pub async fn start(&self) {
-        // let (dial_loop_tx, dial_loop_rx) =
-        //     mpsc::channel::<usize>(5);
-
         let peer_store = self.peer_store.clone();
         let task_mng = self.task_mng.clone();
         let credential = self.credential.clone();

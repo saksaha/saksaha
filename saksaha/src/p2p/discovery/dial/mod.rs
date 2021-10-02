@@ -1,14 +1,22 @@
 mod handler;
 
-use super::Disc;
-use crate::{node::task_manager::TaskManager, p2p::{address::AddressBook, credential::Credential, discovery::{dial::handler::HandleResult, whoareyou}, peer::peer_store::PeerStore}};
+use crate::{
+    msg_err,
+    node::task_manager::{MsgKind, TaskManager},
+    p2p::{
+        address::AddressBook,
+        credential::Credential,
+        discovery::{dial::handler::HandleResult, whoareyou},
+        peer::peer_store::PeerStore,
+    },
+};
 use handler::Handler;
 use logger::log;
-use tokio::sync::{Mutex, mpsc::Receiver};
 use std::{
     sync::Arc,
     time::{Duration, SystemTime},
 };
+use tokio::sync::{mpsc::Receiver, Mutex};
 
 pub struct Dial {
     pub address_book: Arc<AddressBook>,
@@ -63,19 +71,16 @@ impl Dial {
 
                     match handler.run().await {
                         Ok(res) => {
-                            println!("res: ");
                             if let HandleResult::AddressNotFound = res {
                                 break 'main;
                             }
-                        },
+                        }
                         Err(err) => {
                             log!(
                                 DEBUG,
                                 "Error processing request, err: {}\n",
                                 err,
                             );
-
-
                         }
                     }
                 } else {
@@ -101,7 +106,12 @@ impl Dial {
             match dial_loop_rx.recv().await {
                 Some(_) => (),
                 None => {
-                    // todo
+                    let msg = msg_err!(
+                        MsgKind::ResourceNotAvailable,
+                        "dial loop channel has been closed",
+                    );
+
+                    self.task_mng.send(msg).await;
                 }
             }
         }
