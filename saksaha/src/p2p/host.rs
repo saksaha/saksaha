@@ -17,6 +17,7 @@ pub struct Host {
     bootstrap_peers: Option<Vec<String>>,
     task_mng: Arc<TaskManager>,
     secret: String,
+    public_key: String,
 }
 
 impl Host {
@@ -24,8 +25,9 @@ impl Host {
         rpc_port: u16,
         disc_port: u16,
         bootstrap_peers: Option<Vec<String>>,
-        secret: String,
         task_mng: Arc<TaskManager>,
+        secret: String,
+        public_key: String,
     ) -> SakResult<Host> {
         let host = Host {
             rpc_port,
@@ -33,6 +35,7 @@ impl Host {
             bootstrap_peers,
             task_mng,
             secret,
+            public_key,
         };
 
         Ok(host)
@@ -43,7 +46,10 @@ impl Host {
     pub async fn start(&self) {
         log!(DEBUG, "Start host...\n");
 
-        let credential = match Credential::new(self.secret.to_owned()) {
+        let credential = match Credential::new(
+            self.secret.to_owned(),
+            self.public_key.to_owned(),
+        ) {
             Ok(sk) => sk,
             Err(err) => {
                 let msg = msg_err!(

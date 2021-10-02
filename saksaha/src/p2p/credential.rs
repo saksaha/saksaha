@@ -8,7 +8,7 @@ pub struct Credential {
 }
 
 impl Credential {
-    pub fn new(secret: String) -> SakResult<Credential> {
+    pub fn new(secret: String, public_key: String) -> SakResult<Credential> {
         let secret_bytes = match Crypto::decode_hex(secret.to_owned()) {
             Ok(v) => v,
             Err(err) => {
@@ -39,6 +39,16 @@ impl Credential {
             buf.clone_from_slice(&b);
             buf
         };
+
+        {
+            let p = Crypto::encode_hex(&public_key_bytes);
+            if p != public_key {
+                return err_res!(
+                    "public key built from bytes differ \
+                    from the one in pconfig"
+                );
+            }
+        }
 
         let credential = Credential {
             secret_key,

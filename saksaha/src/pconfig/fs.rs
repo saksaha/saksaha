@@ -43,13 +43,9 @@ impl FS {
         }
     }
 
-    pub fn load(config_path: PathBuf) -> SakResult<PConfig> {
-        log!(DEBUG, "Load configuration, path: {:?}\n", config_path);
+    pub fn load(path: PathBuf) -> SakResult<PConfig> {
+        log!(DEBUG, "Load configuration, path: {:?}\n", path);
 
-        return Self::load_config(config_path);
-    }
-
-    fn load_config(path: PathBuf) -> SakResult<PConfig> {
         if !path.exists() {
             return err_resk!(
                 ErrorKind::FileNotExist,
@@ -80,6 +76,7 @@ impl FS {
     pub fn get_default_path() -> SakResult<PathBuf> {
         let app_path = create_or_get_app_path()?;
         let config_path = app_path.join(CONFIG_FILE_NAME);
+
         Ok(config_path)
     }
 }
