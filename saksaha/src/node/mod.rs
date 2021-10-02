@@ -1,6 +1,8 @@
 pub mod task_manager;
 
-use crate::{common::SakResult, err_res, p2p::host::Host, rpc::RPC};
+use crate::{
+    common::SakResult, err_res, p2p::host::Host, pconfig::PConfig, rpc::RPC,
+};
 use logger::log;
 use std::sync::Arc;
 use task_manager::{MsgKind, TaskManager};
@@ -10,8 +12,7 @@ pub struct Node {
     rpc_port: u16,
     disc_port: u16,
     bootstrap_urls: Option<Vec<String>>,
-    public_key: String,
-    secret: String,
+    pconfig: PConfig,
 }
 
 impl Node {
@@ -19,27 +20,29 @@ impl Node {
         rpc_port: u16,
         disc_port: u16,
         bootstrap_urls: Option<Vec<String>>,
-        public_key: String,
-        secret: String,
+        pconfig: PConfig,
     ) -> SakResult<Node> {
         let node = Node {
             rpc_port,
             disc_port,
             bootstrap_urls,
-            public_key,
-            secret,
+            pconfig,
         };
 
         Ok(node)
     }
 
     pub fn make_host(&self, task_mng: Arc<TaskManager>) -> SakResult<Host> {
+        let secret = self.pconfig.p2p.secret.to_owned();
+        let public_key = self.pconfig.p2p.public_key.to_owned();
+
         let host = Host::new(
             self.rpc_port,
             self.disc_port,
             self.bootstrap_urls.to_owned(),
-            self.secret.to_owned(),
             task_mng,
+            secret,
+            public_key,
         );
         host
     }

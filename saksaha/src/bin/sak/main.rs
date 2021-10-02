@@ -93,6 +93,7 @@ fn main() {
         Ok(a) => a,
         Err(err) => {
             log!(DEBUG, "Error parsing command line arguments, err: {}", err);
+
             std::process::exit(1);
         }
     };
@@ -103,12 +104,12 @@ fn main() {
         args.rpc_port,
         args.disc_port,
         args.bootstrap_urls,
-        pconf.p2p.public_key,
-        pconf.p2p.secret,
+        pconf,
     ) {
         Ok(n) => n,
         Err(err) => {
             log!(DEBUG, "Error creating a node, err: {}\n", err);
+
             std::process::exit(1);
         }
     };
@@ -117,6 +118,7 @@ fn main() {
         Ok(_) => (),
         Err(err) => {
             log!(DEBUG, "Error starting a node, err: {}", err);
+
             std::process::exit(1);
         }
     }
@@ -131,6 +133,7 @@ fn make_pconfig(config_path: Option<String>) -> PConfig {
                 "Error creating a persisted configuration, err: {}\n",
                 err
             );
+
             std::process::exit(1);
         }
     };

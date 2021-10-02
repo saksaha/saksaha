@@ -4,6 +4,7 @@ mod listen;
 use super::peer::peer_store::PeerStore;
 use crate::{err_res};
 use listen::Listen;
+use logger::log;
 use std::sync::Arc;
 use tokio::sync::{
     mpsc::Sender as MpscSender, oneshot::Sender as OneshotSender,
@@ -36,7 +37,12 @@ impl PeerOp {
         let listen = Listen::new(dial_loop_tx);
 
         tokio::spawn(async move {
-            listen.start_listening(peer_op_port_tx).await;
+            match listen.start_listening(peer_op_port_tx).await {
+                Ok(_) => (),
+                Err(err) => {
+                    log!(DEBUG, "Error peer op listening, err: {}", err);
+                }
+            }
         });
 
         let dial = dial::Dial {};
