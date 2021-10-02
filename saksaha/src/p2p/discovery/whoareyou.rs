@@ -1,8 +1,5 @@
-use crate::{common::SakResult, crypto::Crypto, err_res, p2p::peer_op};
-use k256::ecdsa::{
-    signature::{Signer, Verifier},
-    Signature, SigningKey, VerifyingKey,
-};
+use crate::{common::SakResult, crypto::Crypto, err_res};
+use k256::ecdsa::Signature;
 use std::convert::TryInto;
 use tokio::{io::AsyncReadExt, net::TcpStream};
 

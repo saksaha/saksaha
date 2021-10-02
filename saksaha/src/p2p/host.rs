@@ -51,59 +51,38 @@ impl Host {
         let credential = match Credential::new(self.secret.to_owned()) {
             Ok(sk) => sk,
             Err(err) => {
-                log!(
-                    DEBUG,
-                    "Fatal error. Cannot create secret key, err: {}",
-                    err
-                );
-
                 let msg = msg_err!(
                     MsgKind::SetupFailure,
                     "Error creating secret key, err: {}",
                     err
                 );
 
-                self.task_mng
-                    .send(msg)
-                    .await
-                    .expect("Fatal message should be delivered");
-
-                return;
+                return self.task_mng.send(msg).await;
             }
         };
 
         let peer_store = Arc::new(PeerStore::new(10));
         let peer_store_clone = peer_store.clone();
 
-        let (peer_op_port_tx, mut peer_op_port_rx) = mpsc::channel(1);
+        let (peer_op_port_tx, peer_op_port_rx) = oneshot::channel();
         let (dial_loop_tx, dial_loop_rx) = mpsc::channel::<usize>(5);
 
-        let peer_op = PeerOp::new(
-            peer_store_clone,
-            Arc::new(peer_op_port_tx),
-            Arc::new(dial_loop_tx),
-        );
+        let peer_op = PeerOp::new(peer_store_clone, Arc::new(dial_loop_tx));
 
         tokio::spawn(async move {
-            peer_op.start().await;
+            peer_op.start(peer_op_port_tx).await;
         });
 
-        let peer_op_port = match peer_op_port_rx.recv().await {
-            Some(port) => port,
-            None => {
-                log!(DEBUG, "Fatal error. Cannot retrieve peer op port\n",);
-
+        let peer_op_port = match peer_op_port_rx.await {
+            Ok(port) => port,
+            Err(err) => {
                 let msg = msg_err!(
                     MsgKind::SetupFailure,
-                    "Error retrieving peer op port",
+                    "Error retrieving peer op port, err: {}",
+                    err,
                 );
 
-                self.task_mng
-                    .send(msg)
-                    .await
-                    .expect("Fatal message should be delivered");
-
-                return;
+                return self.task_mng.send(msg).await;
             }
         };
 

@@ -2,25 +2,31 @@ use std::sync::Arc;
 
 use crate::{common::SakResult, err_res};
 use logger::log;
-use tokio::{net::TcpListener, sync::mpsc::Sender};
+use tokio::{
+    net::TcpListener, sync::mpsc::Sender as MpscSender,
+    sync::oneshot::Sender as OneshotSender,
+};
 
 pub struct Listen {
-    peer_op_port_tx: Arc<Sender<u16>>,
-    dial_loop_tx: Arc<Sender<usize>>,
+    // peer_op_port_tx: Arc<Sender<u16>>,
+    dial_loop_tx: Arc<MpscSender<usize>>,
 }
 
 impl Listen {
     pub fn new(
-        peer_op_port_tx: Arc<Sender<u16>>,
-        dial_loop_tx: Arc<Sender<usize>>,
+        // peer_op_port_tx: Arc<Sender<u16>>,
+        dial_loop_tx: Arc<MpscSender<usize>>,
     ) -> Listen {
         Listen {
-            peer_op_port_tx,
+            // peer_op_port_tx,
             dial_loop_tx,
         }
     }
 
-    pub async fn start_listening(&self) -> SakResult<bool> {
+    pub async fn start_listening(
+        &self,
+        peer_op_port_tx: OneshotSender<u16>,
+    ) -> SakResult<bool> {
         let local_addr = format!("127.0.0.1:0");
 
         let listener = match TcpListener::bind(local_addr).await {
@@ -37,7 +43,7 @@ impl Listen {
 
                 log!(DEBUG, "Start peer op listening, addr: {}\n", local_addr);
 
-                match self.peer_op_port_tx.send(local_addr.port()).await {
+                match peer_op_port_tx.send(local_addr.port()) {
                     Ok(_) => (),
                     Err(err) => {
                         // todo

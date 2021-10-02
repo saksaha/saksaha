@@ -39,14 +39,6 @@ impl Listen {
         }
     }
 
-    pub async fn shutdown(msg: Msg, task_mng: Arc<TaskManager>) {
-        if let Err(err) = task_mng.send(msg).await {
-            log!(DEBUG, "Error sending a msg to task manager, err: {}", err);
-
-            task_mng.shutdown_program();
-        }
-    }
-
     pub async fn start_listening(&self) {
         let local_addr = format!("127.0.0.1:{}", self.disc_port);
         let task_mng = self.task_mng.clone();
@@ -56,35 +48,23 @@ impl Listen {
                 Ok(listener) => match listener.local_addr() {
                     Ok(local_addr) => (listener, local_addr),
                     Err(err) => {
-                        log!(
-                            DEBUG,
-                            "Error getting discovery local addr, err: {}",
-                            err
-                        );
-
                         let msg = msg_err!(
                             MsgKind::SetupFailure,
                             "Error getting the local addr, disc listen, {}",
                             err,
                         );
 
-                        return Listen::shutdown(msg, task_mng).await;
+                        return self.task_mng.send(msg).await;
                     }
                 },
                 Err(err) => {
-                    log!(
-                        DEBUG,
-                        "Error getting the endpoint, disc listen, {}\n",
-                        err
-                    );
-
                     let msg = msg_err!(
                         MsgKind::SetupFailure,
                         "Error getting the endpoint, disc listen, {}",
                         err
                     );
 
-                    return Listen::shutdown(msg, task_mng).await;
+                    return self.task_mng.send(msg).await;
                 }
             };
 
