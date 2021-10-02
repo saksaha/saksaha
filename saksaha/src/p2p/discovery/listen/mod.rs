@@ -1,12 +1,11 @@
 mod handler;
 
 use crate::{
-    common::{Error, SakResult},
-    err_res, msg_err, msg_errd,
-    node::task_manager::{Msg, MsgKind, TaskManager},
+    msg_err,
+    node::task_manager::{MsgKind, TaskManager},
     p2p::{
         credential::Credential,
-        peer::{peer_store::PeerStore, Peer},
+        peer::{peer_store::PeerStore,},
     },
 };
 use handler::Handler;
@@ -41,7 +40,6 @@ impl Listen {
 
     pub async fn start_listening(&self) {
         let local_addr = format!("127.0.0.1:{}", self.disc_port);
-        let task_mng = self.task_mng.clone();
 
         let (tcp_listener, local_addr) =
             match TcpListener::bind(local_addr).await {
@@ -74,12 +72,12 @@ impl Listen {
             local_addr
         );
 
-        self.run_loop(tcp_listener).await;
+        self.run_loop(tcp_listener,).await;
 
         unreachable!();
     }
 
-    pub async fn run_loop(&self, tcp_listener: TcpListener) {
+    pub async fn run_loop(&self, tcp_listener: TcpListener,) {
         loop {
             println!("start listen loop");
             let peer_store = self.peer_store.clone();
@@ -132,13 +130,13 @@ impl Listen {
 
 #[cfg(test)]
 mod test {
-    use super::*;
+    // use super::*;
 
     #[tokio::test]
     async fn test_create_new_disc() {
-        let peer_store = Arc::new(PeerStore::new(10));
-        let task_mng = Arc::new(TaskManager::new());
-        let disc_port = 13131;
+        // let peer_store = Arc::new(PeerStore::new(10));
+        // let task_mng = Arc::new(TaskManager::new());
+        // let disc_port = 13131;
 
         // let listen =
         //     Listen::new(disc_port, peer_store.clone(), task_mng.clone());

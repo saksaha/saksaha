@@ -1,20 +1,15 @@
 use crate::{
     common::SakResult,
-    err_res, msg_err, msg_errd,
+    err_res,
     p2p::{
         credential::Credential,
         discovery::whoareyou::{self, WhoAreYou, WhoAreYouAck},
-        peer::{peer_store::PeerStore, Peer},
+        peer::Peer,
     },
 };
 use k256::ecdsa::{signature::Signer, Signature, SigningKey};
-use logger::log;
 use std::sync::Arc;
-use tokio::{
-    io::{AsyncReadExt, AsyncWriteExt},
-    net::{TcpListener, TcpStream},
-    sync::Mutex,
-};
+use tokio::{io::AsyncWriteExt, net::TcpStream, sync::Mutex};
 
 pub struct Handler {
     stream: TcpStream,
