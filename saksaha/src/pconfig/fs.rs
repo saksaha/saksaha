@@ -1,6 +1,5 @@
 use crate::common::{
     Result,
-    ErrorKind,
 };
 use crate::pconfig::PConfig;
 use crate::{err};

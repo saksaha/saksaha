@@ -1,17 +1,15 @@
 mod handler;
+mod routine;
 
-use crate::{
-    msg_err,
-    node::task_manager::{MsgKind, TaskManager},
-    p2p::{credential::Credential, peer::peer_store::PeerStore},
-};
+use crate::{common::Result, msg_err, node::task_manager::{MsgKind, TaskManager}, p2p::{credential::Credential, peer::peer_store::PeerStore}};
 use handler::Handler;
 use logger::log;
+use routine::Routine;
 use std::sync::Arc;
 use tokio::net::TcpListener;
 
 pub struct Listen {
-    disc_port: u16,
+    disc_port: Option<u16>,
     peer_op_port: u16,
     peer_store: Arc<PeerStore>,
     task_mng: Arc<TaskManager>,
@@ -20,7 +18,7 @@ pub struct Listen {
 
 impl Listen {
     pub fn new(
-        disc_port: u16,
+        disc_port: Option<u16>,
         peer_op_port: u16,
         peer_store: Arc<PeerStore>,
         task_mng: Arc<TaskManager>,
@@ -35,31 +33,38 @@ impl Listen {
         }
     }
 
-    pub async fn start_listening(&self) {
-        let local_addr = format!("127.0.0.1:{}", self.disc_port);
+    pub async fn start(&self) -> Result<u16> {
+        let disc_port = match self.disc_port {
+            Some(p) => p,
+            None => 0,
+        };
+
+        let local_addr = format!("127.0.0.1:{}", disc_port);
 
         let (tcp_listener, local_addr) =
             match TcpListener::bind(local_addr).await {
                 Ok(listener) => match listener.local_addr() {
                     Ok(local_addr) => (listener, local_addr),
                     Err(err) => {
-                        let msg = msg_err!(
-                            MsgKind::SetupFailure,
-                            "Error getting the local addr, disc listen, {}",
-                            err,
-                        );
+                        // let msg = msg_err!(
+                        //     MsgKind::SetupFailure,
+                        //     "Error getting the local addr, disc listen, {}",
+                        //     err,
+                        // );
 
-                        return self.task_mng.send(msg).await;
+                        // return self.task_mng.send(msg).await;
+                        return Err(err.into());
                     }
                 },
                 Err(err) => {
-                    let msg = msg_err!(
-                        MsgKind::SetupFailure,
-                        "Error getting the endpoint, disc listen, {}",
-                        err
-                    );
+                    // let msg = msg_err!(
+                    //     MsgKind::SetupFailure,
+                    //     "Error getting the endpoint, disc listen, {}",
+                    //     err
+                    // );
 
-                    return self.task_mng.send(msg).await;
+                    // return self.task_mng.send(msg).await;
+                    return Err(err.into());
                 }
             };
 
@@ -69,59 +74,65 @@ impl Listen {
             local_addr
         );
 
-        self.run_loop(tcp_listener).await;
+        let routine =
+            Routine::new(self.peer_store.clone(), self.credential.clone());
+        let peer_op_port = self.peer_op_port;
 
-        unreachable!();
+        tokio::spawn(async move {
+            routine.run(tcp_listener, peer_op_port).await;
+        });
+
+        Ok(local_addr.port())
     }
 
-    pub async fn run_loop(&self, tcp_listener: TcpListener) {
-        loop {
-            println!("start listen loop");
-            let peer_store = self.peer_store.clone();
+    pub async fn run_loop(&self, tcp_listener: Arc<TcpListener>) {
+        // loop {
+        //     println!("start listen loop");
+        //     let peer_store = self.peer_store.clone();
 
-            if let Some(peer) = peer_store.next().await {
-                let (stream, addr) = match tcp_listener.accept().await {
-                    Ok(res) => {
-                        log!(
-                            DEBUG,
-                            "Accepted incoming request, addr: {}\n",
-                            res.1
-                        );
-                        res
-                    }
-                    Err(err) => {
-                        log!(DEBUG, "Error accepting request, err: {}", err);
-                        continue;
-                    }
-                };
+        //     if let Some(peer) = peer_store.next().await {
+        //         let (stream, addr) = match tcp_listener.accept().await {
+        //             Ok(res) => {
+        //                 log!(
+        //                     DEBUG,
+        //                     "Accepted incoming request, addr: {}\n",
+        //                     res.1
+        //                 );
+        //                 res
+        //             }
+        //             Err(err) => {
+        //                 log!(DEBUG, "Error accepting request, err: {}", err);
+        //                 continue;
+        //             }
+        //         };
 
-                let credential = self.credential.clone();
-                let peer_op_port = self.peer_op_port;
+        //         let credential = self.credential.clone();
+        //         let peer_op_port = self.peer_op_port;
 
-                tokio::spawn(async move {
-                    let mut handler = Handler::new(
-                        stream,
-                        peer.clone(),
-                        credential,
-                        peer_op_port,
-                    );
+        //         tokio::spawn(async move {
+        //             let mut handler = Handler::new(
+        //                 stream,
+        //                 peer.clone(),
+        //                 credential,
+        //                 peer_op_port,
+        //             );
 
-                    match handler.run().await {
-                        Ok(_) => (),
-                        Err(err) => {
-                            log!(
-                                DEBUG,
-                                "Error processing request, addr: {}, err: {}",
-                                addr,
-                                err
-                            );
-                        }
-                    }
-                });
-            } else {
-                log!(DEBUG, "No available peer\n");
-            }
-        }
+        //             match handler.run().await {
+        //                 Ok(_) => (),
+        //                 Err(err) => {
+        //                     log!(
+        //                         DEBUG,
+        //                         "Error processing request, addr: {}, err: {}",
+        //                         addr,
+        //                         err
+        //                     );
+        //                 }
+        //             }
+        //         });
+        //     } else {
+        //         log!(DEBUG, "No available peer\n");
+        //     }
+        // }
     }
 }
 

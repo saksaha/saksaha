@@ -1,11 +1,16 @@
 use clap::{App, Arg};
 use logger::log;
-use saksaha::{common::Result, err, node::{Node, status::Status}, pconfig::PConfig};
+use saksaha::{
+    common::Result,
+    err,
+    node::{status::Status, Node},
+    pconfig::PConfig,
+};
 
 struct Args {
     config: Option<String>,
-    rpc_port: u16,
-    disc_port: u16,
+    rpc_port: Option<u16>,
+    disc_port: Option<u16>,
     bootstrap_urls: Option<Vec<String>>,
 }
 
@@ -52,27 +57,23 @@ fn get_args() -> Result<Args> {
     };
 
     let rpc_port = match flags.value_of("rpc_port") {
-        Some(p) => {
-            match p.parse::<u16>() {
-                Ok(p) => p,
-                Err(err) => {
-                    return err!("Error parsing the rpc port, err: {}", err);
-                }
+        Some(p) => match p.parse::<u16>() {
+            Ok(p) => Some(p),
+            Err(err) => {
+                return err!("Cannot parse rpc port (u16), err: {}", err);
             }
-        }
-        None => 0,
+        },
+        None => None,
     };
 
     let disc_port = match flags.value_of("disc_port") {
-        Some(p) => {
-            match p.parse::<u16>() {
-                Ok(p) => p,
-                Err(err) => {
-                    return err!("ERror parsing the rpc port, err: {}", err);
-                }
+        Some(p) => match p.parse::<u16>() {
+            Ok(p) => Some(p),
+            Err(err) => {
+                return err!("Cannot parse the disc port (u16), err: {}", err);
             }
-        }
-        None => 0,
+        },
+        None => None,
     };
 
     let bootstrap_urls = match flags.values_of("bootstrap_urls") {

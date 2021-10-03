@@ -20,8 +20,8 @@ pub struct Components {
 }
 
 pub struct Node {
-    rpc_port: u16,
-    disc_port: u16,
+    rpc_port: Option<u16>,
+    disc_port: Option<u16>,
     bootstrap_urls: Option<Vec<String>>,
     pconfig: PConfig,
     task_mng: Arc<TaskManager>,
@@ -29,8 +29,8 @@ pub struct Node {
 
 impl Node {
     pub fn new(
-        rpc_port: u16,
-        disc_port: u16,
+        rpc_port: Option<u16>,
+        disc_port: Option<u16>,
         bootstrap_urls: Option<Vec<String>>,
         pconfig: PConfig,
     ) -> Result<Node> {
@@ -125,8 +125,6 @@ impl Node {
                         return Status::SetupFailed(err);
                     }
                 };
-
-                println!("1111");
 
                 let task_mng = self.task_mng.clone();
 

@@ -21,7 +21,7 @@ use tokio::sync::{mpsc::Receiver, Mutex};
 pub struct Dial {
     pub address_book: Arc<AddressBook>,
     pub peer_store: Arc<PeerStore>,
-    disc_port: u16,
+    disc_port: Option<u16>,
     peer_op_port: u16,
     task_mng: Arc<TaskManager>,
     credential: Arc<Credential>,
@@ -32,7 +32,7 @@ impl Dial {
     pub fn new(
         address_book: Arc<AddressBook>,
         peer_store: Arc<PeerStore>,
-        disc_port: u16,
+        disc_port: Option<u16>,
         peer_op_port: u16,
         task_mng: Arc<TaskManager>,
         credential: Arc<Credential>,
@@ -49,8 +49,8 @@ impl Dial {
         }
     }
 
-    pub async fn start_dialing(&self) {
-        let my_disc_endpoint = format!("127.0.0.1:{}", self.disc_port);
+    pub async fn start(&self, my_disc_port: u16) {
+        let my_disc_endpoint = format!("127.0.0.1:{}", my_disc_port);
         let mut dial_loop_rx = self.dial_loop_rx.lock().await;
 
         loop {
