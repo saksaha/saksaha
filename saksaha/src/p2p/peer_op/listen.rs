@@ -3,7 +3,7 @@ use std::sync::Arc;
 use crate::{
     common::{Error, Result},
     err, msg_err,
-    node::task_manager::{MsgKind, TaskManager},
+    node::task_manager::{TaskManager},
 };
 use logger::log;
 use tokio::{net::TcpListener, sync::mpsc::Sender as MpscSender};
