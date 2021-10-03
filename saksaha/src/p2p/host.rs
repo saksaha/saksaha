@@ -19,7 +19,7 @@ pub struct Components {
 }
 
 pub struct Host {
-    disc_port: u16,
+    disc_port: Option<u16>,
     bootstrap_peers: Option<Vec<String>>,
     task_mng: Arc<TaskManager>,
     secret: String,
@@ -28,7 +28,7 @@ pub struct Host {
 
 impl Host {
     pub fn new(
-        disc_port: u16,
+        disc_port: Option<u16>,
         bootstrap_peers: Option<Vec<String>>,
         task_mng: Arc<TaskManager>,
         secret: String,
@@ -44,6 +44,7 @@ impl Host {
 
         host
     }
+
     pub async fn start_components(
         &self,
         components: Arc<Components>,
@@ -52,7 +53,7 @@ impl Host {
         let peer_op_port = tokio::spawn(async move {
             let port = match c.peer_op.start().await {
                 peer_op::Status::Launched(port) => port,
-                peer_op::Status::SetupFailed(err) => return err!("{}", err),
+                peer_op::Status::SetupFailed(err) => return Err(err),
             };
 
             Ok(port)
@@ -62,16 +63,15 @@ impl Host {
             Ok(p) => match p {
                 Ok(p) => p,
                 Err(err) => {
-                    return err!("Error {}", err);
+                    return Err(err);
                 }
             },
             Err(err) => {
-                return err!("Error {}", err);
+                return Err(err.into());
             }
         };
 
         let c = components.clone();
-
         tokio::spawn(async move {
             c.disc.start(peer_op_port).await;
         });
@@ -122,6 +122,7 @@ impl Host {
             Ok(c) => Arc::new(c),
             Err(err) => return Status::SetupFailed(err),
         };
+
         match self.start_components(components).await {
             Ok(_) => (),
             Err(err) => return Status::SetupFailed(err),

@@ -1,18 +1,21 @@
 mod dial;
 mod listen;
 mod whoareyou;
+mod status;
 
+pub use status::Status;
+use dial::Dial;
 use self::listen::Listen;
 use super::{
     address::AddressBook, credential::Credential, peer::peer_store::PeerStore,
 };
-use crate::node::task_manager::TaskManager;
+use crate::{common::Error, node::task_manager::TaskManager};
 use std::sync::Arc;
 use tokio::sync::{mpsc::Receiver, Mutex};
 
 pub struct Disc {
     address_book: Arc<AddressBook>,
-    disc_port: u16,
+    disc_port: Option<u16>,
     peer_store: Arc<PeerStore>,
     task_mng: Arc<TaskManager>,
     credential: Arc<Credential>,
@@ -21,13 +24,13 @@ pub struct Disc {
 
 impl Disc {
     pub fn new(
-        disc_port: u16,
+        disc_port: Option<u16>,
         bootstrap_urls: Option<Vec<String>>,
         peer_store: Arc<PeerStore>,
         task_mng: Arc<TaskManager>,
         credential: Arc<Credential>,
         dial_loop_rx: Arc<Mutex<Receiver<usize>>>,
-    ) -> Self {
+    ) -> Disc {
         let address_book = Arc::new(AddressBook::new(bootstrap_urls));
 
         Disc {
@@ -40,7 +43,7 @@ impl Disc {
         }
     }
 
-    pub async fn start(&self, peer_op_port: u16) {
+    pub async fn start(&self, peer_op_port: u16) -> Status<Error> {
         let peer_store = self.peer_store.clone();
         let task_mng = self.task_mng.clone();
         let credential = self.credential.clone();
@@ -53,16 +56,24 @@ impl Disc {
             credential,
         );
 
-        tokio::spawn(async move {
-            listen.start_listening().await;
+        let listen_start = tokio::spawn(async move {
+            return listen.start().await;
         });
+
+        let disc_port: u16 = match listen_start.await {
+            Ok(l) => match l {
+                Ok(port) => port,
+                Err(err) => return Status::SetupFailed(err)
+            },
+            Err(err) => return Status::SetupFailed(err.into())
+        };
 
         let peer_store = self.peer_store.clone();
         let address_book = self.address_book.clone();
         let task_mng = self.task_mng.clone();
         let credential = self.credential.clone();
 
-        let dialer = dial::Dial::new(
+        let dialer = Dial::new(
             address_book,
             peer_store,
             self.disc_port,
@@ -73,7 +84,9 @@ impl Disc {
         );
 
         tokio::spawn(async move {
-            dialer.start_dialing().await;
+            dialer.start(disc_port).await;
         });
+
+        Status::Launched
     }
 }

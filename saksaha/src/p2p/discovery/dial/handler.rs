@@ -66,7 +66,7 @@ impl Handler {
         if addr.endpoint == self.my_disc_endpoint {
             log!(
                 DEBUG,
-                "Discarding dial request, endpoint to local, addr: {}",
+                "Discarding dial request, endpoint to local, addr: {}\n",
                 addr.endpoint
             );
 
@@ -75,7 +75,7 @@ impl Handler {
                 Err(err) => {
                     log!(
                         DEBUG,
-                        "Cannot remove address, idx: {}, endpoint: {}, err: {}",
+                        "Cannot remove addr, idx: {}, endpoint: {}, err: {}\n",
                         idx,
                         addr.endpoint,
                         err,
@@ -117,10 +117,7 @@ impl Handler {
         let buf = match way.to_bytes() {
             Ok(b) => b,
             Err(err) => {
-                return err!(
-                    "Error creating WhoAreYou request, err: {}",
-                    err
-                );
+                return err!("Error creating WhoAreYou request, err: {}", err);
             }
         };
 
