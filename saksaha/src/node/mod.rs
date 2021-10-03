@@ -1,18 +1,30 @@
+pub mod status;
 pub mod task_manager;
 
 use crate::{
-    common::Result, err_res, p2p::host::Host, pconfig::PConfig, rpc::RPC,
+    common::{Error, Result},
+    err,
+    node::status::Status,
+    p2p::host::{self, Host},
+    pconfig::PConfig,
+    rpc::{self, RPC},
 };
 use logger::log;
 use std::sync::Arc;
 use task_manager::{MsgKind, TaskManager};
-use tokio::{self, signal};
+use tokio::{self, runtime::Runtime, signal};
+
+pub struct Components {
+    rpc: RPC,
+    host: Host,
+}
 
 pub struct Node {
     rpc_port: u16,
     disc_port: u16,
     bootstrap_urls: Option<Vec<String>>,
     pconfig: PConfig,
+    task_mng: Arc<TaskManager>,
 }
 
 impl Node {
@@ -22,71 +34,106 @@ impl Node {
         bootstrap_urls: Option<Vec<String>>,
         pconfig: PConfig,
     ) -> Result<Node> {
+        let task_mng = Arc::new(TaskManager::new());
+
         let node = Node {
             rpc_port,
             disc_port,
             bootstrap_urls,
             pconfig,
+            task_mng,
         };
 
         Ok(node)
     }
 
-    pub fn make_host(&self, task_mng: Arc<TaskManager>) -> Result<Host> {
+    pub async fn start_components(
+        &self,
+        components: Arc<Components>,
+    ) -> Result<()> {
+        let c = components.clone();
+        let rpc_status = tokio::spawn(async move {
+            return c.rpc.start().await;
+        });
+
+        let rpc_port: u16 = match rpc_status.await {
+            Ok(status) => match status {
+                rpc::Status::Launched(port) => port,
+                rpc::Status::SetupFailed(err) => return Err(err),
+            },
+            Err(err) => {
+                return err!("Error joining rpc start thread, err: {}", err);
+            }
+        };
+
+        let c = components.clone();
+        let host_status = tokio::spawn(async move {
+            return c.host.start(rpc_port).await;
+        });
+
+        match host_status.await {
+            Ok(status) => match status {
+                host::Status::Launched => {}
+                host::Status::SetupFailed(err) => return Err(err),
+            },
+            Err(err) => {
+                return err!("Error joining host start thread, err: {}", err);
+            }
+        };
+
+        Ok(())
+    }
+
+    pub fn make_components(&self) -> Result<Components> {
+        let rpc = RPC::new(self.task_mng.clone(), self.rpc_port);
+
         let secret = self.pconfig.p2p.secret.to_owned();
         let public_key = self.pconfig.p2p.public_key.to_owned();
 
         let host = Host::new(
-            self.rpc_port,
             self.disc_port,
             self.bootstrap_urls.to_owned(),
-            task_mng,
+            self.task_mng.clone(),
             secret,
             public_key,
         );
-        host
+
+        let components = Components { rpc, host };
+
+        Ok(components)
     }
 
-    pub fn make_rpc(&self, task_mng: Arc<TaskManager>) -> Result<RPC> {
-        let rpc = RPC::new(task_mng, self.rpc_port);
-
-        Ok(rpc)
-    }
-
-    pub fn start(&self) -> Result<bool> {
+    pub fn start(&self) -> Status<Error> {
         log!(DEBUG, "Start node...\n");
 
-        let runtime = match tokio::runtime::Builder::new_multi_thread()
+        let runtime = tokio::runtime::Builder::new_multi_thread()
             .enable_all()
-            .build()
-        {
+            .build();
+
+        let node_status = match runtime {
             Ok(r) => r.block_on(async {
-                let task_mng = Arc::new(TaskManager::new());
-
-                let rpc = match self.make_rpc(task_mng.clone()) {
-                    Ok(r) => r,
+                let components = match self.make_components() {
+                    Ok(c) => Arc::new(c),
                     Err(err) => {
-                        return err_res!("Error making rpc, err: {}", err);
+                        return Status::SetupFailed(err);
                     }
                 };
 
-                // todo: wait for rpc port
-
-                let host = match self.make_host(task_mng.clone()) {
-                    Ok(h) => h,
+                match self.start_components(components).await {
+                    Ok(_) => (),
                     Err(err) => {
-                        return err_res!("Error making host, err: {}", err);
+                        return Status::SetupFailed(err);
                     }
                 };
 
-                let task_mng_clone = task_mng.clone();
+                println!("1111");
 
-                tokio::join!(host.start(), rpc.start(),);
+                let task_mng = self.task_mng.clone();
 
                 tokio::select!(
-                    msg_kind = task_mng.start_receiving() => {
+                    msg_kind = task_mng.clone().start_receiving() => {
                         if let MsgKind::SetupFailure = msg_kind {
-                            task_mng_clone.shutdown_program();
+                            task_mng.shutdown_program();
                         }
                     },
                     c = signal::ctrl_c() => {
@@ -94,7 +141,7 @@ impl Node {
                             Ok(_) => {
                                 log!(DEBUG, "ctrl+k is pressed.\n");
 
-                                task_mng_clone.shutdown_program();
+                                task_mng.shutdown_program();
                             },
                             Err(err) => {
                                 log!(
@@ -104,22 +151,19 @@ impl Node {
                                     err
                                 );
 
-                                task_mng_clone.shutdown_program();
+                                task_mng.shutdown_program();
                             }
                         }
                     },
                 );
 
-                Ok(true)
+                return Status::Launched;
             }),
             Err(err) => {
-                return err_res!(
-                    "Cannot start the async runtime, err: {}",
-                    err
-                );
+                return Status::SetupFailed(err.into());
             }
         };
 
-        runtime
+        node_status
     }
 }

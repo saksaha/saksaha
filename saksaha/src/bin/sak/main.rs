@@ -1,6 +1,6 @@
 use clap::{App, Arg};
 use logger::log;
-use saksaha::{common::Result, err_res, node::Node, pconfig::PConfig};
+use saksaha::{common::Result, err, node::{Node, status::Status}, pconfig::PConfig};
 
 struct Args {
     config: Option<String>,
@@ -56,7 +56,7 @@ fn get_args() -> Result<Args> {
             match p.parse::<u16>() {
                 Ok(p) => p,
                 Err(err) => {
-                    return err_res!("Error parsing the rpc port, err: {}", err);
+                    return err!("Error parsing the rpc port, err: {}", err);
                 }
             }
         }
@@ -68,7 +68,7 @@ fn get_args() -> Result<Args> {
             match p.parse::<u16>() {
                 Ok(p) => p,
                 Err(err) => {
-                    return err_res!("ERror parsing the rpc port, err: {}", err);
+                    return err!("ERror parsing the rpc port, err: {}", err);
                 }
             }
         }
@@ -115,8 +115,8 @@ fn main() {
     };
 
     match node.start() {
-        Ok(_) => (),
-        Err(err) => {
+        Status::Launched => (),
+        Status::SetupFailed(err) => {
             log!(DEBUG, "Error starting a node, err: {}", err);
 
             std::process::exit(1);

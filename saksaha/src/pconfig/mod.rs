@@ -1,6 +1,6 @@
 pub mod fs;
 
-use crate::{common::Result, crypto::Crypto, err_res};
+use crate::{common::Result, crypto::Crypto, err};
 use fs::FS;
 use logger::log;
 use serde::{Deserialize, Serialize};
@@ -37,7 +37,7 @@ impl PConfig {
                     let pconfig = match PConfig::new() {
                         Ok(p) => p,
                         Err(err) => {
-                            return err_res!(
+                            return err!(
                                 "Error initializing pconfig, err: {}",
                                 err
                             );
@@ -47,7 +47,7 @@ impl PConfig {
                     let pconf = match FS::persist(pconfig) {
                         Ok(p) => p,
                         Err(err) => {
-                            return err_res!(
+                            return err!(
                                 "Cannot persist pconfig, err: {}",
                                 err
                             );

@@ -3,7 +3,7 @@ use crate::common::{
     ErrorKind,
 };
 use crate::pconfig::PConfig;
-use crate::{err_res, err_resk};
+use crate::{err};
 use directories::ProjectDirs;
 use logger::log;
 use std::fs;
@@ -22,7 +22,7 @@ impl FS {
         let serialized = match serde_json::to_string_pretty(&pconfig) {
             Ok(s) => s,
             Err(err) => {
-                return err_res!("Cannot serialize configuration, err: {}", err);
+                return err!("Cannot serialize configuration, err: {}", err);
             }
         };
 
@@ -30,7 +30,7 @@ impl FS {
         let config_path = app_path.join(CONFIG_FILE_NAME).to_owned();
 
         if config_path.exists() {
-            return err_res!("Config file already exists, something is wrong");
+            return err!("Config file already exists, something is wrong");
         }
 
         log!(DEBUG, "Writing a config, at: {:?}\n", config_path);
@@ -39,7 +39,7 @@ impl FS {
             Ok(_) => {
                 Ok(pconfig)
             },
-            Err(err) => err_res!("Error writing the config, err: {}", err),
+            Err(err) => err!("Error writing the config, err: {}", err),
         }
     }
 
@@ -47,8 +47,7 @@ impl FS {
         log!(DEBUG, "Load configuration, path: {:?}\n", path);
 
         if !path.exists() {
-            return err_resk!(
-                ErrorKind::FileNotExist,
+            return err!(
                 "Config does not exist at path: {:?}\n",
                 path
             );
@@ -57,7 +56,7 @@ impl FS {
         let file = match fs::read_to_string(path.to_owned()) {
             Ok(f) => f,
             Err(err) => {
-                return err_res!(
+                return err!(
                     "Error reading file, path: {:?}, err: {}",
                     path,
                     err
@@ -68,7 +67,7 @@ impl FS {
         match serde_json::from_str(file.as_str()) {
             Ok(pconf) => return Ok(pconf),
             Err(err) => {
-                return err_res!("Error deserializing config, err: {}", err);
+                return err!("Error deserializing config, err: {}", err);
             }
         }
     }
@@ -90,12 +89,12 @@ fn create_or_get_app_path() -> Result<PathBuf> {
                     return Ok(app_path.to_path_buf());
                 }
                 Err(err) => {
-                    return err_res!("Error creating a path, {}", err);
+                    return err!("Error creating a path, {}", err);
                 }
             }
         }
         return Ok(app_path.to_path_buf());
     } else {
-        return err_res!("Error forming an app path");
+        return err!("Error forming an app path");
     }
 }

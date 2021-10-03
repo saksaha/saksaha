@@ -2,7 +2,7 @@ mod dial;
 mod listen;
 
 use super::peer::peer_store::PeerStore;
-use crate::{common::Result, err_res, node::task_manager::TaskManager};
+use crate::{common::Result, err, node::task_manager::TaskManager};
 use dial::Dial;
 use listen::Listen;
 use std::sync::Arc;
@@ -45,7 +45,7 @@ impl PeerOp {
             match Listen::new(dial_loop_tx, self.task_mng.clone()).await {
                 Ok(l) => l,
                 Err(err) => {
-                    return err_res!(
+                    return err!(
                         "Error initializing peer op listen, err: {}",
                         err
                     );

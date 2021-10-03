@@ -1,4 +1,4 @@
-use crate::{common::Result, crypto::Crypto, err_res};
+use crate::{common::Result, crypto::Crypto, err};
 use k256::ecdsa::Signature;
 use std::convert::TryInto;
 use tokio::{io::AsyncReadExt, net::TcpStream};
@@ -41,7 +41,7 @@ impl WhoAreYou {
         if sig_len == 71 {
             buf[1..72].copy_from_slice(&sig_bytes);
         } else {
-            return err_res!(
+            return err!(
                 "Signature does not fit the size, len: {}",
                 sig_len
             );
@@ -64,7 +64,7 @@ impl WhoAreYou {
         match stream.read_exact(&mut buf).await {
             Ok(b) => b,
             Err(err) => {
-                return err_res!("Error reading whoAreYou, err: {}", err);
+                return err!("Error reading whoAreYou, err: {}", err);
             }
         };
 
@@ -72,21 +72,21 @@ impl WhoAreYou {
             Ok(b) => match Signature::from_der(b) {
                 Ok(s) => s,
                 Err(err) => {
-                    return err_res!(
+                    return err!(
                         "Error recovering signature, err: {}",
                         err
                     );
                 }
             },
             Err(err) => {
-                return err_res!("Error parsing signature, err: {}", err);
+                return err!("Error parsing signature, err: {}", err);
             }
         };
 
         let peer_op_port: u16 = match buf[72..74].try_into() {
             Ok(p) => u16::from_be_bytes(p),
             Err(err) => {
-                return err_res!("Error parsing peer_op_port, err: {}", err);
+                return err!("Error parsing peer_op_port, err: {}", err);
             }
         };
 
@@ -126,7 +126,7 @@ impl WhoAreYouAck {
         let way = match WhoAreYou::parse(stream).await {
             Ok(w) => w,
             Err(err) => {
-                return err_res!("Error parsing WhoAreYouAck, err: {}", err);
+                return err!("Error parsing WhoAreYouAck, err: {}", err);
             }
         };
 

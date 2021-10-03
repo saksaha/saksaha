@@ -1,6 +1,6 @@
 use crate::{
     common::Result,
-    err_res,
+    err,
     p2p::{
         credential::Credential,
         discovery::whoareyou::{self, WhoAreYou, WhoAreYouAck},
@@ -37,7 +37,7 @@ impl Handler {
         let way = match WhoAreYou::parse(&mut self.stream).await {
             Ok(w) => w,
             Err(err) => {
-                return err_res!(
+                return err!(
                     "Error parsing who are you request, err: {}",
                     err
                 );
@@ -57,7 +57,7 @@ impl Handler {
         let buf = match way_ack.to_bytes() {
             Ok(b) => b,
             Err(err) => {
-                return err_res!(
+                return err!(
                     "Error converting WhoAreYouAck to bytes, err: {}",
                     err
                 );
@@ -67,7 +67,7 @@ impl Handler {
         match self.stream.write_all(&buf).await {
             Ok(_) => (),
             Err(err) => {
-                return err_res!(
+                return err!(
                     "Error sending the whoAreYou buffer, err: {}",
                     err
                 );

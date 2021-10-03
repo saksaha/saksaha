@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::{
     common::{Error, Result},
-    err_res, msg_err,
+    err, msg_err,
     node::task_manager::{MsgKind, TaskManager},
 };
 use logger::log;
@@ -50,7 +50,7 @@ impl Listen {
                 );
 
                 task_mng.send(msg).await;
-                return err_res!("a");
+                return err!("a");
             }
         };
 
@@ -73,7 +73,7 @@ impl Listen {
                     Ok(res) => res,
                     Err(err) => {
                         return;
-                        // return err_res!("Error accepting a request, err: {}", err);
+                        // return err!("Error accepting a request, err: {}", err);
                     }
                 };
 

@@ -6,8 +6,7 @@ pub use k256::{
 };
 use rand_core::OsRng;
 use std::{fmt::Write, num::ParseIntError};
-
-use crate::{common::Result, err_res};
+use crate::{common::Result, err};
 
 pub struct Crypto;
 
@@ -49,7 +48,7 @@ impl Crypto {
         let encoded_point = match EncodedPoint::from_bytes(public_key_bytes) {
             Ok(e) => e,
             Err(err) => {
-                return err_res!(
+                return err!(
                     "Error making EncodedPoint from bytes, err: {}",
                     err
                 );
@@ -60,7 +59,7 @@ impl Crypto {
             match VerifyingKey::from_encoded_point(&encoded_point) {
                 Ok(v) => v,
                 Err(err) => {
-                    return err_res!(
+                    return err!(
                     "Cannot create VerifyingKey from encoded point, err: {}",
                     err
                 );

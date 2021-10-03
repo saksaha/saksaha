@@ -2,7 +2,7 @@ use super::whoareyou::WhoAreYou;
 use crate::{
     common::Result,
     crypto::Crypto,
-    err_res,
+    err,
     p2p::{
         address::AddressBook,
         credential::Credential,
@@ -96,7 +96,7 @@ impl Handler {
                     s
                 }
                 Err(err) => {
-                    return err_res!(
+                    return err!(
                         "Error connecting to addr: {:?}, err: {}",
                         addr,
                         err
@@ -117,7 +117,7 @@ impl Handler {
         let buf = match way.to_bytes() {
             Ok(b) => b,
             Err(err) => {
-                return err_res!(
+                return err!(
                     "Error creating WhoAreYou request, err: {}",
                     err
                 );
@@ -127,7 +127,7 @@ impl Handler {
         match stream.write_all(&buf).await {
             Ok(_) => (),
             Err(err) => {
-                return err_res!(
+                return err!(
                     "Error sending the whoAreYou buffer, err: {}",
                     err
                 );
@@ -137,7 +137,7 @@ impl Handler {
         let way_ack = match WhoAreYouAck::parse(&mut stream).await {
             Ok(w) => w,
             Err(err) => {
-                return err_res!("Cannot process WhoAreyouAck, err: {}", err);
+                return err!("Cannot process WhoAreyouAck, err: {}", err);
             }
         };
 
@@ -146,7 +146,7 @@ impl Handler {
         ) {
             Ok(v) => v,
             Err(err) => {
-                return err_res!("Error creating verifying key, err: {}", err);
+                return err!("Error creating verifying key, err: {}", err);
             }
         };
         let sig = way_ack.way.sig;
@@ -154,7 +154,7 @@ impl Handler {
         match verifying_key.verify(whoareyou::MESSAGE, &sig) {
             Ok(_) => (),
             Err(err) => {
-                return err_res!("Signature is invalid, err: {}", err);
+                return err!("Signature is invalid, err: {}", err);
             }
         };
 
