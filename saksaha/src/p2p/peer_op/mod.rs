@@ -9,22 +9,22 @@ use std::sync::Arc;
 use tokio::sync::mpsc::Sender as MpscSender;
 
 pub struct PeerOp {
-    // peer_store: Arc<PeerStore>,
-    // dial_loop_tx: Arc<MpscSender<usize>>,
-    // task_mng: Arc<TaskManager>,
+    peer_store: Arc<PeerStore>,
+    dial_loop_tx: Arc<MpscSender<usize>>,
+    task_mng: Arc<TaskManager>,
 }
 
 impl PeerOp {
     pub fn new(
-        // peer_store: Arc<PeerStore>,
-        // dial_loop_tx: Arc<MpscSender<usize>>,
-        // rpc_port: u16,
-        // task_mng: Arc<TaskManager>,
+        peer_store: Arc<PeerStore>,
+        dial_loop_tx: Arc<MpscSender<usize>>,
+        rpc_port: u16,
+        task_mng: Arc<TaskManager>,
     ) -> PeerOp {
         let peer_op = PeerOp {
-            // peer_store,
-            // dial_loop_tx,
-            // task_mng,
+            peer_store,
+            dial_loop_tx,
+            task_mng,
         };
 
         peer_op
@@ -34,15 +34,15 @@ impl PeerOp {
 impl PeerOp {
     pub async fn start(
         &self,
-        peer_store: Arc<PeerStore>,
-        dial_loop_tx: Arc<MpscSender<usize>>,
-        rpc_port: u16,
-        task_mng: Arc<TaskManager>,
+        // peer_store: Arc<PeerStore>,
+        // dial_loop_tx: Arc<MpscSender<usize>>,
+        // rpc_port: u16,
+        // task_mng: Arc<TaskManager>,
     ) -> Result<u16> {
-        let dial_loop_tx = dial_loop_tx.clone();
+        let dial_loop_tx = self.dial_loop_tx.clone();
 
         let listen =
-            match Listen::new(dial_loop_tx, task_mng.clone()).await {
+            match Listen::new(dial_loop_tx, self.task_mng.clone()).await {
                 Ok(l) => l,
                 Err(err) => {
                     return err_res!(
@@ -59,7 +59,7 @@ impl PeerOp {
             println!("33");
         });
 
-        let dial = Dial::new(task_mng.clone());
+        let dial = Dial::new(self.task_mng.clone());
 
         tokio::spawn(async move {
             dial.start_dialing().await;

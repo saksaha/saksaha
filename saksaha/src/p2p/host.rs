@@ -64,19 +64,18 @@ impl Host {
 
         let peer_store = Arc::new(PeerStore::new(10));
         let (dial_loop_tx, dial_loop_rx) = mpsc::channel::<usize>(5);
-        let peer_op = PeerOp::new();
         let rpc_port = self.rpc_port;
         let task_mng = self.task_mng.clone();
 
+        let peer_op = PeerOp::new(
+            peer_store.clone(),
+            Arc::new(dial_loop_tx),
+            rpc_port,
+            task_mng,
+        );
+
         let peer_op_port = tokio::spawn(async move {
-            let port = peer_op
-                .start(
-                    peer_store.clone(),
-                    Arc::new(dial_loop_tx),
-                    rpc_port,
-                    task_mng,
-                )
-                .await;
+            let port = peer_op.start().await;
 
             let port = match port {
                 Ok(p) => p,
@@ -89,9 +88,7 @@ impl Host {
         });
 
         let peer_op_port = match peer_op_port.await {
-            Ok(p) => {
-                p
-            },
+            Ok(p) => p,
             Err(err) => {
                 log!(DEBUG, "Error joining peer op start thread, err: {}", err);
                 return;
