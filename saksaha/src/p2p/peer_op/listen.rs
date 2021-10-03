@@ -11,8 +11,6 @@ use tokio::{net::TcpListener, sync::mpsc::Sender as MpscSender};
 pub struct Listen {
     dial_loop_tx: Arc<MpscSender<usize>>,
     task_mng: Arc<TaskManager>,
-    listener: Arc<TcpListener>,
-    pub port: u16,
 }
 
 impl Listen {
@@ -20,6 +18,15 @@ impl Listen {
         dial_loop_tx: Arc<MpscSender<usize>>,
         task_mng: Arc<TaskManager>,
     ) -> Result<Listen> {
+        let listen = Listen {
+            dial_loop_tx,
+            task_mng,
+        };
+
+        Ok(listen)
+    }
+
+    pub async fn start(&self) -> Result<u16> {
         let local_addr = format!("127.0.0.1:0");
 
         let (listener, port) = match TcpListener::bind(local_addr).await {
@@ -27,14 +34,7 @@ impl Listen {
                 let local_addr = match l.local_addr() {
                     Ok(addr) => addr,
                     Err(err) => {
-                        let msg = msg_err!(
-                            MsgKind::SetupFailure,
-                            "Error getting peer op local addr, err: {}",
-                            err
-                        );
-
-                        task_mng.send(msg.to_owned()).await;
-                        return Err(Error::from(msg));
+                        return Err(err.into());
                     }
                 };
 
@@ -43,29 +43,9 @@ impl Listen {
                 (l, local_addr.port())
             }
             Err(err) => {
-                let msg = msg_err!(
-                    MsgKind::SetupFailure,
-                    "Error binding peer op endpoint, err: {}",
-                    err
-                );
-
-                task_mng.send(msg).await;
-                return err!("a");
+                return Err(err.into());
             }
         };
-
-        let listen = Listen {
-            dial_loop_tx,
-            task_mng,
-            listener: Arc::new(listener),
-            port,
-        };
-
-        Ok(listen)
-    }
-
-    pub async fn start_listening(&self) {
-        let listener = self.listener.clone();
 
         tokio::spawn(async move {
             loop {
@@ -73,7 +53,6 @@ impl Listen {
                     Ok(res) => res,
                     Err(err) => {
                         return;
-                        // return err!("Error accepting a request, err: {}", err);
                     }
                 };
 
@@ -88,6 +67,6 @@ impl Listen {
             }
         });
 
-        // Ok(listener)
+        Ok(port)
     }
 }
