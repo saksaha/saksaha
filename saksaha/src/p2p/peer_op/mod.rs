@@ -1,8 +1,11 @@
 mod dial;
 mod listen;
+mod status;
+
+pub use self::status::Status;
 
 use super::peer::peer_store::PeerStore;
-use crate::{common::Result, err, node::task_manager::TaskManager};
+use crate::{common::{Error, Result}, err, node::{task_manager::TaskManager}};
 use dial::Dial;
 use listen::Listen;
 use std::sync::Arc;
@@ -32,32 +35,31 @@ impl PeerOp {
 }
 
 impl PeerOp {
-    pub async fn start(
-        &self,
-        // peer_store: Arc<PeerStore>,
-        // dial_loop_tx: Arc<MpscSender<usize>>,
-        // rpc_port: u16,
-        // task_mng: Arc<TaskManager>,
-    ) -> Result<u16> {
+    pub async fn start(&self) -> Status<u16, Error> {
         let dial_loop_tx = self.dial_loop_tx.clone();
 
-        let listen =
-            match Listen::new(dial_loop_tx, self.task_mng.clone()).await {
-                Ok(l) => l,
-                Err(err) => {
-                    return err!(
-                        "Error initializing peer op listen, err: {}",
-                        err
-                    );
-                }
-            };
+        let listen = match Listen::new(dial_loop_tx, self.task_mng.clone())
+            .await
+        {
+            Ok(l) => l,
+            Err(err) => {
+                return Status::SetupFailed(err);
+            }
+        };
 
-        let peer_op_port = listen.port;
+        // let peer_op_port = listen.port;
 
-        tokio::spawn(async move {
-            listen.start_listening().await;
-            println!("33");
+        let listen_start = tokio::spawn(async move {
+            return listen.start().await;
         });
+        
+        let peer_op_port = match listen_start.await {
+            Ok(res) => match res {
+               Ok(port) => port,
+               Err(err) => return Status::SetupFailed(err), 
+            },
+            Err(err) => return Status::SetupFailed(err.into()), 
+        }; 
 
         let dial = Dial::new(self.task_mng.clone());
 
@@ -66,6 +68,6 @@ impl PeerOp {
             println!("223");
         });
 
-        Ok(peer_op_port)
+        Status::Launched(peer_op_port)
     }
 }

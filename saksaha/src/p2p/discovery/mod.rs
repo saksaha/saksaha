@@ -6,14 +6,13 @@ use self::listen::Listen;
 use super::{
     address::AddressBook, credential::Credential, peer::peer_store::PeerStore,
 };
-use crate::{node::task_manager::TaskManager};
+use crate::node::task_manager::TaskManager;
 use std::sync::Arc;
-use tokio::sync::{Mutex, mpsc::{Receiver}};
+use tokio::sync::{mpsc::Receiver, Mutex};
 
 pub struct Disc {
     address_book: Arc<AddressBook>,
     disc_port: u16,
-    peer_op_port: u16,
     peer_store: Arc<PeerStore>,
     task_mng: Arc<TaskManager>,
     credential: Arc<Credential>,
@@ -23,7 +22,6 @@ pub struct Disc {
 impl Disc {
     pub fn new(
         disc_port: u16,
-        peer_op_port: u16,
         bootstrap_urls: Option<Vec<String>>,
         peer_store: Arc<PeerStore>,
         task_mng: Arc<TaskManager>,
@@ -35,7 +33,6 @@ impl Disc {
         Disc {
             address_book,
             disc_port,
-            peer_op_port,
             peer_store,
             task_mng,
             credential,
@@ -43,14 +40,14 @@ impl Disc {
         }
     }
 
-    pub async fn start(&self) {
+    pub async fn start(&self, peer_op_port: u16) {
         let peer_store = self.peer_store.clone();
         let task_mng = self.task_mng.clone();
         let credential = self.credential.clone();
 
         let listen = Listen::new(
             self.disc_port,
-            self.peer_op_port,
+            peer_op_port,
             peer_store,
             task_mng,
             credential,
@@ -69,7 +66,7 @@ impl Disc {
             address_book,
             peer_store,
             self.disc_port,
-            self.peer_op_port,
+            peer_op_port,
             task_mng,
             credential,
             self.dial_loop_rx.clone(),
