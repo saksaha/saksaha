@@ -47,7 +47,10 @@ impl Listen {
             }
         };
 
+        let dial_loop_tx = self.dial_loop_tx.clone();
         tokio::spawn(async move {
+            let tx = dial_loop_tx;
+
             loop {
                 let (mut stream, addr) = match listener.accept().await {
                     Ok(res) => res,
@@ -63,6 +66,7 @@ impl Listen {
                         // let n = match
                     }
                 });
+
                 println!("22222");
             }
         });

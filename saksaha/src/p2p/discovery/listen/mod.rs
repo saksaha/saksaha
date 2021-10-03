@@ -45,27 +45,9 @@ impl Listen {
             match TcpListener::bind(local_addr).await {
                 Ok(listener) => match listener.local_addr() {
                     Ok(local_addr) => (listener, local_addr),
-                    Err(err) => {
-                        // let msg = msg_err!(
-                        //     MsgKind::SetupFailure,
-                        //     "Error getting the local addr, disc listen, {}",
-                        //     err,
-                        // );
-
-                        // return self.task_mng.send(msg).await;
-                        return Err(err.into());
-                    }
+                    Err(err) => return Err(err.into())
                 },
-                Err(err) => {
-                    // let msg = msg_err!(
-                    //     MsgKind::SetupFailure,
-                    //     "Error getting the endpoint, disc listen, {}",
-                    //     err
-                    // );
-
-                    // return self.task_mng.send(msg).await;
-                    return Err(err.into());
-                }
+                Err(err) => return Err(err.into())
             };
 
         log!(
