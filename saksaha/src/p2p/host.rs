@@ -1,10 +1,11 @@
+pub use super::status::Status;
 use super::{
     credential::Credential, discovery::Disc, peer::peer_store::PeerStore,
     peer_op::PeerOp,
 };
 use crate::{
-    common::Result,
-    err_res, msg_err,
+    common::{Error, Result},
+    err, msg_err,
     node::task_manager::{MsgKind, TaskManager},
 };
 use logger::log;
@@ -12,7 +13,6 @@ use std::sync::Arc;
 use tokio::sync::{mpsc, oneshot, Mutex};
 
 pub struct Host {
-    rpc_port: u16,
     disc_port: u16,
     bootstrap_peers: Option<Vec<String>>,
     task_mng: Arc<TaskManager>,
@@ -22,15 +22,13 @@ pub struct Host {
 
 impl Host {
     pub fn new(
-        rpc_port: u16,
         disc_port: u16,
         bootstrap_peers: Option<Vec<String>>,
         task_mng: Arc<TaskManager>,
         secret: String,
         public_key: String,
-    ) -> Result<Host> {
+    ) -> Host {
         let host = Host {
-            rpc_port,
             disc_port,
             bootstrap_peers,
             task_mng,
@@ -38,12 +36,12 @@ impl Host {
             public_key,
         };
 
-        Ok(host)
+        host
     }
 }
 
 impl Host {
-    pub async fn start(&self) {
+    pub async fn start(&self, rpc_port: u16) -> Status<Error> {
         log!(DEBUG, "Start host...\n");
 
         let credential = match Credential::new(
@@ -52,19 +50,12 @@ impl Host {
         ) {
             Ok(sk) => sk,
             Err(err) => {
-                let msg = msg_err!(
-                    MsgKind::SetupFailure,
-                    "Error creating secret key, err: {}",
-                    err
-                );
-
-                return self.task_mng.send(msg).await;
+                return Status::SetupFailed(err);
             }
         };
 
         let peer_store = Arc::new(PeerStore::new(10));
         let (dial_loop_tx, dial_loop_rx) = mpsc::channel::<usize>(5);
-        let rpc_port = self.rpc_port;
         let task_mng = self.task_mng.clone();
 
         let peer_op = PeerOp::new(
@@ -80,7 +71,7 @@ impl Host {
             let port = match port {
                 Ok(p) => p,
                 Err(err) => {
-                    return err_res!("Error starting peer op, err: {}", err);
+                    return err!("Error starting peer op, err: {}", err);
                 }
             };
 
@@ -91,11 +82,13 @@ impl Host {
             Ok(p) => p,
             Err(err) => {
                 log!(DEBUG, "Error joining peer op start thread, err: {}", err);
-                return;
+                return Status::SetupFailed(err.into());
             }
         };
 
         println!("22, {}", peer_op_port.unwrap());
+
+        Status::Launched
 
         // let peer_op_port = match peer_op_port_rx.await {
         //     Ok(port) => port,

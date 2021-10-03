@@ -1,4 +1,4 @@
-use crate::{common::Result, err_res};
+use crate::{common::Result, err};
 use logger::log;
 use tokio::sync::Mutex;
 use std::{sync::{Arc,}};
@@ -19,11 +19,11 @@ impl Address {
                         (peer_id.to_string(), endpoint.to_string())
                     }
                     None => {
-                        return err_res!("url is not valid, url: {}", url);
+                        return err!("url is not valid, url: {}", url);
                     }
                 },
                 None => {
-                    return err_res!("url might be too short, url: {}", url);
+                    return err!("url might be too short, url: {}", url);
                 }
             }
         };
@@ -115,7 +115,7 @@ impl AddressBook {
             log!(DEBUG, "Address removed, idx: {}\n", idx);
             return Ok(addr);
         } else {
-            return err_res!("Index out of bounds, idx:{}", idx);
+            return err!("Index out of bounds, idx:{}", idx);
         }
     }
 }

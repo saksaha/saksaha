@@ -9,3 +9,5 @@ pub mod peer;
 pub mod address;
 
 pub mod credential;
+
+pub mod status;
