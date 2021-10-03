@@ -12,6 +12,11 @@ use logger::log;
 use std::sync::Arc;
 use tokio::sync::{mpsc, oneshot, Mutex};
 
+pub struct Components {
+    peer_op: PeerOp,
+    disc: Disc,
+}
+
 pub struct Host {
     disc_port: u16,
     bootstrap_peers: Option<Vec<String>>,
@@ -38,12 +43,8 @@ impl Host {
 
         host
     }
-}
 
-impl Host {
-    pub async fn start(&self, rpc_port: u16) -> Status<Error> {
-        log!(DEBUG, "Start host...\n");
-
+    pub fn make_components(&self) -> Result<Components> {
         let credential = match Credential::new(
             self.secret.to_owned(),
             self.public_key.to_owned(),
@@ -116,5 +117,18 @@ impl Host {
         // tokio::spawn(async move {
         //     disc.start().await;
         // });
+
+        let components = Components {
+
+        }
+
+        Ok(components)
+    }
+
+    pub async fn start(&self, rpc_port: u16) -> Status<Error> {
+        log!(DEBUG, "Start host...\n");
+
+        let components = self.make_components();
+
     }
 }
