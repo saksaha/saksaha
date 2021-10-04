@@ -1,5 +1,7 @@
 mod handler;
+mod routine;
 
+use routine::Routine;
 use crate::{
     msg_err,
     node::task_manager::{MsgKind, TaskManager},
@@ -25,7 +27,7 @@ pub struct Dial {
     peer_op_port: u16,
     task_mng: Arc<TaskManager>,
     credential: Arc<Credential>,
-    dial_loop_rx: Arc<Mutex<Receiver<usize>>>,
+    dial_start_rx: Arc<Mutex<Receiver<usize>>>,
 }
 
 impl Dial {
@@ -36,7 +38,7 @@ impl Dial {
         peer_op_port: u16,
         task_mng: Arc<TaskManager>,
         credential: Arc<Credential>,
-        dial_loop_rx: Arc<Mutex<Receiver<usize>>>,
+        dial_start_rx: Arc<Mutex<Receiver<usize>>>,
     ) -> Dial {
         Dial {
             address_book,
@@ -45,76 +47,39 @@ impl Dial {
             peer_op_port,
             task_mng,
             credential,
-            dial_loop_rx,
+            dial_start_rx,
         }
     }
 
     pub async fn start(&self, my_disc_port: u16) {
-        let my_disc_endpoint = format!("127.0.0.1:{}", my_disc_port);
+        let routine = Routine::new(
+            self.peer_store.clone(),
+            self.credential.clone(),
+            self.address_book.clone(),
+            self.peer_op_port,
+            my_disc_port,
+        );
 
-        let mut dial_loop_rx = self.dial_loop_rx.lock().await;
+        tokio::spawn(async move {
+            log!(DEBUG, "Start disc dialing\n");
 
-        loop {
-            'main: loop {
-                let start = SystemTime::now();
+            routine.run().await;
+        });
 
-                if let Some(peer) = self.peer_store.next().await {
-                    let credential = self.credential.clone();
-                    let address_book = self.address_book.clone();
-
-                    let mut handler = Handler::new(
-                        peer,
-                        credential,
-                        self.peer_op_port,
-                        address_book,
-                        my_disc_endpoint.to_owned(),
-                    );
-
-                    match handler.run().await {
-                        Ok(res) => {
-                            if let HandleResult::AddressNotFound = res {
-                                break 'main;
-                            }
-                        }
-                        Err(err) => {
-                            log!(
-                                DEBUG,
-                                "Error processing request, err: {}\n",
-                                err,
-                            );
-                        }
-                    }
-                } else {
-                    log!(DEBUG, "Peer not available");
-
-                    tokio::time::sleep(Duration::from_millis(1000)).await;
-                }
-
-                tokio::time::sleep(Duration::from_millis(1000)).await;
-
-                match start.elapsed() {
-                    Ok(_) => (),
-                    Err(err) => {
-                        log!(
-                            DEBUG,
-                            "Error sleeping the duration, err: {}",
-                            err
-                        );
-                    }
-                }
-            }
-
-            match dial_loop_rx.recv().await {
-                Some(_) => (),
+        let dial_start_rx = self.dial_start_rx.clone();
+        tokio::spawn(async move {
+            let mut dial_start_rx = dial_start_rx.lock().await;
+            match dial_start_rx.recv().await {
+                Some(d) => {
+                    println!("123123 {}", d);
+                },
                 None => {
-                    let msg = msg_err!(
-                        MsgKind::ResourceNotAvailable,
-                        "dial loop channel has been closed",
-                    );
 
-                    self.task_mng.send(msg).await;
-                }
-            }
-        }
+                },
+            };
+
+            // let mut routine_start_rx = self.routine_start_rx.lock().await;
+        });
     }
+
 }
