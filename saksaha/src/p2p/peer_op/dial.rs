@@ -6,15 +6,15 @@ use tokio::sync::mpsc::Sender;
 
 pub struct Dial {
     task_mng: Arc<TaskManager>,
-    dial_start_tx: Arc<Sender<usize>>,
+    dial_wakeup_tx: Arc<Sender<usize>>,
 }
 
 impl Dial {
     pub fn new(
         task_mng: Arc<TaskManager>,
-        dial_start_tx: Arc<Sender<usize>>,
+        dial_wakeup_tx: Arc<Sender<usize>>,
     ) -> Dial {
-        Dial { task_mng, dial_start_tx }
+        Dial { task_mng, dial_wakeup_tx }
     }
 
     pub async fn start_dialing(self) {
@@ -24,7 +24,7 @@ impl Dial {
 
         println!("peer op dial woke up");
 
-        match self.dial_start_tx.send(0).await {
+        match self.dial_wakeup_tx.send(0).await {
             Ok(_) => {
                 println!("peer op dial start sent!");
             },

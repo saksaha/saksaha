@@ -1,9 +1,8 @@
 mod handler;
 mod routine;
 
-use routine::Routine;
 use crate::{
-    msg_err,
+    msg_err, msg_errd,
     node::task_manager::{MsgKind, TaskManager},
     p2p::{
         address::AddressBook,
@@ -14,6 +13,7 @@ use crate::{
 };
 use handler::Handler;
 use logger::log;
+use routine::Routine;
 use std::{
     sync::Arc,
     time::{Duration, SystemTime},
@@ -27,7 +27,7 @@ pub struct Dial {
     peer_op_port: u16,
     task_mng: Arc<TaskManager>,
     credential: Arc<Credential>,
-    dial_start_rx: Arc<Mutex<Receiver<usize>>>,
+    dial_wakeup_rx: Arc<Mutex<Receiver<usize>>>,
 }
 
 impl Dial {
@@ -38,7 +38,7 @@ impl Dial {
         peer_op_port: u16,
         task_mng: Arc<TaskManager>,
         credential: Arc<Credential>,
-        dial_start_rx: Arc<Mutex<Receiver<usize>>>,
+        dial_wakeup_rx: Arc<Mutex<Receiver<usize>>>,
     ) -> Dial {
         Dial {
             address_book,
@@ -47,11 +47,13 @@ impl Dial {
             peer_op_port,
             task_mng,
             credential,
-            dial_start_rx,
+            dial_wakeup_rx,
         }
     }
 
     pub async fn start(&self, my_disc_port: u16) {
+        let task_mng = self.task_mng.clone();
+
         let routine = Arc::new(Routine::new(
             self.peer_store.clone(),
             self.credential.clone(),
@@ -61,27 +63,25 @@ impl Dial {
         ));
 
         let routine_clone = routine.clone();
-        tokio::spawn(async move {
-            log!(DEBUG, "Start disc dialing\n");
-
-            routine_clone.run().await;
-        });
+        routine_clone.run();
 
         let routine_clone = routine.clone();
-        let dial_start_rx = self.dial_start_rx.clone();
+        let dial_wakeup_rx = self.dial_wakeup_rx.clone();
         tokio::spawn(async move {
-            let mut dial_start_rx = dial_start_rx.lock().await;
-            match dial_start_rx.recv().await {
-                Some(d) => {
+            let mut dial_wakeup_rx = dial_wakeup_rx.lock().await;
+
+            match dial_wakeup_rx.recv().await {
+                Some(_) => {
                     routine_clone.wakeup().await;
-
-                    println!("123123 {}", d);
-                },
+                }
                 None => {
+                    let msg = msg_errd!(
+                        "Cannot receive dial wakeup msg, is channel closed?",
+                    );
 
-                },
+                    task_mng.send(msg).await;
+                }
             };
         });
     }
-
 }

@@ -24,7 +24,7 @@ pub struct Disc {
     peer_store: Arc<PeerStore>,
     task_mng: Arc<TaskManager>,
     credential: Arc<Credential>,
-    dial_start_rx: Arc<Mutex<Receiver<usize>>>,
+    dial_wakeup_rx: Arc<Mutex<Receiver<usize>>>,
 }
 
 impl Disc {
@@ -34,7 +34,7 @@ impl Disc {
         peer_store: Arc<PeerStore>,
         task_mng: Arc<TaskManager>,
         credential: Arc<Credential>,
-        dial_start_rx: Arc<Mutex<Receiver<usize>>>,
+        dial_wakeup_rx: Arc<Mutex<Receiver<usize>>>,
     ) -> Disc {
         let address_book = Arc::new(AddressBook::new(bootstrap_urls));
 
@@ -44,7 +44,7 @@ impl Disc {
             peer_store,
             task_mng,
             credential,
-            dial_start_rx,
+            dial_wakeup_rx,
         }
     }
 
@@ -73,7 +73,7 @@ impl Disc {
             peer_op_port,
             task_mng,
             credential,
-            self.dial_start_rx.clone(),
+            self.dial_wakeup_rx.clone(),
         );
 
         let components = Components {
