@@ -1,5 +1,15 @@
 use super::whoareyou::WhoAreYou;
-use crate::{common::{Error, Result}, crypto::Crypto, err, p2p::{address::{Address, address_book::AddressBook, status::Status}, credential::Credential, discovery::whoareyou::{self, WhoAreYouAck}, peer::{Peer, PeerStatus}}};
+use crate::{
+    common::{Error, Result},
+    crypto::Crypto,
+    err,
+    p2p::{
+        address::{address_book::AddressBook, Status, Address},
+        credential::Credential,
+        discovery::whoareyou::{self, WhoAreYouAck},
+        peer::{self, Peer},
+    },
+};
 use k256::ecdsa::{
     signature::{Signer, Verifier},
     Signature, SigningKey,
@@ -198,7 +208,7 @@ impl Handler {
         mut addr: MutexGuard<'_, Address>,
     ) -> Result<()> {
         let mut peer = self.peer.lock().await;
-        peer.status = PeerStatus::Discovered;
+        peer.status = peer::Status::Discovered;
         peer.endpoint = addr.endpoint.to_owned();
         peer.peer_id = way_ack.way.peer_id;
         addr.status = Status::HandshakeSucceeded;

@@ -1,4 +1,13 @@
-use crate::{common::{Error, Result}, err, p2p::{address::{Address, address_book::AddressBook}, credential::Credential, discovery::whoareyou::{self, WhoAreYou, WhoAreYouAck}, peer::{Peer, PeerStatus}}};
+use crate::{
+    common::{Error, Result},
+    err,
+    p2p::{
+        address::{address_book::AddressBook, Address},
+        credential::Credential,
+        discovery::whoareyou::{self, WhoAreYou, WhoAreYouAck},
+        peer::{Peer},
+    },
+};
 use k256::ecdsa::{signature::Signer, Signature, SigningKey};
 use logger::log;
 use std::sync::Arc;
@@ -113,7 +122,7 @@ impl Handler {
             Err(err) => return Err(err.into()),
         };
 
-        let addr = Address::new(way.peer_id, endpoint);
+        // let addr = Address::new_(way.peer_id, endpoint);
         // self.address_book.add(addr);
 
         // let mut peer = self.peer.lock().await;
