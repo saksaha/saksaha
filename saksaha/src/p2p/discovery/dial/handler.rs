@@ -1,22 +1,12 @@
 use super::whoareyou::WhoAreYou;
-use crate::{
-    common::Result,
-    crypto::Crypto,
-    err,
-    p2p::{
-        address::AddressBook,
-        credential::Credential,
-        discovery::whoareyou::{self, WhoAreYouAck},
-        peer::{Peer, PeerStatus},
-    },
-};
+use crate::{common::Result, crypto::Crypto, err, p2p::{address::{Address, AddressBook, status::Status}, credential::Credential, discovery::whoareyou::{self, WhoAreYouAck}, peer::{Peer, PeerStatus}}};
 use k256::ecdsa::{
     signature::{Signer, Verifier},
     Signature, SigningKey,
 };
 use logger::log;
 use std::sync::Arc;
-use tokio::{io::AsyncWriteExt, net::TcpStream, sync::Mutex};
+use tokio::{io::AsyncWriteExt, net::TcpStream, sync::{Mutex, MutexGuard}};
 
 pub enum HandleResult {
     AddressNotFound,
@@ -55,9 +45,12 @@ impl Handler {
         let address_book_len = self.address_book.len().await;
         log!(DEBUG, "Address book len: {}\n", address_book_len);
 
-        let filter = Box::new(|| {
+        let filter = Arc::new(|addr: MutexGuard<Address>| {
+            println!("33, {:?}", addr);
 
+            addr.status == Status::UnInitialized
         });
+
         let (addr, idx) = match self.address_book.next(Some(filter)).await {
             Some(a) => a,
             None => {
@@ -67,7 +60,7 @@ impl Handler {
             }
         };
 
-        let addr = addr.lock().await;
+        let mut addr = addr.lock().await;
 
         if addr.endpoint == self.my_disc_endpoint {
             log!(
@@ -165,6 +158,8 @@ impl Handler {
         peer.status = PeerStatus::Discovered;
         peer.endpoint = addr.endpoint.to_owned();
         peer.peer_id = way_ack.way.get_peer_id();
+
+        addr.status = Status::HandshakeSucceeded;
 
         println!("peer: {:?}", peer);
 
