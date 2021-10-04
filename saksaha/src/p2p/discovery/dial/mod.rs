@@ -52,33 +52,35 @@ impl Dial {
     }
 
     pub async fn start(&self, my_disc_port: u16) {
-        let routine = Routine::new(
+        let routine = Arc::new(Routine::new(
             self.peer_store.clone(),
             self.credential.clone(),
             self.address_book.clone(),
             self.peer_op_port,
             my_disc_port,
-        );
+        ));
 
+        let routine_clone = routine.clone();
         tokio::spawn(async move {
             log!(DEBUG, "Start disc dialing\n");
 
-            routine.run().await;
+            routine_clone.run().await;
         });
 
+        let routine_clone = routine.clone();
         let dial_start_rx = self.dial_start_rx.clone();
         tokio::spawn(async move {
             let mut dial_start_rx = dial_start_rx.lock().await;
             match dial_start_rx.recv().await {
                 Some(d) => {
+                    routine_clone.wakeup().await;
+
                     println!("123123 {}", d);
                 },
                 None => {
 
                 },
             };
-
-            // let mut routine_start_rx = self.routine_start_rx.lock().await;
         });
     }
 

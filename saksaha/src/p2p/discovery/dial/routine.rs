@@ -1,4 +1,5 @@
 use logger::log;
+use tokio::sync::Mutex;
 use std::{
     sync::Arc,
     time::{Duration, SystemTime},
@@ -16,6 +17,7 @@ pub struct Routine {
     address_book: Arc<AddressBook>,
     peer_op_port: u16,
     disc_port: u16,
+    is_running: Arc<Mutex<bool>>,
 }
 
 impl Routine {
@@ -26,17 +28,25 @@ impl Routine {
         peer_op_port: u16,
         disc_port: u16,
     ) -> Routine {
+        let is_running = Arc::new(Mutex::new(false));
+
         Routine {
             peer_store,
             credential,
             address_book,
             peer_op_port,
             disc_port,
+            is_running,
         }
     }
 
     pub async fn run(&self) {
+        println!("dial routine run()");
+
         let my_disc_endpoint = format!("127.0.0.1:{}", self.disc_port);
+        let mut is_running = self.is_running.lock().await;
+        *is_running = true;
+        std::mem::drop(is_running);
 
         loop {
             let start = SystemTime::now();
@@ -79,16 +89,15 @@ impl Routine {
             }
         }
 
-        // match dial_loop_rx.recv().await {
-        //     Some(_) => (),
-        //     None => {
-        //         let msg = msg_err!(
-        //             MsgKind::ResourceNotAvailable,
-        //             "dial loop channel has been closed",
-        //         );
+        let mut is_running = self.is_running.lock().await;
+        *is_running = false;
+    }
 
-        //         self.task_mng.send(msg).await;
-        //     }
-        // }
+    pub async fn wakeup(&self) {
+        let is_running = self.is_running.lock().await;
+
+        println!("dial routine, is_running: {}", is_running);
+
+        self.run().await;
     }
 }
