@@ -7,7 +7,7 @@ use crate::{
     p2p::{
         address::AddressBook,
         credential::Credential,
-        discovery::{dial::handler::HandleResult, whoareyou},
+        discovery::{whoareyou},
         peer::peer_store::PeerStore,
     },
 };

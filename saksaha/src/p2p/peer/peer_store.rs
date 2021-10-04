@@ -29,21 +29,30 @@ impl PeerStore {
     pub async fn next(&self) -> Option<Arc<Mutex<Peer>>> {
         let slots = &self.slots;
         let slots = slots.lock().await;
-        let mut idx = self.curr_idx.lock().await;
+        let capacity = self.capacity;
 
-        if let Some(p) = slots.get(*idx + 1) {
-            *idx += 1;
-            return Some(p.clone());
-        } else {
-            *idx = 0;
-            match slots.get(*idx) {
-                Some(p) => {
-                    return Some(p.clone());
-                }
-                None => {
-                    return None;
+        let mut curr_idx = self.curr_idx.lock().await;
+        let start_idx = *curr_idx + 1;
+
+        for i in start_idx..start_idx + capacity {
+            let idx = i % capacity;
+
+            if let Some(p) = slots.get(idx) {
+                *curr_idx = idx;
+                return Some(p.clone());
+            } else {
+                *curr_idx = 0;
+                match slots.get(*curr_idx) {
+                    Some(p) => {
+                        return Some(p.clone());
+                    }
+                    None => {
+                        return None;
+                    }
                 }
             }
         }
+
+        None
     }
 }

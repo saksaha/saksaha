@@ -17,20 +17,20 @@ impl Dial {
         Dial { task_mng, dial_wakeup_tx }
     }
 
-    pub async fn start_dialing(self) {
+    pub async fn start(self) {
         log!(DEBUG, "Start peer op dialing\n");
 
-        tokio::time::sleep(Duration::from_millis(4000)).await;
+        // tokio::time::sleep(Duration::from_millis(4000)).await;
 
-        println!("peer op dial woke up");
+        // println!("peer op dial woke up");
 
-        match self.dial_wakeup_tx.send(0).await {
-            Ok(_) => {
-                println!("peer op dial start sent!");
-            },
-            Err(err) => {
-                println!("peer op dial start send fail, err: {}", err);
-            }
-        };
+        // match self.dial_wakeup_tx.send(0).await {
+        //     Ok(_) => {
+        //         println!("peer op dial start sent!");
+        //     },
+        //     Err(err) => {
+        //         println!("peer op dial start send fail, err: {}", err);
+        //     }
+        // };
     }
 }

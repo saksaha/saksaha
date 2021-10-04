@@ -8,7 +8,7 @@ use tokio::sync::Mutex;
 use super::handler::Handler;
 use crate::p2p::{
     address::AddressBook, credential::Credential,
-    discovery::dial::handler::HandleResult, peer::peer_store::PeerStore,
+    discovery::dial::handler::HandleStatus, peer::peer_store::PeerStore,
 };
 
 pub struct Routine {
@@ -71,17 +71,41 @@ impl Routine {
                     );
 
                     match handler.run().await {
-                        Ok(res) => {
-                            if let HandleResult::AddressNotFound = res {
-                                break;
-                            }
+                        HandleStatus::AddressNotFound => {
+                            break;
                         }
-                        Err(err) => {
+                        HandleStatus::ConnectionFailed(err) => {
                             log!(
                                 DEBUG,
-                                "Error processing request, err: {}\n",
-                                err,
+                                "Disc dial connection fail, err: {}",
+                                err
                             );
+
+                            continue;
+                        }
+                        HandleStatus::LocalAddrIdentical => {
+                            continue;
+                        }
+                        HandleStatus::Success => {
+                            continue;
+                        }
+                        HandleStatus::WhoAreYouInitiateFailed(err) => {
+                            log!(
+                                DEBUG,
+                                "disc dial who are you \
+                                initiate failed, err: {}",
+                                err
+                            );
+                            continue;
+                        }
+                        HandleStatus::WhoAreYouAckReceiveFailed(err) => {
+                            log!(
+                                DEBUG,
+                                "Disc dial who are you \
+                                ack receive failed, err: {}",
+                                err
+                            );
+                            continue;
                         }
                     }
                 } else {
@@ -95,7 +119,11 @@ impl Routine {
                 match start.elapsed() {
                     Ok(_) => (),
                     Err(err) => {
-                        log!(DEBUG, "Error sleeping the duration, err: {}", err);
+                        log!(
+                            DEBUG,
+                            "Error sleeping the duration, err: {}",
+                            err
+                        );
                     }
                 }
             }
