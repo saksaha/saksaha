@@ -1,7 +1,7 @@
 use crate::{common::Result, err};
 use logger::log;
+use std::sync::Arc;
 use tokio::sync::Mutex;
-use std::{sync::{Arc,}};
 
 #[derive(Debug)]
 pub struct Address {
@@ -28,7 +28,11 @@ impl Address {
             }
         };
 
-        let addr = Address { peer_id, endpoint, fail_count: 0 };
+        let addr = Address {
+            peer_id,
+            endpoint,
+            fail_count: 0,
+        };
 
         Ok(addr)
     }
@@ -82,33 +86,55 @@ impl AddressBook {
         book
     }
 
-    pub async fn next(&self) -> Option<(Arc<Mutex<Address>>, usize)> {
-        let addrs = &self.addrs;
-        let addrs = addrs.lock().await;
-        let mut idx = self.curr_idx.lock().await;
+    pub async fn next(
+        &self,
+        filter: Option<Box<Fn()>>,
+    ) -> Option<(Arc<Mutex<Address>>, usize)> {
+        let addrs = self.addrs.lock().await;
+        let mut curr_idx = self.curr_idx.lock().await;
+        let len = addrs.len();
 
-        if let Some(a) = addrs.get(*idx) {
-            let p = Some((a.clone(), idx.to_owned()));
-            *idx += 1;
-            return p;
-        } else {
-            *idx = 0;
-            match addrs.get(*idx) {
-                Some(a) => {
-                    let p = Some((a.clone(), idx.to_owned()));
-                    *idx += 1;
-                    return p;
+        for i in *curr_idx..(*curr_idx + len) {
+            let idx = i % len;
+
+            let addr = match addrs.get(idx) {
+                Some(addr) => {
+                    if let Some(ref f) = filter {
+                        f();
+                        Some(addr)
+                    } else {
+                        Some(addr)
+                    }
                 },
                 None => {
-                    return None;
+                    None
                 }
-            }
-        };
+            };
+        }
+
+        None
+
+        // if let Some(a) = addrs.get(*idx) {
+        //     let p = Some((a.clone(), idx.to_owned()));
+        //     *idx += 1;
+        //     return p;
+        // } else {
+        //     *idx = 0;
+        //     match addrs.get(*idx) {
+        //         Some(a) => {
+        //             let p = Some((a.clone(), idx.to_owned()));
+        //             *idx += 1;
+        //             return p;
+        //         }
+        //         None => {
+        //             return None;
+        //         }
+        //     }
+        // };
     }
 
     pub async fn remove(&self, idx: usize) -> Result<Arc<Mutex<Address>>> {
-        let addrs = self.addrs.clone();
-        let mut addrs = addrs.lock().await;
+        let mut addrs = self.addrs.lock().await;
 
         if idx <= addrs.len() {
             let addr = addrs.remove(idx);
@@ -117,6 +143,11 @@ impl AddressBook {
         } else {
             return err!("Index out of bounds, idx:{}", idx);
         }
+    }
+
+    pub async fn len(&self) -> usize {
+        let addrs = self.addrs.lock().await;
+        addrs.len()
     }
 }
 
