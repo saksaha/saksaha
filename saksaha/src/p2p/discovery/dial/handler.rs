@@ -1,17 +1,37 @@
 use super::whoareyou::WhoAreYou;
-use crate::{common::Result, crypto::Crypto, err, p2p::{address::{Address, AddressBook, status::Status}, credential::Credential, discovery::whoareyou::{self, WhoAreYouAck}, peer::{Peer, PeerStatus}}};
+use crate::{
+    common::{Error, Result},
+    crypto::Crypto,
+    err,
+    p2p::{
+        address::{status::Status, Address, AddressBook},
+        credential::Credential,
+        discovery::whoareyou::{self, WhoAreYouAck},
+        peer::{Peer, PeerStatus},
+    },
+};
 use k256::ecdsa::{
     signature::{Signer, Verifier},
     Signature, SigningKey,
 };
 use logger::log;
 use std::sync::Arc;
-use tokio::{io::AsyncWriteExt, net::TcpStream, sync::{Mutex, MutexGuard}};
+use tokio::{
+    io::AsyncWriteExt,
+    net::TcpStream,
+    sync::{Mutex, MutexGuard},
+};
 
-pub enum HandleResult {
+pub enum HandleStatus<E> {
     AddressNotFound,
 
     LocalAddrIdentical,
+
+    ConnectionFailed(E),
+
+    WhoAreYouInitiateFailed(E),
+
+    WhoAreYouAckReceiveFailed(E),
 
     Success,
 }
@@ -41,68 +61,80 @@ impl Handler {
         }
     }
 
-    pub async fn run(&mut self) -> Result<HandleResult> {
+    pub async fn handle_my_endpoint(
+        &self,
+        endpoint: String,
+        idx: usize,
+    ) -> Result<()> {
+        log!(
+            DEBUG,
+            "Discarding dial request, endpoint to local, addr: {}\n",
+            endpoint,
+        );
+        match self.address_book.remove(idx).await {
+            Ok(_) => return Ok(()),
+            Err(err) => return Err(err),
+        }
+    }
+
+    pub async fn run(&mut self) -> HandleStatus<Error> {
         let address_book_len = self.address_book.len().await;
+
         log!(DEBUG, "Address book len: {}\n", address_book_len);
 
-        let filter = Arc::new(|addr: MutexGuard<Address>| {
-            println!("33, {:?}", addr);
-
-            addr.status == Status::UnInitialized
-        });
-
-        let (addr, idx) = match self.address_book.next(Some(filter)).await {
+        let (addr, idx) = match self
+            .address_book
+            .next(Some(&get_not_initialized_addr))
+            .await
+        {
             Some(a) => a,
             None => {
                 log!(DEBUG, "Cannot acquire next address\n");
 
-                return Ok(HandleResult::AddressNotFound);
+                return HandleStatus::AddressNotFound;
             }
         };
 
-        let mut addr = addr.lock().await;
+        let addr = addr.lock().await;
 
         if addr.endpoint == self.my_disc_endpoint {
-            log!(
-                DEBUG,
-                "Discarding dial request, endpoint to local, addr: {}\n",
-                addr.endpoint
-            );
-
-            match self.address_book.remove(idx).await {
-                Ok(_) => (),
+            match self.handle_my_endpoint(addr.endpoint.to_owned(), idx).await {
+                Ok(_) => return HandleStatus::LocalAddrIdentical,
                 Err(err) => {
-                    log!(
-                        DEBUG,
-                        "Cannot remove addr, idx: {}, endpoint: {}, err: {}\n",
-                        idx,
-                        addr.endpoint,
-                        err,
-                    );
+                    log!(DEBUG, "Error handling my endpoint, err: {}", err);
                 }
             }
-            return Ok(HandleResult::LocalAddrIdentical);
-        }
+        };
 
-        let mut stream =
-            match TcpStream::connect(addr.endpoint.to_owned()).await {
-                Ok(s) => {
-                    log!(
-                        DEBUG,
-                        "Successfully connected to endpoint, {}\n",
-                        addr.endpoint
-                    );
-                    s
-                }
-                Err(err) => {
-                    return err!(
-                        "Error connecting to addr: {:?}, err: {}",
-                        addr,
-                        err
-                    );
-                }
-            };
+        let stream = match TcpStream::connect(addr.endpoint.to_owned()).await {
+            Ok(s) => {
+                log!(
+                    DEBUG,
+                    "Successfully connected to endpoint, {}\n",
+                    addr.endpoint
+                );
+                s
+            }
+            Err(err) => return HandleStatus::ConnectionFailed(err.into()),
+        };
 
+        let stream = match self.initiate_who_are_you(stream).await {
+            Ok(s) => s,
+            Err(err) => return HandleStatus::WhoAreYouInitiateFailed(err),
+        };
+
+        match self.receive_who_are_you_ack(stream, addr).await {
+            Ok(_) => (),
+            Err(err) => return HandleStatus::WhoAreYouAckReceiveFailed(err),
+        };
+
+        HandleStatus::Success
+    }
+
+    pub async fn initiate_who_are_you(
+        &self,
+        mut stream: TcpStream,
+    ) -> Result<TcpStream> {
         let secret_key = &self.credential.secret_key;
         let signing_key = SigningKey::from(secret_key);
         let sig: Signature = signing_key.sign(whoareyou::MESSAGE);
@@ -121,7 +153,7 @@ impl Handler {
         };
 
         match stream.write_all(&buf).await {
-            Ok(_) => (),
+            Ok(_) => Ok(stream),
             Err(err) => {
                 return err!(
                     "Error sending the whoAreYou buffer, err: {}",
@@ -129,7 +161,13 @@ impl Handler {
                 );
             }
         }
+    }
 
+    pub async fn receive_who_are_you_ack(
+        &self,
+        mut stream: TcpStream,
+        mut addr: MutexGuard<'_, Address>,
+    ) -> Result<()> {
         let way_ack = match WhoAreYouAck::parse(&mut stream).await {
             Ok(w) => w,
             Err(err) => {
@@ -158,15 +196,18 @@ impl Handler {
         peer.status = PeerStatus::Discovered;
         peer.endpoint = addr.endpoint.to_owned();
         peer.peer_id = way_ack.way.get_peer_id();
-
         addr.status = Status::HandshakeSucceeded;
 
-        println!("peer: {:?}", peer);
+        log!(DEBUG, "Successfully discovered a peer: {:?}", peer);
 
         tokio::spawn(async move {
             println!("Start synchroize");
         });
 
-        Ok(HandleResult::Success)
+        Ok(())
     }
+}
+
+fn get_not_initialized_addr(addr: MutexGuard<Address>) -> bool {
+    addr.status == Status::NotInitialized
 }

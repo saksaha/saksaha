@@ -36,7 +36,7 @@ impl Address {
             peer_id,
             endpoint,
             fail_count: 0,
-            status: Status::UnInitialized,
+            status: Status::NotInitialized,
         };
 
         Ok(addr)
@@ -94,7 +94,7 @@ impl AddressBook {
     pub async fn next(
         &self,
         filter: Option<
-            Arc<(dyn Fn(MutexGuard<Address>) -> bool + Sync + Send)>,
+            &(dyn Fn(MutexGuard<Address>) -> bool + Sync + Send),
         >,
     ) -> Option<(Arc<Mutex<Address>>, usize)> {
         let addrs = self.addrs.lock().await;

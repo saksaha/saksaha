@@ -67,7 +67,7 @@ impl PeerOp {
 
         let dial = components.dial;
         tokio::spawn(async move {
-            dial.start_dialing().await;
+            dial.start().await;
         });
 
         Ok(peer_op_port)

@@ -1,6 +1,6 @@
 #[derive(Debug, PartialEq)]
 pub enum Status<C> {
-    UnInitialized,
+    NotInitialized,
 
     DiscoverySucceeded,
 
