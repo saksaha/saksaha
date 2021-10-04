@@ -13,7 +13,7 @@ use logger::log;
 use std::sync::Arc;
 use tokio::sync::{mpsc, Mutex};
 
-pub struct Components {
+struct Components {
     peer_op: PeerOp,
     disc: Disc,
 }
@@ -45,7 +45,7 @@ impl Host {
         host
     }
 
-    pub async fn start_components(&self, components: Components) -> Result<()> {
+    async fn start_components(&self, components: Components) -> Result<()> {
         let peer_op = components.peer_op;
         let peer_op_port = tokio::spawn(async move {
             let port = match peer_op.start().await {
@@ -76,7 +76,7 @@ impl Host {
         Ok(())
     }
 
-    pub fn make_components(&self, rpc_port: u16) -> Result<Components> {
+    fn make_components(&self, rpc_port: u16) -> Result<Components> {
         let credential = match Credential::new(
             self.secret.to_owned(),
             self.public_key.to_owned(),

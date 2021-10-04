@@ -14,16 +14,16 @@ pub struct Listen {
 }
 
 impl Listen {
-    pub async fn new(
+    pub fn new(
         dial_loop_tx: Arc<MpscSender<usize>>,
         task_mng: Arc<TaskManager>,
-    ) -> Result<Listen> {
+    ) -> Listen {
         let listen = Listen {
             dial_loop_tx,
             task_mng,
         };
 
-        Ok(listen)
+        listen
     }
 
     pub async fn start(&self) -> Result<u16> {

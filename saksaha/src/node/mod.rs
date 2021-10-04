@@ -14,7 +14,7 @@ use std::sync::Arc;
 use task_manager::{MsgKind, TaskManager};
 use tokio::{self, runtime::Runtime, signal};
 
-pub struct Components {
+struct Components {
     rpc: RPC,
     host: Host,
 }
@@ -47,7 +47,7 @@ impl Node {
         Ok(node)
     }
 
-    pub async fn start_components(
+    async fn start_components(
         &self,
         components: Arc<Components>,
     ) -> Result<()> {
@@ -84,7 +84,7 @@ impl Node {
         Ok(())
     }
 
-    pub fn make_components(&self) -> Result<Components> {
+    fn make_components(&self) -> Result<Components> {
         let rpc = RPC::new(self.task_mng.clone(), self.rpc_port);
 
         let secret = self.pconfig.p2p.secret.to_owned();
