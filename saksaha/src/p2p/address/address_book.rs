@@ -4,7 +4,7 @@ use logger::log;
 use std::sync::Arc;
 use tokio::sync::{Mutex, MutexGuard};
 
-type MutexedAddress = Arc<Mutex<Address>>;
+type MutexedAddress = Arc<Mutex<Option<Address>>>;
 
 pub struct AddressBook {
     pub addrs: Arc<Mutex<Vec<MutexedAddress>>>,
@@ -40,7 +40,7 @@ impl AddressBook {
                     addr.peer_id,
                     addr.endpoint
                 );
-                let addr = Arc::new(Mutex::new(addr));
+                let addr = Arc::new(Mutex::new(Some(addr)));
                 addrs.push(addr);
                 count += 1;
             }
@@ -59,8 +59,10 @@ impl AddressBook {
 
     pub async fn next(
         &self,
-        filter: Option<&(dyn Fn(MutexGuard<Address>) -> bool + Sync + Send)>,
-    ) -> Option<(Arc<Mutex<Address>>, usize)> {
+        filter: Option<
+            &(dyn Fn(Address) -> bool + Sync + Send),
+        >,
+    ) -> Option<(MutexGuard<'_, Option<Address>>, usize)> {
         let addrs = self.addrs.lock().await;
         let mut curr_idx = self.curr_idx.lock().await;
         let len = addrs.len();
@@ -70,25 +72,30 @@ impl AddressBook {
 
             match addrs.get(idx) {
                 Some(addr) => {
-                    let a = match addr.try_lock() {
+                    let mut addr_lock = match addr.try_lock() {
                         Ok(a) => a,
                         Err(_) => continue,
                     };
 
+                    let addr = match addr_lock.take() {
+                        Some(a) => a,
+                        None => continue,
+                    };
+
                     if let Some(ref f) = filter {
-                        if f(a) {
+                        if f(addr) {
                             *curr_idx = idx;
-                            return Some((addr.clone(), i));
+                            return Some((addr_lock, i));
                         } else {
                             continue;
                         }
                     } else {
                         *curr_idx = idx;
-                        return Some((addr.clone(), i));
+                        return Some((addr_lock, i));
                     }
                 }
                 None => continue,
-            };
+            }
         }
 
         *curr_idx = 0;
