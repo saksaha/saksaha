@@ -6,7 +6,7 @@ use crate::{
     msg_err,
     node::task_manager::{MsgKind, TaskManager},
     p2p::{
-        address::AddressBook, credential::Credential,
+        address::address_book::AddressBook, credential::Credential,
         peer::peer_store::PeerStore,
     },
 };

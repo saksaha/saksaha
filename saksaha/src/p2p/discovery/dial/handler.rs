@@ -1,15 +1,5 @@
 use super::whoareyou::WhoAreYou;
-use crate::{
-    common::{Error, Result},
-    crypto::Crypto,
-    err,
-    p2p::{
-        address::{status::Status, Address, AddressBook},
-        credential::Credential,
-        discovery::whoareyou::{self, WhoAreYouAck},
-        peer::{Peer, PeerStatus},
-    },
-};
+use crate::{common::{Error, Result}, crypto::Crypto, err, p2p::{address::{Address, address_book::AddressBook, status::Status}, credential::Credential, discovery::whoareyou::{self, WhoAreYouAck}, peer::{Peer, PeerStatus}}};
 use k256::ecdsa::{
     signature::{Signer, Verifier},
     Signature, SigningKey,
@@ -210,7 +200,7 @@ impl Handler {
         let mut peer = self.peer.lock().await;
         peer.status = PeerStatus::Discovered;
         peer.endpoint = addr.endpoint.to_owned();
-        peer.peer_id = way_ack.way.get_peer_id();
+        peer.peer_id = way_ack.way.peer_id;
         addr.status = Status::HandshakeSucceeded;
 
         log!(DEBUG, "Successfully discovered a peer: {:?}", peer);

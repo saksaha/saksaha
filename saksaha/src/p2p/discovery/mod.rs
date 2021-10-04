@@ -1,15 +1,19 @@
 mod dial;
 mod listen;
-mod whoareyou;
 mod status;
+mod whoareyou;
 
-pub use status::Status;
-use dial::Dial;
 use self::listen::Listen;
 use super::{
-    address::AddressBook, credential::Credential, peer::peer_store::PeerStore,
+    address::address_book::AddressBook, credential::Credential,
+    peer::peer_store::PeerStore,
 };
-use crate::{common::{Error, Result}, node::task_manager::TaskManager};
+use crate::{
+    common::{Error, Result},
+    node::task_manager::TaskManager,
+};
+use dial::Dial;
+pub use status::Status;
 use std::sync::Arc;
 use tokio::sync::{mpsc::Receiver, Mutex};
 
@@ -78,10 +82,7 @@ impl Disc {
             self.dial_wakeup_rx.clone(),
         );
 
-        let components = Components {
-            listen,
-            dial,
-        };
+        let components = Components { listen, dial };
 
         Ok(components)
     }
@@ -95,9 +96,9 @@ impl Disc {
         let disc_port: u16 = match listen_start.await {
             Ok(l) => match l {
                 Ok(port) => port,
-                Err(err) => return Err(err)
+                Err(err) => return Err(err),
             },
-            Err(err) => return Err(err.into())
+            Err(err) => return Err(err.into()),
         };
 
         let dial = components.dial;
@@ -111,12 +112,12 @@ impl Disc {
     pub async fn start(&self, peer_op_port: u16) -> Status<Error> {
         let components = match self.make_components(peer_op_port) {
             Ok(c) => c,
-            Err(err) => return Status::SetupFailed(err)
+            Err(err) => return Status::SetupFailed(err),
         };
 
         match self.start_components(components).await {
             Ok(_) => (),
-            Err(err) => return Status::SetupFailed(err)
+            Err(err) => return Status::SetupFailed(err),
         };
 
         Status::Launched
