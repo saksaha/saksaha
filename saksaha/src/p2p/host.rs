@@ -5,13 +5,13 @@ use super::{
 };
 use crate::{
     common::{Error, Result},
-    err, msg_err,
-    node::task_manager::{MsgKind, TaskManager},
+    err,
+    node::task_manager::TaskManager,
     p2p::peer_op,
 };
 use logger::log;
 use std::sync::Arc;
-use tokio::sync::{mpsc, oneshot, Mutex};
+use tokio::sync::{mpsc, Mutex};
 
 pub struct Components {
     peer_op: PeerOp,
@@ -45,13 +45,10 @@ impl Host {
         host
     }
 
-    pub async fn start_components(
-        &self,
-        components: Arc<Components>,
-    ) -> Result<()> {
-        let c = components.clone();
+    pub async fn start_components(&self, components: Components) -> Result<()> {
+        let peer_op = components.peer_op;
         let peer_op_port = tokio::spawn(async move {
-            let port = match c.peer_op.start().await {
+            let port = match peer_op.start().await {
                 peer_op::Status::Launched(port) => port,
                 peer_op::Status::SetupFailed(err) => return Err(err),
             };
@@ -71,9 +68,9 @@ impl Host {
             }
         };
 
-        let c = components.clone();
+        let disc = components.disc;
         tokio::spawn(async move {
-            c.disc.start(peer_op_port).await;
+            disc.start(peer_op_port).await;
         });
 
         Ok(())
@@ -91,12 +88,12 @@ impl Host {
         };
 
         let peer_store = Arc::new(PeerStore::new(10));
-        let (dial_loop_tx, dial_loop_rx) = mpsc::channel::<usize>(5);
+        let (dial_start_tx, dial_start_rx) = mpsc::channel::<usize>(5);
         let task_mng = self.task_mng.clone();
 
         let peer_op = PeerOp::new(
             peer_store.clone(),
-            Arc::new(dial_loop_tx),
+            Arc::new(dial_start_tx),
             rpc_port,
             task_mng,
         );
@@ -107,7 +104,7 @@ impl Host {
             peer_store.clone(),
             self.task_mng.clone(),
             Arc::new(credential),
-            Arc::new(Mutex::new(dial_loop_rx)),
+            Arc::new(Mutex::new(dial_start_rx)),
         );
 
         let components = Components { peer_op, disc };
@@ -119,7 +116,7 @@ impl Host {
         log!(DEBUG, "Start host...\n");
 
         let components = match self.make_components(rpc_port) {
-            Ok(c) => Arc::new(c),
+            Ok(c) => c,
             Err(err) => return Status::SetupFailed(err),
         };
 
