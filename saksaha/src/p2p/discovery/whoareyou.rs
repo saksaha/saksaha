@@ -15,6 +15,7 @@ pub struct WhoAreYou {
     pub sig: Signature,
     pub public_key_bytes: [u8; 65],
     pub peer_op_port: u16,
+    pub peer_id: String,
 }
 
 impl WhoAreYou {
@@ -23,11 +24,18 @@ impl WhoAreYou {
         peer_op_port: u16,
         public_key_bytes: [u8; 65],
     ) -> WhoAreYou {
+        let peer_id = WhoAreYou::make_peer_id(&public_key_bytes);
+
         WhoAreYou {
             sig,
             peer_op_port,
             public_key_bytes,
+            peer_id,
         }
+    }
+
+    pub fn make_peer_id(public_key_bytes: &[u8; 65]) -> String {
+        Crypto::encode_hex(public_key_bytes)
     }
 
     pub fn to_bytes(&self) -> Result<[u8; 140]> {
@@ -41,10 +49,7 @@ impl WhoAreYou {
         if sig_len == 71 {
             buf[1..72].copy_from_slice(&sig_bytes);
         } else {
-            return err!(
-                "Signature does not fit the size, len: {}",
-                sig_len
-            );
+            return err!("Signature does not fit the size, len: {}", sig_len);
         }
 
         buf[72..74].copy_from_slice(&self.peer_op_port.to_be_bytes());
@@ -52,10 +57,6 @@ impl WhoAreYou {
         buf[74..139].copy_from_slice(&self.public_key_bytes);
 
         Ok(buf)
-    }
-
-    pub fn get_peer_id(&self) -> String {
-        Crypto::encode_hex(&self.public_key_bytes)
     }
 
     pub async fn parse(stream: &mut TcpStream) -> Result<WhoAreYou> {
@@ -72,10 +73,7 @@ impl WhoAreYou {
             Ok(b) => match Signature::from_der(b) {
                 Ok(s) => s,
                 Err(err) => {
-                    return err!(
-                        "Error recovering signature, err: {}",
-                        err
-                    );
+                    return err!("Error recovering signature, err: {}", err);
                 }
             },
             Err(err) => {
@@ -93,11 +91,11 @@ impl WhoAreYou {
         let mut public_key_bytes = [0; 65];
         public_key_bytes.copy_from_slice(&buf[74..139]);
 
-        let way = WhoAreYou {
+        let way = WhoAreYou::new(
             sig,
             peer_op_port,
             public_key_bytes,
-        };
+        );
 
         Ok(way)
     }

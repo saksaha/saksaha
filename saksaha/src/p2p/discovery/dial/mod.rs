@@ -1,16 +1,7 @@
 mod handler;
 mod routine;
 
-use crate::{
-    msg_err, msg_errd,
-    node::task_manager::{MsgKind, TaskManager},
-    p2p::{
-        address::AddressBook,
-        credential::Credential,
-        discovery::{whoareyou},
-        peer::peer_store::PeerStore,
-    },
-};
+use crate::{msg_err, msg_errd, node::task_manager::{MsgKind, TaskManager}, p2p::{address::address_book::AddressBook, credential::Credential, discovery::{whoareyou}, peer::peer_store::PeerStore}};
 use handler::Handler;
 use logger::log;
 use routine::Routine;

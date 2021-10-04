@@ -6,10 +6,7 @@ use std::{
 use tokio::sync::Mutex;
 
 use super::handler::Handler;
-use crate::p2p::{
-    address::AddressBook, credential::Credential,
-    discovery::dial::handler::HandleStatus, peer::peer_store::PeerStore,
-};
+use crate::p2p::{address::address_book::AddressBook, credential::Credential, discovery::dial::handler::HandleStatus, peer::peer_store::PeerStore};
 
 pub struct Routine {
     peer_store: Arc<PeerStore>,
