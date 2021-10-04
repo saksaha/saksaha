@@ -71,11 +71,13 @@ impl AddressBook {
                         Ok(a) => {
                             if let Some(ref f) = filter {
                                 if f(a) {
+                                    *curr_idx = idx;
                                     return Some((addr.clone(), i));
                                 } else {
                                     continue;
                                 }
                             } else {
+                                *curr_idx = idx;
                                 return Some((addr.clone(), i));
                             }
                         }
@@ -86,6 +88,7 @@ impl AddressBook {
             };
         }
 
+        *curr_idx = 0;
         None
     }
 
