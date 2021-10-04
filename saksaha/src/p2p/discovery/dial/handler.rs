@@ -52,7 +52,13 @@ impl Handler {
     }
 
     pub async fn run(&mut self) -> Result<HandleResult> {
-        let (addr, idx) = match self.address_book.next().await {
+        let address_book_len = self.address_book.len().await;
+        log!(DEBUG, "Address book len: {}\n", address_book_len);
+
+        let filter = Box::new(|| {
+
+        });
+        let (addr, idx) = match self.address_book.next(Some(filter)).await {
             Some(a) => a,
             None => {
                 log!(DEBUG, "Cannot acquire next address\n");
