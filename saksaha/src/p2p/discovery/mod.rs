@@ -52,8 +52,10 @@ impl Disc {
         let peer_store = self.peer_store.clone();
         let task_mng = self.task_mng.clone();
         let credential = self.credential.clone();
+        let address_book = self.address_book.clone();
 
         let listen = Listen::new(
+            address_book,
             self.disc_port,
             peer_op_port,
             peer_store,

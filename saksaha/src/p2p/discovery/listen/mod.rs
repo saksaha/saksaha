@@ -1,7 +1,15 @@
 mod handler;
 mod routine;
 
-use crate::{common::Result, msg_err, node::task_manager::{MsgKind, TaskManager}, p2p::{credential::Credential, peer::peer_store::PeerStore}};
+use crate::{
+    common::Result,
+    msg_err,
+    node::task_manager::{MsgKind, TaskManager},
+    p2p::{
+        address::AddressBook, credential::Credential,
+        peer::peer_store::PeerStore,
+    },
+};
 use handler::Handler;
 use logger::log;
 use routine::Routine;
@@ -9,6 +17,7 @@ use std::sync::Arc;
 use tokio::net::TcpListener;
 
 pub struct Listen {
+    address_book: Arc<AddressBook>,
     disc_port: Option<u16>,
     peer_op_port: u16,
     peer_store: Arc<PeerStore>,
@@ -18,6 +27,7 @@ pub struct Listen {
 
 impl Listen {
     pub fn new(
+        address_book: Arc<AddressBook>,
         disc_port: Option<u16>,
         peer_op_port: u16,
         peer_store: Arc<PeerStore>,
@@ -25,6 +35,7 @@ impl Listen {
         credential: Arc<Credential>,
     ) -> Listen {
         Listen {
+            address_book,
             disc_port,
             peer_op_port,
             peer_store,
@@ -45,9 +56,9 @@ impl Listen {
             match TcpListener::bind(local_addr).await {
                 Ok(listener) => match listener.local_addr() {
                     Ok(local_addr) => (listener, local_addr),
-                    Err(err) => return Err(err.into())
+                    Err(err) => return Err(err.into()),
                 },
-                Err(err) => return Err(err.into())
+                Err(err) => return Err(err.into()),
             };
 
         log!(
@@ -56,10 +67,12 @@ impl Listen {
             local_addr
         );
 
-        let routine =
-            Routine::new(self.peer_store.clone(), self.credential.clone());
-
         let peer_op_port = self.peer_op_port;
+        let routine = Routine::new(
+            self.address_book.clone(),
+            self.peer_store.clone(),
+            self.credential.clone(),
+        );
 
         tokio::spawn(async move {
             routine.run(tcp_listener, peer_op_port).await;

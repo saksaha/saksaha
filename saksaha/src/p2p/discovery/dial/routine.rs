@@ -74,10 +74,10 @@ impl Routine {
                         HandleStatus::AddressNotFound => {
                             break;
                         }
-                        HandleStatus::ConnectionFailed(err) => {
+                        HandleStatus::ConnectionFail(err) => {
                             log!(
                                 DEBUG,
-                                "Disc dial connection fail, err: {}",
+                                "Disc dial connection fail, err: {}\n",
                                 err
                             );
 
@@ -89,23 +89,30 @@ impl Routine {
                         HandleStatus::Success => {
                             continue;
                         }
-                        HandleStatus::WhoAreYouInitiateFailed(err) => {
+                        HandleStatus::WhoAreYouInitiateFail(err) => {
                             log!(
                                 DEBUG,
-                                "disc dial who are you \
-                                initiate failed, err: {}",
+                                "Disc dial who are you \
+                                initiate failed, err: {}\n",
                                 err
                             );
                             continue;
                         }
-                        HandleStatus::WhoAreYouAckReceiveFailed(err) => {
+                        HandleStatus::WhoAreYouAckReceiveFail(err) => {
                             log!(
                                 DEBUG,
                                 "Disc dial who are you \
-                                ack receive failed, err: {}",
+                                ack receive failed, err: {}\n",
                                 err
                             );
                             continue;
+                        }
+                        HandleStatus::PeerUpdateFail(err) => {
+                            log!(
+                                DEBUG,
+                                "Disc dial peer update fail, err: {}\n",
+                                err
+                            );
                         }
                     }
                 } else {

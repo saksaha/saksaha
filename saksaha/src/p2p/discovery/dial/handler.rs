@@ -27,11 +27,13 @@ pub enum HandleStatus<E> {
 
     LocalAddrIdentical,
 
-    ConnectionFailed(E),
+    ConnectionFail(E),
 
-    WhoAreYouInitiateFailed(E),
+    WhoAreYouInitiateFail(E),
 
-    WhoAreYouAckReceiveFailed(E),
+    WhoAreYouAckReceiveFail(E),
+
+    PeerUpdateFail(E),
 
     Success,
 }
@@ -106,35 +108,41 @@ impl Handler {
             }
         };
 
-        let stream = match TcpStream::connect(addr.endpoint.to_owned()).await {
-            Ok(s) => {
-                log!(
-                    DEBUG,
-                    "Successfully connected to endpoint, {}\n",
-                    addr.endpoint
-                );
-                s
-            }
-            Err(err) => return HandleStatus::ConnectionFailed(err.into()),
-        };
+        let mut stream =
+            match TcpStream::connect(addr.endpoint.to_owned()).await {
+                Ok(s) => {
+                    log!(
+                        DEBUG,
+                        "Successfully connected to endpoint, {}\n",
+                        addr.endpoint
+                    );
+                    s
+                }
+                Err(err) => return HandleStatus::ConnectionFail(err.into()),
+            };
 
-        let stream = match self.initiate_who_are_you(stream).await {
-            Ok(s) => s,
-            Err(err) => return HandleStatus::WhoAreYouInitiateFailed(err),
-        };
-
-        match self.receive_who_are_you_ack(stream, addr).await {
+        match self.initiate_who_are_you(&mut stream).await {
             Ok(_) => (),
-            Err(err) => return HandleStatus::WhoAreYouAckReceiveFailed(err),
+            Err(err) => return HandleStatus::WhoAreYouInitiateFail(err),
+        };
+
+        let way_ack = match self.receive_who_are_you_ack(stream).await {
+            Ok(w) => w,
+            Err(err) => return HandleStatus::WhoAreYouAckReceiveFail(err),
+        };
+
+        match self.handle_succeed_who_are_you(way_ack, addr).await {
+            Ok(_) => (),
+            Err(err) => return HandleStatus::PeerUpdateFail(err),
         };
 
         HandleStatus::Success
     }
 
     pub async fn initiate_who_are_you(
-        &self,
-        mut stream: TcpStream,
-    ) -> Result<TcpStream> {
+        &mut self,
+        stream: &mut TcpStream,
+    ) -> Result<()> {
         let secret_key = &self.credential.secret_key;
         let signing_key = SigningKey::from(secret_key);
         let sig: Signature = signing_key.sign(whoareyou::MESSAGE);
@@ -153,7 +161,7 @@ impl Handler {
         };
 
         match stream.write_all(&buf).await {
-            Ok(_) => Ok(stream),
+            Ok(_) => Ok(()),
             Err(err) => {
                 return err!(
                     "Error sending the whoAreYou buffer, err: {}",
@@ -166,8 +174,7 @@ impl Handler {
     pub async fn receive_who_are_you_ack(
         &self,
         mut stream: TcpStream,
-        mut addr: MutexGuard<'_, Address>,
-    ) -> Result<()> {
+    ) -> Result<WhoAreYouAck> {
         let way_ack = match WhoAreYouAck::parse(&mut stream).await {
             Ok(w) => w,
             Err(err) => {
@@ -192,6 +199,14 @@ impl Handler {
             }
         };
 
+        Ok(way_ack)
+    }
+
+    pub async fn handle_succeed_who_are_you(
+        &self,
+        way_ack: WhoAreYouAck,
+        mut addr: MutexGuard<'_, Address>,
+    ) -> Result<()> {
         let mut peer = self.peer.lock().await;
         peer.status = PeerStatus::Discovered;
         peer.endpoint = addr.endpoint.to_owned();
