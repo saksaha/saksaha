@@ -1,13 +1,17 @@
+pub mod status;
+
 use crate::{common::Result, err};
 use logger::log;
 use std::sync::Arc;
-use tokio::sync::Mutex;
+use tokio::sync::{Mutex, MutexGuard};
+use status::Status;
 
 #[derive(Debug)]
 pub struct Address {
     pub peer_id: String,
     pub endpoint: String,
     pub fail_count: usize,
+    pub status: Status<usize>,
 }
 
 impl Address {
@@ -32,6 +36,7 @@ impl Address {
             peer_id,
             endpoint,
             fail_count: 0,
+            status: Status::UnInitialized,
         };
 
         Ok(addr)
@@ -88,7 +93,9 @@ impl AddressBook {
 
     pub async fn next(
         &self,
-        filter: Option<Box<Fn()>>,
+        filter: Option<
+            Arc<(dyn Fn(MutexGuard<Address>) -> bool + Sync + Send)>,
+        >,
     ) -> Option<(Arc<Mutex<Address>>, usize)> {
         let addrs = self.addrs.lock().await;
         let mut curr_idx = self.curr_idx.lock().await;
@@ -97,18 +104,24 @@ impl AddressBook {
         for i in *curr_idx..(*curr_idx + len) {
             let idx = i % len;
 
-            let addr = match addrs.get(idx) {
+            match addrs.get(idx) {
                 Some(addr) => {
-                    if let Some(ref f) = filter {
-                        f();
-                        Some(addr)
-                    } else {
-                        Some(addr)
-                    }
-                },
-                None => {
-                    None
+                    match addr.try_lock() {
+                        Ok(a) => {
+                            if let Some(ref f) = filter {
+                                if f(a) {
+                                    return Some((addr.clone(), i));
+                                } else {
+                                    continue;
+                                }
+                            } else {
+                                return Some((addr.clone(), i));
+                            }
+                        }
+                        Err(_) => continue,
+                    };
                 }
+                None => continue,
             };
         }
 
