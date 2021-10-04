@@ -51,6 +51,7 @@ impl Dial {
 
     pub async fn start(&self, my_disc_port: u16) {
         let my_disc_endpoint = format!("127.0.0.1:{}", my_disc_port);
+
         let mut dial_loop_rx = self.dial_loop_rx.lock().await;
 
         loop {
