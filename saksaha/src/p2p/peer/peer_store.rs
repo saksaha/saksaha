@@ -1,4 +1,4 @@
-use super::{Peer, PeerStatus};
+use super::{Peer, Status};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -14,7 +14,7 @@ impl PeerStore {
 
         for _ in 0..capacity {
             let peer =
-                Peer::new("".into(), "".into(), PeerStatus::NotInitialized);
+                Peer::new("".into(), "".into(), Status::NotInitialized);
 
             slots.push(Arc::new(Mutex::new(peer)));
         }

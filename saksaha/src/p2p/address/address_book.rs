@@ -1,12 +1,15 @@
-use logger::log;
+use super::Address;
 use crate::{common::Result, err};
+use logger::log;
 use std::sync::Arc;
 use tokio::sync::{Mutex, MutexGuard};
-use super::Address;
+
+type MutexedAddress = Arc<Mutex<Address>>;
 
 pub struct AddressBook {
-    pub addrs: Arc<Mutex<Vec<Arc<Mutex<Address>>>>>,
+    pub addrs: Arc<Mutex<Vec<MutexedAddress>>>,
     pub curr_idx: Mutex<usize>,
+    pub capacity: usize,
 }
 
 impl AddressBook {
@@ -37,7 +40,8 @@ impl AddressBook {
                     addr.peer_id,
                     addr.endpoint
                 );
-                addrs.push(Arc::new(Mutex::new(addr)));
+                let addr = Arc::new(Mutex::new(addr));
+                addrs.push(addr);
                 count += 1;
             }
         }
@@ -48,15 +52,14 @@ impl AddressBook {
         let book = AddressBook {
             addrs: Arc::new(Mutex::new(addrs)),
             curr_idx: Mutex::new(0),
+            capacity: 100,
         };
         book
     }
 
     pub async fn next(
         &self,
-        filter: Option<
-            &(dyn Fn(MutexGuard<Address>) -> bool + Sync + Send),
-        >,
+        filter: Option<&(dyn Fn(MutexGuard<Address>) -> bool + Sync + Send)>,
     ) -> Option<(Arc<Mutex<Address>>, usize)> {
         let addrs = self.addrs.lock().await;
         let mut curr_idx = self.curr_idx.lock().await;
@@ -67,22 +70,22 @@ impl AddressBook {
 
             match addrs.get(idx) {
                 Some(addr) => {
-                    match addr.try_lock() {
-                        Ok(a) => {
-                            if let Some(ref f) = filter {
-                                if f(a) {
-                                    *curr_idx = idx;
-                                    return Some((addr.clone(), i));
-                                } else {
-                                    continue;
-                                }
-                            } else {
-                                *curr_idx = idx;
-                                return Some((addr.clone(), i));
-                            }
-                        }
+                    let a = match addr.try_lock() {
+                        Ok(a) => a,
                         Err(_) => continue,
                     };
+
+                    if let Some(ref f) = filter {
+                        if f(a) {
+                            *curr_idx = idx;
+                            return Some((addr.clone(), i));
+                        } else {
+                            continue;
+                        }
+                    } else {
+                        *curr_idx = idx;
+                        return Some((addr.clone(), i));
+                    }
                 }
                 None => continue,
             };
@@ -107,5 +110,19 @@ impl AddressBook {
     pub async fn len(&self) -> usize {
         let addrs = self.addrs.lock().await;
         addrs.len()
+    }
+
+    pub async fn reserve(&self) -> Option<Arc<Mutex<Address>>> {
+        let mut addrs = self.addrs.lock().await;
+
+        if addrs.len() < self.capacity {
+            let addr = Address::new_empty();
+            let addr = Arc::new(Mutex::new(addr));
+
+            addrs.push(addr.clone());
+            return Some(addr);
+        }
+
+        None
     }
 }

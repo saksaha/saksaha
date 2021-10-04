@@ -1,4 +1,3 @@
-pub mod status;
 mod bootstrap;
 pub mod address_book;
 
@@ -6,7 +5,23 @@ use crate::{common::Result, err};
 use logger::log;
 use std::sync::Arc;
 use tokio::sync::{Mutex, MutexGuard};
-use status::Status;
+
+#[derive(Debug, PartialEq)]
+pub enum Status<C> {
+    // Empty value, used for reserving
+    Empty,
+
+    // When provided by bootstrapping
+    NotInitialized,
+
+    DiscoverySucceeded,
+
+    DiscoveryFailed(C),
+
+    HandshakeSucceeded,
+
+    HandshakeFailed(C),
+}
 
 #[derive(Debug)]
 pub struct Address {
@@ -18,13 +33,21 @@ pub struct Address {
 
 impl Address {
     pub fn new(peer_id: String, endpoint: String) -> Address {
-        let addr = Address {
+        Address {
             peer_id,
             endpoint,
             fail_count: 0,
             status: Status::NotInitialized,
-        };
-        addr
+        }
+    }
+
+    pub fn new_empty() -> Address {
+        Address {
+            peer_id: "".into(),
+            endpoint: "".into(),
+            fail_count: 0,
+            status: Status::Empty,
+        }
     }
 
     pub fn parse(url: String) -> Result<Address> {
@@ -44,12 +67,7 @@ impl Address {
             }
         };
 
-        let addr = Address {
-            peer_id,
-            endpoint,
-            fail_count: 0,
-            status: Status::NotInitialized,
-        };
+        let addr = Address::new(peer_id, endpoint);
 
         Ok(addr)
     }

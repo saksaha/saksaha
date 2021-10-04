@@ -1,5 +1,5 @@
 use super::handler::Handler;
-use crate::p2p::{address::address_book::AddressBook, credential::Credential, discovery::listen::handler::HandleStatus, peer::peer_store::PeerStore};
+use crate::p2p::{address::{Address, address_book::AddressBook}, credential::Credential, discovery::listen::handler::HandleStatus, peer::peer_store::PeerStore};
 use logger::log;
 use std::{sync::Arc, time::Duration};
 use tokio::net::TcpListener;
@@ -33,15 +33,26 @@ impl Routine {
                 None => {
                     log!(DEBUG, "No available peer\n");
 
-                    tokio::time::sleep(Duration::from_millis(2000));
+                    tokio::time::sleep(Duration::from_millis(2000)).await;
                     continue;
                 }
             };
 
+            let addr = match self.address_book.reserve().await {
+                Some(a) => a,
+                None => {
+                    log!(DEBUG, "No available address slot\n");
+
+                    tokio::time::sleep(Duration::from_millis(2000)).await;
+                    continue;
+                }
+            };
+
+            // Address::new();
+
             // let addr = self.address_book.next();
 
-
-            let (stream, addr) = match tcp_listener.accept().await {
+            let (stream, peer_addr) = match tcp_listener.accept().await {
                 Ok(res) => {
                     log!(DEBUG, "Accepted incoming request, addr: {}\n", res.1);
                     res
