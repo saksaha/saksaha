@@ -1,11 +1,14 @@
 use std::str;
 
+const TAG_LEN: usize = 24;
+const TAG_CONTENT_LEN: usize = 22;
+
 pub fn make_fd(f: &str, ln: u32) -> String {
     let s = format!("{}:{}", f, ln);
     let s = s.as_bytes();
-    let mut fd: [u8; 18] = [b'.'; 18];
+    let mut fd: [u8; TAG_LEN] = [b'.'; TAG_LEN];
 
-    for i in 0..16 {
+    for i in 0..TAG_CONTENT_LEN {
         fd[fd.len() - 1 - i] = s[s.len() - 1 - i];
     }
 
