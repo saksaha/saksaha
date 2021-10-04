@@ -44,7 +44,8 @@ impl PeerOp {
     fn make_components(&self) -> Result<Components> {
         let listen =
             Listen::new(self.dial_wakeup_tx.clone(), self.task_mng.clone());
-        let dial = Dial::new(self.task_mng.clone(), self.dial_wakeup_tx.clone());
+        let dial =
+            Dial::new(self.task_mng.clone(), self.dial_wakeup_tx.clone());
 
         let components = Components { dial, listen };
 
