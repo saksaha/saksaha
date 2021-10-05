@@ -119,22 +119,21 @@ impl Handler {
         &self,
         way: WhoAreYou,
     ) -> Result<()> {
-        let endpoint = match self.stream.peer_addr() {
-            Ok(a) => {
-                let endpoint = format!("{}:{}", a.ip(), a.port());
-                endpoint
-            }
+        let peer_addr = match self.stream.peer_addr() {
+            Ok(a) => a,
             Err(err) => return Err(err.into()),
         };
 
         let addr = self.addr.clone();
         let mut addr = addr.lock().await;
-        let mut peer = self.peer.lock().await;
-
-        peer.status = PeerStatus::DiscoverySuccess;
-        peer.endpoint = endpoint;
-        peer.peer_id = way.peer_id;
         addr.status = AddrStatus::DiscoverySuccess;
+
+        let mut peer = self.peer.lock().await;
+        peer.status = PeerStatus::DiscoverySuccess;
+        peer.ip = peer_addr.ip().to_string();
+        peer.disc_port = peer_addr.port();
+        peer.peer_op_port = way.peer_op_port;
+        peer.peer_id = way.peer_id;
 
         log!(DEBUG, "Successfully handled disc listen, peer: {:?}\n", peer);
 

@@ -1,7 +1,14 @@
 mod handler;
 mod routine;
 
-use crate::{msg_err, msg_errd, node::task_manager::{MsgKind, TaskManager}, p2p::{address::address_book::AddressBook, credential::Credential, discovery::{whoareyou}, peer::peer_store::PeerStore}};
+use crate::{
+    msg_err, msg_errd,
+    node::task_manager::{MsgKind, TaskManager},
+    p2p::{
+        address::address_book::AddressBook, credential::Credential,
+        discovery::whoareyou, peer::peer_store::PeerStore,
+    },
+};
 use handler::Handler;
 use logger::log;
 use routine::Routine;
@@ -9,7 +16,10 @@ use std::{
     sync::Arc,
     time::{Duration, SystemTime},
 };
-use tokio::sync::{Mutex, mpsc::{Receiver, Sender}};
+use tokio::sync::{
+    mpsc::{Receiver, Sender},
+    Mutex,
+};
 
 pub struct Dial {
     pub address_book: Arc<AddressBook>,
@@ -68,7 +78,8 @@ impl Dial {
                     }
                     None => {
                         let msg = msg_errd!(
-                            "Cannot receive dial wakeup msg, is channel closed?",
+                            "Cannot receive dial wakeup msg, \
+                            is channel closed?",
                         );
 
                         task_mng.send(msg).await;

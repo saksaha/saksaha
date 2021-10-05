@@ -101,9 +101,10 @@ impl Handler {
             };
 
         let addr = addr.lock().await;
+        let endpoint = format!("{}:{}", addr.ip, addr.disc_port);
 
-        if addr.endpoint == self.my_disc_endpoint {
-            match self.handle_my_endpoint(addr.endpoint.to_owned(), idx).await {
+        if endpoint == self.my_disc_endpoint {
+            match self.handle_my_endpoint(endpoint.to_owned(), idx).await {
                 Ok(_) => return HandleStatus::LocalAddrIdentical,
                 Err(err) => {
                     log!(DEBUG, "Error handling my endpoint, err: {}", err);
@@ -112,16 +113,20 @@ impl Handler {
         };
 
         let mut stream =
-            match TcpStream::connect(addr.endpoint.to_owned()).await {
+            match TcpStream::connect(endpoint.to_owned()).await {
                 Ok(s) => {
                     log!(
                         DEBUG,
                         "Successfully connected to endpoint, {}\n",
-                        addr.endpoint
+                        endpoint
                     );
                     s
                 }
-                Err(err) => return HandleStatus::ConnectionFail(err.into()),
+                Err(err) => {
+                    log!(DEBUG, "Cannot disc dial to endpoint, {}\n", endpoint);
+
+                    return HandleStatus::ConnectionFail(err.into());
+                },
             };
 
         match self.initiate_who_are_you(&mut stream).await {
@@ -210,11 +215,14 @@ impl Handler {
         way_ack: WhoAreYouAck,
         mut addr: MutexGuard<'_, Address>,
     ) -> Result<()> {
+        addr.status = Status::DiscoverySuccess;
+
         let mut peer = self.peer.lock().await;
         peer.status = peer::Status::DiscoverySuccess;
-        peer.endpoint = addr.endpoint.to_owned();
         peer.peer_id = way_ack.way.peer_id;
-        addr.status = Status::DiscoverySuccess;
+        peer.ip = addr.ip.to_owned();
+        peer.disc_port = addr.disc_port;
+        peer.peer_op_port = way_ack.way.peer_op_port;
 
         log!(DEBUG, "Successfully handled disc dial peer: {:?}\n", peer);
 
