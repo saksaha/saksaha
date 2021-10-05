@@ -10,13 +10,13 @@ type MutexedAddress = Arc<Mutex<Address>>;
 pub struct Filter;
 
 impl Filter {
-    pub fn get_not_initialized_addr(addr: MutexGuard<Address>) -> bool {
-        addr.status == Status::NotInitialized
+    pub fn not_discovered(addr: MutexGuard<Address>) -> bool {
+        addr.status == Status::NotDiscovered
     }
 }
 
 pub struct AddressBook {
-    pub addrs: Arc<Mutex<Vec<MutexedAddress>>>,
+    addrs: Arc<Mutex<Vec<MutexedAddress>>>,
     pub curr_idx: Mutex<usize>,
     pub capacity: usize,
 }

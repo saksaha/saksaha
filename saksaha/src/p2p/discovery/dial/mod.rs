@@ -9,36 +9,36 @@ use std::{
     sync::Arc,
     time::{Duration, SystemTime},
 };
-use tokio::sync::{mpsc::Receiver, Mutex};
+use tokio::sync::{Mutex, mpsc::{Receiver, Sender}};
 
 pub struct Dial {
     pub address_book: Arc<AddressBook>,
     pub peer_store: Arc<PeerStore>,
-    disc_port: Option<u16>,
     peer_op_port: u16,
     task_mng: Arc<TaskManager>,
     credential: Arc<Credential>,
-    dial_wakeup_rx: Arc<Mutex<Receiver<usize>>>,
+    disc_wakeup_rx: Arc<Mutex<Receiver<usize>>>,
+    peer_op_wakeup_tx: Arc<Sender<usize>>,
 }
 
 impl Dial {
     pub fn new(
         address_book: Arc<AddressBook>,
         peer_store: Arc<PeerStore>,
-        disc_port: Option<u16>,
         peer_op_port: u16,
         task_mng: Arc<TaskManager>,
         credential: Arc<Credential>,
-        dial_wakeup_rx: Arc<Mutex<Receiver<usize>>>,
+        disc_wakeup_rx: Arc<Mutex<Receiver<usize>>>,
+        peer_op_wakeup_tx: Arc<Sender<usize>>,
     ) -> Dial {
         Dial {
             address_book,
             peer_store,
-            disc_port,
             peer_op_port,
             task_mng,
             credential,
-            dial_wakeup_rx,
+            disc_wakeup_rx,
+            peer_op_wakeup_tx,
         }
     }
 
@@ -51,17 +51,18 @@ impl Dial {
             self.address_book.clone(),
             self.peer_op_port,
             my_disc_port,
+            self.peer_op_wakeup_tx.clone(),
         ));
 
         let routine_clone = routine.clone();
         routine_clone.run();
 
         let routine_clone = routine.clone();
-        let dial_wakeup_rx = self.dial_wakeup_rx.clone();
+        let disc_wakeup_rx = self.disc_wakeup_rx.clone();
         tokio::spawn(async move {
-            let mut dial_wakeup_rx = dial_wakeup_rx.lock().await;
+            let mut disc_wakeup_rx = disc_wakeup_rx.lock().await;
 
-            match dial_wakeup_rx.recv().await {
+            match disc_wakeup_rx.recv().await {
                 Some(_) => {
                     routine_clone.wakeup().await;
                 }

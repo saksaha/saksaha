@@ -15,7 +15,7 @@ use crate::{
 use dial::Dial;
 pub use status::Status;
 use std::sync::Arc;
-use tokio::sync::{mpsc::Receiver, Mutex};
+use tokio::sync::{Mutex, mpsc::{Receiver, Sender}};
 
 struct Components {
     listen: Listen,
@@ -28,7 +28,8 @@ pub struct Disc {
     peer_store: Arc<PeerStore>,
     task_mng: Arc<TaskManager>,
     credential: Arc<Credential>,
-    dial_wakeup_rx: Arc<Mutex<Receiver<usize>>>,
+    disc_wakeup_rx: Arc<Mutex<Receiver<usize>>>,
+    peer_op_wakeup_tx: Arc<Sender<usize>>,
 }
 
 impl Disc {
@@ -38,7 +39,8 @@ impl Disc {
         peer_store: Arc<PeerStore>,
         task_mng: Arc<TaskManager>,
         credential: Arc<Credential>,
-        dial_wakeup_rx: Arc<Mutex<Receiver<usize>>>,
+        disc_wakeup_rx: Arc<Mutex<Receiver<usize>>>,
+        peer_op_wakeup_tx: Arc<Sender<usize>>,
     ) -> Disc {
         let address_book = Arc::new(AddressBook::new(bootstrap_urls));
 
@@ -48,7 +50,8 @@ impl Disc {
             peer_store,
             task_mng,
             credential,
-            dial_wakeup_rx,
+            disc_wakeup_rx,
+            peer_op_wakeup_tx,
         }
     }
 
@@ -75,11 +78,11 @@ impl Disc {
         let dial = Dial::new(
             address_book,
             peer_store,
-            self.disc_port,
             peer_op_port,
             task_mng,
             credential,
-            self.dial_wakeup_rx.clone(),
+            self.disc_wakeup_rx.clone(),
+            self.peer_op_wakeup_tx.clone(),
         );
 
         let components = Components { listen, dial };

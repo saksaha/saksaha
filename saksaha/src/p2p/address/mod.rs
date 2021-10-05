@@ -11,8 +11,8 @@ pub enum Status<C> {
     // Empty value, used for reserving
     Empty,
 
-    // When provided by bootstrapping
-    NotInitialized,
+    // Not discovered addresses need to pass "discovery", a.k.a "Who are you"
+    NotDiscovered,
 
     DiscoverySucceeded,
 
@@ -29,7 +29,6 @@ pub struct Address {
     pub endpoint: String,
     pub fail_count: usize,
     pub status: Status<usize>,
-    pub is_locked: bool,
 }
 
 impl Address {
@@ -38,8 +37,7 @@ impl Address {
             peer_id,
             endpoint,
             fail_count: 0,
-            status: Status::NotInitialized,
-            is_locked: false,
+            status: Status::NotDiscovered,
         }
     }
 
@@ -49,7 +47,6 @@ impl Address {
             endpoint: "".into(),
             fail_count: 0,
             status: Status::Empty,
-            is_locked: false,
         }
     }
 

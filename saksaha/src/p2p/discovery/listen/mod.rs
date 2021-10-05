@@ -74,9 +74,7 @@ impl Listen {
             self.credential.clone(),
         );
 
-        tokio::spawn(async move {
-            routine.run(tcp_listener, peer_op_port).await;
-        });
+        routine.run(tcp_listener, peer_op_port);
 
         Ok(local_addr.port())
     }

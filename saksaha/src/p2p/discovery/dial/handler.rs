@@ -1,5 +1,18 @@
 use super::whoareyou::WhoAreYou;
-use crate::{common::{Error, Result}, crypto::Crypto, err, p2p::{address::{Address, Status, address_book::{AddressBook, Filter}}, credential::Credential, discovery::whoareyou::{self, WhoAreYouAck}, peer::{self, Peer}}};
+use crate::{
+    common::{Error, Result},
+    crypto::Crypto,
+    err,
+    p2p::{
+        address::{
+            address_book::{AddressBook, Filter},
+            Address, Status,
+        },
+        credential::Credential,
+        discovery::whoareyou::{self, WhoAreYouAck},
+        peer::{self, Peer},
+    },
+};
 use k256::ecdsa::{
     signature::{Signer, Verifier},
     Signature, SigningKey,
@@ -9,7 +22,7 @@ use std::sync::Arc;
 use tokio::{
     io::AsyncWriteExt,
     net::TcpStream,
-    sync::{Mutex, MutexGuard},
+    sync::{mpsc::Sender, Mutex, MutexGuard},
 };
 
 pub enum HandleStatus<E> {
@@ -34,6 +47,7 @@ pub struct Handler {
     peer_op_port: u16,
     address_book: Arc<AddressBook>,
     my_disc_endpoint: String,
+    peer_op_wakeup_tx: Arc<Sender<usize>>,
 }
 
 impl Handler {
@@ -43,6 +57,7 @@ impl Handler {
         peer_op_port: u16,
         address_book: Arc<AddressBook>,
         my_disc_endpoint: String,
+        peer_op_wakeup_tx: Arc<Sender<usize>>,
     ) -> Handler {
         Handler {
             peer,
@@ -50,6 +65,7 @@ impl Handler {
             peer_op_port,
             address_book,
             my_disc_endpoint,
+            peer_op_wakeup_tx,
         }
     }
 
@@ -74,18 +90,15 @@ impl Handler {
 
         log!(DEBUG, "Address book len: {}\n", address_book_len);
 
-        let (addr, idx) = match self
-            .address_book
-            .next(&Filter::get_not_initialized_addr)
-            .await
-        {
-            Some(a) => a,
-            None => {
-                log!(DEBUG, "Cannot acquire next address\n");
+        let (addr, idx) =
+            match self.address_book.next(&Filter::not_discovered).await {
+                Some(a) => a,
+                None => {
+                    log!(DEBUG, "Cannot acquire next address\n");
 
-                return HandleStatus::NoAvailableAddress;
-            }
-        };
+                    return HandleStatus::NoAvailableAddress;
+                }
+            };
 
         let addr = addr.lock().await;
 
@@ -203,12 +216,25 @@ impl Handler {
         peer.peer_id = way_ack.way.peer_id;
         addr.status = Status::HandshakeSucceeded;
 
-        log!(DEBUG, "Successfully discovered a peer: {:?}\n", peer);
+        log!(DEBUG, "Successfully handled disc dial peer: {:?}\n", peer);
 
-        tokio::spawn(async move {
-            println!("Start synchroize");
+        let peer_op_wakeup_tx = self.peer_op_wakeup_tx.clone();
+
+        let wakeup = tokio::spawn(async move {
+            match peer_op_wakeup_tx.send(0).await {
+                Ok(_) => Ok(()),
+                Err(err) => {
+                    return err!(
+                        "Error sending peer op wakeup msg, err: {}",
+                        err
+                    );
+                }
+            }
         });
 
-        Ok(())
+        match wakeup.await {
+            Ok(_) => Ok(()),
+            Err(err) => return Err(err.into()),
+        }
     }
 }
