@@ -88,12 +88,13 @@ impl Host {
         };
 
         let peer_store = Arc::new(PeerStore::new(10));
-        let (dial_wakeup_tx, dial_wakeup_rx) = mpsc::channel::<usize>(5);
+        let (disc_wakeup_tx, disc_wakeup_rx) = mpsc::channel::<usize>(5);
+        let (peer_op_wakeup_tx, peer_op_wakeup_rx) = mpsc::channel::<usize>(5);
         let task_mng = self.task_mng.clone();
 
         let peer_op = PeerOp::new(
             peer_store.clone(),
-            Arc::new(dial_wakeup_tx),
+            Arc::new(disc_wakeup_tx),
             rpc_port,
             task_mng,
         );
@@ -104,7 +105,8 @@ impl Host {
             peer_store.clone(),
             self.task_mng.clone(),
             Arc::new(credential),
-            Arc::new(Mutex::new(dial_wakeup_rx)),
+            Arc::new(Mutex::new(disc_wakeup_rx)),
+            Arc::new(peer_op_wakeup_tx),
         );
 
         let components = Components { peer_op, disc };

@@ -2,10 +2,10 @@ use crate::{
     common::{Error, Result},
     err,
     p2p::{
-        address::{address_book::AddressBook, Address},
+        address::{address_book::AddressBook, Address, Status as AddrStatus},
         credential::Credential,
         discovery::whoareyou::{self, WhoAreYou, WhoAreYouAck},
-        peer::{Peer},
+        peer::{Peer, Status as PeerStatus},
     },
 };
 use k256::ecdsa::{signature::Signer, Signature, SigningKey};
@@ -20,10 +20,13 @@ pub enum HandleStatus<E> {
 
     PeerUpdateFail(E),
 
+    JoinError(E),
+
     Success,
 }
 
 pub struct Handler {
+    addr: Arc<Mutex<Address>>,
     address_book: Arc<AddressBook>,
     stream: TcpStream,
     peer: Arc<Mutex<Peer>>,
@@ -33,6 +36,7 @@ pub struct Handler {
 
 impl Handler {
     pub fn new(
+        addr: Arc<Mutex<Address>>,
         address_book: Arc<AddressBook>,
         stream: TcpStream,
         peer: Arc<Mutex<Peer>>,
@@ -40,6 +44,7 @@ impl Handler {
         peer_op_port: u16,
     ) -> Handler {
         Handler {
+            addr,
             address_book,
             stream,
             peer,
@@ -122,20 +127,16 @@ impl Handler {
             Err(err) => return Err(err.into()),
         };
 
-        // let addr = Address::new_(way.peer_id, endpoint);
-        // self.address_book.add(addr);
+        let addr = self.addr.clone();
+        let mut addr = addr.lock().await;
+        let mut peer = self.peer.lock().await;
 
-        // let mut peer = self.peer.lock().await;
-        // peer.status = PeerStatus::Discovered;
-        // peer.endpoint = addr.endpoint.to_owned();
-        // peer.peer_id = way_ack.way.get_peer_id();
-        // addr.status = Status::HandshakeSucceeded;
+        peer.status = PeerStatus::Discovered;
+        peer.endpoint = endpoint;
+        peer.peer_id = way.peer_id;
+        addr.status = AddrStatus::HandshakeSucceeded;
 
-        // log!(DEBUG, "Successfully discovered a peer: {:?}", peer);
-
-        // tokio::spawn(async move {
-        //     println!("Start synchroize");
-        // });
+        log!(DEBUG, "Successfully handled disc listen, peer: {:?}\n", peer);
 
         Ok(())
     }

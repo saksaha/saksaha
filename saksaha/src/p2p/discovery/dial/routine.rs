@@ -3,7 +3,7 @@ use std::{
     sync::Arc,
     time::{Duration, SystemTime},
 };
-use tokio::sync::Mutex;
+use tokio::sync::{Mutex, mpsc::Sender};
 
 use super::handler::Handler;
 use crate::p2p::{address::address_book::AddressBook, credential::Credential, discovery::dial::handler::HandleStatus, peer::peer_store::PeerStore};
@@ -13,9 +13,9 @@ pub struct Routine {
     credential: Arc<Credential>,
     address_book: Arc<AddressBook>,
     peer_op_port: u16,
-    disc_port: u16,
     is_running: Arc<Mutex<bool>>,
     my_disc_endpoint: String,
+    peer_op_wakeup_tx: Arc<Sender<usize>>,
 }
 
 impl Routine {
@@ -25,6 +25,7 @@ impl Routine {
         address_book: Arc<AddressBook>,
         peer_op_port: u16,
         disc_port: u16,
+        peer_op_wakeup_tx: Arc<Sender<usize>>,
     ) -> Routine {
         let is_running = Arc::new(Mutex::new(false));
         let my_disc_endpoint = format!("127.0.0.1:{}", disc_port);
@@ -34,9 +35,9 @@ impl Routine {
             credential,
             address_book,
             peer_op_port,
-            disc_port,
             is_running,
             my_disc_endpoint,
+            peer_op_wakeup_tx,
         }
     }
 
@@ -49,6 +50,7 @@ impl Routine {
         let is_running = self.is_running.clone();
         let peer_op_port = self.peer_op_port;
         let my_disc_endpoint = self.my_disc_endpoint.to_owned();
+        let peer_op_wake_tx = self.peer_op_wakeup_tx.clone();
 
         tokio::spawn(async move {
             let mut is_running_lock = is_running.lock().await;
@@ -65,6 +67,7 @@ impl Routine {
                         peer_op_port,
                         address_book.clone(),
                         my_disc_endpoint.to_owned(),
+                        peer_op_wake_tx.clone(),
                     );
 
                     match handler.run().await {
