@@ -32,6 +32,7 @@ pub struct Address {
     pub disc_port: u16,
     pub fail_count: usize,
     pub status: Status<Error>,
+    pub is_busy: bool,
 }
 
 impl Address {
@@ -41,6 +42,7 @@ impl Address {
             ip,
             disc_port,
             fail_count: 0,
+            is_busy: false,
             status: Status::NotDiscovered,
         }
     }
@@ -51,6 +53,7 @@ impl Address {
             ip: "".into(),
             disc_port: 0,
             fail_count: 0,
+            is_busy: false,
             status: Status::Empty,
         }
     }

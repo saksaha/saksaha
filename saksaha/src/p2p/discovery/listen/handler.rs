@@ -126,6 +126,7 @@ impl Handler {
 
         let addr = self.addr.clone();
         let mut addr = addr.lock().await;
+        // addr.ip =
         addr.status = AddrStatus::DiscoverySuccess;
 
         let mut peer = self.peer.lock().await;

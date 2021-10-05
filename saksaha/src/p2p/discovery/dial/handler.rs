@@ -222,6 +222,7 @@ impl Handler {
         peer.peer_id = way_ack.way.peer_id;
         peer.ip = addr.ip.to_owned();
         peer.disc_port = addr.disc_port;
+        peer.pk_bytes = way_ack.way.public_key_bytes;
         peer.peer_op_port = way_ack.way.peer_op_port;
 
         log!(DEBUG, "Successfully handled disc dial peer: {:?}\n", peer);

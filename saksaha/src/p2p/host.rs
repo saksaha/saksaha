@@ -81,7 +81,7 @@ impl Host {
             self.secret.to_owned(),
             self.public_key.to_owned(),
         ) {
-            Ok(sk) => sk,
+            Ok(c) => Arc::new(c),
             Err(err) => {
                 return Err(err);
             }
@@ -98,6 +98,7 @@ impl Host {
             rpc_port,
             task_mng,
             Arc::new(Mutex::new(peer_op_wakeup_rx)),
+            credential.clone(),
         );
 
         let disc = Disc::new(
@@ -105,7 +106,7 @@ impl Host {
             self.bootstrap_peers.to_owned(),
             peer_store.clone(),
             self.task_mng.clone(),
-            Arc::new(credential),
+            credential.clone(),
             Arc::new(Mutex::new(disc_wakeup_rx)),
             Arc::new(peer_op_wakeup_tx),
         );

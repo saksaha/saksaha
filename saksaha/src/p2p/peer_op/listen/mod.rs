@@ -1,24 +1,23 @@
 use std::sync::Arc;
 
-use crate::{
-    common::{Error, Result},
-    err, msg_err,
-    node::task_manager::{TaskManager},
-};
+use crate::{common::{Error, Result}, err, msg_err, node::task_manager::{TaskManager}, p2p::credential::Credential};
 use logger::log;
 use tokio::{net::TcpListener, sync::mpsc::Sender as MpscSender};
 
 pub struct Listen {
     dial_loop_tx: Arc<MpscSender<usize>>,
     task_mng: Arc<TaskManager>,
+    credential: Arc<Credential>,
 }
 
 impl Listen {
     pub fn new(
         dial_loop_tx: Arc<MpscSender<usize>>,
         task_mng: Arc<TaskManager>,
+        credential: Arc<Credential>,
     ) -> Listen {
         let listen = Listen {
+            credential,
             dial_loop_tx,
             task_mng,
         };
