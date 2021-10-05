@@ -60,20 +60,21 @@ impl Dial {
         let routine_clone = routine.clone();
         let disc_wakeup_rx = self.disc_wakeup_rx.clone();
         tokio::spawn(async move {
-            let mut disc_wakeup_rx = disc_wakeup_rx.lock().await;
+            loop {
+                let mut disc_wakeup_rx = disc_wakeup_rx.lock().await;
+                match disc_wakeup_rx.recv().await {
+                    Some(_) => {
+                        routine_clone.wakeup().await;
+                    }
+                    None => {
+                        let msg = msg_errd!(
+                            "Cannot receive dial wakeup msg, is channel closed?",
+                        );
 
-            match disc_wakeup_rx.recv().await {
-                Some(_) => {
-                    routine_clone.wakeup().await;
-                }
-                None => {
-                    let msg = msg_errd!(
-                        "Cannot receive dial wakeup msg, is channel closed?",
-                    );
-
-                    task_mng.send(msg).await;
-                }
-            };
+                        task_mng.send(msg).await;
+                    }
+                };
+            }
         });
     }
 }
