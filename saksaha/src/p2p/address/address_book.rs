@@ -1,10 +1,19 @@
-use super::Address;
-use crate::{common::Result, err};
+use crate::{common::Result, err, p2p::address::Address};
 use logger::log;
 use std::sync::Arc;
 use tokio::sync::{Mutex, MutexGuard};
 
-type MutexedAddress = Arc<Mutex<Option<Address>>>;
+use super::Status;
+
+type MutexedAddress = Arc<Mutex<Address>>;
+
+pub struct Filter;
+
+impl Filter {
+    pub fn get_not_initialized_addr(addr: MutexGuard<Address>) -> bool {
+        addr.status == Status::NotInitialized
+    }
+}
 
 pub struct AddressBook {
     pub addrs: Arc<Mutex<Vec<MutexedAddress>>>,
@@ -40,7 +49,7 @@ impl AddressBook {
                     addr.peer_id,
                     addr.endpoint
                 );
-                let addr = Arc::new(Mutex::new(Some(addr)));
+                let addr = Arc::new(Mutex::new(addr));
                 addrs.push(addr);
                 count += 1;
             }
@@ -59,10 +68,8 @@ impl AddressBook {
 
     pub async fn next(
         &self,
-        filter: Option<
-            &(dyn Fn(Address) -> bool + Sync + Send),
-        >,
-    ) -> Option<(MutexGuard<'_, Option<Address>>, usize)> {
+        filter: &(dyn Fn(MutexGuard<Address>) -> bool + Sync + Send),
+    ) -> Option<(Arc<Mutex<Address>>, usize)> {
         let addrs = self.addrs.lock().await;
         let mut curr_idx = self.curr_idx.lock().await;
         let len = addrs.len();
@@ -72,26 +79,16 @@ impl AddressBook {
 
             match addrs.get(idx) {
                 Some(addr) => {
-                    let mut addr_lock = match addr.try_lock() {
+                    let addr_lock = match addr.try_lock() {
                         Ok(a) => a,
                         Err(_) => continue,
                     };
 
-                    let addr = match addr_lock.take() {
-                        Some(a) => a,
-                        None => continue,
-                    };
-
-                    if let Some(ref f) = filter {
-                        if f(addr) {
-                            *curr_idx = idx;
-                            return Some((addr_lock, i));
-                        } else {
-                            continue;
-                        }
-                    } else {
+                    if filter(addr_lock) {
                         *curr_idx = idx;
-                        return Some((addr_lock, i));
+                        return Some((addr.clone(), i));
+                    } else {
+                        continue;
                     }
                 }
                 None => continue,

@@ -68,7 +68,7 @@ impl Routine {
                     );
 
                     match handler.run().await {
-                        HandleStatus::AddressNotFound => {
+                        HandleStatus::NoAvailableAddress => {
                             break;
                         }
                         HandleStatus::ConnectionFail(err) => {
@@ -77,15 +77,9 @@ impl Routine {
                                 "Disc dial connection fail, err: {}\n",
                                 err
                             );
-
-                            continue;
                         }
-                        HandleStatus::LocalAddrIdentical => {
-                            continue;
-                        }
-                        HandleStatus::Success => {
-                            continue;
-                        }
+                        HandleStatus::LocalAddrIdentical => (),
+                        HandleStatus::Success => (),
                         HandleStatus::WhoAreYouInitiateFail(err) => {
                             log!(
                                 DEBUG,
@@ -93,7 +87,6 @@ impl Routine {
                                 initiate failed, err: {}\n",
                                 err
                             );
-                            continue;
                         }
                         HandleStatus::WhoAreYouAckReceiveFail(err) => {
                             log!(
@@ -102,7 +95,6 @@ impl Routine {
                                 ack receive failed, err: {}\n",
                                 err
                             );
-                            continue;
                         }
                         HandleStatus::PeerUpdateFail(err) => {
                             log!(
