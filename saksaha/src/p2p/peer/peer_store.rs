@@ -1,6 +1,19 @@
 use super::{Peer, Status};
 use std::sync::Arc;
-use tokio::sync::Mutex;
+use tokio::sync::{Mutex, MutexGuard};
+
+pub struct Filter;
+
+impl Filter {
+    pub fn not_initialized(peer: MutexGuard<Peer>) -> bool {
+        peer.status == Status::NotInitialized
+        // return true;
+    }
+
+    pub fn discovered(peer: MutexGuard<Peer>) -> bool {
+        return true;
+    }
+}
 
 pub struct PeerStore {
     pub capacity: usize,
@@ -13,8 +26,7 @@ impl PeerStore {
         let mut slots = Vec::with_capacity(capacity);
 
         for _ in 0..capacity {
-            let peer =
-                Peer::new("".into(), "".into(), Status::NotInitialized);
+            let peer = Peer::new("".into(), "".into(), Status::NotInitialized);
 
             slots.push(Arc::new(Mutex::new(peer)));
         }
@@ -26,7 +38,10 @@ impl PeerStore {
         }
     }
 
-    pub async fn next(&self) -> Option<Arc<Mutex<Peer>>> {
+    pub async fn next(
+        &self,
+        filter: &(dyn Fn(MutexGuard<Peer>) -> bool + Sync + Send),
+    ) -> Option<Arc<Mutex<Peer>>> {
         let slots = &self.slots;
         let slots = slots.lock().await;
         let capacity = self.capacity;
@@ -38,21 +53,22 @@ impl PeerStore {
             let idx = i % capacity;
 
             if let Some(p) = slots.get(idx) {
-                *curr_idx = idx;
-                return Some(p.clone());
-            } else {
-                *curr_idx = 0;
-                match slots.get(*curr_idx) {
-                    Some(p) => {
-                        return Some(p.clone());
-                    }
-                    None => {
-                        return None;
-                    }
+                let peer_lock = match p.try_lock() {
+                    Ok(p) => p,
+                    Err(_) => continue,
+                };
+
+                if filter(peer_lock) {
+                    *curr_idx = idx;
+
+                    return Some(p.clone());
+                } else {
+                    continue;
                 }
             }
         }
 
+        *curr_idx = 0;
         None
     }
 }

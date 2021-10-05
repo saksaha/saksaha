@@ -1,8 +1,8 @@
-mod routine;
+mod handshake;
 
-use crate::{msg_errd, node::task_manager::TaskManager};
+use crate::{msg_errd, node::task_manager::TaskManager, p2p::peer::peer_store::PeerStore};
 use logger::log;
-use routine::Routine;
+use handshake::Handshake;
 use std::{sync::Arc, time::Duration};
 use tokio::sync::{
     mpsc::{Receiver, Sender},
@@ -13,6 +13,7 @@ pub struct Dial {
     task_mng: Arc<TaskManager>,
     disc_wakeup_tx: Arc<Sender<usize>>,
     peer_op_wakeup_rx: Arc<Mutex<Receiver<usize>>>,
+    peer_store: Arc<PeerStore>,
 }
 
 impl Dial {
@@ -20,19 +21,21 @@ impl Dial {
         task_mng: Arc<TaskManager>,
         disc_wakeup_tx: Arc<Sender<usize>>,
         peer_op_wakeup_rx: Arc<Mutex<Receiver<usize>>>,
+        peer_store: Arc<PeerStore>,
     ) -> Dial {
         Dial {
             task_mng,
             disc_wakeup_tx,
             peer_op_wakeup_rx,
+            peer_store,
         }
     }
 
     pub async fn start(self) {
         log!(DEBUG, "Start peer op dialing\n");
 
-        let routine = Routine::new();
-        routine.run();
+        let handshake = Handshake::new(self.peer_store.clone());
+        handshake.run();
 
         // tokio::time::sleep(Duration::from_millis(4000)).await;
 
@@ -51,7 +54,7 @@ impl Dial {
             loop {
                 let mut peer_op_wakeup_rx = self.peer_op_wakeup_rx.lock().await;
                 match peer_op_wakeup_rx.recv().await {
-                    Some(_) => routine.wakeup().await,
+                    Some(_) => handshake.wakeup().await,
                     None => {
                         let msg = msg_errd!(
                             "Cannot receive peer op \

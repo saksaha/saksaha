@@ -3,6 +3,7 @@ use tokio::task::JoinError;
 use super::errorkind::ErrorKind;
 use std::fmt;
 
+#[derive(PartialEq)]
 pub struct Error {
     kind: ErrorKind,
     msg: String,
