@@ -11,7 +11,7 @@ use crate::{
 };
 use dial::Dial;
 use std::sync::Arc;
-use tokio::sync::mpsc::Sender;
+use tokio::sync::{Mutex, mpsc::{Receiver, Sender}};
 use listen::Listen;
 
 struct Components {
@@ -22,7 +22,9 @@ struct Components {
 pub struct PeerOp {
     peer_store: Arc<PeerStore>,
     disc_wakeup_tx: Arc<Sender<usize>>,
+    rpc_port: u16,
     task_mng: Arc<TaskManager>,
+    peer_op_wakeup_rx: Arc<Mutex<Receiver<usize>>>,
 }
 
 impl PeerOp {
@@ -31,11 +33,14 @@ impl PeerOp {
         disc_wakeup_tx: Arc<Sender<usize>>,
         rpc_port: u16,
         task_mng: Arc<TaskManager>,
+        peer_op_wakeup_rx: Arc<Mutex<Receiver<usize>>>,
     ) -> PeerOp {
         let peer_op = PeerOp {
             peer_store,
             disc_wakeup_tx,
+            rpc_port,
             task_mng,
+            peer_op_wakeup_rx,
         };
 
         peer_op
