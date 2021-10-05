@@ -1,9 +1,6 @@
 mod handler;
 
-use crate::p2p::{
-    peer::peer_store::{Filter, PeerStore},
-    peer_op::dial::handshake::handler::{HandleStatus, Handler},
-};
+use crate::p2p::{peer::peer_store::{Filter, PeerStore}, peer_op::dial::handshake_op::handler::{HandleStatus, Handler}};
 use logger::log;
 use std::{
     sync::Arc,
@@ -11,14 +8,14 @@ use std::{
 };
 use tokio::sync::Mutex;
 
-pub struct Handshake {
+pub struct HandshakeOp {
     peer_store: Arc<PeerStore>,
     is_running: Arc<Mutex<bool>>,
 }
 
-impl Handshake {
-    pub fn new(peer_store: Arc<PeerStore>) -> Handshake {
-        Handshake {
+impl HandshakeOp {
+    pub fn new(peer_store: Arc<PeerStore>) -> HandshakeOp {
+        HandshakeOp {
             is_running: Arc::new(Mutex::new(false)),
             peer_store,
         }
@@ -43,6 +40,12 @@ impl Handshake {
                         let handler = Handler::new(p);
 
                         match handler.run().await {
+                            HandleStatus::ConnectionFail(err) => {
+
+                            }
+                            HandleStatus::HandshakeInitiateFail(err) => {
+
+                            }
                             HandleStatus::Success => (),
                         };
                     }

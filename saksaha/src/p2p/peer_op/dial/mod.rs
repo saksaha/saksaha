@@ -1,8 +1,8 @@
-mod handshake;
+mod handshake_op;
 
 use crate::{msg_errd, node::task_manager::TaskManager, p2p::peer::peer_store::PeerStore};
 use logger::log;
-use handshake::Handshake;
+use handshake_op::HandshakeOp;
 use std::{sync::Arc, time::Duration};
 use tokio::sync::{
     mpsc::{Receiver, Sender},
@@ -34,8 +34,8 @@ impl Dial {
     pub async fn start(self) {
         log!(DEBUG, "Start peer op dialing\n");
 
-        let handshake = Handshake::new(self.peer_store.clone());
-        handshake.run();
+        let handshake_op = HandshakeOp::new(self.peer_store.clone());
+        handshake_op.run();
 
         // tokio::time::sleep(Duration::from_millis(4000)).await;
 
@@ -54,7 +54,7 @@ impl Dial {
             loop {
                 let mut peer_op_wakeup_rx = self.peer_op_wakeup_rx.lock().await;
                 match peer_op_wakeup_rx.recv().await {
-                    Some(_) => handshake.wakeup().await,
+                    Some(_) => handshake_op.wakeup().await,
                     None => {
                         let msg = msg_errd!(
                             "Cannot receive peer op \
