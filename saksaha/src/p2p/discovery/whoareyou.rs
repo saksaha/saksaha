@@ -1,8 +1,5 @@
-use crate::{common::SakResult, err_res, p2p::peer_op};
-use k256::ecdsa::{
-    signature::{Signer, Verifier},
-    Signature, SigningKey, VerifyingKey,
-};
+use crate::{common::Result, crypto::Crypto, err};
+use k256::ecdsa::Signature;
 use std::convert::TryInto;
 use tokio::{io::AsyncReadExt, net::TcpStream};
 
@@ -18,6 +15,7 @@ pub struct WhoAreYou {
     pub sig: Signature,
     pub public_key_bytes: [u8; 65],
     pub peer_op_port: u16,
+    pub peer_id: String,
 }
 
 impl WhoAreYou {
@@ -26,14 +24,21 @@ impl WhoAreYou {
         peer_op_port: u16,
         public_key_bytes: [u8; 65],
     ) -> WhoAreYou {
+        let peer_id = WhoAreYou::make_peer_id(&public_key_bytes);
+
         WhoAreYou {
             sig,
             peer_op_port,
             public_key_bytes,
+            peer_id,
         }
     }
 
-    pub fn to_bytes(&self) -> SakResult<[u8; 140]> {
+    pub fn make_peer_id(public_key_bytes: &[u8; 65]) -> String {
+        Crypto::encode_hex(public_key_bytes)
+    }
+
+    pub fn to_bytes(&self) -> Result<[u8; 140]> {
         let mut buf = [0; 140];
 
         buf[0] = Type::SYN as u8;
@@ -44,10 +49,7 @@ impl WhoAreYou {
         if sig_len == 71 {
             buf[1..72].copy_from_slice(&sig_bytes);
         } else {
-            return err_res!(
-                "Signature does not fit the size, len: {}",
-                sig_len
-            );
+            return err!("Signature does not fit the size, len: {}", sig_len);
         }
 
         buf[72..74].copy_from_slice(&self.peer_op_port.to_be_bytes());
@@ -57,13 +59,13 @@ impl WhoAreYou {
         Ok(buf)
     }
 
-    pub async fn parse(stream: &mut TcpStream) -> SakResult<WhoAreYou> {
+    pub async fn parse(stream: &mut TcpStream) -> Result<WhoAreYou> {
         let mut buf = [0; 140];
 
         match stream.read_exact(&mut buf).await {
             Ok(b) => b,
             Err(err) => {
-                return err_res!("Error reading whoAreYou, err: {}", err);
+                return err!("Error reading whoAreYou, err: {}", err);
             }
         };
 
@@ -71,32 +73,29 @@ impl WhoAreYou {
             Ok(b) => match Signature::from_der(b) {
                 Ok(s) => s,
                 Err(err) => {
-                    return err_res!(
-                        "Error recovering signature, err: {}",
-                        err
-                    );
+                    return err!("Error recovering signature, err: {}", err);
                 }
             },
             Err(err) => {
-                return err_res!("Error parsing signature, err: {}", err);
+                return err!("Error parsing signature, err: {}", err);
             }
         };
 
         let peer_op_port: u16 = match buf[72..74].try_into() {
             Ok(p) => u16::from_be_bytes(p),
             Err(err) => {
-                return err_res!("Error parsing peer_op_port, err: {}", err);
+                return err!("Error parsing peer_op_port, err: {}", err);
             }
         };
 
         let mut public_key_bytes = [0; 65];
         public_key_bytes.copy_from_slice(&buf[74..139]);
 
-        let way = WhoAreYou {
+        let way = WhoAreYou::new(
             sig,
             peer_op_port,
             public_key_bytes,
-        };
+        );
 
         Ok(way)
     }
@@ -117,15 +116,15 @@ impl WhoAreYouAck {
         WhoAreYouAck { way }
     }
 
-    pub fn to_bytes(&self) -> SakResult<[u8; 140]> {
+    pub fn to_bytes(&self) -> Result<[u8; 140]> {
         return self.way.to_bytes();
     }
 
-    pub async fn parse(stream: &mut TcpStream) -> SakResult<WhoAreYouAck> {
+    pub async fn parse(stream: &mut TcpStream) -> Result<WhoAreYouAck> {
         let way = match WhoAreYou::parse(stream).await {
             Ok(w) => w,
             Err(err) => {
-                return err_res!("Error parsing WhoAreYouAck, err: {}", err);
+                return err!("Error parsing WhoAreYouAck, err: {}", err);
             }
         };
 
