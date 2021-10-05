@@ -1,15 +1,5 @@
 use super::whoareyou::WhoAreYou;
-use crate::{
-    common::{Error, Result},
-    crypto::Crypto,
-    err,
-    p2p::{
-        address::{address_book::AddressBook, Status, Address},
-        credential::Credential,
-        discovery::whoareyou::{self, WhoAreYouAck},
-        peer::{self, Peer},
-    },
-};
+use crate::{common::{Error, Result}, crypto::Crypto, err, p2p::{address::{Address, Status, address_book::{AddressBook, Filter}}, credential::Credential, discovery::whoareyou::{self, WhoAreYouAck}, peer::{self, Peer}}};
 use k256::ecdsa::{
     signature::{Signer, Verifier},
     Signature, SigningKey,
@@ -23,7 +13,7 @@ use tokio::{
 };
 
 pub enum HandleStatus<E> {
-    AddressNotFound,
+    NoAvailableAddress,
 
     LocalAddrIdentical,
 
@@ -86,14 +76,14 @@ impl Handler {
 
         let (addr, idx) = match self
             .address_book
-            .next(Some(&get_not_initialized_addr))
+            .next(&Filter::get_not_initialized_addr)
             .await
         {
             Some(a) => a,
             None => {
                 log!(DEBUG, "Cannot acquire next address\n");
 
-                return HandleStatus::AddressNotFound;
+                return HandleStatus::NoAvailableAddress;
             }
         };
 
@@ -213,7 +203,7 @@ impl Handler {
         peer.peer_id = way_ack.way.peer_id;
         addr.status = Status::HandshakeSucceeded;
 
-        log!(DEBUG, "Successfully discovered a peer: {:?}", peer);
+        log!(DEBUG, "Successfully discovered a peer: {:?}\n", peer);
 
         tokio::spawn(async move {
             println!("Start synchroize");
@@ -221,8 +211,4 @@ impl Handler {
 
         Ok(())
     }
-}
-
-fn get_not_initialized_addr(addr: MutexGuard<Address>) -> bool {
-    addr.status == Status::NotInitialized
 }

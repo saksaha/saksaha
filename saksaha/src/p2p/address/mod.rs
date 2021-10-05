@@ -29,6 +29,7 @@ pub struct Address {
     pub endpoint: String,
     pub fail_count: usize,
     pub status: Status<usize>,
+    pub is_locked: bool,
 }
 
 impl Address {
@@ -38,6 +39,7 @@ impl Address {
             endpoint,
             fail_count: 0,
             status: Status::NotInitialized,
+            is_locked: false,
         }
     }
 
@@ -47,6 +49,7 @@ impl Address {
             endpoint: "".into(),
             fail_count: 0,
             status: Status::Empty,
+            is_locked: false,
         }
     }
 
