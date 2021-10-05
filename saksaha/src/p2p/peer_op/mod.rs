@@ -10,9 +10,12 @@ use crate::{
     node::task_manager::TaskManager,
 };
 use dial::Dial;
-use std::sync::Arc;
-use tokio::sync::{Mutex, mpsc::{Receiver, Sender}};
 use listen::Listen;
+use std::sync::Arc;
+use tokio::sync::{
+    mpsc::{Receiver, Sender},
+    Mutex,
+};
 
 struct Components {
     dial: Dial,
@@ -48,10 +51,14 @@ impl PeerOp {
 
     fn make_components(&self) -> Result<Components> {
         let listen =
-            Listen::new(
-                self.disc_wakeup_tx.clone(), self.task_mng.clone());
-        let dial =
-            Dial::new(self.task_mng.clone(), self.disc_wakeup_tx.clone(), self.peer_op_wakeup_rx.clone());
+            Listen::new(self.disc_wakeup_tx.clone(), self.task_mng.clone());
+
+        let dial = Dial::new(
+            self.task_mng.clone(),
+            self.disc_wakeup_tx.clone(),
+            self.peer_op_wakeup_rx.clone(),
+            self.peer_store.clone(),
+        );
 
         let components = Components { dial, listen };
 

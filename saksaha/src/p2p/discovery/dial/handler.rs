@@ -211,10 +211,10 @@ impl Handler {
         mut addr: MutexGuard<'_, Address>,
     ) -> Result<()> {
         let mut peer = self.peer.lock().await;
-        peer.status = peer::Status::Discovered;
+        peer.status = peer::Status::DiscoverySuccess;
         peer.endpoint = addr.endpoint.to_owned();
         peer.peer_id = way_ack.way.peer_id;
-        addr.status = Status::HandshakeSucceeded;
+        addr.status = Status::DiscoverySuccess;
 
         log!(DEBUG, "Successfully handled disc dial peer: {:?}\n", peer);
 
@@ -234,7 +234,6 @@ impl Handler {
 
         match wakeup.await {
             Ok(_) => {
-                println!("333333333");
                 Ok(())
             },
             Err(err) => return Err(err.into()),

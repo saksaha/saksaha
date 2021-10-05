@@ -1,26 +1,26 @@
 mod bootstrap;
 pub mod address_book;
 
-use crate::{common::Result, err};
+use crate::{common::{Error, Result}, err};
 use logger::log;
 use std::sync::Arc;
 use tokio::sync::{Mutex, MutexGuard};
 
 #[derive(Debug, PartialEq)]
-pub enum Status<C> {
+pub enum Status<E> {
     // Empty value, used for reserving
     Empty,
 
     // Not discovered addresses need to pass "discovery", a.k.a "Who are you"
     NotDiscovered,
 
-    DiscoverySucceeded,
+    DiscoverySuccess,
 
-    DiscoveryFailed(C),
+    DiscoveryFail(E),
 
-    HandshakeSucceeded,
+    // HandshakeSucceed,
 
-    HandshakeFailed(C),
+    // HandshakeFail(C),
 }
 
 #[derive(Debug)]
@@ -28,7 +28,7 @@ pub struct Address {
     pub peer_id: String,
     pub endpoint: String,
     pub fail_count: usize,
-    pub status: Status<usize>,
+    pub status: Status<Error>,
 }
 
 impl Address {

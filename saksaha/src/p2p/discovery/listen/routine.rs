@@ -1,10 +1,5 @@
 use super::handler::Handler;
-use crate::p2p::{
-    address::{address_book::AddressBook, Address},
-    credential::Credential,
-    discovery::listen::handler::HandleStatus,
-    peer::peer_store::PeerStore,
-};
+use crate::p2p::{address::{address_book::AddressBook, Address}, credential::Credential, discovery::listen::handler::HandleStatus, peer::peer_store::{Filter, PeerStore}};
 use logger::log;
 use std::{sync::Arc, time::Duration};
 use tokio::net::TcpListener;
@@ -38,7 +33,7 @@ impl Routine {
         tokio::spawn(async move {
             loop {
                 let peer_store = peer_store.clone();
-                let peer = match peer_store.next().await {
+                let peer = match peer_store.next(&Filter::not_initialized).await {
                     Some(p) => p,
                     None => {
                         log!(DEBUG, "No available peer\n");

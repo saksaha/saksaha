@@ -131,10 +131,10 @@ impl Handler {
         let mut addr = addr.lock().await;
         let mut peer = self.peer.lock().await;
 
-        peer.status = PeerStatus::Discovered;
+        peer.status = PeerStatus::DiscoverySuccess;
         peer.endpoint = endpoint;
         peer.peer_id = way.peer_id;
-        addr.status = AddrStatus::HandshakeSucceeded;
+        addr.status = AddrStatus::DiscoverySuccess;
 
         log!(DEBUG, "Successfully handled disc listen, peer: {:?}\n", peer);
 
