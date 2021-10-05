@@ -1,8 +1,10 @@
-use std::{sync::Arc, time::Duration};
+mod routine;
 
+use std::{sync::Arc, time::Duration};
 use crate::node::task_manager::TaskManager;
 use logger::log;
 use tokio::sync::mpsc::Sender;
+use routine::Routine;
 
 pub struct Dial {
     task_mng: Arc<TaskManager>,
@@ -19,6 +21,8 @@ impl Dial {
 
     pub async fn start(self) {
         log!(DEBUG, "Start peer op dialing\n");
+
+        let routine = Routine::new();
 
         // tokio::time::sleep(Duration::from_millis(4000)).await;
 

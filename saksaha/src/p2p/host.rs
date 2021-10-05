@@ -97,6 +97,7 @@ impl Host {
             Arc::new(disc_wakeup_tx),
             rpc_port,
             task_mng,
+            Arc::new(Mutex::new(peer_op_wakeup_rx)),
         );
 
         let disc = Disc::new(
