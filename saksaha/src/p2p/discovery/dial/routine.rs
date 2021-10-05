@@ -3,10 +3,15 @@ use std::{
     sync::Arc,
     time::{Duration, SystemTime},
 };
-use tokio::sync::{Mutex, mpsc::Sender};
+use tokio::sync::{mpsc::Sender, Mutex};
 
 use super::handler::Handler;
-use crate::p2p::{address::address_book::AddressBook, credential::Credential, discovery::dial::handler::HandleStatus, peer::peer_store::{Filter, PeerStore}};
+use crate::p2p::{
+    address::address_book::AddressBook,
+    credential::Credential,
+    discovery::dial::handler::HandleStatus,
+    peer::peer_store::{Filter, PeerStore},
+};
 
 pub struct Routine {
     peer_store: Arc<PeerStore>,
@@ -60,7 +65,9 @@ impl Routine {
             loop {
                 let start = SystemTime::now();
 
-                if let Some(peer) = peer_store.next(&Filter::not_initialized).await {
+                if let Some(peer) =
+                    peer_store.next(&Filter::not_initialized).await
+                {
                     let mut handler = Handler::new(
                         peer,
                         credential.clone(),
@@ -110,7 +117,7 @@ impl Routine {
                 } else {
                     log!(DEBUG, "Peer not available");
 
-                    tokio::time::sleep(Duration::from_millis(1000)).await;
+                    tokio::time::sleep(Duration::from_millis(2000)).await;
                 }
 
                 tokio::time::sleep(Duration::from_millis(1000)).await;

@@ -16,19 +16,25 @@ pub enum Status<E> {
 
 #[derive(Debug)]
 pub struct Peer {
-    pub endpoint: String,
+    pub ip: String,
+    pub disc_port: u16,
+    pub peer_op_port: u16,
+    pub rpc_port: u16,
     pub peer_id: String,
     pub status: Status<Error>,
 }
 
 impl Peer {
     pub fn new(
-        endpoint: String,
+        ip: String,
         peer_id: String,
         status: Status<Error>,
     ) -> Peer {
         Peer {
-            endpoint,
+            ip,
+            disc_port: 0,
+            peer_op_port: 0,
+            rpc_port: 0,
             peer_id,
             status,
         }

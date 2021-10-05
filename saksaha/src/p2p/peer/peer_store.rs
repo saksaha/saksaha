@@ -7,11 +7,10 @@ pub struct Filter;
 impl Filter {
     pub fn not_initialized(peer: MutexGuard<Peer>) -> bool {
         peer.status == Status::NotInitialized
-        // return true;
     }
 
-    pub fn discovered(peer: MutexGuard<Peer>) -> bool {
-        return true;
+    pub fn discovery_success(peer: MutexGuard<Peer>) -> bool {
+        peer.status == Status::DiscoverySuccess
     }
 }
 

@@ -44,10 +44,11 @@ impl AddressBook {
             if let Ok(addr) = Address::parse(url) {
                 log!(
                     DEBUG,
-                    "Address book [{}]: {} @ {}\n",
+                    "Address book [{}]: peer_id: {}, ip: {}, port: {}\n",
                     count,
                     addr.peer_id,
-                    addr.endpoint
+                    addr.ip,
+                    addr.disc_port,
                 );
                 let addr = Arc::new(Mutex::new(addr));
                 addrs.push(addr);
