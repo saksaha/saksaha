@@ -1,6 +1,6 @@
 mod handler;
 
-use crate::p2p::{peer::peer_store::{Filter, PeerStore}, peer_op::dial::handshake_op::handler::{HandleStatus, Handler}};
+use crate::p2p::{credential::Credential, peer::peer_store::{Filter, PeerStore}, peer_op::dial::handshake_op::handler::{HandleStatus, Handler}};
 use logger::log;
 use std::{
     sync::Arc,
@@ -10,13 +10,18 @@ use tokio::sync::Mutex;
 
 pub struct HandshakeOp {
     peer_store: Arc<PeerStore>,
+    credential: Arc<Credential>,
     is_running: Arc<Mutex<bool>>,
 }
 
 impl HandshakeOp {
-    pub fn new(peer_store: Arc<PeerStore>) -> HandshakeOp {
+    pub fn new(
+        peer_store: Arc<PeerStore>,
+        credential: Arc<Credential>,
+    ) -> HandshakeOp {
         HandshakeOp {
             is_running: Arc::new(Mutex::new(false)),
+            credential,
             peer_store,
         }
     }
@@ -26,6 +31,7 @@ impl HandshakeOp {
 
         let is_running = self.is_running.clone();
         let peer_store = self.peer_store.clone();
+        let credential = self.credential.clone();
 
         tokio::spawn(async move {
             let mut is_running_lock = is_running.lock().await;
@@ -37,15 +43,11 @@ impl HandshakeOp {
 
                 match peer_store.next(&Filter::discovery_success).await {
                     Some(p) => {
-                        let handler = Handler::new(p);
+                        let handler = Handler::new(p, credential.clone());
 
                         match handler.run().await {
-                            HandleStatus::ConnectionFail(err) => {
-
-                            }
-                            HandleStatus::HandshakeInitiateFail(err) => {
-
-                            }
+                            HandleStatus::ConnectionFail(err) => {}
+                            HandleStatus::HandshakeInitiateFail(err) => {}
                             HandleStatus::Success => (),
                         };
                     }

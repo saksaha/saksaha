@@ -1,9 +1,10 @@
 mod dial;
 mod listen;
 mod status;
+mod msg;
 
 pub use self::status::Status;
-use super::peer::peer_store::PeerStore;
+use super::{credential::{self, Credential}, peer::peer_store::PeerStore};
 use crate::{
     common::{Error, Result},
     err,
@@ -23,6 +24,7 @@ struct Components {
 }
 
 pub struct PeerOp {
+    credential: Arc<Credential>,
     peer_store: Arc<PeerStore>,
     disc_wakeup_tx: Arc<Sender<usize>>,
     rpc_port: u16,
@@ -37,8 +39,10 @@ impl PeerOp {
         rpc_port: u16,
         task_mng: Arc<TaskManager>,
         peer_op_wakeup_rx: Arc<Mutex<Receiver<usize>>>,
+        credential: Arc<Credential>,
     ) -> PeerOp {
         let peer_op = PeerOp {
+            credential,
             peer_store,
             disc_wakeup_tx,
             rpc_port,
@@ -51,9 +55,10 @@ impl PeerOp {
 
     fn make_components(&self) -> Result<Components> {
         let listen =
-            Listen::new(self.disc_wakeup_tx.clone(), self.task_mng.clone());
+            Listen::new(self.disc_wakeup_tx.clone(), self.task_mng.clone(), self.credential.clone());
 
         let dial = Dial::new(
+            self.credential.clone(),
             self.task_mng.clone(),
             self.disc_wakeup_tx.clone(),
             self.peer_op_wakeup_rx.clone(),
