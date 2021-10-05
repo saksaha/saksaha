@@ -1,9 +1,8 @@
-use super::PConfig;
 use crate::common::{
-    SakResult,
-    ErrorKind,
+    Result,
 };
-use crate::{err_res, err_resk};
+use crate::pconfig::PConfig;
+use crate::{err};
 use directories::ProjectDirs;
 use logger::log;
 use std::fs;
@@ -11,12 +10,18 @@ use std::path::PathBuf;
 
 const CONFIG_FILE_NAME: &str = "config.json";
 
-impl PConfig {
-    pub fn persist(&self) -> SakResult<PathBuf> {
-        let serialized = match serde_json::to_string_pretty(&self) {
+pub struct FS;
+
+impl FS {
+    pub fn new() -> FS {
+        FS {}
+    }
+
+    pub fn persist(pconfig: PConfig) -> Result<PConfig> {
+        let serialized = match serde_json::to_string_pretty(&pconfig) {
             Ok(s) => s,
             Err(err) => {
-                return err_res!("Cannot serialize configuration, err: {}", err);
+                return err!("Cannot serialize configuration, err: {}", err);
             }
         };
 
@@ -24,27 +29,24 @@ impl PConfig {
         let config_path = app_path.join(CONFIG_FILE_NAME).to_owned();
 
         if config_path.exists() {
-            return err_res!("Config file already exists, something is wrong");
+            return err!("Config file already exists, something is wrong");
         }
 
         log!(DEBUG, "Writing a config, at: {:?}\n", config_path);
 
         match fs::write(config_path.to_owned(), serialized) {
-            Ok(_) => Ok(config_path),
-            Err(err) => err_res!("Error writing the config, err: {}", err),
+            Ok(_) => {
+                Ok(pconfig)
+            },
+            Err(err) => err!("Error writing the config, err: {}", err),
         }
     }
 
-    pub fn load(config_path: PathBuf) -> SakResult<PConfig> {
-        log!(DEBUG, "Load configuration, path: {:?}\n", config_path);
+    pub fn load(path: PathBuf) -> Result<PConfig> {
+        log!(DEBUG, "Load configuration, path: {:?}\n", path);
 
-        return Self::load_config(config_path);
-    }
-
-    fn load_config(path: PathBuf) -> SakResult<PConfig> {
         if !path.exists() {
-            return err_resk!(
-                ErrorKind::FileNotExist,
+            return err!(
                 "Config does not exist at path: {:?}\n",
                 path
             );
@@ -53,7 +55,7 @@ impl PConfig {
         let file = match fs::read_to_string(path.to_owned()) {
             Ok(f) => f,
             Err(err) => {
-                return err_res!(
+                return err!(
                     "Error reading file, path: {:?}, err: {}",
                     path,
                     err
@@ -64,19 +66,20 @@ impl PConfig {
         match serde_json::from_str(file.as_str()) {
             Ok(pconf) => return Ok(pconf),
             Err(err) => {
-                return err_res!("Error deserializing config, err: {}", err);
+                return err!("Error deserializing config, err: {}", err);
             }
         }
     }
 
-    pub fn get_default_path() -> SakResult<PathBuf> {
+    pub fn get_default_path() -> Result<PathBuf> {
         let app_path = create_or_get_app_path()?;
         let config_path = app_path.join(CONFIG_FILE_NAME);
+
         Ok(config_path)
     }
 }
 
-fn create_or_get_app_path() -> SakResult<PathBuf> {
+fn create_or_get_app_path() -> Result<PathBuf> {
     if let Some(dir) = ProjectDirs::from("com", "Saksaha", "Saksaha") {
         let app_path = dir.config_dir();
         if !app_path.exists() {
@@ -85,12 +88,12 @@ fn create_or_get_app_path() -> SakResult<PathBuf> {
                     return Ok(app_path.to_path_buf());
                 }
                 Err(err) => {
-                    return err_res!("Error creating a path, {}", err);
+                    return err!("Error creating a path, {}", err);
                 }
             }
         }
         return Ok(app_path.to_path_buf());
     } else {
-        return err_res!("Error forming an app path");
+        return err!("Error forming an app path");
     }
 }

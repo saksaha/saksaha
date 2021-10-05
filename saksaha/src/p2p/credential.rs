@@ -1,6 +1,6 @@
 use k256::{elliptic_curve::sec1::ToEncodedPoint, SecretKey};
 
-use crate::{common::SakResult, crypto::Crypto, err_res};
+use crate::{common::Result, crypto::Crypto, err};
 
 pub struct Credential {
     pub secret_key: SecretKey,
@@ -8,18 +8,18 @@ pub struct Credential {
 }
 
 impl Credential {
-    pub fn new(secret: String) -> SakResult<Credential> {
+    pub fn new(secret: String, public_key: String) -> Result<Credential> {
         let secret_bytes = match Crypto::decode_hex(secret.to_owned()) {
             Ok(v) => v,
             Err(err) => {
-                return err_res!("Error making secret key, err: {}", err);
+                return err!("Error making secret key, err: {}", err);
             }
         };
 
         let secret_key = match SecretKey::from_bytes(secret_bytes) {
             Ok(sk) => sk,
             Err(err) => {
-                return err_res!(
+                return err!(
                     "Error creating SecretKey object, err: {}",
                     err
                 );
@@ -30,7 +30,7 @@ impl Credential {
             let b = secret_key.public_key().to_encoded_point(false).to_bytes();
 
             if b.len() != 65 {
-                return err_res!(
+                return err!(
                     "Error encoding public key into bytes, size does not fit"
                 );
             }
@@ -39,6 +39,16 @@ impl Credential {
             buf.clone_from_slice(&b);
             buf
         };
+
+        {
+            let p = Crypto::encode_hex(&public_key_bytes);
+            if p != public_key {
+                return err!(
+                    "public key built from bytes differ \
+                    from the one in pconfig"
+                );
+            }
+        }
 
         let credential = Credential {
             secret_key,

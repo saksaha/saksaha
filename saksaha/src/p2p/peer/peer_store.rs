@@ -1,8 +1,19 @@
-use super::{Peer, PeerStatus};
-use crate::{common::SakResult, err_res};
-use logger::log;
+use super::{Peer, Status};
 use std::sync::Arc;
-use tokio::sync::Mutex;
+use tokio::sync::{Mutex, MutexGuard};
+
+pub struct Filter;
+
+impl Filter {
+    pub fn not_initialized(peer: MutexGuard<Peer>) -> bool {
+        peer.status == Status::NotInitialized
+        // return true;
+    }
+
+    pub fn discovered(peer: MutexGuard<Peer>) -> bool {
+        return true;
+    }
+}
 
 pub struct PeerStore {
     pub capacity: usize,
@@ -13,9 +24,10 @@ pub struct PeerStore {
 impl PeerStore {
     pub fn new(capacity: usize) -> PeerStore {
         let mut slots = Vec::with_capacity(capacity);
-        for i in 0..capacity {
-            let peer =
-                Peer::new("".into(), "".into(), PeerStatus::NOT_INITIALZED);
+
+        for _ in 0..capacity {
+            let peer = Peer::new("".into(), "".into(), Status::NotInitialized);
+
             slots.push(Arc::new(Mutex::new(peer)));
         }
 
@@ -26,24 +38,37 @@ impl PeerStore {
         }
     }
 
-    pub async fn next(&self) -> Option<Arc<Mutex<Peer>>> {
+    pub async fn next(
+        &self,
+        filter: &(dyn Fn(MutexGuard<Peer>) -> bool + Sync + Send),
+    ) -> Option<Arc<Mutex<Peer>>> {
         let slots = &self.slots;
         let slots = slots.lock().await;
-        let mut idx = self.curr_idx.lock().await;
+        let capacity = self.capacity;
 
-        if let Some(p) = slots.get(*idx + 1) {
-            *idx += 1;
-            return Some(p.clone());
-        } else {
-            *idx = 0;
-            match slots.get(*idx) {
-                Some(p) => {
+        let mut curr_idx = self.curr_idx.lock().await;
+        let start_idx = *curr_idx + 1;
+
+        for i in start_idx..start_idx + capacity {
+            let idx = i % capacity;
+
+            if let Some(p) = slots.get(idx) {
+                let peer_lock = match p.try_lock() {
+                    Ok(p) => p,
+                    Err(_) => continue,
+                };
+
+                if filter(peer_lock) {
+                    *curr_idx = idx;
+
                     return Some(p.clone());
-                }
-                None => {
-                    return None;
+                } else {
+                    continue;
                 }
             }
         }
+
+        *curr_idx = 0;
+        None
     }
 }

@@ -1,6 +1,9 @@
+use tokio::task::JoinError;
+
 use super::errorkind::ErrorKind;
 use std::fmt;
 
+#[derive(PartialEq)]
 pub struct Error {
     kind: ErrorKind,
     msg: String,
@@ -14,12 +17,11 @@ impl Error {
     pub fn kind(&self) -> ErrorKind {
         return self.kind;
     }
+}
 
-    pub fn default_kind(&self) -> bool {
-        if let ErrorKind::Default = self.kind {
-            return true;
-        }
-        false
+impl From<JoinError> for Error {
+    fn from(err: JoinError) -> Error {
+        return Error::new(ErrorKind::Default, err.to_string());
     }
 }
 
@@ -42,7 +44,7 @@ impl fmt::Debug for Error {
 }
 
 #[macro_export]
-macro_rules! err_res {
+macro_rules! err {
     ($str: expr) => {
         {
             Err($crate::common::Error::new($crate::common::ErrorKind::Default,
@@ -59,8 +61,9 @@ macro_rules! err_res {
     };
 }
 
+// deprecated
 #[macro_export]
-macro_rules! err_resk {
+macro_rules! err_with_kind {
     ($err_kind: expr, $msg: expr) => {{
         Err(Error::new($err_kind, format!($msg)))
     }};

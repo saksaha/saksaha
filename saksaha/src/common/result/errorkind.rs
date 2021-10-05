@@ -1,6 +1,4 @@
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq)]
 pub enum ErrorKind {
     Default,
-
-    FileNotExist,
 }
