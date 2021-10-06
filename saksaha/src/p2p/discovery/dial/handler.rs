@@ -90,6 +90,10 @@ impl Handler {
         Ok(())
     }
 
+    pub async fn a(&self, peer: &mut Peer) {
+        println!("{:?}", peer);
+    }
+
     pub async fn run(&mut self) -> HandleStatus<usize, Error> {
         let mut last_peer_idx = self.last_peer_idx.lock().await;
 
@@ -111,6 +115,8 @@ impl Handler {
         };
 
         peer.ip = "3".into();
+
+        self.a(peer).await;
 
 
 
