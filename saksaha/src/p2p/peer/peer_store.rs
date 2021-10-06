@@ -21,14 +21,24 @@ pub struct PeerStore {
 }
 
 impl PeerStore {
-    pub fn new(capacity: usize) -> PeerStore {
+    pub fn new(
+        capacity: usize,
+        bootstrap_peers: Option<Vec<String>>,
+    ) -> PeerStore {
         let mut slots = Vec::with_capacity(capacity);
 
-        for _ in 0..capacity {
-            let peer = Peer::new("".into(), "".into(), Status::NotInitialized);
-
-            slots.push(Arc::new(Mutex::new(peer)));
+        if let Some(peers) = bootstrap_peers {
+            for p in peers {
+                Peer::parse();
+                // println!("{},", p);
+            }
         }
+
+        // for _ in 0..capacity {
+        //     let peer = Peer::new("".into(), "".into(), Status::NotInitialized);
+
+        //     slots.push(Arc::new(Mutex::new(peer)));
+        // }
 
         PeerStore {
             curr_idx: Mutex::new(0),
