@@ -19,7 +19,7 @@ pub struct Routine {
     is_running: Arc<Mutex<bool>>,
     my_disc_endpoint: String,
     peer_op_wakeup_tx: Arc<Sender<usize>>,
-    last_peer_idx: Arc<usize>,
+    last_peer_idx: Arc<Mutex<usize>>,
 }
 
 impl Routine {
@@ -37,7 +37,7 @@ impl Routine {
             peer_store,
             credential,
             peer_op_port,
-            last_peer_idx: Arc::new(0),
+            last_peer_idx: Arc::new(Mutex::new(0)),
             is_running,
             my_disc_endpoint,
             peer_op_wakeup_tx,
@@ -53,12 +53,12 @@ impl Routine {
         let peer_op_port = self.peer_op_port;
         let my_disc_endpoint = self.my_disc_endpoint.to_owned();
         let peer_op_wake_tx = self.peer_op_wakeup_tx.clone();
+        let last_peer_idx = self.last_peer_idx.clone();
 
         tokio::spawn(async move {
             let mut is_running_lock = is_running.lock().await;
             *is_running_lock = true;
             std::mem::drop(is_running_lock);
-            let last_peer_idx = self.last_peer_idx;
 
             loop {
                 let start = SystemTime::now();
@@ -69,11 +69,11 @@ impl Routine {
                     peer_op_port,
                     my_disc_endpoint.to_owned(),
                     peer_op_wake_tx.clone(),
-                    last_peer_idx,
+                    last_peer_idx.clone(),
                 );
 
                 match handler.run().await {
-                    HandleStatus::NoAvailableAddress => {
+                    HandleStatus::NoAvailablePeer => {
                         break;
                     }
                     HandleStatus::ConnectionFail(err) => {
@@ -84,9 +84,7 @@ impl Routine {
                         );
                     }
                     HandleStatus::LocalAddrIdentical => (),
-                    HandleStatus::Success(idx) => {
-                        self.last_peer_idx = idx;
-                    },
+                    HandleStatus::Success(_) => (),
                     HandleStatus::WhoAreYouInitiateFail(err) => {
                         log!(
                             DEBUG,

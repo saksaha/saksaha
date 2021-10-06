@@ -28,7 +28,7 @@ use tokio::{
 /// E Error
 /// I Index (Last accessed peer idx)
 pub enum HandleStatus<I, E> {
-    NoAvailableAddress,
+    NoAvailablePeer,
 
     LocalAddrIdentical,
 
@@ -49,7 +49,7 @@ pub struct Handler {
     peer_op_port: u16,
     my_disc_endpoint: String,
     peer_op_wakeup_tx: Arc<Sender<usize>>,
-    last_peer_idx: usize,
+    last_peer_idx: Arc<Mutex<usize>>,
 }
 
 impl Handler {
@@ -59,7 +59,7 @@ impl Handler {
         peer_op_port: u16,
         my_disc_endpoint: String,
         peer_op_wakeup_tx: Arc<Sender<usize>>,
-        last_peer_idx: usize,
+        last_peer_idx: Arc<Mutex<usize>>,
     ) -> Handler {
         Handler {
             peer_store,
@@ -89,13 +89,22 @@ impl Handler {
     }
 
     pub async fn run(&mut self) -> HandleStatus<usize, Error> {
-        let last_peer_idx = self.last_peer_idx;
+        let mut last_peer_idx = self.last_peer_idx.lock().await;
 
-        if let Some(p) = self
+        let peer = self
             .peer_store
-            .next(Some(last_peer_idx), &Filter::not_initialized)
-            .await
-        {}
+            .next(Some(*last_peer_idx), &Filter::not_initialized)
+            .await;
+
+        let (peer, peer_idx) = match peer {
+            Some((p, idx)) => (p, idx),
+            None => return HandleStatus::NoAvailablePeer
+        };
+
+        *last_peer_idx = peer_idx;
+
+
+
         // let address_book_len = self.address_book.len().await;
 
         // log!(DEBUG, "Address book len: {}\n", address_book_len);
