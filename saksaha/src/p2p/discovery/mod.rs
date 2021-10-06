@@ -5,7 +5,7 @@ mod whoareyou;
 
 use self::listen::Listen;
 use super::{
-    address::address_book::AddressBook, credential::Credential,
+    credential::Credential,
     peer::peer_store::PeerStore,
 };
 use crate::{
@@ -23,7 +23,7 @@ struct Components {
 }
 
 pub struct Disc {
-    address_book: Arc<AddressBook>,
+    // address_book: Arc<AddressBook>,
     disc_port: Option<u16>,
     peer_store: Arc<PeerStore>,
     task_mng: Arc<TaskManager>,
@@ -35,17 +35,16 @@ pub struct Disc {
 impl Disc {
     pub fn new(
         disc_port: Option<u16>,
-        bootstrap_urls: Option<Vec<String>>,
         peer_store: Arc<PeerStore>,
         task_mng: Arc<TaskManager>,
         credential: Arc<Credential>,
         disc_wakeup_rx: Arc<Mutex<Receiver<usize>>>,
         peer_op_wakeup_tx: Arc<Sender<usize>>,
     ) -> Disc {
-        let address_book = Arc::new(AddressBook::new(bootstrap_urls));
+        // let address_book = Arc::new(AddressBook::new(bootstrap_urls));
 
         Disc {
-            address_book,
+            // address_book,
             disc_port,
             peer_store,
             task_mng,
@@ -59,10 +58,10 @@ impl Disc {
         let peer_store = self.peer_store.clone();
         let task_mng = self.task_mng.clone();
         let credential = self.credential.clone();
-        let address_book = self.address_book.clone();
+        // let address_book = self.address_book.clone();
 
         let listen = Listen::new(
-            address_book,
+            // address_book,
             self.disc_port,
             peer_op_port,
             peer_store,
@@ -71,12 +70,12 @@ impl Disc {
         );
 
         let peer_store = self.peer_store.clone();
-        let address_book = self.address_book.clone();
+        // let address_book = self.address_book.clone();
         let task_mng = self.task_mng.clone();
         let credential = self.credential.clone();
 
         let dial = Dial::new(
-            address_book,
+            // address_book,
             peer_store,
             peer_op_port,
             task_mng,

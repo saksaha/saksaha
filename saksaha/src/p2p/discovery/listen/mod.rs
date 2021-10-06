@@ -6,7 +6,7 @@ use crate::{
     msg_err,
     node::task_manager::{MsgKind, TaskManager},
     p2p::{
-        address::address_book::AddressBook, credential::Credential,
+        credential::Credential,
         peer::peer_store::PeerStore,
     },
 };
@@ -17,7 +17,7 @@ use std::sync::Arc;
 use tokio::net::TcpListener;
 
 pub struct Listen {
-    address_book: Arc<AddressBook>,
+    // address_book: Arc<AddressBook>,
     disc_port: Option<u16>,
     peer_op_port: u16,
     peer_store: Arc<PeerStore>,
@@ -27,7 +27,7 @@ pub struct Listen {
 
 impl Listen {
     pub fn new(
-        address_book: Arc<AddressBook>,
+        // address_book: Arc<AddressBook>,
         disc_port: Option<u16>,
         peer_op_port: u16,
         peer_store: Arc<PeerStore>,
@@ -35,7 +35,7 @@ impl Listen {
         credential: Arc<Credential>,
     ) -> Listen {
         Listen {
-            address_book,
+            // address_book,
             disc_port,
             peer_op_port,
             peer_store,
@@ -69,7 +69,7 @@ impl Listen {
 
         let peer_op_port = self.peer_op_port;
         let routine = Routine::new(
-            self.address_book.clone(),
+            // self.address_book.clone(),
             self.peer_store.clone(),
             self.credential.clone(),
         );

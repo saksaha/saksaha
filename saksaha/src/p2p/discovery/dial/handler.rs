@@ -4,10 +4,6 @@ use crate::{
     crypto::Crypto,
     err,
     p2p::{
-        address::{
-            address_book::{AddressBook, Filter},
-            Address, Status,
-        },
         credential::Credential,
         discovery::whoareyou::{self, WhoAreYouAck},
         peer::{self, Peer},
@@ -45,7 +41,7 @@ pub struct Handler {
     peer: Arc<Mutex<Peer>>,
     credential: Arc<Credential>,
     peer_op_port: u16,
-    address_book: Arc<AddressBook>,
+    // address_book: Arc<AddressBook>,
     my_disc_endpoint: String,
     peer_op_wakeup_tx: Arc<Sender<usize>>,
 }
@@ -55,7 +51,7 @@ impl Handler {
         peer: Arc<Mutex<Peer>>,
         credential: Arc<Credential>,
         peer_op_port: u16,
-        address_book: Arc<AddressBook>,
+        // address_book: Arc<AddressBook>,
         my_disc_endpoint: String,
         peer_op_wakeup_tx: Arc<Sender<usize>>,
     ) -> Handler {
@@ -63,7 +59,7 @@ impl Handler {
             peer,
             credential,
             peer_op_port,
-            address_book,
+            // address_book,
             my_disc_endpoint,
             peer_op_wakeup_tx,
         }
@@ -79,70 +75,71 @@ impl Handler {
             "Discarding dial request, endpoint to local, addr: {}\n",
             endpoint,
         );
-        match self.address_book.remove(idx).await {
-            Ok(_) => return Ok(()),
-            Err(err) => return Err(err),
-        }
+        // match self.address_book.remove(idx).await {
+        //     Ok(_) => return Ok(()),
+        //     Err(err) => return Err(err),
+        // }
+        Ok(())
     }
 
     pub async fn run(&mut self) -> HandleStatus<Error> {
-        let address_book_len = self.address_book.len().await;
+        // let address_book_len = self.address_book.len().await;
 
-        log!(DEBUG, "Address book len: {}\n", address_book_len);
+        // log!(DEBUG, "Address book len: {}\n", address_book_len);
 
-        let (addr, idx) =
-            match self.address_book.next(&Filter::not_discovered).await {
-                Some(a) => a,
-                None => {
-                    log!(DEBUG, "Cannot acquire next address\n");
+        // let (addr, idx) =
+            // match self.address_book.next(&Filter::not_discovered).await {
+            //     Some(a) => a,
+            //     None => {
+            //         log!(DEBUG, "Cannot acquire next address\n");
 
-                    return HandleStatus::NoAvailableAddress;
-                }
-            };
+            //         return HandleStatus::NoAvailableAddress;
+            //     }
+            // };
 
-        let addr = addr.lock().await;
-        let endpoint = format!("{}:{}", addr.ip, addr.disc_port);
+        // let addr = addr.lock().await;
+        // let endpoint = format!("{}:{}", addr.ip, addr.disc_port);
 
-        if endpoint == self.my_disc_endpoint {
-            match self.handle_my_endpoint(endpoint.to_owned(), idx).await {
-                Ok(_) => return HandleStatus::LocalAddrIdentical,
-                Err(err) => {
-                    log!(DEBUG, "Error handling my endpoint, err: {}", err);
-                }
-            }
-        };
+        // if endpoint == self.my_disc_endpoint {
+        //     match self.handle_my_endpoint(endpoint.to_owned(), idx).await {
+        //         Ok(_) => return HandleStatus::LocalAddrIdentical,
+        //         Err(err) => {
+        //             log!(DEBUG, "Error handling my endpoint, err: {}", err);
+        //         }
+        //     }
+        // };
 
-        let mut stream =
-            match TcpStream::connect(endpoint.to_owned()).await {
-                Ok(s) => {
-                    log!(
-                        DEBUG,
-                        "Successfully connected to endpoint, {}\n",
-                        endpoint
-                    );
-                    s
-                }
-                Err(err) => {
-                    log!(DEBUG, "Cannot disc dial to endpoint, {}\n", endpoint);
+        // let mut stream =
+        //     match TcpStream::connect(endpoint.to_owned()).await {
+        //         Ok(s) => {
+        //             log!(
+        //                 DEBUG,
+        //                 "Successfully connected to endpoint, {}\n",
+        //                 endpoint
+        //             );
+        //             s
+        //         }
+        //         Err(err) => {
+        //             log!(DEBUG, "Cannot disc dial to endpoint, {}\n", endpoint);
 
-                    return HandleStatus::ConnectionFail(err.into());
-                },
-            };
+        //             return HandleStatus::ConnectionFail(err.into());
+        //         },
+        //     };
 
-        match self.initiate_who_are_you(&mut stream).await {
-            Ok(_) => (),
-            Err(err) => return HandleStatus::WhoAreYouInitiateFail(err),
-        };
+        // match self.initiate_who_are_you(&mut stream).await {
+        //     Ok(_) => (),
+        //     Err(err) => return HandleStatus::WhoAreYouInitiateFail(err),
+        // };
 
-        let way_ack = match self.receive_who_are_you_ack(stream).await {
-            Ok(w) => w,
-            Err(err) => return HandleStatus::WhoAreYouAckReceiveFail(err),
-        };
+        // let way_ack = match self.receive_who_are_you_ack(stream).await {
+        //     Ok(w) => w,
+        //     Err(err) => return HandleStatus::WhoAreYouAckReceiveFail(err),
+        // };
 
-        match self.handle_succeed_who_are_you(way_ack, addr).await {
-            Ok(_) => (),
-            Err(err) => return HandleStatus::PeerUpdateFail(err),
-        };
+        // match self.handle_succeed_who_are_you(way_ack).await {
+        //     Ok(_) => (),
+        //     Err(err) => return HandleStatus::PeerUpdateFail(err),
+        // };
 
         HandleStatus::Success
     }
@@ -213,15 +210,15 @@ impl Handler {
     pub async fn handle_succeed_who_are_you(
         &self,
         way_ack: WhoAreYouAck,
-        mut addr: MutexGuard<'_, Address>,
+        // mut addr: MutexGuard<'_, Address>,
     ) -> Result<()> {
-        addr.status = Status::DiscoverySuccess;
+        // addr.status = Status::DiscoverySuccess;
 
         let mut peer = self.peer.lock().await;
         peer.status = peer::Status::DiscoverySuccess;
         peer.peer_id = way_ack.way.peer_id;
-        peer.ip = addr.ip.to_owned();
-        peer.disc_port = addr.disc_port;
+        // peer.ip = addr.ip.to_owned();
+        // peer.disc_port = addr.disc_port;
         peer.pk_bytes = way_ack.way.public_key_bytes;
         peer.peer_op_port = way_ack.way.peer_op_port;
 

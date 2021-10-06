@@ -7,7 +7,6 @@ use tokio::sync::{mpsc::Sender, Mutex};
 
 use super::handler::Handler;
 use crate::p2p::{
-    address::address_book::AddressBook,
     credential::Credential,
     discovery::dial::handler::HandleStatus,
     peer::peer_store::{Filter, PeerStore},
@@ -16,7 +15,7 @@ use crate::p2p::{
 pub struct Routine {
     peer_store: Arc<PeerStore>,
     credential: Arc<Credential>,
-    address_book: Arc<AddressBook>,
+    // address_book: Arc<AddressBook>,
     peer_op_port: u16,
     is_running: Arc<Mutex<bool>>,
     my_disc_endpoint: String,
@@ -27,7 +26,7 @@ impl Routine {
     pub fn new(
         peer_store: Arc<PeerStore>,
         credential: Arc<Credential>,
-        address_book: Arc<AddressBook>,
+        // address_book: Arc<AddressBook>,
         peer_op_port: u16,
         disc_port: u16,
         peer_op_wakeup_tx: Arc<Sender<usize>>,
@@ -38,7 +37,7 @@ impl Routine {
         Routine {
             peer_store,
             credential,
-            address_book,
+            // address_book,
             peer_op_port,
             is_running,
             my_disc_endpoint,
@@ -51,7 +50,7 @@ impl Routine {
 
         let peer_store = self.peer_store.clone();
         let credential = self.credential.clone();
-        let address_book = self.address_book.clone();
+        // let address_book = self.address_book.clone();
         let is_running = self.is_running.clone();
         let peer_op_port = self.peer_op_port;
         let my_disc_endpoint = self.my_disc_endpoint.to_owned();
@@ -72,7 +71,7 @@ impl Routine {
                         peer,
                         credential.clone(),
                         peer_op_port,
-                        address_book.clone(),
+                        // address_book.clone(),
                         my_disc_endpoint.to_owned(),
                         peer_op_wake_tx.clone(),
                     );
