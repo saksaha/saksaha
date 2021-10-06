@@ -1,8 +1,15 @@
-use crate::{common::{Error, Result}, err, p2p::{credential::Credential, peer::Peer, peer_op::{msg::Handshake}}};
-use k256::{EncodedPoint, PublicKey, SecretKey, ecdh::EphemeralSecret};
+use crate::{
+    common::{Error, Result},
+    err,
+    p2p::{credential::Credential, peer::Peer, peer_op::msg::Handshake},
+};
+use k256::{ecdh::EphemeralSecret, EncodedPoint, PublicKey, SecretKey};
 use logger::log;
 use std::sync::Arc;
-use tokio::{net::TcpStream, sync::{Mutex, MutexGuard}};
+use tokio::{
+    net::TcpStream,
+    sync::{Mutex, MutexGuard},
+};
 
 pub enum HandleStatus<E> {
     ConnectionFail(E),
@@ -12,8 +19,8 @@ pub enum HandleStatus<E> {
     Success,
 }
 
-pub struct Handler {
-    peer: Arc<Mutex<Peer>>,
+pub struct Handler<'a> {
+    peer: MutexGuard<'a, Peer>,
     credential: Arc<Credential>,
     // peer_op_port: u16,
     // address_book: Arc<AddressBook>,
@@ -21,9 +28,10 @@ pub struct Handler {
     // peer_op_wakeup_tx: Arc<Sender<usize>>,
 }
 
-impl Handler {
+impl<'a> Handler<'a> {
     pub fn new(
-        peer: Arc<Mutex<Peer>>,
+        // peer: Arc<Mutex<Peer>>,
+        peer: MutexGuard<Peer>,
         credential: Arc<Credential>,
         // peer_op_port: u16,
         // address_book: Arc<AddressBook>,
@@ -32,7 +40,8 @@ impl Handler {
     }
 
     pub async fn run(&self) -> HandleStatus<Error> {
-        let peer = self.peer.lock().await;
+        // let peer = self.peer.lock().await;
+        let peer = &self.peer;
         let peer_op_endpoint = format!("{}:{}", peer.ip, peer.peer_op_port);
         let credential = self.credential.clone();
 
@@ -65,7 +74,7 @@ impl Handler {
     pub async fn initiate_handshake(
         &self,
         stream: &mut TcpStream,
-        peer: MutexGuard<'_, Peer>,
+        peer: &MutexGuard<'_, Peer>,
         credential: Arc<Credential>,
     ) -> Result<()> {
         let peer_pk_bytes = peer.pk_bytes;
@@ -76,8 +85,8 @@ impl Handler {
         let a = match EncodedPoint::from_bytes(&peer_pk_bytes) {
             Ok(a) => a,
             Err(err) => {
-                println!("aa: {}" ,err);
-                return err!("f")
+                println!("aa: {}", err);
+                return err!("f");
             }
         };
         // let peer_pk = match PublicKey::from_sec1_bytes(&peer_pk_bytes) {
@@ -99,14 +108,12 @@ impl Handler {
         // let peer_pub_key = EncodedPoint::from(peer.peer_id);
         // let secret =
 
-
         // let handshake = Handshake::new();
 
         Ok(())
     }
 
     pub async fn receive_handshake_ack(&self, stream: TcpStream) -> Result<()> {
-
         Ok(())
     }
 }

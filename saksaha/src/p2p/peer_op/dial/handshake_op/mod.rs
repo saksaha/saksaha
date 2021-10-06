@@ -41,35 +41,35 @@ impl HandshakeOp {
             loop {
                 let start = SystemTime::now();
 
-                match peer_store.next(&Filter::discovery_success).await {
-                    Some(p) => {
-                        let handler = Handler::new(p, credential.clone());
+                // match peer_store.next(&Filter::discovery_success).await {
+                //     Some(p) => {
+                //         let handler = Handler::new(p, credential.clone());
 
-                        match handler.run().await {
-                            HandleStatus::ConnectionFail(err) => {}
-                            HandleStatus::HandshakeInitiateFail(err) => {}
-                            HandleStatus::Success => (),
-                        };
-                    }
-                    None => {
-                        log!(DEBUG, "Cannot find any discovered peer\n");
+                //         match handler.run().await {
+                //             HandleStatus::ConnectionFail(err) => {}
+                //             HandleStatus::HandshakeInitiateFail(err) => {}
+                //             HandleStatus::Success => (),
+                //         };
+                //     }
+                //     None => {
+                //         log!(DEBUG, "Cannot find any discovered peer\n");
 
-                        tokio::time::sleep(Duration::from_millis(2000)).await;
-                    }
-                }
+                //         tokio::time::sleep(Duration::from_millis(2000)).await;
+                //     }
+                // }
 
-                tokio::time::sleep(Duration::from_millis(1000)).await;
+                // tokio::time::sleep(Duration::from_millis(1000)).await;
 
-                match start.elapsed() {
-                    Ok(_) => (),
-                    Err(err) => {
-                        log!(
-                            DEBUG,
-                            "Error sleeping the duration, err: {}",
-                            err
-                        );
-                    }
-                }
+                // match start.elapsed() {
+                //     Ok(_) => (),
+                //     Err(err) => {
+                //         log!(
+                //             DEBUG,
+                //             "Error sleeping the duration, err: {}",
+                //             err
+                //         );
+                //     }
+                // }
             }
         });
     }

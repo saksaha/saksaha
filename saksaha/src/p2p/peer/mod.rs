@@ -29,8 +29,8 @@ pub struct Peer {
 
 impl Peer {
     pub fn new(
-        ip: String,
         peer_id: String,
+        ip: String,
         disc_port: u16,
     ) -> Peer {
         Peer {

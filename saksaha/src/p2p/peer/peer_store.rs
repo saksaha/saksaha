@@ -6,19 +6,28 @@ use tokio::sync::{Mutex, MutexGuard};
 pub struct Filter;
 
 impl Filter {
-    pub fn not_initialized(peer: MutexGuard<Peer>) -> bool {
-        peer.status == Status::NotInitialized
+    pub fn not_initialized(peer: &MutexGuard<Option<Peer>>) -> bool {
+        if let Some(p) = &**peer {
+            return p.status == Status::NotInitialized;
+        }
+        false
     }
 
-    pub fn discovery_success(peer: MutexGuard<Peer>) -> bool {
-        peer.status == Status::DiscoverySuccess
+    pub fn discovery_success(peer: &MutexGuard<Option<Peer>>) -> bool {
+        if let Some(p) = &**peer {
+            return p.status == Status::DiscoverySuccess;
+        }
+        false
     }
 }
 
+type MutexedPeer = Arc<Mutex<Option<Peer>>>;
+
 pub struct PeerStore {
+    mutex: Mutex<usize>,
+    slots: Vec<MutexedPeer>,
     pub capacity: usize,
     pub curr_idx: Mutex<usize>,
-    pub slots: Arc<Mutex<Vec<Arc<Mutex<Peer>>>>>,
 }
 
 impl PeerStore {
@@ -41,21 +50,21 @@ impl PeerStore {
         let urls_combined = [bootstrap_urls, default_urls].concat();
         let mut count = 0;
 
-        log!(DEBUG, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
-        log!(DEBUG, "Peer store\n");
+        log!(DEBUG, "*****************************************************\n");
+        log!(DEBUG, "* Peer store\n");
         for u in urls_combined {
             let p = match Peer::parse(u.to_owned()) {
                 Ok(p) => {
                     log!(
                         DEBUG,
-                        "Peer store[{}], peer_id: {}, ip: {}, disc_port: {}\n",
+                        "* [{}], peer_id: {}, ip: {}, disc_port: {}\n",
                         count,
                         p.peer_id,
                         p.ip,
                         p.disc_port
                     );
                     count += 1;
-                    Arc::new(Mutex::new(p))
+                    Arc::new(Mutex::new(Some(p)))
                 }
                 Err(err) => {
                     log!(DEBUG, "Cannot parse url, url: {}, err: {}\n", u, err);
@@ -68,43 +77,43 @@ impl PeerStore {
 
         log!(
             DEBUG,
-            "Peer store size: {}, capacity: {}\n",
+            "* Peer store size: {}, capacity: {}\n",
             slots.len(),
             capacity
         );
-        log!(DEBUG, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
+        log!(DEBUG, "*****************************************************\n");
 
         PeerStore {
+            mutex: Mutex::new(0),
             curr_idx: Mutex::new(0),
-            slots: Arc::new(Mutex::new(slots)),
+            slots,
             capacity,
         }
     }
 
     pub async fn next(
         &self,
-        filter: &(dyn Fn(MutexGuard<Peer>) -> bool + Sync + Send),
-    ) -> Option<Arc<Mutex<Peer>>> {
-        let slots = &self.slots;
-        let slots = slots.lock().await;
-        let capacity = self.capacity;
+        filter: &(dyn Fn(&MutexGuard<Option<Peer>>) -> bool + Sync + Send),
+    ) -> Option<MutexGuard<'_, Option<Peer>>> {
+        self.mutex.lock().await;
 
+        let cap = self.capacity;
         let mut curr_idx = self.curr_idx.lock().await;
         let start_idx = *curr_idx + 1;
 
-        for i in start_idx..start_idx + capacity {
-            let idx = i % capacity;
+        for i in start_idx..start_idx + cap {
+            let idx = i % cap;
 
-            if let Some(p) = slots.get(idx) {
+            if let Some(p) = self.slots.get(idx) {
                 let peer_lock = match p.try_lock() {
                     Ok(p) => p,
                     Err(_) => continue,
                 };
 
-                if filter(peer_lock) {
+                if filter(&peer_lock) {
                     *curr_idx = idx;
 
-                    return Some(p.clone());
+                    return Some(peer_lock);
                 } else {
                     continue;
                 }

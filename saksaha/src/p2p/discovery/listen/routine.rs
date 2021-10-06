@@ -30,24 +30,11 @@ impl Routine {
     pub fn run(&self, tcp_listener: TcpListener, peer_op_port: u16) {
         log!(DEBUG, "Start disc listening\n");
 
-        let peer_store = self.peer_store.clone();
-        // let address_book = self.address_book.clone();
         let credential = self.credential.clone();
+        let peer_store = self.peer_store.clone();
 
         tokio::spawn(async move {
             loop {
-                let peer_store = peer_store.clone();
-                let peer = match peer_store.next(&Filter::not_initialized).await
-                {
-                    Some(p) => p,
-                    None => {
-                        log!(DEBUG, "No available peer\n");
-
-                        tokio::time::sleep(Duration::from_millis(2000)).await;
-                        continue;
-                    }
-                };
-
                 let (stream, _) = match tcp_listener.accept().await {
                     Ok(res) => {
                         log!(
@@ -63,24 +50,12 @@ impl Routine {
                     }
                 };
 
-                // let addr = match address_book.reserve().await {
-                //     Some(a) => a,
-                //     None => {
-                //         log!(DEBUG, "No available address slot\n");
-
-                //         tokio::time::sleep(Duration::from_millis(2000)).await;
-                //         continue;
-                //     }
-                // };
-
                 let credential = credential.clone();
-                // let address_book = address_book.clone();
+                let peer_store = peer_store.clone();
                 let mut handler = Handler::new(
-                    // addr,
-                    // address_book,
                     stream,
-                    peer.clone(),
-                    credential,
+                    peer_store,
+                    credential.clone(),
                     peer_op_port,
                 );
 
@@ -122,6 +97,7 @@ impl Routine {
                     };
                 });
             }
+
         });
     }
 }
