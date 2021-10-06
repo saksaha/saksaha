@@ -50,7 +50,10 @@ impl PeerStore {
         let urls_combined = [bootstrap_urls, default_urls].concat();
         let mut count = 0;
 
-        log!(DEBUG, "*****************************************************\n");
+        log!(
+            DEBUG,
+            "*****************************************************\n"
+        );
         log!(DEBUG, "* Peer store\n");
         for u in urls_combined {
             let p = match Peer::parse(u.to_owned()) {
@@ -87,7 +90,10 @@ impl PeerStore {
             slots.len(),
             capacity
         );
-        log!(DEBUG, "*****************************************************\n");
+        log!(
+            DEBUG,
+            "*****************************************************\n"
+        );
 
         PeerStore {
             mutex: Mutex::new(0),
@@ -99,9 +105,15 @@ impl PeerStore {
 
     pub async fn next(
         &self,
+        start_idx: Option<usize>,
         filter: &(dyn Fn(&MutexGuard<Option<Peer>>) -> bool + Sync + Send),
     ) -> Option<MutexGuard<'_, Option<Peer>>> {
         self.mutex.lock().await;
+
+        let start_idx = match start_idx {
+            Some(i) => i,
+            None => 0,
+        };
 
         let cap = self.capacity;
         let mut curr_idx = self.curr_idx.lock().await;

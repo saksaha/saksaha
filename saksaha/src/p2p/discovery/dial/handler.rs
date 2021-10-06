@@ -1,5 +1,18 @@
 use super::whoareyou::WhoAreYou;
-use crate::{common::{Error, Result}, crypto::Crypto, err, p2p::{credential::Credential, discovery::whoareyou::{self, WhoAreYouAck}, peer::{self, Peer, peer_store::{Filter, PeerStore}}}};
+use crate::{
+    common::{Error, Result},
+    crypto::Crypto,
+    err,
+    p2p::{
+        credential::Credential,
+        discovery::whoareyou::{self, WhoAreYouAck},
+        peer::{
+            self,
+            peer_store::{Filter, PeerStore},
+            Peer,
+        },
+    },
+};
 use k256::ecdsa::{
     signature::{Signer, Verifier},
     Signature, SigningKey,
@@ -12,7 +25,9 @@ use tokio::{
     sync::{mpsc::Sender, Mutex, MutexGuard},
 };
 
-pub enum HandleStatus<E> {
+/// E Error
+/// I Index (Last accessed peer idx)
+pub enum HandleStatus<I, E> {
     NoAvailableAddress,
 
     LocalAddrIdentical,
@@ -25,7 +40,7 @@ pub enum HandleStatus<E> {
 
     PeerUpdateFail(E),
 
-    Success,
+    Success(I),
 }
 
 pub struct Handler {
@@ -34,6 +49,7 @@ pub struct Handler {
     peer_op_port: u16,
     my_disc_endpoint: String,
     peer_op_wakeup_tx: Arc<Sender<usize>>,
+    last_peer_idx: usize,
 }
 
 impl Handler {
@@ -43,6 +59,7 @@ impl Handler {
         peer_op_port: u16,
         my_disc_endpoint: String,
         peer_op_wakeup_tx: Arc<Sender<usize>>,
+        last_peer_idx: usize,
     ) -> Handler {
         Handler {
             peer_store,
@@ -50,6 +67,7 @@ impl Handler {
             peer_op_port,
             my_disc_endpoint,
             peer_op_wakeup_tx,
+            last_peer_idx,
         }
     }
 
@@ -70,23 +88,27 @@ impl Handler {
         Ok(())
     }
 
-    pub async fn run(&mut self) -> HandleStatus<Error> {
-        if let Some(p) = self.peer_store.next(&Filter::not_initialized).await {
+    pub async fn run(&mut self) -> HandleStatus<usize, Error> {
+        let last_peer_idx = self.last_peer_idx;
 
-        }
+        if let Some(p) = self
+            .peer_store
+            .next(Some(last_peer_idx), &Filter::not_initialized)
+            .await
+        {}
         // let address_book_len = self.address_book.len().await;
 
         // log!(DEBUG, "Address book len: {}\n", address_book_len);
 
         // let (addr, idx) =
-            // match self.address_book.next(&Filter::not_discovered).await {
-            //     Some(a) => a,
-            //     None => {
-            //         log!(DEBUG, "Cannot acquire next address\n");
+        // match self.address_book.next(&Filter::not_discovered).await {
+        //     Some(a) => a,
+        //     None => {
+        //         log!(DEBUG, "Cannot acquire next address\n");
 
-            //         return HandleStatus::NoAvailableAddress;
-            //     }
-            // };
+        //         return HandleStatus::NoAvailableAddress;
+        //     }
+        // };
 
         // let addr = addr.lock().await;
         // let peer = &self.peer;
@@ -136,7 +158,7 @@ impl Handler {
         //     Err(err) => return HandleStatus::PeerUpdateFail(err),
         // };
 
-        HandleStatus::Success
+        HandleStatus::Success(0)
     }
 
     pub async fn initiate_who_are_you(
