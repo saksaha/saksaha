@@ -27,7 +27,6 @@ pub struct PeerStore {
     mutex: Mutex<usize>,
     slots: Vec<MutexedPeer>,
     pub capacity: usize,
-    pub curr_idx: Mutex<usize>,
 }
 
 impl PeerStore {
@@ -97,7 +96,6 @@ impl PeerStore {
 
         PeerStore {
             mutex: Mutex::new(0),
-            curr_idx: Mutex::new(0),
             slots,
             capacity,
         }
@@ -116,29 +114,24 @@ impl PeerStore {
         };
 
         let cap = self.capacity;
-        let mut curr_idx = self.curr_idx.lock().await;
-        let start_idx = *curr_idx + 1;
 
         for i in start_idx..start_idx + cap {
             let idx = i % cap;
 
             if let Some(p) = self.slots.get(idx) {
-                let peer_lock = match p.try_lock() {
+                let peer_guard = match p.try_lock() {
                     Ok(p) => p,
                     Err(_) => continue,
                 };
 
-                if filter(&peer_lock) {
-                    *curr_idx = idx;
-
-                    return Some((peer_lock, idx));
+                if filter(&peer_guard) {
+                    return Some((peer_guard, idx));
                 } else {
                     continue;
                 }
             }
         }
 
-        *curr_idx = 0;
         None
     }
 }

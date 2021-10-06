@@ -76,6 +76,13 @@ impl Routine {
                     HandleStatus::NoAvailablePeer => {
                         break;
                     }
+                    HandleStatus::IllegalPeerFound(idx) => {
+                        log!(
+                            DEBUG,
+                            "Illegal peer has been found, idx: {}\n",
+                            idx,
+                        );
+                    }
                     HandleStatus::ConnectionFail(err) => {
                         log!(
                             DEBUG,
