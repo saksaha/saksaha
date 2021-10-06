@@ -1,23 +1,27 @@
 use super::handler::Handler;
-use crate::p2p::{address::{address_book::AddressBook, Address}, credential::Credential, discovery::listen::handler::HandleStatus, peer::peer_store::{Filter, PeerStore}};
+use crate::p2p::{
+    credential::Credential,
+    discovery::listen::handler::HandleStatus,
+    peer::peer_store::{Filter, PeerStore},
+};
 use logger::log;
 use std::{sync::Arc, time::Duration};
 use tokio::net::TcpListener;
 
 pub struct Routine {
-    address_book: Arc<AddressBook>,
+    // address_book: Arc<AddressBook>,
     peer_store: Arc<PeerStore>,
     credential: Arc<Credential>,
 }
 
 impl Routine {
     pub fn new(
-        address_book: Arc<AddressBook>,
+        // address_book: Arc<AddressBook>,
         peer_store: Arc<PeerStore>,
         credential: Arc<Credential>,
     ) -> Routine {
         Routine {
-            address_book,
+            // address_book,
             peer_store,
             credential,
         }
@@ -27,13 +31,14 @@ impl Routine {
         log!(DEBUG, "Start disc listening\n");
 
         let peer_store = self.peer_store.clone();
-        let address_book = self.address_book.clone();
+        // let address_book = self.address_book.clone();
         let credential = self.credential.clone();
 
         tokio::spawn(async move {
             loop {
                 let peer_store = peer_store.clone();
-                let peer = match peer_store.next(&Filter::not_initialized).await {
+                let peer = match peer_store.next(&Filter::not_initialized).await
+                {
                     Some(p) => p,
                     None => {
                         log!(DEBUG, "No available peer\n");
@@ -58,21 +63,21 @@ impl Routine {
                     }
                 };
 
-                let addr = match address_book.reserve().await {
-                    Some(a) => a,
-                    None => {
-                        log!(DEBUG, "No available address slot\n");
+                // let addr = match address_book.reserve().await {
+                //     Some(a) => a,
+                //     None => {
+                //         log!(DEBUG, "No available address slot\n");
 
-                        tokio::time::sleep(Duration::from_millis(2000)).await;
-                        continue;
-                    }
-                };
+                //         tokio::time::sleep(Duration::from_millis(2000)).await;
+                //         continue;
+                //     }
+                // };
 
                 let credential = credential.clone();
-                let address_book = address_book.clone();
+                // let address_book = address_book.clone();
                 let mut handler = Handler::new(
-                    addr,
-                    address_book,
+                    // addr,
+                    // address_book,
                     stream,
                     peer.clone(),
                     credential,

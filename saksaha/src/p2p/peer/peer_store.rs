@@ -1,4 +1,5 @@
 use super::{Peer, Status};
+use logger::log;
 use std::sync::Arc;
 use tokio::sync::{Mutex, MutexGuard};
 
@@ -23,22 +24,28 @@ pub struct PeerStore {
 impl PeerStore {
     pub fn new(
         capacity: usize,
-        bootstrap_peers: Option<Vec<String>>,
+        bootstrap_urls: Option<Vec<String>>,
     ) -> PeerStore {
         let mut slots = Vec::with_capacity(capacity);
 
-        if let Some(peers) = bootstrap_peers {
-            for p in peers {
-                Peer::parse();
-                // println!("{},", p);
+        if let Some(urls) = bootstrap_urls {
+            for u in urls {
+                let p = match Peer::parse(u.to_owned()) {
+                    Ok(p) => Arc::new(Mutex::new(p)),
+                    Err(err) => {
+                        log!(
+                            DEBUG,
+                            "Cannot parse url, url: {}, err: {}\n",
+                            u,
+                            err
+                        );
+                        continue;
+                    }
+                };
+
+                slots.push(p);
             }
         }
-
-        // for _ in 0..capacity {
-        //     let peer = Peer::new("".into(), "".into(), Status::NotInitialized);
-
-        //     slots.push(Arc::new(Mutex::new(peer)));
-        // }
 
         PeerStore {
             curr_idx: Mutex::new(0),

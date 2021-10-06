@@ -20,7 +20,7 @@ struct Components {
 
 pub struct Host {
     disc_port: Option<u16>,
-    bootstrap_peers: Option<Vec<String>>,
+    bootstrap_urls: Option<Vec<String>>,
     task_mng: Arc<TaskManager>,
     secret: String,
     public_key: String,
@@ -29,14 +29,14 @@ pub struct Host {
 impl Host {
     pub fn new(
         disc_port: Option<u16>,
-        bootstrap_peers: Option<Vec<String>>,
+        bootstrap_urls: Option<Vec<String>>,
         task_mng: Arc<TaskManager>,
         secret: String,
         public_key: String,
     ) -> Host {
         let host = Host {
             disc_port,
-            bootstrap_peers,
+            bootstrap_urls,
             task_mng,
             secret,
             public_key,
@@ -87,7 +87,7 @@ impl Host {
             }
         };
 
-        let peer_store = PeerStore::new(10, self.bootstrap_peers);
+        let peer_store = PeerStore::new(10, self.bootstrap_urls.clone());
         let peer_store = Arc::new(peer_store);
         let (disc_wakeup_tx, disc_wakeup_rx) = mpsc::channel::<usize>(5);
         let (peer_op_wakeup_tx, peer_op_wakeup_rx) = mpsc::channel::<usize>(5);
@@ -104,7 +104,6 @@ impl Host {
 
         let disc = Disc::new(
             self.disc_port,
-            self.bootstrap_peers.to_owned(),
             peer_store.clone(),
             self.task_mng.clone(),
             credential.clone(),

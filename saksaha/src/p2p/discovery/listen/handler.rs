@@ -2,7 +2,6 @@ use crate::{
     common::{Error, Result},
     err,
     p2p::{
-        address::{address_book::AddressBook, Address, Status as AddrStatus},
         credential::Credential,
         discovery::whoareyou::{self, WhoAreYou, WhoAreYouAck},
         peer::{Peer, Status as PeerStatus},
@@ -26,8 +25,8 @@ pub enum HandleStatus<E> {
 }
 
 pub struct Handler {
-    addr: Arc<Mutex<Address>>,
-    address_book: Arc<AddressBook>,
+    // addr: Arc<Mutex<Address>>,
+    // address_book: Arc<AddressBook>,
     stream: TcpStream,
     peer: Arc<Mutex<Peer>>,
     credential: Arc<Credential>,
@@ -36,16 +35,16 @@ pub struct Handler {
 
 impl Handler {
     pub fn new(
-        addr: Arc<Mutex<Address>>,
-        address_book: Arc<AddressBook>,
+        // addr: Arc<Mutex<Address>>,
+        // address_book: Arc<AddressBook>,
         stream: TcpStream,
         peer: Arc<Mutex<Peer>>,
         credential: Arc<Credential>,
         peer_op_port: u16,
     ) -> Handler {
         Handler {
-            addr,
-            address_book,
+            // addr,
+            // address_book,
             stream,
             peer,
             credential,
@@ -124,10 +123,10 @@ impl Handler {
             Err(err) => return Err(err.into()),
         };
 
-        let addr = self.addr.clone();
-        let mut addr = addr.lock().await;
+        // let addr = self.addr.clone();
+        // let mut addr = addr.lock().await;
         // addr.ip =
-        addr.status = AddrStatus::DiscoverySuccess;
+        // addr.status = AddrStatus::DiscoverySuccess;
 
         let mut peer = self.peer.lock().await;
         peer.status = PeerStatus::DiscoverySuccess;
