@@ -28,24 +28,51 @@ impl PeerStore {
     ) -> PeerStore {
         let mut slots = Vec::with_capacity(capacity);
 
-        if let Some(urls) = bootstrap_urls {
-            for u in urls {
-                let p = match Peer::parse(u.to_owned()) {
-                    Ok(p) => Arc::new(Mutex::new(p)),
-                    Err(err) => {
-                        log!(
-                            DEBUG,
-                            "Cannot parse url, url: {}, err: {}\n",
-                            u,
-                            err
-                        );
-                        continue;
-                    }
-                };
+        let bootstrap_urls = match bootstrap_urls {
+            Some(u) => u,
+            None => vec![],
+        };
 
-                slots.push(p);
-            }
+        let default_urls = crate::default_bootstrap_urls!()
+            .into_iter()
+            .map(|url| url.to_string())
+            .collect::<Vec<String>>();
+
+        let urls_combined = [bootstrap_urls, default_urls].concat();
+        let mut count = 0;
+
+        log!(DEBUG, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+        log!(DEBUG, "Peer store\n");
+        for u in urls_combined {
+            let p = match Peer::parse(u.to_owned()) {
+                Ok(p) => {
+                    log!(
+                        DEBUG,
+                        "Peer store[{}], peer_id: {}, ip: {}, disc_port: {}\n",
+                        count,
+                        p.peer_id,
+                        p.ip,
+                        p.disc_port
+                    );
+                    count += 1;
+                    Arc::new(Mutex::new(p))
+                }
+                Err(err) => {
+                    log!(DEBUG, "Cannot parse url, url: {}, err: {}\n", u, err);
+                    continue;
+                }
+            };
+
+            slots.push(p);
         }
+
+        log!(
+            DEBUG,
+            "Peer store size: {}, capacity: {}\n",
+            slots.len(),
+            capacity
+        );
+        log!(DEBUG, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
 
         PeerStore {
             curr_idx: Mutex::new(0),
