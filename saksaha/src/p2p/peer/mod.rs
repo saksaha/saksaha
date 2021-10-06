@@ -1,4 +1,5 @@
 pub mod peer_store;
+mod bootstrap;
 
 use std::cmp::PartialEq;
 use crate::{common::{Error, Result}, err};
