@@ -107,7 +107,7 @@ impl PeerStore {
         &self,
         start_idx: Option<usize>,
         filter: &(dyn Fn(&MutexGuard<Option<Peer>>) -> bool + Sync + Send),
-    ) -> Option<MutexGuard<'_, Option<Peer>>> {
+    ) -> Option<(MutexGuard<'_, Option<Peer>>, usize)> {
         self.mutex.lock().await;
 
         let start_idx = match start_idx {
@@ -131,7 +131,7 @@ impl PeerStore {
                 if filter(&peer_lock) {
                     *curr_idx = idx;
 
-                    return Some(peer_lock);
+                    return Some((peer_lock, idx));
                 } else {
                     continue;
                 }
