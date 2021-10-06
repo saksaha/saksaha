@@ -1,14 +1,5 @@
 use super::whoareyou::WhoAreYou;
-use crate::{
-    common::{Error, Result},
-    crypto::Crypto,
-    err,
-    p2p::{
-        credential::Credential,
-        discovery::whoareyou::{self, WhoAreYouAck},
-        peer::{self, Peer},
-    },
-};
+use crate::{common::{Error, Result}, crypto::Crypto, err, p2p::{credential::Credential, discovery::whoareyou::{self, WhoAreYouAck}, peer::{self, Peer, peer_store::{Filter, PeerStore}}}};
 use k256::ecdsa::{
     signature::{Signer, Verifier},
     Signature, SigningKey,
@@ -38,7 +29,7 @@ pub enum HandleStatus<E> {
 }
 
 pub struct Handler {
-    peer: Arc<Mutex<Peer>>,
+    peer_store: Arc<PeerStore>,
     credential: Arc<Credential>,
     peer_op_port: u16,
     // address_book: Arc<AddressBook>,
@@ -48,7 +39,9 @@ pub struct Handler {
 
 impl Handler {
     pub fn new(
-        peer: Arc<Mutex<Peer>>,
+        // peer: Arc<Mutex<Peer>>,
+        // peer: MutexGuard<Peer>,
+        peer_store: Arc<PeerStore>,
         credential: Arc<Credential>,
         peer_op_port: u16,
         // address_book: Arc<AddressBook>,
@@ -56,7 +49,7 @@ impl Handler {
         peer_op_wakeup_tx: Arc<Sender<usize>>,
     ) -> Handler {
         Handler {
-            peer,
+            peer_store,
             credential,
             peer_op_port,
             // address_book,
@@ -83,6 +76,9 @@ impl Handler {
     }
 
     pub async fn run(&mut self) -> HandleStatus<Error> {
+        if let Some(p) = self.peer_store.next(&Filter::not_initialized).await {
+
+        }
         // let address_book_len = self.address_book.len().await;
 
         // log!(DEBUG, "Address book len: {}\n", address_book_len);
@@ -98,7 +94,11 @@ impl Handler {
             // };
 
         // let addr = addr.lock().await;
-        // let endpoint = format!("{}:{}", addr.ip, addr.disc_port);
+        // let peer = &self.peer;
+        // let peer = peer.lock().await;
+        // let endpoint = format!("{}:{}", peer.ip, peer.disc_port);
+
+        // println!("44, {}", endpoint);
 
         // if endpoint == self.my_disc_endpoint {
         //     match self.handle_my_endpoint(endpoint.to_owned(), idx).await {
@@ -208,41 +208,44 @@ impl Handler {
     }
 
     pub async fn handle_succeed_who_are_you(
-        &self,
+        &mut self,
         way_ack: WhoAreYouAck,
         // mut addr: MutexGuard<'_, Address>,
     ) -> Result<()> {
         // addr.status = Status::DiscoverySuccess;
 
-        let mut peer = self.peer.lock().await;
-        peer.status = peer::Status::DiscoverySuccess;
-        peer.peer_id = way_ack.way.peer_id;
-        // peer.ip = addr.ip.to_owned();
-        // peer.disc_port = addr.disc_port;
-        peer.pk_bytes = way_ack.way.public_key_bytes;
-        peer.peer_op_port = way_ack.way.peer_op_port;
+        // let mut peer = self.peer.lock().await;
+        // let peer = &self.peer;
+        // let peer = &mut self.peer;
+        // peer.status = peer::Status::DiscoverySuccess;
+        // peer.peer_id = way_ack.way.peer_id;
+        // // peer.ip = addr.ip.to_owned();
+        // // peer.disc_port = addr.disc_port;
+        // peer.pk_bytes = way_ack.way.public_key_bytes;
+        // peer.peer_op_port = way_ack.way.peer_op_port;
 
-        log!(DEBUG, "Successfully handled disc dial peer: {:?}\n", peer);
+        // log!(DEBUG, "Successfully handled disc dial peer: {:?}\n", peer);
 
-        let peer_op_wakeup_tx = self.peer_op_wakeup_tx.clone();
+        // let peer_op_wakeup_tx = self.peer_op_wakeup_tx.clone();
 
-        let wakeup = tokio::spawn(async move {
-            match peer_op_wakeup_tx.send(0).await {
-                Ok(_) => Ok(()),
-                Err(err) => {
-                    return err!(
-                        "Error sending peer op wakeup msg, err: {}",
-                        err
-                    );
-                }
-            }
-        });
+        // let wakeup = tokio::spawn(async move {
+        //     match peer_op_wakeup_tx.send(0).await {
+        //         Ok(_) => Ok(()),
+        //         Err(err) => {
+        //             return err!(
+        //                 "Error sending peer op wakeup msg, err: {}",
+        //                 err
+        //             );
+        //         }
+        //     }
+        // });
 
-        match wakeup.await {
-            Ok(_) => {
-                Ok(())
-            },
-            Err(err) => return Err(err.into()),
-        }
+        // match wakeup.await {
+        //     Ok(_) => {
+        //         Ok(())
+        //     },
+        //     Err(err) => return Err(err.into()),
+        // }
+        Ok(())
     }
 }

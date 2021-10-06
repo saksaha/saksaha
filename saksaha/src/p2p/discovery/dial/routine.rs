@@ -15,7 +15,6 @@ use crate::p2p::{
 pub struct Routine {
     peer_store: Arc<PeerStore>,
     credential: Arc<Credential>,
-    // address_book: Arc<AddressBook>,
     peer_op_port: u16,
     is_running: Arc<Mutex<bool>>,
     my_disc_endpoint: String,
@@ -26,7 +25,6 @@ impl Routine {
     pub fn new(
         peer_store: Arc<PeerStore>,
         credential: Arc<Credential>,
-        // address_book: Arc<AddressBook>,
         peer_op_port: u16,
         disc_port: u16,
         peer_op_wakeup_tx: Arc<Sender<usize>>,
@@ -37,7 +35,6 @@ impl Routine {
         Routine {
             peer_store,
             credential,
-            // address_book,
             peer_op_port,
             is_running,
             my_disc_endpoint,
@@ -50,7 +47,6 @@ impl Routine {
 
         let peer_store = self.peer_store.clone();
         let credential = self.credential.clone();
-        // let address_book = self.address_book.clone();
         let is_running = self.is_running.clone();
         let peer_op_port = self.peer_op_port;
         let my_disc_endpoint = self.my_disc_endpoint.to_owned();
@@ -61,63 +57,70 @@ impl Routine {
             *is_running_lock = true;
             std::mem::drop(is_running_lock);
 
+            // let mut a = Vec::with_capacity(3);
+            // a.push(1);
+            // a.push(2);
+            // a.push(3);
+            // a.push(4);
+            // a.push(5);
+
+            // for e in a {
+            //     println!("1, {}", e);
+            // }
+
             loop {
                 let start = SystemTime::now();
 
-                if let Some(peer) =
-                    peer_store.next(&Filter::not_initialized).await
-                {
-                    let mut handler = Handler::new(
-                        peer,
-                        credential.clone(),
-                        peer_op_port,
-                        // address_book.clone(),
-                        my_disc_endpoint.to_owned(),
-                        peer_op_wake_tx.clone(),
-                    );
+                let mut handler = Handler::new(
+                    peer_store.clone(),
+                    credential.clone(),
+                    peer_op_port,
+                    my_disc_endpoint.to_owned(),
+                    peer_op_wake_tx.clone(),
+                );
 
-                    match handler.run().await {
-                        HandleStatus::NoAvailableAddress => {
-                            break;
-                        }
-                        HandleStatus::ConnectionFail(err) => {
-                            log!(
-                                DEBUG,
-                                "Disc dial connection fail, err: {}\n",
-                                err
-                            );
-                        }
-                        HandleStatus::LocalAddrIdentical => (),
-                        HandleStatus::Success => (),
-                        HandleStatus::WhoAreYouInitiateFail(err) => {
-                            log!(
-                                DEBUG,
-                                "Disc dial who are you \
-                                initiate failed, err: {}\n",
-                                err
-                            );
-                        }
-                        HandleStatus::WhoAreYouAckReceiveFail(err) => {
-                            log!(
-                                DEBUG,
-                                "Disc dial who are you \
-                                ack receive failed, err: {}\n",
-                                err
-                            );
-                        }
-                        HandleStatus::PeerUpdateFail(err) => {
-                            log!(
-                                DEBUG,
-                                "Disc dial peer update fail, err: {}\n",
-                                err
-                            );
-                        }
+                match handler.run().await {
+                    HandleStatus::NoAvailableAddress => {
+                        break;
                     }
-                } else {
-                    log!(DEBUG, "Peer not available");
-
-                    tokio::time::sleep(Duration::from_millis(2000)).await;
+                    HandleStatus::ConnectionFail(err) => {
+                        log!(
+                            DEBUG,
+                            "Disc dial connection fail, err: {}\n",
+                            err
+                        );
+                    }
+                    HandleStatus::LocalAddrIdentical => (),
+                    HandleStatus::Success => (),
+                    HandleStatus::WhoAreYouInitiateFail(err) => {
+                        log!(
+                            DEBUG,
+                            "Disc dial who are you \
+                                initiate failed, err: {}\n",
+                            err
+                        );
+                    }
+                    HandleStatus::WhoAreYouAckReceiveFail(err) => {
+                        log!(
+                            DEBUG,
+                            "Disc dial who are you \
+                                ack receive failed, err: {}\n",
+                            err
+                        );
+                    }
+                    HandleStatus::PeerUpdateFail(err) => {
+                        log!(
+                            DEBUG,
+                            "Disc dial peer update fail, err: {}\n",
+                            err
+                        );
+                    }
                 }
+                // } else {
+                //     log!(DEBUG, "Cannot disc dial, peer not available\n");
+
+                //     tokio::time::sleep(Duration::from_millis(2000)).await;
+                // }
 
                 tokio::time::sleep(Duration::from_millis(1000)).await;
 

@@ -1,16 +1,13 @@
-use crate::{
-    common::{Error, Result},
-    err,
-    p2p::{
-        credential::Credential,
-        discovery::whoareyou::{self, WhoAreYou, WhoAreYouAck},
-        peer::{Peer, Status as PeerStatus},
-    },
-};
+use crate::{common::{Error, Result}, err, p2p::{credential::Credential, discovery::whoareyou::{self, WhoAreYou, WhoAreYouAck}, peer::{Peer, Status as PeerStatus, peer_store::PeerStore}}};
 use k256::ecdsa::{signature::Signer, Signature, SigningKey};
 use logger::log;
 use std::sync::Arc;
-use tokio::{io::AsyncWriteExt, net::TcpStream, sync::Mutex};
+use tokio::{
+    io::AsyncWriteExt,
+    net::TcpStream,
+    sync::{Mutex, MutexGuard},
+    task::JoinHandle,
+};
 
 pub enum HandleStatus<E> {
     WhoAreYouReceiveFail(E),
@@ -28,7 +25,8 @@ pub struct Handler {
     // addr: Arc<Mutex<Address>>,
     // address_book: Arc<AddressBook>,
     stream: TcpStream,
-    peer: Arc<Mutex<Peer>>,
+    // peer: MutexGuard<'a, Peer>,
+    peer_store: Arc<PeerStore>,
     credential: Arc<Credential>,
     peer_op_port: u16,
 }
@@ -38,7 +36,8 @@ impl Handler {
         // addr: Arc<Mutex<Address>>,
         // address_book: Arc<AddressBook>,
         stream: TcpStream,
-        peer: Arc<Mutex<Peer>>,
+        // peer: MutexGuard<Peer>,
+        peer_store: Arc<PeerStore>,
         credential: Arc<Credential>,
         peer_op_port: u16,
     ) -> Handler {
@@ -46,7 +45,7 @@ impl Handler {
             // addr,
             // address_book,
             stream,
-            peer,
+            peer_store,
             credential,
             peer_op_port,
         }
@@ -115,7 +114,7 @@ impl Handler {
     }
 
     pub async fn handle_succeed_who_are_you(
-        &self,
+        &mut self,
         way: WhoAreYou,
     ) -> Result<()> {
         let peer_addr = match self.stream.peer_addr() {
@@ -128,14 +127,19 @@ impl Handler {
         // addr.ip =
         // addr.status = AddrStatus::DiscoverySuccess;
 
-        let mut peer = self.peer.lock().await;
-        peer.status = PeerStatus::DiscoverySuccess;
-        peer.ip = peer_addr.ip().to_string();
-        peer.disc_port = peer_addr.port();
-        peer.peer_op_port = way.peer_op_port;
-        peer.peer_id = way.peer_id;
+        // let mut peer = self.peer.lock().await;
+        // let peer = &mut self.peer;
+        // peer.status = PeerStatus::DiscoverySuccess;
+        // peer.ip = peer_addr.ip().to_string();
+        // peer.disc_port = peer_addr.port();
+        // peer.peer_op_port = way.peer_op_port;
+        // peer.peer_id = way.peer_id;
 
-        log!(DEBUG, "Successfully handled disc listen, peer: {:?}\n", peer);
+        // log!(
+        //     DEBUG,
+        //     "Successfully handled disc listen, peer: {:?}\n",
+        //     peer
+        // );
 
         Ok(())
     }
