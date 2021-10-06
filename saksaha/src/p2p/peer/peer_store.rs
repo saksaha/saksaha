@@ -63,7 +63,6 @@ impl PeerStore {
                         p.ip,
                         p.disc_port
                     );
-                    count += 1;
                     Arc::new(Mutex::new(Some(p)))
                 }
                 Err(err) => {
@@ -73,11 +72,18 @@ impl PeerStore {
             };
 
             slots.push(p);
+            count += 1;
+        }
+
+        for _ in count..capacity {
+            let empty_peer = Arc::new(Mutex::new(None));
+            slots.push(empty_peer);
         }
 
         log!(
             DEBUG,
-            "* Peer store size: {}, capacity: {}\n",
+            "* Peer store init count: {}, len: {}, capacity: {}\n",
+            count,
             slots.len(),
             capacity
         );
