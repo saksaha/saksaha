@@ -32,19 +32,15 @@ pub struct Handler {
     peer_store: Arc<PeerStore>,
     credential: Arc<Credential>,
     peer_op_port: u16,
-    // address_book: Arc<AddressBook>,
     my_disc_endpoint: String,
     peer_op_wakeup_tx: Arc<Sender<usize>>,
 }
 
 impl Handler {
     pub fn new(
-        // peer: Arc<Mutex<Peer>>,
-        // peer: MutexGuard<Peer>,
         peer_store: Arc<PeerStore>,
         credential: Arc<Credential>,
         peer_op_port: u16,
-        // address_book: Arc<AddressBook>,
         my_disc_endpoint: String,
         peer_op_wakeup_tx: Arc<Sender<usize>>,
     ) -> Handler {
@@ -52,7 +48,6 @@ impl Handler {
             peer_store,
             credential,
             peer_op_port,
-            // address_book,
             my_disc_endpoint,
             peer_op_wakeup_tx,
         }

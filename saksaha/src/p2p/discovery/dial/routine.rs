@@ -57,17 +57,6 @@ impl Routine {
             *is_running_lock = true;
             std::mem::drop(is_running_lock);
 
-            // let mut a = Vec::with_capacity(3);
-            // a.push(1);
-            // a.push(2);
-            // a.push(3);
-            // a.push(4);
-            // a.push(5);
-
-            // for e in a {
-            //     println!("1, {}", e);
-            // }
-
             loop {
                 let start = SystemTime::now();
 
