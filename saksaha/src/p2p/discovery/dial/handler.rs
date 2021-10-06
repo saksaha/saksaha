@@ -30,6 +30,8 @@ use tokio::{
 pub enum HandleStatus<I, E> {
     NoAvailablePeer,
 
+    IllegalPeerFound(I),
+
     LocalAddrIdentical,
 
     ConnectionFail(E),
@@ -96,14 +98,30 @@ impl Handler {
             .next(Some(*last_peer_idx), &Filter::not_initialized)
             .await;
 
-        let (peer, peer_idx) = match peer {
-            Some((p, idx)) => (p, idx),
+        let (mut peer, peer_idx) = match peer {
+            Some((peer_guard, idx)) => (peer_guard, idx),
             None => return HandleStatus::NoAvailablePeer
         };
 
         *last_peer_idx = peer_idx;
 
+        let peer = match &mut *peer {
+            Some(a) => a,
+            None => return HandleStatus::NoAvailablePeer
+        };
 
+        peer.ip = "3".into();
+
+
+
+        // std::mem::drop(peer);
+
+        // a.peer_id = "3".into();
+
+        // let a = match *peer {
+        //     Some(p) => p,
+        //     None => return HandleStatus::IllegalPeerFound(0),
+        // };
 
         // let address_book_len = self.address_book.len().await;
 
