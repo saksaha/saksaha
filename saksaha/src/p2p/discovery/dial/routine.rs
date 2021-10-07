@@ -17,7 +17,7 @@ pub struct Routine {
     credential: Arc<Credential>,
     peer_op_port: u16,
     is_running: Arc<Mutex<bool>>,
-    my_disc_endpoint: String,
+    disc_port: u16,
     peer_op_wakeup_tx: Arc<Sender<usize>>,
     last_peer_idx: Arc<Mutex<usize>>,
 }
@@ -31,7 +31,6 @@ impl Routine {
         peer_op_wakeup_tx: Arc<Sender<usize>>,
     ) -> Routine {
         let is_running = Arc::new(Mutex::new(false));
-        let my_disc_endpoint = format!("127.0.0.1:{}", disc_port);
 
         Routine {
             peer_store,
@@ -39,7 +38,7 @@ impl Routine {
             peer_op_port,
             last_peer_idx: Arc::new(Mutex::new(0)),
             is_running,
-            my_disc_endpoint,
+            disc_port,
             peer_op_wakeup_tx,
         }
     }
@@ -51,9 +50,9 @@ impl Routine {
         let credential = self.credential.clone();
         let is_running = self.is_running.clone();
         let peer_op_port = self.peer_op_port;
-        let my_disc_endpoint = self.my_disc_endpoint.to_owned();
         let peer_op_wake_tx = self.peer_op_wakeup_tx.clone();
         let last_peer_idx = self.last_peer_idx.clone();
+        let disc_port = self.disc_port;
 
         tokio::spawn(async move {
             let mut is_running_lock = is_running.lock().await;
@@ -67,12 +66,19 @@ impl Routine {
                     peer_store.clone(),
                     credential.clone(),
                     peer_op_port,
-                    my_disc_endpoint.to_owned(),
+                    disc_port,
                     peer_op_wake_tx.clone(),
                     last_peer_idx.clone(),
                 );
 
                 match handler.run().await {
+                    HandleStatus::IllegalEndpoint(err) => {
+                        log!(
+                            DEBUG,
+                            "Peer may have an illegal endpoint, err: {}\n",
+                            err
+                        );
+                    }
                     HandleStatus::NoAvailablePeer => {
                         break;
                     }
