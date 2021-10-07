@@ -1,52 +1,50 @@
 pub mod status;
 pub mod task_manager;
 
-use crate::{common::{Error, Result}, err, node::status::Status, p2p::host::{self, Host, HostStatus}, pconfig::PConfig, rpc::{self, RPC}};
+use crate::{
+    common::{Error, Result},
+    err,
+    node::status::Status,
+    p2p::host::{self, Host, HostStatus},
+    pconfig::PConfig,
+    rpc::{self, RPC},
+};
 use logger::log;
 use std::sync::Arc;
 use task_manager::{MsgKind, TaskManager};
-use tokio::{self, runtime::Runtime, signal};
-
-struct Components {
-    rpc: RPC,
-    host: Host,
-}
+use tokio::{self, signal};
 
 pub struct Node {
-    rpc_port: Option<u16>,
-    disc_port: Option<u16>,
-    bootstrap_urls: Option<Vec<String>>,
-    pconfig: PConfig,
     task_mng: Arc<TaskManager>,
 }
 
 impl Node {
-    pub fn new(
-        rpc_port: Option<u16>,
-        disc_port: Option<u16>,
-        bootstrap_urls: Option<Vec<String>>,
-        pconfig: PConfig,
-    ) -> Result<Node> {
+    pub fn new() -> Node {
         let task_mng = Arc::new(TaskManager::new());
 
-        let node = Node {
-            rpc_port,
-            disc_port,
-            bootstrap_urls,
-            pconfig,
-            task_mng,
-        };
-
-        Ok(node)
+        Node { task_mng }
     }
 
     async fn start_components(
         &self,
-        components: Arc<Components>,
+        rpc_port: Option<u16>,
+        disc_port: Option<u16>,
+        bootstrap_urls: Option<Vec<String>>,
+        pconfig: PConfig,
     ) -> Result<()> {
-        let c = components.clone();
+        let rpc = RPC::new(self.task_mng.clone(), rpc_port);
+
+        let p2p_config = pconfig.p2p;
+        let host = match Host::new(
+            self.task_mng.clone(),
+            p2p_config,
+        ) {
+            Ok(h) => h,
+            Err(err) => return Err(err),
+        };
+
         let rpc_status = tokio::spawn(async move {
-            return c.rpc.start().await;
+            return rpc.start().await;
         });
 
         let rpc_port: u16 = match rpc_status.await {
@@ -59,9 +57,12 @@ impl Node {
             }
         };
 
-        let c = components.clone();
         let host_status = tokio::spawn(async move {
-            return c.host.start(rpc_port).await;
+            return host.start(
+                rpc_port,
+                disc_port,
+                bootstrap_urls.to_owned(),
+            ).await;
         });
 
         match host_status.await {
@@ -77,26 +78,13 @@ impl Node {
         Ok(())
     }
 
-    fn make_components(&self) -> Result<Components> {
-        let rpc = RPC::new(self.task_mng.clone(), self.rpc_port);
-
-        let secret = self.pconfig.p2p.secret.to_owned();
-        let public_key = self.pconfig.p2p.public_key.to_owned();
-
-        let host = Host::new(
-            self.disc_port,
-            self.bootstrap_urls.to_owned(),
-            self.task_mng.clone(),
-            secret,
-            public_key,
-        );
-
-        let components = Components { rpc, host };
-
-        Ok(components)
-    }
-
-    pub fn start(&self) -> Status<Error> {
+    pub fn start(
+        &self,
+        rpc_port: Option<u16>,
+        disc_port: Option<u16>,
+        bootstrap_urls: Option<Vec<String>>,
+        pconfig: PConfig,
+    ) -> Status<Error> {
         log!(DEBUG, "Start node...\n");
 
         let runtime = tokio::runtime::Builder::new_multi_thread()
@@ -105,14 +93,14 @@ impl Node {
 
         let node_status = match runtime {
             Ok(r) => r.block_on(async {
-                let components = match self.make_components() {
-                    Ok(c) => Arc::new(c),
-                    Err(err) => {
-                        return Status::SetupFailed(err);
-                    }
-                };
+                let started = self.start_components(
+                    rpc_port,
+                    disc_port,
+                    bootstrap_urls,
+                    pconfig,
+                );
 
-                match self.start_components(components).await {
+                match started.await {
                     Ok(_) => (),
                     Err(err) => {
                         return Status::SetupFailed(err);

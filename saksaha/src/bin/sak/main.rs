@@ -99,26 +99,19 @@ fn main() {
         }
     };
 
+    let node = Node::new();
+
     let pconf = make_pconfig(args.config);
 
-    let node = match Node::new(
+    match node.start(
         args.rpc_port,
         args.disc_port,
         args.bootstrap_urls,
         pconf,
     ) {
-        Ok(n) => n,
-        Err(err) => {
-            log!(DEBUG, "Error creating a node, err: {}\n", err);
-
-            std::process::exit(1);
-        }
-    };
-
-    match node.start() {
         Status::Launched => (),
         Status::SetupFailed(err) => {
-            log!(DEBUG, "Error starting a node, err: {}", err);
+            log!(DEBUG, "Error starting a node, err: {}\n", err);
 
             std::process::exit(1);
         }
