@@ -5,7 +5,7 @@ use tokio::net::TcpListener;
 pub struct Listener;
 
 impl Listener {
-    pub async fn new_tcp(port: Option<u16>) -> Result<TcpListener> {
+    pub async fn new_tcp(port: Option<u16>) -> Result<(TcpListener, u16)> {
         let port = match port {
             Some(p) => p,
             None => 0,
@@ -34,6 +34,6 @@ impl Listener {
             local_addr
         );
 
-        Ok(tcp_listener)
+        Ok((tcp_listener, local_addr.port()))
     }
 }

@@ -19,7 +19,6 @@ use tokio::sync::{
 };
 
 pub struct Dial {
-    // pub address_book: Arc<AddressBook>,
     peer_store: Arc<PeerStore>,
     peer_op_port: u16,
     task_mng: Arc<TaskManager>,
@@ -30,7 +29,6 @@ pub struct Dial {
 
 impl Dial {
     pub fn new(
-        // address_book: Arc<AddressBook>,
         peer_store: Arc<PeerStore>,
         peer_op_port: u16,
         task_mng: Arc<TaskManager>,
@@ -39,7 +37,6 @@ impl Dial {
         peer_op_wakeup_tx: Arc<Sender<usize>>,
     ) -> Dial {
         Dial {
-            // address_book,
             peer_store,
             peer_op_port,
             task_mng,
@@ -55,7 +52,6 @@ impl Dial {
         let routine = Arc::new(Routine::new(
             self.peer_store.clone(),
             self.credential.clone(),
-            // self.address_book.clone(),
             self.peer_op_port,
             my_disc_port,
             self.peer_op_wakeup_tx.clone(),
@@ -75,7 +71,7 @@ impl Dial {
                     }
                     None => {
                         let msg = msg_errd!(
-                            "Cannot receive dial wakeup msg, \
+                            "Cannot receive disc dial wakeup msg, \
                             is channel closed?",
                         );
 

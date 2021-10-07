@@ -14,60 +14,59 @@ use std::sync::Arc;
 use tokio::{net::TcpListener, sync::Mutex};
 
 pub struct Listen {
-    disc_port: Option<u16>,
-    peer_op_port: u16,
-    peer_store: Arc<PeerStore>,
-    task_mng: Arc<TaskManager>,
-    credential: Arc<Credential>,
+    // disc_port: Option<u16>,
+    // peer_op_port: u16,
+    // peer_store: Arc<PeerStore>,
+    // task_mng: Arc<TaskManager>,
+    // credential: Arc<Credential>,
 }
 
 impl Listen {
     pub fn new(
-        disc_port: Option<u16>,
+    ) -> Listen {
+        Listen {
+            // disc_listener,
+            // peer_op_port,
+            // peer_store,
+            // task_mng,
+            // credential,
+        }
+    }
+
+    pub async fn start(
+        &self,
+        disc_listener: TcpListener,
         peer_op_port: u16,
         peer_store: Arc<PeerStore>,
         task_mng: Arc<TaskManager>,
         credential: Arc<Credential>,
-    ) -> Listen {
-        Listen {
-            disc_port,
-            peer_op_port,
-            peer_store,
-            task_mng,
-            credential,
-        }
-    }
+    ) -> Result<()> {
+        // let disc_port = match disc_port {
+        //     Some(p) => p,
+        //     None => 0,
+        // };
 
-    pub async fn start(&self) -> Result<u16> {
-        let disc_port = match self.disc_port {
-            Some(p) => p,
-            None => 0,
-        };
+        // let local_addr = format!("127.0.0.1:{}", disc_port);
 
-        let local_addr = format!("127.0.0.1:{}", disc_port);
+        // let (tcp_listener, local_addr) =
+        //     match TcpListener::bind(local_addr).await {
+        //         Ok(listener) => match listener.local_addr() {
+        //             Ok(local_addr) => (listener, local_addr),
+        //             Err(err) => return Err(err.into()),
+        //         },
+        //         Err(err) => return Err(err.into()),
+        //     };
 
-        let (tcp_listener, local_addr) =
-            match TcpListener::bind(local_addr).await {
-                Ok(listener) => match listener.local_addr() {
-                    Ok(local_addr) => (listener, local_addr),
-                    Err(err) => return Err(err.into()),
-                },
-                Err(err) => return Err(err.into()),
-            };
+        // log!(
+        //     DEBUG,
+        //     "Successfully started disc listening, addr: {}\n",
+        //     local_addr
+        // );
 
-        log!(
-            DEBUG,
-            "Successfully started disc listening, addr: {}\n",
-            local_addr
-        );
+        let routine = Routine::new();
+        routine.run(disc_listener, peer_op_port, peer_store, credential);
 
-        let peer_op_port = self.peer_op_port;
-        let routine =
-            Routine::new(self.peer_store.clone(), self.credential.clone());
-
-        routine.run(tcp_listener, peer_op_port);
-
-        Ok(local_addr.port())
+        Ok(())
     }
 }
 

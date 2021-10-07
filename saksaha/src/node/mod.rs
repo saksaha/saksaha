@@ -57,22 +57,15 @@ impl Node {
             }
         };
 
-        let host_status = tokio::spawn(async move {
-            return host.start(
-                rpc_port,
-                disc_port,
-                bootstrap_urls.to_owned(),
-            ).await;
-        });
+        let host_started = host.start(
+            rpc_port,
+            disc_port,
+            bootstrap_urls.to_owned(),
+        );
 
-        match host_status.await {
-            Ok(status) => match status {
-                HostStatus::Launched => {}
-                HostStatus::SetupFailed(err) => return Err(err),
-            },
-            Err(err) => {
-                return err!("Error joining host start thread, err: {}", err);
-            }
+        match host_started.await {
+            HostStatus::Launched => (),
+            HostStatus::SetupFailed(err) => return Err(err),
         };
 
         Ok(())

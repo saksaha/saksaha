@@ -10,28 +10,32 @@ use tokio::{net::TcpListener, sync::Mutex};
 
 pub struct Routine {
     // address_book: Arc<AddressBook>,
-    peer_store: Arc<PeerStore>,
-    credential: Arc<Credential>,
+    // peer_store: Arc<PeerStore>,
+    // credential: Arc<Credential>,
 }
 
 impl Routine {
     pub fn new(
         // address_book: Arc<AddressBook>,
-        peer_store: Arc<PeerStore>,
-        credential: Arc<Credential>,
+        // peer_store: Arc<PeerStore>,
+        // credential: Arc<Credential>,
     ) -> Routine {
         Routine {
             // address_book,
-            peer_store,
-            credential,
+            // peer_store,
+            // credential,
         }
     }
 
-    pub fn run(&self, tcp_listener: TcpListener, peer_op_port: u16) {
+    pub fn run(&self,
+        tcp_listener: TcpListener, peer_op_port: u16,
+        peer_store: Arc<PeerStore>,
+        credential: Arc<Credential>,
+    ) {
         log!(DEBUG, "Start disc listening\n");
 
-        let credential = self.credential.clone();
-        let peer_store = self.peer_store.clone();
+        let credential = credential.clone();
+        let peer_store = peer_store.clone();
 
         tokio::spawn(async move {
             loop {

@@ -1,57 +1,57 @@
 use std::sync::Arc;
 
-use crate::{common::{Error, Result}, err, msg_err, node::task_manager::{TaskManager}, p2p::credential::Credential};
+use crate::{
+    common::{Error, Result},
+    err, msg_err,
+    node::task_manager::TaskManager,
+    p2p::credential::Credential,
+};
 use logger::log;
 use tokio::{net::TcpListener, sync::mpsc::Sender as MpscSender};
 
-pub struct Listen {
-    dial_loop_tx: Arc<MpscSender<usize>>,
-    task_mng: Arc<TaskManager>,
-    credential: Arc<Credential>,
-}
+pub struct Listen {}
 
 impl Listen {
-    pub fn new(
-        dial_loop_tx: Arc<MpscSender<usize>>,
-        task_mng: Arc<TaskManager>,
-        credential: Arc<Credential>,
-    ) -> Listen {
-        let listen = Listen {
-            credential,
-            dial_loop_tx,
-            task_mng,
-        };
+    pub fn new() -> Listen {
+        let listen = Listen {};
 
         listen
     }
 
-    pub async fn start(&self) -> Result<u16> {
-        let local_addr = format!("127.0.0.1:0");
+    pub async fn start(
+        &self,
+        disc_wakeup_tx: Arc<MpscSender<usize>>,
+        task_mng: Arc<TaskManager>,
+        credential: Arc<Credential>,
+        peer_op_listener: TcpListener,
+    ) -> Result<()> {
+        log!(DEBUG, "Start op-handshake listen\n");
+        // let local_addr = format!("127.0.0.1:0");
 
-        let (listener, port) = match TcpListener::bind(local_addr).await {
-            Ok(l) => {
-                let local_addr = match l.local_addr() {
-                    Ok(addr) => addr,
-                    Err(err) => {
-                        return Err(err.into());
-                    }
-                };
+        // let (listener, port) = match TcpListener::bind(local_addr).await {
+        //     Ok(l) => {
+        //         let local_addr = match l.local_addr() {
+        //             Ok(addr) => addr,
+        //             Err(err) => {
+        //                 return Err(err.into());
+        //             }
+        //         };
 
-                log!(DEBUG, "Start peer op listening, addr: {}\n", local_addr);
+        //         log!(DEBUG, "Start peer op listening, addr: {}\n", local_addr);
 
-                (l, local_addr.port())
-            }
-            Err(err) => {
-                return Err(err.into());
-            }
-        };
+        //         (l, local_addr.port())
+        //     }
+        //     Err(err) => {
+        //         return Err(err.into());
+        //     }
+        // };
 
-        let dial_loop_tx = self.dial_loop_tx.clone();
+        let dial_loop_tx = disc_wakeup_tx.clone();
         tokio::spawn(async move {
             let tx = dial_loop_tx;
 
             loop {
-                let (mut stream, addr) = match listener.accept().await {
+                let (mut stream, addr) = match peer_op_listener.accept().await {
                     Ok(res) => res,
                     Err(err) => {
                         return;
@@ -70,6 +70,6 @@ impl Listen {
             }
         });
 
-        Ok(port)
+        Ok(())
     }
 }
