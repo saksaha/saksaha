@@ -21,9 +21,9 @@ fn main() {
         Ok(p) => p,
         Err(_) => {
             log!(
-                "PROJECT_ROOT is not defined. This is most likely due to that \
-                this binary has not been executed from the project root. Use `ci` \
-                script in the project. Exiting.\n"
+                "PROJECT_ROOT is not defined. This is most likely due to \
+                that this binary has not been executed from the project root. \
+                Use `ci` script in the project. Exiting.\n"
             );
 
             std::process::exit(1);
