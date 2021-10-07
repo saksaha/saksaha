@@ -1,12 +1,17 @@
-pub mod peer_store;
 mod bootstrap;
+pub mod peer_store;
 
-use std::cmp::PartialEq;
-use crate::{common::{Error, Result}, err};
+use crate::{
+    common::{Error, Result},
+    err,
+};
 use logger::log;
+use std::cmp::PartialEq;
 
 #[derive(Debug, PartialEq)]
 pub enum Status<E> {
+    Empty,
+
     NotInitialized,
 
     DiscoverySuccess,
@@ -18,6 +23,7 @@ pub enum Status<E> {
 
 #[derive(Debug)]
 pub struct Peer {
+    // pub mutex:
     pub ip: String,
     pub disc_port: u16,
     pub peer_op_port: u16,
@@ -28,11 +34,7 @@ pub struct Peer {
 }
 
 impl Peer {
-    pub fn new(
-        peer_id: String,
-        ip: String,
-        disc_port: u16,
-    ) -> Peer {
+    pub fn new(peer_id: String, ip: String, disc_port: u16) -> Peer {
         Peer {
             ip,
             disc_port,
@@ -41,6 +43,18 @@ impl Peer {
             rpc_port: 0,
             peer_id,
             status: Status::NotInitialized,
+        }
+    }
+
+    pub fn new_empty() -> Peer {
+        Peer {
+            ip: "".into(),
+            disc_port: 0,
+            peer_op_port: 0,
+            public_key_bytes: [0; 65],
+            rpc_port: 0,
+            peer_id: "".into(),
+            status: Status::Empty,
         }
     }
 
@@ -83,5 +97,17 @@ impl Peer {
         let addr = Peer::new(peer_id, ip, disc_port);
 
         Ok(addr)
+    }
+
+    pub fn empty(&mut self) {
+        *self = Peer {
+            ip: "".into(),
+            disc_port: 0,
+            peer_op_port: 0,
+            public_key_bytes: [0; 65],
+            rpc_port: 0,
+            peer_id: "".into(),
+            status: Status::Empty,
+        };
     }
 }

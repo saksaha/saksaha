@@ -26,7 +26,7 @@ pub struct Handler {
     // address_book: Arc<AddressBook>,
     stream: TcpStream,
     // peer: MutexGuard<'a, Peer>,
-    peer_store: Arc<PeerStore>,
+    peer_store: Arc<Mutex<PeerStore>>,
     credential: Arc<Credential>,
     peer_op_port: u16,
 }
@@ -37,7 +37,7 @@ impl Handler {
         // address_book: Arc<AddressBook>,
         stream: TcpStream,
         // peer: MutexGuard<Peer>,
-        peer_store: Arc<PeerStore>,
+        peer_store: Arc<Mutex<PeerStore>>,
         credential: Arc<Credential>,
         peer_op_port: u16,
     ) -> Handler {
@@ -52,6 +52,8 @@ impl Handler {
     }
 
     pub async fn run(&mut self) -> HandleStatus<Error> {
+        // let peer = self.peer_store.find();
+
         let way = match self.receive_who_are_you().await {
             Ok(w) => w,
             Err(err) => return HandleStatus::WhoAreYouReceiveFail(err),

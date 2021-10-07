@@ -5,37 +5,31 @@ use crate::{
     common::Result,
     msg_err,
     node::task_manager::{MsgKind, TaskManager},
-    p2p::{
-        credential::Credential,
-        peer::peer_store::PeerStore,
-    },
+    p2p::{credential::Credential, peer::peer_store::PeerStore},
 };
 use handler::Handler;
 use logger::log;
 use routine::Routine;
 use std::sync::Arc;
-use tokio::net::TcpListener;
+use tokio::{net::TcpListener, sync::Mutex};
 
 pub struct Listen {
-    // address_book: Arc<AddressBook>,
     disc_port: Option<u16>,
     peer_op_port: u16,
-    peer_store: Arc<PeerStore>,
+    peer_store: Arc<Mutex<PeerStore>>,
     task_mng: Arc<TaskManager>,
     credential: Arc<Credential>,
 }
 
 impl Listen {
     pub fn new(
-        // address_book: Arc<AddressBook>,
         disc_port: Option<u16>,
         peer_op_port: u16,
-        peer_store: Arc<PeerStore>,
+        peer_store: Arc<Mutex<PeerStore>>,
         task_mng: Arc<TaskManager>,
         credential: Arc<Credential>,
     ) -> Listen {
         Listen {
-            // address_book,
             disc_port,
             peer_op_port,
             peer_store,
@@ -68,11 +62,8 @@ impl Listen {
         );
 
         let peer_op_port = self.peer_op_port;
-        let routine = Routine::new(
-            // self.address_book.clone(),
-            self.peer_store.clone(),
-            self.credential.clone(),
-        );
+        let routine =
+            Routine::new(self.peer_store.clone(), self.credential.clone());
 
         routine.run(tcp_listener, peer_op_port);
 

@@ -6,26 +6,17 @@ use tokio::sync::{Mutex, MutexGuard};
 pub struct Filter;
 
 impl Filter {
-    pub fn not_initialized(peer: &MutexGuard<Option<Peer>>) -> bool {
-        if let Some(p) = &**peer {
-            return p.status == Status::NotInitialized;
-        }
-        false
+    pub fn not_initialized(peer: &mut Peer) -> bool {
+        return peer.status == Status::NotInitialized;
     }
 
-    pub fn discovery_success(peer: &MutexGuard<Option<Peer>>) -> bool {
-        if let Some(p) = &**peer {
-            return p.status == Status::DiscoverySuccess;
-        }
-        false
+    pub fn discovery_success(peer: &mut Peer) -> bool {
+        return peer.status == Status::DiscoverySuccess;
     }
 }
 
-type MutexedPeer = Arc<Mutex<Option<Peer>>>;
-
 pub struct PeerStore {
-    mutex: Mutex<usize>,
-    slots: Vec<MutexedPeer>,
+    slots: Vec<Peer>,
     pub capacity: usize,
 }
 
@@ -65,7 +56,8 @@ impl PeerStore {
                         p.ip,
                         p.disc_port
                     );
-                    Arc::new(Mutex::new(Some(p)))
+                    p
+                    // Arc::new(Mutex::new(Some(p)))
                 }
                 Err(err) => {
                     log!(DEBUG, "Cannot parse url, url: {}, err: {}\n", u, err);
@@ -77,9 +69,9 @@ impl PeerStore {
             count += 1;
         }
 
-        for _ in count..capacity {
-            let empty_peer = Arc::new(Mutex::new(None));
-            slots.push(empty_peer);
+        for i in count..capacity {
+            let p = Peer::new_empty();
+            slots.push(p);
         }
 
         log!(
@@ -95,18 +87,19 @@ impl PeerStore {
         );
 
         PeerStore {
-            mutex: Mutex::new(0),
+            // slots: Arc::new(Mutex::new(slots)),
             slots,
             capacity,
         }
     }
 
     pub async fn next(
-        &self,
+        &mut self,
         start_idx: Option<usize>,
-        filter: &(dyn Fn(&MutexGuard<Option<Peer>>) -> bool + Sync + Send),
-    ) -> Option<(MutexGuard<'_, Option<Peer>>, usize)> {
-        self.mutex.lock().await;
+        filter: &(dyn Fn(&mut Peer) -> bool + Sync + Send),
+    ) -> Option<(&mut Peer, usize)> {
+        // let mut slots = self.slots.clone().lock().await;
+        let slots = &mut self.slots;
 
         let start_idx = match start_idx {
             Some(i) => i,
@@ -118,20 +111,38 @@ impl PeerStore {
         for i in start_idx..start_idx + cap {
             let idx = i % cap;
 
-            if let Some(p) = self.slots.get(idx) {
-                let peer_guard = match p.try_lock() {
-                    Ok(p) => p,
-                    Err(_) => continue,
-                };
-
-                if filter(&peer_guard) {
-                    return Some((peer_guard, idx));
-                } else {
-                    continue;
+            let mut peer = match slots.get_mut(idx) {
+                Some(p) => p,
+                None => {
+                    log!(
+                        DEBUG,
+                        "There is an empty slot. Something might be wrong\n"
+                    );
+                    return None;
                 }
+            };
+
+            if filter(peer) {
+                let p = slots.get_mut(idx).unwrap();
+                return Some((p, idx));
+            } else {
+                continue;
             }
         }
 
+        None
+    }
+
+    pub async fn find(
+        &self,
+        filter: &(dyn Fn(&MutexGuard<Option<Peer>>) -> bool + Sync + Send),
+    ) -> Option<(MutexGuard<'_, Option<Peer>>, usize)> {
+        // self.mutex.lock().await;
+
+        // for p in self.slots.clone() {
+        //     let a = p.clone();
+        // };
+        // return false;
         None
     }
 }

@@ -23,7 +23,7 @@ use tokio::sync::{
 
 pub struct Dial {
     // pub address_book: Arc<AddressBook>,
-    pub peer_store: Arc<PeerStore>,
+    peer_store: Arc<Mutex<PeerStore>>,
     peer_op_port: u16,
     task_mng: Arc<TaskManager>,
     credential: Arc<Credential>,
@@ -34,7 +34,7 @@ pub struct Dial {
 impl Dial {
     pub fn new(
         // address_book: Arc<AddressBook>,
-        peer_store: Arc<PeerStore>,
+        peer_store: Arc<Mutex<PeerStore>>,
         peer_op_port: u16,
         task_mng: Arc<TaskManager>,
         credential: Arc<Credential>,

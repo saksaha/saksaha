@@ -13,7 +13,7 @@ use crate::p2p::{
 };
 
 pub struct Routine {
-    peer_store: Arc<PeerStore>,
+    peer_store: Arc<Mutex<PeerStore>>,
     credential: Arc<Credential>,
     peer_op_port: u16,
     is_running: Arc<Mutex<bool>>,
@@ -24,7 +24,7 @@ pub struct Routine {
 
 impl Routine {
     pub fn new(
-        peer_store: Arc<PeerStore>,
+        peer_store: Arc<Mutex<PeerStore>>,
         credential: Arc<Credential>,
         peer_op_port: u16,
         disc_port: u16,
@@ -45,6 +45,16 @@ impl Routine {
 
     pub fn run(&self) {
         log!(DEBUG, "Start disc dial\n");
+
+        let mut vec = vec!(1,2,3);
+
+        println!("33, {:?}", vec);
+
+        let a = vec.get_mut(0).unwrap();
+        // *a = None;
+
+        println!("44, {:?}", vec);
+
 
         let peer_store = self.peer_store.clone();
         let credential = self.credential.clone();

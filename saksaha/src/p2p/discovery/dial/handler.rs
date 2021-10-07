@@ -48,7 +48,7 @@ pub enum HandleStatus<I, E> {
 }
 
 pub struct Handler {
-    peer_store: Arc<PeerStore>,
+    peer_store: Arc<Mutex<PeerStore>>,
     credential: Arc<Credential>,
     peer_op_port: u16,
     disc_port: u16,
@@ -58,7 +58,7 @@ pub struct Handler {
 
 impl Handler {
     pub fn new(
-        peer_store: Arc<PeerStore>,
+        peer_store: Arc<Mutex<PeerStore>>,
         credential: Arc<Credential>,
         peer_op_port: u16,
         disc_port: u16,
@@ -77,15 +77,8 @@ impl Handler {
 
     pub fn require_not_my_endpoint(
         &self,
-        peer_guard: &mut MutexGuard<Option<Peer>>,
+        peer: &mut Peer,
     ) -> Result<String> {
-        let peer = match &**peer_guard {
-            Some(p) => p,
-            None => {
-                return err!("Cannot check endpoint, peer is none");
-            }
-        };
-
         let endpoint = format!("{}:{}", peer.ip, peer.disc_port);
         let my_disc_endpoint = format!("127.0.0.1:{}", self.disc_port);
 
@@ -103,7 +96,9 @@ impl Handler {
                 endpoint,
             );
 
-            **peer_guard = None;
+            // *peer = None;
+            // peer.
+            peer.empty();
             return err!(
                 "Endpoint identical, removing this peer, peer endpoint: {}",
                 endpoint
@@ -117,56 +112,57 @@ impl Handler {
         let mut last_peer_idx = self.last_peer_idx.lock().await;
         let credential = self.credential.clone();
 
-        let peer = self
-            .peer_store
+        let mut peer_store = self.peer_store.lock().await;
+
+        let peer = peer_store
             .next(Some(*last_peer_idx), &Filter::not_initialized)
             .await;
 
-        let (mut peer_guard, peer_idx) = match peer {
-            Some((guard, idx)) => (guard, idx),
+        let (mut peer, peer_idx) = match peer {
+            Some((p, idx)) => (p, idx),
             None => return HandleStatus::NoAvailablePeer,
         };
 
         *last_peer_idx = peer_idx;
 
-        let endpoint = match self.require_not_my_endpoint(&mut peer_guard) {
+        let endpoint = match self.require_not_my_endpoint(peer) {
             Ok(ep) => ep,
             Err(err) => return HandleStatus::IllegalEndpoint(err),
         };
 
-        let mut stream = match TcpStream::connect(endpoint.to_owned()).await {
-            Ok(s) => {
-                log!(
-                    DEBUG,
-                    "Successfully connected to endpoint, {}\n",
-                    endpoint
-                );
-                s
-            }
-            Err(err) => {
-                log!(DEBUG, "Cannot disc dial to endpoint, {}\n", endpoint);
+        // let mut stream = match TcpStream::connect(endpoint.to_owned()).await {
+        //     Ok(s) => {
+        //         log!(
+        //             DEBUG,
+        //             "Successfully connected to endpoint, {}\n",
+        //             endpoint
+        //         );
+        //         s
+        //     }
+        //     Err(err) => {
+        //         log!(DEBUG, "Cannot disc dial to endpoint, {}\n", endpoint);
 
-                return HandleStatus::ConnectionFail(err.into());
-            }
-        };
+        //         return HandleStatus::ConnectionFail(err.into());
+        //     }
+        // };
 
-        match self.initiate_who_are_you(&mut stream).await {
-            Ok(_) => (),
-            Err(err) => return HandleStatus::WhoAreYouInitiateFail(err),
-        };
+        // match self.initiate_who_are_you(&mut stream).await {
+        //     Ok(_) => (),
+        //     Err(err) => return HandleStatus::WhoAreYouInitiateFail(err),
+        // };
 
-        let way_ack = match self.receive_who_are_you_ack(stream).await {
-            Ok(w) => w,
-            Err(err) => return HandleStatus::WhoAreYouAckReceiveFail(err),
-        };
+        // let way_ack = match self.receive_who_are_you_ack(stream).await {
+        //     Ok(w) => w,
+        //     Err(err) => return HandleStatus::WhoAreYouAckReceiveFail(err),
+        // };
 
-        match self
-            .handle_succeed_who_are_you(way_ack, peer_guard, credential)
-            .await
-        {
-            Ok(_) => (),
-            Err(err) => return HandleStatus::PeerUpdateFail(err),
-        };
+        // match self
+        //     .handle_succeed_who_are_you(way_ack, peer, credential)
+        //     .await
+        // {
+        //     Ok(_) => (),
+        //     Err(err) => return HandleStatus::PeerUpdateFail(err),
+        // };
 
         HandleStatus::Success(0)
     }
@@ -237,7 +233,7 @@ impl Handler {
     pub async fn handle_succeed_who_are_you(
         &self,
         way_ack: WhoAreYouAck,
-        mut peer: MutexGuard<'_, Option<Peer>>,
+        peer: &mut Option<Peer>,
         credential: Arc<Credential>,
     ) -> Result<()> {
         let mut peer = match &mut *peer {
@@ -245,40 +241,42 @@ impl Handler {
             None => return err!("Peer is none"),
         };
 
-        peer.peer_id = way_ack.way.peer_id;
-        peer.peer_op_port = way_ack.way.peer_op_port;
-        peer.public_key_bytes = way_ack.way.public_key_bytes;
-        peer.status = peer::Status::DiscoverySuccess;
+        // self.peer_store.find()
 
-        let my_public_key = credential.public_key_bytes;
-        let peer_public_key = peer.public_key_bytes;
+        // peer.peer_id = way_ack.way.peer_id;
+        // peer.peer_op_port = way_ack.way.peer_op_port;
+        // peer.public_key_bytes = way_ack.way.public_key_bytes;
+        // peer.status = peer::Status::DiscoverySuccess;
 
-        let mine_is_bigger =
-            match compare_public_key(my_public_key, peer_public_key) {
-                Ok(mine_is_bigger) => mine_is_bigger,
-                Err(err) => return Err(err),
-            };
+        // let my_public_key = credential.public_key_bytes;
+        // let peer_public_key = peer.public_key_bytes;
 
-        if mine_is_bigger {
-            let peer_op_wakeup_tx = self.peer_op_wakeup_tx.clone();
+        // let mine_is_bigger =
+        //     match compare_public_key(my_public_key, peer_public_key) {
+        //         Ok(mine_is_bigger) => mine_is_bigger,
+        //         Err(err) => return Err(err),
+        //     };
 
-            let wakeup = tokio::spawn(async move {
-                match peer_op_wakeup_tx.send(0).await {
-                    Ok(_) => Ok(()),
-                    Err(err) => {
-                        return err!(
-                            "Error sending peer op wakeup msg, err: {}",
-                            err
-                        );
-                    }
-                }
-            });
+        // if mine_is_bigger {
+        //     let peer_op_wakeup_tx = self.peer_op_wakeup_tx.clone();
 
-            match wakeup.await {
-                Ok(_) => (),
-                Err(err) => return Err(err.into()),
-            }
-        }
+        //     let wakeup = tokio::spawn(async move {
+        //         match peer_op_wakeup_tx.send(0).await {
+        //             Ok(_) => Ok(()),
+        //             Err(err) => {
+        //                 return err!(
+        //                     "Error sending peer op wakeup msg, err: {}",
+        //                     err
+        //                 );
+        //             }
+        //         }
+        //     });
+
+        //     match wakeup.await {
+        //         Ok(_) => (),
+        //         Err(err) => return Err(err.into()),
+        //     }
+        // }
 
         // let mut peer = self.peer.lock().await;
         // let peer = &self.peer;

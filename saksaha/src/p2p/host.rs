@@ -88,7 +88,7 @@ impl Host {
         };
 
         let peer_store = PeerStore::new(10, self.bootstrap_urls.clone());
-        let peer_store = Arc::new(peer_store);
+        let peer_store = Arc::new(Mutex::new(peer_store));
         let (disc_wakeup_tx, disc_wakeup_rx) = mpsc::channel::<usize>(5);
         let (peer_op_wakeup_tx, peer_op_wakeup_rx) = mpsc::channel::<usize>(5);
         let task_mng = self.task_mng.clone();
