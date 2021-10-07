@@ -1,5 +1,6 @@
 use super::{
     credential::Credential,
+    listener::Listener,
     ops::{
         discovery::Disc,
         handshake::{self, Handshake},
@@ -11,6 +12,7 @@ use crate::{
     common::{Error, Result},
     err,
     node::task_manager::TaskManager,
+    pconfig::PersistedP2PConfig,
 };
 use logger::log;
 use std::sync::Arc;
@@ -22,82 +24,50 @@ pub enum HostStatus<E> {
     SetupFailed(E),
 }
 
-struct Components {
-    handshake: Handshake,
-    sync: Sync,
-    disc: Disc,
-}
-
 pub struct Host {
-    disc_port: Option<u16>,
-    bootstrap_urls: Option<Vec<String>>,
     task_mng: Arc<TaskManager>,
-    secret: String,
-    public_key: String,
+    credential: Arc<Credential>,
 }
 
 impl Host {
     pub fn new(
+        task_mng: Arc<TaskManager>,
+        p2p_config: PersistedP2PConfig,
+    ) -> Result<Host> {
+        let secret = p2p_config.secret.to_owned();
+        let public_key = p2p_config.public_key.to_owned();
+
+        let credential = match Credential::new(secret, public_key) {
+            Ok(c) => Arc::new(c),
+            Err(err) => return Err(err),
+        };
+
+        let host = Host {
+            task_mng,
+            credential,
+        };
+
+        Ok(host)
+    }
+
+    pub async fn start(
+        &self,
+        rpc_port: u16,
         disc_port: Option<u16>,
         bootstrap_urls: Option<Vec<String>>,
-        task_mng: Arc<TaskManager>,
-        secret: String,
-        public_key: String,
-    ) -> Host {
-        let host = Host {
-            disc_port,
-            bootstrap_urls,
-            task_mng,
-            secret,
-            public_key,
+    ) -> HostStatus<Error> {
+        let disc_listener = match Listener::new_tcp(disc_port).await {
+            Ok(l) => l,
+            Err(err) => return HostStatus::SetupFailed(err),
         };
 
-        host
-    }
-
-    async fn start_components(&self, components: Components) -> Result<()> {
-        let handshake = components.handshake;
-        let peer_op_port = tokio::spawn(async move {
-            let port = match handshake.start().await {
-                handshake::Status::Launched(port) => port,
-                handshake::Status::SetupFailed(err) => return Err(err),
-            };
-
-            Ok(port)
-        });
-
-        let peer_op_port = match peer_op_port.await {
-            Ok(p) => match p {
-                Ok(p) => p,
-                Err(err) => {
-                    return Err(err);
-                }
-            },
-            Err(err) => {
-                return Err(err.into());
-            }
+        let peer_op_listener = match Listener::new_tcp(None).await {
+            Ok(l) => l,
+            Err(err) => return HostStatus::SetupFailed(err),
         };
 
-        let disc = components.disc;
-        tokio::spawn(async move {
-            disc.start(peer_op_port).await;
-        });
-
-        Ok(())
-    }
-
-    fn make_components(&self, rpc_port: u16) -> Result<Components> {
-        let credential = match Credential::new(
-            self.secret.to_owned(),
-            self.public_key.to_owned(),
-        ) {
-            Ok(c) => Arc::new(c),
-            Err(err) => {
-                return Err(err);
-            }
-        };
-
-        let peer_store = PeerStore::new(10, self.bootstrap_urls.clone());
+        let credential = self.credential.clone();
+        let peer_store = PeerStore::new(10, bootstrap_urls);
         let peer_store = Arc::new(peer_store);
         let (disc_wakeup_tx, disc_wakeup_rx) = mpsc::channel::<usize>(5);
         let (peer_op_wakeup_tx, peer_op_wakeup_rx) = mpsc::channel::<usize>(5);
@@ -110,41 +80,43 @@ impl Host {
             task_mng,
             Arc::new(Mutex::new(peer_op_wakeup_rx)),
             credential.clone(),
+            peer_op_listener,
         );
 
         let disc = Disc::new(
-            self.disc_port,
+            disc_port,
             peer_store.clone(),
             self.task_mng.clone(),
             credential.clone(),
             Arc::new(Mutex::new(disc_wakeup_rx)),
             Arc::new(peer_op_wakeup_tx),
+            disc_listener,
         );
 
         let sync = Sync::new();
 
-        let components = Components {
-            handshake,
-            disc,
-            sync,
+        let handshake_started = tokio::spawn(async move {
+            let port = match handshake.start().await {
+                handshake::Status::Launched(port) => port,
+                handshake::Status::SetupFailed(err) => return Err(err),
+            };
+
+            Ok(port)
+        });
+
+        let peer_op_port = match handshake_started.await {
+            Ok(p) => match p {
+                Ok(p) => p,
+                Err(err) => return HostStatus::SetupFailed(err),
+            },
+            Err(err) => return HostStatus::SetupFailed(err.into()),
         };
 
-        Ok(components)
-    }
-
-    pub async fn start(&self, rpc_port: u16) -> HostStatus<Error> {
-        log!(DEBUG, "Start host...\n");
-
-        let components = match self.make_components(rpc_port) {
-            Ok(c) => c,
-            Err(err) => return HostStatus::SetupFailed(err),
-        };
-
-        match self.start_components(components).await {
-            Ok(_) => (),
-            Err(err) => return HostStatus::SetupFailed(err),
-        };
+        tokio::spawn(async move {
+            disc.start(peer_op_port).await;
+        });
 
         HostStatus::Launched
     }
+
 }

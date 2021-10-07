@@ -12,10 +12,10 @@ use crate::{
 use dial::Dial;
 pub use status::Status;
 use std::sync::Arc;
-use tokio::sync::{
+use tokio::{net::TcpListener, sync::{
     mpsc::{Receiver, Sender},
     Mutex,
-};
+}};
 
 struct Components {
     listen: Listen,
@@ -40,6 +40,7 @@ impl Disc {
         credential: Arc<Credential>,
         disc_wakeup_rx: Arc<Mutex<Receiver<usize>>>,
         peer_op_wakeup_tx: Arc<Sender<usize>>,
+        disc_listener: TcpListener,
     ) -> Disc {
         // let address_book = Arc::new(AddressBook::new(bootstrap_urls));
 

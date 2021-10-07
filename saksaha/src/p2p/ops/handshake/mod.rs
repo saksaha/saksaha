@@ -13,10 +13,10 @@ use crate::{
 use dial::Dial;
 use listen::Listen;
 use std::sync::Arc;
-use tokio::sync::{
+use tokio::{net::TcpListener, sync::{
     mpsc::{Receiver, Sender},
     Mutex,
-};
+}};
 
 struct Components {
     dial: Dial,
@@ -40,6 +40,7 @@ impl Handshake {
         task_mng: Arc<TaskManager>,
         peer_op_wakeup_rx: Arc<Mutex<Receiver<usize>>>,
         credential: Arc<Credential>,
+        peer_op_listener: TcpListener,
     ) -> Handshake {
         let peer_op = Handshake {
             credential,
