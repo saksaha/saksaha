@@ -1,20 +1,25 @@
 pub use super::status::Status;
 use super::{
-    credential::Credential, discovery::Disc, peer::peer_store::PeerStore,
-    peer_op::PeerOp,
+    credential::Credential,
+    ops::{
+        discovery::Disc,
+        handshake::{self, Handshake},
+        sync::Sync,
+    },
+    peer::peer_store::PeerStore,
 };
 use crate::{
     common::{Error, Result},
     err,
     node::task_manager::TaskManager,
-    p2p::peer_op,
 };
 use logger::log;
 use std::sync::Arc;
 use tokio::sync::{mpsc, Mutex};
 
 struct Components {
-    peer_op: PeerOp,
+    handshake: Handshake,
+    sync: Sync,
     disc: Disc,
 }
 
@@ -46,11 +51,11 @@ impl Host {
     }
 
     async fn start_components(&self, components: Components) -> Result<()> {
-        let peer_op = components.peer_op;
+        let handshake = components.handshake;
         let peer_op_port = tokio::spawn(async move {
-            let port = match peer_op.start().await {
-                peer_op::Status::Launched(port) => port,
-                peer_op::Status::SetupFailed(err) => return Err(err),
+            let port = match handshake.start().await {
+                handshake::Status::Launched(port) => port,
+                handshake::Status::SetupFailed(err) => return Err(err),
             };
 
             Ok(port)
@@ -93,7 +98,7 @@ impl Host {
         let (peer_op_wakeup_tx, peer_op_wakeup_rx) = mpsc::channel::<usize>(5);
         let task_mng = self.task_mng.clone();
 
-        let peer_op = PeerOp::new(
+        let handshake = Handshake::new(
             peer_store.clone(),
             Arc::new(disc_wakeup_tx),
             rpc_port,
@@ -111,7 +116,13 @@ impl Host {
             Arc::new(peer_op_wakeup_tx),
         );
 
-        let components = Components { peer_op, disc };
+        let sync = Sync::new();
+
+        let components = Components {
+            handshake,
+            disc,
+            sync,
+        };
 
         Ok(components)
     }

@@ -4,10 +4,10 @@ mod status;
 mod whoareyou;
 
 use self::listen::Listen;
-use super::{credential::Credential, peer::peer_store::PeerStore};
 use crate::{
     common::{Error, Result},
     node::task_manager::TaskManager,
+    p2p::{credential::Credential, peer::peer_store::PeerStore},
 };
 use dial::Dial;
 pub use status::Status;
