@@ -1,6 +1,6 @@
 #[derive(Debug)]
-pub enum Status<P, E> {
-    Launched(P),
+pub enum Status<E> {
+    Launched,
 
     SetupFailed(E),
 }

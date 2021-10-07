@@ -75,7 +75,7 @@ impl PeerStore {
 
         log!(
             DEBUG,
-            "* Peer store init count: {}, len: {}, capacity: {}\n",
+            "* Peer store init result, count: {}, len: {}, capacity: {}\n",
             count,
             slots.len(),
             capacity
