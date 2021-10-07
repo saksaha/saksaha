@@ -1,7 +1,7 @@
 use crate::{
     common::{Error, Result},
     err,
-    p2p::{credential::Credential, peer::Peer, peer_op::msg::Handshake},
+    p2p::{credential::Credential, peer::Peer},
 };
 use k256::{ecdh::EphemeralSecret, EncodedPoint, PublicKey, SecretKey};
 use logger::log;

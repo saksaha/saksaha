@@ -4,10 +4,7 @@ mod routine;
 use crate::{
     msg_err, msg_errd,
     node::task_manager::{MsgKind, TaskManager},
-    p2p::{
-        credential::Credential, discovery::whoareyou,
-        peer::peer_store::PeerStore,
-    },
+    p2p::{credential::Credential, peer::peer_store::PeerStore},
 };
 use handler::Handler;
 use logger::log;

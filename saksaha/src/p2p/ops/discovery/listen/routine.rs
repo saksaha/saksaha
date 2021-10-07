@@ -1,7 +1,7 @@
 use super::handler::Handler;
 use crate::p2p::{
     credential::Credential,
-    discovery::listen::handler::HandleStatus,
+    ops::discovery::listen::handler::HandleStatus,
     peer::peer_store::{Filter, PeerStore},
 };
 use logger::log;

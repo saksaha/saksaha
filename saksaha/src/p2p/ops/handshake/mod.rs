@@ -1,14 +1,14 @@
 mod dial;
 mod listen;
-mod status;
 mod msg;
+mod status;
 
 pub use self::status::Status;
-use super::{credential::{self, Credential}, peer::peer_store::PeerStore};
 use crate::{
     common::{Error, Result},
     err,
     node::task_manager::TaskManager,
+    p2p::{credential::Credential, peer::peer_store::PeerStore},
 };
 use dial::Dial;
 use listen::Listen;
@@ -23,7 +23,7 @@ struct Components {
     listen: Listen,
 }
 
-pub struct PeerOp {
+pub struct Handshake {
     credential: Arc<Credential>,
     peer_store: Arc<PeerStore>,
     disc_wakeup_tx: Arc<Sender<usize>>,
@@ -32,7 +32,7 @@ pub struct PeerOp {
     peer_op_wakeup_rx: Arc<Mutex<Receiver<usize>>>,
 }
 
-impl PeerOp {
+impl Handshake {
     pub fn new(
         peer_store: Arc<PeerStore>,
         disc_wakeup_tx: Arc<Sender<usize>>,
@@ -40,8 +40,8 @@ impl PeerOp {
         task_mng: Arc<TaskManager>,
         peer_op_wakeup_rx: Arc<Mutex<Receiver<usize>>>,
         credential: Arc<Credential>,
-    ) -> PeerOp {
-        let peer_op = PeerOp {
+    ) -> Handshake {
+        let peer_op = Handshake {
             credential,
             peer_store,
             disc_wakeup_tx,
@@ -54,8 +54,11 @@ impl PeerOp {
     }
 
     fn make_components(&self) -> Result<Components> {
-        let listen =
-            Listen::new(self.disc_wakeup_tx.clone(), self.task_mng.clone(), self.credential.clone());
+        let listen = Listen::new(
+            self.disc_wakeup_tx.clone(),
+            self.task_mng.clone(),
+            self.credential.clone(),
+        );
 
         let dial = Dial::new(
             self.credential.clone(),

@@ -1,6 +1,7 @@
-mod handler;
-
-use crate::p2p::{credential::Credential, peer::peer_store::{Filter, PeerStore}, peer_op::dial::handshake_op::handler::{HandleStatus, Handler}};
+use crate::p2p::{
+    credential::Credential,
+    peer::peer_store::{Filter, PeerStore},
+};
 use logger::log;
 use std::{
     sync::Arc,
@@ -8,18 +9,18 @@ use std::{
 };
 use tokio::sync::Mutex;
 
-pub struct HandshakeOp {
+pub struct Routine {
     peer_store: Arc<PeerStore>,
     credential: Arc<Credential>,
     is_running: Arc<Mutex<bool>>,
 }
 
-impl HandshakeOp {
+impl Routine {
     pub fn new(
         peer_store: Arc<PeerStore>,
         credential: Arc<Credential>,
-    ) -> HandshakeOp {
-        HandshakeOp {
+    ) -> Routine {
+        Routine {
             is_running: Arc::new(Mutex::new(false)),
             credential,
             peer_store,

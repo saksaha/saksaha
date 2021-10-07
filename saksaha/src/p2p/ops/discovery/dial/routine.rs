@@ -8,7 +8,7 @@ use tokio::sync::{mpsc::Sender, Mutex};
 use super::handler::Handler;
 use crate::p2p::{
     credential::Credential,
-    discovery::dial::handler::HandleStatus,
+    ops::discovery::dial::handler::HandleStatus,
     peer::peer_store::{Filter, PeerStore},
 };
 
@@ -126,7 +126,6 @@ impl Routine {
                 }
 
                 tokio::time::sleep(Duration::from_millis(1000)).await;
-
 
                 match start.elapsed() {
                     Ok(_) => (),
