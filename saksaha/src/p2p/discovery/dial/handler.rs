@@ -115,6 +115,7 @@ impl Handler {
 
     pub async fn run(&self) -> HandleStatus<usize, Error> {
         let mut last_peer_idx = self.last_peer_idx.lock().await;
+        let credential = self.credential.clone();
 
         let peer = self
             .peer_store
@@ -159,7 +160,10 @@ impl Handler {
             Err(err) => return HandleStatus::WhoAreYouAckReceiveFail(err),
         };
 
-        match self.handle_succeed_who_are_you(way_ack, peer_guard).await {
+        match self
+            .handle_succeed_who_are_you(way_ack, peer_guard, credential)
+            .await
+        {
             Ok(_) => (),
             Err(err) => return HandleStatus::PeerUpdateFail(err),
         };
@@ -234,6 +238,7 @@ impl Handler {
         &self,
         way_ack: WhoAreYouAck,
         mut peer: MutexGuard<'_, Option<Peer>>,
+        credential: Arc<Credential>,
     ) -> Result<()> {
         let mut peer = match &mut *peer {
             Some(p) => p,
@@ -242,8 +247,38 @@ impl Handler {
 
         peer.peer_id = way_ack.way.peer_id;
         peer.peer_op_port = way_ack.way.peer_op_port;
-        peer.pk_bytes = way_ack.way.public_key_bytes;
+        peer.public_key_bytes = way_ack.way.public_key_bytes;
         peer.status = peer::Status::DiscoverySuccess;
+
+        let my_public_key = credential.public_key_bytes;
+        let peer_public_key = peer.public_key_bytes;
+
+        let mine_is_bigger =
+            match compare_public_key(my_public_key, peer_public_key) {
+                Ok(mine_is_bigger) => mine_is_bigger,
+                Err(err) => return Err(err),
+            };
+
+        if mine_is_bigger {
+            let peer_op_wakeup_tx = self.peer_op_wakeup_tx.clone();
+
+            let wakeup = tokio::spawn(async move {
+                match peer_op_wakeup_tx.send(0).await {
+                    Ok(_) => Ok(()),
+                    Err(err) => {
+                        return err!(
+                            "Error sending peer op wakeup msg, err: {}",
+                            err
+                        );
+                    }
+                }
+            });
+
+            match wakeup.await {
+                Ok(_) => (),
+                Err(err) => return Err(err.into()),
+            }
+        }
 
         // let mut peer = self.peer.lock().await;
         // let peer = &self.peer;
@@ -257,29 +292,13 @@ impl Handler {
 
         log!(DEBUG, "Successfully handled disc dial peer: {:?}\n", peer);
 
-
-        let credential = self.credential.clone();
-
-        // let peer_op_wakeup_tx = self.peer_op_wakeup_tx.clone();
-
-        // let wakeup = tokio::spawn(async move {
-        //     match peer_op_wakeup_tx.send(0).await {
-        //         Ok(_) => Ok(()),
-        //         Err(err) => {
-        //             return err!(
-        //                 "Error sending peer op wakeup msg, err: {}",
-        //                 err
-        //             );
-        //         }
-        //     }
-        // });
-
-        // match wakeup.await {
-        //     Ok(_) => {
-        //         Ok(())
-        //     },
-        //     Err(err) => return Err(err.into()),
-        // }
         Ok(())
     }
+}
+
+fn compare_public_key(src: [u8; 65], tar: [u8; 65]) -> Result<bool> {
+    for i in 0..src.len() {
+        return Ok(src[i] > tar[i]);
+    }
+    err!("Two public keys are the same")
 }
