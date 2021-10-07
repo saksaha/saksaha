@@ -25,7 +25,7 @@ struct Components {
 
 pub struct PeerOp {
     credential: Arc<Credential>,
-    peer_store: Arc<Mutex<PeerStore>>,
+    peer_store: Arc<PeerStore>,
     disc_wakeup_tx: Arc<Sender<usize>>,
     rpc_port: u16,
     task_mng: Arc<TaskManager>,
@@ -34,7 +34,7 @@ pub struct PeerOp {
 
 impl PeerOp {
     pub fn new(
-        peer_store: Arc<Mutex<PeerStore>>,
+        peer_store: Arc<PeerStore>,
         disc_wakeup_tx: Arc<Sender<usize>>,
         rpc_port: u16,
         task_mng: Arc<TaskManager>,

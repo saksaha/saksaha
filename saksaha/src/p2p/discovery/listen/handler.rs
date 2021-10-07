@@ -1,4 +1,12 @@
-use crate::{common::{Error, Result}, err, p2p::{credential::Credential, discovery::whoareyou::{self, WhoAreYou, WhoAreYouAck}, peer::{Peer, Status as PeerStatus, peer_store::PeerStore}}};
+use crate::{
+    common::{Error, Result},
+    err,
+    p2p::{
+        credential::Credential,
+        discovery::whoareyou::{self, WhoAreYou, WhoAreYouAck},
+        peer::{peer_store::PeerStore, Peer},
+    },
+};
 use k256::ecdsa::{signature::Signer, Signature, SigningKey};
 use logger::log;
 use std::sync::Arc;
@@ -9,7 +17,13 @@ use tokio::{
     task::JoinHandle,
 };
 
-pub enum HandleStatus<E> {
+/// S endpoint
+/// E error
+pub enum HandleStatus<E, S> {
+    AddressAcquireFail(E),
+
+    PeerAlreadyTalking(S),
+
     WhoAreYouReceiveFail(E),
 
     WhoAreYouAckInitiateFail(E),
@@ -26,7 +40,7 @@ pub struct Handler {
     // address_book: Arc<AddressBook>,
     stream: TcpStream,
     // peer: MutexGuard<'a, Peer>,
-    peer_store: Arc<Mutex<PeerStore>>,
+    peer_store: Arc<PeerStore>,
     credential: Arc<Credential>,
     peer_op_port: u16,
 }
@@ -37,7 +51,7 @@ impl Handler {
         // address_book: Arc<AddressBook>,
         stream: TcpStream,
         // peer: MutexGuard<Peer>,
-        peer_store: Arc<Mutex<PeerStore>>,
+        peer_store: Arc<PeerStore>,
         credential: Arc<Credential>,
         peer_op_port: u16,
     ) -> Handler {
@@ -51,23 +65,46 @@ impl Handler {
         }
     }
 
-    pub async fn run(&mut self) -> HandleStatus<Error> {
-        // let peer = self.peer_store.find();
-
-        let way = match self.receive_who_are_you().await {
-            Ok(w) => w,
-            Err(err) => return HandleStatus::WhoAreYouReceiveFail(err),
+    pub async fn run(&mut self) -> HandleStatus<Error, String> {
+        let (peer_ip, peer_port) = match self.stream.peer_addr() {
+            Ok(a) => (a.ip().to_string(), a.port()),
+            Err(err) => return HandleStatus::AddressAcquireFail(err.into()),
         };
 
-        match self.initate_who_are_you_ack().await {
-            Ok(_) => (),
-            Err(err) => return HandleStatus::WhoAreYouAckInitiateFail(err),
-        };
+        let peer_found = self.peer_store.find(&|peer| {
+            if peer.ip == peer_ip && peer.disc_port == peer_port {
+                return false;
+            }
+            return true;
+        });
 
-        match self.handle_succeed_who_are_you(way).await {
-            Ok(_) => (),
-            Err(err) => return HandleStatus::PeerUpdateFail(err),
-        };
+        match peer_found {
+            Some(_) => {
+                let endpoint = format!("{}:{}", peer_ip, peer_port);
+
+                return HandleStatus::PeerAlreadyTalking(endpoint)
+            }
+            None => (),
+        }
+
+        // let peer = self.peer_store.find(|peer| {
+
+        // });
+
+        // let way = match self.receive_who_are_you().await {
+        //     Ok(w) => w,
+        //     Err(err) => return HandleStatus::WhoAreYouReceiveFail(err),
+        // };
+
+        // match self.initate_who_are_you_ack().await {
+        //     Ok(_) => (),
+        //     Err(err) => return HandleStatus::WhoAreYouAckInitiateFail(err),
+        // };
+
+        // match self.handle_succeed_who_are_you(way).await {
+        //     Ok(_) => (),
+        //     Err(err) => return HandleStatus::PeerUpdateFail(err),
+        // };
 
         HandleStatus::Success
     }

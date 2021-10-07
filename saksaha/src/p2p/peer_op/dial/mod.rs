@@ -13,7 +13,7 @@ pub struct Dial {
     task_mng: Arc<TaskManager>,
     disc_wakeup_tx: Arc<Sender<usize>>,
     peer_op_wakeup_rx: Arc<Mutex<Receiver<usize>>>,
-    peer_store: Arc<Mutex<PeerStore>>,
+    peer_store: Arc<PeerStore>,
     credential: Arc<Credential>,
 }
 
@@ -23,7 +23,7 @@ impl Dial {
         task_mng: Arc<TaskManager>,
         disc_wakeup_tx: Arc<Sender<usize>>,
         peer_op_wakeup_rx: Arc<Mutex<Receiver<usize>>>,
-        peer_store: Arc<Mutex<PeerStore>>,
+        peer_store: Arc<PeerStore>,
     ) -> Dial {
         Dial {
             credential,

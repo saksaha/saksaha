@@ -6,17 +6,17 @@ use tokio::sync::{Mutex, MutexGuard};
 pub struct Filter;
 
 impl Filter {
-    pub fn not_initialized(peer: &mut Peer) -> bool {
+    pub fn not_initialized(peer: &MutexGuard<Peer>) -> bool {
         return peer.status == Status::NotInitialized;
     }
 
-    pub fn discovery_success(peer: &mut Peer) -> bool {
+    pub fn discovery_success(peer: &MutexGuard<Peer>) -> bool {
         return peer.status == Status::DiscoverySuccess;
     }
 }
 
 pub struct PeerStore {
-    slots: Vec<Peer>,
+    slots: Vec<Arc<Mutex<Peer>>>,
     pub capacity: usize,
 }
 
@@ -56,8 +56,7 @@ impl PeerStore {
                         p.ip,
                         p.disc_port
                     );
-                    p
-                    // Arc::new(Mutex::new(Some(p)))
+                    Arc::new(Mutex::new(p))
                 }
                 Err(err) => {
                     log!(DEBUG, "Cannot parse url, url: {}, err: {}\n", u, err);
@@ -71,7 +70,7 @@ impl PeerStore {
 
         for i in count..capacity {
             let p = Peer::new_empty();
-            slots.push(p);
+            slots.push(Arc::new(Mutex::new(p)));
         }
 
         log!(
@@ -94,12 +93,11 @@ impl PeerStore {
     }
 
     pub async fn next(
-        &mut self,
+        &self,
         start_idx: Option<usize>,
-        filter: &(dyn Fn(&mut Peer) -> bool + Sync + Send),
-    ) -> Option<(&mut Peer, usize)> {
-        // let mut slots = self.slots.clone().lock().await;
-        let slots = &mut self.slots;
+        filter: &(dyn Fn(&MutexGuard<Peer>) -> bool + Sync + Send),
+    ) -> Option<(MutexGuard<'_, Peer>, usize)> {
+        let slots = &self.slots;
 
         let start_idx = match start_idx {
             Some(i) => i,
@@ -111,7 +109,7 @@ impl PeerStore {
         for i in start_idx..start_idx + cap {
             let idx = i % cap;
 
-            let mut peer = match slots.get_mut(idx) {
+            let peer = match slots.get(idx) {
                 Some(p) => p,
                 None => {
                     log!(
@@ -122,9 +120,14 @@ impl PeerStore {
                 }
             };
 
-            if filter(peer) {
-                let p = slots.get_mut(idx).unwrap();
-                return Some((p, idx));
+
+            let peer = match peer.try_lock() {
+                Ok(p) => p,
+                Err(_) => continue,
+            };
+
+            if filter(&peer) {
+                return Some((peer, idx))
             } else {
                 continue;
             }
@@ -133,16 +136,22 @@ impl PeerStore {
         None
     }
 
-    pub async fn find(
+    pub fn find(
         &self,
-        filter: &(dyn Fn(&MutexGuard<Option<Peer>>) -> bool + Sync + Send),
-    ) -> Option<(MutexGuard<'_, Option<Peer>>, usize)> {
-        // self.mutex.lock().await;
+        filter: &(dyn Fn(&MutexGuard<Peer>) -> bool + Sync + Send),
+    ) -> Option<(MutexGuard<'_, Peer>, usize)> {
+        for (idx, p) in self.slots.iter().enumerate() {
+            let peer = match p.try_lock() {
+                Ok(p) => p,
+                Err(_) => continue
+            };
 
-        // for p in self.slots.clone() {
-        //     let a = p.clone();
-        // };
-        // return false;
+            if filter(&peer) {
+                return Some((peer, idx));
+            } else {
+                continue;
+            }
+        }
         None
     }
 }

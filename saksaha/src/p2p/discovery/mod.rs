@@ -25,7 +25,7 @@ struct Components {
 pub struct Disc {
     // address_book: Arc<AddressBook>,
     disc_port: Option<u16>,
-    peer_store: Arc<Mutex<PeerStore>>,
+    peer_store: Arc<PeerStore>,
     task_mng: Arc<TaskManager>,
     credential: Arc<Credential>,
     disc_wakeup_rx: Arc<Mutex<Receiver<usize>>>,
@@ -35,7 +35,7 @@ pub struct Disc {
 impl Disc {
     pub fn new(
         disc_port: Option<u16>,
-        peer_store: Arc<Mutex<PeerStore>>,
+        peer_store: Arc<PeerStore>,
         task_mng: Arc<TaskManager>,
         credential: Arc<Credential>,
         disc_wakeup_rx: Arc<Mutex<Receiver<usize>>>,
