@@ -86,7 +86,6 @@ impl PeerStore {
         );
 
         PeerStore {
-            // slots: Arc::new(Mutex::new(slots)),
             slots,
             capacity,
         }

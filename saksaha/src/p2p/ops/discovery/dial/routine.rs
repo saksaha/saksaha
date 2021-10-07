@@ -44,7 +44,7 @@ impl Routine {
     }
 
     pub fn run(&self) {
-        log!(DEBUG, "Start disc dial routine\n");
+        log!(DEBUG, "Start dial - disc\n");
 
         let peer_store = self.peer_store.clone();
         let credential = self.credential.clone();
@@ -54,21 +54,15 @@ impl Routine {
         let last_peer_idx = self.last_peer_idx.clone();
         let disc_port = self.disc_port;
 
-        println!("3333");
-
         tokio::spawn(async move {
             let mut is_running_lock = is_running.lock().await;
             *is_running_lock = true;
             std::mem::drop(is_running_lock);
 
-            println!("1122");
-
             loop {
                 let start = SystemTime::now();
 
-                println!("111l");
-
-                let mut handler = Handler::new(
+                let handler = Handler::new(
                     peer_store.clone(),
                     credential.clone(),
                     peer_op_port,
@@ -144,8 +138,6 @@ impl Routine {
                     }
                 }
             }
-
-            println!("343323");
 
             let mut is_running_lock = is_running.lock().await;
             *is_running_lock = false;

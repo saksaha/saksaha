@@ -16,7 +16,11 @@ impl Listener {
         let (tcp_listener, local_addr) =
             match TcpListener::bind(local_addr).await {
                 Ok(listener) => match listener.local_addr() {
-                    Ok(local_addr) => (listener, local_addr),
+                    Ok(local_addr) => {
+                        log!(DEBUG, "Listener created, addr: {}\n", local_addr);
+
+                        (listener, local_addr)
+                    },
                     Err(err) => return Err(err.into()),
                 },
                 Err(err) => {

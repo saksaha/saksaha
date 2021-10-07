@@ -1,15 +1,13 @@
 mod bootstrap;
-mod status;
 pub mod peer_store;
+mod status;
 
-pub use status::Status;
 use crate::{
     common::{Error, Result},
     err,
 };
 use logger::log;
-use tokio::sync::Mutex;
-use std::{cmp::PartialEq, sync::Arc};
+pub use status::Status;
 
 const MAX_FAIL_COUNT: usize = 3;
 
@@ -23,22 +21,10 @@ pub struct Peer {
     pub peer_id: String,
     pub status: Status<Error>,
     pub fail_count: usize,
+    pub url: String,
 }
 
 impl Peer {
-    pub fn new(peer_id: String, ip: String, disc_port: u16) -> Peer {
-        Peer {
-            ip,
-            disc_port,
-            peer_op_port: 0,
-            public_key_bytes: [0; 65],
-            rpc_port: 0,
-            peer_id,
-            status: Status::NotInitialized,
-            fail_count: 0,
-        }
-    }
-
     pub fn new_empty() -> Peer {
         Peer {
             ip: "".into(),
@@ -49,6 +35,7 @@ impl Peer {
             peer_id: "".into(),
             status: Status::Empty,
             fail_count: 0,
+            url: "".into(),
         }
     }
 
@@ -88,9 +75,31 @@ impl Peer {
             }
         };
 
-        let addr = Peer::new(peer_id, ip, disc_port);
+        let peer = Peer {
+            ip,
+            disc_port,
+            peer_op_port: 0,
+            public_key_bytes: [0; 65],
+            rpc_port: 0,
+            peer_id,
+            status: Status::NotInitialized,
+            fail_count: 0,
+            url,
+        };
 
-        Ok(addr)
+        Ok(peer)
+    }
+
+    pub fn short_url(&self) -> String {
+        let peer_id_short = {
+            if self.peer_id.len() > 6 {
+                &self.peer_id[..6]
+            } else {
+                ".."
+            }
+        };
+
+        format!("{}@{}:{}", peer_id_short, self.ip, self.disc_port)
     }
 
     pub fn empty(&mut self) {
@@ -101,6 +110,13 @@ impl Peer {
         self.fail_count += 1;
 
         if self.fail_count >= MAX_FAIL_COUNT {
+            log!(
+                DEBUG,
+                "Peer fail count reached max, count: {}, peer: {}\n",
+                self.fail_count,
+                self.short_url()
+            );
+
             self.empty();
         }
     }

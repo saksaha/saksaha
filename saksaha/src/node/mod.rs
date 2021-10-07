@@ -37,7 +37,6 @@ impl Node {
         let p2p_config = pconfig.p2p;
         let host = match Host::new(
             self.task_mng.clone(),
-            p2p_config,
         ) {
             Ok(h) => h,
             Err(err) => return Err(err),
@@ -58,6 +57,7 @@ impl Node {
         };
 
         let host_started = host.start(
+            p2p_config,
             rpc_port,
             disc_port,
             bootstrap_urls.to_owned(),

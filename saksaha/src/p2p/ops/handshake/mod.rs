@@ -42,38 +42,33 @@ impl Handshake {
         peer_op_listener: TcpListener,
     ) -> Status<Error> {
         let task_mng = self.task_mng.clone();
-        let listen = Listen::new();
 
-        let dial = Dial::new(
-            credential.clone(),
+        let dial = Dial::new(task_mng.clone());
+
+        let listen = Listen::new();
+        let listen_started = listen.start(
+            disc_wakeup_tx.clone(),
             task_mng.clone(),
+            credential.clone(),
+            peer_op_listener,
+        );
+
+        match listen_started.await {
+            Ok(_) => (),
+            Err(err) => return Status::SetupFailed(err),
+        };
+
+        let dial_started = dial.start(
+            credential.clone(),
             disc_wakeup_tx.clone(),
             peer_op_wakeup_rx.clone(),
             peer_store.clone(),
         );
 
-        let listen_start = tokio::spawn(async move {
-            return listen
-                .start(
-                    disc_wakeup_tx.clone(),
-                    task_mng.clone(),
-                    credential.clone(),
-                    peer_op_listener,
-                )
-                .await;
-        });
-
-        match listen_start.await {
-            Ok(res) => match res {
-                Ok(port) => port,
-                Err(err) => return Status::SetupFailed(err),
-            },
-            Err(err) => return Status::SetupFailed(err.into()),
+        match dial_started.await {
+            Ok(_) => (),
+            Err(err) => return Status::SetupFailed(err),
         };
-
-        tokio::spawn(async move {
-            dial.start().await;
-        });
 
         Status::Launched
     }

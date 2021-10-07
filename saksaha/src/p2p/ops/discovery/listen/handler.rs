@@ -30,10 +30,7 @@ pub enum HandleStatus<E, S> {
 }
 
 pub struct Handler {
-    // addr: Arc<Mutex<Address>>,
-    // address_book: Arc<AddressBook>,
     stream: TcpStream,
-    // peer: MutexGuard<'a, Peer>,
     peer_store: Arc<PeerStore>,
     credential: Arc<Credential>,
     peer_op_port: u16,
@@ -41,10 +38,7 @@ pub struct Handler {
 
 impl Handler {
     pub fn new(
-        // addr: Arc<Mutex<Address>>,
-        // address_book: Arc<AddressBook>,
         stream: TcpStream,
-        // peer: MutexGuard<Peer>,
         peer_store: Arc<PeerStore>,
         credential: Arc<Credential>,
         peer_op_port: u16,

@@ -28,8 +28,6 @@ impl Routine {
     }
 
     pub fn run(&self) {
-        log!(DEBUG, "Start handshake dial routine\n");
-
         let is_running = self.is_running.clone();
         let peer_store = self.peer_store.clone();
         let credential = self.credential.clone();

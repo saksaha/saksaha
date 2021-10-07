@@ -99,15 +99,6 @@ impl Disc {
         disc_listener: TcpListener,
         disc_port: u16,
     ) -> Status<Error> {
-        let dial = Dial::new(
-            peer_store.clone(),
-            peer_op_port,
-            self.task_mng.clone(),
-            credential.clone(),
-            disc_wakeup_rx.clone(),
-            peer_op_wakeup_tx.clone(),
-        );
-
         let listen = Listen::new();
         let listen_started = listen.start(
             disc_listener,
@@ -122,9 +113,16 @@ impl Disc {
             Err(err) => return Status::SetupFailed(err.into()),
         };
 
-        tokio::spawn(async move {
-            // dial.start(disc_port).await;
-        });
+        let dial = Dial::new(
+            self.task_mng.clone(),
+        );
+        dial.start(disc_port,
+            peer_store.clone(),
+            peer_op_port,
+            credential.clone(),
+            disc_wakeup_rx.clone(),
+            peer_op_wakeup_tx.clone(),
+        ).await;
 
         Status::Launched
     }

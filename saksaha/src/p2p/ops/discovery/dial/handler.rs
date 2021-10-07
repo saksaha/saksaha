@@ -72,13 +72,6 @@ impl Handler {
         let endpoint = format!("{}:{}", peer.ip, peer.disc_port);
         let my_disc_endpoint = format!("127.0.0.1:{}", self.disc_port);
 
-        println!(
-            "{} {} {}",
-            endpoint,
-            my_disc_endpoint,
-            endpoint == my_disc_endpoint
-        );
-
         if endpoint == my_disc_endpoint {
             log!(
                 DEBUG,

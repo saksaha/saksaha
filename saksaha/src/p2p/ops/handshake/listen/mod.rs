@@ -25,7 +25,8 @@ impl Listen {
         credential: Arc<Credential>,
         peer_op_listener: TcpListener,
     ) -> Result<()> {
-        log!(DEBUG, "Start op-handshake listen\n");
+        log!(DEBUG, "Start listen - handshake\n");
+
         // let local_addr = format!("127.0.0.1:0");
 
         // let (listener, port) = match TcpListener::bind(local_addr).await {

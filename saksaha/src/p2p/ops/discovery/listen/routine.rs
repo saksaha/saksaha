@@ -32,7 +32,7 @@ impl Routine {
         peer_store: Arc<PeerStore>,
         credential: Arc<Credential>,
     ) {
-        log!(DEBUG, "Start disc listening\n");
+        log!(DEBUG, "Start listen - disc\n");
 
         let credential = credential.clone();
         let peer_store = peer_store.clone();

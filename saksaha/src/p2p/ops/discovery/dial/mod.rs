@@ -19,49 +19,57 @@ use tokio::sync::{
 };
 
 pub struct Dial {
-    peer_store: Arc<PeerStore>,
-    peer_op_port: u16,
     task_mng: Arc<TaskManager>,
-    credential: Arc<Credential>,
-    disc_wakeup_rx: Arc<Mutex<Receiver<usize>>>,
-    peer_op_wakeup_tx: Arc<Sender<usize>>,
+    // peer_store: Arc<PeerStore>,
+    // peer_op_port: u16,
+    // credential: Arc<Credential>,
+    // disc_wakeup_rx: Arc<Mutex<Receiver<usize>>>,
+    // peer_op_wakeup_tx: Arc<Sender<usize>>,
 }
 
 impl Dial {
     pub fn new(
-        peer_store: Arc<PeerStore>,
-        peer_op_port: u16,
         task_mng: Arc<TaskManager>,
-        credential: Arc<Credential>,
-        disc_wakeup_rx: Arc<Mutex<Receiver<usize>>>,
-        peer_op_wakeup_tx: Arc<Sender<usize>>,
+        // peer_store: Arc<PeerStore>,
+        // peer_op_port: u16,
+        // credential: Arc<Credential>,
+        // disc_wakeup_rx: Arc<Mutex<Receiver<usize>>>,
+        // peer_op_wakeup_tx: Arc<Sender<usize>>,
     ) -> Dial {
         Dial {
-            peer_store,
-            peer_op_port,
             task_mng,
-            credential,
-            disc_wakeup_rx,
-            peer_op_wakeup_tx,
+            // peer_store,
+            // peer_op_port,
+            // credential,
+            // disc_wakeup_rx,
+            // peer_op_wakeup_tx,
         }
     }
 
-    pub async fn start(&self, my_disc_port: u16) {
+    pub async fn start(
+        &self,
+        my_disc_port: u16,
+        peer_store: Arc<PeerStore>,
+        peer_op_port: u16,
+        credential: Arc<Credential>,
+        disc_wakeup_rx: Arc<Mutex<Receiver<usize>>>,
+        peer_op_wakeup_tx: Arc<Sender<usize>>,
+    ) {
         let task_mng = self.task_mng.clone();
 
         let routine = Arc::new(Routine::new(
-            self.peer_store.clone(),
-            self.credential.clone(),
-            self.peer_op_port,
+            peer_store.clone(),
+            credential.clone(),
+            peer_op_port,
             my_disc_port,
-            self.peer_op_wakeup_tx.clone(),
+            peer_op_wakeup_tx.clone(),
         ));
 
         let routine_clone = routine.clone();
         routine_clone.run();
 
         let routine_clone = routine.clone();
-        let disc_wakeup_rx = self.disc_wakeup_rx.clone();
+        let disc_wakeup_rx = disc_wakeup_rx.clone();
         tokio::spawn(async move {
             loop {
                 let mut disc_wakeup_rx = disc_wakeup_rx.lock().await;
