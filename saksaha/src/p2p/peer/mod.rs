@@ -2,7 +2,7 @@ mod bootstrap;
 mod status;
 pub mod peer_store;
 
-use status::Status;
+pub use status::Status;
 use crate::{
     common::{Error, Result},
     err,
@@ -11,7 +11,7 @@ use logger::log;
 use tokio::sync::Mutex;
 use std::{cmp::PartialEq, sync::Arc};
 
-pub const MAX_FAIL_COUNT: usize = 3;
+const MAX_FAIL_COUNT: usize = 3;
 
 #[derive(Debug)]
 pub struct Peer {
@@ -95,5 +95,13 @@ impl Peer {
 
     pub fn empty(&mut self) {
         *self = Peer::new_empty();
+    }
+
+    pub fn record_fail(&mut self) {
+        self.fail_count += 1;
+
+        if self.fail_count >= MAX_FAIL_COUNT {
+            self.empty();
+        }
     }
 }

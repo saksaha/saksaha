@@ -1,12 +1,4 @@
-use crate::{
-    common::{Error, Result},
-    err,
-    p2p::{
-        credential::Credential,
-        discovery::whoareyou::{self, WhoAreYou, WhoAreYouAck},
-        peer::{peer_store::PeerStore, Peer},
-    },
-};
+use crate::{common::{Error, Result}, err, p2p::{credential::Credential, discovery::whoareyou::{self, WhoAreYou, WhoAreYouAck}, peer::{Peer, Status, peer_store::PeerStore}}};
 use k256::ecdsa::{signature::Signer, Signature, SigningKey};
 use logger::log;
 use std::sync::Arc;
@@ -20,6 +12,8 @@ use tokio::{
 /// S endpoint
 /// E error
 pub enum HandleStatus<E, S> {
+    NoAvailablePeerSlot,
+
     AddressAcquireFail(E),
 
     PeerAlreadyTalking(S),
@@ -66,45 +60,60 @@ impl Handler {
     }
 
     pub async fn run(&mut self) -> HandleStatus<Error, String> {
+        let peer_store = self.peer_store.clone();
         let (peer_ip, peer_port) = match self.stream.peer_addr() {
             Ok(a) => (a.ip().to_string(), a.port()),
             Err(err) => return HandleStatus::AddressAcquireFail(err.into()),
         };
 
-        let peer_found = self.peer_store.find(&|peer| {
+        let peer_found = peer_store.find(&|peer| {
             if peer.ip == peer_ip && peer.disc_port == peer_port {
-                return false;
+                return true;
             }
-            return true;
+            return false;
         });
 
         match peer_found {
             Some(_) => {
                 let endpoint = format!("{}:{}", peer_ip, peer_port);
 
-                return HandleStatus::PeerAlreadyTalking(endpoint)
+                return HandleStatus::PeerAlreadyTalking(endpoint);
             }
             None => (),
         }
 
-        // let peer = self.peer_store.find(|peer| {
+        let (mut peer, peer_idx) = match peer_store.reserve() {
+            Some(p) => p,
+            None => return HandleStatus::NoAvailablePeerSlot,
+        };
 
-        // });
+        let way = match self.receive_who_are_you().await {
+            Ok(w) => w,
+            Err(err) => {
+                peer.record_fail();
 
-        // let way = match self.receive_who_are_you().await {
-        //     Ok(w) => w,
-        //     Err(err) => return HandleStatus::WhoAreYouReceiveFail(err),
-        // };
+                return HandleStatus::WhoAreYouReceiveFail(err);
+            }
+        };
 
-        // match self.initate_who_are_you_ack().await {
-        //     Ok(_) => (),
-        //     Err(err) => return HandleStatus::WhoAreYouAckInitiateFail(err),
-        // };
+        match self.initate_who_are_you_ack().await {
+            Ok(_) => (),
+            Err(err) => {
+                peer.record_fail();
 
-        // match self.handle_succeed_who_are_you(way).await {
-        //     Ok(_) => (),
-        //     Err(err) => return HandleStatus::PeerUpdateFail(err),
-        // };
+                return HandleStatus::WhoAreYouAckInitiateFail(err);
+            }
+        };
+
+        match self
+            .handle_succeed_who_are_you(way, peer, peer_ip, peer_port)
+            .await
+        {
+            Ok(_) => (),
+            Err(err) => {
+                return HandleStatus::PeerUpdateFail(err);
+            }
+        };
 
         HandleStatus::Success
     }
@@ -155,30 +164,23 @@ impl Handler {
     pub async fn handle_succeed_who_are_you(
         &mut self,
         way: WhoAreYou,
+        mut peer: MutexGuard<'_, Peer>,
+        peer_ip: String,
+        peer_port: u16,
     ) -> Result<()> {
-        let peer_addr = match self.stream.peer_addr() {
-            Ok(a) => a,
-            Err(err) => return Err(err.into()),
-        };
+        peer.ip = peer_ip;
+        peer.disc_port = peer_port;
+        peer.peer_id = way.peer_id;
+        peer.peer_op_port = way.peer_op_port;
+        peer.public_key_bytes = way.public_key_bytes;
+        peer.fail_count = 0;
+        peer.status = Status::DiscoverySuccess;
 
-        // let addr = self.addr.clone();
-        // let mut addr = addr.lock().await;
-        // addr.ip =
-        // addr.status = AddrStatus::DiscoverySuccess;
-
-        // let mut peer = self.peer.lock().await;
-        // let peer = &mut self.peer;
-        // peer.status = PeerStatus::DiscoverySuccess;
-        // peer.ip = peer_addr.ip().to_string();
-        // peer.disc_port = peer_addr.port();
-        // peer.peer_op_port = way.peer_op_port;
-        // peer.peer_id = way.peer_id;
-
-        // log!(
-        //     DEBUG,
-        //     "Successfully handled disc listen, peer: {:?}\n",
-        //     peer
-        // );
+        log!(
+            DEBUG,
+            "Successfully handled disc listen, peer: {:?}\n",
+            peer
+        );
 
         Ok(())
     }

@@ -14,6 +14,13 @@ impl Error {
         return Error { kind, msg };
     }
 
+    pub fn new_default(msg: String) -> Error {
+        return Error {
+            kind: ErrorKind::Default,
+            msg,
+        };
+    }
+
     pub fn kind(&self) -> ErrorKind {
         return self.kind;
     }

@@ -9,7 +9,7 @@ use crate::{
         peer::{
             self,
             peer_store::{Filter, PeerStore},
-            Peer, MAX_FAIL_COUNT,
+            Peer,
         },
     },
 };
@@ -110,11 +110,10 @@ impl Handler {
         let mut last_peer_idx = self.last_peer_idx.lock().await;
         let credential = self.credential.clone();
 
-        let mut peer_store = self.peer_store.clone();
+        let peer_store = self.peer_store.clone();
 
-        let peer = peer_store
-            .next(Some(*last_peer_idx), &Filter::not_initialized)
-            .await;
+        let peer =
+            peer_store.next(Some(*last_peer_idx), &Filter::not_initialized);
 
         let (mut peer, peer_idx) = match peer {
             Some((p, idx)) => (p, idx),
@@ -138,31 +137,37 @@ impl Handler {
                 s
             }
             Err(err) => {
-                log!(DEBUG, "Cannot disc dial to peer, {:?}\n", peer);
-                peer.fail_count += 1;
+                let msg = format!(
+                    "Cannot connect to peer.ip: {}, port: {}, err: {}",
+                    peer.ip, peer.disc_port, err
+                );
+                let err = Error::new_default(msg);
 
-                if peer.fail_count >= MAX_FAIL_COUNT {
-                    peer.empty();
-                }
+                peer.record_fail();
 
-                return HandleStatus::ConnectionFail(err.into());
+                return HandleStatus::ConnectionFail(err);
             }
         };
 
         match self.initiate_who_are_you(&mut stream).await {
             Ok(_) => (),
-            Err(err) => return HandleStatus::WhoAreYouInitiateFail(err),
+            Err(err) => {
+                peer.record_fail();
+
+                return HandleStatus::WhoAreYouInitiateFail(err);
+            }
         };
 
         let way_ack = match self.receive_who_are_you_ack(stream).await {
             Ok(w) => w,
-            Err(err) => return HandleStatus::WhoAreYouAckReceiveFail(err),
+            Err(err) => {
+                peer.record_fail();
+
+                return HandleStatus::WhoAreYouAckReceiveFail(err);
+            }
         };
 
-        match self
-            .handle_succeed_who_are_you(way_ack, peer, credential)
-            .await
-        {
+        match self.handle_succeed_who_are_you(way_ack, peer).await {
             Ok(_) => (),
             Err(err) => return HandleStatus::PeerUpdateFail(err),
         };
@@ -237,54 +242,31 @@ impl Handler {
         &self,
         way_ack: WhoAreYouAck,
         mut peer: MutexGuard<'_, Peer>,
-        credential: Arc<Credential>,
     ) -> Result<()> {
-        // let a = self.peer_store.find()
+        let peer_op_wakeup_tx = self.peer_op_wakeup_tx.clone();
 
-        // peer.peer_id = way_ack.way.peer_id;
-        // peer.peer_op_port = way_ack.way.peer_op_port;
-        // peer.public_key_bytes = way_ack.way.public_key_bytes;
-        // peer.status = peer::Status::DiscoverySuccess;
+        peer.peer_id = way_ack.way.peer_id;
+        peer.peer_op_port = way_ack.way.peer_op_port;
+        peer.public_key_bytes = way_ack.way.public_key_bytes;
+        peer.status = peer::Status::DiscoverySuccess;
+        peer.fail_count = 0;
 
-        // let my_public_key = credential.public_key_bytes;
-        // let peer_public_key = peer.public_key_bytes;
+        let wakeup = tokio::spawn(async move {
+            match peer_op_wakeup_tx.send(0).await {
+                Ok(_) => Ok(()),
+                Err(err) => {
+                    return err!(
+                        "Error sending peer op wakeup msg, err: {}",
+                        err
+                    );
+                }
+            }
+        });
 
-        // let mine_is_bigger =
-        //     match compare_public_key(my_public_key, peer_public_key) {
-        //         Ok(mine_is_bigger) => mine_is_bigger,
-        //         Err(err) => return Err(err),
-        //     };
-
-        // if mine_is_bigger {
-        //     let peer_op_wakeup_tx = self.peer_op_wakeup_tx.clone();
-
-        //     let wakeup = tokio::spawn(async move {
-        //         match peer_op_wakeup_tx.send(0).await {
-        //             Ok(_) => Ok(()),
-        //             Err(err) => {
-        //                 return err!(
-        //                     "Error sending peer op wakeup msg, err: {}",
-        //                     err
-        //                 );
-        //             }
-        //         }
-        //     });
-
-        //     match wakeup.await {
-        //         Ok(_) => (),
-        //         Err(err) => return Err(err.into()),
-        //     }
-        // }
-
-        // let mut peer = self.peer.lock().await;
-        // let peer = &self.peer;
-        // let peer = &mut self.peer;
-        // peer.status = peer::Status::DiscoverySuccess;
-        // peer.peer_id = way_ack.way.peer_id;
-        // // peer.ip = addr.ip.to_owned();
-        // // peer.disc_port = addr.disc_port;
-        // peer.pk_bytes = way_ack.way.public_key_bytes;
-        // peer.peer_op_port = way_ack.way.peer_op_port;
+        match wakeup.await {
+            Ok(_) => (),
+            Err(err) => return Err(err.into()),
+        }
 
         log!(DEBUG, "Successfully handled disc dial peer: {:?}\n", peer);
 

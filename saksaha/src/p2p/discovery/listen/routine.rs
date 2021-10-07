@@ -61,6 +61,12 @@ impl Routine {
 
                 tokio::spawn(async move {
                     match handler.run().await {
+                        HandleStatus::NoAvailablePeerSlot => {
+                            log!(DEBUG, "No available peer slot, sleeping");
+
+                            tokio::time::sleep(Duration::from_millis(1000))
+                                .await;
+                        }
                         HandleStatus::PeerAlreadyTalking(endpoint) => {
                             log!(
                                 DEBUG,
@@ -76,9 +82,7 @@ impl Routine {
                                 err
                             );
                         }
-                        HandleStatus::Success => {
-                            return;
-                        }
+                        HandleStatus::Success => (),
                         HandleStatus::WhoAreYouReceiveFail(err) => {
                             log!(
                                 DEBUG,

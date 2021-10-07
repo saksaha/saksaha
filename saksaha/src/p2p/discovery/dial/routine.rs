@@ -46,16 +46,6 @@ impl Routine {
     pub fn run(&self) {
         log!(DEBUG, "Start disc dial\n");
 
-        let mut vec = vec!(1,2,3);
-
-        println!("33, {:?}", vec);
-
-        let a = vec.get_mut(0).unwrap();
-        // *a = None;
-
-        println!("44, {:?}", vec);
-
-
         let peer_store = self.peer_store.clone();
         let credential = self.credential.clone();
         let is_running = self.is_running.clone();
@@ -143,7 +133,7 @@ impl Routine {
                     Err(err) => {
                         log!(
                             DEBUG,
-                            "Error sleeping the duration, err: {}",
+                            "Error sleeping the duration, err: {}\n",
                             err
                         );
                     }
