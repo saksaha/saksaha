@@ -1,4 +1,3 @@
-pub use super::status::Status;
 use super::{
     credential::Credential,
     ops::{
@@ -16,6 +15,12 @@ use crate::{
 use logger::log;
 use std::sync::Arc;
 use tokio::sync::{mpsc, Mutex};
+
+pub enum HostStatus<E> {
+    Launched,
+
+    SetupFailed(E),
+}
 
 struct Components {
     handshake: Handshake,
@@ -127,19 +132,19 @@ impl Host {
         Ok(components)
     }
 
-    pub async fn start(&self, rpc_port: u16) -> Status<Error> {
+    pub async fn start(&self, rpc_port: u16) -> HostStatus<Error> {
         log!(DEBUG, "Start host...\n");
 
         let components = match self.make_components(rpc_port) {
             Ok(c) => c,
-            Err(err) => return Status::SetupFailed(err),
+            Err(err) => return HostStatus::SetupFailed(err),
         };
 
         match self.start_components(components).await {
             Ok(_) => (),
-            Err(err) => return Status::SetupFailed(err),
+            Err(err) => return HostStatus::SetupFailed(err),
         };
 
-        Status::Launched
+        HostStatus::Launched
     }
 }

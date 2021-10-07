@@ -1,14 +1,7 @@
 pub mod status;
 pub mod task_manager;
 
-use crate::{
-    common::{Error, Result},
-    err,
-    node::status::Status,
-    p2p::host::{self, Host},
-    pconfig::PConfig,
-    rpc::{self, RPC},
-};
+use crate::{common::{Error, Result}, err, node::status::Status, p2p::host::{self, Host, HostStatus}, pconfig::PConfig, rpc::{self, RPC}};
 use logger::log;
 use std::sync::Arc;
 use task_manager::{MsgKind, TaskManager};
@@ -73,8 +66,8 @@ impl Node {
 
         match host_status.await {
             Ok(status) => match status {
-                host::Status::Launched => {}
-                host::Status::SetupFailed(err) => return Err(err),
+                HostStatus::Launched => {}
+                HostStatus::SetupFailed(err) => return Err(err),
             },
             Err(err) => {
                 return err!("Error joining host start thread, err: {}", err);
