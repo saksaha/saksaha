@@ -38,10 +38,10 @@ impl WhoAreYou {
         Crypto::encode_hex(public_key_bytes)
     }
 
-    pub fn to_bytes(&self) -> Result<[u8; 140]> {
-        let mut buf = [0; 140];
+    pub fn to_bytes(&self) -> Result<&[u8]> {
+        let mut buf = vec!(0);
 
-        buf[0] = Type::SYN as u8;
+        buf.push(Type::SYN as u8);
 
         let sig_bytes = self.sig.to_der().to_bytes();
         let sig_len = sig_bytes.len();
@@ -56,7 +56,7 @@ impl WhoAreYou {
 
         buf[74..139].copy_from_slice(&self.public_key_bytes);
 
-        Ok(buf)
+        Ok(&buf)
     }
 
     pub async fn parse(stream: &mut TcpStream) -> Result<WhoAreYou> {
