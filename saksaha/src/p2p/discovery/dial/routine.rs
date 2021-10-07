@@ -13,7 +13,7 @@ use crate::p2p::{
 };
 
 pub struct Routine {
-    peer_store: Arc<Mutex<PeerStore>>,
+    peer_store: Arc<PeerStore>,
     credential: Arc<Credential>,
     peer_op_port: u16,
     is_running: Arc<Mutex<bool>>,
@@ -24,7 +24,7 @@ pub struct Routine {
 
 impl Routine {
     pub fn new(
-        peer_store: Arc<Mutex<PeerStore>>,
+        peer_store: Arc<PeerStore>,
         credential: Arc<Credential>,
         peer_op_port: u16,
         disc_port: u16,
@@ -90,6 +90,8 @@ impl Routine {
                         );
                     }
                     HandleStatus::NoAvailablePeer => {
+                        log!(DEBUG, "No available peer\n");
+
                         break;
                     }
                     HandleStatus::IllegalPeerFound(idx) => {
@@ -134,6 +136,7 @@ impl Routine {
                 }
 
                 tokio::time::sleep(Duration::from_millis(1000)).await;
+
 
                 match start.elapsed() {
                     Ok(_) => (),

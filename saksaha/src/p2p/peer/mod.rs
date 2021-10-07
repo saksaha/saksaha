@@ -1,29 +1,20 @@
 mod bootstrap;
+mod status;
 pub mod peer_store;
 
+use status::Status;
 use crate::{
     common::{Error, Result},
     err,
 };
 use logger::log;
-use std::cmp::PartialEq;
+use tokio::sync::Mutex;
+use std::{cmp::PartialEq, sync::Arc};
 
-#[derive(Debug, PartialEq)]
-pub enum Status<E> {
-    Empty,
-
-    NotInitialized,
-
-    DiscoverySuccess,
-
-    HandshakeSuccess,
-
-    HandshakeFail(E),
-}
+pub const MAX_FAIL_COUNT: usize = 3;
 
 #[derive(Debug)]
 pub struct Peer {
-    // pub mutex:
     pub ip: String,
     pub disc_port: u16,
     pub peer_op_port: u16,
@@ -31,6 +22,7 @@ pub struct Peer {
     pub rpc_port: u16,
     pub peer_id: String,
     pub status: Status<Error>,
+    pub fail_count: usize,
 }
 
 impl Peer {
@@ -43,6 +35,7 @@ impl Peer {
             rpc_port: 0,
             peer_id,
             status: Status::NotInitialized,
+            fail_count: 0,
         }
     }
 
@@ -55,6 +48,7 @@ impl Peer {
             rpc_port: 0,
             peer_id: "".into(),
             status: Status::Empty,
+            fail_count: 0,
         }
     }
 
@@ -100,14 +94,6 @@ impl Peer {
     }
 
     pub fn empty(&mut self) {
-        *self = Peer {
-            ip: "".into(),
-            disc_port: 0,
-            peer_op_port: 0,
-            public_key_bytes: [0; 65],
-            rpc_port: 0,
-            peer_id: "".into(),
-            status: Status::Empty,
-        };
+        *self = Peer::new_empty();
     }
 }

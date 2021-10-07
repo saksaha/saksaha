@@ -9,7 +9,7 @@ use crate::{
         peer::{
             self,
             peer_store::{Filter, PeerStore},
-            Peer,
+            Peer, MAX_FAIL_COUNT,
         },
     },
 };
@@ -48,7 +48,7 @@ pub enum HandleStatus<I, E> {
 }
 
 pub struct Handler {
-    peer_store: Arc<Mutex<PeerStore>>,
+    peer_store: Arc<PeerStore>,
     credential: Arc<Credential>,
     peer_op_port: u16,
     disc_port: u16,
@@ -58,7 +58,7 @@ pub struct Handler {
 
 impl Handler {
     pub fn new(
-        peer_store: Arc<Mutex<PeerStore>>,
+        peer_store: Arc<PeerStore>,
         credential: Arc<Credential>,
         peer_op_port: u16,
         disc_port: u16,
@@ -77,7 +77,7 @@ impl Handler {
 
     pub fn require_not_my_endpoint(
         &self,
-        peer: &mut Peer,
+        peer: &mut MutexGuard<Peer>,
     ) -> Result<String> {
         let endpoint = format!("{}:{}", peer.ip, peer.disc_port);
         let my_disc_endpoint = format!("127.0.0.1:{}", self.disc_port);
@@ -96,8 +96,6 @@ impl Handler {
                 endpoint,
             );
 
-            // *peer = None;
-            // peer.
             peer.empty();
             return err!(
                 "Endpoint identical, removing this peer, peer endpoint: {}",
@@ -112,7 +110,7 @@ impl Handler {
         let mut last_peer_idx = self.last_peer_idx.lock().await;
         let credential = self.credential.clone();
 
-        let mut peer_store = self.peer_store.lock().await;
+        let mut peer_store = self.peer_store.clone();
 
         let peer = peer_store
             .next(Some(*last_peer_idx), &Filter::not_initialized)
@@ -125,44 +123,49 @@ impl Handler {
 
         *last_peer_idx = peer_idx;
 
-        let endpoint = match self.require_not_my_endpoint(peer) {
+        let endpoint = match self.require_not_my_endpoint(&mut peer) {
             Ok(ep) => ep,
             Err(err) => return HandleStatus::IllegalEndpoint(err),
         };
 
-        // let mut stream = match TcpStream::connect(endpoint.to_owned()).await {
-        //     Ok(s) => {
-        //         log!(
-        //             DEBUG,
-        //             "Successfully connected to endpoint, {}\n",
-        //             endpoint
-        //         );
-        //         s
-        //     }
-        //     Err(err) => {
-        //         log!(DEBUG, "Cannot disc dial to endpoint, {}\n", endpoint);
+        let mut stream = match TcpStream::connect(endpoint.to_owned()).await {
+            Ok(s) => {
+                log!(
+                    DEBUG,
+                    "Successfully connected to endpoint, {}\n",
+                    endpoint
+                );
+                s
+            }
+            Err(err) => {
+                log!(DEBUG, "Cannot disc dial to peer, {:?}\n", peer);
+                peer.fail_count += 1;
 
-        //         return HandleStatus::ConnectionFail(err.into());
-        //     }
-        // };
+                if peer.fail_count >= MAX_FAIL_COUNT {
+                    peer.empty();
+                }
 
-        // match self.initiate_who_are_you(&mut stream).await {
-        //     Ok(_) => (),
-        //     Err(err) => return HandleStatus::WhoAreYouInitiateFail(err),
-        // };
+                return HandleStatus::ConnectionFail(err.into());
+            }
+        };
 
-        // let way_ack = match self.receive_who_are_you_ack(stream).await {
-        //     Ok(w) => w,
-        //     Err(err) => return HandleStatus::WhoAreYouAckReceiveFail(err),
-        // };
+        match self.initiate_who_are_you(&mut stream).await {
+            Ok(_) => (),
+            Err(err) => return HandleStatus::WhoAreYouInitiateFail(err),
+        };
 
-        // match self
-        //     .handle_succeed_who_are_you(way_ack, peer, credential)
-        //     .await
-        // {
-        //     Ok(_) => (),
-        //     Err(err) => return HandleStatus::PeerUpdateFail(err),
-        // };
+        let way_ack = match self.receive_who_are_you_ack(stream).await {
+            Ok(w) => w,
+            Err(err) => return HandleStatus::WhoAreYouAckReceiveFail(err),
+        };
+
+        match self
+            .handle_succeed_who_are_you(way_ack, peer, credential)
+            .await
+        {
+            Ok(_) => (),
+            Err(err) => return HandleStatus::PeerUpdateFail(err),
+        };
 
         HandleStatus::Success(0)
     }
@@ -233,15 +236,10 @@ impl Handler {
     pub async fn handle_succeed_who_are_you(
         &self,
         way_ack: WhoAreYouAck,
-        peer: &mut Option<Peer>,
+        mut peer: MutexGuard<'_, Peer>,
         credential: Arc<Credential>,
     ) -> Result<()> {
-        let mut peer = match &mut *peer {
-            Some(p) => p,
-            None => return err!("Peer is none"),
-        };
-
-        // self.peer_store.find()
+        // let a = self.peer_store.find()
 
         // peer.peer_id = way_ack.way.peer_id;
         // peer.peer_op_port = way_ack.way.peer_op_port;

@@ -10,14 +10,14 @@ use tokio::{net::TcpListener, sync::Mutex};
 
 pub struct Routine {
     // address_book: Arc<AddressBook>,
-    peer_store: Arc<Mutex<PeerStore>>,
+    peer_store: Arc<PeerStore>,
     credential: Arc<Credential>,
 }
 
 impl Routine {
     pub fn new(
         // address_book: Arc<AddressBook>,
-        peer_store: Arc<Mutex<PeerStore>>,
+        peer_store: Arc<PeerStore>,
         credential: Arc<Credential>,
     ) -> Routine {
         Routine {
@@ -61,6 +61,21 @@ impl Routine {
 
                 tokio::spawn(async move {
                     match handler.run().await {
+                        HandleStatus::PeerAlreadyTalking(endpoint) => {
+                            log!(
+                                DEBUG,
+                                "Peer might be in talk already, endpoint: {}\n",
+                                endpoint,
+                            );
+                        }
+                        HandleStatus::AddressAcquireFail(err) => {
+                            log!(
+                                DEBUG,
+                                "Cannot acquire address of \
+                                incoming connection, err: {}\n",
+                                err
+                            );
+                        }
                         HandleStatus::Success => {
                             return;
                         }
@@ -97,7 +112,6 @@ impl Routine {
                     };
                 });
             }
-
         });
     }
 }

@@ -9,14 +9,14 @@ use std::{
 use tokio::sync::Mutex;
 
 pub struct HandshakeOp {
-    peer_store: Arc<Mutex<PeerStore>>,
+    peer_store: Arc<PeerStore>,
     credential: Arc<Credential>,
     is_running: Arc<Mutex<bool>>,
 }
 
 impl HandshakeOp {
     pub fn new(
-        peer_store: Arc<Mutex<PeerStore>>,
+        peer_store: Arc<PeerStore>,
         credential: Arc<Credential>,
     ) -> HandshakeOp {
         HandshakeOp {

@@ -16,7 +16,7 @@ use tokio::{net::TcpListener, sync::Mutex};
 pub struct Listen {
     disc_port: Option<u16>,
     peer_op_port: u16,
-    peer_store: Arc<Mutex<PeerStore>>,
+    peer_store: Arc<PeerStore>,
     task_mng: Arc<TaskManager>,
     credential: Arc<Credential>,
 }
@@ -25,7 +25,7 @@ impl Listen {
     pub fn new(
         disc_port: Option<u16>,
         peer_op_port: u16,
-        peer_store: Arc<Mutex<PeerStore>>,
+        peer_store: Arc<PeerStore>,
         task_mng: Arc<TaskManager>,
         credential: Arc<Credential>,
     ) -> Listen {
