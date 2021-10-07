@@ -92,15 +92,15 @@ impl PeerStore {
         }
     }
 
-    pub async fn next(
+    pub fn next(
         &self,
-        start_idx: Option<usize>,
+        last_idx: Option<usize>,
         filter: &(dyn Fn(&MutexGuard<Peer>) -> bool + Sync + Send),
     ) -> Option<(MutexGuard<'_, Peer>, usize)> {
         let slots = &self.slots;
 
-        let start_idx = match start_idx {
-            Some(i) => i,
+        let start_idx = match last_idx {
+            Some(i) => i + 1,
             None => 0,
         };
 
@@ -119,7 +119,6 @@ impl PeerStore {
                     return None;
                 }
             };
-
 
             let peer = match peer.try_lock() {
                 Ok(p) => p,
@@ -153,5 +152,11 @@ impl PeerStore {
             }
         }
         None
+    }
+
+    pub fn reserve(&self) -> Option<(MutexGuard<Peer>, usize)> {
+        self.find(&|peer| {
+            peer.status == Status::Empty
+        })
     }
 }
