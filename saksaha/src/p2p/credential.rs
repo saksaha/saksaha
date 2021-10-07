@@ -4,6 +4,7 @@ use crate::{common::Result, crypto::Crypto, err};
 
 pub struct Credential {
     pub secret_key: SecretKey,
+    pub public_key: String,
     pub public_key_bytes: [u8; 65],
 }
 
@@ -52,6 +53,7 @@ impl Credential {
 
         let credential = Credential {
             secret_key,
+            public_key,
             public_key_bytes,
         };
 

@@ -77,7 +77,7 @@ impl<'a> Handler<'a> {
         peer: &MutexGuard<'_, Peer>,
         credential: Arc<Credential>,
     ) -> Result<()> {
-        let peer_pk_bytes = peer.pk_bytes;
+        let peer_pk_bytes = peer.public_key_bytes;
         // PublicKey::f
 
         println!("33, {:?}", peer_pk_bytes);
