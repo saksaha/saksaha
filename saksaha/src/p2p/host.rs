@@ -74,13 +74,7 @@ impl Host {
         let task_mng = self.task_mng.clone();
 
         let handshake = Handshake::new(
-            peer_store.clone(),
-            Arc::new(disc_wakeup_tx),
-            rpc_port,
             task_mng,
-            Arc::new(Mutex::new(peer_op_wakeup_rx)),
-            credential.clone(),
-            peer_op_listener,
         );
 
         let disc = Disc::new(
@@ -96,7 +90,17 @@ impl Host {
         let sync = Sync::new();
 
         let handshake_started = tokio::spawn(async move {
-            let port = match handshake.start().await {
+            let port = match handshake
+                .start(
+                    peer_store.clone(),
+                    Arc::new(disc_wakeup_tx),
+                    rpc_port,
+                    Arc::new(Mutex::new(peer_op_wakeup_rx)),
+                    credential.clone(),
+                    peer_op_listener,
+                )
+                .await
+            {
                 handshake::Status::Launched(port) => port,
                 handshake::Status::SetupFailed(err) => return Err(err),
             };
@@ -118,5 +122,4 @@ impl Host {
 
         HostStatus::Launched
     }
-
 }
