@@ -6,18 +6,18 @@ use crate::p2p::{
 };
 use logger::log;
 use std::{sync::Arc, time::Duration};
-use tokio::net::TcpListener;
+use tokio::{net::TcpListener, sync::Mutex};
 
 pub struct Routine {
     // address_book: Arc<AddressBook>,
-    peer_store: Arc<PeerStore>,
+    peer_store: Arc<Mutex<PeerStore>>,
     credential: Arc<Credential>,
 }
 
 impl Routine {
     pub fn new(
         // address_book: Arc<AddressBook>,
-        peer_store: Arc<PeerStore>,
+        peer_store: Arc<Mutex<PeerStore>>,
         credential: Arc<Credential>,
     ) -> Routine {
         Routine {

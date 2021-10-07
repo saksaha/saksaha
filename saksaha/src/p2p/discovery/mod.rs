@@ -4,10 +4,7 @@ mod status;
 mod whoareyou;
 
 use self::listen::Listen;
-use super::{
-    credential::Credential,
-    peer::peer_store::PeerStore,
-};
+use super::{credential::Credential, peer::peer_store::PeerStore};
 use crate::{
     common::{Error, Result},
     node::task_manager::TaskManager,
@@ -15,7 +12,10 @@ use crate::{
 use dial::Dial;
 pub use status::Status;
 use std::sync::Arc;
-use tokio::sync::{Mutex, mpsc::{Receiver, Sender}};
+use tokio::sync::{
+    mpsc::{Receiver, Sender},
+    Mutex,
+};
 
 struct Components {
     listen: Listen,
@@ -25,7 +25,7 @@ struct Components {
 pub struct Disc {
     // address_book: Arc<AddressBook>,
     disc_port: Option<u16>,
-    peer_store: Arc<PeerStore>,
+    peer_store: Arc<Mutex<PeerStore>>,
     task_mng: Arc<TaskManager>,
     credential: Arc<Credential>,
     disc_wakeup_rx: Arc<Mutex<Receiver<usize>>>,
@@ -35,7 +35,7 @@ pub struct Disc {
 impl Disc {
     pub fn new(
         disc_port: Option<u16>,
-        peer_store: Arc<PeerStore>,
+        peer_store: Arc<Mutex<PeerStore>>,
         task_mng: Arc<TaskManager>,
         credential: Arc<Credential>,
         disc_wakeup_rx: Arc<Mutex<Receiver<usize>>>,
