@@ -5,5 +5,3 @@ pub mod ops;
 pub mod peer;
 
 pub mod credential;
-
-pub mod status;
