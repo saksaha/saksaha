@@ -45,18 +45,18 @@ impl Handshake {
 
         let dial = Dial::new(task_mng.clone());
 
-        let listen = Listen::new();
-        let listen_started = listen.start(
-            disc_wakeup_tx.clone(),
-            task_mng.clone(),
-            credential.clone(),
-            peer_op_listener,
-        );
+        // let listen = Listen::new();
+        // let listen_started = listen.start(
+        //     disc_wakeup_tx.clone(),
+        //     task_mng.clone(),
+        //     credential.clone(),
+        //     peer_op_listener,
+        // );
 
-        match listen_started.await {
-            Ok(_) => (),
-            Err(err) => return Status::SetupFailed(err),
-        };
+        // match listen_started.await {
+        //     Ok(_) => (),
+        //     Err(err) => return Status::SetupFailed(err),
+        // };
 
         let dial_started = dial.start(
             credential.clone(),

@@ -1,17 +1,18 @@
+pub mod msg;
 pub mod status;
 pub mod task_manager;
 
 use crate::{
     common::{Error, Result},
     err,
-    node::status::Status,
+    node::{msg::Kind, status::Status},
     p2p::host::{self, Host, HostStatus},
     pconfig::PConfig,
     rpc::{self, RPC},
 };
 use logger::log;
 use std::sync::Arc;
-use task_manager::{MsgKind, TaskManager};
+use task_manager::TaskManager;
 use tokio::{self, signal};
 
 pub struct Node {
@@ -35,9 +36,7 @@ impl Node {
         let rpc = RPC::new(self.task_mng.clone(), rpc_port);
 
         let p2p_config = pconfig.p2p;
-        let host = match Host::new(
-            self.task_mng.clone(),
-        ) {
+        let host = match Host::new(self.task_mng.clone()) {
             Ok(h) => h,
             Err(err) => return Err(err),
         };
@@ -104,7 +103,7 @@ impl Node {
 
                 tokio::select!(
                     msg_kind = task_mng.clone().start_receiving() => {
-                        if let MsgKind::SetupFailure = msg_kind {
+                        if let Kind::SetupFailure = msg_kind {
                             task_mng.shutdown_program();
                         }
                     },

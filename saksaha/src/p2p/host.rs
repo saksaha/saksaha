@@ -29,14 +29,33 @@ pub struct Host {
 }
 
 impl Host {
-    pub fn new(
-        task_mng: Arc<TaskManager>,
-    ) -> Result<Host> {
-        let host = Host {
-            task_mng,
-        };
+    pub fn new(task_mng: Arc<TaskManager>) -> Result<Host> {
+        let host = Host { task_mng };
 
         Ok(host)
+    }
+
+    fn make_credential(p2p_config: PersistedP2PConfig) -> Result<Credential> {
+        let secret = p2p_config.secret.to_owned();
+        let public_key = p2p_config.public_key.to_owned();
+
+        let credential = match Credential::new(secret, public_key) {
+            Ok(c) => c,
+            Err(err) => return Err(err),
+        };
+
+        Ok(credential)
+    }
+
+    fn make_peer_store(
+        bootstrap_urls: Option<Vec<String>>,
+    ) -> Result<PeerStore> {
+        let peer_store = match PeerStore::new(10, bootstrap_urls) {
+            Ok(p) => p,
+            Err(err) => return Err(err)
+        };
+
+        Ok(peer_store)
     }
 
     pub async fn start(
@@ -46,41 +65,35 @@ impl Host {
         disc_port: Option<u16>,
         bootstrap_urls: Option<Vec<String>>,
     ) -> HostStatus<Error> {
-        let secret = p2p_config.secret.to_owned();
-        let public_key = p2p_config.public_key.to_owned();
-
-        let credential = match Credential::new(secret, public_key) {
+        let credential = match Host::make_credential(p2p_config) {
             Ok(c) => Arc::new(c),
             Err(err) => return HostStatus::SetupFailed(err),
         };
 
         let (disc_listener, disc_port) =
-            match Listener::new_tcp(disc_port).await {
-                Ok(l) => l,
-                Err(err) => return HostStatus::SetupFailed(err),
-            };
+        match Listener::new_tcp(disc_port).await {
+            Ok(l) => l,
+            Err(err) => return HostStatus::SetupFailed(err),
+        };
 
         let (peer_op_listener, peer_op_port) =
-            match Listener::new_tcp(None).await {
-                Ok(l) => l,
-                Err(err) => return HostStatus::SetupFailed(err),
-            };
+        match Listener::new_tcp(None).await {
+            Ok(l) => l,
+            Err(err) => return HostStatus::SetupFailed(err),
+        };
 
         let credential_clone = credential.clone();
-        let peer_store = match PeerStore::new(10, bootstrap_urls) {
-            Ok(p) => p,
-            Err(err) => return HostStatus::SetupFailed(err)
+        let peer_store = match Host::make_peer_store(bootstrap_urls) {
+            Ok(p) => Arc::new(p),
+            Err(err) => return HostStatus::SetupFailed(err),
         };
-        let peer_store = Arc::new(peer_store);
+
         let (disc_wakeup_tx, disc_wakeup_rx) = mpsc::channel::<usize>(5);
         let (peer_op_wakeup_tx, peer_op_wakeup_rx) = mpsc::channel::<usize>(5);
-        let task_mng = self.task_mng.clone();
 
-        let peer_store_clone = peer_store.clone();
-
-        let handshake = Handshake::new(task_mng);
+        let handshake = Handshake::new(self.task_mng.clone());
         let handshake_started = handshake.start(
-            peer_store_clone,
+            peer_store.clone(),
             Arc::new(disc_wakeup_tx),
             rpc_port,
             Arc::new(Mutex::new(peer_op_wakeup_rx)),
@@ -95,12 +108,11 @@ impl Host {
             }
         };
 
-        let peer_store_clone = peer_store.clone();
         let credential_clone = credential.clone();
         let disc = Disc::new(self.task_mng.clone());
         let disc_started = disc.start(
             peer_op_port,
-            peer_store_clone,
+            peer_store.clone(),
             credential_clone,
             Arc::new(Mutex::new(disc_wakeup_rx)),
             Arc::new(peer_op_wakeup_tx),
