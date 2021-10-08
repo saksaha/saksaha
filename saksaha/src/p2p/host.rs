@@ -64,19 +64,7 @@ impl Host {
             Err(err) => return HostStatus::SetupFailed(err),
         };
 
-        // let (disc_listener, disc_port) =
-        // match Listener::new_disc(disc_port).await {
-        //     Ok(l) => l,
-        //     Err(err) => return HostStatus::SetupFailed(err),
-        // };
-
-        // let (peer_op_listener, peer_op_port) =
-        // match Listener::new_peer_op(None).await {
-        //     Ok(l) => l,
-        //     Err(err) => return HostStatus::SetupFailed(err),
-        // };
-
-        let (peer_op_wakeup_tx, peer_op_wakeup_rx) = mpsc::channel::<usize>(5);
+        let (add_peer_tx, add_peer_rx) = mpsc::channel::<usize>(5);
 
         let peer_store = match Host::make_peer_store(bootstrap_urls) {
             Ok(p) => Arc::new(p),
@@ -89,7 +77,7 @@ impl Host {
                 None,
                 peer_store.clone(),
                 rpc_port,
-                Arc::new(Mutex::new(peer_op_wakeup_rx)),
+                Arc::new(Mutex::new(add_peer_rx)),
                 credential.clone(),
             )
             .await
@@ -103,15 +91,13 @@ impl Host {
         };
 
         let disc = Disc::new();
-        let disc_started = disc.start(
+        match disc.start(
             disc_port,
             p2p_listener_port,
             peer_store.clone(),
             credential.clone(),
-            Arc::new(peer_op_wakeup_tx),
-        );
-
-        match disc_started.await {
+            Arc::new(add_peer_tx),
+        ).await {
             discovery::Status::Launched => (),
             discovery::Status::SetupFailed(err) => {
                 return HostStatus::SetupFailed(err);
