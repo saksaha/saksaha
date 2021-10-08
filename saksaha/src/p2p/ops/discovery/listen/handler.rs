@@ -1,12 +1,19 @@
-use crate::{common::{Error, Result}, err, p2p::{credential::Credential, ops::discovery::whoareyou::{self, WhoAreYou, WhoAreYouAck}, peer::{peer_store::PeerStore, Peer, Status}}};
+use crate::{
+    common::{Error, Result},
+    err,
+    p2p::{
+        credential::Credential,
+        ops::discovery::whoareyou::{self, WhoAreYou, WhoAreYouAck},
+        peer::{peer_store::PeerStore, Peer, Status},
+    },
+};
 use k256::ecdsa::{signature::Signer, Signature, SigningKey};
 use logger::log;
 use std::sync::Arc;
 use tokio::{
     io::AsyncWriteExt,
     net::TcpStream,
-    sync::{Mutex, MutexGuard},
-    task::JoinHandle,
+    sync::{OwnedMutexGuard},
 };
 
 /// S endpoint
@@ -23,8 +30,6 @@ pub enum HandleStatus<E, S> {
     WhoAreYouAckInitiateFail(E),
 
     PeerUpdateFail(E),
-
-    JoinError(E),
 
     Success,
 }
@@ -44,8 +49,6 @@ impl Handler {
         peer_op_port: u16,
     ) -> Handler {
         Handler {
-            // addr,
-            // address_book,
             stream,
             peer_store,
             credential,
@@ -60,12 +63,14 @@ impl Handler {
             Err(err) => return HandleStatus::AddressAcquireFail(err.into()),
         };
 
-        let peer_found = peer_store.find(&|peer| {
-            if peer.ip == peer_ip && peer.disc_port == peer_port {
-                return true;
-            }
-            return false;
-        });
+        let peer_found = peer_store
+            .find(&|peer| {
+                if peer.ip == peer_ip && peer.disc_port == peer_port {
+                    return true;
+                }
+                return false;
+            })
+            .await;
 
         match peer_found {
             Some(_) => {
@@ -76,7 +81,7 @@ impl Handler {
             None => (),
         }
 
-        let (mut peer, peer_idx) = match peer_store.reserve() {
+        let (mut peer, _) = match peer_store.reserve().await {
             Some(p) => p,
             None => return HandleStatus::NoAvailablePeerSlot,
         };
@@ -118,7 +123,7 @@ impl Handler {
                 // log!(DEBUG, "Received WhoAreYou, raw: {:?}\n", w.raw);
 
                 w
-            },
+            }
             Err(err) => {
                 return err!("Error parsing who are you request, err: {}", err);
             }
@@ -164,7 +169,7 @@ impl Handler {
     pub async fn handle_succeed_who_are_you(
         &mut self,
         way: WhoAreYou,
-        mut peer: MutexGuard<'_, Peer>,
+        mut peer: OwnedMutexGuard<Peer>,
         peer_ip: String,
         peer_port: u16,
     ) -> Result<()> {

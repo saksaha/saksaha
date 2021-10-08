@@ -13,24 +13,11 @@ use routine::Routine;
 use std::sync::Arc;
 use tokio::{net::TcpListener, sync::Mutex};
 
-pub struct Listen {
-    // disc_port: Option<u16>,
-    // peer_op_port: u16,
-    // peer_store: Arc<PeerStore>,
-    // task_mng: Arc<TaskManager>,
-    // credential: Arc<Credential>,
-}
+pub struct Listen {}
 
 impl Listen {
-    pub fn new(
-    ) -> Listen {
-        Listen {
-            // disc_listener,
-            // peer_op_port,
-            // peer_store,
-            // task_mng,
-            // credential,
-        }
+    pub fn new() -> Listen {
+        Listen {}
     }
 
     pub async fn start(
@@ -41,28 +28,6 @@ impl Listen {
         task_mng: Arc<TaskManager>,
         credential: Arc<Credential>,
     ) -> Result<()> {
-        // let disc_port = match disc_port {
-        //     Some(p) => p,
-        //     None => 0,
-        // };
-
-        // let local_addr = format!("127.0.0.1:{}", disc_port);
-
-        // let (tcp_listener, local_addr) =
-        //     match TcpListener::bind(local_addr).await {
-        //         Ok(listener) => match listener.local_addr() {
-        //             Ok(local_addr) => (listener, local_addr),
-        //             Err(err) => return Err(err.into()),
-        //         },
-        //         Err(err) => return Err(err.into()),
-        //     };
-
-        // log!(
-        //     DEBUG,
-        //     "Successfully started disc listening, addr: {}\n",
-        //     local_addr
-        // );
-
         let routine = Routine::new();
         routine.run(disc_listener, peer_op_port, peer_store, credential);
 
@@ -70,6 +35,7 @@ impl Listen {
     }
 }
 
+/// currently not used
 #[cfg(test)]
 mod test {
     // use super::*;

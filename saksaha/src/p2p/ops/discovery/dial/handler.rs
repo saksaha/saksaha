@@ -21,7 +21,7 @@ use std::sync::Arc;
 use tokio::{
     io::AsyncWriteExt,
     net::TcpStream,
-    sync::{mpsc::Sender, Mutex, MutexGuard},
+    sync::{mpsc::Sender, Mutex, MutexGuard, OwnedMutexGuard, RwLock},
 };
 
 /// E Error
@@ -76,7 +76,7 @@ impl Handler {
 
     pub fn require_not_my_endpoint(
         &self,
-        peer: &mut MutexGuard<Peer>,
+        peer: &mut OwnedMutexGuard<Peer>,
     ) -> Result<String> {
         let endpoint = format!("{}:{}", peer.ip, peer.disc_port);
         let my_disc_endpoint = format!("127.0.0.1:{}", self.disc_port);
@@ -100,14 +100,13 @@ impl Handler {
 
     pub async fn run(&self) -> HandleStatus<usize, Error> {
         let mut last_peer_idx = self.last_peer_idx.lock().await;
-        let credential = self.credential.clone();
 
         let peer_store = self.peer_store.clone();
 
         let peer =
             peer_store.next(Some(*last_peer_idx), &Filter::not_initialized);
 
-        let (mut peer, peer_idx) = match peer {
+        let (mut peer, peer_idx) = match peer.await {
             Some((p, idx)) => (p, idx),
             None => return HandleStatus::NoAvailablePeer,
         };
@@ -239,7 +238,7 @@ impl Handler {
     pub async fn handle_succeed_who_are_you(
         &self,
         way_ack: WhoAreYouAck,
-        mut peer: MutexGuard<'_, Peer>,
+        mut peer: OwnedMutexGuard<Peer>,
     ) -> Result<()> {
         let peer_op_wakeup_tx = self.peer_op_wakeup_tx.clone();
 
@@ -274,11 +273,4 @@ impl Handler {
 
         Ok(())
     }
-}
-
-fn compare_public_key(src: [u8; 65], tar: [u8; 65]) -> Result<bool> {
-    for i in 0..src.len() {
-        return Ok(src[i] > tar[i]);
-    }
-    err!("Two public keys are the same")
 }

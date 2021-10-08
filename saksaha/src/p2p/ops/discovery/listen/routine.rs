@@ -16,15 +16,8 @@ pub struct Routine {
 
 impl Routine {
     pub fn new(
-        // address_book: Arc<AddressBook>,
-        // peer_store: Arc<PeerStore>,
-        // credential: Arc<Credential>,
     ) -> Routine {
-        Routine {
-            // address_book,
-            // peer_store,
-            // credential,
-        }
+        Routine {}
     }
 
     pub fn run(&self,
@@ -107,13 +100,6 @@ impl Routine {
                             log!(
                                 DEBUG,
                                 "Disc listen failed updating peer, err: {}\n",
-                                err
-                            );
-                        }
-                        HandleStatus::JoinError(err) => {
-                            log!(
-                                DEBUG,
-                                "Error joining a handler thread, err: {}\n",
                                 err
                             );
                         }
