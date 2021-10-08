@@ -27,26 +27,6 @@ impl Listen {
     ) -> Result<()> {
         log!(DEBUG, "Start listen - handshake\n");
 
-        // let local_addr = format!("127.0.0.1:0");
-
-        // let (listener, port) = match TcpListener::bind(local_addr).await {
-        //     Ok(l) => {
-        //         let local_addr = match l.local_addr() {
-        //             Ok(addr) => addr,
-        //             Err(err) => {
-        //                 return Err(err.into());
-        //             }
-        //         };
-
-        //         log!(DEBUG, "Start peer op listening, addr: {}\n", local_addr);
-
-        //         (l, local_addr.port())
-        //     }
-        //     Err(err) => {
-        //         return Err(err.into());
-        //     }
-        // };
-
         let dial_loop_tx = disc_wakeup_tx.clone();
         tokio::spawn(async move {
             let tx = dial_loop_tx;

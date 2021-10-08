@@ -3,7 +3,7 @@ mod routine;
 
 use crate::{
     msg_err, msg_errd,
-    node::task_manager::{MsgKind, TaskManager},
+    node::{msg::Kind, task_manager::TaskManager},
     p2p::{credential::Credential, peer::peer_store::PeerStore},
 };
 use handler::Handler;
@@ -54,17 +54,21 @@ impl Dial {
         tokio::spawn(async move {
             loop {
                 let mut disc_wakeup_rx = disc_wakeup_rx.lock().await;
+
                 match disc_wakeup_rx.recv().await {
                     Some(_) => {
                         routine_clone.wakeup().await;
                     }
                     None => {
-                        let msg = msg_errd!(
+                        let msg = msg_err!(
+                            Kind::SetupFailure,
                             "Cannot receive disc dial wakeup msg, \
                             is channel closed?",
                         );
 
                         task_mng.send(msg).await;
+
+                        tokio::time::sleep(Duration::from_millis(1000)).await;
                     }
                 };
             }

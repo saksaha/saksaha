@@ -4,7 +4,7 @@ mod routine;
 use crate::{
     common::Result,
     msg_err,
-    node::task_manager::{MsgKind, TaskManager},
+    node::task_manager::{ TaskManager},
     p2p::{credential::Credential, peer::peer_store::PeerStore},
 };
 use handler::Handler;

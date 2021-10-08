@@ -3,7 +3,7 @@ mod routine;
 use crate::{
     common::Result,
     msg_err, msg_errd,
-    node::task_manager::{MsgKind, TaskManager},
+    node::{msg::Kind, task_manager::TaskManager},
     p2p::{
         credential::Credential, ops::handshake::dial::routine::Routine,
         peer::peer_store::PeerStore,
@@ -46,7 +46,7 @@ impl Dial {
                     Some(_) => routine.wakeup().await,
                     None => {
                         let msg = msg_err!(
-                            MsgKind::SetupFailure,
+                            Kind::SetupFailure,
                             "Cannot receive peer op \
                             wake up msg. Is channel closed?",
                         );

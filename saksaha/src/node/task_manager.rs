@@ -4,8 +4,7 @@ use tokio::sync::{
     mpsc::{self, Receiver, Sender},
     Mutex,
 };
-
-use crate::common::Error;
+use super::msg::{Kind, Msg};
 
 pub struct TaskManager {
     pub tx: Sender<Msg>,
@@ -51,7 +50,7 @@ impl TaskManager {
         }
     }
 
-    pub async fn start_receiving(self: Arc<Self>) -> MsgKind {
+    pub async fn start_receiving(self: Arc<Self>) -> Kind {
         let mut rx = self.rx.lock().await;
 
         loop {
@@ -59,13 +58,13 @@ impl TaskManager {
                 log!(DEBUG, "task manager received a msg, {:?}: \n", msg);
 
                 match msg.kind {
-                    MsgKind::SetupFailure => {
+                    Kind::SetupFailure => {
                         return msg.kind;
                     }
-                    MsgKind::ResourceNotAvailable => {
+                    Kind::ResourceNotAvailable => {
                         return msg.kind;
                     }
-                    MsgKind::Default => (),
+                    Kind::Default => (),
                 };
 
                 #[cfg(test)]
@@ -84,35 +83,6 @@ impl TaskManager {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct Msg {
-    pub label: String,
-    pub kind: MsgKind,
-}
-
-impl Msg {
-    pub fn new(label: String, kind: MsgKind) -> Msg {
-        Msg { label, kind }
-    }
-}
-
-impl From<Msg> for Error {
-    fn from(m: Msg) -> Error {
-        let err = Error::new(crate::common::ErrorKind::Default, "".into());
-        err
-    }
-}
-
-#[derive(Clone, Debug)]
-pub enum MsgKind {
-    // ...
-    Default,
-
-    // ...
-    SetupFailure,
-
-    ResourceNotAvailable,
-}
 
 #[macro_export]
 macro_rules! msg_err {
@@ -128,7 +98,7 @@ macro_rules! msg_err {
     ($msg_kind: expr, $str_format: expr, $($arg:tt)*) => {
         {
             let label = format!("{}", format_args!($str_format, $($arg)*));
-            $crate::node::task_manager::Msg {
+            $crate::node::msg::Msg {
                 kind: $msg_kind,
                 label,
             }

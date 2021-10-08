@@ -1,27 +1,23 @@
 use super::handler::Handler;
 use crate::p2p::{
-    credential::Credential,
-    ops::discovery::listen::handler::HandleStatus,
-    peer::peer_store::{Filter, PeerStore},
+    credential::Credential, ops::discovery::listen::handler::HandleStatus,
+    peer::peer_store::PeerStore,
 };
 use logger::log;
 use std::{sync::Arc, time::Duration};
-use tokio::{net::TcpListener, sync::Mutex};
+use tokio::net::TcpListener;
 
-pub struct Routine {
-    // address_book: Arc<AddressBook>,
-    // peer_store: Arc<PeerStore>,
-    // credential: Arc<Credential>,
-}
+pub struct Routine {}
 
 impl Routine {
-    pub fn new(
-    ) -> Routine {
+    pub fn new() -> Routine {
         Routine {}
     }
 
-    pub fn run(&self,
-        tcp_listener: TcpListener, peer_op_port: u16,
+    pub fn run(
+        &self,
+        tcp_listener: TcpListener,
+        peer_op_port: u16,
         peer_store: Arc<PeerStore>,
         credential: Arc<Credential>,
     ) {
