@@ -7,3 +7,5 @@ pub mod peer;
 pub mod credential;
 
 mod listener;
+
+mod discovery;

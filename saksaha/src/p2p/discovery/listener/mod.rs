@@ -1,13 +1,64 @@
-use super::handler::Handler;
-use crate::p2p::{
-    credential::Credential, ops::discovery::listen::handler::HandleStatus,
-    peer::peer_store::PeerStore,
-};
-use logger::log;
-use std::{sync::Arc, time::Duration};
-use tokio::net::TcpListener;
+mod handler;
+mod status;
 
-pub struct Routine {}
+use crate::{
+    common::{Error, Result},
+    msg_err,
+    node::task_manager::TaskManager,
+    p2p::{credential::Credential, peer::peer_store::PeerStore},
+};
+use handler::Handler;
+use logger::log;
+pub use status::Status;
+use std::{sync::Arc, time::Duration};
+use tokio::{net::TcpListener, sync::Mutex};
+
+use self::handler::HandleStatus;
+
+pub struct Listener {}
+
+impl Listener {
+    pub fn new() -> Listener {
+        Listener {}
+    }
+
+    pub async fn start(
+        &self,
+        port: Option<u16>,
+        p2p_listener_port: u16,
+        peer_store: Arc<PeerStore>,
+        credential: Arc<Credential>,
+    ) -> Status<u16, Error> {
+        let port = match port {
+            Some(p) => p,
+            None => 0,
+        };
+
+        let local_addr = format!("127.0.0.1:{}", port);
+
+        let (tcp_listener, local_addr) =
+            match TcpListener::bind(local_addr).await {
+                Ok(listener) => match listener.local_addr() {
+                    Ok(local_addr) => {
+                        // log!(DEBUG, "Listener created, addr: {}\n", local_addr);
+
+                        (listener, local_addr)
+                    }
+                    Err(err) => return Status::SetupFailed(err.into()),
+                },
+                Err(err) => return Status::SetupFailed(err.into()),
+            };
+
+        log!(DEBUG, "Started - Disc listener, addr: {}\n", local_addr);
+
+        let routine = Routine::new();
+        routine.run(tcp_listener, p2p_listener_port, peer_store, credential);
+
+        Status::Launched(local_addr.port())
+    }
+}
+
+struct Routine {}
 
 impl Routine {
     pub fn new() -> Routine {
@@ -21,8 +72,6 @@ impl Routine {
         peer_store: Arc<PeerStore>,
         credential: Arc<Credential>,
     ) {
-        log!(DEBUG, "Start listen - disc\n");
-
         let credential = credential.clone();
         let peer_store = peer_store.clone();
 

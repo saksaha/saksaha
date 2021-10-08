@@ -1,19 +1,13 @@
 use super::{
     credential::Credential,
-    listener::Listener,
+    discovery::Disc,
+    listener::{self, Listener},
     ops::{
-        discovery::{self, Disc},
         handshake::{self, Handshake},
-        sync::Sync,
     },
     peer::peer_store::PeerStore,
 };
-use crate::{
-    common::{Error, Result},
-    err,
-    node::task_manager::TaskManager,
-    pconfig::PersistedP2PConfig,
-};
+use crate::{common::{Error, Result}, err, node::task_manager::TaskManager, p2p::discovery, pconfig::PersistedP2PConfig};
 use logger::log;
 use std::sync::Arc;
 use tokio::sync::{mpsc, Mutex};
@@ -52,7 +46,7 @@ impl Host {
     ) -> Result<PeerStore> {
         let peer_store = match PeerStore::new(10, bootstrap_urls) {
             Ok(p) => p,
-            Err(err) => return Err(err)
+            Err(err) => return Err(err),
         };
 
         Ok(peer_store)
@@ -70,54 +64,51 @@ impl Host {
             Err(err) => return HostStatus::SetupFailed(err),
         };
 
-        let (disc_listener, disc_port) =
-        match Listener::new_tcp(disc_port).await {
-            Ok(l) => l,
-            Err(err) => return HostStatus::SetupFailed(err),
-        };
+        // let (disc_listener, disc_port) =
+        // match Listener::new_disc(disc_port).await {
+        //     Ok(l) => l,
+        //     Err(err) => return HostStatus::SetupFailed(err),
+        // };
 
-        let (peer_op_listener, peer_op_port) =
-        match Listener::new_tcp(None).await {
-            Ok(l) => l,
-            Err(err) => return HostStatus::SetupFailed(err),
-        };
+        // let (peer_op_listener, peer_op_port) =
+        // match Listener::new_peer_op(None).await {
+        //     Ok(l) => l,
+        //     Err(err) => return HostStatus::SetupFailed(err),
+        // };
 
-        let credential_clone = credential.clone();
+        let (peer_op_wakeup_tx, peer_op_wakeup_rx) = mpsc::channel::<usize>(5);
+
         let peer_store = match Host::make_peer_store(bootstrap_urls) {
             Ok(p) => Arc::new(p),
             Err(err) => return HostStatus::SetupFailed(err),
         };
 
-        let (disc_wakeup_tx, disc_wakeup_rx) = mpsc::channel::<usize>(5);
-        let (peer_op_wakeup_tx, peer_op_wakeup_rx) = mpsc::channel::<usize>(5);
+        let p2p_listener = Listener::new();
+        let p2p_listener_port = match p2p_listener
+            .start(
+                None,
+                peer_store.clone(),
+                rpc_port,
+                Arc::new(Mutex::new(peer_op_wakeup_rx)),
+                credential.clone(),
+            )
+            .await
+        {
+            listener::Status::Launched(port) => port,
+            listener::Status::SetupFailed(err) => {
+                log!(DEBUG, "Couldn't start listener, err: {}\n", err);
 
-        let handshake = Handshake::new(self.task_mng.clone());
-        let handshake_started = handshake.start(
-            peer_store.clone(),
-            Arc::new(disc_wakeup_tx),
-            rpc_port,
-            Arc::new(Mutex::new(peer_op_wakeup_rx)),
-            credential_clone,
-            peer_op_listener,
-        );
-
-        match handshake_started.await {
-            handshake::Status::Launched => (),
-            handshake::Status::SetupFailed(err) => {
-                return HostStatus::SetupFailed(err);
+                return HostStatus::SetupFailed(err)
             }
         };
 
-        let credential_clone = credential.clone();
-        let disc = Disc::new(self.task_mng.clone());
+        let disc = Disc::new();
         let disc_started = disc.start(
-            peer_op_port,
-            peer_store.clone(),
-            credential_clone,
-            Arc::new(Mutex::new(disc_wakeup_rx)),
-            Arc::new(peer_op_wakeup_tx),
-            disc_listener,
             disc_port,
+            p2p_listener_port,
+            peer_store.clone(),
+            credential.clone(),
+            Arc::new(peer_op_wakeup_tx),
         );
 
         match disc_started.await {
@@ -127,7 +118,24 @@ impl Host {
             }
         };
 
-        let sync = Sync::new();
+        // let credential_clone = credential.clone();
+
+        // let handshake = Handshake::new(self.task_mng.clone());
+        // let handshake_started = handshake.start(
+        //     peer_store.clone(),
+        //     Arc::new(disc_wakeup_tx),
+        //     rpc_port,
+        //     Arc::new(Mutex::new(peer_op_wakeup_rx)),
+        //     credential_clone,
+        //     peer_op_listener,
+        // );
+
+        // match handshake_started.await {
+        //     handshake::Status::Launched => (),
+        //     handshake::Status::SetupFailed(err) => {
+        //         return HostStatus::SetupFailed(err);
+        //     }
+        // };
 
         HostStatus::Launched
     }
