@@ -1,8 +1,17 @@
-use crate::{common::{Error, Result}, crypto::Crypto, err, p2p::{credential::Credential, ops::discovery::whoareyou::{self, WhoAreYou, WhoAreYouAck}, peer::{
+use crate::{
+    common::{Error, Result},
+    crypto::Crypto,
+    err,
+    p2p::{
+        credential::Credential,
+        ops::discovery::whoareyou::{self, WhoAreYou, WhoAreYouAck},
+        peer::{
             self,
             peer_store::{Filter, PeerStore},
             Peer,
-        }}};
+        },
+    },
+};
 use k256::ecdsa::{
     signature::{Signer, Verifier},
     Signature, SigningKey,
@@ -81,7 +90,7 @@ impl Handler {
 
             peer.empty();
             return err!(
-                "Endpoint identical, removing this peer, peer endpoint: {}",
+                "Endpoint same as mine, removing this peer, peer endpoint: {}",
                 endpoint
             );
         }
@@ -167,6 +176,7 @@ impl Handler {
         let sig: Signature = signing_key.sign(whoareyou::MESSAGE);
 
         let way = WhoAreYou::new(
+            whoareyou::Kind::Syn,
             sig,
             self.peer_op_port,
             self.credential.public_key_bytes,
@@ -183,8 +193,9 @@ impl Handler {
             Ok(_) => Ok(()),
             Err(err) => {
                 return err!(
-                    "Error sending the whoAreYou buffer, err: {}",
-                    err
+                    "Error sending the whoAreYou buffer, err: {}, buf: {:?}",
+                    err,
+                    buf,
                 );
             }
         }
@@ -214,7 +225,11 @@ impl Handler {
         match verifying_key.verify(whoareyou::MESSAGE, &sig) {
             Ok(_) => (),
             Err(err) => {
-                return err!("Signature is invalid, err: {}", err);
+                return err!(
+                    "Signature is invalid, err: {}, buf: {:?}",
+                    err,
+                    way_ack.way.raw
+                );
             }
         };
 
@@ -251,7 +266,11 @@ impl Handler {
             Err(err) => return Err(err.into()),
         }
 
-        log!(DEBUG, "Successfully handled disc dial peer: {:?}\n", peer);
+        log!(
+            DEBUG,
+            "[PeerDiscovered] disc - dial, peer: {}\n",
+            peer.short_url()
+        );
 
         Ok(())
     }
