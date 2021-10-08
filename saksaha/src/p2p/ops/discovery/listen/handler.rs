@@ -113,12 +113,18 @@ impl Handler {
     }
 
     pub async fn receive_who_are_you(&mut self) -> Result<WhoAreYou> {
-        match WhoAreYou::parse(&mut self.stream).await {
-            Ok(w) => Ok(w),
+        let way = match WhoAreYou::parse(&mut self.stream).await {
+            Ok(w) => {
+                // log!(DEBUG, "Received WhoAreYou, raw: {:?}\n", w.raw);
+
+                w
+            },
             Err(err) => {
                 return err!("Error parsing who are you request, err: {}", err);
             }
-        }
+        };
+
+        Ok(way)
     }
 
     pub async fn initate_who_are_you_ack(&mut self) -> Result<()> {
@@ -172,8 +178,8 @@ impl Handler {
 
         log!(
             DEBUG,
-            "Successfully handled disc listen, peer: {:?}\n",
-            peer
+            "[PeerDiscovered], disc - listen, peer: {}\n",
+            peer.short_url(),
         );
 
         Ok(())
