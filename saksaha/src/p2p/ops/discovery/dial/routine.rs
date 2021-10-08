@@ -80,7 +80,7 @@ impl Routine {
                         );
                     }
                     HandleStatus::NoAvailablePeer => {
-                        log!(DEBUG, "No available peer\n");
+                        log!(DEBUG, "No available peer to discover\n");
 
                         break;
                     }

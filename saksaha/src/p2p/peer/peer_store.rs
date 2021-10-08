@@ -1,22 +1,28 @@
+use crate::{common::Result, err};
+
 use super::{Peer, Status};
 use logger::log;
 use std::sync::Arc;
-use tokio::sync::{Mutex, MutexGuard};
+use tokio::sync::{
+    Mutex, MutexGuard, OwnedMutexGuard, RwLock, RwLockReadGuard,
+    RwLockWriteGuard,
+};
 
 pub struct Filter;
 
 impl Filter {
-    pub fn not_initialized(peer: &MutexGuard<Peer>) -> bool {
+    pub fn not_initialized(peer: &OwnedMutexGuard<Peer>) -> bool {
         return peer.status == Status::NotInitialized;
     }
 
-    pub fn discovery_success(peer: &MutexGuard<Peer>) -> bool {
+    pub fn discovery_success(peer: &OwnedMutexGuard<Peer>) -> bool {
         return peer.status == Status::DiscoverySuccess;
     }
 }
 
 pub struct PeerStore {
-    slots: Vec<Arc<Mutex<Peer>>>,
+    pub slots: Arc<Mutex<Vec<Arc<Mutex<Peer>>>>>,
+    // slots: Vec<Mutex<Peer>>,
     pub capacity: usize,
 }
 
@@ -24,8 +30,13 @@ impl PeerStore {
     pub fn new(
         capacity: usize,
         bootstrap_urls: Option<Vec<String>>,
-    ) -> PeerStore {
-        let mut slots = Vec::with_capacity(capacity);
+    ) -> Result<PeerStore> {
+        // let mut slots = Vec::with_capacity(capacity);
+        let slots = Arc::new(Mutex::new(Vec::with_capacity(capacity)));
+        let mut slots_guard = match slots.try_lock() {
+            Ok(s) => s,
+            Err(err) => return err!("Cannot acquire slots, err: {}\n", err),
+        };
 
         let bootstrap_urls = match bootstrap_urls {
             Some(u) => u,
@@ -57,6 +68,7 @@ impl PeerStore {
                         p.disc_port
                     );
                     Arc::new(Mutex::new(p))
+                    // Mutex::new(p)
                 }
                 Err(err) => {
                     log!(DEBUG, "Cannot parse url, url: {}, err: {}\n", u, err);
@@ -64,20 +76,21 @@ impl PeerStore {
                 }
             };
 
-            slots.push(p);
+            slots_guard.push(p);
             count += 1;
         }
 
         for i in count..capacity {
             let p = Peer::new_empty();
-            slots.push(Arc::new(Mutex::new(p)));
+            slots_guard.push(Arc::new(Mutex::new(p)));
+            // slots.push(Mutex::new(p));
         }
 
         log!(
             DEBUG,
             "* Peer store init result, count: {}, len: {}, capacity: {}\n",
             count,
-            slots.len(),
+            slots_guard.len(),
             capacity
         );
         log!(
@@ -85,18 +98,18 @@ impl PeerStore {
             "*****************************************************\n"
         );
 
-        PeerStore {
-            slots,
-            capacity,
-        }
+        drop(slots_guard);
+        let ps = PeerStore { slots, capacity };
+
+        Ok(ps)
     }
 
-    pub fn next(
+    pub async fn next(
         &self,
         last_idx: Option<usize>,
-        filter: &(dyn Fn(&MutexGuard<Peer>) -> bool + Sync + Send),
-    ) -> Option<(MutexGuard<'_, Peer>, usize)> {
-        let slots = &self.slots;
+        filter: &(dyn Fn(&OwnedMutexGuard<Peer>) -> bool + Sync + Send),
+    ) -> Option<(OwnedMutexGuard<Peer>, usize)> {
+        let slots = self.slots.lock().await;
 
         let start_idx = match last_idx {
             Some(i) => i + 1,
@@ -109,7 +122,7 @@ impl PeerStore {
             let idx = i % cap;
 
             let peer = match slots.get(idx) {
-                Some(p) => p,
+                Some(p) => p.to_owned(),
                 None => {
                     log!(
                         DEBUG,
@@ -119,13 +132,13 @@ impl PeerStore {
                 }
             };
 
-            let peer = match peer.try_lock() {
+            let peer_guard = match peer.try_lock_owned() {
                 Ok(p) => p,
                 Err(_) => continue,
             };
 
-            if filter(&peer) {
-                return Some((peer, idx))
+            if filter(&peer_guard) {
+                return Some((peer_guard, idx));
             } else {
                 continue;
             }
@@ -134,18 +147,20 @@ impl PeerStore {
         None
     }
 
-    pub fn find(
+    pub async fn find(
         &self,
-        filter: &(dyn Fn(&MutexGuard<Peer>) -> bool + Sync + Send),
-    ) -> Option<(MutexGuard<'_, Peer>, usize)> {
-        for (idx, p) in self.slots.iter().enumerate() {
-            let peer = match p.try_lock() {
+        filter: &(dyn Fn(&OwnedMutexGuard<Peer>) -> bool + Sync + Send),
+    ) -> Option<(OwnedMutexGuard<Peer>, usize)> {
+        let slots = self.slots.lock().await.to_owned();
+
+        for (idx, p) in slots.into_iter().enumerate() {
+            let peer_guard = match p.try_lock_owned() {
                 Ok(p) => p,
-                Err(_) => continue
+                Err(_) => continue,
             };
 
-            if filter(&peer) {
-                return Some((peer, idx));
+            if filter(&peer_guard) {
+                return Some((peer_guard, idx));
             } else {
                 continue;
             }
@@ -153,9 +168,7 @@ impl PeerStore {
         None
     }
 
-    pub fn reserve(&self) -> Option<(MutexGuard<Peer>, usize)> {
-        self.find(&|peer| {
-            peer.status == Status::Empty
-        })
+    pub async fn reserve(&self) -> Option<(OwnedMutexGuard<Peer>, usize)> {
+        self.find(&|peer| peer.status == Status::Empty).await
     }
 }

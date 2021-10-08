@@ -67,7 +67,10 @@ impl Host {
             };
 
         let credential_clone = credential.clone();
-        let peer_store = PeerStore::new(10, bootstrap_urls);
+        let peer_store = match PeerStore::new(10, bootstrap_urls) {
+            Ok(p) => p,
+            Err(err) => return HostStatus::SetupFailed(err)
+        };
         let peer_store = Arc::new(peer_store);
         let (disc_wakeup_tx, disc_wakeup_rx) = mpsc::channel::<usize>(5);
         let (peer_op_wakeup_tx, peer_op_wakeup_rx) = mpsc::channel::<usize>(5);

@@ -20,30 +20,11 @@ use tokio::sync::{
 
 pub struct Dial {
     task_mng: Arc<TaskManager>,
-    // peer_store: Arc<PeerStore>,
-    // peer_op_port: u16,
-    // credential: Arc<Credential>,
-    // disc_wakeup_rx: Arc<Mutex<Receiver<usize>>>,
-    // peer_op_wakeup_tx: Arc<Sender<usize>>,
 }
 
 impl Dial {
-    pub fn new(
-        task_mng: Arc<TaskManager>,
-        // peer_store: Arc<PeerStore>,
-        // peer_op_port: u16,
-        // credential: Arc<Credential>,
-        // disc_wakeup_rx: Arc<Mutex<Receiver<usize>>>,
-        // peer_op_wakeup_tx: Arc<Sender<usize>>,
-    ) -> Dial {
-        Dial {
-            task_mng,
-            // peer_store,
-            // peer_op_port,
-            // credential,
-            // disc_wakeup_rx,
-            // peer_op_wakeup_tx,
-        }
+    pub fn new(task_mng: Arc<TaskManager>) -> Dial {
+        Dial { task_mng }
     }
 
     pub async fn start(
