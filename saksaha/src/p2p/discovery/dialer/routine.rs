@@ -8,7 +8,7 @@ use tokio::sync::{mpsc::Sender, Mutex};
 use super::handler::Handler;
 use crate::p2p::{
     credential::Credential,
-    ops::discovery::dial::handler::HandleStatus,
+    discovery::dialer::handler::HandleStatus,
     peer::peer_store::{Filter, PeerStore},
 };
 

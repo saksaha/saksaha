@@ -26,13 +26,6 @@ impl TaskManager {
     }
 
     pub async fn send(self: &Arc<Self>, msg: Msg) {
-        log!(
-            DEBUG,
-            "Msg to send, label: {}, kind: {:?}\n",
-            msg.label,
-            msg.kind
-        );
-
         let label = msg.label.to_owned();
 
         match self.tx.send(msg).await {
