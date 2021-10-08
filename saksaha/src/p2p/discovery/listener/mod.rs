@@ -4,14 +4,13 @@ mod status;
 use crate::{
     common::{Error, Result},
     msg_err,
-    node::task_manager::TaskManager,
     p2p::{credential::Credential, peer::peer_store::PeerStore},
 };
 use handler::Handler;
 use logger::log;
 pub use status::Status;
 use std::{sync::Arc, time::Duration};
-use tokio::{net::TcpListener, sync::Mutex};
+use tokio::net::TcpListener;
 
 use self::handler::HandleStatus;
 

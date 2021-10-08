@@ -18,7 +18,6 @@ pub struct Routine {
     peer_op_port: u16,
     is_running: Arc<Mutex<bool>>,
     disc_port: u16,
-    peer_op_wakeup_tx: Arc<Sender<usize>>,
     last_peer_idx: Arc<Mutex<usize>>,
 }
 
@@ -28,7 +27,6 @@ impl Routine {
         credential: Arc<Credential>,
         peer_op_port: u16,
         disc_port: u16,
-        peer_op_wakeup_tx: Arc<Sender<usize>>,
     ) -> Routine {
         let is_running = Arc::new(Mutex::new(false));
 
@@ -39,7 +37,6 @@ impl Routine {
             last_peer_idx: Arc::new(Mutex::new(0)),
             is_running,
             disc_port,
-            peer_op_wakeup_tx,
         }
     }
 
@@ -50,7 +47,6 @@ impl Routine {
         let credential = self.credential.clone();
         let is_running = self.is_running.clone();
         let peer_op_port = self.peer_op_port;
-        let peer_op_wake_tx = self.peer_op_wakeup_tx.clone();
         let last_peer_idx = self.last_peer_idx.clone();
         let disc_port = self.disc_port;
 
@@ -67,7 +63,6 @@ impl Routine {
                     credential.clone(),
                     peer_op_port,
                     disc_port,
-                    peer_op_wake_tx.clone(),
                     last_peer_idx.clone(),
                 );
 

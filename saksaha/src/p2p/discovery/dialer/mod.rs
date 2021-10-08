@@ -1,7 +1,12 @@
 mod handler;
 mod routine;
 
-use crate::{common::Result, msg_err, msg_errd, node::{msg::Kind, task_manager::TaskManager}, p2p::{credential::Credential, peer::peer_store::PeerStore}};
+use crate::{
+    common::Result,
+    msg_err, msg_errd,
+    node::{msg::Kind, task_manager::TaskManager},
+    p2p::{credential::Credential, peer::peer_store::PeerStore},
+};
 use handler::Handler;
 use logger::log;
 use routine::Routine;
@@ -18,7 +23,7 @@ pub struct Dialer {}
 
 impl Dialer {
     pub fn new() -> Dialer {
-        Dialer { }
+        Dialer {}
     }
 
     pub async fn start(
@@ -27,14 +32,12 @@ impl Dialer {
         peer_store: Arc<PeerStore>,
         peer_op_port: u16,
         credential: Arc<Credential>,
-        peer_op_wakeup_tx: Arc<Sender<usize>>,
     ) -> Result<()> {
         let routine = Arc::new(Routine::new(
             peer_store.clone(),
             credential.clone(),
             peer_op_port,
             my_disc_port,
-            peer_op_wakeup_tx.clone(),
         ));
 
         let routine_clone = routine.clone();

@@ -1,12 +1,8 @@
-use crate::{common::Result, err};
-
 use super::{Peer, Status};
+use crate::{common::Result, err};
 use logger::log;
 use std::sync::Arc;
-use tokio::sync::{
-    Mutex, MutexGuard, OwnedMutexGuard, RwLock, RwLockReadGuard,
-    RwLockWriteGuard,
-};
+use tokio::sync::{Mutex, OwnedMutexGuard};
 
 pub struct Filter;
 
@@ -29,7 +25,7 @@ pub struct PeerStore {
 impl PeerStore {
     pub fn new(
         capacity: usize,
-        bootstrap_urls: Option<Vec<String>>,
+        // bootstrap_urls: Option<Vec<String>>,
     ) -> Result<PeerStore> {
         // let mut slots = Vec::with_capacity(capacity);
         let slots = Arc::new(Mutex::new(Vec::with_capacity(capacity)));
@@ -38,17 +34,17 @@ impl PeerStore {
             Err(err) => return err!("Cannot acquire slots, err: {}\n", err),
         };
 
-        let bootstrap_urls = match bootstrap_urls {
-            Some(u) => u,
-            None => vec![],
-        };
+        // let bootstrap_urls = match bootstrap_urls {
+        //     Some(u) => u,
+        //     None => vec![],
+        // };
 
-        let default_urls = crate::default_bootstrap_urls!()
-            .into_iter()
-            .map(|url| url.to_string())
-            .collect::<Vec<String>>();
+        // let default_urls = crate::default_bootstrap_urls!()
+        //     .into_iter()
+        //     .map(|url| url.to_string())
+        //     .collect::<Vec<String>>();
 
-        let urls_combined = [bootstrap_urls, default_urls].concat();
+        // let urls_combined = [bootstrap_urls, default_urls].concat();
         let mut count = 0;
 
         log!(
@@ -56,34 +52,33 @@ impl PeerStore {
             "*****************************************************\n"
         );
         log!(DEBUG, "* Peer store\n");
-        for u in urls_combined {
-            let p = match Peer::parse(u.to_owned()) {
-                Ok(p) => {
-                    log!(
-                        DEBUG,
-                        "* [{}], peer_id: {}, ip: {}, disc_port: {}\n",
-                        count,
-                        p.peer_id,
-                        p.ip,
-                        p.disc_port
-                    );
-                    Arc::new(Mutex::new(p))
-                    // Mutex::new(p)
-                }
-                Err(err) => {
-                    log!(DEBUG, "Cannot parse url, url: {}, err: {}\n", u, err);
-                    continue;
-                }
-            };
+        // for u in urls_combined {
+        //     let p = match Peer::parse(u.to_owned()) {
+        //         Ok(p) => {
+        //             log!(
+        //                 DEBUG,
+        //                 "* [{}], peer_id: {}, ip: {}, disc_port: {}\n",
+        //                 count,
+        //                 p.peer_id,
+        //                 p.ip,
+        //                 p.disc_port
+        //             );
+        //             Arc::new(Mutex::new(p))
+        //             // Mutex::new(p)
+        //         }
+        //         Err(err) => {
+        //             log!(DEBUG, "Cannot parse url, url: {}, err: {}\n", u, err);
+        //             continue;
+        //         }
+        //     };
 
-            slots_guard.push(p);
-            count += 1;
-        }
+        //     slots_guard.push(p);
+        //     count += 1;
+        // }
 
-        for i in count..capacity {
+        for _ in 0..capacity {
             let p = Peer::new_empty();
             slots_guard.push(Arc::new(Mutex::new(p)));
-            // slots.push(Mutex::new(p));
         }
 
         log!(
