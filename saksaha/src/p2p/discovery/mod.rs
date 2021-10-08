@@ -48,7 +48,7 @@ impl Disc {
         };
 
         let task_queue = TaskQueue::new();
-        task_queue.run_loop();
+        // task_queue.run_loop();
 
         // println!("11");
 
@@ -81,7 +81,6 @@ impl TaskQueue {
             Box<dyn Fn() -> std::pin::Pin<Box<dyn Future<Output = ()>>>>>(10);
 
         tx.send(Box::new(|| Box::pin(async {
-
         })));
 
         tx.send(Box::new(|| Box::pin(async {
