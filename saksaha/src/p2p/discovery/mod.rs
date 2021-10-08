@@ -9,10 +9,12 @@ use crate::{
     p2p::{credential::Credential, peer::peer_store::PeerStore},
 };
 use dialer::Dialer;
-use futures::stream::{FuturesUnordered};
 pub use status::Status;
-use std::{collections::VecDeque, sync::Arc};
-use tokio::{sync::{mpsc::{self, Sender}}};
+use std::{collections::VecDeque, future::Future, sync::Arc};
+use tokio::sync::{
+    mpsc::{self, Receiver, Sender},
+    Mutex,
+};
 
 pub struct Disc {}
 
@@ -45,92 +47,10 @@ impl Disc {
             }
         };
 
-        let ff = || async {
-            println!("333");
-        };
+        let task_queue = TaskQueue::new();
+        task_queue.run_loop();
 
-        let (tasks_tx, mut tasks_rx) = mpsc::channel(10);
-        // tx.send(ff).await;
-        // tx.send(ff).await;
-
-        // tasks_tx.send(async {
-
-        // });
-        let a = tokio::spawn(async {
-
-        });
-
-        a.await;
-
-        println!("11");
-
-        // tokio::spawn(async move {
-        //     loop {
-        //         let f = rx.recv().await.unwrap();
-        //         f().await;
-        //     }
-        // });
-
-        // println!("22");
-
-        // tx.send(ff).await;
-        // tx.send(ff).await;
-        // tx.send(ff).await;
-        // tx.send(ff).await;
-
-        // loop {
-        //     match aa.next().await {
-        //         Some(result) => {
-        //           println!("    finished future [{}]", result);
-        //           if cnt < 20 {
-        //             workers.push( random_sleep(cnt) );
-        //           }
-        //         },
-        //         None => {
-        //           println!("Done!");
-        //           break;
-
-        // }
-
-
-        // let ff = || {
-        //     println!("33");
-        // };
-
-        // let mut v = vec!();
-        // v.push(f);
-        // v.push(f);
-
-        // let mut vv = vec!();
-        // vv.push(ff);
-        // vv.push(ff);
-
-        // let mut tasks = vec!();
-        // tasks.push(async {
-        //     println!("3");
-        // });
-
-        // let q = FuturesUnordered::new();
-        // q.push(Box::pin(async {
-        //     println!("f");
-        // }));
-
-        // for a in q.iter() {
-
-        // }
-
-        // q.
-
-
-        // tasks.
-        // loop {
-        // }
-
-
-        // loop {
-        //     tasks
-        // }
-
+        // println!("11");
 
         // let dialer = Dialer::new();
         // match dialer
@@ -148,4 +68,50 @@ impl Disc {
 
         Status::Launched
     }
+}
+
+struct TaskQueue {
+    // tx: Sender<Box<impl Fn() -> std::future::Future<Output = ()>>>,
+// rx: Mutex<Receiver<Box<impl Fn() -> std::future::Future<Output = ()>>>>,
+}
+
+impl TaskQueue {
+    pub fn new() -> TaskQueue {
+        let (tx, mut rx) = mpsc::channel::<
+            Box<dyn Fn() -> std::pin::Pin<Box<dyn Future<Output = ()>>>>>(10);
+
+        tx.send(Box::new(|| Box::pin(async {
+
+        })));
+
+        tx.send(Box::new(|| Box::pin(async {
+
+        })));
+
+        TaskQueue {
+            // tx,
+            // rx: Mutex::new(rx),
+        }
+    }
+
+    // pub async fn push<F, Fut>(&self, f: F)
+    // where
+    //     F: Fn() -> Fut,
+    //     Fut: std::future::Future<Output = ()>,
+    // {
+    //     self.tx
+    //         .send(Box::new(f))
+    //         .await;
+    // }
+
+    // pub async fn run_loop(&self) {
+    //     let mut rx = self.rx.lock().await;
+
+    //     loop {
+    //         if let Some(task) = rx.recv().await {
+    //             task().await;
+    //         }
+    //     }
+    //     // self.rx.recv();
+    // }
 }
