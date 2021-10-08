@@ -1,15 +1,26 @@
 mod bootstrap;
 pub mod peer_store;
-mod status;
 
 use crate::{
     common::{Error, Result},
     err,
 };
 use logger::log;
-pub use status::Status;
 
 const MAX_FAIL_COUNT: usize = 3;
+
+#[derive(Debug, PartialEq)]
+pub enum Status<E> {
+    Empty,
+
+    NotInitialized,
+
+    DiscoverySuccess,
+
+    HandshakeSuccess,
+
+    HandshakeFail(E),
+}
 
 #[derive(Debug)]
 pub struct Peer {

@@ -14,7 +14,7 @@ use std::sync::Arc;
 use tokio::{
     net::TcpListener,
     sync::{
-        mpsc::{Receiver, Sender},
+        mpsc::{Receiver},
         Mutex,
     },
 };
@@ -31,7 +31,6 @@ impl Listener {
         port: Option<u16>,
         peer_store: Arc<PeerStore>,
         rpc_port: u16,
-        peer_op_wakeup_rx: Arc<Mutex<Receiver<usize>>>,
         credential: Arc<Credential>,
     ) -> Status<u16, Error> {
         let port = match port {

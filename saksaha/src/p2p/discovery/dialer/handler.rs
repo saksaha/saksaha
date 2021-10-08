@@ -42,7 +42,6 @@ pub struct Handler {
     credential: Arc<Credential>,
     peer_op_port: u16,
     disc_port: u16,
-    peer_op_wakeup_tx: Arc<Sender<usize>>,
     last_peer_idx: Arc<Mutex<usize>>,
 }
 
@@ -52,7 +51,6 @@ impl Handler {
         credential: Arc<Credential>,
         peer_op_port: u16,
         disc_port: u16,
-        peer_op_wakeup_tx: Arc<Sender<usize>>,
         last_peer_idx: Arc<Mutex<usize>>,
     ) -> Handler {
         Handler {
@@ -60,7 +58,6 @@ impl Handler {
             credential,
             peer_op_port,
             disc_port,
-            peer_op_wakeup_tx,
             last_peer_idx,
         }
     }
@@ -231,8 +228,6 @@ impl Handler {
         way_ack: WhoAreYouAck,
         mut peer: OwnedMutexGuard<Peer>,
     ) -> Result<()> {
-        let peer_op_wakeup_tx = self.peer_op_wakeup_tx.clone();
-
         peer.peer_id = way_ack.way.peer_id;
         peer.peer_op_port = way_ack.way.peer_op_port;
         peer.public_key_bytes = way_ack.way.public_key_bytes;
@@ -240,15 +235,15 @@ impl Handler {
         peer.fail_count = 0;
 
         let wakeup = tokio::spawn(async move {
-            match peer_op_wakeup_tx.send(0).await {
-                Ok(_) => Ok(()),
-                Err(err) => {
-                    return err!(
-                        "Error sending peer op wakeup msg, err: {}",
-                        err
-                    );
-                }
-            }
+            // match peer_op_wakeup_tx.send(0).await {
+            //     Ok(_) => Ok(()),
+            //     Err(err) => {
+            //         return err!(
+            //             "Error sending peer op wakeup msg, err: {}",
+            //             err
+            //         );
+            //     }
+            // }
         });
 
         match wakeup.await {

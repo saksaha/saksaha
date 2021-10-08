@@ -8,6 +8,7 @@ use super::{
     peer::peer_store::PeerStore,
 };
 use crate::{common::{Error, Result}, err, node::task_manager::TaskManager, p2p::discovery, pconfig::PersistedP2PConfig};
+use futures::stream::{FuturesOrdered, FuturesUnordered};
 use logger::log;
 use std::sync::Arc;
 use tokio::sync::{mpsc, Mutex};
@@ -42,9 +43,9 @@ impl Host {
     }
 
     fn make_peer_store(
-        bootstrap_urls: Option<Vec<String>>,
+        // bootstrap_urls: Option<Vec<String>>,
     ) -> Result<PeerStore> {
-        let peer_store = match PeerStore::new(10, bootstrap_urls) {
+        let peer_store = match PeerStore::new(10) {
             Ok(p) => p,
             Err(err) => return Err(err),
         };
@@ -64,9 +65,12 @@ impl Host {
             Err(err) => return HostStatus::SetupFailed(err),
         };
 
-        let (add_peer_tx, add_peer_rx) = mpsc::channel::<usize>(5);
+        // let tasks = FuturesUnordered::new();
+        // tasks.push(async {
 
-        let peer_store = match Host::make_peer_store(bootstrap_urls) {
+        // });
+
+        let peer_store = match Host::make_peer_store() {
             Ok(p) => Arc::new(p),
             Err(err) => return HostStatus::SetupFailed(err),
         };
@@ -77,7 +81,6 @@ impl Host {
                 None,
                 peer_store.clone(),
                 rpc_port,
-                Arc::new(Mutex::new(add_peer_rx)),
                 credential.clone(),
             )
             .await
@@ -96,7 +99,7 @@ impl Host {
             p2p_listener_port,
             peer_store.clone(),
             credential.clone(),
-            Arc::new(add_peer_tx),
+            bootstrap_urls,
         ).await {
             discovery::Status::Launched => (),
             discovery::Status::SetupFailed(err) => {
