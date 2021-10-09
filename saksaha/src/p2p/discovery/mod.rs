@@ -10,7 +10,7 @@ use crate::{
 };
 use dialer::Dialer;
 pub use status::Status;
-use std::{collections::VecDeque, future::Future, sync::Arc};
+use std::{collections::VecDeque, future::Future, pin::Pin, sync::Arc};
 use tokio::sync::{
     mpsc::{self, Receiver, Sender},
     Mutex,
@@ -47,7 +47,11 @@ impl Disc {
             }
         };
 
-        let task_queue = TaskQueue::new();
+        let task_queue = TaskQueue::new::<Fn() -> Future<Output = ()>>();
+
+        // task_queue.push(|| async {
+
+        // });
         // task_queue.run_loop();
 
         // println!("11");
@@ -70,38 +74,69 @@ impl Disc {
     }
 }
 
+// type Task = Box<dyn Fn() -> Pin<Box<dyn Future<Output = ()>>>>;
+
 struct TaskQueue {
-    // tx: Sender<Box<impl Fn() -> std::future::Future<Output = ()>>>,
-// rx: Mutex<Receiver<Box<impl Fn() -> std::future::Future<Output = ()>>>>,
+    tx: Sender<Box<Fn() -> Box<dyn Future<Output = ()>>>>,
+    rx: Receiver<Box<Fn() -> Box<dyn Future<Output = ()>>>>,
+}
+
+struct A {
+    a: Box<dyn Fn() -> dyn Future<Output = ()>>
 }
 
 impl TaskQueue {
     pub fn new() -> TaskQueue {
-        let (tx, mut rx) = mpsc::channel::<
-            Box<dyn Fn() -> std::pin::Pin<Box<dyn Future<Output = ()>>>>>(10);
+        let (tx, mut rx) = mpsc::channel(10);
 
-        tx.send(Box::new(|| Box::pin(async {
-        })));
+        A {
+            a: Box::new(|| async {}),
+        };
 
-        tx.send(Box::new(|| Box::pin(async {
-
-        })));
-
-        TaskQueue {
-            // tx,
-            // rx: Mutex::new(rx),
-        }
+        // TaskQueue { tx, rx }
+        TaskQueue { tx, rx }
     }
 
-    // pub async fn push<F, Fut>(&self, f: F)
-    // where
-    //     F: Fn() -> Fut,
-    //     Fut: std::future::Future<Output = ()>,
-    // {
-    //     self.tx
-    //         .send(Box::new(f))
-    //         .await;
-    // }
+    pub async fn push<F, Fut>(&self, f: F)
+    where
+        F: Fn() -> Fut,
+        Fut: Future<Output = bool>,
+    {
+        // let (tx, mut rx) = mpsc::channel(10);
+        // let (tx, mut rx) = mpsc::channel(10);
+
+        let a = Box::new(f);
+        match self.tx.send(a).await {
+            Ok(_) => (),
+            Err(err) => (),
+        };
+
+        // let (tx, mut rx) = mpsc::channel(10);
+
+        // match tx.send(f).await {
+        //     Ok(_) => (),
+        //     Err(err) => (),
+        // };
+
+        // if let Some(t) = rx.recv().await {
+        //     let a = t;
+        //     a().await;
+        //     // t().await;
+        // }
+
+        // TaskQueue::<F> {
+        //     tx,
+        //     rx,
+        // };
+
+        // self.tx
+        //     .send(a)
+        //     .await;
+
+        // self.tx
+        //     .send(a)
+        //     .await;
+    }
 
     // pub async fn run_loop(&self) {
     //     let mut rx = self.rx.lock().await;
