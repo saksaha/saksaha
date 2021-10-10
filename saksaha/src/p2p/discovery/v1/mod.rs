@@ -1,18 +1,14 @@
 pub mod dialer;
 pub mod listener;
 pub mod status;
+pub mod task;
 mod whoareyou;
 
-use self::listener::Listener;
-use crate::{
-    common::{Error, Result},
-    p2p::{credential::Credential, peer::peer_store::PeerStore},
-};
+use self::{listener::Listener, task::TaskQueue};
+use crate::{common::{Error, Result}, p2p::{credential::Credential, discovery::task::{Task, TaskResult, task}, peer::peer_store::PeerStore}};
 use dialer::Dialer;
-use futures::future::BoxFuture;
 use status::Status;
 use std::{
-    collections::VecDeque, future::Future, marker::PhantomData, pin::Pin,
     sync::Arc,
 };
 use tokio::sync::{
@@ -22,14 +18,6 @@ use tokio::sync::{
 
 pub struct Disc {
     pub task_queue: Arc<TaskQueue>,
-}
-
-#[macro_export]
-macro_rules! task {
-    (|$c:tt| async move $d:tt) => {
-        // Box::new(|$c| Box::pin(async move $d))
-        Task::new(Box::new(|$c| Box::pin(async move $d)));
-    };
 }
 
 impl Disc {
@@ -47,8 +35,6 @@ impl Disc {
         credential: Arc<Credential>,
         bootstrap_urls: Option<Vec<String>>,
     ) -> Status<Error> {
-        // let task_queue = TaskQueue::new();
-
         let listener = Listener::new();
         let listener_port = match listener
             .start(
@@ -65,33 +51,20 @@ impl Disc {
             }
         };
 
-        // let a = task!(|| async move {
-        //     println!("333, {}", x);
-        // });
-        let a = Task::new(Box::new(|| Box::pin(async move {
-            println!("333");
-            return Ok(());
-        })));
-        let b = Task::new(Box::new(|| Box::pin(async move {
-            println!("333");
-            return Ok(());
-        })));
+        let t = Task::new(|| Box::pin(async {
+            println!("task 1");
+            TaskResult::Retriable
+        }));
 
         self.task_queue.run_loop();
 
-        self.task_queue.push(a).await;
-        self.task_queue.push(b).await;
-
-        // self.task_queue.push(|| async {
-
-        // });
+        self.task_queue.push(t).await;
+        println!("55");
+        // self.task_queue.push(b).await;
+        // self.task_queue.push(b).await;
+        // self.task_queue.push(b).await;
 
         // self.enqueue_initial_tasks(bootstrap_urls);
-
-        // task_queue.push(|| async {
-
-        // });
-        // task_queue.run_loop();
 
         // let dialer = Dialer::new();
         // match dialer
@@ -120,67 +93,6 @@ impl Disc {
 
                 // }));
             }
-        }
-    }
-}
-
-
-pub struct TaskQueue {
-    tx: Arc<Sender<Task>>,
-    rx: Arc<Mutex<Receiver<Task>>>,
-}
-
-impl TaskQueue {
-    pub fn new() -> TaskQueue {
-        let (tx, mut rx) = mpsc::channel(10);
-
-        TaskQueue {
-            tx: Arc::new(tx),
-            rx: Arc::new(Mutex::new(rx)),
-        }
-    }
-
-    pub async fn push(&self, task: Task) {
-        self.tx.send(task).await;
-    }
-
-    pub fn run_loop(&self) {
-        let rx = self.rx.clone();
-        let tx = self.tx.clone();
-
-        tokio::spawn(async move {
-            let mut rx = rx.lock().await;
-
-            loop {
-                if let Some(t) = rx.recv().await {
-                    match (t.f)().await {
-                        Ok(_) => (),
-                        Err(err) => {
-                            let aa = Task {
-                                f: t.f,
-                                fail_count: t.fail_count + 1,
-                            };
-                            tx.send(aa).await;
-                        },
-                    };
-                }
-            }
-        });
-    }
-}
-
-type BoxedFuture = Box<dyn Fn() -> Pin<Box<dyn Future<Output = Result<()>> + Send>> + Send + Sync>;
-
-pub struct Task {
-    pub f: BoxedFuture,
-    pub fail_count: usize,
-}
-
-impl Task {
-    pub fn new(f: BoxedFuture) -> Task {
-        Task {
-            f,
-            fail_count: 0,
         }
     }
 }
