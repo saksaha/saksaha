@@ -101,7 +101,12 @@ impl TaskQueue {
                             }
                         }
                         TaskResult::Fail(err) => {
-                            log!(DEBUG, "Unexpected error while executing a task, err: {}", err);
+                            log!(
+                                DEBUG,
+                                "Unexpected error while \
+                                executing a task, err: {}",
+                                err
+                            );
                         }
                     };
                 }
