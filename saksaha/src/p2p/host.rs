@@ -2,12 +2,16 @@ use super::{
     credential::Credential,
     discovery::Disc,
     listener::{self, Listener},
-    ops::{
-        handshake::{self, Handshake},
-    },
+    ops::handshake::{self, Handshake},
     peer::peer_store::PeerStore,
 };
-use crate::{common::{Error, Result}, err, node::task_manager::TaskManager, p2p::discovery, pconfig::PersistedP2PConfig};
+use crate::{
+    common::{Error, Result},
+    err,
+    node::task_manager::TaskManager,
+    p2p::discovery,
+    pconfig::PersistedP2PConfig,
+};
 use futures::stream::{FuturesOrdered, FuturesUnordered};
 use logger::log;
 use std::sync::Arc;
@@ -42,8 +46,7 @@ impl Host {
         Ok(credential)
     }
 
-    fn make_peer_store(
-        // bootstrap_urls: Option<Vec<String>>,
+    fn make_peer_store(// bootstrap_urls: Option<Vec<String>>,
     ) -> Result<PeerStore> {
         let peer_store = match PeerStore::new(10) {
             Ok(p) => p,
@@ -72,30 +75,28 @@ impl Host {
 
         let p2p_listener = Listener::new();
         let p2p_listener_port = match p2p_listener
-            .start(
-                None,
-                peer_store.clone(),
-                rpc_port,
-                credential.clone(),
-            )
+            .start(None, peer_store.clone(), rpc_port, credential.clone())
             .await
         {
             listener::Status::Launched(port) => port,
             listener::Status::SetupFailed(err) => {
                 log!(DEBUG, "Couldn't start listener, err: {}\n", err);
 
-                return HostStatus::SetupFailed(err)
+                return HostStatus::SetupFailed(err);
             }
         };
 
         let disc = Disc::new();
-        match disc.start(
-            disc_port,
-            p2p_listener_port,
-            peer_store.clone(),
-            credential.clone(),
-            bootstrap_urls,
-        ).await {
+        match disc
+            .start(
+                disc_port,
+                p2p_listener_port,
+                peer_store.clone(),
+                credential.clone(),
+                bootstrap_urls,
+            )
+            .await
+        {
             discovery::Status::Launched => (),
             discovery::Status::SetupFailed(err) => {
                 return HostStatus::SetupFailed(err);
