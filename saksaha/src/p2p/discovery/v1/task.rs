@@ -1,4 +1,7 @@
-use crate::common::{Error, Result};
+use crate::{
+    common::{Error, Result},
+    err,
+};
 use logger::log;
 use std::{future::Future, pin::Pin, sync::Arc, time::Duration};
 use tokio::sync::{
@@ -29,7 +32,10 @@ impl Task {
         F: Fn() -> BoxedFuture + Send + Sync + 'static,
     {
         let a = Box::new(f);
-        Task { f: a, fail_count: 0 }
+        Task {
+            f: a,
+            fail_count: 0,
+        }
     }
 }
 
@@ -46,12 +52,19 @@ impl TaskQueue {
         TaskQueue {
             tx: Arc::new(tx),
             rx: Arc::new(Mutex::new(rx)),
-            max_retry: 3,
+            max_retry: 2,
         }
     }
 
-    pub async fn push(&self, task: Task) {
-        self.tx.send(task).await;
+    pub async fn push(&self, task: Task) -> Result<()> {
+        return TaskQueue::_push(self.tx.clone(), task).await;
+    }
+
+    async fn _push(tx: Arc<Sender<Task>>, task: Task) -> Result<()> {
+        match tx.send(task).await {
+            Ok(_) => Ok(()),
+            Err(err) => return err!("Cannot enqueue new task, err: {}", err),
+        }
     }
 
     pub fn run_loop(&self) {
@@ -69,21 +82,22 @@ impl TaskQueue {
 
                     let f = &t.f;
                     match f().await {
-                        TaskResult::Success => {
-                        }
+                        TaskResult::Success => {}
                         TaskResult::Retriable => {
-                            println!("1313");
                             if t.fail_count < max_retry {
+                                tokio::time::sleep(Duration::from_millis(1000))
+                                    .await;
+
                                 let t = Task {
                                     f: t.f,
                                     fail_count: t.fail_count + 1,
                                 };
 
-                                println!("555");
-
-                                tokio::time::sleep(Duration::from_millis(1000))
-                                    .await;
-                                tx.send(t).await;
+                                if let Err(err) =
+                                    TaskQueue::_push(tx.clone(), t).await
+                                {
+                                    log!(DEBUG, "Fatal error, {}\n", err);
+                                }
                             }
                         }
                         TaskResult::Fail(err) => {
