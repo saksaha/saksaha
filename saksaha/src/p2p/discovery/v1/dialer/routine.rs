@@ -5,10 +5,9 @@ use std::{
 };
 use tokio::sync::{mpsc::Sender, Mutex};
 
-use super::handler::Handler;
+use super::handler::{HandleStatus, Handler};
 use crate::p2p::{
     credential::Credential,
-    discovery::dialer::handler::HandleStatus,
     peer::peer_store::{Filter, PeerStore},
 };
 

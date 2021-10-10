@@ -1,4 +1,4 @@
-use crate::{common::{Error, Result}, crypto::Crypto, err, p2p::{credential::Credential, discovery::whoareyou::{self, WhoAreYou, WhoAreYouAck}, peer::{
+use crate::{common::{Error, Result}, crypto::Crypto, err, p2p::{credential::Credential, discovery::v1::whoareyou::{self, WhoAreYou, WhoAreYouAck}, peer::{
             self,
             peer_store::{Filter, PeerStore},
             Peer,

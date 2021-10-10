@@ -1,12 +1,8 @@
-use crate::{common::{Error, Result}, err, p2p::{credential::Credential, discovery::whoareyou::{self, WhoAreYou, WhoAreYouAck}, peer::{peer_store::PeerStore, Peer, Status}}};
+use crate::{common::{Error, Result}, err, p2p::{credential::Credential, discovery::v1::whoareyou::{self, WhoAreYou, WhoAreYouAck}, peer::{peer_store::PeerStore, Peer, Status}}};
 use k256::ecdsa::{signature::Signer, Signature, SigningKey};
 use logger::log;
 use std::sync::Arc;
-use tokio::{
-    io::AsyncWriteExt,
-    net::TcpStream,
-    sync::{OwnedMutexGuard},
-};
+use tokio::{io::AsyncWriteExt, net::TcpStream, sync::OwnedMutexGuard};
 
 /// S endpoint
 /// E error
