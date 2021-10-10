@@ -65,11 +65,6 @@ impl Host {
             Err(err) => return HostStatus::SetupFailed(err),
         };
 
-        // let tasks = FuturesUnordered::new();
-        // tasks.push(async {
-
-        // });
-
         let peer_store = match Host::make_peer_store() {
             Ok(p) => Arc::new(p),
             Err(err) => return HostStatus::SetupFailed(err),
