@@ -47,7 +47,7 @@ pub struct TaskQueue {
 
 impl TaskQueue {
     pub fn new() -> TaskQueue {
-        let (tx, mut rx) = mpsc::channel(10);
+        let (tx, rx) = mpsc::channel(10);
 
         TaskQueue {
             tx: Arc::new(tx),
@@ -73,7 +73,6 @@ impl TaskQueue {
         let max_retry = self.max_retry;
 
         tokio::spawn(async move {
-            println!("11");
             let mut rx = rx.lock().await;
 
             loop {
@@ -117,15 +116,17 @@ impl TaskQueue {
 
 macro_rules! task {
     (async $d:tt) => {
-        || {
-            let t = $crate::p2p::discovery::task::Task::new(Box::pin(async $d));
+        {
+            let t = $crate::p2p::discovery::task::Task::new(
+                || Box::pin(async $d));
             t
         }
     };
 
     (async move $d:tt) => {
-        || {
-            let t = $crate::p2p::discovery::task::Task::new(Box::pin(async move $d));
+        {
+            let t = $crate::p2p::discovery::task::Task::new(
+                || Box::pin(async move $d));
             t
         }
     };

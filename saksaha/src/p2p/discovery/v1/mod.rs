@@ -63,13 +63,15 @@ impl Disc {
             })
         });
 
+        let t2 = task!(async {
+            TaskResult::Retriable
+        });
+
         self.task_queue.run_loop();
 
         self.task_queue.push(t).await;
+        self.task_queue.push(t2).await;
         println!("55");
-        // self.task_queue.push(b).await;
-        // self.task_queue.push(b).await;
-        // self.task_queue.push(b).await;
 
         // self.enqueue_initial_tasks(bootstrap_urls);
 
