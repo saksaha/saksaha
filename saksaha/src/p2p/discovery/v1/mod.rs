@@ -9,18 +9,34 @@ use crate::{
     p2p::{credential::Credential, peer::peer_store::PeerStore},
 };
 use dialer::Dialer;
+use futures::future::BoxFuture;
 use status::Status;
-use std::{collections::VecDeque, future::Future, pin::Pin, sync::Arc};
+use std::{
+    collections::VecDeque, future::Future, marker::PhantomData, pin::Pin,
+    sync::Arc,
+};
 use tokio::sync::{
     mpsc::{self, Receiver, Sender},
     Mutex,
 };
 
-pub struct Disc {}
+pub struct Disc {
+    pub task_queue: Arc<TaskQueue>,
+}
+
+#[macro_export]
+macro_rules! task {
+    (|$c:tt| async move $d:tt) => {
+        // Box::new(|$c| Box::pin(async move $d))
+        Task::new(Box::new(|$c| Box::pin(async move $d)));
+    };
+}
 
 impl Disc {
     pub fn new() -> Disc {
-        Disc {}
+        let task_queue = Arc::new(TaskQueue::new());
+
+        Disc { task_queue }
     }
 
     pub async fn start(
@@ -31,6 +47,8 @@ impl Disc {
         credential: Arc<Credential>,
         bootstrap_urls: Option<Vec<String>>,
     ) -> Status<Error> {
+        // let task_queue = TaskQueue::new();
+
         let listener = Listener::new();
         let listener_port = match listener
             .start(
@@ -47,18 +65,33 @@ impl Disc {
             }
         };
 
-        let a = TaskQueue::new();
-        a.push(|| async {
-            println!("222");
-        })
-        .await;
+        // let a = task!(|| async move {
+        //     println!("333, {}", x);
+        // });
+        let a = Task::new(Box::new(|| Box::pin(async move {
+            println!("333");
+            return Ok(());
+        })));
+        let b = Task::new(Box::new(|| Box::pin(async move {
+            println!("333");
+            return Ok(());
+        })));
+
+        self.task_queue.run_loop();
+
+        self.task_queue.push(a).await;
+        self.task_queue.push(b).await;
+
+        // self.task_queue.push(|| async {
+
+        // });
+
+        // self.enqueue_initial_tasks(bootstrap_urls);
 
         // task_queue.push(|| async {
 
         // });
         // task_queue.run_loop();
-
-        // println!("11");
 
         // let dialer = Dialer::new();
         // match dialer
@@ -76,54 +109,78 @@ impl Disc {
 
         Status::Launched
     }
+
+    pub async fn enqueue_initial_tasks(
+        &self,
+        bootstrap_urls: Option<Vec<String>>,
+    ) {
+        if let Some(urls) = bootstrap_urls {
+            for url in urls {
+                // self.task_queue.push(Box::new(|| async {
+
+                // }));
+            }
+        }
+    }
 }
 
-struct TaskQueue<F, Fut>
-where
-    F: Fn() -> Fut,
-    Fut: Future<Output = ()>,
-{
-    tx: Sender<F>,
-    rx: Mutex<Receiver<F>>,
+
+pub struct TaskQueue {
+    tx: Arc<Sender<Task>>,
+    rx: Arc<Mutex<Receiver<Task>>>,
 }
 
-impl<F, Fut> TaskQueue<F, Fut>
-where
-    F: Fn() -> Fut,
-    Fut: Future<Output = ()>,
-{
-    pub fn new() -> TaskQueue<F, Fut> {
+impl TaskQueue {
+    pub fn new() -> TaskQueue {
         let (tx, mut rx) = mpsc::channel(10);
 
         TaskQueue {
-            tx,
-            rx: Mutex::new(rx),
+            tx: Arc::new(tx),
+            rx: Arc::new(Mutex::new(rx)),
         }
     }
 
-    pub async fn push(&self, f: F) {
-        match self.tx.send(f).await {
-            Ok(_) => (),
-            Err(err) => (),
-        };
-
-        let mut rx = self.rx.lock().await;
-
-        if let Some(t) = rx.recv().await {
-            let a = t;
-            a().await;
-            // t().await;
-        }
+    pub async fn push(&self, task: Task) {
+        self.tx.send(task).await;
     }
 
-    // pub async fn run_loop(&self) {
-    //     let mut rx = self.rx.lock().await;
+    pub fn run_loop(&self) {
+        let rx = self.rx.clone();
+        let tx = self.tx.clone();
 
-    //     loop {
-    //         if let Some(task) = rx.recv().await {
-    //             task().await;
-    //         }
-    //     }
-    //     // self.rx.recv();
-    // }
+        tokio::spawn(async move {
+            let mut rx = rx.lock().await;
+
+            loop {
+                if let Some(t) = rx.recv().await {
+                    match (t.f)().await {
+                        Ok(_) => (),
+                        Err(err) => {
+                            let aa = Task {
+                                f: t.f,
+                                fail_count: t.fail_count + 1,
+                            };
+                            tx.send(aa).await;
+                        },
+                    };
+                }
+            }
+        });
+    }
+}
+
+type BoxedFuture = Box<dyn Fn() -> Pin<Box<dyn Future<Output = Result<()>> + Send>> + Send + Sync>;
+
+pub struct Task {
+    pub f: BoxedFuture,
+    pub fail_count: usize,
+}
+
+impl Task {
+    pub fn new(f: BoxedFuture) -> Task {
+        Task {
+            f,
+            fail_count: 0,
+        }
+    }
 }
