@@ -5,12 +5,17 @@ pub mod task;
 mod whoareyou;
 
 use self::{listener::Listener, task::TaskQueue};
-use crate::{common::{Error, Result}, p2p::{credential::Credential, discovery::task::{Task, TaskResult, task}, peer::peer_store::PeerStore}};
+use crate::{
+    common::{Error, Result},
+    p2p::{
+        credential::Credential,
+        discovery::task::{task, Task, TaskResult},
+        peer::peer_store::PeerStore,
+    },
+};
 use dialer::Dialer;
 use status::Status;
-use std::{
-    sync::Arc,
-};
+use std::sync::Arc;
 use tokio::sync::{
     mpsc::{self, Receiver, Sender},
     Mutex,
@@ -51,10 +56,12 @@ impl Disc {
             }
         };
 
-        let t = Task::new(|| Box::pin(async {
-            println!("task 1");
-            TaskResult::Retriable
-        }));
+        let t = Task::new(|| {
+            Box::pin(async {
+                println!("task 1");
+                TaskResult::Retriable
+            })
+        });
 
         self.task_queue.run_loop();
 
