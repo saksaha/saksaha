@@ -22,18 +22,18 @@ pub enum TaskResult<E> {
 }
 
 pub struct Task {
-    pub f: Box<dyn Fn() -> BoxedFuture + Send + Sync>,
+    pub make_action: Box<dyn Fn() -> BoxedFuture + Send + Sync>,
     pub fail_count: usize,
 }
 
 impl Task {
-    pub fn new<F>(f: F) -> Task
+    pub fn new<F>(make_action: F) -> Task
     where
         F: Fn() -> BoxedFuture + Send + Sync + 'static,
     {
-        let a = Box::new(f);
+        let make_action = Box::new(make_action);
         Task {
-            f: a,
+            make_action,
             fail_count: 0,
         }
     }
@@ -43,6 +43,7 @@ pub struct TaskQueue {
     tx: Arc<Sender<Task>>,
     rx: Arc<Mutex<Receiver<Task>>>,
     max_retry: usize,
+    interval: Duration,
 }
 
 impl TaskQueue {
@@ -53,6 +54,7 @@ impl TaskQueue {
             tx: Arc::new(tx),
             rx: Arc::new(Mutex::new(rx)),
             max_retry: 2,
+            interval: Duration::from_millis(1000),
         }
     }
 
@@ -71,24 +73,21 @@ impl TaskQueue {
         let rx = self.rx.clone();
         let tx = self.tx.clone();
         let max_retry = self.max_retry;
+        let interval = self.interval;
 
         tokio::spawn(async move {
             let mut rx = rx.lock().await;
 
             loop {
                 if let Some(t) = rx.recv().await {
-                    println!("fail_count: {}", t.fail_count);
-
-                    let f = &t.f;
-                    match f().await {
+                    match (&t.make_action)().await {
                         TaskResult::Success => {}
                         TaskResult::Retriable => {
                             if t.fail_count < max_retry {
-                                tokio::time::sleep(Duration::from_millis(1000))
-                                    .await;
+                                tokio::time::sleep(interval).await;
 
                                 let t = Task {
-                                    f: t.f,
+                                    make_action: t.make_action,
                                     fail_count: t.fail_count + 1,
                                 };
 
@@ -126,7 +125,7 @@ macro_rules! task {
     (async move $d:tt) => {
         {
             let t = $crate::p2p::discovery::task::Task::new(
-                || Box::pin(async move $d));
+                move || Box::pin(async move $d));
             t
         }
     };
