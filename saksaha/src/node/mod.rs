@@ -8,6 +8,7 @@ use crate::{
     node::{msg::Kind, status::Status},
     p2p::host::{self, Host, HostStatus},
     pconfig::PConfig,
+    process::Process,
     rpc::{self, RPC},
 };
 use logger::log;
@@ -23,7 +24,12 @@ impl Node {
     pub fn new() -> Node {
         let task_mng = Arc::new(TaskManager::new());
 
-        Node { task_mng }
+        let n = Node { task_mng };
+
+        let b = Box::new(n);
+
+        Process::init(b);
+        n
     }
 
     async fn start_components(
@@ -85,6 +91,8 @@ impl Node {
 
         let node_status = match runtime {
             Ok(r) => r.block_on(async {
+                // Process::init(self);
+
                 let started = self.start_components(
                     rpc_port,
                     disc_port,
@@ -136,5 +144,9 @@ impl Node {
         };
 
         node_status
+    }
+
+    pub fn persist_state(&self) {
+        log!(DEBUG, "Storing state of node\n");
     }
 }
