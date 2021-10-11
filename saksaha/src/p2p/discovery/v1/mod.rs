@@ -63,7 +63,10 @@ impl Disc {
             })
         });
 
-        let t2 = task!(async {
+
+        let a = 3;
+        let t2 = task!(async move {
+            println!("task 23, {}", a);
             TaskResult::Retriable
         });
 
@@ -71,7 +74,6 @@ impl Disc {
 
         self.task_queue.push(t).await;
         self.task_queue.push(t2).await;
-        println!("55");
 
         // self.enqueue_initial_tasks(bootstrap_urls);
 
