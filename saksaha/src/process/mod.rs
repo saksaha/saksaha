@@ -1,19 +1,17 @@
-use std::{alloc::dealloc, sync::Arc};
-use once_cell::sync::OnceCell;
-use logger::log;
 use crate::node::Node;
+use logger::log;
+use once_cell::sync::OnceCell;
+use std::sync::Arc;
 
 static INSTANCE: OnceCell<Process> = OnceCell::new();
 
 pub struct Process {
-    node: Box<Node>,
+    node: Arc<Node>,
 }
 
 impl Process {
-    pub fn init(node: Box<Node>) {
-        let p = Process {
-            node,
-        };
+    pub fn init(node: Arc<Node>) {
+        let p = Process { node };
 
         match INSTANCE.set(p) {
             Ok(_) => (),
@@ -29,11 +27,14 @@ impl Process {
         let process = match INSTANCE.get() {
             Some(p) => p,
             None => {
-                log!(DEBUG, "Process is not initialized. Consider calling \
-                    Process:init()\n");
+                log!(
+                    DEBUG,
+                    "Process is not initialized. Consider calling \
+                    Process:init() at the launch of the program\n"
+                );
 
                 std::process::exit(1);
-            },
+            }
         };
 
         log!(DEBUG, "Preparing to shutdown process\n");
@@ -42,5 +43,4 @@ impl Process {
 
         std::process::exit(1);
     }
-
 }

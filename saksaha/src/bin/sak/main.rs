@@ -97,7 +97,9 @@ fn main() {
     };
 
     let pconf = make_pconfig(args.config);
-    let node = Node::new();
+    let node = Arc::new(Node::new());
+
+    Process::init(node.clone());
 
     match node.start(
         args.rpc_port,
@@ -112,7 +114,6 @@ fn main() {
             std::process::exit(1);
         }
     };
-
 }
 
 fn make_pconfig(config_path: Option<String>) -> PConfig {
