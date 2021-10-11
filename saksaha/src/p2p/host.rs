@@ -80,9 +80,6 @@ impl Host {
             }
         };
 
-        println!("333");
-        Process::shutdown();
-
         let disc = Disc::new();
         match disc
             .start(

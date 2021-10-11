@@ -25,10 +25,6 @@ impl Node {
         let task_mng = Arc::new(TaskManager::new());
 
         let n = Node { task_mng };
-
-        let b = Box::new(n);
-
-        Process::init(b);
         n
     }
 
@@ -77,7 +73,7 @@ impl Node {
     }
 
     pub fn start(
-        &self,
+        self: Arc<Self>,
         rpc_port: Option<u16>,
         disc_port: Option<u16>,
         bootstrap_urls: Option<Vec<String>>,
@@ -91,8 +87,6 @@ impl Node {
 
         let node_status = match runtime {
             Ok(r) => r.block_on(async {
-                // Process::init(self);
-
                 let started = self.start_components(
                     rpc_port,
                     disc_port,
