@@ -1,11 +1,8 @@
+use std::sync::Arc;
+
 use clap::{App, Arg};
 use logger::log;
-use saksaha::{
-    common::Result,
-    err,
-    node::{status::Status, Node},
-    pconfig::PConfig,
-};
+use saksaha::{common::Result, err, node::{status::Status, Node}, pconfig::PConfig, process::Process};
 
 struct Args {
     config: Option<String>,
@@ -99,9 +96,8 @@ fn main() {
         }
     };
 
-    let node = Node::new();
-
     let pconf = make_pconfig(args.config);
+    let node = Node::new();
 
     match node.start(
         args.rpc_port,
@@ -115,7 +111,8 @@ fn main() {
 
             std::process::exit(1);
         }
-    }
+    };
+
 }
 
 fn make_pconfig(config_path: Option<String>) -> PConfig {

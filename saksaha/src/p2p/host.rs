@@ -5,13 +5,7 @@ use super::{
     ops::handshake::{self, Handshake},
     peer::peer_store::PeerStore,
 };
-use crate::{
-    common::{Error, Result},
-    err,
-    node::task_manager::TaskManager,
-    p2p::discovery,
-    pconfig::PersistedP2PConfig,
-};
+use crate::{common::{Error, Result}, err, node::task_manager::TaskManager, p2p::discovery, pconfig::PersistedP2PConfig, process::Process};
 use futures::stream::{FuturesOrdered, FuturesUnordered};
 use logger::log;
 use std::sync::Arc;
@@ -85,6 +79,9 @@ impl Host {
                 return HostStatus::SetupFailed(err);
             }
         };
+
+        println!("333");
+        Process::shutdown();
 
         let disc = Disc::new();
         match disc
