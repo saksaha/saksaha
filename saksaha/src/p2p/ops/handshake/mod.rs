@@ -7,7 +7,6 @@ pub use self::status::Status;
 use crate::{
     common::{Error, Result},
     err,
-    node::task_manager::TaskManager,
     p2p::{credential::Credential, peer::peer_store::PeerStore},
 };
 use dial::Dial;
@@ -22,12 +21,11 @@ use tokio::{
 };
 
 pub struct Handshake {
-    task_mng: Arc<TaskManager>,
 }
 
 impl Handshake {
-    pub fn new(task_mng: Arc<TaskManager>) -> Handshake {
-        let peer_op = Handshake { task_mng };
+    pub fn new() -> Handshake {
+        let peer_op = Handshake { };
 
         peer_op
     }
@@ -41,9 +39,7 @@ impl Handshake {
         credential: Arc<Credential>,
         peer_op_listener: TcpListener,
     ) -> Status<Error> {
-        let task_mng = self.task_mng.clone();
-
-        let dial = Dial::new(task_mng.clone());
+        let dial = Dial::new();
 
         // let listen = Listen::new();
         // let listen_started = listen.start(
