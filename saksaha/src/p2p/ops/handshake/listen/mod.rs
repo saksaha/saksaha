@@ -2,8 +2,6 @@ use std::sync::Arc;
 
 use crate::{
     common::{Error, Result},
-    err, msg_err,
-    node::task_manager::TaskManager,
     p2p::credential::Credential,
 };
 use logger::log;
@@ -21,7 +19,6 @@ impl Listen {
     pub async fn start(
         &self,
         disc_wakeup_tx: Arc<MpscSender<usize>>,
-        task_mng: Arc<TaskManager>,
         credential: Arc<Credential>,
         peer_op_listener: TcpListener,
     ) -> Result<()> {

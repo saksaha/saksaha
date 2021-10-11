@@ -1,11 +1,9 @@
-pub mod msg;
 pub mod status;
-pub mod task_manager;
 
 use crate::{
     common::{Error, Result},
     err,
-    node::{msg::Kind, status::Status},
+    node::{status::Status},
     p2p::host::{self, Host, HostStatus},
     pconfig::PConfig,
     process::Process,
@@ -13,19 +11,13 @@ use crate::{
 };
 use logger::log;
 use std::sync::Arc;
-use task_manager::TaskManager;
 use tokio::{self, signal};
 
-pub struct Node {
-    task_mng: Arc<TaskManager>,
-}
+pub struct Node {}
 
 impl Node {
     pub fn new() -> Node {
-        let task_mng = Arc::new(TaskManager::new());
-
-        let n = Node { task_mng };
-        n
+        Node {}
     }
 
     async fn start_components(
@@ -35,10 +27,10 @@ impl Node {
         bootstrap_urls: Option<Vec<String>>,
         pconfig: PConfig,
     ) -> Result<()> {
-        let rpc = RPC::new(self.task_mng.clone(), rpc_port);
+        let rpc = RPC::new(rpc_port);
 
         let p2p_config = pconfig.p2p;
-        let host = match Host::new(self.task_mng.clone()) {
+        let host = match Host::new() {
             Ok(h) => h,
             Err(err) => return Err(err),
         };
@@ -101,20 +93,20 @@ impl Node {
                     }
                 };
 
-                let task_mng = self.task_mng.clone();
+                // let task_mng = self.task_mng.clone();
 
                 tokio::select!(
-                    msg_kind = task_mng.clone().start_receiving() => {
-                        if let Kind::SetupFailure = msg_kind {
-                            task_mng.shutdown_program();
-                        }
-                    },
+                    // msg_kind = task_mng.clone().start_receiving() => {
+                    //     if let Kind::SetupFailure = msg_kind {
+                    //         task_mng.shutdown_program();
+                    //     }
+                    // },
                     c = signal::ctrl_c() => {
                         match c {
                             Ok(_) => {
                                 log!(DEBUG, "ctrl+k is pressed.\n");
 
-                                task_mng.shutdown_program();
+                                // task_mng.shutdown_program();
                             },
                             Err(err) => {
                                 log!(
@@ -124,7 +116,7 @@ impl Node {
                                     err
                                 );
 
-                                task_mng.shutdown_program();
+                                // task_mng.shutdown_program();
                             }
                         }
                     },

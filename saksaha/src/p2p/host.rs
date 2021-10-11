@@ -5,7 +5,13 @@ use super::{
     ops::handshake::{self, Handshake},
     peer::peer_store::PeerStore,
 };
-use crate::{common::{Error, Result}, err, node::task_manager::TaskManager, p2p::discovery, pconfig::PersistedP2PConfig, process::Process};
+use crate::{
+    common::{Error, Result},
+    err,
+    p2p::discovery,
+    pconfig::PersistedP2PConfig,
+    process::Process,
+};
 use futures::stream::{FuturesOrdered, FuturesUnordered};
 use logger::log;
 use std::sync::Arc;
@@ -18,12 +24,11 @@ pub enum HostStatus<E> {
 }
 
 pub struct Host {
-    task_mng: Arc<TaskManager>,
 }
 
 impl Host {
-    pub fn new(task_mng: Arc<TaskManager>) -> Result<Host> {
-        let host = Host { task_mng };
+    pub fn new() -> Result<Host> {
+        let host = Host { };
 
         Ok(host)
     }

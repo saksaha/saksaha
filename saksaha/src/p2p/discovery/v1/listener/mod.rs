@@ -3,7 +3,6 @@ mod status;
 
 use crate::{
     common::{Error, Result},
-    msg_err,
     p2p::{credential::Credential, peer::peer_store::PeerStore},
 };
 use handler::Handler;

@@ -2,8 +2,6 @@ mod routine;
 
 use crate::{
     common::Result,
-    msg_err, msg_errd,
-    node::{msg::Kind, task_manager::TaskManager},
     p2p::{
         credential::Credential, ops::handshake::dial::routine::Routine,
         peer::peer_store::PeerStore,
@@ -17,12 +15,11 @@ use tokio::sync::{
 };
 
 pub struct Dial {
-    task_mng: Arc<TaskManager>,
 }
 
 impl Dial {
-    pub fn new(task_mng: Arc<TaskManager>) -> Dial {
-        Dial { task_mng }
+    pub fn new() -> Dial {
+        Dial { }
     }
 
     pub async fn start(
@@ -34,7 +31,6 @@ impl Dial {
     ) -> Result<()> {
         log!(DEBUG, "Start dial - handshake\n");
 
-        let task_mng = self.task_mng.clone();
         let routine = Routine::new(peer_store.clone(), credential.clone());
         routine.run();
 
@@ -45,13 +41,12 @@ impl Dial {
                 match peer_op_wakeup_rx.recv().await {
                     Some(_) => routine.wakeup().await,
                     None => {
-                        let msg = msg_err!(
-                            Kind::SetupFailure,
-                            "Cannot receive peer op \
-                            wake up msg. Is channel closed?",
-                        );
+                        // let msg = msg_err!(
+                        //     Kind::SetupFailure,
+                        //     "Cannot receive peer op \
+                        //     wake up msg. Is channel closed?",
+                        // );
 
-                        task_mng.send(msg).await;
                     }
                 }
             }
