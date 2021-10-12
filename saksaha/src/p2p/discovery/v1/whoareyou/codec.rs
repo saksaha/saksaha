@@ -23,7 +23,7 @@ impl From<u8> for Kind {
     }
 }
 
-pub struct WhoAreYou {
+pub struct WhoAreYouMsg {
     pub kind: Kind,
     pub sig: Signature,
     pub public_key_bytes: [u8; 65],
@@ -32,16 +32,16 @@ pub struct WhoAreYou {
     pub raw: Vec<u8>,
 }
 
-impl WhoAreYou {
+impl WhoAreYouMsg {
     pub fn new(
         kind: Kind,
         sig: Signature,
         peer_op_port: u16,
         public_key_bytes: [u8; 65],
-    ) -> WhoAreYou {
-        let peer_id = WhoAreYou::make_peer_id(&public_key_bytes);
+    ) -> WhoAreYouMsg {
+        let peer_id = WhoAreYouMsg::make_peer_id(&public_key_bytes);
 
-        WhoAreYou {
+        WhoAreYouMsg {
             kind,
             sig,
             peer_op_port,
@@ -84,7 +84,7 @@ impl WhoAreYou {
         Ok(buf)
     }
 
-    pub async fn parse(stream: &mut TcpStream) -> Result<WhoAreYou> {
+    pub async fn parse(stream: &mut TcpStream) -> Result<WhoAreYouMsg> {
         let mut size_buf: [u8; 1] = [0; 1];
 
         match stream.read(&mut size_buf).await {
@@ -146,7 +146,7 @@ impl WhoAreYou {
         public_key_bytes
             .copy_from_slice(&buf[peer_op_port_end..peer_op_port_end + 65]);
 
-        let mut way = WhoAreYou::new(kind, sig, peer_op_port, public_key_bytes);
+        let mut way = WhoAreYouMsg::new(kind, sig, peer_op_port, public_key_bytes);
 
         let mut new_buf = size_buf.to_vec();
         new_buf.extend_from_slice(&buf);
@@ -157,7 +157,7 @@ impl WhoAreYou {
 }
 
 pub struct WhoAreYouAck {
-    pub way: WhoAreYou,
+    pub way: WhoAreYouMsg,
 }
 
 impl WhoAreYouAck {
@@ -167,7 +167,7 @@ impl WhoAreYouAck {
         public_key_bytes: [u8; 65],
     ) -> WhoAreYouAck {
         let way =
-            WhoAreYou::new(Kind::Ack, sig, peer_op_port, public_key_bytes);
+            WhoAreYouMsg::new(Kind::Ack, sig, peer_op_port, public_key_bytes);
 
         WhoAreYouAck { way }
     }
@@ -177,7 +177,7 @@ impl WhoAreYouAck {
     }
 
     pub async fn parse(stream: &mut TcpStream) -> Result<WhoAreYouAck> {
-        let way = match WhoAreYou::parse(stream).await {
+        let way = match WhoAreYouMsg::parse(stream).await {
             Ok(w) => w,
             Err(err) => {
                 return err!("Error parsing WhoAreYouAck, err: {}", err);

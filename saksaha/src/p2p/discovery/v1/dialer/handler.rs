@@ -1,7 +1,16 @@
-use crate::{common::{Error, Result}, crypto::Crypto, err, p2p::{
+use crate::{
+    common::{Error, Result},
+    crypto::Crypto,
+    err,
+    p2p::{
         credential::Credential,
-        discovery::v1::whoareyou::{self, WhoAreYou, WhoAreYouAck},
-    }, peer::{self, Peer, peer_store::{Filter, PeerStore}}};
+    },
+    peer::{
+        self,
+        peer_store::{Filter, PeerStore},
+        Peer,
+    },
+};
 use k256::ecdsa::{
     signature::{Signer, Verifier},
     Signature, SigningKey,
@@ -161,7 +170,7 @@ impl Handler {
         let signing_key = SigningKey::from(secret_key);
         let sig: Signature = signing_key.sign(whoareyou::MESSAGE);
 
-        let way = WhoAreYou::new(
+        let way = WhoAreYouMsg::new(
             whoareyou::Kind::Syn,
             sig,
             self.peer_op_port,
