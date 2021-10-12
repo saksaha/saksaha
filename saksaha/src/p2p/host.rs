@@ -2,14 +2,13 @@ use super::{
     credential::Credential,
     discovery::Disc,
     listener::{self, Listener},
-    ops::handshake::{self, Handshake},
-    peer::peer_store::PeerStore,
 };
 use crate::{
     common::{Error, Result},
     err,
     p2p::discovery,
     pconfig::PersistedP2PConfig,
+    peer::peer_store::PeerStore,
     process::Process,
 };
 use futures::stream::{FuturesOrdered, FuturesUnordered};
@@ -23,12 +22,11 @@ pub enum HostStatus<E> {
     SetupFailed(E),
 }
 
-pub struct Host {
-}
+pub struct Host {}
 
 impl Host {
     pub fn new() -> Result<Host> {
-        let host = Host { };
+        let host = Host {};
 
         Ok(host)
     }
@@ -61,6 +59,7 @@ impl Host {
         rpc_port: u16,
         disc_port: Option<u16>,
         bootstrap_urls: Option<Vec<String>>,
+        default_bootstrap_urls: &str,
     ) -> HostStatus<Error> {
         let credential = match Host::make_credential(p2p_config) {
             Ok(c) => Arc::new(c),
@@ -93,6 +92,7 @@ impl Host {
                 peer_store.clone(),
                 credential.clone(),
                 bootstrap_urls,
+                default_bootstrap_urls,
             )
             .await
         {

@@ -10,11 +10,14 @@ use saksaha::{
     process::Process,
 };
 
+const DEFAULT_BOOTSTRAP_URLS: &str =
+    include_str!("../../../../config/bootstrap_urls");
+
 struct Args {
     config: Option<String>,
     rpc_port: Option<u16>,
     disc_port: Option<u16>,
-    bootstrap_urls: Option<Vec<String>>,
+    bootstrap_endpoints: Option<Vec<String>>,
 }
 
 fn get_args() -> Result<Args> {
@@ -34,8 +37,8 @@ fn get_args() -> Result<Args> {
                 ),
         )
         .arg(
-            Arg::new("bootstrap_urls")
-                .long("bootstrap-urls")
+            Arg::new("bootstrap_endpoints")
+                .long("bootstrap-endpoints")
                 .value_name("ENDPOINT")
                 .use_delimiter(true)
                 .about("Bootstrap peers to start discovery for"),
@@ -79,7 +82,7 @@ fn get_args() -> Result<Args> {
         None => None,
     };
 
-    let bootstrap_urls = match flags.values_of("bootstrap_urls") {
+    let bootstrap_endpoints = match flags.values_of("bootstrap_endpoints") {
         Some(b) => Some(b.map(str::to_string).collect()),
         None => None,
     };
@@ -88,7 +91,7 @@ fn get_args() -> Result<Args> {
         config,
         rpc_port,
         disc_port,
-        bootstrap_urls,
+        bootstrap_endpoints,
     })
 }
 
@@ -110,8 +113,9 @@ fn main() {
     match client.start(
         args.rpc_port,
         args.disc_port,
-        args.bootstrap_urls,
+        args.bootstrap_endpoints,
         pconf,
+        DEFAULT_BOOTSTRAP_URLS,
     ) {
         Status::Launched => (),
         Status::SetupFailed(err) => {

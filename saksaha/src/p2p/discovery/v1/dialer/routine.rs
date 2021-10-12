@@ -6,10 +6,9 @@ use std::{
 use tokio::sync::{mpsc::Sender, Mutex};
 
 use super::handler::{HandleStatus, Handler};
-use crate::p2p::{
+use crate::{p2p::{
     credential::Credential,
-    peer::peer_store::{Filter, PeerStore},
-};
+}, peer::peer_store::PeerStore};
 
 pub struct Routine {
     peer_store: Arc<PeerStore>,

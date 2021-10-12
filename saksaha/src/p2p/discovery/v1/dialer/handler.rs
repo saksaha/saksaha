@@ -1,8 +1,7 @@
-use crate::{common::{Error, Result}, crypto::Crypto, err, p2p::{credential::Credential, discovery::v1::whoareyou::{self, WhoAreYou, WhoAreYouAck}, peer::{
-            self,
-            peer_store::{Filter, PeerStore},
-            Peer,
-        }}};
+use crate::{common::{Error, Result}, crypto::Crypto, err, p2p::{
+        credential::Credential,
+        discovery::v1::whoareyou::{self, WhoAreYou, WhoAreYouAck},
+    }, peer::{self, Peer, peer_store::{Filter, PeerStore}}};
 use k256::ecdsa::{
     signature::{Signer, Verifier},
     Signature, SigningKey,

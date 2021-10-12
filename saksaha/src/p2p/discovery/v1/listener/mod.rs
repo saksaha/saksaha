@@ -1,10 +1,7 @@
 mod handler;
 mod status;
 
-use crate::{
-    common::{Error, Result},
-    p2p::{credential::Credential, peer::peer_store::PeerStore},
-};
+use crate::{common::{Error, Result}, p2p::{credential::Credential,}, peer::peer_store::PeerStore};
 use handler::Handler;
 use logger::log;
 pub use status::Status;

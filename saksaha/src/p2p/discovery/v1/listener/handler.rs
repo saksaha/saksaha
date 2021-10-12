@@ -1,4 +1,7 @@
-use crate::{common::{Error, Result}, err, p2p::{credential::Credential, discovery::v1::whoareyou::{self, WhoAreYou, WhoAreYouAck}, peer::{peer_store::PeerStore, Peer, Status}}};
+use crate::{common::{Error, Result}, err, p2p::{
+        credential::Credential,
+        discovery::v1::whoareyou::{self, WhoAreYou, WhoAreYouAck},
+    }, peer::{self, Peer, peer_store::PeerStore}};
 use k256::ecdsa::{signature::Signer, Signature, SigningKey};
 use logger::log;
 use std::sync::Arc;
@@ -167,7 +170,7 @@ impl Handler {
         peer.peer_op_port = way.peer_op_port;
         peer.public_key_bytes = way.public_key_bytes;
         peer.fail_count = 0;
-        peer.status = Status::DiscoverySuccess;
+        peer.status = peer::Status::DiscoverySuccess;
 
         log!(
             DEBUG,
