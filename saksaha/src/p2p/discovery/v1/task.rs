@@ -2,6 +2,7 @@ use crate::{
     common::{Error, Result},
     err,
 };
+use futures::future::BoxFuture;
 use logger::log;
 use std::{future::Future, pin::Pin, sync::Arc, time::Duration};
 use tokio::sync::{
@@ -22,28 +23,30 @@ pub enum TaskResult<E> {
 }
 
 pub struct Task {
-    pub make_action: Box<dyn Fn() -> BoxedFuture + Send + Sync>,
+    pub action: Pin<Box<dyn Future<Output = TaskResult<Error>> + Send + Sync>>,
     pub fail_count: usize,
 }
 
 impl Task {
-    pub fn new<F>(make_action: F) -> Task
+    pub fn new<F>(action: F) -> Task
     where
-        F: Fn() -> BoxedFuture + Send + Sync + 'static,
+        F: Future<Output = TaskResult<Error>> + Send + Sync + 'static,
     {
-        let make_action = Box::new(make_action);
+        let action = Box::pin(action);
         Task {
-            make_action,
+            action,
+            // make_action,
             fail_count: 0,
         }
     }
 }
 
 pub struct TaskQueue {
-    tx: Arc<Sender<Task>>,
-    rx: Arc<Mutex<Receiver<Task>>>,
+    tx: Arc<Sender<Box<dyn FnOnce() -> Task + Send + Sync>>>,
+    rx: Arc<Mutex<Receiver<Box<dyn FnOnce() -> Task + Send + Sync>>>>,
     max_retry: usize,
     interval: Duration,
+
 }
 
 impl TaskQueue {
@@ -58,11 +61,21 @@ impl TaskQueue {
         }
     }
 
+    // pub async fn push(&self, task: Task) -> Result<()> {
+    //     return TaskQueue::_push(self.tx.clone(), task).await;
+    // }
+
+
     pub async fn push(&self, task: Task) -> Result<()> {
+        // let make_task = Box::new(|| task);
         return TaskQueue::_push(self.tx.clone(), task).await;
     }
 
-    async fn _push(tx: Arc<Sender<Task>>, task: Task) -> Result<()> {
+    async fn _push(
+        tx: Arc<Sender<Box<dyn FnOnce() -> Task + Send + Sync>>>,
+        task:fe
+        // task: Box<dyn FnOnce() -> Task + Send + Sync>,
+    ) -> Result<()> {
         match tx.send(task).await {
             Ok(_) => Ok(()),
             Err(err) => return err!("Cannot enqueue new task, err: {}", err),
@@ -79,34 +92,39 @@ impl TaskQueue {
             let mut rx = rx.lock().await;
 
             loop {
-                if let Some(t) = rx.recv().await {
-                    match (&t.make_action)().await {
-                        TaskResult::Success => {}
-                        TaskResult::Retriable => {
-                            if t.fail_count < max_retry {
-                                tokio::time::sleep(interval).await;
+                if let Some(make_task) = rx.recv().await {
+                    let t = make_task();
+                    // let t2 = make_task();
+                    // let action = (t.make_action)();
+                    // let new_make_action = Box::new(|| action);
 
-                                let t = Task {
-                                    make_action: t.make_action,
-                                    fail_count: t.fail_count + 1,
-                                };
+                    // match (t.make_action)().await {
+                    //     TaskResult::Success => {}
+                    //     TaskResult::Retriable => {
+                    //         if t.fail_count < max_retry {
+                    //             tokio::time::sleep(interval).await;
 
-                                if let Err(err) =
-                                    TaskQueue::_push(tx.clone(), t).await
-                                {
-                                    log!(DEBUG, "Fatal error, {}\n", err);
-                                }
-                            }
-                        }
-                        TaskResult::Fail(err) => {
-                            log!(
-                                DEBUG,
-                                "Unexpected error while \
-                                executing a task, err: {}",
-                                err
-                            );
-                        }
-                    };
+                    //             let t = Task {
+                    //                 // make_action: new_make_action,
+                    //                 fail_count: t.fail_count + 1,
+                    //             };
+
+                    //             if let Err(err) =
+                    //                 TaskQueue::_push(tx.clone(), t).await
+                    //             {
+                    //                 log!(DEBUG, "Fatal error, {}\n", err);
+                    //             }
+                    //         }
+                    //     }
+                    //     TaskResult::Fail(err) => {
+                    //         log!(
+                    //             DEBUG,
+                    //             "Unexpected error while \
+                    //             executing a task, err: {}",
+                    //             err
+                    //         );
+                    //     }
+                    // };
                 }
             }
         });
@@ -125,7 +143,7 @@ macro_rules! task {
     (async move $d:tt) => {
         {
             let t = $crate::p2p::discovery::task::Task::new(
-                move || Box::pin(async move $d));
+                || Box::pin(async move $d));
             t
         }
     };

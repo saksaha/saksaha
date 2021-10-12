@@ -1,7 +1,12 @@
-use crate::{common::{Error, Result}, err, p2p::{
+use crate::{
+    common::{Error, Result},
+    err,
+    p2p::{
         credential::Credential,
-        discovery::v1::whoareyou::{self, WhoAreYou, WhoAreYouAck},
-    }, peer::{self, Peer, peer_store::PeerStore}};
+        discovery::v1::whoareyou::{self},
+    },
+    peer::{self, peer_store::PeerStore, Peer},
+};
 use k256::ecdsa::{signature::Signer, Signature, SigningKey};
 use logger::log;
 use std::sync::Arc;
@@ -108,8 +113,8 @@ impl Handler {
         HandleStatus::Success
     }
 
-    pub async fn receive_who_are_you(&mut self) -> Result<WhoAreYou> {
-        let way = match WhoAreYou::parse(&mut self.stream).await {
+    pub async fn receive_who_are_you(&mut self) -> Result<WhoAreYouMsg> {
+        let way = match WhoAreYouMsg::parse(&mut self.stream).await {
             Ok(w) => {
                 // log!(DEBUG, "Received WhoAreYou, raw: {:?}\n", w.raw);
 
@@ -159,7 +164,7 @@ impl Handler {
 
     pub async fn handle_succeed_who_are_you(
         &mut self,
-        way: WhoAreYou,
+        way: WhoAreYouMsg,
         mut peer: OwnedMutexGuard<Peer>,
         peer_ip: String,
         peer_port: u16,

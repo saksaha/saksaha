@@ -1,15 +1,20 @@
-pub mod dialer;
-pub mod listener;
+// pub mod dialer;
+// pub mod listener;
 pub mod status;
 pub mod task;
-mod whoareyou;
+pub mod whoareyou;
 
-use self::{listener::Listener, task::TaskQueue};
-use crate::{common::{Error, Result}, p2p::{
+use self::task::TaskQueue;
+use crate::{
+    common::{Error, Result},
+    p2p::{
         credential::Credential,
         discovery::task::{task, Task, TaskResult},
-    }, peer::peer_store::PeerStore};
-use dialer::Dialer;
+    },
+    peer::peer_store::PeerStore,
+};
+use futures::stream::FuturesUnordered;
+// use dialer::Dialer;
 use status::Status;
 use std::sync::Arc;
 use tokio::sync::{
@@ -37,28 +42,28 @@ impl Disc {
         bootstrap_urls: Option<Vec<String>>,
         default_bootstrap_urls: &str,
     ) -> Status<Error> {
-        let listener = Listener::new();
-        let listener_port = match listener
-            .start(
-                port,
-                p2p_listener_port,
-                peer_store.clone(),
-                credential.clone(),
-            )
-            .await
-        {
-            listener::Status::Launched(port) => port,
-            listener::Status::SetupFailed(err) => {
-                return Status::SetupFailed(err)
-            }
-        };
+        // let listener = Listener::new();
+        // let listener_port = match listener
+        //     .start(
+        //         port,
+        //         p2p_listener_port,
+        //         peer_store.clone(),
+        //         credential.clone(),
+        //     )
+        //     .await
+        // {
+        //     listener::Status::Launched(port) => port,
+        //     listener::Status::SetupFailed(err) => {
+        //         return Status::SetupFailed(err)
+        //     }
+        // };
 
-        let t = Task::new(|| {
-            Box::pin(async {
-                println!("task 1");
-                TaskResult::Retriable
-            })
-        });
+        // let t = Task::new(|| {
+        //     Box::pin(async {
+        //         println!("task 1");
+        //         TaskResult::Retriable
+        //     })
+        // });
 
         self.task_queue.run_loop();
 
@@ -87,14 +92,45 @@ impl Disc {
         bootstrap_urls: Option<Vec<String>>,
         default_bootstrap_urls: &str,
     ) {
-        println!("3333");
-        if let Some(urls) = bootstrap_urls {
-            for url in urls {
-                println!("{}", url);
-                // self.task_queue.push(Box::new(|| async {
+        let bootstrap_urls = match bootstrap_urls {
+            Some(u) => u,
+            None => Vec::new(),
+        };
 
-                // }));
-            }
+        let default_bootstrap_urls: Vec<String> = default_bootstrap_urls
+            .lines()
+            .map(|l| l.to_string())
+            .collect();
+
+        let urls = [bootstrap_urls, default_bootstrap_urls].concat();
+
+        for url in urls {
+            // let t = task!(async move {
+            //     match whoareyou::Initiate::run(url.to_owned()) {
+            //         Ok(_) => (),
+            //         Err(err) => return TaskResult::Retriable
+            //     };
+
+            //     TaskResult::Success
+            // });
+
+            let a = 3;
+            let r = url.to_owned();
+            // let t = Task::new(Box::pin(async move {
+            //     // url.to_owned();
+            //     // // a.to_owned();
+            //     // // r.to_string();
+            //     // // url.to_owned();
+            //     TaskResult::Success
+            // }));
+
+            tokio::spawn(async move {
+                println!("11 {}", url);
+            });
+
+            let t = Task::new(async move { TaskResult::Success });
+
+            self.task_queue.push(t).await;
         }
     }
 }
