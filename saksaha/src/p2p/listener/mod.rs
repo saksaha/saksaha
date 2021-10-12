@@ -1,14 +1,9 @@
 mod status;
 
 pub use status::Status;
-use crate::{
-    common::{Error, Result},
-    err,
-    p2p::{
+use crate::{common::{Error, Result}, err, p2p::{
         credential::Credential,
-        peer::peer_store::PeerStore,
-    },
-};
+    }, peer::peer_store::PeerStore};
 use logger::log;
 use std::sync::Arc;
 use tokio::{

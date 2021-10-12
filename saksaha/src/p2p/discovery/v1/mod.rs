@@ -5,14 +5,10 @@ pub mod task;
 mod whoareyou;
 
 use self::{listener::Listener, task::TaskQueue};
-use crate::{
-    common::{Error, Result},
-    p2p::{
+use crate::{common::{Error, Result}, p2p::{
         credential::Credential,
         discovery::task::{task, Task, TaskResult},
-        peer::peer_store::PeerStore,
-    },
-};
+    }, peer::peer_store::PeerStore};
 use dialer::Dialer;
 use status::Status;
 use std::sync::Arc;
@@ -39,6 +35,7 @@ impl Disc {
         peer_store: Arc<PeerStore>,
         credential: Arc<Credential>,
         bootstrap_urls: Option<Vec<String>>,
+        default_bootstrap_urls: &str,
     ) -> Status<Error> {
         let listener = Listener::new();
         let listener_port = match listener
@@ -63,19 +60,10 @@ impl Disc {
             })
         });
 
-
-        let a = 3;
-        let t2 = task!(async move {
-            println!("task 23, {}", a);
-            TaskResult::Retriable
-        });
-
         self.task_queue.run_loop();
 
-        self.task_queue.push(t).await;
-        self.task_queue.push(t2).await;
-
-        // self.enqueue_initial_tasks(bootstrap_urls);
+        self.enqueue_initial_tasks(bootstrap_urls, default_bootstrap_urls)
+            .await;
 
         // let dialer = Dialer::new();
         // match dialer
@@ -97,9 +85,12 @@ impl Disc {
     pub async fn enqueue_initial_tasks(
         &self,
         bootstrap_urls: Option<Vec<String>>,
+        default_bootstrap_urls: &str,
     ) {
+        println!("3333");
         if let Some(urls) = bootstrap_urls {
             for url in urls {
+                println!("{}", url);
                 // self.task_queue.push(Box::new(|| async {
 
                 // }));

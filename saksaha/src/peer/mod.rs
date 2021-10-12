@@ -1,4 +1,3 @@
-mod bootstrap;
 pub mod peer_store;
 
 use crate::{

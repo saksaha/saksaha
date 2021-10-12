@@ -1,9 +1,9 @@
 pub mod status;
 
 use crate::{
+    client::status::Status,
     common::{Error, Result},
     err,
-    client::{status::Status},
     p2p::host::{self, Host, HostStatus},
     pconfig::PConfig,
     process::Process,
@@ -24,8 +24,9 @@ impl Client {
         &self,
         rpc_port: Option<u16>,
         disc_port: Option<u16>,
-        bootstrap_urls: Option<Vec<String>>,
+        bootstrap_endpoints: Option<Vec<String>>,
         pconfig: PConfig,
+        default_bootstrap_urls: &str,
     ) -> Result<()> {
         let rpc = RPC::new(rpc_port);
 
@@ -53,7 +54,8 @@ impl Client {
             p2p_config,
             rpc_port,
             disc_port,
-            bootstrap_urls.to_owned(),
+            bootstrap_endpoints,
+            default_bootstrap_urls,
         );
 
         match host_started.await {
@@ -68,8 +70,9 @@ impl Client {
         self: Arc<Self>,
         rpc_port: Option<u16>,
         disc_port: Option<u16>,
-        bootstrap_urls: Option<Vec<String>>,
+        bootstrap_endpoints: Option<Vec<String>>,
         pconfig: PConfig,
+        default_bootstrap_urls: &str,
     ) -> Status<Error> {
         log!(DEBUG, "Start node...\n");
 
@@ -82,8 +85,9 @@ impl Client {
                 let started = self.start_components(
                     rpc_port,
                     disc_port,
-                    bootstrap_urls,
+                    bootstrap_endpoints,
                     pconfig,
+                    default_bootstrap_urls,
                 );
 
                 match started.await {

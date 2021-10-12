@@ -1,10 +1,7 @@
 mod handler;
 mod routine;
 
-use crate::{
-    common::Result,
-    p2p::{credential::Credential, peer::peer_store::PeerStore},
-};
+use crate::{common::Result, p2p::{credential::Credential}, peer::peer_store::PeerStore};
 use handler::Handler;
 use logger::log;
 use routine::Routine;
