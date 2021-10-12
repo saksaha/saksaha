@@ -3,7 +3,7 @@ pub mod status;
 use crate::{
     common::{Error, Result},
     err,
-    node::{status::Status},
+    client::{status::Status},
     p2p::host::{self, Host, HostStatus},
     pconfig::PConfig,
     process::Process,
@@ -13,11 +13,11 @@ use logger::log;
 use std::sync::Arc;
 use tokio::{self, signal};
 
-pub struct Node {}
+pub struct Client {}
 
-impl Node {
-    pub fn new() -> Node {
-        Node {}
+impl Client {
+    pub fn new() -> Client {
+        Client {}
     }
 
     async fn start_components(
@@ -93,20 +93,13 @@ impl Node {
                     }
                 };
 
-                // let task_mng = self.task_mng.clone();
-
                 tokio::select!(
-                    // msg_kind = task_mng.clone().start_receiving() => {
-                    //     if let Kind::SetupFailure = msg_kind {
-                    //         task_mng.shutdown_program();
-                    //     }
-                    // },
                     c = signal::ctrl_c() => {
                         match c {
                             Ok(_) => {
                                 log!(DEBUG, "ctrl+k is pressed.\n");
 
-                                // task_mng.shutdown_program();
+                                Process::shutdown();
                             },
                             Err(err) => {
                                 log!(
@@ -116,7 +109,7 @@ impl Node {
                                     err
                                 );
 
-                                // task_mng.shutdown_program();
+                                Process::shutdown();
                             }
                         }
                     },

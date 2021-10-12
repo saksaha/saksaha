@@ -4,7 +4,7 @@ pub mod common;
 
 pub mod crypto;
 
-pub mod node;
+pub mod client;
 
 pub mod p2p;
 

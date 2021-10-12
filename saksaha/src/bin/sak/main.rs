@@ -2,7 +2,13 @@ use std::sync::Arc;
 
 use clap::{App, Arg};
 use logger::log;
-use saksaha::{common::Result, err, node::{status::Status, Node}, pconfig::PConfig, process::Process};
+use saksaha::{
+    client::{status::Status, Client},
+    common::Result,
+    err,
+    pconfig::PConfig,
+    process::Process,
+};
 
 struct Args {
     config: Option<String>,
@@ -97,11 +103,11 @@ fn main() {
     };
 
     let pconf = make_pconfig(args.config);
-    let node = Arc::new(Node::new());
+    let client = Arc::new(Client::new());
 
-    Process::init(node.clone());
+    Process::init(client.clone());
 
-    match node.start(
+    match client.start(
         args.rpc_port,
         args.disc_port,
         args.bootstrap_urls,
