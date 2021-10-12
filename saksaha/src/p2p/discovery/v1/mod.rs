@@ -4,7 +4,6 @@ pub mod status;
 pub mod task;
 pub mod whoareyou;
 
-use self::task::TaskQueue;
 use crate::{
     common::{Error, Result},
     p2p::{
@@ -21,6 +20,8 @@ use tokio::sync::{
     mpsc::{self, Receiver, Sender},
     Mutex,
 };
+
+use self::task::queue::TaskQueue;
 
 pub struct Disc {
     pub task_queue: Arc<TaskQueue>,
@@ -42,6 +43,7 @@ impl Disc {
         bootstrap_urls: Option<Vec<String>>,
         default_bootstrap_urls: &str,
     ) -> Status<Error> {
+        zkp::test();
         // let listener = Listener::new();
         // let listener_port = match listener
         //     .start(
@@ -124,11 +126,11 @@ impl Disc {
             //     TaskResult::Success
             // }));
 
-            tokio::spawn(async move {
-                println!("11 {}", url);
+            let t = Task::new(async move {
+                url;
+                // a;
+                TaskResult::Success
             });
-
-            let t = Task::new(async move { TaskResult::Success });
 
             self.task_queue.push(t).await;
         }
