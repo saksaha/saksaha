@@ -1,16 +1,8 @@
-use crate::{
-    common::{Error, Result},
-    crypto::Crypto,
-    err,
-    p2p::{
-        credential::Credential,
-    },
-    peer::{
+use crate::{common::{Error, Result}, crypto::Crypto, err, p2p::{credential::Credential, discovery::v1::whoareyou::{self, codec::{WhoAreYouAck, WhoAreYouMsg}}}, peer::{
         self,
         peer_store::{Filter, PeerStore},
         Peer,
-    },
-};
+    }};
 use k256::ecdsa::{
     signature::{Signer, Verifier},
     Signature, SigningKey,
@@ -168,10 +160,10 @@ impl Handler {
     ) -> Result<()> {
         let secret_key = &self.credential.secret_key;
         let signing_key = SigningKey::from(secret_key);
-        let sig: Signature = signing_key.sign(whoareyou::MESSAGE);
+        let sig: Signature = signing_key.sign(whoareyou::codec::MESSAGE);
 
         let way = WhoAreYouMsg::new(
-            whoareyou::Kind::Syn,
+            whoareyou::codec::Kind::Syn,
             sig,
             self.peer_op_port,
             self.credential.public_key_bytes,
@@ -217,7 +209,7 @@ impl Handler {
         };
         let sig = way_ack.way.sig;
 
-        match verifying_key.verify(whoareyou::MESSAGE, &sig) {
+        match verifying_key.verify(whoareyou::codec::MESSAGE, &sig) {
             Ok(_) => (),
             Err(err) => {
                 return err!(

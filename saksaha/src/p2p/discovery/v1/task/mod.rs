@@ -25,23 +25,27 @@ pub enum TaskResult<E> {
 
 type Action = Pin<Box<dyn Future<Output = TaskResult<Error>> + Send + Sync>>;
 
-pub struct Task {
-    // action: Box<dyn Fn() -> Action + Send>,
-    // pub kind:
-    pub fail_count: usize,
+struct Task {
+    kind: TaskKind,
+    fail_count: usize,
 }
 
-impl Task {
-    pub fn new<F>(action: F) -> Task
-    where
-        F: Future<Output = TaskResult<Error>> + 'static + Send + Sync,
-    {
-        Task {
-            // action,
-            fail_count: 0,
-        }
-    }
+pub enum TaskKind {
+    InitiateWhoAreYou(),
+    // pub action: Box<dyn Fn()>,
+    // // action: Box<dyn Fn() -> Action + Send>,
+    // // pub kind:
+    // pub fail_count: usize,
 }
+
+// impl Task {
+//     pub fn new(action: Box<dyn Fn()>) -> Task {
+//         Task {
+//             action,
+//             fail_count: 0,
+//         }
+//     }
+// }
 
 macro_rules! task {
     (async $d:tt) => {

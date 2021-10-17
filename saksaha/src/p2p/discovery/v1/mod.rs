@@ -1,27 +1,31 @@
-// pub mod dialer;
+pub mod address;
+pub mod dial;
 // pub mod listener;
-pub mod status;
 pub mod task;
 pub mod whoareyou;
 
+use self::{address::Address, task::{queue::TaskQueue, TaskKind}};
 use crate::{
     common::{Error, Result},
     p2p::{
         credential::Credential,
-        discovery::task::{task, Task, TaskResult},
+        discovery::task::{task, TaskResult},
     },
     peer::peer_store::PeerStore,
 };
 use futures::stream::FuturesUnordered;
-// use dialer::Dialer;
-use status::Status;
+use logger::log;
 use std::sync::Arc;
 use tokio::sync::{
     mpsc::{self, Receiver, Sender},
     Mutex,
 };
 
-use self::task::queue::TaskQueue;
+pub enum Status<E> {
+    Launched,
+
+    SetupFailed(E),
+}
 
 pub struct Disc {
     pub task_queue: Arc<TaskQueue>,
@@ -43,7 +47,6 @@ impl Disc {
         bootstrap_urls: Option<Vec<String>>,
         default_bootstrap_urls: &str,
     ) -> Status<Error> {
-        zkp::test();
         // let listener = Listener::new();
         // let listener_port = match listener
         //     .start(
@@ -67,7 +70,9 @@ impl Disc {
         //     })
         // });
 
-        self.task_queue.run_loop();
+        println!("11");
+
+        self.task_queue.run_listen_loop();
 
         self.enqueue_initial_tasks(bootstrap_urls, default_bootstrap_urls)
             .await;
@@ -107,6 +112,20 @@ impl Disc {
         let urls = [bootstrap_urls, default_bootstrap_urls].concat();
 
         for url in urls {
+            let addr = Address::parse(url);
+
+            println!("11, {:?}", addr);
+
+            match self.task_queue.push(TaskKind::InitiateWhoAreYou()).await {
+                Ok(_) => (),
+                Err(err) => {
+                    log!(
+                        DEBUG,
+                        "Failed to enqueue an initial task, err: {}",
+                        err
+                    );
+                }
+            };
             // let t = task!(async move {
             //     match whoareyou::Initiate::run(url.to_owned()) {
             //         Ok(_) => (),
@@ -116,8 +135,8 @@ impl Disc {
             //     TaskResult::Success
             // });
 
-            let a = 3;
-            let r = url.to_owned();
+            // let a = 3;
+            // let r = url.to_owned();
             // let t = Task::new(Box::pin(async move {
             //     // url.to_owned();
             //     // // a.to_owned();
@@ -126,13 +145,13 @@ impl Disc {
             //     TaskResult::Success
             // }));
 
-            let t = Task::new(async move {
-                url;
-                // a;
-                TaskResult::Success
-            });
+            // let t = Task::new(async move {
+            //     url;
+            //     // a;
+            //     TaskResult::Success
+            // });
 
-            self.task_queue.push(t).await;
+            // self.task_queue.push(t).await;
         }
     }
 }
