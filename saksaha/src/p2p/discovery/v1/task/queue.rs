@@ -2,7 +2,7 @@ use std::{sync::Arc, time::Duration};
 
 use tokio::sync::{Mutex, mpsc::{self, Receiver, Sender}};
 
-use crate::{common::Result, err};
+use crate::{common::Result, err, p2p::discovery::task::TaskKind};
 
 use super::Task;
 
@@ -25,22 +25,19 @@ impl TaskQueue {
         }
     }
 
-    // pub async fn push(&self, task: Task) -> Result<()> {
-    //     return TaskQueue::_push(self.tx.clone(), task).await;
-    // }
+    pub async fn push(&self, task_kind: TaskKind) -> Result<()> {
+        let t  = Task {
+            kind: task_kind,
+            fail_count: 0,
+        };
 
-    pub async fn push(&self, task: Task) -> Result<()> {
-        return TaskQueue::_push(self.tx.clone(), task).await;
-    }
-
-    async fn _push(tx: Arc<Sender<Task>>, task: Task) -> Result<()> {
-        match tx.send(task).await {
+        match self.tx.send(t).await {
             Ok(_) => Ok(()),
             Err(err) => return err!("Cannot enqueue new task, err: {}", err),
         }
     }
 
-    pub fn run_loop(&self) {
+    pub fn run_listen_loop(&self) {
         let rx = self.rx.clone();
         let tx = self.tx.clone();
         let max_retry = self.max_retry;
@@ -50,7 +47,6 @@ impl TaskQueue {
             let mut rx = rx.lock().await;
 
             loop {
-                println!("33");
                 let t = rx.recv();
 
                 match t.await {
