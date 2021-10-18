@@ -31,7 +31,7 @@ struct Task {
 }
 
 pub enum TaskKind {
-    InitiateWhoAreYou(),
+    InitiateWhoAreYou(Address),
     // pub action: Box<dyn Fn()>,
     // // action: Box<dyn Fn() -> Action + Send>,
     // // pub kind:
@@ -66,3 +66,5 @@ macro_rules! task {
 }
 
 pub(crate) use task;
+
+use super::address::Address;

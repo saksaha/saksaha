@@ -4,7 +4,10 @@ pub mod dial;
 pub mod task;
 pub mod whoareyou;
 
-use self::{address::Address, task::{queue::TaskQueue, TaskKind}};
+use self::{
+    address::Address,
+    task::{queue::TaskQueue, TaskKind},
+};
 use crate::{
     common::{Error, Result},
     p2p::{
@@ -112,11 +115,23 @@ impl Disc {
         let urls = [bootstrap_urls, default_bootstrap_urls].concat();
 
         for url in urls {
-            let addr = Address::parse(url);
+            let addr = match Address::parse(url.clone()) {
+                Ok(a) => a,
+                Err(err) => {
+                    log!(
+                        DEBUG,
+                        "Discarding url failed to parse, url: {}, err: {}\n",
+                        url.clone(),
+                        err
+                    );
+
+                    continue;
+                }
+            };
 
             println!("11, {:?}", addr);
 
-            match self.task_queue.push(TaskKind::InitiateWhoAreYou()).await {
+            match self.task_queue.push(TaskKind::InitiateWhoAreYou(addr)).await {
                 Ok(_) => (),
                 Err(err) => {
                     log!(
@@ -126,6 +141,7 @@ impl Disc {
                     );
                 }
             };
+
             // let t = task!(async move {
             //     match whoareyou::Initiate::run(url.to_owned()) {
             //         Ok(_) => (),
