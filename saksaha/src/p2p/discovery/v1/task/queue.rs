@@ -1,9 +1,10 @@
 use std::{sync::Arc, time::Duration};
-
-use tokio::sync::{Mutex, mpsc::{self, Receiver, Sender}};
-
+use tokio::sync::{
+    mpsc::{self, Receiver, Sender},
+    Mutex,
+};
+use logger::log;
 use crate::{common::Result, err, p2p::discovery::task::TaskKind};
-
 use super::Task;
 
 pub struct TaskQueue {
@@ -26,7 +27,7 @@ impl TaskQueue {
     }
 
     pub async fn push(&self, task_kind: TaskKind) -> Result<()> {
-        let t  = Task {
+        let t = Task {
             kind: task_kind,
             fail_count: 0,
         };
@@ -34,6 +35,14 @@ impl TaskQueue {
         match self.tx.send(t).await {
             Ok(_) => Ok(()),
             Err(err) => return err!("Cannot enqueue new task, err: {}", err),
+        }
+    }
+
+    fn execute_task(t: Task) {
+        match t.kind {
+            TaskKind::InitiateWhoAreYou(addr) => {
+
+            }
         }
     }
 
@@ -47,47 +56,17 @@ impl TaskQueue {
             let mut rx = rx.lock().await;
 
             loop {
-                let t = rx.recv();
-
-                match t.await {
-                    Some(t) => {
-                        // let t = make_task();
-                        // let t2 = make_task();
-                        // let action = (t.make_action)();
-                        // let new_make_action = Box::new(|| action);
-
-                        // match (t.make_action)().await {
-                        //     TaskResult::Success => {}
-                        //     TaskResult::Retriable => {
-                        //         if t.fail_count < max_retry {
-                        //             tokio::time::sleep(interval).await;
-
-                        //             let t = Task {
-                        //                 // make_action: new_make_action,
-                        //                 fail_count: t.fail_count + 1,
-                        //             };
-
-                        //             if let Err(err) =
-                        //                 TaskQueue::_push(tx.clone(), t).await
-                        //             {
-                        //                 log!(DEBUG, "Fatal error, {}\n", err);
-                        //             }
-                        //         }
-                        //     }
-                        //     TaskResult::Fail(err) => {
-                        //         log!(
-                        //             DEBUG,
-                        //             "Unexpected error while \
-                        //             executing a task, err: {}",
-                        //             err
-                        //         );
-                        //     }
-                        // };
-                    }
+                let task = match rx.recv().await {
+                    Some(t) => t,
                     None => {
+                        log!(DEBUG, "Cannot receive task any more\n");
                         break;
                     }
-                }
+                };
+
+                TaskQueue::execute_task(task);
+
+
             }
         });
     }
