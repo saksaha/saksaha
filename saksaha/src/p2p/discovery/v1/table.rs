@@ -1,6 +1,6 @@
 use logger::log;
 use tokio::sync::{Mutex, mpsc};
-use crate::common::Result;
+use crate::{common::Result, p2p::dialer::AddressIterator};
 use super::address::Address;
 
 pub struct Table {
@@ -66,8 +66,10 @@ impl Table {
         Ok(table)
     }
 
-    pub async fn next() {
+}
+
+impl AddressIterator for Table {
+    fn next(&self) {
 
     }
-
 }

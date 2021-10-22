@@ -1,8 +1,4 @@
-use super::{
-    credential::Credential,
-    discovery::Disc,
-    listener::{self, Listener},
-};
+use super::{credential::Credential, dialer::Dialer, discovery::Disc, listener::{self, Listener}};
 use crate::{
     common::{Error, Result},
     err,
@@ -100,6 +96,9 @@ impl Host {
                 return HostStatus::SetupFailed(err);
             }
         };
+
+        let dialer = Dialer::new(table);
+        dialer.schedule();
 
 
         // let credential_clone = credential.clone();
