@@ -1,20 +1,18 @@
-pub mod address;
+mod connection_pool;
 pub mod dial;
 pub mod listener;
 pub mod msg;
 pub mod task;
 mod ops;
-mod connection_pool;
+mod table;
+mod address;
 
-use self::{address::Address, connection_pool::ConnectionPool, task::{queue::TaskQueue, TaskKind}};
+use self::{connection_pool::ConnectionPool, table::Table, task::{queue::TaskQueue, TaskKind}};
 use crate::{
     common::{Error, Result},
     p2p::{
         credential::Credential,
-        discovery::{
-            task::{TaskResult},
-            v1::listener::Listener,
-        },
+        discovery::{task::TaskResult, v1::listener::Listener},
     },
     peer::peer_store::PeerStore,
 };
@@ -25,8 +23,8 @@ use tokio::sync::{
     Mutex,
 };
 
-pub enum Status<E> {
-    Launched,
+pub enum Status<T, E> {
+    Launched(T),
 
     SetupFailed(E),
 }
@@ -41,7 +39,10 @@ impl Disc {
         let task_queue = Arc::new(TaskQueue::new());
         let connection_pool = Arc::new(ConnectionPool::new());
 
-        Disc { task_queue, connection_pool }
+        Disc {
+            task_queue,
+            connection_pool,
+        }
     }
 
     pub async fn start(
@@ -52,7 +53,12 @@ impl Disc {
         credential: Arc<Credential>,
         bootstrap_urls: Option<Vec<String>>,
         default_bootstrap_urls: &str,
-    ) -> Status<Error> {
+    ) -> Status<Table, Error> {
+        let table = match Table::new(bootstrap_urls, default_bootstrap_urls) {
+            Ok(t) => t,
+            Err(err) => return Status::SetupFailed(err),
+        };
+
         let listener = Listener::new();
         let listener_port = match listener
             .start(
@@ -73,8 +79,8 @@ impl Disc {
 
         self.task_queue.run_loop();
 
-        self.enqueue_initial_tasks(bootstrap_urls, default_bootstrap_urls)
-            .await;
+        // self.enqueue_initial_tasks(bootstrap_urls, default_bootstrap_urls)
+        //     .await;
 
         // let dialer = Dialer::new();
         // match dialer
@@ -90,66 +96,66 @@ impl Disc {
         //     Err(err) => return Status::SetupFailed(err),
         // };
 
-        Status::Launched
+        Status::Launched(table)
     }
 
-    pub async fn enqueue_initial_tasks(
-        &self,
-        bootstrap_urls: Option<Vec<String>>,
-        default_bootstrap_urls: &str,
-    ) {
-        let bootstrap_urls = match bootstrap_urls {
-            Some(u) => u,
-            None => Vec::new(),
-        };
+    // pub async fn enqueue_initial_tasks(
+    //     &self,
+    //     bootstrap_urls: Option<Vec<String>>,
+    //     default_bootstrap_urls: &str,
+    // ) {
+    //     let bootstrap_urls = match bootstrap_urls {
+    //         Some(u) => u,
+    //         None => Vec::new(),
+    //     };
 
-        let default_bootstrap_urls: Vec<String> = default_bootstrap_urls
-            .lines()
-            .map(|l| l.to_string())
-            .collect();
+    //     let default_bootstrap_urls: Vec<String> = default_bootstrap_urls
+    //         .lines()
+    //         .map(|l| l.to_string())
+    //         .collect();
 
-        let urls = [bootstrap_urls, default_bootstrap_urls].concat();
-        let url_count = urls.len();
+    //     let urls = [bootstrap_urls, default_bootstrap_urls].concat();
+    //     let url_count = urls.len();
 
-        if url_count > 0 {
-            log!(
-                DEBUG,
-                "Initializing discovery bootstrap urls, candidates: {}\n",
-                url_count
-            );
-        }
+    //     if url_count > 0 {
+    //         log!(
+    //             DEBUG,
+    //             "Initializing discovery bootstrap urls, candidates: {}\n",
+    //             url_count
+    //         );
+    //     }
 
-        for (idx, url) in urls.iter().enumerate() {
-            let addr = match Address::parse(url.clone()) {
-                Ok(a) => a,
-                Err(err) => {
-                    log!(
-                        DEBUG,
-                        "Discarding url failed to parse, url: {}, err: {}\n",
-                        url.clone(),
-                        err
-                    );
+    //     for (idx, url) in urls.iter().enumerate() {
+    //         let addr = match Address::parse(url.clone()) {
+    //             Ok(a) => a,
+    //             Err(err) => {
+    //                 log!(
+    //                     DEBUG,
+    //                     "Discarding url failed to parse, url: {}, err: {}\n",
+    //                     url.clone(),
+    //                     err
+    //                 );
 
-                    continue;
-                }
-            };
+    //                 continue;
+    //             }
+    //         };
 
-            log!(DEBUG, "Discovery address [{}], {:?}\n", idx, addr);
+    //         log!(DEBUG, "Discovery address [{}], {:?}\n", idx, addr);
 
-            match self
-                .task_queue
-                .push(TaskKind::Ping(addr))
-                .await
-            {
-                Ok(_) => (),
-                Err(err) => {
-                    log!(
-                        DEBUG,
-                        "Failed to enqueue an initial task, err: {}",
-                        err
-                    );
-                }
-            };
-        }
-    }
+    //         // match self
+    //         //     .task_queue
+    //         //     .push(TaskKind::Ping(addr))
+    //         //     .await
+    //         // {
+    //         //     Ok(_) => (),
+    //         //     Err(err) => {
+    //         //         log!(
+    //         //             DEBUG,
+    //         //             "Failed to enqueue an initial task, err: {}",
+    //         //             err
+    //         //         );
+    //         //     }
+    //         // };
+    //     }
+    // }
 }

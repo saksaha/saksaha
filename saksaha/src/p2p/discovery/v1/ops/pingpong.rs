@@ -1,6 +1,6 @@
-use tokio::net::TcpStream;
-use logger::log;
 use crate::{common::{Error, Result}, p2p::discovery::{task::TaskResult, v1::address::Address}};
+use logger::log;
+use tokio::net::TcpStream;
 
 pub struct PingPong;
 

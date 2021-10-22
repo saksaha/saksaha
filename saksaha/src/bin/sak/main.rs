@@ -3,9 +3,9 @@ use std::sync::Arc;
 use clap::{App, Arg};
 use logger::log;
 use saksaha::{
-    client::{status::Status, Client},
     common::Result,
     err,
+    node::{status::Status, Node},
     pconfig::PConfig,
     process::Process,
 };
@@ -106,11 +106,11 @@ fn main() {
     };
 
     let pconf = make_pconfig(args.config);
-    let client = Arc::new(Client::new());
+    let node = Arc::new(Node::new());
 
-    Process::init(client.clone());
+    Process::init(node.clone());
 
-    match client.start(
+    match node.start(
         args.rpc_port,
         args.disc_port,
         args.bootstrap_endpoints,

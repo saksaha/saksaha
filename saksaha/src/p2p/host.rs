@@ -43,8 +43,7 @@ impl Host {
         Ok(credential)
     }
 
-    fn make_peer_store(// bootstrap_urls: Option<Vec<String>>,
-    ) -> Result<PeerStore> {
+    fn make_peer_store() -> Result<PeerStore> {
         let peer_store = match PeerStore::new(10) {
             Ok(p) => p,
             Err(err) => return Err(err),
@@ -85,7 +84,7 @@ impl Host {
         };
 
         let disc = Disc::new();
-        match disc
+        let table = match disc
             .start(
                 disc_port,
                 p2p_listener_port,
@@ -96,11 +95,12 @@ impl Host {
             )
             .await
         {
-            discovery::Status::Launched => (),
+            discovery::Status::Launched(table) => (table),
             discovery::Status::SetupFailed(err) => {
                 return HostStatus::SetupFailed(err);
             }
         };
+
 
         // let credential_clone = credential.clone();
 

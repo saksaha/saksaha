@@ -1,7 +1,7 @@
 pub mod status;
 
 use crate::{
-    client::status::Status,
+    node::status::Status,
     common::{Error, Result},
     err,
     p2p::host::{self, Host, HostStatus},
@@ -13,11 +13,11 @@ use logger::log;
 use std::sync::Arc;
 use tokio::{self, signal};
 
-pub struct Client {}
+pub struct Node {}
 
-impl Client {
-    pub fn new() -> Client {
-        Client {}
+impl Node {
+    pub fn new() -> Node {
+        Node {}
     }
 
     async fn start_components(
