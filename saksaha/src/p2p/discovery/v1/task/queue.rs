@@ -46,7 +46,7 @@ impl TaskQueue {
         }
     }
 
-    pub fn run_listen_loop(&self) {
+    pub fn run_loop(&self) {
         let rx = self.rx.clone();
         let tx = self.tx.clone();
         let max_retry = self.max_retry;

@@ -1,12 +1,4 @@
-use crate::{
-    common::{Error, Result},
-    err,
-    p2p::{
-        credential::Credential,
-        discovery::v1::whoareyou::{self},
-    },
-    peer::{self, peer_store::PeerStore, Peer},
-};
+use crate::{common::{Error, Result}, err, p2p::{credential::Credential, discovery::v1::msg::{self, codec::{WhoAreYouAck, WhoAreYouMsg}}}, peer::{self, peer_store::PeerStore, Peer}};
 use k256::ecdsa::{signature::Signer, Signature, SigningKey};
 use logger::log;
 use std::sync::Arc;
@@ -131,7 +123,7 @@ impl Handler {
     pub async fn initate_who_are_you_ack(&mut self) -> Result<()> {
         let secret_key = &self.credential.secret_key;
         let signing_key = SigningKey::from(secret_key);
-        let sig: Signature = signing_key.sign(whoareyou::MESSAGE);
+        let sig: Signature = signing_key.sign(msg::codec::MESSAGE);
 
         let way_ack = WhoAreYouAck::new(
             sig,
