@@ -1,8 +1,8 @@
 pub mod address;
 pub mod dial;
-// pub mod listener;
+pub mod listener;
+pub mod msg;
 pub mod task;
-pub mod whoareyou;
 
 use self::{
     address::Address,
@@ -12,11 +12,13 @@ use crate::{
     common::{Error, Result},
     p2p::{
         credential::Credential,
-        discovery::task::{task, TaskResult},
+        discovery::{
+            task::{task, TaskResult},
+            v1::listener::Listener,
+        },
     },
     peer::peer_store::PeerStore,
 };
-use futures::stream::FuturesUnordered;
 use logger::log;
 use std::sync::Arc;
 use tokio::sync::{
@@ -50,32 +52,24 @@ impl Disc {
         bootstrap_urls: Option<Vec<String>>,
         default_bootstrap_urls: &str,
     ) -> Status<Error> {
-        // let listener = Listener::new();
-        // let listener_port = match listener
-        //     .start(
-        //         port,
-        //         p2p_listener_port,
-        //         peer_store.clone(),
-        //         credential.clone(),
-        //     )
-        //     .await
-        // {
-        //     listener::Status::Launched(port) => port,
-        //     listener::Status::SetupFailed(err) => {
-        //         return Status::SetupFailed(err)
-        //     }
-        // };
+        let listener = Listener::new();
+        let listener_port = match listener
+            .start(
+                port,
+                p2p_listener_port,
+                peer_store.clone(),
+                credential.clone(),
+                self.task_queue.clone(),
+            )
+            .await
+        {
+            listener::Status::Launched(port) => port,
+            listener::Status::SetupFailed(err) => {
+                return Status::SetupFailed(err)
+            }
+        };
 
-        // let t = Task::new(|| {
-        //     Box::pin(async {
-        //         println!("task 1");
-        //         TaskResult::Retriable
-        //     })
-        // });
-
-        println!("11");
-
-        self.task_queue.run_listen_loop();
+        self.task_queue.run_loop();
 
         self.enqueue_initial_tasks(bootstrap_urls, default_bootstrap_urls)
             .await;
@@ -113,8 +107,17 @@ impl Disc {
             .collect();
 
         let urls = [bootstrap_urls, default_bootstrap_urls].concat();
+        let url_count = urls.len();
 
-        for url in urls {
+        if url_count > 0 {
+            log!(
+                DEBUG,
+                "Initializing discovery bootstrap urls, candidates: {}\n",
+                url_count
+            );
+        }
+
+        for (idx, url) in urls.iter().enumerate() {
             let addr = match Address::parse(url.clone()) {
                 Ok(a) => a,
                 Err(err) => {
@@ -129,9 +132,13 @@ impl Disc {
                 }
             };
 
-            println!("11, {:?}", addr);
+            log!(DEBUG, "Discovery address [{}], {:?}\n", idx, addr);
 
-            match self.task_queue.push(TaskKind::InitiateWhoAreYou(addr)).await {
+            match self
+                .task_queue
+                .push(TaskKind::InitiateWhoAreYou(addr))
+                .await
+            {
                 Ok(_) => (),
                 Err(err) => {
                     log!(
@@ -141,33 +148,6 @@ impl Disc {
                     );
                 }
             };
-
-            // let t = task!(async move {
-            //     match whoareyou::Initiate::run(url.to_owned()) {
-            //         Ok(_) => (),
-            //         Err(err) => return TaskResult::Retriable
-            //     };
-
-            //     TaskResult::Success
-            // });
-
-            // let a = 3;
-            // let r = url.to_owned();
-            // let t = Task::new(Box::pin(async move {
-            //     // url.to_owned();
-            //     // // a.to_owned();
-            //     // // r.to_string();
-            //     // // url.to_owned();
-            //     TaskResult::Success
-            // }));
-
-            // let t = Task::new(async move {
-            //     url;
-            //     // a;
-            //     TaskResult::Success
-            // });
-
-            // self.task_queue.push(t).await;
         }
     }
 }

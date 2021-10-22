@@ -1,7 +1,11 @@
 mod handler;
 mod status;
 
-use crate::{common::{Error, Result}, p2p::{credential::Credential,}, peer::peer_store::PeerStore};
+use crate::{
+    common::{Error, Result},
+    p2p::{credential::Credential, discovery::task::queue::TaskQueue},
+    peer::peer_store::PeerStore,
+};
 use handler::Handler;
 use logger::log;
 pub use status::Status;
@@ -23,6 +27,7 @@ impl Listener {
         p2p_listener_port: u16,
         peer_store: Arc<PeerStore>,
         credential: Arc<Credential>,
+        task_queue: Arc<TaskQueue>,
     ) -> Status<u16, Error> {
         let port = match port {
             Some(p) => p,
@@ -35,7 +40,11 @@ impl Listener {
             match TcpListener::bind(local_addr).await {
                 Ok(listener) => match listener.local_addr() {
                     Ok(local_addr) => {
-                        // log!(DEBUG, "Listener created, addr: {}\n", local_addr);
+                        log!(
+                            DEBUG,
+                            "Discovery listener bound, addr: {}\n",
+                            local_addr
+                        );
 
                         (listener, local_addr)
                     }
@@ -47,7 +56,13 @@ impl Listener {
         log!(DEBUG, "Started - Disc listener, addr: {}\n", local_addr);
 
         let routine = Routine::new();
-        routine.run(tcp_listener, p2p_listener_port, peer_store, credential);
+        routine.run(
+            tcp_listener,
+            p2p_listener_port,
+            peer_store,
+            credential,
+            task_queue,
+        );
 
         Status::Launched(local_addr.port())
     }
@@ -66,9 +81,12 @@ impl Routine {
         peer_op_port: u16,
         peer_store: Arc<PeerStore>,
         credential: Arc<Credential>,
+        task_queue: Arc<TaskQueue>,
     ) {
         let credential = credential.clone();
         let peer_store = peer_store.clone();
+        let task_queue = task_queue.clone();
+        // task_queue.push()
 
         tokio::spawn(async move {
             loop {
