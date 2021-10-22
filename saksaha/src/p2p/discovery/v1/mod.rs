@@ -3,11 +3,9 @@ pub mod dial;
 pub mod listener;
 pub mod msg;
 pub mod task;
+mod connection_pool;
 
-use self::{
-    address::Address,
-    task::{queue::TaskQueue, TaskKind},
-};
+use self::{address::Address, connection_pool::ConnectionPool, task::{queue::TaskQueue, TaskKind}};
 use crate::{
     common::{Error, Result},
     p2p::{
@@ -34,13 +32,15 @@ pub enum Status<E> {
 
 pub struct Disc {
     pub task_queue: Arc<TaskQueue>,
+    pub connection_pool: Arc<ConnectionPool>,
 }
 
 impl Disc {
     pub fn new() -> Disc {
         let task_queue = Arc::new(TaskQueue::new());
+        let connection_pool = Arc::new(ConnectionPool::new());
 
-        Disc { task_queue }
+        Disc { task_queue, connection_pool }
     }
 
     pub async fn start(
@@ -60,6 +60,7 @@ impl Disc {
                 peer_store.clone(),
                 credential.clone(),
                 self.task_queue.clone(),
+                self.connection_pool.clone(),
             )
             .await
         {

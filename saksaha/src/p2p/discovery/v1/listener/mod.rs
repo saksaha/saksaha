@@ -3,16 +3,23 @@ mod status;
 
 use crate::{
     common::{Error, Result},
-    p2p::{credential::Credential, discovery::task::queue::TaskQueue},
+    p2p::{
+        credential::Credential,
+        discovery::{
+            task::queue::TaskQueue, v1::connection_pool::ConnectionPool,
+        },
+    },
     peer::peer_store::PeerStore,
 };
 use handler::Handler;
 use logger::log;
 pub use status::Status;
 use std::{sync::Arc, time::Duration};
-use tokio::net::TcpListener;
+use tokio::net::{TcpListener, TcpStream};
 
 use self::handler::HandleStatus;
+
+use super::connection_pool::Traffic;
 
 pub struct Listener {}
 
@@ -28,6 +35,7 @@ impl Listener {
         peer_store: Arc<PeerStore>,
         credential: Arc<Credential>,
         task_queue: Arc<TaskQueue>,
+        connection_pool: Arc<ConnectionPool>,
     ) -> Status<u16, Error> {
         let port = match port {
             Some(p) => p,
@@ -62,6 +70,7 @@ impl Listener {
             peer_store,
             credential,
             task_queue,
+            connection_pool,
         );
 
         Status::Launched(local_addr.port())
@@ -82,12 +91,8 @@ impl Routine {
         peer_store: Arc<PeerStore>,
         credential: Arc<Credential>,
         task_queue: Arc<TaskQueue>,
+        connection_pool: Arc<ConnectionPool>,
     ) {
-        let credential = credential.clone();
-        let peer_store = peer_store.clone();
-        let task_queue = task_queue.clone();
-        // task_queue.push()
-
         tokio::spawn(async move {
             loop {
                 let (stream, _) = match tcp_listener.accept().await {
@@ -105,65 +110,103 @@ impl Routine {
                     }
                 };
 
-                let credential = credential.clone();
-                let peer_store = peer_store.clone();
-                let mut handler = Handler::new(
+                let peer_ip = match stream.peer_addr() {
+                    Ok(a) => a.ip().to_string(),
+                    Err(err) => {
+                        log!(
+                            DEBUG,
+                            "Cannot retrieve peer addr, err: {}\n",
+                            err,
+                        );
+
+                        continue;
+                    }
+                };
+
+                if connection_pool.has_call(&peer_ip).await {
+                    log!(DEBUG, "Already on phone, dropping conn, {}", peer_ip);
+
+                    continue;
+                } else {
+                    connection_pool
+                        .insert(peer_ip.clone(), Traffic::InBound)
+                        .await;
+                }
+
+                Routine::run_handler(
                     stream,
-                    peer_store,
+                    peer_ip.clone(),
                     credential.clone(),
                     peer_op_port,
+                    task_queue.clone(),
+                    connection_pool.clone(),
+                    peer_store.clone(),
                 );
-
-                tokio::spawn(async move {
-                    match handler.run().await {
-                        HandleStatus::NoAvailablePeerSlot => {
-                            log!(DEBUG, "No available peer slot, sleeping");
-
-                            tokio::time::sleep(Duration::from_millis(1000))
-                                .await;
-                        }
-                        HandleStatus::PeerAlreadyTalking(endpoint) => {
-                            log!(
-                                DEBUG,
-                                "Peer might be in talk already, endpoint: {}\n",
-                                endpoint,
-                            );
-                        }
-                        HandleStatus::AddressAcquireFail(err) => {
-                            log!(
-                                DEBUG,
-                                "Cannot acquire address of \
-                                incoming connection, err: {}\n",
-                                err
-                            );
-                        }
-                        HandleStatus::Success => (),
-                        HandleStatus::WhoAreYouReceiveFail(err) => {
-                            log!(
-                                DEBUG,
-                                "Disc listen failed receiving \
-                                who are you, err: {}\n",
-                                err
-                            );
-                        }
-                        HandleStatus::WhoAreYouAckInitiateFail(err) => {
-                            log!(
-                                DEBUG,
-                                "Disc listen failed initiating \
-                                who are you ack, err: {}\n",
-                                err
-                            );
-                        }
-                        HandleStatus::PeerUpdateFail(err) => {
-                            log!(
-                                DEBUG,
-                                "Disc listen failed updating peer, err: {}\n",
-                                err
-                            );
-                        }
-                    };
-                });
             }
+        });
+    }
+
+    pub fn run_handler(
+        stream: TcpStream,
+        peer_ip: String,
+        credential: Arc<Credential>,
+        peer_op_port: u16,
+        task_queue: Arc<TaskQueue>,
+        connection_pool: Arc<ConnectionPool>,
+        peer_store: Arc<PeerStore>,
+    ) {
+        let mut handler =
+            Handler::new(stream, peer_store, credential, peer_op_port);
+
+        tokio::spawn(async move {
+            match handler.run().await {
+                HandleStatus::NoAvailablePeerSlot => {
+                    log!(DEBUG, "No available peer slot, sleeping");
+
+                    tokio::time::sleep(Duration::from_millis(1000)).await;
+                }
+                HandleStatus::PeerAlreadyTalking(endpoint) => {
+                    log!(
+                        DEBUG,
+                        "Peer might be in talk already, endpoint: {}\n",
+                        endpoint,
+                    );
+                }
+                HandleStatus::AddressAcquireFail(err) => {
+                    log!(
+                        DEBUG,
+                        "Cannot acquire address of \
+                                incoming connection, err: {}\n",
+                        err
+                    );
+                }
+                HandleStatus::Success => (),
+                HandleStatus::WhoAreYouReceiveFail(err) => {
+                    log!(
+                        DEBUG,
+                        "Disc listen failed receiving \
+                                who are you, err: {}\n",
+                        err
+                    );
+                }
+                HandleStatus::WhoAreYouAckInitiateFail(err) => {
+                    log!(
+                        DEBUG,
+                        "Disc listen failed initiating \
+                                who are you ack, err: {}\n",
+                        err
+                    );
+                }
+                HandleStatus::PeerUpdateFail(err) => {
+                    log!(
+                        DEBUG,
+                        "Disc listen failed updating peer, err: {}\n",
+                        err
+                    );
+                }
+            };
+
+            connection_pool.remove(&peer_ip).await;
         });
     }
 }

@@ -1,12 +1,12 @@
-use std::{fs::File, sync::Arc, io::Write};
+// use std::{fs::File, sync::Arc, io::Write};
 use bellman::{Circuit, ConstraintSystem, SynthesisError, gadgets::{
         boolean::{AllocatedBit, Boolean},
         multipack,
         sha256::sha256,
-    }, groth16::{self, Parameters}};
+    }, groth16::{self}};
 use bls12_381::Bls12;
 use ff::PrimeField;
-use pairing::Engine;
+// use pairing::Engine;
 use rand::rngs::OsRng;
 use sha2::{Digest, Sha256};
 
