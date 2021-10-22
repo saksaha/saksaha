@@ -10,6 +10,7 @@ use tokio::sync::{
     mpsc::{self, Receiver, Sender},
     Mutex,
 };
+use super::address::Address;
 
 // type BoxedFuture = Box<dyn Fn() -> Pin<Box<dyn Future<Output = Result<()>> + Send>> + Send + Sync>;
 // type BoxedFuture =
@@ -31,40 +32,6 @@ struct Task {
 }
 
 pub enum TaskKind {
-    InitiateWhoAreYou(Address),
-    // pub action: Box<dyn Fn()>,
-    // // action: Box<dyn Fn() -> Action + Send>,
-    // // pub kind:
-    // pub fail_count: usize,
+    Ping(Address),
 }
 
-// impl Task {
-//     pub fn new(action: Box<dyn Fn()>) -> Task {
-//         Task {
-//             action,
-//             fail_count: 0,
-//         }
-//     }
-// }
-
-macro_rules! task {
-    (async $d:tt) => {
-        {
-            let t = $crate::p2p::discovery::task::Task::new(
-                || Box::pin(async $d));
-            t
-        }
-    };
-
-    (async move $d:tt) => {
-        {
-            let t = $crate::p2p::discovery::task::Task::new(
-                || Box::pin(async move $d));
-            t
-        }
-    };
-}
-
-pub(crate) use task;
-
-use super::address::Address;

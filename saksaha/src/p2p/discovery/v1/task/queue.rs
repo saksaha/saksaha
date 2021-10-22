@@ -4,7 +4,7 @@ use tokio::sync::{
     Mutex,
 };
 use logger::log;
-use crate::{common::Result, err, p2p::discovery::task::TaskKind};
+use crate::{common::Result, err, p2p::discovery::{task::TaskKind, v1::ops::pingpong::PingPong}};
 use super::Task;
 
 pub struct TaskQueue {
@@ -38,12 +38,12 @@ impl TaskQueue {
         }
     }
 
-    fn execute_task(t: Task) {
-        match t.kind {
-            TaskKind::InitiateWhoAreYou(addr) => {
-
+    async fn execute_task(t: Task) {
+        let task_result = match t.kind {
+            TaskKind::Ping(addr) => {
+                PingPong::ping(addr).await
             }
-        }
+        };
     }
 
     pub fn run_loop(&self) {
@@ -64,8 +64,7 @@ impl TaskQueue {
                     }
                 };
 
-                TaskQueue::execute_task(task);
-
+                TaskQueue::execute_task(task).await;
 
             }
         });

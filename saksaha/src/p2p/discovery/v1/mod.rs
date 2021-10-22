@@ -3,6 +3,7 @@ pub mod dial;
 pub mod listener;
 pub mod msg;
 pub mod task;
+mod ops;
 mod connection_pool;
 
 use self::{address::Address, connection_pool::ConnectionPool, task::{queue::TaskQueue, TaskKind}};
@@ -11,7 +12,7 @@ use crate::{
     p2p::{
         credential::Credential,
         discovery::{
-            task::{task, TaskResult},
+            task::{TaskResult},
             v1::listener::Listener,
         },
     },
@@ -137,7 +138,7 @@ impl Disc {
 
             match self
                 .task_queue
-                .push(TaskKind::InitiateWhoAreYou(addr))
+                .push(TaskKind::Ping(addr))
                 .await
             {
                 Ok(_) => (),
