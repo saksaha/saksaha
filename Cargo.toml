@@ -3,7 +3,7 @@
 members = [
   "saksaha",
   "logger",
-  "zkp",
+  "saksaha_proofs",
 
   # internals
   "internals/ci"
