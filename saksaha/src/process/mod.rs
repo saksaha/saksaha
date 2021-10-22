@@ -1,4 +1,4 @@
-use crate::client::Client;
+use crate::node::Node;
 use logger::log;
 use once_cell::sync::OnceCell;
 use std::sync::Arc;
@@ -6,11 +6,11 @@ use std::sync::Arc;
 static INSTANCE: OnceCell<Process> = OnceCell::new();
 
 pub struct Process {
-    node: Arc<Client>,
+    node: Arc<Node>,
 }
 
 impl Process {
-    pub fn init(node: Arc<Client>) {
+    pub fn init(node: Arc<Node>) {
         let p = Process { node };
 
         match INSTANCE.set(p) {

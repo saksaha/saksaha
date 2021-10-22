@@ -10,7 +10,6 @@ use tokio::sync::{
     mpsc::{self, Receiver, Sender},
     Mutex,
 };
-use super::address::Address;
 
 // type BoxedFuture = Box<dyn Fn() -> Pin<Box<dyn Future<Output = Result<()>> + Send>> + Send + Sync>;
 // type BoxedFuture =
@@ -32,6 +31,6 @@ struct Task {
 }
 
 pub enum TaskKind {
-    Ping(Address),
+    // Ping(Address),
 }
 

@@ -40,9 +40,9 @@ impl TaskQueue {
 
     async fn execute_task(t: Task) {
         let task_result = match t.kind {
-            TaskKind::Ping(addr) => {
-                PingPong::ping(addr).await
-            }
+            // TaskKind::Ping(addr) => {
+            //     PingPong::ping(addr).await
+            // }
         };
     }
 
