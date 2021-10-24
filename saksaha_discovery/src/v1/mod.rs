@@ -1,18 +1,20 @@
-pub mod dial;
-pub mod listener;
-pub mod msg;
-pub mod task;
-pub mod error;
 mod address;
 mod connection_pool;
+pub mod dial;
+pub mod error;
+pub mod listener;
+pub mod msg;
 mod ops;
 mod table;
+pub mod task;
 
-use crate::{DiscoveryError, identity::Identity};
+use crate::{identity::Identity, DiscoveryError};
 
 use self::{
-    connection_pool::ConnectionPool, listener::Listener,
-    table::Table, task::queue::TaskQueue,
+    connection_pool::ConnectionPool,
+    listener::{Listener, ListenerError},
+    table::Table,
+    task::queue::TaskQueue,
 };
 use logger::log;
 use std::sync::Arc;
@@ -46,10 +48,10 @@ impl Disc {
         // credential: Arc<Credential>,
         bootstrap_urls: Option<Vec<String>>,
         default_bootstrap_urls: &str,
-    ) -> Result<Table, DiscoveryError> {
+    ) -> Result<Table, String> {
         let table = match Table::init(bootstrap_urls, default_bootstrap_urls) {
             Ok(t) => t,
-            Err(err) => return Err(DiscoveryError::SetupFail(err.to_string())),
+            Err(err) => return Err(err),
         };
 
         let listener = Listener::new();
@@ -64,10 +66,12 @@ impl Disc {
             )
             .await
         {
-            listener::Status::Launched(port) => port,
-            listener::Status::SetupFailed(err) => {
-                return Status::SetupFailed(err)
-            }
+            Ok(port) => port,
+            Err(err) => match err {
+                ListenerError::StartFail(err) => {
+                    return Err(err);
+                }
+            },
         };
 
         self.task_queue.run_loop();
@@ -89,7 +93,7 @@ impl Disc {
         //     Err(err) => return Status::SetupFailed(err),
         // };
 
-        Status::Launched(table)
+        Ok(table)
     }
 
     // pub async fn enqueue_initial_tasks(
@@ -152,4 +156,3 @@ impl Disc {
     //     }
     // }
 }
-

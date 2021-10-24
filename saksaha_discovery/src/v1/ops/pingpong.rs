@@ -1,11 +1,11 @@
-use crate::{error::Error, task::TaskResult, v1::address::Address};
+use crate::{task::TaskResult, v1::address::Address};
 use logger::log;
 use tokio::net::TcpStream;
 
 pub struct PingPong;
 
 impl PingPong {
-    pub async fn ping(addr: Address) -> TaskResult<Error> {
+    pub async fn ping(addr: Address) -> TaskResult {
         let endpoint = format!("{}:{}", addr.ip, addr.disc_port);
 
         let mut stream = match TcpStream::connect(endpoint.to_owned()).await {

@@ -4,9 +4,9 @@ use tokio::sync::{
     Mutex,
 };
 use logger::log;
-use crate::{error::Error, task::TaskKind};
+use crate::{task::TaskKind};
 
-use super::Task;
+use super::{Task, TaskError};
 
 pub struct TaskQueue {
     tx: Arc<Sender<Task>>,
@@ -27,7 +27,7 @@ impl TaskQueue {
         }
     }
 
-    pub async fn push(&self, task_kind: TaskKind) -> Result<(), Error> {
+    pub async fn push(&self, task_kind: TaskKind) -> Result<(), TaskError> {
         let t = Task {
             kind: task_kind,
             fail_count: 0,
@@ -37,7 +37,7 @@ impl TaskQueue {
             Ok(_) => Ok(()),
             Err(err) => {
                 let msg = format!("Cannot enqueue new task, err: {}", err);
-                return Err(Error::new(msg));
+                return Err(TaskError::Default(msg));
             }
         }
     }

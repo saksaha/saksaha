@@ -1,4 +1,4 @@
-use super::handler::{HandleStatus, Handler};
+use super::handler::{HandleError, Handler};
 use logger::log;
 use std::{
     sync::Arc,
@@ -61,56 +61,58 @@ impl Routine {
                 );
 
                 match handler.run().await {
-                    HandleStatus::IllegalEndpoint(err) => {
-                        log!(
-                            DEBUG,
-                            "Peer may have an illegal endpoint, err: {}\n",
-                            err
-                        );
-                    }
-                    HandleStatus::NoAvailablePeer => {
-                        log!(DEBUG, "No available peer to discover\n");
+                    Ok(_) => (),
+                    Err(err) => match err {
+                        HandleError::IllegalEndpoint(err) => {
+                            log!(
+                                DEBUG,
+                                "Peer may have an illegal endpoint, err: {}\n",
+                                err
+                            );
+                        }
+                        HandleError::NoAvailablePeer => {
+                            log!(DEBUG, "No available peer to discover\n");
 
-                        break;
-                    }
-                    HandleStatus::IllegalPeerFound(idx) => {
-                        log!(
-                            DEBUG,
-                            "Illegal peer has been found, idx: {}\n",
-                            idx,
-                        );
-                    }
-                    HandleStatus::ConnectionFail(err) => {
-                        log!(
-                            DEBUG,
-                            "Disc dial connection fail, err: {}\n",
-                            err
-                        );
-                    }
-                    HandleStatus::LocalAddrIdentical => (),
-                    HandleStatus::Success(_) => (),
-                    HandleStatus::WhoAreYouInitiateFail(err) => {
-                        log!(
-                            DEBUG,
-                            "Disc dial who are you \
-                                initiate failed, err: {}\n",
-                            err
-                        );
-                    }
-                    HandleStatus::WhoAreYouAckReceiveFail(err) => {
-                        log!(
-                            DEBUG,
-                            "Disc dial who are you \
-                                ack receive failed, err: {}\n",
-                            err
-                        );
-                    }
-                    HandleStatus::PeerUpdateFail(err) => {
-                        log!(
-                            DEBUG,
-                            "Disc dial peer update fail, err: {}\n",
-                            err
-                        );
+                            break;
+                        }
+                        HandleError::IllegalPeerFound(idx) => {
+                            log!(
+                                DEBUG,
+                                "Illegal peer has been found, idx: {}\n",
+                                idx,
+                            );
+                        }
+                        HandleError::ConnectionFail(err) => {
+                            log!(
+                                DEBUG,
+                                "Disc dial connection fail, err: {}\n",
+                                err
+                            );
+                        }
+                        HandleError::LocalAddrIdentical => (),
+                        HandleError::WhoAreYouInitiateFail(err) => {
+                            log!(
+                                DEBUG,
+                                "Disc dial who are you \
+                                    initiate failed, err: {}\n",
+                                err
+                            );
+                        }
+                        HandleError::WhoAreYouAckReceiveFail(err) => {
+                            log!(
+                                DEBUG,
+                                "Disc dial who are you \
+                                    ack receive failed, err: {}\n",
+                                err
+                            );
+                        }
+                        HandleError::PeerUpdateFail(err) => {
+                            log!(
+                                DEBUG,
+                                "Disc dial peer update fail, err: {}\n",
+                                err
+                            );
+                        }
                     }
                 }
 
