@@ -1,12 +1,7 @@
-pub mod status;
-
-pub use status::Status;
 use std::sync::Arc;
 use logger::log;
-use crate::{common::Error };
 
-pub struct RPC {
-}
+pub struct RPC {}
 
 impl RPC {
     pub fn new(rpc_port: Option<u16>) -> RPC {
@@ -14,9 +9,9 @@ impl RPC {
         };
     }
 
-    pub async fn start(&self) -> Status<u16, Error> {
+    pub async fn start(&self) -> Result<u16, String> {
         log!(DEBUG, "Start rpc...\n");
 
-        Status::Launched(10000)
+        Ok(10000)
     }
 }

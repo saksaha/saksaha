@@ -1,7 +1,7 @@
 use super::{
     credential::Credential,
     dialer::Dialer,
-    error::P2PError,
+    error::HostError,
     listener::{self, Listener},
 };
 use crate::{
@@ -18,10 +18,9 @@ use tokio::sync::{mpsc, Mutex};
 pub struct Host {}
 
 impl Host {
-    pub fn new() -> Result<Host, P2PError> {
+    pub fn new() -> Host {
         let host = Host {};
-
-        Ok(host)
+        host
     }
 
     fn make_credential(
@@ -38,7 +37,7 @@ impl Host {
         Ok(credential)
     }
 
-    fn make_peer_store() -> Result<PeerStore, P2PError> {
+    fn make_peer_store() -> Result<PeerStore, String> {
         let peer_store = match PeerStore::new(10) {
             Ok(p) => p,
             Err(err) => return Err(err),
@@ -54,7 +53,7 @@ impl Host {
         disc_port: Option<u16>,
         bootstrap_urls: Option<Vec<String>>,
         default_bootstrap_urls: &str,
-    ) -> Result<(), P2PError> {
+    ) -> Result<(), String> {
         let credential = match Host::make_credential(p2p_config) {
             Ok(c) => Arc::new(c),
             Err(err) => return Err(err),
@@ -75,7 +74,7 @@ impl Host {
                 ListenerError::SetupFail(err) => {
                     log!(DEBUG, "Couldn't start listener, err: {}\n", err);
 
-                    return Err(P2PError::SetupFail(err.to_string()));
+                    return Err(err);
                 }
             },
         };
@@ -93,7 +92,7 @@ impl Host {
         {
             Ok(table) => table,
             Err(err) => {
-                return Err(P2PError::SetupFail(err));
+                return Err(err);
             }
         };
 
