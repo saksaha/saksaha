@@ -4,7 +4,8 @@ use tokio::sync::{
     Mutex,
 };
 use logger::log;
-use crate::{common::Result, err, p2p::discovery::{task::TaskKind, v1::ops::pingpong::PingPong}};
+use crate::{error::Error, task::TaskKind};
+
 use super::Task;
 
 pub struct TaskQueue {
@@ -26,7 +27,7 @@ impl TaskQueue {
         }
     }
 
-    pub async fn push(&self, task_kind: TaskKind) -> Result<()> {
+    pub async fn push(&self, task_kind: TaskKind) -> Result<(), Error> {
         let t = Task {
             kind: task_kind,
             fail_count: 0,
@@ -34,7 +35,10 @@ impl TaskQueue {
 
         match self.tx.send(t).await {
             Ok(_) => Ok(()),
-            Err(err) => return err!("Cannot enqueue new task, err: {}", err),
+            Err(err) => {
+                let msg = format!("Cannot enqueue new task, err: {}", err);
+                return Err(Error::new(msg));
+            }
         }
     }
 

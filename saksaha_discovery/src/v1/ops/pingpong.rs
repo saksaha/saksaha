@@ -1,4 +1,4 @@
-use crate::{common::{Error, Result}, p2p::discovery::{task::TaskResult, v1::address::Address}};
+use crate::{error::Error, task::TaskResult, v1::address::Address};
 use logger::log;
 use tokio::net::TcpStream;
 

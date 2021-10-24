@@ -1,6 +1,7 @@
 pub mod fs;
 
-use crate::{common::Result, crypto::Crypto, err};
+use crate::{common::Result, err};
+use crypto::Crypto;
 use fs::FS;
 use logger::log;
 use serde::{Deserialize, Serialize};

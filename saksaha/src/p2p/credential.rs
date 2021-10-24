@@ -1,6 +1,6 @@
+use crypto::Crypto;
 use k256::{elliptic_curve::sec1::ToEncodedPoint, SecretKey};
-
-use crate::{common::Result, crypto::Crypto, err};
+use crate::{common::Result, err};
 
 pub struct Credential {
     pub secret_key: SecretKey,
