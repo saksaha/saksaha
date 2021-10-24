@@ -1,21 +1,14 @@
+mod address;
 mod connection_pool;
 pub mod dial;
 pub mod listener;
 pub mod msg;
-pub mod task;
 mod ops;
 mod table;
-mod address;
+pub mod task;
 
-use self::{connection_pool::ConnectionPool, table::Table, task::{queue::TaskQueue, TaskKind}};
-use crate::{
-    common::{Error, Result},
-    p2p::{
-        credential::Credential,
-        discovery::{task::TaskResult, v1::listener::Listener},
-    },
-    peer::peer_store::PeerStore,
-};
+use self::{connection_pool::ConnectionPool, listener::Listener, table::Table, task::queue::TaskQueue};
+use super::error::Error;
 use logger::log;
 use std::sync::Arc;
 use tokio::sync::{
@@ -49,12 +42,12 @@ impl Disc {
         &self,
         port: Option<u16>,
         p2p_listener_port: u16,
-        peer_store: Arc<PeerStore>,
-        credential: Arc<Credential>,
+        // peer_store: Arc<PeerStore>,
+        // credential: Arc<Credential>,
         bootstrap_urls: Option<Vec<String>>,
         default_bootstrap_urls: &str,
     ) -> Status<Table, Error> {
-        let table = match Table::new(bootstrap_urls, default_bootstrap_urls) {
+        let table = match Table::init(bootstrap_urls, default_bootstrap_urls) {
             Ok(t) => t,
             Err(err) => return Status::SetupFailed(err),
         };
@@ -64,8 +57,8 @@ impl Disc {
             .start(
                 port,
                 p2p_listener_port,
-                peer_store.clone(),
-                credential.clone(),
+                // peer_store.clone(),
+                // credential.clone(),
                 self.task_queue.clone(),
                 self.connection_pool.clone(),
             )

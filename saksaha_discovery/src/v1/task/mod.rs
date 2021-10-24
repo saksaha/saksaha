@@ -1,15 +1,12 @@
 pub mod queue;
 
-use crate::{
-    common::{Error, Result},
-    err,
-};
 use logger::log;
 use std::{future::Future, pin::Pin, sync::Arc, time::Duration};
 use tokio::sync::{
     mpsc::{self, Receiver, Sender},
     Mutex,
 };
+use crate::error::Error;
 
 // type BoxedFuture = Box<dyn Fn() -> Pin<Box<dyn Future<Output = Result<()>> + Send>> + Send + Sync>;
 // type BoxedFuture =

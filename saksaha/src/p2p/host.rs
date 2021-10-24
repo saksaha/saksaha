@@ -1,8 +1,11 @@
-use super::{credential::Credential, dialer::Dialer, discovery::Disc, listener::{self, Listener}};
+use super::{
+    credential::Credential,
+    dialer::Dialer,
+    listener::{self, Listener},
+};
 use crate::{
     common::{Error, Result},
     err,
-    p2p::discovery,
     pconfig::PersistedP2PConfig,
     peer::peer_store::PeerStore,
     process::Process,
@@ -79,27 +82,26 @@ impl Host {
             }
         };
 
-        let disc = Disc::new();
-        let table = match disc
-            .start(
-                disc_port,
-                p2p_listener_port,
-                peer_store.clone(),
-                credential.clone(),
-                bootstrap_urls,
-                default_bootstrap_urls,
-            )
-            .await
-        {
-            discovery::Status::Launched(table) => (table),
-            discovery::Status::SetupFailed(err) => {
-                return HostStatus::SetupFailed(err);
-            }
-        };
+        // let disc = Disc::new();
+        // let table = match disc
+        //     .start(
+        //         disc_port,
+        //         p2p_listener_port,
+        //         peer_store.clone(),
+        //         credential.clone(),
+        //         bootstrap_urls,
+        //         default_bootstrap_urls,
+        //     )
+        //     .await
+        // {
+        //     discovery::Status::Launched(table) => (table),
+        //     discovery::Status::SetupFailed(err) => {
+        //         return HostStatus::SetupFailed(err);
+        //     }
+        // };
 
-        let dialer = Dialer::new(table);
-        dialer.schedule();
-
+        // let dialer = Dialer::new(table);
+        // dialer.schedule();
 
         // let credential_clone = credential.clone();
 

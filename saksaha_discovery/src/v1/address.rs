@@ -1,4 +1,4 @@
-use crate::{common::Result, err};
+use crate::error::Error;
 
 #[derive(Debug)]
 pub struct Address {
@@ -9,7 +9,7 @@ pub struct Address {
 }
 
 impl Address {
-    fn parse_full_url(url: String) -> Result<Address> {
+    fn parse_full_url(url: String) -> Result<Address, Error> {
         let (peer_id, ip, disc_port) = match url.get(6..) {
             Some(u) => match u.split_once('@') {
                 Some((peer_id, endpoint)) => {
@@ -17,11 +17,13 @@ impl Address {
                     (peer_id.to_string(), ip, port)
                 }
                 None => {
-                    return err!("url is not valid, url: {}", url);
+                    let msg = format!("url is not valid, url: {}", url);
+                    return Err(Error::new(msg));
                 }
             },
             None => {
-                return err!("url might be of a short form, url: {}", url);
+                let msg = format!("url might be of a short form, url: {}", url);
+                return Err(Error::new(msg));
             }
         };
 
@@ -33,7 +35,7 @@ impl Address {
         })
     }
 
-    fn parse_short_url(url: String) -> Result<Address> {
+    fn parse_short_url(url: String) -> Result<Address, Error> {
         let (ip, disc_port) = parse_endpoint(url.as_str())?;
         Ok(Address {
             peer_id: "".to_string(),
@@ -43,7 +45,7 @@ impl Address {
         })
     }
 
-    pub fn parse(url: String) -> Result<Address> {
+    pub fn parse(url: String) -> Result<Address, Error> {
         if url.starts_with("sak://") {
             return Address::parse_full_url(url);
         } else {
@@ -64,12 +66,13 @@ impl Address {
     }
 }
 
-fn parse_endpoint(endpoint: &str) -> Result<(String, u16)> {
+fn parse_endpoint(endpoint: &str) -> Result<(String, u16), Error> {
     if endpoint.matches(".").count() < 3 {
-        return err!(
+        let msg = format!(
             "endpoint may not have a valid ip address, endpoint: {}",
             endpoint
         );
+        return Err(Error::new(msg));
     }
 
     match endpoint.split_once(":") {
@@ -78,24 +81,27 @@ fn parse_endpoint(endpoint: &str) -> Result<(String, u16)> {
             Ok((ip.to_string(), port))
         }
         None => {
-            err!(
+            let msg = format!(
                 "Error splitting endpoint into ip and port, endpoint: {}",
                 endpoint
-            )
+            );
+            return Err(Error::new(msg));
         }
     }
 }
 
-fn parse_port(port: &str) -> Result<u16> {
+fn parse_port(port: &str) -> Result<u16, Error> {
     match port.parse::<u16>() {
         Ok(d) => Ok(d),
         Err(err) => {
-            return err!(
+            let msg = format!(
                 "disc port cannot be converted to u16, err: {}, \
                     disc_port: {}",
                 err,
                 port,
-            )
+            );
+
+            return Err(Error::new(msg));
         }
     }
 }

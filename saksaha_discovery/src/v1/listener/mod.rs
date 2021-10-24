@@ -1,25 +1,17 @@
 mod handler;
 mod status;
 
-use crate::{
-    common::{Error, Result},
-    p2p::{
-        credential::Credential,
-        discovery::{
-            task::queue::TaskQueue, v1::connection_pool::ConnectionPool,
-        },
-    },
-    peer::peer_store::PeerStore,
-};
 use handler::Handler;
 use logger::log;
 pub use status::Status;
 use std::{sync::Arc, time::Duration};
 use tokio::net::{TcpListener, TcpStream};
 
+use crate::{error::Error, task::queue::TaskQueue};
+
 use self::handler::HandleStatus;
 
-use super::connection_pool::Traffic;
+use super::connection_pool::{ConnectionPool, Traffic};
 
 pub struct Listener {}
 
@@ -32,8 +24,8 @@ impl Listener {
         &self,
         port: Option<u16>,
         p2p_listener_port: u16,
-        peer_store: Arc<PeerStore>,
-        credential: Arc<Credential>,
+        // peer_store: Arc<PeerStore>,
+        // credential: Arc<Credential>,
         task_queue: Arc<TaskQueue>,
         connection_pool: Arc<ConnectionPool>,
     ) -> Status<u16, Error> {
@@ -67,8 +59,8 @@ impl Listener {
         routine.run(
             tcp_listener,
             p2p_listener_port,
-            peer_store,
-            credential,
+            // peer_store,
+            // credential,
             task_queue,
             connection_pool,
         );
@@ -88,8 +80,8 @@ impl Routine {
         &self,
         tcp_listener: TcpListener,
         peer_op_port: u16,
-        peer_store: Arc<PeerStore>,
-        credential: Arc<Credential>,
+        // peer_store: Arc<PeerStore>,
+        // credential: Arc<Credential>,
         task_queue: Arc<TaskQueue>,
         connection_pool: Arc<ConnectionPool>,
     ) {
@@ -136,11 +128,11 @@ impl Routine {
                 Routine::run_handler(
                     stream,
                     peer_ip.clone(),
-                    credential.clone(),
+                    // credential.clone(),
                     peer_op_port,
                     task_queue.clone(),
                     connection_pool.clone(),
-                    peer_store.clone(),
+                    // peer_store.clone(),
                 );
             }
         });
@@ -149,14 +141,18 @@ impl Routine {
     pub fn run_handler(
         stream: TcpStream,
         peer_ip: String,
-        credential: Arc<Credential>,
+        // credential: Arc<Credential>,
         peer_op_port: u16,
         task_queue: Arc<TaskQueue>,
         connection_pool: Arc<ConnectionPool>,
-        peer_store: Arc<PeerStore>,
+        // peer_store: Arc<PeerStore>,
     ) {
-        let mut handler =
-            Handler::new(stream, peer_store, credential, peer_op_port);
+        let mut handler = Handler::new(
+            stream,
+            // peer_store,
+            // credential,
+            peer_op_port,
+        );
 
         tokio::spawn(async move {
             match handler.run().await {

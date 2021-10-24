@@ -1,7 +1,8 @@
-use crate::{common::Result, crypto::Crypto, err};
+use crypto::Crypto;
 use k256::ecdsa::Signature;
-use std::{convert::TryInto};
+use std::convert::TryInto;
 use tokio::{io::AsyncReadExt, net::TcpStream};
+use crate::error::Error;
 
 pub const MESSAGE: &[u8; 7] = b"saksaha";
 
@@ -47,7 +48,7 @@ impl WhoAreYouMsg {
             peer_op_port,
             public_key_bytes,
             peer_id,
-            raw: vec!(),
+            raw: vec![],
         }
     }
 
@@ -55,8 +56,8 @@ impl WhoAreYouMsg {
         Crypto::encode_hex(public_key_bytes)
     }
 
-    pub fn to_bytes(&self) -> Result<Vec<u8>> {
-        let mut buf = vec!();
+    pub fn to_bytes(&self) -> Result<Vec<u8>, Error> {
+        let mut buf = vec![];
 
         let kind_bytes = [self.kind as u8];
         let sig_bytes = self.sig.to_der().to_bytes();
@@ -71,7 +72,9 @@ impl WhoAreYouMsg {
         let len: u8 = match len.try_into() {
             Ok(l) => l,
             Err(err) => {
-                return err!("Cannot convert length into u8, err: {}", err);
+                let msg =
+                    format!("Cannot convert length into u8, err: {}", err);
+                return Err(Error::new(msg));
             }
         };
 
@@ -84,14 +87,15 @@ impl WhoAreYouMsg {
         Ok(buf)
     }
 
-    pub async fn parse(stream: &mut TcpStream) -> Result<WhoAreYouMsg> {
+    pub async fn parse(stream: &mut TcpStream) -> Result<WhoAreYouMsg, Error> {
         let mut size_buf: [u8; 1] = [0; 1];
 
         match stream.read(&mut size_buf).await {
             Ok(_) => (),
             Err(err) => {
-                return err!("Error reading WhoAreYou msg, err: {}", err);
-            },
+                let msg = format!("Error reading WhoAreYou msg, err: {}", err);
+                return Err(Error::new(msg));
+            }
         };
 
         let size: usize = size_buf[0].into();
@@ -100,12 +104,14 @@ impl WhoAreYouMsg {
         let _ = match stream.read_exact(&mut buf).await {
             Ok(l) => {
                 if l == 0 {
-                    return err!("Read 0 byte");
+                    let msg = format!("Read 0 byte");
+                    return Err(Error::new(msg));
                 }
                 l
-            },
+            }
             Err(err) => {
-                return err!("Error reading whoAreYou, err: {}", err);
+                let msg = format!("Error reading whoAreYou, err: {}", err);
+                return Err(Error::new(msg));
             }
         };
 
@@ -123,12 +129,17 @@ impl WhoAreYouMsg {
                 match Signature::from_der(b) {
                     Ok(s) => s,
                     Err(err) => {
-                        return err!("Error recovering signature, err: {}", err);
+                        let msg = format!(
+                            "Error recovering signature, err: {}",
+                            err
+                        );
+                        return Err(Error::new(msg));
                     }
                 }
-            },
+            }
             Err(err) => {
-                return err!("Error parsing signature, err: {}", err);
+                let msg = format!("Error parsing signature, err: {}", err);
+                return Err(Error::new(msg));
             }
         };
 
@@ -137,7 +148,8 @@ impl WhoAreYouMsg {
         let peer_op_port: u16 = match buf[sig_end..sig_end + 2].try_into() {
             Ok(p) => u16::from_be_bytes(p),
             Err(err) => {
-                return err!("Error parsing peer_op_port, err: {}", err);
+                let msg = format!("Error parsing peer_op_port, err: {}", err);
+                return Err(Error::new(msg));
             }
         };
 
@@ -146,7 +158,8 @@ impl WhoAreYouMsg {
         public_key_bytes
             .copy_from_slice(&buf[peer_op_port_end..peer_op_port_end + 65]);
 
-        let mut way = WhoAreYouMsg::new(kind, sig, peer_op_port, public_key_bytes);
+        let mut way =
+            WhoAreYouMsg::new(kind, sig, peer_op_port, public_key_bytes);
 
         let mut new_buf = size_buf.to_vec();
         new_buf.extend_from_slice(&buf);
@@ -172,15 +185,16 @@ impl WhoAreYouAck {
         WhoAreYouAck { way }
     }
 
-    pub fn to_bytes(&self) -> Result<Vec<u8>> {
+    pub fn to_bytes(&self) -> Result<Vec<u8>, Error> {
         return self.way.to_bytes();
     }
 
-    pub async fn parse(stream: &mut TcpStream) -> Result<WhoAreYouAck> {
+    pub async fn parse(stream: &mut TcpStream) -> Result<WhoAreYouAck, Error> {
         let way = match WhoAreYouMsg::parse(stream).await {
             Ok(w) => w,
             Err(err) => {
-                return err!("Error parsing WhoAreYouAck, err: {}", err);
+                let msg = format!("Error parsing WhoAreYouAck, err: {}", err);
+                return Err(Error::new(msg));
             }
         };
 

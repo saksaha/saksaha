@@ -1,3 +1,4 @@
+use super::handler::{HandleStatus, Handler};
 use logger::log;
 use std::{
     sync::Arc,
@@ -5,14 +6,9 @@ use std::{
 };
 use tokio::sync::{mpsc::Sender, Mutex};
 
-use super::handler::{HandleStatus, Handler};
-use crate::{p2p::{
-    credential::Credential,
-}, peer::peer_store::PeerStore};
-
 pub struct Routine {
-    peer_store: Arc<PeerStore>,
-    credential: Arc<Credential>,
+    // peer_store: Arc<PeerStore>,
+    // credential: Arc<Credential>,
     peer_op_port: u16,
     is_running: Arc<Mutex<bool>>,
     disc_port: u16,
@@ -21,16 +17,16 @@ pub struct Routine {
 
 impl Routine {
     pub fn new(
-        peer_store: Arc<PeerStore>,
-        credential: Arc<Credential>,
+        // peer_store: Arc<PeerStore>,
+        // credential: Arc<Credential>,
         peer_op_port: u16,
         disc_port: u16,
     ) -> Routine {
         let is_running = Arc::new(Mutex::new(false));
 
         Routine {
-            peer_store,
-            credential,
+            // peer_store,
+            // credential,
             peer_op_port,
             last_peer_idx: Arc::new(Mutex::new(0)),
             is_running,
@@ -41,8 +37,8 @@ impl Routine {
     pub fn run(&self) {
         log!(DEBUG, "Start dial - disc\n");
 
-        let peer_store = self.peer_store.clone();
-        let credential = self.credential.clone();
+        // let peer_store = self.peer_store.clone();
+        // let credential = self.credential.clone();
         let is_running = self.is_running.clone();
         let peer_op_port = self.peer_op_port;
         let last_peer_idx = self.last_peer_idx.clone();
@@ -57,8 +53,8 @@ impl Routine {
                 let start = SystemTime::now();
 
                 let handler = Handler::new(
-                    peer_store.clone(),
-                    credential.clone(),
+                    // peer_store.clone(),
+                    // credential.clone(),
                     peer_op_port,
                     disc_port,
                     last_peer_idx.clone(),

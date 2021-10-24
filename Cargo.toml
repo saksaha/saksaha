@@ -3,7 +3,9 @@
 members = [
   "saksaha",
   "logger",
+  "crypto",
   "saksaha_proofs",
+  "saksaha_discovery",
 
   # internals
   "internals/ci"

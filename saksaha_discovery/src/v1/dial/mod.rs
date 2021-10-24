@@ -1,7 +1,6 @@
 mod handler;
 mod routine;
 
-use crate::{common::Result, p2p::{credential::Credential}, peer::peer_store::PeerStore};
 use handler::Handler;
 use logger::log;
 use routine::Routine;
@@ -13,6 +12,7 @@ use tokio::sync::{
     mpsc::{Receiver, Sender},
     Mutex,
 };
+use crate::error::Error;
 
 pub struct Dialer {}
 
@@ -24,13 +24,13 @@ impl Dialer {
     pub async fn start(
         &self,
         my_disc_port: u16,
-        peer_store: Arc<PeerStore>,
+        // peer_store: Arc<PeerStore>,
         peer_op_port: u16,
-        credential: Arc<Credential>,
-    ) -> Result<()> {
+        // credential: Arc<Credential>,
+    ) -> Result<(), Error> {
         let routine = Arc::new(Routine::new(
-            peer_store.clone(),
-            credential.clone(),
+            // peer_store.clone(),
+            // credential.clone(),
             peer_op_port,
             my_disc_port,
         ));

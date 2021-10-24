@@ -1,17 +1,18 @@
+use std::collections::HashMap;
 use logger::log;
 use tokio::sync::{Mutex, mpsc};
-use crate::{common::Result, p2p::dialer::AddressIterator};
 use super::address::Address;
+use super::Error;
 
 pub struct Table {
     addrs: Mutex<Vec<Address>>,
 }
 
 impl Table {
-    pub fn new(
+    pub fn init(
         bootstrap_urls: Option<Vec<String>>,
         default_bootstrap_urls: &str,
-    ) -> Result<Table> {
+    ) -> Result<Table, Error> {
         let (tx, rx) = mpsc::channel::<usize>(10);
 
         let bootstrap_urls = match bootstrap_urls {
@@ -65,11 +66,10 @@ impl Table {
 
         Ok(table)
     }
-
 }
 
-impl AddressIterator for Table {
-    fn next(&self) {
+// impl AddressIterator for Table {
+//     fn next(&self) {
 
-    }
-}
+//     }
+// }
