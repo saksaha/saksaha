@@ -1,17 +1,18 @@
 mod handler;
 mod status;
 
+use self::handler::{HandleError};
+use super::connection_pool::{ConnectionPool, Traffic};
+use crate::task::queue::TaskQueue;
 use handler::Handler;
 use logger::log;
 pub use status::Status;
 use std::{sync::Arc, time::Duration};
 use tokio::net::{TcpListener, TcpStream};
 
-use crate::{error::Error, task::queue::TaskQueue};
-
-use self::handler::HandleStatus;
-
-use super::connection_pool::{ConnectionPool, Traffic};
+pub enum ListenerError {
+    StartFail(String),
+}
 
 pub struct Listener {}
 
@@ -28,7 +29,7 @@ impl Listener {
         // credential: Arc<Credential>,
         task_queue: Arc<TaskQueue>,
         connection_pool: Arc<ConnectionPool>,
-    ) -> Status<u16, Error> {
+    ) -> Result<u16, ListenerError> {
         let port = match port {
             Some(p) => p,
             None => 0,
@@ -36,22 +37,25 @@ impl Listener {
 
         let local_addr = format!("127.0.0.1:{}", port);
 
-        let (tcp_listener, local_addr) =
-            match TcpListener::bind(local_addr).await {
-                Ok(listener) => match listener.local_addr() {
-                    Ok(local_addr) => {
-                        log!(
-                            DEBUG,
-                            "Discovery listener bound, addr: {}\n",
-                            local_addr
-                        );
+        let (tcp_listener, local_addr) = match TcpListener::bind(local_addr)
+            .await
+        {
+            Ok(listener) => match listener.local_addr() {
+                Ok(local_addr) => {
+                    log!(
+                        DEBUG,
+                        "Discovery listener bound, addr: {}\n",
+                        local_addr
+                    );
 
-                        (listener, local_addr)
-                    }
-                    Err(err) => return Status::SetupFailed(err.into()),
-                },
-                Err(err) => return Status::SetupFailed(err.into()),
-            };
+                    (listener, local_addr)
+                }
+                Err(err) => {
+                    return Err(ListenerError::StartFail(err.to_string()))
+                }
+            },
+            Err(err) => return Err(ListenerError::StartFail(err.to_string())),
+        };
 
         log!(DEBUG, "Started - Disc listener, addr: {}\n", local_addr);
 
@@ -65,7 +69,7 @@ impl Listener {
             connection_pool,
         );
 
-        Status::Launched(local_addr.port())
+        Ok(local_addr.port())
     }
 }
 
@@ -155,50 +159,56 @@ impl Routine {
         );
 
         tokio::spawn(async move {
-            match handler.run().await {
-                HandleStatus::NoAvailablePeerSlot => {
-                    log!(DEBUG, "No available peer slot, sleeping");
 
-                    tokio::time::sleep(Duration::from_millis(1000)).await;
-                }
-                HandleStatus::PeerAlreadyTalking(endpoint) => {
-                    log!(
-                        DEBUG,
-                        "Peer might be in talk already, endpoint: {}\n",
-                        endpoint,
-                    );
-                }
-                HandleStatus::AddressAcquireFail(err) => {
-                    log!(
-                        DEBUG,
-                        "Cannot acquire address of \
-                                incoming connection, err: {}\n",
-                        err
-                    );
-                }
-                HandleStatus::Success => (),
-                HandleStatus::WhoAreYouReceiveFail(err) => {
-                    log!(
-                        DEBUG,
-                        "Disc listen failed receiving \
-                                who are you, err: {}\n",
-                        err
-                    );
-                }
-                HandleStatus::WhoAreYouAckInitiateFail(err) => {
-                    log!(
-                        DEBUG,
-                        "Disc listen failed initiating \
-                                who are you ack, err: {}\n",
-                        err
-                    );
-                }
-                HandleStatus::PeerUpdateFail(err) => {
-                    log!(
-                        DEBUG,
-                        "Disc listen failed updating peer, err: {}\n",
-                        err
-                    );
+
+
+            match handler.run().await {
+                Ok(_) => (),
+                Err(err) => match err {
+                    HandleError::NoAvailablePeerSlot => {
+                        log!(DEBUG, "No available peer slot, sleeping");
+
+                        tokio::time::sleep(Duration::from_millis(1000)).await;
+                    }
+                    HandleError::PeerAlreadyTalking(endpoint) => {
+                        log!(
+                            DEBUG,
+                            "Peer might be in talk already, endpoint: {}\n",
+                            endpoint,
+                        );
+                    }
+                    HandleError::AddressAcquireFail(err) => {
+                        log!(
+                            DEBUG,
+                            "Cannot acquire address of \
+                                    incoming connection, err: {}\n",
+                            err
+                        );
+                    }
+                    HandleError::Success => (),
+                    HandleError::WhoAreYouReceiveFail(err) => {
+                        log!(
+                            DEBUG,
+                            "Disc listen failed receiving \
+                                    who are you, err: {}\n",
+                            err
+                        );
+                    }
+                    HandleStatus::WhoAreYouAckInitiateFail(err) => {
+                        log!(
+                            DEBUG,
+                            "Disc listen failed initiating \
+                                    who are you ack, err: {}\n",
+                            err
+                        );
+                    }
+                    HandleStatus::PeerUpdateFail(err) => {
+                        log!(
+                            DEBUG,
+                            "Disc listen failed updating peer, err: {}\n",
+                            err
+                        );
+                    }
                 }
             };
 

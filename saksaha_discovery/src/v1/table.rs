@@ -2,7 +2,6 @@ use std::collections::HashMap;
 use logger::log;
 use tokio::sync::{Mutex, mpsc};
 use super::address::Address;
-use super::Error;
 
 pub struct Table {
     addrs: Mutex<Vec<Address>>,

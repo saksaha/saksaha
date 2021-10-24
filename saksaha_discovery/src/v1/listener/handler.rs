@@ -3,22 +3,18 @@ use logger::log;
 use std::sync::Arc;
 use tokio::{io::AsyncWriteExt, net::TcpStream, sync::OwnedMutexGuard};
 
-use crate::error::Error;
-
-/// S endpoint
-/// E error
-pub enum HandleStatus<E, S> {
+pub enum HandleError {
     NoAvailablePeerSlot,
 
-    AddressAcquireFail(E),
+    AddressAcquireFail(String),
 
-    PeerAlreadyTalking(S),
+    PeerAlreadyTalking(String),
 
-    WhoAreYouReceiveFail(E),
+    WhoAreYouReceiveFail(String),
 
-    WhoAreYouAckInitiateFail(E),
+    WhoAreYouAckInitiateFail(String),
 
-    PeerUpdateFail(E),
+    PeerUpdateFail(String),
 
     Success,
 }
@@ -45,7 +41,7 @@ impl Handler {
         }
     }
 
-    pub async fn run(&mut self) -> HandleStatus<Error, String> {
+    pub async fn run(&mut self) -> Result<(), HandleError> {
         // let peer_store = self.peer_store.clone();
         // let (peer_ip, peer_port) = match self.stream.peer_addr() {
         //     Ok(a) => (a.ip().to_string(), a.port()),
@@ -103,7 +99,8 @@ impl Handler {
         //     }
         // };
 
-        HandleStatus::Success
+        // HandleStatus::Success
+        Ok(())
     }
 
     // pub async fn receive_who_are_you(&mut self) -> Result<WhoAreYouMsg> {

@@ -59,8 +59,8 @@ impl Node {
         );
 
         match host_started.await {
-            HostStatus::Launched => (),
-            HostStatus::SetupFailed(err) => return Err(err),
+            Ok(_) => (),
+            HostError::SetupFail(err) => return Err(err),
         };
 
         Ok(())
