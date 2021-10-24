@@ -12,13 +12,16 @@ use tokio::sync::{
     mpsc::{Receiver, Sender},
     Mutex,
 };
-use crate::error::Error;
 
-pub struct Dialer {}
+pub enum DialError {
+    Default(String),
+}
 
-impl Dialer {
-    pub fn new() -> Dialer {
-        Dialer {}
+pub struct Dial {}
+
+impl Dial {
+    pub fn new() -> Dial {
+        Dial {}
     }
 
     pub async fn start(
@@ -27,7 +30,7 @@ impl Dialer {
         // peer_store: Arc<PeerStore>,
         peer_op_port: u16,
         // credential: Arc<Credential>,
-    ) -> Result<(), Error> {
+    ) -> Result<(), DialError> {
         let routine = Arc::new(Routine::new(
             // peer_store.clone(),
             // credential.clone(),

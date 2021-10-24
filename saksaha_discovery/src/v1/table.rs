@@ -1,6 +1,8 @@
-use std::collections::HashMap;
+use crate::DiscoveryError;
 use logger::log;
-use tokio::sync::{Mutex, mpsc};
+use std::collections::HashMap;
+use tokio::sync::{mpsc, Mutex};
+
 use super::address::Address;
 
 pub struct Table {
@@ -11,7 +13,7 @@ impl Table {
     pub fn init(
         bootstrap_urls: Option<Vec<String>>,
         default_bootstrap_urls: &str,
-    ) -> Result<Table, Error> {
+    ) -> Result<Table, String> {
         let (tx, rx) = mpsc::channel::<usize>(10);
 
         let bootstrap_urls = match bootstrap_urls {
@@ -36,16 +38,16 @@ impl Table {
         }
 
         let addrs = {
-            let mut v = vec!();
+            let mut v = vec![];
             for (idx, url) in urls.iter().enumerate() {
                 let addr = match Address::parse(url.clone()) {
                     Ok(a) => a,
                     Err(err) => {
                         log!(
                             DEBUG,
-                            "Discarding url failed to parse, url: {}, err: {}\n",
+                            "Discarding url failed to parse, url: {}, err: {:?}\n",
                             url.clone(),
-                            err
+                            err,
                         );
 
                         continue;

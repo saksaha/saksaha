@@ -2,9 +2,12 @@ use crypto::Crypto;
 use k256::ecdsa::Signature;
 use std::convert::TryInto;
 use tokio::{io::AsyncReadExt, net::TcpStream};
-use crate::error::Error;
 
 pub const MESSAGE: &[u8; 7] = b"saksaha";
+
+pub enum WhoAreYouError {
+    Default(String),
+}
 
 #[repr(u8)]
 #[derive(Copy, Clone)]
@@ -56,7 +59,7 @@ impl WhoAreYouMsg {
         Crypto::encode_hex(public_key_bytes)
     }
 
-    pub fn to_bytes(&self) -> Result<Vec<u8>, Error> {
+    pub fn to_bytes(&self) -> Result<Vec<u8>, WhoAreYouError> {
         let mut buf = vec![];
 
         let kind_bytes = [self.kind as u8];
@@ -74,7 +77,7 @@ impl WhoAreYouMsg {
             Err(err) => {
                 let msg =
                     format!("Cannot convert length into u8, err: {}", err);
-                return Err(Error::new(msg));
+                return Err(WhoAreYouError::Default(msg));
             }
         };
 
@@ -87,14 +90,16 @@ impl WhoAreYouMsg {
         Ok(buf)
     }
 
-    pub async fn parse(stream: &mut TcpStream) -> Result<WhoAreYouMsg, Error> {
+    pub async fn parse(
+        stream: &mut TcpStream,
+    ) -> Result<WhoAreYouMsg, WhoAreYouError> {
         let mut size_buf: [u8; 1] = [0; 1];
 
         match stream.read(&mut size_buf).await {
             Ok(_) => (),
             Err(err) => {
                 let msg = format!("Error reading WhoAreYou msg, err: {}", err);
-                return Err(Error::new(msg));
+                return Err(WhoAreYouError::Default(msg));
             }
         };
 
@@ -105,13 +110,13 @@ impl WhoAreYouMsg {
             Ok(l) => {
                 if l == 0 {
                     let msg = format!("Read 0 byte");
-                    return Err(Error::new(msg));
+                    return Err(WhoAreYouError::Default(msg));
                 }
                 l
             }
             Err(err) => {
                 let msg = format!("Error reading whoAreYou, err: {}", err);
-                return Err(Error::new(msg));
+                return Err(WhoAreYouError::Default(msg));
             }
         };
 
@@ -129,17 +134,15 @@ impl WhoAreYouMsg {
                 match Signature::from_der(b) {
                     Ok(s) => s,
                     Err(err) => {
-                        let msg = format!(
-                            "Error recovering signature, err: {}",
-                            err
-                        );
-                        return Err(Error::new(msg));
+                        let msg =
+                            format!("Error recovering signature, err: {}", err);
+                        return Err(WhoAreYouError::Default(msg));
                     }
                 }
             }
             Err(err) => {
                 let msg = format!("Error parsing signature, err: {}", err);
-                return Err(Error::new(msg));
+                return Err(WhoAreYouError::Default(msg));
             }
         };
 
@@ -149,7 +152,7 @@ impl WhoAreYouMsg {
             Ok(p) => u16::from_be_bytes(p),
             Err(err) => {
                 let msg = format!("Error parsing peer_op_port, err: {}", err);
-                return Err(Error::new(msg));
+                return Err(WhoAreYouError::Default(msg));
             }
         };
 
@@ -185,16 +188,17 @@ impl WhoAreYouAck {
         WhoAreYouAck { way }
     }
 
-    pub fn to_bytes(&self) -> Result<Vec<u8>, Error> {
+    pub fn to_bytes(&self) -> Result<Vec<u8>, WhoAreYouError> {
         return self.way.to_bytes();
     }
 
-    pub async fn parse(stream: &mut TcpStream) -> Result<WhoAreYouAck, Error> {
+    pub async fn parse(
+        stream: &mut TcpStream,
+    ) -> Result<WhoAreYouAck, WhoAreYouError> {
         let way = match WhoAreYouMsg::parse(stream).await {
             Ok(w) => w,
             Err(err) => {
-                let msg = format!("Error parsing WhoAreYouAck, err: {}", err);
-                return Err(Error::new(msg));
+                return Err(err)
             }
         };
 

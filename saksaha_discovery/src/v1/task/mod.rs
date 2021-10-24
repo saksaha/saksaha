@@ -6,21 +6,17 @@ use tokio::sync::{
     mpsc::{self, Receiver, Sender},
     Mutex,
 };
-use crate::error::Error;
 
-// type BoxedFuture = Box<dyn Fn() -> Pin<Box<dyn Future<Output = Result<()>> + Send>> + Send + Sync>;
-// type BoxedFuture =
-//     Pin<Box<dyn Future<Output = TaskResult<Error>> + Send + Sync>>;
-
-pub enum TaskResult<E> {
+pub enum TaskResult {
     Success,
-
     Retriable,
-
-    Fail(E),
 }
 
-type Action = Pin<Box<dyn Future<Output = TaskResult<Error>> + Send + Sync>>;
+pub enum TaskError {
+    Default(String),
+}
+
+// type Action = Pin<Box<dyn Future<Output = TaskResult<Error>> + Send + Sync>>;
 
 struct Task {
     kind: TaskKind,

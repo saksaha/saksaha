@@ -1,7 +1,7 @@
 mod handler;
 mod status;
 
-use self::handler::{HandleError};
+use self::handler::HandleError;
 use super::connection_pool::{ConnectionPool, Traffic};
 use crate::task::queue::TaskQueue;
 use handler::Handler;
@@ -159,9 +159,6 @@ impl Routine {
         );
 
         tokio::spawn(async move {
-
-
-
             match handler.run().await {
                 Ok(_) => (),
                 Err(err) => match err {
@@ -194,7 +191,7 @@ impl Routine {
                             err
                         );
                     }
-                    HandleStatus::WhoAreYouAckInitiateFail(err) => {
+                    HandleError::WhoAreYouAckInitiateFail(err) => {
                         log!(
                             DEBUG,
                             "Disc listen failed initiating \
@@ -202,14 +199,14 @@ impl Routine {
                             err
                         );
                     }
-                    HandleStatus::PeerUpdateFail(err) => {
+                    HandleError::PeerUpdateFail(err) => {
                         log!(
                             DEBUG,
                             "Disc listen failed updating peer, err: {}\n",
                             err
                         );
                     }
-                }
+                },
             };
 
             connection_pool.remove(&peer_ip).await;

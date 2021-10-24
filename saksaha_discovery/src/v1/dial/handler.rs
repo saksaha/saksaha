@@ -10,28 +10,22 @@ use tokio::{
     sync::{mpsc::Sender, Mutex, MutexGuard, OwnedMutexGuard, RwLock},
 };
 
-use crate::error::Error;
-
-/// E Error
-/// I Index (Last accessed peer idx)
-pub enum HandleStatus<I, E> {
+pub enum HandleError {
     NoAvailablePeer,
 
-    IllegalEndpoint(E),
+    IllegalEndpoint(String),
 
-    IllegalPeerFound(I),
+    IllegalPeerFound(usize),
 
     LocalAddrIdentical,
 
-    ConnectionFail(E),
+    ConnectionFail(String),
 
-    WhoAreYouInitiateFail(E),
+    WhoAreYouInitiateFail(String),
 
-    WhoAreYouAckReceiveFail(E),
+    WhoAreYouAckReceiveFail(String),
 
-    PeerUpdateFail(E),
-
-    Success(I),
+    PeerUpdateFail(String),
 }
 
 pub struct Handler {
@@ -85,7 +79,7 @@ impl Handler {
     //     Ok(endpoint)
     // }
 
-    pub async fn run(&self) -> HandleStatus<usize, Error> {
+    pub async fn run(&self) -> Result<usize, HandleError> {
         let mut last_peer_idx = self.last_peer_idx.lock().await;
 
         // let peer_store = self.peer_store.clone();
@@ -150,7 +144,7 @@ impl Handler {
         //     Err(err) => return HandleStatus::PeerUpdateFail(err),
         // };
 
-        HandleStatus::Success(0)
+        Ok(0)
     }
 
     // pub async fn initiate_who_are_you(

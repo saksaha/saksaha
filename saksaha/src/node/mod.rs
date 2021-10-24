@@ -3,7 +3,7 @@ pub mod error;
 
 use crate::{
     node::status::Status,
-    p2p::host::{self, Host, HostError},
+    p2p::host::{Host, HostError},
     pconfig::PConfig,
     process::Process,
     rpc::{self, RPC},

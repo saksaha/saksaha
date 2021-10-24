@@ -1,24 +1,24 @@
 use super::{
     credential::Credential,
     dialer::Dialer,
+    error::P2PError,
     listener::{self, Listener},
 };
-use crate::{p2p::listener::error::ListenerError, pconfig::PersistedP2PConfig, peer::peer_store::PeerStore, process::Process};
+use crate::{
+    p2p::listener::error::ListenerError, pconfig::PersistedP2PConfig,
+    peer::peer_store::PeerStore, process::Process,
+};
 use futures::stream::{FuturesOrdered, FuturesUnordered};
 use logger::log;
 use saksaha_discovery::Disc;
 use std::sync::Arc;
+use thiserror::Error;
 use tokio::sync::{mpsc, Mutex};
-
-pub enum HostError {
-    Launched,
-    SetupFail(String),
-}
 
 pub struct Host {}
 
 impl Host {
-    pub fn new() -> Result<Host, HostError> {
+    pub fn new() -> Result<Host, P2PError> {
         let host = Host {};
 
         Ok(host)
@@ -26,7 +26,7 @@ impl Host {
 
     fn make_credential(
         p2p_config: PersistedP2PConfig,
-    ) -> Result<Credential, HostError> {
+    ) -> Result<Credential, String> {
         let secret = p2p_config.secret.to_owned();
         let public_key = p2p_config.public_key.to_owned();
 
@@ -38,7 +38,7 @@ impl Host {
         Ok(credential)
     }
 
-    fn make_peer_store() -> Result<PeerStore, HostError> {
+    fn make_peer_store() -> Result<PeerStore, P2PError> {
         let peer_store = match PeerStore::new(10) {
             Ok(p) => p,
             Err(err) => return Err(err),
@@ -54,7 +54,7 @@ impl Host {
         disc_port: Option<u16>,
         bootstrap_urls: Option<Vec<String>>,
         default_bootstrap_urls: &str,
-    ) -> Result<(), HostError> {
+    ) -> Result<(), P2PError> {
         let credential = match Host::make_credential(p2p_config) {
             Ok(c) => Arc::new(c),
             Err(err) => return Err(err),
@@ -75,9 +75,9 @@ impl Host {
                 ListenerError::SetupFail(err) => {
                     log!(DEBUG, "Couldn't start listener, err: {}\n", err);
 
-                    return Err(HostError::SetupFail(err.to_string()));
+                    return Err(P2PError::SetupFail(err.to_string()));
                 }
-            }
+            },
         };
 
         let disc = Disc::new();
@@ -91,9 +91,9 @@ impl Host {
             )
             .await
         {
-            saksaha_discovery::Status::Launched(table) => (table),
-            saksaha_discovery::Status::SetupFailed(err) => {
-                return ListenerError::SetupFail(err);
+            Ok(table) => table,
+            Err(err) => {
+                return Err(P2PError::SetupFail(err));
             }
         };
 
@@ -119,6 +119,6 @@ impl Host {
         //     }
         // };
 
-        HostStatus::Launched
+        Ok(())
     }
 }
