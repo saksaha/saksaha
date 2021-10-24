@@ -1,5 +1,4 @@
 use super::{Peer, Status};
-use crate::{common::Result, err};
 use logger::log;
 use std::sync::Arc;
 use tokio::sync::{Mutex, OwnedMutexGuard};
@@ -26,12 +25,14 @@ impl PeerStore {
     pub fn new(
         capacity: usize,
         // bootstrap_urls: Option<Vec<String>>,
-    ) -> Result<PeerStore> {
+    ) -> Result<PeerStore, String> {
         // let mut slots = Vec::with_capacity(capacity);
         let slots = Arc::new(Mutex::new(Vec::with_capacity(capacity)));
         let mut slots_guard = match slots.try_lock() {
             Ok(s) => s,
-            Err(err) => return err!("Cannot acquire slots, err: {}\n", err),
+            Err(err) => {
+                return Err(format!("Cannot acquire slots, err: {}\n", err))
+            }
         };
 
         // let bootstrap_urls = match bootstrap_urls {

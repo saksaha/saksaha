@@ -1,9 +1,10 @@
-pub mod status;
 pub mod error;
+pub mod status;
 
+use self::error::NodeError;
 use crate::{
     node::status::Status,
-    p2p::host::{Host, HostError},
+    p2p::host::Host,
     pconfig::PConfig,
     process::Process,
     rpc::{self, RPC},
@@ -11,7 +12,6 @@ use crate::{
 use logger::log;
 use std::sync::Arc;
 use tokio::{self, signal};
-use self::error::NodeError;
 
 pub struct Node {}
 
@@ -31,22 +31,16 @@ impl Node {
         let rpc = RPC::new(rpc_port);
 
         let p2p_config = pconfig.p2p;
-        let host = match Host::new() {
-            Ok(h) => h,
-            Err(err) => return Err(NodeError::InitError(err)),
-        };
+        let host = Host::new();
 
-        let rpc_status = tokio::spawn(async move {
-            return rpc.start().await;
-        });
-
-        let rpc_port: u16 = match rpc_status.await {
-            Ok(status) => match status {
-                rpc::Status::Launched(port) => port,
-                rpc::Status::SetupFailed(err) => return Err(err),
-            },
+        let rpc_started = rpc.start();
+        let rpc_port: u16 = match rpc_started.await {
+            Ok(port) => port,
             Err(err) => {
-                return Err(Error::Default(format!("Error joining rpc start thread, err: {}", err)));
+                return Err(NodeError::SetupFail(format!(
+                    "Error joining rpc start thread, err: {}",
+                    err
+                )));
             }
         };
 
@@ -60,7 +54,7 @@ impl Node {
 
         match host_started.await {
             Ok(_) => (),
-            HostError::SetupFail(err) => return Err(err),
+            Err(err) => return Err(NodeError::SetupFail(err)),
         };
 
         Ok(())
@@ -73,14 +67,14 @@ impl Node {
         bootstrap_endpoints: Option<Vec<String>>,
         pconfig: PConfig,
         default_bootstrap_urls: &str,
-    ) -> Status<Error> {
+    ) -> Result<(), String> {
         log!(DEBUG, "Start node...\n");
 
         let runtime = tokio::runtime::Builder::new_multi_thread()
             .enable_all()
             .build();
 
-        let node_status = match runtime {
+        match runtime {
             Ok(r) => r.block_on(async {
                 let started = self.start_components(
                     rpc_port,
@@ -122,11 +116,12 @@ impl Node {
                 return Status::Launched;
             }),
             Err(err) => {
-                return Status::SetupFailed(err.into());
+                let msg = format!("runtime fail, err: {:?}", err);
+                return Err(msg);
             }
         };
 
-        node_status
+        Ok(())
     }
 
     pub fn persist_state(&self) {

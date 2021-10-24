@@ -1,4 +1,3 @@
-use super::error::P2PError;
 use crypto::Crypto;
 use k256::{elliptic_curve::sec1::ToEncodedPoint, SecretKey};
 use saksaha_discovery::identity::Identity;

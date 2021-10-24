@@ -3,8 +3,6 @@ use std::sync::Arc;
 use clap::{App, Arg};
 use logger::log;
 use saksaha::{
-    common::Result,
-    err,
     node::{status::Status, Node},
     pconfig::PConfig,
     process::Process,
@@ -20,7 +18,7 @@ struct Args {
     bootstrap_endpoints: Option<Vec<String>>,
 }
 
-fn get_args() -> Result<Args> {
+fn get_args() -> Result<Args, String> {
     let flags = App::new("Saksaha rust")
         .version("0.1")
         .author("Saksaha <team@saksaha.com>")
@@ -66,7 +64,10 @@ fn get_args() -> Result<Args> {
         Some(p) => match p.parse::<u16>() {
             Ok(p) => Some(p),
             Err(err) => {
-                return err!("Cannot parse rpc port (u16), err: {}", err);
+                return Err(format!(
+                    "Cannot parse rpc port (u16), err: {}",
+                    err
+                ));
             }
         },
         None => None,
@@ -76,7 +77,10 @@ fn get_args() -> Result<Args> {
         Some(p) => match p.parse::<u16>() {
             Ok(p) => Some(p),
             Err(err) => {
-                return err!("Cannot parse the disc port (u16), err: {}", err);
+                return Err(format!(
+                    "Cannot parse the disc port (u16), err: {}",
+                    err
+                ))
             }
         },
         None => None,
@@ -117,10 +121,9 @@ fn main() {
         pconf,
         DEFAULT_BOOTSTRAP_URLS,
     ) {
-        Status::Launched => (),
-        Status::SetupFailed(err) => {
+        Ok(_) => (),
+        Err(err) => {
             log!(DEBUG, "Error starting a node, err: {}\n", err);
-
             std::process::exit(1);
         }
     };

@@ -1,7 +1,7 @@
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum P2PError {
-    #[error("Error setting up p2p")]
+pub enum HostError {
+    #[error("Error setting up p2p, {0}")]
     SetupFail(String),
 }

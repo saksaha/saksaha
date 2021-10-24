@@ -1,15 +1,11 @@
 pub mod peer_store;
 
-use crate::{
-    common::{Error, Result},
-    err,
-};
 use logger::log;
 
 const MAX_FAIL_COUNT: usize = 3;
 
 #[derive(Debug, PartialEq)]
-pub enum Status<E> {
+pub enum Status {
     Empty,
 
     NotInitialized,
@@ -18,7 +14,7 @@ pub enum Status<E> {
 
     HandshakeSuccess,
 
-    HandshakeFail(E),
+    HandshakeFail(String),
 }
 
 #[derive(Debug)]
@@ -29,7 +25,7 @@ pub struct Peer {
     pub public_key_bytes: [u8; 65],
     pub rpc_port: u16,
     pub peer_id: String,
-    pub status: Status<Error>,
+    pub status: Status,
     pub fail_count: usize,
     pub url: String,
 }
@@ -49,7 +45,7 @@ impl Peer {
         }
     }
 
-    pub fn parse(url: String) -> Result<Peer> {
+    pub fn parse(url: String) -> Result<Peer, String> {
         let (peer_id, ip, disc_port) = {
             match url.get(6..) {
                 Some(u) => match u.split_once('@') {
@@ -61,16 +57,21 @@ impl Peer {
                                 port.to_string(),
                             ),
                             None => {
-                                return err!("url may have illegal ip or port");
+                                return Err(format!(
+                                    "url may have illegal ip or port"
+                                ));
                             }
                         }
                     }
                     None => {
-                        return err!("url is not valid, url: {}", url);
+                        return Err(format!("url is not valid, url: {}", url));
                     }
                 },
                 None => {
-                    return err!("url might be too short, url: {}", url);
+                    return Err(format!(
+                        "url might be too short, url: {}",
+                        url
+                    ));
                 }
             }
         };
@@ -78,10 +79,10 @@ impl Peer {
         let disc_port = match disc_port.parse::<u16>() {
             Ok(d) => d,
             Err(err) => {
-                return err!(
+                return Err(format!(
                     "disc port cannot be converted to u16, err: {}",
                     err
-                )
+                ));
             }
         };
 
