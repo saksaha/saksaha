@@ -4,33 +4,31 @@ use super::{
     listener::{self, Listener},
 };
 use crate::{
-    common::{Error, Result},
-    err,
-    pconfig::PersistedP2PConfig,
-    peer::peer_store::PeerStore,
-    process::Process,
+    pconfig::PersistedP2PConfig, peer::peer_store::PeerStore, process::Process,
 };
 use futures::stream::{FuturesOrdered, FuturesUnordered};
 use logger::log;
+use saksaha_discovery::Disc;
 use std::sync::Arc;
 use tokio::sync::{mpsc, Mutex};
 
-pub enum HostStatus<E> {
+pub enum HostError {
     Launched,
-
-    SetupFailed(E),
+    SetupFailed(String),
 }
 
 pub struct Host {}
 
 impl Host {
-    pub fn new() -> Result<Host> {
+    pub fn new() -> Result<Host, HostError> {
         let host = Host {};
 
         Ok(host)
     }
 
-    fn make_credential(p2p_config: PersistedP2PConfig) -> Result<Credential> {
+    fn make_credential(
+        p2p_config: PersistedP2PConfig,
+    ) -> Result<Credential, HostError> {
         let secret = p2p_config.secret.to_owned();
         let public_key = p2p_config.public_key.to_owned();
 
@@ -42,7 +40,7 @@ impl Host {
         Ok(credential)
     }
 
-    fn make_peer_store() -> Result<PeerStore> {
+    fn make_peer_store() -> Result<PeerStore, HostError> {
         let peer_store = match PeerStore::new(10) {
             Ok(p) => p,
             Err(err) => return Err(err),
@@ -58,15 +56,15 @@ impl Host {
         disc_port: Option<u16>,
         bootstrap_urls: Option<Vec<String>>,
         default_bootstrap_urls: &str,
-    ) -> HostStatus<Error> {
+    ) -> Result<(), HostError> {
         let credential = match Host::make_credential(p2p_config) {
             Ok(c) => Arc::new(c),
-            Err(err) => return HostStatus::SetupFailed(err),
+            Err(err) => return Err(err),
         };
 
         let peer_store = match Host::make_peer_store() {
             Ok(p) => Arc::new(p),
-            Err(err) => return HostStatus::SetupFailed(err),
+            Err(err) => return Err(err),
         };
 
         let p2p_listener = Listener::new();
@@ -78,27 +76,26 @@ impl Host {
             listener::Status::SetupFailed(err) => {
                 log!(DEBUG, "Couldn't start listener, err: {}\n", err);
 
-                return HostStatus::SetupFailed(err);
+                return Err(err);
             }
         };
 
-        // let disc = Disc::new();
-        // let table = match disc
-        //     .start(
-        //         disc_port,
-        //         p2p_listener_port,
-        //         peer_store.clone(),
-        //         credential.clone(),
-        //         bootstrap_urls,
-        //         default_bootstrap_urls,
-        //     )
-        //     .await
-        // {
-        //     discovery::Status::Launched(table) => (table),
-        //     discovery::Status::SetupFailed(err) => {
-        //         return HostStatus::SetupFailed(err);
-        //     }
-        // };
+        let disc = Disc::new();
+        let table = match disc
+            .start(
+                disc_port,
+                p2p_listener_port,
+                credential.clone(),
+                bootstrap_urls,
+                default_bootstrap_urls,
+            )
+            .await
+        {
+            saksaha_discovery::Status::Launched(table) => (table),
+            saksaha_discovery::Status::SetupFailed(err) => {
+                return HostStatus::SetupFailed(err);
+            }
+        };
 
         // let dialer = Dialer::new(table);
         // dialer.schedule();

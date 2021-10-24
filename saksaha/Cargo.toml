@@ -10,6 +10,7 @@ default-run = "sak"
 logger = { path = "../logger" }
 crypto = { path = "../crypto" }
 saksaha_proofs = { path = "../saksaha_proofs" }
+saksaha_discovery = { path = "../saksaha_discovery" }
 clap = "3.0.0-beta.4"
 directories = "3.0"
 k256 = { version = "0.9.6", features = ["ecdh"] }
@@ -20,6 +21,7 @@ rand = "0.8.4"
 tokio = { version = "1.12.0", features = ["full"] }
 futures = "0.3.17"
 once_cell = "1.8.0"
+thiserror = "1.0"
 
 [[bin]]
 name = "sak"

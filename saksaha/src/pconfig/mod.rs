@@ -1,11 +1,13 @@
+pub mod error;
 pub mod fs;
 
-use crate::{common::Result, err};
 use crypto::Crypto;
 use fs::FS;
 use logger::log;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+
+use self::error::PConfigError;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct PConfig {
@@ -19,7 +21,9 @@ pub struct PersistedP2PConfig {
 }
 
 impl PConfig {
-    pub fn from_path(config_path: Option<String>) -> Result<PConfig> {
+    pub fn from_path(
+        config_path: Option<String>,
+    ) -> Result<PConfig, PConfigError> {
         let config_path = match config_path {
             Some(c) => c,
             None => {
@@ -35,23 +39,12 @@ impl PConfig {
 
                     return FS::load(default_path);
                 } else {
-                    let pconfig = match PConfig::new() {
-                        Ok(p) => p,
-                        Err(err) => {
-                            return err!(
-                                "Error initializing pconfig, err: {}",
-                                err
-                            );
-                        }
-                    };
+                    let pconfig = PConfig::new();
 
                     let pconf = match FS::persist(pconfig) {
                         Ok(p) => p,
                         Err(err) => {
-                            return err!(
-                                "Cannot persist pconfig, err: {}",
-                                err
-                            );
+                            return Err(PConfigError::PersistError);
                         }
                     };
 
@@ -64,7 +57,7 @@ impl PConfig {
         FS::load(config_path)
     }
 
-    fn new() -> Result<PConfig> {
+    fn new() -> PConfig {
         log!(DEBUG, "Creating a new config\n");
 
         let sk = Crypto::generate_key();
@@ -76,6 +69,6 @@ impl PConfig {
             },
         };
 
-        Ok(pconf)
+        pconf
     }
 }

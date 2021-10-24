@@ -1,13 +1,18 @@
-mod address;
-mod connection_pool;
 pub mod dial;
 pub mod listener;
 pub mod msg;
+pub mod task;
+mod address;
+mod connection_pool;
 mod ops;
 mod table;
-pub mod task;
 
-use self::{connection_pool::ConnectionPool, listener::Listener, table::Table, task::queue::TaskQueue};
+use crate::identity::Identity;
+
+use self::{
+    connection_pool::ConnectionPool, listener::Listener,
+    table::Table, task::queue::TaskQueue,
+};
 use super::error::Error;
 use logger::log;
 use std::sync::Arc;
@@ -42,6 +47,7 @@ impl Disc {
         &self,
         port: Option<u16>,
         p2p_listener_port: u16,
+        id: Arc<impl Identity>,
         // peer_store: Arc<PeerStore>,
         // credential: Arc<Credential>,
         bootstrap_urls: Option<Vec<String>>,
@@ -152,3 +158,4 @@ impl Disc {
     //     }
     // }
 }
+
