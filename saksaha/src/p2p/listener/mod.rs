@@ -1,4 +1,4 @@
-mod error;
+pub mod error;
 
 use crate::{
     p2p::{credential::Credential, listener::error::ListenerError},

@@ -2,30 +2,24 @@ pub mod dial;
 pub mod listener;
 pub mod msg;
 pub mod task;
+pub mod error;
 mod address;
 mod connection_pool;
 mod ops;
 mod table;
 
-use crate::identity::Identity;
+use crate::{DiscoveryError, identity::Identity};
 
 use self::{
     connection_pool::ConnectionPool, listener::Listener,
     table::Table, task::queue::TaskQueue,
 };
-use super::error::Error;
 use logger::log;
 use std::sync::Arc;
 use tokio::sync::{
     mpsc::{self, Receiver, Sender},
     Mutex,
 };
-
-pub enum Status<T, E> {
-    Launched(T),
-
-    SetupFailed(E),
-}
 
 pub struct Disc {
     pub task_queue: Arc<TaskQueue>,
@@ -52,10 +46,10 @@ impl Disc {
         // credential: Arc<Credential>,
         bootstrap_urls: Option<Vec<String>>,
         default_bootstrap_urls: &str,
-    ) -> Status<Table, Error> {
+    ) -> Result<Table, DiscoveryError> {
         let table = match Table::init(bootstrap_urls, default_bootstrap_urls) {
             Ok(t) => t,
-            Err(err) => return Status::SetupFailed(err),
+            Err(err) => return Err(DiscoveryError::SetupFail(err.to_string())),
         };
 
         let listener = Listener::new();

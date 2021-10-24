@@ -3,9 +3,7 @@ use super::{
     dialer::Dialer,
     listener::{self, Listener},
 };
-use crate::{
-    pconfig::PersistedP2PConfig, peer::peer_store::PeerStore, process::Process,
-};
+use crate::{p2p::listener::error::ListenerError, pconfig::PersistedP2PConfig, peer::peer_store::PeerStore, process::Process};
 use futures::stream::{FuturesOrdered, FuturesUnordered};
 use logger::log;
 use saksaha_discovery::Disc;
@@ -14,7 +12,7 @@ use tokio::sync::{mpsc, Mutex};
 
 pub enum HostError {
     Launched,
-    SetupFailed(String),
+    SetupFail(String),
 }
 
 pub struct Host {}
@@ -72,11 +70,13 @@ impl Host {
             .start(None, peer_store.clone(), rpc_port, credential.clone())
             .await
         {
-            listener::Status::Launched(port) => port,
-            listener::Status::SetupFailed(err) => {
-                log!(DEBUG, "Couldn't start listener, err: {}\n", err);
+            Ok(port) => port,
+            Err(err) => match err {
+                ListenerError::SetupFail(err) => {
+                    log!(DEBUG, "Couldn't start listener, err: {}\n", err);
 
-                return Err(err);
+                    return Err(HostError::SetupFail(err.to_string()));
+                }
             }
         };
 
@@ -93,7 +93,7 @@ impl Host {
         {
             saksaha_discovery::Status::Launched(table) => (table),
             saksaha_discovery::Status::SetupFailed(err) => {
-                return HostStatus::SetupFailed(err);
+                return ListenerError::SetupFail(err);
             }
         };
 
