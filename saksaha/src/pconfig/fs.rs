@@ -1,8 +1,5 @@
-use crate::common::{
-    Result,
-};
+use crate::pconfig::error::PConfigError;
 use crate::pconfig::PConfig;
-use crate::{err};
 use directories::ProjectDirs;
 use logger::log;
 use std::fs;
@@ -17,11 +14,11 @@ impl FS {
         FS {}
     }
 
-    pub fn persist(pconfig: PConfig) -> Result<PConfig> {
+    pub fn persist(pconfig: PConfig) -> Result<PConfig, PConfigError> {
         let serialized = match serde_json::to_string_pretty(&pconfig) {
             Ok(s) => s,
             Err(err) => {
-                return err!("Cannot serialize configuration, err: {}", err);
+                return Err(PConfigError::SerializationFail(err.to_string()));
             }
         };
 
@@ -29,49 +26,40 @@ impl FS {
         let config_path = app_path.join(CONFIG_FILE_NAME).to_owned();
 
         if config_path.exists() {
-            return err!("Config file already exists, something is wrong");
+            return Err(PConfigError::PathNotFound(config_path));
         }
 
         log!(DEBUG, "Writing a config, at: {:?}\n", config_path);
 
         match fs::write(config_path.to_owned(), serialized) {
-            Ok(_) => {
-                Ok(pconfig)
-            },
-            Err(err) => err!("Error writing the config, err: {}", err),
+            Ok(_) => Ok(pconfig),
+            Err(err) => Err(PConfigError::ConfigWriteFail(err.to_string())),
         }
     }
 
-    pub fn load(path: PathBuf) -> Result<PConfig> {
+    pub fn load(path: PathBuf) -> Result<PConfig, PConfigError> {
         log!(DEBUG, "Load configuration, path: {:?}\n", path);
 
         if !path.exists() {
-            return err!(
-                "Config does not exist at path: {:?}\n",
-                path
-            );
+            return Err(PConfigError::PathNotFound(path));
         }
 
         let file = match fs::read_to_string(path.to_owned()) {
             Ok(f) => f,
             Err(err) => {
-                return err!(
-                    "Error reading file, path: {:?}, err: {}",
-                    path,
-                    err
-                );
+                return Err(PConfigError::ReadFail(err.to_string()));
             }
         };
 
         match serde_json::from_str(file.as_str()) {
             Ok(pconf) => return Ok(pconf),
             Err(err) => {
-                return err!("Error deserializing config, err: {}", err);
+                return Err(PConfigError::SerializationFail(err.to_string()));
             }
         }
     }
 
-    pub fn get_default_path() -> Result<PathBuf> {
+    pub fn get_default_path() -> Result<PathBuf, PConfigError> {
         let app_path = create_or_get_app_path()?;
         let config_path = app_path.join(CONFIG_FILE_NAME);
 
@@ -79,7 +67,7 @@ impl FS {
     }
 }
 
-fn create_or_get_app_path() -> Result<PathBuf> {
+fn create_or_get_app_path() -> Result<PathBuf, PConfigError> {
     if let Some(dir) = ProjectDirs::from("com", "Saksaha", "Saksaha") {
         let app_path = dir.config_dir();
         if !app_path.exists() {
@@ -88,12 +76,16 @@ fn create_or_get_app_path() -> Result<PathBuf> {
                     return Ok(app_path.to_path_buf());
                 }
                 Err(err) => {
-                    return err!("Error creating a path, {}", err);
+                    return Err(PConfigError::PathCreationFail(
+                        err.to_string(),
+                    ));
                 }
             }
         }
         return Ok(app_path.to_path_buf());
     } else {
-        return err!("Error forming an app path");
+        return Err(PConfigError::PathCreationFail(
+            "couldn't form the right".into(),
+        ));
     }
 }

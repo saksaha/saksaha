@@ -1,5 +1,6 @@
 use crypto::Crypto;
 use k256::{elliptic_curve::sec1::ToEncodedPoint, SecretKey};
+use saksaha_discovery::identity::Identity;
 use crate::{common::Result, err};
 
 pub struct Credential {
@@ -58,5 +59,11 @@ impl Credential {
         };
 
         Ok(credential)
+    }
+}
+
+impl Identity for Credential {
+    fn public_key() {
+
     }
 }

@@ -1,10 +1,9 @@
 pub mod status;
+pub mod error;
 
 use crate::{
     node::status::Status,
-    common::{Error, Result},
-    err,
-    p2p::host::{self, Host, HostStatus},
+    p2p::host::{self, Host, HostError},
     pconfig::PConfig,
     process::Process,
     rpc::{self, RPC},
@@ -12,6 +11,7 @@ use crate::{
 use logger::log;
 use std::sync::Arc;
 use tokio::{self, signal};
+use self::error::NodeError;
 
 pub struct Node {}
 
@@ -27,13 +27,13 @@ impl Node {
         bootstrap_endpoints: Option<Vec<String>>,
         pconfig: PConfig,
         default_bootstrap_urls: &str,
-    ) -> Result<()> {
+    ) -> Result<(), NodeError> {
         let rpc = RPC::new(rpc_port);
 
         let p2p_config = pconfig.p2p;
         let host = match Host::new() {
             Ok(h) => h,
-            Err(err) => return Err(err),
+            Err(err) => return Err(NodeError::InitError(err)),
         };
 
         let rpc_status = tokio::spawn(async move {
@@ -46,7 +46,7 @@ impl Node {
                 rpc::Status::SetupFailed(err) => return Err(err),
             },
             Err(err) => {
-                return err!("Error joining rpc start thread, err: {}", err);
+                return Err(Error::Default(format!("Error joining rpc start thread, err: {}", err)));
             }
         };
 

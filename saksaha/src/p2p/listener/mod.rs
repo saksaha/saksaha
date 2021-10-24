@@ -1,17 +1,14 @@
-mod status;
+mod error;
 
-pub use status::Status;
-use crate::{common::{Error, Result}, err, p2p::{
-        credential::Credential,
-    }, peer::peer_store::PeerStore};
+use crate::{
+    p2p::{credential::Credential, listener::error::ListenerError},
+    peer::peer_store::PeerStore,
+};
 use logger::log;
 use std::sync::Arc;
 use tokio::{
     net::TcpListener,
-    sync::{
-        mpsc::{Receiver},
-        Mutex,
-    },
+    sync::{mpsc::Receiver, Mutex},
 };
 
 pub struct Listener;
@@ -27,7 +24,7 @@ impl Listener {
         peer_store: Arc<PeerStore>,
         rpc_port: u16,
         credential: Arc<Credential>,
-    ) -> Status<u16, Error> {
+    ) -> Result<u16, ListenerError> {
         let port = match port {
             Some(p) => p,
             None => 0,
@@ -35,28 +32,23 @@ impl Listener {
 
         let local_addr = format!("127.0.0.1:{}", port);
 
-        let (_, local_addr) =
-            match TcpListener::bind(local_addr).await {
-                Ok(listener) => match listener.local_addr() {
-                    Ok(local_addr) => {
-                        // log!(DEBUG, "Listener created, addr: {}\n", local_addr);
+        let (_, local_addr) = match TcpListener::bind(local_addr).await {
+            Ok(listener) => match listener.local_addr() {
+                Ok(local_addr) => {
+                    // log!(DEBUG, "Listener created, addr: {}\n", local_addr);
 
-                        (listener, local_addr)
-                    }
-                    Err(err) => {
-                        return Status::SetupFailed(err.into())
-                    },
-                },
-                Err(err) => return Status::SetupFailed(err.into()),
-            };
+                    (listener, local_addr)
+                }
+                Err(err) => {
+                    return Err(ListenerError::SetupFail(err.to_string()))
+                }
+            },
+            Err(err) => return Err(ListenerError::SetupFail(err.to_string())),
+        };
 
-        log!(
-            DEBUG,
-            "Started - P2P listener, addr: {}\n",
-            local_addr
-        );
+        log!(DEBUG, "Started - P2P listener, addr: {}\n", local_addr);
 
-        Status::Launched(local_addr.port())
+        Ok(local_addr.port())
     }
 
     // async fn new_tcp(port: Option<u16>) -> Result<(TcpListener, u16)> {
