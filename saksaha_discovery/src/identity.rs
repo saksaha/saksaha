@@ -1,3 +1,3 @@
 pub trait Identity {
-    fn public_key();
+    fn public_key(&self);
 }

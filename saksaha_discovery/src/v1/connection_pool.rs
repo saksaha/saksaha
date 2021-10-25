@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use tokio::sync::Mutex;
 
 pub enum Traffic {
@@ -7,11 +7,7 @@ pub enum Traffic {
 }
 
 pub struct ConnectionPool {
-    map: Mutex<HashMap<String, Connection>>,
-}
-
-pub struct Connection {
-    traffic: Traffic,
+    map: Mutex<HashMap<String, Traffic>>,
 }
 
 impl ConnectionPool {
@@ -31,15 +27,13 @@ impl ConnectionPool {
         &self,
         peer_ip: String,
         traffic: Traffic,
-    ) -> Option<Connection> {
+    ) -> Option<Traffic> {
         let mut map = self.map.lock().await;
 
-        let conn = Connection { traffic };
-
-        return map.insert(peer_ip, conn);
+        return map.insert(peer_ip, traffic);
     }
 
-    pub async fn remove(&self, peer_id: &String) -> Option<Connection> {
+    pub async fn remove(&self, peer_id: &String) -> Option<Traffic> {
         let mut map = self.map.lock().await;
 
         map.remove(peer_id)

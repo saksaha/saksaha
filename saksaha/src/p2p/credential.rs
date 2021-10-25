@@ -65,5 +65,7 @@ impl Credential {
 }
 
 impl Identity for Credential {
-    fn public_key() {}
+    fn public_key(&self) {
+
+    }
 }

@@ -1,48 +1,77 @@
-use log::{debug, warn};
-use super::handler::{HandleError, Handler};
+mod handler;
+
+use crate::{
+    identity::Identity,
+    v1::{dial_scheduler::handler::HandleError, table::Table},
+};
+use handler::Handler;
+use log::{debug, info, warn};
 use std::{
     sync::Arc,
     time::{Duration, SystemTime},
 };
-use tokio::sync::{mpsc::Sender, Mutex};
+use tokio::sync::{
+    mpsc::{Receiver, Sender},
+    Mutex,
+};
+
+pub struct DialScheduler {}
+
+impl DialScheduler {
+    pub fn new() -> DialScheduler {
+        DialScheduler {}
+    }
+
+    pub fn run_loop(
+        &self,
+        id: Arc<dyn Identity>,
+        my_disc_port: u16,
+        my_peer_op_port: u16,
+        table: Arc<Table>,
+    ) -> Result<(), String> {
+        let routine =
+            Arc::new(Routine::new(id, my_peer_op_port, my_disc_port, table));
+
+        let routine_clone = routine.clone();
+        routine_clone.run();
+
+        info!("Started - Discovery dial scheduler");
+
+        Ok(())
+    }
+}
 
 pub struct Routine {
-    // peer_store: Arc<PeerStore>,
-    // credential: Arc<Credential>,
-    peer_op_port: u16,
+    id: Arc<dyn Identity>,
+    my_p2p_listener_port: u16,
+    my_disc_port: u16,
     is_running: Arc<Mutex<bool>>,
-    disc_port: u16,
-    last_peer_idx: Arc<Mutex<usize>>,
+    table: Arc<Table>,
 }
 
 impl Routine {
     pub fn new(
-        // peer_store: Arc<PeerStore>,
-        // credential: Arc<Credential>,
-        peer_op_port: u16,
-        disc_port: u16,
+        id: Arc<dyn Identity>,
+        my_disc_port: u16,
+        my_p2p_listener_port: u16,
+        table: Arc<Table>,
     ) -> Routine {
         let is_running = Arc::new(Mutex::new(false));
 
         Routine {
-            // peer_store,
-            // credential,
-            peer_op_port,
-            last_peer_idx: Arc::new(Mutex::new(0)),
+            id,
+            my_disc_port,
+            my_p2p_listener_port,
             is_running,
-            disc_port,
+            table,
         }
     }
 
     pub fn run(&self) {
-        debug!("Start dial - disc");
-
-        // let peer_store = self.peer_store.clone();
-        // let credential = self.credential.clone();
         let is_running = self.is_running.clone();
-        let peer_op_port = self.peer_op_port;
-        let last_peer_idx = self.last_peer_idx.clone();
-        let disc_port = self.disc_port;
+        let my_disc_port = self.my_disc_port;
+        let my_p2p_listener_port = self.my_p2p_listener_port;
+        let table = self.table.clone();
 
         tokio::spawn(async move {
             let mut is_running_lock = is_running.lock().await;
@@ -51,16 +80,14 @@ impl Routine {
 
             loop {
                 let start = SystemTime::now();
-
-                let handler = Handler::new(
-                    // peer_store.clone(),
-                    // credential.clone(),
-                    peer_op_port,
-                    disc_port,
-                    last_peer_idx.clone(),
+                let handler = Handler::new();
+                let handler_run = handler.run(
+                    my_disc_port,
+                    my_p2p_listener_port,
+                    table.clone(),
                 );
 
-                match handler.run().await {
+                match handler_run.await {
                     Ok(_) => (),
                     Err(err) => match err {
                         HandleError::IllegalEndpoint(err) => {
@@ -71,20 +98,13 @@ impl Routine {
                         }
                         HandleError::NoAvailablePeer => {
                             warn!("No available peer to discover");
-
                             break;
                         }
                         HandleError::IllegalPeerFound(idx) => {
-                            warn!(
-                                "Illegal peer has been found, idx: {}",
-                                idx,
-                            );
+                            warn!("Illegal peer has been found, idx: {}", idx,);
                         }
                         HandleError::ConnectionFail(err) => {
-                            warn!(
-                                "Disc dial connection fail, err: {}",
-                                err
-                            );
+                            warn!("Disc dial connection fail, err: {}", err);
                         }
                         HandleError::LocalAddrIdentical => (),
                         HandleError::WhoAreYouInitiateFail(err) => {
@@ -102,12 +122,9 @@ impl Routine {
                             );
                         }
                         HandleError::PeerUpdateFail(err) => {
-                            warn!(
-                                "Disc dial peer update fail, err: {}",
-                                err
-                            );
+                            warn!("Disc dial peer update fail, err: {}", err);
                         }
-                    }
+                    },
                 }
 
                 tokio::time::sleep(Duration::from_millis(1000)).await;
@@ -115,12 +132,9 @@ impl Routine {
                 match start.elapsed() {
                     Ok(_) => (),
                     Err(err) => {
-                        warn!(
-                            "Error sleeping the duration, err: {}",
-                            err
-                        );
+                        warn!("Error sleeping the duration, err: {}", err);
                     }
-                }
+                };
             }
 
             let mut is_running_lock = is_running.lock().await;
