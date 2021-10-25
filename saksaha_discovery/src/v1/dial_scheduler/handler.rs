@@ -9,6 +9,8 @@ use tokio::{
     sync::{mpsc::Sender, Mutex, MutexGuard, OwnedMutexGuard, RwLock},
 };
 
+use crate::v1::table::Table;
+
 pub enum HandleError {
     NoAvailablePeer,
 
@@ -27,29 +29,12 @@ pub enum HandleError {
     PeerUpdateFail(String),
 }
 
-pub struct Handler {
-    // peer_store: Arc<PeerStore>,
-    // credential: Arc<Credential>,
-    peer_op_port: u16,
-    disc_port: u16,
-    last_peer_idx: Arc<Mutex<usize>>,
-}
+pub struct Handler {}
 
 impl Handler {
     pub fn new(
-        // peer_store: Arc<PeerStore>,
-        // credential: Arc<Credential>,
-        peer_op_port: u16,
-        disc_port: u16,
-        last_peer_idx: Arc<Mutex<usize>>,
     ) -> Handler {
-        Handler {
-            // peer_store,
-            // credential,
-            peer_op_port,
-            disc_port,
-            last_peer_idx,
-        }
+        Handler {}
     }
 
     // pub fn require_not_my_endpoint(
@@ -78,8 +63,21 @@ impl Handler {
     //     Ok(endpoint)
     // }
 
-    pub async fn run(&self) -> Result<usize, HandleError> {
-        let mut last_peer_idx = self.last_peer_idx.lock().await;
+    pub async fn run(
+        &self,
+        my_disc_port: u16,
+        my_p2p_listener_port: u16,
+        table: Arc<Table>,
+    ) -> Result<usize, HandleError> {
+        println!("11");
+
+        // let t = table.lock().await;
+        // t.next();
+
+        // Table::next(table);
+
+        // table.next().await;
+        // let mut last_peer_idx = self.last_peer_idx.lock().await;
 
         // let peer_store = self.peer_store.clone();
 

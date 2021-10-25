@@ -1,6 +1,6 @@
 mod address;
 mod connection_pool;
-pub mod dial;
+pub mod dial_scheduler;
 pub mod error;
 pub mod listener;
 pub mod msg;
@@ -11,10 +11,8 @@ pub mod task;
 use crate::{identity::Identity, DiscoveryError};
 
 use self::{
-    connection_pool::ConnectionPool,
-    listener::{Listener, ListenerError},
-    table::Table,
-    task::queue::TaskQueue,
+    connection_pool::ConnectionPool, dial_scheduler::DialScheduler,
+    listener::Listener, table::Table, task::queue::TaskQueue,
 };
 use std::sync::Arc;
 use tokio::sync::{
@@ -24,17 +22,17 @@ use tokio::sync::{
 
 pub struct Disc {
     pub task_queue: Arc<TaskQueue>,
-    pub connection_pool: Arc<ConnectionPool>,
+    pub talking: Arc<ConnectionPool>,
 }
 
 impl Disc {
     pub fn new() -> Disc {
         let task_queue = Arc::new(TaskQueue::new());
-        let connection_pool = Arc::new(ConnectionPool::new());
+        let talking = Arc::new(ConnectionPool::new());
 
         Disc {
             task_queue,
-            connection_pool,
+            talking,
         }
     }
 
@@ -42,14 +40,14 @@ impl Disc {
         &self,
         port: Option<u16>,
         p2p_listener_port: u16,
-        id: Arc<impl Identity>,
+        id: Arc<impl Identity + 'static>,
         // peer_store: Arc<PeerStore>,
         // credential: Arc<Credential>,
         bootstrap_urls: Option<Vec<String>>,
         default_bootstrap_urls: &str,
-    ) -> Result<Table, String> {
+    ) -> Result<Arc<Table>, String> {
         let table = match Table::init(bootstrap_urls, default_bootstrap_urls) {
-            Ok(t) => t,
+            Ok(t) => Arc::new(t),
             Err(err) => return Err(err),
         };
 
@@ -61,19 +59,23 @@ impl Disc {
                 // peer_store.clone(),
                 // credential.clone(),
                 self.task_queue.clone(),
-                self.connection_pool.clone(),
+                self.talking.clone(),
             )
             .await
         {
             Ok(port) => port,
-            Err(err) => match err {
-                ListenerError::StartFail(err) => {
-                    return Err(err);
-                }
-            },
+            Err(err) => return Err(err),
         };
 
-        self.task_queue.run_loop();
+        let dial_scheduler = DialScheduler::new();
+        let _ = dial_scheduler.run_loop(
+            id,
+            listener_port,
+            p2p_listener_port,
+            table.clone(),
+        );
+
+        // self.task_queue.run_loop();
 
         // self.enqueue_initial_tasks(bootstrap_urls, default_bootstrap_urls)
         //     .await;

@@ -10,10 +10,6 @@ pub use status::Status;
 use std::{sync::Arc, time::Duration};
 use tokio::net::{TcpListener, TcpStream};
 
-pub enum ListenerError {
-    StartFail(String),
-}
-
 pub struct Listener {}
 
 impl Listener {
@@ -29,7 +25,7 @@ impl Listener {
         // credential: Arc<Credential>,
         task_queue: Arc<TaskQueue>,
         connection_pool: Arc<ConnectionPool>,
-    ) -> Result<u16, ListenerError> {
+    ) -> Result<u16, String> {
         let port = match port {
             Some(p) => p,
             None => 0,
@@ -42,21 +38,16 @@ impl Listener {
         {
             Ok(listener) => match listener.local_addr() {
                 Ok(local_addr) => {
-                    info!(
-                        "Discovery listener bound, addr: {}",
-                        local_addr
-                    );
-
                     (listener, local_addr)
                 }
                 Err(err) => {
-                    return Err(ListenerError::StartFail(err.to_string()))
+                    return Err(err.to_string())
                 }
             },
-            Err(err) => return Err(ListenerError::StartFail(err.to_string())),
+            Err(err) => return Err(err.to_string()),
         };
 
-        debug!("Started - Disc listener, addr: {}", local_addr);
+        debug!("Started - Discovery listener, addr: {}", local_addr);
 
         let routine = Routine::new();
         routine.run(
