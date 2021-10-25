@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
 use clap::{App, Arg};
-use logger::log;
+use log::{error, info};
 use saksaha::{
-    node::{status::Status, Node},
+    node::{Node},
     pconfig::PConfig,
     process::Process,
 };
@@ -100,10 +100,12 @@ fn get_args() -> Result<Args, String> {
 }
 
 fn main() {
+    logger::init();
+
     let args = match get_args() {
         Ok(a) => a,
         Err(err) => {
-            log!(DEBUG, "Error parsing command line arguments, err: {}", err);
+            error!("Can't parse command line arguments, err: {}", err);
 
             std::process::exit(1);
         }
@@ -123,7 +125,7 @@ fn main() {
     ) {
         Ok(_) => (),
         Err(err) => {
-            log!(DEBUG, "Error starting a node, err: {}\n", err);
+            error!("Can't start a node, err: {}", err);
             std::process::exit(1);
         }
     };
@@ -133,9 +135,8 @@ fn make_pconfig(config_path: Option<String>) -> PConfig {
     let pconf = match PConfig::from_path(config_path) {
         Ok(p) => p,
         Err(err) => {
-            log!(
-                DEBUG,
-                "Error creating a persisted configuration, err: {}\n",
+            error!(
+                "Error creating a persisted configuration, err: {}",
                 err
             );
 
@@ -143,6 +144,6 @@ fn make_pconfig(config_path: Option<String>) -> PConfig {
         }
     };
 
-    log!(DEBUG, "Successfully loaded config, {:?}\n", pconf);
+    info!("Successfully loaded config, {:?}", pconf);
     pconf
 }

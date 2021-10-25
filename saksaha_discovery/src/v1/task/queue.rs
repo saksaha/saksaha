@@ -1,9 +1,9 @@
+use log::{debug};
 use std::{sync::Arc, time::Duration};
 use tokio::sync::{
     mpsc::{self, Receiver, Sender},
     Mutex,
 };
-use logger::log;
 use crate::{task::TaskKind};
 
 use super::{Task, TaskError};
@@ -63,7 +63,7 @@ impl TaskQueue {
                 let task = match rx.recv().await {
                     Some(t) => t,
                     None => {
-                        log!(DEBUG, "Cannot receive task any more\n");
+                        debug!("Cannot receive task any more");
                         break;
                     }
                 };

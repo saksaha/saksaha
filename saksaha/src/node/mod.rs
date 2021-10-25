@@ -9,8 +9,8 @@ use crate::{
     process::Process,
     rpc::{self, RPC},
 };
-use logger::log;
 use std::sync::Arc;
+use log::{debug, error, info};
 use tokio::{self, signal};
 
 pub struct Node {}
@@ -68,7 +68,7 @@ impl Node {
         pconfig: PConfig,
         default_bootstrap_urls: &str,
     ) -> Result<(), String> {
-        log!(DEBUG, "Start node...\n");
+        debug!("Start node...");
 
         let runtime = tokio::runtime::Builder::new_multi_thread()
             .enable_all()
@@ -95,13 +95,12 @@ impl Node {
                     c = signal::ctrl_c() => {
                         match c {
                             Ok(_) => {
-                                log!(DEBUG, "ctrl+k is pressed.\n");
+                                debug!("ctrl+k is pressed.");
 
                                 Process::shutdown();
                             },
                             Err(err) => {
-                                log!(
-                                    DEBUG,
+                                error!(
                                     "Unexpected error while waiting for \
                                         ctrl+p, err: {}",
                                     err
@@ -125,6 +124,6 @@ impl Node {
     }
 
     pub fn persist_state(&self) {
-        log!(DEBUG, "Storing state of node\n");
+        info!("Storing state of node");
     }
 }

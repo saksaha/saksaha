@@ -1,6 +1,6 @@
 pub mod peer_store;
 
-use logger::log;
+use log::{debug};
 
 const MAX_FAIL_COUNT: usize = 3;
 
@@ -121,9 +121,8 @@ impl Peer {
         self.fail_count += 1;
 
         if self.fail_count >= MAX_FAIL_COUNT {
-            log!(
-                DEBUG,
-                "Peer fail count reached max, count: {}, peer: {}\n",
+            debug!(
+                "Peer fail count reached max, count: {}, peer: {}",
                 self.fail_count,
                 self.short_url()
             );

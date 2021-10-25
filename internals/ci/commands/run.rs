@@ -28,7 +28,7 @@ impl Commandify for Run {
             let args = [vec!["run", "--release", "-p", "saksaha", "--"], args]
                 .concat();
 
-            log!("Executing `{} {:?}`\n", program, args);
+            log!("Executing `{} {:?}`", program, args);
 
             Command::new(program)
                 .args(args)

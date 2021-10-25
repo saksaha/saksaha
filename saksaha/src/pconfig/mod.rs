@@ -1,12 +1,11 @@
 pub mod error;
 pub mod fs;
 
+use log::{info, debug};
 use crypto::Crypto;
 use fs::FS;
-use logger::log;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
-
 use self::error::PConfigError;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -27,15 +26,14 @@ impl PConfig {
         let config_path = match config_path {
             Some(c) => c,
             None => {
-                log!(
-                    DEBUG,
-                    "Config path is not given, creating a new config\n"
+                info!(
+                    "Config path is not given, creating a new config"
                 );
 
                 let default_path = FS::get_default_path()?;
 
                 if default_path.exists() {
-                    log!(DEBUG, "Found a config at the default location\n");
+                    info!("Found a config at the default location");
 
                     return FS::load(default_path);
                 } else {
@@ -58,7 +56,7 @@ impl PConfig {
     }
 
     fn new() -> PConfig {
-        log!(DEBUG, "Creating a new config\n");
+        debug!("Creating a new config");
 
         let sk = Crypto::generate_key();
         let (sk, pk) = Crypto::encode_into_key_pair(sk);

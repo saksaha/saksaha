@@ -1,5 +1,4 @@
 use k256::ecdsa::{signature::Signer, Signature, SigningKey};
-use logger::log;
 use std::sync::Arc;
 use tokio::{io::AsyncWriteExt, net::TcpStream, sync::OwnedMutexGuard};
 
@@ -106,7 +105,7 @@ impl Handler {
     // pub async fn receive_who_are_you(&mut self) -> Result<WhoAreYouMsg> {
     //     let way = match WhoAreYouMsg::parse(&mut self.stream).await {
     //         Ok(w) => {
-    //             // log!(DEBUG, "Received WhoAreYou, raw: {:?}\n", w.raw);
+    //             // log!(DEBUG, "Received WhoAreYou, raw: {:?}", w.raw);
 
     //             w
     //         }
@@ -169,7 +168,7 @@ impl Handler {
 
     //     log!(
     //         DEBUG,
-    //         "[PeerDiscovered], disc - listen, peer: {}\n",
+    //         "[PeerDiscovered], disc - listen, peer: {}",
     //         peer.short_url(),
     //     );
 

@@ -129,7 +129,7 @@ impl WhoAreYouMsg {
 
         let sig: Signature = match buf[1..1 + sig_len].try_into() {
             Ok(b) => {
-                // log!(DEBUG, "Parsing signature: {:?}\n", b);
+                // log!(DEBUG, "Parsing signature: {:?}", b);
 
                 match Signature::from_der(b) {
                     Ok(s) => s,

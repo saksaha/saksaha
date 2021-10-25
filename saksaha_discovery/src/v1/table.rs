@@ -1,9 +1,8 @@
+use super::address::Address;
 use crate::DiscoveryError;
-use logger::log;
+use log::{debug, warn, info};
 use std::collections::HashMap;
 use tokio::sync::{mpsc, Mutex};
-
-use super::address::Address;
 
 pub struct Table {
     addrs: Mutex<Vec<Address>>,
@@ -30,9 +29,8 @@ impl Table {
         let url_count = urls.len();
 
         if url_count > 0 {
-            log!(
-                DEBUG,
-                "Initializing discovery bootstrap urls, candidates: {}\n",
+            debug!(
+                "Initializing discovery bootstrap urls, candidates: {}",
                 url_count
             );
         }
@@ -43,9 +41,9 @@ impl Table {
                 let addr = match Address::parse(url.clone()) {
                     Ok(a) => a,
                     Err(err) => {
-                        log!(
-                            DEBUG,
-                            "Discarding url failed to parse, url: {}, err: {:?}\n",
+                        warn!(
+                            "Discarding url failed to parse, url: {}, \
+                                err: {:?}",
                             url.clone(),
                             err,
                         );
@@ -54,7 +52,7 @@ impl Table {
                     }
                 };
 
-                log!(DEBUG, "Discovery address [{}], {:?}\n", idx, addr);
+                info!("Discovery address [{}], {:?}", idx, addr);
 
                 v.push(addr);
             }

@@ -22,7 +22,7 @@ impl Listen {
         credential: Arc<Credential>,
         peer_op_listener: TcpListener,
     ) -> Result<()> {
-        log!(DEBUG, "Start listen - handshake\n");
+        log!(DEBUG, "Start listen - handshake");
 
         let dial_loop_tx = disc_wakeup_tx.clone();
         tokio::spawn(async move {

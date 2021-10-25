@@ -27,9 +27,14 @@ impl Commandify for Dev {
             };
             let args = [vec!("run", "-p", "saksaha", "--"), args].concat();
 
-            log!("Executing `{} {:?}`\n", program, args);
+            log!("Executing `{} {:?}`", program, args);
 
             std::env::set_var("RUST_BACKTRACE", "1");
+
+            if std::env::var("LOG_LEVEL").is_err() {
+                log!("LOG_LEVEL env var is not given, setting it to debug");
+                std::env::set_var("LOG_LEVEL", "debug");
+            }
 
             Command::new(program)
                 .args(args)

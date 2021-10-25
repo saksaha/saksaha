@@ -2,7 +2,6 @@ mod handler;
 mod routine;
 
 use handler::Handler;
-use logger::log;
 use routine::Routine;
 use std::{
     sync::Arc,
