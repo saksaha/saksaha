@@ -29,7 +29,7 @@ impl Dial {
         peer_op_wakeup_rx: Arc<Mutex<Receiver<usize>>>,
         peer_store: Arc<PeerStore>,
     ) -> Result<()> {
-        log!(DEBUG, "Start dial - handshake\n");
+        log!(DEBUG, "Start dial - handshake");
 
         let routine = Routine::new(peer_store.clone(), credential.clone());
         routine.run();

@@ -1,19 +1,14 @@
+use log::{error};
 use super::{
     credential::Credential,
-    dialer::Dialer,
-    error::HostError,
     listener::{self, Listener},
 };
 use crate::{
     p2p::listener::error::ListenerError, pconfig::PersistedP2PConfig,
-    peer::peer_store::PeerStore, process::Process,
+    peer::peer_store::PeerStore,
 };
-use futures::stream::{FuturesOrdered, FuturesUnordered};
-use logger::log;
 use saksaha_discovery::Disc;
 use std::sync::Arc;
-use thiserror::Error;
-use tokio::sync::{mpsc, Mutex};
 
 pub struct Host {}
 
@@ -72,7 +67,7 @@ impl Host {
             Ok(port) => port,
             Err(err) => match err {
                 ListenerError::SetupFail(err) => {
-                    log!(DEBUG, "Couldn't start listener, err: {}\n", err);
+                    error!("Couldn't start listener, err: {}", err);
 
                     return Err(err);
                 }

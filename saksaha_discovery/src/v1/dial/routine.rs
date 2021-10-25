@@ -1,5 +1,5 @@
+use log::{debug, warn};
 use super::handler::{HandleError, Handler};
-use logger::log;
 use std::{
     sync::Arc,
     time::{Duration, SystemTime},
@@ -35,7 +35,7 @@ impl Routine {
     }
 
     pub fn run(&self) {
-        log!(DEBUG, "Start dial - disc\n");
+        debug!("Start dial - disc");
 
         // let peer_store = self.peer_store.clone();
         // let credential = self.credential.clone();
@@ -64,52 +64,46 @@ impl Routine {
                     Ok(_) => (),
                     Err(err) => match err {
                         HandleError::IllegalEndpoint(err) => {
-                            log!(
-                                DEBUG,
-                                "Peer may have an illegal endpoint, err: {}\n",
+                            warn!(
+                                "Peer may have an illegal endpoint, err: {}",
                                 err
                             );
                         }
                         HandleError::NoAvailablePeer => {
-                            log!(DEBUG, "No available peer to discover\n");
+                            warn!("No available peer to discover");
 
                             break;
                         }
                         HandleError::IllegalPeerFound(idx) => {
-                            log!(
-                                DEBUG,
-                                "Illegal peer has been found, idx: {}\n",
+                            warn!(
+                                "Illegal peer has been found, idx: {}",
                                 idx,
                             );
                         }
                         HandleError::ConnectionFail(err) => {
-                            log!(
-                                DEBUG,
-                                "Disc dial connection fail, err: {}\n",
+                            warn!(
+                                "Disc dial connection fail, err: {}",
                                 err
                             );
                         }
                         HandleError::LocalAddrIdentical => (),
                         HandleError::WhoAreYouInitiateFail(err) => {
-                            log!(
-                                DEBUG,
+                            warn!(
                                 "Disc dial who are you \
-                                    initiate failed, err: {}\n",
+                                    initiate failed, err: {}",
                                 err
                             );
                         }
                         HandleError::WhoAreYouAckReceiveFail(err) => {
-                            log!(
-                                DEBUG,
+                            warn!(
                                 "Disc dial who are you \
-                                    ack receive failed, err: {}\n",
+                                    ack receive failed, err: {}",
                                 err
                             );
                         }
                         HandleError::PeerUpdateFail(err) => {
-                            log!(
-                                DEBUG,
-                                "Disc dial peer update fail, err: {}\n",
+                            warn!(
+                                "Disc dial peer update fail, err: {}",
                                 err
                             );
                         }
@@ -121,9 +115,8 @@ impl Routine {
                 match start.elapsed() {
                     Ok(_) => (),
                     Err(err) => {
-                        log!(
-                            DEBUG,
-                            "Error sleeping the duration, err: {}\n",
+                        warn!(
+                            "Error sleeping the duration, err: {}",
                             err
                         );
                     }
@@ -139,7 +132,7 @@ impl Routine {
         let is_running = self.is_running.lock().await;
 
         if *is_running == false {
-            log!(DEBUG, "Disc dial routine is not running, waking up\n");
+            warn!("Disc dial routine is not running, waking up");
 
             self.run();
         }

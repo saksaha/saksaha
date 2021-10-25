@@ -51,7 +51,7 @@ impl Routine {
                 //         };
                 //     }
                 //     None => {
-                //         log!(DEBUG, "Cannot find any discovered peer\n");
+                //         log!(DEBUG, "Cannot find any discovered peer");
 
                 //         tokio::time::sleep(Duration::from_millis(2000)).await;
                 //     }

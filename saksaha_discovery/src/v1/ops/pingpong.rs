@@ -1,5 +1,5 @@
 use crate::{task::TaskResult, v1::address::Address};
-use logger::log;
+use log::{debug};
 use tokio::net::TcpStream;
 
 pub struct PingPong;
@@ -10,9 +10,8 @@ impl PingPong {
 
         let mut stream = match TcpStream::connect(endpoint.to_owned()).await {
             Ok(s) => {
-                log!(
-                    DEBUG,
-                    "Successfully connected to endpoint, {}\n",
+                debug!(
+                    "Successfully connected to endpoint, {}",
                     endpoint
                 );
                 s

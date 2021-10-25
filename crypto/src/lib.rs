@@ -103,26 +103,26 @@ mod test {
         let sk = SecretKey::random(&mut OsRng);
         let sk_bytes = sk.to_bytes();
 
-        print!("secret key: {:?}\n", sk);
-        print!("secret key bytes: {:?}\n", alice_pk_bytes);
+        print!("secret key: {:?}", sk);
+        print!("secret key bytes: {:?}", alice_pk_bytes);
 
         let sk_rec = SecretKey::from_bytes(sk_bytes).unwrap();
-        print!("recovered secret key {:?}\n", sk_rec);
+        print!("recovered secret key {:?}", sk_rec);
 
         let public_key = sk.public_key();
         let enc_point = public_key.to_encoded_point(false);
         let enc_point_bytes = enc_point.as_bytes();
 
-        print!("public key: {:?}\n", public_key);
-        print!("encoded point: {:?}\n", enc_point);
-        print!("encoded point as bytes: {:?}\n", enc_point_bytes);
+        print!("public key: {:?}", public_key);
+        print!("encoded point: {:?}", enc_point);
+        print!("encoded point as bytes: {:?}", enc_point_bytes);
 
         let public_key_rec =
             PublicKey::from_sec1_bytes(enc_point_bytes).unwrap();
         let enc_point_rec = public_key_rec.to_encoded_point(false);
 
-        print!("public key rec: {:?}\n", public_key_rec);
-        print!("encoded point rec: {:?}\n", &enc_point_rec);
+        print!("public key rec: {:?}", public_key_rec);
+        print!("encoded point rec: {:?}", &enc_point_rec);
 
         assert_eq!(enc_point, enc_point_rec);
     }

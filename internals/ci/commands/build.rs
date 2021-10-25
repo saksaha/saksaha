@@ -28,7 +28,7 @@ impl Commandify for Build {
             let args = [vec!["build"], args].concat();
 
             log!(
-                "Executing `{} {:?}`\n",
+                "Executing `{} {:?}`",
                 program,
                 args,
             );

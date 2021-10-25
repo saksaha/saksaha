@@ -16,7 +16,6 @@ use self::{
     table::Table,
     task::queue::TaskQueue,
 };
-use logger::log;
 use std::sync::Arc;
 use tokio::sync::{
     mpsc::{self, Receiver, Sender},
@@ -117,7 +116,7 @@ impl Disc {
     //     if url_count > 0 {
     //         log!(
     //             DEBUG,
-    //             "Initializing discovery bootstrap urls, candidates: {}\n",
+    //             "Initializing discovery bootstrap urls, candidates: {}",
     //             url_count
     //         );
     //     }
@@ -128,7 +127,7 @@ impl Disc {
     //             Err(err) => {
     //                 log!(
     //                     DEBUG,
-    //                     "Discarding url failed to parse, url: {}, err: {}\n",
+    //                     "Discarding url failed to parse, url: {}, err: {}",
     //                     url.clone(),
     //                     err
     //                 );
@@ -137,7 +136,7 @@ impl Disc {
     //             }
     //         };
 
-    //         log!(DEBUG, "Discovery address [{}], {:?}\n", idx, addr);
+    //         log!(DEBUG, "Discovery address [{}], {:?}", idx, addr);
 
     //         // match self
     //         //     .task_queue

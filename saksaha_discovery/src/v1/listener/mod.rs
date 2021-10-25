@@ -1,11 +1,11 @@
 mod handler;
 mod status;
 
+use log::{info, debug, warn};
 use self::handler::HandleError;
 use super::connection_pool::{ConnectionPool, Traffic};
 use crate::task::queue::TaskQueue;
 use handler::Handler;
-use logger::log;
 pub use status::Status;
 use std::{sync::Arc, time::Duration};
 use tokio::net::{TcpListener, TcpStream};
@@ -42,9 +42,8 @@ impl Listener {
         {
             Ok(listener) => match listener.local_addr() {
                 Ok(local_addr) => {
-                    log!(
-                        DEBUG,
-                        "Discovery listener bound, addr: {}\n",
+                    info!(
+                        "Discovery listener bound, addr: {}",
                         local_addr
                     );
 
@@ -57,7 +56,7 @@ impl Listener {
             Err(err) => return Err(ListenerError::StartFail(err.to_string())),
         };
 
-        log!(DEBUG, "Started - Disc listener, addr: {}\n", local_addr);
+        debug!("Started - Disc listener, addr: {}", local_addr);
 
         let routine = Routine::new();
         routine.run(
@@ -93,15 +92,14 @@ impl Routine {
             loop {
                 let (stream, _) = match tcp_listener.accept().await {
                     Ok(res) => {
-                        log!(
-                            DEBUG,
-                            "Accepted incoming request, addr: {}\n",
+                        debug!(
+                            "Accepted incoming request, addr: {}",
                             res.1
                         );
                         res
                     }
                     Err(err) => {
-                        log!(DEBUG, "Error accepting request, err: {}", err);
+                        warn!("Error accepting request, err: {}", err);
                         continue;
                     }
                 };
@@ -109,9 +107,8 @@ impl Routine {
                 let peer_ip = match stream.peer_addr() {
                     Ok(a) => a.ip().to_string(),
                     Err(err) => {
-                        log!(
-                            DEBUG,
-                            "Cannot retrieve peer addr, err: {}\n",
+                        warn!(
+                            "Cannot retrieve peer addr, err: {}",
                             err,
                         );
 
@@ -120,7 +117,7 @@ impl Routine {
                 };
 
                 if connection_pool.has_call(&peer_ip).await {
-                    log!(DEBUG, "Already on phone, dropping conn, {}", peer_ip);
+                    debug!("Already on phone, dropping conn, {}", peer_ip);
 
                     continue;
                 } else {
@@ -163,46 +160,41 @@ impl Routine {
                 Ok(_) => (),
                 Err(err) => match err {
                     HandleError::NoAvailablePeerSlot => {
-                        log!(DEBUG, "No available peer slot, sleeping");
+                        debug!("No available peer slot, sleeping");
 
                         tokio::time::sleep(Duration::from_millis(1000)).await;
                     }
                     HandleError::PeerAlreadyTalking(endpoint) => {
-                        log!(
-                            DEBUG,
-                            "Peer might be in talk already, endpoint: {}\n",
+                        debug!(
+                            "Peer might be in talk already, endpoint: {}",
                             endpoint,
                         );
                     }
                     HandleError::AddressAcquireFail(err) => {
-                        log!(
-                            DEBUG,
+                        warn!(
                             "Cannot acquire address of \
-                                    incoming connection, err: {}\n",
+                                    incoming connection, err: {}",
                             err
                         );
                     }
                     HandleError::Success => (),
                     HandleError::WhoAreYouReceiveFail(err) => {
-                        log!(
-                            DEBUG,
+                        warn!(
                             "Disc listen failed receiving \
-                                    who are you, err: {}\n",
+                                    who are you, err: {}",
                             err
                         );
                     }
                     HandleError::WhoAreYouAckInitiateFail(err) => {
-                        log!(
-                            DEBUG,
+                        warn!(
                             "Disc listen failed initiating \
-                                    who are you ack, err: {}\n",
+                                    who are you ack, err: {}",
                             err
                         );
                     }
                     HandleError::PeerUpdateFail(err) => {
-                        log!(
-                            DEBUG,
-                            "Disc listen failed updating peer, err: {}\n",
+                        warn!(
+                            "Disc listen failed updating peer, err: {}",
                             err
                         );
                     }

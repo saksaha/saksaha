@@ -1,10 +1,10 @@
 pub mod error;
 
+use log::{debug};
 use crate::{
     p2p::{credential::Credential, listener::error::ListenerError},
     peer::peer_store::PeerStore,
 };
-use logger::log;
 use std::sync::Arc;
 use tokio::{
     net::TcpListener,
@@ -35,7 +35,7 @@ impl Listener {
         let (_, local_addr) = match TcpListener::bind(local_addr).await {
             Ok(listener) => match listener.local_addr() {
                 Ok(local_addr) => {
-                    // log!(DEBUG, "Listener created, addr: {}\n", local_addr);
+                    // log!(DEBUG, "Listener created, addr: {}", local_addr);
 
                     (listener, local_addr)
                 }
@@ -46,7 +46,7 @@ impl Listener {
             Err(err) => return Err(ListenerError::SetupFail(err.to_string())),
         };
 
-        log!(DEBUG, "Started - P2P listener, addr: {}\n", local_addr);
+        debug!("Started - P2P listener, addr: {}", local_addr);
 
         Ok(local_addr.port())
     }
@@ -63,7 +63,7 @@ impl Listener {
     //         match TcpListener::bind(local_addr).await {
     //             Ok(listener) => match listener.local_addr() {
     //                 Ok(local_addr) => {
-    //                     log!(DEBUG, "Listener created, addr: {}\n", local_addr);
+    //                     log!(DEBUG, "Listener created, addr: {}", local_addr);
 
     //                     (listener, local_addr)
     //                 },
@@ -80,7 +80,7 @@ impl Listener {
 
     //     log!(
     //         DEBUG,
-    //         "Successfully started disc listening, addr: {}\n",
+    //         "Successfully started disc listening, addr: {}",
     //         local_addr
     //     );
 

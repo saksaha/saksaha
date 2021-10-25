@@ -1,5 +1,5 @@
 use crate::node::Node;
-use logger::log;
+use log::{error, info};
 use once_cell::sync::OnceCell;
 use std::sync::Arc;
 
@@ -16,7 +16,7 @@ impl Process {
         match INSTANCE.set(p) {
             Ok(_) => (),
             Err(err) => {
-                log!(DEBUG, "Cannot initialize process\n");
+                error!("Cannot initialize process");
 
                 std::process::exit(1);
             }
@@ -27,17 +27,16 @@ impl Process {
         let process = match INSTANCE.get() {
             Some(p) => p,
             None => {
-                log!(
-                    DEBUG,
+                error!(
                     "Process is not initialized. Consider calling \
-                    Process:init() at the launch of the program\n"
+                    Process:init() at the launch of the program"
                 );
 
                 std::process::exit(1);
             }
         };
 
-        log!(DEBUG, "Preparing to shutdown process\n");
+        info!("Preparing to shutdown process");
 
         process.node.persist_state();
 

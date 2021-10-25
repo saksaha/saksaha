@@ -1,5 +1,5 @@
-use logger::log;
 use std::fs;
+use log::{debug};
 use std::path::{Path, PathBuf};
 use std::sync::Once;
 
@@ -13,16 +13,15 @@ pub struct TestEnv {
 
 fn init() {
     INIT.call_once(|| unsafe {
-        log!(DEBUG, "Initializing the test environment. \
-            This should be called once.\n");
+        debug!("Initializing the test environment. \
+            This should be called once.");
 
         let p = PathBuf::from("testdump");
 
         if p.exists() {
-            log!(
-                DEBUG,
+            debug!(
                 "Test folder already exists, replace it with a new empty one, \
-                path: {}\n",
+                path: {}",
                 p.to_str().unwrap(),
             );
 
@@ -34,9 +33,8 @@ fn init() {
         fs::create_dir(<PathBuf as AsRef<Path>>::as_ref(&p))
             .expect("Test directory cannot be created");
 
-        log!(
-            DEBUG,
-            "Test directory is created, path: {}\n",
+        debug!(
+            "Test directory is created, path: {}",
             p.to_str().unwrap(),
         );
 

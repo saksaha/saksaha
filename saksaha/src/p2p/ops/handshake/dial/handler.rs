@@ -50,7 +50,7 @@ impl<'a> Handler<'a> {
                 Ok(s) => {
                     log!(
                         DEBUG,
-                        "Successfully connected to endpoint, {}\n",
+                        "Successfully connected to endpoint, {}",
                         peer_op_endpoint.to_owned(),
                     );
                     s

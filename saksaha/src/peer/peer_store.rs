@@ -1,7 +1,7 @@
 use super::{Peer, Status};
-use logger::log;
 use std::sync::Arc;
 use tokio::sync::{Mutex, OwnedMutexGuard};
+use log::{info, debug, warn};
 
 pub struct Filter;
 
@@ -31,7 +31,7 @@ impl PeerStore {
         let mut slots_guard = match slots.try_lock() {
             Ok(s) => s,
             Err(err) => {
-                return Err(format!("Cannot acquire slots, err: {}\n", err))
+                return Err(format!("Cannot acquire slots, err: {}", err))
             }
         };
 
@@ -48,17 +48,16 @@ impl PeerStore {
         // let urls_combined = [bootstrap_urls, default_urls].concat();
         let mut count = 0;
 
-        log!(
-            DEBUG,
-            "*****************************************************\n"
+        info!(
+            "*****************************************************"
         );
-        log!(DEBUG, "* Peer store\n");
+        info!("* Peer store");
         // for u in urls_combined {
         //     let p = match Peer::parse(u.to_owned()) {
         //         Ok(p) => {
         //             log!(
         //                 DEBUG,
-        //                 "* [{}], peer_id: {}, ip: {}, disc_port: {}\n",
+        //                 "* [{}], peer_id: {}, ip: {}, disc_port: {}",
         //                 count,
         //                 p.peer_id,
         //                 p.ip,
@@ -68,7 +67,7 @@ impl PeerStore {
         //             // Mutex::new(p)
         //         }
         //         Err(err) => {
-        //             log!(DEBUG, "Cannot parse url, url: {}, err: {}\n", u, err);
+        //             log!(DEBUG, "Cannot parse url, url: {}, err: {}", u, err);
         //             continue;
         //         }
         //     };
@@ -82,16 +81,14 @@ impl PeerStore {
             slots_guard.push(Arc::new(Mutex::new(p)));
         }
 
-        log!(
-            DEBUG,
-            "* Peer store init result, count: {}, len: {}, capacity: {}\n",
+        info!(
+            "* Peer store init result, count: {}, len: {}, capacity: {}",
             count,
             slots_guard.len(),
             capacity
         );
-        log!(
-            DEBUG,
-            "*****************************************************\n"
+        info!(
+            "*****************************************************"
         );
 
         drop(slots_guard);
@@ -120,9 +117,8 @@ impl PeerStore {
             let peer = match slots.get(idx) {
                 Some(p) => p.to_owned(),
                 None => {
-                    log!(
-                        DEBUG,
-                        "There is an empty slot. Something might be wrong\n"
+                    warn!(
+                        "There is an empty slot. Something might be wrong"
                     );
                     return None;
                 }

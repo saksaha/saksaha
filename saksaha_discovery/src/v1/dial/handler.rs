@@ -2,7 +2,6 @@ use k256::ecdsa::{
     signature::{Signer, Verifier},
     Signature, SigningKey,
 };
-use logger::log;
 use std::sync::Arc;
 use tokio::{
     io::AsyncWriteExt,
@@ -63,7 +62,7 @@ impl Handler {
     //     if endpoint == my_disc_endpoint {
     //         log!(
     //             DEBUG,
-    //             "Discarding dial request, endpoint to local, addr: {}\n",
+    //             "Discarding dial request, endpoint to local, addr: {}",
     //             endpoint,
     //         );
 
@@ -103,7 +102,7 @@ impl Handler {
         //     Ok(s) => {
         //         log!(
         //             DEBUG,
-        //             "Successfully connected to endpoint, {}\n",
+        //             "Successfully connected to endpoint, {}",
         //             endpoint
         //         );
         //         s
@@ -252,7 +251,7 @@ impl Handler {
 
     //     log!(
     //         DEBUG,
-    //         "[PeerDiscovered] disc - dial, peer: {}\n",
+    //         "[PeerDiscovered] disc - dial, peer: {}",
     //         peer.short_url()
     //     );
 
