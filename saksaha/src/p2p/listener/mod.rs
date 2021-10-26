@@ -1,6 +1,7 @@
 pub mod error;
 
 use log::{debug};
+use saksaha_discovery::identity::Identity;
 use crate::{
     p2p::{credential::Credential, listener::error::ListenerError},
     peer::peer_store::PeerStore,
@@ -23,7 +24,7 @@ impl Listener {
         port: Option<u16>,
         peer_store: Arc<PeerStore>,
         rpc_port: u16,
-        credential: Arc<Credential>,
+        credential: Arc<Box<dyn Identity>>,
     ) -> Result<u16, ListenerError> {
         let port = match port {
             Some(p) => p,

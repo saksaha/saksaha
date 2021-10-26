@@ -26,7 +26,7 @@ impl DialScheduler {
 
     pub fn start(
         &self,
-        id: Arc<dyn Identity>,
+        id: Arc<Box<dyn Identity>>,
         my_disc_port: u16,
         my_peer_op_port: u16,
         table: Arc<Table>,

@@ -7,7 +7,7 @@ use crate::{
     p2p::listener::error::ListenerError, pconfig::PersistedP2PConfig,
     peer::peer_store::PeerStore,
 };
-use saksaha_discovery::Disc;
+use saksaha_discovery::{Disc, identity::Identity};
 use std::sync::Arc;
 
 pub struct Host {}
@@ -20,7 +20,7 @@ impl Host {
 
     fn make_credential(
         p2p_config: PersistedP2PConfig,
-    ) -> Result<Credential, String> {
+    ) -> Result<Box<dyn Identity>, String> {
         let secret = p2p_config.secret.to_owned();
         let public_key = p2p_config.public_key.to_owned();
 
@@ -29,7 +29,7 @@ impl Host {
             Err(err) => return Err(err),
         };
 
-        Ok(credential)
+        Ok(Box::new(credential))
     }
 
     fn make_peer_store() -> Result<PeerStore, String> {
@@ -74,12 +74,13 @@ impl Host {
             },
         };
 
-        let disc = Disc::new();
+        let disc = Disc::new(
+            credential.clone(),
+        );
         let table = match disc
             .start(
                 disc_port,
                 p2p_listener_port,
-                credential.clone(),
                 bootstrap_urls,
                 default_bootstrap_urls,
             )
