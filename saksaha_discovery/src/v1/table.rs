@@ -1,11 +1,7 @@
-use crate::DiscoveryError;
 use log::{debug, error, info, warn};
 use rand::prelude::*;
 use std::{collections::HashMap, sync::Arc};
-use tokio::sync::{
-    mpsc, Mutex, MutexGuard, OwnedMutexGuard, RwLock, RwLockWriteGuard,
-    TryLockError,
-};
+use tokio::sync::{mpsc, Mutex, MutexGuard, OwnedMutexGuard};
 
 use super::address::Address;
 
@@ -39,9 +35,7 @@ impl Table {
         let mut indices = self.indices.lock().await;
 
         let endpoint = addr.endpoint();
-        let node = TableNode {
-            addr,
-        };
+        let node = TableNode { addr };
 
         nodes.insert(endpoint.clone(), Arc::new(Mutex::new(node)));
         indices.push(endpoint);

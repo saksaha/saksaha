@@ -1,3 +1,6 @@
+use crypto::SecretKey;
+
 pub trait Identity {
-    fn public_key(&self);
+    fn secret_key(&self) -> &SecretKey;
+    fn public_key_bytes(&self) -> [u8; 65];
 }

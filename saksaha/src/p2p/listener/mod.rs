@@ -24,7 +24,7 @@ impl Listener {
         port: Option<u16>,
         peer_store: Arc<PeerStore>,
         rpc_port: u16,
-        credential: Arc<Box<dyn Identity>>,
+        credential: Arc<Box<dyn Identity + Send + Sync>>,
     ) -> Result<u16, ListenerError> {
         let port = match port {
             Some(p) => p,
