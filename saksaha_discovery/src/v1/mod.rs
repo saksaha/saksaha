@@ -1,15 +1,15 @@
 pub mod address;
-mod calls;
+mod call;
 pub mod dial_scheduler;
 pub mod listener;
 pub mod msg;
 mod ops;
-pub mod task_queue;
 mod table;
+pub mod task_queue;
 
 use self::{
-    calls::ConnectionPool, dial_scheduler::DialScheduler, listener::Listener,
-    task_queue::TaskQueue, table::Table,
+    call::OngoingCalls, dial_scheduler::DialScheduler, listener::Listener,
+    table::Table, task_queue::TaskQueue,
 };
 use crate::{
     identity::Identity,
@@ -20,7 +20,7 @@ use std::sync::Arc;
 
 pub struct Disc {
     task_queue: Arc<TaskQueue>,
-    calls: Arc<ConnectionPool>,
+    ongoing_calls: Arc<OngoingCalls>,
     table: Arc<Table>,
     id: Arc<Box<dyn Identity + Send + Sync>>,
 }
@@ -29,11 +29,11 @@ impl Disc {
     pub fn new(id: Arc<Box<dyn Identity + Send + Sync>>) -> Disc {
         let table = Table::new();
         let task_queue = TaskQueue::new();
-        let calls = ConnectionPool::new();
+        let ongoing_calls = OngoingCalls::new();
 
         Disc {
             task_queue: Arc::new(task_queue),
-            calls: Arc::new(calls),
+            ongoing_calls: Arc::new(ongoing_calls),
             table: Arc::new(table),
             id,
         }
@@ -61,6 +61,7 @@ impl Disc {
                 listener_port,
                 my_p2p_port,
                 self.table.clone(),
+                self.calls,
             );
             Arc::new(s)
         };
@@ -149,6 +150,7 @@ pub struct DiscState {
     my_disc_port: u16,
     my_p2p_port: u16,
     table: Arc<Table>,
+    calls: Arc<Calls>,
 }
 
 impl DiscState {
@@ -157,12 +159,14 @@ impl DiscState {
         my_disc_port: u16,
         my_p2p_port: u16,
         table: Arc<Table>,
+        calls: Arc<Calls>,
     ) -> DiscState {
         DiscState {
             id,
             my_disc_port,
             my_p2p_port,
             table,
+            calls,
         }
     }
 }

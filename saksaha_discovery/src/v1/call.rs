@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap};
 use tokio::sync::Mutex;
 
 pub enum Traffic {
@@ -6,15 +6,15 @@ pub enum Traffic {
     OutBound,
 }
 
-pub struct ConnectionPool {
+pub struct OngoingCalls {
     map: Mutex<HashMap<String, Traffic>>,
 }
 
-impl ConnectionPool {
-    pub fn new() -> ConnectionPool {
+impl OngoingCalls {
+    pub fn new() -> OngoingCalls {
         let map = Mutex::new(HashMap::new());
 
-        ConnectionPool { map }
+        Calls { map }
     }
 
     pub async fn has_call(&self, peer_ip: &String) -> bool {

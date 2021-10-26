@@ -1,9 +1,9 @@
 mod handler;
 mod status;
 
-use log::{info, debug, warn};
 use self::handler::HandleError;
-use super::calls::{ConnectionPool, Traffic};
+use super::call::{OngoingCalls, Traffic};
+use log::{debug, info, warn};
 // use crate::task::queue::TaskQueue;
 use handler::Handler;
 pub use status::Status;
@@ -21,7 +21,7 @@ impl Listener {
         &self,
         port: Option<u16>,
         p2p_listener_port: u16,
-        connection_pool: Arc<ConnectionPool>,
+        calls: Arc<OngoingCalls>,
     ) -> Result<u16, String> {
         let port = match port {
             Some(p) => p,
@@ -30,28 +30,19 @@ impl Listener {
 
         let local_addr = format!("127.0.0.1:{}", port);
 
-        let (tcp_listener, local_addr) = match TcpListener::bind(local_addr)
-            .await
-        {
-            Ok(listener) => match listener.local_addr() {
-                Ok(local_addr) => {
-                    (listener, local_addr)
-                }
-                Err(err) => {
-                    return Err(err.to_string())
-                }
-            },
-            Err(err) => return Err(err.to_string()),
-        };
+        let (tcp_listener, local_addr) =
+            match TcpListener::bind(local_addr).await {
+                Ok(listener) => match listener.local_addr() {
+                    Ok(local_addr) => (listener, local_addr),
+                    Err(err) => return Err(err.to_string()),
+                },
+                Err(err) => return Err(err.to_string()),
+            };
 
         debug!("Started - Discovery listener, addr: {}", local_addr);
 
         let routine = Routine::new();
-        routine.run(
-            tcp_listener,
-            p2p_listener_port,
-            connection_pool,
-        );
+        routine.run(tcp_listener, p2p_listener_port, calls);
 
         Ok(local_addr.port())
     }
@@ -71,16 +62,13 @@ impl Routine {
         // peer_store: Arc<PeerStore>,
         // credential: Arc<Credential>,
         // task_queue: Arc<TaskQueue>,
-        connection_pool: Arc<ConnectionPool>,
+        ongoing_calls: Arc<OngoingCalls>,
     ) {
         tokio::spawn(async move {
             loop {
                 let (stream, _) = match tcp_listener.accept().await {
                     Ok(res) => {
-                        debug!(
-                            "Accepted incoming request, addr: {}",
-                            res.1
-                        );
+                        debug!("Accepted incoming request, addr: {}", res.1);
                         res
                     }
                     Err(err) => {
@@ -92,23 +80,18 @@ impl Routine {
                 let peer_ip = match stream.peer_addr() {
                     Ok(a) => a.ip().to_string(),
                     Err(err) => {
-                        warn!(
-                            "Cannot retrieve peer addr, err: {}",
-                            err,
-                        );
+                        warn!("Cannot retrieve peer addr, err: {}", err,);
 
                         continue;
                     }
                 };
 
-                if connection_pool.has_call(&peer_ip).await {
+                if ongoing_calls.contains(&peer_ip).await {
                     debug!("Already on phone, dropping conn, {}", peer_ip);
 
                     continue;
                 } else {
-                    connection_pool
-                        .insert(peer_ip.clone(), Traffic::InBound)
-                        .await;
+                    ongoing_calls.insert(peer_ip.clone(), Traffic::InBound).await;
                 }
 
                 Routine::run_handler(
@@ -117,7 +100,7 @@ impl Routine {
                     // credential.clone(),
                     peer_op_port,
                     // task_queue.clone(),
-                    connection_pool.clone(),
+                    ongoing_calls.clone(),
                     // peer_store.clone(),
                 );
             }
@@ -178,10 +161,7 @@ impl Routine {
                         );
                     }
                     HandleError::PeerUpdateFail(err) => {
-                        warn!(
-                            "Disc listen failed updating peer, err: {}",
-                            err
-                        );
+                        warn!("Disc listen failed updating peer, err: {}", err);
                     }
                 },
             };
