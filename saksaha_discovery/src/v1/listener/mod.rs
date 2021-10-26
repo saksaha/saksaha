@@ -4,7 +4,7 @@ mod status;
 use log::{info, debug, warn};
 use self::handler::HandleError;
 use super::connection_pool::{ConnectionPool, Traffic};
-use crate::task::queue::TaskQueue;
+// use crate::task::queue::TaskQueue;
 use handler::Handler;
 pub use status::Status;
 use std::{sync::Arc, time::Duration};
@@ -23,7 +23,7 @@ impl Listener {
         p2p_listener_port: u16,
         // peer_store: Arc<PeerStore>,
         // credential: Arc<Credential>,
-        task_queue: Arc<TaskQueue>,
+        // task_queue: Arc<TaskQueue>,
         connection_pool: Arc<ConnectionPool>,
     ) -> Result<u16, String> {
         let port = match port {
@@ -55,7 +55,7 @@ impl Listener {
             p2p_listener_port,
             // peer_store,
             // credential,
-            task_queue,
+            // task_queue,
             connection_pool,
         );
 
@@ -76,7 +76,7 @@ impl Routine {
         peer_op_port: u16,
         // peer_store: Arc<PeerStore>,
         // credential: Arc<Credential>,
-        task_queue: Arc<TaskQueue>,
+        // task_queue: Arc<TaskQueue>,
         connection_pool: Arc<ConnectionPool>,
     ) {
         tokio::spawn(async move {
@@ -122,7 +122,7 @@ impl Routine {
                     peer_ip.clone(),
                     // credential.clone(),
                     peer_op_port,
-                    task_queue.clone(),
+                    // task_queue.clone(),
                     connection_pool.clone(),
                     // peer_store.clone(),
                 );
@@ -135,7 +135,7 @@ impl Routine {
         peer_ip: String,
         // credential: Arc<Credential>,
         peer_op_port: u16,
-        task_queue: Arc<TaskQueue>,
+        // task_queue: Arc<TaskQueue>,
         connection_pool: Arc<ConnectionPool>,
         // peer_store: Arc<PeerStore>,
     ) {

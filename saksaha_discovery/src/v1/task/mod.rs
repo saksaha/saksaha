@@ -1,5 +1,3 @@
-pub mod queue;
-
 use std::{future::Future, pin::Pin, sync::Arc, time::Duration};
 use tokio::sync::{
     mpsc::{self, Receiver, Sender},

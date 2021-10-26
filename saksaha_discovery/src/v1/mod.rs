@@ -1,19 +1,24 @@
-mod address;
+pub mod address;
 mod connection_pool;
 pub mod dial_scheduler;
 pub mod error;
 pub mod listener;
 pub mod msg;
 mod ops;
+pub mod queue;
 mod table;
 pub mod task;
 
-use crate::{identity::Identity, DiscoveryError};
-
 use self::{
     connection_pool::ConnectionPool, dial_scheduler::DialScheduler,
-    listener::Listener, table::Table, task::queue::TaskQueue,
+    listener::Listener, queue::TaskQueue, table::Table,
 };
+use crate::{
+    identity::Identity,
+    v1::{address::Address, queue::Task},
+    DiscoveryError,
+};
+use log::{info, warn};
 use std::sync::Arc;
 use tokio::sync::{
     mpsc::{self, Receiver, Sender},
@@ -21,18 +26,21 @@ use tokio::sync::{
 };
 
 pub struct Disc {
-    pub task_queue: Arc<TaskQueue>,
-    pub talking: Arc<ConnectionPool>,
+    task_queue: Arc<TaskQueue>,
+    calls: Arc<ConnectionPool>,
+    table: Arc<Table>,
 }
 
 impl Disc {
     pub fn new() -> Disc {
-        let task_queue = Arc::new(TaskQueue::new());
-        let talking = Arc::new(ConnectionPool::new());
+        let task_queue = TaskQueue::new();
+        let table = Table::new();
+        let calls = ConnectionPool::new();
 
         Disc {
-            task_queue,
-            talking,
+            task_queue: Arc::new(task_queue),
+            calls: Arc::new(calls),
+            table: Arc::new(table),
         }
     }
 
@@ -41,26 +49,15 @@ impl Disc {
         port: Option<u16>,
         p2p_listener_port: u16,
         id: Arc<impl Identity + 'static>,
-        // peer_store: Arc<PeerStore>,
-        // credential: Arc<Credential>,
         bootstrap_urls: Option<Vec<String>>,
         default_bootstrap_urls: &str,
-    ) -> Result<Arc<Table>, String> {
-        let table = match Table::init(bootstrap_urls, default_bootstrap_urls) {
-            Ok(t) => Arc::new(t),
-            Err(err) => return Err(err),
-        };
+    ) -> Result<(), String> {
+        self.enqueue_initial_tasks(bootstrap_urls, default_bootstrap_urls)
+            .await;
 
         let listener = Listener::new();
         let listener_port = match listener
-            .start(
-                port,
-                p2p_listener_port,
-                // peer_store.clone(),
-                // credential.clone(),
-                self.task_queue.clone(),
-                self.talking.clone(),
-            )
+            .start(port, p2p_listener_port, self.calls.clone())
             .await
         {
             Ok(port) => port,
@@ -68,33 +65,81 @@ impl Disc {
         };
 
         let dial_scheduler = DialScheduler::new();
-        let _ = dial_scheduler.run_loop(
+        let _ = dial_scheduler.start(
             id,
             listener_port,
             p2p_listener_port,
-            table.clone(),
+            self.table.clone(),
+            self.task_queue.clone(),
         );
 
-        // self.task_queue.run_loop();
+        Ok(())
+    }
 
-        // self.enqueue_initial_tasks(bootstrap_urls, default_bootstrap_urls)
-        //     .await;
+    pub async fn enqueue_initial_tasks(
+        &self,
+        bootstrap_urls: Option<Vec<String>>,
+        default_bootstrap_urls: &str,
+    ) {
+        let bootstrap_urls = match bootstrap_urls {
+            Some(u) => u,
+            None => Vec::new(),
+        };
 
-        // let dialer = Dialer::new();
-        // match dialer
-        //     .start(
-        //         listener_port,
-        //         peer_store.clone(),
-        //         p2p_listener_port,
-        //         credential.clone(),
-        //     )
-        //     .await
-        // {
-        //     Ok(_) => (),
-        //     Err(err) => return Status::SetupFailed(err),
-        // };
+        let default_bootstrap_urls: Vec<String> = default_bootstrap_urls
+            .lines()
+            .map(|l| l.to_string())
+            .collect();
 
-        Ok(table)
+        let urls = [bootstrap_urls, default_bootstrap_urls].concat();
+
+        info!("*********************************************************");
+        info!("* Discovery table bootstrapped");
+
+        {
+            let mut count = 0;
+            for url in urls {
+                println!("url: {}", url);
+                let addr = match Address::parse(url.clone()) {
+                    Ok(n) => {
+                        count += 1;
+                        n
+                    }
+                    Err(err) => {
+                        warn!(
+                            "Discarding url failed to parse, url: {}, \
+                            err: {:?}",
+                            url.clone(),
+                            err,
+                        );
+
+                        continue;
+                    }
+                };
+
+                info!("* [{}] {}", count, addr.short_url());
+
+                self.task_queue.push(Task::WhoAreYou(addr)).await;
+
+                // let endpoint = node.endpoint();
+                // match nodes.insert(endpoint.clone(), Arc::new(Mutex::new(node)))
+                // {
+                //     Some(_) => {
+                //         warn!(
+                //             "Duplicate key insertion while initializing, \
+                //             key: {}",
+                //             endpoint
+                //         );
+                //     }
+                //     None => (),
+                // };
+                // indices.push(endpoint);
+            }
+            // (nodes, indices)
+        };
+
+        // info!("* nodes len: {}, indices len: {}", nodes.len(), indices.len());
+        // info!("*********************************************************");
     }
 
     // pub async fn enqueue_initial_tasks(

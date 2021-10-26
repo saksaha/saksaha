@@ -12,7 +12,7 @@ use tokio::{
 use crate::v1::table::Table;
 
 pub enum HandleError {
-    NoAvailablePeer,
+    NoAvailableNode,
 
     IllegalEndpoint(String),
 
@@ -69,27 +69,15 @@ impl Handler {
         my_p2p_listener_port: u16,
         table: Arc<Table>,
     ) -> Result<usize, HandleError> {
-        println!("11");
+        let node = match table.next().await {
+            Some(n) => n,
+            None => {
+                return Err(HandleError::NoAvailableNode);
+            }
+        };
 
-        // let t = table.lock().await;
-        // t.next();
+        println!("node: {:?}", node);
 
-        // Table::next(table);
-
-        // table.next().await;
-        // let mut last_peer_idx = self.last_peer_idx.lock().await;
-
-        // let peer_store = self.peer_store.clone();
-
-        // let peer =
-        //     peer_store.next(Some(*last_peer_idx), &Filter::not_initialized);
-
-        // let (mut peer, peer_idx) = match peer.await {
-        //     Some((p, idx)) => (p, idx),
-        //     None => return HandleStatus::NoAvailablePeer,
-        // };
-
-        // *last_peer_idx = peer_idx;
 
         // let endpoint = match self.require_not_my_endpoint(&mut peer) {
         //     Ok(ep) => ep,

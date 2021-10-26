@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Address {
     pub ip: String,
     pub disc_port: u16,
@@ -8,7 +8,7 @@ pub struct Address {
 
 #[derive(Debug)]
 pub enum ParseError {
-    Default(String)
+    Default(String),
 }
 
 impl Address {
@@ -56,6 +56,10 @@ impl Address {
         }
     }
 
+    pub fn endpoint(&self) -> String {
+        format!("{}:{}", self.ip, self.disc_port)
+    }
+
     pub fn short_url(&self) -> String {
         let peer_id_short = {
             if self.peer_id.len() > 6 {
@@ -100,8 +104,7 @@ fn parse_port(port: &str) -> Result<u16, ParseError> {
             let msg = format!(
                 "disc port cannot be converted to u16, err: {}, \
                     disc_port: {}",
-                err,
-                port,
+                err, port,
             );
 
             return Err(ParseError::Default(msg));
