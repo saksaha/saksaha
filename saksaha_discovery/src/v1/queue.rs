@@ -5,7 +5,12 @@ use tokio::sync::{
     Mutex,
 };
 
-use super::address::Address;
+use crate::identity::Identity;
+
+use super::{
+    address::Address, ops::whoareyou::initiator::WhoAreYouInitiator,
+    table::Table,
+};
 
 pub enum TaskError {
     Default(String),
@@ -13,7 +18,7 @@ pub enum TaskError {
 
 #[derive(Clone)]
 pub enum Task {
-    WhoAreYou(Address),
+    InitiateWhoAreYou(Arc<Table>, Address),
 }
 
 #[derive(Clone)]
@@ -27,10 +32,16 @@ pub struct TaskQueue {
     rx: Arc<Mutex<Receiver<TaskInstance>>>,
     max_retry: usize,
     interval: Duration,
+    table: Arc<Table>,
+    a: Mutex<Option<u16>>,
+    // id: Arc<impl Identity + 'static>,
 }
 
 impl TaskQueue {
-    pub fn new() -> TaskQueue {
+    pub fn new(
+        table: Arc<Table>,
+        id: Arc<Box<dyn Identity>>,
+    ) -> TaskQueue {
         let (tx, rx) = mpsc::channel(10);
 
         TaskQueue {
@@ -38,6 +49,8 @@ impl TaskQueue {
             rx: Arc::new(Mutex::new(rx)),
             max_retry: 2,
             interval: Duration::from_millis(1000),
+            table,
+            a: Mutex::new(None),
         }
     }
 
@@ -55,29 +68,17 @@ impl TaskQueue {
         };
     }
 
-    async fn execute_task(
-        task_instance: &mut TaskInstance,
-    ) -> Result<(), TaskError> {
-        let task_result: Result<(), String> = match task_instance.task {
-            // TaskKind::Ping(addr) => {
-            //     PingPong::ping(addr).await
-            // }
-            _ => Err("".to_string()),
-        };
-
-        match task_result {
-            Ok(_) => (),
-            Err(err) => {
-                task_instance.fail_count += 1;
-            }
-        };
-
-        Ok(())
+    pub async fn set(&self) {
+        let mut a = self.a.lock().await;
+        *a = Some(10);
+        // self.a = ;
     }
 
     pub fn run_loop(&self) {
         let rx = self.rx.clone();
         let tx = self.tx.clone();
+        let table = self.table.clone();
+
         let max_retry = self.max_retry;
         let interval = self.interval;
 
@@ -97,7 +98,7 @@ impl TaskQueue {
                     continue;
                 }
 
-                match TaskQueue::execute_task(&mut task_instance).await {
+                match TaskRunner::run(table.clone(), &mut task_instance).await {
                     Ok(_) => (),
                     Err(_) => {
                         let mut task_instance = task_instance.clone();
@@ -113,5 +114,32 @@ impl TaskQueue {
                 };
             }
         });
+    }
+}
+
+struct TaskRunner;
+
+impl TaskRunner {
+    pub async fn run(
+        table: Arc<Table>,
+        task_instance: &mut TaskInstance,
+    ) -> Result<(), TaskError> {
+        let task_result: Result<(), String> = match &task_instance.task {
+            Task::InitiateWhoAreYou(table, addr) => {
+                WhoAreYouInitiator::run(table.clone(), addr).await;
+
+                Ok(())
+                // PingPong::ping(addr).await
+            }
+        };
+
+        match task_result {
+            Ok(_) => (),
+            Err(err) => {
+                task_instance.fail_count += 1;
+            }
+        };
+
+        Ok(())
     }
 }

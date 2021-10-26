@@ -13,6 +13,7 @@ futures = "0.3.17"
 k256 = { version = "0.9.6", features = ["ecdh"] }
 log = "0.4.0"
 rand = "0.8.4"
+thiserror = "1.0"
 
 [lib]
 doctest = false # until stable beta is released

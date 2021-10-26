@@ -3,7 +3,7 @@ mod status;
 
 use log::{info, debug, warn};
 use self::handler::HandleError;
-use super::connection_pool::{ConnectionPool, Traffic};
+use super::calls::{ConnectionPool, Traffic};
 // use crate::task::queue::TaskQueue;
 use handler::Handler;
 pub use status::Status;
@@ -21,9 +21,6 @@ impl Listener {
         &self,
         port: Option<u16>,
         p2p_listener_port: u16,
-        // peer_store: Arc<PeerStore>,
-        // credential: Arc<Credential>,
-        // task_queue: Arc<TaskQueue>,
         connection_pool: Arc<ConnectionPool>,
     ) -> Result<u16, String> {
         let port = match port {
@@ -53,9 +50,6 @@ impl Listener {
         routine.run(
             tcp_listener,
             p2p_listener_port,
-            // peer_store,
-            // credential,
-            // task_queue,
             connection_pool,
         );
 

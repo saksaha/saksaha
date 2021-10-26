@@ -30,81 +30,9 @@ impl Table {
         }
     }
 
-    // pub fn init(
-    //     bootstrap_urls: Option<Vec<String>>,
-    //     default_bootstrap_urls: &str,
-    // ) -> Result<Table, String> {
-    //     let bootstrap_urls = match bootstrap_urls {
-    //         Some(u) => u,
-    //         None => Vec::new(),
-    //     };
-
-    //     let default_bootstrap_urls: Vec<String> = default_bootstrap_urls
-    //         .lines()
-    //         .map(|l| l.to_string())
-    //         .collect();
-
-    //     let urls = [bootstrap_urls, default_bootstrap_urls].concat();
-
-    //     info!("*********************************************************");
-    //     info!("* Discovery table bootstrapped");
-
-    //     let (nodes, indices) = {
-    //         let mut nodes = HashMap::new();
-    //         let mut indices = vec![];
-    //         let mut count = 0;
-    //         for url in urls {
-    //             let node = match TableNode::parse(url.clone()) {
-    //                 Ok(n) => {
-    //                     count += 1;
-    //                     n
-    //                 }
-    //                 Err(err) => {
-    //                     warn!(
-    //                         "Discarding url failed to parse, url: {}, \
-    //                         err: {:?}",
-    //                         url.clone(),
-    //                         err,
-    //                     );
-
-    //                     continue;
-    //                 }
-    //             };
-
-    //             info!("* [{}] {}", count, node.short_url());
-
-    //             let endpoint = node.endpoint();
-    //             match nodes.insert(endpoint.clone(), Arc::new(Mutex::new(node)))
-    //             {
-    //                 Some(_) => {
-    //                     warn!(
-    //                         "Duplicate key insertion while initializing, \
-    //                         key: {}",
-    //                         endpoint
-    //                     );
-    //                 }
-    //                 None => (),
-    //             };
-    //             indices.push(endpoint);
-    //         }
-    //         (nodes, indices)
-    //     };
-
-    //     info!("* nodes len: {}, indices len: {}", nodes.len(), indices.len());
-    //     info!("*********************************************************");
-
-    //     let table = Table {
-    //         nodes: Mutex::new(nodes),
-    //         indices: Mutex::new(indices),
-    //         rng: Mutex::new(SeedableRng::from_entropy()),
-    //     };
-
-    //     Ok(table)
+    // pub fn nodes(&self) -> Result<MutexGuard<'_, Nodes>, TryLockError> {
+    //     self.nodes.try_lock()
     // }
-
-    pub fn nodes(&self) -> Result<MutexGuard<'_, Nodes>, TryLockError> {
-        self.nodes.try_lock()
-    }
 
     pub async fn insert(&self, addr: Address) {
         let mut nodes = self.nodes.lock().await;
