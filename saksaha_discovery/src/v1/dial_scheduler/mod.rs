@@ -3,7 +3,7 @@ mod handler;
 use crate::{
     identity::Identity,
     v1::{
-        dial_scheduler::handler::HandleError, queue::TaskQueue, table::Table,
+        dial_scheduler::handler::HandleError, task_queue::TaskQueue, table::Table,
     },
 };
 use handler::Handler;
@@ -26,7 +26,7 @@ impl DialScheduler {
 
     pub fn start(
         &self,
-        id: Arc<Box<dyn Identity>>,
+        id: Arc<Box<dyn Identity + Send + Sync>>,
         my_disc_port: u16,
         my_peer_op_port: u16,
         table: Arc<Table>,
@@ -36,30 +36,6 @@ impl DialScheduler {
 
         Ok(())
     }
-
-    // pub fn enqueue_initial_tasks(
-    //     &self,
-    //     table: Arc<Table>,
-    // ) -> Result<(), String> {
-    //     let nodes = match table.nodes() {
-    //         Ok(n) => n,
-    //         Err(err) => {
-    //             return Err(format!(
-    //                 "`nodes` is locked. Cannot initialize discovery \
-    //                 task queue"
-    //             ));
-    //         }
-    //     };
-
-    //     for (endpoint, node) in nodes.iter() {
-    //         // let n = node.lock().await;
-    //     }
-
-    //     Ok(())
-
-    //     // self.task_queue.push()
-    //     // task_queu
-    // }
 }
 
 // pub struct Routine {

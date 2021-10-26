@@ -1,24 +1,17 @@
-use log::{debug, error};
+use super::{
+    address::Address, ops::whoareyou::initiator::WhoAreYouInitiator,
+    table::Table, DiscState,
+};
+use log::{debug, error, warn};
 use std::{sync::Arc, time::Duration};
 use tokio::sync::{
     mpsc::{self, Receiver, Sender},
     Mutex,
 };
 
-use crate::identity::Identity;
-
-use super::{
-    address::Address, ops::whoareyou::initiator::WhoAreYouInitiator,
-    table::Table,
-};
-
-pub enum TaskError {
-    Default(String),
-}
-
 #[derive(Clone)]
 pub enum Task {
-    InitiateWhoAreYou(Arc<Table>, Address),
+    InitiateWhoAreYou(Arc<DiscState>, Address),
 }
 
 #[derive(Clone)]
@@ -27,21 +20,22 @@ struct TaskInstance {
     fail_count: usize,
 }
 
+enum TaskResult {
+    Success,
+    FailRetriable(String),
+    Fail(String),
+}
+
 pub struct TaskQueue {
     tx: Arc<Sender<TaskInstance>>,
     rx: Arc<Mutex<Receiver<TaskInstance>>>,
     max_retry: usize,
     interval: Duration,
-    table: Arc<Table>,
-    a: Mutex<Option<u16>>,
-    // id: Arc<impl Identity + 'static>,
+    is_running: Arc<Mutex<bool>>,
 }
 
 impl TaskQueue {
-    pub fn new(
-        table: Arc<Table>,
-        id: Arc<Box<dyn Identity>>,
-    ) -> TaskQueue {
+    pub fn new() -> TaskQueue {
         let (tx, rx) = mpsc::channel(10);
 
         TaskQueue {
@@ -49,8 +43,7 @@ impl TaskQueue {
             rx: Arc::new(Mutex::new(rx)),
             max_retry: 2,
             interval: Duration::from_millis(1000),
-            table,
-            a: Mutex::new(None),
+            is_running: Arc::new(Mutex::new(false)),
         }
     }
 
@@ -68,22 +61,19 @@ impl TaskQueue {
         };
     }
 
-    pub async fn set(&self) {
-        let mut a = self.a.lock().await;
-        *a = Some(10);
-        // self.a = ;
-    }
-
     pub fn run_loop(&self) {
         let rx = self.rx.clone();
+        let is_running = self.is_running.clone();
         let tx = self.tx.clone();
-        let table = self.table.clone();
 
         let max_retry = self.max_retry;
-        let interval = self.interval;
+        let _interval = self.interval;
 
         tokio::spawn(async move {
             let mut rx = rx.lock().await;
+            let mut is_running_lock = is_running.lock().await;
+            *is_running_lock = true;
+            std::mem::drop(is_running_lock);
 
             loop {
                 let mut task_instance = match rx.recv().await {
@@ -98,9 +88,9 @@ impl TaskQueue {
                     continue;
                 }
 
-                match TaskRunner::run(table.clone(), &mut task_instance).await {
-                    Ok(_) => (),
-                    Err(_) => {
+                match TaskRunner::run(&mut task_instance).await {
+                    TaskResult::Success => (),
+                    TaskResult::FailRetriable(_) => {
                         let mut task_instance = task_instance.clone();
                         task_instance.fail_count += 1;
 
@@ -111,35 +101,41 @@ impl TaskQueue {
                             }
                         };
                     }
+                    TaskResult::Fail(err) => {
+                        debug!("Discovery task failed, err: {}", err);
+                    }
                 };
             }
+
+            let mut is_running_lock = is_running.lock().await;
+            *is_running_lock = false;
         });
+    }
+
+    pub async fn _wakeup(&self) {
+        let is_running = self.is_running.lock().await;
+
+        if *is_running == false {
+            warn!("Disc dial routine is not running, waking up");
+
+            self.run_loop();
+        }
     }
 }
 
 struct TaskRunner;
 
 impl TaskRunner {
-    pub async fn run(
-        table: Arc<Table>,
-        task_instance: &mut TaskInstance,
-    ) -> Result<(), TaskError> {
-        let task_result: Result<(), String> = match &task_instance.task {
-            Task::InitiateWhoAreYou(table, addr) => {
-                WhoAreYouInitiator::run(table.clone(), addr).await;
-
-                Ok(())
-                // PingPong::ping(addr).await
+    pub async fn run(task_instance: &mut TaskInstance) -> TaskResult {
+        match &task_instance.task {
+            Task::InitiateWhoAreYou(state, addr) => {
+                match WhoAreYouInitiator::run(state.clone(), addr).await {
+                    Ok(_) => (),
+                    Err(err) => {}
+                }
             }
         };
 
-        match task_result {
-            Ok(_) => (),
-            Err(err) => {
-                task_instance.fail_count += 1;
-            }
-        };
-
-        Ok(())
+        TaskResult::Success
     }
 }

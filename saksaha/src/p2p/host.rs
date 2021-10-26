@@ -20,7 +20,7 @@ impl Host {
 
     fn make_credential(
         p2p_config: PersistedP2PConfig,
-    ) -> Result<Box<dyn Identity>, String> {
+    ) -> Result<Box<dyn Identity + Send + Sync>, String> {
         let secret = p2p_config.secret.to_owned();
         let public_key = p2p_config.public_key.to_owned();
 
@@ -77,6 +77,7 @@ impl Host {
         let disc = Disc::new(
             credential.clone(),
         );
+
         let table = match disc
             .start(
                 disc_port,

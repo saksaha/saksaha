@@ -1,10 +1,11 @@
+use crate::v1::DiscState;
 use crate::v1::{address::Address, table::Table};
 use crypto::{Signature, SigningKey};
 use log::debug;
 use std::sync::Arc;
 use thiserror::Error;
+use tokio::io::AsyncWriteExt;
 use tokio::net::TcpStream;
-use tokio::io::{AsyncWriteExt};
 
 #[derive(Error, Debug)]
 pub enum WhoAreYouInitiateError {
@@ -16,9 +17,8 @@ pub struct WhoAreYouInitiator;
 
 impl WhoAreYouInitiator {
     pub async fn run(
-        table: Arc<Table>,
+        state: Arc<DiscState>,
         addr: &Address,
-
     ) -> Result<(), WhoAreYouInitiateError> {
         let endpoint = addr.endpoint();
 
@@ -32,14 +32,15 @@ impl WhoAreYouInitiator {
             }
         };
 
-        // match WhoAreYouInitiator::initiate_who_are_you(&mut stream).await {
-        //     Ok(_) => (),
-        //     Err(err) => {
-        //         peer.record_fail();
+        match WhoAreYouInitiator::initiate_who_are_you(&mut stream, state).await
+        {
+            Ok(_) => (),
+            Err(err) => {
+                // peer.record_fail();
 
-        //         return HandleStatus::WhoAreYouInitiateFail(err);
-        //     }
-        // };
+                // return HandleStatus::WhoAreYouInitiateFail(err);
+            }
+        };
 
         // let way_ack = match WhoAreYouInitiator::wait_for_ack(stream).await {
         //     Ok(w) => w,
@@ -60,7 +61,9 @@ impl WhoAreYouInitiator {
 
     pub async fn initiate_who_are_you(
         stream: &mut TcpStream,
+        state: Arc<DiscState>,
     ) -> Result<(), WhoAreYouInitiateError> {
+        println!("33, state {:?}", state.id.public_key_bytes());
         // let secret_key = &self.credential.secret_key;
         // let signing_key = SigningKey::from(secret_key);
         // let sig: Signature = signing_key.sign(msg::codec::MESSAGE);

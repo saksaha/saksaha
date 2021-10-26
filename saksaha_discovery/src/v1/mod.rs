@@ -1,20 +1,19 @@
 pub mod address;
 mod calls;
 pub mod dial_scheduler;
-pub mod error;
 pub mod listener;
 pub mod msg;
 mod ops;
-pub mod queue;
+pub mod task_queue;
 mod table;
 
 use self::{
     calls::ConnectionPool, dial_scheduler::DialScheduler, listener::Listener,
-    queue::TaskQueue, table::Table,
+    task_queue::TaskQueue, table::Table,
 };
 use crate::{
     identity::Identity,
-    v1::{address::Address, queue::Task},
+    v1::{address::Address, task_queue::Task},
 };
 use log::{info, warn};
 use std::sync::Arc;
@@ -23,48 +22,61 @@ pub struct Disc {
     task_queue: Arc<TaskQueue>,
     calls: Arc<ConnectionPool>,
     table: Arc<Table>,
-    id: Arc<Box<dyn Identity>>,
+    id: Arc<Box<dyn Identity + Send + Sync>>,
 }
 
 impl Disc {
-    pub fn new(id: Arc<Box<dyn Identity>>) -> Disc {
-        let table = Arc::new(Table::new());
-        let task_queue = TaskQueue::new(table.clone(), id.clone());
+    pub fn new(id: Arc<Box<dyn Identity + Send + Sync>>) -> Disc {
+        let table = Table::new();
+        let task_queue = TaskQueue::new();
         let calls = ConnectionPool::new();
 
         Disc {
             task_queue: Arc::new(task_queue),
             calls: Arc::new(calls),
-            table,
+            table: Arc::new(table),
             id,
         }
     }
 
     pub async fn start(
         &self,
-        port: Option<u16>,
-        p2p_listener_port: u16,
+        my_disc_port: Option<u16>,
+        my_p2p_port: u16,
         bootstrap_urls: Option<Vec<String>>,
         default_bootstrap_urls: &str,
     ) -> Result<(), String> {
         let listener = Listener::new();
         let listener_port = match listener
-            .start(port, p2p_listener_port, self.calls.clone())
+            .start(my_disc_port, my_p2p_port, self.calls.clone())
             .await
         {
             Ok(port) => port,
             Err(err) => return Err(err),
         };
 
-        self.task_queue.set();
-        self.enqueue_initial_tasks(bootstrap_urls, default_bootstrap_urls)
-            .await;
+        let state = {
+            let s = DiscState::new(
+                self.id.clone(),
+                listener_port,
+                my_p2p_port,
+                self.table.clone(),
+            );
+            Arc::new(s)
+        };
+
+        self.enqueue_initial_tasks(
+            bootstrap_urls,
+            default_bootstrap_urls,
+            state,
+        )
+        .await;
 
         let dial_scheduler = DialScheduler::new();
         let _ = dial_scheduler.start(
             self.id.clone(),
             listener_port,
-            p2p_listener_port,
+            my_p2p_port,
             self.table.clone(),
             self.task_queue.clone(),
         );
@@ -78,6 +90,7 @@ impl Disc {
         &self,
         bootstrap_urls: Option<Vec<String>>,
         default_bootstrap_urls: &str,
+        state: Arc<DiscState>,
     ) {
         let bootstrap_urls = match bootstrap_urls {
             Some(u) => u,
@@ -116,7 +129,7 @@ impl Disc {
 
                 info!("* [{}] {}", count, addr.short_url());
 
-                let task = Task::InitiateWhoAreYou(self.table.clone(), addr);
+                let task = Task::InitiateWhoAreYou(state.clone(), addr);
                 match self.task_queue.push(task).await {
                     Ok(_) => (),
                     Err(err) => {
@@ -124,9 +137,32 @@ impl Disc {
                     }
                 };
             }
-        };
+        }
 
         info!("* bootstrapped node count: {}", count);
         info!("*********************************************************");
+    }
+}
+
+pub struct DiscState {
+    id: Arc<Box<dyn Identity + Send + Sync>>,
+    my_disc_port: u16,
+    my_p2p_port: u16,
+    table: Arc<Table>,
+}
+
+impl DiscState {
+    pub fn new(
+        id: Arc<Box<dyn Identity + Send + Sync>>,
+        my_disc_port: u16,
+        my_p2p_port: u16,
+        table: Arc<Table>,
+    ) -> DiscState {
+        DiscState {
+            id,
+            my_disc_port,
+            my_p2p_port,
+            table,
+        }
     }
 }
