@@ -48,7 +48,7 @@ impl Disc {
     ) -> Result<(), String> {
         let listener = Listener::new(self.state.clone());
         let listener_port = match listener
-            .start(my_disc_port, my_p2p_port, self.state.active_calls.clone())
+            .start(my_disc_port, my_p2p_port)
             .await
         {
             Ok(port) => port,
