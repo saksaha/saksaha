@@ -43,6 +43,8 @@ impl WhoAreYouInitiator {
     pub async fn run(
         state: Arc<DiscState>,
         addr: &Address,
+        my_disc_port: u16,
+        my_p2p_port: u16,
     ) -> Result<(), WhoAreYouInitError> {
         let endpoint = addr.endpoint();
 
@@ -56,8 +58,13 @@ impl WhoAreYouInitiator {
                 .await;
         }
 
-        let result =
-            WhoAreYouInitiator::_run(state, endpoint.to_string()).await;
+        let result = WhoAreYouInitiator::_run(
+            state,
+            endpoint.to_string(),
+            my_disc_port,
+            my_p2p_port,
+        )
+        .await;
 
         active_calls.remove(&endpoint).await;
         result
@@ -66,8 +73,10 @@ impl WhoAreYouInitiator {
     async fn _run(
         state: Arc<DiscState>,
         endpoint: String,
+        my_disc_port: u16,
+        my_p2p_port: u16,
     ) -> Result<(), WhoAreYouInitError> {
-        if WhoAreYouInitiator::is_my_endpoint(state.clone(), &endpoint) {
+        if WhoAreYouInitiator::is_my_endpoint(my_disc_port, &endpoint) {
             return Err(WhoAreYouInitError::MyEndpoint(endpoint));
         }
 
@@ -88,6 +97,7 @@ impl WhoAreYouInitiator {
             state.clone(),
             &mut stream,
             endpoint.clone(),
+            my_p2p_port,
         )
         .await?;
 
@@ -102,8 +112,8 @@ impl WhoAreYouInitiator {
         Ok(())
     }
 
-    fn is_my_endpoint(state: Arc<DiscState>, endpoint: &String) -> bool {
-        let my_disc_endpoint = format!("127.0.0.1:{}", state.my_disc_port);
+    fn is_my_endpoint(my_disc_port: u16, endpoint: &String) -> bool {
+        let my_disc_endpoint = format!("127.0.0.1:{}", my_disc_port);
 
         my_disc_endpoint == *endpoint
     }
@@ -112,6 +122,7 @@ impl WhoAreYouInitiator {
         state: Arc<DiscState>,
         stream: &mut TcpStream,
         endpoint: String,
+        my_p2p_port: u16,
     ) -> Result<(), WhoAreYouInitError> {
         let secret_key = state.id.secret_key();
         let signing_key = SigningKey::from(secret_key);
@@ -120,7 +131,7 @@ impl WhoAreYouInitiator {
         let way = WhoAreYouMsg::new(
             MsgKind::Syn,
             sig,
-            state.my_p2p_port,
+            my_p2p_port,
             state.id.public_key_bytes(),
         );
 
