@@ -1,26 +1,32 @@
-use super::{DiscState, active_calls::{ActiveCalls, Traffic}, table::Table};
+use super::{
+    active_calls::{ActiveCalls, Traffic},
+    table::Table,
+    DiscState,
+};
 use log::{debug, info, warn};
-use std::{sync::Arc, time::Duration};
-use tokio::net::{TcpListener, TcpStream};
+use std::{net::SocketAddr, sync::Arc, time::Duration};
+use tokio::{
+    net::{TcpListener, TcpStream},
+    sync::Mutex,
+};
 
 pub struct Listener {
-    // table: Arc<Table>,
     disc_state: Arc<DiscState>,
+    tcp_listener: Arc<Mutex<Option<TcpListener>>>,
 }
 
 impl Listener {
     pub fn new(disc_state: Arc<DiscState>) -> Listener {
         Listener {
             disc_state,
+            tcp_listener: Arc::new(Mutex::new(None)),
         }
     }
 
     pub async fn start(
         &self,
-
         my_disc_port: Option<u16>,
         my_p2p_port: u16,
-        active_calls: Arc<ActiveCalls>,
     ) -> Result<u16, String> {
         let my_disc_port = match my_disc_port {
             Some(p) => p,
@@ -38,31 +44,49 @@ impl Listener {
                 Err(err) => return Err(err.to_string()),
             };
 
+        let mut tcp_listener_lock = self.tcp_listener.lock().await;
+        *tcp_listener_lock = Some(tcp_listener);
+        std::mem::drop(tcp_listener_lock);
+
         info!("Started - Discovery listener, addr: {}", local_addr);
 
-        // let routine = Routine::new();
-        // routine.run(tcp_listener, p2p_listener_port, active_calls);
-
-        self.run_loop();
+        match self.run_loop() {
+            Ok(_) => (),
+            Err(err) => {
+                return Err(format!("Couldn't start loop, err: {}", err));
+            }
+        };
 
         Ok(local_addr.port())
     }
 
-    pub fn run_loop(&self) {
+    pub fn run_loop(&self) -> Result<(), String> {
+        let tcp_listener = match self.tcp_listener.try_lock() {
+            Ok(mut t) => match t.take() {
+                Some(t) => t,
+                None => return Err(format!("tcp_listener is not initialized")),
+            },
+            Err(_) => {
+                return Err(format!("tcp listener is being used"));
+            }
+        };
+
+        let state = self.disc_state.clone();
+
         tokio::spawn(async move {
             loop {
-                // let (stream, addr) = match tcp_listener.accept().await {
-                //     Ok(res) => {
-                //         debug!("Accepted incoming request, addr: {}", res.1);
-                //         res
-                //     }
-                //     Err(err) => {
-                //         warn!("Error accepting request, err: {}", err);
-                //         continue;
-                //     }
-                // };
+                let (stream, addr) = match tcp_listener.accept().await {
+                    Ok(res) => {
+                        debug!("Accepted incoming request, addr: {}", res.1);
+                        res
+                    }
+                    Err(err) => {
+                        warn!("Error accepting request, err: {}", err);
+                        continue;
+                    }
+                };
 
-                // println!("4, addr: {:?}", addr);
+                Handler::run(stream, addr);
 
                 // let peer_ip = match stream.peer_addr() {
                 //     Ok(a) => a.ip().to_string(),
@@ -95,6 +119,31 @@ impl Listener {
             }
         });
 
+        Ok(())
+    }
+}
+
+struct Handler;
+
+impl Handler {
+    fn run(stream: TcpStream, addr: SocketAddr) -> Result<(), String> {
+        let endpoint = get_endpoint(addr);
+
+        Handler::_run(stream);
+
+        // state.active_calls.contain(&endpoint);
+
+        // state.table.clone();
+
+        // addr.ip();
+
+        println!("4, addr: {:?}", addr);
+
+        Ok(())
+    }
+
+    fn _run(stream: TcpStream) {
+
     }
 }
 
@@ -116,7 +165,6 @@ impl Routine {
     ) {
         tokio::spawn(async move {
             loop {
-
 
                 // let (stream, addr) = match tcp_listener.accept().await {
                 //     Ok(res) => {
@@ -225,4 +273,8 @@ impl Routine {
         //     active_calls.remove(&peer_ip).await;
         // });
     }
+}
+
+fn get_endpoint(addr: SocketAddr) -> String {
+    format!("{}:{}", addr.ip(), addr.port())
 }
