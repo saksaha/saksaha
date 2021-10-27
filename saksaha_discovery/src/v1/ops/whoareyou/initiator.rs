@@ -10,6 +10,9 @@ use tokio::net::TcpStream;
 
 #[derive(Error, Debug)]
 pub enum WhoAreYouInitError {
+    #[error("Aborting, my endpoint: {0}")]
+    MyEndpoint(String),
+
     #[error("Connection failed, endpoint: {0}")]
     ConnectionFail(String),
 
@@ -29,14 +32,15 @@ impl WhoAreYouInitiator {
         let active_calls = state.active_calls.clone();
 
         if active_calls.contain(&endpoint).await {
-            active_calls.insert(endpoint.to_string(), Traffic::OutBound).await;
+            return Err(WhoAreYouInitError::CallAlreadyInProgress(endpoint));
         } else {
-            return Err(WhoAreYouInitError::CallAlreadyInProgress(
-                endpoint,
-            ));
+            active_calls
+                .insert(endpoint.to_string(), Traffic::OutBound)
+                .await;
         }
 
-        let result = WhoAreYouInitiator::_run(state, addr).await;
+        let result =
+            WhoAreYouInitiator::_run(state, endpoint.to_string()).await;
 
         active_calls.remove(&endpoint).await;
         result
@@ -44,17 +48,21 @@ impl WhoAreYouInitiator {
 
     async fn _run(
         state: Arc<DiscState>,
-        addr: &Address,
+        endpoint: String,
     ) -> Result<(), WhoAreYouInitError> {
-        // let mut stream = match TcpStream::connect(endpoint.to_owned()).await {
-        //     Ok(s) => {
-        //         debug!("Successfully connected to endpoint, {}", endpoint);
-        //         s
-        //     }
-        //     Err(err) => {
-        //         return Err(WhoAreYouInitiateError::ConnectionFail(endpoint));
-        //     }
-        // };
+        if WhoAreYouInitiator::is_my_endpoint(state, &endpoint) {
+            return Err(WhoAreYouInitError::MyEndpoint(endpoint));
+        }
+
+        let mut stream = match TcpStream::connect(endpoint.clone()).await {
+            Ok(s) => {
+                debug!("Successfully connected to endpoint, {}", endpoint);
+                s
+            }
+            Err(err) => {
+                return Err(WhoAreYouInitError::ConnectionFail(endpoint));
+            }
+        };
 
         // match WhoAreYouInitiator::initiate_who_are_you(&mut stream, state).await
         // {
@@ -81,6 +89,12 @@ impl WhoAreYouInitiator {
         // };
 
         Ok(())
+    }
+
+    fn is_my_endpoint(state: Arc<DiscState>, endpoint: &String) -> bool {
+        let my_disc_endpoint = format!("127.0.0.1:{}", state.my_disc_port);
+
+        my_disc_endpoint == *endpoint
     }
 
     pub async fn initiate_who_are_you(
