@@ -13,10 +13,14 @@ use self::{
 };
 use crate::{
     identity::Identity,
-    v1::{address::Address, task_queue::Task},
+    v1::{
+        address::Address, ops::whoareyou::initiator::WhoAreYouInitiator,
+        task_queue::Task,
+    },
 };
 use log::{info, warn};
 use std::sync::Arc;
+use tokio::net::UdpSocket;
 
 pub struct Disc {
     task_queue: Arc<TaskQueue>,
@@ -46,20 +50,58 @@ impl Disc {
         bootstrap_urls: Option<Vec<String>>,
         default_bootstrap_urls: &str,
     ) -> Result<(), String> {
-        let listener = Listener::new(self.state.clone());
-        let listener_port = match listener
-            .start(my_disc_port, my_p2p_port)
-            .await
-        {
+        let my_disc_port = match my_disc_port {
+            Some(p) => p,
+            None => 0,
+        };
+
+        let local_addr = format!("127.0.0.1:{}", my_disc_port);
+
+        let (udp_socket, local_addr) = match UdpSocket::bind(local_addr).await {
+            Ok(s) => {
+                let local_addr = match s.local_addr() {
+                    Ok(a) => a,
+                    Err(err) => {
+                        return Err(format!(
+                            "Couldn't get local address of udp socket, err: {}",
+                            err
+                        ))
+                    }
+                };
+
+                info!(
+                    "Started - Discovery udp socket opened, local_addr: {}",
+                    local_addr
+                );
+
+                (Arc::new(s), local_addr)
+            }
+            Err(err) => {
+                return Err(format!(
+                    "Couldn't open UdpSocket, err: {}",
+                    err.to_string()
+                ));
+            }
+        };
+
+        let way_initiator = {
+            let i =
+                WhoAreYouInitiator::new(udp_socket.clone(), self.state.clone());
+            Arc::new(i)
+        };
+
+        let listener = Listener::new(self.state.clone(), udp_socket.clone());
+        match listener.start(my_p2p_port).await {
             Ok(port) => port,
             Err(err) => return Err(err),
         };
 
         self.enqueue_initial_tasks(
+            way_initiator,
             bootstrap_urls,
             default_bootstrap_urls,
             self.state.clone(),
-            listener_port,
+            local_addr.port(),
             my_p2p_port,
         )
         .await;
@@ -80,6 +122,7 @@ impl Disc {
 
     pub async fn enqueue_initial_tasks(
         &self,
+        way_initiator: Arc<WhoAreYouInitiator>,
         bootstrap_urls: Option<Vec<String>>,
         default_bootstrap_urls: &str,
         state: Arc<DiscState>,
@@ -124,7 +167,7 @@ impl Disc {
                 info!("* [{}] {}", count, addr.short_url());
 
                 let task = Task::InitiateWhoAreYou(
-                    state.clone(),
+                    way_initiator.clone(),
                     addr,
                     my_disc_port,
                     my_p2p_port,

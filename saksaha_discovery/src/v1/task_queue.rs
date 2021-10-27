@@ -16,7 +16,7 @@ use tokio::sync::{
 
 #[derive(Clone)]
 pub enum Task {
-    InitiateWhoAreYou(Arc<DiscState>, Address, u16, u16),
+    InitiateWhoAreYou(Arc<WhoAreYouInitiator>, Address, u16, u16),
 }
 
 #[derive(Clone)]
@@ -158,14 +158,15 @@ struct TaskRunner;
 impl TaskRunner {
     pub async fn run(task_instance: &mut TaskInstance) -> TaskResult {
         match &task_instance.task {
-            Task::InitiateWhoAreYou(state, addr, my_disc_port, my_p2p_port) => {
-                match WhoAreYouInitiator::run(
-                    state.clone(),
-                    addr,
-                    my_disc_port.clone(),
-                    my_p2p_port.clone(),
-                )
-                .await
+            Task::InitiateWhoAreYou(
+                way_initiator,
+                addr,
+                my_disc_port,
+                my_p2p_port,
+            ) => {
+                match way_initiator
+                    .run(addr, my_disc_port.clone(), my_p2p_port.clone())
+                    .await
                 {
                     Ok(_) => (),
                     Err(err) => {
