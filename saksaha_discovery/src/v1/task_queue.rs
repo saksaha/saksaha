@@ -5,7 +5,10 @@ use super::{
     DiscState,
 };
 use log::{debug, error, warn};
-use std::{sync::Arc, time::Duration};
+use std::{
+    sync::Arc,
+    time::{Duration, SystemTime},
+};
 use tokio::sync::{
     mpsc::{self, Receiver, Sender},
     Mutex,
@@ -32,7 +35,7 @@ pub struct TaskQueue {
     tx: Arc<Sender<TaskInstance>>,
     rx: Arc<Mutex<Receiver<TaskInstance>>>,
     max_retry: usize,
-    interval: Duration,
+    min_interval: Duration,
     is_running: Arc<Mutex<bool>>,
 }
 
@@ -44,7 +47,7 @@ impl TaskQueue {
             tx: Arc::new(tx),
             rx: Arc::new(Mutex::new(rx)),
             max_retry: 2,
-            interval: Duration::from_millis(1000),
+            min_interval: Duration::from_millis(1000),
             is_running: Arc::new(Mutex::new(false)),
         }
     }
@@ -69,7 +72,7 @@ impl TaskQueue {
         let tx = self.tx.clone();
 
         let max_retry = self.max_retry;
-        let _interval = self.interval;
+        let min_interval = self.min_interval;
 
         tokio::spawn(async move {
             let mut rx = rx.lock().await;
@@ -89,6 +92,8 @@ impl TaskQueue {
                 if task_instance.fail_count > max_retry {
                     continue;
                 }
+
+                let start = SystemTime::now();
 
                 match TaskRunner::run(&mut task_instance).await {
                     TaskResult::Success => (),
@@ -113,6 +118,23 @@ impl TaskQueue {
                         debug!("Discovery task failed, err: {}", err);
                     }
                 };
+
+                match start.elapsed() {
+                    Ok(d) => {
+                        if d < min_interval {
+                            let diff = min_interval - d;
+                            tokio::time::sleep(diff).await;
+                        }
+                    },
+                    Err(err) => {
+                        error!(
+                            "Calculating the time elapsed fail, err: {}",
+                            err
+                        );
+
+                        tokio::time::sleep(Duration::from_millis(1000)).await;
+                    }
+                }
             }
 
             let mut is_running_lock = is_running.lock().await;
