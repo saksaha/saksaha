@@ -1,9 +1,9 @@
-mod error;
-
-pub use error::Error;
 pub use k256::{
     ecdh::EphemeralSecret,
-    ecdsa::{Signature, SigningKey, VerifyingKey},
+    ecdsa::{
+        signature::{Signer, Verifier},
+        Signature, SigningKey, VerifyingKey,
+    },
     elliptic_curve::sec1::ToEncodedPoint,
     EncodedPoint, PublicKey, SecretKey,
 };
@@ -46,15 +46,14 @@ impl Crypto {
 
     pub fn convert_public_key_to_verifying_key(
         public_key_bytes: [u8; 65],
-    ) -> Result<VerifyingKey, Error> {
+    ) -> Result<VerifyingKey, String> {
         let encoded_point = match EncodedPoint::from_bytes(public_key_bytes) {
             Ok(e) => e,
             Err(err) => {
-                let msg = format!(
+                return Err(format!(
                     "Error making EncodedPoint from bytes, err: {}",
                     err
-                );
-                return Err(Error::new(msg));
+                ));
             }
         };
 
@@ -62,16 +61,30 @@ impl Crypto {
             match VerifyingKey::from_encoded_point(&encoded_point) {
                 Ok(v) => v,
                 Err(err) => {
-                    let msg = format!(
+                    return Err(format!(
                         "Cannot create VerifyingKey from encoded point, \
                         err: {}",
                         err
-                    );
-                    return Err(Error::new(msg));
+                    ));
                 }
             };
 
         Ok(verifying_key)
+    }
+
+    pub fn make_sign(signing_key: SigningKey, data: &[u8]) -> Signature {
+        signing_key.sign(data)
+    }
+
+    pub fn verify(
+        verifying_key: VerifyingKey,
+        data: &[u8],
+        sig: &Signature,
+    ) -> Result<(), String> {
+        match verifying_key.verify(data, sig) {
+            Ok(_) => Ok(()),
+            Err(err) => Err(err.to_string()),
+        }
     }
 }
 

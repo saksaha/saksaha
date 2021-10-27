@@ -125,7 +125,7 @@ impl TaskQueue {
                             let diff = min_interval - d;
                             tokio::time::sleep(diff).await;
                         }
-                    },
+                    }
                     Err(err) => {
                         error!(
                             "Calculating the time elapsed fail, err: {}",
@@ -171,7 +171,22 @@ impl TaskRunner {
                             WhoAreYouInitError::CallAlreadyInProgress(_) => {
                                 return TaskResult::Fail(err_msg);
                             }
-                            WhoAreYouInitError::ConnectionFail(_) => {
+                            WhoAreYouInitError::ConnectionFail(_, _) => {
+                                return TaskResult::FailRetriable(err_msg);
+                            }
+                            WhoAreYouInitError::ByteConversionFail(_) => {
+                                return TaskResult::Fail(err_msg);
+                            }
+                            WhoAreYouInitError::AckParseFail(_) => {
+                                return TaskResult::FailRetriable(err_msg);
+                            }
+                            WhoAreYouInitError::VerifiyingKeyFail(_) => {
+                                return TaskResult::FailRetriable(err_msg);
+                            }
+                            WhoAreYouInitError::InvalidSignature(_, _) => {
+                                return TaskResult::FailRetriable(err_msg);
+                            }
+                            WhoAreYouInitError::WaySendFail(_, _) => {
                                 return TaskResult::FailRetriable(err_msg);
                             }
                         }
