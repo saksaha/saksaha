@@ -6,36 +6,36 @@ pub enum Traffic {
     OutBound,
 }
 
-pub struct OngoingCalls {
+pub struct ActiveCalls {
     map: Mutex<HashMap<String, Traffic>>,
 }
 
-impl OngoingCalls {
-    pub fn new() -> OngoingCalls {
+impl ActiveCalls {
+    pub fn new() -> ActiveCalls {
         let map = Mutex::new(HashMap::new());
 
-        Calls { map }
+        ActiveCalls { map }
     }
 
-    pub async fn has_call(&self, peer_ip: &String) -> bool {
+    pub async fn contain(&self, endpoint: &String) -> bool {
         let map = self.map.lock().await;
 
-        return map.contains_key(peer_ip);
+        return map.contains_key(endpoint);
     }
 
     pub async fn insert(
         &self,
-        peer_ip: String,
+        endpoint: String,
         traffic: Traffic,
     ) -> Option<Traffic> {
         let mut map = self.map.lock().await;
 
-        return map.insert(peer_ip, traffic);
+        return map.insert(endpoint, traffic);
     }
 
-    pub async fn remove(&self, peer_id: &String) -> Option<Traffic> {
+    pub async fn remove(&self, endpoint: &String) -> Option<Traffic> {
         let mut map = self.map.lock().await;
 
-        map.remove(peer_id)
+        map.remove(endpoint)
     }
 }

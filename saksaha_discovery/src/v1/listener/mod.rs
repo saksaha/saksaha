@@ -2,7 +2,7 @@ mod handler;
 mod status;
 
 use self::handler::HandleError;
-use super::call::{OngoingCalls, Traffic};
+use super::active_calls::{ActiveCalls, Traffic};
 use log::{debug, info, warn};
 // use crate::task::queue::TaskQueue;
 use handler::Handler;
@@ -21,7 +21,7 @@ impl Listener {
         &self,
         port: Option<u16>,
         p2p_listener_port: u16,
-        calls: Arc<OngoingCalls>,
+        active_calls: Arc<ActiveCalls>,
     ) -> Result<u16, String> {
         let port = match port {
             Some(p) => p,
@@ -42,7 +42,7 @@ impl Listener {
         debug!("Started - Discovery listener, addr: {}", local_addr);
 
         let routine = Routine::new();
-        routine.run(tcp_listener, p2p_listener_port, calls);
+        routine.run(tcp_listener, p2p_listener_port, active_calls);
 
         Ok(local_addr.port())
     }
@@ -62,7 +62,7 @@ impl Routine {
         // peer_store: Arc<PeerStore>,
         // credential: Arc<Credential>,
         // task_queue: Arc<TaskQueue>,
-        ongoing_calls: Arc<OngoingCalls>,
+        active_calls: Arc<ActiveCalls>,
     ) {
         tokio::spawn(async move {
             loop {
@@ -86,12 +86,14 @@ impl Routine {
                     }
                 };
 
-                if ongoing_calls.contains(&peer_ip).await {
+                if active_calls.contain(&peer_ip).await {
                     debug!("Already on phone, dropping conn, {}", peer_ip);
 
                     continue;
                 } else {
-                    ongoing_calls.insert(peer_ip.clone(), Traffic::InBound).await;
+                    active_calls
+                        .insert(peer_ip.clone(), Traffic::InBound)
+                        .await;
                 }
 
                 Routine::run_handler(
@@ -100,7 +102,7 @@ impl Routine {
                     // credential.clone(),
                     peer_op_port,
                     // task_queue.clone(),
-                    ongoing_calls.clone(),
+                    active_calls.clone(),
                     // peer_store.clone(),
                 );
             }
@@ -113,7 +115,7 @@ impl Routine {
         // credential: Arc<Credential>,
         peer_op_port: u16,
         // task_queue: Arc<TaskQueue>,
-        connection_pool: Arc<ConnectionPool>,
+        active_calls: Arc<ActiveCalls>,
         // peer_store: Arc<PeerStore>,
     ) {
         let mut handler = Handler::new(
@@ -166,7 +168,7 @@ impl Routine {
                 },
             };
 
-            connection_pool.remove(&peer_ip).await;
+            active_calls.remove(&peer_ip).await;
         });
     }
 }

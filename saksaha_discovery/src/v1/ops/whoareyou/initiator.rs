@@ -1,3 +1,4 @@
+use crate::v1::active_calls::Traffic;
 use crate::v1::DiscState;
 use crate::v1::{address::Address, table::Table};
 use crypto::{Signature, SigningKey};
@@ -8,9 +9,12 @@ use tokio::io::AsyncWriteExt;
 use tokio::net::TcpStream;
 
 #[derive(Error, Debug)]
-pub enum WhoAreYouInitiateError {
+pub enum WhoAreYouInitError {
     #[error("Connection failed, endpoint: {0}")]
     ConnectionFail(String),
+
+    #[error("Call already in pgoress, endpoint: {0}")]
+    CallAlreadyInProgress(String),
 }
 
 pub struct WhoAreYouInitiator;
@@ -19,28 +23,48 @@ impl WhoAreYouInitiator {
     pub async fn run(
         state: Arc<DiscState>,
         addr: &Address,
-    ) -> Result<(), WhoAreYouInitiateError> {
+    ) -> Result<(), WhoAreYouInitError> {
         let endpoint = addr.endpoint();
 
-        let mut stream = match TcpStream::connect(endpoint.to_owned()).await {
-            Ok(s) => {
-                debug!("Successfully connected to endpoint, {}", endpoint);
-                s
-            }
-            Err(err) => {
-                return Err(WhoAreYouInitiateError::ConnectionFail(endpoint));
-            }
-        };
+        let active_calls = state.active_calls.clone();
 
-        match WhoAreYouInitiator::initiate_who_are_you(&mut stream, state).await
-        {
-            Ok(_) => (),
-            Err(err) => {
-                // peer.record_fail();
+        if active_calls.contain(&endpoint).await {
+            active_calls.insert(endpoint.to_string(), Traffic::OutBound).await;
+        } else {
+            return Err(WhoAreYouInitError::CallAlreadyInProgress(
+                endpoint,
+            ));
+        }
 
-                // return HandleStatus::WhoAreYouInitiateFail(err);
-            }
-        };
+        let result = WhoAreYouInitiator::_run(state, addr).await;
+
+        active_calls.remove(&endpoint).await;
+        result
+    }
+
+    async fn _run(
+        state: Arc<DiscState>,
+        addr: &Address,
+    ) -> Result<(), WhoAreYouInitError> {
+        // let mut stream = match TcpStream::connect(endpoint.to_owned()).await {
+        //     Ok(s) => {
+        //         debug!("Successfully connected to endpoint, {}", endpoint);
+        //         s
+        //     }
+        //     Err(err) => {
+        //         return Err(WhoAreYouInitiateError::ConnectionFail(endpoint));
+        //     }
+        // };
+
+        // match WhoAreYouInitiator::initiate_who_are_you(&mut stream, state).await
+        // {
+        //     Ok(_) => (),
+        //     Err(err) => {
+        //         // peer.record_fail();
+
+        //         // return HandleStatus::WhoAreYouInitiateFail(err);
+        //     }
+        // };
 
         // let way_ack = match WhoAreYouInitiator::wait_for_ack(stream).await {
         //     Ok(w) => w,
@@ -62,7 +86,7 @@ impl WhoAreYouInitiator {
     pub async fn initiate_who_are_you(
         stream: &mut TcpStream,
         state: Arc<DiscState>,
-    ) -> Result<(), WhoAreYouInitiateError> {
+    ) -> Result<(), WhoAreYouInitError> {
         println!("33, state {:?}", state.id.public_key_bytes());
         // let secret_key = &self.credential.secret_key;
         // let signing_key = SigningKey::from(secret_key);
