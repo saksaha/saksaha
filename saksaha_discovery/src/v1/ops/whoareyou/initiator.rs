@@ -5,7 +5,7 @@ use crypto::{Crypto, Signature, SigningKey};
 use log::debug;
 use std::sync::Arc;
 use thiserror::Error;
-use tokio::io::AsyncWriteExt;
+use tokio::io::{AsyncWriteExt, Interest};
 use tokio::net::{TcpStream, UdpSocket};
 
 use super::msg::{MsgKind, WhoAreYouAckMsg, WhoAreYouMsg, SAKSAHA};
@@ -91,31 +91,6 @@ impl WhoAreYouInitiator {
             return Err(WhoAreYouInitError::MyEndpoint(endpoint));
         }
 
-        debug!("Calling endpoint: {}", &endpoint);
-
-        match self.udp_socket.connect(endpoint.clone()).await {
-            Ok(_) => (),
-            Err(err) => {
-                return Err(WhoAreYouInitError::ConnectionFail(
-                    endpoint,
-                    err.to_string(),
-                ));
-            }
-        };
-
-        // let mut stream = match UdpSocket::connect(endpoint.clone()).await {
-        //     Ok(s) => {
-        //         debug!("Successfully connected to endpoint, {}", endpoint);
-        //         s
-        //     }
-        //     Err(err) => {
-        //         return Err(WhoAreYouInitError::ConnectionFail(
-        //             endpoint,
-        //             err.to_string(),
-        //         ));
-        //     }
-        // };
-
         self.initiate_who_are_you(
             // self.state.clone(),
             // self.udp_socket.clone(),
@@ -143,11 +118,10 @@ impl WhoAreYouInitiator {
 
     pub async fn initiate_who_are_you(
         &self,
-        // state: Arc<DiscState>,
-        // udp_socket: Arc<UdpSocket>,
         endpoint: String,
         my_p2p_port: u16,
     ) -> Result<(), WhoAreYouInitError> {
+        println!("44");
         let secret_key = self.state.id.secret_key();
         let signing_key = SigningKey::from(secret_key);
         let sig = Crypto::make_sign(signing_key, SAKSAHA);
@@ -166,7 +140,7 @@ impl WhoAreYouInitiator {
             }
         };
 
-        match self.udp_socket.send(&buf).await {
+        match self.udp_socket.send_to(&buf, endpoint.clone()).await {
             Ok(_) => (),
             Err(err) => {
                 return Err(WhoAreYouInitError::WaySendFail(
@@ -175,6 +149,8 @@ impl WhoAreYouInitiator {
                 ));
             }
         };
+
+        println!("55");
 
         // match stream.write_all(&buf).await {
         //     Ok(_) => (),

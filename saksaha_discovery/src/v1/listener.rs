@@ -33,10 +33,7 @@ impl Listener {
         }
     }
 
-    pub async fn start(
-        &self,
-        my_p2p_port: u16,
-    ) -> Result<(), String> {
+    pub async fn start(&self, my_p2p_port: u16) -> Result<(), String> {
         match self.run_loop() {
             Ok(_) => (),
             Err(err) => {
@@ -53,8 +50,6 @@ impl Listener {
 
         tokio::spawn(async move {
             loop {
-                println!("111");
-
                 let mut buf = [0; 1024];
                 let (len, addr) = match udp_socket.recv_from(&mut buf).await {
                     Ok(res) => {
@@ -70,17 +65,17 @@ impl Listener {
                     }
                 };
 
-                println!("222");
-
-                // match Handler::run(state.clone(), stream, addr).await {
-                //     Ok(_) => (),
-                //     Err(err) => {
-                //         error!(
-                //             "Error processing request, addr: {}, err: {}",
-                //             addr, err
-                //         );
-                //     }
-                // }
+                match Handler::run(state.clone(), udp_socket.clone(), addr)
+                    .await
+                {
+                    Ok(_) => (),
+                    Err(err) => {
+                        error!(
+                            "Error processing request, addr: {}, err: {}",
+                            addr, err
+                        );
+                    }
+                }
 
                 // let peer_ip = match stream.peer_addr() {
                 //     Ok(a) => a.ip().to_string(),
@@ -122,7 +117,7 @@ struct Handler;
 impl Handler {
     async fn run(
         state: Arc<DiscState>,
-        stream: TcpStream,
+        udp_socket: Arc<UdpSocket>,
         addr: SocketAddr,
     ) -> Result<(), String> {
         let endpoint = get_endpoint(addr);
@@ -139,13 +134,20 @@ impl Handler {
                 .await;
         }
 
-        Handler::_run(state.clone(), stream, endpoint.clone());
+        Handler::_run(state.clone(), udp_socket, endpoint.clone());
 
-        state.active_calls.remove(&endpoint);
+        state.active_calls.remove(&endpoint).await;
+
         Ok(())
     }
 
-    fn _run(state: Arc<DiscState>, stream: TcpStream, endpoint: String) {}
+    fn _run(
+        state: Arc<DiscState>,
+        udp_socket: Arc<UdpSocket>,
+        endpoint: String,
+    ) {
+        println!("33");
+    }
 }
 
 struct Routine {}
