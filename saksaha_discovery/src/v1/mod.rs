@@ -1,5 +1,5 @@
+mod active_calls;
 pub mod address;
-mod call;
 pub mod dial_scheduler;
 pub mod listener;
 pub mod msg;
@@ -8,8 +8,8 @@ mod table;
 pub mod task_queue;
 
 use self::{
-    call::OngoingCalls, dial_scheduler::DialScheduler, listener::Listener,
-    table::Table, task_queue::TaskQueue,
+    active_calls::ActiveCalls, dial_scheduler::DialScheduler,
+    listener::Listener, table::Table, task_queue::TaskQueue,
 };
 use crate::{
     identity::Identity,
@@ -20,7 +20,7 @@ use std::sync::Arc;
 
 pub struct Disc {
     task_queue: Arc<TaskQueue>,
-    ongoing_calls: Arc<OngoingCalls>,
+    active_calls: Arc<ActiveCalls>,
     table: Arc<Table>,
     id: Arc<Box<dyn Identity + Send + Sync>>,
 }
@@ -29,11 +29,11 @@ impl Disc {
     pub fn new(id: Arc<Box<dyn Identity + Send + Sync>>) -> Disc {
         let table = Table::new();
         let task_queue = TaskQueue::new();
-        let ongoing_calls = OngoingCalls::new();
+        let active_calls = ActiveCalls::new();
 
         Disc {
             task_queue: Arc::new(task_queue),
-            ongoing_calls: Arc::new(ongoing_calls),
+            active_calls: Arc::new(active_calls),
             table: Arc::new(table),
             id,
         }
@@ -48,7 +48,7 @@ impl Disc {
     ) -> Result<(), String> {
         let listener = Listener::new();
         let listener_port = match listener
-            .start(my_disc_port, my_p2p_port, self.calls.clone())
+            .start(my_disc_port, my_p2p_port, self.active_calls.clone())
             .await
         {
             Ok(port) => port,
@@ -61,7 +61,7 @@ impl Disc {
                 listener_port,
                 my_p2p_port,
                 self.table.clone(),
-                self.calls,
+                self.active_calls.clone(),
             );
             Arc::new(s)
         };
@@ -150,7 +150,7 @@ pub struct DiscState {
     my_disc_port: u16,
     my_p2p_port: u16,
     table: Arc<Table>,
-    calls: Arc<Calls>,
+    active_calls: Arc<ActiveCalls>,
 }
 
 impl DiscState {
@@ -159,14 +159,14 @@ impl DiscState {
         my_disc_port: u16,
         my_p2p_port: u16,
         table: Arc<Table>,
-        calls: Arc<Calls>,
+        active_calls: Arc<ActiveCalls>,
     ) -> DiscState {
         DiscState {
             id,
             my_disc_port,
             my_p2p_port,
             table,
-            calls,
+            active_calls,
         }
     }
 }

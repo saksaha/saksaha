@@ -1,6 +1,8 @@
 use super::{
-    address::Address, ops::whoareyou::initiator::WhoAreYouInitiator,
-    table::Table, DiscState,
+    address::Address,
+    ops::whoareyou::initiator::{WhoAreYouInitError, WhoAreYouInitiator},
+    table::Table,
+    DiscState,
 };
 use log::{debug, error, warn};
 use std::{sync::Arc, time::Duration};
@@ -131,7 +133,18 @@ impl TaskRunner {
             Task::InitiateWhoAreYou(state, addr) => {
                 match WhoAreYouInitiator::run(state.clone(), addr).await {
                     Ok(_) => (),
-                    Err(err) => {}
+                    Err(err) => {
+                        let err_msg = err.to_string();
+
+                        match err {
+                            WhoAreYouInitError::CallAlreadyInProgress(_) => {
+                                return TaskResult::Fail(err_msg);
+                            }
+                            WhoAreYouInitError::ConnectionFail(_) => {
+                                return TaskResult::FailRetriable(err_msg);
+                            }
+                        }
+                    }
                 }
             }
         };
