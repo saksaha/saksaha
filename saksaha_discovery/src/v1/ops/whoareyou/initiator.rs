@@ -13,7 +13,7 @@ pub enum WhoAreYouInitError {
     #[error("Connection failed, endpoint: {0}")]
     ConnectionFail(String),
 
-    #[error("Call already in pgoress, endpoint: {0}")]
+    #[error("Call already in progress, endpoint: {0}")]
     CallAlreadyInProgress(String),
 }
 

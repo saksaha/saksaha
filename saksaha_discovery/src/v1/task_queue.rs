@@ -92,7 +92,12 @@ impl TaskQueue {
 
                 match TaskRunner::run(&mut task_instance).await {
                     TaskResult::Success => (),
-                    TaskResult::FailRetriable(_) => {
+                    TaskResult::FailRetriable(err) => {
+                        debug!(
+                            "Discovery task failed, will retry, err: {}",
+                            err
+                        );
+
                         let mut task_instance = task_instance.clone();
                         task_instance.fail_count += 1;
 
