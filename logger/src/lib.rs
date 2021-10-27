@@ -13,14 +13,14 @@ pub fn init() {
             .format(|buf, record| {
                 let timestamp = buf.timestamp_millis();
                 let style = buf.default_level_style(record.level());
+                let level = format!("[{:>width$}]", record.level(), width=5);
 
                 writeln!(
                     buf,
-                    "{} {:>width$}  {}",
+                    "{} {} {}",
                     timestamp,
-                    style.value(record.level()),
+                    style.value(level),
                     record.args(),
-                    width=5,
                 )
             })
             .init();
@@ -29,6 +29,7 @@ pub fn init() {
     init_logger();
 
     log::info!("Logger is initialized");
+    log::warn!("Logger is initialized");
 }
 
 // pub fn make_fd(f: &str, ln: u32) -> String {
