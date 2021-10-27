@@ -6,7 +6,7 @@ use log::debug;
 use std::sync::Arc;
 use thiserror::Error;
 use tokio::io::AsyncWriteExt;
-use tokio::net::TcpStream;
+use tokio::net::{TcpStream, UdpSocket};
 
 use super::msg::{MsgKind, WhoAreYouAckMsg, WhoAreYouMsg, SAKSAHA};
 
@@ -37,18 +37,30 @@ pub enum WhoAreYouInitError {
     InvalidSignature(Vec<u8>, String),
 }
 
-pub struct WhoAreYouInitiator;
+pub struct WhoAreYouInitiator {
+    udp_socket: Arc<UdpSocket>,
+    state: Arc<DiscState>,
+}
 
 impl WhoAreYouInitiator {
-    pub async fn run(
+    pub fn new(
+        udp_socket: Arc<UdpSocket>,
         state: Arc<DiscState>,
+    ) -> WhoAreYouInitiator {
+        WhoAreYouInitiator {
+            udp_socket,
+            state,
+        }
+    }
+
+    pub async fn run(
+        &self,
         addr: &Address,
         my_disc_port: u16,
         my_p2p_port: u16,
     ) -> Result<(), WhoAreYouInitError> {
         let endpoint = addr.endpoint();
-
-        let active_calls = state.active_calls.clone();
+        let active_calls = self.state.active_calls.clone();
 
         if active_calls.contain(&endpoint).await {
             return Err(WhoAreYouInitError::CallAlreadyInProgress(endpoint));
@@ -58,8 +70,7 @@ impl WhoAreYouInitiator {
                 .await;
         }
 
-        let result = WhoAreYouInitiator::_run(
-            state,
+        let result = self._run(
             endpoint.to_string(),
             my_disc_port,
             my_p2p_port,
@@ -71,7 +82,7 @@ impl WhoAreYouInitiator {
     }
 
     async fn _run(
-        state: Arc<DiscState>,
+        &self,
         endpoint: String,
         my_disc_port: u16,
         my_p2p_port: u16,
@@ -80,11 +91,10 @@ impl WhoAreYouInitiator {
             return Err(WhoAreYouInitError::MyEndpoint(endpoint));
         }
 
-        let mut stream = match TcpStream::connect(endpoint.clone()).await {
-            Ok(s) => {
-                debug!("Successfully connected to endpoint, {}", endpoint);
-                s
-            }
+        debug!("Calling endpoint: {}", &endpoint);
+
+        match self.udp_socket.connect(endpoint.clone()).await {
+            Ok(_) => (),
             Err(err) => {
                 return Err(WhoAreYouInitError::ConnectionFail(
                     endpoint,
@@ -93,16 +103,29 @@ impl WhoAreYouInitiator {
             }
         };
 
-        WhoAreYouInitiator::initiate_who_are_you(
-            state.clone(),
-            &mut stream,
+        // let mut stream = match UdpSocket::connect(endpoint.clone()).await {
+        //     Ok(s) => {
+        //         debug!("Successfully connected to endpoint, {}", endpoint);
+        //         s
+        //     }
+        //     Err(err) => {
+        //         return Err(WhoAreYouInitError::ConnectionFail(
+        //             endpoint,
+        //             err.to_string(),
+        //         ));
+        //     }
+        // };
+
+        self.initiate_who_are_you(
+            // self.state.clone(),
+            // self.udp_socket.clone(),
             endpoint.clone(),
             my_p2p_port,
         )
         .await?;
 
-        let way_ack =
-            WhoAreYouInitiator::wait_for_ack(stream, &endpoint).await?;
+        // let way_ack =
+        //     WhoAreYouInitiator::wait_for_ack(stream, &endpoint).await?;
 
         // match self.handle_succeed_who_are_you(way_ack, peer).await {
         //     Ok(_) => (),
@@ -119,12 +142,13 @@ impl WhoAreYouInitiator {
     }
 
     pub async fn initiate_who_are_you(
-        state: Arc<DiscState>,
-        stream: &mut TcpStream,
+        &self,
+        // state: Arc<DiscState>,
+        // udp_socket: Arc<UdpSocket>,
         endpoint: String,
         my_p2p_port: u16,
     ) -> Result<(), WhoAreYouInitError> {
-        let secret_key = state.id.secret_key();
+        let secret_key = self.state.id.secret_key();
         let signing_key = SigningKey::from(secret_key);
         let sig = Crypto::make_sign(signing_key, SAKSAHA);
 
@@ -132,7 +156,7 @@ impl WhoAreYouInitiator {
             MsgKind::Syn,
             sig,
             my_p2p_port,
-            state.id.public_key_bytes(),
+            self.state.id.public_key_bytes(),
         );
 
         let buf = match way.to_bytes() {
@@ -142,7 +166,7 @@ impl WhoAreYouInitiator {
             }
         };
 
-        match stream.write_all(&buf).await {
+        match self.udp_socket.send(&buf).await {
             Ok(_) => (),
             Err(err) => {
                 return Err(WhoAreYouInitError::WaySendFail(
@@ -151,6 +175,16 @@ impl WhoAreYouInitiator {
                 ));
             }
         };
+
+        // match stream.write_all(&buf).await {
+        //     Ok(_) => (),
+        //     Err(err) => {
+        //         return Err(WhoAreYouInitError::WaySendFail(
+        //             endpoint,
+        //             err.to_string(),
+        //         ));
+        //     }
+        // };
 
         Ok(())
     }

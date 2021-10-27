@@ -3,53 +3,40 @@ use super::{
     table::Table,
     DiscState,
 };
-use log::{debug, info, warn};
+use log::{debug, error, info, warn};
 use std::{net::SocketAddr, sync::Arc, time::Duration};
+use thiserror::Error;
 use tokio::{
-    net::{TcpListener, TcpStream},
+    net::{TcpListener, TcpStream, UdpSocket},
     sync::Mutex,
 };
 
+#[derive(Error, Debug)]
+pub enum ListenerError {
+    #[error("Already has active call with endpoint, {0}")]
+    CallAlreadyInProgress(String),
+}
+
 pub struct Listener {
     disc_state: Arc<DiscState>,
-    tcp_listener: Arc<Mutex<Option<TcpListener>>>,
+    udp_socket: Arc<UdpSocket>,
 }
 
 impl Listener {
-    pub fn new(disc_state: Arc<DiscState>) -> Listener {
+    pub fn new(
+        disc_state: Arc<DiscState>,
+        udp_socket: Arc<UdpSocket>,
+    ) -> Listener {
         Listener {
             disc_state,
-            tcp_listener: Arc::new(Mutex::new(None)),
+            udp_socket,
         }
     }
 
     pub async fn start(
         &self,
-        my_disc_port: Option<u16>,
         my_p2p_port: u16,
-    ) -> Result<u16, String> {
-        let my_disc_port = match my_disc_port {
-            Some(p) => p,
-            None => 0,
-        };
-
-        let local_addr = format!("127.0.0.1:{}", my_disc_port);
-
-        let (tcp_listener, local_addr) =
-            match TcpListener::bind(local_addr).await {
-                Ok(listener) => match listener.local_addr() {
-                    Ok(local_addr) => (listener, local_addr),
-                    Err(err) => return Err(err.to_string()),
-                },
-                Err(err) => return Err(err.to_string()),
-            };
-
-        let mut tcp_listener_lock = self.tcp_listener.lock().await;
-        *tcp_listener_lock = Some(tcp_listener);
-        std::mem::drop(tcp_listener_lock);
-
-        info!("Started - Discovery listener, addr: {}", local_addr);
-
+    ) -> Result<(), String> {
         match self.run_loop() {
             Ok(_) => (),
             Err(err) => {
@@ -57,27 +44,24 @@ impl Listener {
             }
         };
 
-        Ok(local_addr.port())
+        Ok(())
     }
 
     pub fn run_loop(&self) -> Result<(), String> {
-        let tcp_listener = match self.tcp_listener.try_lock() {
-            Ok(mut t) => match t.take() {
-                Some(t) => t,
-                None => return Err(format!("tcp_listener is not initialized")),
-            },
-            Err(_) => {
-                return Err(format!("tcp listener is being used"));
-            }
-        };
-
         let state = self.disc_state.clone();
+        let udp_socket = self.udp_socket.clone();
 
         tokio::spawn(async move {
             loop {
-                let (stream, addr) = match tcp_listener.accept().await {
+                println!("111");
+
+                let mut buf = [0; 1024];
+                let (len, addr) = match udp_socket.recv_from(&mut buf).await {
                     Ok(res) => {
-                        debug!("Accepted incoming request, addr: {}", res.1);
+                        debug!(
+                            "Accepted incoming request, len: {}, addr: {}",
+                            res.0, res.1
+                        );
                         res
                     }
                     Err(err) => {
@@ -86,7 +70,17 @@ impl Listener {
                     }
                 };
 
-                Handler::run(stream, addr);
+                println!("222");
+
+                // match Handler::run(state.clone(), stream, addr).await {
+                //     Ok(_) => (),
+                //     Err(err) => {
+                //         error!(
+                //             "Error processing request, addr: {}, err: {}",
+                //             addr, err
+                //         );
+                //     }
+                // }
 
                 // let peer_ip = match stream.peer_addr() {
                 //     Ok(a) => a.ip().to_string(),
@@ -126,25 +120,32 @@ impl Listener {
 struct Handler;
 
 impl Handler {
-    fn run(stream: TcpStream, addr: SocketAddr) -> Result<(), String> {
+    async fn run(
+        state: Arc<DiscState>,
+        stream: TcpStream,
+        addr: SocketAddr,
+    ) -> Result<(), String> {
         let endpoint = get_endpoint(addr);
 
-        Handler::_run(stream);
+        if state.active_calls.contain(&endpoint).await {
+            return Err(format!(
+                "Already has an active call with endpoint: {}",
+                endpoint
+            ));
+        } else {
+            state
+                .active_calls
+                .insert(endpoint.clone(), Traffic::InBound)
+                .await;
+        }
 
-        // state.active_calls.contain(&endpoint);
+        Handler::_run(state.clone(), stream, endpoint.clone());
 
-        // state.table.clone();
-
-        // addr.ip();
-
-        println!("4, addr: {:?}", addr);
-
+        state.active_calls.remove(&endpoint);
         Ok(())
     }
 
-    fn _run(stream: TcpStream) {
-
-    }
+    fn _run(state: Arc<DiscState>, stream: TcpStream, endpoint: String) {}
 }
 
 struct Routine {}
