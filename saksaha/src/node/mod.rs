@@ -68,7 +68,7 @@ impl Node {
         pconfig: PConfig,
         default_bootstrap_urls: &str,
     ) -> Result<(), String> {
-        debug!("Start node...");
+        info!("Start node...");
 
         let runtime = tokio::runtime::Builder::new_multi_thread()
             .enable_all()

@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use log::{debug};
+use log::{info, debug};
 
 pub struct RPC {}
 
@@ -10,7 +10,7 @@ impl RPC {
     }
 
     pub async fn start(&self) -> Result<u16, String> {
-        debug!("Start rpc...");
+        info!("Start rpc...");
 
         Ok(10000)
     }

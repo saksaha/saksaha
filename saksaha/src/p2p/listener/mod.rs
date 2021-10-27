@@ -1,6 +1,6 @@
 pub mod error;
 
-use log::{debug};
+use log::{debug, info};
 use saksaha_discovery::identity::Identity;
 use crate::{
     p2p::{credential::Credential, listener::error::ListenerError},
@@ -47,7 +47,7 @@ impl Listener {
             Err(err) => return Err(ListenerError::SetupFail(err.to_string())),
         };
 
-        debug!("Started - P2P listener, addr: {}", local_addr);
+        info!("Started - P2P listener, addr: {}", local_addr);
 
         Ok(local_addr.port())
     }
