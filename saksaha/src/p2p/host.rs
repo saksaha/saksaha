@@ -1,4 +1,3 @@
-use log::{error};
 use super::{
     credential::Credential,
     listener::{self, Listener},
@@ -7,7 +6,8 @@ use crate::{
     p2p::listener::error::ListenerError, pconfig::PersistedP2PConfig,
     peer::peer_store::PeerStore,
 };
-use saksaha_discovery::{Disc, identity::Identity};
+use log::error;
+use saksaha_discovery::{identity::Identity, Disc};
 use std::sync::Arc;
 
 pub struct Host {}
@@ -74,9 +74,7 @@ impl Host {
             },
         };
 
-        let disc = Disc::new(
-            credential.clone(),
-        );
+        let disc = Disc::new(credential.clone());
 
         let table = match disc
             .start(

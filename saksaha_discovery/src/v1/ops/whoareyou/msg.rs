@@ -3,28 +3,30 @@ use k256::ecdsa::Signature;
 use std::convert::TryInto;
 use tokio::{io::AsyncReadExt, net::TcpStream};
 
+use crate::v1::ops::Opcode;
+
 pub const SAKSAHA: &[u8; 7] = b"saksaha";
 
-#[repr(u8)]
-#[derive(Copy, Clone)]
-pub enum MsgKind {
-    Syn = 0x0,
-    Ack,
-    Undefined,
-}
+// #[repr(u8)]
+// #[derive(Copy, Clone)]
+// pub enum MsgKind {
+//     Syn = 0x0,
+//     Ack,
+//     Undefined,
+// }
 
-impl From<u8> for MsgKind {
-    fn from(src: u8) -> Self {
-        match src {
-            0x0 => MsgKind::Syn,
-            0x1 => MsgKind::Ack,
-            _ => MsgKind::Undefined,
-        }
-    }
-}
+// impl From<u8> for MsgKind {
+//     fn from(src: u8) -> Self {
+//         match src {
+//             0x0 => MsgKind::Syn,
+//             0x1 => MsgKind::Ack,
+//             _ => MsgKind::Undefined,
+//         }
+//     }
+// }
 
 pub struct WhoAreYouMsg {
-    pub kind: MsgKind,
+    pub opcode: Opcode,
     pub sig: Signature,
     pub public_key_bytes: [u8; 65],
     pub peer_op_port: u16,
@@ -34,7 +36,7 @@ pub struct WhoAreYouMsg {
 
 impl WhoAreYouMsg {
     pub fn new(
-        kind: MsgKind,
+        opcode: Opcode,
         sig: Signature,
         peer_op_port: u16,
         public_key_bytes: [u8; 65],
@@ -42,7 +44,7 @@ impl WhoAreYouMsg {
         let peer_id = WhoAreYouMsg::make_peer_id(&public_key_bytes);
 
         WhoAreYouMsg {
-            kind,
+            opcode,
             sig,
             peer_op_port,
             public_key_bytes,
@@ -58,7 +60,7 @@ impl WhoAreYouMsg {
     pub fn to_bytes(&self) -> Result<Vec<u8>, String> {
         let mut buf = vec![];
 
-        let kind_bytes = [self.kind as u8];
+        let opcode_bytes = [self.opcode as u8];
         let sig_bytes = self.sig.to_der().to_bytes();
         let peer_op_bytes = self.peer_op_port.to_be_bytes();
         let public_key_bytes = self.public_key_bytes;
@@ -79,7 +81,7 @@ impl WhoAreYouMsg {
         };
 
         buf.push(len);
-        buf.extend_from_slice(&kind_bytes);
+        buf.extend_from_slice(&opcode_bytes);
         buf.extend_from_slice(&sig_bytes);
         buf.extend_from_slice(&peer_op_bytes);
         buf.extend_from_slice(&public_key_bytes);
@@ -115,7 +117,7 @@ impl WhoAreYouMsg {
             }
         };
 
-        let kind = MsgKind::from(buf[0]);
+        let opcode = Opcode::from(buf[0]);
 
         let sig_len = size
             - 1 // kind
@@ -159,7 +161,7 @@ impl WhoAreYouMsg {
             .copy_from_slice(&buf[peer_op_port_end..peer_op_port_end + 65]);
 
         let mut way =
-            WhoAreYouMsg::new(kind, sig, peer_op_port, public_key_bytes);
+            WhoAreYouMsg::new(opcode, sig, peer_op_port, public_key_bytes);
 
         let mut new_buf = size_buf.to_vec();
         new_buf.extend_from_slice(&buf);
@@ -180,7 +182,7 @@ impl WhoAreYouAckMsg {
         public_key_bytes: [u8; 65],
     ) -> WhoAreYouAckMsg {
         let way = WhoAreYouMsg::new(
-            MsgKind::Ack,
+            Opcode::WhoAreYouAck,
             sig,
             peer_op_port,
             public_key_bytes,

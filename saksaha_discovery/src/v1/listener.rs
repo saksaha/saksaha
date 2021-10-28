@@ -65,7 +65,7 @@ impl Listener {
                     }
                 };
 
-                match Handler::run(state.clone(), udp_socket.clone(), addr)
+                match Handler::run(state.clone(), udp_socket.clone(), addr, &buf)
                     .await
                 {
                     Ok(_) => (),
@@ -119,35 +119,22 @@ impl Handler {
         state: Arc<DiscState>,
         udp_socket: Arc<UdpSocket>,
         addr: SocketAddr,
+        buf: &[u8],
     ) -> Result<(), String> {
         let endpoint = get_endpoint(addr);
 
-        if state.active_calls.contain(&endpoint).await {
-            return Err(format!(
-                "Already has an active call with endpoint: {}",
-                endpoint
-            ));
-        } else {
-            state
-                .active_calls
-                .insert(endpoint.clone(), Traffic::InBound)
-                .await;
-        }
-
-        Handler::_run(state.clone(), udp_socket, endpoint.clone());
-
-        state.active_calls.remove(&endpoint).await;
+        println!("33, buf: {:?}", buf);
 
         Ok(())
     }
 
-    fn _run(
-        state: Arc<DiscState>,
-        udp_socket: Arc<UdpSocket>,
-        endpoint: String,
-    ) {
-        println!("33");
-    }
+    // fn _run(
+    //     state: Arc<DiscState>,
+    //     udp_socket: Arc<UdpSocket>,
+    //     endpoint: String,
+    // ) {
+    //     println!("33");
+    // }
 }
 
 struct Routine {}

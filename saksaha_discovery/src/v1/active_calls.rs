@@ -6,6 +6,7 @@ pub enum Traffic {
     OutBound,
 }
 
+// Currently not used
 pub struct ActiveCalls {
     map: Mutex<HashMap<String, Traffic>>,
 }

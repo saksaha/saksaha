@@ -1,4 +1,6 @@
 use crate::v1::active_calls::Traffic;
+use crate::v1::ops::Opcode;
+use crate::v1::table::TableNode;
 use crate::v1::DiscState;
 use crate::v1::{address::Address, table::Table};
 use crypto::{Crypto, Signature, SigningKey};
@@ -8,15 +10,18 @@ use thiserror::Error;
 use tokio::io::{AsyncWriteExt, Interest};
 use tokio::net::{TcpStream, UdpSocket};
 
-use super::msg::{MsgKind, WhoAreYouAckMsg, WhoAreYouMsg, SAKSAHA};
+use super::msg::{WhoAreYouAckMsg, WhoAreYouMsg, SAKSAHA};
 
 #[derive(Error, Debug)]
 pub enum WhoAreYouInitError {
-    #[error("Aborting, my endpoint: {0}")]
+    #[error("Aborting, request to my endpoint: {0}")]
     MyEndpoint(String),
 
     #[error("Connection failed, endpoint: {0}, _err: {1}")]
     ConnectionFail(String, String),
+
+    #[error("Cannot reserve tableNode, _err: {0}")]
+    NodeReserveFail(String),
 
     #[error("Call already in progress, endpoint: {0}")]
     CallAlreadyInProgress(String),
@@ -35,6 +40,9 @@ pub enum WhoAreYouInitError {
 
     #[error("Signature is invalid, buf: {:?}, _err: {1}")]
     InvalidSignature(Vec<u8>, String),
+
+    #[error("Failed to register node into map, endpoint: {0}, _err: {1}")]
+    NodeRegisterFail(String, String),
 }
 
 pub struct WhoAreYouInitiator {
@@ -47,57 +55,72 @@ impl WhoAreYouInitiator {
         udp_socket: Arc<UdpSocket>,
         state: Arc<DiscState>,
     ) -> WhoAreYouInitiator {
-        WhoAreYouInitiator {
-            udp_socket,
-            state,
-        }
+        WhoAreYouInitiator { udp_socket, state }
     }
 
-    pub async fn run(
+    pub async fn send_who_are_you(
         &self,
-        addr: &Address,
+        addr: Address,
         my_disc_port: u16,
         my_p2p_port: u16,
     ) -> Result<(), WhoAreYouInitError> {
         let endpoint = addr.endpoint();
-        let active_calls = self.state.active_calls.clone();
 
-        if active_calls.contain(&endpoint).await {
-            return Err(WhoAreYouInitError::CallAlreadyInProgress(endpoint));
-        } else {
-            active_calls
-                .insert(endpoint.to_string(), Traffic::OutBound)
-                .await;
-        }
-
-        let result = self._run(
-            endpoint.to_string(),
-            my_disc_port,
-            my_p2p_port,
-        )
-        .await;
-
-        active_calls.remove(&endpoint).await;
-        result
-    }
-
-    async fn _run(
-        &self,
-        endpoint: String,
-        my_disc_port: u16,
-        my_p2p_port: u16,
-    ) -> Result<(), WhoAreYouInitError> {
         if WhoAreYouInitiator::is_my_endpoint(my_disc_port, &endpoint) {
             return Err(WhoAreYouInitError::MyEndpoint(endpoint));
         }
 
-        self.initiate_who_are_you(
-            // self.state.clone(),
-            // self.udp_socket.clone(),
-            endpoint.clone(),
+        let table_node = match self.state.table.reserve().await {
+            Ok(n) => n,
+            Err(err) => {
+                return Err(WhoAreYouInitError::NodeReserveFail(err));
+            }
+        };
+
+        let secret_key = self.state.id.secret_key();
+        let signing_key = SigningKey::from(secret_key);
+        let sig = Crypto::make_sign(signing_key, SAKSAHA);
+
+        let way = WhoAreYouMsg::new(
+            Opcode::WhoAreYou,
+            sig,
             my_p2p_port,
-        )
-        .await?;
+            self.state.id.public_key_bytes(),
+        );
+
+        let buf = match way.to_bytes() {
+            Ok(b) => b,
+            Err(err) => {
+                return Err(WhoAreYouInitError::ByteConversionFail(err));
+            }
+        };
+
+        match self.udp_socket.send_to(&buf, endpoint.clone()).await {
+            Ok(_) => {
+                debug!("Sent WhoAreYou to endpoint: {}", &endpoint);
+            }
+            Err(err) => {
+                return Err(WhoAreYouInitError::WaySendFail(
+                    endpoint,
+                    err.to_string(),
+                ));
+            }
+        };
+
+        match self.state.table.register(table_node, addr).await {
+            Ok(_) => {}
+            Err(err) => {
+                return Err(WhoAreYouInitError::NodeRegisterFail(endpoint, err))
+            }
+        };
+
+        // self.initiate_who_are_you(
+        //     // self.state.clone(),
+        //     // self.udp_socket.clone(),
+        //     endpoint.clone(),
+        //     my_p2p_port,
+        // )
+        // .await?;
 
         // let way_ack =
         //     WhoAreYouInitiator::wait_for_ack(stream, &endpoint).await?;
@@ -127,7 +150,7 @@ impl WhoAreYouInitiator {
         let sig = Crypto::make_sign(signing_key, SAKSAHA);
 
         let way = WhoAreYouMsg::new(
-            MsgKind::Syn,
+            Opcode::WhoAreYou,
             sig,
             my_p2p_port,
             self.state.id.public_key_bytes(),
