@@ -1,4 +1,14 @@
-use super::{DiscState, active_calls::{ActiveCalls, Traffic}, address::Address, ops::{Opcode, whoareyou::receiver::{WhoAreYouReceiver, WhoAreYouRecvError}}, table::Table, task_queue::TaskQueue};
+use super::{
+    active_calls::{ActiveCalls, Traffic},
+    address::Address,
+    ops::{
+        whoareyou::receiver::{WhoAreYouReceiver, WhoAreYouRecvError},
+        Opcode,
+    },
+    table::Table,
+    task_queue::TaskQueue,
+    DiscState,
+};
 use log::{debug, error, info, warn};
 use std::{convert::TryInto, net::SocketAddr, sync::Arc, time::Duration};
 use thiserror::Error;
@@ -84,7 +94,7 @@ impl Listener {
                             socket_addr, err
                         );
                     }
-                }
+                };
 
                 // let peer_ip = match stream.peer_addr() {
                 //     Ok(a) => a.ip().to_string(),
