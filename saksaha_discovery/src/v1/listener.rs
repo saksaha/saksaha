@@ -2,11 +2,14 @@ use super::{
     active_calls::{ActiveCalls, Traffic},
     address::Address,
     ops::{
-        whoareyou::receiver::{WhoAreYouReceiver, WhoAreYouRecvError},
+        whoareyou::{
+            receiver::{WhoAreYouReceiver, WhoAreYouRecvError},
+            WhoAreYouOperator,
+        },
         Opcode,
     },
     table::Table,
-    task_queue::TaskQueue,
+    task_queue::{Task, TaskQueue},
     DiscState,
 };
 use log::{debug, error, info, warn};
@@ -27,25 +30,25 @@ pub struct Listener {
     disc_state: Arc<DiscState>,
     task_queue: Arc<TaskQueue>,
     udp_socket: Arc<UdpSocket>,
-    way_receiver: Arc<WhoAreYouReceiver>,
+    way_operator: Arc<WhoAreYouOperator>,
 }
 
 impl Listener {
     pub fn new(
         disc_state: Arc<DiscState>,
         udp_socket: Arc<UdpSocket>,
-        way_receiver: Arc<WhoAreYouReceiver>,
+        way_operator: Arc<WhoAreYouOperator>,
         task_queue: Arc<TaskQueue>,
     ) -> Listener {
         Listener {
             disc_state,
-            udp_socket,
-            way_receiver,
             task_queue,
+            udp_socket,
+            way_operator,
         }
     }
 
-    pub async fn start(&self, my_p2p_port: u16) -> Result<(), String> {
+    pub async fn start(&self) -> Result<(), String> {
         match self.run_loop() {
             Ok(_) => (),
             Err(err) => {
@@ -59,7 +62,8 @@ impl Listener {
     pub fn run_loop(&self) -> Result<(), String> {
         let disc_state = self.disc_state.clone();
         let udp_socket = self.udp_socket.clone();
-        let way_receiver = self.way_receiver.clone();
+        let way_operator = self.way_operator.clone();
+        let task_queue = self.task_queue.clone();
 
         tokio::spawn(async move {
             loop {
@@ -69,7 +73,7 @@ impl Listener {
                         Ok(res) => {
                             debug!(
                                 "Accepted incoming request, len: {}, addr: {}",
-                                res.0, res.1
+                                res.0, res.1,
                             );
                             res
                         }
@@ -81,7 +85,8 @@ impl Listener {
 
                 match Handler::run(
                     disc_state.clone(),
-                    way_receiver.clone(),
+                    way_operator.clone(),
+                    task_queue.clone(),
                     socket_addr,
                     &buf,
                 )
@@ -136,7 +141,8 @@ struct Handler;
 impl Handler {
     async fn run(
         disc_state: Arc<DiscState>,
-        way_receiver: Arc<WhoAreYouReceiver>,
+        way_operator: Arc<WhoAreYouOperator>,
+        task_queue: Arc<TaskQueue>,
         addr: SocketAddr,
         buf: &[u8],
     ) -> Result<(), String> {
@@ -157,8 +163,14 @@ impl Handler {
 
         match opcode {
             Opcode::WhoAreYou => {
-                match way_receiver.handle_who_are_you(addr, buf).await {
-                    Ok(_) => (),
+                match way_operator.receiver.handle_who_are_you(addr, buf).await
+                {
+                    Ok(_) => {
+                        // match task_queue.push(Task::SendWhoAreYouAck()).await {
+                        //     Ok(_) => (),
+                        //     Err(err) => return Err(err),
+                        // };
+                    }
                     Err(err) => {
                         // match err {
                         //     WhoAreYouRecvError::MessageParseFail(_) => {

@@ -14,11 +14,7 @@ use self::{
 use crate::{
     identity::Identity,
     v1::{
-        address::Address,
-        ops::whoareyou::{
-            initiator::WhoAreYouInitiator, receiver::WhoAreYouReceiver,
-        },
-        task_queue::Task,
+        address::Address, ops::whoareyou::WhoAreYouOperator, task_queue::Task,
     },
 };
 use log::{info, warn};
@@ -27,39 +23,22 @@ use tokio::net::UdpSocket;
 
 pub struct Disc {
     task_queue: Arc<TaskQueue>,
-    // active_calls: Arc<ActiveCalls>,
-    // table: Arc<Table>,
-    // id: Arc<Box<dyn Identity + Send + Sync>>,
+    listener: Arc<Listener>,
     state: Arc<DiscState>,
+    way_operator: Arc<WhoAreYouOperator>,
 }
 
 impl Disc {
-    pub fn new(id: Arc<Box<dyn Identity + Send + Sync>>) -> Disc {
-        let table = Table::new();
-        let active_calls = ActiveCalls::new();
-        let state = DiscState::new(id, Arc::new(table), Arc::new(active_calls));
-
-        let task_queue = TaskQueue::new();
-
-        Disc {
-            task_queue: Arc::new(task_queue),
-            state: Arc::new(state),
-        }
-    }
-
-    pub async fn start(
-        &self,
+    pub async fn init(
+        id: Arc<Box<dyn Identity + Send + Sync>>,
         my_disc_port: Option<u16>,
         my_p2p_port: u16,
         bootstrap_urls: Option<Vec<String>>,
         default_bootstrap_urls: &str,
-    ) -> Result<(), String> {
-        match self.state.table.start().await {
-            Ok(_) => (),
-            Err(err) => {
-                return Err(format!("Failed to start table, err: {}", err))
-            }
-        };
+    ) -> Result<Disc, String> {
+        let table = Arc::new(Table::new());
+        let active_calls = Arc::new(ActiveCalls::new());
+        let task_queue = Arc::new(TaskQueue::new());
 
         let my_disc_port = match my_disc_port {
             Some(p) => p,
@@ -95,41 +74,59 @@ impl Disc {
             }
         };
 
-        let way_initiator = {
-            let i =
-                WhoAreYouInitiator::new(udp_socket.clone(), self.state.clone());
+        let state = {
+            let s = DiscState::new(
+                id,
+                table,
+                active_calls,
+                local_addr.port(),
+                my_p2p_port,
+            );
+            Arc::new(s)
+        };
+
+        let way_operator = {
+            let i = WhoAreYouOperator::new(udp_socket.clone(), state.clone());
             Arc::new(i)
         };
 
-        let way_receiver = {
-            let r = WhoAreYouReceiver::new(
-                self.state.clone(),
-                self.task_queue.clone(),
+        let listener = {
+            let l = Listener::new(
+                state.clone(),
+                udp_socket.clone(),
+                way_operator.clone(),
+                task_queue.clone(),
             );
-            Arc::new(r)
+            Arc::new(l)
         };
 
-        let listener = Listener::new(
-            self.state.clone(),
-            udp_socket.clone(),
-            way_receiver,
-            self.task_queue.clone(),
-        );
+        let disc = Disc {
+            task_queue,
+            state,
+            listener,
+            way_operator,
+        };
 
-        match listener.start(my_p2p_port).await {
+        disc.enqueue_initial_tasks(bootstrap_urls, default_bootstrap_urls)
+            .await;
+
+        Ok(disc)
+    }
+
+    pub async fn start(&self) -> Result<Arc<Table>, String> {
+        let table = self.state.table.clone();
+
+        match table.start().await {
+            Ok(_) => (),
+            Err(err) => {
+                return Err(format!("Failed to start table, err: {}", err))
+            }
+        };
+
+        match self.listener.start().await {
             Ok(port) => port,
             Err(err) => return Err(err),
         };
-
-        self.enqueue_initial_tasks(
-            way_initiator,
-            bootstrap_urls,
-            default_bootstrap_urls,
-            self.state.clone(),
-            local_addr.port(),
-            my_p2p_port,
-        )
-        .await;
 
         // let dial_scheduler = DialScheduler::new();
         // let _ = dial_scheduler.start(
@@ -142,17 +139,13 @@ impl Disc {
 
         self.task_queue.run_loop();
 
-        Ok(())
+        Ok(table)
     }
 
     pub async fn enqueue_initial_tasks(
         &self,
-        way_initiator: Arc<WhoAreYouInitiator>,
         bootstrap_urls: Option<Vec<String>>,
         default_bootstrap_urls: &str,
-        state: Arc<DiscState>,
-        my_disc_port: u16,
-        my_p2p_port: u16,
     ) {
         let bootstrap_urls = match bootstrap_urls {
             Some(u) => u,
@@ -165,6 +158,9 @@ impl Disc {
             .collect();
 
         let urls = [bootstrap_urls, default_bootstrap_urls].concat();
+
+        let my_disc_port = self.state.my_disc_port;
+        let my_p2p_port = self.state.my_p2p_port;
 
         info!("*********************************************************");
         info!("* Discovery table bootstrapped");
@@ -191,12 +187,12 @@ impl Disc {
 
                 info!("* [{}] {}", count, addr.short_url());
 
-                let task = Task::SendWhoAreYou(
-                    way_initiator.clone(),
+                let task = Task::SendWhoAreYou {
+                    way_operator: self.way_operator.clone(),
                     addr,
                     my_disc_port,
                     my_p2p_port,
-                );
+                };
 
                 match self.task_queue.push(task).await {
                     Ok(_) => (),
@@ -214,8 +210,8 @@ impl Disc {
 
 pub struct DiscState {
     id: Arc<Box<dyn Identity + Send + Sync>>,
-    // my_disc_port: Option<u16>,
-    // my_p2p_port: Option<u16>,
+    my_disc_port: u16,
+    my_p2p_port: u16,
     table: Arc<Table>,
     active_calls: Arc<ActiveCalls>,
 }
@@ -223,15 +219,15 @@ pub struct DiscState {
 impl DiscState {
     pub fn new(
         id: Arc<Box<dyn Identity + Send + Sync>>,
-        // my_disc_port: Option<u16>,
-        // my_p2p_port: Option<u16>,
         table: Arc<Table>,
         active_calls: Arc<ActiveCalls>,
+        my_disc_port: u16,
+        my_p2p_port: u16,
     ) -> DiscState {
         DiscState {
             id,
-            // my_disc_port,
-            // my_p2p_port,
+            my_disc_port,
+            my_p2p_port,
             table,
             active_calls,
         }

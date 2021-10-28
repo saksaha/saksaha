@@ -24,17 +24,14 @@ pub enum WhoAreYouRecvError {
 
 pub struct WhoAreYouReceiver {
     disc_state: Arc<DiscState>,
-    task_queue: Arc<TaskQueue>,
 }
 
 impl WhoAreYouReceiver {
     pub fn new(
         disc_state: Arc<DiscState>,
-        task_queue: Arc<TaskQueue>,
     ) -> WhoAreYouReceiver {
         WhoAreYouReceiver {
             disc_state,
-            task_queue,
         }
     }
 

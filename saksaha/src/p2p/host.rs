@@ -74,17 +74,22 @@ impl Host {
             },
         };
 
-        let disc = Disc::new(credential.clone());
-
-        let table = match disc
-            .start(
-                disc_port,
-                p2p_listener_port,
-                bootstrap_urls,
-                default_bootstrap_urls,
-            )
-            .await
+        let disc = match Disc::init(
+            credential.clone(),
+            disc_port,
+            p2p_listener_port,
+            bootstrap_urls,
+            default_bootstrap_urls,
+        )
+        .await
         {
+            Ok(d) => d,
+            Err(err) => {
+                return Err(format!("Can't start discovery, err: {}", err))
+            }
+        };
+
+        let table = match disc.start().await {
             Ok(table) => table,
             Err(err) => {
                 return Err(err);

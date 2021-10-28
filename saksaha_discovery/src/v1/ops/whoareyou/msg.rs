@@ -74,9 +74,6 @@ impl WhoAreYouMsg {
             size_bytes
         };
 
-        println!("size: {:?}", size_bytes);
-        println!("sig: {:?}", sig_bytes);
-
         buf.extend_from_slice(&size_bytes);
         buf.extend_from_slice(&opcode_bytes);
         buf.extend_from_slice(&p2p_port_bytes);
@@ -87,8 +84,6 @@ impl WhoAreYouMsg {
     }
 
     pub fn parse(buf: &[u8]) -> Result<WhoAreYouMsg, String> {
-        println!("entire buf: {:?}, {}", buf, buf.len());
-
         let size: usize = {
             let mut size_buf: [u8; SIZE_LEN] = [0; SIZE_LEN];
             size_buf.copy_from_slice(&buf[..SIZE_LEN]);
