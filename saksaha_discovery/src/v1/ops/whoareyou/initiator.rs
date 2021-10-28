@@ -94,6 +94,8 @@ impl WhoAreYouInitiator {
             }
         };
 
+        println!("send, buf: {:?}, {}", buf, buf.len());
+
         match self.udp_socket.send_to(&buf, endpoint.clone()).await {
             Ok(_) => {
                 debug!("Sent WhoAreYou to endpoint: {}", &endpoint);
@@ -162,6 +164,7 @@ impl WhoAreYouInitiator {
             }
         };
 
+
         match self.udp_socket.send_to(&buf, endpoint.clone()).await {
             Ok(_) => (),
             Err(err) => {
@@ -187,37 +190,37 @@ impl WhoAreYouInitiator {
         Ok(())
     }
 
-    pub async fn wait_for_ack(
-        mut stream: TcpStream,
-        endpoint: &String,
-    ) -> Result<WhoAreYouAckMsg, WhoAreYouInitError> {
-        let way_ack = match WhoAreYouAckMsg::parse(&mut stream).await {
-            Ok(w) => w,
-            Err(err) => {
-                return Err(WhoAreYouInitError::AckParseFail(err));
-            }
-        };
+    // pub async fn wait_for_ack(
+    //     mut stream: TcpStream,
+    //     endpoint: &String,
+    // ) -> Result<WhoAreYouAckMsg, WhoAreYouInitError> {
+    //     let way_ack = match WhoAreYouAckMsg::parse(&mut stream).await {
+    //         Ok(w) => w,
+    //         Err(err) => {
+    //             return Err(WhoAreYouInitError::AckParseFail(err));
+    //         }
+    //     };
 
-        let verifying_key = match Crypto::convert_public_key_to_verifying_key(
-            way_ack.way.public_key_bytes,
-        ) {
-            Ok(v) => v,
-            Err(err) => {
-                return Err(WhoAreYouInitError::VerifiyingKeyFail(err));
-            }
-        };
-        let sig = way_ack.way.sig;
+    //     let verifying_key = match Crypto::convert_public_key_to_verifying_key(
+    //         way_ack.way.public_key_bytes,
+    //     ) {
+    //         Ok(v) => v,
+    //         Err(err) => {
+    //             return Err(WhoAreYouInitError::VerifiyingKeyFail(err));
+    //         }
+    //     };
+    //     let sig = way_ack.way.sig;
 
-        match Crypto::verify(verifying_key, SAKSAHA, &sig) {
-            Ok(_) => (),
-            Err(err) => {
-                return Err(WhoAreYouInitError::InvalidSignature(
-                    way_ack.way.raw,
-                    err,
-                ))
-            }
-        }
+    //     match Crypto::verify(verifying_key, SAKSAHA, &sig) {
+    //         Ok(_) => (),
+    //         Err(err) => {
+    //             return Err(WhoAreYouInitError::InvalidSignature(
+    //                 way_ack.way.raw,
+    //                 err,
+    //             ))
+    //         }
+    //     }
 
-        Ok(way_ack)
-    }
+    //     Ok(way_ack)
+    // }
 }
