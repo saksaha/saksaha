@@ -16,7 +16,8 @@ use tokio::sync::{
 
 #[derive(Clone)]
 pub enum Task {
-    InitiateWhoAreYou(Arc<WhoAreYouInitiator>, Address, u16, u16),
+    SendWhoAreYou(Arc<WhoAreYouInitiator>, Address, u16, u16),
+    // ReceiveWhoAreYouAck(Arc<WhoAreYouInitiator>),
 }
 
 #[derive(Clone)]
@@ -81,7 +82,7 @@ impl TaskQueue {
             std::mem::drop(is_running_lock);
 
             loop {
-                let mut task_instance = match rx.recv().await {
+                let task_instance = match rx.recv().await {
                     Some(t) => t,
                     None => {
                         debug!("Cannot receive task any more");
@@ -93,9 +94,10 @@ impl TaskQueue {
                     continue;
                 }
 
+                let task = task_instance.task.clone();
                 let start = SystemTime::now();
 
-                match TaskRunner::run(&mut task_instance).await {
+                match TaskRunner::run(task).await {
                     TaskResult::Success => (),
                     TaskResult::FailRetriable(err) => {
                         let mut task_instance = task_instance.clone();
@@ -156,16 +158,20 @@ impl TaskQueue {
 struct TaskRunner;
 
 impl TaskRunner {
-    pub async fn run(task_instance: &mut TaskInstance) -> TaskResult {
-        match &task_instance.task {
-            Task::InitiateWhoAreYou(
+    pub async fn run(task: Task) -> TaskResult {
+        match task {
+            Task::SendWhoAreYou(
                 way_initiator,
                 addr,
                 my_disc_port,
                 my_p2p_port,
             ) => {
                 match way_initiator
-                    .run(addr, my_disc_port.clone(), my_p2p_port.clone())
+                    .send_who_are_you(
+                        addr,
+                        my_disc_port.clone(),
+                        my_p2p_port.clone(),
+                    )
                     .await
                 {
                     Ok(_) => (),
@@ -195,6 +201,12 @@ impl TaskRunner {
                                 return TaskResult::FailRetriable(err_msg);
                             }
                             WhoAreYouInitError::WaySendFail(_, _) => {
+                                return TaskResult::FailRetriable(err_msg);
+                            }
+                            WhoAreYouInitError::NodeReserveFail(_) => {
+                                return TaskResult::FailRetriable(err_msg);
+                            }
+                            WhoAreYouInitError::NodeRegisterFail(_, _) => {
                                 return TaskResult::FailRetriable(err_msg);
                             }
                         }

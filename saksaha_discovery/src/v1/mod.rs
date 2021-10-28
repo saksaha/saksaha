@@ -32,15 +32,16 @@ pub struct Disc {
 
 impl Disc {
     pub fn new(id: Arc<Box<dyn Identity + Send + Sync>>) -> Disc {
-        let table = Arc::new(Table::new());
-        let task_queue = Arc::new(TaskQueue::new());
-        let active_calls = Arc::new(ActiveCalls::new());
-        let state = {
-            let s = DiscState::new(id, table, active_calls);
-            Arc::new(s)
-        };
+        let table = Table::new();
+        let active_calls = ActiveCalls::new();
+        let state = DiscState::new(id, Arc::new(table), Arc::new(active_calls));
 
-        Disc { task_queue, state }
+        let task_queue = TaskQueue::new();
+
+        Disc {
+            task_queue: Arc::new(task_queue),
+            state: Arc::new(state),
+        }
     }
 
     pub async fn start(
@@ -50,6 +51,13 @@ impl Disc {
         bootstrap_urls: Option<Vec<String>>,
         default_bootstrap_urls: &str,
     ) -> Result<(), String> {
+        match self.state.table.start().await {
+            Ok(_) => (),
+            Err(err) => {
+                return Err(format!("Failed to start table, err: {}", err))
+            }
+        };
+
         let my_disc_port = match my_disc_port {
             Some(p) => p,
             None => 0,
@@ -166,7 +174,7 @@ impl Disc {
 
                 info!("* [{}] {}", count, addr.short_url());
 
-                let task = Task::InitiateWhoAreYou(
+                let task = Task::SendWhoAreYou(
                     way_initiator.clone(),
                     addr,
                     my_disc_port,
