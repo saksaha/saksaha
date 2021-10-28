@@ -1,8 +1,8 @@
 use super::msg::{WhoAreYouAckMsg, WhoAreYouMsg, SAKSAHA};
 use crate::v1::active_calls::Traffic;
 use crate::v1::ops::Opcode;
-use crate::v1::table::TableNode;
-use crate::v1::task_queue::TaskQueue;
+use crate::v1::table::{Record, TableNode};
+use crate::v1::task_queue::{Task, TaskQueue};
 use crate::v1::DiscState;
 use crate::v1::{address::Address, table::Table};
 use crypto::{Crypto, Signature, SigningKey};
@@ -18,10 +18,8 @@ pub enum WhoAreYouRecvError {
     #[error("Couldn't parse WhoAreYou message, err: {0}")]
     MessageParseFail(String),
 
-    #[error(
-        "Couldn't reserve node, table might be busy, endpoint: {0}, err: {1}"
-    )]
-    TableIsBusy(String, String),
+    #[error("Couldn't reserve node, table is full, endpoint: {0}, err: {1}")]
+    TableIsFull(String, String),
 }
 
 pub struct WhoAreYouReceiver {
@@ -48,16 +46,18 @@ impl WhoAreYouReceiver {
         let endpoint = addr.endpoint();
 
         let table_node = {
-            let node = self.disc_state.table.find().await;
-
-            if node == None {
-                match self.disc_state.table.try_reserve().await {
+            let node = match self.disc_state.table.find(&endpoint).await {
+                Some(n) => n,
+                None => match self.disc_state.table.try_reserve().await {
                     Ok(n) => n,
                     Err(err) => {
-                        return Err(WhoAreYouRecvError::TableIsBusy(endpoint, err))
+                        return Err(WhoAreYouRecvError::TableIsFull(
+                            endpoint, err,
+                        ));
                     }
-                };
-            }
+                },
+            };
+            node
         };
 
         let msg = match WhoAreYouMsg::parse(buf) {
@@ -67,7 +67,15 @@ impl WhoAreYouReceiver {
             }
         };
 
-        println!("msg: ");
+        let mut table_node = table_node.lock().await;
+        table_node.record = Some(Record {
+            sig: msg.sig,
+            p2p_port: msg.p2p_port,
+            public_key_bytes: msg.public_key_bytes,
+        });
+
+        // self.task_queue.push(Task::SendWhoAreYou())
+        // table_node.addr;
         // let len: usize = {
         //     let mut len_buf: [u8; 4] = [0; 4];
         //     len_buf.copy_from_slice(&buf[..4]);

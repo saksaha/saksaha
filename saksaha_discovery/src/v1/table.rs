@@ -1,4 +1,5 @@
-use super::address::Address;
+use super::{address::Address, ops::whoareyou::msg::PUBLIC_KEY_LEN};
+use crypto::Signature;
 use log::{debug, error, info, warn};
 use rand::prelude::*;
 use std::{collections::HashMap, sync::Arc};
@@ -50,6 +51,18 @@ impl Table {
         }
 
         Ok(())
+    }
+
+    pub async fn find(
+        &self,
+        endpoint: &String,
+    ) -> Option<Arc<Mutex<TableNode>>> {
+        let map = self.map.lock().await;
+        if let Some(n) = map.get(endpoint) {
+            return Some(n.clone());
+        } else {
+            return None;
+        }
     }
 
     // pub async fn _insert(&self, addr: Address) {
@@ -136,17 +149,29 @@ impl Table {
     }
 }
 
-#[derive(Debug)]
 pub struct TableNode {
     pub addr: Option<Address>,
+    pub record: Option<Record>,
 }
 
 impl TableNode {
     pub fn new(addr: Address) -> TableNode {
-        TableNode { addr: Some(addr) }
+        TableNode {
+            addr: Some(addr),
+            record: None,
+        }
     }
 
     pub fn new_empty() -> TableNode {
-        TableNode { addr: None }
+        TableNode {
+            addr: None,
+            record: None,
+        }
     }
+}
+
+pub struct Record {
+    pub sig: Signature,
+    pub p2p_port: u16,
+    pub public_key_bytes: [u8; PUBLIC_KEY_LEN],
 }
