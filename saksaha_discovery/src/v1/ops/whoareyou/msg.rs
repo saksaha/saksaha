@@ -10,6 +10,10 @@ pub const OPCODE_LEN: usize = 1;
 pub const P2P_PORT_LEN: usize = 2;
 pub const PUBLIC_KEY_LEN: usize = 65;
 
+pub struct WhoAreYouSynMsg {
+
+}
+
 pub struct WhoAreYouMsg {
     pub opcode: Opcode,
     pub sig: Signature,
@@ -33,9 +37,9 @@ impl WhoAreYouMsg {
         }
     }
 
-    pub fn make_peer_id(public_key_bytes: &[u8; PUBLIC_KEY_LEN]) -> String {
-        Crypto::encode_hex(public_key_bytes)
-    }
+    // pub fn make_peer_id(public_key_bytes: &[u8; PUBLIC_KEY_LEN]) -> String {
+    //     Crypto::encode_hex(public_key_bytes)
+    // }
 
     pub fn to_bytes(&self) -> Result<Vec<u8>, String> {
         let mut buf: Vec<u8> = vec![];
