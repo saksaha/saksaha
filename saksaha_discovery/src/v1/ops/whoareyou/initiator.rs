@@ -1,3 +1,4 @@
+use super::msg::{WhoAreYouAckMsg, WhoAreYouMsg, SAKSAHA};
 use crate::v1::active_calls::Traffic;
 use crate::v1::ops::Opcode;
 use crate::v1::table::TableNode;
@@ -9,7 +10,6 @@ use std::sync::Arc;
 use thiserror::Error;
 use tokio::io::{AsyncWriteExt, Interest};
 use tokio::net::{TcpStream, UdpSocket};
-use super::msg::{WhoAreYouAckMsg, WhoAreYouMsg, SAKSAHA};
 
 #[derive(Error, Debug)]
 pub enum WhoAreYouInitError {
@@ -54,15 +54,20 @@ impl WhoAreYouInitiator {
         udp_socket: Arc<UdpSocket>,
         disc_state: Arc<DiscState>,
     ) -> WhoAreYouInitiator {
-        WhoAreYouInitiator { udp_socket, disc_state }
+        WhoAreYouInitiator {
+            udp_socket,
+            disc_state,
+        }
     }
 
     pub async fn send_who_are_you(
         &self,
         addr: Address,
-        my_disc_port: u16,
-        my_p2p_port: u16,
+        disc_state: Arc<DiscState>,
     ) -> Result<(), WhoAreYouInitError> {
+        let my_disc_port = disc_state.my_disc_port;
+        let my_p2p_port = disc_state.my_p2p_port;
+
         let endpoint = addr.endpoint();
 
         if WhoAreYouInitiator::is_my_endpoint(my_disc_port, &endpoint) {
@@ -106,10 +111,17 @@ impl WhoAreYouInitiator {
             }
         };
 
-        match self.disc_state.table.register(table_node, addr).await {
+        match self
+            .disc_state
+            .table
+            .register(endpoint.clone(), table_node)
+            .await
+        {
             Ok(_) => {}
             Err(err) => {
-                return Err(WhoAreYouInitError::NodeRegisterFail(endpoint, err))
+                return Err(WhoAreYouInitError::NodeRegisterFail(
+                    endpoint, err,
+                ));
             }
         };
 
@@ -160,7 +172,6 @@ impl WhoAreYouInitiator {
                 return Err(WhoAreYouInitError::ByteConversionFail(err));
             }
         };
-
 
         match self.udp_socket.send_to(&buf, endpoint.clone()).await {
             Ok(_) => (),

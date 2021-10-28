@@ -79,12 +79,11 @@ impl Table {
 
     pub async fn register(
         &self,
+        endpoint: String,
         table_node: Arc<Mutex<TableNode>>,
-        addr: Address,
     ) -> Result<(), String> {
         let mut map = self.map.lock().await;
         let mut indices = self.indices.lock().await;
-        let endpoint = addr.endpoint();
 
         map.insert(endpoint.clone(), table_node);
         indices.push(endpoint);
