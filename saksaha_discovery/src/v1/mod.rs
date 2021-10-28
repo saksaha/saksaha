@@ -190,8 +190,7 @@ impl Disc {
                 let task = Task::SendWhoAreYou {
                     way_operator: self.way_operator.clone(),
                     addr,
-                    my_disc_port,
-                    my_p2p_port,
+                    disc_state: self.state.clone(),
                 };
 
                 match self.task_queue.push(task).await {

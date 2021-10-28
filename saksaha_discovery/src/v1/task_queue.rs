@@ -19,14 +19,12 @@ pub enum Task {
     SendWhoAreYou {
         way_operator: Arc<WhoAreYouOperator>,
         addr: Address,
-        my_disc_port: u16,
-        my_p2p_port: u16,
+        disc_state: Arc<DiscState>,
     },
-    SendWhoAreYouAck{
+    SendWhoAreYouAck {
         way_operator: Arc<WhoAreYouOperator>,
         addr: Address,
-        my_disc_port: u16,
-        my_p2p_port: u16
+        disc_state: Arc<DiscState>,
     },
 }
 
@@ -173,15 +171,13 @@ impl TaskRunner {
             Task::SendWhoAreYou {
                 way_operator,
                 addr,
-                my_disc_port,
-                my_p2p_port,
+                disc_state,
             } => {
                 match way_operator
                     .initiator
                     .send_who_are_you(
                         addr,
-                        my_disc_port.clone(),
-                        my_p2p_port.clone(),
+                        disc_state,
                     )
                     .await
                 {
@@ -227,8 +223,7 @@ impl TaskRunner {
             Task::SendWhoAreYouAck {
                 way_operator,
                 addr,
-                my_disc_port,
-                my_p2p_port,
+                disc_state,
             } => {}
         };
 

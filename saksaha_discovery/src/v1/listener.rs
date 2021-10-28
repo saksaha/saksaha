@@ -163,13 +163,23 @@ impl Handler {
 
         match opcode {
             Opcode::WhoAreYou => {
-                match way_operator.receiver.handle_who_are_you(addr, buf).await
+                match way_operator
+                    .receiver
+                    .handle_who_are_you(addr.clone(), buf)
+                    .await
                 {
                     Ok(_) => {
-                        // match task_queue.push(Task::SendWhoAreYouAck()).await {
-                        //     Ok(_) => (),
-                        //     Err(err) => return Err(err),
-                        // };
+                        match task_queue
+                            .push(Task::SendWhoAreYouAck {
+                                way_operator,
+                                addr,
+                                disc_state,
+                            })
+                            .await
+                        {
+                            Ok(_) => (),
+                            Err(err) => return Err(err),
+                        };
                     }
                     Err(err) => {
                         // match err {
