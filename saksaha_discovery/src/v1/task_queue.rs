@@ -1,9 +1,4 @@
-use super::{
-    address::Address,
-    ops::whoareyou::initiator::{WhoAreYouInitError, WhoAreYouInitiator},
-    table::Table,
-    DiscState,
-};
+use super::{DiscState, address::Address, ops::whoareyou::{initiator::{WhoAreYouInitError, WhoAreYouInitiator}, receiver::WhoAreYouReceiver}, table::Table};
 use log::{debug, error, warn};
 use std::{
     sync::Arc,
@@ -17,6 +12,8 @@ use tokio::sync::{
 #[derive(Clone)]
 pub enum Task {
     SendWhoAreYou(Arc<WhoAreYouInitiator>, Address, u16, u16),
+
+    SendWhoAreYouAck(Arc)
     // ReceiveWhoAreYouAck(Arc<WhoAreYouInitiator>),
 }
 
@@ -38,6 +35,8 @@ pub struct TaskQueue {
     max_retry: usize,
     min_interval: Duration,
     is_running: Arc<Mutex<bool>>,
+    way_initiator: Arc<WhoAreYouInitiator>,
+    way_receiver: Arc<WhoAreYouReceiver>,
 }
 
 impl TaskQueue {

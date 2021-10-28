@@ -76,8 +76,7 @@ impl Handler {
             }
         };
 
-        println!("node: {:?}", node);
-
+        println!("node addr: {:?}", node.addr);
 
         // let endpoint = match self.require_not_my_endpoint(&mut peer) {
         //     Ok(ep) => ep,
