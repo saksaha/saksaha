@@ -17,6 +17,11 @@ use tokio::net::{TcpStream, UdpSocket};
 pub enum WhoAreYouRecvError {
     #[error("Couldn't parse WhoAreYou message, err: {0}")]
     MessageParseFail(String),
+
+    #[error(
+        "Couldn't reserve node, table might be busy, endpoint: {0}, err: {1}"
+    )]
+    TableIsBusy(String, String),
 }
 
 pub struct WhoAreYouReceiver {
@@ -29,14 +34,32 @@ impl WhoAreYouReceiver {
         disc_state: Arc<DiscState>,
         task_queue: Arc<TaskQueue>,
     ) -> WhoAreYouReceiver {
-        WhoAreYouReceiver { disc_state, task_queue }
+        WhoAreYouReceiver {
+            disc_state,
+            task_queue,
+        }
     }
 
-    pub fn handle_who_are_you(
+    pub async fn handle_who_are_you(
         &self,
         addr: Address,
         buf: &[u8],
     ) -> Result<(), WhoAreYouRecvError> {
+        let endpoint = addr.endpoint();
+
+        let table_node = {
+            let node = self.disc_state.table.find().await;
+
+            if node == None {
+                match self.disc_state.table.try_reserve().await {
+                    Ok(n) => n,
+                    Err(err) => {
+                        return Err(WhoAreYouRecvError::TableIsBusy(endpoint, err))
+                    }
+                };
+            }
+        };
+
         let msg = match WhoAreYouMsg::parse(buf) {
             Ok(m) => m,
             Err(err) => {

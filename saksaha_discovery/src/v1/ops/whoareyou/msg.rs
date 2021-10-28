@@ -101,8 +101,8 @@ impl WhoAreYouMsg {
                 Ok(l) => l,
                 Err(err) => {
                     return Err(format!(
-                        "Couldn't parse length of a msg, len: {}",
-                        size
+                        "Couldn't parse length of a msg, len: {}, err: {}",
+                        size, err,
                     ));
                 }
             };
@@ -141,7 +141,6 @@ impl WhoAreYouMsg {
                 - PUBLIC_KEY_LEN; // pubkey;
 
             let b = &buf[72..72 + sig_len];
-            println!("33, b: {:?}", b);
             let sig = match Signature::from_der(b) {
                 Ok(s) => s,
                 Err(err) => {
@@ -152,73 +151,8 @@ impl WhoAreYouMsg {
                 }
             };
 
-            // let sig = match buf[72..72 + sig_len].try_into() {
-            //     Ok(b) => {
-            //         match Signature::from_der(b) {
-            //             Ok(s) => s,
-            //             Err(err) => {
-            //                 return Err(format!(
-            //                     "Cannot recover signature, err: {}",
-            //                     err
-            //                 ));
-            //             }
-            //         }
-            //     }
-            //     Err(err) => {
-            //         return Err(format!("Error parsing signature, err: {}", err));
-            //     }
-            // };
-
             sig
         };
-
-        // let sig_len = len
-        //     - 1 // kind
-        //     - 2 // peer_op_bytes
-        //     - 65; // public_key_bytes
-
-        // let sig: Signature = match buf[1..1 + sig_len].try_into() {
-        //     Ok(b) => {
-        //         // log!(DEBUG, "Parsing signature: {:?}", b);
-
-        //         match Signature::from_der(b) {
-        //             Ok(s) => s,
-        //             Err(err) => {
-        //                 return Err(format!(
-        //                     "Error recovering signature, err: {}",
-        //                     err
-        //                 ));
-        //             }
-        //         }
-        //     }
-        //     Err(err) => {
-        //         return Err(format!("Error parsing signature, err: {}", err));
-        //     }
-        // };
-
-        // let sig_end = 1 + sig_len;
-
-        // let peer_op_port: u16 = match buf[sig_end..sig_end + 2].try_into() {
-        //     Ok(p) => u16::from_be_bytes(p),
-        //     Err(err) => {
-        //         return Err(format!(
-        //             "Error parsing peer_op_port, err: {}",
-        //             err
-        //         ));
-        //     }
-        // };
-
-        // let peer_op_port_end = 1 + sig_len + 2;
-        // let mut public_key_bytes = [0; 65];
-        // public_key_bytes
-        //     .copy_from_slice(&buf[peer_op_port_end..peer_op_port_end + 65]);
-
-        // let mut way =
-        //     WhoAreYouMsg::new(opcode, sig, peer_op_port, public_key_bytes);
-
-        // let mut new_buf = len_buf.to_vec();
-        // new_buf.extend_from_slice(&buf);
-        // way.raw = new_buf;
 
         let msg = WhoAreYouMsg::new(opcode, sig, p2p_port, public_key_bytes);
         Ok(msg)
