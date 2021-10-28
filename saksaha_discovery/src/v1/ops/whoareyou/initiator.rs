@@ -73,11 +73,17 @@ impl WhoAreYouInitiator {
             return Err(WhoAreYouInitError::MyEndpoint(endpoint));
         }
 
-        let table_node = match self.disc_state.table.reserve().await {
-            Ok(n) => n,
-            Err(err) => {
-                return Err(WhoAreYouInitError::NodeReserveFail(err));
-            }
+        let table_node = {
+            let node = match self.disc_state.table.find(&endpoint).await {
+                Some(n) => n,
+                None => match self.disc_state.table.reserve().await {
+                    Ok(n) => n,
+                    Err(err) => {
+                        return Err(WhoAreYouInitError::NodeReserveFail(err));
+                    }
+                },
+            };
+            node
         };
 
         let secret_key = self.disc_state.id.secret_key();
@@ -149,53 +155,41 @@ impl WhoAreYouInitiator {
         my_disc_endpoint == *endpoint
     }
 
-    pub async fn initiate_who_are_you(
-        &self,
-        endpoint: String,
-        my_p2p_port: u16,
-    ) -> Result<(), WhoAreYouInitError> {
-        let secret_key = self.disc_state.id.secret_key();
-        let signing_key = SigningKey::from(secret_key);
-        let sig = Crypto::make_sign(signing_key, SAKSAHA);
+    // pub async fn initiate_who_are_you(
+    //     &self,
+    //     endpoint: String,
+    //     my_p2p_port: u16,
+    // ) -> Result<(), WhoAreYouInitError> {
+    //     let secret_key = self.disc_state.id.secret_key();
+    //     let signing_key = SigningKey::from(secret_key);
+    //     let sig = Crypto::make_sign(signing_key, SAKSAHA);
 
-        let way = WhoAreYouMsg::new(
-            Opcode::WhoAreYou,
-            sig,
-            my_p2p_port,
-            self.disc_state.id.public_key_bytes(),
-        );
+    //     let way = WhoAreYouMsg::new(
+    //         Opcode::WhoAreYou,
+    //         sig,
+    //         my_p2p_port,
+    //         self.disc_state.id.public_key_bytes(),
+    //     );
 
-        let buf = match way.to_bytes() {
-            Ok(b) => b,
-            Err(err) => {
-                return Err(WhoAreYouInitError::ByteConversionFail(err));
-            }
-        };
+    //     let buf = match way.to_bytes() {
+    //         Ok(b) => b,
+    //         Err(err) => {
+    //             return Err(WhoAreYouInitError::ByteConversionFail(err));
+    //         }
+    //     };
 
-        match self.udp_socket.send_to(&buf, endpoint.clone()).await {
-            Ok(_) => (),
-            Err(err) => {
-                return Err(WhoAreYouInitError::WaySendFail(
-                    endpoint,
-                    err.to_string(),
-                ));
-            }
-        };
+    //     match self.udp_socket.send_to(&buf, endpoint.clone()).await {
+    //         Ok(_) => (),
+    //         Err(err) => {
+    //             return Err(WhoAreYouInitError::WaySendFail(
+    //                 endpoint,
+    //                 err.to_string(),
+    //             ));
+    //         }
+    //     };
 
-        println!("55");
-
-        // match stream.write_all(&buf).await {
-        //     Ok(_) => (),
-        //     Err(err) => {
-        //         return Err(WhoAreYouInitError::WaySendFail(
-        //             endpoint,
-        //             err.to_string(),
-        //         ));
-        //     }
-        // };
-
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
     // pub async fn wait_for_ack(
     //     mut stream: TcpStream,
