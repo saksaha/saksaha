@@ -80,7 +80,7 @@ impl<'a> Handler<'a> {
         let peer_pk_bytes = peer.public_key_bytes;
         // PublicKey::f
 
-        println!("33, {:?}", peer_pk_bytes);
+        println!("331, {:?}", peer_pk_bytes);
 
         let a = match EncodedPoint::from_bytes(&peer_pk_bytes) {
             Ok(a) => a,

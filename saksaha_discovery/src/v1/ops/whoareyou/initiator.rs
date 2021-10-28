@@ -9,7 +9,6 @@ use std::sync::Arc;
 use thiserror::Error;
 use tokio::io::{AsyncWriteExt, Interest};
 use tokio::net::{TcpStream, UdpSocket};
-
 use super::msg::{WhoAreYouAckMsg, WhoAreYouMsg, SAKSAHA};
 
 #[derive(Error, Debug)]
@@ -47,15 +46,15 @@ pub enum WhoAreYouInitError {
 
 pub struct WhoAreYouInitiator {
     udp_socket: Arc<UdpSocket>,
-    state: Arc<DiscState>,
+    disc_state: Arc<DiscState>,
 }
 
 impl WhoAreYouInitiator {
     pub fn new(
         udp_socket: Arc<UdpSocket>,
-        state: Arc<DiscState>,
+        disc_state: Arc<DiscState>,
     ) -> WhoAreYouInitiator {
-        WhoAreYouInitiator { udp_socket, state }
+        WhoAreYouInitiator { udp_socket, disc_state }
     }
 
     pub async fn send_who_are_you(
@@ -70,14 +69,14 @@ impl WhoAreYouInitiator {
             return Err(WhoAreYouInitError::MyEndpoint(endpoint));
         }
 
-        let table_node = match self.state.table.reserve().await {
+        let table_node = match self.disc_state.table.reserve().await {
             Ok(n) => n,
             Err(err) => {
                 return Err(WhoAreYouInitError::NodeReserveFail(err));
             }
         };
 
-        let secret_key = self.state.id.secret_key();
+        let secret_key = self.disc_state.id.secret_key();
         let signing_key = SigningKey::from(secret_key);
         let sig = Crypto::make_sign(signing_key, SAKSAHA);
 
@@ -85,7 +84,7 @@ impl WhoAreYouInitiator {
             Opcode::WhoAreYou,
             sig,
             my_p2p_port,
-            self.state.id.public_key_bytes(),
+            self.disc_state.id.public_key_bytes(),
         );
 
         let buf = match way.to_bytes() {
@@ -107,7 +106,7 @@ impl WhoAreYouInitiator {
             }
         };
 
-        match self.state.table.register(table_node, addr).await {
+        match self.disc_state.table.register(table_node, addr).await {
             Ok(_) => {}
             Err(err) => {
                 return Err(WhoAreYouInitError::NodeRegisterFail(endpoint, err))
@@ -145,7 +144,7 @@ impl WhoAreYouInitiator {
         my_p2p_port: u16,
     ) -> Result<(), WhoAreYouInitError> {
         println!("44");
-        let secret_key = self.state.id.secret_key();
+        let secret_key = self.disc_state.id.secret_key();
         let signing_key = SigningKey::from(secret_key);
         let sig = Crypto::make_sign(signing_key, SAKSAHA);
 
@@ -153,7 +152,7 @@ impl WhoAreYouInitiator {
             Opcode::WhoAreYou,
             sig,
             my_p2p_port,
-            self.state.id.public_key_bytes(),
+            self.disc_state.id.public_key_bytes(),
         );
 
         let buf = match way.to_bytes() {

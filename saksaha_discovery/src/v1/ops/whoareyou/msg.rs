@@ -58,29 +58,41 @@ impl WhoAreYouMsg {
     }
 
     pub fn to_bytes(&self) -> Result<Vec<u8>, String> {
-        let mut buf = vec![];
+        let mut buf: Vec<u8> = vec![];
 
         let opcode_bytes = [self.opcode as u8];
         let sig_bytes = self.sig.to_der().to_bytes();
         let peer_op_bytes = self.peer_op_port.to_be_bytes();
         let public_key_bytes = self.public_key_bytes;
 
-        let len = 1 // kind_bytes
-            + sig_bytes.len()
-            + 2 // peer_op_bytes
-            + 65; // public_key_bytes
+        let len_bytes = {
+            let l = opcode_bytes.len()
+                + sig_bytes.len()
+                + peer_op_bytes.len()
+                + public_key_bytes.len();
 
-        let len: u8 = match len.try_into() {
-            Ok(l) => l,
-            Err(err) => {
+            let len: u32 = match l.try_into() {
+                Ok(l) => l,
+                Err(err) => {
+                    return Err(format!(
+                        "Cannot convert length into u8, err: {}",
+                        err
+                    ));
+                }
+            };
+
+            let len_bytes = len.to_le_bytes();
+            if len_bytes.len() != 4 {
                 return Err(format!(
-                    "Cannot convert length into u8, err: {}",
-                    err
+                    "Message length is invalid, len: {}",
+                    len_bytes.len()
                 ));
             }
+
+            len_bytes
         };
 
-        buf.push(len);
+        buf.extend_from_slice(&len_bytes);
         buf.extend_from_slice(&opcode_bytes);
         buf.extend_from_slice(&sig_bytes);
         buf.extend_from_slice(&peer_op_bytes);
@@ -90,9 +102,9 @@ impl WhoAreYouMsg {
     }
 
     pub async fn parse(stream: &mut TcpStream) -> Result<WhoAreYouMsg, String> {
-        let mut size_buf: [u8; 1] = [0; 1];
+        let mut len_buf: [u8; 4] = [0; 4];
 
-        match stream.read(&mut size_buf).await {
+        match stream.read(&mut len_buf).await {
             Ok(_) => (),
             Err(err) => {
                 return Err(format!(
@@ -102,8 +114,21 @@ impl WhoAreYouMsg {
             }
         };
 
-        let size: usize = size_buf[0].into();
-        let mut buf = vec![0; size];
+        let len: usize = {
+            let len = u32::from_le_bytes(len_buf);
+            let len: usize = match len.try_into() {
+                Ok(l) => l,
+                Err(err) => {
+                    return Err(format!(
+                        "Error converting size into usize, len: {}",
+                        len
+                    ));
+                }
+            };
+            len
+        };
+
+        let mut buf = vec![0; len];
 
         let _ = match stream.read_exact(&mut buf).await {
             Ok(l) => {
@@ -119,7 +144,7 @@ impl WhoAreYouMsg {
 
         let opcode = Opcode::from(buf[0]);
 
-        let sig_len = size
+        let sig_len = len
             - 1 // kind
             - 2 // peer_op_bytes
             - 65; // public_key_bytes
@@ -163,7 +188,7 @@ impl WhoAreYouMsg {
         let mut way =
             WhoAreYouMsg::new(opcode, sig, peer_op_port, public_key_bytes);
 
-        let mut new_buf = size_buf.to_vec();
+        let mut new_buf = len_buf.to_vec();
         new_buf.extend_from_slice(&buf);
         way.raw = new_buf;
 

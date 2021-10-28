@@ -1,10 +1,6 @@
-use super::{
-    active_calls::{ActiveCalls, Traffic},
-    table::Table,
-    DiscState,
-};
+use super::{DiscState, active_calls::{ActiveCalls, Traffic}, ops::{whoareyou::receiver::WhoAreYouReceiver, Opcode}, table::Table, task_queue::TaskQueue};
 use log::{debug, error, info, warn};
-use std::{net::SocketAddr, sync::Arc, time::Duration};
+use std::{convert::TryInto, net::SocketAddr, sync::Arc, time::Duration};
 use thiserror::Error;
 use tokio::{
     net::{TcpListener, TcpStream, UdpSocket},
@@ -19,17 +15,23 @@ pub enum ListenerError {
 
 pub struct Listener {
     disc_state: Arc<DiscState>,
+    task_queue: Arc<TaskQueue>,
     udp_socket: Arc<UdpSocket>,
+    way_receiver: Arc<WhoAreYouReceiver>,
 }
 
 impl Listener {
     pub fn new(
         disc_state: Arc<DiscState>,
         udp_socket: Arc<UdpSocket>,
+        way_receiver: Arc<WhoAreYouReceiver>,
+        task_queue: Arc<TaskQueue>,
     ) -> Listener {
         Listener {
             disc_state,
             udp_socket,
+            way_receiver,
+            task_queue,
         }
     }
 
@@ -45,8 +47,10 @@ impl Listener {
     }
 
     pub fn run_loop(&self) -> Result<(), String> {
-        let state = self.disc_state.clone();
+        let disc_state = self.disc_state.clone();
         let udp_socket = self.udp_socket.clone();
+        let task_queue = self.task_queue.clone();
+        let way_receiver = self.way_receiver.clone();
 
         tokio::spawn(async move {
             loop {
@@ -65,8 +69,14 @@ impl Listener {
                     }
                 };
 
-                match Handler::run(state.clone(), udp_socket.clone(), addr, &buf)
-                    .await
+                match Handler::run(
+                    disc_state.clone(),
+                    task_queue.clone(),
+                    way_receiver.clone(),
+                    addr,
+                    &buf,
+                )
+                .await
                 {
                     Ok(_) => (),
                     Err(err) => {
@@ -116,25 +126,52 @@ struct Handler;
 
 impl Handler {
     async fn run(
-        state: Arc<DiscState>,
-        udp_socket: Arc<UdpSocket>,
+        disc_state: Arc<DiscState>,
+        task_queue: Arc<TaskQueue>,
+        way_receiver: Arc<WhoAreYouReceiver>,
         addr: SocketAddr,
         buf: &[u8],
     ) -> Result<(), String> {
         let endpoint = get_endpoint(addr);
+        let len = buf.len();
 
-        println!("33, buf: {:?}", buf);
+        if len < 5 {
+            return Err(format!("content too short, len: {}", len));
+        }
+
+        let len: usize = {
+            let mut len_buf: [u8; 4] = [0; 4];
+            len_buf.copy_from_slice(&buf[..4]);
+
+            let len = u32::from_le_bytes(len_buf);
+            let len: usize = match len.try_into() {
+                Ok(l) => l,
+                Err(err) => {
+                    return Err(format!(
+                        "Error converting size into usize, len: {}",
+                        len
+                    ));
+                }
+            };
+            len
+        };
+
+        let opcode = {
+            let c = Opcode::from(buf[4]);
+            if c == Opcode::Undefined {
+                return Err(format!("Undefined opcode, val: {}", buf[4]));
+            }
+            c
+        };
+
+        match opcode {
+            Opcode::WhoAreYou => {}
+            Opcode::WhoAreYouAck => {}
+            Opcode::Undefined => {}
+        };
 
         Ok(())
     }
-
-    // fn _run(
-    //     state: Arc<DiscState>,
-    //     udp_socket: Arc<UdpSocket>,
-    //     endpoint: String,
-    // ) {
-    //     println!("33");
-    // }
 }
 
 struct Routine {}

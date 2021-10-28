@@ -14,7 +14,10 @@ use self::{
 use crate::{
     identity::Identity,
     v1::{
-        address::Address, ops::whoareyou::initiator::WhoAreYouInitiator,
+        address::Address,
+        ops::whoareyou::{
+            initiator::WhoAreYouInitiator, receiver::WhoAreYouReceiver,
+        },
         task_queue::Task,
     },
 };
@@ -98,7 +101,18 @@ impl Disc {
             Arc::new(i)
         };
 
-        let listener = Listener::new(self.state.clone(), udp_socket.clone());
+        let way_receiver = {
+            let r = WhoAreYouReceiver::new(self.state.clone());
+            Arc::new(r)
+        };
+
+        let listener = Listener::new(
+            self.state.clone(),
+            udp_socket.clone(),
+            way_receiver,
+            self.task_queue.clone(),
+        );
+
         match listener.start(my_p2p_port).await {
             Ok(port) => port,
             Err(err) => return Err(err),
