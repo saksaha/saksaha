@@ -173,7 +173,6 @@ impl Handler {
                             .push(Task::SendWhoAreYouAck {
                                 way_operator,
                                 addr,
-                                disc_state,
                             })
                             .await
                         {

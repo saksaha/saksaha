@@ -159,9 +159,6 @@ impl Disc {
 
         let urls = [bootstrap_urls, default_bootstrap_urls].concat();
 
-        let my_disc_port = self.state.my_disc_port;
-        let my_p2p_port = self.state.my_p2p_port;
-
         info!("*********************************************************");
         info!("* Discovery table bootstrapped");
 
@@ -190,7 +187,6 @@ impl Disc {
                 let task = Task::SendWhoAreYou {
                     way_operator: self.way_operator.clone(),
                     addr,
-                    disc_state: self.state.clone(),
                 };
 
                 match self.task_queue.push(task).await {
