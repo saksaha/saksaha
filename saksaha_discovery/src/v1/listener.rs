@@ -1,4 +1,4 @@
-use super::{DiscState, active_calls::{ActiveCalls, Traffic}, ops::{whoareyou::receiver::WhoAreYouReceiver, Opcode}, table::Table, task_queue::TaskQueue};
+use super::{DiscState, active_calls::{ActiveCalls, Traffic}, address::Address, ops::{Opcode, whoareyou::receiver::{WhoAreYouReceiver, WhoAreYouRecvError}}, table::Table, task_queue::TaskQueue};
 use log::{debug, error, info, warn};
 use std::{convert::TryInto, net::SocketAddr, sync::Arc, time::Duration};
 use thiserror::Error;
@@ -49,31 +49,30 @@ impl Listener {
     pub fn run_loop(&self) -> Result<(), String> {
         let disc_state = self.disc_state.clone();
         let udp_socket = self.udp_socket.clone();
-        let task_queue = self.task_queue.clone();
         let way_receiver = self.way_receiver.clone();
 
         tokio::spawn(async move {
             loop {
-                let mut buf = [0; 1024];
-                let (len, addr) = match udp_socket.recv_from(&mut buf).await {
-                    Ok(res) => {
-                        debug!(
-                            "Accepted incoming request, len: {}, addr: {}",
-                            res.0, res.1
-                        );
-                        res
-                    }
-                    Err(err) => {
-                        warn!("Error accepting request, err: {}", err);
-                        continue;
-                    }
-                };
+                let mut buf = [0; 512];
+                let (_, socket_addr) =
+                    match udp_socket.recv_from(&mut buf).await {
+                        Ok(res) => {
+                            debug!(
+                                "Accepted incoming request, len: {}, addr: {}",
+                                res.0, res.1
+                            );
+                            res
+                        }
+                        Err(err) => {
+                            warn!("Error accepting request, err: {}", err);
+                            continue;
+                        }
+                    };
 
                 match Handler::run(
                     disc_state.clone(),
-                    task_queue.clone(),
                     way_receiver.clone(),
-                    addr,
+                    socket_addr,
                     &buf,
                 )
                 .await
@@ -82,7 +81,7 @@ impl Listener {
                     Err(err) => {
                         error!(
                             "Error processing request, addr: {}, err: {}",
-                            addr, err
+                            socket_addr, err
                         );
                     }
                 }
@@ -127,34 +126,16 @@ struct Handler;
 impl Handler {
     async fn run(
         disc_state: Arc<DiscState>,
-        task_queue: Arc<TaskQueue>,
         way_receiver: Arc<WhoAreYouReceiver>,
         addr: SocketAddr,
         buf: &[u8],
     ) -> Result<(), String> {
-        let endpoint = get_endpoint(addr);
+        let addr = Address::from_socket_addr(addr);
         let len = buf.len();
 
         if len < 5 {
             return Err(format!("content too short, len: {}", len));
         }
-
-        let len: usize = {
-            let mut len_buf: [u8; 4] = [0; 4];
-            len_buf.copy_from_slice(&buf[..4]);
-
-            let len = u32::from_le_bytes(len_buf);
-            let len: usize = match len.try_into() {
-                Ok(l) => l,
-                Err(err) => {
-                    return Err(format!(
-                        "Error converting size into usize, len: {}",
-                        len
-                    ));
-                }
-            };
-            len
-        };
 
         let opcode = {
             let c = Opcode::from(buf[4]);
@@ -165,7 +146,18 @@ impl Handler {
         };
 
         match opcode {
-            Opcode::WhoAreYou => {}
+            Opcode::WhoAreYou => {
+                match way_receiver.handle_who_are_you(addr, buf) {
+                    Ok(_) => (),
+                    Err(err) => {
+                        // match err {
+                        //     WhoAreYouRecvError::MessageParseFail(_) => {
+                        //     }
+                        // }
+                        error!("Request handle fail, err: {}", err);
+                    }
+                }
+            }
             Opcode::WhoAreYouAck => {}
             Opcode::Undefined => {}
         };

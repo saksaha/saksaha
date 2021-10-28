@@ -1,12 +1,21 @@
+use std::net::SocketAddr;
+
 #[derive(Debug, Clone)]
 pub struct Address {
     pub ip: String,
     pub disc_port: u16,
-    pub peer_id: String,
-    pub url: String,
+    pub peer_id: Option<String>,
 }
 
 impl Address {
+    pub fn from_socket_addr(addr: SocketAddr) -> Address {
+        Address {
+            ip: addr.ip().to_string(),
+            disc_port: addr.port(),
+            peer_id: None,
+        }
+    }
+
     fn parse_full_url(url: String) -> Result<Address, String> {
         let (peer_id, ip, disc_port) = match url.get(6..) {
             Some(u) => match u.split_once('@') {
@@ -27,20 +36,19 @@ impl Address {
         };
 
         Ok(Address {
-            peer_id,
+            peer_id: Some(peer_id),
             ip,
             disc_port,
-            url,
         })
     }
 
     fn parse_short_url(url: String) -> Result<Address, String> {
         let (ip, disc_port) = parse_endpoint(url.as_str())?;
+
         Ok(Address {
-            peer_id: "".to_string(),
+            peer_id: None,
             ip,
             disc_port,
-            url,
         })
     }
 
@@ -58,8 +66,8 @@ impl Address {
 
     pub fn short_url(&self) -> String {
         let peer_id_short = {
-            if self.peer_id.len() > 6 {
-                &self.peer_id[..6]
+            if let Some(pid) = &self.peer_id {
+                &pid[..6]
             } else {
                 ".."
             }

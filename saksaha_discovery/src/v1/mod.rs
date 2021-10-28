@@ -102,7 +102,10 @@ impl Disc {
         };
 
         let way_receiver = {
-            let r = WhoAreYouReceiver::new(self.state.clone());
+            let r = WhoAreYouReceiver::new(
+                self.state.clone(),
+                self.task_queue.clone(),
+            );
             Arc::new(r)
         };
 
