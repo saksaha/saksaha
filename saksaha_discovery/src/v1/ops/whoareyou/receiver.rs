@@ -161,6 +161,13 @@ impl WhoAreYouReceiver {
         &self,
         addr: Address,
     ) -> Result<(), String> {
+        let my_disc_port = self.disc_state.my_disc_port;
+        let my_p2p_port = self.disc_state.my_p2p_port;
+        let endpoint = addr.endpoint();
+
+        if super::is_my_endpoint(my_disc_port, &endpoint) {
+            // return Err(WhoAreYouInitError::MyEndpoint(endpoint));
+        }
 
         Ok(())
     }
