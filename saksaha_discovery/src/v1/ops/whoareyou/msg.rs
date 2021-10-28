@@ -2,33 +2,18 @@ use crypto::Crypto;
 use k256::ecdsa::Signature;
 use std::convert::TryInto;
 use tokio::{io::AsyncReadExt, net::TcpStream};
-
 use crate::v1::ops::Opcode;
 
 pub const SAKSAHA: &[u8; 7] = b"saksaha";
-
-// #[repr(u8)]
-// #[derive(Copy, Clone)]
-// pub enum MsgKind {
-//     Syn = 0x0,
-//     Ack,
-//     Undefined,
-// }
-
-// impl From<u8> for MsgKind {
-//     fn from(src: u8) -> Self {
-//         match src {
-//             0x0 => MsgKind::Syn,
-//             0x1 => MsgKind::Ack,
-//             _ => MsgKind::Undefined,
-//         }
-//     }
-// }
+pub const SIZE_LEN: usize = 4;
+pub const OPCODE_LEN: usize = 1;
+pub const P2P_PORT_LEN: usize = 2;
+pub const PUBLIC_KEY_LEN: usize = 65;
 
 pub struct WhoAreYouMsg {
     pub opcode: Opcode,
     pub sig: Signature,
-    pub public_key_bytes: [u8; 65],
+    pub public_key_bytes: [u8; PUBLIC_KEY_LEN],
     pub p2p_port: u16,
     pub peer_id: String,
 }
@@ -38,7 +23,7 @@ impl WhoAreYouMsg {
         opcode: Opcode,
         sig: Signature,
         p2p_port: u16,
-        public_key_bytes: [u8; 65],
+        public_key_bytes: [u8; PUBLIC_KEY_LEN],
     ) -> WhoAreYouMsg {
         let peer_id = WhoAreYouMsg::make_peer_id(&public_key_bytes);
 
@@ -51,7 +36,7 @@ impl WhoAreYouMsg {
         }
     }
 
-    pub fn make_peer_id(public_key_bytes: &[u8; 65]) -> String {
+    pub fn make_peer_id(public_key_bytes: &[u8; PUBLIC_KEY_LEN]) -> String {
         Crypto::encode_hex(public_key_bytes)
     }
 
@@ -69,7 +54,7 @@ impl WhoAreYouMsg {
                 + public_key_bytes.len()
                 + sig_bytes.len();
 
-            let len: u32 = match l.try_into() {
+            let mut len: u32 = match l.try_into() {
                 Ok(l) => l,
                 Err(err) => {
                     return Err(format!(
@@ -79,16 +64,21 @@ impl WhoAreYouMsg {
                 }
             };
 
+            len += SIZE_LEN as u32; // adding size bytes itself
+
             let size_bytes = len.to_le_bytes();
-            if size_bytes.len() > 4 {
+            if size_bytes.len() != 4 {
                 return Err(format!(
-                    "Message length is too big, len: {}",
+                    "Message length is not 4 (length of 2^4), len: {}",
                     size_bytes.len()
                 ));
             }
 
             size_bytes
         };
+
+        println!("size: {:?}", size_bytes);
+        println!("sig: {:?}", sig_bytes);
 
         buf.extend_from_slice(&size_bytes);
         buf.extend_from_slice(&opcode_bytes);
@@ -103,8 +93,8 @@ impl WhoAreYouMsg {
         println!("entire buf: {:?}, {}", buf, buf.len());
 
         let size: usize = {
-            let mut size_buf: [u8; 4] = [0; 4];
-            size_buf.copy_from_slice(&buf[..4]);
+            let mut size_buf: [u8; SIZE_LEN] = [0; SIZE_LEN];
+            size_buf.copy_from_slice(&buf[..SIZE_LEN]);
 
             let size = u32::from_le_bytes(size_buf);
             let size: usize = match size.try_into() {
@@ -127,7 +117,7 @@ impl WhoAreYouMsg {
             c
         };
 
-        let p2p_port: u16 = match buf[5..7].try_into() {
+        let p2p_port: u16 = match buf[5..(5 + P2P_PORT_LEN)].try_into() {
             Ok(p) => u16::from_be_bytes(p),
             Err(err) => {
                 return Err(format!(
@@ -137,18 +127,18 @@ impl WhoAreYouMsg {
             }
         };
 
-        let mut public_key_bytes = {
-            let mut b = [0; 65];
-            b.copy_from_slice(&buf[7..72]);
+        let public_key_bytes = {
+            let mut b = [0; PUBLIC_KEY_LEN];
+            b.copy_from_slice(&buf[7..(7 + PUBLIC_KEY_LEN)]);
             b
         };
 
         let sig: Signature = {
             let sig_len = size
-                - 4 // size buf
-                - 1 // opcode
-                - 2 // p2p port
-                - 65; // pubkey;
+                - SIZE_LEN // size buf
+                - OPCODE_LEN // opcode
+                - P2P_PORT_LEN // p2p port
+                - PUBLIC_KEY_LEN; // pubkey;
 
             let b = &buf[72..72 + sig_len];
             println!("33, b: {:?}", b);
