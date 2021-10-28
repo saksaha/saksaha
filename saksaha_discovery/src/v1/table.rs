@@ -21,8 +21,7 @@ pub struct Table {
 
 impl Table {
     pub fn new() -> Table {
-        let (node_tx, node_rx) =
-            mpsc::channel::<Arc<Mutex<TableNode>>>(32);
+        let (node_tx, node_rx) = mpsc::channel::<Arc<Mutex<TableNode>>>(32);
 
         let map = HashMap::with_capacity(CAPACITY);
         let indices = Vec::new();
@@ -79,14 +78,23 @@ impl Table {
         Ok(())
     }
 
-    pub async fn reserve(
-        &self,
-    ) -> Result<Arc<Mutex<TableNode>>, String> {
+    pub async fn reserve(&self) -> Result<Arc<Mutex<TableNode>>, String> {
         let mut node_rx = self.node_rx.lock().await;
         match node_rx.recv().await {
             Some(n) => return Ok(n),
             None => return Err(format!("Can't retrieve tableNode from pool")),
         };
+    }
+
+    pub async fn try_reserve(&self) -> Result<Arc<Mutex<TableNode>>, String> {
+        let mut node_rx = self.node_rx.lock().await;
+        match node_rx.try_recv() {
+            Ok(n) => Ok(n),
+            Err(err) => Err(format!(
+                "Can't reserve a tableNode. Table might be busy, err: {}",
+                err
+            )),
+        }
     }
 
     pub async fn next(&self) -> Option<OwnedMutexGuard<TableNode>> {
@@ -135,14 +143,10 @@ pub struct TableNode {
 
 impl TableNode {
     pub fn new(addr: Address) -> TableNode {
-        TableNode {
-            addr: Some(addr),
-        }
+        TableNode { addr: Some(addr) }
     }
 
     pub fn new_empty() -> TableNode {
-        TableNode {
-            addr: None,
-        }
+        TableNode { addr: None }
     }
 }

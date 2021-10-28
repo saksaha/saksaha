@@ -157,7 +157,7 @@ impl Handler {
 
         match opcode {
             Opcode::WhoAreYou => {
-                match way_receiver.handle_who_are_you(addr, buf) {
+                match way_receiver.handle_who_are_you(addr, buf).await {
                     Ok(_) => (),
                     Err(err) => {
                         // match err {
