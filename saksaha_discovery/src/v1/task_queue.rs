@@ -19,12 +19,10 @@ pub enum Task {
     SendWhoAreYou {
         way_operator: Arc<WhoAreYouOperator>,
         addr: Address,
-        disc_state: Arc<DiscState>,
     },
     SendWhoAreYouAck {
         way_operator: Arc<WhoAreYouOperator>,
         addr: Address,
-        disc_state: Arc<DiscState>,
     },
 }
 
@@ -168,19 +166,8 @@ struct TaskRunner;
 impl TaskRunner {
     pub async fn run(task: Task) -> TaskResult {
         match task {
-            Task::SendWhoAreYou {
-                way_operator,
-                addr,
-                disc_state,
-            } => {
-                match way_operator
-                    .initiator
-                    .send_who_are_you(
-                        addr,
-                        disc_state,
-                    )
-                    .await
-                {
+            Task::SendWhoAreYou { way_operator, addr } => {
+                match way_operator.initiator.send_who_are_you(addr).await {
                     Ok(_) => (),
                     Err(err) => {
                         let err_msg = err.to_string();
@@ -220,11 +207,12 @@ impl TaskRunner {
                     }
                 }
             }
-            Task::SendWhoAreYouAck {
-                way_operator,
-                addr,
-                disc_state,
-            } => {}
+            Task::SendWhoAreYouAck { way_operator, addr } => {
+                match way_operator.receiver.send_who_are_you_ack(addr).await {
+                    Ok(_) => (),
+                    Err(err) => (),
+                };
+            }
         };
 
         TaskResult::Success

@@ -27,12 +27,8 @@ pub struct WhoAreYouReceiver {
 }
 
 impl WhoAreYouReceiver {
-    pub fn new(
-        disc_state: Arc<DiscState>,
-    ) -> WhoAreYouReceiver {
-        WhoAreYouReceiver {
-            disc_state,
-        }
+    pub fn new(disc_state: Arc<DiscState>) -> WhoAreYouReceiver {
+        WhoAreYouReceiver { disc_state }
     }
 
     pub async fn handle_who_are_you(
@@ -158,6 +154,14 @@ impl WhoAreYouReceiver {
         // way.raw = new_buf;
 
         // Ok(way)
+        Ok(())
+    }
+
+    pub async fn send_who_are_you_ack(
+        &self,
+        addr: Address,
+    ) -> Result<(), String> {
+
         Ok(())
     }
 }

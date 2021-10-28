@@ -63,10 +63,9 @@ impl WhoAreYouInitiator {
     pub async fn send_who_are_you(
         &self,
         addr: Address,
-        disc_state: Arc<DiscState>,
     ) -> Result<(), WhoAreYouInitError> {
-        let my_disc_port = disc_state.my_disc_port;
-        let my_p2p_port = disc_state.my_p2p_port;
+        let my_disc_port = self.disc_state.my_disc_port;
+        let my_p2p_port = self.disc_state.my_p2p_port;
 
         let endpoint = addr.endpoint();
 
