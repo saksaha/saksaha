@@ -44,7 +44,8 @@ impl Table {
                 Ok(_) => (),
                 Err(err) => {
                     return Err(format!(
-                        "Can't send empty TableNode to the pool"
+                        "Can't send empty TableNode to the pool, err: {}",
+                        err
                     ));
                 }
             }

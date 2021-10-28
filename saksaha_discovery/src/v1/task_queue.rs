@@ -1,4 +1,9 @@
-use super::{DiscState, address::Address, ops::whoareyou::{initiator::{WhoAreYouInitError, WhoAreYouInitiator}, receiver::WhoAreYouReceiver}, table::Table};
+use super::{
+    address::Address,
+    ops::whoareyou::{initiator::WhoAreYouInitError, WhoAreYouOperator},
+    table::Table,
+    DiscState,
+};
 use log::{debug, error, warn};
 use std::{
     sync::Arc,
@@ -11,10 +16,18 @@ use tokio::sync::{
 
 #[derive(Clone)]
 pub enum Task {
-    SendWhoAreYou(Arc<WhoAreYouInitiator>, Address, u16, u16),
-
-    SendWhoAreYouAck(Arc)
-    // ReceiveWhoAreYouAck(Arc<WhoAreYouInitiator>),
+    SendWhoAreYou {
+        way_operator: Arc<WhoAreYouOperator>,
+        addr: Address,
+        my_disc_port: u16,
+        my_p2p_port: u16,
+    },
+    SendWhoAreYouAck{
+        way_operator: Arc<WhoAreYouOperator>,
+        addr: Address,
+        my_disc_port: u16,
+        my_p2p_port: u16
+    },
 }
 
 #[derive(Clone)]
@@ -35,8 +48,6 @@ pub struct TaskQueue {
     max_retry: usize,
     min_interval: Duration,
     is_running: Arc<Mutex<bool>>,
-    way_initiator: Arc<WhoAreYouInitiator>,
-    way_receiver: Arc<WhoAreYouReceiver>,
 }
 
 impl TaskQueue {
@@ -159,13 +170,14 @@ struct TaskRunner;
 impl TaskRunner {
     pub async fn run(task: Task) -> TaskResult {
         match task {
-            Task::SendWhoAreYou(
-                way_initiator,
+            Task::SendWhoAreYou {
+                way_operator,
                 addr,
                 my_disc_port,
                 my_p2p_port,
-            ) => {
-                match way_initiator
+            } => {
+                match way_operator
+                    .initiator
                     .send_who_are_you(
                         addr,
                         my_disc_port.clone(),
@@ -212,6 +224,12 @@ impl TaskRunner {
                     }
                 }
             }
+            Task::SendWhoAreYouAck {
+                way_operator,
+                addr,
+                my_disc_port,
+                my_p2p_port,
+            } => {}
         };
 
         TaskResult::Success

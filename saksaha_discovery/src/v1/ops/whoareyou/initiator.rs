@@ -94,8 +94,6 @@ impl WhoAreYouInitiator {
             }
         };
 
-        println!("send, buf: {:?}, {}", buf, buf.len());
-
         match self.udp_socket.send_to(&buf, endpoint.clone()).await {
             Ok(_) => {
                 debug!("Sent WhoAreYou to endpoint: {}", &endpoint);
@@ -145,7 +143,6 @@ impl WhoAreYouInitiator {
         endpoint: String,
         my_p2p_port: u16,
     ) -> Result<(), WhoAreYouInitError> {
-        println!("44");
         let secret_key = self.disc_state.id.secret_key();
         let signing_key = SigningKey::from(secret_key);
         let sig = Crypto::make_sign(signing_key, SAKSAHA);
