@@ -1,8 +1,8 @@
-use std::sync::Arc;
-use tokio::net::UdpSocket;
-use crate::v1::{address::Address, DiscState};
 use self::{initiator::WhoAreYouInitiator, receiver::WhoAreYouReceiver};
+use crate::v1::DiscState;
+use std::sync::Arc;
 use thiserror::Error;
+use tokio::net::UdpSocket;
 
 pub mod initiator;
 pub mod msg;
