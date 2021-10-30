@@ -184,7 +184,7 @@ impl Disc {
 
                 info!("* [{}] {}", count, addr.short_url());
 
-                let task = Task::SendWhoAreYou {
+                let task = Task::InitiateWhoAreYou {
                     way_operator: self.way_operator.clone(),
                     addr,
                 };

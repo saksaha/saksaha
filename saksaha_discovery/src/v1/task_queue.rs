@@ -1,9 +1,4 @@
-use super::{
-    address::Address,
-    ops::whoareyou::{initiator::WhoAreYouInitError, WhoAreYouOperator},
-    table::Table,
-    DiscState,
-};
+use super::{DiscState, address::Address, ops::whoareyou::{WhoAreYouError, WhoAreYouOperator}, table::Table};
 use log::{debug, error, warn};
 use std::{
     sync::Arc,
@@ -16,11 +11,7 @@ use tokio::sync::{
 
 #[derive(Clone)]
 pub enum Task {
-    SendWhoAreYou {
-        way_operator: Arc<WhoAreYouOperator>,
-        addr: Address,
-    },
-    SendWhoAreYouAck {
+    InitiateWhoAreYou {
         way_operator: Arc<WhoAreYouOperator>,
         addr: Address,
     },
@@ -166,52 +157,51 @@ struct TaskRunner;
 impl TaskRunner {
     pub async fn run(task: Task) -> TaskResult {
         match task {
-            Task::SendWhoAreYou { way_operator, addr } => {
+            Task::InitiateWhoAreYou { way_operator, addr } => {
                 match way_operator.initiator.send_who_are_you(addr).await {
                     Ok(_) => (),
                     Err(err) => {
                         let err_msg = err.to_string();
 
                         match err {
-                            WhoAreYouInitError::MyEndpoint(_) => {
+                            WhoAreYouError::MyEndpoint(_) => {
                                 return TaskResult::Fail(err_msg);
                             }
-                            WhoAreYouInitError::CallAlreadyInProgress(_) => {
+                            WhoAreYouError::CallAlreadyInProgress(_) => {
                                 return TaskResult::Fail(err_msg);
                             }
-                            WhoAreYouInitError::ConnectionFail(_, _) => {
+                            WhoAreYouError::ConnectionFail(_, _) => {
                                 return TaskResult::FailRetriable(err_msg);
                             }
-                            WhoAreYouInitError::ByteConversionFail(_) => {
+                            WhoAreYouError::ByteConversionFail(_) => {
                                 return TaskResult::Fail(err_msg);
                             }
-                            WhoAreYouInitError::AckParseFail(_) => {
+                            WhoAreYouError::MessageParseFail(_) => {
                                 return TaskResult::FailRetriable(err_msg);
                             }
-                            WhoAreYouInitError::VerifiyingKeyFail(_) => {
+                            WhoAreYouError::VerifiyingKeyFail(_) => {
                                 return TaskResult::FailRetriable(err_msg);
                             }
-                            WhoAreYouInitError::InvalidSignature(_, _) => {
+                            WhoAreYouError::InvalidSignature(_, _) => {
                                 return TaskResult::FailRetriable(err_msg);
                             }
-                            WhoAreYouInitError::WaySendFail(_, _) => {
+                            WhoAreYouError::SendFail(_) => {
                                 return TaskResult::FailRetriable(err_msg);
                             }
-                            WhoAreYouInitError::NodeReserveFail(_) => {
+                            WhoAreYouError::NodeReserveFail(_) => {
                                 return TaskResult::FailRetriable(err_msg);
                             }
-                            WhoAreYouInitError::NodeRegisterFail(_, _) => {
+                            WhoAreYouError::NodeRegisterFail(_, _) => {
                                 return TaskResult::FailRetriable(err_msg);
+                            }
+                            _ => {
+                                error!("Unhandled error occur!");
+
+                                return TaskResult::Fail(err_msg);
                             }
                         }
                     }
                 }
-            }
-            Task::SendWhoAreYouAck { way_operator, addr } => {
-                match way_operator.receiver.send_who_are_you_ack(addr).await {
-                    Ok(_) => (),
-                    Err(err) => (),
-                };
             }
         };
 
