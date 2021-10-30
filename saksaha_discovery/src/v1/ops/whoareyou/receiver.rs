@@ -1,6 +1,6 @@
-use super::msg::{WhoAreYouAckMsg, WhoAreYouMsg, SAKSAHA};
+use super::msg::{SAKSAHA, WhoAreYou, WhoAreYouAck, WhoAreYouSyn};
 use crate::v1::active_calls::Traffic;
-use crate::v1::ops::Opcode;
+use crate::v1::ops::{Message, Opcode};
 use crate::v1::table::{Record, TableNode};
 use crate::v1::task_queue::{Task, TaskQueue};
 use crate::v1::DiscState;
@@ -15,11 +15,17 @@ use tokio::net::{TcpStream, UdpSocket};
 
 #[derive(Error, Debug)]
 pub enum WhoAreYouRecvError {
+    #[error("Can't send ack to myendpoint, err: {0}")]
+    MyEndpoint(String),
+
     #[error("Couldn't parse WhoAreYou message, err: {0}")]
     MessageParseFail(String),
 
     #[error("Couldn't reserve node, table is full, endpoint: {0}, err: {1}")]
     TableIsFull(String, String),
+}
+
+pub enum PostWhoAreYouRecv {
 }
 
 pub struct WhoAreYouReceiver {
@@ -53,7 +59,7 @@ impl WhoAreYouReceiver {
             node
         };
 
-        let msg = match WhoAreYouMsg::parse(buf) {
+        let way_syn = match WhoAreYouSyn::parse(buf) {
             Ok(m) => m,
             Err(err) => {
                 return Err(WhoAreYouRecvError::MessageParseFail(err));
@@ -62,9 +68,9 @@ impl WhoAreYouReceiver {
 
         let mut table_node = table_node.lock().await;
         table_node.record = Some(Record {
-            sig: msg.sig,
-            p2p_port: msg.p2p_port,
-            public_key_bytes: msg.public_key_bytes,
+            sig: way_syn.way.sig,
+            p2p_port: way_syn.way.p2p_port,
+            public_key_bytes: way_syn.way.public_key_bytes,
         });
 
         // self.task_queue.push(Task::SendWhoAreYou())
@@ -154,20 +160,24 @@ impl WhoAreYouReceiver {
         // way.raw = new_buf;
 
         // Ok(way)
+
         Ok(())
     }
 
     pub async fn send_who_are_you_ack(
         &self,
         addr: Address,
-    ) -> Result<(), String> {
+    ) -> Result<(), WhoAreYouRecvError> {
         let my_disc_port = self.disc_state.my_disc_port;
         let my_p2p_port = self.disc_state.my_p2p_port;
         let endpoint = addr.endpoint();
 
         if super::is_my_endpoint(my_disc_port, &endpoint) {
-            // return Err(WhoAreYouInitError::MyEndpoint(endpoint));
+            return Err(WhoAreYouRecvError::MyEndpoint(endpoint));
         }
+
+
+
 
         Ok(())
     }
