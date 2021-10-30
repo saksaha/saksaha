@@ -1,10 +1,8 @@
 use super::msg::{WhoAreYouAck, WhoAreYouSyn, SAKSAHA};
 use crate::v1::address::Address;
-use crate::v1::ops::whoareyou::WhoAreYouError;
 use crate::v1::ops::Message;
 use crate::v1::table::{Record, TableNode};
 use crate::v1::DiscState;
-use crypto::{Crypto, SigningKey};
 use log::debug;
 use std::sync::Arc;
 use thiserror::Error;
@@ -15,14 +13,8 @@ pub enum WhoAreYouInitError {
     #[error("Aborting, request to my endpoint: {endpoint}")]
     MyEndpoint { endpoint: String },
 
-    #[error("Connection failed, endpoint: {endpoint}, _err: {err}")]
-    ConnectionFail { endpoint: String, err: String },
-
     #[error("Cannot reserve tableNode, _err: {err}")]
     NodeReserveFail { err: String },
-
-    #[error("Call already in progress, endpoint: {endpoint}")]
-    CallAlreadyInProgress { endpoint: String },
 
     #[error("Couldn't sent msg through socket")]
     SendFail(#[from] std::io::Error),
@@ -95,9 +87,7 @@ impl WhoAreYouInitiator {
             node
         };
 
-        let secret_key = self.disc_state.id.secret_key();
-        let signing_key = SigningKey::from(secret_key);
-        let sig = Crypto::make_sign(signing_key, SAKSAHA);
+        let sig = self.disc_state.id.sig();
 
         let way_syn = WhoAreYouSyn::new(
             sig,
