@@ -29,7 +29,6 @@ pub fn init() {
     init_logger();
 
     log::info!("Logger is initialized");
-    log::warn!("Logger is initialized");
 }
 
 // pub fn make_fd(f: &str, ln: u32) -> String {

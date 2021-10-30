@@ -1,6 +1,6 @@
-use super::msg::{WhoAreYouAckMsg, WhoAreYouMsg, SAKSAHA};
+use super::msg::{SAKSAHA, WhoAreYou, WhoAreYouAck, WhoAreYouSyn};
 use crate::v1::active_calls::Traffic;
-use crate::v1::ops::Opcode;
+use crate::v1::ops::{Message, Opcode};
 use crate::v1::table::TableNode;
 use crate::v1::DiscState;
 use crate::v1::{address::Address, table::Table};
@@ -90,14 +90,13 @@ impl WhoAreYouInitiator {
         let signing_key = SigningKey::from(secret_key);
         let sig = Crypto::make_sign(signing_key, SAKSAHA);
 
-        let way = WhoAreYouMsg::new(
-            Opcode::WhoAreYou,
+        let way_syn = WhoAreYouSyn::new(
             sig,
             my_p2p_port,
             self.disc_state.id.public_key_bytes(),
         );
 
-        let buf = match way.to_bytes() {
+        let buf = match way_syn.to_bytes() {
             Ok(b) => b,
             Err(err) => {
                 return Err(WhoAreYouInitError::ByteConversionFail(err));

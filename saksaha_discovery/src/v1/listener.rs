@@ -162,7 +162,7 @@ impl Handler {
         };
 
         match opcode {
-            Opcode::WhoAreYou => {
+            Opcode::WhoAreYouSyn => {
                 match way_operator
                     .receiver
                     .handle_who_are_you(addr.clone(), buf)
