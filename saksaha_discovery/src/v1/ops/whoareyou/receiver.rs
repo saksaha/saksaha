@@ -6,12 +6,10 @@ use crate::v1::table::{Record, TableNode};
 use crate::v1::task_queue::{Task, TaskQueue};
 use crate::v1::DiscState;
 use crate::v1::{address::Address, table::Table};
-use crypto::{Crypto, Signature, SigningKey};
 use log::debug;
-use std::convert::TryInto;
 use std::sync::Arc;
 use thiserror::Error;
-use tokio::net::{TcpStream, UdpSocket};
+use tokio::net::{UdpSocket};
 
 #[derive(Error, Debug)]
 pub enum WhoAreYouRecvError {
@@ -102,9 +100,7 @@ impl WhoAreYouReceiver {
             return Err(WhoAreYouRecvError::MyEndpoint(endpoint));
         }
 
-        let secret_key = self.disc_state.id.secret_key();
-        let signing_key = SigningKey::from(secret_key);
-        let sig = Crypto::make_sign(signing_key, SAKSAHA);
+        let sig = self.disc_state.id.sig();
 
         let way_ack = WhoAreYouAck::new(
             sig,

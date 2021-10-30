@@ -1,11 +1,14 @@
-use crypto::Crypto;
+use crypto::{Crypto, Signature, SigningKey};
 use k256::{elliptic_curve::sec1::ToEncodedPoint, SecretKey};
 use saksaha_discovery::identity::Identity;
+
+pub const SAKSAHA: &[u8; 7] = b"saksaha";
 
 pub struct Credential {
     pub secret_key: SecretKey,
     pub public_key_str: String,
     pub public_key_bytes: [u8; 65],
+    sig: Signature,
 }
 
 impl Credential {
@@ -54,10 +57,17 @@ impl Credential {
             }
         }
 
+        let sig = {
+            let signing_key = SigningKey::from(&secret_key);
+            let sig = Crypto::make_sign(signing_key, SAKSAHA);
+            sig
+        };
+
         let credential = Credential {
             secret_key,
             public_key_str,
             public_key_bytes,
+            sig,
         };
 
         Ok(credential)
@@ -71,5 +81,9 @@ impl Identity for Credential {
 
     fn secret_key(&self) -> &SecretKey {
         &self.secret_key
+    }
+
+    fn sig(&self) -> Signature {
+        self.sig
     }
 }

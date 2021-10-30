@@ -1,7 +1,7 @@
 use super::{
     address::Address,
     ops::whoareyou::{
-        initiator::WhoAreYouInitError, WhoAreYouError, WhoAreYouOperator,
+        initiator::WhoAreYouInitError, WhoAreYouOperator,
     },
     table::Table,
     DiscState,
@@ -173,17 +173,6 @@ impl TaskRunner {
                         match err {
                             WhoAreYouInitError::MyEndpoint { endpoint: _ } => {
                                 return TaskResult::Fail(err_msg);
-                            }
-                            WhoAreYouInitError::CallAlreadyInProgress {
-                                endpoint: _,
-                            } => {
-                                return TaskResult::Fail(err_msg);
-                            }
-                            WhoAreYouInitError::ConnectionFail {
-                                endpoint: _,
-                                err: _,
-                            } => {
-                                return TaskResult::FailRetriable(err_msg);
                             }
                             WhoAreYouInitError::ByteConversionFail {
                                 err: _,
