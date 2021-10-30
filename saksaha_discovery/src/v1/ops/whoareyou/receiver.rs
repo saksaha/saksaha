@@ -29,8 +29,6 @@ pub enum WhoAreYouRecvError {
     SendFail(#[from] std::io::Error),
 }
 
-pub enum PostWhoAreYouRecv {}
-
 pub struct WhoAreYouReceiver {
     disc_state: Arc<DiscState>,
     udp_socket: Arc<UdpSocket>,
