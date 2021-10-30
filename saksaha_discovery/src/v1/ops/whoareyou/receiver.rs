@@ -1,7 +1,6 @@
 use super::msg::{
     WhoAreYou, WhoAreYouAck, WhoAreYouSyn, P2P_PORT_LEN, SAKSAHA,
 };
-use crate::v1::active_calls::Traffic;
 use crate::v1::ops::{Message, Opcode};
 use crate::v1::table::{Record, TableNode};
 use crate::v1::task_queue::{Task, TaskQueue};
@@ -12,7 +11,6 @@ use log::debug;
 use std::convert::TryInto;
 use std::sync::Arc;
 use thiserror::Error;
-use tokio::io::{AsyncWriteExt, Interest};
 use tokio::net::{TcpStream, UdpSocket};
 
 #[derive(Error, Debug)]

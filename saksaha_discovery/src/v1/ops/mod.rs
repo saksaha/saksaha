@@ -1,7 +1,7 @@
 pub mod whoareyou;
 
 #[repr(u8)]
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub enum Opcode {
     WhoAreYouSyn = 0x0,
     WhoAreYouAck,

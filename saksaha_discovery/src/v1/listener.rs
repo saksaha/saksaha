@@ -149,7 +149,18 @@ impl Handler {
                     }
                 }
             }
-            Opcode::WhoAreYouAck => {}
+            Opcode::WhoAreYouAck => {
+                match way_operator
+                    .initiator
+                    .handle_who_are_you_ack(addr.clone(), buf)
+                    .await
+                {
+                    Ok(_) => (),
+                    Err(err) => {
+                        error!("Request handle fail, err: {}", err);
+                    }
+                }
+            }
             Opcode::Undefined => {}
         };
 

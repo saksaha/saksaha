@@ -1,49 +1,14 @@
-use super::msg::{WhoAreYou, WhoAreYouAck, WhoAreYouSyn, SAKSAHA};
-use crate::v1::active_calls::Traffic;
+use super::msg::{WhoAreYouAck, WhoAreYouSyn, SAKSAHA};
+use crate::v1::address::Address;
 use crate::v1::ops::whoareyou::WhoAreYouError;
-use crate::v1::ops::{Message, Opcode};
+use crate::v1::ops::Message;
 use crate::v1::table::{Record, TableNode};
 use crate::v1::DiscState;
-use crate::v1::{address::Address, table::Table};
-use crypto::{Crypto, Signature, SigningKey};
+use crypto::{Crypto, SigningKey};
 use log::debug;
 use std::sync::Arc;
 use thiserror::Error;
-use tokio::io::{AsyncWriteExt, Interest};
-use tokio::net::{TcpStream, UdpSocket};
-
-// #[derive(Error, Debug)]
-// pub enum WhoAreYouInitError {
-//     #[error("Aborting, request to my endpoint: {0}")]
-//     MyEndpoint(String),
-
-//     #[error("Connection failed, endpoint: {0}, _err: {1}")]
-//     ConnectionFail(String, String),
-
-//     #[error("Cannot reserve tableNode, _err: {0}")]
-//     NodeReserveFail(String),
-
-//     #[error("Call already in progress, endpoint: {0}")]
-//     CallAlreadyInProgress(String),
-
-//     #[error("Couldn't sent msg through socket")]
-//     SendFail(#[from] std::io::Error),
-
-//     #[error("Cannot convert to byte, _err: {0}")]
-//     ByteConversionFail(String),
-
-//     #[error("Cannot parse WAY ack, _err: {0}")]
-//     AckParseFail(String),
-
-//     #[error("Cannot create verifying key of remote, _err: {0}")]
-//     VerifiyingKeyFail(String),
-
-//     #[error("Signature is invalid, buf: {:?}, _err: {1}")]
-//     InvalidSignature(Vec<u8>, String),
-
-//     #[error("Failed to register node into map, endpoint: {0}, _err: {1}")]
-//     NodeRegisterFail(String, String),
-// }
+use tokio::net::UdpSocket;
 
 pub struct WhoAreYouInitiator {
     udp_socket: Arc<UdpSocket>,
@@ -128,16 +93,14 @@ impl WhoAreYouInitiator {
                 None => match self.disc_state.table.try_reserve().await {
                     Ok(n) => n,
                     Err(err) => {
-                        return Err(WhoAreYouError::TableIsFull(
-                            endpoint, err,
-                        ));
+                        return Err(WhoAreYouError::TableIsFull(endpoint, err));
                     }
                 },
             };
             node
         };
 
-        let way_syn = match WhoAreYouSyn::parse(buf) {
+        let way_ack = match WhoAreYouAck::parse(buf) {
             Ok(m) => m,
             Err(err) => {
                 return Err(WhoAreYouError::MessageParseFail(err));
@@ -146,50 +109,11 @@ impl WhoAreYouInitiator {
 
         let mut table_node = table_node.lock().await;
         table_node.record = Some(Record {
-            sig: way_syn.way.sig,
-            p2p_port: way_syn.way.p2p_port,
-            public_key_bytes: way_syn.way.public_key_bytes,
+            sig: way_ack.way.sig,
+            p2p_port: way_ack.way.p2p_port,
+            public_key_bytes: way_ack.way.public_key_bytes,
         });
-
-        // self.send_who_are_you_ack(addr).await?;
 
         Ok(())
     }
-
-    // pub async fn initiate_who_are_you(
-    //     &self,
-    //     endpoint: String,
-    //     my_p2p_port: u16,
-    // ) -> Result<(), WhoAreYouInitError> {
-    //     let secret_key = self.disc_state.id.secret_key();
-    //     let signing_key = SigningKey::from(secret_key);
-    //     let sig = Crypto::make_sign(signing_key, SAKSAHA);
-
-    //     let way = WhoAreYouMsg::new(
-    //         Opcode::WhoAreYou,
-    //         sig,
-    //         my_p2p_port,
-    //         self.disc_state.id.public_key_bytes(),
-    //     );
-
-    //     let buf = match way.to_bytes() {
-    //         Ok(b) => b,
-    //         Err(err) => {
-    //             return Err(WhoAreYouInitError::ByteConversionFail(err));
-    //         }
-    //     };
-
-    //     match self.udp_socket.send_to(&buf, endpoint.clone()).await {
-    //         Ok(_) => (),
-    //         Err(err) => {
-    //             return Err(WhoAreYouInitError::WaySendFail(
-    //                 endpoint,
-    //                 err.to_string(),
-    //             ));
-    //         }
-    //     };
-
-    //     Ok(())
-    // }
-
 }

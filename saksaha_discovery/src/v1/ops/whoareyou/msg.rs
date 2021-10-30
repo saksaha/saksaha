@@ -2,7 +2,6 @@ use crate::v1::ops::{Message, Opcode};
 use crypto::Crypto;
 use k256::ecdsa::Signature;
 use std::convert::TryInto;
-use tokio::{io::AsyncReadExt, net::TcpStream};
 
 pub const SAKSAHA: &[u8; 7] = b"saksaha";
 pub const SIZE_LEN: usize = 4;
@@ -227,10 +226,11 @@ fn parse_way_msg(buf: &[u8], opcode: Opcode) -> Result<WhoAreYou, String> {
 
     let _opcode = {
         let c = Opcode::from(buf[4]);
-        if c != Opcode::WhoAreYouSyn {
+        if c != opcode {
             return Err(format!(
-                "Opcode is unmatched, {}, expected WhoAreYouSyn",
-                buf[4]
+                "Opcode is unmatched, {}, expected {:?}",
+                buf[4],
+                opcode,
             ));
         }
         c
