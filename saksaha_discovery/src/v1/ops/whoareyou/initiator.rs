@@ -10,6 +10,47 @@ use std::sync::Arc;
 use thiserror::Error;
 use tokio::net::UdpSocket;
 
+#[derive(Error, Debug)]
+pub enum WhoAreYouInitError {
+    #[error("Aborting, request to my endpoint: {endpoint}")]
+    MyEndpoint { endpoint: String },
+
+    #[error("Connection failed, endpoint: {endpoint}, _err: {err}")]
+    ConnectionFail { endpoint: String, err: String },
+
+    #[error("Cannot reserve tableNode, _err: {err}")]
+    NodeReserveFail { err: String },
+
+    #[error("Call already in progress, endpoint: {endpoint}")]
+    CallAlreadyInProgress { endpoint: String },
+
+    #[error("Couldn't sent msg through socket")]
+    SendFail(#[from] std::io::Error),
+
+    #[error("Cannot convert to byte, _err: {err}")]
+    ByteConversionFail { err: String },
+
+    #[error("Cannot create verifying key of remote, _err: {err}")]
+    VerifiyingKeyFail { err: String },
+
+    #[error("Signature is invalid, buf: {buf:?}, _err: {err}")]
+    InvalidSignature { buf: Vec<u8>, err: String },
+
+    #[error(
+        "Failed to register node into map, endpoint: {endpoint}, _err: {err}"
+    )]
+    NodeRegisterFail { endpoint: String, err: String },
+
+    #[error("Can't parse WhoAreYou message, err: {err}")]
+    MessageParseFail { err: String },
+
+    #[error(
+        "Can't reserve node, table is full, endpoint: {endpoint}, \
+        err: {err}"
+    )]
+    TableIsFull { endpoint: String, err: String },
+}
+
 pub struct WhoAreYouInitiator {
     udp_socket: Arc<UdpSocket>,
     disc_state: Arc<DiscState>,
@@ -29,14 +70,14 @@ impl WhoAreYouInitiator {
     pub async fn send_who_are_you(
         &self,
         addr: Address,
-    ) -> Result<(), WhoAreYouError> {
+    ) -> Result<(), WhoAreYouInitError> {
         let my_disc_port = self.disc_state.my_disc_port;
         let my_p2p_port = self.disc_state.my_p2p_port;
 
         let endpoint = addr.endpoint();
 
         if super::is_my_endpoint(my_disc_port, &endpoint) {
-            return Err(WhoAreYouError::MyEndpoint(endpoint));
+            return Err(WhoAreYouInitError::MyEndpoint { endpoint });
         }
 
         let table_node = {
@@ -45,7 +86,9 @@ impl WhoAreYouInitiator {
                 None => match self.disc_state.table.reserve().await {
                     Ok(n) => n,
                     Err(err) => {
-                        return Err(WhoAreYouError::NodeReserveFail(err));
+                        return Err(WhoAreYouInitError::NodeReserveFail {
+                            err,
+                        });
                     }
                 },
             };
@@ -65,7 +108,7 @@ impl WhoAreYouInitiator {
         let buf = match way_syn.to_bytes() {
             Ok(b) => b,
             Err(err) => {
-                return Err(WhoAreYouError::ByteConversionFail(err));
+                return Err(WhoAreYouInitError::ByteConversionFail { err });
             }
         };
 
@@ -84,7 +127,7 @@ impl WhoAreYouInitiator {
         &self,
         addr: Address,
         buf: &[u8],
-    ) -> Result<(), WhoAreYouError> {
+    ) -> Result<(), WhoAreYouInitError> {
         let endpoint = addr.endpoint();
 
         let table_node = {
@@ -93,7 +136,10 @@ impl WhoAreYouInitiator {
                 None => match self.disc_state.table.try_reserve().await {
                     Ok(n) => n,
                     Err(err) => {
-                        return Err(WhoAreYouError::TableIsFull(endpoint, err));
+                        return Err(WhoAreYouInitError::TableIsFull {
+                            endpoint,
+                            err,
+                        });
                     }
                 },
             };
@@ -103,7 +149,7 @@ impl WhoAreYouInitiator {
         let way_ack = match WhoAreYouAck::parse(buf) {
             Ok(m) => m,
             Err(err) => {
-                return Err(WhoAreYouError::MessageParseFail(err));
+                return Err(WhoAreYouInitError::MessageParseFail { err });
             }
         };
 

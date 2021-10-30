@@ -1,6 +1,8 @@
 use super::{
     address::Address,
-    ops::whoareyou::{WhoAreYouError, WhoAreYouOperator},
+    ops::whoareyou::{
+        initiator::WhoAreYouInitError, WhoAreYouError, WhoAreYouOperator,
+    },
     table::Table,
     DiscState,
 };
@@ -169,40 +171,56 @@ impl TaskRunner {
                         let err_msg = err.to_string();
 
                         match err {
-                            WhoAreYouError::MyEndpoint(_) => {
+                            WhoAreYouInitError::MyEndpoint { endpoint: _ } => {
                                 return TaskResult::Fail(err_msg);
                             }
-                            WhoAreYouError::CallAlreadyInProgress(_) => {
+                            WhoAreYouInitError::CallAlreadyInProgress {
+                                endpoint: _,
+                            } => {
                                 return TaskResult::Fail(err_msg);
                             }
-                            WhoAreYouError::ConnectionFail(_, _) => {
+                            WhoAreYouInitError::ConnectionFail {
+                                endpoint: _,
+                                err: _,
+                            } => {
                                 return TaskResult::FailRetriable(err_msg);
                             }
-                            WhoAreYouError::ByteConversionFail(_) => {
+                            WhoAreYouInitError::ByteConversionFail {
+                                err: _,
+                            } => {
                                 return TaskResult::Fail(err_msg);
                             }
-                            WhoAreYouError::MessageParseFail(_) => {
+                            WhoAreYouInitError::MessageParseFail { err: _ } => {
                                 return TaskResult::FailRetriable(err_msg);
                             }
-                            WhoAreYouError::VerifiyingKeyFail(_) => {
+                            WhoAreYouInitError::VerifiyingKeyFail {
+                                err: _,
+                            } => {
                                 return TaskResult::FailRetriable(err_msg);
                             }
-                            WhoAreYouError::InvalidSignature(_, _) => {
+                            WhoAreYouInitError::InvalidSignature {
+                                buf: _,
+                                err: _,
+                            } => {
                                 return TaskResult::FailRetriable(err_msg);
                             }
-                            WhoAreYouError::SendFail(_) => {
+                            WhoAreYouInitError::SendFail(_) => {
                                 return TaskResult::FailRetriable(err_msg);
                             }
-                            WhoAreYouError::NodeReserveFail(_) => {
+                            WhoAreYouInitError::NodeReserveFail { err: _ } => {
                                 return TaskResult::FailRetriable(err_msg);
                             }
-                            WhoAreYouError::NodeRegisterFail(_, _) => {
+                            WhoAreYouInitError::NodeRegisterFail {
+                                endpoint: _,
+                                err: _,
+                            } => {
                                 return TaskResult::FailRetriable(err_msg);
                             }
-                            _ => {
-                                error!("Unhandled error occur!");
-
-                                return TaskResult::Fail(err_msg);
+                            WhoAreYouInitError::TableIsFull {
+                                endpoint: _,
+                                err: _,
+                            } => {
+                                return TaskResult::FailRetriable(err_msg);
                             }
                         }
                     }
