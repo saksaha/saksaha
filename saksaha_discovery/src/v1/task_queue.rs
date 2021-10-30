@@ -1,4 +1,9 @@
-use super::{DiscState, address::Address, ops::whoareyou::{WhoAreYouError, WhoAreYouOperator}, table::Table};
+use super::{
+    address::Address,
+    ops::whoareyou::{WhoAreYouError, WhoAreYouOperator},
+    table::Table,
+    DiscState,
+};
 use log::{debug, error, warn};
 use std::{
     sync::Arc,
