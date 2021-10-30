@@ -110,6 +110,8 @@ impl WhoAreYouInitiator {
             buf.len()
         );
 
+        // update
+
         Ok(())
     }
 
@@ -149,6 +151,8 @@ impl WhoAreYouInitiator {
             p2p_port: way_ack.way.p2p_port,
             public_key_bytes: way_ack.way.public_key_bytes,
         });
+
+        //
 
         Ok(())
     }
