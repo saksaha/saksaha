@@ -1,4 +1,5 @@
-use super::{address::Address};
+use super::address::Address;
+use futures::Future;
 use log::{debug, error, info, warn};
 use rand::prelude::*;
 use sak_crypto::Signature;
@@ -42,6 +43,7 @@ impl Table {
     pub async fn start(&self) -> Result<(), String> {
         for _ in 0..CAPACITY {
             let empty_node = Arc::new(Mutex::new(TableNode::new_empty()));
+            println!("333: {:p}", empty_node);
 
             match self.slots_tx.send(empty_node).await {
                 Ok(_) => (),
@@ -67,6 +69,22 @@ impl Table {
         } else {
             return None;
         }
+    }
+
+    // pub async fn update<F>(&self, updater: F) -> Result<(), String>
+    // where
+    //     F: Future,
+    // {
+    //     Ok(())
+    // }
+
+    pub async fn update(
+        &self,
+        table_node: Arc<Mutex<TableNode>>,
+    ) -> Result<(), String> {
+
+
+        Ok(())
     }
 
     // pub async fn _insert(&self, addr: Address) {
