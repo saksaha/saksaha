@@ -3,10 +3,10 @@
 members = [
   "logger",
   "saksaha",
-  "saksaha_p2p_identity",
-  "saksaha_crypto",
-  "saksaha_proofs",
-  "saksaha_discovery",
+  "sak_crypto",
+  "sak_proofs",
+  "sak_p2p_disc",
+  "sak_p2p_identity",
 
   # internals
   "internals/ci"

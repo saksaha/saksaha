@@ -8,10 +8,10 @@ default-run = "sak"
 
 [dependencies]
 logger = { path = "../logger" }
-saksaha_crypto = { path = "../saksaha_crypto" }
-saksaha_p2p_identity = { path = "../saksaha_p2p_identity" }
-saksaha_proofs = { path = "../saksaha_proofs" }
-saksaha_discovery = { path = "../saksaha_discovery" }
+sak_crypto = { path = "../sak_crypto" }
+sak_p2p_identity = { path = "../sak_p2p_identity" }
+sak_proofs = { path = "../sak_proofs" }
+sak_p2p_disc = { path = "../sak_p2p_disc" }
 clap = "3.0.0-beta.4"
 directories = "3.0"
 k256 = { version = "0.9.6", features = ["ecdh"] }

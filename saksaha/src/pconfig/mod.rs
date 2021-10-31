@@ -3,7 +3,7 @@ pub mod fs;
 
 use log::{info, debug};
 use fs::FS;
-use saksaha_crypto::Crypto;
+use sak_crypto::Crypto;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use self::error::PConfigError;

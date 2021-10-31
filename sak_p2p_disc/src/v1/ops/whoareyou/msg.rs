@@ -1,7 +1,7 @@
 use crate::v1::{ops::{Message, Opcode}};
 use k256::ecdsa::Signature;
-use saksaha_crypto::Crypto;
-use saksaha_p2p_identity::PUBLIC_KEY_LEN;
+use sak_crypto::Crypto;
+use sak_p2p_identity::PUBLIC_KEY_LEN;
 use std::convert::TryInto;
 
 pub const SAKSAHA: &[u8; 7] = b"saksaha";
