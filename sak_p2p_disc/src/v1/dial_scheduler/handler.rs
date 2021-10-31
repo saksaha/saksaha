@@ -69,14 +69,14 @@ impl Handler {
         my_p2p_port: u16,
         table: Arc<Table>,
     ) -> Result<usize, HandleError> {
-        let node = match table.next().await {
-            Some(n) => n,
-            None => {
-                return Err(HandleError::NoAvailableNode);
-            }
-        };
+        // let node = match table.next().await {
+        //     Some(n) => n,
+        //     None => {
+        //         return Err(HandleError::NoAvailableNode);
+        //     }
+        // };
 
-        println!("node addr: {:?}", node.addr);
+        // println!("node addr: {:?}", node.addr);
 
         // let endpoint = match self.require_not_my_endpoint(&mut peer) {
         //     Ok(ep) => ep,

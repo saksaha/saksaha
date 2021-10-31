@@ -12,20 +12,19 @@ use tokio::sync::{
 
 const CAPACITY: usize = 32;
 
-type Nodes = HashMap<String, Arc<Mutex<TableNode>>>;
+type Nodes = HashMap<String, Arc<TableNode>>;
 
 pub struct Table {
     map: Mutex<Nodes>,
     keys: Mutex<Vec<String>>,
     rng: Mutex<StdRng>,
-    slots_tx: Sender<Arc<Mutex<TableNode>>>,
-    slots_rx: Mutex<Receiver<Arc<Mutex<TableNode>>>>,
+    slots_tx: Sender<Arc<TableNode>>,
+    slots_rx: Mutex<Receiver<Arc<TableNode>>>,
 }
 
 impl Table {
     pub fn new() -> Table {
-        let (slots_tx, slots_rx) =
-            mpsc::channel::<Arc<Mutex<TableNode>>>(CAPACITY);
+        let (slots_tx, slots_rx) = mpsc::channel::<Arc<TableNode>>(CAPACITY);
 
         let map = HashMap::with_capacity(CAPACITY);
         let keys = Vec::new();
@@ -42,8 +41,7 @@ impl Table {
 
     pub async fn start(&self) -> Result<(), String> {
         for _ in 0..CAPACITY {
-            let empty_node = Arc::new(Mutex::new(TableNode::new_empty()));
-            println!("333: {:p}", empty_node);
+            let empty_node = Arc::new(TableNode::new_empty());
 
             match self.slots_tx.send(empty_node).await {
                 Ok(_) => (),
@@ -59,11 +57,9 @@ impl Table {
         Ok(())
     }
 
-    pub async fn find(
-        &self,
-        endpoint: &String,
-    ) -> Option<Arc<Mutex<TableNode>>> {
+    pub async fn find(&self, endpoint: &String) -> Option<Arc<TableNode>> {
         let map = self.map.lock().await;
+
         if let Some(n) = map.get(endpoint) {
             return Some(n.clone());
         } else {
@@ -71,18 +67,40 @@ impl Table {
         }
     }
 
-    // pub async fn update<F>(&self, updater: F) -> Result<(), String>
-    // where
-    //     F: Future,
-    // {
-    //     Ok(())
-    // }
-
-    pub async fn update(
+    pub async fn find_or_reserve(
         &self,
-        table_node: Arc<Mutex<TableNode>>,
-    ) -> Result<(), String> {
+        endpoint: &String,
+    ) -> Result<Arc<TableNode>, String> {
+        match self.find(endpoint).await {
+            Some(n) => return Ok(n),
+            None => {
+                return self.reserve().await
+            }
+        };
+    }
 
+    pub async fn find_or_try_reserve(
+        &self,
+        endpoint: &String,
+    ) -> Result<Arc<TableNode>, String> {
+        match self.find(endpoint).await {
+            Some(n) => return Ok(n),
+            None => {
+                return self.try_reserve().await
+            }
+        };
+    }
+
+    pub async fn update<F>(
+        &self,
+        table_node: Arc<TableNode>,
+        updater: F,
+    ) -> Result<(), String>
+    where
+        F: Fn(MutexGuard<Option<TableNodeInner>>),
+    {
+        let inner = table_node.inner.lock().await;
+        let _inner = updater(inner);
 
         Ok(())
     }
@@ -98,21 +116,54 @@ impl Table {
     //     indices.push(endpoint);
     // }
 
-    pub async fn register(
-        &self,
-        endpoint: String,
-        table_node: Arc<Mutex<TableNode>>,
-    ) -> Result<(), String> {
-        let mut map = self.map.lock().await;
-        let mut keys = self.keys.lock().await;
+    // pub async fn register(
+    //     &self,
+    //     endpoint: String,
+    //     table_node: Arc<TableNode>,
+    // ) -> Result<(), String> {
+    //     let mut map = self.map.lock().await;
+    //     let mut keys = self.keys.lock().await;
 
-        map.insert(endpoint.clone(), table_node);
-        keys.push(endpoint);
+    //     map.insert(endpoint.clone(), table_node);
+    //     keys.push(endpoint);
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
-    pub async fn reserve(&self) -> Result<Arc<Mutex<TableNode>>, String> {
+    // pub async fn next(&self) -> Option<TableNode> {
+    //     let map = self.map.lock().await;
+    //     let keys = self.keys.lock().await;
+    //     let mut rng = self.rng.lock().await;
+    //     let seed: usize = rng.gen();
+
+    //     for i in 0..3 {
+    //         let idx = (seed + i) % keys.len();
+    //         let key = match keys.get(idx) {
+    //             Some(k) => k,
+    //             None => {
+    //                 error!("Table key of idx: {}, not found", idx);
+    //                 continue;
+    //             }
+    //         };
+
+    //         let node = match map.get(key) {
+    //             Some(n) => n.clone(),
+    //             None => {
+    //                 error!(
+    //                     "None TableNode, something might be wrong, idx: {}",
+    //                     idx,
+    //                 );
+    //                 return None;
+    //             }
+    //         };
+
+    //         return Some(node);
+    //     }
+
+    //     None
+    // }
+
+    async fn reserve(&self) -> Result<Arc<TableNode>, String> {
         let mut slots_rx = self.slots_rx.lock().await;
 
         match slots_rx.recv().await {
@@ -121,7 +172,7 @@ impl Table {
         };
     }
 
-    pub async fn try_reserve(&self) -> Result<Arc<Mutex<TableNode>>, String> {
+    async fn try_reserve(&self) -> Result<Arc<TableNode>, String> {
         let mut slots_rx = self.slots_rx.lock().await;
 
         match slots_rx.try_recv() {
@@ -132,63 +183,28 @@ impl Table {
             )),
         }
     }
-
-    pub async fn next(&self) -> Option<OwnedMutexGuard<TableNode>> {
-        let map = self.map.lock().await;
-        let keys = self.keys.lock().await;
-        let mut rng = self.rng.lock().await;
-        let seed: usize = rng.gen();
-
-        for i in 0..3 {
-            let idx = (seed + i) % keys.len();
-            let key = match keys.get(idx) {
-                Some(k) => k,
-                None => {
-                    error!("Table key of idx: {}, not found", idx);
-                    continue;
-                }
-            };
-
-            let node = match map.get(key) {
-                Some(n) => n.clone(),
-                None => {
-                    error!(
-                        "None TableNode, something might be wrong, idx: {}",
-                        idx,
-                    );
-                    return None;
-                }
-            };
-
-            let node = match node.try_lock_owned() {
-                Ok(n) => n,
-                Err(_) => continue,
-            };
-
-            return Some(node);
-        }
-
-        None
-    }
 }
 
 pub struct TableNode {
-    pub addr: Option<Address>,
-    pub record: Option<Record>,
+    inner: Mutex<Option<TableNodeInner>>,
+    // pub record: Option<Record>,
+    // _should_be_constructed_by_table: bool,
+}
+
+pub struct TableNodeInner {
+    pub addr: Address,
+    pub sig: Signature,
+    pub p2p_port: u16,
+    pub public_key_bytes: [u8; PUBLIC_KEY_LEN],
 }
 
 impl TableNode {
-    pub fn new(addr: Address) -> TableNode {
+    fn new_empty() -> TableNode {
         TableNode {
-            addr: Some(addr),
-            record: None,
-        }
-    }
-
-    pub fn new_empty() -> TableNode {
-        TableNode {
-            addr: None,
-            record: None,
+            inner: Mutex::new(None),
+            // addr: None,
+            // record: None,
+            // _should_be_constructed_by_table: true,
         }
     }
 }

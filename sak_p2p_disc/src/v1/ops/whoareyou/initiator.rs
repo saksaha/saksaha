@@ -72,28 +72,19 @@ impl WhoAreYouInitiator {
             return Err(WhoAreYouInitError::MyEndpoint { endpoint });
         }
 
-        let table_node = {
-            let node = match self.disc_state.table.find(&endpoint).await {
-                Some(n) => n,
-                None => match self.disc_state.table.reserve().await {
-                    Ok(n) => n,
-                    Err(err) => {
-                        return Err(WhoAreYouInitError::NodeReserveFail {
-                            err,
-                        });
-                    }
-                },
+        let table_node =
+            match self.disc_state.table.find_or_reserve(&endpoint).await {
+                Ok(n) => n,
+                Err(err) => {
+                    return Err(WhoAreYouInitError::NodeReserveFail { err })
+                }
             };
-            node
-        };
 
-        let sig = self.disc_state.id.sig();
+        let my_sig = self.disc_state.id.sig();
+        let my_public_key_bytes = self.disc_state.id.public_key_bytes();
 
-        let way_syn = WhoAreYouSyn::new(
-            sig,
-            my_p2p_port,
-            self.disc_state.id.public_key_bytes(),
-        );
+        let way_syn =
+            WhoAreYouSyn::new(my_sig, my_p2p_port, my_public_key_bytes);
 
         let buf = match way_syn.to_bytes() {
             Ok(b) => b,
@@ -110,7 +101,7 @@ impl WhoAreYouInitiator {
             buf.len()
         );
 
-        let mut table_node_lock = table_node.lock().await;
+        // let mut table_node_lock = table_node.lock().await;
         // table_node.addr = Some(addr.clone());
         // table_node.record = Some(Record {
         //     sig: way_syn.way.sig,
@@ -122,8 +113,7 @@ impl WhoAreYouInitiator {
         //     Ok(_) => (),
         //     Err(err) => (),
         // };
-        std::mem::drop(table_node_lock);
-        self.disc_state.table.update(table_node);
+        // self.disc_state.table.update(table_node);
 
         Ok(())
     }
@@ -135,21 +125,32 @@ impl WhoAreYouInitiator {
     ) -> Result<(), WhoAreYouInitError> {
         let endpoint = addr.endpoint();
 
-        let table_node = {
-            let node = match self.disc_state.table.find(&endpoint).await {
-                Some(n) => n,
-                None => match self.disc_state.table.try_reserve().await {
-                    Ok(n) => n,
-                    Err(err) => {
-                        return Err(WhoAreYouInitError::TableIsFull {
-                            endpoint,
-                            err,
-                        });
-                    }
-                },
+        // let table_node = {
+        //     let node = match self.disc_state.table.find(&endpoint).await {
+        //         Some(n) => n,
+        //         None => match self.disc_state.table.try_reserve().await {
+        //             Ok(n) => n,
+        //             Err(err) => {
+        //                 return Err(WhoAreYouInitError::TableIsFull {
+        //                     endpoint,
+        //                     err,
+        //                 });
+        //             }
+        //         },
+        //     };
+        //     node
+        // };
+
+        let table_node =
+            match self.disc_state.table.find_or_reserve(&endpoint).await {
+                Ok(n) => n,
+                Err(err) => {
+                    return Err(WhoAreYouInitError::TableIsFull {
+                        endpoint,
+                        err,
+                    })
+                }
             };
-            node
-        };
 
         let way_ack = match WhoAreYouAck::parse(buf) {
             Ok(m) => m,
@@ -158,12 +159,25 @@ impl WhoAreYouInitiator {
             }
         };
 
-        let mut table_node = table_node.lock().await;
-        table_node.record = Some(Record {
-            sig: way_ack.way.sig,
-            p2p_port: way_ack.way.p2p_port,
-            public_key_bytes: way_ack.way.public_key_bytes,
-        });
+        let _ = self
+            .disc_state
+            .table
+            .update(table_node, |mut n| {
+                *n = None;
+
+                // let mut a = n.take();
+                // *a  = None;
+                // *n = None;
+            })
+            .await;
+
+        // table_node.inner;
+        // let mut table_node = table_node.lock().await;
+        // table_node.record = Some(Record {
+        //     sig: way_ack.way.sig,
+        //     p2p_port: way_ack.way.p2p_port,
+        //     public_key_bytes: way_ack.way.public_key_bytes,
+        // });
 
         //
 
