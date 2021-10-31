@@ -1,5 +1,5 @@
 [package]
-name = "saksaha_crypto"
+name = "sak_crypto"
 version = "0.1.0"
 edition = "2018"
 

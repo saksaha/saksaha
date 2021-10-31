@@ -1,5 +1,5 @@
 [package]
-name = "saksaha_proofs"
+name = "sak_p2p_identity"
 version = "0.1.0"
 edition = "2018"
 
@@ -7,12 +7,11 @@ edition = "2018"
 
 [dependencies]
 logger = { path = "../logger" }
-bellman = "0.11.1"
-bls12_381 = "0.6.0"
-ff = "0.11"
-pairing = "0.21.0"
+k256 = { version = "0.9.6", features = ["ecdh"] }
+rand_core = "0.6.3"
+serde = { version = "1.0.130", features = ["derive"] }
+serde_json = "1.0.59"
 rand = "0.8.4"
-sha2 = "0.9.8"
 
 [lib]
 doctest = false # until stable beta is released

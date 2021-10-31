@@ -1,6 +1,6 @@
 use k256::{elliptic_curve::sec1::ToEncodedPoint, SecretKey};
-use saksaha_crypto::{Crypto, Signature, SigningKey};
-use saksaha_p2p_identity::{Identity, PUBLIC_KEY_LEN};
+use sak_crypto::{Crypto, Signature, SigningKey};
+use sak_p2p_identity::{Identity, PUBLIC_KEY_LEN};
 
 pub const SAKSAHA: &[u8; 7] = b"saksaha";
 

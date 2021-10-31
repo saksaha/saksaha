@@ -1,4 +1,4 @@
-use saksaha_crypto::SecretKey;
+use sak_crypto::SecretKey;
 use k256::ecdsa::Signature;
 
 pub const PUBLIC_KEY_LEN: usize = 65;
