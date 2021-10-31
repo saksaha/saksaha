@@ -23,20 +23,117 @@ pub struct Table {
 }
 
 impl Table {
-    pub fn new() -> Table {
-        let (slots_tx, slots_rx) = mpsc::channel::<Arc<TableNode>>(CAPACITY);
+    pub async fn init(
+        bootstrap_urls: Option<Vec<String>>,
+        default_bootstrap_urls: &str,
+    ) -> Result<Table, String> {
+        let (slots_tx, slots_rx) = {
+            let (tx, rx) = mpsc::channel::<Arc<TableNode>>(CAPACITY);
+
+            for _ in 0..CAPACITY {
+                let empty_node = Arc::new(TableNode::new_empty());
+
+                match tx.send(empty_node).await {
+                    Ok(_) => (),
+                    Err(err) => {
+                        return Err(format!(
+                            "Can't send empty TableNode to the pool, err: {}",
+                            err
+                        ));
+                    }
+                }
+            }
+
+            (tx, rx)
+        };
 
         let map = HashMap::with_capacity(CAPACITY);
         let keys = Vec::new();
         let rng = SeedableRng::from_entropy();
 
-        Table {
+        let table = Table {
             map: Mutex::new(map),
             keys: Mutex::new(keys),
             rng: Mutex::new(rng),
             slots_tx,
             slots_rx: Mutex::new(slots_rx),
+        };
+
+        {
+            let addrs =
+                Table::convert_to_addrs(bootstrap_urls, default_bootstrap_urls);
+
+            for addr in addrs {
+                let table_node = match table.reserve().await {
+                    Ok(n) => n,
+                    Err(err) => {
+                        return Err(format!(
+                            "Couldn't initialize table, err: {}",
+                            err
+                        ));
+                    }
+                };
+
+                table.update(table_node, |mut n| {
+                    *n = TableNodeInner {
+                        addr:
+                    };
+                }).await;
+            }
         }
+
+        Ok(table)
+    }
+
+    pub fn convert_to_addrs(
+        bootstrap_urls: Option<Vec<String>>,
+        default_bootstrap_urls: &str,
+    ) -> Vec<Address> {
+        let bootstrap_urls = match bootstrap_urls {
+            Some(u) => u,
+            None => Vec::new(),
+        };
+
+        let default_bootstrap_urls: Vec<String> = default_bootstrap_urls
+            .lines()
+            .map(|l| l.to_string())
+            .collect();
+
+        let urls = [bootstrap_urls, default_bootstrap_urls].concat();
+
+        info!("*********************************************************");
+        info!("* Discovery table bootstrapped");
+
+        let mut count = 0;
+        let mut addrs = vec![];
+        {
+            for url in urls {
+                let addr = match Address::parse(url.clone()) {
+                    Ok(n) => {
+                        count += 1;
+                        n
+                    }
+                    Err(err) => {
+                        warn!(
+                            "Discarding url failed to parse, url: {}, \
+                            err: {:?}",
+                            url.clone(),
+                            err,
+                        );
+
+                        continue;
+                    }
+                };
+
+                info!("* [{}] {}", count, addr.short_url());
+                addrs.push(addr);
+            }
+        }
+
+        info!("* bootstrapped node count: {}", count);
+        info!("*********************************************************");
+
+        addrs
     }
 
     pub async fn start(&self) -> Result<(), String> {
@@ -73,9 +170,7 @@ impl Table {
     ) -> Result<Arc<TableNode>, String> {
         match self.find(endpoint).await {
             Some(n) => return Ok(n),
-            None => {
-                return self.reserve().await
-            }
+            None => return self.reserve().await,
         };
     }
 
@@ -85,9 +180,7 @@ impl Table {
     ) -> Result<Arc<TableNode>, String> {
         match self.find(endpoint).await {
             Some(n) => return Ok(n),
-            None => {
-                return self.try_reserve().await
-            }
+            None => return self.try_reserve().await,
         };
     }
 

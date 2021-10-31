@@ -13,8 +13,7 @@ use self::{
     listener::Listener, table::Table, task_queue::TaskQueue,
 };
 use crate::v1::{
-    address::Address,  ops::whoareyou::WhoAreYouOperator,
-    task_queue::Task,
+    address::Address, ops::whoareyou::WhoAreYouOperator, task_queue::Task,
 };
 use log::{info, warn};
 use sak_p2p_identity::Identity;
@@ -36,7 +35,17 @@ impl Disc {
         bootstrap_urls: Option<Vec<String>>,
         default_bootstrap_urls: &str,
     ) -> Result<Disc, String> {
-        let table = Arc::new(Table::new());
+        let table = {
+            let t = match Table::init(bootstrap_urls, default_bootstrap_urls)
+                .await
+            {
+                Ok(t) => t,
+                Err(err) => {
+                    return Err(format!("Can't initialize Table, err: {}", err))
+                }
+            };
+            Arc::new(t)
+        };
         let active_calls = Arc::new(ActiveCalls::new());
         let task_queue = Arc::new(TaskQueue::new());
 
@@ -107,21 +116,21 @@ impl Disc {
             way_operator,
         };
 
-        disc.enqueue_initial_tasks(bootstrap_urls, default_bootstrap_urls)
-            .await;
+        // disc.enqueue_initial_tasks(bootstrap_urls, default_bootstrap_urls)
+        //     .await;
 
         Ok(disc)
     }
 
     pub async fn start(&self) -> Result<Arc<Table>, String> {
-        let table = self.state.table.clone();
+        // let table = self.state.table.clone();
 
-        match table.start().await {
-            Ok(_) => (),
-            Err(err) => {
-                return Err(format!("Failed to start table, err: {}", err))
-            }
-        };
+        // match table.start().await {
+        //     Ok(_) => (),
+        //     Err(err) => {
+        //         return Err(format!("Failed to start table, err: {}", err))
+        //     }
+        // };
 
         match self.listener.start().await {
             Ok(port) => port,
@@ -139,10 +148,10 @@ impl Disc {
 
         self.task_queue.run_loop();
 
-        Ok(table)
+        Ok(self.state.table.clone())
     }
 
-    pub async fn enqueue_initial_tasks(
+    pub async fn _enqueue_initial_tasks(
         &self,
         bootstrap_urls: Option<Vec<String>>,
         default_bootstrap_urls: &str,
