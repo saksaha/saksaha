@@ -1,5 +1,5 @@
 [package]
-name = "saksaha_discovery"
+name = "saksaha_p2p_identity"
 version = "0.1.0"
 edition = "2018"
 
@@ -7,14 +7,11 @@ edition = "2018"
 
 [dependencies]
 logger = { path = "../logger" }
-saksaha_crypto = { path = "../saksaha_crypto" }
-saksaha_p2p_identity = { path = "../saksaha_p2p_identity" }
-tokio = { version = "1.12.0", features = ["full"] }
-futures = "0.3.17"
 k256 = { version = "0.9.6", features = ["ecdh"] }
-log = "0.4.0"
+rand_core = "0.6.3"
+serde = { version = "1.0.130", features = ["derive"] }
+serde_json = "1.0.59"
 rand = "0.8.4"
-thiserror = "1.0"
 
 [lib]
 doctest = false # until stable beta is released

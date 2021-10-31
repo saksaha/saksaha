@@ -1,7 +1,7 @@
 pub mod error;
 
 use log::{debug, info};
-use saksaha_discovery::identity::Identity;
+use saksaha_p2p_identity::Identity;
 use crate::{
     p2p::{credential::Credential, listener::error::ListenerError},
     peer::peer_store::PeerStore,

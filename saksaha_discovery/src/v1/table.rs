@@ -1,7 +1,8 @@
-use super::{address::Address, identity::PUBLIC_KEY_LEN};
+use super::{address::Address};
 use log::{debug, error, info, warn};
 use rand::prelude::*;
 use saksaha_crypto::Signature;
+use saksaha_p2p_identity::PUBLIC_KEY_LEN;
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::{
     mpsc::{self, Receiver, Sender},

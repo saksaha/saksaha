@@ -9,6 +9,7 @@ default-run = "sak"
 [dependencies]
 logger = { path = "../logger" }
 saksaha_crypto = { path = "../saksaha_crypto" }
+saksaha_p2p_identity = { path = "../saksaha_p2p_identity" }
 saksaha_proofs = { path = "../saksaha_proofs" }
 saksaha_discovery = { path = "../saksaha_discovery" }
 clap = "3.0.0-beta.4"

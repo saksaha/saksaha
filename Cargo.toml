@@ -1,8 +1,9 @@
 [workspace]
 
 members = [
-  "saksaha",
   "logger",
+  "saksaha",
+  "saksaha_p2p_identity",
   "saksaha_crypto",
   "saksaha_proofs",
   "saksaha_discovery",
