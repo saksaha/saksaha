@@ -3,7 +3,7 @@
 members = [
   "saksaha",
   "logger",
-  "crypto",
+  "saksaha_crypto",
   "saksaha_proofs",
   "saksaha_discovery",
 

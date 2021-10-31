@@ -110,7 +110,8 @@ impl WhoAreYouInitiator {
             buf.len()
         );
 
-        // update
+        let mut table_node = table_node.lock().await;
+        // table_node
 
         Ok(())
     }

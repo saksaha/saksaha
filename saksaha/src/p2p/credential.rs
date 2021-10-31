@@ -1,13 +1,13 @@
-use crypto::{Crypto, Signature, SigningKey};
 use k256::{elliptic_curve::sec1::ToEncodedPoint, SecretKey};
-use saksaha_discovery::identity::Identity;
+use saksaha_crypto::{Crypto, Signature, SigningKey};
+use saksaha_discovery::identity::{Identity, PUBLIC_KEY_LEN};
 
 pub const SAKSAHA: &[u8; 7] = b"saksaha";
 
 pub struct Credential {
     pub secret_key: SecretKey,
     pub public_key_str: String,
-    pub public_key_bytes: [u8; 65],
+    pub public_key_bytes: [u8; PUBLIC_KEY_LEN],
     sig: Signature,
 }
 

@@ -7,7 +7,7 @@ edition = "2018"
 
 [dependencies]
 logger = { path = "../logger" }
-crypto = { path = "../crypto" }
+saksaha_crypto = { path = "../saksaha_crypto" }
 tokio = { version = "1.12.0", features = ["full"] }
 futures = "0.3.17"
 k256 = { version = "0.9.6", features = ["ecdh"] }
