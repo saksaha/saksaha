@@ -1,5 +1,7 @@
-use crypto::SecretKey;
-pub use k256::ecdsa::Signature;
+use saksaha_crypto::SecretKey;
+use k256::ecdsa::Signature;
+
+pub const PUBLIC_KEY_LEN: usize = 65;
 
 pub trait Identity {
     fn secret_key(&self) -> &SecretKey;

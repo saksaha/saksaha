@@ -1,7 +1,7 @@
-use super::{address::Address, ops::whoareyou::msg::PUBLIC_KEY_LEN};
-use crypto::Signature;
+use super::{address::Address, identity::PUBLIC_KEY_LEN};
 use log::{debug, error, info, warn};
 use rand::prelude::*;
+use saksaha_crypto::Signature;
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::{
     mpsc::{self, Receiver, Sender},
@@ -14,33 +14,35 @@ type Nodes = HashMap<String, Arc<Mutex<TableNode>>>;
 
 pub struct Table {
     map: Mutex<Nodes>,
-    indices: Mutex<Vec<String>>,
+    keys: Mutex<Vec<String>>,
     rng: Mutex<StdRng>,
-    node_tx: Sender<Arc<Mutex<TableNode>>>,
-    node_rx: Mutex<Receiver<Arc<Mutex<TableNode>>>>,
+    slots_tx: Sender<Arc<Mutex<TableNode>>>,
+    slots_rx: Mutex<Receiver<Arc<Mutex<TableNode>>>>,
 }
 
 impl Table {
     pub fn new() -> Table {
-        let (node_tx, node_rx) = mpsc::channel::<Arc<Mutex<TableNode>>>(32);
+        let (slots_tx, slots_rx) =
+            mpsc::channel::<Arc<Mutex<TableNode>>>(CAPACITY);
 
         let map = HashMap::with_capacity(CAPACITY);
-        let indices = Vec::new();
+        let keys = Vec::new();
         let rng = SeedableRng::from_entropy();
 
         Table {
             map: Mutex::new(map),
-            indices: Mutex::new(indices),
+            keys: Mutex::new(keys),
             rng: Mutex::new(rng),
-            node_tx,
-            node_rx: Mutex::new(node_rx),
+            slots_tx,
+            slots_rx: Mutex::new(slots_rx),
         }
     }
 
     pub async fn start(&self) -> Result<(), String> {
         for _ in 0..CAPACITY {
             let empty_node = Arc::new(Mutex::new(TableNode::new_empty()));
-            match self.node_tx.send(empty_node).await {
+
+            match self.slots_tx.send(empty_node).await {
                 Ok(_) => (),
                 Err(err) => {
                     return Err(format!(
@@ -83,25 +85,27 @@ impl Table {
         table_node: Arc<Mutex<TableNode>>,
     ) -> Result<(), String> {
         let mut map = self.map.lock().await;
-        let mut indices = self.indices.lock().await;
+        let mut keys = self.keys.lock().await;
 
         map.insert(endpoint.clone(), table_node);
-        indices.push(endpoint);
+        keys.push(endpoint);
 
         Ok(())
     }
 
     pub async fn reserve(&self) -> Result<Arc<Mutex<TableNode>>, String> {
-        let mut node_rx = self.node_rx.lock().await;
-        match node_rx.recv().await {
+        let mut slots_rx = self.slots_rx.lock().await;
+
+        match slots_rx.recv().await {
             Some(n) => return Ok(n),
             None => return Err(format!("Can't retrieve tableNode from pool")),
         };
     }
 
     pub async fn try_reserve(&self) -> Result<Arc<Mutex<TableNode>>, String> {
-        let mut node_rx = self.node_rx.lock().await;
-        match node_rx.try_recv() {
+        let mut slots_rx = self.slots_rx.lock().await;
+
+        match slots_rx.try_recv() {
             Ok(n) => Ok(n),
             Err(err) => Err(format!(
                 "Can't reserve a tableNode. Table might be busy, err: {}",
@@ -112,13 +116,13 @@ impl Table {
 
     pub async fn next(&self) -> Option<OwnedMutexGuard<TableNode>> {
         let map = self.map.lock().await;
-        let indices = self.indices.lock().await;
+        let keys = self.keys.lock().await;
         let mut rng = self.rng.lock().await;
         let seed: usize = rng.gen();
 
         for i in 0..3 {
-            let idx = (seed + i) % indices.len();
-            let key = match indices.get(idx) {
+            let idx = (seed + i) % keys.len();
+            let key = match keys.get(idx) {
                 Some(k) => k,
                 None => {
                     error!("Table key of idx: {}, not found", idx);

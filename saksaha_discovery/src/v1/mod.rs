@@ -1,22 +1,18 @@
-mod active_calls;
 pub mod address;
 pub mod dial_scheduler;
 pub mod listener;
 pub mod msg;
+pub mod task_queue;
+pub mod identity;
+mod active_calls;
 mod ops;
 mod table;
-pub mod task_queue;
 
 use self::{
     active_calls::ActiveCalls, dial_scheduler::DialScheduler,
     listener::Listener, table::Table, task_queue::TaskQueue,
 };
-use crate::{
-    identity::Identity,
-    v1::{
-        address::Address, ops::whoareyou::WhoAreYouOperator, task_queue::Task,
-    },
-};
+use crate::v1::{address::Address, identity::Identity, ops::whoareyou::WhoAreYouOperator, task_queue::Task};
 use log::{info, warn};
 use std::sync::Arc;
 use tokio::net::UdpSocket;

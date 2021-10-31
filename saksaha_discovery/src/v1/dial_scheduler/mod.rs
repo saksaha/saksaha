@@ -1,10 +1,7 @@
 mod handler;
 
-use crate::{
-    identity::Identity,
-    v1::{
-        dial_scheduler::handler::HandleError, task_queue::TaskQueue, table::Table,
-    },
+use crate::v1::{
+    dial_scheduler::handler::HandleError, table::Table, task_queue::TaskQueue,
 };
 use handler::Handler;
 use log::{debug, error, info, warn};
@@ -16,6 +13,8 @@ use tokio::sync::{
     mpsc::{Receiver, Sender},
     Mutex,
 };
+
+use super::identity::Identity;
 
 pub struct DialScheduler {}
 

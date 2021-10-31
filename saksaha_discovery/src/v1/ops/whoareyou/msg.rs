@@ -1,13 +1,12 @@
-use crate::v1::ops::{Message, Opcode};
-use crypto::Crypto;
+use crate::v1::{identity::PUBLIC_KEY_LEN, ops::{Message, Opcode}};
 use k256::ecdsa::Signature;
+use saksaha_crypto::Crypto;
 use std::convert::TryInto;
 
 pub const SAKSAHA: &[u8; 7] = b"saksaha";
 pub const SIZE_LEN: usize = 4;
 pub const OPCODE_LEN: usize = 1;
 pub const P2P_PORT_LEN: usize = 2;
-pub const PUBLIC_KEY_LEN: usize = 65;
 
 pub struct WhoAreYou {
     pub sig: Signature,

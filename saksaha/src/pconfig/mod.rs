@@ -2,8 +2,8 @@ pub mod error;
 pub mod fs;
 
 use log::{info, debug};
-use crypto::Crypto;
 use fs::FS;
+use saksaha_crypto::Crypto;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use self::error::PConfigError;
