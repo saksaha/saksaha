@@ -5,6 +5,7 @@ use crate::v1::{
 };
 use handler::Handler;
 use log::{debug, error, info, warn};
+use saksaha_p2p_identity::Identity;
 use std::{
     sync::Arc,
     time::{Duration, SystemTime},
@@ -13,8 +14,6 @@ use tokio::sync::{
     mpsc::{Receiver, Sender},
     Mutex,
 };
-
-use super::identity::Identity;
 
 pub struct DialScheduler {}
 
