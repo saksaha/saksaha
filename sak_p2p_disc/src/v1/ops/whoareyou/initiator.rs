@@ -110,8 +110,20 @@ impl WhoAreYouInitiator {
             buf.len()
         );
 
-        let mut table_node = table_node.lock().await;
-        // table_node
+        let mut table_node_lock = table_node.lock().await;
+        // table_node.addr = Some(addr.clone());
+        // table_node.record = Some(Record {
+        //     sig: way_syn.way.sig,
+        //     p2p_port: way_syn.way.p2p_port,
+        //     public_key_bytes: way_syn.way.public_key_bytes,
+        // });
+        // match self.disc_state.table.update(async {
+        // }).await {
+        //     Ok(_) => (),
+        //     Err(err) => (),
+        // };
+        std::mem::drop(table_node_lock);
+        self.disc_state.table.update(table_node);
 
         Ok(())
     }
