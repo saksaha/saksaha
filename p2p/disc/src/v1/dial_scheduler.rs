@@ -19,7 +19,8 @@ impl DialScheduler {
         disc_state: Arc<DiscState>,
         task_queue: Arc<TaskQueue>,
     ) -> DialScheduler {
-        let routine = Routine::new(disc_state, task_queue);
+        let min_interval = Duration::from_millis(2000);
+        let routine = Routine::new(disc_state, task_queue, min_interval);
 
         DialScheduler { routine }
     }
@@ -35,12 +36,14 @@ pub struct Routine {
     disc_state: Arc<DiscState>,
     task_queue: Arc<TaskQueue>,
     is_running: Arc<Mutex<bool>>,
+    min_interval: Duration,
 }
 
 impl Routine {
     pub fn new(
         disc_state: Arc<DiscState>,
         task_queue: Arc<TaskQueue>,
+        min_interval: Duration,
     ) -> Routine {
         let is_running = Arc::new(Mutex::new(false));
 
@@ -48,6 +51,7 @@ impl Routine {
             is_running,
             disc_state,
             task_queue,
+            min_interval,
         }
     }
 
@@ -55,6 +59,7 @@ impl Routine {
         info!("Discovery dial scheduler routine starts to run");
 
         let is_running = self.is_running.clone();
+        let min_interval = self.min_interval;
 
         tokio::spawn(async move {
             let mut is_running_lock = is_running.lock().await;
@@ -64,14 +69,24 @@ impl Routine {
             loop {
                 let start = SystemTime::now();
 
-                tokio::time::sleep(Duration::from_millis(100)).await;
+
 
                 match start.elapsed() {
-                    Ok(_) => (),
-                    Err(err) => {
-                        warn!("Error sleeping the duration, err: {}", err);
+                    Ok(d) => {
+                        if d < min_interval {
+                            let diff = min_interval - d;
+                            tokio::time::sleep(diff).await;
+                        }
                     }
-                };
+                    Err(err) => {
+                        error!(
+                            "Calculating the time elapsed fail, err: {}",
+                            err
+                        );
+
+                        tokio::time::sleep(min_interval).await;
+                    }
+                }
             }
 
             let mut is_running_lock = is_running.lock().await;
