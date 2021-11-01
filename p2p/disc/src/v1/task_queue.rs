@@ -1,8 +1,6 @@
 use super::{
     address::Address,
-    ops::whoareyou::{
-        initiator::WhoAreYouInitError, WhoAreYouOperator,
-    },
+    ops::whoareyou::{initiator::WhoAreYouInitError, WhoAreYouOperator},
     table::Table,
     DiscState,
 };
@@ -171,44 +169,38 @@ impl TaskRunner {
                         let err_msg = err.to_string();
 
                         match err {
-                            WhoAreYouInitError::MyEndpoint { endpoint: _ } => {
+                            WhoAreYouInitError::MyEndpoint { .. } => {
                                 return TaskResult::Fail(err_msg);
                             }
                             WhoAreYouInitError::ByteConversionFail {
-                                err: _,
+                                ..
                             } => {
                                 return TaskResult::Fail(err_msg);
                             }
-                            WhoAreYouInitError::MessageParseFail { err: _ } => {
+                            WhoAreYouInitError::MessageParseFail { .. } => {
                                 return TaskResult::FailRetriable(err_msg);
                             }
                             WhoAreYouInitError::VerifiyingKeyFail {
-                                err: _,
+                                ..
                             } => {
                                 return TaskResult::FailRetriable(err_msg);
                             }
-                            WhoAreYouInitError::InvalidSignature {
-                                buf: _,
-                                err: _,
-                            } => {
+                            WhoAreYouInitError::InvalidSignature { .. } => {
                                 return TaskResult::FailRetriable(err_msg);
                             }
                             WhoAreYouInitError::SendFail(_) => {
                                 return TaskResult::FailRetriable(err_msg);
                             }
-                            WhoAreYouInitError::NodeReserveFail { err: _ } => {
+                            WhoAreYouInitError::NodeReserveFail { .. } => {
                                 return TaskResult::FailRetriable(err_msg);
                             }
-                            WhoAreYouInitError::NodeRegisterFail {
-                                endpoint: _,
-                                err: _,
-                            } => {
+                            WhoAreYouInitError::NodeRegisterFail { .. } => {
                                 return TaskResult::FailRetriable(err_msg);
                             }
-                            WhoAreYouInitError::TableIsFull {
-                                endpoint: _,
-                                err: _,
-                            } => {
+                            WhoAreYouInitError::TableIsFull { .. } => {
+                                return TaskResult::FailRetriable(err_msg);
+                            }
+                            WhoAreYouInitError::TableAddFail { .. } => {
                                 return TaskResult::FailRetriable(err_msg);
                             }
                         }

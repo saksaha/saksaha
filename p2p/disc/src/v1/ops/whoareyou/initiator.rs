@@ -1,7 +1,7 @@
-use super::msg::{WhoAreYouAck, WhoAreYouSyn, SAKSAHA};
+use super::msg::{WhoAreYouAck, WhoAreYouSyn};
 use crate::v1::address::Address;
 use crate::v1::ops::Message;
-use crate::v1::table::{Record, TableNode, TableNodeInner};
+use crate::v1::table::{TableNodeInner};
 use crate::v1::DiscState;
 use log::debug;
 use std::sync::Arc;
@@ -41,6 +41,9 @@ pub enum WhoAreYouInitError {
         err: {err}"
     )]
     TableIsFull { endpoint: String, err: String },
+
+    #[error("Can't add node to table, err: {err}")]
+    TableAddFail { err: String },
 }
 
 pub struct WhoAreYouInitiator {
@@ -72,14 +75,6 @@ impl WhoAreYouInitiator {
             return Err(WhoAreYouInitError::MyEndpoint { endpoint });
         }
 
-        let table_node =
-            match self.disc_state.table.find_or_reserve(&endpoint).await {
-                Ok(n) => n,
-                Err(err) => {
-                    return Err(WhoAreYouInitError::NodeReserveFail { err })
-                }
-            };
-
         let my_sig = self.disc_state.id.sig();
         let my_public_key_bytes = self.disc_state.id.public_key_bytes();
 
@@ -101,20 +96,6 @@ impl WhoAreYouInitiator {
             buf.len()
         );
 
-        // let mut table_node_lock = table_node.lock().await;
-        // table_node.addr = Some(addr.clone());
-        // table_node.record = Some(Record {
-        //     sig: way_syn.way.sig,
-        //     p2p_port: way_syn.way.p2p_port,
-        //     public_key_bytes: way_syn.way.public_key_bytes,
-        // });
-        // match self.disc_state.table.update(async {
-        // }).await {
-        //     Ok(_) => (),
-        //     Err(err) => (),
-        // };
-        // self.disc_state.table.update(table_node);
-
         Ok(())
     }
 
@@ -125,32 +106,12 @@ impl WhoAreYouInitiator {
     ) -> Result<(), WhoAreYouInitError> {
         let endpoint = addr.endpoint();
 
-        // let table_node = {
-        //     let node = match self.disc_state.table.find(&endpoint).await {
-        //         Some(n) => n,
-        //         None => match self.disc_state.table.try_reserve().await {
-        //             Ok(n) => n,
-        //             Err(err) => {
-        //                 return Err(WhoAreYouInitError::TableIsFull {
-        //                     endpoint,
-        //                     err,
-        //                 });
-        //             }
-        //         },
-        //     };
-        //     node
-        // };
-
-        let table_node =
-            match self.disc_state.table.find_or_reserve(&endpoint).await {
-                Ok(n) => n,
-                Err(err) => {
-                    return Err(WhoAreYouInitError::TableIsFull {
-                        endpoint,
-                        err,
-                    })
-                }
-            };
+        let table_node = match self.disc_state.table.try_reserve().await {
+            Ok(n) => n,
+            Err(err) => {
+                return Err(WhoAreYouInitError::TableIsFull { endpoint, err })
+            }
+        };
 
         let way_ack = match WhoAreYouAck::parse(buf) {
             Ok(m) => m,
@@ -159,29 +120,28 @@ impl WhoAreYouInitiator {
             }
         };
 
-        let _ = self
+        match self
             .disc_state
             .table
-            .update(table_node, |mut n| {
-                *n = TableNodeInner::Empty;
-                // *n = None;
-
-                // let mut a = n.take();
-                // *a  = None;
-                // *n = None;
+            .add(table_node, |mut n| {
+                *n = TableNodeInner::Identified {
+                    addr: addr.clone(),
+                    sig: way_ack.way.sig,
+                    p2p_port: way_ack.way.p2p_port,
+                    public_key_bytes: way_ack.way.public_key_bytes,
+                };
                 n
             })
-            .await;
-
-        // table_node.inner;
-        // let mut table_node = table_node.lock().await;
-        // table_node.record = Some(Record {
-        //     sig: way_ack.way.sig,
-        //     p2p_port: way_ack.way.p2p_port,
-        //     public_key_bytes: way_ack.way.public_key_bytes,
-        // });
-
-        //
+            .await
+        {
+            Ok((public_key_bytes, endpoint)) => {
+                debug!(
+                    "Node is inserted, key: {:?}, endpoint: {:?}",
+                    public_key_bytes, endpoint
+                );
+            }
+            Err(err) => return Err(WhoAreYouInitError::TableAddFail { err }),
+        };
 
         Ok(())
     }

@@ -1,11 +1,10 @@
 use super::msg::{
-    WhoAreYou, WhoAreYouAck, WhoAreYouSyn, P2P_PORT_LEN, SAKSAHA,
+    WhoAreYouAck, WhoAreYouSyn,
 };
-use crate::v1::ops::{Message, Opcode};
-use crate::v1::table::{Record, TableNode};
-use crate::v1::task_queue::{Task, TaskQueue};
+use crate::v1::ops::{Message,};
+use crate::v1::table::{TableNodeInner};
 use crate::v1::DiscState;
-use crate::v1::{address::Address, table::Table};
+use crate::v1::{address::Address};
 use log::debug;
 use std::sync::Arc;
 use thiserror::Error;
@@ -30,6 +29,9 @@ pub enum WhoAreYouRecvError {
 
     #[error("Couldn't sent msg through socket")]
     SendFail(#[from] std::io::Error),
+
+    #[error("Can't add node to table, err: {err}")]
+    TableAddFail { err: String },
 }
 
 pub struct WhoAreYouReceiver {
@@ -55,16 +57,12 @@ impl WhoAreYouReceiver {
     ) -> Result<(), WhoAreYouRecvError> {
         let endpoint = addr.endpoint();
 
-        let table_node =
-            match self.disc_state.table.find_or_try_reserve(&endpoint).await {
-                Ok(n) => n,
-                Err(err) => {
-                    return Err(WhoAreYouRecvError::TableIsFull {
-                        endpoint,
-                        err,
-                    })
-                }
-            };
+        let table_node = match self.disc_state.table.try_reserve().await {
+            Ok(n) => n,
+            Err(err) => {
+                return Err(WhoAreYouRecvError::TableIsFull { endpoint, err })
+            }
+        };
 
         let way_syn = match WhoAreYouSyn::parse(buf) {
             Ok(m) => m,
@@ -73,14 +71,28 @@ impl WhoAreYouReceiver {
             }
         };
 
-        // table_node
-
-        // let mut table_node = table_node.lock().await;
-        // table_node.record = Some(Record {
-        //     sig: way_syn.way.sig,
-        //     p2p_port: way_syn.way.p2p_port,
-        //     public_key_bytes: way_syn.way.public_key_bytes,
-        // });
+        match self
+            .disc_state
+            .table
+            .add(table_node, |mut n| {
+                *n = TableNodeInner::Identified {
+                    addr: addr.clone(),
+                    sig: way_syn.way.sig,
+                    p2p_port: way_syn.way.p2p_port,
+                    public_key_bytes: way_syn.way.public_key_bytes,
+                };
+                n
+            })
+            .await
+        {
+            Ok((public_key_bytes, endpoint)) => {
+                debug!(
+                    "Node is inserted, key: {:?}, endpoint: {:?}",
+                    public_key_bytes, endpoint
+                );
+            }
+            Err(err) => return Err(WhoAreYouRecvError::TableAddFail { err }),
+        };
 
         self.send_who_are_you_ack(addr).await?;
 
@@ -113,6 +125,8 @@ impl WhoAreYouReceiver {
                 return Err(WhoAreYouRecvError::ByteConversionFail { err });
             }
         };
+
+        println!("send way ack: {:?}", buf);
 
         self.udp_socket.send_to(&buf, endpoint.clone()).await?;
 

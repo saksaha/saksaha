@@ -1,23 +1,19 @@
 use super::{
-    active_calls::{ActiveCalls, Traffic},
     address::Address,
     ops::{
         whoareyou::{
-            receiver::{WhoAreYouReceiver, WhoAreYouRecvError},
             WhoAreYouOperator,
         },
         Opcode,
     },
-    table::Table,
-    task_queue::{Task, TaskQueue},
+    task_queue::{TaskQueue},
     DiscState,
 };
 use log::{debug, error, info, warn};
-use std::{convert::TryInto, net::SocketAddr, sync::Arc, time::Duration};
+use std::{net::SocketAddr, sync::Arc};
 use thiserror::Error;
 use tokio::{
-    net::{TcpListener, TcpStream, UdpSocket},
-    sync::Mutex,
+    net::{UdpSocket},
 };
 
 #[derive(Error, Debug)]
@@ -141,10 +137,6 @@ impl Handler {
                 {
                     Ok(_) => (),
                     Err(err) => {
-                        // match err {
-                        //     WhoAreYouRecvError::MessageParseFail(_) => {
-                        //     }
-                        // }
                         error!("Request handle fail, err: {}", err);
                     }
                 }
