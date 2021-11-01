@@ -1,7 +1,7 @@
 use super::msg::{WhoAreYouAck, WhoAreYouSyn, SAKSAHA};
 use crate::v1::address::Address;
 use crate::v1::ops::Message;
-use crate::v1::table::{Record, TableNode};
+use crate::v1::table::{Record, TableNode, TableNodeInner};
 use crate::v1::DiscState;
 use log::debug;
 use std::sync::Arc;
@@ -163,11 +163,13 @@ impl WhoAreYouInitiator {
             .disc_state
             .table
             .update(table_node, |mut n| {
-                *n = None;
+                *n = TableNodeInner::Empty;
+                // *n = None;
 
                 // let mut a = n.take();
                 // *a  = None;
                 // *n = None;
+                n
             })
             .await;
 

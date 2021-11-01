@@ -100,7 +100,7 @@ fn get_args() -> Result<Args, String> {
 }
 
 fn main() {
-    logger::init();
+    saksaha_logger::init();
 
     let args = match get_args() {
         Ok(a) => a,

@@ -7,8 +7,8 @@ use crate::{
     peer::peer_store::PeerStore,
 };
 use log::error;
-use sak_p2p_disc::{Disc};
-use sak_p2p_identity::Identity;
+use saksaha_p2p_disc::{Disc};
+use saksaha_p2p_identity::Identity;
 use std::sync::Arc;
 
 pub struct Host {}
