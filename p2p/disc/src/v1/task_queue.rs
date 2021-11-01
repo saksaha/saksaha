@@ -136,7 +136,7 @@ impl TaskQueue {
                             err
                         );
 
-                        tokio::time::sleep(Duration::from_millis(1000)).await;
+                        tokio::time::sleep(min_interval).await;
                     }
                 }
             }
