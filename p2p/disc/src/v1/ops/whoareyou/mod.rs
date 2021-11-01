@@ -1,13 +1,11 @@
-use self::{initiator::WhoAreYouInitiator, receiver::WhoAreYouReceiver};
-use crate::v1::DiscState;
-use std::sync::Arc;
-use thiserror::Error;
-use tokio::net::UdpSocket;
-
 pub mod initiator;
 pub mod msg;
 pub mod receiver;
 
+use self::{initiator::WhoAreYouInitiator, receiver::WhoAreYouReceiver};
+use crate::v1::DiscState;
+use std::sync::Arc;
+use tokio::net::UdpSocket;
 
 pub struct WhoAreYouOperator {
     pub initiator: WhoAreYouInitiator,

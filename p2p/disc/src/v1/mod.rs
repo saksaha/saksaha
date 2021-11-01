@@ -1,12 +1,11 @@
+mod active_calls;
 pub mod address;
 pub mod dial_scheduler;
 pub mod listener;
 pub mod msg;
-pub mod task_queue;
-// pub mod identity;
-mod active_calls;
 mod ops;
 mod table;
+pub mod task_queue;
 
 use self::{
     active_calls::ActiveCalls, dial_scheduler::DialScheduler,
@@ -25,6 +24,7 @@ pub struct Disc {
     listener: Arc<Listener>,
     state: Arc<DiscState>,
     way_operator: Arc<WhoAreYouOperator>,
+    dial_scheduler: Arc<DialScheduler>,
 }
 
 impl Disc {
@@ -36,9 +36,7 @@ impl Disc {
         default_bootstrap_urls: &str,
     ) -> Result<Disc, String> {
         let table = {
-            let t = match Table::init(bootstrap_urls, default_bootstrap_urls)
-                .await
-            {
+            let t = match Table::init().await {
                 Ok(t) => t,
                 Err(err) => {
                     return Err(format!("Can't initialize Table, err: {}", err))
@@ -109,49 +107,42 @@ impl Disc {
             Arc::new(l)
         };
 
+        let dial_scheduler = {
+            let d = DialScheduler::new(state.clone(), task_queue.clone());
+            Arc::new(d)
+        };
+
         let disc = Disc {
             task_queue,
             state,
             listener,
             way_operator,
+            dial_scheduler,
         };
 
-        // disc.enqueue_initial_tasks(bootstrap_urls, default_bootstrap_urls)
-        //     .await;
+        disc.enqueue_initial_tasks(bootstrap_urls, default_bootstrap_urls)
+            .await;
 
         Ok(disc)
     }
 
     pub async fn start(&self) -> Result<Arc<Table>, String> {
-        // let table = self.state.table.clone();
-
-        // match table.start().await {
-        //     Ok(_) => (),
-        //     Err(err) => {
-        //         return Err(format!("Failed to start table, err: {}", err))
-        //     }
-        // };
-
         match self.listener.start().await {
             Ok(port) => port,
             Err(err) => return Err(err),
         };
 
-        // let dial_scheduler = DialScheduler::new();
-        // let _ = dial_scheduler.start(
-        //     self.id.clone(),
-        //     listener_port,
-        //     my_p2p_port,
-        //     self.table.clone(),
-        //     self.task_queue.clone(),
-        // );
+        match self.dial_scheduler.start() {
+            Ok(_) => (),
+            Err(err) => return Err(err),
+        };
 
         self.task_queue.run_loop();
 
         Ok(self.state.table.clone())
     }
 
-    pub async fn _enqueue_initial_tasks(
+    pub async fn enqueue_initial_tasks(
         &self,
         bootstrap_urls: Option<Vec<String>>,
         default_bootstrap_urls: &str,
