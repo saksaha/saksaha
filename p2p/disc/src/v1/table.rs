@@ -2,8 +2,8 @@ use super::address::Address;
 use futures::Future;
 use log::{debug, error, info, warn};
 use rand::prelude::*;
-use sak_crypto::Signature;
-use sak_p2p_identity::PUBLIC_KEY_LEN;
+use saksaha_crypto::Signature;
+use saksaha_p2p_identity::PUBLIC_KEY_LEN;
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::{
     mpsc::{self, Receiver, Sender},
@@ -31,7 +31,9 @@ impl Table {
             let (tx, rx) = mpsc::channel::<Arc<TableNode>>(CAPACITY);
 
             for _ in 0..CAPACITY {
-                let empty_node = Arc::new(TableNode::new_empty());
+                let empty_node = Arc::new(TableNode {
+                    inner: Mutex::new(TableNodeInner::Empty),
+                });
 
                 match tx.send(empty_node).await {
                     Ok(_) => (),
@@ -74,11 +76,16 @@ impl Table {
                     }
                 };
 
-                table.update(table_node, |mut n| {
-                    *n = TableNodeInner {
-                        addr:
-                    };
-                }).await;
+                // let _ = table
+                //     .update(table_node, |mut n| {
+                //         // *n = TableNodeInner {
+                //         //     addr:
+                //         // };
+                //         // TableNode::Unidentified {
+                //         //     addr: addr.clone(),
+                //         // };
+                //     })
+                //     .await;
             }
         }
 
@@ -136,23 +143,25 @@ impl Table {
         addrs
     }
 
-    pub async fn start(&self) -> Result<(), String> {
-        for _ in 0..CAPACITY {
-            let empty_node = Arc::new(TableNode::new_empty());
+    // pub async fn start(&self) -> Result<(), String> {
+    //     for _ in 0..CAPACITY {
+    //         let empty_node = Arc::new(TableNode {
+    //             inner: Mutex::new(TableNodeInner::Empty),
+    //         });
 
-            match self.slots_tx.send(empty_node).await {
-                Ok(_) => (),
-                Err(err) => {
-                    return Err(format!(
-                        "Can't send empty TableNode to the pool, err: {}",
-                        err
-                    ));
-                }
-            }
-        }
+    //         match self.slots_tx.send(empty_node).await {
+    //             Ok(_) => (),
+    //             Err(err) => {
+    //                 return Err(format!(
+    //                     "Can't send empty TableNode to the pool, err: {}",
+    //                     err
+    //                 ));
+    //             }
+    //         }
+    //     }
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
     pub async fn find(&self, endpoint: &String) -> Option<Arc<TableNode>> {
         let map = self.map.lock().await;
@@ -190,10 +199,21 @@ impl Table {
         updater: F,
     ) -> Result<(), String>
     where
-        F: Fn(MutexGuard<Option<TableNodeInner>>),
+        F: Fn(MutexGuard<TableNodeInner>) -> MutexGuard<TableNodeInner>,
     {
         let inner = table_node.inner.lock().await;
-        let _inner = updater(inner);
+
+        let inner = updater(inner);
+        match &*inner {
+            TableNodeInner::Empty => (),
+            TableNodeInner::Unidentified { addr } => (),
+            TableNodeInner::Identified {
+                addr,
+                sig,
+                p2p_port,
+                public_key_bytes,
+            } => (),
+        };
 
         Ok(())
     }
@@ -279,25 +299,44 @@ impl Table {
 }
 
 pub struct TableNode {
-    inner: Mutex<Option<TableNodeInner>>,
-    // pub record: Option<Record>,
-    // _should_be_constructed_by_table: bool,
+    inner: Mutex<TableNodeInner>,
 }
 
-pub struct TableNodeInner {
-    pub addr: Address,
-    pub sig: Signature,
-    pub p2p_port: u16,
-    pub public_key_bytes: [u8; PUBLIC_KEY_LEN],
+pub enum TableNodeInner {
+    Empty,
+
+    Unidentified {
+        addr: Address,
+    },
+
+    Identified {
+        addr: Address,
+        sig: Signature,
+        p2p_port: u16,
+        public_key_bytes: [u8; PUBLIC_KEY_LEN],
+    },
 }
 
-impl TableNode {
-    fn new_empty() -> TableNode {
-        TableNode {
-            inner: Mutex::new(None),
-            // addr: None,
-            // record: None,
-            // _should_be_constructed_by_table: true,
+impl TableNodeInner {
+    fn new_empty() -> TableNodeInner {
+        TableNodeInner::Empty
+    }
+
+    fn new_unidentified(addr: Address) -> TableNodeInner {
+        TableNodeInner::Unidentified { addr }
+    }
+
+    fn new_identified(
+        addr: Address,
+        sig: Signature,
+        p2p_port: u16,
+        public_key_bytes: [u8; PUBLIC_KEY_LEN],
+    ) -> TableNodeInner {
+        TableNodeInner::Identified {
+            addr,
+            sig,
+            p2p_port,
+            public_key_bytes,
         }
     }
 }

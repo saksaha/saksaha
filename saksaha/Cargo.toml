@@ -7,11 +7,11 @@ default-run = "sak"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-logger = { path = "../logger" }
-sak_crypto = { path = "../crypto" }
-sak_p2p_identity = { path = "../p2p/identity" }
-sak_proofs = { path = "../proofs" }
-sak_p2p_disc = { path = "../p2p/disc" }
+saksaha_logger = { path = "../logger" }
+saksaha_crypto = { path = "../crypto" }
+saksaha_p2p_identity = { path = "../p2p/identity" }
+saksaha_proofs = { path = "../proofs" }
+saksaha_p2p_disc = { path = "../p2p/disc" }
 clap = "3.0.0-beta.4"
 directories = "3.0"
 k256 = { version = "0.9.6", features = ["ecdh"] }
