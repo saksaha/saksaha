@@ -1,5 +1,5 @@
 use super::address::Address;
-use crate::{CAPACITY, iterator::Iterator};
+use crate::{iterator::Iterator, CAPACITY};
 use futures::Future;
 use log::{debug, error, info, warn};
 use rand::prelude::*;
@@ -16,44 +16,40 @@ use tokio::sync::{
 };
 
 type PeerId = [u8; PUBLIC_KEY_LEN];
-type Nodes = HashMap<PeerId, Arc<TableNode>>;
+type Nodes = HashMap<PeerId, Arc<Node>>;
 
 pub(crate) struct Table {
     map: Mutex<Nodes>,
     keys: Mutex<HashSet<PeerId>>,
     rng: Mutex<StdRng>,
-    slots_tx: Sender<Arc<TableNode>>,
-    slots_rx: Mutex<Receiver<Arc<TableNode>>>,
-    updates_tx: Sender<Arc<TableNode>>,
-    updates_rx: Mutex<Receiver<Arc<TableNode>>>,
+    slots_tx: Sender<Arc<Node>>,
+    slots_rx: Mutex<Receiver<Arc<Node>>>,
+    updates_tx: Arc<Sender<Arc<Node>>>,
+    updates_rx: Arc<Mutex<Receiver<Arc<Node>>>>,
     iter: Arc<Iterator>,
 }
 
 impl Table {
     pub async fn init() -> Result<Table, String> {
-        let iter = {
-            let it = Iterator::new();
-            Arc::new(it)
-        };
-
         let (updates_tx, updates_rx) = {
             let (tx, rx) = mpsc::channel(CAPACITY);
-            (tx, rx)
+            (Arc::new(tx), Arc::new(Mutex::new(rx)))
         };
 
         let (slots_tx, slots_rx) = {
-            let (tx, rx) = mpsc::channel::<Arc<TableNode>>(CAPACITY);
+            let (tx, rx) = mpsc::channel::<Arc<Node>>(CAPACITY);
 
             for _ in 0..CAPACITY {
-                let empty_node = Arc::new(TableNode {
-                    inner: Mutex::new(TableNodeInner::Empty),
-                });
+                // let empty_node = Arc::new(Node {
+                //     inner: Mutex::new(NodeInner::Empty),
+                // });
+                let empty_node = Arc::new(Node::Empty);
 
                 match tx.send(empty_node).await {
                     Ok(_) => (),
                     Err(err) => {
                         return Err(format!(
-                            "Can't send empty TableNode to the pool, err: {}",
+                            "Can't send empty Node to the pool, err: {}",
                             err
                         ));
                     }
@@ -66,6 +62,10 @@ impl Table {
         let map = HashMap::with_capacity(CAPACITY);
         let keys = HashSet::new();
         let rng = SeedableRng::from_entropy();
+        let iter = {
+            let it = Iterator::new(updates_tx.clone(), updates_rx.clone());
+            Arc::new(it)
+        };
 
         let table = Table {
             map: Mutex::new(map),
@@ -74,14 +74,14 @@ impl Table {
             slots_tx,
             slots_rx: Mutex::new(slots_rx),
             updates_tx,
-            updates_rx: Mutex::new(updates_rx),
+            updates_rx,
             iter,
         };
 
         Ok(table)
     }
 
-    pub async fn find(&self, peer_id: &PeerId) -> Option<Arc<TableNode>> {
+    pub async fn find(&self, peer_id: &PeerId) -> Option<Arc<Node>> {
         let map = self.map.lock().await;
 
         if let Some(n) = map.get(peer_id) {
@@ -94,7 +94,7 @@ impl Table {
     pub async fn find_or_reserve(
         &self,
         peer_id: &PeerId,
-    ) -> Result<Arc<TableNode>, String> {
+    ) -> Result<Arc<Node>, String> {
         match self.find(peer_id).await {
             Some(n) => return Ok(n),
             None => return self.reserve().await,
@@ -104,7 +104,7 @@ impl Table {
     pub async fn find_or_try_reserve(
         &self,
         peer_id: &PeerId,
-    ) -> Result<Arc<TableNode>, String> {
+    ) -> Result<Arc<Node>, String> {
         match self.find(peer_id).await {
             Some(n) => return Ok(n),
             None => return self.try_reserve().await,
@@ -113,11 +113,11 @@ impl Table {
 
     pub async fn add<F>(
         &self,
-        table_node: Arc<TableNode>,
+        table_node: Arc<Node>,
         updater: F,
     ) -> Result<([u8; PUBLIC_KEY_LEN], String), String>
     where
-        F: Fn(MutexGuard<TableNodeInner>) -> MutexGuard<TableNodeInner>,
+        F: Fn(MutexGuard<NodeInner>) -> MutexGuard<NodeInner>,
     {
         let mut map = self.map.lock().await;
         let mut keys = self.keys.lock().await;
@@ -125,7 +125,7 @@ impl Table {
         let inner = table_node.inner.lock().await;
         let inner = updater(inner);
 
-        let (public_key_bytes, endpoint) = if let TableNodeInner::Identified {
+        let (public_key_bytes, endpoint) = if let NodeInner::Identified {
             public_key_bytes,
             ref addr,
             ..
@@ -144,7 +144,7 @@ impl Table {
             Ok(_) => (),
             Err(err) => {
                 return Err(format!(
-                "Can't add TableNode to 'update' pool, endpoint: {}, err: {}",
+                "Can't add Node to 'update' pool, endpoint: {}, err: {}",
                 endpoint, err,
             ))
             }
@@ -153,22 +153,22 @@ impl Table {
         Ok((public_key_bytes, endpoint))
     }
 
-    pub async fn reserve(&self) -> Result<Arc<TableNode>, String> {
+    pub async fn reserve(&self) -> Result<Arc<Node>, String> {
         let mut slots_rx = self.slots_rx.lock().await;
 
         match slots_rx.recv().await {
             Some(n) => return Ok(n),
-            None => return Err(format!("Can't retrieve tableNode from pool")),
+            None => return Err(format!("Can't retrieve Node from pool")),
         };
     }
 
-    pub async fn try_reserve(&self) -> Result<Arc<TableNode>, String> {
+    pub async fn try_reserve(&self) -> Result<Arc<Node>, String> {
         let mut slots_rx = self.slots_rx.lock().await;
 
         match slots_rx.try_recv() {
             Ok(n) => Ok(n),
             Err(err) => Err(format!(
-                "Can't reserve a tableNode. Table might be busy, err: {}",
+                "Can't reserve a Node. Table might be busy, err: {}",
                 err
             )),
         }
@@ -177,35 +177,27 @@ impl Table {
     pub fn iter(&self) -> Arc<Iterator> {
         self.iter.clone()
     }
-
-    // pub fn iter(&self) -> Iterator {
-    //     Iterator {}
-    // }
-
-    // pub async fn next(&self) -> Result<Arc<TableNode>, String> {
-    //     let mut updates_rx = self.updates_rx.lock().await;
-    //     let tnode = match updates_rx.recv().await {
-    //         Some(n) => n,
-    //         None => {
-    //             return Err(format!("Update channel is closed, fatal error"))
-    //         }
-    //     };
-
-    //     Ok(tnode)
-    // }
 }
 
-pub struct TableNode {
-    inner: Mutex<TableNodeInner>,
+pub struct IdentifiedNode {
+    addr: Address,
+    sig: Signature,
+    p2p_port: u16,
+    public_key_bytes: [u8; PUBLIC_KEY_LEN],
 }
 
-pub enum TableNodeInner {
+pub struct Node {
+    inner: Mutex<NodeInner>,
+}
+
+pub enum NodeInner {
     Empty,
 
     Identified {
-        addr: Address,
-        sig: Signature,
-        p2p_port: u16,
-        public_key_bytes: [u8; PUBLIC_KEY_LEN],
+        value: IdentifiedNode,
+        // addr: Address,
+        // sig: Signature,
+        // p2p_port: u16,
+        // public_key_bytes: [u8; PUBLIC_KEY_LEN],
     },
 }
