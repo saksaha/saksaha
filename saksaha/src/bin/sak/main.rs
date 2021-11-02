@@ -15,6 +15,7 @@ struct Args {
     config: Option<String>,
     rpc_port: Option<u16>,
     disc_port: Option<u16>,
+    p2p_port: Option<u16>,
     bootstrap_endpoints: Option<Vec<String>>,
 }
 
@@ -53,6 +54,12 @@ fn get_args() -> Result<Args, String> {
                 .value_name("PORT")
                 .about("Discovery port"),
         )
+        .arg(
+            Arg::new("p2p_port")
+                .long("p2p-port")
+                .value_name("PORT")
+                .about("P2P port"),
+        )
         .get_matches();
 
     let config = match flags.value_of("config") {
@@ -86,6 +93,19 @@ fn get_args() -> Result<Args, String> {
         None => None,
     };
 
+    let p2p_port = match flags.value_of("p2p_port") {
+        Some(p) => match p.parse::<u16>() {
+            Ok(p) => Some(p),
+            Err(err) => {
+                return Err(format!(
+                    "Cannot parse the p2p port (u16), err: {}",
+                    err
+                ))
+            }
+        },
+        None => None,
+    };
+
     let bootstrap_endpoints = match flags.values_of("bootstrap_endpoints") {
         Some(b) => Some(b.map(str::to_string).collect()),
         None => None,
@@ -95,6 +115,7 @@ fn get_args() -> Result<Args, String> {
         config,
         rpc_port,
         disc_port,
+        p2p_port,
         bootstrap_endpoints,
     })
 }
@@ -116,9 +137,10 @@ fn main() {
 
     Process::init(node.clone());
 
-    match node.start(
+    match node.init(
         args.rpc_port,
         args.disc_port,
+        args.p2p_port,
         args.bootstrap_endpoints,
         pconf,
         DEFAULT_BOOTSTRAP_URLS,
@@ -126,6 +148,7 @@ fn main() {
         Ok(_) => (),
         Err(err) => {
             error!("Can't start a node, err: {}", err);
+
             std::process::exit(1);
         }
     };
