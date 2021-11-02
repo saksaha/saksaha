@@ -1,11 +1,6 @@
-pub mod error;
-
+use crate::{p2p::credential::Credential, peer::peer_store::PeerStore};
 use log::{debug, info};
 use saksaha_p2p_identity::Identity;
-use crate::{
-    p2p::{credential::Credential, listener::error::ListenerError},
-    peer::peer_store::PeerStore,
-};
 use std::sync::Arc;
 use tokio::{
     net::TcpListener,
@@ -25,7 +20,7 @@ impl Listener {
         peer_store: Arc<PeerStore>,
         rpc_port: u16,
         credential: Arc<Box<dyn Identity + Send + Sync>>,
-    ) -> Result<u16, ListenerError> {
+    ) -> Result<u16, String> {
         let port = match port {
             Some(p) => p,
             None => 0,
@@ -41,10 +36,15 @@ impl Listener {
                     (listener, local_addr)
                 }
                 Err(err) => {
-                    return Err(ListenerError::SetupFail(err.to_string()))
+                    return Err(format!(
+                        "Can't get local address of p2p listener, err: {}",
+                        err
+                    ))
                 }
             },
-            Err(err) => return Err(ListenerError::SetupFail(err.to_string())),
+            Err(err) => {
+                return Err(format!("Can't bind tcp listener, err: {}", err))
+            }
         };
 
         info!("Started - P2P listener, addr: {}", local_addr);

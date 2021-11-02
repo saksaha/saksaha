@@ -2,22 +2,21 @@ mod active_calls;
 pub mod address;
 pub mod dial_scheduler;
 pub mod listener;
-pub mod iter;
+pub mod iterator;
 mod ops;
 mod table;
 pub mod task_queue;
 
-use self::{
-    active_calls::ActiveCalls, dial_scheduler::DialScheduler,
-    listener::Listener, table::Table, task_queue::TaskQueue,
-};
-use crate::v1::{
+use self::{active_calls::ActiveCalls, dial_scheduler::DialScheduler, listener::Listener, table::Table, task_queue::TaskQueue};
+use crate::{iterator::Iterator, v1::{
     address::Address, ops::whoareyou::WhoAreYouOperator, task_queue::Task,
-};
+}};
 use log::{info, warn};
 use saksaha_p2p_identity::Identity;
 use std::sync::Arc;
 use tokio::net::UdpSocket;
+
+pub const CAPACITY: usize = 32;
 
 pub struct Disc {
     task_queue: Arc<TaskQueue>,
@@ -44,6 +43,7 @@ impl Disc {
             };
             Arc::new(t)
         };
+
         let active_calls = Arc::new(ActiveCalls::new());
         let task_queue = Arc::new(TaskQueue::new());
 
@@ -126,7 +126,7 @@ impl Disc {
         Ok(disc)
     }
 
-    pub async fn start(&self) -> Result<Arc<Table>, String> {
+    pub async fn start(&self) -> Result<(), String> {
         match self.listener.start().await {
             Ok(port) => port,
             Err(err) => return Err(err),
@@ -139,7 +139,7 @@ impl Disc {
 
         self.task_queue.run_loop();
 
-        Ok(self.state.table.clone())
+        Ok(())
     }
 
     pub async fn enqueue_initial_tasks(
@@ -162,12 +162,12 @@ impl Disc {
         info!("*********************************************************");
         info!("* Discovery table bootstrapped");
 
-        let mut count = 0;
-        {
+        let count = {
+            let mut cnt = 0;
             for url in urls {
                 let addr = match Address::parse(url.clone()) {
                     Ok(n) => {
-                        count += 1;
+                        cnt += 1;
                         n
                     }
                     Err(err) => {
@@ -182,7 +182,7 @@ impl Disc {
                     }
                 };
 
-                info!("* [{}] {}", count, addr.short_url());
+                info!("* [{}] {}", cnt, addr.short_url());
 
                 let task = Task::InitiateWhoAreYou {
                     way_operator: self.way_operator.clone(),
@@ -196,19 +196,24 @@ impl Disc {
                     }
                 };
             }
-        }
+            cnt
+        };
 
         info!("* bootstrapped node count: {}", count);
         info!("*********************************************************");
     }
+
+    pub fn iter(&self) -> Arc<Iterator> {
+        self.state.table.iter()
+    }
 }
 
-pub struct DiscState {
+pub(crate) struct DiscState {
     id: Arc<Box<dyn Identity + Send + Sync>>,
     my_disc_port: u16,
     my_p2p_port: u16,
     table: Arc<Table>,
-    active_calls: Arc<ActiveCalls>,
+    _active_calls: Arc<ActiveCalls>,
 }
 
 impl DiscState {
@@ -224,7 +229,7 @@ impl DiscState {
             my_disc_port,
             my_p2p_port,
             table,
-            active_calls,
+            _active_calls: active_calls,
         }
     }
 }

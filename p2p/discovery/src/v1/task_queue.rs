@@ -15,7 +15,7 @@ use tokio::sync::{
 };
 
 #[derive(Clone)]
-pub enum Task {
+pub(crate) enum Task {
     InitiateWhoAreYou {
         way_operator: Arc<WhoAreYouOperator>,
         addr: Address,
@@ -34,7 +34,7 @@ enum TaskResult {
     Fail(String),
 }
 
-pub struct TaskQueue {
+pub(crate) struct TaskQueue {
     tx: Arc<Sender<TaskInstance>>,
     rx: Arc<Mutex<Receiver<TaskInstance>>>,
     max_retry: usize,

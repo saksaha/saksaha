@@ -10,7 +10,7 @@ use tokio::sync::{
     Mutex,
 };
 
-pub struct DialScheduler {
+pub(crate) struct DialScheduler {
     revalidator: Revalidator,
 }
 
@@ -32,7 +32,7 @@ impl DialScheduler {
     }
 }
 
-pub struct Revalidator {
+pub(crate) struct Revalidator {
     disc_state: Arc<DiscState>,
     task_queue: Arc<TaskQueue>,
     is_running: Arc<Mutex<bool>>,

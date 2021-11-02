@@ -1,10 +1,13 @@
 use super::address::Address;
+use crate::{CAPACITY, iterator::Iterator};
+use futures::Future;
 use log::{debug, error, info, warn};
 use rand::prelude::*;
 use saksaha_crypto::Signature;
 use saksaha_p2p_identity::PUBLIC_KEY_LEN;
 use std::{
     collections::{HashMap, HashSet},
+    pin::Pin,
     sync::Arc,
 };
 use tokio::sync::{
@@ -12,12 +15,10 @@ use tokio::sync::{
     Mutex, MutexGuard, OwnedMutexGuard,
 };
 
-const CAPACITY: usize = 32;
-
 type PeerId = [u8; PUBLIC_KEY_LEN];
 type Nodes = HashMap<PeerId, Arc<TableNode>>;
 
-pub struct Table {
+pub(crate) struct Table {
     map: Mutex<Nodes>,
     keys: Mutex<HashSet<PeerId>>,
     rng: Mutex<StdRng>,
@@ -25,10 +26,21 @@ pub struct Table {
     slots_rx: Mutex<Receiver<Arc<TableNode>>>,
     updates_tx: Sender<Arc<TableNode>>,
     updates_rx: Mutex<Receiver<Arc<TableNode>>>,
+    iter: Arc<Iterator>,
 }
 
 impl Table {
     pub async fn init() -> Result<Table, String> {
+        let iter = {
+            let it = Iterator::new();
+            Arc::new(it)
+        };
+
+        let (updates_tx, updates_rx) = {
+            let (tx, rx) = mpsc::channel(CAPACITY);
+            (tx, rx)
+        };
+
         let (slots_tx, slots_rx) = {
             let (tx, rx) = mpsc::channel::<Arc<TableNode>>(CAPACITY);
 
@@ -51,11 +63,6 @@ impl Table {
             (tx, rx)
         };
 
-        let (updates_tx, updates_rx) = {
-            let (tx, rx) = mpsc::channel::<Arc<TableNode>>(CAPACITY);
-            (tx, rx)
-        };
-
         let map = HashMap::with_capacity(CAPACITY);
         let keys = HashSet::new();
         let rng = SeedableRng::from_entropy();
@@ -68,6 +75,7 @@ impl Table {
             slots_rx: Mutex::new(slots_rx),
             updates_tx,
             updates_rx: Mutex::new(updates_rx),
+            iter,
         };
 
         Ok(table)
@@ -130,44 +138,20 @@ impl Table {
 
         std::mem::drop(inner);
 
-        map.insert(public_key_bytes, table_node);
+        map.insert(public_key_bytes, table_node.clone());
         keys.insert(public_key_bytes);
+        match self.updates_tx.send(table_node).await {
+            Ok(_) => (),
+            Err(err) => {
+                return Err(format!(
+                "Can't add TableNode to 'update' pool, endpoint: {}, err: {}",
+                endpoint, err,
+            ))
+            }
+        };
 
         Ok((public_key_bytes, endpoint))
     }
-
-    // pub async fn next(&self) -> Option<TableNode> {
-    //     let map = self.map.lock().await;
-    //     let keys = self.keys.lock().await;
-    //     let mut rng = self.rng.lock().await;
-    //     let seed: usize = rng.gen();
-
-    //     for i in 0..3 {
-    //         let idx = (seed + i) % keys.len();
-    //         let key = match keys.get(idx) {
-    //             Some(k) => k,
-    //             None => {
-    //                 error!("Table key of idx: {}, not found", idx);
-    //                 continue;
-    //             }
-    //         };
-
-    //         let node = match map.get(key) {
-    //             Some(n) => n.clone(),
-    //             None => {
-    //                 error!(
-    //                     "None TableNode, something might be wrong, idx: {}",
-    //                     idx,
-    //                 );
-    //                 return None;
-    //             }
-    //         };
-
-    //         return Some(node);
-    //     }
-
-    //     None
-    // }
 
     pub async fn reserve(&self) -> Result<Arc<TableNode>, String> {
         let mut slots_rx = self.slots_rx.lock().await;
@@ -189,6 +173,26 @@ impl Table {
             )),
         }
     }
+
+    pub fn iter(&self) -> Arc<Iterator> {
+        self.iter.clone()
+    }
+
+    // pub fn iter(&self) -> Iterator {
+    //     Iterator {}
+    // }
+
+    // pub async fn next(&self) -> Result<Arc<TableNode>, String> {
+    //     let mut updates_rx = self.updates_rx.lock().await;
+    //     let tnode = match updates_rx.recv().await {
+    //         Some(n) => n,
+    //         None => {
+    //             return Err(format!("Update channel is closed, fatal error"))
+    //         }
+    //     };
+
+    //     Ok(tnode)
+    // }
 }
 
 pub struct TableNode {
