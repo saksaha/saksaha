@@ -23,6 +23,8 @@ pub struct Table {
     rng: Mutex<StdRng>,
     slots_tx: Sender<Arc<TableNode>>,
     slots_rx: Mutex<Receiver<Arc<TableNode>>>,
+    updates_tx: Sender<Arc<TableNode>>,
+    updates_rx: Mutex<Receiver<Arc<TableNode>>>,
 }
 
 impl Table {
@@ -49,6 +51,11 @@ impl Table {
             (tx, rx)
         };
 
+        let (updates_tx, updates_rx) = {
+            let (tx, rx) = mpsc::channel::<Arc<TableNode>>(CAPACITY);
+            (tx, rx)
+        };
+
         let map = HashMap::with_capacity(CAPACITY);
         let keys = HashSet::new();
         let rng = SeedableRng::from_entropy();
@@ -59,6 +66,8 @@ impl Table {
             rng: Mutex::new(rng),
             slots_tx,
             slots_rx: Mutex::new(slots_rx),
+            updates_tx,
+            updates_rx: Mutex::new(updates_rx),
         };
 
         Ok(table)
@@ -123,7 +132,6 @@ impl Table {
 
         map.insert(public_key_bytes, table_node);
         keys.insert(public_key_bytes);
-
 
         Ok((public_key_bytes, endpoint))
     }

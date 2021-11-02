@@ -2,6 +2,7 @@ mod active_calls;
 pub mod address;
 pub mod dial_scheduler;
 pub mod listener;
+pub mod iter;
 mod ops;
 mod table;
 pub mod task_queue;
