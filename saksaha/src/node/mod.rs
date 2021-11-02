@@ -1,9 +1,4 @@
-pub mod error;
-pub mod status;
-
-use self::error::NodeError;
 use crate::{
-    node::status::Status,
     p2p::host::Host,
     pconfig::PConfig,
     process::Process,
@@ -13,57 +8,18 @@ use std::sync::Arc;
 use log::{debug, error, info};
 use tokio::{self, signal};
 
-pub struct Node {}
+pub struct Node;
 
 impl Node {
     pub fn new() -> Node {
         Node {}
     }
 
-    async fn start_components(
+    pub fn init(
         &self,
         rpc_port: Option<u16>,
         disc_port: Option<u16>,
-        bootstrap_endpoints: Option<Vec<String>>,
-        pconfig: PConfig,
-        default_bootstrap_urls: &str,
-    ) -> Result<(), NodeError> {
-        let rpc = RPC::new(rpc_port);
-
-        let p2p_config = pconfig.p2p;
-        let host = Host::new();
-
-        let rpc_started = rpc.start();
-        let rpc_port: u16 = match rpc_started.await {
-            Ok(port) => port,
-            Err(err) => {
-                return Err(NodeError::SetupFail(format!(
-                    "Error joining rpc start thread, err: {}",
-                    err
-                )));
-            }
-        };
-
-        let host_started = host.start(
-            p2p_config,
-            rpc_port,
-            disc_port,
-            bootstrap_endpoints,
-            default_bootstrap_urls,
-        );
-
-        match host_started.await {
-            Ok(_) => (),
-            Err(err) => return Err(NodeError::SetupFail(err)),
-        };
-
-        Ok(())
-    }
-
-    pub fn start(
-        self: Arc<Self>,
-        rpc_port: Option<u16>,
-        disc_port: Option<u16>,
+        p2p_port: Option<u16>,
         bootstrap_endpoints: Option<Vec<String>>,
         pconfig: PConfig,
         default_bootstrap_urls: &str,
@@ -74,20 +30,21 @@ impl Node {
             .enable_all()
             .build();
 
-        match runtime {
+        let _ = match runtime {
             Ok(r) => r.block_on(async {
-                let started = self.start_components(
+                match self.start(
                     rpc_port,
                     disc_port,
+                    p2p_port,
                     bootstrap_endpoints,
                     pconfig,
                     default_bootstrap_urls,
-                );
-
-                match started.await {
+                ).await {
                     Ok(_) => (),
                     Err(err) => {
-                        return Status::SetupFailed(err);
+                        error!("Can't start node, err: {}", err);
+
+                        Process::shutdown();
                     }
                 };
 
@@ -111,14 +68,48 @@ impl Node {
                         }
                     },
                 );
-
-                return Status::Launched;
             }),
             Err(err) => {
                 let msg = format!("runtime fail, err: {:?}", err);
                 return Err(msg);
             }
         };
+
+        Ok(())
+    }
+
+    async fn start(
+        &self,
+        rpc_port: Option<u16>,
+        disc_port: Option<u16>,
+        p2p_port: Option<u16>,
+        bootstrap_urls: Option<Vec<String>>,
+        pconfig: PConfig,
+        default_bootstrap_urls: &str,
+    ) -> Result<(), String> {
+        let p2p_config = pconfig.p2p;
+
+        let rpc = RPC::new(rpc_port);
+        let rpc_started = rpc.start();
+        let rpc_port: u16 = match rpc_started.await {
+            Ok(port) => port,
+            Err(err) => {
+                return Err(format!(
+                    "Error joining rpc start thread, err: {}",
+                    err
+                ));
+            }
+        };
+
+        let host = Host::init(
+            p2p_config,
+            rpc_port,
+            p2p_port,
+            disc_port,
+            bootstrap_urls,
+            default_bootstrap_urls,
+        ).await?;
+        host.start().await?;
 
         Ok(())
     }

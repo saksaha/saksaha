@@ -7,13 +7,71 @@ use log::error;
 use saksaha_p2p_discovery::Disc;
 use saksaha_p2p_identity::Identity;
 use std::sync::Arc;
+use tokio::net::TcpListener;
 
-pub struct Host {}
+pub struct Host {
+    disc: Arc<Disc>,
+}
 
 impl Host {
-    pub fn new() -> Host {
-        let host = Host {};
-        host
+    pub async fn init(
+        p2p_config: PersistedP2PConfig,
+        rpc_port: u16,
+        p2p_port: Option<u16>,
+        disc_port: Option<u16>,
+        bootstrap_urls: Option<Vec<String>>,
+        default_bootstrap_urls: &str,
+    ) -> Result<Host, String> {
+        let p2p_port = match p2p_port {
+            Some(p) => p,
+            None => 0,
+        };
+
+        let local_addr = format!("127.0.0.1:{}", p2p_port);
+
+        let (tcp_listener, local_addr) = match TcpListener::bind(local_addr)
+            .await
+        {
+            Ok(listener) => match listener.local_addr() {
+                Ok(local_addr) => {
+                    // log!(DEBUG, "Listener created, addr: {}", local_addr);
+
+                    (listener, local_addr)
+                }
+                Err(err) => {
+                    return Err(format!(
+                        "Can't get local address of p2p listener, err: {}",
+                        err
+                    ))
+                }
+            },
+            Err(err) => {
+                return Err(format!("Can't bind tcp listener, err: {}", err))
+            }
+        };
+
+        let p2p_listener = Listener::new(tcp_listener);
+        let credential = Host::make_credential(p2p_config)?;
+        let peer_store = Host::make_peer_store()?;
+
+        let p2p_listener_port = p2p_listener
+            .start(None, peer_store.clone(), rpc_port, credential.clone())
+            .await?;
+
+        let disc = Disc::init(
+            credential.clone(),
+            disc_port,
+            p2p_listener_port,
+            bootstrap_urls,
+            default_bootstrap_urls,
+        )
+        .await?;
+
+        let host = Host {
+            disc: Arc::new(disc),
+        };
+
+        Ok(host)
     }
 
     fn make_credential(
@@ -39,34 +97,10 @@ impl Host {
         Ok(peer_store)
     }
 
-    pub async fn start(
-        &self,
-        p2p_config: PersistedP2PConfig,
-        rpc_port: u16,
-        disc_port: Option<u16>,
-        bootstrap_urls: Option<Vec<String>>,
-        default_bootstrap_urls: &str,
-    ) -> Result<(), String> {
-        let credential = Host::make_credential(p2p_config)?;
-        let peer_store = Host::make_peer_store()?;
+    pub async fn start(&self) -> Result<(), String> {
+        self.disc.start().await?;
 
-        let p2p_listener = Listener::new();
-        let p2p_listener_port = p2p_listener
-            .start(None, peer_store.clone(), rpc_port, credential.clone())
-            .await?;
-
-        let disc = Disc::init(
-            credential.clone(),
-            disc_port,
-            p2p_listener_port,
-            bootstrap_urls,
-            default_bootstrap_urls,
-        )
-        .await?;
-
-        disc.start().await?;
-
-        let disc_it = disc.iter();
+        let disc_it = self.disc.iter();
         let a = disc_it.next().await?;
         println!("111,");
 

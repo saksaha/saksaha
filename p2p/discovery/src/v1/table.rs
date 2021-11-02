@@ -40,10 +40,7 @@ impl Table {
             let (tx, rx) = mpsc::channel::<Arc<Node>>(CAPACITY);
 
             for _ in 0..CAPACITY {
-                // let empty_node = Arc::new(Node {
-                //     inner: Mutex::new(NodeInner::Empty),
-                // });
-                let empty_node = Arc::new(Node::Empty);
+                let empty_node = Arc::new(Node::new_empty());
 
                 match tx.send(empty_node).await {
                     Ok(_) => (),
@@ -190,14 +187,34 @@ pub struct Node {
     inner: Mutex<NodeInner>,
 }
 
+impl Node {
+    pub fn new_empty() -> Node {
+        Node { inner: Mutex::new(NodeInner::Empty) }
+    }
+
+    pub fn new_identified(
+        addr: Address,
+        sig: Signature,
+        p2p_port: u16,
+        public_key_bytes: [u8; PUBLIC_KEY_LEN],
+    ) -> Node {
+        let inner = Mutex::new(NodeInner::Identified {
+            addr, sig, p2p_port, public_key_bytes,
+        });
+
+        Node {
+            inner,
+        }
+    }
+}
+
 pub enum NodeInner {
     Empty,
 
     Identified {
-        value: IdentifiedNode,
-        // addr: Address,
-        // sig: Signature,
-        // p2p_port: u16,
-        // public_key_bytes: [u8; PUBLIC_KEY_LEN],
+        addr: Address,
+        sig: Signature,
+        p2p_port: u16,
+        public_key_bytes: [u8; PUBLIC_KEY_LEN],
     },
 }

@@ -7,11 +7,17 @@ use tokio::{
     sync::{mpsc::Receiver, Mutex},
 };
 
-pub struct Listener;
+pub struct Listener {
+    tcp_listener: TcpListener,
+}
 
 impl Listener {
-    pub fn new() -> Listener {
-        Listener {}
+    pub fn new(
+        tcp_listener: TcpListener,
+    ) -> Listener {
+        Listener {
+            tcp_listener,
+        }
     }
 
     pub async fn start(
