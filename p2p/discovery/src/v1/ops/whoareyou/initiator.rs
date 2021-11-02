@@ -1,7 +1,7 @@
 use super::msg::{WhoAreYouAck, WhoAreYouSyn};
 use crate::v1::address::Address;
 use crate::v1::ops::Message;
-use crate::v1::table::{TableNodeInner};
+use crate::v1::table::{NodeInner};
 use crate::v1::DiscState;
 use log::debug;
 use std::sync::Arc;
@@ -13,7 +13,7 @@ pub enum WhoAreYouInitError {
     #[error("Aborting, request to my endpoint: {endpoint}")]
     MyEndpoint { endpoint: String },
 
-    #[error("Cannot reserve tableNode, _err: {err}")]
+    #[error("Cannot reserve Node, _err: {err}")]
     NodeReserveFail { err: String },
 
     #[error("Couldn't sent msg through socket")]
@@ -124,7 +124,7 @@ impl WhoAreYouInitiator {
             .disc_state
             .table
             .add(table_node, |mut n| {
-                *n = TableNodeInner::Identified {
+                *n = NodeInner::Identified {
                     addr: addr.clone(),
                     sig: way_ack.way.sig,
                     p2p_port: way_ack.way.p2p_port,

@@ -67,6 +67,8 @@ impl Host {
         disc.start().await?;
 
         let disc_it = disc.iter();
+        let a = disc_it.next().await?;
+        println!("111,");
 
         // let dialer = Dialer::new(table);
         // dialer.schedule();
