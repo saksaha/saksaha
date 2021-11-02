@@ -69,8 +69,6 @@ impl Routine {
             loop {
                 let start = SystemTime::now();
 
-
-
                 match start.elapsed() {
                     Ok(d) => {
                         if d < min_interval {
