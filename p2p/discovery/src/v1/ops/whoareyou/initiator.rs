@@ -46,7 +46,7 @@ pub enum WhoAreYouInitError {
     TableAddFail { err: String },
 }
 
-pub struct WhoAreYouInitiator {
+pub(crate) struct WhoAreYouInitiator {
     udp_socket: Arc<UdpSocket>,
     disc_state: Arc<DiscState>,
 }

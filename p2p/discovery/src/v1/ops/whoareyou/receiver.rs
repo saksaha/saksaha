@@ -32,7 +32,7 @@ pub enum WhoAreYouRecvError {
     TableAddFail { err: String },
 }
 
-pub struct WhoAreYouReceiver {
+pub(crate) struct WhoAreYouReceiver {
     disc_state: Arc<DiscState>,
     udp_socket: Arc<UdpSocket>,
 }

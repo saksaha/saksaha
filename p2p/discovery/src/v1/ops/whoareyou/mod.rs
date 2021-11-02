@@ -7,7 +7,7 @@ use crate::v1::DiscState;
 use std::sync::Arc;
 use tokio::net::UdpSocket;
 
-pub struct WhoAreYouOperator {
+pub(crate) struct WhoAreYouOperator {
     pub initiator: WhoAreYouInitiator,
     pub receiver: WhoAreYouReceiver,
 }

@@ -22,7 +22,7 @@ pub enum ListenerError {
     CallAlreadyInProgress(String),
 }
 
-pub struct Listener {
+pub(crate) struct Listener {
     disc_state: Arc<DiscState>,
     task_queue: Arc<TaskQueue>,
     udp_socket: Arc<UdpSocket>,
