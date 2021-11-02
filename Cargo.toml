@@ -5,7 +5,7 @@ members = [
   "saksaha",
   "crypto",
   "proofs",
-  "p2p/disc",
+  "p2p/discovery",
   "p2p/identity",
 
   # internals
