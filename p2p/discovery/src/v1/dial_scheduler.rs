@@ -11,7 +11,7 @@ use tokio::sync::{
 };
 
 pub struct DialScheduler {
-    routine: Routine,
+    revalidator: Revalidator,
 }
 
 impl DialScheduler {
@@ -20,34 +20,34 @@ impl DialScheduler {
         task_queue: Arc<TaskQueue>,
     ) -> DialScheduler {
         let min_interval = Duration::from_millis(2000);
-        let routine = Routine::new(disc_state, task_queue, min_interval);
+        let revalidator = Revalidator::new(disc_state, task_queue, min_interval);
 
-        DialScheduler { routine }
+        DialScheduler { revalidator }
     }
 
     pub fn start(&self) -> Result<(), String> {
-        self.routine.run();
+        self.revalidator.run();
 
         Ok(())
     }
 }
 
-pub struct Routine {
+pub struct Revalidator {
     disc_state: Arc<DiscState>,
     task_queue: Arc<TaskQueue>,
     is_running: Arc<Mutex<bool>>,
     min_interval: Duration,
 }
 
-impl Routine {
+impl Revalidator {
     pub fn new(
         disc_state: Arc<DiscState>,
         task_queue: Arc<TaskQueue>,
         min_interval: Duration,
-    ) -> Routine {
+    ) -> Revalidator {
         let is_running = Arc::new(Mutex::new(false));
 
-        Routine {
+        Revalidator {
             is_running,
             disc_state,
             task_queue,
@@ -65,6 +65,8 @@ impl Routine {
             let mut is_running_lock = is_running.lock().await;
             *is_running_lock = true;
             std::mem::drop(is_running_lock);
+
+            debug!("TODO Revalidator is currently no-op");
 
             loop {
                 let start = SystemTime::now();

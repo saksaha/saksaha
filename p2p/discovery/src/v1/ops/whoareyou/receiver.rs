@@ -1,10 +1,8 @@
-use super::msg::{
-    WhoAreYouAck, WhoAreYouSyn,
-};
-use crate::v1::ops::{Message,};
-use crate::v1::table::{TableNodeInner};
+use super::msg::{WhoAreYouAck, WhoAreYouSyn};
+use crate::v1::address::Address;
+use crate::v1::ops::Message;
+use crate::v1::table::TableNodeInner;
 use crate::v1::DiscState;
-use crate::v1::{address::Address};
 use log::debug;
 use std::sync::Arc;
 use thiserror::Error;
@@ -126,9 +124,13 @@ impl WhoAreYouReceiver {
             }
         };
 
-        println!("send way ack: {:?}", buf);
-
         self.udp_socket.send_to(&buf, endpoint.clone()).await?;
+
+        debug!(
+            "Successfully sent WhoAreYouAck to endpoint: {:?}, len: {}",
+            &endpoint,
+            buf.len(),
+        );
 
         Ok(())
     }
