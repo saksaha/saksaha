@@ -1,13 +1,5 @@
-use futures::Future;
-// use super::{
-//     address::Address,
-//     ops::whoareyou::{initiator::WhoAreYouInitError, WhoAreYouOperator},
-//     table::Table,
-//     DiscState,
-// };
 use log::{debug, error, warn};
 use std::{
-    pin::Pin,
     sync::Arc,
     time::{Duration, SystemTime},
 };
@@ -15,14 +7,6 @@ use tokio::sync::{
     mpsc::{self, Receiver, Sender},
     Mutex,
 };
-
-// #[derive(Clone)]
-// pub(crate) enum Task {
-//     InitiateWhoAreYou {
-//         way_operator: Arc<WhoAreYouOperator>,
-//         addr: Address,
-//     },
-// }
 
 #[derive(Clone)]
 struct TaskInstance<T>
@@ -55,10 +39,7 @@ pub trait TaskRun<T>
 where
     T: Clone + Send + Sync,
 {
-    fn run(
-        &self,
-        task: T,
-    ) -> TaskResult;
+    fn run(&self, task: T) -> TaskResult;
 }
 
 impl<T> TaskQueue<T>
@@ -66,8 +47,6 @@ where
     T: Clone + Send + Sync + 'static,
 {
     pub fn new(task_runner: Box<dyn TaskRun<T> + Send + Sync>) -> TaskQueue<T> {
-        struct A {}
-
         let (tx, rx) = mpsc::channel(10);
 
         TaskQueue {
@@ -125,7 +104,6 @@ where
                 let task = task_instance.task.clone();
                 let start = SystemTime::now();
 
-                // match TaskRunner::run(task).await {
                 match task_runner.run(task) {
                     TaskResult::Success => (),
                     TaskResult::FailRetriable(err) => {
@@ -183,59 +161,3 @@ where
         }
     }
 }
-
-// struct TaskRunner;
-
-// impl TaskRunner {
-//     pub async fn run(task: Task) -> TaskResult {
-//         match task {
-//             Task::InitiateWhoAreYou { way_operator, addr } => {
-//                 match way_operator.initiator.send_who_are_you(addr).await {
-//                     Ok(_) => (),
-//                     Err(err) => {
-//                         let err_msg = err.to_string();
-
-//                         match err {
-//                             WhoAreYouInitError::MyEndpoint { .. } => {
-//                                 return TaskResult::Fail(err_msg);
-//                             }
-//                             WhoAreYouInitError::ByteConversionFail {
-//                                 ..
-//                             } => {
-//                                 return TaskResult::Fail(err_msg);
-//                             }
-//                             WhoAreYouInitError::MessageParseFail { .. } => {
-//                                 return TaskResult::FailRetriable(err_msg);
-//                             }
-//                             WhoAreYouInitError::VerifiyingKeyFail {
-//                                 ..
-//                             } => {
-//                                 return TaskResult::FailRetriable(err_msg);
-//                             }
-//                             WhoAreYouInitError::InvalidSignature { .. } => {
-//                                 return TaskResult::FailRetriable(err_msg);
-//                             }
-//                             WhoAreYouInitError::SendFail(_) => {
-//                                 return TaskResult::FailRetriable(err_msg);
-//                             }
-//                             WhoAreYouInitError::NodeReserveFail { .. } => {
-//                                 return TaskResult::FailRetriable(err_msg);
-//                             }
-//                             WhoAreYouInitError::NodeRegisterFail { .. } => {
-//                                 return TaskResult::FailRetriable(err_msg);
-//                             }
-//                             WhoAreYouInitError::TableIsFull { .. } => {
-//                                 return TaskResult::FailRetriable(err_msg);
-//                             }
-//                             WhoAreYouInitError::TableAddFail { .. } => {
-//                                 return TaskResult::FailRetriable(err_msg);
-//                             }
-//                         }
-//                     }
-//                 }
-//             }
-//         };
-
-//         TaskResult::Success
-//     }
-// }
