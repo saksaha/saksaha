@@ -36,8 +36,8 @@ fn get_args() -> Result<Args, String> {
                 ),
         )
         .arg(
-            Arg::new("bootstrap_endpoints")
-                .long("bootstrap-endpoints")
+            Arg::new("bootstrap_urls")
+                .long("bootstrap-urls")
                 .value_name("ENDPOINT")
                 .use_delimiter(true)
                 .about("Bootstrap peers to start discovery for"),
@@ -132,7 +132,23 @@ fn main() {
         }
     };
 
-    let pconf = make_pconfig(args.config);
+    let pconf = {
+        let c = match PConfig::from_path(args.config) {
+            Ok(p) => p,
+            Err(err) => {
+                error!(
+                    "Error creating a persisted configuration, err: {}",
+                    err
+                );
+
+                std::process::exit(1);
+            }
+        };
+
+        info!("Successfully loaded config, {:?}", c);
+        c
+    };
+
     let node = Arc::new(Node::new());
 
     Process::init(node.clone());
@@ -154,19 +170,19 @@ fn main() {
     };
 }
 
-fn make_pconfig(config_path: Option<String>) -> PConfig {
-    let pconf = match PConfig::from_path(config_path) {
-        Ok(p) => p,
-        Err(err) => {
-            error!(
-                "Error creating a persisted configuration, err: {}",
-                err
-            );
+// fn make_pconfig(config_path: Option<String>) -> PConfig {
+//     let pconf = match PConfig::from_path(config_path) {
+//         Ok(p) => p,
+//         Err(err) => {
+//             error!(
+//                 "Error creating a persisted configuration, err: {}",
+//                 err
+//             );
 
-            std::process::exit(1);
-        }
-    };
+//             std::process::exit(1);
+//         }
+//     };
 
-    info!("Successfully loaded config, {:?}", pconf);
-    pconf
-}
+//     info!("Successfully loaded config, {:?}", pconf);
+//     pconf
+// }

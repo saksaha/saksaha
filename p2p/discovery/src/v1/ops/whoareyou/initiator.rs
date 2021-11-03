@@ -123,14 +123,14 @@ impl WhoAreYouInitiator {
         match self
             .disc_state
             .table
-            .add(table_node, |mut n| {
-                *n = NodeInner::Identified {
+            .add(table_node, |mut inner| {
+                *inner = NodeInner::Identified {
                     addr: addr.clone(),
                     sig: way_ack.way.sig,
                     p2p_port: way_ack.way.p2p_port,
                     public_key_bytes: way_ack.way.public_key_bytes,
                 };
-                n
+                inner
             })
             .await
         {

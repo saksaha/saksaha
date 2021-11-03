@@ -7,6 +7,7 @@ members = [
   "proofs",
   "p2p/discovery",
   "p2p/identity",
+  "task",
 
   # internals
   "internals/ci"

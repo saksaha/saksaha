@@ -1,11 +1,13 @@
-use super::{
-    address::Address,
-    ops::whoareyou::{initiator::WhoAreYouInitError, WhoAreYouOperator},
-    table::Table,
-    DiscState,
-};
+use futures::Future;
+// use super::{
+//     address::Address,
+//     ops::whoareyou::{initiator::WhoAreYouInitError, WhoAreYouOperator},
+//     table::Table,
+//     DiscState,
+// };
 use log::{debug, error, warn};
 use std::{
+    pin::Pin,
     sync::Arc,
     time::{Duration, SystemTime},
 };
@@ -14,36 +16,58 @@ use tokio::sync::{
     Mutex,
 };
 
-#[derive(Clone)]
-pub(crate) enum Task {
-    InitiateWhoAreYou {
-        way_operator: Arc<WhoAreYouOperator>,
-        addr: Address,
-    },
-}
+// #[derive(Clone)]
+// pub(crate) enum Task {
+//     InitiateWhoAreYou {
+//         way_operator: Arc<WhoAreYouOperator>,
+//         addr: Address,
+//     },
+// }
 
 #[derive(Clone)]
-struct TaskInstance {
-    task: Task,
+struct TaskInstance<T>
+where
+    T: Clone,
+{
+    task: T,
     fail_count: usize,
 }
 
-enum TaskResult {
+pub enum TaskResult {
     Success,
     FailRetriable(String),
     Fail(String),
 }
 
-pub(crate) struct TaskQueue {
-    tx: Arc<Sender<TaskInstance>>,
-    rx: Arc<Mutex<Receiver<TaskInstance>>>,
+pub struct TaskQueue<T>
+where
+    T: Clone + Send + Sync,
+{
+    tx: Arc<Sender<TaskInstance<T>>>,
+    rx: Arc<Mutex<Receiver<TaskInstance<T>>>>,
     max_retry: usize,
     min_interval: Duration,
     is_running: Arc<Mutex<bool>>,
+    task_runner: Arc<Box<dyn TaskRun<T> + Send + Sync>>,
 }
 
-impl TaskQueue {
-    pub fn new() -> TaskQueue {
+pub trait TaskRun<T>
+where
+    T: Clone + Send + Sync,
+{
+    fn run(
+        &self,
+        task: T,
+    ) -> TaskResult;
+}
+
+impl<T> TaskQueue<T>
+where
+    T: Clone + Send + Sync + 'static,
+{
+    pub fn new(task_runner: Box<dyn TaskRun<T> + Send + Sync>) -> TaskQueue<T> {
+        struct A {}
+
         let (tx, rx) = mpsc::channel(10);
 
         TaskQueue {
@@ -52,10 +76,11 @@ impl TaskQueue {
             max_retry: 2,
             min_interval: Duration::from_millis(1000),
             is_running: Arc::new(Mutex::new(false)),
+            task_runner: Arc::new(task_runner),
         }
     }
 
-    pub async fn push(&self, task: Task) -> Result<(), String> {
+    pub async fn push(&self, task: T) -> Result<(), String> {
         let task_instance = TaskInstance {
             task,
             fail_count: 0,
@@ -76,6 +101,7 @@ impl TaskQueue {
 
         let max_retry = self.max_retry;
         let min_interval = self.min_interval;
+        let task_runner = self.task_runner.clone();
 
         tokio::spawn(async move {
             let mut rx = rx.lock().await;
@@ -99,7 +125,8 @@ impl TaskQueue {
                 let task = task_instance.task.clone();
                 let start = SystemTime::now();
 
-                match TaskRunner::run(task).await {
+                // match TaskRunner::run(task).await {
+                match task_runner.run(task) {
                     TaskResult::Success => (),
                     TaskResult::FailRetriable(err) => {
                         let mut task_instance = task_instance.clone();
@@ -157,58 +184,58 @@ impl TaskQueue {
     }
 }
 
-struct TaskRunner;
+// struct TaskRunner;
 
-impl TaskRunner {
-    pub async fn run(task: Task) -> TaskResult {
-        match task {
-            Task::InitiateWhoAreYou { way_operator, addr } => {
-                match way_operator.initiator.send_who_are_you(addr).await {
-                    Ok(_) => (),
-                    Err(err) => {
-                        let err_msg = err.to_string();
+// impl TaskRunner {
+//     pub async fn run(task: Task) -> TaskResult {
+//         match task {
+//             Task::InitiateWhoAreYou { way_operator, addr } => {
+//                 match way_operator.initiator.send_who_are_you(addr).await {
+//                     Ok(_) => (),
+//                     Err(err) => {
+//                         let err_msg = err.to_string();
 
-                        match err {
-                            WhoAreYouInitError::MyEndpoint { .. } => {
-                                return TaskResult::Fail(err_msg);
-                            }
-                            WhoAreYouInitError::ByteConversionFail {
-                                ..
-                            } => {
-                                return TaskResult::Fail(err_msg);
-                            }
-                            WhoAreYouInitError::MessageParseFail { .. } => {
-                                return TaskResult::FailRetriable(err_msg);
-                            }
-                            WhoAreYouInitError::VerifiyingKeyFail {
-                                ..
-                            } => {
-                                return TaskResult::FailRetriable(err_msg);
-                            }
-                            WhoAreYouInitError::InvalidSignature { .. } => {
-                                return TaskResult::FailRetriable(err_msg);
-                            }
-                            WhoAreYouInitError::SendFail(_) => {
-                                return TaskResult::FailRetriable(err_msg);
-                            }
-                            WhoAreYouInitError::NodeReserveFail { .. } => {
-                                return TaskResult::FailRetriable(err_msg);
-                            }
-                            WhoAreYouInitError::NodeRegisterFail { .. } => {
-                                return TaskResult::FailRetriable(err_msg);
-                            }
-                            WhoAreYouInitError::TableIsFull { .. } => {
-                                return TaskResult::FailRetriable(err_msg);
-                            }
-                            WhoAreYouInitError::TableAddFail { .. } => {
-                                return TaskResult::FailRetriable(err_msg);
-                            }
-                        }
-                    }
-                }
-            }
-        };
+//                         match err {
+//                             WhoAreYouInitError::MyEndpoint { .. } => {
+//                                 return TaskResult::Fail(err_msg);
+//                             }
+//                             WhoAreYouInitError::ByteConversionFail {
+//                                 ..
+//                             } => {
+//                                 return TaskResult::Fail(err_msg);
+//                             }
+//                             WhoAreYouInitError::MessageParseFail { .. } => {
+//                                 return TaskResult::FailRetriable(err_msg);
+//                             }
+//                             WhoAreYouInitError::VerifiyingKeyFail {
+//                                 ..
+//                             } => {
+//                                 return TaskResult::FailRetriable(err_msg);
+//                             }
+//                             WhoAreYouInitError::InvalidSignature { .. } => {
+//                                 return TaskResult::FailRetriable(err_msg);
+//                             }
+//                             WhoAreYouInitError::SendFail(_) => {
+//                                 return TaskResult::FailRetriable(err_msg);
+//                             }
+//                             WhoAreYouInitError::NodeReserveFail { .. } => {
+//                                 return TaskResult::FailRetriable(err_msg);
+//                             }
+//                             WhoAreYouInitError::NodeRegisterFail { .. } => {
+//                                 return TaskResult::FailRetriable(err_msg);
+//                             }
+//                             WhoAreYouInitError::TableIsFull { .. } => {
+//                                 return TaskResult::FailRetriable(err_msg);
+//                             }
+//                             WhoAreYouInitError::TableAddFail { .. } => {
+//                                 return TaskResult::FailRetriable(err_msg);
+//                             }
+//                         }
+//                     }
+//                 }
+//             }
+//         };
 
-        TaskResult::Success
-    }
-}
+//         TaskResult::Success
+//     }
+// }

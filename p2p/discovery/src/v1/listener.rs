@@ -1,3 +1,4 @@
+use crate::task::Task;
 use super::{
     address::Address,
     ops::{
@@ -6,10 +7,10 @@ use super::{
         },
         Opcode,
     },
-    task_queue::{TaskQueue},
     DiscState,
 };
 use log::{debug, error, info, warn};
+use saksaha_task::task_queue::TaskQueue;
 use std::{net::SocketAddr, sync::Arc};
 use thiserror::Error;
 use tokio::{
@@ -24,7 +25,7 @@ pub enum ListenerError {
 
 pub(crate) struct Listener {
     disc_state: Arc<DiscState>,
-    task_queue: Arc<TaskQueue>,
+    task_queue: Arc<TaskQueue<Task>>,
     udp_socket: Arc<UdpSocket>,
     way_operator: Arc<WhoAreYouOperator>,
 }
@@ -34,7 +35,7 @@ impl Listener {
         disc_state: Arc<DiscState>,
         udp_socket: Arc<UdpSocket>,
         way_operator: Arc<WhoAreYouOperator>,
-        task_queue: Arc<TaskQueue>,
+        task_queue: Arc<TaskQueue<Task>>,
     ) -> Listener {
         Listener {
             disc_state,
@@ -109,7 +110,7 @@ impl Handler {
     async fn run(
         disc_state: Arc<DiscState>,
         way_operator: Arc<WhoAreYouOperator>,
-        task_queue: Arc<TaskQueue>,
+        task_queue: Arc<TaskQueue<Task>>,
         addr: SocketAddr,
         buf: &[u8],
     ) -> Result<(), String> {

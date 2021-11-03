@@ -1,25 +1,29 @@
 mod active_calls;
 pub mod address;
 pub mod dial_scheduler;
-pub mod listener;
 pub mod iterator;
+pub mod listener;
 mod ops;
 mod table;
-pub mod task_queue;
+pub mod task;
 
-use self::{active_calls::ActiveCalls, dial_scheduler::DialScheduler, listener::Listener, table::Table, task_queue::TaskQueue};
-use crate::{iterator::Iterator, v1::{
-    address::Address, ops::whoareyou::WhoAreYouOperator, task_queue::Task,
-}};
+use self::{
+    active_calls::ActiveCalls, dial_scheduler::DialScheduler,
+    listener::Listener, table::Table,
+};
+use crate::{iterator::Iterator, task::TaskRunner, v1::{
+        address::Address, ops::whoareyou::WhoAreYouOperator, task::Task,
+    }};
 use log::{info, warn};
 use saksaha_p2p_identity::Identity;
+use saksaha_task::task_queue::TaskQueue;
 use std::sync::Arc;
 use tokio::net::UdpSocket;
 
 pub const CAPACITY: usize = 32;
 
 pub struct Disc {
-    task_queue: Arc<TaskQueue>,
+    task_queue: Arc<TaskQueue<Task>>,
     listener: Arc<Listener>,
     state: Arc<DiscState>,
     way_operator: Arc<WhoAreYouOperator>,
@@ -45,7 +49,7 @@ impl Disc {
         };
 
         let active_calls = Arc::new(ActiveCalls::new());
-        let task_queue = Arc::new(TaskQueue::new());
+        let task_queue = Arc::new(TaskQueue::new(Box::new(TaskRunner {})));
 
         let my_disc_port = match my_disc_port {
             Some(p) => p,

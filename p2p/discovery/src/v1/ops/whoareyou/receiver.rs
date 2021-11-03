@@ -1,7 +1,7 @@
 use super::msg::{WhoAreYouAck, WhoAreYouSyn};
 use crate::v1::address::Address;
 use crate::v1::ops::Message;
-use crate::v1::table::NodeInner;
+use crate::v1::table::{Node, NodeInner};
 use crate::v1::DiscState;
 use log::debug;
 use std::sync::Arc;
@@ -72,14 +72,14 @@ impl WhoAreYouReceiver {
         match self
             .disc_state
             .table
-            .add(table_node, |mut n| {
-                *n = NodeInner::Identified {
+            .add(table_node, |mut inner| {
+                *inner = NodeInner::Identified {
                     addr: addr.clone(),
                     sig: way_syn.way.sig,
                     p2p_port: way_syn.way.p2p_port,
                     public_key_bytes: way_syn.way.public_key_bytes,
                 };
-                n
+                inner
             })
             .await
         {
