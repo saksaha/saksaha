@@ -1,13 +1,11 @@
-use crate::{DiscState, task::Task};
+use crate::{task::Task, DiscState};
 use log::{debug, error, info, warn};
-use saksaha_p2p_identity::Identity;
 use saksaha_task::task_queue::TaskQueue;
 use std::{
     sync::Arc,
     time::{Duration, SystemTime},
 };
 use tokio::sync::{
-    mpsc::{Receiver, Sender},
     Mutex,
 };
 
@@ -21,7 +19,8 @@ impl DialScheduler {
         task_queue: Arc<TaskQueue<Task>>,
     ) -> DialScheduler {
         let min_interval = Duration::from_millis(2000);
-        let revalidator = Revalidator::new(disc_state, task_queue, min_interval);
+        let revalidator =
+            Revalidator::new(disc_state, task_queue, min_interval);
 
         DialScheduler { revalidator }
     }

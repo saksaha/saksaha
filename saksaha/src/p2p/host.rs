@@ -1,16 +1,15 @@
-use super::{
-    credential::Credential,
-    listener::{self, Listener},
-};
+use super::{credential::Credential, listener::{self, Listener}, task::{Task, TaskRunner}};
 use crate::{pconfig::PersistedP2PConfig, peer::peer_store::PeerStore};
 use log::{error, info};
-use saksaha_p2p_discovery::Disc;
+use saksaha_p2p_discovery::{Disc};
 use saksaha_p2p_identity::Identity;
+use saksaha_task::task_queue::TaskQueue;
 use std::sync::Arc;
 use tokio::net::TcpListener;
 
 pub struct Host {
     disc: Arc<Disc>,
+    task_queue: Arc<TaskQueue<Task>>,
 }
 
 impl Host {
@@ -94,9 +93,13 @@ impl Host {
         )
         .await?;
 
+        let task_queue = Arc::new(TaskQueue::new(Box::new(TaskRunner {})));
+
         let host = Host {
             disc: Arc::new(disc),
+            task_queue,
         };
+
 
         Ok(host)
     }
