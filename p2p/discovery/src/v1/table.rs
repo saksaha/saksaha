@@ -1,18 +1,16 @@
 use super::address::Address;
 use crate::{iterator::Iterator, CAPACITY};
-use futures::Future;
 use log::{debug, error, info, warn};
 use rand::prelude::*;
 use saksaha_crypto::Signature;
 use saksaha_p2p_identity::PUBLIC_KEY_LEN;
 use std::{
     collections::{HashMap, HashSet},
-    pin::Pin,
     sync::Arc,
 };
 use tokio::sync::{
     mpsc::{self, Receiver, Sender},
-    Mutex, MutexGuard, OwnedMutexGuard,
+    Mutex, MutexGuard,
 };
 
 type PeerId = [u8; PUBLIC_KEY_LEN];
@@ -176,13 +174,6 @@ impl Table {
     }
 }
 
-pub struct IdentifiedNode {
-    addr: Address,
-    sig: Signature,
-    p2p_port: u16,
-    public_key_bytes: [u8; PUBLIC_KEY_LEN],
-}
-
 pub struct Node {
     inner: Mutex<NodeInner>,
 }
@@ -190,21 +181,6 @@ pub struct Node {
 impl Node {
     pub fn new_empty() -> Node {
         Node { inner: Mutex::new(NodeInner::Empty) }
-    }
-
-    pub fn new_identified(
-        addr: Address,
-        sig: Signature,
-        p2p_port: u16,
-        public_key_bytes: [u8; PUBLIC_KEY_LEN],
-    ) -> Node {
-        let inner = Mutex::new(NodeInner::Identified {
-            addr, sig, p2p_port, public_key_bytes,
-        });
-
-        Node {
-            inner,
-        }
     }
 }
 

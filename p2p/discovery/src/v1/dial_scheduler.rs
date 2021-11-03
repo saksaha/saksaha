@@ -1,6 +1,7 @@
-use crate::{v1::task_queue::TaskQueue, DiscState};
+use crate::{DiscState, task::Task};
 use log::{debug, error, info, warn};
 use saksaha_p2p_identity::Identity;
+use saksaha_task::task_queue::TaskQueue;
 use std::{
     sync::Arc,
     time::{Duration, SystemTime},
@@ -17,7 +18,7 @@ pub(crate) struct DialScheduler {
 impl DialScheduler {
     pub fn new(
         disc_state: Arc<DiscState>,
-        task_queue: Arc<TaskQueue>,
+        task_queue: Arc<TaskQueue<Task>>,
     ) -> DialScheduler {
         let min_interval = Duration::from_millis(2000);
         let revalidator = Revalidator::new(disc_state, task_queue, min_interval);
@@ -34,7 +35,7 @@ impl DialScheduler {
 
 pub(crate) struct Revalidator {
     disc_state: Arc<DiscState>,
-    task_queue: Arc<TaskQueue>,
+    task_queue: Arc<TaskQueue<Task>>,
     is_running: Arc<Mutex<bool>>,
     min_interval: Duration,
 }
@@ -42,7 +43,7 @@ pub(crate) struct Revalidator {
 impl Revalidator {
     pub fn new(
         disc_state: Arc<DiscState>,
-        task_queue: Arc<TaskQueue>,
+        task_queue: Arc<TaskQueue<Task>>,
         min_interval: Duration,
     ) -> Revalidator {
         let is_running = Arc::new(Mutex::new(false));
