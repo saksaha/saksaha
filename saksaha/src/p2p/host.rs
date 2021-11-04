@@ -1,7 +1,12 @@
-use super::{credential::Credential, listener::{self, Listener}, task::{Task, TaskRunner}};
+use super::{
+    credential::Credential,
+    dial_scheduler::{self, DialScheduler},
+    listener::{self, Listener},
+    task::{Task, TaskRunner},
+};
 use crate::{pconfig::PersistedP2PConfig, peer::peer_store::PeerStore};
 use log::{error, info};
-use saksaha_p2p_discovery::{Disc};
+use saksaha_p2p_discovery::Disc;
 use saksaha_p2p_identity::Identity;
 use saksaha_task::task_queue::TaskQueue;
 use std::sync::Arc;
@@ -9,6 +14,7 @@ use tokio::net::TcpListener;
 
 pub struct Host {
     disc: Arc<Disc>,
+    dial_scheduler: Arc<DialScheduler>,
     task_queue: Arc<TaskQueue<Task>>,
 }
 
@@ -19,7 +25,7 @@ impl Host {
         p2p_port: Option<u16>,
         disc_port: Option<u16>,
         bootstrap_urls: Option<Vec<String>>,
-        default_bootstrap_urls: &str,
+        default_bootstrap_urls: String,
     ) -> Result<Host, String> {
         let credential = {
             let secret = p2p_config.secret.to_owned();
@@ -93,13 +99,21 @@ impl Host {
         )
         .await?;
 
-        let task_queue = Arc::new(TaskQueue::new(Box::new(TaskRunner {})));
+        let task_queue = {
+            let task_runner = TaskRunner {};
+            Arc::new(TaskQueue::new(Box::new(task_runner)))
+        };
+
+        let dial_scheduler = {
+            let d = DialScheduler::new(task_queue.clone(), disc.iter());
+            Arc::new(d)
+        };
 
         let host = Host {
             disc: Arc::new(disc),
+            dial_scheduler,
             task_queue,
         };
-
 
         Ok(host)
     }
@@ -107,9 +121,11 @@ impl Host {
     pub async fn start(&self) -> Result<(), String> {
         self.disc.start().await?;
 
-        let disc_it = self.disc.iter();
-        let a = disc_it.next().await?;
-        println!("111,");
+        self.dial_scheduler.start();
+
+        // let disc_it = self.disc.iter();
+        // let a = disc_it.next().await?;
+        // println!("111,");
 
         // let handshake = Handshake::new(self.task_mng.clone());
         // let handshake_started = handshake.start(

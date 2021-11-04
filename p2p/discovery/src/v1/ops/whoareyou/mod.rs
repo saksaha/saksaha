@@ -1,31 +1,34 @@
-pub mod initiator;
+pub mod initiate;
 pub mod msg;
-pub mod receiver;
+pub mod receive;
 
-use self::{initiator::WhoAreYouInitiator, receiver::WhoAreYouReceiver};
-use crate::v1::DiscState;
+use self::{
+    initiate::{WhoareyouInitError, WhoareyouInitiate},
+    receive::{WhoareyouReceive, WhoareyouRecvError},
+};
+use crate::{address::Address, v1::DiscState};
 use std::sync::Arc;
 use tokio::net::UdpSocket;
 
-pub(crate) struct WhoAreYouOperator {
-    pub initiator: WhoAreYouInitiator,
-    pub receiver: WhoAreYouReceiver,
+pub(crate) struct WhoareyouOp {
+    pub initiate: WhoareyouInitiate,
+    pub receive: WhoareyouReceive,
 }
 
-impl WhoAreYouOperator {
+impl WhoareyouOp {
     pub fn new(
         udp_socket: Arc<UdpSocket>,
         disc_state: Arc<DiscState>,
-    ) -> WhoAreYouOperator {
-        let initiator =
-            WhoAreYouInitiator::new(udp_socket.clone(), disc_state.clone());
+    ) -> WhoareyouOp {
+        let initiate =
+            WhoareyouInitiate::new(udp_socket.clone(), disc_state.clone());
 
-        let receiver =
-            WhoAreYouReceiver::new(disc_state.clone(), udp_socket.clone());
+        let receive =
+            WhoareyouReceive::new(udp_socket.clone(), disc_state.clone());
 
-        WhoAreYouOperator {
-            initiator,
-            receiver,
+        WhoareyouOp {
+            initiate,
+            receive,
         }
     }
 }

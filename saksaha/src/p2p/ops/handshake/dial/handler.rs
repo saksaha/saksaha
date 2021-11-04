@@ -78,7 +78,6 @@ impl<'a> Handler<'a> {
         credential: Arc<Credential>,
     ) -> Result<()> {
         let peer_pk_bytes = peer.public_key_bytes;
-        // PublicKey::f
 
         println!("331, {:?}", peer_pk_bytes);
 

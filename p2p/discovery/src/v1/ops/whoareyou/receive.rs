@@ -9,7 +9,7 @@ use thiserror::Error;
 use tokio::net::UdpSocket;
 
 #[derive(Error, Debug)]
-pub enum WhoAreYouRecvError {
+pub enum WhoareyouRecvError {
     #[error("Cannot convert to byte, _err: {err}")]
     ByteConversionFail { err: String },
 
@@ -20,7 +20,7 @@ pub enum WhoAreYouRecvError {
     MessageParseFail { err: String },
 
     #[error(
-        "Couldn't reserve node, table is full, endpoint: \
+        "Couldn't reserve node, table is full, endpoint:\
         {endpoint}, err: {err}"
     )]
     TableIsFull { endpoint: String, err: String },
@@ -32,17 +32,17 @@ pub enum WhoAreYouRecvError {
     TableAddFail { err: String },
 }
 
-pub(crate) struct WhoAreYouReceiver {
+pub(crate) struct WhoareyouReceive {
     disc_state: Arc<DiscState>,
     udp_socket: Arc<UdpSocket>,
 }
 
-impl WhoAreYouReceiver {
+impl WhoareyouReceive {
     pub fn new(
-        disc_state: Arc<DiscState>,
         udp_socket: Arc<UdpSocket>,
-    ) -> WhoAreYouReceiver {
-        WhoAreYouReceiver {
+        disc_state: Arc<DiscState>,
+    ) -> WhoareyouReceive {
+        WhoareyouReceive {
             disc_state,
             udp_socket,
         }
@@ -52,20 +52,20 @@ impl WhoAreYouReceiver {
         &self,
         addr: Address,
         buf: &[u8],
-    ) -> Result<(), WhoAreYouRecvError> {
+    ) -> Result<(), WhoareyouRecvError> {
         let endpoint = addr.endpoint();
 
         let table_node = match self.disc_state.table.try_reserve().await {
             Ok(n) => n,
             Err(err) => {
-                return Err(WhoAreYouRecvError::TableIsFull { endpoint, err })
+                return Err(WhoareyouRecvError::TableIsFull { endpoint, err })
             }
         };
 
         let way_syn = match WhoAreYouSyn::parse(buf) {
             Ok(m) => m,
             Err(err) => {
-                return Err(WhoAreYouRecvError::MessageParseFail { err });
+                return Err(WhoareyouRecvError::MessageParseFail { err });
             }
         };
 
@@ -89,7 +89,7 @@ impl WhoAreYouReceiver {
                     public_key_bytes, endpoint
                 );
             }
-            Err(err) => return Err(WhoAreYouRecvError::TableAddFail { err }),
+            Err(err) => return Err(WhoareyouRecvError::TableAddFail { err }),
         };
 
         self.send_who_are_you_ack(addr).await?;
@@ -100,13 +100,13 @@ impl WhoAreYouReceiver {
     pub async fn send_who_are_you_ack(
         &self,
         addr: Address,
-    ) -> Result<(), WhoAreYouRecvError> {
+    ) -> Result<(), WhoareyouRecvError> {
         let my_disc_port = self.disc_state.my_disc_port;
         let my_p2p_port = self.disc_state.my_p2p_port;
         let endpoint = addr.endpoint();
 
         if super::is_my_endpoint(my_disc_port, &endpoint) {
-            return Err(WhoAreYouRecvError::MyEndpoint { endpoint });
+            return Err(WhoareyouRecvError::MyEndpoint { endpoint });
         }
 
         let sig = self.disc_state.id.sig();
@@ -120,7 +120,7 @@ impl WhoAreYouReceiver {
         let buf = match way_ack.to_bytes() {
             Ok(b) => b,
             Err(err) => {
-                return Err(WhoAreYouRecvError::ByteConversionFail { err });
+                return Err(WhoareyouRecvError::ByteConversionFail { err });
             }
         };
 

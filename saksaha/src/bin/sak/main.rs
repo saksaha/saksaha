@@ -2,11 +2,7 @@ use std::sync::Arc;
 
 use clap::{App, Arg};
 use log::{error, info};
-use saksaha::{
-    node::{Node},
-    pconfig::PConfig,
-    process::Process,
-};
+use saksaha::{node::Node, pconfig::PConfig, process::Process};
 
 const DEFAULT_BOOTSTRAP_URLS: &str =
     include_str!("../../../../config/bootstrap_urls");
@@ -149,6 +145,10 @@ fn main() {
         c
     };
 
+    let default_bootstrap_urls = {
+        DEFAULT_BOOTSTRAP_URLS.to_string()
+    };
+
     let node = Arc::new(Node::new());
 
     Process::init(node.clone());
@@ -159,7 +159,7 @@ fn main() {
         args.p2p_port,
         args.bootstrap_endpoints,
         pconf,
-        DEFAULT_BOOTSTRAP_URLS,
+        default_bootstrap_urls,
     ) {
         Ok(_) => (),
         Err(err) => {

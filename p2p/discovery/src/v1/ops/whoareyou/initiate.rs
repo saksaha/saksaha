@@ -1,7 +1,7 @@
 use super::msg::{WhoAreYouAck, WhoAreYouSyn};
 use crate::v1::address::Address;
 use crate::v1::ops::Message;
-use crate::v1::table::{NodeInner};
+use crate::v1::table::NodeInner;
 use crate::v1::DiscState;
 use log::debug;
 use std::sync::Arc;
@@ -9,7 +9,7 @@ use thiserror::Error;
 use tokio::net::UdpSocket;
 
 #[derive(Error, Debug)]
-pub enum WhoAreYouInitError {
+pub enum WhoareyouInitError {
     #[error("Aborting, request to my endpoint: {endpoint}")]
     MyEndpoint { endpoint: String },
 
@@ -46,17 +46,17 @@ pub enum WhoAreYouInitError {
     TableAddFail { err: String },
 }
 
-pub(crate) struct WhoAreYouInitiator {
+pub(crate) struct WhoareyouInitiate {
     udp_socket: Arc<UdpSocket>,
     disc_state: Arc<DiscState>,
 }
 
-impl WhoAreYouInitiator {
+impl WhoareyouInitiate {
     pub fn new(
         udp_socket: Arc<UdpSocket>,
         disc_state: Arc<DiscState>,
-    ) -> WhoAreYouInitiator {
-        WhoAreYouInitiator {
+    ) -> WhoareyouInitiate {
+        WhoareyouInitiate {
             udp_socket,
             disc_state,
         }
@@ -65,14 +65,14 @@ impl WhoAreYouInitiator {
     pub async fn send_who_are_you(
         &self,
         addr: Address,
-    ) -> Result<(), WhoAreYouInitError> {
+    ) -> Result<(), WhoareyouInitError> {
         let my_disc_port = self.disc_state.my_disc_port;
         let my_p2p_port = self.disc_state.my_p2p_port;
 
         let endpoint = addr.endpoint();
 
         if super::is_my_endpoint(my_disc_port, &endpoint) {
-            return Err(WhoAreYouInitError::MyEndpoint { endpoint });
+            return Err(WhoareyouInitError::MyEndpoint { endpoint });
         }
 
         let my_sig = self.disc_state.id.sig();
@@ -84,7 +84,7 @@ impl WhoAreYouInitiator {
         let buf = match way_syn.to_bytes() {
             Ok(b) => b,
             Err(err) => {
-                return Err(WhoAreYouInitError::ByteConversionFail { err });
+                return Err(WhoareyouInitError::ByteConversionFail { err });
             }
         };
 
@@ -103,20 +103,20 @@ impl WhoAreYouInitiator {
         &self,
         addr: Address,
         buf: &[u8],
-    ) -> Result<(), WhoAreYouInitError> {
+    ) -> Result<(), WhoareyouInitError> {
         let endpoint = addr.endpoint();
 
         let table_node = match self.disc_state.table.try_reserve().await {
             Ok(n) => n,
             Err(err) => {
-                return Err(WhoAreYouInitError::TableIsFull { endpoint, err })
+                return Err(WhoareyouInitError::TableIsFull { endpoint, err })
             }
         };
 
         let way_ack = match WhoAreYouAck::parse(buf) {
             Ok(m) => m,
             Err(err) => {
-                return Err(WhoAreYouInitError::MessageParseFail { err });
+                return Err(WhoareyouInitError::MessageParseFail { err });
             }
         };
 
@@ -140,7 +140,7 @@ impl WhoAreYouInitiator {
                     public_key_bytes, endpoint
                 );
             }
-            Err(err) => return Err(WhoAreYouInitError::TableAddFail { err }),
+            Err(err) => return Err(WhoareyouInitError::TableAddFail { err }),
         };
 
         Ok(())
