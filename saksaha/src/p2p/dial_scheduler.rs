@@ -1,6 +1,6 @@
-use crate::p2p::ops::handshake::{self, initiate::Initiator};
+use crate::p2p::ops::handshake::{self};
 
-use super::task::Task;
+use super::{ops::handshake::HandshakeOp, task::Task};
 use log::{debug, error, info, warn};
 use saksaha_p2p_discovery::iterator::Iterator;
 use saksaha_task::task_queue::TaskQueue;
@@ -21,13 +21,10 @@ impl DialScheduler {
     ) -> DialScheduler {
         let min_interval = Duration::from_millis(2000);
 
-        let handshake_initiator = Arc::new(Initiator::new());
-
         let handshake_routine = HandshakeRoutine::new(
             task_queue.clone(),
             min_interval,
             disc_iterator,
-            handshake_initiator,
         );
 
         DialScheduler { handshake_routine }
@@ -43,7 +40,7 @@ struct HandshakeRoutine {
     is_running: Arc<Mutex<bool>>,
     min_interval: Duration,
     disc_iterator: Arc<Iterator>,
-    handshake_initiator: Arc<Initiator>,
+    handshake_op: Arc<HandshakeOp>,
 }
 
 impl HandshakeRoutine {
@@ -51,16 +48,17 @@ impl HandshakeRoutine {
         task_queue: Arc<TaskQueue<Task>>,
         min_interval: Duration,
         disc_iterator: Arc<Iterator>,
-        handshake_initiator: Arc<Initiator>,
     ) -> HandshakeRoutine {
         let is_running = Arc::new(Mutex::new(false));
+
+        let handshake_op = Arc::new(HandshakeOp::new());
 
         HandshakeRoutine {
             task_queue,
             disc_iterator,
             is_running,
             min_interval,
-            handshake_initiator,
+            handshake_op,
         }
     }
 
@@ -71,7 +69,7 @@ impl HandshakeRoutine {
         let min_interval = self.min_interval;
         let task_queue = self.task_queue.clone();
         let disc_iterator = self.disc_iterator.clone();
-        let handshake_initiator = self.handshake_initiator.clone();
+        let handshake_op = self.handshake_op.clone();
 
         tokio::spawn(async move {
             let mut is_running_lock = is_running.lock().await;
@@ -95,7 +93,8 @@ impl HandshakeRoutine {
                 };
 
                 // task_queue.push(Task::SendHandshakeSyn {
-
+                //     endpoint
+                //     handshake_op,
                 // });
 
                 match start.elapsed() {

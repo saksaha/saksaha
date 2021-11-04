@@ -1,10 +1,8 @@
-pub struct Initiator {
+pub struct HandshakeInitiate {}
 
-}
-
-impl Initiator {
-    pub fn new() -> Initiator {
-        Initiator {}
+impl HandshakeInitiate {
+    pub fn new() -> HandshakeInitiate {
+        HandshakeInitiate {}
     }
 
     pub async fn initiate(&self) {

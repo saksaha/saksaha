@@ -1,7 +1,7 @@
-pub struct Receiver {}
+pub struct HandshakeReceive {}
 
-impl Receiver {
-    pub fn new() {
-
+impl HandshakeReceive {
+    pub fn new() -> HandshakeReceive {
+        HandshakeReceive {}
     }
 }
