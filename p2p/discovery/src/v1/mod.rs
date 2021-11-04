@@ -98,15 +98,6 @@ impl Disc {
             Arc::new(s)
         };
 
-        // let way_initiator = {
-        //     let i = WhoAreYouInitiator::new(udp_socket.clone(), state.clone());
-        //     Arc::new(i)
-        // };
-
-        // let way_receiver = {
-        //     let r = WhoAreYouReceiver::new(udp_socket.clone(), state.clone());
-        // };
-
         let whoareyou_op = {
             let w = WhoareyouOp::new(udp_socket.clone(), state.clone());
             Arc::new(w)
@@ -140,12 +131,8 @@ impl Disc {
             state,
             listener,
             whoareyou_op: whoareyou_op.clone(),
-            // way_operator,
             dial_scheduler,
         };
-
-        // disc.enqueue_initial_tasks(bootstrap_urls, default_bootstrap_urls)
-        //     .await;
 
         Ok(disc)
     }
@@ -165,67 +152,6 @@ impl Disc {
 
         Ok(())
     }
-
-    // pub async fn enqueue_initial_tasks(
-    //     &self,
-    //     bootstrap_urls: Option<Vec<String>>,
-    //     default_bootstrap_urls: &str,
-    // ) {
-    //     let bootstrap_urls = match bootstrap_urls {
-    //         Some(u) => u,
-    //         None => Vec::new(),
-    //     };
-
-    //     let default_bootstrap_urls: Vec<String> = default_bootstrap_urls
-    //         .lines()
-    //         .map(|l| l.to_string())
-    //         .collect();
-
-    //     let urls = [bootstrap_urls, default_bootstrap_urls].concat();
-
-    //     info!("*********************************************************");
-    //     info!("* Discovery table bootstrapped");
-
-    //     let count = {
-    //         let mut cnt = 0;
-    //         for url in urls {
-    //             let addr = match Address::parse(url.clone()) {
-    //                 Ok(n) => {
-    //                     cnt += 1;
-    //                     n
-    //                 }
-    //                 Err(err) => {
-    //                     warn!(
-    //                         "Discarding url failed to parse, url: {}, \
-    //                         err: {:?}",
-    //                         url.clone(),
-    //                         err,
-    //                     );
-
-    //                     continue;
-    //                 }
-    //             };
-
-    //             info!("* [{}] {}", cnt, addr.short_url());
-
-    //             let task = Task::InitiateWhoAreYou {
-    //                 way_operator: self.way_operator.clone(),
-    //                 addr,
-    //             };
-
-    //             match self.task_queue.push(task).await {
-    //                 Ok(_) => (),
-    //                 Err(err) => {
-    //                     warn!("Couldn't enque new task, err: {}", err);
-    //                 }
-    //             };
-    //         }
-    //         cnt
-    //     };
-
-    //     info!("* bootstrapped node count: {}", count);
-    //     info!("*********************************************************");
-    // }
 
     pub fn iter(&self) -> Arc<Iterator> {
         self.state.table.iter()
