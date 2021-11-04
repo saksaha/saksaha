@@ -1,53 +1,127 @@
-use crate::{task::Task, DiscState};
+use crate::{address::Address, task::Task, DiscState};
 use log::{debug, error, info, warn};
 use saksaha_task::task_queue::TaskQueue;
 use std::{
     sync::Arc,
     time::{Duration, SystemTime},
 };
-use tokio::sync::{
-    Mutex,
-};
+use tokio::sync::Mutex;
+
+use super::ops::whoareyou::WhoareyouOp;
 
 pub(crate) struct DialScheduler {
-    revalidator: Revalidator,
+    revalidate_routine: RevalidateRoutine,
+    task_queue: Arc<TaskQueue<Task>>,
+    whoareyou_op: Arc<WhoareyouOp>,
 }
 
 impl DialScheduler {
     pub fn new(
         disc_state: Arc<DiscState>,
         task_queue: Arc<TaskQueue<Task>>,
+        whoareyou_op: Arc<WhoareyouOp>,
     ) -> DialScheduler {
         let min_interval = Duration::from_millis(2000);
-        let revalidator =
-            Revalidator::new(disc_state, task_queue, min_interval);
 
-        DialScheduler { revalidator }
+        let revalidate_routine = RevalidateRoutine::new(
+            disc_state.clone(),
+            task_queue.clone(),
+            min_interval,
+        );
+
+        DialScheduler {
+            revalidate_routine,
+            task_queue,
+            whoareyou_op,
+        }
     }
 
     pub fn start(&self) -> Result<(), String> {
-        self.revalidator.run();
+        self.revalidate_routine.run();
 
         Ok(())
     }
+
+    pub async fn enqueue_initial_tasks(
+        &self,
+        bootstrap_urls: Option<Vec<String>>,
+        default_bootstrap_urls: String,
+    ) {
+        let task_queue = self.task_queue.clone();
+
+        let bootstrap_urls = match bootstrap_urls {
+            Some(u) => u,
+            None => Vec::new(),
+        };
+
+        let default_bootstrap_urls: Vec<String> = default_bootstrap_urls
+            .lines()
+            .map(|l| l.to_string())
+            .collect();
+
+        let urls = [bootstrap_urls, default_bootstrap_urls].concat();
+
+        info!("*********************************************************");
+        info!("* Discovery table bootstrapped");
+
+        let count = {
+            let mut cnt = 0;
+            for url in urls {
+                let addr = match Address::parse(url.clone()) {
+                    Ok(n) => {
+                        cnt += 1;
+                        n
+                    }
+                    Err(err) => {
+                        warn!(
+                            "Discarding url failed to parse, url: {}, \
+                            err: {:?}",
+                            url.clone(),
+                            err,
+                        );
+
+                        continue;
+                    }
+                };
+
+                info!("* [{}] {}", cnt, addr.short_url());
+
+                let task = Task::InitiateWhoAreYou {
+                    whoareyou_op: self.whoareyou_op.clone(),
+                    addr,
+                };
+
+                match self.task_queue.push(task).await {
+                    Ok(_) => (),
+                    Err(err) => {
+                        warn!("Couldn't enque new task, err: {}", err);
+                    }
+                };
+            }
+            cnt
+        };
+
+        info!("* bootstrapped node count: {}", count);
+        info!("*********************************************************");
+    }
 }
 
-pub(crate) struct Revalidator {
+pub(crate) struct RevalidateRoutine {
     disc_state: Arc<DiscState>,
     task_queue: Arc<TaskQueue<Task>>,
     is_running: Arc<Mutex<bool>>,
     min_interval: Duration,
 }
 
-impl Revalidator {
+impl RevalidateRoutine {
     pub fn new(
         disc_state: Arc<DiscState>,
         task_queue: Arc<TaskQueue<Task>>,
         min_interval: Duration,
-    ) -> Revalidator {
+    ) -> RevalidateRoutine {
         let is_running = Arc::new(Mutex::new(false));
 
-        Revalidator {
+        RevalidateRoutine {
             is_running,
             disc_state,
             task_queue,
@@ -66,10 +140,10 @@ impl Revalidator {
             *is_running_lock = true;
             std::mem::drop(is_running_lock);
 
-            debug!("TODO Revalidator is currently no-op");
-
             loop {
                 let start = SystemTime::now();
+
+                debug!("TODO Discovery revalidator is currently no-op");
 
                 match start.elapsed() {
                     Ok(d) => {
@@ -87,6 +161,7 @@ impl Revalidator {
                         tokio::time::sleep(min_interval).await;
                     }
                 }
+                return;
             }
 
             let mut is_running_lock = is_running.lock().await;

@@ -22,7 +22,7 @@ impl Node {
         p2p_port: Option<u16>,
         bootstrap_endpoints: Option<Vec<String>>,
         pconfig: PConfig,
-        default_bootstrap_urls: &str,
+        default_bootstrap_urls: String,
     ) -> Result<(), String> {
         info!("Start node...");
 
@@ -85,7 +85,7 @@ impl Node {
         p2p_port: Option<u16>,
         bootstrap_urls: Option<Vec<String>>,
         pconfig: PConfig,
-        default_bootstrap_urls: &str,
+        default_bootstrap_urls: String,
     ) -> Result<(), String> {
         let p2p_config = pconfig.p2p;
 

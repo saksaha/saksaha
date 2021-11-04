@@ -9,11 +9,13 @@ pub mod task;
 
 use self::{
     active_calls::ActiveCalls, dial_scheduler::DialScheduler,
-    listener::Listener, table::Table,
+    listener::Listener, ops::whoareyou::WhoareyouOp, table::Table,
 };
-use crate::{iterator::Iterator, task::TaskRunner, v1::{
-        address::Address, ops::whoareyou::WhoAreYouOperator, task::Task,
-    }};
+use crate::{
+    iterator::Iterator,
+    task::TaskRunner,
+    v1::{address::Address, task::Task},
+};
 use log::{info, warn};
 use saksaha_p2p_identity::Identity;
 use saksaha_task::task_queue::TaskQueue;
@@ -26,7 +28,7 @@ pub struct Disc {
     task_queue: Arc<TaskQueue<Task>>,
     listener: Arc<Listener>,
     state: Arc<DiscState>,
-    way_operator: Arc<WhoAreYouOperator>,
+    whoareyou_op: Arc<WhoareyouOp>,
     dial_scheduler: Arc<DialScheduler>,
 }
 
@@ -36,7 +38,7 @@ impl Disc {
         my_disc_port: Option<u16>,
         my_p2p_port: u16,
         bootstrap_urls: Option<Vec<String>>,
-        default_bootstrap_urls: &str,
+        default_bootstrap_urls: String,
     ) -> Result<Disc, String> {
         let table = {
             let t = match Table::init().await {
@@ -96,36 +98,54 @@ impl Disc {
             Arc::new(s)
         };
 
-        let way_operator = {
-            let i = WhoAreYouOperator::new(udp_socket.clone(), state.clone());
-            Arc::new(i)
+        // let way_initiator = {
+        //     let i = WhoAreYouInitiator::new(udp_socket.clone(), state.clone());
+        //     Arc::new(i)
+        // };
+
+        // let way_receiver = {
+        //     let r = WhoAreYouReceiver::new(udp_socket.clone(), state.clone());
+        // };
+
+        let whoareyou_op = {
+            let w = WhoareyouOp::new(udp_socket.clone(), state.clone());
+            Arc::new(w)
         };
 
         let listener = {
             let l = Listener::new(
                 state.clone(),
                 udp_socket.clone(),
-                way_operator.clone(),
+                whoareyou_op.clone(),
                 task_queue.clone(),
             );
             Arc::new(l)
         };
 
         let dial_scheduler = {
-            let d = DialScheduler::new(state.clone(), task_queue.clone());
+            let d = DialScheduler::new(
+                state.clone(),
+                task_queue.clone(),
+                whoareyou_op.clone(),
+            );
             Arc::new(d)
         };
+
+        dial_scheduler
+            .enqueue_initial_tasks(bootstrap_urls, default_bootstrap_urls)
+            .await;
 
         let disc = Disc {
             task_queue,
             state,
             listener,
-            way_operator,
+            whoareyou_op: whoareyou_op.clone(),
+            // way_operator,
             dial_scheduler,
         };
 
-        disc.enqueue_initial_tasks(bootstrap_urls, default_bootstrap_urls)
-            .await;
+        // disc.enqueue_initial_tasks(bootstrap_urls, default_bootstrap_urls)
+        //     .await;
 
         Ok(disc)
     }
@@ -146,66 +166,66 @@ impl Disc {
         Ok(())
     }
 
-    pub async fn enqueue_initial_tasks(
-        &self,
-        bootstrap_urls: Option<Vec<String>>,
-        default_bootstrap_urls: &str,
-    ) {
-        let bootstrap_urls = match bootstrap_urls {
-            Some(u) => u,
-            None => Vec::new(),
-        };
+    // pub async fn enqueue_initial_tasks(
+    //     &self,
+    //     bootstrap_urls: Option<Vec<String>>,
+    //     default_bootstrap_urls: &str,
+    // ) {
+    //     let bootstrap_urls = match bootstrap_urls {
+    //         Some(u) => u,
+    //         None => Vec::new(),
+    //     };
 
-        let default_bootstrap_urls: Vec<String> = default_bootstrap_urls
-            .lines()
-            .map(|l| l.to_string())
-            .collect();
+    //     let default_bootstrap_urls: Vec<String> = default_bootstrap_urls
+    //         .lines()
+    //         .map(|l| l.to_string())
+    //         .collect();
 
-        let urls = [bootstrap_urls, default_bootstrap_urls].concat();
+    //     let urls = [bootstrap_urls, default_bootstrap_urls].concat();
 
-        info!("*********************************************************");
-        info!("* Discovery table bootstrapped");
+    //     info!("*********************************************************");
+    //     info!("* Discovery table bootstrapped");
 
-        let count = {
-            let mut cnt = 0;
-            for url in urls {
-                let addr = match Address::parse(url.clone()) {
-                    Ok(n) => {
-                        cnt += 1;
-                        n
-                    }
-                    Err(err) => {
-                        warn!(
-                            "Discarding url failed to parse, url: {}, \
-                            err: {:?}",
-                            url.clone(),
-                            err,
-                        );
+    //     let count = {
+    //         let mut cnt = 0;
+    //         for url in urls {
+    //             let addr = match Address::parse(url.clone()) {
+    //                 Ok(n) => {
+    //                     cnt += 1;
+    //                     n
+    //                 }
+    //                 Err(err) => {
+    //                     warn!(
+    //                         "Discarding url failed to parse, url: {}, \
+    //                         err: {:?}",
+    //                         url.clone(),
+    //                         err,
+    //                     );
 
-                        continue;
-                    }
-                };
+    //                     continue;
+    //                 }
+    //             };
 
-                info!("* [{}] {}", cnt, addr.short_url());
+    //             info!("* [{}] {}", cnt, addr.short_url());
 
-                let task = Task::InitiateWhoAreYou {
-                    way_operator: self.way_operator.clone(),
-                    addr,
-                };
+    //             let task = Task::InitiateWhoAreYou {
+    //                 way_operator: self.way_operator.clone(),
+    //                 addr,
+    //             };
 
-                match self.task_queue.push(task).await {
-                    Ok(_) => (),
-                    Err(err) => {
-                        warn!("Couldn't enque new task, err: {}", err);
-                    }
-                };
-            }
-            cnt
-        };
+    //             match self.task_queue.push(task).await {
+    //                 Ok(_) => (),
+    //                 Err(err) => {
+    //                     warn!("Couldn't enque new task, err: {}", err);
+    //                 }
+    //             };
+    //         }
+    //         cnt
+    //     };
 
-        info!("* bootstrapped node count: {}", count);
-        info!("*********************************************************");
-    }
+    //     info!("* bootstrapped node count: {}", count);
+    //     info!("*********************************************************");
+    // }
 
     pub fn iter(&self) -> Arc<Iterator> {
         self.state.table.iter()

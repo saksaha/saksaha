@@ -1,21 +1,14 @@
-use crate::task::Task;
 use super::{
     address::Address,
-    ops::{
-        whoareyou::{
-            WhoAreYouOperator,
-        },
-        Opcode,
-    },
+    ops::{whoareyou::WhoareyouOp, Opcode},
     DiscState,
 };
+use crate::task::Task;
 use log::{debug, error, info, warn};
 use saksaha_task::task_queue::TaskQueue;
 use std::{net::SocketAddr, sync::Arc};
 use thiserror::Error;
-use tokio::{
-    net::{UdpSocket},
-};
+use tokio::net::UdpSocket;
 
 #[derive(Error, Debug)]
 pub enum ListenerError {
@@ -27,21 +20,21 @@ pub(crate) struct Listener {
     disc_state: Arc<DiscState>,
     task_queue: Arc<TaskQueue<Task>>,
     udp_socket: Arc<UdpSocket>,
-    way_operator: Arc<WhoAreYouOperator>,
+    whoareyou_op: Arc<WhoareyouOp>,
 }
 
 impl Listener {
     pub fn new(
         disc_state: Arc<DiscState>,
         udp_socket: Arc<UdpSocket>,
-        way_operator: Arc<WhoAreYouOperator>,
+        whoareyou_op: Arc<WhoareyouOp>,
         task_queue: Arc<TaskQueue<Task>>,
     ) -> Listener {
         Listener {
             disc_state,
             task_queue,
             udp_socket,
-            way_operator,
+            whoareyou_op,
         }
     }
 
@@ -59,7 +52,7 @@ impl Listener {
     pub fn run_loop(&self) -> Result<(), String> {
         let disc_state = self.disc_state.clone();
         let udp_socket = self.udp_socket.clone();
-        let way_operator = self.way_operator.clone();
+        let whoareyou_op = self.whoareyou_op.clone();
         let task_queue = self.task_queue.clone();
 
         tokio::spawn(async move {
@@ -82,7 +75,7 @@ impl Listener {
 
                 match Handler::run(
                     disc_state.clone(),
-                    way_operator.clone(),
+                    whoareyou_op.clone(),
                     task_queue.clone(),
                     socket_addr,
                     &buf,
@@ -109,7 +102,7 @@ struct Handler;
 impl Handler {
     async fn run(
         disc_state: Arc<DiscState>,
-        way_operator: Arc<WhoAreYouOperator>,
+        whoareyou_op: Arc<WhoareyouOp>,
         task_queue: Arc<TaskQueue<Task>>,
         addr: SocketAddr,
         buf: &[u8],
@@ -131,8 +124,8 @@ impl Handler {
 
         match opcode {
             Opcode::WhoAreYouSyn => {
-                match way_operator
-                    .receiver
+                match whoareyou_op
+                    .receive
                     .handle_who_are_you(addr.clone(), buf)
                     .await
                 {
@@ -143,8 +136,8 @@ impl Handler {
                 }
             }
             Opcode::WhoAreYouAck => {
-                match way_operator
-                    .initiator
+                match whoareyou_op
+                    .initiate
                     .handle_who_are_you_ack(addr.clone(), buf)
                     .await
                 {
