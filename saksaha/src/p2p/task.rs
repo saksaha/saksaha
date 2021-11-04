@@ -3,11 +3,14 @@ use saksaha_p2p_identity::PUBLIC_KEY_LEN;
 use saksaha_task::task_queue::{TaskResult, TaskRun};
 use std::{sync::Arc};
 
+use super::ops::handshake::HandshakeOp;
+
 #[derive(Clone)]
 pub enum Task {
     SendHandshakeSyn {
         endpoint: String,
         my_public_key_bytes: [u8; PUBLIC_KEY_LEN],
+        handshake_op: Arc<HandshakeOp>,
     }
 }
 

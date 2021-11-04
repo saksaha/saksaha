@@ -1,3 +1,4 @@
+use super::ops::whoareyou::WhoareyouOp;
 use crate::{address::Address, task::Task, DiscState};
 use log::{debug, error, info, warn};
 use saksaha_task::task_queue::TaskQueue;
@@ -6,8 +7,6 @@ use std::{
     time::{Duration, SystemTime},
 };
 use tokio::sync::Mutex;
-
-use super::ops::whoareyou::WhoareyouOp;
 
 pub(crate) struct DialScheduler {
     revalidate_routine: RevalidateRoutine,
@@ -47,8 +46,6 @@ impl DialScheduler {
         bootstrap_urls: Option<Vec<String>>,
         default_bootstrap_urls: String,
     ) {
-        let task_queue = self.task_queue.clone();
-
         let bootstrap_urls = match bootstrap_urls {
             Some(u) => u,
             None => Vec::new(),
