@@ -92,6 +92,9 @@ impl HandshakeRoutine {
                     }
                 };
 
+
+                // table_node.get_value();
+
                 // task_queue.push(Task::SendHandshakeSyn {
                 //     endpoint
                 //     handshake_op,
