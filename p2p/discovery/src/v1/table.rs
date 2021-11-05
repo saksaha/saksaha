@@ -139,9 +139,9 @@ impl Table {
             Ok(_) => (),
             Err(err) => {
                 return Err(format!(
-                "Can't add Node to 'update' pool, endpoint: {}, err: {}",
-                endpoint, err,
-            ))
+                    "Can't add Node to 'update' pool, endpoint: {}, err: {}",
+                    endpoint, err,
+                ))
             }
         };
 
@@ -180,17 +180,27 @@ pub struct Node {
 
 impl Node {
     pub fn new_empty() -> Node {
-        Node { inner: Mutex::new(NodeInner::Empty) }
+        Node {
+            inner: Mutex::new(NodeInner::Empty),
+        }
     }
+}
+
+pub struct NodeValue {
+    addr: Address,
+    sig: Signature,
+    p2p_port: u16,
+    public_key_bytes: [u8; PUBLIC_KEY_LEN],
 }
 
 pub enum NodeInner {
     Empty,
 
-    Identified {
-        addr: Address,
-        sig: Signature,
-        p2p_port: u16,
-        public_key_bytes: [u8; PUBLIC_KEY_LEN],
-    },
+    Identified(NodeValue),
+    // {
+    //     addr: Address,
+    //     sig: Signature,
+    //     p2p_port: u16,
+    //     public_key_bytes: [u8; PUBLIC_KEY_LEN],
+    // }
 }
