@@ -112,26 +112,25 @@ impl Table {
         updater: F,
     ) -> Result<([u8; PUBLIC_KEY_LEN], String), String>
     where
-        F: Fn(MutexGuard<NodeInner>) -> MutexGuard<NodeInner>,
+        F: Fn(MutexGuard<NodeValue>) -> MutexGuard<NodeValue>,
     {
         let mut map = self.map.lock().await;
         let mut keys = self.keys.lock().await;
 
-        let inner = table_node.inner.lock().await;
-        let inner = updater(inner);
+        let value_guard = table_node.value.lock().await;
+        let mut value_guard = updater(value_guard);
 
-        let (public_key_bytes, endpoint) = if let NodeInner::Identified {
-            public_key_bytes,
-            ref addr,
-            ..
-        } = *inner
-        {
-            (public_key_bytes, addr.endpoint())
-        } else {
-            return Err(format!("Empty node can't be updated"));
+        let identified_val = match value_guard.identified_mut() {
+            Some(v) => v,
+            None => {
+                return Err(format!("Empty node can't be updated"));
+            }
         };
 
-        std::mem::drop(inner);
+        let public_key_bytes = identified_val.public_key_bytes;
+        let endpoint = identified_val.addr.endpoint();
+
+        std::mem::drop(value_guard);
 
         map.insert(public_key_bytes, table_node.clone());
         keys.insert(public_key_bytes);
@@ -175,32 +174,65 @@ impl Table {
 }
 
 pub struct Node {
-    inner: Mutex<NodeInner>,
+    value: Arc<Mutex<NodeValue>>,
 }
 
 impl Node {
     pub fn new_empty() -> Node {
         Node {
-            inner: Mutex::new(NodeInner::Empty),
+            value: Arc::new(Mutex::new(NodeValue::Empty)),
         }
+    }
+
+    pub async fn get_value(&self) -> Option<IdentifiedValue> {
+        let val = self.value.lock().await;
+
+        val.identified()
     }
 }
 
-pub struct NodeValue {
-    addr: Address,
-    sig: Signature,
-    p2p_port: u16,
-    public_key_bytes: [u8; PUBLIC_KEY_LEN],
+#[derive(Clone)]
+pub struct IdentifiedValue {
+    pub addr: Address,
+    pub sig: Signature,
+    pub p2p_port: u16,
+    pub public_key_bytes: [u8; PUBLIC_KEY_LEN],
 }
 
-pub enum NodeInner {
+pub enum NodeValue {
     Empty,
 
-    Identified(NodeValue),
-    // {
-    //     addr: Address,
-    //     sig: Signature,
-    //     p2p_port: u16,
-    //     public_key_bytes: [u8; PUBLIC_KEY_LEN],
-    // }
+    Identified(IdentifiedValue),
+}
+
+impl NodeValue {
+    pub fn new_identified(
+        addr: Address,
+        sig: Signature,
+        p2p_port: u16,
+        public_key_bytes: [u8; PUBLIC_KEY_LEN],
+    ) -> NodeValue {
+        NodeValue::Identified(IdentifiedValue {
+            addr,
+            sig,
+            p2p_port,
+            public_key_bytes,
+        })
+    }
+
+    fn identified(&self) -> Option<IdentifiedValue> {
+        if let NodeValue::Identified(v) = self {
+            Some(v.clone())
+        } else {
+            None
+        }
+    }
+
+    pub fn identified_mut(&mut self) -> Option<&mut IdentifiedValue> {
+        if let NodeValue::Identified(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
 }

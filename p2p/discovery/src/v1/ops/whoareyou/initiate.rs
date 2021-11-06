@@ -1,7 +1,7 @@
 use super::msg::{WhoAreYouAck, WhoAreYouSyn};
 use crate::v1::address::Address;
 use crate::v1::ops::Message;
-use crate::v1::table::NodeInner;
+use crate::v1::table::NodeValue;
 use crate::v1::DiscState;
 use log::debug;
 use std::sync::Arc;
@@ -123,21 +123,21 @@ impl WhoareyouInitiate {
         match self
             .disc_state
             .table
-            .add(table_node, |mut inner| {
-                *inner = NodeInner::Identified {
-                    addr: addr.clone(),
-                    sig: way_ack.way.sig,
-                    p2p_port: way_ack.way.p2p_port,
-                    public_key_bytes: way_ack.way.public_key_bytes,
-                };
-                inner
+            .add(table_node, |mut val| {
+                *val = NodeValue::new_identified(
+                    addr.clone(),
+                    way_ack.way.sig,
+                    way_ack.way.p2p_port,
+                    way_ack.way.public_key_bytes,
+                );
+                val
             })
             .await
         {
-            Ok((public_key_bytes, endpoint)) => {
+            Ok((.., endpoint)) => {
                 debug!(
-                    "Node is inserted, key: {:?}, endpoint: {:?}",
-                    public_key_bytes, endpoint
+                    "Discovered a node, I initiated, endpoint: {}",
+                    endpoint
                 );
             }
             Err(err) => return Err(WhoareyouInitError::TableAddFail { err }),
