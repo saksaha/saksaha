@@ -153,7 +153,7 @@ fn main() {
 
     Process::init(node.clone());
 
-    match node.init(
+    match node.start(
         args.rpc_port,
         args.disc_port,
         args.p2p_port,
