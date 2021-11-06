@@ -1,11 +1,13 @@
+mod init;
+
 use crate::{
     p2p::host::Host,
     pconfig::PConfig,
     process::Process,
     rpc::{self, RPC},
 };
-use std::sync::Arc;
 use log::{debug, error, info};
+use std::sync::Arc;
 use tokio::{self, signal};
 
 pub struct Node;
@@ -15,7 +17,7 @@ impl Node {
         Node {}
     }
 
-    pub fn init(
+    pub fn start(
         &self,
         rpc_port: Option<u16>,
         disc_port: Option<u16>,
@@ -32,14 +34,17 @@ impl Node {
 
         let _ = match runtime {
             Ok(r) => r.block_on(async {
-                match self.start(
-                    rpc_port,
-                    disc_port,
-                    p2p_port,
-                    bootstrap_endpoints,
-                    pconfig,
-                    default_bootstrap_urls,
-                ).await {
+                match self
+                    .initialize(
+                        rpc_port,
+                        disc_port,
+                        p2p_port,
+                        bootstrap_endpoints,
+                        pconfig,
+                        default_bootstrap_urls,
+                    )
+                    .await
+                {
                     Ok(_) => (),
                     Err(err) => {
                         error!("Can't start node, err: {}", err);
@@ -78,7 +83,7 @@ impl Node {
         Ok(())
     }
 
-    async fn start(
+    async fn initialize(
         &self,
         rpc_port: Option<u16>,
         disc_port: Option<u16>,
@@ -87,6 +92,8 @@ impl Node {
         pconfig: PConfig,
         default_bootstrap_urls: String,
     ) -> Result<(), String> {
+        init::setup_sockets(rpc_port, disc_port, p2p_port);
+
         let p2p_config = pconfig.p2p;
 
         let rpc = RPC::new(rpc_port);
@@ -108,7 +115,9 @@ impl Node {
             disc_port,
             bootstrap_urls,
             default_bootstrap_urls,
-        ).await?;
+        )
+        .await?;
+
         host.start().await?;
 
         Ok(())

@@ -82,23 +82,23 @@ impl HandshakeRoutine {
             loop {
                 let start = SystemTime::now();
 
-                let node_val = match disc_iterator.next().await {
-                    Ok(n) => match n.get_value().await {
-                        Some(v) => v,
-                        None => {
-                            error!("Can't retrieve next node. Node is empty");
-                            continue;
-                        }
-                    },
-                    Err(err) => {
-                        error!(
-                            "Discovery iterator cannot retrieve next \
-                            node, err: {}",
-                            err
-                        );
-                        continue;
-                    }
-                };
+                // let node_val = match disc_iterator.next().await {
+                //     Ok(n) => match n.get_value().await {
+                //         Some(v) => v,
+                //         None => {
+                //             error!("Can't retrieve next node. Node is empty");
+                //             continue;
+                //         }
+                //     },
+                //     Err(err) => {
+                //         error!(
+                //             "Discovery iterator cannot retrieve next \
+                //             node, err: {}",
+                //             err
+                //         );
+                //         continue;
+                //     }
+                // };
 
                 // task_queue.push(Task::InitiateHandshake {
                 //     endpoint: node_val.addr.endpoint(),
