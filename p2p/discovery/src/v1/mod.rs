@@ -36,7 +36,8 @@ impl Disc {
     pub async fn init(
         id: Arc<Box<dyn Identity + Send + Sync>>,
         my_disc_port: Option<u16>,
-        my_p2p_port: u16,
+        // my_p2p_port: u16,
+        get_p2p_port: Box<dyn Fn(Listener) -> u16>,
         bootstrap_urls: Option<Vec<String>>,
         default_bootstrap_urls: String,
     ) -> Result<Disc, String> {
@@ -86,6 +87,8 @@ impl Disc {
                 ));
             }
         };
+
+        // let my_p2p_port = get_p2p_port();
 
         let state = {
             let s = DiscState::new(

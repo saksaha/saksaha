@@ -3,6 +3,7 @@ use crate::p2p::ops::handshake::{self};
 use super::{ops::handshake::HandshakeOp, task::Task};
 use log::{debug, error, info, warn};
 use saksaha_p2p_discovery::iterator::Iterator;
+use saksaha_p2p_identity::Identity;
 use saksaha_task::task_queue::TaskQueue;
 use std::{
     sync::Arc,
@@ -18,6 +19,7 @@ impl DialScheduler {
     pub fn new(
         task_queue: Arc<TaskQueue<Task>>,
         disc_iterator: Arc<Iterator>,
+        credential: Arc<Box<dyn Identity + Send + Sync>>,
     ) -> DialScheduler {
         let min_interval = Duration::from_millis(2000);
 
@@ -70,6 +72,7 @@ impl HandshakeRoutine {
         let task_queue = self.task_queue.clone();
         let disc_iterator = self.disc_iterator.clone();
         let handshake_op = self.handshake_op.clone();
+        // let credential = self.cre
 
         tokio::spawn(async move {
             let mut is_running_lock = is_running.lock().await;
@@ -79,21 +82,29 @@ impl HandshakeRoutine {
             loop {
                 let start = SystemTime::now();
 
-                let table_node = match disc_iterator.next().await {
-                    Ok(n) => n,
+                let node_val = match disc_iterator.next().await {
+                    Ok(n) => match n.get_value().await {
+                        Some(v) => v,
+                        None => {
+                            error!("Can't retrieve next node. Node is empty");
+                            continue;
+                        }
+                    },
                     Err(err) => {
                         error!(
                             "Discovery iterator cannot retrieve next \
                             node, err: {}",
                             err
                         );
-
                         continue;
                     }
                 };
 
-
-                // table_node.get_value();
+                // task_queue.push(Task::InitiateHandshake {
+                //     endpoint: node_val.addr.endpoint(),
+                //     my_public_key: ,
+                //     handshake_op: ,
+                // }).await;
 
                 // task_queue.push(Task::SendHandshakeSyn {
                 //     endpoint

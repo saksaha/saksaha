@@ -39,39 +39,6 @@ impl Host {
             Arc::new(c)
         };
 
-        let p2p_port = match p2p_port {
-            Some(p) => p,
-            None => 0,
-        };
-
-        let (tcp_listener, tcp_port) = {
-            let local_addr = format!("127.0.0.1:{}", p2p_port);
-
-            match TcpListener::bind(local_addr).await {
-                Ok(listener) => match listener.local_addr() {
-                    Ok(local_addr) => {
-                        info!(
-                            "P2P tcp listener is bound, addr: {}",
-                            &local_addr
-                        );
-
-                        (listener, local_addr.port())
-                    }
-                    Err(err) => {
-                        return Err(format!(
-                            "Can't get local address of p2p listener, err: {}",
-                            err
-                        ))
-                    }
-                },
-                Err(err) => {
-                    return Err(format!(
-                        "Can't bind tcp listener, err: {}",
-                        err
-                    ))
-                }
-            }
-        };
 
         let peer_store = {
             let ps = match PeerStore::new(10) {
@@ -84,8 +51,8 @@ impl Host {
         let p2p_listener = Listener::new(
             credential.clone(),
             peer_store.clone(),
-            tcp_listener,
             rpc_port,
+            p2p_port,
         );
 
         p2p_listener.start().await?;
@@ -93,7 +60,8 @@ impl Host {
         let disc = Disc::init(
             credential.clone(),
             disc_port,
-            tcp_port,
+            Box::new(Listener::get_port),
+            // tcp_port,
             bootstrap_urls,
             default_bootstrap_urls,
         )
@@ -105,7 +73,11 @@ impl Host {
         };
 
         let dial_scheduler = {
-            let d = DialScheduler::new(task_queue.clone(), disc.iter());
+            let d = DialScheduler::new(
+                task_queue.clone(),
+                disc.iter(),
+                credential.clone(),
+            );
             Arc::new(d)
         };
 

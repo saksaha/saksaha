@@ -7,7 +7,7 @@ use super::ops::handshake::HandshakeOp;
 
 #[derive(Clone)]
 pub enum Task {
-    SendHandshakeSyn {
+    InitiateHandshake {
         endpoint: String,
         my_public_key_bytes: [u8; PUBLIC_KEY_LEN],
         handshake_op: Arc<HandshakeOp>,

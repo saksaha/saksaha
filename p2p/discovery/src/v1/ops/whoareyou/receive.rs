@@ -1,7 +1,7 @@
 use super::msg::{WhoAreYouAck, WhoAreYouSyn};
 use crate::v1::address::Address;
 use crate::v1::ops::Message;
-use crate::v1::table::{Node, NodeInner};
+use crate::v1::table::{Node, NodeValue};
 use crate::v1::DiscState;
 use log::debug;
 use std::sync::Arc;
@@ -72,21 +72,21 @@ impl WhoareyouReceive {
         match self
             .disc_state
             .table
-            .add(table_node, |mut inner| {
-                *inner = NodeInner::Identified {
-                    addr: addr.clone(),
-                    sig: way_syn.way.sig,
-                    p2p_port: way_syn.way.p2p_port,
-                    public_key_bytes: way_syn.way.public_key_bytes,
-                };
-                inner
+            .add(table_node, |mut val| {
+                *val = NodeValue::new_identified(
+                    addr.clone(),
+                    way_syn.way.sig,
+                    way_syn.way.p2p_port,
+                    way_syn.way.public_key_bytes,
+                );
+                val
             })
             .await
         {
-            Ok((public_key_bytes, endpoint)) => {
+            Ok((.., endpoint)) => {
                 debug!(
-                    "Node is inserted, key: {:?}, endpoint: {:?}",
-                    public_key_bytes, endpoint
+                    "Node is discovered, I received, endpoint: {}",
+                    endpoint
                 );
             }
             Err(err) => return Err(WhoareyouRecvError::TableAddFail { err }),

@@ -23,13 +23,13 @@ impl Iterator {
 
     pub async fn next(&self) -> Result<Arc<Node>, String> {
         let mut updates_rx = self.updates_rx.lock().await;
-        let tnode = match updates_rx.recv().await {
+        let node = match updates_rx.recv().await {
             Some(n) => n,
             None => {
                 return Err(format!("Update channel is closed, fatal error"))
             }
         };
 
-        Ok(tnode)
+        Ok(node)
     }
 }
