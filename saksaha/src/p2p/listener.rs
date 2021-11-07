@@ -1,4 +1,3 @@
-use crate::peer::peer_store::PeerStore;
 use log::{debug, info};
 use saksaha_p2p_identity::Identity;
 use std::sync::Arc;

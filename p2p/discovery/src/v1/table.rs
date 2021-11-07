@@ -3,7 +3,7 @@ use crate::{iterator::Iterator, CAPACITY};
 use log::{debug, error, info, warn};
 use rand::prelude::*;
 use saksaha_crypto::Signature;
-use saksaha_p2p_identity::PUBLIC_KEY_LEN;
+use saksaha_p2p_identity::{PUBLIC_KEY_LEN, PeerId};
 use std::{
     collections::{HashMap, HashSet},
     sync::Arc,
@@ -13,7 +13,6 @@ use tokio::sync::{
     Mutex, MutexGuard,
 };
 
-type PeerId = [u8; PUBLIC_KEY_LEN];
 type Nodes = HashMap<PeerId, Arc<Node>>;
 
 pub(crate) struct Table {
@@ -127,13 +126,13 @@ impl Table {
             }
         };
 
-        let public_key_bytes = identified_val.public_key_bytes;
+        let public_key = identified_val.public_key;
         let endpoint = identified_val.addr.disc_endpoint();
 
         std::mem::drop(value_guard);
 
-        map.insert(public_key_bytes, table_node.clone());
-        keys.insert(public_key_bytes);
+        map.insert(public_key, table_node.clone());
+        keys.insert(public_key);
         match self.updates_tx.send(table_node).await {
             Ok(_) => (),
             Err(err) => {
@@ -144,7 +143,7 @@ impl Table {
             }
         };
 
-        Ok((public_key_bytes, endpoint))
+        Ok((public_key, endpoint))
     }
 
     pub async fn reserve(&self) -> Result<Arc<Node>, String> {
@@ -196,7 +195,7 @@ pub struct IdentifiedValue {
     pub addr: Address,
     pub sig: Signature,
     pub p2p_port: u16,
-    pub public_key_bytes: [u8; PUBLIC_KEY_LEN],
+    pub public_key: PeerId,
 }
 
 pub enum NodeValue {
@@ -210,13 +209,13 @@ impl NodeValue {
         addr: Address,
         sig: Signature,
         p2p_port: u16,
-        public_key_bytes: [u8; PUBLIC_KEY_LEN],
+        public_key: PeerId,
     ) -> NodeValue {
         NodeValue::Identified(IdentifiedValue {
             addr,
             sig,
             p2p_port,
-            public_key_bytes,
+            public_key,
         })
     }
 

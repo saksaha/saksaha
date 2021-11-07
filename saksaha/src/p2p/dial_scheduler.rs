@@ -62,7 +62,7 @@ impl HandshakeRoutine {
     }
 
     pub fn run(&self) {
-        info!("P2P dial scheduler routine starts to run");
+        info!("P2P handshake routine starts to run");
 
         let is_running = self.is_running.clone();
         let min_interval = self.min_interval;
@@ -83,13 +83,13 @@ impl HandshakeRoutine {
                     Ok(n) => match n.get_value().await {
                         Some(v) => v,
                         None => {
-                            error!("Can't retrieve next node. Node is empty");
+                            error!("Invalid node. Node is empty");
                             continue;
                         }
                     },
                     Err(err) => {
                         error!(
-                            "Discovery iterator cannot retrieve next \
+                            "P2P handshake, can't retrieve next \
                             node, err: {}",
                             err
                         );

@@ -56,7 +56,7 @@ impl Disc {
         };
 
         let task_queue = {
-            let q = TaskQueue::new(Box::new(TaskRunner {}));
+            let q = TaskQueue::new("Disc".to_string(), Box::new(TaskRunner {}));
             Arc::new(q)
         };
 
