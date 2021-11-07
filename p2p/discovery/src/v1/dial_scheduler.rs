@@ -15,10 +15,12 @@ pub(crate) struct DialScheduler {
 }
 
 impl DialScheduler {
-    pub fn new(
+    pub async fn init(
         disc_state: Arc<DiscState>,
         task_queue: Arc<TaskQueue<Task>>,
         whoareyou_op: Arc<WhoareyouOp>,
+        bootstrap_urls: Option<Vec<String>>,
+        default_bootstrap_urls: String,
     ) -> DialScheduler {
         let min_interval = Duration::from_millis(2000);
 
@@ -28,11 +30,16 @@ impl DialScheduler {
             min_interval,
         );
 
-        DialScheduler {
+        let d = DialScheduler {
             revalidate_routine,
             task_queue,
             whoareyou_op,
-        }
+        };
+
+        d.enqueue_initial_tasks(bootstrap_urls, default_bootstrap_urls)
+            .await;
+
+        d
     }
 
     pub fn start(&self) -> Result<(), String> {
