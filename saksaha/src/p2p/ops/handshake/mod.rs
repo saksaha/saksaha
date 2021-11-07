@@ -11,7 +11,6 @@ pub struct HandshakeOp {
 impl HandshakeOp {
     pub fn new() -> HandshakeOp {
         let initiate = HandshakeInitiate::new();
-
         let receive = HandshakeReceive::new();
 
         HandshakeOp {

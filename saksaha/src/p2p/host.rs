@@ -1,5 +1,5 @@
 use super::{
-    credential::Credential,
+    // credential::Credential,
     dial_scheduler::{self, DialScheduler},
     listener::{self, Listener},
     task::{Task, TaskRunner},
@@ -24,41 +24,45 @@ pub struct Host {
 impl Host {
     pub async fn init(
         p2p_config: PersistedP2PConfig,
-        rpc_port: u16,
+        my_rpc_port: u16,
         p2p_socket: TcpSocket,
         disc_port: Option<u16>,
         bootstrap_urls: Option<Vec<String>>,
         default_bootstrap_urls: String,
     ) -> Result<Host, String> {
-        let credential = {
-            let secret = p2p_config.secret.to_owned();
-            let public_key = p2p_config.public_key.to_owned();
-
-            let c: Box<dyn Identity + Send + Sync> =
-                match Credential::new(secret, public_key) {
-                    Ok(c) => Box::new(c),
-                    Err(err) => return Err(err),
-                };
-            Arc::new(c)
+        let identity = {
+            let id = Identity::new(p2p_config.secret, p2p_config.public_key)?;
+            Arc::new(id)
         };
+        // let Identity = {
+        //     let secret = p2p_config.secret.clone();
+        //     let public_key = p2p_config.public_key.clone();
+
+        //     let c: Box<dyn Identity + Send + Sync> =
+        //         match Credential::new(secret, public_key) {
+        //             Ok(c) => Box::new(c),
+        //             Err(err) => return Err(err),
+        //         };
+        //     Arc::new(c)
+        // };
 
         let peer_store = {
             let ps = match PeerStore::new(10) {
-                Ok(p) => Arc::new(p),
+                Ok(p) => p,
                 Err(err) => return Err(err),
             };
-            ps
+            Arc::new(ps)
         };
 
-        let p2p_listener = Listener::new(
-            credential.clone(),
+        let listener = Listener::new(
+            identity.clone(),
             peer_store.clone(),
             p2p_socket.listener,
-            rpc_port,
+            my_rpc_port,
         );
 
         let disc = Disc::init(
-            credential.clone(),
+            identity.clone(),
             disc_port,
             p2p_socket.port,
             bootstrap_urls,
@@ -75,7 +79,7 @@ impl Host {
             let d = DialScheduler::new(
                 task_queue.clone(),
                 disc.iter(),
-                credential.clone(),
+                identity.clone(),
             );
             Arc::new(d)
         };
@@ -93,6 +97,8 @@ impl Host {
         self.disc.start().await?;
 
         self.dial_scheduler.start();
+
+        self.task_queue.run_loop();
 
         // let disc_it = self.disc.iter();
         // let a = disc_it.next().await?;
@@ -117,4 +123,8 @@ impl Host {
 
         Ok(())
     }
+}
+
+pub struct HostState {
+    identity: Arc<Identity>,
 }

@@ -128,7 +128,7 @@ impl Table {
         };
 
         let public_key_bytes = identified_val.public_key_bytes;
-        let endpoint = identified_val.addr.endpoint();
+        let endpoint = identified_val.addr.disc_endpoint();
 
         std::mem::drop(value_guard);
 

@@ -4,12 +4,14 @@ pub mod dial_scheduler;
 pub mod iterator;
 pub mod listener;
 mod ops;
+pub mod state;
 mod table;
 pub mod task;
 
 use self::{
     active_calls::ActiveCalls, dial_scheduler::DialScheduler,
-    listener::Listener, ops::whoareyou::WhoareyouOp, table::Table,
+    listener::Listener, ops::whoareyou::WhoareyouOp, state::DiscState,
+    table::Table,
 };
 use crate::{
     iterator::Iterator,
@@ -33,7 +35,7 @@ pub struct Disc {
 
 impl Disc {
     pub async fn init(
-        id: Arc<Box<dyn Identity + Send + Sync>>,
+        id: Arc<Identity>,
         my_disc_port: Option<u16>,
         my_p2p_port: u16,
         bootstrap_urls: Option<Vec<String>>,
@@ -52,7 +54,7 @@ impl Disc {
         let active_calls = Arc::new(ActiveCalls::new());
         let task_queue = Arc::new(TaskQueue::new(Box::new(TaskRunner {})));
 
-        let (udp_socket, port) = {
+        let (udp_socket, my_disc_port) = {
             let (socket, port) = setup_udp_socket(my_disc_port).await?;
             (Arc::new(socket), port)
         };
@@ -62,7 +64,7 @@ impl Disc {
                 id,
                 table,
                 active_calls,
-                port,
+                my_disc_port,
                 my_p2p_port,
             );
             Arc::new(s)
@@ -157,30 +159,4 @@ pub async fn setup_udp_socket(
     };
 
     Ok((udp_socket, port))
-}
-
-pub(crate) struct DiscState {
-    id: Arc<Box<dyn Identity + Send + Sync>>,
-    my_disc_port: u16,
-    my_p2p_port: u16,
-    table: Arc<Table>,
-    _active_calls: Arc<ActiveCalls>,
-}
-
-impl DiscState {
-    pub fn new(
-        id: Arc<Box<dyn Identity + Send + Sync>>,
-        table: Arc<Table>,
-        active_calls: Arc<ActiveCalls>,
-        my_disc_port: u16,
-        my_p2p_port: u16,
-    ) -> DiscState {
-        DiscState {
-            id,
-            my_disc_port,
-            my_p2p_port,
-            table,
-            _active_calls: active_calls,
-        }
-    }
 }
