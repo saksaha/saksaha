@@ -1,12 +1,25 @@
+use thiserror::Error;
+use std::sync::Arc;
 use log::{debug, error};
 use saksaha_p2p_discovery::address::Address;
 use saksaha_p2p_identity::PUBLIC_KEY_LEN;
+use crate::p2p::state::HostState;
 
-pub struct HandshakeInitiate {}
+pub(crate) struct HandshakeInitiate {
+    host_state: Arc<HostState>,
+}
+
+#[derive(Error, Debug)]
+pub enum HandshakeInitError {
+    #[error("Aborting, request to my endpoint: {endpoint}")]
+    MyEndpoint { endpoint: String },
+}
 
 impl HandshakeInitiate {
-    pub fn new() -> HandshakeInitiate {
-        HandshakeInitiate {}
+    pub fn new(host_state: Arc<HostState>) -> HandshakeInitiate {
+        HandshakeInitiate {
+            host_state,
+        }
     }
 
     pub async fn send_handshake_syn(
@@ -14,12 +27,18 @@ impl HandshakeInitiate {
         ip: String,
         p2p_port: u16,
         public_key: [u8; PUBLIC_KEY_LEN]
-    ) -> Result<(), String> {
+    ) -> Result<(), HandshakeInitError> {
         let endpoint = format!("{}:{}", ip, p2p_port);
 
-        // if super::is_my_endpoint(my_disc_port, &endpoint) {
-        //     return Err(WhoareyouInitError::MyEndpoint { endpoint });
-        // }
+        let my_p2p_port = self.host_state.my_p2p_port;
+
+        if super::is_my_endpoint(my_p2p_port, &endpoint) {
+            return Err(HandshakeInitError::MyEndpoint {
+                endpoint,
+            });
+        }
+
+
 
         // let my_sig = self.disc_state.id.sig();
         // let my_public_key_bytes = self.disc_state.id.public_key_bytes();

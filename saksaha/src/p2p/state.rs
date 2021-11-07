@@ -1,10 +1,13 @@
+use super::task::Task;
 use saksaha_p2p_identity::Identity;
 use saksaha_task::task_queue::{self, TaskQueue};
 use std::sync::Arc;
-use super::task::Task;
 
-pub struct HostState {
+pub(crate) struct HostState {
     pub identity: Arc<Identity>,
+    pub task_queue: Arc<TaskQueue<Task>>,
+    pub my_rpc_port: u16,
+    pub my_p2p_port: u16,
 }
 
 impl HostState {
@@ -14,6 +17,11 @@ impl HostState {
         my_p2p_port: u16,
         task_queue: Arc<TaskQueue<Task>>,
     ) -> HostState {
-        HostState { identity }
+        HostState {
+            identity,
+            task_queue,
+            my_p2p_port,
+            my_rpc_port,
+        }
     }
 }

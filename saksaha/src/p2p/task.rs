@@ -6,7 +6,7 @@ use std::sync::Arc;
 use super::ops::handshake::HandshakeOp;
 
 #[derive(Clone)]
-pub enum Task {
+pub(crate) enum Task {
     InitiateHandshake {
         ip: String,
         p2p_port: u16,
@@ -15,7 +15,7 @@ pub enum Task {
     },
 }
 
-pub struct TaskRunner;
+pub(crate) struct TaskRunner;
 
 impl TaskRun<Task> for TaskRunner {
     fn run(&self, task: Task) -> TaskResult {
@@ -33,7 +33,11 @@ impl TaskRun<Task> for TaskRunner {
                         my_public_key,
                     ).await {
                         Ok(_) => (),
-                        Err(err) => return TaskResult::FailRetriable(err),
+                        Err(err) => {
+                            let err_msg = err.to_string();
+
+                            return TaskResult::FailRetriable(err_msg);
+                        }
                     };
                 }
             };

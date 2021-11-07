@@ -88,7 +88,6 @@ impl Disc {
                 disc_state.clone(),
                 udp_socket.clone(),
                 whoareyou_op.clone(),
-                // task_queue.clone(),
             );
             Arc::new(l)
         };
@@ -96,7 +95,6 @@ impl Disc {
         let dial_scheduler = {
             let s = DialScheduler::init(
                 disc_state.clone(),
-                // task_queue.clone(),
                 whoareyou_op.clone(),
                 bootstrap_urls,
                 default_bootstrap_urls,
@@ -105,7 +103,6 @@ impl Disc {
         };
 
         let disc = Disc {
-            // task_queue,
             disc_state,
             listener,
             dial_scheduler,
