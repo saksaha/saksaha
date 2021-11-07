@@ -6,7 +6,7 @@ use tokio::net::TcpListener;
 
 use super::state::HostState;
 
-pub struct Listener {
+pub(crate) struct Listener {
     tcp_listener: TcpListener,
     host_state: Arc<HostState>,
 }

@@ -9,12 +9,7 @@ use saksaha_task::task_queue::TaskQueue;
 use std::sync::Arc;
 use tokio::net::TcpListener;
 
-use super::{
-    dial_scheduler::DialScheduler,
-    listener::Listener,
-    state::HostState,
-    task::{Task, TaskRunner},
-};
+use super::{dial_scheduler::DialScheduler, listener::Listener, ops::handshake::HandshakeOp, state::HostState, task::{Task, TaskRunner}};
 
 pub struct Host {
     disc: Arc<Disc>,
@@ -56,7 +51,14 @@ impl Host {
             Arc::new(s)
         };
 
-        let listener = Listener::new(p2p_socket.listener, host_state.clone());
+        let listener = {
+            Listener::new(p2p_socket.listener, host_state.clone())
+        };
+
+        let handshake_op = {
+            let h = HandshakeOp::new(host_state.clone());
+            Arc::new(h)
+        };
 
         let disc = Disc::init(
             identity.clone(),
@@ -69,9 +71,11 @@ impl Host {
 
         let dial_scheduler = {
             let d = DialScheduler::new(
-                task_queue.clone(),
                 disc.iter(),
-                identity.clone(),
+                // identity.clone(),
+                host_state.clone(),
+                handshake_op.clone(),
+
             );
             Arc::new(d)
         };

@@ -1,5 +1,5 @@
 use crate::p2p::ops::handshake::{self};
-use super::{ops::handshake::HandshakeOp, task::Task};
+use super::{ops::handshake::HandshakeOp, state::HostState, task::Task};
 use log::{debug, error, info, warn};
 use saksaha_p2p_discovery::iterator::Iterator;
 use saksaha_p2p_identity::Identity;
@@ -10,23 +10,27 @@ use std::{
 };
 use tokio::sync::Mutex;
 
-pub struct DialScheduler {
+pub(crate) struct DialScheduler {
     handshake_routine: HandshakeRoutine,
 }
 
 impl DialScheduler {
     pub fn new(
-        task_queue: Arc<TaskQueue<Task>>,
+        // task_queue: Arc<TaskQueue<Task>>,
         disc_iterator: Arc<Iterator>,
-        identity: Arc<Identity>,
+        // identity: Arc<Identity>,
+        host_state: Arc<HostState>,
+        handshake_op: Arc<HandshakeOp>,
     ) -> DialScheduler {
         let min_interval = Duration::from_millis(2000);
 
         let handshake_routine = HandshakeRoutine::new(
-            task_queue.clone(),
+            // task_queue.clone(),
             min_interval,
             disc_iterator,
-            identity,
+            // identity,
+            host_state,
+            handshake_op,
         );
 
         DialScheduler { handshake_routine }
@@ -38,32 +42,34 @@ impl DialScheduler {
 }
 
 struct HandshakeRoutine {
-    task_queue: Arc<TaskQueue<Task>>,
+    // task_queue: Arc<TaskQueue<Task>>,
     is_running: Arc<Mutex<bool>>,
     min_interval: Duration,
     disc_iterator: Arc<Iterator>,
     handshake_op: Arc<HandshakeOp>,
-    identity: Arc<Identity>,
+    // identity: Arc<Identity>,
+    host_state: Arc<HostState>,
 }
 
 impl HandshakeRoutine {
     pub fn new(
-        task_queue: Arc<TaskQueue<Task>>,
+        // task_queue: Arc<TaskQueue<Task>>,
         min_interval: Duration,
         disc_iterator: Arc<Iterator>,
-        identity: Arc<Identity>,
+        // identity: Arc<Identity>,
+        host_state: Arc<HostState>,
+        handshake_op: Arc<HandshakeOp>,
     ) -> HandshakeRoutine {
         let is_running = Arc::new(Mutex::new(false));
 
-        let handshake_op = Arc::new(HandshakeOp::new());
-
         HandshakeRoutine {
-            task_queue,
+            // task_queue,
             disc_iterator,
             is_running,
             min_interval,
             handshake_op,
-            identity,
+            // identity,
+            host_state,
         }
     }
 
@@ -72,10 +78,10 @@ impl HandshakeRoutine {
 
         let is_running = self.is_running.clone();
         let min_interval = self.min_interval;
-        let task_queue = self.task_queue.clone();
+        let task_queue = self.host_state.task_queue.clone();
         let disc_iterator = self.disc_iterator.clone();
         let handshake_op = self.handshake_op.clone();
-        let identity = self.identity.clone();
+        let identity = self.host_state.identity.clone();
 
         tokio::spawn(async move {
             let mut is_running_lock = is_running.lock().await;
