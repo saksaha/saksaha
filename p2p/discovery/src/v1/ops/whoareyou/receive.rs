@@ -53,7 +53,7 @@ impl WhoareyouReceive {
         addr: Address,
         buf: &[u8],
     ) -> Result<(), WhoareyouRecvError> {
-        let endpoint = addr.endpoint();
+        let endpoint = addr.disc_endpoint();
 
         let table_node = match self.disc_state.table.try_reserve().await {
             Ok(n) => n,
@@ -103,19 +103,16 @@ impl WhoareyouReceive {
     ) -> Result<(), WhoareyouRecvError> {
         let my_disc_port = self.disc_state.my_disc_port;
         let my_p2p_port = self.disc_state.my_p2p_port;
-        let endpoint = addr.endpoint();
+        let endpoint = addr.disc_endpoint();
 
         if super::is_my_endpoint(my_disc_port, &endpoint) {
             return Err(WhoareyouRecvError::MyEndpoint { endpoint });
         }
 
-        let sig = self.disc_state.id.sig();
+        let sig = self.disc_state.id.sig;
 
-        let way_ack = WhoAreYouAck::new(
-            sig,
-            my_p2p_port,
-            self.disc_state.id.public_key_bytes(),
-        );
+        let way_ack =
+            WhoAreYouAck::new(sig, my_p2p_port, self.disc_state.id.public_key);
 
         let buf = match way_ack.to_bytes() {
             Ok(b) => b,

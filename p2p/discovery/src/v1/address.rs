@@ -60,7 +60,7 @@ impl Address {
         }
     }
 
-    pub fn endpoint(&self) -> String {
+    pub fn disc_endpoint(&self) -> String {
         format!("{}:{}", self.ip, self.disc_port)
     }
 

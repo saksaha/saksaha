@@ -3,7 +3,6 @@ pub mod fs;
 
 use log::{info, debug};
 use fs::FS;
-use saksaha_crypto::Crypto;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use self::error::PConfigError;
@@ -58,8 +57,8 @@ impl PConfig {
     fn new() -> PConfig {
         debug!("Creating a new config");
 
-        let sk = Crypto::generate_key();
-        let (sk, pk) = Crypto::encode_into_key_pair(sk);
+        let sk = saksaha_crypto::generate_key();
+        let (sk, pk) = saksaha_crypto::encode_into_key_pair(sk);
         let pconf = PConfig {
             p2p: PersistedP2PConfig {
                 secret: sk,

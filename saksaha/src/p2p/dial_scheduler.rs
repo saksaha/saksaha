@@ -19,7 +19,7 @@ impl DialScheduler {
     pub fn new(
         task_queue: Arc<TaskQueue<Task>>,
         disc_iterator: Arc<Iterator>,
-        credential: Arc<Box<dyn Identity + Send + Sync>>,
+        identity: Arc<Identity>,
     ) -> DialScheduler {
         let min_interval = Duration::from_millis(2000);
 
@@ -27,6 +27,7 @@ impl DialScheduler {
             task_queue.clone(),
             min_interval,
             disc_iterator,
+            identity,
         );
 
         DialScheduler { handshake_routine }
@@ -43,6 +44,7 @@ struct HandshakeRoutine {
     min_interval: Duration,
     disc_iterator: Arc<Iterator>,
     handshake_op: Arc<HandshakeOp>,
+    identity: Arc<Identity>,
 }
 
 impl HandshakeRoutine {
@@ -50,6 +52,7 @@ impl HandshakeRoutine {
         task_queue: Arc<TaskQueue<Task>>,
         min_interval: Duration,
         disc_iterator: Arc<Iterator>,
+        identity: Arc<Identity>,
     ) -> HandshakeRoutine {
         let is_running = Arc::new(Mutex::new(false));
 
@@ -61,6 +64,7 @@ impl HandshakeRoutine {
             is_running,
             min_interval,
             handshake_op,
+            identity,
         }
     }
 
@@ -72,7 +76,7 @@ impl HandshakeRoutine {
         let task_queue = self.task_queue.clone();
         let disc_iterator = self.disc_iterator.clone();
         let handshake_op = self.handshake_op.clone();
-        // let credential = self.cre
+        let identity = self.identity.clone();
 
         tokio::spawn(async move {
             let mut is_running_lock = is_running.lock().await;
@@ -82,34 +86,39 @@ impl HandshakeRoutine {
             loop {
                 let start = SystemTime::now();
 
-                // let node_val = match disc_iterator.next().await {
-                //     Ok(n) => match n.get_value().await {
-                //         Some(v) => v,
-                //         None => {
-                //             error!("Can't retrieve next node. Node is empty");
-                //             continue;
-                //         }
-                //     },
-                //     Err(err) => {
-                //         error!(
-                //             "Discovery iterator cannot retrieve next \
-                //             node, err: {}",
-                //             err
-                //         );
-                //         continue;
-                //     }
-                // };
+                let node_val = match disc_iterator.next().await {
+                    Ok(n) => match n.get_value().await {
+                        Some(v) => v,
+                        None => {
+                            error!("Can't retrieve next node. Node is empty");
+                            continue;
+                        }
+                    },
+                    Err(err) => {
+                        error!(
+                            "Discovery iterator cannot retrieve next \
+                            node, err: {}",
+                            err
+                        );
+                        continue;
+                    }
+                };
 
-                // task_queue.push(Task::InitiateHandshake {
-                //     endpoint: node_val.addr.endpoint(),
-                //     my_public_key: ,
-                //     handshake_op: ,
-                // }).await;
-
-                // task_queue.push(Task::SendHandshakeSyn {
-                //     endpoint
-                //     handshake_op,
-                // });
+                match task_queue
+                    .push(Task::InitiateHandshake {
+                        ip: node_val.addr.ip,
+                        p2p_port: node_val.p2p_port,
+                        my_public_key: identity.public_key,
+                        handshake_op: handshake_op.clone(),
+                    })
+                    .await
+                {
+                    Ok(_) => (),
+                    Err(err) => {
+                        error!("Can't enqueue a task, err: {}", err);
+                        continue;
+                    }
+                };
 
                 match start.elapsed() {
                     Ok(d) => {
