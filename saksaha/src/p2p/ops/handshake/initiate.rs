@@ -1,9 +1,10 @@
-use thiserror::Error;
-use std::sync::Arc;
+use crate::p2p::state::HostState;
 use log::{debug, error};
 use saksaha_p2p_discovery::address::Address;
 use saksaha_p2p_identity::PUBLIC_KEY_LEN;
-use crate::p2p::state::HostState;
+use std::sync::Arc;
+use thiserror::Error;
+use tokio::net::TcpStream;
 
 pub(crate) struct HandshakeInitiate {
     host_state: Arc<HostState>,
@@ -13,32 +14,36 @@ pub(crate) struct HandshakeInitiate {
 pub enum HandshakeInitError {
     #[error("Aborting, request to my endpoint: {endpoint}")]
     MyEndpoint { endpoint: String },
+
+    #[error("Can't connect to endpoint")]
+    ConnectionFail(#[from] std::io::Error),
 }
 
 impl HandshakeInitiate {
     pub fn new(host_state: Arc<HostState>) -> HandshakeInitiate {
-        HandshakeInitiate {
-            host_state,
-        }
+        HandshakeInitiate { host_state }
     }
 
     pub async fn send_handshake_syn(
         &self,
         ip: String,
         p2p_port: u16,
-        public_key: [u8; PUBLIC_KEY_LEN]
+        public_key: [u8; PUBLIC_KEY_LEN],
     ) -> Result<(), HandshakeInitError> {
         let endpoint = format!("{}:{}", ip, p2p_port);
 
         let my_p2p_port = self.host_state.my_p2p_port;
 
         if super::is_my_endpoint(my_p2p_port, &endpoint) {
-            return Err(HandshakeInitError::MyEndpoint {
-                endpoint,
-            });
+            return Err(HandshakeInitError::MyEndpoint { endpoint });
         }
 
+        let peer_store = self.host_state.peer_store.clone();
 
+        let mut stream = match TcpStream::connect(endpoint).await {
+            Ok(s) => s,
+            Err(err) => return Err(HandshakeInitError::ConnectionFail(err)),
+        };
 
         // let my_sig = self.disc_state.id.sig();
         // let my_public_key_bytes = self.disc_state.id.public_key_bytes();
@@ -60,7 +65,6 @@ impl HandshakeInitiate {
         //     &endpoint,
         //     buf.len()
         // );
-
 
         Ok(())
     }

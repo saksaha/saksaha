@@ -9,7 +9,13 @@ use saksaha_task::task_queue::TaskQueue;
 use std::sync::Arc;
 use tokio::net::TcpListener;
 
-use super::{dial_scheduler::DialScheduler, listener::Listener, ops::handshake::HandshakeOp, state::HostState, task::{Task, TaskRunner}};
+use super::{
+    dial_scheduler::DialScheduler,
+    listener::Listener,
+    ops::handshake::HandshakeOp,
+    state::HostState,
+    task::{Task, TaskRunner},
+};
 
 pub struct Host {
     disc: Arc<Disc>,
@@ -47,12 +53,14 @@ impl Host {
                 my_rpc_port,
                 p2p_socket.port,
                 task_queue.clone(),
+                peer_store.clone(),
             );
             Arc::new(s)
         };
 
         let listener = {
-            Listener::new(p2p_socket.listener, host_state.clone())
+            let l = Listener::new(p2p_socket.listener, host_state.clone());
+            Arc::new(l)
         };
 
         let handshake_op = {
@@ -60,28 +68,29 @@ impl Host {
             Arc::new(h)
         };
 
-        let disc = Disc::init(
-            identity.clone(),
-            disc_port,
-            p2p_socket.port,
-            bootstrap_urls,
-            default_bootstrap_urls,
-        )
-        .await?;
+        let disc = {
+            let d = Disc::init(
+                identity.clone(),
+                disc_port,
+                p2p_socket.port,
+                bootstrap_urls,
+                default_bootstrap_urls,
+            )
+            .await?;
+            Arc::new(d)
+        };
 
         let dial_scheduler = {
             let d = DialScheduler::new(
                 disc.iter(),
-                // identity.clone(),
                 host_state.clone(),
                 handshake_op.clone(),
-
             );
             Arc::new(d)
         };
 
         let host = Host {
-            disc: Arc::new(disc),
+            disc,
             dial_scheduler,
             task_queue,
         };
