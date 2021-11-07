@@ -28,7 +28,6 @@ pub struct Disc {
     task_queue: Arc<TaskQueue<Task>>,
     listener: Arc<Listener>,
     state: Arc<DiscState>,
-    whoareyou_op: Arc<WhoareyouOp>,
     dial_scheduler: Arc<DialScheduler>,
 }
 
@@ -36,8 +35,7 @@ impl Disc {
     pub async fn init(
         id: Arc<Box<dyn Identity + Send + Sync>>,
         my_disc_port: Option<u16>,
-        // my_p2p_port: u16,
-        get_p2p_port: Box<dyn Fn(Listener) -> u16>,
+        my_p2p_port: u16,
         bootstrap_urls: Option<Vec<String>>,
         default_bootstrap_urls: String,
     ) -> Result<Disc, String> {
@@ -54,48 +52,17 @@ impl Disc {
         let active_calls = Arc::new(ActiveCalls::new());
         let task_queue = Arc::new(TaskQueue::new(Box::new(TaskRunner {})));
 
-        let my_disc_port = match my_disc_port {
-            Some(p) => p,
-            None => 0,
+        let (udp_socket, port) = {
+            let (socket, port) = setup_udp_socket(my_disc_port).await?;
+            (Arc::new(socket), port)
         };
-
-        let local_addr = format!("127.0.0.1:{}", my_disc_port);
-
-        let (udp_socket, local_addr) = match UdpSocket::bind(local_addr).await {
-            Ok(s) => {
-                let local_addr = match s.local_addr() {
-                    Ok(a) => a,
-                    Err(err) => {
-                        return Err(format!(
-                            "Couldn't get local address of udp socket, err: {}",
-                            err
-                        ))
-                    }
-                };
-
-                info!(
-                    "Started - Discovery udp socket opened, local_addr: {}",
-                    local_addr
-                );
-
-                (Arc::new(s), local_addr)
-            }
-            Err(err) => {
-                return Err(format!(
-                    "Couldn't open UdpSocket, err: {}",
-                    err.to_string()
-                ));
-            }
-        };
-
-        // let my_p2p_port = get_p2p_port();
 
         let state = {
             let s = DiscState::new(
                 id,
                 table,
                 active_calls,
-                local_addr.port(),
+                port,
                 my_p2p_port,
             );
             Arc::new(s)
@@ -133,7 +100,6 @@ impl Disc {
             task_queue,
             state,
             listener,
-            whoareyou_op: whoareyou_op.clone(),
             dial_scheduler,
         };
 
@@ -141,16 +107,8 @@ impl Disc {
     }
 
     pub async fn start(&self) -> Result<(), String> {
-        match self.listener.start().await {
-            Ok(port) => port,
-            Err(err) => return Err(err),
-        };
-
-        match self.dial_scheduler.start() {
-            Ok(_) => (),
-            Err(err) => return Err(err),
-        };
-
+        self.listener.start()?;
+        self.dial_scheduler.start()?;
         self.task_queue.run_loop();
 
         Ok(())
@@ -159,6 +117,46 @@ impl Disc {
     pub fn iter(&self) -> Arc<Iterator> {
         self.state.table.iter()
     }
+}
+
+pub async fn setup_udp_socket(
+    my_disc_port: Option<u16>,
+) -> Result<(UdpSocket, u16), String> {
+    let my_disc_port = match my_disc_port {
+        Some(p) => p,
+        None => 0,
+    };
+
+    let local_addr = format!("127.0.0.1:{}", my_disc_port);
+
+    let (udp_socket, port) = match UdpSocket::bind(local_addr).await {
+        Ok(s) => {
+            let local_addr = match s.local_addr() {
+                Ok(a) => a,
+                Err(err) => {
+                    return Err(format!(
+                        "Couldn't get local address of udp socket, err: {}",
+                        err
+                    ))
+                }
+            };
+
+            info!(
+                "Started - Discovery udp socket opened, local_addr: {}",
+                local_addr
+            );
+
+            (s, local_addr.port())
+        }
+        Err(err) => {
+            return Err(format!(
+                "Couldn't open UdpSocket, err: {}",
+                err.to_string()
+            ));
+        }
+    };
+
+    Ok((udp_socket, port))
 }
 
 pub(crate) struct DiscState {

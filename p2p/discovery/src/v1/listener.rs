@@ -38,15 +38,8 @@ impl Listener {
         }
     }
 
-    pub async fn start(&self) -> Result<(), String> {
-        match self.run_loop() {
-            Ok(_) => (),
-            Err(err) => {
-                return Err(format!("Couldn't start loop, err: {}", err));
-            }
-        };
-
-        Ok(())
+    pub fn start(&self) -> Result<(), String> {
+        self.run_loop()
     }
 
     pub fn run_loop(&self) -> Result<(), String> {
