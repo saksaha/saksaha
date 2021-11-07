@@ -11,9 +11,11 @@ pub use k256::{
 pub const PUBLIC_KEY_LEN: usize = 65;
 pub const SAKSAHA: &[u8; 7] = b"saksaha";
 
+pub type PeerId = [u8; PUBLIC_KEY_LEN];
+
 pub struct Identity {
     pub secret_key: SecretKey,
-    pub public_key: [u8; PUBLIC_KEY_LEN],
+    pub public_key: PeerId,
     pub peer_id: String,
     pub sig: Signature,
 }
@@ -40,7 +42,7 @@ impl Identity {
             }
         };
 
-        let public_key: [u8; 65] = {
+        let public_key: PeerId = {
             let b = secret_key.public_key().to_encoded_point(false).to_bytes();
 
             if b.len() != 65 {

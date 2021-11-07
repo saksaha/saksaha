@@ -1,10 +1,10 @@
 use crate::{
     node::socket::TcpSocket, pconfig::PersistedP2PConfig,
-    peer::peer_store::PeerStore,
 };
 use log::{error, info};
 use saksaha_p2p_discovery::Disc;
 use saksaha_p2p_identity::Identity;
+use saksaha_peer::peer_store::PeerStore;
 use saksaha_task::task_queue::TaskQueue;
 use std::sync::Arc;
 use tokio::net::TcpListener;
@@ -43,8 +43,8 @@ impl Host {
         };
 
         let task_queue = {
-            let task_runner = TaskRunner {};
-            Arc::new(TaskQueue::new(Box::new(task_runner)))
+            let q = TaskQueue::new("P2P".to_string(), Box::new(TaskRunner {}));
+            Arc::new(q)
         };
 
         let host_state = {
