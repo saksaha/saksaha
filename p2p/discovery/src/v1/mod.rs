@@ -27,9 +27,9 @@ use tokio::net::UdpSocket;
 pub const CAPACITY: usize = 32;
 
 pub struct Disc {
-    task_queue: Arc<TaskQueue<Task>>,
+    // task_queue: Arc<TaskQueue<Task>>,
     listener: Arc<Listener>,
-    state: Arc<DiscState>,
+    disc_state: Arc<DiscState>,
     dial_scheduler: Arc<DialScheduler>,
 }
 
@@ -66,36 +66,37 @@ impl Disc {
             (Arc::new(socket), port)
         };
 
-        let state = {
+        let disc_state = {
             let s = DiscState::new(
                 id,
                 table,
                 active_calls,
                 my_disc_port,
                 my_p2p_port,
+                task_queue.clone(),
             );
             Arc::new(s)
         };
 
         let whoareyou_op = {
-            let w = WhoareyouOp::new(udp_socket.clone(), state.clone());
+            let w = WhoareyouOp::new(udp_socket.clone(), disc_state.clone());
             Arc::new(w)
         };
 
         let listener = {
             let l = Listener::new(
-                state.clone(),
+                disc_state.clone(),
                 udp_socket.clone(),
                 whoareyou_op.clone(),
-                task_queue.clone(),
+                // task_queue.clone(),
             );
             Arc::new(l)
         };
 
         let dial_scheduler = {
             let s = DialScheduler::init(
-                state.clone(),
-                task_queue.clone(),
+                disc_state.clone(),
+                // task_queue.clone(),
                 whoareyou_op.clone(),
                 bootstrap_urls,
                 default_bootstrap_urls,
@@ -104,8 +105,8 @@ impl Disc {
         };
 
         let disc = Disc {
-            task_queue,
-            state,
+            // task_queue,
+            disc_state,
             listener,
             dial_scheduler,
         };
@@ -114,16 +115,15 @@ impl Disc {
     }
 
     pub async fn start(&self) -> Result<(), String> {
-
         self.listener.start()?;
         self.dial_scheduler.start()?;
-        self.task_queue.run_loop();
+        self.disc_state.task_queue.run_loop();
 
         Ok(())
     }
 
     pub fn iter(&self) -> Arc<Iterator> {
-        self.state.table.iter()
+        self.disc_state.table.iter()
     }
 }
 

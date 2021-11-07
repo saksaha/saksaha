@@ -9,15 +9,14 @@ use std::{
 use tokio::sync::Mutex;
 
 pub(crate) struct DialScheduler {
+    disc_state: Arc<DiscState>,
     revalidate_routine: RevalidateRoutine,
-    task_queue: Arc<TaskQueue<Task>>,
     whoareyou_op: Arc<WhoareyouOp>,
 }
 
 impl DialScheduler {
     pub async fn init(
         disc_state: Arc<DiscState>,
-        task_queue: Arc<TaskQueue<Task>>,
         whoareyou_op: Arc<WhoareyouOp>,
         bootstrap_urls: Option<Vec<String>>,
         default_bootstrap_urls: String,
@@ -26,13 +25,12 @@ impl DialScheduler {
 
         let revalidate_routine = RevalidateRoutine::new(
             disc_state.clone(),
-            task_queue.clone(),
             min_interval,
         );
 
         let d = DialScheduler {
             revalidate_routine,
-            task_queue,
+            disc_state: disc_state.clone(),
             whoareyou_op,
         };
 
@@ -95,7 +93,7 @@ impl DialScheduler {
                     addr,
                 };
 
-                match self.task_queue.push(task).await {
+                match self.disc_state.task_queue.push(task).await {
                     Ok(_) => (),
                     Err(err) => {
                         warn!("Couldn't enque new task, err: {}", err);
@@ -112,7 +110,6 @@ impl DialScheduler {
 
 pub(crate) struct RevalidateRoutine {
     disc_state: Arc<DiscState>,
-    task_queue: Arc<TaskQueue<Task>>,
     is_running: Arc<Mutex<bool>>,
     min_interval: Duration,
 }
@@ -120,7 +117,6 @@ pub(crate) struct RevalidateRoutine {
 impl RevalidateRoutine {
     pub fn new(
         disc_state: Arc<DiscState>,
-        task_queue: Arc<TaskQueue<Task>>,
         min_interval: Duration,
     ) -> RevalidateRoutine {
         let is_running = Arc::new(Mutex::new(false));
@@ -128,7 +124,6 @@ impl RevalidateRoutine {
         RevalidateRoutine {
             is_running,
             disc_state,
-            task_queue,
             min_interval,
         }
     }
