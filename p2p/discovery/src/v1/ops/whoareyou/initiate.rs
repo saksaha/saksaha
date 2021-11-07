@@ -75,8 +75,8 @@ impl WhoareyouInitiate {
             return Err(WhoareyouInitError::MyEndpoint { endpoint });
         }
 
-        let my_sig = self.disc_state.id.sig;
-        let my_public_key = self.disc_state.id.public_key;
+        let my_sig = self.disc_state.identity.sig;
+        let my_public_key = self.disc_state.identity.public_key;
 
         let way_syn = WhoAreYouSyn::new(my_sig, my_p2p_port, my_public_key);
 
