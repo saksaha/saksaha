@@ -14,7 +14,7 @@ pub(crate) enum Task {
     },
 }
 
-pub struct TaskRunner;
+pub(crate) struct TaskRunner;
 
 impl TaskRun<Task> for TaskRunner {
     fn run(&self, task: Task) -> TaskResult {

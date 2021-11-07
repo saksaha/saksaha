@@ -13,7 +13,7 @@ impl HandshakeInitiate {
         &self,
         ip: String,
         p2p_port: u16,
-        public_key_bytes: [u8; PUBLIC_KEY_LEN]
+        public_key: [u8; PUBLIC_KEY_LEN]
     ) -> Result<(), String> {
         let endpoint = format!("{}:{}", ip, p2p_port);
 

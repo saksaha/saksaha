@@ -79,13 +79,4 @@ impl Identity {
 
         Ok(credential)
     }
-
 }
-
-// pub trait Identity {
-//     fn secret_key(&self) -> &SecretKey;
-
-//     fn public_key_bytes(&self) -> [u8; 65];
-
-//     fn sig(&self) -> Signature;
-// }
