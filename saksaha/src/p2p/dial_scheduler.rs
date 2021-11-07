@@ -2,8 +2,6 @@ use crate::p2p::ops::handshake::{self};
 use super::{ops::handshake::HandshakeOp, state::HostState, task::Task};
 use log::{debug, error, info, warn};
 use saksaha_p2p_discovery::iterator::Iterator;
-use saksaha_p2p_identity::Identity;
-use saksaha_task::task_queue::TaskQueue;
 use std::{
     sync::Arc,
     time::{Duration, SystemTime},
@@ -16,19 +14,15 @@ pub(crate) struct DialScheduler {
 
 impl DialScheduler {
     pub fn new(
-        // task_queue: Arc<TaskQueue<Task>>,
         disc_iterator: Arc<Iterator>,
-        // identity: Arc<Identity>,
         host_state: Arc<HostState>,
         handshake_op: Arc<HandshakeOp>,
     ) -> DialScheduler {
         let min_interval = Duration::from_millis(2000);
 
         let handshake_routine = HandshakeRoutine::new(
-            // task_queue.clone(),
             min_interval,
             disc_iterator,
-            // identity,
             host_state,
             handshake_op,
         );
@@ -42,33 +36,27 @@ impl DialScheduler {
 }
 
 struct HandshakeRoutine {
-    // task_queue: Arc<TaskQueue<Task>>,
     is_running: Arc<Mutex<bool>>,
     min_interval: Duration,
     disc_iterator: Arc<Iterator>,
     handshake_op: Arc<HandshakeOp>,
-    // identity: Arc<Identity>,
     host_state: Arc<HostState>,
 }
 
 impl HandshakeRoutine {
     pub fn new(
-        // task_queue: Arc<TaskQueue<Task>>,
         min_interval: Duration,
         disc_iterator: Arc<Iterator>,
-        // identity: Arc<Identity>,
         host_state: Arc<HostState>,
         handshake_op: Arc<HandshakeOp>,
     ) -> HandshakeRoutine {
         let is_running = Arc::new(Mutex::new(false));
 
         HandshakeRoutine {
-            // task_queue,
             disc_iterator,
             is_running,
             min_interval,
             handshake_op,
-            // identity,
             host_state,
         }
     }

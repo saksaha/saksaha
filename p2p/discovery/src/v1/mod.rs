@@ -27,7 +27,6 @@ use tokio::net::UdpSocket;
 pub const CAPACITY: usize = 32;
 
 pub struct Disc {
-    // task_queue: Arc<TaskQueue<Task>>,
     listener: Arc<Listener>,
     disc_state: Arc<DiscState>,
     dial_scheduler: Arc<DialScheduler>,
