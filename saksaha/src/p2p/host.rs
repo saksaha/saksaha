@@ -4,7 +4,10 @@ use super::{
     listener::{self, Listener},
     task::{Task, TaskRunner},
 };
-use crate::{pconfig::PersistedP2PConfig, peer::peer_store::PeerStore};
+use crate::{
+    node::socket::TcpSocket, pconfig::PersistedP2PConfig,
+    peer::peer_store::PeerStore,
+};
 use log::{error, info};
 use saksaha_p2p_discovery::Disc;
 use saksaha_p2p_identity::Identity;
@@ -22,7 +25,7 @@ impl Host {
     pub async fn init(
         p2p_config: PersistedP2PConfig,
         rpc_port: u16,
-        p2p_port: Option<u16>,
+        p2p_socket: TcpSocket,
         disc_port: Option<u16>,
         bootstrap_urls: Option<Vec<String>>,
         default_bootstrap_urls: String,
@@ -39,7 +42,6 @@ impl Host {
             Arc::new(c)
         };
 
-
         let peer_store = {
             let ps = match PeerStore::new(10) {
                 Ok(p) => Arc::new(p),
@@ -51,17 +53,14 @@ impl Host {
         let p2p_listener = Listener::new(
             credential.clone(),
             peer_store.clone(),
+            p2p_socket.listener,
             rpc_port,
-            p2p_port,
         );
-
-        p2p_listener.start().await?;
 
         let disc = Disc::init(
             credential.clone(),
             disc_port,
-            Box::new(Listener::get_port),
-            // tcp_port,
+            p2p_socket.port,
             bootstrap_urls,
             default_bootstrap_urls,
         )

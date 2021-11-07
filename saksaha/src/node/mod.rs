@@ -1,4 +1,4 @@
-mod init;
+pub mod socket;
 
 use crate::{
     p2p::host::Host,
@@ -35,7 +35,7 @@ impl Node {
         let _ = match runtime {
             Ok(r) => r.block_on(async {
                 match self
-                    .initialize(
+                    .init_and_start(
                         rpc_port,
                         disc_port,
                         p2p_port,
@@ -83,7 +83,7 @@ impl Node {
         Ok(())
     }
 
-    async fn initialize(
+    async fn init_and_start(
         &self,
         rpc_port: Option<u16>,
         disc_port: Option<u16>,
@@ -92,32 +92,21 @@ impl Node {
         pconfig: PConfig,
         default_bootstrap_urls: String,
     ) -> Result<(), String> {
-        init::setup_sockets(rpc_port, disc_port, p2p_port);
+        let sockets = socket::setup_sockets(rpc_port, p2p_port).await?;
 
-        let p2p_config = pconfig.p2p;
-
-        let rpc = RPC::new(rpc_port);
-        let rpc_started = rpc.start();
-        let rpc_port: u16 = match rpc_started.await {
-            Ok(port) => port,
-            Err(err) => {
-                return Err(format!(
-                    "Error joining rpc start thread, err: {}",
-                    err
-                ));
-            }
-        };
+        let rpc = RPC::new(sockets.rpc.listener);
 
         let host = Host::init(
-            p2p_config,
-            rpc_port,
-            p2p_port,
+            pconfig.p2p,
+            sockets.rpc.port,
+            sockets.p2p,
             disc_port,
             bootstrap_urls,
             default_bootstrap_urls,
         )
         .await?;
 
+        rpc.start().await?;
         host.start().await?;
 
         Ok(())
