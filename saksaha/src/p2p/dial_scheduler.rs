@@ -1,5 +1,4 @@
 use crate::p2p::ops::handshake::{self};
-
 use super::{ops::handshake::HandshakeOp, task::Task};
 use log::{debug, error, info, warn};
 use saksaha_p2p_discovery::iterator::Iterator;

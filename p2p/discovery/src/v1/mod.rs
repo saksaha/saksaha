@@ -51,8 +51,15 @@ impl Disc {
             Arc::new(t)
         };
 
-        let active_calls = Arc::new(ActiveCalls::new());
-        let task_queue = Arc::new(TaskQueue::new(Box::new(TaskRunner {})));
+        let active_calls = {
+            let c = ActiveCalls::new();
+            Arc::new(c)
+        };
+
+        let task_queue = {
+            let q = TaskQueue::new(Box::new(TaskRunner {}));
+            Arc::new(q)
+        };
 
         let (udp_socket, my_disc_port) = {
             let (socket, port) = setup_udp_socket(my_disc_port).await?;
@@ -86,17 +93,15 @@ impl Disc {
         };
 
         let dial_scheduler = {
-            let d = DialScheduler::new(
+            let s = DialScheduler::init(
                 state.clone(),
                 task_queue.clone(),
                 whoareyou_op.clone(),
-            );
-            Arc::new(d)
+                bootstrap_urls,
+                default_bootstrap_urls,
+            ).await;
+            Arc::new(s)
         };
-
-        dial_scheduler
-            .enqueue_initial_tasks(bootstrap_urls, default_bootstrap_urls)
-            .await;
 
         let disc = Disc {
             task_queue,
@@ -109,6 +114,7 @@ impl Disc {
     }
 
     pub async fn start(&self) -> Result<(), String> {
+
         self.listener.start()?;
         self.dial_scheduler.start()?;
         self.task_queue.run_loop();
