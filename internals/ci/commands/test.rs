@@ -31,7 +31,7 @@ impl Commandify for Test {
             // let args = [vec!["test", "--"], args]
             //     .concat();
 
-            log!("Executing `{} {:?}`\n", program, args);
+            log!("Executing `{} {:?}`", program, args);
 
             Command::new(program)
                 .args(args)

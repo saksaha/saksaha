@@ -27,7 +27,7 @@ impl Commandify for Postcommit {
             };
             let args = [vec!["log", "-1"], args].concat();
 
-            log!("Executing `{} {:?}`\n", program, args,);
+            log!("Executing `{} {:?}`", program, args,);
 
             let cmd = Command::new(program)
                 .args(args)
@@ -38,10 +38,10 @@ impl Commandify for Postcommit {
 
             let output = cmd.wait_with_output().unwrap();
             let output = String::from_utf8_lossy(&output.stdout);
-            
+
             let opening = ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>";
             let closing = "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<";
-            println!("\n {}last commit message\n\n{}\n{}", opening, output, closing); 
+            println!("\n {}last commit message\n\n{}\n{}", opening, output, closing);
 
             return Some(true);
         }

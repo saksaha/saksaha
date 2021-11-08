@@ -43,7 +43,7 @@ pub fn expand(dest: PathBuf) {
         Err(err) if err.kind() == ErrorKind::NotFound => (),
         Err(err) => panic!("Cannot remove destination, err: {}", err),
         Ok(_) => {
-            log!("Removed destination, {:?}\n", dest);
+            log!("Removed destination, {:?}", dest);
         }
     }
 
@@ -86,7 +86,7 @@ pub fn expand(dest: PathBuf) {
 fn check_rustfmt() -> bool {
     let is_rust_fmt = match Command::new("rustfmt").output() {
         Ok(_) => {
-            log!("rustfmt is found, will format expanded output\n");
+            log!("rustfmt is found, will format expanded output");
             true
         }
         Err(err) => {
@@ -101,7 +101,7 @@ fn check_rustfmt() -> bool {
 }
 
 fn execute_rustfmt(file_path: PathBuf) {
-    log!("Executing rustfmt on file: {:?}\n", file_path);
+    log!("Executing rustfmt on file: {:?}", file_path);
 
     Command::new("rustfmt")
         .arg(file_path.to_str().expect("file path must be stringified"))

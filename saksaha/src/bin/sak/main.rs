@@ -1,20 +1,21 @@
+use std::sync::Arc;
+
 use clap::{App, Arg};
-use logger::log;
-use saksaha::{
-    common::Result,
-    err,
-    node::{status::Status, Node},
-    pconfig::PConfig,
-};
+use log::{error, info};
+use saksaha::{node::Node, pconfig::PConfig, process::Process};
+
+const DEFAULT_BOOTSTRAP_URLS: &str =
+    include_str!("../../../../config/bootstrap_urls");
 
 struct Args {
     config: Option<String>,
     rpc_port: Option<u16>,
     disc_port: Option<u16>,
-    bootstrap_urls: Option<Vec<String>>,
+    p2p_port: Option<u16>,
+    bootstrap_endpoints: Option<Vec<String>>,
 }
 
-fn get_args() -> Result<Args> {
+fn get_args() -> Result<Args, String> {
     let flags = App::new("Saksaha rust")
         .version("0.1")
         .author("Saksaha <team@saksaha.com>")
@@ -49,6 +50,12 @@ fn get_args() -> Result<Args> {
                 .value_name("PORT")
                 .about("Discovery port"),
         )
+        .arg(
+            Arg::new("p2p_port")
+                .long("p2p-port")
+                .value_name("PORT")
+                .about("P2P port"),
+        )
         .get_matches();
 
     let config = match flags.value_of("config") {
@@ -60,7 +67,10 @@ fn get_args() -> Result<Args> {
         Some(p) => match p.parse::<u16>() {
             Ok(p) => Some(p),
             Err(err) => {
-                return err!("Cannot parse rpc port (u16), err: {}", err);
+                return Err(format!(
+                    "Cannot parse rpc port (u16), err: {}",
+                    err
+                ));
             }
         },
         None => None,
@@ -70,13 +80,29 @@ fn get_args() -> Result<Args> {
         Some(p) => match p.parse::<u16>() {
             Ok(p) => Some(p),
             Err(err) => {
-                return err!("Cannot parse the disc port (u16), err: {}", err);
+                return Err(format!(
+                    "Cannot parse the disc port (u16), err: {}",
+                    err
+                ))
             }
         },
         None => None,
     };
 
-    let bootstrap_urls = match flags.values_of("bootstrap_urls") {
+    let p2p_port = match flags.value_of("p2p_port") {
+        Some(p) => match p.parse::<u16>() {
+            Ok(p) => Some(p),
+            Err(err) => {
+                return Err(format!(
+                    "Cannot parse the p2p port (u16), err: {}",
+                    err
+                ))
+            }
+        },
+        None => None,
+    };
+
+    let bootstrap_endpoints = match flags.values_of("bootstrap_endpoints") {
         Some(b) => Some(b.map(str::to_string).collect()),
         None => None,
     };
@@ -85,60 +111,78 @@ fn get_args() -> Result<Args> {
         config,
         rpc_port,
         disc_port,
-        bootstrap_urls,
+        p2p_port,
+        bootstrap_endpoints,
     })
 }
 
 fn main() {
+    saksaha_logger::init();
+
     let args = match get_args() {
         Ok(a) => a,
         Err(err) => {
-            log!(DEBUG, "Error parsing command line arguments, err: {}", err);
+            error!("Can't parse command line arguments, err: {}", err);
 
             std::process::exit(1);
         }
     };
 
-    let pconf = make_pconfig(args.config);
+    let pconf = {
+        let c = match PConfig::from_path(args.config) {
+            Ok(p) => p,
+            Err(err) => {
+                error!(
+                    "Error creating a persisted configuration, err: {}",
+                    err
+                );
 
-    let node = match Node::new(
+                std::process::exit(1);
+            }
+        };
+
+        info!("Successfully loaded config, {:?}", c);
+        c
+    };
+
+    let default_bootstrap_urls = {
+        DEFAULT_BOOTSTRAP_URLS.to_string()
+    };
+
+    let node = Arc::new(Node::new());
+
+    Process::init(node.clone());
+
+    match node.start(
         args.rpc_port,
         args.disc_port,
-        args.bootstrap_urls,
+        args.p2p_port,
+        args.bootstrap_endpoints,
         pconf,
+        default_bootstrap_urls,
     ) {
-        Ok(n) => n,
+        Ok(_) => (),
         Err(err) => {
-            log!(DEBUG, "Error creating a node, err: {}\n", err);
+            error!("Can't start a node, err: {}", err);
 
             std::process::exit(1);
         }
     };
-
-    match node.start() {
-        Status::Launched => (),
-        Status::SetupFailed(err) => {
-            log!(DEBUG, "Error starting a node, err: {}", err);
-
-            std::process::exit(1);
-        }
-    }
 }
 
-fn make_pconfig(config_path: Option<String>) -> PConfig {
-    let pconf = match PConfig::from_path(config_path) {
-        Ok(p) => p,
-        Err(err) => {
-            log!(
-                DEBUG,
-                "Error creating a persisted configuration, err: {}\n",
-                err
-            );
+// fn make_pconfig(config_path: Option<String>) -> PConfig {
+//     let pconf = match PConfig::from_path(config_path) {
+//         Ok(p) => p,
+//         Err(err) => {
+//             error!(
+//                 "Error creating a persisted configuration, err: {}",
+//                 err
+//             );
 
-            std::process::exit(1);
-        }
-    };
+//             std::process::exit(1);
+//         }
+//     };
 
-    log!(DEBUG, "Successfully loaded config, {:?}\n", pconf);
-    pconf
-}
+//     info!("Successfully loaded config, {:?}", pconf);
+//     pconf
+// }

@@ -1,8 +1,14 @@
 [workspace]
 
 members = [
-  "saksaha",
   "logger",
+  "saksaha",
+  "crypto",
+  "proofs",
+  "peer",
+  "p2p/discovery",
+  "p2p/identity",
+  "task",
 
   # internals
   "internals/ci"
