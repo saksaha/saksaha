@@ -4,7 +4,7 @@ use crate::{
 use log::{error, info};
 use saksaha_p2p_discovery::Disc;
 use saksaha_p2p_identity::Identity;
-use saksaha_peer::peer_store::PeerStore;
+use saksaha_peer::PeerStore;
 use saksaha_task::task_queue::TaskQueue;
 use std::sync::Arc;
 use tokio::net::TcpListener;
@@ -38,7 +38,7 @@ impl Host {
         };
 
         let peer_store = {
-            let ps = PeerStore::new(10)?;
+            let ps = PeerStore::init().await?;
             Arc::new(ps)
         };
 
