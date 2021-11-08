@@ -1,12 +1,13 @@
 use super::msg::{WhoAreYouAck, WhoAreYouSyn};
 use crate::v1::address::Address;
 use crate::v1::ops::Message;
-use crate::v1::table::NodeValue;
+use crate::v1::table::{Node, NodeValue};
 use crate::v1::DiscState;
 use log::debug;
 use std::sync::Arc;
 use thiserror::Error;
 use tokio::net::UdpSocket;
+use tokio::sync::mpsc::error::TrySendError;
 
 #[derive(Error, Debug)]
 pub enum WhoareyouInitError {
@@ -44,6 +45,12 @@ pub enum WhoareyouInitError {
 
     #[error("Can't add node to table, err: {err}")]
     TableAddFail { err: String },
+
+    #[error("Can't put back a node to table")]
+    NodePutBackFail {
+        #[from]
+        source: TrySendError<Arc<Node>>,
+    },
 }
 
 pub(crate) struct WhoareyouInitiate {
@@ -115,6 +122,15 @@ impl WhoareyouInitiate {
         let way_ack = match WhoAreYouAck::parse(buf) {
             Ok(m) => m,
             Err(err) => {
+                match self.disc_state.table.put_back(table_node) {
+                    Ok(_) => (),
+                    Err(err) => {
+                        return Err(WhoareyouInitError::NodePutBackFail {
+                            source: err,
+                        })
+                    }
+                };
+
                 return Err(WhoareyouInitError::MessageParseFail { err });
             }
         };

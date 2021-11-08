@@ -6,6 +6,7 @@ members = [
   "crypto",
   "proofs",
   "peer",
+  "process",
   "p2p/discovery",
   "p2p/identity",
   "task",

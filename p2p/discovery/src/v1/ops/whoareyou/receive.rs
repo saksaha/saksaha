@@ -26,7 +26,10 @@ pub enum WhoareyouRecvError {
     TableIsFull { endpoint: String, err: String },
 
     #[error("Couldn't sent msg through socket")]
-    SendFail(#[from] std::io::Error),
+    SendFail {
+        #[from]
+        source: std::io::Error
+    },
 
     #[error("Can't add node to table, err: {err}")]
     TableAddFail { err: String },

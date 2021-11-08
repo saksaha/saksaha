@@ -3,15 +3,12 @@ use crate::{iterator::Iterator, CAPACITY};
 use log::{debug, error, info, warn};
 use rand::prelude::*;
 use saksaha_crypto::Signature;
-use saksaha_p2p_identity::{PUBLIC_KEY_LEN, PeerId};
+use saksaha_p2p_identity::{PeerId, PUBLIC_KEY_LEN};
 use std::{
     collections::{HashMap, HashSet},
     sync::Arc,
 };
-use tokio::sync::{
-    mpsc::{self, Receiver, Sender},
-    Mutex, MutexGuard,
-};
+use tokio::sync::{Mutex, MutexGuard, mpsc::{self, Receiver, Sender, error::TrySendError}};
 
 type Nodes = HashMap<PeerId, Arc<Node>>;
 
@@ -159,6 +156,13 @@ impl Table {
         Ok((public_key, endpoint))
     }
 
+    pub fn put_back(&self, node: Arc<Node>) -> Result<(), TrySendError<Arc<Node>>> {
+        match self.slots_tx.try_send(node) {
+            Ok(_) => Ok(()),
+            Err(err) => return Err(err),
+        }
+    }
+
     // pub async fn reserve(&self) -> Result<Arc<Node>, String> {
     //     let mut slots_rx = self.slots_rx.lock().await;
 
@@ -185,6 +189,7 @@ impl Table {
     }
 }
 
+#[derive(Debug)]
 pub struct Node {
     value: Arc<Mutex<NodeValue>>,
 }
@@ -203,7 +208,7 @@ impl Node {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct IdentifiedValue {
     pub addr: Address,
     pub sig: Signature,
@@ -211,6 +216,7 @@ pub struct IdentifiedValue {
     pub public_key: PeerId,
 }
 
+#[derive(Debug)]
 pub enum NodeValue {
     Empty,
 

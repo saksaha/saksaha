@@ -1,13 +1,12 @@
-// use crate::node::Node;
-// use log::{error, info};
-// use once_cell::sync::OnceCell;
-// use std::sync::Arc;
+use log::{error, info};
+use once_cell::sync::OnceCell;
+use std::sync::Arc;
 
-// static INSTANCE: OnceCell<Process> = OnceCell::new();
+static INSTANCE: OnceCell<Process> = OnceCell::new();
 
-// pub struct Process {
-//     node: Arc<Node>,
-// }
+pub struct Process {
+    // node: Arc<Node>,
+}
 
 // impl Process {
 //     pub fn init(node: Arc<Node>) {
