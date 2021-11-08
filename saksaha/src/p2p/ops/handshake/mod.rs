@@ -1,11 +1,9 @@
-use std::sync::Arc;
-
-use crate::p2p::state::HostState;
-
-use self::{initiate::HandshakeInitiate, receive::HandshakeReceive};
-
 pub mod initiate;
 pub mod receive;
+
+use std::sync::Arc;
+use crate::p2p::state::HostState;
+use self::{initiate::HandshakeInitiate, receive::HandshakeReceive};
 
 pub(crate) struct HandshakeOp {
     pub initiate: HandshakeInitiate,
