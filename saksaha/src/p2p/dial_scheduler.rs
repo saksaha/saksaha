@@ -1,7 +1,7 @@
-use crate::p2p::ops::handshake::{self};
-use super::{ops::handshake::HandshakeOp, state::HostState, task::Task};
+use super::{state::HostState, task::Task};
 use log::{debug, error, info, warn};
 use saksaha_p2p_discovery::iterator::Iterator;
+use saksaha_p2p_transport::TransportFactory;
 use std::{
     sync::Arc,
     time::{Duration, SystemTime},
@@ -16,7 +16,7 @@ impl DialScheduler {
     pub fn new(
         disc_iterator: Arc<Iterator>,
         host_state: Arc<HostState>,
-        handshake_op: Arc<HandshakeOp>,
+        transport_factory: Arc<TransportFactory>,
     ) -> DialScheduler {
         let min_interval = Duration::from_millis(2000);
 
@@ -24,7 +24,7 @@ impl DialScheduler {
             min_interval,
             disc_iterator,
             host_state,
-            handshake_op,
+            transport_factory.clone(),
         );
 
         DialScheduler { handshake_routine }
@@ -39,7 +39,7 @@ struct HandshakeRoutine {
     is_running: Arc<Mutex<bool>>,
     min_interval: Duration,
     disc_iterator: Arc<Iterator>,
-    handshake_op: Arc<HandshakeOp>,
+    transport_factory: Arc<TransportFactory>,
     host_state: Arc<HostState>,
 }
 
@@ -48,7 +48,7 @@ impl HandshakeRoutine {
         min_interval: Duration,
         disc_iterator: Arc<Iterator>,
         host_state: Arc<HostState>,
-        handshake_op: Arc<HandshakeOp>,
+        transport_factory: Arc<TransportFactory>,
     ) -> HandshakeRoutine {
         let is_running = Arc::new(Mutex::new(false));
 
@@ -56,7 +56,7 @@ impl HandshakeRoutine {
             disc_iterator,
             is_running,
             min_interval,
-            handshake_op,
+            transport_factory,
             host_state,
         }
     }
@@ -68,8 +68,7 @@ impl HandshakeRoutine {
         let min_interval = self.min_interval;
         let task_queue = self.host_state.task_queue.clone();
         let disc_iterator = self.disc_iterator.clone();
-        let handshake_op = self.handshake_op.clone();
-        let identity = self.host_state.identity.clone();
+        let transport_factory = self.transport_factory.clone();
 
         tokio::spawn(async move {
             let mut is_running_lock = is_running.lock().await;
@@ -101,8 +100,7 @@ impl HandshakeRoutine {
                     .push(Task::InitiateHandshake {
                         ip: node_val.addr.ip,
                         p2p_port: node_val.p2p_port,
-                        my_public_key: identity.public_key,
-                        handshake_op: handshake_op.clone(),
+                        transport_factory: transport_factory.clone(),
                     })
                     .await
                 {

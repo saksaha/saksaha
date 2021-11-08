@@ -8,10 +8,10 @@ pub use k256::{
     EncodedPoint, PublicKey, SecretKey,
 };
 
+pub type PeerId = [u8; PUBLIC_KEY_LEN];
+
 pub const PUBLIC_KEY_LEN: usize = 65;
 pub const SAKSAHA: &[u8; 7] = b"saksaha";
-
-pub type PeerId = [u8; PUBLIC_KEY_LEN];
 
 pub struct Identity {
     pub secret_key: SecretKey,

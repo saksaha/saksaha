@@ -4,15 +4,14 @@ use crate::{
 use log::{error, info};
 use saksaha_p2p_discovery::Disc;
 use saksaha_p2p_identity::Identity;
+use saksaha_p2p_transport::TransportFactory;
 use saksaha_peer::PeerStore;
 use saksaha_task::task_queue::TaskQueue;
 use std::sync::Arc;
 use tokio::net::TcpListener;
-
 use super::{
     dial_scheduler::DialScheduler,
     listener::Listener,
-    ops::handshake::HandshakeOp,
     state::HostState,
     task::{Task, TaskRunner},
 };
@@ -63,9 +62,13 @@ impl Host {
             Arc::new(l)
         };
 
-        let handshake_op = {
-            let h = HandshakeOp::new(host_state.clone());
-            Arc::new(h)
+        let transport_factory = {
+            let f = TransportFactory::new(
+                identity.clone(),
+                host_state.my_rpc_port,
+                host_state.my_p2p_port,
+            );
+            Arc::new(f)
         };
 
         let disc = {
@@ -84,7 +87,7 @@ impl Host {
             let d = DialScheduler::new(
                 disc.iter(),
                 host_state.clone(),
-                handshake_op.clone(),
+                transport_factory.clone(),
             );
             Arc::new(d)
         };
@@ -104,27 +107,6 @@ impl Host {
         self.dial_scheduler.start();
 
         self.task_queue.run_loop();
-
-        // let disc_it = self.disc.iter();
-        // let a = disc_it.next().await?;
-        // println!("111,");
-
-        // let handshake = Handshake::new(self.task_mng.clone());
-        // let handshake_started = handshake.start(
-        //     peer_store.clone(),
-        //     Arc::new(disc_wakeup_tx),
-        //     rpc_port,
-        //     Arc::new(Mutex::new(peer_op_wakeup_rx)),
-        //     credential_clone,
-        //     peer_op_listener,
-        // );
-
-        // match handshake_started.await {
-        //     handshake::Status::Launched => (),
-        //     handshake::Status::SetupFailed(err) => {
-        //         return HostStatus::SetupFailed(err);
-        //     }
-        // };
 
         Ok(())
     }

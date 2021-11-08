@@ -97,7 +97,8 @@ impl Disc {
                 whoareyou_op.clone(),
                 bootstrap_urls,
                 default_bootstrap_urls,
-            ).await;
+            )
+            .await;
             Arc::new(s)
         };
 

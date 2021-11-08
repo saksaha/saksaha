@@ -9,11 +9,12 @@ default-run = "sak"
 [dependencies]
 saksaha_logger = { path = "../logger" }
 saksaha_crypto = { path = "../crypto" }
-saksaha_p2p_identity = { path = "../p2p/identity" }
-saksaha_proofs = { path = "../proofs" }
-saksaha_p2p_discovery = { path = "../p2p/discovery" }
-saksaha_task = { path = "../task" }
 saksaha_peer = { path = "../peer" }
+saksaha_p2p_identity = { path = "../p2p/identity" }
+saksaha_p2p_discovery = { path = "../p2p/discovery" }
+saksaha_p2p_transport = { path = "../p2p/transport" }
+saksaha_proofs = { path = "../proofs" }
+saksaha_task = { path = "../task" }
 clap = "3.0.0-beta.4"
 directories = "3.0"
 k256 = { version = "0.9.6", features = ["ecdh"] }
