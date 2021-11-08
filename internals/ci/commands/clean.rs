@@ -27,7 +27,7 @@ impl Commandify for Clean {
             };
             let args = [vec!["clean", "--"], args].concat();
 
-            log!("Executing `{} {:?}`\n", program, args,);
+            log!("Executing `{} {:?}`", program, args,);
 
             let cmd = Command::new(program)
                 .args(args)

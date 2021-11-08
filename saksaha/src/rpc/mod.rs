@@ -1,24 +1,21 @@
-pub mod status;
-
-pub use status::Status;
 use std::sync::Arc;
-use logger::log;
-use crate::{common::Error, node::task_manager::TaskManager};
+use log::{info, debug};
+use tokio::net::TcpListener;
 
 pub struct RPC {
-    task_mng: Arc<TaskManager>,
+    tcp_listener: TcpListener,
 }
 
 impl RPC {
-    pub fn new(task_mng: Arc<TaskManager>, rpc_port: Option<u16>) -> RPC {
-        return RPC {
-            task_mng,
-        };
+    pub fn new(tcp_listener: TcpListener) -> RPC {
+        RPC {
+            tcp_listener,
+        }
     }
 
-    pub async fn start(&self) -> Status<u16, Error> {
-        log!(DEBUG, "Start rpc...\n");
+    pub async fn start(&self) -> Result<u16, String> {
+        info!("Start rpc...");
 
-        Status::Launched(10000)
+        Ok(10000)
     }
 }

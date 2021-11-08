@@ -11,7 +11,7 @@ fn main() {
             .into_string()
             .expect("current dir must be stringified"),
         Err(_) => {
-            log!("Cannot get current working directory\n");
+            log!("Cannot get current working directory");
 
             std::process::exit(1);
         }
@@ -21,9 +21,9 @@ fn main() {
         Ok(p) => p,
         Err(_) => {
             log!(
-                "PROJECT_ROOT is not defined. This is most likely due to that \
-                this binary has not been executed from the project root. Use `ci` \
-                script in the project. Exiting.\n"
+                "PROJECT_ROOT is not defined. This is most likely due to \
+                that this binary has not been executed from the project root. \
+                Use `ci` script in the project. Exiting."
             );
 
             std::process::exit(1);
@@ -31,7 +31,7 @@ fn main() {
     };
 
     log!(
-        "CI is starting, project root: {}, current workign directory: {}\n",
+        "CI is starting, project root: {}, current workign directory: {}",
         project_root,
         curr_dir,
     );
@@ -60,11 +60,11 @@ fn main() {
 
     for e in comm.iter() {
         if let Some(_) = e.exec(&matches) {
-            log!("Command has been executed, name: {}\n", e.name());
+            log!("Command has been executed, name: {}", e.name());
 
             std::process::exit(0);
         }
     }
 
-    log!("Couldn't find any command to exeucte, Check the argument\n");
+    log!("Couldn't find any command to exeucte, Check the argument");
 }

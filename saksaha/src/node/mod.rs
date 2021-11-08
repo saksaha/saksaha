@@ -1,167 +1,118 @@
-pub mod status;
-pub mod task_manager;
+pub mod socket;
 
 use crate::{
-    common::{Error, Result},
-    err,
-    node::status::Status,
-    p2p::host::{self, Host},
+    p2p::host::Host,
     pconfig::PConfig,
+    process::Process,
     rpc::{self, RPC},
 };
-use logger::log;
+use log::{debug, error, info};
 use std::sync::Arc;
-use task_manager::{MsgKind, TaskManager};
-use tokio::{self, runtime::Runtime, signal};
+use tokio::{self, signal};
 
-struct Components {
-    rpc: RPC,
-    host: Host,
-}
-
-pub struct Node {
-    rpc_port: Option<u16>,
-    disc_port: Option<u16>,
-    bootstrap_urls: Option<Vec<String>>,
-    pconfig: PConfig,
-    task_mng: Arc<TaskManager>,
-}
+pub struct Node;
 
 impl Node {
-    pub fn new(
-        rpc_port: Option<u16>,
-        disc_port: Option<u16>,
-        bootstrap_urls: Option<Vec<String>>,
-        pconfig: PConfig,
-    ) -> Result<Node> {
-        let task_mng = Arc::new(TaskManager::new());
-
-        let node = Node {
-            rpc_port,
-            disc_port,
-            bootstrap_urls,
-            pconfig,
-            task_mng,
-        };
-
-        Ok(node)
+    pub fn new() -> Node {
+        Node {}
     }
 
-    async fn start_components(
+    pub fn start(
         &self,
-        components: Arc<Components>,
-    ) -> Result<()> {
-        let c = components.clone();
-        let rpc_status = tokio::spawn(async move {
-            return c.rpc.start().await;
-        });
+        rpc_port: Option<u16>,
+        disc_port: Option<u16>,
+        p2p_port: Option<u16>,
+        bootstrap_endpoints: Option<Vec<String>>,
+        pconfig: PConfig,
+        default_bootstrap_urls: String,
+    ) -> Result<(), String> {
+        info!("Start node...");
 
-        let rpc_port: u16 = match rpc_status.await {
-            Ok(status) => match status {
-                rpc::Status::Launched(port) => port,
-                rpc::Status::SetupFailed(err) => return Err(err),
-            },
+        let runtime = tokio::runtime::Builder::new_multi_thread()
+            .enable_all()
+            .build();
+
+        let _ = match runtime {
+            Ok(r) => r.block_on(async {
+                match self
+                    .init_and_start(
+                        rpc_port,
+                        disc_port,
+                        p2p_port,
+                        bootstrap_endpoints,
+                        pconfig,
+                        default_bootstrap_urls,
+                    )
+                    .await
+                {
+                    Ok(_) => (),
+                    Err(err) => {
+                        error!("Can't start node, err: {}", err);
+
+                        Process::shutdown();
+                    }
+                };
+
+                tokio::select!(
+                    c = signal::ctrl_c() => {
+                        match c {
+                            Ok(_) => {
+                                debug!("ctrl+k is pressed.");
+
+                                Process::shutdown();
+                            },
+                            Err(err) => {
+                                error!(
+                                    "Unexpected error while waiting for \
+                                        ctrl+p, err: {}",
+                                    err
+                                );
+
+                                Process::shutdown();
+                            }
+                        }
+                    },
+                );
+            }),
             Err(err) => {
-                return err!("Error joining rpc start thread, err: {}", err);
-            }
-        };
-
-        let c = components.clone();
-        let host_status = tokio::spawn(async move {
-            return c.host.start(rpc_port).await;
-        });
-
-        match host_status.await {
-            Ok(status) => match status {
-                host::Status::Launched => {}
-                host::Status::SetupFailed(err) => return Err(err),
-            },
-            Err(err) => {
-                return err!("Error joining host start thread, err: {}", err);
+                let msg = format!("runtime fail, err: {:?}", err);
+                return Err(msg);
             }
         };
 
         Ok(())
     }
 
-    fn make_components(&self) -> Result<Components> {
-        let rpc = RPC::new(self.task_mng.clone(), self.rpc_port);
+    async fn init_and_start(
+        &self,
+        rpc_port: Option<u16>,
+        disc_port: Option<u16>,
+        p2p_port: Option<u16>,
+        bootstrap_urls: Option<Vec<String>>,
+        pconfig: PConfig,
+        default_bootstrap_urls: String,
+    ) -> Result<(), String> {
+        let sockets = socket::setup_sockets(rpc_port, p2p_port).await?;
 
-        let secret = self.pconfig.p2p.secret.to_owned();
-        let public_key = self.pconfig.p2p.public_key.to_owned();
+        let rpc = RPC::new(sockets.rpc.listener);
 
-        let host = Host::new(
-            self.disc_port,
-            self.bootstrap_urls.to_owned(),
-            self.task_mng.clone(),
-            secret,
-            public_key,
-        );
+        let host = Host::init(
+            pconfig.p2p,
+            sockets.rpc.port,
+            sockets.p2p,
+            disc_port,
+            bootstrap_urls,
+            default_bootstrap_urls,
+        )
+        .await?;
 
-        let components = Components { rpc, host };
+        rpc.start().await?;
+        host.start().await?;
 
-        Ok(components)
+        Ok(())
     }
 
-    pub fn start(&self) -> Status<Error> {
-        log!(DEBUG, "Start node...\n");
-
-        let runtime = tokio::runtime::Builder::new_multi_thread()
-            .enable_all()
-            .build();
-
-        let node_status = match runtime {
-            Ok(r) => r.block_on(async {
-                let components = match self.make_components() {
-                    Ok(c) => Arc::new(c),
-                    Err(err) => {
-                        return Status::SetupFailed(err);
-                    }
-                };
-
-                match self.start_components(components).await {
-                    Ok(_) => (),
-                    Err(err) => {
-                        return Status::SetupFailed(err);
-                    }
-                };
-
-                let task_mng = self.task_mng.clone();
-
-                tokio::select!(
-                    msg_kind = task_mng.clone().start_receiving() => {
-                        if let MsgKind::SetupFailure = msg_kind {
-                            task_mng.shutdown_program();
-                        }
-                    },
-                    c = signal::ctrl_c() => {
-                        match c {
-                            Ok(_) => {
-                                log!(DEBUG, "ctrl+k is pressed.\n");
-
-                                task_mng.shutdown_program();
-                            },
-                            Err(err) => {
-                                log!(
-                                    DEBUG,
-                                    "Unexpected error while waiting for \
-                                        ctrl+p, err: {}",
-                                    err
-                                );
-
-                                task_mng.shutdown_program();
-                            }
-                        }
-                    },
-                );
-
-                return Status::Launched;
-            }),
-            Err(err) => {
-                return Status::SetupFailed(err.into());
-            }
-        };
-
-        node_status
+    pub fn persist_state(&self) {
+        info!("Storing state of node");
     }
 }
