@@ -1,6 +1,6 @@
 use super::task::Task;
 use saksaha_p2p_identity::Identity;
-use saksaha_peer::peer_store::PeerStore;
+use saksaha_peer::PeerStore;
 use saksaha_task::task_queue::{self, TaskQueue};
 use std::sync::Arc;
 

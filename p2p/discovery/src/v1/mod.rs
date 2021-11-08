@@ -24,7 +24,7 @@ use saksaha_task::task_queue::TaskQueue;
 use std::sync::Arc;
 use tokio::net::UdpSocket;
 
-pub const CAPACITY: usize = 32;
+pub const CAPACITY: usize = 64;
 
 pub struct Disc {
     listener: Arc<Listener>,

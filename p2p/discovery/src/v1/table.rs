@@ -15,6 +15,7 @@ use tokio::sync::{
 
 type Nodes = HashMap<PeerId, Arc<Node>>;
 
+/// TODO Table shall have Kademlia flavored buckets
 pub(crate) struct Table {
     map: Mutex<Nodes>,
     keys: Mutex<HashSet<PeerId>>,
@@ -50,23 +51,35 @@ impl Table {
                 }
             }
 
-            (tx, rx)
+            (tx, Mutex::new(rx))
         };
 
-        let map = HashMap::with_capacity(CAPACITY);
-        let keys = HashSet::new();
-        let rng = SeedableRng::from_entropy();
+        let map = {
+            let m = HashMap::with_capacity(CAPACITY);
+            Mutex::new(m)
+        };
+
+        let keys = {
+            let s = HashSet::new();
+            Mutex::new(s)
+        };
+
+        let rng = {
+            let r = SeedableRng::from_entropy();
+            Mutex::new(r)
+        };
+
         let iter = {
             let it = Iterator::new(updates_tx.clone(), updates_rx.clone());
             Arc::new(it)
         };
 
         let table = Table {
-            map: Mutex::new(map),
-            keys: Mutex::new(keys),
-            rng: Mutex::new(rng),
+            map,
+            keys,
+            rng,
             slots_tx,
-            slots_rx: Mutex::new(slots_rx),
+            slots_rx,
             updates_tx,
             updates_rx,
             iter,
@@ -75,35 +88,35 @@ impl Table {
         Ok(table)
     }
 
-    pub async fn find(&self, peer_id: &PeerId) -> Option<Arc<Node>> {
-        let map = self.map.lock().await;
+    // pub async fn find(&self, peer_id: &PeerId) -> Option<Arc<Node>> {
+    //     let map = self.map.lock().await;
 
-        if let Some(n) = map.get(peer_id) {
-            return Some(n.clone());
-        } else {
-            return None;
-        }
-    }
+    //     if let Some(n) = map.get(peer_id) {
+    //         return Some(n.clone());
+    //     } else {
+    //         return None;
+    //     }
+    // }
 
-    pub async fn find_or_reserve(
-        &self,
-        peer_id: &PeerId,
-    ) -> Result<Arc<Node>, String> {
-        match self.find(peer_id).await {
-            Some(n) => return Ok(n),
-            None => return self.reserve().await,
-        };
-    }
+    // pub async fn find_or_reserve(
+    //     &self,
+    //     peer_id: &PeerId,
+    // ) -> Result<Arc<Node>, String> {
+    //     match self.find(peer_id).await {
+    //         Some(n) => return Ok(n),
+    //         None => return self.reserve().await,
+    //     };
+    // }
 
-    pub async fn find_or_try_reserve(
-        &self,
-        peer_id: &PeerId,
-    ) -> Result<Arc<Node>, String> {
-        match self.find(peer_id).await {
-            Some(n) => return Ok(n),
-            None => return self.try_reserve().await,
-        };
-    }
+    // pub async fn find_or_try_reserve(
+    //     &self,
+    //     peer_id: &PeerId,
+    // ) -> Result<Arc<Node>, String> {
+    //     match self.find(peer_id).await {
+    //         Some(n) => return Ok(n),
+    //         None => return self.try_reserve().await,
+    //     };
+    // }
 
     pub async fn add<F>(
         &self,
@@ -146,14 +159,14 @@ impl Table {
         Ok((public_key, endpoint))
     }
 
-    pub async fn reserve(&self) -> Result<Arc<Node>, String> {
-        let mut slots_rx = self.slots_rx.lock().await;
+    // pub async fn reserve(&self) -> Result<Arc<Node>, String> {
+    //     let mut slots_rx = self.slots_rx.lock().await;
 
-        match slots_rx.recv().await {
-            Some(n) => return Ok(n),
-            None => return Err(format!("Can't retrieve Node from pool")),
-        };
-    }
+    //     match slots_rx.recv().await {
+    //         Some(n) => return Ok(n),
+    //         None => return Err(format!("Can't retrieve Node from pool")),
+    //     };
+    // }
 
     pub async fn try_reserve(&self) -> Result<Arc<Node>, String> {
         let mut slots_rx = self.slots_rx.lock().await;
