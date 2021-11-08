@@ -3,7 +3,6 @@ pub mod socket;
 use crate::{
     p2p::host::Host,
     pconfig::PConfig,
-    process::Process,
     rpc::{self, RPC},
 };
 use log::{debug, error, info};

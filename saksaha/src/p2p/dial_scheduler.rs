@@ -2,6 +2,7 @@ use super::{state::HostState, task::Task};
 use log::{debug, error, info, warn};
 use saksaha_p2p_discovery::iterator::Iterator;
 use saksaha_p2p_transport::TransportFactory;
+use saksaha_peer::PeerStore;
 use std::{
     sync::Arc,
     time::{Duration, SystemTime},
@@ -24,7 +25,7 @@ impl DialScheduler {
             min_interval,
             disc_iterator,
             host_state,
-            transport_factory.clone(),
+            transport_factory,
         );
 
         DialScheduler { handshake_routine }
@@ -69,6 +70,7 @@ impl HandshakeRoutine {
         let task_queue = self.host_state.task_queue.clone();
         let disc_iterator = self.disc_iterator.clone();
         let transport_factory = self.transport_factory.clone();
+        let peer_store = self.host_state.peer_store.clone();
 
         tokio::spawn(async move {
             let mut is_running_lock = is_running.lock().await;
@@ -95,6 +97,8 @@ impl HandshakeRoutine {
                         continue;
                     }
                 };
+
+                let peer = peer_store.try_reserve();
 
                 match task_queue
                     .push(Task::InitiateHandshake {

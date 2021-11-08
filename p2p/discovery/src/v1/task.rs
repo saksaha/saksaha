@@ -69,6 +69,9 @@ impl TaskRun<Task> for TaskRunner {
                                 WhoareyouInitError::TableAddFail { .. } => {
                                     return TaskResult::FailRetriable(err_msg);
                                 }
+                                WhoareyouInitError::NodePutBackFail { .. } => {
+
+                                }
                             }
                         }
                     }

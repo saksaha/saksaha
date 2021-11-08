@@ -65,6 +65,17 @@ impl PeerStore {
         Ok(ps)
     }
 
+    pub async fn try_reserve(&self) -> Result<Arc<Peer>, String> {
+        let mut slots_rx_guard = self.slots_rx.lock().await;
+
+        match slots_rx_guard.try_recv() {
+            Ok(p) => Ok(p),
+            Err(err) => {
+                Err(format!("No available slot to reserve, err: {}", err))
+            }
+        }
+    }
+
     // pub async fn next(
     //     &self,
     //     last_idx: Option<usize>,
