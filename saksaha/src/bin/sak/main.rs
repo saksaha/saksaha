@@ -1,8 +1,9 @@
-use std::sync::Arc;
+use std::{sync::Arc};
 
 use clap::{App, Arg};
 use log::{error, info};
-use saksaha::{node::Node, pconfig::PConfig, process::Process};
+use saksaha::{node::Node, pconfig::PConfig};
+use saksaha_process::{Process, Shutdown};
 
 const DEFAULT_BOOTSTRAP_URLS: &str =
     include_str!("../../../../config/bootstrap_urls");
@@ -151,7 +152,7 @@ fn main() {
 
     let node = Arc::new(Node::new());
 
-    Process::init(node.clone());
+    Process::init(node.clone() as Arc<dyn Shutdown + Sync + Send>);
 
     match node.start(
         args.rpc_port,
@@ -168,21 +169,5 @@ fn main() {
             std::process::exit(1);
         }
     };
+
 }
-
-// fn make_pconfig(config_path: Option<String>) -> PConfig {
-//     let pconf = match PConfig::from_path(config_path) {
-//         Ok(p) => p,
-//         Err(err) => {
-//             error!(
-//                 "Error creating a persisted configuration, err: {}",
-//                 err
-//             );
-
-//             std::process::exit(1);
-//         }
-//     };
-
-//     info!("Successfully loaded config, {:?}", pconf);
-//     pconf
-// }
