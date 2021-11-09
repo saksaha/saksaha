@@ -20,6 +20,7 @@ pub struct Host {
     disc: Arc<Disc>,
     dial_scheduler: Arc<DialScheduler>,
     task_queue: Arc<TaskQueue<Task>>,
+    listener: Arc<Listener>,
 }
 
 impl Host {
@@ -96,6 +97,7 @@ impl Host {
             disc,
             dial_scheduler,
             task_queue,
+            listener,
         };
 
         Ok(host)
@@ -103,6 +105,8 @@ impl Host {
 
     pub async fn start(&self) -> Result<(), String> {
         self.disc.start().await?;
+
+        self.listener.start();
 
         self.dial_scheduler.start();
 
