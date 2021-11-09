@@ -76,6 +76,17 @@ impl PeerStore {
         }
     }
 
+    pub async fn reserve(&self) -> Result<Arc<Peer>, String> {
+        let mut slots_rx_guard = self.slots_rx.lock().await;
+
+        match slots_rx_guard.recv().await {
+            Some(p) => Ok(p),
+            None => {
+                Err(format!("Slots channel might be closed"))
+            }
+        }
+    }
+
     // pub async fn next(
     //     &self,
     //     last_idx: Option<usize>,

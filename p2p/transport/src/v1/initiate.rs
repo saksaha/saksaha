@@ -1,46 +1,53 @@
-use std::sync::Arc;
+use crate::TransportMeta;
 use log::{debug, error};
 use saksaha_p2p_identity::PeerId;
+use std::sync::Arc;
 use thiserror::Error;
-use crate::TransportMeta;
+use tokio::net::TcpStream;
 
 #[derive(Error, Debug)]
 pub enum TransportInitError {
-    #[error("Aborting, request to my endpoint: {endpoint}")]
+    #[error("Request to my (recursive) endpoint: {endpoint}")]
     MyEndpoint { endpoint: String },
 
     #[error("Can't connect to endpoint")]
-    ConnectionFail(#[from] std::io::Error),
+    ConnectionFail {
+        #[from]
+        source: std::io::Error,
+    },
+
+    #[error("Already talking: {ip}")]
+    CallInProcess { ip: String },
 }
 
-pub(crate) async fn initiate_handshake(
-    transport_meta: Arc<TransportMeta>,
-    ip: String,
-    p2p_port: u16,
-) -> Result<(), String> {
-    let _ = send_handshake_syn(ip, p2p_port, transport_meta).await;
-
-    Ok(())
-}
-
-async fn send_handshake_syn(
+pub(crate) async fn send_handshake_syn(
     ip: String,
     p2p_port: u16,
     transport_meta: Arc<TransportMeta>,
 ) -> Result<(), TransportInitError> {
-    let endpoint = format!("{}:{}", ip, p2p_port);
     let my_p2p_port = transport_meta.my_p2p_port;
+    let active_calls = transport_meta.active_calls.clone();
+
+    let endpoint = format!("{}:{}", ip, p2p_port);
+
+    if active_calls.contain(&ip).await {
+        return Err(TransportInitError::CallInProcess { ip });
+    }
 
     if super::is_my_endpoint(my_p2p_port, &endpoint) {
         return Err(TransportInitError::MyEndpoint { endpoint });
     }
 
-    // let peer_store = self.host_state.peer_store.clone();
-
-    // let mut stream = match TcpStream::connect(endpoint).await {
-    //     Ok(s) => s,
-    //     Err(err) => return Err(TransportInitError::ConnectionFail(err)),
-    // };
+    let mut stream = match TcpStream::connect(endpoint).await {
+        Ok(s) => {
+            println!("called, ip: {}", ip);
+            // active_calls.insert()
+            s
+        }
+        Err(err) => {
+            return Err(TransportInitError::ConnectionFail { source: err })
+        }
+    };
 
     // let my_sig = self.disc_state.id.sig();
     // let my_public_key_bytes = self.disc_state.id.public_key_bytes();

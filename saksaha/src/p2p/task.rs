@@ -1,6 +1,7 @@
 use log::{debug, error, warn};
-use saksaha_p2p_identity::PUBLIC_KEY_LEN;
-use saksaha_p2p_transport::TransportFactory;
+use saksaha_p2p_identity::{PUBLIC_KEY_LEN, PeerId};
+use saksaha_p2p_transport::{TransportFactory, TransportInitError};
+use saksaha_peer::Peer;
 use saksaha_task::task_queue::{TaskResult, TaskRun};
 use std::sync::Arc;
 
@@ -9,7 +10,9 @@ pub(crate) enum Task {
     InitiateHandshake {
         ip: String,
         p2p_port: u16,
+        public_key: PeerId,
         transport_factory: Arc<TransportFactory>,
+        peer: Arc<Peer>,
     },
 }
 
@@ -22,15 +25,18 @@ impl TaskRun<Task> for TaskRunner {
                 Task::InitiateHandshake {
                     ip,
                     p2p_port,
+                    public_key,
                     transport_factory,
+                    peer,
                 } => {
                     match transport_factory.initiate_handshake(
                         ip,
                         p2p_port,
+                        peer,
                     ).await {
                         Ok(_) => (),
                         Err(err) => {
-                            let err_msg = err.to_string();
+                            handle_initiate_handshake_err(err);
                         }
                     };
                     // match handshake_op.initiate.send_handshake_syn(
@@ -51,4 +57,14 @@ impl TaskRun<Task> for TaskRunner {
             TaskResult::Success
         })
     }
+}
+
+fn handle_initiate_handshake_err(err: TransportInitError) {
+    debug!("initiate handshake fail, err: {}", err);
+
+    match err {
+        TransportInitError::CallInProcess { .. } => (),
+        TransportInitError::ConnectionFail { .. } => (),
+        TransportInitError::MyEndpoint { .. } => (),
+    };
 }

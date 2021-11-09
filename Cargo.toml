@@ -9,6 +9,8 @@ members = [
   "process",
   "p2p/discovery",
   "p2p/identity",
+  "p2p/active_calls",
+  "p2p/transport",
   "task",
 
   # internals

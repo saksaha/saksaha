@@ -1,6 +1,10 @@
+use crate::v1::initiate::TransportInitError;
+
 use super::initiate;
 use log::{debug, error};
+use saksaha_p2p_active_calls::ActiveCalls;
 use saksaha_p2p_identity::Identity;
+use saksaha_peer::Peer;
 use std::sync::Arc;
 use thiserror::Error;
 
@@ -8,6 +12,7 @@ pub(crate) struct TransportMeta {
     pub identity: Arc<Identity>,
     pub my_rpc_port: u16,
     pub my_p2p_port: u16,
+    pub active_calls: Arc<ActiveCalls>,
 }
 
 pub struct TransportFactory {
@@ -20,11 +25,17 @@ impl TransportFactory {
         my_rpc_port: u16,
         my_p2p_port: u16,
     ) -> TransportFactory {
+        let active_calls = {
+            let c = ActiveCalls::new();
+            Arc::new(c)
+        };
+
         let transport_meta = {
             let m = TransportMeta {
                 identity,
                 my_rpc_port,
                 my_p2p_port,
+                active_calls,
             };
             Arc::new(m)
         };
@@ -36,9 +47,16 @@ impl TransportFactory {
         &self,
         ip: String,
         p2p_port: u16,
-    ) -> Result<(), String> {
-        initiate::initiate_handshake(self.transport_meta.clone(), ip, p2p_port)
-            .await
+        peer: Arc<Peer>,
+    ) -> Result<(), TransportInitError> {
+        let transport_meta = self.transport_meta.clone();
+
+        println!("111");
+
+        let handshake_sent =
+            initiate::send_handshake_syn(ip, p2p_port, transport_meta).await?;
+
+        Ok(())
     }
 }
 

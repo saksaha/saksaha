@@ -131,7 +131,7 @@ impl WhoareyouReceive {
         self.udp_socket.send_to(&buf, endpoint.clone()).await?;
 
         debug!(
-            "Successfully sent WhoAreYouAck to endpoint: {:?}, len: {}",
+            "Successfully sent WhoAreYouAck to endpoint: {}, len: {}",
             &endpoint,
             buf.len(),
         );
