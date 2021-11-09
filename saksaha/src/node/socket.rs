@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use log::{debug, error, info};
 use tokio::net::TcpListener;
 
@@ -7,7 +9,7 @@ pub struct Sockets {
 }
 
 pub struct TcpSocket {
-    pub listener: TcpListener,
+    pub listener: Arc<TcpListener>,
     pub port: u16,
 }
 
@@ -27,7 +29,7 @@ pub(crate) async fn setup_sockets(
 
 async fn create_tcp_socket(
     port: Option<u16>,
-) -> Result<(TcpListener, u16), String> {
+) -> Result<(Arc<TcpListener>, u16), String> {
     let (tcp_listener, tcp_port) = {
         let port = match port {
             Some(p) => p,
@@ -39,7 +41,7 @@ async fn create_tcp_socket(
         match TcpListener::bind(local_addr).await {
             Ok(listener) => match listener.local_addr() {
                 Ok(local_addr) => {
-                    (listener, local_addr.port())
+                    (Arc::new(listener), local_addr.port())
                 }
                 Err(err) => {
                     return Err(format!(
