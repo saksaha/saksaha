@@ -98,13 +98,21 @@ impl HandshakeRoutine {
                     }
                 };
 
-                let peer = peer_store.try_reserve();
+                let peer = match peer_store.reserve().await {
+                    Ok(p) => p,
+                    Err(err) => {
+                        error!("Can't reserve, err: {}", err);
+                        break;
+                    }
+                };
 
                 match task_queue
                     .push(Task::InitiateHandshake {
                         ip: node_val.addr.ip,
                         p2p_port: node_val.p2p_port,
+                        public_key: node_val.public_key,
                         transport_factory: transport_factory.clone(),
+                        peer,
                     })
                     .await
                 {
