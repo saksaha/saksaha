@@ -1,9 +1,10 @@
 use std::sync::Arc;
+use saksaha_p2p_active_calls::ActiveCalls;
 use saksaha_p2p_identity::Identity;
 use saksaha_task::task_queue::TaskQueue;
 use crate::task::Task;
 
-use super::{active_calls::ActiveCalls, table::Table};
+use super::{table::Table};
 
 pub(crate) struct DiscState {
     pub identity: Arc<Identity>,

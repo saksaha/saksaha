@@ -9,6 +9,7 @@ edition = "2018"
 saksaha_logger = { path = "../../logger" }
 saksaha_crypto = { path = "../../crypto" }
 saksaha_task = { path = "../../task" }
+saksaha_p2p_active_calls = { path = "../active_calls" }
 saksaha_p2p_identity = { path = "../identity" }
 tokio = { version = "1.12.0", features = ["full"] }
 futures = "0.3.17"
