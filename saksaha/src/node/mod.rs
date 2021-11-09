@@ -6,6 +6,7 @@ use crate::{
     rpc::{self, RPC},
 };
 use log::{debug, error, info};
+use saksaha_process::{Process, Shutdown};
 use std::sync::Arc;
 use tokio::{self, signal};
 
@@ -111,7 +112,13 @@ impl Node {
         Ok(())
     }
 
-    pub fn persist_state(&self) {
+    // pub fn persist_state(&self) {
+    //     info!("Storing state of node");
+    // }
+}
+
+impl Shutdown for Node {
+    fn shutdown(&self) {
         info!("Storing state of node");
     }
 }
