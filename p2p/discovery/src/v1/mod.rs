@@ -1,4 +1,4 @@
-mod active_calls;
+// mod active_calls;
 pub mod address;
 pub mod dial_scheduler;
 pub mod iterator;
@@ -9,7 +9,7 @@ mod table;
 pub mod task;
 
 use self::{
-    active_calls::ActiveCalls, dial_scheduler::DialScheduler,
+    dial_scheduler::DialScheduler,
     listener::Listener, ops::whoareyou::WhoareyouOp, state::DiscState,
     table::Table,
 };
@@ -19,6 +19,7 @@ use crate::{
     v1::{address::Address, task::Task},
 };
 use log::{info, warn};
+use saksaha_p2p_active_calls::ActiveCalls;
 use saksaha_p2p_identity::Identity;
 use saksaha_task::task_queue::TaskQueue;
 use std::sync::Arc;
