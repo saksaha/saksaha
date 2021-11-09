@@ -111,10 +111,6 @@ impl Node {
 
         Ok(())
     }
-
-    // pub fn persist_state(&self) {
-    //     info!("Storing state of node");
-    // }
 }
 
 impl Shutdown for Node {

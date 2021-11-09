@@ -8,7 +8,10 @@ use std::{
     collections::{HashMap, HashSet},
     sync::Arc,
 };
-use tokio::sync::{Mutex, MutexGuard, mpsc::{self, Receiver, Sender, error::TrySendError}};
+use tokio::sync::{
+    mpsc::{self, error::TrySendError, Receiver, Sender},
+    Mutex, MutexGuard,
+};
 
 type Nodes = HashMap<PeerId, Arc<Node>>;
 
@@ -156,7 +159,10 @@ impl Table {
         Ok((public_key, endpoint))
     }
 
-    pub fn put_back(&self, node: Arc<Node>) -> Result<(), TrySendError<Arc<Node>>> {
+    pub fn put_back(
+        &self,
+        node: Arc<Node>,
+    ) -> Result<(), TrySendError<Arc<Node>>> {
         match self.slots_tx.try_send(node) {
             Ok(_) => Ok(()),
             Err(err) => return Err(err),
@@ -205,6 +211,14 @@ impl Node {
         let val = self.value.lock().await;
 
         val.identified()
+    }
+}
+
+/// TODO Node, when dropped either due to success or failure, needs to be
+/// checked to see if it should go to slots.
+impl Drop for Node {
+    fn drop(&mut self) {
+        debug!("[disc] Node dropped");
     }
 }
 
