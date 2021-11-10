@@ -6,7 +6,7 @@ use saksaha::{node::Node, pconfig::PConfig};
 use saksaha_process::{Process, Shutdown};
 
 const DEFAULT_BOOTSTRAP_URLS: &str =
-    include_str!("../../../../config/bootstrap_urls");
+    include_str!("../../../../../config/bootstrap_urls");
 
 struct Args {
     config: Option<String>,
