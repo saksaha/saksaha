@@ -3,7 +3,6 @@ use std::{sync::Arc};
 use clap::{App, Arg};
 use log::{error, info};
 use saksaha::{node::Node, pconfig::PConfig};
-use saksaha_process::{Process, Shutdown};
 
 const DEFAULT_BOOTSTRAP_URLS: &str =
     include_str!("../../../../../config/bootstrap_urls");
@@ -150,9 +149,9 @@ fn main() {
         DEFAULT_BOOTSTRAP_URLS.to_string()
     };
 
-    let node = Arc::new(Node::new());
+    let node = Node::new();
 
-    Process::init(node.clone() as Arc<dyn Shutdown + Sync + Send>);
+    // Process::init(node.clone() as Arc<dyn Shutdown + Sync + Send>);
 
     match node.start(
         args.rpc_port,

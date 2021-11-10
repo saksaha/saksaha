@@ -6,7 +6,7 @@ members = [
   "source/crypto",
   "source/proofs",
   "source/peer",
-  "source/process",
+  # "source/process",
   "source/p2p/discovery",
   "source/p2p/identity",
   "source/p2p/active_calls",
