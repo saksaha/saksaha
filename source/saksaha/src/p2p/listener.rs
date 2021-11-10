@@ -1,5 +1,5 @@
 use log::{debug, info, warn};
-use saksaha_p2p_identity::Identity;
+use p2p_identity::Identity;
 use std::{net::ToSocketAddrs, sync::Arc};
 use tokio::net::TcpListener;
 use super::state::HostState;

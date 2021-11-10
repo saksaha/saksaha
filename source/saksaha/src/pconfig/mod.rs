@@ -57,8 +57,8 @@ impl PConfig {
     fn new() -> PConfig {
         debug!("Creating a new config");
 
-        let sk = saksaha_crypto::generate_key();
-        let (sk, pk) = saksaha_crypto::encode_into_key_pair(sk);
+        let sk = crypto::generate_key();
+        let (sk, pk) = crypto::encode_into_key_pair(sk);
         let pconf = PConfig {
             p2p: PersistedP2PConfig {
                 secret: sk,

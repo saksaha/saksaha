@@ -5,7 +5,7 @@ use super::{
 };
 use crate::task::Task;
 use log::{debug, error, info, warn};
-use saksaha_task::task_queue::TaskQueue;
+use task::task_queue::TaskQueue;
 use std::{net::SocketAddr, sync::Arc};
 use thiserror::Error;
 use tokio::net::UdpSocket;

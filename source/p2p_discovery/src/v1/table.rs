@@ -2,8 +2,8 @@ use super::address::Address;
 use crate::{iterator::Iterator, CAPACITY};
 use log::{debug, error, info, warn};
 use rand::prelude::*;
-use saksaha_crypto::Signature;
-use saksaha_p2p_identity::{PeerId, PUBLIC_KEY_LEN};
+use crypto::Signature;
+use p2p_identity::{PeerId, PUBLIC_KEY_LEN};
 use std::{
     collections::{HashMap, HashSet},
     sync::Arc,

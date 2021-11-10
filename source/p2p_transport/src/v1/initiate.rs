@@ -1,6 +1,6 @@
 use crate::TransportMeta;
 use log::{debug, error};
-use saksaha_p2p_identity::PeerId;
+use p2p_identity::PeerId;
 use std::sync::Arc;
 use thiserror::Error;
 use tokio::net::TcpStream;

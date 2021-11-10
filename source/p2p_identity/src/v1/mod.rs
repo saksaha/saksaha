@@ -25,7 +25,7 @@ impl Identity {
         secret: String,
         peer_id: String,
     ) -> Result<Identity, String> {
-        let secret_bytes = match saksaha_crypto::decode_hex(secret.to_owned()) {
+        let secret_bytes = match crypto::decode_hex(secret.to_owned()) {
             Ok(v) => v,
             Err(err) => {
                 return Err(format!("Error making secret key, err: {}", err));
@@ -57,7 +57,7 @@ impl Identity {
         };
 
         {
-            let p = saksaha_crypto::encode_hex(&public_key);
+            let p = crypto::encode_hex(&public_key);
             if p != peer_id {
                 return Err(format!(
                     "public key built from bytes differ \
@@ -68,7 +68,7 @@ impl Identity {
 
         let sig = {
             let signing_key = SigningKey::from(&secret_key);
-            let sig = saksaha_crypto::make_sign(signing_key, SAKSAHA);
+            let sig = crypto::make_sign(signing_key, SAKSAHA);
             sig
         };
 

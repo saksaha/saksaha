@@ -1,16 +1,16 @@
 [package]
-name = "saksaha_p2p_discovery"
+name = "p2p_discovery"
 version = "0.1.0"
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-saksaha_logger = { path = "../../logger" }
-saksaha_crypto = { path = "../../crypto" }
-saksaha_task = { path = "../../task" }
-saksaha_p2p_active_calls = { path = "../active_calls" }
-saksaha_p2p_identity = { path = "../identity" }
+logger = { path = "../logger" }
+crypto = { path = "../crypto" }
+task = { path = "../task" }
+p2p_active_calls = { path = "../p2p_active_calls" }
+p2p_identity = { path = "../p2p_identity" }
 tokio = { version = "1.12.0", features = ["full"] }
 futures = "0.3.17"
 k256 = { version = "0.9.6", features = ["ecdh"] }
