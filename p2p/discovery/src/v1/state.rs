@@ -1,13 +1,15 @@
-use std::sync::Arc;
+use crate::task::Task;
 use saksaha_p2p_active_calls::ActiveCalls;
 use saksaha_p2p_identity::Identity;
 use saksaha_task::task_queue::TaskQueue;
-use crate::task::Task;
+use std::sync::Arc;
+use tokio::net::UdpSocket;
 
-use super::{table::Table};
+use super::table::Table;
 
 pub(crate) struct DiscState {
     pub identity: Arc<Identity>,
+    pub udp_socket: Arc<UdpSocket>,
     pub my_disc_port: u16,
     pub my_p2p_port: u16,
     pub table: Arc<Table>,
@@ -20,12 +22,14 @@ impl DiscState {
         identity: Arc<Identity>,
         table: Arc<Table>,
         active_calls: Arc<ActiveCalls>,
+        udp_socket: Arc<UdpSocket>,
         my_disc_port: u16,
         my_p2p_port: u16,
         task_queue: Arc<TaskQueue<Task>>,
     ) -> DiscState {
         DiscState {
             identity,
+            udp_socket,
             my_disc_port,
             my_p2p_port,
             table,
