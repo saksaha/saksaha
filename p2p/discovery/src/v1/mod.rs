@@ -71,6 +71,7 @@ impl Disc {
                 id,
                 table,
                 active_calls,
+                udp_socket.clone(),
                 my_disc_port,
                 my_p2p_port,
                 task_queue.clone(),
@@ -79,7 +80,7 @@ impl Disc {
         };
 
         let whoareyou_op = {
-            let w = WhoareyouOp::new(udp_socket.clone(), disc_state.clone());
+            let w = WhoareyouOp::new(disc_state.clone());
             Arc::new(w)
         };
 

@@ -112,7 +112,6 @@ impl Handler {
         match opcode {
             Opcode::WhoAreYouSyn => {
                 match whoareyou_op
-                    .receive
                     .handle_who_are_you(addr.clone(), buf)
                     .await
                 {
@@ -124,7 +123,6 @@ impl Handler {
             }
             Opcode::WhoAreYouAck => {
                 match whoareyou_op
-                    .initiate
                     .handle_who_are_you_ack(addr.clone(), buf)
                     .await
                 {

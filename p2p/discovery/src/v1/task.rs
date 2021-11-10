@@ -21,7 +21,7 @@ impl TaskRun<Task> for TaskRunner {
         futures::executor::block_on(async {
             match task {
                 Task::InitiateWhoAreYou { whoareyou_op, addr } => {
-                    match whoareyou_op.initiate.send_who_are_you(addr).await {
+                    match whoareyou_op.send_who_are_you(addr).await {
                         Ok(_) => (),
                         Err(err) => {
                             let err_msg = err.to_string();
