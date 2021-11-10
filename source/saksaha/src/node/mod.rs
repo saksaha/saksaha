@@ -1,12 +1,7 @@
 pub mod socket;
 
-use crate::{
-    p2p::host::Host,
-    pconfig::PConfig,
-    rpc::{self, RPC},
-};
+use crate::{p2p::host::Host, pconfig::PConfig, process::{Process, Shutdown}, rpc::{self, RPC}};
 use log::{debug, error, info};
-use saksaha_process::{Process, Shutdown};
 use std::sync::Arc;
 use tokio::{self, signal};
 
@@ -14,7 +9,10 @@ pub struct Node;
 
 impl Node {
     pub fn new() -> Node {
-        Node {}
+        let n = Node {};
+
+        // Process::init(n.clone() as Arc<dyn Shutdown + Sync + Send>);
+        n
     }
 
     pub fn start(
