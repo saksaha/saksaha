@@ -6,11 +6,10 @@ members = [
   "source/crypto",
   "source/proofs",
   "source/peer",
-  # "source/process",
-  "source/p2p/discovery",
-  "source/p2p/identity",
-  "source/p2p/active_calls",
-  "source/p2p/transport",
+  "source/p2p_discovery",
+  "source/p2p_identity",
+  "source/p2p_active_calls",
+  "source/p2p_transport",
   "source/task",
 
   # internals

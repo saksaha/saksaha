@@ -1,6 +1,6 @@
 use crate::v1::{ops::{Message, Opcode}};
 use k256::ecdsa::Signature;
-use saksaha_p2p_identity::PUBLIC_KEY_LEN;
+use p2p_identity::PUBLIC_KEY_LEN;
 use std::convert::TryInto;
 
 pub const SIZE_LEN: usize = 4;

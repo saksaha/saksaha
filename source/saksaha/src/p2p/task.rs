@@ -1,8 +1,8 @@
 use log::{debug, error, warn};
-use saksaha_p2p_identity::{PUBLIC_KEY_LEN, PeerId};
-use saksaha_p2p_transport::{TransportFactory, TransportInitError};
-use saksaha_peer::Peer;
-use saksaha_task::task_queue::{TaskResult, TaskRun};
+use p2p_identity::{PUBLIC_KEY_LEN, PeerId};
+use p2p_transport::{TransportFactory, TransportInitError};
+use peer::Peer;
+use task::task_queue::{TaskResult, TaskRun};
 use std::sync::Arc;
 
 #[derive(Clone)]

@@ -1,5 +1,5 @@
 use log::{debug, info, warn};
-use saksaha_p2p_identity::PeerId;
+use p2p_identity::PeerId;
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::{
     mpsc::{self, Receiver, Sender},

@@ -1,13 +1,13 @@
 [package]
-name = "saksaha_peer"
+name = "peer"
 version = "0.1.0"
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-saksaha_logger = { path = "../logger" }
-saksaha_p2p_identity = { path = "../p2p/identity" }
+logger = { path = "../logger" }
+p2p_identity = { path = "../p2p_identity" }
 k256 = { version = "0.9.6", features = ["ecdh"] }
 rand_core = "0.6.3"
 serde = { version = "1.0.130", features = ["derive"] }
