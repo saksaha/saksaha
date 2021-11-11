@@ -3,28 +3,50 @@ pub mod socket;
 use crate::{
     p2p::host::Host,
     pconfig::PConfig,
-    process::{Process,},
+    process::{Process, Shutdown},
     rpc::{self, RPC},
 };
 use log::{debug, error, info};
 use std::sync::Arc;
 use tokio::{self, signal};
 
-pub struct Node;
+pub struct Node {
+    inner: Arc<Inner>,
+}
 
 impl Node {
     pub fn new() -> Node {
-        let n = Node {};
+        let inner = Arc::new(Inner {});
 
-        Process::init(Box::new(|| {
-            &n.shutdown();
-        }));
-        // let a = Arc::new(n);
-        // Process::init(a);
-        n
+        Process::init(inner.clone());
+
+        Node { inner }
     }
 
     pub fn start(
+        &self,
+        rpc_port: Option<u16>,
+        disc_port: Option<u16>,
+        p2p_port: Option<u16>,
+        bootstrap_endpoints: Option<Vec<String>>,
+        pconfig: PConfig,
+        default_bootstrap_urls: String,
+    ) -> Result<(), String> {
+        self.inner.start(
+            rpc_port,
+            disc_port,
+            p2p_port,
+            bootstrap_endpoints,
+            pconfig,
+            default_bootstrap_urls,
+        )
+    }
+}
+
+struct Inner;
+
+impl Inner {
+    fn start(
         &self,
         rpc_port: Option<u16>,
         disc_port: Option<u16>,
@@ -39,10 +61,10 @@ impl Node {
             .enable_all()
             .build();
 
-        let _ = match runtime {
+        match runtime {
             Ok(r) => r.block_on(async {
                 match self
-                    .init_and_start(
+                    .start_in_runtime(
                         rpc_port,
                         disc_port,
                         p2p_port,
@@ -82,15 +104,14 @@ impl Node {
                 );
             }),
             Err(err) => {
-                let msg = format!("runtime fail, err: {:?}", err);
-                return Err(msg);
+                return Err(format!("runtime fail, err: {:?}", err));
             }
         };
 
         Ok(())
     }
 
-    async fn init_and_start(
+    async fn start_in_runtime(
         &self,
         rpc_port: Option<u16>,
         disc_port: Option<u16>,
@@ -118,14 +139,10 @@ impl Node {
 
         Ok(())
     }
+}
 
+impl Shutdown for Inner {
     fn shutdown(&self) {
         info!("Storing state of node");
     }
 }
-
-// impl Shutdown for Node {
-//     fn shutdown(&self) {
-//         info!("Storing state of node");
-//     }
-// }
