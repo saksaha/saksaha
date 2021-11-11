@@ -5,13 +5,11 @@ use std::sync::Arc;
 static INSTANCE: OnceCell<Process> = OnceCell::new();
 
 pub struct Process {
-    // shutdownable: impl Shutdown
-    // shutdownable: Arc<dyn Shutdown + Sync + Send>,
-    shutdownable: Box<dyn Fn()>,
+    shutdownable: Arc<dyn Shutdown + Sync + Send>,
 }
 
 impl Process {
-    pub fn init(shutdownable: Box<dyn Fn()>) {
+    pub fn init(shutdownable: Arc<dyn Shutdown + Sync + Send>) {
         let p = Process { shutdownable };
 
         match INSTANCE.set(p) {
@@ -39,12 +37,12 @@ impl Process {
 
         info!("Calling shutdown callback");
 
-        // process.shutdownable.shutdown();
+        process.shutdownable.shutdown();
 
         std::process::exit(1);
     }
 }
 
-// pub trait Shutdown {
-//     fn shutdown(&self);
-// }
+pub trait Shutdown {
+    fn shutdown(&self);
+}
