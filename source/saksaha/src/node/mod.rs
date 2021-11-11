@@ -1,6 +1,11 @@
 pub mod socket;
 
-use crate::{p2p::host::Host, pconfig::PConfig, process::{Process, Shutdown}, rpc::{self, RPC}};
+use crate::{
+    p2p::host::Host,
+    pconfig::PConfig,
+    process::{Process,},
+    rpc::{self, RPC},
+};
 use log::{debug, error, info};
 use std::sync::Arc;
 use tokio::{self, signal};
@@ -11,7 +16,11 @@ impl Node {
     pub fn new() -> Node {
         let n = Node {};
 
-        // Process::init(n.clone() as Arc<dyn Shutdown + Sync + Send>);
+        Process::init(Box::new(|| {
+            &n.shutdown();
+        }));
+        // let a = Arc::new(n);
+        // Process::init(a);
         n
     }
 
@@ -109,10 +118,14 @@ impl Node {
 
         Ok(())
     }
-}
 
-impl Shutdown for Node {
     fn shutdown(&self) {
         info!("Storing state of node");
     }
 }
+
+// impl Shutdown for Node {
+//     fn shutdown(&self) {
+//         info!("Storing state of node");
+//     }
+// }
