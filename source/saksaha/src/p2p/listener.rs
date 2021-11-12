@@ -1,5 +1,6 @@
 use log::{debug, info, warn};
 use p2p_identity::Identity;
+use p2p_transport::Connection;
 use std::{net::ToSocketAddrs, sync::Arc};
 use tokio::net::TcpListener;
 use super::state::HostState;
@@ -46,6 +47,14 @@ impl Listener {
 
                 debug!("Accepted new connection, endpoint: {}", addr);
 
+                let mut handler = Handler {
+                    conn: Connection::new(stream),
+                };
+
+                tokio::spawn(async move {
+                    let _ = handler.run().await;
+                });
+
                 //     let mut buf = [0; 512];
                 //     let (_, socket_addr) =
                 //         match udp_socket.recv_from(&mut buf).await {
@@ -83,8 +92,24 @@ impl Listener {
     }
 }
 
-struct Handler;
+struct Handler {
+    conn: Connection,
+}
 
 impl Handler {
-    fn run() {}
+    async fn run(&mut self) -> Result<(), String> {
+        let maybe_frame = match self.conn.read_frame().await {
+            Ok(f) => f,
+            Err(err) => return Err(format!("Can't read frame, err: {}", err)),
+        };
+
+        let frame = match maybe_frame {
+            Some(f) => f,
+            None => return Ok(()),
+        };
+
+        println!("frame: {}", frame);
+
+        Ok(())
+    }
 }

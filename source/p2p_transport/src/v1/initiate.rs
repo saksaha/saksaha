@@ -1,4 +1,5 @@
-use crate::TransportMeta;
+use crate::{Connection, Frame, TransportMeta};
+use bytes::Bytes;
 use log::{debug, error};
 use p2p_identity::PeerId;
 use std::sync::Arc;
@@ -38,16 +39,27 @@ pub(crate) async fn send_handshake_syn(
         return Err(TransportInitError::MyEndpoint { endpoint });
     }
 
-    let mut stream = match TcpStream::connect(endpoint).await {
+    let mut conn = match TcpStream::connect(endpoint).await {
         Ok(s) => {
             println!("called, ip: {}", ip);
-            // active_calls.insert()
-            s
+
+            Connection::new(s)
         }
         Err(err) => {
             return Err(TransportInitError::ConnectionFail { source: err })
         }
     };
+
+    let mut frame = Frame::array();
+    frame.push_bulk(Bytes::from("power".as_bytes()));
+    match conn.write_frame(&frame).await {
+        Ok(_) => (),
+        Err(err) => {
+            println!("err: {}", err);
+        }
+    }
+
+    // conn.write_frame()
 
     // let my_sig = self.disc_state.id.sig();
     // let my_public_key_bytes = self.disc_state.id.public_key_bytes();
