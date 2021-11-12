@@ -48,12 +48,12 @@ impl TaskRun<Task> for TaskRunner {
 async fn handle_initiate_handshake(
     ip: String,
     p2p_port: u16,
-    public_key: PeerId,
+    peer_id: PeerId,
     transport_factory: Arc<TransportFactory>,
     peer: Arc<Peer>,
 ) {
     match transport_factory
-        .initiate_handshake(ip, p2p_port, peer)
+        .initiate_handshake(ip, p2p_port, peer_id, peer)
         .await
     {
         Ok(_) => (),

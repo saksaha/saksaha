@@ -2,7 +2,7 @@ use crate::v1::initiate::TransportInitError;
 use super::initiate;
 use log::{debug, error};
 use p2p_active_calls::ActiveCalls;
-use p2p_identity::Identity;
+use p2p_identity::{Identity, PeerId};
 use peer::Peer;
 use std::sync::Arc;
 use thiserror::Error;
@@ -46,6 +46,7 @@ impl TransportFactory {
         &self,
         ip: String,
         p2p_port: u16,
+        peer_id: PeerId,
         peer: Arc<Peer>,
     ) -> Result<(), TransportInitError> {
         let transport_meta = self.transport_meta.clone();
