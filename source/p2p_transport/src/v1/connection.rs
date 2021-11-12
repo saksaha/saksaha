@@ -31,6 +31,8 @@ impl Connection {
                 }
             };
 
+            println!("len: {}", len);
+
             if 0 == len {
                 if self.buffer.is_empty() {
                     return Ok(None);
@@ -112,6 +114,8 @@ impl Connection {
                     Ok(f) => f,
                     Err(err) => return Err(format!("err: {}", err)),
                 };
+
+                println!("parse_frame(): buf: {:?}", buf);
 
                 self.buffer.advance(len);
 

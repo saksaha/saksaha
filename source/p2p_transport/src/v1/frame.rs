@@ -165,6 +165,8 @@ impl Frame {
                     out.push(Frame::parse(src)?);
                 }
 
+                println!("3333, parse out: {:?}" ,out);
+
                 Ok(Frame::Array(out))
             }
             _ => unimplemented!(),
@@ -201,6 +203,8 @@ impl fmt::Display for Frame {
             },
             Frame::Null => "(nil)".fmt(fmt),
             Frame::Array(parts) => {
+                println!("parts: {:?}" ,parts);
+
                 for (i, part) in parts.iter().enumerate() {
                     if i > 0 {
                         write!(fmt, " ")?;
