@@ -51,8 +51,6 @@ impl TransportFactory {
     ) -> Result<(), TransportInitError> {
         let transport_meta = self.transport_meta.clone();
 
-        println!("111");
-
         let handshake_sent =
             initiate::send_handshake_syn(ip, p2p_port, transport_meta).await?;
 
