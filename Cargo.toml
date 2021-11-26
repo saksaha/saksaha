@@ -13,5 +13,8 @@ members = [
   "source/task",
 
   # internals
-  "internals/ci"
+  "internals/ci",
+
+  # example
+  "example/ci"
 ]
