@@ -2,6 +2,7 @@ use log::{debug};
 
 const MAX_FAIL_COUNT: usize = 3;
 
+/// Peer slot reserved
 pub enum Peer {
     Empty,
 

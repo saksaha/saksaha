@@ -1,7 +1,8 @@
 use super::{state::HostState, task::Task};
 use log::{debug, error, info, warn};
 use p2p_discovery::iterator::Iterator;
-use p2p_transport::TransportFactory;
+use p2p_identity::Identity;
+use p2p_transport::HandshakeArgs;
 use peer::PeerStore;
 use std::{
     sync::Arc,
@@ -17,16 +18,11 @@ impl DialScheduler {
     pub fn new(
         disc_iterator: Arc<Iterator>,
         host_state: Arc<HostState>,
-        transport_factory: Arc<TransportFactory>,
     ) -> DialScheduler {
         let min_interval = Duration::from_millis(2000);
 
-        let handshake_routine = HandshakeRoutine::new(
-            min_interval,
-            disc_iterator,
-            host_state,
-            transport_factory,
-        );
+        let handshake_routine =
+            HandshakeRoutine::new(min_interval, disc_iterator, host_state);
 
         DialScheduler { handshake_routine }
     }
@@ -40,7 +36,6 @@ struct HandshakeRoutine {
     is_running: Arc<Mutex<bool>>,
     min_interval: Duration,
     disc_iterator: Arc<Iterator>,
-    transport_factory: Arc<TransportFactory>,
     host_state: Arc<HostState>,
 }
 
@@ -49,7 +44,6 @@ impl HandshakeRoutine {
         min_interval: Duration,
         disc_iterator: Arc<Iterator>,
         host_state: Arc<HostState>,
-        transport_factory: Arc<TransportFactory>,
     ) -> HandshakeRoutine {
         let is_running = Arc::new(Mutex::new(false));
 
@@ -57,7 +51,6 @@ impl HandshakeRoutine {
             disc_iterator,
             is_running,
             min_interval,
-            transport_factory,
             host_state,
         }
     }
@@ -69,8 +62,9 @@ impl HandshakeRoutine {
         let min_interval = self.min_interval;
         let task_queue = self.host_state.task_queue.clone();
         let disc_iterator = self.disc_iterator.clone();
-        let transport_factory = self.transport_factory.clone();
         let peer_store = self.host_state.peer_store.clone();
+        let host_state = self.host_state.clone();
+        let active_calls = self.host_state.handshake_active_calls.clone();
 
         tokio::spawn(async move {
             let mut is_running_lock = is_running.lock().await;
@@ -98,6 +92,14 @@ impl HandshakeRoutine {
                     }
                 };
 
+                if let Some(_) = peer_store.find(node_val.public_key).await {
+                    debug!(
+                        "She is already a peer, public_key: {:?}",
+                        node_val.public_key,
+                    );
+                    continue;
+                }
+
                 let peer = match peer_store.reserve().await {
                     Ok(p) => p,
                     Err(err) => {
@@ -106,14 +108,18 @@ impl HandshakeRoutine {
                     }
                 };
 
+                let handshake_args = HandshakeArgs {
+                    identity: host_state.identity.clone(),
+                    my_rpc_port: host_state.my_rpc_port,
+                    my_p2p_port: host_state.my_p2p_port,
+                    her_ip: node_val.addr.ip,
+                    her_p2p_port: node_val.p2p_port,
+                    her_public_key: node_val.public_key,
+                    peer: peer,
+                };
+
                 match task_queue
-                    .push(Task::InitiateHandshake {
-                        ip: node_val.addr.ip,
-                        p2p_port: node_val.p2p_port,
-                        public_key: node_val.public_key,
-                        transport_factory: transport_factory.clone(),
-                        peer,
-                    })
+                    .push(Task::InitiateHandshake(handshake_args))
                     .await
                 {
                     Ok(_) => (),

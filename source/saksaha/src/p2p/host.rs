@@ -2,9 +2,9 @@ use crate::{
     node::socket::TcpSocket, pconfig::PersistedP2PConfig,
 };
 use log::{error, info};
+use p2p_active_calls::ActiveCalls;
 use p2p_discovery::Disc;
 use p2p_identity::Identity;
-use p2p_transport::TransportFactory;
 use peer::PeerStore;
 use task::task_queue::TaskQueue;
 use std::sync::Arc;
@@ -47,6 +47,11 @@ impl Host {
             Arc::new(q)
         };
 
+        let handshake_active_calls = {
+            let a = ActiveCalls::new();
+            Arc::new(a)
+        };
+
         let host_state = {
             let s = HostState::new(
                 identity.clone(),
@@ -54,6 +59,7 @@ impl Host {
                 p2p_socket.port,
                 task_queue.clone(),
                 peer_store.clone(),
+                handshake_active_calls,
             );
             Arc::new(s)
         };
@@ -61,15 +67,6 @@ impl Host {
         let listener = {
             let l = Listener::new(p2p_socket.listener, host_state.clone());
             Arc::new(l)
-        };
-
-        let transport_factory = {
-            let f = TransportFactory::new(
-                identity.clone(),
-                host_state.my_rpc_port,
-                host_state.my_p2p_port,
-            );
-            Arc::new(f)
         };
 
         let disc = {
@@ -88,7 +85,6 @@ impl Host {
             let d = DialScheduler::new(
                 disc.iter(),
                 host_state.clone(),
-                transport_factory.clone(),
             );
             Arc::new(d)
         };
