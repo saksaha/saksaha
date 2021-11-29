@@ -24,7 +24,7 @@ const CAPACITY: usize = 50;
 
 pub struct PeerStore {
     // pub slots: Arc<Mutex<Vec<Arc<Mutex<Peer>>>>>,
-    map: Mutex<HashMap<PeerId, Peer>>,
+    map: Mutex<HashMap<PeerId, Arc<Peer>>>,
     slots_tx: Sender<Arc<Peer>>,
     slots_rx: Mutex<Receiver<Arc<Peer>>>,
 }
@@ -84,6 +84,15 @@ impl PeerStore {
             None => {
                 Err(format!("Slots channel might be closed"))
             }
+        }
+    }
+
+    pub async fn find(&self, peer_id: PeerId) -> Option<Arc<Peer>> {
+        let map = self.map.lock().await;
+        if let Some(p) = map.get(&peer_id) {
+            Some(p.clone())
+        } else {
+            None
         }
     }
 

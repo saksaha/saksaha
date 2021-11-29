@@ -17,7 +17,7 @@ impl ActiveCalls {
         ActiveCalls { map }
     }
 
-    pub async fn contain(&self, ip: &String) -> bool {
+    pub async fn contains(&self, ip: &String) -> bool {
         let map = self.map.lock().await;
 
         return map.contains_key(ip);

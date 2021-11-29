@@ -108,8 +108,6 @@ impl Frame {
                     out.push(Frame::parse(src)?);
                 }
 
-                println!("3333, parse out: {:?}" ,out);
-
                 Ok(Frame::Array(out))
             }
             _ => unimplemented!(),
