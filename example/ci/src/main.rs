@@ -7,7 +7,7 @@ use structopt::StructOpt;
 struct Cli {
     ci_type: String,
     /// The chat room id
-    chat_room: Option<String>,
+    meta_property: Option<String>,
 }
 
 const LEDGER: &str = "ledger";
@@ -20,7 +20,7 @@ fn main() {
 
 
     let args = Cli::from_args();
-    println!("trying to enter chatroomId {:?}", args.ci_type);
+    println!("trying to init  {:?}", args.ci_type);
 
     match args.ci_type.as_str() {
         LEDGER => ledger::show_ledger(),
