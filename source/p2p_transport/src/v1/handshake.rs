@@ -22,57 +22,6 @@ pub enum TransportInitError {
     CallInProcess { ip: String },
 }
 
-// pub(crate) struct TransportMeta {
-//     pub identity: Arc<Identity>,
-//     pub my_rpc_port: u16,
-//     pub my_p2p_port: u16,
-//     pub active_calls: Arc<ActiveCalls>,
-// }
-
-// pub struct TransportFactory {
-//     transport_meta: Arc<TransportMeta>,
-// }
-
-// impl TransportFactory {
-//     pub fn new(
-//         identity: Arc<Identity>,
-//         my_rpc_port: u16,
-//         my_p2p_port: u16,
-//     ) -> TransportFactory {
-//         let active_calls = {
-//             let c = ActiveCalls::new();
-//             Arc::new(c)
-//         };
-
-//         let transport_meta = {
-//             let m = TransportMeta {
-//                 identity,
-//                 my_rpc_port,
-//                 my_p2p_port,
-//                 active_calls,
-//             };
-//             Arc::new(m)
-//         };
-
-//         TransportFactory { transport_meta }
-//     }
-
-//     // pub async fn initiate_handshake(
-//     //     &self,
-//     //     ip: String,
-//     //     p2p_port: u16,
-//     //     peer_id: PeerId,
-//     //     peer: Arc<Peer>,
-//     // ) -> Result<(), TransportInitError> {
-//     //     let transport_meta = self.transport_meta.clone();
-
-//     //     let handshake_sent =
-//     //         initiate::send_handshake_syn(ip, p2p_port, transport_meta).await?;
-
-//     //     Ok(())
-//     // }
-// }
-
 #[derive(Clone)]
 pub struct HandshakeArgs {
     pub identity: Arc<Identity>,
@@ -81,7 +30,6 @@ pub struct HandshakeArgs {
     pub her_ip: String,
     pub her_p2p_port: u16,
     pub her_public_key: PeerId,
-    pub peer: Arc<Peer>,
 }
 
 pub async fn initiate_handshake(
@@ -113,9 +61,9 @@ pub async fn initiate_handshake(
         }
     };
 
-    let mut frame = Frame::array();
-    frame.push_bulk(Bytes::from("power".as_bytes()));
-    match conn.write_frame(&frame).await {
+    let handshake_req_frame = make_handshake_req_frame();
+
+    match conn.write_frame(&handshake_req_frame).await {
         Ok(_) => (),
         Err(err) => {
             println!("err: {}", err);
@@ -123,6 +71,19 @@ pub async fn initiate_handshake(
     }
 
     Ok(())
+}
+
+fn make_handshake_req_frame() -> Frame {
+    let mut frame = Frame::array();
+    frame.push_bulk(Bytes::from("power1".as_bytes()));
+    frame.push_bulk(Bytes::from("power2".as_bytes()));
+    frame
+}
+
+fn make_handshake_resp_frame() -> Frame {
+    let mut frame = Frame::array();
+    frame.push_bulk(Bytes::from("power1".as_bytes()));
+    frame
 }
 
 pub(crate) async fn send_handshake_syn(

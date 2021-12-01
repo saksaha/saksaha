@@ -88,36 +88,6 @@ impl Table {
         Ok(table)
     }
 
-    // pub async fn find(&self, peer_id: &PeerId) -> Option<Arc<Node>> {
-    //     let map = self.map.lock().await;
-
-    //     if let Some(n) = map.get(peer_id) {
-    //         return Some(n.clone());
-    //     } else {
-    //         return None;
-    //     }
-    // }
-
-    // pub async fn find_or_reserve(
-    //     &self,
-    //     peer_id: &PeerId,
-    // ) -> Result<Arc<Node>, String> {
-    //     match self.find(peer_id).await {
-    //         Some(n) => return Ok(n),
-    //         None => return self.reserve().await,
-    //     };
-    // }
-
-    // pub async fn find_or_try_reserve(
-    //     &self,
-    //     peer_id: &PeerId,
-    // ) -> Result<Arc<Node>, String> {
-    //     match self.find(peer_id).await {
-    //         Some(n) => return Ok(n),
-    //         None => return self.try_reserve().await,
-    //     };
-    // }
-
     pub async fn add<F>(
         &self,
         table_node: Arc<Node>,
@@ -168,15 +138,6 @@ impl Table {
             Err(err) => return Err(err),
         }
     }
-
-    // pub async fn reserve(&self) -> Result<Arc<Node>, String> {
-    //     let mut slots_rx = self.slots_rx.lock().await;
-
-    //     match slots_rx.recv().await {
-    //         Some(n) => return Ok(n),
-    //         None => return Err(format!("Can't retrieve Node from pool")),
-    //     };
-    // }
 
     pub async fn try_reserve(&self) -> Result<Arc<Node>, String> {
         let mut slots_rx = self.slots_rx.lock().await;

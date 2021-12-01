@@ -67,6 +67,8 @@ impl Connection {
 
     async fn write_value(&mut self, frame: &Frame) -> io::Result<()> {
         match frame {
+            Frame::HandshakeRequest(bytes) => (),
+            Frame::HandshakeResponse(bytes) => (),
             Frame::Bulk(val) => {
                 let len = val.len();
 
