@@ -6,10 +6,14 @@ use std::num::TryFromIntError;
 use std::string::FromUtf8Error;
 use atoi::atoi;
 
-/// A frame in the Redis protocol.
+pub const FrameType: u8 = b'1';
+
 #[derive(Clone, Debug)]
 pub enum Frame {
-    // Simple(String),
+    HandshakeRequest(Bytes),
+
+    HandshakeResponse(Bytes),
+
     Bulk(Bytes),
     Array(Vec<Frame>),
 }
@@ -24,16 +28,10 @@ pub enum Error {
 }
 
 impl Frame {
-    /// Returns an empty array
     pub(crate) fn array() -> Frame {
         Frame::Array(vec![])
     }
 
-    /// Push a "bulk" frame into the array. `self` must be an Array frame.
-    ///
-    /// # Panics
-    ///
-    /// panics if `self` is not an array
     pub(crate) fn push_bulk(&mut self, bytes: Bytes) {
         match self {
             Frame::Array(vec) => {
@@ -43,13 +41,8 @@ impl Frame {
         }
     }
 
-    /// Checks if an entire message can be decoded from `src`
     pub fn check(src: &mut Cursor<&[u8]>) -> Result<(), Error> {
         match get_u8(src)? {
-            b'+' => {
-                get_line(src)?;
-                Ok(())
-            }
             b'$' => {
                 if b'-' == peek_u8(src)? {
                     // Skip '-1\r\n'
@@ -134,13 +127,19 @@ impl fmt::Display for Frame {
         use std::str;
 
         match self {
+            Frame::HandshakeRequest(msg) => match str::from_utf8(msg) {
+                Ok(string) => string.fmt(fmt),
+                Err(_) => write!(fmt, "{:?}", msg),
+            },
+            Frame::HandshakeResponse(msg) => match str::from_utf8(msg) {
+                Ok(string) => string.fmt(fmt),
+                Err(_) => write!(fmt, "{:?}", msg),
+            },
             Frame::Bulk(msg) => match str::from_utf8(msg) {
                 Ok(string) => string.fmt(fmt),
                 Err(_) => write!(fmt, "{:?}", msg),
             },
             Frame::Array(parts) => {
-                println!("parts: {:?}" ,parts);
-
                 for (i, part) in parts.iter().enumerate() {
                     if i > 0 {
                         write!(fmt, " ")?;
@@ -181,8 +180,6 @@ fn skip(src: &mut Cursor<&[u8]>, n: usize) -> Result<(), Error> {
 
 /// Read a new-line terminated decimal
 fn get_decimal(src: &mut Cursor<&[u8]>) -> Result<u64, Error> {
-    // use atoi::atoi;
-
     let line = get_line(src)?;
 
     atoi::<u64>(line)

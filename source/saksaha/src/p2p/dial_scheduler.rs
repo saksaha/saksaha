@@ -1,8 +1,9 @@
+use crate::p2p::task::InitHandshakeArgs;
+
 use super::{state::HostState, task::Task};
 use log::{debug, error, info, warn};
 use p2p_discovery::iterator::Iterator;
 use p2p_identity::Identity;
-use p2p_transport::HandshakeArgs;
 use peer::PeerStore;
 use std::{
     sync::Arc,
@@ -92,6 +93,15 @@ impl HandshakeRoutine {
                     }
                 };
 
+                if active_calls.contains(&node_val.addr.ip).await {
+                    debug!(
+                        "Already talking with this node, ip: {}",
+                        node_val.addr.ip
+                    );
+
+                    continue;
+                }
+
                 if let Some(_) = peer_store.find(node_val.public_key).await {
                     debug!(
                         "She is already a peer, public_key: {:?}",
@@ -108,7 +118,7 @@ impl HandshakeRoutine {
                     }
                 };
 
-                let handshake_args = HandshakeArgs {
+                let init_handshake_args = InitHandshakeArgs {
                     identity: host_state.identity.clone(),
                     my_rpc_port: host_state.my_rpc_port,
                     my_p2p_port: host_state.my_p2p_port,
@@ -116,10 +126,11 @@ impl HandshakeRoutine {
                     her_p2p_port: node_val.p2p_port,
                     her_public_key: node_val.public_key,
                     peer: peer,
+                    handshake_active_calls: active_calls.clone(),
                 };
 
                 match task_queue
-                    .push(Task::InitiateHandshake(handshake_args))
+                    .push(Task::InitiateHandshake(init_handshake_args))
                     .await
                 {
                     Ok(_) => (),
