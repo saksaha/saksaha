@@ -63,6 +63,7 @@ impl DialScheduler {
 
         let urls = [bootstrap_urls, default_bootstrap_urls].concat();
 
+        info!("");
         info!("*********************************************************");
         info!("* Discovery table bootstrapped");
 
@@ -105,6 +106,7 @@ impl DialScheduler {
 
         info!("* bootstrapped node count: {}", count);
         info!("*********************************************************");
+        info!("");
     }
 }
 

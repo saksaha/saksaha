@@ -64,6 +64,9 @@ async fn handle_initiate_handshake(init_handshake_args: InitHandshakeArgs) {
                 TransportInitError::CallInProcess { .. } => (),
                 TransportInitError::ConnectionFail { .. } => (),
                 TransportInitError::MyEndpoint { .. } => (),
+                TransportInitError::PayloadWriteFail { .. } => (),
+                TransportInitError::InvalidAck { .. } => (),
+                TransportInitError::HandshakeSentFail { .. } => (),
             };
         }
     };

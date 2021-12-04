@@ -6,17 +6,15 @@ use std::num::TryFromIntError;
 use std::string::FromUtf8Error;
 use atoi::atoi;
 
-pub const FrameType: u8 = b'1';
+use super::msg::msg_code;
 
 #[derive(Clone, Debug)]
 pub enum Frame {
-    HandshakeRequest(Bytes),
-
-    HandshakeResponse(Bytes),
-
     Bulk(Bytes),
+
     Array(Vec<Frame>),
 }
+
 
 #[derive(Debug)]
 pub enum Error {
@@ -43,7 +41,7 @@ impl Frame {
 
     pub fn check(src: &mut Cursor<&[u8]>) -> Result<(), Error> {
         match get_u8(src)? {
-            b'$' => {
+            msg_code::BULK => {
                 if b'-' == peek_u8(src)? {
                     // Skip '-1\r\n'
                     skip(src, 4)
@@ -55,7 +53,7 @@ impl Frame {
                     skip(src, len + 2)
                 }
             }
-            b'*' => {
+            msg_code::ARRAY => {
                 let len = get_decimal(src)?;
 
                 for _ in 0..len {
@@ -64,9 +62,9 @@ impl Frame {
 
                 Ok(())
             }
-            actual => Err(format!(
+            any => Err(format!(
                 "protocol error; invalid frame type byte `{}`",
-                actual
+                any
             )
             .into()),
         }
@@ -75,7 +73,7 @@ impl Frame {
     /// The message has already been validated with `scan`.
     pub fn parse(src: &mut Cursor<&[u8]>) -> Result<Frame, Error> {
         match get_u8(src)? {
-            b'$' => {
+            msg_code::BULK => {
                 {
                     // Read the bulk string
                     let len = get_decimal(src)?.try_into()?;
@@ -93,7 +91,7 @@ impl Frame {
                     Ok(Frame::Bulk(data))
                 }
             }
-            b'*' => {
+            msg_code::ARRAY => {
                 let len = get_decimal(src)?.try_into()?;
                 let mut out = Vec::with_capacity(len);
 
@@ -127,14 +125,6 @@ impl fmt::Display for Frame {
         use std::str;
 
         match self {
-            Frame::HandshakeRequest(msg) => match str::from_utf8(msg) {
-                Ok(string) => string.fmt(fmt),
-                Err(_) => write!(fmt, "{:?}", msg),
-            },
-            Frame::HandshakeResponse(msg) => match str::from_utf8(msg) {
-                Ok(string) => string.fmt(fmt),
-                Err(_) => write!(fmt, "{:?}", msg),
-            },
             Frame::Bulk(msg) => match str::from_utf8(msg) {
                 Ok(string) => string.fmt(fmt),
                 Err(_) => write!(fmt, "{:?}", msg),

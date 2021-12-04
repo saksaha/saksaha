@@ -5,10 +5,15 @@ pub use k256::{
         Signature, SigningKey, VerifyingKey,
     },
     elliptic_curve::sec1::ToEncodedPoint,
-    EncodedPoint, PublicKey, SecretKey,
+    elliptic_curve::weierstrass::Curve,
+    elliptic_curve::{
+        Error,
+        ecdh::SharedSecret, AffinePoint, NonZeroScalar, ProjectiveArithmetic,
+    },
+    EncodedPoint, PublicKey, Secp256k1, SecretKey,
 };
 use rand_core::OsRng;
-use std::{fmt::Write, num::ParseIntError};
+use std::{borrow::Borrow, fmt::Write, num::ParseIntError};
 
 pub fn generate_key() -> SecretKey {
     let secret = SecretKey::random(&mut OsRng);
@@ -79,6 +84,13 @@ pub fn verify(
         Ok(_) => Ok(()),
         Err(err) => Err(err.to_string()),
     }
+}
+
+pub fn diffie_hellman(
+    sk: impl Borrow<NonZeroScalar<Secp256k1>>,
+    pk: impl Borrow<AffinePoint<Secp256k1>>,
+) -> SharedSecret<Secp256k1> {
+    k256::elliptic_curve::ecdh::diffie_hellman(sk, pk)
 }
 
 #[cfg(test)]
