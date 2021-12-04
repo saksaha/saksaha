@@ -141,7 +141,13 @@ fn main() {
             }
         };
 
-        info!("Successfully loaded config, {:?}", c);
+        info!("");
+        info!("********************************************************");
+        info!("* Persisted config loaded");
+        info!("* My peer id (public key): {}", c.p2p.public_key);
+        info!("********************************************************");
+        info!("");
+
         c
     };
 
@@ -150,8 +156,6 @@ fn main() {
     };
 
     let node = Node::new();
-
-    // Process::init(node.clone() as Arc<dyn Shutdown + Sync + Send>);
 
     match node.start(
         args.rpc_port,

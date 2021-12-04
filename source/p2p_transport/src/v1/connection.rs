@@ -1,7 +1,9 @@
-use crate::Frame;
+use crate::{Frame};
 use bytes::{Buf, BytesMut};
 use std::io::{self, Cursor, Write};
 use tokio::{io::{AsyncReadExt, BufWriter, AsyncWriteExt}, net::TcpStream};
+
+use super::msg::msg_code;
 
 const BUFFER_SIZE: usize = 4096;
 
@@ -48,7 +50,7 @@ impl Connection {
         match frame {
             Frame::Array(val) => {
                 // Encode the frame type prefix. For an array, it is `*`.
-                self.stream.write_u8(b'*').await?;
+                self.stream.write_u8(msg_code::ARRAY).await?;
 
                 // Encode the length of the array.
                 self.write_decimal(val.len() as u64).await?;
@@ -67,12 +69,10 @@ impl Connection {
 
     async fn write_value(&mut self, frame: &Frame) -> io::Result<()> {
         match frame {
-            Frame::HandshakeRequest(bytes) => (),
-            Frame::HandshakeResponse(bytes) => (),
             Frame::Bulk(val) => {
                 let len = val.len();
 
-                self.stream.write_u8(b'$').await?;
+                self.stream.write_u8(msg_code::BULK).await?;
                 self.write_decimal(len as u64).await?;
                 self.stream.write_all(val).await?;
                 self.stream.write_all(b"\r\n").await?;
@@ -113,7 +113,6 @@ impl Connection {
     }
 
     async fn write_decimal(&mut self, val: u64) -> io::Result<()> {
-
         // Convert the value to a string
         let mut buf = [0u8; 20];
         let mut buf = Cursor::new(&mut buf[..]);
