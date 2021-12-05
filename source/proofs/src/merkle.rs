@@ -165,7 +165,7 @@ impl Tree {
         n
     }
 
-    pub fn generate_proof(&self, idx: u64) -> Vec<Path> {
+    pub fn generate_auth_paths(&self, idx: u64) -> Vec<Path> {
         let height = self.height;
         let mut auth_path = vec![];
 
@@ -217,9 +217,9 @@ pub fn func() {
     let root = tree.root();
     println!("root: {:?}", root);
 
-    let proof = tree.generate_proof(3);
+    let auth_paths = tree.generate_auth_paths(3);
     println!();
-    println!("yo {}, {:?}", proof.len(), proof);
+    println!("yo {}, {:?}", auth_paths.len(), auth_paths);
 
 
     let preimage = [0];
