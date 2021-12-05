@@ -238,17 +238,26 @@ pub fn get_params(constants: &[Scalar]) -> Parameters<Bls12> {
     de_params
 }
 
+pub fn get_merkle_tree(constants: &[Scalar]) -> Tree{
+    let mut leaves: Vec<u32> = vec![];
+    (0..32).for_each(|iter| {
+        leaves.push(iter.clone());
+    });
+    let tree = Tree::new(leaves, TREE_DEPTH, &constants);
+    tree
+}
+
 #[test]
 pub fn mimcTest() {
     println!("start");
-    // let test_leaves: Vec<u32> = (0..std::u32::MAX).map(|x| x).collect();
-    let mut test_leaves: Vec<u32> = vec![];
-    (0..2).for_each(|iter| {
-        test_leaves.push(iter.clone());
-    });
-    println!("before new tree");
+    // // let test_leaves: Vec<u32> = (0..std::u32::MAX).map(|x| x).collect();
+    // let mut test_leaves: Vec<u32> = vec![];
+    // (0..32).for_each(|iter| {
+    //     test_leaves.push(iter.clone());
+    // });
+    // println!("before new tree");
 
-    let mut rng = thread_rng();
+    // let mut rng = thread_rng();
 
     // let constants = (0..MIMC_ROUNDS)
     //     .map(|_| Scalar::random(&mut rng))
@@ -256,12 +265,12 @@ pub fn mimcTest() {
     let constants = get_round_constants();
     println!("constants : {:?}", constants);
 
-    let mut bytes_constants = constants.clone();
-    let changed_constants: Vec<[u8; 32]> =
-        bytes_constants.iter().map(|a| a.to_bytes()).collect();
-    println!("changed constants: {:?}", changed_constants);
+    // let mut bytes_constants = constants.clone();
+    // let changed_constants: Vec<[u8; 32]> =
+    //     bytes_constants.iter().map(|a| a.to_bytes()).collect();
+    // println!("changed constants: {:?}", changed_constants);
 
-    let tree = Tree::new(test_leaves, TREE_DEPTH, &constants);
+    let tree = get_merkle_tree(&constants);
 
     println!("before generate proof");
     let proof = tree.generate_proof(0);
