@@ -1,12 +1,12 @@
-use crate::{Connection, Frame};
+use crate::{Connection, Frame, Transport};
 use bytes::{Buf, BufMut, Bytes, BytesMut};
 use crypto::{
     EncodedPoint, EphemeralSecret, PublicKey, Secp256k1, SharedSecret,
 };
 use log::{debug, error};
 use p2p_identity::{Identity, PeerId};
-use peer::Peer;
 use rand::rngs::OsRng;
+use std::convert::TryInto;
 use std::{
     io::{Cursor, Seek, SeekFrom, Write},
     sync::Arc,
@@ -57,8 +57,8 @@ pub enum HandshakeRecvError {
 }
 
 pub struct HandshakeMsg {
-    my_public_key: PeerId,
-    her_public_key: PeerId,
+    src_public_key: PeerId,
+    dst_public_key: PeerId,
 }
 
 #[derive(Clone)]
@@ -72,25 +72,53 @@ pub struct HandshakeInitParams {
 }
 
 pub async fn receive_handshake(
-    stream: &mut TcpStream,
+    mut stream: TcpStream,
     identity: Arc<Identity>,
-) -> Result<(), HandshakeRecvError> {
-    let mut hs_buf = read_handshake_msg(stream).await?;
+) -> Result<Transport, HandshakeRecvError> {
+    let mut hs_buf = read_handshake_msg(&mut stream).await?;
 
-    let shared_secret = match parse_handshake_msg(&mut hs_buf, stream, identity)
-    {
-        Ok(s) => s,
+    let hs_msg =
+        match parse_handshake_msg(&mut hs_buf, &mut stream, identity.clone()) {
+            Ok(s) => s,
+            Err(err) => {
+                return Err(HandshakeRecvError::Invalid { err });
+            }
+        };
+
+    let hs_ack_msg = HandshakeMsg {
+        src_public_key: identity.public_key,
+        dst_public_key: hs_msg.src_public_key,
+    };
+
+    match send_handshake_msg(&mut stream, hs_ack_msg).await {
+        Ok(_) => (),
         Err(err) => {
-            return Err(HandshakeRecvError::Invalid { err });
+            return Err(HandshakeRecvError::Invalid {
+                err: err.to_string(),
+            })
         }
     };
 
-    Ok(())
+    let shared_secret =
+        match make_shared_secret(identity.clone(), hs_msg.src_public_key) {
+            Ok(s) => s,
+            Err(err) => return Err(HandshakeRecvError::Invalid { err }),
+        };
+
+    debug!(
+        "Successfully received handshake, endpoint: {:?}",
+        stream.peer_addr()
+    );
+
+    Ok(Transport {
+        stream,
+        shared_secret,
+    })
 }
 
 pub async fn initiate_handshake(
     hs_init_params: HandshakeInitParams,
-) -> Result<(), HandshakeInitError> {
+) -> Result<Transport, HandshakeInitError> {
     let HandshakeInitParams {
         my_rpc_port,
         my_p2p_port,
@@ -121,8 +149,8 @@ pub async fn initiate_handshake(
     };
 
     let handshake_msg = HandshakeMsg {
-        my_public_key: identity.public_key,
-        her_public_key: her_public_key,
+        src_public_key: identity.public_key,
+        dst_public_key: her_public_key,
     };
 
     match send_handshake_msg(&mut stream, handshake_msg).await {
@@ -136,65 +164,86 @@ pub async fn initiate_handshake(
 
     let mut hs_ack_buf = read_handshake_msg(&mut stream).await?;
 
+    let hs_msg = match parse_handshake_msg(
+        &mut hs_ack_buf,
+        &mut stream,
+        identity.clone(),
+    ) {
+        Ok(s) => s,
+        Err(err) => {
+            return Err(HandshakeInitError::Invalid { err });
+        }
+    };
+
     let shared_secret =
-        match parse_handshake_msg(&mut hs_ack_buf, &mut stream, identity) {
+        match make_shared_secret(identity.clone(), hs_msg.dst_public_key) {
             Ok(s) => s,
-            Err(err) => {
-                return Err(HandshakeInitError::Invalid { err });
-            }
+            Err(err) => return Err(HandshakeInitError::Invalid { err }),
         };
 
-    Ok(())
+    debug!(
+        "Successfully initiated handshake, peer: {:?}",
+        stream.peer_addr()
+    );
+
+    let t = Transport {
+        stream,
+        shared_secret,
+    };
+
+    Ok(t)
 }
 
 async fn read_handshake_msg(
     stream: &mut TcpStream,
 ) -> Result<BytesMut, std::io::Error> {
-    let mut buffer = BytesMut::with_capacity(1024);
+    let mut buffer = BytesMut::with_capacity(512);
 
-    loop {
-        let n = stream.read_buf(&mut buffer).await?;
+    let n = stream.read_buf(&mut buffer).await?;
 
-        if n == 0 {
-            break;
-        }
-    }
-
-    println!("buf received: {:?}", buffer.to_vec());
+    // println!("buf received: {:?}", buffer.to_vec());
 
     Ok(buffer)
 }
 
 fn check_msg(buffer: &BytesMut) -> Result<(), String> {
-    let code = buffer[0];
+    if buffer.len() > 0 {
+        let code = buffer[0];
 
-    match code {
-        HANDSHAKE_CODE => {
-            return Ok(());
+        match code {
+            HANDSHAKE_CODE => {
+                return Ok(());
+            }
+            _ => {
+                return Err(format!(
+                    "Listener currently takes only 'handshake' msg"
+                ))
+            }
         }
-        _ => {
-            return Err(format!(
-                "Listener currently takes only 'handshake' msg"
-            ))
-        }
+    } else {
+        return Err(format!("Msg too short"));
     }
 }
 
 #[cfg(target_pointer_width = "64")]
 async fn send_handshake_msg(
     stream: &mut TcpStream,
-    handshake_msg: HandshakeMsg,
+    hs_msg: HandshakeMsg,
 ) -> Result<(), std::io::Error> {
     let mut buf = Cursor::new(Vec::new());
 
-    std::io::Write::write(&mut buf, &handshake_msg.my_public_key[..])?;
-    std::io::Write::write(&mut buf, &handshake_msg.her_public_key[..])?;
+    std::io::Write::write(&mut buf, &hs_msg.src_public_key[..])?;
+    std::io::Write::write(&mut buf, &hs_msg.dst_public_key[..])?;
     let len = buf.position().to_le_bytes();
 
+    println!("sending: {:?}", &buf.get_ref()[..]);
+
     stream.write_u8(HANDSHAKE_CODE).await?;
-    stream.write(&len[..]).await?;
-    stream.write(&buf.get_ref()[..]).await?;
+    stream.write_all(&len[..]).await?;
+    stream.write_all(&buf.get_ref()[..]).await?;
     stream.write_all(b"\r\n").await?;
+
+    // debug!("Sent handshake msg: {:?}", buf);
 
     Ok(())
 }
@@ -204,38 +253,63 @@ fn parse_handshake_msg(
     hs_buf: &mut BytesMut,
     stream: &mut TcpStream,
     identity: Arc<Identity>,
-) -> Result<SharedSecret<Secp256k1>, String> {
+) -> Result<HandshakeMsg, String> {
     match check_msg(&hs_buf) {
         Ok(_) => (),
         Err(err) => return Err(format!("Invalid handshake msg")),
     }
 
+    debug!("Checking msg: {:?}", hs_buf.to_vec());
+
     let mut buf = Cursor::new(&hs_buf[..]);
 
     buf.advance(1);
+
+    if !buf.has_remaining() {
+        error!("Msg is too short1");
+        return Err(format!("Msg too short"));
+    }
 
     let mut len_buf = Bytes::copy_from_slice(&buf.chunk()[..8]);
     let len = len_buf.get_u64_le() as usize;
 
     buf.advance(8);
 
+    if !buf.has_remaining() {
+        error!("Msg is too short2");
+        return Err(format!("Msg too short"));
+    }
+
     let data = Bytes::copy_from_slice(&buf.chunk()[..len]);
 
-    let her_public_key = Bytes::copy_from_slice(&data[..65]);
-    let her_public = match PublicKey::from_sec1_bytes(&her_public_key) {
-        Ok(p) => p,
-        Err(err) => {
-            println!("22, err: {}", err);
-            return Err(format!("Cannot create her public key"));
-        }
+    let dst_public_key = Bytes::copy_from_slice(&data[..65]);
+    let dst_public_key = match dst_public_key[..65].try_into() {
+        Ok(k) => k,
+        Err(e) => return Err(format!("Cannot create public key")),
     };
 
+    Ok(HandshakeMsg {
+        src_public_key: identity.public_key,
+        dst_public_key: dst_public_key,
+    })
+
+}
+
+fn make_shared_secret(
+    identity: Arc<Identity>,
+    her_public_key: PeerId,
+) -> Result<SharedSecret<Secp256k1>, String> {
     let my_secret_key = &identity.secret_key;
 
-    let shared_secret = crypto::diffie_hellman(
-        my_secret_key.to_secret_scalar(),
-        her_public.as_affine(),
-    );
+    let her_public =
+        match PublicKey::<Secp256k1>::from_sec1_bytes(&her_public_key) {
+            Ok(p) => p,
+            Err(err) => {
+                return Err(format!("Cannot create her public key"));
+            }
+        };
+
+    let shared_secret = crypto::make_shared_secret(my_secret_key, her_public);
 
     Ok(shared_secret)
 }

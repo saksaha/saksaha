@@ -21,8 +21,8 @@ pub enum RequestHandleError {
         source: std::io::Error,
     },
 
-    #[error("Invalid request code")]
-    InvalidCode { err: String },
+    #[error("Invalid request")]
+    Invalid,
 
     #[error("No available peer slot, err: {err}")]
     NoAvailablePeerSlot { err: String },
@@ -68,38 +68,40 @@ impl Listener {
 
                 debug!("[p2p] Accepted new connection, endpoint: {}", addr);
 
-                let mut handler = Handler {
-                    stream,
-                    host_state: host_state.clone(),
-                };
+                let mut handler = Handler {};
+                let host_state = host_state.clone();
 
                 tokio::spawn(async move {
-                    let _ = handler.run().await;
+                    let _ = handler.run(stream, host_state).await;
                 });
             }
         });
     }
 }
 
-struct Handler {
-    stream: TcpStream,
-    host_state: Arc<HostState>,
-}
+struct Handler {}
 
 impl Handler {
-    async fn run(&mut self) -> Result<(), RequestHandleError> {
-        let peer = match self.host_state.peer_store.reserve().await {
+    async fn run(
+        &mut self,
+        stream: TcpStream,
+        host_state: Arc<HostState>,
+    ) -> Result<(), RequestHandleError> {
+        let peer = match host_state.peer_store.reserve().await {
             Ok(p) => p,
             Err(err) => {
                 return Err(RequestHandleError::NoAvailablePeerSlot { err })
             }
         };
 
-        let transport = p2p_transport::receive_handshake(
-            &mut self.stream,
-            self.host_state.identity.clone(),
+        let transport = match p2p_transport::receive_handshake(
+            stream,
+            host_state.identity.clone(),
         )
-        .await;
+        .await {
+            Ok(t) => t,
+            Err(err) => return Err(RequestHandleError::Invalid),
+        };
 
         // read_handshak(buffer);
 

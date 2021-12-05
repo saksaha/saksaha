@@ -1,49 +1,46 @@
 use log::{debug};
+use p2p_transport::Transport;
+use tokio::sync::Mutex;
 
 const MAX_FAIL_COUNT: usize = 3;
 
-/// Peer slot reserved
-pub enum Peer {
-    Empty,
+// #[derive(Debug, PartialEq)]
+// pub enum Status {
+//     Empty,
 
-    Registered(RegisteredPeer),
+//     NotInitialized,
+
+//     DiscoverySuccess,
+
+//     HandshakeSuccess,
+
+//     HandshakeFail(String),
+// }
+
+pub struct Peer {
+    pub value: Mutex<PeerValue>,
 }
 
 impl Peer {
     pub fn new_empty() -> Peer {
-        Peer::Empty
+        Peer {
+            value: Mutex::new(PeerValue::Empty),
+        }
     }
 }
 
-#[derive(Debug, PartialEq)]
-pub enum Status {
+pub enum PeerValue {
     Empty,
-
-    NotInitialized,
-
-    DiscoverySuccess,
-
-    HandshakeSuccess,
-
-    HandshakeFail(String),
+    Registered(RegisteredPeerValue),
 }
 
-
-#[derive(Debug)]
-pub struct RegisteredPeer {
-    pub ip: String,
-    pub disc_port: u16,
-    pub peer_op_port: u16,
-    pub public_key_bytes: [u8; 65],
-    pub rpc_port: u16,
-    pub peer_id: String,
-    pub status: Status,
-    pub fail_count: usize,
-    pub url: String,
-}
-
-impl RegisteredPeer {
-
+pub struct RegisteredPeerValue {
+    // pub ip: String,
+    // pub p2p_port: u16,
+    // pub rpc_port: u16,
+    pub transport: Transport,
+    // pub public_key_bytes: [u8; 65],
+    // pub status: Status,
 }
 
 // impl PeerValue {

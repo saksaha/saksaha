@@ -68,7 +68,7 @@ impl Identity {
 
         let sig = {
             let signing_key = SigningKey::from(&secret_key);
-            let sig = crypto::make_sign(signing_key, SAKSAHA);
+            let sig = crypto::make_signature(signing_key, SAKSAHA);
             sig
         };
 
