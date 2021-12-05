@@ -1,5 +1,6 @@
 pub mod constants;
 pub mod merkle;
+use std::convert::TryInto;
 use std::fs::File;
 use std::io::Write;
 use std::time::SystemTime;
@@ -7,7 +8,7 @@ use std::vec;
 
 // use super::utils;
 use bellman::gadgets::boolean::{AllocatedBit, Boolean};
-use bellman::groth16::Parameters;
+use bellman::groth16::{Parameters, Proof};
 use bellman::{groth16, Circuit, ConstraintSystem, SynthesisError};
 use bls12_381::{Bls12, MillerLoopResult, Scalar};
 use ff::PrimeField;
@@ -18,7 +19,7 @@ use rand::thread_rng;
 use crate::constants::get_round_constants;
 use crate::merkle::Tree;
 
-const TREE_DEPTH: usize = 3;
+const TREE_DEPTH: usize = 32;
 pub const MIMC_ROUNDS: usize = 322;
 
 struct MyCircuit<'a, S: PrimeField> {
@@ -238,7 +239,7 @@ pub fn get_params(constants: &[Scalar]) -> Parameters<Bls12> {
     de_params
 }
 
-pub fn get_merkle_tree(constants: &[Scalar]) -> Tree{
+pub fn get_merkle_tree(constants: &[Scalar]) -> Tree {
     let mut leaves: Vec<u32> = vec![];
     (0..32).for_each(|iter| {
         leaves.push(iter.clone());
@@ -247,8 +248,62 @@ pub fn get_merkle_tree(constants: &[Scalar]) -> Tree{
     tree
 }
 
+pub fn generate_proof(idx: usize) -> Proof<Bls12> {
+    let constants = get_round_constants();
+    let tree = get_merkle_tree(&constants);
+    // make auth_paths and leaf of {idx}
+    let auth_paths = tree.generate_auth_paths(idx.try_into().unwrap());
+    let leaf = tree.nodes.get(0).unwrap().get(idx).unwrap().hash;
+    let de_params = get_params(&constants);
+    let mut auth_path: [Option<(Scalar, bool)>; TREE_DEPTH] =
+        [None; TREE_DEPTH];
+
+    for (idx, elem) in auth_path.clone().iter().enumerate() {
+        let sib = auth_paths.get(idx).unwrap();
+        auth_path[idx] = Some((sib.hash.clone(), sib.direction.clone()));
+    }
+
+    let c = MyCircuit {
+        leaf: Some(leaf),
+        auth_path: auth_path,
+        constants: &constants,
+    };
+    let proof =
+        groth16::create_random_proof(c, &de_params, &mut OsRng).unwrap();
+    proof
+}
+
+pub fn verify_proof(proof: Proof<Bls12>) -> bool {
+    let constants = get_round_constants();
+    let de_params = get_params(&constants);
+    let tree = get_merkle_tree(&constants);
+    let root = tree.root().hash;
+
+    // Prepare the verification key (for proof verification).
+    let pvk = groth16::prepare_verifying_key(&de_params.vk);
+    match groth16::verify_proof(&pvk, &proof, &[root]) {
+        Ok(_) => {
+            println!("veryfiy success!");
+            true
+        }
+        Err(err) => {
+            println!("verify_proof(), err: {}", err);
+            false
+        }
+    }
+}
+
 #[test]
-pub fn mimcTest() {
+pub fn mimc_test() {
+    let proof0 = generate_proof(0);
+    assert!(verify_proof(proof0));
+
+    let proof12 = generate_proof(12);
+    assert!(verify_proof(proof12));
+}
+
+#[test]
+pub fn performance_test() {
     println!("start");
     // // let test_leaves: Vec<u32> = (0..std::u32::MAX).map(|x| x).collect();
     // let mut test_leaves: Vec<u32> = vec![];
@@ -258,7 +313,6 @@ pub fn mimcTest() {
     // println!("before new tree");
 
     // let mut rng = thread_rng();
-
     // let constants = (0..MIMC_ROUNDS)
     //     .map(|_| Scalar::random(&mut rng))
     //     .collect::<Vec<_>>();
@@ -273,11 +327,11 @@ pub fn mimcTest() {
     let tree = get_merkle_tree(&constants);
 
     println!("before generate proof");
-    let proof = tree.generate_proof(0);
+    let auth_paths = tree.generate_auth_paths(0);
     let leaf = tree.nodes.get(0).unwrap().get(0).unwrap().hash;
     let root = tree.root().hash;
 
-    println!("\nproof: {:?}", proof);
+    println!("\nauth_paths: {:?}", auth_paths);
     println!("\nroot: {:?}", root.to_bytes());
 
     let now = SystemTime::now();
@@ -342,7 +396,7 @@ pub fn mimcTest() {
     let mut auth_path: [Option<(Scalar, bool)>; TREE_DEPTH] =
         [None; TREE_DEPTH];
     for (idx, elem) in auth_path.clone().iter().enumerate() {
-        let sib = proof.get(idx).unwrap();
+        let sib = auth_paths.get(idx).unwrap();
         auth_path[idx] = Some((sib.hash.clone(), sib.direction.clone()));
     }
     let auth_path_time = SystemTime::now();
