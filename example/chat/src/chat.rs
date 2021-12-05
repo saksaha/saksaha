@@ -7,6 +7,10 @@ use std::io::{stdin, stdout, Write};
 use std::thread;
 use std::time::Duration;
 use tokio::runtime::Runtime;
+use chrono::Local;
+use std::time::SystemTime;
+
+const DATE_FORMAT_STR: &'static str = "%Y-%m-%d][%H:%M:%S";
 
 enum ChatStatus {
     Idle,
@@ -15,9 +19,21 @@ enum ChatStatus {
     ChatSend,
 }
 
+// struct ChatInfo {
+//     last_idx: i32,
+// }
+
+// impl ChatInfo {
+//     pub fn update_idx(&mut self, new_idx: i32) {
+//         self.last_idx = new_idx;
+//     }
+// }
+
 pub fn start_chat() {
     let mut status = ChatStatus::Idle;
     let mut rt = Runtime::new().unwrap();
+    // let mut chat_info = ChatInfo { last_idx: -1 };
+    let mut last_idx = -1;
 
     // Do init here
     status = ChatStatus::ChatList;
@@ -43,14 +59,14 @@ pub fn start_chat() {
                 //     tokio::spawn(async { get_new_message(status).await });
                 // });
                 rt.block_on(async {
-                    status = get_new_message().await;
+                    status = get_new_message(&mut last_idx).await;
                 });
             }
             ChatStatus::ChatSend => {
                 println!("Type new message");
                 let mut buffer = String::new();
                 stdin().read_line(&mut buffer).expect("invalid message");
-                println!("New message is {}", buffer);
+                // println!("New message is {}", buffer);
                 status = ChatStatus::ChatRead;
                 // clean_console();
             }
@@ -79,36 +95,7 @@ async fn get_chat_list() {
     stdout.write(format!("chat list {:?}", res.unwrap().body()).as_bytes());
 }
 
-// async fn get_new_message() -> ChatStatus {
-//     let mut stdout = stdout();
-//     let mut next_status: ChatStatus;
-
-//     if poll(Duration::from_secs(1)).unwrap() {
-//         let event = read().unwrap();
-//         // println!("Event::{:?}\r", event);
-//         next_status = ChatStatus::ChatSend;
-//         // return next_status;
-//     } else {
-//         let client = Client::new();
-//         let bootstrap = "http://google.com".parse::<hyper::Uri>().unwrap();
-//         let mut res = client.get(bootstrap).await;
-
-//         stdout.queue(cursor::MoveTo(0, 0));
-//         stdout.queue(cursor::SavePosition);
-//         stdout.write(format!("New chat {:?}", res.unwrap().body()).as_bytes());
-//         // should move cursor under current chat
-//         stdout.queue(cursor::MoveDown(2));
-//         stdout.queue(cursor::MoveLeft(255));
-//         stdout.write(format!("Press Enter to send new message: ").as_bytes());
-//         stdout.flush();
-//         next_status = ChatStatus::ChatRead;
-//     }
-//     next_status
-
-//     // thread::sleep(Duration::from_secs(1));
-// }
-
-async fn get_new_message() -> ChatStatus {
+async fn get_new_message(last_idx: &mut i32) -> ChatStatus {
     let mut stdout = stdout();
     let mut next_status: ChatStatus;
 
@@ -132,33 +119,55 @@ async fn get_new_message() -> ChatStatus {
         let client = Client::new();
         let bootstrap = "http://google.com".parse::<hyper::Uri>().unwrap();
         let mut res = client.get(bootstrap).await;
-        clean_console();
+        let idxs = [0, 1, 2];
+        // check last index
 
-        stdout
-            .queue(cursor::MoveTo(0, 0))
-            .expect("cursor move error");
-        stdout
-            .queue(cursor::SavePosition)
-            .expect("cursor save position error");
-        stdout
-            .write(format!("New chat {:?}", res.unwrap().body()).as_bytes())
-            .expect("chat write error");
-        // should move cursor under current chat
-        stdout
-            .queue(cursor::MoveDown(2))
-            .expect("cursor move error");
-        stdout
-            .queue(cursor::MoveLeft(255))
-            .expect("cursor move error");
-        stdout
-            .write(format!("Press Enter to send new message ").as_bytes())
-            .expect("guide write error");
-        stdout
-            .queue(cursor::MoveDown(1))
-            .expect("cursor move error");
-        stdout
-            .queue(cursor::MoveLeft(255))
-            .expect("cursor move error");
+        // clean_console();
+
+        // stdout
+        //     .queue(cursor::MoveTo(0, 0))
+        //     .expect("cursor move error");
+        // stdout
+        //     .queue(cursor::SavePosition)
+        //     .expect("cursor save position error");
+        for idx in idxs {
+            if idx > *last_idx {
+                let date = Local::now();
+    // println!("{}", date.format("%Y-%m-%d][%H:%M:%S"));
+
+                stdout
+                    .write(format!("{} New chat, {}", date.format("[%H:%M]"), idx).as_bytes())
+                    .expect("chat write error");
+                // should move cursor under current chat
+                stdout
+                    .queue(cursor::MoveDown(1))
+                    .expect("cursor move error");
+                stdout
+                    .queue(cursor::MoveLeft(255))
+                    .expect("cursor move error");
+                // chat_info.update_idx(idx);
+                *last_idx = idx;
+            }
+        }
+        // stdout
+        //     .write(format!("New chat {:?}", res.unwrap().body()).as_bytes())
+        //     .expect("chat write error");
+        // // should move cursor under current chat
+        // stdout
+        //     .queue(cursor::MoveDown(1))
+        //     .expect("cursor move error");
+        // stdout
+        //     .queue(cursor::MoveLeft(255))
+        //     .expect("cursor move error");
+        // stdout
+        //     .write(format!("Press Enter to send new message ").as_bytes())
+        //     .expect("guide write error");
+        // stdout
+        //     .queue(cursor::MoveDown(1))
+        //     .expect("cursor move error");
+        // stdout
+        //     .queue(cursor::MoveLeft(255))
+        //     .expect("cursor move error");
         stdout.flush().expect("flush error");
         next_status = ChatStatus::ChatRead;
     }
