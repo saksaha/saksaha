@@ -11,18 +11,18 @@ use super::peer::Peer;
 const CAPACITY: usize = 50;
 
 pub struct PeerStore {
-    map: Mutex<HashMap<PeerId, Arc<Mutex<Peer>>>>,
-    slots_tx: Sender<Arc<Mutex<Peer>>>,
-    slots_rx: Mutex<Receiver<Arc<Mutex<Peer>>>>,
+    map: Mutex<HashMap<PeerId, Arc<Peer>>>,
+    slots_tx: Sender<Arc<Peer>>,
+    slots_rx: Mutex<Receiver<Arc<Peer>>>,
 }
 
 impl PeerStore {
     pub async fn init() -> Result<PeerStore, String> {
         let (slots_tx, slots_rx) = {
-            let (tx, rx) = mpsc::channel::<Arc<Mutex<Peer>>>(CAPACITY);
+            let (tx, rx) = mpsc::channel::<Arc<Peer>>(CAPACITY);
 
             for _ in 0..CAPACITY {
-                let empty_node = Arc::new(Mutex::new(Peer::new_empty()));
+                let empty_node = Arc::new(Peer::new_empty());
 
                 match tx.send(empty_node).await {
                     Ok(_) => (),
@@ -52,7 +52,7 @@ impl PeerStore {
         Ok(ps)
     }
 
-    pub async fn try_reserve(&self) -> Result<Arc<Mutex<Peer>>, String> {
+    pub async fn try_reserve(&self) -> Result<Arc<Peer>, String> {
         let mut slots_rx_guard = self.slots_rx.lock().await;
 
         match slots_rx_guard.try_recv() {
@@ -63,7 +63,7 @@ impl PeerStore {
         }
     }
 
-    pub async fn reserve(&self) -> Result<Arc<Mutex<Peer>>, String> {
+    pub async fn reserve(&self) -> Result<Arc<Peer>, String> {
         let mut slots_rx_guard = self.slots_rx.lock().await;
 
         match slots_rx_guard.recv().await {
@@ -73,13 +73,4 @@ impl PeerStore {
             }
         }
     }
-
-    // pub async fn find(&self, peer_id: PeerId) -> Option<Arc<Mutex<Peer>>> {
-    //     let map = self.map.lock().await;
-    //     if let Some(p) = map.get(&peer_id) {
-    //         Some(p.clone())
-    //     } else {
-    //         None
-    //     }
-    // }
 }

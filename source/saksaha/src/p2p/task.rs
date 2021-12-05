@@ -2,7 +2,7 @@ use log::{debug, error, warn};
 use p2p_active_calls::ActiveCalls;
 use p2p_identity::{Identity, PeerId, PUBLIC_KEY_LEN};
 use p2p_transport::{HandshakeInitParams, HandshakeInitError,};
-use peer::Peer;
+use peer::{Peer, PeerValue, RegisteredPeerValue,};
 use tokio::sync::Mutex;
 use std::sync::Arc;
 use task::task_queue::{TaskResult, TaskRun};
@@ -20,7 +20,7 @@ pub(crate) struct HSInitTaskParams {
     pub her_ip: String,
     pub her_p2p_port: u16,
     pub her_public_key: PeerId,
-    pub peer: Arc<Mutex<Peer>>,
+    pub peer: Arc<Peer>,
     pub handshake_active_calls: Arc<ActiveCalls>,
 }
 
@@ -60,7 +60,10 @@ async fn handle_initiate_handshake(hs_init_task_params: HSInitTaskParams) {
 
     match p2p_transport::initiate_handshake(hs_init_params).await {
         Ok(t) => {
-
+            let mut p_val = peer.value.lock().await;
+            *p_val = PeerValue::Registered(RegisteredPeerValue {
+                transport: t,
+            });
         },
         Err(err) => {
             debug!("initiate handshake fail, err: {}", err);

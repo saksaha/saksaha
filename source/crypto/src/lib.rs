@@ -1,3 +1,4 @@
+pub use k256::{elliptic_curve::{PublicKey}, SecretKey};
 pub use k256::{
     ecdh::EphemeralSecret,
     ecdsa::{
@@ -10,7 +11,7 @@ pub use k256::{
         Error,
         ecdh::SharedSecret, AffinePoint, NonZeroScalar, ProjectiveArithmetic,
     },
-    EncodedPoint, PublicKey, Secp256k1, SecretKey,
+    EncodedPoint, Secp256k1,
 };
 use rand_core::OsRng;
 use std::{borrow::Borrow, fmt::Write, num::ParseIntError};
@@ -71,7 +72,7 @@ pub fn convert_public_key_to_verifying_key(
     Ok(verifying_key)
 }
 
-pub fn make_sign(signing_key: SigningKey, data: &[u8]) -> Signature {
+pub fn make_signature(signing_key: SigningKey, data: &[u8]) -> Signature {
     signing_key.sign(data)
 }
 
@@ -86,11 +87,16 @@ pub fn verify(
     }
 }
 
-pub fn diffie_hellman(
-    sk: impl Borrow<NonZeroScalar<Secp256k1>>,
-    pk: impl Borrow<AffinePoint<Secp256k1>>,
+pub fn make_shared_secret(
+    // sk: impl Borrow<NonZeroScalar<Secp256k1>>,
+    // pk: impl Borrow<AffinePoint<Secp256k1>>,
+    my_secret_key: &SecretKey,
+    her_public: PublicKey<Secp256k1>,
 ) -> SharedSecret<Secp256k1> {
-    k256::elliptic_curve::ecdh::diffie_hellman(sk, pk)
+    k256::elliptic_curve::ecdh::diffie_hellman(
+        my_secret_key.to_secret_scalar(),
+        her_public.as_affine(),
+    )
 }
 
 #[cfg(test)]
