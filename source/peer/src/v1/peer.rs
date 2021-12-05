@@ -6,7 +6,7 @@ const MAX_FAIL_COUNT: usize = 3;
 pub enum Peer {
     Empty,
 
-    Registered(PeerValue),
+    Registered(RegisteredPeer),
 }
 
 impl Peer {
@@ -30,7 +30,7 @@ pub enum Status {
 
 
 #[derive(Debug)]
-pub struct PeerValue {
+pub struct RegisteredPeer {
     pub ip: String,
     pub disc_port: u16,
     pub peer_op_port: u16,
@@ -40,6 +40,10 @@ pub struct PeerValue {
     pub status: Status,
     pub fail_count: usize,
     pub url: String,
+}
+
+impl RegisteredPeer {
+
 }
 
 // impl PeerValue {
