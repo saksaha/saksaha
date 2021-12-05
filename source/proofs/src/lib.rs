@@ -1,4 +1,5 @@
-mod merkle;
+pub mod merkle;
+pub mod constants;
 use std::fs::File;
 use std::io::Write;
 use std::time::SystemTime;
@@ -8,12 +9,13 @@ use std::vec;
 use bellman::gadgets::boolean::{AllocatedBit, Boolean};
 use bellman::groth16::Parameters;
 use bellman::{groth16, Circuit, ConstraintSystem, SynthesisError};
-use bls12_381::{Bls12, Scalar};
-use ff::Field;
+use bls12_381::{Bls12, Scalar, MillerLoopResult};
+use ff::{Field, PrimeFieldBits};
 use ff::PrimeField;
 use rand::rngs::OsRng;
 use rand::thread_rng;
 
+use crate::constants::get_round_constants;
 use crate::merkle::Tree;
 
 
@@ -193,7 +195,7 @@ pub fn mimc<S: PrimeField>(mut xl: S, mut xr: S, constants: &[S]) -> S {
 
     xl
 }
-
+#[test]
 pub fn mimcTest() {
     println!("start");
     // let test_leaves: Vec<u32> = (0..std::u32::MAX).map(|x| x).collect();
@@ -205,19 +207,25 @@ pub fn mimcTest() {
 
     let mut rng = thread_rng();
 
-    let constants = (0..MIMC_ROUNDS)
-        .map(|_| Scalar::random(&mut rng))
-        .collect::<Vec<_>>();
+    // let constants = (0..MIMC_ROUNDS)
+    //     .map(|_| Scalar::random(&mut rng))
+    //     .collect::<Vec<_>>();
+    let constants = get_round_constants();
+    println!("constants : {:?}", constants);
+
+    let mut bytes_constants = constants.clone();
+    let changed_constants:Vec<[u8;32]>  = bytes_constants.iter().map(|a| a.to_bytes()).collect();
+    println!("changed constants: {:?}", changed_constants);
 
     let tree = Tree::new(test_leaves, TREE_DEPTH, &constants);
 
     println!("before generate proof");
-    let proof = tree.generate_proof(1);
-    let leaf = tree.nodes.get(0).unwrap().get(1).unwrap().hash.to_bytes();
+    let proof = tree.generate_proof(0);
+    let leaf = tree.nodes.get(0).unwrap().get(0).unwrap().hash;
     let root = tree.root().hash;
 
     println!("\nproof: {:?}", proof);
-    println!("\nroot: {:?}", root);
+    println!("\nroot: {:?}", root.to_bytes());
 
     let now = SystemTime::now();
     println!("timer start {:?}", now);
@@ -286,7 +294,8 @@ pub fn mimcTest() {
     );
 
     let c = MyCircuit {
-        leaf: Some(Scalar::from_bytes(&leaf).unwrap()),
+        leaf: Some(leaf),
+        // leaf: Some(Scalar::from_bytes(&leaf).unwrap()),
         auth_path: auth_path,
         constants: &constants,
     };
@@ -317,6 +326,7 @@ pub fn mimcTest() {
             println!("verify_proof(), err: {}", err);
         }
     }
+    assert!(groth16::verify_proof(&pvk, &proof, &[root]).is_ok());
 
     let verify_finish_time = SystemTime::now();
     println!(
