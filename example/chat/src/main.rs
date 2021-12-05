@@ -1,5 +1,5 @@
-mod ledger;
 mod chat;
+mod ledger;
 
 use structopt::StructOpt;
 
@@ -13,11 +13,9 @@ struct Cli {
 const LEDGER: &str = "ledger";
 const CHAT: &str = "chat";
 
-
 // #[tokio::main]
 fn main() {
     println!("start chat application");
-
 
     let args = Cli::from_args();
     println!("trying to init  {:?}", args.ci_type);
@@ -26,7 +24,6 @@ fn main() {
         LEDGER => ledger::show_ledger(),
         CHAT => chat::start_chat(),
         _ => println!("args not provided"),
-
     }
 
     loop {}

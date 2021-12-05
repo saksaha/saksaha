@@ -1,14 +1,13 @@
+use chrono::Local;
 use crossterm::event::{poll, read, Event, KeyCode, KeyEvent};
 use crossterm::style::{Color, SetBackgroundColor};
 use crossterm::terminal::{Clear, ClearType};
 use crossterm::{cursor, execute, QueueableCommand};
-use hyper::Client;
 use std::io::{stdin, stdout, Write};
 use std::thread;
 use std::time::Duration;
-use tokio::runtime::Runtime;
-use chrono::Local;
 use std::time::SystemTime;
+use tokio::runtime::Runtime;
 
 const DATE_FORMAT_STR: &'static str = "%Y-%m-%d][%H:%M:%S";
 
@@ -65,8 +64,12 @@ pub fn start_chat() {
             ChatStatus::ChatSend => {
                 println!("Type new message");
                 let mut buffer = String::new();
-                stdin().read_line(&mut buffer).expect("invalid message");
-                // println!("New message is {}", buffer);
+                std::io::stdin()
+                    .read_line(&mut buffer)
+                    .expect("invalid message");
+
+                println!("[debug] New message is {}", buffer);
+
                 status = ChatStatus::ChatRead;
                 // clean_console();
             }
@@ -88,11 +91,13 @@ fn clean_console() {
 
 async fn get_chat_list() {
     let mut stdout = stdout();
-    let client = Client::new();
-    let bootstrap = "http://google.com".parse::<hyper::Uri>().unwrap();
-    let mut res = client.get(bootstrap).await;
+    // let client = Client::new();
+    // let bootstrap = "http://google.com".parse::<hyper::Uri>().unwrap();
+    // let mut res = client.get(bootstrap).await;
 
-    stdout.write(format!("chat list {:?}", res.unwrap().body()).as_bytes());
+    let msg = "";
+
+    stdout.write(msg.as_bytes());
 }
 
 async fn get_new_message(last_idx: &mut i32) -> ChatStatus {
@@ -116,9 +121,9 @@ async fn get_new_message(last_idx: &mut i32) -> ChatStatus {
         // println!("poll key {}", line);
         next_status = ChatStatus::ChatSend;
     } else {
-        let client = Client::new();
-        let bootstrap = "http://google.com".parse::<hyper::Uri>().unwrap();
-        let mut res = client.get(bootstrap).await;
+        // let client = Client::new();
+        // let bootstrap = "http://google.com".parse::<hyper::Uri>().unwrap();
+        // let mut res = client.get(bootstrap).await;
         let idxs = [0, 1, 2];
         // check last index
 
@@ -133,10 +138,13 @@ async fn get_new_message(last_idx: &mut i32) -> ChatStatus {
         for idx in idxs {
             if idx > *last_idx {
                 let date = Local::now();
-    // println!("{}", date.format("%Y-%m-%d][%H:%M:%S"));
+                // println!("{}", date.format("%Y-%m-%d][%H:%M:%S"));
 
                 stdout
-                    .write(format!("{} New chat, {}", date.format("[%H:%M]"), idx).as_bytes())
+                    .write(
+                        format!("{} New chat, {}", date.format("[%H:%M]"), idx)
+                            .as_bytes(),
+                    )
                     .expect("chat write error");
                 // should move cursor under current chat
                 stdout
