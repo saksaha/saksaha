@@ -39,6 +39,9 @@ pub enum HandshakeInitError {
 
     #[error("Can't send handshake msg to endpoint: {endpoint}")]
     HandshakeSentFail { endpoint: String },
+
+    #[error("Can't receive handshake")]
+    Invalid { err: String },
 }
 
 #[derive(Error, Debug)]
@@ -72,16 +75,10 @@ pub async fn receive_handshake(
     stream: &mut TcpStream,
     identity: Arc<Identity>,
 ) -> Result<(), HandshakeRecvError> {
-    let buffer = read_handshake_msg(stream).await?;
+    let mut hs_buf = read_handshake_msg(stream).await?;
 
-    match check_msg(&buffer) {
-        Ok(_) => (),
-        Err(err) => return Err(HandshakeRecvError::Invalid { err }),
-    }
-
-    let mut buf = Cursor::new(&buffer[..]);
-
-    let shared_secret = match parse_handshake_msg(&mut buf, stream, identity) {
+    let shared_secret = match parse_handshake_msg(&mut hs_buf, stream, identity)
+    {
         Ok(s) => s,
         Err(err) => {
             return Err(HandshakeRecvError::Invalid { err });
@@ -137,7 +134,15 @@ pub async fn initiate_handshake(
         }
     };
 
-    let mut buf = BytesMut::with_capacity(256);
+    let mut hs_ack_buf = read_handshake_msg(&mut stream).await?;
+
+    let shared_secret =
+        match parse_handshake_msg(&mut hs_ack_buf, &mut stream, identity) {
+            Ok(s) => s,
+            Err(err) => {
+                return Err(HandshakeInitError::Invalid { err });
+            }
+        };
 
     Ok(())
 }
@@ -196,10 +201,17 @@ async fn send_handshake_msg(
 
 #[cfg(target_pointer_width = "64")]
 fn parse_handshake_msg(
-    buf: &mut Cursor<&[u8]>,
+    hs_buf: &mut BytesMut,
     stream: &mut TcpStream,
     identity: Arc<Identity>,
 ) -> Result<SharedSecret<Secp256k1>, String> {
+    match check_msg(&hs_buf) {
+        Ok(_) => (),
+        Err(err) => return Err(format!("Invalid handshake msg")),
+    }
+
+    let mut buf = Cursor::new(&hs_buf[..]);
+
     buf.advance(1);
 
     let mut len_buf = Bytes::copy_from_slice(&buf.chunk()[..8]);
