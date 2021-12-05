@@ -1,7 +1,8 @@
 use super::state::HostState;
+use bytes::BytesMut;
 use log::{debug, info, warn};
 use p2p_identity::Identity;
-use p2p_transport::{Connection, Frame};
+use p2p_transport::{Connection, Frame, HANDSHAKE_CODE};
 use std::{net::ToSocketAddrs, sync::Arc};
 use thiserror::Error;
 use tokio::io::AsyncReadExt;
@@ -19,6 +20,12 @@ pub enum RequestHandleError {
         #[from]
         source: std::io::Error,
     },
+
+    #[error("Invalid request code")]
+    InvalidCode { err: String },
+
+    #[error("No available peer slot, err: {err}")]
+    NoAvailablePeerSlot { err: String },
 }
 
 impl Listener {
@@ -43,6 +50,7 @@ impl Listener {
 
     pub fn run_loop(&self) {
         let tcp_listener = self.tcp_listener.clone();
+        let host_state = self.host_state.clone();
 
         tokio::spawn(async move {
             loop {
@@ -60,7 +68,10 @@ impl Listener {
 
                 debug!("[p2p] Accepted new connection, endpoint: {}", addr);
 
-                let mut handler = Handler { stream };
+                let mut handler = Handler {
+                    stream,
+                    host_state: host_state.clone(),
+                };
 
                 tokio::spawn(async move {
                     let _ = handler.run().await;
@@ -72,20 +83,25 @@ impl Listener {
 
 struct Handler {
     stream: TcpStream,
+    host_state: Arc<HostState>,
 }
 
 impl Handler {
     async fn run(&mut self) -> Result<(), RequestHandleError> {
-        let mut buf = vec![0; 512];
-        loop {
-            let n = self.stream.read(&mut buf).await?;
-
-            if n == 0 {
-                break;
+        let peer = match self.host_state.peer_store.reserve().await {
+            Ok(p) => p,
+            Err(err) => {
+                return Err(RequestHandleError::NoAvailablePeerSlot { err })
             }
-        }
+        };
 
-        println!("buf: {:?}", buf);
+        let transport = p2p_transport::receive_handshake(
+            &mut self.stream,
+            self.host_state.identity.clone(),
+        )
+        .await;
+
+        // read_handshak(buffer);
 
         // let frame = match maybe_frame {
         //     Some(fr) => {

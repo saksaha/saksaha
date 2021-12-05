@@ -1,25 +1,26 @@
 use log::{debug, error, warn};
 use p2p_active_calls::ActiveCalls;
 use p2p_identity::{Identity, PeerId, PUBLIC_KEY_LEN};
-use p2p_transport::{HandshakeArgs, TransportInitError};
+use p2p_transport::{HandshakeInitParams, HandshakeInitError,};
 use peer::Peer;
+use tokio::sync::Mutex;
 use std::sync::Arc;
 use task::task_queue::{TaskResult, TaskRun};
 
 #[derive(Clone)]
 pub(crate) enum Task {
-    InitiateHandshake(InitHandshakeArgs),
+    InitiateHandshake(HSInitTaskParams),
 }
 
 #[derive(Clone)]
-pub(crate) struct InitHandshakeArgs {
+pub(crate) struct HSInitTaskParams {
     pub identity: Arc<Identity>,
     pub my_rpc_port: u16,
     pub my_p2p_port: u16,
     pub her_ip: String,
     pub her_p2p_port: u16,
     pub her_public_key: PeerId,
-    pub peer: Arc<Peer>,
+    pub peer: Arc<Mutex<Peer>>,
     pub handshake_active_calls: Arc<ActiveCalls>,
 }
 
@@ -29,8 +30,8 @@ impl TaskRun<Task> for TaskRunner {
     fn run(&self, task: Task) -> TaskResult {
         futures::executor::block_on(async {
             match task {
-                Task::InitiateHandshake(args) => {
-                    handle_initiate_handshake(args).await;
+                Task::InitiateHandshake(hs_init_task_params) => {
+                    handle_initiate_handshake(hs_init_task_params).await;
                 }
             };
 
@@ -39,39 +40,43 @@ impl TaskRun<Task> for TaskRunner {
     }
 }
 
-async fn handle_initiate_handshake(init_handshake_args: InitHandshakeArgs) {
-    let handshake_args = HandshakeArgs {
-        identity: init_handshake_args.identity,
-        my_rpc_port: init_handshake_args.my_rpc_port,
-        my_p2p_port: init_handshake_args.my_p2p_port,
-        her_ip: init_handshake_args.her_ip.clone(),
-        her_p2p_port: init_handshake_args.her_p2p_port,
-        her_public_key: init_handshake_args.her_public_key,
+async fn handle_initiate_handshake(hs_init_task_params: HSInitTaskParams) {
+    let hs_init_params = HandshakeInitParams {
+        identity: hs_init_task_params.identity,
+        my_rpc_port: hs_init_task_params.my_rpc_port,
+        my_p2p_port: hs_init_task_params.my_p2p_port,
+        her_ip: hs_init_task_params.her_ip.clone(),
+        her_p2p_port: hs_init_task_params.her_p2p_port,
+        her_public_key: hs_init_task_params.her_public_key,
     };
 
-    let handshake_active_calls = init_handshake_args.handshake_active_calls;
+    let peer = hs_init_task_params.peer;
 
-    handshake_active_calls
-        .insert_outbound(init_handshake_args.her_ip.clone())
-        .await;
+    // let handshake_active_calls = hs_init_task_params.handshake_active_calls;
 
-    match p2p_transport::initiate_handshake(handshake_args).await {
-        Ok(_) => (),
+    // handshake_active_calls
+    //     .insert_outbound(hs_init_task_params.her_ip.clone())
+    //     .await;
+
+    match p2p_transport::initiate_handshake(hs_init_params).await {
+        Ok(t) => {
+
+        },
         Err(err) => {
             debug!("initiate handshake fail, err: {}", err);
 
             match err {
-                TransportInitError::CallInProcess { .. } => (),
-                TransportInitError::ConnectionFail { .. } => (),
-                TransportInitError::MyEndpoint { .. } => (),
-                TransportInitError::PayloadWriteFail { .. } => (),
-                TransportInitError::InvalidAck { .. } => (),
-                TransportInitError::HandshakeSentFail { .. } => (),
+                HandshakeInitError::CallInProcess { .. } => (),
+                HandshakeInitError::ConnectionFail { .. } => (),
+                HandshakeInitError::MyEndpoint { .. } => (),
+                HandshakeInitError::PayloadWriteFail { .. } => (),
+                HandshakeInitError::InvalidAck { .. } => (),
+                HandshakeInitError::HandshakeSentFail { .. } => (),
             };
         }
     };
 
-    handshake_active_calls
-        .remove(init_handshake_args.her_ip)
-        .await;
+    // handshake_active_calls
+    //     .remove(hs_init_task_params.her_ip)
+    //     .await;
 }

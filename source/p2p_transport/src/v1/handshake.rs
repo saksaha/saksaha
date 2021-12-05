@@ -1,6 +1,8 @@
 use crate::{Connection, Frame};
 use bytes::{Buf, BufMut, Bytes, BytesMut};
-use crypto::{EncodedPoint, EphemeralSecret, PublicKey};
+use crypto::{
+    EncodedPoint, EphemeralSecret, PublicKey, Secp256k1, SharedSecret,
+};
 use log::{debug, error};
 use p2p_identity::{Identity, PeerId};
 use peer::Peer;
@@ -13,10 +15,10 @@ use thiserror::Error;
 use tokio::io::{AsyncReadExt, AsyncWriteExt, BufWriter};
 use tokio::net::TcpStream;
 
-use super::msg::msg_code;
+pub const HANDSHAKE_CODE: u8 = b'#';
 
 #[derive(Error, Debug)]
-pub enum TransportInitError {
+pub enum HandshakeInitError {
     #[error("Request to my (recursive) endpoint: {endpoint}")]
     MyEndpoint { endpoint: String },
 
@@ -39,8 +41,25 @@ pub enum TransportInitError {
     HandshakeSentFail { endpoint: String },
 }
 
+#[derive(Error, Debug)]
+pub enum HandshakeRecvError {
+    #[error("Can't receive handshake")]
+    Invalid { err: String },
+
+    #[error("Can't read stream")]
+    CannotReadStream {
+        #[from]
+        source: std::io::Error,
+    },
+}
+
+pub struct HandshakeMsg {
+    my_public_key: PeerId,
+    her_public_key: PeerId,
+}
+
 #[derive(Clone)]
-pub struct HandshakeArgs {
+pub struct HandshakeInitParams {
     pub identity: Arc<Identity>,
     pub my_rpc_port: u16,
     pub my_p2p_port: u16,
@@ -49,10 +68,33 @@ pub struct HandshakeArgs {
     pub her_public_key: PeerId,
 }
 
+pub async fn receive_handshake(
+    stream: &mut TcpStream,
+    identity: Arc<Identity>,
+) -> Result<(), HandshakeRecvError> {
+    let buffer = read_handshake_msg(stream).await?;
+
+    match check_msg(&buffer) {
+        Ok(_) => (),
+        Err(err) => return Err(HandshakeRecvError::Invalid { err }),
+    }
+
+    let mut buf = Cursor::new(&buffer[..]);
+
+    let shared_secret = match parse_handshake_msg(&mut buf, stream, identity) {
+        Ok(s) => s,
+        Err(err) => {
+            return Err(HandshakeRecvError::Invalid { err });
+        }
+    };
+
+    Ok(())
+}
+
 pub async fn initiate_handshake(
-    handshake_args: HandshakeArgs,
-) -> Result<(), TransportInitError> {
-    let HandshakeArgs {
+    hs_init_params: HandshakeInitParams,
+) -> Result<(), HandshakeInitError> {
+    let HandshakeInitParams {
         my_rpc_port,
         my_p2p_port,
         her_ip,
@@ -60,12 +102,12 @@ pub async fn initiate_handshake(
         her_public_key,
         identity,
         ..
-    } = handshake_args;
+    } = hs_init_params;
 
     let endpoint = format!("{}:{}", her_ip.clone(), her_p2p_port);
 
-    if super::is_my_endpoint(handshake_args.my_p2p_port, &endpoint) {
-        return Err(TransportInitError::MyEndpoint { endpoint });
+    if super::is_my_endpoint(my_p2p_port, &endpoint) {
+        return Err(HandshakeInitError::MyEndpoint { endpoint });
     }
 
     let mut stream = match TcpStream::connect(&endpoint).await {
@@ -77,30 +119,19 @@ pub async fn initiate_handshake(
             s
         }
         Err(err) => {
-            return Err(TransportInitError::ConnectionFail { source: err })
+            return Err(HandshakeInitError::ConnectionFail { source: err })
         }
     };
 
-    // let sk = identity.secret_key.clone();
-    // let her_public = match PublicKey::from_sec1_bytes(&her_public_key) {
-    //     Ok(p) => p,
-    //     Err(err) => {
-    //         return Err(TransportInitError::InvalidPublicKey { source: err })
-    //     }
-    // };
-    // let shared_secret =
-    //     crypto::diffie_hellman(sk.to_secret_scalar(), her_public.as_affine());
-    // println!("33 {:?}", shared_secret.as_bytes());
+    let handshake_msg = HandshakeMsg {
+        my_public_key: identity.public_key,
+        her_public_key: her_public_key,
+    };
 
-    // let buf = vec![0; 1024];
-    // let mut buf = Cursor::new(buf);
-
-    match send_handshake_msg(&mut stream, identity.clone(), &her_public_key)
-        .await
-    {
+    match send_handshake_msg(&mut stream, handshake_msg).await {
         Ok(_) => (),
         Err(err) => {
-            return Err(TransportInitError::PayloadWriteFail {
+            return Err(HandshakeInitError::PayloadWriteFail {
                 err: err.to_string(),
             })
         }
@@ -108,106 +139,93 @@ pub async fn initiate_handshake(
 
     let mut buf = BytesMut::with_capacity(256);
 
-    // loop {
-    //     let len = match stream.read_buf(&mut buf).await {
-    //         Ok(l) => l,
-    //         Err(err) => {
-    //             return Err(TransportInitError::InvalidAck { endpoint })
-    //         }
-    //     };
-
-    //     println!("len: {}", len);
-
-    //     if len == 0 {
-    //         break;
-    //     }
-    // }
-
-    // match conn.write_frame(&handshake_req_frame).await {
-    //     Ok(_) => (),
-    //     Err(err) => {
-    //         println!("err: {}", err);
-    //     }
-    // }
-
     Ok(())
 }
 
+async fn read_handshake_msg(
+    stream: &mut TcpStream,
+) -> Result<BytesMut, std::io::Error> {
+    let mut buffer = BytesMut::with_capacity(1024);
+
+    loop {
+        let n = stream.read_buf(&mut buffer).await?;
+
+        if n == 0 {
+            break;
+        }
+    }
+
+    println!("buf received: {:?}", buffer.to_vec());
+
+    Ok(buffer)
+}
+
+fn check_msg(buffer: &BytesMut) -> Result<(), String> {
+    let code = buffer[0];
+
+    match code {
+        HANDSHAKE_CODE => {
+            return Ok(());
+        }
+        _ => {
+            return Err(format!(
+                "Listener currently takes only 'handshake' msg"
+            ))
+        }
+    }
+}
+
+#[cfg(target_pointer_width = "64")]
 async fn send_handshake_msg(
     stream: &mut TcpStream,
-    identity: Arc<Identity>,
-    her_public_key: &[u8],
+    handshake_msg: HandshakeMsg,
 ) -> Result<(), std::io::Error> {
-    let buf = vec!();
-    let mut buf = Cursor::new(buf);
-    std::io::Write::write(&mut buf, &identity.public_key[..])?;
-    std::io::Write::write(&mut buf, &her_public_key[..])?;
+    let mut buf = Cursor::new(Vec::new());
+
+    std::io::Write::write(&mut buf, &handshake_msg.my_public_key[..])?;
+    std::io::Write::write(&mut buf, &handshake_msg.her_public_key[..])?;
     let len = buf.position().to_le_bytes();
 
-    println!("2222, {:?}", buf);
-
-    stream.write_u8(msg_code::HANDSHAKE).await?;
+    stream.write_u8(HANDSHAKE_CODE).await?;
     stream.write(&len[..]).await?;
     stream.write(&buf.get_ref()[..]).await?;
+    stream.write_all(b"\r\n").await?;
 
     Ok(())
-    // std::io::Write::write(&mut buf, &b"a"[..])?;
-
-    // buf.set_position(8);
-    // std::io::Write::write(&mut buf, &identity.public_key[..])?;
-    // std::io::Write::write(&mut buf, &her_public_key[..])?;
-
-    // let pos = buf.position();
-    // buf.seek(SeekFrom::Start(0))?;
-
-    // let len = pos.to_le_bytes();
-    // std::io::Write::write(&mut buf, &len)?;
-
-    // Ok(buf)
 }
 
-// fn read_handshake_msg() {
+#[cfg(target_pointer_width = "64")]
+fn parse_handshake_msg(
+    buf: &mut Cursor<&[u8]>,
+    stream: &mut TcpStream,
+    identity: Arc<Identity>,
+) -> Result<SharedSecret<Secp256k1>, String> {
+    buf.advance(1);
 
-// }
+    let mut len_buf = Bytes::copy_from_slice(&buf.chunk()[..8]);
+    let len = len_buf.get_u64_le() as usize;
 
-pub(crate) async fn send_handshake_syn(
-    ip: String,
-    p2p_port: u16,
-    // transport_meta: Arc<TransportMeta>,
-) -> Result<(), TransportInitError> {
-    // let my_p2p_port = transport_meta.my_p2p_port;
-    // let active_calls = transport_meta.active_calls.clone();
+    buf.advance(8);
 
-    // let endpoint = format!("{}:{}", ip, p2p_port);
+    let data = Bytes::copy_from_slice(&buf.chunk()[..len]);
 
-    // if active_calls.contain(&ip).await {
-    //     return Err(TransportInitError::CallInProcess { ip });
-    // }
+    let her_public_key = Bytes::copy_from_slice(&data[..65]);
+    let her_public = match PublicKey::from_sec1_bytes(&her_public_key) {
+        Ok(p) => p,
+        Err(err) => {
+            println!("22, err: {}", err);
+            return Err(format!("Cannot create her public key"));
+        }
+    };
 
-    // conn.write_frame()
+    let my_secret_key = &identity.secret_key;
 
-    // let my_sig = self.disc_state.id.sig();
-    // let my_public_key_bytes = self.disc_state.id.public_key_bytes();
+    let shared_secret = crypto::diffie_hellman(
+        my_secret_key.to_secret_scalar(),
+        her_public.as_affine(),
+    );
 
-    // let way_syn =
-    //     WhoAreYouSyn::new(my_sig, my_p2p_port, my_public_key_bytes);
-
-    // let buf = match way_syn.to_bytes() {
-    //     Ok(b) => b,
-    //     Err(err) => {
-    //         return Err(WhoareyouInitError::ByteConversionFail { err });
-    //     }
-    // };
-
-    // self.udp_socket.send_to(&buf, endpoint.clone()).await?;
-
-    // debug!(
-    //     "Successfully sent WhoAreYou to endpoint: {}, buf len: {}",
-    //     &endpoint,
-    //     buf.len()
-    // );
-
-    Ok(())
+    Ok(shared_secret)
 }
 
 pub(crate) fn is_my_endpoint(my_p2p_port: u16, endpoint: &String) -> bool {

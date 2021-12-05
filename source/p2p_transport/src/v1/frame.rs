@@ -6,7 +6,10 @@ use std::num::TryFromIntError;
 use std::string::FromUtf8Error;
 use atoi::atoi;
 
-use super::msg::msg_code;
+pub mod frame_code {
+    pub const BULK: u8 = b'$';
+    pub const ARRAY: u8 = b'*';
+}
 
 #[derive(Clone, Debug)]
 pub enum Frame {
@@ -41,7 +44,7 @@ impl Frame {
 
     pub fn check(src: &mut Cursor<&[u8]>) -> Result<(), Error> {
         match get_u8(src)? {
-            msg_code::BULK => {
+            frame_code::BULK => {
                 if b'-' == peek_u8(src)? {
                     // Skip '-1\r\n'
                     skip(src, 4)
@@ -53,7 +56,7 @@ impl Frame {
                     skip(src, len + 2)
                 }
             }
-            msg_code::ARRAY => {
+            frame_code::ARRAY => {
                 let len = get_decimal(src)?;
 
                 for _ in 0..len {
@@ -73,7 +76,7 @@ impl Frame {
     /// The message has already been validated with `scan`.
     pub fn parse(src: &mut Cursor<&[u8]>) -> Result<Frame, Error> {
         match get_u8(src)? {
-            msg_code::BULK => {
+            frame_code::BULK => {
                 {
                     // Read the bulk string
                     let len = get_decimal(src)?.try_into()?;
@@ -91,7 +94,7 @@ impl Frame {
                     Ok(Frame::Bulk(data))
                 }
             }
-            msg_code::ARRAY => {
+            frame_code::ARRAY => {
                 let len = get_decimal(src)?.try_into()?;
                 let mut out = Vec::with_capacity(len);
 

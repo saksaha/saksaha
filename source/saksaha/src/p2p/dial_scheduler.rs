@@ -1,4 +1,4 @@
-use crate::p2p::task::InitHandshakeArgs;
+use crate::p2p::task::HSInitTaskParams;
 
 use super::{state::HostState, task::Task};
 use log::{debug, error, info, warn};
@@ -102,13 +102,14 @@ impl HandshakeRoutine {
                     continue;
                 }
 
-                if let Some(_) = peer_store.find(node_val.public_key).await {
-                    debug!(
-                        "She is already a peer, public_key: {:?}",
-                        node_val.public_key,
-                    );
-                    continue;
-                }
+                // TODO
+                // if let Some(_) = peer_store.find(node_val.public_key).await {
+                //     debug!(
+                //         "She is already a peer, public_key: {:?}",
+                //         node_val.public_key,
+                //     );
+                //     continue;
+                // }
 
                 let peer = match peer_store.reserve().await {
                     Ok(p) => p,
@@ -118,7 +119,7 @@ impl HandshakeRoutine {
                     }
                 };
 
-                let init_handshake_args = InitHandshakeArgs {
+                let hs_init_task_params = HSInitTaskParams {
                     identity: host_state.identity.clone(),
                     my_rpc_port: host_state.my_rpc_port,
                     my_p2p_port: host_state.my_p2p_port,
@@ -130,7 +131,7 @@ impl HandshakeRoutine {
                 };
 
                 match task_queue
-                    .push(Task::InitiateHandshake(init_handshake_args))
+                    .push(Task::InitiateHandshake(hs_init_task_params))
                     .await
                 {
                     Ok(_) => (),

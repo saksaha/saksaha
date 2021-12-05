@@ -10,32 +10,19 @@ use super::peer::Peer;
 
 const CAPACITY: usize = 50;
 
-// pub struct Filter;
-
-// impl Filter {
-//     pub fn not_initialized(peer: &OwnedMutexGuard<Peer>) -> bool {
-//         return peer.status == Status::NotInitialized;
-//     }
-
-//     pub fn discovery_success(peer: &OwnedMutexGuard<Peer>) -> bool {
-//         return peer.status == Status::DiscoverySuccess;
-//     }
-// }
-
 pub struct PeerStore {
-    // pub slots: Arc<Mutex<Vec<Arc<Mutex<Peer>>>>>,
-    map: Mutex<HashMap<PeerId, Arc<Peer>>>,
-    slots_tx: Sender<Arc<Peer>>,
-    slots_rx: Mutex<Receiver<Arc<Peer>>>,
+    map: Mutex<HashMap<PeerId, Arc<Mutex<Peer>>>>,
+    slots_tx: Sender<Arc<Mutex<Peer>>>,
+    slots_rx: Mutex<Receiver<Arc<Mutex<Peer>>>>,
 }
 
 impl PeerStore {
     pub async fn init() -> Result<PeerStore, String> {
         let (slots_tx, slots_rx) = {
-            let (tx, rx) = mpsc::channel::<Arc<Peer>>(CAPACITY);
+            let (tx, rx) = mpsc::channel::<Arc<Mutex<Peer>>>(CAPACITY);
 
             for _ in 0..CAPACITY {
-                let empty_node = Arc::new(Peer::new_empty());
+                let empty_node = Arc::new(Mutex::new(Peer::new_empty()));
 
                 match tx.send(empty_node).await {
                     Ok(_) => (),
@@ -65,7 +52,7 @@ impl PeerStore {
         Ok(ps)
     }
 
-    pub async fn try_reserve(&self) -> Result<Arc<Peer>, String> {
+    pub async fn try_reserve(&self) -> Result<Arc<Mutex<Peer>>, String> {
         let mut slots_rx_guard = self.slots_rx.lock().await;
 
         match slots_rx_guard.try_recv() {
@@ -76,7 +63,7 @@ impl PeerStore {
         }
     }
 
-    pub async fn reserve(&self) -> Result<Arc<Peer>, String> {
+    pub async fn reserve(&self) -> Result<Arc<Mutex<Peer>>, String> {
         let mut slots_rx_guard = self.slots_rx.lock().await;
 
         match slots_rx_guard.recv().await {
@@ -87,79 +74,12 @@ impl PeerStore {
         }
     }
 
-    pub async fn find(&self, peer_id: PeerId) -> Option<Arc<Peer>> {
-        let map = self.map.lock().await;
-        if let Some(p) = map.get(&peer_id) {
-            Some(p.clone())
-        } else {
-            None
-        }
-    }
-
-    // pub async fn next(
-    //     &self,
-    //     last_idx: Option<usize>,
-    //     filter: &(dyn Fn(&OwnedMutexGuard<Peer>) -> bool + Sync + Send),
-    // ) -> Option<(OwnedMutexGuard<Peer>, usize)> {
-    //     let slots = self.slots.lock().await;
-
-    //     let start_idx = match last_idx {
-    //         Some(i) => i + 1,
-    //         None => 0,
-    //     };
-
-    //     let cap = self.capacity;
-
-    //     for i in start_idx..start_idx + cap {
-    //         let idx = i % cap;
-
-    //         let peer = match slots.get(idx) {
-    //             Some(p) => p.to_owned(),
-    //             None => {
-    //                 warn!(
-    //                     "There is an empty slot. Something might be wrong"
-    //                 );
-    //                 return None;
-    //             }
-    //         };
-
-    //         let peer_guard = match peer.try_lock_owned() {
-    //             Ok(p) => p,
-    //             Err(_) => continue,
-    //         };
-
-    //         if filter(&peer_guard) {
-    //             return Some((peer_guard, idx));
-    //         } else {
-    //             continue;
-    //         }
+    // pub async fn find(&self, peer_id: PeerId) -> Option<Arc<Mutex<Peer>>> {
+    //     let map = self.map.lock().await;
+    //     if let Some(p) = map.get(&peer_id) {
+    //         Some(p.clone())
+    //     } else {
+    //         None
     //     }
-
-    //     None
-    // }
-
-    // pub async fn find(
-    //     &self,
-    //     filter: &(dyn Fn(&OwnedMutexGuard<Peer>) -> bool + Sync + Send),
-    // ) -> Option<(OwnedMutexGuard<Peer>, usize)> {
-    //     let slots = self.slots.lock().await.to_owned();
-
-    //     for (idx, p) in slots.into_iter().enumerate() {
-    //         let peer_guard = match p.try_lock_owned() {
-    //             Ok(p) => p,
-    //             Err(_) => continue,
-    //         };
-
-    //         if filter(&peer_guard) {
-    //             return Some((peer_guard, idx));
-    //         } else {
-    //             continue;
-    //         }
-    //     }
-    //     None
-    // }
-
-    // pub async fn reserve(&self) -> Option<(OwnedMutexGuard<Peer>, usize)> {
-    //     self.find(&|peer| peer.status == Status::Empty).await
     // }
 }
