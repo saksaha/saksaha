@@ -72,6 +72,7 @@ async fn handle_initiate_handshake(hs_init_task_params: HSInitTaskParams) {
                 HandshakeInitError::PayloadWriteFail { .. } => (),
                 HandshakeInitError::InvalidAck { .. } => (),
                 HandshakeInitError::HandshakeSentFail { .. } => (),
+                HandshakeInitError::Invalid { .. } => (),
             };
         }
     };
