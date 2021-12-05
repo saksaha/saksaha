@@ -1,5 +1,5 @@
-pub mod merkle;
 pub mod constants;
+pub mod merkle;
 use std::fs::File;
 use std::io::Write;
 use std::time::SystemTime;
@@ -9,15 +9,14 @@ use std::vec;
 use bellman::gadgets::boolean::{AllocatedBit, Boolean};
 use bellman::groth16::Parameters;
 use bellman::{groth16, Circuit, ConstraintSystem, SynthesisError};
-use bls12_381::{Bls12, Scalar, MillerLoopResult};
-use ff::{Field, PrimeFieldBits};
+use bls12_381::{Bls12, MillerLoopResult, Scalar};
 use ff::PrimeField;
+use ff::{Field, PrimeFieldBits};
 use rand::rngs::OsRng;
 use rand::thread_rng;
 
 use crate::constants::get_round_constants;
 use crate::merkle::Tree;
-
 
 const TREE_DEPTH: usize = 3;
 pub const MIMC_ROUNDS: usize = 322;
@@ -53,7 +52,10 @@ fn convert_to_str(v: Vec<Boolean>) -> String {
 }
 
 impl<'a, S: PrimeField> Circuit<S> for MyCircuit<'a, S> {
-    fn synthesize<CS: ConstraintSystem<S>>(self, cs: &mut CS) -> Result<(), SynthesisError> {
+    fn synthesize<CS: ConstraintSystem<S>>(
+        self,
+        cs: &mut CS,
+    ) -> Result<(), SynthesisError> {
         println!("\nsynthesize()");
         let mut cur = match self.leaf {
             Some(a) => Some(a),
@@ -80,10 +82,13 @@ impl<'a, S: PrimeField> Circuit<S> for MyCircuit<'a, S> {
                 let mut xr_value;
 
                 // let right = cur_is_right.get_value().unwrap();
-                let right =
-                    cur_is_right
-                        .get_value()
-                        .and_then(|v| if v { Some(v) } else { Some(false) });
+                let right = cur_is_right.get_value().and_then(|v| {
+                    if v {
+                        Some(v)
+                    } else {
+                        Some(false)
+                    }
+                });
 
                 let temp = match *layer {
                     Some(a) => a,
@@ -146,7 +151,10 @@ impl<'a, S: PrimeField> Circuit<S> for MyCircuit<'a, S> {
 
                     let new_xl = cs.alloc(
                         || "new_xl",
-                        || new_xl_value.ok_or(SynthesisError::AssignmentMissing),
+                        || {
+                            new_xl_value
+                                .ok_or(SynthesisError::AssignmentMissing)
+                        },
                     )?;
 
                     cs.enforce(
@@ -173,7 +181,10 @@ impl<'a, S: PrimeField> Circuit<S> for MyCircuit<'a, S> {
                 // println!("\nlayer_idx: {}, cur: {}", idx, cur_str);
             }
         };
-        cs.alloc_input(|| "image", || cur.ok_or(SynthesisError::AssignmentMissing))?;
+        cs.alloc_input(
+            || "image",
+            || cur.ok_or(SynthesisError::AssignmentMissing),
+        )?;
         println!("final circuit public input {:?}", cur.unwrap());
 
         Ok(())
@@ -195,6 +206,38 @@ pub fn mimc<S: PrimeField>(mut xl: S, mut xr: S, constants: &[S]) -> S {
 
     xl
 }
+
+pub fn get_params(constants: &[Scalar]) -> Parameters<Bls12> {
+    let is_file_exist = std::path::Path::new("mimc_params").exists();
+    println!("file exist status : {}", is_file_exist);
+    let mut v = vec![];
+    if is_file_exist {
+        // read
+        v = std::fs::read("mimc_params").unwrap();
+    } else {
+        // generate and write
+        let params = {
+            let c = MyCircuit {
+                leaf: None,
+                auth_path: [None; TREE_DEPTH],
+                constants: &constants,
+            };
+
+            groth16::generate_random_parameters::<Bls12, _, _>(c, &mut OsRng)
+                .unwrap()
+        };
+        // write param to file
+        let mut file = File::create("mimc_params").unwrap();
+
+        params.write(&mut v).unwrap();
+        // write origin buf
+        file.write_all(&v);
+    }
+
+    let de_params = Parameters::<Bls12>::read(&v[..], false).unwrap();
+    de_params
+}
+
 #[test]
 pub fn mimcTest() {
     println!("start");
@@ -214,7 +257,8 @@ pub fn mimcTest() {
     println!("constants : {:?}", constants);
 
     let mut bytes_constants = constants.clone();
-    let changed_constants:Vec<[u8;32]>  = bytes_constants.iter().map(|a| a.to_bytes()).collect();
+    let changed_constants: Vec<[u8; 32]> =
+        bytes_constants.iter().map(|a| a.to_bytes()).collect();
     println!("changed constants: {:?}", changed_constants);
 
     let tree = Tree::new(test_leaves, TREE_DEPTH, &constants);
@@ -229,15 +273,16 @@ pub fn mimcTest() {
 
     let now = SystemTime::now();
     println!("timer start {:?}", now);
-    let params = {
-        let c = MyCircuit {
-            leaf: None,
-            auth_path: [None; TREE_DEPTH],
-            constants: &constants,
-        };
+    // let params = {
+    //     let c = MyCircuit {
+    //         leaf: None,
+    //         auth_path: [None; TREE_DEPTH],
+    //         constants: &constants,
+    //     };
 
-        groth16::generate_random_parameters::<Bls12, _, _>(c, &mut OsRng).unwrap()
-    };
+    //     groth16::generate_random_parameters::<Bls12, _, _>(c, &mut OsRng)
+    //         .unwrap()
+    // };
 
     let param_time = SystemTime::now();
     println!(
@@ -245,16 +290,18 @@ pub fn mimcTest() {
         param_time.duration_since(now)
     );
 
-    // write param to file
-    let mut file = File::create("new_params").unwrap();
-    let mut v = vec![];
+    // let is_file_exist = std::path::Path::new("new_params").exists();
+    // println!("file exist status : {}", is_file_exist);
+    // // write param to file
+    // let mut file = File::create("new_params").unwrap();
+    // let mut v = vec![];
 
-    params.write(&mut v).unwrap();
+    // params.write(&mut v).unwrap();
 
-    println!("writed data len: {}", v.len());
+    // println!("writed data len: {}", v.len());
 
-    // write origin buf
-    file.write_all(&v);
+    // // write origin buf
+    // file.write_all(&v);
 
     // let strings: Vec<String> = v.iter().map(|n| n.to_string()).collect();
     // write!(file, "{}", strings.join(",")).unwrap();
@@ -268,9 +315,10 @@ pub fn mimcTest() {
     //     .map(|x| x.parse::<u8>().unwrap())
     //     .collect();
 
-    println!("parsed data len: {}", v.len());
+    // println!("parsed data len: {}", v.len());
 
-    let de_params = Parameters::<Bls12>::read(&v[..], false).unwrap();
+    // let de_params = Parameters::<Bls12>::read(&v[..], false).unwrap();
+    let de_params = get_params(&constants);
 
     // Prepare the verification key (for proof verification).
     let pvk = groth16::prepare_verifying_key(&de_params.vk);
@@ -282,7 +330,8 @@ pub fn mimcTest() {
     );
 
     // Create an instance of our circuit (with the preimage as a witness).
-    let mut auth_path: [Option<(Scalar, bool)>; TREE_DEPTH] = [None; TREE_DEPTH];
+    let mut auth_path: [Option<(Scalar, bool)>; TREE_DEPTH] =
+        [None; TREE_DEPTH];
     for (idx, elem) in auth_path.clone().iter().enumerate() {
         let sib = proof.get(idx).unwrap();
         auth_path[idx] = Some((sib.hash.clone(), sib.direction.clone()));
@@ -313,7 +362,8 @@ pub fn mimcTest() {
         multipacking_time.duration_since(circuit_time)
     );
 
-    let proof = groth16::create_random_proof(c, &de_params, &mut OsRng).unwrap();
+    let proof =
+        groth16::create_random_proof(c, &de_params, &mut OsRng).unwrap();
     let proof_time = SystemTime::now();
     println!(
         "proof time {:?}",
