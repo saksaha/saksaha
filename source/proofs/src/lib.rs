@@ -57,7 +57,7 @@ impl<'a, S: PrimeField> Circuit<S> for MyCircuit<'a, S> {
         self,
         cs: &mut CS,
     ) -> Result<(), SynthesisError> {
-        println!("\nsynthesize()");
+        // println!("\nsynthesize()");
         let mut cur = match self.leaf {
             Some(a) => Some(a),
             None => Some(S::default()),
@@ -72,11 +72,11 @@ impl<'a, S: PrimeField> Circuit<S> for MyCircuit<'a, S> {
                 )
                 .unwrap();
 
-                println!(
-                    "\nlayer_idx: {}, curr_is_right: {:?}",
-                    idx,
-                    cur_is_right.get_value()
-                );
+                // println!(
+                //     "\nlayer_idx: {}, curr_is_right: {:?}",
+                //     idx,
+                //     cur_is_right.get_value()
+                // );
 
                 // start mimc
                 let mut xl_value;
@@ -175,7 +175,7 @@ impl<'a, S: PrimeField> Circuit<S> for MyCircuit<'a, S> {
                 }
 
                 cur = xl_value;
-                println!("circuit public input {:?}", cur.unwrap());
+                // println!("circuit public input {:?}", cur.unwrap());
                 // end of mimc
 
                 // let cur_str = convert_to_str(cur.clone());
@@ -186,7 +186,7 @@ impl<'a, S: PrimeField> Circuit<S> for MyCircuit<'a, S> {
             || "image",
             || cur.ok_or(SynthesisError::AssignmentMissing),
         )?;
-        println!("final circuit public input {:?}", cur.unwrap());
+        // println!("final circuit public input {:?}", cur.unwrap());
 
         Ok(())
     }
@@ -210,7 +210,7 @@ pub fn mimc<S: PrimeField>(mut xl: S, mut xr: S, constants: &[S]) -> S {
 
 pub fn get_params(constants: &[Scalar]) -> Parameters<Bls12> {
     let is_file_exist = std::path::Path::new("mimc_params").exists();
-    println!("file exist status : {}", is_file_exist);
+    // println!("file exist status : {}", is_file_exist);
     let mut v = vec![];
     if is_file_exist {
         // read
@@ -273,7 +273,7 @@ pub fn generate_proof(idx: usize) -> Proof<Bls12> {
     proof
 }
 
-pub fn verify_proof(proof: Proof<Bls12>) -> bool {
+pub fn verify_proof(proof: &Proof<Bls12>) -> bool {
     let constants = get_round_constants();
     let de_params = get_params(&constants);
     let tree = get_merkle_tree(&constants);
@@ -283,7 +283,7 @@ pub fn verify_proof(proof: Proof<Bls12>) -> bool {
     let pvk = groth16::prepare_verifying_key(&de_params.vk);
     match groth16::verify_proof(&pvk, &proof, &[root]) {
         Ok(_) => {
-            println!("veryfiy success!");
+            // println!("veryfiy success!");
             true
         }
         Err(err) => {
@@ -296,7 +296,7 @@ pub fn verify_proof(proof: Proof<Bls12>) -> bool {
 #[test]
 pub fn mimc_test() {
     let proof0 = generate_proof(0);
-    assert!(verify_proof(proof0));
+    assert!(verify_proof(&proof0));
 
     // let proof12 = generate_proof(12);
     // assert!(verify_proof(proof12));
@@ -304,7 +304,7 @@ pub fn mimc_test() {
 
 #[test]
 pub fn performance_test() {
-    println!("start");
+    // println!("start");
     // // let test_leaves: Vec<u32> = (0..std::u32::MAX).map(|x| x).collect();
     // let mut test_leaves: Vec<u32> = vec![];
     // (0..32).for_each(|iter| {

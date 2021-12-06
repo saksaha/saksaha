@@ -1,0 +1,20 @@
+[package]
+name = "chat2"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+structopt = "0.3.13"
+tokio = { version = "1.12.0", features = ["full"] }
+crossterm = "0.22.1"
+chrono = "0.4"
+clap = "2"
+bytes = "1"
+bellman = "0.11.1"
+bls12_381 = "0.6.0"
+ff = "0.11"
+pairing = "0.21.0"
+rand = "0.8.4"
+proofs = { path = "../../source/proofs" }
