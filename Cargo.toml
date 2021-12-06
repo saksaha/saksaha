@@ -16,5 +16,6 @@ members = [
   "internals/ci",
 
   # example
-  "example/chat"
+  "example/chat",
+  "example/chat2",
 ]

@@ -8,6 +8,7 @@ use sha2::{Digest, Sha256};
 pub struct Tree {
     pub nodes: Vec<Vec<Node>>,
     pub height: usize,
+    pub data: Vec<u32>,
 }
 
 #[derive(Debug, Clone)]
@@ -71,10 +72,12 @@ impl Tree {
         let mut leaves = vec![];
         let leaf_count = data.len();
 
-        println!(
-            "Create tree, leaf_count: {}, height: {}",
-            leaf_count, height
-        );
+        // println!(
+        //     "Create tree, leaf_count: {}, height: {}",
+        //     leaf_count, height
+        // );
+
+        let d = data.clone();
 
         for l in data.into_iter() {
             // let mut val = [0; 4];
@@ -129,7 +132,7 @@ impl Tree {
                     // let mut hash: [u8; 32] = Default::default();
                     // hash.copy_from_slice(&hs[..]);
 
-                    println!("height: {}, hash: {:?}", h, hs);
+                    // println!("height: {}, hash: {:?}", h, hs);
 
                     let n = Node { val: None, hash: hs };
 
@@ -141,10 +144,10 @@ impl Tree {
         }
 
         for (idx, e) in nodes.iter().enumerate() {
-            println!("{}: {}, {:?}\n", idx, e.len(), e);
+            // println!("{}: {}, {:?}\n", idx, e.len(), e);
         }
 
-        Tree { nodes, height }
+        Tree { nodes, height, data: d }
     }
 
     pub fn root(&self) -> &Node {
