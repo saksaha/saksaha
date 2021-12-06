@@ -20,10 +20,10 @@ pub struct Chat {
 
 impl Chat {
     pub async fn start(&mut self) {
-        println!("Start typing, cid: {}", self.cid);
-
         let tree = get_merkle_tree(&get_round_constants());
-        println!("Transactions up to so far: {:?}", tree.data);
+        println!("[ledger] Transactions up to so far: {:?}\n", tree.data);
+
+        println!("Start typing, cid: {}", self.cid);
 
         loop {
             let mut buffer = String::new();
