@@ -1,11 +1,11 @@
 use log::{debug, error, warn};
 use p2p_active_calls::ActiveCalls;
 use p2p_identity::{Identity, PeerId, PUBLIC_KEY_LEN};
-use p2p_transport::{HandshakeInitParams, HandshakeInitError,};
-use peer::{Peer, PeerValue, RegisteredPeerValue,};
-use tokio::sync::Mutex;
+use p2p_transport::{HandshakeInitError, HandshakeInitParams};
+use peer::{Peer, PeerStore, PeerValue, RegisteredPeerValue};
 use std::sync::Arc;
 use task::task_queue::{TaskResult, TaskRun};
+use tokio::{sync::Mutex, io::AsyncBufReadExt, io::AsyncReadExt,};
 
 #[derive(Clone)]
 pub(crate) enum Task {
@@ -20,6 +20,7 @@ pub(crate) struct HSInitTaskParams {
     pub her_ip: String,
     pub her_p2p_port: u16,
     pub her_public_key: PeerId,
+    pub peer_store: Arc<PeerStore>,
     pub peer: Arc<Peer>,
     pub handshake_active_calls: Arc<ActiveCalls>,
 }
@@ -50,7 +51,9 @@ async fn handle_initiate_handshake(hs_init_task_params: HSInitTaskParams) {
         her_public_key: hs_init_task_params.her_public_key,
     };
 
-    let peer = hs_init_task_params.peer;
+    let HSInitTaskParams {
+        peer, peer_store, ..
+    } = hs_init_task_params;
 
     // let handshake_active_calls = hs_init_task_params.handshake_active_calls;
 
@@ -59,12 +62,21 @@ async fn handle_initiate_handshake(hs_init_task_params: HSInitTaskParams) {
     //     .await;
 
     match p2p_transport::initiate_handshake(hs_init_params).await {
-        Ok(t) => {
+        Ok(mut t) => {
             let mut p_val = peer.value.lock().await;
-            *p_val = PeerValue::Registered(RegisteredPeerValue {
-                transport: t,
-            });
-        },
+            *p_val =
+                PeerValue::Registered(RegisteredPeerValue { transport: t });
+            std::mem::drop(p_val);
+
+            peer_store.register(peer.clone()).await;
+
+            // tokio::spawn(async {
+            //     loop {
+            //         let mut buf = vec![];
+            //         t.stream.read_buf(&mut buf);
+            //     }
+            // });
+        }
         Err(err) => {
             debug!("initiate handshake fail, err: {}", err);
 

@@ -126,6 +126,7 @@ impl HandshakeRoutine {
                     her_ip: node_val.addr.ip,
                     her_p2p_port: node_val.p2p_port,
                     her_public_key: node_val.public_key,
+                    peer_store: peer_store.clone(),
                     peer: peer,
                     handshake_active_calls: active_calls.clone(),
                 };

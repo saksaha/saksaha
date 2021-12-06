@@ -7,13 +7,9 @@ const MAX_FAIL_COUNT: usize = 3;
 // #[derive(Debug, PartialEq)]
 // pub enum Status {
 //     Empty,
-
 //     NotInitialized,
-
 //     DiscoverySuccess,
-
 //     HandshakeSuccess,
-
 //     HandshakeFail(String),
 // }
 

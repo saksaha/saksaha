@@ -3,6 +3,7 @@ use bytes::BytesMut;
 use log::{debug, info, warn};
 use p2p_identity::Identity;
 use p2p_transport::{Connection, Frame, HANDSHAKE_CODE};
+use peer::{PeerValue, RegisteredPeerValue};
 use std::{net::ToSocketAddrs, sync::Arc};
 use thiserror::Error;
 use tokio::io::AsyncReadExt;
@@ -94,37 +95,22 @@ impl Handler {
             }
         };
 
-        let transport = match p2p_transport::receive_handshake(
+        match p2p_transport::receive_handshake(
             stream,
             host_state.identity.clone(),
         )
-        .await {
-            Ok(t) => t,
+        .await
+        {
+            Ok(t) => {
+                let mut p_val = peer.value.lock().await;
+                *p_val =
+                    PeerValue::Registered(RegisteredPeerValue { transport: t });
+                std::mem::drop(p_val);
+
+                host_state.peer_store.register(peer.clone()).await;
+            }
             Err(err) => return Err(RequestHandleError::Invalid),
         };
-
-        // read_handshak(buffer);
-
-        // let frame = match maybe_frame {
-        //     Some(fr) => {
-        //         match fr {
-        //             Frame::Array(ref fr) => {
-        //                 let a = fr.as_slice();
-
-        //                 for e in a {
-        //                     let b = e.to_string();
-        //                     println!("1, b: {}", e);
-        //                 }
-
-        //                 println!("3, {:?}", a);
-        //             },
-        //             _ => ()
-        //         }
-        //     },
-        //     None => return Ok(()),
-        // };
-
-        // println!("handler frame: {}", frame);
 
         Ok(())
     }
