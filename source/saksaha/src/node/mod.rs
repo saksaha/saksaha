@@ -4,11 +4,13 @@ use crate::{
     p2p::host::Host,
     pconfig::PConfig,
     process::{Process, Shutdown},
-    rpc::{self, RPC},
+    rpc::{self, RPC}, ledger::Ledger,
 };
 use log::{debug, error, info};
+use peer::{PeerStore, Peer};
 use std::sync::Arc;
 use tokio::{self, signal};
+use tokio::sync::Mutex;
 
 pub struct Node {
     inner: Arc<Inner>,
@@ -20,7 +22,7 @@ impl Node {
 
         Process::init(inner.clone());
 
-        Node { inner }
+        Node { inner, }
     }
 
     pub fn start(
@@ -124,7 +126,7 @@ impl Inner {
 
         let rpc = RPC::new(sockets.rpc.listener);
 
-        let host = Host::init(
+        let p2p_host = Host::init(
             pconfig.p2p,
             sockets.rpc.port,
             sockets.p2p,
@@ -134,8 +136,14 @@ impl Inner {
         )
         .await?;
 
+        let host_state = p2p_host.host_state.clone();
+        let peer_store = host_state.peer_store.clone();
+
+        let ledger = Ledger::new(peer_store);
+
         rpc.start().await?;
-        host.start().await?;
+        ledger.start().await?;
+        p2p_host.start().await?;
 
         Ok(())
     }

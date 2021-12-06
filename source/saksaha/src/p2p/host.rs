@@ -1,5 +1,5 @@
 use crate::{
-    node::socket::TcpSocket, pconfig::PersistedP2PConfig,
+    node::{socket::TcpSocket,}, pconfig::PersistedP2PConfig,
 };
 use log::{error, info};
 use p2p_active_calls::ActiveCalls;
@@ -16,7 +16,8 @@ use super::{
     task::{Task, TaskRunner},
 };
 
-pub struct Host {
+pub(crate) struct Host {
+    pub host_state: Arc<HostState>,
     disc: Arc<Disc>,
     dial_scheduler: Arc<DialScheduler>,
     task_queue: Arc<TaskQueue<Task>>,
@@ -94,6 +95,7 @@ impl Host {
             dial_scheduler,
             task_queue,
             listener,
+            host_state,
         };
 
         Ok(host)

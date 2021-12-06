@@ -85,6 +85,13 @@ pub async fn receive_handshake(
             }
         };
 
+    // if identity.public_key == hs_msg.src_public_key {
+    //     println!("222");
+    //     return Err(HandshakeRecvError::Invalid {
+    //         err: "my identity".to_string(),
+    //     });
+    // }
+
     let hs_ack_msg = HandshakeMsg {
         src_public_key: identity.public_key,
         dst_public_key: hs_msg.src_public_key,
@@ -113,6 +120,7 @@ pub async fn receive_handshake(
     Ok(Transport {
         stream,
         shared_secret,
+        peer_id: hs_msg.src_public_key,
     })
 }
 
@@ -134,6 +142,13 @@ pub async fn initiate_handshake(
     if super::is_my_endpoint(my_p2p_port, &endpoint) {
         return Err(HandshakeInitError::MyEndpoint { endpoint });
     }
+
+    // if her_public_key == identity.public_key {
+    //     println!("111");
+    //     return Err(HandshakeInitError::Invalid {
+    //         err: "my endpoint".to_string(),
+    //     });
+    // }
 
     let mut stream = match TcpStream::connect(&endpoint).await {
         Ok(s) => {
@@ -189,6 +204,7 @@ pub async fn initiate_handshake(
     let t = Transport {
         stream,
         shared_secret,
+        peer_id: hs_msg.dst_public_key,
     };
 
     Ok(t)
@@ -292,7 +308,6 @@ fn parse_handshake_msg(
         src_public_key: identity.public_key,
         dst_public_key: dst_public_key,
     })
-
 }
 
 fn make_shared_secret(
