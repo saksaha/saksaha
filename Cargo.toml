@@ -1,15 +1,21 @@
 [workspace]
 
 members = [
-  "logger",
-  "saksaha",
-  "crypto",
-  "proofs",
-  "peer",
-  "p2p/discovery",
-  "p2p/identity",
-  "task",
+  "source/logger",
+  "source/saksaha",
+  "source/crypto",
+  "source/proofs",
+  "source/peer",
+  "source/p2p_discovery",
+  "source/p2p_identity",
+  "source/p2p_active_calls",
+  "source/p2p_transport",
+  "source/task",
 
   # internals
-  "internals/ci"
+  "internals/ci",
+
+  # example
+  "example/chat",
+  "example/chat2",
 ]
