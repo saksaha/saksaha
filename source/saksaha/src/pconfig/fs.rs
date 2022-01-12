@@ -1,11 +1,11 @@
-use log::{info};
+use logger::{tinfo};
 use crate::pconfig::error::PConfigError;
 use crate::pconfig::PConfig;
 use directories::ProjectDirs;
 use std::fs;
 use std::path::PathBuf;
 
-const CONFIG_FILE_NAME: &str = "config.json";
+const DEFAULT_CONFIG_FILE: &str = "config.json";
 
 pub struct FS;
 
@@ -23,13 +23,13 @@ impl FS {
         };
 
         let app_path = create_or_get_app_path()?;
-        let config_path = app_path.join(CONFIG_FILE_NAME).to_owned();
+        let config_path = app_path.join(DEFAULT_CONFIG_FILE).to_owned();
 
         if config_path.exists() {
             return Err(PConfigError::PathNotFound(config_path));
         }
 
-        info!("Writing a config, at: {:?}", config_path);
+        tinfo!("pconfig", "Writing a config, at: {:?}", config_path);
 
         match fs::write(config_path.to_owned(), serialized) {
             Ok(_) => Ok(pconfig),
@@ -38,7 +38,7 @@ impl FS {
     }
 
     pub fn load(path: PathBuf) -> Result<PConfig, PConfigError> {
-        info!("Load configuration, path: {:?}", path);
+        tinfo!("pconfig", "Loading configuration at path: {:?}", path);
 
         if !path.exists() {
             return Err(PConfigError::PathNotFound(path));
@@ -61,7 +61,7 @@ impl FS {
 
     pub fn get_default_path() -> Result<PathBuf, PConfigError> {
         let app_path = create_or_get_app_path()?;
-        let config_path = app_path.join(CONFIG_FILE_NAME);
+        let config_path = app_path.join(DEFAULT_CONFIG_FILE);
 
         Ok(config_path)
     }

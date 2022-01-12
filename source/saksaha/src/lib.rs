@@ -1,5 +1,5 @@
 pub mod pconfig;
-pub mod node;
+pub mod system;
 pub mod p2p;
 pub mod rpc;
 pub mod process;

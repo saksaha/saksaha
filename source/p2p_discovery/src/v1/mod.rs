@@ -1,4 +1,3 @@
-// mod active_calls;
 pub mod address;
 pub mod dial_scheduler;
 pub mod iterator;
@@ -16,9 +15,8 @@ use self::{
 use crate::{
     iterator::Iterator,
     task::TaskRunner,
-    v1::{address::Address, task::Task},
 };
-use log::{info, warn};
+use logger::{tinfo};
 use p2p_active_calls::ActiveCalls;
 use p2p_identity::Identity;
 use ::task::task_queue::TaskQueue;
@@ -39,7 +37,7 @@ impl Disc {
         my_disc_port: Option<u16>,
         my_p2p_port: u16,
         bootstrap_urls: Option<Vec<String>>,
-        default_bootstrap_urls: String,
+        default_bootstrap_urls: &str,
     ) -> Result<Disc, String> {
         let table = {
             let t = match Table::init().await {
@@ -148,8 +146,9 @@ pub async fn setup_udp_socket(
                 }
             };
 
-            info!(
-                "Started - Discovery udp socket opened, local_addr: {}",
+            tinfo!(
+                "p2p_discovery",
+                "Bound udp socket for discovery, local_addr: {}",
                 local_addr
             );
 

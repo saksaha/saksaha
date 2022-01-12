@@ -1,28 +1,28 @@
 pub mod socket;
 
+use logger::{terr};
 use crate::{
+    ledger::Ledger,
     p2p::host::Host,
     pconfig::PConfig,
     process::{Process, Shutdown},
-    rpc::{self, RPC}, ledger::Ledger,
+    rpc::RPC,
 };
-use log::{debug, error, info};
-use peer::{PeerStore, Peer};
+use logger::{tinfo, tdebug};
 use std::sync::Arc;
 use tokio::{self, signal};
-use tokio::sync::Mutex;
 
-pub struct Node {
+pub struct System {
     inner: Arc<Inner>,
 }
 
-impl Node {
-    pub fn new() -> Node {
+impl System {
+    pub fn new() -> System {
         let inner = Arc::new(Inner {});
 
         Process::init(inner.clone());
 
-        Node { inner, }
+        System { inner }
     }
 
     pub fn start(
@@ -32,7 +32,7 @@ impl Node {
         p2p_port: Option<u16>,
         bootstrap_endpoints: Option<Vec<String>>,
         pconfig: PConfig,
-        default_bootstrap_urls: String,
+        default_bootstrap_urls: &str,
     ) -> Result<(), String> {
         self.inner.start(
             rpc_port,
@@ -55,10 +55,8 @@ impl Inner {
         p2p_port: Option<u16>,
         bootstrap_endpoints: Option<Vec<String>>,
         pconfig: PConfig,
-        default_bootstrap_urls: String,
+        default_bootstrap_urls: &str,
     ) -> Result<(), String> {
-        info!("Start node...");
-
         let runtime = tokio::runtime::Builder::new_multi_thread()
             .enable_all()
             .build();
@@ -78,7 +76,7 @@ impl Inner {
                 {
                     Ok(_) => (),
                     Err(err) => {
-                        error!("Can't start node, err: {}", err);
+                        terr!("system", "Can't start node, err: {}", err);
 
                         Process::shutdown();
                     }
@@ -88,12 +86,13 @@ impl Inner {
                     c = signal::ctrl_c() => {
                         match c {
                             Ok(_) => {
-                                debug!("ctrl+k is pressed.");
+                                tdebug!("system", "ctrl+k is pressed.");
 
                                 Process::shutdown();
                             },
                             Err(err) => {
-                                error!(
+                                terr!(
+                                    "system",
                                     "Unexpected error while waiting for \
                                         ctrl+p, err: {}",
                                     err
@@ -120,7 +119,7 @@ impl Inner {
         p2p_port: Option<u16>,
         bootstrap_urls: Option<Vec<String>>,
         pconfig: PConfig,
-        default_bootstrap_urls: String,
+        default_bootstrap_urls: &str,
     ) -> Result<(), String> {
         let sockets = socket::setup_sockets(rpc_port, p2p_port).await?;
 
@@ -141,8 +140,8 @@ impl Inner {
 
         let ledger = Ledger::new(peer_store);
 
-        rpc.start().await?;
-        ledger.start().await?;
+        // rpc.start().await?;
+        // ledger.start().await?;
         p2p_host.start().await?;
 
         Ok(())
@@ -151,6 +150,6 @@ impl Inner {
 
 impl Shutdown for Inner {
     fn shutdown(&self) {
-        info!("Storing state of node");
+        tinfo!("system", "Storing state of node");
     }
 }

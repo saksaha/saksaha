@@ -3,9 +3,7 @@ use super::{
     ops::{whoareyou::WhoareyouOp, Opcode},
     DiscState,
 };
-use crate::task::Task;
-use log::{debug, error, info, warn};
-use task::task_queue::TaskQueue;
+use logger::{tdebug, terr, tinfo, twarn};
 use std::{net::SocketAddr, sync::Arc};
 use thiserror::Error;
 use tokio::net::UdpSocket;
@@ -36,6 +34,7 @@ impl Listener {
     }
 
     pub fn start(&self) -> Result<(), String> {
+        tinfo!("p2p_discovery", "Listener starts to accept requests");
         self.run_loop()
     }
 
@@ -50,14 +49,20 @@ impl Listener {
                 let (_, socket_addr) =
                     match udp_socket.recv_from(&mut buf).await {
                         Ok(res) => {
-                            debug!(
+                            tdebug!(
+                                "p2p_discovery",
                                 "Accepted incoming request, len: {}, addr: {}",
-                                res.0, res.1,
+                                res.0,
+                                res.1,
                             );
                             res
                         }
                         Err(err) => {
-                            warn!("Error accepting request, err: {}", err);
+                            twarn!(
+                                "p2p_discovery",
+                                "Error accepting request, err: {}",
+                                err
+                            );
                             continue;
                         }
                     };
@@ -72,9 +77,11 @@ impl Listener {
                 {
                     Ok(_) => (),
                     Err(err) => {
-                        error!(
+                        terr!(
+                            "p2p_discovery",
                             "Error processing request, addr: {}, err: {}",
-                            socket_addr, err
+                            socket_addr,
+                            err
                         );
                     }
                 };
@@ -111,13 +118,14 @@ impl Handler {
 
         match opcode {
             Opcode::WhoAreYouSyn => {
-                match whoareyou_op
-                    .handle_who_are_you(addr.clone(), buf)
-                    .await
-                {
+                match whoareyou_op.handle_who_are_you(addr.clone(), buf).await {
                     Ok(_) => (),
                     Err(err) => {
-                        error!("Request handle fail, err: {}", err);
+                        terr!(
+                            "p2p_discovery",
+                            "Request handle fail, err: {}",
+                            err
+                        );
                     }
                 }
             }
@@ -128,7 +136,11 @@ impl Handler {
                 {
                     Ok(_) => (),
                     Err(err) => {
-                        error!("Request handle fail, err: {}", err);
+                        terr!(
+                            "p2p_discovery",
+                            "Request handle fail, err: {}",
+                            err
+                        );
                     }
                 }
             }
