@@ -8,18 +8,15 @@ mod table;
 pub mod task;
 
 use self::{
-    dial_scheduler::DialScheduler,
-    listener::Listener, ops::whoareyou::WhoareyouOp, state::DiscState,
-    table::Table,
+    dial_scheduler::DialScheduler, listener::Listener,
+    ops::whoareyou::WhoareyouOp, state::DiscState, table::Table,
 };
-use crate::{
-    iterator::Iterator,
-    task::TaskRunner,
-};
-use logger::{tinfo};
+use crate::{iterator::Iterator, task::TaskRunner};
+use ::task::task_queue::TaskQueue;
+use colored::*;
+use logger::tinfo;
 use p2p_active_calls::ActiveCalls;
 use p2p_identity::Identity;
-use ::task::task_queue::TaskQueue;
 use std::sync::Arc;
 use tokio::net::UdpSocket;
 
@@ -55,7 +52,10 @@ impl Disc {
         };
 
         let task_queue = {
-            let q = TaskQueue::new("Disc".to_string(), Box::new(TaskRunner {}));
+            let q = TaskQueue::new(
+                "p2p_discovery".to_string(),
+                Box::new(TaskRunner {}),
+            );
             Arc::new(q)
         };
 
@@ -148,8 +148,8 @@ pub async fn setup_udp_socket(
 
             tinfo!(
                 "p2p_discovery",
-                "Bound udp socket for discovery, local_addr: {}",
-                local_addr
+                "Bound udp socket for discovery, addr: {}",
+                local_addr.to_string().yellow(),
             );
 
             (s, local_addr.port())
