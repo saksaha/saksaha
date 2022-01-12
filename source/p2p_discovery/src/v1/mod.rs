@@ -2,14 +2,14 @@ pub mod address;
 pub mod dial_scheduler;
 pub mod iterator;
 pub mod listener;
-mod ops;
+mod operations;
 pub mod state;
 mod table;
 pub mod task;
 
 use self::{
     dial_scheduler::DialScheduler, listener::Listener,
-    ops::whoareyou::WhoareyouOp, state::DiscState, table::Table,
+    state::DiscState, table::Table, operations::whoareyou::operation::WhoareyouOp,
 };
 use crate::{iterator::Iterator, task::TaskRunner};
 use ::task::task_queue::TaskQueue;

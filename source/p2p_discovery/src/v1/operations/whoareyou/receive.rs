@@ -1,6 +1,7 @@
 use super::msg::{WhoAreYouAck, WhoAreYouSyn};
+use super::check;
 use crate::v1::address::Address;
-use crate::v1::ops::Message;
+use crate::v1::operations::Message;
 use crate::v1::table::{NodeValue};
 use crate::v1::DiscState;
 use log::debug;
@@ -80,7 +81,7 @@ pub(crate) async fn handle_who_are_you(
 
         let endpoint = addr.disc_endpoint();
 
-        if super::is_my_endpoint(my_disc_port, &endpoint) {
+        if check::is_my_endpoint(my_disc_port, &endpoint) {
             return Err(WhoareyouRecvError::MyEndpoint { endpoint });
         }
 
