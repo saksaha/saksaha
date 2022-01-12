@@ -9,7 +9,7 @@ pub mod task;
 
 use self::{
     dial_scheduler::DialScheduler, listener::Listener,
-    operations::whoareyou::operation::WhoareyouOp, state::DiscState,
+    state::DiscState,
     table::Table,
 };
 use crate::{iterator::Iterator, task::TaskRunner};

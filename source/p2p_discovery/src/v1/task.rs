@@ -1,8 +1,8 @@
+use crate::state::DiscState;
+
 use super::{
     address::Address,
-    operations::whoareyou::{
-        initiate::WhoareyouInitError, operation::WhoareyouOp,
-    },
+    operations::whoareyou::{self, initiate::WhoareyouInitError},
 };
 use log::{debug, error, warn};
 use std::sync::Arc;
@@ -11,7 +11,8 @@ use task::task_queue::{TaskResult, TaskRun};
 #[derive(Clone)]
 pub(crate) enum Task {
     InitiateWhoAreYou {
-        whoareyou_op: Arc<WhoareyouOp>,
+        disc_state: Arc<DiscState>,
+        // whoareyou_op: Arc<WhoareyouOp>,
         addr: Address,
     },
 }
@@ -22,8 +23,12 @@ impl TaskRun<Task> for TaskRunner {
     fn run(&self, task: Task) -> TaskResult {
         futures::executor::block_on(async {
             match task {
-                Task::InitiateWhoAreYou { whoareyou_op, addr } => {
-                    match whoareyou_op.send_who_are_you(addr).await {
+                Task::InitiateWhoAreYou { disc_state, addr } => {
+                    match whoareyou::initiate::send_who_are_you(
+                        disc_state, addr,
+                    )
+                    .await
+                    {
                         Ok(_) => (),
                         Err(err) => {
                             let err_msg = err.to_string();

@@ -57,6 +57,12 @@ pub enum WhoareyouInitError {
     },
 }
 
+struct Initiate;
+
+impl Initiate {
+
+}
+
 pub(crate) async fn send_who_are_you(
     disc_state: Arc<DiscState>,
     addr: Address,
