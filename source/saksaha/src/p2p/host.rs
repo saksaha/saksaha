@@ -7,15 +7,15 @@ use super::{
 use crate::{pconfig::PersistedP2PConfig, system::socket::TcpSocket};
 use logger::tinfo;
 use p2p_active_calls::ActiveCalls;
-use p2p_discovery::Disc;
 use p2p_identity::Identity;
+use p2p_discovery::{Discovery};
 use peer::PeerStore;
 use std::sync::Arc;
 use task::task_queue::TaskQueue;
 
 pub(crate) struct Host {
     pub host_state: Arc<HostState>,
-    disc: Arc<Disc>,
+    disc: Arc<Discovery>,
     dial_scheduler: Arc<DialScheduler>,
     task_queue: Arc<TaskQueue<Task>>,
     listener: Arc<Listener>,
@@ -69,7 +69,7 @@ impl Host {
         };
 
         let disc = {
-            let d = Disc::init(
+            let d = Discovery::init(
                 identity.clone(),
                 disc_port,
                 p2p_socket.port,

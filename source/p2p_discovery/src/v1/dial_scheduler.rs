@@ -5,7 +5,6 @@ use std::{
     time::{Duration, SystemTime},
 };
 use tokio::sync::Mutex;
-use super::operations::whoareyou::operation::WhoareyouOp;
 
 pub(crate) struct DialScheduler {
     disc_state: Arc<DiscState>,
@@ -89,7 +88,8 @@ impl DialScheduler {
                 );
 
                 let task = Task::InitiateWhoAreYou {
-                    whoareyou_op: self.whoareyou_op.clone(),
+                    // whoareyou_op: self.whoareyou_op.clone(),
+                    disc_state: self.disc_state.clone(),
                     addr,
                 };
 

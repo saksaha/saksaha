@@ -1,6 +1,7 @@
 use super::{
     address::Address,
-    operations::{Opcode, whoareyou::operation::WhoareyouOp},
+    operations::whoareyou::{initiate, receive},
+    operations::Opcode,
     DiscState,
 };
 use logger::{tdebug, terr, tinfo, twarn};
@@ -119,7 +120,9 @@ impl Handler {
 
         match opcode {
             Opcode::WhoAreYouSyn => {
-                match whoareyou_op.handle_who_are_you(addr.clone(), buf).await {
+                match receive::handle_who_are_you(disc_state, addr.clone(), buf)
+                    .await
+                {
                     Ok(_) => (),
                     Err(err) => {
                         terr!(
@@ -131,9 +134,12 @@ impl Handler {
                 }
             }
             Opcode::WhoAreYouAck => {
-                match whoareyou_op
-                    .handle_who_are_you_ack(addr.clone(), buf)
-                    .await
+                match initiate::handle_who_are_you_ack(
+                    disc_state,
+                    addr.clone(),
+                    buf,
+                )
+                .await
                 {
                     Ok(_) => (),
                     Err(err) => {
