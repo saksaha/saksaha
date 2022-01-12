@@ -1,10 +1,12 @@
 use super::{
     address::Address,
-    ops::whoareyou::{initiate::WhoareyouInitError, WhoareyouOp},
+    operations::whoareyou::{
+        initiate::WhoareyouInitError, operation::WhoareyouOp,
+    },
 };
 use log::{debug, error, warn};
-use task::task_queue::{TaskResult, TaskRun};
 use std::sync::Arc;
+use task::task_queue::{TaskResult, TaskRun};
 
 #[derive(Clone)]
 pub(crate) enum Task {
@@ -69,9 +71,9 @@ impl TaskRun<Task> for TaskRunner {
                                 WhoareyouInitError::TableAddFail { .. } => {
                                     return TaskResult::FailRetriable(err_msg);
                                 }
-                                WhoareyouInitError::NodePutBackFail { .. } => {
-
-                                }
+                                WhoareyouInitError::NodePutBackFail {
+                                    ..
+                                } => {}
                             }
                         }
                     }

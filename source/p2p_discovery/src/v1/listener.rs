@@ -1,6 +1,6 @@
 use super::{
     address::Address,
-    ops::{whoareyou::WhoareyouOp, Opcode},
+    operations::{Opcode, whoareyou::operation::WhoareyouOp},
     DiscState,
 };
 use logger::{tdebug, terr, tinfo, twarn};

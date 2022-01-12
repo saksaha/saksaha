@@ -1,4 +1,3 @@
-use super::ops::whoareyou::WhoareyouOp;
 use crate::{address::Address, state::DiscState, task::Task};
 use logger::{tdebug, terr, tinfo, twarn};
 use std::{
@@ -6,6 +5,7 @@ use std::{
     time::{Duration, SystemTime},
 };
 use tokio::sync::Mutex;
+use super::operations::whoareyou::operation::WhoareyouOp;
 
 pub(crate) struct DialScheduler {
     disc_state: Arc<DiscState>,

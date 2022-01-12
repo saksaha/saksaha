@@ -1,6 +1,7 @@
 use super::msg::{WhoAreYouAck, WhoAreYouSyn};
+use super::check;
 use crate::v1::address::Address;
-use crate::v1::ops::Message;
+use crate::v1::operations::Message;
 use crate::v1::table::{Node, NodeValue};
 use crate::v1::DiscState;
 use log::debug;
@@ -11,7 +12,7 @@ use tokio::sync::mpsc::error::TrySendError;
 
 #[derive(Error, Debug)]
 pub enum WhoareyouInitError {
-    #[error("Request to my endpoint: {endpoint}")]
+    #[error("Request to myself, dumping this task, endpoint: {endpoint}")]
     MyEndpoint { endpoint: String },
 
     #[error(" Cannot reserve Node, _err: {err}")]
@@ -65,7 +66,7 @@ pub(crate) async fn send_who_are_you(
 
     let endpoint = addr.disc_endpoint();
 
-    if super::is_my_endpoint(my_disc_port, &endpoint) {
+    if check::is_my_endpoint(my_disc_port, &endpoint) {
         return Err(WhoareyouInitError::MyEndpoint { endpoint });
     }
 
