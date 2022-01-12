@@ -1,14 +1,13 @@
 use crate::{
-    node::{socket::TcpSocket,}, pconfig::PersistedP2PConfig,
+    system::{socket::TcpSocket,}, pconfig::PersistedP2PConfig,
 };
-use log::{error, info};
+use logger::{tinfo};
 use p2p_active_calls::ActiveCalls;
 use p2p_discovery::Disc;
 use p2p_identity::Identity;
 use peer::PeerStore;
 use task::task_queue::TaskQueue;
 use std::sync::Arc;
-use tokio::net::TcpListener;
 use super::{
     dial_scheduler::DialScheduler,
     listener::Listener,
@@ -31,7 +30,7 @@ impl Host {
         p2p_socket: TcpSocket,
         disc_port: Option<u16>,
         bootstrap_urls: Option<Vec<String>>,
-        default_bootstrap_urls: String,
+        default_bootstrap_urls: &str,
     ) -> Result<Host, String> {
         let identity = {
             let id = Identity::new(p2p_config.secret, p2p_config.public_key)?;
@@ -102,13 +101,14 @@ impl Host {
     }
 
     pub async fn start(&self) -> Result<(), String> {
+        tinfo!("p2p", "Starting discovery");
         self.disc.start().await?;
 
-        self.listener.start();
+        // self.listener.start();
 
-        self.dial_scheduler.start();
+        // self.dial_scheduler.start();
 
-        self.task_queue.run_loop();
+        // self.task_queue.run_loop();
 
         Ok(())
     }

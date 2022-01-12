@@ -1,7 +1,6 @@
 use super::ops::whoareyou::WhoareyouOp;
 use crate::{address::Address, state::DiscState, task::Task};
-use log::{debug, error, info, warn};
-use task::task_queue::TaskQueue;
+use logger::{tdebug, terr, tinfo, twarn};
 use std::{
     sync::Arc,
     time::{Duration, SystemTime},
@@ -19,14 +18,12 @@ impl DialScheduler {
         disc_state: Arc<DiscState>,
         whoareyou_op: Arc<WhoareyouOp>,
         bootstrap_urls: Option<Vec<String>>,
-        default_bootstrap_urls: String,
+        default_bootstrap_urls: &str,
     ) -> DialScheduler {
         let min_interval = Duration::from_millis(2000);
 
-        let revalidate_routine = RevalidateRoutine::new(
-            disc_state.clone(),
-            min_interval,
-        );
+        let revalidate_routine =
+            RevalidateRoutine::new(disc_state.clone(), min_interval);
 
         let d = DialScheduler {
             revalidate_routine,
@@ -49,7 +46,7 @@ impl DialScheduler {
     pub async fn enqueue_initial_tasks(
         &self,
         bootstrap_urls: Option<Vec<String>>,
-        default_bootstrap_urls: String,
+        default_bootstrap_urls: &str,
     ) {
         let bootstrap_urls = match bootstrap_urls {
             Some(u) => u,
@@ -63,10 +60,6 @@ impl DialScheduler {
 
         let urls = [bootstrap_urls, default_bootstrap_urls].concat();
 
-        info!("");
-        info!("*********************************************************");
-        info!("* Discovery table bootstrapped");
-
         let count = {
             let mut cnt = 0;
             for url in urls {
@@ -76,7 +69,8 @@ impl DialScheduler {
                         n
                     }
                     Err(err) => {
-                        warn!(
+                        twarn!(
+                            "p2p_discovery",
                             "Discarding url failed to parse, url: {}, \
                             err: {:?}",
                             url.clone(),
@@ -87,7 +81,12 @@ impl DialScheduler {
                     }
                 };
 
-                info!("* [{}] {}", cnt, addr.short_url());
+                tinfo!(
+                    "p2p_discovery",
+                    "Bootstrap - [{}] {}",
+                    cnt,
+                    addr.short_url()
+                );
 
                 let task = Task::InitiateWhoAreYou {
                     whoareyou_op: self.whoareyou_op.clone(),
@@ -97,16 +96,18 @@ impl DialScheduler {
                 match self.disc_state.task_queue.push(task).await {
                     Ok(_) => (),
                     Err(err) => {
-                        warn!("Couldn't enque new task, err: {}", err);
+                        twarn!(
+                            "p2p_discovery",
+                            "Couldn't enque new task, err: {}",
+                            err
+                        );
                     }
                 };
             }
             cnt
         };
 
-        info!("* bootstrapped node count: {}", count);
-        info!("*********************************************************");
-        info!("");
+        tinfo!("p2p_discovery", "Bootstrapped node count: {}", count);
     }
 }
 
@@ -131,7 +132,7 @@ impl RevalidateRoutine {
     }
 
     pub fn run(&self) {
-        info!("Discovery dial scheduler routine starts to run");
+        tinfo!("p2p_discovery", "Dial scheduler starts to run");
 
         let is_running = self.is_running.clone();
         let min_interval = self.min_interval;
@@ -144,7 +145,10 @@ impl RevalidateRoutine {
             loop {
                 let start = SystemTime::now();
 
-                debug!("TODO Discovery revalidator is currently no-op");
+                tdebug!(
+                    "p2p_discovery",
+                    "TODO Discovery revalidator is currently no-op"
+                );
 
                 match start.elapsed() {
                     Ok(d) => {
@@ -154,7 +158,8 @@ impl RevalidateRoutine {
                         }
                     }
                     Err(err) => {
-                        error!(
+                        terr!(
+                            "p2p_discovery",
                             "Calculating the time elapsed fail, err: {}",
                             err
                         );
@@ -174,7 +179,7 @@ impl RevalidateRoutine {
         let is_running = self.is_running.lock().await;
 
         if *is_running == false {
-            warn!("Disc dial routine is not running, waking up");
+            twarn!("p2p_discovery", "Dial routine is not running, waking up");
 
             self.run();
         }

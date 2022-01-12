@@ -1,12 +1,11 @@
-use std::{sync::Arc};
-
 use clap::{App, Arg};
-use log::{error, info};
-use saksaha::{node::Node, pconfig::PConfig};
+use logger::{terr, tinfo};
+use saksaha::{pconfig::PConfig, system::System};
 
 const DEFAULT_BOOTSTRAP_URLS: &str =
     include_str!("../../../../../config/bootstrap_urls");
 
+#[derive(Debug)]
 struct Args {
     config: Option<String>,
     rpc_port: Option<u16>,
@@ -19,7 +18,7 @@ fn get_args() -> Result<Args, String> {
     let flags = App::new("Saksaha rust")
         .version("0.1")
         .author("Saksaha <team@saksaha.com>")
-        .about("Saksaha node rust client")
+        .about("Saksaha network rust client")
         .license("MIT OR Apache-2.0")
         .arg(
             Arg::new("config")
@@ -117,22 +116,31 @@ fn get_args() -> Result<Args, String> {
 }
 
 fn main() {
+    print!("Saksaha is launching...\n");
+
     logger::init();
 
     let args = match get_args() {
-        Ok(a) => a,
+        Ok(a) => {
+            tinfo!("sak", "arguments parsed: {:?}", a);
+
+            a
+        }
         Err(err) => {
-            error!("Can't parse command line arguments, err: {}", err);
+            terr!("Can't parse command line arguments, err: {}", err);
 
             std::process::exit(1);
         }
     };
 
+    tinfo!("sak", "loading persisted config...");
+
     let pconf = {
         let c = match PConfig::from_path(args.config) {
             Ok(p) => p,
             Err(err) => {
-                error!(
+                terr!(
+                    "sak",
                     "Error creating a persisted configuration, err: {}",
                     err
                 );
@@ -141,36 +149,26 @@ fn main() {
             }
         };
 
-        info!("");
-        info!("********************************************************");
-        info!("* Persisted config loaded");
-        info!("* My peer id (public key): {}", c.p2p.public_key);
-        info!("********************************************************");
-        info!("");
+        tinfo!("sak", "Persisted config loaded, conf: {:?}", c);
 
         c
     };
 
-    let default_bootstrap_urls = {
-        DEFAULT_BOOTSTRAP_URLS.to_string()
-    };
+    let system = System::new();
 
-    let node = Node::new();
-
-    match node.start(
+    match system.start(
         args.rpc_port,
         args.disc_port,
         args.p2p_port,
         args.bootstrap_endpoints,
         pconf,
-        default_bootstrap_urls,
+        DEFAULT_BOOTSTRAP_URLS,
     ) {
         Ok(_) => (),
         Err(err) => {
-            error!("Can't start a node, err: {}", err);
+            terr!("sak", "Can't start the system, err: {}", err);
 
             std::process::exit(1);
         }
     };
-
 }
