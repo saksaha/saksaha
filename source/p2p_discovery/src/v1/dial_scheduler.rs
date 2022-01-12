@@ -10,13 +10,13 @@ use super::operations::whoareyou::operation::WhoareyouOp;
 pub(crate) struct DialScheduler {
     disc_state: Arc<DiscState>,
     revalidate_routine: RevalidateRoutine,
-    whoareyou_op: Arc<WhoareyouOp>,
+    // whoareyou_op: Arc<WhoareyouOp>,
 }
 
 impl DialScheduler {
     pub async fn init(
         disc_state: Arc<DiscState>,
-        whoareyou_op: Arc<WhoareyouOp>,
+        // whoareyou_op: Arc<WhoareyouOp>,
         bootstrap_urls: Option<Vec<String>>,
         default_bootstrap_urls: &str,
     ) -> DialScheduler {
@@ -28,7 +28,7 @@ impl DialScheduler {
         let d = DialScheduler {
             revalidate_routine,
             disc_state: disc_state.clone(),
-            whoareyou_op,
+            // whoareyou_op,
         };
 
         d.enqueue_initial_tasks(bootstrap_urls, default_bootstrap_urls)
@@ -112,7 +112,7 @@ impl DialScheduler {
 }
 
 pub(crate) struct RevalidateRoutine {
-    disc_state: Arc<DiscState>,
+    _disc_state: Arc<DiscState>,
     is_running: Arc<Mutex<bool>>,
     min_interval: Duration,
 }
@@ -126,7 +126,7 @@ impl RevalidateRoutine {
 
         RevalidateRoutine {
             is_running,
-            disc_state,
+            _disc_state: disc_state,
             min_interval,
         }
     }
@@ -167,7 +167,6 @@ impl RevalidateRoutine {
                         tokio::time::sleep(min_interval).await;
                     }
                 }
-                return;
             }
 
             let mut is_running_lock = is_running.lock().await;

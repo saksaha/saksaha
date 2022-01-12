@@ -9,7 +9,8 @@ pub mod task;
 
 use self::{
     dial_scheduler::DialScheduler, listener::Listener,
-    state::DiscState, table::Table, operations::whoareyou::operation::WhoareyouOp,
+    operations::whoareyou::operation::WhoareyouOp, state::DiscState,
+    table::Table,
 };
 use crate::{iterator::Iterator, task::TaskRunner};
 use ::task::task_queue::TaskQueue;
@@ -22,20 +23,20 @@ use tokio::net::UdpSocket;
 
 pub const CAPACITY: usize = 64;
 
-pub struct Disc {
+pub struct Discovery {
     listener: Arc<Listener>,
     disc_state: Arc<DiscState>,
     dial_scheduler: Arc<DialScheduler>,
 }
 
-impl Disc {
+impl Discovery {
     pub async fn init(
         id: Arc<Identity>,
         my_disc_port: Option<u16>,
         my_p2p_port: u16,
         bootstrap_urls: Option<Vec<String>>,
         default_bootstrap_urls: &str,
-    ) -> Result<Disc, String> {
+    ) -> Result<Discovery, String> {
         let table = {
             let t = match Table::init().await {
                 Ok(t) => t,
@@ -77,16 +78,16 @@ impl Disc {
             Arc::new(s)
         };
 
-        let whoareyou_op = {
-            let w = WhoareyouOp::new(disc_state.clone());
-            Arc::new(w)
-        };
+        // let whoareyou_op = {
+        //     let w = WhoareyouOp::new(disc_state.clone());
+        //     Arc::new(w)
+        // };
 
         let listener = {
             let l = Listener::new(
                 disc_state.clone(),
                 udp_socket.clone(),
-                whoareyou_op.clone(),
+                // whoareyou_op.clone(),
             );
             Arc::new(l)
         };
@@ -94,7 +95,7 @@ impl Disc {
         let dial_scheduler = {
             let s = DialScheduler::init(
                 disc_state.clone(),
-                whoareyou_op.clone(),
+                // whoareyou_op.clone(),
                 bootstrap_urls,
                 default_bootstrap_urls,
             )
@@ -102,7 +103,7 @@ impl Disc {
             Arc::new(s)
         };
 
-        let disc = Disc {
+        let disc = Discovery {
             disc_state,
             listener,
             dial_scheduler,
