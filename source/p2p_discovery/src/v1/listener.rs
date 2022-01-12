@@ -17,19 +17,19 @@ pub enum ListenerError {
 pub(crate) struct Listener {
     disc_state: Arc<DiscState>,
     udp_socket: Arc<UdpSocket>,
-    whoareyou_op: Arc<WhoareyouOp>,
+    // whoareyou_op: Arc<WhoareyouOp>,
 }
 
 impl Listener {
     pub fn new(
         disc_state: Arc<DiscState>,
         udp_socket: Arc<UdpSocket>,
-        whoareyou_op: Arc<WhoareyouOp>,
+        // whoareyou_op: Arc<WhoareyouOp>,
     ) -> Listener {
         Listener {
             disc_state,
             udp_socket,
-            whoareyou_op,
+            // whoareyou_op,
         }
     }
 
@@ -42,7 +42,7 @@ impl Listener {
     pub fn run_loop(&self) -> Result<(), String> {
         let disc_state = self.disc_state.clone();
         let udp_socket = self.udp_socket.clone();
-        let whoareyou_op = self.whoareyou_op.clone();
+        // let whoareyou_op = self.whoareyou_op.clone();
 
         tokio::spawn(async move {
             loop {
@@ -70,7 +70,7 @@ impl Listener {
 
                 match Handler::run(
                     disc_state.clone(),
-                    whoareyou_op.clone(),
+                    // whoareyou_op.clone(),
                     socket_addr,
                     &buf,
                 )
@@ -98,7 +98,7 @@ struct Handler;
 impl Handler {
     async fn run(
         disc_state: Arc<DiscState>,
-        whoareyou_op: Arc<WhoareyouOp>,
+        // whoareyou_op: Arc<WhoareyouOp>,
         addr: SocketAddr,
         buf: &[u8],
     ) -> Result<(), String> {
