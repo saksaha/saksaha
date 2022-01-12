@@ -1,4 +1,4 @@
-use log::{debug, error, warn};
+use logger::{tdebug, terr, twarn};
 use std::{
     sync::Arc,
     time::{Duration, SystemTime},
@@ -33,7 +33,7 @@ where
     min_interval: Duration,
     is_running: Arc<Mutex<bool>>,
     task_runner: Arc<Box<dyn TaskRun<T> + Send + Sync>>,
-    task_queue_label: String,
+    task_queue_name: String,
 }
 
 pub trait TaskRun<T>
@@ -48,11 +48,10 @@ where
     T: Clone + Send + Sync + 'static,
 {
     pub fn new(
-        task_queue_label: String,
+        task_queue_name: String,
         task_runner: Box<dyn TaskRun<T> + Send + Sync>,
     ) -> TaskQueue<T> {
         let (tx, rx) = mpsc::channel(10);
-        let formatted_task_queue_label = format!("[{}]", task_queue_label);
 
         TaskQueue {
             tx: Arc::new(tx),
@@ -61,7 +60,7 @@ where
             min_interval: Duration::from_millis(1000),
             is_running: Arc::new(Mutex::new(false)),
             task_runner: Arc::new(task_runner),
-            task_queue_label: formatted_task_queue_label,
+            task_queue_name: task_queue_name,
         }
     }
 
@@ -87,7 +86,7 @@ where
         let max_retry = self.max_retry;
         let min_interval = self.min_interval;
         let task_runner = self.task_runner.clone();
-        let task_queue_label = self.task_queue_label.clone();
+        let task_queue_name = self.task_queue_name.clone();
 
         tokio::spawn(async move {
             let mut rx = rx.lock().await;
@@ -99,9 +98,10 @@ where
                 let task_instance = match rx.recv().await {
                     Some(t) => t,
                     None => {
-                        debug!(
-                            "{} Cannot receive task any more",
-                            task_queue_label,
+                        tdebug!(
+                            "task",
+                            "Cannot receive task any more, task_queue: {}",
+                            task_queue_name,
                         );
                         break;
                     }
@@ -120,26 +120,34 @@ where
                         let mut task_instance = task_instance.clone();
                         task_instance.fail_count += 1;
 
-                        debug!(
-                            "{} Task failed, will retry, \
+                        tdebug!(
+                            "task",
+                            "Task failed, will retry, queue_name: {} \
                                 fail_count: {}, err: {}",
-                            task_queue_label, task_instance.fail_count, err
+                            task_queue_name,
+                            task_instance.fail_count,
+                            err
                         );
 
                         match tx.send(task_instance).await {
                             Ok(_) => (),
                             Err(err) => {
-                                error!(
-                                    "{} can't enqueue new task, err: {}",
-                                    task_queue_label, err
+                                terr!(
+                                    "task",
+                                    "Can't enqueue new task, queue_name: {} \
+                                    err: {}",
+                                    task_queue_name,
+                                    err,
                                 )
                             }
                         };
                     }
                     TaskResult::Fail(err) => {
-                        debug!(
-                            "{} Task failed, err: {}",
-                            task_queue_label, err
+                        tdebug!(
+                            "task",
+                            "Task failed, queue_name: {}, err: {}",
+                            task_queue_name,
+                            err,
                         );
                     }
                 };
@@ -152,9 +160,11 @@ where
                         }
                     }
                     Err(err) => {
-                        error!(
-                            "{} Calculating the time elapsed fail, err: {}",
-                            task_queue_label, err
+                        terr!(
+                            "task",
+                            "Calculating the time elapsed fail, \
+                            queue_name: {}, err: {}",
+                            task_queue_name, err
                         );
 
                         tokio::time::sleep(min_interval).await;
@@ -171,9 +181,10 @@ where
         let is_running = self.is_running.lock().await;
 
         if *is_running == false {
-            warn!(
-                "{} dial routine is not running, waking up",
-                self.task_queue_label
+            twarn!(
+                "task",
+                "Task routine is not running, waking up, queue_name: {}",
+                self.task_queue_name,
             );
 
             self.run_loop();

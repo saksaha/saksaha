@@ -1,19 +1,17 @@
-use crate::{
-    system::{socket::TcpSocket,}, pconfig::PersistedP2PConfig,
-};
-use logger::{tinfo};
-use p2p_active_calls::ActiveCalls;
-use p2p_discovery::Disc;
-use p2p_identity::Identity;
-use peer::PeerStore;
-use task::task_queue::TaskQueue;
-use std::sync::Arc;
 use super::{
     dial_scheduler::DialScheduler,
     listener::Listener,
     state::HostState,
     task::{Task, TaskRunner},
 };
+use crate::{pconfig::PersistedP2PConfig, system::socket::TcpSocket};
+use logger::tinfo;
+use p2p_active_calls::ActiveCalls;
+use p2p_discovery::Disc;
+use p2p_identity::Identity;
+use peer::PeerStore;
+use std::sync::Arc;
+use task::task_queue::TaskQueue;
 
 pub(crate) struct Host {
     pub host_state: Arc<HostState>,
@@ -43,7 +41,8 @@ impl Host {
         };
 
         let task_queue = {
-            let q = TaskQueue::new("P2P".to_string(), Box::new(TaskRunner {}));
+            let q =
+                TaskQueue::new("p2p".to_string(), Box::new(TaskRunner {}));
             Arc::new(q)
         };
 
@@ -82,10 +81,7 @@ impl Host {
         };
 
         let dial_scheduler = {
-            let d = DialScheduler::new(
-                disc.iter(),
-                host_state.clone(),
-            );
+            let d = DialScheduler::new(disc.iter(), host_state.clone());
             Arc::new(d)
         };
 

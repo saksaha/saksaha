@@ -11,42 +11,45 @@ use tokio::sync::mpsc::error::TrySendError;
 
 #[derive(Error, Debug)]
 pub enum WhoareyouInitError {
-    #[error("Aborting, request to my endpoint: {endpoint}")]
+    #[error("Request to my endpoint: {endpoint}")]
     MyEndpoint { endpoint: String },
 
-    #[error("Cannot reserve Node, _err: {err}")]
+    #[error(" Cannot reserve Node, _err: {err}")]
     NodeReserveFail { err: String },
 
-    #[error("Couldn't sent msg through socket")]
+    #[error(" Couldn't sent msg through socket")]
     SendFail(#[from] std::io::Error),
 
-    #[error("Cannot convert to byte, _err: {err}")]
+    #[error(" Cannot convert to byte, _err: {err}")]
     ByteConversionFail { err: String },
 
-    #[error("Cannot create verifying key of remote, _err: {err}")]
+    #[error(
+        " Cannot create verifying key of remote, _err: {err}"
+    )]
     VerifiyingKeyFail { err: String },
 
-    #[error("Signature is invalid, buf: {buf:?}, _err: {err}")]
+    #[error(" Signature is invalid, buf: {buf:?}, _err: {err}")]
     InvalidSignature { buf: Vec<u8>, err: String },
 
     #[error(
-        "Failed to register node into map, endpoint: {endpoint}, _err: {err}"
+        " Failed to register node into map, \
+        endpoint: {endpoint}, _err: {err}"
     )]
     NodeRegisterFail { endpoint: String, err: String },
 
-    #[error("Can't parse WhoAreYou message, err: {err}")]
+    #[error(" Can't parse WhoAreYou message, err: {err}")]
     MessageParseFail { err: String },
 
     #[error(
-        "Can't reserve node, table is full, endpoint: {endpoint}, \
-        err: {err}"
+        " Can't reserve node, table is full, \
+        endpoint: {endpoint}, err: {err}"
     )]
     TableIsFull { endpoint: String, err: String },
 
-    #[error("Can't add node to table, err: {err}")]
+    #[error(" Can't add node to table, err: {err}")]
     TableAddFail { err: String },
 
-    #[error("Can't put back a node to table")]
+    #[error(" Can't put back a node to table")]
     NodePutBackFail {
         #[from]
         source: TrySendError<Arc<Node>>,

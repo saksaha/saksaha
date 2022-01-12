@@ -1,6 +1,6 @@
 use super::address::Address;
 use crate::{iterator::Iterator, CAPACITY};
-use log::{debug, error, info, warn};
+use logger::{tdebug};
 use rand::prelude::*;
 use crypto::Signature;
 use p2p_identity::{PeerId, PUBLIC_KEY_LEN};
@@ -179,7 +179,7 @@ impl Node {
 /// checked to see if it should go to slots.
 impl Drop for Node {
     fn drop(&mut self) {
-        debug!("[disc] Node dropped");
+        tdebug!("p2p_discovery", "Node dropped");
     }
 }
 

@@ -35,6 +35,7 @@ impl Listener {
 
     pub fn start(&self) -> Result<(), String> {
         tinfo!("p2p_discovery", "Listener starts to accept requests");
+
         self.run_loop()
     }
 
