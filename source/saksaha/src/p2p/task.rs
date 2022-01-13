@@ -3,7 +3,7 @@ use p2p_active_calls::ActiveCalls;
 use p2p_identity::{Identity, PeerId, PUBLIC_KEY_LEN};
 use p2p_transport::{HandshakeInitError, HandshakeInitParams};
 use peer::{Peer, PeerStore, PeerValue, RegisteredPeerValue};
-use std::sync::Arc;
+use std::{sync::Arc, pin::Pin};
 use task::task_queue::{TaskResult, TaskRun};
 use tokio::{sync::Mutex, io::AsyncBufReadExt, io::AsyncReadExt,};
 
@@ -28,17 +28,30 @@ pub(crate) struct HSInitTaskParams {
 pub(crate) struct TaskRunner;
 
 impl TaskRun<Task> for TaskRunner {
-    fn run(&self, task: Task) -> TaskResult {
-        futures::executor::block_on(async {
-            match task {
-                Task::InitiateHandshake(hs_init_task_params) => {
-                    handle_initiate_handshake(hs_init_task_params).await;
-                }
-            };
+    // fn run<'a>(
+    //     &'a self,
+    //     task: Task,
+    // ) -> Box<dyn std::future::Future<Output = ()> + Send + 'a>
+    // where
+    //     Self: 'a,
+    // {
+    //     // async fn run(_self: &TaskRunner) {}
 
-            TaskResult::Success
-        })
-    }
+    //     // Box::pin(run(self))
+    //     Box::new(async {})
+    // }
+
+    // fn run(&self, task: Task) -> TaskResult {
+    //     futures::executor::block_on(async {
+    //         match task {
+    //             Task::InitiateHandshake(hs_init_task_params) => {
+    //                 handle_initiate_handshake(hs_init_task_params).await;
+    //             }
+    //         };
+
+    //         TaskResult::Success
+    //     })
+    // }
 }
 
 async fn handle_initiate_handshake(hs_init_task_params: HSInitTaskParams) {

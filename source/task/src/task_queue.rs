@@ -1,5 +1,6 @@
 use logger::{tdebug, terr, twarn};
 use std::{
+    pin::Pin,
     sync::Arc,
     time::{Duration, SystemTime},
 };
@@ -40,7 +41,11 @@ pub trait TaskRun<T>
 where
     T: Clone + Send + Sync,
 {
-    fn run(&self, task: T) -> TaskResult;
+    fn run<'a>(&self, task: T) -> Pin<Box<dyn std::future::Future<Output = ()> + 'a>>;
+    // fn run<'a>(
+    //     &'a self,
+    //     task: T,
+    // ) -> Box<dyn std::future::Future<Output = ()>> where Self: 'a;
 }
 
 impl<T> TaskQueue<T>
@@ -114,43 +119,43 @@ where
                 let task = task_instance.task.clone();
                 let start = SystemTime::now();
 
-                match task_runner.run(task) {
-                    TaskResult::Success => (),
-                    TaskResult::FailRetriable(err) => {
-                        let mut task_instance = task_instance.clone();
-                        task_instance.fail_count += 1;
+                // match task_runner.run(task) {
+                //     TaskResult::Success => (),
+                //     TaskResult::FailRetriable(err) => {
+                //         let mut task_instance = task_instance.clone();
+                //         task_instance.fail_count += 1;
 
-                        tdebug!(
-                            "task",
-                            "Task failed, will retry, queue_name: {} \
-                                fail_count: {}, err: {}",
-                            task_queue_name,
-                            task_instance.fail_count,
-                            err
-                        );
+                //         tdebug!(
+                //             "task",
+                //             "Task failed, will retry, queue_name: {} \
+                //                 fail_count: {}, err: {}",
+                //             task_queue_name,
+                //             task_instance.fail_count,
+                //             err
+                //         );
 
-                        match tx.send(task_instance).await {
-                            Ok(_) => (),
-                            Err(err) => {
-                                terr!(
-                                    "task",
-                                    "Can't enqueue new task, queue_name: {} \
-                                    err: {}",
-                                    task_queue_name,
-                                    err,
-                                )
-                            }
-                        };
-                    }
-                    TaskResult::Fail(err) => {
-                        tdebug!(
-                            "task",
-                            "Task failed, queue_name: {}, err: {}",
-                            task_queue_name,
-                            err,
-                        );
-                    }
-                };
+                //         match tx.send(task_instance).await {
+                //             Ok(_) => (),
+                //             Err(err) => {
+                //                 terr!(
+                //                     "task",
+                //                     "Can't enqueue new task, queue_name: {} \
+                //                     err: {}",
+                //                     task_queue_name,
+                //                     err,
+                //                 )
+                //             }
+                //         };
+                //     }
+                //     TaskResult::Fail(err) => {
+                //         tdebug!(
+                //             "task",
+                //             "Task failed, queue_name: {}, err: {}",
+                //             task_queue_name,
+                //             err,
+                //         );
+                //     }
+                // };
 
                 match start.elapsed() {
                     Ok(d) => {
@@ -164,7 +169,8 @@ where
                             "task",
                             "Calculating the time elapsed fail, \
                             queue_name: {}, err: {}",
-                            task_queue_name, err
+                            task_queue_name,
+                            err
                         );
 
                         tokio::time::sleep(min_interval).await;
