@@ -27,13 +27,32 @@ impl TaskRunner {
     }
 }
 
-impl TaskRun<Task> for TaskRunner {
-    fn run<'a>(&'a self, task: Task) -> Pin<Box<dyn std::future::Future<Output= ()> + 'a>> {
-        // async {
-        //     let a = 3;
-        // }
-    }
+trait Advertisement {
+    fn run<'a>(
+        &'a self,
+    ) -> Pin<Box<dyn std::future::Future<Output = ()> + Send + 'a>>;
+    // where
+    //     Self: Sync + 'a;
+}
 
+struct AutoplayingVideo;
+
+impl Advertisement for AutoplayingVideo {
+    fn run<'a>(
+        &'a self,
+    ) -> Pin<Box<dyn std::future::Future<Output = ()> + Send + 'a>>
+    // where
+    //     Self: Sync + 'a,
+    {
+        async fn run(_self: &AutoplayingVideo) {
+            /* the original method body */
+        }
+
+        Box::pin(run(self))
+    }
+}
+
+impl TaskRun<Task> for TaskRunner {
     // fn run<'a>(
     //     &self,
     //     task: Task,
