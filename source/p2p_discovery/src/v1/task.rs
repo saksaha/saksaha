@@ -19,14 +19,6 @@ pub(crate) enum Task {
 
 pub(crate) struct TaskRunner;
 
-impl TaskRunner {
-    fn run(task: Task) -> impl std::future::Future<Output = ()> {
-        async {
-            let a = 3;
-        }
-    }
-}
-
 trait Advertisement {
     fn run<'a>(
         &'a self,
@@ -53,6 +45,18 @@ impl Advertisement for AutoplayingVideo {
 }
 
 impl TaskRun<Task> for TaskRunner {
+    fn run<'a>(
+        &'a self,
+    ) -> Pin<Box<dyn std::future::Future<Output = ()> + Send + 'a>>
+    // where
+    //     Self: Sync + 'a,
+    {
+        async fn run(_self: &TaskRunner) {
+            /* the original method body */
+        }
+
+        Box::pin(run(self))
+    }
     // fn run<'a>(
     //     &self,
     //     task: Task,
