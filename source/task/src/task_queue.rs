@@ -41,6 +41,9 @@ pub trait TaskRun<T>
 where
     T: Clone + Send + Sync,
 {
+    fn run<'a>(
+        &'a self,
+    ) -> Pin<Box<dyn std::future::Future<Output = ()> + Send + 'a>>;
     // fn run<'a>(&self, task: T) -> Pin<Box<dyn std::future::Future<Output = ()> + 'a>>;
     // fn run<'a>(
     //     &'a self,

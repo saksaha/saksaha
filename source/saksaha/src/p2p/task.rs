@@ -28,6 +28,18 @@ pub(crate) struct HSInitTaskParams {
 pub(crate) struct TaskRunner;
 
 impl TaskRun<Task> for TaskRunner {
+    fn run<'a>(
+        &'a self,
+    ) -> Pin<Box<dyn std::future::Future<Output = ()> + Send + 'a>>
+    // where
+    //     Self: Sync + 'a,
+    {
+        async fn run(_self: &TaskRunner) {
+            /* the original method body */
+        }
+
+        Box::pin(run(self))
+    }
     // fn run<'a>(
     //     &'a self,
     //     task: Task,
