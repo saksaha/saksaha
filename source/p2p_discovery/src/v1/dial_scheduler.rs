@@ -4,6 +4,7 @@ use std::{
     sync::Arc,
     time::{Duration, SystemTime},
 };
+use task::task_queue::TaskQueue;
 use tokio::sync::Mutex;
 
 pub(crate) struct DialScheduler {
@@ -18,6 +19,7 @@ impl DialScheduler {
         // whoareyou_op: Arc<WhoareyouOp>,
         bootstrap_urls: Option<Vec<String>>,
         default_bootstrap_urls: &str,
+        task_queue: Arc<TaskQueue<Task>>,
     ) -> DialScheduler {
         let min_interval = Duration::from_millis(2000);
 
@@ -30,8 +32,12 @@ impl DialScheduler {
             // whoareyou_op,
         };
 
-        d.enqueue_initial_tasks(bootstrap_urls, default_bootstrap_urls)
-            .await;
+        d.enqueue_initial_tasks(
+            bootstrap_urls,
+            default_bootstrap_urls,
+            task_queue,
+        )
+        .await;
 
         d
     }
@@ -46,6 +52,7 @@ impl DialScheduler {
         &self,
         bootstrap_urls: Option<Vec<String>>,
         default_bootstrap_urls: &str,
+        task_queue: Arc<TaskQueue<Task>>,
     ) {
         let bootstrap_urls = match bootstrap_urls {
             Some(u) => u,
@@ -89,11 +96,11 @@ impl DialScheduler {
 
                 let task = Task::InitiateWhoAreYou {
                     // whoareyou_op: self.whoareyou_op.clone(),
-                    disc_state: self.disc_state.clone(),
+                    // disc_state: self.disc_state.clone(),
                     addr,
                 };
 
-                match self.disc_state.task_queue.push(task).await {
+                match task_queue.push(task).await {
                     Ok(_) => (),
                     Err(err) => {
                         twarn!(

@@ -31,12 +31,13 @@ impl TaskRun<Task> for P2PTaskRunner {
     fn run<'a>(
         &'a self,
         task: Task,
-    ) -> Pin<Box<dyn std::future::Future<Output = ()> + Send + 'a>>
+    ) -> Pin<Box<dyn std::future::Future<Output = TaskResult> + Send + 'a>>
     // where
     //     Self: Sync + 'a,
     {
-        async fn run(_self: &P2PTaskRunner) {
+        async fn run(_self: &P2PTaskRunner) -> TaskResult {
             /* the original method body */
+            return TaskResult::Success;
         }
 
         Box::pin(run(self))

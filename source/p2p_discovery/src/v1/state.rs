@@ -13,7 +13,7 @@ pub(crate) struct DiscState {
     pub my_disc_port: u16,
     pub my_p2p_port: u16,
     pub table: Arc<Table>,
-    pub task_queue: Arc<TaskQueue<Task>>,
+    // pub task_queue: Arc<TaskQueue<Task>>,
     pub _active_calls: Arc<ActiveCalls>,
 }
 
@@ -25,7 +25,7 @@ impl DiscState {
         udp_socket: Arc<UdpSocket>,
         my_disc_port: u16,
         my_p2p_port: u16,
-        task_queue: Arc<TaskQueue<Task>>,
+        // task_queue: Arc<TaskQueue<Task>>,
     ) -> DiscState {
         DiscState {
             identity,
@@ -33,7 +33,7 @@ impl DiscState {
             my_disc_port,
             my_p2p_port,
             table,
-            task_queue,
+            // task_queue,
             _active_calls: active_calls,
         }
     }
