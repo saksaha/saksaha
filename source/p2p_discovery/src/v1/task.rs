@@ -17,45 +17,82 @@ pub(crate) enum Task {
     },
 }
 
-pub(crate) struct TaskRunner;
+pub(crate) struct DiscTaskRunner;
 
-trait Advertisement {
+impl TaskRun<Task> for DiscTaskRunner {
     fn run<'a>(
         &'a self,
-    ) -> Pin<Box<dyn std::future::Future<Output = ()> + Send + 'a>>;
-    // where
-    //     Self: Sync + 'a;
-}
-
-struct AutoplayingVideo;
-
-impl Advertisement for AutoplayingVideo {
-    fn run<'a>(
-        &'a self,
-    ) -> Pin<Box<dyn std::future::Future<Output = ()> + Send + 'a>>
+        task: Task,
+    ) -> Pin<Box<dyn std::future::Future<Output = TaskResult> + Send + 'a>>
     // where
     //     Self: Sync + 'a,
     {
-        async fn run(_self: &AutoplayingVideo) {
-            /* the original method body */
+        async fn run(_self: &DiscTaskRunner, task: Task) {
+            match task {
+                Task::InitiateWhoAreYou { disc_state, addr } => {
+                    match whoareyou::initiate::send_who_are_you(
+                        disc_state, addr,
+                    )
+                    .await
+                    {
+                        Ok(_) => (),
+                        Err(err) => {
+                            let err_msg = err.to_string();
+
+                            match err {
+                                WhoareyouInitError::MyEndpoint { .. } => {
+                                    return TaskResult::Fail(err_msg);
+                                }
+                                WhoareyouInitError::ByteConversionFail {
+                                    ..
+                                } => {
+                                    return TaskResult::Fail(err_msg);
+                                }
+                                WhoareyouInitError::MessageParseFail {
+                                    ..
+                                } => {
+                                    return TaskResult::FailRetriable(err_msg);
+                                }
+                                WhoareyouInitError::VerifiyingKeyFail {
+                                    ..
+                                } => {
+                                    return TaskResult::FailRetriable(err_msg);
+                                }
+                                WhoareyouInitError::InvalidSignature {
+                                    ..
+                                } => {
+                                    return TaskResult::FailRetriable(err_msg);
+                                }
+                                WhoareyouInitError::SendFail(_) => {
+                                    return TaskResult::FailRetriable(err_msg);
+                                }
+                                WhoareyouInitError::NodeReserveFail {
+                                    ..
+                                } => {
+                                    return TaskResult::FailRetriable(err_msg);
+                                }
+                                WhoareyouInitError::NodeRegisterFail {
+                                    ..
+                                } => {
+                                    return TaskResult::FailRetriable(err_msg);
+                                }
+                                WhoareyouInitError::TableIsFull { .. } => {
+                                    return TaskResult::FailRetriable(err_msg);
+                                }
+                                WhoareyouInitError::TableAddFail { .. } => {
+                                    return TaskResult::FailRetriable(err_msg);
+                                }
+                                WhoareyouInitError::NodePutBackFail {
+                                    ..
+                                } => {}
+                            }
+                        }
+                    }
+                }
+            }
         }
 
-        Box::pin(run(self))
-    }
-}
-
-impl TaskRun<Task> for TaskRunner {
-    fn run<'a>(
-        &'a self,
-    ) -> Pin<Box<dyn std::future::Future<Output = ()> + Send + 'a>>
-    // where
-    //     Self: Sync + 'a,
-    {
-        async fn run(_self: &TaskRunner) {
-            /* the original method body */
-        }
-
-        Box::pin(run(self))
+        Box::pin(run(self, task))
     }
     // fn run<'a>(
     //     &self,

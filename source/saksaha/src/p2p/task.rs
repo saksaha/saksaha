@@ -25,16 +25,17 @@ pub(crate) struct HSInitTaskParams {
     pub handshake_active_calls: Arc<ActiveCalls>,
 }
 
-pub(crate) struct TaskRunner;
+pub(crate) struct P2PTaskRunner;
 
-impl TaskRun<Task> for TaskRunner {
+impl TaskRun<Task> for P2PTaskRunner {
     fn run<'a>(
         &'a self,
+        task: Task,
     ) -> Pin<Box<dyn std::future::Future<Output = ()> + Send + 'a>>
     // where
     //     Self: Sync + 'a,
     {
-        async fn run(_self: &TaskRunner) {
+        async fn run(_self: &P2PTaskRunner) {
             /* the original method body */
         }
 

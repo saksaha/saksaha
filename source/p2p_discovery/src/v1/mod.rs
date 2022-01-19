@@ -12,7 +12,7 @@ use self::{
     state::DiscState,
     table::Table,
 };
-use crate::{iterator::Iterator, task::TaskRunner};
+use crate::{iterator::Iterator, task::DiscTaskRunner};
 use ::task::task_queue::TaskQueue;
 use colored::*;
 use logger::tinfo;
@@ -55,7 +55,7 @@ impl Discovery {
         let task_queue = {
             let q = TaskQueue::new(
                 "p2p_discovery".to_string(),
-                Box::new(TaskRunner {}),
+                Box::new(DiscTaskRunner {}),
             );
             Arc::new(q)
         };
