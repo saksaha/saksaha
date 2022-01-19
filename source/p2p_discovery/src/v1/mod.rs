@@ -11,9 +11,10 @@ use self::{
     dial_scheduler::DialScheduler, listener::Listener,
     state::DiscState,
     table::Table,
+    task::Task,
 };
 use crate::{iterator::Iterator, task::DiscTaskRunner};
-use ::task::task_queue::TaskQueue;
+use ::task::{task_queue::TaskQueue};
 use colored::*;
 use logger::tinfo;
 use p2p_active_calls::ActiveCalls;
@@ -27,6 +28,7 @@ pub struct Discovery {
     listener: Arc<Listener>,
     disc_state: Arc<DiscState>,
     dial_scheduler: Arc<DialScheduler>,
+    task_queue: Arc<TaskQueue<Task>>,
 }
 
 impl Discovery {
@@ -52,13 +54,6 @@ impl Discovery {
             Arc::new(c)
         };
 
-        let task_queue = {
-            let q = TaskQueue::new(
-                "p2p_discovery".to_string(),
-                Box::new(DiscTaskRunner {}),
-            );
-            Arc::new(q)
-        };
 
         let (udp_socket, my_disc_port) = {
             let (socket, port) = setup_udp_socket(my_disc_port).await?;
@@ -73,9 +68,19 @@ impl Discovery {
                 udp_socket.clone(),
                 my_disc_port,
                 my_p2p_port,
-                task_queue.clone(),
+                // task_queue.clone(),
             );
             Arc::new(s)
+        };
+
+        let task_queue = {
+            let q = TaskQueue::new(
+                "p2p_discovery".to_string(),
+                Box::new(DiscTaskRunner {
+                    disc_state: disc_state.clone(),
+                }),
+            );
+            Arc::new(q)
         };
 
         // let whoareyou_op = {
@@ -98,6 +103,7 @@ impl Discovery {
                 // whoareyou_op.clone(),
                 bootstrap_urls,
                 default_bootstrap_urls,
+                task_queue.clone(),
             )
             .await;
             Arc::new(s)
@@ -107,6 +113,7 @@ impl Discovery {
             disc_state,
             listener,
             dial_scheduler,
+            task_queue,
         };
 
         Ok(disc)
@@ -115,7 +122,7 @@ impl Discovery {
     pub async fn start(&self) -> Result<(), String> {
         self.listener.start()?;
         self.dial_scheduler.start()?;
-        self.disc_state.task_queue.run_loop();
+        self.task_queue.run_loop();
 
         Ok(())
     }

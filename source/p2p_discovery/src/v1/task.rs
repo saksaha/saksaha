@@ -6,36 +6,45 @@ use super::{
 };
 use log::{debug, error, warn};
 use std::{pin::Pin, sync::Arc};
-use task::task_queue::{TaskResult, TaskRun};
+use task::task_queue::{TaskResult, TaskRun, TaskQueue};
 
 #[derive(Clone)]
 pub(crate) enum Task {
     InitiateWhoAreYou {
-        disc_state: Arc<DiscState>,
+        // disc_state: Arc<DiscState>,
         // whoareyou_op: Arc<WhoareyouOp>,
         addr: Address,
     },
 }
 
-pub(crate) struct DiscTaskRunner;
+pub(crate) struct DiscTaskRunner {
+    disc_state: Arc<DiscState>,
+}
+
+impl DiscTaskRunner {
+    pub fn new(task_queue: Arc<TaskQueue<Task>>) -> DiscTaskRunner {
+        return Dis
+    }
+}
 
 impl TaskRun<Task> for DiscTaskRunner {
     fn run<'a>(
         &'a self,
         task: Task,
     ) -> Pin<Box<dyn std::future::Future<Output = TaskResult> + Send + 'a>>
-    // where
+// where
     //     Self: Sync + 'a,
     {
-        async fn run(_self: &DiscTaskRunner, task: Task) {
+        async fn run(_self: &DiscTaskRunner, task: Task) -> TaskResult {
             match task {
-                Task::InitiateWhoAreYou { disc_state, addr } => {
+                Task::InitiateWhoAreYou { addr } => {
+                    let disc_state = _self.disc_state.clone();
                     match whoareyou::initiate::send_who_are_you(
                         disc_state, addr,
                     )
                     .await
                     {
-                        Ok(_) => (),
+                        Ok(_) => TaskResult::Success,
                         Err(err) => {
                             let err_msg = err.to_string();
 
@@ -84,7 +93,9 @@ impl TaskRun<Task> for DiscTaskRunner {
                                 }
                                 WhoareyouInitError::NodePutBackFail {
                                     ..
-                                } => {}
+                                } => {
+                                    return TaskResult::Fail(err_msg);
+                                }
                             }
                         }
                     }
