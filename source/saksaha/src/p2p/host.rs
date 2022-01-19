@@ -2,7 +2,7 @@ use super::{
     dial_scheduler::DialScheduler,
     listener::Listener,
     state::HostState,
-    task::{Task, TaskRunner},
+    task::{Task, P2PTaskRunner},
 };
 use crate::{pconfig::PersistedP2PConfig, system::socket::TcpSocket};
 use logger::tinfo;
@@ -42,7 +42,7 @@ impl Host {
 
         let task_queue = {
             let q =
-                TaskQueue::new("p2p".to_string(), Box::new(TaskRunner {}));
+                TaskQueue::new("p2p".to_string(), Box::new(P2PTaskRunner {}));
             Arc::new(q)
         };
 

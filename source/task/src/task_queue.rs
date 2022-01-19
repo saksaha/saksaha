@@ -43,7 +43,9 @@ where
 {
     fn run<'a>(
         &'a self,
-    ) -> Pin<Box<dyn std::future::Future<Output = ()> + Send + 'a>>;
+        task: T,
+    ) -> Pin<Box<dyn std::future::Future<Output = TaskResult> + Send + 'a>>;
+
     // fn run<'a>(&self, task: T) -> Pin<Box<dyn std::future::Future<Output = ()> + 'a>>;
     // fn run<'a>(
     //     &'a self,
