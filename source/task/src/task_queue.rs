@@ -110,7 +110,7 @@ where
                     None => {
                         tdebug!(
                             "task",
-                            "Cannot receive task any more, task_queue: {}",
+                            "Can't take a new task, channel has been closed, task_queue: {}",
                             task_queue_name,
                         );
                         break;

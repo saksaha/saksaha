@@ -6,7 +6,7 @@ use super::{
 };
 use log::{debug, error, warn};
 use std::{pin::Pin, sync::Arc};
-use task::task_queue::{TaskResult, TaskRun, TaskQueue};
+use task::task_queue::{TaskQueue, TaskResult, TaskRun};
 
 #[derive(Clone)]
 pub(crate) enum Task {
@@ -19,11 +19,18 @@ pub(crate) enum Task {
 
 pub(crate) struct DiscTaskRunner {
     disc_state: Arc<DiscState>,
+    // task_queue: Arc<TaskQueue<Task>>,
 }
 
 impl DiscTaskRunner {
-    pub fn new(task_queue: Arc<TaskQueue<Task>>) -> DiscTaskRunner {
-        return Dis
+    pub fn new(
+        disc_state: Arc<DiscState>,
+        // task_queue: Arc<TaskQueue<Task>>,
+    ) -> DiscTaskRunner {
+        return DiscTaskRunner {
+            disc_state,
+            // task_queue,
+        };
     }
 }
 

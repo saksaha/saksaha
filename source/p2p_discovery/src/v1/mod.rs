@@ -76,9 +76,9 @@ impl Discovery {
         let task_queue = {
             let q = TaskQueue::new(
                 "p2p_discovery".to_string(),
-                Box::new(DiscTaskRunner {
-                    disc_state: disc_state.clone(),
-                }),
+                Box::new(DiscTaskRunner::new(
+                    disc_state.clone(),
+                )),
             );
             Arc::new(q)
         };
