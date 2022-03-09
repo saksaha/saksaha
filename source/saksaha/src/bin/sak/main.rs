@@ -1,4 +1,4 @@
-use clap::{App, Arg};
+use clap::{command, Command, arg};
 use logger::{terr, tinfo};
 use saksaha::{pconfig::PConfig, system::System};
 
@@ -15,47 +15,50 @@ struct Args {
 }
 
 fn get_args() -> Result<Args, String> {
-    let flags = App::new("Saksaha rust")
-        .version("0.1")
-        .author("Saksaha <team@saksaha.com>")
-        .about("Saksaha network rust client")
-        .license("MIT OR Apache-2.0")
-        .arg(
-            Arg::new("config")
-                .short('c')
-                .long("config")
-                .value_name("FILE")
-                .about(
-                    "Saksaha configuration file, usually created at \
-                    [[OS default config path]]/saksaha/config.json",
-                ),
-        )
-        .arg(
-            Arg::new("bootstrap_urls")
-                .long("bootstrap-urls")
-                .value_name("ENDPOINT")
-                .use_delimiter(true)
-                .about("Bootstrap peers to start discovery for"),
-        )
-        .arg(
-            Arg::new("rpc_port")
-                .long("rpc-port")
-                .value_name("PORT")
-                .about("RPC port"),
-        )
-        .arg(
-            Arg::new("disc_port")
-                .long("disc-port")
-                .value_name("PORT")
-                .about("Discovery port"),
-        )
-        .arg(
-            Arg::new("p2p_port")
-                .long("p2p-port")
-                .value_name("PORT")
-                .about("P2P port"),
-        )
-        .get_matches();
+    let matches = command!()
+        .arg(arg!(-c --config <File> "Saksaha configuration file, usually \
+                                      created at [[OS default config path]]/ \
+                                      saksaha/config.json"));
+    // let flags = Command::new("Saksaha rust")
+    //     .version("0.1")
+    //     .author("Saksaha <team@saksaha.com>")
+    //     .about("Saksaha network rust client")
+    //     .arg(
+    //         Arg::new("config")
+    //             .short('c')
+    //             .long("config")
+    //             .value_name("FILE")
+    //             .about(
+    //                 "Saksaha configuration file, usually created at \
+    //                 [[OS default config path]]/saksaha/config.json",
+    //             ),
+    //     )
+    //     .arg(
+    //         Arg::new("bootstrap_urls")
+    //             .long("bootstrap-urls")
+    //             .value_name("ENDPOINT")
+    //             .use_delimiter(true)
+    //             .about("Bootstrap peers to start discovery for"),
+    //     )
+    //     .arg(
+    //         Arg::new("rpc_port")
+    //             .long("rpc-port")
+    //             .value_name("PORT")
+    //             .about("RPC port"),
+    //     )
+    //     .arg(
+    //         Arg::new("disc_port")
+    //             .long("disc-port")
+    //             .value_name("PORT")
+    //             .about("Discovery port"),
+    //     )
+    //     .arg(
+    //         Arg::new("p2p_port")
+    //             .long("p2p-port")
+    //             .value_name("PORT")
+    //             .about("P2P port"),
+    //     )
+    //     .get_matches();
 
     let config = match flags.value_of("config") {
         Some(c) => Some(String::from(c)),
