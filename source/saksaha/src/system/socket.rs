@@ -1,7 +1,7 @@
+use colored::*;
 use logger::tinfo;
 use std::sync::Arc;
 use tokio::net::TcpListener;
-use colored::*;
 
 pub struct Sockets {
     pub p2p: TcpSocket,
@@ -48,7 +48,6 @@ async fn create_tcp_socket(
         match TcpListener::bind(local_addr).await {
             Ok(listener) => match listener.local_addr() {
                 Ok(local_addr) => {
-
                     tinfo!(
                         "system",
                         "Bound tcp listener, name: {}, addr: {}",

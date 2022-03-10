@@ -23,5 +23,7 @@ pub trait Message {
 
     fn to_bytes(&self) -> Result<Vec<u8>, String>;
 
-    fn parse(buf: &[u8]) -> Result<Self, String> where Self: Sized;
+    fn parse(buf: &[u8]) -> Result<Self, String>
+    where
+        Self: Sized;
 }

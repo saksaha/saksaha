@@ -1,7 +1,10 @@
-use crate::{Frame, frame_code};
+use crate::{frame_code, Frame};
 use bytes::{Buf, BytesMut};
 use std::io::{self, Cursor, Write};
-use tokio::{io::{AsyncReadExt, BufWriter, AsyncWriteExt}, net::TcpStream};
+use tokio::{
+    io::{AsyncReadExt, AsyncWriteExt, BufWriter},
+    net::TcpStream,
+};
 
 const BUFFER_SIZE: usize = 4096;
 

@@ -3,9 +3,9 @@ use p2p_active_calls::ActiveCalls;
 use p2p_identity::{Identity, PeerId, PUBLIC_KEY_LEN};
 use p2p_transport::{HandshakeInitError, HandshakeInitParams};
 use peer::{Peer, PeerStore, PeerValue, RegisteredPeerValue};
-use std::{sync::Arc, pin::Pin};
+use std::{pin::Pin, sync::Arc};
 use task::task_queue::{TaskResult, TaskRun};
-use tokio::{sync::Mutex, io::AsyncBufReadExt, io::AsyncReadExt,};
+use tokio::{io::AsyncBufReadExt, io::AsyncReadExt, sync::Mutex};
 
 #[derive(Clone)]
 pub(crate) enum Task {
@@ -32,7 +32,7 @@ impl TaskRun<Task> for P2PTaskRunner {
         &'a self,
         task: Task,
     ) -> Pin<Box<dyn std::future::Future<Output = TaskResult> + Send + 'a>>
-    // where
+// where
     //     Self: Sync + 'a,
     {
         async fn run(_self: &P2PTaskRunner) -> TaskResult {

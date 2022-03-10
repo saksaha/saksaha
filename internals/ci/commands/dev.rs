@@ -23,9 +23,9 @@ impl Commandify for Dev {
             let program = "cargo";
             let args = match matches.values_of("args") {
                 Some(a) => a.collect(),
-                None => vec!(),
+                None => vec![],
             };
-            let args = [vec!("run", "-p", "saksaha", "--"), args].concat();
+            let args = [vec!["run", "-p", "saksaha", "--"], args].concat();
 
             log!("Executing `{} {:?}`", program, args);
 

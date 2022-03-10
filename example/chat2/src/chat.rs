@@ -16,7 +16,6 @@ use serde::{Deserialize, Serialize};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
 
-
 pub struct Chat {
     pub cid: String,
     pub stream: TcpStream,

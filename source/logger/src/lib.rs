@@ -8,7 +8,7 @@ fn init_logger() {
         .format(|buf, record| {
             let timestamp = buf.timestamp_millis();
             let style = buf.default_level_style(record.level());
-            let level = format!("{:>width$}", record.level(), width=5);
+            let level = format!("{:>width$}", record.level(), width = 5);
 
             writeln!(
                 buf,
@@ -24,7 +24,7 @@ fn init_logger() {
 pub fn init() {
     init_logger();
 
-    tinfo!("logger", "Global logger is initialized");
+    tinfo!("logger", "logger is initialized");
 }
 
 #[macro_export]

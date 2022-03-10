@@ -1,7 +1,7 @@
-use crypto::{SharedSecret, Secp256k1};
+use crypto::{Secp256k1, SharedSecret};
 use p2p_identity::PeerId;
-use tokio::net::TcpStream;
 use std::sync::Arc;
+use tokio::net::TcpStream;
 
 pub struct Transport {
     // pub ip: String,
@@ -11,6 +11,4 @@ pub struct Transport {
     pub peer_id: PeerId,
 }
 
-impl Transport {
-
-}
+impl Transport {}

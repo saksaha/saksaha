@@ -1,6 +1,5 @@
 pub mod socket;
 
-use logger::{terr};
 use crate::{
     ledger::Ledger,
     p2p::host::Host,
@@ -8,7 +7,8 @@ use crate::{
     process::{Process, Shutdown},
     rpc::RPC,
 };
-use logger::{tinfo, tdebug};
+use logger::terr;
+use logger::{tdebug, tinfo};
 use std::sync::Arc;
 use tokio::{self, signal};
 

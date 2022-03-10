@@ -1,6 +1,6 @@
-use logger::{tinfo};
 use crate::pconfig::error::PConfigError;
 use crate::pconfig::PConfig;
+use crate::log::info;
 use directories::ProjectDirs;
 use std::fs;
 use std::path::PathBuf;
@@ -29,7 +29,7 @@ impl FS {
             return Err(PConfigError::PathNotFound(config_path));
         }
 
-        tinfo!("pconfig", "Writing a config, at: {:?}", config_path);
+        info!("Writing a config, at: {:?}", config_path);
 
         match fs::write(config_path.to_owned(), serialized) {
             Ok(_) => Ok(pconfig),
@@ -38,7 +38,7 @@ impl FS {
     }
 
     pub fn load(path: PathBuf) -> Result<PConfig, PConfigError> {
-        tinfo!("pconfig", "Loading configuration at path: {:?}", path);
+        info!("Loading configuration at path: {:?}", path);
 
         if !path.exists() {
             return Err(PConfigError::PathNotFound(path));

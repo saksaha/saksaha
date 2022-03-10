@@ -25,8 +25,9 @@ impl Commandify for Test {
                 Some(a) => a.collect(),
                 None => vec![],
             };
-            let args = [vec!["test", "--", "--nocapture", "--show-output"], args]
-                .concat();
+            let args =
+                [vec!["test", "--", "--nocapture", "--show-output"], args]
+                    .concat();
 
             // let args = [vec!["test", "--"], args]
             //     .concat();

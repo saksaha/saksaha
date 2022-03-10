@@ -1,8 +1,8 @@
-use super::msg::{WhoAreYouAck, WhoAreYouSyn};
 use super::check;
+use super::msg::{WhoAreYouAck, WhoAreYouSyn};
 use crate::v1::address::Address;
 use crate::v1::operations::Message;
-use crate::v1::table::{NodeValue};
+use crate::v1::table::NodeValue;
 use crate::v1::DiscState;
 use log::debug;
 use std::sync::Arc;
@@ -87,11 +87,8 @@ pub(crate) async fn handle_who_are_you(
 
         let sig = disc_state.identity.sig;
 
-        let way_ack = WhoAreYouAck::new(
-            sig,
-            my_p2p_port,
-            disc_state.identity.public_key,
-        );
+        let way_ack =
+            WhoAreYouAck::new(sig, my_p2p_port, disc_state.identity.public_key);
 
         let buf = match way_ack.to_bytes() {
             Ok(b) => b,
@@ -100,7 +97,10 @@ pub(crate) async fn handle_who_are_you(
             }
         };
 
-        disc_state.udp_socket.send_to(&buf, endpoint.clone()).await?;
+        disc_state
+            .udp_socket
+            .send_to(&buf, endpoint.clone())
+            .await?;
 
         debug!(
             "Successfully sent WhoAreYouAck to endpoint: {}, len: {}",

@@ -1,9 +1,9 @@
 use super::address::Address;
 use crate::{iterator::Iterator, CAPACITY};
-use logger::{tdebug};
-use rand::prelude::*;
 use crypto::Signature;
+use logger::tdebug;
 use p2p_identity::{PeerId, PUBLIC_KEY_LEN};
+use rand::prelude::*;
 use std::{
     collections::{HashMap, HashSet},
     sync::Arc,

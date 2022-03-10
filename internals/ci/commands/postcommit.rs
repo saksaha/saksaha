@@ -41,7 +41,10 @@ impl Commandify for Postcommit {
 
             let opening = ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>";
             let closing = "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<";
-            println!("\n {}last commit message\n\n{}\n{}", opening, output, closing);
+            println!(
+                "\n {}last commit message\n\n{}\n{}",
+                opening, output, closing
+            );
 
             return Some(true);
         }
