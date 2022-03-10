@@ -165,21 +165,21 @@ fn main() {
         c
     };
 
-    // let system = System::new();
+    let system = System::new();
 
-    // match system.start(
-    //     args.rpc_port,
-    //     args.disc_port,
-    //     args.p2p_port,
-    //     args.bootstrap_endpoints,
-    //     pconf,
-    //     DEFAULT_BOOTSTRAP_URLS,
-    // ) {
-    //     Ok(_) => (),
-    //     Err(err) => {
-    //         terr!("sak", "Can't start the system, err: {}", err);
+    match system.start(
+        args.rpc_port,
+        args.disc_port,
+        args.p2p_port,
+        args.bootstrap_endpoints,
+        pconf,
+        DEFAULT_BOOTSTRAP_URLS,
+    ) {
+        Ok(_) => (),
+        Err(err) => {
+            terr!("sak", "Can't start the system, err: {}", err);
 
-    //         std::process::exit(1);
-    //     }
-    // };
+            std::process::exit(1);
+        }
+    };
 }
