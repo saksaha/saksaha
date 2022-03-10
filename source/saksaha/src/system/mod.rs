@@ -1,12 +1,13 @@
 pub mod socket;
+mod process;
 
 use crate::{
     ledger::Ledger,
     p2p::host::Host,
     pconfig::PConfig,
-    process::{Process, Shutdown},
     rpc::RPC,
 };
+use process::{Process, Shutdown};
 use logger::terr;
 use logger::{tdebug, tinfo};
 use std::sync::Arc;
