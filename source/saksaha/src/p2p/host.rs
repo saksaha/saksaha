@@ -2,13 +2,13 @@ use super::{
     dial_scheduler::DialScheduler,
     listener::Listener,
     state::HostState,
-    task::{Task, P2PTaskRunner},
+    task::{P2PTaskRunner, Task},
 };
 use crate::{pconfig::PersistedP2PConfig, system::socket::TcpSocket};
 use logger::tinfo;
 use p2p_active_calls::ActiveCalls;
+use p2p_discovery::Discovery;
 use p2p_identity::Identity;
-use p2p_discovery::{Discovery};
 use peer::PeerStore;
 use std::sync::Arc;
 use task::task_queue::TaskQueue;

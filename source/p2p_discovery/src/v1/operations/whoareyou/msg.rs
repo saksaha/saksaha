@@ -1,4 +1,4 @@
-use crate::v1::{operations::{Message, Opcode}};
+use crate::v1::operations::{Message, Opcode};
 use k256::ecdsa::Signature;
 use p2p_identity::PUBLIC_KEY_LEN;
 use std::convert::TryInto;
@@ -147,9 +147,7 @@ impl Message for WhoAreYouAck {
     fn parse(buf: &[u8]) -> Result<WhoAreYouAck, String> {
         let way = parse_way_msg(buf, Opcode::WhoAreYouAck)?;
 
-        Ok(WhoAreYouAck {
-            way,
-        })
+        Ok(WhoAreYouAck { way })
     }
 }
 
@@ -161,9 +159,7 @@ impl WhoAreYouAck {
     ) -> WhoAreYouAck {
         let way = WhoAreYou::new(sig, peer_op_port, public_key_bytes);
 
-        WhoAreYouAck {
-            way,
-        }
+        WhoAreYouAck { way }
     }
 }
 
@@ -227,8 +223,7 @@ fn parse_way_msg(buf: &[u8], opcode: Opcode) -> Result<WhoAreYou, String> {
         if c != opcode {
             return Err(format!(
                 "Opcode is unmatched, {}, expected {:?}",
-                buf[4],
-                opcode,
+                buf[4], opcode,
             ));
         }
         c

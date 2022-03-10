@@ -2,8 +2,8 @@ pub mod error;
 pub mod fs;
 
 use self::error::PConfigError;
+use crate::log::info;
 use fs::FS;
-use logger::{tinfo};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
@@ -22,26 +22,27 @@ impl PConfig {
     pub fn from_path(
         config_path: Option<String>,
     ) -> Result<PConfig, PConfigError> {
+        info!("loading persisted config...");
+
         let config_path = match config_path {
             Some(c) => c,
             None => {
-                tinfo!(
-                    "pconfig",
-                    "Config path is not given. We will look for a config at \
-                    default locations",
+                let default_path = FS::get_default_path()?;
+                info!(
+                    "Config path is not given. Defaults to location, {:?}",
+                    default_path,
                 );
 
-                let default_path = FS::get_default_path()?;
-
                 if default_path.exists() {
-                    tinfo!(
-                        "pconfig",
+                    info!(
                         "Found a config at the default location, path: {:?}",
-                        default_path
+                        default_path,
                     );
 
                     return FS::load(default_path);
                 } else {
+                    info!("Config path ");
+
                     let pconfig = PConfig::new();
 
                     let pconf = match FS::persist(pconfig) {
@@ -61,7 +62,7 @@ impl PConfig {
     }
 
     fn new() -> PConfig {
-        tinfo!("pconfig", "Creating a new config");
+        info!("Creating a new config");
 
         let sk = crypto::generate_key();
         let (sk, pk) = crypto::encode_into_key_pair(sk);

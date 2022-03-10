@@ -1,7 +1,7 @@
 use super::Commandify;
 use crate::log;
 use clap::{App, Arg, ArgMatches, SubCommand};
-use std::process::{Command};
+use std::process::Command;
 
 pub struct Clean;
 

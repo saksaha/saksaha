@@ -1,7 +1,7 @@
 use super::state::HostState;
-use logger::{tinfo, tdebug, twarn};
+use logger::{tdebug, tinfo, twarn};
 use peer::{PeerValue, RegisteredPeerValue};
-use std::{sync::Arc};
+use std::sync::Arc;
 use thiserror::Error;
 use tokio::net::{TcpListener, TcpStream};
 

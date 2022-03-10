@@ -8,13 +8,11 @@ mod table;
 pub mod task;
 
 use self::{
-    dial_scheduler::DialScheduler, listener::Listener,
-    state::DiscState,
-    table::Table,
-    task::Task,
+    dial_scheduler::DialScheduler, listener::Listener, state::DiscState,
+    table::Table, task::Task,
 };
 use crate::{iterator::Iterator, task::DiscTaskRunner};
-use ::task::{task_queue::TaskQueue};
+use ::task::task_queue::TaskQueue;
 use colored::*;
 use logger::tinfo;
 use p2p_active_calls::ActiveCalls;
@@ -54,7 +52,6 @@ impl Discovery {
             Arc::new(c)
         };
 
-
         let (udp_socket, my_disc_port) = {
             let (socket, port) = setup_udp_socket(my_disc_port).await?;
             (Arc::new(socket), port)
@@ -76,9 +73,7 @@ impl Discovery {
         let task_queue = {
             let q = TaskQueue::new(
                 "p2p_discovery".to_string(),
-                Box::new(DiscTaskRunner::new(
-                    disc_state.clone(),
-                )),
+                Box::new(DiscTaskRunner::new(disc_state.clone())),
             );
             Arc::new(q)
         };

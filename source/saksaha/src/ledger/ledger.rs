@@ -5,8 +5,8 @@ use std::{
     sync::Arc,
     time::{Duration, SystemTime},
 };
+use tokio::io::AsyncWriteExt;
 use tokio::sync::Mutex;
-use tokio::io::{AsyncWriteExt};
 
 pub(crate) struct Ledger {
     db: Arc<DB>,

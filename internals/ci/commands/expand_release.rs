@@ -1,12 +1,6 @@
-use super::{
-    Commandify,
-    expand,
-};
+use super::{expand, Commandify};
 use clap::{App, Arg, ArgMatches, SubCommand};
-use std::{
-    path::PathBuf,
-    str::FromStr,
-};
+use std::{path::PathBuf, str::FromStr};
 
 pub struct ExpandRelease;
 

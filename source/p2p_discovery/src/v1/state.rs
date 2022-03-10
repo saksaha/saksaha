@@ -1,8 +1,8 @@
 use crate::task::Task;
 use p2p_active_calls::ActiveCalls;
 use p2p_identity::Identity;
-use task::task_queue::TaskQueue;
 use std::sync::Arc;
+use task::task_queue::TaskQueue;
 use tokio::net::UdpSocket;
 
 use super::table::Table;

@@ -1,10 +1,10 @@
 mod build;
 mod clean;
 mod dev;
-mod run;
 mod expand;
 mod expand_release;
 mod postcommit;
+mod run;
 mod test;
 
 use clap::{App, ArgMatches};

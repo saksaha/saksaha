@@ -1,5 +1,5 @@
-use super::msg::{WhoAreYouAck, WhoAreYouSyn};
 use super::check;
+use super::msg::{WhoAreYouAck, WhoAreYouSyn};
 use crate::v1::address::Address;
 use crate::v1::operations::Message;
 use crate::v1::table::{Node, NodeValue};
@@ -24,9 +24,7 @@ pub enum WhoareyouInitError {
     #[error(" Cannot convert to byte, _err: {err}")]
     ByteConversionFail { err: String },
 
-    #[error(
-        " Cannot create verifying key of remote, _err: {err}"
-    )]
+    #[error(" Cannot create verifying key of remote, _err: {err}")]
     VerifiyingKeyFail { err: String },
 
     #[error(" Signature is invalid, buf: {buf:?}, _err: {err}")]
@@ -59,9 +57,7 @@ pub enum WhoareyouInitError {
 
 struct Initiate;
 
-impl Initiate {
-
-}
+impl Initiate {}
 
 pub(crate) async fn send_who_are_you(
     disc_state: Arc<DiscState>,

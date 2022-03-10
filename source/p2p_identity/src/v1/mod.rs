@@ -21,10 +21,7 @@ pub struct Identity {
 }
 
 impl Identity {
-    pub fn new(
-        secret: String,
-        peer_id: String,
-    ) -> Result<Identity, String> {
+    pub fn new(secret: String, peer_id: String) -> Result<Identity, String> {
         let secret_bytes = match crypto::decode_hex(secret.to_owned()) {
             Ok(v) => v,
             Err(err) => {

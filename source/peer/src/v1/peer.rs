@@ -1,4 +1,4 @@
-use log::{debug};
+use log::debug;
 use p2p_transport::Transport;
 use tokio::sync::Mutex;
 

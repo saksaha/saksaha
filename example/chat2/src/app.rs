@@ -68,10 +68,9 @@ impl ChatApp {
 }
 
 async fn start_routine(cid: String) {
-
     if cid.clone() == "0" {
-        let priv_key =
-            RsaPrivateKey::from_pkcs8_pem(&KEY).expect("failed to generate a key");
+        let priv_key = RsaPrivateKey::from_pkcs8_pem(&KEY)
+            .expect("failed to generate a key");
         let pub_key = RsaPublicKey::from(&priv_key);
         let channel_data = b"channel_id";
         let padding = PaddingScheme::new_pkcs1v15_encrypt();
@@ -138,8 +137,8 @@ async fn start_routine(cid: String) {
     }
 
     if cid == "1" {
-        let priv_key =
-            RsaPrivateKey::from_pkcs8_pem(&KEY).expect("failed to generate a key");
+        let priv_key = RsaPrivateKey::from_pkcs8_pem(&KEY)
+            .expect("failed to generate a key");
         let pub_key = RsaPublicKey::from(&priv_key);
         let channel_data = b"channel_id";
         let padding = PaddingScheme::new_pkcs1v15_encrypt();

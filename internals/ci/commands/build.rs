@@ -1,7 +1,7 @@
 use super::Commandify;
 use crate::log;
 use clap::{App, Arg, ArgMatches, SubCommand};
-use std::process::{Command};
+use std::process::Command;
 
 pub struct Build;
 
@@ -27,11 +27,7 @@ impl Commandify for Build {
             };
             let args = [vec!["build"], args].concat();
 
-            log!(
-                "Executing `{} {:?}`",
-                program,
-                args,
-            );
+            log!("Executing `{} {:?}`", program, args,);
 
             let cmd = Command::new(program)
                 .args(args)
