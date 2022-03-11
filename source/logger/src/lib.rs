@@ -12,7 +12,7 @@ fn init_logger() {
 
             writeln!(
                 buf,
-                "{} {} {}",
+                "{}  {}  {}",
                 timestamp,
                 style.value(level),
                 record.args(),
@@ -32,14 +32,16 @@ macro_rules! tinfo {
     ($tag: expr, $str_format: expr) => {
         // #[cfg(debug_assertions)]
         {
-            log::info!("[{}] {}", $tag, $str_format);
+            let t = std::format!("{:>w$}", $tag, w = 16);
+            log::info!("{}  {}", t, $str_format);
         }
     };
 
     ($tag: expr, $str_format: expr, $($arg:tt)*) => {
         // #[cfg(debug_assertions)]
         {
-            log::info!("[{}] {}", $tag, format_args!($str_format, $($arg)*));
+            let t = std::format!("{:>w$}", $tag, w = 16);
+            log::info!("{}  {}", t, format_args!($str_format, $($arg)*));
         };
     }
 }
@@ -49,14 +51,16 @@ macro_rules! tdebug {
     ($tag: expr, $str_format: expr) => {
         // #[cfg(debug_assertions)]
         {
-            log::debug!("[{}] {}", $tag, $str_format);
+            let t = std::format!("{:>w$}", $tag, w = 16);
+            log::debug!("{}  {}", t, $str_format);
         }
     };
 
     ($tag: expr, $str_format: expr, $($arg:tt)*) => {
         // #[cfg(debug_assertions)]
         {
-            log::debug!("[{}] {}", $tag, format_args!($str_format, $($arg)*));
+            let t = std::format!("{:>w$}", $tag, w = 16);
+            log::debug!("{}  {}", t, format_args!($str_format, $($arg)*));
         };
     }
 }
@@ -66,14 +70,16 @@ macro_rules! terr {
     ($tag: expr, $str_format: expr) => {
         // #[cfg(debug_assertions)]
         {
-            log::error!("[{}] {}", $tag, $str_format);
+            let t = std::format!("{:>w$}", $tag, w = 16);
+            log::error!("{}  {}", t, $str_format);
         }
     };
 
     ($tag: expr, $str_format: expr, $($arg:tt)*) => {
         // #[cfg(debug_assertions)]
         {
-            log::error!("[{}] {}", $tag, format_args!($str_format, $($arg)*));
+            let t = std::format!("{:>w$}", $tag, w = 16);
+            log::error!("{} {}", t, format_args!($str_format, $($arg)*));
         };
     }
 }
@@ -83,14 +89,16 @@ macro_rules! twarn {
     ($tag: expr, $str_format: expr) => {
         // #[cfg(debug_assertions)]
         {
-            log::warn!("[{}] {}", $tag, $str_format);
+            let t = std::format!("{:>w$}", $tag, w = 16);
+            log::warn!("{}  {}", t, $str_format);
         }
     };
 
     ($tag: expr, $str_format: expr, $($arg:tt)*) => {
         // #[cfg(debug_assertions)]
         {
-            log::warn!("[{}] {}", $tag, format_args!($str_format, $($arg)*));
+            let t = std::format!("{:>w$}", $tag, w = 16);
+            log::warn!("{}  {}", t, format_args!($str_format, $($arg)*));
         };
     }
 }

@@ -65,7 +65,7 @@ impl Inner {
         match runtime {
             Ok(r) => r.block_on(async {
                 match self
-                    .start_in_runtime(
+                    .start_inside_runtime(
                         rpc_port,
                         disc_port,
                         p2p_port,
@@ -77,7 +77,7 @@ impl Inner {
                 {
                     Ok(_) => (),
                     Err(err) => {
-                        terr!("system", "Can't start node, err: {}", err);
+                        terr!("saksaha", "Can't start node, err: {}", err);
 
                         Process::shutdown();
                     }
@@ -87,13 +87,13 @@ impl Inner {
                     c = signal::ctrl_c() => {
                         match c {
                             Ok(_) => {
-                                tdebug!("system", "ctrl+k is pressed.");
+                                tdebug!("sahsaha", "ctrl+k is pressed.");
 
                                 Process::shutdown();
                             },
                             Err(err) => {
                                 terr!(
-                                    "system",
+                                    "saksaha",
                                     "Unexpected error while waiting for \
                                         ctrl+p, err: {}",
                                     err
@@ -113,7 +113,7 @@ impl Inner {
         Ok(())
     }
 
-    async fn start_in_runtime(
+    async fn start_inside_runtime(
         &self,
         rpc_port: Option<u16>,
         disc_port: Option<u16>,

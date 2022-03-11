@@ -135,7 +135,7 @@ fn main() {
 
     let args = match get_args() {
         Ok(a) => {
-            tinfo!("sak", "Arguments parsed: {:?}", a);
+            tinfo!("saksaha", "Arguments parsed: {:?}", a);
 
             a
         }
@@ -151,7 +151,7 @@ fn main() {
             Ok(p) => p,
             Err(err) => {
                 terr!(
-                    "sak",
+                    "saksaha",
                     "Error creating a persisted configuration, err: {}",
                     err
                 );
@@ -160,7 +160,7 @@ fn main() {
             }
         };
 
-        tinfo!("sak", "Persisted config loaded, conf: {:?}", c);
+        tinfo!("saksaha", "Persisted config loaded, conf: {:?}", c);
 
         c
     };
@@ -177,7 +177,7 @@ fn main() {
     ) {
         Ok(_) => (),
         Err(err) => {
-            terr!("sak", "Can't start the system, err: {}", err);
+            terr!("saksaha", "Can't start the system, err: {}", err);
 
             std::process::exit(1);
         }

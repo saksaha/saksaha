@@ -29,7 +29,7 @@ impl FS {
             return Err(PConfigError::PathNotFound(config_path));
         }
 
-        tinfo!("sak", "Writing a config, at: {:?}", config_path);
+        tinfo!("saksaha", "Writing a config, at: {:?}", config_path);
 
         match fs::write(config_path.to_owned(), serialized) {
             Ok(_) => Ok(pconfig),
@@ -38,7 +38,7 @@ impl FS {
     }
 
     pub fn load(path: PathBuf) -> Result<PConfig, PConfigError> {
-        tinfo!("sak", "Loading configuration at path: {:?}", path);
+        tinfo!("saksaha", "Loading configuration at path: {:?}", path);
 
         if !path.exists() {
             return Err(PConfigError::PathNotFound(path));

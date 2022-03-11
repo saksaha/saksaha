@@ -9,7 +9,7 @@ use tokio::sync::Mutex;
 
 pub(crate) struct DialScheduler {
     disc_state: Arc<DiscState>,
-    revalidate_routine: RevalidateRoutine,
+    // revalidate_routine: RevalidateRoutine,
     // whoareyou_op: Arc<WhoareyouOp>,
 }
 
@@ -23,11 +23,11 @@ impl DialScheduler {
     ) -> DialScheduler {
         let min_interval = Duration::from_millis(2000);
 
-        let revalidate_routine =
-            RevalidateRoutine::new(disc_state.clone(), min_interval);
+        // let revalidate_routine =
+        //     RevalidateRoutine::new(disc_state.clone(), min_interval);
 
         let d = DialScheduler {
-            revalidate_routine,
+            // revalidate_routine,
             disc_state: disc_state.clone(),
             // whoareyou_op,
         };
@@ -43,7 +43,7 @@ impl DialScheduler {
     }
 
     pub fn start(&self) -> Result<(), String> {
-        self.revalidate_routine.run();
+        // self.revalidate_routine.run();
 
         Ok(())
     }
@@ -118,76 +118,76 @@ impl DialScheduler {
     }
 }
 
-pub(crate) struct RevalidateRoutine {
-    _disc_state: Arc<DiscState>,
-    is_running: Arc<Mutex<bool>>,
-    min_interval: Duration,
-}
+// pub(crate) struct RevalidateRoutine {
+//     _disc_state: Arc<DiscState>,
+//     is_running: Arc<Mutex<bool>>,
+//     min_interval: Duration,
+// }
 
-impl RevalidateRoutine {
-    pub fn new(
-        disc_state: Arc<DiscState>,
-        min_interval: Duration,
-    ) -> RevalidateRoutine {
-        let is_running = Arc::new(Mutex::new(false));
+// impl RevalidateRoutine {
+//     pub fn new(
+//         disc_state: Arc<DiscState>,
+//         min_interval: Duration,
+//     ) -> RevalidateRoutine {
+//         let is_running = Arc::new(Mutex::new(false));
 
-        RevalidateRoutine {
-            is_running,
-            _disc_state: disc_state,
-            min_interval,
-        }
-    }
+//         RevalidateRoutine {
+//             is_running,
+//             _disc_state: disc_state,
+//             min_interval,
+//         }
+//     }
 
-    pub fn run(&self) {
-        tinfo!("p2p_discovery", "Dial scheduler starts to run");
+//     pub fn run(&self) {
+//         tinfo!("p2p_discovery", "Dial scheduler starts to run");
 
-        let is_running = self.is_running.clone();
-        let min_interval = self.min_interval;
+//         let is_running = self.is_running.clone();
+//         let min_interval = self.min_interval;
 
-        tokio::spawn(async move {
-            let mut is_running_lock = is_running.lock().await;
-            *is_running_lock = true;
-            std::mem::drop(is_running_lock);
+//         tokio::spawn(async move {
+//             let mut is_running_lock = is_running.lock().await;
+//             *is_running_lock = true;
+//             std::mem::drop(is_running_lock);
 
-            loop {
-                let start = SystemTime::now();
+//             loop {
+//                 let start = SystemTime::now();
 
-                tdebug!(
-                    "p2p_discovery",
-                    "TODO Discovery revalidator is currently no-op"
-                );
+//                 tdebug!(
+//                     "p2p_discovery",
+//                     "TODO Discovery revalidator is currently no-op"
+//                 );
 
-                match start.elapsed() {
-                    Ok(d) => {
-                        if d < min_interval {
-                            let diff = min_interval - d;
-                            tokio::time::sleep(diff).await;
-                        }
-                    }
-                    Err(err) => {
-                        terr!(
-                            "p2p_discovery",
-                            "Calculating the time elapsed fail, err: {}",
-                            err
-                        );
+//                 match start.elapsed() {
+//                     Ok(d) => {
+//                         if d < min_interval {
+//                             let diff = min_interval - d;
+//                             tokio::time::sleep(diff).await;
+//                         }
+//                     }
+//                     Err(err) => {
+//                         terr!(
+//                             "p2p_discovery",
+//                             "Calculating the time elapsed fail, err: {}",
+//                             err
+//                         );
 
-                        tokio::time::sleep(min_interval).await;
-                    }
-                }
-            }
+//                         tokio::time::sleep(min_interval).await;
+//                     }
+//                 }
+//             }
 
-            let mut is_running_lock = is_running.lock().await;
-            *is_running_lock = false;
-        });
-    }
+//             let mut is_running_lock = is_running.lock().await;
+//             *is_running_lock = false;
+//         });
+//     }
 
-    pub async fn wakeup(&self) {
-        let is_running = self.is_running.lock().await;
+//     pub async fn wakeup(&self) {
+//         let is_running = self.is_running.lock().await;
 
-        if *is_running == false {
-            twarn!("p2p_discovery", "Dial routine is not running, waking up");
+//         if *is_running == false {
+//             twarn!("p2p_discovery", "Dial routine is not running, waking up");
 
-            self.run();
-        }
-    }
-}
+//             self.run();
+//         }
+//     }
+// }
