@@ -22,28 +22,28 @@ impl PConfig {
     pub fn from_path(
         config_path: Option<String>,
     ) -> Result<PConfig, PConfigError> {
-        tinfo!("sak", "loading persisted config...");
+        tinfo!("saksaha", "loading persisted config...");
 
         let config_path = match config_path {
             Some(c) => c,
             None => {
                 let default_path = FS::get_default_path()?;
                 tinfo!(
-                    "sak",
+                    "saksaha",
                     "Config path is not given. Defaults to location, {:?}",
                     default_path,
                 );
 
                 if default_path.exists() {
                     tinfo!(
-                        "sak",
+                        "saksaha",
                         "Found a config at the default location, path: {:?}",
                         default_path,
                     );
 
                     return FS::load(default_path);
                 } else {
-                    tinfo!("sak", "Config path ");
+                    tinfo!("saksaha", "Config path ");
 
                     let pconfig = PConfig::new();
 
@@ -64,7 +64,7 @@ impl PConfig {
     }
 
     fn new() -> PConfig {
-        tinfo!("sak", "Creating a new config");
+        tinfo!("saksaha", "Creating a new config");
 
         let sk = crypto::generate_key();
         let (sk, pk) = crypto::encode_into_key_pair(sk);

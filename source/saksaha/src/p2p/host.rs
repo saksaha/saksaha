@@ -97,7 +97,8 @@ impl Host {
     }
 
     pub async fn start(&self) -> Result<(), String> {
-        tinfo!("p2p", "Starting discovery");
+        tinfo!("saksaha", "Starting P2P host");
+
         self.disc.start().await?;
 
         // self.listener.start();

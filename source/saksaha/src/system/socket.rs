@@ -49,7 +49,7 @@ async fn create_tcp_socket(
             Ok(listener) => match listener.local_addr() {
                 Ok(local_addr) => {
                     tinfo!(
-                        "system",
+                        "saksaha",
                         "Bound tcp listener, name: {}, addr: {}",
                         name,
                         local_addr.to_string().yellow(),

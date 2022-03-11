@@ -1,6 +1,6 @@
-use log::{error, info};
 use once_cell::sync::OnceCell;
 use std::sync::Arc;
+use logger::{terr, tinfo};
 
 static INSTANCE: OnceCell<Process> = OnceCell::new();
 
@@ -15,7 +15,7 @@ impl Process {
         match INSTANCE.set(p) {
             Ok(_) => (),
             Err(_) => {
-                error!("Cannot initialize process");
+                terr!("saksaha", "Cannot initialize process");
 
                 std::process::exit(1);
             }
@@ -26,7 +26,8 @@ impl Process {
         let process = match INSTANCE.get() {
             Some(p) => p,
             None => {
-                error!(
+                terr!(
+                    "saksaha",
                     "Process is not initialized. Consider calling \
                     Process:init() at the launch of the program"
                 );
@@ -35,7 +36,7 @@ impl Process {
             }
         };
 
-        info!("Calling shutdown callback");
+        tinfo!("sak", "Calling shutdown callback");
 
         process.shutdownable.shutdown();
 
