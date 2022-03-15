@@ -48,12 +48,12 @@ async fn create_tcp_socket(
         match TcpListener::bind(local_addr).await {
             Ok(listener) => match listener.local_addr() {
                 Ok(local_addr) => {
-                    tinfo!(
-                        "saksaha",
-                        "Bound tcp listener, name: {}, addr: {}",
-                        name,
-                        local_addr.to_string().yellow(),
-                    );
+                    // tinfo!(
+                    //     "saksaha",
+                    //     "Bound tcp listener, name: {}, addr: {}",
+                    //     name,
+                    //     local_addr.to_string().yellow(),
+                    // );
                     (Arc::new(listener), local_addr.port())
                 }
                 Err(err) => {

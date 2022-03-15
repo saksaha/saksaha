@@ -22,7 +22,8 @@ impl PConfig {
     pub fn from_path(
         config_path: Option<String>,
     ) -> Result<PConfig, PConfigError> {
-        tinfo!("saksaha", "loading persisted config...");
+        tinfo!("saksaha", "");
+        tinfo!("saksaha", "Loading persisted config...");
 
         let config_path = match config_path {
             Some(c) => c,

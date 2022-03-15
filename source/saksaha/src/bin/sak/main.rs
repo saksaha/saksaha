@@ -22,10 +22,10 @@ fn get_args() -> Result<Args, String> {
         .arg(arg!(-c --config [File]
                     "Saksaha configuration file, usually created at\n\
                     [[OS default config path]]/saksaha/config.json "))
-        .arg(arg!(--rpc_port [Port] "Your RPC port"))
-        .arg(arg!(--disc_port [Port] "Your P2P discovery port"))
-        .arg(arg!(--p2p_port [Port] "Your p2p port"))
-        .arg(arg!(--bootstrap_endpoints [Endpoints]
+        .arg(arg!(--"rpc-port" [Port] "Your RPC port"))
+        .arg(arg!(--"disc-port" [Port] "Your P2P discovery port"))
+        .arg(arg!(--"p2p-port" [Port] "Your p2p port"))
+        .arg(arg!(--"bootstrap-endpoints" [Endpoints]
                 "Bootstrap peer URLs to start discover, delimited by a comma"))
         .get_matches();
 
@@ -75,7 +75,7 @@ fn get_args() -> Result<Args, String> {
         None => None,
     };
 
-    let rpc_port = match matches.value_of("rpc_port") {
+    let rpc_port = match matches.value_of("rpc-port") {
         Some(p) => match p.parse::<u16>() {
             Ok(p) => Some(p),
             Err(err) => {
@@ -88,7 +88,7 @@ fn get_args() -> Result<Args, String> {
         None => None,
     };
 
-    let disc_port = match matches.value_of("disc_port") {
+    let disc_port = match matches.value_of("disc-port") {
         Some(p) => match p.parse::<u16>() {
             Ok(p) => Some(p),
             Err(err) => {
@@ -101,7 +101,7 @@ fn get_args() -> Result<Args, String> {
         None => None,
     };
 
-    let p2p_port = match matches.value_of("p2p_port") {
+    let p2p_port = match matches.value_of("p2p-port") {
         Some(p) => match p.parse::<u16>() {
             Ok(p) => Some(p),
             Err(err) => {
@@ -114,7 +114,7 @@ fn get_args() -> Result<Args, String> {
         None => None,
     };
 
-    let bootstrap_endpoints = match matches.values_of("bootstrap_endpoints") {
+    let bootstrap_endpoints = match matches.values_of("bootstrap-endpoints") {
         Some(b) => Some(b.map(str::to_string).collect()),
         None => None,
     };
@@ -135,7 +135,7 @@ fn main() {
 
     let args = match get_args() {
         Ok(a) => {
-            tinfo!("saksaha", "Arguments parsed: {:?}", a);
+            tinfo!("saksaha", "[sak] Arguments parsed: {:?}", a);
 
             a
         }
