@@ -89,6 +89,7 @@ impl DialScheduler {
 
                 tinfo!(
                     "p2p_discovery",
+                    "",
                     "Bootstrap - [{}] {}",
                     cnt,
                     addr.short_url()
@@ -114,7 +115,7 @@ impl DialScheduler {
             cnt
         };
 
-        tinfo!("p2p_discovery", "Bootstrapped node count: {}", count);
+        tinfo!("p2p_discovery", "", "Bootstrapped node count: {}", count);
     }
 }
 

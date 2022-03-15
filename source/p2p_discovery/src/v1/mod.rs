@@ -151,6 +151,7 @@ pub async fn setup_udp_socket(
 
             tinfo!(
                 "p2p_discovery",
+                "",
                 "Bound udp socket for discovery, addr: {}",
                 local_addr.to_string().yellow(),
             );

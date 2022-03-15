@@ -135,12 +135,17 @@ fn main() {
 
     let args = match get_args() {
         Ok(a) => {
-            tinfo!("saksaha", "[sak] Arguments parsed: {:?}", a);
+            tinfo!("saksaha", "sak", "Arguments parsed: {:?}", a);
 
             a
         }
         Err(err) => {
-            terr!("Can't parse command line arguments, err: {}", err);
+            terr!(
+                "saksaha",
+                "sak",
+                "Can't parse command line arguments, err: {}",
+                err
+            );
 
             std::process::exit(1);
         }
@@ -160,7 +165,7 @@ fn main() {
             }
         };
 
-        tinfo!("saksaha", "Persisted config loaded, conf: {:?}", c);
+        tinfo!("saksaha", "sak", "Persisted config loaded, conf: {:?}", c);
 
         c
     };

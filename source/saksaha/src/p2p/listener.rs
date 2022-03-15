@@ -37,7 +37,7 @@ impl Listener {
     }
 
     pub fn start(&self) {
-        tinfo!("p2p", "Starting accepting requests");
+        tinfo!("p2p", "", "Starting accepting requests");
 
         self.run_loop();
     }

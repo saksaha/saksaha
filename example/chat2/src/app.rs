@@ -44,7 +44,7 @@ impl ChatApp {
                             Ok(_) => {
                                 println!("ctrl+k is pressed.");
 
-                std::process::exit(1);
+                                std::process::exit(1);
                             },
                             Err(err) => {
                                 println!(
@@ -60,7 +60,7 @@ impl ChatApp {
                     },
                 );
             }),
-            Err(err) => {
+            Err(_err) => {
                 std::process::exit(1);
             }
         }
