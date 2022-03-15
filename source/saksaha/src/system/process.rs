@@ -15,7 +15,7 @@ impl Process {
         match INSTANCE.set(p) {
             Ok(_) => (),
             Err(_) => {
-                terr!("saksaha", "Cannot initialize process");
+                terr!("saksaha", "", "Cannot initialize process");
 
                 std::process::exit(1);
             }
@@ -28,6 +28,7 @@ impl Process {
             None => {
                 terr!(
                     "saksaha",
+                    "system",
                     "Process is not initialized. Consider calling \
                     Process:init() at the launch of the program"
                 );
@@ -36,7 +37,7 @@ impl Process {
             }
         };
 
-        tinfo!("sak", "Calling shutdown callback");
+        tinfo!("saksaha", "system", "Calling shutdown callback");
 
         process.shutdownable.shutdown();
 

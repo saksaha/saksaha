@@ -179,7 +179,7 @@ impl Node {
 /// checked to see if it should go to slots.
 impl Drop for Node {
     fn drop(&mut self) {
-        tdebug!("p2p_discovery", "Node dropped");
+        tdebug!("p2p_discovery", "", "Node dropped");
     }
 }
 

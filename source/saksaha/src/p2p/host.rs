@@ -110,6 +110,7 @@ impl Host {
 
         tinfo!(
             "saksaha",
+            "p2p",
             "p2p host is starting, tcp socket: {}",
             local_addr.to_string().yellow(),
         );

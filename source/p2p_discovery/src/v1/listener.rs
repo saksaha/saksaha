@@ -35,7 +35,7 @@ impl Listener {
     }
 
     pub fn start(&self) -> Result<(), String> {
-        tinfo!("p2p_discovery", "Listener starts to accept requests");
+        tinfo!("p2p_discovery", "", "Listener starts to accept requests");
 
         self.run_loop()
     }
@@ -53,6 +53,7 @@ impl Listener {
                         Ok(res) => {
                             tdebug!(
                                 "p2p_discovery",
+                                "",
                                 "Accepted incoming request, len: {}, addr: {}",
                                 res.0,
                                 res.1,
@@ -81,6 +82,7 @@ impl Listener {
                     Err(err) => {
                         terr!(
                             "p2p_discovery",
+                            "",
                             "Error processing request, addr: {}, err: {}",
                             socket_addr,
                             err

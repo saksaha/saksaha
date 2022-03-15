@@ -1,15 +1,10 @@
-pub mod socket;
 mod process;
+pub mod socket;
 
-use crate::{
-    ledger::Ledger,
-    p2p::host::Host,
-    pconfig::PConfig,
-    rpc::RPC,
-};
-use process::{Process, Shutdown};
+use crate::{ledger::Ledger, p2p::host::Host, pconfig::PConfig, rpc::RPC};
 use logger::terr;
 use logger::{tdebug, tinfo};
+use process::{Process, Shutdown};
 use std::sync::Arc;
 use tokio::{self, signal};
 
@@ -77,7 +72,12 @@ impl Inner {
                 {
                     Ok(_) => (),
                     Err(err) => {
-                        terr!("saksaha", "Can't start node, err: {}", err);
+                        terr!(
+                            "saksaha",
+                            "system",
+                            "Can't start node, err: {}",
+                            err,
+                        );
 
                         Process::shutdown();
                     }
@@ -87,16 +87,21 @@ impl Inner {
                     c = signal::ctrl_c() => {
                         match c {
                             Ok(_) => {
-                                tdebug!("sahsaha", "ctrl+k is pressed.");
+                                tdebug!(
+                                    "sahsaha",
+                                    "system",
+                                    "ctrl+k is pressed.",
+                                );
 
                                 Process::shutdown();
                             },
                             Err(err) => {
                                 terr!(
                                     "saksaha",
+                                    "system",
                                     "Unexpected error while waiting for \
                                         ctrl+p, err: {}",
-                                    err
+                                    err,
                                 );
 
                                 Process::shutdown();
@@ -122,8 +127,8 @@ impl Inner {
         pconfig: PConfig,
         default_bootstrap_urls: &str,
     ) -> Result<(), String> {
-        tinfo!("saksaha", "");
-        tinfo!("saksaha", "System is starting...");
+        tinfo!("saksaha", "system", "");
+        tinfo!("saksaha", "system", "System is starting...");
 
         let sockets = socket::setup_sockets(rpc_port, p2p_port).await?;
 
@@ -154,6 +159,6 @@ impl Inner {
 
 impl Shutdown for Inner {
     fn shutdown(&self) {
-        tinfo!("system", "Storing state of node");
+        tinfo!("saksaha", "system", "Storing state of node");
     }
 }

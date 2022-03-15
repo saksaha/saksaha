@@ -110,6 +110,7 @@ where
                     None => {
                         tdebug!(
                             "task",
+                            "",
                             "Can't take a new task, channel has been closed, task_queue: {}",
                             task_queue_name,
                         );
@@ -172,6 +173,7 @@ where
                     Err(err) => {
                         terr!(
                             "task",
+                            "",
                             "Calculating the time elapsed fail, \
                             queue_name: {}, err: {}",
                             task_queue_name,
