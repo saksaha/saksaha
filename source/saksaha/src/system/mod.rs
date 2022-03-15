@@ -122,6 +122,9 @@ impl Inner {
         pconfig: PConfig,
         default_bootstrap_urls: &str,
     ) -> Result<(), String> {
+        tinfo!("saksaha", "");
+        tinfo!("saksaha", "System is starting...");
+
         let sockets = socket::setup_sockets(rpc_port, p2p_port).await?;
 
         let rpc = RPC::new(sockets.rpc.listener);

@@ -6,7 +6,7 @@ use thiserror::Error;
 use tokio::net::{TcpListener, TcpStream};
 
 pub(crate) struct Listener {
-    tcp_listener: Arc<TcpListener>,
+    pub tcp_socket: Arc<TcpListener>,
     host_state: Arc<HostState>,
 }
 
@@ -27,11 +27,11 @@ pub enum RequestHandleError {
 
 impl Listener {
     pub fn new(
-        tcp_listener: Arc<TcpListener>,
+        tcp_socket: Arc<TcpListener>,
         host_state: Arc<HostState>,
     ) -> Listener {
         Listener {
-            tcp_listener,
+            tcp_socket,
             host_state,
         }
     }
@@ -43,12 +43,12 @@ impl Listener {
     }
 
     pub fn run_loop(&self) {
-        let tcp_listener = self.tcp_listener.clone();
+        let tcp_socket = self.tcp_socket.clone();
         let host_state = self.host_state.clone();
 
         tokio::spawn(async move {
             loop {
-                let (stream, addr) = match tcp_listener.accept().await {
+                let (stream, addr) = match tcp_socket.accept().await {
                     Ok(s) => s,
                     Err(err) => {
                         twarn!(

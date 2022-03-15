@@ -1,3 +1,4 @@
+use colored::{Colorize};
 use super::{
     dial_scheduler::DialScheduler,
     listener::Listener,
@@ -97,7 +98,21 @@ impl Host {
     }
 
     pub async fn start(&self) -> Result<(), String> {
-        tinfo!("saksaha", "Starting P2P host");
+        let local_addr = match self.listener.tcp_socket.local_addr() {
+            Ok(l) => l,
+            Err(err) => {
+                return Err(format!(
+                    "Couldn't get the local addr of tcp socket, err: {}",
+                    err,
+                ))
+            }
+        };
+
+        tinfo!(
+            "saksaha",
+            "p2p host is starting, tcp socket: {}",
+            local_addr.to_string().yellow(),
+        );
 
         self.disc.start().await?;
 
