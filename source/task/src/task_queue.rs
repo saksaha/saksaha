@@ -196,6 +196,7 @@ where
         if *is_running == false {
             twarn!(
                 "task",
+                "",
                 "Task routine is not running, waking up, queue_name: {}",
                 self.task_queue_name,
             );
