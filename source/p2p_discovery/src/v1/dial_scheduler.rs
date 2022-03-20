@@ -77,6 +77,7 @@ impl DialScheduler {
                     Err(err) => {
                         twarn!(
                             "p2p_discovery",
+                            "dial_schd",
                             "Discarding url failed to parse, url: {}, \
                             err: {:?}",
                             url.clone(),
@@ -89,7 +90,7 @@ impl DialScheduler {
 
                 tinfo!(
                     "p2p_discovery",
-                    "",
+                    "dial_schd",
                     "Bootstrap - [{}] {}",
                     cnt,
                     addr.short_url()
@@ -106,6 +107,7 @@ impl DialScheduler {
                     Err(err) => {
                         twarn!(
                             "p2p_discovery",
+                            "dial_schd",
                             "Couldn't enque new task, err: {}",
                             err
                         );
@@ -115,7 +117,12 @@ impl DialScheduler {
             cnt
         };
 
-        tinfo!("p2p_discovery", "", "Bootstrapped node count: {}", count);
+        tinfo!(
+            "p2p_discovery",
+            "dial_schd",
+            "Bootstrap - Total bootstrapped node count: {}",
+            count,
+        );
     }
 }
 

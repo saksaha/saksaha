@@ -30,7 +30,7 @@ pub fn init() {
 #[macro_export]
 macro_rules! tag {
     ($tag1: expr, $tag2: expr) => {
-        std::format!("[{:>w1$}] [{:>w2$}]", $tag1, $tag2, w1 = 16, w2 = 8)
+        std::format!("[{:>w1$}] [{:>w2$}]", $tag1, $tag2, w1 = 16, w2 = 10)
     };
 }
 
@@ -93,19 +93,19 @@ macro_rules! terr {
 
 #[macro_export]
 macro_rules! twarn {
-    ($tag: expr, $str_format: expr) => {
+    ($tag1: expr, $tag2: expr, $str_format: expr) => {
         // #[cfg(debug_assertions)]
         {
-            let t = std::format!("{:>w$}", $tag, w = 16);
+            let t = $crate::tag!($tag1, $tag2);
             log::warn!("{} {}", t, $str_format);
         };
     };
 
-    ($tag: expr, $str_format: expr, $($arg:tt)*) => {
+    ($tag1: expr, $tag2: expr, $str_format: expr, $($arg:tt)*) => {
         // #[cfg(debug_assertions)]
         {
-            let t = std::format!("{:>w$}", $tag, w = 16);
-            log::warn!("[{}] {}", t, format_args!($str_format, $($arg)*));
+            let t = $crate::tag!($tag1, $tag2);
+            log::warn!("{} {}", t, format_args!($str_format, $($arg)*));
         };
     };
 }
