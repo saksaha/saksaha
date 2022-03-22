@@ -1,7 +1,7 @@
 use super::Commandify;
 use crate::log;
-use clap::{App, Arg, ArgMatches, SubCommand};
-use std::process::{Command, Stdio};
+use clap::{Arg, ArgMatches, Command};
+use std::process::{Stdio};
 
 pub struct Run;
 
@@ -10,9 +10,9 @@ impl Commandify for Run {
         "run"
     }
 
-    fn def<'a, 'b>(&self, app: App<'a, 'b>) -> App<'a, 'b> {
+    fn def<'a, 'b>(&self, app: Command<'a>) -> Command<'a> {
         app.subcommand(
-            SubCommand::with_name(self.name())
+            Command::with_name(self.name())
                 .setting(clap::AppSettings::AllowLeadingHyphen)
                 .arg(Arg::with_name("args").multiple(true)),
         )

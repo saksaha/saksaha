@@ -18,7 +18,7 @@ impl DialScheduler {
         disc_state: Arc<DiscState>,
         // whoareyou_op: Arc<WhoareyouOp>,
         bootstrap_urls: Option<Vec<String>>,
-        default_bootstrap_urls: &str,
+        // default_bootstrap_urls: &str,
         task_queue: Arc<TaskQueue<Task>>,
     ) -> DialScheduler {
         let min_interval = Duration::from_millis(2000);
@@ -34,7 +34,7 @@ impl DialScheduler {
 
         d.enqueue_initial_tasks(
             bootstrap_urls,
-            default_bootstrap_urls,
+            // default_bootstrap_urls,
             task_queue,
         )
         .await;
@@ -51,7 +51,7 @@ impl DialScheduler {
     pub async fn enqueue_initial_tasks(
         &self,
         bootstrap_urls: Option<Vec<String>>,
-        default_bootstrap_urls: &str,
+        // default_bootstrap_urls: &str,
         task_queue: Arc<TaskQueue<Task>>,
     ) {
         let bootstrap_urls = match bootstrap_urls {
@@ -59,12 +59,16 @@ impl DialScheduler {
             None => Vec::new(),
         };
 
-        let default_bootstrap_urls: Vec<String> = default_bootstrap_urls
-            .lines()
-            .map(|l| l.to_string())
-            .collect();
+        // let default_bootstrap_urls: Vec<String> = default_bootstrap_urls
+        //     .lines()
+        //     .map(|l| l.to_string())
+        //     .collect();
 
-        let urls = [bootstrap_urls, default_bootstrap_urls].concat();
+        let urls = [
+            bootstrap_urls,
+            // default_bootstrap_urls,
+        ]
+        .concat();
 
         let count = {
             let mut cnt = 0;

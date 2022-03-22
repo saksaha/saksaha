@@ -1,11 +1,11 @@
 use super::Commandify;
 use crate::log;
-use clap::{App, Arg, ArgMatches, SubCommand};
+use clap::{Arg, ArgMatches, Command};
 use std::{
     fs,
     io::{ErrorKind, Write},
     path::PathBuf,
-    process::{Command, Stdio},
+    process::{Stdio},
     str::FromStr,
 };
 
@@ -16,11 +16,10 @@ impl Commandify for Expand {
         "expand"
     }
 
-    fn def<'a, 'b>(&self, app: App<'a, 'b>) -> App<'a, 'b> {
+    fn def<'a, 'b>(&self, app: Command<'a>) -> Command<'a> {
         app.subcommand(
-            SubCommand::with_name(self.name())
-                .setting(clap::AppSettings::AllowLeadingHyphen)
-                .arg(Arg::with_name("args").multiple(true)),
+            Command::new(self.name())
+                .arg(Arg::new("args").multiple(true)),
         )
     }
 
