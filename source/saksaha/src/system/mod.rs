@@ -12,6 +12,14 @@ pub struct System {
     inner: Arc<Inner>,
 }
 
+pub struct SystemArgs {
+    pub rpc_port: Option<u16>,
+    pub disc_port: Option<u16>,
+    pub p2p_port: Option<u16>,
+    pub bootstrap_urls: Option<Vec<String>>,
+    pub pconfig: PConfig,
+}
+
 impl System {
     pub fn new() -> System {
         let inner = Arc::new(Inner {});
@@ -23,20 +31,20 @@ impl System {
 
     pub fn start(
         &self,
-        rpc_port: Option<u16>,
-        disc_port: Option<u16>,
-        p2p_port: Option<u16>,
-        bootstrap_endpoints: Option<Vec<String>>,
-        pconfig: PConfig,
-        default_bootstrap_urls: &str,
+        sys_args: SystemArgs,
+        // rpc_port: Option<u16>,
+        // disc_port: Option<u16>,
+        // p2p_port: Option<u16>,
+        // bootstrap_endpoints: Option<Vec<String>>,
+        // pconfig: PConfig,
     ) -> Result<(), String> {
         self.inner.start(
-            rpc_port,
-            disc_port,
-            p2p_port,
-            bootstrap_endpoints,
-            pconfig,
-            default_bootstrap_urls,
+            // rpc_port,
+            // disc_port,
+            // p2p_port,
+            // bootstrap_endpoints,
+            // pconfig,
+            sys_args,
         )
     }
 }
@@ -46,12 +54,12 @@ struct Inner;
 impl Inner {
     fn start(
         &self,
-        rpc_port: Option<u16>,
-        disc_port: Option<u16>,
-        p2p_port: Option<u16>,
-        bootstrap_endpoints: Option<Vec<String>>,
-        pconfig: PConfig,
-        default_bootstrap_urls: &str,
+        // rpc_port: Option<u16>,
+        // disc_port: Option<u16>,
+        // p2p_port: Option<u16>,
+        // bootstrap_endpoints: Option<Vec<String>>,
+        // pconfig: PConfig,
+        sys_args: SystemArgs,
     ) -> Result<(), String> {
         let runtime = tokio::runtime::Builder::new_multi_thread()
             .enable_all()
@@ -61,12 +69,12 @@ impl Inner {
             Ok(r) => r.block_on(async {
                 match self
                     .start_inside_runtime(
-                        rpc_port,
-                        disc_port,
-                        p2p_port,
-                        bootstrap_endpoints,
-                        pconfig,
-                        default_bootstrap_urls,
+                        sys_args,
+                        // rpc_port,
+                        // disc_port,
+                        // p2p_port,
+                        // bootstrap_endpoints,
+                        // pconfig,
                     )
                     .await
                 {
@@ -120,27 +128,27 @@ impl Inner {
 
     async fn start_inside_runtime(
         &self,
-        rpc_port: Option<u16>,
-        disc_port: Option<u16>,
-        p2p_port: Option<u16>,
-        bootstrap_urls: Option<Vec<String>>,
-        pconfig: PConfig,
-        default_bootstrap_urls: &str,
+        sys_args: SystemArgs,
+        // rpc_port: Option<u16>,
+        // disc_port: Option<u16>,
+        // p2p_port: Option<u16>,
+        // bootstrap_urls: Option<Vec<String>>,
+        // pconfig: PConfig,
     ) -> Result<(), String> {
         tinfo!("saksaha", "system", "");
         tinfo!("saksaha", "system", "System is starting...");
 
-        let sockets = socket::setup_sockets(rpc_port, p2p_port).await?;
+        let sockets =
+            socket::setup_sockets(sys_args.rpc_port, sys_args.p2p_port).await?;
 
         let rpc = RPC::new(sockets.rpc.listener);
 
         let p2p_host = Host::init(
-            pconfig.p2p,
+            sys_args.pconfig.p2p,
             sockets.rpc.port,
             sockets.p2p,
-            disc_port,
-            bootstrap_urls,
-            default_bootstrap_urls,
+            sys_args.disc_port,
+            sys_args.bootstrap_urls,
         )
         .await?;
 

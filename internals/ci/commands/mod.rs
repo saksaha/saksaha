@@ -7,29 +7,26 @@ mod postcommit;
 mod run;
 mod test;
 
-use clap::{App, ArgMatches};
-use once_cell::sync::Lazy;
-use std::sync::Mutex;
+use clap::{ArgMatches, Command};
 
-pub static COMMANDS: Lazy<Mutex<Vec<Box<dyn Commandify + Send>>>> =
-    Lazy::new(|| {
-        let v: Vec<Box<dyn Commandify + Send>> = vec![
-            Box::new(build::Build),
-            Box::new(dev::Dev),
-            Box::new(run::Run),
-            Box::new(clean::Clean),
-            Box::new(expand::Expand),
-            Box::new(expand_release::ExpandRelease),
-            Box::new(postcommit::Postcommit),
-            Box::new(test::Test),
-        ];
-        Mutex::new(v)
-    });
+pub(crate) fn get_commands() -> Vec<Box<dyn Commandify + Send>> {
+    let v: Vec<Box<dyn Commandify + Send>> = vec![
+        Box::new(build::Build),
+        Box::new(dev::Dev),
+        Box::new(run::Run),
+        Box::new(clean::Clean),
+        Box::new(expand::Expand),
+        Box::new(expand_release::ExpandRelease),
+        Box::new(postcommit::Postcommit),
+        Box::new(test::Test),
+    ];
+    v
+}
 
 pub trait Commandify {
     fn name(&self) -> &str;
 
-    fn def<'a, 'b>(&self, app: App<'a, 'b>) -> App<'a, 'b>;
+    fn def<'a, 'b>(&self, app: Command<'a>) -> Command<'a>;
 
     fn exec(&self, matches: &ArgMatches) -> Option<bool>;
 }

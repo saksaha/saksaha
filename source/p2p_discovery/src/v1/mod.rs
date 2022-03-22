@@ -35,7 +35,7 @@ impl Discovery {
         my_disc_port: Option<u16>,
         my_p2p_port: u16,
         bootstrap_urls: Option<Vec<String>>,
-        default_bootstrap_urls: &str,
+        // default_botstrap_urls: &str,
     ) -> Result<Discovery, String> {
         let table = {
             let t = match Table::init().await {
@@ -97,7 +97,7 @@ impl Discovery {
                 disc_state.clone(),
                 // whoareyou_op.clone(),
                 bootstrap_urls,
-                default_bootstrap_urls,
+                // default_bootstrap_urls,
                 task_queue.clone(),
             )
             .await;

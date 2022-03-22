@@ -3,27 +3,30 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum PConfigError {
-    #[error("")]
+    #[error("Init error")]
     InitError,
 
-    #[error("")]
+    #[error("Persist error")]
     PersistError,
 
-    #[error("")]
+    #[error("Read fail")]
     ReadFail(String),
 
-    #[error("")]
+    #[error("Serialization fail")]
     SerializationFail(String),
 
-    #[error("")]
+    #[error("Deserialization fail")]
+    DeserializationFail(String),
+
+    #[error("Path not found")]
     PathNotFound(PathBuf),
 
-    #[error("")]
+    #[error("Path creation fail")]
     PathCreationFail(String),
 
-    #[error("")]
+    #[error("Config write fail")]
     ConfigWriteFail(String),
 
-    #[error("")]
+    #[error("Unknown")]
     Unknown,
 }

@@ -1,8 +1,7 @@
+use clap::Command;
+
 mod commands;
 mod macros;
-
-use clap::App;
-use commands::COMMANDS;
 
 fn main() {
     let curr_dir = match std::env::current_dir() {
@@ -43,24 +42,22 @@ fn main() {
         );
     }
 
-    let mut app = App::new("CI")
-        .version("0.1")
-        .author("Saksaha <team@saksaha.com>")
-        .about("Rust saksaha continuous integration toolsuite");
+    let mut app = Command::new("CI")
+        .version("0.0.1")
+        .author("Saksaha <elden@saksaha.com>")
+        .about("Rust saksaha implementation continuous integration toolsuite");
 
-    let comm = COMMANDS
-        .lock()
-        .expect("cli command definitions must be loaded");
+    let commands = commands::get_commands();
 
-    for e in comm.iter() {
+    for e in commands.iter() {
         app = e.def(app.to_owned());
     }
 
     let matches = app.get_matches();
 
-    for e in comm.iter() {
-        if let Some(_) = e.exec(&matches) {
-            log!("Command has been executed, name: {}", e.name());
+    for cmd in commands.iter() {
+        if let Some(_) = cmd.exec(&matches) {
+            log!("Command has been executed, name: {}", cmd.name());
 
             std::process::exit(0);
         }

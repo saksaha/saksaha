@@ -29,7 +29,7 @@ impl Host {
         p2p_socket: TcpSocket,
         disc_port: Option<u16>,
         bootstrap_urls: Option<Vec<String>>,
-        default_bootstrap_urls: &str,
+        // default_bootstrap_urls: &str,
     ) -> Result<Host, String> {
         let identity = {
             let id = Identity::new(p2p_config.secret, p2p_config.public_key)?;
@@ -75,7 +75,7 @@ impl Host {
                 disc_port,
                 p2p_socket.port,
                 bootstrap_urls,
-                default_bootstrap_urls,
+                // default_bootstrap_urls,
             )
             .await?;
             Arc::new(d)

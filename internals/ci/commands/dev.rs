@@ -1,7 +1,7 @@
 use super::Commandify;
 use crate::log;
-use clap::{App, Arg, ArgMatches, SubCommand};
-use std::process::{Command, Stdio};
+use clap::{Arg, ArgMatches, Command};
+use std::process::{Stdio};
 
 pub struct Dev;
 
@@ -10,10 +10,9 @@ impl Commandify for Dev {
         "dev"
     }
 
-    fn def<'a, 'b>(&self, app: App<'a, 'b>) -> App<'a, 'b> {
+    fn def<'a, 'b>(&self, app: Command<'a>) -> Command<'a> {
         app.subcommand(
-            SubCommand::with_name(self.name())
-                .setting(clap::AppSettings::AllowLeadingHyphen)
+            Command::new(self.name())
                 .arg(Arg::with_name("args").multiple(true)),
         )
     }
@@ -21,10 +20,12 @@ impl Commandify for Dev {
     fn exec(&self, matches: &ArgMatches) -> Option<bool> {
         if let Some(matches) = matches.subcommand_matches(self.name()) {
             let program = "cargo";
+
             let args = match matches.values_of("args") {
                 Some(a) => a.collect(),
                 None => vec![],
             };
+
             let args = [vec!["run", "-p", "saksaha", "--"], args].concat();
 
             log!("Executing `{} {:?}`", program, args);
