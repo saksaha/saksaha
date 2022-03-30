@@ -1,6 +1,6 @@
 use crate::{log, scriptify::Scriptify};
 use clap::{Arg, ArgMatches, Command};
-use std::process::Stdio;
+use std::process::{Command as Cmd, Stdio};
 
 pub struct Dev;
 
@@ -33,7 +33,7 @@ impl Scriptify for Dev {
                 std::env::set_var("LOG_LEVEL", "debug");
             }
 
-            Command::new(program)
+            Cmd::new(program)
                 .args(args)
                 .stdout(Stdio::inherit())
                 .stderr(Stdio::inherit())
