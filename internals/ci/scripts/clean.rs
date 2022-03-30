@@ -1,5 +1,6 @@
 use crate::{log, scriptify::Scriptify};
 use clap::{Arg, ArgMatches, Command};
+use std::process::Command as Cmd;
 
 pub struct Clean;
 
@@ -23,10 +24,8 @@ impl Scriptify for Clean {
 
             log!("Executing `{} {:?}`", program, args,);
 
-            let cmd = Command::new(program)
-                .args(args)
-                .spawn()
-                .expect("failed to run");
+            let cmd =
+                Cmd::new(program).args(args).spawn().expect("failed to run");
 
             cmd.wait_with_output().unwrap();
 

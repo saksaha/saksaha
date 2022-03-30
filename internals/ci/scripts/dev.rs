@@ -10,7 +10,10 @@ impl Scriptify for Dev {
     }
 
     fn define<'a, 'b>(&self, app: Command<'a>) -> Command<'a> {
-        app.subcommand(Command::new(self.name()))
+        app.subcommand(
+            Command::new(self.name())
+                .arg(Arg::new("args").multiple_occurrences(true)),
+        )
     }
 
     fn handle_matches(&self, matches: &ArgMatches) -> Option<bool> {

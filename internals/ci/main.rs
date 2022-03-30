@@ -51,13 +51,13 @@ fn main() {
     let commands = scripts::get_commands();
 
     for e in commands.iter() {
-        app = e.def(app.to_owned());
+        app = e.define(app.to_owned());
     }
 
     let matches = app.get_matches();
 
     for cmd in commands.iter() {
-        if let Some(_) = cmd.exec(&matches) {
+        if let Some(_) = cmd.handle_matches(&matches) {
             log!("Command has been executed, name: {}", cmd.name());
 
             std::process::exit(0);

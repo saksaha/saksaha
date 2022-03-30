@@ -4,7 +4,7 @@ use std::{
     fs,
     io::{ErrorKind, Write},
     path::PathBuf,
-    process::Stdio,
+    process::{Command as Cmd, Stdio},
     str::FromStr,
 };
 
@@ -79,7 +79,7 @@ pub fn expand(dest: PathBuf) {
 }
 
 fn check_rustfmt() -> bool {
-    let is_rust_fmt = match Command::new("rustfmt").output() {
+    let is_rust_fmt = match Cmd::new("rustfmt").output() {
         Ok(_) => {
             log!("rustfmt is found, will format expanded output");
             true
@@ -98,7 +98,7 @@ fn check_rustfmt() -> bool {
 fn execute_rustfmt(file_path: PathBuf) {
     log!("Executing rustfmt on file: {:?}", file_path);
 
-    Command::new("rustfmt")
+    Cmd::new("rustfmt")
         .arg(file_path.to_str().expect("file path must be stringified"))
         .output()
         .unwrap_or_else(|err| {
@@ -113,7 +113,7 @@ fn execute_expand(
     args: Vec<&str>,
     is_rust_fmt: bool,
 ) {
-    let cmd = Command::new("cargo")
+    let cmd = Cmd::new("cargo")
         .args(args)
         .stderr(Stdio::inherit())
         .stdout(Stdio::piped())
