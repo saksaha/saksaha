@@ -1,29 +1,25 @@
-use super::Commandify;
-use crate::log;
+use crate::{log, scriptify::Scriptify};
 use clap::{Arg, ArgMatches, Command};
 use std::{
     fs,
     io::{ErrorKind, Write},
     path::PathBuf,
-    process::{Stdio},
+    process::Stdio,
     str::FromStr,
 };
 
 pub struct Expand;
 
-impl Commandify for Expand {
+impl Scriptify for Expand {
     fn name(&self) -> &str {
         "expand"
     }
 
-    fn def<'a, 'b>(&self, app: Command<'a>) -> Command<'a> {
-        app.subcommand(
-            Command::new(self.name())
-                .arg(Arg::new("args").multiple(true)),
-        )
+    fn define<'a, 'b>(&self, app: Command<'a>) -> Command<'a> {
+        app.subcommand(Command::new(self.name()))
     }
 
-    fn exec(&self, matches: &ArgMatches) -> Option<bool> {
+    fn handle_matches(&self, matches: &ArgMatches) -> Option<bool> {
         if let Some(_) = matches.subcommand_matches(self.name()) {
             let dest = PathBuf::from_str(r"target/expand/debug")
                 .expect("destination path");
