@@ -1,23 +1,19 @@
-use super::Commandify;
-use crate::log;
+use crate::{log, scriptify::Scriptify};
 use clap::{Arg, ArgMatches, Command};
-use std::process::{Stdio};
+use std::process::Stdio;
 
 pub struct Postcommit;
 
-impl Commandify for Postcommit {
+impl Scriptify for Postcommit {
     fn name(&self) -> &str {
         "postcommit"
     }
 
-    fn def<'a, 'b>(&self, app: Command<'a>) -> Command<'a> {
-        app.subcommand(
-            Command::new(self.name())
-                .arg(Arg::new("args").multiple(true))
-        )
+    fn define<'a, 'b>(&self, app: Command<'a>) -> Command<'a> {
+        app.subcommand(Command::new(self.name()))
     }
 
-    fn exec(&self, matches: &ArgMatches) -> Option<bool> {
+    fn handle_matches(&self, matches: &ArgMatches) -> Option<bool> {
         if let Some(matches) = matches.subcommand_matches(self.name()) {
             let program = "git";
             let args = match matches.values_of("args") {

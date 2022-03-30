@@ -1,34 +1,31 @@
-use super::Commandify;
 use crate::log;
+use crate::scriptify::Scriptify;
 use clap::{Arg, ArgMatches, Command};
 
-pub struct Clean;
+pub struct Build;
 
-impl Commandify for Clean {
+impl Scriptify for Build {
     fn name(&self) -> &str {
-        "clean"
+        "build"
     }
 
-    fn def<'a, 'b>(&self, app: Command<'a>) -> Command<'a> {
-        app.subcommand(
-            Command::with_name(self.name())
-                .arg(Arg::with_name("args").multiple(true)),
-        )
+    fn define<'a, 'b>(&self, app: Command<'a>) -> Command<'a> {
+        app.subcommand(Command::new(self.name()))
     }
 
-    fn exec(&self, matches: &ArgMatches) -> Option<bool> {
+    fn handle_matches(&self, matches: &ArgMatches) -> Option<bool> {
         if let Some(matches) = matches.subcommand_matches(self.name()) {
             let program = "cargo";
             let args = match matches.values_of("args") {
                 Some(a) => a.collect(),
                 None => vec![],
             };
-            let args = [vec!["clean", "--"], args].concat();
+            let args = [vec!["build"], args].concat();
 
             log!("Executing `{} {:?}`", program, args,);
 
             let cmd = Command::new(program)
-                .args(args)
+                .arg(arg!())
                 .spawn()
                 .expect("failed to run");
 
@@ -36,6 +33,7 @@ impl Commandify for Clean {
 
             return Some(true);
         }
+
         None
     }
 }

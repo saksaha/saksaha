@@ -1,7 +1,8 @@
 use clap::Command;
 
-mod commands;
 mod macros;
+mod scriptify;
+mod scripts;
 
 fn main() {
     let curr_dir = match std::env::current_dir() {
@@ -47,7 +48,7 @@ fn main() {
         .author("Saksaha <elden@saksaha.com>")
         .about("Rust saksaha implementation continuous integration toolsuite");
 
-    let commands = commands::get_commands();
+    let commands = scripts::get_commands();
 
     for e in commands.iter() {
         app = e.def(app.to_owned());

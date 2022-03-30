@@ -1,32 +1,31 @@
-use super::Commandify;
-use crate::log;
+use crate::{log, scriptify::Scriptify};
 use clap::{Arg, ArgMatches, Command};
-use std::process::{Stdio};
+use std::process::Stdio;
 
-pub struct Run;
+pub struct Test;
 
-impl Commandify for Run {
+impl Scriptify for Test {
     fn name(&self) -> &str {
-        "run"
+        "test"
     }
 
-    fn def<'a, 'b>(&self, app: Command<'a>) -> Command<'a> {
-        app.subcommand(
-            Command::with_name(self.name())
-                .setting(clap::AppSettings::AllowLeadingHyphen)
-                .arg(Arg::with_name("args").multiple(true)),
-        )
+    fn define<'a, 'b>(&self, app: Command<'a>) -> Command<'a> {
+        app.subcommand(Command::new(self.name()))
     }
 
-    fn exec(&self, matches: &ArgMatches) -> Option<bool> {
+    fn handle_matches(&self, matches: &ArgMatches) -> Option<bool> {
         if let Some(matches) = matches.subcommand_matches(self.name()) {
             let program = "cargo";
             let args = match matches.values_of("args") {
                 Some(a) => a.collect(),
                 None => vec![],
             };
-            let args = [vec!["run", "--release", "-p", "saksaha", "--"], args]
-                .concat();
+            let args =
+                [vec!["test", "--", "--nocapture", "--show-output"], args]
+                    .concat();
+
+            // let args = [vec!["test", "--"], args]
+            //     .concat();
 
             log!("Executing `{} {:?}`", program, args);
 
@@ -39,6 +38,7 @@ impl Commandify for Run {
 
             return Some(true);
         }
+
         None
     }
 }

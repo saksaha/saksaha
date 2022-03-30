@@ -1,22 +1,20 @@
-use super::{expand, Commandify};
+use super::expand;
+use crate::scriptify::Scriptify;
 use clap::{Arg, ArgMatches, Command};
 use std::{path::PathBuf, str::FromStr};
 
 pub struct ExpandRelease;
 
-impl Commandify for ExpandRelease {
+impl Scriptify for ExpandRelease {
     fn name(&self) -> &str {
         "expand_release"
     }
 
-    fn def<'a, 'b>(&self, app: Command<'a>) -> Command<'a> {
-        app.subcommand(
-            Command::with_name(self.name())
-                .arg(Arg::with_name("args").multiple(true)),
-        )
+    fn define<'a, 'b>(&self, app: Command<'a>) -> Command<'a> {
+        app.subcommand(Command::new(self.name()))
     }
 
-    fn exec(&self, matches: &ArgMatches) -> Option<bool> {
+    fn handle_matches(&self, matches: &ArgMatches) -> Option<bool> {
         if let Some(_) = matches.subcommand_matches(self.name()) {
             let dest = PathBuf::from_str(r"target/expand/release")
                 .expect("destination path");
@@ -25,6 +23,7 @@ impl Commandify for ExpandRelease {
 
             return Some(true);
         }
+
         None
     }
 }
