@@ -1,6 +1,7 @@
 use crate::log;
 use crate::scriptify::Scriptify;
 use clap::{Arg, ArgMatches, Command};
+use std::process::Command as Cmd;
 
 pub struct Build;
 
@@ -24,10 +25,8 @@ impl Scriptify for Build {
 
             log!("Executing `{} {:?}`", program, args,);
 
-            let cmd = Command::new(program)
-                .arg(arg!())
-                .spawn()
-                .expect("failed to run");
+            let cmd =
+                Cmd::new(program).args(args).spawn().expect("failed to run");
 
             cmd.wait_with_output().unwrap();
 
