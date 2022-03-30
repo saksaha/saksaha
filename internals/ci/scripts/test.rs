@@ -1,6 +1,6 @@
 use crate::{log, scriptify::Scriptify};
 use clap::{Arg, ArgMatches, Command};
-use std::process::Stdio;
+use std::process::{Command as Cmd, Stdio};
 
 pub struct Test;
 
@@ -29,7 +29,7 @@ impl Scriptify for Test {
 
             log!("Executing `{} {:?}`", program, args);
 
-            Command::new(program)
+            Cmd::new(program)
                 .args(args)
                 .stdout(Stdio::inherit())
                 .stderr(Stdio::inherit())

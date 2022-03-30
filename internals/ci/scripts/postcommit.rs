@@ -1,6 +1,6 @@
 use crate::{log, scriptify::Scriptify};
 use clap::{Arg, ArgMatches, Command};
-use std::process::Stdio;
+use std::process::{Command as Cmd, Stdio};
 
 pub struct Postcommit;
 
@@ -24,7 +24,7 @@ impl Scriptify for Postcommit {
 
             log!("Executing `{} {:?}`", program, args,);
 
-            let cmd = Command::new(program)
+            let cmd = Cmd::new(program)
                 .args(args)
                 .stdout(Stdio::piped())
                 .stderr(Stdio::inherit())
