@@ -11,16 +11,21 @@ impl Scriptify for Build {
     }
 
     fn define<'a, 'b>(&self, app: Command<'a>) -> Command<'a> {
-        app.subcommand(Command::new(self.name()))
+        app.subcommand(
+            Command::new(self.name())
+                .arg(Arg::new("args").multiple_occurrences(true)),
+        )
     }
 
     fn handle_matches(&self, matches: &ArgMatches) -> Option<bool> {
         if let Some(matches) = matches.subcommand_matches(self.name()) {
             let program = "cargo";
+
             let args = match matches.values_of("args") {
                 Some(a) => a.collect(),
                 None => vec![],
             };
+
             let args = [vec!["build"], args].concat();
 
             log!("Executing `{} {:?}`", program, args,);

@@ -10,7 +10,7 @@ mod run;
 mod test;
 
 pub(crate) fn get_commands() -> Vec<Box<dyn Scriptify + Send>> {
-    let v: Vec<Box<dyn Scriptify + Send>> = vec![
+    let v: Vec<Box<Scriptify + Send>> = vec![
         Box::new(build::Build),
         Box::new(dev::Dev),
         Box::new(run::Run),

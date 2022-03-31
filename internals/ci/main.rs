@@ -58,7 +58,9 @@ fn main() {
 
     for cmd in commands.iter() {
         if let Some(_) = cmd.handle_matches(&matches) {
-            log!("Command has been executed, name: {}", cmd.name());
+            log!("");
+            log!("Script has been executed, script: {}", cmd.name());
+            log!("");
 
             std::process::exit(0);
         }
