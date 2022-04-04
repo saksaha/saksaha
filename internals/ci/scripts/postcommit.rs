@@ -2,9 +2,9 @@ use crate::{log, scriptify::Scriptify};
 use clap::{Arg, ArgMatches, Command};
 use std::process::{Command as Cmd, Stdio};
 
-pub struct Postcommit;
+pub struct PostCommit;
 
-impl Scriptify for Postcommit {
+impl Scriptify for PostCommit {
     fn name(&self) -> &str {
         "postcommit"
     }
