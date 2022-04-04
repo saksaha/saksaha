@@ -10,15 +10,19 @@ mod run;
 mod test;
 
 pub(crate) fn get_commands() -> Vec<Box<dyn Scriptify + Send>> {
-    let v: Vec<Box<Scriptify + Send>> = vec![
+    let v: Vec<Box<dyn Scriptify + Send>> = vec![
         Box::new(build::Build),
         Box::new(dev::Dev),
         Box::new(run::Run),
         Box::new(clean::Clean),
         Box::new(expand::Expand),
         Box::new(expand_release::ExpandRelease),
-        Box::new(postcommit::Postcommit),
+        Box::new(postcommit::PostCommit),
         Box::new(test::Test),
     ];
     v
+}
+
+enum A {
+    Ok,
 }

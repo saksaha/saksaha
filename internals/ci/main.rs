@@ -1,6 +1,7 @@
 use clap::Command;
 
-mod macros;
+mod log;
+mod script;
 mod scriptify;
 mod scripts;
 
@@ -50,8 +51,8 @@ fn main() {
 
     let commands = scripts::get_commands();
 
-    for e in commands.iter() {
-        app = e.define(app.to_owned());
+    for cmd in commands.iter() {
+        app = cmd.define(app.to_owned());
     }
 
     let matches = app.get_matches();
@@ -67,4 +68,17 @@ fn main() {
     }
 
     log!("Couldn't find any command to exeucte, Check the argument");
+}
+
+#[macro_export]
+macro_rules! vec22 {
+    ( $( $x:expr ),* ) => {
+        {
+            let mut temp_vec = Vec::new();
+            $(
+                temp_vec.push($x);
+            )*
+            temp_vec
+        }
+    };
 }
