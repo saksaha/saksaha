@@ -2,7 +2,7 @@ use crate::{log, scriptify::Scriptify};
 use clap::{Arg, ArgMatches, Command};
 use std::process::Command as Cmd;
 
-pub struct Clean;
+pub(crate) struct Clean;
 
 impl Scriptify for Clean {
     fn name(&self) -> &str {

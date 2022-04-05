@@ -3,7 +3,7 @@ use crate::scriptify::Scriptify;
 use clap::{Arg, ArgMatches, Command};
 use std::process::Command as Cmd;
 
-pub struct Build;
+pub(crate) struct Build;
 
 impl Scriptify for Build {
     fn name(&self) -> &str {

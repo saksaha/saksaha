@@ -8,7 +8,7 @@ use std::{
     str::FromStr,
 };
 
-pub struct Expand;
+pub(crate) struct Expand;
 
 impl Scriptify for Expand {
     fn name(&self) -> &str {
@@ -31,7 +31,7 @@ impl Scriptify for Expand {
     }
 }
 
-pub fn expand(dest: PathBuf) {
+pub(crate) fn expand(dest: PathBuf) {
     let is_rust_fmt = check_rustfmt();
 
     match std::fs::remove_dir_all(dest.to_owned()) {
