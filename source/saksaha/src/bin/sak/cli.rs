@@ -24,11 +24,13 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
         .arg(arg!(--"disc-port" [Port] "Your P2P discovery port"))
         .arg(arg!(--"p2p-port" [Port] "Your p2p port"))
         .arg(arg!(--"bootstrap-urls" [Endpoints]
-                "Bootstrap peer URLs to start discover, delimited by a comma,\n
-                    e.g.\n
-                        full url: sak://04715796a40b0d58fc14a3c4ebee21cb806763066a7f1a17adbc256999764443beb8109cfd000718535c5aa27513a2edafc6e8bdbe7c27edc2980f9bbc25142fc5@127.0.0.1:8080, \n
-                        short url: 127.0.0.1:3030
-                "))
+            "Bootstrap peer URLs to start discover, delimited by a comma,\n
+                e.g.\n
+                    full url: sak://04715796a40b0d58fc14a3c4ebee21cb806763066\
+                    a7f1a17adbc256999764443beb8109cfd000718535c5aa27513a2edaf\
+                    c6e8bdbe7c27edc2980f9bbc25142fc5@127.0.0.1:8080, \n
+                    short url: 127.0.0.1:3030
+            "))
         .get_matches();
 
     let config = match matches.value_of("config") {
@@ -42,7 +44,7 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
             Err(err) => {
                 return Err(format!(
                     "Cannot parse rpc port (u16), err: {}",
-                    err
+                    err,
                 ));
             }
         },

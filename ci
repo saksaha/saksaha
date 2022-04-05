@@ -8,18 +8,18 @@ curr_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 is_rustc=$(which rustc)
 if [ $? -eq 0 ]; then
     rustc_version=$(rustc --version)
-    printf "Found rustc at: %s, version: %s" "$is_rustc" "$rustc_version"
+    printf "Found rustc at: %s, version: %s\n" "$is_rustc" "$rustc_version"
 else
-    echo "Rustc is not installed, exiting the program"
+    printf "Rustc is not installed, exiting the program\n"
     exit 1
 fi
 
 is_cargo=$(which cargo)
 if [ $? -eq 0 ]; then
     cargo_version=$(cargo --version)
-    printf "Found cargo at: %s, version: %s" "$is_cargo" "$cargo_version"
+    printf "Found cargo at: %s, version: %s\n" "$is_cargo" "$cargo_version"
 else
-    echo "Cargo is not installed, exiting the program"
+    printf "Cargo is not installed, exiting the program\n"
     exit 1
 fi
 

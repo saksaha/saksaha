@@ -1,5 +1,5 @@
 use crate::{log, scriptify::Scriptify};
-use clap::{Arg, ArgMatches, Command};
+use clap::{arg, Arg, ArgMatches, Command};
 use std::process::{Command as Cmd, Stdio};
 
 pub struct Dev;
@@ -10,24 +10,33 @@ impl Scriptify for Dev {
     }
 
     fn define<'a, 'b>(&self, app: Command<'a>) -> Command<'a> {
-        app.subcommand(
+        let app = app.subcommand(
             Command::new(self.name())
-                .arg(Arg::new("args").multiple_occurrences(true)),
-        )
+                .arg(Arg::new("SAKSAHA_ARGS").multiple_values(true))
+                .allow_hyphen_values(true),
+        );
+
+        app
     }
 
     fn handle_matches(&self, matches: &ArgMatches) -> Option<bool> {
         if let Some(matches) = matches.subcommand_matches(self.name()) {
             let program = "cargo";
 
-            let args = match matches.values_of("args") {
+            let args = match matches.values_of("SAKSAHA_ARGS") {
                 Some(a) => a.collect(),
                 None => vec![],
             };
 
-            let args = [vec!["run", "-p", "saksaha", "--"], args].concat();
+            let args =
+                [vec!["run", "--package", "saksaha", "--"], args].concat();
 
-            log!("Executing `{} {:?}`", program, args);
+            log!(
+                "Found subcommand, script: {}, executing `{} {}`",
+                self.name(),
+                program,
+                args.join(" "),
+            );
 
             std::env::set_var("RUST_BACKTRACE", "1");
 

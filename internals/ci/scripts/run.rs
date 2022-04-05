@@ -34,6 +34,7 @@ impl Scriptify for Run {
 
             return Some(true);
         }
+
         None
     }
 }

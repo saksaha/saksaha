@@ -9,8 +9,8 @@ mod postcommit;
 mod run;
 mod test;
 
-pub(crate) fn get_commands() -> Vec<Box<dyn Scriptify + Send>> {
-    let v: Vec<Box<dyn Scriptify + Send>> = vec![
+pub(crate) fn get_scripts() -> Vec<Box<dyn Scriptify + Send>> {
+    let scripts: Vec<Box<dyn Scriptify + Send>> = vec![
         Box::new(build::Build),
         Box::new(dev::Dev),
         Box::new(run::Run),
@@ -20,9 +20,5 @@ pub(crate) fn get_commands() -> Vec<Box<dyn Scriptify + Send>> {
         Box::new(postcommit::PostCommit),
         Box::new(test::Test),
     ];
-    v
-}
-
-enum A {
-    Ok,
+    scripts
 }
