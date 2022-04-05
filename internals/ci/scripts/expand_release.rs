@@ -3,7 +3,7 @@ use crate::scriptify::Scriptify;
 use clap::{Arg, ArgMatches, Command};
 use std::{path::PathBuf, str::FromStr};
 
-pub struct ExpandRelease;
+pub(crate) struct ExpandRelease;
 
 impl Scriptify for ExpandRelease {
     fn name(&self) -> &str {
