@@ -1,7 +1,6 @@
 use clap::Command;
 
 mod log;
-mod script;
 mod scriptify;
 mod scripts;
 
@@ -32,7 +31,7 @@ fn main() {
     };
 
     log!(
-        "CI is starting, project root: {}, current workign directory: {}",
+        "CI is starting, project root: {}, current working directory: {}",
         project_root,
         curr_dir,
     );
@@ -49,36 +48,27 @@ fn main() {
         .author("Saksaha <elden@saksaha.com>")
         .about("Rust saksaha implementation continuous integration toolsuite");
 
-    let commands = scripts::get_commands();
+    let scripts = scripts::get_scripts();
 
-    for cmd in commands.iter() {
-        app = cmd.define(app.to_owned());
+    for script in scripts.iter() {
+        app = script.define(app.to_owned());
     }
 
     let matches = app.get_matches();
 
-    for cmd in commands.iter() {
-        if let Some(_) = cmd.handle_matches(&matches) {
-            log!("");
-            log!("Script has been executed, script: {}", cmd.name());
-            log!("");
+    log!("Searching for script that can handle the request has been executed");
+
+    for script in scripts.iter() {
+        if let Some(_) = script.handle_matches(&matches) {
+            log!(
+                "Finished running the script, exiting the process. \
+                script: {}\n",
+                script.name(),
+            );
 
             std::process::exit(0);
         }
     }
 
     log!("Couldn't find any command to exeucte, Check the argument");
-}
-
-#[macro_export]
-macro_rules! vec22 {
-    ( $( $x:expr ),* ) => {
-        {
-            let mut temp_vec = Vec::new();
-            $(
-                temp_vec.push($x);
-            )*
-            temp_vec
-        }
-    };
 }

@@ -16,10 +16,12 @@ impl Scriptify for PostCommit {
     fn handle_matches(&self, matches: &ArgMatches) -> Option<bool> {
         if let Some(matches) = matches.subcommand_matches(self.name()) {
             let program = "git";
+
             let args = match matches.values_of("args") {
                 Some(a) => a.collect(),
                 None => vec![],
             };
+
             let args = [vec!["log", "-1"], args].concat();
 
             log!("Executing `{} {:?}`", program, args,);
