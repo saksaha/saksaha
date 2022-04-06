@@ -1,6 +1,8 @@
-pub mod ledger;
-pub mod p2p;
-pub mod pconfig;
-pub mod rpc;
-pub mod system;
 mod config;
+mod ledger;
+mod network;
+mod p2p;
+mod rpc;
+
+pub mod pconfig;
+pub mod system;

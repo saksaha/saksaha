@@ -46,7 +46,13 @@ impl PConfig {
 
                     return FS::load(default_path);
                 } else {
-                    tinfo!("saksaha", "pconfig", "Config path ");
+                    tinfo!(
+                        "saksaha",
+                        "pconfig",
+                        "Couldn't find a config file at the default path. \
+                        Creating a new one, path: {:?}",
+                        default_path,
+                    );
 
                     let pconfig = PConfig::new();
 

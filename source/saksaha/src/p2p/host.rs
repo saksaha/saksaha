@@ -1,11 +1,11 @@
-use colored::{Colorize};
 use super::{
     dial_scheduler::DialScheduler,
     listener::Listener,
     state::HostState,
     task::{P2PTaskRunner, Task},
 };
-use crate::{pconfig::PersistedP2PConfig, system::socket::TcpSocket};
+use crate::{network::socket::TcpSocket, pconfig::PersistedP2PConfig};
+use colored::Colorize;
 use logger::tinfo;
 use p2p_active_calls::ActiveCalls;
 use p2p_discovery::Discovery;

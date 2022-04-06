@@ -1,6 +1,8 @@
-use clap::{arg, command, Command};
 use logger::{terr, tinfo};
-use saksaha::{pconfig::PConfig, system::{System, SystemArgs}};
+use saksaha::{
+    pconfig::PConfig,
+    system::{system_args::SystemArgs, System},
+};
 
 mod cli;
 
@@ -8,6 +10,8 @@ fn main() {
     print!("Saksaha is launching...\n");
 
     logger::init();
+
+    // saksaha::system::
 
     let cli_args = match cli::get_args() {
         Ok(a) => {
@@ -57,14 +61,7 @@ fn main() {
         pconfig: pconf,
     };
 
-    match system.start(
-        sys_args,
-        // cli_args.rpc_port,
-        // cli_args.disc_port,
-        // cli_args.p2p_port,
-        // cli_args.bootstrap_endpoints,
-        // pconf,
-    ) {
+    match system.start(sys_args) {
         Ok(_) => (),
         Err(err) => {
             terr!("saksaha", "Can't start the system, err: {}", err);
