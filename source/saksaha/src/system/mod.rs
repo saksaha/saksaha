@@ -1,83 +1,48 @@
 mod process;
-pub mod socket;
+pub mod system_args;
 
-use crate::{ledger::Ledger, p2p::host::Host, pconfig::PConfig, rpc::RPC};
+use crate::{
+    ledger::Ledger, network::socket, p2p::host::Host, pconfig::PConfig,
+    rpc::RPC,
+};
 use logger::terr;
 use logger::{tdebug, tinfo};
-use process::{Process, Shutdown};
+use process::Process;
 use std::sync::Arc;
+use system_args::SystemArgs;
 use tokio::{self, signal};
 
 pub struct System {
-    inner: Arc<Inner>,
-}
-
-pub struct SystemArgs {
-    pub rpc_port: Option<u16>,
-    pub disc_port: Option<u16>,
-    pub p2p_port: Option<u16>,
-    pub bootstrap_urls: Option<Vec<String>>,
-    pub pconfig: PConfig,
+    inner: Arc<SystemInner>,
 }
 
 impl System {
     pub fn new() -> System {
-        let inner = Arc::new(Inner {});
+        let inner = Arc::new(SystemInner {});
 
         Process::init(inner.clone());
 
-        System { inner }
+        let system = System { inner };
+
+        system
     }
 
-    pub fn start(
-        &self,
-        sys_args: SystemArgs,
-        // rpc_port: Option<u16>,
-        // disc_port: Option<u16>,
-        // p2p_port: Option<u16>,
-        // bootstrap_endpoints: Option<Vec<String>>,
-        // pconfig: PConfig,
-    ) -> Result<(), String> {
-        self.inner.start(
-            // rpc_port,
-            // disc_port,
-            // p2p_port,
-            // bootstrap_endpoints,
-            // pconfig,
-            sys_args,
-        )
+    pub fn start(&self, sys_args: SystemArgs) -> Result<(), String> {
+        self.inner.start(sys_args)
     }
 }
 
-struct Inner;
+struct SystemInner;
 
-impl Inner {
-    fn start(
-        &self,
-        // rpc_port: Option<u16>,
-        // disc_port: Option<u16>,
-        // p2p_port: Option<u16>,
-        // bootstrap_endpoints: Option<Vec<String>>,
-        // pconfig: PConfig,
-        sys_args: SystemArgs,
-    ) -> Result<(), String> {
+impl SystemInner {
+    fn start(&self, sys_args: SystemArgs) -> Result<(), String> {
         let runtime = tokio::runtime::Builder::new_multi_thread()
             .enable_all()
             .build();
 
         match runtime {
             Ok(r) => r.block_on(async {
-                match self
-                    .start_inside_runtime(
-                        sys_args,
-                        // rpc_port,
-                        // disc_port,
-                        // p2p_port,
-                        // bootstrap_endpoints,
-                        // pconfig,
-                    )
-                    .await
-                {
+                match self.start_inside_runtime(sys_args).await {
                     Ok(_) => (),
                     Err(err) => {
                         terr!(
@@ -129,11 +94,6 @@ impl Inner {
     async fn start_inside_runtime(
         &self,
         sys_args: SystemArgs,
-        // rpc_port: Option<u16>,
-        // disc_port: Option<u16>,
-        // p2p_port: Option<u16>,
-        // bootstrap_urls: Option<Vec<String>>,
-        // pconfig: PConfig,
     ) -> Result<(), String> {
         tinfo!("saksaha", "system", "");
         tinfo!("saksaha", "system", "System is starting...");
@@ -163,10 +123,14 @@ impl Inner {
 
         Ok(())
     }
-}
 
-impl Shutdown for Inner {
     fn shutdown(&self) {
         tinfo!("saksaha", "system", "Storing state of node");
     }
 }
+
+// impl Shutdown for System {
+//     fn shutdown(&self) {
+//         // todos Shutdown preprocessing
+//     }
+// }

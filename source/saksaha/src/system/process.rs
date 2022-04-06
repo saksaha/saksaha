@@ -1,21 +1,29 @@
+use super::{System, SystemInner};
+use logger::{terr, tinfo};
 use once_cell::sync::OnceCell;
 use std::sync::Arc;
-use logger::{terr, tinfo};
 
 static INSTANCE: OnceCell<Process> = OnceCell::new();
 
-pub struct Process {
-    shutdownable: Arc<dyn Shutdown + Sync + Send>,
+pub(crate) struct Process {
+    // shutdownable: Arc<dyn Shutdown + Sync + Send>,
+    system: Arc<Inner>,
 }
 
 impl Process {
-    pub fn init(shutdownable: Arc<dyn Shutdown + Sync + Send>) {
-        let p = Process { shutdownable };
+    pub fn init(system_inner: Arc<Inner>) {
+        let p = Process { system };
 
         match INSTANCE.set(p) {
-            Ok(_) => (),
+            Ok(_) => {
+                tinfo!(
+                    "saksaha",
+                    "system",
+                    "System is attached to a singleton, umbrella process"
+                );
+            }
             Err(_) => {
-                terr!("saksaha", "", "Cannot initialize process");
+                terr!("saksaha", "system", "Cannot initialize process");
 
                 std::process::exit(1);
             }
@@ -39,12 +47,12 @@ impl Process {
 
         tinfo!("saksaha", "system", "Calling shutdown callback");
 
-        process.shutdownable.shutdown();
+        // process.system.shutdown();
 
         std::process::exit(1);
     }
 }
 
-pub trait Shutdown {
-    fn shutdown(&self);
-}
+// pub trait Shutdown {
+//     fn shutdown(&self);
+// }
