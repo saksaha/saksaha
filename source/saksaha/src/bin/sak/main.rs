@@ -51,7 +51,14 @@ fn main() {
         c
     };
 
-    let system = System::new();
+    let system = match System::init() {
+        Ok(s) => s,
+        Err(err) => {
+            terr!("saksaha", "sak", "Error initializing system, err: {}", err,);
+
+            std::process::exit(1);
+        }
+    };
 
     let sys_args = SystemArgs {
         rpc_port: cli_args.rpc_port,

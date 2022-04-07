@@ -1,20 +1,21 @@
-use super::{System, SystemInner};
+use super::System;
 use logger::{terr, tinfo};
 use once_cell::sync::OnceCell;
 use std::sync::Arc;
 
-static INSTANCE: OnceCell<Process> = OnceCell::new();
+// static INSTANCE: OnceCell<Process> = OnceCell::new();
+static INSTANCE: OnceCell<System> = OnceCell::new();
 
-pub(crate) struct Process {
-    // shutdownable: Arc<dyn Shutdown + Sync + Send>,
-    system: Arc<Inner>,
-}
+// pub(crate) struct Process {
+//     // shutdownable: Arc<dyn Shutdown + Sync + Send>,
+//     system: Arc<Inner>,
+// }
 
-impl Process {
-    pub fn init(system_inner: Arc<Inner>) {
-        let p = Process { system };
+impl System {
+    pub(super) fn make_static(system: System) {
+        // let p = Process { system };
 
-        match INSTANCE.set(p) {
+        match INSTANCE.set(system) {
             Ok(_) => {
                 tinfo!(
                     "saksaha",

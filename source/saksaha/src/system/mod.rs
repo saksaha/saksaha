@@ -1,4 +1,4 @@
-mod process;
+mod shutdown;
 pub mod system_args;
 
 use crate::{
@@ -7,34 +7,47 @@ use crate::{
 };
 use logger::terr;
 use logger::{tdebug, tinfo};
-use process::Process;
+use once_cell::sync::OnceCell;
 use std::sync::Arc;
 use system_args::SystemArgs;
 use tokio::{self, signal};
 
+static INSTANCE: OnceCell<System> = OnceCell::new();
+
 pub struct System {
-    inner: Arc<SystemInner>,
+    // inner: Arc<SystemInner>,
+    main_routine: Arc<MainRoutine>,
 }
 
 impl System {
-    pub fn new() -> System {
-        let inner = Arc::new(SystemInner {});
+    pub fn get_instance() -> Result<System, String> {
+        let main_routine = Arc::new(MainRoutine {});
+        let system = System { main_routine };
 
-        Process::init(inner.clone());
-
-        let system = System { inner };
-
-        system
+        System::make_static(system);
+        // System::make_static(system);
+        Ok(system)
     }
 
+    // pub fn new() -> System {
+    //     let inner = Arc::new(SystemInner {});
+
+    //     Process::init(inner.clone());
+
+    //     let system = System { inner };
+
+    //     system
+    // }
+
     pub fn start(&self, sys_args: SystemArgs) -> Result<(), String> {
-        self.inner.start(sys_args)
+        Ok(())
+        // self.inner.start(sys_args)
     }
 }
 
-struct SystemInner;
+struct MainRoutine;
 
-impl SystemInner {
+impl MainRoutine {
     fn start(&self, sys_args: SystemArgs) -> Result<(), String> {
         let runtime = tokio::runtime::Builder::new_multi_thread()
             .enable_all()
@@ -52,7 +65,7 @@ impl SystemInner {
                             err,
                         );
 
-                        Process::shutdown();
+                        System::shutdown();
                     }
                 };
 
@@ -66,7 +79,7 @@ impl SystemInner {
                                     "ctrl+k is pressed.",
                                 );
 
-                                Process::shutdown();
+                                System::shutdown();
                             },
                             Err(err) => {
                                 terr!(
@@ -77,7 +90,7 @@ impl SystemInner {
                                     err,
                                 );
 
-                                Process::shutdown();
+                                System::shutdown();
                             }
                         }
                     },
