@@ -24,7 +24,7 @@ impl System {
         let main_routine = Arc::new(MainRoutine {});
         let system = System { main_routine };
 
-        System::make_static(system);
+        // System::make_static(system);
         // System::make_static(system);
         Ok(system)
     }
@@ -40,8 +40,8 @@ impl System {
     // }
 
     pub fn start(&self, sys_args: SystemArgs) -> Result<(), String> {
-        Ok(())
-        // self.inner.start(sys_args)
+        self.main_routine.start(sys_args)
+        // Ok(())
     }
 }
 

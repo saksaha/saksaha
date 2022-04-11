@@ -51,7 +51,7 @@ fn main() {
         c
     };
 
-    let system = match System::init() {
+    let system = match System::get_instance() {
         Ok(s) => s,
         Err(err) => {
             terr!("saksaha", "sak", "Error initializing system, err: {}", err,);
