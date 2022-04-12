@@ -2,7 +2,7 @@ pub mod address;
 pub mod dial_scheduler;
 pub mod iterator;
 pub mod listener;
-mod operations;
+mod ops;
 pub mod state;
 mod table;
 pub mod task;

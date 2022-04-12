@@ -1,7 +1,7 @@
 use super::{
     address::Address,
-    operations::whoareyou::{initiate, receive},
-    operations::Opcode,
+    ops::whoareyou::{initiate, receive},
+    ops::Opcode,
     DiscState,
 };
 use logger::{tdebug, terr, tinfo, twarn};

@@ -2,7 +2,7 @@ use crate::state::DiscState;
 
 use super::{
     address::Address,
-    operations::whoareyou::{self, initiate::WhoareyouInitError},
+    ops::whoareyou::{self, initiate::WhoareyouInitError},
 };
 use log::{debug, error, warn};
 use std::{pin::Pin, sync::Arc};
