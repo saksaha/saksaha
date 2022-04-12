@@ -1,7 +1,7 @@
 use logger::{terr, tinfo};
 use saksaha::{
     pconfig::PConfig,
-    system::{system_args::SystemArgs, System},
+    system::{System, SystemArgs},
 };
 
 mod cli;
@@ -10,8 +10,6 @@ fn main() {
     print!("Saksaha is launching...\n");
 
     logger::init();
-
-    // saksaha::system::
 
     let cli_args = match cli::get_args() {
         Ok(a) => {
@@ -65,6 +63,7 @@ fn main() {
         disc_port: cli_args.disc_port,
         p2p_port: cli_args.p2p_port,
         bootstrap_urls: cli_args.bootstrap_urls,
+        dev_mode: cli_args.dev_mode,
         pconfig: pconf,
     };
 

@@ -1,4 +1,7 @@
 use super::{System, SystemArgs};
+use crate::config::default::dev_local::get_dev_local_config;
+use crate::config::default::{get_empty_default_config, DConfig};
+use crate::config::{Config, P2PConfig};
 use crate::{
     ledger::Ledger, network::socket, p2p::host::Host, pconfig::PConfig,
     rpc::RPC,
@@ -15,7 +18,16 @@ impl System {
         sys_args: SystemArgs,
     ) -> Result<(), String> {
         tinfo!("saksaha", "system", "");
-        tinfo!("saksaha", "system", "System is starting...");
+        tinfo!(
+            "saksaha",
+            "system",
+            "System is starting, system arguments: {:?}",
+            sys_args,
+        );
+
+        let dconfig = load_default_config(&sys_args.dev_mode);
+
+        let conf = resolve_config(&sys_args, dconfig);
 
         let sockets =
             socket::setup_sockets(sys_args.rpc_port, sys_args.p2p_port).await?;
@@ -52,4 +64,22 @@ impl System {
 
         Ok(())
     }
+}
+
+fn load_default_config(dev_mode: &Option<String>) -> DConfig {
+    match dev_mode.as_deref() {
+        Some("dev-local") => {
+            return get_dev_local_config();
+        }
+        Some(&_) => return get_empty_default_config(),
+        None => return get_empty_default_config(),
+    }
+}
+
+fn resolve_config(sys_args: &SystemArgs, dconfig: DConfig) {
+    // Config {
+    //     p2p: {
+    //         identity:
+    //     }
+    // }
 }

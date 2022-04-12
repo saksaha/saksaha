@@ -32,7 +32,10 @@ impl Host {
         // default_bootstrap_urls: &str,
     ) -> Result<Host, String> {
         let identity = {
-            let id = Identity::new(p2p_config.secret, p2p_config.public_key)?;
+            let id = Identity::new(
+                p2p_config.identity.secret,
+                p2p_config.identity.public_key,
+            )?;
             Arc::new(id)
         };
 
