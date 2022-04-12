@@ -1,4 +1,4 @@
-use crate::task::Task;
+use crate::task::DiscoveryTask;
 use p2p_active_calls::ActiveCalls;
 use p2p_identity::P2PIdentity;
 use std::sync::Arc;

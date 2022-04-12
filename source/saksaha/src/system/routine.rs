@@ -2,6 +2,8 @@ use super::{System, SystemArgs};
 use crate::config::default::dev_local::get_dev_local_config;
 use crate::config::default::{get_empty_default_config, DConfig};
 use crate::config::{Config, P2PConfig, RPCConfig};
+use crate::p2p::host::HostArgs;
+use crate::pconfig::p2p::PersistedUnknownPeer;
 use crate::{
     ledger::Ledger,
     network::socket,
@@ -10,6 +12,8 @@ use crate::{
     rpc::RPC,
 };
 use logger::{tdebug, terr, tinfo};
+use p2p_identity::peer::UnknownPeer;
+use peer::PeerStore;
 use std::sync::Arc;
 use tokio::{self, signal};
 
@@ -25,10 +29,6 @@ impl System {
 
         tinfo!("saksaha", "system", "Resolved config: {:?}", config);
 
-        // let sockets =
-        //     socket::setup_sockets(config.rpc.rpc_port, config.p2p.p2p_port)
-        //         .await?;
-
         let (rpc_socket, rpc_port) =
             match socket::bind_tcp_socket(config.rpc.rpc_port).await {
                 Ok(s) => s,
@@ -42,6 +42,11 @@ impl System {
                     return Err(err);
                 }
             };
+
+        let peer_store = {
+            let ps = PeerStore::init().await?;
+            Arc::new(ps)
+        };
 
         let rpc = RPC::new(rpc_socket, rpc_port);
 
@@ -59,20 +64,18 @@ impl System {
                 }
             };
 
-        let p2p_host = Host::init(
+        let p2p_host_args = HostArgs {
             p2p_socket,
             p2p_port,
-            config.p2p.disc_port,
-            config.p2p.peers,
+            disc_port: config.p2p.disc_port,
+            unknown_peers: config.p2p.unknown_peers,
             rpc_port,
-            config.p2p.identity,
-            // sys_args.pconfig.p2p,
-            // sockets.rpc.port,
-            // sockets.p2p,
-            // sys_args.disc_port,
-            // sys_args.bootstrap_urls,
-        )
-        .await?;
+            identity: config.p2p.identity,
+            bootstrap_urls: config.p2p.bootstrap_urls,
+            peer_store,
+        };
+
+        let p2p_host = Host::init(p2p_host_args).await?;
 
         // let host_state = p2p_host.host_state.clone();
         // let peer_store = host_state.peer_store.clone();
@@ -111,13 +114,13 @@ fn resolve_config(sys_args: &SystemArgs, dconfig: DConfig) -> Config {
     let identity = &sys_args.pconfig.p2p.identity;
     let pconfig = &sys_args.pconfig;
 
-    let peers = {
-        let mut p = dconfig.p2p.peers;
+    let unknown_peers = {
+        let mut p = dconfig.p2p.unknown_peers;
 
-        if let Some(peers) = &pconfig.p2p.peers {
-            p = peers.to_vec();
+        if let Some(up) = &pconfig.p2p.unknown_peers {
+            let up = convert_persisted_unknown_peers_into_unknown_peers(up);
+            p = up;
         }
-
         p
     };
 
@@ -126,13 +129,32 @@ fn resolve_config(sys_args: &SystemArgs, dconfig: DConfig) -> Config {
             rpc_port: sys_args.rpc_port,
         },
         p2p: P2PConfig {
+            bootstrap_urls: sys_args.bootstrap_urls.clone(),
             p2p_port: sys_args.p2p_port,
             disc_port: sys_args.disc_port,
             identity: Identity {
                 secret: identity.secret.clone(),
                 public_key: identity.public_key.clone(),
             },
-            peers,
+            unknown_peers,
         },
     }
+}
+
+fn convert_persisted_unknown_peers_into_unknown_peers(
+    persisted_unknown_peers: &Vec<PersistedUnknownPeer>,
+) -> Vec<UnknownPeer> {
+    let mut v = vec![];
+
+    for up in persisted_unknown_peers {
+        v.push(UnknownPeer {
+            ip: up.ip.to_string(),
+            disc_port: up.disc_port,
+            p2p_port: up.p2p_port,
+            secret: up.secret.clone(),
+            public_key: up.public_key.clone(),
+        });
+    }
+
+    v
 }
