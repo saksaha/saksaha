@@ -1,4 +1,4 @@
-use crate::v1::operations::{Message, Opcode};
+use crate::v1::ops::{Message, Opcode};
 use k256::ecdsa::Signature;
 use p2p_identity::PUBLIC_KEY_LEN;
 use std::convert::TryInto;

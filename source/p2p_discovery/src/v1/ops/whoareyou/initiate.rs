@@ -1,7 +1,7 @@
 use super::check;
 use super::msg::{WhoAreYouAck, WhoAreYouSyn};
 use crate::v1::address::Address;
-use crate::v1::operations::Message;
+use crate::v1::ops::Message;
 use crate::v1::table::{Node, NodeValue};
 use crate::v1::DiscState;
 use log::debug;
