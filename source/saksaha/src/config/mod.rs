@@ -1,15 +1,22 @@
+use crate::p2p::identity::Identity;
+
 pub(crate) mod default;
 
+#[derive(Debug)]
 pub(crate) struct Config {
-    p2p: P2PConfig,
+    pub(crate) rpc: RPCConfig,
+    pub(crate) p2p: P2PConfig,
 }
 
-pub(crate) struct Identity {
-    pub secret: String,
-    pub public_key: String,
-}
-
+#[derive(Debug)]
 pub(crate) struct P2PConfig {
+    pub(crate) disc_port: Option<u16>,
+    pub(crate) p2p_port: Option<u16>,
     pub(crate) identity: Identity,
     pub(crate) peers: Vec<Identity>,
+}
+
+#[derive(Debug)]
+pub(crate) struct RPCConfig {
+    pub(crate) rpc_port: Option<u16>,
 }

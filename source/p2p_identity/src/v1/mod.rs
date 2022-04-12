@@ -13,15 +13,15 @@ pub type PeerId = [u8; PUBLIC_KEY_LEN];
 pub const PUBLIC_KEY_LEN: usize = 65;
 pub const SAKSAHA: &[u8; 7] = b"saksaha";
 
-pub struct Identity {
+pub struct P2PIdentity {
     pub secret_key: SecretKey,
     pub public_key: PeerId,
     pub peer_id: String,
     pub sig: Signature,
 }
 
-impl Identity {
-    pub fn new(secret: String, peer_id: String) -> Result<Identity, String> {
+impl P2PIdentity {
+    pub fn new(secret: String, peer_id: String) -> Result<P2PIdentity, String> {
         let secret_bytes = match crypto::decode_hex(secret.to_owned()) {
             Ok(v) => v,
             Err(err) => {
@@ -69,7 +69,7 @@ impl Identity {
             sig
         };
 
-        let credential = Identity {
+        let credential = P2PIdentity {
             secret_key,
             public_key,
             peer_id,

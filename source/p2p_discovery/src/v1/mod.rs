@@ -16,7 +16,7 @@ use ::task::task_queue::TaskQueue;
 use colored::Colorize;
 use logger::tinfo;
 use p2p_active_calls::ActiveCalls;
-use p2p_identity::Identity;
+use p2p_identity::P2PIdentity;
 use std::sync::Arc;
 use tokio::net::UdpSocket;
 
@@ -31,7 +31,7 @@ pub struct Discovery {
 
 impl Discovery {
     pub async fn init(
-        id: Arc<Identity>,
+        id: Arc<P2PIdentity>,
         my_disc_port: Option<u16>,
         my_p2p_port: u16,
         bootstrap_urls: Option<Vec<String>>,

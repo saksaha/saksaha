@@ -3,7 +3,7 @@ use crate::p2p::task::HSInitTaskParams;
 use super::{state::HostState, task::Task};
 use log::{debug, error, info, warn};
 use p2p_discovery::iterator::Iterator;
-use p2p_identity::Identity;
+use p2p_identity::P2PIdentity;
 use peer::PeerStore;
 use std::{
     sync::Arc,

@@ -1,5 +1,6 @@
 use super::{
     dial_scheduler::DialScheduler,
+    identity::Identity,
     listener::Listener,
     state::HostState,
     task::{P2PTaskRunner, Task},
@@ -9,10 +10,11 @@ use colored::Colorize;
 use logger::tinfo;
 use p2p_active_calls::ActiveCalls;
 use p2p_discovery::Discovery;
-use p2p_identity::Identity;
+use p2p_identity::P2PIdentity;
 use peer::PeerStore;
 use std::sync::Arc;
 use task::task_queue::TaskQueue;
+use tokio::net::TcpListener;
 
 pub(crate) struct Host {
     pub host_state: Arc<HostState>,
@@ -24,18 +26,22 @@ pub(crate) struct Host {
 
 impl Host {
     pub async fn init(
-        p2p_config: PersistedP2PConfig,
-        my_rpc_port: u16,
-        p2p_socket: TcpSocket,
+        p2p_socket: Arc<TcpListener>,
+        p2p_port: u16,
         disc_port: Option<u16>,
+        peers: Vec<Identity>,
+        rpc_port: u16,
+        identity: Identity,
         bootstrap_urls: Option<Vec<String>>,
+        // p2p_config: PersistedP2PConfig,
+        // my_rpc_port: u16,
+        // p2p_socket: TcpSocket,
+        // disc_port: Option<u16>,
+        // bootstrap_urls: Option<Vec<String>>,
         // default_bootstrap_urls: &str,
     ) -> Result<Host, String> {
         let identity = {
-            let id = Identity::new(
-                p2p_config.identity.secret,
-                p2p_config.identity.public_key,
-            )?;
+            let id = P2PIdentity::new(identity.secret, identity.public_key)?;
             Arc::new(id)
         };
 
@@ -58,8 +64,8 @@ impl Host {
         let host_state = {
             let s = HostState::new(
                 identity.clone(),
-                my_rpc_port,
-                p2p_socket.port,
+                rpc_port,
+                p2p_port,
                 task_queue.clone(),
                 peer_store.clone(),
                 handshake_active_calls,
@@ -68,7 +74,7 @@ impl Host {
         };
 
         let listener = {
-            let l = Listener::new(p2p_socket.listener, host_state.clone());
+            let l = Listener::new(p2p_socket, host_state.clone());
             Arc::new(l)
         };
 
@@ -76,7 +82,7 @@ impl Host {
             let d = Discovery::init(
                 identity.clone(),
                 disc_port,
-                p2p_socket.port,
+                p2p_port,
                 bootstrap_urls,
                 // default_bootstrap_urls,
             )
