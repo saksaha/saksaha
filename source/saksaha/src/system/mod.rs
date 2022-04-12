@@ -1,6 +1,5 @@
 mod routine;
 mod shutdown;
-pub mod system_args;
 
 use crate::{
     ledger::Ledger, network::socket, p2p::host::Host, pconfig::PConfig,
@@ -10,7 +9,6 @@ use logger::terr;
 use logger::{tdebug, tinfo};
 use once_cell::sync::OnceCell;
 use std::sync::Arc;
-use system_args::SystemArgs;
 use tokio::{self, signal, sync::Mutex};
 
 static INSTANCE: OnceCell<Arc<System>> = OnceCell::new();
@@ -19,24 +17,52 @@ pub struct System {
     system_state: Arc<Mutex<SystemState>>,
 }
 
+#[derive(Debug)]
+pub struct SystemArgs {
+    pub rpc_port: Option<u16>,
+    pub disc_port: Option<u16>,
+    pub p2p_port: Option<u16>,
+    pub bootstrap_urls: Option<Vec<String>>,
+    pub dev_mode: Option<String>,
+    pub pconfig: PConfig,
+}
+
 struct SystemState {
     p2p_host: Option<Host>,
 }
 
 impl System {
     pub fn get_instance() -> Result<Arc<System>, String> {
-        let system = {
-            let system_state = {
-                let s = SystemState { p2p_host: None };
-                Arc::new(Mutex::new(s))
+        if let Some(s) = INSTANCE.get() {
+            return Ok(s.clone());
+        } else {
+            let system = {
+                let system_state = {
+                    let s = SystemState { p2p_host: None };
+                    Arc::new(Mutex::new(s))
+                };
+
+                let s = System { system_state };
+                Arc::new(s)
             };
 
-            let s = System { system_state };
-            Arc::new(s)
-        };
+            match INSTANCE.set(system.clone()) {
+                Ok(_) => {
+                    tinfo!("saksaha", "system", "System is made static.",);
+                    return Ok(system);
+                }
+                Err(_) => {
+                    terr!(
+                        "saksaha",
+                        "system",
+                        "Cannot make System static. Container is likely \
+                        already full. Have you called this function before?",
+                    );
 
-        System::make_static(system.clone());
-        Ok(system)
+                    unreachable!();
+                }
+            }
+        }
     }
 
     pub fn start(&self, sys_args: SystemArgs) -> Result<(), String> {
@@ -59,8 +85,6 @@ impl System {
                         System::shutdown();
                     }
                 };
-
-                // System::handle_ctrl_c().await;
             }),
             Err(err) => {
                 return Err(format!("runtime fail, err: {:?}", err));
@@ -68,24 +92,6 @@ impl System {
         };
 
         Ok(())
-    }
-
-    fn make_static(system: Arc<System>) {
-        match INSTANCE.set(system) {
-            Ok(_) => {
-                tinfo!("saksaha", "system", "System is made static.",);
-            }
-            Err(_) => {
-                terr!(
-                    "saksaha",
-                    "system",
-                    "Cannot make System static. Container is likely already \
-                    full. Have you called this function before?",
-                );
-
-                std::process::exit(1);
-            }
-        }
     }
 
     async fn handle_ctrl_c() {

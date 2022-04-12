@@ -13,7 +13,7 @@ use self::{
 };
 use crate::{iterator::Iterator, task::DiscTaskRunner};
 use ::task::task_queue::TaskQueue;
-use colored::*;
+use colored::Colorize;
 use logger::tinfo;
 use p2p_active_calls::ActiveCalls;
 use p2p_identity::Identity;

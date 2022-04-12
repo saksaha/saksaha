@@ -2,6 +2,7 @@ pub mod error;
 pub mod fs;
 
 use self::error::PConfigError;
+use colored::Colorize;
 use fs::FS;
 use logger::tinfo;
 use serde::{Deserialize, Serialize};
@@ -13,9 +14,14 @@ pub struct PConfig {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct PersistedP2PConfig {
+pub struct Identity {
     pub secret: String,
     pub public_key: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PersistedP2PConfig {
+    pub identity: Identity,
 }
 
 impl PConfig {
@@ -73,14 +79,16 @@ impl PConfig {
     }
 
     fn new() -> PConfig {
-        tinfo!("saksaha", "", "Creating a new config");
+        tinfo!("saksaha", "", "Creating a new config".yellow());
 
         let sk = crypto::generate_key();
         let (sk, pk) = crypto::encode_into_key_pair(sk);
         let pconf = PConfig {
             p2p: PersistedP2PConfig {
-                secret: sk,
-                public_key: pk,
+                identity: Identity {
+                    secret: sk,
+                    public_key: pk,
+                },
             },
         };
 

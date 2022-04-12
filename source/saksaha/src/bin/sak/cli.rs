@@ -9,6 +9,7 @@ pub(crate) struct CLIArgs {
     pub(crate) rpc_port: Option<u16>,
     pub(crate) disc_port: Option<u16>,
     pub(crate) p2p_port: Option<u16>,
+    pub(crate) dev_mode: Option<String>,
     pub(crate) bootstrap_urls: Option<Vec<String>>,
 }
 
@@ -18,11 +19,12 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
         .author("Saksaha <elden@saksaha.com>")
         .about("Sakaha network reference implementation")
         .arg(arg!(-c --config [File]
-                    "Saksaha configuration file, usually created at\n\
+                    "Saksaha configuration file path, usually created at\n\
                     [[OS default config path]]/saksaha/config.json "))
         .arg(arg!(--"rpc-port" [Port] "Your RPC port"))
         .arg(arg!(--"disc-port" [Port] "Your P2P discovery port"))
         .arg(arg!(--"p2p-port" [Port] "Your p2p port"))
+        .arg(arg!(--"dev-mode" [Mode] "Dev mode. e.g. dev-local"))
         .arg(arg!(--"bootstrap-urls" [Endpoints]
             "Bootstrap peer URLs to start discover, delimited by a comma,\n
                 e.g.\n
@@ -77,6 +79,11 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
         None => None,
     };
 
+    let dev_mode = match matches.value_of("dev-mode") {
+        Some(m) => Some(String::from(m)),
+        None => None,
+    };
+
     let bootstrap_urls = match matches.values_of("bootstrap-urls") {
         Some(b) => Some(b.map(str::to_string).collect()),
         None => None,
@@ -87,6 +94,7 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
         rpc_port,
         disc_port,
         p2p_port,
+        dev_mode,
         bootstrap_urls,
     })
 }

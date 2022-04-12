@@ -1,13 +1,15 @@
-pub mod dev_local;
+pub(crate) mod default;
 
-pub struct Identity {
+pub(crate) struct Config {
+    p2p: P2PConfig,
+}
+
+pub(crate) struct Identity {
     pub secret: String,
     pub public_key: String,
 }
 
-pub struct P2PConfig {
-    pub local_1: Identity,
-    pub local_2: Identity,
-    pub local_3: Identity,
-    pub local_4: Identity,
+pub(crate) struct P2PConfig {
+    pub(crate) identity: Identity,
+    pub(crate) peers: Vec<Identity>,
 }
