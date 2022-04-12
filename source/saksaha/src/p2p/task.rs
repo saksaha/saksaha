@@ -4,7 +4,7 @@ use p2p_identity::{P2PIdentity, PeerId, PUBLIC_KEY_LEN};
 use p2p_transport::{HandshakeInitError, HandshakeInitParams};
 use peer::{Peer, PeerStore, PeerValue, RegisteredPeerValue};
 use std::{pin::Pin, sync::Arc};
-use task::task_queue::{TaskResult, TaskRun};
+use task::task_queue::{TaskHandle, TaskResult};
 use tokio::{io::AsyncBufReadExt, io::AsyncReadExt, sync::Mutex};
 
 #[derive(Clone)]
@@ -25,17 +25,15 @@ pub(crate) struct HSInitTaskParams {
     pub handshake_active_calls: Arc<ActiveCalls>,
 }
 
-pub(crate) struct P2PTaskRunner;
+pub(crate) struct P2PTaskHandler;
 
-impl TaskRun<Task> for P2PTaskRunner {
-    fn run<'a>(
+impl TaskHandle<Task> for P2PTaskHandler {
+    fn handle_task<'a>(
         &'a self,
         task: Task,
     ) -> Pin<Box<dyn std::future::Future<Output = TaskResult> + Send + 'a>>
-// where
-    //     Self: Sync + 'a,
     {
-        async fn run(_self: &P2PTaskRunner) -> TaskResult {
+        async fn run(_self: &P2PTaskHandler) -> TaskResult {
             /* the original method body */
             return TaskResult::Success;
         }

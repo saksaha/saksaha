@@ -1,31 +1,20 @@
 pub mod error;
 pub mod fs;
+pub mod p2p;
 
 use self::error::PConfigError;
 use crate::p2p::identity::Identity;
 use colored::Colorize;
 use fs::FS;
 use logger::tinfo;
+use p2p::{PersistedP2PConfig, PersistedUnknownPeer};
+use p2p_identity::peer::UnknownPeer;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct PConfig {
     pub p2p: PersistedP2PConfig,
-}
-
-// #[derive(Serialize, Deserialize, Debug)]
-// pub struct Identity {
-//     pub secret: String,
-//     pub public_key: String,
-// }
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct PersistedP2PConfig {
-    pub identity: Identity,
-    pub peers: Option<Vec<Identity>>,
-    pub p2p_port: Option<u16>,
-    pub disc_port: Option<u16>,
 }
 
 impl PConfig {
@@ -93,7 +82,7 @@ impl PConfig {
                     secret: sk,
                     public_key: pk,
                 },
-                peers: None,
+                unknown_peers: None,
                 p2p_port: None,
                 disc_port: None,
             },

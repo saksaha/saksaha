@@ -33,24 +33,18 @@ where
     max_retry: usize,
     min_interval: Duration,
     is_running: Arc<Mutex<bool>>,
-    task_runner: Arc<Box<dyn TaskRun<T> + Send + Sync>>,
+    task_handler: Arc<Box<dyn TaskHandle<T> + Send + Sync>>,
     task_queue_name: String,
 }
 
-pub trait TaskRun<T>
+pub trait TaskHandle<T>
 where
     T: Clone + Send + Sync,
 {
-    fn run<'a>(
+    fn handle_task<'a>(
         &'a self,
         task: T,
     ) -> Pin<Box<dyn std::future::Future<Output = TaskResult> + Send + 'a>>;
-
-    // fn run<'a>(&self, task: T) -> Pin<Box<dyn std::future::Future<Output = ()> + 'a>>;
-    // fn run<'a>(
-    //     &'a self,
-    //     task: T,
-    // ) -> Box<dyn std::future::Future<Output = ()>> where Self: 'a;
 }
 
 impl<T> TaskQueue<T>
@@ -59,7 +53,7 @@ where
 {
     pub fn new(
         task_queue_name: String,
-        task_runner: Box<dyn TaskRun<T> + Send + Sync>,
+        task_handler: Box<dyn TaskHandle<T> + Send + Sync>,
     ) -> TaskQueue<T> {
         let (tx, rx) = mpsc::channel(10);
 
@@ -69,8 +63,8 @@ where
             max_retry: 2,
             min_interval: Duration::from_millis(1000),
             is_running: Arc::new(Mutex::new(false)),
-            task_runner: Arc::new(task_runner),
-            task_queue_name: task_queue_name,
+            task_handler: Arc::new(task_handler),
+            task_queue_name,
         }
     }
 
@@ -95,7 +89,7 @@ where
 
         let max_retry = self.max_retry;
         let min_interval = self.min_interval;
-        let task_runner = self.task_runner.clone();
+        let task_handler = self.task_handler.clone();
         let task_queue_name = self.task_queue_name.clone();
 
         tokio::spawn(async move {
@@ -110,8 +104,9 @@ where
                     None => {
                         tdebug!(
                             "task",
-                            "",
-                            "Can't take a new task, channel has been closed, task_queue: {}",
+                            "task_queue",
+                            "Can't take a new task, channel has been closed, \
+                            task_queue: {}",
                             task_queue_name,
                         );
                         break;
@@ -125,43 +120,46 @@ where
                 let task = task_instance.task.clone();
                 let start = SystemTime::now();
 
-                // match task_runner.run(task) {
-                //     TaskResult::Success => (),
-                //     TaskResult::FailRetriable(err) => {
-                //         let mut task_instance = task_instance.clone();
-                //         task_instance.fail_count += 1;
+                match task_handler.handle_task(task).await {
+                    TaskResult::Success => (),
+                    TaskResult::FailRetriable(err) => {
+                        let mut task_instance = task_instance.clone();
+                        task_instance.fail_count += 1;
 
-                //         tdebug!(
-                //             "task",
-                //             "Task failed, will retry, queue_name: {} \
-                //                 fail_count: {}, err: {}",
-                //             task_queue_name,
-                //             task_instance.fail_count,
-                //             err
-                //         );
+                        tdebug!(
+                            "task",
+                            "task_queue",
+                            "Task failed, will retry, queue_name: {:?} \
+                                fail_count: {}, err: {}",
+                            task_queue_name,
+                            task_instance.fail_count,
+                            err
+                        );
 
-                //         match tx.send(task_instance).await {
-                //             Ok(_) => (),
-                //             Err(err) => {
-                //                 terr!(
-                //                     "task",
-                //                     "Can't enqueue new task, queue_name: {} \
-                //                     err: {}",
-                //                     task_queue_name,
-                //                     err,
-                //                 )
-                //             }
-                //         };
-                //     }
-                //     TaskResult::Fail(err) => {
-                //         tdebug!(
-                //             "task",
-                //             "Task failed, queue_name: {}, err: {}",
-                //             task_queue_name,
-                //             err,
-                //         );
-                //     }
-                // };
+                        match tx.send(task_instance).await {
+                            Ok(_) => (),
+                            Err(err) => {
+                                terr!(
+                                    "task",
+                                    "task_queue",
+                                    "Can't enqueue new task, queue_name: {} \
+                                    err: {}",
+                                    task_queue_name,
+                                    err,
+                                )
+                            }
+                        };
+                    }
+                    TaskResult::Fail(err) => {
+                        tdebug!(
+                            "task",
+                            "task_queue",
+                            "Task failed, queue_name: {}, err: {}",
+                            task_queue_name,
+                            err,
+                        );
+                    }
+                };
 
                 match start.elapsed() {
                     Ok(d) => {

@@ -1,3 +1,5 @@
+use p2p_identity::peer::UnknownPeer;
+
 use crate::p2p::identity::Identity;
 
 pub(crate) mod default;
@@ -10,10 +12,11 @@ pub(crate) struct Config {
 
 #[derive(Debug)]
 pub(crate) struct P2PConfig {
+    pub(crate) bootstrap_urls: Option<Vec<String>>,
     pub(crate) disc_port: Option<u16>,
     pub(crate) p2p_port: Option<u16>,
     pub(crate) identity: Identity,
-    pub(crate) peers: Vec<Identity>,
+    pub(crate) unknown_peers: Vec<UnknownPeer>,
 }
 
 #[derive(Debug)]

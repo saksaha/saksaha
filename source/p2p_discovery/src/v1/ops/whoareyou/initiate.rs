@@ -5,6 +5,7 @@ use crate::v1::ops::Message;
 use crate::v1::table::{Node, NodeValue};
 use crate::v1::DiscState;
 use log::debug;
+use p2p_identity::peer::UnknownPeer;
 use std::sync::Arc;
 use thiserror::Error;
 use tokio::net::UdpSocket;
@@ -61,12 +62,13 @@ impl Initiate {}
 
 pub(crate) async fn send_who_are_you(
     disc_state: Arc<DiscState>,
-    addr: Address,
+    // addr: Address,
+    unknown_peer: UnknownPeer,
 ) -> Result<(), WhoareyouInitError> {
     let my_disc_port = disc_state.my_disc_port;
     let my_p2p_port = disc_state.my_p2p_port;
 
-    let endpoint = addr.disc_endpoint();
+    let endpoint = unknown_peer.disc_endpoint();
 
     if check::is_my_endpoint(my_disc_port, &endpoint) {
         return Err(WhoareyouInitError::MyEndpoint { endpoint });

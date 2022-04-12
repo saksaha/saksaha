@@ -9,14 +9,14 @@ pub mod task;
 
 use self::{
     dial_scheduler::DialScheduler, listener::Listener, state::DiscState,
-    table::Table, task::Task,
+    table::Table, task::DiscoveryTask,
 };
-use crate::{iterator::Iterator, task::DiscTaskRunner};
+use crate::{iterator::Iterator, task::DiscTaskHandler};
 use ::task::task_queue::TaskQueue;
 use colored::Colorize;
-use logger::tinfo;
+use logger::{tinfo, twarn};
 use p2p_active_calls::ActiveCalls;
-use p2p_identity::P2PIdentity;
+use p2p_identity::{peer::UnknownPeer, P2PIdentity};
 use std::sync::Arc;
 use tokio::net::UdpSocket;
 
@@ -26,17 +26,24 @@ pub struct Discovery {
     listener: Arc<Listener>,
     disc_state: Arc<DiscState>,
     dial_scheduler: Arc<DialScheduler>,
-    task_queue: Arc<TaskQueue<Task>>,
+    task_queue: Arc<TaskQueue<DiscoveryTask>>,
+}
+
+pub struct DiscoveryArgs {
+    pub p2p_identity: Arc<P2PIdentity>,
+    pub disc_port: Option<u16>,
+    pub p2p_port: u16,
+    pub bootstrap_urls: Option<Vec<String>>,
+    pub unknown_peers: Vec<UnknownPeer>,
 }
 
 impl Discovery {
-    pub async fn init(
-        id: Arc<P2PIdentity>,
-        my_disc_port: Option<u16>,
-        my_p2p_port: u16,
-        bootstrap_urls: Option<Vec<String>>,
-        // default_botstrap_urls: &str,
-    ) -> Result<Discovery, String> {
+    pub async fn init(disc_args: DiscoveryArgs) -> Result<Discovery, String> {
+        let unknown_peers = merge_bootstrap_urls(
+            disc_args.bootstrap_urls,
+            disc_args.unknown_peers,
+        );
+
         let table = {
             let t = match Table::init().await {
                 Ok(t) => t,
@@ -52,28 +59,32 @@ impl Discovery {
             Arc::new(c)
         };
 
-        let (udp_socket, my_disc_port) = {
-            let (socket, port) = setup_udp_socket(my_disc_port).await?;
+        let (udp_socket, disc_port) = {
+            let (socket, port) = setup_udp_socket(disc_args.disc_port).await?;
             (Arc::new(socket), port)
         };
 
         let disc_state = {
             let s = DiscState::new(
-                id,
+                disc_args.p2p_identity,
                 table,
                 active_calls,
                 udp_socket.clone(),
-                my_disc_port,
-                my_p2p_port,
+                disc_port,
+                disc_args.p2p_port,
                 // task_queue.clone(),
             );
             Arc::new(s)
         };
 
+        let disc_task_handler = DiscTaskHandler {
+            disc_state: disc_state.clone(),
+        };
+
         let task_queue = {
             let q = TaskQueue::new(
-                "p2p_discovery".to_string(),
-                Box::new(DiscTaskRunner::new(disc_state.clone())),
+                String::from("p2p_discovery"),
+                Box::new(disc_task_handler),
             );
             Arc::new(q)
         };
@@ -96,9 +107,9 @@ impl Discovery {
             let s = DialScheduler::init(
                 disc_state.clone(),
                 // whoareyou_op.clone(),
-                bootstrap_urls,
-                // default_bootstrap_urls,
+                // disc_args.bootstrap_urls,
                 task_queue.clone(),
+                unknown_peers,
             )
             .await;
             Arc::new(s)
@@ -116,8 +127,10 @@ impl Discovery {
 
     pub async fn start(&self) -> Result<(), String> {
         self.listener.start()?;
-        self.dial_scheduler.start()?;
+
         self.task_queue.run_loop();
+
+        self.dial_scheduler.start()?;
 
         Ok(())
     }
@@ -167,4 +180,52 @@ pub async fn setup_udp_socket(
     };
 
     Ok((udp_socket, port))
+}
+
+fn merge_bootstrap_urls(
+    bootstrap_urls: Option<Vec<String>>,
+    unknown_peers: Vec<UnknownPeer>,
+) -> Vec<UnknownPeer> {
+    let mut resulting_peers = Vec::from(unknown_peers);
+
+    if let Some(urls) = bootstrap_urls {
+        let mut cnt = 0;
+
+        for url in urls {
+            match UnknownPeer::parse(url.clone()) {
+                Ok(p) => {
+                    cnt += 1;
+
+                    tinfo!(
+                        "p2p_discovery",
+                        "dial_schd",
+                        "Bootstrap - [{}] {}",
+                        cnt,
+                        p.short_url(),
+                    );
+
+                    resulting_peers.push(p);
+                }
+                Err(err) => {
+                    twarn!(
+                        "p2p_discovery",
+                        "dial_schd",
+                        "Failed to parse url, url: {}, \
+                            err: {:?}",
+                        url.clone(),
+                        err,
+                    );
+                }
+            };
+        }
+
+        tinfo!(
+            "p2p_discovery",
+            "dial_schd",
+            "Bootstrap - Total bootstrapped node count: {}",
+            cnt,
+        );
+    }
+
+    resulting_peers
 }

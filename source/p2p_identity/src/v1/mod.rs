@@ -1,3 +1,5 @@
+pub mod peer;
+
 pub use k256::{
     ecdh::EphemeralSecret,
     ecdsa::{

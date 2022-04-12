@@ -5,49 +5,53 @@ use super::{
     ops::whoareyou::{self, initiate::WhoareyouInitError},
 };
 use log::{debug, error, warn};
+use p2p_identity::peer::UnknownPeer;
 use std::{pin::Pin, sync::Arc};
-use task::task_queue::{TaskQueue, TaskResult, TaskRun};
+use task::task_queue::{TaskHandle, TaskQueue, TaskResult};
 
 #[derive(Clone)]
-pub(crate) enum Task {
+pub(crate) enum DiscoveryTask {
     InitiateWhoAreYou {
         // disc_state: Arc<DiscState>,
         // whoareyou_op: Arc<WhoareyouOp>,
-        addr: Address,
+        // addr: Address,
+        unknown_peer: UnknownPeer,
     },
 }
 
-pub(crate) struct DiscTaskRunner {
-    disc_state: Arc<DiscState>,
+pub(crate) struct DiscTaskHandler {
+    pub(crate) disc_state: Arc<DiscState>,
     // task_queue: Arc<TaskQueue<Task>>,
 }
 
-impl DiscTaskRunner {
-    pub fn new(
-        disc_state: Arc<DiscState>,
-        // task_queue: Arc<TaskQueue<Task>>,
-    ) -> DiscTaskRunner {
-        return DiscTaskRunner {
-            disc_state,
-            // task_queue,
-        };
-    }
-}
+// impl DiscTaskHandler {
+//     pub fn new(
+//         disc_state: Arc<DiscState>,
+//         // task_queue: Arc<TaskQueue<Task>>,
+//     ) -> DiscTaskHandler {
+//         return DiscTaskRunner {
+//             disc_state,
+//             // task_queue,
+//         };
+//     }
+// }
 
-impl TaskRun<Task> for DiscTaskRunner {
-    fn run<'a>(
+impl TaskHandle<DiscoveryTask> for DiscTaskHandler {
+    fn handle_task<'a>(
         &'a self,
-        task: Task,
+        task: DiscoveryTask,
     ) -> Pin<Box<dyn std::future::Future<Output = TaskResult> + Send + 'a>>
-// where
-    //     Self: Sync + 'a,
     {
-        async fn run(_self: &DiscTaskRunner, task: Task) -> TaskResult {
+        async fn run(
+            _self: &DiscTaskHandler,
+            task: DiscoveryTask,
+        ) -> TaskResult {
             match task {
-                Task::InitiateWhoAreYou { addr } => {
+                DiscoveryTask::InitiateWhoAreYou { unknown_peer } => {
                     let disc_state = _self.disc_state.clone();
                     match whoareyou::initiate::send_who_are_you(
-                        disc_state, addr,
+                        disc_state,
+                        unknown_peer,
                     )
                     .await
                     {

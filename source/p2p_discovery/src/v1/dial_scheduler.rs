@@ -1,5 +1,6 @@
-use crate::{address::Address, state::DiscState, task::Task};
+use crate::{address::Address, state::DiscState, task::DiscoveryTask};
 use logger::{tdebug, terr, tinfo, twarn};
+use p2p_identity::peer::UnknownPeer;
 use std::{
     sync::Arc,
     time::{Duration, SystemTime},
@@ -17,9 +18,10 @@ impl DialScheduler {
     pub async fn init(
         disc_state: Arc<DiscState>,
         // whoareyou_op: Arc<WhoareyouOp>,
-        bootstrap_urls: Option<Vec<String>>,
+        // bootstrap_urls: Option<Vec<String>>,
         // default_bootstrap_urls: &str,
-        task_queue: Arc<TaskQueue<Task>>,
+        task_queue: Arc<TaskQueue<DiscoveryTask>>,
+        unknown_peers: Vec<UnknownPeer>,
     ) -> DialScheduler {
         let min_interval = Duration::from_millis(2000);
 
@@ -33,9 +35,10 @@ impl DialScheduler {
         };
 
         d.enqueue_initial_tasks(
-            bootstrap_urls,
+            // bootstrap_urls,
             // default_bootstrap_urls,
             task_queue,
+            unknown_peers,
         )
         .await;
 
@@ -50,83 +53,31 @@ impl DialScheduler {
 
     pub async fn enqueue_initial_tasks(
         &self,
-        bootstrap_urls: Option<Vec<String>>,
+        // bootstrap_urls: Option<Vec<String>>,
         // default_bootstrap_urls: &str,
-        task_queue: Arc<TaskQueue<Task>>,
+        task_queue: Arc<TaskQueue<DiscoveryTask>>,
+        unknown_peers: Vec<UnknownPeer>,
     ) {
-        let bootstrap_urls = match bootstrap_urls {
-            Some(u) => u,
-            None => Vec::new(),
-        };
+        for unknown_peer in unknown_peers {
+            let task = DiscoveryTask::InitiateWhoAreYou {
+                // whoareyou_op: self.whoareyou_op.clone(),
+                // disc_state: self.disc_state.clone(),
+                // addr,
+                unknown_peer,
+            };
 
-        // let default_bootstrap_urls: Vec<String> = default_bootstrap_urls
-        //     .lines()
-        //     .map(|l| l.to_string())
-        //     .collect();
-
-        let urls = [
-            bootstrap_urls,
-            // default_bootstrap_urls,
-        ]
-        .concat();
-
-        let count = {
-            let mut cnt = 0;
-            for url in urls {
-                let addr = match Address::parse(url.clone()) {
-                    Ok(n) => {
-                        cnt += 1;
-                        n
-                    }
-                    Err(err) => {
-                        twarn!(
-                            "p2p_discovery",
-                            "dial_schd",
-                            "Discarding url failed to parse, url: {}, \
-                            err: {:?}",
-                            url.clone(),
-                            err,
-                        );
-
-                        continue;
-                    }
-                };
-
-                tinfo!(
-                    "p2p_discovery",
-                    "dial_schd",
-                    "Bootstrap - [{}] {}",
-                    cnt,
-                    addr.short_url()
-                );
-
-                let task = Task::InitiateWhoAreYou {
-                    // whoareyou_op: self.whoareyou_op.clone(),
-                    // disc_state: self.disc_state.clone(),
-                    addr,
-                };
-
-                match task_queue.push(task).await {
-                    Ok(_) => (),
-                    Err(err) => {
-                        twarn!(
-                            "p2p_discovery",
-                            "dial_schd",
-                            "Couldn't enque new task, err: {}",
-                            err
-                        );
-                    }
-                };
-            }
-            cnt
-        };
-
-        tinfo!(
-            "p2p_discovery",
-            "dial_schd",
-            "Bootstrap - Total bootstrapped node count: {}",
-            count,
-        );
+            match task_queue.push(task).await {
+                Ok(_) => {}
+                Err(err) => {
+                    twarn!(
+                        "p2p_discovery",
+                        "dial_schd",
+                        "Couldn't enque new task, err: {}",
+                        err
+                    );
+                }
+            };
+        }
     }
 }
 
