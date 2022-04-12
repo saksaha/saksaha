@@ -1,6 +1,6 @@
 use crate::task::Task;
 use p2p_active_calls::ActiveCalls;
-use p2p_identity::Identity;
+use p2p_identity::P2PIdentity;
 use std::sync::Arc;
 use task::task_queue::TaskQueue;
 use tokio::net::UdpSocket;
@@ -8,7 +8,7 @@ use tokio::net::UdpSocket;
 use super::table::Table;
 
 pub(crate) struct DiscState {
-    pub identity: Arc<Identity>,
+    pub identity: Arc<P2PIdentity>,
     pub udp_socket: Arc<UdpSocket>,
     pub my_disc_port: u16,
     pub my_p2p_port: u16,
@@ -19,7 +19,7 @@ pub(crate) struct DiscState {
 
 impl DiscState {
     pub fn new(
-        identity: Arc<Identity>,
+        identity: Arc<P2PIdentity>,
         table: Arc<Table>,
         active_calls: Arc<ActiveCalls>,
         udp_socket: Arc<UdpSocket>,

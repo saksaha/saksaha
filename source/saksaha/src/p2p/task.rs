@@ -1,6 +1,6 @@
 use log::{debug, error, warn};
 use p2p_active_calls::ActiveCalls;
-use p2p_identity::{Identity, PeerId, PUBLIC_KEY_LEN};
+use p2p_identity::{P2PIdentity, PeerId, PUBLIC_KEY_LEN};
 use p2p_transport::{HandshakeInitError, HandshakeInitParams};
 use peer::{Peer, PeerStore, PeerValue, RegisteredPeerValue};
 use std::{pin::Pin, sync::Arc};
@@ -14,7 +14,7 @@ pub(crate) enum Task {
 
 #[derive(Clone)]
 pub(crate) struct HSInitTaskParams {
-    pub identity: Arc<Identity>,
+    pub identity: Arc<P2PIdentity>,
     pub my_rpc_port: u16,
     pub my_p2p_port: u16,
     pub her_ip: String,

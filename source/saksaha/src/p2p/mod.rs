@@ -1,5 +1,8 @@
+pub mod identity;
+
+pub(crate) mod host;
+
 mod dial_scheduler;
-pub mod host;
 mod listener;
 mod state;
 mod task;

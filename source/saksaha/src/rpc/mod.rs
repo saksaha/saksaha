@@ -7,7 +7,7 @@ pub struct RPC {
 }
 
 impl RPC {
-    pub fn new(tcp_listener: Arc<TcpListener>) -> RPC {
+    pub fn new(tcp_listener: Arc<TcpListener>, rpc_port: u16) -> RPC {
         RPC { tcp_listener }
     }
 
