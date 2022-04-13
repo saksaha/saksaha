@@ -1,7 +1,7 @@
 use super::{
     address::Address,
     ops::whoareyou::{initiate, receive},
-    ops::Opcode,
+    // ops::Opcode,
     DiscState,
 };
 use logger::{tdebug, terr, tinfo, twarn};
@@ -116,49 +116,49 @@ impl Handler {
             return Err(format!("content too short, len: {}", len));
         }
 
-        let opcode = {
-            let c = Opcode::from(buf[4]);
-            if c == Opcode::Undefined {
-                return Err(format!("Undefined opcode, val: {}", buf[4]));
-            }
-            c
-        };
+        // let opcode = {
+        //     let c = Opcode::from(buf[4]);
+        //     if c == Opcode::Undefined {
+        //         return Err(format!("Undefined opcode, val: {}", buf[4]));
+        //     }
+        //     c
+        // };
 
-        match opcode {
-            Opcode::WhoAreYouSyn => {
-                match receive::handle_who_are_you(disc_state, addr.clone(), buf)
-                    .await
-                {
-                    Ok(_) => (),
-                    Err(err) => {
-                        terr!(
-                            "p2p_discovery",
-                            "Request handle fail, err: {}",
-                            err
-                        );
-                    }
-                }
-            }
-            Opcode::WhoAreYouAck => {
-                match initiate::handle_who_are_you_ack(
-                    disc_state,
-                    addr.clone(),
-                    buf,
-                )
-                .await
-                {
-                    Ok(_) => (),
-                    Err(err) => {
-                        terr!(
-                            "p2p_discovery",
-                            "Request handle fail, err: {}",
-                            err
-                        );
-                    }
-                }
-            }
-            Opcode::Undefined => {}
-        };
+        // match opcode {
+        //     Opcode::WhoAreYouSyn => {
+        //         match receive::handle_who_are_you(disc_state, addr.clone(), buf)
+        //             .await
+        //         {
+        //             Ok(_) => (),
+        //             Err(err) => {
+        //                 terr!(
+        //                     "p2p_discovery",
+        //                     "Request handle fail, err: {}",
+        //                     err
+        //                 );
+        //             }
+        //         }
+        //     }
+        //     Opcode::WhoAreYouAck => {
+        //         match initiate::handle_who_are_you_ack(
+        //             disc_state,
+        //             addr.clone(),
+        //             buf,
+        //         )
+        //         .await
+        //         {
+        //             Ok(_) => (),
+        //             Err(err) => {
+        //                 terr!(
+        //                     "p2p_discovery",
+        //                     "Request handle fail, err: {}",
+        //                     err
+        //                 );
+        //             }
+        //         }
+        //     }
+        //     Opcode::Undefined => {}
+        // };
 
         Ok(())
     }

@@ -1,5 +1,6 @@
 pub mod address;
 pub mod dial_scheduler;
+mod frame;
 pub mod iterator;
 pub mod listener;
 mod ops;
@@ -37,6 +38,8 @@ pub struct DiscoveryArgs {
     pub unknown_peers: Vec<UnknownPeer>,
 }
 
+pub type Error = Box<dyn std::error::Error + Send + Sync>;
+
 impl Discovery {
     pub async fn init(disc_args: DiscoveryArgs) -> Result<Discovery, String> {
         let unknown_peers = merge_bootstrap_urls(
@@ -65,15 +68,14 @@ impl Discovery {
         };
 
         let disc_state = {
-            let s = DiscState::new(
-                disc_args.p2p_identity,
+            let s = DiscState {
+                p2p_identity: disc_args.p2p_identity,
                 table,
                 active_calls,
-                udp_socket.clone(),
                 disc_port,
-                disc_args.p2p_port,
-                // task_queue.clone(),
-            );
+                udp_socket: udp_socket.clone(),
+                p2p_port: disc_args.p2p_port,
+            };
             Arc::new(s)
         };
 

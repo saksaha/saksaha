@@ -6,6 +6,8 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+atoi = "0.3.2"
+bytes = "1"
 logger = { path = "../logger" }
 crypto = { path = "../crypto" }
 task = { path = "../task" }

@@ -129,7 +129,7 @@ where
                         tdebug!(
                             "task",
                             "task_queue",
-                            "Task failed, will retry, queue_name: {:?} \
+                            "Task-FailRetriable, will retry, queue_name: {:?} \
                                 fail_count: {}, err: {}",
                             task_queue_name,
                             task_instance.fail_count,
@@ -154,7 +154,7 @@ where
                         tdebug!(
                             "task",
                             "task_queue",
-                            "Task failed, queue_name: {}, err: {}",
+                            "Task-Fail, queue_name: {}, err: {}",
                             task_queue_name,
                             err,
                         );
