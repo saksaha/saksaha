@@ -34,13 +34,7 @@ impl DialScheduler {
             // whoareyou_op,
         };
 
-        d.enqueue_initial_tasks(
-            // bootstrap_urls,
-            // default_bootstrap_urls,
-            task_queue,
-            unknown_peers,
-        )
-        .await;
+        enqueue_initial_tasks(task_queue, unknown_peers).await;
 
         d
     }
@@ -50,34 +44,31 @@ impl DialScheduler {
 
         Ok(())
     }
+}
 
-    pub async fn enqueue_initial_tasks(
-        &self,
-        // bootstrap_urls: Option<Vec<String>>,
-        // default_bootstrap_urls: &str,
-        task_queue: Arc<TaskQueue<DiscoveryTask>>,
-        unknown_peers: Vec<UnknownPeer>,
-    ) {
-        for unknown_peer in unknown_peers {
-            let task = DiscoveryTask::InitiateWhoAreYou {
-                // whoareyou_op: self.whoareyou_op.clone(),
-                // disc_state: self.disc_state.clone(),
-                // addr,
-                unknown_peer,
-            };
+async fn enqueue_initial_tasks(
+    task_queue: Arc<TaskQueue<DiscoveryTask>>,
+    unknown_peers: Vec<UnknownPeer>,
+) {
+    for unknown_peer in unknown_peers {
+        let task = DiscoveryTask::InitiateWhoAreYou {
+            // whoareyou_op: self.whoareyou_op.clone(),
+            // disc_state: self.disc_state.clone(),
+            // addr,
+            unknown_peer,
+        };
 
-            match task_queue.push(task).await {
-                Ok(_) => {}
-                Err(err) => {
-                    twarn!(
-                        "p2p_discovery",
-                        "dial_schd",
-                        "Couldn't enque new task, err: {}",
-                        err
-                    );
-                }
-            };
-        }
+        match task_queue.push(task).await {
+            Ok(_) => {}
+            Err(err) => {
+                twarn!(
+                    "p2p_discovery",
+                    "dial_schd",
+                    "Couldn't enque new task, err: {}",
+                    err
+                );
+            }
+        };
     }
 }
 
