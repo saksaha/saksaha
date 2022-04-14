@@ -3,7 +3,7 @@ use p2p_active_calls::ActiveCalls;
 use p2p_identity::P2PIdentity;
 use peer::PeerStore;
 use std::sync::Arc;
-use task::task_queue::{self, TaskQueue};
+use task_queue::TaskQueue;
 
 pub(crate) struct HostState {
     pub identity: Arc<P2PIdentity>,

@@ -132,7 +132,7 @@ impl HandshakeRoutine {
                 };
 
                 match task_queue
-                    .push(Task::InitiateHandshake(hs_init_task_params))
+                    .push_back(Task::InitiateHandshake(hs_init_task_params))
                     .await
                 {
                     Ok(_) => (),

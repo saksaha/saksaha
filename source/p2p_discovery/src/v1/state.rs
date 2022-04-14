@@ -1,19 +1,20 @@
-use crate::task::DiscoveryTask;
+use super::task::DiscoveryTask;
 use p2p_active_calls::ActiveCalls;
 use p2p_identity::P2PIdentity;
 use std::sync::Arc;
-use task::task_queue::TaskQueue;
+use task_queue::TaskQueue;
 use tokio::net::UdpSocket;
 
 use super::table::Table;
 
 pub(crate) struct DiscState {
-    pub p2p_identity: Arc<P2PIdentity>,
-    pub udp_socket: Arc<UdpSocket>,
-    pub disc_port: u16,
-    pub p2p_port: u16,
-    pub table: Arc<Table>,
-    pub active_calls: Arc<ActiveCalls>,
+    pub(crate) p2p_identity: Arc<P2PIdentity>,
+    pub(crate) udp_socket: Arc<UdpSocket>,
+    pub(crate) disc_port: u16,
+    pub(crate) p2p_port: u16,
+    pub(crate) table: Arc<Table>,
+    pub(crate) active_calls: Arc<ActiveCalls>,
+    pub(crate) is_dial_routine_running: Arc<Mutex<bool>>,
     // pub task_queue: Arc<TaskQueue<Task>>,
 }
 

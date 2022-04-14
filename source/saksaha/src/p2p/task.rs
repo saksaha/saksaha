@@ -4,7 +4,6 @@ use p2p_identity::{P2PIdentity, PeerId, PUBLIC_KEY_LEN};
 use p2p_transport::{HandshakeInitError, HandshakeInitParams};
 use peer::{Peer, PeerStore, PeerValue, RegisteredPeerValue};
 use std::{pin::Pin, sync::Arc};
-use task::task_queue::{TaskHandle, TaskResult};
 use tokio::{io::AsyncBufReadExt, io::AsyncReadExt, sync::Mutex};
 
 #[derive(Clone)]
@@ -27,44 +26,44 @@ pub(crate) struct HSInitTaskParams {
 
 pub(crate) struct P2PTaskHandler;
 
-impl TaskHandle<Task> for P2PTaskHandler {
-    fn handle_task<'a>(
-        &'a self,
-        task: Task,
-    ) -> Pin<Box<dyn std::future::Future<Output = TaskResult> + Send + 'a>>
-    {
-        async fn run(_self: &P2PTaskHandler) -> TaskResult {
-            /* the original method body */
-            return TaskResult::Success;
-        }
+// impl TaskHandle<Task> for P2PTaskHandler {
+//     fn handle_task<'a>(
+//         &'a self,
+//         task: Task,
+//     ) -> Pin<Box<dyn std::future::Future<Output = TaskResult> + Send + 'a>>
+//     {
+//         async fn run(_self: &P2PTaskHandler) -> TaskResult {
+//             /* the original method body */
+//             return TaskResult::Success;
+//         }
 
-        Box::pin(run(self))
-    }
-    // fn run<'a>(
-    //     &'a self,
-    //     task: Task,
-    // ) -> Box<dyn std::future::Future<Output = ()> + Send + 'a>
-    // where
-    //     Self: 'a,
-    // {
-    //     // async fn run(_self: &TaskRunner) {}
+//         Box::pin(run(self))
+//     }
+//     // fn run<'a>(
+//     //     &'a self,
+//     //     task: Task,
+//     // ) -> Box<dyn std::future::Future<Output = ()> + Send + 'a>
+//     // where
+//     //     Self: 'a,
+//     // {
+//     //     // async fn run(_self: &TaskRunner) {}
 
-    //     // Box::pin(run(self))
-    //     Box::new(async {})
-    // }
+//     //     // Box::pin(run(self))
+//     //     Box::new(async {})
+//     // }
 
-    // fn run(&self, task: Task) -> TaskResult {
-    //     futures::executor::block_on(async {
-    //         match task {
-    //             Task::InitiateHandshake(hs_init_task_params) => {
-    //                 handle_initiate_handshake(hs_init_task_params).await;
-    //             }
-    //         };
+//     // fn run(&self, task: Task) -> TaskResult {
+//     //     futures::executor::block_on(async {
+//     //         match task {
+//     //             Task::InitiateHandshake(hs_init_task_params) => {
+//     //                 handle_initiate_handshake(hs_init_task_params).await;
+//     //             }
+//     //         };
 
-    //         TaskResult::Success
-    //     })
-    // }
-}
+//     //         TaskResult::Success
+//     //     })
+//     // }
+// }
 
 async fn handle_initiate_handshake(hs_init_task_params: HSInitTaskParams) {
     let hs_init_params = HandshakeInitParams {

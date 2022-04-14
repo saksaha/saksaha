@@ -1,17 +1,23 @@
-use crate::{address::Address, state::DiscState, task::DiscoveryTask};
+use super::{address::Address, state::DiscState, task::DiscoveryTask};
 use logger::{tdebug, terr, tinfo, twarn};
 use p2p_identity::peer::UnknownPeer;
 use std::{
     sync::Arc,
     time::{Duration, SystemTime},
 };
-use task::task_queue::TaskQueue;
+use task_queue::TaskQueue;
 use tokio::sync::Mutex;
 
 pub(crate) struct DialScheduler {
     disc_state: Arc<DiscState>,
+    dial_routine: DialRoutine,
     // revalidate_routine: RevalidateRoutine,
     // whoareyou_op: Arc<WhoareyouOp>,
+}
+
+struct DialRoutine {
+    is_running: Arc<Mutex<bool>>,
+    min_interval: Duration,
 }
 
 impl DialScheduler {
@@ -20,21 +26,26 @@ impl DialScheduler {
         // whoareyou_op: Arc<WhoareyouOp>,
         // bootstrap_urls: Option<Vec<String>>,
         // default_bootstrap_urls: &str,
-        task_queue: Arc<TaskQueue<DiscoveryTask>>,
+        // task_queue: Arc<TaskQueue<DiscoveryTask>>,
         unknown_peers: Vec<UnknownPeer>,
     ) -> DialScheduler {
+        let task_queue = TaskQueue::<DiscoveryTask>::new(10);
+
+        enqueue_initial_tasks(task_queue, unknown_peers).await;
+
         let min_interval = Duration::from_millis(2000);
 
         // let revalidate_routine =
         //     RevalidateRoutine::new(disc_state.clone(), min_interval);
 
+        let dial_routine = DialRoutine::new(min_interval);
+
         let d = DialScheduler {
             // revalidate_routine,
             disc_state: disc_state.clone(),
+            dial_routine,
             // whoareyou_op,
         };
-
-        enqueue_initial_tasks(task_queue, unknown_peers).await;
 
         d
     }
@@ -42,12 +53,73 @@ impl DialScheduler {
     pub fn start(&self) -> Result<(), String> {
         // self.revalidate_routine.run();
 
+        self.dial_routine.run();
+
         Ok(())
     }
 }
 
+impl DialRoutine {
+    fn new(min_interval: Duration) -> DialRoutine {
+        DialRoutine {
+            min_interval,
+            is_running: Arc::new(Mutex::new(false)),
+        }
+    }
+
+    fn run(&self) {
+        tinfo!(
+            "p2p_discovery",
+            "dial_schd",
+            "Discovery dial scheduler starts to run"
+        );
+
+        let is_running = self.is_running.clone();
+        let min_interval = self.min_interval;
+
+        tokio::spawn(async move {
+            let mut is_running_lock = is_running.lock().await;
+            *is_running_lock = true;
+            drop(is_running_lock);
+
+            loop {
+                let start = SystemTime::now();
+
+                match start.elapsed() {
+                    Ok(d) => {
+                        if d < min_interval {
+                            let diff = min_interval - d;
+                            tokio::time::sleep(diff).await;
+                        }
+                    }
+                    Err(err) => {
+                        terr!(
+                            "p2p_discovery",
+                            "Calculating the time elapsed fail, err: {}",
+                            err
+                        );
+
+                        tokio::time::sleep(min_interval).await;
+                    }
+                }
+            }
+        });
+
+        // let is_running = self.is_running.clone();
+        // is_running.lock().await;
+
+        // let a = is_running.clone();
+
+        terr!(
+            "p2p_discovery",
+            "dial_schd",
+            "Discovery dial routine has ended"
+        );
+    }
+}
+
 async fn enqueue_initial_tasks(
-    task_queue: Arc<TaskQueue<DiscoveryTask>>,
+    task_queue: TaskQueue<DiscoveryTask>,
     unknown_peers: Vec<UnknownPeer>,
 ) {
     for unknown_peer in unknown_peers {
@@ -58,7 +130,7 @@ async fn enqueue_initial_tasks(
             unknown_peer,
         };
 
-        match task_queue.push(task).await {
+        match task_queue.push_back(task).await {
             Ok(_) => {}
             Err(err) => {
                 twarn!(

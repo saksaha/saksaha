@@ -7,7 +7,7 @@ use super::{
 use log::{debug, error, warn};
 use p2p_identity::peer::UnknownPeer;
 use std::{pin::Pin, sync::Arc};
-use task::task_queue::{TaskHandle, TaskQueue, TaskResult};
+use task_queue::TaskQueue;
 
 #[derive(Clone)]
 pub(crate) enum DiscoveryTask {
@@ -36,164 +36,84 @@ pub(crate) struct DiscTaskHandler {
 //     }
 // }
 
-impl TaskHandle<DiscoveryTask> for DiscTaskHandler {
-    fn handle_task<'a>(
-        &'a self,
-        task: DiscoveryTask,
-    ) -> Pin<Box<dyn std::future::Future<Output = TaskResult> + Send + 'a>>
-    {
-        async fn run(
-            _self: &DiscTaskHandler,
-            task: DiscoveryTask,
-        ) -> TaskResult {
-            match task {
-                DiscoveryTask::InitiateWhoAreYou { unknown_peer } => {
-                    let disc_state = _self.disc_state.clone();
-                    match whoareyou::initiate::send_who_are_you(
-                        disc_state,
-                        unknown_peer,
-                    )
-                    .await
-                    {
-                        Ok(_) => TaskResult::Success,
-                        Err(err) => {
-                            let err_msg = err.to_string();
+// impl TaskHandle<DiscoveryTask> for DiscTaskHandler {
+//     fn handle_task<'a>(
+//         &'a self,
+//         task: DiscoveryTask,
+//     ) -> Pin<Box<dyn std::future::Future<Output = TaskResult> + Send + 'a>>
+//     {
+//         async fn run(
+//             _self: &DiscTaskHandler,
+//             task: DiscoveryTask,
+//         ) -> TaskResult {
+//             match task {
+//                 DiscoveryTask::InitiateWhoAreYou { unknown_peer } => {
+//                     let disc_state = _self.disc_state.clone();
+//                     match whoareyou::initiate::send_who_are_you(
+//                         disc_state,
+//                         unknown_peer,
+//                     )
+//                     .await
+//                     {
+//                         Ok(_) => TaskResult::Success,
+//                         Err(err) => {
+//                             let err_msg = err.to_string();
 
-                            match err {
-                                WhoareyouInitError::MyEndpoint { .. } => {
-                                    return TaskResult::Fail(err_msg);
-                                }
-                                WhoareyouInitError::ByteConversionFail {
-                                    ..
-                                } => {
-                                    return TaskResult::Fail(err_msg);
-                                }
-                                WhoareyouInitError::MessageParseFail {
-                                    ..
-                                } => {
-                                    return TaskResult::FailRetriable(err_msg);
-                                }
-                                WhoareyouInitError::VerifiyingKeyFail {
-                                    ..
-                                } => {
-                                    return TaskResult::FailRetriable(err_msg);
-                                }
-                                WhoareyouInitError::InvalidSignature {
-                                    ..
-                                } => {
-                                    return TaskResult::FailRetriable(err_msg);
-                                }
-                                WhoareyouInitError::SendFail(_) => {
-                                    return TaskResult::FailRetriable(err_msg);
-                                }
-                                WhoareyouInitError::NodeReserveFail {
-                                    ..
-                                } => {
-                                    return TaskResult::FailRetriable(err_msg);
-                                }
-                                WhoareyouInitError::NodeRegisterFail {
-                                    ..
-                                } => {
-                                    return TaskResult::FailRetriable(err_msg);
-                                }
-                                WhoareyouInitError::TableIsFull { .. } => {
-                                    return TaskResult::FailRetriable(err_msg);
-                                }
-                                WhoareyouInitError::TableAddFail { .. } => {
-                                    return TaskResult::FailRetriable(err_msg);
-                                }
-                                WhoareyouInitError::NodePutBackFail {
-                                    ..
-                                } => {
-                                    return TaskResult::Fail(err_msg);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+//                             match err {
+//                                 WhoareyouInitError::MyEndpoint { .. } => {
+//                                     return TaskResult::Fail(err_msg);
+//                                 }
+//                                 WhoareyouInitError::ByteConversionFail {
+//                                     ..
+//                                 } => {
+//                                     return TaskResult::Fail(err_msg);
+//                                 }
+//                                 WhoareyouInitError::MessageParseFail {
+//                                     ..
+//                                 } => {
+//                                     return TaskResult::FailRetriable(err_msg);
+//                                 }
+//                                 WhoareyouInitError::VerifiyingKeyFail {
+//                                     ..
+//                                 } => {
+//                                     return TaskResult::FailRetriable(err_msg);
+//                                 }
+//                                 WhoareyouInitError::InvalidSignature {
+//                                     ..
+//                                 } => {
+//                                     return TaskResult::FailRetriable(err_msg);
+//                                 }
+//                                 WhoareyouInitError::SendFail(_) => {
+//                                     return TaskResult::FailRetriable(err_msg);
+//                                 }
+//                                 WhoareyouInitError::NodeReserveFail {
+//                                     ..
+//                                 } => {
+//                                     return TaskResult::FailRetriable(err_msg);
+//                                 }
+//                                 WhoareyouInitError::NodeRegisterFail {
+//                                     ..
+//                                 } => {
+//                                     return TaskResult::FailRetriable(err_msg);
+//                                 }
+//                                 WhoareyouInitError::TableIsFull { .. } => {
+//                                     return TaskResult::FailRetriable(err_msg);
+//                                 }
+//                                 WhoareyouInitError::TableAddFail { .. } => {
+//                                     return TaskResult::FailRetriable(err_msg);
+//                                 }
+//                                 WhoareyouInitError::NodePutBackFail {
+//                                     ..
+//                                 } => {
+//                                     return TaskResult::Fail(err_msg);
+//                                 }
+//                             }
+//                         }
+//                     }
+//                 }
+//             }
+//         }
 
-        Box::pin(run(self, task))
-    }
-    // fn run<'a>(
-    //     &self,
-    //     task: Task,
-    // ) -> Box<dyn std::future::Future<Output = ()>> where Self: 'a
-    // {
-    //     // async fn async_fn(_self: &TaskRunner, task: Task) {
-
-    //     // }
-
-    //     // Box::pin(async_fn(self, task))
-    // }
-
-    // fn run(&self, task: Task) -> TaskResult {
-    //     futures::executor::block_on(async {
-    //         match task {
-    //             Task::InitiateWhoAreYou { disc_state, addr } => {
-    //                 match whoareyou::initiate::send_who_are_you(
-    //                     disc_state, addr,
-    //                 )
-    //                 .await
-    //                 {
-    //                     Ok(_) => (),
-    //                     Err(err) => {
-    //                         let err_msg = err.to_string();
-
-    //                         match err {
-    //                             WhoareyouInitError::MyEndpoint { .. } => {
-    //                                 return TaskResult::Fail(err_msg);
-    //                             }
-    //                             WhoareyouInitError::ByteConversionFail {
-    //                                 ..
-    //                             } => {
-    //                                 return TaskResult::Fail(err_msg);
-    //                             }
-    //                             WhoareyouInitError::MessageParseFail {
-    //                                 ..
-    //                             } => {
-    //                                 return TaskResult::FailRetriable(err_msg);
-    //                             }
-    //                             WhoareyouInitError::VerifiyingKeyFail {
-    //                                 ..
-    //                             } => {
-    //                                 return TaskResult::FailRetriable(err_msg);
-    //                             }
-    //                             WhoareyouInitError::InvalidSignature {
-    //                                 ..
-    //                             } => {
-    //                                 return TaskResult::FailRetriable(err_msg);
-    //                             }
-    //                             WhoareyouInitError::SendFail(_) => {
-    //                                 return TaskResult::FailRetriable(err_msg);
-    //                             }
-    //                             WhoareyouInitError::NodeReserveFail {
-    //                                 ..
-    //                             } => {
-    //                                 return TaskResult::FailRetriable(err_msg);
-    //                             }
-    //                             WhoareyouInitError::NodeRegisterFail {
-    //                                 ..
-    //                             } => {
-    //                                 return TaskResult::FailRetriable(err_msg);
-    //                             }
-    //                             WhoareyouInitError::TableIsFull { .. } => {
-    //                                 return TaskResult::FailRetriable(err_msg);
-    //                             }
-    //                             WhoareyouInitError::TableAddFail { .. } => {
-    //                                 return TaskResult::FailRetriable(err_msg);
-    //                             }
-    //                             WhoareyouInitError::NodePutBackFail {
-    //                                 ..
-    //                             } => {}
-    //                         }
-    //                     }
-    //                 }
-    //             }
-    //         };
-
-    //         TaskResult::Success
-    //     })
-    // }
-}
+//         Box::pin(run(self, task))
+//     }
+// }
