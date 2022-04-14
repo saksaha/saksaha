@@ -10,7 +10,7 @@ members = [
   "source/p2p_identity",
   "source/p2p_active_calls",
   "source/p2p_transport",
-  "source/task",
+  "source/task_queue",
 
   # internals
   "internals/ci",

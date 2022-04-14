@@ -16,23 +16,23 @@ pub enum ListenerError {
 }
 
 pub(crate) struct Listener {
-    disc_state: Arc<DiscState>,
-    udp_socket: Arc<UdpSocket>,
+    pub(crate) disc_state: Arc<DiscState>,
+    pub(crate) udp_socket: Arc<UdpSocket>,
     // whoareyou_op: Arc<WhoareyouOp>,
 }
 
 impl Listener {
-    pub fn new(
-        disc_state: Arc<DiscState>,
-        udp_socket: Arc<UdpSocket>,
-        // whoareyou_op: Arc<WhoareyouOp>,
-    ) -> Listener {
-        Listener {
-            disc_state,
-            udp_socket,
-            // whoareyou_op,
-        }
-    }
+    // pub fn new(
+    //     disc_state: Arc<DiscState>,
+    //     udp_socket: Arc<UdpSocket>,
+    //     // whoareyou_op: Arc<WhoareyouOp>,
+    // ) -> Listener {
+    //     Listener {
+    //         disc_state,
+    //         udp_socket,
+    //         // whoareyou_op,
+    //     }
+    // }
 
     pub fn start(&self) -> Result<(), String> {
         tinfo!(

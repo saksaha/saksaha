@@ -6,19 +6,20 @@ pub mod listener;
 mod ops;
 pub mod state;
 mod table;
-pub mod task;
+mod task;
 
 use self::{
     dial_scheduler::DialScheduler, listener::Listener, state::DiscState,
     table::Table, task::DiscoveryTask,
 };
-use crate::{iterator::Iterator, task::DiscTaskHandler};
-use ::task::task_queue::TaskQueue;
+use crate::iterator::Iterator;
 use colored::Colorize;
 use logger::{tinfo, twarn};
 use p2p_active_calls::ActiveCalls;
 use p2p_identity::{peer::UnknownPeer, P2PIdentity};
 use std::sync::Arc;
+use task::DiscTaskHandler;
+use task_queue::TaskQueue;
 use tokio::net::UdpSocket;
 
 pub const CAPACITY: usize = 64;
@@ -85,8 +86,9 @@ impl Discovery {
 
         let task_queue = {
             let q = TaskQueue::new(
-                String::from("p2p_discovery"),
-                Box::new(disc_task_handler),
+                10,
+                // String::from("p2p_discovery"),
+                // Box::new(disc_task_handler),
             );
             Arc::new(q)
         };
@@ -97,11 +99,10 @@ impl Discovery {
         // };
 
         let listener = {
-            let l = Listener::new(
-                disc_state.clone(),
-                udp_socket.clone(),
-                // whoareyou_op.clone(),
-            );
+            let l = Listener {
+                disc_state: disc_state.clone(),
+                udp_socket: udp_socket.clone(),
+            };
             Arc::new(l)
         };
 
@@ -110,7 +111,7 @@ impl Discovery {
                 disc_state.clone(),
                 // whoareyou_op.clone(),
                 // disc_args.bootstrap_urls,
-                task_queue.clone(),
+                // task_queue.clone(),
                 unknown_peers,
             )
             .await;
@@ -130,7 +131,7 @@ impl Discovery {
     pub async fn start(&self) -> Result<(), String> {
         self.listener.start()?;
 
-        self.task_queue.run_loop();
+        // self.task_queue.run_loop();
 
         self.dial_scheduler.start()?;
 

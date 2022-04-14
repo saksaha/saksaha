@@ -13,7 +13,7 @@ use p2p_discovery::{Discovery, DiscoveryArgs};
 use p2p_identity::{peer::UnknownPeer, P2PIdentity};
 use peer::PeerStore;
 use std::sync::Arc;
-use task::task_queue::TaskQueue;
+use task_queue::TaskQueue;
 use tokio::net::TcpListener;
 
 pub(crate) struct Host {
@@ -46,8 +46,7 @@ impl Host {
         };
 
         let task_queue = {
-            let q =
-                TaskQueue::new("p2p".to_string(), Box::new(P2PTaskHandler {}));
+            let q = TaskQueue::new(10);
             Arc::new(q)
         };
 
