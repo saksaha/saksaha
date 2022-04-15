@@ -41,3 +41,20 @@ impl Scriptify for Build {
         None
     }
 }
+
+pub(super) fn build(matches: &ArgMatches) {
+    let program = "cargo";
+
+    let args = match matches.values_of("args") {
+        Some(a) => a.collect(),
+        None => vec![],
+    };
+
+    let args = [vec!["build"], args].concat();
+
+    log!("Executing `{} {:?}`", program, args,);
+
+    let cmd = Cmd::new(program).args(args).spawn().expect("failed to run");
+
+    cmd.wait_with_output().unwrap();
+}

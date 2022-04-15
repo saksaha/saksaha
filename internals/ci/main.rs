@@ -1,5 +1,4 @@
-use clap::Command;
-
+mod cli;
 mod log;
 mod scriptify;
 mod scripts;
@@ -43,32 +42,10 @@ fn main() {
         );
     }
 
-    let mut app = Command::new("CI")
-        .version("0.0.1")
-        .author("Saksaha <elden@saksaha.com>")
-        .about("Rust saksaha implementation continuous integration toolsuite");
-
-    let scripts = scripts::get_scripts();
-
-    for script in scripts.iter() {
-        app = script.define(app.to_owned());
-    }
-
-    let matches = app.get_matches();
-
-    log!("Searching for script that can handle the request has been executed");
-
-    for script in scripts.iter() {
-        if let Some(_) = script.handle_matches(&matches) {
-            log!(
-                "Finished running the script, exiting the process. \
-                script: {}\n",
-                script.name(),
-            );
-
-            std::process::exit(0);
+    match cli::run_app() {
+        Ok(_) => (),
+        Err(err) => {
+            log!("Error running script, err: {}", err);
         }
-    }
-
-    log!("Couldn't find any command to exeucte, Check the argument");
+    };
 }

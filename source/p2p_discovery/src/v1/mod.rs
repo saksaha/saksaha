@@ -21,6 +21,7 @@ use std::sync::Arc;
 use task::DiscTaskHandler;
 use task_queue::TaskQueue;
 use tokio::net::UdpSocket;
+use tokio::sync::Mutex;
 
 pub const CAPACITY: usize = 64;
 
@@ -76,6 +77,7 @@ impl Discovery {
                 disc_port,
                 udp_socket: udp_socket.clone(),
                 p2p_port: disc_args.p2p_port,
+                is_dial_routine_running: Arc::new(Mutex::new(false)),
             };
             Arc::new(s)
         };

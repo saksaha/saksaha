@@ -29,7 +29,7 @@ impl DialScheduler {
         // task_queue: Arc<TaskQueue<DiscoveryTask>>,
         unknown_peers: Vec<UnknownPeer>,
     ) -> DialScheduler {
-        let task_queue = TaskQueue::<DiscoveryTask>::new(10);
+        let task_queue = TaskQueue::<DiscoveryTask>::new(20);
 
         enqueue_initial_tasks(task_queue, unknown_peers).await;
 
@@ -67,20 +67,22 @@ impl DialRoutine {
         }
     }
 
-    fn run(&self) {
+    async fn run(&self) {
         tinfo!(
             "p2p_discovery",
             "dial_schd",
             "Discovery dial scheduler starts to run"
         );
 
-        let is_running = self.is_running.clone();
         let min_interval = self.min_interval;
+        let mut is_running = self.is_running.lock().await;
+        *is_running = true;
+        drop(is_running);
 
-        tokio::spawn(async move {
-            let mut is_running_lock = is_running.lock().await;
-            *is_running_lock = true;
-            drop(is_running_lock);
+        let routine_process = tokio::spawn(async move {
+            // let mut is_running_lock = is_running.lock().await;
+            // *is_running_lock = true;
+            // drop(is_running_lock);
 
             loop {
                 let start = SystemTime::now();
@@ -105,16 +107,26 @@ impl DialRoutine {
             }
         });
 
-        // let is_running = self.is_running.clone();
-        // is_running.lock().await;
+        match routine_process.await {
+            Ok(_) => {
+                terr!(
+                    "p2p_discovery",
+                    "dial_schd",
+                    "dial routine has ended, which is likely unusual",
+                );
+            }
+            Err(err) => {
+                terr!(
+                    "p2p_discovery",
+                    "dial_schd",
+                    "dial routine has ended with an error, {}",
+                    err,
+                );
+            }
+        };
 
-        // let a = is_running.clone();
-
-        terr!(
-            "p2p_discovery",
-            "dial_schd",
-            "Discovery dial routine has ended"
-        );
+        let mut is_running = self.is_running.lock().await;
+        *is_running = true;
     }
 }
 
