@@ -42,8 +42,5 @@ pub(crate) enum Script {
 // }
 
 pub(crate) fn get_scripts<'a>() -> Vec<Script> {
-    vec![
-        Script::Build("build", build::build),
-        Script::Dev("dev", dev::dev),
-    ]
+    vec![Script::Build(build::build), Script::Dev(dev::dev)]
 }
