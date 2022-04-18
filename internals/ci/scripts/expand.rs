@@ -1,4 +1,5 @@
-use crate::{log, scriptify::Scriptify};
+use super::Script;
+use crate::log;
 use clap::{Arg, ArgMatches, Command};
 use std::{
     fs,
@@ -10,17 +11,17 @@ use std::{
 
 pub(crate) struct Expand;
 
-impl Scriptify for Expand {
-    fn name(&self) -> &str {
+impl Script for Expand {
+    fn name() -> &'static str {
         "expand"
     }
 
-    fn define<'a, 'b>(&self, app: Command<'a>) -> Command<'a> {
-        app.subcommand(Command::new(self.name()))
+    fn define(app: Command) -> Command {
+        app.subcommand(Command::new(Expand::name()))
     }
 
-    fn handle_matches(&self, matches: &ArgMatches) -> Option<bool> {
-        if let Some(_) = matches.subcommand_matches(self.name()) {
+    fn handle_matches(matches: &ArgMatches) -> Option<bool> {
+        if let Some(_) = matches.subcommand_matches(Expand::name()) {
             let dest = PathBuf::from_str(r"target/expand/debug")
                 .expect("destination path");
 

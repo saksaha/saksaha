@@ -1,10 +1,12 @@
-use super::{log, scripts};
+use crate::scripts;
+
+use super::log;
 use clap::{App, Arg, Command};
 
 pub(super) fn run_app() -> Result<(), String> {
     let app = define_app();
 
-    handle_cli_arg_matches(app);
+    // handle_cli_arg_matches(app);
 
     // let scripts = scripts::get_scripts();
 
@@ -41,15 +43,26 @@ fn define_app() -> Command<'static> {
 
     log!("Registering subcommands");
 
-    for (idx, script) in scripts::get_scripts().iter().enumerate() {
-        log!("[{}] Subcommand: {}", idx, *script.0);
+    // let a: Box<dyn scripts::Script> = Box::new(scripts::build::Build);
 
-        app = app.subcommand(
-            Command::new(*name)
-                .arg(Arg::new("SAKSAHA_ARGS").multiple_values(true))
-                .allow_hyphen_values(true),
-        );
-    }
+    // for (name, script) in scripts::SCRIPTS.iter() {
+    //     println!("name: {} {}", name, script.name());
+    // }
+    // for (name, script) in &*a.into_iter() {}
+
+    // let scripts = crate::load_scripts!();
+
+    // println!("{}", b);
+
+    // for (idx, script) in scripts::get_scripts().iter().enumerate() {
+    // log!("[{}] Subcommand: {}", idx, *script.0);
+
+    // app = app.subcommand(
+    //     Command::new(*name)
+    //         .arg(Arg::new("SAKSAHA_ARGS").multiple_values(true))
+    //         .allow_hyphen_values(true),
+    // );
+    // }
 
     app
 }
@@ -62,12 +75,9 @@ fn handle_cli_arg_matches(app: Command) {
         "cmd" => {}
         _ => {}
     };
+
     // match matches.subcommand() {
-    //     Some((cmd, arg_matches)) => {
-    //         match cmd {
-    //
-    //         }
-    //     }
+    //     Some((cmd, arg_matches)) => match cmd {},
     //     None => {}
     // };
 

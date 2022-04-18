@@ -1,20 +1,21 @@
-use crate::{log, scriptify::Scriptify};
+use super::Script;
+use crate::log;
 use clap::{Arg, ArgMatches, Command};
 use std::process::Command as Cmd;
 
 pub(crate) struct Clean;
 
-impl Scriptify for Clean {
-    fn name(&self) -> &str {
+impl Script for Clean {
+    fn name() -> &'static str {
         "clean"
     }
 
-    fn define<'a, 'b>(&self, app: Command<'a>) -> Command<'a> {
-        app.subcommand(Command::new(self.name()))
+    fn define(app: Command) -> Command {
+        app.subcommand(Command::new(Clean::name()))
     }
 
-    fn handle_matches(&self, matches: &ArgMatches) -> Option<bool> {
-        if let Some(matches) = matches.subcommand_matches(self.name()) {
+    fn handle_matches(matches: &ArgMatches) -> Option<bool> {
+        if let Some(matches) = matches.subcommand_matches(Clean::name()) {
             let program = "cargo";
             let args = match matches.values_of("args") {
                 Some(a) => a.collect(),
