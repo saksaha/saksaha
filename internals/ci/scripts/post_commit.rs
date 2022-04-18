@@ -1,20 +1,21 @@
-use crate::{log, scriptify::Scriptify};
+use super::Script;
+use crate::log;
 use clap::{Arg, ArgMatches, Command};
 use std::process::{Command as Cmd, Stdio};
 
 pub(crate) struct PostCommit;
 
-impl Scriptify for PostCommit {
-    fn name(&self) -> &str {
+impl Script for PostCommit {
+    fn name() -> &'static str {
         "postcommit"
     }
 
-    fn define<'a, 'b>(&self, app: Command<'a>) -> Command<'a> {
-        app.subcommand(Command::new(self.name()))
+    fn define(app: Command) -> Command {
+        app.subcommand(Command::new(PostCommit::name()))
     }
 
-    fn handle_matches(&self, matches: &ArgMatches) -> Option<bool> {
-        if let Some(matches) = matches.subcommand_matches(self.name()) {
+    fn handle_matches(matches: &ArgMatches) -> Option<bool> {
+        if let Some(matches) = matches.subcommand_matches(PostCommit::name()) {
             let program = "git";
 
             let args = match matches.values_of("args") {

@@ -1,6 +1,6 @@
 mod cli;
 mod log;
-mod scriptify;
+mod script;
 mod scripts;
 
 fn main() {
