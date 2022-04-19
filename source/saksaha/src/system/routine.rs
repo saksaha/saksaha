@@ -1,6 +1,6 @@
 use super::{System, SystemArgs};
 use crate::config::default::dev_local::get_dev_local_config;
-use crate::config::default::{get_empty_default_config, DConfig};
+use crate::config::default::{get_empty_default_config, DefaultConfig};
 use crate::config::{Config, P2PConfig, RPCConfig};
 use crate::p2p::host::HostArgs;
 use crate::pconfig::p2p::PersistedUnknownPeer;
@@ -100,7 +100,7 @@ impl System {
     }
 }
 
-fn load_default_config(dev_mode: &Option<String>) -> DConfig {
+fn load_default_config(dev_mode: &Option<String>) -> DefaultConfig {
     match dev_mode.as_deref() {
         Some("dev_local") => {
             return get_dev_local_config();
@@ -110,7 +110,7 @@ fn load_default_config(dev_mode: &Option<String>) -> DConfig {
     }
 }
 
-fn resolve_config(sys_args: &SystemArgs, dconfig: DConfig) -> Config {
+fn resolve_config(sys_args: &SystemArgs, dconfig: DefaultConfig) -> Config {
     let identity = &sys_args.pconfig.p2p.identity;
     let pconfig = &sys_args.pconfig;
 
@@ -129,6 +129,7 @@ fn resolve_config(sys_args: &SystemArgs, dconfig: DConfig) -> Config {
             rpc_port: sys_args.rpc_port,
         },
         p2p: P2PConfig {
+            disc_dial_min_interval: sys_args.disc_dial_min_interval,
             bootstrap_urls: sys_args.bootstrap_urls.clone(),
             p2p_port: sys_args.p2p_port,
             disc_port: sys_args.disc_port,
