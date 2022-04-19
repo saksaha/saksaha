@@ -6,55 +6,33 @@ use std::process::Command as Cmd;
 pub(crate) struct Build;
 
 impl Script for Build {
-    fn name() -> &'static str {
+    fn name(&self) -> &'static str {
         "build"
     }
 
-    fn define(app: Command) -> Command {
+    fn define<'a>(&'a self, app: Command<'a>) -> Command<'a> {
         app.subcommand(
-            Command::new(Build::name())
+            Command::new("build")
                 .arg(Arg::new("args").multiple_occurrences(true)),
         )
     }
 
-    fn handle_matches(matches: &ArgMatches) -> Option<bool> {
-        // if let Some(matches) = matches.subcommand_matches(self.name()) {
-        //     let program = "cargo";
+    fn handle_matches(&self, matches: &ArgMatches) -> Option<bool> {
+        let program = "cargo";
 
-        //     let args = match matches.values_of("args") {
-        //         Some(a) => a.collect(),
-        //         None => vec![],
-        //     };
+        let args = match matches.values_of("args") {
+            Some(a) => a.collect(),
+            None => vec![],
+        };
 
-        //     let args = [vec!["build"], args].concat();
+        let args = [vec!["build"], args].concat();
 
-        //     log!("Executing `{} {:?}`", program, args,);
+        log!("Executing `{} {:?}`", program, args,);
 
-        //     let cmd =
-        //         Cmd::new(program).args(args).spawn().expect("failed to run");
+        let cmd = Cmd::new(program).args(args).spawn().expect("failed to run");
 
-        //     cmd.wait_with_output().unwrap();
+        cmd.wait_with_output().unwrap();
 
-        //     return Some(true);
-        // }
-
-        None
+        return Some(true);
     }
 }
-
-// pub(super) fn build(matches: &ArgMatches) {
-//     let program = "cargo";
-
-//     let args = match matches.values_of("args") {
-//         Some(a) => a.collect(),
-//         None => vec![],
-//     };
-
-//     let args = [vec!["build"], args].concat();
-
-//     log!("Executing `{} {:?}`", program, args,);
-
-//     let cmd = Cmd::new(program).args(args).spawn().expect("failed to run");
-
-//     cmd.wait_with_output().unwrap();
-// }

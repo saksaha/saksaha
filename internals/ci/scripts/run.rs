@@ -1,21 +1,21 @@
 use super::Script;
 use crate::log;
-use clap::{Arg, ArgMatches, Command};
+use clap::{ArgMatches, Command};
 use std::process::{Command as Cmd, Stdio};
 
 pub(crate) struct Run;
 
 impl Script for Run {
-    fn name() -> &'static str {
+    fn name(&self) -> &'static str {
         "run"
     }
 
-    fn define(app: Command) -> Command {
-        app.subcommand(Command::new(Run::name()))
+    fn define<'a>(&self, app: Command<'a>) -> Command<'a> {
+        app.subcommand(Command::new(self.name()))
     }
 
-    fn handle_matches(matches: &ArgMatches) -> Option<bool> {
-        if let Some(matches) = matches.subcommand_matches(Run::name()) {
+    fn handle_matches(&self, matches: &ArgMatches) -> Option<bool> {
+        if let Some(matches) = matches.subcommand_matches(self.name()) {
             let program = "cargo";
             let args = match matches.values_of("args") {
                 Some(a) => a.collect(),
