@@ -1,38 +1,14 @@
-use crate::scripts;
+use super::scripts;
 
 use super::log;
-use clap::{App, Arg, Command};
+use clap::Command;
 
 pub(super) fn run_app() -> Result<(), String> {
     let app = define_app();
 
-    // handle_cli_arg_matches(app);
+    let _ = handle_cli_arg_matches(app);
 
-    // let scripts = scripts::get_scripts();
-
-    // for script in scripts.iter() {
-    //     app = script.define(app.to_owned());
-    // }
-
-    // let matches = app.get_matches();
-
-    // log!("Searching for script that can handle the request has been executed");
-
-    // for script in scripts.iter() {
-    //     if let Some(_) = script.handle_matches(&matches) {
-    //         log!(
-    //             "Finished running the script, exiting the process. \
-    //             script: {}\n",
-    //             script.name(),
-    //         );
-
-    //         std::process::exit(0);
-    //     }
-    // }
-
-    return Err(format!(
-        "Couldn't find any command to exeucte, Check the argument"
-    ));
+    Ok(())
 }
 
 fn define_app() -> Command<'static> {
@@ -43,43 +19,37 @@ fn define_app() -> Command<'static> {
 
     log!("Registering subcommands");
 
-    // let a: Box<dyn scripts::Script> = Box::new(scripts::build::Build);
+    for (name, script) in scripts::SCRIPTS.iter() {
+        println!("name: {} {}", name, script.name());
 
-    // for (name, script) in scripts::SCRIPTS.iter() {
-    //     println!("name: {} {}", name, script.name());
-    // }
-    // for (name, script) in &*a.into_iter() {}
-
-    // let scripts = crate::load_scripts!();
-
-    // println!("{}", b);
-
-    // for (idx, script) in scripts::get_scripts().iter().enumerate() {
-    // log!("[{}] Subcommand: {}", idx, *script.0);
-
-    // app = app.subcommand(
-    //     Command::new(*name)
-    //         .arg(Arg::new("SAKSAHA_ARGS").multiple_values(true))
-    //         .allow_hyphen_values(true),
-    // );
-    // }
+        app = script.define(app);
+    }
 
     app
 }
 
-fn handle_cli_arg_matches(app: Command) {
+fn handle_cli_arg_matches(app: Command) -> Result<(), String> {
     let matches = app.get_matches();
 
-    let name = "cmd";
-    match name {
-        "cmd" => {}
-        _ => {}
+    match matches.subcommand() {
+        Some((subcmd, arg_matches)) => {
+            println!("Found match");
+            match scripts::SCRIPTS.get(subcmd) {
+                Some(s) => {
+                    s.handle_matches(arg_matches);
+                }
+                None => {
+                    return Err(format!(
+                        "Subcommand is not registered, subcmd: {}",
+                        subcmd
+                    ))
+                }
+            };
+        }
+        None => {
+            println!("No match");
+        }
     };
 
-    // match matches.subcommand() {
-    //     Some((cmd, arg_matches)) => match cmd {},
-    //     None => {}
-    // };
-
-    // if let Some(matches) = matches.subcommand_matches(self.name()) {}
+    Ok(())
 }
