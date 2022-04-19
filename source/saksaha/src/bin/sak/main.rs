@@ -59,6 +59,7 @@ fn main() {
     };
 
     let sys_args = SystemArgs {
+        disc_dial_min_interval: cli_args.disc_dial_min_interval,
         rpc_port: cli_args.rpc_port,
         disc_port: cli_args.disc_port,
         p2p_port: cli_args.p2p_port,

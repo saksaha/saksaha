@@ -1,9 +1,9 @@
 use p2p_identity::peer::UnknownPeer;
 
-use super::{DConfig, DefaultP2PConfig};
+use super::{DefaultConfig, DefaultP2PConfig};
 
-pub(crate) fn get_dev_local_config() -> DConfig {
-    return DConfig {
+pub(crate) fn get_dev_local_config() -> DefaultConfig {
+    return DefaultConfig {
         p2p: DefaultP2PConfig {
             unknown_peers: vec![
                 UnknownPeer {
