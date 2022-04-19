@@ -1,15 +1,18 @@
-use crate::state::DiscState;
+mod handler;
+
+pub use handler::*;
 
 use super::{
     address::Address,
     ops::whoareyou::{self, initiate::WhoareyouInitError},
 };
+use crate::state::DiscState;
 use log::{debug, error, warn};
 use p2p_identity::peer::UnknownPeer;
 use std::{pin::Pin, sync::Arc};
 use task_queue::TaskQueue;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub(crate) enum DiscoveryTask {
     InitiateWhoAreYou {
         // disc_state: Arc<DiscState>,
@@ -19,10 +22,10 @@ pub(crate) enum DiscoveryTask {
     },
 }
 
-pub(crate) struct DiscTaskHandler {
-    pub(crate) disc_state: Arc<DiscState>,
-    // task_queue: Arc<TaskQueue<Task>>,
-}
+// pub(crate) struct DiscTaskHandler {
+//     pub(crate) disc_state: Arc<DiscState>,
+//     // task_queue: Arc<TaskQueue<Task>>,
+// }
 
 // impl DiscTaskHandler {
 //     pub fn new(

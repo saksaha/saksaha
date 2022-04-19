@@ -5,7 +5,8 @@ const DEFAULT_BOOTSTRAP_URLS: &str =
 
 #[derive(Debug)]
 pub(crate) struct CLIArgs {
-    pub(crate) disc_dial_min_interval: Option<u16>,
+    pub(crate) disc_dial_interval: Option<u16>,
+    pub(crate) p2p_dial_interval: Option<u16>,
     pub(crate) config: Option<String>,
     pub(crate) rpc_port: Option<u16>,
     pub(crate) disc_port: Option<u16>,
@@ -31,7 +32,9 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
         .arg(arg!(--"dev-mode" [Mode]
             "Dev mode. e.g. dev-local"))
         .arg(arg!(--"disc-dial-interval" [MilliSecond]
-            "P2P Discovery dialing minimum interval"))
+            "P2P discovery dialing minimum interval"))
+        .arg(arg!(--"p2p-dial-interval" [MilliSecond]
+            "P2P dialing minimum interval"))
         .arg(arg!(--"bootstrap-urls" [Endpoints]
             "Bootstrap peer URLs to start discover, delimited by a comma,\n
                 e.g.\n
@@ -96,12 +99,25 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
         None => None,
     };
 
-    let disc_dial_min_interval = match matches.value_of("disc-dial-interval") {
+    let disc_dial_interval = match matches.value_of("disc-dial-interval") {
         Some(i) => match i.parse::<u16>() {
             Ok(interval) => Some(interval),
             Err(err) => {
                 return Err(format!(
-                    "Cannot parse discovery dial min interval (u16), err: {}",
+                    "Cannot parse p2p discovery dial interval (u16), err: {}",
+                    err,
+                ))
+            }
+        },
+        None => None,
+    };
+
+    let p2p_dial_interval = match matches.value_of("p2p-dial-interval") {
+        Some(i) => match i.parse::<u16>() {
+            Ok(interval) => Some(interval),
+            Err(err) => {
+                return Err(format!(
+                    "Cannot parse p2p dial interval (u16), err: {}",
                     err,
                 ))
             }
@@ -110,7 +126,8 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
     };
 
     Ok(CLIArgs {
-        disc_dial_min_interval,
+        disc_dial_interval,
+        p2p_dial_interval,
         config,
         rpc_port,
         disc_port,
