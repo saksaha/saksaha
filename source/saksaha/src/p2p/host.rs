@@ -26,6 +26,8 @@ pub(crate) struct Host {
 
 pub(crate) struct HostArgs {
     pub(crate) p2p_socket: Arc<TcpListener>,
+    pub(crate) disc_dial_interval: Option<u16>,
+    pub(crate) p2p_dial_interval: Option<u16>,
     pub(crate) p2p_port: u16,
     pub(crate) disc_port: Option<u16>,
     pub(crate) unknown_peers: Vec<UnknownPeer>,
@@ -73,6 +75,7 @@ impl Host {
         };
 
         let disc_args = DiscoveryArgs {
+            disc_dial_interval: host_args.disc_dial_interval,
             p2p_identity: identity.clone(),
             disc_port: host_args.disc_port,
             p2p_port: host_args.p2p_port,
@@ -86,7 +89,11 @@ impl Host {
         };
 
         let dial_scheduler = {
-            let d = DialScheduler::new(discovery.iter(), host_state.clone());
+            let d = DialScheduler::new(
+                discovery.iter(),
+                host_state.clone(),
+                host_args.p2p_dial_interval.clone(),
+            );
             Arc::new(d)
         };
 

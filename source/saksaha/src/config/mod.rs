@@ -12,7 +12,8 @@ pub(crate) struct Config {
 
 #[derive(Debug)]
 pub(crate) struct P2PConfig {
-    pub(crate) disc_dial_min_interval: Option<u16>,
+    pub(crate) disc_dial_interval: Option<u16>,
+    pub(crate) p2p_dial_interval: Option<u16>,
     pub(crate) bootstrap_urls: Option<Vec<String>>,
     pub(crate) disc_port: Option<u16>,
     pub(crate) p2p_port: Option<u16>,

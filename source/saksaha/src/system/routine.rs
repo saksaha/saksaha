@@ -65,6 +65,8 @@ impl System {
             };
 
         let p2p_host_args = HostArgs {
+            disc_dial_interval: config.p2p.disc_dial_interval,
+            p2p_dial_interval: config.p2p.p2p_dial_interval,
             p2p_socket,
             p2p_port,
             disc_port: config.p2p.disc_port,
@@ -129,7 +131,8 @@ fn resolve_config(sys_args: &SystemArgs, dconfig: DefaultConfig) -> Config {
             rpc_port: sys_args.rpc_port,
         },
         p2p: P2PConfig {
-            disc_dial_min_interval: sys_args.disc_dial_min_interval,
+            disc_dial_interval: sys_args.disc_dial_interval,
+            p2p_dial_interval: sys_args.p2p_dial_interval,
             bootstrap_urls: sys_args.bootstrap_urls.clone(),
             p2p_port: sys_args.p2p_port,
             disc_port: sys_args.disc_port,

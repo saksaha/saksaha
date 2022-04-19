@@ -1,7 +1,3 @@
-use clap::{ArgMatches, Command};
-use lazy_static::lazy_static;
-use std::collections::HashMap;
-
 pub(crate) mod build;
 pub(crate) mod clean;
 pub(crate) mod dev;
@@ -9,6 +5,10 @@ pub(crate) mod expand;
 pub(crate) mod post_commit;
 pub(crate) mod run;
 pub(crate) mod test;
+
+use clap::{ArgMatches, Command};
+use lazy_static::lazy_static;
+use std::collections::HashMap;
 
 crate::load_script![
     build::Build,

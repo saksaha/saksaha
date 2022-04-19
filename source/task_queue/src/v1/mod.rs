@@ -9,27 +9,12 @@ use tokio::sync::{
     Mutex,
 };
 
-// #[derive(Clone)]
-// struct TaskInstance<T>
-// where
-//     T: Clone,
-// {
-//     task: T,
-//     fail_count: usize,
-// }
-
-// pub enum TaskResult {
-//     Success,
-//     FailRetriable(String),
-//     Fail(String),
-// }
-
 pub struct TaskQueue<T>
 where
     T: Clone + Send + Sync,
 {
     tx: Sender<T>,
-    rx: Receiver<T>,
+    rx: Mutex<Receiver<T>>,
     // max_retry: usize,
     // min_interval: Duration,
     // is_running: Arc<Mutex<bool>>,
@@ -37,29 +22,16 @@ where
     // task_queue_name: String,
 }
 
-// pub trait TaskHandle<T>
-// where
-//     T: Clone + Send + Sync,
-// {
-//     fn handle_task<'a>(
-//         &'a self,
-//         task: T,
-//     ) -> Pin<Box<dyn std::future::Future<Output = TaskResult> + Send + 'a>>;
-// }
-
 impl<T> TaskQueue<T>
 where
     T: Clone + Send + Sync + 'static,
 {
-    pub fn new(
-        size: usize,
-        // task_handler: Box<dyn TaskHandle<T> + Send + Sync>,
-    ) -> TaskQueue<T> {
+    pub fn new(size: usize) -> TaskQueue<T> {
         let (tx, rx) = mpsc::channel(size);
 
         TaskQueue {
             tx,
-            rx,
+            rx: Mutex::new(rx),
             // max_retry: 2,
             // min_interval: Duration::from_millis(1000),
             // is_running: Arc::new(Mutex::new(false)),
@@ -81,9 +53,17 @@ where
         };
     }
 
-    pub async fn pop_front(&self) -> Result<(), String> {
-        // self.rx.recv().await;
-        Ok(())
+    pub async fn pop_front(&self) -> Result<T, String> {
+        let mut rx = self.rx.lock().await;
+        match rx.recv().await {
+            Some(t) => return Ok(t),
+            None => {
+                return Err(format!(
+                    "Task queue is already closed. \
+                    Something might have gone wrong",
+                ));
+            }
+        }
     }
 
     // pub fn run_loop(&self) {

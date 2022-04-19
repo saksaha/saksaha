@@ -8,9 +8,13 @@ pub mod state;
 mod table;
 mod task;
 
+use self::dial_scheduler::DialSchedulerArgs;
 use self::{
-    dial_scheduler::DialScheduler, listener::Listener, state::DiscState,
-    table::Table, task::DiscoveryTask,
+    dial_scheduler::DialScheduler,
+    listener::Listener,
+    state::DiscState,
+    table::Table,
+    task::{DiscoveryTask, TaskHandler},
 };
 use crate::iterator::Iterator;
 use colored::Colorize;
@@ -18,7 +22,6 @@ use logger::{tinfo, twarn};
 use p2p_active_calls::ActiveCalls;
 use p2p_identity::{peer::UnknownPeer, P2PIdentity};
 use std::sync::Arc;
-use task::DiscTaskHandler;
 use task_queue::TaskQueue;
 use tokio::net::UdpSocket;
 use tokio::sync::Mutex;
@@ -30,9 +33,11 @@ pub struct Discovery {
     disc_state: Arc<DiscState>,
     dial_scheduler: Arc<DialScheduler>,
     task_queue: Arc<TaskQueue<DiscoveryTask>>,
+    task_handler: Arc<TaskHandler>,
 }
 
 pub struct DiscoveryArgs {
+    pub disc_dial_interval: Option<u16>,
     pub p2p_identity: Arc<P2PIdentity>,
     pub disc_port: Option<u16>,
     pub p2p_port: u16,
@@ -82,23 +87,17 @@ impl Discovery {
             Arc::new(s)
         };
 
-        let disc_task_handler = DiscTaskHandler {
-            disc_state: disc_state.clone(),
-        };
-
         let task_queue = {
-            let q = TaskQueue::new(
-                10,
-                // String::from("p2p_discovery"),
-                // Box::new(disc_task_handler),
-            );
+            let q = TaskQueue::new(10);
             Arc::new(q)
         };
 
-        // let whoareyou_op = {
-        //     let w = WhoareyouOp::new(disc_state.clone());
-        //     Arc::new(w)
-        // };
+        let task_handler = {
+            let r = TaskHandler {
+                task_queue: task_queue.clone(),
+            };
+            Arc::new(r)
+        };
 
         let listener = {
             let l = Listener {
@@ -108,15 +107,15 @@ impl Discovery {
             Arc::new(l)
         };
 
+        let dial_schd_args = DialSchedulerArgs {
+            disc_state: disc_state.clone(),
+            disc_dial_interval: disc_args.disc_dial_interval,
+            unknown_peers,
+            task_queue: task_queue.clone(),
+        };
+
         let dial_scheduler = {
-            let s = DialScheduler::init(
-                disc_state.clone(),
-                // whoareyou_op.clone(),
-                // disc_args.bootstrap_urls,
-                // task_queue.clone(),
-                unknown_peers,
-            )
-            .await;
+            let s = DialScheduler::init(dial_schd_args).await;
             Arc::new(s)
         };
 
@@ -125,6 +124,7 @@ impl Discovery {
             listener,
             dial_scheduler,
             task_queue,
+            task_handler,
         };
 
         Ok(disc)
@@ -133,7 +133,7 @@ impl Discovery {
     pub async fn start(&self) -> Result<(), String> {
         self.listener.start()?;
 
-        // self.task_queue.run_loop();
+        self.task_handler.run();
 
         self.dial_scheduler.start()?;
 
@@ -170,7 +170,7 @@ pub async fn setup_udp_socket(
             tinfo!(
                 "p2p_discovery",
                 "",
-                "Bound udp socket for discovery, addr: {}",
+                "Bound udp socket for P2P discovery, addr: {}",
                 local_addr.to_string().yellow(),
             );
 

@@ -19,8 +19,12 @@ impl DialScheduler {
     pub fn new(
         disc_iterator: Arc<Iterator>,
         host_state: Arc<HostState>,
+        p2p_dial_interval: Option<u16>,
     ) -> DialScheduler {
-        let min_interval = Duration::from_millis(2000);
+        let min_interval = match p2p_dial_interval {
+            Some(i) => Duration::from_millis(i.into()),
+            None => Duration::from_millis(2000),
+        };
 
         let handshake_routine =
             HandshakeRoutine::new(min_interval, disc_iterator, host_state);
