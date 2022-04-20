@@ -11,7 +11,7 @@ use tokio::sync::Mutex;
 pub(crate) struct DialSchedulerArgs {
     pub(crate) disc_state: Arc<DiscState>,
     pub(crate) disc_dial_interval: Option<u16>,
-    pub(crate) unknown_peers: Vec<UnknownPeer>,
+    // pub(crate) unknown_peers: Vec<UnknownPeer>,
     pub(crate) task_queue: Arc<TaskQueue<DiscoveryTask>>,
 }
 
@@ -32,7 +32,7 @@ impl DialScheduler {
     pub async fn init(dial_schd_args: DialSchedulerArgs) -> DialScheduler {
         let DialSchedulerArgs {
             task_queue,
-            unknown_peers,
+            // unknown_peers,
             ..
         } = dial_schd_args;
 
@@ -64,7 +64,7 @@ impl DialScheduler {
             min_interval,
         );
 
-        enqueue_initial_tasks(task_queue, unknown_peers).await;
+        // enqueue_initial_tasks(task_queue, unknown_peers).await;
 
         d
     }

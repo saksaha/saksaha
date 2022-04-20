@@ -2,7 +2,6 @@ use super::check;
 use super::msg::{WhoAreYouAck, WhoAreYouSyn};
 use crate::v1::address::Address;
 // use crate::v1::ops::Message;
-use crate::v1::table::{Node, NodeValue};
 use crate::v1::DiscState;
 use logger::tdebug;
 use p2p_identity::peer::UnknownPeer;
@@ -47,12 +46,11 @@ pub enum WhoareyouInitError {
 
     #[error(" Can't add node to table, err: {err}")]
     TableAddFail { err: String },
-
-    #[error(" Can't put back a node to table")]
-    NodePutBackFail {
-        #[from]
-        source: TrySendError<Arc<Node>>,
-    },
+    // #[error(" Can't put back a node to table")]
+    // NodePutBackFail {
+    //     #[from]
+    //     source: TrySendError<Arc<Node>>,
+    // },
 }
 
 pub(crate) async fn send_who_are_you(
@@ -106,12 +104,12 @@ pub(crate) async fn handle_who_are_you_ack(
 ) -> Result<(), WhoareyouInitError> {
     let endpoint = addr.disc_endpoint();
 
-    let table_node = match disc_state.table.try_reserve().await {
-        Ok(n) => n,
-        Err(err) => {
-            return Err(WhoareyouInitError::TableIsFull { endpoint, err })
-        }
-    };
+    // let table_node = match disc_state.table.try_reserve().await {
+    //     Ok(n) => n,
+    //     Err(err) => {
+    //         return Err(WhoareyouInitError::TableIsFull { endpoint, err })
+    //     }
+    // };
 
     // let way_ack = match WhoAreYouAck::parse(buf) {
     //     Ok(m) => m,

@@ -17,9 +17,9 @@ use task_queue::TaskQueue;
 use tokio::net::TcpListener;
 
 pub(crate) struct Host {
-    pub host_state: Arc<HostState>,
+    pub(crate) host_state: Arc<HostState>,
     discovery: Arc<Discovery>,
-    dial_scheduler: Arc<DialScheduler>,
+    // dial_scheduler: Arc<DialScheduler>,
     task_queue: Arc<TaskQueue<Task>>,
     listener: Arc<Listener>,
 }
@@ -27,6 +27,7 @@ pub(crate) struct Host {
 pub(crate) struct HostArgs {
     pub(crate) p2p_socket: Arc<TcpListener>,
     pub(crate) disc_dial_interval: Option<u16>,
+    pub(crate) disc_table_capacity: Option<u16>,
     pub(crate) p2p_dial_interval: Option<u16>,
     pub(crate) p2p_port: u16,
     pub(crate) disc_port: Option<u16>,
@@ -76,6 +77,7 @@ impl Host {
 
         let disc_args = DiscoveryArgs {
             disc_dial_interval: host_args.disc_dial_interval,
+            disc_table_capacity: host_args.disc_table_capacity,
             p2p_identity: identity.clone(),
             disc_port: host_args.disc_port,
             p2p_port: host_args.p2p_port,
@@ -88,18 +90,18 @@ impl Host {
             Arc::new(d)
         };
 
-        let dial_scheduler = {
-            let d = DialScheduler::new(
-                discovery.iter(),
-                host_state.clone(),
-                host_args.p2p_dial_interval.clone(),
-            );
-            Arc::new(d)
-        };
+        // let dial_scheduler = {
+        //     let d = DialScheduler::new(
+        //         discovery.iter(),
+        //         host_state.clone(),
+        //         host_args.p2p_dial_interval.clone(),
+        //     );
+        //     Arc::new(d)
+        // };
 
         let host = Host {
             discovery,
-            dial_scheduler,
+            // dial_scheduler,
             task_queue,
             listener,
             host_state,

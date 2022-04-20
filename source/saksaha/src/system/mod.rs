@@ -20,6 +20,7 @@ pub struct System {
 #[derive(Debug)]
 pub struct SystemArgs {
     pub disc_dial_interval: Option<u16>,
+    pub disc_table_capacity: Option<u16>,
     pub p2p_dial_interval: Option<u16>,
     pub rpc_port: Option<u16>,
     pub disc_port: Option<u16>,

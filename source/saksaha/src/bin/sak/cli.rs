@@ -6,6 +6,7 @@ const DEFAULT_BOOTSTRAP_URLS: &str =
 #[derive(Debug)]
 pub(crate) struct CLIArgs {
     pub(crate) disc_dial_interval: Option<u16>,
+    pub(crate) disc_table_capacity: Option<u16>,
     pub(crate) p2p_dial_interval: Option<u16>,
     pub(crate) config: Option<String>,
     pub(crate) rpc_port: Option<u16>,
@@ -33,6 +34,8 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
             "Dev mode. e.g. dev-local"))
         .arg(arg!(--"disc-dial-interval" [MilliSecond]
             "P2P discovery dialing minimum interval"))
+        .arg(arg!(--"disc-table-capacity" [Capacity]
+            "P2P discovery table capacity (size)"))
         .arg(arg!(--"p2p-dial-interval" [MilliSecond]
             "P2P dialing minimum interval"))
         .arg(arg!(--"bootstrap-urls" [Endpoints]
@@ -125,8 +128,23 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
         None => None,
     };
 
+    let disc_table_capacity = match matches.value_of("disc-table-capacity") {
+        Some(c) => match c.parse::<u16>() {
+            Ok(capacity) => Some(capacity),
+            Err(err) => {
+                return Err(format!(
+                    "Cannot parse p2p discovery table capacity. Has to be u16,\
+                    err: {}",
+                    err,
+                ));
+            }
+        },
+        None => None,
+    };
+
     Ok(CLIArgs {
         disc_dial_interval,
+        disc_table_capacity,
         p2p_dial_interval,
         config,
         rpc_port,
