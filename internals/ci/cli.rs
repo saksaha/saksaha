@@ -20,7 +20,7 @@ fn define_app() -> Command<'static> {
     log!("Registering subcommands");
 
     for (name, script) in scripts::SCRIPTS.iter() {
-        println!("name: {} {}", name, script.name());
+        log!("  - script name: {}", name);
 
         app = script.define(app);
     }
@@ -33,9 +33,10 @@ fn handle_cli_arg_matches(app: Command) -> Result<(), String> {
 
     match matches.subcommand() {
         Some((subcmd, arg_matches)) => {
-            println!("Found match");
             match scripts::SCRIPTS.get(subcmd) {
                 Some(s) => {
+                    log!("Found subcmd, running: {}", subcmd);
+
                     s.handle_matches(arg_matches);
                 }
                 None => {
