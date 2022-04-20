@@ -19,15 +19,11 @@ pub struct UnknownPeer {
 }
 
 impl UnknownPeer {
-    // pub fn parse(url: String) -> UnknownPeer {
-    //     UnknownPeer {}
-    // }
-
-    pub fn parse(url: String) -> Result<UnknownPeer, String> {
+    pub fn from_url(url: String) -> Result<UnknownPeer, String> {
         if url.starts_with("sak://") {
-            return UnknownPeer::parse_full_url(url);
+            return UnknownPeer::from_full_url(url);
         } else {
-            return UnknownPeer::parse_short_url(url);
+            return UnknownPeer::from_short_url(url);
         }
     }
 
@@ -41,7 +37,7 @@ impl UnknownPeer {
         }
     }
 
-    fn parse_full_url(url: String) -> Result<UnknownPeer, String> {
+    fn from_full_url(url: String) -> Result<UnknownPeer, String> {
         let (peer_id, ip, disc_port) = match url.get(6..) {
             Some(u) => match u.split_once('@') {
                 Some((peer_id, endpoint)) => {
@@ -69,7 +65,7 @@ impl UnknownPeer {
         })
     }
 
-    fn parse_short_url(url: String) -> Result<UnknownPeer, String> {
+    fn from_short_url(url: String) -> Result<UnknownPeer, String> {
         let (ip, disc_port) = parse_endpoint(url.as_str())?;
 
         Ok(UnknownPeer {

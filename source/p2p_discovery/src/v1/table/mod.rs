@@ -4,7 +4,8 @@ use super::address::Address;
 use crate::{iterator::Iterator, CAPACITY};
 use crypto::Signature;
 use logger::tdebug;
-use p2p_identity::{peer::{UnknownPeer, KnownPeer}, PeerId, PUBLIC_KEY_LEN};
+use node::{KnownNode, UnknownNode};
+use p2p_identity::peer::{KnownPeer, UnknownPeer};
 use rand::prelude::*;
 use std::{
     collections::{HashMap, HashSet},
@@ -14,7 +15,6 @@ use tokio::sync::{
     mpsc::{self, error::TrySendError, Receiver, Sender},
     Mutex, MutexGuard,
 };
-use node::{KnownNode, UnknownNode};
 
 // type Nodes = HashMap<PeerId, Arc<Node>>;
 
@@ -39,7 +39,7 @@ impl Table {
             None => 100,
         };
 
-        // vec![UnknownNode, disc_table_capacity];
+        // vec![UnknownNode, table_capacity];
 
         // let slots: Vec<Node> = Vec::with_capacity(table_capacity);
 
@@ -240,4 +240,3 @@ impl Table {
 //         }
 //     }
 // }
-

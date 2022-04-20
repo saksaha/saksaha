@@ -19,7 +19,7 @@ use crate::iterator::Iterator;
 use colored::Colorize;
 use logger::{tinfo, twarn};
 use p2p_active_calls::ActiveCalls;
-use p2p_identity::{peer::UnknownPeer, P2PIdentity};
+use p2p_identity::{identity::P2PIdentity, peer::UnknownPeer};
 use std::sync::Arc;
 use table::Table;
 use task_queue::TaskQueue;
@@ -204,7 +204,7 @@ fn merge_bootstrap_urls(
         let mut cnt = 0;
 
         for url in urls {
-            match UnknownPeer::parse(url.clone()) {
+            match UnknownPeer::from_url(url.clone()) {
                 Ok(p) => {
                     cnt += 1;
 
