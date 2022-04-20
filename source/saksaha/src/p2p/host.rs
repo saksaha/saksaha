@@ -10,7 +10,7 @@ use colored::Colorize;
 use logger::tinfo;
 use p2p_active_calls::ActiveCalls;
 use p2p_discovery::{Discovery, DiscoveryArgs};
-use p2p_identity::{peer::UnknownPeer, P2PIdentity};
+use p2p_identity::{identity::P2PIdentity, peer::UnknownPeer};
 use peer::PeerStore;
 use std::sync::Arc;
 use task_queue::TaskQueue;

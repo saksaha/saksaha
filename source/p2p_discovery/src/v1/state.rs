@@ -1,6 +1,6 @@
 use super::task::DiscoveryTask;
 use p2p_active_calls::ActiveCalls;
-use p2p_identity::P2PIdentity;
+use p2p_identity::identity::P2PIdentity;
 use std::sync::Arc;
 use task_queue::TaskQueue;
 use tokio::net::UdpSocket;

@@ -12,10 +12,12 @@ pub(crate) struct DefaultP2PConfig {
     pub(crate) unknown_peers: Vec<UnknownPeer>,
 }
 
-pub(crate) fn get_empty_default_config() -> DefaultConfig {
-    DefaultConfig {
-        p2p: DefaultP2PConfig {
-            unknown_peers: vec![],
-        },
+impl DefaultConfig {
+    pub(crate) fn new_empty() -> DefaultConfig {
+        DefaultConfig {
+            p2p: DefaultP2PConfig {
+                unknown_peers: vec![],
+            },
+        }
     }
 }

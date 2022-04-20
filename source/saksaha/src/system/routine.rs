@@ -1,6 +1,5 @@
 use super::{System, SystemArgs};
-use crate::config::default::dev_local::get_dev_local_config;
-use crate::config::default::{get_empty_default_config, DefaultConfig};
+use crate::config::default::DefaultConfig;
 use crate::config::{Config, P2PConfig, RPCConfig};
 use crate::p2p::host::HostArgs;
 use crate::pconfig::p2p::PersistedUnknownPeer;
@@ -24,8 +23,8 @@ impl System {
     ) -> Result<(), String> {
         tinfo!("saksaha", "system", "System is starting");
 
-        let dconfig: DefaultConfig = load_default_config(&sys_args.dev_mode);
-        let config: Config = resolve_config(&sys_args, dconfig);
+        // let dconfig: DefaultConfig = load_default_config(&sys_args.dev_mode);
+        let config: Config = resolve_config(&sys_args);
 
         tinfo!("saksaha", "system", "Resolved config: {:?}", config);
 
@@ -103,17 +102,15 @@ impl System {
     }
 }
 
-fn load_default_config(dev_mode: &Option<String>) -> DefaultConfig {
-    match dev_mode.as_deref() {
-        Some("dev_local") => {
-            return get_dev_local_config();
+fn resolve_config(sys_args: &SystemArgs) -> Config {
+    let dconfig: DefaultConfig = {
+        match sys_args.dev_mode.as_deref() {
+            Some("dev_local") => DefaultConfig::new_dev_local(),
+            Some(&_) => DefaultConfig::new_empty(),
+            None => DefaultConfig::new_empty(),
         }
-        Some(&_) => return get_empty_default_config(),
-        None => return get_empty_default_config(),
-    }
-}
+    };
 
-fn resolve_config(sys_args: &SystemArgs, dconfig: DefaultConfig) -> Config {
     let identity = &sys_args.pconfig.p2p.identity;
     let pconfig = &sys_args.pconfig;
 
