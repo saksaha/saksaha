@@ -24,8 +24,8 @@ impl System {
     ) -> Result<(), String> {
         tinfo!("saksaha", "system", "System is starting");
 
-        let dconfig = load_default_config(&sys_args.dev_mode);
-        let config = resolve_config(&sys_args, dconfig);
+        let dconfig: DefaultConfig = load_default_config(&sys_args.dev_mode);
+        let config: Config = resolve_config(&sys_args, dconfig);
 
         tinfo!("saksaha", "system", "Resolved config: {:?}", config);
 
@@ -66,6 +66,7 @@ impl System {
 
         let p2p_host_args = HostArgs {
             disc_dial_interval: config.p2p.disc_dial_interval,
+            disc_table_capacity: config.p2p.disc_table_capacity,
             p2p_dial_interval: config.p2p.p2p_dial_interval,
             p2p_socket,
             p2p_port,
@@ -132,6 +133,7 @@ fn resolve_config(sys_args: &SystemArgs, dconfig: DefaultConfig) -> Config {
         },
         p2p: P2PConfig {
             disc_dial_interval: sys_args.disc_dial_interval,
+            disc_table_capacity: sys_args.disc_table_capacity,
             p2p_dial_interval: sys_args.p2p_dial_interval,
             bootstrap_urls: sys_args.bootstrap_urls.clone(),
             p2p_port: sys_args.p2p_port,

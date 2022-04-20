@@ -2,7 +2,6 @@ use super::check;
 use super::msg::{WhoAreYouAck, WhoAreYouSyn};
 use crate::v1::address::Address;
 // use crate::v1::ops::Message;
-use crate::v1::table::NodeValue;
 use crate::v1::DiscState;
 use logger::tdebug;
 use std::sync::Arc;
@@ -42,12 +41,12 @@ pub(crate) async fn handle_who_are_you(
 ) -> Result<(), WhoareyouRecvError> {
     let endpoint = addr.disc_endpoint();
 
-    let table_node = match disc_state.table.try_reserve().await {
-        Ok(n) => n,
-        Err(err) => {
-            return Err(WhoareyouRecvError::TableIsFull { endpoint, err })
-        }
-    };
+    // let table_node = match disc_state.table.try_reserve().await {
+    //     Ok(n) => n,
+    //     Err(err) => {
+    //         return Err(WhoareyouRecvError::TableIsFull { endpoint, err })
+    //     }
+    // };
 
     // let way_syn = match WhoAreYouSyn::parse(buf) {
     //     Ok(m) => m,

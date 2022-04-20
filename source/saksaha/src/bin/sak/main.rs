@@ -4,6 +4,8 @@ use saksaha::{
     system::{System, SystemArgs},
 };
 
+use crate::cli::CLIArgs;
+
 mod cli;
 
 fn main() {
@@ -11,7 +13,7 @@ fn main() {
 
     logger::init();
 
-    let cli_args = match cli::get_args() {
+    let cli_args: CLIArgs = match cli::get_args() {
         Ok(a) => {
             tinfo!("saksaha", "sak", "Arguments parsed: {:?}", a);
 
@@ -60,6 +62,7 @@ fn main() {
 
     let sys_args = SystemArgs {
         disc_dial_interval: cli_args.disc_dial_interval,
+        disc_table_capacity: cli_args.disc_table_capacity,
         p2p_dial_interval: cli_args.p2p_dial_interval,
         rpc_port: cli_args.rpc_port,
         disc_port: cli_args.disc_port,

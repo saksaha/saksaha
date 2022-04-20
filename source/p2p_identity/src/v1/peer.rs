@@ -1,6 +1,15 @@
 use std::net::SocketAddr;
 
 #[derive(Debug, Clone)]
+pub struct KnownPeer {
+    pub ip: String,
+    pub disc_port: u16,
+    pub p2p_port: u16,
+    pub secret: String,
+    pub public_key: String,
+}
+
+#[derive(Debug, Clone)]
 pub struct UnknownPeer {
     pub ip: String,
     pub disc_port: u16,

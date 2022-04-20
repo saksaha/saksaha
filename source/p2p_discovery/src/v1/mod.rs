@@ -13,7 +13,6 @@ use self::{
     dial_scheduler::DialScheduler,
     listener::Listener,
     state::DiscState,
-    table::Table,
     task::{DiscoveryTask, TaskHandler},
 };
 use crate::iterator::Iterator;
@@ -22,6 +21,7 @@ use logger::{tinfo, twarn};
 use p2p_active_calls::ActiveCalls;
 use p2p_identity::{peer::UnknownPeer, P2PIdentity};
 use std::sync::Arc;
+use table::Table;
 use task_queue::TaskQueue;
 use tokio::net::UdpSocket;
 use tokio::sync::Mutex;
@@ -38,6 +38,7 @@ pub struct Discovery {
 
 pub struct DiscoveryArgs {
     pub disc_dial_interval: Option<u16>,
+    pub disc_table_capacity: Option<u16>,
     pub p2p_identity: Arc<P2PIdentity>,
     pub disc_port: Option<u16>,
     pub p2p_port: u16,
@@ -55,12 +56,18 @@ impl Discovery {
         );
 
         let table = {
-            let t = match Table::init().await {
-                Ok(t) => t,
-                Err(err) => {
-                    return Err(format!("Can't initialize Table, err: {}", err))
-                }
-            };
+            let t =
+                match Table::init(unknown_peers, disc_args.disc_table_capacity)
+                    .await
+                {
+                    Ok(t) => t,
+                    Err(err) => {
+                        return Err(format!(
+                            "Can't initialize Table, err: {}",
+                            err
+                        ))
+                    }
+                };
             Arc::new(t)
         };
 
@@ -110,7 +117,7 @@ impl Discovery {
         let dial_schd_args = DialSchedulerArgs {
             disc_state: disc_state.clone(),
             disc_dial_interval: disc_args.disc_dial_interval,
-            unknown_peers,
+            // unknown_peers,
             task_queue: task_queue.clone(),
         };
 
@@ -140,9 +147,9 @@ impl Discovery {
         Ok(())
     }
 
-    pub fn iter(&self) -> Arc<Iterator> {
-        self.disc_state.table.iter()
-    }
+    // pub fn iter(&self) -> Arc<Iterator> {
+    //     self.disc_state.table.iter()
+    // }
 }
 
 pub async fn setup_udp_socket(
