@@ -1,6 +1,6 @@
 use super::Script;
 use crate::log;
-use clap::{ArgMatches, Command};
+use clap::{Arg, ArgMatches, Command};
 use std::process::{Command as Cmd, Stdio};
 
 pub(crate) struct Test;
@@ -11,35 +11,36 @@ impl Script for Test {
     }
 
     fn define<'a>(&self, app: Command<'a>) -> Command<'a> {
-        app.subcommand(Command::new(self.name()))
+        app.subcommand(
+            Command::new(self.name())
+                .arg(Arg::new("SAKSAHA_ARGS").multiple_values(true))
+                .allow_hyphen_values(true),
+        )
     }
 
     fn handle_matches(&self, matches: &ArgMatches) -> Option<bool> {
-        if let Some(matches) = matches.subcommand_matches(self.name()) {
-            let program = "cargo";
-            let args = match matches.values_of("args") {
-                Some(a) => a.collect(),
-                None => vec![],
-            };
-            let args =
-                [vec!["test", "--", "--nocapture", "--show-output"], args]
-                    .concat();
+        let program = "cargo";
 
-            // let args = [vec!["test", "--"], args]
-            //     .concat();
+        let args = match matches.values_of("SAKSAHA_ARGS") {
+            Some(a) => a.collect(),
+            None => vec![],
+        };
 
-            log!("Executing `{} {:?}`", program, args);
+        let args =
+            [vec!["test", "--", "--nocapture", "--show-output"], args].concat();
 
-            Cmd::new(program)
-                .args(args)
-                .stdout(Stdio::inherit())
-                .stderr(Stdio::inherit())
-                .output()
-                .expect("failed to run");
+        // let args = [vec!["test", "--"], args]
+        //     .concat();
 
-            return Some(true);
-        }
+        log!("Executing `{} {:?}`", program, args);
 
-        None
+        Cmd::new(program)
+            .args(args)
+            .stdout(Stdio::inherit())
+            .stderr(Stdio::inherit())
+            .output()
+            .expect("failed to run");
+
+        return Some(true);
     }
 }
