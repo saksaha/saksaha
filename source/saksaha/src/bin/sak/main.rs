@@ -1,12 +1,12 @@
+mod app;
+mod cli;
+
+use crate::cli::CLIArgs;
 use logger::{terr, tinfo};
 use saksaha::{
     pconfig::PConfig,
     system::{System, SystemArgs},
 };
-
-use crate::cli::CLIArgs;
-
-mod cli;
 
 fn main() {
     print!("Saksaha is launching...\n");

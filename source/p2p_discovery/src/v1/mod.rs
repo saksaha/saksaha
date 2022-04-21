@@ -204,7 +204,7 @@ fn merge_bootstrap_urls(
         let mut cnt = 0;
 
         for url in urls {
-            match UnknownAddr::from_url(url.clone()) {
+            match UnknownAddr::new_from_url(url.clone()) {
                 Ok(p) => {
                     cnt += 1;
 

@@ -1,3 +1,4 @@
+use super::app;
 use clap::{arg, command, ArgMatches, Command};
 
 const DEFAULT_BOOTSTRAP_URLS: &str =
@@ -17,7 +18,7 @@ pub(crate) struct CLIArgs {
 }
 
 pub(crate) fn get_args() -> Result<CLIArgs, String> {
-    let app = define_app();
+    let app = app::create_app();
     let matches = app.get_matches();
 
     let config = match matches.value_of("config") {
@@ -127,43 +128,11 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
     })
 }
 
-pub(crate) fn define_app<'a>() -> Command<'a> {
-    command!()
-        .version("0.0.1")
-        .author("Saksaha <elden@saksaha.com>")
-        .about("Sakaha network reference implementation")
-        .arg(arg!(-c --config [File]
-                    "Saksaha configuration file path, usually created at\n\
-                    [[OS default config path]]/saksaha/config.json "))
-        .arg(arg!(--"rpc-port" [Port] 
-            "Your RPC port"))
-        .arg(arg!(--"disc-port" [Port] 
-            "Your P2P discovery port"))
-        .arg(arg!(--"p2p-port" [Port]
-            "Your p2p port"))
-        .arg(arg!(--"dev-mode" [Mode]
-            "Dev mode. e.g. dev-local"))
-        .arg(arg!(--"disc-dial-interval" [MilliSecond]
-            "P2P discovery dialing minimum interval"))
-        .arg(arg!(--"disc-table-capacity" [Capacity]
-            "P2P discovery table capacity (size)"))
-        .arg(arg!(--"p2p-dial-interval" [MilliSecond]
-            "P2P dialing minimum interval"))
-        .arg(arg!(--"bootstrap-urls" [Endpoints]
-            "Bootstrap peer URLs to start discover, delimited by a comma,\n
-                e.g.\n
-                    full url: sak://04715796a40b0d58fc14a3c4ebee21cb806763066\
-                    a7f1a17adbc256999764443beb8109cfd000718535c5aa27513a2edaf\
-                    c6e8bdbe7c27edc2980f9bbc25142fc5@127.0.0.1:8080, \n
-                    short url: 127.0.0.1:3030
-            "))
-}
-
 #[test]
 fn test_if_app_matches_dev_mode() {
     let args = vec!["", "--dev-mode", "dev-local"];
 
-    let app = define_app();
+    let app = app::create_app();
     let matches = app.get_matches_from(args);
 
     assert_eq!(matches.value_of("dev-mode"), Some("dev-local"));
@@ -173,7 +142,7 @@ fn test_if_app_matches_dev_mode() {
 fn test_empty_dev_mode() {
     let args = vec![""];
 
-    let app = define_app();
+    let app = app::create_app();
     let matches = app.get_matches_from(args);
 
     assert_eq!(matches.value_of("dev-mode"), None);
