@@ -1,4 +1,4 @@
-use p2p_identity::peer::UnknownPeer;
+use p2p_identity::addr::Addr;
 
 use super::Identity;
 
@@ -9,14 +9,14 @@ pub(crate) struct DefaultConfig {
 }
 
 pub(crate) struct DefaultP2PConfig {
-    pub(crate) unknown_peers: Vec<UnknownPeer>,
+    pub(crate) bootstrap_addrs: Vec<Addr>,
 }
 
 impl DefaultConfig {
     pub(crate) fn new_empty() -> DefaultConfig {
         DefaultConfig {
             p2p: DefaultP2PConfig {
-                unknown_peers: vec![],
+                bootstrap_addrs: vec![],
             },
         }
     }

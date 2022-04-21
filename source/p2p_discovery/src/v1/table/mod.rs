@@ -5,7 +5,10 @@ use crate::{iterator::Iterator, CAPACITY};
 use crypto::Signature;
 use logger::tdebug;
 use node::{KnownNode, UnknownNode};
-use p2p_identity::peer::{KnownPeer, UnknownPeer};
+use p2p_identity::{
+    addr::Addr,
+    peer::{KnownPeer, UnknownPeer},
+};
 use rand::prelude::*;
 use std::{
     collections::{HashMap, HashSet},
@@ -31,7 +34,7 @@ pub(crate) struct Table {
 
 impl Table {
     pub async fn init(
-        unknown_peers: Vec<UnknownPeer>,
+        bootstrap_addrs: Vec<Addr>,
         disc_table_capacity: Option<u16>,
     ) -> Result<Table, String> {
         let table_capacity = match disc_table_capacity {

@@ -10,7 +10,7 @@ use colored::Colorize;
 use logger::tinfo;
 use p2p_active_calls::ActiveCalls;
 use p2p_discovery::{Discovery, DiscoveryArgs};
-use p2p_identity::{identity::P2PIdentity, peer::UnknownPeer};
+use p2p_identity::{addr::Addr, identity::P2PIdentity, peer::UnknownPeer};
 use peer::PeerStore;
 use std::sync::Arc;
 use task_queue::TaskQueue;
@@ -31,7 +31,7 @@ pub(crate) struct HostArgs {
     pub(crate) p2p_dial_interval: Option<u16>,
     pub(crate) p2p_port: u16,
     pub(crate) disc_port: Option<u16>,
-    pub(crate) unknown_peers: Vec<UnknownPeer>,
+    pub(crate) bootstrap_addrs: Vec<Addr>,
     pub(crate) rpc_port: u16,
     pub(crate) identity: Identity,
     pub(crate) bootstrap_urls: Option<Vec<String>>,
@@ -82,7 +82,7 @@ impl Host {
             disc_port: host_args.disc_port,
             p2p_port: host_args.p2p_port,
             bootstrap_urls: host_args.bootstrap_urls,
-            unknown_peers: host_args.unknown_peers,
+            bootstrap_addrs: host_args.bootstrap_addrs,
         };
 
         let discovery = {
