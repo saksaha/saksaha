@@ -1,5 +1,6 @@
 use logger::{tdebug, terr, twarn};
 use std::{
+    fmt::Debug,
     pin::Pin,
     sync::Arc,
     time::{Duration, SystemTime},
@@ -24,10 +25,10 @@ where
 
 impl<T> TaskQueue<T>
 where
-    T: Clone + Send + Sync + 'static,
+    T: Debug + Clone + Send + Sync + 'static,
 {
-    pub fn new(size: usize) -> TaskQueue<T> {
-        let (tx, rx) = mpsc::channel(size);
+    pub fn new(capacity: usize) -> TaskQueue<T> {
+        let (tx, rx) = mpsc::channel(capacity);
 
         TaskQueue {
             tx,
@@ -40,15 +41,13 @@ where
     }
 
     pub async fn push_back(&self, task: T) -> Result<(), String> {
-        // let task_instance = TaskInstance {
-        //     task,
-        //     fail_count: 0,
-        // };
-
-        match self.tx.send(task).await {
+        match self.tx.send(task.clone()).await {
             Ok(_) => return Ok(()),
             Err(err) => {
-                return Err(format!("Cannot add a new task, err: {}", err));
+                return Err(format!(
+                    "Cannot add a new task, task: {:?}, err: {:?}",
+                    task, err
+                ));
             }
         };
     }

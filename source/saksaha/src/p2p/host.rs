@@ -28,13 +28,13 @@ pub(crate) struct HostArgs {
     pub(crate) p2p_socket: Arc<TcpListener>,
     pub(crate) disc_dial_interval: Option<u16>,
     pub(crate) disc_table_capacity: Option<u16>,
+    pub(crate) disc_task_interval: Option<u16>,
     pub(crate) p2p_dial_interval: Option<u16>,
     pub(crate) p2p_port: u16,
     pub(crate) disc_port: Option<u16>,
     pub(crate) bootstrap_addrs: Vec<Addr>,
     pub(crate) rpc_port: u16,
     pub(crate) identity: Identity,
-    pub(crate) bootstrap_urls: Option<Vec<String>>,
     pub(crate) peer_store: Arc<PeerStore>,
 }
 
@@ -78,10 +78,10 @@ impl Host {
         let disc_args = DiscoveryArgs {
             disc_dial_interval: host_args.disc_dial_interval,
             disc_table_capacity: host_args.disc_table_capacity,
+            disc_task_interval: host_args.disc_task_interval,
             p2p_identity: identity.clone(),
             disc_port: host_args.disc_port,
             p2p_port: host_args.p2p_port,
-            bootstrap_urls: host_args.bootstrap_urls,
             bootstrap_addrs: host_args.bootstrap_addrs,
         };
 

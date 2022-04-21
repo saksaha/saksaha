@@ -1,10 +1,11 @@
 mod node;
 
+use self::node::Node;
 use super::address::Address;
 use crate::{iterator::Iterator, CAPACITY};
 use crypto::Signature;
 use logger::tdebug;
-use node::{KnownNode, UnknownNode};
+use logger::twarn;
 use p2p_identity::{
     addr::Addr,
     peer::{KnownPeer, UnknownPeer},
@@ -23,18 +24,19 @@ use tokio::sync::{
 
 /// TODO Table shall have Kademlia flavored buckets
 pub(crate) struct Table {
+    slots: Vec<Arc<Mutex<Node>>>,
+    table_capacity: u16,
     // map: Mutex<Nodes>,
-// keys: Mutex<HashSet<PeerId>>,
-// slots_tx: Sender<Arc<Node>>,
-// slots_rx: Mutex<Receiver<Arc<Node>>>,
-// updates_tx: Arc<Sender<Arc<Node>>>,
-// updates_rx: Arc<Mutex<Receiver<Arc<Node>>>>,
-// iter: Arc<Iterator>,
+    // keys: Mutex<HashSet<PeerId>>,
+    // slots_tx: Sender<Arc<Node>>,
+    // slots_rx: Mutex<Receiver<Arc<Node>>>,
+    // updates_tx: Arc<Sender<Arc<Node>>>,
+    // updates_rx: Arc<Mutex<Receiver<Arc<Node>>>>,
+    // iter: Arc<Iterator>,
 }
 
 impl Table {
     pub async fn init(
-        bootstrap_addrs: Vec<Addr>,
         disc_table_capacity: Option<u16>,
     ) -> Result<Table, String> {
         let table_capacity = match disc_table_capacity {
@@ -42,11 +44,49 @@ impl Table {
             None => 100,
         };
 
-        // vec![UnknownNode, table_capacity];
+        let (slots_tx, slots_rx) = mpsc::channel(table_capacity.into());
 
-        // let slots: Vec<Node> = Vec::with_capacity(table_capacity);
+        let mut slots = Vec::with_capacity(table_capacity.into());
 
-        // for l
+        for _ in 0..table_capacity {
+            let node = Arc::new(Mutex::new(Node::Empty));
+
+            slots.push(node.clone());
+            match slots_tx.send(node).await {
+                Ok(_) => (),
+                Err(err) => {
+                    return Err(format!(
+                        "Cannot push table node into the queue, err: {}",
+                        err,
+                    ));
+                }
+            };
+        }
+
+        // for (idx, addr) in bootstrap_addrs.iter().enumerate() {
+        //     if idx >= slots.len() {
+        //         twarn!(
+        //             "p2p_discovery",
+        //             "table",
+        //             "Table capacity is reached. Abandoning rest of bootstrap \
+        //             addresses"
+        //         );
+
+        //         break;
+        //     }
+
+        //     let node = Arc::new(Mutex::new(Node::Empty));
+
+        //     match slots_tx.send(node).await {
+        //         Ok(_) => (),
+        //         Err(err) => {
+        //             return Err(format!(
+        //                 "Cannot push table node into the queue, err: {}",
+        //                 err,
+        //             ));
+        //         }
+        //     };
+        // }
 
         // let (updates_tx, updates_rx) = {
         //     let (tx, rx) = mpsc::channel(CAPACITY);
@@ -89,6 +129,8 @@ impl Table {
         // };
 
         let table = Table {
+            table_capacity,
+            slots,
             // map,
             // keys,
             // rng,

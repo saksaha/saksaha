@@ -15,8 +15,8 @@ pub(crate) struct Config {
 pub(crate) struct P2PConfig {
     pub(crate) disc_dial_interval: Option<u16>,
     pub(crate) disc_table_capacity: Option<u16>,
+    pub(crate) disc_task_interval: Option<u16>,
     pub(crate) p2p_dial_interval: Option<u16>,
-    pub(crate) bootstrap_urls: Option<Vec<String>>,
     pub(crate) disc_port: Option<u16>,
     pub(crate) p2p_port: Option<u16>,
     pub(crate) identity: Identity,
@@ -92,8 +92,8 @@ impl Config {
             p2p: P2PConfig {
                 disc_dial_interval: sys_args.disc_dial_interval,
                 disc_table_capacity: sys_args.disc_table_capacity,
+                disc_task_interval: sys_args.disc_task_interval,
                 p2p_dial_interval: sys_args.p2p_dial_interval,
-                bootstrap_urls: sys_args.bootstrap_urls.clone(),
                 p2p_port: sys_args.p2p_port,
                 disc_port: sys_args.disc_port,
                 identity: Identity {

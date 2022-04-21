@@ -64,6 +64,7 @@ impl System {
         let p2p_host_args = HostArgs {
             disc_dial_interval: config.p2p.disc_dial_interval,
             disc_table_capacity: config.p2p.disc_table_capacity,
+            disc_task_interval: config.p2p.disc_task_interval,
             p2p_dial_interval: config.p2p.p2p_dial_interval,
             p2p_socket,
             p2p_port,
@@ -71,7 +72,6 @@ impl System {
             bootstrap_addrs: config.p2p.bootstrap_addrs,
             rpc_port,
             identity: config.p2p.identity,
-            bootstrap_urls: config.p2p.bootstrap_urls,
             peer_store,
         };
 

@@ -5,7 +5,7 @@ pub use handler::*;
 use super::address::Address;
 use crate::state::DiscState;
 use log::{debug, error, warn};
-use p2p_identity::peer::UnknownPeer;
+use p2p_identity::{addr::Addr, peer::UnknownPeer};
 use std::{pin::Pin, sync::Arc};
 use task_queue::TaskQueue;
 
@@ -14,8 +14,8 @@ pub(crate) enum DiscoveryTask {
     InitiateWhoAreYou {
         // disc_state: Arc<DiscState>,
         // whoareyou_op: Arc<WhoareyouOp>,
-        // addr: Address,
-        unknown_peer: UnknownPeer,
+        addr: Addr,
+        // unknown_peer: UnknownPeer,
     },
 }
 
