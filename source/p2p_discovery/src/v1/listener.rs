@@ -1,11 +1,10 @@
 use super::{
     address::Address,
-    ops::{whoareyou::WhoareyouOp, Opcode},
+    ops::whoareyou::{initiate, receive},
+    // ops::Opcode,
     DiscState,
 };
-use crate::task::Task;
-use log::{debug, error, info, warn};
-use task::task_queue::TaskQueue;
+use logger::{tdebug, terr, tinfo, twarn};
 use std::{net::SocketAddr, sync::Arc};
 use thiserror::Error;
 use tokio::net::UdpSocket;
@@ -17,32 +16,38 @@ pub enum ListenerError {
 }
 
 pub(crate) struct Listener {
-    disc_state: Arc<DiscState>,
-    udp_socket: Arc<UdpSocket>,
-    whoareyou_op: Arc<WhoareyouOp>,
+    pub(crate) disc_state: Arc<DiscState>,
+    pub(crate) udp_socket: Arc<UdpSocket>,
+    // whoareyou_op: Arc<WhoareyouOp>,
 }
 
 impl Listener {
-    pub fn new(
-        disc_state: Arc<DiscState>,
-        udp_socket: Arc<UdpSocket>,
-        whoareyou_op: Arc<WhoareyouOp>,
-    ) -> Listener {
-        Listener {
-            disc_state,
-            udp_socket,
-            whoareyou_op,
-        }
-    }
+    // pub fn new(
+    //     disc_state: Arc<DiscState>,
+    //     udp_socket: Arc<UdpSocket>,
+    //     // whoareyou_op: Arc<WhoareyouOp>,
+    // ) -> Listener {
+    //     Listener {
+    //         disc_state,
+    //         udp_socket,
+    //         // whoareyou_op,
+    //     }
+    // }
 
     pub fn start(&self) -> Result<(), String> {
+        tinfo!(
+            "p2p_discovery",
+            "listener",
+            "Listener starts to accept requests"
+        );
+
         self.run_loop()
     }
 
     pub fn run_loop(&self) -> Result<(), String> {
         let disc_state = self.disc_state.clone();
         let udp_socket = self.udp_socket.clone();
-        let whoareyou_op = self.whoareyou_op.clone();
+        // let whoareyou_op = self.whoareyou_op.clone();
 
         tokio::spawn(async move {
             loop {
@@ -50,21 +55,28 @@ impl Listener {
                 let (_, socket_addr) =
                     match udp_socket.recv_from(&mut buf).await {
                         Ok(res) => {
-                            debug!(
+                            tdebug!(
+                                "p2p_discovery",
+                                "",
                                 "Accepted incoming request, len: {}, addr: {}",
-                                res.0, res.1,
+                                res.0,
+                                res.1,
                             );
                             res
                         }
                         Err(err) => {
-                            warn!("Error accepting request, err: {}", err);
+                            twarn!(
+                                "p2p_discovery",
+                                "Error accepting request, err: {}",
+                                err
+                            );
                             continue;
                         }
                     };
 
                 match Handler::run(
                     disc_state.clone(),
-                    whoareyou_op.clone(),
+                    // whoareyou_op.clone(),
                     socket_addr,
                     &buf,
                 )
@@ -72,9 +84,12 @@ impl Listener {
                 {
                     Ok(_) => (),
                     Err(err) => {
-                        error!(
+                        terr!(
+                            "p2p_discovery",
+                            "",
                             "Error processing request, addr: {}, err: {}",
-                            socket_addr, err
+                            socket_addr,
+                            err
                         );
                     }
                 };
@@ -90,7 +105,7 @@ struct Handler;
 impl Handler {
     async fn run(
         disc_state: Arc<DiscState>,
-        whoareyou_op: Arc<WhoareyouOp>,
+        // whoareyou_op: Arc<WhoareyouOp>,
         addr: SocketAddr,
         buf: &[u8],
     ) -> Result<(), String> {
@@ -101,39 +116,49 @@ impl Handler {
             return Err(format!("content too short, len: {}", len));
         }
 
-        let opcode = {
-            let c = Opcode::from(buf[4]);
-            if c == Opcode::Undefined {
-                return Err(format!("Undefined opcode, val: {}", buf[4]));
-            }
-            c
-        };
+        // let opcode = {
+        //     let c = Opcode::from(buf[4]);
+        //     if c == Opcode::Undefined {
+        //         return Err(format!("Undefined opcode, val: {}", buf[4]));
+        //     }
+        //     c
+        // };
 
-        match opcode {
-            Opcode::WhoAreYouSyn => {
-                match whoareyou_op
-                    .handle_who_are_you(addr.clone(), buf)
-                    .await
-                {
-                    Ok(_) => (),
-                    Err(err) => {
-                        error!("Request handle fail, err: {}", err);
-                    }
-                }
-            }
-            Opcode::WhoAreYouAck => {
-                match whoareyou_op
-                    .handle_who_are_you_ack(addr.clone(), buf)
-                    .await
-                {
-                    Ok(_) => (),
-                    Err(err) => {
-                        error!("Request handle fail, err: {}", err);
-                    }
-                }
-            }
-            Opcode::Undefined => {}
-        };
+        // match opcode {
+        //     Opcode::WhoAreYouSyn => {
+        //         match receive::handle_who_are_you(disc_state, addr.clone(), buf)
+        //             .await
+        //         {
+        //             Ok(_) => (),
+        //             Err(err) => {
+        //                 terr!(
+        //                     "p2p_discovery",
+        //                     "Request handle fail, err: {}",
+        //                     err
+        //                 );
+        //             }
+        //         }
+        //     }
+        //     Opcode::WhoAreYouAck => {
+        //         match initiate::handle_who_are_you_ack(
+        //             disc_state,
+        //             addr.clone(),
+        //             buf,
+        //         )
+        //         .await
+        //         {
+        //             Ok(_) => (),
+        //             Err(err) => {
+        //                 terr!(
+        //                     "p2p_discovery",
+        //                     "Request handle fail, err: {}",
+        //                     err
+        //                 );
+        //             }
+        //         }
+        //     }
+        //     Opcode::Undefined => {}
+        // };
 
         Ok(())
     }

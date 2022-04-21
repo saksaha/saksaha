@@ -1,8 +1,6 @@
-mod commands;
-mod macros;
-
-use clap::App;
-use commands::COMMANDS;
+mod cli;
+mod log;
+mod scripts;
 
 fn main() {
     let curr_dir = match std::env::current_dir() {
@@ -31,7 +29,7 @@ fn main() {
     };
 
     log!(
-        "CI is starting, project root: {}, current workign directory: {}",
+        "CI is starting, project root: {}, current working directory: {}",
         project_root,
         curr_dir,
     );
@@ -43,28 +41,10 @@ fn main() {
         );
     }
 
-    let mut app = App::new("CI")
-        .version("0.1")
-        .author("Saksaha <team@saksaha.com>")
-        .about("Rust saksaha continuous integration toolsuite");
-
-    let comm = COMMANDS
-        .lock()
-        .expect("cli command definitions must be loaded");
-
-    for e in comm.iter() {
-        app = e.def(app.to_owned());
-    }
-
-    let matches = app.get_matches();
-
-    for e in comm.iter() {
-        if let Some(_) = e.exec(&matches) {
-            log!("Command has been executed, name: {}", e.name());
-
-            std::process::exit(0);
+    match cli::run_app() {
+        Ok(_) => (),
+        Err(err) => {
+            log!("Error running script, err: {}", err);
         }
-    }
-
-    log!("Couldn't find any command to exeucte, Check the argument");
+    };
 }

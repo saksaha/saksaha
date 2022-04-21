@@ -1,4 +1,3 @@
-pub use k256::{elliptic_curve::{PublicKey}, SecretKey};
 pub use k256::{
     ecdh::EphemeralSecret,
     ecdsa::{
@@ -8,11 +7,12 @@ pub use k256::{
     elliptic_curve::sec1::ToEncodedPoint,
     elliptic_curve::weierstrass::Curve,
     elliptic_curve::{
-        Error,
-        ecdh::SharedSecret, AffinePoint, NonZeroScalar, ProjectiveArithmetic,
+        ecdh::SharedSecret, AffinePoint, Error, NonZeroScalar,
+        ProjectiveArithmetic,
     },
     EncodedPoint, Secp256k1,
 };
+pub use k256::{elliptic_curve::PublicKey, SecretKey};
 use rand_core::OsRng;
 use std::{borrow::Borrow, fmt::Write, num::ParseIntError};
 

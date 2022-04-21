@@ -87,7 +87,7 @@ impl Tree {
             // hash.copy_from_slice(&h[..]);
             // println!("val: {}, hash: {:?}", l, hash);
             let xl: u64 = l.into();
-            let xr: u64 = (l+1).into();
+            let xr: u64 = (l + 1).into();
             let mut hash = mimc(Scalar::from(xl), Scalar::from(xr), constants);
 
             let n = Node {
@@ -134,7 +134,10 @@ impl Tree {
 
                     // println!("height: {}, hash: {:?}", h, hs);
 
-                    let n = Node { val: None, hash: hs };
+                    let n = Node {
+                        val: None,
+                        hash: hs,
+                    };
 
                     nodes_at_height.push(n);
                     combined = [0; 64];
@@ -147,7 +150,11 @@ impl Tree {
             // println!("{}: {}, {:?}\n", idx, e.len(), e);
         }
 
-        Tree { nodes, height, data: d }
+        Tree {
+            nodes,
+            height,
+            data: d,
+        }
     }
 
     pub fn root(&self) -> &Node {
@@ -204,11 +211,11 @@ pub fn func() {
 
     let leaves = vec![0, 1, 2, 3, 4];
     pub const MIMC_ROUNDS: usize = 100;
-        let mut rng = thread_rng();
+    let mut rng = thread_rng();
 
     let constants = (0..MIMC_ROUNDS)
-    .map(|_| Scalar::random(&mut rng))
-    .collect::<Vec<_>>();
+        .map(|_| Scalar::random(&mut rng))
+        .collect::<Vec<_>>();
 
     let tree = Tree::new(leaves, 2, &constants);
 
@@ -223,7 +230,6 @@ pub fn func() {
     let auth_paths = tree.generate_auth_paths(3);
     println!();
     println!("yo {}, {:?}", auth_paths.len(), auth_paths);
-
 
     let preimage = [0];
     let preimage2 = [1];

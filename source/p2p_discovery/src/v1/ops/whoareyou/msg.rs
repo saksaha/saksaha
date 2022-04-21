@@ -1,4 +1,4 @@
-use crate::v1::{ops::{Message, Opcode}};
+// use crate::v1::ops::{Message, Opcode};
 use k256::ecdsa::Signature;
 use p2p_identity::PUBLIC_KEY_LEN;
 use std::convert::TryInto;
@@ -105,53 +105,51 @@ impl WhoAreYouSyn {
     }
 }
 
-impl Message for WhoAreYouSyn {
-    fn opcode(&self) -> Opcode {
-        Opcode::WhoAreYouSyn
-    }
+// impl Message for WhoAreYouSyn {
+//     fn opcode(&self) -> Opcode {
+//         Opcode::WhoAreYouSyn
+//     }
 
-    fn to_bytes(&self) -> Result<Vec<u8>, String> {
-        let way_bytes = match self.way.to_bytes() {
-            Ok(b) => b,
-            Err(err) => return Err(err),
-        };
+//     fn to_bytes(&self) -> Result<Vec<u8>, String> {
+//         let way_bytes = match self.way.to_bytes() {
+//             Ok(b) => b,
+//             Err(err) => return Err(err),
+//         };
 
-        return seal_way_msg(self.opcode(), way_bytes);
-    }
+//         return seal_way_msg(self.opcode(), way_bytes);
+//     }
 
-    fn parse(buf: &[u8]) -> Result<WhoAreYouSyn, String> {
-        let way = parse_way_msg(buf, Opcode::WhoAreYouSyn)?;
+//     fn parse(buf: &[u8]) -> Result<WhoAreYouSyn, String> {
+//         let way = parse_way_msg(buf, Opcode::WhoAreYouSyn)?;
 
-        Ok(WhoAreYouSyn { way })
-    }
-}
+//         Ok(WhoAreYouSyn { way })
+//     }
+// }
 
 pub struct WhoAreYouAck {
     pub way: WhoAreYou,
 }
 
-impl Message for WhoAreYouAck {
-    fn opcode(&self) -> Opcode {
-        Opcode::WhoAreYouAck
-    }
+// impl Message for WhoAreYouAck {
+//     fn opcode(&self) -> Opcode {
+//         Opcode::WhoAreYouAck
+//     }
 
-    fn to_bytes(&self) -> Result<Vec<u8>, String> {
-        let way_bytes = match self.way.to_bytes() {
-            Ok(b) => b,
-            Err(err) => return Err(err),
-        };
+//     fn to_bytes(&self) -> Result<Vec<u8>, String> {
+//         let way_bytes = match self.way.to_bytes() {
+//             Ok(b) => b,
+//             Err(err) => return Err(err),
+//         };
 
-        return seal_way_msg(self.opcode(), way_bytes);
-    }
+//         return seal_way_msg(self.opcode(), way_bytes);
+//     }
 
-    fn parse(buf: &[u8]) -> Result<WhoAreYouAck, String> {
-        let way = parse_way_msg(buf, Opcode::WhoAreYouAck)?;
+//     fn parse(buf: &[u8]) -> Result<WhoAreYouAck, String> {
+//         let way = parse_way_msg(buf, Opcode::WhoAreYouAck)?;
 
-        Ok(WhoAreYouAck {
-            way,
-        })
-    }
-}
+//         Ok(WhoAreYouAck { way })
+//     }
+// }
 
 impl WhoAreYouAck {
     pub fn new(
@@ -161,85 +159,82 @@ impl WhoAreYouAck {
     ) -> WhoAreYouAck {
         let way = WhoAreYou::new(sig, peer_op_port, public_key_bytes);
 
-        WhoAreYouAck {
-            way,
-        }
+        WhoAreYouAck { way }
     }
 }
 
-fn seal_way_msg(opcode: Opcode, way_buf: Vec<u8>) -> Result<Vec<u8>, String> {
-    let opcode_bytes = [opcode as u8];
+// fn seal_way_msg(opcode: Opcode, way_buf: Vec<u8>) -> Result<Vec<u8>, String> {
+//     let opcode_bytes = [opcode as u8];
 
-    let size_bytes = {
-        let l = opcode_bytes.len() + way_buf.len();
+//     let size_bytes = {
+//         let l = opcode_bytes.len() + way_buf.len();
 
-        let mut len: u32 = match l.try_into() {
-            Ok(l) => l,
-            Err(err) => {
-                return Err(format!(
-                    "Cannot convert length into u8, err: {}",
-                    err
-                ));
-            }
-        };
+//         let mut len: u32 = match l.try_into() {
+//             Ok(l) => l,
+//             Err(err) => {
+//                 return Err(format!(
+//                     "Cannot convert length into u8, err: {}",
+//                     err
+//                 ));
+//             }
+//         };
 
-        len += SIZE_LEN as u32; // adding size bytes itself
+//         len += SIZE_LEN as u32; // adding size bytes itself
 
-        let size_bytes = len.to_le_bytes();
-        if size_bytes.len() != 4 {
-            return Err(format!(
-                "Message length is not 4 (length of 2^4), len: {}",
-                size_bytes.len()
-            ));
-        }
+//         let size_bytes = len.to_le_bytes();
+//         if size_bytes.len() != 4 {
+//             return Err(format!(
+//                 "Message length is not 4 (length of 2^4), len: {}",
+//                 size_bytes.len()
+//             ));
+//         }
 
-        size_bytes
-    };
+//         size_bytes
+//     };
 
-    let mut buf: Vec<u8> = vec![];
-    buf.extend_from_slice(&size_bytes);
-    buf.extend_from_slice(&opcode_bytes);
-    buf.extend_from_slice(&way_buf);
+//     let mut buf: Vec<u8> = vec![];
+//     buf.extend_from_slice(&size_bytes);
+//     buf.extend_from_slice(&opcode_bytes);
+//     buf.extend_from_slice(&way_buf);
 
-    Ok(buf)
-}
+//     Ok(buf)
+// }
 
-fn parse_way_msg(buf: &[u8], opcode: Opcode) -> Result<WhoAreYou, String> {
-    let size: usize = {
-        let mut size_buf: [u8; SIZE_LEN] = [0; SIZE_LEN];
-        size_buf.copy_from_slice(&buf[..SIZE_LEN]);
+// fn parse_way_msg(buf: &[u8], opcode: Opcode) -> Result<WhoAreYou, String> {
+//     let size: usize = {
+//         let mut size_buf: [u8; SIZE_LEN] = [0; SIZE_LEN];
+//         size_buf.copy_from_slice(&buf[..SIZE_LEN]);
 
-        let size = u32::from_le_bytes(size_buf);
-        let size: usize = match size.try_into() {
-            Ok(l) => l,
-            Err(err) => {
-                return Err(format!(
-                    "Couldn't parse length of a msg, len: {}, err: {}",
-                    size, err,
-                ));
-            }
-        };
-        size
-    };
+//         let size = u32::from_le_bytes(size_buf);
+//         let size: usize = match size.try_into() {
+//             Ok(l) => l,
+//             Err(err) => {
+//                 return Err(format!(
+//                     "Couldn't parse length of a msg, len: {}, err: {}",
+//                     size, err,
+//                 ));
+//             }
+//         };
+//         size
+//     };
 
-    let _opcode = {
-        let c = Opcode::from(buf[4]);
-        if c != opcode {
-            return Err(format!(
-                "Opcode is unmatched, {}, expected {:?}",
-                buf[4],
-                opcode,
-            ));
-        }
-        c
-    };
+//     let _opcode = {
+//         let c = Opcode::from(buf[4]);
+//         if c != opcode {
+//             return Err(format!(
+//                 "Opcode is unmatched, {}, expected {:?}",
+//                 buf[4], opcode,
+//             ));
+//         }
+//         c
+//     };
 
-    let offset = SIZE_LEN + OPCODE_LEN;
+//     let offset = SIZE_LEN + OPCODE_LEN;
 
-    let way = match WhoAreYou::parse(&buf[offset..size]) {
-        Ok(w) => w,
-        Err(err) => return Err(err),
-    };
+//     let way = match WhoAreYou::parse(&buf[offset..size]) {
+//         Ok(w) => w,
+//         Err(err) => return Err(err),
+//     };
 
-    Ok(way)
-}
+//     Ok(way)
+// }

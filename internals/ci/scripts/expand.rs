@@ -1,42 +1,35 @@
-use super::Commandify;
+use super::Script;
 use crate::log;
-use clap::{App, Arg, ArgMatches, SubCommand};
+use clap::{ArgMatches, Command};
 use std::{
     fs,
     io::{ErrorKind, Write},
     path::PathBuf,
-    process::{Command, Stdio},
+    process::{Command as Cmd, Stdio},
     str::FromStr,
 };
 
-pub struct Expand;
+pub(crate) struct Expand;
 
-impl Commandify for Expand {
-    fn name(&self) -> &str {
+impl Script for Expand {
+    fn name(&self) -> &'static str {
         "expand"
     }
 
-    fn def<'a, 'b>(&self, app: App<'a, 'b>) -> App<'a, 'b> {
-        app.subcommand(
-            SubCommand::with_name(self.name())
-                .setting(clap::AppSettings::AllowLeadingHyphen)
-                .arg(Arg::with_name("args").multiple(true)),
-        )
+    fn define<'a>(&self, app: Command<'a>) -> Command<'a> {
+        app.subcommand(Command::new(self.name()))
     }
 
-    fn exec(&self, matches: &ArgMatches) -> Option<bool> {
-        if let Some(_) = matches.subcommand_matches(self.name()) {
-            let dest = PathBuf::from_str(r"target/expand/debug")
-                .expect("destination path");
+    fn handle_matches(&self, _matches: &ArgMatches) -> Option<bool> {
+        let dest = PathBuf::from_str(r"target/expand/debug")
+            .expect("destination path");
 
-            expand(dest);
-            return Some(true);
-        }
-        None
+        expand(dest);
+        return Some(true);
     }
 }
 
-pub fn expand(dest: PathBuf) {
+pub(crate) fn expand(dest: PathBuf) {
     let is_rust_fmt = check_rustfmt();
 
     match std::fs::remove_dir_all(dest.to_owned()) {
@@ -84,7 +77,7 @@ pub fn expand(dest: PathBuf) {
 }
 
 fn check_rustfmt() -> bool {
-    let is_rust_fmt = match Command::new("rustfmt").output() {
+    let is_rust_fmt = match Cmd::new("rustfmt").output() {
         Ok(_) => {
             log!("rustfmt is found, will format expanded output");
             true
@@ -103,7 +96,7 @@ fn check_rustfmt() -> bool {
 fn execute_rustfmt(file_path: PathBuf) {
     log!("Executing rustfmt on file: {:?}", file_path);
 
-    Command::new("rustfmt")
+    Cmd::new("rustfmt")
         .arg(file_path.to_str().expect("file path must be stringified"))
         .output()
         .unwrap_or_else(|err| {
@@ -118,7 +111,7 @@ fn execute_expand(
     args: Vec<&str>,
     is_rust_fmt: bool,
 ) {
-    let cmd = Command::new("cargo")
+    let cmd = Cmd::new("cargo")
         .args(args)
         .stderr(Stdio::inherit())
         .stdout(Stdio::piped())

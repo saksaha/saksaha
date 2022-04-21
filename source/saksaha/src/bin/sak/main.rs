@@ -1,176 +1,83 @@
-use std::{sync::Arc};
+use logger::{terr, tinfo};
+use saksaha::{
+    pconfig::PConfig,
+    system::{System, SystemArgs},
+};
 
-use clap::{App, Arg};
-use log::{error, info};
-use saksaha::{node::Node, pconfig::PConfig};
+use crate::cli::CLIArgs;
 
-const DEFAULT_BOOTSTRAP_URLS: &str =
-    include_str!("../../../../../config/bootstrap_urls");
-
-struct Args {
-    config: Option<String>,
-    rpc_port: Option<u16>,
-    disc_port: Option<u16>,
-    p2p_port: Option<u16>,
-    bootstrap_endpoints: Option<Vec<String>>,
-}
-
-fn get_args() -> Result<Args, String> {
-    let flags = App::new("Saksaha rust")
-        .version("0.1")
-        .author("Saksaha <team@saksaha.com>")
-        .about("Saksaha node rust client")
-        .license("MIT OR Apache-2.0")
-        .arg(
-            Arg::new("config")
-                .short('c')
-                .long("config")
-                .value_name("FILE")
-                .about(
-                    "Saksaha configuration file, usually created at \
-                    [[OS default config path]]/saksaha/config.json",
-                ),
-        )
-        .arg(
-            Arg::new("bootstrap_urls")
-                .long("bootstrap-urls")
-                .value_name("ENDPOINT")
-                .use_delimiter(true)
-                .about("Bootstrap peers to start discovery for"),
-        )
-        .arg(
-            Arg::new("rpc_port")
-                .long("rpc-port")
-                .value_name("PORT")
-                .about("RPC port"),
-        )
-        .arg(
-            Arg::new("disc_port")
-                .long("disc-port")
-                .value_name("PORT")
-                .about("Discovery port"),
-        )
-        .arg(
-            Arg::new("p2p_port")
-                .long("p2p-port")
-                .value_name("PORT")
-                .about("P2P port"),
-        )
-        .get_matches();
-
-    let config = match flags.value_of("config") {
-        Some(c) => Some(String::from(c)),
-        None => None,
-    };
-
-    let rpc_port = match flags.value_of("rpc_port") {
-        Some(p) => match p.parse::<u16>() {
-            Ok(p) => Some(p),
-            Err(err) => {
-                return Err(format!(
-                    "Cannot parse rpc port (u16), err: {}",
-                    err
-                ));
-            }
-        },
-        None => None,
-    };
-
-    let disc_port = match flags.value_of("disc_port") {
-        Some(p) => match p.parse::<u16>() {
-            Ok(p) => Some(p),
-            Err(err) => {
-                return Err(format!(
-                    "Cannot parse the disc port (u16), err: {}",
-                    err
-                ))
-            }
-        },
-        None => None,
-    };
-
-    let p2p_port = match flags.value_of("p2p_port") {
-        Some(p) => match p.parse::<u16>() {
-            Ok(p) => Some(p),
-            Err(err) => {
-                return Err(format!(
-                    "Cannot parse the p2p port (u16), err: {}",
-                    err
-                ))
-            }
-        },
-        None => None,
-    };
-
-    let bootstrap_endpoints = match flags.values_of("bootstrap_endpoints") {
-        Some(b) => Some(b.map(str::to_string).collect()),
-        None => None,
-    };
-
-    Ok(Args {
-        config,
-        rpc_port,
-        disc_port,
-        p2p_port,
-        bootstrap_endpoints,
-    })
-}
+mod cli;
 
 fn main() {
+    print!("Saksaha is launching...\n");
+
     logger::init();
 
-    let args = match get_args() {
-        Ok(a) => a,
+    let cli_args: CLIArgs = match cli::get_args() {
+        Ok(a) => {
+            tinfo!("saksaha", "sak", "Arguments parsed: {:?}", a);
+
+            a
+        }
         Err(err) => {
-            error!("Can't parse command line arguments, err: {}", err);
+            terr!(
+                "saksaha",
+                "sak",
+                "Can't parse command line arguments, err: {}",
+                err
+            );
 
             std::process::exit(1);
         }
     };
 
     let pconf = {
-        let c = match PConfig::from_path(args.config) {
+        let c = match PConfig::from_path(cli_args.config) {
             Ok(p) => p,
             Err(err) => {
-                error!(
+                terr!(
+                    "saksaha",
+                    "sak",
                     "Error creating a persisted configuration, err: {}",
-                    err
+                    err,
                 );
 
                 std::process::exit(1);
             }
         };
 
-        info!("");
-        info!("********************************************************");
-        info!("* Persisted config loaded");
-        info!("* My peer id (public key): {}", c.p2p.public_key);
-        info!("********************************************************");
-        info!("");
+        tinfo!("saksaha", "sak", "Persisted config loaded, conf: {:?}", c);
 
         c
     };
 
-    let default_bootstrap_urls = {
-        DEFAULT_BOOTSTRAP_URLS.to_string()
-    };
-
-    let node = Node::new();
-
-    match node.start(
-        args.rpc_port,
-        args.disc_port,
-        args.p2p_port,
-        args.bootstrap_endpoints,
-        pconf,
-        default_bootstrap_urls,
-    ) {
-        Ok(_) => (),
+    let system = match System::get_instance() {
+        Ok(s) => s,
         Err(err) => {
-            error!("Can't start a node, err: {}", err);
+            terr!("saksaha", "sak", "Error initializing system, err: {}", err,);
 
             std::process::exit(1);
         }
     };
 
+    let sys_args = SystemArgs {
+        disc_dial_interval: cli_args.disc_dial_interval,
+        disc_table_capacity: cli_args.disc_table_capacity,
+        p2p_dial_interval: cli_args.p2p_dial_interval,
+        rpc_port: cli_args.rpc_port,
+        disc_port: cli_args.disc_port,
+        p2p_port: cli_args.p2p_port,
+        bootstrap_urls: cli_args.bootstrap_urls,
+        dev_mode: cli_args.dev_mode,
+        pconfig: pconf,
+    };
+
+    match system.start(sys_args) {
+        Ok(_) => (),
+        Err(err) => {
+            terr!("saksaha", "Can't start the system, err: {}", err);
+
+            std::process::exit(1);
+        }
+    };
 }

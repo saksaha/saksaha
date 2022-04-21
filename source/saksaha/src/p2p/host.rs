@@ -1,50 +1,55 @@
-use crate::{
-    node::{socket::TcpSocket,}, pconfig::PersistedP2PConfig,
-};
-use log::{error, info};
-use p2p_active_calls::ActiveCalls;
-use p2p_discovery::Disc;
-use p2p_identity::Identity;
-use peer::PeerStore;
-use task::task_queue::TaskQueue;
-use std::sync::Arc;
-use tokio::net::TcpListener;
 use super::{
     dial_scheduler::DialScheduler,
+    identity::Identity,
     listener::Listener,
     state::HostState,
-    task::{Task, TaskRunner},
+    task::{P2PTaskHandler, Task},
 };
+use crate::network::socket::TcpSocket;
+use colored::Colorize;
+use logger::tinfo;
+use p2p_active_calls::ActiveCalls;
+use p2p_discovery::{Discovery, DiscoveryArgs};
+use p2p_identity::{identity::P2PIdentity, peer::UnknownPeer};
+use peer::PeerStore;
+use std::sync::Arc;
+use task_queue::TaskQueue;
+use tokio::net::TcpListener;
 
 pub(crate) struct Host {
-    pub host_state: Arc<HostState>,
-    disc: Arc<Disc>,
-    dial_scheduler: Arc<DialScheduler>,
+    pub(crate) host_state: Arc<HostState>,
+    discovery: Arc<Discovery>,
+    // dial_scheduler: Arc<DialScheduler>,
     task_queue: Arc<TaskQueue<Task>>,
     listener: Arc<Listener>,
 }
 
+pub(crate) struct HostArgs {
+    pub(crate) p2p_socket: Arc<TcpListener>,
+    pub(crate) disc_dial_interval: Option<u16>,
+    pub(crate) disc_table_capacity: Option<u16>,
+    pub(crate) p2p_dial_interval: Option<u16>,
+    pub(crate) p2p_port: u16,
+    pub(crate) disc_port: Option<u16>,
+    pub(crate) unknown_peers: Vec<UnknownPeer>,
+    pub(crate) rpc_port: u16,
+    pub(crate) identity: Identity,
+    pub(crate) bootstrap_urls: Option<Vec<String>>,
+    pub(crate) peer_store: Arc<PeerStore>,
+}
+
 impl Host {
-    pub async fn init(
-        p2p_config: PersistedP2PConfig,
-        my_rpc_port: u16,
-        p2p_socket: TcpSocket,
-        disc_port: Option<u16>,
-        bootstrap_urls: Option<Vec<String>>,
-        default_bootstrap_urls: String,
-    ) -> Result<Host, String> {
+    pub async fn init(host_args: HostArgs) -> Result<Host, String> {
         let identity = {
-            let id = Identity::new(p2p_config.secret, p2p_config.public_key)?;
+            let id = P2PIdentity::new(
+                host_args.identity.secret,
+                host_args.identity.public_key,
+            )?;
             Arc::new(id)
         };
 
-        let peer_store = {
-            let ps = PeerStore::init().await?;
-            Arc::new(ps)
-        };
-
         let task_queue = {
-            let q = TaskQueue::new("P2P".to_string(), Box::new(TaskRunner {}));
+            let q = TaskQueue::new(10);
             Arc::new(q)
         };
 
@@ -56,43 +61,47 @@ impl Host {
         let host_state = {
             let s = HostState::new(
                 identity.clone(),
-                my_rpc_port,
-                p2p_socket.port,
+                host_args.rpc_port,
+                host_args.p2p_port,
                 task_queue.clone(),
-                peer_store.clone(),
+                host_args.peer_store.clone(),
                 handshake_active_calls,
             );
             Arc::new(s)
         };
 
         let listener = {
-            let l = Listener::new(p2p_socket.listener, host_state.clone());
+            let l = Listener::new(host_args.p2p_socket, host_state.clone());
             Arc::new(l)
         };
 
-        let disc = {
-            let d = Disc::init(
-                identity.clone(),
-                disc_port,
-                p2p_socket.port,
-                bootstrap_urls,
-                default_bootstrap_urls,
-            )
-            .await?;
+        let disc_args = DiscoveryArgs {
+            disc_dial_interval: host_args.disc_dial_interval,
+            disc_table_capacity: host_args.disc_table_capacity,
+            p2p_identity: identity.clone(),
+            disc_port: host_args.disc_port,
+            p2p_port: host_args.p2p_port,
+            bootstrap_urls: host_args.bootstrap_urls,
+            unknown_peers: host_args.unknown_peers,
+        };
+
+        let discovery = {
+            let d = Discovery::init(disc_args).await?;
             Arc::new(d)
         };
 
-        let dial_scheduler = {
-            let d = DialScheduler::new(
-                disc.iter(),
-                host_state.clone(),
-            );
-            Arc::new(d)
-        };
+        // let dial_scheduler = {
+        //     let d = DialScheduler::new(
+        //         discovery.iter(),
+        //         host_state.clone(),
+        //         host_args.p2p_dial_interval.clone(),
+        //     );
+        //     Arc::new(d)
+        // };
 
         let host = Host {
-            disc,
-            dial_scheduler,
+            discovery,
+            // dial_scheduler,
             task_queue,
             listener,
             host_state,
@@ -102,13 +111,30 @@ impl Host {
     }
 
     pub async fn start(&self) -> Result<(), String> {
-        self.disc.start().await?;
+        let local_addr = match self.listener.tcp_socket.local_addr() {
+            Ok(l) => l,
+            Err(err) => {
+                return Err(format!(
+                    "Couldn't get the local addr of tcp socket, err: {}",
+                    err,
+                ))
+            }
+        };
 
-        self.listener.start();
+        tinfo!(
+            "saksaha",
+            "p2p",
+            "p2p host is starting, tcp socket: {}",
+            local_addr.to_string().yellow(),
+        );
 
-        self.dial_scheduler.start();
+        self.discovery.start().await?;
 
-        self.task_queue.run_loop();
+        // self.listener.start();
+
+        // self.dial_scheduler.start();
+
+        // self.task_queue.run_loop();
 
         Ok(())
     }

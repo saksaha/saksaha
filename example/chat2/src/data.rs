@@ -8,6 +8,4 @@ pub mod client_1 {
     // pub const PORT: u16 = 45519;
 }
 
-pub mod ledger {
-
-}
+pub mod ledger {}
