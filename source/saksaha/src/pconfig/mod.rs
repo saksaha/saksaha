@@ -7,7 +7,7 @@ use crate::p2p::identity::Identity;
 use colored::Colorize;
 use fs::FS;
 use logger::tinfo;
-use p2p::{PersistedP2PConfig, PersistedUnknownPeer};
+use p2p::PersistedP2PConfig;
 use p2p_identity::peer::UnknownPeer;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
@@ -82,7 +82,7 @@ impl PConfig {
                     secret: sk,
                     public_key: pk,
                 },
-                unknown_peers: None,
+                bootstrap_addrs: None,
                 p2p_port: None,
                 disc_port: None,
             },

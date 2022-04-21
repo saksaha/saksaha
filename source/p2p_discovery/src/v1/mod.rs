@@ -19,6 +19,7 @@ use crate::iterator::Iterator;
 use colored::Colorize;
 use logger::{tinfo, twarn};
 use p2p_active_calls::ActiveCalls;
+use p2p_identity::addr::{Addr, UnknownAddr};
 use p2p_identity::{identity::P2PIdentity, peer::UnknownPeer};
 use std::sync::Arc;
 use table::Table;
@@ -43,31 +44,30 @@ pub struct DiscoveryArgs {
     pub disc_port: Option<u16>,
     pub p2p_port: u16,
     pub bootstrap_urls: Option<Vec<String>>,
-    pub unknown_peers: Vec<UnknownPeer>,
+    pub bootstrap_addrs: Vec<Addr>,
 }
 
 pub type Error = Box<dyn std::error::Error + Send + Sync>;
 
 impl Discovery {
     pub async fn init(disc_args: DiscoveryArgs) -> Result<Discovery, String> {
-        let unknown_peers = merge_bootstrap_urls(
+        let bootstrap_addrs = merge_bootstrap_urls(
             disc_args.bootstrap_urls,
-            disc_args.unknown_peers,
+            disc_args.bootstrap_addrs,
         );
 
         let table = {
-            let t =
-                match Table::init(unknown_peers, disc_args.disc_table_capacity)
-                    .await
-                {
-                    Ok(t) => t,
-                    Err(err) => {
-                        return Err(format!(
-                            "Can't initialize Table, err: {}",
-                            err
-                        ))
-                    }
-                };
+            let t = match Table::init(
+                bootstrap_addrs,
+                disc_args.disc_table_capacity,
+            )
+            .await
+            {
+                Ok(t) => t,
+                Err(err) => {
+                    return Err(format!("Can't initialize Table, err: {}", err))
+                }
+            };
             Arc::new(t)
         };
 
@@ -196,15 +196,15 @@ pub async fn setup_udp_socket(
 
 fn merge_bootstrap_urls(
     bootstrap_urls: Option<Vec<String>>,
-    unknown_peers: Vec<UnknownPeer>,
-) -> Vec<UnknownPeer> {
-    let mut resulting_peers = Vec::from(unknown_peers);
+    bootstrap_addrs: Vec<Addr>,
+) -> Vec<Addr> {
+    let mut resulting_peers = Vec::from(bootstrap_addrs);
 
     if let Some(urls) = bootstrap_urls {
         let mut cnt = 0;
 
         for url in urls {
-            match UnknownPeer::from_url(url.clone()) {
+            match UnknownAddr::from_url(url.clone()) {
                 Ok(p) => {
                     cnt += 1;
 
@@ -216,7 +216,7 @@ fn merge_bootstrap_urls(
                         p.short_url(),
                     );
 
-                    resulting_peers.push(p);
+                    resulting_peers.push(Addr::Unknown(p));
                 }
                 Err(err) => {
                     twarn!(

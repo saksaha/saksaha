@@ -1,32 +1,55 @@
-use p2p_identity::peer::UnknownPeer;
+// use p2p_identity::peer::UnknownPeer;
+use p2p_identity::addr::{Addr, KnownAddr, UnknownAddr};
 
 use super::{DefaultConfig, DefaultP2PConfig};
 
 impl DefaultConfig {
+    fn a() {
+        let a = Addr::Unknown(UnknownAddr {
+            ip: String::from("127.0.0.1"),
+            disc_port: 35518,
+            p2p_port: None,
+            secret: Some(String::from(
+                "\
+                9a3d9fafda4a1b0e420d339a3e42c2c8\
+                1062ba788018eb6639b5d2eedeb2d13e\
+                ",
+            )),
+            public_key: Some(String::from(
+                "\
+                04715796a40b0d58fc14a3c4ebee21cb\
+                806763066a7f1a17adbc256999764443\
+                beb8109cfd000718535c5aa27513a2ed\
+                afc6e8bdbe7c27edc2980f9bbc25142fc5\
+                ",
+            )),
+        });
+    }
+
     pub(crate) fn new_dev_local() -> DefaultConfig {
         return DefaultConfig {
             p2p: DefaultP2PConfig {
-                unknown_peers: vec![
-                    UnknownPeer {
+                bootstrap_addrs: vec![
+                    Addr::Unknown(UnknownAddr {
                         ip: String::from("127.0.0.1"),
                         disc_port: 35518,
                         p2p_port: None,
                         secret: Some(String::from(
                             "\
-                    9a3d9fafda4a1b0e420d339a3e42c2c8\
-                    1062ba788018eb6639b5d2eedeb2d13e\
-                    ",
+                            9a3d9fafda4a1b0e420d339a3e42c2c8\
+                            1062ba788018eb6639b5d2eedeb2d13e\
+                            ",
                         )),
                         public_key: Some(String::from(
                             "\
-                    04715796a40b0d58fc14a3c4ebee21cb\
-                    806763066a7f1a17adbc256999764443\
-                    beb8109cfd000718535c5aa27513a2ed\
-                    afc6e8bdbe7c27edc2980f9bbc25142fc5\
-                    ",
+                            04715796a40b0d58fc14a3c4ebee21cb\
+                            806763066a7f1a17adbc256999764443\
+                            beb8109cfd000718535c5aa27513a2ed\
+                            afc6e8bdbe7c27edc2980f9bbc25142fc5\
+                            ",
                         )),
-                    },
-                    // UnknownPeer {
+                    }),
+                    // Addr::Unknown(UnknownAddr {
                     //     ip: String::from("127.0.0.1"),
                     //     disc_port: 35519,
                     //     p2p_port: None,
@@ -44,8 +67,8 @@ impl DefaultConfig {
                     //     91bca238e900a4dff496ef0c84400c26f4\
                     //     ",
                     //     )),
-                    // },
-                    // UnknownPeer {
+                    // }),
+                    // Addr::Unknown(UnknownAddr {
                     //     ip: String::from("127.0.0.1"),
                     //     disc_port: 35520,
                     //     p2p_port: None,
@@ -63,8 +86,8 @@ impl DefaultConfig {
                     //     58a536841411f7567f6a673f16ef71191f\
                     //     ",
                     //     )),
-                    // },
-                    // UnknownPeer {
+                    // }),
+                    // Addr::Unknown(UnknownAddr {
                     //     ip: String::from("127.0.0.1"),
                     //     disc_port: 35521,
                     //     p2p_port: None,
@@ -82,7 +105,7 @@ impl DefaultConfig {
                     //     ddeb915b8aa13f6f318b191e02d8fad885\
                     //     ",
                     //     )),
-                    // },
+                    // }),
                 ],
             },
         };
