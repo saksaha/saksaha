@@ -66,36 +66,36 @@ impl LedgerRoutine {
 
             let peer_store = peer_store.clone();
 
-            loop {
-                let start = SystemTime::now();
+            // loop {
+            //     let start = SystemTime::now();
 
-                let map = peer_store.map.lock().await;
-                for peer in map.values() {
-                    let mut peer_val = peer.value.lock().await;
+            //     let map = peer_store.map.lock().await;
+            //     for peer in map.values() {
+            //         let mut peer_val = peer.value.lock().await;
 
-                    if let PeerValue::Registered(p) = &mut *peer_val {
-                        let peer_id = p.transport.peer_id;
-                        println!("sync(): peer_id: {:?}", peer_id);
-                    }
-                }
+            //         if let PeerValue::Registered(p) = &mut *peer_val {
+            //             let peer_id = p.transport.peer_id;
+            //             println!("sync(): peer_id: {:?}", peer_id);
+            //         }
+            //     }
 
-                match start.elapsed() {
-                    Ok(d) => {
-                        if d < min_interval {
-                            let diff = min_interval - d;
-                            tokio::time::sleep(diff).await;
-                        }
-                    }
-                    Err(err) => {
-                        error!(
-                            "Calculating the time elapsed fail, err: {}",
-                            err
-                        );
+            //     match start.elapsed() {
+            //         Ok(d) => {
+            //             if d < min_interval {
+            //                 let diff = min_interval - d;
+            //                 tokio::time::sleep(diff).await;
+            //             }
+            //         }
+            //         Err(err) => {
+            //             error!(
+            //                 "Calculating the time elapsed fail, err: {}",
+            //                 err
+            //             );
 
-                        tokio::time::sleep(min_interval).await;
-                    }
-                }
-            }
+            //             tokio::time::sleep(min_interval).await;
+            //         }
+            //     }
+            // }
 
             let mut is_running_lock = is_running.lock().await;
             *is_running_lock = false;

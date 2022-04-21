@@ -2,10 +2,7 @@ mod handler;
 
 pub use handler::*;
 
-use super::{
-    address::Address,
-    ops::whoareyou::{self, initiate::WhoareyouInitError},
-};
+use super::address::Address;
 use crate::state::DiscState;
 use log::{debug, error, warn};
 use p2p_identity::peer::UnknownPeer;

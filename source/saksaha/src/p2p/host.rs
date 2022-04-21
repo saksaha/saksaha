@@ -1,9 +1,9 @@
 use super::{
-    dial_scheduler::DialScheduler,
+    // dial_scheduler::DialScheduler,
     identity::Identity,
     listener::Listener,
     state::HostState,
-    task::{P2PTaskHandler, Task},
+    // task::{P2PTaskHandler, Task},
 };
 use crate::network::socket::TcpSocket;
 use colored::Colorize;
@@ -20,7 +20,7 @@ pub(crate) struct Host {
     pub(crate) host_state: Arc<HostState>,
     discovery: Arc<Discovery>,
     // dial_scheduler: Arc<DialScheduler>,
-    task_queue: Arc<TaskQueue<Task>>,
+    // task_queue: Arc<TaskQueue<Task>>,
     listener: Arc<Listener>,
 }
 
@@ -48,10 +48,10 @@ impl Host {
             Arc::new(id)
         };
 
-        let task_queue = {
-            let q = TaskQueue::new(10);
-            Arc::new(q)
-        };
+        // let task_queue = {
+        //     let q = TaskQueue::new(10);
+        //     Arc::new(q)
+        // };
 
         let handshake_active_calls = {
             let a = ActiveCalls::new();
@@ -63,7 +63,7 @@ impl Host {
                 identity.clone(),
                 host_args.rpc_port,
                 host_args.p2p_port,
-                task_queue.clone(),
+                // task_queue.clone(),
                 host_args.peer_store.clone(),
                 handshake_active_calls,
             );
@@ -102,7 +102,7 @@ impl Host {
         let host = Host {
             discovery,
             // dial_scheduler,
-            task_queue,
+            // task_queue,
             listener,
             host_state,
         };
