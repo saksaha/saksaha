@@ -1,6 +1,6 @@
 use super::{address::Address, state::DiscState, task::DiscoveryTask};
 use logger::{tdebug, terr, tinfo, twarn};
-use p2p_identity::peer::UnknownPeer;
+use p2p_identity::{addr::Addr, peer::UnknownPeer};
 use std::{
     sync::Arc,
     time::{Duration, SystemTime},
@@ -11,7 +11,7 @@ use tokio::sync::Mutex;
 pub(crate) struct DialSchedulerArgs {
     pub(crate) disc_state: Arc<DiscState>,
     pub(crate) disc_dial_interval: Option<u16>,
-    // pub(crate) unknown_peers: Vec<UnknownPeer>,
+    pub(crate) bootstrap_addrs: Vec<Addr>,
     pub(crate) task_queue: Arc<TaskQueue<DiscoveryTask>>,
 }
 
@@ -32,7 +32,7 @@ impl DialScheduler {
     pub async fn init(dial_schd_args: DialSchedulerArgs) -> DialScheduler {
         let DialSchedulerArgs {
             task_queue,
-            // unknown_peers,
+            bootstrap_addrs,
             ..
         } = dial_schd_args;
 
@@ -64,9 +64,31 @@ impl DialScheduler {
             min_interval,
         );
 
-        // enqueue_initial_tasks(task_queue, unknown_peers).await;
+        d.enqueue_bootstrap_addrs(bootstrap_addrs).await;
 
         d
+    }
+
+    async fn enqueue_bootstrap_addrs(&self, bootstrap_addrs: Vec<Addr>) {
+        for addr in bootstrap_addrs {
+            let task = DiscoveryTask::InitiateWhoAreYou {
+                // whoareyou_op: self.whoareyou_op.clone(),
+                // disc_state: self.disc_state.clone(),
+                addr: addr.clone(),
+            };
+
+            match self.task_queue.push_back(task).await {
+                Ok(_) => {}
+                Err(err) => {
+                    twarn!(
+                        "p2p_discovery",
+                        "dial_schd",
+                        "Cannot enqueue a bootstrap addr, err: {}",
+                        err,
+                    );
+                }
+            };
+        }
     }
 
     pub fn start(&self) -> Result<(), String> {
@@ -110,38 +132,5 @@ impl DialLoop {
         //         }
         //     }
         // }
-    }
-}
-
-async fn enqueue_initial_tasks(
-    task_queue: Arc<TaskQueue<DiscoveryTask>>,
-    unknown_peers: Vec<UnknownPeer>,
-) {
-    for unknown_peer in unknown_peers {
-        let task = DiscoveryTask::InitiateWhoAreYou {
-            // whoareyou_op: self.whoareyou_op.clone(),
-            // disc_state: self.disc_state.clone(),
-            // addr,
-            unknown_peer,
-        };
-
-        tdebug!(
-            "p2p_discovery",
-            "dial_schd",
-            "enqueueing a task, {:?}",
-            task
-        );
-
-        match task_queue.push_back(task).await {
-            Ok(_) => {}
-            Err(err) => {
-                twarn!(
-                    "p2p_discovery",
-                    "dial_schd",
-                    "Couldn't enque new task, err: {}",
-                    err
-                );
-            }
-        };
     }
 }

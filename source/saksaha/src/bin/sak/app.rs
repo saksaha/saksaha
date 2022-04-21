@@ -59,6 +59,15 @@ pub(super) fn create_app<'a>() -> Command<'a> {
                 ),
         )
         .arg(
+            Arg::new("disc-task-interval") //
+                .long("disc-task-interval")
+                .long_help(
+                    "P2P discovery task handle minimum interval in \
+                    millisecond\n\
+                    e.g. 1000",
+                ),
+        )
+        .arg(
             Arg::new("p2p-dial-interval") //
                 .long("p2p-dial-interval")
                 .long_help(

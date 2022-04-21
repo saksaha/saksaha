@@ -13,7 +13,7 @@ use self::{
     dial_scheduler::DialScheduler,
     listener::Listener,
     state::DiscState,
-    task::{DiscoveryTask, TaskHandler},
+    task::{DiscTaskHandler, DiscoveryTask},
 };
 use crate::iterator::Iterator;
 use colored::Colorize;
@@ -34,16 +34,16 @@ pub struct Discovery {
     disc_state: Arc<DiscState>,
     dial_scheduler: Arc<DialScheduler>,
     task_queue: Arc<TaskQueue<DiscoveryTask>>,
-    task_handler: Arc<TaskHandler>,
+    task_handler: Arc<DiscTaskHandler>,
 }
 
 pub struct DiscoveryArgs {
     pub disc_dial_interval: Option<u16>,
     pub disc_table_capacity: Option<u16>,
+    pub disc_task_interval: Option<u16>,
     pub p2p_identity: Arc<P2PIdentity>,
     pub disc_port: Option<u16>,
     pub p2p_port: u16,
-    pub bootstrap_urls: Option<Vec<String>>,
     pub bootstrap_addrs: Vec<Addr>,
 }
 
@@ -51,23 +51,14 @@ pub type Error = Box<dyn std::error::Error + Send + Sync>;
 
 impl Discovery {
     pub async fn init(disc_args: DiscoveryArgs) -> Result<Discovery, String> {
-        let bootstrap_addrs = merge_bootstrap_urls(
-            disc_args.bootstrap_urls,
-            disc_args.bootstrap_addrs,
-        );
-
         let table = {
-            let t = match Table::init(
-                bootstrap_addrs,
-                disc_args.disc_table_capacity,
-            )
-            .await
-            {
+            let t = match Table::init(disc_args.disc_table_capacity).await {
                 Ok(t) => t,
                 Err(err) => {
                     return Err(format!("Can't initialize Table, err: {}", err))
                 }
             };
+
             Arc::new(t)
         };
 
@@ -100,10 +91,11 @@ impl Discovery {
         };
 
         let task_handler = {
-            let r = TaskHandler {
-                task_queue: task_queue.clone(),
-            };
-            Arc::new(r)
+            let h = DiscTaskHandler::new(
+                task_queue.clone(),
+                disc_args.disc_task_interval,
+            );
+            Arc::new(h)
         };
 
         let listener = {
@@ -117,7 +109,7 @@ impl Discovery {
         let dial_schd_args = DialSchedulerArgs {
             disc_state: disc_state.clone(),
             disc_dial_interval: disc_args.disc_dial_interval,
-            // unknown_peers,
+            bootstrap_addrs: disc_args.bootstrap_addrs,
             task_queue: task_queue.clone(),
         };
 
@@ -192,52 +184,4 @@ pub async fn setup_udp_socket(
     };
 
     Ok((udp_socket, port))
-}
-
-fn merge_bootstrap_urls(
-    bootstrap_urls: Option<Vec<String>>,
-    bootstrap_addrs: Vec<Addr>,
-) -> Vec<Addr> {
-    let mut resulting_peers = Vec::from(bootstrap_addrs);
-
-    if let Some(urls) = bootstrap_urls {
-        let mut cnt = 0;
-
-        for url in urls {
-            match UnknownAddr::new_from_url(url.clone()) {
-                Ok(p) => {
-                    cnt += 1;
-
-                    tinfo!(
-                        "p2p_discovery",
-                        "dial_schd",
-                        "Bootstrap - [{}] {}",
-                        cnt,
-                        p.short_url(),
-                    );
-
-                    resulting_peers.push(Addr::Unknown(p));
-                }
-                Err(err) => {
-                    twarn!(
-                        "p2p_discovery",
-                        "dial_schd",
-                        "Failed to parse url, url: {}, \
-                            err: {:?}",
-                        url.clone(),
-                        err,
-                    );
-                }
-            };
-        }
-
-        tinfo!(
-            "p2p_discovery",
-            "dial_schd",
-            "Bootstrap - Total bootstrapped node count: {}",
-            cnt,
-        );
-    }
-
-    resulting_peers
 }
