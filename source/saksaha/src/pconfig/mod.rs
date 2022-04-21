@@ -1,21 +1,15 @@
+mod config;
 pub mod error;
 pub mod fs;
-pub mod p2p;
 
 use self::error::PConfigError;
 use crate::p2p::identity::Identity;
 use colored::Colorize;
+pub use config::*;
 use fs::FS;
 use logger::tinfo;
-use p2p::PersistedP2PConfig;
 use p2p_identity::peer::UnknownPeer;
-use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct PConfig {
-    pub p2p: PersistedP2PConfig,
-}
 
 impl PConfig {
     pub fn from_path(

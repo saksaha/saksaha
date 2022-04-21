@@ -27,15 +27,15 @@ pub struct UnknownAddr {
 }
 
 impl UnknownAddr {
-    pub fn from_url(url: String) -> Result<UnknownAddr, String> {
+    pub fn new_from_url(url: String) -> Result<UnknownAddr, String> {
         if url.starts_with("sak://") {
-            return UnknownAddr::from_full_url(url);
+            return UnknownAddr::new_from_full_url(url);
         } else {
-            return UnknownAddr::from_short_url(url);
+            return UnknownAddr::new_from_short_url(url);
         }
     }
 
-    pub fn from_socket_addr(addr: SocketAddr) -> UnknownAddr {
+    pub fn new_from_socket_addr(addr: SocketAddr) -> UnknownAddr {
         UnknownAddr {
             ip: addr.ip().to_string(),
             disc_port: addr.port(),
@@ -45,7 +45,7 @@ impl UnknownAddr {
         }
     }
 
-    fn from_full_url(url: String) -> Result<UnknownAddr, String> {
+    fn new_from_full_url(url: String) -> Result<UnknownAddr, String> {
         let (peer_id, ip, disc_port) = match url.get(6..) {
             Some(u) => match u.split_once('@') {
                 Some((peer_id, endpoint)) => {
@@ -73,7 +73,7 @@ impl UnknownAddr {
         })
     }
 
-    fn from_short_url(url: String) -> Result<UnknownAddr, String> {
+    fn new_from_short_url(url: String) -> Result<UnknownAddr, String> {
         let (ip, disc_port) = parse_endpoint(url.as_str())?;
 
         Ok(UnknownAddr {

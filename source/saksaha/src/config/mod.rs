@@ -1,10 +1,9 @@
-use p2p_identity::{addr::Addr, peer::UnknownPeer};
-
-use crate::{p2p::identity::Identity, system::SystemArgs};
+pub(crate) mod default;
 
 use self::default::DefaultConfig;
-
-pub(crate) mod default;
+use crate::{p2p::identity::Identity, system::SystemArgs};
+use logger::{tinfo, twarn};
+use p2p_identity::addr::{Addr, UnknownAddr};
 
 #[derive(Debug)]
 pub(crate) struct Config {
@@ -45,10 +44,44 @@ impl Config {
         let bootstrap_addrs = {
             let mut addrs = dconfig.p2p.bootstrap_addrs;
 
-            if let Some(up) = &pconfig.p2p.bootstrap_addrs {
-                // let up = convert_persisted_unknown_peers_into_unknown_peers(up);
-                // p = up;
+            if let Some(a) = &pconfig.p2p.bootstrap_addrs {
+                addrs = a.clone();
             }
+
+            if let Some(a) = &sys_args.bootstrap_urls {
+                addrs = vec![];
+
+                for (idx, addr) in a.iter().enumerate() {
+                    let addr = match UnknownAddr::new_from_url(addr.clone()) {
+                        Ok(ua) => {
+                            tinfo!(
+                                "saksaha",
+                                "pconfig",
+                                "-- [{}] Successfully parsed bootstrap url, {}",
+                                idx,
+                                addr,
+                            );
+
+                            ua
+                        }
+                        Err(err) => {
+                            twarn!(
+                                "saksaha",
+                                "config",
+                                "Failed to parse \
+                                bootstrap url, url: {}, err: {}",
+                                addr,
+                                err
+                            );
+
+                            break;
+                        }
+                    };
+
+                    addrs.push(Addr::Unknown(addr));
+                }
+            }
+
             addrs
         };
 
@@ -71,22 +104,4 @@ impl Config {
             },
         }
     }
-
-    // fn convert_persisted_unknown_peers_into_unknown_peers(
-    //     persisted_unknown_peers: &Vec<PersistedUnknownPeer>,
-    // ) -> Vec<UnknownPeer> {
-    //     let mut v = vec![];
-
-    //     for up in persisted_unknown_peers {
-    //         v.push(UnknownPeer {
-    //             ip: up.ip.to_string(),
-    //             disc_port: up.disc_port,
-    //             p2p_port: up.p2p_port,
-    //             secret: up.secret.clone(),
-    //             public_key: up.public_key.clone(),
-    //         });
-    //     }
-
-    //     v
-    // }
 }
