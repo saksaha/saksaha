@@ -19,7 +19,6 @@ pub(crate) struct CLIArgs {
 pub(crate) fn get_args() -> Result<CLIArgs, String> {
     let app = define_app();
     let matches = app.get_matches();
-    // let matches = args_command();
 
     let config = match matches.value_of("config") {
         Some(c) => Some(String::from(c)),
@@ -153,9 +152,7 @@ pub(crate) fn define_app<'a>() -> Command<'a> {
         .arg(arg!(--"bootstrap-urls" [Endpoints]
             "Bootstrap peer URLs to start discover, delimited by a comma,\n
                 e.g.\n
-                    full url: sak://04715796a40b0d58fc14a3c4ebee21cb806763066\
-                    a7f1a17adbc256999764443beb8109cfd000718535c5aa27513a2edaf\
-                    c6e8bdbe7c27edc2980f9bbc25142fc5@127.0.0.1:8080, \n
+                // println!("{:?}", matches.value_of("dev-mode"));080, \n
                     short url: 127.0.0.1:3030
             "))
         
@@ -164,15 +161,10 @@ pub(crate) fn define_app<'a>() -> Command<'a> {
 #[test]
 fn test_if_app_matches_dev_mode() {
     let args = vec!["", "--dev-mode", "dev-local"];
-    // let matches = command!()
-    //     // .arg(arg!(--dev-mode <Mode>))
-    //     .arg_from_usage("--dev-mode=[]")
-    //     .get_matches_from(args);
 
     let app = define_app();
     let matches = app.get_matches_from(args);
 
-    // println!("{:?}", matches.value_of("dev-mode"));
     assert_eq!(matches.value_of("dev-mode"), Some("dev-local"));
 }
 
@@ -182,6 +174,5 @@ fn test_empty_dev_mode() {
     let app = define_app();
     let matches = app.get_matches_from(args);
 
-    // println!("{:?}", matches.value_of("dev-mode"));
     assert_eq!(matches.value_of("dev-mode"), None);
 }
