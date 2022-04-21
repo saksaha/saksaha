@@ -1,4 +1,4 @@
-use clap::{arg, command, Command, ArgMatches};
+use clap::{arg, command, ArgMatches, Command};
 
 const DEFAULT_BOOTSTRAP_URLS: &str =
     include_str!("../../../../../config/bootstrap_urls");
@@ -127,7 +127,7 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
     })
 }
 
-pub(crate) fn define_app<'a>() -> Command<'a> { 
+pub(crate) fn define_app<'a>() -> Command<'a> {
     command!()
         .version("0.0.1")
         .author("Saksaha <elden@saksaha.com>")
@@ -152,10 +152,11 @@ pub(crate) fn define_app<'a>() -> Command<'a> {
         .arg(arg!(--"bootstrap-urls" [Endpoints]
             "Bootstrap peer URLs to start discover, delimited by a comma,\n
                 e.g.\n
-                // println!("{:?}", matches.value_of("dev-mode"));080, \n
+                    full url: sak://04715796a40b0d58fc14a3c4ebee21cb806763066\
+                    a7f1a17adbc256999764443beb8109cfd000718535c5aa27513a2edaf\
+                    c6e8bdbe7c27edc2980f9bbc25142fc5@127.0.0.1:8080, \n
                     short url: 127.0.0.1:3030
             "))
-        
 }
 
 #[test]
@@ -168,8 +169,9 @@ fn test_if_app_matches_dev_mode() {
     assert_eq!(matches.value_of("dev-mode"), Some("dev-local"));
 }
 
+#[test]
 fn test_empty_dev_mode() {
-    let args = vec!["",];
+    let args = vec![""];
 
     let app = define_app();
     let matches = app.get_matches_from(args);

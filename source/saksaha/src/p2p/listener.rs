@@ -67,9 +67,9 @@ impl Listener {
                 let mut handler = Handler {};
                 let host_state = host_state.clone();
 
-                tokio::spawn(async move {
-                    let _ = handler.run(stream, host_state).await;
-                });
+                // tokio::spawn(async move {
+                //     let _ = handler.run(stream, host_state).await;
+                // });
             }
         });
     }
@@ -90,22 +90,22 @@ impl Handler {
             }
         };
 
-        match p2p_transport::receive_handshake(
-            stream,
-            host_state.identity.clone(),
-        )
-        .await
-        {
-            Ok(t) => {
-                let mut p_val = peer.value.lock().await;
-                *p_val =
-                    PeerValue::Registered(RegisteredPeerValue { transport: t });
-                std::mem::drop(p_val);
+        // match p2p_transport::receive_handshake(
+        //     stream,
+        //     host_state.identity.clone(),
+        // )
+        // .await
+        // {
+        //     Ok(t) => {
+        //         let mut p_val = peer.value.lock().await;
+        //         *p_val =
+        //             PeerValue::Registered(RegisteredPeerValue { transport: t });
+        //         std::mem::drop(p_val);
 
-                host_state.peer_store.register(peer.clone()).await;
-            }
-            Err(err) => return Err(RequestHandleError::Invalid),
-        };
+        //         host_state.peer_store.register(peer.clone()).await;
+        //     }
+        //     Err(err) => return Err(RequestHandleError::Invalid),
+        // };
 
         Ok(())
     }

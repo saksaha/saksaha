@@ -1,5 +1,5 @@
 use log::debug;
-use p2p_transport::Transport;
+// use p2p_transport::Transport;
 use tokio::sync::Mutex;
 
 const MAX_FAIL_COUNT: usize = 3;
@@ -32,11 +32,11 @@ pub enum PeerValue {
 
 pub struct RegisteredPeerValue {
     // pub ip: String,
-    // pub p2p_port: u16,
-    // pub rpc_port: u16,
-    pub transport: Transport,
-    // pub public_key_bytes: [u8; 65],
-    // pub status: Status,
+// pub p2p_port: u16,
+// pub rpc_port: u16,
+// pub transport: Transport,
+// pub public_key_bytes: [u8; 65],
+// pub status: Status,
 }
 
 // impl PeerValue {
