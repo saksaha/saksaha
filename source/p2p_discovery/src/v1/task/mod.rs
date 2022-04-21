@@ -1,6 +1,8 @@
 mod handler;
+pub(crate) mod runtime;
+pub(crate) mod task;
 
-pub use handler::*;
+pub(crate) use task::*;
 
 use super::address::Address;
 use crate::state::DiscState;
@@ -8,33 +10,6 @@ use log::{debug, error, warn};
 use p2p_identity::{addr::Addr, peer::UnknownPeer};
 use std::{pin::Pin, sync::Arc};
 use task_queue::TaskQueue;
-
-#[derive(Clone, Debug)]
-pub(crate) enum DiscoveryTask {
-    InitiateWhoAreYou {
-        // disc_state: Arc<DiscState>,
-        // whoareyou_op: Arc<WhoareyouOp>,
-        addr: Addr,
-        // unknown_peer: UnknownPeer,
-    },
-}
-
-// pub(crate) struct DiscTaskHandler {
-//     pub(crate) disc_state: Arc<DiscState>,
-//     // task_queue: Arc<TaskQueue<Task>>,
-// }
-
-// impl DiscTaskHandler {
-//     pub fn new(
-//         disc_state: Arc<DiscState>,
-//         // task_queue: Arc<TaskQueue<Task>>,
-//     ) -> DiscTaskHandler {
-//         return DiscTaskRunner {
-//             disc_state,
-//             // task_queue,
-//         };
-//     }
-// }
 
 // impl TaskHandle<DiscoveryTask> for DiscTaskHandler {
 //     fn handle_task<'a>(

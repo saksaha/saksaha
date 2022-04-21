@@ -10,10 +10,8 @@ mod task;
 
 use self::dial_scheduler::DialSchedulerArgs;
 use self::{
-    dial_scheduler::DialScheduler,
-    listener::Listener,
-    state::DiscState,
-    task::{DiscTaskHandler, DiscoveryTask},
+    dial_scheduler::DialScheduler, listener::Listener, state::DiscState,
+    task::runtime::DiscTaskRuntime, task::DiscoveryTask,
 };
 use crate::iterator::Iterator;
 use colored::Colorize;
@@ -34,7 +32,7 @@ pub struct Discovery {
     disc_state: Arc<DiscState>,
     dial_scheduler: Arc<DialScheduler>,
     task_queue: Arc<TaskQueue<DiscoveryTask>>,
-    task_handler: Arc<DiscTaskHandler>,
+    task_runtime: Arc<DiscTaskRuntime>,
 }
 
 pub struct DiscoveryArgs {
@@ -90,8 +88,8 @@ impl Discovery {
             Arc::new(q)
         };
 
-        let task_handler = {
-            let h = DiscTaskHandler::new(
+        let task_runtime = {
+            let h = DiscTaskRuntime::new(
                 task_queue.clone(),
                 disc_args.disc_task_interval,
             );
@@ -123,7 +121,7 @@ impl Discovery {
             listener,
             dial_scheduler,
             task_queue,
-            task_handler,
+            task_runtime,
         };
 
         Ok(disc)
@@ -132,7 +130,7 @@ impl Discovery {
     pub async fn start(&self) -> Result<(), String> {
         self.listener.start()?;
 
-        self.task_handler.run();
+        self.task_runtime.run();
 
         self.dial_scheduler.start()?;
 
