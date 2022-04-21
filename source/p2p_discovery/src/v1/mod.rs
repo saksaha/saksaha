@@ -1,53 +1,73 @@
-// mod active_calls;
 pub mod address;
 pub mod dial_scheduler;
+mod frame;
 pub mod iterator;
 pub mod listener;
 mod ops;
 pub mod state;
 mod table;
-pub mod task;
+mod task;
 
+use self::dial_scheduler::DialSchedulerArgs;
 use self::{
     dial_scheduler::DialScheduler,
-    listener::Listener, ops::whoareyou::WhoareyouOp, state::DiscState,
-    table::Table,
+    listener::Listener,
+    state::DiscState,
+    task::{DiscoveryTask, TaskHandler},
 };
-use crate::{
-    iterator::Iterator,
-    task::TaskRunner,
-    v1::{address::Address, task::Task},
-};
-use log::{info, warn};
+use crate::iterator::Iterator;
+use colored::Colorize;
+use logger::{tinfo, twarn};
 use p2p_active_calls::ActiveCalls;
-use p2p_identity::Identity;
-use ::task::task_queue::TaskQueue;
+use p2p_identity::{identity::P2PIdentity, peer::UnknownPeer};
 use std::sync::Arc;
+use table::Table;
+use task_queue::TaskQueue;
 use tokio::net::UdpSocket;
+use tokio::sync::Mutex;
 
 pub const CAPACITY: usize = 64;
 
-pub struct Disc {
+pub struct Discovery {
     listener: Arc<Listener>,
     disc_state: Arc<DiscState>,
     dial_scheduler: Arc<DialScheduler>,
+    task_queue: Arc<TaskQueue<DiscoveryTask>>,
+    task_handler: Arc<TaskHandler>,
 }
 
-impl Disc {
-    pub async fn init(
-        id: Arc<Identity>,
-        my_disc_port: Option<u16>,
-        my_p2p_port: u16,
-        bootstrap_urls: Option<Vec<String>>,
-        default_bootstrap_urls: String,
-    ) -> Result<Disc, String> {
+pub struct DiscoveryArgs {
+    pub disc_dial_interval: Option<u16>,
+    pub disc_table_capacity: Option<u16>,
+    pub p2p_identity: Arc<P2PIdentity>,
+    pub disc_port: Option<u16>,
+    pub p2p_port: u16,
+    pub bootstrap_urls: Option<Vec<String>>,
+    pub unknown_peers: Vec<UnknownPeer>,
+}
+
+pub type Error = Box<dyn std::error::Error + Send + Sync>;
+
+impl Discovery {
+    pub async fn init(disc_args: DiscoveryArgs) -> Result<Discovery, String> {
+        let unknown_peers = merge_bootstrap_urls(
+            disc_args.bootstrap_urls,
+            disc_args.unknown_peers,
+        );
+
         let table = {
-            let t = match Table::init().await {
-                Ok(t) => t,
-                Err(err) => {
-                    return Err(format!("Can't initialize Table, err: {}", err))
-                }
-            };
+            let t =
+                match Table::init(unknown_peers, disc_args.disc_table_capacity)
+                    .await
+                {
+                    Ok(t) => t,
+                    Err(err) => {
+                        return Err(format!(
+                            "Can't initialize Table, err: {}",
+                            err
+                        ))
+                    }
+                };
             Arc::new(t)
         };
 
@@ -56,58 +76,62 @@ impl Disc {
             Arc::new(c)
         };
 
-        let task_queue = {
-            let q = TaskQueue::new("Disc".to_string(), Box::new(TaskRunner {}));
-            Arc::new(q)
-        };
-
-        let (udp_socket, my_disc_port) = {
-            let (socket, port) = setup_udp_socket(my_disc_port).await?;
+        let (udp_socket, disc_port) = {
+            let (socket, port) = setup_udp_socket(disc_args.disc_port).await?;
             (Arc::new(socket), port)
         };
 
         let disc_state = {
-            let s = DiscState::new(
-                id,
+            let s = DiscState {
+                p2p_identity: disc_args.p2p_identity,
                 table,
                 active_calls,
-                udp_socket.clone(),
-                my_disc_port,
-                my_p2p_port,
-                task_queue.clone(),
-            );
+                disc_port,
+                udp_socket: udp_socket.clone(),
+                p2p_port: disc_args.p2p_port,
+                is_dial_routine_running: Arc::new(Mutex::new(false)),
+            };
             Arc::new(s)
         };
 
-        let whoareyou_op = {
-            let w = WhoareyouOp::new(disc_state.clone());
-            Arc::new(w)
+        let task_queue = {
+            let q = TaskQueue::new(10);
+            Arc::new(q)
+        };
+
+        let task_handler = {
+            let r = TaskHandler {
+                task_queue: task_queue.clone(),
+            };
+            Arc::new(r)
         };
 
         let listener = {
-            let l = Listener::new(
-                disc_state.clone(),
-                udp_socket.clone(),
-                whoareyou_op.clone(),
-            );
+            let l = Listener {
+                disc_state: disc_state.clone(),
+                udp_socket: udp_socket.clone(),
+            };
             Arc::new(l)
         };
 
+        let dial_schd_args = DialSchedulerArgs {
+            disc_state: disc_state.clone(),
+            disc_dial_interval: disc_args.disc_dial_interval,
+            // unknown_peers,
+            task_queue: task_queue.clone(),
+        };
+
         let dial_scheduler = {
-            let s = DialScheduler::init(
-                disc_state.clone(),
-                whoareyou_op.clone(),
-                bootstrap_urls,
-                default_bootstrap_urls,
-            )
-            .await;
+            let s = DialScheduler::init(dial_schd_args).await;
             Arc::new(s)
         };
 
-        let disc = Disc {
+        let disc = Discovery {
             disc_state,
             listener,
             dial_scheduler,
+            task_queue,
+            task_handler,
         };
 
         Ok(disc)
@@ -115,15 +139,17 @@ impl Disc {
 
     pub async fn start(&self) -> Result<(), String> {
         self.listener.start()?;
+
+        self.task_handler.run();
+
         self.dial_scheduler.start()?;
-        self.disc_state.task_queue.run_loop();
 
         Ok(())
     }
 
-    pub fn iter(&self) -> Arc<Iterator> {
-        self.disc_state.table.iter()
-    }
+    // pub fn iter(&self) -> Arc<Iterator> {
+    //     self.disc_state.table.iter()
+    // }
 }
 
 pub async fn setup_udp_socket(
@@ -148,9 +174,11 @@ pub async fn setup_udp_socket(
                 }
             };
 
-            info!(
-                "Started - Discovery udp socket opened, local_addr: {}",
-                local_addr
+            tinfo!(
+                "p2p_discovery",
+                "",
+                "Bound udp socket for P2P discovery, addr: {}",
+                local_addr.to_string().yellow(),
             );
 
             (s, local_addr.port())
@@ -164,4 +192,52 @@ pub async fn setup_udp_socket(
     };
 
     Ok((udp_socket, port))
+}
+
+fn merge_bootstrap_urls(
+    bootstrap_urls: Option<Vec<String>>,
+    unknown_peers: Vec<UnknownPeer>,
+) -> Vec<UnknownPeer> {
+    let mut resulting_peers = Vec::from(unknown_peers);
+
+    if let Some(urls) = bootstrap_urls {
+        let mut cnt = 0;
+
+        for url in urls {
+            match UnknownPeer::from_url(url.clone()) {
+                Ok(p) => {
+                    cnt += 1;
+
+                    tinfo!(
+                        "p2p_discovery",
+                        "dial_schd",
+                        "Bootstrap - [{}] {}",
+                        cnt,
+                        p.short_url(),
+                    );
+
+                    resulting_peers.push(p);
+                }
+                Err(err) => {
+                    twarn!(
+                        "p2p_discovery",
+                        "dial_schd",
+                        "Failed to parse url, url: {}, \
+                            err: {:?}",
+                        url.clone(),
+                        err,
+                    );
+                }
+            };
+        }
+
+        tinfo!(
+            "p2p_discovery",
+            "dial_schd",
+            "Bootstrap - Total bootstrapped node count: {}",
+            cnt,
+        );
+    }
+
+    resulting_peers
 }

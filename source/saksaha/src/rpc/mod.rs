@@ -1,5 +1,5 @@
+use log::{debug, info};
 use std::sync::Arc;
-use log::{info, debug};
 use tokio::net::TcpListener;
 
 pub struct RPC {
@@ -7,10 +7,8 @@ pub struct RPC {
 }
 
 impl RPC {
-    pub fn new(tcp_listener: Arc<TcpListener>) -> RPC {
-        RPC {
-            tcp_listener,
-        }
+    pub fn new(tcp_listener: Arc<TcpListener>, rpc_port: u16) -> RPC {
+        RPC { tcp_listener }
     }
 
     pub async fn start(&self) -> Result<u16, String> {

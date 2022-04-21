@@ -1,2 +1,2 @@
-pub mod peer_store;
 pub mod peer;
+pub mod peer_store;

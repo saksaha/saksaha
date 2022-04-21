@@ -1,6 +1,6 @@
 use log::{debug, info, warn};
 use p2p_identity::PeerId;
-use std::{collections::{HashMap}, sync::Arc};
+use std::{collections::HashMap, sync::Arc};
 use tokio::sync::{
     mpsc::{self, Receiver, Sender},
     Mutex, OwnedMutexGuard,
@@ -16,7 +16,6 @@ pub struct PeerStore {
     pub map: Mutex<HashMap<PeerId, Arc<Peer>>>,
     slots_tx: Sender<Arc<Peer>>,
     slots_rx: Mutex<Receiver<Arc<Peer>>>,
-
 }
 
 impl PeerStore {
@@ -50,7 +49,6 @@ impl PeerStore {
             map,
             slots_tx,
             slots_rx,
-
         };
 
         Ok(ps)
@@ -61,9 +59,7 @@ impl PeerStore {
 
         match slots_rx_guard.recv().await {
             Some(p) => Ok(p),
-            None => {
-                Err(format!("Slots channel might be closed"))
-            }
+            None => Err(format!("Slots channel might be closed")),
         }
     }
 

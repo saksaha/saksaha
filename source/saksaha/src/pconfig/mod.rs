@@ -1,46 +1,63 @@
 pub mod error;
 pub mod fs;
+pub mod p2p;
 
-use log::{info, debug};
+use self::error::PConfigError;
+use crate::p2p::identity::Identity;
+use colored::Colorize;
 use fs::FS;
+use logger::tinfo;
+use p2p::{PersistedP2PConfig, PersistedUnknownPeer};
+use p2p_identity::peer::UnknownPeer;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
-use self::error::PConfigError;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct PConfig {
     pub p2p: PersistedP2PConfig,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct PersistedP2PConfig {
-    pub secret: String,
-    pub public_key: String,
-}
-
 impl PConfig {
     pub fn from_path(
         config_path: Option<String>,
     ) -> Result<PConfig, PConfigError> {
+        tinfo!("saksaha", "pconfig", "",);
+        tinfo!("saksaha", "pconfig", "Loading persisted config...");
+
         let config_path = match config_path {
             Some(c) => c,
             None => {
-                info!(
-                    "Config path is not given, creating a new config"
+                let default_path = FS::get_default_path()?;
+                tinfo!(
+                    "saksaha",
+                    "pconfig",
+                    "Config path is not given. Defaults to location, {:?}",
+                    default_path,
                 );
 
-                let default_path = FS::get_default_path()?;
-
                 if default_path.exists() {
-                    info!("Found a config at the default location");
+                    tinfo!(
+                        "saksaha",
+                        "pconfig",
+                        "Found a config at the default location, path: {:?}",
+                        default_path,
+                    );
 
                     return FS::load(default_path);
                 } else {
+                    tinfo!(
+                        "saksaha",
+                        "pconfig",
+                        "Couldn't find a config file at the default path. \
+                        Creating a new one, path: {:?}",
+                        default_path,
+                    );
+
                     let pconfig = PConfig::new();
 
                     let pconf = match FS::persist(pconfig) {
                         Ok(p) => p,
-                        Err(err) => {
+                        Err(_) => {
                             return Err(PConfigError::PersistError);
                         }
                     };
@@ -55,14 +72,19 @@ impl PConfig {
     }
 
     fn new() -> PConfig {
-        debug!("Creating a new config");
+        tinfo!("saksaha", "", "Creating a new config".yellow());
 
         let sk = crypto::generate_key();
         let (sk, pk) = crypto::encode_into_key_pair(sk);
         let pconf = PConfig {
             p2p: PersistedP2PConfig {
-                secret: sk,
-                public_key: pk,
+                identity: Identity {
+                    secret: sk,
+                    public_key: pk,
+                },
+                unknown_peers: None,
+                p2p_port: None,
+                disc_port: None,
             },
         };
 

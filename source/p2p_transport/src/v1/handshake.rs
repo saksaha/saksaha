@@ -4,7 +4,7 @@ use crypto::{
     EncodedPoint, EphemeralSecret, PublicKey, Secp256k1, SharedSecret,
 };
 use log::{debug, error};
-use p2p_identity::{Identity, PeerId};
+use p2p_identity::{P2PIdentity, PeerId};
 use rand::rngs::OsRng;
 use std::convert::TryInto;
 use std::{
@@ -63,7 +63,7 @@ pub struct HandshakeMsg {
 
 #[derive(Clone)]
 pub struct HandshakeInitParams {
-    pub identity: Arc<Identity>,
+    pub identity: Arc<P2PIdentity>,
     pub my_rpc_port: u16,
     pub my_p2p_port: u16,
     pub her_ip: String,
@@ -73,7 +73,7 @@ pub struct HandshakeInitParams {
 
 pub async fn receive_handshake(
     mut stream: TcpStream,
-    identity: Arc<Identity>,
+    identity: Arc<P2PIdentity>,
 ) -> Result<Transport, HandshakeRecvError> {
     let mut hs_buf = read_handshake_msg(&mut stream).await?;
 
@@ -268,7 +268,7 @@ async fn send_handshake_msg(
 fn parse_handshake_msg(
     hs_buf: &mut BytesMut,
     stream: &mut TcpStream,
-    identity: Arc<Identity>,
+    identity: Arc<P2PIdentity>,
 ) -> Result<HandshakeMsg, String> {
     match check_msg(&hs_buf) {
         Ok(_) => (),
@@ -311,7 +311,7 @@ fn parse_handshake_msg(
 }
 
 fn make_shared_secret(
-    identity: Arc<Identity>,
+    identity: Arc<P2PIdentity>,
     her_public_key: PeerId,
 ) -> Result<SharedSecret<Secp256k1>, String> {
     let my_secret_key = &identity.secret_key;

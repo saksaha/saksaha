@@ -1,9 +1,9 @@
+use super::check;
 use super::msg::{WhoAreYouAck, WhoAreYouSyn};
 use crate::v1::address::Address;
-use crate::v1::ops::Message;
-use crate::v1::table::{NodeValue};
+// use crate::v1::ops::Message;
 use crate::v1::DiscState;
-use log::debug;
+use logger::tdebug;
 use std::sync::Arc;
 use thiserror::Error;
 
@@ -41,72 +41,82 @@ pub(crate) async fn handle_who_are_you(
 ) -> Result<(), WhoareyouRecvError> {
     let endpoint = addr.disc_endpoint();
 
-    let table_node = match disc_state.table.try_reserve().await {
-        Ok(n) => n,
-        Err(err) => {
-            return Err(WhoareyouRecvError::TableIsFull { endpoint, err })
-        }
-    };
+    // let table_node = match disc_state.table.try_reserve().await {
+    //     Ok(n) => n,
+    //     Err(err) => {
+    //         return Err(WhoareyouRecvError::TableIsFull { endpoint, err })
+    //     }
+    // };
 
-    let way_syn = match WhoAreYouSyn::parse(buf) {
-        Ok(m) => m,
-        Err(err) => {
-            return Err(WhoareyouRecvError::MessageParseFail { err });
-        }
-    };
+    // let way_syn = match WhoAreYouSyn::parse(buf) {
+    //     Ok(m) => m,
+    //     Err(err) => {
+    //         return Err(WhoareyouRecvError::MessageParseFail { err });
+    //     }
+    // };
 
-    match disc_state
-        .table
-        .add(table_node, |mut val| {
-            *val = NodeValue::new_identified(
-                addr.clone(),
-                way_syn.way.sig,
-                way_syn.way.p2p_port,
-                way_syn.way.public_key_bytes,
-            );
-            val
-        })
-        .await
-    {
-        Ok((.., endpoint)) => {
-            debug!("Node is discovered, I received, endpoint: {}", endpoint);
-        }
-        Err(err) => return Err(WhoareyouRecvError::TableAddFail { err }),
-    };
+    // match disc_state
+    //     .table
+    //     .add(table_node, |mut val| {
+    //         *val = NodeValue::new_identified(
+    //             addr.clone(),
+    //             way_syn.way.sig,
+    //             way_syn.way.p2p_port,
+    //             way_syn.way.public_key_bytes,
+    //         );
+    //         val
+    //     })
+    //     .await
+    // {
+    //     Ok((.., endpoint)) => {
+    //         tdebug!(
+    //             "p2p_discovery",
+    //             "whoareyou",
+    //             "Node is discovered, I received, endpoint: {}",
+    //             endpoint
+    //         );
+    //     }
+    //     Err(err) => return Err(WhoareyouRecvError::TableAddFail { err }),
+    // };
 
-    let _send_who_are_you_ack = {
-        let my_disc_port = disc_state.my_disc_port;
-        let my_p2p_port = disc_state.my_p2p_port;
+    // let _send_who_are_you_ack = {
+    //     let disc_port = disc_state.disc_port;
+    //     let p2p_port = disc_state.p2p_port;
 
-        let endpoint = addr.disc_endpoint();
+    //     let endpoint = addr.disc_endpoint();
 
-        if super::is_my_endpoint(my_disc_port, &endpoint) {
-            return Err(WhoareyouRecvError::MyEndpoint { endpoint });
-        }
+    //     if check::is_my_endpoint(disc_port, &endpoint) {
+    //         return Err(WhoareyouRecvError::MyEndpoint { endpoint });
+    //     }
 
-        let sig = disc_state.identity.sig;
+    //     let sig = disc_state.p2p_identity.sig;
 
-        let way_ack = WhoAreYouAck::new(
-            sig,
-            my_p2p_port,
-            disc_state.identity.public_key,
-        );
+    //     let way_ack = WhoAreYouAck::new(
+    //         sig,
+    //         p2p_port,
+    //         disc_state.p2p_identity.public_key,
+    //     );
 
-        let buf = match way_ack.to_bytes() {
-            Ok(b) => b,
-            Err(err) => {
-                return Err(WhoareyouRecvError::ByteConversionFail { err });
-            }
-        };
+    //     let buf = match way_ack.to_bytes() {
+    //         Ok(b) => b,
+    //         Err(err) => {
+    //             return Err(WhoareyouRecvError::ByteConversionFail { err });
+    //         }
+    //     };
 
-        disc_state.udp_socket.send_to(&buf, endpoint.clone()).await?;
+    //     disc_state
+    //         .udp_socket
+    //         .send_to(&buf, endpoint.clone())
+    //         .await?;
 
-        debug!(
-            "Successfully sent WhoAreYouAck to endpoint: {}, len: {}",
-            &endpoint,
-            buf.len(),
-        );
-    };
+    //     tdebug!(
+    //         "p2p_discovery",
+    //         "whoareyou",
+    //         "Successfully sent WhoAreYouAck to endpoint: {}, len: {}",
+    //         &endpoint,
+    //         buf.len(),
+    //     );
+    // };
 
     Ok(())
 }

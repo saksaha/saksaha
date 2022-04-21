@@ -1,12 +1,12 @@
 use super::task::Task;
 use p2p_active_calls::ActiveCalls;
-use p2p_identity::Identity;
+use p2p_identity::P2PIdentity;
 use peer::PeerStore;
 use std::sync::Arc;
-use task::task_queue::{self, TaskQueue};
+use task_queue::TaskQueue;
 
 pub(crate) struct HostState {
-    pub identity: Arc<Identity>,
+    pub identity: Arc<P2PIdentity>,
     pub task_queue: Arc<TaskQueue<Task>>,
     pub my_rpc_port: u16,
     pub my_p2p_port: u16,
@@ -16,7 +16,7 @@ pub(crate) struct HostState {
 
 impl HostState {
     pub fn new(
-        identity: Arc<Identity>,
+        identity: Arc<P2PIdentity>,
         my_rpc_port: u16,
         my_p2p_port: u16,
         task_queue: Arc<TaskQueue<Task>>,

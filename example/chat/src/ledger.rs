@@ -38,9 +38,7 @@ async fn get_cur_status() -> Result<(), std::io::Error> {
         let msg = "status";
 
         stdout.queue(cursor::SavePosition)?;
-        stdout.write(
-            format!("Ledger Status {:?}", msg).as_bytes(),
-        )?;
+        stdout.write(format!("Ledger Status {:?}", msg).as_bytes())?;
         stdout.queue(cursor::RestorePosition)?;
         stdout.flush()?;
         thread::sleep(Duration::from_secs(1));

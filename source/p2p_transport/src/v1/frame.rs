@@ -1,10 +1,10 @@
+use atoi::atoi;
 use bytes::{Buf, Bytes};
 use std::convert::TryInto;
 use std::fmt;
-use std::io::{Read, Cursor};
+use std::io::{Cursor, Read};
 use std::num::TryFromIntError;
 use std::string::FromUtf8Error;
-use atoi::atoi;
 
 pub mod frame_code {
     pub const BULK: u8 = b'$';
@@ -17,7 +17,6 @@ pub enum Frame {
 
     Array(Vec<Frame>),
 }
-
 
 #[derive(Debug)]
 pub enum Error {

@@ -3,7 +3,7 @@ use crate::p2p::task::HSInitTaskParams;
 use super::{state::HostState, task::Task};
 use log::{debug, error, info, warn};
 use p2p_discovery::iterator::Iterator;
-use p2p_identity::Identity;
+use p2p_identity::P2PIdentity;
 use peer::PeerStore;
 use std::{
     sync::Arc,
@@ -19,8 +19,12 @@ impl DialScheduler {
     pub fn new(
         disc_iterator: Arc<Iterator>,
         host_state: Arc<HostState>,
+        p2p_dial_interval: Option<u16>,
     ) -> DialScheduler {
-        let min_interval = Duration::from_millis(2000);
+        let min_interval = match p2p_dial_interval {
+            Some(i) => Duration::from_millis(i.into()),
+            None => Duration::from_millis(2000),
+        };
 
         let handshake_routine =
             HandshakeRoutine::new(min_interval, disc_iterator, host_state);
@@ -75,32 +79,32 @@ impl HandshakeRoutine {
             loop {
                 let start = SystemTime::now();
 
-                let node_val = match disc_iterator.next().await {
-                    Ok(n) => match n.get_value().await {
-                        Some(v) => v,
-                        None => {
-                            error!("Invalid node. Node is empty");
-                            continue;
-                        }
-                    },
-                    Err(err) => {
-                        error!(
-                            "P2P handshake, can't retrieve next \
-                            node, err: {}",
-                            err
-                        );
-                        continue;
-                    }
-                };
+                // let node_val = match disc_iterator.next().await {
+                //     Ok(n) => match n.get_value().await {
+                //         Some(v) => v,
+                //         None => {
+                //             error!("Invalid node. Node is empty");
+                //             continue;
+                //         }
+                //     },
+                //     Err(err) => {
+                //         error!(
+                //             "P2P handshake, can't retrieve next \
+                //             node, err: {}",
+                //             err
+                //         );
+                //         continue;
+                //     }
+                // };
 
-                if active_calls.contains(&node_val.addr.ip).await {
-                    debug!(
-                        "Already talking with this node, ip: {}",
-                        node_val.addr.ip
-                    );
+                // if active_calls.contains(&node_val.addr.ip).await {
+                //     debug!(
+                //         "Already talking with this node, ip: {}",
+                //         node_val.addr.ip
+                //     );
 
-                    continue;
-                }
+                //     continue;
+                // }
 
                 // TODO
                 // if let Some(_) = peer_store.find(node_val.public_key).await {
@@ -119,28 +123,28 @@ impl HandshakeRoutine {
                     }
                 };
 
-                let hs_init_task_params = HSInitTaskParams {
-                    identity: host_state.identity.clone(),
-                    my_rpc_port: host_state.my_rpc_port,
-                    my_p2p_port: host_state.my_p2p_port,
-                    her_ip: node_val.addr.ip,
-                    her_p2p_port: node_val.p2p_port,
-                    her_public_key: node_val.public_key,
-                    peer_store: peer_store.clone(),
-                    peer: peer,
-                    handshake_active_calls: active_calls.clone(),
-                };
+                // let hs_init_task_params = HSInitTaskParams {
+                //     identity: host_state.identity.clone(),
+                //     my_rpc_port: host_state.my_rpc_port,
+                //     my_p2p_port: host_state.my_p2p_port,
+                //     her_ip: node_val.addr.ip,
+                //     her_p2p_port: node_val.p2p_port,
+                //     her_public_key: node_val.public_key,
+                //     peer_store: peer_store.clone(),
+                //     peer: peer,
+                //     handshake_active_calls: active_calls.clone(),
+                // };
 
-                match task_queue
-                    .push(Task::InitiateHandshake(hs_init_task_params))
-                    .await
-                {
-                    Ok(_) => (),
-                    Err(err) => {
-                        error!("Can't enqueue a task, err: {}", err);
-                        continue;
-                    }
-                };
+                // match task_queue
+                //     .push_back(Task::InitiateHandshake(hs_init_task_params))
+                //     .await
+                // {
+                //     Ok(_) => (),
+                //     Err(err) => {
+                //         error!("Can't enqueue a task, err: {}", err);
+                //         continue;
+                //     }
+                // };
 
                 match start.elapsed() {
                     Ok(d) => {

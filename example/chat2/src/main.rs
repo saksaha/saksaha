@@ -1,9 +1,9 @@
 mod app;
-mod data;
 mod chat;
+mod data;
 
-use clap::{Arg, App};
 use crate::app::ChatApp;
+use clap::{App, Arg};
 
 fn main() {
     println!("Start Saksaha chat");
@@ -29,7 +29,6 @@ fn main() {
         } else {
             println!("Invalid client id, cid: {}", cid);
         }
-
     } else {
         println!("No client id is provided. Exiting..");
     }

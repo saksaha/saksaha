@@ -1,16 +1,12 @@
 use super::state::HostState;
-use bytes::BytesMut;
-use log::{debug, info, warn};
-use p2p_identity::Identity;
-use p2p_transport::{Connection, Frame, HANDSHAKE_CODE};
+use logger::{tdebug, tinfo, twarn};
 use peer::{PeerValue, RegisteredPeerValue};
-use std::{net::ToSocketAddrs, sync::Arc};
+use std::sync::Arc;
 use thiserror::Error;
-use tokio::io::AsyncReadExt;
 use tokio::net::{TcpListener, TcpStream};
 
 pub(crate) struct Listener {
-    tcp_listener: Arc<TcpListener>,
+    pub tcp_socket: Arc<TcpListener>,
     host_state: Arc<HostState>,
 }
 
@@ -31,34 +27,33 @@ pub enum RequestHandleError {
 
 impl Listener {
     pub fn new(
-        tcp_listener: Arc<TcpListener>,
+        tcp_socket: Arc<TcpListener>,
         host_state: Arc<HostState>,
     ) -> Listener {
-        info!(
-            "P2P Listener is initialized, local_addr: {:?}",
-            tcp_listener.local_addr()
-        );
-
         Listener {
-            tcp_listener,
+            tcp_socket,
             host_state,
         }
     }
 
     pub fn start(&self) {
+        tinfo!("p2p", "", "Starting accepting requests");
+
         self.run_loop();
     }
 
     pub fn run_loop(&self) {
-        let tcp_listener = self.tcp_listener.clone();
+        let tcp_socket = self.tcp_socket.clone();
         let host_state = self.host_state.clone();
 
         tokio::spawn(async move {
             loop {
-                let (stream, addr) = match tcp_listener.accept().await {
+                let (stream, addr) = match tcp_socket.accept().await {
                     Ok(s) => s,
                     Err(err) => {
-                        warn!(
+                        twarn!(
+                            "saksaha",
+                            "p2p",
                             "Error accepting connection request, err: {}",
                             err,
                         );
@@ -67,7 +62,7 @@ impl Listener {
                     }
                 };
 
-                debug!("[p2p] Accepted new connection, endpoint: {}", addr);
+                tdebug!("p2p", "Accepted new connection, endpoint: {}", addr);
 
                 let mut handler = Handler {};
                 let host_state = host_state.clone();

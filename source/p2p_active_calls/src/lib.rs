@@ -1,4 +1,4 @@
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use tokio::sync::Mutex;
 
 pub enum Traffic {
@@ -33,19 +33,13 @@ impl ActiveCalls {
         return map.insert(ip, traffic);
     }
 
-    pub async fn insert_inbound(
-        &self,
-        ip: String,
-    ) -> Option<Traffic> {
+    pub async fn insert_inbound(&self, ip: String) -> Option<Traffic> {
         let mut map = self.map.lock().await;
 
         return map.insert(ip, Traffic::InBound);
     }
 
-    pub async fn insert_outbound(
-        &self,
-        ip: String,
-    ) -> Option<Traffic> {
+    pub async fn insert_outbound(&self, ip: String) -> Option<Traffic> {
         let mut map = self.map.lock().await;
 
         return map.insert(ip, Traffic::OutBound);
