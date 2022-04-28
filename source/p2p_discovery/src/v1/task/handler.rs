@@ -14,6 +14,6 @@ async fn do_task(task: DiscoveryTask) {
     println!("{:?}", task);
 
     match task {
-        _ => (),
+        DiscoveryTask::InitiateWhoAreYou { addr } => {}
     };
 }

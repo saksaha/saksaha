@@ -10,6 +10,7 @@ pub(super) fn create_app<'a>() -> Command<'a> {
             Arg::new("config") //
                 .short('c')
                 .long("config")
+                .takes_value(true)
                 .long_help(
                     "Saksaha configuration file path, usually created at\n\
                     [[OS default config path]]/saksaha/config.json ",
@@ -18,6 +19,7 @@ pub(super) fn create_app<'a>() -> Command<'a> {
         .arg(
             Arg::new("rpc-port") //
                 .long("rpc-port")
+                .takes_value(true)
                 .long_help(
                     "Port to which bind RPC server \n\
                     e.g. 21452",
@@ -26,6 +28,7 @@ pub(super) fn create_app<'a>() -> Command<'a> {
         .arg(
             Arg::new("disc-port") //
                 .long("disc-port")
+                .takes_value(true)
                 .long_help(
                     "port to which bind P2P discovery server \n\
                     e.g. 35518",
@@ -34,6 +37,7 @@ pub(super) fn create_app<'a>() -> Command<'a> {
         .arg(
             Arg::new("p2p-port") //
                 .long("p2p-port")
+                .takes_value(true)
                 .long_help(
                     "Port to which bind P2P server \n\
                     e.g. 41232",
@@ -42,6 +46,7 @@ pub(super) fn create_app<'a>() -> Command<'a> {
         .arg(
             Arg::new("disc-table-capacity") //
                 .long("disc-table-capacity")
+                .takes_value(true)
                 .long_help("P2P discovery table capacity (size)"),
         )
         .arg(
@@ -53,6 +58,7 @@ pub(super) fn create_app<'a>() -> Command<'a> {
         .arg(
             Arg::new("disc-dial-interval") //
                 .long("disc-dial-interval")
+                .takes_value(true)
                 .long_help(
                     "P2P discovery dialing minimum interval in millisecond\n\
                     e.g. 1000",
@@ -61,6 +67,7 @@ pub(super) fn create_app<'a>() -> Command<'a> {
         .arg(
             Arg::new("disc-task-interval") //
                 .long("disc-task-interval")
+                .takes_value(true)
                 .long_help(
                     "P2P discovery task handle minimum interval in \
                     millisecond\n\
@@ -70,6 +77,7 @@ pub(super) fn create_app<'a>() -> Command<'a> {
         .arg(
             Arg::new("p2p-dial-interval") //
                 .long("p2p-dial-interval")
+                .takes_value(true)
                 .long_help(
                     "P2P dialing minimum interval in millisecond\n\
                     e.g. 1000",
