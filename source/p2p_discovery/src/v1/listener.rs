@@ -1,6 +1,6 @@
 use super::{
     address::Address,
-    ops::whoareyou::{initiate, receive},
+    instr::whoareyou::{initiate, receive},
     // ops::Opcode,
     DiscState,
 };

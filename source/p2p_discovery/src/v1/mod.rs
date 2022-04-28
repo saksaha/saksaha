@@ -1,9 +1,9 @@
 pub mod address;
 pub mod dial_scheduler;
 mod frame;
+mod instr;
 pub mod iterator;
 pub mod listener;
-mod ops;
 pub mod state;
 mod table;
 mod task;
