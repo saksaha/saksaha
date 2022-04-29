@@ -1,9 +1,6 @@
 use super::app;
 use clap::{arg, command, ArgMatches, Command};
 
-const DEFAULT_BOOTSTRAP_URLS: &str =
-    include_str!("../../../../../config/bootstrap_urls");
-
 #[derive(Debug)]
 pub(crate) struct CLIArgs {
     pub(crate) disc_dial_interval: Option<u16>,
@@ -143,22 +140,27 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
     })
 }
 
-#[test]
-fn test_if_app_matches_dev_mode() {
-    let args = vec!["", "--dev-mode", "dev-local"];
+#[cfg(test)]
+mod test {
+    use super::app;
 
-    let app = app::create_app();
-    let matches = app.get_matches_from(args);
+    #[test]
+    fn test_if_app_matches_dev_mode() {
+        let args = vec!["", "--dev-mode", "dev-local"];
 
-    assert_eq!(matches.value_of("dev-mode"), Some("dev-local"));
-}
+        let app = app::create_app();
+        let matches = app.get_matches_from(args);
 
-#[test]
-fn test_empty_dev_mode() {
-    let args = vec![""];
+        assert_eq!(matches.value_of("dev-mode"), Some("dev-local"));
+    }
 
-    let app = app::create_app();
-    let matches = app.get_matches_from(args);
+    #[test]
+    fn test_empty_dev_mode() {
+        let args = vec![""];
 
-    assert_eq!(matches.value_of("dev-mode"), None);
+        let app = app::create_app();
+        let matches = app.get_matches_from(args);
+
+        assert_eq!(matches.value_of("dev-mode"), None);
+    }
 }

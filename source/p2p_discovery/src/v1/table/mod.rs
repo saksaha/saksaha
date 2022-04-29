@@ -1,7 +1,6 @@
 mod node;
 
 use self::node::Node;
-use super::address::Address;
 use crate::{iterator::Iterator, CAPACITY};
 use crypto::Signature;
 use logger::tdebug;

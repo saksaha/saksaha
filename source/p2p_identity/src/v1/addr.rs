@@ -26,6 +26,21 @@ pub struct UnknownAddr {
     pub public_key: Option<String>,
 }
 
+impl Addr {
+    pub fn disc_endpoint(&self) -> String {
+        match &*self {
+            Self::Known(known_addr) => known_addr.disc_endpoint(),
+            Self::Unknown(unknown_addr) => unknown_addr.disc_endpoint(),
+        }
+    }
+}
+
+impl KnownAddr {
+    pub fn disc_endpoint(&self) -> String {
+        disc_endpoint(&self.ip, self.disc_port)
+    }
+}
+
 impl UnknownAddr {
     pub fn new_from_url(url: String) -> Result<UnknownAddr, String> {
         if url.starts_with("sak://") {
@@ -86,7 +101,8 @@ impl UnknownAddr {
     }
 
     pub fn disc_endpoint(&self) -> String {
-        format!("{}:{}", self.ip, self.disc_port)
+        disc_endpoint(&self.ip, self.disc_port)
+        // format!("{}:{}", self.ip, self.disc_port)
     }
 
     pub fn short_url(&self) -> String {
@@ -100,6 +116,10 @@ impl UnknownAddr {
 
         format!("{}@{}:{}", peer_id_short, self.ip, self.disc_port)
     }
+}
+
+fn disc_endpoint(ip: &String, disc_port: u16) -> String {
+    format!("{}:{}", ip, disc_port)
 }
 
 fn parse_endpoint(endpoint: &str) -> Result<(String, u16), String> {
