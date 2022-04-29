@@ -1,37 +1,39 @@
 // // use crate::v1::ops::{Message, Opcode};
 // use k256::ecdsa::Signature;
 // // use p2p_identity::PUBLIC_KEY_LEN;
+// use bytes::Bytes;
 // use std::convert::TryInto;
 
 // pub const SIZE_LEN: usize = 4;
 // pub const OPCODE_LEN: usize = 1;
 // pub const P2P_PORT_LEN: usize = 2;
 
-// pub struct WhoAreYou {
-//     pub sig: Signature,
+// pub(crate) struct WhoAreYouSyn {
+//     pub(crate) my_sig: Signature,
 //     // pub public_key_bytes: [u8; PUBLIC_KEY_LEN],
-//     pub p2p_port: u16,
+//     pub(crate) my_disc_port: u16,
+//     pub(crate) my_p2p_port: u16,
 // }
 
-// impl WhoAreYou {
-//     pub fn new(
-//         sig: Signature,
-//         p2p_port: u16,
-//         // public_key_bytes: [u8; PUBLIC_KEY_LEN],
-//     ) -> WhoAreYou {
-//         WhoAreYou {
-//             sig,
-//             p2p_port,
-//             // public_key_bytes,
-//         }
-//     }
+// impl WhoAreYouSyn {
+//     // pub fn new(
+//     //     sig: Signature,
+//     //     p2p_port: u16,
+//     //     // public_key_bytes: [u8; PUBLIC_KEY_LEN],
+//     // ) -> WhoAreYouSyn {
+//     //     WhoAreYouSyn {
+//     //         sig,
+//     //         p2p_port,
+//     //         // public_key_bytes,
+//     //     }
+//     // }
 
 //     pub fn to_bytes(&self) -> Result<Vec<u8>, String> {
 //         let mut buf: Vec<u8> = vec![];
 
-//         let p2p_port_bytes = self.p2p_port.to_be_bytes();
+//         let p2p_port_bytes: [u8; 2] = self.my_p2p_port.to_be_bytes();
 //         // let public_key_bytes = self.public_key_bytes;
-//         let sig_bytes = self.sig.to_der().to_bytes();
+//         let sig_bytes = self.my_sig.to_der().to_bytes();
 
 //         buf.extend_from_slice(&p2p_port_bytes);
 //         // buf.extend_from_slice(&public_key_bytes);
@@ -40,70 +42,84 @@
 //         Ok(buf)
 //     }
 
-//     pub fn parse(buf: &[u8]) -> Result<WhoAreYou, String> {
-//         let p2p_port_offset = 0;
-//         let p2p_port: u16 = match buf
-//             [p2p_port_offset..(p2p_port_offset + P2P_PORT_LEN)]
-//             .try_into()
-//         {
-//             Ok(p) => u16::from_be_bytes(p),
-//             Err(err) => {
-//                 return Err(format!(
-//                     "Error parsing peer_op_port, err: {}",
-//                     err
-//                 ));
-//             }
-//         };
+//     // pub(crate) fn into_frame(&self) -> Result<Frame, String> {
+//     //     let mut frame = Frame::array();
 
-//         let public_key_offset = P2P_PORT_LEN;
-//         let public_key_bytes = {
-//             let mut b = [0; PUBLIC_KEY_LEN];
-//             b.copy_from_slice(
-//                 &buf[public_key_offset..(public_key_offset + PUBLIC_KEY_LEN)],
-//             );
-//             b
-//         };
+//     //     let my_p2p_port_bytes = &self.my_p2p_port.to_be_bytes()[..];
+//     //     let sig_bytes = &self.my_sig.to_der().to_bytes()[..];
+//     //     let disc_port_bytes = &self.my_disc_port.to_be_bytes()[..];
 
-//         let sig: Signature = {
-//             let sig_len = buf.len() - P2P_PORT_LEN - PUBLIC_KEY_LEN;
+//     //     // frame.push_bulk(Bytes::copy_from_slice(my_p2p_port_bytes));
+//     //     // frame.push_bulk(Bytes::copy_from_slice(sig_bytes));
+//     //     // frame.push_bulk(Bytes::copy_from_slice(disc_port_bytes));
 
-//             let sig_offset = P2P_PORT_LEN + PUBLIC_KEY_LEN;
-//             let b = &buf[sig_offset..(sig_offset + sig_len)];
-//             let sig = match Signature::from_der(b) {
-//                 Ok(s) => s,
-//                 Err(err) => {
-//                     return Err(format!(
-//                         "Cannot recover signature, err: {}",
-//                         err
-//                     ));
-//                 }
-//             };
+//     //     Ok(frame)
+//     // }
 
-//             sig
-//         };
+//     // pub fn parse(buf: &[u8]) -> Result<WhoAreYouSyn, String> {
+//     //     let p2p_port_offset = 0;
+//     //     let p2p_port: u16 = match buf
+//     //         [p2p_port_offset..(p2p_port_offset + P2P_PORT_LEN)]
+//     //         .try_into()
+//     //     {
+//     //         Ok(p) => u16::from_be_bytes(p),
+//     //         Err(err) => {
+//     //             return Err(format!(
+//     //                 "Error parsing peer_op_port, err: {}",
+//     //                 err
+//     //             ));
+//     //         }
+//     //     };
 
-//         let msg = WhoAreYou::new(sig, p2p_port, public_key_bytes);
-//         Ok(msg)
-//     }
+//     //     let public_key_offset = P2P_PORT_LEN;
+//     //     let public_key_bytes = {
+//     //         let mut b = [0; PUBLIC_KEY_LEN];
+//     //         b.copy_from_slice(
+//     //             &buf[public_key_offset..(public_key_offset + PUBLIC_KEY_LEN)],
+//     //         );
+//     //         b
+//     //     };
+
+//     //     let sig: Signature = {
+//     //         let sig_len = buf.len() - P2P_PORT_LEN - PUBLIC_KEY_LEN;
+
+//     //         let sig_offset = P2P_PORT_LEN + PUBLIC_KEY_LEN;
+//     //         let b = &buf[sig_offset..(sig_offset + sig_len)];
+//     //         let sig = match Signature::from_der(b) {
+//     //             Ok(s) => s,
+//     //             Err(err) => {
+//     //                 return Err(format!(
+//     //                     "Cannot recover signature, err: {}",
+//     //                     err
+//     //                 ));
+//     //             }
+//     //         };
+
+//     //         sig
+//     //     };
+
+//     //     let msg = WhoAreYou::new(sig, p2p_port, public_key_bytes);
+//     //     Ok(msg)
+//     // }
 // }
 
-// pub struct WhoAreYouSyn {
-//     pub way: WhoAreYou,
-// }
+// // pub(crate) struct WhoAreYouSyn {
+// //     // pub() way: WhoAreYou,
+// // }
 
-// impl WhoAreYouSyn {
-//     pub fn new(
-//         sig: Signature,
-//         p2p_port: u16,
-//         public_key_bytes: [u8; PUBLIC_KEY_LEN],
-//     ) -> WhoAreYouSyn {
-//         let way = WhoAreYou::new(sig, p2p_port, public_key_bytes);
+// // impl WhoAreYouSyn {
+// //     pub fn new(
+// //         sig: Signature,
+// //         p2p_port: u16,
+// //         public_key_bytes: [u8; PUBLIC_KEY_LEN],
+// //     ) -> WhoAreYouSyn {
+// //         let way = WhoAreYou::new(sig, p2p_port, public_key_bytes);
 
-//         let way_syn = WhoAreYouSyn { way };
+// //         let way_syn = WhoAreYouSyn { way };
 
-//         way_syn
-//     }
-// }
+// //         way_syn
+// //     }
+// // }
 
 // // impl Message for WhoAreYouSyn {
 // //     fn opcode(&self) -> Opcode {
@@ -126,9 +142,9 @@
 // //     }
 // // }
 
-// pub struct WhoAreYouAck {
-//     pub way: WhoAreYou,
-// }
+// // pub struct WhoAreYouAck {
+// //     pub way: WhoAreYou,
+// // }
 
 // // impl Message for WhoAreYouAck {
 // //     fn opcode(&self) -> Opcode {
@@ -151,17 +167,17 @@
 // //     }
 // // }
 
-// impl WhoAreYouAck {
-//     pub fn new(
-//         sig: Signature,
-//         peer_op_port: u16,
-//         public_key_bytes: [u8; PUBLIC_KEY_LEN],
-//     ) -> WhoAreYouAck {
-//         let way = WhoAreYou::new(sig, peer_op_port, public_key_bytes);
+// // impl WhoAreYouAck {
+// //     pub fn new(
+// //         sig: Signature,
+// //         peer_op_port: u16,
+// //         public_key_bytes: [u8; PUBLIC_KEY_LEN],
+// //     ) -> WhoAreYouAck {
+// //         let way = WhoAreYou::new(sig, peer_op_port, public_key_bytes);
 
-//         WhoAreYouAck { way }
-//     }
-// }
+// //         WhoAreYouAck { way }
+// //     }
+// // }
 
 // // fn seal_way_msg(opcode: Opcode, way_buf: Vec<u8>) -> Result<Vec<u8>, String> {
 // //     let opcode_bytes = [opcode as u8];

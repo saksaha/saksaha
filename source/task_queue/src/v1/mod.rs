@@ -25,7 +25,7 @@ where
 
 impl<T> TaskQueue<T>
 where
-    T: Debug + Clone + Send + Sync + 'static,
+    T: std::fmt::Display + Clone + Send + Sync + 'static,
 {
     pub fn new(capacity: usize) -> TaskQueue<T> {
         let (tx, rx) = mpsc::channel(capacity);
@@ -45,7 +45,7 @@ where
             Ok(_) => return Ok(()),
             Err(err) => {
                 return Err(format!(
-                    "Cannot add a new task, task: {:?}, err: {:?}",
+                    "Cannot add a new task, task: {}, err: {}",
                     task, err
                 ));
             }

@@ -9,6 +9,14 @@
 // use thiserror::Error;
 // use tokio::sync::mpsc::error::TrySendError;
 
+use p2p_identity::addr::Addr;
+
+use crate::{
+    msg::{self, Msg},
+    state::DiscState,
+};
+use std::sync::Arc;
+
 // #[derive(Error, Debug)]
 // pub enum WhoareyouInitError {
 //     #[error("Request to myself, endpoint: {endpoint}")]
@@ -53,25 +61,38 @@
 //     // },
 // }
 
-pub(crate) async fn send_who_are_you(
+pub(crate) async fn init_who_are_you(
     addr: Addr,
-    // disc_state: Arc<DiscState>,
-    // addr: Address,
-    // unknown_peer: UnknownPeer,
+    disc_state: Arc<DiscState>,
 ) -> Result<(), String> {
-    // let disc_port = disc_state.disc_port;
-    // let p2p_port = disc_state.p2p_port;
+    let my_disc_port = disc_state.disc_port;
+    let my_p2p_port = disc_state.p2p_port;
+    let my_sig = disc_state.p2p_identity.sig;
+    let my_public_key = disc_state.p2p_identity.public_key.clone();
 
-    // let her_endpoint = unknown_peer.disc_endpoint();
+    let endpoint = addr.disc_endpoint();
 
-    // if check::is_my_endpoint(disc_port, &her_endpoint) {
-    //     return Err(WhoareyouInitError::MyEndpoint {
-    //         endpoint: her_endpoint,
-    //     });
-    // }
+    let way_syn = msg::WhoAreYouSyn {
+        my_sig,
+        my_disc_port,
+        my_p2p_port,
+    };
 
-    // let sig = disc_state.p2p_identity.sig;
-    // let public_key = disc_state.p2p_identity.public_key;
+    disc_state
+        .udp_conn
+        .write_msg(endpoint, way_syn.into_msg()?)
+        .await;
+
+    // let frame = match way_syn.into_frame() {
+    //     Ok(f) => f,
+    //     Err(err) => {
+    //         return Err(format!(
+    //             "Error converting WhoAreYouSyn message into a frame"
+    //         ))
+    //     }
+    // };
+
+    // disc_state.udp_socket.send_to(&buf, endpoint.clone()).await;
 
     // let way_syn = WhoAreYouSyn::new(sig, p2p_port, public_key);
 
@@ -154,5 +175,3 @@ pub(crate) async fn send_who_are_you(
 
 //     Ok(())
 // }
-
-use p2p_identity::addr::Addr;

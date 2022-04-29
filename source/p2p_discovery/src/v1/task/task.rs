@@ -13,3 +13,13 @@ pub(crate) enum DiscoveryTask {
         // unknown_peer: UnknownPeer,
     },
 }
+
+impl std::fmt::Display for DiscoveryTask {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::InitiateWhoAreYou { addr, disc_state } => {
+                write!(f, "InitiateWhoAreYou, addr: {:?}", addr)
+            }
+        }
+    }
+}

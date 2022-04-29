@@ -40,7 +40,7 @@ impl DiscTaskRuntime {
                         tdebug!(
                             "p2p_discovery",
                             "task",
-                            "Popped a task. Will handle, {:?}",
+                            "Popped a task. Will handle, {}",
                             t,
                         );
                         t

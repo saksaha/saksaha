@@ -1,13 +1,15 @@
-pub mod dial_scheduler;
+pub(crate) mod dial_scheduler;
 mod instr;
-pub mod iterator;
-pub mod listener;
+pub(crate) mod iterator;
+pub(crate) mod listener;
+pub(crate) mod msg;
 mod net;
-pub mod state;
+pub(crate) mod state;
 mod table;
 mod task;
 
 use self::dial_scheduler::DialSchedulerArgs;
+use self::net::connection::UdpConn;
 use self::{
     dial_scheduler::DialScheduler, listener::Listener, state::DiscState,
     task::runtime::DiscTaskRuntime, task::DiscoveryTask,
@@ -44,8 +46,6 @@ pub struct DiscoveryArgs {
     pub bootstrap_addrs: Vec<Addr>,
 }
 
-pub type Error = Box<dyn std::error::Error + Send + Sync>;
-
 impl Discovery {
     pub async fn init(disc_args: DiscoveryArgs) -> Result<Discovery, String> {
         let table = {
@@ -59,25 +59,19 @@ impl Discovery {
             Arc::new(t)
         };
 
-        // let active_calls = {
-        //     let c = ActiveCalls::new();
-        //     Arc::new(c)
-        // };
-
-        let (udp_socket, disc_port) = {
+        let (udp_conn, disc_port) = {
             let (socket, port) = setup_udp_socket(disc_args.disc_port).await?;
-            (Arc::new(socket), port)
+            let udp_conn = UdpConn { socket };
+            (Arc::new(udp_conn), port)
         };
 
         let disc_state = {
             let s = DiscState {
                 p2p_identity: disc_args.p2p_identity,
                 table,
-                // active_calls,
                 disc_port,
-                udp_socket: udp_socket.clone(),
+                udp_conn,
                 p2p_port: disc_args.p2p_port,
-                // is_dial_routine_running: Arc::new(Mutex::new(false)),
             };
             Arc::new(s)
         };
@@ -96,10 +90,7 @@ impl Discovery {
         };
 
         let listener = {
-            let l = Listener {
-                disc_state: disc_state.clone(),
-                udp_socket: udp_socket.clone(),
-            };
+            let l = Listener::new(disc_state.clone());
             Arc::new(l)
         };
 
