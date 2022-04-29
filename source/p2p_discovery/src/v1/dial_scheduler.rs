@@ -33,10 +33,11 @@ impl DialScheduler {
         let DialSchedulerArgs {
             task_queue,
             bootstrap_addrs,
-            ..
+            disc_dial_interval,
+            disc_state,
         } = dial_schd_args;
 
-        let min_interval = match dial_schd_args.disc_dial_interval {
+        let min_interval = match disc_dial_interval {
             Some(i) => Duration::from_millis(i.into()),
             None => Duration::from_millis(2000),
         };
@@ -50,7 +51,7 @@ impl DialScheduler {
         };
 
         let d = DialScheduler {
-            disc_state: dial_schd_args.disc_state.clone(),
+            disc_state: disc_state.clone(),
             min_interval,
             is_dial_loop_running: Arc::new(Mutex::new(false)),
             task_queue: task_queue.clone(),
@@ -93,6 +94,7 @@ impl DialScheduler {
                 // whoareyou_op: self.whoareyou_op.clone(),
                 // disc_state: self.disc_state.clone(),
                 addr: addr.clone(),
+                disc_state: self.disc_state.clone(),
             };
 
             match self.task_queue.push_back(task).await {

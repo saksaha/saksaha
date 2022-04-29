@@ -1,14 +1,12 @@
-mod config;
 pub mod error;
 pub mod fs;
+mod pconfig;
 
 use self::error::PConfigError;
-use crate::p2p::identity::Identity;
 use colored::Colorize;
-pub use config::*;
 use fs::FS;
 use logger::tinfo;
-use p2p_identity::peer::UnknownPeer;
+pub use pconfig::*;
 use std::path::PathBuf;
 
 impl PConfig {
@@ -72,10 +70,8 @@ impl PConfig {
         let (sk, pk) = crypto::encode_into_key_pair(sk);
         let pconf = PConfig {
             p2p: PersistedP2PConfig {
-                identity: Identity {
-                    secret: sk,
-                    public_key: pk,
-                },
+                secret: sk,
+                public_key: pk,
                 bootstrap_addrs: None,
                 p2p_port: None,
                 disc_port: None,
