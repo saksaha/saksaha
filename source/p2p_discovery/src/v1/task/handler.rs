@@ -17,7 +17,7 @@ async fn do_task(task: DiscoveryTask) {
 
     match task {
         DiscoveryTask::InitiateWhoAreYou { addr, disc_state } => {
-            whoareyou::send_who_are_you(addr).await;
+            whoareyou::init_who_are_you(addr, disc_state).await;
         }
     };
 }

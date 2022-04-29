@@ -1,3 +1,4 @@
+use super::net::connection::UdpConn;
 use super::task::DiscoveryTask;
 use p2p_active_calls::ActiveCalls;
 use p2p_identity::identity::P2PIdentity;
@@ -10,7 +11,7 @@ use super::table::Table;
 
 pub(crate) struct DiscState {
     pub(crate) p2p_identity: Arc<P2PIdentity>,
-    pub(crate) udp_socket: Arc<UdpSocket>,
+    pub(crate) udp_conn: Arc<UdpConn>,
     pub(crate) disc_port: u16,
     pub(crate) p2p_port: u16,
     pub(crate) table: Arc<Table>,
