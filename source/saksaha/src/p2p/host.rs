@@ -1,6 +1,5 @@
 use super::{
     // dial_scheduler::DialScheduler,
-    identity::Identity,
     listener::Listener,
     state::HostState,
     // task::{P2PTaskHandler, Task},
@@ -34,19 +33,24 @@ pub(crate) struct HostArgs {
     pub(crate) disc_port: Option<u16>,
     pub(crate) bootstrap_addrs: Vec<Addr>,
     pub(crate) rpc_port: u16,
-    pub(crate) identity: Identity,
+    pub(crate) secret: String,
+    pub(crate) public_key: String,
     pub(crate) peer_store: Arc<PeerStore>,
 }
 
 impl Host {
     pub async fn init(host_args: HostArgs) -> Result<Host, String> {
-        let identity = {
-            let id = P2PIdentity::new(
-                host_args.identity.secret,
-                host_args.identity.public_key,
-            )?;
+        let p2p_identity = {
+            let id = P2PIdentity::new(host_args.secret, host_args.public_key)?;
             Arc::new(id)
         };
+
+        tinfo!(
+            "saksaha",
+            "p2p",
+            "Created p2p identity, public_key: {}",
+            p2p_identity.public_key.yellow(),
+        );
 
         // let task_queue = {
         //     let q = TaskQueue::new(10);
@@ -59,14 +63,21 @@ impl Host {
         };
 
         let host_state = {
-            let s = HostState::new(
-                identity.clone(),
-                host_args.rpc_port,
-                host_args.p2p_port,
-                // task_queue.clone(),
-                host_args.peer_store.clone(),
+            // let s = HostState::new(
+            //     p2p_identity.clone(),
+            //     host_args.rpc_port,
+            //     host_args.p2p_port,
+            //     // task_queue.clone(),
+            //     host_args.peer_store.clone(),
+            //     handshake_active_calls,
+            // );
+            let s = HostState {
+                p2p_identity: p2p_identity.clone(),
+                my_rpc_port: host_args.rpc_port,
+                my_p2p_port: host_args.p2p_port,
+                peer_store: host_args.peer_store.clone(),
                 handshake_active_calls,
-            );
+            };
             Arc::new(s)
         };
 
@@ -79,7 +90,7 @@ impl Host {
             disc_dial_interval: host_args.disc_dial_interval,
             disc_table_capacity: host_args.disc_table_capacity,
             disc_task_interval: host_args.disc_task_interval,
-            p2p_identity: identity.clone(),
+            p2p_identity: p2p_identity.clone(),
             disc_port: host_args.disc_port,
             p2p_port: host_args.p2p_port,
             bootstrap_addrs: host_args.bootstrap_addrs,

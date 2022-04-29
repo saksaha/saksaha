@@ -13,11 +13,11 @@ impl Handler {
 }
 
 async fn do_task(task: DiscoveryTask) {
-    println!("{:?}", task);
+    // println!("{:?}", task);
 
     match task {
-        DiscoveryTask::InitiateWhoAreYou { addr } => {
-            whoareyou::send_who_are_you(addr);
+        DiscoveryTask::InitiateWhoAreYou { addr, disc_state } => {
+            whoareyou::send_who_are_you(addr).await;
         }
     };
 }

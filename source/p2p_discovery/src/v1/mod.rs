@@ -59,10 +59,10 @@ impl Discovery {
             Arc::new(t)
         };
 
-        let active_calls = {
-            let c = ActiveCalls::new();
-            Arc::new(c)
-        };
+        // let active_calls = {
+        //     let c = ActiveCalls::new();
+        //     Arc::new(c)
+        // };
 
         let (udp_socket, disc_port) = {
             let (socket, port) = setup_udp_socket(disc_args.disc_port).await?;
@@ -73,11 +73,11 @@ impl Discovery {
             let s = DiscState {
                 p2p_identity: disc_args.p2p_identity,
                 table,
-                active_calls,
+                // active_calls,
                 disc_port,
                 udp_socket: udp_socket.clone(),
                 p2p_port: disc_args.p2p_port,
-                is_dial_routine_running: Arc::new(Mutex::new(false)),
+                // is_dial_routine_running: Arc::new(Mutex::new(false)),
             };
             Arc::new(s)
         };

@@ -27,63 +27,63 @@ impl DefaultConfig {
                             ",
                         )),
                     }),
-                    Addr::Unknown(UnknownAddr {
-                        ip: String::from("127.0.0.1"),
-                        disc_port: 35519,
-                        p2p_port: None,
-                        secret: Some(String::from(
-                            "\
-                        e364bcd1cd3769fc44cf026864f7ad98\
-                        a1ba1721fb5096d0f4ea7710efe03a3d\
-                        ",
-                        )),
-                        public_key: Some(String::from(
-                            "\
-                        048e34a97e173aa7d978f3b3d720487c\
-                        d10c64020e334eae6789cbee6f0856b2\
-                        4953989b5067afff361e3a4534abe506\
-                        91bca238e900a4dff496ef0c84400c26f4\
-                        ",
-                        )),
-                    }),
-                    Addr::Unknown(UnknownAddr {
-                        ip: String::from("127.0.0.1"),
-                        disc_port: 35520,
-                        p2p_port: None,
-                        secret: Some(String::from(
-                            "\
-                        c50754a60a2261fc777267486a9c43d8\
-                        df965e7721017da6deb5a64fa20a907c\
-                        ",
-                        )),
-                        public_key: Some(String::from(
-                            "\
-                        0467e86ec86e8a520503818a4fa09724\
-                        08e56917c7cc76a514e781d8036bd923\
-                        8483a3d8bc5917e2592c4ad0181a1606\
-                        58a536841411f7567f6a673f16ef71191f\
-                        ",
-                        )),
-                    }),
-                    Addr::Unknown(UnknownAddr {
-                        ip: String::from("127.0.0.1"),
-                        disc_port: 35521,
-                        p2p_port: None,
-                        secret: Some(String::from(
-                            "\
-                        6127f232f79cc329aa33a09776e0212c\
-                        5ce76bd1b7f56956d5f87a74b9e07bd2\
-                        ",
-                        )),
-                        public_key: Some(String::from(
-                            "\
-                        0431f595b429a2a6d998030f9a7d71df\
-                        7d617109bf70b91a144ed6ef16dcef2d\
-                        0bf285a541f50bd49b3e4ffc534881b1\
-                        ddeb915b8aa13f6f318b191e02d8fad885\
-                        ",
-                        )),
-                    }),
+                    // Addr::Unknown(UnknownAddr {
+                    //     ip: String::from("127.0.0.1"),
+                    //     disc_port: 35519,
+                    //     p2p_port: None,
+                    //     secret: Some(String::from(
+                    //         "\
+                    //     e364bcd1cd3769fc44cf026864f7ad98\
+                    //     a1ba1721fb5096d0f4ea7710efe03a3d\
+                    //     ",
+                    //     )),
+                    //     public_key: Some(String::from(
+                    //         "\
+                    //     048e34a97e173aa7d978f3b3d720487c\
+                    //     d10c64020e334eae6789cbee6f0856b2\
+                    //     4953989b5067afff361e3a4534abe506\
+                    //     91bca238e900a4dff496ef0c84400c26f4\
+                    //     ",
+                    //     )),
+                    // }),
+                    // Addr::Unknown(UnknownAddr {
+                    //     ip: String::from("127.0.0.1"),
+                    //     disc_port: 35520,
+                    //     p2p_port: None,
+                    //     secret: Some(String::from(
+                    //         "\
+                    //     c50754a60a2261fc777267486a9c43d8\
+                    //     df965e7721017da6deb5a64fa20a907c\
+                    //     ",
+                    //     )),
+                    //     public_key: Some(String::from(
+                    //         "\
+                    //     0467e86ec86e8a520503818a4fa09724\
+                    //     08e56917c7cc76a514e781d8036bd923\
+                    //     8483a3d8bc5917e2592c4ad0181a1606\
+                    //     58a536841411f7567f6a673f16ef71191f\
+                    //     ",
+                    //     )),
+                    // }),
+                    // Addr::Unknown(UnknownAddr {
+                    //     ip: String::from("127.0.0.1"),
+                    //     disc_port: 35521,
+                    //     p2p_port: None,
+                    //     secret: Some(String::from(
+                    //         "\
+                    //     6127f232f79cc329aa33a09776e0212c\
+                    //     5ce76bd1b7f56956d5f87a74b9e07bd2\
+                    //     ",
+                    //     )),
+                    //     public_key: Some(String::from(
+                    //         "\
+                    //     0431f595b429a2a6d998030f9a7d71df\
+                    //     7d617109bf70b91a144ed6ef16dcef2d\
+                    //     0bf285a541f50bd49b3e4ffc534881b1\
+                    //     ddeb915b8aa13f6f318b191e02d8fad885\
+                    //     ",
+                    //     )),
+                    // }),
                 ],
             },
         };

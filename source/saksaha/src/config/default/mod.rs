@@ -1,7 +1,5 @@
 use p2p_identity::addr::Addr;
 
-use super::Identity;
-
 pub(crate) mod dev_local;
 
 pub(crate) struct DefaultConfig {

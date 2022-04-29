@@ -14,8 +14,8 @@ pub(crate) struct DiscState {
     pub(crate) disc_port: u16,
     pub(crate) p2p_port: u16,
     pub(crate) table: Arc<Table>,
-    pub(crate) active_calls: Arc<ActiveCalls>,
-    pub(crate) is_dial_routine_running: Arc<Mutex<bool>>,
+    // pub(crate) active_calls: Arc<ActiveCalls>,
+    // pub(crate) is_dial_routine_running: Arc<Mutex<bool>>,
     // pub task_queue: Arc<TaskQueue<Task>>,
 }
 

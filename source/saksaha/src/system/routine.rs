@@ -3,10 +3,7 @@ use crate::config::default::DefaultConfig;
 use crate::config::{Config, P2PConfig, RPCConfig};
 use crate::p2p::host::HostArgs;
 use crate::{
-    ledger::Ledger,
-    network::socket,
-    p2p::{host::Host, identity::Identity},
-    pconfig::PConfig,
+    ledger::Ledger, network::socket, p2p::host::Host, pconfig::PConfig,
     rpc::RPC,
 };
 use logger::{tdebug, terr, tinfo};
@@ -71,7 +68,8 @@ impl System {
             disc_port: config.p2p.disc_port,
             bootstrap_addrs: config.p2p.bootstrap_addrs,
             rpc_port,
-            identity: config.p2p.identity,
+            secret: config.p2p.secret,
+            public_key: config.p2p.public_key,
             peer_store,
         };
 

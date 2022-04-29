@@ -1,7 +1,7 @@
 pub(crate) mod default;
 
 use self::default::DefaultConfig;
-use crate::{p2p::identity::Identity, system::SystemArgs};
+use crate::system::SystemArgs;
 use logger::{tinfo, twarn};
 use p2p_identity::addr::{Addr, UnknownAddr};
 
@@ -19,8 +19,9 @@ pub(crate) struct P2PConfig {
     pub(crate) p2p_dial_interval: Option<u16>,
     pub(crate) disc_port: Option<u16>,
     pub(crate) p2p_port: Option<u16>,
-    pub(crate) identity: Identity,
     pub(crate) bootstrap_addrs: Vec<Addr>,
+    pub(crate) secret: String,
+    pub(crate) public_key: String,
 }
 
 #[derive(Debug)]
@@ -38,7 +39,7 @@ impl Config {
             }
         };
 
-        let identity = &sys_args.pconfig.p2p.identity;
+        // let identity = &sys_args.pconfig.p2p.identity;
         let pconfig = &sys_args.pconfig;
 
         let bootstrap_addrs = {
@@ -96,10 +97,8 @@ impl Config {
                 p2p_dial_interval: sys_args.p2p_dial_interval,
                 p2p_port: sys_args.p2p_port,
                 disc_port: sys_args.disc_port,
-                identity: Identity {
-                    secret: identity.secret.clone(),
-                    public_key: identity.public_key.clone(),
-                },
+                secret: sys_args.pconfig.p2p.secret.clone(),
+                public_key: sys_args.pconfig.p2p.public_key.clone(),
                 bootstrap_addrs,
             },
         }
