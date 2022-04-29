@@ -1,3 +1,5 @@
+use crate::v1::instr::whoareyou;
+
 use super::DiscoveryTask;
 
 pub(crate) struct Handler {
@@ -14,6 +16,8 @@ async fn do_task(task: DiscoveryTask) {
     println!("{:?}", task);
 
     match task {
-        DiscoveryTask::InitiateWhoAreYou { addr } => {}
+        DiscoveryTask::InitiateWhoAreYou { addr } => {
+            whoareyou::send_who_are_you(addr);
+        }
     };
 }

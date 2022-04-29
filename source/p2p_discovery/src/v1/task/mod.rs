@@ -4,7 +4,6 @@ pub(crate) mod task;
 
 pub(crate) use task::*;
 
-use super::address::Address;
 use crate::state::DiscState;
 use log::{debug, error, warn};
 use p2p_identity::{addr::Addr, peer::UnknownPeer};

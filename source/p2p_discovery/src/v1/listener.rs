@@ -1,5 +1,4 @@
 use super::{
-    address::Address,
     instr::whoareyou::{initiate, receive},
     // ops::Opcode,
     DiscState,
@@ -109,12 +108,12 @@ impl Handler {
         addr: SocketAddr,
         buf: &[u8],
     ) -> Result<(), String> {
-        let addr = Address::from_socket_addr(addr);
-        let len = buf.len();
+        // let addr = Address::from_socket_addr(addr);
+        // let len = buf.len();
 
-        if len < 5 {
-            return Err(format!("content too short, len: {}", len));
-        }
+        // if len < 5 {
+        //     return Err(format!("content too short, len: {}", len));
+        // }
 
         // let opcode = {
         //     let c = Opcode::from(buf[4]);

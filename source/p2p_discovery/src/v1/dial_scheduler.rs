@@ -1,4 +1,4 @@
-use super::{address::Address, state::DiscState, task::DiscoveryTask};
+use super::{state::DiscState, task::DiscoveryTask};
 use logger::{tdebug, terr, tinfo, twarn};
 use p2p_identity::{addr::Addr, peer::UnknownPeer};
 use std::{
@@ -70,7 +70,25 @@ impl DialScheduler {
     }
 
     async fn enqueue_bootstrap_addrs(&self, bootstrap_addrs: Vec<Addr>) {
-        for addr in bootstrap_addrs {
+        let total_count = bootstrap_addrs.len();
+
+        tinfo!(
+            "p2p_discovery",
+            "dial_schd",
+            "Enqueueing bootstrap addrs, total count: {}",
+            total_count,
+        );
+
+        for (idx, addr) in bootstrap_addrs.iter().enumerate() {
+            tinfo!(
+                "p2p_discovery",
+                "dial_schd",
+                "-- [{}/{}] enqueueing bootstrap addr, disc_endpoint: {}",
+                idx + 1,
+                total_count,
+                addr.disc_endpoint(),
+            );
+
             let task = DiscoveryTask::InitiateWhoAreYou {
                 // whoareyou_op: self.whoareyou_op.clone(),
                 // disc_state: self.disc_state.clone(),

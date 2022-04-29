@@ -53,49 +53,50 @@
 //     // },
 // }
 
-// pub(crate) async fn send_who_are_you(
-//     disc_state: Arc<DiscState>,
-//     // addr: Address,
-//     unknown_peer: UnknownPeer,
-// ) -> Result<(), WhoareyouInitError> {
-//     let disc_port = disc_state.disc_port;
-//     let p2p_port = disc_state.p2p_port;
+pub(crate) async fn send_who_are_you(
+    addr: Addr,
+    // disc_state: Arc<DiscState>,
+    // addr: Address,
+    // unknown_peer: UnknownPeer,
+) -> Result<(), String> {
+    // let disc_port = disc_state.disc_port;
+    // let p2p_port = disc_state.p2p_port;
 
-//     let her_endpoint = unknown_peer.disc_endpoint();
+    // let her_endpoint = unknown_peer.disc_endpoint();
 
-//     if check::is_my_endpoint(disc_port, &her_endpoint) {
-//         return Err(WhoareyouInitError::MyEndpoint {
-//             endpoint: her_endpoint,
-//         });
-//     }
+    // if check::is_my_endpoint(disc_port, &her_endpoint) {
+    //     return Err(WhoareyouInitError::MyEndpoint {
+    //         endpoint: her_endpoint,
+    //     });
+    // }
 
-//     let sig = disc_state.p2p_identity.sig;
-//     let public_key = disc_state.p2p_identity.public_key;
+    // let sig = disc_state.p2p_identity.sig;
+    // let public_key = disc_state.p2p_identity.public_key;
 
-//     let way_syn = WhoAreYouSyn::new(sig, p2p_port, public_key);
+    // let way_syn = WhoAreYouSyn::new(sig, p2p_port, public_key);
 
-//     // let buf = match way_syn.to_bytes() {
-//     //     Ok(b) => b,
-//     //     Err(err) => {
-//     //         return Err(WhoareyouInitError::ByteConversionFail { err });
-//     //     }
-//     // };
+    // let buf = match way_syn.to_bytes() {
+    //     Ok(b) => b,
+    //     Err(err) => {
+    //         return Err(WhoareyouInitError::ByteConversionFail { err });
+    //     }
+    // };
 
-//     // disc_state
-//     //     .udp_socket
-//     //     .send_to(&buf, her_endpoint.clone())
-//     //     .await?;
+    // disc_state
+    //     .udp_socket
+    //     .send_to(&buf, her_endpoint.clone())
+    //     .await?;
 
-//     // tdebug!(
-//     //     "p2p_discovery",
-//     //     "whoareyou",
-//     //     "Successfully sent WhoAreYou to endpoint: {}, buf len: {}",
-//     //     &her_endpoint,
-//     //     buf.len()
-//     // );
+    // tdebug!(
+    //     "p2p_discovery",
+    //     "whoareyou",
+    //     "Successfully sent WhoAreYou to endpoint: {}, buf len: {}",
+    //     &her_endpoint,
+    //     buf.len()
+    // );
 
-//     Ok(())
-// }
+    Ok(())
+}
 
 // pub(crate) async fn handle_who_are_you_ack(
 //     disc_state: Arc<DiscState>,
@@ -153,3 +154,5 @@
 
 //     Ok(())
 // }
+
+use p2p_identity::addr::Addr;
