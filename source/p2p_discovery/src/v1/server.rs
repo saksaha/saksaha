@@ -2,32 +2,24 @@ use crate::msg::{Msg, MsgType, WhoAreYou};
 
 use super::{
     instr::whoareyou::{self, initiate, receive},
-    // ops::Opcode,
     DiscState,
 };
 use logger::{tdebug, terr, tinfo, twarn};
 use std::{net::SocketAddr, sync::Arc};
-use thiserror::Error;
-use tokio::{net::UdpSocket, sync::Semaphore};
+use tokio::sync::Semaphore;
 
 const MAX_CONN_COUNT: usize = 50;
 
-#[derive(Error, Debug)]
-pub enum ListenerError {
-    #[error("Already has active call with endpoint, {0}")]
-    CallAlreadyInProgress(String),
-}
-
-pub(crate) struct Listener {
+pub(crate) struct Server {
     pub(crate) disc_state: Arc<DiscState>,
     conn_semaphore: Arc<Semaphore>,
 }
 
-impl Listener {
-    pub fn new(disc_state: Arc<DiscState>) -> Listener {
+impl Server {
+    pub fn new(disc_state: Arc<DiscState>) -> Server {
         let conn_semaphore = Arc::new(Semaphore::new(MAX_CONN_COUNT));
 
-        Listener {
+        Server {
             disc_state,
             conn_semaphore,
         }

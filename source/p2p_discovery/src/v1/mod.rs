@@ -1,9 +1,9 @@
 pub(crate) mod dial_scheduler;
 mod instr;
 pub(crate) mod iterator;
-pub(crate) mod listener;
 pub(crate) mod msg;
 mod net;
+pub(crate) mod server;
 pub(crate) mod state;
 pub(crate) mod table;
 mod task;
@@ -12,7 +12,7 @@ use self::dial_scheduler::DialSchedulerArgs;
 use self::net::connection::UdpConn;
 use self::task::DiscoveryTaskInstance;
 use self::{
-    dial_scheduler::DialScheduler, listener::Listener, state::DiscState,
+    dial_scheduler::DialScheduler, server::Server, state::DiscState,
     task::runtime::DiscTaskRuntime, task::DiscoveryTask,
 };
 use crate::iterator::Iterator;
@@ -30,7 +30,7 @@ use tokio::sync::Mutex;
 pub const CAPACITY: usize = 64;
 
 pub struct Discovery {
-    listener: Arc<Listener>,
+    server: Arc<Server>,
     disc_state: Arc<DiscState>,
     dial_scheduler: Arc<DialScheduler>,
     task_queue: Arc<TaskQueue<DiscoveryTaskInstance>>,
@@ -90,9 +90,9 @@ impl Discovery {
             Arc::new(h)
         };
 
-        let listener = {
-            let l = Listener::new(disc_state.clone());
-            Arc::new(l)
+        let server = {
+            let s = Server::new(disc_state.clone());
+            Arc::new(s)
         };
 
         let dial_schd_args = DialSchedulerArgs {
@@ -109,7 +109,7 @@ impl Discovery {
 
         let disc = Discovery {
             disc_state,
-            listener,
+            server,
             dial_scheduler,
             task_queue,
             task_runtime,
@@ -119,7 +119,7 @@ impl Discovery {
     }
 
     pub async fn start(&self) -> Result<(), String> {
-        self.listener.start()?;
+        self.server.start()?;
 
         self.task_runtime.run();
 

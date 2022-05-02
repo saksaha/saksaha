@@ -89,7 +89,6 @@ pub(crate) async fn init_who_are_you(
     let src_sig = disc_state.p2p_identity.sig;
     let src_public_key = disc_state.p2p_identity.public_key.clone();
 
-    // let addr = &node_value.addr;
     let endpoint = addr.disc_endpoint();
 
     let way = msg::WhoAreYou {
@@ -101,7 +100,7 @@ pub(crate) async fn init_who_are_you(
 
     match disc_state
         .udp_conn
-        .write_msg(endpoint, way.into_msg()?)
+        .write_msg(endpoint, way.into_syn_msg()?)
         .await
     {
         Ok(_) => {
