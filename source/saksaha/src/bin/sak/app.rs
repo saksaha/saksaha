@@ -75,8 +75,8 @@ pub(super) fn create_app<'a>() -> Command<'a> {
                 ),
         )
         .arg(
-            Arg::new("p2p-dial-interval") //
-                .long("p2p-dial-interval")
+            Arg::new("p2p-task-interval") //
+                .long("p2p-task-interval")
                 .takes_value(true)
                 .long_help(
                     "P2P dialing minimum interval in millisecond\n\

@@ -64,7 +64,7 @@ fn main() {
         disc_dial_interval: cli_args.disc_dial_interval,
         disc_table_capacity: cli_args.disc_table_capacity,
         disc_task_interval: cli_args.disc_task_interval,
-        p2p_dial_interval: cli_args.p2p_dial_interval,
+        p2p_task_interval: cli_args.p2p_task_interval,
         rpc_port: cli_args.rpc_port,
         disc_port: cli_args.disc_port,
         p2p_port: cli_args.p2p_port,

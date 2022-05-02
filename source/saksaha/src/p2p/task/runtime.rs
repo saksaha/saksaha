@@ -6,9 +6,9 @@ use std::{
     time::{Duration, SystemTime},
 };
 use task_queue::TaskQueue;
-use utils_time::wait_until_min_interval;
 
 const MAX_TASK_RETRY: usize = 2;
+const TASK_MIN_INTERVAL: u64 = 1000;
 
 pub(crate) struct P2PTaskRuntime {
     pub(crate) task_queue: Arc<TaskQueue<P2PTaskInstance>>,
@@ -22,7 +22,7 @@ impl P2PTaskRuntime {
     ) -> P2PTaskRuntime {
         let task_min_interval = match disc_task_interval {
             Some(i) => Duration::from_millis(i.into()),
-            None => Duration::from_millis(1000),
+            None => Duration::from_millis(TASK_MIN_INTERVAL),
         };
 
         P2PTaskRuntime {
@@ -88,7 +88,11 @@ impl P2PTaskRuntime {
                     }
                 };
 
-                wait_until_min_interval(time_since, task_min_interval).await;
+                utils_time::wait_until_min_interval(
+                    time_since,
+                    task_min_interval,
+                )
+                .await;
             }
         });
     }

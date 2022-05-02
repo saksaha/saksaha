@@ -8,7 +8,6 @@ use std::{
     time::{Duration, SystemTime},
 };
 use task_queue::TaskQueue;
-use utils_time::wait_until_min_interval;
 
 const MAX_TASK_RETRY: usize = 2;
 
@@ -90,7 +89,11 @@ impl DiscTaskRuntime {
                     }
                 };
 
-                wait_until_min_interval(time_since, task_min_interval).await;
+                utils_time::wait_until_min_interval(
+                    time_since,
+                    task_min_interval,
+                )
+                .await;
             }
         });
     }
