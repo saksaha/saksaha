@@ -1,21 +1,9 @@
 mod node;
 
 pub(crate) use self::node::*;
-use crate::{iterator::Iterator, CAPACITY};
-use crypto::Signature;
-use logger::tdebug;
-use logger::twarn;
 use p2p_identity::addr::Addr;
-use std::{
-    collections::{HashMap, HashSet},
-    sync::Arc,
-};
-use tokio::sync::{
-    mpsc::{self, error::TrySendError, Receiver, Sender},
-    Mutex, MutexGuard,
-};
-
-const ADDRS_MAX_COUNT: usize = 100;
+use std::{collections::HashMap, sync::Arc};
+use tokio::sync::{Mutex, MutexGuard};
 
 /// TODO Table shall have Kademlia flavored buckets
 pub(crate) struct Table {
@@ -32,10 +20,15 @@ impl Table {
             Arc::new(Mutex::new(m))
         };
 
-        let addrs = {
-            let mut v = Vec::with_capacity(ADDRS_MAX_COUNT);
+        let disc_table_capacity = match disc_table_capacity {
+            Some(c) => c.into(),
+            None => 100,
+        };
 
-            for _ in 0..ADDRS_MAX_COUNT {
+        let addrs = {
+            let mut v = Vec::with_capacity(disc_table_capacity);
+
+            for _ in 0..disc_table_capacity {
                 let n = Node {
                     value: NodeValue::Empty,
                 };

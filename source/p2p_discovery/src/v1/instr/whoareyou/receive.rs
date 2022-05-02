@@ -1,16 +1,9 @@
 use p2p_identity::addr::Addr;
 
-// use super::check;
-// use super::msg::{WhoAreYouAck, WhoAreYouSyn};
-// use crate::v1::address::Address;
-// // use crate::v1::ops::Message;
-// use crate::v1::DiscState;
-// use logger::tdebug;
-// use std::sync::Arc;
 use crate::{
-    msg::{self, WhoAreYou},
+    msg::WhoAreYou,
     state::DiscState,
-    table::{Node, NodeStatus, NodeValue, NodeValueInner},
+    table::{NodeStatus, NodeValue},
 };
 use std::{net::SocketAddr, sync::Arc};
 use thiserror::Error;
@@ -19,13 +12,11 @@ use super::check;
 
 #[derive(Error, Debug)]
 pub(crate) enum WhoAreYouRecvError {
-    // #[error("Cannot convert to byte, _err: {err}")]
-    // ByteConversionFail { err: String },
     #[error("Can't take request I sent, addr: {addr}")]
     MyEndpoint { addr: Addr },
 
-    #[error("Can't take a slot in the table, addr: {addr}")]
-    TableIsFull { addr: Addr },
+    #[error("Can't take a slot in the table, err: {err}")]
+    TableIsFull { err: String },
 
     #[error("Can't make a message (WhoAreYouAck), err: {err}")]
     MsgCreateFail { err: String },
@@ -35,23 +26,6 @@ pub(crate) enum WhoAreYouRecvError {
 
     #[error("Table node is empty")]
     EmptyNode,
-    // #[error("Couldn't parse WhoAreYou message, err: {err}")]
-    // MessageParseFail { err: String },
-
-    // #[error(
-    //     "Couldn't reserve node, table is full, endpoint:\
-    //     {endpoint}, err: {err}"
-    // )]
-    // TableIsFull { endpoint: String, err: String },
-
-    // #[error("Couldn't sent msg through socket")]
-    // SendFail {
-    //     #[from]
-    //     source: std::io::Error,
-    // },
-
-    // #[error("Can't add node to table, err: {err}")]
-    // TableAddFail { err: String },
 }
 
 pub(crate) async fn recv_who_are_you(
@@ -80,7 +54,7 @@ pub(crate) async fn recv_who_are_you(
 
     let node = match disc_state.table.upsert(&addr).await {
         Ok(n) => n,
-        Err(err) => return Err(WhoAreYouRecvError::TableIsFull { addr }),
+        Err(err) => return Err(WhoAreYouRecvError::TableIsFull { err }),
     };
 
     let mut node_lock = node.lock().await;
@@ -113,7 +87,7 @@ pub(crate) async fn recv_who_are_you(
 
     match disc_state.udp_conn.write_msg(endpoint, way_msg).await {
         Ok(_) => {
-            node_value.status = NodeStatus::WhoAreYouSynSent;
+            node_value.status = NodeStatus::WhoAreYouAckSent;
         }
         Err(err) => {
             return Err(WhoAreYouRecvError::MsgSendFail { err });
