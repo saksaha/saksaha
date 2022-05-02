@@ -68,8 +68,9 @@ impl UdpConn {
                         "p2p_discovery",
                         "net",
                         "Invalid msg length for this platform, cannot \
-                            convert u32 into usize: {}",
+                            convert u32 into usize: {}, err: {}",
                         u32_len,
+                        err,
                     );
                     return None;
                 }
@@ -81,7 +82,7 @@ impl UdpConn {
         // tdebug!("p2p_discovery", "net", "read_msg(): content: {:?}", content,);
 
         let msg = Msg {
-            msg_type: MsgType::WhoAreYouSyn,
+            msg_type,
             content: content.to_vec(),
         };
 

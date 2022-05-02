@@ -15,7 +15,15 @@ pub(crate) struct WhoAreYou {
 }
 
 impl WhoAreYou {
-    pub fn into_msg(&self) -> Result<Msg, String> {
+    pub fn into_syn_msg(&self) -> Result<Msg, String> {
+        self.into_msg(MsgType::WhoAreYouSyn)
+    }
+
+    pub fn into_ack_msg(&self) -> Result<Msg, String> {
+        self.into_msg(MsgType::WhoAreYouAck)
+    }
+
+    fn into_msg(&self, msg_type: MsgType) -> Result<Msg, String> {
         let mut buf: Vec<u8> = vec![];
 
         let src_p2p_port_bytes = self.src_p2p_port.to_be_bytes();
@@ -39,7 +47,7 @@ impl WhoAreYou {
         buf.extend_from_slice(&src_public_key_bytes);
 
         let msg = Msg {
-            msg_type: MsgType::WhoAreYouSyn,
+            msg_type,
             content: buf,
         };
 
