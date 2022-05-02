@@ -40,7 +40,9 @@ pub(crate) async fn recv_who_are_you(
     disc_state: Arc<DiscState>,
     msg: WhoAreYouSyn,
 ) -> Result<(), String> {
-    // let endpoint = ad
+    let src_disc_port = msg.src_disc_port;
+    let src_p2p_port = msg.src_p2p_port;
+    let src_sig = msg.src_sig;
 
     // let table_node = match disc_state.table.try_reserve().await {
     //     Ok(n) => n,

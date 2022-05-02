@@ -11,11 +11,21 @@ pub(crate) enum Node {
 
 #[derive(Debug)]
 pub(crate) enum NodeStatus {
-    WhoAreYouSyncSent,
+    Initialized,
+    WhoAreYouSynSent,
 }
 
 #[derive(Debug)]
 pub(crate) struct NodeValue {
-    addr: Addr,
-    status: NodeStatus,
+    pub(crate) addr: Addr,
+    pub(crate) status: NodeStatus,
+}
+
+impl NodeValue {
+    pub(crate) fn new(addr: Addr) -> NodeValue {
+        NodeValue {
+            addr,
+            status: NodeStatus::Initialized,
+        }
+    }
 }

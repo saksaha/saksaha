@@ -118,7 +118,15 @@ impl Handler {
                     }
                 };
 
-                whoareyou::recv_who_are_you(self.disc_state.clone(), way_syn);
+                match whoareyou::recv_who_are_you(
+                    self.disc_state.clone(),
+                    way_syn,
+                )
+                .await
+                {
+                    Ok(_) => (),
+                    Err(err) => {}
+                };
             }
         };
 

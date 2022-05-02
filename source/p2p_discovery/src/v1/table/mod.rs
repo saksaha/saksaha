@@ -54,7 +54,10 @@ impl Table {
         Ok(table)
     }
 
-    pub async fn upsert(&self, addr: Addr) -> Result<Arc<Mutex<Addr>>, String> {
+    pub async fn upsert(
+        &self,
+        addr: Addr,
+    ) -> Result<Arc<Mutex<NodeValue>>, String> {
         let endpoint = addr.disc_endpoint();
 
         let addr_map = self.addr_map.clone();
@@ -74,11 +77,12 @@ impl Table {
             None => {}
         }
 
-        let addr = Arc::new(Mutex::new(addr));
-        let node = { Node::Valued(addr.clone()) };
+        let node_value = Arc::new(Mutex::new(NodeValue::new(addr)));
+        let node = { Node::Valued(node_value.clone()) };
+
         addr_map_guard.insert(endpoint, node);
 
-        return Ok(addr);
+        return Ok(node_value);
     }
 
     // pub async fn add<F>(
