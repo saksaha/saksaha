@@ -12,12 +12,7 @@ impl DefaultConfig {
                         ip: String::from("127.0.0.1"),
                         disc_port: 35518,
                         p2p_port: None,
-                        secret: Some(String::from(
-                            "\
-                            9a3d9fafda4a1b0e420d339a3e42c2c8\
-                            1062ba788018eb6639b5d2eedeb2d13e\
-                            ",
-                        )),
+                        sig: None,
                         public_key: Some(String::from(
                             "\
                             04715796a40b0d58fc14a3c4ebee21cb\
@@ -31,12 +26,7 @@ impl DefaultConfig {
                     //     ip: String::from("127.0.0.1"),
                     //     disc_port: 35519,
                     //     p2p_port: None,
-                    //     secret: Some(String::from(
-                    //         "\
-                    //     e364bcd1cd3769fc44cf026864f7ad98\
-                    //     a1ba1721fb5096d0f4ea7710efe03a3d\
-                    //     ",
-                    //     )),
+                    //     sig: None,
                     //     public_key: Some(String::from(
                     //         "\
                     //     048e34a97e173aa7d978f3b3d720487c\
@@ -50,12 +40,7 @@ impl DefaultConfig {
                     //     ip: String::from("127.0.0.1"),
                     //     disc_port: 35520,
                     //     p2p_port: None,
-                    //     secret: Some(String::from(
-                    //         "\
-                    //     c50754a60a2261fc777267486a9c43d8\
-                    //     df965e7721017da6deb5a64fa20a907c\
-                    //     ",
-                    //     )),
+                    //     sig: None,
                     //     public_key: Some(String::from(
                     //         "\
                     //     0467e86ec86e8a520503818a4fa09724\
@@ -69,12 +54,7 @@ impl DefaultConfig {
                     //     ip: String::from("127.0.0.1"),
                     //     disc_port: 35521,
                     //     p2p_port: None,
-                    //     secret: Some(String::from(
-                    //         "\
-                    //     6127f232f79cc329aa33a09776e0212c\
-                    //     5ce76bd1b7f56956d5f87a74b9e07bd2\
-                    //     ",
-                    //     )),
+                    //     sig: None,
                     //     public_key: Some(String::from(
                     //         "\
                     //     0431f595b429a2a6d998030f9a7d71df\

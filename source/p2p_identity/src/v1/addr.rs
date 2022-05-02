@@ -1,6 +1,14 @@
-use std::net::SocketAddr;
-
+pub use k256::{
+    ecdh::EphemeralSecret,
+    ecdsa::{
+        signature::{Signer, Verifier},
+        Signature, SigningKey, VerifyingKey,
+    },
+    elliptic_curve::sec1::ToEncodedPoint,
+    EncodedPoint, PublicKey, SecretKey,
+};
 use serde::{Deserialize, Serialize};
+use std::net::SocketAddr;
 
 // #[derive(Serialize, Deserialize, Debug, Clone)]
 // pub enum Addr {
@@ -16,7 +24,9 @@ pub struct Addr {
     // pub secret: String,
     // pub public_key: String,
     pub p2p_port: Option<u16>,
-    pub secret: Option<String>,
+
+    #[serde(skip)]
+    pub sig: Option<Signature>,
     pub public_key: Option<String>,
 }
 
@@ -58,7 +68,7 @@ impl Addr {
             ip: addr.ip().to_string(),
             disc_port: addr.port(),
             p2p_port: None,
-            secret: None,
+            sig: None,
             public_key: None,
         }
     }
@@ -86,7 +96,7 @@ impl Addr {
             ip,
             disc_port,
             p2p_port: None,
-            secret: None,
+            sig: None,
             public_key: None,
         })
     }
@@ -98,7 +108,7 @@ impl Addr {
             ip,
             disc_port,
             p2p_port: None,
-            secret: None,
+            sig: None,
             public_key: None,
         })
     }

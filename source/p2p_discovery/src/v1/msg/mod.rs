@@ -8,18 +8,19 @@ use std::convert::TryInto;
 const SIG_LEN: usize = 71;
 
 pub(crate) struct WhoAreYouSyn {
-    pub(crate) my_sig: Signature,
-    pub(crate) my_disc_port: u16,
-    pub(crate) my_p2p_port: u16,
+    pub(crate) src_sig: Signature,
+    pub(crate) src_disc_port: u16,
+    pub(crate) src_p2p_port: u16,
+    pub(crate) src_public_key: String,
 }
 
 impl WhoAreYouSyn {
     pub fn into_msg(&self) -> Result<Msg, String> {
         let mut buf: Vec<u8> = vec![];
 
-        let my_p2p_port_bytes = self.my_p2p_port.to_be_bytes();
-        let my_sig_bytes = {
-            let s = self.my_sig.to_der().to_bytes();
+        let src_p2p_port_bytes = self.src_p2p_port.to_be_bytes();
+        let src_sig_bytes = {
+            let s = self.src_sig.to_der().to_bytes();
             if s.len() != SIG_LEN {
                 return Err(format!(
                     "Signature invalid length, expected: {}, len: {}",
@@ -29,13 +30,13 @@ impl WhoAreYouSyn {
             }
             s
         };
-        let my_disc_port_bytes = self.my_disc_port.to_be_bytes();
+        let src_disc_port_bytes = self.src_disc_port.to_be_bytes();
+        let src_public_key_bytes = self.src_public_key.as_bytes();
 
-        buf.extend_from_slice(&my_p2p_port_bytes);
-        buf.extend_from_slice(&my_sig_bytes);
-        buf.extend_from_slice(&my_disc_port_bytes);
-
-        println!("sig22: {:?}, len {}", my_sig_bytes, my_sig_bytes.len());
+        buf.extend_from_slice(&src_p2p_port_bytes);
+        buf.extend_from_slice(&src_sig_bytes);
+        buf.extend_from_slice(&src_disc_port_bytes);
+        buf.extend_from_slice(&src_public_key_bytes);
 
         let msg = Msg {
             msg_type: MsgType::WhoAreYouSyn,
@@ -48,14 +49,14 @@ impl WhoAreYouSyn {
     pub fn from_msg(msg: &Msg) -> Result<WhoAreYouSyn, String> {
         let content = &msg.content;
 
-        let my_p2p_port = {
+        let src_p2p_port = {
             let mut p2p_port_bytes = [0u8; 2];
             p2p_port_bytes.copy_from_slice(&content[0..2]);
 
             u16::from_be_bytes(p2p_port_bytes)
         };
 
-        let my_sig = {
+        let src_sig = {
             let mut sig_bytes = [0u8; SIG_LEN];
             sig_bytes.copy_from_slice(&content[2..73]);
 
@@ -73,17 +74,35 @@ impl WhoAreYouSyn {
             s
         };
 
-        let my_disc_port = {
+        let src_disc_port = {
             let mut disc_port_bytes = [0u8; 2];
             disc_port_bytes.copy_from_slice(&content[73..75]);
 
             u16::from_be_bytes(disc_port_bytes)
         };
 
+        let src_public_key = {
+            let mut public_key_bytes = [0u8; 130];
+            public_key_bytes.copy_from_slice(&content[75..205]);
+
+            let s = match String::from_utf8(public_key_bytes.to_vec()) {
+                Ok(s) => s,
+                Err(err) => {
+                    return Err(format!(
+                        "Error parsing public key from byte array, err: {}",
+                        err,
+                    ));
+                }
+            };
+
+            s
+        };
+
         Ok(WhoAreYouSyn {
-            my_p2p_port,
-            my_sig,
-            my_disc_port,
+            src_p2p_port,
+            src_sig,
+            src_disc_port,
+            src_public_key,
         })
     }
 
