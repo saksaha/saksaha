@@ -11,6 +11,7 @@ members = [
   "source/p2p_active_calls",
   "source/p2p_transport",
   "source/task_queue",
+  "source/utils_time",
 
   # internals
   "internals/ci",
