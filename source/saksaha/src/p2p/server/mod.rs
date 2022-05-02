@@ -5,7 +5,7 @@ use std::sync::Arc;
 use thiserror::Error;
 use tokio::net::{TcpListener, TcpStream};
 
-pub(crate) struct Listener {
+pub(crate) struct Server {
     pub tcp_socket: Arc<TcpListener>,
     host_state: Arc<HostState>,
 }
@@ -25,12 +25,12 @@ pub enum RequestHandleError {
     NoAvailablePeerSlot { err: String },
 }
 
-impl Listener {
+impl Server {
     pub fn new(
         tcp_socket: Arc<TcpListener>,
         host_state: Arc<HostState>,
-    ) -> Listener {
-        Listener {
+    ) -> Server {
+        Server {
             tcp_socket,
             host_state,
         }

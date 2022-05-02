@@ -1,9 +1,5 @@
-use super::{
-    // dial_scheduler::DialScheduler,
-    listener::Listener,
-    state::HostState,
-    // task::{P2PTaskHandler, Task},
-};
+use super::server::Server;
+use super::state::HostState;
 use crate::network::socket::TcpSocket;
 use colored::Colorize;
 use logger::tinfo;
@@ -20,7 +16,7 @@ pub(crate) struct Host {
     discovery: Arc<Discovery>,
     // dial_scheduler: Arc<DialScheduler>,
     // task_queue: Arc<TaskQueue<Task>>,
-    listener: Arc<Listener>,
+    server: Arc<Server>,
 }
 
 pub(crate) struct HostArgs {
@@ -81,9 +77,9 @@ impl Host {
             Arc::new(s)
         };
 
-        let listener = {
-            let l = Listener::new(host_args.p2p_socket, host_state.clone());
-            Arc::new(l)
+        let server = {
+            let s = Server::new(host_args.p2p_socket, host_state.clone());
+            Arc::new(s)
         };
 
         let disc_args = DiscoveryArgs {
@@ -114,7 +110,7 @@ impl Host {
             discovery,
             // dial_scheduler,
             // task_queue,
-            listener,
+            server,
             host_state,
         };
 
@@ -122,7 +118,7 @@ impl Host {
     }
 
     pub async fn start(&self) -> Result<(), String> {
-        let local_addr = match self.listener.tcp_socket.local_addr() {
+        let local_addr = match self.server.tcp_socket.local_addr() {
             Ok(l) => l,
             Err(err) => {
                 return Err(format!(
