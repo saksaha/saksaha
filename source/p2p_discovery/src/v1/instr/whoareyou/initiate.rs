@@ -97,7 +97,7 @@ pub(crate) async fn init_who_are_you(
         .write_msg(endpoint, way_syn.into_msg()?)
         .await
     {
-        Ok(_) => {}
+        Ok(_) => addr.status,
         Err(err) => {
             return Err(format!("Error sending WhoAreYouSyn, err: {}", err));
         }

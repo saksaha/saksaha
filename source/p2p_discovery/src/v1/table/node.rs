@@ -6,5 +6,16 @@ use tokio::sync::Mutex;
 pub(crate) enum Node {
     Empty,
 
-    Valued(Arc<Mutex<Addr>>),
+    Valued(Arc<Mutex<NodeValue>>),
+}
+
+#[derive(Debug)]
+pub(crate) enum NodeStatus {
+    WhoAreYouSyncSent,
+}
+
+#[derive(Debug)]
+pub(crate) struct NodeValue {
+    addr: Addr,
+    status: NodeStatus,
 }
