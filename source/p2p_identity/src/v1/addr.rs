@@ -2,40 +2,43 @@ use std::net::SocketAddr;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub enum Addr {
-    Known(KnownAddr),
-    Unknown(UnknownAddr),
-}
+// #[derive(Serialize, Deserialize, Debug, Clone)]
+// pub enum Addr {
+//     Known(KnownAddr),
+//     Unknown(UnknownAddr),
+// }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct KnownAddr {
+pub struct Addr {
     pub ip: String,
     pub disc_port: u16,
-    pub p2p_port: u16,
-    pub secret: String,
-    pub public_key: String,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct UnknownAddr {
-    pub ip: String,
-    pub disc_port: u16,
+    // pub p2p_port: u16,
+    // pub secret: String,
+    // pub public_key: String,
     pub p2p_port: Option<u16>,
     pub secret: Option<String>,
     pub public_key: Option<String>,
 }
 
-impl Addr {
-    pub fn disc_endpoint(&self) -> String {
-        match &*self {
-            Self::Known(known_addr) => known_addr.disc_endpoint(),
-            Self::Unknown(unknown_addr) => unknown_addr.disc_endpoint(),
-        }
-    }
-}
+// #[derive(Serialize, Deserialize, Debug, Clone)]
+// pub struct UnknownAddr {
+//     pub ip: String,
+//     pub disc_port: u16,
+//     // pub p2p_port: Option<u16>,
+//     // pub secret: Option<String>,
+//     // pub public_key: Option<String>,
+// }
 
-impl KnownAddr {
+// impl Addr {
+//     pub fn disc_endpoint(&self) -> String {
+//         match &*self {
+//             Self::Known(known_addr) => known_addr.disc_endpoint(),
+//             Self::Unknown(unknown_addr) => unknown_addr.disc_endpoint(),
+//         }
+//     }
+// }
+
+impl Addr {
     pub fn disc_endpoint(&self) -> String {
         disc_endpoint(&self.ip, self.disc_port)
     }

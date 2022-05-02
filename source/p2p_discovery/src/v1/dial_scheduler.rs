@@ -1,4 +1,9 @@
-use super::{state::DiscState, task::DiscoveryTask};
+use crate::v1::task::TaskInstance;
+
+use super::{
+    state::DiscState,
+    task::{DiscoveryTask, DiscoveryTaskInstance},
+};
 use logger::{tdebug, terr, tinfo, twarn};
 use p2p_identity::{addr::Addr, peer::UnknownPeer};
 use std::{
@@ -12,19 +17,20 @@ pub(crate) struct DialSchedulerArgs {
     pub(crate) disc_state: Arc<DiscState>,
     pub(crate) disc_dial_interval: Option<u16>,
     pub(crate) bootstrap_addrs: Vec<Addr>,
-    pub(crate) task_queue: Arc<TaskQueue<DiscoveryTask>>,
+    pub(crate) task_queue: Arc<TaskQueue<DiscoveryTaskInstance>>,
 }
 
 pub(crate) struct DialScheduler {
     disc_state: Arc<DiscState>,
     min_interval: Duration,
     is_dial_loop_running: Arc<Mutex<bool>>,
-    task_queue: Arc<TaskQueue<DiscoveryTask>>,
+    task_queue: Arc<TaskQueue<DiscoveryTaskInstance>>,
     dial_loop: Arc<DialLoop>,
+    bootstrap_addrs: Vec<Addr>,
 }
 
 struct DialLoop {
-    task_queue: Arc<TaskQueue<DiscoveryTask>>,
+    task_queue: Arc<TaskQueue<DiscoveryTaskInstance>>,
     min_interval: Duration,
 }
 
@@ -56,6 +62,7 @@ impl DialScheduler {
             is_dial_loop_running: Arc::new(Mutex::new(false)),
             task_queue: task_queue.clone(),
             dial_loop,
+            bootstrap_addrs,
         };
 
         tinfo!(
@@ -65,12 +72,10 @@ impl DialScheduler {
             min_interval,
         );
 
-        d.enqueue_bootstrap_addrs(bootstrap_addrs).await;
-
         d
     }
 
-    async fn enqueue_bootstrap_addrs(&self, bootstrap_addrs: Vec<Addr>) {
+    async fn enqueue_bootstrap_addrs(&self, bootstrap_addrs: &Vec<Addr>) {
         let total_count = bootstrap_addrs.len();
 
         tinfo!(
@@ -90,11 +95,16 @@ impl DialScheduler {
                 addr.disc_endpoint(),
             );
 
-            let task = DiscoveryTask::InitiateWhoAreYou {
-                // whoareyou_op: self.whoareyou_op.clone(),
-                // disc_state: self.disc_state.clone(),
-                addr: addr.clone(),
-                disc_state: self.disc_state.clone(),
+            let task = {
+                let t = DiscoveryTask::InitiateWhoAreYou {
+                    addr: addr.clone(),
+                    disc_state: self.disc_state.clone(),
+                };
+
+                TaskInstance {
+                    task: Arc::new(t),
+                    fail_count: 0,
+                }
             };
 
             match self.task_queue.push_back(task).await {
@@ -111,7 +121,9 @@ impl DialScheduler {
         }
     }
 
-    pub fn start(&self) -> Result<(), String> {
+    pub async fn start(&self) -> Result<(), String> {
+        self.enqueue_bootstrap_addrs(&self.bootstrap_addrs).await;
+
         let dial_loop = DialLoop {
             task_queue: self.task_queue.clone(),
             min_interval: self.min_interval,

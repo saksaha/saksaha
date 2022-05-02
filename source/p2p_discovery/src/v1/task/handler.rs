@@ -1,23 +1,32 @@
 use crate::v1::instr::whoareyou;
 
-use super::DiscoveryTask;
+use super::{DiscoveryTask, DiscoveryTaskInstance, TaskResult};
 
 pub(crate) struct Handler {
-    pub(crate) task: DiscoveryTask,
+    pub(crate) task_instance: DiscoveryTaskInstance,
 }
 
 impl Handler {
-    pub(crate) async fn run(&self) {
-        do_task(self.task.clone()).await;
+    pub(crate) async fn run(&self) -> TaskResult {
+        do_task(self.task_instance.clone()).await
     }
 }
 
-async fn do_task(task: DiscoveryTask) {
-    // println!("{:?}", task);
+async fn do_task(task_instance: DiscoveryTaskInstance) -> TaskResult {
+    let task = task_instance.task;
 
-    match task {
+    match &*task {
         DiscoveryTask::InitiateWhoAreYou { addr, disc_state } => {
-            whoareyou::init_who_are_you(addr, disc_state).await;
+            match whoareyou::init_who_are_you(addr.clone(), disc_state.clone())
+                .await
+            {
+                Ok(_) => {
+                    return TaskResult::Success;
+                }
+                Err(_err) => {
+                    return TaskResult::FailRetry;
+                }
+            }
         }
     };
 }

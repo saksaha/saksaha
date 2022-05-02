@@ -5,11 +5,12 @@ pub(crate) mod listener;
 pub(crate) mod msg;
 mod net;
 pub(crate) mod state;
-mod table;
+pub(crate) mod table;
 mod task;
 
 use self::dial_scheduler::DialSchedulerArgs;
 use self::net::connection::UdpConn;
+use self::task::DiscoveryTaskInstance;
 use self::{
     dial_scheduler::DialScheduler, listener::Listener, state::DiscState,
     task::runtime::DiscTaskRuntime, task::DiscoveryTask,
@@ -32,7 +33,7 @@ pub struct Discovery {
     listener: Arc<Listener>,
     disc_state: Arc<DiscState>,
     dial_scheduler: Arc<DialScheduler>,
-    task_queue: Arc<TaskQueue<DiscoveryTask>>,
+    task_queue: Arc<TaskQueue<DiscoveryTaskInstance>>,
     task_runtime: Arc<DiscTaskRuntime>,
 }
 
@@ -122,7 +123,7 @@ impl Discovery {
 
         self.task_runtime.run();
 
-        self.dial_scheduler.start()?;
+        self.dial_scheduler.start().await?;
 
         Ok(())
     }
