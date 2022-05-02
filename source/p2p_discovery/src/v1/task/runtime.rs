@@ -1,4 +1,7 @@
-use super::{handler::Handler, task::DiscoveryTask};
+use super::{
+    handler::Handler, task::DiscoveryTask, task::DiscoveryTaskInstance,
+    task::TaskInstance, TaskResult,
+};
 use logger::{tdebug, terr};
 use std::{
     sync::Arc,
@@ -6,14 +9,16 @@ use std::{
 };
 use task_queue::TaskQueue;
 
+const MAX_TASK_RETRY: usize = 3;
+
 pub(crate) struct DiscTaskRuntime {
-    pub(crate) task_queue: Arc<TaskQueue<DiscoveryTask>>,
+    pub(crate) task_queue: Arc<TaskQueue<DiscoveryTaskInstance>>,
     pub(crate) task_min_interval: Duration,
 }
 
 impl DiscTaskRuntime {
     pub(crate) fn new(
-        task_queue: Arc<TaskQueue<DiscoveryTask>>,
+        task_queue: Arc<TaskQueue<DiscoveryTaskInstance>>,
         disc_task_interval: Option<u16>,
     ) -> DiscTaskRuntime {
         let task_min_interval = match disc_task_interval {
@@ -35,7 +40,7 @@ impl DiscTaskRuntime {
             loop {
                 let time_since = SystemTime::now();
 
-                let task = match task_queue.pop_front().await {
+                let task_instance = match task_queue.pop_front().await {
                     Ok(t) => {
                         tdebug!(
                             "p2p_discovery",
@@ -57,8 +62,31 @@ impl DiscTaskRuntime {
                     }
                 };
 
-                let handler = Handler { task };
-                handler.run().await;
+                let handler = Handler {
+                    task_instance: task_instance.clone(),
+                };
+
+                match handler.run().await {
+                    TaskResult::Success => (),
+                    TaskResult::Fail => (),
+                    TaskResult::FailRetry => {
+                        if task_instance.fail_count < MAX_TASK_RETRY - 1 {
+                            tdebug!(
+                                "p2p_discovery",
+                                "task",
+                                "Task failed retriable, task: {}",
+                                task_instance
+                            );
+
+                            let task_instance = TaskInstance {
+                                task: task_instance.task.clone(),
+                                fail_count: task_instance.fail_count + 1,
+                            };
+
+                            let _ = task_queue.push_back(task_instance).await;
+                        }
+                    }
+                };
 
                 wait_until_min_interval(time_since, task_min_interval).await;
             }

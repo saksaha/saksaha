@@ -14,6 +14,7 @@ use p2p_identity::addr::Addr;
 use crate::{
     msg::{self, Msg},
     state::DiscState,
+    table::Node,
 };
 use std::sync::Arc;
 
@@ -65,6 +66,19 @@ pub(crate) async fn init_who_are_you(
     addr: Addr,
     disc_state: Arc<DiscState>,
 ) -> Result<(), String> {
+    let table = disc_state.table.clone();
+
+    let addr = match table.upsert(addr).await {
+        Ok(a) => a,
+        Err(err) => {
+            return Err(format!(
+                "Error upserting node in the addr map, err: {}",
+                err,
+            ));
+        }
+    };
+
+    let addr = addr.lock().await;
     let my_disc_port = disc_state.disc_port;
     let my_p2p_port = disc_state.p2p_port;
     let my_sig = disc_state.p2p_identity.sig;
@@ -78,43 +92,16 @@ pub(crate) async fn init_who_are_you(
         my_p2p_port,
     };
 
-    disc_state
+    match disc_state
         .udp_conn
         .write_msg(endpoint, way_syn.into_msg()?)
-        .await;
-
-    // let frame = match way_syn.into_frame() {
-    //     Ok(f) => f,
-    //     Err(err) => {
-    //         return Err(format!(
-    //             "Error converting WhoAreYouSyn message into a frame"
-    //         ))
-    //     }
-    // };
-
-    // disc_state.udp_socket.send_to(&buf, endpoint.clone()).await;
-
-    // let way_syn = WhoAreYouSyn::new(sig, p2p_port, public_key);
-
-    // let buf = match way_syn.to_bytes() {
-    //     Ok(b) => b,
-    //     Err(err) => {
-    //         return Err(WhoareyouInitError::ByteConversionFail { err });
-    //     }
-    // };
-
-    // disc_state
-    //     .udp_socket
-    //     .send_to(&buf, her_endpoint.clone())
-    //     .await?;
-
-    // tdebug!(
-    //     "p2p_discovery",
-    //     "whoareyou",
-    //     "Successfully sent WhoAreYou to endpoint: {}, buf len: {}",
-    //     &her_endpoint,
-    //     buf.len()
-    // );
+        .await
+    {
+        Ok(_) => {}
+        Err(err) => {
+            return Err(format!("Error sending WhoAreYouSyn, err: {}", err));
+        }
+    };
 
     Ok(())
 }

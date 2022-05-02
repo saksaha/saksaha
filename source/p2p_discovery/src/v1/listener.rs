@@ -50,19 +50,19 @@ impl Listener {
 
         tokio::spawn(async move {
             loop {
-                conn_semaphore.acquire().await.unwrap().forget();
-                // match conn_semaphore.acquire().await {
-                //     Ok(s) => s.forget(),
-                //     Err(err) => {
-                //         terr!(
-                //             "p2p_discovery",
-                //             "listener",
-                //             "Connection semaphore has been closed, err: {}",
-                //             err,
-                //         );
-                //         break;
-                //     }
-                // };
+                let conn_semaphore = conn_semaphore.clone();
+                match conn_semaphore.acquire().await {
+                    Ok(s) => s.forget(),
+                    Err(err) => {
+                        terr!(
+                            "p2p_discovery",
+                            "listener",
+                            "Connection semaphore has been closed, err: {}",
+                            err,
+                        );
+                        break;
+                    }
+                };
 
                 let (msg, socket_addr) = match udp_conn.read_msg().await {
                     Some(m) => m,
@@ -123,5 +123,11 @@ impl Handler {
         };
 
         Ok(())
+    }
+}
+
+impl Drop for Handler {
+    fn drop(&mut self) {
+        self.conn_semaphore.add_permits(1);
     }
 }

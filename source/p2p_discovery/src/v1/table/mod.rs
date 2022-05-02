@@ -1,6 +1,6 @@
 mod node;
 
-use self::node::Node;
+pub(crate) use self::node::*;
 use crate::{iterator::Iterator, CAPACITY};
 use crypto::Signature;
 use logger::tdebug;
@@ -19,128 +19,66 @@ use tokio::sync::{
     Mutex, MutexGuard,
 };
 
+const ADDRS_MAX_COUNT: usize = 100;
+
 // type Nodes = HashMap<PeerId, Arc<Node>>;
 
 /// TODO Table shall have Kademlia flavored buckets
 pub(crate) struct Table {
-    slots: Vec<Arc<Mutex<Node>>>,
-    table_capacity: u16,
-    // map: Mutex<Nodes>,
-    // keys: Mutex<HashSet<PeerId>>,
-    // slots_tx: Sender<Arc<Node>>,
-    // slots_rx: Mutex<Receiver<Arc<Node>>>,
-    // updates_tx: Arc<Sender<Arc<Node>>>,
-    // updates_rx: Arc<Mutex<Receiver<Arc<Node>>>>,
-    // iter: Arc<Iterator>,
+    addr_map: Arc<Mutex<HashMap<String, Node>>>,
+    addrs: Arc<Mutex<Vec<Node>>>,
 }
 
 impl Table {
     pub async fn init(
         disc_table_capacity: Option<u16>,
     ) -> Result<Table, String> {
-        let table_capacity = match disc_table_capacity {
-            Some(c) => c,
-            None => 100,
+        let addr_map = {
+            let m = HashMap::new();
+            Arc::new(Mutex::new(m))
         };
 
-        let (slots_tx, slots_rx) = mpsc::channel(table_capacity.into());
+        let addrs = {
+            let mut v = Vec::with_capacity(ADDRS_MAX_COUNT);
 
-        let mut slots = Vec::with_capacity(table_capacity.into());
+            for _ in 0..ADDRS_MAX_COUNT {
+                let n = Node::Empty;
+                v.push(n);
+            }
 
-        for _ in 0..table_capacity {
-            let node = Arc::new(Mutex::new(Node::Empty));
-
-            slots.push(node.clone());
-            match slots_tx.send(node).await {
-                Ok(_) => (),
-                Err(err) => {
-                    return Err(format!(
-                        "Cannot push table node into the queue, err: {}",
-                        err,
-                    ));
-                }
-            };
-        }
-
-        // for (idx, addr) in bootstrap_addrs.iter().enumerate() {
-        //     if idx >= slots.len() {
-        //         twarn!(
-        //             "p2p_discovery",
-        //             "table",
-        //             "Table capacity is reached. Abandoning rest of bootstrap \
-        //             addresses"
-        //         );
-
-        //         break;
-        //     }
-
-        //     let node = Arc::new(Mutex::new(Node::Empty));
-
-        //     match slots_tx.send(node).await {
-        //         Ok(_) => (),
-        //         Err(err) => {
-        //             return Err(format!(
-        //                 "Cannot push table node into the queue, err: {}",
-        //                 err,
-        //             ));
-        //         }
-        //     };
-        // }
-
-        // let (updates_tx, updates_rx) = {
-        //     let (tx, rx) = mpsc::channel(CAPACITY);
-        //     (Arc::new(tx), Arc::new(Mutex::new(rx)))
-        // };
-
-        // let (slots_tx, slots_rx) = {
-        //     let (tx, rx) = mpsc::channel::<Arc<Node>>(CAPACITY);
-
-        //     for _ in 0..CAPACITY {
-        //         let empty_node = Arc::new(Node::new_empty());
-
-        //         match tx.send(empty_node).await {
-        //             Ok(_) => (),
-        //             Err(err) => {
-        //                 return Err(format!(
-        //                     "Can't send empty Node to the pool, err: {}",
-        //                     err
-        //                 ));
-        //             }
-        //         }
-        //     }
-
-        //     (tx, Mutex::new(rx))
-        // };
-
-        // let map = {
-        //     let m = HashMap::with_capacity(CAPACITY);
-        //     Mutex::new(m)
-        // };
-
-        // let keys = {
-        //     let s = HashSet::new();
-        //     Mutex::new(s)
-        // };
-
-        // let iter = {
-        //     let it = Iterator::new(updates_tx.clone(), updates_rx.clone());
-        //     Arc::new(it)
-        // };
-
-        let table = Table {
-            table_capacity,
-            slots,
-            // map,
-            // keys,
-            // rng,
-            // slots_tx,
-            // slots_rx,
-            // updates_tx,
-            // updates_rx,
-            // iter,
+            Arc::new(Mutex::new(v))
         };
+
+        let table = Table { addr_map, addrs };
 
         Ok(table)
+    }
+
+    pub async fn upsert(&self, addr: Addr) -> Result<Arc<Mutex<Addr>>, String> {
+        let endpoint = addr.disc_endpoint();
+
+        let addr_map = self.addr_map.clone();
+        let mut addr_map_guard = addr_map.lock().await;
+
+        // if map already had the address node
+        match addr_map_guard.get(&endpoint) {
+            Some(n) => {
+                match &*n {
+                    Node::Empty => {}
+                    Node::Valued(a) => {
+                        let addr = a.clone();
+                        return Ok(addr);
+                    }
+                };
+            }
+            None => {}
+        }
+
+        let addr = Arc::new(Mutex::new(addr));
+        let node = { Node::Valued(addr.clone()) };
+        addr_map_guard.insert(endpoint, node);
+
+        return Ok(addr);
     }
 
     // pub async fn add<F>(
