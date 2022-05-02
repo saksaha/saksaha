@@ -1,7 +1,5 @@
-use super::{
-    handler::Handler, task::DiscoveryTaskInstance, task::TaskInstance,
-    TaskResult,
-};
+use super::task::{P2PTaskInstance, TaskResult};
+use super::{handler::Handler, task::TaskInstance};
 use logger::{tdebug, terr};
 use std::{
     sync::Arc,
@@ -12,22 +10,22 @@ use utils_time::wait_until_min_interval;
 
 const MAX_TASK_RETRY: usize = 2;
 
-pub(crate) struct DiscTaskRuntime {
-    pub(crate) task_queue: Arc<TaskQueue<DiscoveryTaskInstance>>,
+pub(crate) struct P2PTaskRuntime {
+    pub(crate) task_queue: Arc<TaskQueue<P2PTaskInstance>>,
     pub(crate) task_min_interval: Duration,
 }
 
-impl DiscTaskRuntime {
+impl P2PTaskRuntime {
     pub(crate) fn new(
-        task_queue: Arc<TaskQueue<DiscoveryTaskInstance>>,
+        task_queue: Arc<TaskQueue<P2PTaskInstance>>,
         disc_task_interval: Option<u16>,
-    ) -> DiscTaskRuntime {
+    ) -> P2PTaskRuntime {
         let task_min_interval = match disc_task_interval {
             Some(i) => Duration::from_millis(i.into()),
             None => Duration::from_millis(1000),
         };
 
-        DiscTaskRuntime {
+        P2PTaskRuntime {
             task_queue,
             task_min_interval,
         }

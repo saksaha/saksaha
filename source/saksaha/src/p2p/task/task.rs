@@ -6,6 +6,47 @@
 // use std::{pin::Pin, sync::Arc};
 // use tokio::{io::AsyncBufReadExt, io::AsyncReadExt, sync::Mutex};
 
+use p2p_identity::addr::Addr;
+use std::sync::Arc;
+
+pub(crate) type P2PTaskInstance = TaskInstance<Arc<P2PTask>>;
+
+#[derive(Clone)]
+pub(crate) struct TaskInstance<T> {
+    pub(crate) task: T,
+    pub(crate) fail_count: usize,
+}
+
+pub(crate) enum TaskResult {
+    Success,
+    Fail,
+    FailRetry { msg: String },
+}
+
+#[derive(Clone)]
+pub(crate) enum P2PTask {
+    InitiateHandshake,
+}
+
+impl<T> std::fmt::Display for TaskInstance<T>
+where
+    T: std::fmt::Display,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}, fail_count: {}", self.task, self.fail_count)
+    }
+}
+
+impl std::fmt::Display for P2PTask {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::InitiateHandshake => {
+                write!(f, "InitiateHandshake",)
+            }
+        }
+    }
+}
+
 // #[derive(Clone)]
 // pub(crate) enum Task {
 //     InitiateHandshake(HSInitTaskParams),

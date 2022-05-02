@@ -3,9 +3,8 @@ use super::state::HostState;
 use crate::network::socket::TcpSocket;
 use colored::Colorize;
 use logger::tinfo;
-use p2p_active_calls::ActiveCalls;
 use p2p_discovery::{Discovery, DiscoveryArgs};
-use p2p_identity::{addr::Addr, identity::P2PIdentity, peer::UnknownPeer};
+use p2p_identity::{addr::Addr, identity::P2PIdentity};
 use peer::PeerStore;
 use std::sync::Arc;
 use task_queue::TaskQueue;
@@ -53,26 +52,13 @@ impl Host {
         //     Arc::new(q)
         // };
 
-        let handshake_active_calls = {
-            let a = ActiveCalls::new();
-            Arc::new(a)
-        };
-
         let host_state = {
-            // let s = HostState::new(
-            //     p2p_identity.clone(),
-            //     host_args.rpc_port,
-            //     host_args.p2p_port,
-            //     // task_queue.clone(),
-            //     host_args.peer_store.clone(),
-            //     handshake_active_calls,
-            // );
             let s = HostState {
                 p2p_identity: p2p_identity.clone(),
                 my_rpc_port: host_args.rpc_port,
                 my_p2p_port: host_args.p2p_port,
                 peer_store: host_args.peer_store.clone(),
-                handshake_active_calls,
+                // handshake_active_calls,
             };
             Arc::new(s)
         };
