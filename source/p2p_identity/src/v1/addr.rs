@@ -38,23 +38,23 @@ pub struct Addr {
 //     }
 // }
 
-impl Addr {
-    pub fn disc_endpoint(&self) -> String {
-        disc_endpoint(&self.ip, self.disc_port)
-    }
-}
+// impl Addr {
+//     pub fn disc_endpoint(&self) -> String {
+//         disc_endpoint(&self.ip, self.disc_port)
+//     }
+// }
 
-impl UnknownAddr {
-    pub fn new_from_url(url: String) -> Result<UnknownAddr, String> {
+impl Addr {
+    pub fn new_from_url(url: String) -> Result<Addr, String> {
         if url.starts_with("sak://") {
-            return UnknownAddr::new_from_full_url(url);
+            return Addr::new_from_full_url(url);
         } else {
-            return UnknownAddr::new_from_short_url(url);
+            return Addr::new_from_short_url(url);
         }
     }
 
-    pub fn new_from_socket_addr(addr: SocketAddr) -> UnknownAddr {
-        UnknownAddr {
+    pub fn new_from_socket_addr(addr: SocketAddr) -> Addr {
+        Addr {
             ip: addr.ip().to_string(),
             disc_port: addr.port(),
             p2p_port: None,
@@ -63,7 +63,7 @@ impl UnknownAddr {
         }
     }
 
-    fn new_from_full_url(url: String) -> Result<UnknownAddr, String> {
+    fn new_from_full_url(url: String) -> Result<Addr, String> {
         let (peer_id, ip, disc_port) = match url.get(6..) {
             Some(u) => match u.split_once('@') {
                 Some((peer_id, endpoint)) => {
@@ -82,7 +82,7 @@ impl UnknownAddr {
             }
         };
 
-        Ok(UnknownAddr {
+        Ok(Addr {
             ip,
             disc_port,
             p2p_port: None,
@@ -91,10 +91,10 @@ impl UnknownAddr {
         })
     }
 
-    fn new_from_short_url(url: String) -> Result<UnknownAddr, String> {
+    fn new_from_short_url(url: String) -> Result<Addr, String> {
         let (ip, disc_port) = parse_endpoint(url.as_str())?;
 
-        Ok(UnknownAddr {
+        Ok(Addr {
             ip,
             disc_port,
             p2p_port: None,

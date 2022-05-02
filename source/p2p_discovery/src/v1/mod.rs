@@ -19,7 +19,7 @@ use crate::iterator::Iterator;
 use colored::Colorize;
 use logger::{tinfo, twarn};
 use p2p_active_calls::ActiveCalls;
-use p2p_identity::addr::{Addr, UnknownAddr};
+use p2p_identity::addr::Addr;
 use p2p_identity::{identity::P2PIdentity, peer::UnknownPeer};
 use std::sync::Arc;
 use table::Table;
