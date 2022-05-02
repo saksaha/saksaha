@@ -1,6 +1,7 @@
 use super::server::Server;
 use super::state::HostState;
-use crate::network::socket::TcpSocket;
+use super::task::runtime::P2PTaskRuntime;
+use super::task::P2PTaskInstance;
 use colored::Colorize;
 use logger::tinfo;
 use p2p_discovery::{Discovery, DiscoveryArgs};
@@ -14,8 +15,9 @@ pub(crate) struct Host {
     pub(crate) host_state: Arc<HostState>,
     discovery: Arc<Discovery>,
     // dial_scheduler: Arc<DialScheduler>,
-    // task_queue: Arc<TaskQueue<Task>>,
     server: Arc<Server>,
+    task_queue: Arc<TaskQueue<P2PTaskInstance>>,
+    task_runtime: Arc<P2PTaskRuntime>,
 }
 
 pub(crate) struct HostArgs {
@@ -23,7 +25,7 @@ pub(crate) struct HostArgs {
     pub(crate) disc_dial_interval: Option<u16>,
     pub(crate) disc_table_capacity: Option<u16>,
     pub(crate) disc_task_interval: Option<u16>,
-    pub(crate) p2p_dial_interval: Option<u16>,
+    pub(crate) p2p_task_interval: Option<u16>,
     pub(crate) p2p_port: u16,
     pub(crate) disc_port: Option<u16>,
     pub(crate) bootstrap_addrs: Vec<Addr>,
@@ -47,10 +49,18 @@ impl Host {
             p2p_identity.public_key.yellow(),
         );
 
-        // let task_queue = {
-        //     let q = TaskQueue::new(10);
-        //     Arc::new(q)
-        // };
+        let task_queue = {
+            let q = TaskQueue::new(10);
+            Arc::new(q)
+        };
+
+        let task_runtime = {
+            let h = P2PTaskRuntime::new(
+                task_queue.clone(),
+                host_args.p2p_task_interval,
+            );
+            Arc::new(h)
+        };
 
         let host_state = {
             let s = HostState {
@@ -95,7 +105,8 @@ impl Host {
         let host = Host {
             discovery,
             // dial_scheduler,
-            // task_queue,
+            task_queue,
+            task_runtime,
             server,
             host_state,
         };
@@ -104,24 +115,26 @@ impl Host {
     }
 
     pub async fn start(&self) -> Result<(), String> {
-        let local_addr = match self.server.tcp_socket.local_addr() {
-            Ok(l) => l,
-            Err(err) => {
-                return Err(format!(
-                    "Couldn't get the local addr of tcp socket, err: {}",
-                    err,
-                ))
-            }
-        };
+        // let local_addr = match self.server.tcp_socket.local_addr() {
+        //     Ok(l) => l,
+        //     Err(err) => {
+        //         return Err(format!(
+        //             "Couldn't get the local addr of tcp socket, err: {}",
+        //             err,
+        //         ))
+        //     }
+        // };
 
-        tinfo!(
-            "saksaha",
-            "p2p",
-            "p2p host is starting, tcp socket: {}",
-            local_addr.to_string().yellow(),
-        );
+        // tinfo!(
+        //     "saksaha",
+        //     "p2p",
+        //     "p2p host is starting, tcp socket: {}",
+        //     local_addr.to_string().yellow(),
+        // );
 
         self.discovery.start().await?;
+
+        self.task_runtime.run();
 
         // self.listener.start();
 

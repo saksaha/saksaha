@@ -1,12 +1,3 @@
-// use log::{debug, error, warn};
-// use p2p_active_calls::ActiveCalls;
-// use p2p_identity::{identity::P2PIdentity, identity::PUBLIC_KEY_LEN};
-// // use p2p_transport::{HandshakeInitError, HandshakeInitParams};
-// use peer::{Peer, PeerStore, PeerValue, RegisteredPeerValue};
-// use std::{pin::Pin, sync::Arc};
-// use tokio::{io::AsyncBufReadExt, io::AsyncReadExt, sync::Mutex};
-
-use p2p_identity::addr::Addr;
 use std::sync::Arc;
 
 pub(crate) type P2PTaskInstance = TaskInstance<Arc<P2PTask>>;
