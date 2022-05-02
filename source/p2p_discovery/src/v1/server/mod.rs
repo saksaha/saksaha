@@ -1,11 +1,9 @@
-use crate::msg::{Msg, MsgType, WhoAreYou};
+mod handler;
 
-use super::{
-    instr::whoareyou::{self, initiate, receive},
-    DiscState,
-};
-use logger::{tdebug, terr, tinfo, twarn};
-use std::{net::SocketAddr, sync::Arc};
+use super::DiscState;
+use handler::Handler;
+use logger::{terr, tinfo};
+use std::sync::Arc;
 use tokio::sync::Semaphore;
 
 const MAX_CONN_COUNT: usize = 50;
@@ -86,57 +84,5 @@ impl Server {
         });
 
         Ok(())
-    }
-}
-
-struct Handler {
-    conn_semaphore: Arc<Semaphore>,
-    disc_state: Arc<DiscState>,
-    socket_addr: SocketAddr,
-    msg: Msg,
-}
-
-impl Handler {
-    async fn run(&self) -> Result<(), String> {
-        match self.msg.msg_type {
-            MsgType::WhoAreYouSyn => {
-                let way_syn = match WhoAreYou::from_msg(&self.msg) {
-                    Ok(w) => w,
-                    Err(err) => {
-                        return Err(format!(
-                            "Error parsing who are you syn msg, err: {}",
-                            err
-                        ));
-                    }
-                };
-
-                match whoareyou::recv_who_are_you(
-                    self.socket_addr,
-                    self.disc_state.clone(),
-                    way_syn,
-                )
-                .await
-                {
-                    Ok(_) => (),
-                    Err(err) => {
-                        tdebug!(
-                            "p2p_discovery",
-                            "listener",
-                            "WhoAreYouRecv fail, err: {}",
-                            err
-                        );
-                    }
-                };
-            }
-            MsgType::WhoAreYouAck => {}
-        };
-
-        Ok(())
-    }
-}
-
-impl Drop for Handler {
-    fn drop(&mut self) {
-        self.conn_semaphore.add_permits(1);
     }
 }

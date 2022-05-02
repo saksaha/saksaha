@@ -1,6 +1,6 @@
 use super::{
-    handler::Handler, task::DiscoveryTask, task::DiscoveryTaskInstance,
-    task::TaskInstance, TaskResult,
+    handler::Handler, task::DiscoveryTaskInstance, task::TaskInstance,
+    TaskResult,
 };
 use logger::{tdebug, terr};
 use std::{

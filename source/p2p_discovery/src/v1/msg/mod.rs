@@ -1,9 +1,7 @@
 mod msg;
 
-use bytes::Bytes;
 use k256::ecdsa::Signature;
 pub(crate) use msg::{Msg, MsgType};
-use std::convert::TryInto;
 
 const SIG_LEN: usize = 71;
 

@@ -1,6 +1,5 @@
 pub(crate) mod dial_scheduler;
-mod instr;
-pub(crate) mod iterator;
+pub(crate) mod instr;
 pub(crate) mod msg;
 mod net;
 pub(crate) mod server;
@@ -13,19 +12,16 @@ use self::net::connection::UdpConn;
 use self::task::DiscoveryTaskInstance;
 use self::{
     dial_scheduler::DialScheduler, server::Server, state::DiscState,
-    task::runtime::DiscTaskRuntime, task::DiscoveryTask,
+    task::runtime::DiscTaskRuntime,
 };
-use crate::iterator::Iterator;
 use colored::Colorize;
-use logger::{tinfo, twarn};
-use p2p_active_calls::ActiveCalls;
+use logger::tinfo;
 use p2p_identity::addr::Addr;
-use p2p_identity::{identity::P2PIdentity, peer::UnknownPeer};
+use p2p_identity::identity::P2PIdentity;
 use std::sync::Arc;
 use table::Table;
 use task_queue::TaskQueue;
 use tokio::net::UdpSocket;
-use tokio::sync::Mutex;
 
 pub const CAPACITY: usize = 64;
 
@@ -120,9 +116,7 @@ impl Discovery {
 
     pub async fn start(&self) -> Result<(), String> {
         self.server.start()?;
-
         self.task_runtime.run();
-
         self.dial_scheduler.start().await?;
 
         Ok(())
