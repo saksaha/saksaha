@@ -20,11 +20,7 @@ use std::net::SocketAddr;
 pub struct Addr {
     pub ip: String,
     pub disc_port: u16,
-    // pub p2p_port: u16,
-    // pub secret: String,
-    // pub public_key: String,
     pub p2p_port: Option<u16>,
-
     #[serde(skip)]
     pub sig: Option<Signature>,
     pub public_key: Option<String>,
@@ -167,5 +163,15 @@ fn parse_port(port: &str) -> Result<u16, String> {
                 err, port,
             ));
         }
+    }
+}
+
+impl std::fmt::Display for Addr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "ip: {}, disc_port: {}, p2p_port: {:?}",
+            self.ip, self.disc_port, self.p2p_port,
+        )
     }
 }

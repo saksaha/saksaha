@@ -69,13 +69,14 @@ impl DiscTaskRuntime {
                 match handler.run().await {
                     TaskResult::Success => (),
                     TaskResult::Fail => (),
-                    TaskResult::FailRetry => {
+                    TaskResult::FailRetry { msg } => {
                         if task_instance.fail_count < MAX_TASK_RETRY - 1 {
                             tdebug!(
                                 "p2p_discovery",
                                 "task",
-                                "Task failed retriable, task: {}",
-                                task_instance
+                                "Task failed retriable, task: {}, msg: {}",
+                                task_instance,
+                                msg,
                             );
 
                             let task_instance = TaskInstance {

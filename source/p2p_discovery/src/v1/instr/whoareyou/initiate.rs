@@ -14,7 +14,7 @@ use p2p_identity::addr::Addr;
 use crate::{
     msg::{self, Msg},
     state::DiscState,
-    table::{Node, NodeStatus},
+    table::{Node, NodeStatus, NodeValue},
 };
 use std::sync::Arc;
 
@@ -68,7 +68,7 @@ pub(crate) async fn init_who_are_you(
 ) -> Result<(), String> {
     let table = disc_state.table.clone();
 
-    let node_value = match table.upsert(addr).await {
+    let node = match table.upsert(&addr).await {
         Ok(a) => a,
         Err(err) => {
             return Err(format!(
@@ -78,16 +78,21 @@ pub(crate) async fn init_who_are_you(
         }
     };
 
-    let mut node_value = node_value.lock().await;
+    let mut node_lock = node.lock().await;
+    let mut node_value = match &mut node_lock.value {
+        NodeValue::Valued(v) => v,
+        _ => return Err(format!("Empty node, something is wrong")),
+    };
+
     let src_disc_port = disc_state.disc_port;
     let src_p2p_port = disc_state.p2p_port;
     let src_sig = disc_state.p2p_identity.sig;
     let src_public_key = disc_state.p2p_identity.public_key.clone();
 
-    let addr = &node_value.addr;
+    // let addr = &node_value.addr;
     let endpoint = addr.disc_endpoint();
 
-    let way_syn = msg::WhoAreYouSyn {
+    let way = msg::WhoAreYou {
         src_sig,
         src_disc_port,
         src_p2p_port,
@@ -96,7 +101,7 @@ pub(crate) async fn init_who_are_you(
 
     match disc_state
         .udp_conn
-        .write_msg(endpoint, way_syn.into_msg()?)
+        .write_msg(endpoint, way.into_msg()?)
         .await
     {
         Ok(_) => {

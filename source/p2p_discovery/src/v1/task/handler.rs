@@ -23,8 +23,8 @@ async fn do_task(task_instance: DiscoveryTaskInstance) -> TaskResult {
                 Ok(_) => {
                     return TaskResult::Success;
                 }
-                Err(_err) => {
-                    return TaskResult::FailRetry;
+                Err(err) => {
+                    return TaskResult::FailRetry { msg: err };
                 }
             }
         }
