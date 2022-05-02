@@ -10,29 +10,17 @@ pub(crate) struct TaskInstance<T> {
     pub(crate) fail_count: usize,
 }
 
-impl<T> TaskInstance<T> {
-    // pub fn new(task: T) -> TaskInstance<T> {
-    //     TaskInstance {
-    //         task,
-    //         fail_count: 0,
-    //     }
-    // }
-}
-
 pub(crate) enum TaskResult {
     Success,
     Fail,
-    FailRetry,
+    FailRetry { msg: String },
 }
 
 #[derive(Clone)]
 pub(crate) enum DiscoveryTask {
     InitiateWhoAreYou {
-        // disc_state: Arc<DiscState>,
-        // whoareyou_op: Arc<WhoareyouOp>,
         addr: Addr,
         disc_state: Arc<DiscState>,
-        // unknown_peer: UnknownPeer,
     },
 }
 
@@ -48,7 +36,7 @@ where
 impl std::fmt::Display for DiscoveryTask {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::InitiateWhoAreYou { addr, disc_state } => {
+            Self::InitiateWhoAreYou { addr, .. } => {
                 write!(f, "InitiateWhoAreYou, addr: {:?}", addr)
             }
         }

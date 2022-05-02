@@ -1,4 +1,4 @@
-use crate::msg::{Msg, MsgType, WhoAreYouSyn};
+use crate::msg::{Msg, MsgType, WhoAreYou};
 
 use super::{
     instr::whoareyou::{self, initiate, receive},
@@ -108,7 +108,7 @@ impl Handler {
     async fn run(&self) -> Result<(), String> {
         match self.msg.msg_type {
             MsgType::WhoAreYouSyn => {
-                let way_syn = match WhoAreYouSyn::from_msg(&self.msg) {
+                let way_syn = match WhoAreYou::from_msg(&self.msg) {
                     Ok(w) => w,
                     Err(err) => {
                         return Err(format!(
@@ -119,15 +119,24 @@ impl Handler {
                 };
 
                 match whoareyou::recv_who_are_you(
+                    self.socket_addr,
                     self.disc_state.clone(),
                     way_syn,
                 )
                 .await
                 {
                     Ok(_) => (),
-                    Err(err) => {}
+                    Err(err) => {
+                        tdebug!(
+                            "p2p_discovery",
+                            "listener",
+                            "WhoAreYouRecv fail, err: {}",
+                            err
+                        );
+                    }
                 };
             }
+            MsgType::WhoAreYouAck => {}
         };
 
         Ok(())

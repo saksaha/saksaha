@@ -1,6 +1,7 @@
 #[derive(Debug)]
 pub(crate) enum MsgType {
     WhoAreYouSyn,
+    WhoAreYouAck,
 }
 
 pub(crate) struct Msg {
