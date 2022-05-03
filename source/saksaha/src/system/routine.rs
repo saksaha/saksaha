@@ -1,16 +1,13 @@
 use super::{System, SystemArgs};
-use crate::config::default::DefaultConfig;
-use crate::config::{Config, P2PConfig, RPCConfig};
+use crate::config::Config;
 use crate::p2p::host::HostArgs;
 use crate::{
     ledger::Ledger, network::socket, p2p::host::Host, pconfig::PConfig,
     rpc::RPC,
 };
 use logger::{tdebug, terr, tinfo};
-use p2p_identity::peer::UnknownPeer;
 use peer::PeerStore;
 use std::sync::Arc;
-use tokio::{self, signal};
 
 impl System {
     pub(super) async fn start_routine(
@@ -62,7 +59,9 @@ impl System {
             disc_dial_interval: config.p2p.disc_dial_interval,
             disc_table_capacity: config.p2p.disc_table_capacity,
             disc_task_interval: config.p2p.disc_task_interval,
+            disc_task_queue_capacity: config.p2p.disc_task_queue_capacity,
             p2p_task_interval: config.p2p.p2p_task_interval,
+            p2p_task_queue_capacity: config.p2p.p2p_task_queue_capacity,
             p2p_socket,
             p2p_port,
             disc_port: config.p2p.disc_port,

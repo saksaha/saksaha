@@ -6,7 +6,9 @@ pub(crate) struct CLIArgs {
     pub(crate) disc_dial_interval: Option<u16>,
     pub(crate) disc_table_capacity: Option<u16>,
     pub(crate) disc_task_interval: Option<u16>,
+    pub(crate) disc_task_queue_capacity: Option<u16>,
     pub(crate) p2p_task_interval: Option<u16>,
+    pub(crate) p2p_task_queue_capacity: Option<u16>,
     pub(crate) config: Option<String>,
     pub(crate) rpc_port: Option<u16>,
     pub(crate) disc_port: Option<u16>,
@@ -126,11 +128,41 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
         None => None,
     };
 
+    let disc_task_queue_capacity =
+        match matches.value_of("disc-task-queue-capacity") {
+            Some(i) => match i.parse::<u16>() {
+                Ok(interval) => Some(interval),
+                Err(err) => {
+                    return Err(format!(
+                        "Cannot parse disc task queue capacity (u16), err: {}",
+                        err,
+                    ))
+                }
+            },
+            None => None,
+        };
+
+    let p2p_task_queue_capacity =
+        match matches.value_of("p2p-task-queue-capacity") {
+            Some(i) => match i.parse::<u16>() {
+                Ok(interval) => Some(interval),
+                Err(err) => {
+                    return Err(format!(
+                        "Cannot parse p2p task queue capacity (u16), err: {}",
+                        err,
+                    ))
+                }
+            },
+            None => None,
+        };
+
     Ok(CLIArgs {
         disc_dial_interval,
         disc_table_capacity,
         disc_task_interval,
+        disc_task_queue_capacity,
         p2p_task_interval,
+        p2p_task_queue_capacity,
         config,
         rpc_port,
         disc_port,

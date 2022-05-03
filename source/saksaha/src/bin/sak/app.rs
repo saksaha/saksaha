@@ -75,12 +75,31 @@ pub(super) fn create_app<'a>() -> Command<'a> {
                 ),
         )
         .arg(
+            Arg::new("disc-task-queue-capacity") //
+                .long("disc-task-queue-capacity")
+                .takes_value(true)
+                .long_help(
+                    "P2P discovery task maximum number of tasks enqueued \n\
+                    concurrently\n\
+                    e.g. 10",
+                ),
+        )
+        .arg(
             Arg::new("p2p-task-interval") //
                 .long("p2p-task-interval")
                 .takes_value(true)
                 .long_help(
                     "P2P dialing minimum interval in millisecond\n\
                     e.g. 1000",
+                ),
+        )
+        .arg(
+            Arg::new("p2p-task-queue-capacity") //
+                .long("p2p-task-queue-capacity")
+                .takes_value(true)
+                .long_help(
+                    "P2P task maximum number of tasks enqueued concurrently\n\
+                    e.g. 10",
                 ),
         )
         .arg(
