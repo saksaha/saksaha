@@ -9,6 +9,7 @@ mod task;
 
 use self::dial_scheduler::DialSchedulerArgs;
 use self::net::connection::UdpConn;
+pub use self::table::AddrsIterator;
 use self::task::DiscoveryTaskInstance;
 use self::{
     dial_scheduler::DialScheduler, server::Server, state::DiscState,
@@ -21,7 +22,6 @@ use p2p_identity::identity::P2PIdentity;
 use std::sync::Arc;
 use table::Table;
 use task_queue::TaskQueue;
-use tokio::net::UdpSocket;
 
 const DISC_TASK_QUEUE_CAPACITY: usize = 10;
 
@@ -137,49 +137,7 @@ impl Discovery {
         Ok(())
     }
 
-    // pub fn iter(&self) -> Arc<Iterator> {
-    //     self.disc_state.table.iter()
-    // }
+    pub fn iter(&self) -> AddrsIterator {
+        self.disc_state.table.iter()
+    }
 }
-
-// pub async fn setup_udp_socket(
-//     my_disc_port: Option<u16>,
-// ) -> Result<(UdpSocket, u16), String> {
-//     let my_disc_port = match my_disc_port {
-//         Some(p) => p,
-//         None => 0,
-//     };
-
-//     let local_addr = format!("127.0.0.1:{}", my_disc_port);
-
-//     let (udp_socket, port) = match UdpSocket::bind(local_addr).await {
-//         Ok(s) => {
-//             let local_addr = match s.local_addr() {
-//                 Ok(a) => a,
-//                 Err(err) => {
-//                     return Err(format!(
-//                         "Couldn't get local address of udp socket, err: {}",
-//                         err
-//                     ))
-//                 }
-//             };
-
-//             tinfo!(
-//                 "p2p_discovery",
-//                 "",
-//                 "Bound udp socket for P2P discovery, addr: {}",
-//                 local_addr.to_string().yellow(),
-//             );
-
-//             (s, local_addr.port())
-//         }
-//         Err(err) => {
-//             return Err(format!(
-//                 "Couldn't open UdpSocket, err: {}",
-//                 err.to_string()
-//             ));
-//         }
-//     };
-
-//     Ok((udp_socket, port))
-// }

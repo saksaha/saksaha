@@ -103,6 +103,24 @@ pub(super) fn create_app<'a>() -> Command<'a> {
                 ),
         )
         .arg(
+            Arg::new("p2p-max-conn-count") //
+                .long("p2p-max-conn-count")
+                .takes_value(true)
+                .long_help(
+                    "P2P server maximum number of concurrent connections\n\
+                    e.g. 50",
+                ),
+        )
+        .arg(
+            Arg::new("p2p-dial-interval") //
+                .long("p2p-dial-interval")
+                .takes_value(true)
+                .long_help(
+                    "P2P dialing minimum interval in millisecond\n\
+                    e.g. 1000",
+                ),
+        )
+        .arg(
             Arg::new("bootstrap-urls") //
                 .long("bootstrap-urls")
                 .takes_value(true)

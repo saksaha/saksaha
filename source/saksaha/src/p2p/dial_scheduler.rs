@@ -179,3 +179,109 @@
 //         }
 //     }
 // }
+
+use logger::{tinfo, twarn};
+use p2p_discovery::AddrsIterator;
+use p2p_identity::addr::Addr;
+use std::{sync::Arc, time::Duration};
+use task_queue::TaskQueue;
+
+use crate::p2p::{state::HostState, task::P2PTaskInstance};
+
+pub(crate) struct P2PDialSchedulerArgs {
+    pub(crate) host_state: Arc<HostState>,
+    pub(crate) p2p_dial_interval: Option<u16>,
+    pub(crate) p2p_task_queue: Arc<TaskQueue<P2PTaskInstance>>,
+    pub(crate) addrs_iter: Arc<AddrsIterator>,
+}
+
+pub(crate) struct P2PDialScheduler {
+    host_state: Arc<HostState>,
+    p2p_task_queue: Arc<TaskQueue<P2PTaskInstance>>,
+    dial_loop: Arc<DialLoop>,
+}
+
+struct DialLoop {
+    p2p_task_queue: Arc<TaskQueue<P2PTaskInstance>>,
+    p2p_dial_interval: Duration,
+}
+
+impl P2PDialScheduler {
+    pub async fn init(
+        p2p_dial_schd_args: P2PDialSchedulerArgs,
+    ) -> P2PDialScheduler {
+        let P2PDialSchedulerArgs {
+            p2p_task_queue,
+            p2p_dial_interval,
+            host_state,
+            addrs_iter,
+        } = p2p_dial_schd_args;
+
+        let p2p_dial_interval = match p2p_dial_interval {
+            Some(i) => Duration::from_millis(i.into()),
+            None => Duration::from_millis(2000),
+        };
+
+        let dial_loop = {
+            let l = DialLoop {
+                p2p_task_queue: p2p_task_queue.clone(),
+                p2p_dial_interval,
+            };
+            Arc::new(l)
+        };
+
+        let d = P2PDialScheduler {
+            host_state: host_state.clone(),
+            p2p_task_queue: p2p_task_queue.clone(),
+            dial_loop,
+        };
+
+        tinfo!(
+            "saksaha",
+            "p2p",
+            "P2P dial scheduler is initialized. Disc dial min \
+            interval: {:?}",
+            p2p_dial_interval,
+        );
+
+        d
+    }
+
+    pub fn start(&self) -> Result<(), String> {
+        tinfo!(
+            "saksaha",
+            "p2p",
+            "P2P dial scheduler starts to enqueue dial requests",
+        );
+
+        self.dial_loop.run();
+
+        Ok(())
+    }
+}
+
+impl DialLoop {
+    fn run(&self) {
+        // loop {
+        //     let start = SystemTime::now();
+
+        //     match start.elapsed() {
+        //         Ok(d) => {
+        //             if d < self.min_interval {
+        //                 let diff = self.min_interval - d;
+        //                 tokio::time::sleep(diff).await;
+        //             }
+        //         }
+        //         Err(err) => {
+        //             terr!(
+        //                 "p2p_discovery",
+        //                 "Calculating the time elapsed fail, err: {}",
+        //                 err
+        //             );
+
+        //             tokio::time::sleep(self.min_interval).await;
+        //         }
+        //     }
+        // }
+    }
+}

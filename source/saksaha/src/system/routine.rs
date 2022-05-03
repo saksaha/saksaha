@@ -5,6 +5,7 @@ use crate::{
     ledger::Ledger, network::socket, p2p::host::Host, pconfig::PConfig,
     rpc::RPC,
 };
+use colored::Colorize;
 use logger::{tdebug, terr, tinfo};
 use peer::PeerStore;
 use std::sync::Arc;
@@ -26,8 +27,17 @@ impl System {
         };
 
         let (rpc_socket, rpc_port) =
-            match socket::bind_tcp_socket(config.rpc.rpc_port).await {
-                Ok(s) => s,
+            match utils_net::bind_tcp_socket(config.rpc.rpc_port).await {
+                Ok((socket, socket_addr)) => {
+                    tinfo!(
+                        "saksaha",
+                        "system",
+                        "Bound tcp socket for RPC, addr: {}",
+                        socket_addr.to_string().yellow(),
+                    );
+
+                    (socket, socket_addr.port())
+                }
                 Err(err) => {
                     terr!(
                         "saksaha",
@@ -42,8 +52,17 @@ impl System {
         let _rpc = RPC::new(rpc_socket, rpc_port);
 
         let (p2p_socket, p2p_port) =
-            match socket::bind_tcp_socket(config.p2p.p2p_port).await {
-                Ok(s) => s,
+            match utils_net::bind_tcp_socket(config.p2p.p2p_port).await {
+                Ok((socket, socket_addr)) => {
+                    tinfo!(
+                        "saksaha",
+                        "system",
+                        "Bound tcp socket for P2P host, addr: {}",
+                        socket_addr.to_string().yellow(),
+                    );
+
+                    (socket, socket_addr.port())
+                }
                 Err(err) => {
                     terr!(
                         "saksaha",
@@ -56,15 +75,17 @@ impl System {
             };
 
         let p2p_host_args = HostArgs {
+            disc_port: config.p2p.disc_port,
             disc_dial_interval: config.p2p.disc_dial_interval,
             disc_table_capacity: config.p2p.disc_table_capacity,
             disc_task_interval: config.p2p.disc_task_interval,
             disc_task_queue_capacity: config.p2p.disc_task_queue_capacity,
             p2p_task_interval: config.p2p.p2p_task_interval,
             p2p_task_queue_capacity: config.p2p.p2p_task_queue_capacity,
+            p2p_dial_interval: config.p2p.p2p_dial_interval,
             p2p_socket,
+            p2p_max_conn_count: config.p2p.p2p_max_conn_count,
             p2p_port,
-            disc_port: config.p2p.disc_port,
             bootstrap_addrs: config.p2p.bootstrap_addrs,
             rpc_port,
             secret: config.p2p.secret,

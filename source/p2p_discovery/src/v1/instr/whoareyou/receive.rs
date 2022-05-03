@@ -1,14 +1,12 @@
-use p2p_identity::addr::Addr;
-
+use super::check;
 use crate::{
     msg::WhoAreYou,
     state::DiscState,
     table::{NodeStatus, NodeValue},
 };
+use p2p_identity::addr::Addr;
 use std::{net::SocketAddr, sync::Arc};
 use thiserror::Error;
-
-use super::check;
 
 #[derive(Error, Debug)]
 pub(crate) enum WhoAreYouRecvError {
