@@ -68,7 +68,10 @@ impl Handler {
                 let disc_state = self.disc_state.clone();
                 let table = disc_state.table.clone();
 
-                let node = match table.upsert(&addr).await {
+                let node = match table
+                    .upsert(&addr, NodeStatus::WhoAreYouAckRecvd)
+                    .await
+                {
                     Ok(a) => a,
                     Err(err) => {
                         return Err(format!(

@@ -180,13 +180,17 @@
 //     }
 // }
 
+use crate::p2p::{state::HostState, task::P2PTaskInstance};
 use logger::{tinfo, twarn};
 use p2p_discovery::AddrsIterator;
 use p2p_identity::addr::Addr;
-use std::{sync::Arc, time::Duration};
+use std::{
+    sync::Arc,
+    time::{Duration, SystemTime},
+};
 use task_queue::TaskQueue;
 
-use crate::p2p::{state::HostState, task::P2PTaskInstance};
+const P2P_DIAL_INTERVAL: u64 = 2000;
 
 pub(crate) struct P2PDialSchedulerArgs {
     pub(crate) host_state: Arc<HostState>,
@@ -203,7 +207,8 @@ pub(crate) struct P2PDialScheduler {
 
 struct DialLoop {
     p2p_task_queue: Arc<TaskQueue<P2PTaskInstance>>,
-    p2p_dial_interval: Duration,
+    p2p_dial_interval: Option<u16>,
+    addrs_iter: Arc<AddrsIterator>,
 }
 
 impl P2PDialScheduler {
@@ -217,15 +222,11 @@ impl P2PDialScheduler {
             addrs_iter,
         } = p2p_dial_schd_args;
 
-        let p2p_dial_interval = match p2p_dial_interval {
-            Some(i) => Duration::from_millis(i.into()),
-            None => Duration::from_millis(2000),
-        };
-
         let dial_loop = {
             let l = DialLoop {
                 p2p_task_queue: p2p_task_queue.clone(),
                 p2p_dial_interval,
+                addrs_iter,
             };
             Arc::new(l)
         };
@@ -247,41 +248,42 @@ impl P2PDialScheduler {
         d
     }
 
-    pub fn start(&self) -> Result<(), String> {
+    pub async fn start(&self) -> Result<(), String> {
         tinfo!(
             "saksaha",
             "p2p",
             "P2P dial scheduler starts to enqueue dial requests",
         );
 
-        self.dial_loop.run();
+        self.dial_loop.run().await;
 
         Ok(())
     }
 }
 
 impl DialLoop {
-    fn run(&self) {
-        // loop {
-        //     let start = SystemTime::now();
+    async fn run(&self) {
+        let p2p_dial_interval = match self.p2p_dial_interval {
+            Some(i) => Duration::from_millis(i.into()),
+            None => Duration::from_millis(P2P_DIAL_INTERVAL),
+        };
 
-        //     match start.elapsed() {
-        //         Ok(d) => {
-        //             if d < self.min_interval {
-        //                 let diff = self.min_interval - d;
-        //                 tokio::time::sleep(diff).await;
-        //             }
-        //         }
-        //         Err(err) => {
-        //             terr!(
-        //                 "p2p_discovery",
-        //                 "Calculating the time elapsed fail, err: {}",
-        //                 err
-        //             );
+        let addrs_iter = self.addrs_iter.clone();
 
-        //             tokio::time::sleep(self.min_interval).await;
-        //         }
-        //     }
-        // }
+        loop {
+            let time_since = SystemTime::now();
+
+            match addrs_iter.next().await {
+                Some(addr) => {
+                    println!("Found next addr, {}", addr);
+                }
+                None => {
+                    println!("Coundn't find next addr");
+                }
+            }
+
+            utils_time::wait_until_min_interval(time_since, p2p_dial_interval)
+                .await;
+        }
     }
 }

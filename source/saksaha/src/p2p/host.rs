@@ -148,7 +148,7 @@ impl Host {
 
         self.p2p_server.start()?;
 
-        self.p2p_dial_scheduler.start()?;
+        self.p2p_dial_scheduler.start().await?;
 
         // self.task_queue.run_loop();
 

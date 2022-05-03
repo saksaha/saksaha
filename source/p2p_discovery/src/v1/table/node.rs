@@ -4,6 +4,7 @@ use p2p_identity::addr::Addr;
 pub(crate) enum NodeStatus {
     Initialized,
     WhoAreYouSynSent,
+    WhoAreYouSynRecvd,
     WhoAreYouAckSent,
     WhoAreYouAckRecvd,
 }
