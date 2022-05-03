@@ -1,6 +1,8 @@
+mod iter;
 mod node;
 
 pub(crate) use self::node::*;
+pub use iter::*;
 use p2p_identity::addr::Addr;
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::{Mutex, MutexGuard};
@@ -76,6 +78,10 @@ impl Table {
                 }
             };
         }
+    }
+
+    pub(crate) fn iter(&self) -> AddrsIterator {
+        AddrsIterator {}
     }
 }
 

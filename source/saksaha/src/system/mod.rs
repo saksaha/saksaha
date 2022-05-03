@@ -19,14 +19,16 @@ pub struct System {
 
 #[derive(Debug)]
 pub struct SystemArgs {
+    pub disc_port: Option<u16>,
     pub disc_dial_interval: Option<u16>,
     pub disc_table_capacity: Option<u16>,
     pub disc_task_interval: Option<u16>,
     pub disc_task_queue_capacity: Option<u16>,
     pub p2p_task_interval: Option<u16>,
     pub p2p_task_queue_capacity: Option<u16>,
+    pub p2p_max_conn_count: Option<u16>,
+    pub p2p_dial_interval: Option<u16>,
     pub rpc_port: Option<u16>,
-    pub disc_port: Option<u16>,
     pub p2p_port: Option<u16>,
     pub bootstrap_urls: Option<Vec<String>>,
     pub dev_mode: Option<String>,

@@ -26,8 +26,8 @@ impl Server {
     pub fn start(&self) -> Result<(), String> {
         tinfo!(
             "p2p_discovery",
-            "listener",
-            "P2P discovery listener starts to accept requests",
+            "server",
+            "P2P discovery server starts to accept requests",
         );
 
         self.run_loop()
@@ -46,7 +46,7 @@ impl Server {
                     Err(err) => {
                         terr!(
                             "p2p_discovery",
-                            "listener",
+                            "server",
                             "Connection semaphore has been closed, err: {}",
                             err,
                         );
@@ -73,7 +73,7 @@ impl Server {
                     Err(err) => {
                         terr!(
                             "p2p_discovery",
-                            "",
+                            "server",
                             "Error processing request, addr: {}, err: {}",
                             socket_addr,
                             err

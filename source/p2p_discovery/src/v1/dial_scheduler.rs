@@ -25,7 +25,7 @@ pub(crate) struct DialScheduler {
 
 struct DialLoop {
     task_queue: Arc<TaskQueue<DiscoveryTaskInstance>>,
-    disc_dial_min_interval: Duration,
+    disc_dial_interval: Duration,
 }
 
 impl DialScheduler {
@@ -37,7 +37,7 @@ impl DialScheduler {
             disc_state,
         } = dial_schd_args;
 
-        let disc_dial_min_interval = match disc_dial_interval {
+        let disc_dial_interval = match disc_dial_interval {
             Some(i) => Duration::from_millis(i.into()),
             None => Duration::from_millis(2000),
         };
@@ -45,7 +45,7 @@ impl DialScheduler {
         let dial_loop = {
             let l = DialLoop {
                 task_queue: task_queue.clone(),
-                disc_dial_min_interval,
+                disc_dial_interval,
             };
             Arc::new(l)
         };
@@ -62,7 +62,7 @@ impl DialScheduler {
             "dial_schd",
             "Discovery dial scheduler is initialized. Disc dial min \
             interval: {:?}",
-            disc_dial_min_interval,
+            disc_dial_interval,
         );
 
         d
