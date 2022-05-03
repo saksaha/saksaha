@@ -11,11 +11,13 @@ use std::sync::Arc;
 use task_queue::TaskQueue;
 use tokio::net::TcpListener;
 
+const P2P_TASK_QUEUE_CAPACITY: usize = 10;
+
 pub(crate) struct Host {
     pub(crate) host_state: Arc<HostState>,
     discovery: Arc<Discovery>,
     // dial_scheduler: Arc<DialScheduler>,
-    server: Arc<Server>,
+    // server: Arc<Server>,
     task_queue: Arc<TaskQueue<P2PTaskInstance>>,
     task_runtime: Arc<P2PTaskRuntime>,
 }
@@ -25,7 +27,9 @@ pub(crate) struct HostArgs {
     pub(crate) disc_dial_interval: Option<u16>,
     pub(crate) disc_table_capacity: Option<u16>,
     pub(crate) disc_task_interval: Option<u16>,
+    pub(crate) disc_task_queue_capacity: Option<u16>,
     pub(crate) p2p_task_interval: Option<u16>,
+    pub(crate) p2p_task_queue_capacity: Option<u16>,
     pub(crate) p2p_port: u16,
     pub(crate) disc_port: Option<u16>,
     pub(crate) bootstrap_addrs: Vec<Addr>,
@@ -50,7 +54,12 @@ impl Host {
         );
 
         let task_queue = {
-            let q = TaskQueue::new(10);
+            let capacity = match host_args.p2p_task_queue_capacity {
+                Some(c) => c.into(),
+                None => P2P_TASK_QUEUE_CAPACITY,
+            };
+
+            let q = TaskQueue::new(capacity);
             Arc::new(q)
         };
 
@@ -65,23 +74,23 @@ impl Host {
         let host_state = {
             let s = HostState {
                 p2p_identity: p2p_identity.clone(),
-                my_rpc_port: host_args.rpc_port,
-                my_p2p_port: host_args.p2p_port,
+                rpc_port: host_args.rpc_port,
+                p2p_port: host_args.p2p_port,
                 peer_store: host_args.peer_store.clone(),
-                // handshake_active_calls,
             };
             Arc::new(s)
         };
 
-        let server = {
-            let s = Server::new(host_args.p2p_socket, host_state.clone());
-            Arc::new(s)
-        };
+        // let server = {
+        //     let s = Server::new(host_args.p2p_socket, host_state.clone());
+        //     Arc::new(s)
+        // };
 
         let disc_args = DiscoveryArgs {
             disc_dial_interval: host_args.disc_dial_interval,
             disc_table_capacity: host_args.disc_table_capacity,
             disc_task_interval: host_args.disc_task_interval,
+            disc_task_queue_capacity: host_args.disc_task_queue_capacity,
             p2p_identity: p2p_identity.clone(),
             disc_port: host_args.disc_port,
             p2p_port: host_args.p2p_port,
@@ -107,7 +116,7 @@ impl Host {
             // dial_scheduler,
             task_queue,
             task_runtime,
-            server,
+            // server,
             host_state,
         };
 

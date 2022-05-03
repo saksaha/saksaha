@@ -22,7 +22,9 @@ pub struct SystemArgs {
     pub disc_dial_interval: Option<u16>,
     pub disc_table_capacity: Option<u16>,
     pub disc_task_interval: Option<u16>,
+    pub disc_task_queue_capacity: Option<u16>,
     pub p2p_task_interval: Option<u16>,
+    pub p2p_task_queue_capacity: Option<u16>,
     pub rpc_port: Option<u16>,
     pub disc_port: Option<u16>,
     pub p2p_port: Option<u16>,
@@ -52,7 +54,7 @@ impl System {
 
             match INSTANCE.set(system.clone()) {
                 Ok(_) => {
-                    tinfo!("saksaha", "system", "System is made static.",);
+                    tinfo!("saksaha", "system", "System is made static",);
                     return Ok(system);
                 }
                 Err(_) => {

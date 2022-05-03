@@ -14,6 +14,7 @@ task_queue = { path = "../task_queue" }
 p2p_active_calls = { path = "../p2p_active_calls" }
 p2p_identity = { path = "../p2p_identity" }
 utils_time = { path = "../utils_time" }
+utils_net = { path = "../utils_net" }
 tokio = { version = "1.12.0", features = ["full"] }
 futures = "0.3.17"
 k256 = { version = "0.9.6", features = ["ecdh"] }

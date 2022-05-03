@@ -1,6 +1,6 @@
-use crate::v1::instr::whoareyou;
-
 use super::{DiscoveryTask, DiscoveryTaskInstance, TaskResult};
+use crate::{instr::whoareyou::WhoAreYouInitError, v1::instr::whoareyou};
+use logger::twarn;
 
 pub(crate) struct Handler {
     pub(crate) task_instance: DiscoveryTaskInstance,
@@ -24,7 +24,23 @@ async fn do_task(task_instance: DiscoveryTaskInstance) -> TaskResult {
                     return TaskResult::Success;
                 }
                 Err(err) => {
-                    return TaskResult::FailRetry { msg: err };
+                    match err {
+                        WhoAreYouInitError::MyEndpoint { .. } => {
+                            twarn!(
+                                "p2p_discovery",
+                                "task",
+                                "Abandoning failed task, err: {}",
+                                err
+                            );
+
+                            return TaskResult::Fail;
+                        }
+                        _ => {
+                            return TaskResult::FailRetry {
+                                msg: err.to_string(),
+                            };
+                        }
+                    };
                 }
             }
         }

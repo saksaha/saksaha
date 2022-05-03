@@ -4,14 +4,10 @@ use super::{
     state::DiscState,
     task::{DiscoveryTask, DiscoveryTaskInstance},
 };
-use logger::{tdebug, terr, tinfo, twarn};
-use p2p_identity::{addr::Addr, peer::UnknownPeer};
-use std::{
-    sync::Arc,
-    time::{Duration, SystemTime},
-};
+use logger::{tinfo, twarn};
+use p2p_identity::addr::Addr;
+use std::{sync::Arc, time::Duration};
 use task_queue::TaskQueue;
-use tokio::sync::Mutex;
 
 pub(crate) struct DialSchedulerArgs {
     pub(crate) disc_state: Arc<DiscState>,
@@ -22,8 +18,6 @@ pub(crate) struct DialSchedulerArgs {
 
 pub(crate) struct DialScheduler {
     disc_state: Arc<DiscState>,
-    min_interval: Duration,
-    is_dial_loop_running: Arc<Mutex<bool>>,
     task_queue: Arc<TaskQueue<DiscoveryTaskInstance>>,
     dial_loop: Arc<DialLoop>,
     bootstrap_addrs: Vec<Addr>,
@@ -31,7 +25,7 @@ pub(crate) struct DialScheduler {
 
 struct DialLoop {
     task_queue: Arc<TaskQueue<DiscoveryTaskInstance>>,
-    min_interval: Duration,
+    disc_dial_min_interval: Duration,
 }
 
 impl DialScheduler {
@@ -43,7 +37,7 @@ impl DialScheduler {
             disc_state,
         } = dial_schd_args;
 
-        let min_interval = match disc_dial_interval {
+        let disc_dial_min_interval = match disc_dial_interval {
             Some(i) => Duration::from_millis(i.into()),
             None => Duration::from_millis(2000),
         };
@@ -51,15 +45,13 @@ impl DialScheduler {
         let dial_loop = {
             let l = DialLoop {
                 task_queue: task_queue.clone(),
-                min_interval,
+                disc_dial_min_interval,
             };
             Arc::new(l)
         };
 
         let d = DialScheduler {
             disc_state: disc_state.clone(),
-            min_interval,
-            is_dial_loop_running: Arc::new(Mutex::new(false)),
             task_queue: task_queue.clone(),
             dial_loop,
             bootstrap_addrs,
@@ -68,8 +60,9 @@ impl DialScheduler {
         tinfo!(
             "p2p_discovery",
             "dial_schd",
-            "Discovery dial scheduler is initialized. Dial interval: {:?}",
-            min_interval,
+            "Discovery dial scheduler is initialized. Disc dial min \
+            interval: {:?}",
+            disc_dial_min_interval,
         );
 
         d
@@ -123,12 +116,6 @@ impl DialScheduler {
 
     pub async fn start(&self) -> Result<(), String> {
         self.enqueue_bootstrap_addrs(&self.bootstrap_addrs).await;
-
-        let dial_loop = DialLoop {
-            task_queue: self.task_queue.clone(),
-            min_interval: self.min_interval,
-        };
-
         self.dial_loop.run();
 
         Ok(())
@@ -136,7 +123,7 @@ impl DialScheduler {
 }
 
 impl DialLoop {
-    async fn run(&self) {
+    fn run(&self) {
         tinfo!(
             "p2p_discovery",
             "dial_schd",

@@ -1,7 +1,5 @@
-use logger::{terr};
-use std::{
-    time::{Duration, SystemTime},
-};
+use logger::terr;
+use std::time::{Duration, SystemTime};
 
 pub async fn wait_until_min_interval(
     time_since: SystemTime,

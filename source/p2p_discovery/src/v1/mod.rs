@@ -23,7 +23,7 @@ use table::Table;
 use task_queue::TaskQueue;
 use tokio::net::UdpSocket;
 
-pub const CAPACITY: usize = 64;
+const DISC_TASK_QUEUE_CAPACITY: usize = 10;
 
 pub struct Discovery {
     server: Arc<Server>,
@@ -37,6 +37,7 @@ pub struct DiscoveryArgs {
     pub disc_dial_interval: Option<u16>,
     pub disc_table_capacity: Option<u16>,
     pub disc_task_interval: Option<u16>,
+    pub disc_task_queue_capacity: Option<u16>,
     pub p2p_identity: Arc<P2PIdentity>,
     pub disc_port: Option<u16>,
     pub p2p_port: u16,
@@ -57,9 +58,18 @@ impl Discovery {
         };
 
         let (udp_conn, disc_port) = {
-            let (socket, port) = setup_udp_socket(disc_args.disc_port).await?;
+            let (socket, socket_addr) =
+                utils_net::setup_udp_socket(disc_args.disc_port).await?;
             let udp_conn = UdpConn { socket };
-            (Arc::new(udp_conn), port)
+
+            tinfo!(
+                "p2p_discovery",
+                "",
+                "Bound udp socket for P2P discovery, addr: {}",
+                socket_addr.to_string().yellow(),
+            );
+
+            (Arc::new(udp_conn), socket_addr.port())
         };
 
         let disc_state = {
@@ -74,7 +84,12 @@ impl Discovery {
         };
 
         let task_queue = {
-            let q = TaskQueue::new(10);
+            let capacity = match disc_args.disc_task_queue_capacity {
+                Some(c) => c.into(),
+                None => DISC_TASK_QUEUE_CAPACITY,
+            };
+
+            let q = TaskQueue::new(capacity);
             Arc::new(q)
         };
 
@@ -127,44 +142,44 @@ impl Discovery {
     // }
 }
 
-pub async fn setup_udp_socket(
-    my_disc_port: Option<u16>,
-) -> Result<(UdpSocket, u16), String> {
-    let my_disc_port = match my_disc_port {
-        Some(p) => p,
-        None => 0,
-    };
+// pub async fn setup_udp_socket(
+//     my_disc_port: Option<u16>,
+// ) -> Result<(UdpSocket, u16), String> {
+//     let my_disc_port = match my_disc_port {
+//         Some(p) => p,
+//         None => 0,
+//     };
 
-    let local_addr = format!("127.0.0.1:{}", my_disc_port);
+//     let local_addr = format!("127.0.0.1:{}", my_disc_port);
 
-    let (udp_socket, port) = match UdpSocket::bind(local_addr).await {
-        Ok(s) => {
-            let local_addr = match s.local_addr() {
-                Ok(a) => a,
-                Err(err) => {
-                    return Err(format!(
-                        "Couldn't get local address of udp socket, err: {}",
-                        err
-                    ))
-                }
-            };
+//     let (udp_socket, port) = match UdpSocket::bind(local_addr).await {
+//         Ok(s) => {
+//             let local_addr = match s.local_addr() {
+//                 Ok(a) => a,
+//                 Err(err) => {
+//                     return Err(format!(
+//                         "Couldn't get local address of udp socket, err: {}",
+//                         err
+//                     ))
+//                 }
+//             };
 
-            tinfo!(
-                "p2p_discovery",
-                "",
-                "Bound udp socket for P2P discovery, addr: {}",
-                local_addr.to_string().yellow(),
-            );
+//             tinfo!(
+//                 "p2p_discovery",
+//                 "",
+//                 "Bound udp socket for P2P discovery, addr: {}",
+//                 local_addr.to_string().yellow(),
+//             );
 
-            (s, local_addr.port())
-        }
-        Err(err) => {
-            return Err(format!(
-                "Couldn't open UdpSocket, err: {}",
-                err.to_string()
-            ));
-        }
-    };
+//             (s, local_addr.port())
+//         }
+//         Err(err) => {
+//             return Err(format!(
+//                 "Couldn't open UdpSocket, err: {}",
+//                 err.to_string()
+//             ));
+//         }
+//     };
 
-    Ok((udp_socket, port))
-}
+//     Ok((udp_socket, port))
+// }
