@@ -7,10 +7,14 @@ use p2p_identity::addr::Addr;
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::{Mutex, MutexGuard};
 
+const DISC_TABLE_CAPACITY: usize = 100;
+
 /// TODO Table shall have Kademlia flavored buckets
 pub(crate) struct Table {
     addr_map: Arc<Mutex<HashMap<String, Arc<Mutex<Node>>>>>,
     addrs: Arc<Mutex<Vec<Arc<Mutex<Node>>>>>,
+    known_addrs: Arc<Mutex<Vec<Arc<Mutex<Node>>>>>,
+    disc_table_capacity: usize,
 }
 
 impl Table {
@@ -24,7 +28,7 @@ impl Table {
 
         let disc_table_capacity = match disc_table_capacity {
             Some(c) => c.into(),
-            None => 100,
+            None => DISC_TABLE_CAPACITY,
         };
 
         let addrs = {
@@ -40,7 +44,17 @@ impl Table {
             Arc::new(Mutex::new(v))
         };
 
-        let table = Table { addr_map, addrs };
+        let known_addrs = {
+            let v = Vec::with_capacity(disc_table_capacity);
+            Arc::new(Mutex::new(v))
+        };
+
+        let table = Table {
+            addr_map,
+            addrs,
+            known_addrs,
+            disc_table_capacity,
+        };
 
         Ok(table)
     }
@@ -48,6 +62,7 @@ impl Table {
     pub(crate) async fn upsert(
         &self,
         addr: &Addr,
+        node_status: NodeStatus,
     ) -> Result<Arc<Mutex<Node>>, String> {
         let endpoint = addr.disc_endpoint();
 
@@ -56,6 +71,12 @@ impl Table {
 
         // if map already had the address node
         if let Some(n) = addr_map_guard.get(&endpoint) {
+            let mut node_lock = n.lock().await;
+            node_lock.value = NodeValue::Valued(NodeValueInner {
+                addr: addr.clone(),
+                status: node_status,
+            });
+
             return Ok(n.clone());
         } else {
             // When the map doesn't have a node associated with the endpoint
@@ -68,7 +89,7 @@ impl Table {
                     let mut node_lock = n.lock().await;
                     node_lock.value = NodeValue::Valued(NodeValueInner {
                         addr: addr.clone(),
-                        status: NodeStatus::Initialized,
+                        status: node_status,
                     });
 
                     return Ok(n.clone());
@@ -80,8 +101,15 @@ impl Table {
         }
     }
 
+    pub(crate) async fn add_known_node(&self, node: Arc<Mutex<Node>>) {
+        println!("add known node");
+
+        let mut known_addrs = self.known_addrs.lock().await;
+        known_addrs.push(node.clone());
+    }
+
     pub(crate) fn iter(&self) -> AddrsIterator {
-        AddrsIterator {}
+        AddrsIterator::init(self.known_addrs.clone(), self.disc_table_capacity)
     }
 }
 

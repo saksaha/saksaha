@@ -39,7 +39,7 @@ pub(crate) async fn init_who_are_you(
 
     let table = disc_state.table.clone();
 
-    let node = match table.upsert(&addr).await {
+    let node = match table.upsert(&addr, NodeStatus::Initialized).await {
         Ok(a) => a,
         Err(err) => {
             return Err(WhoAreYouInitError::TableIsFull { err });

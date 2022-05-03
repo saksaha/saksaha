@@ -13,7 +13,7 @@ const MAX_TASK_RETRY: usize = 2;
 
 pub(crate) struct DiscTaskRuntime {
     pub(crate) task_queue: Arc<TaskQueue<DiscoveryTaskInstance>>,
-    pub(crate) task_min_interval: Duration,
+    pub(crate) disc_task_interval: Duration,
 }
 
 impl DiscTaskRuntime {
@@ -21,20 +21,20 @@ impl DiscTaskRuntime {
         task_queue: Arc<TaskQueue<DiscoveryTaskInstance>>,
         disc_task_interval: Option<u16>,
     ) -> DiscTaskRuntime {
-        let task_min_interval = match disc_task_interval {
+        let disc_task_interval = match disc_task_interval {
             Some(i) => Duration::from_millis(i.into()),
             None => Duration::from_millis(1000),
         };
 
         DiscTaskRuntime {
             task_queue,
-            task_min_interval,
+            disc_task_interval,
         }
     }
 
     pub(crate) fn run(&self) {
         let task_queue = self.task_queue.clone();
-        let task_min_interval = self.task_min_interval.clone();
+        let disc_task_interval = self.disc_task_interval.clone();
 
         tokio::spawn(async move {
             loop {
@@ -91,7 +91,7 @@ impl DiscTaskRuntime {
 
                 utils_time::wait_until_min_interval(
                     time_since,
-                    task_min_interval,
+                    disc_task_interval,
                 )
                 .await;
             }

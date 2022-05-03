@@ -50,7 +50,11 @@ pub(crate) async fn recv_who_are_you(
         return Err(WhoAreYouRecvError::MyEndpoint { addr });
     }
 
-    let node = match disc_state.table.upsert(&addr).await {
+    let node = match disc_state
+        .table
+        .upsert(&addr, NodeStatus::WhoAreYouSynRecvd)
+        .await
+    {
         Ok(n) => n,
         Err(err) => return Err(WhoAreYouRecvError::TableIsFull { err }),
     };
@@ -86,6 +90,9 @@ pub(crate) async fn recv_who_are_you(
     match disc_state.udp_conn.write_msg(endpoint, way_msg).await {
         Ok(_) => {
             node_value.status = NodeStatus::WhoAreYouAckSent;
+
+            drop(node_lock);
+            disc_state.table.add_known_node(node).await;
         }
         Err(err) => {
             return Err(WhoAreYouRecvError::MsgSendFail { err });
