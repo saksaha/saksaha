@@ -2,12 +2,21 @@ use crate::state::DiscState;
 use p2p_identity::addr::Addr;
 use std::sync::Arc;
 
-pub(crate) type DiscoveryTaskInstance = TaskInstance<Arc<DiscoveryTask>>;
+pub(crate) type DiscoveryTaskInstance = TaskInstance<DiscoveryTask>;
 
 #[derive(Clone)]
 pub(crate) struct TaskInstance<T> {
-    pub(crate) task: T,
+    pub(crate) task: Arc<T>,
     pub(crate) fail_count: usize,
+}
+
+impl<T> TaskInstance<T> {
+    pub fn new(task: T) -> Self {
+        TaskInstance {
+            task: Arc::new(task),
+            fail_count: 0,
+        }
+    }
 }
 
 pub(crate) enum TaskResult {

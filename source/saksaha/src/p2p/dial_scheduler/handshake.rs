@@ -1,7 +1,4 @@
-// // use crate::p2p::task::HSInitTaskParams;
-
-// // use super::{state::HostState, task::Task};
-// use log::{debug, error, info, warn};
+// // use crate::p2p::task::HSInitTaskParams; // use super::{state::HostState, task::Task}; use log::{debug, error, info, warn};
 // use p2p_discovery::iterator::Iterator;
 // // use p2p_identity::P2PIdentity;
 // use peer::PeerStore;
@@ -180,8 +177,11 @@
 //     }
 // }
 
-use crate::p2p::{state::HostState, task::P2PTaskInstance};
-use logger::{tinfo, twarn};
+use crate::p2p::{
+    state::HostState,
+    task::{P2PTask, P2PTaskInstance, TaskInstance},
+};
+use logger::{terr, tinfo, twarn};
 use p2p_discovery::{AddrsIterator, Item};
 use p2p_identity::addr::Addr;
 use std::{
@@ -190,82 +190,21 @@ use std::{
 };
 use task_queue::TaskQueue;
 
-const P2P_DIAL_INTERVAL: u64 = 2000;
+const HANDSHAKE_DIAL_INTERVAL: u64 = 2000;
 
-pub(crate) struct P2PDialSchedulerArgs {
-    pub(crate) host_state: Arc<HostState>,
-    pub(crate) p2p_dial_interval: Option<u16>,
+pub(crate) struct HandshakeDialLoop {
     pub(crate) p2p_task_queue: Arc<TaskQueue<P2PTaskInstance>>,
+    pub(crate) p2p_dial_interval: Option<u16>,
     pub(crate) addrs_iter: Arc<AddrsIterator>,
 }
 
-pub(crate) struct P2PDialScheduler {
-    host_state: Arc<HostState>,
-    p2p_task_queue: Arc<TaskQueue<P2PTaskInstance>>,
-    dial_loop: Arc<DialLoop>,
-}
+impl HandshakeDialLoop {
+    pub(crate) async fn run(&self) {
+        tinfo!("saksaha", "p2p", "Handshake dial loop starts looping",);
 
-struct DialLoop {
-    p2p_task_queue: Arc<TaskQueue<P2PTaskInstance>>,
-    p2p_dial_interval: Option<u16>,
-    addrs_iter: Arc<AddrsIterator>,
-}
-
-impl P2PDialScheduler {
-    pub async fn init(
-        p2p_dial_schd_args: P2PDialSchedulerArgs,
-    ) -> P2PDialScheduler {
-        let P2PDialSchedulerArgs {
-            p2p_task_queue,
-            p2p_dial_interval,
-            host_state,
-            addrs_iter,
-        } = p2p_dial_schd_args;
-
-        let dial_loop = {
-            let l = DialLoop {
-                p2p_task_queue: p2p_task_queue.clone(),
-                p2p_dial_interval,
-                addrs_iter,
-            };
-            Arc::new(l)
-        };
-
-        let d = P2PDialScheduler {
-            host_state: host_state.clone(),
-            p2p_task_queue: p2p_task_queue.clone(),
-            dial_loop,
-        };
-
-        tinfo!(
-            "saksaha",
-            "p2p",
-            "P2P dial scheduler is initialized. Disc dial min \
-            interval: {:?}",
-            p2p_dial_interval,
-        );
-
-        d
-    }
-
-    pub async fn start(&self) -> Result<(), String> {
-        tinfo!(
-            "saksaha",
-            "p2p",
-            "P2P dial scheduler starts to enqueue dial requests",
-        );
-
-        self.dial_loop.run().await;
-
-        Ok(())
-    }
-}
-
-impl DialLoop {
-    async fn run(&self) {
         let p2p_dial_interval = match self.p2p_dial_interval {
             Some(i) => Duration::from_millis(i.into()),
-            None => Duration::from_millis(P2P_DIAL_INTERVAL),
+            None => Duration::from_millis(HANDSHAKE_DIAL_INTERVAL),
         };
 
         let addrs_iter = self.addrs_iter.clone();
@@ -275,13 +214,23 @@ impl DialLoop {
 
             println!("Getting next known addr");
 
-            match addrs_iter.next().await {
-                Some(a) => {
-                    let addr = a.get_value();
-                    println!("Found next addr, {}", addr);
-                }
-                None => {
-                    println!("Coundn't find next addr");
+            if let Some(a) = addrs_iter.next().await {
+                let addr = a.get_value();
+                let task = {
+                    let t = P2PTask::InitiateHandshake { addr };
+                    TaskInstance::new(t)
+                };
+
+                match self.p2p_task_queue.push_back(task).await {
+                    Ok(_) => (),
+                    Err(err) => {
+                        terr!(
+                            "saksaha",
+                            "p2p",
+                            "Error enqueueing a p2p handshake task, err: {}",
+                            err
+                        );
+                    }
                 }
             }
 

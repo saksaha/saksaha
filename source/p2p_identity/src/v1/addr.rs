@@ -110,8 +110,15 @@ impl Addr {
     }
 
     pub fn disc_endpoint(&self) -> String {
-        disc_endpoint(&self.ip, self.disc_port)
+        make_endpoint(&self.ip, self.disc_port)
         // format!("{}:{}", self.ip, self.disc_port)
+    }
+
+    pub fn p2p_endpoint(&self) -> Option<String> {
+        match self.p2p_port {
+            Some(p) => Some(make_endpoint(&self.ip, p)),
+            None => None,
+        }
     }
 
     pub fn short_url(&self) -> String {
@@ -127,8 +134,8 @@ impl Addr {
     }
 }
 
-fn disc_endpoint(ip: &String, disc_port: u16) -> String {
-    format!("{}:{}", ip, disc_port)
+fn make_endpoint(ip: &String, port: u16) -> String {
+    format!("{}:{}", ip, port)
 }
 
 fn parse_endpoint(endpoint: &str) -> Result<(String, u16), String> {

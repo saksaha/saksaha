@@ -2,26 +2,26 @@ use super::{Node, NodeValue};
 use logger::terr;
 use p2p_identity::addr::Addr;
 use std::sync::Arc;
-use tokio::sync::mpsc::{Receiver, Sender};
+use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 use tokio::sync::Mutex;
 
 pub struct AddrsIterator {
     curr_idx: Mutex<usize>,
-    known_addrs_tx: Arc<Sender<Arc<Mutex<Node>>>>,
-    known_addrs_rx: Arc<Mutex<Receiver<Arc<Mutex<Node>>>>>,
+    known_addrs_tx: Arc<UnboundedSender<Arc<Mutex<Node>>>>,
+    known_addrs_rx: Arc<Mutex<UnboundedReceiver<Arc<Mutex<Node>>>>>,
     disc_table_capacity: usize,
 }
 
 pub struct Item {
     val: Addr,
     node: Arc<Mutex<Node>>,
-    known_addrs_tx: Arc<Sender<Arc<Mutex<Node>>>>,
+    known_addrs_tx: Arc<UnboundedSender<Arc<Mutex<Node>>>>,
 }
 
 impl AddrsIterator {
     pub(crate) fn init(
-        known_addrs_tx: Arc<Sender<Arc<Mutex<Node>>>>,
-        known_addrs_rx: Arc<Mutex<Receiver<Arc<Mutex<Node>>>>>,
+        known_addrs_tx: Arc<UnboundedSender<Arc<Mutex<Node>>>>,
+        known_addrs_rx: Arc<Mutex<UnboundedReceiver<Arc<Mutex<Node>>>>>,
         disc_table_capacity: usize,
     ) -> AddrsIterator {
         AddrsIterator {
@@ -74,13 +74,28 @@ impl AddrsIterator {
 }
 
 impl Item {
-    pub fn get_value(&self) -> &Addr {
-        &self.val
+    pub fn get_value(&self) -> Addr {
+        self.val.clone()
     }
 }
 
 impl Drop for Item {
     fn drop(&mut self) {
-        // self.known_addrs_tx.send(self.node.clone()).await;
+        println!(
+            "Node (known addr) has been used. We push it back to the queue"
+        );
+
+        match self.known_addrs_tx.send(self.node.clone()) {
+            Ok(_) => (),
+            Err(err) => {
+                terr!(
+                    "p2p_discovery",
+                    "table",
+                    "Known address cannot be queued again. There is something \
+                    wrong in the unbounded mpsc channel, err: {}",
+                    err,
+                );
+            }
+        }
     }
 }
