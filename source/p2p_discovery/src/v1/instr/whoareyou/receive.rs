@@ -24,6 +24,9 @@ pub(crate) enum WhoAreYouRecvError {
 
     #[error("Table node is empty")]
     EmptyNode,
+
+    #[error("Couldn't register as a known node, addr: {addr}")]
+    KnownNodeRegisterFail { addr: Addr, err: String },
 }
 
 pub(crate) async fn recv_who_are_you(
@@ -92,7 +95,15 @@ pub(crate) async fn recv_who_are_you(
             node_value.status = NodeStatus::WhoAreYouAckSent;
 
             drop(node_lock);
-            disc_state.table.add_known_node(node).await;
+            match disc_state.table.add_known_node(node).await {
+                Ok(_) => (),
+                Err(err) => {
+                    return Err(WhoAreYouRecvError::KnownNodeRegisterFail {
+                        addr,
+                        err,
+                    });
+                }
+            };
         }
         Err(err) => {
             return Err(WhoAreYouRecvError::MsgSendFail { err });

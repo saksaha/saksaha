@@ -182,7 +182,7 @@
 
 use crate::p2p::{state::HostState, task::P2PTaskInstance};
 use logger::{tinfo, twarn};
-use p2p_discovery::AddrsIterator;
+use p2p_discovery::{AddrsIterator, Item};
 use p2p_identity::addr::Addr;
 use std::{
     sync::Arc,
@@ -273,8 +273,11 @@ impl DialLoop {
         loop {
             let time_since = SystemTime::now();
 
+            println!("Getting next known addr");
+
             match addrs_iter.next().await {
-                Some(addr) => {
+                Some(a) => {
+                    let addr = a.get_value();
                     println!("Found next addr, {}", addr);
                 }
                 None => {

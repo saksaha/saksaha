@@ -88,6 +88,14 @@ impl Handler {
                 };
 
                 node_value.status = NodeStatus::WhoAreYouAckRecvd;
+
+                drop(node_lock);
+                match disc_state.table.add_known_node(node).await {
+                    Ok(_) => (),
+                    Err(err) => {
+                        return Err(err);
+                    }
+                };
             }
         };
 

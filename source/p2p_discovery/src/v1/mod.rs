@@ -9,7 +9,7 @@ mod task;
 
 use self::dial_scheduler::DialSchedulerArgs;
 use self::net::connection::UdpConn;
-pub use self::table::AddrsIterator;
+pub use self::table::{AddrsIterator, Item};
 use self::task::DiscoveryTaskInstance;
 use self::{
     dial_scheduler::DialScheduler, server::Server, state::DiscState,
