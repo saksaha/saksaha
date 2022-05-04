@@ -1,5 +1,5 @@
 use crate::p2p::state::HostState;
-use p2p_identity::addr::Addr;
+use p2p_identity::addr::KnownAddr;
 use std::sync::Arc;
 
 pub(crate) type P2PTaskInstance = TaskInstance<P2PTask>;
@@ -28,7 +28,7 @@ pub(crate) enum TaskResult {
 #[derive(Clone)]
 pub(crate) enum P2PTask {
     InitiateHandshake {
-        addr: Addr,
+        addr: KnownAddr,
         host_state: Arc<HostState>,
     },
 }

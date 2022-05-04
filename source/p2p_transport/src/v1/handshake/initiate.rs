@@ -2,13 +2,13 @@ use super::check;
 use crate::connection::Connection;
 use crate::msg::Handshake;
 use logger::tdebug;
-use p2p_identity::addr::Addr;
+use p2p_identity::addr::KnownAddr;
 use thiserror::Error;
 use tokio::net::TcpStream;
 
 pub struct HandshakeInitArgs {
     pub p2p_port: u16,
-    pub addr: Addr,
+    pub addr: KnownAddr,
 }
 
 #[derive(Error, Debug)]
@@ -17,7 +17,7 @@ pub enum HandshakeInitError {
     InvalidP2PEndpoint,
 
     #[error("Cannot send request to myself, addr: {addr}")]
-    MyEndpoint { addr: Addr },
+    MyEndpoint { addr: KnownAddr },
 
     #[error("Cannot create tcp stream into endpoint, err: {err}")]
     ConnectionFail { err: String },
@@ -31,12 +31,9 @@ pub async fn initiate_handshake(
 ) -> Result<(), HandshakeInitError> {
     let HandshakeInitArgs { p2p_port, addr, .. } = handshake_init_args;
 
-    let endpoint = match addr.p2p_endpoint() {
-        Some(e) => e,
-        None => return Err(HandshakeInitError::InvalidP2PEndpoint),
-    };
+    let endpoint = addr.p2p_endpoint();
 
-    if check::is_my_endpoint(p2p_port, &addr) {
+    if check::is_my_endpoint(p2p_port, &endpoint) {
         return Err(HandshakeInitError::MyEndpoint { addr });
     }
 

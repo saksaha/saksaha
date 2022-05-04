@@ -1,3 +1,5 @@
+mod known;
+
 pub use k256::{
     ecdh::EphemeralSecret,
     ecdsa::{
@@ -10,8 +12,18 @@ pub use k256::{
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
 
+pub use self::known::KnownAddr;
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Addr {
+pub enum Addr {
+    Unknown(UnknownAddr),
+
+    #[serde(skip)]
+    Known(KnownAddr),
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct UnknownAddr {
     pub ip: String,
     pub disc_port: u16,
     pub p2p_port: Option<u16>,
@@ -20,26 +32,17 @@ pub struct Addr {
     pub public_key_str: Option<String>,
 }
 
-#[derive(Debug, Clone)]
-pub struct KnownAddr {
-    pub ip: String,
-    pub disc_port: u16,
-    pub p2p_port: u16,
-    pub sig: Signature,
-    pub public_key_str: String,
-}
-
-impl Addr {
-    pub fn new_from_url(url: String) -> Result<Addr, String> {
+impl UnknownAddr {
+    pub fn new_from_url(url: String) -> Result<UnknownAddr, String> {
         if url.starts_with("sak://") {
-            return Addr::new_from_full_url(url);
+            return UnknownAddr::new_from_full_url(url);
         } else {
-            return Addr::new_from_short_url(url);
+            return UnknownAddr::new_from_short_url(url);
         }
     }
 
-    pub fn new_from_socket_addr(addr: SocketAddr) -> Addr {
-        Addr {
+    pub fn new_from_socket_addr(addr: SocketAddr) -> UnknownAddr {
+        UnknownAddr {
             ip: addr.ip().to_string(),
             disc_port: addr.port(),
             p2p_port: None,
@@ -48,7 +51,7 @@ impl Addr {
         }
     }
 
-    fn new_from_full_url(url: String) -> Result<Addr, String> {
+    fn new_from_full_url(url: String) -> Result<UnknownAddr, String> {
         let (public_key_str, ip, disc_port) = match url.get(6..) {
             Some(u) => match u.split_once('@') {
                 Some((peer_id, endpoint)) => {
@@ -67,7 +70,7 @@ impl Addr {
             }
         };
 
-        Ok(Addr {
+        Ok(UnknownAddr {
             ip,
             disc_port,
             p2p_port: None,
@@ -76,10 +79,10 @@ impl Addr {
         })
     }
 
-    fn new_from_short_url(url: String) -> Result<Addr, String> {
+    fn new_from_short_url(url: String) -> Result<UnknownAddr, String> {
         let (ip, disc_port) = parse_endpoint(url.as_str())?;
 
-        Ok(Addr {
+        Ok(UnknownAddr {
             ip,
             disc_port,
             p2p_port: None,
@@ -151,7 +154,16 @@ fn parse_port(port: &str) -> Result<u16, String> {
     }
 }
 
-impl std::fmt::Display for Addr {
+impl Addr {
+    pub fn disc_endpoint(&self) -> String {
+        match self {
+            Addr::Known(k) => k.disc_endpoint(),
+            Addr::Unknown(u) => u.disc_endpoint(),
+        }
+    }
+}
+
+impl std::fmt::Display for UnknownAddr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,

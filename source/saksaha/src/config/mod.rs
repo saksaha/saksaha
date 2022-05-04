@@ -3,7 +3,7 @@ pub(crate) mod default;
 use self::default::DefaultConfig;
 use crate::system::SystemArgs;
 use logger::{tinfo, twarn};
-use p2p_identity::addr::Addr;
+use p2p_identity::addr::UnknownAddr;
 
 #[derive(Debug)]
 pub(crate) struct Config {
@@ -23,7 +23,7 @@ pub(crate) struct P2PConfig {
     pub(crate) p2p_dial_interval: Option<u16>,
     pub(crate) p2p_max_conn_count: Option<u16>,
     pub(crate) p2p_port: Option<u16>,
-    pub(crate) bootstrap_addrs: Vec<Addr>,
+    pub(crate) bootstrap_addrs: Vec<UnknownAddr>,
     pub(crate) secret: String,
     pub(crate) public_key: String,
 }
@@ -57,7 +57,7 @@ impl Config {
                 addrs = vec![];
 
                 for (idx, addr) in a.iter().enumerate() {
-                    let addr = match Addr::new_from_url(addr.clone()) {
+                    let addr = match UnknownAddr::new_from_url(addr.clone()) {
                         Ok(ua) => {
                             tinfo!(
                                 "saksaha",

@@ -5,14 +5,14 @@ use super::{
     task::{DiscoveryTask, DiscoveryTaskInstance},
 };
 use logger::{tinfo, twarn};
-use p2p_identity::addr::Addr;
+use p2p_identity::addr::{Addr, UnknownAddr};
 use std::{sync::Arc, time::Duration};
 use task_queue::TaskQueue;
 
 pub(crate) struct DialSchedulerArgs {
     pub(crate) disc_state: Arc<DiscState>,
     pub(crate) disc_dial_interval: Option<u16>,
-    pub(crate) bootstrap_addrs: Vec<Addr>,
+    pub(crate) bootstrap_addrs: Vec<UnknownAddr>,
     pub(crate) task_queue: Arc<TaskQueue<DiscoveryTaskInstance>>,
 }
 
@@ -20,7 +20,7 @@ pub(crate) struct DialScheduler {
     disc_state: Arc<DiscState>,
     task_queue: Arc<TaskQueue<DiscoveryTaskInstance>>,
     dial_loop: Arc<DialLoop>,
-    bootstrap_addrs: Vec<Addr>,
+    bootstrap_addrs: Vec<UnknownAddr>,
 }
 
 struct DialLoop {
@@ -68,7 +68,10 @@ impl DialScheduler {
         d
     }
 
-    async fn enqueue_bootstrap_addrs(&self, bootstrap_addrs: &Vec<Addr>) {
+    async fn enqueue_bootstrap_addrs(
+        &self,
+        bootstrap_addrs: &Vec<UnknownAddr>,
+    ) {
         let total_count = bootstrap_addrs.len();
 
         tinfo!(

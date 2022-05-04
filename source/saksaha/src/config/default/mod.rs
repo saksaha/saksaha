@@ -1,4 +1,4 @@
-use p2p_identity::addr::Addr;
+use p2p_identity::addr::UnknownAddr;
 
 pub(crate) mod dev_local;
 
@@ -7,7 +7,7 @@ pub(crate) struct DefaultConfig {
 }
 
 pub(crate) struct DefaultP2PConfig {
-    pub(crate) bootstrap_addrs: Vec<Addr>,
+    pub(crate) bootstrap_addrs: Vec<UnknownAddr>,
 }
 
 impl DefaultConfig {

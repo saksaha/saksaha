@@ -1,6 +1,6 @@
 use super::{Node, NodeValue};
 use logger::terr;
-use p2p_identity::addr::Addr;
+use p2p_identity::addr::{Addr, KnownAddr};
 use std::sync::Arc;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 use tokio::sync::Mutex;
@@ -13,7 +13,7 @@ pub struct AddrsIterator {
 }
 
 pub struct Item {
-    val: Addr,
+    val: KnownAddr,
     node: Arc<Mutex<Node>>,
     known_addrs_tx: Arc<UnboundedSender<Arc<Mutex<Node>>>>,
 }
@@ -40,19 +40,31 @@ impl AddrsIterator {
                 let node_lock = n.lock().await;
                 match &node_lock.value {
                     NodeValue::Valued(v) => {
-                        let item = Item {
-                            known_addrs_tx: self.known_addrs_tx.clone(),
-                            val: v.addr.clone(),
-                            node: n.clone(),
-                        };
+                        if let Addr::Known(addr) = &v.addr {
+                            let item = Item {
+                                known_addrs_tx: self.known_addrs_tx.clone(),
+                                val: addr.clone(),
+                                node: n.clone(),
+                            };
 
-                        return Some(item);
+                            return Some(item);
+                        } else {
+                            terr!(
+                                "p2p_discovery",
+                                "table",
+                                "Invalid address is popped out of known \
+                                address queue"
+                            );
+
+                            return None;
+                        }
                     }
                     _ => {
                         terr!(
                             "p2p_discovery",
                             "table",
-                            "Known addr is empty. Something is wrong"
+                            "Invalid address is popped out of known address \
+                            queue"
                         );
 
                         return None;
@@ -74,7 +86,7 @@ impl AddrsIterator {
 }
 
 impl Item {
-    pub fn get_value(&self) -> Addr {
+    pub fn get_value(&self) -> KnownAddr {
         self.val.clone()
     }
 }

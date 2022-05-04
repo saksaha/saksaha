@@ -17,7 +17,7 @@ use self::{
 };
 use colored::Colorize;
 use logger::tinfo;
-use p2p_identity::addr::Addr;
+use p2p_identity::addr::UnknownAddr;
 use p2p_identity::identity::P2PIdentity;
 use std::sync::Arc;
 use table::Table;
@@ -41,7 +41,7 @@ pub struct DiscoveryArgs {
     pub p2p_identity: Arc<P2PIdentity>,
     pub disc_port: Option<u16>,
     pub p2p_port: u16,
-    pub bootstrap_addrs: Vec<Addr>,
+    pub bootstrap_addrs: Vec<UnknownAddr>,
 }
 
 impl Discovery {
