@@ -215,25 +215,26 @@ impl HandshakeDialLoop {
 
             if let Some(a) = self.addrs_iter.next().await {
                 let addr = a.get_value();
-                // let task = {
-                //     let t = P2PTask::InitiateHandshake {
-                //         addr,
-                //         host_state: self.host_state.clone(),
-                //     };
-                //     TaskInstance::new(t)
-                // };
 
-                // match self.p2p_task_queue.push_back(task).await {
-                //     Ok(_) => (),
-                //     Err(err) => {
-                //         terr!(
-                //             "saksaha",
-                //             "p2p",
-                //             "Error enqueueing a p2p handshake task, err: {}",
-                //             err
-                //         );
-                //     }
-                // }
+                let task = {
+                    let t = P2PTask::InitiateHandshake {
+                        addr,
+                        host_state: self.host_state.clone(),
+                    };
+                    TaskInstance::new(t)
+                };
+
+                match self.p2p_task_queue.push_back(task).await {
+                    Ok(_) => (),
+                    Err(err) => {
+                        terr!(
+                            "saksaha",
+                            "p2p",
+                            "Error enqueueing a p2p handshake task, err: {}",
+                            err
+                        );
+                    }
+                }
             }
 
             utils_time::wait_until_min_interval(time_since, p2p_dial_interval)

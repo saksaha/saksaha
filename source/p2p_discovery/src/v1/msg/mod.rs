@@ -1,5 +1,6 @@
 mod msg;
 
+use crypto::PublicKey;
 use k256::ecdsa::Signature;
 pub(crate) use msg::{Msg, MsgType};
 

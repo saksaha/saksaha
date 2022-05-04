@@ -57,12 +57,21 @@ impl Handler {
                     }
                 };
 
+                let public_key =
+                    match crypto::convert_public_key_str_into_public_key(
+                        &way_ack.src_public_key_str,
+                    ) {
+                        Ok(p) => p,
+                        Err(err) => return Err(err),
+                    };
+
                 let addr = KnownAddr {
                     ip: self.socket_addr.ip().to_string(),
                     disc_port: way_ack.src_disc_port,
                     p2p_port: way_ack.src_p2p_port,
                     sig: way_ack.src_sig,
                     public_key_str: way_ack.src_public_key_str,
+                    public_key,
                 };
 
                 let disc_state = self.disc_state.clone();

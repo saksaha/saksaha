@@ -14,6 +14,7 @@ pub struct KnownAddr {
     pub p2p_port: u16,
     pub sig: Signature,
     pub public_key_str: String,
+    pub public_key: PublicKey,
 }
 
 impl KnownAddr {
