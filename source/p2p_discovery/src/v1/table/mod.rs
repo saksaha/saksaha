@@ -6,7 +6,7 @@ pub use iter::*;
 use p2p_identity::addr::Addr;
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::{
-    mpsc::{self, Receiver, Sender},
+    mpsc::{self, UnboundedReceiver, UnboundedSender},
     Mutex, MutexGuard,
 };
 
@@ -16,8 +16,8 @@ const DISC_TABLE_CAPACITY: usize = 100;
 pub(crate) struct Table {
     addr_map: Arc<Mutex<HashMap<String, Arc<Mutex<Node>>>>>,
     addrs: Arc<Mutex<Vec<Arc<Mutex<Node>>>>>,
-    known_addrs_tx: Arc<Sender<Arc<Mutex<Node>>>>,
-    known_addrs_rx: Arc<Mutex<Receiver<Arc<Mutex<Node>>>>>,
+    known_addrs_tx: Arc<UnboundedSender<Arc<Mutex<Node>>>>,
+    known_addrs_rx: Arc<Mutex<UnboundedReceiver<Arc<Mutex<Node>>>>>,
     disc_table_capacity: usize,
 }
 
@@ -49,7 +49,7 @@ impl Table {
         };
 
         let (known_addrs_tx, known_addrs_rx) = {
-            let (tx, rx) = mpsc::channel(disc_table_capacity);
+            let (tx, rx) = mpsc::unbounded_channel();
             (Arc::new(tx), Arc::new(Mutex::new(rx)))
             // let v = Vec::with_capacity(disc_table_capacity);
             // Arc::new(Mutex::new(v))
@@ -114,7 +114,7 @@ impl Table {
     ) -> Result<(), String> {
         println!("add known node");
 
-        match self.known_addrs_tx.send(node).await {
+        match self.known_addrs_tx.send(node) {
             Ok(_) => Ok(()),
             Err(err) => Err(format!(
                 "Couldn't push known node into queue, err: {}",

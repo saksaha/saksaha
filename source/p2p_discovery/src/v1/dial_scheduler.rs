@@ -94,10 +94,7 @@ impl DialScheduler {
                     disc_state: self.disc_state.clone(),
                 };
 
-                TaskInstance {
-                    task: Arc::new(t),
-                    fail_count: 0,
-                }
+                TaskInstance::new(t)
             };
 
             match self.task_queue.push_back(task).await {

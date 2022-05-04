@@ -42,8 +42,8 @@ impl P2PTaskRuntime {
                 let task_instance = match task_queue.pop_front().await {
                     Ok(t) => {
                         tdebug!(
-                            "p2p_discovery",
-                            "task",
+                            "saksaha",
+                            "p2p",
                             "Popped a task. Will handle, {}",
                             t,
                         );
@@ -51,8 +51,8 @@ impl P2PTaskRuntime {
                     }
                     Err(err) => {
                         terr!(
-                            "p2p_discovery",
-                            "task",
+                            "saksaha",
+                            "p2p",
                             "Cannot handle p2p discovery task any more, \
                                 err: {}",
                             err,
@@ -71,8 +71,8 @@ impl P2PTaskRuntime {
                     TaskResult::FailRetry { msg } => {
                         if task_instance.fail_count < MAX_TASK_RETRY {
                             tdebug!(
-                                "p2p_discovery",
-                                "task",
+                                "saksaha",
+                                "p2p",
                                 "Task failed retriable, task: {}, msg: {}",
                                 task_instance,
                                 msg,

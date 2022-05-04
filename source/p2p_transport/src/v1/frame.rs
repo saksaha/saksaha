@@ -108,7 +108,7 @@ impl Frame {
     }
 
     /// Converts the frame to an "unexpected frame" error
-    pub(crate) fn to_error(&self) -> crate::Error {
+    pub(crate) fn to_error(&self) -> Error {
         format!("unexpected frame: {}", self).into()
     }
 }

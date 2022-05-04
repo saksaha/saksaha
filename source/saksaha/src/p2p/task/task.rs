@@ -1,11 +1,22 @@
 use std::sync::Arc;
 
-pub(crate) type P2PTaskInstance = TaskInstance<Arc<P2PTask>>;
+use p2p_identity::addr::Addr;
+
+pub(crate) type P2PTaskInstance = TaskInstance<P2PTask>;
 
 #[derive(Clone)]
 pub(crate) struct TaskInstance<T> {
-    pub(crate) task: T,
+    pub(crate) task: Arc<T>,
     pub(crate) fail_count: usize,
+}
+
+impl<T> TaskInstance<T> {
+    pub fn new(task: T) -> Self {
+        TaskInstance {
+            task: Arc::new(task),
+            fail_count: 0,
+        }
+    }
 }
 
 pub(crate) enum TaskResult {
@@ -16,7 +27,7 @@ pub(crate) enum TaskResult {
 
 #[derive(Clone)]
 pub(crate) enum P2PTask {
-    InitiateHandshake,
+    InitiateHandshake { addr: Addr },
 }
 
 impl<T> std::fmt::Display for TaskInstance<T>
@@ -31,8 +42,8 @@ where
 impl std::fmt::Display for P2PTask {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::InitiateHandshake => {
-                write!(f, "InitiateHandshake",)
+            Self::InitiateHandshake { addr } => {
+                write!(f, "InitiateHandshake, addr: {}", addr)
             }
         }
     }
