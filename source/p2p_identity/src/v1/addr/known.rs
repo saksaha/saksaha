@@ -1,3 +1,4 @@
+use crypto::PublicKey;
 pub use k256::{
     ecdh::EphemeralSecret,
     ecdsa::{

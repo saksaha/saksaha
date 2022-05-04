@@ -25,7 +25,7 @@ pub(crate) struct P2PConfig {
     pub(crate) p2p_port: Option<u16>,
     pub(crate) bootstrap_addrs: Vec<UnknownAddr>,
     pub(crate) secret: String,
-    pub(crate) public_key: String,
+    pub(crate) public_key_str: String,
 }
 
 #[derive(Debug)]
@@ -43,7 +43,6 @@ impl Config {
             }
         };
 
-        // let identity = &sys_args.pconfig.p2p.identity;
         let pconfig = &sys_args.pconfig;
 
         let bootstrap_addrs = {
@@ -106,7 +105,7 @@ impl Config {
                 p2p_port: sys_args.p2p_port,
                 p2p_max_conn_count: sys_args.p2p_max_conn_count,
                 secret: sys_args.pconfig.p2p.secret.clone(),
-                public_key: sys_args.pconfig.p2p.public_key.clone(),
+                public_key_str: sys_args.pconfig.p2p.public_key_str.clone(),
                 bootstrap_addrs,
             },
         }

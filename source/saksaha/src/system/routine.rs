@@ -89,7 +89,7 @@ impl System {
             bootstrap_addrs: config.p2p.bootstrap_addrs,
             rpc_port,
             secret: config.p2p.secret,
-            public_key: config.p2p.public_key,
+            public_key_str: config.p2p.public_key_str,
             peer_store,
         };
 

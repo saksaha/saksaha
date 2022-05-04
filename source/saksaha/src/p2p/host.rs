@@ -39,14 +39,15 @@ pub(crate) struct HostArgs {
     pub(crate) bootstrap_addrs: Vec<UnknownAddr>,
     pub(crate) rpc_port: u16,
     pub(crate) secret: String,
-    pub(crate) public_key: String,
+    pub(crate) public_key_str: String,
     pub(crate) peer_store: Arc<PeerStore>,
 }
 
 impl Host {
     pub async fn init(host_args: HostArgs) -> Result<Host, String> {
         let p2p_identity = {
-            let id = P2PIdentity::new(host_args.secret, host_args.public_key)?;
+            let id =
+                P2PIdentity::new(host_args.secret, host_args.public_key_str)?;
 
             tinfo!(
                 "saksaha",

@@ -37,12 +37,12 @@ impl WhoAreYou {
             s
         };
         let src_disc_port_bytes = self.src_disc_port.to_be_bytes();
-        let src_peer_id_bytes = self.src_public_key_str.as_bytes();
+        let src_public_key_bytes = self.src_public_key_str.as_bytes();
 
         buf.extend_from_slice(&src_p2p_port_bytes);
         buf.extend_from_slice(&src_sig_bytes);
         buf.extend_from_slice(&src_disc_port_bytes);
-        buf.extend_from_slice(&src_peer_id_bytes);
+        buf.extend_from_slice(&src_public_key_bytes);
 
         let msg = Msg {
             msg_type,
