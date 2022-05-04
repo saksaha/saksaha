@@ -3,56 +3,62 @@
 // use log::{debug, error};
 // use p2p_identity::PeerId;
 // use std::sync::Arc;
-// use thiserror::Error;
+use crate::connection::Connection;
+use thiserror::Error;
+use tokio::net::TcpStream;
+
 // use tokio::net::TcpStream;
+use super::check;
 use p2p_identity::addr::Addr;
 
-// #[derive(Error, Debug)]
-// pub enum TransportInitError {
-//     #[error("Request to my (recursive) endpoint: {endpoint}")]
-//     MyEndpoint { endpoint: String },
+pub struct HandshakeInitArgs {
+    pub p2p_port: u16,
+    pub addr: Addr,
+}
 
-//     #[error("Can't connect to endpoint")]
-//     ConnectionFail {
-//         #[from]
-//         source: std::io::Error,
-//     },
+#[derive(Error, Debug)]
+pub enum HandshakeInitError {
+    #[error("P2P Port may not be provided")]
+    InvalidP2PEndpoint,
 
-//     #[error("Already talking: {ip}")]
-//     CallInProcess { ip: String },
-// }
+    #[error("Cannot send request to myself, addr: {addr}")]
+    MyEndpoint { addr: Addr },
+
+    #[error("Cannot craete tcp stream into endpoint")]
+    ConnectionFail { err: String },
+    // #[error("Already talking: {ip}")]
+    // CallInProcess { ip: String },
+}
 
 pub async fn initiate_handshake(
-    // ip: String,
-    // p2p_port: u16,
-    // transport_meta: Arc<TransportMeta>,
-    addr: &Addr,
-) -> Result<(), String> {
+    handshake_init_args: HandshakeInitArgs,
+) -> Result<(), HandshakeInitError> {
     // let my_p2p_port = transport_meta.my_p2p_port;
     // let active_calls = transport_meta.active_calls.clone();
 
-    // let endpoint = format!("{}:{}", ip, p2p_port);
+    let HandshakeInitArgs { p2p_port, addr, .. } = handshake_init_args;
 
-    // let endpoint = addr.
+    let endpoint = match addr.p2p_endpoint() {
+        Some(e) => e,
+        None => return Err(HandshakeInitError::InvalidP2PEndpoint),
+    };
 
-    // if active_calls.contain(&ip).await {
-    //     return Err(TransportInitError::CallInProcess { ip });
-    // }
+    if check::is_my_endpoint(p2p_port, &addr) {
+        return Err(HandshakeInitError::MyEndpoint { addr });
+    }
 
-    // if super::is_my_endpoint(my_p2p_port, &endpoint) {
-    //     return Err(TransportInitError::MyEndpoint { endpoint });
-    // }
+    let mut conn = match TcpStream::connect(endpoint).await {
+        Ok(s) => {
+            println!("called, ip: {:?}", s.peer_addr());
 
-    // let mut conn = match TcpStream::connect(endpoint).await {
-    //     Ok(s) => {
-    //         println!("called, ip: {}", ip);
-
-    //         Connection::new(s)
-    //     }
-    //     Err(err) => {
-    //         return Err(TransportInitError::ConnectionFail { source: err })
-    //     }
-    // };
+            Connection::new(s)
+        }
+        Err(err) => {
+            return Err(HandshakeInitError::ConnectionFail {
+                err: err.to_string(),
+            })
+        }
+    };
 
     // let mut frame = Frame::array();
     // frame.push_bulk(Bytes::from("power".as_bytes()));

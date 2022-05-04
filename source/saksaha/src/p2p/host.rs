@@ -122,10 +122,6 @@ impl Host {
 
             let s = P2PDialScheduler::init(p2p_dial_schd_args).await;
 
-            // discovery.iter(),
-            // host_state.clone(),
-            // host_args.p2p_dial_interval.clone(),
-
             Arc::new(s)
         };
 

@@ -1,20 +1,21 @@
-use atoi::atoi;
+//! Provides a type representing a Redis protocol frame as well as utilities for
+//! parsing frames from a byte array.
+
 use bytes::{Buf, Bytes};
 use std::convert::TryInto;
 use std::fmt;
-use std::io::{Cursor, Read};
+use std::io::Cursor;
 use std::num::TryFromIntError;
 use std::string::FromUtf8Error;
 
-pub mod frame_code {
-    pub const BULK: u8 = b'$';
-    pub const ARRAY: u8 = b'*';
-}
-
+/// A frame in the Redis protocol.
 #[derive(Clone, Debug)]
 pub enum Frame {
+    Simple(String),
+    Error(String),
+    Integer(u64),
     Bulk(Bytes),
-
+    Null,
     Array(Vec<Frame>),
 }
 
@@ -24,14 +25,20 @@ pub enum Error {
     Incomplete,
 
     /// Invalid message encoding
-    Other(String),
+    Other(crate::Error),
 }
 
 impl Frame {
+    /// Returns an empty array
     pub(crate) fn array() -> Frame {
         Frame::Array(vec![])
     }
 
+    /// Push a "bulk" frame into the array. `self` must be an Array frame.
+    ///
+    /// # Panics
+    ///
+    /// panics if `self` is not an array
     pub(crate) fn push_bulk(&mut self, bytes: Bytes) {
         match self {
             Frame::Array(vec) => {
@@ -41,9 +48,36 @@ impl Frame {
         }
     }
 
+    /// Push an "integer" frame into the array. `self` must be an Array frame.
+    ///
+    /// # Panics
+    ///
+    /// panics if `self` is not an array
+    pub(crate) fn push_int(&mut self, value: u64) {
+        match self {
+            Frame::Array(vec) => {
+                vec.push(Frame::Integer(value));
+            }
+            _ => panic!("not an array frame"),
+        }
+    }
+
+    /// Checks if an entire message can be decoded from `src`
     pub fn check(src: &mut Cursor<&[u8]>) -> Result<(), Error> {
         match get_u8(src)? {
-            frame_code::BULK => {
+            b'+' => {
+                get_line(src)?;
+                Ok(())
+            }
+            b'-' => {
+                get_line(src)?;
+                Ok(())
+            }
+            b':' => {
+                let _ = get_decimal(src)?;
+                Ok(())
+            }
+            b'$' => {
                 if b'-' == peek_u8(src)? {
                     // Skip '-1\r\n'
                     skip(src, 4)
@@ -55,7 +89,7 @@ impl Frame {
                     skip(src, len + 2)
                 }
             }
-            frame_code::ARRAY => {
+            b'*' => {
                 let len = get_decimal(src)?;
 
                 for _ in 0..len {
@@ -64,19 +98,51 @@ impl Frame {
 
                 Ok(())
             }
-            any => Err(format!(
+            actual => Err(format!(
                 "protocol error; invalid frame type byte `{}`",
-                any
+                actual
             )
             .into()),
         }
     }
 
-    /// The message has already been validated with `scan`.
+    /// The message has already been validated with `check`.
     pub fn parse(src: &mut Cursor<&[u8]>) -> Result<Frame, Error> {
         match get_u8(src)? {
-            frame_code::BULK => {
-                {
+            b'+' => {
+                // Read the line and convert it to `Vec<u8>`
+                let line = get_line(src)?.to_vec();
+
+                // Convert the line to a String
+                let string = String::from_utf8(line)?;
+
+                Ok(Frame::Simple(string))
+            }
+            b'-' => {
+                // Read the line and convert it to `Vec<u8>`
+                let line = get_line(src)?.to_vec();
+
+                // Convert the line to a String
+                let string = String::from_utf8(line)?;
+
+                Ok(Frame::Error(string))
+            }
+            b':' => {
+                let len = get_decimal(src)?;
+                Ok(Frame::Integer(len))
+            }
+            b'$' => {
+                if b'-' == peek_u8(src)? {
+                    let line = get_line(src)?;
+
+                    if line != b"-1" {
+                        return Err(
+                            "protocol error; invalid frame format".into()
+                        );
+                    }
+
+                    Ok(Frame::Null)
+                } else {
                     // Read the bulk string
                     let len = get_decimal(src)?.try_into()?;
                     let n = len + 2;
@@ -93,7 +159,7 @@ impl Frame {
                     Ok(Frame::Bulk(data))
                 }
             }
-            frame_code::ARRAY => {
+            b'*' => {
                 let len = get_decimal(src)?.try_into()?;
                 let mut out = Vec::with_capacity(len);
 
@@ -108,7 +174,7 @@ impl Frame {
     }
 
     /// Converts the frame to an "unexpected frame" error
-    pub(crate) fn to_error(&self) -> Error {
+    pub(crate) fn to_error(&self) -> crate::Error {
         format!("unexpected frame: {}", self).into()
     }
 }
@@ -116,6 +182,7 @@ impl Frame {
 impl PartialEq<&str> for Frame {
     fn eq(&self, other: &&str) -> bool {
         match self {
+            Frame::Simple(s) => s.eq(other),
             Frame::Bulk(s) => s.eq(other),
             _ => false,
         }
@@ -127,10 +194,14 @@ impl fmt::Display for Frame {
         use std::str;
 
         match self {
+            Frame::Simple(response) => response.fmt(fmt),
+            Frame::Error(msg) => write!(fmt, "error: {}", msg),
+            Frame::Integer(num) => num.fmt(fmt),
             Frame::Bulk(msg) => match str::from_utf8(msg) {
                 Ok(string) => string.fmt(fmt),
                 Err(_) => write!(fmt, "{:?}", msg),
             },
+            Frame::Null => "(nil)".fmt(fmt),
             Frame::Array(parts) => {
                 for (i, part) in parts.iter().enumerate() {
                     if i > 0 {
@@ -172,6 +243,8 @@ fn skip(src: &mut Cursor<&[u8]>, n: usize) -> Result<(), Error> {
 
 /// Read a new-line terminated decimal
 fn get_decimal(src: &mut Cursor<&[u8]>) -> Result<u64, Error> {
+    use atoi::atoi;
+
     let line = get_line(src)?;
 
     atoi::<u64>(line)

@@ -1,7 +1,7 @@
 use super::task::{P2PTaskInstance, TaskResult};
 use crate::p2p::task::P2PTask;
 use logger::twarn;
-use p2p_transport::handshake;
+use p2p_transport::handshake::{self, HandshakeInitArgs};
 
 pub(crate) struct Handler {
     pub(crate) task_instance: P2PTaskInstance,
@@ -19,8 +19,13 @@ async fn do_task(task_instance: P2PTaskInstance) -> TaskResult {
     println!("Will do a task, {}", task);
 
     match &*task {
-        P2PTask::InitiateHandshake { addr } => {
-            match handshake::initiate_handshake(addr).await {
+        P2PTask::InitiateHandshake { addr, host_state } => {
+            let handshake_init_args = HandshakeInitArgs {
+                addr: addr.clone(),
+                p2p_port: host_state.p2p_port,
+            };
+
+            match handshake::initiate_handshake(handshake_init_args).await {
                 Ok(_) => (),
                 Err(err) => {
                     twarn!(

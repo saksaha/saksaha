@@ -40,6 +40,7 @@ impl P2PDialScheduler {
                 p2p_task_queue: p2p_task_queue.clone(),
                 p2p_dial_interval,
                 addrs_iter,
+                host_state: host_state.clone(),
             };
             Arc::new(l)
         };
