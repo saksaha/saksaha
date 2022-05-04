@@ -2,52 +2,85 @@ use super::{Node, NodeValue};
 use logger::terr;
 use p2p_identity::addr::Addr;
 use std::sync::Arc;
+use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::sync::Mutex;
 
 pub struct AddrsIterator {
     curr_idx: Mutex<usize>,
-    known_addrs: Arc<Mutex<Vec<Arc<Mutex<Node>>>>>,
+    known_addrs_tx: Arc<Sender<Arc<Mutex<Node>>>>,
+    known_addrs_rx: Arc<Mutex<Receiver<Arc<Mutex<Node>>>>>,
     disc_table_capacity: usize,
+}
+
+pub struct Item {
+    val: Addr,
+    node: Arc<Mutex<Node>>,
+    known_addrs_tx: Arc<Sender<Arc<Mutex<Node>>>>,
 }
 
 impl AddrsIterator {
     pub(crate) fn init(
-        known_addrs: Arc<Mutex<Vec<Arc<Mutex<Node>>>>>,
+        known_addrs_tx: Arc<Sender<Arc<Mutex<Node>>>>,
+        known_addrs_rx: Arc<Mutex<Receiver<Arc<Mutex<Node>>>>>,
         disc_table_capacity: usize,
     ) -> AddrsIterator {
         AddrsIterator {
             curr_idx: Mutex::new(0),
-            known_addrs,
+            known_addrs_tx,
+            known_addrs_rx,
             disc_table_capacity,
         }
     }
 
-    pub async fn next(&self) -> Option<Addr> {
-        let known_addrs = self.known_addrs.lock().await;
-        let mut curr_idx = self.curr_idx.lock().await;
+    pub async fn next(&self) -> Option<Item> {
+        let mut rx = self.known_addrs_rx.lock().await;
 
-        println!(
-            "next(): curr_idx: {}, known_addrs.len: {}",
-            *curr_idx,
-            known_addrs.len(),
-        );
+        match rx.recv().await {
+            Some(n) => {
+                let node_lock = n.lock().await;
+                match &node_lock.value {
+                    NodeValue::Valued(v) => {
+                        let item = Item {
+                            known_addrs_tx: self.known_addrs_tx.clone(),
+                            val: v.addr.clone(),
+                            node: n.clone(),
+                        };
 
-        if let Some(n) = known_addrs.get(*curr_idx) {
-            let node_lock = n.lock().await;
+                        return Some(item);
+                    }
+                    _ => {
+                        terr!(
+                            "p2p_discovery",
+                            "table",
+                            "Known addr is empty. Something is wrong"
+                        );
 
-            println!(
-                "next(): found node, curr_idx: {}, known_addrs.len: {}",
-                *curr_idx,
-                known_addrs.len()
-            );
-
-            if let NodeValue::Valued(v) = &node_lock.value {
-                *curr_idx = (*curr_idx + 1) % self.disc_table_capacity;
-                return Some(v.addr.clone());
+                        return None;
+                    }
+                };
             }
-        }
+            None => {
+                terr!(
+                    "p2p_discovery",
+                    "table",
+                    "Known addrs queue has been closed. Coudn't retrieve \
+                    known address.",
+                );
 
-        *curr_idx = (*curr_idx + 1) % self.disc_table_capacity;
-        None
+                return None;
+            }
+        };
+    }
+}
+
+impl Item {
+    pub fn get_value(&self) -> &Addr {
+        &self.val
+    }
+}
+
+impl Drop for Item {
+    fn drop(&mut self) {
+        // self.known_addrs_tx.send(self.node.clone()).await;
     }
 }

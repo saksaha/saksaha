@@ -5,7 +5,10 @@ pub(crate) use self::node::*;
 pub use iter::*;
 use p2p_identity::addr::Addr;
 use std::{collections::HashMap, sync::Arc};
-use tokio::sync::{Mutex, MutexGuard};
+use tokio::sync::{
+    mpsc::{self, Receiver, Sender},
+    Mutex, MutexGuard,
+};
 
 const DISC_TABLE_CAPACITY: usize = 100;
 
@@ -13,7 +16,8 @@ const DISC_TABLE_CAPACITY: usize = 100;
 pub(crate) struct Table {
     addr_map: Arc<Mutex<HashMap<String, Arc<Mutex<Node>>>>>,
     addrs: Arc<Mutex<Vec<Arc<Mutex<Node>>>>>,
-    known_addrs: Arc<Mutex<Vec<Arc<Mutex<Node>>>>>,
+    known_addrs_tx: Arc<Sender<Arc<Mutex<Node>>>>,
+    known_addrs_rx: Arc<Mutex<Receiver<Arc<Mutex<Node>>>>>,
     disc_table_capacity: usize,
 }
 
@@ -44,15 +48,18 @@ impl Table {
             Arc::new(Mutex::new(v))
         };
 
-        let known_addrs = {
-            let v = Vec::with_capacity(disc_table_capacity);
-            Arc::new(Mutex::new(v))
+        let (known_addrs_tx, known_addrs_rx) = {
+            let (tx, rx) = mpsc::channel(disc_table_capacity);
+            (Arc::new(tx), Arc::new(Mutex::new(rx)))
+            // let v = Vec::with_capacity(disc_table_capacity);
+            // Arc::new(Mutex::new(v))
         };
 
         let table = Table {
             addr_map,
             addrs,
-            known_addrs,
+            known_addrs_tx,
+            known_addrs_rx,
             disc_table_capacity,
         };
 
@@ -101,15 +108,27 @@ impl Table {
         }
     }
 
-    pub(crate) async fn add_known_node(&self, node: Arc<Mutex<Node>>) {
+    pub(crate) async fn add_known_node(
+        &self,
+        node: Arc<Mutex<Node>>,
+    ) -> Result<(), String> {
         println!("add known node");
 
-        let mut known_addrs = self.known_addrs.lock().await;
-        known_addrs.push(node.clone());
+        match self.known_addrs_tx.send(node).await {
+            Ok(_) => Ok(()),
+            Err(err) => Err(format!(
+                "Couldn't push known node into queue, err: {}",
+                err
+            )),
+        }
     }
 
     pub(crate) fn iter(&self) -> AddrsIterator {
-        AddrsIterator::init(self.known_addrs.clone(), self.disc_table_capacity)
+        AddrsIterator::init(
+            self.known_addrs_tx.clone(),
+            self.known_addrs_rx.clone(),
+            self.disc_table_capacity,
+        )
     }
 }
 
