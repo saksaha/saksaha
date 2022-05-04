@@ -4,6 +4,7 @@ use crate::{
     state::DiscState,
     table::{NodeStatus, NodeValue},
 };
+use crypto::PublicKey;
 use p2p_identity::addr::{Addr, KnownAddr};
 use std::{net::SocketAddr, sync::Arc};
 use thiserror::Error;
@@ -27,19 +28,34 @@ pub(crate) enum WhoAreYouRecvError {
 
     #[error("Could not register as a known node, endpoint: {endpoint}")]
     KnownNodeRegisterFail { endpoint: String, err: String },
+
+    #[error("Could not make public key out of string: {public_key_str}")]
+    PublicKeyCreateFail { public_key_str: String, err: String },
 }
 
 pub(crate) async fn recv_who_are_you(
     socket_addr: SocketAddr,
     disc_state: Arc<DiscState>,
-    msg: WhoAreYou,
+    way_recv: WhoAreYou,
 ) -> Result<(), WhoAreYouRecvError> {
     let WhoAreYou {
         src_sig: her_sig,
         src_disc_port: her_disc_port,
         src_p2p_port: her_p2p_port,
         src_public_key_str: her_public_key_str,
-    } = msg;
+    } = way_recv;
+
+    let her_public_key = match crypto::convert_public_key_str_into_public_key(
+        &her_public_key_str,
+    ) {
+        Ok(p) => p,
+        Err(err) => {
+            return Err(WhoAreYouRecvError::PublicKeyCreateFail {
+                public_key_str: her_public_key_str,
+                err: err.to_string(),
+            });
+        }
+    };
 
     let addr = KnownAddr {
         ip: socket_addr.ip().to_string(),
@@ -47,6 +63,7 @@ pub(crate) async fn recv_who_are_you(
         p2p_port: her_p2p_port,
         sig: her_sig,
         public_key_str: her_public_key_str,
+        public_key: her_public_key,
     };
 
     let endpoint = addr.disc_endpoint();

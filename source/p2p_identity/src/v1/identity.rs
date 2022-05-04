@@ -27,7 +27,7 @@ impl P2PIdentity {
         secret: String,
         public_key_str: String,
     ) -> Result<P2PIdentity, String> {
-        let secret_bytes = match crypto::decode_hex(secret.to_owned()) {
+        let secret_bytes = match crypto::decode_hex(&secret) {
             Ok(v) => v,
             Err(err) => {
                 return Err(format!("Error making secret key, err: {}", err));

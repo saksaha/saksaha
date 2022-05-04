@@ -32,7 +32,6 @@ pub async fn initiate_handshake(
     let HandshakeInitArgs { p2p_port, addr, .. } = handshake_init_args;
 
     let endpoint = addr.p2p_endpoint();
-
     if check::is_my_endpoint(p2p_port, &endpoint) {
         return Err(HandshakeInitError::MyEndpoint { addr });
     }
@@ -65,6 +64,9 @@ pub async fn initiate_handshake(
             })
         }
     };
+
+    let p = addr.public_key;
+    println!("power: {:?}", p);
 
     // let dest_pub_key = addr.public_key
 
