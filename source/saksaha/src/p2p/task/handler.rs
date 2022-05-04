@@ -43,19 +43,4 @@ async fn do_task(task_instance: P2PTaskInstance) -> TaskResult {
     };
 
     return TaskResult::Success;
-
-    // match &*task {
-    //     DiscoveryTask::InitiateWhoAreYou { addr, disc_state } => {
-    //         match whoareyou::init_who_are_you(addr.clone(), disc_state.clone())
-    //             .await
-    //         {
-    //             Ok(_) => {
-    //                 return TaskResult::Success;
-    //             }
-    //             Err(err) => {
-    //                 return TaskResult::FailRetry { msg: err };
-    //             }
-    //         }
-    //     }
-    // };
 }

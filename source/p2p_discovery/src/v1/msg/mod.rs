@@ -9,7 +9,7 @@ pub(crate) struct WhoAreYou {
     pub(crate) src_sig: Signature,
     pub(crate) src_disc_port: u16,
     pub(crate) src_p2p_port: u16,
-    pub(crate) src_public_key: String,
+    pub(crate) src_public_key_str: String,
 }
 
 impl WhoAreYou {
@@ -37,12 +37,12 @@ impl WhoAreYou {
             s
         };
         let src_disc_port_bytes = self.src_disc_port.to_be_bytes();
-        let src_public_key_bytes = self.src_public_key.as_bytes();
+        let src_peer_id_bytes = self.src_public_key_str.as_bytes();
 
         buf.extend_from_slice(&src_p2p_port_bytes);
         buf.extend_from_slice(&src_sig_bytes);
         buf.extend_from_slice(&src_disc_port_bytes);
-        buf.extend_from_slice(&src_public_key_bytes);
+        buf.extend_from_slice(&src_peer_id_bytes);
 
         let msg = Msg {
             msg_type,
@@ -85,7 +85,7 @@ impl WhoAreYou {
             u16::from_be_bytes(disc_port_bytes)
         };
 
-        let src_public_key = {
+        let src_public_key_str = {
             let mut public_key_bytes = [0u8; 130];
             public_key_bytes.copy_from_slice(&content[75..205]);
 
@@ -106,7 +106,7 @@ impl WhoAreYou {
             src_p2p_port,
             src_sig,
             src_disc_port,
-            src_public_key,
+            src_public_key_str,
         })
     }
 }
