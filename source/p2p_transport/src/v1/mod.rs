@@ -1,12 +1,9 @@
 pub mod connection;
-pub mod frame;
+pub(crate) mod frame;
 pub mod handshake;
-pub mod msg;
+pub(crate) mod msg;
 pub mod transport;
 
-pub type Error = Box<dyn std::error::Error + Send + Sync>;
+pub(crate) type Error = Box<dyn std::error::Error + Send + Sync>;
 
-/// A specialized `Result` type for mini-redis operations.
-///
-/// This is defined as a convenience.
-pub type Result<T> = std::result::Result<T, Error>;
+pub(crate) type Result<T> = std::result::Result<T, Error>;

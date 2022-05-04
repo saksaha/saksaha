@@ -50,8 +50,8 @@ impl Host {
             tinfo!(
                 "saksaha",
                 "p2p",
-                "Created p2p identity, public_key: {}",
-                id.public_key.yellow(),
+                "Created p2p identity, public_key_str: {}",
+                id.public_key_str.yellow(),
             );
 
             Arc::new(id)

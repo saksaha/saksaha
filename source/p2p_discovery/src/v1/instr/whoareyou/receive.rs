@@ -38,7 +38,7 @@ pub(crate) async fn recv_who_are_you(
         src_sig: her_sig,
         src_disc_port: her_disc_port,
         src_p2p_port: her_p2p_port,
-        src_public_key: her_public_key,
+        src_public_key_str: her_public_key_str,
     } = msg;
 
     let addr = Addr {
@@ -46,7 +46,7 @@ pub(crate) async fn recv_who_are_you(
         disc_port: her_disc_port,
         p2p_port: Some(her_p2p_port),
         sig: Some(her_sig),
-        public_key: Some(her_public_key),
+        public_key_str: Some(her_public_key_str),
     };
 
     if check::is_my_endpoint(disc_state.disc_port, &addr) {
@@ -74,13 +74,13 @@ pub(crate) async fn recv_who_are_you(
     let my_disc_port = disc_state.disc_port;
     let my_p2p_port = disc_state.p2p_port;
     let my_sig = disc_state.p2p_identity.sig;
-    let my_public_key = disc_state.p2p_identity.public_key.clone();
+    let my_public_key_str = disc_state.p2p_identity.public_key_str.clone();
 
     let way = WhoAreYou {
         src_sig: my_sig,
         src_disc_port: my_disc_port,
         src_p2p_port: my_p2p_port,
-        src_public_key: my_public_key,
+        src_public_key_str: my_public_key_str,
     };
 
     let way_msg = match way.into_ack_msg() {

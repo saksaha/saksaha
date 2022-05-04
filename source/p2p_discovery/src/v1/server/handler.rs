@@ -62,7 +62,7 @@ impl Handler {
                     disc_port: way_ack.src_disc_port,
                     p2p_port: Some(way_ack.src_p2p_port),
                     sig: Some(way_ack.src_sig),
-                    public_key: Some(way_ack.src_public_key),
+                    public_key_str: Some(way_ack.src_public_key_str),
                 };
 
                 let disc_state = self.disc_state.clone();

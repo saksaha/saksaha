@@ -13,7 +13,7 @@ impl DefaultConfig {
                         disc_port: 35518,
                         p2p_port: None,
                         sig: None,
-                        public_key: Some(String::from(
+                        public_key_str: Some(String::from(
                             "\
                             04715796a40b0d58fc14a3c4ebee21cb\
                             806763066a7f1a17adbc256999764443\
@@ -27,7 +27,7 @@ impl DefaultConfig {
                     //     disc_port: 35519,
                     //     p2p_port: None,
                     //     sig: None,
-                    //     public_key: Some(String::from(
+                    //     public_key_str: Some(String::from(
                     //         "\
                     //     048e34a97e173aa7d978f3b3d720487c\
                     //     d10c64020e334eae6789cbee6f0856b2\
@@ -41,7 +41,7 @@ impl DefaultConfig {
                     //     disc_port: 35520,
                     //     p2p_port: None,
                     //     sig: None,
-                    //     public_key: Some(String::from(
+                    //     public_key_str: Some(String::from(
                     //         "\
                     //     0467e86ec86e8a520503818a4fa09724\
                     //     08e56917c7cc76a514e781d8036bd923\
@@ -55,7 +55,7 @@ impl DefaultConfig {
                     //     disc_port: 35521,
                     //     p2p_port: None,
                     //     sig: None,
-                    //     public_key: Some(String::from(
+                    //     public_key_str: Some(String::from(
                     //         "\
                     //     0431f595b429a2a6d998030f9a7d71df\
                     //     7d617109bf70b91a144ed6ef16dcef2d\

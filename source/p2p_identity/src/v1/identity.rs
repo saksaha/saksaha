@@ -16,8 +16,7 @@ pub const SAKSAHA: &[u8; 7] = b"saksaha";
 
 pub struct P2PIdentity {
     pub secret: String,
-    pub public_key: String,
-
+    pub public_key_str: String,
     pub secret_key: SecretKey,
     pub public_key_bytes: [u8; PUBLIC_KEY_LEN],
     pub sig: Signature,
@@ -26,7 +25,7 @@ pub struct P2PIdentity {
 impl P2PIdentity {
     pub fn new(
         secret: String,
-        public_key: String,
+        public_key_str: String,
     ) -> Result<P2PIdentity, String> {
         let secret_bytes = match crypto::decode_hex(secret.to_owned()) {
             Ok(v) => v,
@@ -57,8 +56,8 @@ impl P2PIdentity {
             let mut buf = [0; 65];
             buf.clone_from_slice(&b);
 
-            let pk = crypto::encode_hex(&b);
-            if pk != public_key {
+            let pk_encoded = crypto::encode_hex(&b);
+            if pk_encoded != public_key_str {
                 return Err(format!(
                     "Encoded public key is different from the restored one",
                 ));
@@ -76,7 +75,7 @@ impl P2PIdentity {
         let credential = P2PIdentity {
             secret,
             secret_key,
-            public_key,
+            public_key_str,
             public_key_bytes,
             sig,
         };

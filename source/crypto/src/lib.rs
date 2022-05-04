@@ -88,8 +88,6 @@ pub fn verify(
 }
 
 pub fn make_shared_secret(
-    // sk: impl Borrow<NonZeroScalar<Secp256k1>>,
-    // pk: impl Borrow<AffinePoint<Secp256k1>>,
     my_secret_key: &SecretKey,
     her_public: PublicKey<Secp256k1>,
 ) -> SharedSecret<Secp256k1> {
