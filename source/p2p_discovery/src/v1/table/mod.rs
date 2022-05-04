@@ -68,7 +68,7 @@ impl Table {
 
     pub(crate) async fn upsert(
         &self,
-        addr: &Addr,
+        addr: Addr,
         node_status: NodeStatus,
     ) -> Result<Arc<Mutex<Node>>, String> {
         let endpoint = addr.disc_endpoint();

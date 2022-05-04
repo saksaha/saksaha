@@ -6,7 +6,8 @@ use super::{dial_scheduler::P2PDialScheduler, server::Server};
 use colored::Colorize;
 use logger::tinfo;
 use p2p_discovery::{Discovery, DiscoveryArgs};
-use p2p_identity::{addr::Addr, identity::P2PIdentity};
+use p2p_identity::addr::UnknownAddr;
+use p2p_identity::identity::P2PIdentity;
 use peer::PeerStore;
 use std::sync::Arc;
 use task_queue::TaskQueue;
@@ -35,7 +36,7 @@ pub(crate) struct HostArgs {
     pub(crate) p2p_dial_interval: Option<u16>,
     pub(crate) p2p_port: u16,
     pub(crate) p2p_max_conn_count: Option<u16>,
-    pub(crate) bootstrap_addrs: Vec<Addr>,
+    pub(crate) bootstrap_addrs: Vec<UnknownAddr>,
     pub(crate) rpc_port: u16,
     pub(crate) secret: String,
     pub(crate) public_key: String,

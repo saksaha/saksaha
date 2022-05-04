@@ -3,7 +3,7 @@ use crate::msg::{Msg, MsgType, WhoAreYou};
 use crate::state::DiscState;
 use crate::table::{NodeStatus, NodeValue};
 use logger::tdebug;
-use p2p_identity::addr::Addr;
+use p2p_identity::addr::{Addr, KnownAddr};
 use std::{net::SocketAddr, sync::Arc};
 use tokio::sync::Semaphore;
 
@@ -57,19 +57,19 @@ impl Handler {
                     }
                 };
 
-                let addr = Addr {
+                let addr = KnownAddr {
                     ip: self.socket_addr.ip().to_string(),
                     disc_port: way_ack.src_disc_port,
-                    p2p_port: Some(way_ack.src_p2p_port),
-                    sig: Some(way_ack.src_sig),
-                    public_key_str: Some(way_ack.src_public_key_str),
+                    p2p_port: way_ack.src_p2p_port,
+                    sig: way_ack.src_sig,
+                    public_key_str: way_ack.src_public_key_str,
                 };
 
                 let disc_state = self.disc_state.clone();
                 let table = disc_state.table.clone();
 
                 let node = match table
-                    .upsert(&addr, NodeStatus::WhoAreYouAckRecvd)
+                    .upsert(Addr::Known(addr), NodeStatus::WhoAreYouAckRecvd)
                     .await
                 {
                     Ok(a) => a,
@@ -84,7 +84,9 @@ impl Handler {
                 let mut node_lock = node.lock().await;
                 let mut node_value = match &mut node_lock.value {
                     NodeValue::Valued(v) => v,
-                    _ => return Err(format!("Empty node, something is wrong")),
+                    _ => {
+                        return Err(format!("Invalid node, something is wrong"))
+                    }
                 };
 
                 node_value.status = NodeStatus::WhoAreYouAckRecvd;

@@ -4,14 +4,14 @@ use crate::{
     state::DiscState,
     table::{NodeStatus, NodeValue},
 };
-use p2p_identity::addr::Addr;
+use p2p_identity::addr::{Addr, UnknownAddr};
 use std::sync::Arc;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub(crate) enum WhoAreYouInitError {
     #[error("Can't send request to myself, addr: {addr}")]
-    MyEndpoint { addr: Addr },
+    MyEndpoint { addr: UnknownAddr },
 
     #[error("Can't take a slot in the table, err: {err}")]
     TableIsFull { err: String },
@@ -27,19 +27,22 @@ pub(crate) enum WhoAreYouInitError {
 }
 
 pub(crate) async fn init_who_are_you(
-    addr: Addr,
+    addr: UnknownAddr,
     disc_state: Arc<DiscState>,
 ) -> Result<(), WhoAreYouInitError> {
     let endpoint = addr.disc_endpoint();
     let src_disc_port = disc_state.disc_port;
 
-    if check::is_my_endpoint(src_disc_port, &addr) {
+    if check::is_my_endpoint(src_disc_port, &addr.disc_endpoint()) {
         return Err(WhoAreYouInitError::MyEndpoint { addr });
     }
 
     let table = disc_state.table.clone();
 
-    let node = match table.upsert(&addr, NodeStatus::Initialized).await {
+    let node = match table
+        .upsert(Addr::Unknown(addr), NodeStatus::Initialized)
+        .await
+    {
         Ok(a) => a,
         Err(err) => {
             return Err(WhoAreYouInitError::TableIsFull { err });

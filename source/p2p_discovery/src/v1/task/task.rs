@@ -1,5 +1,5 @@
 use crate::state::DiscState;
-use p2p_identity::addr::Addr;
+use p2p_identity::addr::UnknownAddr;
 use std::sync::Arc;
 
 pub(crate) type DiscoveryTaskInstance = TaskInstance<DiscoveryTask>;
@@ -28,7 +28,7 @@ pub(crate) enum TaskResult {
 #[derive(Clone)]
 pub(crate) enum DiscoveryTask {
     InitiateWhoAreYou {
-        addr: Addr,
+        addr: UnknownAddr,
         disc_state: Arc<DiscState>,
     },
 }

@@ -1,5 +1,4 @@
-// use p2p_identity::peer::UnknownPeer;
-use p2p_identity::addr::Addr;
+use p2p_identity::addr::UnknownAddr;
 
 use super::{DefaultConfig, DefaultP2PConfig};
 
@@ -8,7 +7,7 @@ impl DefaultConfig {
         return DefaultConfig {
             p2p: DefaultP2PConfig {
                 bootstrap_addrs: vec![
-                    Addr {
+                    UnknownAddr {
                         ip: String::from("127.0.0.1"),
                         disc_port: 35518,
                         p2p_port: None,
@@ -22,7 +21,7 @@ impl DefaultConfig {
                             ",
                         )),
                     },
-                    // Addr {
+                    // UnknownAddr {
                     //     ip: String::from("127.0.0.1"),
                     //     disc_port: 35519,
                     //     p2p_port: None,
@@ -36,7 +35,7 @@ impl DefaultConfig {
                     //     ",
                     //     )),
                     // },
-                    // Addr {
+                    // UnknownAddr {
                     //     ip: String::from("127.0.0.1"),
                     //     disc_port: 35520,
                     //     p2p_port: None,
@@ -50,7 +49,7 @@ impl DefaultConfig {
                     //     ",
                     //     )),
                     // },
-                    // Addr {
+                    // UnknownAddr {
                     //     ip: String::from("127.0.0.1"),
                     //     disc_port: 35521,
                     //     p2p_port: None,

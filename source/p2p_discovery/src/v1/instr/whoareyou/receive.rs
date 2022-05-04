@@ -4,14 +4,14 @@ use crate::{
     state::DiscState,
     table::{NodeStatus, NodeValue},
 };
-use p2p_identity::addr::Addr;
+use p2p_identity::addr::{Addr, KnownAddr};
 use std::{net::SocketAddr, sync::Arc};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub(crate) enum WhoAreYouRecvError {
     #[error("Can't take request I sent, addr: {addr}")]
-    MyEndpoint { addr: Addr },
+    MyEndpoint { addr: KnownAddr },
 
     #[error("Can't take a slot in the table, err: {err}")]
     TableIsFull { err: String },
@@ -25,8 +25,8 @@ pub(crate) enum WhoAreYouRecvError {
     #[error("Table node is empty")]
     EmptyNode,
 
-    #[error("Couldn't register as a known node, addr: {addr}")]
-    KnownNodeRegisterFail { addr: Addr, err: String },
+    #[error("Could not register as a known node, endpoint: {endpoint}")]
+    KnownNodeRegisterFail { endpoint: String, err: String },
 }
 
 pub(crate) async fn recv_who_are_you(
@@ -41,21 +41,23 @@ pub(crate) async fn recv_who_are_you(
         src_public_key_str: her_public_key_str,
     } = msg;
 
-    let addr = Addr {
+    let addr = KnownAddr {
         ip: socket_addr.ip().to_string(),
         disc_port: her_disc_port,
-        p2p_port: Some(her_p2p_port),
-        sig: Some(her_sig),
-        public_key_str: Some(her_public_key_str),
+        p2p_port: her_p2p_port,
+        sig: her_sig,
+        public_key_str: her_public_key_str,
     };
 
-    if check::is_my_endpoint(disc_state.disc_port, &addr) {
+    let endpoint = addr.disc_endpoint();
+
+    if check::is_my_endpoint(disc_state.disc_port, &endpoint) {
         return Err(WhoAreYouRecvError::MyEndpoint { addr });
     }
 
     let node = match disc_state
         .table
-        .upsert(&addr, NodeStatus::WhoAreYouSynRecvd)
+        .upsert(Addr::Known(addr), NodeStatus::WhoAreYouSynRecvd)
         .await
     {
         Ok(n) => n,
@@ -65,12 +67,11 @@ pub(crate) async fn recv_who_are_you(
     let mut node_lock = node.lock().await;
     let mut node_value = match &mut node_lock.value {
         NodeValue::Valued(v) => v,
-        NodeValue::Empty => {
+        _ => {
             return Err(WhoAreYouRecvError::EmptyNode);
         }
     };
 
-    let endpoint = addr.disc_endpoint();
     let my_disc_port = disc_state.disc_port;
     let my_p2p_port = disc_state.p2p_port;
     let my_sig = disc_state.p2p_identity.sig;
@@ -90,7 +91,11 @@ pub(crate) async fn recv_who_are_you(
         }
     };
 
-    match disc_state.udp_conn.write_msg(endpoint, way_msg).await {
+    match disc_state
+        .udp_conn
+        .write_msg(endpoint.clone(), way_msg)
+        .await
+    {
         Ok(_) => {
             node_value.status = NodeStatus::WhoAreYouAckSent;
 
@@ -99,7 +104,7 @@ pub(crate) async fn recv_who_are_you(
                 Ok(_) => (),
                 Err(err) => {
                     return Err(WhoAreYouRecvError::KnownNodeRegisterFail {
-                        addr,
+                        endpoint,
                         err,
                     });
                 }
