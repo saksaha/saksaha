@@ -9,7 +9,7 @@ pub struct PConfig {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct PersistedP2PConfig {
     pub secret: String,
-    pub public_key: String,
+    pub public_key_str: String,
     pub bootstrap_addrs: Option<Vec<UnknownAddr>>,
     pub p2p_port: Option<u16>,
     pub disc_port: Option<u16>,

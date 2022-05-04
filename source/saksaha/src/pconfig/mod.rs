@@ -49,8 +49,10 @@ impl PConfig {
 
                     let pconf = match FS::persist(pconfig) {
                         Ok(p) => p,
-                        Err(_) => {
-                            return Err(PConfigError::PersistError);
+                        Err(err) => {
+                            return Err(PConfigError::PersistError {
+                                err: err.to_string(),
+                            });
                         }
                     };
 
@@ -71,7 +73,7 @@ impl PConfig {
         let pconf = PConfig {
             p2p: PersistedP2PConfig {
                 secret: sk,
-                public_key: pk,
+                public_key_str: pk,
                 bootstrap_addrs: None,
                 p2p_port: None,
                 disc_port: None,
