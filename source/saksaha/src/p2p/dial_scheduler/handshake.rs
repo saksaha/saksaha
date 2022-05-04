@@ -196,6 +196,7 @@ pub(crate) struct HandshakeDialLoop {
     pub(crate) p2p_task_queue: Arc<TaskQueue<P2PTaskInstance>>,
     pub(crate) p2p_dial_interval: Option<u16>,
     pub(crate) addrs_iter: Arc<AddrsIterator>,
+    pub(crate) host_state: Arc<HostState>,
 }
 
 impl HandshakeDialLoop {
@@ -207,17 +208,18 @@ impl HandshakeDialLoop {
             None => Duration::from_millis(HANDSHAKE_DIAL_INTERVAL),
         };
 
-        let addrs_iter = self.addrs_iter.clone();
-
         loop {
             let time_since = SystemTime::now();
 
             println!("Getting next known addr");
 
-            if let Some(a) = addrs_iter.next().await {
+            if let Some(a) = self.addrs_iter.next().await {
                 let addr = a.get_value();
                 let task = {
-                    let t = P2PTask::InitiateHandshake { addr };
+                    let t = P2PTask::InitiateHandshake {
+                        addr,
+                        host_state: self.host_state.clone(),
+                    };
                     TaskInstance::new(t)
                 };
 

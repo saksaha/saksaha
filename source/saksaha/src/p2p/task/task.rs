@@ -1,6 +1,6 @@
-use std::sync::Arc;
-
+use crate::p2p::state::HostState;
 use p2p_identity::addr::Addr;
+use std::sync::Arc;
 
 pub(crate) type P2PTaskInstance = TaskInstance<P2PTask>;
 
@@ -27,7 +27,10 @@ pub(crate) enum TaskResult {
 
 #[derive(Clone)]
 pub(crate) enum P2PTask {
-    InitiateHandshake { addr: Addr },
+    InitiateHandshake {
+        addr: Addr,
+        host_state: Arc<HostState>,
+    },
 }
 
 impl<T> std::fmt::Display for TaskInstance<T>
@@ -42,7 +45,7 @@ where
 impl std::fmt::Display for P2PTask {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::InitiateHandshake { addr } => {
+            Self::InitiateHandshake { addr, host_state } => {
                 write!(f, "InitiateHandshake, addr: {}", addr)
             }
         }
