@@ -7,7 +7,7 @@ use crate::{
 };
 use colored::Colorize;
 use logger::{tdebug, terr, tinfo};
-use peer::PeerStore;
+use p2p_peer::PeerTable;
 use std::sync::Arc;
 
 impl System {
@@ -21,8 +21,8 @@ impl System {
 
         tinfo!("saksaha", "system", "Resolved config: {:?}", config);
 
-        let peer_store = {
-            let ps = PeerStore::init().await?;
+        let peer_table = {
+            let ps = PeerTable::init(None).await?;
             Arc::new(ps)
         };
 
@@ -90,7 +90,7 @@ impl System {
             rpc_port,
             secret: config.p2p.secret,
             public_key_str: config.p2p.public_key_str,
-            peer_store,
+            peer_table,
         };
 
         let p2p_host = Host::init(p2p_host_args).await?;

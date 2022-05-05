@@ -8,7 +8,7 @@ use logger::tinfo;
 use p2p_discovery::{Discovery, DiscoveryArgs};
 use p2p_identity::addr::UnknownAddr;
 use p2p_identity::identity::P2PIdentity;
-use peer::PeerStore;
+use p2p_peer::PeerTable;
 use std::sync::Arc;
 use task_queue::TaskQueue;
 use tokio::net::TcpListener;
@@ -40,7 +40,7 @@ pub(crate) struct HostArgs {
     pub(crate) rpc_port: u16,
     pub(crate) secret: String,
     pub(crate) public_key_str: String,
-    pub(crate) peer_store: Arc<PeerStore>,
+    pub(crate) peer_table: Arc<PeerTable>,
 }
 
 impl Host {
@@ -84,7 +84,7 @@ impl Host {
                 p2p_identity: p2p_identity.clone(),
                 rpc_port: host_args.rpc_port,
                 p2p_port: host_args.p2p_port,
-                peer_store: host_args.peer_store.clone(),
+                peer_table: host_args.peer_table.clone(),
                 p2p_socket,
             };
             Arc::new(s)

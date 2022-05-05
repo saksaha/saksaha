@@ -10,6 +10,7 @@ pub(crate) struct CLIArgs {
     pub(crate) disc_task_queue_capacity: Option<u16>,
     pub(crate) p2p_task_interval: Option<u16>,
     pub(crate) p2p_task_queue_capacity: Option<u16>,
+    pub(crate) p2p_peer_table_capacity: Option<u16>,
     pub(crate) p2p_max_conn_count: Option<u16>,
     pub(crate) p2p_dial_interval: Option<u16>,
     pub(crate) config: Option<String>,
@@ -158,6 +159,20 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
             None => None,
         };
 
+    let p2p_peer_table_capacity =
+        match matches.value_of("p2p-peer-table-capacity") {
+            Some(i) => match i.parse::<u16>() {
+                Ok(interval) => Some(interval),
+                Err(err) => {
+                    return Err(format!(
+                        "Cannot parse p2p peer table capacity (u16), err: {}",
+                        err,
+                    ))
+                }
+            },
+            None => None,
+        };
+
     let p2p_max_conn_count = match matches.value_of("p2p-max-conn-count") {
         Some(i) => match i.parse::<u16>() {
             Ok(interval) => Some(interval),
@@ -192,6 +207,7 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
         disc_task_queue_capacity,
         p2p_task_interval,
         p2p_task_queue_capacity,
+        p2p_peer_table_capacity,
         p2p_max_conn_count,
         p2p_dial_interval,
         config,

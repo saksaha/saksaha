@@ -103,6 +103,15 @@ pub(super) fn create_app<'a>() -> Command<'a> {
                 ),
         )
         .arg(
+            Arg::new("p2p-peer-table-capacity") //
+                .long("p2p-peer-table-capacity")
+                .takes_value(true)
+                .long_help(
+                    "P2P peer table maximum number of slots\n\
+                    e.g. 50",
+                ),
+        )
+        .arg(
             Arg::new("p2p-max-conn-count") //
                 .long("p2p-max-conn-count")
                 .takes_value(true)
