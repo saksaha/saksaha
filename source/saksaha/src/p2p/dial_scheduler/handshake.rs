@@ -177,10 +177,7 @@
 //     }
 // }
 
-use crate::p2p::{
-    state::HostState,
-    task::{P2PTask, P2PTaskInstance, TaskInstance},
-};
+use crate::p2p::{state::HostState, task::P2PTask};
 use logger::{terr, tinfo, twarn};
 use p2p_discovery::{AddrsIterator, Item};
 use p2p_identity::addr::Addr;
@@ -193,7 +190,7 @@ use task_queue::TaskQueue;
 const HANDSHAKE_DIAL_INTERVAL: u64 = 2000;
 
 pub(crate) struct HandshakeDialLoop {
-    pub(crate) p2p_task_queue: Arc<TaskQueue<P2PTaskInstance>>,
+    pub(crate) p2p_task_queue: Arc<TaskQueue<P2PTask>>,
     pub(crate) p2p_dial_interval: Option<u16>,
     pub(crate) addrs_iter: Arc<AddrsIterator>,
     pub(crate) host_state: Arc<HostState>,
@@ -216,12 +213,9 @@ impl HandshakeDialLoop {
             if let Some(a) = self.addrs_iter.next().await {
                 let addr = a.get_value();
 
-                let task = {
-                    let t = P2PTask::InitiateHandshake {
-                        addr,
-                        host_state: self.host_state.clone(),
-                    };
-                    TaskInstance::new(t)
+                let task = P2PTask::InitiateHandshake {
+                    addr,
+                    host_state: self.host_state.clone(),
                 };
 
                 match self.p2p_task_queue.push_back(task).await {

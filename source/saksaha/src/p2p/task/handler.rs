@@ -1,4 +1,3 @@
-use super::task::{P2PTaskInstance, TaskResult};
 use crate::p2p::task::P2PTask;
 use logger::terr;
 use logger::twarn;
@@ -7,21 +6,19 @@ use p2p_transport::handshake::{self, HandshakeInitArgs};
 use std::sync::Arc;
 
 pub(crate) struct Handler {
-    pub(crate) task_instance: P2PTaskInstance,
+    pub(crate) task: P2PTask,
 }
 
 impl Handler {
-    pub(crate) async fn run(&self) -> TaskResult {
-        do_task(self.task_instance.clone()).await
+    pub(crate) async fn run(&self) {
+        do_task(&self.task).await
     }
 }
 
-async fn do_task(task_instance: P2PTaskInstance) -> TaskResult {
-    let task = task_instance.task;
-
+async fn do_task(task: &P2PTask) {
     match &*task {
         P2PTask::InitiateHandshake { addr, host_state } => {
-            let active_calls = &host_state.active_calls;
+            let active_calls = &host_state.p2p_active_calls;
 
             let endpoint = addr.p2p_endpoint();
 
@@ -31,19 +28,17 @@ async fn do_task(task_instance: P2PTaskInstance) -> TaskResult {
                         twarn!(
                             "saksaha",
                             "p2p",
-                            "Call to initiate handshake is abandoned since we \
-                    are already in a call, call: {}",
-                            call
+                            "Call to initiate handshake is abandoned \
+                            since we are already in a call, call: {}",
+                            call,
                         );
-
-                        return TaskResult::Fail;
                     }
                     None => {
                         active_calls.insert_outbound(endpoint.clone()).await;
                         CallGuard {
                             endpoint,
                             active_calls: active_calls.clone(),
-                        }
+                        };
                     }
                 }
             };
@@ -63,14 +58,10 @@ async fn do_task(task_instance: P2PTaskInstance) -> TaskResult {
                         err: {}",
                         err,
                     );
-
-                    return TaskResult::Fail;
                 }
             }
         }
     };
-
-    return TaskResult::Success;
 }
 
 struct CallGuard {

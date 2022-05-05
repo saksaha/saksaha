@@ -1,6 +1,5 @@
 use logger::twarn;
 use std::{collections::HashMap, sync::Arc};
-
 use tokio::sync::{
     mpsc::{self, UnboundedReceiver, UnboundedSender},
     Mutex,
@@ -13,7 +12,6 @@ pub enum Call {
 
 pub struct ActiveCalls {
     map: Arc<Mutex<HashMap<String, Arc<Call>>>>,
-    removal_routine: Arc<RemovalRoutine>,
     call_removal_tx: Arc<UnboundedSender<String>>,
 }
 
@@ -30,33 +28,28 @@ impl ActiveCalls {
             Arc::new(Mutex::new(m))
         };
 
-        let (removal_routine, call_removal_tx) = {
+        let call_removal_tx = {
             let (call_removal_tx, call_removal_rx) = {
                 let (tx, rx) = mpsc::unbounded_channel();
                 (Arc::new(tx), Mutex::new(rx))
             };
 
-            let r = RemovalRoutine {
+            let removal_routine = RemovalRoutine {
                 map: map.clone(),
                 call_removal_rx,
             };
 
-            (Arc::new(r), call_removal_tx)
+            tokio::spawn(async move {
+                removal_routine.run().await;
+            });
+
+            call_removal_tx
         };
 
         ActiveCalls {
             call_removal_tx,
             map,
-            removal_routine,
         }
-    }
-
-    pub fn run(&self) {
-        let removal_routine = self.removal_routine.clone();
-
-        tokio::spawn(async move {
-            removal_routine.run().await;
-        });
     }
 
     // Endpoint is {ip || port} in the network where the target wants
