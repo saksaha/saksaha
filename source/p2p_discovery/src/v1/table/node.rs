@@ -1,4 +1,4 @@
-use p2p_identity::addr::{Addr, KnownAddr};
+use p2p_identity::addr::Addr;
 
 #[derive(Debug)]
 pub(crate) enum NodeStatus {

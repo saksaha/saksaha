@@ -10,7 +10,7 @@ mod task;
 use self::dial_scheduler::DialSchedulerArgs;
 use self::net::connection::UdpConn;
 pub use self::table::{AddrGuard, AddrsIterator};
-use self::task::DiscoveryTaskInstance;
+use self::task::DiscoveryTask;
 use self::{
     dial_scheduler::DialScheduler, server::Server, state::DiscState,
     task::runtime::DiscTaskRuntime,
@@ -29,7 +29,7 @@ pub struct Discovery {
     server: Arc<Server>,
     disc_state: Arc<DiscState>,
     dial_scheduler: Arc<DialScheduler>,
-    disc_task_queue: Arc<TaskQueue<DiscoveryTaskInstance>>,
+    disc_task_queue: Arc<TaskQueue<DiscoveryTask>>,
     task_runtime: Arc<DiscTaskRuntime>,
 }
 
