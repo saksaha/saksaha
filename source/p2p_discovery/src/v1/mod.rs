@@ -9,7 +9,7 @@ mod task;
 
 use self::dial_scheduler::DialSchedulerArgs;
 use self::net::connection::UdpConn;
-pub use self::table::{AddrsIterator, Item};
+pub use self::table::{AddrGuard, AddrsIterator};
 use self::task::DiscoveryTaskInstance;
 use self::{
     dial_scheduler::DialScheduler, server::Server, state::DiscState,
@@ -29,7 +29,7 @@ pub struct Discovery {
     server: Arc<Server>,
     disc_state: Arc<DiscState>,
     dial_scheduler: Arc<DialScheduler>,
-    task_queue: Arc<TaskQueue<DiscoveryTaskInstance>>,
+    disc_task_queue: Arc<TaskQueue<DiscoveryTaskInstance>>,
     task_runtime: Arc<DiscTaskRuntime>,
 }
 
@@ -83,7 +83,7 @@ impl Discovery {
             Arc::new(s)
         };
 
-        let task_queue = {
+        let disc_task_queue = {
             let capacity = match disc_args.disc_task_queue_capacity {
                 Some(c) => c.into(),
                 None => DISC_TASK_QUEUE_CAPACITY,
@@ -95,7 +95,7 @@ impl Discovery {
 
         let task_runtime = {
             let h = DiscTaskRuntime::new(
-                task_queue.clone(),
+                disc_task_queue.clone(),
                 disc_args.disc_task_interval,
             );
             Arc::new(h)
@@ -110,7 +110,7 @@ impl Discovery {
             disc_state: disc_state.clone(),
             disc_dial_interval: disc_args.disc_dial_interval,
             bootstrap_addrs: disc_args.bootstrap_addrs,
-            task_queue: task_queue.clone(),
+            disc_task_queue: disc_task_queue.clone(),
         };
 
         let dial_scheduler = {
@@ -122,7 +122,7 @@ impl Discovery {
             disc_state,
             server,
             dial_scheduler,
-            task_queue,
+            disc_task_queue,
             task_runtime,
         };
 

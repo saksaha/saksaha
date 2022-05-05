@@ -10,7 +10,7 @@ pub struct AddrsIterator {
     known_addrs_rx: Arc<Mutex<UnboundedReceiver<Arc<Mutex<Node>>>>>,
 }
 
-pub struct Item {
+pub struct AddrGuard {
     val: KnownAddr,
     node: Arc<Mutex<Node>>,
     known_addrs_tx: Arc<UnboundedSender<Arc<Mutex<Node>>>>,
@@ -27,7 +27,7 @@ impl AddrsIterator {
         }
     }
 
-    pub async fn next(&self) -> Option<Item> {
+    pub async fn next(&self) -> Option<AddrGuard> {
         let mut rx = self.known_addrs_rx.lock().await;
 
         match rx.recv().await {
@@ -36,13 +36,13 @@ impl AddrsIterator {
                 match &node_lock.value {
                     NodeValue::Valued(v) => {
                         if let Addr::Known(addr) = &v.addr {
-                            let item = Item {
+                            let addr_guard = AddrGuard {
                                 known_addrs_tx: self.known_addrs_tx.clone(),
                                 val: addr.clone(),
                                 node: n.clone(),
                             };
 
-                            return Some(item);
+                            return Some(addr_guard);
                         } else {
                             terr!(
                                 "p2p_discovery",
@@ -80,13 +80,13 @@ impl AddrsIterator {
     }
 }
 
-impl Item {
+impl AddrGuard {
     pub fn get_value(&self) -> KnownAddr {
         self.val.clone()
     }
 }
 
-impl Drop for Item {
+impl Drop for AddrGuard {
     fn drop(&mut self) {
         println!(
             "Node (known addr) has been used. We push it back to the queue"
@@ -98,8 +98,9 @@ impl Drop for Item {
                 terr!(
                     "p2p_discovery",
                     "table",
-                    "Known address cannot be queued again. There is something \
-                    wrong in the unbounded mpsc channel, err: {}",
+                    "Known address cannot be queued again. There is \
+                        something wrong in the unbounded mpsc channel, \
+                        err: {}",
                     err,
                 );
             }

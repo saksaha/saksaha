@@ -1,11 +1,13 @@
 use crate::p2p::state::HostState;
+use p2p_discovery::AddrGuard;
 use p2p_identity::addr::KnownAddr;
 use std::sync::Arc;
 
-#[derive(Clone)]
+// #[derive(Clone)]
 pub(crate) enum P2PTask {
     InitiateHandshake {
-        addr: KnownAddr,
+        addr_guard: AddrGuard,
+        // addr: KnownAddr,
         host_state: Arc<HostState>,
     },
 }
@@ -13,8 +15,12 @@ pub(crate) enum P2PTask {
 impl std::fmt::Display for P2PTask {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::InitiateHandshake { addr, .. } => {
-                write!(f, "InitiateHandshake, addr: {}", addr)
+            Self::InitiateHandshake { addr_guard, .. } => {
+                write!(
+                    f,
+                    "InitiateHandshake, addr_guard: {}",
+                    addr_guard.get_value(),
+                )
             }
         }
     }

@@ -1,4 +1,4 @@
-use super::{handler::Handler, P2PTask};
+use super::{handler, P2PTask};
 use logger::{tdebug, terr};
 use std::{
     sync::Arc,
@@ -58,8 +58,9 @@ impl P2PTaskRuntime {
                 }
             };
 
-            let handler = Handler { task };
-            handler.run().await;
+            // let handler = Handler { task };
+            // handler.run().await;
+            handler::run(task).await;
 
             utils_time::wait_until_min_interval(time_since, *task_min_interval)
                 .await;

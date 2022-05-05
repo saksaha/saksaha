@@ -4,22 +4,32 @@ use logger::twarn;
 use p2p_active_calls::ActiveCalls;
 use p2p_transport::handshake::{self, HandshakeInitArgs};
 use std::sync::Arc;
+use std::time::Duration;
 
-pub(crate) struct Handler {
-    pub(crate) task: P2PTask,
-}
+// pub(crate) struct Handler {
+//     pub(crate) task: P2PTask,
+// }
 
-impl Handler {
-    pub(crate) async fn run(&self) {
-        do_task(&self.task).await
-    }
-}
+// impl Handler {
+//     pub(crate) async fn run(&self) {
+//         println!("1231213");
 
-async fn do_task(task: &P2PTask) {
-    match &*task {
-        P2PTask::InitiateHandshake { addr, host_state } => {
+//         do_task(&self.task).await;
+
+//         tokio::spawn(async move {
+//             self.task;
+//         });
+//     }
+// }
+
+pub(crate) async fn run(task: P2PTask) {
+    match task {
+        P2PTask::InitiateHandshake {
+            addr_guard,
+            host_state,
+        } => {
             let active_calls = &host_state.p2p_active_calls;
-
+            let addr = addr_guard.get_value();
             let endpoint = addr.p2p_endpoint();
 
             let _call_guard = {
@@ -47,6 +57,14 @@ async fn do_task(task: &P2PTask) {
                 addr: addr.clone(),
                 p2p_port: host_state.p2p_port,
             };
+
+            tokio::spawn(async {
+                println!("moved, will wait for 3 seconds");
+
+                tokio::time::sleep(Duration::from_secs(3)).await;
+
+                addr_guard;
+            });
 
             match handshake::initiate_handshake(handshake_init_args).await {
                 Ok(_) => (),
