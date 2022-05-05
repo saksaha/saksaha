@@ -51,8 +51,6 @@ impl Table {
         let (known_addrs_tx, known_addrs_rx) = {
             let (tx, rx) = mpsc::unbounded_channel();
             (Arc::new(tx), Arc::new(Mutex::new(rx)))
-            // let v = Vec::with_capacity(disc_table_capacity);
-            // Arc::new(Mutex::new(v))
         };
 
         let table = Table {

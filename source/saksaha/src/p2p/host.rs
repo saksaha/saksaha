@@ -5,6 +5,7 @@ use super::task::P2PTaskInstance;
 use super::{dial_scheduler::P2PDialScheduler, server::Server};
 use colored::Colorize;
 use logger::tinfo;
+use p2p_active_calls::ActiveCalls;
 use p2p_discovery::{Discovery, DiscoveryArgs};
 use p2p_identity::addr::UnknownAddr;
 use p2p_identity::identity::P2PIdentity;
@@ -77,12 +78,19 @@ impl Host {
             Arc::new(h)
         };
 
+        let active_calls = {
+            let a = ActiveCalls::init();
+
+            Arc::new(a)
+        };
+
         let host_state = {
             let s = HostState {
                 p2p_identity: p2p_identity.clone(),
                 rpc_port: host_args.rpc_port,
                 p2p_port: host_args.p2p_port,
                 peer_table: host_args.peer_table.clone(),
+                active_calls: active_calls,
                 // p2p_socket,
             };
             Arc::new(s)
@@ -148,7 +156,7 @@ impl Host {
 
         let p2p_task_runtime = self.p2p_task_runtime.clone();
         tokio::spawn(async move {
-            p2p_task_runtime.run();
+            p2p_task_runtime.run().await;
         });
 
         let p2p_server = self.p2p_server.clone();

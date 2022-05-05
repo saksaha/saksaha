@@ -45,7 +45,7 @@ where
 impl std::fmt::Display for P2PTask {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::InitiateHandshake { addr, host_state } => {
+            Self::InitiateHandshake { addr, .. } => {
                 write!(f, "InitiateHandshake, addr: {}", addr)
             }
         }
