@@ -59,7 +59,6 @@ pub(crate) async fn init_who_are_you(
     let src_p2p_port = disc_state.p2p_port;
     let src_sig = disc_state.p2p_identity.sig;
     let src_public_key_str = disc_state.p2p_identity.public_key_str.clone();
-    let src_public_key = disc_state.p2p_identity.secret_key.public_key();
 
     let way = WhoAreYou {
         src_sig,

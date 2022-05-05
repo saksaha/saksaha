@@ -4,7 +4,6 @@ use crate::{
     state::DiscState,
     table::{NodeStatus, NodeValue},
 };
-use crypto::PublicKey;
 use p2p_identity::addr::{Addr, KnownAddr};
 use std::{net::SocketAddr, sync::Arc};
 use thiserror::Error;
