@@ -13,25 +13,25 @@ pub(crate) struct DialSchedulerArgs {
     pub(crate) disc_state: Arc<DiscState>,
     pub(crate) disc_dial_interval: Option<u16>,
     pub(crate) bootstrap_addrs: Vec<UnknownAddr>,
-    pub(crate) task_queue: Arc<TaskQueue<DiscoveryTaskInstance>>,
+    pub(crate) disc_task_queue: Arc<TaskQueue<DiscoveryTaskInstance>>,
 }
 
 pub(crate) struct DialScheduler {
     disc_state: Arc<DiscState>,
-    task_queue: Arc<TaskQueue<DiscoveryTaskInstance>>,
+    disc_task_queue: Arc<TaskQueue<DiscoveryTaskInstance>>,
     dial_loop: Arc<DialLoop>,
     bootstrap_addrs: Vec<UnknownAddr>,
 }
 
 struct DialLoop {
-    task_queue: Arc<TaskQueue<DiscoveryTaskInstance>>,
+    disc_task_queue: Arc<TaskQueue<DiscoveryTaskInstance>>,
     disc_dial_interval: Duration,
 }
 
 impl DialScheduler {
     pub async fn init(dial_schd_args: DialSchedulerArgs) -> DialScheduler {
         let DialSchedulerArgs {
-            task_queue,
+            disc_task_queue,
             bootstrap_addrs,
             disc_dial_interval,
             disc_state,
@@ -44,7 +44,7 @@ impl DialScheduler {
 
         let dial_loop = {
             let l = DialLoop {
-                task_queue: task_queue.clone(),
+                disc_task_queue: disc_task_queue.clone(),
                 disc_dial_interval,
             };
             Arc::new(l)
@@ -52,7 +52,7 @@ impl DialScheduler {
 
         let d = DialScheduler {
             disc_state: disc_state.clone(),
-            task_queue: task_queue.clone(),
+            disc_task_queue: disc_task_queue.clone(),
             dial_loop,
             bootstrap_addrs,
         };
@@ -100,7 +100,7 @@ impl DialScheduler {
                 TaskInstance::new(t)
             };
 
-            match self.task_queue.push_back(task).await {
+            match self.disc_task_queue.push_back(task).await {
                 Ok(_) => {}
                 Err(err) => {
                     twarn!(

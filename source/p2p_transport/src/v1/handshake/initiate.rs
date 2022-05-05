@@ -65,7 +65,7 @@ pub async fn initiate_handshake(
         }
     };
 
-    let p = addr.public_key;
+    let _p = addr.public_key;
     // println!("power: {:?}", p);
 
     // let dest_pub_key = addr.public_key

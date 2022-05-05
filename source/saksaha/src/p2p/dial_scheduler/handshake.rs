@@ -179,7 +179,7 @@
 
 use crate::p2p::{state::HostState, task::P2PTask};
 use logger::{terr, tinfo, twarn};
-use p2p_discovery::{AddrsIterator, Item};
+use p2p_discovery::{AddrGuard, AddrsIterator};
 use p2p_identity::addr::Addr;
 use std::{
     sync::Arc,
@@ -206,13 +206,16 @@ impl HandshakeDialLoop {
         };
 
         loop {
+            println!("handshake dial loop iteration");
+
             let time_since = SystemTime::now();
 
-            if let Some(item) = self.addrs_iter.next().await {
-                let addr = item.get_value();
+            if let Some(addr_guard) = self.addrs_iter.next().await {
+                // let addr = item.get_value();
 
                 let task = P2PTask::InitiateHandshake {
-                    addr,
+                    addr_guard,
+                    // addr,
                     host_state: self.host_state.clone(),
                 };
 

@@ -5,7 +5,7 @@ use tokio::sync::{
 
 pub struct TaskQueue<T>
 where
-    T: Clone + Send + Sync,
+    T: Send + Sync,
 {
     tx: Sender<T>,
     rx: Mutex<Receiver<T>>,
@@ -13,7 +13,7 @@ where
 
 impl<T> TaskQueue<T>
 where
-    T: std::fmt::Display + Clone + Send + Sync + 'static,
+    T: std::fmt::Display + Send + Sync + 'static,
 {
     pub fn new(capacity: usize) -> TaskQueue<T> {
         let (tx, rx) = mpsc::channel(capacity);
@@ -25,12 +25,14 @@ where
     }
 
     pub async fn push_back(&self, task: T) -> Result<(), String> {
-        match self.tx.send(task.clone()).await {
+        let task_str = task.to_string();
+
+        match self.tx.send(task).await {
             Ok(_) => return Ok(()),
             Err(err) => {
                 return Err(format!(
                     "Cannot add a new task, task: {}, err: {}",
-                    task, err
+                    task_str, err,
                 ));
             }
         };
