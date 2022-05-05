@@ -1,7 +1,4 @@
-use super::{
-    handler::Handler, task::DiscoveryTaskInstance, task::TaskInstance,
-    TaskResult,
-};
+use super::{handler, DiscoveryTask};
 use logger::{tdebug, terr};
 use std::{
     sync::Arc,
@@ -9,21 +6,21 @@ use std::{
 };
 use task_queue::TaskQueue;
 
-const MAX_TASK_RETRY: usize = 2;
+const DISC_TASK_INTERVAL: u64 = 1000;
 
 pub(crate) struct DiscTaskRuntime {
-    pub(crate) task_queue: Arc<TaskQueue<DiscoveryTaskInstance>>,
+    pub(crate) task_queue: Arc<TaskQueue<DiscoveryTask>>,
     pub(crate) disc_task_interval: Duration,
 }
 
 impl DiscTaskRuntime {
     pub(crate) fn new(
-        task_queue: Arc<TaskQueue<DiscoveryTaskInstance>>,
+        task_queue: Arc<TaskQueue<DiscoveryTask>>,
         disc_task_interval: Option<u16>,
     ) -> DiscTaskRuntime {
         let disc_task_interval = match disc_task_interval {
             Some(i) => Duration::from_millis(i.into()),
-            None => Duration::from_millis(1000),
+            None => Duration::from_millis(DISC_TASK_INTERVAL),
         };
 
         DiscTaskRuntime {
@@ -39,7 +36,7 @@ impl DiscTaskRuntime {
         loop {
             let time_since = SystemTime::now();
 
-            let task_instance = match task_queue.pop_front().await {
+            let task = match task_queue.pop_front().await {
                 Ok(t) => {
                     tdebug!(
                         "p2p_discovery",
@@ -61,32 +58,7 @@ impl DiscTaskRuntime {
                 }
             };
 
-            let handler = Handler {
-                task_instance: task_instance.clone(),
-            };
-
-            match handler.run().await {
-                TaskResult::Success => (),
-                TaskResult::Fail => (),
-                TaskResult::FailRetry { msg } => {
-                    if task_instance.fail_count < MAX_TASK_RETRY {
-                        tdebug!(
-                            "p2p_discovery",
-                            "task",
-                            "Task failed retriable, task: {}, msg: {}",
-                            task_instance,
-                            msg,
-                        );
-
-                        let task_instance = TaskInstance {
-                            task: task_instance.task.clone(),
-                            fail_count: task_instance.fail_count + 1,
-                        };
-
-                        let _ = task_queue.push_back(task_instance).await;
-                    }
-                }
-            };
+            handler::run(task).await;
 
             utils_time::wait_until_min_interval(time_since, disc_task_interval)
                 .await;

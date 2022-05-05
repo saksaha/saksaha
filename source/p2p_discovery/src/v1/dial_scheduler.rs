@@ -1,9 +1,4 @@
-use crate::v1::task::TaskInstance;
-
-use super::{
-    state::DiscState,
-    task::{DiscoveryTask, DiscoveryTaskInstance},
-};
+use super::{state::DiscState, task::DiscoveryTask};
 use logger::{tinfo, twarn};
 use p2p_identity::addr::{Addr, UnknownAddr};
 use std::{sync::Arc, time::Duration};
@@ -13,18 +8,18 @@ pub(crate) struct DialSchedulerArgs {
     pub(crate) disc_state: Arc<DiscState>,
     pub(crate) disc_dial_interval: Option<u16>,
     pub(crate) bootstrap_addrs: Vec<UnknownAddr>,
-    pub(crate) disc_task_queue: Arc<TaskQueue<DiscoveryTaskInstance>>,
+    pub(crate) disc_task_queue: Arc<TaskQueue<DiscoveryTask>>,
 }
 
 pub(crate) struct DialScheduler {
     disc_state: Arc<DiscState>,
-    disc_task_queue: Arc<TaskQueue<DiscoveryTaskInstance>>,
+    disc_task_queue: Arc<TaskQueue<DiscoveryTask>>,
     dial_loop: Arc<DialLoop>,
     bootstrap_addrs: Vec<UnknownAddr>,
 }
 
 struct DialLoop {
-    disc_task_queue: Arc<TaskQueue<DiscoveryTaskInstance>>,
+    disc_task_queue: Arc<TaskQueue<DiscoveryTask>>,
     disc_dial_interval: Duration,
 }
 
@@ -91,13 +86,9 @@ impl DialScheduler {
                 addr.disc_endpoint(),
             );
 
-            let task = {
-                let t = DiscoveryTask::InitiateWhoAreYou {
-                    addr: addr.clone(),
-                    disc_state: self.disc_state.clone(),
-                };
-
-                TaskInstance::new(t)
+            let task = DiscoveryTask::InitiateWhoAreYou {
+                addr: addr.clone(),
+                disc_state: self.disc_state.clone(),
             };
 
             match self.disc_task_queue.push_back(task).await {
