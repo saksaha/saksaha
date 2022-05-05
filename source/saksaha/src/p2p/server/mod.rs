@@ -116,20 +116,25 @@ mod handler;
 use super::state::HostState;
 use handler::Handler;
 use logger::{terr, tinfo};
-use std::sync::Arc;
-use tokio::sync::Semaphore;
+use std::{sync::Arc, time::Duration};
+use tokio::{
+    net::{TcpListener, TcpStream},
+    sync::Semaphore,
+};
 
 const MAX_CONN_COUNT: usize = 50;
 
 pub(crate) struct Server {
     host_state: Arc<HostState>,
     conn_semaphore: Arc<Semaphore>,
+    p2p_socket: TcpListener,
 }
 
 impl Server {
     pub fn new(
         host_state: Arc<HostState>,
         p2p_max_conn_count: Option<u16>,
+        p2p_socket: TcpListener,
     ) -> Server {
         let p2p_max_conn_count = match p2p_max_conn_count {
             Some(c) => c.into(),
@@ -141,65 +146,78 @@ impl Server {
         Server {
             host_state,
             conn_semaphore,
+            p2p_socket,
         }
     }
 
-    pub fn start(&self) -> Result<(), String> {
+    pub async fn run(&self) {
         tinfo!("saksaha", "p2p", "P2P server starts to accept requests",);
 
-        self.run_loop()
+        self.run_loop().await;
     }
 
-    pub fn run_loop(&self) -> Result<(), String> {
+    // async fn accept(&mut self) -> Result<TcpStream, String> {
+    //     let mut backoff = 1;
+
+    //     // Try to accept a few times
+    //     // loop {
+    //     //     // Perform the accept operation. If a socket is successfully
+    //     //     // accepted, return it. Otherwise, save the error.
+    //     //     match self.p2p_socket.accept().await {
+    //     //         Ok((socket, _)) => return Ok(socket),
+    //     //         Err(err) => {
+    //     //             if backoff > 64 {
+    //     //                 // Accept has failed too many times. Return the error.
+    //     //                 return Err(err.into());
+    //     //             }
+    //     //         }
+    //     //     }
+
+    //     //     // Pause execution until the back off period elapses.
+    //     //     time::sleep(Duration::from_secs(backoff)).await;
+
+    //     //     // Double the back off
+    //     //     backoff *= 2;
+    //     // }
+    // }
+
+    pub async fn run_loop(&self) {
         let host_state = self.host_state.clone();
-        let tcp_socket = self.host_state.p2p_socket.clone();
+        // let tcp_socket = self.p2p_socket;
         let conn_semaphore = self.conn_semaphore.clone();
 
-        tokio::spawn(async move {
-            loop {
-                let conn_semaphore = conn_semaphore.clone();
-                match conn_semaphore.acquire().await {
-                    Ok(s) => s.forget(),
-                    Err(err) => {
-                        terr!(
-                            "saksaha",
-                            "p2p",
-                            "Connection semaphore has been closed, err: {}",
-                            err,
-                        );
-                        break;
-                    }
-                };
+        // loop {
+        // let conn_semaphore = conn_semaphore.clone();
+        // conn_semaphore.acquire().await.unwrap().forget();
 
-                // let (msg, socket_addr) = match udp_conn.read_msg().await {
-                //     Some(m) => m,
-                //     None => {
-                //         continue;
-                //     }
-                // };
+        // self.accept().await;
 
-                // let handler = Handler {
-                //     conn_semaphore,
-                //     disc_state: disc_state.clone(),
-                //     socket_addr,
-                //     msg,
-                // };
+        // let (msg, socket_addr) = match udp_conn.read_msg().await {
+        //     Some(m) => m,
+        //     None => {
+        //         continue;
+        //     }
+        // };
 
-                // match handler.run().await {
-                //     Ok(_) => (),
-                //     Err(err) => {
-                //         terr!(
-                //             "p2p_discovery",
-                //             "",
-                //             "Error processing request, addr: {}, err: {}",
-                //             socket_addr,
-                //             err
-                //         );
-                //     }
-                // };
-            }
-        });
+        // let handler = Handler {
+        //     conn_semaphore,
+        //     disc_state: disc_state.clone(),
+        //     socket_addr,
+        //     msg,
+        // };
 
-        Ok(())
+        // match handler.run().await {
+        //     Ok(_) => (),
+        //     Err(err) => {
+        //         terr!(
+        //             "p2p_discovery",
+        //             "",
+        //             "Error processing request, addr: {}, err: {}",
+        //             socket_addr,
+        //             err
+        //         );
+        //     }
+        // };
+        // }
     }
 }

@@ -1,5 +1,4 @@
 use super::app;
-use clap::{arg, command, ArgMatches, Command};
 
 #[derive(Debug)]
 pub(crate) struct CLIArgs {

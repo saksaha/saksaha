@@ -1,21 +1,16 @@
 mod routine;
 mod shutdown;
 
-use crate::{
-    ledger::Ledger, network::socket, p2p::host::Host, pconfig::PConfig,
-    rpc::RPC,
-};
+use crate::pconfig::PConfig;
 use logger::terr;
-use logger::{tdebug, tinfo};
+use logger::tinfo;
 use once_cell::sync::OnceCell;
 use std::sync::Arc;
-use tokio::{self, signal, sync::Mutex};
+use tokio::{self, signal};
 
 static INSTANCE: OnceCell<Arc<System>> = OnceCell::new();
 
-pub struct System {
-    system_state: Arc<Mutex<SystemState>>,
-}
+pub struct System {}
 
 #[derive(Debug)]
 pub struct SystemArgs {
@@ -36,22 +31,13 @@ pub struct SystemArgs {
     pub pconfig: PConfig,
 }
 
-struct SystemState {
-    p2p_host: Option<Host>,
-}
-
 impl System {
     pub fn get_instance() -> Result<Arc<System>, String> {
         if let Some(s) = INSTANCE.get() {
             return Ok(s.clone());
         } else {
             let system = {
-                let system_state = {
-                    let s = SystemState { p2p_host: None };
-                    Arc::new(Mutex::new(s))
-                };
-
-                let s = System { system_state };
+                let s = System {};
                 Arc::new(s)
             };
 

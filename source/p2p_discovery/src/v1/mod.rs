@@ -129,12 +129,21 @@ impl Discovery {
         Ok(disc)
     }
 
-    pub async fn start(&self) -> Result<(), String> {
-        self.server.start()?;
-        self.task_runtime.run();
-        self.dial_scheduler.start().await?;
+    pub async fn run(&self) {
+        let server = self.server.clone();
+        tokio::spawn(async move {
+            server.run().await;
+        });
 
-        Ok(())
+        let task_runtime = self.task_runtime.clone();
+        tokio::spawn(async move {
+            task_runtime.run().await;
+        });
+
+        let dial_scheduler = self.dial_scheduler.clone();
+        tokio::spawn(async move {
+            dial_scheduler.run().await;
+        });
     }
 
     pub fn iter(&self) -> AddrsIterator {

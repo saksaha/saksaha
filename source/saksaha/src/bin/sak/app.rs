@@ -1,4 +1,4 @@
-use clap::{arg, command, Arg, Command};
+use clap::{command, Arg, Command};
 
 pub(super) fn create_app<'a>() -> Command<'a> {
     command!()

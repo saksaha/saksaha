@@ -62,9 +62,7 @@ impl P2PDialScheduler {
         d
     }
 
-    pub async fn start(&self) -> Result<(), String> {
+    pub async fn run(&self) {
         self.handshake_dial_loop.run().await;
-
-        Ok(())
     }
 }

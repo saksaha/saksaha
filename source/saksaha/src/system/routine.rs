@@ -1,12 +1,9 @@
 use super::{System, SystemArgs};
 use crate::config::Config;
 use crate::p2p::host::HostArgs;
-use crate::{
-    ledger::Ledger, network::socket, p2p::host::Host, pconfig::PConfig,
-    rpc::RPC,
-};
+use crate::{p2p::host::Host, rpc::RPC};
 use colored::Colorize;
-use logger::{tdebug, terr, tinfo};
+use logger::{terr, tinfo};
 use p2p_peer::PeerTable;
 use std::sync::Arc;
 
@@ -22,7 +19,9 @@ impl System {
         tinfo!("saksaha", "system", "Resolved config: {:?}", config);
 
         let peer_table = {
-            let ps = PeerTable::init(None).await?;
+            let ps =
+                PeerTable::init(config.p2p.p2p_peer_table_capacity).await?;
+
             Arc::new(ps)
         };
 
@@ -103,7 +102,7 @@ impl System {
         // rpc.start().await?;
         // ledger.start().await?;
 
-        p2p_host.start().await?;
+        p2p_host.run().await;
 
         System::handle_ctrl_c().await;
 
