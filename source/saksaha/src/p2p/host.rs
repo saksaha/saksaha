@@ -1,7 +1,7 @@
 use super::dial_scheduler::P2PDialSchedulerArgs;
 use super::state::HostState;
 use super::task::runtime::P2PTaskRuntime;
-use super::task::P2PTaskInstance;
+use super::task::P2PTask;
 use super::{dial_scheduler::P2PDialScheduler, server::Server};
 use colored::Colorize;
 use logger::tinfo;
@@ -19,9 +19,10 @@ const P2P_TASK_QUEUE_CAPACITY: usize = 10;
 pub(crate) struct Host {
     host_state: Arc<HostState>,
     discovery: Arc<Discovery>,
+    p2p_active_calls: Arc<ActiveCalls>,
     p2p_dial_scheduler: Arc<P2PDialScheduler>,
     p2p_server: Arc<Server>,
-    p2p_task_queue: Arc<TaskQueue<P2PTaskInstance>>,
+    p2p_task_queue: Arc<TaskQueue<P2PTask>>,
     p2p_task_runtime: Arc<P2PTaskRuntime>,
 }
 
@@ -78,7 +79,7 @@ impl Host {
             Arc::new(h)
         };
 
-        let active_calls = {
+        let p2p_active_calls = {
             let a = ActiveCalls::init();
 
             Arc::new(a)
@@ -86,12 +87,11 @@ impl Host {
 
         let host_state = {
             let s = HostState {
+                p2p_active_calls: p2p_active_calls.clone(),
                 p2p_identity: p2p_identity.clone(),
-                rpc_port: host_args.rpc_port,
                 p2p_port: host_args.p2p_port,
+                rpc_port: host_args.rpc_port,
                 peer_table: host_args.peer_table.clone(),
-                active_calls: active_calls,
-                // p2p_socket,
             };
             Arc::new(s)
         };
@@ -138,6 +138,7 @@ impl Host {
 
         let host = Host {
             discovery,
+            p2p_active_calls,
             p2p_dial_scheduler,
             p2p_task_queue,
             p2p_task_runtime,

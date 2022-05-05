@@ -1,26 +1,24 @@
 mod handshake;
 
-use crate::p2p::{state::HostState, task::P2PTaskInstance};
+use super::task::P2PTask;
+use crate::p2p::state::HostState;
 use handshake::HandshakeDialLoop;
-use logger::{tinfo, twarn};
-use p2p_discovery::{AddrsIterator, Item};
+use logger::tinfo;
+use p2p_discovery::AddrsIterator;
 use p2p_identity::addr::Addr;
-use std::{
-    sync::Arc,
-    time::{Duration, SystemTime},
-};
+use std::sync::Arc;
 use task_queue::TaskQueue;
 
 pub(crate) struct P2PDialSchedulerArgs {
     pub(crate) host_state: Arc<HostState>,
     pub(crate) p2p_dial_interval: Option<u16>,
-    pub(crate) p2p_task_queue: Arc<TaskQueue<P2PTaskInstance>>,
+    pub(crate) p2p_task_queue: Arc<TaskQueue<P2PTask>>,
     pub(crate) addrs_iter: Arc<AddrsIterator>,
 }
 
 pub(crate) struct P2PDialScheduler {
     host_state: Arc<HostState>,
-    p2p_task_queue: Arc<TaskQueue<P2PTaskInstance>>,
+    p2p_task_queue: Arc<TaskQueue<P2PTask>>,
     handshake_dial_loop: Arc<HandshakeDialLoop>,
 }
 

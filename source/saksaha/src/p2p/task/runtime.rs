@@ -1,5 +1,4 @@
-use super::task::{P2PTaskInstance, TaskResult};
-use super::{handler::Handler, task::TaskInstance};
+use super::{handler::Handler, P2PTask};
 use logger::{tdebug, terr};
 use std::{
     sync::Arc,
@@ -7,17 +6,16 @@ use std::{
 };
 use task_queue::TaskQueue;
 
-const MAX_TASK_RETRY: usize = 2;
 const TASK_MIN_INTERVAL: u64 = 1000;
 
 pub(crate) struct P2PTaskRuntime {
-    pub(crate) task_queue: Arc<TaskQueue<P2PTaskInstance>>,
+    pub(crate) task_queue: Arc<TaskQueue<P2PTask>>,
     pub(crate) task_min_interval: Duration,
 }
 
 impl P2PTaskRuntime {
     pub(crate) fn new(
-        task_queue: Arc<TaskQueue<P2PTaskInstance>>,
+        task_queue: Arc<TaskQueue<P2PTask>>,
         disc_task_interval: Option<u16>,
     ) -> P2PTaskRuntime {
         let task_min_interval = match disc_task_interval {
@@ -38,7 +36,7 @@ impl P2PTaskRuntime {
         loop {
             let time_since = SystemTime::now();
 
-            let task_instance = match task_queue.pop_front().await {
+            let task = match task_queue.pop_front().await {
                 Ok(t) => {
                     tdebug!(
                         "saksaha",
@@ -60,43 +58,8 @@ impl P2PTaskRuntime {
                 }
             };
 
-            let handler = Handler {
-                task_instance: task_instance.clone(),
-            };
-
-            match handler.run().await {
-                TaskResult::Success => (),
-                TaskResult::Fail => (),
-                TaskResult::FailRetry { msg } => {
-                    if task_instance.fail_count < MAX_TASK_RETRY {
-                        tdebug!(
-                            "saksaha",
-                            "p2p",
-                            "Task failed retriable, task: {}, msg: {}",
-                            task_instance,
-                            msg,
-                        );
-
-                        let task_instance = TaskInstance {
-                            task: task_instance.task.clone(),
-                            fail_count: task_instance.fail_count + 1,
-                        };
-
-                        match task_queue.push_back(task_instance).await {
-                            Ok(_) => (),
-                            Err(err) => {
-                                terr!(
-                                    "saksaha",
-                                    "p2p",
-                                    "Error pushing the failed task back into \
-                                    the queue, err: {}",
-                                    err,
-                                );
-                            }
-                        }
-                    }
-                }
-            };
+            let handler = Handler { task };
+            handler.run().await;
 
             utils_time::wait_until_min_interval(time_since, *task_min_interval)
                 .await;
