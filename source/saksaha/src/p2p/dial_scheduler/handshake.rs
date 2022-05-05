@@ -208,10 +208,8 @@ impl HandshakeDialLoop {
         loop {
             let time_since = SystemTime::now();
 
-            println!("Getting next known addr");
-
-            if let Some(a) = self.addrs_iter.next().await {
-                let addr = a.get_value();
+            if let Some(item) = self.addrs_iter.next().await {
+                let addr = item.get_value();
 
                 let task = P2PTask::InitiateHandshake {
                     addr,

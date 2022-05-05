@@ -6,10 +6,8 @@ use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 use tokio::sync::Mutex;
 
 pub struct AddrsIterator {
-    curr_idx: Mutex<usize>,
     known_addrs_tx: Arc<UnboundedSender<Arc<Mutex<Node>>>>,
     known_addrs_rx: Arc<Mutex<UnboundedReceiver<Arc<Mutex<Node>>>>>,
-    disc_table_capacity: usize,
 }
 
 pub struct Item {
@@ -22,13 +20,10 @@ impl AddrsIterator {
     pub(crate) fn init(
         known_addrs_tx: Arc<UnboundedSender<Arc<Mutex<Node>>>>,
         known_addrs_rx: Arc<Mutex<UnboundedReceiver<Arc<Mutex<Node>>>>>,
-        disc_table_capacity: usize,
     ) -> AddrsIterator {
         AddrsIterator {
-            curr_idx: Mutex::new(0),
             known_addrs_tx,
             known_addrs_rx,
-            disc_table_capacity,
         }
     }
 

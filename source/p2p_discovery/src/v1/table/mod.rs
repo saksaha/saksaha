@@ -18,7 +18,6 @@ pub(crate) struct Table {
     addrs: Arc<Mutex<Vec<Arc<Mutex<Node>>>>>,
     known_addrs_tx: Arc<UnboundedSender<Arc<Mutex<Node>>>>,
     known_addrs_rx: Arc<Mutex<UnboundedReceiver<Arc<Mutex<Node>>>>>,
-    disc_table_capacity: usize,
 }
 
 impl Table {
@@ -58,7 +57,6 @@ impl Table {
             addrs,
             known_addrs_tx,
             known_addrs_rx,
-            disc_table_capacity,
         };
 
         Ok(table)
@@ -125,7 +123,6 @@ impl Table {
         AddrsIterator::init(
             self.known_addrs_tx.clone(),
             self.known_addrs_rx.clone(),
-            self.disc_table_capacity,
         )
     }
 }
