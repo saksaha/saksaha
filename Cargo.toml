@@ -5,7 +5,7 @@ members = [
   "source/saksaha",
   "source/crypto",
   "source/proofs",
-  "source/peer",
+  "source/p2p_peer",
   "source/p2p_discovery",
   "source/p2p_identity",
   "source/p2p_active_calls",

@@ -1,6 +1,6 @@
 use super::db::DB;
 use log::{debug, error, info, warn};
-use peer::{PeerStore, PeerValue, RegisteredPeerValue};
+use p2p_peer::{PeerTable, PeerValue, RegisteredPeerValue};
 use std::{
     sync::Arc,
     time::{Duration, SystemTime},
@@ -10,14 +10,14 @@ use tokio::sync::Mutex;
 
 pub(crate) struct Ledger {
     db: Arc<DB>,
-    peer_store: Arc<PeerStore>,
+    peer_table: Arc<PeerTable>,
 }
 
 impl Ledger {
-    pub fn new(peer_store: Arc<PeerStore>) -> Ledger {
+    pub fn new(peer_table: Arc<PeerTable>) -> Ledger {
         let db = Arc::new(DB {});
 
-        Ledger { peer_store, db }
+        Ledger { peer_table, db }
     }
 
     pub async fn start(&self) -> Result<(), String> {
@@ -25,7 +25,7 @@ impl Ledger {
 
         let min_interval = Duration::from_millis(2000);
 
-        let routine = LedgerRoutine::new(min_interval, self.peer_store.clone());
+        let routine = LedgerRoutine::new(min_interval, self.peer_table.clone());
         routine.run();
 
         Ok(())
@@ -35,20 +35,20 @@ impl Ledger {
 struct LedgerRoutine {
     is_running: Arc<Mutex<bool>>,
     min_interval: Duration,
-    peer_store: Arc<PeerStore>,
+    peer_table: Arc<PeerTable>,
 }
 
 impl LedgerRoutine {
     pub fn new(
         min_interval: Duration,
-        peer_store: Arc<PeerStore>,
+        peer_table: Arc<PeerTable>,
     ) -> LedgerRoutine {
         let is_running = Arc::new(Mutex::new(false));
 
         LedgerRoutine {
             is_running,
             min_interval,
-            peer_store,
+            peer_table,
         }
     }
 
@@ -57,14 +57,14 @@ impl LedgerRoutine {
 
         let is_running = self.is_running.clone();
         let min_interval = self.min_interval;
-        let peer_store = self.peer_store.clone();
+        let peer_table = self.peer_table.clone();
 
         tokio::spawn(async move {
             let mut is_running_lock = is_running.lock().await;
             *is_running_lock = true;
             std::mem::drop(is_running_lock);
 
-            let peer_store = peer_store.clone();
+            let peer_table = peer_table.clone();
 
             // loop {
             //     let start = SystemTime::now();

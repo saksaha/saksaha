@@ -68,6 +68,7 @@ fn main() {
         disc_task_queue_capacity: cli_args.disc_task_queue_capacity,
         p2p_task_interval: cli_args.p2p_task_interval,
         p2p_task_queue_capacity: cli_args.p2p_task_queue_capacity,
+        p2p_peer_table_capacity: cli_args.p2p_peer_table_capacity,
         p2p_max_conn_count: cli_args.p2p_max_conn_count,
         p2p_dial_interval: cli_args.p2p_dial_interval,
         p2p_port: cli_args.p2p_port,

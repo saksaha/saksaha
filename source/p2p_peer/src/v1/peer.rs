@@ -1,8 +1,4 @@
-use log::debug;
-// use p2p_transport::Transport;
 use tokio::sync::Mutex;
-
-const MAX_FAIL_COUNT: usize = 3;
 
 // #[derive(Debug, PartialEq)]
 // pub enum Status {

@@ -26,6 +26,7 @@ pub struct SystemArgs {
     pub disc_task_queue_capacity: Option<u16>,
     pub p2p_task_interval: Option<u16>,
     pub p2p_task_queue_capacity: Option<u16>,
+    pub p2p_peer_table_capacity: Option<u16>,
     pub p2p_max_conn_count: Option<u16>,
     pub p2p_dial_interval: Option<u16>,
     pub rpc_port: Option<u16>,
