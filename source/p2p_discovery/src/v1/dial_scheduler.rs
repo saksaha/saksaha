@@ -114,16 +114,14 @@ impl DialScheduler {
         }
     }
 
-    pub async fn start(&self) -> Result<(), String> {
+    pub async fn run(&self) {
         self.enqueue_bootstrap_addrs(&self.bootstrap_addrs).await;
-        self.dial_loop.run();
-
-        Ok(())
+        self.dial_loop.run().await;
     }
 }
 
 impl DialLoop {
-    fn run(&self) {
+    async fn run(&self) {
         tinfo!(
             "p2p_discovery",
             "dial_schd",

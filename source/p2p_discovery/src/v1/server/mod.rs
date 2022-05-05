@@ -23,66 +23,47 @@ impl Server {
         }
     }
 
-    pub fn start(&self) -> Result<(), String> {
+    pub async fn run(&self) {
         tinfo!(
             "p2p_discovery",
             "server",
             "P2P discovery server starts to accept requests",
         );
 
-        self.run_loop()
+        self.run_loop().await;
     }
 
-    pub fn run_loop(&self) -> Result<(), String> {
-        let disc_state = self.disc_state.clone();
-        let udp_conn = self.disc_state.udp_conn.clone();
-        let conn_semaphore = self.conn_semaphore.clone();
+    pub async fn run_loop(&self) {
+        loop {
+            self.conn_semaphore.acquire().await.unwrap().forget();
 
-        tokio::spawn(async move {
-            loop {
-                let conn_semaphore = conn_semaphore.clone();
-                match conn_semaphore.acquire().await {
-                    Ok(s) => s.forget(),
-                    Err(err) => {
-                        terr!(
-                            "p2p_discovery",
-                            "server",
-                            "Connection semaphore has been closed, err: {}",
-                            err,
-                        );
-                        break;
-                    }
-                };
-
-                let (msg, socket_addr) = match udp_conn.read_msg().await {
+            let (msg, socket_addr) =
+                match self.disc_state.udp_conn.read_msg().await {
                     Some(m) => m,
                     None => {
                         continue;
                     }
                 };
 
-                let handler = Handler {
-                    conn_semaphore,
-                    disc_state: disc_state.clone(),
-                    socket_addr,
-                    msg,
-                };
+            let handler = Handler {
+                conn_semaphore: self.conn_semaphore.clone(),
+                disc_state: self.disc_state.clone(),
+                socket_addr,
+                msg,
+            };
 
-                match handler.run().await {
-                    Ok(_) => (),
-                    Err(err) => {
-                        terr!(
-                            "p2p_discovery",
-                            "server",
-                            "Error processing request, addr: {}, err: {}",
-                            socket_addr,
-                            err
-                        );
-                    }
-                };
-            }
-        });
-
-        Ok(())
+            match handler.run().await {
+                Ok(_) => (),
+                Err(err) => {
+                    terr!(
+                        "p2p_discovery",
+                        "server",
+                        "Error processing request, addr: {}, err: {}",
+                        socket_addr,
+                        err
+                    );
+                }
+            };
+        }
     }
 }

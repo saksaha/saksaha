@@ -1,13 +1,9 @@
 use super::System;
 use logger::{terr, tinfo};
-use once_cell::sync::OnceCell;
-use std::sync::Arc;
-
-// static INSTANCE: OnceCell<Arc<System>> = OnceCell::new();
 
 impl System {
     pub(crate) fn shutdown() {
-        let system = match super::INSTANCE.get() {
+        let _system = match super::INSTANCE.get() {
             Some(p) => p,
             None => {
                 terr!(
