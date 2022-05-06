@@ -1,30 +1,28 @@
-use logger::tdebug;
+use crate::p2p::state::HostState;
+use logger::{tdebug, twarn};
 use p2p_identity::addr::Addr;
-use p2p_transport::connection::Connection;
+use p2p_transport::{
+    connection::Connection,
+    ops::{handshake, HandshakeRecvArgs, HandshakeRecvError, Operation},
+};
 use std::{
     net::{SocketAddr, ToSocketAddrs},
     sync::Arc,
 };
 use tokio::sync::Semaphore;
 
-use crate::p2p::state::HostState;
-
 pub(super) struct Handler {
     pub(crate) conn_semaphore: Arc<Semaphore>,
     pub(crate) host_state: Arc<HostState>,
-    pub(crate) connection: Connection,
-    // pub(crate) socket_addr: SocketAddr,
-    // pub(crate) msg: Msg,
+    pub(crate) conn: Connection,
 }
 
 impl Handler {
     pub(super) async fn run(&mut self) -> Result<(), String> {
-        println!("handler: run(),",);
-
-        let maybe_frame = match self.connection.read_frame().await {
+        let maybe_frame = match self.conn.read_frame().await {
             Ok(res) => res,
             Err(err) => {
-                return Err(format!("Error reading frames"));
+                return Err(format!("Error reading frames, err: {}", err));
             }
         };
 
@@ -33,7 +31,44 @@ impl Handler {
             None => return Ok(()),
         };
 
-        println!("Frame arrived: {}", frame);
+        let operation = match Operation::from_frame(frame) {
+            Ok(o) => o,
+            Err(err) => {
+                twarn!(
+                    "saksaha",
+                    "p2p",
+                    "Saksaha currently supports only those operations \
+                    defined in p2p_transport, such as 'handshake', err: {}",
+                    err,
+                );
+
+                return Err(format!(
+                    "Unsupported operation type or operation \
+                    read fail",
+                ));
+            }
+        };
+
+        match operation {
+            Operation::HandshakeInit(h) => {
+                println!("Parsed successfully handshake, {}", h.src_p2p_port);
+
+                let handshake_recv_args = HandshakeRecvArgs {
+                    handshake_syn: h,
+                    my_p2p_port: self.host_state.p2p_port,
+                    conn: &mut self.conn,
+                    src_p2p_port: self.host_state.p2p_port,
+                    p2p_identity: self.host_state.p2p_identity.clone(),
+                };
+
+                match handshake::receive_handshake(handshake_recv_args).await {
+                    Ok(_) => (),
+                    Err(err) => handle_handshake_recv_error(err),
+                };
+            }
+        };
+
+        // println!("op name: {}", operation);
 
         // match self.msg.msg_type {
         //     MsgType::WhoAreYouSyn => {
@@ -115,4 +150,8 @@ impl Drop for Handler {
     fn drop(&mut self) {
         self.conn_semaphore.add_permits(1);
     }
+}
+
+fn handle_handshake_recv_error(err: HandshakeRecvError) {
+    twarn!("saksaha", "p2p", "Handshake recv error, err: {}", err);
 }

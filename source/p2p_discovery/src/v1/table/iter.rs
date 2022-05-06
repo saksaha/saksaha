@@ -11,7 +11,7 @@ pub struct AddrsIterator {
 }
 
 pub struct AddrGuard {
-    val: KnownAddr,
+    addr: KnownAddr,
     node: Arc<Mutex<Node>>,
     known_addrs_tx: Arc<UnboundedSender<Arc<Mutex<Node>>>>,
 }
@@ -38,7 +38,7 @@ impl AddrsIterator {
                         if let Addr::Known(addr) = &v.addr {
                             let addr_guard = AddrGuard {
                                 known_addrs_tx: self.known_addrs_tx.clone(),
-                                val: addr.clone(),
+                                addr: addr.clone(),
                                 node: n.clone(),
                             };
 
@@ -82,7 +82,7 @@ impl AddrsIterator {
 
 impl AddrGuard {
     pub fn get_value(&self) -> KnownAddr {
-        self.val.clone()
+        self.addr.clone()
     }
 }
 

@@ -1,10 +1,129 @@
-mod check;
+use super::check;
+use crate::connection::Connection;
+use crate::ops::Handshake;
+use logger::tdebug;
+use p2p_active_calls::CallGuard;
+use p2p_discovery::AddrGuard;
+use p2p_identity::addr::KnownAddr;
+use p2p_identity::identity::P2PIdentity;
+use std::sync::Arc;
+use thiserror::Error;
+use tokio::net::TcpStream;
 
-mod initiate;
-mod receive;
+pub struct HandshakeInitArgs {
+    pub p2p_identity: Arc<P2PIdentity>,
+    pub p2p_port: u16,
+    pub addr_guard: AddrGuard,
+    pub call_guard: CallGuard,
+}
 
-pub use initiate::*;
-pub use receive::*;
+#[derive(Error, Debug)]
+pub enum HandshakeInitError {
+    #[error("P2P Port may not be provided")]
+    InvalidP2PEndpoint,
+
+    #[error("Cannot send request to myself, addr: {addr}")]
+    MyEndpoint { addr: KnownAddr },
+
+    #[error("Cannot create tcp stream into endpoint, err: {err}")]
+    ConnectionFail { err: String },
+
+    #[error("Cannot retrieve peer address, err: {err}")]
+    PeerAddressNotRetrievable { err: String },
+
+    #[error("Cannot write frame (data) into connection, err: {err}")]
+    FrameWriteFail { err: String },
+
+    #[error("Cannot read handshake ack msg, err: {err}")]
+    HandshakeAckReadFail { err: String },
+}
+
+pub async fn initiate_handshake(
+    handshake_init_args: HandshakeInitArgs,
+    mut conn: Connection,
+) -> Result<(), HandshakeInitError> {
+    println!("000");
+    let HandshakeInitArgs {
+        p2p_port,
+        p2p_identity,
+        addr_guard,
+        call_guard: _call_guard,
+    } = handshake_init_args;
+
+    let addr = addr_guard.get_value();
+
+    let handshake = Handshake {
+        src_p2p_port: p2p_port,
+        src_public_key_str: p2p_identity.public_key_str.clone(),
+        dst_public_key_str: addr.public_key_str,
+    };
+
+    let handshake_syn_frame = handshake.into_syn_frame();
+
+    match conn.write_frame(&handshake_syn_frame).await {
+        Ok(_) => (),
+        Err(err) => {
+            return Err(HandshakeInitError::FrameWriteFail {
+                err: err.to_string(),
+            });
+        }
+    };
+    println!("111");
+
+    let response = match conn.read_frame().await {
+        Ok(f) => f,
+        Err(err) => {
+            return Err(HandshakeInitError::HandshakeAckReadFail {
+                err: err.to_string(),
+            })
+        }
+    };
+
+    println!("222: {:?}", response);
+
+    // match send_handshake_msg(&mut stream, handshake_msg).await {
+    //     Ok(_) => (),
+    //     Err(err) => {
+    //         return Err(HandshakeInitError::PayloadWriteFail {
+    //             err: err.to_string(),
+    //         })
+    //     }
+    // };
+
+    // let mut hs_ack_buf = read_handshake_msg(&mut stream).await?;
+
+    // let hs_msg = match parse_handshake_msg(
+    //     &mut hs_ack_buf,
+    //     &mut stream,
+    //     identity.clone(),
+    // ) {
+    //     Ok(s) => s,
+    //     Err(err) => {
+    //         return Err(HandshakeInitError::Invalid { err });
+    //     }
+    // };
+
+    // let shared_secret =
+    //     match make_shared_secret(identity.clone(), hs_msg.dst_public_key) {
+    //         Ok(s) => s,
+    //         Err(err) => return Err(HandshakeInitError::Invalid { err }),
+    //     };
+
+    // debug!(
+    //     "Successfully initiated handshake, peer: {:?}",
+    //     stream.peer_addr()
+    // );
+
+    // let t = Transport {
+    //     stream,
+    //     shared_secret,
+    //     peer_id: hs_msg.dst_public_key,
+    // };
+
+    // Ok(t)
+
+    Ok(())
+}
 
 // use crate::{Connection, Frame, Transport};
 // use bytes::{Buf, BufMut, Bytes, BytesMut};
@@ -12,7 +131,7 @@ pub use receive::*;
 //     EncodedPoint, EphemeralSecret, PublicKey, Secp256k1, SharedSecret,
 // };
 // use log::{debug, error};
-// use p2p_identity::identity::P2PIdentity;
+// use p2p_identity::{P2PIdentity, PeerId};
 // use rand::rngs::OsRng;
 // use std::convert::TryInto;
 // use std::{
@@ -65,8 +184,8 @@ pub use receive::*;
 // }
 
 // pub struct HandshakeMsg {
-//     // src_public_key: PeerId,
-// // dst_public_key: PeerId,
+//     src_public_key: PeerId,
+//     dst_public_key: PeerId,
 // }
 
 // #[derive(Clone)]
@@ -76,7 +195,7 @@ pub use receive::*;
 //     pub my_p2p_port: u16,
 //     pub her_ip: String,
 //     pub her_p2p_port: u16,
-//     // pub her_public_key: PeerId,
+//     pub her_public_key: PeerId,
 // }
 
 // pub async fn receive_handshake(
@@ -101,8 +220,8 @@ pub use receive::*;
 //     // }
 
 //     let hs_ack_msg = HandshakeMsg {
-//         // src_public_key: identity.public_key,
-//         // dst_public_key: hs_msg.src_public_key,
+//         src_public_key: identity.public_key,
+//         dst_public_key: hs_msg.src_public_key,
 //     };
 
 //     match send_handshake_msg(&mut stream, hs_ack_msg).await {
@@ -114,11 +233,11 @@ pub use receive::*;
 //         }
 //     };
 
-//     // let shared_secret =
-//     //     match make_shared_secret(identity.clone(), hs_msg.src_public_key) {
-//     //         Ok(s) => s,
-//     //         Err(err) => return Err(HandshakeRecvError::Invalid { err }),
-//     //     };
+//     let shared_secret =
+//         match make_shared_secret(identity.clone(), hs_msg.src_public_key) {
+//             Ok(s) => s,
+//             Err(err) => return Err(HandshakeRecvError::Invalid { err }),
+//         };
 
 //     debug!(
 //         "Successfully received handshake, endpoint: {:?}",
@@ -127,8 +246,8 @@ pub use receive::*;
 
 //     Ok(Transport {
 //         stream,
-//         // shared_secret,
-//         // peer_id: hs_msg.src_public_key,
+//         shared_secret,
+//         peer_id: hs_msg.src_public_key,
 //     })
 // }
 
@@ -140,7 +259,7 @@ pub use receive::*;
 //         my_p2p_port,
 //         her_ip,
 //         her_p2p_port,
-//         // her_public_key,
+//         her_public_key,
 //         identity,
 //         ..
 //     } = hs_init_params;
@@ -172,8 +291,8 @@ pub use receive::*;
 //     };
 
 //     let handshake_msg = HandshakeMsg {
-//         // src_public_key: identity.public_key,
-//         // dst_public_key: her_public_key,
+//         src_public_key: identity.public_key,
+//         dst_public_key: her_public_key,
 //     };
 
 //     match send_handshake_msg(&mut stream, handshake_msg).await {
@@ -198,11 +317,11 @@ pub use receive::*;
 //         }
 //     };
 
-//     // let shared_secret =
-//     //     match make_shared_secret(identity.clone(), hs_msg.dst_public_key) {
-//     //         Ok(s) => s,
-//     //         Err(err) => return Err(HandshakeInitError::Invalid { err }),
-//     //     };
+//     let shared_secret =
+//         match make_shared_secret(identity.clone(), hs_msg.dst_public_key) {
+//             Ok(s) => s,
+//             Err(err) => return Err(HandshakeInitError::Invalid { err }),
+//         };
 
 //     debug!(
 //         "Successfully initiated handshake, peer: {:?}",
@@ -211,8 +330,8 @@ pub use receive::*;
 
 //     let t = Transport {
 //         stream,
-//         // shared_secret,
-//         // peer_id: hs_msg.dst_public_key,
+//         shared_secret,
+//         peer_id: hs_msg.dst_public_key,
 //     };
 
 //     Ok(t)
@@ -256,8 +375,8 @@ pub use receive::*;
 // ) -> Result<(), std::io::Error> {
 //     let mut buf = Cursor::new(Vec::new());
 
-//     // std::io::Write::write(&mut buf, &hs_msg.src_public_key[..])?;
-//     // std::io::Write::write(&mut buf, &hs_msg.dst_public_key[..])?;
+//     std::io::Write::write(&mut buf, &hs_msg.src_public_key[..])?;
+//     std::io::Write::write(&mut buf, &hs_msg.dst_public_key[..])?;
 //     let len = buf.position().to_le_bytes();
 
 //     println!("sending: {:?}", &buf.get_ref()[..]);

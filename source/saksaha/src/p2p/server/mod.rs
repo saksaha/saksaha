@@ -115,7 +115,7 @@ mod handler;
 
 use super::state::HostState;
 use handler::Handler;
-use logger::{terr, tinfo, twarn};
+use logger::{tdebug, terr, tinfo, twarn};
 use p2p_transport::connection::Connection;
 use std::{sync::Arc, time::Duration};
 use tokio::{
@@ -161,8 +161,6 @@ impl Server {
         let mut backoff = 1;
 
         loop {
-            // Perform the accept operation. If a socket is successfully
-            // accepted, return it. Otherwise, save the error.
             match self.p2p_socket.accept().await {
                 Ok((socket, _)) => return Ok(socket),
                 Err(err) => {
@@ -173,7 +171,6 @@ impl Server {
                 }
             }
 
-            // Pause execution until the back off period elapses.
             tokio::time::sleep(Duration::from_secs(backoff)).await;
 
             // Double the back off
@@ -182,8 +179,6 @@ impl Server {
     }
 
     pub async fn run_loop(&self) {
-        // let host_state = self.host_state.clone();
-        // let tcp_socket = self.p2p_socket;
         let conn_semaphore = self.conn_semaphore.clone();
 
         loop {
@@ -204,13 +199,34 @@ impl Server {
                 }
             };
 
+            let conn = match Connection::new(socket) {
+                Ok((c, peer_addr)) => {
+                    tdebug!(
+                        "saksaha",
+                        "p2p",
+                        "(caller) Made a connection to destination, \
+                        peer_addr: {:?}",
+                        peer_addr,
+                    );
+
+                    c
+                }
+                Err(err) => {
+                    tdebug!(
+                        "saksaha",
+                        "p2p",
+                        "(callee) Cannot create a connection, err: {}",
+                        err,
+                    );
+
+                    continue;
+                }
+            };
+
             let mut handler = Handler {
                 conn_semaphore: conn_semaphore.clone(),
                 host_state: self.host_state.clone(),
-                connection: Connection::new(socket),
-                // conn_semaphore,
-                // socket_addr,
-                // msg,
+                conn,
             };
 
             tokio::spawn(async move {
@@ -223,19 +239,6 @@ impl Server {
                     );
                 }
             });
-
-            // match handler.run().await {
-            //     Ok(_) => (),
-            //     Err(err) => {
-            //         terr!(
-            //             "p2p_discovery",
-            //             "",
-            //             "Error processing request, addr: {}, err: {}",
-            //             socket_addr,
-            //             err
-            //         );
-            //     }
-            // };
         }
     }
 }
