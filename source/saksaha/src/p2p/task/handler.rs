@@ -1,10 +1,10 @@
 use crate::p2p::task::P2PTask;
-use logger::terr;
-use logger::twarn;
-use p2p_active_calls::ActiveCalls;
-use p2p_transport::handshake::{self, HandshakeInitArgs};
-use std::sync::Arc;
-use std::time::Duration;
+use logger::{tdebug, terr, twarn};
+use p2p_active_calls::CallGuard;
+use p2p_transport::connection::Connection;
+use p2p_transport::ops::handshake;
+use p2p_transport::ops::HandshakeInitArgs;
+use tokio::net::TcpStream;
 
 pub(crate) async fn run(task: P2PTask) {
     match task {
@@ -16,7 +16,7 @@ pub(crate) async fn run(task: P2PTask) {
             let addr = addr_guard.get_value();
             let endpoint = addr.p2p_endpoint();
 
-            let _call_guard = {
+            let call_guard = {
                 match active_calls.get(&endpoint).await {
                     Some(call) => {
                         twarn!(
@@ -26,33 +26,81 @@ pub(crate) async fn run(task: P2PTask) {
                             since we are already in a call, call: {}",
                             call,
                         );
+
+                        return;
                     }
                     None => {
                         active_calls.insert_outbound(endpoint.clone()).await;
 
                         CallGuard {
-                            endpoint,
+                            endpoint: endpoint.clone(),
                             active_calls: active_calls.clone(),
-                        };
+                        }
                     }
                 }
             };
 
+            if utils_net::is_my_endpoint(host_state.p2p_port, &endpoint) {
+                twarn!(
+                    "saksaha",
+                    "p2p",
+                    "Cannot make a request to myself, abandoning handshake \
+                    init task, endopint: {}",
+                    &endpoint
+                );
+
+                return;
+            }
+
+            let mut conn = match TcpStream::connect(&endpoint).await {
+                Ok(s) => {
+                    let (c, peer_addr) = match Connection::new(s) {
+                        Ok(c) => c,
+                        Err(err) => {
+                            terr!(
+                                "saksaha",
+                                "p2p",
+                                "Cannot acquire peer address, err: {}",
+                                err,
+                            );
+
+                            return;
+                        }
+                    };
+
+                    tdebug!(
+                        "p2p_transport",
+                        "handshake",
+                        "(caller) Made a connection to destination, \
+                        peer_addr: {:?}",
+                        peer_addr,
+                    );
+
+                    c
+                }
+                Err(err) => {
+                    terr!(
+                        "saksaha",
+                        "p2p",
+                        "Cannot make a tcp connection to an \
+                        endpoint, endpoint: {}, err: {}",
+                        &endpoint,
+                        err,
+                    );
+
+                    return;
+                }
+            };
+
             let handshake_init_args = HandshakeInitArgs {
-                addr: addr.clone(),
+                call_guard,
+                addr_guard,
                 p2p_port: host_state.p2p_port,
                 p2p_identity: host_state.p2p_identity.clone(),
             };
 
-            tokio::spawn(async move {
-                println!("moved, will wait for 5 seconds");
-
-                tokio::time::sleep(Duration::from_secs(5)).await;
-
-                addr_guard;
-            });
-
-            match handshake::initiate_handshake(handshake_init_args).await {
+            match handshake::initiate_handshake(handshake_init_args, conn).await
+            {
                 Ok(_) => (),
                 Err(err) => {
                     twarn!(
@@ -66,20 +114,4 @@ pub(crate) async fn run(task: P2PTask) {
             }
         }
     };
-}
-
-struct CallGuard {
-    endpoint: String,
-    active_calls: Arc<ActiveCalls>,
-}
-
-impl Drop for CallGuard {
-    fn drop(&mut self) {
-        match self.active_calls.delayed_remove(self.endpoint.clone()) {
-            Ok(_) => (),
-            Err(err) => {
-                terr!("saksaha", "p2p", "Call removal error, err: {}", err);
-            }
-        }
-    }
 }

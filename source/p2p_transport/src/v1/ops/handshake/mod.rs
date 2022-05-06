@@ -1,0 +1,64 @@
+mod check;
+mod initiate;
+mod receive;
+
+use super::{Operation, HANDSHAKE_INIT_OP};
+use crate::{frame::Frame, v1::parse::Parse, Error};
+use bytes::{BufMut, Bytes, BytesMut};
+pub use initiate::*;
+pub use receive::*;
+
+pub struct Handshake {
+    pub src_p2p_port: u16,
+    pub src_public_key_str: String,
+    pub dst_public_key_str: String,
+}
+
+impl Handshake {
+    pub fn into_syn_frame(&self) -> Frame {
+        let mut frame = Frame::array();
+
+        let src_public_key_bytes = {
+            let mut b = BytesMut::new();
+            b.put(self.src_public_key_str.as_bytes());
+            b
+        };
+
+        let dst_public_key_bytes = {
+            let mut b = BytesMut::new();
+            b.put(self.dst_public_key_str.as_bytes());
+            b
+        };
+
+        frame.push_bulk(Bytes::from(HANDSHAKE_INIT_OP.as_bytes()));
+        frame.push_int(self.src_p2p_port as u64);
+        frame.push_bulk(src_public_key_bytes.into());
+        frame.push_bulk(dst_public_key_bytes.into());
+        frame
+    }
+
+    pub(crate) fn parse_frames(parse: &mut Parse) -> Result<Handshake, Error> {
+        let src_p2p_port = {
+            let p = parse.next_int()? as u16;
+            p
+        };
+
+        let src_public_key_str: String = {
+            let k = parse.next_bytes()?;
+            std::str::from_utf8(k.as_ref())?.into()
+        };
+
+        let dst_public_key_str: String = {
+            let k = parse.next_bytes()?;
+            std::str::from_utf8(k.as_ref())?.into()
+        };
+
+        let h = Handshake {
+            src_p2p_port,
+            src_public_key_str,
+            dst_public_key_str,
+        };
+
+        Ok(h)
+    }
+}

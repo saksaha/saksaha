@@ -1,7 +1,8 @@
-use crate::frame::Frame;
+use super::frame::Frame;
 use crate::{Error, Result};
 use bytes::{Buf, BytesMut};
 use std::io::{self, Cursor};
+use std::net::SocketAddr;
 use tokio::io::{AsyncReadExt, AsyncWriteExt, BufWriter};
 use tokio::net::TcpStream;
 
@@ -19,6 +20,7 @@ use tokio::net::TcpStream;
 /// The contents of the write buffer are then written to the socket.
 #[derive(Debug)]
 pub struct Connection {
+    pub peer_addr: SocketAddr,
     // The `TcpStream`. It is decorated with a `BufWriter`, which provides write
     // level buffering. The `BufWriter` implementation provided by Tokio is
     // sufficient for our needs.
@@ -31,15 +33,20 @@ pub struct Connection {
 impl Connection {
     /// Create a new `Connection`, backed by `socket`. Read and write buffers
     /// are initialized.
-    pub fn new(socket: TcpStream) -> Connection {
-        Connection {
+    pub fn new(socket: TcpStream) -> io::Result<(Connection, SocketAddr)> {
+        let peer_addr = socket.peer_addr()?;
+
+        let c = Connection {
+            peer_addr,
             stream: BufWriter::new(socket),
             // Default to a 4KB read buffer. For the use case of mini redis,
             // this is fine. However, real applications will want to tune this
             // value to their specific use case. There is a high likelihood that
             // a larger read buffer will work better.
             buffer: BytesMut::with_capacity(4 * 1024),
-        }
+        };
+
+        Ok((c, peer_addr))
     }
 
     /// Read a single `Frame` value from the underlying stream.

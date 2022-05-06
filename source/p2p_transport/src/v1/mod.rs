@@ -1,8 +1,8 @@
-pub mod connection;
-pub(crate) mod frame;
-pub mod handshake;
-pub(crate) mod msg;
+mod net;
+pub mod ops;
 pub mod transport;
+
+pub use net::*;
 
 pub(crate) type Error = Box<dyn std::error::Error + Send + Sync>;
 
