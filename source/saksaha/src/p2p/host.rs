@@ -169,5 +169,10 @@ impl Host {
         tokio::spawn(async move {
             p2p_dial_scheduler.run().await;
         });
+
+        let p2p_active_calls = self.p2p_active_calls.clone();
+        tokio::spawn(async move {
+            p2p_active_calls.run().await;
+        });
     }
 }

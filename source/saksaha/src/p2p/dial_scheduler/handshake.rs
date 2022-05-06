@@ -206,16 +206,13 @@ impl HandshakeDialLoop {
         };
 
         loop {
-            println!("handshake dial loop iteration");
+            println!("handshake dial loop iteration 1s");
 
             let time_since = SystemTime::now();
 
             if let Some(addr_guard) = self.addrs_iter.next().await {
-                // let addr = item.get_value();
-
                 let task = P2PTask::InitiateHandshake {
                     addr_guard,
-                    // addr,
                     host_state: self.host_state.clone(),
                 };
 

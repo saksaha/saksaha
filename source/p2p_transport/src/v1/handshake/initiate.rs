@@ -1,12 +1,16 @@
+use std::sync::Arc;
+
 use super::check;
 use crate::connection::Connection;
 use crate::msg::Handshake;
 use logger::tdebug;
 use p2p_identity::addr::KnownAddr;
+use p2p_identity::identity::P2PIdentity;
 use thiserror::Error;
 use tokio::net::TcpStream;
 
 pub struct HandshakeInitArgs {
+    pub p2p_identity: Arc<P2PIdentity>,
     pub p2p_port: u16,
     pub addr: KnownAddr,
 }
@@ -24,12 +28,19 @@ pub enum HandshakeInitError {
 
     #[error("Cannot retrieve peer address, err: {err}")]
     PeerAddressNotRetrievable { err: String },
+
+    #[error("Cannot write frame (data) into connection, err: {err}")]
+    FrameWriteFail { err: String },
 }
 
 pub async fn initiate_handshake(
     handshake_init_args: HandshakeInitArgs,
 ) -> Result<(), HandshakeInitError> {
-    let HandshakeInitArgs { p2p_port, addr, .. } = handshake_init_args;
+    let HandshakeInitArgs {
+        p2p_port,
+        p2p_identity,
+        addr,
+    } = handshake_init_args;
 
     let endpoint = addr.p2p_endpoint();
     if check::is_my_endpoint(p2p_port, &endpoint) {
@@ -50,9 +61,9 @@ pub async fn initiate_handshake(
             };
 
             tdebug!(
-                "p2p_tranposrt",
+                "p2p_transport",
                 "handshake",
-                "Call success, addr: {:?}",
+                "(caller) Made a connection to destination, addr: {:?}",
                 socket_addr,
             );
 
@@ -65,15 +76,22 @@ pub async fn initiate_handshake(
         }
     };
 
-    let _p = addr.public_key;
-    // println!("power: {:?}", p);
+    let handshake = Handshake {
+        src_p2p_port: p2p_port,
+        src_public_key: p2p_identity.public_key_str.clone(),
+        dst_public_key: addr.public_key_str,
+    };
 
-    // let dest_pub_key = addr.public_key
+    let handshake_syn_frame = handshake.into_syn_frame();
 
-    // let handshake = Handshake {
-    //     src_public_key: identity.public_key,
-    //     dst_public_key: her_public_key,
-    // };
+    match conn.write_frame(&handshake_syn_frame).await {
+        Ok(_) => (),
+        Err(err) => {
+            return Err(HandshakeInitError::FrameWriteFail {
+                err: err.to_string(),
+            });
+        }
+    };
 
     // match send_handshake_msg(&mut stream, handshake_msg).await {
     //     Ok(_) => (),

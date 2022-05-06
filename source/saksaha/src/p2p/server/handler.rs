@@ -1,6 +1,10 @@
 use logger::tdebug;
 use p2p_identity::addr::Addr;
-use std::{net::SocketAddr, sync::Arc};
+use p2p_transport::connection::Connection;
+use std::{
+    net::{SocketAddr, ToSocketAddrs},
+    sync::Arc,
+};
 use tokio::sync::Semaphore;
 
 use crate::p2p::state::HostState;
@@ -8,12 +12,29 @@ use crate::p2p::state::HostState;
 pub(super) struct Handler {
     pub(crate) conn_semaphore: Arc<Semaphore>,
     pub(crate) host_state: Arc<HostState>,
-    pub(crate) socket_addr: SocketAddr,
+    pub(crate) connection: Connection,
+    // pub(crate) socket_addr: SocketAddr,
     // pub(crate) msg: Msg,
 }
 
 impl Handler {
-    pub(super) async fn run(&self) -> Result<(), String> {
+    pub(super) async fn run(&mut self) -> Result<(), String> {
+        println!("handler: run(),",);
+
+        let maybe_frame = match self.connection.read_frame().await {
+            Ok(res) => res,
+            Err(err) => {
+                return Err(format!("Error reading frames"));
+            }
+        };
+
+        let frame = match maybe_frame {
+            Some(frame) => frame,
+            None => return Ok(()),
+        };
+
+        println!("Frame arrived: {}", frame);
+
         // match self.msg.msg_type {
         //     MsgType::WhoAreYouSyn => {
         //         let way_syn = match WhoAreYou::from_msg(&self.msg) {

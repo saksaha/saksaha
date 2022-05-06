@@ -1,5 +1,5 @@
-use crate::instr::whoareyou;
 use crate::msg::{Msg, MsgType, WhoAreYou};
+use crate::ops::whoareyou;
 use crate::state::DiscState;
 use crate::table::{NodeStatus, NodeValue};
 use logger::tdebug;
