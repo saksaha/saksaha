@@ -1,5 +1,5 @@
 use super::DiscoveryTask;
-use crate::{instr::whoareyou::WhoAreYouInitError, v1::instr::whoareyou};
+use crate::{ops::whoareyou::WhoAreYouInitError, v1::ops::whoareyou};
 use logger::twarn;
 
 pub(crate) async fn run(task: DiscoveryTask) {

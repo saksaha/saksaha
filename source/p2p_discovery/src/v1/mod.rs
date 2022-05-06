@@ -1,7 +1,7 @@
 pub(crate) mod dial_scheduler;
-pub(crate) mod instr;
 pub(crate) mod msg;
 mod net;
+pub(crate) mod ops;
 pub(crate) mod server;
 pub(crate) mod state;
 pub(crate) mod table;

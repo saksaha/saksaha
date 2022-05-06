@@ -1,4 +1,4 @@
-use logger::twarn;
+use logger::{terr, twarn};
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::{
     mpsc::{self, UnboundedReceiver, UnboundedSender},
@@ -11,14 +11,19 @@ pub enum Call {
 }
 
 pub struct ActiveCalls {
+    is_running: *mut bool,
     map: Arc<Mutex<HashMap<String, Arc<Call>>>>,
     call_removal_tx: Arc<UnboundedSender<String>>,
+    removal_routine: RemovalRoutine,
 }
 
 struct RemovalRoutine {
     map: Arc<Mutex<HashMap<String, Arc<Call>>>>,
     call_removal_rx: Mutex<UnboundedReceiver<String>>,
 }
+
+unsafe impl Send for ActiveCalls {}
+unsafe impl Sync for ActiveCalls {}
 
 impl ActiveCalls {
     pub fn init() -> ActiveCalls {
@@ -28,7 +33,7 @@ impl ActiveCalls {
             Arc::new(Mutex::new(m))
         };
 
-        let call_removal_tx = {
+        let (call_removal_tx, removal_routine) = {
             let (call_removal_tx, call_removal_rx) = {
                 let (tx, rx) = mpsc::unbounded_channel();
                 (Arc::new(tx), Mutex::new(rx))
@@ -39,14 +44,12 @@ impl ActiveCalls {
                 call_removal_rx,
             };
 
-            tokio::spawn(async move {
-                removal_routine.run().await;
-            });
-
-            call_removal_tx
+            (call_removal_tx, removal_routine)
         };
 
         ActiveCalls {
+            is_running: &mut false,
+            removal_routine,
             call_removal_tx,
             map,
         }
@@ -80,7 +83,22 @@ impl ActiveCalls {
             .insert(endpoint.clone(), Arc::new(Call::Outbound { endpoint }));
     }
 
+    unsafe fn check_is_running(&self) -> bool {
+        *self.is_running == true
+    }
+
     pub fn delayed_remove(&self, endpoint: String) -> Result<(), String> {
+        unsafe {
+            if !self.check_is_running() {
+                terr!(
+                    "active_calls",
+                    "",
+                    "Removal routine is not running. \
+                Have you run 'active_calls.run()' before?"
+                );
+            }
+        }
+
         match self.call_removal_tx.send(endpoint) {
             Ok(_) => Ok(()),
             Err(err) => {
@@ -97,6 +115,14 @@ impl ActiveCalls {
         let mut map = self.map.lock().await;
 
         map.remove(endpoint)
+    }
+
+    pub async fn run(&self) {
+        unsafe {
+            *self.is_running = true;
+        }
+
+        self.removal_routine.run().await;
     }
 }
 
