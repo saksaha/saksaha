@@ -4,6 +4,8 @@ use p2p_identity::addr::{Addr, UnknownAddr};
 use std::{sync::Arc, time::Duration};
 use task_queue::TaskQueue;
 
+const DISC_DIAL_INTERVAL: u64 = 2000;
+
 pub(crate) struct DialSchedulerArgs {
     pub(crate) disc_state: Arc<DiscState>,
     pub(crate) disc_dial_interval: Option<u16>,
@@ -24,7 +26,7 @@ struct DialLoop {
 }
 
 impl DialScheduler {
-    pub async fn init(dial_schd_args: DialSchedulerArgs) -> DialScheduler {
+    pub fn init(dial_schd_args: DialSchedulerArgs) -> DialScheduler {
         let DialSchedulerArgs {
             disc_task_queue,
             bootstrap_addrs,
@@ -34,7 +36,7 @@ impl DialScheduler {
 
         let disc_dial_interval = match disc_dial_interval {
             Some(i) => Duration::from_millis(i.into()),
-            None => Duration::from_millis(2000),
+            None => Duration::from_millis(DISC_DIAL_INTERVAL),
         };
 
         let dial_loop = {

@@ -23,9 +23,7 @@ pub(crate) struct P2PDialScheduler {
 }
 
 impl P2PDialScheduler {
-    pub async fn init(
-        p2p_dial_schd_args: P2PDialSchedulerArgs,
-    ) -> P2PDialScheduler {
+    pub fn init(p2p_dial_schd_args: P2PDialSchedulerArgs) -> P2PDialScheduler {
         let P2PDialSchedulerArgs {
             p2p_task_queue,
             p2p_dial_interval,

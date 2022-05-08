@@ -2,7 +2,7 @@ mod check;
 mod initiate;
 mod receive;
 
-use super::{Operation, HANDSHAKE_INIT_OP};
+use super::{Operation, HANDSHAKE_ACK, HANDSHAKE_SYN};
 use crate::{frame::Frame, v1::parse::Parse, Error};
 use bytes::{BufMut, Bytes, BytesMut};
 pub use initiate::*;
@@ -15,7 +15,7 @@ pub struct Handshake {
 }
 
 impl Handshake {
-    pub fn into_syn_frame(&self) -> Frame {
+    fn into_frame(&self, frame_type: &'static str) -> Frame {
         let mut frame = Frame::array();
 
         let src_public_key_bytes = {
@@ -30,11 +30,18 @@ impl Handshake {
             b
         };
 
-        frame.push_bulk(Bytes::from(HANDSHAKE_INIT_OP.as_bytes()));
+        frame.push_bulk(Bytes::from(frame_type.as_bytes()));
         frame.push_int(self.src_p2p_port as u64);
         frame.push_bulk(src_public_key_bytes.into());
         frame.push_bulk(dst_public_key_bytes.into());
         frame
+    }
+    pub fn into_syn_frame(&self) -> Frame {
+        self.into_frame(HANDSHAKE_SYN)
+    }
+
+    pub fn into_ack_frame(&self) -> Frame {
+        self.into_frame(HANDSHAKE_ACK)
     }
 
     pub(crate) fn parse_frames(parse: &mut Parse) -> Result<Handshake, Error> {

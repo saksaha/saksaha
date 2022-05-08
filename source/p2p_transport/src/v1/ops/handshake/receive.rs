@@ -69,12 +69,15 @@ pub async fn receive_handshake<'a>(
     let shared_secret =
         crypto::make_shared_secret(my_secret_key, her_public_key);
 
-    // let handshake_ack = Handshake {
-    //     src_p2p_port: my_p2p_port,
-    //     src_public_key_str: my_public_key_str.clone(),
-    //     dst_public_key_str: ,
-    // };
+    let handshake_ack = Handshake {
+        src_p2p_port: my_p2p_port,
+        src_public_key_str: my_public_key_str.clone(),
+        dst_public_key_str: her_public_key_str.clone(),
+    };
 
+    let handshake_ack_frame = handshake_ack.into_syn_frame();
+
+    // conn.write_frame(&handshake_ack_frame).await;
     // send ack
 
     let transport = Transport {

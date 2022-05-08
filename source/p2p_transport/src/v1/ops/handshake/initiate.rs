@@ -7,6 +7,7 @@ use p2p_discovery::AddrGuard;
 use p2p_identity::addr::KnownAddr;
 use p2p_identity::identity::P2PIdentity;
 use std::sync::Arc;
+use std::time::Duration;
 use thiserror::Error;
 use tokio::net::TcpStream;
 
@@ -34,6 +35,9 @@ pub enum HandshakeInitError {
     #[error("Cannot write frame (data) into connection, err: {err}")]
     FrameWriteFail { err: String },
 
+    #[error("Data received may not be the entire frame intended")]
+    InvalidFrame,
+
     #[error("Cannot read handshake ack msg, err: {err}")]
     HandshakeAckReadFail { err: String },
 }
@@ -42,7 +46,6 @@ pub async fn initiate_handshake(
     handshake_init_args: HandshakeInitArgs,
     mut conn: Connection,
 ) -> Result<(), HandshakeInitError> {
-    println!("000");
     let HandshakeInitArgs {
         p2p_port,
         p2p_identity,
@@ -68,10 +71,17 @@ pub async fn initiate_handshake(
             });
         }
     };
-    println!("111");
 
-    let response = match conn.read_frame().await {
-        Ok(f) => f,
+    let handshake_ack_frame = match conn.read_frame().await {
+        Ok(fr) => {
+            println!("ff: {:?}", fr);
+            match fr {
+                Some(f) => f,
+                None => {
+                    return Err(HandshakeInitError::InvalidFrame);
+                }
+            }
+        }
         Err(err) => {
             return Err(HandshakeInitError::HandshakeAckReadFail {
                 err: err.to_string(),
@@ -79,7 +89,9 @@ pub async fn initiate_handshake(
         }
     };
 
-    println!("222: {:?}", response);
+    println!("123123");
+
+    // println!("initiate_handshake(), response: {:?}", response);
 
     // match send_handshake_msg(&mut stream, handshake_msg).await {
     //     Ok(_) => (),

@@ -2,7 +2,7 @@ mod call;
 
 pub use call::{Call, CallGuard};
 use logger::{terr, twarn};
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::sync::{
     mpsc::{self, UnboundedReceiver, UnboundedSender},
     Mutex,
@@ -11,11 +11,10 @@ use tokio::sync::{
 pub struct ActiveCalls {
     map: Arc<Mutex<HashMap<String, Arc<Call>>>>,
     call_removal_tx: Arc<UnboundedSender<String>>,
-    removal_routine: RemovalRoutine,
+    removal_routine: Arc<RemovalRoutine>,
 }
 
 struct RemovalRoutine {
-    is_running: *mut bool,
     map: Arc<Mutex<HashMap<String, Arc<Call>>>>,
     call_removal_rx: Mutex<UnboundedReceiver<String>>,
 }
@@ -24,7 +23,7 @@ unsafe impl Send for RemovalRoutine {}
 unsafe impl Sync for RemovalRoutine {}
 
 impl ActiveCalls {
-    pub fn init() -> ActiveCalls {
+    pub async fn init() -> ActiveCalls {
         let map = {
             let m = HashMap::new();
 
@@ -37,11 +36,23 @@ impl ActiveCalls {
                 (Arc::new(tx), Mutex::new(rx))
             };
 
-            let removal_routine = RemovalRoutine {
-                map: map.clone(),
-                is_running: &mut false,
-                call_removal_rx,
+            let removal_routine = {
+                let r = RemovalRoutine {
+                    map: map.clone(),
+                    call_removal_rx,
+                };
+
+                Arc::new(r)
             };
+
+            let removal_routine_clone = removal_routine.clone();
+
+            tokio::spawn(async move {
+                removal_routine_clone.run().await;
+            });
+
+            // Wait for a moment to ensure the removal routine be running
+            tokio::time::sleep(Duration::from_millis(100)).await;
 
             (call_removal_tx, removal_routine)
         };
@@ -81,22 +92,7 @@ impl ActiveCalls {
             .insert(endpoint.clone(), Arc::new(Call::Outbound { endpoint }));
     }
 
-    unsafe fn check_is_running(&self) -> bool {
-        *self.removal_routine.is_running == true
-    }
-
     pub fn delayed_remove(&self, endpoint: String) -> Result<(), String> {
-        unsafe {
-            if !self.check_is_running() {
-                terr!(
-                    "active_calls",
-                    "",
-                    "Removal routine is not running. \
-                Have you run 'active_calls.run()' before?"
-                );
-            }
-        }
-
         match self.call_removal_tx.send(endpoint) {
             Ok(_) => Ok(()),
             Err(err) => {
@@ -114,18 +110,10 @@ impl ActiveCalls {
 
         map.remove(endpoint)
     }
-
-    pub async fn run(&self) {
-        self.removal_routine.run().await;
-    }
 }
 
 impl RemovalRoutine {
     pub async fn run(&self) {
-        unsafe {
-            *self.is_running = true;
-        }
-
         let mut call_removal_rx = self.call_removal_rx.lock().await;
 
         loop {

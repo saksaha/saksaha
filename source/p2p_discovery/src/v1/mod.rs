@@ -114,7 +114,7 @@ impl Discovery {
         };
 
         let dial_scheduler = {
-            let s = DialScheduler::init(dial_schd_args).await;
+            let s = DialScheduler::init(dial_schd_args);
             Arc::new(s)
         };
 
