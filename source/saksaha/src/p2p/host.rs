@@ -80,7 +80,7 @@ impl Host {
         };
 
         let p2p_active_calls = {
-            let a = ActiveCalls::init();
+            let a = ActiveCalls::init().await;
 
             Arc::new(a)
         };
@@ -131,7 +131,7 @@ impl Host {
                 addrs_iter,
             };
 
-            let s = P2PDialScheduler::init(p2p_dial_schd_args).await;
+            let s = P2PDialScheduler::init(p2p_dial_schd_args);
 
             Arc::new(s)
         };
@@ -168,12 +168,6 @@ impl Host {
         let p2p_dial_scheduler = self.p2p_dial_scheduler.clone();
         tokio::spawn(async move {
             p2p_dial_scheduler.run().await;
-        });
-
-        let p2p_active_calls = self.p2p_active_calls.clone();
-        tokio::spawn(async move {
-            println!("run!!!!!!!!");
-            p2p_active_calls.run().await;
         });
     }
 }
