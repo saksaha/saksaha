@@ -18,7 +18,7 @@ const P2P_TASK_QUEUE_CAPACITY: usize = 10;
 
 pub(crate) struct Host {
     host_state: Arc<HostState>,
-    discovery: Arc<Discovery>,
+    p2p_discovery: Arc<Discovery>,
     p2p_active_calls: Arc<ActiveCalls>,
     p2p_dial_scheduler: Arc<P2PDialScheduler>,
     p2p_server: Arc<Server>,
@@ -42,7 +42,7 @@ pub(crate) struct HostArgs {
     pub(crate) rpc_port: u16,
     pub(crate) secret: String,
     pub(crate) public_key_str: String,
-    pub(crate) peer_table: Arc<PeerTable>,
+    pub(crate) p2p_peer_table: Arc<PeerTable>,
 }
 
 impl Host {
@@ -91,7 +91,7 @@ impl Host {
                 p2p_identity: p2p_identity.clone(),
                 p2p_port: host_args.p2p_port,
                 rpc_port: host_args.rpc_port,
-                peer_table: host_args.peer_table.clone(),
+                p2p_peer_table: host_args.p2p_peer_table.clone(),
             };
             Arc::new(s)
         };
@@ -116,13 +116,13 @@ impl Host {
             bootstrap_addrs: host_args.bootstrap_addrs,
         };
 
-        let discovery = {
+        let p2p_discovery = {
             let d = Discovery::init(disc_args).await?;
             Arc::new(d)
         };
 
         let p2p_dial_scheduler = {
-            let addrs_iter = Arc::new(discovery.iter());
+            let addrs_iter = Arc::new(p2p_discovery.iter());
 
             let p2p_dial_schd_args = P2PDialSchedulerArgs {
                 host_state: host_state.clone(),
@@ -137,7 +137,7 @@ impl Host {
         };
 
         let host = Host {
-            discovery,
+            p2p_discovery,
             p2p_active_calls,
             p2p_dial_scheduler,
             p2p_task_queue,
@@ -149,8 +149,8 @@ impl Host {
         Ok(host)
     }
 
-    pub async fn run(&self) {
-        let disc = self.discovery.clone();
+    pub fn run(&self) {
+        let disc = self.p2p_discovery.clone();
         tokio::spawn(async move {
             disc.run().await;
         });

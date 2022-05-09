@@ -2,10 +2,12 @@ mod check;
 mod initiate;
 mod receive;
 
-use super::{Operation, HANDSHAKE_ACK, HANDSHAKE_SYN};
-use crate::{frame::Frame, v1::parse::Parse, Error};
+use crate::Error;
+
+use super::{HANDSHAKE_ACK, HANDSHAKE_SYN};
 use bytes::{BufMut, Bytes, BytesMut};
 pub use initiate::*;
+use p2p_transport::{frame::Frame, parse::Parse};
 pub use receive::*;
 
 pub struct Handshake {
@@ -44,7 +46,7 @@ impl Handshake {
         self.into_frame(HANDSHAKE_ACK)
     }
 
-    pub(crate) fn parse_frames(parse: &mut Parse) -> Result<Handshake, Error> {
+    pub fn parse_frames(parse: &mut Parse) -> Result<Handshake, Error> {
         let src_p2p_port = {
             let p = parse.next_int()? as u16;
             p

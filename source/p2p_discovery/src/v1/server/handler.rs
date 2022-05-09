@@ -78,7 +78,10 @@ impl Handler {
                 let table = disc_state.table.clone();
 
                 let node = match table
-                    .upsert(Addr::Known(addr), NodeStatus::WhoAreYouAckRecvd)
+                    .upsert(
+                        Addr::Known(addr),
+                        NodeStatus::WhoAreYouRecv { fail_count: 0 },
+                    )
                     .await
                 {
                     Ok(a) => a,
@@ -90,17 +93,15 @@ impl Handler {
                     }
                 };
 
-                let mut node_lock = node.lock().await;
-                let mut node_value = match &mut node_lock.value {
-                    NodeValue::Valued(v) => v,
-                    _ => {
-                        return Err(format!("Invalid node, something is wrong"))
-                    }
-                };
+                // let mut node_lock = node.lock().await;
+                // let node_value = match &mut node_lock.value {
+                //     NodeValue::Valued(v) => v,
+                //     _ => {
+                //         return Err(format!("Invalid node, something is wrong"))
+                //     }
+                // };
 
-                node_value.status = NodeStatus::WhoAreYouAckRecvd;
-
-                drop(node_lock);
+                // drop(node_lock);
                 match disc_state.table.add_known_node(node).await {
                     Ok(_) => (),
                     Err(err) => {

@@ -1,6 +1,7 @@
 use super::Handshake;
-use crate::{connection::Connection, transport::Transport};
 use p2p_identity::identity::P2PIdentity;
+use p2p_peer::PeerTable;
+use p2p_transport::{connection::Connection, transport::Transport};
 use std::{sync::Arc, time::Duration};
 use thiserror::Error;
 
@@ -17,25 +18,32 @@ pub enum HandshakeRecvError {
         public key: {public_key}, err: {err}"
     )]
     PublicKeyCreateFail { public_key: String, err: String },
+
+    #[error("Failed to send handshake ack frame, err: {err}")]
+    AckSendFail { err: String },
+
+    #[error("Peer node (in table) reserve failed, err: {err}")]
+    PeerNodeReserveFail { err: String },
 }
 
-pub struct HandshakeRecvArgs<'a> {
-    pub my_p2p_port: u16,
+pub struct HandshakeRecvArgs {
     pub handshake_syn: Handshake,
-    pub conn: &'a mut Connection,
+    pub my_p2p_port: u16,
     pub src_p2p_port: u16,
     pub p2p_identity: Arc<P2PIdentity>,
+    pub p2p_peer_table: Arc<PeerTable>,
 }
 
-pub async fn receive_handshake<'a>(
-    handshake_recv_args: HandshakeRecvArgs<'a>,
-) -> Result<Transport<'a>, HandshakeRecvError> {
+pub async fn receive_handshake(
+    handshake_recv_args: HandshakeRecvArgs,
+    mut conn: Connection,
+) -> Result<Transport, HandshakeRecvError> {
     let HandshakeRecvArgs {
         my_p2p_port,
         handshake_syn,
-        conn,
         src_p2p_port,
         p2p_identity,
+        p2p_peer_table,
     } = handshake_recv_args;
 
     let Handshake {
@@ -66,6 +74,21 @@ pub async fn receive_handshake<'a>(
         }
     };
 
+    let node = match p2p_peer_table.get(&her_public_key_str).await {
+        Some(n) => match n {
+            Ok(n) => n,
+            Err(err) => {
+                return Err(HandshakeRecvError::PeerNodeReserveFail { err });
+            }
+        },
+        None => match p2p_peer_table.reserve(&her_public_key_str).await {
+            Ok(n) => n,
+            Err(err) => {
+                return Err(HandshakeRecvError::PeerNodeReserveFail { err });
+            }
+        },
+    };
+
     let shared_secret =
         crypto::make_shared_secret(my_secret_key, her_public_key);
 
@@ -77,8 +100,14 @@ pub async fn receive_handshake<'a>(
 
     let handshake_ack_frame = handshake_ack.into_syn_frame();
 
-    // conn.write_frame(&handshake_ack_frame).await;
-    // send ack
+    match conn.write_frame(&handshake_ack_frame).await {
+        Ok(_) => (),
+        Err(err) => {
+            return Err(HandshakeRecvError::AckSendFail {
+                err: err.to_string(),
+            });
+        }
+    };
 
     let transport = Transport {
         conn,

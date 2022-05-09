@@ -2,8 +2,7 @@ use crate::p2p::task::P2PTask;
 use logger::{tdebug, terr, twarn};
 use p2p_active_calls::CallGuard;
 use p2p_transport::connection::Connection;
-use p2p_transport::ops::handshake;
-use p2p_transport::ops::HandshakeInitArgs;
+use p2p_transport_handshake::ops::{handshake, HandshakeInitArgs};
 use tokio::net::TcpStream;
 
 pub(crate) async fn run(task: P2PTask) {
@@ -97,6 +96,7 @@ pub(crate) async fn run(task: P2PTask) {
                 addr_guard,
                 p2p_port: host_state.p2p_port,
                 p2p_identity: host_state.p2p_identity.clone(),
+                p2p_peer_table: host_state.p2p_peer_table.clone(),
             };
 
             match handshake::initiate_handshake(handshake_init_args, conn).await

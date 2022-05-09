@@ -74,7 +74,7 @@ pub(crate) async fn init_who_are_you(
 
     match disc_state.udp_conn.write_msg(endpoint, way_syn_msg).await {
         Ok(_) => {
-            node_value.status = NodeStatus::WhoAreYouSynSent;
+            node_value.status = NodeStatus::WhoAreYouInit { fail_count: 0 };
         }
         Err(err) => return Err(WhoAreYouInitError::MsgSendFail { err }),
     };

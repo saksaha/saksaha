@@ -30,7 +30,7 @@ pub enum Error {
 
 impl Frame {
     /// Returns an empty array
-    pub(crate) fn array() -> Frame {
+    pub fn array() -> Frame {
         Frame::Array(vec![])
     }
 
@@ -39,7 +39,7 @@ impl Frame {
     /// # Panics
     ///
     /// panics if `self` is not an array
-    pub(crate) fn push_bulk(&mut self, bytes: Bytes) {
+    pub fn push_bulk(&mut self, bytes: Bytes) {
         match self {
             Frame::Array(vec) => {
                 vec.push(Frame::Bulk(bytes));
@@ -53,7 +53,7 @@ impl Frame {
     /// # Panics
     ///
     /// panics if `self` is not an array
-    pub(crate) fn push_int(&mut self, value: u64) {
+    pub fn push_int(&mut self, value: u64) {
         match self {
             Frame::Array(vec) => {
                 vec.push(Frame::Integer(value));
