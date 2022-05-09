@@ -1,0 +1,26 @@
+[package]
+name = "p2p_transport_handshake"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+crypto = { path = "../crypto" }
+p2p_identity = { path = "../p2p_identity" }
+p2p_discovery = { path = "../p2p_discovery" }
+p2p_transport = { path = "../p2p_transport" }
+p2p_peer = { path = "../p2p_peer" }
+p2p_active_calls = { path = "../p2p_active_calls" }
+logger = { path = "../logger" }
+serde = { version = "1.0.130", features = ["derive"] }
+serde_json = "1.0.59"
+rand = "0.8.4"
+log = "0.4.0"
+thiserror = "1.0"
+tokio = { version = "1.12.0", features = ["full"] }
+bytes = "1"
+atoi = "0.4.0"
+
+[lib]
+doctest = false # until stable beta is released

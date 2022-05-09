@@ -18,7 +18,7 @@ impl System {
 
         tinfo!("saksaha", "system", "Resolved config: {:?}", config);
 
-        let peer_table = {
+        let p2p_peer_table = {
             let ps =
                 PeerTable::init(config.p2p.p2p_peer_table_capacity).await?;
 
@@ -89,7 +89,7 @@ impl System {
             rpc_port,
             secret: config.p2p.secret,
             public_key_str: config.p2p.public_key_str,
-            peer_table,
+            p2p_peer_table,
         };
 
         let p2p_host = Host::init(p2p_host_args).await?;
@@ -102,7 +102,7 @@ impl System {
         // rpc.start().await?;
         // ledger.start().await?;
 
-        p2p_host.run().await;
+        p2p_host.run();
 
         System::handle_ctrl_c().await;
 

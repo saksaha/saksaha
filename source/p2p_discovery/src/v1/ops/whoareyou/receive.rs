@@ -4,6 +4,7 @@ use crate::{
     state::DiscState,
     table::{NodeStatus, NodeValue},
 };
+use logger::terr;
 use p2p_identity::addr::{Addr, KnownAddr};
 use std::{net::SocketAddr, sync::Arc};
 use thiserror::Error;
@@ -73,7 +74,10 @@ pub(crate) async fn recv_who_are_you(
 
     let node = match disc_state
         .table
-        .upsert(Addr::Known(addr), NodeStatus::WhoAreYouSynRecvd)
+        .upsert(
+            Addr::Known(addr),
+            NodeStatus::WhoAreYouRecv { fail_count: 0 },
+        )
         .await
     {
         Ok(n) => n,
@@ -113,12 +117,16 @@ pub(crate) async fn recv_who_are_you(
         .await
     {
         Ok(_) => {
-            node_value.status = NodeStatus::WhoAreYouAckSent;
-
             drop(node_lock);
             match disc_state.table.add_known_node(node).await {
                 Ok(_) => (),
                 Err(err) => {
+                    terr!(
+                        "p2p_discovery",
+                        "whoareyou",
+                        "Fail to add known node. Queue might have been closed",
+                    );
+
                     return Err(WhoAreYouRecvError::KnownNodeRegisterFail {
                         endpoint,
                         err,

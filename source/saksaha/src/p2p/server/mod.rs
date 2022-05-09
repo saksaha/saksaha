@@ -199,7 +199,7 @@ impl Server {
                 }
             };
 
-            let conn = match Connection::new(socket) {
+            let mut conn = match Connection::new(socket) {
                 Ok((c, peer_addr)) => {
                     tdebug!(
                         "saksaha",
@@ -226,11 +226,10 @@ impl Server {
             let mut handler = Handler {
                 conn_semaphore: conn_semaphore.clone(),
                 host_state: self.host_state.clone(),
-                conn,
             };
 
             tokio::spawn(async move {
-                if let Err(err) = handler.run().await {
+                if let Err(err) = handler.run(conn).await {
                     twarn!(
                         "saksaha",
                         "p2p",

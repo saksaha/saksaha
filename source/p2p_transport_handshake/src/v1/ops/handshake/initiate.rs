@@ -1,11 +1,12 @@
 use super::check;
-use crate::connection::Connection;
 use crate::ops::Handshake;
 use logger::tdebug;
 use p2p_active_calls::CallGuard;
 use p2p_discovery::AddrGuard;
 use p2p_identity::addr::KnownAddr;
 use p2p_identity::identity::P2PIdentity;
+use p2p_peer::PeerTable;
+use p2p_transport::connection::Connection;
 use std::sync::Arc;
 use std::time::Duration;
 use thiserror::Error;
@@ -13,6 +14,7 @@ use tokio::net::TcpStream;
 
 pub struct HandshakeInitArgs {
     pub p2p_identity: Arc<P2PIdentity>,
+    pub p2p_peer_table: Arc<PeerTable>,
     pub p2p_port: u16,
     pub addr_guard: AddrGuard,
     pub call_guard: CallGuard,
@@ -51,6 +53,7 @@ pub async fn initiate_handshake(
         p2p_identity,
         addr_guard,
         call_guard: _call_guard,
+        p2p_peer_table,
     } = handshake_init_args;
 
     let addr = addr_guard.get_value();
@@ -73,15 +76,12 @@ pub async fn initiate_handshake(
     };
 
     let handshake_ack_frame = match conn.read_frame().await {
-        Ok(fr) => {
-            println!("ff: {:?}", fr);
-            match fr {
-                Some(f) => f,
-                None => {
-                    return Err(HandshakeInitError::InvalidFrame);
-                }
+        Ok(fr) => match fr {
+            Some(f) => f,
+            None => {
+                return Err(HandshakeInitError::InvalidFrame);
             }
-        }
+        },
         Err(err) => {
             return Err(HandshakeInitError::HandshakeAckReadFail {
                 err: err.to_string(),
@@ -89,7 +89,7 @@ pub async fn initiate_handshake(
         }
     };
 
-    println!("123123");
+    println!("initiator, received ack frame, {}", handshake_ack_frame);
 
     // println!("initiate_handshake(), response: {:?}", response);
 
