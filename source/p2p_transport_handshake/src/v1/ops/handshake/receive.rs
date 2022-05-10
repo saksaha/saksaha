@@ -1,6 +1,6 @@
 use super::Handshake;
 use p2p_identity::identity::P2PIdentity;
-use p2p_peer::PeerTable;
+use p2p_peer::{NodeValue, PeerTable};
 use p2p_transport::{connection::Connection, transport::Transport};
 use std::{sync::Arc, time::Duration};
 use thiserror::Error;
@@ -22,6 +22,15 @@ pub enum HandshakeRecvError {
     #[error("Failed to send handshake ack frame, err: {err}")]
     AckSendFail { err: String },
 
+    #[error(
+        "Peer node is being used by another process (task), \
+        public_key: {public_key}, err: {err}"
+    )]
+    PeerNodeAlreadyInUse { public_key: String, err: String },
+
+    #[error("Peer node is invalid. Its value not being peer")]
+    PeerNodeNotHavingPeer,
+
     #[error("Peer node (in table) reserve failed, err: {err}")]
     PeerNodeReserveFail { err: String },
 }
@@ -37,7 +46,7 @@ pub struct HandshakeRecvArgs {
 pub async fn receive_handshake(
     handshake_recv_args: HandshakeRecvArgs,
     mut conn: Connection,
-) -> Result<Transport, HandshakeRecvError> {
+) -> Result<(), HandshakeRecvError> {
     let HandshakeRecvArgs {
         my_p2p_port,
         handshake_syn,
@@ -74,11 +83,14 @@ pub async fn receive_handshake(
         }
     };
 
-    let node = match p2p_peer_table.get(&her_public_key_str).await {
+    let node_guard = match p2p_peer_table.get(&her_public_key_str).await {
         Some(n) => match n {
             Ok(n) => n,
             Err(err) => {
-                return Err(HandshakeRecvError::PeerNodeReserveFail { err });
+                return Err(HandshakeRecvError::PeerNodeAlreadyInUse {
+                    public_key: her_public_key_str,
+                    err,
+                });
             }
         },
         None => match p2p_peer_table.reserve(&her_public_key_str).await {
@@ -88,6 +100,8 @@ pub async fn receive_handshake(
             }
         },
     };
+
+    println!("Node acquired");
 
     let shared_secret =
         crypto::make_shared_secret(my_secret_key, her_public_key);
@@ -116,5 +130,13 @@ pub async fn receive_handshake(
         shared_secret,
     };
 
-    Ok(transport)
+    let mut node_lock = node_guard.node.lock().await;
+    let mut peer = match &mut node_lock.value {
+        NodeValue::Valued(p) => p,
+        _ => return Err(HandshakeRecvError::PeerNodeNotHavingPeer),
+    };
+
+    peer.transport = transport;
+
+    Ok(())
 }

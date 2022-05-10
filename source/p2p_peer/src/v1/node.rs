@@ -1,11 +1,11 @@
 use super::peer::Peer;
+use logger::terr;
 use std::sync::Arc;
 use tokio::sync::{mpsc::UnboundedSender, Mutex};
 
 pub struct Node {
     pub value: NodeValue,
     pub status: NodeStatus,
-    pub node_retrieval_tx: Arc<UnboundedSender<Arc<Mutex<Node>>>>,
 }
 
 impl Node {
@@ -33,16 +33,26 @@ pub enum NodeStatus {
 
 pub enum NodeValue {
     Empty,
-
     Valued(Peer),
 }
 
 pub struct NodeGuard {
     pub node: Arc<Mutex<Node>>,
+    pub node_retrieval_tx: Arc<UnboundedSender<Arc<Mutex<Node>>>>,
 }
 
 impl Drop for NodeGuard {
     fn drop(&mut self) {
-        // self.node.status = NodeStatus::Initialized;
+        match self.node_retrieval_tx.send(self.node.clone()) {
+            Ok(_) => (),
+            Err(err) => {
+                terr!(
+                    "p2p_peer",
+                    "",
+                    "Cannot retrieve peer node after use, err: {}",
+                    err
+                );
+            }
+        }
     }
 }
