@@ -38,12 +38,7 @@ impl P2PTaskRuntime {
 
             let task = match task_queue.pop_front().await {
                 Ok(t) => {
-                    tdebug!(
-                        "saksaha",
-                        "p2p",
-                        "Popped a task. Will handle, {}",
-                        t,
-                    );
+                    tdebug!("saksaha", "p2p", "Popped a task - {}", t,);
                     t
                 }
                 Err(err) => {

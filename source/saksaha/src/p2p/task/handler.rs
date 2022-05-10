@@ -1,3 +1,5 @@
+use std::time::{SystemTime, UNIX_EPOCH};
+
 use crate::p2p::task::P2PTask;
 use logger::{tdebug, terr, twarn};
 use p2p_active_calls::CallGuard;
@@ -12,7 +14,14 @@ pub(crate) async fn run(task: P2PTask) {
             addr_guard,
             host_state,
         } => {
-            let active_calls = &host_state.p2p_active_calls;
+            let since_the_epoch =
+                SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+
+            println!(
+                "init handshake run(), time - {}",
+                since_the_epoch.as_micros()
+            );
+
             let known_addr = addr_guard.get_known_addr();
 
             match host_state
@@ -22,13 +31,17 @@ pub(crate) async fn run(task: P2PTask) {
             {
                 Some(peer_node_guard) => match peer_node_guard {
                     Ok(p) => {
-                        println!("1313");
                         let mut peer_node_lock = p.node.lock().await;
 
-                        println!("2424");
                         match &mut peer_node_lock.value {
                             NodeValue::Valued(p) => {
-                                println!("Started to process initaite handshake, but found addr already in the peer table!!!!!!!!!!!!");
+                                tdebug!(
+                                    "saksaha",
+                                    "task",
+                                    "addr already associated with a peer. \
+                                        Dropping the task",
+                                );
+
                                 p.transport.addr_guard = Some(addr_guard);
                             }
                             _ => {
@@ -38,17 +51,16 @@ pub(crate) async fn run(task: P2PTask) {
                         return;
                     }
                     Err(_) => {
-                        println!("Some other thread is using this thread");
+                        println!("Some other thread is using this peer node");
                         return;
                     }
                 },
-                None => {
-                    println!("power");
-                }
+                None => {}
             };
 
             let endpoint = known_addr.p2p_endpoint();
 
+            let active_calls = &host_state.p2p_active_calls;
             let call_guard = {
                 match active_calls.get(&endpoint).await {
                     Some(call) => {
@@ -85,7 +97,7 @@ pub(crate) async fn run(task: P2PTask) {
                 return;
             }
 
-            let mut conn = match TcpStream::connect(&endpoint).await {
+            let conn = match TcpStream::connect(&endpoint).await {
                 Ok(s) => {
                     let (c, peer_addr) = match Connection::new(s) {
                         Ok(c) => c,
@@ -126,14 +138,18 @@ pub(crate) async fn run(task: P2PTask) {
             };
 
             let handshake_init_args = HandshakeInitArgs {
-                call_guard,
                 addr_guard,
                 p2p_port: host_state.p2p_port,
                 p2p_identity: host_state.p2p_identity.clone(),
                 p2p_peer_table: host_state.p2p_peer_table.clone(),
             };
 
-            match handshake::initiate_handshake(handshake_init_args, conn).await
+            match handshake::initiate_handshake(
+                handshake_init_args,
+                conn,
+                call_guard,
+            )
+            .await
             {
                 Ok(_) => (),
                 Err(err) => {

@@ -4,6 +4,7 @@ use crate::{
     state::DiscState,
     table::{NodeStatus, NodeValue},
 };
+use colored::Colorize;
 use logger::{tdebug, terr};
 use p2p_identity::addr::{Addr, KnownAddr};
 use std::{net::SocketAddr, sync::Arc};
@@ -125,7 +126,7 @@ pub(crate) async fn recv_who_are_you(
                         "p2p_discovery",
                         "whoareyou",
                         "Discovery success, her p2p_endpoint: {}",
-                        her_p2p_endpoint,
+                        her_p2p_endpoint.green(),
                     );
                 }
                 Err(err) => {
