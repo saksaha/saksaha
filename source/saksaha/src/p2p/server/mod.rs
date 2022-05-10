@@ -112,12 +112,16 @@
 // }
 
 mod handler;
+mod request;
 
 use super::state::HostState;
 use handler::Handler;
 use logger::{tdebug, terr, tinfo, twarn};
 use p2p_transport::connection::Connection;
-use std::{sync::Arc, time::Duration};
+use std::{
+    sync::Arc,
+    time::{Duration, SystemTime, UNIX_EPOCH},
+};
 use tokio::{
     net::{TcpListener, TcpStream},
     sync::Semaphore,
@@ -199,15 +203,20 @@ impl Server {
                 }
             };
 
-            let mut conn = match Connection::new(socket) {
+            let since_the_epoch =
+                SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+
+            let conn = match Connection::new(socket) {
                 Ok((c, peer_addr)) => {
                     tdebug!(
                         "saksaha",
                         "p2p",
-                        "(callee) Accepted a tcp connection from source, \
+                        "Accepted a tcp connection from source, \
                         peer_addr: {:?}",
                         peer_addr,
                     );
+
+                    println!("Accept time - {}", since_the_epoch.as_micros());
 
                     c
                 }
@@ -230,12 +239,12 @@ impl Server {
 
             tokio::spawn(async move {
                 if let Err(err) = handler.run(conn).await {
-                    twarn!(
-                        "saksaha",
-                        "p2p",
-                        "Error handling p2p request, err: {}",
-                        err
-                    );
+                    // twarn!(
+                    //     "saksaha",
+                    //     "p2p",
+                    //     "Error handling p2p request, err: {}",
+                    //     err
+                    // );
                 }
             });
         }

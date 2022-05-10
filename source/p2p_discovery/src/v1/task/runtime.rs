@@ -38,12 +38,8 @@ impl DiscTaskRuntime {
 
             let task = match task_queue.pop_front().await {
                 Ok(t) => {
-                    tdebug!(
-                        "p2p_discovery",
-                        "task",
-                        "Popped a task. Will handle, {}",
-                        t,
-                    );
+                    tdebug!("p2p_discovery", "task", "Popped a task - {}", t,);
+
                     t
                 }
                 Err(err) => {

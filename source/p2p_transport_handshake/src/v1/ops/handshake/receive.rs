@@ -1,4 +1,5 @@
 use super::Handshake;
+use p2p_active_calls::CallGuard;
 use p2p_identity::identity::P2PIdentity;
 use p2p_peer::{NodeValue, Peer, PeerTable};
 use p2p_transport::{connection::Connection, transport::Transport};
@@ -46,6 +47,7 @@ pub struct HandshakeRecvArgs {
 pub async fn receive_handshake(
     handshake_recv_args: HandshakeRecvArgs,
     mut conn: Connection,
+    call_guard: CallGuard,
 ) -> Result<(), HandshakeRecvError> {
     let HandshakeRecvArgs {
         my_p2p_port,
@@ -113,7 +115,7 @@ pub async fn receive_handshake(
         dst_public_key_str: her_public_key_str.clone(),
     };
 
-    let handshake_ack_frame = handshake_ack.into_syn_frame();
+    let handshake_ack_frame = handshake_ack.into_ack_frame();
 
     match conn.write_frame(&handshake_ack_frame).await {
         Ok(_) => (),
@@ -125,6 +127,7 @@ pub async fn receive_handshake(
     };
 
     let transport = Transport {
+        call_guard,
         conn,
         p2p_port: src_p2p_port,
         public_key_str: her_public_key_str.clone(),

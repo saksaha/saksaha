@@ -2,6 +2,7 @@ use crate::msg::{Msg, MsgType, WhoAreYou};
 use crate::ops::whoareyou;
 use crate::state::DiscState;
 use crate::table::{NodeStatus, NodeValue};
+use colored::Colorize;
 use logger::tdebug;
 use p2p_identity::addr::{Addr, KnownAddr};
 use std::{net::SocketAddr, sync::Arc};
@@ -101,7 +102,7 @@ impl Handler {
                             "p2p_discovery",
                             "server",
                             "Discovery success, her p2p endpoint: {}",
-                            p2p_endpoint,
+                            p2p_endpoint.green(),
                         );
                     }
                     Err(err) => {
