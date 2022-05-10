@@ -1,9 +1,10 @@
 use super::Handshake;
-use p2p_active_calls::CallGuard;
+use colored::Colorize;
+use logger::tdebug;
 use p2p_identity::identity::P2PIdentity;
 use p2p_peer::{NodeValue, Peer, PeerTable};
 use p2p_transport::{connection::Connection, transport::Transport};
-use std::{sync::Arc, time::Duration};
+use std::sync::Arc;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -47,27 +48,21 @@ pub struct HandshakeRecvArgs {
 pub async fn receive_handshake(
     handshake_recv_args: HandshakeRecvArgs,
     mut conn: Connection,
-    call_guard: CallGuard,
 ) -> Result<(), HandshakeRecvError> {
     let HandshakeRecvArgs {
         my_p2p_port,
         handshake_syn,
-        src_p2p_port,
         p2p_identity,
         p2p_peer_table,
+        ..
     } = handshake_recv_args;
 
     let Handshake {
+        instance_id,
         src_p2p_port,
         src_public_key_str: her_public_key_str,
         dst_public_key_str: my_public_key_str,
     } = handshake_syn;
-
-    println!("handshake recv, dst_public_key: {}", my_public_key_str);
-    println!(
-        "handshake recv, src_public_key: {}",
-        p2p_identity.public_key_str
-    );
 
     if my_public_key_str != p2p_identity.public_key_str {
         return Err(HandshakeRecvError::UnmatchedMyPublicKey {
@@ -88,28 +83,11 @@ pub async fn receive_handshake(
         }
     };
 
-    let peer_node_guard = match p2p_peer_table.get(&her_public_key_str).await {
-        Some(n) => match n {
-            Ok(n) => n,
-            Err(err) => {
-                return Err(HandshakeRecvError::PeerNodeAlreadyInUse {
-                    public_key: her_public_key_str,
-                    err,
-                });
-            }
-        },
-        None => match p2p_peer_table.reserve(&her_public_key_str).await {
-            Ok(n) => n,
-            Err(err) => {
-                return Err(HandshakeRecvError::PeerNodeReserveFail { err });
-            }
-        },
-    };
-
     let shared_secret =
         crypto::make_shared_secret(my_secret_key, her_public_key);
 
     let handshake_ack = Handshake {
+        instance_id: instance_id.clone(),
         src_p2p_port: my_p2p_port,
         src_public_key_str: my_public_key_str.clone(),
         dst_public_key_str: her_public_key_str.clone(),
@@ -127,7 +105,6 @@ pub async fn receive_handshake(
     };
 
     let transport = Transport {
-        call_guard,
         conn,
         p2p_port: src_p2p_port,
         public_key_str: her_public_key_str.clone(),
@@ -135,8 +112,41 @@ pub async fn receive_handshake(
         addr_guard: None,
     };
 
+    let peer_node_guard = match p2p_peer_table.get(&her_public_key_str).await {
+        Some(n) => match n {
+            Ok(_n) => {
+                println!("recv drop");
+
+                return Ok(());
+            }
+            Err(err) => {
+                return Err(HandshakeRecvError::PeerNodeAlreadyInUse {
+                    public_key: her_public_key_str,
+                    err,
+                });
+            }
+        },
+        None => match p2p_peer_table.reserve(&her_public_key_str).await {
+            Ok(n) => {
+                println!("Recv reserves a node of {}", &her_public_key_str);
+                n
+            }
+            Err(err) => {
+                return Err(HandshakeRecvError::PeerNodeReserveFail { err });
+            }
+        },
+    };
+
     let mut peer_node_lock = peer_node_guard.node.lock().await;
     peer_node_lock.value = NodeValue::Valued(Peer { transport });
+
+    tdebug!(
+        "p2p_trpt_hske",
+        "receive",
+        "Peer node updated, instance_id: {}, her_public_key: {}",
+        &instance_id,
+        her_public_key_str.clone().green(),
+    );
 
     Ok(())
 }

@@ -1,8 +1,5 @@
-use std::time::{SystemTime, UNIX_EPOCH};
-
 use crate::p2p::task::P2PTask;
 use logger::{tdebug, terr, twarn};
-use p2p_active_calls::CallGuard;
 use p2p_peer::NodeValue;
 use p2p_transport::connection::Connection;
 use p2p_transport_handshake::ops::{handshake, HandshakeInitArgs};
@@ -14,14 +11,6 @@ pub(crate) async fn run(task: P2PTask) {
             addr_guard,
             host_state,
         } => {
-            let since_the_epoch =
-                SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
-
-            println!(
-                "init handshake run(), time - {}",
-                since_the_epoch.as_micros()
-            );
-
             let known_addr = addr_guard.get_known_addr();
 
             match host_state
@@ -59,31 +48,6 @@ pub(crate) async fn run(task: P2PTask) {
             };
 
             let endpoint = known_addr.p2p_endpoint();
-
-            let active_calls = &host_state.p2p_active_calls;
-            let call_guard = {
-                match active_calls.get(&endpoint).await {
-                    Some(call) => {
-                        twarn!(
-                            "saksaha",
-                            "p2p",
-                            "Call to initiate handshake is abandoned \
-                            since we are already in a call, call: {}",
-                            call,
-                        );
-
-                        return;
-                    }
-                    None => {
-                        active_calls.insert_outbound(endpoint.clone()).await;
-
-                        CallGuard {
-                            endpoint: endpoint.clone(),
-                            active_calls: active_calls.clone(),
-                        }
-                    }
-                }
-            };
 
             if utils_net::is_my_endpoint(host_state.p2p_port, &endpoint) {
                 twarn!(
@@ -144,12 +108,7 @@ pub(crate) async fn run(task: P2PTask) {
                 p2p_peer_table: host_state.p2p_peer_table.clone(),
             };
 
-            match handshake::initiate_handshake(
-                handshake_init_args,
-                conn,
-                call_guard,
-            )
-            .await
+            match handshake::initiate_handshake(handshake_init_args, conn).await
             {
                 Ok(_) => (),
                 Err(err) => {

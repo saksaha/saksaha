@@ -19,7 +19,6 @@ const P2P_TASK_QUEUE_CAPACITY: usize = 10;
 pub(crate) struct Host {
     host_state: Arc<HostState>,
     p2p_discovery: Arc<Discovery>,
-    p2p_active_calls: Arc<ActiveCalls>,
     p2p_dial_scheduler: Arc<P2PDialScheduler>,
     p2p_server: Arc<Server>,
     p2p_task_queue: Arc<TaskQueue<P2PTask>>,
@@ -79,15 +78,15 @@ impl Host {
             Arc::new(h)
         };
 
-        let p2p_active_calls = {
-            let a = ActiveCalls::init().await;
+        // let p2p_active_calls = {
+        //     let a = ActiveCalls::init().await;
 
-            Arc::new(a)
-        };
+        //     Arc::new(a)
+        // };
 
         let host_state = {
             let s = HostState {
-                p2p_active_calls: p2p_active_calls.clone(),
+                // p2p_active_calls: p2p_active_calls.clone(),
                 p2p_identity: p2p_identity.clone(),
                 p2p_port: host_args.p2p_port,
                 rpc_port: host_args.rpc_port,
@@ -138,7 +137,7 @@ impl Host {
 
         let host = Host {
             p2p_discovery,
-            p2p_active_calls,
+            // p2p_active_calls,
             p2p_dial_scheduler,
             p2p_task_queue,
             p2p_task_runtime,
