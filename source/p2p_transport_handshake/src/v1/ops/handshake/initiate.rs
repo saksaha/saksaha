@@ -94,6 +94,8 @@ pub async fn initiate_handshake(
 
     let handshake_syn_frame = handshake_syn.into_syn_frame();
 
+    println!("init writing handshake syn frame");
+
     match conn.write_frame(&handshake_syn_frame).await {
         Ok(_) => (),
         Err(err) => {
@@ -118,6 +120,8 @@ pub async fn initiate_handshake(
             })
         }
     };
+
+    println!("init did read handshake ack frame");
 
     let mut parse = match Parse::new(handshake_ack_frame) {
         Ok(p) => p,
@@ -163,6 +167,7 @@ pub async fn initiate_handshake(
         addr_guard: Some(addr_guard),
     };
 
+    println!("init try getting peer");
     let peer_node_guard = match p2p_peer_table.get(&her_public_key_str).await {
         Some(n) => match n {
             Ok(_n) => {
@@ -193,7 +198,7 @@ pub async fn initiate_handshake(
     tdebug!(
         "p2p_trpt_hske",
         "initiate",
-        "Peer node updated, id: {}, her_public_key: {}",
+        "Peer node updated, hs_id: {}, her_public_key: {}",
         &handshake_ack.instance_id,
         her_public_key_str.clone().green(),
     );

@@ -95,6 +95,7 @@ pub async fn receive_handshake(
 
     let handshake_ack_frame = handshake_ack.into_ack_frame();
 
+    println!("recv writing handshake ack frame");
     match conn.write_frame(&handshake_ack_frame).await {
         Ok(_) => (),
         Err(err) => {
@@ -112,6 +113,7 @@ pub async fn receive_handshake(
         addr_guard: None,
     };
 
+    println!("recv try getting peer");
     let peer_node_guard = match p2p_peer_table.get(&her_public_key_str).await {
         Some(n) => match n {
             Ok(_n) => {
@@ -143,7 +145,7 @@ pub async fn receive_handshake(
     tdebug!(
         "p2p_trpt_hske",
         "receive",
-        "Peer node updated, instance_id: {}, her_public_key: {}",
+        "Peer node updated, hs_id: {}, her_public_key: {}",
         &instance_id,
         her_public_key_str.clone().green(),
     );
