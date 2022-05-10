@@ -1,6 +1,6 @@
 use super::Handshake;
 use p2p_identity::identity::P2PIdentity;
-use p2p_peer::{NodeValue, PeerTable};
+use p2p_peer::{NodeValue, Peer, PeerTable};
 use p2p_transport::{connection::Connection, transport::Transport};
 use std::{sync::Arc, time::Duration};
 use thiserror::Error;
@@ -61,8 +61,11 @@ pub async fn receive_handshake(
         dst_public_key_str: my_public_key_str,
     } = handshake_syn;
 
-    println!("dst_public_key: {}", my_public_key_str);
-    println!("src_public_key: {}", p2p_identity.public_key_str);
+    println!("handshake recv, dst_public_key: {}", my_public_key_str);
+    println!(
+        "handshake recv, src_public_key: {}",
+        p2p_identity.public_key_str
+    );
 
     if my_public_key_str != p2p_identity.public_key_str {
         return Err(HandshakeRecvError::UnmatchedMyPublicKey {
@@ -83,7 +86,7 @@ pub async fn receive_handshake(
         }
     };
 
-    let node_guard = match p2p_peer_table.get(&her_public_key_str).await {
+    let peer_node_guard = match p2p_peer_table.get(&her_public_key_str).await {
         Some(n) => match n {
             Ok(n) => n,
             Err(err) => {
@@ -100,8 +103,6 @@ pub async fn receive_handshake(
             }
         },
     };
-
-    println!("Node acquired");
 
     let shared_secret =
         crypto::make_shared_secret(my_secret_key, her_public_key);
@@ -128,15 +129,11 @@ pub async fn receive_handshake(
         p2p_port: src_p2p_port,
         public_key_str: her_public_key_str.clone(),
         shared_secret,
+        addr_guard: None,
     };
 
-    let mut node_lock = node_guard.node.lock().await;
-    let mut peer = match &mut node_lock.value {
-        NodeValue::Valued(p) => p,
-        _ => return Err(HandshakeRecvError::PeerNodeNotHavingPeer),
-    };
-
-    peer.transport = transport;
+    let mut peer_node_lock = peer_node_guard.node.lock().await;
+    peer_node_lock.value = NodeValue::Valued(Peer { transport });
 
     Ok(())
 }

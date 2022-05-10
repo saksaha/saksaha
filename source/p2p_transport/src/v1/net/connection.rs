@@ -20,7 +20,7 @@ use tokio::net::TcpStream;
 /// The contents of the write buffer are then written to the socket.
 #[derive(Debug)]
 pub struct Connection {
-    pub peer_addr: SocketAddr,
+    pub socket_addr: SocketAddr,
     // The `TcpStream`. It is decorated with a `BufWriter`, which provides write
     // level buffering. The `BufWriter` implementation provided by Tokio is
     // sufficient for our needs.
@@ -34,10 +34,10 @@ impl Connection {
     /// Create a new `Connection`, backed by `socket`. Read and write buffers
     /// are initialized.
     pub fn new(socket: TcpStream) -> io::Result<(Connection, SocketAddr)> {
-        let peer_addr = socket.peer_addr()?;
+        let socket_addr = socket.peer_addr()?;
 
         let c = Connection {
-            peer_addr,
+            socket_addr,
             stream: BufWriter::new(socket),
             // Default to a 4KB read buffer. For the use case of mini redis,
             // this is fine. However, real applications will want to tune this
@@ -46,7 +46,7 @@ impl Connection {
             buffer: BytesMut::with_capacity(4 * 1024),
         };
 
-        Ok((c, peer_addr))
+        Ok((c, socket_addr))
     }
 
     /// Read a single `Frame` value from the underlying stream.

@@ -1,6 +1,7 @@
 use crate::p2p::task::P2PTask;
 use logger::{tdebug, terr, twarn};
 use p2p_active_calls::CallGuard;
+use p2p_peer::NodeValue;
 use p2p_transport::connection::Connection;
 use p2p_transport_handshake::ops::{handshake, HandshakeInitArgs};
 use tokio::net::TcpStream;
@@ -13,6 +14,39 @@ pub(crate) async fn run(task: P2PTask) {
         } => {
             let active_calls = &host_state.p2p_active_calls;
             let known_addr = addr_guard.get_known_addr();
+
+            match host_state
+                .p2p_peer_table
+                .get(&known_addr.public_key_str)
+                .await
+            {
+                Some(peer_node_guard) => match peer_node_guard {
+                    Ok(p) => {
+                        println!("1313");
+                        let mut peer_node_lock = p.node.lock().await;
+
+                        println!("2424");
+                        match &mut peer_node_lock.value {
+                            NodeValue::Valued(p) => {
+                                println!("Started to process initaite handshake, but found addr already in the peer table!!!!!!!!!!!!");
+                                p.transport.addr_guard = Some(addr_guard);
+                            }
+                            _ => {
+                                println!("peer is empty");
+                            }
+                        }
+                        return;
+                    }
+                    Err(_) => {
+                        println!("Some other thread is using this thread");
+                        return;
+                    }
+                },
+                None => {
+                    println!("power");
+                }
+            };
+
             let endpoint = known_addr.p2p_endpoint();
 
             let call_guard = {
@@ -68,9 +102,9 @@ pub(crate) async fn run(task: P2PTask) {
                     };
 
                     tdebug!(
-                        "p2p_transport",
-                        "handshake",
-                        "(caller) Made a connection to destination, \
+                        "saksaha",
+                        "p2p",
+                        "(caller) TCP connected to destination, \
                         peer_addr: {:?}",
                         peer_addr,
                     );

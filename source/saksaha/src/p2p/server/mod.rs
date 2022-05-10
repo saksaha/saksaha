@@ -204,7 +204,7 @@ impl Server {
                     tdebug!(
                         "saksaha",
                         "p2p",
-                        "(caller) Made a connection to destination, \
+                        "(callee) Accepted a tcp connection from source, \
                         peer_addr: {:?}",
                         peer_addr,
                     );
