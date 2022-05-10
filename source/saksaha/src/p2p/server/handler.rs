@@ -1,15 +1,11 @@
 use super::request::Request;
 use crate::p2p::state::HostState;
 use logger::{tdebug, twarn};
-use p2p_identity::addr::Addr;
 use p2p_transport::connection::Connection;
 use p2p_transport_handshake::ops::{
     handshake, HandshakeRecvArgs, HandshakeRecvError,
 };
-use std::{
-    net::{SocketAddr, ToSocketAddrs},
-    sync::Arc,
-};
+use std::sync::Arc;
 use tokio::sync::Semaphore;
 
 pub(super) struct Handler {
@@ -34,13 +30,7 @@ impl Handler {
             None => return Ok(()),
         };
 
-        let request = match Request::new(
-            conn.socket_addr,
-            frame,
-            self.host_state.p2p_active_calls.clone(),
-        )
-        .await
-        {
+        let request = match Request::new(conn.socket_addr, frame).await {
             Ok(o) => o,
             Err(err) => {
                 twarn!(
@@ -59,9 +49,7 @@ impl Handler {
         };
 
         match request {
-            Request::HandshakeInit { msg, call_guard } => {
-                println!("Parsed successfully handshake, {}", msg.src_p2p_port);
-
+            Request::HandshakeInit { msg } => {
                 let handshake_recv_args = HandshakeRecvArgs {
                     handshake_syn: msg,
                     my_p2p_port: self.host_state.p2p_port,
@@ -70,12 +58,8 @@ impl Handler {
                     p2p_peer_table: self.host_state.p2p_peer_table.clone(),
                 };
 
-                match handshake::receive_handshake(
-                    handshake_recv_args,
-                    conn,
-                    call_guard,
-                )
-                .await
+                match handshake::receive_handshake(handshake_recv_args, conn)
+                    .await
                 {
                     Ok(_) => (),
                     Err(err) => handle_handshake_recv_error(err),

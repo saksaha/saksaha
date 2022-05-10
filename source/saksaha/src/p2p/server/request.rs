@@ -10,10 +10,7 @@ use std::sync::Arc;
 use thiserror::Error;
 
 pub enum Request {
-    HandshakeInit {
-        msg: Handshake,
-        call_guard: CallGuard,
-    },
+    HandshakeInit { msg: Handshake },
 }
 
 #[derive(Error, Debug)]
@@ -41,7 +38,6 @@ impl Request {
     pub async fn new(
         socket_addr: SocketAddr,
         frame: Frame,
-        active_calls: Arc<ActiveCalls>,
     ) -> Result<Request, RequestParseError> {
         let mut parse = match Parse::new(frame) {
             Ok(p) => p,
@@ -75,30 +71,7 @@ impl Request {
                 let src_p2p_endpoint =
                     format!("{}:{}", socket_addr.ip(), handshake.src_p2p_port);
 
-                let call_guard = {
-                    match active_calls.get(&src_p2p_endpoint).await {
-                        Some(call) => {
-                            return Err(RequestParseError::AlreadyInCall {
-                                call,
-                            });
-                        }
-                        None => {
-                            active_calls
-                                .insert_inbound(src_p2p_endpoint.clone())
-                                .await;
-
-                            CallGuard {
-                                endpoint: src_p2p_endpoint.clone(),
-                                active_calls: active_calls.clone(),
-                            }
-                        }
-                    }
-                };
-
-                let op = Request::HandshakeInit {
-                    msg: handshake,
-                    call_guard,
-                };
+                let op = Request::HandshakeInit { msg: handshake };
 
                 Ok(op)
             }

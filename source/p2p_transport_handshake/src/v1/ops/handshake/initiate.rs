@@ -1,4 +1,5 @@
 use crate::ops::Handshake;
+use colored::Colorize;
 use logger::tdebug;
 use p2p_active_calls::CallGuard;
 use p2p_discovery::AddrGuard;
@@ -21,6 +22,9 @@ pub struct HandshakeInitArgs {
 
 #[derive(Error, Debug)]
 pub enum HandshakeInitError {
+    #[error("Could not intilize handshake msg, err: {err}")]
+    HandshakeMsgInitFail { err: String },
+
     #[error("P2P Port may not be provided")]
     InvalidP2PEndpoint,
 
@@ -67,25 +71,28 @@ pub enum HandshakeInitError {
 pub async fn initiate_handshake(
     handshake_init_args: HandshakeInitArgs,
     mut conn: Connection,
-    call_guard: CallGuard,
 ) -> Result<(), HandshakeInitError> {
     let HandshakeInitArgs {
         p2p_port,
         p2p_identity,
         addr_guard,
-        // call_guard: _call_guard,
         p2p_peer_table,
     } = handshake_init_args;
 
     let known_addr = addr_guard.get_known_addr();
 
-    let handshake = Handshake {
-        src_p2p_port: p2p_port,
-        src_public_key_str: p2p_identity.public_key_str.clone(),
-        dst_public_key_str: known_addr.public_key_str.clone(),
+    let handshake_syn = match Handshake::new(
+        p2p_port,
+        p2p_identity.public_key_str.clone(),
+        known_addr.public_key_str.clone(),
+    ) {
+        Ok(h) => h,
+        Err(err) => {
+            return Err(HandshakeInitError::HandshakeMsgInitFail { err });
+        }
     };
 
-    let handshake_syn_frame = handshake.into_syn_frame();
+    let handshake_syn_frame = handshake_syn.into_syn_frame();
 
     match conn.write_frame(&handshake_syn_frame).await {
         Ok(_) => (),
@@ -112,8 +119,6 @@ pub async fn initiate_handshake(
         }
     };
 
-    println!("initiator, received ack frame, {}", handshake_ack_frame);
-
     let mut parse = match Parse::new(handshake_ack_frame) {
         Ok(p) => p,
         Err(_err) => {
@@ -123,7 +128,7 @@ pub async fn initiate_handshake(
 
     let _frame_type = parse.next_string().unwrap();
 
-    let handshake = match Handshake::parse_frames(&mut parse) {
+    let handshake_ack = match Handshake::parse_frames(&mut parse) {
         Ok(h) => h,
         Err(err) => {
             return Err(HandshakeInitError::InvalidFrame {
@@ -132,7 +137,7 @@ pub async fn initiate_handshake(
         }
     };
 
-    let her_public_key_str = handshake.src_public_key_str;
+    let her_public_key_str = handshake_ack.src_public_key_str;
 
     let my_secret_key = &p2p_identity.secret_key;
     let her_public_key = match crypto::convert_public_key_str_into_public_key(
@@ -151,9 +156,8 @@ pub async fn initiate_handshake(
         crypto::make_shared_secret(my_secret_key, her_public_key);
 
     let transport = Transport {
-        call_guard,
         conn,
-        p2p_port: handshake.src_p2p_port,
+        p2p_port: handshake_ack.src_p2p_port,
         public_key_str: her_public_key_str.clone(),
         shared_secret,
         addr_guard: Some(addr_guard),
@@ -161,7 +165,10 @@ pub async fn initiate_handshake(
 
     let peer_node_guard = match p2p_peer_table.get(&her_public_key_str).await {
         Some(n) => match n {
-            Ok(n) => n,
+            Ok(_n) => {
+                println!("init drop");
+                return Ok(());
+            }
             Err(err) => {
                 return Err(HandshakeInitError::PeerNodeAlreadyInUse {
                     public_key: her_public_key_str,
@@ -170,7 +177,11 @@ pub async fn initiate_handshake(
             }
         },
         None => match p2p_peer_table.reserve(&her_public_key_str).await {
-            Ok(n) => n,
+            Ok(n) => {
+                println!("Init reserves a node of {}", &her_public_key_str);
+
+                n
+            }
             Err(err) => {
                 return Err(HandshakeInitError::PeerNodeReserveFail { err });
             }
@@ -178,6 +189,14 @@ pub async fn initiate_handshake(
     };
 
     let mut peer_node_lock = peer_node_guard.node.lock().await;
+
+    tdebug!(
+        "p2p_trpt_hske",
+        "initiate",
+        "Peer node updated, id: {}, her_public_key: {}",
+        &handshake_ack.instance_id,
+        her_public_key_str.clone().green(),
+    );
     peer_node_lock.value = NodeValue::Valued(Peer { transport });
 
     Ok(())
