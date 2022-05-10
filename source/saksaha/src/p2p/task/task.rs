@@ -3,11 +3,9 @@ use p2p_discovery::AddrGuard;
 use p2p_identity::addr::KnownAddr;
 use std::sync::Arc;
 
-// #[derive(Clone)]
 pub(crate) enum P2PTask {
     InitiateHandshake {
         addr_guard: AddrGuard,
-        // addr: KnownAddr,
         host_state: Arc<HostState>,
     },
 }

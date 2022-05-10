@@ -74,6 +74,8 @@ impl Handler {
                     public_key,
                 };
 
+                let p2p_endpoint = addr.p2p_endpoint();
+
                 let disc_state = self.disc_state.clone();
                 let table = disc_state.table.clone();
 
@@ -93,17 +95,15 @@ impl Handler {
                     }
                 };
 
-                // let mut node_lock = node.lock().await;
-                // let node_value = match &mut node_lock.value {
-                //     NodeValue::Valued(v) => v,
-                //     _ => {
-                //         return Err(format!("Invalid node, something is wrong"))
-                //     }
-                // };
-
-                // drop(node_lock);
                 match disc_state.table.add_known_node(node).await {
-                    Ok(_) => (),
+                    Ok(_) => {
+                        tdebug!(
+                            "p2p_discovery",
+                            "server",
+                            "Discovery success, her p2p endpoint: {}",
+                            p2p_endpoint,
+                        );
+                    }
                     Err(err) => {
                         return Err(err);
                     }

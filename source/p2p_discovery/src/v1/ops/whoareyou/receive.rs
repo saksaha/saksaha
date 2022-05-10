@@ -4,7 +4,7 @@ use crate::{
     state::DiscState,
     table::{NodeStatus, NodeValue},
 };
-use logger::terr;
+use logger::{tdebug, terr};
 use p2p_identity::addr::{Addr, KnownAddr};
 use std::{net::SocketAddr, sync::Arc};
 use thiserror::Error;
@@ -67,6 +67,7 @@ pub(crate) async fn recv_who_are_you(
     };
 
     let endpoint = addr.disc_endpoint();
+    let her_p2p_endpoint = addr.p2p_endpoint();
 
     if check::is_my_endpoint(disc_state.disc_port, &endpoint) {
         return Err(WhoAreYouRecvError::MyEndpoint { addr });
@@ -85,7 +86,7 @@ pub(crate) async fn recv_who_are_you(
     };
 
     let mut node_lock = node.lock().await;
-    let mut node_value = match &mut node_lock.value {
+    let mut _node_value = match &mut node_lock.value {
         NodeValue::Valued(v) => v,
         _ => {
             return Err(WhoAreYouRecvError::EmptyNode);
@@ -119,7 +120,14 @@ pub(crate) async fn recv_who_are_you(
         Ok(_) => {
             drop(node_lock);
             match disc_state.table.add_known_node(node).await {
-                Ok(_) => (),
+                Ok(_) => {
+                    tdebug!(
+                        "p2p_discovery",
+                        "whoareyou",
+                        "Discovery success, her p2p_endpoint: {}",
+                        her_p2p_endpoint,
+                    );
+                }
                 Err(err) => {
                     terr!(
                         "p2p_discovery",

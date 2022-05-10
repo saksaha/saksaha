@@ -1,5 +1,5 @@
 use super::node::Node;
-use crate::{NodeGuard, NodeStatus, NodeValue};
+use crate::{NodeStatus, NodeValue};
 use logger::{terr, tinfo};
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::{
@@ -167,6 +167,27 @@ impl PeerTable {
     //         // p_value.
     //     }
     // }
+}
+
+pub struct NodeGuard {
+    pub node: Arc<Mutex<Node>>,
+    pub node_retrieval_tx: Arc<UnboundedSender<Arc<Mutex<Node>>>>,
+}
+
+impl Drop for NodeGuard {
+    fn drop(&mut self) {
+        match self.node_retrieval_tx.send(self.node.clone()) {
+            Ok(_) => (),
+            Err(err) => {
+                terr!(
+                    "p2p_peer",
+                    "",
+                    "Cannot retrieve peer node after use, err: {}",
+                    err
+                );
+            }
+        }
+    }
 }
 
 pub struct RetrievalRoutine;
