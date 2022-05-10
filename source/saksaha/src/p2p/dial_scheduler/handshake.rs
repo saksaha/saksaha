@@ -206,8 +206,6 @@ impl HandshakeDialLoop {
         };
 
         loop {
-            println!("handshake dial loop iteration 1s");
-
             let time_since = SystemTime::now();
 
             if let Some(addr_guard) = self.addrs_iter.next().await {

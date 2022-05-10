@@ -42,7 +42,6 @@ impl PeerTable {
                 let n = Node {
                     value: NodeValue::Empty,
                     status: NodeStatus::Available,
-                    node_retrieval_tx: node_retreival_tx.clone(),
                 };
 
                 v.push(Arc::new(Mutex::new(n)));
@@ -84,8 +83,12 @@ impl PeerTable {
             Some(n) => {
                 let node_lock = n.lock().await;
                 if !node_lock.is_used() {
-                    let g = NodeGuard { node: n.clone() };
-                    return Some(Ok(g));
+                    let node_guard = NodeGuard {
+                        node: n.clone(),
+                        node_retrieval_tx: self.node_retreival_tx.clone(),
+                    };
+
+                    return Some(Ok(node_guard));
                 } else {
                     return Some(Err(format!(
                         "Peer node is already being used"
@@ -111,16 +114,18 @@ impl PeerTable {
                 }
             };
 
-            node_lock.status = NodeStatus::Used;
-
             if node_lock.is_empty() && !node_lock.is_used() {
-                let g = NodeGuard { node: node.clone() };
+                let node_guard = NodeGuard {
+                    node: node.clone(),
+                    node_retrieval_tx: self.node_retreival_tx.clone(),
+                };
 
-                let peers_map = self.peers_map.clone();
-                let mut peers_map_lock = peers_map.lock().await;
-                peers_map_lock.insert(public_key.clone(), node.clone());
+                let mut peers_map = self.peers_map.lock().await;
+                peers_map.insert(public_key.clone(), node.clone());
 
-                return Ok(g);
+                node_lock.status = NodeStatus::Used;
+
+                return Ok(node_guard);
             }
         }
 

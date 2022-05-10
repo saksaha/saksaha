@@ -56,12 +56,12 @@ pub async fn initiate_handshake(
         p2p_peer_table,
     } = handshake_init_args;
 
-    let addr = addr_guard.get_value();
+    let known_addr = addr_guard.get_known_addr();
 
     let handshake = Handshake {
         src_p2p_port: p2p_port,
         src_public_key_str: p2p_identity.public_key_str.clone(),
-        dst_public_key_str: addr.public_key_str,
+        dst_public_key_str: known_addr.public_key_str.clone(),
     };
 
     let handshake_syn_frame = handshake.into_syn_frame();

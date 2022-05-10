@@ -12,8 +12,8 @@ pub(crate) async fn run(task: P2PTask) {
             host_state,
         } => {
             let active_calls = &host_state.p2p_active_calls;
-            let addr = addr_guard.get_value();
-            let endpoint = addr.p2p_endpoint();
+            let known_addr = addr_guard.get_known_addr();
+            let endpoint = known_addr.p2p_endpoint();
 
             let call_guard = {
                 match active_calls.get(&endpoint).await {

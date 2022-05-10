@@ -19,7 +19,7 @@ impl std::fmt::Display for P2PTask {
                 write!(
                     f,
                     "InitiateHandshake, addr_guard: {}",
-                    addr_guard.get_value(),
+                    addr_guard.get_known_addr(),
                 )
             }
         }
