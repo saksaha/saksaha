@@ -1,12 +1,11 @@
 use crate::msg::{Msg, MsgType, WhoAreYou};
 use crate::ops::whoareyou;
 use crate::state::DiscState;
-use crate::table::NodeStatus;
+use crate::table::{KnownAddrNode, Node, NodeStatus};
 use chrono::Utc;
 use colored::Colorize;
 use logger::tdebug;
-use p2p_identity::addr::{Addr, KnownAddr};
-use std::time::SystemTime;
+use p2p_identity::addr::KnownAddr;
 use std::{net::SocketAddr, sync::Arc};
 use tokio::sync::Semaphore;
 
@@ -68,7 +67,7 @@ impl Handler {
                         Err(err) => return Err(err),
                     };
 
-                let addr = KnownAddr {
+                let known_addr = KnownAddr {
                     ip: self.socket_addr.ip().to_string(),
                     disc_port: way_ack.src_disc_port,
                     p2p_port: way_ack.src_p2p_port,
@@ -78,26 +77,36 @@ impl Handler {
                     known_at: Utc::now(),
                 };
 
-                let p2p_endpoint = addr.p2p_endpoint();
+                let p2p_endpoint = known_addr.p2p_endpoint();
+                let disc_endpoint = known_addr.disc_endpoint();
 
                 let disc_state = self.disc_state.clone();
                 let table = disc_state.table.clone();
 
-                let node = match table
-                    .upsert(
-                        Addr::Known(addr),
-                        NodeStatus::WhoAreYouRecv { fail_count: 0 },
-                    )
-                    .await
-                {
-                    Ok(a) => a,
-                    Err(err) => {
-                        return Err(format!(
-                            "Error upserting node in the addr map, err: {}",
-                            err,
-                        ));
-                    }
-                };
+                let (mut node_lock, node) =
+                    match table.get_mapped_node_lock(&disc_endpoint).await {
+                        Some(n) => n,
+                        None => {
+                            return Err(format!(
+                                "Cannot proceed with WhoAreYouAck msg, \
+                            entry does not exist in the addr table",
+                            ))
+                        }
+                    };
+
+                if let Node::Empty = &mut *node_lock {
+                    return Err(format!(
+                        "Empty node, at a point where we handle WhoAreYouAck\
+                        AddrNode should exist in the table"
+                    ));
+                }
+
+                *node_lock = Node::KnownAddr(KnownAddrNode {
+                    addr: known_addr,
+                    status: NodeStatus::WhoAreYouRecv,
+                });
+
+                drop(node_lock);
 
                 match disc_state.table.add_known_node(node).await {
                     Ok(_) => {
@@ -107,6 +116,8 @@ impl Handler {
                             "Discovery success, her p2p endpoint: {}",
                             p2p_endpoint.green(),
                         );
+
+                        // disc_state.table.print_all_nodes().await;
                     }
                     Err(err) => {
                         return Err(err);

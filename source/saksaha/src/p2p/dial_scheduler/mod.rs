@@ -5,7 +5,6 @@ use crate::p2p::state::HostState;
 use handshake::HandshakeDialLoop;
 use logger::tinfo;
 use p2p_discovery::AddrsIterator;
-use p2p_identity::addr::Addr;
 use std::sync::Arc;
 use task_queue::TaskQueue;
 

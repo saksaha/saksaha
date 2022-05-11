@@ -1,14 +1,14 @@
-use super::check;
+use super::{check, WHO_ARE_YOU_EXPIRATION_SEC};
 use crate::{
     msg::WhoAreYou,
     state::DiscState,
-    table::{NodeStatus, NodeValue},
+    table::{KnownAddrNode, Node, NodeStatus},
 };
 use chrono::Utc;
 use colored::Colorize;
 use logger::{tdebug, terr};
-use p2p_identity::addr::{Addr, KnownAddr};
-use std::{net::SocketAddr, sync::Arc, time::SystemTime};
+use p2p_identity::addr::KnownAddr;
+use std::{net::SocketAddr, sync::Arc};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -16,36 +16,39 @@ pub(crate) enum WhoAreYouRecvError {
     #[error("Can't take request I sent, addr: {addr}")]
     MyEndpoint { addr: KnownAddr },
 
-    #[error("Can't take a slot in the table, err: {err}")]
-    TableIsFull { err: String },
-
     #[error("Can't make a message (WhoAreYouAck), err: {err}")]
     MsgCreateFail { err: String },
 
     #[error("Can't send a message through udp socket, err: {err}")]
     MsgSendFail { err: String },
 
-    #[error("Table node is empty")]
-    EmptyNode,
-
-    #[error("Could not register as a known node, endpoint: {endpoint}")]
-    KnownNodeRegisterFail { endpoint: String, err: String },
+    #[error("Could not register as a known node, endpoint: {disc_endpoint}")]
+    KnownNodeRegisterFail { disc_endpoint: String, err: String },
 
     #[error("Could not make public key out of string: {public_key_str}")]
     PublicKeyCreateFail { public_key_str: String, err: String },
+
+    #[error(
+        "Previous WhoAreYou succeeded entry still lives in the table, \
+        disc_endpoint: {disc_endpoint}"
+    )]
+    WhoAreYouNotExpired { disc_endpoint: String },
+
+    #[error("Could not reserve addr node")]
+    AddrNodeReserveFail,
 }
 
 pub(crate) async fn recv_who_are_you(
     socket_addr: SocketAddr,
     disc_state: Arc<DiscState>,
-    way_recv: WhoAreYou,
+    way_syn: WhoAreYou,
 ) -> Result<(), WhoAreYouRecvError> {
     let WhoAreYou {
         src_sig: her_sig,
         src_disc_port: her_disc_port,
         src_p2p_port: her_p2p_port,
         src_public_key_str: her_public_key_str,
-    } = way_recv;
+    } = way_syn;
 
     let her_public_key = match crypto::convert_public_key_str_into_public_key(
         &her_public_key_str,
@@ -70,31 +73,39 @@ pub(crate) async fn recv_who_are_you(
     };
 
     let known_at = addr.known_at;
-    let endpoint = addr.disc_endpoint();
+    let her_disc_endpoint = addr.disc_endpoint();
     let her_p2p_endpoint = addr.p2p_endpoint();
 
-    if check::is_my_endpoint(disc_state.disc_port, &endpoint) {
+    if check::is_my_endpoint(disc_state.disc_port, &her_disc_endpoint) {
         return Err(WhoAreYouRecvError::MyEndpoint { addr });
     }
 
-    let node = match disc_state
+    let (mut node_lock, node) = match disc_state
         .table
-        .upsert(
-            Addr::Known(addr),
-            NodeStatus::WhoAreYouRecv { fail_count: 0 },
-        )
+        .get_mapped_node_lock(&her_disc_endpoint)
         .await
     {
-        Ok(n) => n,
-        Err(err) => return Err(WhoAreYouRecvError::TableIsFull { err }),
+        Some(n) => n,
+        None => match disc_state.table.get_empty_node_lock().await {
+            Some(n) => n,
+            None => {
+                return Err(WhoAreYouRecvError::AddrNodeReserveFail);
+            }
+        },
     };
 
-    let mut node_lock = node.lock().await;
-    let mut _node_value = match &mut node_lock.value {
-        NodeValue::Valued(v) => v,
-        _ => {
-            return Err(WhoAreYouRecvError::EmptyNode);
+    match &*node_lock {
+        Node::KnownAddr(known_addr_node) => {
+            if !check::is_who_are_you_expired(
+                WHO_ARE_YOU_EXPIRATION_SEC,
+                known_addr_node.addr.known_at,
+            ) {
+                return Err(WhoAreYouRecvError::WhoAreYouNotExpired {
+                    disc_endpoint: known_addr_node.addr.disc_endpoint(),
+                });
+            }
         }
+        _ => {}
     };
 
     let my_disc_port = disc_state.disc_port;
@@ -118,11 +129,22 @@ pub(crate) async fn recv_who_are_you(
 
     match disc_state
         .udp_conn
-        .write_msg(endpoint.clone(), way_msg)
+        .write_msg(&her_disc_endpoint, way_msg)
         .await
     {
         Ok(_) => {
+            *node_lock = Node::KnownAddr(KnownAddrNode {
+                addr,
+                status: NodeStatus::WhoAreYouRecv,
+            });
+
+            disc_state
+                .table
+                .insert_mapping(&her_disc_endpoint, node.clone())
+                .await;
+
             drop(node_lock);
+
             match disc_state.table.add_known_node(node).await {
                 Ok(_) => {
                     tdebug!(
@@ -132,6 +154,8 @@ pub(crate) async fn recv_who_are_you(
                         her_p2p_endpoint.green(),
                         known_at,
                     );
+
+                    // disc_state.table.print_all_nodes().await;
                 }
                 Err(err) => {
                     terr!(
@@ -141,7 +165,7 @@ pub(crate) async fn recv_who_are_you(
                     );
 
                     return Err(WhoAreYouRecvError::KnownNodeRegisterFail {
-                        endpoint,
+                        disc_endpoint: her_disc_endpoint,
                         err,
                     });
                 }

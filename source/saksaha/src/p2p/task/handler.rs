@@ -1,6 +1,6 @@
 use crate::p2p::task::P2PTask;
 use logger::{tdebug, terr, twarn};
-use p2p_peer::NodeValue;
+use p2p_peer::Node;
 use p2p_transport::connection::Connection;
 use p2p_transport_handshake::ops::{handshake, HandshakeInitArgs};
 use tokio::net::TcpStream;
@@ -11,63 +11,52 @@ pub(crate) async fn run(task: P2PTask) {
             addr_guard,
             host_state,
         } => {
-            let known_addr = addr_guard.get_known_addr().await;
-
-            match host_state
-                .p2p_peer_table
-                .get(&known_addr.public_key_str)
-                .await
-            {
-                Some(peer_node_guard) => match peer_node_guard {
-                    Ok(p) => {
-                        let mut peer_node_lock = p.node.lock().await;
-
-                        match &mut peer_node_lock.value {
-                            NodeValue::Valued(p) => {
-                                tdebug!(
-                                    "saksaha",
-                                    "task",
-                                    "addr already associated with a peer. \
-                                        Dropping the task",
-                                );
-
-                                match &p.transport.addr_guard {
-                                    Some(old_addr_guard) => {
-                                        let old_known_addr = old_addr_guard
-                                            .get_known_addr()
-                                            .await;
-
-                                        println!("replacing old addr, known_at: {}, x: {}",
-                                            old_known_addr.known_at,
-                                            old_addr_guard.x);
-                                    }
-                                    None => {
-                                        println!("addr guard currently none, will assign a new one");
-                                    }
-                                };
-
-                                println!(
-                                    "assigning new addrguard, known_at: {}, x: {}",
-                                    known_addr.known_at,
-                                    addr_guard.x,
-                                );
-
-                                p.transport.addr_guard = Some(addr_guard);
-                            }
-                            _ => {
-                                println!("peer is empty");
-                            }
-                        };
-
-                        return;
-                    }
-                    Err(_) => {
-                        println!("Some other thread is using this peer node");
-                        return;
-                    }
-                },
-                None => {}
+            let known_addr = match addr_guard.get_known_addr().await {
+                Ok(a) => a,
+                Err(err) => {
+                    terr!(
+                        "saksaha",
+                        "p2p",
+                        "Addr table has invalid entry (not known), \
+                                err: {}",
+                        err
+                    );
+                    return;
+                }
             };
+
+            // match host_state
+            //     .p2p_peer_table
+            //     .get_mapped_node_lock(&known_addr.public_key_str)
+            //     .await
+            // {
+            //     Some((mut peer_node_lock, _peer_node)) => {
+            //         match &mut *peer_node_lock {
+            //             Node::Peer(p) => {
+            //                 tdebug!(
+            //                     "saksaha",
+            //                     "task",
+            //                     "This addr is already listed in the peer \
+            //                     table. Dropping InitiateHandshake, peer: {}",
+            //                     p,
+            //                 );
+
+            //                 return;
+            //             }
+            //             _ => {
+            //                 terr!(
+            //                     "saksaha",
+            //                     "p2p",
+            //                     "Empty peer node, there should have \
+            //                     been an error while mapping the node"
+            //                 );
+            //             }
+            //         };
+
+            //         return;
+            //     }
+            //     None => {}
+            // };
 
             let endpoint = known_addr.p2p_endpoint();
 
@@ -83,7 +72,6 @@ pub(crate) async fn run(task: P2PTask) {
                 return;
             }
 
-            println!("endpoint in tcpstream: {}", endpoint);
             let conn = match TcpStream::connect(&endpoint).await {
                 Ok(s) => {
                     let (c, peer_addr) = match Connection::new(s) {

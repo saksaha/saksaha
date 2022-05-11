@@ -1,24 +1,18 @@
 use super::peer::Peer;
-use logger::terr;
-use std::sync::Arc;
-use tokio::sync::{mpsc::UnboundedSender, Mutex};
 
-pub struct Node {
-    pub value: NodeValue,
+pub enum Node {
+    Empty,
+    Peer(PeerNode),
+}
+
+pub struct PeerNode {
+    pub peer: Peer,
     pub status: NodeStatus,
 }
 
 impl Node {
     pub fn is_empty(&self) -> bool {
-        if let NodeValue::Empty = self.value {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    pub fn is_used(&self) -> bool {
-        if let NodeStatus::Used = self.status {
+        if let Node::Empty = &self {
             return true;
         } else {
             return false;
@@ -27,11 +21,37 @@ impl Node {
 }
 
 pub enum NodeStatus {
-    Available,
-    Used,
+    Initialized,
+    HandshakeInitSuccess,
+    HandshakeRecvSuccess,
+    HandshakeInitFail { err: String },
+    HandshakeRecvFail { err: String },
 }
 
-pub enum NodeValue {
-    Empty,
-    Valued(Peer),
+impl std::fmt::Display for PeerNode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "PeerNode (peer: {}, status: {})", self.peer, self.status)
+    }
+}
+
+impl std::fmt::Display for NodeStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match &self {
+            NodeStatus::Initialized => {
+                write!(f, "Initialized")
+            }
+            NodeStatus::HandshakeInitSuccess => {
+                write!(f, "HandshakeInitSuccess")
+            }
+            NodeStatus::HandshakeRecvSuccess => {
+                write!(f, "HandshakeRecvSuccess")
+            }
+            NodeStatus::HandshakeInitFail { err } => {
+                write!(f, "HandshakeInitFail, err: {}", err)
+            }
+            NodeStatus::HandshakeRecvFail { err } => {
+                write!(f, "HandshakeRecvFail, err: {}", err)
+            }
+        }
+    }
 }
