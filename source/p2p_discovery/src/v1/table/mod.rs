@@ -10,7 +10,8 @@ use tokio::sync::{
     Mutex, MutexGuard,
 };
 
-const DISC_TABLE_CAPACITY: usize = 100;
+// const DISC_TABLE_CAPACITY: usize = 100;
+const DISC_TABLE_CAPACITY: usize = 5;
 
 /// TODO Table shall have Kademlia flavored buckets
 pub(crate) struct Table {
@@ -110,12 +111,24 @@ impl Table {
         &self,
         node: Arc<Mutex<Node>>,
     ) -> Result<(), String> {
+        println!("adding known node");
+
+        self.print_all_nodes().await;
+
         match self.known_addrs_tx.send(node) {
             Ok(_) => Ok(()),
             Err(err) => Err(format!(
                 "Couldn't push known node into queue, err: {}",
                 err
             )),
+        }
+    }
+
+    pub(crate) async fn print_all_nodes(&self) {
+        let addrs = self.addrs.lock().await;
+        for (idx, node) in addrs.iter().enumerate() {
+            let node_lock = node.lock().await;
+            println!("addr table elements [{}] - {:?}", idx, node_lock);
         }
     }
 

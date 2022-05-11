@@ -29,34 +29,50 @@ impl HandshakeDialLoop {
         loop {
             let time_since = SystemTime::now();
 
-            if let Some(addr_guard) = self.addrs_iter.next().await {
-                let known_addr = addr_guard.get_known_addr();
+            match self.addrs_iter.next().await {
+                Ok(addr_guard) => {
+                    let known_addr = addr_guard.get_known_addr().await;
 
-                let my_public_key_str =
-                    &self.host_state.p2p_identity.public_key_str;
-                let her_public_key_str = &known_addr.public_key_str;
-                let is_my_public_key_greater_than_hers =
-                    my_public_key_str > her_public_key_str;
+                    println!(
+                        "handshake dial loop, next addr, known_at: {}, x: {}",
+                        known_addr.known_at, addr_guard.x,
+                    );
 
-                let task = P2PTask::InitiateHandshake {
-                    addr_guard,
-                    host_state: self.host_state.clone(),
-                };
-                let p2p_task_queue = self.p2p_task_queue.clone();
+                    let my_public_key_str =
+                        &self.host_state.p2p_identity.public_key_str;
+                    let her_public_key_str = &known_addr.public_key_str;
+                    let is_my_public_key_greater_than_hers =
+                        my_public_key_str > her_public_key_str;
 
-                if is_my_public_key_greater_than_hers {
-                    enqueue_task(p2p_task_queue, task).await;
-                } else {
-                    tokio::spawn(async move {
-                        tokio::time::sleep(Duration::from_secs(
-                            HANDSHAKE_ENQUEUE_DELAY_WHEN_SMALLER_PUBLIC_KEY,
-                        ))
-                        .await;
+                    let task = P2PTask::InitiateHandshake {
+                        addr_guard,
+                        host_state: self.host_state.clone(),
+                    };
+                    let p2p_task_queue = self.p2p_task_queue.clone();
 
+                    if is_my_public_key_greater_than_hers {
                         enqueue_task(p2p_task_queue, task).await;
-                    });
+                    } else {
+                        enqueue_task(p2p_task_queue, task).await;
+                        // tokio::spawn(async move {
+                        //     tokio::time::sleep(Duration::from_secs(
+                        //         HANDSHAKE_ENQUEUE_DELAY_WHEN_SMALLER_PUBLIC_KEY,
+                        //     ))
+                        //     .await;
+
+                        //     enqueue_task(p2p_task_queue, task).await;
+                        // });
+                    }
                 }
-            }
+                Err(err) => {
+                    terr!(
+                        "saksaha",
+                        "p2p",
+                        "Error (fatal) getting next addr node, err: {}",
+                        err
+                    );
+                }
+            };
 
             utils_time::wait_until_min_interval(time_since, p2p_dial_interval)
                 .await;

@@ -69,6 +69,7 @@ pub(crate) async fn recv_who_are_you(
         known_at: Utc::now(),
     };
 
+    let known_at = addr.known_at;
     let endpoint = addr.disc_endpoint();
     let her_p2p_endpoint = addr.p2p_endpoint();
 
@@ -127,8 +128,9 @@ pub(crate) async fn recv_who_are_you(
                     tdebug!(
                         "p2p_discovery",
                         "whoareyou",
-                        "Discovery success, her p2p_endpoint: {}",
+                        "Discovery success, her p2p_endpoint: {}, known_at: {}",
                         her_p2p_endpoint.green(),
+                        known_at,
                     );
                 }
                 Err(err) => {
