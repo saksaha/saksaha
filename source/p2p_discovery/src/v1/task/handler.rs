@@ -11,19 +11,11 @@ pub(crate) async fn run(task: DiscoveryTask) {
                 Ok(_) => {}
                 Err(err) => {
                     match err {
-                        WhoAreYouInitError::MyEndpoint { .. } => {
-                            twarn!(
-                                "p2p_discovery",
-                                "task",
-                                "Abandoning failed task, err: {}",
-                                err
-                            );
-                        }
                         _ => {
                             twarn!(
                                 "p2p_discovery",
                                 "task",
-                                "Unhandled error, err: {}",
+                                "WhoAreYouInit stopped, err: {}",
                                 err,
                             );
                         }

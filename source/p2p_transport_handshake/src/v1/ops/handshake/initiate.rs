@@ -4,7 +4,7 @@ use logger::tdebug;
 use p2p_discovery::AddrGuard;
 use p2p_identity::addr::KnownAddr;
 use p2p_identity::identity::P2PIdentity;
-use p2p_peer::{NodeValue, Peer, PeerTable};
+use p2p_peer::{Node, NodeStatus, Peer, PeerNode, PeerTable};
 use p2p_transport::connection::Connection;
 use p2p_transport::parse::Parse;
 use p2p_transport::transport::Transport;
@@ -16,7 +16,6 @@ pub struct HandshakeInitArgs {
     pub p2p_peer_table: Arc<PeerTable>,
     pub p2p_port: u16,
     pub addr_guard: AddrGuard,
-    // pub call_guard: CallGuard,
 }
 
 #[derive(Error, Debug)]
@@ -60,11 +59,14 @@ pub enum HandshakeInitError {
     )]
     PeerNodeAlreadyInUse { public_key: String, err: String },
 
-    #[error("Peer node is invalid. Its value not being peer")]
-    PeerNodeNotHavingPeer,
+    #[error("Peer node is empty.")]
+    EmptyPeerNode,
 
-    #[error("Peer node (in table) reserve failed, err: {err}")]
-    PeerNodeReserveFail { err: String },
+    #[error("No available empty node in the addr table")]
+    EmptyNodeNotAvailable,
+
+    #[error("PeerNode has an unknown addr")]
+    NotKnownAddr { err: String },
 }
 
 pub async fn initiate_handshake(
@@ -80,7 +82,26 @@ pub async fn initiate_handshake(
         p2p_peer_table,
     } = handshake_init_args;
 
-    let known_addr = addr_guard.get_known_addr().await;
+    let known_addr = match addr_guard.get_known_addr().await {
+        Ok(a) => a,
+        Err(err) => {
+            return Err(HandshakeInitError::NotKnownAddr { err });
+        }
+    };
+
+    let (mut peer_node_lock, peer_node) = match p2p_peer_table
+        .get_mapped_node_lock(&known_addr.public_key_str)
+        .await
+    {
+        Some(n) => n,
+        None => match p2p_peer_table.get_empty_node_lock().await {
+            Some(n) => n,
+            None => {
+                return Err(HandshakeInitError::EmptyNodeNotAvailable);
+            }
+        },
+    };
+
     let known_at = known_addr.known_at;
 
     let handshake_syn = match Handshake::new(
@@ -165,57 +186,24 @@ pub async fn initiate_handshake(
         addr_guard: Some(addr_guard),
     };
 
-    let peer_node_guard = match p2p_peer_table.get(&her_public_key_str).await {
-        Some(n) => match n {
-            Ok(n) => n,
-            Err(err) => {
-                return Err(HandshakeInitError::PeerNodeAlreadyInUse {
-                    public_key: her_public_key_str,
-                    err,
-                });
-            }
-        },
-        None => match p2p_peer_table.reserve(&her_public_key_str).await {
-            Ok(n) => n,
-            Err(err) => {
-                return Err(HandshakeInitError::PeerNodeReserveFail { err });
-            }
-        },
-    };
+    *peer_node_lock = Node::Peer(PeerNode {
+        peer: Peer { transport },
+        status: NodeStatus::Initialized,
+    });
 
-    let mut peer_node_lock = peer_node_guard.node.lock().await;
-
-    match &peer_node_lock.value {
-        NodeValue::Valued(ref p) => {
-            match &p.transport.addr_guard {
-                Some(a) => {
-                    let old_known_addr = a.get_known_addr().await;
-
-                    println!(
-                        "initiate, old known addr, known_at: {}, x: {}",
-                        old_known_addr.known_at, a.x,
-                    );
-                }
-                None => {
-                    println!("initiate, addr guard None");
-                }
-            };
-        }
-        _ => {
-            println!("initiate, empty peer node!!");
-        }
-    };
+    p2p_peer_table
+        .insert_mapping(&her_public_key_str, peer_node)
+        .await;
 
     tdebug!(
         "p2p_trpt_hske",
         "initiate",
-        "Peer node updated, hs_id: {}, her_public_key: {}, addr known_at: {}",
+        "Peer node updated, hs_id: {}, her_public_key: {}, \
+            addr known_at: {}",
         &handshake_ack.instance_id,
         her_public_key_str.clone().green(),
         known_at,
     );
-
-    peer_node_lock.value = NodeValue::Valued(Peer { transport });
 
     Ok(())
 }

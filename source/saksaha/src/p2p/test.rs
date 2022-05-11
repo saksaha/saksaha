@@ -8,8 +8,7 @@ mod test_suite {
     use k256::{ecdsa::Signature, PublicKey};
     use p2p_discovery::AddrGuard;
     use p2p_identity::identity::P2PIdentity;
-    use p2p_peer::{NodeValue, PeerTable};
-
+    use p2p_peer::PeerTable;
     use std::{sync::Arc, time::Duration};
     use task_queue::TaskQueue;
 

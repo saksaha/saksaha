@@ -137,7 +137,10 @@ mod test {
 
             {
                 let addr = iter.next().await.expect("Address should be popped");
-                let known_addr = addr.get_known_addr();
+                let known_addr = addr
+                    .get_known_addr()
+                    .await
+                    .expect("Known addr should be provided");
 
                 known_addr_ip = known_addr.ip.clone();
                 known_addr_disc_port = known_addr.disc_port.clone();
@@ -146,7 +149,10 @@ mod test {
             }
 
             let addr = iter.next().await.expect("Address should be popped");
-            let known_addr = addr.get_known_addr();
+            let known_addr = addr
+                .get_known_addr()
+                .await
+                .expect("Known addr should be provided");
 
             log::info!("Popped addr, {}", known_addr);
 

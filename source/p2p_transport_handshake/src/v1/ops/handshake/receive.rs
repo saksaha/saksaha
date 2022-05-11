@@ -2,7 +2,7 @@ use super::Handshake;
 use colored::Colorize;
 use logger::tdebug;
 use p2p_identity::identity::P2PIdentity;
-use p2p_peer::{NodeValue, Peer, PeerTable};
+use p2p_peer::{Node, NodeStatus, Peer, PeerNode, PeerTable};
 use p2p_transport::{connection::Connection, transport::Transport};
 use std::sync::Arc;
 use thiserror::Error;
@@ -33,8 +33,8 @@ pub enum HandshakeRecvError {
     #[error("Peer node is invalid. Its value not being peer")]
     PeerNodeNotHavingPeer,
 
-    #[error("Peer node (in table) reserve failed, err: {err}")]
-    PeerNodeReserveFail { err: String },
+    #[error("No available empty node in the addr table")]
+    EmptyNodeNotAvailable,
 }
 
 pub struct HandshakeRecvArgs {
@@ -85,6 +85,19 @@ pub async fn receive_handshake(
         }
     };
 
+    let (mut peer_node_lock, peer_node) = match p2p_peer_table
+        .get_mapped_node_lock(&her_public_key_str)
+        .await
+    {
+        Some(n) => n,
+        None => match p2p_peer_table.get_empty_node_lock().await {
+            Some(n) => n,
+            None => {
+                return Err(HandshakeRecvError::EmptyNodeNotAvailable);
+            }
+        },
+    };
+
     let shared_secret =
         crypto::make_shared_secret(my_secret_key, her_public_key);
 
@@ -114,51 +127,20 @@ pub async fn receive_handshake(
         addr_guard: None,
     };
 
-    let peer_node_guard = match p2p_peer_table.get(&her_public_key_str).await {
-        Some(n) => match n {
-            Ok(n) => n,
-            Err(err) => {
-                return Err(HandshakeRecvError::PeerNodeAlreadyInUse {
-                    public_key: her_public_key_str,
-                    err,
-                });
-            }
-        },
-        None => match p2p_peer_table.reserve(&her_public_key_str).await {
-            Ok(n) => n,
-            Err(err) => {
-                return Err(HandshakeRecvError::PeerNodeReserveFail { err });
-            }
-        },
-    };
+    *peer_node_lock = Node::Peer(PeerNode {
+        peer: Peer { transport },
+        status: NodeStatus::HandshakeRecvSuccess,
+    });
 
-    let mut peer_node_lock = peer_node_guard.node.lock().await;
-
-    match &peer_node_lock.value {
-        NodeValue::Valued(ref p) => {
-            match &p.transport.addr_guard {
-                Some(a) => {
-                    let old_known_addr = a.get_known_addr().await;
-
-                    println!(
-                        "receive, old known addr, known_at: {}, x: {}",
-                        old_known_addr.known_at, a.x,
-                    );
-                }
-                None => (),
-            };
-        }
-        _ => {
-            println!("receive, empty peer node!!");
-        }
-    };
-
-    peer_node_lock.value = NodeValue::Valued(Peer { transport });
+    p2p_peer_table
+        .insert_mapping(&her_public_key_str, peer_node)
+        .await;
 
     tdebug!(
         "p2p_trpt_hske",
         "receive",
-        "Peer node updated, hs_id: {}, her_public_key: {}, addr_guard None",
+        "Peer node updated, hs_id: {}, her_public_key: {}, \
+            addr_guard None",
         &instance_id,
         her_public_key_str.clone().green(),
     );

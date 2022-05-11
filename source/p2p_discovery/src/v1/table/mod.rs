@@ -3,11 +3,10 @@ mod node;
 
 pub(crate) use self::node::*;
 pub use iter::*;
-use p2p_identity::addr::Addr;
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::{
     mpsc::{self, UnboundedReceiver, UnboundedSender},
-    Mutex, MutexGuard,
+    OwnedRwLockWriteGuard, RwLock, RwLockReadGuard, RwLockWriteGuard,
 };
 
 // const DISC_TABLE_CAPACITY: usize = 100;
@@ -15,10 +14,10 @@ const DISC_TABLE_CAPACITY: usize = 5;
 
 /// TODO Table shall have Kademlia flavored buckets
 pub(crate) struct Table {
-    addr_map: Arc<Mutex<HashMap<String, Arc<Mutex<Node>>>>>,
-    addrs: Arc<Mutex<Vec<Arc<Mutex<Node>>>>>,
-    known_addrs_tx: Arc<UnboundedSender<Arc<Mutex<Node>>>>,
-    known_addrs_rx: Arc<Mutex<UnboundedReceiver<Arc<Mutex<Node>>>>>,
+    addr_map: RwLock<HashMap<String, Arc<RwLock<Node>>>>,
+    addrs: RwLock<Vec<Arc<RwLock<Node>>>>,
+    known_addrs_tx: Arc<UnboundedSender<Arc<RwLock<Node>>>>,
+    known_addrs_rx: Arc<RwLock<UnboundedReceiver<Arc<RwLock<Node>>>>>,
 }
 
 impl Table {
@@ -27,7 +26,7 @@ impl Table {
     ) -> Result<Table, String> {
         let addr_map = {
             let m = HashMap::new();
-            Arc::new(Mutex::new(m))
+            RwLock::new(m)
         };
 
         let disc_table_capacity = match disc_table_capacity {
@@ -39,20 +38,18 @@ impl Table {
             let mut v = Vec::with_capacity(disc_table_capacity);
 
             for _ in 0..disc_table_capacity {
-                let n = Node {
-                    value: NodeValue::Empty,
-                };
+                let n = Node::Empty;
+                let n = Arc::new(RwLock::new(n));
 
-                let n = Arc::new(Mutex::new(n));
                 v.push(n);
             }
 
-            Arc::new(Mutex::new(v))
+            RwLock::new(v)
         };
 
         let (known_addrs_tx, known_addrs_rx) = {
             let (tx, rx) = mpsc::unbounded_channel();
-            (Arc::new(tx), Arc::new(Mutex::new(rx)))
+            (Arc::new(tx), Arc::new(RwLock::new(rx)))
         };
 
         let table = Table {
@@ -65,51 +62,54 @@ impl Table {
         Ok(table)
     }
 
-    pub(crate) async fn upsert(
+    pub(crate) async fn get_mapped_node(
         &self,
-        addr: Addr,
-        node_status: NodeStatus,
-    ) -> Result<Arc<Mutex<Node>>, String> {
-        let endpoint = addr.disc_endpoint();
+        disc_endpoint: &String,
+    ) -> Option<Arc<RwLock<Node>>> {
+        let addr_map = self.addr_map.read().await;
+        addr_map.get(disc_endpoint).map(|n| n.clone())
+    }
 
-        let addr_map = self.addr_map.clone();
-        let mut addr_map_guard = addr_map.lock().await;
+    pub(crate) async fn get_mapped_node_lock(
+        &self,
+        disc_endpoint: &String,
+    ) -> Option<(OwnedRwLockWriteGuard<Node>, Arc<RwLock<Node>>)> {
+        let addr_map = self.addr_map.read().await;
+        match addr_map.get(disc_endpoint) {
+            Some(n) => {
+                let node = n.clone();
+                return Some((node.write_owned().await, n.clone()));
+            }
+            None => {
+                return None;
+            }
+        };
+    }
 
-        // if map already had the address node
-        if let Some(n) = addr_map_guard.get(&endpoint) {
-            let mut node_lock = n.lock().await;
-            node_lock.value = NodeValue::Valued(NodeValueInner {
-                addr: addr.clone(),
-                status: node_status,
-            });
+    pub(crate) async fn get_empty_node_lock(
+        &self,
+    ) -> Option<(OwnedRwLockWriteGuard<Node>, Arc<RwLock<Node>>)> {
+        let addrs_lock = self.addrs.read().await;
 
-            return Ok(n.clone());
-        } else {
-            // When the map doesn't have a node associated with the endpoint
-            let addrs_lock = self.addrs.lock().await;
-
-            match find_empty_node(&addrs_lock) {
-                Some(n) => {
-                    addr_map_guard.insert(endpoint, n.clone());
-
-                    let mut node_lock = n.lock().await;
-                    node_lock.value = NodeValue::Valued(NodeValueInner {
-                        addr: addr.clone(),
-                        status: node_status,
-                    });
-
-                    return Ok(n.clone());
-                }
-                None => {
-                    return Err(format!("Every node is currently locked"));
+        for node in addrs_lock.iter() {
+            let node_lock = match node.clone().try_write_owned() {
+                Ok(n) => n,
+                Err(_) => {
+                    continue;
                 }
             };
+
+            if node_lock.is_empty() {
+                return Some((node_lock, node.clone()));
+            }
         }
+
+        None
     }
 
     pub(crate) async fn add_known_node(
         &self,
-        node: Arc<Mutex<Node>>,
+        node: Arc<RwLock<Node>>,
     ) -> Result<(), String> {
         match self.known_addrs_tx.send(node) {
             Ok(_) => Ok(()),
@@ -120,11 +120,18 @@ impl Table {
         }
     }
 
+    // For debugging purpose
     pub(crate) async fn print_all_nodes(&self) {
-        let addrs = self.addrs.lock().await;
+        let addrs = self.addrs.read().await;
         for (idx, node) in addrs.iter().enumerate() {
-            let node_lock = node.lock().await;
-            println!("addr table elements [{}] - {:?}", idx, node_lock);
+            match node.try_read() {
+                Ok(n) => {
+                    println!("addr table elements [{}] - {:?}", idx, n);
+                }
+                Err(_err) => {
+                    println!("addr table elements [{}] is locked", idx);
+                }
+            }
         }
     }
 
@@ -134,22 +141,13 @@ impl Table {
             self.known_addrs_rx.clone(),
         )
     }
-}
 
-fn find_empty_node(
-    addrs_lock: &MutexGuard<Vec<Arc<Mutex<Node>>>>,
-) -> Option<Arc<Mutex<Node>>> {
-    for node in addrs_lock.iter() {
-        match node.try_lock() {
-            Ok(n) => match &n.value {
-                NodeValue::Empty => {
-                    return Some(node.clone());
-                }
-                _ => continue,
-            },
-            Err(_) => continue,
-        };
+    pub async fn insert_mapping(
+        &self,
+        disc_endpoint: &String,
+        node: Arc<RwLock<Node>>,
+    ) -> Option<Arc<RwLock<Node>>> {
+        let mut addr_map = self.addr_map.write().await;
+        addr_map.insert(disc_endpoint.clone(), node)
     }
-
-    return None;
 }
