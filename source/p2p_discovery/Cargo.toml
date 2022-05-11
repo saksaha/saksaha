@@ -10,6 +10,7 @@ atoi = "0.3.2"
 bytes = "1"
 logger = { path = "../logger" }
 crypto = { path = "../crypto" }
+chrono = "0.4"
 task_queue = { path = "../task_queue" }
 p2p_identity = { path = "../p2p_identity" }
 utils_time = { path = "../utils_time" }

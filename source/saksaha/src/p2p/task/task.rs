@@ -16,8 +16,9 @@ impl std::fmt::Display for P2PTask {
                 let known_addr = addr_guard.get_known_addr();
                 write!(
                     f,
-                    "InitiateHandshake, dest: {}",
+                    "InitiateHandshake, dest: {}, at: {}",
                     known_addr.p2p_endpoint(),
+                    known_addr.known_at,
                 )
             }
         }

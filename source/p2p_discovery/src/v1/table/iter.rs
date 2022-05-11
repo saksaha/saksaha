@@ -88,11 +88,14 @@ impl AddrGuard {
 
 impl Drop for AddrGuard {
     fn drop(&mut self) {
+        let known_addr = self.get_known_addr();
+
         tdebug!(
             "p2p_discovery",
             "table",
-            "Addr node [{}] is being pushed back to the queue",
-            self.get_known_addr().p2p_endpoint(),
+            "Addr node [p2p:{} @ {}] is pushed back to the queue",
+            known_addr.p2p_endpoint(),
+            known_addr.known_at,
         );
 
         match self.known_addrs_tx.send(self._node.clone()) {

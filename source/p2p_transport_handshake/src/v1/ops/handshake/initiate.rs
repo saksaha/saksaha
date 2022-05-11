@@ -71,6 +71,8 @@ pub async fn initiate_handshake(
     handshake_init_args: HandshakeInitArgs,
     mut conn: Connection,
 ) -> Result<(), HandshakeInitError> {
+    println!("initaite_handshake()");
+
     let HandshakeInitArgs {
         p2p_port,
         p2p_identity,

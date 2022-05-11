@@ -41,7 +41,9 @@ impl Table {
                 let n = Node {
                     value: NodeValue::Empty,
                 };
-                v.push(Arc::new(Mutex::new(n)));
+
+                let n = Arc::new(Mutex::new(n));
+                v.push(n);
             }
 
             Arc::new(Mutex::new(v))

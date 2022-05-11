@@ -31,6 +31,16 @@ pub(crate) async fn run(task: P2PTask) {
                                         Dropping the task",
                                 );
 
+                                let b = match p.transport.addr_guard.as_ref() {
+                                    Some(a) => {
+                                        let c = a.get_known_addr().known_at;
+                                        println!("replacing old addr, {}", c);
+                                    }
+                                    None => {
+                                        println!("addr guard currently none, will assign a new one");
+                                    }
+                                };
+
                                 p.transport.addr_guard = Some(addr_guard);
                             }
                             _ => {
