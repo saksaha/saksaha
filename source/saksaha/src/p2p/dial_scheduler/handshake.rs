@@ -8,6 +8,7 @@ use std::{
 use task_queue::TaskQueue;
 
 const HANDSHAKE_DIAL_INTERVAL: u64 = 2000;
+const HANDSHAKE_ENQUEUE_DELAY_WHEN_SMALLER_PUBLIC_KEY: u64 = 4;
 
 pub(crate) struct HandshakeDialLoop {
     pub(crate) p2p_task_queue: Arc<TaskQueue<P2PTask>>,
@@ -47,7 +48,10 @@ impl HandshakeDialLoop {
                     enqueue_task(p2p_task_queue, task).await;
                 } else {
                     tokio::spawn(async move {
-                        tokio::time::sleep(Duration::from_secs(4)).await;
+                        tokio::time::sleep(Duration::from_secs(
+                            HANDSHAKE_ENQUEUE_DELAY_WHEN_SMALLER_PUBLIC_KEY,
+                        ))
+                        .await;
 
                         enqueue_task(p2p_task_queue, task).await;
                     });
