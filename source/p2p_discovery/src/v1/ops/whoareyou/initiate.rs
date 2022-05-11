@@ -1,10 +1,10 @@
-use super::check;
+use super::{check, WHO_ARE_YOU_EXPIRATION_SEC};
 use crate::{
     msg::WhoAreYou,
     state::DiscState,
-    table::{NodeStatus, NodeValue},
+    table::{Node, NodeStatus, UnknownAddrNode},
 };
-use p2p_identity::addr::{Addr, UnknownAddr};
+use p2p_identity::addr::UnknownAddr;
 use std::sync::Arc;
 use thiserror::Error;
 
@@ -13,24 +13,27 @@ pub(crate) enum WhoAreYouInitError {
     #[error("Can't send request to myself, addr: {addr}")]
     MyEndpoint { addr: UnknownAddr },
 
-    #[error("Can't take a slot in the table, err: {err}")]
-    TableIsFull { err: String },
-
     #[error("Can't make a message (WhoAreYouAck), err: {err}")]
     MsgCreateFail { err: String },
 
     #[error("Can't send a message through udp socket, err: {err}")]
     MsgSendFail { err: String },
 
-    #[error("Table node is empty")]
-    EmptyNode,
+    #[error("No available addr node")]
+    AddrNodeReserveFail,
+
+    #[error(
+        "Previous WhoAreYou succeeded entry still lives in the table, \
+        disc_endpoint: {disc_endpoint}"
+    )]
+    WhoAreYouNotExpired { disc_endpoint: String },
 }
 
 pub(crate) async fn init_who_are_you(
     addr: UnknownAddr,
     disc_state: Arc<DiscState>,
 ) -> Result<(), WhoAreYouInitError> {
-    let endpoint = addr.disc_endpoint();
+    let disc_endpoint = addr.disc_endpoint();
     let src_disc_port = disc_state.disc_port;
 
     if check::is_my_endpoint(src_disc_port, &addr.disc_endpoint()) {
@@ -39,20 +42,29 @@ pub(crate) async fn init_who_are_you(
 
     let table = disc_state.table.clone();
 
-    let node = match table
-        .upsert(Addr::Unknown(addr), NodeStatus::Initialized)
-        .await
-    {
-        Ok(a) => a,
-        Err(err) => {
-            return Err(WhoAreYouInitError::TableIsFull { err });
-        }
-    };
+    let (mut node_lock, node) =
+        match table.get_mapped_node_lock(&disc_endpoint).await {
+            Some(n) => n,
+            None => match table.get_empty_node_lock().await {
+                Some(n) => n,
+                None => {
+                    return Err(WhoAreYouInitError::AddrNodeReserveFail);
+                }
+            },
+        };
 
-    let mut node_lock = node.lock().await;
-    let mut node_value = match &mut node_lock.value {
-        NodeValue::Valued(v) => v,
-        _ => return Err(WhoAreYouInitError::EmptyNode),
+    match &*node_lock {
+        Node::KnownAddr(known_addr_node) => {
+            if !check::is_who_are_you_expired(
+                WHO_ARE_YOU_EXPIRATION_SEC,
+                known_addr_node.addr.known_at,
+            ) {
+                return Err(WhoAreYouInitError::WhoAreYouNotExpired {
+                    disc_endpoint: known_addr_node.addr.disc_endpoint(),
+                });
+            }
+        }
+        _ => {}
     };
 
     let src_disc_port = disc_state.disc_port;
@@ -72,9 +84,18 @@ pub(crate) async fn init_who_are_you(
         Err(err) => return Err(WhoAreYouInitError::MsgCreateFail { err }),
     };
 
-    match disc_state.udp_conn.write_msg(endpoint, way_syn_msg).await {
+    match disc_state
+        .udp_conn
+        .write_msg(&disc_endpoint, way_syn_msg)
+        .await
+    {
         Ok(_) => {
-            node_value.status = NodeStatus::WhoAreYouInit { fail_count: 0 };
+            *node_lock = Node::UnknownAddr(UnknownAddrNode {
+                addr,
+                status: NodeStatus::Initialized,
+            });
+
+            table.insert_mapping(&disc_endpoint, node).await;
         }
         Err(err) => return Err(WhoAreYouInitError::MsgSendFail { err }),
     };

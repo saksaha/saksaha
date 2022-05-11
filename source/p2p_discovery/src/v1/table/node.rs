@@ -1,26 +1,37 @@
-use p2p_identity::addr::Addr;
+use p2p_identity::addr::{KnownAddr, UnknownAddr};
 
 #[derive(Debug)]
 pub(crate) enum NodeStatus {
     Initialized,
-    WhoAreYouInit { fail_count: usize },
-    WhoAreYouRecv { fail_count: usize },
+    WhoAreYouInit,
+    WhoAreYouRecv,
     HandshakeSynFail { fail_count: usize },
 }
 
 #[derive(Debug)]
-pub(crate) struct Node {
-    pub(crate) value: NodeValue,
-}
-
-#[derive(Debug)]
-pub(crate) enum NodeValue {
+pub(crate) enum Node {
     Empty,
-    Valued(NodeValueInner),
+    KnownAddr(KnownAddrNode),
+    UnknownAddr(UnknownAddrNode),
+}
+
+impl Node {
+    pub fn is_empty(&self) -> bool {
+        match self {
+            Node::Empty => true,
+            _ => false,
+        }
+    }
 }
 
 #[derive(Debug)]
-pub(crate) struct NodeValueInner {
-    pub(crate) addr: Addr,
+pub(crate) struct KnownAddrNode {
+    pub(crate) addr: KnownAddr,
+    pub(crate) status: NodeStatus,
+}
+
+#[derive(Debug)]
+pub(crate) struct UnknownAddrNode {
+    pub(crate) addr: UnknownAddr,
     pub(crate) status: NodeStatus,
 }

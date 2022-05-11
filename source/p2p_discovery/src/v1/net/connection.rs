@@ -91,7 +91,7 @@ impl UdpConn {
 
     pub(crate) async fn write_msg(
         &self,
-        endpoint: String,
+        endpoint: &String,
         msg: Msg,
     ) -> Result<usize, String> {
         let msg_type_bytes: u8 = match msg.msg_type {
@@ -130,7 +130,7 @@ impl UdpConn {
         //     content_len_bytes,
         // );
 
-        match self.socket.send_to(&buf, endpoint.clone()).await {
+        match self.socket.send_to(&buf, endpoint).await {
             Ok(l) => Ok(l),
             Err(err) => Err(format!(
                 "Error sending bytes into udp socket, err: {}",

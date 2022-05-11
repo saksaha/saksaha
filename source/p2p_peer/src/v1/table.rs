@@ -1,18 +1,22 @@
 use super::node::Node;
-use crate::{NodeStatus, NodeValue};
+use crate::NodeStatus;
 use logger::{terr, tinfo};
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::{
     mpsc::{self, UnboundedReceiver, UnboundedSender},
-    Mutex,
+    OwnedRwLockMappedWriteGuard, OwnedRwLockWriteGuard, RwLock,
+    RwLockMappedWriteGuard, RwLockWriteGuard,
 };
 
-const PEER_TABLE_CAPACITY: usize = 50;
+// const PEER_TABLE_CAPACITY: usize = 50;
+const PEER_TABLE_CAPACITY: usize = 5;
+
+pub type PublicKey = String;
 
 pub struct PeerTable {
-    peers: Arc<Mutex<Vec<Arc<Mutex<Node>>>>>,
-    peers_map: Arc<Mutex<HashMap<String, Arc<Mutex<Node>>>>>,
-    node_retreival_tx: Arc<UnboundedSender<Arc<Mutex<Node>>>>,
+    peers: RwLock<Vec<Arc<RwLock<Node>>>>,
+    peer_map: RwLock<HashMap<PublicKey, Arc<RwLock<Node>>>>,
+    node_retreival_tx: Arc<UnboundedSender<Arc<RwLock<Node>>>>,
 }
 
 impl PeerTable {
@@ -27,9 +31,9 @@ impl PeerTable {
         let node_retreival_tx = {
             let (tx, rx) = mpsc::unbounded_channel();
 
-            let retrival_routine = RetrievalRoutine {};
+            // let retrival_routine = RetrievalRoutine {};
             tokio::spawn(async move {
-                retrival_routine.run(rx).await;
+                // retrival_routine.run(rx).await;
             });
 
             Arc::new(tx)
@@ -39,21 +43,22 @@ impl PeerTable {
             let mut v = Vec::with_capacity(capacity);
 
             for _ in 0..capacity {
-                let n = Node {
-                    value: NodeValue::Empty,
-                    status: NodeStatus::Available,
-                };
+                // let n = Node {
+                //     value: NodeValue::Empty,
+                //     status: NodeStatus::Available,
+                // };
+                let n = Node::Empty;
 
-                v.push(Arc::new(Mutex::new(n)));
+                v.push(Arc::new(RwLock::new(n)));
             }
 
-            Arc::new(Mutex::new(v))
+            RwLock::new(v)
         };
 
-        let peers_map = {
+        let peer_map = {
             let m = HashMap::new();
 
-            Arc::new(Mutex::new(m))
+            RwLock::new(m)
         };
 
         tinfo!(
@@ -64,7 +69,7 @@ impl PeerTable {
         );
 
         let ps = PeerTable {
-            peers_map,
+            peer_map,
             peers,
             node_retreival_tx,
         };
@@ -72,39 +77,32 @@ impl PeerTable {
         Ok(ps)
     }
 
-    pub async fn get(
+    pub async fn get_mapped_node(
         &self,
-        public_key: &String,
-    ) -> Option<Result<NodeGuard, String>> {
-        let peers_map = self.peers_map.clone();
-        let peers_map_lock = peers_map.lock().await;
+        public_key: &PublicKey,
+    ) -> Option<Arc<RwLock<Node>>> {
+        let peers_map_lock = self.peer_map.write().await;
 
         match peers_map_lock.get(public_key) {
             Some(n) => {
-                let node_lock = n.lock().await;
-                if !node_lock.is_used() {
-                    let node_guard = NodeGuard {
-                        node: n.clone(),
-                        node_retrieval_tx: self.node_retreival_tx.clone(),
-                    };
+                return Some(n.clone());
+            }
+            None => {
+                return None;
+            }
+        };
+    }
 
-                    if let NodeValue::Valued(v) = &node_lock.value {
-                        if let Some(v) = &v.transport.addr_guard {
-                            let known_addr = v.get_known_addr().await;
+    pub async fn get_mapped_node_lock(
+        &self,
+        public_key: &PublicKey,
+    ) -> Option<(OwnedRwLockWriteGuard<Node>, Arc<RwLock<Node>>)> {
+        let peers_map_lock = self.peer_map.write().await;
 
-                            println!(
-                                "peer get(): known_at: {}, x: {}",
-                                known_addr.known_at, v.x
-                            );
-                        }
-                    }
-
-                    return Some(Ok(node_guard));
-                } else {
-                    return Some(Err(format!(
-                        "Peer node is already being used"
-                    )));
-                }
+        match peers_map_lock.get(public_key) {
+            Some(n) => {
+                let node = n.clone();
+                return Some((node.write_owned().await, n.clone()));
             }
             None => {
                 println!("peer get(): None");
@@ -113,129 +111,126 @@ impl PeerTable {
         };
     }
 
-    pub async fn reserve(
+    pub async fn get_empty_node_lock(
         &self,
-        public_key: &String,
-    ) -> Result<NodeGuard, String> {
-        println!("peer reserve()");
+    ) -> Option<(OwnedRwLockWriteGuard<Node>, Arc<RwLock<Node>>)> {
+        let peers_lock = self.peers.write().await;
 
-        let peers = self.peers.lock().await;
-        for node in peers.iter() {
-            let mut node_lock = match node.try_lock() {
+        for node in peers_lock.iter() {
+            let node_lock = match node.clone().try_write_owned() {
                 Ok(n) => n,
                 Err(_) => {
                     continue;
                 }
             };
 
-            if node_lock.is_empty() && !node_lock.is_used() {
-                let node_guard = NodeGuard {
-                    node: node.clone(),
-                    node_retrieval_tx: self.node_retreival_tx.clone(),
-                };
-
-                let mut peers_map = self.peers_map.lock().await;
-                peers_map.insert(public_key.clone(), node.clone());
-
-                node_lock.status = NodeStatus::Used;
-
-                return Ok(node_guard);
+            if node_lock.is_empty() {
+                return Some((node_lock, node.clone()));
             }
         }
 
-        Err(format!("Could not reserve a peer node"))
+        None
     }
 
-    pub async fn print_all_nodes(&self) -> u16 {
-        let peers = self.peers.lock().await;
-
-        for (idx, node) in peers.iter().enumerate() {
-            if let Ok(node_lock) = node.try_lock() {
-                let a = &node_lock.value;
-                match a {
-                    NodeValue::Valued(p) => {
-                        println!(
-                            "peer table [{}] - p2p_port: {}",
-                            idx, p.transport.p2p_port
-                        );
-                        return p.transport.p2p_port;
-                    }
-                    _ => {
-                        println!("peer table [{}] - empty", idx);
-                    }
-                };
-            } else {
-                println!("peer table [{}] - locked", idx,);
-            }
-        }
-        return 0;
+    pub async fn insert_mapping(
+        &self,
+        public_key: &PublicKey,
+        node: Arc<RwLock<Node>>,
+    ) -> Option<Arc<RwLock<Node>>> {
+        let mut peer_map = self.peer_map.write().await;
+        peer_map.insert(public_key.clone(), node)
     }
 
-    pub async fn print_all_mapped_nodes(&self) {
-        let peers_map = self.peers_map.lock().await;
+    // pub async fn print_all_nodes(&self) -> u16 {
+    //     let peers = self.peers.lock().await;
 
-        let len = peers_map.len();
-        println!("Peer map length: {}", len);
+    //     for (idx, node) in peers.iter().enumerate() {
+    //         if let Ok(node_lock) = node.try_lock() {
+    //             let a = &node_lock.value;
+    //             match a {
+    //                 NodeValue::Valued(p) => {
+    //                     println!(
+    //                         "peer table [{}] - p2p_port: {}",
+    //                         idx, p.transport.p2p_port
+    //                     );
+    //                     return p.transport.p2p_port;
+    //                 }
+    //                 _ => {
+    //                     println!("peer table [{}] - empty", idx);
+    //                 }
+    //             };
+    //         } else {
+    //             println!("peer table [{}] - locked", idx,);
+    //         }
+    //     }
+    //     return 0;
+    // }
 
-        for (idx, node) in peers_map.values().into_iter().enumerate() {
-            if let Ok(node_lock) = node.try_lock() {
-                let a = &node_lock.value;
-                match a {
-                    NodeValue::Valued(p) => {
-                        println!(
-                            "peer table [{}] - p2p_port: {}",
-                            idx, p.transport.p2p_port
-                        );
-                    }
-                    _ => (),
-                };
-            }
-        }
-    }
+    // pub async fn print_all_mapped_nodes(&self) {
+    //     let peers_map = self.peers_map.lock().await;
+
+    //     let len = peers_map.len();
+    //     println!("Peer map length: {}", len);
+
+    //     for (idx, node) in peers_map.values().into_iter().enumerate() {
+    //         if let Ok(node_lock) = node.try_lock() {
+    //             let a = &node_lock.value;
+    //             match a {
+    //                 NodeValue::Valued(p) => {
+    //                     println!(
+    //                         "peer table [{}] - p2p_port: {}",
+    //                         idx, p.transport.p2p_port
+    //                     );
+    //                 }
+    //                 _ => (),
+    //             };
+    //         }
+    //     }
+    // }
 }
 
-pub struct NodeGuard {
-    pub node: Arc<Mutex<Node>>,
-    pub node_retrieval_tx: Arc<UnboundedSender<Arc<Mutex<Node>>>>,
-}
+// pub struct NodeGuard {
+//     pub node: Arc<RwLock<Node>>,
+//     pub node_retrieval_tx: Arc<UnboundedSender<Arc<RwLock<Node>>>>,
+// }
 
-impl Drop for NodeGuard {
-    fn drop(&mut self) {
-        match self.node_retrieval_tx.send(self.node.clone()) {
-            Ok(_) => (),
-            Err(err) => {
-                terr!(
-                    "p2p_peer",
-                    "",
-                    "Cannot retrieve peer node after use, err: {}",
-                    err
-                );
-            }
-        }
-    }
-}
+// impl Drop for NodeGuard {
+//     fn drop(&mut self) {
+//         match self.node_retrieval_tx.send(self.node.clone()) {
+//             Ok(_) => (),
+//             Err(err) => {
+//                 terr!(
+//                     "p2p_peer",
+//                     "",
+//                     "Cannot retrieve peer node after use, err: {}",
+//                     err
+//                 );
+//             }
+//         }
+//     }
+// }
 
-pub struct RetrievalRoutine;
+// pub struct RetrievalRoutine;
 
-impl RetrievalRoutine {
-    pub async fn run(&self, mut node_rx: UnboundedReceiver<Arc<Mutex<Node>>>) {
-        loop {
-            let node = match node_rx.recv().await {
-                Some(n) => n,
-                None => {
-                    terr!(
-                        "p2p_peer",
-                        "table",
-                        "All node guard senders have been closed. \
-                        Something is critically wrong",
-                    );
+// impl RetrievalRoutine {
+//     pub async fn run(&self, mut node_rx: UnboundedReceiver<Arc<RwLock<Node>>>) {
+//         loop {
+//             let node = match node_rx.recv().await {
+//                 Some(n) => n,
+//                 None => {
+//                     terr!(
+//                         "p2p_peer",
+//                         "table",
+//                         "All node guard senders have been closed. \
+//                         Something is critically wrong",
+//                     );
 
-                    return;
-                }
-            };
+//                     return;
+//                 }
+//             };
 
-            let mut n = node.lock().await;
-            n.status = NodeStatus::Available;
-        }
-    }
-}
+//             let mut n = node.write().await;
+//             n.status = NodeStatus::Available;
+//         }
+//     }
+// }
