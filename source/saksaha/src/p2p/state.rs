@@ -1,4 +1,3 @@
-use p2p_active_calls::ActiveCalls;
 use p2p_identity::identity::P2PIdentity;
 use p2p_peer::PeerTable;
 use std::sync::Arc;

@@ -1,7 +1,6 @@
 use crate::ops::Handshake;
 use colored::Colorize;
 use logger::tdebug;
-use p2p_active_calls::CallGuard;
 use p2p_discovery::AddrGuard;
 use p2p_identity::addr::KnownAddr;
 use p2p_identity::identity::P2PIdentity;
@@ -94,8 +93,6 @@ pub async fn initiate_handshake(
 
     let handshake_syn_frame = handshake_syn.into_syn_frame();
 
-    println!("init writing handshake syn frame");
-
     match conn.write_frame(&handshake_syn_frame).await {
         Ok(_) => (),
         Err(err) => {
@@ -120,8 +117,6 @@ pub async fn initiate_handshake(
             })
         }
     };
-
-    println!("init did read handshake ack frame");
 
     let mut parse = match Parse::new(handshake_ack_frame) {
         Ok(p) => p,
@@ -167,13 +162,9 @@ pub async fn initiate_handshake(
         addr_guard: Some(addr_guard),
     };
 
-    println!("init try getting peer");
     let peer_node_guard = match p2p_peer_table.get(&her_public_key_str).await {
         Some(n) => match n {
-            Ok(_n) => {
-                println!("init drop");
-                return Ok(());
-            }
+            Ok(n) => n,
             Err(err) => {
                 return Err(HandshakeInitError::PeerNodeAlreadyInUse {
                     public_key: her_public_key_str,
@@ -182,11 +173,7 @@ pub async fn initiate_handshake(
             }
         },
         None => match p2p_peer_table.reserve(&her_public_key_str).await {
-            Ok(n) => {
-                println!("Init reserves a node of {}", &her_public_key_str);
-
-                n
-            }
+            Ok(n) => n,
             Err(err) => {
                 return Err(HandshakeInitError::PeerNodeReserveFail { err });
             }
@@ -202,6 +189,7 @@ pub async fn initiate_handshake(
         &handshake_ack.instance_id,
         her_public_key_str.clone().green(),
     );
+
     peer_node_lock.value = NodeValue::Valued(Peer { transport });
 
     Ok(())

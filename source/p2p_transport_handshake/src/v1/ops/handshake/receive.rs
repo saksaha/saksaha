@@ -95,7 +95,6 @@ pub async fn receive_handshake(
 
     let handshake_ack_frame = handshake_ack.into_ack_frame();
 
-    println!("recv writing handshake ack frame");
     match conn.write_frame(&handshake_ack_frame).await {
         Ok(_) => (),
         Err(err) => {
@@ -113,14 +112,9 @@ pub async fn receive_handshake(
         addr_guard: None,
     };
 
-    println!("recv try getting peer");
     let peer_node_guard = match p2p_peer_table.get(&her_public_key_str).await {
         Some(n) => match n {
-            Ok(_n) => {
-                println!("recv drop");
-
-                return Ok(());
-            }
+            Ok(n) => n,
             Err(err) => {
                 return Err(HandshakeRecvError::PeerNodeAlreadyInUse {
                     public_key: her_public_key_str,
@@ -129,10 +123,7 @@ pub async fn receive_handshake(
             }
         },
         None => match p2p_peer_table.reserve(&her_public_key_str).await {
-            Ok(n) => {
-                println!("Recv reserves a node of {}", &her_public_key_str);
-                n
-            }
+            Ok(n) => n,
             Err(err) => {
                 return Err(HandshakeRecvError::PeerNodeReserveFail { err });
             }

@@ -108,7 +108,6 @@ pub(crate) async fn run(task: P2PTask) {
                 p2p_peer_table: host_state.p2p_peer_table.clone(),
             };
 
-            println!("calling initiate_handshake()");
             match handshake::initiate_handshake(handshake_init_args, conn).await
             {
                 Ok(_) => (),

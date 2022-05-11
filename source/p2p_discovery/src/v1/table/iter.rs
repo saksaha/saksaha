@@ -1,5 +1,5 @@
 use super::{Node, NodeValue};
-use logger::terr;
+use logger::{tdebug, terr};
 use p2p_identity::addr::{Addr, KnownAddr};
 use std::sync::Arc;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
@@ -88,8 +88,11 @@ impl AddrGuard {
 
 impl Drop for AddrGuard {
     fn drop(&mut self) {
-        println!(
-            "Node (known addr) has been used. We push it back to the queue"
+        tdebug!(
+            "p2p_discovery",
+            "table",
+            "Addr node [{}] is being pushed back to the queue",
+            self.get_known_addr().p2p_endpoint(),
         );
 
         match self.known_addrs_tx.send(self._node.clone()) {

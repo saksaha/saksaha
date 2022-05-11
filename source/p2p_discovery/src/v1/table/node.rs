@@ -3,10 +3,6 @@ use p2p_identity::addr::Addr;
 #[derive(Debug)]
 pub(crate) enum NodeStatus {
     Initialized,
-    // WhoAreYouSynSent,
-    // WhoAreYouSynRecvd,
-    // WhoAreYouAckSent,
-    // WhoAreYouAckRecvd,
     WhoAreYouInit { fail_count: usize },
     WhoAreYouRecv { fail_count: usize },
     HandshakeSynFail { fail_count: usize },
