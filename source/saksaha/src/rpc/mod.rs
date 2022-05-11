@@ -3,12 +3,14 @@ use std::sync::Arc;
 use tokio::net::TcpListener;
 
 pub struct RPC {
-    tcp_listener: Arc<TcpListener>,
+    rpc_socket: Arc<TcpListener>,
 }
 
 impl RPC {
-    pub fn new(tcp_listener: Arc<TcpListener>, rpc_port: u16) -> RPC {
-        RPC { tcp_listener }
+    pub fn new(rpc_socket: TcpListener, rpc_port: u16) -> RPC {
+        RPC {
+            rpc_socket: Arc::new(rpc_socket),
+        }
     }
 
     pub async fn start(&self) -> Result<u16, String> {

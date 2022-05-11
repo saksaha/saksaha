@@ -22,15 +22,12 @@ impl Script for Test {
         let program = "cargo";
 
         let args = match matches.values_of("SAKSAHA_ARGS") {
-            Some(a) => a.collect(),
-            None => vec![],
+            Some(a) => a.collect::<Vec<&str>>().join(" "),
+            None => String::new(),
         };
 
         let args =
-            [vec!["test", "--", "--nocapture", "--show-output"], args].concat();
-
-        // let args = [vec!["test", "--"], args]
-        //     .concat();
+            vec!["test", &args[..], "--", "--nocapture", "--show-output"];
 
         log!("Executing `{} {:?}`", program, args);
 

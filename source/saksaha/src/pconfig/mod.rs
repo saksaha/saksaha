@@ -1,21 +1,13 @@
 pub mod error;
 pub mod fs;
-pub mod p2p;
+mod pconfig;
 
 use self::error::PConfigError;
-use crate::p2p::identity::Identity;
 use colored::Colorize;
 use fs::FS;
 use logger::tinfo;
-use p2p::{PersistedP2PConfig, PersistedUnknownPeer};
-use p2p_identity::peer::UnknownPeer;
-use serde::{Deserialize, Serialize};
+pub use pconfig::*;
 use std::path::PathBuf;
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct PConfig {
-    pub p2p: PersistedP2PConfig,
-}
 
 impl PConfig {
     pub fn from_path(
@@ -57,8 +49,10 @@ impl PConfig {
 
                     let pconf = match FS::persist(pconfig) {
                         Ok(p) => p,
-                        Err(_) => {
-                            return Err(PConfigError::PersistError);
+                        Err(err) => {
+                            return Err(PConfigError::PersistError {
+                                err: err.to_string(),
+                            });
                         }
                     };
 
@@ -78,11 +72,9 @@ impl PConfig {
         let (sk, pk) = crypto::encode_into_key_pair(sk);
         let pconf = PConfig {
             p2p: PersistedP2PConfig {
-                identity: Identity {
-                    secret: sk,
-                    public_key: pk,
-                },
-                unknown_peers: None,
+                secret: sk,
+                public_key_str: pk,
+                bootstrap_addrs: None,
                 p2p_port: None,
                 disc_port: None,
             },

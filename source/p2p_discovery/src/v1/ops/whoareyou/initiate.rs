@@ -1,155 +1,83 @@
 use super::check;
-use super::msg::{WhoAreYouAck, WhoAreYouSyn};
-use crate::v1::address::Address;
-// use crate::v1::ops::Message;
-use crate::v1::DiscState;
-use logger::tdebug;
-use p2p_identity::peer::UnknownPeer;
+use crate::{
+    msg::WhoAreYou,
+    state::DiscState,
+    table::{NodeStatus, NodeValue},
+};
+use p2p_identity::addr::{Addr, UnknownAddr};
 use std::sync::Arc;
 use thiserror::Error;
-use tokio::sync::mpsc::error::TrySendError;
 
 #[derive(Error, Debug)]
-pub enum WhoareyouInitError {
-    #[error("Request to myself, endpoint: {endpoint}")]
-    MyEndpoint { endpoint: String },
+pub(crate) enum WhoAreYouInitError {
+    #[error("Can't send request to myself, addr: {addr}")]
+    MyEndpoint { addr: UnknownAddr },
 
-    #[error(" Cannot reserve Node, _err: {err}")]
-    NodeReserveFail { err: String },
+    #[error("Can't take a slot in the table, err: {err}")]
+    TableIsFull { err: String },
 
-    #[error(" Couldn't sent msg through socket")]
-    SendFail(#[from] std::io::Error),
+    #[error("Can't make a message (WhoAreYouAck), err: {err}")]
+    MsgCreateFail { err: String },
 
-    #[error(" Cannot convert to byte, _err: {err}")]
-    ByteConversionFail { err: String },
+    #[error("Can't send a message through udp socket, err: {err}")]
+    MsgSendFail { err: String },
 
-    #[error(" Cannot create verifying key of remote, _err: {err}")]
-    VerifiyingKeyFail { err: String },
-
-    #[error(" Signature is invalid, buf: {buf:?}, _err: {err}")]
-    InvalidSignature { buf: Vec<u8>, err: String },
-
-    #[error(
-        " Failed to register node into map, \
-        endpoint: {endpoint}, _err: {err}"
-    )]
-    NodeRegisterFail { endpoint: String, err: String },
-
-    #[error(" Can't parse WhoAreYou message, err: {err}")]
-    MessageParseFail { err: String },
-
-    #[error(
-        " Can't reserve node, table is full, \
-        endpoint: {endpoint}, err: {err}"
-    )]
-    TableIsFull { endpoint: String, err: String },
-
-    #[error(" Can't add node to table, err: {err}")]
-    TableAddFail { err: String },
-    // #[error(" Can't put back a node to table")]
-    // NodePutBackFail {
-    //     #[from]
-    //     source: TrySendError<Arc<Node>>,
-    // },
+    #[error("Table node is empty")]
+    EmptyNode,
 }
 
-pub(crate) async fn send_who_are_you(
+pub(crate) async fn init_who_are_you(
+    addr: UnknownAddr,
     disc_state: Arc<DiscState>,
-    // addr: Address,
-    unknown_peer: UnknownPeer,
-) -> Result<(), WhoareyouInitError> {
-    let disc_port = disc_state.disc_port;
-    let p2p_port = disc_state.p2p_port;
+) -> Result<(), WhoAreYouInitError> {
+    let endpoint = addr.disc_endpoint();
+    let src_disc_port = disc_state.disc_port;
 
-    let her_endpoint = unknown_peer.disc_endpoint();
-
-    if check::is_my_endpoint(disc_port, &her_endpoint) {
-        return Err(WhoareyouInitError::MyEndpoint {
-            endpoint: her_endpoint,
-        });
+    if check::is_my_endpoint(src_disc_port, &addr.disc_endpoint()) {
+        return Err(WhoAreYouInitError::MyEndpoint { addr });
     }
 
-    let sig = disc_state.p2p_identity.sig;
-    let public_key = disc_state.p2p_identity.public_key;
+    let table = disc_state.table.clone();
 
-    let way_syn = WhoAreYouSyn::new(sig, p2p_port, public_key);
+    let node = match table
+        .upsert(Addr::Unknown(addr), NodeStatus::Initialized)
+        .await
+    {
+        Ok(a) => a,
+        Err(err) => {
+            return Err(WhoAreYouInitError::TableIsFull { err });
+        }
+    };
 
-    // let buf = match way_syn.to_bytes() {
-    //     Ok(b) => b,
-    //     Err(err) => {
-    //         return Err(WhoareyouInitError::ByteConversionFail { err });
-    //     }
-    // };
+    let mut node_lock = node.lock().await;
+    let mut node_value = match &mut node_lock.value {
+        NodeValue::Valued(v) => v,
+        _ => return Err(WhoAreYouInitError::EmptyNode),
+    };
 
-    // disc_state
-    //     .udp_socket
-    //     .send_to(&buf, her_endpoint.clone())
-    //     .await?;
+    let src_disc_port = disc_state.disc_port;
+    let src_p2p_port = disc_state.p2p_port;
+    let src_sig = disc_state.p2p_identity.sig;
+    let src_public_key_str = disc_state.p2p_identity.public_key_str.clone();
 
-    // tdebug!(
-    //     "p2p_discovery",
-    //     "whoareyou",
-    //     "Successfully sent WhoAreYou to endpoint: {}, buf len: {}",
-    //     &her_endpoint,
-    //     buf.len()
-    // );
+    let way = WhoAreYou {
+        src_sig,
+        src_disc_port,
+        src_p2p_port,
+        src_public_key_str,
+    };
 
-    Ok(())
-}
+    let way_syn_msg = match way.into_syn_msg() {
+        Ok(m) => m,
+        Err(err) => return Err(WhoAreYouInitError::MsgCreateFail { err }),
+    };
 
-pub(crate) async fn handle_who_are_you_ack(
-    disc_state: Arc<DiscState>,
-    addr: Address,
-    buf: &[u8],
-) -> Result<(), WhoareyouInitError> {
-    let endpoint = addr.disc_endpoint();
-
-    // let table_node = match disc_state.table.try_reserve().await {
-    //     Ok(n) => n,
-    //     Err(err) => {
-    //         return Err(WhoareyouInitError::TableIsFull { endpoint, err })
-    //     }
-    // };
-
-    // let way_ack = match WhoAreYouAck::parse(buf) {
-    //     Ok(m) => m,
-    //     Err(err) => {
-    //         match disc_state.table.put_back(table_node) {
-    //             Ok(_) => (),
-    //             Err(err) => {
-    //                 return Err(WhoareyouInitError::NodePutBackFail {
-    //                     source: err,
-    //                 })
-    //             }
-    //         };
-
-    //         return Err(WhoareyouInitError::MessageParseFail { err });
-    //     }
-    // };
-
-    // match disc_state
-    //     .table
-    //     .add(table_node, |mut val| {
-    //         *val = NodeValue::new_identified(
-    //             addr.clone(),
-    //             way_ack.way.sig,
-    //             way_ack.way.p2p_port,
-    //             way_ack.way.public_key_bytes,
-    //         );
-    //         val
-    //     })
-    //     .await
-    // {
-    //     Ok((.., endpoint)) => {
-    //         tdebug!(
-    //             "p2p_discvoery",
-    //             "whoareyou",
-    //             "Discovered a node, I initiated, endpoint: {}",
-    //             endpoint
-    //         );
-    //     }
-    //     Err(err) => return Err(WhoareyouInitError::TableAddFail { err }),
-    // };
+    match disc_state.udp_conn.write_msg(endpoint, way_syn_msg).await {
+        Ok(_) => {
+            node_value.status = NodeStatus::WhoAreYouInit { fail_count: 0 };
+        }
+        Err(err) => return Err(WhoAreYouInitError::MsgSendFail { err }),
+    };
 
     Ok(())
 }

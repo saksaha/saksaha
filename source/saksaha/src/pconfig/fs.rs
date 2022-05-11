@@ -18,7 +18,9 @@ impl FS {
         let serialized = match serde_yaml::to_string(&pconfig) {
             Ok(s) => s,
             Err(err) => {
-                return Err(PConfigError::SerializationFail(err.to_string()));
+                return Err(PConfigError::SerializationFail {
+                    err: err.to_string(),
+                });
             }
         };
 
@@ -38,7 +40,9 @@ impl FS {
 
         match fs::write(config_path.to_owned(), serialized) {
             Ok(_) => Ok(pconfig),
-            Err(err) => Err(PConfigError::ConfigWriteFail(err.to_string())),
+            Err(err) => Err(PConfigError::ConfigWriteFail {
+                err: err.to_string(),
+            }),
         }
     }
 
@@ -57,14 +61,18 @@ impl FS {
         let file = match fs::read_to_string(path.to_owned()) {
             Ok(f) => f,
             Err(err) => {
-                return Err(PConfigError::ReadFail(err.to_string()));
+                return Err(PConfigError::ReadFail {
+                    err: err.to_string(),
+                });
             }
         };
 
         match serde_yaml::from_str(file.as_str()) {
             Ok(pconf) => return Ok(pconf),
             Err(err) => {
-                return Err(PConfigError::DeserializationFail(err.to_string()));
+                return Err(PConfigError::DeserializationFail {
+                    err: err.to_string(),
+                });
             }
         }
     }
@@ -86,16 +94,16 @@ fn create_or_get_app_path() -> Result<PathBuf, PConfigError> {
                     return Ok(app_path.to_path_buf());
                 }
                 Err(err) => {
-                    return Err(PConfigError::PathCreationFail(
-                        err.to_string(),
-                    ));
+                    return Err(PConfigError::PathCreationFail {
+                        err: err.to_string(),
+                    });
                 }
             }
         }
         return Ok(app_path.to_path_buf());
     } else {
-        return Err(PConfigError::PathCreationFail(
-            "couldn't form the right".into(),
-        ));
+        return Err(PConfigError::PathCreationFail {
+            err: "couldn't form the right".into(),
+        });
     }
 }

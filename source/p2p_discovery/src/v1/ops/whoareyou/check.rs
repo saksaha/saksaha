@@ -1,5 +1,8 @@
-pub fn is_my_endpoint(my_disc_port: u16, endpoint: &String) -> bool {
-    let my_disc_endpoint = format!("127.0.0.1:{}", my_disc_port);
+pub(crate) fn is_my_endpoint(
+    src_disc_port: u16,
+    dest_endpoint: &String,
+) -> bool {
+    let my_disc_endpoint = format!("127.0.0.1:{}", src_disc_port);
 
-    my_disc_endpoint == *endpoint
+    my_disc_endpoint == *dest_endpoint
 }

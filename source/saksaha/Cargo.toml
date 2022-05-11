@@ -9,12 +9,14 @@ default-run = "sak"
 [dependencies]
 logger = { path = "../logger" }
 crypto = { path = "../crypto" }
-peer = { path = "../peer" }
 proofs = { path = "../proofs" }
-p2p_active_calls = { path = "../p2p_active_calls" }
+p2p_peer = { path = "../p2p_peer" }
 p2p_identity = { path = "../p2p_identity" }
 p2p_discovery = { path = "../p2p_discovery" }
 p2p_transport = { path = "../p2p_transport" }
+p2p_transport_handshake = { path = "../p2p_transport_handshake" }
+utils_time = { path = "../utils_time" }
+utils_net = { path = "../utils_net" }
 task_queue = { path = "../task_queue" }
 clap = { version = "3.1.6", features = ["cargo"] }
 directories = "3.0"

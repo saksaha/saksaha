@@ -5,12 +5,14 @@ members = [
   "source/saksaha",
   "source/crypto",
   "source/proofs",
-  "source/peer",
+  "source/p2p_peer",
   "source/p2p_discovery",
   "source/p2p_identity",
   "source/p2p_active_calls",
-  "source/p2p_transport",
+  "source/p2p_transport_handshake",
   "source/task_queue",
+  "source/utils_time",
+  "source/utils_net",
 
   # internals
   "internals/ci",

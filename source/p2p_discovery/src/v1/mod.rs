@@ -1,243 +1,152 @@
-pub mod address;
-pub mod dial_scheduler;
-mod frame;
-pub mod iterator;
-pub mod listener;
-mod ops;
-pub mod state;
-mod table;
+pub(crate) mod dial_scheduler;
+pub(crate) mod msg;
+mod net;
+pub(crate) mod ops;
+pub(crate) mod server;
+pub(crate) mod state;
+pub(crate) mod table;
 mod task;
 
 use self::dial_scheduler::DialSchedulerArgs;
+use self::net::connection::UdpConn;
+pub use self::table::{AddrGuard, AddrsIterator};
+use self::task::DiscoveryTask;
 use self::{
-    dial_scheduler::DialScheduler,
-    listener::Listener,
-    state::DiscState,
-    task::{DiscoveryTask, TaskHandler},
+    dial_scheduler::DialScheduler, server::Server, state::DiscState,
+    task::runtime::DiscTaskRuntime,
 };
-use crate::iterator::Iterator;
 use colored::Colorize;
-use logger::{tinfo, twarn};
-use p2p_active_calls::ActiveCalls;
-use p2p_identity::{identity::P2PIdentity, peer::UnknownPeer};
+use logger::tinfo;
+use p2p_identity::addr::UnknownAddr;
+use p2p_identity::identity::P2PIdentity;
 use std::sync::Arc;
 use table::Table;
 use task_queue::TaskQueue;
-use tokio::net::UdpSocket;
-use tokio::sync::Mutex;
 
-pub const CAPACITY: usize = 64;
+const DISC_TASK_QUEUE_CAPACITY: usize = 10;
 
 pub struct Discovery {
-    listener: Arc<Listener>,
+    server: Arc<Server>,
     disc_state: Arc<DiscState>,
     dial_scheduler: Arc<DialScheduler>,
-    task_queue: Arc<TaskQueue<DiscoveryTask>>,
-    task_handler: Arc<TaskHandler>,
+    disc_task_queue: Arc<TaskQueue<DiscoveryTask>>,
+    task_runtime: Arc<DiscTaskRuntime>,
 }
 
 pub struct DiscoveryArgs {
     pub disc_dial_interval: Option<u16>,
     pub disc_table_capacity: Option<u16>,
+    pub disc_task_interval: Option<u16>,
+    pub disc_task_queue_capacity: Option<u16>,
     pub p2p_identity: Arc<P2PIdentity>,
     pub disc_port: Option<u16>,
     pub p2p_port: u16,
-    pub bootstrap_urls: Option<Vec<String>>,
-    pub unknown_peers: Vec<UnknownPeer>,
+    pub bootstrap_addrs: Vec<UnknownAddr>,
 }
-
-pub type Error = Box<dyn std::error::Error + Send + Sync>;
 
 impl Discovery {
     pub async fn init(disc_args: DiscoveryArgs) -> Result<Discovery, String> {
-        let unknown_peers = merge_bootstrap_urls(
-            disc_args.bootstrap_urls,
-            disc_args.unknown_peers,
-        );
-
         let table = {
-            let t =
-                match Table::init(unknown_peers, disc_args.disc_table_capacity)
-                    .await
-                {
-                    Ok(t) => t,
-                    Err(err) => {
-                        return Err(format!(
-                            "Can't initialize Table, err: {}",
-                            err
-                        ))
-                    }
-                };
+            let t = match Table::init(disc_args.disc_table_capacity).await {
+                Ok(t) => t,
+                Err(err) => {
+                    return Err(format!("Can't initialize Table, err: {}", err))
+                }
+            };
+
             Arc::new(t)
         };
 
-        let active_calls = {
-            let c = ActiveCalls::new();
-            Arc::new(c)
-        };
+        let (udp_conn, disc_port) = {
+            let (socket, socket_addr) =
+                utils_net::setup_udp_socket(disc_args.disc_port).await?;
+            let udp_conn = UdpConn { socket };
 
-        let (udp_socket, disc_port) = {
-            let (socket, port) = setup_udp_socket(disc_args.disc_port).await?;
-            (Arc::new(socket), port)
+            tinfo!(
+                "p2p_discovery",
+                "",
+                "Bound udp socket for P2P discovery, addr: {}",
+                socket_addr.to_string().yellow(),
+            );
+
+            (Arc::new(udp_conn), socket_addr.port())
         };
 
         let disc_state = {
             let s = DiscState {
                 p2p_identity: disc_args.p2p_identity,
                 table,
-                active_calls,
                 disc_port,
-                udp_socket: udp_socket.clone(),
+                udp_conn,
                 p2p_port: disc_args.p2p_port,
-                is_dial_routine_running: Arc::new(Mutex::new(false)),
             };
             Arc::new(s)
         };
 
-        let task_queue = {
-            let q = TaskQueue::new(10);
+        let disc_task_queue = {
+            let capacity = match disc_args.disc_task_queue_capacity {
+                Some(c) => c.into(),
+                None => DISC_TASK_QUEUE_CAPACITY,
+            };
+
+            let q = TaskQueue::new(capacity);
             Arc::new(q)
         };
 
-        let task_handler = {
-            let r = TaskHandler {
-                task_queue: task_queue.clone(),
-            };
-            Arc::new(r)
+        let task_runtime = {
+            let h = DiscTaskRuntime::new(
+                disc_task_queue.clone(),
+                disc_args.disc_task_interval,
+            );
+            Arc::new(h)
         };
 
-        let listener = {
-            let l = Listener {
-                disc_state: disc_state.clone(),
-                udp_socket: udp_socket.clone(),
-            };
-            Arc::new(l)
+        let server = {
+            let s = Server::new(disc_state.clone());
+            Arc::new(s)
         };
 
         let dial_schd_args = DialSchedulerArgs {
             disc_state: disc_state.clone(),
             disc_dial_interval: disc_args.disc_dial_interval,
-            // unknown_peers,
-            task_queue: task_queue.clone(),
+            bootstrap_addrs: disc_args.bootstrap_addrs,
+            disc_task_queue: disc_task_queue.clone(),
         };
 
         let dial_scheduler = {
-            let s = DialScheduler::init(dial_schd_args).await;
+            let s = DialScheduler::init(dial_schd_args);
             Arc::new(s)
         };
 
         let disc = Discovery {
             disc_state,
-            listener,
+            server,
             dial_scheduler,
-            task_queue,
-            task_handler,
+            disc_task_queue,
+            task_runtime,
         };
 
         Ok(disc)
     }
 
-    pub async fn start(&self) -> Result<(), String> {
-        self.listener.start()?;
+    pub async fn run(&self) {
+        let server = self.server.clone();
+        tokio::spawn(async move {
+            server.run().await;
+        });
 
-        self.task_handler.run();
+        let task_runtime = self.task_runtime.clone();
+        tokio::spawn(async move {
+            task_runtime.run().await;
+        });
 
-        self.dial_scheduler.start()?;
-
-        Ok(())
+        let dial_scheduler = self.dial_scheduler.clone();
+        tokio::spawn(async move {
+            dial_scheduler.run().await;
+        });
     }
 
-    // pub fn iter(&self) -> Arc<Iterator> {
-    //     self.disc_state.table.iter()
-    // }
-}
-
-pub async fn setup_udp_socket(
-    my_disc_port: Option<u16>,
-) -> Result<(UdpSocket, u16), String> {
-    let my_disc_port = match my_disc_port {
-        Some(p) => p,
-        None => 0,
-    };
-
-    let local_addr = format!("127.0.0.1:{}", my_disc_port);
-
-    let (udp_socket, port) = match UdpSocket::bind(local_addr).await {
-        Ok(s) => {
-            let local_addr = match s.local_addr() {
-                Ok(a) => a,
-                Err(err) => {
-                    return Err(format!(
-                        "Couldn't get local address of udp socket, err: {}",
-                        err
-                    ))
-                }
-            };
-
-            tinfo!(
-                "p2p_discovery",
-                "",
-                "Bound udp socket for P2P discovery, addr: {}",
-                local_addr.to_string().yellow(),
-            );
-
-            (s, local_addr.port())
-        }
-        Err(err) => {
-            return Err(format!(
-                "Couldn't open UdpSocket, err: {}",
-                err.to_string()
-            ));
-        }
-    };
-
-    Ok((udp_socket, port))
-}
-
-fn merge_bootstrap_urls(
-    bootstrap_urls: Option<Vec<String>>,
-    unknown_peers: Vec<UnknownPeer>,
-) -> Vec<UnknownPeer> {
-    let mut resulting_peers = Vec::from(unknown_peers);
-
-    if let Some(urls) = bootstrap_urls {
-        let mut cnt = 0;
-
-        for url in urls {
-            match UnknownPeer::from_url(url.clone()) {
-                Ok(p) => {
-                    cnt += 1;
-
-                    tinfo!(
-                        "p2p_discovery",
-                        "dial_schd",
-                        "Bootstrap - [{}] {}",
-                        cnt,
-                        p.short_url(),
-                    );
-
-                    resulting_peers.push(p);
-                }
-                Err(err) => {
-                    twarn!(
-                        "p2p_discovery",
-                        "dial_schd",
-                        "Failed to parse url, url: {}, \
-                            err: {:?}",
-                        url.clone(),
-                        err,
-                    );
-                }
-            };
-        }
-
-        tinfo!(
-            "p2p_discovery",
-            "dial_schd",
-            "Bootstrap - Total bootstrapped node count: {}",
-            cnt,
-        );
+    pub fn iter(&self) -> AddrsIterator {
+        self.disc_state.table.iter()
     }
-
-    resulting_peers
 }
