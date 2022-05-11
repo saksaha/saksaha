@@ -5,7 +5,6 @@ use super::task::P2PTask;
 use super::{dial_scheduler::P2PDialScheduler, server::Server};
 use colored::Colorize;
 use logger::tinfo;
-use p2p_active_calls::ActiveCalls;
 use p2p_discovery::{Discovery, DiscoveryArgs};
 use p2p_identity::addr::UnknownAddr;
 use p2p_identity::identity::P2PIdentity;
@@ -78,15 +77,8 @@ impl Host {
             Arc::new(h)
         };
 
-        // let p2p_active_calls = {
-        //     let a = ActiveCalls::init().await;
-
-        //     Arc::new(a)
-        // };
-
         let host_state = {
             let s = HostState {
-                // p2p_active_calls: p2p_active_calls.clone(),
                 p2p_identity: p2p_identity.clone(),
                 p2p_port: host_args.p2p_port,
                 rpc_port: host_args.rpc_port,
@@ -137,7 +129,6 @@ impl Host {
 
         let host = Host {
             p2p_discovery,
-            // p2p_active_calls,
             p2p_dial_scheduler,
             p2p_task_queue,
             p2p_task_runtime,

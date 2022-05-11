@@ -1,5 +1,4 @@
 use logger::twarn;
-use p2p_active_calls::{ActiveCalls, Call, CallGuard};
 use p2p_transport::{
     frame::{Error, Frame},
     parse::Parse,
@@ -23,9 +22,6 @@ pub enum RequestParseError {
 
     #[error("Frame type (string) parse error, err: {err}")]
     FrameTypeParseError { err: String },
-
-    #[error("Already in call with this client, call: {call}")]
-    AlreadyInCall { call: Arc<Call> },
 
     #[error("Error parsing message, err: {err}")]
     MsgParseError { err: String },
@@ -67,9 +63,6 @@ impl Request {
                         });
                     }
                 };
-
-                let src_p2p_endpoint =
-                    format!("{}:{}", socket_addr.ip(), handshake.src_p2p_port);
 
                 let op = Request::HandshakeInit { msg: handshake };
 

@@ -1,16 +1,13 @@
-mod check;
 mod initiate;
 mod receive;
 
-use std::time::{SystemTime, UNIX_EPOCH};
-
-use crate::Error;
-
 use super::{HANDSHAKE_ACK, HANDSHAKE_SYN};
+use crate::Error;
 use bytes::{BufMut, Bytes, BytesMut};
 pub use initiate::*;
 use p2p_transport::{frame::Frame, parse::Parse};
 pub use receive::*;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 pub struct Handshake {
     pub instance_id: String,

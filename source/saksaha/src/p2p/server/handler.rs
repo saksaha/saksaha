@@ -58,7 +58,6 @@ impl Handler {
                     p2p_peer_table: self.host_state.p2p_peer_table.clone(),
                 };
 
-                println!("calling receive_handshake()");
                 match handshake::receive_handshake(handshake_recv_args, conn)
                     .await
                 {

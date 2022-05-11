@@ -1,6 +1,6 @@
 use super::{state::DiscState, task::DiscoveryTask};
 use logger::{tinfo, twarn};
-use p2p_identity::addr::{Addr, UnknownAddr};
+use p2p_identity::addr::UnknownAddr;
 use std::{sync::Arc, time::Duration};
 use task_queue::TaskQueue;
 
