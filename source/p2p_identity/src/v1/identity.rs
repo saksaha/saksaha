@@ -8,21 +8,26 @@ pub use k256::{
     EncodedPoint, PublicKey, SecretKey,
 };
 
-pub type PeerId = [u8; PUBLIC_KEY_LEN];
+// pub type PeerId = [u8; PUBLIC_KEY_LEN];
 
-pub const PUBLIC_KEY_LEN: usize = 65;
+// 64 + 1 (flag for whether the key is compressed or not)
+pub const PUBLIC_KEY_LEN: usize = 64 + 1;
 pub const SAKSAHA: &[u8; 7] = b"saksaha";
 
 pub struct P2PIdentity {
+    pub secret: String,
+    pub public_key_str: String,
     pub secret_key: SecretKey,
-    pub public_key: PeerId,
-    pub peer_id: String,
+    pub public_key_bytes: [u8; PUBLIC_KEY_LEN],
     pub sig: Signature,
 }
 
 impl P2PIdentity {
-    pub fn new(secret: String, peer_id: String) -> Result<P2PIdentity, String> {
-        let secret_bytes = match crypto::decode_hex(secret.to_owned()) {
+    pub fn new(
+        secret: String,
+        public_key_str: String,
+    ) -> Result<P2PIdentity, String> {
+        let secret_bytes = match crypto::decode_hex(&secret) {
             Ok(v) => v,
             Err(err) => {
                 return Err(format!("Error making secret key, err: {}", err));
@@ -39,7 +44,7 @@ impl P2PIdentity {
             }
         };
 
-        let public_key: PeerId = {
+        let public_key_bytes: [u8; PUBLIC_KEY_LEN] = {
             let b = secret_key.public_key().to_encoded_point(false).to_bytes();
 
             if b.len() != 65 {
@@ -50,18 +55,16 @@ impl P2PIdentity {
 
             let mut buf = [0; 65];
             buf.clone_from_slice(&b);
-            buf
-        };
 
-        {
-            let p = crypto::encode_hex(&public_key);
-            if p != peer_id {
+            let pk_encoded = crypto::encode_hex(&b);
+            if pk_encoded != public_key_str {
                 return Err(format!(
-                    "public key built from bytes differ \
-                    from the one in pconfig"
+                    "Encoded public key is different from the restored one",
                 ));
             }
-        }
+
+            buf
+        };
 
         let sig = {
             let signing_key = SigningKey::from(&secret_key);
@@ -70,9 +73,10 @@ impl P2PIdentity {
         };
 
         let credential = P2PIdentity {
+            secret,
             secret_key,
-            public_key,
-            peer_id,
+            public_key_str,
+            public_key_bytes,
             sig,
         };
 

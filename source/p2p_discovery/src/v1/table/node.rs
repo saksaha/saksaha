@@ -1,16 +1,26 @@
-use p2p_identity::peer::{KnownPeer, UnknownPeer};
+use p2p_identity::addr::Addr;
 
-pub(crate) enum Node {
-    KnownNode(KnownNode),
-    UnknownNode(UnknownNode),
+#[derive(Debug)]
+pub(crate) enum NodeStatus {
+    Initialized,
+    WhoAreYouInit { fail_count: usize },
+    WhoAreYouRecv { fail_count: usize },
+    HandshakeSynFail { fail_count: usize },
 }
 
-pub(crate) struct KnownNode {
-    peer: KnownPeer,
-    fail_count: u16,
+#[derive(Debug)]
+pub(crate) struct Node {
+    pub(crate) value: NodeValue,
 }
 
-pub(crate) struct UnknownNode {
-    peer: UnknownPeer,
-    fail_count: u16,
+#[derive(Debug)]
+pub(crate) enum NodeValue {
+    Empty,
+    Valued(NodeValueInner),
+}
+
+#[derive(Debug)]
+pub(crate) struct NodeValueInner {
+    pub(crate) addr: Addr,
+    pub(crate) status: NodeStatus,
 }

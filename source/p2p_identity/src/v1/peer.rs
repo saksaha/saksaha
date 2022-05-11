@@ -38,7 +38,7 @@ impl UnknownPeer {
     }
 
     fn from_full_url(url: String) -> Result<UnknownPeer, String> {
-        let (peer_id, ip, disc_port) = match url.get(6..) {
+        let (_peer_id, ip, disc_port) = match url.get(6..) {
             Some(u) => match u.split_once('@') {
                 Some((peer_id, endpoint)) => {
                     let (ip, port) = parse_endpoint(endpoint)?;

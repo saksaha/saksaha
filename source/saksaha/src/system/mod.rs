@@ -1,37 +1,34 @@
 mod routine;
 mod shutdown;
 
-use crate::{
-    ledger::Ledger, network::socket, p2p::host::Host, pconfig::PConfig,
-    rpc::RPC,
-};
+use crate::pconfig::PConfig;
 use logger::terr;
-use logger::{tdebug, tinfo};
+use logger::tinfo;
 use once_cell::sync::OnceCell;
 use std::sync::Arc;
-use tokio::{self, signal, sync::Mutex};
+use tokio::{self, signal};
 
 static INSTANCE: OnceCell<Arc<System>> = OnceCell::new();
 
-pub struct System {
-    system_state: Arc<Mutex<SystemState>>,
-}
+pub struct System {}
 
 #[derive(Debug)]
 pub struct SystemArgs {
+    pub disc_port: Option<u16>,
     pub disc_dial_interval: Option<u16>,
     pub disc_table_capacity: Option<u16>,
+    pub disc_task_interval: Option<u16>,
+    pub disc_task_queue_capacity: Option<u16>,
+    pub p2p_task_interval: Option<u16>,
+    pub p2p_task_queue_capacity: Option<u16>,
+    pub p2p_peer_table_capacity: Option<u16>,
+    pub p2p_max_conn_count: Option<u16>,
     pub p2p_dial_interval: Option<u16>,
     pub rpc_port: Option<u16>,
-    pub disc_port: Option<u16>,
     pub p2p_port: Option<u16>,
     pub bootstrap_urls: Option<Vec<String>>,
     pub dev_mode: Option<String>,
     pub pconfig: PConfig,
-}
-
-struct SystemState {
-    p2p_host: Option<Host>,
 }
 
 impl System {
@@ -40,18 +37,13 @@ impl System {
             return Ok(s.clone());
         } else {
             let system = {
-                let system_state = {
-                    let s = SystemState { p2p_host: None };
-                    Arc::new(Mutex::new(s))
-                };
-
-                let s = System { system_state };
+                let s = System {};
                 Arc::new(s)
             };
 
             match INSTANCE.set(system.clone()) {
                 Ok(_) => {
-                    tinfo!("saksaha", "system", "System is made static.",);
+                    tinfo!("saksaha", "system", "System is made static",);
                     return Ok(system);
                 }
                 Err(_) => {

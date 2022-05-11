@@ -1,34 +1,35 @@
 use super::DiscoveryTask;
-use logger::terr;
-use std::sync::Arc;
-use task_queue::TaskQueue;
+use crate::{ops::whoareyou::WhoAreYouInitError, v1::ops::whoareyou};
+use logger::twarn;
 
-pub(crate) struct TaskHandler {
-    pub(crate) task_queue: Arc<TaskQueue<DiscoveryTask>>,
-}
-
-impl TaskHandler {
-    pub(crate) fn run(&self) {
-        let task_queue = self.task_queue.clone();
-
-        tokio::spawn(async move {
-            loop {
-                let task = match task_queue.pop_front().await {
-                    Ok(t) => t,
-                    Err(err) => {
-                        terr!(
-                            "p2p_discovery",
-                            "task",
-                            "Cannot handle p2p discovery task any more, \
-                                err: {}",
-                            err,
-                        );
-                        return;
-                    }
-                };
-
-                println!("task, {:?}", task);
+pub(crate) async fn run(task: DiscoveryTask) {
+    match task {
+        DiscoveryTask::InitiateWhoAreYou { addr, disc_state } => {
+            match whoareyou::init_who_are_you(addr.clone(), disc_state.clone())
+                .await
+            {
+                Ok(_) => {}
+                Err(err) => {
+                    match err {
+                        WhoAreYouInitError::MyEndpoint { .. } => {
+                            twarn!(
+                                "p2p_discovery",
+                                "task",
+                                "Abandoning failed task, err: {}",
+                                err
+                            );
+                        }
+                        _ => {
+                            twarn!(
+                                "p2p_discovery",
+                                "task",
+                                "Unhandled error, err: {}",
+                                err,
+                            );
+                        }
+                    };
+                }
             }
-        });
-    }
+        }
+    };
 }

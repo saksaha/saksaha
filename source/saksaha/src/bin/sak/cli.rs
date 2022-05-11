@@ -1,23 +1,26 @@
-use clap::{arg, command, Command, ArgMatches};
-
-const DEFAULT_BOOTSTRAP_URLS: &str =
-    include_str!("../../../../../config/bootstrap_urls");
+use super::app;
 
 #[derive(Debug)]
 pub(crate) struct CLIArgs {
+    pub(crate) disc_port: Option<u16>,
     pub(crate) disc_dial_interval: Option<u16>,
     pub(crate) disc_table_capacity: Option<u16>,
+    pub(crate) disc_task_interval: Option<u16>,
+    pub(crate) disc_task_queue_capacity: Option<u16>,
+    pub(crate) p2p_task_interval: Option<u16>,
+    pub(crate) p2p_task_queue_capacity: Option<u16>,
+    pub(crate) p2p_peer_table_capacity: Option<u16>,
+    pub(crate) p2p_max_conn_count: Option<u16>,
     pub(crate) p2p_dial_interval: Option<u16>,
     pub(crate) config: Option<String>,
     pub(crate) rpc_port: Option<u16>,
-    pub(crate) disc_port: Option<u16>,
     pub(crate) p2p_port: Option<u16>,
     pub(crate) dev_mode: Option<String>,
     pub(crate) bootstrap_urls: Option<Vec<String>>,
 }
 
 pub(crate) fn get_args() -> Result<CLIArgs, String> {
-    let app = define_app();
+    let app = app::create_app();
     let matches = app.get_matches();
 
     let config = match matches.value_of("config") {
@@ -87,12 +90,12 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
         None => None,
     };
 
-    let p2p_dial_interval = match matches.value_of("p2p-dial-interval") {
+    let p2p_task_interval = match matches.value_of("p2p-task-interval") {
         Some(i) => match i.parse::<u16>() {
             Ok(interval) => Some(interval),
             Err(err) => {
                 return Err(format!(
-                    "Cannot parse p2p dial interval (u16), err: {}",
+                    "Cannot parse p2p task interval (u16), err: {}",
                     err,
                 ))
             }
@@ -114,65 +117,127 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
         None => None,
     };
 
+    let disc_task_interval = match matches.value_of("disc-task-interval") {
+        Some(i) => match i.parse::<u16>() {
+            Ok(interval) => Some(interval),
+            Err(err) => {
+                return Err(format!(
+                    "Cannot parse disc task interval (u16), err: {}",
+                    err,
+                ))
+            }
+        },
+        None => None,
+    };
+
+    let disc_task_queue_capacity =
+        match matches.value_of("disc-task-queue-capacity") {
+            Some(i) => match i.parse::<u16>() {
+                Ok(interval) => Some(interval),
+                Err(err) => {
+                    return Err(format!(
+                        "Cannot parse disc task queue capacity (u16), err: {}",
+                        err,
+                    ))
+                }
+            },
+            None => None,
+        };
+
+    let p2p_task_queue_capacity =
+        match matches.value_of("p2p-task-queue-capacity") {
+            Some(i) => match i.parse::<u16>() {
+                Ok(interval) => Some(interval),
+                Err(err) => {
+                    return Err(format!(
+                        "Cannot parse p2p task queue capacity (u16), err: {}",
+                        err,
+                    ))
+                }
+            },
+            None => None,
+        };
+
+    let p2p_peer_table_capacity =
+        match matches.value_of("p2p-peer-table-capacity") {
+            Some(i) => match i.parse::<u16>() {
+                Ok(interval) => Some(interval),
+                Err(err) => {
+                    return Err(format!(
+                        "Cannot parse p2p peer table capacity (u16), err: {}",
+                        err,
+                    ))
+                }
+            },
+            None => None,
+        };
+
+    let p2p_max_conn_count = match matches.value_of("p2p-max-conn-count") {
+        Some(i) => match i.parse::<u16>() {
+            Ok(interval) => Some(interval),
+            Err(err) => {
+                return Err(format!(
+                    "Cannot parse p2p max connection count (u16), err: {}",
+                    err,
+                ))
+            }
+        },
+        None => None,
+    };
+
+    let p2p_dial_interval = match matches.value_of("p2p-dial-interval") {
+        Some(i) => match i.parse::<u16>() {
+            Ok(interval) => Some(interval),
+            Err(err) => {
+                return Err(format!(
+                    "Cannot parse p2p dial interval (u16), err: {}",
+                    err,
+                ))
+            }
+        },
+        None => None,
+    };
+
     Ok(CLIArgs {
+        disc_port,
         disc_dial_interval,
         disc_table_capacity,
+        disc_task_interval,
+        disc_task_queue_capacity,
+        p2p_task_interval,
+        p2p_task_queue_capacity,
+        p2p_peer_table_capacity,
+        p2p_max_conn_count,
         p2p_dial_interval,
         config,
         rpc_port,
-        disc_port,
         p2p_port,
         dev_mode,
         bootstrap_urls,
     })
 }
 
-pub(crate) fn define_app<'a>() -> Command<'a> { 
-    command!()
-        .version("0.0.1")
-        .author("Saksaha <elden@saksaha.com>")
-        .about("Sakaha network reference implementation")
-        .arg(arg!(-c --config [File]
-                    "Saksaha configuration file path, usually created at\n\
-                    [[OS default config path]]/saksaha/config.json "))
-        .arg(arg!(--"rpc-port" [Port] 
-            "Your RPC port"))
-        .arg(arg!(--"disc-port" [Port] 
-            "Your P2P discovery port"))
-        .arg(arg!(--"p2p-port" [Port]
-            "Your p2p port"))
-        .arg(arg!(--"dev-mode" [Mode]
-            "Dev mode. e.g. dev-local"))
-        .arg(arg!(--"disc-dial-interval" [MilliSecond]
-            "P2P discovery dialing minimum interval"))
-        .arg(arg!(--"disc-table-capacity" [Capacity]
-            "P2P discovery table capacity (size)"))
-        .arg(arg!(--"p2p-dial-interval" [MilliSecond]
-            "P2P dialing minimum interval"))
-        .arg(arg!(--"bootstrap-urls" [Endpoints]
-            "Bootstrap peer URLs to start discover, delimited by a comma,\n
-                e.g.\n
-                // println!("{:?}", matches.value_of("dev-mode"));080, \n
-                    short url: 127.0.0.1:3030
-            "))
-        
-}
+#[cfg(test)]
+mod test {
+    use super::app;
 
-#[test]
-fn test_if_app_matches_dev_mode() {
-    let args = vec!["", "--dev-mode", "dev-local"];
+    #[test]
+    fn test_if_app_matches_dev_mode() {
+        let args = vec!["", "--dev-mode", "dev-local"];
 
-    let app = define_app();
-    let matches = app.get_matches_from(args);
+        let app = app::create_app();
+        let matches = app.get_matches_from(args);
 
-    assert_eq!(matches.value_of("dev-mode"), Some("dev-local"));
-}
+        assert_eq!(matches.value_of("dev-mode"), Some("dev-local"));
+    }
 
-fn test_empty_dev_mode() {
-    let args = vec!["",];
+    #[test]
+    fn test_empty_dev_mode() {
+        let args = vec![""];
 
-    let app = define_app();
-    let matches = app.get_matches_from(args);
+        let app = app::create_app();
+        let matches = app.get_matches_from(args);
 
-    assert_eq!(matches.value_of("dev-mode"), None);
+        assert_eq!(matches.value_of("dev-mode"), None);
+    }
 }

@@ -1,242 +1,144 @@
+mod iter;
 mod node;
 
-use super::address::Address;
-use crate::{iterator::Iterator, CAPACITY};
-use crypto::Signature;
-use logger::tdebug;
-use node::{KnownNode, UnknownNode};
-use p2p_identity::peer::{KnownPeer, UnknownPeer};
-use rand::prelude::*;
-use std::{
-    collections::{HashMap, HashSet},
-    sync::Arc,
-};
+pub(crate) use self::node::*;
+pub use iter::*;
+use p2p_identity::addr::Addr;
+use std::{collections::HashMap, sync::Arc};
 use tokio::sync::{
-    mpsc::{self, error::TrySendError, Receiver, Sender},
+    mpsc::{self, UnboundedReceiver, UnboundedSender},
     Mutex, MutexGuard,
 };
 
-// type Nodes = HashMap<PeerId, Arc<Node>>;
+const DISC_TABLE_CAPACITY: usize = 100;
 
 /// TODO Table shall have Kademlia flavored buckets
 pub(crate) struct Table {
-    // map: Mutex<Nodes>,
-// keys: Mutex<HashSet<PeerId>>,
-// slots_tx: Sender<Arc<Node>>,
-// slots_rx: Mutex<Receiver<Arc<Node>>>,
-// updates_tx: Arc<Sender<Arc<Node>>>,
-// updates_rx: Arc<Mutex<Receiver<Arc<Node>>>>,
-// iter: Arc<Iterator>,
+    addr_map: Arc<Mutex<HashMap<String, Arc<Mutex<Node>>>>>,
+    addrs: Arc<Mutex<Vec<Arc<Mutex<Node>>>>>,
+    known_addrs_tx: Arc<UnboundedSender<Arc<Mutex<Node>>>>,
+    known_addrs_rx: Arc<Mutex<UnboundedReceiver<Arc<Mutex<Node>>>>>,
 }
 
 impl Table {
-    pub async fn init(
-        unknown_peers: Vec<UnknownPeer>,
+    pub(crate) async fn init(
         disc_table_capacity: Option<u16>,
     ) -> Result<Table, String> {
-        let table_capacity = match disc_table_capacity {
-            Some(c) => c,
-            None => 100,
+        let addr_map = {
+            let m = HashMap::new();
+            Arc::new(Mutex::new(m))
         };
 
-        // vec![UnknownNode, table_capacity];
+        let disc_table_capacity = match disc_table_capacity {
+            Some(c) => c.into(),
+            None => DISC_TABLE_CAPACITY,
+        };
 
-        // let slots: Vec<Node> = Vec::with_capacity(table_capacity);
+        let addrs = {
+            let mut v = Vec::with_capacity(disc_table_capacity);
 
-        // for l
+            for _ in 0..disc_table_capacity {
+                let n = Node {
+                    value: NodeValue::Empty,
+                };
+                v.push(Arc::new(Mutex::new(n)));
+            }
 
-        // let (updates_tx, updates_rx) = {
-        //     let (tx, rx) = mpsc::channel(CAPACITY);
-        //     (Arc::new(tx), Arc::new(Mutex::new(rx)))
-        // };
+            Arc::new(Mutex::new(v))
+        };
 
-        // let (slots_tx, slots_rx) = {
-        //     let (tx, rx) = mpsc::channel::<Arc<Node>>(CAPACITY);
-
-        //     for _ in 0..CAPACITY {
-        //         let empty_node = Arc::new(Node::new_empty());
-
-        //         match tx.send(empty_node).await {
-        //             Ok(_) => (),
-        //             Err(err) => {
-        //                 return Err(format!(
-        //                     "Can't send empty Node to the pool, err: {}",
-        //                     err
-        //                 ));
-        //             }
-        //         }
-        //     }
-
-        //     (tx, Mutex::new(rx))
-        // };
-
-        // let map = {
-        //     let m = HashMap::with_capacity(CAPACITY);
-        //     Mutex::new(m)
-        // };
-
-        // let keys = {
-        //     let s = HashSet::new();
-        //     Mutex::new(s)
-        // };
-
-        // let iter = {
-        //     let it = Iterator::new(updates_tx.clone(), updates_rx.clone());
-        //     Arc::new(it)
-        // };
+        let (known_addrs_tx, known_addrs_rx) = {
+            let (tx, rx) = mpsc::unbounded_channel();
+            (Arc::new(tx), Arc::new(Mutex::new(rx)))
+        };
 
         let table = Table {
-            // map,
-            // keys,
-            // rng,
-            // slots_tx,
-            // slots_rx,
-            // updates_tx,
-            // updates_rx,
-            // iter,
+            addr_map,
+            addrs,
+            known_addrs_tx,
+            known_addrs_rx,
         };
 
         Ok(table)
     }
 
-    // pub async fn add<F>(
-    //     &self,
-    //     table_node: Arc<Node>,
-    //     updater: F,
-    // ) -> Result<([u8; PUBLIC_KEY_LEN], String), String>
-    // where
-    //     F: Fn(MutexGuard<NodeValue>) -> MutexGuard<NodeValue>,
-    // {
-    //     let mut map = self.map.lock().await;
-    //     let mut keys = self.keys.lock().await;
+    pub(crate) async fn upsert(
+        &self,
+        addr: Addr,
+        node_status: NodeStatus,
+    ) -> Result<Arc<Mutex<Node>>, String> {
+        let endpoint = addr.disc_endpoint();
 
-    //     let value_guard = table_node.value.lock().await;
-    //     let mut value_guard = updater(value_guard);
+        let addr_map = self.addr_map.clone();
+        let mut addr_map_guard = addr_map.lock().await;
 
-    //     let identified_val = match value_guard.identified_mut() {
-    //         Some(v) => v,
-    //         None => {
-    //             return Err(format!("Empty node can't be updated"));
-    //         }
-    //     };
+        // if map already had the address node
+        if let Some(n) = addr_map_guard.get(&endpoint) {
+            let mut node_lock = n.lock().await;
+            node_lock.value = NodeValue::Valued(NodeValueInner {
+                addr: addr.clone(),
+                status: node_status,
+            });
 
-    //     let public_key = identified_val.public_key;
-    //     let endpoint = identified_val.addr.disc_endpoint();
+            return Ok(n.clone());
+        } else {
+            // When the map doesn't have a node associated with the endpoint
+            let addrs_lock = self.addrs.lock().await;
 
-    //     std::mem::drop(value_guard);
+            match find_empty_node(&addrs_lock) {
+                Some(n) => {
+                    addr_map_guard.insert(endpoint, n.clone());
 
-    //     map.insert(public_key, table_node.clone());
-    //     keys.insert(public_key);
-    //     match self.updates_tx.send(table_node).await {
-    //         Ok(_) => (),
-    //         Err(err) => {
-    //             return Err(format!(
-    //                 "Can't add Node to 'update' pool, endpoint: {}, err: {}",
-    //                 endpoint, err,
-    //             ))
-    //         }
-    //     };
+                    let mut node_lock = n.lock().await;
+                    node_lock.value = NodeValue::Valued(NodeValueInner {
+                        addr: addr.clone(),
+                        status: node_status,
+                    });
 
-    //     Ok((public_key, endpoint))
-    // }
+                    return Ok(n.clone());
+                }
+                None => {
+                    return Err(format!("Every node is currently locked"));
+                }
+            };
+        }
+    }
 
-    // pub fn put_back(
-    //     &self,
-    //     node: Arc<Node>,
-    // ) -> Result<(), TrySendError<Arc<Node>>> {
-    //     match self.slots_tx.try_send(node) {
-    //         Ok(_) => Ok(()),
-    //         Err(err) => return Err(err),
-    //     }
-    // }
+    pub(crate) async fn add_known_node(
+        &self,
+        node: Arc<Mutex<Node>>,
+    ) -> Result<(), String> {
+        match self.known_addrs_tx.send(node) {
+            Ok(_) => Ok(()),
+            Err(err) => Err(format!(
+                "Couldn't push known node into queue, err: {}",
+                err
+            )),
+        }
+    }
 
-    // pub async fn try_reserve(&self) -> Result<Arc<Node>, String> {
-    //     let mut slots_rx = self.slots_rx.lock().await;
-
-    //     match slots_rx.try_recv() {
-    //         Ok(n) => Ok(n),
-    //         Err(err) => Err(format!(
-    //             "Can't reserve a Node. Table might be busy, err: {}",
-    //             err
-    //         )),
-    //     }
-    // }
-
-    // pub fn iter(&self) -> Arc<Iterator> {
-    //     self.iter.clone()
-    // }
+    pub(crate) fn iter(&self) -> AddrsIterator {
+        AddrsIterator::init(
+            self.known_addrs_tx.clone(),
+            self.known_addrs_rx.clone(),
+        )
+    }
 }
 
-// #[derive(Debug)]
-// pub struct Node {
-//     value: Arc<Mutex<NodeValue>>,
-// }
+fn find_empty_node(
+    addrs_lock: &MutexGuard<Vec<Arc<Mutex<Node>>>>,
+) -> Option<Arc<Mutex<Node>>> {
+    for node in addrs_lock.iter() {
+        match node.try_lock() {
+            Ok(n) => match &n.value {
+                NodeValue::Empty => {
+                    return Some(node.clone());
+                }
+                _ => continue,
+            },
+            Err(_) => continue,
+        };
+    }
 
-// impl Node {
-//     pub fn new_empty() -> Node {
-//         Node {
-//             value: Arc::new(Mutex::new(NodeValue::Empty)),
-//         }
-//     }
-
-//     pub async fn get_value(&self) -> Option<IdentifiedValue> {
-//         let val = self.value.lock().await;
-
-//         val.identified()
-//     }
-// }
-
-// /// TODO Node, when dropped either due to success or failure, needs to be
-// /// checked to see if it should go to slots.
-// impl Drop for Node {
-//     fn drop(&mut self) {
-//         tdebug!("p2p_discovery", "", "Node dropped");
-//     }
-// }
-
-// #[derive(Clone, Debug)]
-// pub struct IdentifiedValue {
-//     pub addr: Address,
-//     pub sig: Signature,
-//     pub p2p_port: u16,
-//     pub public_key: PeerId,
-// }
-
-// #[derive(Debug)]
-// pub enum NodeValue {
-//     Empty,
-
-//     Identified(IdentifiedValue),
-// }
-
-// impl NodeValue {
-//     pub fn new_identified(
-//         addr: Address,
-//         sig: Signature,
-//         p2p_port: u16,
-//         public_key: PeerId,
-//     ) -> NodeValue {
-//         NodeValue::Identified(IdentifiedValue {
-//             addr,
-//             sig,
-//             p2p_port,
-//             public_key,
-//         })
-//     }
-
-//     fn identified(&self) -> Option<IdentifiedValue> {
-//         if let NodeValue::Identified(v) = self {
-//             Some(v.clone())
-//         } else {
-//             None
-//         }
-//     }
-
-//     pub fn identified_mut(&mut self) -> Option<&mut IdentifiedValue> {
-//         if let NodeValue::Identified(v) = self {
-//             Some(v)
-//         } else {
-//             None
-//         }
-//     }
-// }
+    return None;
+}

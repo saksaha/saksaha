@@ -1,10 +1,8 @@
-mod connection;
-mod frame;
-mod handshake;
-mod msg;
-mod transport;
+mod net;
+pub mod transport;
 
-pub use connection::*;
-pub use frame::*;
-pub use handshake::*;
-pub use transport::*;
+pub use net::*;
+
+pub type Error = Box<dyn std::error::Error + Send + Sync>;
+
+pub(crate) type Result<T> = std::result::Result<T, Error>;

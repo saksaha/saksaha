@@ -12,9 +12,11 @@ pub use k256::{
     },
     EncodedPoint, Secp256k1,
 };
-pub use k256::{elliptic_curve::PublicKey, SecretKey};
+use k256::{elliptic_curve::PublicKey as PublicKeyK256, SecretKey};
 use rand_core::OsRng;
 use std::{borrow::Borrow, fmt::Write, num::ParseIntError};
+
+pub type PublicKey = k256::PublicKey;
 
 pub fn generate_key() -> SecretKey {
     let secret = SecretKey::random(&mut OsRng);
@@ -30,7 +32,7 @@ pub fn encode_into_key_pair(sk: SecretKey) -> (String, String) {
     return (sk_str, pk_str);
 }
 
-pub fn decode_hex(s: String) -> std::result::Result<Vec<u8>, ParseIntError> {
+pub fn decode_hex(s: &String) -> std::result::Result<Vec<u8>, ParseIntError> {
     (0..s.len())
         .step_by(2)
         .map(|i| u8::from_str_radix(&s[i..i + 2], 16))
@@ -43,6 +45,30 @@ pub fn encode_hex(bytes: &[u8]) -> String {
         write!(&mut s, "{:02x}", b).unwrap();
     }
     s
+}
+
+pub fn convert_public_key_str_into_public_key(
+    public_key_str: &String,
+) -> Result<PublicKey, String> {
+    let pk_decoded = match decode_hex(public_key_str) {
+        Ok(p) => p,
+        Err(err) => {
+            return Err(format!(
+                "Error decoding public key string, err: {}",
+                err
+            ))
+        }
+    };
+
+    match PublicKey::from_sec1_bytes(pk_decoded.as_slice()) {
+        Ok(p) => return Ok(p),
+        Err(err) => {
+            return Err(format!(
+                "Could not create public key out of byte array, err: {}",
+                err
+            ));
+        }
+    }
 }
 
 pub fn convert_public_key_to_verifying_key(
@@ -88,10 +114,8 @@ pub fn verify(
 }
 
 pub fn make_shared_secret(
-    // sk: impl Borrow<NonZeroScalar<Secp256k1>>,
-    // pk: impl Borrow<AffinePoint<Secp256k1>>,
     my_secret_key: &SecretKey,
-    her_public: PublicKey<Secp256k1>,
+    her_public: PublicKey,
 ) -> SharedSecret<Secp256k1> {
     k256::elliptic_curve::ecdh::diffie_hellman(
         my_secret_key.to_secret_scalar(),

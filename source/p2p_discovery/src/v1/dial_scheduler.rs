@@ -1,83 +1,115 @@
-use super::{address::Address, state::DiscState, task::DiscoveryTask};
-use logger::{tdebug, terr, tinfo, twarn};
-use p2p_identity::peer::UnknownPeer;
-use std::{
-    sync::Arc,
-    time::{Duration, SystemTime},
-};
+use super::{state::DiscState, task::DiscoveryTask};
+use logger::{tinfo, twarn};
+use p2p_identity::addr::UnknownAddr;
+use std::{sync::Arc, time::Duration};
 use task_queue::TaskQueue;
-use tokio::sync::Mutex;
+
+const DISC_DIAL_INTERVAL: u64 = 2000;
 
 pub(crate) struct DialSchedulerArgs {
     pub(crate) disc_state: Arc<DiscState>,
     pub(crate) disc_dial_interval: Option<u16>,
-    // pub(crate) unknown_peers: Vec<UnknownPeer>,
-    pub(crate) task_queue: Arc<TaskQueue<DiscoveryTask>>,
+    pub(crate) bootstrap_addrs: Vec<UnknownAddr>,
+    pub(crate) disc_task_queue: Arc<TaskQueue<DiscoveryTask>>,
 }
 
 pub(crate) struct DialScheduler {
     disc_state: Arc<DiscState>,
-    min_interval: Duration,
-    is_dial_loop_running: Arc<Mutex<bool>>,
-    task_queue: Arc<TaskQueue<DiscoveryTask>>,
+    disc_task_queue: Arc<TaskQueue<DiscoveryTask>>,
     dial_loop: Arc<DialLoop>,
+    bootstrap_addrs: Vec<UnknownAddr>,
 }
 
 struct DialLoop {
-    task_queue: Arc<TaskQueue<DiscoveryTask>>,
-    min_interval: Duration,
+    disc_task_queue: Arc<TaskQueue<DiscoveryTask>>,
+    disc_dial_interval: Duration,
 }
 
 impl DialScheduler {
-    pub async fn init(dial_schd_args: DialSchedulerArgs) -> DialScheduler {
+    pub fn init(dial_schd_args: DialSchedulerArgs) -> DialScheduler {
         let DialSchedulerArgs {
-            task_queue,
-            // unknown_peers,
-            ..
+            disc_task_queue,
+            bootstrap_addrs,
+            disc_dial_interval,
+            disc_state,
         } = dial_schd_args;
 
-        let min_interval = match dial_schd_args.disc_dial_interval {
+        let disc_dial_interval = match disc_dial_interval {
             Some(i) => Duration::from_millis(i.into()),
-            None => Duration::from_millis(2000),
+            None => Duration::from_millis(DISC_DIAL_INTERVAL),
         };
 
         let dial_loop = {
             let l = DialLoop {
-                task_queue: task_queue.clone(),
-                min_interval,
+                disc_task_queue: disc_task_queue.clone(),
+                disc_dial_interval,
             };
             Arc::new(l)
         };
 
         let d = DialScheduler {
-            disc_state: dial_schd_args.disc_state.clone(),
-            min_interval,
-            is_dial_loop_running: Arc::new(Mutex::new(false)),
-            task_queue: task_queue.clone(),
+            disc_state: disc_state.clone(),
+            disc_task_queue: disc_task_queue.clone(),
             dial_loop,
+            bootstrap_addrs,
         };
 
         tinfo!(
             "p2p_discovery",
             "dial_schd",
-            "Discovery dial scheduler is initialized. Dial interval: {:?}",
-            min_interval,
+            "Discovery dial scheduler is initialized. Disc dial min \
+            interval: {:?}",
+            disc_dial_interval,
         );
-
-        // enqueue_initial_tasks(task_queue, unknown_peers).await;
 
         d
     }
 
-    pub fn start(&self) -> Result<(), String> {
-        let dial_loop = DialLoop {
-            task_queue: self.task_queue.clone(),
-            min_interval: self.min_interval,
-        };
+    async fn enqueue_bootstrap_addrs(
+        &self,
+        bootstrap_addrs: &Vec<UnknownAddr>,
+    ) {
+        let total_count = bootstrap_addrs.len();
 
-        self.dial_loop.run();
+        tinfo!(
+            "p2p_discovery",
+            "dial_schd",
+            "Enqueueing bootstrap addrs, total count: {}",
+            total_count,
+        );
 
-        Ok(())
+        for (idx, addr) in bootstrap_addrs.iter().enumerate() {
+            tinfo!(
+                "p2p_discovery",
+                "dial_schd",
+                "-- [{}/{}] enqueueing bootstrap addr, disc_endpoint: {}",
+                idx + 1,
+                total_count,
+                addr.disc_endpoint(),
+            );
+
+            let task = DiscoveryTask::InitiateWhoAreYou {
+                addr: addr.clone(),
+                disc_state: self.disc_state.clone(),
+            };
+
+            match self.disc_task_queue.push_back(task).await {
+                Ok(_) => {}
+                Err(err) => {
+                    twarn!(
+                        "p2p_discovery",
+                        "dial_schd",
+                        "Cannot enqueue a bootstrap addr, err: {}",
+                        err,
+                    );
+                }
+            };
+        }
+    }
+
+    pub async fn run(&self) {
+        self.enqueue_bootstrap_addrs(&self.bootstrap_addrs).await;
+        self.dial_loop.run().await;
     }
 }
 
@@ -110,38 +142,5 @@ impl DialLoop {
         //         }
         //     }
         // }
-    }
-}
-
-async fn enqueue_initial_tasks(
-    task_queue: Arc<TaskQueue<DiscoveryTask>>,
-    unknown_peers: Vec<UnknownPeer>,
-) {
-    for unknown_peer in unknown_peers {
-        let task = DiscoveryTask::InitiateWhoAreYou {
-            // whoareyou_op: self.whoareyou_op.clone(),
-            // disc_state: self.disc_state.clone(),
-            // addr,
-            unknown_peer,
-        };
-
-        tdebug!(
-            "p2p_discovery",
-            "dial_schd",
-            "enqueueing a task, {:?}",
-            task
-        );
-
-        match task_queue.push_back(task).await {
-            Ok(_) => {}
-            Err(err) => {
-                twarn!(
-                    "p2p_discovery",
-                    "dial_schd",
-                    "Couldn't enque new task, err: {}",
-                    err
-                );
-            }
-        };
     }
 }
