@@ -6,6 +6,7 @@ pub(crate) mod server;
 pub(crate) mod state;
 pub(crate) mod table;
 mod task;
+mod test;
 
 use self::dial_scheduler::DialSchedulerArgs;
 use self::net::connection::UdpConn;
