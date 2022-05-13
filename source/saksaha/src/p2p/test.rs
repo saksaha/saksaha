@@ -8,7 +8,7 @@ mod test_suite {
     use k256::{ecdsa::Signature, PublicKey};
     use p2p_discovery::AddrGuard;
     use p2p_identity::identity::P2PIdentity;
-    use p2p_peer::PeerTable;
+    use p2p_peer::{Node, PeerTable};
     use std::{sync::Arc, time::Duration};
     use task_queue::TaskQueue;
 
@@ -168,14 +168,15 @@ mod test_suite {
             let peer_table_2 = host_state_1.p2p_peer_table.clone();
 
             let peer = peer_table_2
-                .get(&host_state_1.p2p_identity.public_key_str)
+                .get_mapped_node(&host_state_1.p2p_identity.public_key_str)
                 .await
-                .expect("no peer")
-                .unwrap();
-            let peer_guard = peer.node.lock().await;
-            let peer_flag_handle = match peer_guard.value {
-                NodeValue::Valued(_) => true,
-                NodeValue::Empty => false,
+                .expect("no peer");
+
+            let peer_guard = peer.write().await;
+
+            let peer_flag_handle = match *peer_guard {
+                Node::Peer(_) => true,
+                Node::Empty => false,
             };
             return peer_flag_handle;
         });
