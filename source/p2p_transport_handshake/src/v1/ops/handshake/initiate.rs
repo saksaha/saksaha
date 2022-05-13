@@ -93,7 +93,7 @@ pub async fn initiate_handshake(
         .get_mapped_node_lock(&known_addr.public_key_str)
         .await
     {
-        Some(n) => n,
+        Some((peer_node_lock, peer_node)) => (peer_node_lock, peer_node),
         None => match p2p_peer_table.get_empty_node_lock().await {
             Some(n) => n,
             None => {

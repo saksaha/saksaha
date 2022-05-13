@@ -3,9 +3,8 @@ use crate::NodeStatus;
 use logger::{terr, tinfo};
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::{
-    mpsc::{self, UnboundedReceiver, UnboundedSender},
+    mpsc::{self, UnboundedSender},
     OwnedRwLockMappedWriteGuard, OwnedRwLockWriteGuard, RwLock,
-    RwLockMappedWriteGuard, RwLockWriteGuard,
 };
 
 // const PEER_TABLE_CAPACITY: usize = 50;
@@ -43,10 +42,6 @@ impl PeerTable {
             let mut v = Vec::with_capacity(capacity);
 
             for _ in 0..capacity {
-                // let n = Node {
-                //     value: NodeValue::Empty,
-                //     status: NodeStatus::Available,
-                // };
                 let n = Node::Empty;
 
                 v.push(Arc::new(RwLock::new(n)));
