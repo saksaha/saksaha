@@ -132,8 +132,8 @@ mod test {
         let addr_iter_thread = tokio::spawn(async move {
             let iter = disc_1_clone.iter();
 
-            let mut known_addr_ip: String;
-            let mut known_addr_disc_port: u16;
+            let known_addr_ip: String;
+            let known_addr_disc_port: u16;
 
             {
                 let addr = iter.next().await.expect("Address should be popped");
@@ -150,16 +150,18 @@ mod test {
 
             println!("Popped addr, {}", addr.get_known_addr());
 
-            (
+            println!(
+                "{:?} : {:?}",
+                (&known_addr_ip, known_addr_disc_port),
+                (known_addr.ip.clone(), known_addr.disc_port)
+            );
+
+            assert_eq!(
                 (known_addr_ip, known_addr_disc_port),
-                (known_addr.ip.clone(), known_addr.disc_port),
-            )
+                (known_addr.ip.clone(), known_addr.disc_port)
+            );
         });
 
-        let result = addr_iter_thread.await.unwrap();
-
-        println!("{:?} : {:?}", result.0, result.1);
-
-        assert_eq!(result.0, result.1);
+        tokio::join!(addr_iter_thread);
     }
 }
