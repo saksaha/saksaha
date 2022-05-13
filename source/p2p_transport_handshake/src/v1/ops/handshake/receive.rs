@@ -49,6 +49,8 @@ pub async fn receive_handshake(
     handshake_recv_args: HandshakeRecvArgs,
     mut conn: Connection,
 ) -> Result<(), HandshakeRecvError> {
+    println!("receive_handshake()");
+
     let HandshakeRecvArgs {
         my_p2p_port,
         handshake_syn,
@@ -131,12 +133,32 @@ pub async fn receive_handshake(
     };
 
     let mut peer_node_lock = peer_node_guard.node.lock().await;
+
+    match &peer_node_lock.value {
+        NodeValue::Valued(ref p) => {
+            match &p.transport.addr_guard {
+                Some(a) => {
+                    let old_known_addr = a.get_known_addr().await;
+
+                    println!(
+                        "receive, old known addr, known_at: {}, x: {}",
+                        old_known_addr.known_at, a.x,
+                    );
+                }
+                None => (),
+            };
+        }
+        _ => {
+            println!("receive, empty peer node!!");
+        }
+    };
+
     peer_node_lock.value = NodeValue::Valued(Peer { transport });
 
     tdebug!(
         "p2p_trpt_hske",
         "receive",
-        "Peer node updated, hs_id: {}, her_public_key: {}",
+        "Peer node updated, hs_id: {}, her_public_key: {}, addr_guard None",
         &instance_id,
         her_public_key_str.clone().green(),
     );

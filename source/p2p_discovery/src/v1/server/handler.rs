@@ -1,10 +1,12 @@
 use crate::msg::{Msg, MsgType, WhoAreYou};
 use crate::ops::whoareyou;
 use crate::state::DiscState;
-use crate::table::{NodeStatus, NodeValue};
+use crate::table::NodeStatus;
+use chrono::Utc;
 use colored::Colorize;
 use logger::tdebug;
 use p2p_identity::addr::{Addr, KnownAddr};
+use std::time::SystemTime;
 use std::{net::SocketAddr, sync::Arc};
 use tokio::sync::Semaphore;
 
@@ -73,6 +75,7 @@ impl Handler {
                     sig: way_ack.src_sig,
                     public_key_str: way_ack.src_public_key_str,
                     public_key,
+                    known_at: Utc::now(),
                 };
 
                 let p2p_endpoint = addr.p2p_endpoint();

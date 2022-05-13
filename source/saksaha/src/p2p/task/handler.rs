@@ -11,7 +11,7 @@ pub(crate) async fn run(task: P2PTask) {
             addr_guard,
             host_state,
         } => {
-            let known_addr = addr_guard.get_known_addr();
+            let known_addr = addr_guard.get_known_addr().await;
 
             match host_state
                 .p2p_peer_table
@@ -31,12 +31,34 @@ pub(crate) async fn run(task: P2PTask) {
                                         Dropping the task",
                                 );
 
+                                match &p.transport.addr_guard {
+                                    Some(old_addr_guard) => {
+                                        let old_known_addr = old_addr_guard
+                                            .get_known_addr()
+                                            .await;
+
+                                        println!("replacing old addr, known_at: {}, x: {}",
+                                            old_known_addr.known_at,
+                                            old_addr_guard.x);
+                                    }
+                                    None => {
+                                        println!("addr guard currently none, will assign a new one");
+                                    }
+                                };
+
+                                println!(
+                                    "assigning new addrguard, known_at: {}, x: {}",
+                                    known_addr.known_at,
+                                    addr_guard.x,
+                                );
+
                                 p.transport.addr_guard = Some(addr_guard);
                             }
                             _ => {
                                 println!("peer is empty");
                             }
-                        }
+                        };
+
                         return;
                     }
                     Err(_) => {
@@ -61,6 +83,7 @@ pub(crate) async fn run(task: P2PTask) {
                 return;
             }
 
+            println!("endpoint in tcpstream: {}", endpoint);
             let conn = match TcpStream::connect(&endpoint).await {
                 Ok(s) => {
                     let (c, peer_addr) = match Connection::new(s) {

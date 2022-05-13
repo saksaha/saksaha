@@ -21,6 +21,7 @@ thiserror = "1.0"
 tokio = { version = "1.12.0", features = ["full"] }
 bytes = "1"
 atoi = "0.4.0"
+k256 = { version = "0.9.6", features = ["ecdh"] }
 
 [lib]
 doctest = false # until stable beta is released
