@@ -21,20 +21,20 @@ impl DefaultConfig {
                             ",
                         )),
                     },
-                    UnknownAddr {
-                        ip: String::from("127.0.0.1"),
-                        disc_port: 35518,
-                        p2p_port: None,
-                        sig: None,
-                        public_key_str: Some(String::from(
-                            "\
-                            04715796a40b0d58fc14a3c4ebee21cb\
-                            806763066a7f1a17adbc256999764443\
-                            beb8109cfd000718535c5aa27513a2ed\
-                            afc6e8bdbe7c27edc2980f9bbc25142fc5\
-                            ",
-                        )),
-                    },
+                    // UnknownAddr {
+                    //     ip: String::from("127.0.0.1"),
+                    //     disc_port: 35518,
+                    //     p2p_port: None,
+                    //     sig: None,
+                    //     public_key_str: Some(String::from(
+                    //         "\
+                    //         04715796a40b0d58fc14a3c4ebee21cb\
+                    //         806763066a7f1a17adbc256999764443\
+                    //         beb8109cfd000718535c5aa27513a2ed\
+                    //         afc6e8bdbe7c27edc2980f9bbc25142fc5\
+                    //         ",
+                    //     )),
+                    // },
                     // UnknownAddr {
                     //     ip: String::from("127.0.0.1"),
                     //     disc_port: 35519,

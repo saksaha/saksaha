@@ -37,8 +37,8 @@ pub(crate) async fn run(task: P2PTask) {
                                             .get_known_addr()
                                             .await;
 
-                                        println!("replacing old addr, known_at: {}, x: {}", 
-                                            old_known_addr.known_at, 
+                                        println!("replacing old addr, known_at: {}, x: {}",
+                                            old_known_addr.known_at,
                                             old_addr_guard.x);
                                     }
                                     None => {
@@ -83,6 +83,7 @@ pub(crate) async fn run(task: P2PTask) {
                 return;
             }
 
+            println!("endpoint in tcpstream: {}", endpoint);
             let conn = match TcpStream::connect(&endpoint).await {
                 Ok(s) => {
                     let (c, peer_addr) = match Connection::new(s) {

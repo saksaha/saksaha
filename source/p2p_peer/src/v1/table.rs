@@ -145,6 +145,53 @@ impl PeerTable {
 
         Err(format!("Could not reserve a peer node"))
     }
+
+    pub async fn print_all_nodes(&self) -> u16 {
+        let peers = self.peers.lock().await;
+
+        for (idx, node) in peers.iter().enumerate() {
+            if let Ok(node_lock) = node.try_lock() {
+                let a = &node_lock.value;
+                match a {
+                    NodeValue::Valued(p) => {
+                        println!(
+                            "peer table [{}] - p2p_port: {}",
+                            idx, p.transport.p2p_port
+                        );
+                        return p.transport.p2p_port;
+                    }
+                    _ => {
+                        println!("peer table [{}] - empty", idx);
+                    }
+                };
+            } else {
+                println!("peer table [{}] - locked", idx,);
+            }
+        }
+        return 0;
+    }
+
+    pub async fn print_all_mapped_nodes(&self) {
+        let peers_map = self.peers_map.lock().await;
+
+        let len = peers_map.len();
+        println!("Peer map length: {}", len);
+
+        for (idx, node) in peers_map.values().into_iter().enumerate() {
+            if let Ok(node_lock) = node.try_lock() {
+                let a = &node_lock.value;
+                match a {
+                    NodeValue::Valued(p) => {
+                        println!(
+                            "peer table [{}] - p2p_port: {}",
+                            idx, p.transport.p2p_port
+                        );
+                    }
+                    _ => (),
+                };
+            }
+        }
+    }
 }
 
 pub struct NodeGuard {

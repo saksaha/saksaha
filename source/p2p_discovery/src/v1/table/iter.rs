@@ -1,9 +1,10 @@
 use super::{Node, NodeValue, NodeValueInner};
 use chrono::{DateTime, Utc};
+use crypto::Signature;
 use logger::{tdebug, terr};
-use p2p_identity::addr::{Addr, KnownAddr};
+use p2p_identity::addr::{Addr, KnownAddr, UnknownAddr};
 use std::sync::Arc;
-use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
+use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use tokio::sync::Mutex;
 
 pub struct AddrsIterator {
@@ -94,6 +95,42 @@ impl AddrGuard {
             _ => {
                 panic!("empty addr");
             }
+        }
+    }
+
+    // #[cfg(test)]
+    pub fn new_dummy(
+        public_key: k256::PublicKey,
+        public_key_str: String,
+        sig: Signature,
+        disc_port: u16,
+        p2p_port: u16,
+    ) -> AddrGuard {
+        let node = {
+            Node {
+                value: NodeValue::Valued(NodeValueInner {
+                    addr: Addr::Known(KnownAddr {
+                        ip: "0.0.0.0".to_string(),
+                        disc_port: disc_port,
+                        p2p_port: p2p_port,
+                        sig,
+                        public_key_str,
+                        known_at: Utc::now(),
+                        public_key,
+                    }),
+                    status: super::NodeStatus::Initialized,
+                }),
+            }
+        };
+        let (addrs_tx, _) = {
+            let (tx, rx) = mpsc::unbounded_channel();
+            (Arc::new(tx), Arc::new(Mutex::new(rx)))
+        };
+
+        AddrGuard {
+            _node: Arc::new(Mutex::new(node)),
+            known_addrs_tx: addrs_tx,
+            x: Utc::now(),
         }
     }
 }
