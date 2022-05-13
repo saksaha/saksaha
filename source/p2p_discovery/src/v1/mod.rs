@@ -21,6 +21,7 @@ use logger::tinfo;
 use p2p_identity::addr::UnknownAddr;
 use p2p_identity::identity::P2PIdentity;
 use std::sync::Arc;
+use std::time::Duration;
 use table::Table;
 use task_queue::TaskQueue;
 
@@ -132,19 +133,21 @@ impl Discovery {
 
     pub async fn run(&self) {
         let server = self.server.clone();
-        tokio::spawn(async move {
+        let server_thread = tokio::spawn(async move {
             server.run().await;
         });
 
         let task_runtime = self.task_runtime.clone();
-        tokio::spawn(async move {
+        let task_runtime_thread = tokio::spawn(async move {
             task_runtime.run().await;
         });
 
         let dial_scheduler = self.dial_scheduler.clone();
-        tokio::spawn(async move {
+        let dial_scheduler_thread = tokio::spawn(async move {
             dial_scheduler.run().await;
         });
+
+        tokio::join!(server_thread, task_runtime_thread, dial_scheduler_thread);
     }
 
     pub fn iter(&self) -> AddrsIterator {
