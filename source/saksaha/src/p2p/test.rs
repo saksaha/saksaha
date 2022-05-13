@@ -1,21 +1,17 @@
 #[cfg(test)]
 mod test_suite {
     use crate::p2p::{
-        self,
         server::Server,
         state::HostState,
         task::{runtime::P2PTaskRuntime, P2PTask},
     };
     use k256::{ecdsa::Signature, PublicKey};
-    use logger::tdebug;
     use p2p_discovery::AddrGuard;
     use p2p_identity::identity::P2PIdentity;
     use p2p_peer::{NodeValue, PeerTable};
-    use p2p_transport::connection::Connection;
-    use p2p_transport_handshake::ops::HandshakeInitArgs;
+
     use std::{sync::Arc, time::Duration};
     use task_queue::TaskQueue;
-    use tokio::net::TcpStream;
 
     fn init() {
         let _ = env_logger::builder().is_test(true).try_init();
@@ -144,39 +140,33 @@ mod test_suite {
                 addr_guard,
                 host_state: host_state_1.clone(),
             };
-            p2p_task_queue_1.push_back(task).await;
+            p2p_task_queue_1
+                .push_back(task)
+                .await
+                .expect("InitiateHandshake task pushed in queue");
         }
 
-        let (
-            p2p_server_2,
-            p2p_task_runtime_2,
-            p2p_task_queue_2,
-            p2p_identity_2,
-            host_state_2,
-        ) = create_client(None).await;
+        let (p2p_server_2, p2p_task_runtime_2, ..) = create_client(None).await;
 
-        let p2p_server_1_thread = tokio::spawn(async move {
+        tokio::spawn(async move {
             p2p_server_1.run().await;
         });
 
-        let p2p_task_runtime_1_thread = tokio::spawn(async move {
+        tokio::spawn(async move {
             p2p_task_runtime_1.run().await;
         });
 
-        let p2p_server_2_thread = tokio::spawn(async move {
+        tokio::spawn(async move {
             p2p_server_2.run().await;
         });
 
-        let p2p_task_runtime_2_thread = tokio::spawn(async move {
+        tokio::spawn(async move {
             p2p_task_runtime_2.run().await;
         });
 
         let peer_flag_handle = tokio::spawn(async move {
             tokio::time::sleep(Duration::from_secs(3)).await;
             let peer_table_2 = host_state_1.p2p_peer_table.clone();
-            let cli_1_p2p_endpoint = format!("127.0.0.1:{}", 35518);
-
-            let p2p_port_in_peer = peer_table_2.print_all_nodes().await;
 
             let peer = peer_table_2
                 .get(&host_state_1.p2p_identity.public_key_str)
