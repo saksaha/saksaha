@@ -1,10 +1,11 @@
 use env_logger::{Builder, Env};
 use std::io::Write;
 
-fn init_logger() {
+fn init_logger(is_test: bool) {
     let env = Env::default().filter("LOG_LEVEL").write_style("LOG_STYLE");
 
     Builder::from_env(env)
+        .is_test(is_test)
         .format(|buf, record| {
             let timestamp = buf.timestamp_millis();
             let style = buf.default_level_style(record.level());
@@ -21,8 +22,8 @@ fn init_logger() {
         .init();
 }
 
-pub fn init() {
-    init_logger();
+pub fn init(is_test: bool) {
+    init_logger(is_test);
 
     tinfo!("logger", "", "Logger is initialized");
 }

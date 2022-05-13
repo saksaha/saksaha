@@ -11,7 +11,7 @@ use saksaha::{
 fn main() {
     print!("Saksaha is launching...\n");
 
-    logger::init();
+    logger::init(false);
 
     let cli_args: CLIArgs = match cli::get_args() {
         Ok(a) => {
