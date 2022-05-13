@@ -40,6 +40,7 @@ where
 
     pub async fn pop_front(&self) -> Result<T, String> {
         let mut rx = self.rx.lock().await;
+
         match rx.recv().await {
             Some(t) => return Ok(t),
             None => {

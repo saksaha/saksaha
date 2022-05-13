@@ -88,6 +88,17 @@ impl PeerTable {
                         node_retrieval_tx: self.node_retreival_tx.clone(),
                     };
 
+                    if let NodeValue::Valued(v) = &node_lock.value {
+                        if let Some(v) = &v.transport.addr_guard {
+                            let known_addr = v.get_known_addr().await;
+
+                            println!(
+                                "peer get(): known_at: {}, x: {}",
+                                known_addr.known_at, v.x
+                            );
+                        }
+                    }
+
                     return Some(Ok(node_guard));
                 } else {
                     return Some(Err(format!(
@@ -96,6 +107,7 @@ impl PeerTable {
                 }
             }
             None => {
+                println!("peer get(): None");
                 return None;
             }
         };
@@ -105,6 +117,8 @@ impl PeerTable {
         &self,
         public_key: &String,
     ) -> Result<NodeGuard, String> {
+        println!("peer reserve()");
+
         let peers = self.peers.lock().await;
         for node in peers.iter() {
             let mut node_lock = match node.try_lock() {
@@ -130,43 +144,54 @@ impl PeerTable {
         }
 
         Err(format!("Could not reserve a peer node"))
-
-        // match peers_map_lock.(public_key) {
-        //     Some(n) => Some(n.clone()),
-        //     None => None,
-        // }
     }
 
-    // pub async fn reserve(&self) -> Result<Arc<Peer>, String> {
-    //     let mut slots_rx_guard = self.slots_rx.lock().await;
+    pub async fn print_all_nodes(&self) -> u16 {
+        let peers = self.peers.lock().await;
 
-    //     match slots_rx_guard.recv().await {
-    //         Some(p) => Ok(p),
-    //         None => Err(format!("Slots channel might be closed")),
-    //     }
-    // }
+        for (idx, node) in peers.iter().enumerate() {
+            if let Ok(node_lock) = node.try_lock() {
+                let a = &node_lock.value;
+                match a {
+                    NodeValue::Valued(p) => {
+                        println!(
+                            "peer table [{}] - p2p_port: {}",
+                            idx, p.transport.p2p_port
+                        );
+                        return p.transport.p2p_port;
+                    }
+                    _ => {
+                        println!("peer table [{}] - empty", idx);
+                    }
+                };
+            } else {
+                println!("peer table [{}] - locked", idx,);
+            }
+        }
+        return 0;
+    }
 
-    // pub async fn register(&self, peer: Arc<Peer>) {
-    //     let mut map = self.map.lock().await;
+    pub async fn print_all_mapped_nodes(&self) {
+        let peers_map = self.peers_map.lock().await;
 
-    //     let peer_val = peer.value.lock().await;
-    //     if let PeerValue::Registered(p) = &*peer_val {
-    //         let peer_id = p.transport.peer_id;
-    //         map.insert(peer_id, peer.clone());
+        let len = peers_map.len();
+        println!("Peer map length: {}", len);
 
-    //         debug!("Peer store added peer_id: {:?}", peer_id);
-    //     } else {
-    //     }
-    // }
-
-    // pub async fn DEMO__add(&self, peer: Arc<Peer>) {
-    //     let list = self._list.lock().await;
-    //     let found = false;
-    //     for peer in list.iter() {
-    //         let p_value = peer.value.lock().await;
-    //         // p_value.
-    //     }
-    // }
+        for (idx, node) in peers_map.values().into_iter().enumerate() {
+            if let Ok(node_lock) = node.try_lock() {
+                let a = &node_lock.value;
+                match a {
+                    NodeValue::Valued(p) => {
+                        println!(
+                            "peer table [{}] - p2p_port: {}",
+                            idx, p.transport.p2p_port
+                        );
+                    }
+                    _ => (),
+                };
+            }
+        }
+    }
 }
 
 pub struct NodeGuard {

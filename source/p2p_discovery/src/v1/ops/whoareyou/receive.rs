@@ -4,10 +4,11 @@ use crate::{
     state::DiscState,
     table::{NodeStatus, NodeValue},
 };
+use chrono::Utc;
 use colored::Colorize;
 use logger::{tdebug, terr};
 use p2p_identity::addr::{Addr, KnownAddr};
-use std::{net::SocketAddr, sync::Arc};
+use std::{net::SocketAddr, sync::Arc, time::SystemTime};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -65,8 +66,10 @@ pub(crate) async fn recv_who_are_you(
         sig: her_sig,
         public_key_str: her_public_key_str,
         public_key: her_public_key,
+        known_at: Utc::now(),
     };
 
+    let known_at = addr.known_at;
     let endpoint = addr.disc_endpoint();
     let her_p2p_endpoint = addr.p2p_endpoint();
 
@@ -125,8 +128,9 @@ pub(crate) async fn recv_who_are_you(
                     tdebug!(
                         "p2p_discovery",
                         "whoareyou",
-                        "Discovery success, her p2p_endpoint: {}",
+                        "Discovery success, her p2p_endpoint: {}, known_at: {}",
                         her_p2p_endpoint.green(),
+                        known_at,
                     );
                 }
                 Err(err) => {

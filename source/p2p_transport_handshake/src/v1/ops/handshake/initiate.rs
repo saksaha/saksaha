@@ -71,6 +71,8 @@ pub async fn initiate_handshake(
     handshake_init_args: HandshakeInitArgs,
     mut conn: Connection,
 ) -> Result<(), HandshakeInitError> {
+    println!("initaite_handshake()");
+
     let HandshakeInitArgs {
         p2p_port,
         p2p_identity,
@@ -78,7 +80,8 @@ pub async fn initiate_handshake(
         p2p_peer_table,
     } = handshake_init_args;
 
-    let known_addr = addr_guard.get_known_addr();
+    let known_addr = addr_guard.get_known_addr().await;
+    let known_at = known_addr.known_at;
 
     let handshake_syn = match Handshake::new(
         p2p_port,
@@ -182,12 +185,34 @@ pub async fn initiate_handshake(
 
     let mut peer_node_lock = peer_node_guard.node.lock().await;
 
+    match &peer_node_lock.value {
+        NodeValue::Valued(ref p) => {
+            match &p.transport.addr_guard {
+                Some(a) => {
+                    let old_known_addr = a.get_known_addr().await;
+
+                    println!(
+                        "initiate, old known addr, known_at: {}, x: {}",
+                        old_known_addr.known_at, a.x,
+                    );
+                }
+                None => {
+                    println!("initiate, addr guard None");
+                }
+            };
+        }
+        _ => {
+            println!("initiate, empty peer node!!");
+        }
+    };
+
     tdebug!(
         "p2p_trpt_hske",
         "initiate",
-        "Peer node updated, hs_id: {}, her_public_key: {}",
+        "Peer node updated, hs_id: {}, her_public_key: {}, addr known_at: {}",
         &handshake_ack.instance_id,
         her_public_key_str.clone().green(),
+        known_at,
     );
 
     peer_node_lock.value = NodeValue::Valued(Peer { transport });
