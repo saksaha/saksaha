@@ -142,16 +142,16 @@ mod test {
                 known_addr_ip = known_addr.ip.clone();
                 known_addr_disc_port = known_addr.disc_port.clone();
 
-                println!("Popped addr, {}", known_addr);
+                log::info!("Popped addr, {}", known_addr);
             }
 
             let addr = iter.next().await.expect("Address should be popped");
             let known_addr = addr.get_known_addr();
 
-            println!("Popped addr, {}", addr.get_known_addr());
+            log::info!("Popped addr, {}", known_addr);
 
-            println!(
-                "{:?} : {:?}",
+            log::info!(
+                "{:?} == {:?}",
                 (&known_addr_ip, known_addr_disc_port),
                 (known_addr.ip.clone(), known_addr.disc_port)
             );
