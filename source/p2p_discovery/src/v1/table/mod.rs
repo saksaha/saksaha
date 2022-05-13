@@ -111,10 +111,6 @@ impl Table {
         &self,
         node: Arc<Mutex<Node>>,
     ) -> Result<(), String> {
-        println!("adding known node");
-
-        self.print_all_nodes().await;
-
         match self.known_addrs_tx.send(node) {
             Ok(_) => Ok(()),
             Err(err) => Err(format!(

@@ -10,7 +10,7 @@ mod test_suite {
     use logger::tdebug;
     use p2p_discovery::AddrGuard;
     use p2p_identity::identity::P2PIdentity;
-    use p2p_peer::{PeerTable, NodeValue};
+    use p2p_peer::{NodeValue, PeerTable};
     use p2p_transport::connection::Connection;
     use p2p_transport_handshake::ops::HandshakeInitArgs;
     use std::{sync::Arc, time::Duration};
@@ -46,14 +46,9 @@ mod test_suite {
         Arc<P2PIdentity>,
         Arc<HostState>,
     ) {
-        let (p2p_socket, p2p_port) =
-            match utils_net::bind_tcp_socket(p2p_port).await {
-                Ok((socket, socket_addr)) => (socket, socket_addr.port()),
-                Err(err) => {
-                    panic!("p2p socket should be initialized");
-                }
-            };
-        println!("p2p_port: {}", p2p_port);
+        let (p2p_socket, p2p_port) = utils_net::bind_tcp_socket(p2p_port)
+            .await
+            .expect("p2p socket should be initialized");
 
         let secret = String::from(
             "aa99cfd91cc6f3b541d28f3e0707f9c7bcf05cf495308294786ca450b501b5f2",
@@ -96,7 +91,7 @@ mod test_suite {
         let host_state = {
             let s = HostState {
                 p2p_identity: p2p_identity.clone(),
-                p2p_port,
+                p2p_port: p2p_port.port(),
                 rpc_port: 0,
                 p2p_peer_table: p2p_peer_table.clone(),
             };
@@ -183,13 +178,14 @@ mod test_suite {
 
             let p2p_port_in_peer = peer_table_2.print_all_nodes().await;
 
-            let peer = peer_table_2.get(&host_state_1.p2p_identity.public_key_str).await.expect("no peer").unwrap();
+            let peer = peer_table_2
+                .get(&host_state_1.p2p_identity.public_key_str)
+                .await
+                .expect("no peer")
+                .unwrap();
             let peer_guard = peer.node.lock().await;
             let peer_flag_handle = match peer_guard.value {
-                NodeValue::Valued(_) => {
-                    println!("some value exists");
-                    true
-                },
+                NodeValue::Valued(_) => true,
                 NodeValue::Empty => false,
             };
             return peer_flag_handle;
