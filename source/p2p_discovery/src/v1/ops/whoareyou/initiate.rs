@@ -29,17 +29,17 @@ pub(crate) async fn init_who_are_you(
     addr: UnknownAddr,
     disc_state: Arc<DiscState>,
 ) -> Result<(), WhoAreYouInitError> {
-    let disc_endpoint = addr.disc_endpoint();
-    let src_disc_port = disc_state.disc_port;
+    let her_disc_endpoint = addr.disc_endpoint();
+    let my_disc_port = disc_state.disc_port;
 
-    if check::is_my_endpoint(src_disc_port, &addr.disc_endpoint()) {
+    if check::is_my_endpoint(my_disc_port, &addr.disc_endpoint()) {
         return Err(WhoAreYouInitError::MyEndpoint { addr });
     }
 
     let table = disc_state.table.clone();
 
     let (mut node_lock, node) =
-        match table.get_mapped_node_lock(&disc_endpoint).await {
+        match table.get_mapped_node_lock(&her_disc_endpoint).await {
             Some(n) => n,
             None => match table.get_empty_node_lock().await {
                 Some(n) => n,
@@ -82,13 +82,13 @@ pub(crate) async fn init_who_are_you(
 
     match disc_state
         .udp_conn
-        .write_msg(&disc_endpoint, way_syn_msg)
+        .write_msg(&her_disc_endpoint, way_syn_msg)
         .await
     {
         Ok(_) => {
             *node_lock = AddrNode::Unknown(addr);
 
-            table.insert_mapping(&disc_endpoint, node).await;
+            table.insert_mapping(&her_disc_endpoint, node).await;
         }
         Err(err) => return Err(WhoAreYouInitError::MsgSendFail { err }),
     };

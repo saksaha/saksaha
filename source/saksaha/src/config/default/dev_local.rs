@@ -1,4 +1,4 @@
-use p2p_identity::addr::UnknownAddr;
+use p2p_identity::addr::{UnknownAddr, UnknownAddrStatus};
 
 use super::{DefaultConfig, DefaultP2PConfig};
 
@@ -20,6 +20,7 @@ impl DefaultConfig {
                             afc6e8bdbe7c27edc2980f9bbc25142fc5\
                             ",
                         )),
+                        status: UnknownAddrStatus::Initialized,
                     },
                     UnknownAddr {
                         ip: String::from("127.0.0.1"),
@@ -34,6 +35,7 @@ impl DefaultConfig {
                             afc6e8bdbe7c27edc2980f9bbc25142fc5\
                             ",
                         )),
+                        status: UnknownAddrStatus::Initialized,
                     },
                     // UnknownAddr {
                     //     ip: String::from("127.0.0.1"),
@@ -48,6 +50,7 @@ impl DefaultConfig {
                     //     91bca238e900a4dff496ef0c84400c26f4\
                     //     ",
                     //     )),
+                    //     status: UnknownAddrStatus::Initialized,
                     // },
                     // UnknownAddr {
                     //     ip: String::from("127.0.0.1"),
@@ -62,6 +65,7 @@ impl DefaultConfig {
                     //     58a536841411f7567f6a673f16ef71191f\
                     //     ",
                     //     )),
+                    //     status: UnknownAddrStatus::Initialized,
                     // },
                     // UnknownAddr {
                     //     ip: String::from("127.0.0.1"),
@@ -76,6 +80,7 @@ impl DefaultConfig {
                     //     ddeb915b8aa13f6f318b191e02d8fad885\
                     //     ",
                     //     )),
+                    //     status: UnknownAddrStatus::Initialized,
                     // },
                 ],
             },
