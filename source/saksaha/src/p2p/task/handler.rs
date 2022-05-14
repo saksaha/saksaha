@@ -1,9 +1,9 @@
 use crate::p2p::task::P2PTask;
 use logger::{tdebug, terr, twarn};
-use p2p_peer::Node;
+use p2p_peer::PeerNode;
 use p2p_transport::connection::Connection;
 use p2p_transport_handshake::ops::{handshake, HandshakeInitArgs};
-use tokio::net::TcpStream;
+use tokio::{net::TcpStream, sync::OwnedRwLockWriteGuard};
 
 pub(crate) async fn run(task: P2PTask) {
     match task {
@@ -11,6 +11,8 @@ pub(crate) async fn run(task: P2PTask) {
             addr_guard,
             host_state,
         } => {
+            println!("initiate handshake handle");
+
             let known_addr = match addr_guard.get_known_addr().await {
                 Ok(a) => a,
                 Err(err) => {
@@ -25,38 +27,29 @@ pub(crate) async fn run(task: P2PTask) {
                 }
             };
 
-            // match host_state
-            //     .p2p_peer_table
-            //     .get_mapped_node_lock(&known_addr.public_key_str)
-            //     .await
-            // {
-            //     Some((mut peer_node_lock, _peer_node)) => {
-            //         match &mut *peer_node_lock {
-            //             Node::Peer(p) => {
-            //                 tdebug!(
-            //                     "saksaha",
-            //                     "task",
-            //                     "This addr is already listed in the peer \
-            //                     table. Dropping InitiateHandshake, peer: {}",
-            //                     p,
-            //                 );
+            let p2p_peer_table = host_state.p2p_peer_table.clone();
 
-            //                 return;
-            //             }
-            //             _ => {
-            //                 terr!(
-            //                     "saksaha",
-            //                     "p2p",
-            //                     "Empty peer node, there should have \
-            //                     been an error while mapping the node"
-            //                 );
-            //             }
-            //         };
+            let (peer_node_lock, peer_node) = match p2p_peer_table
+                .get_mapped_node_lock(&known_addr.public_key_str)
+                .await
+            {
+                Some((peer_node_lock, peer_node)) => {
+                    (peer_node_lock, peer_node)
+                }
+                None => match p2p_peer_table.get_empty_node_lock().await {
+                    Some(n) => n,
+                    None => {
+                        twarn!(
+                            "saksaha",
+                            "p2p",
+                            "Cannot reserve an empty peer node. Dropping \
+                            initiate handshake task."
+                        );
 
-            //         return;
-            //     }
-            //     None => {}
-            // };
+                        return;
+                    }
+                },
+            };
 
             let endpoint = known_addr.p2p_endpoint();
 
@@ -117,6 +110,8 @@ pub(crate) async fn run(task: P2PTask) {
                 p2p_port: host_state.p2p_port,
                 p2p_identity: host_state.p2p_identity.clone(),
                 p2p_peer_table: host_state.p2p_peer_table.clone(),
+                peer_node_lock,
+                peer_node,
             };
 
             match handshake::initiate_handshake(handshake_init_args, conn).await

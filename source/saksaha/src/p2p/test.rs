@@ -8,7 +8,7 @@ mod test_suite {
     use k256::{ecdsa::Signature, PublicKey};
     use p2p_discovery::AddrGuard;
     use p2p_identity::identity::P2PIdentity;
-    use p2p_peer::{Node, PeerTable};
+    use p2p_peer::{PeerNode, PeerTable};
     use std::{sync::Arc, time::Duration};
     use task_queue::TaskQueue;
 
@@ -176,8 +176,8 @@ mod test_suite {
             let peer_guard = peer.write().await;
 
             let peer_flag_handle = match *peer_guard {
-                Node::Peer(_) => true,
-                Node::Empty => false,
+                PeerNode::Peer(_) => true,
+                PeerNode::Empty => false,
             };
             return peer_flag_handle;
         });

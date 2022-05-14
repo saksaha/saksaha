@@ -2,7 +2,7 @@ use super::Handshake;
 use colored::Colorize;
 use logger::tdebug;
 use p2p_identity::identity::P2PIdentity;
-use p2p_peer::{Node, NodeStatus, Peer, PeerNode, PeerTable};
+use p2p_peer::{Peer, PeerNode, PeerStatus, PeerTable};
 use p2p_transport::{connection::Connection, transport::Transport};
 use std::sync::Arc;
 use thiserror::Error;
@@ -121,15 +121,18 @@ pub async fn receive_handshake(
 
     let transport = Transport {
         conn,
-        p2p_port: src_p2p_port,
-        public_key_str: her_public_key_str.clone(),
+        // p2p_port: src_p2p_port,
+        // public_key_str: her_public_key_str.clone(),
         shared_secret,
-        addr_guard: None,
+        // addr_guard: None,
     };
 
-    *peer_node_lock = Node::Peer(PeerNode {
-        peer: Peer { transport },
-        status: NodeStatus::HandshakeRecvSuccess,
+    *peer_node_lock = PeerNode::Peer(Peer {
+        transport,
+        p2p_port: src_p2p_port,
+        public_key_str: her_public_key_str.clone(),
+        addr_guard: None,
+        status: PeerStatus::HandshakeRecvSuccess,
     });
 
     p2p_peer_table

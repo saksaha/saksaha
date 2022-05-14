@@ -4,18 +4,21 @@ use logger::tdebug;
 use p2p_discovery::AddrGuard;
 use p2p_identity::addr::KnownAddr;
 use p2p_identity::identity::P2PIdentity;
-use p2p_peer::{Node, NodeStatus, Peer, PeerNode, PeerTable};
+use p2p_peer::{Peer, PeerNode, PeerStatus, PeerTable};
 use p2p_transport::connection::Connection;
 use p2p_transport::parse::Parse;
 use p2p_transport::transport::Transport;
 use std::sync::Arc;
 use thiserror::Error;
+use tokio::sync::{OwnedRwLockWriteGuard, RwLock};
 
 pub struct HandshakeInitArgs {
     pub p2p_identity: Arc<P2PIdentity>,
     pub p2p_peer_table: Arc<PeerTable>,
     pub p2p_port: u16,
     pub addr_guard: AddrGuard,
+    pub peer_node_lock: OwnedRwLockWriteGuard<PeerNode>,
+    pub peer_node: Arc<RwLock<PeerNode>>,
 }
 
 #[derive(Error, Debug)]
@@ -80,6 +83,8 @@ pub async fn initiate_handshake(
         p2p_identity,
         addr_guard,
         p2p_peer_table,
+        peer_node,
+        mut peer_node_lock,
     } = handshake_init_args;
 
     let known_addr = match addr_guard.get_known_addr().await {
@@ -89,18 +94,18 @@ pub async fn initiate_handshake(
         }
     };
 
-    let (mut peer_node_lock, peer_node) = match p2p_peer_table
-        .get_mapped_node_lock(&known_addr.public_key_str)
-        .await
-    {
-        Some((peer_node_lock, peer_node)) => (peer_node_lock, peer_node),
-        None => match p2p_peer_table.get_empty_node_lock().await {
-            Some(n) => n,
-            None => {
-                return Err(HandshakeInitError::EmptyNodeNotAvailable);
-            }
-        },
-    };
+    // let (mut peer_node_lock, peer_node) = match p2p_peer_table
+    //     .get_mapped_node_lock(&known_addr.public_key_str)
+    //     .await
+    // {
+    //     Some((peer_node_lock, peer_node)) => (peer_node_lock, peer_node),
+    //     None => match p2p_peer_table.get_empty_node_lock().await {
+    //         Some(n) => n,
+    //         None => {
+    //             return Err(HandshakeInitError::EmptyNodeNotAvailable);
+    //         }
+    //     },
+    // };
 
     let known_at = known_addr.known_at;
 
@@ -180,15 +185,15 @@ pub async fn initiate_handshake(
 
     let transport = Transport {
         conn,
-        p2p_port: handshake_ack.src_p2p_port,
-        public_key_str: her_public_key_str.clone(),
         shared_secret,
-        addr_guard: Some(addr_guard),
     };
 
-    *peer_node_lock = Node::Peer(PeerNode {
-        peer: Peer { transport },
-        status: NodeStatus::Initialized,
+    *peer_node_lock = PeerNode::Peer(Peer {
+        p2p_port: handshake_ack.src_p2p_port,
+        public_key_str: her_public_key_str.clone(),
+        addr_guard: Some(addr_guard),
+        transport,
+        status: PeerStatus::Initialized,
     });
 
     p2p_peer_table

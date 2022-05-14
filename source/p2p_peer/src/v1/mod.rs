@@ -1,3 +1,5 @@
-pub mod node;
-pub mod peer;
-pub mod table;
+mod peer;
+mod table;
+
+pub use peer::*;
+pub use table::*;

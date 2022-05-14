@@ -17,6 +17,16 @@ pub struct KnownAddr {
     pub public_key_str: String,
     pub public_key: PublicKey,
     pub known_at: DateTime<Utc>,
+    pub status: KnownAddrStatus,
+}
+
+#[derive(Debug, Clone)]
+pub enum KnownAddrStatus {
+    Initialized,
+    WhoAreYouInit,
+    WhoAreYouRecv,
+    WhoAreYouAckRecv,
+    HandshakeSynFail { fail_count: usize },
 }
 
 impl KnownAddr {

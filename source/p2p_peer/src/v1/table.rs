@@ -1,5 +1,3 @@
-use super::node::Node;
-use crate::NodeStatus;
 use logger::{terr, tinfo};
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::{
@@ -7,15 +5,32 @@ use tokio::sync::{
     OwnedRwLockMappedWriteGuard, OwnedRwLockWriteGuard, RwLock,
 };
 
+use crate::Peer;
+
 // const PEER_TABLE_CAPACITY: usize = 50;
 const PEER_TABLE_CAPACITY: usize = 5;
 
 pub type PublicKey = String;
 
 pub struct PeerTable {
-    peers: RwLock<Vec<Arc<RwLock<Node>>>>,
-    peer_map: RwLock<HashMap<PublicKey, Arc<RwLock<Node>>>>,
-    node_retreival_tx: Arc<UnboundedSender<Arc<RwLock<Node>>>>,
+    peers: RwLock<Vec<Arc<RwLock<PeerNode>>>>,
+    peer_map: RwLock<HashMap<PublicKey, Arc<RwLock<PeerNode>>>>,
+    node_retreival_tx: Arc<UnboundedSender<Arc<RwLock<PeerNode>>>>,
+}
+
+pub enum PeerNode {
+    Empty,
+    Peer(Peer),
+}
+
+impl PeerNode {
+    pub fn is_empty(&self) -> bool {
+        if let PeerNode::Empty = &self {
+            return true;
+        } else {
+            return false;
+        }
+    }
 }
 
 impl PeerTable {
@@ -30,11 +45,6 @@ impl PeerTable {
         let node_retreival_tx = {
             let (tx, rx) = mpsc::unbounded_channel();
 
-            // let retrival_routine = RetrievalRoutine {};
-            tokio::spawn(async move {
-                // retrival_routine.run(rx).await;
-            });
-
             Arc::new(tx)
         };
 
@@ -42,7 +52,7 @@ impl PeerTable {
             let mut v = Vec::with_capacity(capacity);
 
             for _ in 0..capacity {
-                let n = Node::Empty;
+                let n = PeerNode::Empty;
 
                 v.push(Arc::new(RwLock::new(n)));
             }
@@ -75,7 +85,7 @@ impl PeerTable {
     pub async fn get_mapped_node(
         &self,
         public_key: &PublicKey,
-    ) -> Option<Arc<RwLock<Node>>> {
+    ) -> Option<Arc<RwLock<PeerNode>>> {
         let peers_map_lock = self.peer_map.write().await;
 
         match peers_map_lock.get(public_key) {
@@ -91,7 +101,7 @@ impl PeerTable {
     pub async fn get_mapped_node_lock(
         &self,
         public_key: &PublicKey,
-    ) -> Option<(OwnedRwLockWriteGuard<Node>, Arc<RwLock<Node>>)> {
+    ) -> Option<(OwnedRwLockWriteGuard<PeerNode>, Arc<RwLock<PeerNode>>)> {
         let peers_map_lock = self.peer_map.write().await;
 
         match peers_map_lock.get(public_key) {
@@ -100,7 +110,6 @@ impl PeerTable {
                 return Some((node.write_owned().await, n.clone()));
             }
             None => {
-                println!("peer get(): None");
                 return None;
             }
         };
@@ -108,7 +117,7 @@ impl PeerTable {
 
     pub async fn get_empty_node_lock(
         &self,
-    ) -> Option<(OwnedRwLockWriteGuard<Node>, Arc<RwLock<Node>>)> {
+    ) -> Option<(OwnedRwLockWriteGuard<PeerNode>, Arc<RwLock<PeerNode>>)> {
         let peers_lock = self.peers.write().await;
 
         for node in peers_lock.iter() {
@@ -130,8 +139,8 @@ impl PeerTable {
     pub async fn insert_mapping(
         &self,
         public_key: &PublicKey,
-        node: Arc<RwLock<Node>>,
-    ) -> Option<Arc<RwLock<Node>>> {
+        node: Arc<RwLock<PeerNode>>,
+    ) -> Option<Arc<RwLock<PeerNode>>> {
         let mut peer_map = self.peer_map.write().await;
         peer_map.insert(public_key.clone(), node)
     }
@@ -183,49 +192,3 @@ impl PeerTable {
     //     }
     // }
 }
-
-// pub struct NodeGuard {
-//     pub node: Arc<RwLock<Node>>,
-//     pub node_retrieval_tx: Arc<UnboundedSender<Arc<RwLock<Node>>>>,
-// }
-
-// impl Drop for NodeGuard {
-//     fn drop(&mut self) {
-//         match self.node_retrieval_tx.send(self.node.clone()) {
-//             Ok(_) => (),
-//             Err(err) => {
-//                 terr!(
-//                     "p2p_peer",
-//                     "",
-//                     "Cannot retrieve peer node after use, err: {}",
-//                     err
-//                 );
-//             }
-//         }
-//     }
-// }
-
-// pub struct RetrievalRoutine;
-
-// impl RetrievalRoutine {
-//     pub async fn run(&self, mut node_rx: UnboundedReceiver<Arc<RwLock<Node>>>) {
-//         loop {
-//             let node = match node_rx.recv().await {
-//                 Some(n) => n,
-//                 None => {
-//                     terr!(
-//                         "p2p_peer",
-//                         "table",
-//                         "All node guard senders have been closed. \
-//                         Something is critically wrong",
-//                     );
-
-//                     return;
-//                 }
-//             };
-
-//             let mut n = node.write().await;
-//             n.status = NodeStatus::Available;
-//         }
-//     }
-// }

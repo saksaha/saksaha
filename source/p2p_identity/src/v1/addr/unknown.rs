@@ -102,3 +102,13 @@ impl UnknownAddr {
         format!("{}@{}:{}", peer_id_short, self.ip, self.disc_port)
     }
 }
+
+impl std::fmt::Display for UnknownAddr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "ip: {}, disc_port: {}, p2p_port: {:?}",
+            self.ip, self.disc_port, self.p2p_port,
+        )
+    }
+}
