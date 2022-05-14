@@ -110,6 +110,7 @@ mod test_suite {
     #[tokio::test(flavor = "multi_thread")]
     async fn test_is_handshake_successful() {
         init();
+
         let (
             p2p_server_1,
             p2p_task_runtime_1,

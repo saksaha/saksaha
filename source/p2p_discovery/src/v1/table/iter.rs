@@ -1,5 +1,5 @@
 use super::{KnownAddrNode, Node};
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 pub use k256::{
     ecdh::EphemeralSecret,
     ecdsa::{
@@ -102,7 +102,6 @@ impl Drop for AddrGuard {
     }
 }
 
-#[cfg(test)]
 impl AddrGuard {
     pub fn new_dummy(
         public_key: k256::PublicKey,
@@ -111,20 +110,18 @@ impl AddrGuard {
         disc_port: u16,
         p2p_port: u16,
     ) -> AddrGuard {
-        let node = {
-            Node::KnownAddr(KnownAddrNode {
-                addr: KnownAddr {
-                    ip: "0.0.0.0".to_string(),
-                    disc_port,
-                    p2p_port,
-                    sig,
-                    public_key_str,
-                    known_at: Utc::now(),
-                    public_key,
-                },
-                status: super::NodeStatus::Initialized,
-            })
-        };
+        let node = Node::KnownAddr(KnownAddrNode {
+            addr: KnownAddr {
+                ip: "0.0.0.0".to_string(),
+                disc_port,
+                p2p_port,
+                sig,
+                public_key_str,
+                known_at: Utc::now(),
+                public_key,
+            },
+            status: super::NodeStatus::Initialized,
+        });
 
         let (addrs_tx, _) = {
             let (tx, rx) = mpsc::unbounded_channel();
