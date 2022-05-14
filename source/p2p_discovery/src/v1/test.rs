@@ -2,8 +2,7 @@
 mod test {
     use crate::Discovery;
     use crate::DiscoveryArgs;
-
-    use p2p_identity::addr::UnknownAddr;
+    use p2p_identity::addr::{UnknownAddr, UnknownAddrStatus};
     use p2p_identity::identity::P2PIdentity;
     use std::sync::Arc;
 
@@ -38,6 +37,7 @@ mod test {
                 789a2153c1fd5b808c1f971127c2592009a\
                 ",
             )),
+            status: UnknownAddrStatus::Initialized,
         }];
 
         let p2p_identity = {
