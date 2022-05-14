@@ -1,9 +1,5 @@
 use super::{check, WHO_ARE_YOU_EXPIRATION_SEC};
-use crate::{
-    msg::WhoAreYou,
-    state::DiscState,
-    table::{Node, NodeStatus, UnknownAddrNode},
-};
+use crate::{msg::WhoAreYou, state::DiscState, table::AddrNode};
 use p2p_identity::addr::UnknownAddr;
 use std::sync::Arc;
 use thiserror::Error;
@@ -54,13 +50,13 @@ pub(crate) async fn init_who_are_you(
         };
 
     match &*node_lock {
-        Node::KnownAddr(known_addr_node) => {
+        AddrNode::Known(known_addr) => {
             if !check::is_who_are_you_expired(
                 WHO_ARE_YOU_EXPIRATION_SEC,
-                known_addr_node.addr.known_at,
+                known_addr.known_at,
             ) {
                 return Err(WhoAreYouInitError::WhoAreYouNotExpired {
-                    disc_endpoint: known_addr_node.addr.disc_endpoint(),
+                    disc_endpoint: known_addr.disc_endpoint(),
                 });
             }
         }
@@ -90,10 +86,7 @@ pub(crate) async fn init_who_are_you(
         .await
     {
         Ok(_) => {
-            *node_lock = Node::UnknownAddr(UnknownAddrNode {
-                addr,
-                status: NodeStatus::Initialized,
-            });
+            *node_lock = AddrNode::Unknown(addr);
 
             table.insert_mapping(&disc_endpoint, node).await;
         }
