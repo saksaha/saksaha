@@ -1,4 +1,4 @@
-use super::{KnownAddrNode, Node};
+use super::AddrNode;
 use chrono::Utc;
 pub use k256::{
     ecdh::EphemeralSecret,
@@ -8,25 +8,25 @@ pub use k256::{
     },
 };
 use logger::terr;
-use p2p_identity::addr::KnownAddr;
+use p2p_identity::addr::{KnownAddr, KnownAddrStatus};
 use std::sync::Arc;
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use tokio::sync::RwLock;
 
 pub struct AddrsIterator {
-    known_addrs_tx: Arc<UnboundedSender<Arc<RwLock<Node>>>>,
-    known_addrs_rx: Arc<RwLock<UnboundedReceiver<Arc<RwLock<Node>>>>>,
+    known_addrs_tx: Arc<UnboundedSender<Arc<RwLock<AddrNode>>>>,
+    known_addrs_rx: Arc<RwLock<UnboundedReceiver<Arc<RwLock<AddrNode>>>>>,
 }
 
 pub struct AddrGuard {
-    node: Arc<RwLock<Node>>,
-    known_addrs_tx: Arc<UnboundedSender<Arc<RwLock<Node>>>>,
+    node: Arc<RwLock<AddrNode>>,
+    known_addrs_tx: Arc<UnboundedSender<Arc<RwLock<AddrNode>>>>,
 }
 
 impl AddrsIterator {
     pub(crate) fn init(
-        known_addrs_tx: Arc<UnboundedSender<Arc<RwLock<Node>>>>,
-        known_addrs_rx: Arc<RwLock<UnboundedReceiver<Arc<RwLock<Node>>>>>,
+        known_addrs_tx: Arc<UnboundedSender<Arc<RwLock<AddrNode>>>>,
+        known_addrs_rx: Arc<RwLock<UnboundedReceiver<Arc<RwLock<AddrNode>>>>>,
     ) -> AddrsIterator {
         AddrsIterator {
             known_addrs_tx,
@@ -41,7 +41,7 @@ impl AddrsIterator {
             Some(n) => {
                 let node = n.read().await;
                 match &*node {
-                    Node::KnownAddr(_) => {
+                    AddrNode::Known(_) => {
                         let addr_guard = AddrGuard {
                             known_addrs_tx: self.known_addrs_tx.clone(),
                             node: n.clone(),
@@ -72,14 +72,14 @@ impl AddrGuard {
         let node = self.node.read().await;
 
         match &*node {
-            Node::KnownAddr(n) => Ok(n.addr.clone()),
-            Node::UnknownAddr(n) => {
+            AddrNode::Known(n) => Ok(n.clone()),
+            AddrNode::Unknown(n) => {
                 return Err(format!(
                     "Unknown addr, which is invalid. disc_endpoint: {}",
-                    n.addr.disc_endpoint(),
+                    n.disc_endpoint(),
                 ))
             }
-            Node::Empty => return Err(format!("Addr node is empty")),
+            AddrNode::Empty => return Err(format!("Addr node is empty")),
         }
     }
 }
@@ -110,17 +110,15 @@ impl AddrGuard {
         disc_port: u16,
         p2p_port: u16,
     ) -> AddrGuard {
-        let node = Node::KnownAddr(KnownAddrNode {
-            addr: KnownAddr {
-                ip: "0.0.0.0".to_string(),
-                disc_port,
-                p2p_port,
-                sig,
-                public_key_str,
-                known_at: Utc::now(),
-                public_key,
-            },
-            status: super::NodeStatus::Initialized,
+        let node = AddrNode::Known(KnownAddr {
+            ip: "0.0.0.0".to_string(),
+            disc_port,
+            p2p_port,
+            sig,
+            public_key_str,
+            known_at: Utc::now(),
+            public_key,
+            status: KnownAddrStatus::Initialized,
         });
 
         let (addrs_tx, _) = {

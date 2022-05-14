@@ -1,13 +1,9 @@
 use super::{check, WHO_ARE_YOU_EXPIRATION_SEC};
-use crate::{
-    msg::WhoAreYou,
-    state::DiscState,
-    table::{KnownAddrNode, Node, NodeStatus},
-};
+use crate::{msg::WhoAreYou, state::DiscState, table::AddrNode};
 use chrono::Utc;
 use colored::Colorize;
 use logger::{tdebug, terr};
-use p2p_identity::addr::KnownAddr;
+use p2p_identity::addr::{KnownAddr, KnownAddrStatus};
 use std::{net::SocketAddr, sync::Arc};
 use thiserror::Error;
 
@@ -62,7 +58,7 @@ pub(crate) async fn recv_who_are_you(
         }
     };
 
-    let addr = KnownAddr {
+    let mut addr = KnownAddr {
         ip: socket_addr.ip().to_string(),
         disc_port: her_disc_port,
         p2p_port: her_p2p_port,
@@ -70,6 +66,7 @@ pub(crate) async fn recv_who_are_you(
         public_key_str: her_public_key_str,
         public_key: her_public_key,
         known_at: Utc::now(),
+        status: KnownAddrStatus::Initialized,
     };
 
     let known_at = addr.known_at;
@@ -95,13 +92,13 @@ pub(crate) async fn recv_who_are_you(
     };
 
     match &*node_lock {
-        Node::KnownAddr(known_addr_node) => {
+        AddrNode::Known(known_addr) => {
             if !check::is_who_are_you_expired(
                 WHO_ARE_YOU_EXPIRATION_SEC,
-                known_addr_node.addr.known_at,
+                known_addr.known_at,
             ) {
                 return Err(WhoAreYouRecvError::WhoAreYouNotExpired {
-                    disc_endpoint: known_addr_node.addr.disc_endpoint(),
+                    disc_endpoint: known_addr.disc_endpoint(),
                 });
             }
         }
@@ -133,10 +130,8 @@ pub(crate) async fn recv_who_are_you(
         .await
     {
         Ok(_) => {
-            *node_lock = Node::KnownAddr(KnownAddrNode {
-                addr,
-                status: NodeStatus::WhoAreYouRecv,
-            });
+            addr.status = KnownAddrStatus::WhoAreYouRecv;
+            *node_lock = AddrNode::Known(addr);
 
             disc_state
                 .table
@@ -154,8 +149,6 @@ pub(crate) async fn recv_who_are_you(
                         her_p2p_endpoint.green(),
                         known_at,
                     );
-
-                    // disc_state.table.print_all_nodes().await;
                 }
                 Err(err) => {
                     terr!(

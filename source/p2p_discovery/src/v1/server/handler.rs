@@ -1,11 +1,11 @@
 use crate::msg::{Msg, MsgType, WhoAreYou};
 use crate::ops::whoareyou;
 use crate::state::DiscState;
-use crate::table::{KnownAddrNode, Node, NodeStatus};
+use crate::table::AddrNode;
 use chrono::Utc;
 use colored::Colorize;
 use logger::tdebug;
-use p2p_identity::addr::KnownAddr;
+use p2p_identity::addr::{KnownAddr, KnownAddrStatus};
 use std::{net::SocketAddr, sync::Arc};
 use tokio::sync::Semaphore;
 
@@ -67,7 +67,7 @@ impl Handler {
                         Err(err) => return Err(err),
                     };
 
-                let known_addr = KnownAddr {
+                let mut known_addr = KnownAddr {
                     ip: self.socket_addr.ip().to_string(),
                     disc_port: way_ack.src_disc_port,
                     p2p_port: way_ack.src_p2p_port,
@@ -75,6 +75,7 @@ impl Handler {
                     public_key_str: way_ack.src_public_key_str,
                     public_key,
                     known_at: Utc::now(),
+                    status: KnownAddrStatus::Initialized,
                 };
 
                 let p2p_endpoint = known_addr.p2p_endpoint();
@@ -94,17 +95,15 @@ impl Handler {
                         }
                     };
 
-                if let Node::Empty = &mut *node_lock {
+                if let AddrNode::Empty = &mut *node_lock {
                     return Err(format!(
                         "Empty node, at a point where we handle WhoAreYouAck\
                         AddrNode should exist in the table"
                     ));
                 }
 
-                *node_lock = Node::KnownAddr(KnownAddrNode {
-                    addr: known_addr,
-                    status: NodeStatus::WhoAreYouRecv,
-                });
+                known_addr.status = KnownAddrStatus::WhoAreYouRecv;
+                *node_lock = AddrNode::Known(known_addr);
 
                 drop(node_lock);
 

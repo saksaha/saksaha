@@ -6,7 +6,7 @@ pub use iter::*;
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::{
     mpsc::{self, UnboundedReceiver, UnboundedSender},
-    OwnedRwLockWriteGuard, RwLock, RwLockReadGuard, RwLockWriteGuard,
+    OwnedRwLockWriteGuard, RwLock,
 };
 
 // const DISC_TABLE_CAPACITY: usize = 100;
@@ -14,10 +14,10 @@ const DISC_TABLE_CAPACITY: usize = 5;
 
 /// TODO Table shall have Kademlia flavored buckets
 pub(crate) struct Table {
-    addr_map: RwLock<HashMap<String, Arc<RwLock<Node>>>>,
-    addrs: RwLock<Vec<Arc<RwLock<Node>>>>,
-    known_addrs_tx: Arc<UnboundedSender<Arc<RwLock<Node>>>>,
-    known_addrs_rx: Arc<RwLock<UnboundedReceiver<Arc<RwLock<Node>>>>>,
+    addr_map: RwLock<HashMap<String, Arc<RwLock<AddrNode>>>>,
+    addrs: RwLock<Vec<Arc<RwLock<AddrNode>>>>,
+    known_addrs_tx: Arc<UnboundedSender<Arc<RwLock<AddrNode>>>>,
+    known_addrs_rx: Arc<RwLock<UnboundedReceiver<Arc<RwLock<AddrNode>>>>>,
 }
 
 impl Table {
@@ -38,7 +38,7 @@ impl Table {
             let mut v = Vec::with_capacity(disc_table_capacity);
 
             for _ in 0..disc_table_capacity {
-                let n = Node::Empty;
+                let n = AddrNode::Empty;
                 let n = Arc::new(RwLock::new(n));
 
                 v.push(n);
@@ -65,7 +65,7 @@ impl Table {
     pub(crate) async fn get_mapped_node(
         &self,
         disc_endpoint: &String,
-    ) -> Option<Arc<RwLock<Node>>> {
+    ) -> Option<Arc<RwLock<AddrNode>>> {
         let addr_map = self.addr_map.read().await;
         addr_map.get(disc_endpoint).map(|n| n.clone())
     }
@@ -73,7 +73,7 @@ impl Table {
     pub(crate) async fn get_mapped_node_lock(
         &self,
         disc_endpoint: &String,
-    ) -> Option<(OwnedRwLockWriteGuard<Node>, Arc<RwLock<Node>>)> {
+    ) -> Option<(OwnedRwLockWriteGuard<AddrNode>, Arc<RwLock<AddrNode>>)> {
         let addr_map = self.addr_map.read().await;
         match addr_map.get(disc_endpoint) {
             Some(n) => {
@@ -88,7 +88,7 @@ impl Table {
 
     pub(crate) async fn get_empty_node_lock(
         &self,
-    ) -> Option<(OwnedRwLockWriteGuard<Node>, Arc<RwLock<Node>>)> {
+    ) -> Option<(OwnedRwLockWriteGuard<AddrNode>, Arc<RwLock<AddrNode>>)> {
         let addrs_lock = self.addrs.read().await;
 
         for node in addrs_lock.iter() {
@@ -109,7 +109,7 @@ impl Table {
 
     pub(crate) async fn add_known_node(
         &self,
-        node: Arc<RwLock<Node>>,
+        node: Arc<RwLock<AddrNode>>,
     ) -> Result<(), String> {
         match self.known_addrs_tx.send(node) {
             Ok(_) => Ok(()),
@@ -145,8 +145,8 @@ impl Table {
     pub async fn insert_mapping(
         &self,
         disc_endpoint: &String,
-        node: Arc<RwLock<Node>>,
-    ) -> Option<Arc<RwLock<Node>>> {
+        node: Arc<RwLock<AddrNode>>,
+    ) -> Option<Arc<RwLock<AddrNode>>> {
         let mut addr_map = self.addr_map.write().await;
         addr_map.insert(disc_endpoint.clone(), node)
     }
