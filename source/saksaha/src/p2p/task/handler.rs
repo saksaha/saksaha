@@ -32,7 +32,11 @@ pub(crate) async fn run(task: P2PTask) {
                 .await
             {
                 Some((peer_node_lock, peer_node)) => {
-                    println!("initiate handshake, record already exists");
+                    if let PeerNode::Peer(p) = &*peer_node_lock {
+                        // p.status;
+                    } else {
+                        terr!("saksaha", "p2p", "mapped node is currently empty. Something wrong has happend");
+                    }
 
                     (peer_node_lock, peer_node)
                 }
