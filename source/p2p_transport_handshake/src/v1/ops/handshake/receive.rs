@@ -121,10 +121,7 @@ pub async fn receive_handshake(
 
     let transport = Transport {
         conn,
-        // p2p_port: src_p2p_port,
-        // public_key_str: her_public_key_str.clone(),
         shared_secret,
-        // addr_guard: None,
     };
 
     *peer_node_lock = PeerNode::Peer(Peer {
