@@ -32,6 +32,14 @@ impl PeerNode {
     }
 }
 
+struct A {}
+
+impl Drop for A {
+    fn drop(&mut self) {
+        println!("123 drop");
+    }
+}
+
 impl PeerTable {
     pub async fn init(
         peer_table_capacity: Option<u16>,
@@ -45,6 +53,14 @@ impl PeerTable {
             let (tx, rx) = mpsc::unbounded_channel();
 
             Arc::new(tx)
+        };
+
+        let vec = {
+            let mut m = HashMap::new();
+            m.insert(1, A {});
+            println!("333");
+            m.remove(&1);
+            println!("333");
         };
 
         let peers = {
