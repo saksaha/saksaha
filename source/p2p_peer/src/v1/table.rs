@@ -1,11 +1,10 @@
+use crate::Peer;
 use logger::{terr, tinfo};
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::{
     mpsc::{self, UnboundedSender},
     OwnedRwLockMappedWriteGuard, OwnedRwLockWriteGuard, RwLock,
 };
-
-use crate::Peer;
 
 // const PEER_TABLE_CAPACITY: usize = 50;
 const PEER_TABLE_CAPACITY: usize = 5;

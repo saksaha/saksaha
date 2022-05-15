@@ -94,19 +94,6 @@ pub async fn initiate_handshake(
         }
     };
 
-    // let (mut peer_node_lock, peer_node) = match p2p_peer_table
-    //     .get_mapped_node_lock(&known_addr.public_key_str)
-    //     .await
-    // {
-    //     Some((peer_node_lock, peer_node)) => (peer_node_lock, peer_node),
-    //     None => match p2p_peer_table.get_empty_node_lock().await {
-    //         Some(n) => n,
-    //         None => {
-    //             return Err(HandshakeInitError::EmptyNodeNotAvailable);
-    //         }
-    //     },
-    // };
-
     let known_at = known_addr.known_at;
 
     let handshake_syn = match Handshake::new(
