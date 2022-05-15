@@ -2,7 +2,7 @@ use crate::Peer;
 use logger::{terr, tinfo};
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::{
-    mpsc::{self, UnboundedSender},
+    mpsc::{self, Receiver, Sender, UnboundedReceiver, UnboundedSender},
     OwnedRwLockMappedWriteGuard, OwnedRwLockWriteGuard, RwLock,
 };
 
@@ -12,10 +12,13 @@ const PEER_TABLE_CAPACITY: usize = 5;
 pub type PublicKey = String;
 
 pub struct PeerTable {
-    peers: RwLock<Vec<Arc<RwLock<PeerNode>>>>,
+    // peers: RwLock<Vec<Arc<RwLock<PeerNode>>>>,
     peer_map: RwLock<HashMap<PublicKey, Arc<RwLock<PeerNode>>>>,
-    node_retreival_tx: Arc<UnboundedSender<Arc<RwLock<PeerNode>>>>,
+    slots_rx: RwLock<Receiver<EmptySlot>>,
+    node_recycle_tx: Arc<UnboundedSender<Arc<RwLock<PeerNode>>>>,
 }
+
+pub struct EmptySlot(usize);
 
 pub enum PeerNode {
     Empty,
@@ -32,14 +35,6 @@ impl PeerNode {
     }
 }
 
-struct A {}
-
-impl Drop for A {
-    fn drop(&mut self) {
-        println!("123 drop");
-    }
-}
-
 impl PeerTable {
     pub async fn init(
         peer_table_capacity: Option<u16>,
@@ -49,30 +44,62 @@ impl PeerTable {
             None => PEER_TABLE_CAPACITY,
         };
 
-        let node_retreival_tx = {
-            let (tx, rx) = mpsc::unbounded_channel();
+        let (slots_tx, slots_rx) = {
+            let (tx, rx) = mpsc::channel(capacity);
 
-            Arc::new(tx)
-        };
+            for idx in 0..capacity {
+                let n = EmptySlot(idx);
 
-        let vec = {
-            let mut m = HashMap::new();
-            m.insert(1, A {});
-            println!("333");
-            m.remove(&1);
-            println!("333");
-        };
-
-        let peers = {
-            let mut v = Vec::with_capacity(capacity);
-
-            for _ in 0..capacity {
-                let n = PeerNode::Empty;
-
-                v.push(Arc::new(RwLock::new(n)));
+                match tx.send(n).await {
+                    Ok(_) => (),
+                    Err(err) => {
+                        terr!(
+                            "p2p_peer",
+                            "table",
+                            "slots channel has been closed, err: {}",
+                            err,
+                        );
+                    }
+                };
             }
 
-            RwLock::new(v)
+            (Arc::new(tx), RwLock::new(rx))
+        };
+
+        // let peers = {
+        //     for idx in 0..capacity {
+        //         let n = EmptySlot(idx);
+
+        //         match slots_tx.send(n).await {
+        //             Ok(_) => (),
+        //             Err(err) => {
+        //                 terr!(
+        //                     "p2p_peer",
+        //                     "table",
+        //                     "slots channel has been closed, err: {}",
+        //                     err,
+        //                 );
+        //             }
+        //         };
+        //     }
+        // };
+
+        let node_recycle_tx = {
+            let (tx, rx) = mpsc::unbounded_channel();
+
+            let recycle_routine = RecycleRoutine {};
+
+            tokio::spawn(async move {
+                recycle_routine.run(rx, slots_tx).await;
+
+                terr!(
+                    "p2p_peer",
+                    "table",
+                    "recycle routine stopped running. Something is wrong"
+                );
+            });
+
+            Arc::new(tx)
         };
 
         let peer_map = {
@@ -90,8 +117,8 @@ impl PeerTable {
 
         let ps = PeerTable {
             peer_map,
-            peers,
-            node_retreival_tx,
+            slots_rx,
+            node_recycle_tx,
         };
 
         Ok(ps)
@@ -130,25 +157,29 @@ impl PeerTable {
         };
     }
 
-    pub async fn get_empty_node_lock(
-        &self,
-    ) -> Option<(OwnedRwLockWriteGuard<PeerNode>, Arc<RwLock<PeerNode>>)> {
-        let peers_lock = self.peers.write().await;
+    pub async fn get_empty_node_lock(&self) -> Option<EmptySlot> {
+        // let peers_lock = self.peers.write().await;
 
-        for node in peers_lock.iter() {
-            let node_lock = match node.clone().try_write_owned() {
-                Ok(n) => n,
-                Err(_) => {
-                    continue;
-                }
-            };
+        // for node in peers_lock.iter() {
+        //     let node_lock = match node.clone().try_write_owned() {
+        //         Ok(n) => n,
+        //         Err(_) => {
+        //             continue;
+        //         }
+        //     };
 
-            if node_lock.is_empty() {
-                return Some((node_lock, node.clone()));
+        //     if node_lock.is_empty() {
+        //         return Some((node_lock, node.clone()));
+        //     }
+        // }
+
+        let mut slots_rx = self.slots_rx.write().await;
+        match slots_rx.recv().await {
+            Some(s) => return Some(s),
+            None => {
+                return None;
             }
         }
-
-        None
     }
 
     pub async fn insert_mapping(
@@ -206,4 +237,18 @@ impl PeerTable {
     //         }
     //     }
     // }
+}
+
+pub struct RecycleRoutine {}
+
+impl RecycleRoutine {
+    pub(super) async fn run(
+        &self,
+        mut node_recycle_rx: UnboundedReceiver<Arc<RwLock<PeerNode>>>,
+        slots_tx: Arc<Sender<EmptySlot>>,
+    ) {
+        loop {
+            let peer = node_recycle_rx.recv().await;
+        }
+    }
 }
