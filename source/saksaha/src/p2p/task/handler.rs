@@ -11,8 +11,6 @@ pub(crate) async fn run(task: P2PTask) {
             addr_guard,
             host_state,
         } => {
-            println!("initiate handshake handle");
-
             let known_addr = match addr_guard.get_known_addr().await {
                 Ok(a) => a,
                 Err(err) => {
@@ -34,6 +32,8 @@ pub(crate) async fn run(task: P2PTask) {
                 .await
             {
                 Some((peer_node_lock, peer_node)) => {
+                    println!("initiate handshake, record already exists");
+
                     (peer_node_lock, peer_node)
                 }
                 None => match p2p_peer_table.get_empty_node_lock().await {
