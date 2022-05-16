@@ -1,4 +1,6 @@
-use super::AddrNode;
+use super::KnownAddrNode;
+use super::Slot;
+use super::SlotGuard;
 use chrono::Utc;
 pub use k256::{
     ecdh::EphemeralSecret,
@@ -10,24 +12,29 @@ pub use k256::{
 use logger::{tdebug, terr};
 use p2p_identity::addr::{KnownAddr, KnownAddrStatus};
 use std::sync::Arc;
-use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use tokio::sync::RwLock;
+use tokio::sync::{
+    mpsc::{self, UnboundedReceiver, UnboundedSender},
+    RwLockReadGuard,
+};
 
 pub struct AddrsIterator {
-    known_addrs_tx: Arc<UnboundedSender<Arc<RwLock<AddrNode>>>>,
-    known_addrs_rx: Arc<RwLock<UnboundedReceiver<Arc<RwLock<AddrNode>>>>>,
+    known_addrs_tx: Arc<UnboundedSender<Arc<RwLock<KnownAddrNode>>>>,
+    known_addrs_rx: Arc<RwLock<UnboundedReceiver<Arc<RwLock<KnownAddrNode>>>>>,
 }
 
 pub struct AddrGuard {
     pub should_be_recycled: bool,
-    node: Arc<RwLock<AddrNode>>,
-    known_addrs_tx: Arc<UnboundedSender<Arc<RwLock<AddrNode>>>>,
+    pub known_addr_entry: Arc<RwLock<KnownAddrNode>>,
+    known_addrs_tx: Arc<UnboundedSender<Arc<RwLock<KnownAddrNode>>>>,
 }
 
 impl AddrsIterator {
     pub(crate) fn init(
-        known_addrs_tx: Arc<UnboundedSender<Arc<RwLock<AddrNode>>>>,
-        known_addrs_rx: Arc<RwLock<UnboundedReceiver<Arc<RwLock<AddrNode>>>>>,
+        known_addrs_tx: Arc<UnboundedSender<Arc<RwLock<KnownAddrNode>>>>,
+        known_addrs_rx: Arc<
+            RwLock<UnboundedReceiver<Arc<RwLock<KnownAddrNode>>>>,
+        >,
     ) -> AddrsIterator {
         AddrsIterator {
             known_addrs_tx,
@@ -39,25 +46,29 @@ impl AddrsIterator {
         let mut rx = self.known_addrs_rx.write().await;
 
         match rx.recv().await {
-            Some(n) => {
-                let node = n.read().await;
-                match &*node {
-                    AddrNode::Known(_) => {
-                        let addr_guard = AddrGuard {
-                            should_be_recycled: true,
-                            known_addrs_tx: self.known_addrs_tx.clone(),
-                            node: n.clone(),
-                        };
-
-                        return Ok(addr_guard);
-                    }
-                    _ => {
-                        return Err(format!(
-                            "Invalid address is popped out of known address \
-                            queue"
-                        ));
-                    }
+            Some(known_addr_entry) => {
+                let addr_guard = AddrGuard {
+                    should_be_recycled: true,
+                    known_addrs_tx: self.known_addrs_tx.clone(),
+                    known_addr_entry,
                 };
+
+                return Ok(addr_guard);
+                // AddrNode::Known(_) => {
+                //     let addr_guard = AddrGuard {
+                //         should_be_recycled: true,
+                //         known_addrs_tx: self.known_addrs_tx.clone(),
+                //         node: n.clone(),
+                //     };
+
+                //     return Ok(addr_guard);
+                // }
+                // _ => {
+                //     return Err(format!(
+                //         "Invalid address is popped out of known address \
+                //         queue"
+                //     ));
+                // }
             }
             None => {
                 return Err(format!(
@@ -71,25 +82,16 @@ impl AddrsIterator {
 
 impl AddrGuard {
     pub async fn get_known_addr(&self) -> Result<KnownAddr, String> {
-        let node = self.node.read().await;
+        let addr = self.known_addr_entry.read().await;
 
-        match &*node {
-            AddrNode::Known(n) => Ok(n.clone()),
-            AddrNode::Unknown(n) => {
-                return Err(format!(
-                    "Unknown addr, which is invalid. disc_endpoint: {}",
-                    n.disc_endpoint(),
-                ))
-            }
-            AddrNode::Empty => return Err(format!("Addr node is empty")),
-        }
+        Ok(addr.known_addr.clone())
     }
 }
 
 impl Drop for AddrGuard {
     fn drop(&mut self) {
         if self.should_be_recycled {
-            match self.known_addrs_tx.send(self.node.clone()) {
+            match self.known_addrs_tx.send(self.known_addr_entry) {
                 Ok(_) => (),
                 Err(err) => {
                     terr!(
@@ -121,16 +123,23 @@ impl AddrGuard {
         disc_port: u16,
         p2p_port: u16,
     ) -> AddrGuard {
-        let node = AddrNode::Known(KnownAddr {
-            ip: "0.0.0.0".to_string(),
-            disc_port,
-            p2p_port,
-            sig,
-            public_key_str,
-            known_at: Utc::now(),
-            public_key,
-            status: KnownAddrStatus::Initialized,
-        });
+        let (slots_tx, rx) = mpsc::unbounded_channel();
+
+        let addr = KnownAddrNode {
+            known_addr: KnownAddr {
+                ip: "0.0.0.0".to_string(),
+                disc_port,
+                p2p_port,
+                sig,
+                public_key_str,
+                status: KnownAddrStatus::WhoAreYouSuccess { at: Utc::now() },
+                public_key,
+            },
+            __internal_slot: SlotGuard {
+                slot: Arc::new(Slot { idx: 0 }),
+                slots_tx: Arc::new(slots_tx),
+            },
+        };
 
         let (addrs_tx, _) = {
             let (tx, rx) = mpsc::unbounded_channel();
@@ -139,7 +148,7 @@ impl AddrGuard {
 
         AddrGuard {
             should_be_recycled: true,
-            node: Arc::new(RwLock::new(node)),
+            known_addr_entry: Arc::new(RwLock::new(addr)),
             known_addrs_tx: addrs_tx,
         }
     }

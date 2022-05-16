@@ -11,6 +11,7 @@ mod test;
 
 use self::dial_scheduler::DialSchedulerArgs;
 use self::net::connection::UdpConn;
+use self::table::Table;
 pub use self::table::{AddrGuard, AddrsIterator};
 use self::task::DiscoveryTask;
 use self::{
@@ -22,8 +23,6 @@ use logger::tinfo;
 use p2p_identity::addr::UnknownAddr;
 use p2p_identity::identity::P2PIdentity;
 use std::sync::Arc;
-use std::time::Duration;
-use table::Table;
 use task_queue::TaskQueue;
 
 const DISC_TASK_QUEUE_CAPACITY: usize = 10;
