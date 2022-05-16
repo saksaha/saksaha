@@ -10,15 +10,16 @@ use p2p_transport::parse::Parse;
 use p2p_transport::transport::Transport;
 use std::sync::Arc;
 use thiserror::Error;
-use tokio::sync::{OwnedRwLockWriteGuard, RwLock};
+use tokio::sync::OwnedRwLockWriteGuard;
 
 pub struct HandshakeInitArgs {
     pub p2p_identity: Arc<P2PIdentity>,
     pub p2p_peer_table: Arc<PeerTable>,
     pub p2p_port: u16,
     pub addr_guard: AddrGuard,
-    pub peer_node_lock: OwnedRwLockWriteGuard<PeerNode>,
-    pub peer_node: Arc<RwLock<PeerNode>>,
+    pub peer_lock: OwnedRwLockWriteGuard<Peer>,
+    // pub peer_node_lock: OwnedRwLockWriteGuard<PeerNode>,
+    // pub peer_node: Arc<RwLock<PeerNode>>,
 }
 
 #[derive(Error, Debug)]
@@ -83,8 +84,9 @@ pub async fn initiate_handshake(
         p2p_identity,
         addr_guard,
         p2p_peer_table,
-        peer_node,
-        mut peer_node_lock,
+        // peer_node,
+        // mut peer_node_lock,
+        peer_lock,
     } = handshake_init_args;
 
     let known_addr = match addr_guard.get_known_addr().await {

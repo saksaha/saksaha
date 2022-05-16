@@ -1,3 +1,4 @@
+use crate::{SlotHolder, SlotHolderGuard};
 use p2p_discovery::AddrGuard;
 use p2p_transport::transport::Transport;
 
@@ -7,6 +8,7 @@ pub struct Peer {
     pub transport: Transport,
     pub addr_guard: Option<AddrGuard>,
     pub status: PeerStatus,
+    pub __internal_slot_holder: SlotHolderGuard,
 }
 
 pub enum PeerStatus {
