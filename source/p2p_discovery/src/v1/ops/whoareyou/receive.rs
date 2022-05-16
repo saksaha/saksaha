@@ -65,11 +65,9 @@ pub(crate) async fn recv_who_are_you(
         sig: her_sig,
         public_key_str: her_public_key_str,
         public_key: her_public_key,
-        known_at: Utc::now(),
-        status: KnownAddrStatus::Initialized,
+        status: KnownAddrStatus::WhoAreYouSynRecv { at: Utc::now() },
     };
 
-    let known_at = addr.known_at;
     let her_disc_endpoint = addr.disc_endpoint();
     let her_p2p_endpoint = addr.p2p_endpoint();
 
@@ -79,7 +77,7 @@ pub(crate) async fn recv_who_are_you(
 
     let (mut node_lock, node) = match disc_state
         .table
-        .get_mapped_node_lock(&her_disc_endpoint)
+        .get_mapped_addr_lock(&her_disc_endpoint)
         .await
     {
         Some(n) => n,
