@@ -1,5 +1,6 @@
 use super::{System, SystemArgs};
 use crate::config::Config;
+use crate::db::database;
 use crate::p2p::host::Host;
 use crate::p2p::host::HostArgs;
 use crate::rpc::RPC;
@@ -127,6 +128,8 @@ impl System {
             _ = system_thread => {
             }
         );
+
+        database::_db();
 
         tinfo!(
             "saksaha",

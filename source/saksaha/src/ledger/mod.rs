@@ -1,4 +1,4 @@
-mod db;
+mod _db;
 mod ledger;
 
 pub use ledger::*;

@@ -26,3 +26,13 @@
 //         Ok(())
 //     }
 // }
+
+pub(crate) struct Ledger {}
+
+impl Ledger {
+    pub async fn init() -> Ledger {
+        // db column create / check
+
+        Ledger {}
+    }
+}

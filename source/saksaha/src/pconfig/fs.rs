@@ -83,6 +83,12 @@ impl FS {
 
         Ok(config_path)
     }
+
+    pub fn get_default_db_path() -> Result<PathBuf, PConfigError> {
+        let app_path = create_or_get_app_path()?;
+
+        Ok(app_path)
+    }
 }
 
 fn create_or_get_app_path() -> Result<PathBuf, PConfigError> {

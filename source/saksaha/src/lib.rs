@@ -1,4 +1,5 @@
 mod config;
+mod db;
 mod ledger;
 mod network;
 mod p2p;
