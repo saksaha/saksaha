@@ -1,7 +1,7 @@
 use super::{System, SystemArgs};
 use crate::config::Config;
+use crate::p2p::host::Host;
 use crate::p2p::host::HostArgs;
-use crate::{p2p::host::Host, rpc::RPC};
 use colored::Colorize;
 use logger::{terr, tinfo};
 use p2p_peer::PeerTable;
@@ -48,7 +48,7 @@ impl System {
                 }
             };
 
-        let _rpc = RPC::new(rpc_socket, rpc_port);
+        // let _rpc = RPC::new(rpc_socket, rpc_port);
 
         let (p2p_socket, p2p_port) =
             match utils_net::bind_tcp_socket(config.p2p.p2p_port).await {
