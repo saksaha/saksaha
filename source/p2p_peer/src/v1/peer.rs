@@ -1,20 +1,22 @@
-use crate::{SlotHolder, SlotHolderGuard};
+use chrono::{DateTime, Utc};
 use p2p_discovery::AddrGuard;
 use p2p_transport::transport::Transport;
+
+use crate::SlotGuard;
 
 pub struct Peer {
     pub p2p_port: u16,
     pub public_key_str: String,
     pub transport: Transport,
-    pub addr_guard: Option<AddrGuard>,
     pub status: PeerStatus,
-    pub __internal_slot_holder: SlotHolderGuard,
+    pub addr_guard: Option<AddrGuard>,
+    pub __internal_slot_guard: SlotGuard,
 }
 
 pub enum PeerStatus {
     Initialized,
-    HandshakeInitSuccess,
-    HandshakeRecvSuccess,
+    HandshakeSuccess { at: DateTime<Utc> },
+    HandshakeInit,
     HandshakeInitFail { err: String },
     HandshakeRecvFail { err: String },
 }
@@ -38,11 +40,11 @@ impl std::fmt::Display for PeerStatus {
             PeerStatus::Initialized => {
                 write!(f, "Initialized")
             }
-            PeerStatus::HandshakeInitSuccess => {
-                write!(f, "HandshakeInitSuccess")
+            PeerStatus::HandshakeInit => {
+                write!(f, "Handshake initiated")
             }
-            PeerStatus::HandshakeRecvSuccess => {
-                write!(f, "HandshakeRecvSuccess")
+            PeerStatus::HandshakeSuccess { at } => {
+                write!(f, "HandshakeSuccess, at: {}", at)
             }
             PeerStatus::HandshakeInitFail { err } => {
                 write!(f, "HandshakeInitFail, err: {}", err)

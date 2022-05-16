@@ -1,4 +1,4 @@
-use crate::{Peer, SlotHolder, SlotHolderGuard};
+use crate::{Peer, Slot, SlotGuard};
 use logger::{terr, tinfo};
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::{
@@ -12,26 +12,15 @@ const PEER_TABLE_CAPACITY: usize = 5;
 pub type PublicKey = String;
 
 pub struct PeerTable {
-    // peers: RwLock<Vec<Arc<RwLock<PeerNode>>>>,
     peer_map: RwLock<HashMap<PublicKey, Arc<RwLock<Peer>>>>,
-    slots_rx: RwLock<UnboundedReceiver<SlotHolder>>,
-    // node_recycle_tx: Arc<UnboundedSender<Arc<RwLock<Peer>>>>,
+    slots_rx: RwLock<UnboundedReceiver<Arc<Slot>>>,
+    slots_tx: Arc<UnboundedSender<Arc<Slot>>>,
 }
 
-// pub enum PeerNode {
-//     Empty(SlotHolderGuard),
-//     Peer(Peer),
-// }
-
-// impl PeerNode {
-//     pub fn is_empty(&self) -> bool {
-//         if let PeerNode::Empty = &self {
-//             return true;
-//         } else {
-//             return false;
-//         }
-//     }
-// }
+pub enum PeerSlot {
+    Slot(SlotGuard),
+    Peer(OwnedRwLockWriteGuard<Peer>),
+}
 
 impl PeerTable {
     pub async fn init(
@@ -48,9 +37,9 @@ impl PeerTable {
             let slots_rx = RwLock::new(rx);
 
             for idx in 0..capacity {
-                let n = SlotHolder { idx };
+                let s = Slot { idx };
 
-                match slots_tx.send(n) {
+                match slots_tx.send(Arc::new(s)) {
                     Ok(_) => (),
                     Err(err) => {
                         terr!(
@@ -66,46 +55,16 @@ impl PeerTable {
             (slots_tx, slots_rx)
         };
 
-        // let peers = {
-        //     for idx in 0..capacity {
-        //         let n = EmptySlot(idx);
-
-        //         match slots_tx.send(n).await {
-        //             Ok(_) => (),
-        //             Err(err) => {
-        //                 terr!(
-        //                     "p2p_peer",
-        //                     "table",
-        //                     "slots channel has been closed, err: {}",
-        //                     err,
-        //                 );
-        //             }
-        //         };
-        //     }
-        // };
-
-        // let node_recycle_tx = {
-        //     let (tx, rx) = mpsc::unbounded_channel();
-
-        //     let recycle_routine = RecycleRoutine {};
-
-        //     tokio::spawn(async move {
-        //         recycle_routine.run(rx, slots_tx).await;
-
-        //         terr!(
-        //             "p2p_peer",
-        //             "table",
-        //             "recycle routine stopped running. Something is wrong"
-        //         );
-        //     });
-
-        //     Arc::new(tx)
-        // };
-
         let peer_map = {
             let m = HashMap::new();
 
             RwLock::new(m)
+        };
+
+        let ps = PeerTable {
+            peer_map,
+            slots_rx,
+            slots_tx,
         };
 
         tinfo!(
@@ -115,16 +74,10 @@ impl PeerTable {
             capacity
         );
 
-        let ps = PeerTable {
-            peer_map,
-            slots_rx,
-            // node_recycle_tx,
-        };
-
         Ok(ps)
     }
 
-    pub async fn get_mapped_node(
+    pub async fn get_mapped_peer(
         &self,
         public_key: &PublicKey,
     ) -> Option<Arc<RwLock<Peer>>> {
@@ -140,16 +93,17 @@ impl PeerTable {
         };
     }
 
-    pub async fn get_mapped_node_lock(
+    pub async fn get_mapped_peer_lock(
         &self,
         public_key: &PublicKey,
-    ) -> Option<(OwnedRwLockWriteGuard<Peer>, Arc<RwLock<Peer>>)> {
+    ) -> Option<OwnedRwLockWriteGuard<Peer>> {
         let peers_map_lock = self.peer_map.write().await;
 
         match peers_map_lock.get(public_key) {
             Some(n) => {
-                let node = n.clone();
-                return Some((node.write_owned().await, n.clone()));
+                let node = n.clone().write_owned().await;
+
+                return Some(node);
             }
             None => {
                 return None;
@@ -157,33 +111,22 @@ impl PeerTable {
         };
     }
 
-    pub async fn get_empty_node_lock(&self) -> Option<Arc<RwLock<Peer>>> {
-        // let peers_lock = self.peers.write().await;
-
-        // for node in peers_lock.iter() {
-        //     let node_lock = match node.clone().try_write_owned() {
-        //         Ok(n) => n,
-        //         Err(_) => {
-        //             continue;
-        //         }
-        //     };
-
-        //     if node_lock.is_empty() {
-        //         return Some((node_lock, node.clone()));
-        //     }
-        // }
-
+    pub async fn get_empty_slot(&self) -> Result<SlotGuard, String> {
         let mut slots_rx = self.slots_rx.write().await;
+
         match slots_rx.recv().await {
             Some(s) => {
-                let peer_node = PeerNode::Empty {
+                let slot_guard = SlotGuard {
+                    slot: s,
+                    slots_tx: self.slots_tx.clone(),
+                };
 
-                }
-
-                return Some(s);
-            },
+                return Ok(slot_guard);
+            }
             None => {
-                return None;
+                return Err(format!(
+                    "Unusual circumstance. Peer slots have been closed"
+                ));
             }
         }
     }
@@ -245,16 +188,21 @@ impl PeerTable {
     // }
 }
 
-pub struct RecycleRoutine {}
+// pub struct RecycleRoutine {}
 
-impl RecycleRoutine {
-    pub(super) async fn run(
-        &self,
-        mut node_recycle_rx: UnboundedReceiver<Arc<RwLock<Peer>>>,
-        slots_tx: Arc<UnboundedSender<SlotHolder>>,
-    ) {
-        loop {
-            let peer = node_recycle_rx.recv().await;
-        }
-    }
-}
+// impl RecycleRoutine {
+//     pub(super) async fn run(
+//         &self,
+//         mut slots_rx: UnboundedReceiver<Arc<RwLock<Peer>>>,
+//         slots_tx: Arc<UnboundedSender<Arc<Slot>>>,
+//     ) {
+//         loop {
+//             let slot = match slots_rx.recv().await {
+//                 Some(s) => s,
+//                 None => {
+//
+//                 },
+//             }
+//         }
+//     }
+// }
