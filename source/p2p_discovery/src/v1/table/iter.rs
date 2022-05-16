@@ -7,7 +7,7 @@ pub use k256::{
         Signature, SigningKey, VerifyingKey,
     },
 };
-use logger::terr;
+use logger::{tdebug, terr};
 use p2p_identity::addr::{KnownAddr, KnownAddrStatus};
 use std::sync::Arc;
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
@@ -19,6 +19,7 @@ pub struct AddrsIterator {
 }
 
 pub struct AddrGuard {
+    pub should_be_recycled: bool,
     node: Arc<RwLock<AddrNode>>,
     known_addrs_tx: Arc<UnboundedSender<Arc<RwLock<AddrNode>>>>,
 }
@@ -43,6 +44,7 @@ impl AddrsIterator {
                 match &*node {
                     AddrNode::Known(_) => {
                         let addr_guard = AddrGuard {
+                            should_be_recycled: true,
                             known_addrs_tx: self.known_addrs_tx.clone(),
                             node: n.clone(),
                         };
@@ -86,18 +88,27 @@ impl AddrGuard {
 
 impl Drop for AddrGuard {
     fn drop(&mut self) {
-        match self.known_addrs_tx.send(self.node.clone()) {
-            Ok(_) => (),
-            Err(err) => {
-                terr!(
-                    "p2p_discovery",
-                    "table",
-                    "Known address cannot be queued again. There is \
+        if self.should_be_recycled {
+            match self.known_addrs_tx.send(self.node.clone()) {
+                Ok(_) => (),
+                Err(err) => {
+                    terr!(
+                        "p2p_discovery",
+                        "table",
+                        "Known address cannot be queued again. There is \
                         something wrong in the unbounded mpsc channel, \
                         err: {}",
-                    err,
-                );
+                        err,
+                    );
+                }
             }
+        } else {
+            tdebug!(
+                "p2p_discovery",
+                "table",
+                "Addr guard is dropped. Most likely the same endpoint \
+                is registered within a different addr guard"
+            );
         }
     }
 }
@@ -127,6 +138,7 @@ impl AddrGuard {
         };
 
         AddrGuard {
+            should_be_recycled: true,
             node: Arc::new(RwLock::new(node)),
             known_addrs_tx: addrs_tx,
         }

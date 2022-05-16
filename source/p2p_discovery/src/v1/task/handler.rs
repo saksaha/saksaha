@@ -1,6 +1,6 @@
 use super::DiscoveryTask;
-use crate::{ops::whoareyou::WhoAreYouInitError, v1::ops::whoareyou};
-use logger::twarn;
+use crate::v1::ops::whoareyou;
+use logger::tdebug;
 
 pub(crate) async fn run(task: DiscoveryTask) {
     match task {
@@ -12,7 +12,7 @@ pub(crate) async fn run(task: DiscoveryTask) {
                 Err(err) => {
                     match err {
                         _ => {
-                            twarn!(
+                            tdebug!(
                                 "p2p_discovery",
                                 "task",
                                 "WhoAreYouInit stopped, err: {}",
