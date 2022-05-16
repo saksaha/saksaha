@@ -49,7 +49,7 @@ impl System {
                 }
             };
 
-        let _rpc = RPC::init(rpc_socket, rpc_port).await;
+        let rpc = RPC::init().await;
 
         let (p2p_socket, p2p_port) =
             match utils_net::bind_tcp_socket(config.p2p.p2p_port).await {

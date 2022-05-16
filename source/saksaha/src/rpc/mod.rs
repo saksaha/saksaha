@@ -1,40 +1,33 @@
+use hyper::server::conn::AddrIncoming;
+use hyper::service::{make_service_fn, service_fn};
+use hyper::{Body, Request, Response, Server};
 use log::{debug, info};
+use std::convert::Infallible;
+use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::net::TcpListener;
-use warp::{Filter, Server};
 
-pub struct RPC {
-    rpc_socket: Arc<TcpListener>,
+pub struct RPC {}
+
+async fn hello(_: Request<Body>) -> Result<Response<Body>, Infallible> {
+    Ok(Response::new(Body::from("Hello World!")))
 }
 
-// pub struct HTTPServer<F> {
-//     http_server: Server<F>,
-// }
-
 impl RPC {
-    pub async fn init(rpc_socket: TcpListener, rpc_port: u16) -> RPC {
-        println!("rpi init() 123123");
+    pub async fn init() -> Result<(), Box<dyn std::error::Error + Send + Sync>>
+    {
+        let make_svc = make_service_fn(|_conn| async {
+            Ok::<_, Infallible>(service_fn(hello))
+        });
 
-        let routes = warp::any().map(|| "Hello, World!");
+        let addr = ([127, 0, 0, 1], 3000).into();
 
-        // sendTransaction()
-        // ..
+        let server = Server::bind(&addr).serve(make_svc);
 
-        let a = warp::serve(routes);
-        // a.builder()
+        println!("Listening on http://{}", addr);
 
-        // .run(([127, 0, 0, 1], 3030)).await;
+        server.await?;
 
-        // warp::hyper::Server::builder()
-
-        RPC {
-            rpc_socket: Arc::new(rpc_socket),
-        }
-    }
-
-    pub async fn start(&self) -> Result<u16, String> {
-        info!("Start rpc...");
-
-        Ok(10000)
+        Ok(())
     }
 }
