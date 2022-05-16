@@ -1,7 +1,6 @@
 use crate::msg::{Msg, MsgType, WhoAreYou};
 use crate::ops::whoareyou;
 use crate::state::DiscState;
-use crate::table::AddrNode;
 use chrono::Utc;
 use colored::Colorize;
 use logger::tdebug;
@@ -75,11 +74,11 @@ impl Handler {
                 let her_p2p_endpoint = format!("{}:{}", her_ip, her_p2p_port);
                 let her_disc_endpoint = format!("{}:{}", her_ip, her_disc_port);
 
-                let (mut node_lock, node) = match table
-                    .get_mapped_node_lock(&her_disc_endpoint)
+                let (mut addr_lock, addr) = match table
+                    .get_mapped_addr_lock(&her_disc_endpoint)
                     .await
                 {
-                    Some(n) => n,
+                    Some(a) => a,
                     None => {
                         return Err(format!(
                             "Cannot proceed with WhoAreYouAck msg, \
@@ -88,29 +87,17 @@ impl Handler {
                     }
                 };
 
-                if let AddrNode::Empty = &mut *node_lock {
-                    return Err(format!(
-                        "Empty node, at a point where we handle WhoAreYouAck\
-                        AddrNode should exist in the table"
-                    ));
-                }
+                addr_lock.known_addr.ip = self.socket_addr.ip().to_string();
+                addr_lock.known_addr.disc_port = way_ack.src_disc_port;
+                addr_lock.known_addr.p2p_port = way_ack.src_p2p_port;
+                addr_lock.known_addr.sig = way_ack.src_sig;
+                addr_lock.known_addr.public_key_str =
+                    way_ack.src_public_key_str;
+                addr_lock.known_addr.public_key = public_key;
+                addr_lock.known_addr.status =
+                    KnownAddrStatus::WhoAreYouSuccess { at: Utc::now() };
 
-                let known_addr = KnownAddr {
-                    ip: self.socket_addr.ip().to_string(),
-                    disc_port: way_ack.src_disc_port,
-                    p2p_port: way_ack.src_p2p_port,
-                    sig: way_ack.src_sig,
-                    public_key_str: way_ack.src_public_key_str,
-                    public_key,
-                    known_at: Utc::now(),
-                    status: KnownAddrStatus::WhoAreYouAckRecv,
-                };
-
-                *node_lock = AddrNode::Known(known_addr);
-
-                drop(node_lock);
-
-                match self.disc_state.table.add_known_node(node).await {
+                match self.disc_state.table.add_known_node(addr).await {
                     Ok(_) => {
                         tdebug!(
                             "p2p_discovery",

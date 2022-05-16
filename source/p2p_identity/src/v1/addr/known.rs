@@ -16,7 +16,6 @@ pub struct KnownAddr {
     pub sig: Signature,
     pub public_key_str: String,
     pub public_key: PublicKey,
-    pub known_at: DateTime<Utc>,
     pub status: KnownAddrStatus,
 }
 
@@ -24,9 +23,9 @@ pub struct KnownAddr {
 pub enum KnownAddrStatus {
     Initialized,
     WhoAreYouInit,
-    WhoAreYouRecv,
-    WhoAreYouAckRecv,
-    HandshakeSynFail { fail_count: usize },
+    WhoAreYouSynRecv { at: DateTime<Utc> },
+    // WhoAreYouAckRecv,
+    WhoAreYouSuccess { at: DateTime<Utc> },
 }
 
 impl KnownAddr {
