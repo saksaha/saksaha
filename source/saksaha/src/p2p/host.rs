@@ -139,25 +139,32 @@ impl Host {
         Ok(host)
     }
 
-    pub fn run(&self) {
+    pub async fn run(&self) {
         let disc = self.p2p_discovery.clone();
         tokio::spawn(async move {
-            disc.run().await;
+            // disc.run().await;
         });
 
         let p2p_task_runtime = self.p2p_task_runtime.clone();
         tokio::spawn(async move {
-            p2p_task_runtime.run().await;
+            // p2p_task_runtime.run().await;
         });
 
         let p2p_server = self.p2p_server.clone();
         tokio::spawn(async move {
-            p2p_server.run().await;
+            // p2p_server.run().await;
         });
 
         let p2p_dial_scheduler = self.p2p_dial_scheduler.clone();
         tokio::spawn(async move {
-            p2p_dial_scheduler.run().await;
+            // p2p_dial_scheduler.run().await;
         });
+
+        tokio::join!(
+            disc.run(),
+            p2p_task_runtime.run(),
+            p2p_server.run(),
+            p2p_dial_scheduler.run()
+        );
     }
 }
