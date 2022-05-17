@@ -1,10 +1,11 @@
 use crate::msg::{Msg, MsgType, WhoAreYou};
 use crate::ops::whoareyou;
 use crate::state::DiscState;
+use crate::table::{Addr, AddrVal};
 use chrono::Utc;
 use colored::Colorize;
 use logger::tdebug;
-use p2p_identity::addr::{KnownAddr, KnownAddrStatus};
+use p2p_identity::addr::{AddrStatus, KnownAddr};
 use std::{net::SocketAddr, sync::Arc};
 use tokio::sync::Semaphore;
 
@@ -87,17 +88,29 @@ impl Handler {
                     }
                 };
 
-                addr_lock.known_addr.ip = self.socket_addr.ip().to_string();
-                addr_lock.known_addr.disc_port = way_ack.src_disc_port;
-                addr_lock.known_addr.p2p_port = way_ack.src_p2p_port;
-                addr_lock.known_addr.sig = way_ack.src_sig;
-                addr_lock.known_addr.public_key_str =
-                    way_ack.src_public_key_str;
-                addr_lock.known_addr.public_key = public_key;
-                addr_lock.known_addr.status =
-                    KnownAddrStatus::WhoAreYouSuccess { at: Utc::now() };
+                match &addr_lock.val {
+                    AddrVal::Unknown(_) => {
+                        addr_lock.val = AddrVal::Known(KnownAddr {
+                            ip: self.socket_addr.ip().to_string(),
+                            disc_port: way_ack.src_disc_port,
+                            p2p_port: way_ack.src_p2p_port,
+                            sig: way_ack.src_sig,
+                            public_key_str: way_ack.src_public_key_str,
+                            public_key,
+                            status: AddrStatus::WhoAreYouSuccess {
+                                at: Utc::now(),
+                            },
+                        });
+                    }
+                    _ => {
+                        return Err(format!(
+                            "Known valid addr has sent a \
+                            redundant WhoAreYouAck"
+                        ));
+                    }
+                }
 
-                match self.disc_state.table.add_known_node(addr).await {
+                match self.disc_state.table.enqueue_known_addr(addr).await {
                     Ok(_) => {
                         tdebug!(
                             "p2p_discovery",
