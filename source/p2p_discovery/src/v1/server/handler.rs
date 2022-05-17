@@ -1,12 +1,11 @@
 use crate::msg::{Msg, MsgType, WhoAreYou};
 use crate::ops::whoareyou;
 use crate::state::DiscState;
-use crate::table::NodeStatus;
+use crate::table::{Addr, AddrVal};
 use chrono::Utc;
 use colored::Colorize;
 use logger::tdebug;
-use p2p_identity::addr::{Addr, KnownAddr};
-use std::time::SystemTime;
+use p2p_identity::addr::{AddrStatus, KnownAddr};
 use std::{net::SocketAddr, sync::Arc};
 use tokio::sync::Semaphore;
 
@@ -68,44 +67,56 @@ impl Handler {
                         Err(err) => return Err(err),
                     };
 
-                let addr = KnownAddr {
-                    ip: self.socket_addr.ip().to_string(),
-                    disc_port: way_ack.src_disc_port,
-                    p2p_port: way_ack.src_p2p_port,
-                    sig: way_ack.src_sig,
-                    public_key_str: way_ack.src_public_key_str,
-                    public_key,
-                    known_at: Utc::now(),
-                };
+                let table = self.disc_state.table.clone();
+                let her_ip = self.socket_addr.ip().to_string();
+                let her_disc_port = way_ack.src_disc_port;
+                let her_p2p_port = way_ack.src_p2p_port;
 
-                let p2p_endpoint = addr.p2p_endpoint();
+                let her_p2p_endpoint = format!("{}:{}", her_ip, her_p2p_port);
+                let her_disc_endpoint = format!("{}:{}", her_ip, her_disc_port);
 
-                let disc_state = self.disc_state.clone();
-                let table = disc_state.table.clone();
-
-                let node = match table
-                    .upsert(
-                        Addr::Known(addr),
-                        NodeStatus::WhoAreYouRecv { fail_count: 0 },
-                    )
+                let (mut addr_lock, addr) = match table
+                    .get_mapped_addr_lock(&her_disc_endpoint)
                     .await
                 {
-                    Ok(a) => a,
-                    Err(err) => {
+                    Some(a) => a,
+                    None => {
                         return Err(format!(
-                            "Error upserting node in the addr map, err: {}",
-                            err,
-                        ));
+                            "Cannot proceed with WhoAreYouAck msg, \
+                            entry does not exist in the addr table",
+                        ))
                     }
                 };
 
-                match disc_state.table.add_known_node(node).await {
+                match &addr_lock.val {
+                    AddrVal::Unknown(_) => {
+                        addr_lock.val = AddrVal::Known(KnownAddr {
+                            ip: self.socket_addr.ip().to_string(),
+                            disc_port: way_ack.src_disc_port,
+                            p2p_port: way_ack.src_p2p_port,
+                            sig: way_ack.src_sig,
+                            public_key_str: way_ack.src_public_key_str,
+                            public_key,
+                            status: AddrStatus::WhoAreYouSuccess {
+                                at: Utc::now(),
+                            },
+                        });
+                    }
+                    _ => {
+                        return Err(format!(
+                            "Known valid addr has sent a \
+                            redundant WhoAreYouAck"
+                        ));
+                    }
+                }
+
+                match self.disc_state.table.enqueue_known_addr(addr).await {
                     Ok(_) => {
                         tdebug!(
                             "p2p_discovery",
                             "server",
-                            "Discovery success, her p2p endpoint: {}",
-                            p2p_endpoint.green(),
+                            "Enqueueing known addr, p2p endpoint: {}",
+                            her_p2p_endpoint.green(),
                         );
                     }
                     Err(err) => {

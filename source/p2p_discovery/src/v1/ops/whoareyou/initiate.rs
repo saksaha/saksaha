@@ -1,20 +1,20 @@
-use super::check;
+use super::{check, WHO_ARE_YOU_EXPIRATION_SEC};
 use crate::{
     msg::WhoAreYou,
     state::DiscState,
-    table::{NodeStatus, NodeValue},
+    table::{Addr, AddrSlot, AddrVal},
 };
-use p2p_identity::addr::{Addr, UnknownAddr};
+use chrono::{DateTime, Utc};
+use logger::tdebug;
+use p2p_identity::addr::{AddrStatus, KnownAddr, UnknownAddr};
 use std::sync::Arc;
 use thiserror::Error;
+use tokio::sync::{mpsc, RwLock};
 
 #[derive(Error, Debug)]
 pub(crate) enum WhoAreYouInitError {
     #[error("Can't send request to myself, addr: {addr}")]
     MyEndpoint { addr: UnknownAddr },
-
-    #[error("Can't take a slot in the table, err: {err}")]
-    TableIsFull { err: String },
 
     #[error("Can't make a message (WhoAreYouAck), err: {err}")]
     MsgCreateFail { err: String },
@@ -22,37 +22,78 @@ pub(crate) enum WhoAreYouInitError {
     #[error("Can't send a message through udp socket, err: {err}")]
     MsgSendFail { err: String },
 
-    #[error("Table node is empty")]
-    EmptyNode,
+    #[error("No available addr slot, err: {err}")]
+    AddrSlotReserveFail { err: String },
+
+    #[error(
+        "Addr is already valid and fresh but attempt to modify has \
+        been made"
+    )]
+    AttemptToUpdateValidAddr,
+
+    #[error(
+        "Successfuly WhoAreYou has been made recently, \
+        at: {at}"
+    )]
+    WhoAreYouNotExpired { at: DateTime<Utc> },
 }
 
 pub(crate) async fn init_who_are_you(
-    addr: UnknownAddr,
+    unknown_addr: UnknownAddr,
     disc_state: Arc<DiscState>,
 ) -> Result<(), WhoAreYouInitError> {
-    let endpoint = addr.disc_endpoint();
-    let src_disc_port = disc_state.disc_port;
+    let her_disc_endpoint = unknown_addr.disc_endpoint();
+    let my_disc_port = disc_state.disc_port;
 
-    if check::is_my_endpoint(src_disc_port, &addr.disc_endpoint()) {
-        return Err(WhoAreYouInitError::MyEndpoint { addr });
+    if check::is_my_endpoint(my_disc_port, &unknown_addr.disc_endpoint()) {
+        return Err(WhoAreYouInitError::MyEndpoint { addr: unknown_addr });
     }
 
     let table = disc_state.table.clone();
 
-    let node = match table
-        .upsert(Addr::Unknown(addr), NodeStatus::Initialized)
-        .await
-    {
-        Ok(a) => a,
-        Err(err) => {
-            return Err(WhoAreYouInitError::TableIsFull { err });
-        }
-    };
+    let addr_slot = match table.get_mapped_addr_lock(&her_disc_endpoint).await {
+        Some((addr_lock, addr)) => {
+            match &addr_lock.val {
+                AddrVal::Unknown(_) => AddrSlot::Addr(addr_lock, addr),
+                AddrVal::Known(known_addr) => {
+                    if let AddrStatus::WhoAreYouSuccess { at } =
+                        known_addr.status
+                    {
+                        if !check::is_who_are_you_expired(
+                            WHO_ARE_YOU_EXPIRATION_SEC,
+                            at,
+                        ) {
+                            return Err(
+                                WhoAreYouInitError::WhoAreYouNotExpired { at },
+                            );
+                        } else {
+                            // WhoAreYou succeeded long time ago (old)
+                            table.remove_mapping(&her_disc_endpoint).await;
 
-    let mut node_lock = node.lock().await;
-    let mut node_value = match &mut node_lock.value {
-        NodeValue::Valued(v) => v,
-        _ => return Err(WhoAreYouInitError::EmptyNode),
+                            match table.get_empty_slot().await {
+                                Ok(s) => AddrSlot::Slot(s),
+                                Err(err) => {
+                                    return Err(
+                                WhoAreYouInitError::AddrSlotReserveFail {
+                                    err,
+                                },
+                            );
+                                }
+                            }
+                        }
+                    } else {
+                        // Previous WhoAreYou not successful
+                        AddrSlot::Addr(addr_lock, addr)
+                    }
+                }
+            }
+        }
+        None => match table.get_empty_slot().await {
+            Ok(s) => AddrSlot::Slot(s),
+            Err(err) => {
+                return Err(WhoAreYouInitError::AddrSlotReserveFail { err });
+            }
+        },
     };
 
     let src_disc_port = disc_state.disc_port;
@@ -72,9 +113,50 @@ pub(crate) async fn init_who_are_you(
         Err(err) => return Err(WhoAreYouInitError::MsgCreateFail { err }),
     };
 
-    match disc_state.udp_conn.write_msg(endpoint, way_syn_msg).await {
+    match disc_state
+        .udp_conn
+        .write_msg(&her_disc_endpoint, way_syn_msg)
+        .await
+    {
         Ok(_) => {
-            node_value.status = NodeStatus::WhoAreYouInit { fail_count: 0 };
+            match addr_slot {
+                // Fresh new attempt OR expired destination
+                AddrSlot::Slot(s) => {
+                    let unknown_addr_node = {
+                        let addr = Addr {
+                            val: AddrVal::Unknown(unknown_addr),
+                            __internal_slot: s,
+                        };
+                        Arc::new(RwLock::new(addr))
+                    };
+
+                    table
+                        .insert_mapping(&her_disc_endpoint, unknown_addr_node)
+                        .await;
+                }
+
+                // Previous unsuccessful WhoAreYou attempt
+                AddrSlot::Addr(mut addr_lock, addr) => {
+                    match &mut addr_lock.val {
+                        AddrVal::Unknown(ua) => {
+                            *ua = unknown_addr;
+                            ua.status =
+                                AddrStatus::WhoAreYouInit { at: Utc::now() };
+                        }
+                        _ => {
+                            return Err(
+                                WhoAreYouInitError::AttemptToUpdateValidAddr,
+                            );
+                        }
+                    };
+                }
+            };
+
+            tdebug!(
+                "p2p_discovery",
+                "whoareyou",
+                "Addr updated after whoareyou initiate"
+            );
         }
         Err(err) => return Err(WhoAreYouInitError::MsgSendFail { err }),
     };
