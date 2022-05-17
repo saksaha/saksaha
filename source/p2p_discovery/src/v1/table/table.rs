@@ -1,15 +1,14 @@
-use std::{collections::HashMap, sync::Arc};
-use tokio::sync::{
-    mpsc::{self, UnboundedReceiver, UnboundedSender},
-    OwnedRwLockWriteGuard, RwLock,
-};
-
-use crate::AddrsIterator;
-
 use super::{
     addr::Addr,
     slot::{Slot, SlotGuard},
-    KnownAddrNode,
+};
+use crate::AddrsIterator;
+use logger::{tdebug, terr};
+use p2p_identity::addr::AddrStatus;
+use std::{collections::HashMap, sync::Arc};
+use tokio::sync::{
+    mpsc::{self, Receiver, Sender, UnboundedReceiver, UnboundedSender},
+    OwnedRwLockWriteGuard, RwLock,
 };
 
 // const DISC_TABLE_CAPACITY: usize = 100;
@@ -18,11 +17,11 @@ const DISC_TABLE_CAPACITY: usize = 5;
 /// TODO Table shall have Kademlia flavored buckets
 pub(crate) struct Table {
     addr_map: RwLock<HashMap<String, Arc<RwLock<Addr>>>>,
-    // addrs: RwLock<Vec<Arc<RwLock<AddrNode>>>>,
     slots_tx: Arc<UnboundedSender<Arc<Slot>>>,
     slots_rx: RwLock<UnboundedReceiver<Arc<Slot>>>,
-    known_addrs_tx: Arc<UnboundedSender<Arc<RwLock<KnownAddrNode>>>>,
-    known_addrs_rx: Arc<RwLock<UnboundedReceiver<Arc<RwLock<KnownAddrNode>>>>>,
+    known_addrs_tx: Arc<Sender<Arc<RwLock<Addr>>>>,
+    known_addrs_rx: Arc<RwLock<Receiver<Arc<RwLock<Addr>>>>>,
+    addr_recycle_tx: Arc<UnboundedSender<Arc<RwLock<Addr>>>>,
 }
 
 pub(crate) enum AddrSlot {
@@ -44,19 +43,6 @@ impl Table {
             None => DISC_TABLE_CAPACITY,
         };
 
-        // let addrs = {
-        //     let mut v = Vec::with_capacity(disc_table_capacity);
-
-        //     for _ in 0..disc_table_capacity {
-        //         let n = AddrNode::Empty;
-        //         let n = Arc::new(RwLock::new(n));
-
-        //         v.push(n);
-        //     }
-
-        //     RwLock::new(v)
-        // };
-
         let (slots_tx, slots_rx) = {
             let (tx, rx) = mpsc::unbounded_channel();
             let slots_tx = Arc::new(tx);
@@ -68,24 +54,45 @@ impl Table {
                     Arc::new(s)
                 };
 
-                slots_tx.send(slot);
+                match slots_tx.send(slot) {
+                    Ok(_) => (),
+                    Err(err) => {
+                        return Err(format!(
+                            "Error initializing slots queue, err: {}",
+                            err
+                        ));
+                    }
+                };
             }
 
             (slots_tx, slots_rx)
         };
 
         let (known_addrs_tx, known_addrs_rx) = {
-            let (tx, rx) = mpsc::unbounded_channel();
+            let (tx, rx) = mpsc::channel(disc_table_capacity);
             (Arc::new(tx), Arc::new(RwLock::new(rx)))
         };
 
+        let (addr_recycle_tx, addr_recycle_rx) = {
+            let (tx, rx) = mpsc::unbounded_channel();
+            (Arc::new(tx), RwLock::new(rx))
+        };
+
+        let recycle_routine = RecycleRoutine {
+            known_addrs_tx: known_addrs_tx.clone(),
+            addr_recycle_rx,
+        };
+        tokio::spawn(async move {
+            recycle_routine.run().await;
+        });
+
         let table = Table {
             addr_map,
-            // addrs,
             slots_tx,
             slots_rx,
             known_addrs_tx,
             known_addrs_rx,
+            addr_recycle_tx,
         };
 
         Ok(table)
@@ -135,33 +142,17 @@ impl Table {
             ))
             }
         }
-
-        // for node in addrs_lock.iter() {
-        //     let node_lock = match node.clone().try_write_owned() {
-        //         Ok(n) => n,
-        //         Err(_) => {
-        //             continue;
-        //         }
-        //     };
-
-        //     if node_lock.is_empty() {
-        //         return Some((node_lock, node.clone()));
-        //     }
-        // }
-
-        // None
     }
 
-    pub(crate) async fn add_known_node(
+    pub(crate) async fn enqueue_known_addr(
         &self,
-        node: Arc<RwLock<KnownAddrNode>>,
+        node: Arc<RwLock<Addr>>,
     ) -> Result<(), String> {
-        match self.known_addrs_tx.send(node) {
+        match self.known_addrs_tx.send(node).await {
             Ok(_) => Ok(()),
-            Err(err) => Err(format!(
-                "Couldn't push known node into queue, err: {}",
-                err
-            )),
+            Err(err) => {
+                Err(format!("Could not enqueue known addr, err: {}", err))
+            }
         }
     }
 
@@ -182,9 +173,9 @@ impl Table {
         }
     }
 
-    pub(crate) fn iter(&self) -> AddrsIterator {
+    pub(crate) fn new_iter(&self) -> AddrsIterator {
         AddrsIterator::init(
-            self.known_addrs_tx.clone(),
+            self.addr_recycle_tx.clone(),
             self.known_addrs_rx.clone(),
         )
     }
@@ -197,5 +188,67 @@ impl Table {
         let mut addr_map = self.addr_map.write().await;
 
         addr_map.insert(disc_endpoint.clone(), addr)
+    }
+
+    pub async fn remove_mapping(
+        &self,
+        disc_endpoint: &String,
+    ) -> Option<Arc<RwLock<Addr>>> {
+        let mut addr_map = self.addr_map.write().await;
+
+        addr_map.remove(disc_endpoint)
+    }
+}
+
+struct RecycleRoutine {
+    known_addrs_tx: Arc<Sender<Arc<RwLock<Addr>>>>,
+    addr_recycle_rx: RwLock<UnboundedReceiver<Arc<RwLock<Addr>>>>,
+}
+
+impl RecycleRoutine {
+    async fn run(&self) {
+        let mut addr_recycle_rx = self.addr_recycle_rx.write().await;
+
+        loop {
+            match addr_recycle_rx.recv().await {
+                Some(a) => {
+                    let addr = a.read().await;
+
+                    if let AddrStatus::Invalid { err } = addr.get_status() {
+                        tdebug!(
+                            "p2p_discovery",
+                            "table",
+                            "Addr is dropped and will not be recycled, \
+                            addr: {}, err: {}",
+                            addr,
+                            err,
+                        );
+                    } else {
+                        drop(addr);
+
+                        match self.known_addrs_tx.send(a).await {
+                            Ok(_) => (),
+                            Err(err) => {
+                                terr!(
+                                    "p2p_discovery",
+                                    "table",
+                                    "Cannot push addr back to the queue. \
+                                        Known addrs rx is closed, err: {}",
+                                    err,
+                                )
+                            }
+                        }
+                    }
+                }
+                None => {
+                    terr!(
+                        "p2p_discovery",
+                        "table",
+                        "Addr recycle channel has been closed. \
+                            All txs are gone."
+                    );
+                }
+            }
+        }
     }
 }

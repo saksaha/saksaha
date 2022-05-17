@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use super::AddrStatus;
 use crypto::PublicKey;
 pub use k256::{
     ecdh::EphemeralSecret,
@@ -16,16 +16,7 @@ pub struct KnownAddr {
     pub sig: Signature,
     pub public_key_str: String,
     pub public_key: PublicKey,
-    pub status: KnownAddrStatus,
-}
-
-#[derive(Debug, Clone)]
-pub enum KnownAddrStatus {
-    Initialized,
-    WhoAreYouInit,
-    WhoAreYouSynRecv { at: DateTime<Utc> },
-    // WhoAreYouAckRecv,
-    WhoAreYouSuccess { at: DateTime<Utc> },
+    pub status: AddrStatus,
 }
 
 impl KnownAddr {

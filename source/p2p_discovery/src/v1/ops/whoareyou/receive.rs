@@ -1,11 +1,16 @@
 use super::{check, WHO_ARE_YOU_EXPIRATION_SEC};
-use crate::{msg::WhoAreYou, state::DiscState, table::AddrNode};
+use crate::{
+    msg::WhoAreYou,
+    state::DiscState,
+    table::{Addr, AddrSlot, AddrVal},
+};
 use chrono::Utc;
 use colored::Colorize;
 use logger::{tdebug, terr};
-use p2p_identity::addr::{KnownAddr, KnownAddrStatus};
+use p2p_identity::addr::{AddrStatus, KnownAddr};
 use std::{net::SocketAddr, sync::Arc};
 use thiserror::Error;
+use tokio::sync::RwLock;
 
 #[derive(Error, Debug)]
 pub(crate) enum WhoAreYouRecvError {
@@ -58,50 +63,51 @@ pub(crate) async fn recv_who_are_you(
         }
     };
 
-    let mut addr = KnownAddr {
+    let known_addr = KnownAddr {
         ip: socket_addr.ip().to_string(),
         disc_port: her_disc_port,
         p2p_port: her_p2p_port,
         sig: her_sig,
         public_key_str: her_public_key_str,
         public_key: her_public_key,
-        status: KnownAddrStatus::WhoAreYouSynRecv { at: Utc::now() },
+        status: AddrStatus::WhoAreYouSynRecv { at: Utc::now() },
     };
 
-    let her_disc_endpoint = addr.disc_endpoint();
-    let her_p2p_endpoint = addr.p2p_endpoint();
+    let her_disc_endpoint = known_addr.disc_endpoint();
+    let her_p2p_endpoint = known_addr.p2p_endpoint();
 
     if check::is_my_endpoint(disc_state.disc_port, &her_disc_endpoint) {
-        return Err(WhoAreYouRecvError::MyEndpoint { addr });
+        return Err(WhoAreYouRecvError::MyEndpoint { addr: known_addr });
     }
 
-    let (mut node_lock, node) = match disc_state
+    let addr_slot = match disc_state
         .table
         .get_mapped_addr_lock(&her_disc_endpoint)
         .await
     {
-        Some(n) => n,
-        None => match disc_state.table.get_empty_node_lock().await {
-            Some(n) => n,
-            None => {
+        Some((addr_lock, addr)) => AddrSlot::Addr(addr_lock, addr),
+        None => match disc_state.table.get_empty_slot().await {
+            Ok(s) => AddrSlot::Slot(s),
+            Err(_) => {
                 return Err(WhoAreYouRecvError::AddrNodeReserveFail);
             }
         },
     };
 
-    match &*node_lock {
-        AddrNode::Known(known_addr) => {
-            if !check::is_who_are_you_expired(
-                WHO_ARE_YOU_EXPIRATION_SEC,
-                known_addr.known_at,
-            ) {
-                return Err(WhoAreYouRecvError::WhoAreYouNotExpired {
-                    disc_endpoint: known_addr.disc_endpoint(),
-                });
+    if let AddrSlot::Addr(addr_lock, addr) = &addr_slot {
+        if let AddrVal::Known(known_addr) = &addr_lock.val {
+            if let AddrStatus::WhoAreYouSuccess { at } = known_addr.status {
+                if !check::is_who_are_you_expired(
+                    WHO_ARE_YOU_EXPIRATION_SEC,
+                    at,
+                ) {
+                    return Err(WhoAreYouRecvError::WhoAreYouNotExpired {
+                        disc_endpoint: known_addr.disc_endpoint(),
+                    });
+                }
             }
         }
-        _ => {}
-    };
+    }
 
     let my_disc_port = disc_state.disc_port;
     let my_p2p_port = disc_state.p2p_port;
@@ -128,24 +134,39 @@ pub(crate) async fn recv_who_are_you(
         .await
     {
         Ok(_) => {
-            addr.status = KnownAddrStatus::WhoAreYouRecv;
-            *node_lock = AddrNode::Known(addr);
+            let addr = match addr_slot {
+                AddrSlot::Slot(s) => {
+                    let addr = {
+                        let a = Addr {
+                            val: AddrVal::Known(known_addr),
+                            __internal_slot: s,
+                        };
 
-            disc_state
-                .table
-                .insert_mapping(&her_disc_endpoint, node.clone())
-                .await;
+                        Arc::new(RwLock::new(a))
+                    };
 
-            drop(node_lock);
+                    disc_state
+                        .table
+                        .insert_mapping(&her_disc_endpoint, addr.clone())
+                        .await;
 
-            match disc_state.table.add_known_node(node).await {
+                    addr
+                }
+
+                // Addr that we've known a long time ago
+                AddrSlot::Addr(mut addr_lock, addr) => {
+                    addr_lock.val = AddrVal::Known(known_addr);
+                    addr.clone()
+                }
+            };
+
+            match disc_state.table.enqueue_known_addr(addr).await {
                 Ok(_) => {
                     tdebug!(
                         "p2p_discovery",
                         "whoareyou",
-                        "Discovery success, her p2p_endpoint: {}, known_at: {}",
+                        "Discovery success, her p2p_endpoint: {}",
                         her_p2p_endpoint.green(),
-                        known_at,
                     );
                 }
                 Err(err) => {

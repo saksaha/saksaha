@@ -1,6 +1,6 @@
 use crate::p2p::{state::HostState, task::P2PTask};
 use logger::{terr, tinfo};
-use p2p_discovery::AddrsIterator;
+use p2p_discovery::{AddrVal, AddrsIterator};
 use std::{
     sync::Arc,
     time::{Duration, SystemTime},
@@ -29,18 +29,21 @@ impl HandshakeDialLoop {
 
             match self.addrs_iter.next().await {
                 Ok(addr_guard) => {
-                    let known_addr =
-                        match addr_guard.get_known_addr().await {
-                            Ok(a) => a,
-                            Err(err) => {
-                                terr!(
-                                "saksaha", 
-                                "p2p", 
-                                "Addr table has invalid entry (not known), \
-                                err: {}", err);
-                                continue;
-                            }
-                        };
+                    let addr = addr_guard.addr.clone();
+                    let addr_lock = addr.read().await;
+
+                    let known_addr = match &addr_lock.val {
+                        AddrVal::Known(k) => k,
+                        AddrVal::Unknown(_) => {
+                            terr!(
+                                "saksaha",
+                                "p2p",
+                                "Addr table has invalid entry (not known), ",
+                            );
+
+                            continue;
+                        }
+                    };
 
                     let my_public_key_str =
                         &self.host_state.p2p_identity.public_key_str;

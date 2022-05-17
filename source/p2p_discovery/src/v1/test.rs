@@ -1,8 +1,10 @@
 #[cfg(test)]
 mod test {
+    use crate::table::AddrVal;
     use crate::Discovery;
     use crate::DiscoveryArgs;
-    use p2p_identity::addr::{UnknownAddr, UnknownAddrStatus};
+    use p2p_identity::addr::AddrStatus;
+    use p2p_identity::addr::UnknownAddr;
     use p2p_identity::identity::P2PIdentity;
     use std::sync::Arc;
 
@@ -37,7 +39,7 @@ mod test {
                 789a2153c1fd5b808c1f971127c2592009a\
                 ",
             )),
-            status: UnknownAddrStatus::Initialized,
+            status: AddrStatus::Initialized,
         }];
 
         let p2p_identity = {
@@ -130,17 +132,20 @@ mod test {
         let disc_1_clone = disc_1.clone();
 
         let addr_iter_thread = tokio::spawn(async move {
-            let iter = disc_1_clone.iter();
+            let iter = disc_1_clone.new_iter();
 
             let known_addr_ip: String;
             let known_addr_disc_port: u16;
 
             {
-                let addr = iter.next().await.expect("Address should be popped");
-                let known_addr = addr
-                    .get_known_addr()
-                    .await
-                    .expect("Known addr should be provided");
+                let addr_guard =
+                    iter.next().await.expect("Address should be popped");
+
+                let addr = addr_guard.addr.write().await;
+                let known_addr = match &addr.val {
+                    AddrVal::Known(k) => k,
+                    _ => panic!("Known addr should be provided"),
+                };
 
                 known_addr_ip = known_addr.ip.clone();
                 known_addr_disc_port = known_addr.disc_port.clone();
@@ -148,11 +153,14 @@ mod test {
                 log::info!("Popped addr, {}", known_addr);
             }
 
-            let addr = iter.next().await.expect("Address should be popped");
-            let known_addr = addr
-                .get_known_addr()
-                .await
-                .expect("Known addr should be provided");
+            let addr_guard =
+                iter.next().await.expect("Address should be popped");
+
+            let addr = addr_guard.addr.write().await;
+            let known_addr = match &addr.val {
+                AddrVal::Known(k) => k,
+                _ => panic!("Known addr should be provided"),
+            };
 
             log::info!("Popped addr, {}", known_addr);
 

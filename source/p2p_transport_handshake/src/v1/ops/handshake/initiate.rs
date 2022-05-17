@@ -1,7 +1,7 @@
 use crate::ops::Handshake;
 use colored::Colorize;
 use logger::tdebug;
-use p2p_discovery::AddrGuard;
+use p2p_discovery::{AddrGuard, AddrVal};
 use p2p_identity::addr::KnownAddr;
 use p2p_identity::identity::P2PIdentity;
 use p2p_peer::{Peer, PeerSlot, PeerStatus, PeerTable};
@@ -68,7 +68,7 @@ pub enum HandshakeInitError {
     EmptyNodeNotAvailable,
 
     #[error("PeerNode has an unknown addr")]
-    NotKnownAddr { err: String },
+    NotKnownAddr,
 }
 
 pub async fn initiate_handshake(
@@ -85,14 +85,16 @@ pub async fn initiate_handshake(
         peer_slot,
     } = handshake_init_args;
 
-    let known_addr = match addr_guard.get_known_addr().await {
-        Ok(a) => a,
-        Err(err) => {
-            return Err(HandshakeInitError::NotKnownAddr { err });
+    let addr = addr_guard.addr.clone();
+    let addr = addr.read().await;
+    println!("3223");
+
+    let known_addr = match &addr.val {
+        AddrVal::Known(k) => k,
+        AddrVal::Unknown(_) => {
+            return Err(HandshakeInitError::NotKnownAddr);
         }
     };
-
-    let known_at = known_addr.known_at;
 
     let handshake_syn = match Handshake::new(
         p2p_port,
@@ -202,10 +204,10 @@ pub async fn initiate_handshake(
         "p2p_trpt_hske",
         "initiate",
         "Peer node updated, hs_id: {}, her_public_key: {}, \
-            addr known_at: {}",
+            status: {:?}",
         &handshake_ack.instance_id,
         her_public_key_str.clone().green(),
-        known_at,
+        known_addr.status,
     );
 
     Ok(())

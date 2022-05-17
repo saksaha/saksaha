@@ -1,7 +1,9 @@
 mod known;
+mod status;
 mod unknown;
 
 pub use known::*;
+pub use status::*;
 pub use unknown::*;
 
 fn make_endpoint(ip: &String, port: u16) -> String {

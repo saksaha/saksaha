@@ -113,7 +113,7 @@ impl Host {
         };
 
         let p2p_dial_scheduler = {
-            let addrs_iter = Arc::new(p2p_discovery.iter());
+            let addrs_iter = Arc::new(p2p_discovery.new_iter());
 
             let p2p_dial_schd_args = P2PDialSchedulerArgs {
                 host_state: host_state.clone(),

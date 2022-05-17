@@ -1,3 +1,4 @@
+use super::status::AddrStatus;
 pub use k256::{
     ecdh::EphemeralSecret,
     ecdsa::{
@@ -19,12 +20,7 @@ pub struct UnknownAddr {
     pub sig: Option<Signature>,
     pub public_key_str: Option<String>,
     #[serde(skip)]
-    pub status: UnknownAddrStatus,
-}
-
-#[derive(Debug, Clone)]
-pub enum UnknownAddrStatus {
-    Initialized,
+    pub status: AddrStatus,
 }
 
 impl UnknownAddr {
@@ -43,7 +39,7 @@ impl UnknownAddr {
             p2p_port: None,
             sig: None,
             public_key_str: None,
-            status: UnknownAddrStatus::Initialized,
+            status: AddrStatus::Initialized,
         }
     }
 
@@ -72,7 +68,7 @@ impl UnknownAddr {
             p2p_port: None,
             sig: None,
             public_key_str: Some(public_key_str),
-            status: UnknownAddrStatus::Initialized,
+            status: AddrStatus::Initialized,
         })
     }
 
@@ -85,7 +81,7 @@ impl UnknownAddr {
             p2p_port: None,
             sig: None,
             public_key_str: None,
-            status: UnknownAddrStatus::Initialized,
+            status: AddrStatus::Initialized,
         })
     }
 
@@ -120,11 +116,5 @@ impl std::fmt::Display for UnknownAddr {
             "ip: {}, disc_port: {}, p2p_port: {:?}",
             self.ip, self.disc_port, self.p2p_port,
         )
-    }
-}
-
-impl Default for UnknownAddrStatus {
-    fn default() -> Self {
-        UnknownAddrStatus::Initialized
     }
 }
