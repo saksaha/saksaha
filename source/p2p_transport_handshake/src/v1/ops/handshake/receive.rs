@@ -98,8 +98,6 @@ pub async fn receive_handshake(
             if let PeerStatus::HandshakeSuccess { at } = p.status {
                 let now = Utc::now();
                 if now.signed_duration_since(at) < Duration::seconds(60) {
-                    println!("Handshake has been done very recently, dropping");
-
                     return Err(HandshakeRecvError::HandshakeRecentlySucceeded);
                 }
             }

@@ -1,27 +1,32 @@
 use crate::p2p::task::P2PTask;
 use chrono::{Duration, Utc};
 use logger::{tdebug, terr, twarn};
+use p2p_discovery::AddrVal;
+use p2p_identity::addr::AddrStatus;
 use p2p_peer::{PeerSlot, PeerStatus};
 use p2p_transport::connection::Connection;
 use p2p_transport_handshake::ops::{handshake, HandshakeInitArgs};
-use tokio::{net::TcpStream, sync::OwnedRwLockWriteGuard};
+use tokio::net::TcpStream;
 
 pub(crate) async fn run(task: P2PTask) {
     match task {
         P2PTask::InitiateHandshake {
-            mut addr_guard,
+            addr_guard,
             host_state,
         } => {
-            let known_addr = match addr_guard.get_known_addr().await {
-                Ok(a) => a,
-                Err(err) => {
+            let addr = addr_guard.addr.clone();
+            let mut addr_lock = addr.write().await;
+            println!("111");
+
+            let mut known_addr = match &mut addr_lock.val {
+                AddrVal::Known(k) => k,
+                AddrVal::Unknown(_) => {
                     terr!(
                         "saksaha",
                         "p2p",
-                        "Addr table has invalid entry (not known), \
-                        err: {}",
-                        err
+                        "Addr table has invalid entry (not known)",
                     );
+
                     return;
                 }
             };
@@ -34,17 +39,25 @@ pub(crate) async fn run(task: P2PTask) {
             {
                 Some(peer) => {
                     if let PeerStatus::HandshakeSuccess { at } = peer.status {
+                        println!("at: {}", at);
+
                         let now = Utc::now();
                         if now.signed_duration_since(at) < Duration::seconds(60)
                         {
                             tdebug!(
                                 "saksaha",
                                 "p2p",
-                                "Handshake has been done lately, dropping \
+                                "Handshake has been done recently, dropping \
                                 the task"
                             );
 
-                            addr_guard.should_be_recycled = false;
+                            known_addr.status = AddrStatus::Invalid {
+                                err: format!(
+                                    "Handshake is done recently. \
+                                            HSInit dropped"
+                                ),
+                            };
+
                             return;
                         }
                     }
@@ -127,6 +140,8 @@ pub(crate) async fn run(task: P2PTask) {
                 p2p_peer_table: host_state.p2p_peer_table.clone(),
                 peer_slot,
             };
+
+            println!("2323");
 
             match handshake::initiate_handshake(handshake_init_args, conn).await
             {

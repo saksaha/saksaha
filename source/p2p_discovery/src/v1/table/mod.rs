@@ -1,10 +1,11 @@
-mod iter;
-// mod node;
 mod addr;
+mod addr_guard;
+mod iter;
 mod slot;
 mod table;
 
-pub(crate) use addr::*;
+pub use addr::*;
+pub use addr_guard::*;
 pub use iter::*;
 pub(crate) use slot::*;
 pub(crate) use table::*;
