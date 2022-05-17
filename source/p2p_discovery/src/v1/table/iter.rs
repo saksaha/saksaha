@@ -1,10 +1,5 @@
-use crate::AddrGuard;
-
 use super::Addr;
-use super::AddrVal;
-use super::Slot;
-use super::SlotGuard;
-use chrono::Utc;
+use crate::AddrGuard;
 pub use k256::{
     ecdh::EphemeralSecret,
     ecdsa::{
@@ -12,16 +7,10 @@ pub use k256::{
         Signature, SigningKey, VerifyingKey,
     },
 };
-use logger::{tdebug, terr};
-use p2p_identity::addr::{AddrStatus, KnownAddr};
 use std::sync::Arc;
 use tokio::sync::mpsc::Receiver;
-use tokio::sync::mpsc::Sender;
+use tokio::sync::mpsc::UnboundedSender;
 use tokio::sync::RwLock;
-use tokio::sync::{
-    mpsc::{self, UnboundedReceiver, UnboundedSender},
-    RwLockReadGuard,
-};
 
 pub struct AddrsIterator {
     addr_recycle_tx: Arc<UnboundedSender<Arc<RwLock<Addr>>>>,

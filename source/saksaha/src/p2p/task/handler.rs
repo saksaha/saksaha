@@ -15,8 +15,7 @@ pub(crate) async fn run(task: P2PTask) {
             host_state,
         } => {
             let addr = addr_guard.addr.clone();
-            let mut addr_lock = addr.write().await;
-            println!("111");
+            let mut addr_lock = addr.write_owned().await;
 
             let mut known_addr = match &mut addr_lock.val {
                 AddrVal::Known(k) => k,
@@ -37,10 +36,8 @@ pub(crate) async fn run(task: P2PTask) {
                 .get_mapped_peer_lock(&known_addr.public_key_str)
                 .await
             {
-                Some(peer) => {
+                Some(mut peer) => {
                     if let PeerStatus::HandshakeSuccess { at } = peer.status {
-                        println!("at: {}", at);
-
                         let now = Utc::now();
                         if now.signed_duration_since(at) < Duration::seconds(60)
                         {
@@ -48,15 +45,19 @@ pub(crate) async fn run(task: P2PTask) {
                                 "saksaha",
                                 "p2p",
                                 "Handshake has been done recently, dropping \
-                                the task"
+                                the task (InitiateHandshake)",
                             );
 
-                            known_addr.status = AddrStatus::Invalid {
-                                err: format!(
-                                    "Handshake is done recently. \
+                            if let Some(_) = &peer.addr_guard {
+                                known_addr.status = AddrStatus::Invalid {
+                                    err: format!(
+                                        "Handshake is done recently. \
                                             HSInit dropped"
-                                ),
-                            };
+                                    ),
+                                };
+                            } else {
+                                peer.addr_guard = Some(addr_guard);
+                            }
 
                             return;
                         }
@@ -139,9 +140,8 @@ pub(crate) async fn run(task: P2PTask) {
                 p2p_identity: host_state.p2p_identity.clone(),
                 p2p_peer_table: host_state.p2p_peer_table.clone(),
                 peer_slot,
+                addr_lock,
             };
-
-            println!("2323");
 
             match handshake::initiate_handshake(handshake_init_args, conn).await
             {

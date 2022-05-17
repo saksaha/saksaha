@@ -15,8 +15,9 @@ pub(crate) async fn run(task: DiscoveryTask) {
                             tdebug!(
                                 "p2p_discovery",
                                 "task",
-                                "WhoAreYouInit stopped, err: {}",
+                                "WhoAreYouInit stopped, err: {}, addr: {}",
                                 err,
+                                addr,
                             );
                         }
                     };

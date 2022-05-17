@@ -165,7 +165,7 @@ pub(crate) async fn recv_who_are_you(
                     tdebug!(
                         "p2p_discovery",
                         "whoareyou",
-                        "Discovery success, her p2p_endpoint: {}",
+                        "Enqueueing known addr, p2p endpoint: {}",
                         her_p2p_endpoint.green(),
                     );
                 }

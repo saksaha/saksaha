@@ -4,9 +4,9 @@ use crate::{
     state::DiscState,
     table::{Addr, AddrSlot, AddrVal},
 };
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 use logger::tdebug;
-use p2p_identity::addr::{AddrStatus, UnknownAddr};
+use p2p_identity::addr::{AddrStatus, KnownAddr, UnknownAddr};
 use std::sync::Arc;
 use thiserror::Error;
 use tokio::sync::{mpsc, RwLock};
@@ -32,10 +32,10 @@ pub(crate) enum WhoAreYouInitError {
     AttemptToUpdateValidAddr,
 
     #[error(
-        "Previous WhoAreYou succeeded entry still lives in the table, \
-        disc_endpoint: {disc_endpoint}"
+        "Successfuly WhoAreYou has been made recently, \
+        at: {at}"
     )]
-    WhoAreYouNotExpired { disc_endpoint: String },
+    WhoAreYouNotExpired { at: DateTime<Utc> },
 }
 
 pub(crate) async fn init_who_are_you(
@@ -64,9 +64,7 @@ pub(crate) async fn init_who_are_you(
                             at,
                         ) {
                             return Err(
-                                WhoAreYouInitError::WhoAreYouNotExpired {
-                                    disc_endpoint: known_addr.disc_endpoint(),
-                                },
+                                WhoAreYouInitError::WhoAreYouNotExpired { at },
                             );
                         } else {
                             // WhoAreYou succeeded long time ago (old)

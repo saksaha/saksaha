@@ -115,7 +115,7 @@ impl Handler {
                         tdebug!(
                             "p2p_discovery",
                             "server",
-                            "Discovery success, her p2p endpoint: {}",
+                            "Enqueueing known addr, p2p endpoint: {}",
                             her_p2p_endpoint.green(),
                         );
                     }

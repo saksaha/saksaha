@@ -54,8 +54,6 @@ pub async fn receive_handshake(
     handshake_recv_args: HandshakeRecvArgs,
     mut conn: Connection,
 ) -> Result<(), HandshakeRecvError> {
-    println!("receive_handshake()");
-
     let HandshakeRecvArgs {
         my_p2p_port,
         handshake_syn,

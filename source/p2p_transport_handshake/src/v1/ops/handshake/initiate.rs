@@ -1,7 +1,7 @@
 use crate::ops::Handshake;
 use colored::Colorize;
 use logger::tdebug;
-use p2p_discovery::{AddrGuard, AddrVal};
+use p2p_discovery::{Addr, AddrGuard, AddrVal};
 use p2p_identity::addr::KnownAddr;
 use p2p_identity::identity::P2PIdentity;
 use p2p_peer::{Peer, PeerSlot, PeerStatus, PeerTable};
@@ -10,7 +10,7 @@ use p2p_transport::parse::Parse;
 use p2p_transport::transport::Transport;
 use std::sync::Arc;
 use thiserror::Error;
-use tokio::sync::RwLock;
+use tokio::sync::{OwnedRwLockWriteGuard, RwLock};
 
 pub struct HandshakeInitArgs {
     pub p2p_identity: Arc<P2PIdentity>,
@@ -18,6 +18,7 @@ pub struct HandshakeInitArgs {
     pub p2p_port: u16,
     pub addr_guard: AddrGuard,
     pub peer_slot: PeerSlot,
+    pub addr_lock: OwnedRwLockWriteGuard<Addr>,
 }
 
 #[derive(Error, Debug)]
@@ -75,21 +76,16 @@ pub async fn initiate_handshake(
     handshake_init_args: HandshakeInitArgs,
     mut conn: Connection,
 ) -> Result<(), HandshakeInitError> {
-    println!("initaite_handshake()");
-
     let HandshakeInitArgs {
         p2p_port,
         p2p_identity,
         addr_guard,
         p2p_peer_table,
         peer_slot,
+        addr_lock,
     } = handshake_init_args;
 
-    let addr = addr_guard.addr.clone();
-    let addr = addr.read().await;
-    println!("3223");
-
-    let known_addr = match &addr.val {
+    let known_addr = match &addr_lock.val {
         AddrVal::Known(k) => k,
         AddrVal::Unknown(_) => {
             return Err(HandshakeInitError::NotKnownAddr);
