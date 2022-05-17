@@ -1,7 +1,8 @@
 use super::{System, SystemArgs};
 use crate::config::Config;
+use crate::p2p::host::Host;
 use crate::p2p::host::HostArgs;
-use crate::{p2p::host::Host, rpc::RPC};
+use crate::rpc::RPC;
 use colored::Colorize;
 use logger::{terr, tinfo};
 use p2p_peer::PeerTable;
@@ -25,7 +26,7 @@ impl System {
             Arc::new(ps)
         };
 
-        let (rpc_socket, rpc_port) =
+        let (rpc_socket, rpc_socket_addr) =
             match utils_net::bind_tcp_socket(config.rpc.rpc_port).await {
                 Ok((socket, socket_addr)) => {
                     tinfo!(
@@ -35,7 +36,7 @@ impl System {
                         socket_addr.to_string().yellow(),
                     );
 
-                    (socket, socket_addr.port())
+                    (socket, socket_addr)
                 }
                 Err(err) => {
                     terr!(
@@ -47,8 +48,6 @@ impl System {
                     return Err(err);
                 }
             };
-
-        let _rpc = RPC::new(rpc_socket, rpc_port);
 
         let (p2p_socket, p2p_port) =
             match utils_net::bind_tcp_socket(config.p2p.p2p_port).await {
@@ -86,7 +85,7 @@ impl System {
             p2p_max_conn_count: config.p2p.p2p_max_conn_count,
             p2p_port,
             bootstrap_addrs: config.p2p.bootstrap_addrs,
-            rpc_port,
+            rpc_port: rpc_socket_addr.port(),
             secret: config.p2p.secret,
             public_key_str: config.p2p.public_key_str,
             p2p_peer_table,
@@ -94,17 +93,40 @@ impl System {
 
         let p2p_host = Host::init(p2p_host_args).await?;
 
-        // let host_state = p2p_host.host_state.clone();
-        // let peer_store = host_state.peer_store.clone();
+        let rpc = RPC::init()?;
 
-        // let ledger = Ledger::new(peer_store);
+        let system_thread = tokio::spawn(async move {
+            tokio::join!(rpc.run(rpc_socket, rpc_socket_addr), p2p_host.run(),);
+        });
 
-        // rpc.start().await?;
-        // ledger.start().await?;
+        tokio::select!(
+            c = tokio::signal::ctrl_c() => {
+                match c {
+                    Ok(_) => {
+                        tinfo!(
+                            "sahsaha",
+                            "system",
+                            "ctrl+k is pressed.",
+                        );
 
-        p2p_host.run();
+                        System::shutdown();
+                    },
+                    Err(err) => {
+                        terr!(
+                            "saksaha",
+                            "system",
+                            "Unexpected error while waiting for \
+                                ctrl+p, err: {}",
+                            err,
+                        );
 
-        System::handle_ctrl_c().await;
+                        System::shutdown();
+                    }
+                }
+            },
+            _ = system_thread => {
+            }
+        );
 
         tinfo!(
             "saksaha",
