@@ -93,22 +93,40 @@ impl System {
 
         let p2p_host = Host::init(p2p_host_args).await?;
 
-        let rpc = RPC::init(rpc_socket, rpc_socket_addr).await;
-        tokio::spawn(async move {
-            rpc.run().await;
+        let rpc = RPC::init()?;
+
+        let system_thread = tokio::spawn(async move {
+            tokio::join!(rpc.run(rpc_socket, rpc_socket_addr), p2p_host.run(),);
         });
 
-        // let host_state = p2p_host.host_state.clone();
-        // let peer_store = host_state.peer_store.clone();
+        tokio::select!(
+            c = tokio::signal::ctrl_c() => {
+                match c {
+                    Ok(_) => {
+                        tinfo!(
+                            "sahsaha",
+                            "system",
+                            "ctrl+k is pressed.",
+                        );
 
-        // let ledger = Ledger::new(peer_store);
+                        System::shutdown();
+                    },
+                    Err(err) => {
+                        terr!(
+                            "saksaha",
+                            "system",
+                            "Unexpected error while waiting for \
+                                ctrl+p, err: {}",
+                            err,
+                        );
 
-        // rpc.start().await?;
-        // ledger.start().await?;
-
-        p2p_host.run();
-
-        System::handle_ctrl_c().await;
+                        System::shutdown();
+                    }
+                }
+            },
+            _ = system_thread => {
+            }
+        );
 
         tinfo!(
             "saksaha",
