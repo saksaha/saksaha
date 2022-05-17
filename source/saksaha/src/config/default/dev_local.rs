@@ -1,6 +1,5 @@
-use p2p_identity::addr::UnknownAddr;
-
 use super::{DefaultConfig, DefaultP2PConfig};
+use p2p_identity::addr::{AddrStatus, UnknownAddr};
 
 impl DefaultConfig {
     pub(crate) fn new_dev_local() -> DefaultConfig {
@@ -20,6 +19,22 @@ impl DefaultConfig {
                             afc6e8bdbe7c27edc2980f9bbc25142fc5\
                             ",
                         )),
+                        status: AddrStatus::Initialized,
+                    },
+                    UnknownAddr {
+                        ip: String::from("127.0.0.1"),
+                        disc_port: 35518,
+                        p2p_port: None,
+                        sig: None,
+                        public_key_str: Some(String::from(
+                            "\
+                            04715796a40b0d58fc14a3c4ebee21cb\
+                            806763066a7f1a17adbc256999764443\
+                            beb8109cfd000718535c5aa27513a2ed\
+                            afc6e8bdbe7c27edc2980f9bbc25142fc5\
+                            ",
+                        )),
+                        status: AddrStatus::Initialized,
                     },
                     // UnknownAddr {
                     //     ip: String::from("127.0.0.1"),
@@ -34,6 +49,7 @@ impl DefaultConfig {
                     //     91bca238e900a4dff496ef0c84400c26f4\
                     //     ",
                     //     )),
+                    //     status: AddrStatus::Initialized,
                     // },
                     // UnknownAddr {
                     //     ip: String::from("127.0.0.1"),
@@ -48,6 +64,7 @@ impl DefaultConfig {
                     //     58a536841411f7567f6a673f16ef71191f\
                     //     ",
                     //     )),
+                    //     status: AddrStatus::Initialized,
                     // },
                     // UnknownAddr {
                     //     ip: String::from("127.0.0.1"),
@@ -62,6 +79,7 @@ impl DefaultConfig {
                     //     ddeb915b8aa13f6f318b191e02d8fad885\
                     //     ",
                     //     )),
+                    //     status: AddrStatus::Initialized,
                     // },
                 ],
             },

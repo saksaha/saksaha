@@ -1,11 +1,13 @@
 use super::Handshake;
+use chrono::{DateTime, Duration, Utc};
 use colored::Colorize;
 use logger::tdebug;
 use p2p_identity::identity::P2PIdentity;
-use p2p_peer::{NodeValue, Peer, PeerTable};
+use p2p_peer::{Peer, PeerSlot, PeerStatus, PeerTable};
 use p2p_transport::{connection::Connection, transport::Transport};
 use std::sync::Arc;
 use thiserror::Error;
+use tokio::sync::RwLock;
 
 #[derive(Error, Debug)]
 pub enum HandshakeRecvError {
@@ -33,8 +35,11 @@ pub enum HandshakeRecvError {
     #[error("Peer node is invalid. Its value not being peer")]
     PeerNodeNotHavingPeer,
 
-    #[error("Peer node (in table) reserve failed, err: {err}")]
-    PeerNodeReserveFail { err: String },
+    #[error("Cannot acquire an empty slot, err: {err}")]
+    EmptySlotNotAvailable { err: String },
+
+    #[error("handshake has been done with this peer lately")]
+    HandshakeRecentlySucceeded,
 }
 
 pub struct HandshakeRecvArgs {
@@ -49,8 +54,6 @@ pub async fn receive_handshake(
     handshake_recv_args: HandshakeRecvArgs,
     mut conn: Connection,
 ) -> Result<(), HandshakeRecvError> {
-    println!("receive_handshake()");
-
     let HandshakeRecvArgs {
         my_p2p_port,
         handshake_syn,
@@ -85,6 +88,27 @@ pub async fn receive_handshake(
         }
     };
 
+    let peer_slot = match p2p_peer_table
+        .get_mapped_peer_lock(&her_public_key_str)
+        .await
+    {
+        Some(p) => {
+            if let PeerStatus::HandshakeSuccess { at } = p.status {
+                let now = Utc::now();
+                if now.signed_duration_since(at) < Duration::seconds(60) {
+                    return Err(HandshakeRecvError::HandshakeRecentlySucceeded);
+                }
+            }
+            PeerSlot::Peer(p)
+        }
+        None => match p2p_peer_table.get_empty_slot().await {
+            Ok(s) => PeerSlot::Slot(s),
+            Err(err) => {
+                return Err(HandshakeRecvError::EmptySlotNotAvailable { err });
+            }
+        },
+    };
+
     let shared_secret =
         crypto::make_shared_secret(my_secret_key, her_public_key);
 
@@ -108,57 +132,39 @@ pub async fn receive_handshake(
 
     let transport = Transport {
         conn,
-        p2p_port: src_p2p_port,
-        public_key_str: her_public_key_str.clone(),
         shared_secret,
-        addr_guard: None,
     };
 
-    let peer_node_guard = match p2p_peer_table.get(&her_public_key_str).await {
-        Some(n) => match n {
-            Ok(n) => n,
-            Err(err) => {
-                return Err(HandshakeRecvError::PeerNodeAlreadyInUse {
-                    public_key: her_public_key_str,
-                    err,
-                });
-            }
-        },
-        None => match p2p_peer_table.reserve(&her_public_key_str).await {
-            Ok(n) => n,
-            Err(err) => {
-                return Err(HandshakeRecvError::PeerNodeReserveFail { err });
-            }
-        },
-    };
-
-    let mut peer_node_lock = peer_node_guard.node.lock().await;
-
-    match &peer_node_lock.value {
-        NodeValue::Valued(ref p) => {
-            match &p.transport.addr_guard {
-                Some(a) => {
-                    let old_known_addr = a.get_known_addr().await;
-
-                    println!(
-                        "receive, old known addr, known_at: {}, x: {}",
-                        old_known_addr.known_at, a.x,
-                    );
-                }
-                None => (),
+    match peer_slot {
+        PeerSlot::Slot(s) => {
+            let p = Peer {
+                transport,
+                p2p_port: src_p2p_port,
+                public_key_str: her_public_key_str.clone(),
+                addr_guard: None,
+                status: PeerStatus::HandshakeSuccess { at: Utc::now() },
+                __internal_slot_guard: s,
             };
+
+            let peer = Arc::new(RwLock::new(p));
+
+            p2p_peer_table
+                .insert_mapping(&her_public_key_str, peer)
+                .await;
         }
-        _ => {
-            println!("receive, empty peer node!!");
+        PeerSlot::Peer(mut peer) => {
+            peer.transport = transport;
+            peer.p2p_port = src_p2p_port;
+            peer.public_key_str = her_public_key_str.clone();
+            peer.status = PeerStatus::HandshakeSuccess { at: Utc::now() };
         }
     };
-
-    peer_node_lock.value = NodeValue::Valued(Peer { transport });
 
     tdebug!(
         "p2p_trpt_hske",
         "receive",
-        "Peer node updated, hs_id: {}, her_public_key: {}, addr_guard None",
+        "Peer node updated, hs_id: {}, her_public_key: {}, \
+            addr_guard None",
         &instance_id,
         her_public_key_str.clone().green(),
     );

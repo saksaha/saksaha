@@ -8,8 +8,7 @@ mod test_suite {
     use k256::{ecdsa::Signature, PublicKey};
     use p2p_discovery::AddrGuard;
     use p2p_identity::identity::P2PIdentity;
-    use p2p_peer::{NodeValue, PeerTable};
-
+    use p2p_peer::PeerTable;
     use std::{sync::Arc, time::Duration};
     use task_queue::TaskQueue;
 
@@ -111,6 +110,7 @@ mod test_suite {
     #[tokio::test(flavor = "multi_thread")]
     async fn test_is_handshake_successful() {
         init();
+
         let (
             p2p_server_1,
             p2p_task_runtime_1,
@@ -168,17 +168,15 @@ mod test_suite {
             tokio::time::sleep(Duration::from_secs(3)).await;
             let peer_table_2 = host_state_1.p2p_peer_table.clone();
 
-            let peer = peer_table_2
-                .get(&host_state_1.p2p_identity.public_key_str)
+            let is_peer_registered = match peer_table_2
+                .get_mapped_peer(&host_state_1.p2p_identity.public_key_str)
                 .await
-                .expect("no peer")
-                .unwrap();
-            let peer_guard = peer.node.lock().await;
-            let peer_flag_handle = match peer_guard.value {
-                NodeValue::Valued(_) => true,
-                NodeValue::Empty => false,
+            {
+                Some(p) => true,
+                None => false,
             };
-            return peer_flag_handle;
+
+            return is_peer_registered;
         });
 
         let peer_flag = peer_flag_handle.await.unwrap();

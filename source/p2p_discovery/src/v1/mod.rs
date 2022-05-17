@@ -11,7 +11,6 @@ mod test;
 
 use self::dial_scheduler::DialSchedulerArgs;
 use self::net::connection::UdpConn;
-pub use self::table::{AddrGuard, AddrsIterator};
 use self::task::DiscoveryTask;
 use self::{
     dial_scheduler::DialScheduler, server::Server, state::DiscState,
@@ -22,8 +21,7 @@ use logger::tinfo;
 use p2p_identity::addr::UnknownAddr;
 use p2p_identity::identity::P2PIdentity;
 use std::sync::Arc;
-use std::time::Duration;
-use table::Table;
+pub use table::*;
 use task_queue::TaskQueue;
 
 const DISC_TASK_QUEUE_CAPACITY: usize = 10;
@@ -151,7 +149,7 @@ impl Discovery {
         tokio::join!(server_thread, task_runtime_thread, dial_scheduler_thread);
     }
 
-    pub fn iter(&self) -> AddrsIterator {
-        self.disc_state.table.iter()
+    pub fn new_iter(&self) -> AddrsIterator {
+        self.disc_state.table.new_iter()
     }
 }

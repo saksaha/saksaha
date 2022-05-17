@@ -1,6 +1,6 @@
 use crate::p2p::{state::HostState, task::P2PTask};
 use logger::{terr, tinfo};
-use p2p_discovery::AddrsIterator;
+use p2p_discovery::{AddrVal, AddrsIterator};
 use std::{
     sync::Arc,
     time::{Duration, SystemTime},
@@ -19,8 +19,6 @@ pub(crate) struct HandshakeDialLoop {
 
 impl HandshakeDialLoop {
     pub(crate) async fn run(&self) {
-        tinfo!("saksaha", "p2p", "Handshake dial loop starts looping",);
-
         let p2p_dial_interval = match self.p2p_dial_interval {
             Some(i) => Duration::from_millis(i.into()),
             None => Duration::from_millis(HANDSHAKE_DIAL_INTERVAL),
@@ -31,12 +29,21 @@ impl HandshakeDialLoop {
 
             match self.addrs_iter.next().await {
                 Ok(addr_guard) => {
-                    let known_addr = addr_guard.get_known_addr().await;
+                    let addr = addr_guard.addr.clone();
+                    let addr_lock = addr.read().await;
 
-                    println!(
-                        "handshake dial loop, next addr, known_at: {}, x: {}",
-                        known_addr.known_at, addr_guard.x,
-                    );
+                    let known_addr = match &addr_lock.val {
+                        AddrVal::Known(k) => k,
+                        AddrVal::Unknown(_) => {
+                            terr!(
+                                "saksaha",
+                                "p2p",
+                                "Addr table has invalid entry (not known), ",
+                            );
+
+                            continue;
+                        }
+                    };
 
                     let my_public_key_str =
                         &self.host_state.p2p_identity.public_key_str;
@@ -53,15 +60,15 @@ impl HandshakeDialLoop {
                     if is_my_public_key_greater_than_hers {
                         enqueue_task(p2p_task_queue, task).await;
                     } else {
-                        enqueue_task(p2p_task_queue, task).await;
-                        // tokio::spawn(async move {
-                        //     tokio::time::sleep(Duration::from_secs(
-                        //         HANDSHAKE_ENQUEUE_DELAY_WHEN_SMALLER_PUBLIC_KEY,
-                        //     ))
-                        //     .await;
+                        // enqueue_task(p2p_task_queue, task).await;
+                        tokio::spawn(async move {
+                            tokio::time::sleep(Duration::from_secs(
+                                HANDSHAKE_ENQUEUE_DELAY_WHEN_SMALLER_PUBLIC_KEY,
+                            ))
+                            .await;
 
-                        //     enqueue_task(p2p_task_queue, task).await;
-                        // });
+                            enqueue_task(p2p_task_queue, task).await;
+                        });
                     }
                 }
                 Err(err) => {

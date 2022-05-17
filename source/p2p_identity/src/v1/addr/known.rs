@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use super::AddrStatus;
 use crypto::PublicKey;
 pub use k256::{
     ecdh::EphemeralSecret,
@@ -16,7 +16,7 @@ pub struct KnownAddr {
     pub sig: Signature,
     pub public_key_str: String,
     pub public_key: PublicKey,
-    pub known_at: DateTime<Utc>,
+    pub status: AddrStatus,
 }
 
 impl KnownAddr {
