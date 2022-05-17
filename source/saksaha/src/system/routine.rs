@@ -26,7 +26,7 @@ impl System {
             Arc::new(ps)
         };
 
-        let (rpc_socket, rpc_port) =
+        let (rpc_socket, rpc_socket_addr) =
             match utils_net::bind_tcp_socket(config.rpc.rpc_port).await {
                 Ok((socket, socket_addr)) => {
                     tinfo!(
@@ -36,7 +36,7 @@ impl System {
                         socket_addr.to_string().yellow(),
                     );
 
-                    (socket, socket_addr.port())
+                    (socket, socket_addr)
                 }
                 Err(err) => {
                     terr!(
@@ -48,8 +48,6 @@ impl System {
                     return Err(err);
                 }
             };
-
-        let rpc = RPC::init().await;
 
         let (p2p_socket, p2p_port) =
             match utils_net::bind_tcp_socket(config.p2p.p2p_port).await {
@@ -87,13 +85,18 @@ impl System {
             p2p_max_conn_count: config.p2p.p2p_max_conn_count,
             p2p_port,
             bootstrap_addrs: config.p2p.bootstrap_addrs,
-            rpc_port,
+            rpc_port: rpc_socket_addr.port(),
             secret: config.p2p.secret,
             public_key_str: config.p2p.public_key_str,
             p2p_peer_table,
         };
 
         let p2p_host = Host::init(p2p_host_args).await?;
+
+        let rpc = RPC::init(rpc_socket, rpc_socket_addr).await;
+        tokio::spawn(async move {
+            rpc.run().await;
+        });
 
         // let host_state = p2p_host.host_state.clone();
         // let peer_store = host_state.peer_store.clone();
