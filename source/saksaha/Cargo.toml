@@ -9,6 +9,8 @@ default-run = "sak"
 [dependencies]
 logger = { path = "../logger" }
 crypto = { path = "../crypto" }
+database = { path = "../database" }
+file_system = { path = "../file_system" }
 proofs = { path = "../proofs" }
 p2p_peer = { path = "../p2p_peer" }
 p2p_identity = { path = "../p2p_identity" }
