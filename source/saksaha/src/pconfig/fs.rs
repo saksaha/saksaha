@@ -85,7 +85,7 @@ impl FS {
     }
 
     pub fn get_default_db_path() -> Result<PathBuf, PConfigError> {
-        let app_path = create_or_get_app_path()?;
+        let app_path = create_or_get_app_path()?.join("db");
 
         Ok(app_path)
     }

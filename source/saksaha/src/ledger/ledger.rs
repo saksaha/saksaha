@@ -1,3 +1,4 @@
+use crate::db::ColumnFamilyDB;
 // use super::db::DB;
 // use log::{debug, error, info, warn};
 // use p2p_peer::{PeerTable, PeerValue, RegisteredPeerValue};
@@ -27,12 +28,15 @@
 //     }
 // }
 
-pub(crate) struct Ledger {}
+pub(crate) struct Ledger {
+    db: ColumnFamilyDB,
+}
 
 impl Ledger {
     pub async fn init() -> Ledger {
         // db column create / check
+        let db = ColumnFamilyDB::new().expect("cannot initialize ledger");
 
-        Ledger {}
+        Ledger { db }
     }
 }

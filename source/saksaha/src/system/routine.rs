@@ -100,6 +100,8 @@ impl System {
             tokio::join!(rpc.run(rpc_socket, rpc_socket_addr), p2p_host.run(),);
         });
 
+        database::_db();
+
         tokio::select!(
             c = tokio::signal::ctrl_c() => {
                 match c {
@@ -128,8 +130,6 @@ impl System {
             _ = system_thread => {
             }
         );
-
-        database::_db();
 
         tinfo!(
             "saksaha",
