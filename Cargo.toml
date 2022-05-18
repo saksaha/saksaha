@@ -4,6 +4,8 @@ members = [
   "source/logger",
   "source/saksaha",
   "source/crypto",
+  "source/file_system",
+  "source/database",
   "source/proofs",
   "source/p2p_peer",
   "source/p2p_discovery",
