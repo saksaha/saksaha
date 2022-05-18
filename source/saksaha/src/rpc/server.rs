@@ -10,6 +10,8 @@ use std::sync::Arc;
 use std::task::{Context, Poll};
 use tokio::net::TcpListener;
 
+type Counter = i32;
+
 pub(crate) struct RPCServer {}
 
 impl RPCServer {

@@ -40,7 +40,7 @@ impl Ledger {
         let mut batch = WriteBatch::default();
         let tx_hash = {
             let mut h = Sha3_256::new();
-            h.update(tx_value.created_at);
+            h.update(tx_value.created_at.clone());
             h.finalize()
         };
 

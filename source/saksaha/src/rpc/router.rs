@@ -1,4 +1,3 @@
-use crate::rpc::apis;
 use crate::rpc::routes::v1;
 use hyper::{body::HttpBody, server::conn::AddrStream, service::Service};
 use hyper::{Body, Method, Request, Response, Server, StatusCode, Uri};
@@ -9,18 +8,11 @@ use std::pin::Pin;
 use std::sync::Arc;
 
 fn get_routes() -> Vec<(Method, &'static str, Handler)> {
-    vec![
-        (
-            Method::POST,
-            "/apis/v1/send_transaction",
-            Box::new(|req| Box::pin(v1::send_transaction(req))),
-        ),
-        // (
-        //     Method::GET,
-        //     "/apis/v1/get_transaction",
-        //     Box::new(|req| Box::pin(v1::get_transaction(req))),
-        // ),
-    ]
+    vec![(
+        Method::POST,
+        "/apis/v1/send_transaction",
+        Box::new(|req| Box::pin(v1::send_transaction(req))),
+    )]
 }
 
 pub type Handler = Box<
