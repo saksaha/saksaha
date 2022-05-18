@@ -9,6 +9,8 @@ default-run = "sak"
 [dependencies]
 logger = { path = "../logger" }
 crypto = { path = "../crypto" }
+database = { path = "../database" }
+file_system = { path = "../file_system" }
 proofs = { path = "../proofs" }
 p2p_peer = { path = "../p2p_peer" }
 p2p_identity = { path = "../p2p_identity" }
@@ -35,6 +37,7 @@ env_logger = "0.9.0"
 once_cell = "1.8.0"
 colored = "2"
 chrono = "0.4"
+rocksdb = "0.18.0"
 
 [dev-dependencies]
 k256 = { version = "0.9.6", features = ["ecdh"] }
