@@ -1,5 +1,5 @@
 mod blockchain;
-mod ledger;
+pub mod ledger;
 
 #[cfg(test)]
 mod tests;
