@@ -1,10 +1,10 @@
-mod columns;
+pub mod columns;
 
 use std::path::PathBuf;
 
 use database::KeyValueDatabase;
 use file_system::FS;
-use rocksdb::{ColumnFamilyDescriptor, Options};
+use rocksdb::Options;
 
 const LEDGER_DB_PATH: &str = "db_ledger";
 
@@ -58,32 +58,4 @@ fn make_db_path() -> Result<PathBuf, String> {
     let db_path = app_path.join(LEDGER_DB_PATH);
 
     Ok(db_path)
-}
-
-mod dummy {
-    pub(crate) struct Transaction<'a> {
-        tx_hash: &'a str,
-        pi: &'a str,
-        contract_addr: &'a str,
-        data: &'a str,
-        fee: f32,
-    }
-
-    impl<'a> Transaction<'a> {
-        pub(crate) fn new(
-            tx_hash: &'a str,
-            pi: &'a str,
-            contract_addr: &'a str,
-            data: &'a str,
-            fee: f32,
-        ) -> Transaction<'a> {
-            Transaction {
-                tx_hash,
-                pi,
-                contract_addr,
-                data,
-                fee,
-            }
-        }
-    }
 }
