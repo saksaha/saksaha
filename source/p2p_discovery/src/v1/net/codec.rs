@@ -1,13 +1,14 @@
-use std::error::Error;
-
-use bytes::BytesMut;
+use crate::msg::{Msg, MsgType};
+use bytes::{BufMut, BytesMut};
 use futures::{SinkExt, StreamExt};
+use std::convert::TryInto;
+use std::error::Error;
 use tokio_util::codec::{
     AnyDelimiterCodec, BytesCodec, Decoder, Encoder, LinesCodec,
 };
 use tokio_util::udp::UdpFramed;
 
-use crate::msg::Msg;
+const CONTENT_MAX_LEN: usize = 8 * 1024 * 1024;
 
 pub(crate) struct UdpCodec {}
 
@@ -46,6 +47,113 @@ impl Encoder<Msg> for UdpCodec {
         msg: Msg,
         dst: &mut BytesMut,
     ) -> Result<(), Box<dyn Error>> {
+        let content_len = msg.content.len();
+
+        if content_len > CONTENT_MAX_LEN {
+            return Err(format!(
+                "Frame of length {} is too large",
+                content_len
+            )
+            .into());
+        }
+
+        // let msg_type_bytes: u8 = match msg.msg_type {
+        //     MsgType::WhoAreYouSyn => b'1',
+        //     MsgType::WhoAreYouAck => b'2',
+        // };
+
+        let len_slice = u32::to_le_bytes(content_len as u32);
+
+        dst.reserve(4 + content_len);
+
+        // dst.put_u8(msg_type_bytes);
+        // dst.extend_from_slice(&content_len_bytes);
+        // dst.extend_from_slice(&msg.content);
+
+        // tdebug!(
+        //     "p2p_discovery",
+        //     "net",
+        //     "write_msg(): buf: {:?}, content len: {:?}",
+        //     buf.to_vec(),
+        //     content_len_bytes,
+        // );
+
+        // match self.socket.send_to(&buf, endpoint).await {
+        //     Ok(l) => Ok(l),
+        //     Err(err) => Err(format!(
+        //         "Error sending bytes into udp socket, err: {}",
+        //         err
+        //     )),
+        // }
+
         Ok(())
+    }
+}
+
+impl Decoder for UdpCodec {
+    type Item = Msg;
+    type Error = Box<dyn Error>;
+
+    fn decode(
+        &mut self,
+        src: &mut BytesMut,
+    ) -> Result<Option<Self::Item>, Self::Error> {
+        // length check
+        if src.len() < 4 {
+            return Ok(None);
+        }
+
+        let mut length_bytes = [0u8; 4];
+
+        // let mut buf = BytesMut::new();
+        // buf.resize(MSG_MAX_LEN, 0);
+
+        let msg_type = {
+            match buf[0] {
+                b'1' => MsgType::WhoAreYouSyn,
+                b'2' => MsgType::WhoAreYouAck,
+                _ => {
+                    twarn!(
+                        "p2p_discovery",
+                        "net",
+                        "Invalid msg type, msg_type: {}",
+                        buf[0],
+                    );
+                    return None;
+                }
+            }
+        };
+
+        let content_len = {
+            let mut content_len_bytes = [0u8; 4];
+            content_len_bytes.clone_from_slice(&buf[1..5]);
+
+            let u32_len = u32::from_be_bytes(content_len_bytes);
+            match usize::try_from(u32_len) {
+                Ok(l) => l,
+                Err(err) => {
+                    twarn!(
+                        "p2p_discovery",
+                        "net",
+                        "Invalid msg length for this platform, cannot \
+                            convert u32 into usize: {}, err: {}",
+                        u32_len,
+                        err,
+                    );
+                    return None;
+                }
+            }
+        };
+
+        let content = &buf[5..(5 + content_len)];
+
+        // tdebug!("p2p_discovery", "net", "read_msg(): content: {:?}", content,);
+
+        let msg = Msg {
+            msg_type,
+            content: content.to_vec(),
+        };
+
+        Ok(None)
     }
 }
