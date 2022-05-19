@@ -349,12 +349,7 @@ mod test {
             p2p_port: None,
             sig: None,
             public_key_str: Some(String::from(
-                "\
-                0417fbc79baf6d20d8fbdfb0e203cda\
-                f61c2eda41ef8d96d535908d94d32c4\
-                6cd573ba054392d217b4bb3b7f966ae\
-                0dbf1be758893af4607040101192b5d90e92f\
-                ",
+                "044afabdc90398a50beee16199b9f055ea44ebd29fda680643f42126015cd2c7aad5efeef12304599697a00fd8ec9381dc6ff49e9d77729b4d078a56f3b66d9788"
             )),
             status: AddrStatus::Initialized,
         }];
@@ -386,6 +381,167 @@ mod test {
     }
 
     async fn create_client_8() -> Arc<Discovery> {
+        let secret = String::from(
+            "e95bdc574fc8a5159ae5c4d26bdbf09a04b95bea66315212433c8ff2bcada140",
+        );
+
+        let public_key_str = String::from(
+            "044afabdc90398a50beee16199b9f055ea44ebd29fda680643f42126015cd2c7aad5efeef12304599697a00fd8ec9381dc6ff49e9d77729b4d078a56f3b66d9788"
+        );
+
+        let bootstrap_addrs = vec![UnknownAddr {
+            ip: String::from("127.0.0.1"),
+            disc_port: 35529,
+            p2p_port: None,
+            sig: None,
+            public_key_str: Some(String::from(
+                "04ca610d0cfa9c475cbc2ed30669bad26939464b0012870ebd70e08489581b8376ab7d616cee93214707afeaa85ac70150e7f8b7b2638d5fb424d9c8a9775848c2",
+            )),
+            status: AddrStatus::Initialized,
+        }];
+
+        let p2p_identity = {
+            let id = P2PIdentity::new(secret, public_key_str).unwrap();
+            Arc::new(id)
+        };
+
+        let disc_args = DiscoveryArgs {
+            disc_dial_interval: None,
+            disc_table_capacity: None,
+            disc_task_interval: None,
+            disc_task_queue_capacity: None,
+            p2p_identity: p2p_identity.clone(),
+            disc_port: Some(35528),
+            p2p_port: 8,
+            bootstrap_addrs,
+        };
+
+        let p2p_discovery = {
+            let d = Discovery::init(disc_args)
+                .await
+                .expect("Discovery should be initailized");
+            Arc::new(d)
+        };
+
+        p2p_discovery
+    }
+
+    async fn create_client_9() -> Arc<Discovery> {
+        let secret = String::from(
+            "e3946a634b67ccccf5c28c92814c90e8ac2c5139ae00aa6ccb64bcf9e3d0e8c4",
+        );
+
+        let public_key_str = String::from(
+            "04ca610d0cfa9c475cbc2ed30669bad26939464b0012870ebd70e08489581b8376ab7d616cee93214707afeaa85ac70150e7f8b7b2638d5fb424d9c8a9775848c2",
+        );
+
+        let bootstrap_addrs = vec![UnknownAddr {
+            ip: String::from("127.0.0.1"),
+            disc_port: 35526,
+            p2p_port: None,
+            sig: None,
+            public_key_str: Some(String::from(
+                "04196e1bb054f5a90beb6d2ec476664f7bf009d290b214ae584120447c922b8d8d96bfecb84949d41b74545d2eba6c39a095ae052ea497a401bbe385e3d62e1a4a",
+            )),
+            status: AddrStatus::Initialized,
+        }];
+
+        let p2p_identity = {
+            let id = P2PIdentity::new(secret, public_key_str).unwrap();
+            Arc::new(id)
+        };
+
+        let disc_args = DiscoveryArgs {
+            disc_dial_interval: None,
+            disc_table_capacity: None,
+            disc_task_interval: None,
+            disc_task_queue_capacity: None,
+            p2p_identity: p2p_identity.clone(),
+            disc_port: Some(35529),
+            p2p_port: 9,
+            bootstrap_addrs,
+        };
+
+        let p2p_discovery = {
+            let d = Discovery::init(disc_args)
+                .await
+                .expect("Discovery should be initailized");
+            Arc::new(d)
+        };
+
+        p2p_discovery
+    }
+
+    async fn create_client_10() -> Arc<Discovery> {
+        let secret = String::from(
+            "ce6ebd9c85c135e74c21f4f9f88263fdfb22874da18e34a17c0b792b326a7818",
+        );
+
+        let public_key_str = String::from(
+            "048e05fe400705a292a737fc42d0dfc0317cc133b41f7b57f46bfe44fde565cd8ab85846bf7761e26e4dc52f464dc27ef8a431cb8a7429b2b4a5c2e0b081709ee5",
+        );
+
+        let bootstrap_addrs = vec![
+            UnknownAddr {
+                ip: String::from("127.0.0.1"),
+                disc_port: 35521,
+                p2p_port: None,
+                sig: None,
+                public_key_str: Some(String::from(
+                    "\
+                    04240874d8c323c22a571f735e835ed2\
+                    f0619893a3989e557b1c9b4c699ac92b\
+                    84d0dc478108629c0353f2876941f90d\
+                    4b36346bcc19c6b625422adffb53b3a6af\
+                    ",
+                )),
+                status: AddrStatus::Initialized,
+            },
+            UnknownAddr {
+                ip: String::from("127.0.0.1"),
+                disc_port: 35527,
+                p2p_port: None,
+                sig: None,
+                public_key_str: Some(String::from(
+                    "\
+                    0458478aa403b8331ce78a329bcac39\
+                    481c6388b80cc83b1107ecc402a4c6d\
+                    6e2defe09ef9e74ffc0fa96da297533\
+                    5a8f745a59efdd1d880279618f84f7983c339\
+                    ",
+                )),
+                status: AddrStatus::Initialized,
+            },
+        ];
+
+        let p2p_identity = {
+            let id = P2PIdentity::new(secret, public_key_str).unwrap();
+            Arc::new(id)
+        };
+
+        let disc_args = DiscoveryArgs {
+            disc_dial_interval: None,
+            disc_table_capacity: None,
+            disc_task_interval: None,
+            disc_task_queue_capacity: None,
+            p2p_identity: p2p_identity.clone(),
+            disc_port: Some(35530),
+            p2p_port: 10,
+            bootstrap_addrs,
+        };
+
+        let p2p_discovery = {
+            let d = Discovery::init(disc_args)
+                .await
+                .expect("Discovery should be initailized");
+            Arc::new(d)
+        };
+
+        p2p_discovery
+    }
+
+    async fn create_clien_making_invalid_signature_length_70() -> Arc<Discovery>
+    {
         let secret = String::from(
             "31ad1bf7531c8694e586c00ca9a798ada474e23e551b2609d4652033d0bdefc9",
         );
@@ -426,54 +582,8 @@ mod test {
             disc_task_interval: None,
             disc_task_queue_capacity: None,
             p2p_identity: p2p_identity.clone(),
-            disc_port: Some(35528),
-            p2p_port: 8,
-            bootstrap_addrs,
-        };
-
-        let p2p_discovery = {
-            let d = Discovery::init(disc_args)
-                .await
-                .expect("Discovery should be initailized");
-            Arc::new(d)
-        };
-
-        p2p_discovery
-    }
-
-    async fn create_client_9() -> Arc<Discovery> {
-        let secret = String::from(
-            "b6c43a0caeb12776dd8f31bb0388e021ac0d637020f8899cf7886b1fdf31a234",
-        );
-
-        let public_key_str = String::from(
-            "0449832914e5502a65946d836c7d82d4999790e6f1ec36082f3b9efac7bf5f6b759dd7c06ad8288bc6ca9cd3e316adddb4eceb824fd3e3f9a7e9f64e78ecace7dc",
-        );
-
-        let bootstrap_addrs = vec![UnknownAddr {
-            ip: String::from("127.0.0.1"),
-            disc_port: 35526,
-            p2p_port: None,
-            sig: None,
-            public_key_str: Some(String::from(
-                "04196e1bb054f5a90beb6d2ec476664f7bf009d290b214ae584120447c922b8d8d96bfecb84949d41b74545d2eba6c39a095ae052ea497a401bbe385e3d62e1a4a",
-            )),
-            status: AddrStatus::Initialized,
-        }];
-
-        let p2p_identity = {
-            let id = P2PIdentity::new(secret, public_key_str).unwrap();
-            Arc::new(id)
-        };
-
-        let disc_args = DiscoveryArgs {
-            disc_dial_interval: None,
-            disc_table_capacity: None,
-            disc_task_interval: None,
-            disc_task_queue_capacity: None,
-            p2p_identity: p2p_identity.clone(),
-            disc_port: Some(35529),
-            p2p_port: 9,
+            disc_port: Some(35555),
+            p2p_port: 55,
             bootstrap_addrs,
         };
 
@@ -489,7 +599,7 @@ mod test {
 
     // {2,3,4,5} => {1}
     #[tokio::test(flavor = "multi_thread")]
-    async fn test_whoareyou_4_to_1() {
+    async fn test_whoareyou_4_to_1_by_running_5_clients_at_the_same_time() {
         utils::init();
 
         let disc_1 = create_client_1().await;
@@ -609,6 +719,7 @@ mod test {
         let disc_3_thread = tokio::spawn(async move {
             println!("running disc_3");
             disc_3_clone.run().await;
+            1
         });
 
         let disc_4_thread = tokio::spawn(async move {
@@ -734,7 +845,7 @@ mod test {
     }
 
     #[tokio::test(flavor = "multi_thread")]
-    async fn test_whoareyou_4_to_1_by_running_client_2_first_and_running_rest_of_all(
+    async fn test_whoareyou_4_to_1_by_running_2_clients_first_and_running_rest_of_all(
     ) {
         utils::init();
 
@@ -894,7 +1005,7 @@ mod test {
     }
 
     #[tokio::test(flavor = "multi_thread")]
-    async fn test_whoareyou_4_clients_are_in_a_circular_sturcture() {
+    async fn test_whoareyou_4_clients_are_in_a_circular_structure() {
         utils::init();
 
         println!("Initializing client 6, 7, 8, 9");
@@ -960,7 +1071,7 @@ mod test {
             let iter = disc_6_clone.new_iter();
             let mut count = 0;
 
-            while count < 2 {
+            while count < 4 {
                 println!("getting next address");
                 let addr_guard = iter.next().await.unwrap();
                 println!("acquired next address");
@@ -981,48 +1092,72 @@ mod test {
 
             println!("client 7");
             let iter = disc_7_clone.new_iter();
-            let addr_guard = iter.next().await.unwrap();
-            let addr_lock = addr_guard.addr.read().await;
-            match &addr_lock.val {
-                AddrVal::Known(k) => {
-                    let endpoint = k.p2p_endpoint();
 
-                    println!("acquired address endpoint : {:?}", endpoint);
-                }
-                _ => {
-                    panic!("should be known address");
-                }
+            count = 0;
+            while count < 4 {
+                println!("getting next address");
+                let addr_guard = iter.next().await.unwrap();
+                println!("acquired next address");
+
+                let addr_lock = addr_guard.addr.read().await;
+                match &addr_lock.val {
+                    AddrVal::Known(k) => {
+                        let endpoint = k.p2p_endpoint();
+
+                        println!("acquired address endpoint : {:?}", endpoint);
+                    }
+                    _ => {
+                        panic!("should be known address");
+                    }
+                };
+                count += 1;
             }
 
             println!("client 8");
             let iter = disc_8_clone.new_iter();
-            let addr_guard = iter.next().await.unwrap();
-            let addr_lock = addr_guard.addr.read().await;
-            match &addr_lock.val {
-                AddrVal::Known(k) => {
-                    let endpoint = k.p2p_endpoint();
+            count = 0;
+            while count < 4 {
+                println!("getting next address");
+                let addr_guard = iter.next().await.unwrap();
+                println!("acquired next address");
 
-                    println!("acquired address endpoint : {:?}", endpoint);
-                }
-                _ => {
-                    panic!("should be known address");
-                }
+                let addr_lock = addr_guard.addr.read().await;
+                match &addr_lock.val {
+                    AddrVal::Known(k) => {
+                        let endpoint = k.p2p_endpoint();
+
+                        println!("acquired address endpoint : {:?}", endpoint);
+                    }
+                    _ => {
+                        panic!("should be known address");
+                    }
+                };
+                count += 1;
             }
 
             println!("client 9");
             let iter = disc_9_clone.new_iter();
-            let addr_guard = iter.next().await.unwrap();
-            let addr_lock = addr_guard.addr.read().await;
-            match &addr_lock.val {
-                AddrVal::Known(k) => {
-                    let endpoint = k.p2p_endpoint();
+            count = 0;
+            while count < 4 {
+                println!("getting next address");
+                let addr_guard = iter.next().await.unwrap();
+                println!("acquired next address");
 
-                    println!("acquired address endpoint : {:?}", endpoint);
-                }
-                _ => {
-                    panic!("should be known address");
-                }
+                let addr_lock = addr_guard.addr.read().await;
+                match &addr_lock.val {
+                    AddrVal::Known(k) => {
+                        let endpoint = k.p2p_endpoint();
+
+                        println!("acquired address endpoint : {:?}", endpoint);
+                    }
+                    _ => {
+                        panic!("should be known address");
+                    }
+                };
+                count += 1;
             }
+
+            println!("Test succeeded!");
         });
 
         let _ = tokio::join!(
@@ -1030,6 +1165,322 @@ mod test {
             disc_7_thread,
             disc_8_thread,
             disc_9_thread,
+            test_thread,
+        );
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn test_whoareyou_client_10_has_2_bootstrap_nodes() {
+        utils::init();
+
+        let disc_1 = create_client_1().await;
+        let disc_2 = create_client_2().await;
+        let disc_3 = create_client_3().await;
+        let disc_4 = create_client_4().await;
+        let disc_5 = create_client_5().await;
+        let disc_6 = create_client_6().await;
+        let disc_7 = create_client_7().await;
+        let disc_8 = create_client_8().await;
+        let disc_9 = create_client_9().await;
+        let disc_10 = create_client_10().await;
+
+        let disc_1_clone = disc_1.clone();
+        let disc_2_clone = disc_2.clone();
+        let disc_3_clone = disc_3.clone();
+        let disc_4_clone = disc_4.clone();
+        let disc_5_clone = disc_5.clone();
+        let disc_6_clone = disc_6.clone();
+        let disc_7_clone = disc_7.clone();
+        let disc_8_clone = disc_8.clone();
+        let disc_9_clone = disc_9.clone();
+        let disc_10_clone = disc_10.clone();
+
+        println!("All discs are initialized");
+
+        let disc_1_thread = tokio::spawn(async move {
+            println!("running disc_1");
+            disc_1_clone.run().await;
+        });
+
+        let disc_2_thread = tokio::spawn(async move {
+            println!("running disc_2");
+            disc_2_clone.run().await;
+        });
+
+        let disc_3_thread = tokio::spawn(async move {
+            println!("running disc_3");
+            disc_3_clone.run().await;
+        });
+
+        let disc_4_thread = tokio::spawn(async move {
+            println!("running disc_4");
+            disc_4_clone.run().await;
+        });
+
+        let disc_5_thread = tokio::spawn(async move {
+            println!("running disc_5");
+            disc_5_clone.run().await;
+        });
+
+        let disc_6_thread = tokio::spawn(async move {
+            println!("running disc_6");
+            disc_6_clone.run().await;
+        });
+
+        let disc_7_thread = tokio::spawn(async move {
+            println!("running disc_7");
+            disc_7_clone.run().await;
+        });
+
+        let disc_8_thread = tokio::spawn(async move {
+            println!("running disc_8");
+            disc_8_clone.run().await;
+        });
+
+        let disc_9_thread = tokio::spawn(async move {
+            println!("running disc_9");
+            disc_9_clone.run().await;
+        });
+
+        let disc_10_thread = tokio::spawn(async move {
+            println!("running disc_10");
+            disc_10_clone.run().await;
+        });
+
+        let disc_1_clone = disc_1.clone();
+        let disc_2_clone = disc_2.clone();
+        let disc_3_clone = disc_3.clone();
+        let disc_4_clone = disc_4.clone();
+        let disc_5_clone = disc_5.clone();
+        let disc_6_clone = disc_6.clone();
+        let disc_7_clone = disc_7.clone();
+        let disc_8_clone = disc_8.clone();
+        let disc_9_clone = disc_9.clone();
+        let disc_10_clone = disc_10.clone();
+
+        let test_thread = tokio::spawn(async move {
+            println!("Starting test thread, sleeping for 5 seconds");
+
+            tokio::time::sleep(Duration::from_secs(5)).await;
+
+            println!("Test thread waken up");
+
+            println!("client 1");
+            let iter = disc_1_clone.new_iter();
+            let mut count = 0;
+
+            while count < 5 {
+                println!("getting next address");
+                let addr_guard = iter.next().await.unwrap();
+                println!("acquired next address!");
+
+                let addr_lock = addr_guard.addr.read().await;
+                match &addr_lock.val {
+                    AddrVal::Known(k) => {
+                        let endpoint = k.p2p_endpoint();
+
+                        println!("acquired address endpoint : {:?}", endpoint);
+                    }
+                    AddrVal::Unknown(u) => {
+                        panic!("should be known address");
+                    }
+                };
+                count += 1;
+            }
+
+            println!("client 2");
+            let iter = disc_2_clone.new_iter();
+            let addr_guard = iter.next().await.unwrap();
+            let addr_lock = addr_guard.addr.read().await;
+            match &addr_lock.val {
+                AddrVal::Known(k) => {
+                    let endpoint = k.p2p_endpoint();
+
+                    println!("acquired address endpoint : {:?}", endpoint);
+                    assert_eq!(endpoint, "127.0.0.1:1");
+                }
+                _ => {
+                    panic!("should be known address");
+                }
+            }
+
+            println!("client 3");
+            let iter = disc_3_clone.new_iter();
+            let addr_guard = iter.next().await.unwrap();
+            let addr_lock = addr_guard.addr.read().await;
+            match &addr_lock.val {
+                AddrVal::Known(k) => {
+                    let endpoint = k.p2p_endpoint();
+
+                    println!("acquired address endpoint : {:?}", endpoint);
+                    assert_eq!(endpoint, "127.0.0.1:1");
+                }
+                _ => {
+                    panic!("should be known address");
+                }
+            }
+
+            println!("client 4");
+            let iter = disc_4_clone.new_iter();
+            let addr_guard = iter.next().await.unwrap();
+            let addr_lock = addr_guard.addr.read().await;
+            match &addr_lock.val {
+                AddrVal::Known(k) => {
+                    let endpoint = k.p2p_endpoint();
+
+                    println!("acquired address endpoint : {:?}", endpoint);
+                    assert_eq!(endpoint, "127.0.0.1:1");
+                }
+                _ => {
+                    panic!("should be known address");
+                }
+            }
+
+            println!("client 5");
+            let iter = disc_5_clone.new_iter();
+            let addr_guard = iter.next().await.unwrap();
+            let addr_lock = addr_guard.addr.read().await;
+            match &addr_lock.val {
+                AddrVal::Known(k) => {
+                    let endpoint = k.p2p_endpoint();
+
+                    println!("acquired address endpoint : {:?}", endpoint);
+                    assert_eq!(endpoint, "127.0.0.1:1");
+                }
+                _ => {
+                    panic!("should be known address");
+                }
+            }
+
+            println!("client 6");
+            let iter = disc_6_clone.new_iter();
+            let mut count = 0;
+
+            while count < 4 {
+                println!("getting next address");
+                let addr_guard = iter.next().await.unwrap();
+                println!("acquired next address");
+
+                let addr_lock = addr_guard.addr.read().await;
+                match &addr_lock.val {
+                    AddrVal::Known(k) => {
+                        let endpoint = k.p2p_endpoint();
+
+                        println!("acquired address endpoint : {:?}", endpoint);
+                    }
+                    _ => {
+                        panic!("should be known address");
+                    }
+                };
+                count += 1;
+            }
+
+            println!("client 7");
+            let iter = disc_7_clone.new_iter();
+            let mut count = 0;
+
+            while count < 4 {
+                println!("getting next address");
+                let addr_guard = iter.next().await.unwrap();
+                println!("acquired next address");
+
+                let addr_lock = addr_guard.addr.read().await;
+                match &addr_lock.val {
+                    AddrVal::Known(k) => {
+                        let endpoint = k.p2p_endpoint();
+
+                        println!("acquired address endpoint : {:?}", endpoint);
+                    }
+                    _ => {
+                        panic!("should be known address");
+                    }
+                };
+                count += 1;
+            }
+
+            println!("client 8");
+            let iter = disc_8_clone.new_iter();
+            let mut count = 0;
+
+            while count < 4 {
+                println!("getting next address");
+                let addr_guard = iter.next().await.unwrap();
+                println!("acquired next address");
+
+                let addr_lock = addr_guard.addr.read().await;
+                match &addr_lock.val {
+                    AddrVal::Known(k) => {
+                        let endpoint = k.p2p_endpoint();
+
+                        println!("acquired address endpoint : {:?}", endpoint);
+                    }
+                    _ => {
+                        panic!("should be known address");
+                    }
+                };
+                count += 1;
+            }
+
+            println!("client 9");
+            let iter = disc_9_clone.new_iter();
+            let mut count = 0;
+
+            while count < 4 {
+                println!("getting next address");
+                let addr_guard = iter.next().await.unwrap();
+                println!("acquired next address");
+
+                let addr_lock = addr_guard.addr.read().await;
+                match &addr_lock.val {
+                    AddrVal::Known(k) => {
+                        let endpoint = k.p2p_endpoint();
+
+                        println!("acquired address endpoint : {:?}", endpoint);
+                    }
+                    _ => {
+                        panic!("should be known address");
+                    }
+                };
+                count += 1;
+            }
+
+            println!("client 10");
+            let iter = disc_10_clone.new_iter();
+            let mut count = 0;
+
+            while count < 4 {
+                println!("getting next address");
+                let addr_guard = iter.next().await.unwrap();
+                println!("acquired next address");
+
+                let addr_lock = addr_guard.addr.read().await;
+                match &addr_lock.val {
+                    AddrVal::Known(k) => {
+                        let endpoint = k.p2p_endpoint();
+
+                        println!("acquired address endpoint : {:?}", endpoint);
+                    }
+                    _ => {
+                        panic!("should be known address");
+                    }
+                };
+                count += 1;
+            }
+
+            println!("Test succeeded!");
+        });
+
+        let _ = tokio::join!(
+            disc_1_thread,
+            disc_2_thread,
+            disc_3_thread,
+            disc_4_thread,
+            disc_5_thread,
+            disc_6_thread,
+            disc_7_thread,
+            disc_8_thread,
+            disc_9_thread,
+            disc_10_thread,
             test_thread,
         );
     }
