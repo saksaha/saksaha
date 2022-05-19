@@ -97,7 +97,7 @@ impl System {
 
         let rpc = RPC::init()?;
 
-        let db = DB::init().await?;
+        let db = DB::init("db_ledger".to_string()).await?;
 
         let blockchain = Blockchain::init(db.ledger_db).await?;
 

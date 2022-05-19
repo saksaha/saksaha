@@ -13,19 +13,19 @@ pub(crate) struct DB {
 }
 
 impl DB {
-    pub(crate) async fn init() -> Result<DB, String> {
-        let ledger_db = DB::init_ledger_db()?;
+    pub(crate) async fn init(path: String) -> Result<DB, String> {
+        let ledger_db = DB::init_ledger_db(path)?;
 
         let db = DB { ledger_db };
 
         Ok(db)
     }
 
-    fn init_ledger_db() -> Result<KeyValueDatabase, String> {
+    fn init_ledger_db(path: String) -> Result<KeyValueDatabase, String> {
         let db_path = {
             let app_path = FS::get_app_path()?;
 
-            app_path.join(LEDGER_DB_PATH)
+            app_path.join(path)
         };
 
         let options = {

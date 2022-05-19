@@ -1,7 +1,6 @@
-use file_system::FS;
 use logger::tinfo;
-use rocksdb::{ColumnFamilyDescriptor, IteratorMode, Options, DB};
-use std::{path::PathBuf, str::from_utf8};
+use rocksdb::{ColumnFamilyDescriptor, Options, DB};
+use std::path::PathBuf;
 
 pub struct KeyValueDatabase {
     pub db: DB,

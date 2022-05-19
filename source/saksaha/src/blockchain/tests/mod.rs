@@ -1,6 +1,3 @@
-use super::*;
-use crate::db::columns::ledger_columns;
-
 #[cfg(test)]
 mod test {
     use super::dummy::Transaction;
@@ -15,7 +12,7 @@ mod test {
     async fn test_send_transaction() {
         init();
 
-        let db = DB::init().await.unwrap();
+        let db = DB::init("db_ledger_test".to_string()).await.unwrap();
 
         // let blockchain = Blockchain::init(db.ledger_db).await.unwrap();
 
@@ -31,15 +28,25 @@ mod test {
             (ledger_columns::DATA, tx.data),
         ];
 
-        let cf_val_exe = cf_val
+        let get_cf: () = cf_val
+            .clone()
             .into_iter()
             .map(|(cf, val)| {
-                println!("key: {}, val: {}", cf, val);
                 db.put_cf(db.cf_handle(cf).unwrap(), "0", val).unwrap();
             })
             .collect();
 
-        cf_val_exe
+        let put_cf: () = cf_val
+            .into_iter()
+            .map(|(cf, _)| match db.get_cf(db.cf_handle(cf).unwrap(), "0") {
+                Ok(v) => println!(
+                    "key: {:?}, got value: {:?}",
+                    std::str::from_utf8(cf.as_bytes()),
+                    std::str::from_utf8(&v.unwrap())
+                ),
+                Err(_) => (),
+            })
+            .collect();
     }
 }
 
