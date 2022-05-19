@@ -17,6 +17,15 @@ pub(super) fn create_app<'a>() -> Command<'a> {
                 ),
         )
         .arg(
+            Arg::new("ledger-db-path") //
+                .long("ledger-db-path")
+                .takes_value(true)
+                .long_help(
+                    "Saksaha ledger db (persistence) path, usually created \n\
+                    at [[OS default config path]]/saksaha/ledger_db/ ",
+                ),
+        )
+        .arg(
             Arg::new("rpc-port") //
                 .long("rpc-port")
                 .takes_value(true)

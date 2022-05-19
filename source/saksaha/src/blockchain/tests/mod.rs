@@ -1,5 +1,7 @@
 #[cfg(test)]
 mod test {
+    use file_system::FS;
+
     use super::dummy::Transaction;
     use crate::db::DB;
     use crate::{blockchain::Blockchain, db::columns::ledger_columns};
@@ -12,13 +14,19 @@ mod test {
     async fn test_send_transaction() {
         init();
 
-        let db = DB::init("db_ledger_test".to_string()).await.unwrap();
+        let db_path = {
+            let app_path = FS::get_app_path().unwrap();
+            let db_path = app_path.join("db_ledger_test");
+            let db_path = db_path.as_os_str().to_str().unwrap().to_owned();
+            Some(db_path)
+        };
 
-        // let blockchain = Blockchain::init(db.ledger_db).await.unwrap();
+        let db = DB::init(db_path).await.unwrap();
+
+        let blockchain = Blockchain::init(db.ledger_db).await.unwrap();
 
         let tx =
             Transaction::new("0x0000", "0x123", "0x0000", "1346546123", "None");
-        let db = db.ledger_db.db;
 
         let cf_val = vec![
             (ledger_columns::TX_HASH, tx.tx_hash),

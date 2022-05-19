@@ -74,6 +74,7 @@ fn main() {
         p2p_port: cli_args.p2p_port,
         rpc_port: cli_args.rpc_port,
         bootstrap_urls: cli_args.bootstrap_urls,
+        ledger_db_path: cli_args.ledger_db_path,
         dev_mode: cli_args.dev_mode,
         pconfig: pconf,
     };
