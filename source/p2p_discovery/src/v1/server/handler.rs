@@ -68,6 +68,11 @@ impl Handler {
                     };
 
                 let table = self.disc_state.table.clone();
+
+                let my_ip = "127.0.0.1";
+                let my_p2p_port = self.disc_state.p2p_port;
+                let my_p2p_endpoint = format!("{}:{}", my_ip, my_p2p_port);
+
                 let her_ip = self.socket_addr.ip().to_string();
                 let her_disc_port = way_ack.src_disc_port;
                 let her_p2p_port = way_ack.src_p2p_port;
@@ -115,7 +120,8 @@ impl Handler {
                         tdebug!(
                             "p2p_discovery",
                             "server",
-                            "Enqueueing known addr, p2p endpoint: {}",
+                            "Enqueueing known addr, my disc endpoint: {}, p2p endpoint: {}",
+                            my_p2p_endpoint.green(),
                             her_p2p_endpoint.green(),
                         );
                     }
