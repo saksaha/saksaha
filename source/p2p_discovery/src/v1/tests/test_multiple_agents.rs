@@ -675,11 +675,11 @@ mod test {
         });
 
         let _ = tokio::join!(
-            disc_1_thread,
-            disc_2_thread,
-            disc_3_thread,
-            disc_4_thread,
-            disc_5_thread,
+            // disc_1_thread,
+            // disc_2_thread,
+            // disc_3_thread,
+            // disc_4_thread,
+            // disc_5_thread,
             test_thread,
         );
     }
@@ -835,11 +835,11 @@ mod test {
         });
 
         let _ = tokio::join!(
-            disc_1_thread,
-            disc_2_thread,
-            disc_3_thread,
-            disc_4_thread,
-            disc_5_thread,
+            // disc_1_thread,
+            // disc_2_thread,
+            // disc_3_thread,
+            // disc_4_thread,
+            // disc_5_thread,
             test_thread,
         );
     }
@@ -995,11 +995,11 @@ mod test {
         });
 
         let _ = tokio::join!(
-            disc_1_thread,
-            disc_2_thread,
-            disc_3_thread,
-            disc_4_thread,
-            disc_5_thread,
+            // disc_1_thread,
+            // disc_2_thread,
+            // disc_3_thread,
+            // disc_4_thread,
+            // disc_5_thread,
             test_thread,
         );
     }
@@ -1161,10 +1161,10 @@ mod test {
         });
 
         let _ = tokio::join!(
-            disc_6_thread,
-            disc_7_thread,
-            disc_8_thread,
-            disc_9_thread,
+            // disc_6_thread,
+            // disc_7_thread,
+            // disc_8_thread,
+            // disc_9_thread,
             test_thread,
         );
     }
@@ -1471,16 +1471,16 @@ mod test {
         });
 
         let _ = tokio::join!(
-            disc_1_thread,
-            disc_2_thread,
-            disc_3_thread,
-            disc_4_thread,
-            disc_5_thread,
-            disc_6_thread,
-            disc_7_thread,
-            disc_8_thread,
-            disc_9_thread,
-            disc_10_thread,
+            // disc_1_thread,
+            // disc_2_thread,
+            // disc_3_thread,
+            // disc_4_thread,
+            // disc_5_thread,
+            // disc_6_thread,
+            // disc_7_thread,
+            // disc_8_thread,
+            // disc_9_thread,
+            // disc_10_thread,
             test_thread,
         );
     }
