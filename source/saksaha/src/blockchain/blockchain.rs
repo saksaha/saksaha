@@ -3,7 +3,7 @@ use database::KeyValueDatabase;
 use logger::tinfo;
 
 pub(crate) struct Blockchain {
-    ledger: Ledger,
+    pub(crate) ledger: Ledger,
 }
 
 impl Blockchain {

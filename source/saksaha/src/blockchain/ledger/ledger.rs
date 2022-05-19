@@ -2,7 +2,7 @@ use database::KeyValueDatabase;
 use logger::tinfo;
 
 pub(crate) struct Ledger {
-    ledger_db: KeyValueDatabase,
+    pub(crate) ledger_db: KeyValueDatabase,
 }
 
 impl Ledger {

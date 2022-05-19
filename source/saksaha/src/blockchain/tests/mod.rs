@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod test {
     use file_system::FS;
+    use rocksdb::{DBWithThreadMode, SingleThreaded, WriteBatch};
 
     use super::dummy::Transaction;
     use crate::db::DB;
@@ -25,6 +26,8 @@ mod test {
 
         let blockchain = Blockchain::init(db.ledger_db).await.unwrap();
 
+        let db = blockchain.ledger.ledger_db.db;
+
         let tx =
             Transaction::new("0x0000", "0x123", "0x0000", "1346546123", "None");
 
@@ -36,7 +39,15 @@ mod test {
             (ledger_columns::DATA, tx.data),
         ];
 
-        let get_cf: () = cf_val
+        put_and_get_transaction(&db, &cf_val);
+        batchput_and_get_transaction(&db, &cf_val);
+    }
+
+    fn put_and_get_transaction(
+        db: &DBWithThreadMode<SingleThreaded>,
+        cf_val: &Vec<(&str, &str)>,
+    ) {
+        let put_cf: () = cf_val
             .clone()
             .into_iter()
             .map(|(cf, val)| {
@@ -44,7 +55,35 @@ mod test {
             })
             .collect();
 
+        let get_cf: () = cf_val
+            .into_iter()
+            .map(|(cf, _)| match db.get_cf(db.cf_handle(cf).unwrap(), "0") {
+                Ok(v) => println!(
+                    "key: {:?}, got value: {:?}",
+                    std::str::from_utf8(cf.as_bytes()),
+                    std::str::from_utf8(&v.unwrap())
+                ),
+                Err(_) => (),
+            })
+            .collect();
+    }
+
+    fn batchput_and_get_transaction(
+        db: &DBWithThreadMode<SingleThreaded>,
+        cf_val: &Vec<(&str, &str)>,
+    ) {
+        let mut batch = WriteBatch::default();
         let put_cf: () = cf_val
+            .clone()
+            .into_iter()
+            .map(|(cf, val)| {
+                batch.put_cf(db.cf_handle(cf).unwrap(), "0", val);
+                // db.put_cf(db.cf_handle(cf).unwrap(), "0", val).unwrap();
+            })
+            .collect();
+        db.write(batch).expect("failed to batchWrite");
+
+        let get_cf: () = cf_val
             .into_iter()
             .map(|(cf, _)| match db.get_cf(db.cf_handle(cf).unwrap(), "0") {
                 Ok(v) => println!(
