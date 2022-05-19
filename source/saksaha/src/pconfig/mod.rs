@@ -1,73 +1,137 @@
 pub mod error;
-pub mod fs;
 mod pconfig;
 
-use self::error::PConfigError;
 use colored::Colorize;
-use fs::FS;
+use file_system::FS;
 use logger::tinfo;
 pub use pconfig::*;
 use std::path::PathBuf;
 
+const CONFIG_FILE_NAME: &str = "config.yml";
+
 impl PConfig {
-    pub fn from_path(
-        config_path: Option<String>,
-    ) -> Result<PConfig, PConfigError> {
-        tinfo!("saksaha", "pconfig", "",);
+    pub fn from_path(config_path: Option<String>) -> Result<PConfig, String> {
         tinfo!("saksaha", "pconfig", "Loading persisted config...");
 
-        let config_path = match config_path {
-            Some(c) => c,
+        match config_path {
+            Some(c) => {
+                let config_path = PathBuf::from(c);
+                return PConfig::load(config_path);
+            }
             None => {
-                let default_path = FS::get_default_path()?;
+                let default_config_file_path = get_default_config_file_path()?;
                 tinfo!(
                     "saksaha",
                     "pconfig",
                     "Config path is not given. Defaults to location, {:?}",
-                    default_path,
+                    default_config_file_path,
                 );
 
-                if default_path.exists() {
+                if default_config_file_path.exists() {
                     tinfo!(
                         "saksaha",
                         "pconfig",
                         "Found a config at the default location, path: {:?}",
-                        default_path,
+                        default_config_file_path,
                     );
 
-                    return FS::load(default_path);
+                    return PConfig::load(default_config_file_path);
                 } else {
                     tinfo!(
                         "saksaha",
                         "pconfig",
                         "Couldn't find a config file at the default path. \
                         Creating a new one, path: {:?}",
-                        default_path,
+                        default_config_file_path,
                     );
 
                     let pconfig = PConfig::new();
 
-                    let pconf = match FS::persist(pconfig) {
+                    let pconf = match PConfig::persist(
+                        pconfig,
+                        default_config_file_path,
+                    ) {
                         Ok(p) => p,
                         Err(err) => {
-                            return Err(PConfigError::PersistError {
-                                err: err.to_string(),
-                            });
+                            return Err(err);
                         }
                     };
 
                     return Ok(pconf);
                 }
             }
+        }
+    }
+
+    pub fn persist(
+        pconfig: PConfig,
+        target_path: PathBuf,
+    ) -> Result<PConfig, String> {
+        let serialized = match serde_yaml::to_string(&pconfig) {
+            Ok(s) => s,
+            Err(err) => {
+                return Err(format!("Error serializing pconfig, err: {}", err));
+            }
         };
 
-        let config_path = PathBuf::from(config_path);
-        FS::load(config_path)
+        if target_path.exists() {
+            return Err(format!(
+                "Path does not exist, path: {}",
+                target_path.to_string_lossy()
+            ));
+        }
+
+        let target_path_str = target_path.to_string_lossy().yellow();
+
+        tinfo!(
+            "saksaha",
+            "pconfig",
+            "Writing a config, target_path: {}",
+            target_path_str,
+        );
+
+        match std::fs::write(target_path.to_owned(), serialized) {
+            Ok(_) => Ok(pconfig),
+            Err(err) => {
+                return Err(format!(
+                    "Error writing pconfig to the path, err: {}",
+                    err
+                ));
+            }
+        }
+    }
+
+    pub fn load(path: PathBuf) -> Result<PConfig, String> {
+        tinfo!(
+            "saksaha",
+            "pconfig",
+            "Loading configuration at path: {}",
+            path.to_string_lossy().yellow()
+        );
+
+        if !path.exists() {
+            return Err(format!("Path does not exist"));
+        }
+
+        let file = match std::fs::read_to_string(path.to_owned()) {
+            Ok(f) => f,
+            Err(err) => {
+                return Err(format!("Could not read the file, err: {}", err));
+            }
+        };
+
+        match serde_yaml::from_str(file.as_str()) {
+            Ok(pconf) => return Ok(pconf),
+            Err(err) => {
+                return Err(format!(
+                    "Could not deserialize pconfig, err: {}",
+                    err
+                ));
+            }
+        }
     }
 
     fn new() -> PConfig {
-        tinfo!("saksaha", "", "Creating a new config".yellow());
-
         let sk = crypto::generate_key();
         let (sk, pk) = crypto::encode_into_key_pair(sk);
         let pconf = PConfig {
@@ -82,4 +146,11 @@ impl PConfig {
 
         pconf
     }
+}
+
+pub fn get_default_config_file_path() -> Result<PathBuf, String> {
+    let app_path = FS::create_or_get_app_path()?;
+    let config_path = app_path.join(CONFIG_FILE_NAME);
+
+    Ok(config_path)
 }

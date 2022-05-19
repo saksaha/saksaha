@@ -1,11 +1,11 @@
+use super::*;
+
 #[cfg(test)]
 mod test {
+    use super::dummy::Transaction;
+    use crate::blockchain::{ledger::ledger_columns, Blockchain};
     use file_system::FS;
     use rocksdb::{DBWithThreadMode, SingleThreaded, WriteBatch};
-
-    use super::dummy::Transaction;
-    use crate::db::DB;
-    use crate::{blockchain::Blockchain, db::columns::ledger_columns};
 
     fn init() {
         let _ = env_logger::builder().is_test(true).try_init();
@@ -16,15 +16,13 @@ mod test {
         init();
 
         let db_path = {
-            let app_path = FS::get_app_path().unwrap();
+            let app_path = FS::create_or_get_app_path().unwrap();
             let db_path = app_path.join("db_ledger_test");
             let db_path = db_path.as_os_str().to_str().unwrap().to_owned();
             Some(db_path)
         };
 
-        let db = DB::init(db_path).await.unwrap();
-
-        let blockchain = Blockchain::init(db.ledger_db).await.unwrap();
+        let blockchain = Blockchain::init(db_path).await.unwrap();
 
         let db = blockchain.ledger.ledger_db.db;
 
