@@ -181,7 +181,6 @@ mod test {
                 tx_hash,
                 tx_val.created_at,
             );
-            // .expect("Tx crated_at should be inserted");
 
             batch.put_cf(
                 db.cf_handle(ledger_columns::DATA).unwrap(),

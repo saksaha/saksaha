@@ -28,11 +28,13 @@ impl Blockchain {
     pub(crate) async fn run(&self) {
         tinfo!("saksaha", "blockchain", "Start running blockchain");
 
-        self.ledger.write_tx();
-        self.ledger.read_tx();
+        // self.ledger.write_tx();
+        // self.ledger.read_tx();
     }
 
-    pub(crate) async fn _send_transaction<'a>(_tx_value: TxValue<'a>) {}
+    pub(crate) async fn send_transaction<'a>(&self, tx_value: TxValue<'a>) {
+        self.ledger.write_tx(tx_value);
+    }
 
-    pub(crate) async fn _get_transaction() {}
+    pub(crate) async fn get_transaction() {}
 }
