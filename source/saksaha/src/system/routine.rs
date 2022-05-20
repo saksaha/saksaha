@@ -100,9 +100,9 @@ impl System {
 
         let system_thread = tokio::spawn(async move {
             tokio::join!(
-                rpc.run(rpc_socket, rpc_socket_addr),
+                // rpc.run(rpc_socket, rpc_socket_addr),
                 p2p_host.run(),
-                blockchain.run()
+                // blockchain.run()
             );
         });
 

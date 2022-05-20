@@ -9,6 +9,8 @@ mod task;
 #[cfg(test)]
 mod tests;
 
+use crate::v1::net::connection2::Connection2;
+
 use self::dial_scheduler::DialSchedulerArgs;
 use self::net::connection::UdpConn;
 use self::task::DiscoveryTask;
@@ -61,7 +63,8 @@ impl Discovery {
         let (udp_conn, disc_port) = {
             let (socket, socket_addr) =
                 utils_net::setup_udp_socket(disc_args.disc_port).await?;
-            let udp_conn = UdpConn { socket };
+            // let udp_conn = UdpConn { socket };
+            let udp_conn = Connection2::new(socket);
 
             tinfo!(
                 "p2p_discovery",

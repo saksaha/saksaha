@@ -128,65 +128,67 @@ pub(crate) async fn recv_who_are_you(
         }
     };
 
-    match disc_state
-        .udp_conn
-        .write_msg(&her_disc_endpoint, way_msg)
-        .await
-    {
-        Ok(_) => {
-            let addr = match addr_slot {
-                AddrSlot::Slot(s) => {
-                    let addr = {
-                        let a = Addr {
-                            val: AddrVal::Known(known_addr),
-                            __internal_slot: s,
-                        };
+    let mut socket = disc_state.udp_conn.socket.write().await;
 
-                        Arc::new(RwLock::new(a))
-                    };
+    // match disc_state
+    //     .udp_conn
+    //     .write_msg(&her_disc_endpoint, way_msg)
+    //     .await
+    // {
+    //     Ok(_) => {
+    //         let addr = match addr_slot {
+    //             AddrSlot::Slot(s) => {
+    //                 let addr = {
+    //                     let a = Addr {
+    //                         val: AddrVal::Known(known_addr),
+    //                         __internal_slot: s,
+    //                     };
 
-                    disc_state
-                        .table
-                        .insert_mapping(&her_disc_endpoint, addr.clone())
-                        .await;
+    //                     Arc::new(RwLock::new(a))
+    //                 };
 
-                    addr
-                }
+    //                 disc_state
+    //                     .table
+    //                     .insert_mapping(&her_disc_endpoint, addr.clone())
+    //                     .await;
 
-                // Addr that we've known a long time ago
-                AddrSlot::Addr(mut addr_lock, addr) => {
-                    addr_lock.val = AddrVal::Known(known_addr);
-                    addr.clone()
-                }
-            };
+    //                 addr
+    //             }
 
-            match disc_state.table.enqueue_known_addr(addr).await {
-                Ok(_) => {
-                    tdebug!(
-                        "p2p_discovery",
-                        "whoareyou",
-                        "Enqueueing known addr, p2p endpoint: {}",
-                        her_p2p_endpoint.green(),
-                    );
-                }
-                Err(err) => {
-                    terr!(
-                        "p2p_discovery",
-                        "whoareyou",
-                        "Fail to add known node. Queue might have been closed",
-                    );
+    //             // Addr that we've known a long time ago
+    //             AddrSlot::Addr(mut addr_lock, addr) => {
+    //                 addr_lock.val = AddrVal::Known(known_addr);
+    //                 addr.clone()
+    //             }
+    //         };
 
-                    return Err(WhoAreYouRecvError::KnownNodeRegisterFail {
-                        disc_endpoint: her_disc_endpoint,
-                        err,
-                    });
-                }
-            };
-        }
-        Err(err) => {
-            return Err(WhoAreYouRecvError::MsgSendFail { err });
-        }
-    };
+    //         match disc_state.table.enqueue_known_addr(addr).await {
+    //             Ok(_) => {
+    //                 tdebug!(
+    //                     "p2p_discovery",
+    //                     "whoareyou",
+    //                     "Enqueueing known addr, p2p endpoint: {}",
+    //                     her_p2p_endpoint.green(),
+    //                 );
+    //             }
+    //             Err(err) => {
+    //                 terr!(
+    //                     "p2p_discovery",
+    //                     "whoareyou",
+    //                     "Fail to add known node. Queue might have been closed",
+    //                 );
+
+    //                 return Err(WhoAreYouRecvError::KnownNodeRegisterFail {
+    //                     disc_endpoint: her_disc_endpoint,
+    //                     err,
+    //                 });
+    //             }
+    //         };
+    //     }
+    //     Err(err) => {
+    //         return Err(WhoAreYouRecvError::MsgSendFail { err });
+    //     }
+    // };
 
     Ok(())
 }
