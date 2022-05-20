@@ -1,12 +1,15 @@
 use super::ledger::{self, Ledger};
-use database::KeyValueDatabase;
-use file_system::FS;
 use logger::tinfo;
-use rocksdb::Options;
-use std::path::PathBuf;
 
 pub(crate) struct Blockchain {
     pub(crate) ledger: Ledger,
+}
+
+pub(crate) struct TxValue<'a> {
+    pub(crate) created_at: &'a str,
+    pub(crate) data: &'a str,
+    pub(crate) pi: &'a str,
+    pub(crate) sig_vec: &'a str,
 }
 
 impl Blockchain {
@@ -29,7 +32,7 @@ impl Blockchain {
         self.ledger.read_tx();
     }
 
-    pub(crate) async fn _send_transaction() {}
+    pub(crate) async fn _send_transaction<'a>(_tx_value: TxValue<'a>) {}
 
     pub(crate) async fn _get_transaction() {}
 }
