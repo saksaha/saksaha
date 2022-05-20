@@ -36,7 +36,7 @@ mod test {
         blockchain
     }
 
-    fn make_dummy_values() -> Vec<(String, TxValue<'static>)> {
+    fn make_dummy_values() -> Vec<(String, TxValue)> {
         let tx = TxValue {
             pi: "0x123",
             sig_vec: "0x0000",

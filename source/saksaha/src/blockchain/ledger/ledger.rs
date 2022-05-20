@@ -31,7 +31,10 @@ impl Ledger {
         Ok(ledger)
     }
 
-    pub(crate) fn write_tx(&self, tx_value: TxValue) -> Result<(), String> {
+    pub(crate) async fn write_tx(
+        &self,
+        tx_value: TxValue,
+    ) -> Result<(), String> {
         let db = &self.ledger_db.db;
 
         let mut batch = WriteBatch::default();

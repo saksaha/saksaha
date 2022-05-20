@@ -5,11 +5,11 @@ pub(crate) struct Blockchain {
     pub(crate) ledger: Ledger,
 }
 
-pub(crate) struct TxValue<'a> {
-    pub(crate) created_at: &'a str,
-    pub(crate) data: &'a str,
-    pub(crate) pi: &'a str,
-    pub(crate) sig_vec: &'a str,
+pub(crate) struct TxValue {
+    pub(crate) created_at: &'static str,
+    pub(crate) data: &'static str,
+    pub(crate) pi: &'static str,
+    pub(crate) sig_vec: &'static str,
 }
 
 impl Blockchain {
@@ -32,8 +32,19 @@ impl Blockchain {
         // self.ledger.read_tx();
     }
 
-    pub(crate) async fn send_transaction<'a>(&self, tx_value: TxValue<'a>) {
-        self.ledger.write_tx(tx_value);
+    pub(crate) async fn send_transaction<'a>(
+        &self,
+        tx_value: TxValue,
+    ) -> Result<String, String> {
+        match self.ledger.write_tx(tx_value).await {
+            Ok(_) => return Ok(format!("Successfully write a tx",)),
+            Err(err) => {
+                return Err(format!(
+                    "Error initializing key value database, err: {}",
+                    err
+                ));
+            }
+        }
     }
 
     pub(crate) async fn get_transaction() {}
