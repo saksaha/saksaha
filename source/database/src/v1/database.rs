@@ -1,3 +1,4 @@
+use colored::Colorize;
 use logger::tinfo;
 use rocksdb::{ColumnFamilyDescriptor, Options, DB};
 use std::path::PathBuf;
@@ -20,12 +21,28 @@ impl KeyValueDatabase {
             }
         };
 
+        tinfo!(
+            "database",
+            "",
+            "Try initializing KeyValueDatabase, db_path: {}",
+            db_path_str,
+        );
+
         let db = match DB::open_cf_descriptors(
             &options,
             &db_path_str,
             cf_descriptors,
         ) {
-            Ok(db) => db,
+            Ok(db) => {
+                tinfo!(
+                    "database",
+                    "",
+                    "Initialized KeyValueDatabase, path: {}",
+                    db_path_str.yellow(),
+                );
+
+                db
+            }
             Err(err) => {
                 return Err(format!(
                     "Cannot open column family descriptors, err: {}",

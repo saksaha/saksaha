@@ -1,12 +1,13 @@
-pub(crate) mod default;
+pub(crate) mod dev;
 
-use self::default::DefaultConfig;
 use crate::system::SystemArgs;
+use dev::DefaultConfig;
 use logger::{tinfo, twarn};
 use p2p_identity::addr::UnknownAddr;
 
 #[derive(Debug)]
 pub(crate) struct Config {
+    pub(crate) app_prefix: String,
     pub(crate) rpc: RPCConfig,
     pub(crate) p2p: P2PConfig,
     pub(crate) db: DBConfig,
@@ -36,9 +37,7 @@ pub(crate) struct RPCConfig {
 }
 
 #[derive(Debug)]
-pub(crate) struct DBConfig {
-    pub(crate) ledger_db_path: Option<String>,
-}
+pub(crate) struct DBConfig {}
 
 impl Config {
     pub(crate) fn new_from_sys_args(sys_args: &SystemArgs) -> Config {
@@ -97,9 +96,8 @@ impl Config {
         };
 
         Config {
-            db: DBConfig {
-                ledger_db_path: sys_args.ledger_db_path.clone(),
-            },
+            app_prefix: sys_args.app_prefix.clone(),
+            db: DBConfig {},
             rpc: RPCConfig {
                 rpc_port: sys_args.rpc_port,
             },

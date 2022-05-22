@@ -8,6 +8,8 @@ use saksaha::{
     system::{System, SystemArgs},
 };
 
+const APP_PREFIX: &str = "default";
+
 fn main() {
     print!("Saksaha is launching...\n");
 
@@ -31,8 +33,13 @@ fn main() {
         }
     };
 
-    let pconf = {
-        let c = match PConfig::from_path(cli_args.config) {
+    let app_prefix = match cli_args.app_prefix {
+        Some(p) => p,
+        None => APP_PREFIX.to_string(),
+    };
+
+    let pconfig = {
+        let c = match PConfig::new(&app_prefix) {
             Ok(p) => p,
             Err(err) => {
                 terr!(
@@ -74,9 +81,9 @@ fn main() {
         p2p_port: cli_args.p2p_port,
         rpc_port: cli_args.rpc_port,
         bootstrap_urls: cli_args.bootstrap_urls,
-        ledger_db_path: cli_args.ledger_db_path,
         dev_mode: cli_args.dev_mode,
-        pconfig: pconf,
+        app_prefix,
+        pconfig,
     };
 
     match system.start(sys_args) {

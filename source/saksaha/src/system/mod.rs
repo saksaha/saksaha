@@ -6,7 +6,6 @@ use logger::terr;
 use logger::tinfo;
 use once_cell::sync::OnceCell;
 use std::sync::Arc;
-use tokio::{self, signal};
 
 static INSTANCE: OnceCell<Arc<System>> = OnceCell::new();
 
@@ -27,8 +26,8 @@ pub struct SystemArgs {
     pub rpc_port: Option<u16>,
     pub p2p_port: Option<u16>,
     pub bootstrap_urls: Option<Vec<String>>,
-    pub ledger_db_path: Option<String>,
     pub dev_mode: Option<String>,
+    pub app_prefix: String,
     pub pconfig: PConfig,
 }
 
@@ -88,34 +87,5 @@ impl System {
         };
 
         Ok(())
-    }
-
-    async fn handle_ctrl_c() {
-        tokio::select!(
-            c = signal::ctrl_c() => {
-                match c {
-                    Ok(_) => {
-                        tinfo!(
-                            "sahsaha",
-                            "system",
-                            "ctrl+k is pressed.",
-                        );
-
-                        System::shutdown();
-                    },
-                    Err(err) => {
-                        terr!(
-                            "saksaha",
-                            "system",
-                            "Unexpected error while waiting for \
-                                ctrl+p, err: {}",
-                            err,
-                        );
-
-                        System::shutdown();
-                    }
-                }
-            },
-        );
     }
 }

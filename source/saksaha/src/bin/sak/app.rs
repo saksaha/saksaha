@@ -7,22 +7,13 @@ pub(super) fn create_app<'a>() -> Command<'a> {
         .about("Sakaha network reference implementation")
         .allow_hyphen_values(true)
         .arg(
-            Arg::new("config") //
-                .short('c')
-                .long("config")
+            Arg::new("app-prefix") //
+                .long("app-prefix")
                 .takes_value(true)
                 .long_help(
-                    "Saksaha configuration file path, usually created at\n\
-                    [[OS default config path]]/saksaha/config.json ",
-                ),
-        )
-        .arg(
-            Arg::new("ledger-db-path") //
-                .long("ledger-db-path")
-                .takes_value(true)
-                .long_help(
-                    "Saksaha ledger db (persistence) path, usually created \n\
-                    at [[OS default config path]]/saksaha/ledger_db/ ",
+                    "Saksaha app prefix. This makes all the member paths
+                    including db directories created under \n\
+                    APP_PATH/db/{db_dirs}, as in APP_PATH/app_path/ledger.",
                 ),
         )
         .arg(

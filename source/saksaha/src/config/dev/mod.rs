@@ -1,6 +1,6 @@
 use p2p_identity::addr::UnknownAddr;
 
-pub(crate) mod dev_local;
+pub(crate) mod local_1;
 
 pub(crate) struct DefaultConfig {
     pub(crate) p2p: DefaultP2PConfig,

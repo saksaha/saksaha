@@ -1,5 +1,6 @@
 use super::{System, SystemArgs};
 use crate::blockchain::Blockchain;
+use crate::blockchain::BlockchainArgs;
 use crate::config::Config;
 use crate::p2p::host::Host;
 use crate::p2p::host::HostArgs;
@@ -96,7 +97,11 @@ impl System {
 
         let rpc = RPC::init()?;
 
-        let blockchain = Blockchain::init(config.db.ledger_db_path).await?;
+        let blockchain_args = BlockchainArgs {
+            app_prefix: config.app_prefix,
+        };
+
+        let blockchain = Blockchain::init(blockchain_args).await?;
 
         let system_thread = tokio::spawn(async move {
             tokio::join!(
