@@ -27,9 +27,6 @@ impl Blockchain {
 
     pub(crate) async fn run(&self) {
         tinfo!("saksaha", "blockchain", "Start running blockchain");
-
-        // self.ledger.write_tx();
-        // self.ledger.read_tx();
     }
 
     pub(crate) async fn send_transaction<'a>(
@@ -47,5 +44,7 @@ impl Blockchain {
         }
     }
 
-    pub(crate) async fn get_transaction() {}
+    pub(crate) async fn get_transaction() {
+        // TODO need to implement
+    }
 }

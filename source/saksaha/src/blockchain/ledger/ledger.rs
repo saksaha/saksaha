@@ -1,6 +1,5 @@
-use crate::blockchain::blockchain::TxValue;
-
 use super::db;
+use crate::blockchain::blockchain::TxValue;
 use database::KeyValueDatabase;
 use logger::tinfo;
 use rocksdb::WriteBatch;

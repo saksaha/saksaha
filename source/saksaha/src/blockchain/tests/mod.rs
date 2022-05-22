@@ -4,18 +4,10 @@ use super::*;
 mod test {
     use super::blockchain::TxValue;
     use crate::blockchain::{ledger::ledger_columns, Blockchain};
-    use chrono::{DateTime, Utc};
     use file_system::FS;
     use hex;
-    use rocksdb::{DBWithThreadMode, SingleThreaded, WriteBatch};
+    use rocksdb::WriteBatch;
     use sha3::{Digest, Sha3_256};
-
-    // struct TxValue<'a> {
-    //     created_at: &'a str,
-    //     data: &'a str,
-    //     pi: &'a str,
-    //     sig_vec: &'a str,
-    // }
 
     fn init() {
         let _ = env_logger::builder().is_test(true).try_init();
@@ -173,6 +165,7 @@ mod test {
         let db = blockchain.ledger.ledger_db.db;
 
         let dummy_tx_values = make_dummy_values();
+
         let mut batch = WriteBatch::default();
 
         dummy_tx_values.iter().for_each(|(tx_hash, tx_val)| {
@@ -265,6 +258,7 @@ mod test {
         let db = blockchain.ledger.ledger_db.db;
 
         let dummy_tx_values = make_dummy_values();
+
         let mut batch = WriteBatch::default();
 
         dummy_tx_values.iter().for_each(|(tx_hash, tx_val)| {
@@ -292,11 +286,14 @@ mod test {
                 tx_val.sig_vec,
             );
         });
+
         db.write(batch).expect("failed to batchWrite");
 
         let mut iter = db
             .raw_iterator_cf(db.cf_handle(ledger_columns::CREATED_AT).unwrap());
+
         iter.seek_to_first();
+
         while iter.valid() {
             println!(
                 "Saw {:?} {:?}",
