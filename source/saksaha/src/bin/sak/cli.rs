@@ -13,6 +13,7 @@ pub(crate) struct CLIArgs {
     pub(crate) p2p_max_conn_count: Option<u16>,
     pub(crate) p2p_dial_interval: Option<u16>,
     pub(crate) config: Option<String>,
+    pub(crate) ledger_db_path: Option<String>,
     pub(crate) rpc_port: Option<u16>,
     pub(crate) p2p_port: Option<u16>,
     pub(crate) dev_mode: Option<String>,
@@ -24,6 +25,11 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
     let matches = app.get_matches();
 
     let config = match matches.value_of("config") {
+        Some(c) => Some(String::from(c)),
+        None => None,
+    };
+
+    let ledger_db_path = match matches.value_of("ledger-db-path") {
         Some(c) => Some(String::from(c)),
         None => None,
     };
@@ -210,6 +216,7 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
         p2p_max_conn_count,
         p2p_dial_interval,
         config,
+        ledger_db_path,
         rpc_port,
         p2p_port,
         dev_mode,

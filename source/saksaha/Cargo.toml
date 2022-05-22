@@ -38,9 +38,12 @@ once_cell = "1.8.0"
 colored = "2"
 chrono = "0.4"
 rocksdb = "0.18.0"
+sha3 = "0.10.1"
 
 [dev-dependencies]
 k256 = { version = "0.9.6", features = ["ecdh"] }
+sha3 = "0.10.1"
+hex = "0.4.3"
 
 [[bin]]
 name = "sak"
