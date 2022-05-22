@@ -35,13 +35,13 @@ impl Server {
     }
 
     pub async fn run_loop(&self) {
-        let socket = self.disc_state.udp_conn.socket.clone();
-        let mut socket_lock = socket.write().await;
+        // let mut rx = self.disc_state.udp_conn.rx;
+        let mut rx_lock = self.disc_state.udp_conn.rx.write().await;
 
         loop {
             self.conn_semaphore.acquire().await.unwrap().forget();
 
-            match socket_lock.next().await {
+            match rx_lock.next().await {
                 Some(res) => {
                     match res {
                         Ok(msg) => {

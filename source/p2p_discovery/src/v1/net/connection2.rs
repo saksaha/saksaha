@@ -1,22 +1,35 @@
-use std::sync::Arc;
+use crate::msg::Msg2;
 
 use super::codec::UdpCodec;
+use futures::{
+    stream::{SplitSink, SplitStream},
+    StreamExt,
+};
+
+use futures::sink::SinkExt;
+use std::{net::SocketAddr, sync::Arc};
 use tokio::{net::UdpSocket, sync::RwLock};
 use tokio_util::udp::UdpFramed;
 
 pub(crate) struct Connection2 {
-    pub(crate) socket: Arc<RwLock<UdpFramed<UdpCodec>>>,
+    // pub(crate) socket: Arc<RwLock<UdpFramed<UdpCodec>>>,
+    pub(crate) tx: RwLock<SplitSink<UdpFramed<UdpCodec>, (Msg2, SocketAddr)>>,
+    pub(crate) rx: RwLock<SplitStream<UdpFramed<UdpCodec>>>,
 }
 
 impl Connection2 {
     pub fn new(socket: UdpSocket) -> Connection2 {
         let udp_codec = UdpCodec {};
 
-        let mut framed_socket = {
+        let (tx, rx) = {
             let f = UdpFramed::new(socket, udp_codec);
+            let (tx, rx) = f.split();
 
-            Arc::new(RwLock::new(f))
+            (RwLock::new(tx), RwLock::new(rx))
         };
+
+        // f.next();
+        // let (rx, tx) = f.split();
 
         // let udp_codec = UdpCodec {};
         // let mut udp_framed2 = UdpFramed::new(socket2, udp_codec);
@@ -33,7 +46,9 @@ impl Connection2 {
         // }
 
         Connection2 {
-            socket: framed_socket,
+            // socket: framed_socket,
+            tx,
+            rx,
         }
     }
 }

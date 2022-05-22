@@ -1,14 +1,15 @@
 use super::{check, WHO_ARE_YOU_EXPIRATION_SEC};
 use crate::{
-    msg::WhoAreYou,
+    msg::{Msg2, WhoAreYou},
     state::DiscState,
     table::{Addr, AddrSlot, AddrVal},
 };
 use chrono::Utc;
 use colored::Colorize;
+use futures::{SinkExt, StreamExt};
 use logger::{tdebug, terr};
 use p2p_identity::addr::{AddrStatus, KnownAddr};
-use std::{net::SocketAddr, sync::Arc};
+use std::{net::SocketAddr, str::FromStr, sync::Arc};
 use thiserror::Error;
 use tokio::sync::RwLock;
 
@@ -37,6 +38,9 @@ pub(crate) enum WhoAreYouRecvError {
 
     #[error("Could not reserve addr node")]
     AddrNodeReserveFail,
+
+    #[error("Could not parse her endpoint into SocketAddr, err: {err}")]
+    EndpointParseFail { err: String },
 }
 
 pub(crate) async fn recv_who_are_you(
@@ -128,67 +132,82 @@ pub(crate) async fn recv_who_are_you(
         }
     };
 
-    let mut socket = disc_state.udp_conn.socket.write().await;
+    let msg2 = Msg2::WhoAreYou(way);
 
-    // match disc_state
-    //     .udp_conn
-    //     .write_msg(&her_disc_endpoint, way_msg)
-    //     .await
-    // {
-    //     Ok(_) => {
-    //         let addr = match addr_slot {
-    //             AddrSlot::Slot(s) => {
-    //                 let addr = {
-    //                     let a = Addr {
-    //                         val: AddrVal::Known(known_addr),
-    //                         __internal_slot: s,
-    //                     };
+    let mut tx_lock = disc_state.udp_conn.tx.write().await;
 
-    //                     Arc::new(RwLock::new(a))
-    //                 };
+    // let socket_addr =
+    //     SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 35518);
 
-    //                 disc_state
-    //                     .table
-    //                     .insert_mapping(&her_disc_endpoint, addr.clone())
-    //                     .await;
+    let her_disc_endpoint: SocketAddr = match her_disc_endpoint.parse() {
+        Ok(a) => a,
+        Err(err) => {
+            return Err(WhoAreYouRecvError::EndpointParseFail {
+                err: err.to_string(),
+            });
+        }
+    };
 
-    //                 addr
-    //             }
+    match tx_lock.send((msg2, her_disc_endpoint)).await {
+        Ok(_) => {
+            let addr = match addr_slot {
+                AddrSlot::Slot(s) => {
+                    let addr = {
+                        let a = Addr {
+                            val: AddrVal::Known(known_addr),
+                            __internal_slot: s,
+                        };
 
-    //             // Addr that we've known a long time ago
-    //             AddrSlot::Addr(mut addr_lock, addr) => {
-    //                 addr_lock.val = AddrVal::Known(known_addr);
-    //                 addr.clone()
-    //             }
-    //         };
+                        Arc::new(RwLock::new(a))
+                    };
 
-    //         match disc_state.table.enqueue_known_addr(addr).await {
-    //             Ok(_) => {
-    //                 tdebug!(
-    //                     "p2p_discovery",
-    //                     "whoareyou",
-    //                     "Enqueueing known addr, p2p endpoint: {}",
-    //                     her_p2p_endpoint.green(),
-    //                 );
-    //             }
-    //             Err(err) => {
-    //                 terr!(
-    //                     "p2p_discovery",
-    //                     "whoareyou",
-    //                     "Fail to add known node. Queue might have been closed",
-    //                 );
+                    disc_state
+                        .table
+                        .insert_mapping(
+                            &her_disc_endpoint.to_string(),
+                            addr.clone(),
+                        )
+                        .await;
 
-    //                 return Err(WhoAreYouRecvError::KnownNodeRegisterFail {
-    //                     disc_endpoint: her_disc_endpoint,
-    //                     err,
-    //                 });
-    //             }
-    //         };
-    //     }
-    //     Err(err) => {
-    //         return Err(WhoAreYouRecvError::MsgSendFail { err });
-    //     }
-    // };
+                    addr
+                }
+
+                // Addr that we've known a long time ago
+                AddrSlot::Addr(mut addr_lock, addr) => {
+                    addr_lock.val = AddrVal::Known(known_addr);
+                    addr.clone()
+                }
+            };
+
+            match disc_state.table.enqueue_known_addr(addr).await {
+                Ok(_) => {
+                    tdebug!(
+                        "p2p_discovery",
+                        "whoareyou",
+                        "Enqueueing known addr, p2p endpoint: {}",
+                        her_p2p_endpoint.green(),
+                    );
+                }
+                Err(err) => {
+                    terr!(
+                        "p2p_discovery",
+                        "whoareyou",
+                        "Fail to add known node. Queue might have been closed",
+                    );
+
+                    return Err(WhoAreYouRecvError::KnownNodeRegisterFail {
+                        disc_endpoint: her_disc_endpoint.to_string(),
+                        err,
+                    });
+                }
+            };
+        }
+        Err(err) => {
+            return Err(WhoAreYouRecvError::MsgSendFail {
+                err: err.to_string(),
+            });
+        }
+    };
 
     Ok(())
 }
