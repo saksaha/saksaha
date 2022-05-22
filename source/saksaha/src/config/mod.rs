@@ -9,6 +9,7 @@ use p2p_identity::addr::UnknownAddr;
 pub(crate) struct Config {
     pub(crate) rpc: RPCConfig,
     pub(crate) p2p: P2PConfig,
+    pub(crate) db: DBConfig,
 }
 
 #[derive(Debug)]
@@ -32,6 +33,11 @@ pub(crate) struct P2PConfig {
 #[derive(Debug)]
 pub(crate) struct RPCConfig {
     pub(crate) rpc_port: Option<u16>,
+}
+
+#[derive(Debug)]
+pub(crate) struct DBConfig {
+    pub(crate) ledger_db_path: Option<String>,
 }
 
 impl Config {
@@ -91,6 +97,9 @@ impl Config {
         };
 
         Config {
+            db: DBConfig {
+                ledger_db_path: sys_args.ledger_db_path.clone(),
+            },
             rpc: RPCConfig {
                 rpc_port: sys_args.rpc_port,
             },

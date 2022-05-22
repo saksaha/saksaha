@@ -27,6 +27,7 @@ pub struct SystemArgs {
     pub rpc_port: Option<u16>,
     pub p2p_port: Option<u16>,
     pub bootstrap_urls: Option<Vec<String>>,
+    pub ledger_db_path: Option<String>,
     pub dev_mode: Option<String>,
     pub pconfig: PConfig,
 }
