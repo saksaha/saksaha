@@ -81,7 +81,7 @@ fn main() {
         p2p_port: cli_args.p2p_port,
         rpc_port: cli_args.rpc_port,
         bootstrap_urls: cli_args.bootstrap_urls,
-        dev_mode: cli_args.dev_mode,
+        dev_profile: cli_args.dev_profile,
         app_prefix,
         pconfig,
     };

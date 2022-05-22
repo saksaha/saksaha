@@ -17,7 +17,12 @@ impl System {
     ) -> Result<(), String> {
         tinfo!("saksaha", "system", "System is starting");
 
-        let config = Config::new_from_sys_args(&sys_args);
+        let config = match Config::new_from_sys_args(&sys_args) {
+            Ok(c) => c,
+            Err(err) => {
+                return Err(format!("Error creating config, err: {}", err));
+            }
+        };
 
         tinfo!("saksaha", "system", "Resolved config: {:?}", config);
 

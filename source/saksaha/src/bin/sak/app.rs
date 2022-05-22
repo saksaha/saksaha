@@ -50,10 +50,13 @@ pub(super) fn create_app<'a>() -> Command<'a> {
                 .long_help("P2P discovery table capacity (size)"),
         )
         .arg(
-            Arg::new("dev-mode") //
-                .long("dev-mode")
+            Arg::new("dev-profile") //
+                .long("dev-profile")
                 .takes_value(true)
-                .long_help("Dev mode. e.g. 'dev-local'"),
+                .long_help(
+                    "Dev profile. This dictates which 'config' to load,
+                    e.g. 'local_1'",
+                ),
         )
         .arg(
             Arg::new("disc-dial-interval") //
