@@ -10,10 +10,7 @@ pub(crate) struct Ledger {
 }
 
 impl Ledger {
-    pub(crate) async fn init(
-        // db_prefix: Option<String>,
-        app_prefix: &String,
-    ) -> Result<Ledger, String> {
+    pub(crate) async fn init(app_prefix: &String) -> Result<Ledger, String> {
         let ledger_db = match db::init_ledger_db(&app_prefix) {
             Ok(d) => d,
             Err(err) => {
@@ -40,7 +37,7 @@ impl Ledger {
         let mut batch = WriteBatch::default();
         let tx_hash = {
             let mut h = Sha3_256::new();
-            h.update(tx_value.created_at);
+            h.update(tx_value.created_at.clone());
             h.finalize()
         };
 
@@ -79,8 +76,6 @@ impl Ledger {
     pub(crate) fn read_tx(&self) {
         let db = &self.ledger_db.db;
 
-        let val = db.get_cf(db.cf_handle("tx_hash").unwrap(), "4").unwrap();
-
-        // println!("got the tx, {:?}", val);
+        let _val = db.get_cf(db.cf_handle("tx_hash").unwrap(), "4").unwrap();
     }
 }

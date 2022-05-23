@@ -1,5 +1,6 @@
 use super::ledger::{self, Ledger};
 use logger::tinfo;
+use serde::{Deserialize, Serialize};
 
 pub(crate) struct Blockchain {
     pub(crate) ledger: Ledger,
@@ -9,11 +10,12 @@ pub(crate) struct BlockchainArgs {
     pub(crate) app_prefix: String,
 }
 
+#[derive(Deserialize, Serialize, Debug)]
 pub(crate) struct TxValue {
-    pub(crate) created_at: &'static str,
-    pub(crate) data: &'static str,
-    pub(crate) pi: &'static str,
-    pub(crate) sig_vec: &'static str,
+    pub(crate) created_at: String,
+    pub(crate) data: String,
+    pub(crate) pi: String,
+    pub(crate) sig_vec: String,
 }
 
 impl Blockchain {

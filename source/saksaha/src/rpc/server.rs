@@ -1,20 +1,16 @@
-use hyper::server::conn::{AddrIncoming, AddrStream};
-use hyper::service::{make_service_fn, service_fn};
-use hyper::{Body, Method, Request, Response, Server, StatusCode};
-use logger::{tdebug, tinfo, twarn};
-use std::convert::Infallible;
+use super::router::Router;
+use hyper::server::conn::AddrIncoming;
+use hyper::service::Service;
+use hyper::{Body, Request, Response, Server};
+use logger::{tinfo, twarn};
+use std::future::Future;
 use std::net::SocketAddr;
+use std::pin::Pin;
 use std::sync::Arc;
+use std::task::{Context, Poll};
 use tokio::net::TcpListener;
-use tokio::sync::RwLock;
-use tokio::task::JoinHandle;
 
-use crate::rpc::apis;
-
-pub(crate) struct RPCServer {
-    // pub(crate) rpc_socket: Option<TcpListener>,
-// pub(crate) socket_addr: SocketAddr,
-}
+pub(crate) struct RPCServer {}
 
 impl RPCServer {
     pub fn init() -> Result<RPCServer, String> {
@@ -38,24 +34,12 @@ impl RPCServer {
             }
         };
 
-        let make_svc = make_service_fn(|socket: &AddrStream| {
-            let remote_addr = socket.remote_addr();
+        let router = {
+            let r = Router::new();
+            Arc::new(r)
+        };
 
-            tdebug!(
-                "saksaha",
-                "rpc",
-                "Incoming request, from: {}",
-                remote_addr
-            );
-
-            async {
-                Ok::<_, Infallible>(service_fn(move |req| {
-                    apis::handle_request(req)
-                }))
-            }
-        });
-
-        let server = Server::builder(addr_incoming).serve(make_svc);
+        let server = Server::builder(addr_incoming).serve(MakeSvc { router });
 
         tinfo!("saksaha", "rpc", "Starting rpc server");
 
@@ -69,5 +53,47 @@ impl RPCServer {
         };
 
         Ok(())
+    }
+}
+
+struct Svc {
+    router: Arc<Router>,
+}
+
+impl Service<Request<Body>> for Svc {
+    type Response = Response<Body>;
+    type Error = hyper::Error;
+    type Future = Pin<
+        Box<dyn Future<Output = Result<Self::Response, Self::Error>> + Send>,
+    >;
+
+    fn poll_ready(&mut self, _: &mut Context) -> Poll<Result<(), Self::Error>> {
+        Poll::Ready(Ok(()))
+    }
+
+    fn call(&mut self, req: Request<Body>) -> Self::Future {
+        self.router.route(req)
+    }
+}
+
+struct MakeSvc {
+    router: Arc<Router>,
+}
+
+impl<T> Service<T> for MakeSvc {
+    type Response = Svc;
+    type Error = hyper::Error;
+    type Future = Pin<
+        Box<dyn Future<Output = Result<Self::Response, Self::Error>> + Send>,
+    >;
+
+    fn poll_ready(&mut self, _: &mut Context) -> Poll<Result<(), Self::Error>> {
+        Poll::Ready(Ok(()))
+    }
+
+    fn call(&mut self, _: T) -> Self::Future {
+        let router = self.router.clone();
+
+        Box::pin(async move { Ok(Svc { router }) })
     }
 }

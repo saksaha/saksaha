@@ -12,14 +12,14 @@ pub(crate) struct DevP2PConfig {
 }
 
 impl DevConfig {
-    pub(crate) fn new(dev_profile: &String) -> Result<DevConfig, String> {
-        match dev_profile.as_ref() {
-            "local_1" => Ok(DevConfig::local_1()),
+    pub(crate) fn new(cfg_profile: &String) -> Result<DevConfig, String> {
+        match cfg_profile.as_ref() {
+            "dev_local_1" => Ok(DevConfig::dev_local_1()),
             _ => {
                 return Err(format!(
                     "DevConfig does not exist with the \
-                            specified dev_profile ({})",
-                    dev_profile,
+                            specified cfg_profile ({})",
+                    cfg_profile,
                 ));
             }
         }

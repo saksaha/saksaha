@@ -2,7 +2,7 @@ use super::{DevConfig, DevP2PConfig};
 use p2p_identity::addr::{AddrStatus, UnknownAddr};
 
 impl DevConfig {
-    pub(crate) fn local_1() -> DevConfig {
+    pub(crate) fn dev_local_1() -> DevConfig {
         return DevConfig {
             app_prefix: String::from("dev_local_1"),
             p2p: DevP2PConfig {

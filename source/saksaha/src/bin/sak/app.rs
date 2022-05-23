@@ -13,7 +13,8 @@ pub(super) fn create_app<'a>() -> Command<'a> {
                 .long_help(
                     "Saksaha app prefix. This makes all the member paths
                     including db directories created under \n\
-                    APP_PATH/db/{db_dirs}, as in APP_PATH/app_path/ledger.",
+                    APP_PATH/{app_prefix}/{db_dirs}, as in \n\
+                    APP_PATH/app_path/ledger.",
                 ),
         )
         .arg(
@@ -50,13 +51,13 @@ pub(super) fn create_app<'a>() -> Command<'a> {
                 .long_help("P2P discovery table capacity (size)"),
         )
         .arg(
-            Arg::new("dev-profile") //
-                .long("dev-profile")
+            Arg::new("cfg-profile") //
+                .long("cfg-profile")
                 .takes_value(true)
                 .long_help(
-                    "Dev profile. This dictates which 'config' to load, \n
-                    Note that you cannot provide 'dev-profile' and \n
-                    'app-prefix' at the same time, as each 'dev-profile' has
+                    "Config profile. This dictates which 'config' to load, \n
+                    Note that you cannot provide 'cfg-profile' and \n
+                    'app-prefix' at the same time, as each 'cfg-profile' has
                     its own 'app-prefix',
                     e.g. 'local_1'",
                 ),
