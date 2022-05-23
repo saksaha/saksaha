@@ -9,6 +9,8 @@ mod task;
 #[cfg(test)]
 mod tests;
 
+use crate::v1::net::connection2::Connection2;
+
 use self::dial_scheduler::DialSchedulerArgs;
 use self::net::connection::UdpConn;
 use self::task::DiscoveryTask;
@@ -61,7 +63,8 @@ impl Discovery {
         let (udp_conn, disc_port) = {
             let (socket, socket_addr) =
                 utils_net::setup_udp_socket(disc_args.disc_port).await?;
-            let udp_conn = UdpConn { socket };
+            // let udp_conn = UdpConn { socket };
+            let udp_conn = Connection2::new(socket);
 
             tinfo!(
                 "p2p_discovery",
@@ -132,21 +135,12 @@ impl Discovery {
 
     pub async fn run(&self) {
         let server = self.server.clone();
-        let server_thread = tokio::spawn(async move {
-            server.run().await;
-        });
 
         let task_runtime = self.task_runtime.clone();
-        let task_runtime_thread = tokio::spawn(async move {
-            task_runtime.run().await;
-        });
 
         let dial_scheduler = self.dial_scheduler.clone();
-        let dial_scheduler_thread = tokio::spawn(async move {
-            dial_scheduler.run().await;
-        });
 
-        tokio::join!(server_thread, task_runtime_thread, dial_scheduler_thread);
+        tokio::join!(server.run(), task_runtime.run(), dial_scheduler.run());
     }
 
     pub fn new_iter(&self) -> AddrsIterator {

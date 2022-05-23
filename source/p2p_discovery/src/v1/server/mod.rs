@@ -1,6 +1,9 @@
 mod handler;
 
+use crate::msg::Msg2;
+
 use super::DiscState;
+use futures::{SinkExt, StreamExt};
 use handler::Handler;
 use logger::{terr, tinfo};
 use std::sync::Arc;
@@ -34,36 +37,53 @@ impl Server {
     }
 
     pub async fn run_loop(&self) {
+        // let mut rx = self.disc_state.udp_conn.rx;
+        let mut rx_lock = self.disc_state.udp_conn.rx.write().await;
+
         loop {
             self.conn_semaphore.acquire().await.unwrap().forget();
 
-            let (msg, socket_addr) =
-                match self.disc_state.udp_conn.read_msg().await {
-                    Some(m) => m,
-                    None => {
-                        continue;
-                    }
-                };
-
-            let handler = Handler {
-                conn_semaphore: self.conn_semaphore.clone(),
-                disc_state: self.disc_state.clone(),
-                socket_addr,
-                msg,
-            };
-
-            match handler.run().await {
-                Ok(_) => (),
-                Err(err) => {
-                    terr!(
-                        "p2p_discovery",
-                        "server",
-                        "Error processing request, addr: {}, err: {}",
-                        socket_addr,
-                        err
-                    );
+            match rx_lock.next().await {
+                Some(res) => {
+                    match res {
+                        Ok((msg, socket_addr)) => {
+                            println!("msg parsed",);
+                        }
+                        Err(err) => {
+                            println!("Error parsing message, err: {}", err);
+                        }
+                    };
                 }
-            };
+                None => (),
+            }
+
+            // let (msg, socket_addr) =
+            //     match self.disc_state.udp_conn.read_msg().await {
+            //         Some(m) => m,
+            //         None => {
+            //             continue;
+            //         }
+            //     };
+
+            // let handler = Handler {
+            //     conn_semaphore: self.conn_semaphore.clone(),
+            //     disc_state: self.disc_state.clone(),
+            //     socket_addr,
+            //     msg,
+            // };
+
+            // match handler.run().await {
+            //     Ok(_) => (),
+            //     Err(err) => {
+            //         terr!(
+            //             "p2p_discovery",
+            //             "server",
+            //             "Error processing request, addr: {}, err: {}",
+            //             socket_addr,
+            //             err
+            //         );
+            //     }
+            // };
         }
     }
 }

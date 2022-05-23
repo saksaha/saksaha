@@ -1,10 +1,11 @@
-use super::{DefaultConfig, DefaultP2PConfig};
+use super::{DevConfig, DevP2PConfig};
 use p2p_identity::addr::{AddrStatus, UnknownAddr};
 
-impl DefaultConfig {
-    pub(crate) fn new_dev_local() -> DefaultConfig {
-        return DefaultConfig {
-            p2p: DefaultP2PConfig {
+impl DevConfig {
+    pub(crate) fn local_1() -> DevConfig {
+        return DevConfig {
+            app_prefix: String::from("dev_local_1"),
+            p2p: DevP2PConfig {
                 bootstrap_addrs: vec![
                     UnknownAddr {
                         ip: String::from("127.0.0.1"),

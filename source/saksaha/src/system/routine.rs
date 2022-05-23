@@ -1,22 +1,99 @@
 use super::{System, SystemArgs};
 use crate::blockchain::Blockchain;
+use crate::blockchain::BlockchainArgs;
 use crate::config::Config;
+use crate::config::DevConfig;
 use crate::p2p::host::Host;
 use crate::p2p::host::HostArgs;
+use crate::pconfig::PConfig;
 use crate::rpc::RPC;
 use colored::Colorize;
 use logger::{terr, tinfo};
 use p2p_peer::PeerTable;
 use std::sync::Arc;
 
-impl System {
-    pub(super) async fn start_routine(
-        &self,
-        sys_args: SystemArgs,
-    ) -> Result<(), String> {
+const APP_PREFIX: &str = "default";
+
+pub(super) struct Routine;
+
+impl Routine {
+    pub(super) async fn run(&self, sys_args: SystemArgs) -> Result<(), String> {
         tinfo!("saksaha", "system", "System is starting");
 
-        let config = Config::new_from_sys_args(&sys_args);
+        let config = {
+            let dev_config = match &sys_args.dev_profile {
+                Some(dev_profile) => {
+                    if let Some(ap) = &sys_args.app_prefix {
+                        return Err(format!(
+                            "You cannot provide 'app_prefix' and \
+                            'dev_profile' at the same time, app_prefix: {}, \
+                            dev_profile: {}",
+                            ap, dev_profile,
+                        ));
+                    }
+
+                    match DevConfig::new(dev_profile) {
+                        Ok(c) => Some(c),
+                        Err(err) => {
+                            return Err(format!(
+                                "Could not create dev config, err: {}",
+                                err
+                            ));
+                        }
+                    }
+                }
+                None => None,
+            };
+
+            // Order of priority
+            // dev_config.prefix > sys_args.app_prefix > APP_PREFIX (default)
+            let app_prefix = match &dev_config {
+                Some(dv) => dv.app_prefix.clone(),
+                None => match &sys_args.app_prefix {
+                    Some(ap) => ap.clone(),
+                    None => APP_PREFIX.to_string(),
+                },
+            };
+
+            tinfo!(
+                "saksaha",
+                "system",
+                "Resolved app_prefix: {}",
+                app_prefix.yellow(),
+            );
+
+            let pconfig = {
+                let c = match PConfig::new(&app_prefix) {
+                    Ok(p) => p,
+                    Err(err) => {
+                        terr!(
+                            "saksaha",
+                            "sak",
+                            "Error creating a persisted configuration, err: {}",
+                            err,
+                        );
+
+                        std::process::exit(1);
+                    }
+                };
+
+                tinfo!(
+                    "saksaha",
+                    "sak",
+                    "Persisted config loaded, conf: {:?}",
+                    c
+                );
+
+                c
+            };
+
+            match Config::new(app_prefix, &sys_args, pconfig, dev_config) {
+                Ok(c) => c,
+                Err(err) => {
+                    return Err(format!("Error creating config, err: {}", err));
+                }
+            }
+        };
 
         tinfo!("saksaha", "system", "Resolved config: {:?}", config);
 
@@ -96,13 +173,17 @@ impl System {
 
         let rpc = RPC::init()?;
 
-        let blockchain = Blockchain::init(config.db.ledger_db_path).await?;
+        let blockchain_args = BlockchainArgs {
+            app_prefix: config.app_prefix,
+        };
+
+        let blockchain = Blockchain::init(blockchain_args).await?;
 
         let system_thread = tokio::spawn(async move {
             tokio::join!(
-                rpc.run(rpc_socket, rpc_socket_addr),
+                // rpc.run(rpc_socket, rpc_socket_addr),
                 p2p_host.run(),
-                blockchain.run()
+                // blockchain.run()
             );
         });
 

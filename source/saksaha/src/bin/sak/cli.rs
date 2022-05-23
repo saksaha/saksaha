@@ -12,27 +12,16 @@ pub(crate) struct CLIArgs {
     pub(crate) p2p_peer_table_capacity: Option<u16>,
     pub(crate) p2p_max_conn_count: Option<u16>,
     pub(crate) p2p_dial_interval: Option<u16>,
-    pub(crate) config: Option<String>,
-    pub(crate) ledger_db_path: Option<String>,
+    pub(crate) app_prefix: Option<String>,
     pub(crate) rpc_port: Option<u16>,
     pub(crate) p2p_port: Option<u16>,
-    pub(crate) dev_mode: Option<String>,
+    pub(crate) dev_profile: Option<String>,
     pub(crate) bootstrap_urls: Option<Vec<String>>,
 }
 
 pub(crate) fn get_args() -> Result<CLIArgs, String> {
     let app = app::create_app();
     let matches = app.get_matches();
-
-    let config = match matches.value_of("config") {
-        Some(c) => Some(String::from(c)),
-        None => None,
-    };
-
-    let ledger_db_path = match matches.value_of("ledger-db-path") {
-        Some(c) => Some(String::from(c)),
-        None => None,
-    };
 
     let rpc_port = match matches.value_of("rpc-port") {
         Some(p) => match p.parse::<u16>() {
@@ -73,7 +62,7 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
         None => None,
     };
 
-    let dev_mode = match matches.value_of("dev-mode") {
+    let dev_profile = match matches.value_of("dev-profile") {
         Some(m) => Some(String::from(m)),
         None => None,
     };
@@ -204,6 +193,11 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
         None => None,
     };
 
+    let app_prefix = match matches.value_of("app-prefix") {
+        Some(m) => Some(String::from(m)),
+        None => None,
+    };
+
     Ok(CLIArgs {
         disc_port,
         disc_dial_interval,
@@ -215,12 +209,11 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
         p2p_peer_table_capacity,
         p2p_max_conn_count,
         p2p_dial_interval,
-        config,
-        ledger_db_path,
         rpc_port,
         p2p_port,
-        dev_mode,
+        dev_profile,
         bootstrap_urls,
+        app_prefix,
     })
 }
 

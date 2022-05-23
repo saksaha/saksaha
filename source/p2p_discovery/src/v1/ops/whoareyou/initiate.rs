@@ -1,15 +1,19 @@
 use super::{check, WHO_ARE_YOU_EXPIRATION_SEC};
 use crate::{
-    msg::WhoAreYou,
+    msg::{Msg2, WhoAreYou},
     state::DiscState,
     table::{Addr, AddrSlot, AddrVal},
 };
 use chrono::{DateTime, Utc};
+use futures::{SinkExt, StreamExt};
 use logger::tdebug;
 use p2p_identity::addr::{AddrStatus, KnownAddr, UnknownAddr};
-use std::sync::Arc;
+use std::{
+    net::{IpAddr, Ipv4Addr, SocketAddr},
+    sync::Arc,
+};
 use thiserror::Error;
-use tokio::sync::{mpsc, RwLock};
+use tokio::sync::RwLock;
 
 #[derive(Error, Debug)]
 pub(crate) enum WhoAreYouInitError {
@@ -113,11 +117,14 @@ pub(crate) async fn init_who_are_you(
         Err(err) => return Err(WhoAreYouInitError::MsgCreateFail { err }),
     };
 
-    match disc_state
-        .udp_conn
-        .write_msg(&her_disc_endpoint, way_syn_msg)
-        .await
-    {
+    let mut tx_lock = disc_state.udp_conn.tx.write().await;
+
+    let msg2 = Msg2::WhoAreYou(way);
+
+    let socket_addr =
+        SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 35518);
+
+    match tx_lock.send((msg2, socket_addr)).await {
         Ok(_) => {
             match addr_slot {
                 // Fresh new attempt OR expired destination
@@ -158,7 +165,11 @@ pub(crate) async fn init_who_are_you(
                 "Addr updated after whoareyou initiate"
             );
         }
-        Err(err) => return Err(WhoAreYouInitError::MsgSendFail { err }),
+        Err(err) => {
+            return Err(WhoAreYouInitError::MsgSendFail {
+                err: err.to_string(),
+            });
+        }
     };
 
     Ok(())

@@ -5,6 +5,10 @@ pub(crate) struct Blockchain {
     pub(crate) ledger: Ledger,
 }
 
+pub(crate) struct BlockchainArgs {
+    pub(crate) app_prefix: String,
+}
+
 pub(crate) struct TxValue {
     pub(crate) created_at: &'static str,
     pub(crate) data: &'static str,
@@ -14,9 +18,12 @@ pub(crate) struct TxValue {
 
 impl Blockchain {
     pub(crate) async fn init(
-        ledger_db_path: Option<String>,
+        blockchain_args: BlockchainArgs,
+        // db_prefix: Option<String>,
     ) -> Result<Blockchain, String> {
-        let ledger = Ledger::init(ledger_db_path).await?;
+        let BlockchainArgs { app_prefix } = blockchain_args;
+
+        let ledger = Ledger::init(&app_prefix).await?;
 
         let blockchain = Blockchain { ledger };
 

@@ -1,65 +1,69 @@
-pub mod error;
-mod pconfig;
-
 use colored::Colorize;
 use file_system::FS;
 use logger::tinfo;
-pub use pconfig::*;
+use p2p_identity::addr::UnknownAddr;
+use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
 const CONFIG_FILE_NAME: &str = "config.yml";
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PConfig {
+    pub p2p: PersistedP2PConfig,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PersistedP2PConfig {
+    pub secret: String,
+    pub public_key_str: String,
+    pub bootstrap_addrs: Option<Vec<UnknownAddr>>,
+    pub p2p_port: Option<u16>,
+    pub disc_port: Option<u16>,
+}
+
 impl PConfig {
-    pub fn from_path(config_path: Option<String>) -> Result<PConfig, String> {
+    pub fn new(app_prefix: &String) -> Result<PConfig, String> {
         tinfo!("saksaha", "pconfig", "Loading persisted config...");
 
-        match config_path {
-            Some(c) => {
-                let config_path = PathBuf::from(c);
-                return PConfig::load(config_path);
-            }
-            None => {
-                let default_config_file_path = get_default_config_file_path()?;
-                tinfo!(
-                    "saksaha",
-                    "pconfig",
-                    "Config path is not given. Defaults to location, {:?}",
-                    default_config_file_path,
-                );
+        let config_file_path = get_config_file_path(app_prefix)?;
 
-                if default_config_file_path.exists() {
-                    tinfo!(
-                        "saksaha",
-                        "pconfig",
-                        "Found a config at the default location, path: {:?}",
-                        default_config_file_path,
-                    );
+        tinfo!(
+            "saksaha",
+            "pconfig",
+            "Config file path is resolved, app_prefix: {}, \
+                config_file_path: {:?}",
+            app_prefix,
+            config_file_path,
+        );
 
-                    return PConfig::load(default_config_file_path);
-                } else {
-                    tinfo!(
-                        "saksaha",
-                        "pconfig",
-                        "Couldn't find a config file at the default path. \
-                        Creating a new one, path: {:?}",
-                        default_config_file_path,
-                    );
+        if config_file_path.exists() {
+            tinfo!(
+                "saksaha",
+                "pconfig",
+                "Found a config file at the path, path: {:?}",
+                config_file_path,
+            );
 
-                    let pconfig = PConfig::new();
+            return PConfig::load(config_file_path);
+        } else {
+            tinfo!(
+                "saksaha",
+                "pconfig",
+                "Could not find a config file at the path. \
+                    Creating a new one, path: {:?}",
+                config_file_path,
+            );
 
-                    let pconf = match PConfig::persist(
-                        pconfig,
-                        default_config_file_path,
-                    ) {
-                        Ok(p) => p,
-                        Err(err) => {
-                            return Err(err);
-                        }
-                    };
+            let pconfig = PConfig::create_new_config();
 
-                    return Ok(pconf);
+            let pconf = match PConfig::persist(pconfig, config_file_path) {
+                Ok(p) => p,
+                Err(err) => {
+                    return Err(err);
                 }
-            }
+            };
+
+            return Ok(pconf);
         }
     }
 
@@ -105,7 +109,7 @@ impl PConfig {
         tinfo!(
             "saksaha",
             "pconfig",
-            "Loading configuration at path: {}",
+            "Loading pconfig from path: {}",
             path.to_string_lossy().yellow()
         );
 
@@ -131,7 +135,7 @@ impl PConfig {
         }
     }
 
-    fn new() -> PConfig {
+    fn create_new_config() -> PConfig {
         let sk = crypto::generate_key();
         let (sk, pk) = crypto::encode_into_key_pair(sk);
         let pconf = PConfig {
@@ -148,8 +152,8 @@ impl PConfig {
     }
 }
 
-pub fn get_default_config_file_path() -> Result<PathBuf, String> {
-    let app_path = FS::create_or_get_app_path()?;
+pub fn get_config_file_path(app_prefix: &String) -> Result<PathBuf, String> {
+    let app_path = FS::create_or_get_app_path(app_prefix)?;
     let config_path = app_path.join(CONFIG_FILE_NAME);
 
     Ok(config_path)
