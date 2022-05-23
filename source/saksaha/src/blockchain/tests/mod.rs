@@ -3,7 +3,9 @@ use super::*;
 #[cfg(test)]
 mod test {
     use super::blockchain::TxValue;
-    use crate::blockchain::{ledger::ledger_columns, Blockchain};
+    use crate::blockchain::{
+        ledger::ledger_columns, Blockchain, BlockchainArgs,
+    };
     use file_system::FS;
     use hex;
     use rocksdb::WriteBatch;
@@ -14,14 +16,18 @@ mod test {
     }
 
     async fn make_blockchain() -> Blockchain {
-        let db_path = {
-            let app_path = FS::create_or_get_app_path().unwrap();
-            let db_path = app_path.join("db_ledger_test");
-            let db_path = db_path.as_os_str().to_str().unwrap().to_owned();
-            Some(db_path)
+        // let db_path = {
+        //     let app_path = FS::create_or_get_app_path().unwrap();
+        //     let db_path = app_path.join("db_ledger_test");
+        //     let db_path = db_path.as_os_str().to_str().unwrap().to_owned();
+        //     Some(db_path)
+        // };
+
+        let blockchain_args = BlockchainArgs {
+            db_prefix: Some("test".to_string()),
         };
 
-        let blockchain = Blockchain::init(db_path)
+        let blockchain = Blockchain::init(blockchain_args)
             .await
             .expect("Blockchain should be initialized");
 

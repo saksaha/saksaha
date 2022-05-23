@@ -3,10 +3,7 @@ mod cli;
 
 use crate::cli::CLIArgs;
 use logger::{terr, tinfo};
-use saksaha::{
-    pconfig::PConfig,
-    system::{System, SystemArgs},
-};
+use saksaha::system::{System, SystemArgs};
 
 fn main() {
     print!("Saksaha is launching...\n");
@@ -29,26 +26,6 @@ fn main() {
 
             std::process::exit(1);
         }
-    };
-
-    let pconf = {
-        let c = match PConfig::from_path(cli_args.config) {
-            Ok(p) => p,
-            Err(err) => {
-                terr!(
-                    "saksaha",
-                    "sak",
-                    "Error creating a persisted configuration, err: {}",
-                    err,
-                );
-
-                std::process::exit(1);
-            }
-        };
-
-        tinfo!("saksaha", "sak", "Persisted config loaded, conf: {:?}", c);
-
-        c
     };
 
     let system = match System::get_instance() {
@@ -74,9 +51,8 @@ fn main() {
         p2p_port: cli_args.p2p_port,
         rpc_port: cli_args.rpc_port,
         bootstrap_urls: cli_args.bootstrap_urls,
-        ledger_db_path: cli_args.ledger_db_path,
-        dev_mode: cli_args.dev_mode,
-        pconfig: pconf,
+        dev_profile: cli_args.dev_profile,
+        app_prefix: cli_args.app_prefix,
     };
 
     match system.start(sys_args) {

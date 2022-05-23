@@ -83,7 +83,17 @@ impl Table {
             addr_recycle_rx,
         };
         tokio::spawn(async move {
-            recycle_routine.run().await;
+            match recycle_routine.run().await {
+                Ok(_) => (),
+                Err(err) => {
+                    terr!(
+                        "p2p_discovery",
+                        "table",
+                        "Recycle routine has stopped, err: {}",
+                        err
+                    );
+                }
+            };
         });
 
         let table = Table {
@@ -206,7 +216,7 @@ struct RecycleRoutine {
 }
 
 impl RecycleRoutine {
-    async fn run(&self) {
+    async fn run(&self) -> Result<(), String> {
         let mut addr_recycle_rx = self.addr_recycle_rx.write().await;
 
         loop {
@@ -241,12 +251,10 @@ impl RecycleRoutine {
                     }
                 }
                 None => {
-                    terr!(
-                        "p2p_discovery",
-                        "table",
+                    return Err(format!(
                         "Addr recycle channel has been closed. \
                             All txs are gone."
-                    );
+                    ));
                 }
             }
         }

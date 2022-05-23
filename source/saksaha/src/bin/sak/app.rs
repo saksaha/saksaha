@@ -7,22 +7,13 @@ pub(super) fn create_app<'a>() -> Command<'a> {
         .about("Sakaha network reference implementation")
         .allow_hyphen_values(true)
         .arg(
-            Arg::new("config") //
-                .short('c')
-                .long("config")
+            Arg::new("app-prefix") //
+                .long("app-prefix")
                 .takes_value(true)
                 .long_help(
-                    "Saksaha configuration file path, usually created at\n\
-                    [[OS default config path]]/saksaha/config.json ",
-                ),
-        )
-        .arg(
-            Arg::new("ledger-db-path") //
-                .long("ledger-db-path")
-                .takes_value(true)
-                .long_help(
-                    "Saksaha ledger db (persistence) path, usually created \n\
-                    at [[OS default config path]]/saksaha/ledger_db/ ",
+                    "Saksaha app prefix. This makes all the member paths
+                    including db directories created under \n\
+                    APP_PATH/db/{db_dirs}, as in APP_PATH/app_path/ledger.",
                 ),
         )
         .arg(
@@ -59,10 +50,16 @@ pub(super) fn create_app<'a>() -> Command<'a> {
                 .long_help("P2P discovery table capacity (size)"),
         )
         .arg(
-            Arg::new("dev-mode") //
-                .long("dev-mode")
+            Arg::new("dev-profile") //
+                .long("dev-profile")
                 .takes_value(true)
-                .long_help("Dev mode. e.g. 'dev-local'"),
+                .long_help(
+                    "Dev profile. This dictates which 'config' to load, \n
+                    Note that you cannot provide 'dev-profile' and \n
+                    'app-prefix' at the same time, as each 'dev-profile' has
+                    its own 'app-prefix',
+                    e.g. 'local_1'",
+                ),
         )
         .arg(
             Arg::new("disc-dial-interval") //

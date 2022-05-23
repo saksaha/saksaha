@@ -11,9 +11,10 @@ pub(crate) struct Ledger {
 
 impl Ledger {
     pub(crate) async fn init(
-        ledger_db_path: Option<String>,
+        // db_prefix: Option<String>,
+        app_prefix: &String,
     ) -> Result<Ledger, String> {
-        let ledger_db = match db::init_ledger_db(ledger_db_path) {
+        let ledger_db = match db::init_ledger_db(&app_prefix) {
             Ok(d) => d,
             Err(err) => {
                 return Err(format!(
