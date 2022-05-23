@@ -3,9 +3,11 @@ use crate::blockchain::Blockchain;
 use crate::blockchain::BlockchainArgs;
 use crate::config::Config;
 use crate::config::DevConfig;
+use crate::machine::Machine;
 use crate::p2p::host::Host;
 use crate::p2p::host::HostArgs;
 use crate::pconfig::PConfig;
+use crate::rpc::RPCArgs;
 use crate::rpc::RPC;
 use colored::Colorize;
 use logger::{terr, tinfo};
@@ -99,6 +101,20 @@ impl Routine {
 
         tinfo!("saksaha", "system", "Resolved config: {:?}", config);
 
+        let blockchain = {
+            let blockchain_args = BlockchainArgs {
+                app_prefix: config.app_prefix,
+            };
+
+            Blockchain::init(blockchain_args).await?
+        };
+
+        let machine = {
+            let m = Machine { blockchain };
+
+            Arc::new(m)
+        };
+
         let p2p_peer_table = {
             let ps =
                 PeerTable::init(config.p2p.p2p_peer_table_capacity).await?;
@@ -152,38 +168,40 @@ impl Routine {
                 }
             };
 
-        let p2p_host_args = HostArgs {
-            disc_port: config.p2p.disc_port,
-            disc_dial_interval: config.p2p.disc_dial_interval,
-            disc_table_capacity: config.p2p.disc_table_capacity,
-            disc_task_interval: config.p2p.disc_task_interval,
-            disc_task_queue_capacity: config.p2p.disc_task_queue_capacity,
-            p2p_task_interval: config.p2p.p2p_task_interval,
-            p2p_task_queue_capacity: config.p2p.p2p_task_queue_capacity,
-            p2p_dial_interval: config.p2p.p2p_dial_interval,
-            p2p_socket,
-            p2p_max_conn_count: config.p2p.p2p_max_conn_count,
-            p2p_port,
-            bootstrap_addrs: config.p2p.bootstrap_addrs,
-            rpc_port: rpc_socket_addr.port(),
-            secret: config.p2p.secret,
-            public_key_str: config.p2p.public_key_str,
-            p2p_peer_table,
+        let p2p_host = {
+            let p2p_host_args = HostArgs {
+                disc_port: config.p2p.disc_port,
+                disc_dial_interval: config.p2p.disc_dial_interval,
+                disc_table_capacity: config.p2p.disc_table_capacity,
+                disc_task_interval: config.p2p.disc_task_interval,
+                disc_task_queue_capacity: config.p2p.disc_task_queue_capacity,
+                p2p_task_interval: config.p2p.p2p_task_interval,
+                p2p_task_queue_capacity: config.p2p.p2p_task_queue_capacity,
+                p2p_dial_interval: config.p2p.p2p_dial_interval,
+                p2p_socket,
+                p2p_max_conn_count: config.p2p.p2p_max_conn_count,
+                p2p_port,
+                bootstrap_addrs: config.p2p.bootstrap_addrs,
+                rpc_port: rpc_socket_addr.port(),
+                secret: config.p2p.secret,
+                public_key_str: config.p2p.public_key_str,
+                p2p_peer_table,
+            };
+
+            Host::init(p2p_host_args).await?
         };
 
-        let p2p_host = Host::init(p2p_host_args).await?;
+        let rpc = {
+            let rpc_args = RPCArgs {
+                machine: machine.clone(),
+            };
 
-        let rpc = RPC::init()?;
-
-        let blockchain_args = BlockchainArgs {
-            app_prefix: config.app_prefix,
+            RPC::init(rpc_args)?
         };
-
-        let blockchain = Blockchain::init(blockchain_args).await?;
 
         let system_thread = tokio::spawn(async move {
             tokio::join!(
-                // rpc.run(rpc_socket, rpc_socket_addr),
+                rpc.run(rpc_socket, rpc_socket_addr),
                 p2p_host.run(),
                 // blockchain.run()
             );

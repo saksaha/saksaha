@@ -1,3 +1,5 @@
+use crate::machine::Machine;
+
 use super::router::Router;
 use hyper::server::conn::AddrIncoming;
 use hyper::service::Service;
@@ -10,11 +12,13 @@ use std::sync::Arc;
 use std::task::{Context, Poll};
 use tokio::net::TcpListener;
 
-pub(crate) struct RPCServer {}
+pub(crate) struct RPCServer {
+    machine: Arc<Machine>,
+}
 
 impl RPCServer {
-    pub fn init() -> Result<RPCServer, String> {
-        let rpc_server = RPCServer {};
+    pub fn init(machine: Arc<Machine>) -> Result<RPCServer, String> {
+        let rpc_server = RPCServer { machine };
 
         Ok(rpc_server)
     }
@@ -22,7 +26,7 @@ impl RPCServer {
     pub async fn run(
         &self,
         rpc_socket: TcpListener,
-        _socket_addr: SocketAddr,
+        socket_addr: SocketAddr,
     ) -> Result<(), String> {
         let addr_incoming = match AddrIncoming::from_listener(rpc_socket) {
             Ok(a) => a,
@@ -39,11 +43,21 @@ impl RPCServer {
             Arc::new(r)
         };
 
-        let server = Server::builder(addr_incoming).serve(MakeSvc { router });
+        let make_svc = MakeSvc {
+            router,
+            machine: self.machine.clone(),
+        };
 
-        tinfo!("saksaha", "rpc", "Starting rpc server");
+        let hyper_server = Server::builder(addr_incoming).serve(make_svc);
 
-        match server.await {
+        tinfo!(
+            "saksaha",
+            "rpc",
+            "Starting rpc server, socket_addr: {}",
+            socket_addr,
+        );
+
+        match hyper_server.await {
             Ok(_) => {
                 twarn!("saksaha", "rpc", "RPC server has stopped");
             }
@@ -58,6 +72,7 @@ impl RPCServer {
 
 struct Svc {
     router: Arc<Router>,
+    machine: Arc<Machine>,
 }
 
 impl Service<Request<Body>> for Svc {
@@ -72,12 +87,13 @@ impl Service<Request<Body>> for Svc {
     }
 
     fn call(&mut self, req: Request<Body>) -> Self::Future {
-        self.router.route(req)
+        self.router.route(req, self.machine.clone())
     }
 }
 
 struct MakeSvc {
     router: Arc<Router>,
+    machine: Arc<Machine>,
 }
 
 impl<T> Service<T> for MakeSvc {
@@ -93,7 +109,8 @@ impl<T> Service<T> for MakeSvc {
 
     fn call(&mut self, _: T) -> Self::Future {
         let router = self.router.clone();
+        let machine = self.machine.clone();
 
-        Box::pin(async move { Ok(Svc { router }) })
+        Box::pin(async move { Ok(Svc { router, machine }) })
     }
 }
