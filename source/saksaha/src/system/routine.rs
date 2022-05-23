@@ -45,10 +45,22 @@ impl Routine {
                 None => None,
             };
 
-            let app_prefix = match &sys_args.app_prefix {
-                Some(p) => p.clone(),
-                None => APP_PREFIX.to_string(),
+            // Order of priority
+            // dev_config.prefix > sys_args.app_prefix > APP_PREFIX (default)
+            let app_prefix = match &dev_config {
+                Some(dv) => dv.app_prefix.clone(),
+                None => match &sys_args.app_prefix {
+                    Some(ap) => ap.clone(),
+                    None => APP_PREFIX.to_string(),
+                },
             };
+
+            tinfo!(
+                "saksaha",
+                "system",
+                "Resolved app_prefix: {}",
+                app_prefix.yellow(),
+            );
 
             let pconfig = {
                 let c = match PConfig::new(&app_prefix) {
