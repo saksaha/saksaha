@@ -10,8 +10,6 @@ use std::sync::Arc;
 use std::task::{Context, Poll};
 use tokio::net::TcpListener;
 
-type Counter = i32;
-
 pub(crate) struct RPCServer {}
 
 impl RPCServer {
@@ -36,7 +34,12 @@ impl RPCServer {
             }
         };
 
-        let server = Server::builder(addr_incoming).serve(MakeSvc {});
+        let router = {
+            let r = Router::new();
+            Arc::new(r)
+        };
+
+        let server = Server::builder(addr_incoming).serve(MakeSvc { router });
 
         tinfo!("saksaha", "rpc", "Starting rpc server");
 
@@ -69,15 +72,13 @@ impl Service<Request<Body>> for Svc {
     }
 
     fn call(&mut self, req: Request<Body>) -> Self::Future {
-        println!("SVC call(), {:p}", self);
-
-        let router = self.router.clone();
-
-        router.route(req)
+        self.router.route(req)
     }
 }
 
-struct MakeSvc {}
+struct MakeSvc {
+    router: Arc<Router>,
+}
 
 impl<T> Service<T> for MakeSvc {
     type Response = Svc;
@@ -91,12 +92,7 @@ impl<T> Service<T> for MakeSvc {
     }
 
     fn call(&mut self, _: T) -> Self::Future {
-        println!("MakeSVC call()");
-
-        let router = {
-            let r = Router::new();
-            Arc::new(r)
-        };
+        let router = self.router.clone();
 
         Box::pin(async move { Ok(Svc { router }) })
     }

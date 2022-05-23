@@ -79,8 +79,6 @@ impl Ledger {
     pub(crate) fn read_tx(&self) {
         let db = &self.ledger_db.db;
 
-        let val = db.get_cf(db.cf_handle("tx_hash").unwrap(), "4").unwrap();
-
-        // println!("got the tx, {:?}", val);
+        let _val = db.get_cf(db.cf_handle("tx_hash").unwrap(), "4").unwrap();
     }
 }

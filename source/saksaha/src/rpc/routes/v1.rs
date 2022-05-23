@@ -18,7 +18,12 @@ pub(crate) async fn send_transaction(
             let body_bytes_vec = b.to_vec();
             let body_str = match std::str::from_utf8(&body_bytes_vec) {
                 Ok(b) => {
-                    let tx_value: TxValue = serde_json::from_str(b).unwrap();
+                    let tx_value: TxValue = match serde_json::from_str(b) {
+                        Ok(v) => v,
+                        Err(err) => {
+                            return Ok(make_not_found_response());
+                        }
+                    };
                 }
                 Err(err) => {
                     return Ok(make_not_found_response());
