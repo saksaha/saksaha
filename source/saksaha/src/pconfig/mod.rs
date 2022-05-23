@@ -1,5 +1,3 @@
-pub mod error;
-
 use colored::Colorize;
 use file_system::FS;
 use logger::tinfo;
@@ -111,7 +109,7 @@ impl PConfig {
         tinfo!(
             "saksaha",
             "pconfig",
-            "Loading configuration at path: {}",
+            "Loading pconfig from path: {}",
             path.to_string_lossy().yellow()
         );
 

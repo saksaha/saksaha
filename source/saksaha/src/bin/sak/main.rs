@@ -3,12 +3,7 @@ mod cli;
 
 use crate::cli::CLIArgs;
 use logger::{terr, tinfo};
-use saksaha::{
-    pconfig::PConfig,
-    system::{System, SystemArgs},
-};
-
-const APP_PREFIX: &str = "default";
+use saksaha::system::{System, SystemArgs};
 
 fn main() {
     print!("Saksaha is launching...\n");
@@ -31,31 +26,6 @@ fn main() {
 
             std::process::exit(1);
         }
-    };
-
-    let app_prefix = match cli_args.app_prefix {
-        Some(p) => p,
-        None => APP_PREFIX.to_string(),
-    };
-
-    let pconfig = {
-        let c = match PConfig::new(&app_prefix) {
-            Ok(p) => p,
-            Err(err) => {
-                terr!(
-                    "saksaha",
-                    "sak",
-                    "Error creating a persisted configuration, err: {}",
-                    err,
-                );
-
-                std::process::exit(1);
-            }
-        };
-
-        tinfo!("saksaha", "sak", "Persisted config loaded, conf: {:?}", c);
-
-        c
     };
 
     let system = match System::get_instance() {
@@ -82,8 +52,7 @@ fn main() {
         rpc_port: cli_args.rpc_port,
         bootstrap_urls: cli_args.bootstrap_urls,
         dev_profile: cli_args.dev_profile,
-        app_prefix,
-        pconfig,
+        app_prefix: cli_args.app_prefix,
     };
 
     match system.start(sys_args) {

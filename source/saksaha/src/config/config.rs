@@ -1,5 +1,5 @@
 use super::DevConfig;
-use crate::system::SystemArgs;
+use crate::{pconfig::PConfig, system::SystemArgs};
 use logger::{tinfo, twarn};
 use p2p_identity::addr::UnknownAddr;
 
@@ -38,30 +38,17 @@ pub(crate) struct RPCConfig {
 pub(crate) struct DBConfig {}
 
 impl Config {
-    pub(crate) fn new_from_sys_args(
+    pub(crate) fn new(
+        app_prefix: String,
         sys_args: &SystemArgs,
+        pconfig: PConfig,
+        dev_config: Option<DevConfig>,
     ) -> Result<Config, String> {
-        let dconfig: DevConfig = {
-            if let Some(p) = &sys_args.dev_profile {
-                match p.as_ref() {
-                    "local_1" => DevConfig::new_dev_local(),
-                    _ => {
-                        return Err(format!(
-                            "DevConfig does not exist with the \
-                            specified dev_profile ({})",
-                            p,
-                        ));
-                    }
-                }
-            } else {
-                DevConfig::new_empty()
-            }
-        };
-
-        let pconfig = &sys_args.pconfig;
-
         let bootstrap_addrs = {
-            let mut addrs = dconfig.p2p.bootstrap_addrs;
+            let mut addrs = match dev_config {
+                Some(c) => c.p2p.bootstrap_addrs,
+                None => vec![],
+            };
 
             if let Some(a) = &pconfig.p2p.bootstrap_addrs {
                 addrs = a.clone();
@@ -105,7 +92,7 @@ impl Config {
         };
 
         let conf = Config {
-            app_prefix: sys_args.app_prefix.clone(),
+            app_prefix: app_prefix.clone(),
             db: DBConfig {},
             rpc: RPCConfig {
                 rpc_port: sys_args.rpc_port,
@@ -122,8 +109,8 @@ impl Config {
                 p2p_dial_interval: sys_args.p2p_dial_interval,
                 p2p_port: sys_args.p2p_port,
                 p2p_max_conn_count: sys_args.p2p_max_conn_count,
-                secret: sys_args.pconfig.p2p.secret.clone(),
-                public_key_str: sys_args.pconfig.p2p.public_key_str.clone(),
+                secret: pconfig.p2p.secret.clone(),
+                public_key_str: pconfig.p2p.public_key_str.clone(),
                 bootstrap_addrs,
             },
         };

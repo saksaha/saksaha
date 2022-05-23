@@ -1,7 +1,7 @@
 mod routine;
 mod shutdown;
 
-use crate::pconfig::PConfig;
+use self::routine::Routine;
 use logger::terr;
 use logger::tinfo;
 use once_cell::sync::OnceCell;
@@ -27,8 +27,7 @@ pub struct SystemArgs {
     pub p2p_port: Option<u16>,
     pub bootstrap_urls: Option<Vec<String>>,
     pub dev_profile: Option<String>,
-    pub app_prefix: String,
-    pub pconfig: PConfig,
+    pub app_prefix: Option<String>,
 }
 
 impl System {
@@ -67,7 +66,8 @@ impl System {
 
         match runtime {
             Ok(r) => r.block_on(async {
-                match self.start_routine(sys_args).await {
+                let routine = Routine {};
+                match routine.run(sys_args).await {
                     Ok(_) => (),
                     Err(err) => {
                         terr!(
