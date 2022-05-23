@@ -15,7 +15,7 @@ pub(crate) struct CLIArgs {
     pub(crate) app_prefix: Option<String>,
     pub(crate) rpc_port: Option<u16>,
     pub(crate) p2p_port: Option<u16>,
-    pub(crate) dev_profile: Option<String>,
+    pub(crate) cfg_profile: Option<String>,
     pub(crate) bootstrap_urls: Option<Vec<String>>,
 }
 
@@ -62,7 +62,7 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
         None => None,
     };
 
-    let dev_profile = match matches.value_of("dev-profile") {
+    let cfg_profile = match matches.value_of("cfg-profile") {
         Some(m) => Some(String::from(m)),
         None => None,
     };
@@ -211,7 +211,7 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
         p2p_dial_interval,
         rpc_port,
         p2p_port,
-        dev_profile,
+        cfg_profile,
         bootstrap_urls,
         app_prefix,
     })
