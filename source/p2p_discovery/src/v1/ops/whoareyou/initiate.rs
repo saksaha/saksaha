@@ -126,7 +126,6 @@ pub(crate) async fn init_who_are_you(
 
     match tx_lock.send((msg2, socket_addr)).await {
         Ok(_) => {
-            println!("power 33");
             match addr_slot {
                 // Fresh new attempt OR expired destination
                 AddrSlot::Slot(s) => {
@@ -167,8 +166,6 @@ pub(crate) async fn init_who_are_you(
             );
         }
         Err(err) => {
-            println!("power 44");
-
             return Err(WhoAreYouInitError::MsgSendFail {
                 err: err.to_string(),
             });

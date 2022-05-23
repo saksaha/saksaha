@@ -1,5 +1,7 @@
 mod handler;
 
+use crate::msg::Msg2;
+
 use super::DiscState;
 use futures::{SinkExt, StreamExt};
 use handler::Handler;
@@ -44,11 +46,11 @@ impl Server {
             match rx_lock.next().await {
                 Some(res) => {
                     match res {
-                        Ok(msg) => {
+                        Ok((msg, socket_addr)) => {
                             println!("msg parsed",);
                         }
                         Err(err) => {
-                            println!("Error parsing message");
+                            println!("Error parsing message, err: {}", err);
                         }
                     };
                 }

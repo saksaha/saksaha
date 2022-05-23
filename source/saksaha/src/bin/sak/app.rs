@@ -54,7 +54,10 @@ pub(super) fn create_app<'a>() -> Command<'a> {
                 .long("dev-profile")
                 .takes_value(true)
                 .long_help(
-                    "Dev profile. This dictates which 'config' to load,
+                    "Dev profile. This dictates which 'config' to load, \n
+                    Note that you cannot provide 'dev-profile' and \n
+                    'app-prefix' at the same time, as each 'dev-profile' has
+                    its own 'app-prefix',
                     e.g. 'local_1'",
                 ),
         )

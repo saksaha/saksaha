@@ -85,7 +85,7 @@ impl Decoder for UdpCodec {
             len_bytes.copy_from_slice(&src[1..5]);
             let length = u32::from_le_bytes(len_bytes) as usize;
 
-            if length > 2 ^ 32 - 1 {
+            if length > (2 as usize).pow(32) - 1 {
                 return Err(format!(
                     "Frame too long to be parsed, length: {}",
                     length
@@ -253,7 +253,7 @@ fn encode_whoareyou(
             + 2 * 4 // each single frame length marker
             + 1 * 4; // each single frame 'frame marker'
 
-        if len >= 2 ^ 32 {
+        if len >= (2 as usize).pow(32) {
             return Err(
                 format!("WhoAreYou is too large to send as a frame").into()
             );
