@@ -1,3 +1,4 @@
+use crate::machine::Machine;
 use crate::rpc::routes::v1;
 use hyper::{body::HttpBody, server::conn::AddrStream, service::Service};
 use hyper::{Body, Method, Request, Response, Server, StatusCode, Uri};
@@ -11,13 +12,14 @@ fn get_routes() -> Vec<(Method, &'static str, Handler)> {
     vec![(
         Method::POST,
         "/apis/v1/send_transaction",
-        Box::new(|req| Box::pin(v1::send_transaction(req))),
+        Box::new(|req, machine| Box::pin(v1::send_transaction(req, machine))),
     )]
 }
 
-pub type Handler = Box<
+pub(crate) type Handler = Box<
     dyn Fn(
             Request<Body>,
+            Arc<Machine>,
         ) -> Pin<
             Box<
                 dyn Future<Output = Result<Response<Body>, hyper::Error>>
@@ -30,8 +32,6 @@ pub type Handler = Box<
 pub(crate) struct Router {
     pub(crate) routes: Arc<Vec<(Method, &'static str, Handler)>>,
 }
-
-pub(crate) struct RouterService {}
 
 impl Router {
     pub(crate) fn new() -> Router {
@@ -46,13 +46,14 @@ impl Router {
     pub(crate) fn route(
         &self,
         req: Request<Body>,
+        machine: Arc<Machine>,
     ) -> Pin<
         Box<dyn Future<Output = Result<Response<Body>, hyper::Error>> + Send>,
     > {
         println!("method: {}, req: {}", req.method(), req.uri().path());
 
         let res = match self.get_handler_idx(req.method(), req.uri().path()) {
-            Some(i) => self.routes[i].2(req),
+            Some(i) => self.routes[i].2(req, machine),
             None => Box::pin(async {
                 println!("Not found");
 
@@ -69,7 +70,7 @@ impl Router {
     ) -> Option<usize> {
         let routes = self.routes.clone();
 
-        for (idx, (m, p, h)) in routes.iter().enumerate() {
+        for (idx, (m, p, _)) in routes.iter().enumerate() {
             if m == method && *p == path {
                 return Some(idx);
             }
