@@ -21,18 +21,18 @@ impl Routine {
         tinfo!("saksaha", "system", "System is starting");
 
         let config = {
-            let dev_config = match &sys_args.dev_profile {
-                Some(dev_profile) => {
+            let profiled_config = match &sys_args.cfg_profile {
+                Some(profile) => {
                     if let Some(ap) = &sys_args.app_prefix {
                         return Err(format!(
                             "You cannot provide 'app_prefix' and \
-                            'dev_profile' at the same time, app_prefix: {}, \
-                            dev_profile: {}",
-                            ap, dev_profile,
+                            'cfg_profile' at the same time, app_prefix: {}, \
+                            cfg_profile: {}",
+                            ap, profile,
                         ));
                     }
 
-                    match DevConfig::new(dev_profile) {
+                    match DevConfig::new(profile) {
                         Ok(c) => Some(c),
                         Err(err) => {
                             return Err(format!(
@@ -46,8 +46,10 @@ impl Routine {
             };
 
             // Order of priority
-            // dev_config.prefix > sys_args.app_prefix > APP_PREFIX (default)
-            let app_prefix = match &dev_config {
+            // 1) profiled_config.app_prefix
+            // 2) sys_args.app_prefix
+            // 3) APP_PREFIX (default)
+            let app_prefix = match &profiled_config {
                 Some(dv) => dv.app_prefix.clone(),
                 None => match &sys_args.app_prefix {
                     Some(ap) => ap.clone(),
@@ -87,7 +89,7 @@ impl Routine {
                 c
             };
 
-            match Config::new(app_prefix, &sys_args, pconfig, dev_config) {
+            match Config::new(app_prefix, &sys_args, pconfig, profiled_config) {
                 Ok(c) => c,
                 Err(err) => {
                     return Err(format!("Error creating config, err: {}", err));

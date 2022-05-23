@@ -26,7 +26,7 @@ pub struct SystemArgs {
     pub rpc_port: Option<u16>,
     pub p2p_port: Option<u16>,
     pub bootstrap_urls: Option<Vec<String>>,
-    pub dev_profile: Option<String>,
+    pub cfg_profile: Option<String>,
     pub app_prefix: Option<String>,
 }
 
@@ -59,7 +59,7 @@ impl System {
         }
     }
 
-    pub fn start(&self, sys_args: SystemArgs) -> Result<(), String> {
+    pub fn run(&self, sys_args: SystemArgs) -> Result<(), String> {
         let runtime = tokio::runtime::Builder::new_multi_thread()
             .enable_all()
             .build();
@@ -67,6 +67,7 @@ impl System {
         match runtime {
             Ok(r) => r.block_on(async {
                 let routine = Routine {};
+
                 match routine.run(sys_args).await {
                     Ok(_) => (),
                     Err(err) => {

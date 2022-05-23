@@ -4,8 +4,6 @@ use logger::tinfo;
 use rocksdb::ColumnFamilyDescriptor;
 use rocksdb::Options;
 
-// const LEDGER_DB_PATH: &str = "db_ledger";
-
 pub(crate) mod ledger_columns {
     pub const TX_HASH: &str = "tx_hash";
     pub const PI: &str = "pi";
@@ -15,17 +13,11 @@ pub(crate) mod ledger_columns {
 }
 
 pub(super) fn init_ledger_db(
-    // db_prefix: Option<String>,
     app_prefix: &String,
 ) -> Result<KeyValueDatabase, String> {
-    // let db_prefix = match db_prefix {
-    //     Some(p) => p,
-    //     None => DB_PREFIX.to_string(),
-    // };
-
     let ledger_db_path = {
         let app_path = FS::create_or_get_app_path(app_prefix)?;
-        let db_path = { app_path.join("ledger") };
+        let db_path = { app_path.join("db").join("ledger") };
 
         db_path
     };

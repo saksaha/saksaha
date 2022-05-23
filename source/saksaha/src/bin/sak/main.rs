@@ -51,11 +51,11 @@ fn main() {
         p2p_port: cli_args.p2p_port,
         rpc_port: cli_args.rpc_port,
         bootstrap_urls: cli_args.bootstrap_urls,
-        dev_profile: cli_args.dev_profile,
+        cfg_profile: cli_args.cfg_profile,
         app_prefix: cli_args.app_prefix,
     };
 
-    match system.start(sys_args) {
+    match system.run(sys_args) {
         Ok(_) => (),
         Err(err) => {
             terr!("saksaha", "Can't start the system, err: {}", err);
