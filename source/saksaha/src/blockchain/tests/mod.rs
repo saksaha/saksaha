@@ -24,7 +24,7 @@ mod test {
         // };
 
         let blockchain_args = BlockchainArgs {
-            db_prefix: Some("test".to_string()),
+            app_prefix: String::from("test"),
         };
 
         let blockchain = Blockchain::init(blockchain_args)
@@ -36,10 +36,10 @@ mod test {
 
     fn make_dummy_values() -> Vec<(String, TxValue)> {
         let tx = TxValue {
-            pi: "0x123",
-            sig_vec: "0x0000",
-            created_at: "1346546123",
-            data: "None",
+            pi: String::from("0x123"),
+            sig_vec: String::from("0x0000"),
+            created_at: String::from("1346546123"),
+            data: String::from("None"),
         };
 
         let transaction_hash_seed = vec!["foo", "bob", "sandy", "land", "god"];
@@ -56,10 +56,10 @@ mod test {
             let tx_hash_str = hex::encode(tx_hash);
 
             let tx_value = TxValue {
-                pi: tx.pi,
-                sig_vec: tx.sig_vec,
-                created_at: tx.created_at,
-                data: tx.data,
+                pi: tx.pi.clone(),
+                sig_vec: tx.sig_vec.clone(),
+                created_at: tx.created_at.clone(),
+                data: tx.data.clone(),
             };
 
             values.push((tx_hash_str, tx_value))
@@ -82,28 +82,28 @@ mod test {
             db.put_cf(
                 db.cf_handle(ledger_columns::CREATED_AT).unwrap(),
                 tx_hash,
-                tx_val.created_at,
+                &tx_val.created_at,
             )
             .expect("Tx crated_at should be inserted");
 
             db.put_cf(
                 db.cf_handle(ledger_columns::DATA).unwrap(),
                 tx_hash,
-                tx_val.data,
+                &tx_val.data,
             )
             .expect("Tx data should be inserted");
 
             db.put_cf(
                 db.cf_handle(ledger_columns::PI).unwrap(),
                 tx_hash,
-                tx_val.pi,
+                &tx_val.pi,
             )
             .expect("Tx pi should be inserted");
 
             db.put_cf(
                 db.cf_handle(ledger_columns::SIG_VEC).unwrap(),
                 tx_hash,
-                tx_val.sig_vec,
+                &tx_val.sig_vec,
             )
             .expect("Tx sig_vec should be inserted");
         });
@@ -178,25 +178,25 @@ mod test {
             batch.put_cf(
                 db.cf_handle(ledger_columns::CREATED_AT).unwrap(),
                 tx_hash,
-                tx_val.created_at,
+                &tx_val.created_at,
             );
 
             batch.put_cf(
                 db.cf_handle(ledger_columns::DATA).unwrap(),
                 tx_hash,
-                tx_val.data,
+                &tx_val.data,
             );
 
             batch.put_cf(
                 db.cf_handle(ledger_columns::PI).unwrap(),
                 tx_hash,
-                tx_val.pi,
+                &tx_val.pi,
             );
 
             batch.put_cf(
                 db.cf_handle(ledger_columns::SIG_VEC).unwrap(),
                 tx_hash,
-                tx_val.sig_vec,
+                &tx_val.sig_vec,
             );
         });
         db.write(batch).expect("failed to batchWrite");
@@ -271,25 +271,25 @@ mod test {
             batch.put_cf(
                 db.cf_handle(ledger_columns::CREATED_AT).unwrap(),
                 tx_hash,
-                tx_val.created_at,
+                &tx_val.created_at,
             );
 
             batch.put_cf(
                 db.cf_handle(ledger_columns::DATA).unwrap(),
                 tx_hash,
-                tx_val.data,
+                &tx_val.data,
             );
 
             batch.put_cf(
                 db.cf_handle(ledger_columns::PI).unwrap(),
                 tx_hash,
-                tx_val.pi,
+                &tx_val.pi,
             );
 
             batch.put_cf(
                 db.cf_handle(ledger_columns::SIG_VEC).unwrap(),
                 tx_hash,
-                tx_val.sig_vec,
+                &tx_val.sig_vec,
             );
         });
 
