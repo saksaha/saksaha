@@ -9,14 +9,6 @@ pub(crate) struct Ledger {
     pub(crate) ledger_db: KeyValueDatabase,
 }
 
-#[derive(Deserialize, Debug)]
-pub struct TxValue<'a> {
-    pi: &'a str,
-    sig_vec: &'a str,
-    data: &'a str,
-    created_at: &'a str,
-}
-
 impl Ledger {
     pub(crate) async fn init(
         // db_prefix: Option<String>,

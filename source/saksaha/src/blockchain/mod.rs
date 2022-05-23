@@ -1,4 +1,4 @@
-mod blockchain;
+pub mod blockchain;
 pub mod ledger;
 
 #[cfg(test)]
