@@ -152,11 +152,11 @@ impl P2PHost {
     pub(crate) async fn run(&self) {
         let disc = self.p2p_discovery.clone();
 
-        let p2p_task_runtime = self.p2p_task_runtime.clone();
+        // let p2p_task_runtime = self.p2p_task_runtime.clone();
 
-        let p2p_server = self.p2p_server.clone();
+        // let p2p_server = self.p2p_server.clone();
 
-        let p2p_dial_scheduler = self.p2p_dial_scheduler.clone();
+        // let p2p_dial_scheduler = self.p2p_dial_scheduler.clone();
 
         tokio::join!(
             disc.run(),
