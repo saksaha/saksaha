@@ -1,18 +1,13 @@
-use crate::blockchain::blockchain::TxValue;
+use crate::{blockchain::blockchain::TxValue, machine::Machine};
 use hyper::{Body, Request, Response, StatusCode};
-use std::str::Utf8Error;
-// =======
-// use crate::rpc::apis;
-// use crate::rpc::router::Router;
-// use hyper::{Body, Method, Request, Response, Server, StatusCode, Uri};
-// use logger::{tdebug, tinfo, twarn};
-// use std::error::Error;
-// use std::future::Future;
-// >>>>>>> RPC: send transaction api
+use std::{str::Utf8Error, sync::Arc};
 
 pub(crate) async fn send_transaction(
     req: Request<Body>,
+    machine: Arc<Machine>,
 ) -> Result<Response<Body>, hyper::Error> {
+    let _ = machine.send_transaction().await;
+
     let body = match hyper::body::to_bytes(req.into_body()).await {
         Ok(b) => {
             let body_bytes_vec = b.to_vec();
