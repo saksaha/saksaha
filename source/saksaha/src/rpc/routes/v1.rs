@@ -1,7 +1,9 @@
 use crate::rpc::response::{ErrorResult, SuccessResult};
 use crate::{blockchain::blockchain::TxValue, machine::Machine};
 use hyper::{Body, Request, Response, StatusCode};
-use std::sync::Arc;
+use p2p_discovery::Discovery;
+use std::convert::TryInto;
+use std::{str::Utf8Error, sync::Arc};
 
 pub(crate) async fn send_transaction(
     req: Request<Body>,
@@ -127,9 +129,16 @@ pub(crate) async fn dummy(
     .into_hyper_result();
 }
 
-// pub fn incorrect_tx_hash_response() -> Response<Body> {
-//     let mut no_content = Response::default();
-//     *no_content.status_mut() = StatusCode::NO_CONTENT;
+pub(crate) async fn get_status(
+    req: Request<Body>,
+    machine: Arc<Machine>,
+) -> Result<Response<Body>, hyper::Error> {
+    let addr_vec = machine.get_status().await;
+    // println!("addr_vec: {:?}", addr_vec);
 
-//     no_content
-// }
+    return SuccessResult {
+        id: String::from("1"),
+        result: String::from("power"),
+    }
+    .into_hyper_result();
+}

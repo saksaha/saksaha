@@ -101,20 +101,20 @@ impl Routine {
 
         tinfo!("saksaha", "system", "Resolved config: {:?}", config);
 
-        let blockchain = {
-            let blockchain_args = BlockchainArgs {
-                app_prefix: config.app_prefix,
-            };
-
-            Blockchain::init(blockchain_args).await?
-        };
-
-        let machine = {
-            let m = Machine { blockchain };
-
-            Arc::new(m)
-        };
-
+        //        let blockchain = {
+        //            let blockchain_args = BlockchainArgs {
+        //                app_prefix: config.app_prefix,
+        //            };
+        //
+        //            Blockchain::init(blockchain_args).await?
+        //        };
+        //
+        //        let machine = {
+        //            let m = Machine { blockchain };
+        //
+        //            Arc::new(m)
+        //        };
+        //
         let p2p_peer_table = {
             let ps =
                 PeerTable::init(config.p2p.p2p_peer_table_capacity).await?;
@@ -189,6 +189,23 @@ impl Routine {
             };
 
             Host::init(p2p_host_args).await?
+        };
+
+        let blockchain = {
+            let blockchain_args = BlockchainArgs {
+                app_prefix: config.app_prefix,
+            };
+
+            Blockchain::init(blockchain_args).await?
+        };
+
+        let machine = {
+            let m = Machine {
+                blockchain,
+                machine_discovery: p2p_host.p2p_discovery.clone(),
+            };
+
+            Arc::new(m)
         };
 
         let rpc = {

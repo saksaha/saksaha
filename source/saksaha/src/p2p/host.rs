@@ -15,16 +15,16 @@ use tokio::net::TcpListener;
 
 const P2P_TASK_QUEUE_CAPACITY: usize = 10;
 
-pub(crate) struct Host {
+pub struct Host {
     host_state: Arc<HostState>,
-    p2p_discovery: Arc<Discovery>,
+    pub p2p_discovery: Arc<Discovery>,
     p2p_dial_scheduler: Arc<P2PDialScheduler>,
     p2p_server: Arc<Server>,
     p2p_task_queue: Arc<TaskQueue<P2PTask>>,
     p2p_task_runtime: Arc<P2PTaskRuntime>,
 }
 
-pub(crate) struct HostArgs {
+pub struct HostArgs {
     pub(crate) disc_port: Option<u16>,
     pub(crate) disc_dial_interval: Option<u16>,
     pub(crate) disc_table_capacity: Option<u16>,

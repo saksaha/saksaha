@@ -30,7 +30,7 @@ const DISC_TASK_QUEUE_CAPACITY: usize = 10;
 
 pub struct Discovery {
     server: Arc<Server>,
-    disc_state: Arc<DiscState>,
+    pub disc_state: Arc<DiscState>,
     dial_scheduler: Arc<DialScheduler>,
     disc_task_queue: Arc<TaskQueue<DiscoveryTask>>,
     task_runtime: Arc<DiscTaskRuntime>,

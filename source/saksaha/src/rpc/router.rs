@@ -3,6 +3,7 @@ use crate::rpc::routes::v1;
 use hyper::{body::HttpBody, server::conn::AddrStream, service::Service};
 use hyper::{Body, Method, Request, Response, Server, StatusCode, Uri};
 use logger::{tdebug, tinfo, twarn};
+use p2p_discovery::Discovery;
 use serde::Serialize;
 use std::error::Error;
 use std::future::Future;
@@ -22,6 +23,13 @@ fn get_routes() -> Vec<(Method, &'static str, Handler)> {
             Method::POST,
             "/apis/v1/dummy",
             Box::new(|req, machine| Box::pin(v1::dummy(req, machine))),
+        ),
+        (
+            Method::POST,
+            "/apis/v1/get_status",
+            Box::new(|req, machine| {
+                Box::pin(v1::get_status(req, machine)) //
+            }),
         ),
     ]
 }
