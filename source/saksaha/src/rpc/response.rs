@@ -5,13 +5,16 @@ const JSON_RPC: &str = "2.0";
 
 #[derive(Debug, Serialize)]
 pub(crate) struct SuccessResult<D: Serialize> {
+    pub(crate) id: String,
     pub(crate) result: D,
 }
 
 pub(crate) struct ErrorResult<E: Serialize> {
+    pub(crate) status_code: StatusCode,
+    pub(crate) id: String,
     pub(crate) code: usize,
     pub(crate) message: String,
-    pub(crate) data: E,
+    pub(crate) data: Option<E>,
 }
 
 impl<D: Serialize> SuccessResult<D> {
@@ -27,7 +30,7 @@ impl<D: Serialize> SuccessResult<D> {
             let response = SuccessResponse {
                 jsonrpc: JSON_RPC,
                 result,
-                id: "1".into(),
+                id: self.id.clone(),
             };
 
             let body_str = serde_json::to_string(&response).unwrap();
@@ -55,7 +58,7 @@ impl<E: Serialize> ErrorResult<E> {
                     message: self.message.clone(),
                     data,
                 },
-                id: "1".into(),
+                id: self.id.clone(),
             };
 
             let body_str = serde_json::to_string(&response).unwrap();

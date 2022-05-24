@@ -96,18 +96,6 @@ mod test {
 
         // shutdown
 
-        // Await the response...
-        // let mut resp = client.get(uri).await?;
-
-        // let url: Uri =
-        //     format!("http://{}/apis/v1/send_transaction", rpc_socket_addr)
-        //         .parse()
-        //         .unwrap();
-
-        // let res = client.get(url).await.unwrap();
-
-        // println!("{:?}", res.status());
-
         tokio::join!(rpc_server);
 
         // Ok(())

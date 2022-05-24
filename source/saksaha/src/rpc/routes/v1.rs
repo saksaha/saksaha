@@ -14,22 +14,35 @@ pub(crate) async fn send_transaction(
                 Ok(b) => {
                     let _tx_value: TxValue = match serde_json::from_str(b) {
                         Ok(v) => match machine.send_transaction(v).await {
-                            Ok(h) => {
-                                let mut response = Response::default();
-                                *response.body_mut() = Body::from(h);
-                                println!("response: {:?}", &response);
-                                return Ok(response);
+                            Ok(hash) => {
+                                println!("response: {:?}", &hash);
+
+                                return SuccessResult {
+                                    id: String::from("1"),
+                                    result: hash,
+                                }
+                                .into_hyper_result();
                             }
                             Err(err) => {
                                 println!("err: {}", err);
-                                return Ok(incorrect_tx_hash_response());
+
+                                return ErrorResult::<String> {
+                                    id: String::from("1"),
+                                    status_code: StatusCode::NO_CONTENT,
+                                    code: 1414,
+                                    message: String::from("dummy"),
+                                    data: None,
+                                }
+                                .into_hyper_result();
                             }
                         },
                         Err(err) => {
                             return ErrorResult {
+                                id: String::from("1"),
+                                status_code: StatusCode::NO_CONTENT,
                                 code: 1414,
                                 message: String::from("dummy"),
-                                data: err.to_string(),
+                                data: Some(err.to_string()),
                             }
                             .into_hyper_result();
                         }
@@ -37,9 +50,11 @@ pub(crate) async fn send_transaction(
                 }
                 Err(err) => {
                     return ErrorResult {
+                        id: String::from("1"),
+                        status_code: StatusCode::NO_CONTENT,
                         code: 1414,
                         message: String::from("dummy"),
-                        data: err.to_string(),
+                        data: Some(err.to_string()),
                     }
                     .into_hyper_result();
                 }
@@ -47,9 +62,11 @@ pub(crate) async fn send_transaction(
         }
         Err(err) => {
             return ErrorResult {
+                id: String::from("1"),
+                status_code: StatusCode::NO_CONTENT,
                 code: 1414,
                 message: String::from("dummy"),
-                data: err.to_string(),
+                data: Some(err.to_string()),
             }
             .into_hyper_result();
         }
@@ -69,9 +86,11 @@ pub(crate) async fn dummy(
                         Ok(v) => v,
                         Err(err) => {
                             return ErrorResult {
+                                id: String::from("1"),
+                                status_code: StatusCode::NO_CONTENT,
                                 code: 1414,
                                 message: String::from("dummy"),
-                                data: err.to_string(),
+                                data: Some(err.to_string()),
                             }
                             .into_hyper_result();
                         }
@@ -79,9 +98,11 @@ pub(crate) async fn dummy(
                 }
                 Err(err) => {
                     return ErrorResult {
+                        id: String::from("1"),
+                        status_code: StatusCode::NO_CONTENT,
                         code: 1414,
                         message: String::from("dummy"),
-                        data: err.to_string(),
+                        data: Some(err.to_string()),
                     }
                     .into_hyper_result();
                 }
@@ -89,23 +110,26 @@ pub(crate) async fn dummy(
         }
         Err(err) => {
             return ErrorResult {
+                id: String::from("1"),
+                status_code: StatusCode::NO_CONTENT,
                 code: 1414,
                 message: String::from("dummy"),
-                data: err.to_string(),
+                data: Some(err.to_string()),
             }
             .into_hyper_result();
         }
     };
 
     return SuccessResult {
+        id: String::from("1"),
         result: String::from("power"),
     }
     .into_hyper_result();
 }
 
-pub fn incorrect_tx_hash_response() -> Response<Body> {
-    let mut no_content = Response::default();
-    *no_content.status_mut() = StatusCode::NO_CONTENT;
+// pub fn incorrect_tx_hash_response() -> Response<Body> {
+//     let mut no_content = Response::default();
+//     *no_content.status_mut() = StatusCode::NO_CONTENT;
 
-    no_content
-}
+//     no_content
+// }
