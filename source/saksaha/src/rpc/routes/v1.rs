@@ -1,7 +1,8 @@
+use crate::rpc::status_code::Status;
 use crate::{blockchain::blockchain::TxValue, machine::Machine};
 use hyper::{Body, Request, Response, StatusCode};
+use std::convert::TryInto;
 use std::{str::Utf8Error, sync::Arc};
-
 pub(crate) async fn send_transaction(
     req: Request<Body>,
     machine: Arc<Machine>,
@@ -36,6 +37,12 @@ pub(crate) async fn send_transaction(
 pub fn make_not_found_response() -> Response<Body> {
     let mut not_found = Response::default();
     *not_found.status_mut() = StatusCode::NOT_FOUND;
+
+    let s = Status::success_response();
+    println!("{:?}", s);
+    let j = serde_json::to_string(&s).unwrap();
+
+    *not_found.body_mut() = Body::from(j);
 
     not_found
 }
