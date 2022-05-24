@@ -31,7 +31,7 @@ impl Ledger {
     pub(crate) async fn write_tx(
         &self,
         tx_value: TxValue,
-    ) -> Result<(), String> {
+    ) -> Result<String, String> {
         let db = &self.ledger_db.db;
 
         let mut batch = WriteBatch::default();
@@ -41,41 +41,104 @@ impl Ledger {
             h.finalize()
         };
 
-        batch.put_cf(
-            db.cf_handle(db::ledger_columns::CREATED_AT)
-                .expect("Fail to open ledger columns created_at"),
-            tx_hash,
-            tx_value.created_at,
-        );
+        let cf_handle = match db.cf_handle(db::ledger_columns::CREATED_AT) {
+            Some(h) => h,
+            None => {
+                return Err(format!("Fail to open ledger columns `crated_at`"))
+            }
+        };
+        batch.put_cf(cf_handle, tx_hash, tx_value.created_at);
 
-        batch.put_cf(
-            db.cf_handle(db::ledger_columns::DATA)
-                .expect("Fail to open ledger columns data"),
-            tx_hash,
-            tx_value.data,
-        );
+        let cf_handle = match db.cf_handle(db::ledger_columns::DATA) {
+            Some(h) => h,
+            None => return Err(format!("Fail to open ledger columns `DATA`")),
+        };
+        batch.put_cf(cf_handle, tx_hash, tx_value.data);
 
-        batch.put_cf(
-            db.cf_handle(db::ledger_columns::PI)
-                .expect("Fail to open ledger columns pi"),
-            tx_hash,
-            tx_value.pi,
-        );
+        let cf_handle = match db.cf_handle(db::ledger_columns::PI) {
+            Some(h) => h,
+            None => return Err(format!("Fail to open ledger columns `PI`")),
+        };
+        batch.put_cf(cf_handle, tx_hash, tx_value.pi);
 
-        batch.put_cf(
-            db.cf_handle(db::ledger_columns::SIG_VEC)
-                .expect("Fail to open ledger columns sig_vec"),
-            tx_hash,
-            tx_value.sig_vec,
-        );
-        db.write(batch).expect("failed to batchWrite");
+        let cf_handle = match db.cf_handle(db::ledger_columns::SIG_VEC) {
+            Some(h) => h,
+            None => {
+                return Err(format!("Fail to open ledger columns `SIG_VEC`"))
+            }
+        };
+        batch.put_cf(cf_handle, tx_hash, tx_value.sig_vec);
 
-        Ok(())
+        match db.write(batch) {
+            Ok(_) => return Ok(format!("{:x}", tx_hash)),
+            Err(err) => {
+                return Err(format!("Fail to write on ledger db, err: {}", err))
+            }
+        }
     }
 
-    pub(crate) fn read_tx(&self) {
+    pub(crate) async fn read_tx(
+        &self,
+        tx_hash: &String,
+    ) -> Result<TxValue, String> {
         let db = &self.ledger_db.db;
 
-        let _val = db.get_cf(db.cf_handle("tx_hash").unwrap(), "4").unwrap();
+        let mut tx_value_result = vec![
+            String::from(""),
+            String::from(""),
+            String::from(""),
+            String::from(""),
+        ];
+
+        let tx_values_col = vec![
+            db::ledger_columns::CREATED_AT,
+            db::ledger_columns::DATA,
+            db::ledger_columns::SIG_VEC,
+            db::ledger_columns::PI,
+        ];
+
+        let tx_values_it_map = tx_values_col.iter().map(|cf_name| cf_name);
+        for (idx, cfn) in tx_values_it_map.enumerate() {
+            println!("cfn?: {}", cfn);
+            let cf_handle = match db.cf_handle(cfn) {
+                Some(h) => h,
+                None => {
+                    return Err(format!("Fail to open ledger columns {}", cfn))
+                }
+            };
+
+            tx_value_result[idx] = match db.get_cf(cf_handle, tx_hash) {
+                Ok(val) => match val {
+                    Some(v) => match std::str::from_utf8(&v) {
+                        Ok(vs) => vs.to_string(),
+                        Err(err) => {
+                            return Err(format!(
+                                "Invalid utf8 given, err: {}",
+                                err,
+                            ))
+                        }
+                    },
+                    None => {
+                        return Err(format!(
+                            "No matched value with tx_hash in {}, {}",
+                            cfn, tx_hash,
+                        ))
+                    }
+                },
+                Err(err) => {
+                    return Err(format!(
+                        "Fail to get value from ledger columns {}",
+                        cfn
+                    ))
+                }
+            };
+        }
+
+        Ok(TxValue {
+            created_at: tx_value_result[0].clone(),
+            data: tx_value_result[1].clone(),
+            sig_vec: tx_value_result[2].clone(),
+            pi: tx_value_result[3].clone(),
+        })
     }
 }

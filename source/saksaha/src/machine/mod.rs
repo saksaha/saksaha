@@ -2,5 +2,7 @@ mod default;
 mod machine;
 mod monitor;
 
-pub(crate) use machine::Machine;
+#[cfg(test)]
+mod test;
 
+pub(crate) use machine::Machine;

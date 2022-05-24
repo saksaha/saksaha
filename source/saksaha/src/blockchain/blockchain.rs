@@ -18,6 +18,17 @@ pub(crate) struct TxValue {
     pub(crate) sig_vec: String,
 }
 
+impl TxValue {
+    pub(crate) fn empty() -> TxValue {
+        TxValue {
+            created_at: String::from(""),
+            data: String::from(""),
+            pi: String::from(""),
+            sig_vec: String::from(""),
+        }
+    }
+}
+
 impl Blockchain {
     pub(crate) async fn init(
         blockchain_args: BlockchainArgs,
@@ -38,22 +49,17 @@ impl Blockchain {
         tinfo!("saksaha", "blockchain", "Start running blockchain");
     }
 
-    pub(crate) async fn send_transaction<'a>(
+    pub(crate) async fn send_transaction(
         &self,
         tx_value: TxValue,
     ) -> Result<String, String> {
-        match self.ledger.write_tx(tx_value).await {
-            Ok(_) => return Ok(format!("Successfully write a tx",)),
-            Err(err) => {
-                return Err(format!(
-                    "Error initializing key value database, err: {}",
-                    err
-                ));
-            }
-        }
+        self.ledger.write_tx(tx_value).await
     }
 
-    pub(crate) async fn get_transaction() {
-        // TODO need to implement
+    pub(crate) async fn get_transaction(
+        &self,
+        tx_hash: &String,
+    ) -> Result<TxValue, String> {
+        self.ledger.read_tx(tx_hash).await
     }
 }

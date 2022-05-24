@@ -7,7 +7,6 @@ mod test {
         ledger::ledger_columns, Blockchain, BlockchainArgs,
     };
     use file_system::FS;
-    use hex;
     use rocksdb::WriteBatch;
     use sha3::{Digest, Sha3_256};
 
@@ -53,7 +52,7 @@ mod test {
                 h.finalize()
             };
 
-            let tx_hash_str = hex::encode(tx_hash);
+            let tx_hash_str = format!("{:x}", tx_hash);
 
             let tx_value = TxValue {
                 pi: tx.pi.clone(),
