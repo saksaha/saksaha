@@ -3,17 +3,27 @@ use crate::rpc::routes::v1;
 use hyper::{body::HttpBody, server::conn::AddrStream, service::Service};
 use hyper::{Body, Method, Request, Response, Server, StatusCode, Uri};
 use logger::{tdebug, tinfo, twarn};
+use serde::Serialize;
 use std::error::Error;
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
 
 fn get_routes() -> Vec<(Method, &'static str, Handler)> {
-    vec![(
-        Method::POST,
-        "/apis/v1/send_transaction",
-        Box::new(|req, machine| Box::pin(v1::send_transaction(req, machine))),
-    )]
+    vec![
+        (
+            Method::POST,
+            "/apis/v1/send_transaction",
+            Box::new(|req, machine| {
+                Box::pin(v1::send_transaction(req, machine))
+            }),
+        ),
+        (
+            Method::POST,
+            "/apis/v1/dummy",
+            Box::new(|req, machine| Box::pin(v1::dummy(req, machine))),
+        ),
+    ]
 }
 
 pub(crate) type Handler = Box<
@@ -52,15 +62,20 @@ impl Router {
     > {
         println!("method: {}, req: {}", req.method(), req.uri().path());
 
-        let res = match self.get_handler_idx(req.method(), req.uri().path()) {
-            Some(i) => self.routes[i].2(req, machine),
-            None => Box::pin(async {
-                println!("Not found");
+        let handler_idx =
+            match self.get_handler_idx(req.method(), req.uri().path()) {
+                Some(i) => i,
+                None => {
+                    return Box::pin(async {
+                        println!("Not found");
 
-                Ok(v1::make_not_found_response())
-            }),
-        };
-        res
+                        return Ok(make_not_found_response());
+                    });
+                }
+            };
+
+        // Box::pin(async { self.routes[handler_idx].2(req, machine) })
+        self.routes[handler_idx].2(req, machine)
     }
 
     pub(crate) fn get_handler_idx(
@@ -78,4 +93,10 @@ impl Router {
 
         None
     }
+}
+
+fn make_not_found_response() -> Response<Body> {
+    let mut res = Response::default();
+    *res.status_mut() = StatusCode::NOT_FOUND;
+    res
 }
