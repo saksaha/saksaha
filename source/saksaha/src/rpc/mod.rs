@@ -5,6 +5,6 @@ mod rpc;
 mod server;
 
 #[cfg(test)]
-mod test;
+mod tests;
 
 pub(crate) use rpc::*;

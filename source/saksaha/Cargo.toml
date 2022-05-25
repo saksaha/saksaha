@@ -43,7 +43,6 @@ sha3 = "0.10.1"
 [dev-dependencies]
 k256 = { version = "0.9.6", features = ["ecdh"] }
 sha3 = "0.10.1"
-hex = "0.4.3"
 
 [[bin]]
 name = "sak"

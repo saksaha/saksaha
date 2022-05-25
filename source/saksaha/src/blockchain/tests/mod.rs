@@ -3,26 +3,13 @@ use super::*;
 #[cfg(test)]
 mod test {
     use super::blockchain::TxValue;
-    use crate::blockchain::{
-        ledger::ledger_columns, Blockchain, BlockchainArgs,
-    };
-    use file_system::FS;
-    use hex;
-    use rocksdb::WriteBatch;
-    use sha3::{Digest, Sha3_256};
+    use crate::blockchain::{Blockchain, BlockchainArgs};
 
     fn init() {
         let _ = env_logger::builder().is_test(true).try_init();
     }
 
     async fn make_blockchain() -> Blockchain {
-        // let db_path = {
-        //     let app_path = FS::create_or_get_app_path().unwrap();
-        //     let db_path = app_path.join("db_ledger_test");
-        //     let db_path = db_path.as_os_str().to_str().unwrap().to_owned();
-        //     Some(db_path)
-        // };
-
         let blockchain_args = BlockchainArgs {
             app_prefix: String::from("test"),
         };
@@ -34,38 +21,33 @@ mod test {
         blockchain
     }
 
-    fn make_dummy_values() -> Vec<(String, TxValue)> {
-        let tx = TxValue {
-            pi: String::from("0x123"),
-            sig_vec: String::from("0x0000"),
-            created_at: String::from("1346546123"),
-            data: String::from("None"),
-        };
-
-        let transaction_hash_seed = vec!["foo", "bob", "sandy", "land", "god"];
-
-        let mut values = vec![];
-
-        for (_idx, tx_data) in transaction_hash_seed.iter().enumerate() {
-            let tx_hash = {
-                let mut h = Sha3_256::new();
-                h.update(tx_data);
-                h.finalize()
-            };
-
-            let tx_hash_str = hex::encode(tx_hash);
-
-            let tx_value = TxValue {
-                pi: tx.pi.clone(),
-                sig_vec: tx.sig_vec.clone(),
-                created_at: tx.created_at.clone(),
-                data: tx.data.clone(),
-            };
-
-            values.push((tx_hash_str, tx_value))
-        }
-
-        values
+    fn make_dummy_values() -> Vec<TxValue> {
+        vec![
+            TxValue {
+                pi: String::from("0x111"),
+                sig_vec: String::from("0x1111"),
+                created_at: String::from("1346546123"),
+                data: String::from("one"),
+            },
+            TxValue {
+                pi: String::from("0x222"),
+                sig_vec: String::from("0x2222"),
+                created_at: String::from("1346546124"),
+                data: String::from("two"),
+            },
+            TxValue {
+                pi: String::from("0x333"),
+                sig_vec: String::from("0x3333"),
+                created_at: String::from("1346546125"),
+                data: String::from("three"),
+            },
+            TxValue {
+                pi: String::from("0x444"),
+                sig_vec: String::from("0x4444"),
+                created_at: String::from("1346546126"),
+                data: String::from("four"),
+            },
+        ]
     }
 
     #[tokio::test(flavor = "multi_thread")]
@@ -73,186 +55,56 @@ mod test {
         init();
 
         let blockchain = make_blockchain().await;
-
-        let db = blockchain.ledger.ledger_db.db;
+        let ledger = blockchain.ledger;
 
         let dummy_tx_values = make_dummy_values();
+        let mut tx_hashes = vec![];
 
-        dummy_tx_values.iter().for_each(|(tx_hash, tx_val)| {
-            db.put_cf(
-                db.cf_handle(ledger_columns::CREATED_AT).unwrap(),
-                tx_hash,
-                &tx_val.created_at,
-            )
-            .expect("Tx crated_at should be inserted");
+        for tx_val in dummy_tx_values.iter() {
+            let h = ledger
+                .write_tx(tx_val.clone())
+                .await
+                .expect("Tx should be written");
 
-            db.put_cf(
-                db.cf_handle(ledger_columns::DATA).unwrap(),
-                tx_hash,
-                &tx_val.data,
-            )
-            .expect("Tx data should be inserted");
+            tx_hashes.push(h);
+        }
 
-            db.put_cf(
-                db.cf_handle(ledger_columns::PI).unwrap(),
-                tx_hash,
-                &tx_val.pi,
-            )
-            .expect("Tx pi should be inserted");
+        for (idx, tx_hash) in tx_hashes.iter().enumerate() {
+            let tx_val_retrieved =
+                ledger.read_tx(&tx_hash).await.expect("Tx should exist");
 
-            db.put_cf(
-                db.cf_handle(ledger_columns::SIG_VEC).unwrap(),
-                tx_hash,
-                &tx_val.sig_vec,
-            )
-            .expect("Tx sig_vec should be inserted");
-        });
-
-        dummy_tx_values.iter().for_each(|(tx_hash, _)| {
-            let created_at = db
-                .get_cf(
-                    db.cf_handle(ledger_columns::CREATED_AT).unwrap(),
-                    tx_hash,
-                )
-                .expect("created_at should be returned")
-                .expect("created_at should exist");
-
-            println!(
-                "key: {}, cf: {}, got value: {:?}",
-                tx_hash,
-                ledger_columns::CREATED_AT,
-                std::str::from_utf8(&created_at)
-            );
-
-            let data = db
-                .get_cf(db.cf_handle(ledger_columns::DATA).unwrap(), tx_hash)
-                .expect("data should be returned")
-                .expect("data should exist");
-
-            println!(
-                "key: {}, cf: {}, got value: {:?}",
-                tx_hash,
-                ledger_columns::DATA,
-                std::str::from_utf8(&data)
-            );
-
-            let sig_vec = db
-                .get_cf(db.cf_handle(ledger_columns::SIG_VEC).unwrap(), tx_hash)
-                .expect("sig_vec should be returned")
-                .expect("sig_vec should exist");
-
-            println!(
-                "key: {}, cf: {}, got value: {:?}",
-                tx_hash,
-                ledger_columns::SIG_VEC,
-                std::str::from_utf8(&sig_vec)
-            );
-
-            let pi = db
-                .get_cf(db.cf_handle(ledger_columns::PI).unwrap(), tx_hash)
-                .expect("pi should be returned")
-                .expect("pi should exist");
-
-            println!(
-                "key: {}, cf: {}, got value: {:?}",
-                tx_hash,
-                ledger_columns::PI,
-                std::str::from_utf8(&pi)
-            );
-        });
+            assert_eq!(tx_val_retrieved.data, dummy_tx_values[idx].data);
+        }
     }
 
     #[tokio::test(flavor = "multi_thread")]
-    async fn batchput_and_get_transaction() {
+    async fn test_wrongful_put_and_get_transaction() {
         init();
 
         let blockchain = make_blockchain().await;
-
-        let db = blockchain.ledger.ledger_db.db;
+        let ledger = blockchain.ledger;
 
         let dummy_tx_values = make_dummy_values();
+        let mut tx_hashes = vec![];
 
-        let mut batch = WriteBatch::default();
+        for tx_val in dummy_tx_values.iter() {
+            let h = ledger
+                .write_tx(tx_val.clone())
+                .await
+                .expect("Tx should be written");
 
-        dummy_tx_values.iter().for_each(|(tx_hash, tx_val)| {
-            batch.put_cf(
-                db.cf_handle(ledger_columns::CREATED_AT).unwrap(),
-                tx_hash,
-                &tx_val.created_at,
-            );
+            tx_hashes.push(h);
+        }
 
-            batch.put_cf(
-                db.cf_handle(ledger_columns::DATA).unwrap(),
-                tx_hash,
-                &tx_val.data,
-            );
+        let target_idx = 0;
+        let wrong_idx = 1;
 
-            batch.put_cf(
-                db.cf_handle(ledger_columns::PI).unwrap(),
-                tx_hash,
-                &tx_val.pi,
-            );
+        let tx_val_retrieved = ledger
+            .read_tx(&tx_hashes[target_idx])
+            .await
+            .expect("Tx should exist");
 
-            batch.put_cf(
-                db.cf_handle(ledger_columns::SIG_VEC).unwrap(),
-                tx_hash,
-                &tx_val.sig_vec,
-            );
-        });
-        db.write(batch).expect("failed to batchWrite");
-
-        dummy_tx_values.iter().for_each(|(tx_hash, _)| {
-            let created_at = db
-                .get_cf(
-                    db.cf_handle(ledger_columns::CREATED_AT).unwrap(),
-                    tx_hash,
-                )
-                .expect("created_at should be returned")
-                .expect("created_at should exist");
-
-            println!(
-                "key: {}, cf: {}, got value: {:?}",
-                tx_hash,
-                ledger_columns::CREATED_AT,
-                std::str::from_utf8(&created_at)
-            );
-
-            let data = db
-                .get_cf(db.cf_handle(ledger_columns::DATA).unwrap(), tx_hash)
-                .expect("data should be returned")
-                .expect("data should exist");
-
-            println!(
-                "key: {}, cf: {}, got value: {:?}",
-                tx_hash,
-                ledger_columns::DATA,
-                std::str::from_utf8(&data)
-            );
-
-            let sig_vec = db
-                .get_cf(db.cf_handle(ledger_columns::SIG_VEC).unwrap(), tx_hash)
-                .expect("sig_vec should be returned")
-                .expect("sig_vec should exist");
-
-            println!(
-                "key: {}, cf: {}, got value: {:?}",
-                tx_hash,
-                ledger_columns::SIG_VEC,
-                std::str::from_utf8(&sig_vec)
-            );
-
-            let pi = db
-                .get_cf(db.cf_handle(ledger_columns::PI).unwrap(), tx_hash)
-                .expect("pi should be returned")
-                .expect("pi should exist");
-
-            println!(
-                "key: {}, cf: {}, got value: {:?}",
-                tx_hash,
-                ledger_columns::PI,
-                std::str::from_utf8(&pi)
-            );
-        });
+        assert_ne!(tx_val_retrieved.data, dummy_tx_values[wrong_idx].data);
     }
 
     #[tokio::test(flavor = "multi_thread")]
@@ -260,44 +112,21 @@ mod test {
         init();
 
         let blockchain = make_blockchain().await;
-
-        let db = blockchain.ledger.ledger_db.db;
+        let ledger = blockchain.ledger;
 
         let dummy_tx_values = make_dummy_values();
+        let mut tx_hashes = vec![];
 
-        let mut batch = WriteBatch::default();
+        for tx_val in dummy_tx_values.iter() {
+            let h = ledger
+                .write_tx(tx_val.clone())
+                .await
+                .expect("Tx should be written");
 
-        dummy_tx_values.iter().for_each(|(tx_hash, tx_val)| {
-            batch.put_cf(
-                db.cf_handle(ledger_columns::CREATED_AT).unwrap(),
-                tx_hash,
-                &tx_val.created_at,
-            );
+            tx_hashes.push(h);
+        }
 
-            batch.put_cf(
-                db.cf_handle(ledger_columns::DATA).unwrap(),
-                tx_hash,
-                &tx_val.data,
-            );
-
-            batch.put_cf(
-                db.cf_handle(ledger_columns::PI).unwrap(),
-                tx_hash,
-                &tx_val.pi,
-            );
-
-            batch.put_cf(
-                db.cf_handle(ledger_columns::SIG_VEC).unwrap(),
-                tx_hash,
-                &tx_val.sig_vec,
-            );
-        });
-
-        db.write(batch).expect("failed to batchWrite");
-
-        let mut iter = db
-            .raw_iterator_cf(db.cf_handle(ledger_columns::CREATED_AT).unwrap());
-
+        let mut iter = ledger.iter();
         iter.seek_to_first();
 
         while iter.valid() {
@@ -306,6 +135,7 @@ mod test {
                 std::str::from_utf8(iter.key().unwrap()),
                 std::str::from_utf8(iter.value().unwrap())
             );
+
             iter.next();
         }
     }
