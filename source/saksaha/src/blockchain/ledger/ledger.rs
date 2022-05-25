@@ -1,4 +1,4 @@
-use super::db;
+use super::{db, ledger_columns};
 use crate::blockchain::blockchain::TxValue;
 use database::KeyValueDatabase;
 use logger::tinfo;
@@ -6,7 +6,7 @@ use rocksdb::WriteBatch;
 use sha3::{Digest, Sha3_256};
 
 pub(crate) struct Ledger {
-    pub(crate) ledger_db: KeyValueDatabase,
+    ledger_db: KeyValueDatabase,
 }
 
 impl Ledger {
@@ -35,11 +35,17 @@ impl Ledger {
         let db = &self.ledger_db.db;
 
         let mut batch = WriteBatch::default();
+
         let tx_hash = {
             let mut h = Sha3_256::new();
             h.update(tx_value.created_at.clone());
             h.finalize()
         };
+
+        println!(
+            "write_tx(): created_at: {}, tx_hash: {:?}",
+            tx_value.created_at, tx_hash
+        );
 
         let cf_handle = match db.cf_handle(db::ledger_columns::CREATED_AT) {
             Some(h) => h,
@@ -91,10 +97,10 @@ impl Ledger {
         ];
 
         let tx_values_col = vec![
-            db::ledger_columns::CREATED_AT,
-            db::ledger_columns::DATA,
-            db::ledger_columns::SIG_VEC,
-            db::ledger_columns::PI,
+            ledger_columns::CREATED_AT,
+            ledger_columns::DATA,
+            ledger_columns::SIG_VEC,
+            ledger_columns::PI,
         ];
 
         let tx_values_it_map = tx_values_col.iter().map(|cf_name| cf_name);
@@ -142,3 +148,5 @@ impl Ledger {
         })
     }
 }
+
+// fn get_hash(tx)

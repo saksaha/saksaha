@@ -10,7 +10,7 @@ pub(crate) struct BlockchainArgs {
     pub(crate) app_prefix: String,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub(crate) struct TxValue {
     pub(crate) created_at: String,
     pub(crate) data: String,
