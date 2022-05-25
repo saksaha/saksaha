@@ -12,7 +12,7 @@ pub(crate) async fn run(task: P2PTask) {
     match task {
         P2PTask::InitiateHandshake {
             addr_guard,
-            host_state,
+            p2p_state,
         } => {
             let addr = addr_guard.addr.clone();
             let mut addr_lock = addr.write_owned().await;
@@ -30,7 +30,7 @@ pub(crate) async fn run(task: P2PTask) {
                 }
             };
 
-            let p2p_peer_table = host_state.p2p_peer_table.clone();
+            let p2p_peer_table = p2p_state.p2p_peer_table.clone();
 
             let peer_slot = match p2p_peer_table
                 .get_mapped_peer_lock(&known_addr.public_key_str)
@@ -82,7 +82,7 @@ pub(crate) async fn run(task: P2PTask) {
 
             let endpoint = known_addr.p2p_endpoint();
 
-            if utils_net::is_my_endpoint(host_state.p2p_port, &endpoint) {
+            if utils_net::is_my_endpoint(p2p_state.p2p_port, &endpoint) {
                 twarn!(
                     "saksaha",
                     "p2p",
@@ -136,9 +136,9 @@ pub(crate) async fn run(task: P2PTask) {
 
             let handshake_init_args = HandshakeInitArgs {
                 addr_guard,
-                p2p_port: host_state.p2p_port,
-                p2p_identity: host_state.p2p_identity.clone(),
-                p2p_peer_table: host_state.p2p_peer_table.clone(),
+                p2p_port: p2p_state.p2p_port,
+                p2p_identity: p2p_state.p2p_identity.clone(),
+                p2p_peer_table: p2p_state.p2p_peer_table.clone(),
                 peer_slot,
                 addr_lock,
             };

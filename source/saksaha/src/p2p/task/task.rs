@@ -1,11 +1,11 @@
-use crate::p2p::state::HostState;
+use crate::p2p::state::P2PState;
 use p2p_discovery::AddrGuard;
 use std::sync::Arc;
 
 pub(crate) enum P2PTask {
     InitiateHandshake {
         addr_guard: AddrGuard,
-        host_state: Arc<HostState>,
+        p2p_state: Arc<P2PState>,
     },
 }
 

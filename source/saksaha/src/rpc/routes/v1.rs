@@ -1,11 +1,16 @@
+use super::Node;
+use crate::p2p::P2PState;
 use crate::rpc::response::{ErrorResult, SuccessResult};
 use crate::{blockchain::blockchain::TxValue, machine::Machine};
 use hyper::{Body, Request, Response, StatusCode};
-use std::sync::Arc;
+use p2p_discovery::Discovery;
+use std::convert::TryInto;
+use std::{str::Utf8Error, sync::Arc};
 
 pub(crate) async fn send_transaction(
     req: Request<Body>,
-    machine: Arc<Machine>,
+    node: Arc<Node>,
+    // machine: Arc<Machine>,
 ) -> Result<Response<Body>, hyper::Error> {
     let _body = match hyper::body::to_bytes(req.into_body()).await {
         Ok(b) => {
@@ -13,7 +18,7 @@ pub(crate) async fn send_transaction(
             let _body_str = match std::str::from_utf8(&body_bytes_vec) {
                 Ok(b) => {
                     let _tx_value: TxValue = match serde_json::from_str(b) {
-                        Ok(v) => match machine.send_transaction(v).await {
+                        Ok(v) => match node.machine.send_transaction(v).await {
                             Ok(hash) => {
                                 println!("response: {:?}", &hash);
 
@@ -75,7 +80,7 @@ pub(crate) async fn send_transaction(
 
 pub(crate) async fn dummy(
     req: Request<Body>,
-    machine: Arc<Machine>,
+    node: Arc<Node>,
 ) -> Result<Response<Body>, hyper::Error> {
     let body = match hyper::body::to_bytes(req.into_body()).await {
         Ok(b) => {
@@ -127,9 +132,15 @@ pub(crate) async fn dummy(
     .into_hyper_result();
 }
 
-// pub fn incorrect_tx_hash_response() -> Response<Body> {
-//     let mut no_content = Response::default();
-//     *no_content.status_mut() = StatusCode::NO_CONTENT;
+pub(crate) async fn get_status(
+    req: Request<Body>,
+    node: Arc<Node>,
+) -> Result<Response<Body>, hyper::Error> {
+    let addr_vec = node.p2p_state.p2p_discovery.get_status().await;
 
-//     no_content
-// }
+    return SuccessResult {
+        id: String::from("1"),
+        result: addr_vec,
+    }
+    .into_hyper_result();
+}

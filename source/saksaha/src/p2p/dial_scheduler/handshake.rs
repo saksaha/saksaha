@@ -1,4 +1,4 @@
-use crate::p2p::{state::HostState, task::P2PTask};
+use crate::p2p::{task::P2PTask, P2PState};
 use logger::{terr, tinfo};
 use p2p_discovery::{AddrVal, AddrsIterator};
 use std::{
@@ -14,7 +14,7 @@ pub(crate) struct HandshakeDialLoop {
     pub(crate) p2p_task_queue: Arc<TaskQueue<P2PTask>>,
     pub(crate) p2p_dial_interval: Option<u16>,
     pub(crate) addrs_iter: Arc<AddrsIterator>,
-    pub(crate) host_state: Arc<HostState>,
+    pub(crate) p2p_state: Arc<P2PState>,
 }
 
 impl HandshakeDialLoop {
@@ -46,14 +46,14 @@ impl HandshakeDialLoop {
                     };
 
                     let my_public_key_str =
-                        &self.host_state.p2p_identity.public_key_str;
+                        &self.p2p_state.p2p_identity.public_key_str;
                     let her_public_key_str = &known_addr.public_key_str;
                     let is_my_public_key_greater_than_hers =
                         my_public_key_str > her_public_key_str;
 
                     let task = P2PTask::InitiateHandshake {
                         addr_guard,
-                        host_state: self.host_state.clone(),
+                        p2p_state: self.p2p_state.clone(),
                     };
                     let p2p_task_queue = self.p2p_task_queue.clone();
 

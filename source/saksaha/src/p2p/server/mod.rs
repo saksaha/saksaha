@@ -1,7 +1,7 @@
 mod handler;
 mod request;
 
-use super::state::HostState;
+use super::state::P2PState;
 use handler::Handler;
 use logger::{tdebug, terr, tinfo, twarn};
 use p2p_transport::connection::Connection;
@@ -14,14 +14,14 @@ use tokio::{
 const MAX_CONN_COUNT: usize = 50;
 
 pub(crate) struct Server {
-    host_state: Arc<HostState>,
+    p2p_state: Arc<P2PState>,
     conn_semaphore: Arc<Semaphore>,
     p2p_socket: TcpListener,
 }
 
 impl Server {
     pub fn new(
-        host_state: Arc<HostState>,
+        p2p_state: Arc<P2PState>,
         p2p_max_conn_count: Option<u16>,
         p2p_socket: TcpListener,
     ) -> Server {
@@ -33,7 +33,7 @@ impl Server {
         let conn_semaphore = Arc::new(Semaphore::new(p2p_max_conn_count));
 
         Server {
-            host_state,
+            p2p_state,
             conn_semaphore,
             p2p_socket,
         }
@@ -113,7 +113,7 @@ impl Server {
 
             let mut handler = Handler {
                 conn_semaphore: conn_semaphore.clone(),
-                host_state: self.host_state.clone(),
+                p2p_state: self.p2p_state.clone(),
             };
 
             tokio::spawn(async move {
