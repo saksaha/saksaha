@@ -15,8 +15,8 @@ use tokio::sync::{
 const DISC_TABLE_CAPACITY: usize = 5;
 
 /// TODO Table shall have Kademlia flavored buckets
-pub(crate) struct Table {
-    addr_map: RwLock<HashMap<String, Arc<RwLock<Addr>>>>,
+pub struct Table {
+    pub addr_map: RwLock<HashMap<String, Arc<RwLock<Addr>>>>,
     slots_tx: Arc<UnboundedSender<Arc<Slot>>>,
     slots_rx: RwLock<UnboundedReceiver<Arc<Slot>>>,
     known_addrs_tx: Arc<Sender<Arc<RwLock<Addr>>>>,

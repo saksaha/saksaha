@@ -1,7 +1,7 @@
 mod handshake;
 
 use super::task::P2PTask;
-use crate::p2p::state::HostState;
+use crate::p2p::state::P2PState;
 use handshake::HandshakeDialLoop;
 use logger::tinfo;
 use p2p_discovery::AddrsIterator;
@@ -9,14 +9,14 @@ use std::sync::Arc;
 use task_queue::TaskQueue;
 
 pub(crate) struct P2PDialSchedulerArgs {
-    pub(crate) host_state: Arc<HostState>,
+    pub(crate) p2p_state: Arc<P2PState>,
     pub(crate) p2p_dial_interval: Option<u16>,
     pub(crate) p2p_task_queue: Arc<TaskQueue<P2PTask>>,
     pub(crate) addrs_iter: Arc<AddrsIterator>,
 }
 
 pub(crate) struct P2PDialScheduler {
-    host_state: Arc<HostState>,
+    host_state: Arc<P2PState>,
     p2p_task_queue: Arc<TaskQueue<P2PTask>>,
     handshake_dial_loop: Arc<HandshakeDialLoop>,
 }
@@ -26,7 +26,7 @@ impl P2PDialScheduler {
         let P2PDialSchedulerArgs {
             p2p_task_queue,
             p2p_dial_interval,
-            host_state,
+            p2p_state,
             addrs_iter,
         } = p2p_dial_schd_args;
 
@@ -35,13 +35,13 @@ impl P2PDialScheduler {
                 p2p_task_queue: p2p_task_queue.clone(),
                 p2p_dial_interval,
                 addrs_iter,
-                host_state: host_state.clone(),
+                p2p_state: p2p_state.clone(),
             };
             Arc::new(l)
         };
 
         let d = P2PDialScheduler {
-            host_state: host_state.clone(),
+            host_state: p2p_state.clone(),
             p2p_task_queue: p2p_task_queue.clone(),
             handshake_dial_loop,
         };

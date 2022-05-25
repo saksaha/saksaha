@@ -1,5 +1,6 @@
 use crate::machine::Machine;
 
+use super::node::Node;
 use super::router::Router;
 use hyper::server::conn::AddrIncoming;
 use hyper::service::Service;
@@ -13,12 +14,12 @@ use std::task::{Context, Poll};
 use tokio::net::TcpListener;
 
 pub(crate) struct RPCServer {
-    machine: Arc<Machine>,
+    node: Arc<Node>,
 }
 
 impl RPCServer {
-    pub fn init(machine: Arc<Machine>) -> Result<RPCServer, String> {
-        let rpc_server = RPCServer { machine };
+    pub fn init(node: Arc<Node>) -> Result<RPCServer, String> {
+        let rpc_server = RPCServer { node };
 
         Ok(rpc_server)
     }
@@ -45,7 +46,7 @@ impl RPCServer {
 
         let make_svc = MakeSvc {
             router,
-            machine: self.machine.clone(),
+            node: self.node.clone(),
         };
 
         let hyper_server = Server::builder(addr_incoming).serve(make_svc);
@@ -72,7 +73,7 @@ impl RPCServer {
 
 struct Svc {
     router: Arc<Router>,
-    machine: Arc<Machine>,
+    node: Arc<Node>,
 }
 
 impl Service<Request<Body>> for Svc {
@@ -87,13 +88,13 @@ impl Service<Request<Body>> for Svc {
     }
 
     fn call(&mut self, req: Request<Body>) -> Self::Future {
-        self.router.route(req, self.machine.clone())
+        self.router.route(req, self.node.clone())
     }
 }
 
 struct MakeSvc {
     router: Arc<Router>,
-    machine: Arc<Machine>,
+    node: Arc<Node>,
 }
 
 impl<T> Service<T> for MakeSvc {
@@ -109,8 +110,8 @@ impl<T> Service<T> for MakeSvc {
 
     fn call(&mut self, _: T) -> Self::Future {
         let router = self.router.clone();
-        let machine = self.machine.clone();
+        let node = self.node.clone();
 
-        Box::pin(async move { Ok(Svc { router, machine }) })
+        Box::pin(async move { Ok(Svc { router, node }) })
     }
 }
