@@ -1,12 +1,10 @@
 use crate::{
-    v1::{
-        net::{Frame, Parse},
-        ops::{WHO_ARE_YOU_ACK_TYPE, WHO_ARE_YOU_SYN_TYPE},
-    },
+    v1::ops::{WHO_ARE_YOU_ACK_TYPE, WHO_ARE_YOU_SYN_TYPE},
     BoxedError,
 };
 use bytes::{BufMut, Bytes, BytesMut};
 use k256::ecdsa::Signature;
+use p2p_frame::{Frame, Parse};
 
 pub(crate) struct WhoAreYou {
     pub(crate) src_sig: Signature,

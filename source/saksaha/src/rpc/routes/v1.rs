@@ -181,8 +181,8 @@ pub(crate) async fn get_status(
         }
     };
 
-    let addr_vec = node.p2p_state.p2p_discovery.get_status().await;
-    let peer_vec = node.p2p_state.p2p_peer_table.get_status().await;
+    let addr_vec = node.p2p_monitor.p2p_discovery.get_status().await;
+    let peer_vec = node.p2p_monitor.peer_table.get_status().await;
 
     let result = NodeStatus {
         addr_vec, //

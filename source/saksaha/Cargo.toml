@@ -12,11 +12,12 @@ crypto = { path = "../crypto" }
 database = { path = "../database" }
 file_system = { path = "../file_system" }
 proofs = { path = "../proofs" }
+p2p_addr = { path = "../p2p_addr" }
 p2p_peer = { path = "../p2p_peer" }
 p2p_identity = { path = "../p2p_identity" }
 p2p_discovery = { path = "../p2p_discovery" }
 p2p_transport = { path = "../p2p_transport" }
-p2p_transport_handshake = { path = "../p2p_transport_handshake" }
+p2p_transport_ops = { path = "../p2p_transport_ops" }
 utils_time = { path = "../utils_time" }
 utils_net = { path = "../utils_net" }
 task_queue = { path = "../task_queue" }

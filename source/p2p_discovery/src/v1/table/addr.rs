@@ -1,5 +1,6 @@
+use p2p_addr::{AddrStatus, KnownAddr, UnknownAddr};
+
 use super::SlotGuard;
-use p2p_identity::addr::{AddrStatus, KnownAddr, UnknownAddr};
 
 pub struct Addr {
     pub val: AddrVal,

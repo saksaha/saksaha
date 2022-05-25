@@ -1,6 +1,8 @@
-use crate::p2p::{task::P2PTask, P2PState};
+use crate::p2p::task::P2PTask;
 use logger::{terr, tinfo};
 use p2p_discovery::{AddrVal, AddrsIterator};
+use p2p_identity::Identity;
+use p2p_peer::PeerTable;
 use std::{
     sync::Arc,
     time::{Duration, SystemTime},
@@ -14,7 +16,8 @@ pub(crate) struct HandshakeDialLoop {
     pub(crate) p2p_task_queue: Arc<TaskQueue<P2PTask>>,
     pub(crate) p2p_dial_interval: Option<u16>,
     pub(crate) addrs_iter: Arc<AddrsIterator>,
-    pub(crate) p2p_state: Arc<P2PState>,
+    pub(crate) identity: Arc<Identity>,
+    pub(crate) peer_table: Arc<PeerTable>,
 }
 
 impl HandshakeDialLoop {
@@ -46,21 +49,21 @@ impl HandshakeDialLoop {
                     };
 
                     let my_public_key_str =
-                        &self.p2p_state.p2p_identity.public_key_str;
+                        &self.identity.credential.public_key_str;
                     let her_public_key_str = &known_addr.public_key_str;
                     let is_my_public_key_greater_than_hers =
                         my_public_key_str > her_public_key_str;
 
                     let task = P2PTask::InitiateHandshake {
                         addr_guard,
-                        p2p_state: self.p2p_state.clone(),
+                        identity: self.identity.clone(),
+                        peer_table: self.peer_table.clone(),
                     };
                     let p2p_task_queue = self.p2p_task_queue.clone();
 
                     if is_my_public_key_greater_than_hers {
                         enqueue_task(p2p_task_queue, task).await;
                     } else {
-                        // enqueue_task(p2p_task_queue, task).await;
                         tokio::spawn(async move {
                             tokio::time::sleep(Duration::from_secs(
                                 HANDSHAKE_ENQUEUE_DELAY_WHEN_SMALLER_PUBLIC_KEY,

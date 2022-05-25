@@ -1,4 +1,4 @@
-use crate::connection::Connection;
+use crate::Connection;
 use crypto::{Secp256k1, SharedSecret};
 
 pub struct Transport {

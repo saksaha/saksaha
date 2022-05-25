@@ -1,8 +1,9 @@
+mod msg;
 mod net;
-pub mod transport;
+mod transport;
 
-pub use net::*;
+pub use msg::*;
+pub use net::Connection;
+pub use transport::Transport;
 
-pub type Error = Box<dyn std::error::Error + Send + Sync>;
-
-pub(crate) type Result<T> = std::result::Result<T, Error>;
+pub type BoxedError = Box<dyn std::error::Error + Send + Sync>;
