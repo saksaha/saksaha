@@ -9,8 +9,6 @@ mod task;
 #[cfg(test)]
 mod tests;
 
-use crate::v1::net::connection2::Connection2;
-
 use self::dial_scheduler::DialSchedulerArgs;
 use self::net::connection::UdpConn;
 use self::task::DiscoveryTask;
@@ -18,6 +16,7 @@ use self::{
     dial_scheduler::DialScheduler, server::Server, state::DiscState,
     task::runtime::DiscTaskRuntime,
 };
+use crate::v1::net::connection2::Connection2;
 use colored::Colorize;
 use logger::tinfo;
 use p2p_identity::addr::UnknownAddr;
@@ -30,7 +29,7 @@ const DISC_TASK_QUEUE_CAPACITY: usize = 10;
 
 pub struct Discovery {
     server: Arc<Server>,
-    pub disc_state: Arc<DiscState>,
+    disc_state: Arc<DiscState>,
     dial_scheduler: Arc<DialScheduler>,
     disc_task_queue: Arc<TaskQueue<DiscoveryTask>>,
     task_runtime: Arc<DiscTaskRuntime>,
@@ -145,5 +144,35 @@ impl Discovery {
 
     pub fn new_iter(&self) -> AddrsIterator {
         self.disc_state.table.new_iter()
+    }
+
+    pub async fn get_status(&self) -> Vec<String> {
+        let table = self.disc_state.table.clone();
+        let addr_map = table.addr_map.read().await;
+
+        let mut addr_vec = Vec::new();
+
+        for (idx, addr) in addr_map.values().enumerate() {
+            match addr.try_read() {
+                Ok(addr) => {
+                    println!("addr table elements [{}] - {}", idx, addr,);
+                    match &addr.val {
+                        AddrVal::Known(k) => {
+                            let endpoint = k.disc_endpoint();
+                            addr_vec.push(endpoint.clone());
+                        }
+                        AddrVal::Unknown(u) => {
+                            let endpoint = u.disc_endpoint();
+                            addr_vec.push(endpoint.clone());
+                        }
+                    }
+                }
+                Err(_err) => {
+                    println!("addr table elements [{}] is locked", idx);
+                }
+            }
+        }
+
+        addr_vec
     }
 }

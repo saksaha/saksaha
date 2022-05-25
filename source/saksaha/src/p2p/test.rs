@@ -2,11 +2,11 @@
 mod test_suite {
     use crate::p2p::{
         server::Server,
-        state::HostState,
         task::{runtime::P2PTaskRuntime, P2PTask},
+        P2PState,
     };
     use k256::{ecdsa::Signature, PublicKey};
-    use p2p_discovery::AddrGuard;
+    use p2p_discovery::{AddrGuard, Discovery, DiscoveryArgs};
     use p2p_identity::identity::P2PIdentity;
     use p2p_peer::PeerTable;
     use std::{sync::Arc, time::Duration};
@@ -39,7 +39,7 @@ mod test_suite {
         Arc<P2PTaskRuntime>,
         Arc<TaskQueue<P2PTask>>,
         Arc<P2PIdentity>,
-        Arc<HostState>,
+        Arc<P2PState>,
     ) {
         let (p2p_socket, p2p_port) = utils_net::bind_tcp_socket(p2p_port)
             .await
@@ -83,8 +83,28 @@ mod test_suite {
             Arc::new(h)
         };
 
-        let host_state = {
-            let s = HostState {
+        let p2p_discovery = {
+            let disc_args = DiscoveryArgs {
+                disc_dial_interval: None,
+                disc_table_capacity: None,
+                disc_task_interval: None,
+                disc_task_queue_capacity: None,
+                p2p_identity: p2p_identity.clone(),
+                disc_port: None,
+                p2p_port: p2p_port.port(),
+                bootstrap_addrs: vec![],
+            };
+
+            let d = Discovery::init(disc_args)
+                .await
+                .expect("Discovery should be initialized");
+
+            Arc::new(d)
+        };
+
+        let p2p_state = {
+            let s = P2PState {
+                p2p_discovery,
                 p2p_identity: p2p_identity.clone(),
                 p2p_port: p2p_port.port(),
                 rpc_port: 0,
@@ -94,7 +114,7 @@ mod test_suite {
         };
 
         let p2p_server = {
-            let s = Server::new(host_state.clone(), None, p2p_socket);
+            let s = Server::new(p2p_state.clone(), None, p2p_socket);
             Arc::new(s)
         };
 
@@ -103,7 +123,7 @@ mod test_suite {
             p2p_task_runtime,
             p2p_task_queue,
             p2p_identity,
-            host_state,
+            p2p_state,
         )
     }
 
@@ -116,7 +136,7 @@ mod test_suite {
             p2p_task_runtime_1,
             p2p_task_queue_1,
             p2p_identity_1,
-            host_state_1,
+            p2p_state_1,
         ) = create_client(Some(35518)).await;
 
         {
@@ -138,7 +158,7 @@ mod test_suite {
 
             let task = P2PTask::InitiateHandshake {
                 addr_guard,
-                host_state: host_state_1.clone(),
+                p2p_state: p2p_state_1.clone(),
             };
             p2p_task_queue_1
                 .push_back(task)
@@ -166,10 +186,10 @@ mod test_suite {
 
         let peer_flag_handle = tokio::spawn(async move {
             tokio::time::sleep(Duration::from_secs(3)).await;
-            let peer_table_2 = host_state_1.p2p_peer_table.clone();
+            let peer_table_2 = p2p_state_1.p2p_peer_table.clone();
 
             let is_peer_registered = match peer_table_2
-                .get_mapped_peer(&host_state_1.p2p_identity.public_key_str)
+                .get_mapped_peer(&p2p_state_1.p2p_identity.public_key_str)
                 .await
             {
                 Some(p) => true,

@@ -1,3 +1,5 @@
+use super::Node;
+use crate::p2p::P2PState;
 use crate::rpc::response::{ErrorResult, SuccessResult};
 use crate::{blockchain::blockchain::TxValue, machine::Machine};
 use hyper::{Body, Request, Response, StatusCode};
@@ -7,7 +9,8 @@ use std::{str::Utf8Error, sync::Arc};
 
 pub(crate) async fn send_transaction(
     req: Request<Body>,
-    machine: Arc<Machine>,
+    node: Arc<Node>,
+    // machine: Arc<Machine>,
 ) -> Result<Response<Body>, hyper::Error> {
     let _body = match hyper::body::to_bytes(req.into_body()).await {
         Ok(b) => {
@@ -15,7 +18,7 @@ pub(crate) async fn send_transaction(
             let _body_str = match std::str::from_utf8(&body_bytes_vec) {
                 Ok(b) => {
                     let _tx_value: TxValue = match serde_json::from_str(b) {
-                        Ok(v) => match machine.send_transaction(v).await {
+                        Ok(v) => match node.machine.send_transaction(v).await {
                             Ok(hash) => {
                                 println!("response: {:?}", &hash);
 
@@ -77,7 +80,7 @@ pub(crate) async fn send_transaction(
 
 pub(crate) async fn dummy(
     req: Request<Body>,
-    machine: Arc<Machine>,
+    node: Arc<Node>,
 ) -> Result<Response<Body>, hyper::Error> {
     let body = match hyper::body::to_bytes(req.into_body()).await {
         Ok(b) => {
@@ -131,14 +134,13 @@ pub(crate) async fn dummy(
 
 pub(crate) async fn get_status(
     req: Request<Body>,
-    machine: Arc<Machine>,
+    node: Arc<Node>,
 ) -> Result<Response<Body>, hyper::Error> {
-    let addr_vec = machine.get_status().await;
-    // println!("addr_vec: {:?}", addr_vec);
+    let addr_vec = node.p2p_state.p2p_discovery.get_status().await;
 
     return SuccessResult {
         id: String::from("1"),
-        result: String::from("power"),
+        result: addr_vec,
     }
     .into_hyper_result();
 }

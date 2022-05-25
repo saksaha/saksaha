@@ -1,5 +1,5 @@
 use super::request::Request;
-use crate::p2p::state::HostState;
+use crate::p2p::P2PState;
 use logger::{tdebug, twarn};
 use p2p_transport::connection::Connection;
 use p2p_transport_handshake::ops::{
@@ -10,7 +10,7 @@ use tokio::sync::Semaphore;
 
 pub(super) struct Handler {
     pub(crate) conn_semaphore: Arc<Semaphore>,
-    pub(crate) host_state: Arc<HostState>,
+    pub(crate) p2p_state: Arc<P2PState>,
 }
 
 impl Handler {
@@ -52,10 +52,10 @@ impl Handler {
             Request::HandshakeInit { msg } => {
                 let handshake_recv_args = HandshakeRecvArgs {
                     handshake_syn: msg,
-                    my_p2p_port: self.host_state.p2p_port,
-                    src_p2p_port: self.host_state.p2p_port,
-                    p2p_identity: self.host_state.p2p_identity.clone(),
-                    p2p_peer_table: self.host_state.p2p_peer_table.clone(),
+                    my_p2p_port: self.p2p_state.p2p_port,
+                    src_p2p_port: self.p2p_state.p2p_port,
+                    p2p_identity: self.p2p_state.p2p_identity.clone(),
+                    p2p_peer_table: self.p2p_state.p2p_peer_table.clone(),
                 };
 
                 match handshake::receive_handshake(handshake_recv_args, conn)

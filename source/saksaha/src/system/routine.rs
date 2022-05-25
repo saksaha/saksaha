@@ -4,8 +4,7 @@ use crate::blockchain::BlockchainArgs;
 use crate::config::Config;
 use crate::config::DevConfig;
 use crate::machine::Machine;
-use crate::p2p::host::Host;
-use crate::p2p::host::HostArgs;
+use crate::p2p::{P2PHost, P2PHostArgs};
 use crate::pconfig::PConfig;
 use crate::rpc::RPCArgs;
 use crate::rpc::RPC;
@@ -101,20 +100,6 @@ impl Routine {
 
         tinfo!("saksaha", "system", "Resolved config: {:?}", config);
 
-        //        let blockchain = {
-        //            let blockchain_args = BlockchainArgs {
-        //                app_prefix: config.app_prefix,
-        //            };
-        //
-        //            Blockchain::init(blockchain_args).await?
-        //        };
-        //
-        //        let machine = {
-        //            let m = Machine { blockchain };
-        //
-        //            Arc::new(m)
-        //        };
-        //
         let p2p_peer_table = {
             let ps =
                 PeerTable::init(config.p2p.p2p_peer_table_capacity).await?;
@@ -169,7 +154,7 @@ impl Routine {
             };
 
         let p2p_host = {
-            let p2p_host_args = HostArgs {
+            let p2p_host_args = P2PHostArgs {
                 disc_port: config.p2p.disc_port,
                 disc_dial_interval: config.p2p.disc_dial_interval,
                 disc_table_capacity: config.p2p.disc_table_capacity,
@@ -188,7 +173,7 @@ impl Routine {
                 p2p_peer_table,
             };
 
-            Host::init(p2p_host_args).await?
+            P2PHost::init(p2p_host_args).await?
         };
 
         let blockchain = {
@@ -200,10 +185,7 @@ impl Routine {
         };
 
         let machine = {
-            let m = Machine {
-                blockchain,
-                machine_discovery: p2p_host.p2p_discovery.clone(),
-            };
+            let m = Machine { blockchain };
 
             Arc::new(m)
         };
@@ -211,6 +193,7 @@ impl Routine {
         let rpc = {
             let rpc_args = RPCArgs {
                 machine: machine.clone(),
+                p2p_state: p2p_host.get_p2p_state(),
             };
 
             RPC::init(rpc_args)?

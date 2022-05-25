@@ -1,5 +1,5 @@
 use super::dial_scheduler::P2PDialSchedulerArgs;
-use super::state::HostState;
+use super::state::P2PState;
 use super::task::runtime::P2PTaskRuntime;
 use super::task::P2PTask;
 use super::{dial_scheduler::P2PDialScheduler, server::Server};
@@ -15,16 +15,16 @@ use tokio::net::TcpListener;
 
 const P2P_TASK_QUEUE_CAPACITY: usize = 10;
 
-pub struct Host {
-    host_state: Arc<HostState>,
-    pub p2p_discovery: Arc<Discovery>,
+pub(crate) struct P2PHost {
+    p2p_state: Arc<P2PState>,
+    p2p_discovery: Arc<Discovery>,
     p2p_dial_scheduler: Arc<P2PDialScheduler>,
     p2p_server: Arc<Server>,
     p2p_task_queue: Arc<TaskQueue<P2PTask>>,
     p2p_task_runtime: Arc<P2PTaskRuntime>,
 }
 
-pub struct HostArgs {
+pub(crate) struct P2PHostArgs {
     pub(crate) disc_port: Option<u16>,
     pub(crate) disc_dial_interval: Option<u16>,
     pub(crate) disc_table_capacity: Option<u16>,
@@ -43,11 +43,15 @@ pub struct HostArgs {
     pub(crate) p2p_peer_table: Arc<PeerTable>,
 }
 
-impl Host {
-    pub async fn init(host_args: HostArgs) -> Result<Host, String> {
+impl P2PHost {
+    pub(crate) async fn init(
+        p2p_host_args: P2PHostArgs,
+    ) -> Result<P2PHost, String> {
         let p2p_identity = {
-            let id =
-                P2PIdentity::new(host_args.secret, host_args.public_key_str)?;
+            let id = P2PIdentity::new(
+                p2p_host_args.secret,
+                p2p_host_args.public_key_str,
+            )?;
 
             tinfo!(
                 "saksaha",
@@ -59,65 +63,71 @@ impl Host {
             Arc::new(id)
         };
 
-        let p2p_task_queue = {
-            let capacity = match host_args.p2p_task_queue_capacity {
-                Some(c) => c.into(),
-                None => P2P_TASK_QUEUE_CAPACITY,
+        let (p2p_task_runtime, p2p_task_queue) = {
+            let p2p_task_queue = {
+                let capacity = match p2p_host_args.p2p_task_queue_capacity {
+                    Some(c) => c.into(),
+                    None => P2P_TASK_QUEUE_CAPACITY,
+                };
+
+                let q = TaskQueue::new(capacity);
+                Arc::new(q)
             };
 
-            let q = TaskQueue::new(capacity);
-            Arc::new(q)
-        };
-
-        let p2p_task_runtime = {
-            let h = P2PTaskRuntime::new(
+            let runtime = P2PTaskRuntime::new(
                 p2p_task_queue.clone(),
-                host_args.p2p_task_interval,
+                p2p_host_args.p2p_task_interval,
             );
-            Arc::new(h)
+
+            (Arc::new(runtime), p2p_task_queue)
         };
 
-        let host_state = {
-            let s = HostState {
+        let p2p_discovery = {
+            let disc_args = DiscoveryArgs {
+                disc_dial_interval: p2p_host_args.disc_dial_interval,
+                disc_table_capacity: p2p_host_args.disc_table_capacity,
+                disc_task_interval: p2p_host_args.disc_task_interval,
+                disc_task_queue_capacity: p2p_host_args
+                    .disc_task_queue_capacity,
                 p2p_identity: p2p_identity.clone(),
-                p2p_port: host_args.p2p_port,
-                rpc_port: host_args.rpc_port,
-                p2p_peer_table: host_args.p2p_peer_table.clone(),
+                disc_port: p2p_host_args.disc_port,
+                p2p_port: p2p_host_args.p2p_port,
+                bootstrap_addrs: p2p_host_args.bootstrap_addrs,
             };
+
+            let d = Discovery::init(disc_args).await?;
+
+            Arc::new(d)
+        };
+
+        let p2p_state = {
+            let s = P2PState {
+                p2p_identity: p2p_identity.clone(),
+                p2p_port: p2p_host_args.p2p_port,
+                rpc_port: p2p_host_args.rpc_port,
+                p2p_peer_table: p2p_host_args.p2p_peer_table.clone(),
+                p2p_discovery: p2p_discovery.clone(),
+            };
+
             Arc::new(s)
         };
 
         let p2p_server = {
             let s = Server::new(
-                host_state.clone(),
-                host_args.p2p_max_conn_count,
-                host_args.p2p_socket,
+                p2p_state.clone(),
+                p2p_host_args.p2p_max_conn_count,
+                p2p_host_args.p2p_socket,
             );
+
             Arc::new(s)
-        };
-
-        let disc_args = DiscoveryArgs {
-            disc_dial_interval: host_args.disc_dial_interval,
-            disc_table_capacity: host_args.disc_table_capacity,
-            disc_task_interval: host_args.disc_task_interval,
-            disc_task_queue_capacity: host_args.disc_task_queue_capacity,
-            p2p_identity: p2p_identity.clone(),
-            disc_port: host_args.disc_port,
-            p2p_port: host_args.p2p_port,
-            bootstrap_addrs: host_args.bootstrap_addrs,
-        };
-
-        let p2p_discovery = {
-            let d = Discovery::init(disc_args).await?;
-            Arc::new(d)
         };
 
         let p2p_dial_scheduler = {
             let addrs_iter = Arc::new(p2p_discovery.new_iter());
 
             let p2p_dial_schd_args = P2PDialSchedulerArgs {
-                host_state: host_state.clone(),
-                p2p_dial_interval: host_args.p2p_dial_interval,
+                p2p_state: p2p_state.clone(),
+                p2p_dial_interval: p2p_host_args.p2p_dial_interval,
                 p2p_task_queue: p2p_task_queue.clone(),
                 addrs_iter,
             };
@@ -127,19 +137,19 @@ impl Host {
             Arc::new(s)
         };
 
-        let host = Host {
+        let host = P2PHost {
             p2p_discovery,
             p2p_dial_scheduler,
             p2p_task_queue,
             p2p_task_runtime,
             p2p_server,
-            host_state,
+            p2p_state,
         };
 
         Ok(host)
     }
 
-    pub async fn run(&self) {
+    pub(crate) async fn run(&self) {
         let disc = self.p2p_discovery.clone();
 
         let p2p_task_runtime = self.p2p_task_runtime.clone();
@@ -154,5 +164,9 @@ impl Host {
             // p2p_server.run(),
             // p2p_dial_scheduler.run()
         );
+    }
+
+    pub(crate) fn get_p2p_state(&self) -> Arc<P2PState> {
+        return self.p2p_state.clone();
     }
 }
