@@ -3,18 +3,23 @@ use crate::blockchain::{Blockchain, TxValue};
 
 // machine api
 impl Machine {
-    pub(crate) async fn send_transaction(&self) {
-        let tx = TxValue {
-            pi: String::from("0x123"),
-            sig_vec: String::from("0x0000"),
-            created_at: String::from("1346546123"),
-            data: String::from("None"),
-        };
-
-        let _ = self.blockchain.send_transaction(tx).await;
+    pub(crate) async fn send_transaction(
+        &self,
+        tx: TxValue,
+    ) -> Result<String, String> {
+        println!("blockchain send_transaction() called");
+        self.blockchain.send_transaction(tx).await
 
         // let _ = self.storage.write_img_file();
+    }
 
-        println!("blockchain send_transaction() called");
+    pub(crate) async fn get_transaction(
+        &self,
+        tx_hash: &String,
+    ) -> Result<TxValue, String> {
+        println!("blockchain get_transaction() called");
+        self.blockchain.get_transaction(tx_hash).await
+
+        // let _ = self.storage.write_img_file();
     }
 }
