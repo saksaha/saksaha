@@ -1,15 +1,16 @@
 #[cfg(test)]
 mod test {
+    use crate::rpc::response::{ErrorResponse, SuccessResponse};
+    use crate::rpc::RPC;
     use crate::{
         blockchain::{Blockchain, BlockchainArgs},
         machine::Machine,
         rpc::RPCArgs,
     };
+    use hyper::body::Buf;
     use hyper::{Body, Client, Method, Request, Uri};
     use std::{net::SocketAddr, sync::Arc};
     use tokio::net::TcpListener;
-
-    use crate::rpc::RPC;
 
     fn init() {
         let _ = env_logger::builder().is_test(true).try_init();
@@ -76,14 +77,20 @@ mod test {
 
         let _result = match client.request(req).await {
             Ok(mut res) => {
-                let body = hyper::body::to_bytes(&mut res)
+                let body = hyper::body::aggregate(&mut res)
                     .await
                     .expect("body should be parsed");
 
-                let a = std::str::from_utf8(&body)
-                    .expect("should be converted to string");
-
-                println!("power: {:?}", res);
+                let _: ErrorResponse =
+                    match serde_json::from_reader(body.reader()) {
+                        Ok(e) => e,
+                        Err(err) => {
+                            panic!(
+                                "Response should be 'error_response', {}",
+                                err
+                            );
+                        }
+                    };
             }
             Err(err) => {
                 panic!("error: {}", err);

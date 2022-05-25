@@ -1,5 +1,5 @@
 use hyper::{Body, Response, StatusCode};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 const JSON_RPC: &str = "2.0";
 
@@ -28,7 +28,7 @@ impl<D: Serialize> SuccessResult<D> {
             let result = serde_json::to_string(&self.result).unwrap();
 
             let response = SuccessResponse {
-                jsonrpc: JSON_RPC,
+                jsonrpc: JSON_RPC.into(),
                 result,
                 id: self.id.clone(),
             };
@@ -52,7 +52,7 @@ impl<E: Serialize> ErrorResult<E> {
             let data = serde_json::to_string(&self.data).unwrap();
 
             let response = ErrorResponse {
-                jsonrpc: JSON_RPC,
+                jsonrpc: JSON_RPC.into(),
                 error: Error {
                     code: self.code,
                     message: self.message.clone(),
@@ -70,22 +70,22 @@ impl<E: Serialize> ErrorResult<E> {
     }
 }
 
-#[derive(Serialize, Debug)]
-struct SuccessResponse {
-    jsonrpc: &'static str,
+#[derive(Serialize, Deserialize, Debug)]
+pub(super) struct SuccessResponse {
+    jsonrpc: String,
     result: String,
     id: String,
 }
 
-#[derive(Serialize, Debug)]
-struct ErrorResponse {
-    jsonrpc: &'static str,
+#[derive(Serialize, Deserialize, Debug)]
+pub(super) struct ErrorResponse {
+    jsonrpc: String,
     error: Error,
     id: String,
 }
 
-#[derive(Serialize, Debug)]
-struct Error {
+#[derive(Serialize, Deserialize, Debug)]
+pub(super) struct Error {
     code: usize,
     message: String,
     data: String,
