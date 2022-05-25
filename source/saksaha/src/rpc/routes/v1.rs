@@ -195,3 +195,56 @@ pub(crate) async fn get_status(
     }
     .into_hyper_result();
 }
+
+pub(crate) async fn get_block(
+    req: Request<Body>,
+    node: Arc<Node>,
+) -> Result<Response<Body>, hyper::Error> {
+    match hyper::body::to_bytes(req.into_body()).await {
+        Ok(b) => {
+            let body_bytes_vec = b.to_vec();
+            match std::str::from_utf8(&body_bytes_vec) {
+                Ok(b) => {
+                    match node.machine.get_block(&b.to_string()).await {
+                        Ok(block) => {
+                            return SuccessResult {
+                                id: String::from("1"),
+                                result: String::from(""),
+                            }
+                        .into_hyper_result()},
+                        Err(err) => {
+                            return ErrorResult {
+                                id: String::from("1"),
+                                status_code: StatusCode::NO_CONTENT,
+                                code: 1414,
+                                message: String::from("dummy"),
+                                data: Some(err.to_string()),
+                            }
+                            .into_hyper_result();
+                }
+            }
+                }
+                Err(err) => {
+                    return ErrorResult {
+                        id: String::from("1"),
+                        status_code: StatusCode::NO_CONTENT,
+                        code: 1414,
+                        message: String::from("dummy"),
+                        data: Some(err.to_string()),
+                    }
+                    .into_hyper_result();
+                }
+            };
+        }
+        Err(err) => {
+            return ErrorResult {
+                id: String::from("1"),
+                status_code: StatusCode::NO_CONTENT,
+                code: 1414,
+                message: String::from("dummy"),
+                data: Some(err.to_string()),
+            }
+            .into_hyper_result();
+        }
+    };
+}

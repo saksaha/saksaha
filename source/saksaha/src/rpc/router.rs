@@ -28,6 +28,11 @@ fn get_routes() -> Vec<(Method, &'static str, Handler)> {
             "/apis/v1/get_transaction",
             Box::new(|req, node| Box::pin(v1::get_transaction(req, node))),
         ),
+        (
+            Method::POST,
+            "/apis/v1/get_block",
+            Box::new(|req, node| Box::pin(v1::get_block(req, node))),
+        ),
     ]
 }
 

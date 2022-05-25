@@ -1,5 +1,5 @@
 use super::Machine;
-use crate::blockchain::{Blockchain, TxValue, TxHash};
+use crate::blockchain::{Blockchain, TxValue, TxHash, BlockValue};
 
 // machine api
 impl Machine {
@@ -7,7 +7,6 @@ impl Machine {
         &self,
         tx: TxValue,
     ) -> Result<String, String> {
-        println!("blockchain send_transaction() called");
         self.blockchain.send_transaction(tx).await
 
         // let _ = self.storage.write_img_file();
@@ -21,5 +20,12 @@ impl Machine {
         self.blockchain.get_transaction(&tx_hash.hash).await
 
         // let _ = self.storage.write_img_file();
+    }
+
+    pub(crate) async fn get_block(
+        &self,
+        block: &String,
+    ) -> Result<BlockValue, String> {
+        self.blockchain.get_block(block).await
     }
 }
