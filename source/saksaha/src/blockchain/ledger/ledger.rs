@@ -2,7 +2,9 @@ use super::{db, ledger_columns};
 use crate::blockchain::blockchain::TxValue;
 use database::KeyValueDatabase;
 use logger::tinfo;
-use rocksdb::WriteBatch;
+use rocksdb::{
+    DBRawIteratorWithThreadMode, DBWithThreadMode, SingleThreaded, WriteBatch,
+};
 use sha3::{Digest, Sha3_256};
 
 pub(crate) struct Ledger {
@@ -36,11 +38,7 @@ impl Ledger {
 
         let mut batch = WriteBatch::default();
 
-        let tx_hash = {
-            let mut h = Sha3_256::new();
-            h.update(tx_value.created_at.clone());
-            h.finalize()
-        };
+        let tx_hash = get_hash(&tx_value);
 
         println!(
             "write_tx(): created_at: {}, tx_hash: {:?}",
@@ -53,19 +51,19 @@ impl Ledger {
                 return Err(format!("Fail to open ledger columns `crated_at`"))
             }
         };
-        batch.put_cf(cf_handle, tx_hash, tx_value.created_at);
+        batch.put_cf(cf_handle, &tx_hash, tx_value.created_at);
 
         let cf_handle = match db.cf_handle(db::ledger_columns::DATA) {
             Some(h) => h,
             None => return Err(format!("Fail to open ledger columns `DATA`")),
         };
-        batch.put_cf(cf_handle, tx_hash, tx_value.data);
+        batch.put_cf(cf_handle, &tx_hash, tx_value.data);
 
         let cf_handle = match db.cf_handle(db::ledger_columns::PI) {
             Some(h) => h,
             None => return Err(format!("Fail to open ledger columns `PI`")),
         };
-        batch.put_cf(cf_handle, tx_hash, tx_value.pi);
+        batch.put_cf(cf_handle, &tx_hash, tx_value.pi);
 
         let cf_handle = match db.cf_handle(db::ledger_columns::SIG_VEC) {
             Some(h) => h,
@@ -73,10 +71,10 @@ impl Ledger {
                 return Err(format!("Fail to open ledger columns `SIG_VEC`"))
             }
         };
-        batch.put_cf(cf_handle, tx_hash, tx_value.sig_vec);
+        batch.put_cf(cf_handle, &tx_hash, tx_value.sig_vec);
 
         match db.write(batch) {
-            Ok(_) => return Ok(format!("{:x}", tx_hash)),
+            Ok(_) => return Ok(tx_hash),
             Err(err) => {
                 return Err(format!("Fail to write on ledger db, err: {}", err))
             }
@@ -105,11 +103,10 @@ impl Ledger {
 
         let tx_values_it_map = tx_values_col.iter().map(|cf_name| cf_name);
         for (idx, cfn) in tx_values_it_map.enumerate() {
-            println!("cfn?: {}", cfn);
             let cf_handle = match db.cf_handle(cfn) {
                 Some(h) => h,
                 None => {
-                    return Err(format!("Fail to open ledger columns {}", cfn))
+                    return Err(format!("Fail to open ledger columns {}", cfn));
                 }
             };
 
@@ -121,21 +118,22 @@ impl Ledger {
                             return Err(format!(
                                 "Invalid utf8 given, err: {}",
                                 err,
-                            ))
+                            ));
                         }
                     },
                     None => {
                         return Err(format!(
                             "No matched value with tx_hash in {}, {}",
                             cfn, tx_hash,
-                        ))
+                        ));
                     }
                 },
                 Err(err) => {
                     return Err(format!(
-                        "Fail to get value from ledger columns {}",
-                        cfn
-                    ))
+                        "Fail to get value from ledger columns, column: {}, \
+                            err: {}",
+                        cfn, err,
+                    ));
                 }
             };
         }
@@ -147,6 +145,27 @@ impl Ledger {
             pi: tx_value_result[3].clone(),
         })
     }
+
+    pub fn iter(
+        &self,
+    ) -> DBRawIteratorWithThreadMode<DBWithThreadMode<SingleThreaded>> {
+        let iter = self.ledger_db.db.raw_iterator_cf(
+            self.ledger_db
+                .db
+                .cf_handle(ledger_columns::CREATED_AT)
+                .unwrap(),
+        );
+
+        iter
+    }
 }
 
-// fn get_hash(tx)
+pub(crate) fn get_hash<'a>(tx_val: &TxValue) -> String {
+    let hash = {
+        let mut h = Sha3_256::new();
+        h.update(tx_val.created_at.clone());
+        h.finalize()
+    };
+
+    format!("{:x}", hash)
+}
