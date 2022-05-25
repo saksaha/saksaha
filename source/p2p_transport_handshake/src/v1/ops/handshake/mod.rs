@@ -72,6 +72,7 @@ impl Handshake {
         frame.push_bulk(dst_public_key_bytes.into());
         frame
     }
+
     pub fn into_syn_frame(&self) -> Frame {
         self.into_frame(HANDSHAKE_SYN)
     }

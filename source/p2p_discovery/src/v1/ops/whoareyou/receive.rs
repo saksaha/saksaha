@@ -1,15 +1,17 @@
-use super::{check, WHO_ARE_YOU_EXPIRATION_SEC};
+use super::{
+    check::{self, WHO_ARE_YOU_EXPIRATION_SEC},
+    WhoAreYou,
+};
 use crate::{
-    msg::{Msg2, WhoAreYou},
-    state::DiscState,
-    table::{Addr, AddrSlot, AddrVal},
+    v1::{ops::Msg, state::DiscState},
+    Addr, AddrSlot, AddrVal,
 };
 use chrono::Utc;
 use colored::Colorize;
-use futures::{SinkExt, StreamExt};
+use futures::sink::SinkExt;
 use logger::{tdebug, terr};
 use p2p_identity::addr::{AddrStatus, KnownAddr};
-use std::{net::SocketAddr, str::FromStr, sync::Arc};
+use std::{net::SocketAddr, sync::Arc};
 use thiserror::Error;
 use tokio::sync::RwLock;
 
@@ -118,26 +120,14 @@ pub(crate) async fn recv_who_are_you(
     let my_sig = disc_state.p2p_identity.sig;
     let my_public_key_str = disc_state.p2p_identity.public_key_str.clone();
 
-    let way = WhoAreYou {
+    let way_ack = WhoAreYou {
         src_sig: my_sig,
         src_disc_port: my_disc_port,
         src_p2p_port: my_p2p_port,
         src_public_key_str: my_public_key_str,
     };
 
-    let way_msg = match way.into_ack_msg() {
-        Ok(m) => m,
-        Err(err) => {
-            return Err(WhoAreYouRecvError::MsgCreateFail { err });
-        }
-    };
-
-    let msg2 = Msg2::WhoAreYou(way);
-
     let mut tx_lock = disc_state.udp_conn.tx.write().await;
-
-    // let socket_addr =
-    //     SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 35518);
 
     let her_disc_endpoint: SocketAddr = match her_disc_endpoint.parse() {
         Ok(a) => a,
@@ -148,7 +138,10 @@ pub(crate) async fn recv_who_are_you(
         }
     };
 
-    match tx_lock.send((msg2, her_disc_endpoint)).await {
+    match tx_lock
+        .send((Msg::WhoAreYouAck(way_ack), her_disc_endpoint))
+        .await
+    {
         Ok(_) => {
             let addr = match addr_slot {
                 AddrSlot::Slot(s) => {
@@ -169,36 +162,36 @@ pub(crate) async fn recv_who_are_you(
                         )
                         .await;
 
-                    addr
-                }
-
-                // Addr that we've known a long time ago
-                AddrSlot::Addr(mut addr_lock, addr) => {
-                    addr_lock.val = AddrVal::Known(known_addr);
-                    addr.clone()
-                }
-            };
-
-            match disc_state.table.enqueue_known_addr(addr).await {
-                Ok(_) => {
-                    tdebug!(
-                        "p2p_discovery",
-                        "whoareyou",
-                        "Enqueueing known addr, p2p endpoint: {}",
-                        her_p2p_endpoint.green(),
-                    );
-                }
-                Err(err) => {
-                    terr!(
+                    match disc_state.table.enqueue_known_addr(addr).await {
+                        Ok(_) => {
+                            tdebug!(
+                                "p2p_discovery",
+                                "whoareyou",
+                                "Enqueueing known addr, p2p endpoint: {}",
+                                her_p2p_endpoint.green(),
+                            );
+                        }
+                        Err(err) => {
+                            terr!(
                         "p2p_discovery",
                         "whoareyou",
                         "Fail to add known node. Queue might have been closed",
                     );
 
-                    return Err(WhoAreYouRecvError::KnownNodeRegisterFail {
-                        disc_endpoint: her_disc_endpoint.to_string(),
-                        err,
-                    });
+                            return Err(
+                                WhoAreYouRecvError::KnownNodeRegisterFail {
+                                    disc_endpoint: her_disc_endpoint
+                                        .to_string(),
+                                    err,
+                                },
+                            );
+                        }
+                    };
+                }
+
+                // Addr that we've known a long time ago
+                AddrSlot::Addr(mut addr_lock, addr) => {
+                    addr_lock.val = AddrVal::Known(known_addr);
                 }
             };
         }

@@ -1,7 +1,9 @@
 use bytes::Bytes;
 use std::{fmt, str, vec};
 
-use crate::frame::Frame;
+use crate::BoxedError;
+
+use super::Frame;
 
 /// Utility for parsing a command
 ///
@@ -10,7 +12,7 @@ use crate::frame::Frame;
 /// cursor-like API. Each command struct includes a `parse_frame` method that
 /// uses a `Parse` to extract its fields.
 #[derive(Debug)]
-pub struct Parse {
+pub(crate) struct Parse {
     /// Array frame iterator.
     parts: vec::IntoIter<Frame>,
 }
@@ -20,20 +22,20 @@ pub struct Parse {
 /// Only `EndOfStream` errors are handled at runtime. All other errors result in
 /// the connection being terminated.
 #[derive(Debug)]
-pub enum ParseError {
+pub(crate) enum ParseError {
     /// Attempting to extract a value failed due to the frame being fully
     /// consumed.
     EndOfStream,
 
     /// All other errors
-    Other(crate::Error),
+    Other(BoxedError),
 }
 
 impl Parse {
     /// Create a new `Parse` to parse the contents of `frame`.
     ///
     /// Returns `Err` if `frame` is not an array frame.
-    pub fn new(frame: Frame) -> Result<Parse, ParseError> {
+    pub(crate) fn new(frame: Frame) -> Result<Parse, ParseError> {
         let array = match frame {
             Frame::Array(array) => array,
             frame => {
@@ -59,7 +61,7 @@ impl Parse {
     /// Return the next entry as a string.
     ///
     /// If the next entry cannot be represented as a String, then an error is returned.
-    pub fn next_string(&mut self) -> Result<String, ParseError> {
+    pub(crate) fn next_string(&mut self) -> Result<String, ParseError> {
         match self.next()? {
             // Both `Simple` and `Bulk` representation may be strings. Strings
             // are parsed to UTF-8.
@@ -82,7 +84,7 @@ impl Parse {
     ///
     /// If the next entry cannot be represented as raw bytes, an error is
     /// returned.
-    pub fn next_bytes(&mut self) -> Result<Bytes, ParseError> {
+    pub(crate) fn next_bytes(&mut self) -> Result<Bytes, ParseError> {
         match self.next()? {
             // Both `Simple` and `Bulk` representation may be raw bytes.
             //
@@ -105,7 +107,7 @@ impl Parse {
     ///
     /// If the next entry cannot be represented as an integer, then an error is
     /// returned.
-    pub fn next_int(&mut self) -> Result<u64, ParseError> {
+    pub(crate) fn next_int(&mut self) -> Result<u64, ParseError> {
         use atoi::atoi;
 
         const MSG: &str = "protocol error; invalid number";

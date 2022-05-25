@@ -1,7 +1,3 @@
-use crate::msg::{Msg, MsgType, WhoAreYou};
-use crate::ops::whoareyou;
-use crate::state::DiscState;
-use crate::table::{Addr, AddrVal};
 use chrono::Utc;
 use colored::Colorize;
 use logger::tdebug;
@@ -9,29 +5,29 @@ use p2p_identity::addr::{AddrStatus, KnownAddr};
 use std::{net::SocketAddr, sync::Arc};
 use tokio::sync::Semaphore;
 
+use crate::{
+    v1::{
+        ops::{whoareyou, Msg},
+        state::DiscState,
+    },
+    AddrVal,
+};
+
 pub(super) struct Handler {
     pub(crate) conn_semaphore: Arc<Semaphore>,
     pub(crate) disc_state: Arc<DiscState>,
-    pub(crate) socket_addr: SocketAddr,
-    pub(crate) msg: Msg,
 }
 
 impl Handler {
-    pub(super) async fn run(&self) -> Result<(), String> {
-        match self.msg.msg_type {
-            MsgType::WhoAreYouSyn => {
-                let way_syn = match WhoAreYou::from_msg(&self.msg) {
-                    Ok(w) => w,
-                    Err(err) => {
-                        return Err(format!(
-                            "Error parsing who are you syn msg, err: {}",
-                            err
-                        ));
-                    }
-                };
-
+    pub(super) async fn run(
+        &self,
+        msg: Msg,
+        socket_addr: SocketAddr,
+    ) -> Result<(), String> {
+        match msg {
+            Msg::WhoAreYouSyn(way_syn) => {
                 match whoareyou::recv_who_are_you(
-                    self.socket_addr,
+                    socket_addr,
                     self.disc_state.clone(),
                     way_syn,
                 )
@@ -48,17 +44,7 @@ impl Handler {
                     }
                 };
             }
-            MsgType::WhoAreYouAck => {
-                let way_ack = match WhoAreYou::from_msg(&self.msg) {
-                    Ok(w) => w,
-                    Err(err) => {
-                        return Err(format!(
-                            "Error parsing who are you syn msg, err: {}",
-                            err
-                        ));
-                    }
-                };
-
+            Msg::WhoAreYouAck(way_ack) => {
                 let public_key =
                     match crypto::convert_public_key_str_into_public_key(
                         &way_ack.src_public_key_str,
@@ -73,7 +59,7 @@ impl Handler {
                 let my_p2p_port = self.disc_state.p2p_port;
                 let my_p2p_endpoint = format!("{}:{}", my_ip, my_p2p_port);
 
-                let her_ip = self.socket_addr.ip().to_string();
+                let her_ip = socket_addr.ip().to_string();
                 let her_disc_port = way_ack.src_disc_port;
                 let her_p2p_port = way_ack.src_p2p_port;
 
@@ -96,7 +82,7 @@ impl Handler {
                 match &addr_lock.val {
                     AddrVal::Unknown(_) => {
                         addr_lock.val = AddrVal::Known(KnownAddr {
-                            ip: self.socket_addr.ip().to_string(),
+                            ip: socket_addr.ip().to_string(),
                             disc_port: way_ack.src_disc_port,
                             p2p_port: way_ack.src_p2p_port,
                             sig: way_ack.src_sig,
@@ -120,7 +106,8 @@ impl Handler {
                         tdebug!(
                             "p2p_discovery",
                             "server",
-                            "Enqueueing known addr, my disc endpoint: {}, p2p endpoint: {}",
+                            "Enqueueing known addr, my disc endpoint: {}, \
+                                p2p endpoint: {}",
                             my_p2p_endpoint.green(),
                             her_p2p_endpoint.green(),
                         );

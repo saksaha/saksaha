@@ -1,8 +1,11 @@
-use super::{check, WHO_ARE_YOU_EXPIRATION_SEC};
 use crate::{
-    msg::{Msg2, WhoAreYou},
-    state::DiscState,
-    table::{Addr, AddrSlot, AddrVal},
+    v1::{ops::Msg, state::DiscState},
+    Addr, AddrSlot, AddrVal,
+};
+
+use super::{
+    check::{self, WHO_ARE_YOU_EXPIRATION_SEC},
+    WhoAreYou,
 };
 use chrono::{DateTime, Utc};
 use futures::{SinkExt, StreamExt};
@@ -112,19 +115,17 @@ pub(crate) async fn init_who_are_you(
         src_public_key_str,
     };
 
-    let way_syn_msg = match way.into_syn_msg() {
-        Ok(m) => m,
-        Err(err) => return Err(WhoAreYouInitError::MsgCreateFail { err }),
-    };
+    // let way_syn_frame = match way.into_frame() {
+    //     Ok(m) => m,
+    //     Err(err) => return Err(WhoAreYouInitError::MsgCreateFail { err }),
+    // };
 
     let mut tx_lock = disc_state.udp_conn.tx.write().await;
-
-    let msg2 = Msg2::WhoAreYou(way);
 
     let socket_addr =
         SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 35518);
 
-    match tx_lock.send((msg2, socket_addr)).await {
+    match tx_lock.send((Msg::WhoAreYouSyn(way), socket_addr)).await {
         Ok(_) => {
             match addr_slot {
                 // Fresh new attempt OR expired destination

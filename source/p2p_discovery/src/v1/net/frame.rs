@@ -1,16 +1,18 @@
 //! Provides a type representing a Redis protocol frame as well as utilities for
 //! parsing frames from a byte array.
 
-use bytes::{Buf, Bytes};
+use bytes::{Buf, Bytes, BytesMut};
 use std::convert::TryInto;
 use std::fmt;
 use std::io::Cursor;
 use std::num::TryFromIntError;
 use std::string::FromUtf8Error;
 
+use crate::BoxedError;
+
 /// A frame in the Redis protocol.
 #[derive(Clone, Debug)]
-pub enum Frame {
+pub(crate) enum Frame {
     Simple(String),
     Error(String),
     Integer(u64),
@@ -20,17 +22,17 @@ pub enum Frame {
 }
 
 #[derive(Debug)]
-pub enum Error {
+pub(crate) enum Error {
     /// Not enough data is available to parse a message
     Incomplete,
 
     /// Invalid message encoding
-    Other(crate::Error),
+    Other(BoxedError),
 }
 
 impl Frame {
     /// Returns an empty array
-    pub fn array() -> Frame {
+    pub(crate) fn array() -> Frame {
         Frame::Array(vec![])
     }
 
@@ -39,7 +41,7 @@ impl Frame {
     /// # Panics
     ///
     /// panics if `self` is not an array
-    pub fn push_bulk(&mut self, bytes: Bytes) {
+    pub(crate) fn push_bulk(&mut self, bytes: Bytes) {
         match self {
             Frame::Array(vec) => {
                 vec.push(Frame::Bulk(bytes));
@@ -53,7 +55,7 @@ impl Frame {
     /// # Panics
     ///
     /// panics if `self` is not an array
-    pub fn push_int(&mut self, value: u64) {
+    pub(crate) fn push_int(&mut self, value: u64) {
         match self {
             Frame::Array(vec) => {
                 vec.push(Frame::Integer(value));
@@ -63,7 +65,7 @@ impl Frame {
     }
 
     /// Checks if an entire message can be decoded from `src`
-    pub fn check(src: &mut Cursor<&[u8]>) -> Result<(), Error> {
+    pub(crate) fn check(src: &mut Cursor<&[u8]>) -> Result<(), Error> {
         match get_u8(src)? {
             b'+' => {
                 get_line(src)?;
@@ -107,7 +109,7 @@ impl Frame {
     }
 
     /// The message has already been validated with `check`.
-    pub fn parse(src: &mut Cursor<&[u8]>) -> Result<Frame, Error> {
+    pub(crate) fn parse(src: &mut Cursor<&[u8]>) -> Result<Frame, Error> {
         match get_u8(src)? {
             b'+' => {
                 // Read the line and convert it to `Vec<u8>`
@@ -174,7 +176,7 @@ impl Frame {
     }
 
     /// Converts the frame to an "unexpected frame" error
-    pub(crate) fn to_error(&self) -> crate::Error {
+    pub(crate) fn to_error(&self) -> BoxedError {
         format!("unexpected frame: {}", self).into()
     }
 }
