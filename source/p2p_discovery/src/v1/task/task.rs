@@ -1,6 +1,7 @@
-use crate::state::DiscState;
 use p2p_identity::addr::UnknownAddr;
 use std::sync::Arc;
+
+use crate::v1::state::DiscState;
 
 pub(crate) enum DiscoveryTask {
     InitiateWhoAreYou {
