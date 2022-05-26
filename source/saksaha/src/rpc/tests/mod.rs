@@ -1,22 +1,23 @@
 #[cfg(test)]
 mod test {
+    use crate::blockchain::ledger::{self, for_test, get_hash};
     use crate::p2p::P2PState;
     use crate::rpc::response::ErrorResponse;
+    use crate::rpc::response::SuccessResponse;
     use crate::rpc::RPC;
     use crate::{
-        blockchain::{Blockchain, BlockchainArgs},
+        blockchain::{Blockchain, BlockchainArgs, TxValue},
         machine::Machine,
         rpc::RPCArgs,
     };
     use hyper::body::Buf;
     use hyper::{Body, Client, Method, Request, Uri};
-    use std::{net::SocketAddr, sync::Arc};
-    use tokio::net::TcpListener;
-
     use p2p_discovery::{Discovery, DiscoveryArgs};
     use p2p_identity::addr::{AddrStatus, UnknownAddr};
     use p2p_identity::identity::P2PIdentity;
     use p2p_peer::PeerTable;
+    use std::{net::SocketAddr, sync::Arc};
+    use tokio::net::TcpListener;
 
     fn init() {
         let _ = env_logger::builder().is_test(true).try_init();
@@ -133,7 +134,7 @@ mod test {
 
         let blockchain = {
             let blockchain_args = BlockchainArgs {
-                app_prefix: "default".to_string(),
+                app_prefix: "test".to_string(),
             };
 
             Blockchain::init(blockchain_args).await.unwrap()
@@ -202,6 +203,7 @@ mod test {
             let d = Discovery::init(disc_args)
                 .await
                 .expect("Discovery should be initailized");
+
             Arc::new(d)
         };
 
@@ -213,6 +215,7 @@ mod test {
                 p2p_peer_table: p2p_peer_table.clone(),
                 p2p_discovery: p2p_discovery.clone(),
             };
+
             Arc::new(s)
         };
 
@@ -226,6 +229,27 @@ mod test {
         };
 
         (rpc, rpc_socket, rpc_socket_addr)
+    }
+
+    async fn make_blockchain() -> Blockchain {
+        let blockchain_args = BlockchainArgs {
+            app_prefix: String::from("test"),
+        };
+
+        let blockchain = Blockchain::init(blockchain_args)
+            .await
+            .expect("Blockchain should be initialized");
+
+        blockchain
+    }
+
+    fn make_dummy_value() -> TxValue {
+        TxValue {
+            pi: String::from("0x111"),
+            sig_vec: String::from("0x1111"),
+            created_at: String::from("1346546123"),
+            data: String::from("one"),
+        }
     }
 
     #[tokio::test(flavor = "multi_thread")]
@@ -280,8 +304,24 @@ mod test {
     }
 
     #[tokio::test(flavor = "multi_thread")]
-    async fn test_rpc_get_status() {
+    async fn test_rpc_client_request_wrong_transaction_hash() {
         init();
+
+        {
+            let blockchain = make_blockchain().await;
+            let ledger = blockchain.ledger;
+            let dummy_tx_val = make_dummy_value();
+
+            let old_tx_hash = get_hash(&dummy_tx_val);
+
+            for_test::delete_tx(&ledger, &old_tx_hash.hash)
+                .expect("Tx should be deleted");
+
+            let _tx_hash = ledger
+                .write_tx(dummy_tx_val)
+                .await
+                .expect("Tx should be written");
+        }
 
         let (rpc, rpc_socket, rpc_socket_addr) = make_rpc().await;
 
@@ -294,7 +334,7 @@ mod test {
 
         let uri: Uri = {
             let u = format!(
-                "http://localhost:{}/apis/v1/get_status",
+                "http://localhost:{}/apis/v1/get_transaction",
                 rpc_socket_addr.port()
             );
 
@@ -304,12 +344,103 @@ mod test {
         let req = Request::builder()
             .method(Method::POST)
             .uri(uri)
-            .body(Body::from("123"))
+            .body(Body::from(r#"{"hash": "1q2w3e4r"}"#))
             .expect("request builder should be made");
 
-        let _result = match client.request(req).await {
+        let res = match client.request(req).await {
             Ok(res) => {
-                assert_eq!(200, res.status());
+                let body = hyper::body::aggregate(res)
+                    .await
+                    .expect("body should be parsed");
+
+                let _: ErrorResponse =
+                    match serde_json::from_reader(body.reader()) {
+                        Ok(e) => {
+                            log::info!("{:?}", e);
+                            e
+                        }
+                        Err(err) => {
+                            panic!(
+                                "Response should be 'error_response', {}",
+                                err
+                            );
+                        }
+                    };
+            }
+            Err(err) => {
+                panic!("error: {}", err);
+            }
+        };
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn test_rpc_client_request_correct_transaction_hash() {
+        init();
+
+        {
+            let blockchain = make_blockchain().await;
+            let ledger = blockchain.ledger;
+            let dummy_tx_val = make_dummy_value();
+
+            let old_tx_hash = get_hash(&dummy_tx_val);
+
+            for_test::delete_tx(&ledger, &old_tx_hash.hash)
+                .expect("Tx should be deleted");
+
+            let tx_hash = ledger
+                .write_tx(dummy_tx_val)
+                .await
+                .expect("Tx should be written");
+
+            assert_eq!(old_tx_hash.hash, tx_hash);
+        }
+
+        let (rpc, rpc_socket, rpc_socket_addr) = make_rpc().await;
+
+        let _rpc_server =
+            tokio::spawn(
+                async move { rpc.run(rpc_socket, rpc_socket_addr).await },
+            );
+
+        let client = Client::new();
+
+        let uri: Uri = {
+            let u = format!(
+                "http://localhost:{}/apis/v1/get_transaction",
+                rpc_socket_addr.port()
+            );
+
+            u.parse().expect("URI should be made")
+        };
+
+        let req = Request::builder()
+            .method(Method::POST)
+            .uri(uri)
+            .body(Body::from(
+                r#"{"hash": "8082e05e6adf824f9c024e64f9fb2f6b04bbf02d455f69807b5bc58976025cd0"}"#))
+            .expect("request builder should be made");
+
+        println!("{:?}", req);
+
+        let _res = match client.request(req).await {
+            Ok(res) => {
+                let body = hyper::body::aggregate(res)
+                    .await
+                    .expect("body should be parsed");
+
+                let _: SuccessResponse =
+                    match serde_json::from_reader(body.reader()) {
+                        Ok(e) => {
+                            log::info!("{:?}", e);
+                            e
+                        }
+                        Err(err) => {
+                            panic!(
+                                "Response should be 'error_response', {}",
+                                err
+                            );
+                        }
+                    };
             }
             Err(err) => {
                 panic!("error: {}", err);
