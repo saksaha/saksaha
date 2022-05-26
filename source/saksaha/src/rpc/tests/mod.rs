@@ -1,8 +1,8 @@
 #[cfg(test)]
 mod test {
+    use crate::blockchain::ledger::{self, for_test, get_hash};
     use crate::p2p::P2PState;
     use crate::rpc::response::ErrorResponse;
-    use crate::blockchain::ledger::{self, for_test, get_hash};
     use crate::rpc::response::SuccessResponse;
     use crate::rpc::RPC;
     use crate::{
@@ -317,7 +317,7 @@ mod test {
             for_test::delete_tx(&ledger, &old_tx_hash.hash)
                 .expect("Tx should be deleted");
 
-            let tx_hash = ledger
+            let _tx_hash = ledger
                 .write_tx(dummy_tx_val)
                 .await
                 .expect("Tx should be written");
@@ -422,7 +422,7 @@ mod test {
 
         println!("{:?}", req);
 
-        let res = match client.request(req).await {
+        let _res = match client.request(req).await {
             Ok(res) => {
                 let body = hyper::body::aggregate(res)
                     .await
