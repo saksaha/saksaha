@@ -144,11 +144,11 @@ pub(crate) async fn get_status(
     req: Request<Body>,
     node: Arc<Node>,
 ) -> Result<Response<Body>, hyper::Error> {
-    let body = match hyper::body::to_bytes(req.into_body()).await {
+    let _body = match hyper::body::to_bytes(req.into_body()).await {
         Ok(b) => {
             let body_bytes_vec = b.to_vec();
-            let body_str = match std::str::from_utf8(&body_bytes_vec) {
-                Ok(b) => {}
+            let _body_str = match std::str::from_utf8(&body_bytes_vec) {
+                Ok(_) => {}
                 Err(err) => {
                     return ErrorResult {
                         id: String::from("1"),
