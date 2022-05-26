@@ -151,12 +151,10 @@ impl Discovery {
 
                     match &addr.val {
                         AddrVal::Known(k) => {
-                            let endpoint = k.disc_endpoint();
-                            addr_vec.push(endpoint.clone());
+                            addr_vec.push(k.disc_endpoint());
                         }
                         AddrVal::Unknown(u) => {
-                            let endpoint = u.disc_endpoint();
-                            addr_vec.push(endpoint.clone());
+                            addr_vec.push(u.disc_endpoint());
                         }
                     }
                 }
