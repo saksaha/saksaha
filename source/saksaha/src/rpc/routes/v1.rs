@@ -4,6 +4,7 @@ use crate::rpc::response::{ErrorResult, SuccessResult};
 use crate::{blockchain::blockchain::TxValue, machine::Machine};
 use hyper::{Body, Request, Response, StatusCode};
 use p2p_discovery::Discovery;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::convert::TryInto;
 use std::{str::Utf8Error, sync::Arc};
@@ -133,21 +134,56 @@ pub(crate) async fn dummy(
     .into_hyper_result();
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+struct NodeStatus {
+    addr_vec: Vec<String>,
+    peer_vec: Vec<String>,
+}
+
 pub(crate) async fn get_status(
     req: Request<Body>,
     node: Arc<Node>,
 ) -> Result<Response<Body>, hyper::Error> {
-    let mut status = HashMap::new();
+    let body = match hyper::body::to_bytes(req.into_body()).await {
+        Ok(b) => {
+            let body_bytes_vec = b.to_vec();
+            let body_str = match std::str::from_utf8(&body_bytes_vec) {
+                Ok(b) => {}
+                Err(err) => {
+                    return ErrorResult {
+                        id: String::from("1"),
+                        status_code: StatusCode::NO_CONTENT,
+                        code: 1414,
+                        message: String::from("dummy"),
+                        data: Some(err.to_string()),
+                    }
+                    .into_hyper_result();
+                }
+            };
+        }
+        Err(err) => {
+            return ErrorResult {
+                id: String::from("1"),
+                status_code: StatusCode::NO_CONTENT,
+                code: 1414,
+                message: String::from("dummy"),
+                data: Some(err.to_string()),
+            }
+            .into_hyper_result();
+        }
+    };
 
     let addr_vec = node.p2p_state.p2p_discovery.get_status().await;
     let peer_vec = node.p2p_state.p2p_peer_table.get_status().await;
 
-    status.insert("addr_vec", addr_vec);
-    status.insert("peer_vec", peer_vec);
+    let result = NodeStatus {
+        addr_vec, //
+        peer_vec,
+    };
 
     return SuccessResult {
         id: String::from("1"),
-        result: status,
+        result,
     }
     .into_hyper_result();
 }
