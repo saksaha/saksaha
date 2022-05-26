@@ -1,4 +1,4 @@
-use crate::table::AddrVal;
+use crate::AddrVal;
 use crate::Discovery;
 use crate::DiscoveryArgs;
 use p2p_identity::addr::AddrStatus;
