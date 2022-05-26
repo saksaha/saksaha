@@ -8,13 +8,7 @@ mod test_multiple_agents;
 mod test {
     use super::utils;
     use crate::AddrVal;
-    use crate::Discovery;
-    use crate::DiscoveryArgs;
-    use p2p_identity::addr::AddrStatus;
-    use p2p_identity::addr::UnknownAddr;
-    use p2p_identity::identity::P2PIdentity;
-    use std::sync::Arc;
-
+    
     fn init() {
         let _ = env_logger::builder().is_test(true).try_init();
     }

@@ -1,18 +1,13 @@
 use super::Node;
-use crate::p2p::P2PState;
 use crate::rpc::response::{ErrorResult, SuccessResult};
-use crate::{blockchain::blockchain::TxValue, machine::Machine};
+use crate::{blockchain::blockchain::{TxValue, TxHash}};
 use hyper::{Body, Request, Response, StatusCode};
-use p2p_discovery::Discovery;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::convert::TryInto;
-use std::{str::Utf8Error, sync::Arc};
+use std::sync::Arc;
 
 pub(crate) async fn send_transaction(
     req: Request<Body>,
     node: Arc<Node>,
-    // machine: Arc<Machine>,
 ) -> Result<Response<Body>, hyper::Error> {
     let _body = match hyper::body::to_bytes(req.into_body()).await {
         Ok(b) => {
@@ -22,8 +17,6 @@ pub(crate) async fn send_transaction(
                     let _tx_value: TxValue = match serde_json::from_str(b) {
                         Ok(v) => match node.machine.send_transaction(v).await {
                             Ok(hash) => {
-                                println!("response: {:?}", &hash);
-
                                 return SuccessResult {
                                     id: String::from("1"),
                                     result: hash,
@@ -31,13 +24,11 @@ pub(crate) async fn send_transaction(
                                 .into_hyper_result();
                             }
                             Err(err) => {
-                                println!("err: {}", err);
-
                                 return ErrorResult::<String> {
                                     id: String::from("1"),
-                                    status_code: StatusCode::NO_CONTENT,
-                                    code: 1414,
-                                    message: String::from("dummy"),
+                                    status_code: StatusCode::BAD_REQUEST,
+                                    code: 32600,
+                                    message: String::from("Invalid Request"),
                                     data: None,
                                 }
                                 .into_hyper_result();
@@ -46,9 +37,9 @@ pub(crate) async fn send_transaction(
                         Err(err) => {
                             return ErrorResult {
                                 id: String::from("1"),
-                                status_code: StatusCode::NO_CONTENT,
-                                code: 1414,
-                                message: String::from("dummy"),
+                                status_code: StatusCode::BAD_REQUEST,
+                                code: 32600,
+                                message: String::from("Invalid Request"),
                                 data: Some(err.to_string()),
                             }
                             .into_hyper_result();
@@ -58,9 +49,9 @@ pub(crate) async fn send_transaction(
                 Err(err) => {
                     return ErrorResult {
                         id: String::from("1"),
-                        status_code: StatusCode::NO_CONTENT,
-                        code: 1414,
-                        message: String::from("dummy"),
+                        status_code: StatusCode::BAD_REQUEST,
+                        code: 32600,
+                        message: String::from("Invalid Request"),
                         data: Some(err.to_string()),
                     }
                     .into_hyper_result();
@@ -70,9 +61,9 @@ pub(crate) async fn send_transaction(
         Err(err) => {
             return ErrorResult {
                 id: String::from("1"),
-                status_code: StatusCode::NO_CONTENT,
-                code: 1414,
-                message: String::from("dummy"),
+                status_code: StatusCode::BAD_REQUEST,
+                code: 32600,
+                message: String::from("Invalid Request"),
                 data: Some(err.to_string()),
             }
             .into_hyper_result();
@@ -80,23 +71,46 @@ pub(crate) async fn send_transaction(
     };
 }
 
-pub(crate) async fn dummy(
+pub(crate) async fn get_transaction(
     req: Request<Body>,
     node: Arc<Node>,
 ) -> Result<Response<Body>, hyper::Error> {
-    let body = match hyper::body::to_bytes(req.into_body()).await {
+    let _body = match hyper::body::to_bytes(req.into_body()).await {
         Ok(b) => {
             let body_bytes_vec = b.to_vec();
-            let body_str = match std::str::from_utf8(&body_bytes_vec) {
+            let _body_str = match std::str::from_utf8(&body_bytes_vec) {
                 Ok(b) => {
-                    let tx_value: TxValue = match serde_json::from_str(b) {
-                        Ok(v) => v,
+                    println!("{}", b);
+                    let _tx: TxHash = match serde_json::from_str(b) {
+                        Ok(tx_hash) => {
+                            match node.machine.get_transaction(tx_hash).await {
+                                Ok(t) => {
+                                    return SuccessResult {
+                                        id: String::from("1"),
+                                        result: t,
+                                    }
+                                    .into_hyper_result();
+                                }
+                                Err(err) => {
+                                    return ErrorResult::<String> {
+                                        id: String::from("1"),
+                                        status_code: StatusCode::BAD_REQUEST,
+                                        code: 32600,
+                                        message: String::from(
+                                            "Invalid Request",
+                                        ),
+                                        data: Some(err.to_string()),
+                                    }
+                                    .into_hyper_result();
+                                }
+                            }
+                        }
                         Err(err) => {
                             return ErrorResult {
                                 id: String::from("1"),
-                                status_code: StatusCode::NO_CONTENT,
-                                code: 1414,
-                                message: String::from("dummy"),
+                                status_code: StatusCode::BAD_REQUEST,
+                                code: 32600,
+                                message: String::from("Invalid Request"),
                                 data: Some(err.to_string()),
                             }
                             .into_hyper_result();
@@ -106,9 +120,9 @@ pub(crate) async fn dummy(
                 Err(err) => {
                     return ErrorResult {
                         id: String::from("1"),
-                        status_code: StatusCode::NO_CONTENT,
-                        code: 1414,
-                        message: String::from("dummy"),
+                        status_code: StatusCode::BAD_REQUEST,
+                        code: 32600,
+                        message: String::from("Invalid Request"),
                         data: Some(err.to_string()),
                     }
                     .into_hyper_result();
@@ -118,20 +132,14 @@ pub(crate) async fn dummy(
         Err(err) => {
             return ErrorResult {
                 id: String::from("1"),
-                status_code: StatusCode::NO_CONTENT,
-                code: 1414,
-                message: String::from("dummy"),
+                status_code: StatusCode::BAD_REQUEST,
+                code: 32600,
+                message: String::from("Invalid Request"),
                 data: Some(err.to_string()),
             }
             .into_hyper_result();
         }
     };
-
-    return SuccessResult {
-        id: String::from("1"),
-        result: String::from("power"),
-    }
-    .into_hyper_result();
 }
 
 #[derive(Serialize, Deserialize, Debug)]

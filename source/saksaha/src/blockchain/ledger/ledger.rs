@@ -1,5 +1,5 @@
 use super::{db, ledger_columns};
-use crate::blockchain::blockchain::TxValue;
+use crate::blockchain::{blockchain::TxValue, TxHash};
 use database::KeyValueDatabase;
 use logger::tinfo;
 use rocksdb::{
@@ -42,7 +42,7 @@ impl Ledger {
 
         println!(
             "write_tx(): created_at: {}, tx_hash: {:?}",
-            tx_value.created_at, tx_hash
+            tx_value.created_at, tx_hash.hash
         );
 
         let cf_handle = match db.cf_handle(db::ledger_columns::CREATED_AT) {
@@ -51,19 +51,19 @@ impl Ledger {
                 return Err(format!("Fail to open ledger columns `crated_at`"))
             }
         };
-        batch.put_cf(cf_handle, &tx_hash, tx_value.created_at);
+        batch.put_cf(cf_handle, &tx_hash.hash, tx_value.created_at);
 
         let cf_handle = match db.cf_handle(db::ledger_columns::DATA) {
             Some(h) => h,
             None => return Err(format!("Fail to open ledger columns `DATA`")),
         };
-        batch.put_cf(cf_handle, &tx_hash, tx_value.data);
+        batch.put_cf(cf_handle, &tx_hash.hash, tx_value.data);
 
         let cf_handle = match db.cf_handle(db::ledger_columns::PI) {
             Some(h) => h,
             None => return Err(format!("Fail to open ledger columns `PI`")),
         };
-        batch.put_cf(cf_handle, &tx_hash, tx_value.pi);
+        batch.put_cf(cf_handle, &tx_hash.hash, tx_value.pi);
 
         let cf_handle = match db.cf_handle(db::ledger_columns::SIG_VEC) {
             Some(h) => h,
@@ -71,10 +71,10 @@ impl Ledger {
                 return Err(format!("Fail to open ledger columns `SIG_VEC`"))
             }
         };
-        batch.put_cf(cf_handle, &tx_hash, tx_value.sig_vec);
+        batch.put_cf(cf_handle, &tx_hash.hash, tx_value.sig_vec);
 
         match db.write(batch) {
-            Ok(_) => return Ok(tx_hash),
+            Ok(_) => return Ok(tx_hash.hash),
             Err(err) => {
                 return Err(format!("Fail to write on ledger db, err: {}", err))
             }
@@ -102,6 +102,7 @@ impl Ledger {
         ];
 
         let tx_values_it_map = tx_values_col.iter().map(|cf_name| cf_name);
+
         for (idx, cfn) in tx_values_it_map.enumerate() {
             let cf_handle = match db.cf_handle(cfn) {
                 Some(h) => h,
@@ -110,7 +111,7 @@ impl Ledger {
                 }
             };
 
-            tx_value_result[idx] = match db.get_cf(cf_handle, tx_hash) {
+            tx_value_result[idx] = match db.get_cf(cf_handle, &tx_hash) {
                 Ok(val) => match val {
                     Some(v) => match std::str::from_utf8(&v) {
                         Ok(vs) => vs.to_string(),
@@ -124,7 +125,7 @@ impl Ledger {
                     None => {
                         return Err(format!(
                             "No matched value with tx_hash in {}, {}",
-                            cfn, tx_hash,
+                            cfn, &tx_hash,
                         ));
                     }
                 },
@@ -158,14 +159,91 @@ impl Ledger {
 
         iter
     }
+
+    // pub fn destroy_ledger_db(&self) -> Result<(), String> {
+    //     self.ledger_db.destroy()
+    // }
 }
 
-pub(crate) fn get_hash<'a>(tx_val: &TxValue) -> String {
+pub(crate) fn get_hash<'a>(tx_val: &TxValue) -> TxHash {
     let hash = {
         let mut h = Sha3_256::new();
         h.update(tx_val.created_at.clone());
         h.finalize()
     };
 
-    format!("{:x}", hash)
+    TxHash { hash: format!("{:x}", hash) }
+}
+
+pub(crate) mod for_test {
+    use super::*;
+
+    pub(crate) fn delete_tx(
+        ledger: &Ledger,
+        key: &String,
+    ) -> Result<(), String> {
+        let db = &ledger.ledger_db.db;
+        let created_at_cf = match db.cf_handle(db::ledger_columns::CREATED_AT) {
+            Some(h) => h,
+            None => {
+                return Err(format!("Fail to open ledger columns `crated_at`"))
+            }
+        };
+
+        match db.delete_cf(created_at_cf, key) {
+            Ok(_) => (),
+            Err(err) => {
+                return Err(format!(
+                    "Error deleting column family created_at, err: {}",
+                    err,
+                ));
+            }
+        }
+
+        let data_cf = match db.cf_handle(db::ledger_columns::DATA) {
+            Some(h) => h,
+            None => return Err(format!("Fail to open ledger columns `DATA`")),
+        };
+        match db.delete_cf(data_cf, key) {
+            Ok(_) => (),
+            Err(err) => {
+                return Err(format!(
+                    "Error deleting column family data_cf, err: {}",
+                    err,
+                ));
+            }
+        }
+
+        let pi_cf = match db.cf_handle(db::ledger_columns::PI) {
+            Some(h) => h,
+            None => return Err(format!("Fail to open ledger columns `PI`")),
+        };
+        match db.delete_cf(pi_cf, key) {
+            Ok(_) => (),
+            Err(err) => {
+                return Err(format!(
+                    "Error deleting column family pi, err: {}",
+                    err,
+                ));
+            }
+        }
+
+        let sig_vec_cf = match db.cf_handle(db::ledger_columns::SIG_VEC) {
+            Some(h) => h,
+            None => {
+                return Err(format!("Fail to open ledger columns `SIG_VEC`"))
+            }
+        };
+        match db.delete_cf(sig_vec_cf, key) {
+            Ok(_) => (),
+            Err(err) => {
+                return Err(format!(
+                    "Error deleting column family sig_vec, err: {}",
+                    err,
+                ));
+            }
+        }
+
+        Ok(())
+    }
 }

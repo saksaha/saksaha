@@ -20,13 +20,13 @@ fn get_routes() -> Vec<(Method, &'static str, Handler)> {
         ),
         (
             Method::POST,
-            "/apis/v1/dummy",
-            Box::new(|req, node| Box::pin(v1::dummy(req, node))),
+            "/apis/v1/get_status",
+            Box::new(|req, node| Box::pin(v1::get_status(req, node))),
         ),
         (
             Method::POST,
-            "/apis/v1/get_status",
-            Box::new(|req, node| Box::pin(v1::get_status(req, node))),
+            "/apis/v1/get_transaction",
+            Box::new(|req, node| Box::pin(v1::get_transaction(req, node))),
         ),
     ]
 }

@@ -1,4 +1,7 @@
-use hyper::{Body, Response, StatusCode};
+use hyper::{
+    header::{HeaderValue, CONTENT_TYPE},
+    Body, Response, StatusCode,
+};
 use serde::{Deserialize, Serialize};
 
 const JSON_RPC: &str = "2.0";
@@ -45,6 +48,12 @@ impl<D: Serialize> SuccessResult<D> {
 impl<E: Serialize> ErrorResult<E> {
     pub fn into_hyper_result(&self) -> Result<Response<Body>, hyper::Error> {
         let mut res = Response::default();
+
+        let headers = res.headers_mut();
+        headers.insert(
+            CONTENT_TYPE,
+            HeaderValue::from_str("application/json").unwrap(),
+        );
 
         *res.status_mut() = StatusCode::OK;
 

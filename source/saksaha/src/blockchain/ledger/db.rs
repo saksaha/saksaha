@@ -1,6 +1,5 @@
 use database::KeyValueDatabase;
 use file_system::FS;
-use logger::tinfo;
 use rocksdb::ColumnFamilyDescriptor;
 use rocksdb::Options;
 

@@ -18,6 +18,11 @@ pub(crate) struct TxValue {
     pub(crate) sig_vec: String,
 }
 
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub(crate) struct TxHash {
+    pub(crate) hash: String,
+}
+
 impl TxValue {
     pub(crate) fn empty() -> TxValue {
         TxValue {
