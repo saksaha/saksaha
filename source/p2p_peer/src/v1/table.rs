@@ -1,5 +1,6 @@
 use crate::{Peer, Slot, SlotGuard};
 use logger::{terr, tinfo};
+use p2p_discovery::AddrVal;
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::{
     mpsc::{self, Receiver, Sender, UnboundedReceiver, UnboundedSender},
@@ -138,6 +139,41 @@ impl PeerTable {
     ) -> Option<Arc<RwLock<Peer>>> {
         let mut peer_map = self.peer_map.write().await;
         peer_map.insert(public_key.clone(), node)
+    }
+
+    pub async fn get_status(&self) -> Vec<String> {
+        let mut peer_vec = Vec::new();
+        let peer_map = self.peer_map.read().await;
+
+        for (idx, peer) in peer_map.values().enumerate() {
+            match peer.try_read() {
+                Ok(peer_lock) => match &peer_lock.addr_guard {
+                    Some(addr_guard) => {
+                        let addr_lock = addr_guard.addr.read().await;
+                        let addr_val = &addr_lock.val;
+                        match addr_val {
+                            AddrVal::Known(k) => {
+                                peer_vec.push(k.p2p_endpoint().clone());
+                            }
+                            AddrVal::Unknown(u) => {
+                                peer_vec.push(
+                                    u.p2p_endpoint().unwrap().clone(), //
+                                );
+                            }
+                        }
+                    }
+
+                    None => {
+                        println!("error: cannot get addr_guard");
+                    }
+                },
+                Err(_err) => {
+                    println!("addr table elements [{}] is locked", idx);
+                }
+            }
+        }
+
+        peer_vec
     }
 
     // pub async fn print_all_nodes(&self) -> u16 {
