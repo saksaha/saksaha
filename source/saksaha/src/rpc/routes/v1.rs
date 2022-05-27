@@ -1,6 +1,6 @@
 use super::Node;
 use crate::rpc::response::{ErrorResult, SuccessResult};
-use crate::{blockchain::blockchain::{TxValue, TxHash}};
+use crate::{blockchain::blockchain::{TxValue, Hash}};
 use hyper::{Body, Request, Response, StatusCode};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -81,7 +81,7 @@ pub(crate) async fn get_transaction(
             let _body_str = match std::str::from_utf8(&body_bytes_vec) {
                 Ok(b) => {
                     println!("{}", b);
-                    let _tx: TxHash = match serde_json::from_str(b) {
+                    let _tx: Hash = match serde_json::from_str(b) {
                         Ok(tx_hash) => {
                             match node.machine.get_transaction(tx_hash).await {
                                 Ok(t) => {
@@ -194,4 +194,57 @@ pub(crate) async fn get_status(
         result,
     }
     .into_hyper_result();
+}
+
+pub(crate) async fn get_block(
+    req: Request<Body>,
+    node: Arc<Node>,
+) -> Result<Response<Body>, hyper::Error> {
+    match hyper::body::to_bytes(req.into_body()).await {
+        Ok(b) => {
+            let body_bytes_vec = b.to_vec();
+            match std::str::from_utf8(&body_bytes_vec) {
+                Ok(b) => {
+                    match node.machine.get_block(&b.to_string()).await {
+                        Ok(block) => {
+                            return SuccessResult {
+                                id: String::from("1"),
+                                result: String::from(""),
+                            }
+                        .into_hyper_result()},
+                        Err(err) => {
+                            return ErrorResult {
+                                id: String::from("1"),
+                                status_code: StatusCode::NO_CONTENT,
+                                code: 1414,
+                                message: String::from("dummy"),
+                                data: Some(err.to_string()),
+                            }
+                            .into_hyper_result();
+                }
+            }
+                }
+                Err(err) => {
+                    return ErrorResult {
+                        id: String::from("1"),
+                        status_code: StatusCode::NO_CONTENT,
+                        code: 1414,
+                        message: String::from("dummy"),
+                        data: Some(err.to_string()),
+                    }
+                    .into_hyper_result();
+                }
+            };
+        }
+        Err(err) => {
+            return ErrorResult {
+                id: String::from("1"),
+                status_code: StatusCode::NO_CONTENT,
+                code: 1414,
+                message: String::from("dummy"),
+                data: Some(err.to_string()),
+            }
+            .into_hyper_result();
+        }
+    };
 }

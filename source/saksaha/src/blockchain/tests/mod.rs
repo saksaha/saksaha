@@ -129,14 +129,16 @@ mod test {
         let mut iter = ledger.iter();
         iter.seek_to_first();
 
+        let mut count = 0;
         while iter.valid() {
             println!(
                 "Saw {:?} {:?}",
                 std::str::from_utf8(iter.key().unwrap()),
                 std::str::from_utf8(iter.value().unwrap())
             );
-
+            count = count + 1;
             iter.next();
         }
+        assert_eq!(count, tx_hashes.len());
     }
 }

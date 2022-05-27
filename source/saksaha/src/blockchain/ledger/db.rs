@@ -3,12 +3,19 @@ use file_system::FS;
 use rocksdb::ColumnFamilyDescriptor;
 use rocksdb::Options;
 
-pub(crate) mod ledger_columns {
+pub(crate) mod tx_columns {
     pub const TX_HASH: &str = "tx_hash";
     pub const PI: &str = "pi";
     pub const SIG_VEC: &str = "sig_vec";
-    pub const CREATED_AT: &str = "created_at";
+    pub const CREATED_AT: &str = "tx_created_at";
     pub const DATA: &str = "data";
+}
+
+pub(crate) mod block_columns {
+    pub const TX_POOL: &str = "tx_pool";
+    pub const SIG_VEC: &str = "block_sig_vec";
+    pub const CREATED_AT: &str = "block_created_at";
+    pub const HEIGHT: &str = "height";
 }
 
 pub(super) fn init_ledger_db(
@@ -47,11 +54,15 @@ pub(super) fn init_ledger_db(
 
 fn make_ledger_cf_descriptors() -> Vec<ColumnFamilyDescriptor> {
     let columns = vec![
-        (ledger_columns::TX_HASH, Options::default()),
-        (ledger_columns::PI, Options::default()),
-        (ledger_columns::SIG_VEC, Options::default()),
-        (ledger_columns::CREATED_AT, Options::default()),
-        (ledger_columns::DATA, Options::default()),
+        (tx_columns::TX_HASH, Options::default()),
+        (tx_columns::PI, Options::default()),
+        (tx_columns::SIG_VEC, Options::default()),
+        (tx_columns::CREATED_AT, Options::default()),
+        (tx_columns::DATA, Options::default()),
+        (block_columns::SIG_VEC, Options::default()),
+        (block_columns::TX_POOL, Options::default()),
+        (block_columns::CREATED_AT, Options::default()),
+        (block_columns::HEIGHT, Options::default()),
     ];
 
     let cf = columns

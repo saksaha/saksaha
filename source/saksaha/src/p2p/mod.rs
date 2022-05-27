@@ -5,7 +5,7 @@ mod state;
 mod task;
 
 #[cfg(test)]
-mod test;
+mod tests;
 
 pub(crate) use host::{P2PHost, P2PHostArgs};
 pub(crate) use state::P2PState;
