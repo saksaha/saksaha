@@ -1,18 +1,19 @@
 use crate::p2p::task::P2PTask;
 use chrono::{Duration, Utc};
 use logger::{tdebug, terr, twarn};
+use p2p_addr::AddrStatus;
 use p2p_discovery::AddrVal;
-use p2p_identity::addr::AddrStatus;
 use p2p_peer::{PeerSlot, PeerStatus};
-use p2p_transport::connection::Connection;
-use p2p_transport_handshake::ops::{handshake, HandshakeInitArgs};
+use p2p_transport::Connection;
+use p2p_transport_ops::handshake::{self, HandshakeInitArgs};
 use tokio::net::TcpStream;
 
 pub(crate) async fn run(task: P2PTask) {
     match task {
         P2PTask::InitiateHandshake {
             addr_guard,
-            p2p_state,
+            identity,
+            peer_table,
         } => {
             let addr = addr_guard.addr.clone();
             let mut addr_lock = addr.write_owned().await;
@@ -30,9 +31,7 @@ pub(crate) async fn run(task: P2PTask) {
                 }
             };
 
-            let p2p_peer_table = p2p_state.p2p_peer_table.clone();
-
-            let peer_slot = match p2p_peer_table
+            let peer_slot = match peer_table
                 .get_mapped_peer_lock(&known_addr.public_key_str)
                 .await
             {
@@ -64,7 +63,7 @@ pub(crate) async fn run(task: P2PTask) {
                     }
                     PeerSlot::Peer(peer)
                 }
-                None => match p2p_peer_table.get_empty_slot().await {
+                None => match peer_table.get_empty_slot().await {
                     Ok(s) => PeerSlot::Slot(s),
                     Err(err) => {
                         terr!(
@@ -82,7 +81,7 @@ pub(crate) async fn run(task: P2PTask) {
 
             let endpoint = known_addr.p2p_endpoint();
 
-            if utils_net::is_my_endpoint(p2p_state.p2p_port, &endpoint) {
+            if utils_net::is_my_endpoint(identity.p2p_port, &endpoint) {
                 twarn!(
                     "saksaha",
                     "p2p",
@@ -96,7 +95,7 @@ pub(crate) async fn run(task: P2PTask) {
 
             let conn = match TcpStream::connect(&endpoint).await {
                 Ok(s) => {
-                    let (c, peer_addr) = match Connection::new(s) {
+                    let c = match Connection::new(s) {
                         Ok(c) => c,
                         Err(err) => {
                             terr!(
@@ -115,7 +114,7 @@ pub(crate) async fn run(task: P2PTask) {
                         "p2p",
                         "(caller) TCP connected to destination, \
                         peer_addr: {:?}",
-                        peer_addr,
+                        c.socket_addr,
                     );
 
                     c
@@ -136,9 +135,8 @@ pub(crate) async fn run(task: P2PTask) {
 
             let handshake_init_args = HandshakeInitArgs {
                 addr_guard,
-                p2p_port: p2p_state.p2p_port,
-                p2p_identity: p2p_state.p2p_identity.clone(),
-                p2p_peer_table: p2p_state.p2p_peer_table.clone(),
+                identity,
+                peer_table,
                 peer_slot,
                 addr_lock,
             };

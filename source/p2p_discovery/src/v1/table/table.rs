@@ -4,7 +4,7 @@ use super::{
 };
 use crate::AddrsIterator;
 use logger::{tdebug, terr};
-use p2p_identity::addr::AddrStatus;
+use p2p_addr::AddrStatus;
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::{
     mpsc::{self, Receiver, Sender, UnboundedReceiver, UnboundedSender},
@@ -14,7 +14,7 @@ use tokio::sync::{
 // const DISC_TABLE_CAPACITY: usize = 100;
 const DISC_TABLE_CAPACITY: usize = 5;
 
-/// TODO Table shall have Kademlia flavored buckets
+/// TODO Table shall have Kademlia flavored buckets later on
 pub struct Table {
     pub addr_map: RwLock<HashMap<String, Arc<RwLock<Addr>>>>,
     slots_tx: Arc<UnboundedSender<Arc<Slot>>>,

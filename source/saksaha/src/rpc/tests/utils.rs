@@ -3,11 +3,11 @@ pub(super) mod test_utils {
     use super::*;
     use crate::blockchain::{Blockchain, BlockchainArgs, TxValue};
     use crate::machine::Machine;
-    use crate::p2p::P2PState;
+    use crate::p2p::{P2PHost, P2PHostArgs};
     use crate::rpc::{RPCArgs, RPC};
+    use p2p_addr::{AddrStatus, UnknownAddr};
     use p2p_discovery::{Discovery, DiscoveryArgs};
-    use p2p_identity::addr::{AddrStatus, UnknownAddr};
-    use p2p_identity::identity::P2PIdentity;
+    use p2p_identity::Credential;
     use p2p_peer::PeerTable;
     use std::net::SocketAddr;
     use std::sync::Arc;
@@ -67,8 +67,9 @@ pub(super) mod test_utils {
             status: AddrStatus::Initialized,
         }];
 
-        let p2p_identity = {
-            let id = P2PIdentity::new(secret, public_key_str).unwrap();
+        let credential = {
+            let id = Credential::new(secret.clone(), public_key_str.clone())
+                .unwrap();
             Arc::new(id)
         };
 
@@ -77,7 +78,7 @@ pub(super) mod test_utils {
             disc_table_capacity: None,
             disc_task_interval: None,
             disc_task_queue_capacity: None,
-            p2p_identity: p2p_identity.clone(),
+            credential: credential.clone(),
             disc_port: Some(35521),
             p2p_port: 1,
             bootstrap_addrs,
@@ -91,30 +92,56 @@ pub(super) mod test_utils {
             Arc::new(ps)
         };
 
-        let p2p_discovery = {
-            let d = Discovery::init(disc_args)
+        let (p2p_discovery, disc_port) = {
+            let (d, disc_port) = Discovery::init(disc_args)
                 .await
                 .expect("Discovery should be initailized");
 
-            Arc::new(d)
+            (Arc::new(d), disc_port)
         };
 
-        let p2p_state = {
-            let s = P2PState {
-                p2p_identity: p2p_identity.clone(),
-                p2p_port: 35521,
-                rpc_port: 12345,
-                p2p_peer_table: p2p_peer_table.clone(),
-                p2p_discovery: p2p_discovery.clone(),
+        let (p2p_socket, p2p_socket_addr) =
+            utils_net::bind_tcp_socket(Some(12345))
+                .await
+                .expect("rpc socket should be initialized");
+
+        let p2p_host = {
+            let p2p_host_args = P2PHostArgs {
+                disc_port: None,
+                disc_dial_interval: None,
+                disc_table_capacity: None,
+                disc_task_interval: None,
+                disc_task_queue_capacity: None,
+                p2p_task_interval: None,
+                p2p_task_queue_capacity: None,
+                p2p_dial_interval: None,
+                p2p_socket,
+                p2p_max_conn_count: None,
+                p2p_port: p2p_socket_addr.port(),
+                bootstrap_addrs: vec![],
+                rpc_port: rpc_socket_addr.port(),
+                secret,
+                public_key_str,
+                peer_table: p2p_peer_table,
             };
 
-            Arc::new(s)
+            let p = P2PHost::init(p2p_host_args)
+                .await
+                .expect("P2P Host should be initialized");
+
+            p
+        };
+
+        let p2p_monitor = {
+            let m = p2p_host.get_p2p_monitor();
+
+            Arc::new(m)
         };
 
         let rpc = {
             let rpc_args = RPCArgs {
                 machine: machine.clone(),
-                p2p_state: p2p_state.clone(),
+                p2p_monitor,
             };
 
             RPC::init(rpc_args).expect("RPC should be initialized")

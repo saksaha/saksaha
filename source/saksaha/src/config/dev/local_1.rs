@@ -1,5 +1,6 @@
+use p2p_addr::{AddrStatus, UnknownAddr};
+
 use super::{DevConfig, DevP2PConfig};
-use p2p_identity::addr::{AddrStatus, UnknownAddr};
 
 impl DevConfig {
     pub(crate) fn dev_local_1() -> DevConfig {

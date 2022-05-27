@@ -1,10 +1,10 @@
-use super::Handshake;
-use chrono::{DateTime, Duration, Utc};
+use chrono::{Duration, Utc};
 use colored::Colorize;
+use futures::SinkExt;
 use logger::tdebug;
-use p2p_identity::identity::P2PIdentity;
+use p2p_identity::Identity;
 use p2p_peer::{Peer, PeerSlot, PeerStatus, PeerTable};
-use p2p_transport::{connection::Connection, transport::Transport};
+use p2p_transport::{Connection, Handshake, Msg, Transport};
 use std::sync::Arc;
 use thiserror::Error;
 use tokio::sync::RwLock;
@@ -44,10 +44,8 @@ pub enum HandshakeRecvError {
 
 pub struct HandshakeRecvArgs {
     pub handshake_syn: Handshake,
-    pub my_p2p_port: u16,
-    pub src_p2p_port: u16,
-    pub p2p_identity: Arc<P2PIdentity>,
-    pub p2p_peer_table: Arc<PeerTable>,
+    pub identity: Arc<Identity>,
+    pub peer_table: Arc<PeerTable>,
 }
 
 pub async fn receive_handshake(
@@ -55,10 +53,9 @@ pub async fn receive_handshake(
     mut conn: Connection,
 ) -> Result<(), HandshakeRecvError> {
     let HandshakeRecvArgs {
-        my_p2p_port,
         handshake_syn,
-        p2p_identity,
-        p2p_peer_table,
+        peer_table,
+        identity,
         ..
     } = handshake_recv_args;
 
@@ -69,13 +66,13 @@ pub async fn receive_handshake(
         dst_public_key_str: my_public_key_str,
     } = handshake_syn;
 
-    if my_public_key_str != p2p_identity.public_key_str {
+    if my_public_key_str != identity.credential.public_key_str {
         return Err(HandshakeRecvError::UnmatchedMyPublicKey {
             public_key: my_public_key_str,
         });
     }
 
-    let my_secret_key = &p2p_identity.secret_key;
+    let my_secret_key = &identity.credential.secret_key;
     let her_public_key = match crypto::convert_public_key_str_into_public_key(
         &her_public_key_str,
     ) {
@@ -88,7 +85,7 @@ pub async fn receive_handshake(
         }
     };
 
-    let peer_slot = match p2p_peer_table
+    let peer_slot = match peer_table
         .get_mapped_peer_lock(&her_public_key_str)
         .await
     {
@@ -101,7 +98,7 @@ pub async fn receive_handshake(
             }
             PeerSlot::Peer(p)
         }
-        None => match p2p_peer_table.get_empty_slot().await {
+        None => match peer_table.get_empty_slot().await {
             Ok(s) => PeerSlot::Slot(s),
             Err(err) => {
                 return Err(HandshakeRecvError::EmptySlotNotAvailable { err });
@@ -112,16 +109,14 @@ pub async fn receive_handshake(
     let shared_secret =
         crypto::make_shared_secret(my_secret_key, her_public_key);
 
-    let handshake_ack = Handshake {
+    let handshake = Handshake {
         instance_id: instance_id.clone(),
-        src_p2p_port: my_p2p_port,
+        src_p2p_port: identity.p2p_port,
         src_public_key_str: my_public_key_str.clone(),
         dst_public_key_str: her_public_key_str.clone(),
     };
 
-    let handshake_ack_frame = handshake_ack.into_ack_frame();
-
-    match conn.write_frame(&handshake_ack_frame).await {
+    match conn.socket_tx.send(Msg::HandshakeAck(handshake)).await {
         Ok(_) => (),
         Err(err) => {
             return Err(HandshakeRecvError::AckSendFail {
@@ -148,9 +143,7 @@ pub async fn receive_handshake(
 
             let peer = Arc::new(RwLock::new(p));
 
-            p2p_peer_table
-                .insert_mapping(&her_public_key_str, peer)
-                .await;
+            peer_table.insert_mapping(&her_public_key_str, peer).await;
         }
         PeerSlot::Peer(mut peer) => {
             peer.transport = transport;

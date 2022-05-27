@@ -1,4 +1,4 @@
-use p2p_identity::addr::UnknownAddr;
+use p2p_addr::UnknownAddr;
 
 pub(crate) mod local_1;
 

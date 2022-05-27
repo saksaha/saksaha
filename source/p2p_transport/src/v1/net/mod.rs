@@ -1,3 +1,4 @@
-pub mod connection;
-pub mod frame;
-pub mod parse;
+mod codec;
+mod connection;
+
+pub use connection::*;

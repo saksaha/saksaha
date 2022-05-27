@@ -100,7 +100,7 @@ impl Routine {
 
         tinfo!("saksaha", "system", "Resolved config: {:?}", config);
 
-        let p2p_peer_table = {
+        let peer_table = {
             let ps =
                 PeerTable::init(config.p2p.p2p_peer_table_capacity).await?;
 
@@ -170,7 +170,7 @@ impl Routine {
                 rpc_port: rpc_socket_addr.port(),
                 secret: config.p2p.secret,
                 public_key_str: config.p2p.public_key_str,
-                p2p_peer_table,
+                peer_table,
             };
 
             P2PHost::init(p2p_host_args).await?
@@ -190,10 +190,16 @@ impl Routine {
             Arc::new(m)
         };
 
+        let p2p_monitor = {
+            let m = p2p_host.get_p2p_monitor();
+
+            Arc::new(m)
+        };
+
         let rpc = {
             let rpc_args = RPCArgs {
                 machine: machine.clone(),
-                p2p_state: p2p_host.get_p2p_state(),
+                p2p_monitor,
             };
 
             RPC::init(rpc_args)?

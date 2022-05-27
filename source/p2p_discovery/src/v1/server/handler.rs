@@ -1,21 +1,20 @@
+use crate::{
+    v1::{
+        net::Connection,
+        ops::{whoareyou, Msg},
+    },
+    AddrVal, Table,
+};
 use chrono::Utc;
 use colored::Colorize;
 use logger::tdebug;
-use p2p_identity::addr::{AddrStatus, KnownAddr};
+use p2p_addr::{AddrStatus, KnownAddr};
+use p2p_identity::Identity;
 use std::{net::SocketAddr, sync::Arc};
 use tokio::sync::Semaphore;
 
-use crate::{
-    v1::{
-        ops::{whoareyou, Msg},
-        state::DiscState,
-    },
-    AddrVal,
-};
-
 pub(super) struct Handler {
     pub(crate) conn_semaphore: Arc<Semaphore>,
-    pub(crate) disc_state: Arc<DiscState>,
 }
 
 impl Handler {
@@ -23,13 +22,18 @@ impl Handler {
         &self,
         msg: Msg,
         socket_addr: SocketAddr,
+        udp_conn: Arc<Connection>,
+        identity: Arc<Identity>,
+        table: Arc<Table>,
     ) -> Result<(), String> {
         match msg {
             Msg::WhoAreYouSyn(way_syn) => {
                 match whoareyou::recv_who_are_you(
                     socket_addr,
-                    self.disc_state.clone(),
+                    udp_conn,
                     way_syn,
+                    identity,
+                    table,
                 )
                 .await
                 {
@@ -53,10 +57,8 @@ impl Handler {
                         Err(err) => return Err(err),
                     };
 
-                let table = self.disc_state.table.clone();
-
                 let my_ip = "127.0.0.1";
-                let my_p2p_port = self.disc_state.p2p_port;
+                let my_p2p_port = identity.p2p_port;
                 let my_p2p_endpoint = format!("{}:{}", my_ip, my_p2p_port);
 
                 let her_ip = socket_addr.ip().to_string();
@@ -101,7 +103,7 @@ impl Handler {
                     }
                 }
 
-                match self.disc_state.table.enqueue_known_addr(addr).await {
+                match table.enqueue_known_addr(addr).await {
                     Ok(_) => {
                         tdebug!(
                             "p2p_discovery",

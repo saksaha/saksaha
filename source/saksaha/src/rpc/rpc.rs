@@ -1,7 +1,7 @@
 use super::node::Node;
 use super::server::RPCServer;
 use crate::machine::Machine;
-use crate::p2p::P2PState;
+use crate::p2p::P2PMonitor;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::net::TcpListener;
@@ -12,7 +12,7 @@ pub(crate) struct RPC {
 
 pub(crate) struct RPCArgs {
     pub(crate) machine: Arc<Machine>,
-    pub(crate) p2p_state: Arc<P2PState>,
+    pub(crate) p2p_monitor: Arc<P2PMonitor>,
 }
 
 impl RPC {
@@ -20,7 +20,7 @@ impl RPC {
         let node = {
             let n = Node {
                 machine: rpc_args.machine,
-                p2p_state: rpc_args.p2p_state,
+                p2p_monitor: rpc_args.p2p_monitor,
             };
 
             Arc::new(n)

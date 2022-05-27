@@ -1,13 +1,10 @@
-mod initiate;
-mod receive;
-
-use super::{HANDSHAKE_ACK, HANDSHAKE_SYN};
-use crate::Error;
+use crate::BoxedError;
 use bytes::{BufMut, Bytes, BytesMut};
-pub use initiate::*;
-use p2p_transport::{frame::Frame, parse::Parse};
-pub use receive::*;
+use p2p_frame::{Frame, Parse, ParseError};
 use std::time::{SystemTime, UNIX_EPOCH};
+
+pub const HANDSHAKE_SYN_TYPE: &'static str = "hs_syn";
+pub const HANDSHAKE_ACK_TYPE: &'static str = "hs_ack";
 
 pub struct Handshake {
     pub instance_id: String,
@@ -15,6 +12,9 @@ pub struct Handshake {
     pub src_public_key_str: String,
     pub dst_public_key_str: String,
 }
+
+#[derive(Debug)]
+pub struct HandshakeParseError(BoxedError);
 
 impl Handshake {
     pub fn new(
@@ -44,44 +44,7 @@ impl Handshake {
         })
     }
 
-    fn into_frame(&self, frame_type: &'static str) -> Frame {
-        let mut frame = Frame::array();
-
-        let instance_id_bytes = {
-            let mut b = BytesMut::new();
-            b.put(self.instance_id.as_bytes());
-            b
-        };
-
-        let src_public_key_bytes = {
-            let mut b = BytesMut::new();
-            b.put(self.src_public_key_str.as_bytes());
-            b
-        };
-
-        let dst_public_key_bytes = {
-            let mut b = BytesMut::new();
-            b.put(self.dst_public_key_str.as_bytes());
-            b
-        };
-
-        frame.push_bulk(Bytes::from(frame_type.as_bytes()));
-        frame.push_int(self.src_p2p_port as u64);
-        frame.push_bulk(instance_id_bytes.into());
-        frame.push_bulk(src_public_key_bytes.into());
-        frame.push_bulk(dst_public_key_bytes.into());
-        frame
-    }
-
-    pub fn into_syn_frame(&self) -> Frame {
-        self.into_frame(HANDSHAKE_SYN)
-    }
-
-    pub fn into_ack_frame(&self) -> Frame {
-        self.into_frame(HANDSHAKE_ACK)
-    }
-
-    pub fn parse_frames(parse: &mut Parse) -> Result<Handshake, Error> {
+    pub fn from_parse(parse: &mut Parse) -> Result<Handshake, BoxedError> {
         let src_p2p_port = {
             let p = parse.next_int()? as u16;
             p
@@ -110,5 +73,42 @@ impl Handshake {
         };
 
         Ok(h)
+    }
+
+    fn into_frame(&self, msg_type: &'static str) -> Frame {
+        let mut frame = Frame::array();
+
+        let instance_id_bytes = {
+            let mut b = BytesMut::new();
+            b.put(self.instance_id.as_bytes());
+            b
+        };
+
+        let src_public_key_bytes = {
+            let mut b = BytesMut::new();
+            b.put(self.src_public_key_str.as_bytes());
+            b
+        };
+
+        let dst_public_key_bytes = {
+            let mut b = BytesMut::new();
+            b.put(self.dst_public_key_str.as_bytes());
+            b
+        };
+
+        frame.push_bulk(Bytes::from(msg_type.as_bytes()));
+        frame.push_int(self.src_p2p_port as u64);
+        frame.push_bulk(instance_id_bytes.into());
+        frame.push_bulk(src_public_key_bytes.into());
+        frame.push_bulk(dst_public_key_bytes.into());
+        frame
+    }
+
+    pub fn into_syn_frame(&self) -> Frame {
+        self.into_frame(HANDSHAKE_SYN_TYPE)
+    }
+
+    pub fn into_ack_frame(&self) -> Frame {
+        self.into_frame(HANDSHAKE_ACK_TYPE)
     }
 }

@@ -11,7 +11,6 @@ pub use k256::{
     },
 };
 use logger::{tdebug, terr};
-use p2p_identity::addr::{AddrStatus, KnownAddr};
 use std::sync::Arc;
 use tokio::sync::mpsc::{self, UnboundedSender};
 use tokio::sync::RwLock;
@@ -41,6 +40,8 @@ impl Drop for AddrGuard {
 }
 
 pub mod testing {
+    use p2p_addr::{AddrStatus, KnownAddr};
+
     use super::*;
 
     impl AddrGuard {

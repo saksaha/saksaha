@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use p2p_discovery::AddrGuard;
-use p2p_transport::transport::Transport;
+use p2p_transport::Transport;
 
 use crate::SlotGuard;
 

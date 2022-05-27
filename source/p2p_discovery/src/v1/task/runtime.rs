@@ -1,5 +1,7 @@
 use super::{handler, DiscoveryTask};
+use crate::{v1::net::Connection, Table};
 use logger::{tdebug, terr};
+use p2p_identity::Identity;
 use std::{
     sync::Arc,
     time::{Duration, SystemTime},
@@ -11,12 +13,18 @@ const DISC_TASK_INTERVAL: u64 = 1000;
 pub(crate) struct DiscTaskRuntime {
     pub(crate) task_queue: Arc<TaskQueue<DiscoveryTask>>,
     pub(crate) disc_task_interval: Duration,
+    pub(crate) identity: Arc<Identity>,
+    pub(crate) table: Arc<Table>,
+    pub(crate) udp_conn: Arc<Connection>,
 }
 
 impl DiscTaskRuntime {
     pub(crate) fn new(
         task_queue: Arc<TaskQueue<DiscoveryTask>>,
         disc_task_interval: Option<u16>,
+        identity: Arc<Identity>,
+        table: Arc<Table>,
+        udp_conn: Arc<Connection>,
     ) -> DiscTaskRuntime {
         let disc_task_interval = match disc_task_interval {
             Some(i) => Duration::from_millis(i.into()),
@@ -26,6 +34,9 @@ impl DiscTaskRuntime {
         DiscTaskRuntime {
             task_queue,
             disc_task_interval,
+            identity,
+            table,
+            udp_conn,
         }
     }
 
@@ -54,7 +65,13 @@ impl DiscTaskRuntime {
                 }
             };
 
-            handler::run(task).await;
+            handler::run(
+                task,
+                self.identity.clone(),
+                self.table.clone(),
+                self.udp_conn.clone(),
+            )
+            .await;
 
             utils_time::wait_until_min_interval(time_since, disc_task_interval)
                 .await;
