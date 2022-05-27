@@ -1,6 +1,5 @@
 mod dial_scheduler;
 mod discovery;
-mod identity;
 mod net;
 mod ops;
 mod server;

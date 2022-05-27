@@ -3,11 +3,11 @@ use crate::{
         net::Connection,
         ops::{whoareyou, Msg},
     },
-    AddrVal, Table,
+    Table,
 };
-use chrono::Utc;
+use chrono::{Duration, Utc};
 use colored::Colorize;
-use logger::tdebug;
+use logger::{tdebug, twarn};
 use p2p_addr::{AddrStatus, KnownAddr};
 use p2p_identity::Identity;
 use std::{net::SocketAddr, sync::Arc};
@@ -25,6 +25,7 @@ impl Handler {
         udp_conn: Arc<Connection>,
         identity: Arc<Identity>,
         table: Arc<Table>,
+        addr_expire_duration: Duration,
     ) -> Result<(), String> {
         match msg {
             Msg::WhoAreYouSyn(way_syn) => {
@@ -68,11 +69,16 @@ impl Handler {
                 let her_p2p_endpoint = format!("{}:{}", her_ip, her_p2p_port);
                 let her_disc_endpoint = format!("{}:{}", her_ip, her_disc_port);
 
-                let (mut addr_lock, addr) = match table
-                    .get_mapped_addr_lock(&her_disc_endpoint)
-                    .await
-                {
-                    Some(a) => a,
+                match table.get_mapped_addr_lock(&her_disc_endpoint).await {
+                    Some(_) => {
+                        twarn!(
+                            "p2p_discovery",
+                            "server",
+                            "Addr of {} is already discovered. Dropping \
+                            WAY request",
+                            &her_disc_endpoint,
+                        );
+                    }
                     None => {
                         return Err(format!(
                             "Cannot proceed with WhoAreYouAck msg, \
@@ -81,43 +87,43 @@ impl Handler {
                     }
                 };
 
-                match &addr_lock.val {
-                    AddrVal::Unknown(_) => {
-                        addr_lock.val = AddrVal::Known(KnownAddr {
-                            ip: socket_addr.ip().to_string(),
-                            disc_port: way_ack.src_disc_port,
-                            p2p_port: way_ack.src_p2p_port,
-                            sig: way_ack.src_sig,
-                            public_key_str: way_ack.src_public_key_str,
-                            public_key,
-                            status: AddrStatus::WhoAreYouSuccess {
-                                at: Utc::now(),
-                            },
-                        });
-                    }
-                    _ => {
-                        return Err(format!(
-                            "Known valid addr has sent a \
-                            redundant WhoAreYouAck"
-                        ));
-                    }
-                }
+                // match &addr_lock.val {
+                //     AddrVal::Unknown(_) => {
+                //         addr_lock.val = AddrVal::Known(KnownAddr {
+                //             ip: socket_addr.ip().to_string(),
+                //             disc_port: way_ack.src_disc_port,
+                //             p2p_port: way_ack.src_p2p_port,
+                //             sig: way_ack.src_sig,
+                //             public_key_str: way_ack.src_public_key_str,
+                //             public_key,
+                //             status: AddrStatus::WhoAreYouSuccess {
+                //                 at: Utc::now(),
+                //             },
+                //         });
+                //     }
+                //     _ => {
+                //         return Err(format!(
+                //             "Known valid addr has sent a \
+                //             redundant WhoAreYouAck"
+                //         ));
+                //     }
+                // }
 
-                match table.enqueue_known_addr(addr).await {
-                    Ok(_) => {
-                        tdebug!(
-                            "p2p_discovery",
-                            "server",
-                            "Enqueueing known addr, my disc endpoint: {}, \
-                                p2p endpoint: {}",
-                            my_p2p_endpoint.green(),
-                            her_p2p_endpoint.green(),
-                        );
-                    }
-                    Err(err) => {
-                        return Err(err);
-                    }
-                };
+                // match table.enqueue_known_addr(addr).await {
+                //     Ok(_) => {
+                //         tdebug!(
+                //             "p2p_discovery",
+                //             "server",
+                //             "Enqueueing known addr, my disc endpoint: {}, \
+                //                 p2p endpoint: {}",
+                //             my_p2p_endpoint.green(),
+                //             her_p2p_endpoint.green(),
+                //         );
+                //     }
+                //     Err(err) => {
+                //         return Err(err);
+                //     }
+                // };
             }
         };
 

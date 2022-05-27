@@ -1,6 +1,5 @@
 use crate::{Peer, Slot, SlotGuard};
 use logger::{terr, tinfo};
-use p2p_discovery::AddrVal;
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::{
     mpsc::{self, Receiver, Sender, UnboundedReceiver, UnboundedSender},
@@ -150,17 +149,19 @@ impl PeerTable {
                 Ok(peer_lock) => match &peer_lock.addr_guard {
                     Some(addr_guard) => {
                         let addr_lock = addr_guard.addr.read().await;
-                        let addr_val = &addr_lock.val;
-                        match addr_val {
-                            AddrVal::Known(k) => {
-                                peer_vec.push(k.p2p_endpoint().clone());
-                            }
-                            AddrVal::Unknown(u) => {
-                                peer_vec.push(
-                                    u.p2p_endpoint().unwrap().clone(), //
-                                );
-                            }
-                        }
+                        peer_vec
+                            .push(addr_lock.known_addr.p2p_endpoint().clone());
+                        // let addr_val = &addr_lock.val;
+                        // match addr_val {
+                        //     AddrVal::Known(k) => {
+                        //         peer_vec.push(k.p2p_endpoint().clone());
+                        //     }
+                        //     AddrVal::Unknown(u) => {
+                        //         peer_vec.push(
+                        //             u.p2p_endpoint().unwrap().clone(), //
+                        //         );
+                        //     }
+                        // }
                     }
 
                     None => {

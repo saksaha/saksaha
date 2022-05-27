@@ -3,7 +3,7 @@ use futures::SinkExt;
 use futures::StreamExt;
 use logger::{tdebug, twarn};
 use p2p_addr::KnownAddr;
-use p2p_discovery::{Addr, AddrGuard, AddrVal};
+use p2p_discovery::{Addr, AddrGuard};
 use p2p_identity::Identity;
 use p2p_peer::{Peer, PeerSlot, PeerStatus, PeerTable};
 use p2p_transport::Handshake;
@@ -87,12 +87,13 @@ pub async fn initiate_handshake(
         addr_lock,
     } = handshake_init_args;
 
-    let known_addr = match &addr_lock.val {
-        AddrVal::Known(k) => k,
-        AddrVal::Unknown(_) => {
-            return Err(HandshakeInitError::NotKnownAddr);
-        }
-    };
+    // let known_addr = match &addr_lock.val {
+    //     AddrVal::Known(k) => k,
+    //     AddrVal::Unknown(_) => {
+    //         return Err(HandshakeInitError::NotKnownAddr);
+    //     }
+    // };
+    let known_addr = &addr_lock.known_addr;
 
     let handshake = match Handshake::new(
         identity.p2p_port,

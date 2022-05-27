@@ -2,7 +2,7 @@ use super::{System, SystemArgs};
 use crate::blockchain::Blockchain;
 use crate::blockchain::BlockchainArgs;
 use crate::config::Config;
-use crate::config::DevConfig;
+use crate::config::ProfiledConfig;
 use crate::machine::Machine;
 use crate::p2p::{P2PHost, P2PHostArgs};
 use crate::pconfig::PConfig;
@@ -22,13 +22,8 @@ impl Routine {
         tinfo!("saksaha", "system", "System is starting");
 
         let config = {
-            let app_prefix = match &sys_args.app_prefix {
-                Some(ap) => ap.clone(),
-                None => APP_PREFIX.to_string(),
-            };
-
             let profiled_config = match &sys_args.cfg_profile {
-                Some(profile) => match DevConfig::new(profile) {
+                Some(profile) => match ProfiledConfig::new(profile) {
                     Ok(c) => Some(c),
                     Err(err) => {
                         return Err(format!(
@@ -38,6 +33,14 @@ impl Routine {
                     }
                 },
                 None => None,
+            };
+
+            let app_prefix = match &sys_args.app_prefix {
+                Some(ap) => ap.clone(),
+                None => match &profiled_config {
+                    Some(pc) => pc.app_prefix.clone(),
+                    None => APP_PREFIX.to_string(),
+                },
             };
 
             tinfo!(
@@ -137,6 +140,7 @@ impl Routine {
 
         let p2p_host = {
             let p2p_host_args = P2PHostArgs {
+                addr_expire_duration: config.p2p.addr_expire_duration,
                 disc_port: config.p2p.disc_port,
                 disc_dial_interval: config.p2p.disc_dial_interval,
                 disc_table_capacity: config.p2p.disc_table_capacity,

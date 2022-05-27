@@ -1,5 +1,5 @@
 mod config;
-mod dev;
+mod profiled;
 
 pub(crate) use config::*;
-pub(crate) use dev::*;
+pub(crate) use profiled::*;

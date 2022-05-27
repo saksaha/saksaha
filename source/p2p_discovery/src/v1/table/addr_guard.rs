@@ -1,5 +1,4 @@
 use super::Addr;
-use super::AddrVal;
 use super::Slot;
 use super::SlotGuard;
 use chrono::Utc;
@@ -17,13 +16,12 @@ use tokio::sync::RwLock;
 
 pub struct AddrGuard {
     pub addr: Arc<RwLock<Addr>>,
-    pub(crate) __internal_addr_recycle_tx:
-        Arc<UnboundedSender<Arc<RwLock<Addr>>>>,
+    pub(crate) addr_recycle_tx: Arc<UnboundedSender<Arc<RwLock<Addr>>>>,
 }
 
 impl Drop for AddrGuard {
     fn drop(&mut self) {
-        match self.__internal_addr_recycle_tx.send(self.addr.clone()) {
+        match self.addr_recycle_tx.send(self.addr.clone()) {
             Ok(_) => (),
             Err(err) => {
                 terr!(
@@ -55,7 +53,7 @@ pub mod testing {
             let (slots_tx, _rx) = mpsc::unbounded_channel();
 
             let addr = Addr {
-                val: AddrVal::Known(KnownAddr {
+                known_addr: KnownAddr {
                     ip: "0.0.0.0".to_string(),
                     disc_port,
                     p2p_port,
@@ -63,8 +61,8 @@ pub mod testing {
                     public_key_str,
                     status: AddrStatus::WhoAreYouSuccess { at: Utc::now() },
                     public_key,
-                }),
-                __internal_slot: SlotGuard {
+                },
+                addr_slot_guard: SlotGuard {
                     slot: Arc::new(Slot { idx: 0 }),
                     slots_tx: Arc::new(slots_tx),
                 },
@@ -77,7 +75,7 @@ pub mod testing {
 
             AddrGuard {
                 addr: Arc::new(RwLock::new(addr)),
-                __internal_addr_recycle_tx: addrs_tx,
+                addr_recycle_tx: addrs_tx,
             }
         }
     }

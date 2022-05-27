@@ -1,8 +1,8 @@
 use super::dial_scheduler::{DialScheduler, DialSchedulerArgs};
-use super::server::Server;
+use super::server::{Server, ServerArgs};
 use super::task::runtime::DiscTaskRuntime;
 use crate::v1::net::Connection;
-use crate::{AddrVal, AddrsIterator, Table};
+use crate::{AddrsIterator, Table};
 use colored::Colorize;
 use logger::tinfo;
 use p2p_addr::UnknownAddr;
@@ -11,6 +11,7 @@ use std::sync::Arc;
 use task_queue::TaskQueue;
 
 const DISC_TASK_QUEUE_CAPACITY: usize = 10;
+const ADDR_EXPIRE_DURATION: i64 = 3600;
 
 pub struct Discovery {
     server: Server,
@@ -20,6 +21,7 @@ pub struct Discovery {
 }
 
 pub struct DiscoveryArgs {
+    pub addr_expire_duration: Option<i64>,
     pub disc_dial_interval: Option<u16>,
     pub disc_table_capacity: Option<u16>,
     pub disc_task_interval: Option<u16>,
@@ -48,6 +50,11 @@ impl Discovery {
             );
 
             (Arc::new(udp_conn), socket_addr.port())
+        };
+
+        let addr_expire_duration = match disc_args.addr_expire_duration {
+            Some(d) => d,
+            None => ADDR_EXPIRE_DURATION,
         };
 
         let identity = {
@@ -94,8 +101,14 @@ impl Discovery {
         };
 
         let server = {
-            let s =
-                Server::new(udp_conn.clone(), identity.clone(), table.clone());
+            let server_args = ServerArgs {
+                udp_conn: udp_conn.clone(),
+                identity: identity.clone(),
+                table: table.clone(),
+                addr_expire_duration,
+            };
+
+            let s = Server::new(server_args);
 
             s
         };
@@ -146,14 +159,16 @@ impl Discovery {
                 Ok(addr) => {
                     println!("addr table elements [{}] - {}", idx, addr,);
 
-                    match &addr.val {
-                        AddrVal::Known(k) => {
-                            addr_vec.push(k.disc_endpoint());
-                        }
-                        AddrVal::Unknown(u) => {
-                            addr_vec.push(u.disc_endpoint());
-                        }
-                    }
+                    addr_vec.push(addr.known_addr.disc_endpoint())
+
+                    // match &addr.val {
+                    //     AddrVal::Known(k) => {
+                    //         addr_vec.push(k.disc_endpoint());
+                    //     }
+                    //     AddrVal::Unknown(u) => {
+                    //         addr_vec.push(u.disc_endpoint());
+                    //     }
+                    // }
                 }
                 Err(_err) => {
                     println!("addr table elements [{}] is locked", idx);

@@ -194,10 +194,24 @@ impl Table {
         &self,
         disc_endpoint: &String,
         addr: Arc<RwLock<Addr>>,
-    ) -> Option<Arc<RwLock<Addr>>> {
+    ) -> Result<Option<Arc<RwLock<Addr>>>, String> {
         let mut addr_map = self.addr_map.write().await;
 
-        addr_map.insert(disc_endpoint.clone(), addr)
+        let previous_addr =
+            addr_map.insert(disc_endpoint.clone(), addr.clone());
+
+        match self.enqueue_known_addr(addr).await {
+            Ok(_) => {}
+            Err(err) => {
+                return Err(format!(
+                    "Fail to insert mapping. Queue might have been closed, \
+                        err: {}",
+                    err,
+                ));
+            }
+        };
+
+        Ok(previous_addr)
     }
 
     pub async fn remove_mapping(

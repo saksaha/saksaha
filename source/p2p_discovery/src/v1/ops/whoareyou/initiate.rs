@@ -4,7 +4,7 @@ use super::{
 };
 use crate::{
     v1::{net::Connection, ops::Msg},
-    Addr, AddrSlot, AddrVal, Table,
+    Addr, Table,
 };
 use chrono::{DateTime, Utc};
 use futures::SinkExt;
@@ -35,11 +35,14 @@ pub(crate) enum WhoAreYouInitError {
     )]
     AttemptToUpdateValidAddr,
 
+    #[error("Peer socket addr create fail, err: {err}")]
+    MalformedAddr { err: String },
+
     #[error(
-        "Successfuly WhoAreYou has been made recently, \
-        at: {at}"
+        "Addr has already been discovered and is mapped, endpoint: \
+        {disc_endpoint}"
     )]
-    WhoAreYouNotExpired { at: DateTime<Utc> },
+    AddrAlreadyMapped { disc_endpoint: String },
 }
 
 pub(crate) async fn init_who_are_you(
@@ -57,45 +60,14 @@ pub(crate) async fn init_who_are_you(
 
     let table = table.clone();
 
-    let addr_slot = match table.get_mapped_addr_lock(&her_disc_endpoint).await {
-        Some((addr_lock, addr)) => {
-            match &addr_lock.val {
-                AddrVal::Unknown(_) => AddrSlot::Addr(addr_lock, addr),
-                AddrVal::Known(known_addr) => {
-                    if let AddrStatus::WhoAreYouSuccess { at } =
-                        known_addr.status
-                    {
-                        if !check::is_who_are_you_expired(
-                            WHO_ARE_YOU_EXPIRATION_SEC,
-                            at,
-                        ) {
-                            return Err(
-                                WhoAreYouInitError::WhoAreYouNotExpired { at },
-                            );
-                        } else {
-                            // WhoAreYou succeeded long time ago (old)
-                            table.remove_mapping(&her_disc_endpoint).await;
-
-                            match table.get_empty_slot().await {
-                                Ok(s) => AddrSlot::Slot(s),
-                                Err(err) => {
-                                    return Err(
-                                WhoAreYouInitError::AddrSlotReserveFail {
-                                    err,
-                                },
-                            );
-                                }
-                            }
-                        }
-                    } else {
-                        // Previous WhoAreYou not successful
-                        AddrSlot::Addr(addr_lock, addr)
-                    }
-                }
-            }
+    let slot = match table.get_mapped_addr_lock(&her_disc_endpoint).await {
+        Some(_) => {
+            return Err(WhoAreYouInitError::AddrAlreadyMapped {
+                disc_endpoint: her_disc_endpoint.to_string(),
+            });
         }
         None => match table.get_empty_slot().await {
-            Ok(s) => AddrSlot::Slot(s),
+            Ok(s) => s,
             Err(err) => {
                 return Err(WhoAreYouInitError::AddrSlotReserveFail { err });
             }
@@ -116,48 +88,24 @@ pub(crate) async fn init_who_are_you(
 
     let mut tx_lock = udp_conn.tx.write().await;
 
-    let socket_addr =
-        SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 35518);
+    let her_socket_addr: SocketAddr = match &her_disc_endpoint.parse() {
+        Ok(a) => *a,
+        Err(err) => {
+            return Err(WhoAreYouInitError::MalformedAddr {
+                err: err.to_string(),
+            });
+        }
+    };
 
-    match tx_lock.send((Msg::WhoAreYouSyn(way), socket_addr)).await {
+    match tx_lock
+        .send((Msg::WhoAreYouSyn(way), her_socket_addr))
+        .await
+    {
         Ok(_) => {
-            match addr_slot {
-                // Fresh new attempt OR expired destination
-                AddrSlot::Slot(s) => {
-                    let unknown_addr_node = {
-                        let addr = Addr {
-                            val: AddrVal::Unknown(unknown_addr),
-                            __internal_slot: s,
-                        };
-                        Arc::new(RwLock::new(addr))
-                    };
-
-                    table
-                        .insert_mapping(&her_disc_endpoint, unknown_addr_node)
-                        .await;
-                }
-
-                // Previous unsuccessful WhoAreYou attempt
-                AddrSlot::Addr(mut addr_lock, _) => {
-                    match &mut addr_lock.val {
-                        AddrVal::Unknown(ua) => {
-                            *ua = unknown_addr;
-                            ua.status =
-                                AddrStatus::WhoAreYouInit { at: Utc::now() };
-                        }
-                        _ => {
-                            return Err(
-                                WhoAreYouInitError::AttemptToUpdateValidAddr,
-                            );
-                        }
-                    };
-                }
-            };
-
             tdebug!(
                 "p2p_discovery",
                 "whoareyou",
-                "Addr updated after whoareyou initiate"
+                "WhoAreYou SYN has been successfully sent, to: {}"
             );
         }
         Err(err) => {

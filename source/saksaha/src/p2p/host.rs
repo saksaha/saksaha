@@ -25,6 +25,7 @@ pub(crate) struct P2PHost {
 }
 
 pub(crate) struct P2PHostArgs {
+    pub(crate) addr_expire_duration: Option<i64>,
     pub(crate) disc_port: Option<u16>,
     pub(crate) disc_dial_interval: Option<u16>,
     pub(crate) disc_table_capacity: Option<u16>,
@@ -84,6 +85,7 @@ impl P2PHost {
 
         let (p2p_discovery, disc_port) = {
             let disc_args = DiscoveryArgs {
+                addr_expire_duration: p2p_host_args.addr_expire_duration,
                 disc_dial_interval: p2p_host_args.disc_dial_interval,
                 disc_table_capacity: p2p_host_args.disc_table_capacity,
                 disc_task_interval: p2p_host_args.disc_task_interval,

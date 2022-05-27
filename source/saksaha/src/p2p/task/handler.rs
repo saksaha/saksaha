@@ -2,7 +2,6 @@ use crate::p2p::task::P2PTask;
 use chrono::{Duration, Utc};
 use logger::{tdebug, terr, twarn};
 use p2p_addr::AddrStatus;
-use p2p_discovery::AddrVal;
 use p2p_peer::{PeerSlot, PeerStatus};
 use p2p_transport::Connection;
 use p2p_transport_ops::handshake::{self, HandshakeInitArgs};
@@ -18,18 +17,20 @@ pub(crate) async fn run(task: P2PTask) {
             let addr = addr_guard.addr.clone();
             let mut addr_lock = addr.write_owned().await;
 
-            let mut known_addr = match &mut addr_lock.val {
-                AddrVal::Known(k) => k,
-                AddrVal::Unknown(_) => {
-                    terr!(
-                        "saksaha",
-                        "p2p",
-                        "Addr table has invalid entry (not known)",
-                    );
+            // let mut known_addr = match &mut addr_lock.val {
+            //     AddrVal::Known(k) => k,
+            //     AddrVal::Unknown(_) => {
+            //         terr!(
+            //             "saksaha",
+            //             "p2p",
+            //             "Addr table has invalid entry (not known)",
+            //         );
 
-                    return;
-                }
-            };
+            //         return;
+            //     }
+            // };
+
+            let known_addr = &mut addr_lock.known_addr;
 
             let peer_slot = match peer_table
                 .get_mapped_peer_lock(&known_addr.public_key_str)

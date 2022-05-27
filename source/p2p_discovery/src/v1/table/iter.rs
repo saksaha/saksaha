@@ -34,7 +34,7 @@ impl AddrsIterator {
         match rx.recv().await {
             Some(addr) => {
                 let addr_guard = AddrGuard {
-                    __internal_addr_recycle_tx: self.addr_recycle_tx.clone(),
+                    addr_recycle_tx: self.addr_recycle_tx.clone(),
                     addr,
                 };
 

@@ -1,4 +1,5 @@
 use crate::{v1::net::Connection, Table};
+use chrono::Duration;
 use futures::StreamExt;
 use logger::{terr, tinfo, twarn};
 use p2p_identity::Identity;
@@ -14,21 +15,29 @@ pub(crate) struct Server {
     conn_semaphore: Arc<Semaphore>,
     identity: Arc<Identity>,
     table: Arc<Table>,
+    addr_expire_duration: Duration,
+}
+
+pub(crate) struct ServerArgs {
+    pub(crate) udp_conn: Arc<Connection>,
+    pub(crate) identity: Arc<Identity>,
+    pub(crate) table: Arc<Table>,
+    pub(crate) addr_expire_duration: i64,
 }
 
 impl Server {
-    pub fn new(
-        udp_conn: Arc<Connection>,
-        identity: Arc<Identity>,
-        table: Arc<Table>,
-    ) -> Server {
+    pub fn new(server_args: ServerArgs) -> Server {
         let conn_semaphore = Arc::new(Semaphore::new(MAX_CONN_COUNT));
 
+        let addr_expire_duration =
+            Duration::seconds(server_args.addr_expire_duration);
+
         Server {
-            identity,
-            udp_conn,
+            identity: server_args.identity,
+            udp_conn: server_args.udp_conn,
             conn_semaphore,
-            table,
+            table: server_args.table,
+            addr_expire_duration,
         }
     }
 
@@ -59,6 +68,8 @@ impl Server {
                             let udp_conn = self.udp_conn.clone();
                             let identity = self.identity.clone();
                             let table = self.table.clone();
+                            let addr_expire_duration =
+                                self.addr_expire_duration;
 
                             tokio::spawn(async move {
                                 match handler
@@ -68,6 +79,7 @@ impl Server {
                                         udp_conn,
                                         identity,
                                         table,
+                                        addr_expire_duration,
                                     )
                                     .await
                                 {
