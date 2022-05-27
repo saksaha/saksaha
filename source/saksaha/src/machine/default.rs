@@ -1,5 +1,5 @@
 use super::Machine;
-use crate::blockchain::{Blockchain, TxValue, TxHash, BlockValue};
+use crate::blockchain::{Blockchain, TxValue, Hash, BlockValue};
 
 // machine api
 impl Machine {
@@ -14,7 +14,7 @@ impl Machine {
 
     pub(crate) async fn get_transaction(
         &self,
-        tx_hash: TxHash,
+        tx_hash: Hash,
     ) -> Result<TxValue, String> {
         println!("blockchain get_transaction() called");
         self.blockchain.get_transaction(&tx_hash.hash).await

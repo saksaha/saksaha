@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod test {
-    use crate::blockchain::ledger::{self, for_test, get_hash};
+    use crate::blockchain::ledger::{self, for_test, Hashing};
     use crate::p2p::P2PState;
     use crate::{rpc::response::{ErrorResponse, SuccessResponse, SuccessResult, ErrorResult}, blockchain::BlockValue};
     use crate::rpc::RPC;
@@ -17,7 +17,6 @@ mod test {
     use p2p_peer::PeerTable;
     use std::{net::SocketAddr, sync::Arc};
     use tokio::net::TcpListener;
-    use crate::p2p::P2PState;
 
     const app_prefix: &str = "test";
 
@@ -211,7 +210,7 @@ mod test {
             let ledger = blockchain.ledger;
             let dummy_tx_val = make_dummy_value();
 
-            let old_tx_hash = get_hash(&dummy_tx_val);
+            let old_tx_hash = (&dummy_tx_val).get_hash().expect("fail to get hash");
 
             for_test::delete_tx(&ledger, &old_tx_hash.hash)
                 .expect("Tx should be deleted");
@@ -223,12 +222,6 @@ mod test {
         }
 
         let (rpc, rpc_socket, rpc_socket_addr, _) = make_rpc().await;
-    }
-
-    async fn test_rpc_client_and_get_block() {
-        init();
-
-        let (rpc, rpc_socket, rpc_socket_addr, machine) = make_rpc().await;
 
         let _rpc_server =
             tokio::spawn(
@@ -287,7 +280,7 @@ mod test {
             let ledger = blockchain.ledger;
             let dummy_tx_val = make_dummy_value();
 
-            let old_tx_hash = get_hash(&dummy_tx_val);
+            let old_tx_hash = (&dummy_tx_val).get_hash().expect("fail to get hash");
 
             for_test::delete_tx(&ledger, &old_tx_hash.hash)
                 .expect("Tx should be deleted");
@@ -300,7 +293,7 @@ mod test {
             assert_eq!(old_tx_hash.hash, tx_hash);
         }
 
-        let (rpc, rpc_socket, rpc_socket_addr) = make_rpc().await;
+        let (rpc, rpc_socket, rpc_socket_addr, _) = make_rpc().await;
 
         let _rpc_server =
             tokio::spawn(
@@ -312,25 +305,6 @@ mod test {
         let uri: Uri = {
             let u = format!(
                 "http://localhost:{}/apis/v1/get_transaction",
-        let block_value = BlockValue {
-                tx_pool: vec![String::from("1"), String::from("2")],
-                sig_vec:vec![String::from("1"), String::from("2")],
-                created_at: String::from(""),
-                height: String::from(""),
-            };
-
-        let block_hash = {
-            let block_hash = match machine.blockchain.ledger.write_block(block_value.clone()).await {
-                Ok(v) => v,
-                Err(err) => panic!("Failed to write dummy block, err: {}", err),
-            };
-
-            block_hash
-        };
-
-        let uri: Uri = {
-            let u = format!(
-                "http://localhost:{}/apis/v1/get_block",
                 rpc_socket_addr.port()
             );
 
@@ -370,6 +344,49 @@ mod test {
                 panic!("error: {}", err);
             }
         };
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn test_rpc_client_and_get_block() {
+        init();
+
+        let (rpc, rpc_socket, rpc_socket_addr, machine) = make_rpc().await;
+
+        let _rpc_server =
+            tokio::spawn(
+                async move { rpc.run(rpc_socket, rpc_socket_addr).await },
+            );
+
+        let client = Client::new();
+
+        let block_value = BlockValue {
+                tx_pool: vec![String::from("1"), String::from("2")],
+                sig_vec:vec![String::from("1"), String::from("2")],
+                created_at: String::from(""),
+                height: String::from(""),
+            };
+
+        let block_hash = {
+            let block_hash = match machine.blockchain.ledger.write_block(block_value.clone()).await {
+                Ok(v) => v,
+                Err(err) => panic!("Failed to write dummy block, err: {}", err),
+            };
+
+            block_hash
+        };
+
+        let uri: Uri = {
+            let u = format!(
+                "http://localhost:{}/apis/v1/get_block",
+                rpc_socket_addr.port()
+            );
+
+            u.parse().expect("URI should be made")
+        };
+
+        let req = Request::builder()
+            .method(Method::POST)
+            .uri(uri)
             .body(Body::from(block_hash))
             .expect("request builder should be made");
 

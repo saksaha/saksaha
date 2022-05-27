@@ -19,8 +19,8 @@ pub(crate) struct TxValue {
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub(crate) struct TxHash {
-    pub(crate) hash: String,
+pub struct Hash {
+    pub hash: String,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]

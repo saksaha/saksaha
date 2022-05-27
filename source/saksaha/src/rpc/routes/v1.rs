@@ -1,6 +1,6 @@
 use super::Node;
 use crate::rpc::response::{ErrorResult, SuccessResult};
-use crate::{blockchain::blockchain::{TxValue, TxHash}};
+use crate::{blockchain::blockchain::{TxValue, Hash}};
 use hyper::{Body, Request, Response, StatusCode};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -81,7 +81,7 @@ pub(crate) async fn get_transaction(
             let _body_str = match std::str::from_utf8(&body_bytes_vec) {
                 Ok(b) => {
                     println!("{}", b);
-                    let _tx: TxHash = match serde_json::from_str(b) {
+                    let _tx: Hash = match serde_json::from_str(b) {
                         Ok(tx_hash) => {
                             match node.machine.get_transaction(tx_hash).await {
                                 Ok(t) => {

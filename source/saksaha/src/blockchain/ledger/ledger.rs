@@ -1,10 +1,10 @@
 use super::{db, tx_columns};
-use crate::blockchain::{blockchain::TxValue, TxHash, BlockValue};
+use crate::blockchain::{blockchain::TxValue, Hash, BlockValue};
 use database::KeyValueDatabase;
 use db::block_columns;
 use logger::tinfo;
 use rocksdb::{
-    DBRawIteratorWithThreadMode, DBWithThreadMode, SingleThreaded, WriteBatch, ColumnFamily,
+    DBRawIteratorWithThreadMode, DBWithThreadMode, SingleThreaded, WriteBatch,
 };
 use sha3::{Digest, Sha3_256};
 
@@ -39,7 +39,10 @@ impl Ledger {
 
         let mut batch = WriteBatch::default();
 
-        let tx_hash = tx_value.get_hash();
+        let tx_hash = match tx_value.get_hash() {
+            Ok(hash) => hash,
+            Err(err) => return Err(format!("Failed to get hash from tx_value")),
+        };
 
         let cf_handle = match db.cf_handle(tx_columns::CREATED_AT) {
             Some(h) => h,
@@ -297,7 +300,10 @@ impl Ledger {
 
         let mut batch = WriteBatch::default();
 
-        let block_hash = block_value.get_hash();
+        let block_hash = match block_value.get_hash() {
+            Ok(hash) => hash,
+            Err(err) => return Err(format!("Failed to get hash from block_value")),
+        };
 
         println!(
             "write_block(): created_at: {}, block_hash: {:?}",
@@ -310,7 +316,7 @@ impl Ledger {
                 return Err(format!("Fail to open ledger columns {}", block_columns::CREATED_AT))
             }
         };
-        batch.put_cf(cf_handle, &block_hash, block_value.created_at);
+        batch.put_cf(cf_handle, &block_hash.hash, block_value.created_at);
 
         let cf_handle = match db.cf_handle(block_columns::SIG_VEC) {
             Some(h) => h,
@@ -320,13 +326,13 @@ impl Ledger {
             Ok(v) => v,
             Err(err) => return Err(format!("Cannot serialize {}, err: {}", block_columns::SIG_VEC, err)),
         };
-        batch.put_cf(cf_handle, &block_hash, ser_sig_vec);
+        batch.put_cf(cf_handle, &block_hash.hash, ser_sig_vec);
 
         let cf_handle = match db.cf_handle(block_columns::HEIGHT) {
             Some(h) => h,
             None => return Err(format!("Fail to open ledger columns {}", block_columns::HEIGHT)),
         };
-        batch.put_cf(cf_handle, &block_hash, block_value.height);
+        batch.put_cf(cf_handle, &block_hash.hash, block_value.height);
 
         let cf_handle = match db.cf_handle(block_columns::TX_POOL) {
             Some(h) => h,
@@ -338,10 +344,10 @@ impl Ledger {
             Ok(v) => v,
             Err(err) => return Err(format!("Cannot serialize {}, err: {}", block_columns::TX_POOL, err)),
         };
-        batch.put_cf(cf_handle, &block_hash, ser_tx_pool);
+        batch.put_cf(cf_handle, &block_hash.hash, ser_tx_pool);
 
         match db.write(batch) {
-            Ok(_) => return Ok(block_hash),
+            Ok(_) => return Ok(block_hash.hash),
             Err(err) => {
                 return Err(format!("Fail to write on ledger db, err: {}", err))
             }
@@ -364,38 +370,38 @@ impl Ledger {
 
 
 pub trait Hashing {
-    fn get_hash(&self) -> String;
+    fn get_hash(&self) -> Result<Hash, String>;
 }
 
 impl Hashing for BlockValue {
-    fn get_hash(&self) -> String {
+    fn get_hash(&self) -> Result<Hash, String> {
         let hash = {
             let mut h = Sha3_256::new();
             let v = match serde_json::to_value(&self) {
                 Ok(v) => v,
-                Err(err) => return format!("Failed to serialize self, err: {}", err),
+                Err(err) => return Err(format!("Failed to serialize self, err: {}", err)),
             };
             h.update(v.to_string());
             h.finalize()
         };
 
-        format!("{:x}", hash)
+        Ok(Hash {hash: format!("{:x}", hash)})
     }
 }
 
 impl Hashing for TxValue {
-    fn get_hash(&self) -> String {
+    fn get_hash(&self) -> Result<Hash, String> {
         let hash = {
             let mut h = Sha3_256::new();
             let v = match serde_json::to_value(&self) {
                 Ok(v) => v,
-                Err(err) => return format!("Failed to serialize self, err: {}", err),
+                Err(err) => return Err(format!("Failed to serialize self, err: {}", err)),
             };
             h.update(v.to_string());
             h.finalize()
         };
 
-        format!("{:x}", hash)
+        Ok(Hash {hash: format!("{:x}", hash)})
     }
 }
 
