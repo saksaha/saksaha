@@ -22,7 +22,7 @@ pub(crate) enum WhoAreYouInitError {
     MalformedAddr { err: String },
 
     #[error(
-        "Addr has already been discovered and is mapped, endpoint: \
+        "Addr has already been discovered and is mapped, disc_endpoint: \
         {disc_endpoint}"
     )]
     AddrAlreadyMapped { disc_endpoint: String },

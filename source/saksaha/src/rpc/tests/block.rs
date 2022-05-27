@@ -2,13 +2,11 @@ use super::utils::test_utils;
 
 #[cfg(test)]
 mod test_suite {
-    use hyper::body::HttpBody;
-    use hyper::{Body, Client, Method, Request, Uri};
-
-    use super::*;
     use super::*;
     use crate::blockchain::ledger::for_test;
     use crate::blockchain::BlockValue;
+    use hyper::body::HttpBody;
+    use hyper::{Body, Client, Method, Request, Uri};
 
     #[tokio::test(flavor = "multi_thread")]
     async fn test_rpc_client_and_get_block() {

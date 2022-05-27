@@ -1,17 +1,20 @@
 use crate::{
     v1::{
         net::Connection,
-        ops::{whoareyou, Msg},
+        ops::{
+            whoareyou::{self, WhoAreYou},
+            Msg,
+        },
     },
-    Table,
+    Addr, Table,
 };
 use chrono::{Duration, Utc};
 use colored::Colorize;
-use logger::{tdebug, twarn};
+use logger::{tdebug, terr, twarn};
 use p2p_addr::{AddrStatus, KnownAddr};
 use p2p_identity::Identity;
 use std::{net::SocketAddr, sync::Arc};
-use tokio::sync::Semaphore;
+use tokio::sync::{RwLock, Semaphore};
 
 pub(super) struct Handler {
     pub(crate) conn_semaphore: Arc<Semaphore>,
@@ -50,80 +53,77 @@ impl Handler {
                 };
             }
             Msg::WhoAreYouAck(way_ack) => {
-                let public_key =
+                let WhoAreYou {
+                    src_sig: her_sig,
+                    src_disc_port: her_disc_port,
+                    src_p2p_port: her_p2p_port,
+                    src_public_key_str: her_public_key_str,
+                } = way_ack;
+
+                let her_public_key =
                     match crypto::convert_public_key_str_into_public_key(
-                        &way_ack.src_public_key_str,
+                        &her_public_key_str,
                     ) {
                         Ok(p) => p,
                         Err(err) => return Err(err),
                     };
 
-                let my_ip = "127.0.0.1";
-                let my_p2p_port = identity.p2p_port;
-                let my_p2p_endpoint = format!("{}:{}", my_ip, my_p2p_port);
-
-                let her_ip = socket_addr.ip().to_string();
-                let her_disc_port = way_ack.src_disc_port;
-                let her_p2p_port = way_ack.src_p2p_port;
-
-                let her_p2p_endpoint = format!("{}:{}", her_ip, her_p2p_port);
-                let her_disc_endpoint = format!("{}:{}", her_ip, her_disc_port);
-
-                match table.get_mapped_addr_lock(&her_disc_endpoint).await {
-                    Some(_) => {
-                        twarn!(
-                            "p2p_discovery",
-                            "server",
-                            "Addr of {} is already discovered. Dropping \
-                            WAY request",
-                            &her_disc_endpoint,
-                        );
-                    }
-                    None => {
-                        return Err(format!(
-                            "Cannot proceed with WhoAreYouAck msg, \
-                            entry does not exist in the addr table",
-                        ))
-                    }
+                let known_addr = KnownAddr {
+                    ip: socket_addr.ip().to_string(),
+                    disc_port: her_disc_port,
+                    p2p_port: her_p2p_port,
+                    sig: her_sig,
+                    public_key_str: her_public_key_str.clone(),
+                    public_key: her_public_key,
+                    status: AddrStatus::WhoAreYouSynRecv { at: Utc::now() },
                 };
 
-                // match &addr_lock.val {
-                //     AddrVal::Unknown(_) => {
-                //         addr_lock.val = AddrVal::Known(KnownAddr {
-                //             ip: socket_addr.ip().to_string(),
-                //             disc_port: way_ack.src_disc_port,
-                //             p2p_port: way_ack.src_p2p_port,
-                //             sig: way_ack.src_sig,
-                //             public_key_str: way_ack.src_public_key_str,
-                //             public_key,
-                //             status: AddrStatus::WhoAreYouSuccess {
-                //                 at: Utc::now(),
-                //             },
-                //         });
-                //     }
-                //     _ => {
-                //         return Err(format!(
-                //             "Known valid addr has sent a \
-                //             redundant WhoAreYouAck"
-                //         ));
-                //     }
-                // }
+                let her_p2p_endpoint = known_addr.p2p_endpoint();
+                let her_disc_endpoint = known_addr.disc_endpoint();
 
-                // match table.enqueue_known_addr(addr).await {
-                //     Ok(_) => {
-                //         tdebug!(
-                //             "p2p_discovery",
-                //             "server",
-                //             "Enqueueing known addr, my disc endpoint: {}, \
-                //                 p2p endpoint: {}",
-                //             my_p2p_endpoint.green(),
-                //             her_p2p_endpoint.green(),
-                //         );
-                //     }
-                //     Err(err) => {
-                //         return Err(err);
-                //     }
-                // };
+                if let Some(_) =
+                    table.get_mapped_addr_lock(&her_disc_endpoint).await
+                {
+                    twarn!(
+                        "p2p_discovery",
+                        "server",
+                        "Addr (disc: {}) is already discovered. Dropping \
+                            WAY request",
+                        &her_disc_endpoint,
+                    );
+                };
+
+                let slot_guard = table.get_empty_slot().await?;
+
+                let addr = {
+                    let a = Addr {
+                        known_addr,
+                        addr_slot_guard: slot_guard,
+                    };
+
+                    Arc::new(RwLock::new(a))
+                };
+
+                match table.insert_mapping(&her_disc_endpoint, addr).await {
+                    Ok(_) => {
+                        tdebug!(
+                            "p2p_discovery",
+                            "server",
+                            "Whoareyou Success! p2p_endpoint: {}, \
+                                disc_endpoint: {}",
+                            her_p2p_endpoint.green(),
+                            her_disc_endpoint.green(),
+                        );
+                    }
+                    Err(_) => {
+                        terr!(
+                            "p2p_discovery",
+                            "server",
+                            "Fail to add known node. Queue might have been \
+                                closed",
+                        );
+                    }
+                };
             }
         };
 

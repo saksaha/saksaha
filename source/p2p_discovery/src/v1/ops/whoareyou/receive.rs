@@ -28,7 +28,7 @@ pub(crate) enum WhoAreYouRecvError {
     PublicKeyCreateFail { public_key_str: String, err: String },
 
     #[error(
-        "Addr has already been discovered and is mapped, endpoint: \
+        "Addr has already been discovered and is mapped, disc_endpoint: \
         {disc_endpoint}"
     )]
     AddrAlreadyMapped { disc_endpoint: String },
@@ -112,7 +112,7 @@ pub(crate) async fn recv_who_are_you(
 
     let mut tx_lock = udp_conn.tx.write().await;
 
-    let her_disc_endpoint: SocketAddr = match her_disc_endpoint.parse() {
+    let her_disc_socket_addr: SocketAddr = match her_disc_endpoint.parse() {
         Ok(a) => a,
         Err(err) => {
             return Err(WhoAreYouRecvError::EndpointParseFail {
@@ -122,7 +122,7 @@ pub(crate) async fn recv_who_are_you(
     };
 
     if let Err(err) = tx_lock
-        .send((Msg::WhoAreYouAck(way_ack), her_disc_endpoint))
+        .send((Msg::WhoAreYouAck(way_ack), her_disc_socket_addr))
         .await
     {
         return Err(WhoAreYouRecvError::MsgSendFail {
@@ -147,8 +147,9 @@ pub(crate) async fn recv_who_are_you(
             tdebug!(
                 "p2p_discovery",
                 "whoareyou",
-                "Enqueueing known addr, p2p endpoint: {}",
+                "Whoareyou Success! p2p_endpoint: {}, disc_endpoint: {}",
                 her_p2p_endpoint.green(),
+                her_disc_endpoint.green(),
             );
         }
         Err(err) => {
