@@ -22,40 +22,22 @@ impl Routine {
         tinfo!("saksaha", "system", "System is starting");
 
         let config = {
-            let profiled_config = match &sys_args.cfg_profile {
-                Some(profile) => {
-                    if let Some(ap) = &sys_args.app_prefix {
-                        return Err(format!(
-                            "You cannot provide 'app_prefix' and \
-                            'cfg_profile' at the same time, app_prefix: {}, \
-                            cfg_profile: {}",
-                            ap, profile,
-                        ));
-                    }
-
-                    match DevConfig::new(profile) {
-                        Ok(c) => Some(c),
-                        Err(err) => {
-                            return Err(format!(
-                                "Could not create dev config, err: {}",
-                                err
-                            ));
-                        }
-                    }
-                }
-                None => None,
+            let app_prefix = match &sys_args.app_prefix {
+                Some(ap) => ap.clone(),
+                None => APP_PREFIX.to_string(),
             };
 
-            // Order of priority
-            // 1) profiled_config.app_prefix
-            // 2) sys_args.app_prefix
-            // 3) APP_PREFIX (default)
-            let app_prefix = match &profiled_config {
-                Some(dv) => dv.app_prefix.clone(),
-                None => match &sys_args.app_prefix {
-                    Some(ap) => ap.clone(),
-                    None => APP_PREFIX.to_string(),
+            let profiled_config = match &sys_args.cfg_profile {
+                Some(profile) => match DevConfig::new(profile) {
+                    Ok(c) => Some(c),
+                    Err(err) => {
+                        return Err(format!(
+                            "Could not create dev config, err: {}",
+                            err
+                        ));
+                    }
                 },
+                None => None,
             };
 
             tinfo!(
