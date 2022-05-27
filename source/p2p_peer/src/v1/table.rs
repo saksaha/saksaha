@@ -144,19 +144,9 @@ impl PeerTable {
                 Ok(peer_lock) => match &peer_lock.addr_guard {
                     Some(addr_guard) => {
                         let addr_lock = addr_guard.addr.read().await;
+
                         peer_vec
                             .push(addr_lock.known_addr.p2p_endpoint().clone());
-                        // let addr_val = &addr_lock.val;
-                        // match addr_val {
-                        //     AddrVal::Known(k) => {
-                        //         peer_vec.push(k.p2p_endpoint().clone());
-                        //     }
-                        //     AddrVal::Unknown(u) => {
-                        //         peer_vec.push(
-                        //             u.p2p_endpoint().unwrap().clone(), //
-                        //         );
-                        //     }
-                        // }
                     }
 
                     None => {
@@ -171,53 +161,6 @@ impl PeerTable {
 
         peer_vec
     }
-
-    // pub async fn print_all_nodes(&self) -> u16 {
-    //     let peers = self.peers.lock().await;
-
-    //     for (idx, node) in peers.iter().enumerate() {
-    //         if let Ok(node_lock) = node.try_lock() {
-    //             let a = &node_lock.value;
-    //             match a {
-    //                 NodeValue::Valued(p) => {
-    //                     println!(
-    //                         "peer table [{}] - p2p_port: {}",
-    //                         idx, p.transport.p2p_port
-    //                     );
-    //                     return p.transport.p2p_port;
-    //                 }
-    //                 _ => {
-    //                     println!("peer table [{}] - empty", idx);
-    //                 }
-    //             };
-    //         } else {
-    //             println!("peer table [{}] - locked", idx,);
-    //         }
-    //     }
-    //     return 0;
-    // }
-
-    // pub async fn print_all_mapped_nodes(&self) {
-    //     let peers_map = self.peers_map.lock().await;
-
-    //     let len = peers_map.len();
-    //     println!("Peer map length: {}", len);
-
-    //     for (idx, node) in peers_map.values().into_iter().enumerate() {
-    //         if let Ok(node_lock) = node.try_lock() {
-    //             let a = &node_lock.value;
-    //             match a {
-    //                 NodeValue::Valued(p) => {
-    //                     println!(
-    //                         "peer table [{}] - p2p_port: {}",
-    //                         idx, p.transport.p2p_port
-    //                     );
-    //                 }
-    //                 _ => (),
-    //             };
-    //         }
-    //     }
-    // }
 }
 
 // pub struct RecycleRoutine {}
