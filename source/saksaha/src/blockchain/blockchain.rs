@@ -1,4 +1,4 @@
-use super::ledger::{self, Ledger};
+use super::ledger::Ledger;
 use logger::tinfo;
 use serde::{Deserialize, Serialize};
 
@@ -19,19 +19,16 @@ pub(crate) struct TxValue {
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub(crate) struct TxHash {
-    pub(crate) hash: String,
+pub struct Hash {
+    pub hash: String,
 }
 
-impl TxValue {
-    pub(crate) fn empty() -> TxValue {
-        TxValue {
-            created_at: String::from(""),
-            data: String::from(""),
-            pi: String::from(""),
-            sig_vec: String::from(""),
-        }
-    }
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub(crate) struct BlockValue {
+    pub(crate) tx_pool: Vec<String>,
+    pub(crate) sig_vec: Vec<String>,
+    pub(crate) created_at: String,
+    pub(crate) height: String,
 }
 
 impl Blockchain {
@@ -66,5 +63,12 @@ impl Blockchain {
         tx_hash: &String,
     ) -> Result<TxValue, String> {
         self.ledger.read_tx(tx_hash).await
+    }
+
+    pub(crate) async fn get_block(
+        &self,
+        block: &String,
+    ) -> Result<BlockValue, String> {
+        self.ledger.get_block(block).await
     }
 }
