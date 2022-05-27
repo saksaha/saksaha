@@ -34,25 +34,12 @@ impl HandshakeDialLoop {
                 Ok(addr_guard) => {
                     let addr = addr_guard.addr.clone();
                     let addr_lock = addr.read().await;
-
-                    // let known_addr = match &addr_lock.val {
-                    //     AddrVal::Known(k) => k,
-                    //     AddrVal::Unknown(_) => {
-                    //         terr!(
-                    //             "saksaha",
-                    //             "p2p",
-                    //             "Addr table has invalid entry (not known), ",
-                    //         );
-
-                    //         continue;
-                    //     }
-                    // };
-
                     let known_addr = &addr_lock.known_addr;
 
                     let my_public_key_str =
                         &self.identity.credential.public_key_str;
                     let her_public_key_str = &known_addr.public_key_str;
+
                     let is_my_public_key_greater_than_hers =
                         my_public_key_str > her_public_key_str;
 
@@ -61,6 +48,7 @@ impl HandshakeDialLoop {
                         identity: self.identity.clone(),
                         peer_table: self.peer_table.clone(),
                     };
+
                     let p2p_task_queue = self.p2p_task_queue.clone();
 
                     if is_my_public_key_greater_than_hers {

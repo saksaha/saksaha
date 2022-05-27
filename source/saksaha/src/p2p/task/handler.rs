@@ -1,5 +1,6 @@
 use crate::p2p::task::P2PTask;
 use logger::{tdebug, terr, twarn};
+use p2p_addr::AddrStatus;
 use p2p_transport::Connection;
 use p2p_transport_ops::handshake::{self, HandshakeInitArgs};
 use tokio::net::TcpStream;
@@ -27,7 +28,8 @@ pub(crate) async fn run(task: P2PTask) {
                         &known_addr.public_key_str,
                     );
 
-                    addr_lock.get_status();
+                    // let mut addr_status = addr_lock.get_status();
+                    // addr_status = AddrStatus::WhoAreYouSuccess
 
                     return;
                 }
