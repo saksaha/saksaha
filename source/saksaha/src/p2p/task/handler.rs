@@ -1,8 +1,5 @@
 use crate::p2p::task::P2PTask;
-use chrono::{Duration, Utc};
 use logger::{tdebug, terr, twarn};
-use p2p_addr::AddrStatus;
-use p2p_peer::{PeerSlot, PeerStatus};
 use p2p_transport::Connection;
 use p2p_transport_ops::handshake::{self, HandshakeInitArgs};
 use tokio::net::TcpStream;
@@ -16,56 +13,24 @@ pub(crate) async fn run(task: P2PTask) {
         } => {
             let addr = addr_guard.addr.clone();
             let mut addr_lock = addr.write_owned().await;
-
-            // let mut known_addr = match &mut addr_lock.val {
-            //     AddrVal::Known(k) => k,
-            //     AddrVal::Unknown(_) => {
-            //         terr!(
-            //             "saksaha",
-            //             "p2p",
-            //             "Addr table has invalid entry (not known)",
-            //         );
-
-            //         return;
-            //     }
-            // };
-
             let known_addr = &mut addr_lock.known_addr;
 
-            let peer_slot = match peer_table
+            let peer_slot_guard = match peer_table
                 .get_mapped_peer_lock(&known_addr.public_key_str)
                 .await
             {
-                Some(mut peer) => {
-                    if let PeerStatus::HandshakeSuccess { at } = peer.status {
-                        let now = Utc::now();
-                        if now.signed_duration_since(at) < Duration::seconds(60)
-                        {
-                            tdebug!(
-                                "saksaha",
-                                "p2p",
-                                "Handshake has been done recently, dropping \
-                                the task (InitiateHandshake)",
-                            );
+                Some(_) => {
+                    twarn!(
+                        "saksaha",
+                        "p2p",
+                        "Peer is already mapped, dropping, public_key_str: {}",
+                        &known_addr.public_key_str,
+                    );
 
-                            if let Some(_) = &peer.addr_guard {
-                                known_addr.status = AddrStatus::Invalid {
-                                    err: format!(
-                                        "Handshake is done recently. \
-                                            HSInit dropped"
-                                    ),
-                                };
-                            } else {
-                                peer.addr_guard = Some(addr_guard);
-                            }
-
-                            return;
-                        }
-                    }
-                    PeerSlot::Peer(peer)
+                    return;
                 }
                 None => match peer_table.get_empty_slot().await {
-                    Ok(s) => PeerSlot::Slot(s),
+                    Ok(s) => s,
                     Err(err) => {
                         terr!(
                             "saksaha",
@@ -138,7 +103,7 @@ pub(crate) async fn run(task: P2PTask) {
                 addr_guard,
                 identity,
                 peer_table,
-                peer_slot,
+                peer_slot_guard,
                 addr_lock,
             };
 

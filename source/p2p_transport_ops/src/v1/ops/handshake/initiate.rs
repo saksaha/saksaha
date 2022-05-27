@@ -5,7 +5,8 @@ use logger::{tdebug, twarn};
 use p2p_addr::KnownAddr;
 use p2p_discovery::{Addr, AddrGuard};
 use p2p_identity::Identity;
-use p2p_peer::{Peer, PeerSlot, PeerStatus, PeerTable};
+use p2p_peer::SlotGuard;
+use p2p_peer::{Peer, PeerStatus, PeerTable};
 use p2p_transport::Handshake;
 use p2p_transport::Msg;
 use p2p_transport::{Connection, Transport};
@@ -17,7 +18,8 @@ pub struct HandshakeInitArgs {
     pub peer_table: Arc<PeerTable>,
     pub identity: Arc<Identity>,
     pub addr_guard: AddrGuard,
-    pub peer_slot: PeerSlot,
+    // pub peer_slot: PeerSlot,
+    pub peer_slot_guard: SlotGuard,
     pub addr_lock: OwnedRwLockWriteGuard<Addr>,
 }
 
@@ -83,16 +85,10 @@ pub async fn initiate_handshake(
         identity,
         addr_guard,
         peer_table,
-        peer_slot,
+        peer_slot_guard,
         addr_lock,
     } = handshake_init_args;
 
-    // let known_addr = match &addr_lock.val {
-    //     AddrVal::Known(k) => k,
-    //     AddrVal::Unknown(_) => {
-    //         return Err(HandshakeInitError::NotKnownAddr);
-    //     }
-    // };
     let known_addr = &addr_lock.known_addr;
 
     let handshake = match Handshake::new(
@@ -147,37 +143,30 @@ pub async fn initiate_handshake(
         }
     };
 
-    let shared_secret =
-        crypto::make_shared_secret(my_secret_key, her_public_key);
+    {
+        let shared_secret =
+            crypto::make_shared_secret(my_secret_key, her_public_key);
 
-    let transport = Transport {
-        conn,
-        shared_secret,
-    };
+        let transport = Transport {
+            conn,
+            shared_secret,
+        };
 
-    match peer_slot {
-        PeerSlot::Slot(s) => {
+        let peer = {
             let p = Peer {
                 p2p_port: handshake_ack.src_p2p_port,
                 public_key_str: her_public_key_str.clone(),
                 addr_guard: Some(addr_guard),
                 transport,
                 status: PeerStatus::HandshakeInit,
-                __internal_slot_guard: s,
+                peer_slot_guard,
             };
 
-            let peer = Arc::new(RwLock::new(p));
+            Arc::new(RwLock::new(p))
+        };
 
-            peer_table.insert_mapping(&her_public_key_str, peer).await;
-        }
-        PeerSlot::Peer(mut peer) => {
-            peer.p2p_port = handshake_ack.src_p2p_port;
-            peer.public_key_str = her_public_key_str.clone();
-            peer.addr_guard = Some(addr_guard);
-            peer.transport = transport;
-            peer.status = PeerStatus::HandshakeInit;
-        }
-    };
+        peer_table.insert_mapping(&her_public_key_str, peer).await;
+    }
 
     tdebug!(
         "p2p_trpt_hske",

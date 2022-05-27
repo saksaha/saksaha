@@ -1,8 +1,7 @@
+use crate::SlotGuard;
 use chrono::{DateTime, Utc};
 use p2p_discovery::AddrGuard;
 use p2p_transport::Transport;
-
-use crate::SlotGuard;
 
 pub struct Peer {
     pub p2p_port: u16,
@@ -10,7 +9,7 @@ pub struct Peer {
     pub transport: Transport,
     pub status: PeerStatus,
     pub addr_guard: Option<AddrGuard>,
-    pub __internal_slot_guard: SlotGuard,
+    pub peer_slot_guard: SlotGuard,
 }
 
 pub enum PeerStatus {

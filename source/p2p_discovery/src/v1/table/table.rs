@@ -24,11 +24,6 @@ pub struct Table {
     addr_recycle_tx: Arc<UnboundedSender<Arc<RwLock<Addr>>>>,
 }
 
-pub(crate) enum AddrSlot {
-    Slot(SlotGuard),
-    Addr(OwnedRwLockWriteGuard<Addr>, Arc<RwLock<Addr>>),
-}
-
 impl Table {
     pub(crate) async fn init(
         disc_table_capacity: Option<u16>,

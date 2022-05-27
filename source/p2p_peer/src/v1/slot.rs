@@ -1,6 +1,7 @@
-use logger::{terr};
+use logger::terr;
 use std::sync::Arc;
 use tokio::sync::mpsc::UnboundedSender;
+
 pub struct Slot {
     pub idx: usize,
 }

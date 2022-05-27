@@ -2,8 +2,8 @@ use crate::{Peer, Slot, SlotGuard};
 use logger::{terr, tinfo};
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::{
-    mpsc::{self, Receiver, Sender, UnboundedReceiver, UnboundedSender},
-    OwnedRwLockMappedWriteGuard, OwnedRwLockWriteGuard, RwLock,
+    mpsc::{self, UnboundedReceiver, UnboundedSender},
+    OwnedRwLockWriteGuard, RwLock,
 };
 
 // const PEER_TABLE_CAPACITY: usize = 50;
@@ -15,11 +15,6 @@ pub struct PeerTable {
     peer_map: RwLock<HashMap<PublicKey, Arc<RwLock<Peer>>>>,
     slots_rx: RwLock<UnboundedReceiver<Arc<Slot>>>,
     slots_tx: Arc<UnboundedSender<Arc<Slot>>>,
-}
-
-pub enum PeerSlot {
-    Slot(SlotGuard),
-    Peer(OwnedRwLockWriteGuard<Peer>),
 }
 
 impl PeerTable {

@@ -1,22 +1,14 @@
-use super::{
-    check::{self, WHO_ARE_YOU_EXPIRATION_SEC},
-    WhoAreYou,
-};
+use super::{check, WhoAreYou};
 use crate::{
     v1::{net::Connection, ops::Msg},
-    Addr, Table,
+    Table,
 };
-use chrono::{DateTime, Utc};
 use futures::SinkExt;
 use logger::tdebug;
-use p2p_addr::{AddrStatus, UnknownAddr};
+use p2p_addr::UnknownAddr;
 use p2p_identity::Identity;
-use std::{
-    net::{IpAddr, Ipv4Addr, SocketAddr},
-    sync::Arc,
-};
+use std::{net::SocketAddr, sync::Arc};
 use thiserror::Error;
-use tokio::sync::RwLock;
 
 #[derive(Error, Debug)]
 pub(crate) enum WhoAreYouInitError {
@@ -25,15 +17,6 @@ pub(crate) enum WhoAreYouInitError {
 
     #[error("Can't send a message through udp socket, err: {err}")]
     MsgSendFail { err: String },
-
-    #[error("No available addr slot, err: {err}")]
-    AddrSlotReserveFail { err: String },
-
-    #[error(
-        "Addr is already valid and fresh but attempt to modify has \
-        been made"
-    )]
-    AttemptToUpdateValidAddr,
 
     #[error("Peer socket addr create fail, err: {err}")]
     MalformedAddr { err: String },
@@ -60,18 +43,10 @@ pub(crate) async fn init_who_are_you(
 
     let table = table.clone();
 
-    let slot = match table.get_mapped_addr_lock(&her_disc_endpoint).await {
-        Some(_) => {
-            return Err(WhoAreYouInitError::AddrAlreadyMapped {
-                disc_endpoint: her_disc_endpoint.to_string(),
-            });
-        }
-        None => match table.get_empty_slot().await {
-            Ok(s) => s,
-            Err(err) => {
-                return Err(WhoAreYouInitError::AddrSlotReserveFail { err });
-            }
-        },
+    if let Some(_) = table.get_mapped_addr_lock(&her_disc_endpoint).await {
+        return Err(WhoAreYouInitError::AddrAlreadyMapped {
+            disc_endpoint: her_disc_endpoint.to_string(),
+        });
     };
 
     let src_disc_port = identity.disc_port;
@@ -105,7 +80,8 @@ pub(crate) async fn init_who_are_you(
             tdebug!(
                 "p2p_discovery",
                 "whoareyou",
-                "WhoAreYou SYN has been successfully sent, to: {}"
+                "WhoAreYou SYN has been successfully sent, to: {}",
+                &her_disc_endpoint,
             );
         }
         Err(err) => {

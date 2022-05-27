@@ -1,10 +1,7 @@
-use super::{
-    check::{self, WHO_ARE_YOU_EXPIRATION_SEC},
-    WhoAreYou,
-};
+use super::{check, WhoAreYou};
 use crate::{
     v1::{net::Connection, ops::Msg},
-    Addr, AddrSlot, Table,
+    Addr, Table,
 };
 use chrono::Utc;
 use colored::Colorize;
@@ -86,7 +83,8 @@ pub(crate) async fn recv_who_are_you(
         return Err(WhoAreYouRecvError::MyEndpoint { addr: known_addr });
     }
 
-    let slot = match table.get_mapped_addr_lock(&her_disc_endpoint).await {
+    let slot_guard = match table.get_mapped_addr_lock(&her_disc_endpoint).await
+    {
         Some(_) => {
             return Err(WhoAreYouRecvError::AddrAlreadyMapped {
                 disc_endpoint: her_disc_endpoint.to_string(),
@@ -123,53 +121,49 @@ pub(crate) async fn recv_who_are_you(
         }
     };
 
-    match tx_lock
+    if let Err(err) = tx_lock
         .send((Msg::WhoAreYouAck(way_ack), her_disc_endpoint))
         .await
     {
+        return Err(WhoAreYouRecvError::MsgSendFail {
+            err: err.to_string(),
+        });
+    }
+
+    let addr = {
+        let a = Addr {
+            known_addr,
+            addr_slot_guard: slot_guard,
+        };
+
+        Arc::new(RwLock::new(a))
+    };
+
+    match table
+        .insert_mapping(&her_disc_endpoint.to_string(), addr.clone())
+        .await
+    {
         Ok(_) => {
-            let addr = {
-                let a = Addr {
-                    known_addr,
-                    addr_slot_guard: slot,
-                };
-
-                Arc::new(RwLock::new(a))
-            };
-
-            table
-                .insert_mapping(&her_disc_endpoint.to_string(), addr.clone())
-                .await;
-
-            match table.enqueue_known_addr(addr).await {
-                Ok(_) => {
-                    tdebug!(
-                        "p2p_discovery",
-                        "whoareyou",
-                        "Enqueueing known addr, p2p endpoint: {}",
-                        her_p2p_endpoint.green(),
-                    );
-                }
-                Err(err) => {
-                    terr!(
-                        "p2p_discovery",
-                        "whoareyou",
-                        "Fail to add known node. Queue might have been closed",
-                    );
-
-                    return Err(WhoAreYouRecvError::KnownNodeRegisterFail {
-                        disc_endpoint: her_disc_endpoint.to_string(),
-                        err,
-                    });
-                }
-            };
+            tdebug!(
+                "p2p_discovery",
+                "whoareyou",
+                "Enqueueing known addr, p2p endpoint: {}",
+                her_p2p_endpoint.green(),
+            );
         }
         Err(err) => {
-            return Err(WhoAreYouRecvError::MsgSendFail {
-                err: err.to_string(),
+            terr!(
+                "p2p_discovery",
+                "whoareyou",
+                "Fail to add known node. Queue might have been closed",
+            );
+
+            return Err(WhoAreYouRecvError::KnownNodeRegisterFail {
+                disc_endpoint: her_disc_endpoint.to_string(),
+                err,
             });
         }
-    };
+    }
 
     Ok(())
 }
