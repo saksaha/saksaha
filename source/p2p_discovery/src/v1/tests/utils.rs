@@ -1,9 +1,9 @@
 use crate::AddrVal;
 use crate::Discovery;
 use crate::DiscoveryArgs;
-use p2p_identity::addr::AddrStatus;
-use p2p_identity::addr::UnknownAddr;
-use p2p_identity::identity::P2PIdentity;
+use p2p_addr::AddrStatus;
+use p2p_addr::UnknownAddr;
+use p2p_identity::Credential;
 use std::sync::Arc;
 
 pub(super) fn init() {
@@ -40,9 +40,10 @@ pub(super) async fn create_client_1() -> Arc<Discovery> {
         status: AddrStatus::Initialized,
     }];
 
-    let p2p_identity = {
-        let id = P2PIdentity::new(secret, public_key_str).unwrap();
-        Arc::new(id)
+    let credential = {
+        let c = Credential::new(secret, public_key_str).unwrap();
+
+        Arc::new(c)
     };
 
     let disc_args = DiscoveryArgs {
@@ -50,17 +51,19 @@ pub(super) async fn create_client_1() -> Arc<Discovery> {
         disc_table_capacity: None,
         disc_task_interval: None,
         disc_task_queue_capacity: None,
-        p2p_identity: p2p_identity.clone(),
+        credential: credential.clone(),
+        // p2p_identity: p2p_identity.clone(),
         disc_port: Some(35520),
         p2p_port: 1,
         bootstrap_addrs,
     };
 
-    let p2p_discovery = {
-        let d = Discovery::init(disc_args)
+    let (p2p_discovery, disc_port) = {
+        let (disc, disc_port) = Discovery::init(disc_args)
             .await
             .expect("Discovery should be initailized");
-        Arc::new(d)
+
+        (Arc::new(disc), disc_port)
     };
 
     p2p_discovery
@@ -82,9 +85,10 @@ pub(super) async fn create_client_2() -> Arc<Discovery> {
 
     let bootstrap_addrs = vec![];
 
-    let p2p_identity = {
-        let id = P2PIdentity::new(secret, public_key_str).unwrap();
-        Arc::new(id)
+    let credential = {
+        let c = Credential::new(secret, public_key_str).unwrap();
+
+        Arc::new(c)
     };
 
     let disc_args = DiscoveryArgs {
@@ -92,17 +96,19 @@ pub(super) async fn create_client_2() -> Arc<Discovery> {
         disc_table_capacity: None,
         disc_task_interval: None,
         disc_task_queue_capacity: None,
-        p2p_identity: p2p_identity.clone(),
+        // p2p_identity: p2p_identity.clone(),
+        credential: credential.clone(),
         disc_port: Some(35519),
         p2p_port: 2,
         bootstrap_addrs,
     };
 
-    let p2p_discovery = {
-        let d = Discovery::init(disc_args)
+    let (p2p_discovery, disc_port) = {
+        let (disc, disc_port) = Discovery::init(disc_args)
             .await
             .expect("Discovery should be initailized");
-        Arc::new(d)
+
+        (Arc::new(disc), disc_port)
     };
 
     p2p_discovery

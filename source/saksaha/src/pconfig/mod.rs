@@ -1,7 +1,7 @@
 use colored::Colorize;
 use file_system::FS;
 use logger::tinfo;
-use p2p_identity::addr::UnknownAddr;
+use p2p_addr::UnknownAddr;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 

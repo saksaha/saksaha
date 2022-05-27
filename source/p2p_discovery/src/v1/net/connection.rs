@@ -1,4 +1,5 @@
 use super::UdpCodec;
+use crate::v1::ops::Msg;
 use futures::{
     stream::{SplitSink, SplitStream},
     StreamExt,
@@ -6,7 +7,6 @@ use futures::{
 use std::net::SocketAddr;
 use tokio::{net::UdpSocket, sync::RwLock};
 use tokio_util::udp::UdpFramed;
-use crate::v1::ops::Msg;
 
 pub(crate) struct Connection {
     pub(crate) tx: RwLock<SplitSink<UdpFramed<UdpCodec>, (Msg, SocketAddr)>>,

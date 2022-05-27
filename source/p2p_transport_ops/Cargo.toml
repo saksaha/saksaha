@@ -1,5 +1,5 @@
 [package]
-name = "p2p_transport_handshake"
+name = "p2p_transport_ops"
 version = "0.1.0"
 edition = "2018"
 
@@ -8,7 +8,9 @@ edition = "2018"
 [dependencies]
 colored = "2"
 crypto = { path = "../crypto" }
+p2p_addr = { path = "../p2p_addr" }
 p2p_identity = { path = "../p2p_identity" }
+p2p_frame = { path = "../p2p_frame" }
 p2p_discovery = { path = "../p2p_discovery" }
 p2p_transport = { path = "../p2p_transport" }
 p2p_peer = { path = "../p2p_peer" }
@@ -18,6 +20,7 @@ serde_json = "1.0.59"
 rand = "0.8.4"
 log = "0.4.0"
 thiserror = "1.0"
+futures = "0.3.21"
 tokio = { version = "1.12.0", features = ["full"] }
 bytes = "1"
 atoi = "0.4.0"

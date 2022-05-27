@@ -1,16 +1,16 @@
-use crate::{
-    v1::{ops::Msg, state::DiscState},
-    Addr, AddrSlot, AddrVal,
-};
-
 use super::{
     check::{self, WHO_ARE_YOU_EXPIRATION_SEC},
     WhoAreYou,
 };
+use crate::{
+    v1::{net::Connection, ops::Msg},
+    Addr, AddrSlot, AddrVal, Table,
+};
 use chrono::{DateTime, Utc};
-use futures::{SinkExt, StreamExt};
+use futures::SinkExt;
 use logger::tdebug;
-use p2p_identity::addr::{AddrStatus, KnownAddr, UnknownAddr};
+use p2p_addr::{AddrStatus, UnknownAddr};
+use p2p_identity::Identity;
 use std::{
     net::{IpAddr, Ipv4Addr, SocketAddr},
     sync::Arc,
@@ -22,9 +22,6 @@ use tokio::sync::RwLock;
 pub(crate) enum WhoAreYouInitError {
     #[error("Can't send request to myself, addr: {addr}")]
     MyEndpoint { addr: UnknownAddr },
-
-    #[error("Can't make a message (WhoAreYouAck), err: {err}")]
-    MsgCreateFail { err: String },
 
     #[error("Can't send a message through udp socket, err: {err}")]
     MsgSendFail { err: String },
@@ -47,16 +44,18 @@ pub(crate) enum WhoAreYouInitError {
 
 pub(crate) async fn init_who_are_you(
     unknown_addr: UnknownAddr,
-    disc_state: Arc<DiscState>,
+    identity: Arc<Identity>,
+    table: Arc<Table>,
+    udp_conn: Arc<Connection>,
 ) -> Result<(), WhoAreYouInitError> {
     let her_disc_endpoint = unknown_addr.disc_endpoint();
-    let my_disc_port = disc_state.disc_port;
+    let my_disc_port = identity.disc_port;
 
     if check::is_my_endpoint(my_disc_port, &unknown_addr.disc_endpoint()) {
         return Err(WhoAreYouInitError::MyEndpoint { addr: unknown_addr });
     }
 
-    let table = disc_state.table.clone();
+    let table = table.clone();
 
     let addr_slot = match table.get_mapped_addr_lock(&her_disc_endpoint).await {
         Some((addr_lock, addr)) => {
@@ -103,10 +102,10 @@ pub(crate) async fn init_who_are_you(
         },
     };
 
-    let src_disc_port = disc_state.disc_port;
-    let src_p2p_port = disc_state.p2p_port;
-    let src_sig = disc_state.p2p_identity.sig;
-    let src_public_key_str = disc_state.p2p_identity.public_key_str.clone();
+    let src_disc_port = identity.disc_port;
+    let src_p2p_port = identity.p2p_port;
+    let src_sig = identity.credential.sig;
+    let src_public_key_str = identity.credential.public_key_str.clone();
 
     let way = WhoAreYou {
         src_sig,
@@ -115,12 +114,7 @@ pub(crate) async fn init_who_are_you(
         src_public_key_str,
     };
 
-    // let way_syn_frame = match way.into_frame() {
-    //     Ok(m) => m,
-    //     Err(err) => return Err(WhoAreYouInitError::MsgCreateFail { err }),
-    // };
-
-    let mut tx_lock = disc_state.udp_conn.tx.write().await;
+    let mut tx_lock = udp_conn.tx.write().await;
 
     let socket_addr =
         SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 35518);
@@ -144,7 +138,7 @@ pub(crate) async fn init_who_are_you(
                 }
 
                 // Previous unsuccessful WhoAreYou attempt
-                AddrSlot::Addr(mut addr_lock, addr) => {
+                AddrSlot::Addr(mut addr_lock, _) => {
                     match &mut addr_lock.val {
                         AddrVal::Unknown(ua) => {
                             *ua = unknown_addr;

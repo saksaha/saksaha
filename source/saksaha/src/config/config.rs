@@ -1,7 +1,7 @@
 use super::DevConfig;
 use crate::{pconfig::PConfig, system::SystemArgs};
 use logger::{tinfo, twarn};
-use p2p_identity::addr::UnknownAddr;
+use p2p_addr::UnknownAddr;
 
 #[derive(Debug)]
 pub(crate) struct Config {

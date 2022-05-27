@@ -1,21 +1,21 @@
-use crate::ops::Handshake;
 use colored::Colorize;
-use logger::tdebug;
+use futures::SinkExt;
+use futures::StreamExt;
+use logger::{tdebug, twarn};
+use p2p_addr::KnownAddr;
 use p2p_discovery::{Addr, AddrGuard, AddrVal};
-use p2p_identity::addr::KnownAddr;
-use p2p_identity::identity::P2PIdentity;
+use p2p_identity::Identity;
 use p2p_peer::{Peer, PeerSlot, PeerStatus, PeerTable};
-use p2p_transport::connection::Connection;
-use p2p_transport::parse::Parse;
-use p2p_transport::transport::Transport;
+use p2p_transport::Handshake;
+use p2p_transport::Msg;
+use p2p_transport::{Connection, Transport};
 use std::sync::Arc;
 use thiserror::Error;
 use tokio::sync::{OwnedRwLockWriteGuard, RwLock};
 
 pub struct HandshakeInitArgs {
-    pub p2p_identity: Arc<P2PIdentity>,
-    pub p2p_peer_table: Arc<PeerTable>,
-    pub p2p_port: u16,
+    pub peer_table: Arc<PeerTable>,
+    pub identity: Arc<Identity>,
     pub addr_guard: AddrGuard,
     pub peer_slot: PeerSlot,
     pub addr_lock: OwnedRwLockWriteGuard<Addr>,
@@ -44,11 +44,14 @@ pub enum HandshakeInitError {
     #[error("Data received may not be the entire frame intended, err: {err}")]
     InvalidFrame { err: String },
 
-    #[error("Cannot read handshake ack msg, err: {err}")]
-    HandshakeAckReadFail { err: String },
+    #[error("Waited for Handshake ack but something else has arrived")]
+    HandshakeAckWrongArrived,
 
-    #[error("Handshake ack frame received is not an array frame")]
-    HandshakeAckNotArrayFrame,
+    #[error("Failed to parse Handshake ack msg, err: {err}")]
+    HandshakeAckParseFail { err: String },
+
+    #[error("Handshake is not fully arrived")]
+    HandshakeAckNotYetArrived,
 
     #[error(
         "Could not create a public key, err: {err}, \
@@ -77,10 +80,9 @@ pub async fn initiate_handshake(
     mut conn: Connection,
 ) -> Result<(), HandshakeInitError> {
     let HandshakeInitArgs {
-        p2p_port,
-        p2p_identity,
+        identity,
         addr_guard,
-        p2p_peer_table,
+        peer_table,
         peer_slot,
         addr_lock,
     } = handshake_init_args;
@@ -92,9 +94,9 @@ pub async fn initiate_handshake(
         }
     };
 
-    let handshake_syn = match Handshake::new(
-        p2p_port,
-        p2p_identity.public_key_str.clone(),
+    let handshake = match Handshake::new(
+        identity.p2p_port,
+        identity.credential.public_key_str.clone(),
         known_addr.public_key_str.clone(),
     ) {
         Ok(h) => h,
@@ -103,9 +105,7 @@ pub async fn initiate_handshake(
         }
     };
 
-    let handshake_syn_frame = handshake_syn.into_syn_frame();
-
-    match conn.write_frame(&handshake_syn_frame).await {
+    match conn.socket_tx.send(Msg::HandshakeSyn(handshake)).await {
         Ok(_) => (),
         Err(err) => {
             return Err(HandshakeInitError::FrameWriteFail {
@@ -114,42 +114,26 @@ pub async fn initiate_handshake(
         }
     };
 
-    let handshake_ack_frame = match conn.read_frame().await {
-        Ok(fr) => match fr {
-            Some(f) => f,
-            None => {
-                return Err(HandshakeInitError::HandshakeAckReadFail {
-                    err: "Peer might have closed the connection".into(),
-                })
+    let handshake_ack = match conn.socket_rx.next().await {
+        Some(maybe_msg) => match maybe_msg {
+            Ok(msg) => {
+                if let Msg::HandshakeAck(h) = msg {
+                    h
+                } else {
+                    return Err(HandshakeInitError::HandshakeAckWrongArrived);
+                }
+            }
+            Err(err) => {
+                return Err(HandshakeInitError::HandshakeAckParseFail {
+                    err: err.to_string(),
+                });
             }
         },
-        Err(err) => {
-            return Err(HandshakeInitError::HandshakeAckReadFail {
-                err: err.to_string(),
-            })
-        }
-    };
-
-    let mut parse = match Parse::new(handshake_ack_frame) {
-        Ok(p) => p,
-        Err(_err) => {
-            return Err(HandshakeInitError::HandshakeAckNotArrayFrame);
-        }
-    };
-
-    let _frame_type = parse.next_string().unwrap();
-
-    let handshake_ack = match Handshake::parse_frames(&mut parse) {
-        Ok(h) => h,
-        Err(err) => {
-            return Err(HandshakeInitError::InvalidFrame {
-                err: err.to_string(),
-            });
-        }
+        None => return Err(HandshakeInitError::HandshakeAckNotYetArrived),
     };
 
     let her_public_key_str = handshake_ack.src_public_key_str;
-    let my_secret_key = &p2p_identity.secret_key;
+    let my_secret_key = &identity.credential.secret_key;
     let her_public_key = match crypto::convert_public_key_str_into_public_key(
         &her_public_key_str,
     ) {
@@ -183,9 +167,7 @@ pub async fn initiate_handshake(
 
             let peer = Arc::new(RwLock::new(p));
 
-            p2p_peer_table
-                .insert_mapping(&her_public_key_str, peer)
-                .await;
+            peer_table.insert_mapping(&her_public_key_str, peer).await;
         }
         PeerSlot::Peer(mut peer) => {
             peer.p2p_port = handshake_ack.src_p2p_port;

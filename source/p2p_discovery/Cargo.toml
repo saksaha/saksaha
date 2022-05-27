@@ -13,7 +13,9 @@ logger = { path = "../logger" }
 crypto = { path = "../crypto" }
 chrono = "0.4"
 task_queue = { path = "../task_queue" }
+p2p_addr = { path = "../p2p_addr" }
 p2p_identity = { path = "../p2p_identity" }
+p2p_frame = { path = "../p2p_frame" }
 utils_time = { path = "../utils_time" }
 utils_net = { path = "../utils_net" }
 tokio = { version = "1.12.0", features = ["full"] }
