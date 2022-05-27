@@ -27,6 +27,8 @@ pub(crate) async fn run(task: P2PTask) {
                         &known_addr.public_key_str,
                     );
 
+                    addr_lock.get_status();
+
                     return;
                 }
                 None => match peer_table.get_empty_slot().await {

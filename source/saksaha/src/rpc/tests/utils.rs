@@ -19,10 +19,9 @@ pub(super) mod test_utils {
 
     pub(crate) async fn make_rpc(
     ) -> (RPC, TcpListener, SocketAddr, Arc<Machine>) {
-        let (rpc_socket, rpc_socket_addr) =
-            utils_net::bind_tcp_socket(Some(12345))
-                .await
-                .expect("rpc socket should be initialized");
+        let (rpc_socket, rpc_socket_addr) = utils_net::bind_tcp_socket(None)
+            .await
+            .expect("rpc socket should be initialized");
 
         let blockchain = {
             let blockchain_args = BlockchainArgs {
@@ -78,6 +77,7 @@ pub(super) mod test_utils {
             disc_table_capacity: None,
             disc_task_interval: None,
             disc_task_queue_capacity: None,
+            addr_expire_duration: None,
             credential: credential.clone(),
             disc_port: Some(35521),
             p2p_port: 1,
@@ -100,13 +100,13 @@ pub(super) mod test_utils {
             (Arc::new(d), disc_port)
         };
 
-        let (p2p_socket, p2p_socket_addr) =
-            utils_net::bind_tcp_socket(Some(12345))
-                .await
-                .expect("rpc socket should be initialized");
+        let (p2p_socket, p2p_socket_addr) = utils_net::bind_tcp_socket(None)
+            .await
+            .expect("rpc socket should be initialized");
 
         let p2p_host = {
             let p2p_host_args = P2PHostArgs {
+                addr_expire_duration: None,
                 disc_port: None,
                 disc_dial_interval: None,
                 disc_table_capacity: None,

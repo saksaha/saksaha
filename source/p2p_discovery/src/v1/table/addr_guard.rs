@@ -37,10 +37,9 @@ impl Drop for AddrGuard {
     }
 }
 
-pub mod testing {
-    use p2p_addr::{AddrStatus, KnownAddr};
-
+pub mod for_test {
     use super::*;
+    use p2p_addr::{AddrStatus, KnownAddr};
 
     impl AddrGuard {
         pub fn new_dummy(

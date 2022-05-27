@@ -1,4 +1,3 @@
-use crate::AddrVal;
 use crate::Discovery;
 use crate::DiscoveryArgs;
 use p2p_addr::AddrStatus;
@@ -52,7 +51,7 @@ pub(super) async fn create_client_1() -> Arc<Discovery> {
         disc_task_interval: None,
         disc_task_queue_capacity: None,
         credential: credential.clone(),
-        // p2p_identity: p2p_identity.clone(),
+        addr_expire_duration: None,
         disc_port: Some(35520),
         p2p_port: 1,
         bootstrap_addrs,
@@ -96,7 +95,7 @@ pub(super) async fn create_client_2() -> Arc<Discovery> {
         disc_table_capacity: None,
         disc_task_interval: None,
         disc_task_queue_capacity: None,
-        // p2p_identity: p2p_identity.clone(),
+        addr_expire_duration: None,
         credential: credential.clone(),
         disc_port: Some(35519),
         p2p_port: 2,

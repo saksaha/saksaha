@@ -7,7 +7,6 @@ mod test_multiple_agents;
 #[cfg(test)]
 mod test {
     use super::utils;
-    use crate::AddrVal;
     use crate::Discovery;
     use crate::DiscoveryArgs;
 
@@ -47,10 +46,11 @@ mod test {
                     iter.next().await.expect("Address should be popped");
 
                 let addr = addr_guard.addr.write().await;
-                let known_addr = match &addr.val {
-                    AddrVal::Known(k) => k,
-                    _ => panic!("Known addr should be provided"),
-                };
+                // let known_addr = match &addr.val {
+                //     AddrVal::Known(k) => k,
+                //     _ => panic!("Known addr should be provided"),
+                // };
+                let known_addr = &addr.known_addr;
 
                 known_addr_ip = known_addr.ip.clone();
                 known_addr_disc_port = known_addr.disc_port.clone();
@@ -62,10 +62,7 @@ mod test {
                 iter.next().await.expect("Address should be popped");
 
             let addr = addr_guard.addr.write().await;
-            let known_addr = match &addr.val {
-                AddrVal::Known(k) => k,
-                _ => panic!("Known addr should be provided"),
-            };
+            let known_addr = &addr.known_addr;
 
             log::info!("Popped addr, {}", known_addr);
 
