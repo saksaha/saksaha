@@ -1,5 +1,5 @@
 use super::{db, tx_columns};
-use crate::blockchain::{blockchain::TxValue, Hash, BlockValue};
+use crate::blockchain::{blockchain::TxValue, BlockValue, Hash};
 use database::KeyValueDatabase;
 use db::block_columns;
 use logger::tinfo;
@@ -41,33 +41,51 @@ impl Ledger {
 
         let tx_hash = match tx_value.get_hash() {
             Ok(hash) => hash,
-            Err(err) => return Err(format!("Failed to get hash from tx_value")),
+            Err(err) => {
+                return Err(format!("Failed to get hash from tx_value"))
+            }
         };
 
         let cf_handle = match db.cf_handle(tx_columns::CREATED_AT) {
             Some(h) => h,
             None => {
-                return Err(format!("Fail to open ledger columns {}", tx_columns::CREATED_AT))
+                return Err(format!(
+                    "Fail to open ledger columns {}",
+                    tx_columns::CREATED_AT
+                ))
             }
         };
         batch.put_cf(cf_handle, &tx_hash.hash, tx_value.created_at);
 
         let cf_handle = match db.cf_handle(tx_columns::DATA) {
             Some(h) => h,
-            None => return Err(format!("Fail to open ledger columns {}", tx_columns::DATA)),
+            None => {
+                return Err(format!(
+                    "Fail to open ledger columns {}",
+                    tx_columns::DATA
+                ))
+            }
         };
         batch.put_cf(cf_handle, &tx_hash.hash, tx_value.data);
 
         let cf_handle = match db.cf_handle(tx_columns::PI) {
             Some(h) => h,
-            None => return Err(format!("Fail to open ledger columns {}", tx_columns::PI)),
+            None => {
+                return Err(format!(
+                    "Fail to open ledger columns {}",
+                    tx_columns::PI
+                ))
+            }
         };
         batch.put_cf(cf_handle, &tx_hash.hash, tx_value.pi);
 
         let cf_handle = match db.cf_handle(tx_columns::SIG_VEC) {
             Some(h) => h,
             None => {
-                return Err(format!("Fail to open ledger columns {}", tx_columns::SIG_VEC))
+                return Err(format!(
+                    "Fail to open ledger columns {}",
+                    tx_columns::SIG_VEC
+                ))
             }
         };
         batch.put_cf(cf_handle, &tx_hash.hash, tx_value.sig_vec);
@@ -157,25 +175,29 @@ impl Ledger {
         let cf_handle = match db.cf_handle(block_columns::CREATED_AT) {
             Some(h) => h,
             None => {
-                return Err(format!("Fail to open ledger columns {}", block_columns::CREATED_AT));
+                return Err(format!(
+                    "Fail to open ledger columns {}",
+                    block_columns::CREATED_AT
+                ));
             }
         };
 
         let created_at = match db.get_cf(cf_handle, block_hash) {
             Ok(val) => match val {
                 Some(v) => match std::str::from_utf8(&v) {
-                        Ok(vs) => vs.to_string(),
-                        Err(err) => {
-                            return Err(format!(
-                                "Invalid utf8 given, err: {}",
-                                err,
-                            ));
-                        }
-                    },
+                    Ok(vs) => vs.to_string(),
+                    Err(err) => {
+                        return Err(format!(
+                            "Invalid utf8 given, err: {}",
+                            err,
+                        ));
+                    }
+                },
                 None => {
                     return Err(format!(
                         "No matched value with tx_hash in {}, {}",
-                        block_columns::CREATED_AT, block_hash,
+                        block_columns::CREATED_AT,
+                        block_hash,
                     ));
                 }
             },
@@ -183,7 +205,8 @@ impl Ledger {
                 return Err(format!(
                     "Fail to get value from ledger columns, column: {}, \
                         err: {}",
-                    block_columns::CREATED_AT, err,
+                    block_columns::CREATED_AT,
+                    err,
                 ));
             }
         };
@@ -191,7 +214,10 @@ impl Ledger {
         let cf_handle = match db.cf_handle(block_columns::TX_POOL) {
             Some(h) => h,
             None => {
-                return Err(format!("Fail to open ledger columns {}", block_columns::TX_POOL));
+                return Err(format!(
+                    "Fail to open ledger columns {}",
+                    block_columns::TX_POOL
+                ));
             }
         };
         let get_cf_handle = db.get_cf(cf_handle, block_hash);
@@ -201,11 +227,12 @@ impl Ledger {
                 Some(v) => {
                     let th: Vec<String> = serde_json::from_slice(&v).unwrap();
                     th
-                },
+                }
                 None => {
                     return Err(format!(
                         "No matched value with tx_hash in {}, {}",
-                        block_columns::TX_POOL, block_hash,
+                        block_columns::TX_POOL,
+                        block_hash,
                     ));
                 }
             },
@@ -213,7 +240,8 @@ impl Ledger {
                 return Err(format!(
                     "Fail to get value from ledger columns, column: {}, \
                         err: {}",
-                    block_columns::TX_POOL, err,
+                    block_columns::TX_POOL,
+                    err,
                 ));
             }
         };
@@ -221,7 +249,10 @@ impl Ledger {
         let cf_handle = match db.cf_handle(block_columns::SIG_VEC) {
             Some(h) => h,
             None => {
-                return Err(format!("Fail to open ledger columns {}", block_columns::SIG_VEC));
+                return Err(format!(
+                    "Fail to open ledger columns {}",
+                    block_columns::SIG_VEC
+                ));
             }
         };
         let get_cf_handle = db.get_cf(cf_handle, block_hash);
@@ -231,11 +262,12 @@ impl Ledger {
                 Some(v) => {
                     let th: Vec<String> = serde_json::from_slice(&v).unwrap();
                     th
-                },
+                }
                 None => {
                     return Err(format!(
                         "No matched value with tx_hash in {}, {}",
-                        block_columns::SIG_VEC, block_hash,
+                        block_columns::SIG_VEC,
+                        block_hash,
                     ));
                 }
             },
@@ -243,7 +275,8 @@ impl Ledger {
                 return Err(format!(
                     "Fail to get value from ledger columns, column: {}, \
                         err: {}",
-                    block_columns::SIG_VEC, err,
+                    block_columns::SIG_VEC,
+                    err,
                 ));
             }
         };
@@ -251,25 +284,29 @@ impl Ledger {
         let cf_handle = match db.cf_handle(block_columns::HEIGHT) {
             Some(h) => h,
             None => {
-                return Err(format!("Fail to open ledger columns {}", block_columns::HEIGHT));
+                return Err(format!(
+                    "Fail to open ledger columns {}",
+                    block_columns::HEIGHT
+                ));
             }
         };
 
         let height = match db.get_cf(cf_handle, block_hash) {
             Ok(val) => match val {
                 Some(v) => match std::str::from_utf8(&v) {
-                        Ok(vs) => vs.to_string(),
-                        Err(err) => {
-                            return Err(format!(
-                                "Invalid utf8 given, err: {}",
-                                err,
-                            ));
-                        }
-                    },
+                    Ok(vs) => vs.to_string(),
+                    Err(err) => {
+                        return Err(format!(
+                            "Invalid utf8 given, err: {}",
+                            err,
+                        ));
+                    }
+                },
                 None => {
                     return Err(format!(
                         "No matched value with tx_hash in {}, {}",
-                        block_columns::HEIGHT, block_hash,
+                        block_columns::HEIGHT,
+                        block_hash,
                     ));
                 }
             },
@@ -277,7 +314,8 @@ impl Ledger {
                 return Err(format!(
                     "Fail to get value from ledger columns, column: {}, \
                         err: {}",
-                    block_columns::HEIGHT, err,
+                    block_columns::HEIGHT,
+                    err,
                 ));
             }
         };
@@ -302,7 +340,9 @@ impl Ledger {
 
         let block_hash = match block_value.get_hash() {
             Ok(hash) => hash,
-            Err(err) => return Err(format!("Failed to get hash from block_value")),
+            Err(err) => {
+                return Err(format!("Failed to get hash from block_value"))
+            }
         };
 
         println!(
@@ -313,36 +353,64 @@ impl Ledger {
         let cf_handle = match db.cf_handle(block_columns::CREATED_AT) {
             Some(h) => h,
             None => {
-                return Err(format!("Fail to open ledger columns {}", block_columns::CREATED_AT))
+                return Err(format!(
+                    "Fail to open ledger columns {}",
+                    block_columns::CREATED_AT
+                ))
             }
         };
         batch.put_cf(cf_handle, &block_hash.hash, block_value.created_at);
 
         let cf_handle = match db.cf_handle(block_columns::SIG_VEC) {
             Some(h) => h,
-            None => return Err(format!("Fail to open ledger columns {}", block_columns::SIG_VEC)),
+            None => {
+                return Err(format!(
+                    "Fail to open ledger columns {}",
+                    block_columns::SIG_VEC
+                ))
+            }
         };
         let ser_sig_vec = match serde_json::to_string(&block_value.sig_vec) {
             Ok(v) => v,
-            Err(err) => return Err(format!("Cannot serialize {}, err: {}", block_columns::SIG_VEC, err)),
+            Err(err) => {
+                return Err(format!(
+                    "Cannot serialize {}, err: {}",
+                    block_columns::SIG_VEC,
+                    err
+                ))
+            }
         };
         batch.put_cf(cf_handle, &block_hash.hash, ser_sig_vec);
 
         let cf_handle = match db.cf_handle(block_columns::HEIGHT) {
             Some(h) => h,
-            None => return Err(format!("Fail to open ledger columns {}", block_columns::HEIGHT)),
+            None => {
+                return Err(format!(
+                    "Fail to open ledger columns {}",
+                    block_columns::HEIGHT
+                ))
+            }
         };
         batch.put_cf(cf_handle, &block_hash.hash, block_value.height);
 
         let cf_handle = match db.cf_handle(block_columns::TX_POOL) {
             Some(h) => h,
             None => {
-                return Err(format!("Fail to open ledger columns {}", block_columns::TX_POOL))
+                return Err(format!(
+                    "Fail to open ledger columns {}",
+                    block_columns::TX_POOL
+                ))
             }
         };
         let ser_tx_pool = match serde_json::to_string(&block_value.tx_pool) {
             Ok(v) => v,
-            Err(err) => return Err(format!("Cannot serialize {}, err: {}", block_columns::TX_POOL, err)),
+            Err(err) => {
+                return Err(format!(
+                    "Cannot serialize {}, err: {}",
+                    block_columns::TX_POOL,
+                    err
+                ))
+            }
         };
         batch.put_cf(cf_handle, &block_hash.hash, ser_tx_pool);
 
@@ -358,16 +426,12 @@ impl Ledger {
         &self,
     ) -> DBRawIteratorWithThreadMode<DBWithThreadMode<SingleThreaded>> {
         let iter = self.ledger_db.db.raw_iterator_cf(
-            self.ledger_db
-                .db
-                .cf_handle(tx_columns::CREATED_AT)
-                .unwrap(),
+            self.ledger_db.db.cf_handle(tx_columns::CREATED_AT).unwrap(),
         );
 
         iter
     }
 }
-
 
 pub trait Hashing {
     fn get_hash(&self) -> Result<Hash, String>;
@@ -379,13 +443,20 @@ impl Hashing for BlockValue {
             let mut h = Sha3_256::new();
             let v = match serde_json::to_value(&self) {
                 Ok(v) => v,
-                Err(err) => return Err(format!("Failed to serialize self, err: {}", err)),
+                Err(err) => {
+                    return Err(format!(
+                        "Failed to serialize self, err: {}",
+                        err
+                    ))
+                }
             };
             h.update(v.to_string());
             h.finalize()
         };
 
-        Ok(Hash {hash: format!("{:x}", hash)})
+        Ok(Hash {
+            hash: format!("{:x}", hash),
+        })
     }
 }
 
@@ -395,13 +466,20 @@ impl Hashing for TxValue {
             let mut h = Sha3_256::new();
             let v = match serde_json::to_value(&self) {
                 Ok(v) => v,
-                Err(err) => return Err(format!("Failed to serialize self, err: {}", err)),
+                Err(err) => {
+                    return Err(format!(
+                        "Failed to serialize self, err: {}",
+                        err
+                    ))
+                }
             };
             h.update(v.to_string());
             h.finalize()
         };
 
-        Ok(Hash {hash: format!("{:x}", hash)})
+        Ok(Hash {
+            hash: format!("{:x}", hash),
+        })
     }
 }
 
