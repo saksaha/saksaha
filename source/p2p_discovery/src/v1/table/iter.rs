@@ -1,5 +1,4 @@
 use super::Addr;
-// use crate::AddrGuard;
 pub use k256::{
     ecdh::EphemeralSecret,
     ecdsa::{
@@ -15,46 +14,34 @@ use tokio::sync::{mpsc::Receiver, OwnedMutexGuard};
 use tokio::sync::{mpsc::UnboundedSender, OwnedRwLockWriteGuard};
 
 pub struct AddrsIterator {
-    addr_recycle_tx: Arc<UnboundedSender<Arc<RwLock<Addr>>>>,
-    known_addrs_rx: Arc<RwLock<Receiver<Arc<RwLock<Addr>>>>>,
+    known_addrs_rx: Arc<RwLock<Receiver<Arc<Addr>>>>,
     _addrs_it_lock: OwnedMutexGuard<usize>,
 }
 
 impl AddrsIterator {
     pub(crate) fn init(
-        addr_recycle_tx: Arc<UnboundedSender<Arc<RwLock<Addr>>>>,
-        known_addrs_rx: Arc<RwLock<Receiver<Arc<RwLock<Addr>>>>>,
+        known_addrs_rx: Arc<RwLock<Receiver<Arc<Addr>>>>,
         addrs_it_lock: OwnedMutexGuard<usize>,
     ) -> AddrsIterator {
         AddrsIterator {
-            addr_recycle_tx,
             known_addrs_rx,
             _addrs_it_lock: addrs_it_lock,
         }
     }
 
     // Returning newly "discovered" addresses
-    pub async fn next(&self) -> Result<Arc<RwLock<Addr>>, String> {
+    pub async fn next(&self) -> Result<Arc<Addr>, String> {
         let mut known_addrs_rx_lock = self.known_addrs_rx.write().await;
 
         loop {
             match known_addrs_rx_lock.recv().await {
-                Some(a) => {
-                    // let addr_guard = AddrGuard {
-                    //     addr_recycle_tx: self.addr_recycle_tx.clone(),
-                    //     addr,
-                    // };
+                Some(addr) => {
+                    // let addr = a.clone();
+                    let addr_status_lock = addr.known_addr.status.read().await;
 
-                    // return Ok(addr_guard);
-
-                    let addr = a.clone();
-                    let addr_lock = a.write_owned().await;
-                    let addr_status = addr_lock.get_status();
-
-                    match addr_status {
+                    match *addr_status_lock {
                         AddrStatus::WhoAreYouSuccess { .. } => {
-                            drop(addr_lock);
-
+                            drop(addr_status_lock);
                             return Ok(addr);
                         }
                         _ => (),

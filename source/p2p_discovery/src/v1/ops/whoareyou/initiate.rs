@@ -75,23 +75,13 @@ pub(crate) async fn init_who_are_you(
         }
     };
 
-    match tx_lock
+    if let Err(err) = tx_lock
         .send((Msg::WhoAreYouSyn(way), her_socket_addr))
         .await
     {
-        Ok(_) => {
-            // tdebug!(
-            //     "p2p_discovery",
-            //     "whoareyou",
-            //     "WhoAreYou SYN has been successfully sent, to: {}",
-            //     &her_disc_endpoint,
-            // );
-        }
-        Err(err) => {
-            return Err(WhoAreYouInitError::MsgSendFail {
-                err: err.to_string(),
-            });
-        }
+        return Err(WhoAreYouInitError::MsgSendFail {
+            err: err.to_string(),
+        });
     };
 
     Ok(())
@@ -111,8 +101,7 @@ pub(crate) async fn handle_who_are_you_ack(
         src_public_key_str: her_public_key_str,
     } = way_ack;
 
-    if let Some(_) = addr_table.get_mapped_addr_lock(&her_public_key_str).await
-    {
+    if let Some(_) = addr_table.get_mapped_addr(&her_public_key_str).await {
         return Err(format!("Address is already mapped."));
     };
 
@@ -132,7 +121,7 @@ pub(crate) async fn handle_who_are_you_ack(
         sig: her_sig,
         public_key_str: her_public_key_str.clone(),
         public_key: her_public_key,
-        status: AddrStatus::WhoAreYouSuccess { at: Utc::now() },
+        status: RwLock::new(AddrStatus::WhoAreYouSuccess { at: Utc::now() }),
     };
 
     let her_disc_endpoint = known_addr.disc_endpoint();
@@ -145,29 +134,11 @@ pub(crate) async fn handle_who_are_you_ack(
             addr_slot_guard: slot_guard,
         };
 
-        Arc::new(RwLock::new(a))
+        // Arc::new(RwLock::new(a))
+        Arc::new(a)
     };
 
-    match addr_table.insert_mapping(addr).await {
-        Ok(_) => {
-            // tdebug!(
-            //     "p2p_discovery",
-            //     "server",
-            //     "Whoareyou Success! p2p_endpoint: {}, \
-            //                     disc_endpoint: {}",
-            //     her_p2p_endpoint.green(),
-            //     her_disc_endpoint.green(),
-            // );
-        }
-        Err(_) => {
-            terr!(
-                "p2p_discovery",
-                "server",
-                "Fail to add known node. Queue might have been \
-                                closed",
-            );
-        }
-    };
+    addr_table.insert_mapping(addr).await?;
 
     Ok(())
 }

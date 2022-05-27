@@ -1,6 +1,7 @@
 mod blockchain;
 mod config;
 mod machine;
+mod node;
 mod p2p;
 mod rpc;
 

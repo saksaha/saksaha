@@ -6,6 +6,7 @@ use futures::{
 };
 use p2p_frame::Frame;
 use std::net::SocketAddr;
+use std::sync::Arc;
 use tokio::net::TcpStream;
 use tokio::sync::RwLock;
 use tokio_util::codec::Framed;
@@ -26,6 +27,7 @@ impl Connection {
             let f = Framed::new(socket, p2p_codec);
             let (tx, rx) = f.split();
 
+            // (Arc::new(RwLock::new(tx)), Arc::new(RwLock::new(rx)))
             (tx, rx)
         };
 

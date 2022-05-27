@@ -1,5 +1,6 @@
-use crate::{Peer, Slot, SlotGuard};
-use logger::{terr, tinfo};
+use crate::{v1::iter::PeerIterator, Peer, Slot, SlotGuard};
+use colored::Colorize;
+use logger::{tdebug, terr, tinfo};
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::{
     mpsc::{self, UnboundedReceiver, UnboundedSender},
@@ -12,9 +13,11 @@ const PEER_TABLE_CAPACITY: usize = 5;
 pub type PublicKey = String;
 
 pub struct PeerTable {
-    peer_map: RwLock<HashMap<PublicKey, Arc<RwLock<Peer>>>>,
+    peer_map: RwLock<HashMap<PublicKey, Arc<Peer>>>,
     slots_rx: RwLock<UnboundedReceiver<Arc<Slot>>>,
     slots_tx: Arc<UnboundedSender<Arc<Slot>>>,
+    peers_tx: Arc<UnboundedSender<Arc<Peer>>>,
+    peer_it: Arc<RwLock<PeerIterator>>,
 }
 
 impl PeerTable {
@@ -50,6 +53,15 @@ impl PeerTable {
             (slots_tx, slots_rx)
         };
 
+        let (peers_tx, peer_it) = {
+            let (tx, rx) = mpsc::unbounded_channel();
+            let peers_tx = Arc::new(tx);
+
+            let it = PeerIterator { peers_rx: rx };
+
+            (peers_tx, Arc::new(RwLock::new(it)))
+        };
+
         let peer_map = {
             let m = HashMap::new();
 
@@ -60,6 +72,9 @@ impl PeerTable {
             peer_map,
             slots_rx,
             slots_tx,
+            // peers_rx,
+            peers_tx,
+            peer_it,
         };
 
         tinfo!(
@@ -75,7 +90,7 @@ impl PeerTable {
     pub async fn get_mapped_peer(
         &self,
         public_key: &PublicKey,
-    ) -> Option<Arc<RwLock<Peer>>> {
+    ) -> Option<Arc<Peer>> {
         let peers_map_lock = self.peer_map.write().await;
 
         match peers_map_lock.get(public_key) {
@@ -88,23 +103,23 @@ impl PeerTable {
         };
     }
 
-    pub async fn get_mapped_peer_lock(
-        &self,
-        public_key: &PublicKey,
-    ) -> Option<OwnedRwLockWriteGuard<Peer>> {
-        let peers_map_lock = self.peer_map.write().await;
+    // pub async fn get_mapped_peer_lock(
+    //     &self,
+    //     public_key: &PublicKey,
+    // ) -> Option<OwnedRwLockWriteGuard<Peer>> {
+    //     let peers_map_lock = self.peer_map.write().await;
 
-        match peers_map_lock.get(public_key) {
-            Some(n) => {
-                let node = n.clone().write_owned().await;
+    //     match peers_map_lock.get(public_key) {
+    //         Some(n) => {
+    //             let node = n.clone().write_owned().await;
 
-                return Some(node);
-            }
-            None => {
-                return None;
-            }
-        };
-    }
+    //             return Some(node);
+    //         }
+    //         None => {
+    //             return None;
+    //         }
+    //     };
+    // }
 
     pub async fn get_empty_slot(&self) -> Result<SlotGuard, String> {
         let mut slots_rx = self.slots_rx.write().await;
@@ -128,50 +143,40 @@ impl PeerTable {
 
     pub async fn insert_mapping(
         &self,
-        public_key: &PublicKey,
-        node: Arc<RwLock<Peer>>,
-    ) -> Option<Arc<RwLock<Peer>>> {
+        peer: Arc<Peer>,
+    ) -> Result<Option<Arc<Peer>>, String> {
+        let public_key_str = peer.public_key_str.clone();
+
+        tdebug!(
+            "p2p_peer_table",
+            "table",
+            "Peer table insert mapping, her_public_key: {},",
+            public_key_str.green(),
+        );
+
+        if let Err(err) = self.peers_tx.send(peer.clone()) {
+            return Err(format!(
+                "Cannot send to peer queue, rx might have been closed, err: {}",
+                err,
+            ));
+        }
+
         let mut peer_map = self.peer_map.write().await;
-        peer_map.insert(public_key.clone(), node)
+        Ok(peer_map.insert(public_key_str, peer))
     }
 
     pub async fn get_status(&self) -> Vec<String> {
         let mut peer_vec = Vec::new();
         let peer_map = self.peer_map.read().await;
 
-        for (idx, peer) in peer_map.values().enumerate() {
-            match peer.try_read() {
-                Ok(peer_lock) => {
-                    // let addr_lock = peer_lock.addr_guard.addr.read().await;
-                    let addr_lock = peer_lock.addr.read().await;
-
-                    peer_vec.push(addr_lock.known_addr.p2p_endpoint().clone());
-                }
-                Err(_err) => {
-                    println!("addr table elements [{}] is locked", idx);
-                }
-            }
+        for (_, peer) in peer_map.values().enumerate() {
+            peer_vec.push(peer.addr.known_addr.p2p_endpoint().clone());
         }
 
         peer_vec
     }
+
+    pub fn new_iter(&self) -> Arc<RwLock<PeerIterator>> {
+        self.peer_it.clone()
+    }
 }
-
-// pub struct RecycleRoutine {}
-
-// impl RecycleRoutine {
-//     pub(super) async fn run(
-//         &self,
-//         mut slots_rx: UnboundedReceiver<Arc<RwLock<Peer>>>,
-//         slots_tx: Arc<UnboundedSender<Arc<Slot>>>,
-//     ) {
-//         loop {
-//             let slot = match slots_rx.recv().await {
-//                 Some(s) => s,
-//                 None => {
-//
-//                 },
-//             }
-//         }
-//     }
-// }

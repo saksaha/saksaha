@@ -7,8 +7,9 @@ pub use k256::{
         Signature, SigningKey, VerifyingKey,
     },
 };
+use tokio::sync::RwLock;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct KnownAddr {
     pub ip: String,
     pub disc_port: u16,
@@ -16,7 +17,7 @@ pub struct KnownAddr {
     pub sig: Signature,
     pub public_key_str: String,
     pub public_key: PublicKey,
-    pub status: AddrStatus,
+    pub status: RwLock<AddrStatus>,
 }
 
 impl KnownAddr {

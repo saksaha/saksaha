@@ -18,7 +18,8 @@ use tokio::sync::{OwnedRwLockWriteGuard, RwLock};
 pub struct HandshakeInitArgs {
     pub peer_table: Arc<PeerTable>,
     pub identity: Arc<Identity>,
-    pub addr: Arc<RwLock<Addr>>,
+    // pub addr: Arc<RwLock<Addr>>,
+    pub addr: Arc<Addr>,
     // pub addr_guard: AddrGuard,
     // pub peer_slot_guard: SlotGuard,
     // pub addr_lock: OwnedRwLockWriteGuard<Addr>,
@@ -83,54 +84,27 @@ pub enum HandshakeInitError {
 
 pub async fn initiate_handshake(
     handshake_init_args: HandshakeInitArgs,
-    // mut conn: Connection,
 ) -> Result<(), HandshakeInitError> {
     let HandshakeInitArgs {
         identity,
-        // addr_guard,
         peer_table,
-        // peer_slot_guard,
         addr,
-        // mut addr_lock,
     } = handshake_init_args;
 
-    // let addr = addr_guard.addr.clone();
+    let known_addr = &addr.known_addr;
 
-    let mut addr_lock = addr.clone().write_owned().await;
-    let known_addr = &mut addr_lock.known_addr;
-
-    let peer_slot_guard = match peer_table
-        .get_mapped_peer_lock(&known_addr.public_key_str)
-        .await
-    {
-        Some(_) => {
-            // twarn!(
-            //     "saksaha",
-            //     "p2p",
-            //     "Peer is already mapped, dropping, public_key_str: {}",
-            //     &known_addr.public_key_str,
-            // );
-
-            // let mut addr_status = addr_lock.get_status();
-            // addr_status = AddrStatus::WhoAreYouSuccess
-
-            return Err(HandshakeInitError::PeerAlreadyMapped);
-        }
-        None => match peer_table.get_empty_slot().await {
-            Ok(s) => s,
-            Err(_) => {
-                // terr!(
-                //     "saksaha",
-                //     "p2p",
-                //     "Cannot reserve an empty peer node. Dropping \
-                //             initiate handshake task, err: {}",
-                //     err,
-                // );
-
-                return Err(HandshakeInitError::EmptyNodeNotAvailable);
+    let peer_slot_guard =
+        match peer_table.get_mapped_peer(&known_addr.public_key_str).await {
+            Some(_) => {
+                return Err(HandshakeInitError::PeerAlreadyMapped);
             }
-        },
-    };
+            None => match peer_table.get_empty_slot().await {
+                Ok(s) => s,
+                Err(_) => {
+                    return Err(HandshakeInitError::EmptyNodeNotAvailable);
+                }
+            },
+        };
 
     let endpoint = known_addr.p2p_endpoint();
 
@@ -233,35 +207,24 @@ pub async fn initiate_handshake(
             crypto::make_shared_secret(my_secret_key, her_public_key);
 
         let transport = Transport {
-            conn,
+            conn: RwLock::new(conn),
             shared_secret,
         };
-
-        tdebug!(
-            "p2p_trpt_hske",
-            "initiate",
-            "Peer node updated, hs_id: {}, her_public_key: {}, \
-            status: {:?}",
-            &handshake_ack.instance_id,
-            her_public_key_str.clone().green(),
-            known_addr.status,
-        );
 
         let peer = {
             let p = Peer {
                 p2p_port: handshake_ack.src_p2p_port,
                 public_key_str: her_public_key_str.clone(),
-                // addr_guard,
                 addr,
                 transport,
                 status: PeerStatus::HandshakeInit,
                 peer_slot_guard,
             };
 
-            Arc::new(RwLock::new(p))
+            Arc::new(p)
         };
 
-        peer_table.insert_mapping(&her_public_key_str, peer).await;
+        peer_table.insert_mapping(peer).await;
     }
 
     Ok(())

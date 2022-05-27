@@ -1,6 +1,6 @@
 use super::Node;
+use crate::blockchain::blockchain::{Hash, TxValue};
 use crate::rpc::response::{ErrorResult, SuccessResult};
-use crate::{blockchain::blockchain::{TxValue, Hash}};
 use hyper::{Body, Request, Response, StatusCode};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -181,7 +181,7 @@ pub(crate) async fn get_status(
         }
     };
 
-    let addr_vec = node.p2p_monitor.p2p_discovery.get_status().await;
+    let addr_vec = node.p2p_monitor.p2p_discovery.addr_table.get_status().await;
     let peer_vec = node.p2p_monitor.peer_table.get_status().await;
 
     let result = NodeStatus {
@@ -205,13 +205,17 @@ pub(crate) async fn get_block(
             let body_bytes_vec = b.to_vec();
             match std::str::from_utf8(&body_bytes_vec) {
                 Ok(b) => {
-                    match node.machine.get_block(&b.to_string()).await {
+                    let hash = &Hash {
+                        hash: b.to_string(),
+                    };
+                    match node.machine.get_block(hash).await {
                         Ok(block) => {
                             return SuccessResult {
                                 id: String::from("1"),
                                 result: String::from(""),
                             }
-                        .into_hyper_result()},
+                            .into_hyper_result()
+                        }
                         Err(err) => {
                             return ErrorResult {
                                 id: String::from("1"),
@@ -221,8 +225,8 @@ pub(crate) async fn get_block(
                                 data: Some(err.to_string()),
                             }
                             .into_hyper_result();
-                }
-            }
+                        }
+                    }
                 }
                 Err(err) => {
                     return ErrorResult {

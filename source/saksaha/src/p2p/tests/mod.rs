@@ -22,7 +22,7 @@ mod test_suite {
         src_sig: Signature,
         p2p_port: u16,
         disc_port: u16,
-    ) -> Arc<RwLock<Addr>> {
+    ) -> Arc<Addr> {
         let a = Addr::new_dummy(
             public_key,
             public_key_str,
@@ -31,14 +31,7 @@ mod test_suite {
             p2p_port,
         );
 
-        Arc::new(RwLock::new(a))
-        // AddrGuard::new_dummy(
-        //     public_key,
-        //     public_key_str,
-        //     src_sig,
-        //     p2p_port,
-        //     disc_port,
-        // )
+        Arc::new(a)
     }
 
     async fn create_client(
@@ -173,7 +166,6 @@ mod test_suite {
             );
 
             let task = P2PTask::InitiateHandshake {
-                // addr_guard,
                 addr,
                 identity: identity_1.clone(),
                 peer_table: peer_table_1.clone(),
@@ -211,7 +203,7 @@ mod test_suite {
                 .get_mapped_peer(&identity_1.credential.public_key_str)
                 .await
             {
-                Some(p) => true,
+                Some(_) => true,
                 None => false,
             };
 

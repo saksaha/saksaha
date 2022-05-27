@@ -2,7 +2,7 @@ use std::sync::Arc;
 use tokio::sync::mpsc::UnboundedSender;
 
 pub(crate) struct Slot {
-    pub(crate) idx: usize,
+    pub(crate) _idx: usize,
 }
 
 pub(crate) struct SlotGuard {

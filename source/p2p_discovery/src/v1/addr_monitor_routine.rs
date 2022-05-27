@@ -3,7 +3,6 @@ use crate::Addr;
 use logger::tdebug;
 use std::sync::Arc;
 use std::time::Duration;
-use tokio::sync::RwLock;
 
 pub(crate) struct AddrMonitorRoutine {
     pub(crate) addr_monitor_interval: Duration,
@@ -19,20 +18,18 @@ impl AddrMonitorRoutine {
 
             let addr_map_lock = table.addr_map.read().await;
 
-            let addrs: Vec<Arc<RwLock<Addr>>> =
+            let addrs: Vec<Arc<Addr>> =
                 addr_map_lock.values().map(|addr| addr.clone()).collect();
 
             drop(addr_map_lock);
 
             for (idx, addr) in addrs.iter().enumerate() {
-                let addr_lock = addr.read().await;
-
                 tdebug!(
                     "p2p_discovery",
                     "addr_mnt_rout",
                     "addr status [{}] - {}",
                     idx,
-                    addr_lock.known_addr,
+                    addr.known_addr,
                 );
                 tokio::time::sleep(self.addr_monitor_interval).await;
             }

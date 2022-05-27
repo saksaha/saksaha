@@ -14,13 +14,7 @@ pub(crate) struct DialSchedulerArgs {
 
 pub(crate) struct DialScheduler {
     disc_task_queue: Arc<TaskQueue<DiscoveryTask>>,
-    dial_loop: Arc<DialLoop>,
     bootstrap_addrs: Vec<UnknownAddr>,
-}
-
-struct DialLoop {
-    disc_task_queue: Arc<TaskQueue<DiscoveryTask>>,
-    disc_dial_interval: Duration,
 }
 
 impl DialScheduler {
@@ -36,17 +30,8 @@ impl DialScheduler {
             None => Duration::from_millis(DISC_DIAL_INTERVAL),
         };
 
-        let dial_loop = {
-            let l = DialLoop {
-                disc_task_queue: disc_task_queue.clone(),
-                disc_dial_interval,
-            };
-            Arc::new(l)
-        };
-
         let d = DialScheduler {
             disc_task_queue: disc_task_queue.clone(),
-            dial_loop,
             bootstrap_addrs,
         };
 
@@ -102,39 +87,5 @@ impl DialScheduler {
 
     pub async fn run(&self) {
         self.enqueue_bootstrap_addrs(&self.bootstrap_addrs).await;
-
-        self.dial_loop.run().await;
-    }
-}
-
-impl DialLoop {
-    async fn run(&self) {
-        tinfo!(
-            "p2p_discovery",
-            "dial_schd",
-            "Discovery dial loop currently not functional",
-        );
-
-        // loop {
-        //     let start = SystemTime::now();
-
-        //     match start.elapsed() {
-        //         Ok(d) => {
-        //             if d < self.min_interval {
-        //                 let diff = self.min_interval - d;
-        //                 tokio::time::sleep(diff).await;
-        //             }
-        //         }
-        //         Err(err) => {
-        //             terr!(
-        //                 "p2p_discovery",
-        //                 "Calculating the time elapsed fail, err: {}",
-        //                 err
-        //             );
-
-        //             tokio::time::sleep(self.min_interval).await;
-        //         }
-        //     }
-        // }
     }
 }

@@ -4,6 +4,7 @@ use crate::blockchain::BlockchainArgs;
 use crate::config::Config;
 use crate::config::ProfiledConfig;
 use crate::machine::Machine;
+use crate::node::LocalNode;
 use crate::p2p::{P2PHost, P2PHostArgs};
 use crate::pconfig::PConfig;
 use crate::rpc::RPCArgs;
@@ -157,7 +158,7 @@ impl Routine {
                 rpc_port: rpc_socket_addr.port(),
                 secret: config.p2p.secret,
                 public_key_str: config.p2p.public_key_str,
-                peer_table,
+                peer_table: peer_table.clone(),
             };
 
             P2PHost::init(p2p_host_args).await?
@@ -175,6 +176,15 @@ impl Routine {
             let m = Machine { blockchain };
 
             Arc::new(m)
+        };
+
+        let local_node = {
+            let ln = LocalNode {
+                peer_table: peer_table.clone(),
+                machine: machine.clone(),
+            };
+
+            ln
         };
 
         let p2p_monitor = {
@@ -196,6 +206,7 @@ impl Routine {
             tokio::join!(
                 rpc.run(rpc_socket, rpc_socket_addr),
                 p2p_host.run(),
+                local_node.run(),
                 // blockchain.run()
             );
         });
