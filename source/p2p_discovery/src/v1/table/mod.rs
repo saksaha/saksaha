@@ -8,4 +8,4 @@ pub use addr::*;
 pub use addr_guard::*;
 pub use iter::*;
 pub(crate) use slot::*;
-pub(crate) use table::*;
+pub use table::*;

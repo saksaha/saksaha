@@ -1,4 +1,5 @@
 use logger::{tdebug, terr, tinfo, twarn};
+use p2p_discovery::AddrTable;
 use p2p_identity::Identity;
 use p2p_peer_table::PeerTable;
 use p2p_transport::Connection;
@@ -17,7 +18,7 @@ pub(crate) struct Server {
     p2p_socket: TcpListener,
     identity: Arc<Identity>,
     peer_table: Arc<PeerTable>,
-    addr_map: Arc<AddrMap>,
+    addr_table: Arc<AddrTable>,
 }
 
 impl Server {
@@ -26,7 +27,7 @@ impl Server {
         p2p_socket: TcpListener,
         identity: Arc<Identity>,
         peer_table: Arc<PeerTable>,
-        addr_map: Arc<AddrMap>,
+        addr_table: Arc<AddrTable>,
     ) -> Server {
         let p2p_max_conn_count = match p2p_max_conn_count {
             Some(c) => c.into(),
@@ -40,7 +41,7 @@ impl Server {
             p2p_socket,
             identity,
             peer_table,
-            addr_map,
+            addr_table,
         }
     }
 
@@ -116,11 +117,11 @@ impl Server {
 
             let identity = self.identity.clone();
             let peer_table = self.peer_table.clone();
-            let addr_map = self.addr_map.clone();
+            let addr_table = self.addr_table.clone();
 
             tokio::spawn(async move {
                 if let Err(err) =
-                    handler.run(conn, identity, peer_table, addr_map).await
+                    handler.run(conn, identity, peer_table, addr_table).await
                 {
                     twarn!(
                         "saksaha",

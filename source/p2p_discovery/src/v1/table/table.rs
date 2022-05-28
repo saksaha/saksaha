@@ -23,7 +23,6 @@ pub struct AddrTable {
     known_addrs_rx: Arc<RwLock<Receiver<Arc<RwLock<Addr>>>>>,
     addr_recycle_tx: Arc<UnboundedSender<Arc<RwLock<Addr>>>>,
     addrs_it_mutex: Arc<Mutex<usize>>,
-    // addrs_iterator: Arc<RwLock<AddrsIterator>>,
 }
 
 impl AddrTable {
@@ -96,12 +95,6 @@ impl AddrTable {
         });
 
         let addrs_it_mutex = Arc::new(Mutex::new(0));
-        // let (addrs_iterator, addrs_it_semaphore) = {
-        //     let it =
-        //         AddrsIterator::init(addr_recycle_tx.clone(), known_addrs_rx);
-
-        //     Arc::new(RwLock::new(it))
-        // };
 
         let table = AddrTable {
             addr_map,
@@ -111,18 +104,19 @@ impl AddrTable {
             known_addrs_rx,
             addr_recycle_tx,
             addrs_it_mutex,
-            // addrs_iterator,
         };
 
         Ok(table)
     }
 
-    pub(crate) async fn get_mapped_node(
+    pub async fn get_mapped_addr(
         &self,
-        disc_endpoint: &String,
+        // disc_endpoint: &String,
+        public_key_str: &String,
     ) -> Option<Arc<RwLock<Addr>>> {
         let addr_map = self.addr_map.read().await;
-        addr_map.get(disc_endpoint).map(|n| n.clone())
+        // addr_map.get(disc_endpoint).map(|n| n.clone())
+        addr_map.get(public_key_str).map(|n| n.clone())
     }
 
     pub(crate) async fn get_mapped_addr_lock(
@@ -192,7 +186,7 @@ impl AddrTable {
         }
     }
 
-    pub(crate) fn new_addr_iter(&self) -> Result<AddrsIterator, String> {
+    pub fn new_addr_iter(&self) -> Result<AddrsIterator, String> {
         let addrs_it_lock = match self.addrs_it_mutex.clone().try_lock_owned() {
             Ok(l) => l,
             Err(err) => {
@@ -212,15 +206,15 @@ impl AddrTable {
         Ok(it)
     }
 
-    pub async fn insert_mapping(
+    pub(crate) async fn insert_mapping(
         &self,
-        disc_endpoint: &String,
+        public_key_str: &String,
         addr: Arc<RwLock<Addr>>,
     ) -> Result<Option<Arc<RwLock<Addr>>>, String> {
         let mut addr_map = self.addr_map.write().await;
 
         let previous_addr =
-            addr_map.insert(disc_endpoint.clone(), addr.clone());
+            addr_map.insert(public_key_str.clone(), addr.clone());
 
         match self.enqueue_known_addr(addr).await {
             Ok(_) => {}
@@ -236,13 +230,13 @@ impl AddrTable {
         Ok(previous_addr)
     }
 
-    pub async fn remove_mapping(
+    pub(crate) async fn remove_mapping(
         &self,
-        disc_endpoint: &String,
+        public_key_str: &String,
     ) -> Option<Arc<RwLock<Addr>>> {
         let mut addr_map = self.addr_map.write().await;
 
-        addr_map.remove(disc_endpoint)
+        addr_map.remove(public_key_str)
     }
 }
 

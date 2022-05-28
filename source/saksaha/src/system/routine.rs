@@ -10,7 +10,7 @@ use crate::rpc::RPCArgs;
 use crate::rpc::RPC;
 use colored::Colorize;
 use logger::{terr, tinfo};
-use p2p_peer::PeerTable;
+use p2p_peer_table::PeerTable;
 use std::sync::Arc;
 
 const APP_PREFIX: &str = "default";

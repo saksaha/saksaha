@@ -76,6 +76,7 @@ pub(crate) async fn recv_who_are_you(
         status: AddrStatus::WhoAreYouSynRecv { at: Utc::now() },
     };
 
+    let her_public_key_str = known_addr.public_key_str.clone();
     let her_disc_endpoint = known_addr.disc_endpoint();
     let her_p2p_endpoint = known_addr.p2p_endpoint();
 
@@ -84,7 +85,7 @@ pub(crate) async fn recv_who_are_you(
     }
 
     let slot_guard =
-        match addr_table.get_mapped_addr_lock(&her_disc_endpoint).await {
+        match addr_table.get_mapped_addr_lock(&her_public_key_str).await {
             Some(_) => {
                 return Err(WhoAreYouRecvError::AddrAlreadyMapped {
                     disc_endpoint: her_disc_endpoint.to_string(),
@@ -140,7 +141,7 @@ pub(crate) async fn recv_who_are_you(
     };
 
     match addr_table
-        .insert_mapping(&her_disc_endpoint.to_string(), addr.clone())
+        .insert_mapping(&her_public_key_str, addr.clone())
         .await
     {
         Ok(_) => {

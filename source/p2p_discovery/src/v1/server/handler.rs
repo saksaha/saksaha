@@ -80,9 +80,10 @@ impl Handler {
 
                 let her_p2p_endpoint = known_addr.p2p_endpoint();
                 let her_disc_endpoint = known_addr.disc_endpoint();
+                let her_public_key_str = known_addr.public_key_str.clone();
 
                 if let Some(_) =
-                    addr_table.get_mapped_addr_lock(&her_disc_endpoint).await
+                    addr_table.get_mapped_addr_lock(&her_public_key_str).await
                 {
                     twarn!(
                         "p2p_discovery",

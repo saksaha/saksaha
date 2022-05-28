@@ -58,7 +58,7 @@ pub async fn receive_handshake(
     let HandshakeRecvArgs {
         handshake_syn,
         peer_table,
-        addr_map,
+        addr_table,
         identity,
         ..
     } = handshake_recv_args;
@@ -121,22 +121,22 @@ pub async fn receive_handshake(
             shared_secret,
         };
 
-        // addr_map
+        // addr_table.get_mapped_node(disc_endpoint)
 
-        let peer = {
-            let p = Peer {
-                transport,
-                p2p_port: src_p2p_port,
-                public_key_str: her_public_key_str.clone(),
-                addr_guard: None,
-                status: PeerStatus::HandshakeSuccess { at: Utc::now() },
-                peer_slot_guard: slot_guard,
-            };
+        // let peer = {
+        //     let p = Peer {
+        //         transport,
+        //         p2p_port: src_p2p_port,
+        //         public_key_str: her_public_key_str.clone(),
+        //         addr_guard: None,
+        //         status: PeerStatus::HandshakeSuccess { at: Utc::now() },
+        //         peer_slot_guard: slot_guard,
+        //     };
 
-            Arc::new(RwLock::new(p))
-        };
+        //     Arc::new(RwLock::new(p))
+        // };
 
-        peer_table.insert_mapping(&her_public_key_str, peer).await;
+        // peer_table.insert_mapping(&her_public_key_str, peer).await;
     }
 
     tdebug!(

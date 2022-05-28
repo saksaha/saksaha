@@ -19,7 +19,7 @@ pub struct Discovery {
     server: Server,
     dial_scheduler: DialScheduler,
     task_runtime: DiscTaskRuntime,
-    addr_table: Arc<AddrTable>,
+    pub addr_table: Arc<AddrTable>,
 }
 
 pub struct DiscoveryArgs {
@@ -144,10 +144,6 @@ impl Discovery {
             self.task_runtime.run(),
             self.dial_scheduler.run(),
         );
-    }
-
-    pub fn new_addr_iter(&self) -> Result<AddrsIterator, String> {
-        self.addr_table.new_addr_iter()
     }
 
     pub async fn get_status(&self) -> Vec<String> {

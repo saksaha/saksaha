@@ -41,11 +41,19 @@ pub(crate) async fn init_who_are_you(
         return Err(WhoAreYouInitError::MyEndpoint { addr: unknown_addr });
     }
 
-    if let Some(_) = addr_table.get_mapped_addr_lock(&her_disc_endpoint).await {
-        return Err(WhoAreYouInitError::AddrAlreadyMapped {
-            disc_endpoint: her_disc_endpoint.to_string(),
-        });
-    };
+    if let Some(ref public_key_str) = unknown_addr.public_key_str {
+        if let Some(_) = addr_table.get_mapped_addr(public_key_str).await {
+            return Err(WhoAreYouInitError::AddrAlreadyMapped {
+                disc_endpoint: her_disc_endpoint.to_string(),
+            });
+        }
+    }
+
+    // if let Some(_) = addr_table.get_mapped_addr_lock(&her_disc_endpoint).await {
+    //     return Err(WhoAreYouInitError::AddrAlreadyMapped {
+    //         disc_endpoint: her_disc_endpoint.to_string(),
+    //     });
+    // };
 
     let src_disc_port = identity.disc_port;
     let src_p2p_port = identity.p2p_port;

@@ -118,14 +118,14 @@ impl P2PHost {
                 p2p_host_args.p2p_socket,
                 identity.clone(),
                 p2p_host_args.peer_table.clone(),
-                p2p_discovery.get_addr_map().clone(),
+                p2p_discovery.addr_table.clone(),
             );
 
             s
         };
 
         let p2p_dial_scheduler = {
-            let addrs_iter = p2p_discovery.new_addr_iter()?;
+            let addrs_iter = p2p_discovery.addr_table.new_addr_iter()?;
 
             let p2p_dial_schd_args = P2PDialSchedulerArgs {
                 p2p_dial_interval: p2p_host_args.p2p_dial_interval,

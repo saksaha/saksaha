@@ -5,7 +5,7 @@ use handshake::HandshakeDialLoop;
 use logger::tinfo;
 use p2p_discovery::AddrsIterator;
 use p2p_identity::Identity;
-use p2p_peer::PeerTable;
+use p2p_peer_table::PeerTable;
 use std::sync::Arc;
 use task_queue::TaskQueue;
 
