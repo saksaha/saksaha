@@ -1,7 +1,7 @@
 use super::{check, WhoAreYou};
 use crate::{
     v1::{net::Connection, ops::Msg},
-    Table,
+    AddrTable,
 };
 use futures::SinkExt;
 use logger::tdebug;
@@ -31,7 +31,7 @@ pub(crate) enum WhoAreYouInitError {
 pub(crate) async fn init_who_are_you(
     unknown_addr: UnknownAddr,
     identity: Arc<Identity>,
-    table: Arc<Table>,
+    addr_table: Arc<AddrTable>,
     udp_conn: Arc<Connection>,
 ) -> Result<(), WhoAreYouInitError> {
     let her_disc_endpoint = unknown_addr.disc_endpoint();
@@ -41,9 +41,7 @@ pub(crate) async fn init_who_are_you(
         return Err(WhoAreYouInitError::MyEndpoint { addr: unknown_addr });
     }
 
-    let table = table.clone();
-
-    if let Some(_) = table.get_mapped_addr_lock(&her_disc_endpoint).await {
+    if let Some(_) = addr_table.get_mapped_addr_lock(&her_disc_endpoint).await {
         return Err(WhoAreYouInitError::AddrAlreadyMapped {
             disc_endpoint: her_disc_endpoint.to_string(),
         });

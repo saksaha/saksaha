@@ -1,7 +1,7 @@
 use super::{check, WhoAreYou};
 use crate::{
     v1::{net::Connection, ops::Msg},
-    Addr, Table,
+    Addr, AddrTable,
 };
 use chrono::Utc;
 use colored::Colorize;
@@ -45,7 +45,7 @@ pub(crate) async fn recv_who_are_you(
     udp_conn: Arc<Connection>,
     way_syn: WhoAreYou,
     identity: Arc<Identity>,
-    table: Arc<Table>,
+    addr_table: Arc<AddrTable>,
 ) -> Result<(), WhoAreYouRecvError> {
     let WhoAreYou {
         src_sig: her_sig,
@@ -83,20 +83,20 @@ pub(crate) async fn recv_who_are_you(
         return Err(WhoAreYouRecvError::MyEndpoint { addr: known_addr });
     }
 
-    let slot_guard = match table.get_mapped_addr_lock(&her_disc_endpoint).await
-    {
-        Some(_) => {
-            return Err(WhoAreYouRecvError::AddrAlreadyMapped {
-                disc_endpoint: her_disc_endpoint.to_string(),
-            });
-        }
-        None => match table.get_empty_slot().await {
-            Ok(s) => s,
-            Err(_) => {
-                return Err(WhoAreYouRecvError::AddrSlotReserveFail);
+    let slot_guard =
+        match addr_table.get_mapped_addr_lock(&her_disc_endpoint).await {
+            Some(_) => {
+                return Err(WhoAreYouRecvError::AddrAlreadyMapped {
+                    disc_endpoint: her_disc_endpoint.to_string(),
+                });
             }
-        },
-    };
+            None => match addr_table.get_empty_slot().await {
+                Ok(s) => s,
+                Err(_) => {
+                    return Err(WhoAreYouRecvError::AddrSlotReserveFail);
+                }
+            },
+        };
 
     let my_disc_port = identity.disc_port;
     let my_p2p_port = identity.p2p_port;
@@ -139,7 +139,7 @@ pub(crate) async fn recv_who_are_you(
         Arc::new(RwLock::new(a))
     };
 
-    match table
+    match addr_table
         .insert_mapping(&her_disc_endpoint.to_string(), addr.clone())
         .await
     {

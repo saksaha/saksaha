@@ -15,7 +15,7 @@ use tokio::sync::{
 const DISC_TABLE_CAPACITY: usize = 5;
 
 /// TODO Table shall have Kademlia flavored buckets later on
-pub struct Table {
+pub struct AddrTable {
     pub(crate) addr_map: Arc<RwLock<HashMap<String, Arc<RwLock<Addr>>>>>,
     slots_tx: Arc<UnboundedSender<Arc<Slot>>>,
     slots_rx: RwLock<UnboundedReceiver<Arc<Slot>>>,
@@ -26,10 +26,10 @@ pub struct Table {
     // addrs_iterator: Arc<RwLock<AddrsIterator>>,
 }
 
-impl Table {
+impl AddrTable {
     pub(crate) async fn init(
         disc_table_capacity: Option<u16>,
-    ) -> Result<Table, String> {
+    ) -> Result<AddrTable, String> {
         let addr_map = {
             let m = HashMap::new();
 
@@ -103,7 +103,7 @@ impl Table {
         //     Arc::new(RwLock::new(it))
         // };
 
-        let table = Table {
+        let table = AddrTable {
             addr_map,
             slots_tx,
             slots_rx,

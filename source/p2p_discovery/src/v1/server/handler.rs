@@ -6,7 +6,7 @@ use crate::{
             Msg,
         },
     },
-    Addr, Table,
+    Addr, AddrTable,
 };
 use chrono::{Duration, Utc};
 use colored::Colorize;
@@ -27,7 +27,7 @@ impl Handler {
         socket_addr: SocketAddr,
         udp_conn: Arc<Connection>,
         identity: Arc<Identity>,
-        table: Arc<Table>,
+        addr_table: Arc<AddrTable>,
         addr_expire_duration: Duration,
     ) -> Result<(), String> {
         match msg {
@@ -37,7 +37,7 @@ impl Handler {
                     udp_conn,
                     way_syn,
                     identity,
-                    table,
+                    addr_table,
                 )
                 .await
                 {
@@ -82,7 +82,7 @@ impl Handler {
                 let her_disc_endpoint = known_addr.disc_endpoint();
 
                 if let Some(_) =
-                    table.get_mapped_addr_lock(&her_disc_endpoint).await
+                    addr_table.get_mapped_addr_lock(&her_disc_endpoint).await
                 {
                     twarn!(
                         "p2p_discovery",
@@ -93,7 +93,7 @@ impl Handler {
                     );
                 };
 
-                let slot_guard = table.get_empty_slot().await?;
+                let slot_guard = addr_table.get_empty_slot().await?;
 
                 let addr = {
                     let a = Addr {
@@ -104,7 +104,8 @@ impl Handler {
                     Arc::new(RwLock::new(a))
                 };
 
-                match table.insert_mapping(&her_disc_endpoint, addr).await {
+                match addr_table.insert_mapping(&her_disc_endpoint, addr).await
+                {
                     Ok(_) => {
                         tdebug!(
                             "p2p_discovery",

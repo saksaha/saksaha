@@ -1,7 +1,7 @@
 use futures::StreamExt;
 use logger::{tdebug, twarn};
 use p2p_identity::Identity;
-use p2p_peer::PeerTable;
+use p2p_peer_table::PeerTable;
 use p2p_transport::{Connection, Msg};
 use p2p_transport_ops::handshake::{
     self, HandshakeRecvArgs, HandshakeRecvError,
@@ -19,6 +19,7 @@ impl Handler {
         mut conn: Connection,
         identity: Arc<Identity>,
         peer_table: Arc<PeerTable>,
+        addr_table: Arc<AddrTable>,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         match conn.socket_rx.next().await {
             Some(maybe_msg) => match maybe_msg {
@@ -29,6 +30,7 @@ impl Handler {
                                 handshake_syn: handshake,
                                 identity,
                                 peer_table,
+                                addr_table,
                             };
 
                             match handshake::receive_handshake(

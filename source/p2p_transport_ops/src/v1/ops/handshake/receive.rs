@@ -2,6 +2,7 @@ use chrono::Utc;
 use colored::Colorize;
 use futures::SinkExt;
 use logger::tdebug;
+use p2p_discovery::AddrTable;
 use p2p_identity::Identity;
 use p2p_peer_table::{Peer, PeerStatus, PeerTable};
 use p2p_transport::{Connection, Handshake, Msg, Transport};
@@ -46,6 +47,8 @@ pub struct HandshakeRecvArgs {
     pub handshake_syn: Handshake,
     pub identity: Arc<Identity>,
     pub peer_table: Arc<PeerTable>,
+    pub addr_table: Arc<AddrTable>,
+    // pub addr_map: Arc<RwLock<AddrMap>>,
 }
 
 pub async fn receive_handshake(
@@ -55,6 +58,7 @@ pub async fn receive_handshake(
     let HandshakeRecvArgs {
         handshake_syn,
         peer_table,
+        addr_map,
         identity,
         ..
     } = handshake_recv_args;
@@ -117,7 +121,7 @@ pub async fn receive_handshake(
             shared_secret,
         };
 
-        //addr guard
+        // addr_map
 
         let peer = {
             let p = Peer {

@@ -1,4 +1,4 @@
-use crate::{v1::net::Connection, Table};
+use crate::{v1::net::Connection, AddrTable};
 use chrono::Duration;
 use futures::StreamExt;
 use logger::{terr, tinfo, twarn};
@@ -14,14 +14,14 @@ pub(crate) struct Server {
     udp_conn: Arc<Connection>,
     conn_semaphore: Arc<Semaphore>,
     identity: Arc<Identity>,
-    table: Arc<Table>,
+    addr_table: Arc<AddrTable>,
     addr_expire_duration: Duration,
 }
 
 pub(crate) struct ServerArgs {
     pub(crate) udp_conn: Arc<Connection>,
     pub(crate) identity: Arc<Identity>,
-    pub(crate) table: Arc<Table>,
+    pub(crate) addr_table: Arc<AddrTable>,
     pub(crate) addr_expire_duration: i64,
 }
 
@@ -36,7 +36,7 @@ impl Server {
             identity: server_args.identity,
             udp_conn: server_args.udp_conn,
             conn_semaphore,
-            table: server_args.table,
+            addr_table: server_args.addr_table,
             addr_expire_duration,
         }
     }
@@ -67,7 +67,7 @@ impl Server {
 
                             let udp_conn = self.udp_conn.clone();
                             let identity = self.identity.clone();
-                            let table = self.table.clone();
+                            let table = self.addr_table.clone();
                             let addr_expire_duration =
                                 self.addr_expire_duration;
 

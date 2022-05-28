@@ -8,7 +8,7 @@ use logger::tinfo;
 use p2p_addr::UnknownAddr;
 use p2p_discovery::{Discovery, DiscoveryArgs};
 use p2p_identity::{Credential, Identity};
-use p2p_peer::PeerTable;
+use p2p_peer_table::PeerTable;
 use std::sync::Arc;
 use task_queue::TaskQueue;
 use tokio::net::TcpListener;
@@ -118,6 +118,7 @@ impl P2PHost {
                 p2p_host_args.p2p_socket,
                 identity.clone(),
                 p2p_host_args.peer_table.clone(),
+                p2p_discovery.get_addr_map().clone(),
             );
 
             s
