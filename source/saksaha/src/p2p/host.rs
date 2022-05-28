@@ -124,7 +124,7 @@ impl P2PHost {
         };
 
         let p2p_dial_scheduler = {
-            let addrs_iter = Arc::new(p2p_discovery.new_iter());
+            let addrs_iter = p2p_discovery.new_addr_iter()?;
 
             let p2p_dial_schd_args = P2PDialSchedulerArgs {
                 p2p_dial_interval: p2p_host_args.p2p_dial_interval,

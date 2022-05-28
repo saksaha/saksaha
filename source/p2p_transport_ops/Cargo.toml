@@ -13,7 +13,7 @@ p2p_identity = { path = "../p2p_identity" }
 p2p_frame = { path = "../p2p_frame" }
 p2p_discovery = { path = "../p2p_discovery" }
 p2p_transport = { path = "../p2p_transport" }
-p2p_peer = { path = "../p2p_peer" }
+p2p_peer_table = { path = "../p2p_peer_table" }
 logger = { path = "../logger" }
 serde = { version = "1.0.130", features = ["derive"] }
 serde_json = "1.0.59"

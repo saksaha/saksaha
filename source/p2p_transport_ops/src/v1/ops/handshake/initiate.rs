@@ -5,8 +5,8 @@ use logger::{tdebug, twarn};
 use p2p_addr::KnownAddr;
 use p2p_discovery::{Addr, AddrGuard};
 use p2p_identity::Identity;
-use p2p_peer::SlotGuard;
-use p2p_peer::{Peer, PeerStatus, PeerTable};
+use p2p_peer_table::SlotGuard;
+use p2p_peer_table::{Peer, PeerStatus, PeerTable};
 use p2p_transport::Handshake;
 use p2p_transport::Msg;
 use p2p_transport::{Connection, Transport};
@@ -156,7 +156,7 @@ pub async fn initiate_handshake(
             let p = Peer {
                 p2p_port: handshake_ack.src_p2p_port,
                 public_key_str: her_public_key_str.clone(),
-                addr_guard: Some(addr_guard),
+                addr_guard,
                 transport,
                 status: PeerStatus::HandshakeInit,
                 peer_slot_guard,

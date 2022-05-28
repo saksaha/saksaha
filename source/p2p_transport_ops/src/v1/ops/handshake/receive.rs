@@ -3,7 +3,7 @@ use colored::Colorize;
 use futures::SinkExt;
 use logger::tdebug;
 use p2p_identity::Identity;
-use p2p_peer::{Peer, PeerStatus, PeerTable};
+use p2p_peer_table::{Peer, PeerStatus, PeerTable};
 use p2p_transport::{Connection, Handshake, Msg, Transport};
 use std::sync::Arc;
 use thiserror::Error;
@@ -116,6 +116,8 @@ pub async fn receive_handshake(
             conn,
             shared_secret,
         };
+
+        //addr guard
 
         let peer = {
             let p = Peer {

@@ -17,7 +17,7 @@ impl Drop for SlotGuard {
             Ok(_) => (),
             Err(err) => {
                 terr!(
-                    "p2p_peer",
+                    "p2p_peer_table",
                     "slot",
                     "Cannot send the released slot back to the queue,
                     err: {}",

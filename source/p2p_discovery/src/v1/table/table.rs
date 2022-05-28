@@ -8,7 +8,7 @@ use p2p_addr::AddrStatus;
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::{
     mpsc::{self, Receiver, Sender, UnboundedReceiver, UnboundedSender},
-    OwnedRwLockWriteGuard, RwLock,
+    Mutex, OwnedRwLockWriteGuard, RwLock, Semaphore,
 };
 
 // const DISC_TABLE_CAPACITY: usize = 100;
@@ -16,12 +16,14 @@ const DISC_TABLE_CAPACITY: usize = 5;
 
 /// TODO Table shall have Kademlia flavored buckets later on
 pub struct Table {
-    pub addr_map: RwLock<HashMap<String, Arc<RwLock<Addr>>>>,
+    pub(crate) addr_map: Arc<RwLock<HashMap<String, Arc<RwLock<Addr>>>>>,
     slots_tx: Arc<UnboundedSender<Arc<Slot>>>,
     slots_rx: RwLock<UnboundedReceiver<Arc<Slot>>>,
     known_addrs_tx: Arc<Sender<Arc<RwLock<Addr>>>>,
     known_addrs_rx: Arc<RwLock<Receiver<Arc<RwLock<Addr>>>>>,
     addr_recycle_tx: Arc<UnboundedSender<Arc<RwLock<Addr>>>>,
+    addrs_it_mutex: Arc<Mutex<usize>>,
+    // addrs_iterator: Arc<RwLock<AddrsIterator>>,
 }
 
 impl Table {
@@ -30,7 +32,8 @@ impl Table {
     ) -> Result<Table, String> {
         let addr_map = {
             let m = HashMap::new();
-            RwLock::new(m)
+
+            Arc::new(RwLock::new(m))
         };
 
         let disc_table_capacity = match disc_table_capacity {
@@ -77,6 +80,7 @@ impl Table {
             known_addrs_tx: known_addrs_tx.clone(),
             addr_recycle_rx,
         };
+
         tokio::spawn(async move {
             match recycle_routine.run().await {
                 Ok(_) => (),
@@ -91,6 +95,14 @@ impl Table {
             };
         });
 
+        let addrs_it_mutex = Arc::new(Mutex::new(0));
+        // let (addrs_iterator, addrs_it_semaphore) = {
+        //     let it =
+        //         AddrsIterator::init(addr_recycle_tx.clone(), known_addrs_rx);
+
+        //     Arc::new(RwLock::new(it))
+        // };
+
         let table = Table {
             addr_map,
             slots_tx,
@@ -98,6 +110,8 @@ impl Table {
             known_addrs_tx,
             known_addrs_rx,
             addr_recycle_tx,
+            addrs_it_mutex,
+            // addrs_iterator,
         };
 
         Ok(table)
@@ -178,11 +192,24 @@ impl Table {
         }
     }
 
-    pub(crate) fn new_iter(&self) -> AddrsIterator {
-        AddrsIterator::init(
+    pub(crate) fn new_addr_iter(&self) -> Result<AddrsIterator, String> {
+        let addrs_it_lock = match self.addrs_it_mutex.clone().try_lock_owned() {
+            Ok(l) => l,
+            Err(err) => {
+                return Err(format!(
+                    "Addr iter is already being used by some entity, err: {}",
+                    err,
+                ));
+            }
+        };
+
+        let it = AddrsIterator::init(
             self.addr_recycle_tx.clone(),
             self.known_addrs_rx.clone(),
-        )
+            addrs_it_lock,
+        );
+
+        Ok(it)
     }
 
     pub async fn insert_mapping(

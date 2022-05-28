@@ -2,13 +2,15 @@ use super::dial_scheduler::{DialScheduler, DialSchedulerArgs};
 use super::server::{Server, ServerArgs};
 use super::task::runtime::DiscTaskRuntime;
 use crate::v1::net::Connection;
-use crate::{AddrsIterator, Table};
+use crate::{Addr, AddrsIterator, Table};
 use colored::Colorize;
 use logger::tinfo;
 use p2p_addr::UnknownAddr;
 use p2p_identity::{Credential, Identity};
+use std::collections::HashMap;
 use std::sync::Arc;
 use task_queue::TaskQueue;
+use tokio::sync::{OwnedRwLockWriteGuard, RwLock};
 
 const DISC_TASK_QUEUE_CAPACITY: usize = 10;
 const ADDR_EXPIRE_DURATION: i64 = 3600;
@@ -144,8 +146,14 @@ impl Discovery {
         );
     }
 
-    pub fn new_iter(&self) -> AddrsIterator {
-        self.table.new_iter()
+    pub fn new_addr_iter(&self) -> Result<AddrsIterator, String> {
+        self.table.new_addr_iter()
+    }
+
+    pub fn get_addr_map(
+        &self,
+    ) -> Arc<RwLock<HashMap<String, Arc<RwLock<Addr>>>>> {
+        self.table.addr_map.clone()
     }
 
     pub async fn get_status(&self) -> Vec<String> {

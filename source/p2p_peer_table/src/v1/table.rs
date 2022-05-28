@@ -38,7 +38,7 @@ impl PeerTable {
                     Ok(_) => (),
                     Err(err) => {
                         terr!(
-                            "p2p_peer",
+                            "p2p_peer_table",
                             "table",
                             "slots channel has been closed, err: {}",
                             err,
@@ -141,18 +141,11 @@ impl PeerTable {
 
         for (idx, peer) in peer_map.values().enumerate() {
             match peer.try_read() {
-                Ok(peer_lock) => match &peer_lock.addr_guard {
-                    Some(addr_guard) => {
-                        let addr_lock = addr_guard.addr.read().await;
+                Ok(peer_lock) => {
+                    let addr_lock = peer_lock.addr_guard.addr.read().await;
 
-                        peer_vec
-                            .push(addr_lock.known_addr.p2p_endpoint().clone());
-                    }
-
-                    None => {
-                        println!("error: cannot get addr_guard");
-                    }
-                },
+                    peer_vec.push(addr_lock.known_addr.p2p_endpoint().clone());
+                }
                 Err(_err) => {
                     println!("addr table elements [{}] is locked", idx);
                 }

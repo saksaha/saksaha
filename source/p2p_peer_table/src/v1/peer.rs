@@ -8,7 +8,7 @@ pub struct Peer {
     pub public_key_str: String,
     pub transport: Transport,
     pub status: PeerStatus,
-    pub addr_guard: Option<AddrGuard>,
+    pub addr_guard: AddrGuard,
     pub peer_slot_guard: SlotGuard,
 }
 
