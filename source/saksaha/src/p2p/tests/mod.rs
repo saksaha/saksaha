@@ -5,9 +5,9 @@ mod test_suite {
         task::{runtime::P2PTaskRuntime, P2PTask},
     };
     use k256::{ecdsa::Signature, PublicKey};
-    use p2p_discovery::{AddrGuard, Discovery, DiscoveryArgs};
+    use p2p_discovery::{Addr, Discovery, DiscoveryArgs};
     use p2p_identity::{Credential, Identity};
-    use p2p_peer::PeerTable;
+    use p2p_peer_table::PeerTable;
     use std::{sync::Arc, time::Duration};
     use task_queue::TaskQueue;
 
@@ -21,14 +21,15 @@ mod test_suite {
         src_sig: Signature,
         p2p_port: u16,
         disc_port: u16,
-    ) -> AddrGuard {
-        AddrGuard::new_dummy(
-            public_key,
-            public_key_str,
-            src_sig,
-            p2p_port,
-            disc_port,
-        )
+    ) -> Addr {
+        Addr::new_dummy(public_key, public_key_str, sig, disc_port, p2p_port)
+        // AddrGuard::new_dummy(
+        //     public_key,
+        //     public_key_str,
+        //     src_sig,
+        //     p2p_port,
+        //     disc_port,
+        // )
     }
 
     async fn create_client(
@@ -118,6 +119,7 @@ mod test_suite {
                 p2p_socket,
                 identity.clone(),
                 p2p_peer_table.clone(),
+                p2p_discovery.addr_table.clone(),
             );
             Arc::new(s)
         };
@@ -152,7 +154,7 @@ mod test_suite {
             )
             .unwrap();
 
-            let addr_guard = get_dummy_handshake_init_args(
+            let addr = get_dummy_handshake_init_args(
                 public_key,
                 identity_1.credential.public_key_str.clone(),
                 identity_1.credential.sig,

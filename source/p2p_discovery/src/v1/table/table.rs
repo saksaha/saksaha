@@ -3,12 +3,13 @@ use super::{
     slot::{Slot, SlotGuard},
 };
 use crate::AddrsIterator;
+use colored::Colorize;
 use logger::{tdebug, terr};
 use p2p_addr::AddrStatus;
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::{
     mpsc::{self, Receiver, Sender, UnboundedReceiver, UnboundedSender},
-    Mutex, OwnedRwLockWriteGuard, RwLock, Semaphore,
+    Mutex, OwnedRwLockWriteGuard, RwLock,
 };
 
 // const DISC_TABLE_CAPACITY: usize = 100;
@@ -16,7 +17,7 @@ const DISC_TABLE_CAPACITY: usize = 5;
 
 /// TODO Table shall have Kademlia flavored buckets later on
 pub struct AddrTable {
-    pub(crate) addr_map: Arc<RwLock<HashMap<String, Arc<RwLock<Addr>>>>>,
+    addr_map: Arc<RwLock<HashMap<String, Arc<RwLock<Addr>>>>>,
     slots_tx: Arc<UnboundedSender<Arc<Slot>>>,
     slots_rx: RwLock<UnboundedReceiver<Arc<Slot>>>,
     known_addrs_tx: Arc<Sender<Arc<RwLock<Addr>>>>,
@@ -119,7 +120,7 @@ impl AddrTable {
         addr_map.get(public_key_str).map(|n| n.clone())
     }
 
-    pub(crate) async fn get_mapped_addr_lock(
+    pub async fn get_mapped_addr_lock(
         &self,
         disc_endpoint: &String,
     ) -> Option<(OwnedRwLockWriteGuard<Addr>, Arc<RwLock<Addr>>)> {
@@ -186,7 +187,7 @@ impl AddrTable {
         }
     }
 
-    pub fn new_addr_iter(&self) -> Result<AddrsIterator, String> {
+    pub fn new_iter(&self) -> Result<AddrsIterator, String> {
         let addrs_it_lock = match self.addrs_it_mutex.clone().try_lock_owned() {
             Ok(l) => l,
             Err(err) => {
@@ -208,15 +209,22 @@ impl AddrTable {
 
     pub(crate) async fn insert_mapping(
         &self,
-        public_key_str: &String,
+        // public_key_str: &String,
         addr: Arc<RwLock<Addr>>,
     ) -> Result<Option<Arc<RwLock<Addr>>>, String> {
         let mut addr_map = self.addr_map.write().await;
+        let addr_lock = addr.read().await;
+        let key = &addr_lock.known_addr.public_key_str;
 
-        let previous_addr =
-            addr_map.insert(public_key_str.clone(), addr.clone());
+        tdebug!(
+            "p2p_discovery",
+            "table",
+            "Insert mapping! key: {}, value: (p2p_ep: {})",
+            key,
+            addr_lock.known_addr.p2p_endpoint().green(),
+        );
 
-        match self.enqueue_known_addr(addr).await {
+        match self.enqueue_known_addr(addr.clone()).await {
             Ok(_) => {}
             Err(err) => {
                 return Err(format!(
@@ -227,7 +235,8 @@ impl AddrTable {
             }
         };
 
-        Ok(previous_addr)
+        // Ok(previous_addr)
+        return Ok(addr_map.insert(key.to_string(), addr.clone()));
     }
 
     pub(crate) async fn remove_mapping(
@@ -237,6 +246,26 @@ impl AddrTable {
         let mut addr_map = self.addr_map.write().await;
 
         addr_map.remove(public_key_str)
+    }
+
+    pub async fn get_all_addrs_str(&self) -> Vec<String> {
+        let addr_map = self.addr_map.read().await;
+        let mut addr_vec = Vec::new();
+
+        for (idx, addr) in addr_map.values().enumerate() {
+            match addr.try_read() {
+                Ok(addr) => {
+                    println!("addr table elements [{}] - {}", idx, addr,);
+
+                    addr_vec.push(addr.known_addr.disc_endpoint())
+                }
+                Err(_err) => {
+                    println!("addr table elements [{}] is locked", idx);
+                }
+            }
+        }
+
+        addr_vec
     }
 }
 

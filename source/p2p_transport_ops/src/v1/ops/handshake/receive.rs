@@ -2,13 +2,13 @@ use chrono::Utc;
 use colored::Colorize;
 use futures::SinkExt;
 use logger::tdebug;
-use p2p_discovery::AddrTable;
+use p2p_discovery::{Addr, AddrTable};
 use p2p_identity::Identity;
 use p2p_peer_table::{Peer, PeerStatus, PeerTable};
 use p2p_transport::{Connection, Handshake, Msg, Transport};
 use std::sync::Arc;
 use thiserror::Error;
-use tokio::sync::RwLock;
+use tokio::sync::{OwnedRwLockWriteGuard, RwLock};
 
 #[derive(Error, Debug)]
 pub enum HandshakeRecvError {
@@ -47,7 +47,9 @@ pub struct HandshakeRecvArgs {
     pub handshake_syn: Handshake,
     pub identity: Arc<Identity>,
     pub peer_table: Arc<PeerTable>,
-    pub addr_table: Arc<AddrTable>,
+    pub addr: Arc<RwLock<Addr>>,
+    pub addr_lock: OwnedRwLockWriteGuard<Addr>,
+    // pub addr_table: Arc<AddrTable>,
     // pub addr_map: Arc<RwLock<AddrMap>>,
 }
 
@@ -58,9 +60,10 @@ pub async fn receive_handshake(
     let HandshakeRecvArgs {
         handshake_syn,
         peer_table,
-        addr_table,
         identity,
-        ..
+        // addr_table,
+        addr,
+        addr_lock,
     } = handshake_recv_args;
 
     let Handshake {
@@ -121,20 +124,19 @@ pub async fn receive_handshake(
             shared_secret,
         };
 
-        // addr_table.get_mapped_node(disc_endpoint)
+        let peer = {
+            let p = Peer {
+                transport,
+                p2p_port: src_p2p_port,
+                public_key_str: her_public_key_str.clone(),
+                addr,
+                // addr_guard: None,
+                status: PeerStatus::HandshakeSuccess { at: Utc::now() },
+                peer_slot_guard: slot_guard,
+            };
 
-        // let peer = {
-        //     let p = Peer {
-        //         transport,
-        //         p2p_port: src_p2p_port,
-        //         public_key_str: her_public_key_str.clone(),
-        //         addr_guard: None,
-        //         status: PeerStatus::HandshakeSuccess { at: Utc::now() },
-        //         peer_slot_guard: slot_guard,
-        //     };
-
-        //     Arc::new(RwLock::new(p))
-        // };
+            Arc::new(RwLock::new(p))
+        };
 
         // peer_table.insert_mapping(&her_public_key_str, peer).await;
     }

@@ -681,17 +681,20 @@ mod test {
 
             println!("Test thread waken up");
 
-            let iter = disc_1_clone.new_iter();
+            let iter = disc_1_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
             let mut count = 0;
 
             while count < 5 {
                 println!("getting next address");
 
-                let addr_guard = iter.next().await.unwrap();
+                let addr = iter.next().await.unwrap();
 
                 println!("acquired next address!");
 
-                let addr_lock = addr_guard.addr.read().await;
+                let addr_lock = addr.read().await;
                 let known_addr = &addr_lock.known_addr;
                 let endpoint = known_addr.p2p_endpoint();
 
@@ -773,15 +776,18 @@ mod test {
             println!("Test thread waken up");
 
             println!("client 1");
-            let iter = disc_1_clone.new_iter();
+            let iter = disc_1_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
             let mut count = 0;
 
             while count < 5 {
                 println!("getting next address");
-                let addr_guard = iter.next().await.unwrap();
+                let addr = iter.next().await.unwrap();
                 println!("acquired next address!");
 
-                let addr_lock = addr_guard.addr.read().await;
+                let addr_lock = addr.read().await;
                 let known_addr = &addr_lock.known_addr;
                 let endpoint = known_addr.p2p_endpoint();
 
@@ -792,9 +798,13 @@ mod test {
 
             println!("client 2");
 
-            let iter = disc_2_clone.new_iter();
-            let addr_guard = iter.next().await.unwrap();
-            let addr_lock = addr_guard.addr.read().await;
+            let iter = disc_2_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
+
+            let addr = iter.next().await.unwrap();
+            let addr_lock = addr.read().await;
 
             let known_addr = &addr_lock.known_addr;
             let endpoint = known_addr.p2p_endpoint();
@@ -802,27 +812,39 @@ mod test {
             assert_eq!(endpoint, "127.0.0.1:1");
 
             println!("client 3");
-            let iter = disc_3_clone.new_iter();
-            let addr_guard = iter.next().await.unwrap();
-            let addr_lock = addr_guard.addr.read().await;
+            let iter = disc_3_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
+
+            let addr = iter.next().await.unwrap();
+            let addr_lock = addr.read().await;
             let known_addr = &addr_lock.known_addr;
             let endpoint = known_addr.p2p_endpoint();
             println!("acquired address endpoint : {:?}", endpoint);
             assert_eq!(endpoint, "127.0.0.1:1");
 
             println!("client 4");
-            let iter = disc_4_clone.new_iter();
-            let addr_guard = iter.next().await.unwrap();
-            let addr_lock = addr_guard.addr.read().await;
+            let iter = disc_4_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
+
+            let addr = iter.next().await.unwrap();
+            let addr_lock = addr.read().await;
             let known_addr = &addr_lock.known_addr;
             let endpoint = known_addr.p2p_endpoint();
             println!("acquired address endpoint : {:?}", endpoint);
             assert_eq!(endpoint, "127.0.0.1:1");
 
             println!("client 5");
-            let iter = disc_5_clone.new_iter();
-            let addr_guard = iter.next().await.unwrap();
-            let addr_lock = addr_guard.addr.read().await;
+            let iter = disc_5_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
+
+            let addr = iter.next().await.unwrap();
+            let addr_lock = addr.read().await;
             let known_addr = &addr_lock.known_addr;
             let endpoint = known_addr.p2p_endpoint();
             println!("acquired address endpoint : {:?}", endpoint);
@@ -903,15 +925,19 @@ mod test {
             println!("Test thread waken up");
 
             println!("client 1");
-            let iter = disc_1_clone.new_iter();
+            let iter = disc_1_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
+
             let mut count = 0;
 
             while count < 5 {
                 println!("getting next address");
-                let addr_guard = iter.next().await.unwrap();
+                let addr = iter.next().await.unwrap();
                 println!("acquired next address!");
 
-                let addr_lock = addr_guard.addr.read().await;
+                let addr_lock = addr.read().await;
                 let known_addr = &addr_lock.known_addr;
                 let endpoint = known_addr.p2p_endpoint();
                 println!("acquired address endpoint : {:?}", endpoint);
@@ -920,36 +946,52 @@ mod test {
             }
 
             println!("client 2");
-            let iter = disc_2_clone.new_iter();
-            let addr_guard = iter.next().await.unwrap();
-            let addr_lock = addr_guard.addr.read().await;
+            let iter = disc_2_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
+
+            let addr = iter.next().await.unwrap();
+            let addr_lock = addr.read().await;
             let known_addr = &addr_lock.known_addr;
             let endpoint = known_addr.p2p_endpoint();
             println!("acquired address endpoint : {:?}", endpoint);
             assert_eq!(endpoint, "127.0.0.1:1");
 
             println!("client 3");
-            let iter = disc_3_clone.new_iter();
-            let addr_guard = iter.next().await.unwrap();
-            let addr_lock = addr_guard.addr.read().await;
+            let iter = disc_3_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
+
+            let addr = iter.next().await.unwrap();
+            let addr_lock = addr.read().await;
             let known_addr = &addr_lock.known_addr;
             let endpoint = known_addr.p2p_endpoint();
             println!("acquired address endpoint : {:?}", endpoint);
             assert_eq!(endpoint, "127.0.0.1:1");
 
             println!("client 4");
-            let iter = disc_4_clone.new_iter();
-            let addr_guard = iter.next().await.unwrap();
-            let addr_lock = addr_guard.addr.read().await;
+            let iter = disc_4_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
+
+            let addr = iter.next().await.unwrap();
+            let addr_lock = addr.read().await;
             let known_addr = &addr_lock.known_addr;
             let endpoint = known_addr.p2p_endpoint();
             println!("acquired address endpoint : {:?}", endpoint);
             assert_eq!(endpoint, "127.0.0.1:1");
 
             println!("client 5");
-            let iter = disc_5_clone.new_iter();
-            let addr_guard = iter.next().await.unwrap();
-            let addr_lock = addr_guard.addr.read().await;
+            let iter = disc_5_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
+
+            let addr = iter.next().await.unwrap();
+            let addr_lock = addr.read().await;
             let known_addr = &addr_lock.known_addr;
             let endpoint = known_addr.p2p_endpoint();
             println!("acquired address endpoint : {:?}", endpoint);
@@ -1032,15 +1074,19 @@ mod test {
             println!("Test thread waken up");
 
             println!("client 6");
-            let iter = disc_6_clone.new_iter();
+            let iter = disc_6_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
+
             let mut count = 0;
 
             while count < 4 {
                 println!("getting next address");
-                let addr_guard = iter.next().await.unwrap();
+                let addr = iter.next().await.unwrap();
                 println!("acquired next address");
 
-                let addr_lock = addr_guard.addr.read().await;
+                let addr_lock = addr.read().await;
                 let known_addr = &addr_lock.known_addr;
                 let endpoint = known_addr.p2p_endpoint();
                 println!("acquired address endpoint : {:?}", endpoint);
@@ -1049,15 +1095,18 @@ mod test {
             }
 
             println!("client 7");
-            let iter = disc_7_clone.new_iter();
+            let iter = disc_7_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
 
             count = 0;
             while count < 4 {
                 println!("getting next address");
-                let addr_guard = iter.next().await.unwrap();
+                let addr = iter.next().await.unwrap();
                 println!("acquired next address");
 
-                let addr_lock = addr_guard.addr.read().await;
+                let addr_lock = addr.read().await;
                 let known_addr = &addr_lock.known_addr;
                 let endpoint = known_addr.p2p_endpoint();
                 println!("acquired address endpoint : {:?}", endpoint);
@@ -1066,14 +1115,18 @@ mod test {
             }
 
             println!("client 8");
-            let iter = disc_8_clone.new_iter();
+            let iter = disc_8_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
+
             count = 0;
             while count < 4 {
                 println!("getting next address");
-                let addr_guard = iter.next().await.unwrap();
+                let addr = iter.next().await.unwrap();
                 println!("acquired next address");
 
-                let addr_lock = addr_guard.addr.read().await;
+                let addr_lock = addr.read().await;
                 let known_addr = &addr_lock.known_addr;
                 let endpoint = known_addr.p2p_endpoint();
                 println!("acquired address endpoint : {:?}", endpoint);
@@ -1082,14 +1135,18 @@ mod test {
             }
 
             println!("client 9");
-            let iter = disc_9_clone.new_iter();
+            let iter = disc_9_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
+
             count = 0;
             while count < 4 {
                 println!("getting next address");
-                let addr_guard = iter.next().await.unwrap();
+                let addr = iter.next().await.unwrap();
                 println!("acquired next address");
 
-                let addr_lock = addr_guard.addr.read().await;
+                let addr_lock = addr.read().await;
                 let known_addr = &addr_lock.known_addr;
                 let endpoint = known_addr.p2p_endpoint();
                 println!("acquired address endpoint : {:?}", endpoint);
@@ -1206,15 +1263,18 @@ mod test {
             println!("Test thread waken up");
 
             println!("client 1");
-            let iter = disc_1_clone.new_iter();
+            let iter = disc_1_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
             let mut count = 0;
 
             while count < 5 {
                 println!("getting next address");
-                let addr_guard = iter.next().await.unwrap();
+                let addr = iter.next().await.unwrap();
                 println!("acquired next address!");
 
-                let addr_lock = addr_guard.addr.read().await;
+                let addr_lock = addr.read().await;
                 let known_addr = &addr_lock.known_addr;
                 let endpoint = known_addr.p2p_endpoint();
                 println!("acquired address endpoint : {:?}", endpoint);
@@ -1223,47 +1283,67 @@ mod test {
             }
 
             println!("client 2");
-            let iter = disc_2_clone.new_iter();
-            let addr_guard = iter.next().await.unwrap();
-            let addr_lock = addr_guard.addr.read().await;
+            let iter = disc_2_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
+
+            let addr = iter.next().await.unwrap();
+            let addr_lock = addr.read().await;
             let known_addr = &addr_lock.known_addr;
             let endpoint = known_addr.p2p_endpoint();
             println!("acquired address endpoint : {:?}", endpoint);
 
             println!("client 3");
-            let iter = disc_3_clone.new_iter();
-            let addr_guard = iter.next().await.unwrap();
-            let addr_lock = addr_guard.addr.read().await;
+            let iter = disc_3_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
+
+            let addr = iter.next().await.unwrap();
+            let addr_lock = addr.read().await;
             let known_addr = &addr_lock.known_addr;
             let endpoint = known_addr.p2p_endpoint();
             println!("acquired address endpoint : {:?}", endpoint);
 
             println!("client 4");
-            let iter = disc_4_clone.new_iter();
-            let addr_guard = iter.next().await.unwrap();
-            let addr_lock = addr_guard.addr.read().await;
+            let iter = disc_4_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
+
+            let addr = iter.next().await.unwrap();
+            let addr_lock = addr.read().await;
             let known_addr = &addr_lock.known_addr;
             let endpoint = known_addr.p2p_endpoint();
             println!("acquired address endpoint : {:?}", endpoint);
 
             println!("client 5");
-            let iter = disc_5_clone.new_iter();
-            let addr_guard = iter.next().await.unwrap();
-            let addr_lock = addr_guard.addr.read().await;
+            let iter = disc_5_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
+
+            let addr = iter.next().await.unwrap();
+            let addr_lock = addr.read().await;
             let known_addr = &addr_lock.known_addr;
             let endpoint = known_addr.p2p_endpoint();
             println!("acquired address endpoint : {:?}", endpoint);
 
             println!("client 6");
-            let iter = disc_6_clone.new_iter();
+            let iter = disc_6_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
+
             let mut count = 0;
 
             while count < 4 {
                 println!("getting next address");
-                let addr_guard = iter.next().await.unwrap();
+                let addr = iter.next().await.unwrap();
                 println!("acquired next address");
 
-                let addr_lock = addr_guard.addr.read().await;
+                let addr_lock = addr.read().await;
                 let known_addr = &addr_lock.known_addr;
                 let endpoint = known_addr.p2p_endpoint();
                 println!("acquired address endpoint : {:?}", endpoint);
@@ -1272,15 +1352,19 @@ mod test {
             }
 
             println!("client 7");
-            let iter = disc_7_clone.new_iter();
+            let iter = disc_7_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
+
             let mut count = 0;
 
             while count < 4 {
                 println!("getting next address");
-                let addr_guard = iter.next().await.unwrap();
+                let addr = iter.next().await.unwrap();
                 println!("acquired next address");
 
-                let addr_lock = addr_guard.addr.read().await;
+                let addr_lock = addr.read().await;
                 let known_addr = &addr_lock.known_addr;
                 let endpoint = known_addr.p2p_endpoint();
                 println!("acquired address endpoint : {:?}", endpoint);
@@ -1289,15 +1373,18 @@ mod test {
             }
 
             println!("client 8");
-            let iter = disc_8_clone.new_iter();
+            let iter = disc_8_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
             let mut count = 0;
 
             while count < 4 {
                 println!("getting next address");
-                let addr_guard = iter.next().await.unwrap();
+                let addr = iter.next().await.unwrap();
                 println!("acquired next address");
 
-                let addr_lock = addr_guard.addr.read().await;
+                let addr_lock = addr.read().await;
                 let known_addr = &addr_lock.known_addr;
                 let endpoint = known_addr.p2p_endpoint();
                 println!("acquired address endpoint : {:?}", endpoint);
@@ -1306,15 +1393,18 @@ mod test {
             }
 
             println!("client 9");
-            let iter = disc_9_clone.new_iter();
+            let iter = disc_9_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
             let mut count = 0;
 
             while count < 4 {
                 println!("getting next address");
-                let addr_guard = iter.next().await.unwrap();
+                let addr = iter.next().await.unwrap();
                 println!("acquired next address");
 
-                let addr_lock = addr_guard.addr.read().await;
+                let addr_lock = addr.read().await;
                 let known_addr = &addr_lock.known_addr;
                 let endpoint = known_addr.p2p_endpoint();
                 println!("acquired address endpoint : {:?}", endpoint);
@@ -1323,15 +1413,18 @@ mod test {
             }
 
             println!("client 10");
-            let iter = disc_10_clone.new_iter();
+            let iter = disc_10_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
             let mut count = 0;
 
             while count < 4 {
                 println!("getting next address");
-                let addr_guard = iter.next().await.unwrap();
+                let addr = iter.next().await.unwrap();
                 println!("acquired next address");
 
-                let addr_lock = addr_guard.addr.read().await;
+                let addr_lock = addr.read().await;
                 let known_addr = &addr_lock.known_addr;
                 let endpoint = known_addr.p2p_endpoint();
                 println!("acquired address endpoint : {:?}", endpoint);

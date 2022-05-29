@@ -142,7 +142,8 @@ impl PeerTable {
         for (idx, peer) in peer_map.values().enumerate() {
             match peer.try_read() {
                 Ok(peer_lock) => {
-                    let addr_lock = peer_lock.addr_guard.addr.read().await;
+                    // let addr_lock = peer_lock.addr_guard.addr.read().await;
+                    let addr_lock = peer_lock.addr.read().await;
 
                     peer_vec.push(addr_lock.known_addr.p2p_endpoint().clone());
                 }

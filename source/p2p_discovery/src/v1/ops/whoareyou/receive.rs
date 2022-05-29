@@ -15,8 +15,8 @@ use tokio::sync::RwLock;
 
 #[derive(Error, Debug)]
 pub(crate) enum WhoAreYouRecvError {
-    #[error("Can't take request I sent, addr: {addr}")]
-    MyEndpoint { addr: KnownAddr },
+    #[error("Will not proceed with disc_endpoint being myself")]
+    MyEndpoint,
 
     #[error("Can't send a message through udp socket, err: {err}")]
     MsgSendFail { err: String },
@@ -54,34 +54,11 @@ pub(crate) async fn recv_who_are_you(
         src_public_key_str: her_public_key_str,
     } = way_syn;
 
-    let her_public_key = match crypto::convert_public_key_str_into_public_key(
-        &her_public_key_str,
-    ) {
-        Ok(p) => p,
-        Err(err) => {
-            return Err(WhoAreYouRecvError::PublicKeyCreateFail {
-                public_key_str: her_public_key_str,
-                err: err.to_string(),
-            });
-        }
-    };
-
-    let known_addr = KnownAddr {
-        ip: socket_addr.ip().to_string(),
-        disc_port: her_disc_port,
-        p2p_port: her_p2p_port,
-        sig: her_sig,
-        public_key_str: her_public_key_str,
-        public_key: her_public_key,
-        status: AddrStatus::WhoAreYouSynRecv { at: Utc::now() },
-    };
-
-    let her_public_key_str = known_addr.public_key_str.clone();
-    let her_disc_endpoint = known_addr.disc_endpoint();
-    let her_p2p_endpoint = known_addr.p2p_endpoint();
+    let her_disc_endpoint =
+        utils_net::make_endpoint(&socket_addr.ip().to_string(), her_disc_port);
 
     if check::is_my_endpoint(identity.disc_port, &her_disc_endpoint) {
-        return Err(WhoAreYouRecvError::MyEndpoint { addr: known_addr });
+        return Err(WhoAreYouRecvError::MyEndpoint);
     }
 
     let slot_guard =
@@ -131,6 +108,28 @@ pub(crate) async fn recv_who_are_you(
         });
     }
 
+    let her_public_key = match crypto::convert_public_key_str_into_public_key(
+        &her_public_key_str,
+    ) {
+        Ok(p) => p,
+        Err(err) => {
+            return Err(WhoAreYouRecvError::PublicKeyCreateFail {
+                public_key_str: her_public_key_str,
+                err: err.to_string(),
+            });
+        }
+    };
+
+    let known_addr = KnownAddr {
+        ip: socket_addr.ip().to_string(),
+        disc_port: her_disc_port,
+        p2p_port: her_p2p_port,
+        sig: her_sig,
+        public_key_str: her_public_key_str.clone(),
+        public_key: her_public_key,
+        status: AddrStatus::WhoAreYouSuccess { at: Utc::now() },
+    };
+
     let addr = {
         let a = Addr {
             known_addr,
@@ -140,19 +139,8 @@ pub(crate) async fn recv_who_are_you(
         Arc::new(RwLock::new(a))
     };
 
-    match addr_table
-        .insert_mapping(&her_public_key_str, addr.clone())
-        .await
-    {
-        Ok(_) => {
-            tdebug!(
-                "p2p_discovery",
-                "whoareyou",
-                "Whoareyou Success! p2p_endpoint: {}, disc_endpoint: {}",
-                her_p2p_endpoint.green(),
-                her_disc_endpoint.green(),
-            );
-        }
+    match addr_table.insert_mapping(addr.clone()).await {
+        Ok(_) => {}
         Err(err) => {
             terr!(
                 "p2p_discovery",

@@ -31,8 +31,8 @@ impl HandshakeDialLoop {
             let time_since = SystemTime::now();
 
             match self.addrs_iter.next().await {
-                Ok(addr_guard) => {
-                    let addr = addr_guard.addr.clone();
+                Ok(addr) => {
+                    // let addr = addr_guard.addr.clone();
                     let addr_lock = addr.read().await;
                     let known_addr = &addr_lock.known_addr;
 
@@ -43,8 +43,11 @@ impl HandshakeDialLoop {
                     let is_my_public_key_greater_than_hers =
                         my_public_key_str > her_public_key_str;
 
+                    drop(addr_lock);
+
                     let task = P2PTask::InitiateHandshake {
-                        addr_guard,
+                        // addr_lock,
+                        addr,
                         identity: self.identity.clone(),
                         peer_table: self.peer_table.clone(),
                     };

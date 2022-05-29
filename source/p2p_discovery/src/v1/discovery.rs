@@ -2,15 +2,13 @@ use super::dial_scheduler::{DialScheduler, DialSchedulerArgs};
 use super::server::{Server, ServerArgs};
 use super::task::runtime::DiscTaskRuntime;
 use crate::v1::net::Connection;
-use crate::{Addr, AddrTable, AddrsIterator};
+use crate::AddrTable;
 use colored::Colorize;
 use logger::tinfo;
 use p2p_addr::UnknownAddr;
 use p2p_identity::{Credential, Identity};
-use std::collections::HashMap;
 use std::sync::Arc;
 use task_queue::TaskQueue;
-use tokio::sync::{OwnedRwLockWriteGuard, RwLock};
 
 const DISC_TASK_QUEUE_CAPACITY: usize = 10;
 const ADDR_EXPIRE_DURATION: i64 = 3600;
@@ -147,33 +145,7 @@ impl Discovery {
     }
 
     pub async fn get_status(&self) -> Vec<String> {
-        let table = self.addr_table.clone();
-        let addr_map = table.addr_map.read().await;
-
-        let mut addr_vec = Vec::new();
-
-        for (idx, addr) in addr_map.values().enumerate() {
-            match addr.try_read() {
-                Ok(addr) => {
-                    println!("addr table elements [{}] - {}", idx, addr,);
-
-                    addr_vec.push(addr.known_addr.disc_endpoint())
-
-                    // match &addr.val {
-                    //     AddrVal::Known(k) => {
-                    //         addr_vec.push(k.disc_endpoint());
-                    //     }
-                    //     AddrVal::Unknown(u) => {
-                    //         addr_vec.push(u.disc_endpoint());
-                    //     }
-                    // }
-                }
-                Err(_err) => {
-                    println!("addr table elements [{}] is locked", idx);
-                }
-            }
-        }
-
-        addr_vec
+        let addrs = self.addr_table.get_all_addrs_str().await;
+        addrs
     }
 }

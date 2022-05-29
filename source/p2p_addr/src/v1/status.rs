@@ -11,8 +11,9 @@ pub use k256::{
 pub enum AddrStatus {
     Invalid { err: String },
     Initialized,
-    WhoAreYouInit { at: DateTime<Utc> },
-    WhoAreYouSynRecv { at: DateTime<Utc> },
+    WhoAreYouInProgress,
+    // WhoAreYouInit { at: DateTime<Utc> },
+    // WhoAreYouSynRecv { at: DateTime<Utc> },
     WhoAreYouSuccess { at: DateTime<Utc> },
 }
 

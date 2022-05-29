@@ -1,3 +1,4 @@
+use super::handler::Handler;
 use logger::{tdebug, terr, tinfo, twarn};
 use p2p_discovery::AddrTable;
 use p2p_identity::Identity;
@@ -9,8 +10,6 @@ use tokio::{
     sync::Semaphore,
 };
 
-use super::handler::Handler;
-
 const MAX_CONN_COUNT: usize = 50;
 
 pub(crate) struct Server {
@@ -20,6 +19,8 @@ pub(crate) struct Server {
     peer_table: Arc<PeerTable>,
     addr_table: Arc<AddrTable>,
 }
+
+pub(super) type ServerError = Box<dyn std::error::Error + Send + Sync>;
 
 impl Server {
     pub fn new(
