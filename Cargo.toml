@@ -3,7 +3,6 @@
 members = [
   "source/logger",
   "source/saksaha",
-  "source/saksaha/src/contracts",
   "source/crypto",
   "source/file_system",
   "source/database",
@@ -18,6 +17,9 @@ members = [
   "source/task_queue",
   "source/utils_time",
   "source/utils_net",
+
+  # contracts
+  "source/saksaha/src/contracts/validator",
 
   # internals
   "internals/ci",
