@@ -19,8 +19,8 @@ mod test {
     async fn test_addr_has_been_registered_on_the_map() {
         init();
 
-        let disc_1 = utils::create_client(1).await;
-        let disc_2 = utils::create_client(2).await;
+        let disc_1 = utils::create_disc(1).await;
+        let disc_2 = utils::create_disc(2).await;
 
         let disc_1_clone = disc_1.clone();
         let disc_2_clone = disc_2.clone();
