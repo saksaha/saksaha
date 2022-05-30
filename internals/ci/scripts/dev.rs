@@ -1,26 +1,13 @@
 use super::Script;
 use crate::log;
-use clap::{Arg, ArgMatches, Command};
+use crate::scripts::BoxedError;
+use clap::ArgMatches;
 use std::process::{Command as Cmd, Stdio};
 
 pub(crate) struct Dev;
 
 impl Script for Dev {
-    fn name(&self) -> &'static str {
-        "dev"
-    }
-
-    fn define<'a>(&self, app: Command<'a>) -> Command<'a> {
-        let app = app.subcommand(
-            Command::new(self.name())
-                .arg(Arg::new("SAKSAHA_ARGS").multiple_values(true))
-                .allow_hyphen_values(true),
-        );
-
-        app
-    }
-
-    fn handle_matches(&self, matches: &ArgMatches) -> Option<bool> {
+    fn handle_matches(matches: &ArgMatches) -> Result<(), BoxedError> {
         let program = "cargo";
 
         let args = match matches.values_of("SAKSAHA_ARGS") {
@@ -32,7 +19,7 @@ impl Script for Dev {
 
         log!(
             "Found subcommand, script: {}, executing `{} {}`",
-            self.name(),
+            "dev",
             program,
             args.join(" "),
         );
@@ -51,6 +38,6 @@ impl Script for Dev {
             .output()
             .expect("failed to run");
 
-        return Some(true);
+        Ok(())
     }
 }

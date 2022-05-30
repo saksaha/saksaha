@@ -1,20 +1,13 @@
 use super::Script;
 use crate::log;
+use crate::scripts::BoxedError;
 use clap::{ArgMatches, Command};
 use std::process::Command as Cmd;
 
 pub(crate) struct Clean;
 
 impl Script for Clean {
-    fn name(&self) -> &'static str {
-        "clean"
-    }
-
-    fn define<'a>(&'a self, app: Command<'a>) -> Command<'a> {
-        app.subcommand(Command::new(self.name()))
-    }
-
-    fn handle_matches(&self, matches: &ArgMatches) -> Option<bool> {
+    fn handle_matches(matches: &ArgMatches) -> Result<(), BoxedError> {
         let program = "cargo";
 
         let args = match matches.values_of("args") {
@@ -29,6 +22,6 @@ impl Script for Clean {
 
         cmd.wait_with_output().unwrap();
 
-        return Some(true);
+        Ok(())
     }
 }

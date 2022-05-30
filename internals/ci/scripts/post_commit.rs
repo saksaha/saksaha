@@ -1,20 +1,13 @@
 use super::Script;
 use crate::log;
+use crate::scripts::BoxedError;
 use clap::{ArgMatches, Command};
 use std::process::{Command as Cmd, Stdio};
 
 pub(crate) struct PostCommit;
 
 impl Script for PostCommit {
-    fn name(&self) -> &'static str {
-        "postcommit"
-    }
-
-    fn define<'a>(&self, app: Command<'a>) -> Command<'a> {
-        app.subcommand(Command::new(self.name()))
-    }
-
-    fn handle_matches(&self, matches: &ArgMatches) -> Option<bool> {
+    fn handle_matches(matches: &ArgMatches) -> Result<(), BoxedError> {
         let program = "git";
 
         let args = match matches.values_of("args") {
@@ -43,6 +36,6 @@ impl Script for PostCommit {
             opening, output, closing
         );
 
-        return Some(true);
+        Ok(())
     }
 }
