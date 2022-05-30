@@ -13,7 +13,7 @@ fn init_logger(is_test: bool) {
 
             writeln!(
                 buf,
-                "{} [{}] {}",
+                "{} {} {}",
                 timestamp,
                 style.value(level),
                 record.args(),

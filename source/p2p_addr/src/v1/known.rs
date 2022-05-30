@@ -21,11 +21,11 @@ pub struct KnownAddr {
 
 impl KnownAddr {
     pub fn disc_endpoint(&self) -> String {
-        utils::make_endpoint(&self.ip, self.disc_port)
+        utils_net::make_endpoint(&self.ip, self.disc_port)
     }
 
     pub fn p2p_endpoint(&self) -> String {
-        utils::make_endpoint(&self.ip, self.p2p_port)
+        utils_net::make_endpoint(&self.ip, self.p2p_port)
     }
 }
 

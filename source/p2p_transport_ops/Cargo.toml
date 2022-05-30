@@ -13,7 +13,7 @@ p2p_identity = { path = "../p2p_identity" }
 p2p_frame = { path = "../p2p_frame" }
 p2p_discovery = { path = "../p2p_discovery" }
 p2p_transport = { path = "../p2p_transport" }
-p2p_peer = { path = "../p2p_peer" }
+p2p_peer_table = { path = "../p2p_peer_table" }
 logger = { path = "../logger" }
 serde = { version = "1.0.130", features = ["derive"] }
 serde_json = "1.0.59"
@@ -26,6 +26,7 @@ bytes = "1"
 atoi = "0.4.0"
 k256 = { version = "0.9.6", features = ["ecdh"] }
 chrono = "0.4"
+utils_net = { path = "../utils_net" }
 
 [lib]
 doctest = false # until stable beta is released

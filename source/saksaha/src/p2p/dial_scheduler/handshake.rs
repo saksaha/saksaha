@@ -1,8 +1,8 @@
 use crate::p2p::task::P2PTask;
 use logger::{terr, tinfo};
-use p2p_discovery::{AddrVal, AddrsIterator};
+use p2p_discovery::AddrsIterator;
 use p2p_identity::Identity;
-use p2p_peer::PeerTable;
+use p2p_peer_table::PeerTable;
 use std::{
     sync::Arc,
     time::{Duration, SystemTime},
@@ -15,7 +15,7 @@ const HANDSHAKE_ENQUEUE_DELAY_WHEN_SMALLER_PUBLIC_KEY: u64 = 4;
 pub(crate) struct HandshakeDialLoop {
     pub(crate) p2p_task_queue: Arc<TaskQueue<P2PTask>>,
     pub(crate) p2p_dial_interval: Option<u16>,
-    pub(crate) addrs_iter: Arc<AddrsIterator>,
+    pub(crate) addrs_iter: AddrsIterator,
     pub(crate) identity: Arc<Identity>,
     pub(crate) peer_table: Arc<PeerTable>,
 }
@@ -31,34 +31,27 @@ impl HandshakeDialLoop {
             let time_since = SystemTime::now();
 
             match self.addrs_iter.next().await {
-                Ok(addr_guard) => {
-                    let addr = addr_guard.addr.clone();
+                Ok(addr) => {
+                    // let addr = addr_guard.addr.clone();
                     let addr_lock = addr.read().await;
-
-                    let known_addr = match &addr_lock.val {
-                        AddrVal::Known(k) => k,
-                        AddrVal::Unknown(_) => {
-                            terr!(
-                                "saksaha",
-                                "p2p",
-                                "Addr table has invalid entry (not known), ",
-                            );
-
-                            continue;
-                        }
-                    };
+                    let known_addr = &addr_lock.known_addr;
 
                     let my_public_key_str =
                         &self.identity.credential.public_key_str;
                     let her_public_key_str = &known_addr.public_key_str;
+
                     let is_my_public_key_greater_than_hers =
                         my_public_key_str > her_public_key_str;
 
+                    drop(addr_lock);
+
                     let task = P2PTask::InitiateHandshake {
-                        addr_guard,
+                        // addr_lock,
+                        addr,
                         identity: self.identity.clone(),
                         peer_table: self.peer_table.clone(),
                     };
+
                     let p2p_task_queue = self.p2p_task_queue.clone();
 
                     if is_my_public_key_greater_than_hers {

@@ -1,7 +1,8 @@
-use super::DevConfig;
 use crate::{pconfig::PConfig, system::SystemArgs};
 use logger::{tinfo, twarn};
 use p2p_addr::UnknownAddr;
+
+use super::profiled::ProfiledConfig;
 
 #[derive(Debug)]
 pub(crate) struct Config {
@@ -24,6 +25,7 @@ pub(crate) struct P2PConfig {
     pub(crate) p2p_max_conn_count: Option<u16>,
     pub(crate) p2p_peer_table_capacity: Option<u16>,
     pub(crate) p2p_port: Option<u16>,
+    pub(crate) addr_expire_duration: Option<i64>,
     pub(crate) bootstrap_addrs: Vec<UnknownAddr>,
     pub(crate) secret: String,
     pub(crate) public_key_str: String,
@@ -42,10 +44,10 @@ impl Config {
         app_prefix: String,
         sys_args: &SystemArgs,
         pconfig: PConfig,
-        dev_config: Option<DevConfig>,
+        profiled_config: Option<ProfiledConfig>,
     ) -> Result<Config, String> {
         let bootstrap_addrs = {
-            let mut addrs = match dev_config {
+            let mut addrs = match profiled_config {
                 Some(c) => c.p2p.bootstrap_addrs,
                 None => vec![],
             };
@@ -109,6 +111,7 @@ impl Config {
                 p2p_dial_interval: sys_args.p2p_dial_interval,
                 p2p_port: sys_args.p2p_port,
                 p2p_max_conn_count: sys_args.p2p_max_conn_count,
+                addr_expire_duration: sys_args.addr_expire_duration,
                 secret: pconfig.p2p.secret.clone(),
                 public_key_str: pconfig.p2p.public_key_str.clone(),
                 bootstrap_addrs,

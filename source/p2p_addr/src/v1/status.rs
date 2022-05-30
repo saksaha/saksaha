@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Duration, Local, Utc};
 pub use k256::{
     ecdh::EphemeralSecret,
     ecdsa::{
@@ -11,9 +11,21 @@ pub use k256::{
 pub enum AddrStatus {
     Invalid { err: String },
     Initialized,
-    WhoAreYouInit { at: DateTime<Utc> },
-    WhoAreYouSynRecv { at: DateTime<Utc> },
+    WhoAreYouInProgress,
+    // WhoAreYouInit { at: DateTime<Utc> },
+    // WhoAreYouSynRecv { at: DateTime<Utc> },
     WhoAreYouSuccess { at: DateTime<Utc> },
+}
+
+impl AddrStatus {
+    pub fn is_registered_long_ago(&self, how_long: Duration) -> bool {
+        if let AddrStatus::WhoAreYouSuccess { at } = self {
+            let now = Local::now();
+            return at.signed_duration_since(now) > how_long;
+        }
+        // .signed_duration_since(rhs)
+        return false;
+    }
 }
 
 impl Default for AddrStatus {

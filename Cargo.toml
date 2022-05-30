@@ -8,7 +8,7 @@ members = [
   "source/database",
   "source/proofs",
   "source/p2p_addr",
-  "source/p2p_peer",
+  "source/p2p_peer_table",
   "source/p2p_frame",
   "source/p2p_discovery",
   "source/p2p_identity",

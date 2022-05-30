@@ -5,14 +5,14 @@ use handshake::HandshakeDialLoop;
 use logger::tinfo;
 use p2p_discovery::AddrsIterator;
 use p2p_identity::Identity;
-use p2p_peer::PeerTable;
+use p2p_peer_table::PeerTable;
 use std::sync::Arc;
 use task_queue::TaskQueue;
 
 pub(crate) struct P2PDialSchedulerArgs {
     pub(crate) p2p_dial_interval: Option<u16>,
     pub(crate) p2p_task_queue: Arc<TaskQueue<P2PTask>>,
-    pub(crate) addrs_iter: Arc<AddrsIterator>,
+    pub(crate) addrs_iter: AddrsIterator,
     pub(crate) identity: Arc<Identity>,
     pub(crate) peer_table: Arc<PeerTable>,
 }

@@ -1,5 +1,4 @@
 use super::Machine;
-use p2p_discovery::AddrVal::{Known, Unknown};
 
 impl Machine {
     // pub(crate) async fn get_status(&self) -> Vec<String> {

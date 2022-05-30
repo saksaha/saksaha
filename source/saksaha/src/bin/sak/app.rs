@@ -36,6 +36,16 @@ pub(super) fn create_app<'a>() -> Command<'a> {
                 ),
         )
         .arg(
+            Arg::new("addr-expire-duration") //
+                .long("addr-expire-duration")
+                .takes_value(true)
+                .long_help(
+                    "Duration for how long the successfully discovered \n\
+                    address will remain, (in seconds)
+                    e.g. 3600",
+                ),
+        )
+        .arg(
             Arg::new("p2p-port") //
                 .long("p2p-port")
                 .takes_value(true)
@@ -56,10 +66,7 @@ pub(super) fn create_app<'a>() -> Command<'a> {
                 .takes_value(true)
                 .long_help(
                     "Config profile. This dictates which 'config' to load, \n
-                    Note that you cannot provide 'cfg-profile' and \n
-                    'app-prefix' at the same time, as each 'cfg-profile' has
-                    its own 'app-prefix',
-                    e.g. 'local_1'",
+                    e.g. 'dev_local_1'",
                 ),
         )
         .arg(

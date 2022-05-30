@@ -48,7 +48,7 @@ impl UnknownAddr {
         let (public_key_str, ip, disc_port) = match url.get(6..) {
             Some(u) => match u.split_once('@') {
                 Some((peer_id, endpoint)) => {
-                    let (ip, port) = utils::parse_endpoint(endpoint)?;
+                    let (ip, port) = utils_net::parse_endpoint(endpoint)?;
                     (peer_id.to_string(), ip, port)
                 }
                 None => {
@@ -74,7 +74,7 @@ impl UnknownAddr {
     }
 
     fn new_from_short_url(url: String) -> Result<UnknownAddr, String> {
-        let (ip, disc_port) = utils::parse_endpoint(url.as_str())?;
+        let (ip, disc_port) = utils_net::parse_endpoint(url.as_str())?;
 
         Ok(UnknownAddr {
             ip,
@@ -87,12 +87,12 @@ impl UnknownAddr {
     }
 
     pub fn disc_endpoint(&self) -> String {
-        utils::make_endpoint(&self.ip, self.disc_port)
+        utils_net::make_endpoint(&self.ip, self.disc_port)
     }
 
     pub fn p2p_endpoint(&self) -> Option<String> {
         match self.p2p_port {
-            Some(p) => Some(utils::make_endpoint(&self.ip, p)),
+            Some(p) => Some(utils_net::make_endpoint(&self.ip, p)),
             None => None,
         }
     }

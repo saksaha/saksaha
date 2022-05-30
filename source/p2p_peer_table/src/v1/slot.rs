@@ -1,6 +1,7 @@
-use logger::{terr};
+use logger::terr;
 use std::sync::Arc;
 use tokio::sync::mpsc::UnboundedSender;
+
 pub struct Slot {
     pub idx: usize,
 }
@@ -16,7 +17,7 @@ impl Drop for SlotGuard {
             Ok(_) => (),
             Err(err) => {
                 terr!(
-                    "p2p_peer",
+                    "p2p_peer_table",
                     "slot",
                     "Cannot send the released slot back to the queue,
                     err: {}",

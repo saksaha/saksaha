@@ -3,39 +3,37 @@ use super::{
     slot::{Slot, SlotGuard},
 };
 use crate::AddrsIterator;
+use colored::Colorize;
 use logger::{tdebug, terr};
 use p2p_addr::AddrStatus;
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::{
     mpsc::{self, Receiver, Sender, UnboundedReceiver, UnboundedSender},
-    OwnedRwLockWriteGuard, RwLock,
+    Mutex, OwnedRwLockWriteGuard, RwLock,
 };
 
 // const DISC_TABLE_CAPACITY: usize = 100;
 const DISC_TABLE_CAPACITY: usize = 5;
 
 /// TODO Table shall have Kademlia flavored buckets later on
-pub struct Table {
-    pub addr_map: RwLock<HashMap<String, Arc<RwLock<Addr>>>>,
+pub struct AddrTable {
+    addr_map: Arc<RwLock<HashMap<String, Arc<RwLock<Addr>>>>>,
     slots_tx: Arc<UnboundedSender<Arc<Slot>>>,
     slots_rx: RwLock<UnboundedReceiver<Arc<Slot>>>,
     known_addrs_tx: Arc<Sender<Arc<RwLock<Addr>>>>,
     known_addrs_rx: Arc<RwLock<Receiver<Arc<RwLock<Addr>>>>>,
     addr_recycle_tx: Arc<UnboundedSender<Arc<RwLock<Addr>>>>,
+    addrs_it_mutex: Arc<Mutex<usize>>,
 }
 
-pub(crate) enum AddrSlot {
-    Slot(SlotGuard),
-    Addr(OwnedRwLockWriteGuard<Addr>, Arc<RwLock<Addr>>),
-}
-
-impl Table {
+impl AddrTable {
     pub(crate) async fn init(
         disc_table_capacity: Option<u16>,
-    ) -> Result<Table, String> {
+    ) -> Result<AddrTable, String> {
         let addr_map = {
             let m = HashMap::new();
-            RwLock::new(m)
+
+            Arc::new(RwLock::new(m))
         };
 
         let disc_table_capacity = match disc_table_capacity {
@@ -82,6 +80,7 @@ impl Table {
             known_addrs_tx: known_addrs_tx.clone(),
             addr_recycle_rx,
         };
+
         tokio::spawn(async move {
             match recycle_routine.run().await {
                 Ok(_) => (),
@@ -96,27 +95,32 @@ impl Table {
             };
         });
 
-        let table = Table {
+        let addrs_it_mutex = Arc::new(Mutex::new(0));
+
+        let table = AddrTable {
             addr_map,
             slots_tx,
             slots_rx,
             known_addrs_tx,
             known_addrs_rx,
             addr_recycle_tx,
+            addrs_it_mutex,
         };
 
         Ok(table)
     }
 
-    pub(crate) async fn get_mapped_node(
+    pub async fn get_mapped_addr(
         &self,
-        disc_endpoint: &String,
+        // disc_endpoint: &String,
+        public_key_str: &String,
     ) -> Option<Arc<RwLock<Addr>>> {
         let addr_map = self.addr_map.read().await;
-        addr_map.get(disc_endpoint).map(|n| n.clone())
+        // addr_map.get(disc_endpoint).map(|n| n.clone())
+        addr_map.get(public_key_str).map(|n| n.clone())
     }
 
-    pub(crate) async fn get_mapped_addr_lock(
+    pub async fn get_mapped_addr_lock(
         &self,
         disc_endpoint: &String,
     ) -> Option<(OwnedRwLockWriteGuard<Addr>, Arc<RwLock<Addr>>)> {
@@ -183,30 +187,85 @@ impl Table {
         }
     }
 
-    pub(crate) fn new_iter(&self) -> AddrsIterator {
-        AddrsIterator::init(
+    pub fn new_iter(&self) -> Result<AddrsIterator, String> {
+        let addrs_it_lock = match self.addrs_it_mutex.clone().try_lock_owned() {
+            Ok(l) => l,
+            Err(err) => {
+                return Err(format!(
+                    "Addr iter is already being used by some entity, err: {}",
+                    err,
+                ));
+            }
+        };
+
+        let it = AddrsIterator::init(
             self.addr_recycle_tx.clone(),
             self.known_addrs_rx.clone(),
-        )
+            addrs_it_lock,
+        );
+
+        Ok(it)
     }
 
-    pub async fn insert_mapping(
+    pub(crate) async fn insert_mapping(
         &self,
-        disc_endpoint: &String,
+        // public_key_str: &String,
         addr: Arc<RwLock<Addr>>,
-    ) -> Option<Arc<RwLock<Addr>>> {
+    ) -> Result<Option<Arc<RwLock<Addr>>>, String> {
         let mut addr_map = self.addr_map.write().await;
+        let addr_lock = addr.read().await;
+        let key = &addr_lock.known_addr.public_key_str;
 
-        addr_map.insert(disc_endpoint.clone(), addr)
+        tdebug!(
+            "p2p_discovery",
+            "table",
+            "Insert mapping! key: {}, value: (p2p_ep: {})",
+            key,
+            addr_lock.known_addr.p2p_endpoint().green(),
+        );
+
+        match self.enqueue_known_addr(addr.clone()).await {
+            Ok(_) => {}
+            Err(err) => {
+                return Err(format!(
+                    "Fail to insert mapping. Queue might have been closed, \
+                        err: {}",
+                    err,
+                ));
+            }
+        };
+
+        // Ok(previous_addr)
+        return Ok(addr_map.insert(key.to_string(), addr.clone()));
     }
 
-    pub async fn remove_mapping(
+    pub(crate) async fn remove_mapping(
         &self,
-        disc_endpoint: &String,
+        public_key_str: &String,
     ) -> Option<Arc<RwLock<Addr>>> {
         let mut addr_map = self.addr_map.write().await;
 
-        addr_map.remove(disc_endpoint)
+        addr_map.remove(public_key_str)
+    }
+
+    pub async fn get_all_addrs_str(&self) -> Vec<String> {
+        let addr_map = self.addr_map.read().await;
+        let mut addr_vec = Vec::new();
+
+        for (idx, addr) in addr_map.values().enumerate() {
+            match addr.try_read() {
+                Ok(addr) => {
+                    println!("addr table elements [{}] - {}", idx, addr,);
+
+                    addr_vec.push(addr.known_addr.disc_endpoint())
+                }
+                Err(_err) => {
+                    println!("addr table elements [{}] is locked", idx);
+                }
+            }
+        }
+
+        addr_vec
     }
 }
 
