@@ -2,7 +2,7 @@ use super::{System, SystemArgs};
 use crate::blockchain::Blockchain;
 use crate::blockchain::BlockchainArgs;
 use crate::config::Config;
-use crate::config::DevConfig;
+use crate::config::ProfiledConfig;
 use crate::machine::Machine;
 use crate::p2p::{P2PHost, P2PHostArgs};
 use crate::pconfig::PConfig;
@@ -10,7 +10,7 @@ use crate::rpc::RPCArgs;
 use crate::rpc::RPC;
 use colored::Colorize;
 use logger::{terr, tinfo};
-use p2p_peer::PeerTable;
+use p2p_peer_table::PeerTable;
 use std::sync::Arc;
 
 const APP_PREFIX: &str = "default";
@@ -23,37 +23,22 @@ impl Routine {
 
         let config = {
             let profiled_config = match &sys_args.cfg_profile {
-                Some(profile) => {
-                    if let Some(ap) = &sys_args.app_prefix {
+                Some(profile) => match ProfiledConfig::new(profile) {
+                    Ok(c) => Some(c),
+                    Err(err) => {
                         return Err(format!(
-                            "You cannot provide 'app_prefix' and \
-                            'cfg_profile' at the same time, app_prefix: {}, \
-                            cfg_profile: {}",
-                            ap, profile,
+                            "Could not create dev config, err: {}",
+                            err
                         ));
                     }
-
-                    match DevConfig::new(profile) {
-                        Ok(c) => Some(c),
-                        Err(err) => {
-                            return Err(format!(
-                                "Could not create dev config, err: {}",
-                                err
-                            ));
-                        }
-                    }
-                }
+                },
                 None => None,
             };
 
-            // Order of priority
-            // 1) profiled_config.app_prefix
-            // 2) sys_args.app_prefix
-            // 3) APP_PREFIX (default)
-            let app_prefix = match &profiled_config {
-                Some(dv) => dv.app_prefix.clone(),
-                None => match &sys_args.app_prefix {
-                    Some(ap) => ap.clone(),
+            let app_prefix = match &sys_args.app_prefix {
+                Some(ap) => ap.clone(),
+                None => match &profiled_config {
+                    Some(pc) => pc.app_prefix.clone(),
                     None => APP_PREFIX.to_string(),
                 },
             };
@@ -155,6 +140,7 @@ impl Routine {
 
         let p2p_host = {
             let p2p_host_args = P2PHostArgs {
+                addr_expire_duration: config.p2p.addr_expire_duration,
                 disc_port: config.p2p.disc_port,
                 disc_dial_interval: config.p2p.disc_dial_interval,
                 disc_table_capacity: config.p2p.disc_table_capacity,

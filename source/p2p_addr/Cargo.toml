@@ -12,6 +12,7 @@ chrono = "0.4"
 k256 = { version = "0.9.6", features = ["ecdh"] }
 rand_core = "0.6.3"
 serde = { version = "1.0.130", features = ["derive"] }
+utils_net = { path = "../utils_net" }
 serde_json = "1.0.59"
 rand = "0.8.4"
 

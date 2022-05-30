@@ -13,7 +13,7 @@ database = { path = "../database" }
 file_system = { path = "../file_system" }
 proofs = { path = "../proofs" }
 p2p_addr = { path = "../p2p_addr" }
-p2p_peer = { path = "../p2p_peer" }
+p2p_peer_table = { path = "../p2p_peer_table" }
 p2p_identity = { path = "../p2p_identity" }
 p2p_discovery = { path = "../p2p_discovery" }
 p2p_transport = { path = "../p2p_transport" }

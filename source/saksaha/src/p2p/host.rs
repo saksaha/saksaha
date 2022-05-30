@@ -8,7 +8,7 @@ use logger::tinfo;
 use p2p_addr::UnknownAddr;
 use p2p_discovery::{Discovery, DiscoveryArgs};
 use p2p_identity::{Credential, Identity};
-use p2p_peer::PeerTable;
+use p2p_peer_table::PeerTable;
 use std::sync::Arc;
 use task_queue::TaskQueue;
 use tokio::net::TcpListener;
@@ -25,6 +25,7 @@ pub(crate) struct P2PHost {
 }
 
 pub(crate) struct P2PHostArgs {
+    pub(crate) addr_expire_duration: Option<i64>,
     pub(crate) disc_port: Option<u16>,
     pub(crate) disc_dial_interval: Option<u16>,
     pub(crate) disc_table_capacity: Option<u16>,
@@ -84,6 +85,7 @@ impl P2PHost {
 
         let (p2p_discovery, disc_port) = {
             let disc_args = DiscoveryArgs {
+                addr_expire_duration: p2p_host_args.addr_expire_duration,
                 disc_dial_interval: p2p_host_args.disc_dial_interval,
                 disc_table_capacity: p2p_host_args.disc_table_capacity,
                 disc_task_interval: p2p_host_args.disc_task_interval,
@@ -116,13 +118,14 @@ impl P2PHost {
                 p2p_host_args.p2p_socket,
                 identity.clone(),
                 p2p_host_args.peer_table.clone(),
+                p2p_discovery.addr_table.clone(),
             );
 
             s
         };
 
         let p2p_dial_scheduler = {
-            let addrs_iter = Arc::new(p2p_discovery.new_iter());
+            let addrs_iter = p2p_discovery.addr_table.new_iter()?;
 
             let p2p_dial_schd_args = P2PDialSchedulerArgs {
                 p2p_dial_interval: p2p_host_args.p2p_dial_interval,

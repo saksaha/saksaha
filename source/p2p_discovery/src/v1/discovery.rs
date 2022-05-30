@@ -1,8 +1,8 @@
 use super::dial_scheduler::{DialScheduler, DialSchedulerArgs};
-use super::server::Server;
+use super::server::{Server, ServerArgs};
 use super::task::runtime::DiscTaskRuntime;
 use crate::v1::net::Connection;
-use crate::{AddrVal, AddrsIterator, Table};
+use crate::AddrTable;
 use colored::Colorize;
 use logger::tinfo;
 use p2p_addr::UnknownAddr;
@@ -11,15 +11,17 @@ use std::sync::Arc;
 use task_queue::TaskQueue;
 
 const DISC_TASK_QUEUE_CAPACITY: usize = 10;
+const ADDR_EXPIRE_DURATION: i64 = 3600;
 
 pub struct Discovery {
     server: Server,
     dial_scheduler: DialScheduler,
     task_runtime: DiscTaskRuntime,
-    table: Arc<Table>,
+    pub addr_table: Arc<AddrTable>,
 }
 
 pub struct DiscoveryArgs {
+    pub addr_expire_duration: Option<i64>,
     pub disc_dial_interval: Option<u16>,
     pub disc_table_capacity: Option<u16>,
     pub disc_task_interval: Option<u16>,
@@ -50,6 +52,11 @@ impl Discovery {
             (Arc::new(udp_conn), socket_addr.port())
         };
 
+        let addr_expire_duration = match disc_args.addr_expire_duration {
+            Some(d) => d,
+            None => ADDR_EXPIRE_DURATION,
+        };
+
         let identity = {
             let i = Identity {
                 credential: disc_args.credential,
@@ -60,8 +67,8 @@ impl Discovery {
             Arc::new(i)
         };
 
-        let table = {
-            let t = match Table::init(disc_args.disc_table_capacity).await {
+        let addr_table = {
+            let t = match AddrTable::init(disc_args.disc_table_capacity).await {
                 Ok(t) => t,
                 Err(err) => {
                     return Err(format!("Can't initialize Table, err: {}", err))
@@ -94,8 +101,14 @@ impl Discovery {
         };
 
         let server = {
-            let s =
-                Server::new(udp_conn.clone(), identity.clone(), table.clone());
+            let server_args = ServerArgs {
+                udp_conn: udp_conn.clone(),
+                identity: identity.clone(),
+                addr_table: addr_table.clone(),
+                addr_expire_duration,
+            };
+
+            let s = Server::new(server_args);
 
             s
         };
@@ -105,7 +118,7 @@ impl Discovery {
                 disc_task_queue.clone(),
                 disc_args.disc_task_interval,
                 identity.clone(),
-                table.clone(),
+                addr_table.clone(),
                 udp_conn.clone(),
             );
 
@@ -116,7 +129,7 @@ impl Discovery {
             server,
             task_runtime,
             dial_scheduler,
-            table,
+            addr_table,
         };
 
         Ok((disc, disc_port))
@@ -131,36 +144,8 @@ impl Discovery {
         );
     }
 
-    pub fn new_iter(&self) -> AddrsIterator {
-        self.table.new_iter()
-    }
-
     pub async fn get_status(&self) -> Vec<String> {
-        let table = self.table.clone();
-        let addr_map = table.addr_map.read().await;
-
-        let mut addr_vec = Vec::new();
-
-        for (idx, addr) in addr_map.values().enumerate() {
-            match addr.try_read() {
-                Ok(addr) => {
-                    println!("addr table elements [{}] - {}", idx, addr,);
-
-                    match &addr.val {
-                        AddrVal::Known(k) => {
-                            addr_vec.push(k.disc_endpoint());
-                        }
-                        AddrVal::Unknown(u) => {
-                            addr_vec.push(u.disc_endpoint());
-                        }
-                    }
-                }
-                Err(_err) => {
-                    println!("addr table elements [{}] is locked", idx);
-                }
-            }
-        }
-
-        addr_vec
+        let addrs = self.addr_table.get_all_addrs_str().await;
+        addrs
     }
 }

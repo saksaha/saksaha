@@ -5,11 +5,12 @@ mod test_suite {
         task::{runtime::P2PTaskRuntime, P2PTask},
     };
     use k256::{ecdsa::Signature, PublicKey};
-    use p2p_discovery::{AddrGuard, Discovery, DiscoveryArgs};
+    use p2p_discovery::{Addr, Discovery, DiscoveryArgs};
     use p2p_identity::{Credential, Identity};
-    use p2p_peer::PeerTable;
+    use p2p_peer_table::PeerTable;
     use std::{sync::Arc, time::Duration};
     use task_queue::TaskQueue;
+    use tokio::sync::RwLock;
 
     fn init() {
         let _ = env_logger::builder().is_test(true).try_init();
@@ -21,14 +22,23 @@ mod test_suite {
         src_sig: Signature,
         p2p_port: u16,
         disc_port: u16,
-    ) -> AddrGuard {
-        AddrGuard::new_dummy(
+    ) -> Arc<RwLock<Addr>> {
+        let a = Addr::new_dummy(
             public_key,
             public_key_str,
             src_sig,
-            p2p_port,
             disc_port,
-        )
+            p2p_port,
+        );
+
+        Arc::new(RwLock::new(a))
+        // AddrGuard::new_dummy(
+        //     public_key,
+        //     public_key_str,
+        //     src_sig,
+        //     p2p_port,
+        //     disc_port,
+        // )
     }
 
     async fn create_client(
@@ -84,6 +94,7 @@ mod test_suite {
 
         let p2p_discovery = {
             let disc_args = DiscoveryArgs {
+                addr_expire_duration: None,
                 disc_dial_interval: None,
                 disc_table_capacity: None,
                 disc_task_interval: None,
@@ -117,6 +128,7 @@ mod test_suite {
                 p2p_socket,
                 identity.clone(),
                 p2p_peer_table.clone(),
+                p2p_discovery.addr_table.clone(),
             );
             Arc::new(s)
         };
@@ -151,7 +163,7 @@ mod test_suite {
             )
             .unwrap();
 
-            let addr_guard = get_dummy_handshake_init_args(
+            let addr = get_dummy_handshake_init_args(
                 public_key,
                 identity_1.credential.public_key_str.clone(),
                 identity_1.credential.sig,
@@ -160,7 +172,8 @@ mod test_suite {
             );
 
             let task = P2PTask::InitiateHandshake {
-                addr_guard,
+                // addr_guard,
+                addr,
                 identity: identity_1.clone(),
                 peer_table: peer_table_1.clone(),
             };

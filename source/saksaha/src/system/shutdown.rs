@@ -3,7 +3,7 @@ use logger::{terr, tinfo};
 
 impl System {
     pub(crate) fn shutdown() {
-        let _system = match super::INSTANCE.get() {
+        let _system = match super::system::INSTANCE.get() {
             Some(p) => p,
             None => {
                 terr!(

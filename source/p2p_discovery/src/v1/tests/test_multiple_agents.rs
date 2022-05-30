@@ -8,7 +8,6 @@ mod test {
     use p2p_identity::Credential;
 
     use super::utils;
-    use crate::AddrVal;
     use crate::Discovery;
     use crate::DiscoveryArgs;
     use std::sync::Arc;
@@ -56,7 +55,7 @@ mod test {
             disc_task_interval: None,
             disc_task_queue_capacity: None,
             credential: credential.clone(),
-            // p2p_identity: p2p_identity.clone(),
+            addr_expire_duration: None,
             disc_port: Some(35521),
             p2p_port: 1,
             bootstrap_addrs,
@@ -114,8 +113,8 @@ mod test {
             disc_table_capacity: None,
             disc_task_interval: None,
             disc_task_queue_capacity: None,
+            addr_expire_duration: None,
             credential: credential.clone(),
-            // p2p_identity: p2p_identity.clone(),
             disc_port: Some(35522),
             p2p_port: 1,
             bootstrap_addrs,
@@ -168,7 +167,7 @@ mod test {
             disc_task_interval: None,
             disc_task_queue_capacity: None,
             credential: credential.clone(),
-            // p2p_identity: p2p_identity.clone(),
+            addr_expire_duration: None,
             disc_port: Some(35523),
             p2p_port: 1,
             bootstrap_addrs,
@@ -222,7 +221,7 @@ mod test {
             disc_task_interval: None,
             disc_task_queue_capacity: None,
             credential: credential.clone(),
-            // p2p_identity: p2p_identity.clone(),
+            addr_expire_duration: None,
             disc_port: Some(35524),
             p2p_port: 1,
             bootstrap_addrs,
@@ -275,7 +274,7 @@ mod test {
             disc_table_capacity: None,
             disc_task_interval: None,
             disc_task_queue_capacity: None,
-            // p2p_identity: p2p_identity.clone(),
+            addr_expire_duration: None,
             credential: credential.clone(),
             disc_port: Some(35525),
             p2p_port: 5,
@@ -329,7 +328,7 @@ mod test {
             disc_table_capacity: None,
             disc_task_interval: None,
             disc_task_queue_capacity: None,
-            // p2p_identity: p2p_identity.clone(),
+            addr_expire_duration: None,
             credential: credential.clone(),
             disc_port: Some(35526),
             p2p_port: 6,
@@ -383,7 +382,7 @@ mod test {
             disc_table_capacity: None,
             disc_task_interval: None,
             disc_task_queue_capacity: None,
-            // p2p_identity: p2p_identity.clone(),
+            addr_expire_duration: None,
             credential: credential.clone(),
             disc_port: Some(35527),
             p2p_port: 7,
@@ -432,7 +431,7 @@ mod test {
             disc_table_capacity: None,
             disc_task_interval: None,
             disc_task_queue_capacity: None,
-            // p2p_identity: p2p_identity.clone(),
+            addr_expire_duration: None,
             credential: credential.clone(),
             disc_port: Some(35528),
             p2p_port: 8,
@@ -481,7 +480,7 @@ mod test {
             disc_table_capacity: None,
             disc_task_interval: None,
             disc_task_queue_capacity: None,
-            // p2p_identity: p2p_identity.clone(),
+            addr_expire_duration: None,
             credential: credential.clone(),
             disc_port: Some(35529),
             p2p_port: 9,
@@ -552,7 +551,7 @@ mod test {
             disc_table_capacity: None,
             disc_task_interval: None,
             disc_task_queue_capacity: None,
-            // p2p_identity: p2p_identity.clone(),
+            addr_expire_duration: None,
             credential: credential.clone(),
             disc_port: Some(35530),
             p2p_port: 10,
@@ -612,7 +611,7 @@ mod test {
             disc_table_capacity: None,
             disc_task_interval: None,
             disc_task_queue_capacity: None,
-            // p2p_identity: p2p_identity.clone(),
+            addr_expire_duration: None,
             credential: credential.clone(),
             disc_port: Some(35555),
             p2p_port: 55,
@@ -682,25 +681,23 @@ mod test {
 
             println!("Test thread waken up");
 
-            let iter = disc_1_clone.new_iter();
+            let iter = disc_1_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
             let mut count = 0;
 
             while count < 5 {
                 println!("getting next address");
-                let addr_guard = iter.next().await.unwrap();
+
+                let addr = iter.next().await.unwrap();
+
                 println!("acquired next address!");
 
-                let addr_lock = addr_guard.addr.read().await;
-                match &addr_lock.val {
-                    AddrVal::Known(k) => {
-                        let endpoint = k.p2p_endpoint();
+                let addr_lock = addr.read().await;
+                let known_addr = &addr_lock.known_addr;
+                let endpoint = known_addr.p2p_endpoint();
 
-                        println!("acquired address endpoint : {:?}", endpoint);
-                    }
-                    AddrVal::Unknown(u) => {
-                        panic!("should be known address")
-                    }
-                };
                 count += 1;
             }
 
@@ -779,91 +776,80 @@ mod test {
             println!("Test thread waken up");
 
             println!("client 1");
-            let iter = disc_1_clone.new_iter();
+            let iter = disc_1_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
             let mut count = 0;
 
             while count < 5 {
                 println!("getting next address");
-                let addr_guard = iter.next().await.unwrap();
+                let addr = iter.next().await.unwrap();
                 println!("acquired next address!");
 
-                let addr_lock = addr_guard.addr.read().await;
-                match &addr_lock.val {
-                    AddrVal::Known(k) => {
-                        let endpoint = k.p2p_endpoint();
+                let addr_lock = addr.read().await;
+                let known_addr = &addr_lock.known_addr;
+                let endpoint = known_addr.p2p_endpoint();
 
-                        println!("acquired address endpoint : {:?}", endpoint);
-                    }
-                    AddrVal::Unknown(u) => {
-                        panic!("should be known address");
-                    }
-                };
+                println!("acquired address endpoint : {:?}", endpoint);
+
                 count += 1;
             }
 
             println!("client 2");
-            let iter = disc_2_clone.new_iter();
-            let addr_guard = iter.next().await.unwrap();
-            let addr_lock = addr_guard.addr.read().await;
-            match &addr_lock.val {
-                AddrVal::Known(k) => {
-                    let endpoint = k.p2p_endpoint();
 
-                    println!("acquired address endpoint : {:?}", endpoint);
-                    assert_eq!(endpoint, "127.0.0.1:1");
-                }
-                _ => {
-                    panic!("should be known address");
-                }
-            }
+            let iter = disc_2_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
+
+            let addr = iter.next().await.unwrap();
+            let addr_lock = addr.read().await;
+
+            let known_addr = &addr_lock.known_addr;
+            let endpoint = known_addr.p2p_endpoint();
+            println!("acquired address endpoint : {:?}", endpoint);
+            assert_eq!(endpoint, "127.0.0.1:1");
 
             println!("client 3");
-            let iter = disc_3_clone.new_iter();
-            let addr_guard = iter.next().await.unwrap();
-            let addr_lock = addr_guard.addr.read().await;
-            match &addr_lock.val {
-                AddrVal::Known(k) => {
-                    let endpoint = k.p2p_endpoint();
+            let iter = disc_3_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
 
-                    println!("acquired address endpoint : {:?}", endpoint);
-                    assert_eq!(endpoint, "127.0.0.1:1");
-                }
-                _ => {
-                    panic!("should be known address");
-                }
-            }
+            let addr = iter.next().await.unwrap();
+            let addr_lock = addr.read().await;
+            let known_addr = &addr_lock.known_addr;
+            let endpoint = known_addr.p2p_endpoint();
+            println!("acquired address endpoint : {:?}", endpoint);
+            assert_eq!(endpoint, "127.0.0.1:1");
 
             println!("client 4");
-            let iter = disc_4_clone.new_iter();
-            let addr_guard = iter.next().await.unwrap();
-            let addr_lock = addr_guard.addr.read().await;
-            match &addr_lock.val {
-                AddrVal::Known(k) => {
-                    let endpoint = k.p2p_endpoint();
+            let iter = disc_4_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
 
-                    println!("acquired address endpoint : {:?}", endpoint);
-                    assert_eq!(endpoint, "127.0.0.1:1");
-                }
-                _ => {
-                    panic!("should be known address");
-                }
-            }
+            let addr = iter.next().await.unwrap();
+            let addr_lock = addr.read().await;
+            let known_addr = &addr_lock.known_addr;
+            let endpoint = known_addr.p2p_endpoint();
+            println!("acquired address endpoint : {:?}", endpoint);
+            assert_eq!(endpoint, "127.0.0.1:1");
 
             println!("client 5");
-            let iter = disc_5_clone.new_iter();
-            let addr_guard = iter.next().await.unwrap();
-            let addr_lock = addr_guard.addr.read().await;
-            match &addr_lock.val {
-                AddrVal::Known(k) => {
-                    let endpoint = k.p2p_endpoint();
+            let iter = disc_5_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
 
-                    println!("acquired address endpoint : {:?}", endpoint);
-                    assert_eq!(endpoint, "127.0.0.1:1");
-                }
-                _ => {
-                    panic!("should be known address");
-                }
-            }
+            let addr = iter.next().await.unwrap();
+            let addr_lock = addr.read().await;
+            let known_addr = &addr_lock.known_addr;
+            let endpoint = known_addr.p2p_endpoint();
+            println!("acquired address endpoint : {:?}", endpoint);
+            assert_eq!(endpoint, "127.0.0.1:1");
+
             println!("Test succeeded!");
         });
 
@@ -939,91 +925,78 @@ mod test {
             println!("Test thread waken up");
 
             println!("client 1");
-            let iter = disc_1_clone.new_iter();
+            let iter = disc_1_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
+
             let mut count = 0;
 
             while count < 5 {
                 println!("getting next address");
-                let addr_guard = iter.next().await.unwrap();
+                let addr = iter.next().await.unwrap();
                 println!("acquired next address!");
 
-                let addr_lock = addr_guard.addr.read().await;
-                match &addr_lock.val {
-                    AddrVal::Known(k) => {
-                        let endpoint = k.p2p_endpoint();
+                let addr_lock = addr.read().await;
+                let known_addr = &addr_lock.known_addr;
+                let endpoint = known_addr.p2p_endpoint();
+                println!("acquired address endpoint : {:?}", endpoint);
 
-                        println!("acquired address endpoint : {:?}", endpoint);
-                    }
-                    AddrVal::Unknown(u) => {
-                        panic!("should be known address");
-                    }
-                };
                 count += 1;
             }
 
             println!("client 2");
-            let iter = disc_2_clone.new_iter();
-            let addr_guard = iter.next().await.unwrap();
-            let addr_lock = addr_guard.addr.read().await;
-            match &addr_lock.val {
-                AddrVal::Known(k) => {
-                    let endpoint = k.p2p_endpoint();
+            let iter = disc_2_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
 
-                    println!("acquired address endpoint : {:?}", endpoint);
-                    assert_eq!(endpoint, "127.0.0.1:1");
-                }
-                _ => {
-                    panic!("should be known address");
-                }
-            }
+            let addr = iter.next().await.unwrap();
+            let addr_lock = addr.read().await;
+            let known_addr = &addr_lock.known_addr;
+            let endpoint = known_addr.p2p_endpoint();
+            println!("acquired address endpoint : {:?}", endpoint);
+            assert_eq!(endpoint, "127.0.0.1:1");
 
             println!("client 3");
-            let iter = disc_3_clone.new_iter();
-            let addr_guard = iter.next().await.unwrap();
-            let addr_lock = addr_guard.addr.read().await;
-            match &addr_lock.val {
-                AddrVal::Known(k) => {
-                    let endpoint = k.p2p_endpoint();
+            let iter = disc_3_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
 
-                    println!("acquired address endpoint : {:?}", endpoint);
-                    assert_eq!(endpoint, "127.0.0.1:1");
-                }
-                _ => {
-                    panic!("should be known address");
-                }
-            }
+            let addr = iter.next().await.unwrap();
+            let addr_lock = addr.read().await;
+            let known_addr = &addr_lock.known_addr;
+            let endpoint = known_addr.p2p_endpoint();
+            println!("acquired address endpoint : {:?}", endpoint);
+            assert_eq!(endpoint, "127.0.0.1:1");
 
             println!("client 4");
-            let iter = disc_4_clone.new_iter();
-            let addr_guard = iter.next().await.unwrap();
-            let addr_lock = addr_guard.addr.read().await;
-            match &addr_lock.val {
-                AddrVal::Known(k) => {
-                    let endpoint = k.p2p_endpoint();
+            let iter = disc_4_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
 
-                    println!("acquired address endpoint : {:?}", endpoint);
-                    assert_eq!(endpoint, "127.0.0.1:1");
-                }
-                _ => {
-                    panic!("should be known address");
-                }
-            }
+            let addr = iter.next().await.unwrap();
+            let addr_lock = addr.read().await;
+            let known_addr = &addr_lock.known_addr;
+            let endpoint = known_addr.p2p_endpoint();
+            println!("acquired address endpoint : {:?}", endpoint);
+            assert_eq!(endpoint, "127.0.0.1:1");
 
             println!("client 5");
-            let iter = disc_5_clone.new_iter();
-            let addr_guard = iter.next().await.unwrap();
-            let addr_lock = addr_guard.addr.read().await;
-            match &addr_lock.val {
-                AddrVal::Known(k) => {
-                    let endpoint = k.p2p_endpoint();
+            let iter = disc_5_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
 
-                    println!("acquired address endpoint : {:?}", endpoint);
-                    assert_eq!(endpoint, "127.0.0.1:1");
-                }
-                _ => {
-                    panic!("should be known address");
-                }
-            }
+            let addr = iter.next().await.unwrap();
+            let addr_lock = addr.read().await;
+            let known_addr = &addr_lock.known_addr;
+            let endpoint = known_addr.p2p_endpoint();
+            println!("acquired address endpoint : {:?}", endpoint);
+            assert_eq!(endpoint, "127.0.0.1:1");
+
             println!("Test succeeded!");
         });
 
@@ -1101,92 +1074,83 @@ mod test {
             println!("Test thread waken up");
 
             println!("client 6");
-            let iter = disc_6_clone.new_iter();
+            let iter = disc_6_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
+
             let mut count = 0;
 
             while count < 4 {
                 println!("getting next address");
-                let addr_guard = iter.next().await.unwrap();
+                let addr = iter.next().await.unwrap();
                 println!("acquired next address");
 
-                let addr_lock = addr_guard.addr.read().await;
-                match &addr_lock.val {
-                    AddrVal::Known(k) => {
-                        let endpoint = k.p2p_endpoint();
+                let addr_lock = addr.read().await;
+                let known_addr = &addr_lock.known_addr;
+                let endpoint = known_addr.p2p_endpoint();
+                println!("acquired address endpoint : {:?}", endpoint);
 
-                        println!("acquired address endpoint : {:?}", endpoint);
-                    }
-                    _ => {
-                        panic!("should be known address");
-                    }
-                };
                 count += 1;
             }
 
             println!("client 7");
-            let iter = disc_7_clone.new_iter();
+            let iter = disc_7_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
 
             count = 0;
             while count < 4 {
                 println!("getting next address");
-                let addr_guard = iter.next().await.unwrap();
+                let addr = iter.next().await.unwrap();
                 println!("acquired next address");
 
-                let addr_lock = addr_guard.addr.read().await;
-                match &addr_lock.val {
-                    AddrVal::Known(k) => {
-                        let endpoint = k.p2p_endpoint();
+                let addr_lock = addr.read().await;
+                let known_addr = &addr_lock.known_addr;
+                let endpoint = known_addr.p2p_endpoint();
+                println!("acquired address endpoint : {:?}", endpoint);
 
-                        println!("acquired address endpoint : {:?}", endpoint);
-                    }
-                    _ => {
-                        panic!("should be known address");
-                    }
-                };
                 count += 1;
             }
 
             println!("client 8");
-            let iter = disc_8_clone.new_iter();
+            let iter = disc_8_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
+
             count = 0;
             while count < 4 {
                 println!("getting next address");
-                let addr_guard = iter.next().await.unwrap();
+                let addr = iter.next().await.unwrap();
                 println!("acquired next address");
 
-                let addr_lock = addr_guard.addr.read().await;
-                match &addr_lock.val {
-                    AddrVal::Known(k) => {
-                        let endpoint = k.p2p_endpoint();
+                let addr_lock = addr.read().await;
+                let known_addr = &addr_lock.known_addr;
+                let endpoint = known_addr.p2p_endpoint();
+                println!("acquired address endpoint : {:?}", endpoint);
 
-                        println!("acquired address endpoint : {:?}", endpoint);
-                    }
-                    _ => {
-                        panic!("should be known address");
-                    }
-                };
                 count += 1;
             }
 
             println!("client 9");
-            let iter = disc_9_clone.new_iter();
+            let iter = disc_9_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
+
             count = 0;
             while count < 4 {
                 println!("getting next address");
-                let addr_guard = iter.next().await.unwrap();
+                let addr = iter.next().await.unwrap();
                 println!("acquired next address");
 
-                let addr_lock = addr_guard.addr.read().await;
-                match &addr_lock.val {
-                    AddrVal::Known(k) => {
-                        let endpoint = k.p2p_endpoint();
+                let addr_lock = addr.read().await;
+                let known_addr = &addr_lock.known_addr;
+                let endpoint = known_addr.p2p_endpoint();
+                println!("acquired address endpoint : {:?}", endpoint);
 
-                        println!("acquired address endpoint : {:?}", endpoint);
-                    }
-                    _ => {
-                        panic!("should be known address");
-                    }
-                };
                 count += 1;
             }
 
@@ -1299,204 +1263,172 @@ mod test {
             println!("Test thread waken up");
 
             println!("client 1");
-            let iter = disc_1_clone.new_iter();
+            let iter = disc_1_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
             let mut count = 0;
 
             while count < 5 {
                 println!("getting next address");
-                let addr_guard = iter.next().await.unwrap();
+                let addr = iter.next().await.unwrap();
                 println!("acquired next address!");
 
-                let addr_lock = addr_guard.addr.read().await;
-                match &addr_lock.val {
-                    AddrVal::Known(k) => {
-                        let endpoint = k.p2p_endpoint();
+                let addr_lock = addr.read().await;
+                let known_addr = &addr_lock.known_addr;
+                let endpoint = known_addr.p2p_endpoint();
+                println!("acquired address endpoint : {:?}", endpoint);
 
-                        println!("acquired address endpoint : {:?}", endpoint);
-                    }
-                    AddrVal::Unknown(u) => {
-                        panic!("should be known address");
-                    }
-                };
                 count += 1;
             }
 
             println!("client 2");
-            let iter = disc_2_clone.new_iter();
-            let addr_guard = iter.next().await.unwrap();
-            let addr_lock = addr_guard.addr.read().await;
-            match &addr_lock.val {
-                AddrVal::Known(k) => {
-                    let endpoint = k.p2p_endpoint();
+            let iter = disc_2_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
 
-                    println!("acquired address endpoint : {:?}", endpoint);
-                    assert_eq!(endpoint, "127.0.0.1:1");
-                }
-                _ => {
-                    panic!("should be known address");
-                }
-            }
+            let addr = iter.next().await.unwrap();
+            let addr_lock = addr.read().await;
+            let known_addr = &addr_lock.known_addr;
+            let endpoint = known_addr.p2p_endpoint();
+            println!("acquired address endpoint : {:?}", endpoint);
 
             println!("client 3");
-            let iter = disc_3_clone.new_iter();
-            let addr_guard = iter.next().await.unwrap();
-            let addr_lock = addr_guard.addr.read().await;
-            match &addr_lock.val {
-                AddrVal::Known(k) => {
-                    let endpoint = k.p2p_endpoint();
+            let iter = disc_3_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
 
-                    println!("acquired address endpoint : {:?}", endpoint);
-                    assert_eq!(endpoint, "127.0.0.1:1");
-                }
-                _ => {
-                    panic!("should be known address");
-                }
-            }
+            let addr = iter.next().await.unwrap();
+            let addr_lock = addr.read().await;
+            let known_addr = &addr_lock.known_addr;
+            let endpoint = known_addr.p2p_endpoint();
+            println!("acquired address endpoint : {:?}", endpoint);
 
             println!("client 4");
-            let iter = disc_4_clone.new_iter();
-            let addr_guard = iter.next().await.unwrap();
-            let addr_lock = addr_guard.addr.read().await;
-            match &addr_lock.val {
-                AddrVal::Known(k) => {
-                    let endpoint = k.p2p_endpoint();
+            let iter = disc_4_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
 
-                    println!("acquired address endpoint : {:?}", endpoint);
-                    assert_eq!(endpoint, "127.0.0.1:1");
-                }
-                _ => {
-                    panic!("should be known address");
-                }
-            }
+            let addr = iter.next().await.unwrap();
+            let addr_lock = addr.read().await;
+            let known_addr = &addr_lock.known_addr;
+            let endpoint = known_addr.p2p_endpoint();
+            println!("acquired address endpoint : {:?}", endpoint);
 
             println!("client 5");
-            let iter = disc_5_clone.new_iter();
-            let addr_guard = iter.next().await.unwrap();
-            let addr_lock = addr_guard.addr.read().await;
-            match &addr_lock.val {
-                AddrVal::Known(k) => {
-                    let endpoint = k.p2p_endpoint();
+            let iter = disc_5_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
 
-                    println!("acquired address endpoint : {:?}", endpoint);
-                    assert_eq!(endpoint, "127.0.0.1:1");
-                }
-                _ => {
-                    panic!("should be known address");
-                }
-            }
+            let addr = iter.next().await.unwrap();
+            let addr_lock = addr.read().await;
+            let known_addr = &addr_lock.known_addr;
+            let endpoint = known_addr.p2p_endpoint();
+            println!("acquired address endpoint : {:?}", endpoint);
 
             println!("client 6");
-            let iter = disc_6_clone.new_iter();
+            let iter = disc_6_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
+
             let mut count = 0;
 
             while count < 4 {
                 println!("getting next address");
-                let addr_guard = iter.next().await.unwrap();
+                let addr = iter.next().await.unwrap();
                 println!("acquired next address");
 
-                let addr_lock = addr_guard.addr.read().await;
-                match &addr_lock.val {
-                    AddrVal::Known(k) => {
-                        let endpoint = k.p2p_endpoint();
+                let addr_lock = addr.read().await;
+                let known_addr = &addr_lock.known_addr;
+                let endpoint = known_addr.p2p_endpoint();
+                println!("acquired address endpoint : {:?}", endpoint);
 
-                        println!("acquired address endpoint : {:?}", endpoint);
-                    }
-                    _ => {
-                        panic!("should be known address");
-                    }
-                };
                 count += 1;
             }
 
             println!("client 7");
-            let iter = disc_7_clone.new_iter();
+            let iter = disc_7_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
+
             let mut count = 0;
 
             while count < 4 {
                 println!("getting next address");
-                let addr_guard = iter.next().await.unwrap();
+                let addr = iter.next().await.unwrap();
                 println!("acquired next address");
 
-                let addr_lock = addr_guard.addr.read().await;
-                match &addr_lock.val {
-                    AddrVal::Known(k) => {
-                        let endpoint = k.p2p_endpoint();
+                let addr_lock = addr.read().await;
+                let known_addr = &addr_lock.known_addr;
+                let endpoint = known_addr.p2p_endpoint();
+                println!("acquired address endpoint : {:?}", endpoint);
 
-                        println!("acquired address endpoint : {:?}", endpoint);
-                    }
-                    _ => {
-                        panic!("should be known address");
-                    }
-                };
                 count += 1;
             }
 
             println!("client 8");
-            let iter = disc_8_clone.new_iter();
+            let iter = disc_8_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
             let mut count = 0;
 
             while count < 4 {
                 println!("getting next address");
-                let addr_guard = iter.next().await.unwrap();
+                let addr = iter.next().await.unwrap();
                 println!("acquired next address");
 
-                let addr_lock = addr_guard.addr.read().await;
-                match &addr_lock.val {
-                    AddrVal::Known(k) => {
-                        let endpoint = k.p2p_endpoint();
+                let addr_lock = addr.read().await;
+                let known_addr = &addr_lock.known_addr;
+                let endpoint = known_addr.p2p_endpoint();
+                println!("acquired address endpoint : {:?}", endpoint);
 
-                        println!("acquired address endpoint : {:?}", endpoint);
-                    }
-                    _ => {
-                        panic!("should be known address");
-                    }
-                };
                 count += 1;
             }
 
             println!("client 9");
-            let iter = disc_9_clone.new_iter();
+            let iter = disc_9_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
             let mut count = 0;
 
             while count < 4 {
                 println!("getting next address");
-                let addr_guard = iter.next().await.unwrap();
+                let addr = iter.next().await.unwrap();
                 println!("acquired next address");
 
-                let addr_lock = addr_guard.addr.read().await;
-                match &addr_lock.val {
-                    AddrVal::Known(k) => {
-                        let endpoint = k.p2p_endpoint();
+                let addr_lock = addr.read().await;
+                let known_addr = &addr_lock.known_addr;
+                let endpoint = known_addr.p2p_endpoint();
+                println!("acquired address endpoint : {:?}", endpoint);
 
-                        println!("acquired address endpoint : {:?}", endpoint);
-                    }
-                    _ => {
-                        panic!("should be known address");
-                    }
-                };
                 count += 1;
             }
 
             println!("client 10");
-            let iter = disc_10_clone.new_iter();
+            let iter = disc_10_clone
+                .addr_table
+                .new_iter()
+                .expect("addr iterator should be initialized");
             let mut count = 0;
 
             while count < 4 {
                 println!("getting next address");
-                let addr_guard = iter.next().await.unwrap();
+                let addr = iter.next().await.unwrap();
                 println!("acquired next address");
 
-                let addr_lock = addr_guard.addr.read().await;
-                match &addr_lock.val {
-                    AddrVal::Known(k) => {
-                        let endpoint = k.p2p_endpoint();
+                let addr_lock = addr.read().await;
+                let known_addr = &addr_lock.known_addr;
+                let endpoint = known_addr.p2p_endpoint();
+                println!("acquired address endpoint : {:?}", endpoint);
 
-                        println!("acquired address endpoint : {:?}", endpoint);
-                    }
-                    _ => {
-                        panic!("should be known address");
-                    }
-                };
                 count += 1;
             }
 

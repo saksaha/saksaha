@@ -15,6 +15,7 @@ pub(crate) struct CLIArgs {
     pub(crate) app_prefix: Option<String>,
     pub(crate) rpc_port: Option<u16>,
     pub(crate) p2p_port: Option<u16>,
+    pub(crate) addr_expire_duration: Option<i64>,
     pub(crate) cfg_profile: Option<String>,
     pub(crate) bootstrap_urls: Option<Vec<String>>,
 }
@@ -193,6 +194,19 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
         None => None,
     };
 
+    let addr_expire_duration = match matches.value_of("addr-expire-duration") {
+        Some(d) => match d.parse::<i64>() {
+            Ok(d) => Some(d),
+            Err(err) => {
+                return Err(format!(
+                    "Cannot parse addr expire duration (i64), err: {}",
+                    err,
+                ));
+            }
+        },
+        None => None,
+    };
+
     let app_prefix = match matches.value_of("app-prefix") {
         Some(m) => Some(String::from(m)),
         None => None,
@@ -211,6 +225,7 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
         p2p_dial_interval,
         rpc_port,
         p2p_port,
+        addr_expire_duration,
         cfg_profile,
         bootstrap_urls,
         app_prefix,

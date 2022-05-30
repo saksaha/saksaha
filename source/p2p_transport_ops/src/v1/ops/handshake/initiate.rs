@@ -3,22 +3,25 @@ use futures::SinkExt;
 use futures::StreamExt;
 use logger::{tdebug, twarn};
 use p2p_addr::KnownAddr;
-use p2p_discovery::{Addr, AddrGuard, AddrVal};
+use p2p_discovery::Addr;
 use p2p_identity::Identity;
-use p2p_peer::{Peer, PeerSlot, PeerStatus, PeerTable};
+use p2p_peer_table::SlotGuard;
+use p2p_peer_table::{Peer, PeerStatus, PeerTable};
 use p2p_transport::Handshake;
 use p2p_transport::Msg;
 use p2p_transport::{Connection, Transport};
 use std::sync::Arc;
 use thiserror::Error;
+use tokio::net::TcpStream;
 use tokio::sync::{OwnedRwLockWriteGuard, RwLock};
 
 pub struct HandshakeInitArgs {
     pub peer_table: Arc<PeerTable>,
     pub identity: Arc<Identity>,
-    pub addr_guard: AddrGuard,
-    pub peer_slot: PeerSlot,
-    pub addr_lock: OwnedRwLockWriteGuard<Addr>,
+    pub addr: Arc<RwLock<Addr>>,
+    // pub addr_guard: AddrGuard,
+    // pub peer_slot_guard: SlotGuard,
+    // pub addr_lock: OwnedRwLockWriteGuard<Addr>,
 }
 
 #[derive(Error, Debug)]
@@ -29,10 +32,10 @@ pub enum HandshakeInitError {
     #[error("P2P Port may not be provided")]
     InvalidP2PEndpoint,
 
-    #[error("Cannot send request to myself, addr: {addr}")]
-    MyEndpoint { addr: KnownAddr },
+    #[error("Cannot send request to myself, p2p_endpoint: {p2p_endpoint}")]
+    MyEndpoint { p2p_endpoint: String },
 
-    #[error("Cannot create tcp stream into endpoint, err: {err}")]
+    #[error("Cannot create tcp connection to endpoint, err: {err}")]
     ConnectionFail { err: String },
 
     #[error("Cannot retrieve peer address, err: {err}")]
@@ -59,6 +62,9 @@ pub enum HandshakeInitError {
     )]
     PublicKeyCreateFail { err: String, public_key: String },
 
+    #[error("Peer is already mapped")]
+    PeerAlreadyMapped,
+
     #[error(
         "Peer node is being used by another process (task), \
         public_key: {public_key}, err: {err}"
@@ -77,20 +83,96 @@ pub enum HandshakeInitError {
 
 pub async fn initiate_handshake(
     handshake_init_args: HandshakeInitArgs,
-    mut conn: Connection,
+    // mut conn: Connection,
 ) -> Result<(), HandshakeInitError> {
     let HandshakeInitArgs {
         identity,
-        addr_guard,
+        // addr_guard,
         peer_table,
-        peer_slot,
-        addr_lock,
+        // peer_slot_guard,
+        addr,
+        // mut addr_lock,
     } = handshake_init_args;
 
-    let known_addr = match &addr_lock.val {
-        AddrVal::Known(k) => k,
-        AddrVal::Unknown(_) => {
-            return Err(HandshakeInitError::NotKnownAddr);
+    // let addr = addr_guard.addr.clone();
+
+    let mut addr_lock = addr.clone().write_owned().await;
+    let known_addr = &mut addr_lock.known_addr;
+
+    let peer_slot_guard = match peer_table
+        .get_mapped_peer_lock(&known_addr.public_key_str)
+        .await
+    {
+        Some(_) => {
+            // twarn!(
+            //     "saksaha",
+            //     "p2p",
+            //     "Peer is already mapped, dropping, public_key_str: {}",
+            //     &known_addr.public_key_str,
+            // );
+
+            // let mut addr_status = addr_lock.get_status();
+            // addr_status = AddrStatus::WhoAreYouSuccess
+
+            return Err(HandshakeInitError::PeerAlreadyMapped);
+        }
+        None => match peer_table.get_empty_slot().await {
+            Ok(s) => s,
+            Err(_) => {
+                // terr!(
+                //     "saksaha",
+                //     "p2p",
+                //     "Cannot reserve an empty peer node. Dropping \
+                //             initiate handshake task, err: {}",
+                //     err,
+                // );
+
+                return Err(HandshakeInitError::EmptyNodeNotAvailable);
+            }
+        },
+    };
+
+    let endpoint = known_addr.p2p_endpoint();
+
+    if utils_net::is_my_endpoint(identity.p2p_port, &endpoint) {
+        twarn!(
+            "saksaha",
+            "p2p",
+            "Cannot make a request to myself, abandoning handshake \
+                    init task, endopint: {}",
+            &endpoint
+        );
+
+        return Err(HandshakeInitError::MyEndpoint {
+            p2p_endpoint: endpoint,
+        });
+    }
+
+    let mut conn = match TcpStream::connect(&endpoint).await {
+        Ok(s) => {
+            let c = match Connection::new(s) {
+                Ok(c) => c,
+                Err(err) => {
+                    return Err(HandshakeInitError::ConnectionFail {
+                        err: err.to_string(),
+                    });
+                }
+            };
+
+            tdebug!(
+                "saksaha",
+                "p2p",
+                "(caller) TCP connected to destination, \
+                        peer_addr: {:?}",
+                c.socket_addr,
+            );
+
+            c
+        }
+        Err(err) => {
+            return Err(HandshakeInitError::ConnectionFail {
+                err: err.to_string(),
+            });
         }
     };
 
@@ -146,47 +228,41 @@ pub async fn initiate_handshake(
         }
     };
 
-    let shared_secret =
-        crypto::make_shared_secret(my_secret_key, her_public_key);
+    {
+        let shared_secret =
+            crypto::make_shared_secret(my_secret_key, her_public_key);
 
-    let transport = Transport {
-        conn,
-        shared_secret,
-    };
+        let transport = Transport {
+            conn,
+            shared_secret,
+        };
 
-    match peer_slot {
-        PeerSlot::Slot(s) => {
+        tdebug!(
+            "p2p_trpt_hske",
+            "initiate",
+            "Peer node updated, hs_id: {}, her_public_key: {}, \
+            status: {:?}",
+            &handshake_ack.instance_id,
+            her_public_key_str.clone().green(),
+            known_addr.status,
+        );
+
+        let peer = {
             let p = Peer {
                 p2p_port: handshake_ack.src_p2p_port,
                 public_key_str: her_public_key_str.clone(),
-                addr_guard: Some(addr_guard),
+                // addr_guard,
+                addr,
                 transport,
                 status: PeerStatus::HandshakeInit,
-                __internal_slot_guard: s,
+                peer_slot_guard,
             };
 
-            let peer = Arc::new(RwLock::new(p));
+            Arc::new(RwLock::new(p))
+        };
 
-            peer_table.insert_mapping(&her_public_key_str, peer).await;
-        }
-        PeerSlot::Peer(mut peer) => {
-            peer.p2p_port = handshake_ack.src_p2p_port;
-            peer.public_key_str = her_public_key_str.clone();
-            peer.addr_guard = Some(addr_guard);
-            peer.transport = transport;
-            peer.status = PeerStatus::HandshakeInit;
-        }
-    };
-
-    tdebug!(
-        "p2p_trpt_hske",
-        "initiate",
-        "Peer node updated, hs_id: {}, her_public_key: {}, \
-            status: {:?}",
-        &handshake_ack.instance_id,
-        her_public_key_str.clone().green(),
-        known_addr.status,
-    );
+        peer_table.insert_mapping(&her_public_key_str, peer).await;
+    }
 
     Ok(())
 }

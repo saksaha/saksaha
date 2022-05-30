@@ -1,10 +1,9 @@
 use crate::{Peer, Slot, SlotGuard};
 use logger::{terr, tinfo};
-use p2p_discovery::AddrVal;
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::{
-    mpsc::{self, Receiver, Sender, UnboundedReceiver, UnboundedSender},
-    OwnedRwLockMappedWriteGuard, OwnedRwLockWriteGuard, RwLock,
+    mpsc::{self, UnboundedReceiver, UnboundedSender},
+    OwnedRwLockWriteGuard, RwLock,
 };
 
 // const PEER_TABLE_CAPACITY: usize = 50;
@@ -16,11 +15,6 @@ pub struct PeerTable {
     peer_map: RwLock<HashMap<PublicKey, Arc<RwLock<Peer>>>>,
     slots_rx: RwLock<UnboundedReceiver<Arc<Slot>>>,
     slots_tx: Arc<UnboundedSender<Arc<Slot>>>,
-}
-
-pub enum PeerSlot {
-    Slot(SlotGuard),
-    Peer(OwnedRwLockWriteGuard<Peer>),
 }
 
 impl PeerTable {
@@ -44,7 +38,7 @@ impl PeerTable {
                     Ok(_) => (),
                     Err(err) => {
                         terr!(
-                            "p2p_peer",
+                            "p2p_peer_table",
                             "table",
                             "slots channel has been closed, err: {}",
                             err,
@@ -147,26 +141,12 @@ impl PeerTable {
 
         for (idx, peer) in peer_map.values().enumerate() {
             match peer.try_read() {
-                Ok(peer_lock) => match &peer_lock.addr_guard {
-                    Some(addr_guard) => {
-                        let addr_lock = addr_guard.addr.read().await;
-                        let addr_val = &addr_lock.val;
-                        match addr_val {
-                            AddrVal::Known(k) => {
-                                peer_vec.push(k.p2p_endpoint().clone());
-                            }
-                            AddrVal::Unknown(u) => {
-                                peer_vec.push(
-                                    u.p2p_endpoint().unwrap().clone(), //
-                                );
-                            }
-                        }
-                    }
+                Ok(peer_lock) => {
+                    // let addr_lock = peer_lock.addr_guard.addr.read().await;
+                    let addr_lock = peer_lock.addr.read().await;
 
-                    None => {
-                        println!("error: cannot get addr_guard");
-                    }
-                },
+                    peer_vec.push(addr_lock.known_addr.p2p_endpoint().clone());
+                }
                 Err(_err) => {
                     println!("addr table elements [{}] is locked", idx);
                 }
@@ -175,53 +155,6 @@ impl PeerTable {
 
         peer_vec
     }
-
-    // pub async fn print_all_nodes(&self) -> u16 {
-    //     let peers = self.peers.lock().await;
-
-    //     for (idx, node) in peers.iter().enumerate() {
-    //         if let Ok(node_lock) = node.try_lock() {
-    //             let a = &node_lock.value;
-    //             match a {
-    //                 NodeValue::Valued(p) => {
-    //                     println!(
-    //                         "peer table [{}] - p2p_port: {}",
-    //                         idx, p.transport.p2p_port
-    //                     );
-    //                     return p.transport.p2p_port;
-    //                 }
-    //                 _ => {
-    //                     println!("peer table [{}] - empty", idx);
-    //                 }
-    //             };
-    //         } else {
-    //             println!("peer table [{}] - locked", idx,);
-    //         }
-    //     }
-    //     return 0;
-    // }
-
-    // pub async fn print_all_mapped_nodes(&self) {
-    //     let peers_map = self.peers_map.lock().await;
-
-    //     let len = peers_map.len();
-    //     println!("Peer map length: {}", len);
-
-    //     for (idx, node) in peers_map.values().into_iter().enumerate() {
-    //         if let Ok(node_lock) = node.try_lock() {
-    //             let a = &node_lock.value;
-    //             match a {
-    //                 NodeValue::Valued(p) => {
-    //                     println!(
-    //                         "peer table [{}] - p2p_port: {}",
-    //                         idx, p.transport.p2p_port
-    //                     );
-    //                 }
-    //                 _ => (),
-    //             };
-    //         }
-    //     }
-    // }
 }
 
 // pub struct RecycleRoutine {}
