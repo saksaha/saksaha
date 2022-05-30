@@ -78,6 +78,7 @@ pub(super) mod test_utils {
             disc_task_interval: None,
             disc_task_queue_capacity: None,
             addr_expire_duration: None,
+            addr_monitor_interval: None,
             credential: credential.clone(),
             disc_port: Some(35521),
             p2p_port: 1,
@@ -107,6 +108,7 @@ pub(super) mod test_utils {
         let p2p_host = {
             let p2p_host_args = P2PHostArgs {
                 addr_expire_duration: None,
+                addr_monitor_interval: None,
                 disc_port: None,
                 disc_dial_interval: None,
                 disc_table_capacity: None,

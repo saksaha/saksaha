@@ -3,6 +3,7 @@ use crate::{
     v1::{net::Connection, ops::Msg},
     Addr, AddrTable,
 };
+use chrono::Utc;
 use colored::Colorize;
 use futures::SinkExt;
 use logger::{tdebug, terr};
@@ -131,7 +132,7 @@ pub(crate) async fn handle_who_are_you_ack(
         sig: her_sig,
         public_key_str: her_public_key_str.clone(),
         public_key: her_public_key,
-        status: AddrStatus::WhoAreYouInProgress,
+        status: AddrStatus::WhoAreYouSuccess { at: Utc::now() },
     };
 
     let her_disc_endpoint = known_addr.disc_endpoint();

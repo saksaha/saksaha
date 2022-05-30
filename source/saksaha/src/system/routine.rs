@@ -141,6 +141,7 @@ impl Routine {
         let p2p_host = {
             let p2p_host_args = P2PHostArgs {
                 addr_expire_duration: config.p2p.addr_expire_duration,
+                addr_monitor_interval: config.p2p.addr_monitor_interval,
                 disc_port: config.p2p.disc_port,
                 disc_dial_interval: config.p2p.disc_dial_interval,
                 disc_table_capacity: config.p2p.disc_table_capacity,
