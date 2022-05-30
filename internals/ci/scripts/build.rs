@@ -1,23 +1,13 @@
 use super::Script;
 use crate::log;
-use clap::{Arg, ArgMatches, Command};
+use crate::scripts::BoxedError;
+use clap::ArgMatches;
 use std::process::Command as Cmd;
 
 pub(crate) struct Build;
 
 impl Script for Build {
-    fn name(&self) -> &'static str {
-        "build"
-    }
-
-    fn define<'a>(&'a self, app: Command<'a>) -> Command<'a> {
-        app.subcommand(
-            Command::new("build")
-                .arg(Arg::new("args").multiple_occurrences(true)),
-        )
-    }
-
-    fn handle_matches(&self, matches: &ArgMatches) -> Option<bool> {
+    fn handle_matches(matches: &ArgMatches) -> Result<(), BoxedError> {
         let program = "cargo";
 
         let args = match matches.values_of("args") {
@@ -33,6 +23,6 @@ impl Script for Build {
 
         cmd.wait_with_output().unwrap();
 
-        return Some(true);
+        Ok(())
     }
 }

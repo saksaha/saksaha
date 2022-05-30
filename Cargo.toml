@@ -3,6 +3,7 @@
 members = [
   "source/logger",
   "source/saksaha",
+  "source/saksaha/src/contracts",
   "source/crypto",
   "source/file_system",
   "source/database",

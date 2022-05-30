@@ -1,24 +1,13 @@
 use super::Script;
 use crate::log;
+use crate::scripts::BoxedError;
 use clap::{Arg, ArgMatches, Command};
 use std::process::{Command as Cmd, Stdio};
 
 pub(crate) struct Test;
 
 impl Script for Test {
-    fn name(&self) -> &'static str {
-        "test"
-    }
-
-    fn define<'a>(&self, app: Command<'a>) -> Command<'a> {
-        app.subcommand(
-            Command::new(self.name())
-                .arg(Arg::new("SAKSAHA_ARGS").multiple_values(true))
-                .allow_hyphen_values(true),
-        )
-    }
-
-    fn handle_matches(&self, matches: &ArgMatches) -> Option<bool> {
+    fn handle_matches(matches: &ArgMatches) -> Result<(), BoxedError> {
         let program = "cargo";
 
         let args = match matches.values_of("SAKSAHA_ARGS") {
@@ -39,6 +28,6 @@ impl Script for Test {
             .output()
             .expect("failed to run");
 
-        return Some(true);
+        Ok(())
     }
 }
