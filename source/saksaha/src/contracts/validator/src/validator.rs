@@ -1,12 +1,12 @@
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
-pub struct ValidatorContract3 {
-    f1: Vec<usize>,
+pub struct ValidatorContract {
+    validator: Vec<String>,
 }
 
-impl ValidatorContract3 {
-    pub fn init() {
-        println!("1");
+impl ValidatorContract {
+    pub fn init(validator: Vec<String>) -> ValidatorContract {
+        ValidatorContract { validator }
     }
 }
