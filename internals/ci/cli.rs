@@ -1,6 +1,5 @@
-use super::scripts;
-
 use super::log;
+use super::scripts;
 use clap::Command;
 
 pub(super) fn run_app() -> Result<(), String> {
