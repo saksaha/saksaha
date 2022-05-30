@@ -10,6 +10,7 @@ mod test_suite {
     use p2p_peer_table::PeerTable;
     use std::{sync::Arc, time::Duration};
     use task_queue::TaskQueue;
+    use tokio::sync::RwLock;
 
     fn init() {
         let _ = env_logger::builder().is_test(true).try_init();
@@ -21,8 +22,16 @@ mod test_suite {
         src_sig: Signature,
         p2p_port: u16,
         disc_port: u16,
-    ) -> Addr {
-        Addr::new_dummy(public_key, public_key_str, sig, disc_port, p2p_port)
+    ) -> Arc<RwLock<Addr>> {
+        let a = Addr::new_dummy(
+            public_key,
+            public_key_str,
+            src_sig,
+            disc_port,
+            p2p_port,
+        );
+
+        Arc::new(RwLock::new(a))
         // AddrGuard::new_dummy(
         //     public_key,
         //     public_key_str,
@@ -163,7 +172,8 @@ mod test_suite {
             );
 
             let task = P2PTask::InitiateHandshake {
-                addr_guard,
+                // addr_guard,
+                addr,
                 identity: identity_1.clone(),
                 peer_table: peer_table_1.clone(),
             };

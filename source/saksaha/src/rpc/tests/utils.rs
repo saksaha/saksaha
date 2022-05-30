@@ -8,7 +8,7 @@ pub(super) mod test_utils {
     use p2p_addr::{AddrStatus, UnknownAddr};
     use p2p_discovery::{Discovery, DiscoveryArgs};
     use p2p_identity::Credential;
-    use p2p_peer::PeerTable;
+    use p2p_peer_table::PeerTable;
     use std::net::SocketAddr;
     use std::sync::Arc;
     use tokio::net::TcpListener;

@@ -19,15 +19,12 @@ impl std::fmt::Display for Addr {
 }
 
 pub mod for_test {
-    use std::sync::Arc;
-
-    use crate::Slot;
-
     use super::*;
+    use crate::Slot;
     use chrono::Utc;
     use crypto::Signature;
-    use k256::ecdsa::signature::Signature;
     use p2p_addr::{AddrStatus, KnownAddr};
+    use std::sync::Arc;
     use tokio::sync::mpsc;
 
     impl Addr {
