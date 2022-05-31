@@ -51,6 +51,7 @@ fn main() {
         p2p_port: cli_args.p2p_port,
         rpc_port: cli_args.rpc_port,
         addr_expire_duration: cli_args.addr_expire_duration,
+        addr_monitor_interval: cli_args.addr_monitor_interval,
         bootstrap_urls: cli_args.bootstrap_urls,
         cfg_profile: cli_args.cfg_profile,
         app_prefix: cli_args.app_prefix,

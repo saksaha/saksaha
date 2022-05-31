@@ -2,7 +2,7 @@ use chrono::Utc;
 use colored::Colorize;
 use futures::SinkExt;
 use logger::tdebug;
-use p2p_discovery::{Addr, AddrTable};
+use p2p_discovery::Addr;
 use p2p_identity::Identity;
 use p2p_peer_table::{Peer, PeerStatus, PeerTable};
 use p2p_transport::{Connection, Handshake, Msg, Transport};
@@ -49,8 +49,6 @@ pub struct HandshakeRecvArgs {
     pub peer_table: Arc<PeerTable>,
     pub addr: Arc<RwLock<Addr>>,
     pub addr_lock: OwnedRwLockWriteGuard<Addr>,
-    // pub addr_table: Arc<AddrTable>,
-    // pub addr_map: Arc<RwLock<AddrMap>>,
 }
 
 pub async fn receive_handshake(
@@ -61,9 +59,8 @@ pub async fn receive_handshake(
         handshake_syn,
         peer_table,
         identity,
-        // addr_table,
         addr,
-        addr_lock,
+        addr_lock: _,
     } = handshake_recv_args;
 
     let Handshake {
@@ -130,7 +127,6 @@ pub async fn receive_handshake(
                 p2p_port: src_p2p_port,
                 public_key_str: her_public_key_str.clone(),
                 addr,
-                // addr_guard: None,
                 status: PeerStatus::HandshakeSuccess { at: Utc::now() },
                 peer_slot_guard: slot_guard,
             };
@@ -138,7 +134,7 @@ pub async fn receive_handshake(
             Arc::new(RwLock::new(p))
         };
 
-        // peer_table.insert_mapping(&her_public_key_str, peer).await;
+        peer_table.insert_mapping(&her_public_key_str, peer).await;
     }
 
     tdebug!(
