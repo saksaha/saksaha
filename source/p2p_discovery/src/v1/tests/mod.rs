@@ -25,15 +25,8 @@ mod test {
         let disc_1_clone = disc_1.clone();
         let disc_2_clone = disc_2.clone();
 
-        tokio::spawn(async move {
-            println!("running disc_1");
-            disc_1_clone.run().await;
-        });
-
-        tokio::spawn(async move {
-            println!("running disc_2");
-            disc_2_clone.run().await;
-        });
+        utils::discovery_run(disc_1_clone);
+        utils::discovery_run(disc_2_clone);
 
         println!("Sleeping... 5sec");
         tokio::time::sleep(Duration::from_secs(5)).await;
