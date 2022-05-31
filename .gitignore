@@ -531,3 +531,6 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.toptal.com/developers/gitignore/api/go,vim,osx,java,node,rust,linux,python,windows,intellij,visualstudiocode
+
+build/**
+!build/.gitkeep

@@ -4,10 +4,12 @@ set -e
 
 curr_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
-declare -A extern_bins=(\
-    [clang]="rustc --version"\
-    [rustc]="cargo --version"\
-    [wasm-pack]="wasm-pack --version"
+declare -A extern_bins=(
+    [clang]="clang --version"\
+    [rustc]="rustc --version"\
+    [cargo]="cargo --version"\
+    [wasm2wat]="wasm2wat --version"\
+    [wasm-pack]="wasm-pack --version"\
 );
 
 printf "Saksaha ci starting...\n"
