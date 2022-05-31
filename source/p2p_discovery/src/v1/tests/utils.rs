@@ -11,6 +11,7 @@ lazy_static! {
         let v = vec![
             // dummy
             DiscoveryArgs {
+                addr_monitor_interval: None,
                 disc_dial_interval: None,
                 disc_table_capacity: None,
                 disc_task_interval: None,
@@ -37,6 +38,7 @@ lazy_static! {
             },
             // 1
             DiscoveryArgs {
+                addr_monitor_interval: None,
                 disc_dial_interval: None,
                 disc_table_capacity: None,
                 disc_task_interval: None,
@@ -75,6 +77,7 @@ lazy_static! {
             },
             // 2
             DiscoveryArgs {
+                addr_monitor_interval: None,
                 disc_dial_interval: None,
                 disc_table_capacity: None,
                 disc_task_interval: None,
@@ -113,6 +116,7 @@ lazy_static! {
             },
             // 3
             DiscoveryArgs {
+                addr_monitor_interval: None,
                 disc_dial_interval: None,
                 disc_table_capacity: None,
                 disc_task_interval: None,
@@ -151,6 +155,7 @@ lazy_static! {
             },
             // 4
             DiscoveryArgs {
+                addr_monitor_interval: None,
                 disc_dial_interval: None,
                 disc_table_capacity: None,
                 disc_task_interval: None,
@@ -189,6 +194,7 @@ lazy_static! {
             },
             // 5
             DiscoveryArgs {
+                addr_monitor_interval: None,
                 disc_dial_interval: None,
                 disc_table_capacity: None,
                 disc_task_interval: None,
@@ -227,6 +233,7 @@ lazy_static! {
             },
             // 6
             DiscoveryArgs {
+                addr_monitor_interval: None,
                 disc_dial_interval: None,
                 disc_table_capacity: None,
                 disc_task_interval: None,
@@ -267,6 +274,7 @@ lazy_static! {
             },
             // 7
             DiscoveryArgs {
+                addr_monitor_interval: None,
                 disc_dial_interval: None,
                 disc_table_capacity: None,
                 disc_task_interval: None,
@@ -307,6 +315,7 @@ lazy_static! {
             },
             // 8
             DiscoveryArgs {
+                addr_monitor_interval: None,
                 disc_dial_interval: None,
                 disc_table_capacity: None,
                 disc_task_interval: None,
@@ -345,6 +354,7 @@ lazy_static! {
             },
             // 9
             DiscoveryArgs {
+                addr_monitor_interval: None,
                 disc_dial_interval: None,
                 disc_table_capacity: None,
                 disc_task_interval: None,
@@ -383,6 +393,7 @@ lazy_static! {
             },
             // 10
             DiscoveryArgs {
+                addr_monitor_interval: None,
                 disc_dial_interval: None,
                 disc_table_capacity: None,
                 disc_task_interval: None,
@@ -438,6 +449,7 @@ lazy_static! {
 
         v
     };
+
 }
 
 pub(super) fn init() {

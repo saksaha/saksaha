@@ -33,8 +33,8 @@ impl std::fmt::Display for KnownAddr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "ip: {}, disc_port: {}, p2p_port: {:?}",
-            self.ip, self.disc_port, self.p2p_port,
+            "ip: {}, disc_port: {}, p2p_port: {:?}, status: {:?}",
+            self.ip, self.disc_port, self.p2p_port, self.status,
         )
     }
 }

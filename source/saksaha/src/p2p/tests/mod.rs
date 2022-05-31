@@ -95,6 +95,7 @@ mod test_suite {
         let p2p_discovery = {
             let disc_args = DiscoveryArgs {
                 addr_expire_duration: None,
+                addr_monitor_interval: None,
                 disc_dial_interval: None,
                 disc_table_capacity: None,
                 disc_task_interval: None,

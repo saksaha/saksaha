@@ -46,6 +46,16 @@ pub(super) fn create_app<'a>() -> Command<'a> {
                 ),
         )
         .arg(
+            Arg::new("addr-monitor-interval") //
+                .long("addr-monitor-interval")
+                .takes_value(true)
+                .long_help(
+                    "Interval for how long the time for checking \n\
+                    the addr map (in seconds)
+                    e.g. 1",
+                ),
+        )
+        .arg(
             Arg::new("p2p-port") //
                 .long("p2p-port")
                 .takes_value(true)

@@ -17,7 +17,7 @@ const DISC_TABLE_CAPACITY: usize = 5;
 
 /// TODO Table shall have Kademlia flavored buckets later on
 pub struct AddrTable {
-    addr_map: Arc<RwLock<HashMap<String, Arc<RwLock<Addr>>>>>,
+    pub(crate) addr_map: Arc<RwLock<HashMap<String, Arc<RwLock<Addr>>>>>,
     slots_tx: Arc<UnboundedSender<Arc<Slot>>>,
     slots_rx: RwLock<UnboundedReceiver<Arc<Slot>>>,
     known_addrs_tx: Arc<Sender<Arc<RwLock<Addr>>>>,
@@ -239,14 +239,14 @@ impl AddrTable {
         return Ok(addr_map.insert(key.to_string(), addr.clone()));
     }
 
-    pub(crate) async fn remove_mapping(
-        &self,
-        public_key_str: &String,
-    ) -> Option<Arc<RwLock<Addr>>> {
-        let mut addr_map = self.addr_map.write().await;
+    // pub(crate) async fn remove_mapping(
+    //     &self,
+    //     public_key_str: &String,
+    // ) -> Option<Arc<RwLock<Addr>>> {
+    //     let mut addr_map = self.addr_map.write().await;
 
-        addr_map.remove(public_key_str)
-    }
+    //     addr_map.remove(public_key_str)
+    // }
 
     pub async fn get_all_addrs_str(&self) -> Vec<String> {
         let addr_map = self.addr_map.read().await;

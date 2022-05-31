@@ -1,12 +1,10 @@
+use super::handler::Handler;
 use crate::{v1::net::Connection, AddrTable};
-use chrono::Duration;
 use futures::StreamExt;
 use logger::{terr, tinfo, twarn};
 use p2p_identity::Identity;
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 use tokio::sync::Semaphore;
-
-use super::handler::Handler;
 
 const MAX_CONN_COUNT: usize = 50;
 
@@ -22,7 +20,7 @@ pub(crate) struct ServerArgs {
     pub(crate) udp_conn: Arc<Connection>,
     pub(crate) identity: Arc<Identity>,
     pub(crate) addr_table: Arc<AddrTable>,
-    pub(crate) addr_expire_duration: i64,
+    pub(crate) addr_expire_duration: u64,
 }
 
 impl Server {
@@ -30,7 +28,7 @@ impl Server {
         let conn_semaphore = Arc::new(Semaphore::new(MAX_CONN_COUNT));
 
         let addr_expire_duration =
-            Duration::seconds(server_args.addr_expire_duration);
+            Duration::from_secs(server_args.addr_expire_duration);
 
         Server {
             identity: server_args.identity,

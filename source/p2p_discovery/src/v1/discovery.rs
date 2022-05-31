@@ -1,3 +1,4 @@
+use super::addr_monitor_routine::AddrMonitorRoutine;
 use super::dial_scheduler::{DialScheduler, DialSchedulerArgs};
 use super::server::{Server, ServerArgs};
 use super::task::runtime::DiscTaskRuntime;
@@ -8,12 +9,15 @@ use logger::tinfo;
 use p2p_addr::UnknownAddr;
 use p2p_identity::{Credential, Identity};
 use std::sync::Arc;
+use std::time::Duration;
 use task_queue::TaskQueue;
 
 const DISC_TASK_QUEUE_CAPACITY: usize = 10;
-const ADDR_EXPIRE_DURATION: i64 = 3600;
+const ADDR_EXPIRE_DURATION: u64 = 3600;
+const ADDR_MONITOR_INTERVAL: u64 = 1000;
 
 pub struct Discovery {
+    addr_monitor_routine: AddrMonitorRoutine,
     server: Server,
     dial_scheduler: DialScheduler,
     task_runtime: DiscTaskRuntime,
@@ -22,7 +26,8 @@ pub struct Discovery {
 
 #[derive(Clone)]
 pub struct DiscoveryArgs {
-    pub addr_expire_duration: Option<i64>,
+    pub addr_expire_duration: Option<u64>,
+    pub addr_monitor_interval: Option<u64>,
     pub disc_dial_interval: Option<u16>,
     pub disc_table_capacity: Option<u16>,
     pub disc_task_interval: Option<u16>,
@@ -56,6 +61,11 @@ impl Discovery {
         let addr_expire_duration = match disc_args.addr_expire_duration {
             Some(d) => d,
             None => ADDR_EXPIRE_DURATION,
+        };
+
+        let addr_monitor_interval = match disc_args.addr_monitor_interval {
+            Some(d) => Duration::from_millis(d),
+            None => Duration::from_millis(ADDR_MONITOR_INTERVAL),
         };
 
         let identity = {
@@ -114,6 +124,15 @@ impl Discovery {
             s
         };
 
+        let addr_monitor_routine = {
+            let r = AddrMonitorRoutine {
+                addr_monitor_interval,
+                addr_table: addr_table.clone(),
+            };
+
+            r
+        };
+
         let task_runtime = {
             let h = DiscTaskRuntime::new(
                 disc_task_queue.clone(),
@@ -131,6 +150,7 @@ impl Discovery {
             task_runtime,
             dial_scheduler,
             addr_table,
+            addr_monitor_routine,
         };
 
         Ok((disc, disc_port))
@@ -142,6 +162,7 @@ impl Discovery {
             self.server.run(),
             self.task_runtime.run(),
             self.dial_scheduler.run(),
+            self.addr_monitor_routine.run(),
         );
     }
 
