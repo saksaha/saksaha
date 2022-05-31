@@ -1,4 +1,4 @@
-use super::BoxedError;
+use crate::scripts::BoxedError;
 use clap::ArgMatches;
 
 pub(crate) trait Script {

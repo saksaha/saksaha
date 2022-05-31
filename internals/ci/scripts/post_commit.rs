@@ -1,6 +1,5 @@
-use super::Script;
-use crate::log;
 use crate::scripts::BoxedError;
+use crate::{log, script::Script};
 use clap::{ArgMatches, Command};
 use std::process::{Command as Cmd, Stdio};
 

@@ -1,7 +1,7 @@
 use super::log;
+use crate::script::Script;
 use crate::scripts;
 use crate::scripts::BoxedError;
-use crate::scripts::Script;
 use clap::Arg;
 use clap::Command;
 

@@ -1,7 +1,6 @@
-use super::Script;
-use crate::log;
 use crate::scripts::BoxedError;
-use clap::{ArgMatches, Command};
+use crate::{log, script::Script};
+use clap::ArgMatches;
 use std::process::{Command as Cmd, Stdio};
 
 pub(crate) struct Run;
