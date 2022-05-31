@@ -1,6 +1,6 @@
-use super::Script;
-use crate::log;
-use clap::{ArgMatches, Command};
+use crate::scripts::BoxedError;
+use crate::{log, script::Script};
+use clap::ArgMatches;
 use std::{
     fs,
     io::{ErrorKind, Write},
@@ -12,20 +12,13 @@ use std::{
 pub(crate) struct Expand;
 
 impl Script for Expand {
-    fn name(&self) -> &'static str {
-        "expand"
-    }
-
-    fn define<'a>(&self, app: Command<'a>) -> Command<'a> {
-        app.subcommand(Command::new(self.name()))
-    }
-
-    fn handle_matches(&self, _matches: &ArgMatches) -> Option<bool> {
+    fn handle_matches(matches: &ArgMatches) -> Result<(), BoxedError> {
         let dest = PathBuf::from_str(r"target/expand/debug")
             .expect("destination path");
 
         expand(dest);
-        return Some(true);
+
+        Ok(())
     }
 }
 

@@ -4,32 +4,25 @@ set -e
 
 curr_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
-if command -v rustc &> /dev/null
-then
-    rustc_version=$(rustc --version)
-    printf "Found rustc, version: %s\n" "$rustc_version"
-else
-    printf "Rustc is not installed, exiting the program\n"
-    exit 1
-fi
+declare -A extern_bins=(\
+    [clang]="rustc --version"\
+    [rustc]="cargo --version"\
+    [wasm-pack]="wasm-pack --version"
+);
 
-if command -v cargo &> /dev/null
-then
-    cargo_version=$(cargo --version)
-    printf "Found cargo, version: %s\n" "$cargo_version"
-else
-    printf "Cargo is not installed, exiting the program\n"
-    exit 1
-fi
+printf "Saksaha ci starting...\n"
 
-if command -v clang &> /dev/null
-then
-    clang_version=$(clang --version)
-    printf "Found clang, version: %s\n" "$clang_version"
-else
-    printf "Clang is not installed, exiting the program\n"
-    exit 1
-fi
+for key in "${!extern_bins[@]}";
+do
+    if command -v $key &> /dev/null
+    then
+        version=$(${extern_bins[$key]});
+        printf "Found %s, version: %s\n" $key "$version"
+    else
+        printf "$(key) is not installed, exiting the program\n"
+        exit 1
+    fi
+done
 
 ci_cargo="$curr_dir/internals/ci/Cargo.toml"
 PROJECT_ROOT=$curr_dir cargo run --manifest-path=$ci_cargo -- "$@"
