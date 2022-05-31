@@ -20,6 +20,7 @@ pub struct Discovery {
     pub addr_table: Arc<AddrTable>,
 }
 
+#[derive(Clone)]
 pub struct DiscoveryArgs {
     pub addr_expire_duration: Option<i64>,
     pub disc_dial_interval: Option<u16>,
