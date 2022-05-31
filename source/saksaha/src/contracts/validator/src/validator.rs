@@ -1,12 +1,19 @@
+use contract::Storage;
+use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
-#[wasm_bindgen]
-pub struct ValidatorContract {
-    validator: Vec<String>,
+#[derive(Serialize, Deserialize)]
+pub struct State {
+    pub validators: Vec<String>,
 }
 
-impl ValidatorContract {
-    pub fn init(validator: Vec<String>) -> ValidatorContract {
-        ValidatorContract { validator }
-    }
+#[wasm_bindgen]
+pub fn init(storage: Storage) {
+    let state = State {
+        validators: vec!["person_1".into(), "person_2".into()],
+    };
+
+    storage.set_state(serde_json::to_string(&state).unwrap());
 }
+
+pub fn query() {}

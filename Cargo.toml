@@ -17,6 +17,7 @@ members = [
   "source/task_queue",
   "source/utils_time",
   "source/utils_net",
+  "source/contract",
 
   # contracts
   "source/saksaha/src/contracts/validator",
