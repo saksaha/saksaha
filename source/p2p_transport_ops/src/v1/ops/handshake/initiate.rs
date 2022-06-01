@@ -18,11 +18,7 @@ use tokio::sync::{OwnedRwLockWriteGuard, RwLock};
 pub struct HandshakeInitArgs {
     pub peer_table: Arc<PeerTable>,
     pub identity: Arc<Identity>,
-    // pub addr: Arc<RwLock<Addr>>,
     pub addr: Arc<Addr>,
-    // pub addr_guard: AddrGuard,
-    // pub peer_slot_guard: SlotGuard,
-    // pub addr_lock: OwnedRwLockWriteGuard<Addr>,
 }
 
 #[derive(Error, Debug)]

@@ -12,8 +12,6 @@ pub enum AddrStatus {
     Invalid { err: String },
     Initialized,
     WhoAreYouInProgress,
-    // WhoAreYouInit { at: DateTime<Utc> },
-    // WhoAreYouSynRecv { at: DateTime<Utc> },
     WhoAreYouSuccess { at: DateTime<Utc> },
 }
 
@@ -23,7 +21,7 @@ impl AddrStatus {
             let now = Local::now();
             return at.signed_duration_since(now) > how_long;
         }
-        // .signed_duration_since(rhs)
+
         return false;
     }
 }
