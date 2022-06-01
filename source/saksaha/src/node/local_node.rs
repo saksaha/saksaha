@@ -44,17 +44,18 @@ async fn run_node_routine(peer_node: PeerNode, machine: Arc<Machine>) {
     // let mut peer_lock = peer.write().await;
     // let conn = &mut peer_lock.transport.conn;
 
-    let conn = &peer.transport.conn;
+    let mut conn = peer.transport.conn.write().await;
 
     let mut interval = tokio::time::interval(Duration::from_secs(3));
 
     tokio::select! {
         _ = interval.tick() => {
             println!("power");
+            conn;
         },
-        // msg = conn.socket_rx.next() => {
-        //     // conn;
-        // }
+        msg = conn.socket_rx.next() => {
+            conn;
+        }
     }
     println!("poawerpowe");
 

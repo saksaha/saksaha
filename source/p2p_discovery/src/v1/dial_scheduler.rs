@@ -6,15 +6,15 @@ use task_queue::TaskQueue;
 
 const DISC_DIAL_INTERVAL: u64 = 2000;
 
+pub(crate) struct DialScheduler {
+    disc_task_queue: Arc<TaskQueue<DiscoveryTask>>,
+    bootstrap_addrs: Vec<UnknownAddr>,
+}
+
 pub(crate) struct DialSchedulerArgs {
     pub(crate) disc_dial_interval: Option<u16>,
     pub(crate) bootstrap_addrs: Vec<UnknownAddr>,
     pub(crate) disc_task_queue: Arc<TaskQueue<DiscoveryTask>>,
-}
-
-pub(crate) struct DialScheduler {
-    disc_task_queue: Arc<TaskQueue<DiscoveryTask>>,
-    bootstrap_addrs: Vec<UnknownAddr>,
 }
 
 impl DialScheduler {

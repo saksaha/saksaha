@@ -1,5 +1,5 @@
-use super::node::Node;
 use super::server::RPCServer;
+use super::sys_handle::SystemHandle;
 use crate::machine::Machine;
 use crate::p2p::P2PMonitor;
 use std::net::SocketAddr;
@@ -17,17 +17,18 @@ pub(crate) struct RPCArgs {
 
 impl RPC {
     pub(crate) fn init(rpc_args: RPCArgs) -> Result<RPC, String> {
-        let node = {
-            let n = Node {
+        let system_handle = {
+            let h = SystemHandle {
                 machine: rpc_args.machine,
                 p2p_monitor: rpc_args.p2p_monitor,
             };
 
-            Arc::new(n)
+            h
+            // Arc::new(h)
         };
 
         let rpc_server = {
-            let s = RPCServer::init(node)?;
+            let s = RPCServer::init(system_handle)?;
 
             Arc::new(s)
         };

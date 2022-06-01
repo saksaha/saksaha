@@ -27,7 +27,6 @@ impl Connection {
             let f = Framed::new(socket, p2p_codec);
             let (tx, rx) = f.split();
 
-            // (Arc::new(RwLock::new(tx)), Arc::new(RwLock::new(rx)))
             (tx, rx)
         };
 

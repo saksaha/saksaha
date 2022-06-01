@@ -26,7 +26,7 @@ impl AddrMonitorRoutine {
             for (idx, addr) in addrs.iter().enumerate() {
                 tdebug!(
                     "p2p_discovery",
-                    "addr_mnt_rout",
+                    "monitor",
                     "addr status [{}] - {}",
                     idx,
                     addr.known_addr,

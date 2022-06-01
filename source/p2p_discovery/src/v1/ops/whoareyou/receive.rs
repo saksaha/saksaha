@@ -5,7 +5,7 @@ use crate::{
 };
 use chrono::Utc;
 use futures::sink::SinkExt;
-use logger::{tdebug, terr};
+use logger::terr;
 use p2p_addr::{AddrStatus, KnownAddr};
 use p2p_identity::Identity;
 use std::{net::SocketAddr, sync::Arc};

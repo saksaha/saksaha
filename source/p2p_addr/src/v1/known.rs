@@ -32,10 +32,15 @@ impl KnownAddr {
 
 impl std::fmt::Display for KnownAddr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let addr_status = match self.status.try_read() {
+            Ok(s) => format!("{:?}", s),
+            Err(_) => "is being used".to_string(),
+        };
+
         write!(
             f,
-            "ip: {}, disc_port: {}, p2p_port: {:?}, status: {:?}",
-            self.ip, self.disc_port, self.p2p_port, self.status,
+            "ip: {}, disc_port: {}, p2p_port: {:?}, status: {}",
+            self.ip, self.disc_port, self.p2p_port, addr_status,
         )
     }
 }

@@ -1,10 +1,9 @@
-use super::{check, WhoAreYou, WhoAreYouRecvError};
+use super::{check, WhoAreYou};
 use crate::{
     v1::{net::Connection, ops::Msg},
     Addr, AddrTable,
 };
 use chrono::Utc;
-use colored::Colorize;
 use futures::SinkExt;
 use logger::{tdebug, terr};
 use p2p_addr::{AddrStatus, KnownAddr, UnknownAddr};

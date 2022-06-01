@@ -236,8 +236,7 @@ impl Routine {
                     }
                 }
             },
-            _ = system_thread => {
-            }
+            _ = system_thread => {}
         );
 
         tinfo!(
