@@ -1,15 +1,9 @@
 use super::SlotGuard;
-use p2p_addr::{AddrStatus, KnownAddr};
+use p2p_addr::KnownAddr;
 
 pub struct Addr {
     pub known_addr: KnownAddr,
-    pub(crate) addr_slot_guard: SlotGuard,
-}
-
-impl Addr {
-    // pub async fn get_status(&self) -> &AddrStatus {
-    //     let addr_status_lock = self.known_addr.status.read().await;
-    // }
+    pub(crate) _addr_slot_guard: SlotGuard,
 }
 
 impl std::fmt::Display for Addr {
@@ -49,8 +43,8 @@ pub mod for_test {
                     }),
                     public_key,
                 },
-                addr_slot_guard: SlotGuard {
-                    slot: Arc::new(Slot { _idx: 0 }),
+                _addr_slot_guard: SlotGuard {
+                    _slot: Arc::new(Slot { _idx: 0 }),
                     slots_tx: Arc::new(slots_tx),
                 },
             };

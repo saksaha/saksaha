@@ -11,7 +11,6 @@ use p2p_addr::AddrStatus;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use tokio::sync::{mpsc::Receiver, OwnedMutexGuard};
-use tokio::sync::{mpsc::UnboundedSender, OwnedRwLockWriteGuard};
 
 pub struct AddrsIterator {
     known_addrs_rx: Arc<RwLock<Receiver<Arc<Addr>>>>,
@@ -36,7 +35,6 @@ impl AddrsIterator {
         loop {
             match known_addrs_rx_lock.recv().await {
                 Some(addr) => {
-                    // let addr = a.clone();
                     let addr_status_lock = addr.known_addr.status.read().await;
 
                     match *addr_status_lock {

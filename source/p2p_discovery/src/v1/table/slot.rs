@@ -6,6 +6,6 @@ pub(crate) struct Slot {
 }
 
 pub(crate) struct SlotGuard {
-    pub(crate) slot: Arc<Slot>,
+    pub(crate) _slot: Arc<Slot>,
     pub(crate) slots_tx: Arc<UnboundedSender<Arc<Slot>>>,
 }

@@ -5,11 +5,10 @@ use super::{
 use crate::AddrsIterator;
 use colored::Colorize;
 use logger::{tdebug, terr};
-use p2p_addr::AddrStatus;
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::{
     mpsc::{self, Receiver, Sender, UnboundedReceiver, UnboundedSender},
-    Mutex, OwnedRwLockWriteGuard, RwLock,
+    Mutex, RwLock,
 };
 
 // const DISC_TABLE_CAPACITY: usize = 100;
@@ -124,9 +123,9 @@ impl AddrTable {
         let mut slots_rx = self.slots_rx.write().await;
 
         match slots_rx.recv().await {
-            Some(slot) => {
+            Some(_slot) => {
                 let slot_guard = SlotGuard {
-                    slot,
+                    _slot,
                     slots_tx: self.slots_tx.clone(),
                 };
 
@@ -215,19 +214,6 @@ impl AddrTable {
 
         addr_map.remove(public_key_str)
     }
-
-    // pub async fn get_all_addrs_str(&self) -> Vec<String> {
-    //     let addr_map = self.addr_map.read().await;
-    //     let mut addr_vec = Vec::new();
-
-    //     for (idx, addr) in addr_map.values().enumerate() {
-    //         println!("addr table elements [{}] - {}", idx, addr,);
-
-    //         addr_vec.push(addr.known_addr.disc_endpoint())
-    //     }
-
-    //     addr_vec
-    // }
 
     pub async fn get_status(&self) -> Vec<String> {
         let addr_map = self.addr_map.read().await;

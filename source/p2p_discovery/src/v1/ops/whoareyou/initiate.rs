@@ -90,8 +90,8 @@ pub(crate) async fn init_who_are_you(
 pub(crate) async fn handle_who_are_you_ack(
     way_ack: WhoAreYou,
     socket_addr: SocketAddr,
-    udp_conn: Arc<Connection>,
-    identity: Arc<Identity>,
+    _udp_conn: Arc<Connection>,
+    _identity: Arc<Identity>,
     addr_table: Arc<AddrTable>,
 ) -> Result<(), String> {
     let WhoAreYou {
@@ -103,7 +103,7 @@ pub(crate) async fn handle_who_are_you_ack(
 
     if let Some(_) = addr_table.get_mapped_addr(&her_public_key_str).await {
         return Err(format!("Address is already mapped."));
-    };
+    }
 
     let her_public_key = match crypto::convert_public_key_str_into_public_key(
         &her_public_key_str,
@@ -124,17 +124,12 @@ pub(crate) async fn handle_who_are_you_ack(
         status: RwLock::new(AddrStatus::WhoAreYouSuccess { at: Utc::now() }),
     };
 
-    let her_disc_endpoint = known_addr.disc_endpoint();
-    let her_p2p_endpoint = known_addr.p2p_endpoint();
-    let her_public_key_str = known_addr.public_key_str.clone();
-
     let addr = {
         let a = Addr {
             known_addr,
-            addr_slot_guard: slot_guard,
+            _addr_slot_guard: slot_guard,
         };
 
-        // Arc::new(RwLock::new(a))
         Arc::new(a)
     };
 

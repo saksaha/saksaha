@@ -132,7 +132,7 @@ pub(crate) async fn recv_who_are_you(
     let addr = {
         let a = Addr {
             known_addr,
-            addr_slot_guard: slot_guard,
+            _addr_slot_guard: slot_guard,
         };
 
         Arc::new(a)
