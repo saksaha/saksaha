@@ -19,8 +19,8 @@ members = [
   "source/utils_net",
   "source/contract",
 
-  # contracts
-  "source/saksaha/src/contracts/validator",
+  # network contracts
+  "source/saksaha/src/ncontracts/validator",
 
   # internals
   "internals/ci",

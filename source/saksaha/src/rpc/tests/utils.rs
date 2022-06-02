@@ -3,6 +3,7 @@ pub(super) mod test_utils {
     use crate::machine::Machine;
     use crate::p2p::{P2PHost, P2PHostArgs};
     use crate::rpc::{RPCArgs, RPC};
+    use crate::system::SystemHandle;
     use crate::{
         blockchain::{Blockchain, BlockchainArgs, TxValue},
         node::LocalNode,
@@ -19,8 +20,7 @@ pub(super) mod test_utils {
         let _ = env_logger::builder().is_test(true).try_init();
     }
 
-    pub(crate) async fn make_rpc(
-    ) -> (RPC, TcpListener, SocketAddr, Arc<Machine>) {
+    pub(crate) async fn make_rpc() -> (RPC, SocketAddr, Arc<Machine>) {
         let (rpc_socket, rpc_socket_addr) = utils_net::bind_tcp_socket(None)
             .await
             .expect("rpc socket should be initialized");
@@ -152,15 +152,23 @@ pub(super) mod test_utils {
         };
 
         let rpc = {
+            let sys_handle = {
+                let h = SystemHandle {
+                    machine: machine.clone(),
+                    p2p_monitor,
+                };
+                Arc::new(h)
+            };
+
             let rpc_args = RPCArgs {
-                machine: machine.clone(),
-                p2p_monitor,
+                sys_handle,
+                rpc_socket,
             };
 
             RPC::init(rpc_args).expect("RPC should be initialized")
         };
 
-        (rpc, rpc_socket, rpc_socket_addr, machine)
+        (rpc, rpc_socket_addr, machine)
     }
 
     pub(crate) async fn make_blockchain() -> Blockchain {
