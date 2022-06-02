@@ -1,12 +1,6 @@
-use crate::machine::Machine;
 use crate::rpc::routes::v1;
 use crate::system::SystemHandle;
-use hyper::{body::HttpBody, server::conn::AddrStream, service::Service};
-use hyper::{Body, Method, Request, Response, Server, StatusCode, Uri};
-use logger::{tdebug, tinfo, twarn};
-use p2p_discovery::Discovery;
-use serde::Serialize;
-use std::error::Error;
+use hyper::{Body, Method, Request, Response, StatusCode};
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
@@ -92,7 +86,6 @@ impl Router {
                 }
             };
 
-        // Box::pin(async { self.routes[handler_idx].2(req, machine) })
         self.routes[handler_idx].2(req, sys_handle)
     }
 

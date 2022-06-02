@@ -1,8 +1,5 @@
 use super::server::RPCServer;
-use crate::machine::Machine;
-use crate::p2p::P2PMonitor;
 use crate::system::SystemHandle;
-use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::net::TcpListener;
 
@@ -13,8 +10,6 @@ pub(crate) struct RPC {
 pub(crate) struct RPCArgs {
     pub(crate) sys_handle: Arc<SystemHandle>,
     pub(crate) rpc_socket: TcpListener,
-    // pub(crate) machine: Arc<Machine>,
-    // pub(crate) p2p_monitor: Arc<P2PMonitor>,
 }
 
 impl RPC {
@@ -30,14 +25,9 @@ impl RPC {
         Ok(rpc)
     }
 
-    pub(crate) async fn run(
-        &self,
-        // rpc_socket: TcpListener,
-        // socket_addr: SocketAddr,
-    ) {
+    pub(crate) async fn run(&self) {
         let rpc_server = self.rpc_server.clone();
 
-        // let _ = tokio::join!(rpc_server.run(rpc_socket, socket_addr));
         let _ = tokio::join!(rpc_server.run());
     }
 }
