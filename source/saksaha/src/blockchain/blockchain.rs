@@ -1,8 +1,7 @@
-use std::sync::Arc;
-
-use super::ledger::{Hashing, Ledger};
+use super::ledger::{Hashable, Ledger};
 use logger::tinfo;
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 use tokio::sync::RwLock;
 
 pub(crate) struct Blockchain {

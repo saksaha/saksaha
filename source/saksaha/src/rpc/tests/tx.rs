@@ -3,7 +3,7 @@ use super::utils::test_utils;
 #[cfg(test)]
 mod test_suite {
     use super::*;
-    use crate::blockchain::ledger::{for_test, Hashing};
+    use crate::blockchain::ledger::{for_test, Hashable};
     use crate::rpc::response::{ErrorResponse, SuccessResponse};
     use hyper::body::Buf;
     use hyper::{Body, Client, Method, Request, Uri};
@@ -12,13 +12,9 @@ mod test_suite {
     async fn test_rpc_client_and_send_wrong_transaction() {
         test_utils::init();
 
-        let (rpc, rpc_socket, rpc_socket_addr, _) =
-            test_utils::make_rpc().await;
+        let (rpc, rpc_socket_addr, _) = test_utils::make_rpc().await;
 
-        let _rpc_server =
-            tokio::spawn(
-                async move { rpc.run(rpc_socket, rpc_socket_addr).await },
-            );
+        let _rpc_server = tokio::spawn(async move { rpc.run().await });
 
         let client = Client::new();
 
@@ -81,13 +77,9 @@ mod test_suite {
                 .expect("Tx should be written");
         }
 
-        let (rpc, rpc_socket, rpc_socket_addr, _) =
-            test_utils::make_rpc().await;
+        let (rpc, rpc_socket_addr, _) = test_utils::make_rpc().await;
 
-        let _rpc_server =
-            tokio::spawn(
-                async move { rpc.run(rpc_socket, rpc_socket_addr).await },
-            );
+        let _rpc_server = tokio::spawn(async move { rpc.run().await });
 
         let client = Client::new();
 
@@ -155,13 +147,9 @@ mod test_suite {
             assert_eq!(old_tx_hash.hash, tx_hash.hash);
         }
 
-        let (rpc, rpc_socket, rpc_socket_addr, _) =
-            test_utils::make_rpc().await;
+        let (rpc, rpc_socket_addr, _) = test_utils::make_rpc().await;
 
-        let _rpc_server =
-            tokio::spawn(
-                async move { rpc.run(rpc_socket, rpc_socket_addr).await },
-            );
+        let _rpc_server = tokio::spawn(async move { rpc.run().await });
 
         let client = Client::new();
 

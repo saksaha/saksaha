@@ -12,13 +12,9 @@ mod test_suite {
     async fn test_rpc_client_and_get_block() {
         test_utils::init();
 
-        let (rpc, rpc_socket, rpc_socket_addr, machine) =
-            test_utils::make_rpc().await;
+        let (rpc, rpc_socket_addr, machine) = test_utils::make_rpc().await;
 
-        let _rpc_server =
-            tokio::spawn(
-                async move { rpc.run(rpc_socket, rpc_socket_addr).await },
-            );
+        let _rpc_server = tokio::spawn(async move { rpc.run().await });
 
         let client = Client::new();
 
@@ -63,9 +59,10 @@ mod test_suite {
                 let body_bytes_vec = b.to_vec();
                 let _vh = match std::str::from_utf8(&body_bytes_vec) {
                     Ok(b) => {
-                        let hash = &Hash{ hash : b.to_string() };
-                        let _vht = match machine.get_block(hash).await
-                        {
+                        let hash = &Hash {
+                            hash: b.to_string(),
+                        };
+                        let _vht = match machine.get_block(hash).await {
                             Ok(block) => {
                                 println!("{:?}", block);
                                 assert_eq!(
