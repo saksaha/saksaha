@@ -1,15 +1,9 @@
 use super::SlotGuard;
-use p2p_addr::{AddrStatus, KnownAddr};
+use p2p_addr::KnownAddr;
 
 pub struct Addr {
     pub known_addr: KnownAddr,
-    pub(crate) addr_slot_guard: SlotGuard,
-}
-
-impl Addr {
-    pub fn get_status(&self) -> &AddrStatus {
-        &self.known_addr.status
-    }
+    pub(crate) _addr_slot_guard: SlotGuard,
 }
 
 impl std::fmt::Display for Addr {
@@ -25,7 +19,7 @@ pub mod for_test {
     use crypto::Signature;
     use p2p_addr::{AddrStatus, KnownAddr};
     use std::sync::Arc;
-    use tokio::sync::mpsc;
+    use tokio::sync::{mpsc, RwLock};
 
     impl Addr {
         pub fn new_dummy(
@@ -44,26 +38,18 @@ pub mod for_test {
                     p2p_port,
                     sig,
                     public_key_str,
-                    status: AddrStatus::WhoAreYouSuccess { at: Utc::now() },
+                    status: RwLock::new(AddrStatus::WhoAreYouSuccess {
+                        at: Utc::now(),
+                    }),
                     public_key,
                 },
-                addr_slot_guard: SlotGuard {
-                    slot: Arc::new(Slot { idx: 0 }),
+                _addr_slot_guard: SlotGuard {
+                    _slot: Arc::new(Slot { _idx: 0 }),
                     slots_tx: Arc::new(slots_tx),
                 },
             };
 
             addr
-
-            // let (addrs_tx, _) = {
-            //     let (tx, rx) = mpsc::unbounded_channel();
-            //     (Arc::new(tx), Arc::new(RwLock::new(rx)))
-            // };
-
-            // AddrGuard {
-            //     addr: Arc::new(RwLock::new(addr)),
-            //     addr_recycle_tx: addrs_tx,
-            // }
         }
     }
 }

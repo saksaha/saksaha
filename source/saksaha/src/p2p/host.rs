@@ -3,6 +3,7 @@ use super::task::runtime::P2PTaskRuntime;
 use super::task::P2PTask;
 use super::P2PMonitor;
 use super::{dial_scheduler::P2PDialScheduler, server::Server};
+use crate::node::LocalNode;
 use colored::Colorize;
 use logger::tinfo;
 use p2p_addr::UnknownAddr;
@@ -149,6 +150,7 @@ impl P2PHost {
             p2p_task_runtime,
             p2p_server,
             peer_table: p2p_host_args.peer_table.clone(),
+            // local_node: p2p_host_args.local_node,
         };
 
         Ok(host)
@@ -159,7 +161,7 @@ impl P2PHost {
             self.p2p_discovery.run(),
             self.p2p_task_runtime.run(),
             self.p2p_server.run(),
-            self.p2p_dial_scheduler.run()
+            self.p2p_dial_scheduler.run(),
         );
     }
 

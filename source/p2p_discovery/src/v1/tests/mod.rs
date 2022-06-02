@@ -7,8 +7,6 @@ mod test_multiple_agents;
 #[cfg(test)]
 mod test {
     use super::utils;
-    use crate::Discovery;
-    use crate::DiscoveryArgs;
     use tokio::time::Duration;
 
     fn init() {
@@ -49,11 +47,10 @@ mod test {
             .get_mapped_addr(&disc_2_pub_key.to_string())
             .await
         {
-            Some(pub_key) => {
-                let pub_key = pub_key.read().await;
+            Some(addr) => {
                 println!(
                     "disc_1_mapped_addr: {}",
-                    pub_key.known_addr.disc_endpoint()
+                    addr.known_addr.disc_endpoint()
                 );
             }
             None => {
@@ -65,11 +62,10 @@ mod test {
             .get_mapped_addr(&disc_1_pub_key.to_string())
             .await
         {
-            Some(pub_key) => {
-                let pub_key = pub_key.read().await;
+            Some(addr) => {
                 println!(
                     "disc_2_mapped_addr: {}",
-                    pub_key.known_addr.disc_endpoint()
+                    addr.known_addr.disc_endpoint()
                 );
             }
             None => {

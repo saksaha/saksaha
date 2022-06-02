@@ -152,7 +152,7 @@ mod test_suite {
                 .await
                 .expect("Tx should be written");
 
-            assert_eq!(old_tx_hash.hash, tx_hash);
+            assert_eq!(old_tx_hash.hash, tx_hash.hash);
         }
 
         let (rpc, rpc_socket, rpc_socket_addr, _) =

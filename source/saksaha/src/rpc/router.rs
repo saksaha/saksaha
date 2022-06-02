@@ -1,12 +1,6 @@
-use super::node::Node;
-use crate::machine::Machine;
 use crate::rpc::routes::v1;
-use hyper::{body::HttpBody, server::conn::AddrStream, service::Service};
-use hyper::{Body, Method, Request, Response, Server, StatusCode, Uri};
-use logger::{tdebug, tinfo, twarn};
-use p2p_discovery::Discovery;
-use serde::Serialize;
-use std::error::Error;
+use crate::system::SystemHandle;
+use hyper::{Body, Method, Request, Response, StatusCode};
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
@@ -16,22 +10,30 @@ fn get_routes() -> Vec<(Method, &'static str, Handler)> {
         (
             Method::POST,
             "/apis/v1/send_transaction",
-            Box::new(|req, node| Box::pin(v1::send_transaction(req, node))),
+            Box::new(|req, sys_handle| {
+                Box::pin(v1::send_transaction(req, sys_handle))
+            }),
         ),
         (
             Method::POST,
             "/apis/v1/get_status",
-            Box::new(|req, node| Box::pin(v1::get_status(req, node))),
+            Box::new(|req, sys_handle| {
+                Box::pin(v1::get_status(req, sys_handle))
+            }),
         ),
         (
             Method::POST,
             "/apis/v1/get_transaction",
-            Box::new(|req, node| Box::pin(v1::get_transaction(req, node))),
+            Box::new(|req, sys_handle| {
+                Box::pin(v1::get_transaction(req, sys_handle))
+            }),
         ),
         (
             Method::POST,
             "/apis/v1/get_block",
-            Box::new(|req, node| Box::pin(v1::get_block(req, node))),
+            Box::new(|req, sys_handle| {
+                Box::pin(v1::get_block(req, sys_handle))
+            }),
         ),
     ]
 }
@@ -39,7 +41,7 @@ fn get_routes() -> Vec<(Method, &'static str, Handler)> {
 pub(crate) type Handler = Box<
     dyn Fn(
             Request<Body>,
-            Arc<Node>,
+            Arc<SystemHandle>,
         ) -> Pin<
             Box<
                 dyn Future<Output = Result<Response<Body>, hyper::Error>>
@@ -66,7 +68,7 @@ impl Router {
     pub(crate) fn route(
         &self,
         req: Request<Body>,
-        node: Arc<Node>,
+        sys_handle: Arc<SystemHandle>,
     ) -> Pin<
         Box<dyn Future<Output = Result<Response<Body>, hyper::Error>> + Send>,
     > {
@@ -84,8 +86,7 @@ impl Router {
                 }
             };
 
-        // Box::pin(async { self.routes[handler_idx].2(req, machine) })
-        self.routes[handler_idx].2(req, node)
+        self.routes[handler_idx].2(req, sys_handle)
     }
 
     pub(crate) fn get_handler_idx(

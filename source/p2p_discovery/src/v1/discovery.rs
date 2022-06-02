@@ -165,9 +165,4 @@ impl Discovery {
             self.addr_monitor_routine.run(),
         );
     }
-
-    pub async fn get_status(&self) -> Vec<String> {
-        let addrs = self.addr_table.get_all_addrs_str().await;
-        addrs
-    }
 }

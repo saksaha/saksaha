@@ -1,9 +1,13 @@
-use super::ledger::Ledger;
+use std::sync::Arc;
+
+use super::ledger::{Hashing, Ledger};
 use logger::tinfo;
 use serde::{Deserialize, Serialize};
+use tokio::sync::RwLock;
 
 pub(crate) struct Blockchain {
     pub(crate) ledger: Ledger,
+    pub(crate) transactions: Arc<RwLock<Vec<Hash>>>,
 }
 
 pub(crate) struct BlockchainArgs {
@@ -40,7 +44,10 @@ impl Blockchain {
 
         let ledger = Ledger::init(&app_prefix).await?;
 
-        let blockchain = Blockchain { ledger };
+        let blockchain = Blockchain {
+            ledger,
+            transactions: Arc::new(RwLock::new(vec![])),
+        };
 
         tinfo!("saksaha", "ledger", "Initialized Blockchain");
 
@@ -54,20 +61,22 @@ impl Blockchain {
     pub(crate) async fn send_transaction(
         &self,
         tx_value: TxValue,
-    ) -> Result<String, String> {
+    ) -> Result<Hash, String> {
+        let mut transactions_guard = self.transactions.write().await;
+        transactions_guard.push(tx_value.get_hash()?);
         self.ledger.write_tx(tx_value).await
     }
 
     pub(crate) async fn get_transaction(
         &self,
-        tx_hash: &String,
+        tx_hash: &Hash,
     ) -> Result<TxValue, String> {
         self.ledger.read_tx(tx_hash).await
     }
 
     pub(crate) async fn get_block(
         &self,
-        block: &String,
+        block: &Hash,
     ) -> Result<BlockValue, String> {
         self.ledger.get_block(block).await
     }

@@ -1,10 +1,12 @@
 #[cfg(test)]
 pub(super) mod test_utils {
-    use super::*;
-    use crate::blockchain::{Blockchain, BlockchainArgs, TxValue};
     use crate::machine::Machine;
     use crate::p2p::{P2PHost, P2PHostArgs};
     use crate::rpc::{RPCArgs, RPC};
+    use crate::{
+        blockchain::{Blockchain, BlockchainArgs, TxValue},
+        node::LocalNode,
+    };
     use p2p_addr::{AddrStatus, UnknownAddr};
     use p2p_discovery::{Discovery, DiscoveryArgs};
     use p2p_identity::Credential;
@@ -91,6 +93,15 @@ pub(super) mod test_utils {
                 .expect("Peer table should be initialized");
 
             Arc::new(ps)
+        };
+
+        let local_node = {
+            let ln = LocalNode {
+                peer_table: p2p_peer_table.clone(),
+                machine: machine.clone(),
+            };
+
+            ln
         };
 
         let (p2p_discovery, disc_port) = {

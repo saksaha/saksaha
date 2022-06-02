@@ -1,4 +1,4 @@
-use crate::{BoxedError, Handshake, Msg};
+use crate::{BoxedError, Handshake, Msg, SyncMsg};
 use bytes::BytesMut;
 use p2p_frame::{frame_io, Frame, Parse};
 use tokio_util::codec::{Decoder, Encoder};
@@ -16,6 +16,7 @@ impl Encoder<Msg> for P2PCodec {
         let frame = match item {
             Msg::HandshakeSyn(handshake) => handshake.into_syn_frame(),
             Msg::HandshakeAck(handshake) => handshake.into_ack_frame(),
+            Msg::Sync(sync) => sync.into_frame(),
         };
 
         match frame_io::write_frame(dst, &frame) {
@@ -54,6 +55,10 @@ impl Decoder for P2PCodec {
                 "hs_ack" => {
                     let handshake = Handshake::from_parse(&mut parse)?;
                     Msg::HandshakeAck(handshake)
+                }
+                "sync" => {
+                    let sync = SyncMsg::from_parse(&mut parse)?;
+                    Msg::Sync(sync)
                 }
                 _ => {
                     return Err(format!(

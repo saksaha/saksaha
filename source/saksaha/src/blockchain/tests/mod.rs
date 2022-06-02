@@ -71,7 +71,7 @@ mod test {
 
         for (idx, tx_hash) in tx_hashes.iter().enumerate() {
             let tx_val_retrieved =
-                ledger.read_tx(&tx_hash.to_string()).await.expect("Tx should exist");
+                ledger.read_tx(&tx_hash).await.expect("Tx should exist");
 
             assert_eq!(tx_val_retrieved.data, dummy_tx_values[idx].data);
         }
