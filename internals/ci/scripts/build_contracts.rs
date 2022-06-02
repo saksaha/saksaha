@@ -6,6 +6,7 @@ use lazy_static::lazy_static;
 use std::fs::DirEntry;
 use std::path::PathBuf;
 use std::process::Command as Cmd;
+use wasmer::{Module, Store};
 
 const NETWORK_CONTRACTS_PATH: &str = "source/saksaha/src/ncontracts";
 
@@ -72,28 +73,48 @@ impl Script for BuildContracts {
                 }
             };
 
-            let build_path = {
-                let p =
-                    PathBuf::from(std::env::var("PROJECT_ROOT")?).join("build");
+            // let build_path = {
+            //     let p =
+            //         PathBuf::from(std::env::var("PROJECT_ROOT")?).join("build");
 
-                match p.into_os_string().into_string() {
-                    Ok(p) => p,
-                    Err(err) => {
-                        log!("Build path should be resolved");
+            //     match p.into_os_string().into_string() {
+            //         Ok(p) => p,
+            //         Err(err) => {
+            //             log!("Build path should be resolved");
 
-                        std::process::exit(1);
-                    }
-                }
-            };
+            //             std::process::exit(1);
+            //         }
+            //     }
+            // };
 
-            let args = ["build", &path];
+            println!("run_vm()123!!");
 
-            let cmd = Cmd::new("wasm-pack")
-                .args(args)
-                .spawn()
-                .expect("failed to run");
+            //     let module_wat = r#"
+            // (module
+            // (type $t0 (func (param i32) (result i32)))
+            // (func $add_one (export "add_one") (type $t0) (param $p0 i32) (result i32)
+            //     get_local $p0
+            //     i32.const 1
+            //     i32.add))
+            // "#;
 
-            cmd.wait_with_output().unwrap();
+            //     let store = Store::default();
+
+            //     let module = match Module::new(&store, &module_wat) {
+            //         Ok(m) => m,
+            //         Err(err) => {
+            //             return Err("".into());
+            //         }
+            //     };
+
+            //     let args = ["build", &path];
+
+            // let cmd = Cmd::new("wasm-pack")
+            //     .args(args)
+            //     .spawn()
+            //     .expect("failed to run");
+
+            // cmd.wait_with_output().unwrap();
         }
 
         Ok(())

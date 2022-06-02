@@ -217,10 +217,11 @@ impl Routine {
         let system_thread = tokio::spawn(async move {
             tokio::join!(
                 // rpc.run(rpc_socket, rpc_socket_addr),
-                rpc.run(),
-                p2p_host.run(),
-                local_node.run(),
-                // blockchain.run()
+                // rpc.run(),
+                // p2p_host.run(),
+                // local_node.run(),
+                // blockchain.run(),
+                machine.run(),
             );
         });
 
