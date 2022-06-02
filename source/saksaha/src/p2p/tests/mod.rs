@@ -4,7 +4,7 @@ mod test_suite {
         server::Server,
         task::{runtime::P2PTaskRuntime, P2PTask},
     };
-    use k256::{ecdsa::Signature, PublicKey};
+    use crypto::{PublicKey, Signature};
     use p2p_discovery::{Addr, Discovery, DiscoveryArgs};
     use p2p_identity::{Credential, Identity};
     use p2p_peer_table::PeerTable;
