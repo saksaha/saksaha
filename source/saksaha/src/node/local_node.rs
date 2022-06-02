@@ -41,9 +41,6 @@ impl LocalNode {
 
 async fn run_node_routine(peer_node: PeerNode, machine: Arc<Machine>) {
     let peer = peer_node.peer.clone();
-    // let mut peer_lock = peer.write().await;
-    // let conn = &mut peer_lock.transport.conn;
-
     let mut conn = peer.transport.conn.write().await;
 
     let mut interval = tokio::time::interval(Duration::from_secs(3));
@@ -57,21 +54,10 @@ async fn run_node_routine(peer_node: PeerNode, machine: Arc<Machine>) {
             conn;
         }
     }
-    println!("poawerpowe");
-
-    // tokio::join!(PeerListener::start_listening(conn), dial_temp(conn),);
-
-    // let transactions = local_node_transactions.read().await;
-    // println!("current transactions: {:?}", transactions);
-
-    // tokio::spawn(async move { run_node_routine(peer_node, machine).await });
 }
 
 async fn dial_temp(socket_tx: &Connection) {
     println!("awefawe");
-
-    // let peer_lock = peer.write().await;
-    // println!("33");
 
     // let mut socket_tx_lock = peer_lock.transport.conn.socket_tx.write().await;
 
