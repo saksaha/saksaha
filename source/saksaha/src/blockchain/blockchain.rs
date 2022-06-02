@@ -1,3 +1,5 @@
+use crate::blockchain::vm::VM;
+
 use super::ledger::{Hashable, Ledger};
 use logger::tinfo;
 use serde::{Deserialize, Serialize};
@@ -7,6 +9,7 @@ use tokio::sync::RwLock;
 pub(crate) struct Blockchain {
     pub(crate) ledger: Ledger,
     pub(crate) transactions: Arc<RwLock<Vec<Hash>>>,
+    pub(crate) vm: VM,
 }
 
 pub(crate) struct BlockchainArgs {
@@ -43,8 +46,11 @@ impl Blockchain {
 
         let ledger = Ledger::init(&app_prefix).await?;
 
+        let vm = VM {};
+
         let blockchain = Blockchain {
             ledger,
+            vm,
             transactions: Arc::new(RwLock::new(vec![])),
         };
 
@@ -55,6 +61,8 @@ impl Blockchain {
 
     pub(crate) async fn run(&self) {
         tinfo!("saksaha", "blockchain", "Start running blockchain");
+
+        self.vm.run_vm();
     }
 
     pub(crate) async fn send_transaction(

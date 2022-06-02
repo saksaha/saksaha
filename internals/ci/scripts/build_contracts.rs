@@ -72,19 +72,28 @@ impl Script for BuildContracts {
                 }
             };
 
-            let build_path = {
-                let p =
-                    PathBuf::from(std::env::var("PROJECT_ROOT")?).join("build");
+            // let build_path = {
+            //     let p =
+            //         PathBuf::from(std::env::var("PROJECT_ROOT")?).join("build");
 
-                match p.into_os_string().into_string() {
-                    Ok(p) => p,
-                    Err(err) => {
-                        log!("Build path should be resolved");
+            //     match p.into_os_string().into_string() {
+            //         Ok(p) => p,
+            //         Err(err) => {
+            //             log!("Build path should be resolved");
 
-                        std::process::exit(1);
-                    }
-                }
-            };
+            //             std::process::exit(1);
+            //         }
+            //     }
+            // };
+
+            let module_wat = r#"
+            (module
+            (type $t0 (func (param i32) (result i32)))
+            (func $add_one (export "add_one") (type $t0) (param $p0 i32) (result i32)
+                get_local $p0
+                i32.const 1
+                i32.add))
+            "#;
 
             let args = ["build", &path];
 
