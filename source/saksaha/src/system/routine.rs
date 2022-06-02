@@ -220,7 +220,8 @@ impl Routine {
                 rpc.run(),
                 p2p_host.run(),
                 local_node.run(),
-                // blockchain.run()
+                // blockchain.run(),
+                machine.run(),
             );
         });
 
