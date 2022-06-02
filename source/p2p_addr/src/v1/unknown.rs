@@ -1,5 +1,4 @@
 use super::status::AddrStatus;
-use super::utils;
 pub use k256::{
     ecdh::EphemeralSecret,
     ecdsa::{

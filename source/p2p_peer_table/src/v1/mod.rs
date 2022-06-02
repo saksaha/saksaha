@@ -1,3 +1,4 @@
+mod iter;
 mod peer;
 mod slot;
 mod table;
@@ -5,3 +6,4 @@ mod table;
 pub use peer::*;
 pub use slot::*;
 pub use table::*;
+pub use iter::*;

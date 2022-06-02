@@ -1,4 +1,4 @@
-use super::{utils, AddrStatus};
+use super::AddrStatus;
 use crypto::PublicKey;
 pub use k256::{
     ecdh::EphemeralSecret,
@@ -7,8 +7,9 @@ pub use k256::{
         Signature, SigningKey, VerifyingKey,
     },
 };
+use tokio::sync::RwLock;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct KnownAddr {
     pub ip: String,
     pub disc_port: u16,
@@ -16,7 +17,7 @@ pub struct KnownAddr {
     pub sig: Signature,
     pub public_key_str: String,
     pub public_key: PublicKey,
-    pub status: AddrStatus,
+    pub status: RwLock<AddrStatus>,
 }
 
 impl KnownAddr {
@@ -31,10 +32,15 @@ impl KnownAddr {
 
 impl std::fmt::Display for KnownAddr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let addr_status = match self.status.try_read() {
+            Ok(s) => format!("{:?}", s),
+            Err(_) => "is being used".to_string(),
+        };
+
         write!(
             f,
-            "ip: {}, disc_port: {}, p2p_port: {:?}, status: {:?}",
-            self.ip, self.disc_port, self.p2p_port, self.status,
+            "ip: {}, disc_port: {}, p2p_port: {:?}, status: {}",
+            self.ip, self.disc_port, self.p2p_port, addr_status,
         )
     }
 }

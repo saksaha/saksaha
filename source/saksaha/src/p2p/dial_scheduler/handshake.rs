@@ -32,9 +32,7 @@ impl HandshakeDialLoop {
 
             match self.addrs_iter.next().await {
                 Ok(addr) => {
-                    // let addr = addr_guard.addr.clone();
-                    let addr_lock = addr.read().await;
-                    let known_addr = &addr_lock.known_addr;
+                    let known_addr = &addr.known_addr;
 
                     let my_public_key_str =
                         &self.identity.credential.public_key_str;
@@ -43,10 +41,7 @@ impl HandshakeDialLoop {
                     let is_my_public_key_greater_than_hers =
                         my_public_key_str > her_public_key_str;
 
-                    drop(addr_lock);
-
                     let task = P2PTask::InitiateHandshake {
-                        // addr_lock,
                         addr,
                         identity: self.identity.clone(),
                         peer_table: self.peer_table.clone(),

@@ -4,7 +4,7 @@ use super::utils::test_utils;
 mod test_suite {
     use super::*;
     use crate::blockchain::ledger::for_test;
-    use crate::blockchain::BlockValue;
+    use crate::blockchain::{BlockValue, Hash};
     use hyper::body::HttpBody;
     use hyper::{Body, Client, Method, Request, Uri};
 
@@ -55,7 +55,7 @@ mod test_suite {
         let req = Request::builder()
             .method(Method::POST)
             .uri(uri)
-            .body(Body::from(block_hash))
+            .body(Body::from(block_hash.hash))
             .expect("request builder should be made");
 
         match hyper::body::to_bytes(req.into_body()).await {
@@ -63,7 +63,8 @@ mod test_suite {
                 let body_bytes_vec = b.to_vec();
                 let _vh = match std::str::from_utf8(&body_bytes_vec) {
                     Ok(b) => {
-                        let _vht = match machine.get_block(&b.to_string()).await
+                        let hash = &Hash{ hash : b.to_string() };
+                        let _vht = match machine.get_block(hash).await
                         {
                             Ok(block) => {
                                 println!("{:?}", block);

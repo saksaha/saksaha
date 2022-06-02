@@ -6,6 +6,7 @@ use futures::{
 };
 use p2p_frame::Frame;
 use std::net::SocketAddr;
+use std::sync::Arc;
 use tokio::net::TcpStream;
 use tokio::sync::RwLock;
 use tokio_util::codec::Framed;

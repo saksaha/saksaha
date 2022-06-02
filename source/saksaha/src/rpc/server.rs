@@ -1,34 +1,25 @@
-use crate::machine::Machine;
-
-use super::node::Node;
 use super::router::Router;
+use crate::system::SystemHandle;
 use hyper::server::conn::AddrIncoming;
 use hyper::service::Service;
 use hyper::{Body, Request, Response, Server};
 use logger::{tinfo, twarn};
 use std::future::Future;
-use std::net::SocketAddr;
 use std::pin::Pin;
 use std::sync::Arc;
 use std::task::{Context, Poll};
 use tokio::net::TcpListener;
+use tokio::sync::RwLock;
 
 pub(crate) struct RPCServer {
-    node: Arc<Node>,
+    hyper_server: Arc<RwLock<Server<AddrIncoming, MakeSvc>>>,
 }
 
 impl RPCServer {
-    pub fn init(node: Arc<Node>) -> Result<RPCServer, String> {
-        let rpc_server = RPCServer { node };
-
-        Ok(rpc_server)
-    }
-
-    pub async fn run(
-        &self,
+    pub fn init(
+        sys_handle: Arc<SystemHandle>,
         rpc_socket: TcpListener,
-        socket_addr: SocketAddr,
-    ) -> Result<(), String> {
+    ) -> Result<RPCServer, String> {
         let addr_incoming = match AddrIncoming::from_listener(rpc_socket) {
             Ok(a) => a,
             Err(err) => {
@@ -46,26 +37,31 @@ impl RPCServer {
 
         let make_svc = MakeSvc {
             router,
-            node: self.node.clone(),
+            sys_handle: sys_handle.clone(),
         };
 
-        let hyper_server = Server::builder(addr_incoming).serve(make_svc);
+        let hyper_server = {
+            let s = Server::builder(addr_incoming).serve(make_svc);
 
-        tinfo!(
-            "saksaha",
-            "rpc",
-            "Starting rpc server, socket_addr: {}",
-            socket_addr,
-        );
+            Arc::new(RwLock::new(s))
+        };
 
-        match hyper_server.await {
+        let rpc_server = RPCServer { hyper_server };
+
+        Ok(rpc_server)
+    }
+
+    pub async fn run(&self) -> Result<(), String> {
+        let mut hyper_server_guard = self.hyper_server.write().await;
+
+        match (&mut *hyper_server_guard).await {
             Ok(_) => {
                 twarn!("saksaha", "rpc", "RPC server has stopped");
             }
             Err(err) => {
                 return Err(format!("Error while running RPC, err: {}", err));
             }
-        };
+        }
 
         Ok(())
     }
@@ -73,7 +69,7 @@ impl RPCServer {
 
 struct Svc {
     router: Arc<Router>,
-    node: Arc<Node>,
+    sys_handle: Arc<SystemHandle>,
 }
 
 impl Service<Request<Body>> for Svc {
@@ -88,13 +84,13 @@ impl Service<Request<Body>> for Svc {
     }
 
     fn call(&mut self, req: Request<Body>) -> Self::Future {
-        self.router.route(req, self.node.clone())
+        self.router.route(req, self.sys_handle.clone())
     }
 }
 
 struct MakeSvc {
     router: Arc<Router>,
-    node: Arc<Node>,
+    sys_handle: Arc<SystemHandle>,
 }
 
 impl<T> Service<T> for MakeSvc {
@@ -110,8 +106,8 @@ impl<T> Service<T> for MakeSvc {
 
     fn call(&mut self, _: T) -> Self::Future {
         let router = self.router.clone();
-        let node = self.node.clone();
+        let sys_handle = self.sys_handle.clone();
 
-        Box::pin(async move { Ok(Svc { router, node }) })
+        Box::pin(async { Ok(Svc { router, sys_handle }) })
     }
 }

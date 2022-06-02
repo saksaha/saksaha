@@ -39,6 +39,9 @@ pub enum HandshakeRecvError {
     #[error("Cannot acquire an empty slot, err: {err}")]
     EmptySlotNotAvailable { err: String },
 
+    #[error("Cannot insert handshaked peer into the map, err: {err}")]
+    InsertMappingFail { err: String },
+
     #[error("handshake has been done with this peer lately")]
     HandshakeRecentlySucceeded,
 }
@@ -47,8 +50,7 @@ pub struct HandshakeRecvArgs {
     pub handshake_syn: Handshake,
     pub identity: Arc<Identity>,
     pub peer_table: Arc<PeerTable>,
-    pub addr: Arc<RwLock<Addr>>,
-    pub addr_lock: OwnedRwLockWriteGuard<Addr>,
+    pub addr: Arc<Addr>,
 }
 
 pub async fn receive_handshake(
@@ -60,7 +62,6 @@ pub async fn receive_handshake(
         peer_table,
         identity,
         addr,
-        addr_lock: _,
     } = handshake_recv_args;
 
     let Handshake {
@@ -117,7 +118,7 @@ pub async fn receive_handshake(
 
     {
         let transport = Transport {
-            conn,
+            conn: RwLock::new(conn),
             shared_secret,
         };
 
@@ -127,24 +128,19 @@ pub async fn receive_handshake(
                 p2p_port: src_p2p_port,
                 public_key_str: her_public_key_str.clone(),
                 addr,
-                status: PeerStatus::HandshakeSuccess { at: Utc::now() },
+                status: RwLock::new(PeerStatus::HandshakeSuccess {
+                    at: Utc::now(),
+                }),
                 peer_slot_guard: slot_guard,
             };
 
-            Arc::new(RwLock::new(p))
+            Arc::new(p)
         };
 
-        peer_table.insert_mapping(&her_public_key_str, peer).await;
+        if let Err(err) = peer_table.insert_mapping(peer).await {
+            return Err(HandshakeRecvError::InsertMappingFail { err });
+        }
     }
-
-    tdebug!(
-        "p2p_trpt_hske",
-        "receive",
-        "Peer node updated, hs_id: {}, her_public_key: {}, \
-            addr_guard None",
-        &instance_id,
-        her_public_key_str.clone().green(),
-    );
 
     Ok(())
 }

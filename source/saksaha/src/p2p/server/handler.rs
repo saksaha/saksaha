@@ -1,16 +1,13 @@
+use super::ServerError;
 use futures::StreamExt;
 use logger::{tdebug, twarn};
 use p2p_discovery::AddrTable;
 use p2p_identity::Identity;
 use p2p_peer_table::PeerTable;
 use p2p_transport::{Connection, Handshake, Msg};
-use p2p_transport_ops::handshake::{
-    self, HandshakeRecvArgs, HandshakeRecvError,
-};
+use p2p_transport_ops::handshake::{self, HandshakeRecvArgs};
 use std::sync::Arc;
 use tokio::sync::Semaphore;
-
-use super::ServerError;
 
 pub(super) struct Handler {
     pub(crate) conn_semaphore: Arc<Semaphore>,
@@ -56,13 +53,13 @@ impl Drop for Handler {
 
 async fn handle_handshake_syn_msg(
     handshake: Handshake,
-    mut conn: Connection,
+    conn: Connection,
     identity: Arc<Identity>,
     peer_table: Arc<PeerTable>,
     addr_table: Arc<AddrTable>,
 ) -> Result<(), ServerError> {
-    let (addr_lock, addr) = match addr_table
-        .get_mapped_addr_lock(&handshake.src_public_key_str)
+    let addr = match addr_table
+        .get_mapped_addr(&handshake.src_public_key_str)
         .await
     {
         Some(a) => a,
@@ -79,8 +76,6 @@ async fn handle_handshake_syn_msg(
         identity,
         peer_table,
         addr,
-        addr_lock,
-        // addr_table,
     };
 
     match handshake::receive_handshake(handshake_recv_args, conn).await {

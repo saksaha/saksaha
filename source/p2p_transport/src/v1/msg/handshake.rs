@@ -1,6 +1,6 @@
 use crate::BoxedError;
 use bytes::{BufMut, Bytes, BytesMut};
-use p2p_frame::{Frame, Parse, ParseError};
+use p2p_frame::{Frame, Parse};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub const HANDSHAKE_SYN_TYPE: &'static str = "hs_syn";

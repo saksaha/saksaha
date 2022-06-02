@@ -34,14 +34,14 @@ impl Ledger {
     pub(crate) async fn write_tx(
         &self,
         tx_value: TxValue,
-    ) -> Result<String, String> {
+    ) -> Result<Hash, String> {
         let db = &self.ledger_db.db;
 
         let mut batch = WriteBatch::default();
 
         let tx_hash = match tx_value.get_hash() {
             Ok(hash) => hash,
-            Err(err) => {
+            Err(_) => {
                 return Err(format!("Failed to get hash from tx_value"))
             }
         };
@@ -91,7 +91,7 @@ impl Ledger {
         batch.put_cf(cf_handle, &tx_hash.hash, tx_value.sig_vec);
 
         match db.write(batch) {
-            Ok(_) => return Ok(tx_hash.hash),
+            Ok(_) => return Ok(tx_hash),
             Err(err) => {
                 return Err(format!("Fail to write on ledger db, err: {}", err))
             }
@@ -100,7 +100,7 @@ impl Ledger {
 
     pub(crate) async fn read_tx(
         &self,
-        tx_hash: &String,
+        tx_hash: &Hash,
     ) -> Result<TxValue, String> {
         let db = &self.ledger_db.db;
 
@@ -128,7 +128,7 @@ impl Ledger {
                 }
             };
 
-            tx_value_result[idx] = match db.get_cf(cf_handle, &tx_hash) {
+            tx_value_result[idx] = match db.get_cf(cf_handle, &tx_hash.hash) {
                 Ok(val) => match val {
                     Some(v) => match std::str::from_utf8(&v) {
                         Ok(vs) => vs.to_string(),
@@ -142,7 +142,7 @@ impl Ledger {
                     None => {
                         return Err(format!(
                             "No matched value with tx_hash in {}, {}",
-                            cfn, &tx_hash,
+                            cfn, &tx_hash.hash,
                         ));
                     }
                 },
@@ -166,10 +166,8 @@ impl Ledger {
 
     pub(crate) async fn get_block(
         &self,
-        block_hash: &String,
+        block_hash: &Hash,
     ) -> Result<BlockValue, String> {
-        println!("got block_hash: {}", block_hash);
-
         let db = &self.ledger_db.db;
 
         let cf_handle = match db.cf_handle(block_columns::CREATED_AT) {
@@ -182,7 +180,7 @@ impl Ledger {
             }
         };
 
-        let created_at = match db.get_cf(cf_handle, block_hash) {
+        let created_at = match db.get_cf(cf_handle, &block_hash.hash) {
             Ok(val) => match val {
                 Some(v) => match std::str::from_utf8(&v) {
                     Ok(vs) => vs.to_string(),
@@ -197,7 +195,7 @@ impl Ledger {
                     return Err(format!(
                         "No matched value with tx_hash in {}, {}",
                         block_columns::CREATED_AT,
-                        block_hash,
+                        &block_hash.hash,
                     ));
                 }
             },
@@ -220,7 +218,7 @@ impl Ledger {
                 ));
             }
         };
-        let get_cf_handle = db.get_cf(cf_handle, block_hash);
+        let get_cf_handle = db.get_cf(cf_handle, &block_hash.hash);
 
         let tx_pool = match get_cf_handle.as_ref() {
             Ok(val) => match val.as_ref() {
@@ -232,7 +230,7 @@ impl Ledger {
                     return Err(format!(
                         "No matched value with tx_hash in {}, {}",
                         block_columns::TX_POOL,
-                        block_hash,
+                        &block_hash.hash,
                     ));
                 }
             },
@@ -255,7 +253,7 @@ impl Ledger {
                 ));
             }
         };
-        let get_cf_handle = db.get_cf(cf_handle, block_hash);
+        let get_cf_handle = db.get_cf(cf_handle, &block_hash.hash);
 
         let sig_vec = match get_cf_handle.as_ref() {
             Ok(val) => match val.as_ref() {
@@ -267,7 +265,7 @@ impl Ledger {
                     return Err(format!(
                         "No matched value with tx_hash in {}, {}",
                         block_columns::SIG_VEC,
-                        block_hash,
+                        &block_hash.hash,
                     ));
                 }
             },
@@ -291,7 +289,7 @@ impl Ledger {
             }
         };
 
-        let height = match db.get_cf(cf_handle, block_hash) {
+        let height = match db.get_cf(cf_handle, &block_hash.hash) {
             Ok(val) => match val {
                 Some(v) => match std::str::from_utf8(&v) {
                     Ok(vs) => vs.to_string(),
@@ -306,7 +304,7 @@ impl Ledger {
                     return Err(format!(
                         "No matched value with tx_hash in {}, {}",
                         block_columns::HEIGHT,
-                        block_hash,
+                        &block_hash.hash,
                     ));
                 }
             },
@@ -333,14 +331,14 @@ impl Ledger {
     pub(crate) async fn write_block(
         &self,
         block_value: BlockValue,
-    ) -> Result<String, String> {
+    ) -> Result<Hash, String> {
         let db = &self.ledger_db.db;
 
         let mut batch = WriteBatch::default();
 
         let block_hash = match block_value.get_hash() {
             Ok(hash) => hash,
-            Err(err) => {
+            Err(_) => {
                 return Err(format!("Failed to get hash from block_value"))
             }
         };
@@ -415,7 +413,7 @@ impl Ledger {
         batch.put_cf(cf_handle, &block_hash.hash, ser_tx_pool);
 
         match db.write(batch) {
-            Ok(_) => return Ok(block_hash.hash),
+            Ok(_) => return Ok(block_hash),
             Err(err) => {
                 return Err(format!("Fail to write on ledger db, err: {}", err))
             }

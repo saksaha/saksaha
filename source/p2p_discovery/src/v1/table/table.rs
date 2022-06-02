@@ -5,11 +5,10 @@ use super::{
 use crate::AddrsIterator;
 use colored::Colorize;
 use logger::{tdebug, terr};
-use p2p_addr::AddrStatus;
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::{
     mpsc::{self, Receiver, Sender, UnboundedReceiver, UnboundedSender},
-    Mutex, OwnedRwLockWriteGuard, RwLock,
+    Mutex, RwLock,
 };
 
 // const DISC_TABLE_CAPACITY: usize = 100;
@@ -17,12 +16,12 @@ const DISC_TABLE_CAPACITY: usize = 5;
 
 /// TODO Table shall have Kademlia flavored buckets later on
 pub struct AddrTable {
-    pub(crate) addr_map: Arc<RwLock<HashMap<String, Arc<RwLock<Addr>>>>>,
+    pub(crate) addr_map: Arc<RwLock<HashMap<String, Arc<Addr>>>>,
     slots_tx: Arc<UnboundedSender<Arc<Slot>>>,
     slots_rx: RwLock<UnboundedReceiver<Arc<Slot>>>,
-    known_addrs_tx: Arc<Sender<Arc<RwLock<Addr>>>>,
-    known_addrs_rx: Arc<RwLock<Receiver<Arc<RwLock<Addr>>>>>,
-    addr_recycle_tx: Arc<UnboundedSender<Arc<RwLock<Addr>>>>,
+    known_addrs_tx: Arc<Sender<Arc<Addr>>>,
+    known_addrs_rx: Arc<RwLock<Receiver<Arc<Addr>>>>,
+    addr_recycle_tx: Arc<UnboundedSender<Arc<Addr>>>,
     addrs_it_mutex: Arc<Mutex<usize>>,
 }
 
@@ -46,9 +45,9 @@ impl AddrTable {
             let slots_tx = Arc::new(tx);
             let slots_rx = RwLock::new(rx);
 
-            for idx in 0..disc_table_capacity {
+            for _idx in 0..disc_table_capacity {
                 let slot = {
-                    let s = Slot { idx };
+                    let s = Slot { _idx };
                     Arc::new(s)
                 };
 
@@ -68,32 +67,15 @@ impl AddrTable {
 
         let (known_addrs_tx, known_addrs_rx) = {
             let (tx, rx) = mpsc::channel(disc_table_capacity);
+
             (Arc::new(tx), Arc::new(RwLock::new(rx)))
         };
 
         let (addr_recycle_tx, addr_recycle_rx) = {
             let (tx, rx) = mpsc::unbounded_channel();
+
             (Arc::new(tx), RwLock::new(rx))
         };
-
-        let recycle_routine = RecycleRoutine {
-            known_addrs_tx: known_addrs_tx.clone(),
-            addr_recycle_rx,
-        };
-
-        tokio::spawn(async move {
-            match recycle_routine.run().await {
-                Ok(_) => (),
-                Err(err) => {
-                    terr!(
-                        "p2p_discovery",
-                        "table",
-                        "Recycle routine has stopped, err: {}",
-                        err
-                    );
-                }
-            };
-        });
 
         let addrs_it_mutex = Arc::new(Mutex::new(0));
 
@@ -112,39 +94,38 @@ impl AddrTable {
 
     pub async fn get_mapped_addr(
         &self,
-        // disc_endpoint: &String,
         public_key_str: &String,
-    ) -> Option<Arc<RwLock<Addr>>> {
+    ) -> Option<Arc<Addr>> {
         let addr_map = self.addr_map.read().await;
-        // addr_map.get(disc_endpoint).map(|n| n.clone())
+
         addr_map.get(public_key_str).map(|n| n.clone())
     }
 
-    pub async fn get_mapped_addr_lock(
-        &self,
-        disc_endpoint: &String,
-    ) -> Option<(OwnedRwLockWriteGuard<Addr>, Arc<RwLock<Addr>>)> {
-        let addr_map = self.addr_map.read().await;
+    // pub async fn get_mapped_addr_lock(
+    //     &self,
+    //     disc_endpoint: &String,
+    // ) -> Option<(OwnedRwLockWriteGuard<Addr>, Arc<RwLock<Addr>>)> {
+    //     let addr_map = self.addr_map.read().await;
 
-        match addr_map.get(disc_endpoint) {
-            Some(addr) => {
-                let addr_lock = addr.clone().write_owned().await;
+    //     match addr_map.get(disc_endpoint) {
+    //         Some(addr) => {
+    //             let addr_lock = addr.clone().write_owned().await;
 
-                return Some((addr_lock, addr.clone()));
-            }
-            None => {
-                return None;
-            }
-        };
-    }
+    //             return Some((addr_lock, addr.clone()));
+    //         }
+    //         None => {
+    //             return None;
+    //         }
+    //     };
+    // }
 
     pub(crate) async fn get_empty_slot(&self) -> Result<SlotGuard, String> {
         let mut slots_rx = self.slots_rx.write().await;
 
         match slots_rx.recv().await {
-            Some(slot) => {
+            Some(_slot) => {
                 let slot_guard = SlotGuard {
-                    slot,
+                    _slot,
                     slots_tx: self.slots_tx.clone(),
                 };
 
@@ -160,7 +141,7 @@ impl AddrTable {
 
     pub(crate) async fn enqueue_known_addr(
         &self,
-        node: Arc<RwLock<Addr>>,
+        node: Arc<Addr>,
     ) -> Result<(), String> {
         match self.known_addrs_tx.send(node).await {
             Ok(_) => Ok(()),
@@ -172,18 +153,10 @@ impl AddrTable {
 
     // For debugging purpose
     pub(crate) async fn print_all_nodes(&self) {
-        // let addrs = self.addrs.read().await;
         let addr_map = self.addr_map.read().await;
 
         for (idx, addr) in addr_map.values().enumerate() {
-            match addr.try_read() {
-                Ok(addr) => {
-                    println!("addr table elements [{}] - {}", idx, addr,);
-                }
-                Err(_err) => {
-                    println!("addr table elements [{}] is locked", idx);
-                }
-            }
+            println!("addr table elements [{}] - {}", idx, addr,);
         }
     }
 
@@ -198,30 +171,25 @@ impl AddrTable {
             }
         };
 
-        let it = AddrsIterator::init(
-            self.addr_recycle_tx.clone(),
-            self.known_addrs_rx.clone(),
-            addrs_it_lock,
-        );
+        let it =
+            AddrsIterator::init(self.known_addrs_rx.clone(), addrs_it_lock);
 
         Ok(it)
     }
 
     pub(crate) async fn insert_mapping(
         &self,
-        // public_key_str: &String,
-        addr: Arc<RwLock<Addr>>,
-    ) -> Result<Option<Arc<RwLock<Addr>>>, String> {
+        addr: Arc<Addr>,
+    ) -> Result<Option<Arc<Addr>>, String> {
         let mut addr_map = self.addr_map.write().await;
-        let addr_lock = addr.read().await;
-        let key = &addr_lock.known_addr.public_key_str;
+        let key = &addr.known_addr.public_key_str;
 
         tdebug!(
             "p2p_discovery",
             "table",
             "Insert mapping! key: {}, value: (p2p_ep: {})",
             key,
-            addr_lock.known_addr.p2p_endpoint().green(),
+            addr.known_addr.p2p_endpoint().green(),
         );
 
         match self.enqueue_known_addr(addr.clone()).await {
@@ -235,87 +203,28 @@ impl AddrTable {
             }
         };
 
-        // Ok(previous_addr)
         return Ok(addr_map.insert(key.to_string(), addr.clone()));
     }
 
-    // pub(crate) async fn remove_mapping(
-    //     &self,
-    //     public_key_str: &String,
-    // ) -> Option<Arc<RwLock<Addr>>> {
-    //     let mut addr_map = self.addr_map.write().await;
+    pub(crate) async fn remove_mapping(
+        &self,
+        public_key_str: &String,
+    ) -> Option<Arc<Addr>> {
+        let mut addr_map = self.addr_map.write().await;
 
-    //     addr_map.remove(public_key_str)
-    // }
+        addr_map.remove(public_key_str)
+    }
 
-    pub async fn get_all_addrs_str(&self) -> Vec<String> {
+    pub async fn get_status(&self) -> Vec<String> {
         let addr_map = self.addr_map.read().await;
         let mut addr_vec = Vec::new();
 
         for (idx, addr) in addr_map.values().enumerate() {
-            match addr.try_read() {
-                Ok(addr) => {
-                    println!("addr table elements [{}] - {}", idx, addr,);
+            println!("addr table elements [{}] - {}", idx, addr,);
 
-                    addr_vec.push(addr.known_addr.disc_endpoint())
-                }
-                Err(_err) => {
-                    println!("addr table elements [{}] is locked", idx);
-                }
-            }
+            addr_vec.push(addr.known_addr.disc_endpoint())
         }
 
         addr_vec
-    }
-}
-
-struct RecycleRoutine {
-    known_addrs_tx: Arc<Sender<Arc<RwLock<Addr>>>>,
-    addr_recycle_rx: RwLock<UnboundedReceiver<Arc<RwLock<Addr>>>>,
-}
-
-impl RecycleRoutine {
-    async fn run(&self) -> Result<(), String> {
-        let mut addr_recycle_rx = self.addr_recycle_rx.write().await;
-
-        loop {
-            match addr_recycle_rx.recv().await {
-                Some(a) => {
-                    let addr = a.read().await;
-
-                    if let AddrStatus::Invalid { err } = addr.get_status() {
-                        tdebug!(
-                            "p2p_discovery",
-                            "table",
-                            "Addr is dropped and will not be recycled, \
-                            addr: {}, err: {}",
-                            addr,
-                            err,
-                        );
-                    } else {
-                        drop(addr);
-
-                        match self.known_addrs_tx.send(a).await {
-                            Ok(_) => (),
-                            Err(err) => {
-                                terr!(
-                                    "p2p_discovery",
-                                    "table",
-                                    "Cannot push addr back to the queue. \
-                                        Known addrs rx is closed, err: {}",
-                                    err,
-                                )
-                            }
-                        }
-                    }
-                }
-                None => {
-                    return Err(format!(
-                        "Addr recycle channel has been closed. \
-                            All txs are gone."
-                    ));
-                }
-            }
-        }
     }
 }

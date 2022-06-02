@@ -1,10 +1,9 @@
-use super::{check, WhoAreYou, WhoAreYouRecvError};
+use super::{check, WhoAreYou};
 use crate::{
     v1::{net::Connection, ops::Msg},
     Addr, AddrTable,
 };
 use chrono::Utc;
-use colored::Colorize;
 use futures::SinkExt;
 use logger::{tdebug, terr};
 use p2p_addr::{AddrStatus, KnownAddr, UnknownAddr};
@@ -75,23 +74,13 @@ pub(crate) async fn init_who_are_you(
         }
     };
 
-    match tx_lock
+    if let Err(err) = tx_lock
         .send((Msg::WhoAreYouSyn(way), her_socket_addr))
         .await
     {
-        Ok(_) => {
-            // tdebug!(
-            //     "p2p_discovery",
-            //     "whoareyou",
-            //     "WhoAreYou SYN has been successfully sent, to: {}",
-            //     &her_disc_endpoint,
-            // );
-        }
-        Err(err) => {
-            return Err(WhoAreYouInitError::MsgSendFail {
-                err: err.to_string(),
-            });
-        }
+        return Err(WhoAreYouInitError::MsgSendFail {
+            err: err.to_string(),
+        });
     };
 
     Ok(())
@@ -100,8 +89,8 @@ pub(crate) async fn init_who_are_you(
 pub(crate) async fn handle_who_are_you_ack(
     way_ack: WhoAreYou,
     socket_addr: SocketAddr,
-    udp_conn: Arc<Connection>,
-    identity: Arc<Identity>,
+    _udp_conn: Arc<Connection>,
+    _identity: Arc<Identity>,
     addr_table: Arc<AddrTable>,
 ) -> Result<(), String> {
     let WhoAreYou {
@@ -111,10 +100,9 @@ pub(crate) async fn handle_who_are_you_ack(
         src_public_key_str: her_public_key_str,
     } = way_ack;
 
-    if let Some(_) = addr_table.get_mapped_addr_lock(&her_public_key_str).await
-    {
+    if let Some(_) = addr_table.get_mapped_addr(&her_public_key_str).await {
         return Err(format!("Address is already mapped."));
-    };
+    }
 
     let her_public_key = match crypto::convert_public_key_str_into_public_key(
         &her_public_key_str,
@@ -132,42 +120,19 @@ pub(crate) async fn handle_who_are_you_ack(
         sig: her_sig,
         public_key_str: her_public_key_str.clone(),
         public_key: her_public_key,
-        status: AddrStatus::WhoAreYouSuccess { at: Utc::now() },
+        status: RwLock::new(AddrStatus::WhoAreYouSuccess { at: Utc::now() }),
     };
-
-    let her_disc_endpoint = known_addr.disc_endpoint();
-    let her_p2p_endpoint = known_addr.p2p_endpoint();
-    let her_public_key_str = known_addr.public_key_str.clone();
 
     let addr = {
         let a = Addr {
             known_addr,
-            addr_slot_guard: slot_guard,
+            _addr_slot_guard: slot_guard,
         };
 
-        Arc::new(RwLock::new(a))
+        Arc::new(a)
     };
 
-    match addr_table.insert_mapping(addr).await {
-        Ok(_) => {
-            // tdebug!(
-            //     "p2p_discovery",
-            //     "server",
-            //     "Whoareyou Success! p2p_endpoint: {}, \
-            //                     disc_endpoint: {}",
-            //     her_p2p_endpoint.green(),
-            //     her_disc_endpoint.green(),
-            // );
-        }
-        Err(_) => {
-            terr!(
-                "p2p_discovery",
-                "server",
-                "Fail to add known node. Queue might have been \
-                                closed",
-            );
-        }
-    };
+    addr_table.insert_mapping(addr).await?;
 
     Ok(())
 }

@@ -1,19 +1,16 @@
-use std::sync::Arc;
-
 use crate::SlotGuard;
 use chrono::{DateTime, Utc};
 use p2p_discovery::Addr;
-// use p2p_discovery::AddrGuard;
 use p2p_transport::Transport;
+use std::sync::Arc;
 use tokio::sync::RwLock;
 
 pub struct Peer {
     pub p2p_port: u16,
     pub public_key_str: String,
     pub transport: Transport,
-    pub status: PeerStatus,
-    // pub addr_guard: AddrGuard,
-    pub addr: Arc<RwLock<Addr>>,
+    pub status: RwLock<PeerStatus>,
+    pub addr: Arc<Addr>,
     pub peer_slot_guard: SlotGuard,
 }
 
@@ -27,13 +24,15 @@ pub enum PeerStatus {
 
 impl std::fmt::Display for Peer {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let socket_addr = &self.transport.conn.socket_addr;
-        let public_key_str = &self.public_key_str;
+        let status = match &self.status.try_read() {
+            Ok(s) => s.to_string(),
+            Err(_) => "being used".to_string(),
+        };
 
         write!(
             f,
-            "Peer (socket_addr: {}, public_key_str: {}, status: {})",
-            socket_addr, public_key_str, self.status,
+            "Peer (ip: {}, public_key_str: {}, status: {})",
+            &self.addr.known_addr.ip, &self.public_key_str, status,
         )
     }
 }

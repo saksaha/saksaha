@@ -4,9 +4,8 @@ use crate::{
     Addr, AddrTable,
 };
 use chrono::Utc;
-use colored::Colorize;
 use futures::sink::SinkExt;
-use logger::{tdebug, terr};
+use logger::terr;
 use p2p_addr::{AddrStatus, KnownAddr};
 use p2p_identity::Identity;
 use std::{net::SocketAddr, sync::Arc};
@@ -61,20 +60,20 @@ pub(crate) async fn recv_who_are_you(
         return Err(WhoAreYouRecvError::MyEndpoint);
     }
 
-    let slot_guard =
-        match addr_table.get_mapped_addr_lock(&her_public_key_str).await {
-            Some(_) => {
-                return Err(WhoAreYouRecvError::AddrAlreadyMapped {
-                    disc_endpoint: her_disc_endpoint.to_string(),
-                });
+    let slot_guard = match addr_table.get_mapped_addr(&her_public_key_str).await
+    {
+        Some(_) => {
+            return Err(WhoAreYouRecvError::AddrAlreadyMapped {
+                disc_endpoint: her_disc_endpoint.to_string(),
+            });
+        }
+        None => match addr_table.get_empty_slot().await {
+            Ok(s) => s,
+            Err(_) => {
+                return Err(WhoAreYouRecvError::AddrSlotReserveFail);
             }
-            None => match addr_table.get_empty_slot().await {
-                Ok(s) => s,
-                Err(_) => {
-                    return Err(WhoAreYouRecvError::AddrSlotReserveFail);
-                }
-            },
-        };
+        },
+    };
 
     let my_disc_port = identity.disc_port;
     let my_p2p_port = identity.p2p_port;
@@ -127,16 +126,16 @@ pub(crate) async fn recv_who_are_you(
         sig: her_sig,
         public_key_str: her_public_key_str.clone(),
         public_key: her_public_key,
-        status: AddrStatus::WhoAreYouSuccess { at: Utc::now() },
+        status: RwLock::new(AddrStatus::WhoAreYouSuccess { at: Utc::now() }),
     };
 
     let addr = {
         let a = Addr {
             known_addr,
-            addr_slot_guard: slot_guard,
+            _addr_slot_guard: slot_guard,
         };
 
-        Arc::new(RwLock::new(a))
+        Arc::new(a)
     };
 
     match addr_table.insert_mapping(addr.clone()).await {

@@ -1,8 +1,5 @@
-use super::node::Node;
 use super::server::RPCServer;
-use crate::machine::Machine;
-use crate::p2p::P2PMonitor;
-use std::net::SocketAddr;
+use crate::system::SystemHandle;
 use std::sync::Arc;
 use tokio::net::TcpListener;
 
@@ -11,23 +8,14 @@ pub(crate) struct RPC {
 }
 
 pub(crate) struct RPCArgs {
-    pub(crate) machine: Arc<Machine>,
-    pub(crate) p2p_monitor: Arc<P2PMonitor>,
+    pub(crate) sys_handle: Arc<SystemHandle>,
+    pub(crate) rpc_socket: TcpListener,
 }
 
 impl RPC {
     pub(crate) fn init(rpc_args: RPCArgs) -> Result<RPC, String> {
-        let node = {
-            let n = Node {
-                machine: rpc_args.machine,
-                p2p_monitor: rpc_args.p2p_monitor,
-            };
-
-            Arc::new(n)
-        };
-
         let rpc_server = {
-            let s = RPCServer::init(node)?;
+            let s = RPCServer::init(rpc_args.sys_handle, rpc_args.rpc_socket)?;
 
             Arc::new(s)
         };
@@ -37,13 +25,9 @@ impl RPC {
         Ok(rpc)
     }
 
-    pub(crate) async fn run(
-        &self,
-        rpc_socket: TcpListener,
-        socket_addr: SocketAddr,
-    ) {
+    pub(crate) async fn run(&self) {
         let rpc_server = self.rpc_server.clone();
 
-        let _ = tokio::join!(rpc_server.run(rpc_socket, socket_addr));
+        let _ = tokio::join!(rpc_server.run());
     }
 }
