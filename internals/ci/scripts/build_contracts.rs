@@ -6,7 +6,6 @@ use lazy_static::lazy_static;
 use std::fs::DirEntry;
 use std::path::PathBuf;
 use std::process::Command as Cmd;
-use wasmer::{Module, Store};
 
 const NETWORK_CONTRACTS_PATH: &str = "source/saksaha/src/ncontracts";
 
@@ -96,23 +95,14 @@ impl Script for BuildContracts {
                 i32.add))
             "#;
 
-            let store = Store::default();
+            let args = ["build", &path];
 
-            let module = match Module::new(&store, &module_wat) {
-                Ok(m) => m,
-                Err(err) => {
-                    return Err("".into());
-                }
-            };
+            let cmd = Cmd::new("wasm-pack")
+                .args(args)
+                .spawn()
+                .expect("failed to run");
 
-            //     let args = ["build", &path];
-
-            // let cmd = Cmd::new("wasm-pack")
-            //     .args(args)
-            //     .spawn()
-            //     .expect("failed to run");
-
-            // cmd.wait_with_output().unwrap();
+            cmd.wait_with_output().unwrap();
         }
 
         Ok(())
