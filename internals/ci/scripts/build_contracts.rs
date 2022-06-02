@@ -7,6 +7,8 @@ use std::fs::DirEntry;
 use std::path::PathBuf;
 use std::process::Command as Cmd;
 
+const NETWORK_CONTRACTS_PATH: &str = "source/saksaha/src/ncontracts";
+
 lazy_static! {
     static ref CONTRACTS: Vec<DirEntry> = {
         let project_root = match std::env::var("PROJECT_ROOT") {
@@ -23,7 +25,7 @@ lazy_static! {
         };
 
         let contracts_dir = {
-            let p = project_root.join("source").join("saksaha/src/contracts");
+            let p = project_root.join(NETWORK_CONTRACTS_PATH);
 
             if p.exists() {
                 match std::fs::read_dir(p) {
@@ -84,7 +86,7 @@ impl Script for BuildContracts {
                 }
             };
 
-            let args = ["build", &path, "--out-dir", &build_path];
+            let args = ["build", &path];
 
             let cmd = Cmd::new("wasm-pack")
                 .args(args)
