@@ -61,6 +61,17 @@ pub(crate) async fn write_tx(
     };
     batch.put_cf(cf_handle, &tx_hash, tx.signature);
 
+    let cf_handle = match db.cf_handle(tx_columns::CONTRACT) {
+        Some(h) => h,
+        None => {
+            return Err(format!(
+                "Fail to open ledger columns {}",
+                tx_columns::CONTRACT
+            ))
+        }
+    };
+    batch.put_cf(cf_handle, &tx_hash, tx.contract.unwrap());
+
     match db.write(batch) {
         Ok(_) => return Ok(tx_hash),
         Err(err) => {
@@ -81,6 +92,7 @@ pub(crate) async fn read_tx(
         String::from(""),
         String::from(""),
         String::from(""),
+        String::from(""),
     ];
 
     let tx_values_col = vec![
@@ -88,6 +100,7 @@ pub(crate) async fn read_tx(
         tx_columns::DATA,
         tx_columns::SIG_VEC,
         tx_columns::PI,
+        tx_columns::CONTRACT,
     ];
 
     let tx_values_it_map = tx_values_col.iter().map(|cf_name| cf_name);
@@ -133,5 +146,6 @@ pub(crate) async fn read_tx(
         data: tx_value_result[1].as_bytes().to_vec(),
         signature: tx_value_result[2].clone(),
         pi: tx_value_result[3].clone(),
+        contract: Some(tx_value_result[4].as_bytes().to_vec()),
     })
 }

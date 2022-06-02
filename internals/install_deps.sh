@@ -16,6 +16,7 @@ sudo apt install clang
 echo "Installing WABT"
 
 cd ..
+mkdir temp
 cd temp
 git clone --recursive https://github.com/WebAssembly/wabt
 

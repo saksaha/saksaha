@@ -9,6 +9,7 @@ pub struct Transaction {
     pub data: Vec<u8>,
     pub pi: String,
     pub signature: String,
+    pub contract: Option<Vec<u8>>,
 }
 
 impl Hashable for Transaction {
