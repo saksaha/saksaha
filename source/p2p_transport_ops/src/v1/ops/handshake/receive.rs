@@ -128,7 +128,9 @@ pub async fn receive_handshake(
                 p2p_port: src_p2p_port,
                 public_key_str: her_public_key_str.clone(),
                 addr,
-                status: PeerStatus::HandshakeSuccess { at: Utc::now() },
+                status: RwLock::new(PeerStatus::HandshakeSuccess {
+                    at: Utc::now(),
+                }),
                 peer_slot_guard: slot_guard,
             };
 

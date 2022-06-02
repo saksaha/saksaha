@@ -213,7 +213,7 @@ pub async fn initiate_handshake(
                 public_key_str: her_public_key_str.clone(),
                 addr,
                 transport,
-                status: PeerStatus::HandshakeInit,
+                status: RwLock::new(PeerStatus::HandshakeInit),
                 peer_slot_guard,
             };
 

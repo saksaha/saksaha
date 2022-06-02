@@ -9,6 +9,7 @@ use crate::p2p::{P2PHost, P2PHostArgs};
 use crate::pconfig::PConfig;
 use crate::rpc::RPCArgs;
 use crate::rpc::RPC;
+use crate::system::SystemHandle;
 use colored::Colorize;
 use logger::{terr, tinfo};
 use p2p_peer_table::PeerTable;
@@ -187,16 +188,27 @@ impl Routine {
             ln
         };
 
-        let p2p_monitor = {
-            let m = p2p_host.get_p2p_monitor();
-
-            Arc::new(m)
-        };
-
         let rpc = {
+            let sys_handle = {
+                let p2p_monitor = {
+                    let m = p2p_host.get_p2p_monitor();
+
+                    Arc::new(m)
+                };
+
+                let h = SystemHandle {
+                    machine: machine.clone(),
+                    p2p_monitor,
+                };
+
+                Arc::new(h)
+            };
+
             let rpc_args = RPCArgs {
-                machine: machine.clone(),
-                p2p_monitor,
+                sys_handle,
+                rpc_socket,
+                // machine: machine.clone(),
+                // p2p_monitor,
             };
 
             RPC::init(rpc_args)?
@@ -204,7 +216,8 @@ impl Routine {
 
         let system_thread = tokio::spawn(async move {
             tokio::join!(
-                rpc.run(rpc_socket, rpc_socket_addr),
+                // rpc.run(rpc_socket, rpc_socket_addr),
+                rpc.run(),
                 p2p_host.run(),
                 local_node.run(),
                 // blockchain.run()

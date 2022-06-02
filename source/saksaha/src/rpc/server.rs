@@ -1,9 +1,7 @@
+use super::router::Router;
 use crate::machine::Machine;
 use crate::p2p::P2PMonitor;
-
-use super::node::Node;
-use super::router::Router;
-use super::sys_handle::SystemHandle;
+use crate::system::SystemHandle;
 use hyper::server::conn::AddrIncoming;
 use hyper::service::Service;
 use hyper::{Body, Request, Response, Server};
@@ -15,53 +13,167 @@ use std::sync::Arc;
 use std::task::{Context, Poll};
 use tokio::net::TcpListener;
 
+pub(crate) struct RPCServer2 {
+    // create_server:
+//     Box<dyn FnOnce() -> Pin<Box<dyn Future<Output = Result<(), String>>>>>,
+// s1: Box<
+//     dyn FnOnce(Vec<usize>) -> Pin<Box<dyn Future<Output = Vec<usize>>>>,
+// >,
+// hyper_server: Arc<Server<AddrIncoming, MakeSvc>>,
+// machine: Arc<Machine>,
+// p2p_monitor: Arc<P2PMonitor>
+}
+
 pub(crate) struct RPCServer {
-    // machine: Arc<Machine>,
-// p2p_monitor: Arc<P2PMonitor>,
+    pub s1: Box<
+        dyn Fn() -> Pin<
+                Box<dyn Future<Output = Result<(), String>> + Send + Sync>,
+            > + Send
+            + Sync,
+    >,
+}
+
+// impl Services {
+//     fn new(
+//         f: Box<
+//             dyn FnOnce(Vec<usize>) -> Pin<Box<dyn Future<Output = Vec<usize>>>>,
+//         >,
+//     ) -> Self {
+//         Services { s1: f }
+//     }
+// }
+
+enum NumberOperation {
+    AddOne,
+    MinusOne,
 }
 
 impl RPCServer {
     pub fn init(
-        system_handle: SystemHandle,
+        sys_handle: Arc<SystemHandle>,
         rpc_socket: TcpListener,
         // machine: Arc<Machine>,
         // p2p_monitor: Arc<P2PMonitor>,
     ) -> Result<RPCServer, String> {
+        let input = vec![1, 2, 3];
+        let op = NumberOperation::AddOne;
+
+        // let s = Services::new(Box::new(move |numbers| {
+        //     Box::pin(async move { numbers })
+        // }));
+
         let rpc_server = RPCServer {
-            // machine,
-            // p2p_monitor,
+            s1: Box::new(move || {
+                Box::pin(async move {
+                    // let addr_incoming =
+                    //     match AddrIncoming::from_listener(rpc_socket) {
+                    //         Ok(a) => a,
+                    //         Err(err) => {
+                    //             return Err(format!(
+                    //                 "Error initializing Addr Incoming, err: {}",
+                    //                 err
+                    //             ));
+                    //         }
+                    //     };
+
+                    // let router = {
+                    //     let r = Router::new();
+                    //     Arc::new(r)
+                    // };
+
+                    // let make_svc = MakeSvc {
+                    //     router,
+                    //     sys_handle,
+                    //     // machine: self.machine.clone(),
+                    //     // p2p_monitor: self.monitor.clone(),
+                    //     // node: self.node.clone(),
+                    // };
+
+                    // let hyper_server =
+                    //     Server::builder(addr_incoming).serve(make_svc);
+
+                    // match hyper_server.await {
+                    //     Ok(_) => {
+                    //         twarn!("saksaha", "rpc", "RPC server has stopped");
+                    //     }
+                    //     Err(err) => {
+                    //         return Err(format!(
+                    //             "Error while running RPC, err: {}",
+                    //             err
+                    //         ));
+                    //     }
+                    // };
+
+                    Ok(())
+                })
+            }),
         };
 
-        let addr_incoming = match AddrIncoming::from_listener(rpc_socket) {
-            Ok(a) => a,
-            Err(err) => {
-                return Err(format!(
-                    "Error initializing Addr Incoming, err: {}",
-                    err
-                ));
-            }
-        };
+        // let create_server = Box::new(|| {
+        //     Box::pin(async move {
+        //         // let addr_incoming = match AddrIncoming::from_listener(rpc_socket) {
+        //         //     Ok(a) => a,
+        //         //     Err(err) => {
+        //         //         return Err(format!(
+        //         //             "Error initializing Addr Incoming, err: {}",
+        //         //             err
+        //         //         ));
+        //         //     }
+        //         // };
 
-        let router = {
-            let r = Router::new();
-            Arc::new(r)
-        };
+        //         // let router = {
+        //         //     let r = Router::new();
+        //         //     Arc::new(r)
+        //         // };
 
-        let make_svc = MakeSvc {
-            router,
-            // machine: self.machine.clone(),
-            // p2p_monitor: self.monitor.clone(),
-            // node: self.node.clone(),
-        };
+        //         // let make_svc = MakeSvc {
+        //         //     router,
+        //         //     sys_handle,
+        //         //     // machine: self.machine.clone(),
+        //         //     // p2p_monitor: self.monitor.clone(),
+        //         //     // node: self.node.clone(),
+        //         // };
+
+        //         // let hyper_server = Server::builder(addr_incoming).serve(make_svc);
+
+        //         // match hyper_server.await {
+        //         //     Ok(_) => {
+        //         //         twarn!("saksaha", "rpc", "RPC server has stopped");
+        //         //     }
+        //         //     Err(err) => {
+        //         //         return Err(format!(
+        //         //             "Error while running RPC, err: {}",
+        //         //             err
+        //         //         ));
+        //         //     }
+        //         // };
+
+        //         Ok(())
+        //     })
+        // });
+
+        // let create_server = Box::new(create_server);
+
+        // let rpc_server = RPCServer {
+        //     // create_server,
+        //     // s1,
+        //     // hyper_server,
+        //     // machine,
+        //     // p2p_monitor,
+        // };
 
         Ok(rpc_server)
     }
 
     pub async fn run(
         &self,
-        rpc_socket: TcpListener,
-        socket_addr: SocketAddr,
+        // rpc_socket: TcpListener,
+        // socket_addr: SocketAddr,
     ) -> Result<(), String> {
+        println!("running rpc server!!!!!!!!!!!!!!!");
+
+        (&self.s1)().await;
+
         // let addr_incoming = match AddrIncoming::from_listener(rpc_socket) {
         //     Ok(a) => a,
         //     Err(err) => {
@@ -109,7 +221,7 @@ impl RPCServer {
 struct Svc {
     router: Arc<Router>,
     // node: Arc<Node>,
-    system_handle: Arc<SystemHandle>,
+    sys_handle: Arc<SystemHandle>,
 }
 
 impl Service<Request<Body>> for Svc {
@@ -124,14 +236,14 @@ impl Service<Request<Body>> for Svc {
     }
 
     fn call(&mut self, req: Request<Body>) -> Self::Future {
-        self.router.route(req, self.system_handle.clone())
+        self.router.route(req, self.sys_handle.clone())
     }
 }
 
 struct MakeSvc {
     router: Arc<Router>,
     // node: Arc<Node>,
-    system_handle: SystemHandle,
+    sys_handle: Arc<SystemHandle>,
 }
 
 impl<T> Service<T> for MakeSvc {
@@ -148,12 +260,12 @@ impl<T> Service<T> for MakeSvc {
     fn call(&mut self, _: T) -> Self::Future {
         let router = self.router.clone();
         // let node = self.node.clone();
-        let system_handle = self.system_handle.clone();
+        let sys_handle = self.sys_handle.clone();
 
         Box::pin(async {
             Ok(Svc {
                 router,
-                system_handle,
+                sys_handle,
                 // machine,
                 // p2p_monitor,
             })
