@@ -87,25 +87,23 @@ impl Script for BuildContracts {
             //     }
             // };
 
-            println!("run_vm()123!!");
+            let module_wat = r#"
+            (module
+            (type $t0 (func (param i32) (result i32)))
+            (func $add_one (export "add_one") (type $t0) (param $p0 i32) (result i32)
+                get_local $p0
+                i32.const 1
+                i32.add))
+            "#;
 
-            //     let module_wat = r#"
-            // (module
-            // (type $t0 (func (param i32) (result i32)))
-            // (func $add_one (export "add_one") (type $t0) (param $p0 i32) (result i32)
-            //     get_local $p0
-            //     i32.const 1
-            //     i32.add))
-            // "#;
+            let store = Store::default();
 
-            //     let store = Store::default();
-
-            //     let module = match Module::new(&store, &module_wat) {
-            //         Ok(m) => m,
-            //         Err(err) => {
-            //             return Err("".into());
-            //         }
-            //     };
+            let module = match Module::new(&store, &module_wat) {
+                Ok(m) => m,
+                Err(err) => {
+                    return Err("".into());
+                }
+            };
 
             //     let args = ["build", &path];
 

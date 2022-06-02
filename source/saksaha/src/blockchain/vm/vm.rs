@@ -12,8 +12,6 @@ impl VM {
             "../../ncontracts/validator/pkg/contract_validator_bg.wasm"
         );
 
-        println!("power: {:?}", bytes);
-
         let module_wat = r#"
         (module
         (type $t0 (func (param i32) (result i32)))

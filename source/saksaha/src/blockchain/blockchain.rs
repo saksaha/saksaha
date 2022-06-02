@@ -62,8 +62,6 @@ impl Blockchain {
     pub(crate) async fn run(&self) {
         tinfo!("saksaha", "blockchain", "Start running blockchain");
 
-        println!("blockchain vm experiment start!");
-
         self.vm.run_vm();
     }
 
