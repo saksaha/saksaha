@@ -10,7 +10,6 @@ mod test_suite {
     use p2p_peer_table::PeerTable;
     use std::{sync::Arc, time::Duration};
     use task_queue::TaskQueue;
-    use tokio::sync::RwLock;
 
     fn init() {
         let _ = env_logger::builder().is_test(true).try_init();

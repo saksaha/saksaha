@@ -1,11 +1,4 @@
 use super::Addr;
-pub use k256::{
-    ecdh::EphemeralSecret,
-    ecdsa::{
-        signature::{Signer, Verifier},
-        Signature, SigningKey, VerifyingKey,
-    },
-};
 use logger::terr;
 use p2p_addr::AddrStatus;
 use std::sync::Arc;
