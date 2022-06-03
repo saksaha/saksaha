@@ -4,8 +4,8 @@ use sha3::{Digest, Sha3_256};
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub(crate) struct Block {
-    pub(crate) tx_pool: Vec<String>,
-    pub(crate) sig_vec: Vec<String>,
+    pub(crate) transactions: Vec<String>,
+    pub(crate) signatures: Vec<String>,
     pub(crate) created_at: String,
     pub(crate) height: String,
 }

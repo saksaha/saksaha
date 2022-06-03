@@ -1,15 +1,12 @@
 use crate::blockchain::{ledger::tx_columns, Hash, Hashable, Transaction};
 use database::KeyValueDatabase;
-use logger::tinfo;
 use rocksdb::WriteBatch;
 
 #[inline]
 pub(crate) async fn write_tx(
-    // &self,
     ledger_db: &KeyValueDatabase,
     tx: Transaction,
 ) -> Result<Hash, String> {
-    // let db = &self.ledger_db.db;
     let db = &ledger_db.db;
 
     let mut batch = WriteBatch::default();
@@ -76,7 +73,6 @@ pub(crate) async fn read_tx(
     ledger_db: &KeyValueDatabase,
     tx_hash: &Hash,
 ) -> Result<Transaction, String> {
-    // let db = &self.ledger_db.db;
     let db = &ledger_db.db;
 
     let mut tx_value_result = vec![
