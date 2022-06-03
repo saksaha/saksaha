@@ -1,8 +1,8 @@
-use super::{Hash, Hashable};
+use super::Hashable;
 use serde::{Deserialize, Serialize};
 use sha3::{Digest, Sha3_256};
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct Block {
     pub(crate) transactions: Vec<String>,
     pub(crate) signatures: Vec<String>,
@@ -11,7 +11,7 @@ pub(crate) struct Block {
 }
 
 impl Hashable for Block {
-    fn get_hash(&self) -> Result<Hash, String> {
+    fn get_hash(&self) -> Result<String, String> {
         let hash = {
             let mut h = Sha3_256::new();
 
@@ -28,8 +28,8 @@ impl Hashable for Block {
             h.finalize()
         };
 
-        Ok(Hash {
-            hash: format!("{:x}", hash),
-        })
+        let h = format!("{:x}", hash);
+
+        Ok(h)
     }
 }

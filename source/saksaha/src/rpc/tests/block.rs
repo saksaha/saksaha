@@ -4,7 +4,7 @@ use super::utils::test_utils;
 mod test_suite {
     use super::*;
     use crate::blockchain::ledger_for_test;
-    use crate::blockchain::{Block, Hash};
+    use crate::blockchain::Block;
     use hyper::{Body, Client, Method, Request, Uri};
 
     #[tokio::test(flavor = "multi_thread")]
@@ -18,8 +18,8 @@ mod test_suite {
         let client = Client::new();
 
         let block_value = Block {
-            tx_pool: vec![String::from("1"), String::from("2")],
-            sig_vec: vec![String::from("1"), String::from("2")],
+            transactions: vec![String::from("1"), String::from("2")],
+            signatures: vec![String::from("1"), String::from("2")],
             created_at: String::from(""),
             height: String::from(""),
         };
@@ -50,7 +50,7 @@ mod test_suite {
         let req = Request::builder()
             .method(Method::POST)
             .uri(uri)
-            .body(Body::from(block_hash.hash))
+            .body(Body::from(block_hash))
             .expect("request builder should be made");
 
         match hyper::body::to_bytes(req.into_body()).await {
@@ -58,15 +58,13 @@ mod test_suite {
                 let body_bytes_vec = b.to_vec();
                 let _vh = match std::str::from_utf8(&body_bytes_vec) {
                     Ok(b) => {
-                        let hash = &Hash {
-                            hash: b.to_string(),
-                        };
+                        let hash = &b.to_string();
                         let _vht = match machine.get_block(hash).await {
                             Ok(block) => {
                                 println!("{:?}", block);
                                 assert_eq!(
-                                    &block.tx_pool,
-                                    &block_value.tx_pool
+                                    &block.transactions,
+                                    &block_value.transactions,
                                 );
                             }
                             Err(_err) => panic!(),

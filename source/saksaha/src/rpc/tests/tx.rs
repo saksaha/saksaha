@@ -68,7 +68,7 @@ mod test_suite {
             let old_tx_hash =
                 (&dummy_tx_val).get_hash().expect("fail to get hash");
 
-            ledger_for_test::delete_tx(&ledger, &old_tx_hash.hash)
+            ledger_for_test::delete_tx(&ledger, &old_tx_hash)
                 .expect("Tx should be deleted");
 
             let _tx_hash = ledger
@@ -136,7 +136,7 @@ mod test_suite {
             let old_tx_hash =
                 (&dummy_tx_val).get_hash().expect("fail to get hash");
 
-            ledger_for_test::delete_tx(&ledger, &old_tx_hash.hash)
+            ledger_for_test::delete_tx(&ledger, &old_tx_hash)
                 .expect("Tx should be deleted");
 
             let tx_hash = ledger
@@ -144,7 +144,7 @@ mod test_suite {
                 .await
                 .expect("Tx should be written");
 
-            assert_eq!(old_tx_hash.hash, tx_hash.hash);
+            assert_eq!(old_tx_hash, tx_hash);
         }
 
         let (rpc, rpc_socket_addr, _) = test_utils::make_rpc().await;

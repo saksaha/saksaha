@@ -1,13 +1,10 @@
 use super::{listener::PeerListener, peer_node::PeerNode};
-use crate::{blockchain::Hash, machine::Machine};
-use futures::{stream::SplitSink, SinkExt};
-use futures::{stream::SplitStream, StreamExt};
+use crate::machine::Machine;
+use futures::{stream::SplitStream, SinkExt, StreamExt};
 use logger::tdebug;
 use p2p_peer_table::{Peer, PeerTable};
 use p2p_transport::{Connection, Msg, P2PCodec, SyncMsg};
 use std::{sync::Arc, time::Duration};
-use tokio::{net::TcpStream, sync::RwLock};
-use tokio_util::codec::Framed;
 
 pub(crate) struct LocalNode {
     pub(crate) peer_table: Arc<PeerTable>,
@@ -21,11 +18,7 @@ impl LocalNode {
 
         loop {
             let peer = match it_lock.next().await {
-                Ok(ref p) => {
-                    println!("Hi, I am in syncing!!!!!!!!!!!!");
-
-                    p.clone()
-                }
+                Ok(p) => p,
                 Err(_) => continue,
             };
 
@@ -43,14 +36,19 @@ async fn run_node_routine(peer_node: PeerNode, machine: Arc<Machine>) {
     let peer = peer_node.peer.clone();
     let mut conn = peer.transport.conn.write().await;
 
-    let mut interval = tokio::time::interval(Duration::from_secs(3));
+    // let mut interval = tokio::time::interval(Duration::from_secs(3));
+    let mut transaction_rx = machine.blockchain.transaction_rx.write().await;
 
     tokio::select! {
-        _ = interval.tick() => {
-            println!("power");
-            conn;
+        Some(hash) = transaction_rx.recv() => {
+            println!("got hash from my rpc, {:?}", hash);
+            match conn.socket_tx.send(Msg::Sync(SyncMsg{value:1})).await {
+                Ok(_) => println!("successfully send a msg to other nodes"),
+                Err(err) => println!("failed to send a msg to other nodes, err: {}", err),
+            };
         },
         msg = conn.socket_rx.next() => {
+            println!("got hash from other node");
             conn;
         }
     }

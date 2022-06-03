@@ -1,4 +1,4 @@
-use crate::blockchain::{ledger::block_columns, Block, Hash, Hashable};
+use crate::blockchain::{ledger::block_columns, Block, Hashable};
 use database::KeyValueDatabase;
 use log::debug;
 use rocksdb::WriteBatch;
@@ -6,7 +6,7 @@ use rocksdb::WriteBatch;
 #[inline]
 pub(crate) async fn get_block(
     ledger_db: &KeyValueDatabase,
-    block_hash: &Hash,
+    block_hash: &String,
 ) -> Result<Block, String> {
     let db = &ledger_db.db;
 
@@ -20,7 +20,7 @@ pub(crate) async fn get_block(
         }
     };
 
-    let created_at = match db.get_cf(cf_handle, &block_hash.hash) {
+    let created_at = match db.get_cf(cf_handle, &block_hash) {
         Ok(val) => match val {
             Some(v) => match std::str::from_utf8(&v) {
                 Ok(vs) => vs.to_string(),
@@ -32,7 +32,7 @@ pub(crate) async fn get_block(
                 return Err(format!(
                     "No matched value with tx_hash in {}, {}",
                     block_columns::CREATED_AT,
-                    &block_hash.hash,
+                    &block_hash,
                 ));
             }
         },
@@ -55,7 +55,7 @@ pub(crate) async fn get_block(
             ));
         }
     };
-    let get_cf_handle = db.get_cf(cf_handle, &block_hash.hash);
+    let get_cf_handle = db.get_cf(cf_handle, &block_hash);
 
     let transactions = match get_cf_handle.as_ref() {
         Ok(val) => match val.as_ref() {
@@ -67,7 +67,7 @@ pub(crate) async fn get_block(
                 return Err(format!(
                     "No matched value with tx_hash in {}, {}",
                     block_columns::TX_POOL,
-                    &block_hash.hash,
+                    &block_hash,
                 ));
             }
         },
@@ -90,7 +90,7 @@ pub(crate) async fn get_block(
             ));
         }
     };
-    let get_cf_handle = db.get_cf(cf_handle, &block_hash.hash);
+    let get_cf_handle = db.get_cf(cf_handle, &block_hash);
 
     let signatures = match get_cf_handle.as_ref() {
         Ok(val) => match val.as_ref() {
@@ -102,7 +102,7 @@ pub(crate) async fn get_block(
                 return Err(format!(
                     "No matched value with tx_hash in {}, {}",
                     block_columns::SIG_VEC,
-                    &block_hash.hash,
+                    &block_hash,
                 ));
             }
         },
@@ -126,7 +126,7 @@ pub(crate) async fn get_block(
         }
     };
 
-    let height = match db.get_cf(cf_handle, &block_hash.hash) {
+    let height = match db.get_cf(cf_handle, &block_hash) {
         Ok(val) => match val {
             Some(v) => match std::str::from_utf8(&v) {
                 Ok(vs) => vs.to_string(),
@@ -138,7 +138,7 @@ pub(crate) async fn get_block(
                 return Err(format!(
                     "No matched value with tx_hash in {}, {}",
                     block_columns::HEIGHT,
-                    &block_hash.hash,
+                    &block_hash,
                 ));
             }
         },
@@ -166,7 +166,7 @@ pub(crate) async fn get_block(
 pub(crate) async fn write_block(
     ledger_db: &KeyValueDatabase,
     block: Block,
-) -> Result<Hash, String> {
+) -> Result<String, String> {
     let db = &ledger_db.db;
 
     let mut batch = WriteBatch::default();
@@ -192,7 +192,7 @@ pub(crate) async fn write_block(
             }
         };
 
-        batch.put_cf(cf_handle, &block_hash.hash, block.created_at);
+        batch.put_cf(cf_handle, &block_hash, block.created_at);
     }
 
     let cf_handle = match db.cf_handle(block_columns::SIG_VEC) {
@@ -216,7 +216,7 @@ pub(crate) async fn write_block(
         }
     };
 
-    batch.put_cf(cf_handle, &block_hash.hash, ser_signatures);
+    batch.put_cf(cf_handle, &block_hash, ser_signatures);
 
     let cf_handle = match db.cf_handle(block_columns::HEIGHT) {
         Some(h) => h,
@@ -228,7 +228,7 @@ pub(crate) async fn write_block(
         }
     };
 
-    batch.put_cf(cf_handle, &block_hash.hash, block.height);
+    batch.put_cf(cf_handle, &block_hash, block.height);
 
     let cf_handle = match db.cf_handle(block_columns::TX_POOL) {
         Some(h) => h,
@@ -251,7 +251,7 @@ pub(crate) async fn write_block(
         }
     };
 
-    batch.put_cf(cf_handle, &block_hash.hash, ser_transactions);
+    batch.put_cf(cf_handle, &block_hash, ser_transactions);
 
     match db.write(batch) {
         Ok(_) => return Ok(block_hash),

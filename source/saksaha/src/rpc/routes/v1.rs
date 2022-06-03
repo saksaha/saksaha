@@ -1,4 +1,4 @@
-use crate::blockchain::{Hash, Transaction};
+use crate::blockchain::Transaction;
 use crate::rpc::response::{ErrorResult, SuccessResult};
 use crate::system::SystemHandle;
 use hyper::{Body, Request, Response, StatusCode};
@@ -84,8 +84,7 @@ pub(crate) async fn get_transaction(
             let body_bytes_vec = b.to_vec();
             let _body_str = match std::str::from_utf8(&body_bytes_vec) {
                 Ok(b) => {
-                    println!("{}", b);
-                    let _tx: Hash = match serde_json::from_str(b) {
+                    let _tx_hash: String = match serde_json::from_str(b) {
                         Ok(tx_hash) => {
                             match sys_handle
                                 .machine
@@ -218,10 +217,9 @@ pub(crate) async fn get_block(
             let body_bytes_vec = b.to_vec();
             match std::str::from_utf8(&body_bytes_vec) {
                 Ok(b) => {
-                    let hash = &Hash {
-                        hash: b.to_string(),
-                    };
-                    match sys_handle.machine.get_block(hash).await {
+                    let block_hash = b.to_string();
+
+                    match sys_handle.machine.get_block(&block_hash).await {
                         Ok(_block) => {
                             return SuccessResult {
                                 id: String::from("1"),

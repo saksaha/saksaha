@@ -186,9 +186,9 @@ pub(super) mod test_utils {
     pub(crate) fn make_dummy_value() -> Transaction {
         Transaction {
             pi: String::from("0x111"),
-            sig_vec: String::from("0x1111"),
+            signature: String::from("0x1111"),
             created_at: String::from("1346546123"),
-            data: String::from("one"),
+            data: String::from("one").as_bytes().to_vec(),
         }
     }
 }

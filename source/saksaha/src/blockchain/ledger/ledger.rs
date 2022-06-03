@@ -1,5 +1,5 @@
 use super::{apis, db, tx_columns};
-use crate::blockchain::{types::Hash, Block, Transaction};
+use crate::blockchain::{Block, Transaction};
 use database::KeyValueDatabase;
 use db::block_columns;
 use logger::tinfo;
@@ -32,20 +32,20 @@ impl Ledger {
     pub(crate) async fn write_tx(
         &self,
         tx: Transaction,
-    ) -> Result<Hash, String> {
+    ) -> Result<String, String> {
         apis::write_tx(&self.ledger_db, tx).await
     }
 
     pub(crate) async fn read_tx(
         &self,
-        tx_hash: &Hash,
+        tx_hash: &String,
     ) -> Result<Transaction, String> {
         apis::read_tx(&self.ledger_db, tx_hash).await
     }
 
     pub(crate) async fn get_block(
         &self,
-        block_hash: &Hash,
+        block_hash: &String,
     ) -> Result<Block, String> {
         apis::get_block(&self.ledger_db, block_hash).await
     }
@@ -53,7 +53,7 @@ impl Ledger {
     pub(crate) async fn write_block(
         &self,
         block: Block,
-    ) -> Result<Hash, String> {
+    ) -> Result<String, String> {
         apis::write_block(&self.ledger_db, block).await
     }
 

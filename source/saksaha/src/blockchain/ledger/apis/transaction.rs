@@ -1,4 +1,4 @@
-use crate::blockchain::{ledger::tx_columns, Hash, Hashable, Transaction};
+use crate::blockchain::{ledger::tx_columns, Hashable, Transaction};
 use database::KeyValueDatabase;
 use rocksdb::WriteBatch;
 
@@ -6,7 +6,7 @@ use rocksdb::WriteBatch;
 pub(crate) async fn write_tx(
     ledger_db: &KeyValueDatabase,
     tx: Transaction,
-) -> Result<Hash, String> {
+) -> Result<String, String> {
     let db = &ledger_db.db;
 
     let mut batch = WriteBatch::default();
@@ -25,7 +25,7 @@ pub(crate) async fn write_tx(
             ))
         }
     };
-    batch.put_cf(cf_handle, &tx_hash.hash, tx.created_at);
+    batch.put_cf(cf_handle, &tx_hash, tx.created_at);
 
     let cf_handle = match db.cf_handle(tx_columns::DATA) {
         Some(h) => h,
@@ -36,7 +36,7 @@ pub(crate) async fn write_tx(
             ))
         }
     };
-    batch.put_cf(cf_handle, &tx_hash.hash, tx.data);
+    batch.put_cf(cf_handle, &tx_hash, tx.data);
 
     let cf_handle = match db.cf_handle(tx_columns::PI) {
         Some(h) => h,
@@ -47,7 +47,7 @@ pub(crate) async fn write_tx(
             ))
         }
     };
-    batch.put_cf(cf_handle, &tx_hash.hash, tx.pi);
+    batch.put_cf(cf_handle, &tx_hash, tx.pi);
 
     let cf_handle = match db.cf_handle(tx_columns::SIG_VEC) {
         Some(h) => h,
@@ -58,7 +58,7 @@ pub(crate) async fn write_tx(
             ))
         }
     };
-    batch.put_cf(cf_handle, &tx_hash.hash, tx.signature);
+    batch.put_cf(cf_handle, &tx_hash, tx.signature);
 
     match db.write(batch) {
         Ok(_) => return Ok(tx_hash),
@@ -71,7 +71,7 @@ pub(crate) async fn write_tx(
 #[inline]
 pub(crate) async fn read_tx(
     ledger_db: &KeyValueDatabase,
-    tx_hash: &Hash,
+    tx_hash: &String,
 ) -> Result<Transaction, String> {
     let db = &ledger_db.db;
 
@@ -99,7 +99,7 @@ pub(crate) async fn read_tx(
             }
         };
 
-        tx_value_result[idx] = match db.get_cf(cf_handle, &tx_hash.hash) {
+        tx_value_result[idx] = match db.get_cf(cf_handle, &tx_hash) {
             Ok(val) => match val {
                 Some(v) => match std::str::from_utf8(&v) {
                     Ok(vs) => vs.to_string(),
@@ -113,7 +113,7 @@ pub(crate) async fn read_tx(
                 None => {
                     return Err(format!(
                         "No matched value with tx_hash in {}, {}",
-                        cfn, &tx_hash.hash,
+                        cfn, &tx_hash,
                     ));
                 }
             },
