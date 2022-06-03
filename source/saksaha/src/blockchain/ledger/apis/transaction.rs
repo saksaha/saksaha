@@ -1,8 +1,4 @@
-use crate::blockchain::{
-    blockchain::TxValue,
-    ledger::{tx_columns, Hashable},
-    Hash,
-};
+use crate::blockchain::{ledger::tx_columns, Hash, Hashable, Transaction};
 use database::KeyValueDatabase;
 use logger::tinfo;
 use rocksdb::WriteBatch;
@@ -11,14 +7,14 @@ use rocksdb::WriteBatch;
 pub(crate) async fn write_tx(
     // &self,
     ledger_db: &KeyValueDatabase,
-    tx_value: TxValue,
+    tx: Transaction,
 ) -> Result<Hash, String> {
     // let db = &self.ledger_db.db;
     let db = &ledger_db.db;
 
     let mut batch = WriteBatch::default();
 
-    let tx_hash = match tx_value.get_hash() {
+    let tx_hash = match tx.get_hash() {
         Ok(hash) => hash,
         Err(_) => return Err(format!("Failed to get hash from tx_value")),
     };
@@ -32,7 +28,7 @@ pub(crate) async fn write_tx(
             ))
         }
     };
-    batch.put_cf(cf_handle, &tx_hash.hash, tx_value.created_at);
+    batch.put_cf(cf_handle, &tx_hash.hash, tx.created_at);
 
     let cf_handle = match db.cf_handle(tx_columns::DATA) {
         Some(h) => h,
@@ -43,7 +39,7 @@ pub(crate) async fn write_tx(
             ))
         }
     };
-    batch.put_cf(cf_handle, &tx_hash.hash, tx_value.data);
+    batch.put_cf(cf_handle, &tx_hash.hash, tx.data);
 
     let cf_handle = match db.cf_handle(tx_columns::PI) {
         Some(h) => h,
@@ -54,7 +50,7 @@ pub(crate) async fn write_tx(
             ))
         }
     };
-    batch.put_cf(cf_handle, &tx_hash.hash, tx_value.pi);
+    batch.put_cf(cf_handle, &tx_hash.hash, tx.pi);
 
     let cf_handle = match db.cf_handle(tx_columns::SIG_VEC) {
         Some(h) => h,
@@ -65,7 +61,7 @@ pub(crate) async fn write_tx(
             ))
         }
     };
-    batch.put_cf(cf_handle, &tx_hash.hash, tx_value.sig_vec);
+    batch.put_cf(cf_handle, &tx_hash.hash, tx.sig_vec);
 
     match db.write(batch) {
         Ok(_) => return Ok(tx_hash),
@@ -79,7 +75,7 @@ pub(crate) async fn write_tx(
 pub(crate) async fn read_tx(
     ledger_db: &KeyValueDatabase,
     tx_hash: &Hash,
-) -> Result<TxValue, String> {
+) -> Result<Transaction, String> {
     // let db = &self.ledger_db.db;
     let db = &ledger_db.db;
 
@@ -135,7 +131,7 @@ pub(crate) async fn read_tx(
         };
     }
 
-    Ok(TxValue {
+    Ok(Transaction {
         created_at: tx_value_result[0].clone(),
         data: tx_value_result[1].clone(),
         sig_vec: tx_value_result[2].clone(),

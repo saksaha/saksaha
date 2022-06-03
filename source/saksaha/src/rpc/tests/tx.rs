@@ -3,7 +3,7 @@ use super::utils::test_utils;
 #[cfg(test)]
 mod test_suite {
     use super::*;
-    use crate::blockchain::ledger::{for_test, Hashable};
+    use crate::blockchain::{ledger_for_test, Hashable};
     use crate::rpc::response::{ErrorResponse, SuccessResponse};
     use hyper::body::Buf;
     use hyper::{Body, Client, Method, Request, Uri};
@@ -68,7 +68,7 @@ mod test_suite {
             let old_tx_hash =
                 (&dummy_tx_val).get_hash().expect("fail to get hash");
 
-            for_test::delete_tx(&ledger, &old_tx_hash.hash)
+            ledger_for_test::delete_tx(&ledger, &old_tx_hash.hash)
                 .expect("Tx should be deleted");
 
             let _tx_hash = ledger
@@ -136,7 +136,7 @@ mod test_suite {
             let old_tx_hash =
                 (&dummy_tx_val).get_hash().expect("fail to get hash");
 
-            for_test::delete_tx(&ledger, &old_tx_hash.hash)
+            ledger_for_test::delete_tx(&ledger, &old_tx_hash.hash)
                 .expect("Tx should be deleted");
 
             let tx_hash = ledger

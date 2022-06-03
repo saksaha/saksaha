@@ -5,7 +5,7 @@ pub(super) mod test_utils {
     use crate::rpc::{RPCArgs, RPC};
     use crate::system::SystemHandle;
     use crate::{
-        blockchain::{Blockchain, BlockchainArgs, TxValue},
+        blockchain::{Blockchain, BlockchainArgs, Transaction},
         node::LocalNode,
     };
     use p2p_addr::{AddrStatus, UnknownAddr};
@@ -183,8 +183,8 @@ pub(super) mod test_utils {
         blockchain
     }
 
-    pub(crate) fn make_dummy_value() -> TxValue {
-        TxValue {
+    pub(crate) fn make_dummy_value() -> Transaction {
+        Transaction {
             pi: String::from("0x111"),
             sig_vec: String::from("0x1111"),
             created_at: String::from("1346546123"),
