@@ -5,6 +5,7 @@ use super::P2PMonitor;
 use super::{dial_scheduler::P2PDialScheduler, server::Server};
 use crate::node::LocalNode;
 use colored::Colorize;
+use log::info;
 use logger::tinfo;
 use p2p_addr::UnknownAddr;
 use p2p_discovery::{Discovery, DiscoveryArgs};
@@ -56,9 +57,7 @@ impl P2PHost {
                 p2p_host_args.public_key_str,
             )?;
 
-            tinfo!(
-                "saksaha",
-                "p2p",
+            info!(
                 "Created p2p identity, public_key_str: {}",
                 id.public_key_str.yellow(),
             );

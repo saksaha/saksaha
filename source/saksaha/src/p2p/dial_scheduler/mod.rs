@@ -2,6 +2,7 @@ mod handshake;
 
 use super::task::P2PTask;
 use handshake::HandshakeDialLoop;
+use log::info;
 use logger::tinfo;
 use p2p_discovery::AddrsIterator;
 use p2p_identity::Identity;
@@ -49,9 +50,7 @@ impl P2PDialScheduler {
             handshake_dial_loop,
         };
 
-        tinfo!(
-            "saksaha",
-            "p2p",
+        info!(
             "P2P dial scheduler is initialized. Disc dial min \
             interval: {:?}",
             p2p_dial_interval,

@@ -25,11 +25,6 @@ impl Script for Dev {
 
         std::env::set_var("RUST_BACKTRACE", "1");
 
-        if std::env::var("LOG_LEVEL").is_err() {
-            log!("LOG_LEVEL env var is not given, setting it to debug");
-            std::env::set_var("LOG_LEVEL", "debug");
-        }
-
         Cmd::new(program)
             .args(args)
             .stdout(Stdio::inherit())

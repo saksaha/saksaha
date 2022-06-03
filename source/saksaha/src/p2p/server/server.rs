@@ -1,4 +1,5 @@
 use super::handler::Handler;
+use log::{debug, warn};
 use logger::{tdebug, terr, tinfo, twarn};
 use p2p_discovery::AddrTable;
 use p2p_identity::Identity;
@@ -77,12 +78,7 @@ impl Server {
             let socket = match self.accept().await {
                 Ok(s) => s,
                 Err(err) => {
-                    twarn!(
-                        "saksaha",
-                        "p2p",
-                        "Error accepting tcp request, err: {}",
-                        err
-                    );
+                    warn!("Error accepting tcp request, err: {}", err);
 
                     continue;
                 }
@@ -90,9 +86,7 @@ impl Server {
 
             let conn = match Connection::new(socket) {
                 Ok(c) => {
-                    tdebug!(
-                        "saksaha",
-                        "p2p",
+                    debug!(
                         "Accepted a tcp connection from source, \
                         peer_addr: {:?}",
                         c.socket_addr,
@@ -101,12 +95,7 @@ impl Server {
                     c
                 }
                 Err(err) => {
-                    tdebug!(
-                        "saksaha",
-                        "p2p",
-                        "(callee) Cannot create a connection, err: {}",
-                        err,
-                    );
+                    debug!("(callee) Cannot create a connection, err: {}", err,);
 
                     continue;
                 }
@@ -124,12 +113,7 @@ impl Server {
                 if let Err(err) =
                     handler.run(conn, identity, peer_table, addr_table).await
                 {
-                    twarn!(
-                        "saksaha",
-                        "p2p",
-                        "Error handling p2p request, err: {}",
-                        err,
-                    );
+                    warn!("Error handling p2p request, err: {}", err,);
                 }
             });
         }
