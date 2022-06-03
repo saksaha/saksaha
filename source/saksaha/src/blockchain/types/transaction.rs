@@ -1,8 +1,7 @@
-use std::time::SystemTime;
-
-use super::{Hash, Hashable};
+use super::Hashable;
 use serde::{Deserialize, Serialize};
 use sha3::{Digest, Sha3_256};
+use std::time::SystemTime;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub(crate) struct Transaction {
@@ -13,7 +12,7 @@ pub(crate) struct Transaction {
 }
 
 impl Hashable for Transaction {
-    fn get_hash(&self) -> Result<Hash, String> {
+    fn get_hash(&self) -> Result<String, String> {
         let hash = {
             let mut h = Sha3_256::new();
             let v = match serde_json::to_value(&self) {
@@ -29,8 +28,8 @@ impl Hashable for Transaction {
             h.finalize()
         };
 
-        Ok(Hash {
-            hash: format!("{:x}", hash),
-        })
+        let h = format!("{:x}", hash);
+
+        Ok(h)
     }
 }

@@ -24,27 +24,27 @@ mod test {
         vec![
             Transaction {
                 pi: String::from("0x111"),
-                sig_vec: String::from("0x1111"),
+                signature: String::from("0x1111"),
                 created_at: String::from("1346546123"),
-                data: String::from("one"),
+                data: String::from("one").as_bytes().to_vec(),
             },
             Transaction {
                 pi: String::from("0x222"),
-                sig_vec: String::from("0x2222"),
+                signature: String::from("0x2222"),
                 created_at: String::from("1346546124"),
-                data: String::from("two"),
+                data: String::from("two").as_bytes().to_vec(),
             },
             Transaction {
                 pi: String::from("0x333"),
-                sig_vec: String::from("0x3333"),
+                signature: String::from("0x3333"),
                 created_at: String::from("1346546125"),
-                data: String::from("three"),
+                data: String::from("three").as_bytes().to_vec(),
             },
             Transaction {
                 pi: String::from("0x444"),
-                sig_vec: String::from("0x4444"),
+                signature: String::from("0x4444"),
                 created_at: String::from("1346546126"),
-                data: String::from("four"),
+                data: String::from("four").as_bytes().to_vec(),
             },
         ]
     }
