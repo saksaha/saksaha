@@ -1,15 +1,9 @@
-mod blockchain;
-mod events;
-mod ledger;
-mod types;
-mod vm;
+use blockchain::{Blockchain, BlockchainArgs};
 
-#[cfg(test)]
-mod tests;
+pub(crate) async fn create_blockchain(
+    app_prefix: String,
+) -> Result<Blockchain, String> {
+    let blockchain_args = BlockchainArgs { app_prefix };
 
-pub(crate) use blockchain::*;
-pub(crate) use events::*;
-pub(crate) use ledger::*;
-pub(crate) use types::*;
-
-pub(super) type BoxedError = Box<dyn std::error::Error + Send + Sync>;
+    Blockchain::init(blockchain_args).await
+}

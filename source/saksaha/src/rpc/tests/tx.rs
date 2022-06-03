@@ -20,7 +20,7 @@ mod test_suite {
 
         let uri: Uri = {
             let u = format!(
-                "http://localhost:{}/apis/v1/send_transaction",
+                "http://localhost:{}/apis/v0/send_transaction",
                 rpc_socket_addr.port()
             );
 
@@ -85,7 +85,7 @@ mod test_suite {
 
         let uri: Uri = {
             let u = format!(
-                "http://localhost:{}/apis/v1/get_transaction",
+                "http://localhost:{}/apis/v0/get_transaction",
                 rpc_socket_addr.port()
             );
 
@@ -155,7 +155,7 @@ mod test_suite {
 
         let uri: Uri = {
             let u = format!(
-                "http://localhost:{}/apis/v1/get_transaction",
+                "http://localhost:{}/apis/v0/get_transaction",
                 rpc_socket_addr.port()
             );
 

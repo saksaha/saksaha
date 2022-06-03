@@ -1,4 +1,4 @@
-use crate::rpc::routes::v1;
+use crate::rpc::routes::v0;
 use crate::system::SystemHandle;
 use hyper::{Body, Method, Request, Response, StatusCode};
 use std::future::Future;
@@ -9,30 +9,30 @@ fn get_routes() -> Vec<(Method, &'static str, Handler)> {
     vec![
         (
             Method::POST,
-            "/apis/v1/send_transaction",
+            "/apis/v0/send_transaction",
             Box::new(|req, sys_handle| {
-                Box::pin(v1::send_transaction(req, sys_handle))
+                Box::pin(v0::send_transaction(req, sys_handle))
             }),
         ),
         (
             Method::POST,
-            "/apis/v1/get_status",
+            "/apis/v0/get_status",
             Box::new(|req, sys_handle| {
-                Box::pin(v1::get_status(req, sys_handle))
+                Box::pin(v0::get_status(req, sys_handle))
             }),
         ),
         (
             Method::POST,
-            "/apis/v1/get_transaction",
+            "/apis/v0/get_transaction",
             Box::new(|req, sys_handle| {
-                Box::pin(v1::get_transaction(req, sys_handle))
+                Box::pin(v0::get_transaction(req, sys_handle))
             }),
         ),
         (
             Method::POST,
-            "/apis/v1/get_block",
+            "/apis/v0/get_block",
             Box::new(|req, sys_handle| {
-                Box::pin(v1::get_block(req, sys_handle))
+                Box::pin(v0::get_block(req, sys_handle))
             }),
         ),
     ]

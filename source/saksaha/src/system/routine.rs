@@ -1,6 +1,5 @@
 use super::{System, SystemArgs};
-use crate::blockchain::Blockchain;
-use crate::blockchain::BlockchainArgs;
+use crate::blockchain;
 use crate::config::Config;
 use crate::config::ProfiledConfig;
 use crate::machine::Machine;
@@ -143,11 +142,8 @@ impl Routine {
         };
 
         let blockchain = {
-            let blockchain_args = BlockchainArgs {
-                app_prefix: config.app_prefix,
-            };
-
-            Blockchain::init(blockchain_args).await?
+            let b = blockchain::create_blockchain(config.app_prefix).await?;
+            b
         };
 
         let machine = {
