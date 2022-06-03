@@ -3,6 +3,7 @@ use crate::system::SystemHandle;
 use hyper::server::conn::AddrIncoming;
 use hyper::service::Service;
 use hyper::{Body, Request, Response, Server};
+use log::warn;
 use logger::{tinfo, twarn};
 use std::future::Future;
 use std::pin::Pin;
@@ -56,7 +57,7 @@ impl RPCServer {
 
         match (&mut *hyper_server_guard).await {
             Ok(_) => {
-                twarn!("saksaha", "rpc", "RPC server has stopped");
+                warn!("RPC server has stopped");
             }
             Err(err) => {
                 return Err(format!("Error while running RPC, err: {}", err));

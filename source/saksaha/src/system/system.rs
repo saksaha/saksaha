@@ -1,9 +1,9 @@
+use super::routine::Routine;
+use log::{error, info};
 use logger::terr;
 use logger::tinfo;
 use once_cell::sync::OnceCell;
 use std::sync::Arc;
-
-use super::routine::Routine;
 
 pub(super) static INSTANCE: OnceCell<Arc<System>> = OnceCell::new();
 
@@ -42,13 +42,11 @@ impl System {
 
             match INSTANCE.set(system.clone()) {
                 Ok(_) => {
-                    tinfo!("saksaha", "system", "System is made static",);
+                    info!("System is made static",);
                     return Ok(system);
                 }
                 Err(_) => {
-                    terr!(
-                        "saksaha",
-                        "system",
+                    error!(
                         "Cannot make System static. Container is likely \
                         already full. Have you called this function before?",
                     );
@@ -71,12 +69,7 @@ impl System {
                 match routine.run(sys_args).await {
                     Ok(_) => (),
                     Err(err) => {
-                        terr!(
-                            "saksaha",
-                            "system",
-                            "Can't start node, err: {}",
-                            err,
-                        );
+                        error!("Can't start node, err: {}", err,);
 
                         System::shutdown();
                     }

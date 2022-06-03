@@ -1,5 +1,5 @@
 use super::{handler, P2PTask};
-use logger::{tdebug, terr};
+use log::{debug, error};
 use std::{
     sync::Arc,
     time::{Duration, SystemTime},
@@ -38,14 +38,12 @@ impl P2PTaskRuntime {
 
             let task = match task_queue.pop_front().await {
                 Ok(t) => {
-                    tdebug!("saksaha", "p2p", "Pop P2PTask - {}", t,);
+                    debug!("Pop P2PTask - {}", t,);
 
                     t
                 }
                 Err(err) => {
-                    terr!(
-                        "saksaha",
-                        "p2p",
+                    error!(
                         "Cannot handle p2p discovery task any more, \
                                 err: {}",
                         err,
@@ -54,8 +52,6 @@ impl P2PTaskRuntime {
                 }
             };
 
-            // let handler = Handler { task };
-            // handler.run().await;
             handler::run(task).await;
 
             utils_time::wait_until_min_interval(time_since, *task_min_interval)

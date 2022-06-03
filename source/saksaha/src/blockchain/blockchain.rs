@@ -1,6 +1,6 @@
-use crate::blockchain::vm::VM;
-
 use super::ledger::{Hashable, Ledger};
+use crate::blockchain::vm::VM;
+use log::info;
 use logger::tinfo;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -54,13 +54,13 @@ impl Blockchain {
             transactions: Arc::new(RwLock::new(vec![])),
         };
 
-        tinfo!("saksaha", "ledger", "Initialized Blockchain");
+        info!("Initialized Blockchain");
 
         Ok(blockchain)
     }
 
     pub(crate) async fn run(&self) {
-        tinfo!("saksaha", "blockchain", "Start running blockchain");
+        info!("Start running blockchain");
 
         self.vm.run_vm();
     }
