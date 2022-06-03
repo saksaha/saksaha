@@ -1,12 +1,4 @@
-pub use k256::{
-    ecdh::EphemeralSecret,
-    ecdsa::{
-        signature::{Signer, Verifier},
-        Signature, SigningKey, VerifyingKey,
-    },
-    elliptic_curve::sec1::ToEncodedPoint,
-    EncodedPoint, PublicKey, SecretKey,
-};
+use crypto::{SecretKey, Signature, SigningKey, ToEncodedPoint};
 
 // 64 + 1 (flag for whether the key is compressed or not)
 pub const PUBLIC_KEY_LEN: usize = 64 + 1;

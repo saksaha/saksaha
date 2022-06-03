@@ -3,7 +3,7 @@ use crate::{
     BoxedError,
 };
 use bytes::{BufMut, Bytes, BytesMut};
-use k256::ecdsa::Signature;
+use crypto::Signature;
 use p2p_frame::{Frame, Parse};
 
 pub(crate) struct WhoAreYou {

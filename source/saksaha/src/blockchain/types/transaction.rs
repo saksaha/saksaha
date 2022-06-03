@@ -1,3 +1,5 @@
+use std::time::SystemTime;
+
 use super::{Hash, Hashable};
 use serde::{Deserialize, Serialize};
 use sha3::{Digest, Sha3_256};
@@ -5,9 +7,9 @@ use sha3::{Digest, Sha3_256};
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub(crate) struct Transaction {
     pub(crate) created_at: String,
-    pub(crate) data: String,
+    pub(crate) data: Vec<u8>,
     pub(crate) pi: String,
-    pub(crate) sig_vec: String,
+    pub(crate) signature: String,
 }
 
 impl Hashable for Transaction {

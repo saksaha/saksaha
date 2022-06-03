@@ -58,7 +58,7 @@ pub(crate) async fn write_tx(
             ))
         }
     };
-    batch.put_cf(cf_handle, &tx_hash.hash, tx.sig_vec);
+    batch.put_cf(cf_handle, &tx_hash.hash, tx.signature);
 
     match db.write(batch) {
         Ok(_) => return Ok(tx_hash),
@@ -129,8 +129,8 @@ pub(crate) async fn read_tx(
 
     Ok(Transaction {
         created_at: tx_value_result[0].clone(),
-        data: tx_value_result[1].clone(),
-        sig_vec: tx_value_result[2].clone(),
+        data: tx_value_result[1].as_bytes().to_vec(),
+        signature: tx_value_result[2].clone(),
         pi: tx_value_result[3].clone(),
     })
 }
