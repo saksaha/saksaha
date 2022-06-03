@@ -1,3 +1,4 @@
+use super::BlockchainEvent;
 use super::{ledger::Ledger, Block, Hashable, Transaction};
 use crate::blockchain::vm::VM;
 use log::info;
@@ -10,11 +11,13 @@ use tokio::sync::{
     mpsc::{Receiver, Sender},
 };
 
+const BLOCKCHAIN_EVENT_QUEUE_CAPACITY: usize = 32;
+
 pub(crate) struct Blockchain {
     pub(crate) ledger: Ledger,
     pub(crate) vm: VM,
-    pub(crate) transaction_tx: Sender<String>,
-    pub(crate) transaction_rx: RwLock<Receiver<String>>,
+    pub(crate) bc_event_tx: Arc<Sender<BlockchainEvent>>,
+    pub(crate) bc_event_rx: RwLock<Receiver<BlockchainEvent>>,
     pub(crate) tx_pool: Arc<RwLock<TxPool>>,
 }
 
@@ -47,13 +50,13 @@ impl Blockchain {
         let vm = VM {};
 
         let blockchain = {
-            let (transaction_tx, transaction_rx) = mpsc::channel(32);
+            let (tx, rx) = mpsc::channel(BLOCKCHAIN_EVENT_QUEUE_CAPACITY);
 
             Blockchain {
                 ledger,
                 vm,
-                transaction_tx,
-                transaction_rx: RwLock::new(transaction_rx),
+                bc_event_tx: Arc::new(tx),
+                bc_event_rx: RwLock::new(rx),
                 tx_pool: Arc::new(RwLock::new(TxPool::new())),
             }
         };
@@ -81,7 +84,12 @@ impl Blockchain {
             return Err(format!("Cannot insert to tx pool, err: {}", err,));
         };
 
-        if let Err(err) = self.transaction_tx.send(tx_hash).await {
+        // Define at some other location
+        if let Err(err) = self
+            .bc_event_tx
+            .send(BlockchainEvent::TxPoolChange(tx_hash))
+            .await
+        {
             return Err(format!(
                 "Cannot send to tx queue, rx might have been closed, err: {}",
                 err,
