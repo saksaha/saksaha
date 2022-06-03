@@ -1,5 +1,6 @@
 use crate::p2p::task::P2PTask;
-use logger::{terr, tinfo};
+use log::error;
+use logger::terr;
 use p2p_discovery::AddrsIterator;
 use p2p_identity::Identity;
 use p2p_peer_table::PeerTable;
@@ -63,9 +64,7 @@ impl HandshakeDialLoop {
                     }
                 }
                 Err(err) => {
-                    terr!(
-                        "saksaha",
-                        "p2p",
+                    error!(
                         "Error (fatal) getting next addr node, err: {}",
                         err
                     );
@@ -82,12 +81,7 @@ async fn enqueue_task(task_queue: Arc<TaskQueue<P2PTask>>, task: P2PTask) {
     match task_queue.push_back(task).await {
         Ok(_) => {}
         Err(err) => {
-            terr!(
-                "saksaha",
-                "p2p",
-                "Error enqueueing a p2p handshake task, err: {}",
-                err
-            );
+            error!("Error enqueueing a p2p handshake task, err: {}", err);
         }
     }
 }

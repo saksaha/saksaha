@@ -1,5 +1,6 @@
 use colored::Colorize;
 use file_system::FS;
+use log::info;
 use logger::tinfo;
 use p2p_addr::UnknownAddr;
 use serde::{Deserialize, Serialize};
@@ -23,32 +24,25 @@ pub struct PersistedP2PConfig {
 
 impl PConfig {
     pub fn new(app_prefix: &String) -> Result<PConfig, String> {
-        tinfo!("saksaha", "pconfig", "Loading persisted config...");
+        info!("Loading persisted config...");
 
         let config_file_path = get_config_file_path(app_prefix)?;
 
-        tinfo!(
-            "saksaha",
-            "pconfig",
+        info!(
             "Config file path is resolved, app_prefix: {}, \
                 config_file_path: {:?}",
-            app_prefix,
-            config_file_path,
+            app_prefix, config_file_path,
         );
 
         if config_file_path.exists() {
-            tinfo!(
-                "saksaha",
-                "pconfig",
+            info!(
                 "Found a config file at the path, path: {:?}",
                 config_file_path,
             );
 
             return PConfig::load(config_file_path);
         } else {
-            tinfo!(
-                "saksaha",
-                "pconfig",
+            info!(
                 "Could not find a config file at the path. \
                     Creating a new one, path: {:?}",
                 config_file_path,
@@ -87,12 +81,7 @@ impl PConfig {
 
         let target_path_str = target_path.to_string_lossy().yellow();
 
-        tinfo!(
-            "saksaha",
-            "pconfig",
-            "Writing a config, target_path: {}",
-            target_path_str,
-        );
+        info!("Writing a config, target_path: {}", target_path_str,);
 
         match std::fs::write(target_path.to_owned(), serialized) {
             Ok(_) => Ok(pconfig),
@@ -106,9 +95,7 @@ impl PConfig {
     }
 
     pub fn load(path: PathBuf) -> Result<PConfig, String> {
-        tinfo!(
-            "saksaha",
-            "pconfig",
+        info!(
             "Loading pconfig from path: {}",
             path.to_string_lossy().yellow()
         );

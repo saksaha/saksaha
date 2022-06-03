@@ -11,7 +11,7 @@ use crate::rpc::RPCArgs;
 use crate::rpc::RPC;
 use crate::system::SystemHandle;
 use colored::Colorize;
-use logger::{terr, tinfo};
+use log::{error, info};
 use p2p_peer_table::PeerTable;
 use std::sync::Arc;
 
@@ -21,7 +21,7 @@ pub(super) struct Routine;
 
 impl Routine {
     pub(super) async fn run(&self, sys_args: SystemArgs) -> Result<(), String> {
-        tinfo!("saksaha", "system", "System is starting");
+        log::info!("System is starting");
 
         let config = {
             let profiled_config = match &sys_args.cfg_profile {
@@ -45,20 +45,13 @@ impl Routine {
                 },
             };
 
-            tinfo!(
-                "saksaha",
-                "system",
-                "Resolved app_prefix: {}",
-                app_prefix.yellow(),
-            );
+            info!("Resolved app_prefix: {}", app_prefix.yellow(),);
 
             let pconfig = {
                 let c = match PConfig::new(&app_prefix) {
                     Ok(p) => p,
                     Err(err) => {
-                        terr!(
-                            "saksaha",
-                            "sak",
+                        error!(
                             "Error creating a persisted configuration, err: {}",
                             err,
                         );
@@ -67,12 +60,7 @@ impl Routine {
                     }
                 };
 
-                tinfo!(
-                    "saksaha",
-                    "sak",
-                    "Persisted config loaded, conf: {:?}",
-                    c
-                );
+                info!("Persisted config loaded, conf: {:?}", c);
 
                 c
             };
@@ -85,7 +73,7 @@ impl Routine {
             }
         };
 
-        tinfo!("saksaha", "system", "Resolved config: {:?}", config);
+        info!("Resolved config: {:?}", config);
 
         let peer_table = {
             let ps =
@@ -97,9 +85,7 @@ impl Routine {
         let (rpc_socket, rpc_socket_addr) =
             match utils_net::bind_tcp_socket(config.rpc.rpc_port).await {
                 Ok((socket, socket_addr)) => {
-                    tinfo!(
-                        "saksaha",
-                        "system",
+                    info!(
                         "Bound tcp socket for RPC, addr: {}",
                         socket_addr.to_string().yellow(),
                     );
@@ -107,12 +93,7 @@ impl Routine {
                     (socket, socket_addr)
                 }
                 Err(err) => {
-                    terr!(
-                        "saksaha",
-                        "system",
-                        "Could not bind a tcp socket for RPC, err: {}",
-                        err
-                    );
+                    error!("Could not bind a tcp socket for RPC, err: {}", err);
                     return Err(err);
                 }
             };
@@ -120,9 +101,7 @@ impl Routine {
         let (p2p_socket, p2p_port) =
             match utils_net::bind_tcp_socket(config.p2p.p2p_port).await {
                 Ok((socket, socket_addr)) => {
-                    tinfo!(
-                        "saksaha",
-                        "system",
+                    info!(
                         "Bound tcp socket for P2P host, addr: {}",
                         socket_addr.to_string().yellow(),
                     );
@@ -130,9 +109,7 @@ impl Routine {
                     (socket, socket_addr.port())
                 }
                 Err(err) => {
-                    terr!(
-                        "saksaha",
-                        "system",
+                    error!(
                         "Could not bind a tcp socket for P2P Host, err: {}",
                         err
                     );
@@ -207,8 +184,6 @@ impl Routine {
             let rpc_args = RPCArgs {
                 sys_handle,
                 rpc_socket,
-                // machine: machine.clone(),
-                // p2p_monitor,
             };
 
             RPC::init(rpc_args)?
@@ -216,11 +191,9 @@ impl Routine {
 
         let system_thread = tokio::spawn(async move {
             tokio::join!(
-                // rpc.run(rpc_socket, rpc_socket_addr),
                 rpc.run(),
                 p2p_host.run(),
                 local_node.run(),
-                // blockchain.run(),
                 machine.run(),
             );
         });
@@ -229,18 +202,14 @@ impl Routine {
             c = tokio::signal::ctrl_c() => {
                 match c {
                     Ok(_) => {
-                        tinfo!(
-                            "sahsaha",
-                            "system",
+                        info!(
                             "ctrl+k is pressed.",
                         );
 
                         System::shutdown();
                     },
                     Err(err) => {
-                        terr!(
-                            "saksaha",
-                            "system",
+                        error!(
                             "Unexpected error while waiting for \
                                 ctrl+p, err: {}",
                             err,
@@ -253,9 +222,7 @@ impl Routine {
             _ = system_thread => {}
         );
 
-        tinfo!(
-            "saksaha",
-            "system",
+        info!(
             "System main routine terminated. This is likely not what you \
             have expected."
         );

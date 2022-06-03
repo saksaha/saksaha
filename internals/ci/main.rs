@@ -1,5 +1,5 @@
+mod ci_log;
 mod cli;
-mod log;
 mod script;
 mod scripts;
 

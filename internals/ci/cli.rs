@@ -1,4 +1,3 @@
-use super::log;
 use crate::script::Script;
 use crate::scripts;
 use crate::scripts::BoxedError;
@@ -14,7 +13,7 @@ pub(super) fn run_app() -> Result<(), String> {
 }
 
 fn define_app() -> Command<'static> {
-    let mut app = Command::new("CI")
+    let app = Command::new("CI")
         .version("0.0.1")
         .author("Saksaha <elden@saksaha.com>")
         .about("Rust saksaha implementation continuous integration toolsuite")

@@ -5,10 +5,35 @@ use crate::cli::CLIArgs;
 use logger::{terr, tinfo};
 use saksaha::system::{System, SystemArgs};
 
-fn main() {
-    print!("Saksaha is launching...\n");
+const RUST_LOG_ENV: &str = "
+    contract,\
+    crypto,\
+    database,\
+    file_system,\
+    logger,\
+    p2p_,\
+    proofs,\
+    saksaha,\
+    task_queue,\
+    utils_,\
+";
 
-    logger::init(false);
+fn main() {
+    println!("Saksaha is launching...");
+
+    {
+        if std::env::var("RUST_LOG").is_err() {
+            println!(
+                "LOG_LEVEL env var is not given, setting it to \
+                default 'sak' settings, {}",
+                RUST_LOG_ENV,
+            );
+
+            std::env::set_var("RUST_LOG", RUST_LOG_ENV);
+        }
+
+        logger::init(false);
+    }
 
     let cli_args: CLIArgs = match cli::get_args() {
         Ok(a) => {

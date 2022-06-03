@@ -1,4 +1,5 @@
 use crate::{pconfig::PConfig, system::SystemArgs};
+use log::{info, warn};
 use logger::{tinfo, twarn};
 use p2p_addr::UnknownAddr;
 
@@ -63,24 +64,18 @@ impl Config {
                 for (idx, addr) in a.iter().enumerate() {
                     let addr = match UnknownAddr::new_from_url(addr.clone()) {
                         Ok(ua) => {
-                            tinfo!(
-                                "saksaha",
-                                "pconfig",
+                            info!(
                                 "-- [{}] Successfully parsed bootstrap url, {}",
-                                idx,
-                                addr,
+                                idx, addr,
                             );
 
                             ua
                         }
                         Err(err) => {
-                            twarn!(
-                                "saksaha",
-                                "config",
+                            warn!(
                                 "Failed to parse \
                                 bootstrap url, url: {}, err: {}",
-                                addr,
-                                err
+                                addr, err
                             );
 
                             break;

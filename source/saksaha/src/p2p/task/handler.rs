@@ -1,5 +1,6 @@
 use crate::p2p::task::P2PTask;
-use logger::{tdebug, terr, twarn};
+use log::warn;
+use logger::twarn;
 use p2p_transport_ops::handshake::{self, HandshakeInitArgs};
 
 pub(crate) async fn run(task: P2PTask) {
@@ -18,9 +19,7 @@ pub(crate) async fn run(task: P2PTask) {
             match handshake::initiate_handshake(handshake_init_args).await {
                 Ok(_) => (),
                 Err(err) => {
-                    twarn!(
-                        "saksaha",
-                        "p2p",
+                    warn!(
                         "Error processing InitiateHandshake, discarding, \
                         err: {}",
                         err,

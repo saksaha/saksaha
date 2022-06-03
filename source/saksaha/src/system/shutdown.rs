@@ -1,14 +1,12 @@
 use super::System;
-use logger::{terr, tinfo};
+use log::{error, info};
 
 impl System {
     pub(crate) fn shutdown() {
         let _system = match super::system::INSTANCE.get() {
             Some(p) => p,
             None => {
-                terr!(
-                    "saksaha",
-                    "system",
+                error!(
                     "Process is not initialized. Consider calling \
                     Process:init() at the launch of the program"
                 );
@@ -17,7 +15,7 @@ impl System {
             }
         };
 
-        tinfo!("saksaha", "system", "Calling shutdown callback");
+        info!("Calling shutdown callback");
 
         std::process::exit(1);
     }

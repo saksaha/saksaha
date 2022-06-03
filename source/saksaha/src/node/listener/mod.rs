@@ -1,4 +1,5 @@
 use futures::{stream::SplitStream, StreamExt};
+use log::warn;
 use logger::twarn;
 use p2p_peer_table::Peer;
 use p2p_transport::Connection;
@@ -28,19 +29,13 @@ impl PeerListener {
                         if let Msg::Sync(s) = msg {
                             s
                         } else {
-                            twarn!(
-                                "saksaha",
-                                "node",
-                                "Msg arrived not SYNC type"
-                            );
+                            warn!("Msg arrived not SYNC type");
 
                             continue;
                         }
                     }
                     Err(err) => {
-                        twarn!(
-                            "saksaha",
-                            "node",
+                        warn!(
                             "Message parse fail, corrupt SYNC message, err: {}",
                             err,
                         );
@@ -48,11 +43,7 @@ impl PeerListener {
                     }
                 },
                 None => {
-                    twarn!(
-                        "saksaha",
-                        "node",
-                        "Message parse fail, corrupt SYNC message",
-                    );
+                    warn!("Message parse fail, corrupt SYNC message",);
 
                     continue;
                 }

@@ -1,6 +1,5 @@
 use super::ServerError;
 use futures::StreamExt;
-use logger::{tdebug, twarn};
 use p2p_discovery::AddrTable;
 use p2p_identity::Identity;
 use p2p_peer_table::PeerTable;
