@@ -181,16 +181,19 @@ pub(crate) async fn write_block(
         block.created_at, block_hash
     );
 
-    let cf_handle = match db.cf_handle(block_columns::CREATED_AT) {
-        Some(h) => h,
-        None => {
-            return Err(format!(
-                "Fail to open ledger columns {}",
-                block_columns::CREATED_AT
-            ))
-        }
-    };
-    batch.put_cf(cf_handle, &block_hash.hash, block.created_at);
+    {
+        let cf_handle = match db.cf_handle(block_columns::CREATED_AT) {
+            Some(h) => h,
+            None => {
+                return Err(format!(
+                    "Fail to open ledger columns {}",
+                    block_columns::CREATED_AT
+                ))
+            }
+        };
+
+        batch.put_cf(cf_handle, &block_hash.hash, block.created_at);
+    }
 
     let cf_handle = match db.cf_handle(block_columns::SIG_VEC) {
         Some(h) => h,
