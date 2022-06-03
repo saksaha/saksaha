@@ -6,6 +6,7 @@ use std::time::SystemTime;
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub(crate) struct Transaction {
     pub(crate) created_at: String,
+    #[serde(with = "serde_bytes")]
     pub(crate) data: Vec<u8>,
     pub(crate) pi: String,
     pub(crate) signature: String,

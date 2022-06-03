@@ -1,5 +1,5 @@
 use super::{listener::PeerListener, peer_node::PeerNode};
-use crate::machine::Machine;
+use crate::{blockchain::BlockchainEvent, machine::Machine};
 use futures::{stream::SplitStream, SinkExt, StreamExt};
 use logger::tdebug;
 use p2p_peer_table::{Peer, PeerTable};
@@ -36,16 +36,20 @@ async fn run_node_routine(peer_node: PeerNode, machine: Arc<Machine>) {
     let peer = peer_node.peer.clone();
     let mut conn = peer.transport.conn.write().await;
 
-    // let mut interval = tokio::time::interval(Duration::from_secs(3));
-    let mut transaction_rx = machine.blockchain.transaction_rx.write().await;
+    let mut bc_event_rx = machine.blockchain.bc_event_rx.write().await;
 
     tokio::select! {
-        Some(hash) = transaction_rx.recv() => {
-            println!("got hash from my rpc, {:?}", hash);
-            match conn.socket_tx.send(Msg::Sync(SyncMsg{value:1})).await {
-                Ok(_) => println!("successfully send a msg to other nodes"),
-                Err(err) => println!("failed to send a msg to other nodes, err: {}", err),
-            };
+        Some(ev) = bc_event_rx.recv() => {
+            match ev {
+                BlockchainEvent::TxPoolChange(tx_hash) => {
+                    println!("got hash from my rpc, {:?}", tx_hash);
+
+                    match conn.socket_tx.send(Msg::Sync(SyncMsg{value:1})).await {
+                        Ok(_) => println!("successfully send a msg to other nodes"),
+                        Err(err) => println!("failed to send a msg to other nodes, err: {}", err),
+                    };
+                },
+            }
         },
         msg = conn.socket_rx.next() => {
             println!("got hash from other node");
