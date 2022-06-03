@@ -1,22 +1,13 @@
-use crate::blockchain::{
-    blockchain::TxValue,
-    ledger::{block_columns, Hashable},
-    BlockValue, Hash,
-};
+use crate::blockchain::{ledger::block_columns, Block, Hash, Hashable};
 use database::KeyValueDatabase;
-use logger::tinfo;
-use rocksdb::{
-    DBRawIteratorWithThreadMode, DBWithThreadMode, SingleThreaded, WriteBatch,
-};
-use sha3::{Digest, Sha3_256};
+use log::debug;
+use rocksdb::WriteBatch;
 
 #[inline]
 pub(crate) async fn get_block(
-    // &self,
     ledger_db: &KeyValueDatabase,
     block_hash: &Hash,
-) -> Result<BlockValue, String> {
-    // let db = &self.ledger_db.db;
+) -> Result<Block, String> {
     let db = &ledger_db.db;
 
     let cf_handle = match db.cf_handle(block_columns::CREATED_AT) {
@@ -66,7 +57,7 @@ pub(crate) async fn get_block(
     };
     let get_cf_handle = db.get_cf(cf_handle, &block_hash.hash);
 
-    let tx_pool = match get_cf_handle.as_ref() {
+    let transactions = match get_cf_handle.as_ref() {
         Ok(val) => match val.as_ref() {
             Some(v) => {
                 let th: Vec<String> = serde_json::from_slice(&v).unwrap();
@@ -101,7 +92,7 @@ pub(crate) async fn get_block(
     };
     let get_cf_handle = db.get_cf(cf_handle, &block_hash.hash);
 
-    let sig_vec = match get_cf_handle.as_ref() {
+    let signatures = match get_cf_handle.as_ref() {
         Ok(val) => match val.as_ref() {
             Some(v) => {
                 let th: Vec<String> = serde_json::from_slice(&v).unwrap();
@@ -161,47 +152,48 @@ pub(crate) async fn get_block(
         }
     };
 
-    let bv = BlockValue {
-        tx_pool,
-        sig_vec,
+    let b = Block {
+        transactions,
+        signatures,
         created_at,
         height,
     };
-    println!("requested blockvalue: {:?}", &bv);
-    Ok(bv)
+
+    Ok(b)
 }
 
 #[inline]
 pub(crate) async fn write_block(
-    // &self,
     ledger_db: &KeyValueDatabase,
-    block_value: BlockValue,
+    block: Block,
 ) -> Result<Hash, String> {
-    // let db = &self.ledger_db.db;
     let db = &ledger_db.db;
 
     let mut batch = WriteBatch::default();
 
-    let block_hash = match block_value.get_hash() {
+    let block_hash = match block.get_hash() {
         Ok(hash) => hash,
         Err(_) => return Err(format!("Failed to get hash from block_value")),
     };
 
-    println!(
+    debug!(
         "write_block(): created_at: {}, block_hash: {:?}",
-        block_value.created_at, block_hash
+        block.created_at, block_hash
     );
 
-    let cf_handle = match db.cf_handle(block_columns::CREATED_AT) {
-        Some(h) => h,
-        None => {
-            return Err(format!(
-                "Fail to open ledger columns {}",
-                block_columns::CREATED_AT
-            ))
-        }
-    };
-    batch.put_cf(cf_handle, &block_hash.hash, block_value.created_at);
+    {
+        let cf_handle = match db.cf_handle(block_columns::CREATED_AT) {
+            Some(h) => h,
+            None => {
+                return Err(format!(
+                    "Fail to open ledger columns {}",
+                    block_columns::CREATED_AT
+                ))
+            }
+        };
+
+        batch.put_cf(cf_handle, &block_hash.hash, block.created_at);
+    }
 
     let cf_handle = match db.cf_handle(block_columns::SIG_VEC) {
         Some(h) => h,
@@ -212,7 +204,8 @@ pub(crate) async fn write_block(
             ))
         }
     };
-    let ser_sig_vec = match serde_json::to_string(&block_value.sig_vec) {
+
+    let ser_signatures = match serde_json::to_string(&block.signatures) {
         Ok(v) => v,
         Err(err) => {
             return Err(format!(
@@ -222,7 +215,8 @@ pub(crate) async fn write_block(
             ))
         }
     };
-    batch.put_cf(cf_handle, &block_hash.hash, ser_sig_vec);
+
+    batch.put_cf(cf_handle, &block_hash.hash, ser_signatures);
 
     let cf_handle = match db.cf_handle(block_columns::HEIGHT) {
         Some(h) => h,
@@ -233,7 +227,8 @@ pub(crate) async fn write_block(
             ))
         }
     };
-    batch.put_cf(cf_handle, &block_hash.hash, block_value.height);
+
+    batch.put_cf(cf_handle, &block_hash.hash, block.height);
 
     let cf_handle = match db.cf_handle(block_columns::TX_POOL) {
         Some(h) => h,
@@ -244,7 +239,8 @@ pub(crate) async fn write_block(
             ))
         }
     };
-    let ser_tx_pool = match serde_json::to_string(&block_value.tx_pool) {
+
+    let ser_transactions = match serde_json::to_string(&block.transactions) {
         Ok(v) => v,
         Err(err) => {
             return Err(format!(
@@ -254,7 +250,8 @@ pub(crate) async fn write_block(
             ))
         }
     };
-    batch.put_cf(cf_handle, &block_hash.hash, ser_tx_pool);
+
+    batch.put_cf(cf_handle, &block_hash.hash, ser_transactions);
 
     match db.write(batch) {
         Ok(_) => return Ok(block_hash),

@@ -1,8 +1,6 @@
-use super::ledger::{Hashable, Ledger};
+use super::{ledger::Ledger, Block, Hash, Hashable, Transaction};
 use crate::blockchain::vm::VM;
 use log::info;
-use logger::tinfo;
-use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
@@ -14,27 +12,6 @@ pub(crate) struct Blockchain {
 
 pub(crate) struct BlockchainArgs {
     pub(crate) app_prefix: String,
-}
-
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub(crate) struct TxValue {
-    pub(crate) created_at: String,
-    pub(crate) data: String,
-    pub(crate) pi: String,
-    pub(crate) sig_vec: String,
-}
-
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct Hash {
-    pub hash: String,
-}
-
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub(crate) struct BlockValue {
-    pub(crate) tx_pool: Vec<String>,
-    pub(crate) sig_vec: Vec<String>,
-    pub(crate) created_at: String,
-    pub(crate) height: String,
 }
 
 impl Blockchain {
@@ -67,24 +44,24 @@ impl Blockchain {
 
     pub(crate) async fn send_transaction(
         &self,
-        tx_value: TxValue,
+        tx: Transaction,
     ) -> Result<Hash, String> {
         let mut transactions_guard = self.transactions.write().await;
-        transactions_guard.push(tx_value.get_hash()?);
-        self.ledger.write_tx(tx_value).await
+        transactions_guard.push(tx.get_hash()?);
+        self.ledger.write_tx(tx).await
     }
 
     pub(crate) async fn get_transaction(
         &self,
         tx_hash: &Hash,
-    ) -> Result<TxValue, String> {
+    ) -> Result<Transaction, String> {
         self.ledger.read_tx(tx_hash).await
     }
 
     pub(crate) async fn get_block(
         &self,
-        block: &Hash,
-    ) -> Result<BlockValue, String> {
-        self.ledger.get_block(block).await
+        block_hash: &Hash,
+    ) -> Result<Block, String> {
+        self.ledger.get_block(block_hash).await
     }
 }

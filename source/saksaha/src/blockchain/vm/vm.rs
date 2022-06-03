@@ -1,6 +1,5 @@
-use wasmer::{imports, Instance, Module, Store, Value};
-
 use crate::blockchain::BoxedError;
+use wasmer::{imports, Instance, Module, Store, Value};
 
 pub(crate) struct VM {}
 

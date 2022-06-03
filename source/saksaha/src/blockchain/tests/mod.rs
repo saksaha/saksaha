@@ -2,8 +2,7 @@ use super::*;
 
 #[cfg(test)]
 mod test {
-    use super::blockchain::TxValue;
-    use crate::blockchain::{Blockchain, BlockchainArgs};
+    use crate::blockchain::{Blockchain, BlockchainArgs, Transaction};
 
     fn init() {
         let _ = env_logger::builder().is_test(true).try_init();
@@ -21,27 +20,27 @@ mod test {
         blockchain
     }
 
-    fn make_dummy_values() -> Vec<TxValue> {
+    fn make_dummy_values() -> Vec<Transaction> {
         vec![
-            TxValue {
+            Transaction {
                 pi: String::from("0x111"),
                 sig_vec: String::from("0x1111"),
                 created_at: String::from("1346546123"),
                 data: String::from("one"),
             },
-            TxValue {
+            Transaction {
                 pi: String::from("0x222"),
                 sig_vec: String::from("0x2222"),
                 created_at: String::from("1346546124"),
                 data: String::from("two"),
             },
-            TxValue {
+            Transaction {
                 pi: String::from("0x333"),
                 sig_vec: String::from("0x3333"),
                 created_at: String::from("1346546125"),
                 data: String::from("three"),
             },
-            TxValue {
+            Transaction {
                 pi: String::from("0x444"),
                 sig_vec: String::from("0x4444"),
                 created_at: String::from("1346546126"),
