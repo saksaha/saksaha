@@ -1,5 +1,5 @@
 mod block;
-mod tx;
+mod transaction;
 
 pub(super) use block::*;
-pub(super) use tx::*;
+pub(super) use transaction::*;

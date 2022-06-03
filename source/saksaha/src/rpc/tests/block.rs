@@ -3,9 +3,8 @@ use super::utils::test_utils;
 #[cfg(test)]
 mod test_suite {
     use super::*;
-    use crate::blockchain::ledger::for_test;
-    use crate::blockchain::{BlockValue, Hash};
-    use hyper::body::HttpBody;
+    use crate::blockchain::ledger_for_test;
+    use crate::blockchain::{Block, Hash};
     use hyper::{Body, Client, Method, Request, Uri};
 
     #[tokio::test(flavor = "multi_thread")]
@@ -18,7 +17,7 @@ mod test_suite {
 
         let client = Client::new();
 
-        let block_value = BlockValue {
+        let block_value = Block {
             tx_pool: vec![String::from("1"), String::from("2")],
             sig_vec: vec![String::from("1"), String::from("2")],
             created_at: String::from(""),

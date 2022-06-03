@@ -1,5 +1,5 @@
 use super::{apis, db, tx_columns};
-use crate::blockchain::{blockchain::TxValue, BlockValue, Hash};
+use crate::blockchain::{types::Hash, Block, Transaction};
 use database::KeyValueDatabase;
 use db::block_columns;
 use logger::tinfo;
@@ -31,30 +31,30 @@ impl Ledger {
 
     pub(crate) async fn write_tx(
         &self,
-        tx_value: TxValue,
+        tx: Transaction,
     ) -> Result<Hash, String> {
-        apis::write_tx(&self.ledger_db, tx_value).await
+        apis::write_tx(&self.ledger_db, tx).await
     }
 
     pub(crate) async fn read_tx(
         &self,
         tx_hash: &Hash,
-    ) -> Result<TxValue, String> {
+    ) -> Result<Transaction, String> {
         apis::read_tx(&self.ledger_db, tx_hash).await
     }
 
     pub(crate) async fn get_block(
         &self,
         block_hash: &Hash,
-    ) -> Result<BlockValue, String> {
+    ) -> Result<Block, String> {
         apis::get_block(&self.ledger_db, block_hash).await
     }
 
     pub(crate) async fn write_block(
         &self,
-        block_value: BlockValue,
+        block: Block,
     ) -> Result<Hash, String> {
-        apis::write_block(&self.ledger_db, block_value).await
+        apis::write_block(&self.ledger_db, block).await
     }
 
     pub fn iter(
@@ -68,58 +68,8 @@ impl Ledger {
     }
 }
 
-pub trait Hashable {
-    fn get_hash(&self) -> Result<Hash, String>;
-}
-
-impl Hashable for BlockValue {
-    fn get_hash(&self) -> Result<Hash, String> {
-        let hash = {
-            let mut h = Sha3_256::new();
-            let v = match serde_json::to_value(&self) {
-                Ok(v) => v,
-                Err(err) => {
-                    return Err(format!(
-                        "Failed to serialize self, err: {}",
-                        err
-                    ))
-                }
-            };
-            h.update(v.to_string());
-            h.finalize()
-        };
-
-        Ok(Hash {
-            hash: format!("{:x}", hash),
-        })
-    }
-}
-
-impl Hashable for TxValue {
-    fn get_hash(&self) -> Result<Hash, String> {
-        let hash = {
-            let mut h = Sha3_256::new();
-            let v = match serde_json::to_value(&self) {
-                Ok(v) => v,
-                Err(err) => {
-                    return Err(format!(
-                        "Failed to serialize self, err: {}",
-                        err
-                    ))
-                }
-            };
-            h.update(v.to_string());
-            h.finalize()
-        };
-
-        Ok(Hash {
-            hash: format!("{:x}", hash),
-        })
-    }
-}
-
 #[cfg(test)]
-pub(crate) mod for_test {
+pub mod ledger_for_test {
     use super::*;
 
     pub(crate) fn delete_tx(
