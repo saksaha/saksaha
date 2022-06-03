@@ -1,5 +1,6 @@
+use blockchain::{Block, Transaction};
+
 use super::Machine;
-use crate::blockchain::{Block, Transaction};
 
 // machine api
 impl Machine {

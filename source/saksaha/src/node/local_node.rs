@@ -1,10 +1,10 @@
 use super::{listener::PeerListener, peer_node::PeerNode};
-use crate::{blockchain::BlockchainEvent, machine::Machine};
+use crate::machine::Machine;
+use blockchain::BlockchainEvent;
 use futures::{stream::SplitStream, SinkExt, StreamExt};
-use logger::tdebug;
 use p2p_peer_table::{Peer, PeerTable};
 use p2p_transport::{Connection, Msg, P2PCodec, SyncMsg};
-use std::{sync::Arc, time::Duration};
+use std::sync::Arc;
 
 pub(crate) struct LocalNode {
     pub(crate) peer_table: Arc<PeerTable>,

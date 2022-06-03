@@ -1,9 +1,8 @@
+use super::profiled::ProfiledConfig;
 use crate::{pconfig::PConfig, system::SystemArgs};
 use log::{info, warn};
 use logger::{tinfo, twarn};
 use p2p_addr::UnknownAddr;
-
-use super::profiled::ProfiledConfig;
 
 #[derive(Debug)]
 pub(crate) struct Config {
