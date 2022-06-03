@@ -1,4 +1,4 @@
-use crate::blockchain::Blockchain;
+use blockchain::Blockchain;
 
 pub(crate) struct Machine {
     pub(crate) blockchain: Blockchain,

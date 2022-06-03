@@ -3,8 +3,7 @@ use super::utils::test_utils;
 #[cfg(test)]
 mod test_suite {
     use super::*;
-    use crate::blockchain::ledger_for_test;
-    use crate::blockchain::Block;
+    use blockchain::Block;
     use hyper::{Body, Client, Method, Request, Uri};
 
     #[tokio::test(flavor = "multi_thread")]
@@ -40,7 +39,7 @@ mod test_suite {
 
         let uri: Uri = {
             let u = format!(
-                "http://localhost:{}/apis/v1/get_block",
+                "http://localhost:{}/apis/v0/get_block",
                 rpc_socket_addr.port()
             );
 
