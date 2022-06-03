@@ -1,12 +1,5 @@
 use super::AddrStatus;
-use crypto::PublicKey;
-pub use k256::{
-    ecdh::EphemeralSecret,
-    ecdsa::{
-        signature::{Signer, Verifier},
-        Signature, SigningKey, VerifyingKey,
-    },
-};
+use crypto::{PublicKey, Signature};
 use tokio::sync::RwLock;
 
 #[derive(Debug)]

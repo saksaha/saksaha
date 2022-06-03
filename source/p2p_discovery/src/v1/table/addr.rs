@@ -16,14 +16,14 @@ pub mod for_test {
     use super::*;
     use crate::Slot;
     use chrono::Utc;
-    use crypto::Signature;
+    use crypto::{PublicKey, Signature};
     use p2p_addr::{AddrStatus, KnownAddr};
     use std::sync::Arc;
     use tokio::sync::{mpsc, RwLock};
 
     impl Addr {
         pub fn new_dummy(
-            public_key: k256::PublicKey,
+            public_key: PublicKey,
             public_key_str: String,
             sig: Signature,
             disc_port: u16,

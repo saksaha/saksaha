@@ -1,13 +1,5 @@
 use super::status::AddrStatus;
-pub use k256::{
-    ecdh::EphemeralSecret,
-    ecdsa::{
-        signature::{Signer, Verifier},
-        Signature, SigningKey, VerifyingKey,
-    },
-    elliptic_curve::sec1::ToEncodedPoint,
-    EncodedPoint, PublicKey, SecretKey,
-};
+use crypto::Signature;
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
 
