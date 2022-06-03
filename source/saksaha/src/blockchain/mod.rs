@@ -1,4 +1,5 @@
 mod blockchain;
+mod events;
 mod ledger;
 mod types;
 mod vm;
@@ -7,6 +8,7 @@ mod vm;
 mod tests;
 
 pub(crate) use blockchain::*;
+pub(crate) use events::*;
 pub(crate) use ledger::*;
 pub(crate) use types::*;
 

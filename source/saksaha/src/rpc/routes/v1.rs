@@ -2,6 +2,7 @@ use crate::blockchain::Transaction;
 use crate::rpc::response::{ErrorResult, SuccessResult};
 use crate::system::SystemHandle;
 use hyper::{Body, Request, Response, StatusCode};
+use log::warn;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
@@ -39,6 +40,8 @@ pub(crate) async fn send_transaction(
                             }
                         }
                         Err(err) => {
+                            warn!("Error parsing request param, err: {}", err);
+
                             return ErrorResult {
                                 id: String::from("1"),
                                 status_code: StatusCode::BAD_REQUEST,
