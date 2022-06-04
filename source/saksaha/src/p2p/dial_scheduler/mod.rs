@@ -3,7 +3,6 @@ mod handshake;
 use super::task::P2PTask;
 use handshake::HandshakeDialLoop;
 use log::info;
-use logger::tinfo;
 use p2p_discovery::AddrsIterator;
 use p2p_identity::Identity;
 use p2p_peer_table::PeerTable;

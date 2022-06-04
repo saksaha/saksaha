@@ -1,5 +1,5 @@
 use super::profiled::ProfiledConfig;
-use crate::{pconfig::PConfig, system::SystemArgs};
+use crate::{pconfig::PConfig, system::SystemRunArgs};
 use log::{info, warn};
 use logger::{tinfo, twarn};
 use p2p_addr::UnknownAddr;
@@ -43,7 +43,7 @@ pub(crate) struct DBConfig {}
 impl Config {
     pub(crate) fn new(
         app_prefix: String,
-        sys_args: &SystemArgs,
+        sys_run_args: &SystemRunArgs,
         pconfig: PConfig,
         profiled_config: Option<ProfiledConfig>,
     ) -> Result<Config, String> {
@@ -57,7 +57,7 @@ impl Config {
                 addrs = a.clone();
             }
 
-            if let Some(a) = &sys_args.bootstrap_urls {
+            if let Some(a) = &sys_run_args.bootstrap_urls {
                 addrs = vec![];
 
                 for (idx, addr) in a.iter().enumerate() {
@@ -92,22 +92,22 @@ impl Config {
             app_prefix: app_prefix.clone(),
             db: DBConfig {},
             rpc: RPCConfig {
-                rpc_port: sys_args.rpc_port,
+                rpc_port: sys_run_args.rpc_port,
             },
             p2p: P2PConfig {
-                disc_port: sys_args.disc_port,
-                disc_dial_interval: sys_args.disc_dial_interval,
-                disc_table_capacity: sys_args.disc_table_capacity,
-                disc_task_interval: sys_args.disc_task_interval,
-                disc_task_queue_capacity: sys_args.disc_task_queue_capacity,
-                p2p_task_interval: sys_args.p2p_task_interval,
-                p2p_task_queue_capacity: sys_args.p2p_task_queue_capacity,
-                p2p_peer_table_capacity: sys_args.p2p_peer_table_capacity,
-                p2p_dial_interval: sys_args.p2p_dial_interval,
-                p2p_port: sys_args.p2p_port,
-                p2p_max_conn_count: sys_args.p2p_max_conn_count,
-                addr_expire_duration: sys_args.addr_expire_duration,
-                addr_monitor_interval: sys_args.addr_monitor_interval,
+                disc_port: sys_run_args.disc_port,
+                disc_dial_interval: sys_run_args.disc_dial_interval,
+                disc_table_capacity: sys_run_args.disc_table_capacity,
+                disc_task_interval: sys_run_args.disc_task_interval,
+                disc_task_queue_capacity: sys_run_args.disc_task_queue_capacity,
+                p2p_task_interval: sys_run_args.p2p_task_interval,
+                p2p_task_queue_capacity: sys_run_args.p2p_task_queue_capacity,
+                p2p_peer_table_capacity: sys_run_args.p2p_peer_table_capacity,
+                p2p_dial_interval: sys_run_args.p2p_dial_interval,
+                p2p_port: sys_run_args.p2p_port,
+                p2p_max_conn_count: sys_run_args.p2p_max_conn_count,
+                addr_expire_duration: sys_run_args.addr_expire_duration,
+                addr_monitor_interval: sys_run_args.addr_monitor_interval,
                 secret: pconfig.p2p.secret.clone(),
                 public_key_str: pconfig.p2p.public_key_str.clone(),
                 bootstrap_addrs,

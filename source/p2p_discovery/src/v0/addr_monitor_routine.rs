@@ -1,5 +1,5 @@
 use super::AddrTable;
-use crate::Addr;
+use crate::DiscAddr;
 use logger::tdebug;
 use std::sync::Arc;
 use std::time::Duration;
@@ -18,7 +18,7 @@ impl AddrMonitorRoutine {
 
             let addr_map_lock = table.addr_map.read().await;
 
-            let addrs: Vec<Arc<Addr>> =
+            let addrs: Vec<Arc<DiscAddr>> =
                 addr_map_lock.values().map(|addr| addr.clone()).collect();
 
             drop(addr_map_lock);

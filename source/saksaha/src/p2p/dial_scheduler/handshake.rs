@@ -1,6 +1,5 @@
 use crate::p2p::task::P2PTask;
 use log::error;
-use logger::terr;
 use p2p_discovery::AddrsIterator;
 use p2p_identity::Identity;
 use p2p_peer_table::PeerTable;

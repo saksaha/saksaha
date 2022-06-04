@@ -1,6 +1,5 @@
 use super::handler::Handler;
 use log::{debug, warn};
-use logger::{tdebug, terr, tinfo, twarn};
 use p2p_discovery::AddrTable;
 use p2p_identity::Identity;
 use p2p_peer_table::PeerTable;
@@ -20,8 +19,6 @@ pub(crate) struct Server {
     peer_table: Arc<PeerTable>,
     addr_table: Arc<AddrTable>,
 }
-
-pub(super) type ServerError = Box<dyn std::error::Error + Send + Sync>;
 
 impl Server {
     pub fn new(
@@ -110,11 +107,7 @@ impl Server {
             let addr_table = self.addr_table.clone();
 
             tokio::spawn(async move {
-                if let Err(err) =
-                    handler.run(conn, identity, peer_table, addr_table).await
-                {
-                    warn!("Error handling p2p request, err: {}", err,);
-                }
+                handler.run(conn, identity, peer_table, addr_table).await;
             });
         }
     }

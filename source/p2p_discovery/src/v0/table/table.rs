@@ -1,5 +1,5 @@
 use super::{
-    addr::Addr,
+    addr::DiscAddr,
     slot::{Slot, SlotGuard},
 };
 use crate::AddrsIterator;
@@ -16,12 +16,12 @@ const DISC_TABLE_CAPACITY: usize = 5;
 
 /// TODO Table shall have Kademlia flavored buckets later on
 pub struct AddrTable {
-    pub(crate) addr_map: Arc<RwLock<HashMap<String, Arc<Addr>>>>,
+    pub(crate) addr_map: Arc<RwLock<HashMap<String, Arc<DiscAddr>>>>,
     slots_tx: Arc<UnboundedSender<Arc<Slot>>>,
     slots_rx: RwLock<UnboundedReceiver<Arc<Slot>>>,
-    known_addrs_tx: Arc<Sender<Arc<Addr>>>,
-    known_addrs_rx: Arc<RwLock<Receiver<Arc<Addr>>>>,
-    addr_recycle_tx: Arc<UnboundedSender<Arc<Addr>>>,
+    known_addrs_tx: Arc<Sender<Arc<DiscAddr>>>,
+    known_addrs_rx: Arc<RwLock<Receiver<Arc<DiscAddr>>>>,
+    addr_recycle_tx: Arc<UnboundedSender<Arc<DiscAddr>>>,
     addrs_it_mutex: Arc<Mutex<usize>>,
 }
 
@@ -95,7 +95,7 @@ impl AddrTable {
     pub async fn get_mapped_addr(
         &self,
         public_key_str: &String,
-    ) -> Option<Arc<Addr>> {
+    ) -> Option<Arc<DiscAddr>> {
         let addr_map = self.addr_map.read().await;
 
         addr_map.get(public_key_str).map(|n| n.clone())
@@ -141,7 +141,7 @@ impl AddrTable {
 
     pub(crate) async fn enqueue_known_addr(
         &self,
-        node: Arc<Addr>,
+        node: Arc<DiscAddr>,
     ) -> Result<(), String> {
         match self.known_addrs_tx.send(node).await {
             Ok(_) => Ok(()),
@@ -179,8 +179,8 @@ impl AddrTable {
 
     pub(crate) async fn insert_mapping(
         &self,
-        addr: Arc<Addr>,
-    ) -> Result<Option<Arc<Addr>>, String> {
+        addr: Arc<DiscAddr>,
+    ) -> Result<Option<Arc<DiscAddr>>, String> {
         let mut addr_map = self.addr_map.write().await;
         let key = &addr.known_addr.public_key_str;
 
@@ -207,7 +207,7 @@ impl AddrTable {
     pub(crate) async fn remove_mapping(
         &self,
         public_key_str: &String,
-    ) -> Option<Arc<Addr>> {
+    ) -> Option<Arc<DiscAddr>> {
         let mut addr_map = self.addr_map.write().await;
 
         addr_map.remove(public_key_str)
