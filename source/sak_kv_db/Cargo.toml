@@ -1,5 +1,5 @@
 [package]
-name = "sak_key_db"
+name = "sak_kv_db"
 version = "0.1.0"
 edition = "2018"
 

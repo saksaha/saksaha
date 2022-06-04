@@ -1,5 +1,5 @@
 use rocksdb::WriteBatch;
-use sak_key_db::KeyValueDatabase;
+use sak_kv_db::KeyValueDatabase;
 
 use crate::{tx_columns, Hashable, Transaction};
 

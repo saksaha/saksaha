@@ -1,7 +1,7 @@
 use rocksdb::ColumnFamilyDescriptor;
 use rocksdb::Options;
 use sak_fs::FS;
-use sak_key_db::KeyValueDatabase;
+use sak_kv_db::KeyValueDatabase;
 
 pub(crate) mod tx_columns {
     pub const TX_HASH: &str = "tx_hash";
