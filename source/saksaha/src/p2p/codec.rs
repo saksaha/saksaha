@@ -1,6 +1,6 @@
 use crate::BoxedError;
 use bytes::BytesMut;
-use p2p_frame::{frame_io, Frame, Parse};
+use sak_p2p_frame::{frame_io, Frame, Parse};
 use tokio_util::codec::{Decoder, Encoder};
 
 pub struct P2PCodec {}

@@ -1,14 +1,12 @@
-use std::sync::Arc;
-
 use crate::p2p::task::P2PTask;
 use log::{debug, warn};
-use p2p_peer_table::{Peer, PeerStatus};
-use p2p_transport::{
+use sak_p2p_ptable::{Peer, PeerStatus};
+use sak_p2p_trpt::{
     handshake::{self, HandshakeInitArgs},
     Connection,
 };
+use std::sync::Arc;
 use tokio::{net::TcpStream, sync::RwLock};
-// use p2p_transport_ops::handshake::{self, HandshakeInitArgs};
 
 pub(crate) async fn run(task: P2PTask) {
     match task {
@@ -41,7 +39,7 @@ pub(crate) async fn run(task: P2PTask) {
 
             let endpoint = known_addr.p2p_endpoint();
 
-            if utils_net::is_my_endpoint(identity.p2p_port, &endpoint) {
+            if sak_utils_net::is_my_endpoint(identity.p2p_port, &endpoint) {
                 warn!(
                     "Cannot make a request to myself, abandoning handshake \
                     init task, endopint: {}",

@@ -3,8 +3,8 @@ use super::utils::test_utils;
 #[cfg(test)]
 mod test_suite {
     use super::*;
-    use blockchain::Block;
     use hyper::{Body, Client, Method, Request, Uri};
+    use sak_blockchain::Block;
 
     #[tokio::test(flavor = "multi_thread")]
     async fn test_rpc_client_and_get_block() {

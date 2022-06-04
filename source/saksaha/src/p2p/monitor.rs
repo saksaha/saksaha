@@ -1,5 +1,5 @@
-use p2p_discovery::Discovery;
-use p2p_peer_table::PeerTable;
+use sak_p2p_disc::Discovery;
+use sak_p2p_ptable::PeerTable;
 use std::sync::Arc;
 
 pub(crate) struct P2PMonitor {

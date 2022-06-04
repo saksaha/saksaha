@@ -2,20 +2,12 @@ mod app;
 mod cli;
 
 use crate::cli::CLIArgs;
-use logger::{terr, tinfo};
+use sak_logger::{terr, tinfo};
 use saksaha::system::{System, SystemRunArgs};
 
 const RUST_LOG_ENV: &str = "
-    contract,\
-    crypto,\
-    database,\
-    file_system,\
-    logger,\
-    p2p_,\
-    proofs,\
-    saksaha,\
-    task_queue,\
-    utils_,\
+    sak_,
+    saksaha
 ";
 
 fn main() {
@@ -23,16 +15,10 @@ fn main() {
 
     {
         if std::env::var("RUST_LOG").is_err() {
-            println!(
-                "LOG_LEVEL env var is not given, setting it to \
-                default 'sak' settings, {}",
-                RUST_LOG_ENV,
-            );
-
             std::env::set_var("RUST_LOG", RUST_LOG_ENV);
         }
 
-        logger::init(false);
+        sak_logger::init(false);
     }
 
     let cli_args: CLIArgs = match cli::get_args() {

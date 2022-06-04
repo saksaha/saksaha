@@ -1,10 +1,10 @@
 use super::{handler, P2PTask};
 use log::{debug, error};
+use sak_task_queue::TaskQueue;
 use std::{
     sync::Arc,
     time::{Duration, SystemTime},
 };
-use task_queue::TaskQueue;
 
 const TASK_MIN_INTERVAL: u64 = 1000;
 
@@ -54,8 +54,11 @@ impl P2PTaskRuntime {
 
             handler::run(task).await;
 
-            utils_time::wait_until_min_interval(time_since, *task_min_interval)
-                .await;
+            sak_utils_time::wait_until_min_interval(
+                time_since,
+                *task_min_interval,
+            )
+            .await;
         }
     }
 }

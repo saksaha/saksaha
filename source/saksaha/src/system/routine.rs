@@ -12,7 +12,7 @@ use crate::rpc::RPC;
 use crate::system::SystemHandle;
 use colored::Colorize;
 use log::{error, info};
-use p2p_peer_table::PeerTable;
+use sak_p2p_ptable::PeerTable;
 use std::sync::Arc;
 
 const APP_PREFIX: &str = "default";
@@ -93,7 +93,7 @@ impl Routine {
         };
 
         let (rpc_socket, _) =
-            match utils_net::bind_tcp_socket(config.rpc.rpc_port).await {
+            match sak_utils_net::bind_tcp_socket(config.rpc.rpc_port).await {
                 Ok((socket, socket_addr)) => {
                     info!(
                         "Bound tcp socket for RPC, addr: {}",
@@ -109,7 +109,7 @@ impl Routine {
             };
 
         let (p2p_socket, p2p_port) =
-            match utils_net::bind_tcp_socket(config.p2p.p2p_port).await {
+            match sak_utils_net::bind_tcp_socket(config.p2p.p2p_port).await {
                 Ok((socket, socket_addr)) => {
                     info!(
                         "Bound tcp socket for P2P host, addr: {}",

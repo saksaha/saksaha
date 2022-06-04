@@ -4,12 +4,12 @@ mod test_suite {
         server::Server,
         task::{runtime::P2PTaskRuntime, P2PTask},
     };
-    use crypto::{PublicKey, Signature};
-    use p2p_discovery::{Addr, Discovery, DiscoveryArgs};
-    use p2p_identity::{Credential, Identity};
-    use p2p_peer_table::PeerTable;
+    use sak_crypto::{PublicKey, Signature};
+    use sak_p2p_disc::{DiscAddr, Discovery, DiscoveryArgs};
+    use sak_p2p_id::{Credential, Identity};
+    use sak_p2p_ptable::PeerTable;
+    use sak_task_queue::TaskQueue;
     use std::{sync::Arc, time::Duration};
-    use task_queue::TaskQueue;
 
     fn init() {
         let _ = env_logger::builder().is_test(true).try_init();
@@ -21,8 +21,8 @@ mod test_suite {
         src_sig: Signature,
         p2p_port: u16,
         disc_port: u16,
-    ) -> Arc<Addr> {
-        let a = Addr::new_dummy(
+    ) -> Arc<DiscAddr> {
+        let a = DiscAddr::new_dummy(
             public_key,
             public_key_str,
             src_sig,
@@ -42,7 +42,7 @@ mod test_suite {
         Arc<Identity>,
         Arc<PeerTable>,
     ) {
-        let (p2p_socket, p2p_port) = utils_net::bind_tcp_socket(p2p_port)
+        let (p2p_socket, p2p_port) = sak_utils_net::bind_tcp_socket(p2p_port)
             .await
             .expect("p2p socket should be initialized");
 
@@ -151,10 +151,11 @@ mod test_suite {
             let p2p_port = 0;
             let disc_port = 35518;
 
-            let public_key = crypto::convert_public_key_str_into_public_key(
-                &identity_1.credential.public_key_str,
-            )
-            .unwrap();
+            let public_key =
+                sak_crypto::convert_public_key_str_into_public_key(
+                    &identity_1.credential.public_key_str,
+                )
+                .unwrap();
 
             let addr = get_dummy_handshake_init_args(
                 public_key,

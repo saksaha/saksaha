@@ -1,8 +1,8 @@
 use colored::Colorize;
-use file_system::FS;
 use log::info;
-use logger::tinfo;
-use p2p_addr::UnknownAddr;
+use sak_fs::FS;
+use sak_logger::tinfo;
+use sak_p2p_addr::UnknownAddr;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
@@ -123,8 +123,8 @@ impl PConfig {
     }
 
     fn create_new_config() -> PConfig {
-        let sk = crypto::generate_key();
-        let (sk, pk) = crypto::encode_into_key_pair(sk);
+        let sk = sak_crypto::generate_key();
+        let (sk, pk) = sak_crypto::encode_into_key_pair(sk);
         let pconf = PConfig {
             p2p: PersistedP2PConfig {
                 secret: sk,

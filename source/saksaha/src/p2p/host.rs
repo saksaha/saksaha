@@ -5,12 +5,12 @@ use super::P2PMonitor;
 use super::{dial_scheduler::P2PDialScheduler, server::Server};
 use colored::Colorize;
 use log::info;
-use p2p_addr::UnknownAddr;
-use p2p_discovery::{Discovery, DiscoveryArgs};
-use p2p_identity::{Credential, Identity};
-use p2p_peer_table::PeerTable;
+use sak_p2p_addr::UnknownAddr;
+use sak_p2p_disc::{Discovery, DiscoveryArgs};
+use sak_p2p_id::{Credential, Identity};
+use sak_p2p_ptable::PeerTable;
+use sak_task_queue::TaskQueue;
 use std::sync::Arc;
-use task_queue::TaskQueue;
 use tokio::net::TcpListener;
 
 const P2P_TASK_QUEUE_CAPACITY: usize = 10;

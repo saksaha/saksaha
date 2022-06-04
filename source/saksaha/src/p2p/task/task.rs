@@ -1,6 +1,6 @@
-use p2p_discovery::DiscAddr;
-use p2p_identity::Identity;
-use p2p_peer_table::PeerTable;
+use sak_p2p_disc::DiscAddr;
+use sak_p2p_id::Identity;
+use sak_p2p_ptable::PeerTable;
 use std::sync::Arc;
 
 pub(crate) enum P2PTask {
