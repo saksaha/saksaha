@@ -1,12 +1,15 @@
-use super::ServerError;
+use chrono::Utc;
 use futures::StreamExt;
+use log::warn;
 use p2p_discovery::AddrTable;
 use p2p_identity::Identity;
-use p2p_peer_table::PeerTable;
-use p2p_transport::{Connection, Handshake, Msg};
-use p2p_transport_ops::handshake::{self, HandshakeRecvArgs};
+use p2p_peer_table::{Peer, PeerStatus, PeerTable};
+use p2p_transport::{
+    handshake::{self, HandshakeRecvArgs},
+    Connection, Handshake, Msg,
+};
 use std::sync::Arc;
-use tokio::sync::Semaphore;
+use tokio::sync::{RwLock, Semaphore};
 
 pub(super) struct Handler {
     pub(crate) conn_semaphore: Arc<Semaphore>,
@@ -19,7 +22,7 @@ impl Handler {
         identity: Arc<Identity>,
         peer_table: Arc<PeerTable>,
         addr_table: Arc<AddrTable>,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    ) {
         match conn.socket_rx.next().await {
             Some(maybe_msg) => match maybe_msg {
                 Ok(msg) => match msg {
@@ -29,18 +32,24 @@ impl Handler {
                         )
                         .await
                     }
-                    _ => Err(format!(
-                        "Message of this type is not expected at \
+                    _ => {
+                        warn!(
+                            "Message of this type is not expected at \
                                 this stage",
-                    )
-                    .into()),
+                        );
+                        return;
+                    }
                 },
                 Err(err) => {
-                    Err(format!("Error parsing message, err: {}", err).into())
+                    warn!("Error parsing message, err: {}", err);
+                    return;
                 }
             },
-            None => Ok(()),
-        }
+            None => {
+                warn!("Stream has ended, socket_adr: {:?}", conn.socket_addr);
+                return;
+            }
+        };
     }
 }
 
@@ -56,31 +65,64 @@ async fn handle_handshake_syn_msg(
     identity: Arc<Identity>,
     peer_table: Arc<PeerTable>,
     addr_table: Arc<AddrTable>,
-) -> Result<(), ServerError> {
+) {
     let addr = match addr_table
         .get_mapped_addr(&handshake.src_public_key_str)
         .await
     {
         Some(a) => a,
         None => {
-            return Err(format!(
-            "Cannot find addr out of addr_table for the handshake candidate",
-        )
-            .into());
+            warn!(
+                "Cannot find addr out of addr_table for the \
+                handshake candidate"
+            );
+
+            return;
         }
     };
 
     let handshake_recv_args = HandshakeRecvArgs {
         handshake_syn: handshake,
         identity,
-        peer_table,
-        addr,
     };
 
-    match handshake::receive_handshake(handshake_recv_args, conn).await {
-        Ok(_) => return Ok(()),
+    let peer_slot_guard = match peer_table.get_empty_slot().await {
+        Ok(s) => s,
         Err(err) => {
-            return Err(err.into());
+            warn!(
+                "Empty slot is not available in the peer table, err: {}",
+                err
+            );
+            return;
         }
     };
+
+    let transport =
+        match handshake::receive_handshake(handshake_recv_args, conn).await {
+            Ok(t) => t,
+            Err(err) => {
+                warn!("Error receiving handshake, err: {}", err);
+                return;
+            }
+        };
+
+    let peer = {
+        let p = Peer {
+            transport,
+            p2p_port: addr.known_addr.p2p_port,
+            public_key_str: addr.known_addr.public_key_str.clone(),
+            addr,
+            status: RwLock::new(PeerStatus::HandshakeSuccess {
+                at: Utc::now(),
+            }),
+            peer_slot_guard,
+        };
+
+        Arc::new(p)
+    };
+
+    if let Err(err) = peer_table.insert_mapping(peer).await {
+        warn!("Error inserting peer mapping, err: {}", err);
+        return;
+    }
 }

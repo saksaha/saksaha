@@ -1,20 +1,10 @@
-use super::System;
 use log::{error, info};
 
-impl System {
-    pub(crate) fn shutdown() {
-        let _system = match super::system::INSTANCE.get() {
-            Some(p) => p,
-            None => {
-                error!(
-                    "Process is not initialized. Consider calling \
-                    Process:init() at the launch of the program"
-                );
+pub struct ShutdownMng;
 
-                std::process::exit(1);
-            }
-        };
-
+impl ShutdownMng {
+    pub(crate) fn shutdown(&self) {
+        // TODO Shutdown behavior has to be implemented later
         info!("Calling shutdown callback");
 
         std::process::exit(1);

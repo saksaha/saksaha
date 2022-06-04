@@ -1,24 +1,18 @@
-use colored::Colorize;
+use crate::Connection;
+use crate::Handshake;
+use crate::Msg;
+use crate::Transport;
 use futures::SinkExt;
 use futures::StreamExt;
-use logger::{tdebug, twarn};
-use p2p_addr::KnownAddr;
-use p2p_discovery::Addr;
 use p2p_identity::Identity;
-use p2p_peer_table::SlotGuard;
-use p2p_peer_table::{Peer, PeerStatus, PeerTable};
-use p2p_transport::Handshake;
-use p2p_transport::Msg;
-use p2p_transport::{Connection, Transport};
 use std::sync::Arc;
 use thiserror::Error;
-use tokio::net::TcpStream;
-use tokio::sync::{OwnedRwLockWriteGuard, RwLock};
+use tokio::sync::RwLock;
 
 pub struct HandshakeInitArgs {
-    pub peer_table: Arc<PeerTable>,
     pub identity: Arc<Identity>,
-    pub addr: Arc<Addr>,
+    pub conn: Connection,
+    pub public_key_str: String,
 }
 
 #[derive(Error, Debug)]
@@ -80,76 +74,17 @@ pub enum HandshakeInitError {
 
 pub async fn initiate_handshake(
     handshake_init_args: HandshakeInitArgs,
-) -> Result<(), HandshakeInitError> {
+) -> Result<Transport, HandshakeInitError> {
     let HandshakeInitArgs {
         identity,
-        peer_table,
-        addr,
+        mut conn,
+        public_key_str,
     } = handshake_init_args;
-
-    let known_addr = &addr.known_addr;
-
-    let peer_slot_guard =
-        match peer_table.get_mapped_peer(&known_addr.public_key_str).await {
-            Some(_) => {
-                return Err(HandshakeInitError::PeerAlreadyMapped);
-            }
-            None => match peer_table.get_empty_slot().await {
-                Ok(s) => s,
-                Err(_) => {
-                    return Err(HandshakeInitError::EmptyNodeNotAvailable);
-                }
-            },
-        };
-
-    let endpoint = known_addr.p2p_endpoint();
-
-    if utils_net::is_my_endpoint(identity.p2p_port, &endpoint) {
-        twarn!(
-            "saksaha",
-            "p2p",
-            "Cannot make a request to myself, abandoning handshake \
-                    init task, endopint: {}",
-            &endpoint
-        );
-
-        return Err(HandshakeInitError::MyEndpoint {
-            p2p_endpoint: endpoint,
-        });
-    }
-
-    let mut conn = match TcpStream::connect(&endpoint).await {
-        Ok(s) => {
-            let c = match Connection::new(s) {
-                Ok(c) => c,
-                Err(err) => {
-                    return Err(HandshakeInitError::ConnectionFail {
-                        err: err.to_string(),
-                    });
-                }
-            };
-
-            tdebug!(
-                "saksaha",
-                "p2p",
-                "(caller) TCP connected to destination, \
-                        peer_addr: {:?}",
-                c.socket_addr,
-            );
-
-            c
-        }
-        Err(err) => {
-            return Err(HandshakeInitError::ConnectionFail {
-                err: err.to_string(),
-            });
-        }
-    };
 
     let handshake = match Handshake::new(
         identity.p2p_port,
         identity.credential.public_key_str.clone(),
-        known_addr.public_key_str.clone(),
+        public_key_str,
     ) {
         Ok(h) => h,
         Err(err) => {
@@ -198,30 +133,13 @@ pub async fn initiate_handshake(
         }
     };
 
-    {
-        let shared_secret =
-            crypto::make_shared_secret(my_secret_key, her_public_key);
+    let shared_secret =
+        crypto::make_shared_secret(my_secret_key, her_public_key);
 
-        let transport = Transport {
-            conn: RwLock::new(conn),
-            shared_secret,
-        };
+    let transport = Transport {
+        conn: RwLock::new(conn),
+        shared_secret,
+    };
 
-        let peer = {
-            let p = Peer {
-                p2p_port: handshake_ack.src_p2p_port,
-                public_key_str: her_public_key_str.clone(),
-                addr,
-                transport,
-                status: RwLock::new(PeerStatus::HandshakeInit),
-                peer_slot_guard,
-            };
-
-            Arc::new(p)
-        };
-
-        peer_table.insert_mapping(peer).await;
-    }
-
-    Ok(())
+    return Ok(transport);
 }

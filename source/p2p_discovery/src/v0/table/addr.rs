@@ -1,12 +1,12 @@
 use super::SlotGuard;
 use p2p_addr::KnownAddr;
 
-pub struct Addr {
+pub struct DiscAddr {
     pub known_addr: KnownAddr,
     pub(crate) _addr_slot_guard: SlotGuard,
 }
 
-impl std::fmt::Display for Addr {
+impl std::fmt::Display for DiscAddr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Addr - Known ({}])", self.known_addr)
     }
@@ -21,17 +21,17 @@ pub mod for_test {
     use std::sync::Arc;
     use tokio::sync::{mpsc, RwLock};
 
-    impl Addr {
+    impl DiscAddr {
         pub fn new_dummy(
             public_key: PublicKey,
             public_key_str: String,
             sig: Signature,
             disc_port: u16,
             p2p_port: u16,
-        ) -> Addr {
+        ) -> DiscAddr {
             let (slots_tx, _rx) = mpsc::unbounded_channel();
 
-            let addr = Addr {
+            let addr = DiscAddr {
                 known_addr: KnownAddr {
                     ip: "0.0.0.0".to_string(),
                     disc_port,

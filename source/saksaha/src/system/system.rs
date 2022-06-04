@@ -1,16 +1,10 @@
-use super::routine::Routine;
-use log::{error, info};
-use logger::terr;
-use logger::tinfo;
-use once_cell::sync::OnceCell;
-use std::sync::Arc;
-
-pub(super) static INSTANCE: OnceCell<Arc<System>> = OnceCell::new();
+use super::{routine::Routine, shutdown::ShutdownMng};
+use log::error;
 
 pub struct System {}
 
 #[derive(Debug)]
-pub struct SystemArgs {
+pub struct SystemRunArgs {
     pub disc_port: Option<u16>,
     pub disc_dial_interval: Option<u16>,
     pub disc_table_capacity: Option<u16>,
@@ -31,47 +25,25 @@ pub struct SystemArgs {
 }
 
 impl System {
-    pub fn get_instance() -> Result<Arc<System>, String> {
-        if let Some(s) = INSTANCE.get() {
-            return Ok(s.clone());
-        } else {
-            let system = {
-                let s = System {};
-                Arc::new(s)
-            };
-
-            match INSTANCE.set(system.clone()) {
-                Ok(_) => {
-                    info!("System is made static",);
-                    return Ok(system);
-                }
-                Err(_) => {
-                    error!(
-                        "Cannot make System static. Container is likely \
-                        already full. Have you called this function before?",
-                    );
-
-                    unreachable!();
-                }
-            }
-        }
-    }
-
-    pub fn run(&self, sys_args: SystemArgs) -> Result<(), String> {
+    pub fn run(&self, sys_run_args: SystemRunArgs) -> Result<(), String> {
         let runtime = tokio::runtime::Builder::new_multi_thread()
             .enable_all()
             .build();
 
         match runtime {
             Ok(r) => r.block_on(async {
-                let routine = Routine {};
+                let shutdown_manager = ShutdownMng {};
 
-                match routine.run(sys_args).await {
+                let routine = Routine { shutdown_manager };
+
+                match routine.run(sys_run_args).await {
                     Ok(_) => (),
                     Err(err) => {
-                        error!("Can't start node, err: {}", err,);
-
-                        System::shutdown();
+                        error!(
+                            "Error initializing (running) main routine, \
+                            err: {}",
+                            err,
+                        );
                     }
                 };
             }),

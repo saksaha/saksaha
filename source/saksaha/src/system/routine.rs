@@ -1,4 +1,5 @@
-use super::{System, SystemArgs};
+use super::shutdown::ShutdownMng;
+use super::SystemRunArgs;
 use crate::blockchain;
 use crate::config::Config;
 use crate::config::ProfiledConfig;
@@ -16,14 +17,19 @@ use std::sync::Arc;
 
 const APP_PREFIX: &str = "default";
 
-pub(super) struct Routine;
+pub(super) struct Routine {
+    pub(super) shutdown_manager: ShutdownMng,
+}
 
 impl Routine {
-    pub(super) async fn run(&self, sys_args: SystemArgs) -> Result<(), String> {
+    pub(super) async fn run(
+        &self,
+        sys_run_args: SystemRunArgs,
+    ) -> Result<(), String> {
         log::info!("System is starting");
 
         let config = {
-            let profiled_config = match &sys_args.cfg_profile {
+            let profiled_config = match &sys_run_args.cfg_profile {
                 Some(profile) => match ProfiledConfig::new(profile) {
                     Ok(c) => Some(c),
                     Err(err) => {
@@ -36,7 +42,7 @@ impl Routine {
                 None => None,
             };
 
-            let app_prefix = match &sys_args.app_prefix {
+            let app_prefix = match &sys_run_args.app_prefix {
                 Some(ap) => ap.clone(),
                 None => match &profiled_config {
                     Some(pc) => pc.app_prefix.clone(),
@@ -64,7 +70,12 @@ impl Routine {
                 c
             };
 
-            match Config::new(app_prefix, &sys_args, pconfig, profiled_config) {
+            match Config::new(
+                app_prefix,
+                &sys_run_args,
+                pconfig,
+                profiled_config,
+            ) {
                 Ok(c) => c,
                 Err(err) => {
                     return Err(format!("Error creating config, err: {}", err));
@@ -81,7 +92,7 @@ impl Routine {
             Arc::new(ps)
         };
 
-        let (rpc_socket, rpc_socket_addr) =
+        let (rpc_socket, _) =
             match utils_net::bind_tcp_socket(config.rpc.rpc_port).await {
                 Ok((socket, socket_addr)) => {
                     info!(
@@ -132,7 +143,6 @@ impl Routine {
                 p2p_max_conn_count: config.p2p.p2p_max_conn_count,
                 p2p_port,
                 bootstrap_addrs: config.p2p.bootstrap_addrs,
-                rpc_port: rpc_socket_addr.port(),
                 secret: config.p2p.secret,
                 public_key_str: config.p2p.public_key_str,
                 peer_table: peer_table.clone(),
@@ -199,10 +209,11 @@ impl Routine {
                 match c {
                     Ok(_) => {
                         info!(
-                            "ctrl+k is pressed.",
+                            "System main routine terminated. This is likely \
+                            not what you have expected",
                         );
 
-                        System::shutdown();
+                        self.shutdown_manager.shutdown();
                     },
                     Err(err) => {
                         error!(
@@ -211,16 +222,11 @@ impl Routine {
                             err,
                         );
 
-                        System::shutdown();
+                        self.shutdown_manager.shutdown();
                     }
                 }
             },
             _ = system_thread => {}
-        );
-
-        info!(
-            "System main routine terminated. This is likely not what you \
-            have expected."
         );
 
         Ok(())

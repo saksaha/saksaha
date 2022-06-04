@@ -1,4 +1,4 @@
-use super::Addr;
+use super::DiscAddr;
 use logger::terr;
 use p2p_addr::AddrStatus;
 use std::sync::Arc;
@@ -6,13 +6,13 @@ use tokio::sync::RwLock;
 use tokio::sync::{mpsc::Receiver, OwnedMutexGuard};
 
 pub struct AddrsIterator {
-    known_addrs_rx: Arc<RwLock<Receiver<Arc<Addr>>>>,
+    known_addrs_rx: Arc<RwLock<Receiver<Arc<DiscAddr>>>>,
     _addrs_it_lock: OwnedMutexGuard<usize>,
 }
 
 impl AddrsIterator {
     pub(crate) fn init(
-        known_addrs_rx: Arc<RwLock<Receiver<Arc<Addr>>>>,
+        known_addrs_rx: Arc<RwLock<Receiver<Arc<DiscAddr>>>>,
         addrs_it_lock: OwnedMutexGuard<usize>,
     ) -> AddrsIterator {
         AddrsIterator {
@@ -22,7 +22,7 @@ impl AddrsIterator {
     }
 
     // Returning newly "discovered" addresses
-    pub async fn next(&self) -> Result<Arc<Addr>, String> {
+    pub async fn next(&self) -> Result<Arc<DiscAddr>, String> {
         let mut known_addrs_rx_lock = self.known_addrs_rx.write().await;
 
         loop {

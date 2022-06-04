@@ -3,7 +3,7 @@ mod cli;
 
 use crate::cli::CLIArgs;
 use logger::{terr, tinfo};
-use saksaha::system::{System, SystemArgs};
+use saksaha::system::{System, SystemRunArgs};
 
 const RUST_LOG_ENV: &str = "
     contract,\
@@ -53,16 +53,9 @@ fn main() {
         }
     };
 
-    let system = match System::get_instance() {
-        Ok(s) => s,
-        Err(err) => {
-            terr!("saksaha", "sak", "Error initializing system, err: {}", err,);
+    let system = System {};
 
-            std::process::exit(1);
-        }
-    };
-
-    let sys_args = SystemArgs {
+    let sys_run_args = SystemRunArgs {
         disc_port: cli_args.disc_port,
         disc_dial_interval: cli_args.disc_dial_interval,
         disc_table_capacity: cli_args.disc_table_capacity,
@@ -82,7 +75,7 @@ fn main() {
         app_prefix: cli_args.app_prefix,
     };
 
-    match system.run(sys_args) {
+    match system.run(sys_run_args) {
         Ok(_) => (),
         Err(err) => {
             terr!("saksaha", "Can't start the system, err: {}", err);
