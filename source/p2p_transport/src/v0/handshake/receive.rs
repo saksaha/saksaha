@@ -1,14 +1,10 @@
-use chrono::Utc;
-use colored::Colorize;
 use futures::SinkExt;
-use logger::tdebug;
-use p2p_discovery::Addr;
 use p2p_identity::Identity;
-use p2p_peer_table::{Peer, PeerStatus, PeerTable};
-use p2p_transport::{Connection, Handshake, Msg, Transport};
 use std::sync::Arc;
 use thiserror::Error;
-use tokio::sync::{OwnedRwLockWriteGuard, RwLock};
+use tokio::sync::RwLock;
+
+use crate::{Connection, Handshake, Msg, Transport};
 
 #[derive(Error, Debug)]
 pub enum HandshakeRecvError {
@@ -49,26 +45,22 @@ pub enum HandshakeRecvError {
 pub struct HandshakeRecvArgs {
     pub handshake_syn: Handshake,
     pub identity: Arc<Identity>,
-    pub peer_table: Arc<PeerTable>,
-    pub addr: Arc<Addr>,
 }
 
 pub async fn receive_handshake(
     handshake_recv_args: HandshakeRecvArgs,
     mut conn: Connection,
-) -> Result<(), HandshakeRecvError> {
+) -> Result<Transport, HandshakeRecvError> {
     let HandshakeRecvArgs {
         handshake_syn,
-        peer_table,
         identity,
-        addr,
     } = handshake_recv_args;
 
     let Handshake {
         instance_id,
-        src_p2p_port,
         src_public_key_str: her_public_key_str,
         dst_public_key_str: my_public_key_str,
+        ..
     } = handshake_syn;
 
     if my_public_key_str != identity.credential.public_key_str {
@@ -87,13 +79,6 @@ pub async fn receive_handshake(
                 public_key: her_public_key_str,
                 err,
             })
-        }
-    };
-
-    let slot_guard = match peer_table.get_empty_slot().await {
-        Ok(s) => s,
-        Err(err) => {
-            return Err(HandshakeRecvError::EmptySlotNotAvailable { err });
         }
     };
 
@@ -116,31 +101,10 @@ pub async fn receive_handshake(
         }
     };
 
-    {
-        let transport = Transport {
-            conn: RwLock::new(conn),
-            shared_secret,
-        };
+    let transport = Transport {
+        conn: RwLock::new(conn),
+        shared_secret,
+    };
 
-        let peer = {
-            let p = Peer {
-                transport,
-                p2p_port: src_p2p_port,
-                public_key_str: her_public_key_str.clone(),
-                addr,
-                status: RwLock::new(PeerStatus::HandshakeSuccess {
-                    at: Utc::now(),
-                }),
-                peer_slot_guard: slot_guard,
-            };
-
-            Arc::new(p)
-        };
-
-        if let Err(err) = peer_table.insert_mapping(peer).await {
-            return Err(HandshakeRecvError::InsertMappingFail { err });
-        }
-    }
-
-    Ok(())
+    return Ok(transport);
 }

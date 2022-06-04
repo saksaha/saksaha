@@ -1,5 +1,5 @@
 use super::{check, WhoAreYou};
-use crate::{Addr, AddrTable, Connection, Msg};
+use crate::{AddrTable, Connection, DiscAddr, Msg};
 use chrono::Utc;
 use futures::SinkExt;
 use p2p_addr::{AddrStatus, KnownAddr, UnknownAddr};
@@ -120,7 +120,7 @@ pub(crate) async fn handle_who_are_you_ack(
     };
 
     let addr = {
-        let a = Addr {
+        let a = DiscAddr {
             known_addr,
             _addr_slot_guard: slot_guard,
         };

@@ -1,6 +1,6 @@
 use crate::SlotGuard;
 use chrono::{DateTime, Utc};
-use p2p_discovery::Addr;
+use p2p_discovery::DiscAddr;
 use p2p_transport::Transport;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -10,7 +10,7 @@ pub struct Peer {
     pub public_key_str: String,
     pub transport: Transport,
     pub status: RwLock<PeerStatus>,
-    pub addr: Arc<Addr>,
+    pub addr: Arc<DiscAddr>,
     pub peer_slot_guard: SlotGuard,
 }
 

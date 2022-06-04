@@ -3,10 +3,8 @@ use super::task::runtime::P2PTaskRuntime;
 use super::task::P2PTask;
 use super::P2PMonitor;
 use super::{dial_scheduler::P2PDialScheduler, server::Server};
-use crate::node::LocalNode;
 use colored::Colorize;
 use log::info;
-use logger::tinfo;
 use p2p_addr::UnknownAddr;
 use p2p_discovery::{Discovery, DiscoveryArgs};
 use p2p_identity::{Credential, Identity};
@@ -41,7 +39,6 @@ pub(crate) struct P2PHostArgs {
     pub(crate) p2p_port: u16,
     pub(crate) p2p_max_conn_count: Option<u16>,
     pub(crate) bootstrap_addrs: Vec<UnknownAddr>,
-    pub(crate) rpc_port: u16,
     pub(crate) secret: String,
     pub(crate) public_key_str: String,
     pub(crate) peer_table: Arc<PeerTable>,

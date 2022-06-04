@@ -1,5 +1,5 @@
 use super::{check, WhoAreYou};
-use crate::{Addr, AddrTable, Connection, Msg};
+use crate::{AddrTable, Connection, DiscAddr, Msg};
 use chrono::Utc;
 use futures::sink::SinkExt;
 use log::error;
@@ -127,7 +127,7 @@ pub(crate) async fn recv_who_are_you(
     };
 
     let addr = {
-        let a = Addr {
+        let a = DiscAddr {
             known_addr,
             _addr_slot_guard: slot_guard,
         };

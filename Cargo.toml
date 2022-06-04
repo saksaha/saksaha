@@ -13,7 +13,6 @@ members = [
   "source/p2p_discovery",
   "source/p2p_identity",
   "source/p2p_transport",
-  "source/p2p_transport_ops",
   "source/task_queue",
   "source/utils_time",
   "source/utils_net",
