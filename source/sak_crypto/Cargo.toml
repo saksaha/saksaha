@@ -1,0 +1,18 @@
+[package]
+name = "sak_crypto"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+sak_logger = { path = "../sak_logger" }
+k256 = { version = "0.9.6", features = ["ecdh"] }
+rand_core = "0.6.3"
+serde = { version = "1.0.130", features = ["derive"] }
+serde_json = "1.0.59"
+rand = "0.8.4"
+sha3 = "0.10.1"
+
+[lib]
+doctest = false # until stable beta is released

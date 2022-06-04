@@ -1,13 +1,13 @@
 use crate::p2p::task::P2PTask;
 use log::error;
-use p2p_discovery::AddrsIterator;
-use p2p_identity::Identity;
-use p2p_peer_table::PeerTable;
+use sak_p2p_disc::AddrsIterator;
+use sak_p2p_id::Identity;
+use sak_p2p_ptable::PeerTable;
+use sak_task_queue::TaskQueue;
 use std::{
     sync::Arc,
     time::{Duration, SystemTime},
 };
-use task_queue::TaskQueue;
 
 const HANDSHAKE_DIAL_INTERVAL: u64 = 2000;
 const HANDSHAKE_ENQUEUE_DELAY_WHEN_SMALLER_PUBLIC_KEY: u64 = 4;
@@ -70,8 +70,11 @@ impl HandshakeDialLoop {
                 }
             };
 
-            utils_time::wait_until_min_interval(time_since, p2p_dial_interval)
-                .await;
+            sak_utils_time::wait_until_min_interval(
+                time_since,
+                p2p_dial_interval,
+            )
+            .await;
         }
     }
 }

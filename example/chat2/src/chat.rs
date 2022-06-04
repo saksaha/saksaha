@@ -1,18 +1,7 @@
-use bellman::gadgets::boolean::{AllocatedBit, Boolean};
-use bellman::groth16::{Parameters, Proof};
-use bellman::{groth16, Circuit, ConstraintSystem, SynthesisError};
-use bls12_381::{Bls12, MillerLoopResult, Scalar};
 use bytes::BytesMut;
-use ff::PrimeField;
-use ff::{Field, PrimeFieldBits};
-use proofs::constants::get_round_constants;
-use proofs::{get_merkle_tree, verify_proof};
-use rand::prelude::ThreadRng;
-use rand::rngs::OsRng;
-use rand::thread_rng;
-use rsa::pkcs8::{FromPrivateKey, ToPrivateKey};
-use rsa::{PaddingScheme, PublicKey, RsaPrivateKey, RsaPublicKey};
-use serde::{Deserialize, Serialize};
+use rsa::{RsaPrivateKey, RsaPublicKey};
+use sak_proofs::constants::get_round_constants;
+use sak_proofs::{get_merkle_tree, verify_proof};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
 
@@ -57,7 +46,7 @@ impl Chat {
             let tid = self.cid.parse::<usize>().unwrap();
             println!("Transaction I know: {}", tid);
 
-            let proof = proofs::generate_proof(tid);
+            let proof = sak_proofs::generate_proof(tid);
             let verified = verify_proof(&proof);
             println!("proof: {:?}, verified: {}", proof, verified);
 

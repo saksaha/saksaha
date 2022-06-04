@@ -1,0 +1,30 @@
+[package]
+name = "sak_p2p_trpt"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+sak_crypto = { path = "../sak_crypto" }
+sak_p2p_addr = { path = "../sak_p2p_addr" }
+sak_p2p_id = { path = "../sak_p2p_id" }
+sak_p2p_frame = { path = "../sak_p2p_frame" }
+sak_p2p_disc = { path = "../sak_p2p_disc" }
+sak_logger = { path = "../sak_logger" }
+serde = { version = "1.0.130", features = ["derive"] }
+serde_json = "1.0.59"
+rand = "0.8.4"
+log = "0.4.0"
+thiserror = "1.0"
+futures = "0.3.21"
+tokio = { version = "1.12.0", features = ["full"] }
+tokio-util = { version = "0.7.2", features = ["full"] }
+bytes = "1"
+atoi = "0.4.0"
+colored = "2"
+chrono = "0.4"
+sak_utils_net = { path = "../sak_utils_net" }
+
+[lib]
+doctest = false # until stable beta is released

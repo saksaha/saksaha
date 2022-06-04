@@ -1,5 +1,5 @@
 use super::{ProfiledConfig, ProfiledP2PConfig};
-use p2p_addr::{AddrStatus, UnknownAddr};
+use sak_p2p_addr::{AddrStatus, UnknownAddr};
 
 pub(super) fn get_config() -> ProfiledConfig {
     return ProfiledConfig {

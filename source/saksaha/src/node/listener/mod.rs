@@ -1,13 +1,6 @@
-use futures::{stream::SplitStream, StreamExt};
-use log::warn;
-use logger::twarn;
-use p2p_peer_table::Peer;
-use p2p_transport::Connection;
-use p2p_transport::Msg;
-use p2p_transport::P2PCodec;
-use std::sync::Arc;
-use tokio::{net::TcpStream, sync::RwLock};
-use tokio_util::codec::Framed;
+use futures::StreamExt;
+use log::{debug, warn};
+use sak_p2p_trpt::{Connection, Msg};
 
 pub(super) struct PeerListener {}
 
@@ -49,7 +42,7 @@ impl PeerListener {
                 }
             };
 
-            println!("sync msg: {}", sync.value);
+            debug!("sync msg: {}", sync.value);
         }
     }
 }

@@ -1,5 +1,5 @@
 use super::local_1;
-use p2p_addr::UnknownAddr;
+use sak_p2p_addr::UnknownAddr;
 
 pub(crate) struct ProfiledConfig {
     pub(crate) app_prefix: String,

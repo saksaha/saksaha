@@ -1,17 +1,15 @@
 #[cfg(test)]
 pub(super) mod test_utils {
     use crate::machine::Machine;
+    use crate::node::LocalNode;
     use crate::p2p::{P2PHost, P2PHostArgs};
     use crate::rpc::{RPCArgs, RPC};
     use crate::system::SystemHandle;
-    use crate::{
-        blockchain::{Blockchain, BlockchainArgs, Transaction},
-        node::LocalNode,
-    };
-    use p2p_addr::{AddrStatus, UnknownAddr};
-    use p2p_discovery::{Discovery, DiscoveryArgs};
-    use p2p_identity::Credential;
-    use p2p_peer_table::PeerTable;
+    use sak_blockchain::{Blockchain, BlockchainArgs, Transaction};
+    use sak_p2p_addr::{AddrStatus, UnknownAddr};
+    use sak_p2p_disc::{Discovery, DiscoveryArgs};
+    use sak_p2p_id::Credential;
+    use sak_p2p_ptable::PeerTable;
     use std::net::SocketAddr;
     use std::sync::Arc;
     use tokio::net::TcpListener;
@@ -21,9 +19,10 @@ pub(super) mod test_utils {
     }
 
     pub(crate) async fn make_rpc() -> (RPC, SocketAddr, Arc<Machine>) {
-        let (rpc_socket, rpc_socket_addr) = utils_net::bind_tcp_socket(None)
-            .await
-            .expect("rpc socket should be initialized");
+        let (rpc_socket, rpc_socket_addr) =
+            sak_utils_net::bind_tcp_socket(None)
+                .await
+                .expect("rpc socket should be initialized");
 
         let blockchain = {
             let blockchain_args = BlockchainArgs {
@@ -112,9 +111,10 @@ pub(super) mod test_utils {
             (Arc::new(d), disc_port)
         };
 
-        let (p2p_socket, p2p_socket_addr) = utils_net::bind_tcp_socket(None)
-            .await
-            .expect("rpc socket should be initialized");
+        let (p2p_socket, p2p_socket_addr) =
+            sak_utils_net::bind_tcp_socket(None)
+                .await
+                .expect("rpc socket should be initialized");
 
         let p2p_host = {
             let p2p_host_args = P2PHostArgs {
@@ -132,7 +132,6 @@ pub(super) mod test_utils {
                 p2p_max_conn_count: None,
                 p2p_port: p2p_socket_addr.port(),
                 bootstrap_addrs: vec![],
-                rpc_port: rpc_socket_addr.port(),
                 secret,
                 public_key_str,
                 peer_table: p2p_peer_table,
