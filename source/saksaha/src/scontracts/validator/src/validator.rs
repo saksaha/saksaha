@@ -1,4 +1,4 @@
-use contract::Storage;
+use sak_contract::Storage;
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 

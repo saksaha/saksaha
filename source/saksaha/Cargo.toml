@@ -7,21 +7,20 @@ default-run = "sak"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-logger = { path = "../logger" }
-crypto = { path = "../crypto" }
-blockchain = { path = "../blockchain" }
-database = { path = "../database" }
-file_system = { path = "../file_system" }
-proofs = { path = "../proofs" }
-p2p_addr = { path = "../p2p_addr" }
-p2p_peer_table = { path = "../p2p_peer_table" }
-p2p_identity = { path = "../p2p_identity" }
-p2p_discovery = { path = "../p2p_discovery" }
-p2p_transport = { path = "../p2p_transport" }
-# p2p_transport_ops = { path = "../p2p_transport_ops" }
-utils_time = { path = "../utils_time" }
-utils_net = { path = "../utils_net" }
-task_queue = { path = "../task_queue" }
+sak_logger = { path = "../sak_logger" }
+sak_crypto = { path = "../sak_crypto" }
+sak_blockchain = { path = "../sak_blockchain" }
+sak_key_db = { path = "../sak_key_db" }
+sak_fs = { path = "../sak_fs" }
+sak_proofs = { path = "../sak_proofs" }
+sak_p2p_addr = { path = "../sak_p2p_addr" }
+sak_p2p_ptable = { path = "../sak_p2p_ptable" }
+sak_p2p_id = { path = "../sak_p2p_id" }
+sak_p2p_disc = { path = "../sak_p2p_disc" }
+sak_p2p_trpt = { path = "../sak_p2p_trpt" }
+sak_utils_time = { path = "../sak_utils_time" }
+sak_utils_net = { path = "../sak_utils_net" }
+sak_task_queue = { path = "../sak_task_queue" }
 clap = { version = "3.1.6", features = ["cargo"] }
 directories = "3.0"
 bytes = "1"

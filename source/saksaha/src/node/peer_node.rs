@@ -1,4 +1,4 @@
-use p2p_peer_table::Peer;
+use sak_p2p_ptable::Peer;
 use std::sync::Arc;
 
 pub(crate) struct PeerNode {
