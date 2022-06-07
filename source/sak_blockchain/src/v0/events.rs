@@ -1,4 +1,7 @@
+use crate::Transaction;
+
 pub enum BlockchainEvent {
-    TxPoolChange(String), // tx_hash
-                          // LedgerBlockAdd(...)
+    // LedgerBlockAdd(...)
+    TxPoolStat(Vec<Transaction>),
+    TxPoolChanged(Vec<String>),
 }

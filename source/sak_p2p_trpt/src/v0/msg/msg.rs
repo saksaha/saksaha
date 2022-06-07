@@ -1,7 +1,10 @@
-use crate::{Handshake, SyncMsg};
+use crate::{Handshake, SyncTx};
+
+use super::sync::SyncTxHash;
 
 pub enum Msg {
     HandshakeSyn(Handshake),
     HandshakeAck(Handshake),
-    Sync(SyncMsg),
+    SyncTx(SyncTx),
+    SyncTxHash(SyncTxHash),
 }

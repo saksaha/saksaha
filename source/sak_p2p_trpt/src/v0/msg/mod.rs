@@ -4,4 +4,4 @@ mod sync;
 
 pub use handshake::Handshake;
 pub use msg::Msg;
-pub use sync::SyncMsg;
+pub use sync::{SyncTx, SyncTxHash};
