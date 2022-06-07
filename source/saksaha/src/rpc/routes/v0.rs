@@ -30,9 +30,7 @@ pub(crate) async fn send_transaction(
                                         id: String::from("1"),
                                         status_code: StatusCode::BAD_REQUEST,
                                         code: 32600,
-                                        message: String::from(
-                                            "Invalid Request",
-                                        ),
+                                        message: String::from(err),
                                         data: None,
                                     }
                                     .into_hyper_result();
@@ -45,7 +43,7 @@ pub(crate) async fn send_transaction(
                             return ErrorResult {
                                 id: String::from("1"),
                                 status_code: StatusCode::BAD_REQUEST,
-                                code: 32600,
+                                code: 32601,
                                 message: String::from("Invalid Request"),
                                 data: Some(err.to_string()),
                             }
@@ -57,7 +55,7 @@ pub(crate) async fn send_transaction(
                     return ErrorResult {
                         id: String::from("1"),
                         status_code: StatusCode::BAD_REQUEST,
-                        code: 32600,
+                        code: 32602,
                         message: String::from("Invalid Request"),
                         data: Some(err.to_string()),
                     }
@@ -69,7 +67,7 @@ pub(crate) async fn send_transaction(
             return ErrorResult {
                 id: String::from("1"),
                 status_code: StatusCode::BAD_REQUEST,
-                code: 32600,
+                code: 32603,
                 message: String::from("Invalid Request"),
                 data: Some(err.to_string()),
             }
@@ -260,76 +258,6 @@ pub(crate) async fn get_block(
                 status_code: StatusCode::NO_CONTENT,
                 code: 1414,
                 message: String::from("dummy"),
-                data: Some(err.to_string()),
-            }
-            .into_hyper_result();
-        }
-    };
-}
-
-pub(crate) async fn deploy(
-    req: Request<Body>,
-    sys_handle: Arc<SystemHandle>,
-) -> Result<Response<Body>, hyper::Error> {
-    let _body = match hyper::body::to_bytes(req.into_body()).await {
-        Ok(b) => {
-            let body_bytes_vec = b.to_vec();
-            let _body_str = match std::str::from_utf8(&body_bytes_vec) {
-                Ok(b) => {
-                    let _tx_value: Transaction = match serde_json::from_str(b) {
-                        Ok(v) => {
-                            match sys_handle.machine.send_transaction(v).await {
-                                Ok(hash) => {
-                                    return SuccessResult {
-                                        id: String::from("1"),
-                                        result: hash,
-                                    }
-                                    .into_hyper_result();
-                                }
-                                Err(err) => {
-                                    return ErrorResult::<String> {
-                                        id: String::from("1"),
-                                        status_code: StatusCode::BAD_REQUEST,
-                                        code: 32600,
-                                        message: String::from(
-                                            "Invalid Request",
-                                        ),
-                                        data: None,
-                                    }
-                                    .into_hyper_result();
-                                }
-                            }
-                        }
-                        Err(err) => {
-                            return ErrorResult {
-                                id: String::from("1"),
-                                status_code: StatusCode::BAD_REQUEST,
-                                code: 32600,
-                                message: String::from("Invalid Request"),
-                                data: Some(err.to_string()),
-                            }
-                            .into_hyper_result();
-                        }
-                    };
-                }
-                Err(err) => {
-                    return ErrorResult {
-                        id: String::from("1"),
-                        status_code: StatusCode::BAD_REQUEST,
-                        code: 32600,
-                        message: String::from("Invalid Request"),
-                        data: Some(err.to_string()),
-                    }
-                    .into_hyper_result();
-                }
-            };
-        }
-        Err(err) => {
-            return ErrorResult {
-                id: String::from("1"),
-                status_code: StatusCode::BAD_REQUEST,
-                code: 32600,
-                message: String::from("Invalid Request"),
                 data: Some(err.to_string()),
             }
             .into_hyper_result();

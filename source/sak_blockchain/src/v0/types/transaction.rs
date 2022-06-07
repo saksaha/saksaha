@@ -9,7 +9,7 @@ pub struct Transaction {
     pub data: Vec<u8>,
     pub pi: String,
     pub signature: String,
-    pub contract: Option<Vec<u8>>,
+    pub contract: Vec<u8>,
 }
 
 impl Hashable for Transaction {
@@ -32,5 +32,13 @@ impl Hashable for Transaction {
         let h = format!("{:x}", hash);
 
         Ok(h)
+    }
+}
+
+impl Transaction {
+    fn has_contract(&self) -> Result<bool, String> {
+        let is_has_contract =
+            if self.contract.len() > 0 { true } else { false };
+        Ok(is_has_contract)
     }
 }

@@ -27,28 +27,28 @@ mod test {
                 signature: String::from("0x1111"),
                 created_at: String::from("1346546123"),
                 data: String::from("one").as_bytes().to_vec(),
-                contract: Some(String::from("one").as_bytes().to_vec()),
+                contract: String::from("one").as_bytes().to_vec(),
             },
             Transaction {
                 pi: String::from("0x222"),
                 signature: String::from("0x2222"),
                 created_at: String::from("1346546124"),
                 data: String::from("two").as_bytes().to_vec(),
-                contract: Some(String::from("two").as_bytes().to_vec()),
+                contract: String::from("two").as_bytes().to_vec(),
             },
             Transaction {
                 pi: String::from("0x333"),
                 signature: String::from("0x3333"),
                 created_at: String::from("1346546125"),
                 data: String::from("three").as_bytes().to_vec(),
-                contract: Some(String::from("three").as_bytes().to_vec()),
+                contract: String::from("three").as_bytes().to_vec(),
             },
             Transaction {
                 pi: String::from("0x444"),
                 signature: String::from("0x4444"),
                 created_at: String::from("1346546126"),
                 data: String::from("four").as_bytes().to_vec(),
-                contract: Some(String::from("four").as_bytes().to_vec()),
+                contract: String::from("four").as_bytes().to_vec(),
             },
         ]
     }

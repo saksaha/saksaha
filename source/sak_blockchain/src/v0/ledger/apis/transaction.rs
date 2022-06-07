@@ -70,7 +70,7 @@ pub(crate) async fn write_tx(
             ))
         }
     };
-    batch.put_cf(cf_handle, &tx_hash, tx.contract.unwrap());
+    batch.put_cf(cf_handle, &tx_hash, tx.contract);
 
     match db.write(batch) {
         Ok(_) => return Ok(tx_hash),
@@ -146,6 +146,6 @@ pub(crate) async fn read_tx(
         data: tx_value_result[1].as_bytes().to_vec(),
         signature: tx_value_result[2].clone(),
         pi: tx_value_result[3].clone(),
-        contract: Some(tx_value_result[4].as_bytes().to_vec()),
+        contract: tx_value_result[4].as_bytes().to_vec(),
     })
 }

@@ -22,7 +22,7 @@ impl Ledger {
 
         let ledger = Ledger { ledger_db };
 
-        tinfo!("saksaha", "ledger", "Initialized Ledger (and contracts db)");
+        tinfo!("saksaha", "ledger", "Initialized Ledger (and ledger db)");
 
         Ok(ledger)
     }

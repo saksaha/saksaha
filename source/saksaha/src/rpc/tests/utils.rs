@@ -188,7 +188,7 @@ pub(super) mod test_utils {
             signature: String::from("0x1111"),
             created_at: String::from("1346546123"),
             data: String::from("one").as_bytes().to_vec(),
-            contract: Some(String::from("one").as_bytes().to_vec()),
+            contract: String::from("one").as_bytes().to_vec(),
         }
     }
 }
