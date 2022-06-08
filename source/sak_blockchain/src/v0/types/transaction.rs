@@ -12,6 +12,12 @@ pub struct Transaction {
     pub contract: Vec<u8>,
 }
 
+pub enum TxType {
+    ContractCall,
+    ContractDeploy,
+    Others,
+}
+
 impl Hashable for Transaction {
     fn get_hash(&self) -> Result<String, String> {
         let hash = {
@@ -36,9 +42,16 @@ impl Hashable for Transaction {
 }
 
 impl Transaction {
-    fn has_contract(&self) -> Result<bool, String> {
-        let is_has_contract =
-            if self.contract.len() > 0 { true } else { false };
-        Ok(is_has_contract)
+    pub fn get_tx_type(&self) -> TxType {
+        let has_contract = self.contract.len() > 0;
+
+        if has_contract {
+            // data peek
+            // return TxType::ContractDeploy;
+
+            return TxType::ContractCall;
+        }
+
+        TxType::Others
     }
 }
