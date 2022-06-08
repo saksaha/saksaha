@@ -9,6 +9,13 @@ pub struct Transaction {
     pub data: Vec<u8>,
     pub pi: String,
     pub signature: String,
+    pub contract: Vec<u8>,
+}
+
+pub enum TxType {
+    ContractCall,
+    ContractDeploy,
+    Others,
 }
 
 impl Hashable for Transaction {
@@ -31,5 +38,20 @@ impl Hashable for Transaction {
         let h = format!("{:x}", hash);
 
         Ok(h)
+    }
+}
+
+impl Transaction {
+    pub fn get_tx_type(&self) -> TxType {
+        let has_contract = self.contract.len() > 0;
+
+        if has_contract {
+            // data peek
+            // return TxType::ContractDeploy;
+
+            return TxType::ContractCall;
+        }
+
+        TxType::Others
     }
 }

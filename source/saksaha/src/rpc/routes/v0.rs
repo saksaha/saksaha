@@ -30,9 +30,7 @@ pub(crate) async fn send_transaction(
                                         id: String::from("1"),
                                         status_code: StatusCode::BAD_REQUEST,
                                         code: 32600,
-                                        message: String::from(
-                                            "Invalid Request",
-                                        ),
+                                        message: String::from(err),
                                         data: None,
                                     }
                                     .into_hyper_result();
@@ -45,7 +43,7 @@ pub(crate) async fn send_transaction(
                             return ErrorResult {
                                 id: String::from("1"),
                                 status_code: StatusCode::BAD_REQUEST,
-                                code: 32600,
+                                code: 32601,
                                 message: String::from("Invalid Request"),
                                 data: Some(err.to_string()),
                             }
@@ -57,7 +55,7 @@ pub(crate) async fn send_transaction(
                     return ErrorResult {
                         id: String::from("1"),
                         status_code: StatusCode::BAD_REQUEST,
-                        code: 32600,
+                        code: 32602,
                         message: String::from("Invalid Request"),
                         data: Some(err.to_string()),
                     }
@@ -69,7 +67,7 @@ pub(crate) async fn send_transaction(
             return ErrorResult {
                 id: String::from("1"),
                 status_code: StatusCode::BAD_REQUEST,
-                code: 32600,
+                code: 32603,
                 message: String::from("Invalid Request"),
                 data: Some(err.to_string()),
             }
