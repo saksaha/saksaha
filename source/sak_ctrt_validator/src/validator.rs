@@ -18,7 +18,7 @@ pub fn init(ptr: i32, len: i32) {
 /// Allocate memory into the module's linear memory
 /// and return the offset to the start of the block.
 #[no_mangle]
-pub fn alloc(len: usize) -> *mut u8 {
+pub extern "C" fn alloc(len: usize) -> *mut u8 {
     // create a new mutable buffer with capacity `len`
     let mut buf = Vec::with_capacity(len);
     // take a mutable pointer to the buffer

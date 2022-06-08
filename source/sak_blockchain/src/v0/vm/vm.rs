@@ -1,9 +1,6 @@
 use crate::BoxedError;
 use log::error;
-use std::cell::Cell;
 use wasmtime::*;
-// use wasmtime_wasi::{Wasi, WasiCtxBuilder};
-// use wasmtime_wasi::{Wasi, WasiCtxBuilder};
 
 const WASM: &str = "rust.wasm";
 // const WASM: &str = "as.wasm";
