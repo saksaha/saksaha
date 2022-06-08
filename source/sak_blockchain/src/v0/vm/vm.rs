@@ -137,13 +137,11 @@ fn copy_memory(
         let raw = memory.data_ptr(&mut *store).offset(guest_ptr_offset);
         raw.copy_from(bytes.as_ptr(), bytes.len());
 
-        let v = Vec::from_raw_parts(raw, bytes.len(), bytes.len());
-        println!("Vector: {:?}, len: {}", v, bytes.len());
+        // let v = Vec::from_raw_parts(raw, bytes.len(), bytes.len());
+        // println!("Vector: {:?}, len: {}", v, bytes.len());
     }
 
-    Ok(1)
-
-    // return Ok(guest_ptr_offset);
+    return Ok(guest_ptr_offset);
 }
 
 /// Invoke the module's `array_sum` exported method
@@ -178,17 +176,14 @@ fn array_sum(input: Vec<u8>) -> Result<i32, BoxedError> {
         }
     };
 
-    // // return the result
-    // match ret
-    //     .get(0)
-    //     .expect("expected the result of array_sum to have one value")
-    // {
-    //     Val::I32(val) => Ok(*val),
+    match ret
+        .get(0)
+        .expect("expected the result of array_sum to have one value")
+    {
+        Val::I32(val) => Ok(*val),
 
-    //     _ => return Err("cannot get result".into()),
-    // }
-
-    Ok(1)
+        _ => return Err("cannot get result".into()),
+    }
 }
 
 fn create_instance(
