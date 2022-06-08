@@ -77,6 +77,8 @@ impl Blockchain {
     ) -> Result<String, String> {
         let tx_hash = tx.get_hash()?;
 
+        // println!("{:?}\n{:?}", tx, tx_hash);
+
         let tx_pool = self.tx_pool.clone();
         let mut tx_pool = tx_pool.write().await;
         if let Err(err) = tx_pool.insert_transaction_to_pool(tx.clone()) {

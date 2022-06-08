@@ -9,6 +9,7 @@ pub(crate) mod tx_columns {
     pub const SIG_VEC: &str = "sig_vec";
     pub const CREATED_AT: &str = "tx_created_at";
     pub const DATA: &str = "data";
+    pub const CONTRACT: &str = "contract";
 }
 
 pub(crate) mod block_columns {
@@ -59,6 +60,7 @@ fn make_ledger_cf_descriptors() -> Vec<ColumnFamilyDescriptor> {
         (tx_columns::SIG_VEC, Options::default()),
         (tx_columns::CREATED_AT, Options::default()),
         (tx_columns::DATA, Options::default()),
+        (tx_columns::CONTRACT, Options::default()),
         (block_columns::SIG_VEC, Options::default()),
         (block_columns::TX_POOL, Options::default()),
         (block_columns::CREATED_AT, Options::default()),
