@@ -8,7 +8,7 @@ pub struct SyncTx {
 }
 
 pub struct SyncTxHash {
-    pub tx_hashs: Vec<String>,
+    pub tx_hashes: Vec<String>,
 }
 
 impl SyncTx {
@@ -105,7 +105,7 @@ impl SyncTxHash {
         parse: &mut Parse,
     ) -> Result<SyncTxHash, BoxedError> {
         let tx_count = parse.next_int()?;
-        let mut tx_hashs = Vec::with_capacity(tx_count as usize);
+        let mut tx_hashes = Vec::with_capacity(tx_count as usize);
 
         for _idx in 0..tx_count {
             let tx_hash = {
@@ -113,10 +113,10 @@ impl SyncTxHash {
                 std::str::from_utf8(k.as_ref())?.into()
             };
 
-            tx_hashs.push(tx_hash);
+            tx_hashes.push(tx_hash);
         }
 
-        let m = SyncTxHash { tx_hashs };
+        let m = SyncTxHash { tx_hashes };
 
         Ok(m)
     }
@@ -124,13 +124,13 @@ impl SyncTxHash {
     pub(crate) fn into_frame(&self) -> Frame {
         let mut frame = Frame::array();
 
-        let tx_count = self.tx_hashs.len();
+        let tx_count = self.tx_hashes.len();
 
         frame.push_bulk(Bytes::from("sync_tx_hash".as_bytes()));
         frame.push_int(tx_count as u64);
 
         for idx in 0..tx_count {
-            let tx = &self.tx_hashs[idx];
+            let tx = &self.tx_hashes[idx];
 
             let tx_hash = {
                 let mut b = BytesMut::new();

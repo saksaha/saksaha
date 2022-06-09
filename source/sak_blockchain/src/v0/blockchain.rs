@@ -1,13 +1,11 @@
-use crate::BoxedError;
-
+use super::tx_pool::TxPool;
 use super::BlockchainEvent;
+use super::{ledger::Ledger, Block, Transaction};
+use crate::BoxedError;
 use crate::Runtime;
+use log::{info, warn};
 use sak_vm::VM;
 use std::collections::HashMap;
-
-use super::tx_pool::TxPool;
-use super::{ledger::Ledger, Block, Transaction};
-use log::{info, warn};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use tokio::sync::{
@@ -96,18 +94,19 @@ impl Blockchain {
         Ok(&[])
     }
 
+    // rpc
     pub async fn send_transaction(
         &self,
         tx: Transaction,
-    ) -> Result<bool, String> {
-        let inserted = self.tx_pool.insert(tx).await;
-        Ok(inserted)
+    ) -> Result<(), String> {
+        self.tx_pool.insert(tx).await
     }
 
+    // peer_node
     pub async fn insert_into_pool(&self, txs: Vec<Transaction>) {
         for tx in txs.into_iter() {
-            if let false = self.tx_pool.insert(tx).await {
-                warn!("this transaction was already seen");
+            if let Err(err) = self.tx_pool.insert(tx).await {
+                warn!("Error inserting {}", err);
             };
         }
     }
@@ -115,14 +114,6 @@ impl Blockchain {
     pub async fn write_block(&self) -> Result<&[u8], String> {
         Ok(&[])
     }
-
-    // pub async fn compare_with_my_pool(&self, tx_hashs: Vec<String>) {
-    //     for tx_hash in tx_hashs.into_iter() {
-    //         if let false = self.tx_pool.get_hash_diff(tx_hashs).await {
-    //             warn!("this transaction was already seen");
-    //         };
-    //     }
-    // }
 
     pub async fn get_transaction(
         &self,

@@ -1,83 +1,81 @@
 use crate::Hashable;
 
 use super::Transaction;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use tokio::sync::RwLock;
 
 const TX_POOL_CAPACITY: usize = 100;
 
 pub(crate) struct TxPool {
-    txs: RwLock<Vec<Transaction>>,
-    updated_txs: RwLock<Vec<Transaction>>,
-    unique_transactions: RwLock<HashMap<String, Transaction>>,
+    new_tx_hashes: RwLock<HashSet<String>>,
+    tx_map: RwLock<HashMap<String, Transaction>>,
 }
 
 impl TxPool {
     pub(crate) fn new() -> TxPool {
-        let (txs, updated_txs, unique_transactions) = {
-            let s = HashMap::with_capacity(TX_POOL_CAPACITY);
-            let txs = vec![];
-            let updated_txs = vec![];
+        let new_tx_hashes = {
+            let s = HashSet::new();
 
-            (RwLock::new(txs), RwLock::new(updated_txs), RwLock::new(s))
+            RwLock::new(s)
+        };
+
+        let tx_map = {
+            let m = HashMap::with_capacity(TX_POOL_CAPACITY);
+            RwLock::new(m)
         };
 
         TxPool {
-            txs,
-            updated_txs,
-            unique_transactions,
+            new_tx_hashes,
+            // txs,
+            // updated_txs,
+            tx_map,
         }
     }
 
-    pub async fn get_diff(&self) -> Vec<Transaction> {
-        let mut tx_set_lock = self.updated_txs.write().await;
+    pub async fn get_new_tx_hashes(&self) -> Vec<String> {
+        let mut new_tx_hashes_lock = self.new_tx_hashes.write().await;
 
-        let mut txs = Vec::new();
-        for t in tx_set_lock.iter() {
-            txs.push(t.clone());
-        }
-
-        tx_set_lock.clear();
-
-        txs
+        let v: Vec<_> = new_tx_hashes_lock.drain().collect();
+        v
     }
 
-    pub async fn get_hash_diff(&self) -> Vec<String> {
-        let mut tx_set_lock = self.updated_txs.write().await;
+    // pub async fn get_hash_diff(&self) -> Vec<String> {
+    //     let mut tx_set_lock = self.updated_txs.write().await;
 
-        let mut txs = Vec::new();
-        for t in tx_set_lock.iter() {
-            let tx_hash = match t.get_hash() {
-                Ok(h) => h,
-                Err(_) => "".into(),
-            };
-            txs.push(tx_hash);
-        }
+    //     let mut txs = Vec::new();
+    //     for t in tx_set_lock.iter() {
+    //         let tx_hash = match t.get_hash() {
+    //             Ok(h) => h,
+    //             Err(_) => "".into(),
+    //         };
+    //         txs.push(tx_hash);
+    //     }
 
-        tx_set_lock.clear();
+    //     tx_set_lock.clear();
 
-        txs
-    }
+    //     txs
+    // }
 
-    pub async fn insert(&self, tx: Transaction) -> bool {
-        let tx_hash = match tx.get_hash() {
-            Ok(hash) => hash,
-            Err(_) => return false,
-        };
+    pub async fn insert(&self, tx: Transaction) -> Result<(), String> {
+        let tx_hash = tx.get_hash()?;
 
-        let mut tx_map_lock = self.unique_transactions.write().await;
-        if let Some(_v) = tx_map_lock.get(&tx_hash) {
-            return false;
+        let mut tx_map_lock = self.tx_map.write().await;
+
+        if tx_map_lock.contains_key(&tx_hash) {
+            return Err(format!("tx already exist"));
         } else {
-            tx_map_lock.insert(tx_hash, tx.clone());
+            tx_map_lock.insert(tx_hash.clone(), tx.clone());
         };
 
-        let mut txs_lock = self.txs.write().await;
-        txs_lock.push(tx.clone());
+        let mut new_tx_hashes_lock = self.new_tx_hashes.write().await;
+        new_tx_hashes_lock.insert(tx_hash);
 
-        let mut updated_txs_lock = self.updated_txs.write().await;
-        updated_txs_lock.push(tx);
+        // let mut txs_lock = self.txs.write().await;
+        // txs_lock.push(tx.clone());
 
-        true
+        // let mut updated_txs_lock = self.updated_txs.write().await;
+        // updated_txs_lock.push(tx);
+
+        Ok(())
     }
 }

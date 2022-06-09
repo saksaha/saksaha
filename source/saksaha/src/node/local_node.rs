@@ -1,5 +1,8 @@
 use super::{miner::Miner, peer_node::PeerNode};
-use crate::{machine::Machine, node::msg_handler};
+use crate::{
+    machine::Machine,
+    node::{event_handle, msg_handler},
+};
 use futures::{stream::SplitStream, SinkExt, StreamExt};
 use log::{debug, warn};
 use sak_blockchain::BlockchainEvent;
@@ -61,52 +64,21 @@ async fn run_node_routine(peer_node: PeerNode, machine: Arc<Machine>) {
         tokio::select! {
             Some(ev) = bc_event_rx.recv() => {
                 match ev {
-                    BlockchainEvent::TxPoolStat(txs) => {
-                        match conn.socket_tx
-                            .send(Msg::SyncTx(SyncTx{ txs }))
-                            .await {
-                            Ok(_) => {
-                                debug!(
-                                    "Incoming tx successfully synced with \
-                                    the peer node"
-                                );
-                            },
-                            Err(err) => {
-                                debug!(
-                                    "Failed to sync tx with the peer nodes, \
-                                    err: {}",
-                                    err,
-                                );
-                            }
-                        };
+                    BlockchainEvent::TxPoolStat(new_tx_hashes) => {
+                        event_handle::handle_tx_pool_stat(
+                            &mut conn,
+                            new_tx_hashes,
+                        ).await;
                     },
-                    BlockchainEvent::TxPoolChanged(tx_hashs) => {
-                        match conn.socket_tx
-                            .send(Msg::SyncTxHash(SyncTxHash{ tx_hashs }))
-                            .await {
-                            Ok(_) => {
-                                debug!(
-                                    "Incoming tx_hashs successfully synced \
-                                    with the peer node"
-                                );
-                            },
-                            Err(err) => {
-                                debug!(
-                                    "Failed to sync tx_hashs with the peer \
-                                    nodes,
-                                    err: {}",
-                                    err,
-                                );
-                            }
-                        };
-                    }
                 }
             },
-            maybe_msg = conn.socket_rx.next() => {
+            maybe_msg = conn.socket.next() => {
+                println!("peer_node msg received!");
+
                 match maybe_msg {
                     Some(maybe_msg) => match maybe_msg {
                         Ok(msg) => {
-                            msg_handler::handle_msg(msg, &machine).await;
+                            let _ = msg_handler::handle_msg(msg, &machine, &mut conn).await;
                         }
                         Err(err) => {
                             warn!("Failed to parse the msg, err: {}", err);
@@ -125,19 +97,4 @@ async fn run_node_routine(peer_node: PeerNode, machine: Arc<Machine>) {
             }
         }
     }
-}
-
-async fn dial_temp(socket_tx: &Connection) {
-    println!("awefawe");
-
-    // let mut socket_tx_lock = peer_lock.transport.conn.socket_tx.write().await;
-
-    // println!("send!!!");
-
-    // match socket_tx_lock.send(Msg::Sync(SyncTx { value: 5 })).await {
-    //     Ok(m) => m,
-    //     Err(err) => {
-    //         println!("Err; {}", err);
-    //     }
-    // }
 }

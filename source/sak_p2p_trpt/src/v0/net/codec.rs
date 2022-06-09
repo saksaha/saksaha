@@ -16,8 +16,9 @@ impl Encoder<Msg> for P2PCodec {
         let frame = match item {
             Msg::HandshakeSyn(handshake) => handshake.into_syn_frame(),
             Msg::HandshakeAck(handshake) => handshake.into_ack_frame(),
-            Msg::SyncTx(sync) => sync.into_frame(),
-            Msg::SyncTxHash(sync) => sync.into_frame(),
+            // Msg::SyncTx(sync) => sync.into_frame(),
+            Msg::SyncTxHash(sync_tx_hash) => sync_tx_hash.into_frame(),
+            Msg::RequestTxs(sync_tx_hash) => sync_tx_hash.into_frame(),
         };
 
         match frame_io::write_frame(dst, &frame) {
@@ -57,11 +58,15 @@ impl Decoder for P2PCodec {
                     let handshake = Handshake::from_parse(&mut parse)?;
                     Msg::HandshakeAck(handshake)
                 }
-                "sync_tx" => {
-                    let sync = SyncTx::from_parse(&mut parse)?;
-                    Msg::SyncTx(sync)
-                }
+                // "sync_tx" => {
+                //     let sync = SyncTx::from_parse(&mut parse)?;
+                //     Msg::SyncTx(sync)
+                // }
                 "sync_tx_hash" => {
+                    let sync = SyncTxHash::from_parse(&mut parse)?;
+                    Msg::SyncTxHash(sync)
+                }
+                "request_txs" => {
                     let sync = SyncTxHash::from_parse(&mut parse)?;
                     Msg::SyncTxHash(sync)
                 }

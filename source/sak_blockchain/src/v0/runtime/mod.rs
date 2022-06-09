@@ -32,12 +32,12 @@ impl Runtime {
         loop {
             let time_since = SystemTime::now();
 
-            let txs = self.tx_pool.get_diff().await;
+            let new_tx_hashes = self.tx_pool.get_new_tx_hashes().await;
 
-            if !txs.is_empty() {
+            if !new_tx_hashes.is_empty() {
                 match self
                     .bc_event_tx
-                    .send(BlockchainEvent::TxPoolStat(txs))
+                    .send(BlockchainEvent::TxPoolStat(new_tx_hashes))
                     .await
                 {
                     Ok(_) => (),
