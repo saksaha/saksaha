@@ -2,7 +2,6 @@ mod blockchain;
 mod events;
 mod ledger;
 mod types;
-mod vm;
 
 #[cfg(test)]
 mod tests;

@@ -5,11 +5,8 @@ set -e
 curr_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
 declare -A extern_bins=(
-    [clang]="clang --version"\
     [rustc]="rustc --version"\
     [cargo]="cargo --version"\
-    [wasm2wat]="wasm2wat --version"\
-    [wasm-pack]="wasm-pack --version"\
 );
 
 printf "Saksaha ci starting...\n"
@@ -21,7 +18,7 @@ do
         version=$(${extern_bins[$key]});
         printf "Found %s, version: %s\n" $key "$version"
     else
-        printf "$(key) is not installed, exiting the program\n"
+        printf "%s is not installed, exiting the program\n" "$key"
         exit 1
     fi
 done

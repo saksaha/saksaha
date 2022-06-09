@@ -10,7 +10,6 @@ default-run = "sak"
 sak_logger = { path = "../sak_logger" }
 sak_crypto = { path = "../sak_crypto" }
 sak_blockchain = { path = "../sak_blockchain" }
-sak_key_db = { path = "../sak_key_db" }
 sak_fs = { path = "../sak_fs" }
 sak_proofs = { path = "../sak_proofs" }
 sak_p2p_addr = { path = "../sak_p2p_addr" }

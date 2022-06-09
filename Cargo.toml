@@ -6,7 +6,7 @@ members = [
   "source/sak_crypto",
   "source/sak_proofs",
   "source/sak_fs",
-  "source/sak_key_db",
+  "source/sak_kv_db",
   "source/sak_p2p_addr",
   "source/sak_p2p_ptable",
   "source/sak_p2p_frame",
@@ -18,9 +18,10 @@ members = [
   "source/sak_utils_net",
   "source/sak_contract",
   "source/sak_blockchain",
+  "source/sak_vm",
 
-  # system contracts
-  "source/saksaha/src/scontracts/validator",
+  # system contracts (each)
+  "source/sak_ctrt_validator",
 
   # internals
   "internals/ci",

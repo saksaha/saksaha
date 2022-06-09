@@ -1,7 +1,6 @@
 use crate::{block_columns, Block, Hashable};
 use log::debug;
-use rocksdb::WriteBatch;
-use sak_key_db::KeyValueDatabase;
+use sak_kv_db::{KeyValueDatabase, WriteBatch};
 
 #[inline]
 pub(crate) async fn get_block(
