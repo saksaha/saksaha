@@ -7,7 +7,7 @@ use futures::{stream::SplitStream, SinkExt, StreamExt};
 use log::{debug, warn};
 use sak_blockchain::BlockchainEvent;
 use sak_p2p_ptable::{Peer, PeerStatus, PeerTable};
-use sak_p2p_trpt::{Connection, Msg, SyncTx, SyncTxHash};
+use sak_p2p_trpt::{Connection, Msg, TxHashSyn, TxSyn};
 use std::sync::Arc;
 
 pub(crate) struct LocalNode {
@@ -67,14 +67,13 @@ async fn run_node_routine(peer_node: PeerNode, machine: Arc<Machine>) {
                     BlockchainEvent::TxPoolStat(new_tx_hashes) => {
                         event_handle::handle_tx_pool_stat(
                             &mut conn,
+                            &machine,
                             new_tx_hashes,
                         ).await;
                     },
                 }
             },
             maybe_msg = conn.socket.next() => {
-                println!("peer_node msg received!");
-
                 match maybe_msg {
                     Some(maybe_msg) => match maybe_msg {
                         Ok(msg) => {

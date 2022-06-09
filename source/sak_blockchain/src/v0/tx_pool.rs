@@ -1,7 +1,11 @@
 use crate::Hashable;
 
 use super::Transaction;
-use std::collections::{HashMap, HashSet};
+use log::warn;
+use std::{
+    collections::{HashMap, HashSet},
+    iter::FromIterator,
+};
 use tokio::sync::RwLock;
 
 const TX_POOL_CAPACITY: usize = 100;
@@ -39,22 +43,21 @@ impl TxPool {
         v
     }
 
-    // pub async fn get_hash_diff(&self) -> Vec<String> {
-    //     let mut tx_set_lock = self.updated_txs.write().await;
+    pub async fn get_hash_diff(&self, tx_hashes: Vec<String>) -> Vec<String> {
+        let my_tx_hashes = self.tx_map.write().await;
+        let my_tx_hashes_set: HashSet<String> =
+            my_tx_hashes.keys().cloned().collect();
 
-    //     let mut txs = Vec::new();
-    //     for t in tx_set_lock.iter() {
-    //         let tx_hash = match t.get_hash() {
-    //             Ok(h) => h,
-    //             Err(_) => "".into(),
-    //         };
-    //         txs.push(tx_hash);
-    //     }
+        let incoming_tx_hashes_set: HashSet<String> =
+            HashSet::from_iter(tx_hashes.iter().cloned());
 
-    //     tx_set_lock.clear();
+        let req_hashes = incoming_tx_hashes_set
+            .difference(&my_tx_hashes_set)
+            .cloned()
+            .collect();
 
-    //     txs
-    // }
+        req_hashes
+    }
 
     pub async fn insert(&self, tx: Transaction) -> Result<(), String> {
         let tx_hash = tx.get_hash()?;
@@ -70,12 +73,28 @@ impl TxPool {
         let mut new_tx_hashes_lock = self.new_tx_hashes.write().await;
         new_tx_hashes_lock.insert(tx_hash);
 
-        // let mut txs_lock = self.txs.write().await;
-        // txs_lock.push(tx.clone());
-
-        // let mut updated_txs_lock = self.updated_txs.write().await;
-        // updated_txs_lock.push(tx);
-
         Ok(())
+    }
+
+    pub async fn get_ack_txs(
+        &self,
+        tx_hashes: Vec<String>,
+    ) -> Vec<Transaction> {
+        let tx_map_lock = self.tx_map.read().await;
+        let mut tx_pool = vec![];
+
+        for tx_hash in tx_hashes.iter() {
+            let tx = match tx_map_lock.get(tx_hash) {
+                Some(tx) => tx.clone(),
+                None => {
+                    warn!("Requested tx does not exist");
+                    continue;
+                }
+            };
+
+            tx_pool.push(tx);
+        }
+
+        tx_pool
     }
 }

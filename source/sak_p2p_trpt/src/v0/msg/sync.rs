@@ -3,16 +3,16 @@ use bytes::{BufMut, Bytes, BytesMut};
 use sak_blockchain::Transaction;
 use sak_p2p_frame::{Frame, Parse};
 
-pub struct SyncTx {
+pub struct TxSyn {
     pub txs: Vec<Transaction>,
 }
 
-pub struct SyncTxHash {
+pub struct TxHashSyn {
     pub tx_hashes: Vec<String>,
 }
 
-impl SyncTx {
-    pub(crate) fn from_parse(parse: &mut Parse) -> Result<SyncTx, BoxedError> {
+impl TxSyn {
+    pub(crate) fn from_parse(parse: &mut Parse) -> Result<TxSyn, BoxedError> {
         let tx_count = parse.next_int()?;
         let mut txs = Vec::with_capacity(tx_count as usize);
 
@@ -55,7 +55,7 @@ impl SyncTx {
             txs.push(tx);
         }
 
-        let m = SyncTx { txs };
+        let m = TxSyn { txs };
 
         Ok(m)
     }
@@ -100,10 +100,10 @@ impl SyncTx {
     }
 }
 
-impl SyncTxHash {
+impl TxHashSyn {
     pub(crate) fn from_parse(
         parse: &mut Parse,
-    ) -> Result<SyncTxHash, BoxedError> {
+    ) -> Result<TxHashSyn, BoxedError> {
         let tx_count = parse.next_int()?;
         let mut tx_hashes = Vec::with_capacity(tx_count as usize);
 
@@ -116,7 +116,7 @@ impl SyncTxHash {
             tx_hashes.push(tx_hash);
         }
 
-        let m = SyncTxHash { tx_hashes };
+        let m = TxHashSyn { tx_hashes };
 
         Ok(m)
     }

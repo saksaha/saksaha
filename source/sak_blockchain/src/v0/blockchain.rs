@@ -102,15 +102,6 @@ impl Blockchain {
         self.tx_pool.insert(tx).await
     }
 
-    // peer_node
-    pub async fn insert_into_pool(&self, txs: Vec<Transaction>) {
-        for tx in txs.into_iter() {
-            if let Err(err) = self.tx_pool.insert(tx).await {
-                warn!("Error inserting {}", err);
-            };
-        }
-    }
-
     pub async fn write_block(&self) -> Result<&[u8], String> {
         Ok(&[])
     }
@@ -127,5 +118,28 @@ impl Blockchain {
         block_hash: &String,
     ) -> Result<Block, String> {
         self.ledger.get_block(block_hash).await
+    }
+
+    // peer_node
+    pub async fn insert_into_pool(&self, txs: Vec<Transaction>) {
+        for tx in txs.into_iter() {
+            if let Err(err) = self.tx_pool.insert(tx).await {
+                warn!("Error inserting {}", err);
+            };
+        }
+    }
+
+    pub async fn compare_with_pool(
+        &self,
+        tx_hashes: Vec<String>,
+    ) -> Vec<String> {
+        self.tx_pool.get_hash_diff(tx_hashes).await
+    }
+
+    pub async fn get_ack_txs_from_pool(
+        &self,
+        tx_hashes: Vec<String>,
+    ) -> Vec<Transaction> {
+        self.tx_pool.get_ack_txs(tx_hashes).await
     }
 }

@@ -1,4 +1,4 @@
-use crate::{BoxedError, Handshake, Msg, SyncTx, SyncTxHash};
+use crate::{BoxedError, Handshake, Msg, TxHashSyn, TxSyn};
 use bytes::BytesMut;
 use sak_p2p_frame::{frame_io, Parse};
 use tokio_util::codec::{Decoder, Encoder};
@@ -16,9 +16,9 @@ impl Encoder<Msg> for P2PCodec {
         let frame = match item {
             Msg::HandshakeSyn(handshake) => handshake.into_syn_frame(),
             Msg::HandshakeAck(handshake) => handshake.into_ack_frame(),
-            // Msg::SyncTx(sync) => sync.into_frame(),
-            Msg::SyncTxHash(sync_tx_hash) => sync_tx_hash.into_frame(),
-            Msg::RequestTxs(sync_tx_hash) => sync_tx_hash.into_frame(),
+            Msg::TxSyn(sync) => sync.into_frame(),
+            Msg::TxHashSyn(sync_tx_hash) => sync_tx_hash.into_frame(),
+            Msg::TxHashAck(sync_tx_hash) => sync_tx_hash.into_frame(),
         };
 
         match frame_io::write_frame(dst, &frame) {
@@ -59,16 +59,16 @@ impl Decoder for P2PCodec {
                     Msg::HandshakeAck(handshake)
                 }
                 // "sync_tx" => {
-                //     let sync = SyncTx::from_parse(&mut parse)?;
-                //     Msg::SyncTx(sync)
+                //     let sync = TxSyn::from_parse(&mut parse)?;
+                //     Msg::TxSyn(sync)
                 // }
                 "sync_tx_hash" => {
-                    let sync = SyncTxHash::from_parse(&mut parse)?;
-                    Msg::SyncTxHash(sync)
+                    let sync = TxHashSyn::from_parse(&mut parse)?;
+                    Msg::TxHashSyn(sync)
                 }
                 "request_txs" => {
-                    let sync = SyncTxHash::from_parse(&mut parse)?;
-                    Msg::SyncTxHash(sync)
+                    let sync = TxHashSyn::from_parse(&mut parse)?;
+                    Msg::TxHashSyn(sync)
                 }
                 _ => {
                     return Err(format!(

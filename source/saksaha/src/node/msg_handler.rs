@@ -1,7 +1,7 @@
 use crate::machine::Machine;
 use futures::{stream::SplitStream, SinkExt, StreamExt};
-use log::{info, warn};
-use sak_p2p_trpt::{Connection, Msg, SyncTxHash};
+use log::{debug, info, warn};
+use sak_p2p_trpt::{Connection, Msg, TxHashSyn};
 use tokio::sync::RwLockWriteGuard;
 
 pub(crate) async fn handle_msg<'a>(
@@ -10,27 +10,39 @@ pub(crate) async fn handle_msg<'a>(
     conn: &'a mut RwLockWriteGuard<'_, Connection>,
 ) {
     match msg {
-        // Msg::SyncTx(h) => {
-        //     info!("Discovered transactions inserted into tx pool",);
-
-        //     machine.blockchain.insert_into_pool(h.txs).await;
-        // }
-        Msg::SyncTxHash(sync_tx_hash) => {
+        Msg::TxHashSyn(sync_tx_hash) => {
             info!(
-                "Found sink request will be inserted after hash value \
-                comparison.",
+                "Found sync request will be inserted after hash value \
+                comparison",
             );
 
-            let v = vec![String::from("power")];
+            let req_hashes = machine
+                .blockchain
+                .compare_with_pool(sync_tx_hash.tx_hashes)
+                .await;
 
-            conn.socket
-                .send(Msg::RequestTxs(SyncTxHash { tx_hashes: v }))
+            match conn
+                .socket
+                .send(Msg::TxHashAck(TxHashSyn {
+                    tx_hashes: req_hashes,
+                }))
                 .await
-                .expect("request txs should be sent");
+            {
+                Ok(_) => {
+                    debug!(
+                        "requested tx hashes are successfully \
+                        transmitted to the peer node"
+                    );
+                }
+                Err(err) => {
+                    debug!("Failed to send requested tx, err: {}", err,);
+                }
+            };
+        }
+        Msg::TxSyn(h) => {
+            info!("Received the requested txs");
 
-            // conn.socket.next();
-
-            // machine.blockchain.compare_with_my_pool(h.tx_hashs).await;
+            machine.blockchain.insert_into_pool(h.txs).await;
         }
         Msg::HandshakeSyn(_) => {
             warn!("Peer has sent invalid type message, type: HandshakeSyn");

@@ -1,12 +1,12 @@
-use super::sync::SyncTxHash;
-use crate::{Handshake, SyncTx};
+use super::sync::TxHashSyn;
+use crate::{Handshake, TxSyn};
 
 pub enum Msg {
     HandshakeSyn(Handshake),
     HandshakeAck(Handshake),
-    // SyncTx(SyncTx),
-    SyncTxHash(SyncTxHash), // TxHashSyn
-    RequestTxs(SyncTxHash), // TxHashAck
-                            // TxSyn
-                            // TxAck
+    TxSyn(TxSyn),
+    TxHashSyn(TxHashSyn), // TxHashSyn
+    TxHashAck(TxHashSyn), // TxHashAck
+                          // TxSyn
+                          // TxAck
 }
