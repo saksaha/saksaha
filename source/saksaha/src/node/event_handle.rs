@@ -46,28 +46,7 @@ pub(super) async fn handle_tx_pool_stat<'a>(
         },
         None => {
             warn!("33333333333333333");
-
-            // let mut status_lock = peer_node.peer.status.write().await;
-
-            // *status_lock = PeerStatus::Disconnected;
             return;
         }
     };
-
-    // conn.socket.next().await;
-    // match socket_tx.send(Msg::SyncTx(SyncTx { txs })).await {
-    //     Ok(_) => {
-    //         debug!(
-    //             "Incoming tx successfully synced with \
-    //             the peer node"
-    //         );
-    //     }
-    //     Err(err) => {
-    //         debug!(
-    //             "Failed to sync tx with the peer nodes, \
-    //             err: {}",
-    //             err,
-    //         );
-    //     }
-    // };
 }
