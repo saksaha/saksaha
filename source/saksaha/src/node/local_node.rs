@@ -1,4 +1,4 @@
-use super::{listener::PeerListener, peer_node::PeerNode};
+use super::{listener::PeerListener, miner::Miner, peer_node::PeerNode};
 use crate::machine::Machine;
 use futures::{stream::SplitStream, SinkExt, StreamExt};
 use sak_blockchain::BlockchainEvent;
@@ -9,15 +9,35 @@ use std::sync::Arc;
 pub(crate) struct LocalNode {
     pub(crate) peer_table: Arc<PeerTable>,
     pub(crate) machine: Arc<Machine>,
+    pub(crate) miner: bool,
+    pub(crate) mine_interval: Option<u64>,
 }
 
 impl LocalNode {
     pub(crate) async fn run(&self) {
-        let it = self.peer_table.new_iter();
-        let mut it_lock = it.write().await;
+        // let peer_node_rt = PeerNodeRoutine {};
+        // tokio::spawn(async {
+        //     peer_node_rt.run();
+        // });
+
+        println!("power");
+
+        let machine = self.machine.clone();
+        let mine_interval = self.mine_interval.clone();
+        tokio::spawn(async move {
+            let miner = Miner {
+                machine,
+                mine_interval,
+            };
+
+            miner.run().await;
+        });
+
+        let peer_it = self.peer_table.new_iter();
+        let mut peer_it_lock = peer_it.write().await;
 
         loop {
-            let peer = match it_lock.next().await {
+            let peer = match peer_it_lock.next().await {
                 Ok(p) => p,
                 Err(_) => continue,
             };

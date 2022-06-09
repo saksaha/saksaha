@@ -168,4 +168,19 @@ pub(super) fn create_app<'a>() -> Command<'a> {
                     short url: 127.0.0.1:3030",
                 ),
         )
+        .arg(
+            Arg::new("miner") //
+                .long("miner")
+                .takes_value(false)
+                .long_help("Launch node as a miner"),
+        )
+        .arg(
+            Arg::new("mine-interval") //
+                .long("mine-interval")
+                .takes_value(true)
+                .long_help(
+                    "How often a node will try to see if it can mine a block\n\
+                    in milliseconds e.g. 5000",
+                ),
+        )
 }

@@ -166,6 +166,8 @@ impl Routine {
             let ln = LocalNode {
                 peer_table: peer_table.clone(),
                 machine: machine.clone(),
+                miner: config.node.miner,
+                mine_interval: config.node.mine_interval,
             };
 
             ln

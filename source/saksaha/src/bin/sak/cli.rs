@@ -18,6 +18,8 @@ pub(crate) struct CLIArgs {
     pub(crate) addr_expire_duration: Option<u64>,
     pub(crate) addr_monitor_interval: Option<u64>,
     pub(crate) cfg_profile: Option<String>,
+    pub(crate) miner: bool,
+    pub(crate) mine_interval: Option<u64>,
     pub(crate) bootstrap_urls: Option<Vec<String>>,
 }
 
@@ -222,6 +224,21 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
         None => None,
     };
 
+    let miner = matches.is_present("miner");
+
+    let mine_interval = match matches.value_of("mine-interval") {
+        Some(d) => match d.parse::<u64>() {
+            Ok(d) => Some(d),
+            Err(err) => {
+                return Err(format!(
+                    "Cannot parse mine interval (u64), err: {}",
+                    err,
+                ));
+            }
+        },
+        None => None,
+    };
+
     let app_prefix = match matches.value_of("app-prefix") {
         Some(m) => Some(String::from(m)),
         None => None,
@@ -244,6 +261,8 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
         addr_monitor_interval,
         cfg_profile,
         bootstrap_urls,
+        miner,
+        mine_interval,
         app_prefix,
     })
 }

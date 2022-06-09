@@ -1,3 +1,5 @@
+use crate::BoxedError;
+
 use super::BlockchainEvent;
 use super::{ledger::Ledger, Block, Hashable, Transaction};
 use log::info;
@@ -76,6 +78,14 @@ impl Blockchain {
         };
     }
 
+    pub async fn query_contract(&self) -> Result<&[u8], String> {
+        Ok(&[])
+    }
+
+    pub async fn execute_contract(&self) -> Result<&[u8], String> {
+        Ok(&[])
+    }
+
     pub async fn send_transaction(
         &self,
         tx: Transaction,
@@ -102,6 +112,10 @@ impl Blockchain {
             ));
         }
         self.ledger.write_tx(tx).await
+    }
+
+    pub async fn write_block(&self) -> Result<&[u8], String> {
+        Ok(&[])
     }
 
     pub async fn get_transaction(
