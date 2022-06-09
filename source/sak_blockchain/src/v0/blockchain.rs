@@ -84,7 +84,6 @@ impl Blockchain {
 
     pub async fn run(&self) {
         info!("Start running blockchain");
-
         match self.vm.run_vm() {
             Ok(_) => (),
             Err(err) => {
