@@ -28,11 +28,111 @@ impl VM {
         // }
 
         // test_ex().unwrap();
-        test_array_sum();
-        // test_upper();
+        // test_array_sum();
+        test_upper();
 
         Ok(())
     }
+}
+
+fn test_upper() {
+    let input = "this should be uppercase";
+    let res = upper(input.to_string()).unwrap();
+    println!("Result from running {}: {:#?}", WASM, res);
+}
+
+fn upper(input: String) -> Result<String, BoxedError> {
+    // create a new Wasmtime instance
+    let (instance, mut store) = create_instance(WASM.to_string())?;
+    // write the input array to the module's linear memory
+    let ptr = copy_memory(&input.as_bytes().to_vec(), &instance, &mut store)?;
+    // get the module's exported `upper` function
+    let upper = instance
+        .get_func(&mut store, UPPER_FN)
+        .expect("expected upper function not found");
+
+    let mut ret = vec![Val::from(0 as i32)];
+
+    // call the `upper` function with the pointer to the
+    // string and length
+    upper.call(
+        &mut store,
+        &vec![
+            Val::from(ptr as i32),
+            Val::from(input.as_bytes().len() as i32),
+        ],
+        &mut ret,
+    )?;
+
+    let res_ptr = match ret
+        .get(0)
+        .expect("expected the result of upper to have one value")
+    {
+        Val::I32(val) => *val,
+
+        _ => return Err(format!("cannot get result").into()),
+    };
+
+    // read the result string from the module's memory,
+    // which is located at `res_ptr`
+    let memory = instance
+        .get_memory(&mut store, MEMORY)
+        .expect("expected memory not found");
+
+    let res: String;
+    unsafe {
+        res = read_string(
+            &store,
+            &memory,
+            res_ptr as u32,
+            input.as_bytes().len() as u32,
+        )
+        .unwrap()
+    }
+
+    // call the module's dealloc function for the result string
+    let dealloc = instance
+        .get_func(&mut store, DEALLOC_FN)
+        .expect("expected upper function not found");
+
+    // let mut ret = vec![Val::from(0 as i32)];
+    dealloc.call(
+        &mut store,
+        &vec![
+            Val::from(res_ptr as i32),
+            Val::from(input.as_bytes().len() as i32),
+        ],
+        &mut [],
+    )?;
+
+    // return the string
+    println!("Result string: {}", res);
+
+    Ok(res)
+}
+
+pub unsafe fn read_string(
+    store: &Store<usize>,
+    memory: &Memory,
+    data_ptr: u32,
+    len: u32,
+) -> Result<String, BoxedError> {
+    // get a raw byte array from the module's linear memory
+    // at offset `data_ptr` and length `len`.
+    let data = memory
+        .data(store)
+        .get(data_ptr as u32 as usize..)
+        .and_then(|arr| arr.get(..len as u32 as usize));
+    // attempt to read a UTF-8 string from the memory
+    let str = match data {
+        Some(data) => match std::str::from_utf8(data) {
+            Ok(s) => s,
+            Err(_) => return Err(format!("invalid utf-8").into()),
+        },
+        None => return Err(format!("pointer/length out of bounds").into()),
+    };
+
+    Ok(String::from(str))
 }
 
 fn test_ex() -> Result<(), BoxedError> {
