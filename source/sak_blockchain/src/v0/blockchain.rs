@@ -82,6 +82,18 @@ impl Blockchain {
         Ok(blockchain)
     }
 
+    pub async fn tx_pool_contain(
+        &self,
+        tx: Transaction,
+    ) -> Result<String, String> {
+        match String::from_utf8(tx.contract.clone()) {
+            Ok(v) => return self.tx_pool.contain_check(v).await,
+            Err(err) => {
+                return Err(format!("Invalid UTF-8 sequence, err: {}", err))
+            }
+        };
+    }
+
     pub async fn run(&self) {
         info!("Start running blockchain");
         match self.vm.run_vm() {

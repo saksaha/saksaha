@@ -76,9 +76,11 @@ impl TxDB {
 
         let mut batch = WriteBatch::default();
 
-        let tx_hash = match tx.get_hash() {
-            Ok(hash) => hash,
-            Err(_) => return Err(format!("Failed to get hash from tx_value")),
+        let tx_hash = match String::from_utf8(tx.contract.clone()) {
+            Ok(v) => v,
+            Err(err) => {
+                return Err(format!("Invalid UTF-8 sequence, err: {}", err))
+            }
         };
 
         let cf_handle = match db.cf_handle(tx_columns::CREATED_AT) {

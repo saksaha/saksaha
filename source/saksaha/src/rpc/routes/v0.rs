@@ -87,10 +87,8 @@ pub(crate) async fn get_transaction(
 ) -> Result<Response<Body>, hyper::Error> {
     match hyper::body::to_bytes(req.into_body()).await {
         Ok(b) => {
-            // let body_bytes_vec = b.to_vec();
-
             let body: GetTransactionBody = match serde_json::from_slice(&b) {
-                Ok(b) => b,
+                Ok(b) => GetTransactionBody { hash: b },
                 Err(err) => {
                     return ErrorResult::<String> {
                         id: String::from("1"),
@@ -102,8 +100,6 @@ pub(crate) async fn get_transaction(
                     .into_hyper_result();
                 }
             };
-
-            // println!("tx_hash: {}", tx_hash);
 
             match sys_handle.machine.get_transaction(body.hash).await {
                 Ok(t) => {

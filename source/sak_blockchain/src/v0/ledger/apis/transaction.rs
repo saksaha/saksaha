@@ -12,10 +12,8 @@ pub(crate) async fn write_tx(
 
     let mut batch = WriteBatch::default();
 
-    let tx_hash = match tx.get_hash() {
-        Ok(hash) => hash,
-        Err(_) => return Err(format!("Failed to get hash from tx_value")),
-    };
+    let tx_hash = tx.contract.clone();
+    println!("tx.data : {:?}", tx.data);
 
     let cf_handle = match db.cf_handle(tx_columns::CREATED_AT) {
         Some(h) => h,
@@ -73,7 +71,15 @@ pub(crate) async fn write_tx(
     batch.put_cf(cf_handle, &tx_hash, tx.contract);
 
     match db.write(batch) {
-        Ok(_) => return Ok(tx_hash),
+        Ok(_) => {
+            match String::from_utf8(tx_hash) {
+                Ok(v) => return Ok(v),
+                Err(err) => {
+                    return Err(format!("Invalid UTF-8 sequence, err: {}", err))
+                }
+            };
+        }
+
         Err(err) => {
             return Err(format!("Fail to write on ledger db, err: {}", err))
         }
@@ -112,15 +118,15 @@ pub(crate) async fn read_tx(
                 return Err(format!("Fail to open ledger columns {}", cfn));
             }
         };
-
+        println!("cf_handle : {:?}, tx hash : {:?}", cfn, &tx_hash);
         tx_value_result[idx] = match db.get_cf(cf_handle, &tx_hash) {
             Ok(val) => match val {
                 Some(v) => match std::str::from_utf8(&v) {
                     Ok(vs) => vs.to_string(),
                     Err(err) => {
                         return Err(format!(
-                            "Invalid utf8 given, err: {}",
-                            err,
+                            "Invalid utf8 given, err: {},{:?},{:?}",
+                            err, idx, v
                         ));
                     }
                 },

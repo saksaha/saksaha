@@ -199,8 +199,56 @@ pub(super) mod test_utils {
             pi: String::from("0x111"),
             signature: String::from("0x1111"),
             created_at: String::from("1346546123"),
-            data: String::from("one").as_bytes().to_vec(),
-            contract: String::from("one").as_bytes().to_vec(),
+            data: vec![
+                63, 64, 65, 66, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+            ],
+            contract: vec![75, 73, 72],
         }
+    }
+
+    pub(crate) fn make_dummy_values() -> Vec<Transaction> {
+        vec![
+            Transaction {
+                pi: String::from("0x111"),
+                signature: String::from("0x1111"),
+                created_at: String::from("1346546123"),
+                data: vec![
+                    63, 64, 65, 66, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+                ],
+                contract: vec![1, 2, 3],
+            },
+            Transaction {
+                pi: String::from("0x222"),
+                signature: String::from("0x2222"),
+                created_at: String::from("1346546124"),
+                data: vec![
+                    93, 64, 65, 66, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+                ],
+                contract: String::from("Oxabcde1").as_bytes().to_vec(),
+            },
+            Transaction {
+                pi: String::from("0x333"),
+                signature: String::from("0x3333"),
+                created_at: String::from("1346546125"),
+                data: vec![
+                    73, 64, 65, 66, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+                ],
+                contract: String::from("Oxabcde12").as_bytes().to_vec(),
+            },
+            Transaction {
+                pi: String::from("0x444"),
+                signature: String::from("0x4444"),
+                created_at: String::from("1346546126"),
+                data: vec![
+                    83, 84, 85, 96, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+                ],
+                contract: String::from("Oxabcde123").as_bytes().to_vec(),
+            },
+        ]
     }
 }

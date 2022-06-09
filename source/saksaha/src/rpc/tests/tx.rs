@@ -64,7 +64,6 @@ mod test_suite {
 
         {
             let blockchain = test_utils::make_blockchain().await;
-            // let tx_db = blockchain.database.tx_db;
             let dummy_tx_val = test_utils::make_dummy_value();
 
             let old_tx_hash =
@@ -133,7 +132,6 @@ mod test_suite {
 
         let tx_hash = {
             let blockchain = test_utils::make_blockchain().await;
-            // let tx_db = blockchain.database.tx_db;
             let dummy_tx_val = test_utils::make_dummy_value();
 
             let old_tx_hash =
@@ -191,6 +189,90 @@ mod test_suite {
                     match serde_json::from_reader(body.reader()) {
                         Ok(e) => {
                             log::info!("{:?}", e);
+                            e
+                        }
+                        Err(err) => {
+                            panic!(
+                                "Response should be 'error_response', {}",
+                                err
+                            );
+                        }
+                    };
+            }
+            Err(err) => {
+                panic!("error: {}", err);
+            }
+        };
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn test_rpc_client_request_correct_insert_contain_tx_pool() {
+        test_utils::init();
+
+        let dummy_tx = {
+            let blockchain = test_utils::make_blockchain().await;
+            let dummy_tx_val = test_utils::make_dummy_value();
+
+            let old_tx_hash = String::from_utf8(dummy_tx_val.contract.clone())
+                .expect("Invalid uft8 given");
+
+            blockchain
+                .send_transaction(dummy_tx_val.clone())
+                .await
+                .expect("Can't send transaction");
+
+            let tx_hash = blockchain
+                .tx_pool_contain(dummy_tx_val.clone())
+                .await
+                .unwrap();
+
+            assert_eq!(old_tx_hash, tx_hash);
+
+            dummy_tx_val
+        };
+
+        let (rpc, rpc_socket_addr, _) = test_utils::make_rpc().await;
+        let _rpc_server = tokio::spawn(async move { rpc.run().await });
+        let client = Client::new();
+
+        let uri: Uri = {
+            let u = format!(
+                "http://localhost:{}/apis/v0/send_transaction",
+                rpc_socket_addr.port()
+            );
+            u.parse().expect("URI should be made")
+        };
+
+        let req = Request::builder()
+            .method(Method::POST)
+            .uri(uri.clone())
+            .body(Body::from(format!(
+                r#"
+                    {{
+                        "pi": "{}",
+                        "signature": "{}",
+                        "created_at": "{}",
+                        "data": {:?},
+                        "contract": {:?}
+                    }}
+                "#,
+                dummy_tx.pi,
+                dummy_tx.signature,
+                dummy_tx.created_at,
+                dummy_tx.data,
+                dummy_tx.contract
+            )))
+            .expect("request builder should be made");
+
+        let _res = match client.request(req).await {
+            Ok(res) => {
+                let body = hyper::body::aggregate(res)
+                    .await
+                    .expect("body should be parsed");
+                let _: JsonResponse =
+                    match serde_json::from_reader(body.reader()) {
+                        Ok(e) => {
+                            log::info!("log info dbg {:?}", e);
                             e
                         }
                         Err(err) => {

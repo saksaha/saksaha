@@ -55,7 +55,12 @@ impl TxPool {
     }
 
     pub async fn insert(&self, tx: Transaction) -> Result<(), String> {
-        let tx_hash = tx.get_hash()?;
+        let tx_hash = match String::from_utf8(tx.contract.clone()) {
+            Ok(v) => v,
+            Err(err) => {
+                return Err(format!("Invalid UTF-8 sequence, err: {}", err))
+            }
+        };
 
         let mut tx_map_lock = self.tx_map.write().await;
 
@@ -91,5 +96,18 @@ impl TxPool {
         }
 
         tx_pool
+    }
+
+    pub async fn contain_check(
+        &self,
+        tx_hash_str: String,
+    ) -> Result<String, String> {
+        let tx_map_lock = self.tx_map.read().await;
+
+        if tx_map_lock.contains_key(&tx_hash_str) {
+            return Err(format!("tx already exists : {}", tx_hash_str));
+        } else {
+            return Ok(format!("tx doesnt exist"));
+        };
     }
 }
