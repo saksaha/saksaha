@@ -6,6 +6,7 @@ use sak_p2p_addr::UnknownAddr;
 #[derive(Debug)]
 pub(crate) struct Config {
     pub(crate) app_prefix: String,
+    pub(crate) node: NodeConfig,
     pub(crate) rpc: RPCConfig,
     pub(crate) p2p: P2PConfig,
     pub(crate) db: DBConfig,
@@ -38,6 +39,12 @@ pub(crate) struct RPCConfig {
 
 #[derive(Debug)]
 pub(crate) struct DBConfig {}
+
+#[derive(Debug)]
+pub(crate) struct NodeConfig {
+    pub(crate) miner: bool,
+    pub(crate) mine_interval: Option<u64>,
+}
 
 impl Config {
     pub(crate) fn new(
@@ -89,6 +96,10 @@ impl Config {
 
         let conf = Config {
             app_prefix: app_prefix.clone(),
+            node: NodeConfig {
+                miner: sys_run_args.miner,
+                mine_interval: sys_run_args.mine_interval,
+            },
             db: DBConfig {},
             rpc: RPCConfig {
                 rpc_port: sys_run_args.rpc_port,

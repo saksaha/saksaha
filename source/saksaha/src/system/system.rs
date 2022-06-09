@@ -21,6 +21,8 @@ pub struct SystemRunArgs {
     pub addr_monitor_interval: Option<u64>,
     pub bootstrap_urls: Option<Vec<String>>,
     pub cfg_profile: Option<String>,
+    pub miner: bool,
+    pub mine_interval: Option<u64>,
     pub app_prefix: Option<String>,
 }
 
