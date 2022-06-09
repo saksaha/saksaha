@@ -1,9 +1,13 @@
-use super::{listener::PeerListener, miner::Miner, peer_node::PeerNode};
-use crate::machine::Machine;
+use super::{miner::Miner, peer_node::PeerNode};
+use crate::{
+    machine::Machine,
+    node::{event_handle, msg_handler},
+};
 use futures::{stream::SplitStream, SinkExt, StreamExt};
+use log::{debug, warn};
 use sak_blockchain::BlockchainEvent;
-use sak_p2p_ptable::{Peer, PeerTable};
-use sak_p2p_trpt::{Connection, Msg, P2PCodec, SyncMsg};
+use sak_p2p_ptable::{Peer, PeerStatus, PeerTable};
+use sak_p2p_trpt::{Connection, Msg, SyncTx, SyncTxHash};
 use std::sync::Arc;
 
 pub(crate) struct LocalNode {
@@ -38,7 +42,7 @@ impl LocalNode {
 
         loop {
             let peer = match peer_it_lock.next().await {
-                Ok(p) => p,
+                Ok(p) => p.clone(),
                 Err(_) => continue,
             };
 
@@ -53,42 +57,44 @@ impl LocalNode {
 }
 
 async fn run_node_routine(peer_node: PeerNode, machine: Arc<Machine>) {
-    let peer = peer_node.peer.clone();
-    let mut conn = peer.transport.conn.write().await;
+    loop {
+        let mut conn = peer_node.peer.transport.conn.write().await;
+        let mut bc_event_rx = machine.blockchain.bc_event_rx.write().await;
 
-    let mut bc_event_rx = machine.blockchain.bc_event_rx.write().await;
+        tokio::select! {
+            Some(ev) = bc_event_rx.recv() => {
+                match ev {
+                    BlockchainEvent::TxPoolStat(new_tx_hashes) => {
+                        event_handle::handle_tx_pool_stat(
+                            &mut conn,
+                            new_tx_hashes,
+                        ).await;
+                    },
+                }
+            },
+            maybe_msg = conn.socket.next() => {
+                println!("peer_node msg received!");
 
-    tokio::select! {
-        Some(ev) = bc_event_rx.recv() => {
-            match ev {
-                BlockchainEvent::TxPoolChange(tx_hash) => {
-                    println!("got hash from my rpc, {:?}", tx_hash);
+                match maybe_msg {
+                    Some(maybe_msg) => match maybe_msg {
+                        Ok(msg) => {
+                            let _ = msg_handler::handle_msg(msg, &machine, &mut conn).await;
+                        }
+                        Err(err) => {
+                            warn!("Failed to parse the msg, err: {}", err);
+                        }
+                    }
+                    None => {
+                        warn!("Peer has ended the connection");
 
-                    match conn.socket_tx.send(Msg::Sync(SyncMsg{value:1})).await {
-                        Ok(_) => println!("successfully send a msg to other nodes"),
-                        Err(err) => println!("failed to send a msg to other nodes, err: {}", err),
-                    };
-                },
+                        let mut status_lock = peer_node.peer.status.write()
+                            .await;
+
+                        *status_lock = PeerStatus::Disconnected;
+                        return;
+                    }
+                };
             }
-        },
-        msg = conn.socket_rx.next() => {
-            println!("got hash from other node");
-            conn;
         }
     }
-}
-
-async fn dial_temp(socket_tx: &Connection) {
-    println!("awefawe");
-
-    // let mut socket_tx_lock = peer_lock.transport.conn.socket_tx.write().await;
-
-    // println!("send!!!");
-
-    // match socket_tx_lock.send(Msg::Sync(SyncMsg { value: 5 })).await {
-    //     Ok(m) => m,
-    //     Err(err) => {
-    //         println!("Err; {}", err);
-    //     }
-    // }
 }

@@ -18,10 +18,10 @@ pub(crate) async fn send_transaction(
                     let _tx_value: Transaction = match serde_json::from_str(b) {
                         Ok(v) => {
                             match sys_handle.machine.send_transaction(v).await {
-                                Ok(hash) => {
+                                Ok(bool) => {
                                     return SuccessResult {
                                         id: String::from("1"),
-                                        result: hash,
+                                        result: bool,
                                     }
                                     .into_hyper_result();
                                 }
