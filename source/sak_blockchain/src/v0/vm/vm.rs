@@ -3,7 +3,6 @@ use log::error;
 use wasmtime::*;
 
 const WASM: &str = "rust.wasm";
-// const WASM: &str = "as.wasm";
 const ALLOC_FN: &str = "alloc";
 const MEMORY: &str = "memory";
 const ARRAY_SUM_FN: &str = "array_sum";
@@ -15,18 +14,6 @@ pub struct VM {}
 impl VM {
     // test
     pub fn run_vm(&self) -> Result<(), BoxedError> {
-        let len = 4;
-        let mut buf: Vec<usize> = Vec::with_capacity(len);
-
-        // take a mutable pointer to the buffer
-        let ptr = buf.as_mut_ptr();
-
-        // unsafe {
-        //     let v = Vec::from_raw_parts(ptr, len, len);
-
-        //     println!("Vector: {:?}, len: {}", v, len);
-        // }
-
         // test_ex().unwrap();
         // test_array_sum();
         test_upper();
@@ -44,34 +31,22 @@ fn test_upper() {
 fn upper(input: String) -> Result<String, BoxedError> {
     // create a new Wasmtime instance
     let (instance, mut store) = create_instance(WASM.to_string())?;
+
     // write the input array to the module's linear memory
     let ptr = copy_memory(&input.as_bytes().to_vec(), &instance, &mut store)?;
-    // get the module's exported `upper` function
-    let upper = instance
-        .get_func(&mut store, UPPER_FN)
-        .expect("expected upper function not found");
 
-    let mut ret = vec![Val::from(0 as i32)];
+    // get the module's exported `upper` function
+    let upper: TypedFunc<(i32, i32), i32> = instance
+        .get_typed_func(&mut store, UPPER_FN)
+        .expect("expected upper function not found");
 
     // call the `upper` function with the pointer to the
     // string and length
-    upper.call(
-        &mut store,
-        &vec![
-            Val::from(ptr as i32),
-            Val::from(input.as_bytes().len() as i32),
-        ],
-        &mut ret,
-    )?;
+    let ret =
+        upper.call(&mut store, (ptr as i32, input.as_bytes().len() as i32))?;
 
-    let res_ptr = match ret
-        .get(0)
-        .expect("expected the result of upper to have one value")
-    {
-        Val::I32(val) => *val,
-
-        _ => return Err(format!("cannot get result").into()),
-    };
+    let res_ptr = ret;
+    println!("res_ptr: {}", res_ptr);
 
     // read the result string from the module's memory,
     // which is located at `res_ptr`
@@ -95,7 +70,6 @@ fn upper(input: String) -> Result<String, BoxedError> {
         .get_func(&mut store, DEALLOC_FN)
         .expect("expected upper function not found");
 
-    // let mut ret = vec![Val::from(0 as i32)];
     dealloc.call(
         &mut store,
         &vec![
@@ -104,9 +78,6 @@ fn upper(input: String) -> Result<String, BoxedError> {
         ],
         &mut [],
     )?;
-
-    // return the string
-    println!("Result string: {}", res);
 
     Ok(res)
 }
@@ -192,19 +163,12 @@ fn copy_memory(
     instance: &Instance,
     store: &mut Store<usize>,
 ) -> Result<isize, BoxedError> {
-    // let store = &mut store;
     // Get the "memory" export of the module.
     // If the module does not export it, just panic,
     // since we are not going to be able to copy array data.
     let memory = instance
         .get_memory(&mut *store, MEMORY)
         .expect("expected memory not found");
-
-    let memory_size = memory.size(&mut *store);
-
-    println!("memory size: {}", memory_size);
-
-    memory.grow(&mut *store, 30).expect("memory should grow");
 
     // The module is not using any bindgen libraries, so it should export
     // its own alloc function.
@@ -214,28 +178,16 @@ fn copy_memory(
     // The result is an offset relative to the module's linear memory, which is
     // used to copy the bytes into the module's memory.
     // Then, return the offset.
-    let alloc = instance
-        .get_func(&mut *store, ALLOC_FN)
+    let alloc: TypedFunc<i32, i32> = instance
+        .get_typed_func(&mut *store, ALLOC_FN)
         .expect("expected alloc function not found");
 
-    let ret = &mut [Val::from(1 as i32)];
-
-    alloc.call(&mut *store, &vec![Val::from(bytes.len() as i32)], ret)?;
-
-    let guest_ptr_offset = match ret
-        .get(0)
-        .expect("expected the result of the allocation to have one value")
-    {
-        Val::I32(val) => *val as isize,
-        _ => return Err(format!("guest pointer must be Val::I32").into()),
-    };
+    let guest_ptr_offset =
+        alloc.call(&mut *store, bytes.len() as i32)? as isize;
 
     unsafe {
         let raw = memory.data_ptr(&mut *store).offset(guest_ptr_offset);
         raw.copy_from(bytes.as_ptr(), bytes.len());
-
-        // let v = Vec::from_raw_parts(raw, bytes.len(), bytes.len());
-        // println!("Vector: {:?}, len: {}", v, bytes.len());
     }
 
     return Ok(guest_ptr_offset);
@@ -284,7 +236,7 @@ fn array_sum(input: Vec<u8>) -> Result<i32, BoxedError> {
 }
 
 fn create_instance(
-    filename: String,
+    _filename: String,
 ) -> Result<(Instance, Store<usize>), BoxedError> {
     let wasm_bytes = include_bytes!("./sak_ctrt_validator.wasm");
 
