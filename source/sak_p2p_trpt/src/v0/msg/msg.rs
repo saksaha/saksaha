@@ -1,5 +1,4 @@
-use super::sync::TxHashSyn;
-use crate::{Handshake, TxSyn};
+use crate::{Handshake, TxHashSyn, TxSyn};
 
 pub enum Msg {
     HandshakeSyn(Handshake),

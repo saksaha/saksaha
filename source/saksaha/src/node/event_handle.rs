@@ -36,6 +36,8 @@ pub(super) async fn handle_tx_pool_stat<'a>(
         Some(maybe_msg) => match maybe_msg {
             Ok(msg) => match msg {
                 Msg::TxHashAck(h) => {
+                    println!("happy scenario");
+
                     let txs = machine
                         .blockchain
                         .get_ack_txs_from_pool(h.tx_hashes)
@@ -68,16 +70,12 @@ pub(super) async fn handle_tx_pool_stat<'a>(
                 }
                 Msg::TxHashSyn(_) => {
                     println!("May I?");
-                    return;
                 }
             },
             Err(err) => {
                 warn!("Failed to parse the msg, err: {}", err);
-                return;
             }
         },
-        None => {
-            return;
-        }
+        None => {}
     };
 }

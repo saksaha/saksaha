@@ -38,6 +38,13 @@ pub(crate) async fn handle_msg<'a>(
                     debug!("Failed to send requested tx, err: {}", err,);
                 }
             };
+
+            match conn.socket.next().await {
+                Some(maybe_msg) => {
+                    println!("tx_syn have arrived");
+                }
+                None => {}
+            };
         }
         Msg::TxSyn(h) => {
             info!("Received the requested txs");
