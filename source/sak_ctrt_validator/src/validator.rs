@@ -34,7 +34,7 @@ pub extern "C" fn alloc(len: usize) -> *mut u8 {
 }
 
 #[no_mangle]
-pub unsafe fn dealloc(ptr: *mut u8, size: usize) {
+pub unsafe extern "C" fn dealloc(ptr: *mut u8, size: usize) {
     let data = Vec::from_raw_parts(ptr, size, size);
 
     std::mem::drop(data);
@@ -43,7 +43,7 @@ pub unsafe fn dealloc(ptr: *mut u8, size: usize) {
 /// Given a pointer to the start of a byte array and
 /// its length, return the sum of its elements.
 #[no_mangle]
-pub unsafe fn array_sum(ptr: *mut u8, len: usize) -> u8 {
+pub unsafe extern "C" fn array_sum(ptr: *mut u8, len: usize) -> u8 {
     // create a `Vec<u8>` from the pointer to the
     // linear memory and length
     let data = Vec::from_raw_parts(ptr, len, len);
@@ -56,7 +56,7 @@ pub unsafe fn array_sum(ptr: *mut u8, len: usize) -> u8 {
 /// representation, then return the pointer in
 /// memory to it.
 #[no_mangle]
-pub unsafe fn upper(ptr: *mut u8, len: usize) -> *mut u8 {
+pub unsafe extern "C" fn upper(ptr: *mut u8, len: usize) -> *mut u8 {
     // create a `Vec<u8>` from the pointer and length
     // here we could also use Rust's excellent FFI
     // libraries to read a string, but for simplicity,
