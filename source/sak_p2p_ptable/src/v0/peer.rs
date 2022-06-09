@@ -20,6 +20,7 @@ pub enum PeerStatus {
     HandshakeInit,
     HandshakeInitFail { err: String },
     HandshakeRecvFail { err: String },
+    Disconnected,
 }
 
 impl std::fmt::Display for Peer {
@@ -54,6 +55,9 @@ impl std::fmt::Display for PeerStatus {
             }
             PeerStatus::HandshakeRecvFail { err } => {
                 write!(f, "HandshakeRecvFail, err: {}", err)
+            }
+            PeerStatus::Disconnected => {
+                write!(f, "Disconnected",)
             }
         }
     }

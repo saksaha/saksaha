@@ -25,6 +25,7 @@ atoi = "0.4.0"
 colored = "2"
 chrono = "0.4"
 sak_utils_net = { path = "../sak_utils_net" }
+sak_blockchain = { path = "../sak_blockchain" }
 
 [lib]
 doctest = false # until stable beta is released

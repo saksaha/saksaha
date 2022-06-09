@@ -5,7 +5,7 @@ impl Machine {
     pub(crate) async fn send_transaction(
         &self,
         tx: Transaction,
-    ) -> Result<String, String> {
+    ) -> Result<(), String> {
         self.blockchain.send_transaction(tx).await
     }
 

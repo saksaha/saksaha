@@ -21,6 +21,7 @@ rand = "0.8.4"
 tokio = { version = "1.12.0", features = ["full"] }
 wasmtime = "0.37.0"
 wasmtime-wasi = "0.37.0"
+sak_utils_time = { path = "../sak_utils_time" }
 
 [lib]
 doctest = false # until stable beta is released

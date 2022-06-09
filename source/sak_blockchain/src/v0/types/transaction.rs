@@ -1,14 +1,15 @@
-use super::Hashable;
+use crate::Hashable;
 use sak_crypto::sha3::{Digest, Sha3_256};
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
 pub struct Transaction {
     pub created_at: String,
     #[serde(with = "serde_bytes")]
     pub data: Vec<u8>,
     pub pi: String,
     pub signature: String,
+    #[serde(with = "serde_bytes")]
     pub contract: Vec<u8>,
 }
 

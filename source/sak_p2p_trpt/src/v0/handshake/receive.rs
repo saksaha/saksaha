@@ -1,10 +1,9 @@
+use crate::{Connection, Handshake, Msg, Transport};
 use futures::SinkExt;
 use sak_p2p_id::Identity;
 use std::sync::Arc;
 use thiserror::Error;
 use tokio::sync::RwLock;
-
-use crate::{Connection, Handshake, Msg, Transport};
 
 #[derive(Error, Debug)]
 pub enum HandshakeRecvError {
@@ -93,7 +92,7 @@ pub async fn receive_handshake(
         dst_public_key_str: her_public_key_str.clone(),
     };
 
-    match conn.socket_tx.send(Msg::HandshakeAck(handshake)).await {
+    match conn.socket.send(Msg::HandshakeAck(handshake)).await {
         Ok(_) => (),
         Err(err) => {
             return Err(HandshakeRecvError::AckSendFail {

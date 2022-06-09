@@ -23,7 +23,7 @@ impl Handler {
         peer_table: Arc<PeerTable>,
         addr_table: Arc<AddrTable>,
     ) {
-        match conn.socket_rx.next().await {
+        match conn.socket.next().await {
             Some(maybe_msg) => match maybe_msg {
                 Ok(msg) => match msg {
                     Msg::HandshakeSyn(handshake) => {
