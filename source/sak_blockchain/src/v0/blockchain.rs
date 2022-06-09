@@ -1,7 +1,7 @@
-use super::vm::VM;
 use super::BlockchainEvent;
 use super::{ledger::Ledger, Block, Hashable, Transaction};
 use log::info;
+use sak_vm::VM;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;

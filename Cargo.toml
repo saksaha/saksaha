@@ -18,6 +18,7 @@ members = [
   "source/sak_utils_net",
   "source/sak_contract",
   "source/sak_blockchain",
+  "source/sak_vm",
 
   # system contracts (each)
   "source/sak_ctrt_validator",
