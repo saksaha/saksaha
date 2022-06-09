@@ -1,7 +1,7 @@
-use super::vm::VM;
 use super::BlockchainEvent;
 use super::{ledger::Ledger, Block, Hashable, Transaction};
 use log::info;
+use sak_vm::VM;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -68,7 +68,12 @@ impl Blockchain {
     pub async fn run(&self) {
         info!("Start running blockchain");
 
-        self.vm.run_vm();
+        match self.vm.run_vm() {
+            Ok(_) => (),
+            Err(err) => {
+                println!("Error running vm, err: {}", err);
+            }
+        };
     }
 
     pub async fn send_transaction(

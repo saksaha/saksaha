@@ -1,7 +1,5 @@
-use rocksdb::WriteBatch;
-use sak_key_db::KeyValueDatabase;
-
 use crate::{tx_columns, Hashable, Transaction};
+use sak_kv_db::{KeyValueDatabase, WriteBatch};
 
 #[inline]
 pub(crate) async fn write_tx(

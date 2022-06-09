@@ -1,5 +1,5 @@
 [package]
-name = "sak_key_db"
+name = "sak_kv_db"
 version = "0.1.0"
 edition = "2018"
 
@@ -24,7 +24,7 @@ bytes = "1"
 atoi = "0.4.0"
 k256 = { version = "0.9.6", features = ["ecdh"] }
 chrono = "0.4"
-rocksdb = "0.18.0"
+rocksdb = { version = "0.18.0", default-features = false, features = ["lz4"] }
 
 [lib]
 doctest = false # until stable beta is released

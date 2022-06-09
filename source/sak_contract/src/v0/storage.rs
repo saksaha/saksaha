@@ -1,7 +1,3 @@
-use serde::{de::DeserializeOwned, Serialize};
-use wasm_bindgen::prelude::*;
-
-#[wasm_bindgen]
 pub struct Storage {
     state: String,
 }

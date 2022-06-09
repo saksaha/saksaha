@@ -1,5 +1,5 @@
 [package]
-name = "sak_contract_validator"
+name = "sak_ctrt_validator"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,7 +8,11 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
-wasm-bindgen = "0.2.74"
-sak_contract = { path = "../../../../sak_contract/" }
+sak_contract = { path = "../sak_contract/" }
 serde = { version = "1.0.130", features = ["derive"] }
 serde_json = "1.0.59"
+
+[profile.release]
+lto = true
+opt-level = "z"
+panic = "abort"
