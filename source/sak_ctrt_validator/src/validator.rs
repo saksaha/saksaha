@@ -1,16 +1,19 @@
-use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 
-#[derive(Serialize, Deserialize)]
-pub struct State {
-    pub validators: Vec<String>,
-}
+use sak_contract_std::state::State;
 
 pub fn init(ptr: i32, len: i32) {
-    let state = State {
-        validators: vec!["person_1".into(), "person_2".into()],
+    let mut state = State {
+        validators: BTreeMap::default(),
     };
 
+    state.validators.insert(vec![1], vec![1]);
+    state.validators.insert(vec![2], vec![2]);
+    state.validators.insert(vec![3], vec![3]);
+    state.validators.insert(vec![4], vec![4]);
+
     // storage.set_state(serde_json::to_string(&state).unwrap());
+
     let a = [0, 0];
     // a.as_ptr()
 }
