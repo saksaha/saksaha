@@ -1,10 +1,10 @@
 use colored::Colorize;
+use log::info;
 use rocksdb::{ColumnFamilyDescriptor, Options, DB};
-use sak_logger::tinfo;
 use std::path::PathBuf;
 
 pub struct KeyValueDatabase {
-    pub db: DB,
+    pub db_instance: DB,
     db_path_str: String,
 }
 
@@ -21,22 +21,18 @@ impl KeyValueDatabase {
             }
         };
 
-        tinfo!(
-            "database",
-            "",
+        info!(
             "Try initializing KeyValueDatabase, db_path: {}",
             db_path_str,
         );
 
-        let db = match DB::open_cf_descriptors(
+        let db_instance = match DB::open_cf_descriptors(
             &options,
             &db_path_str,
             cf_descriptors,
         ) {
             Ok(db) => {
-                tinfo!(
-                    "database",
-                    "",
+                info!(
                     "Initialized KeyValueDatabase, path: {}",
                     db_path_str.yellow(),
                 );
@@ -51,7 +47,10 @@ impl KeyValueDatabase {
             }
         };
 
-        Ok(KeyValueDatabase { db, db_path_str })
+        Ok(KeyValueDatabase {
+            db_instance,
+            db_path_str,
+        })
     }
 
     pub fn destroy(&self) -> Result<(), String> {
@@ -59,7 +58,7 @@ impl KeyValueDatabase {
 
         match destroy {
             Ok(_) => {
-                tinfo!("database", "", "Successfully destroyed db path");
+                info!("Successfully destroyed db path");
 
                 Ok(())
             }

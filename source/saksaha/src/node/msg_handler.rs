@@ -9,7 +9,7 @@ pub(crate) async fn handle_msg<'a>(
     machine: &Machine,
     conn: &'a mut RwLockWriteGuard<'_, Connection>,
 ) {
-    match msg {
+    let req_hashes = match msg {
         Msg::TxHashSyn(sync_tx_hash) => {
             info!(
                 "Found sync request will be inserted after hash value \
@@ -25,6 +25,8 @@ pub(crate) async fn handle_msg<'a>(
                 warn!("No difference, no need to request");
                 return;
             }
+
+            req_hashes
         }
         Msg::TxSyn(_) => {
             warn!("Peer has sent invalid type message, type: TxSyn");
@@ -38,7 +40,7 @@ pub(crate) async fn handle_msg<'a>(
             warn!("Peer has sent invalid type message, type: HandshakeAck");
             return;
         }
-        _ => {}
+        _ => return,
     };
 
     match conn
