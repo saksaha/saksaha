@@ -55,6 +55,7 @@ impl BlockDB {
             (block_columns::SIGNATURES, Options::default()),
             (block_columns::CREATED_AT, Options::default()),
             (block_columns::HEIGHT, Options::default()),
+            (block_columns::BLOCK_HASH, Options::default()),
         ];
 
         let cf = columns
@@ -269,6 +270,55 @@ impl BlockDB {
         };
 
         Ok(b)
+    }
+
+    pub(crate) async fn get_block_hash_by_height(
+        &self,
+        block_height: u64,
+    ) -> Result<String, String> {
+        let db = &self.kv_db.db_instance;
+
+        let cf_handle = match db.cf_handle(block_columns::BLOCK_HASH) {
+            Some(h) => h,
+            None => {
+                return Err(format!(
+                    "Fail to open ledger columns {}",
+                    block_columns::BLOCK_HASH
+                ));
+            }
+        };
+
+        let block_hash = match db.get_cf(cf_handle, block_height.to_le_bytes())
+        {
+            Ok(val) => match val {
+                Some(v) => match std::str::from_utf8(&v) {
+                    Ok(vs) => vs.to_string(),
+                    Err(err) => {
+                        return Err(format!(
+                            "Invalid utf8 given, err: {}",
+                            err,
+                        ));
+                    }
+                },
+                None => {
+                    return Err(format!(
+                        "No matched value with tx_hash in {}, {}",
+                        block_columns::BLOCK_HASH,
+                        block_height,
+                    ));
+                }
+            },
+            Err(err) => {
+                return Err(format!(
+                    "Fail to get value from ledger columns, column: {}, \
+                    err: {}",
+                    block_columns::BLOCK_HASH,
+                    err,
+                ));
+            }
+        };
+
+        Ok(block_hash)
     }
 
     pub(crate) async fn write_block(

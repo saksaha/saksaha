@@ -7,3 +7,5 @@ pub(crate) const SIGNATURES: &str = "block_signatures";
 pub(crate) const CREATED_AT: &str = "block_created_at";
 
 pub(crate) const HEIGHT: &str = "height";
+
+pub(crate) const BLOCK_HASH: &str = "block_hash";
