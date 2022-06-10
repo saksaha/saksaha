@@ -12,11 +12,12 @@ mod test_suite {
 
         let (rpc, rpc_socket_addr, machine) = test_utils::make_rpc().await;
 
-        let _rpc_server = tokio::spawn(async move { rpc.run().await });
+        let rpc_server = tokio::spawn(async move { rpc.run().await });
 
         let client = Client::new();
 
         let block_value = Block {
+            miner_signature: String::from("1"),
             transactions: vec![String::from("1"), String::from("2")],
             signatures: vec![String::from("1"), String::from("2")],
             created_at: String::from(""),
@@ -26,7 +27,6 @@ mod test_suite {
         let block_hash = {
             let block_hash = match machine
                 .blockchain
-                .ledger
                 .write_block(block_value.clone())
                 .await
             {

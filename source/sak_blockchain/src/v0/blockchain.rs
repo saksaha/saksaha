@@ -1,7 +1,7 @@
-use super::ledger::Ledger;
 use super::tx_pool::TxPool;
 use super::BlockchainEvent;
 use crate::BoxedError;
+use crate::Database;
 use crate::Runtime;
 use log::{info, warn};
 use sak_types::{Block, Transaction};
@@ -17,9 +17,9 @@ use tokio::sync::{
 const BLOCKCHAIN_EVENT_QUEUE_CAPACITY: usize = 32;
 
 pub struct Blockchain {
-    pub ledger: Ledger,
+    pub(crate) database: Database,
     pub bc_event_rx: RwLock<Receiver<BlockchainEvent>>,
-    tx_pool: Arc<TxPool>,
+    pub(crate) tx_pool: Arc<TxPool>,
     vm: VM,
     bc_event_tx: Arc<Sender<BlockchainEvent>>,
     runtime: Arc<Runtime>,
@@ -35,7 +35,15 @@ impl Blockchain {
     ) -> Result<Blockchain, String> {
         let BlockchainArgs { app_prefix } = blockchain_args;
 
-        let ledger = Ledger::init(&app_prefix).await?;
+        let database = match Database::init(&app_prefix).await {
+            Ok(d) => d,
+            Err(err) => {
+                return Err(format!(
+                    "Error initializing database, err: {}",
+                    err,
+                ));
+            }
+        };
 
         let vm = VM {};
 
@@ -57,8 +65,11 @@ impl Blockchain {
             Arc::new(r)
         };
 
+        // let apis = Apis::new(database);
+
         let blockchain = Blockchain {
-            ledger,
+            // apis,
+            database,
             vm,
             bc_event_tx: bc_event_tx.clone(),
             bc_event_rx,
@@ -85,61 +96,5 @@ impl Blockchain {
         tokio::spawn(async move {
             runtime.run().await;
         });
-    }
-
-    pub async fn query_contract(&self) -> Result<&[u8], String> {
-        Ok(&[])
-    }
-
-    pub async fn execute_contract(&self) -> Result<&[u8], String> {
-        Ok(&[])
-    }
-
-    // rpc
-    pub async fn send_transaction(
-        &self,
-        tx: Transaction,
-    ) -> Result<(), String> {
-        self.tx_pool.insert(tx).await
-    }
-
-    pub async fn write_block(&self) -> Result<&[u8], String> {
-        Ok(&[])
-    }
-
-    pub async fn get_transaction(
-        &self,
-        tx_hash: &String,
-    ) -> Result<Transaction, String> {
-        self.ledger.read_tx(tx_hash).await
-    }
-
-    pub async fn get_block(
-        &self,
-        block_hash: &String,
-    ) -> Result<Block, String> {
-        self.ledger.get_block(block_hash).await
-    }
-
-    pub async fn insert_into_pool(&self, txs: Vec<Transaction>) {
-        for tx in txs.into_iter() {
-            if let Err(err) = self.tx_pool.insert(tx).await {
-                warn!("Error inserting {}", err);
-            };
-        }
-    }
-
-    pub async fn compare_with_pool(
-        &self,
-        tx_hashes: Vec<String>,
-    ) -> Vec<String> {
-        self.tx_pool.get_hash_diff(tx_hashes).await
-    }
-
-    pub async fn get_ack_txs_from_pool(
-        &self,
-        tx_hashes: Vec<String>,
-    ) -> Vec<Transaction> {
-        self.tx_pool.get_ack_txs(tx_hashes).await
     }
 }

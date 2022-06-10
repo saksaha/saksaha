@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Block {
+    pub miner_signature: String,
     pub transactions: Vec<String>,
     pub signatures: Vec<String>,
     pub created_at: String,
