@@ -28,7 +28,7 @@ impl VM {
 fn test_validator_init() -> Result<(), BoxedError> {
     let (instance, mut store) = create_instance(WASM.to_string())?;
 
-    // for test, storage with one string type field
+    // for test, storage with one Vec<String> type field
     let storage = Storage::init();
     let storage_json = serde_json::to_value(storage).unwrap().to_string();
     println!("storage_json: {:?}", storage_json);
@@ -40,6 +40,7 @@ fn test_validator_init() -> Result<(), BoxedError> {
         &mut store,
     )?;
     let size = storage_json.len();
+    println!("ptr: {:?}, size: {:?}", ptr, size);
 
     let init: TypedFunc<(i32, i32), i32> = {
         instance
@@ -48,8 +49,7 @@ fn test_validator_init() -> Result<(), BoxedError> {
     };
 
     let ptr_offset = init.call(&mut store, (ptr as i32, size as i32))? as isize;
-    // println!("ptr offset: {:?}", ptr_offset);
-    // println!("ptr: {:?}, size: {:?}", ptr, size);
+    println!("ptr offset: {:?}", ptr_offset);
 
     let memory = instance
         .get_memory(&mut store, MEMORY)
@@ -57,9 +57,19 @@ fn test_validator_init() -> Result<(), BoxedError> {
 
     let res: String;
     unsafe {
-        res = read_string(&store, &memory, ptr_offset as u32, (size - 2) as u32)
-            .unwrap()
+        // validator : 1
+        // res =
+        //     read_string(&store, &memory, ptr_offset as u32, 144 as u32).unwrap()
+        // validator : 2
+        res =
+            read_string(&store, &memory, ptr_offset as u32, 277 as u32).unwrap()
+
+        // validator : 3
+        // res =
+        //     read_string(&store, &memory, ptr_offset as u32, 410 as u32).unwrap()
     }
+
+    println!("res: {:?}", res);
 
     let res_json: Storage = serde_json::from_str(res.as_str()).unwrap();
     println!("validator list after init(): {:?}", res_json.get_state());

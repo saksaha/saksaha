@@ -1,0 +1,10 @@
+#!/bin/bash
+
+set -e
+
+rm -rf ./source/sak_ctrt_validator/target
+cd ./source/sak_ctrt_validator
+cargo wasm
+cp ./target/wasm32-unknown-unknown/release/sak_ctrt_validator.wasm ~/work/saksaha/saksaha/source/sak_vm/src/v0/sak_ctrt_validator.wasm
+cd ../../
+./ci dev

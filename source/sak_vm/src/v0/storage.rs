@@ -2,19 +2,22 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
 pub struct Storage {
-    state: String,
+    // state: Vec<String>,
+    f1: usize,
 }
 
 impl Storage {
     pub fn init() -> Self {
-        Storage {
-            state: "initiated storage".to_string(),
-        }
+        // Storage { state: vec![] }
+        Storage { f1: 0 }
     }
     pub fn set_state(&mut self, msg: String) {
-        self.state = msg;
+        // self.state.push(msg);
     }
-    pub fn get_state(&self) -> String {
-        self.state.clone()
+    // pub fn get_state(&self) -> Vec<String> {
+    //     self.state.clone()
+    // }
+    pub fn get_state(&self) -> usize {
+        self.f1
     }
 }
