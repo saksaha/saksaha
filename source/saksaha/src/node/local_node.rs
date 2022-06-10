@@ -3,11 +3,10 @@ use crate::{
     machine::Machine,
     node::{event_handle, msg_handler},
 };
-use futures::{stream::SplitStream, SinkExt, StreamExt};
-use log::{debug, warn};
+use futures::StreamExt;
+use log::warn;
 use sak_blockchain::BlockchainEvent;
-use sak_p2p_ptable::{Peer, PeerStatus, PeerTable};
-use sak_p2p_trpt::{Connection, Msg, TxHashSyn, TxSyn};
+use sak_p2p_ptable::{PeerStatus, PeerTable};
 use std::sync::Arc;
 
 pub(crate) struct LocalNode {
@@ -58,9 +57,11 @@ async fn run_node_routine(peer_node: PeerNode, machine: Arc<Machine>) {
     loop {
         let mut conn = peer_node.peer.transport.conn.write().await;
         let mut bc_event_rx = machine.blockchain.bc_event_rx.write().await;
+        let task_queue = machine.blockchain.runtime.task_queue.clone();
 
         tokio::select! {
-            Some(ev) = bc_event_rx.recv() => {
+            // Some(ev) = bc_event_rx.recv() => {
+            Ok(ev) = task_queue.pop_front() => {
                 match ev {
                     BlockchainEvent::TxPoolStat(new_tx_hashes) => {
                         event_handle::handle_tx_pool_stat(

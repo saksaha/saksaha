@@ -4,9 +4,9 @@ use crate::BoxedError;
 use crate::Database;
 use crate::Runtime;
 use log::{info, warn};
+use sak_task_queue::TaskQueue;
 use sak_types::{Block, Transaction};
 use sak_vm::VM;
-use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use tokio::sync::{
@@ -22,7 +22,7 @@ pub struct Blockchain {
     pub(crate) tx_pool: Arc<TxPool>,
     vm: VM,
     bc_event_tx: Arc<Sender<BlockchainEvent>>,
-    runtime: Arc<Runtime>,
+    pub runtime: Arc<Runtime>,
 }
 
 pub struct BlockchainArgs {
@@ -60,7 +60,12 @@ impl Blockchain {
         };
 
         let runtime = {
-            let r = Runtime::init(tx_pool.clone(), bc_event_tx.clone());
+            let sync_task_queue = {
+                let q = TaskQueue::new(BLOCKCHAIN_EVENT_QUEUE_CAPACITY);
+                Arc::new(q)
+            };
+
+            let r = Runtime::init(tx_pool.clone(), sync_task_queue, None);
 
             Arc::new(r)
         };
