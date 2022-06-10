@@ -1,7 +1,7 @@
 use crate::machine::Machine;
 use futures::{SinkExt, StreamExt};
 use log::{info, warn};
-use sak_p2p_trpt::{Connection, Msg, TxHashSyn};
+use sak_p2p_trpt::{Connection, Msg, TxHashSync};
 use tokio::sync::RwLockWriteGuard;
 
 pub(crate) async fn handle_msg<'a>(
@@ -10,7 +10,7 @@ pub(crate) async fn handle_msg<'a>(
     conn: &'a mut RwLockWriteGuard<'_, Connection>,
 ) {
     let req_hashes = match msg {
-        Msg::TxHashSyn(sync_tx_hash) => {
+        Msg::TxHashSyn(tx_hash_sync) => {
             info!(
                 "Found sync request will be inserted after hash value \
                 comparison, got msg type: TxHashSyn",
@@ -18,7 +18,7 @@ pub(crate) async fn handle_msg<'a>(
 
             let req_hashes = machine
                 .blockchain
-                .compare_with_pool(sync_tx_hash.tx_hashes)
+                .get_tx_pool_diff(tx_hash_sync.tx_hashes)
                 .await;
 
             if req_hashes.is_empty() {
@@ -45,7 +45,7 @@ pub(crate) async fn handle_msg<'a>(
 
     match conn
         .socket
-        .send(Msg::TxHashAck(TxHashSyn {
+        .send(Msg::TxHashAck(TxHashSync {
             tx_hashes: req_hashes,
         }))
         .await

@@ -1,5 +1,5 @@
 use crate::{
-    BoxedError, Handshake, Msg, TxHashSyn, TxSyn, HANDSHAKE_ACK_TYPE,
+    BoxedError, Handshake, Msg, TxHashSync, TxSyn, HANDSHAKE_ACK_TYPE,
     HANDSHAKE_SYN_TYPE, TX_HASH_ACK_TYPE, TX_HASH_SYN_TYPE, TX_SYN_TYPE,
 };
 use bytes::BytesMut;
@@ -62,11 +62,11 @@ impl Decoder for P2PCodec {
                     Msg::HandshakeAck(handshake)
                 }
                 TX_HASH_SYN_TYPE => {
-                    let tx_hash_syn = TxHashSyn::from_parse(&mut parse)?;
+                    let tx_hash_syn = TxHashSync::from_parse(&mut parse)?;
                     Msg::TxHashSyn(tx_hash_syn)
                 }
                 TX_HASH_ACK_TYPE => {
-                    let tx_hash_ack = TxHashSyn::from_parse(&mut parse)?;
+                    let tx_hash_ack = TxHashSync::from_parse(&mut parse)?;
                     Msg::TxHashAck(tx_hash_ack)
                 }
                 TX_SYN_TYPE => {

@@ -4,7 +4,6 @@ use crate::BoxedError;
 use crate::Database;
 use crate::Runtime;
 use log::{info, warn};
-use sak_task_queue::TaskQueue;
 use sak_types::{Block, Transaction};
 use sak_vm::VM;
 use std::sync::Arc;
@@ -22,18 +21,22 @@ pub struct Blockchain {
     pub(crate) tx_pool: Arc<TxPool>,
     vm: VM,
     bc_event_tx: Arc<Sender<BlockchainEvent>>,
-    pub runtime: Arc<Runtime>,
+    runtime: Arc<Runtime>,
 }
 
 pub struct BlockchainArgs {
     pub app_prefix: String,
+    pub tx_pool_sync_interval: Option<u64>,
 }
 
 impl Blockchain {
     pub async fn init(
         blockchain_args: BlockchainArgs,
     ) -> Result<Blockchain, String> {
-        let BlockchainArgs { app_prefix } = blockchain_args;
+        let BlockchainArgs {
+            app_prefix,
+            tx_pool_sync_interval,
+        } = blockchain_args;
 
         let database = match Database::init(&app_prefix).await {
             Ok(d) => d,
@@ -60,20 +63,16 @@ impl Blockchain {
         };
 
         let runtime = {
-            let sync_task_queue = {
-                let q = TaskQueue::new(BLOCKCHAIN_EVENT_QUEUE_CAPACITY);
-                Arc::new(q)
-            };
-
-            let r = Runtime::init(tx_pool.clone(), sync_task_queue, None);
+            let r = Runtime::init(
+                tx_pool.clone(),
+                bc_event_tx.clone(),
+                tx_pool_sync_interval,
+            );
 
             Arc::new(r)
         };
 
-        // let apis = Apis::new(database);
-
         let blockchain = Blockchain {
-            // apis,
             database,
             vm,
             bc_event_tx: bc_event_tx.clone(),

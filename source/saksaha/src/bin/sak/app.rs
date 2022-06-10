@@ -183,4 +183,13 @@ pub(super) fn create_app<'a>() -> Command<'a> {
                     in milliseconds e.g. 5000",
                 ),
         )
+        .arg(
+            Arg::new("tx-pool-sync-interval") //
+                .long("tx-pool-sync-interval")
+                .takes_value(true)
+                .long_help(
+                    "Tx pool sync (with peers) minimum interval \n\
+                    in milliseconds e.g. 5000",
+                ),
+        )
 }

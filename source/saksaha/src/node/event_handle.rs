@@ -1,6 +1,6 @@
 use futures::{SinkExt, StreamExt};
 use log::{info, warn};
-use sak_p2p_trpt::{Connection, Msg, TxHashSyn, TxSyn};
+use sak_p2p_trpt::{Connection, Msg, TxHashSync, TxSyn};
 use tokio::sync::RwLockWriteGuard;
 
 use crate::machine::Machine;
@@ -12,7 +12,7 @@ pub(super) async fn handle_tx_pool_stat<'a>(
 ) {
     match conn
         .socket
-        .send(Msg::TxHashSyn(TxHashSyn {
+        .send(Msg::TxHashSyn(TxHashSync {
             tx_hashes: new_tx_hashes,
         }))
         .await

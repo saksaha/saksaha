@@ -28,8 +28,6 @@ impl TxPool {
 
         TxPool {
             new_tx_hashes,
-            // txs,
-            // updated_txs,
             tx_map,
         }
     }
@@ -41,20 +39,22 @@ impl TxPool {
         v
     }
 
-    pub async fn get_hash_diff(&self, tx_hashes: Vec<String>) -> Vec<String> {
-        let my_tx_hashes = self.tx_map.write().await;
-        let my_tx_hashes_set: HashSet<String> =
-            my_tx_hashes.keys().cloned().collect();
+    // Returns hashes of transactions that I do not have
+    pub async fn get_tx_pool_diff(
+        &self,
+        tx_hashes: Vec<String>,
+    ) -> Vec<String> {
+        let tx_map_lock = self.tx_map.write().await;
 
-        let incoming_tx_hashes_set: HashSet<String> =
-            HashSet::from_iter(tx_hashes.iter().cloned());
+        let mut ret = vec![];
 
-        let req_hashes = incoming_tx_hashes_set
-            .difference(&my_tx_hashes_set)
-            .cloned()
-            .collect();
+        for h in tx_hashes {
+            if !tx_map_lock.contains_key(&h) {
+                ret.push(h.clone());
+            }
+        }
 
-        req_hashes
+        return ret;
     }
 
     pub async fn insert(&self, tx: Transaction) -> Result<(), String> {
