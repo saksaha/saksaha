@@ -121,7 +121,6 @@ impl Blockchain {
         self.ledger.get_block(block_hash).await
     }
 
-    // peer_node
     pub async fn insert_into_pool(&self, txs: Vec<Transaction>) {
         for tx in txs.into_iter() {
             if let Err(err) = self.tx_pool.insert(tx).await {

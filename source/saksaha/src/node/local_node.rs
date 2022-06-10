@@ -75,7 +75,8 @@ async fn run_node_routine(peer_node: PeerNode, machine: Arc<Machine>) {
                 match maybe_msg {
                     Some(maybe_msg) => match maybe_msg {
                         Ok(msg) => {
-                            let _ = msg_handler::handle_msg(msg, &machine, &mut conn).await;
+                            let _ = msg_handler::handle_msg(
+                                msg, &machine, &mut conn).await;
                         }
                         Err(err) => {
                             warn!("Failed to parse the msg, err: {}", err);
