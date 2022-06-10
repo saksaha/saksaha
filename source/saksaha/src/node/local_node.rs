@@ -24,8 +24,6 @@ impl LocalNode {
         //     peer_node_rt.run();
         // });
 
-        println!("power");
-
         let machine = self.machine.clone();
         let mine_interval = self.mine_interval.clone();
         tokio::spawn(async move {
@@ -74,8 +72,6 @@ async fn run_node_routine(peer_node: PeerNode, machine: Arc<Machine>) {
                 }
             },
             maybe_msg = conn.socket.next() => {
-                println!("run_node_routine(): socket next(),");
-
                 match maybe_msg {
                     Some(maybe_msg) => match maybe_msg {
                         Ok(msg) => {

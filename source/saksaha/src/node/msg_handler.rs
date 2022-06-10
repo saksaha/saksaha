@@ -1,6 +1,6 @@
 use crate::machine::Machine;
-use futures::{stream::SplitStream, SinkExt, StreamExt};
-use log::{debug, info, warn};
+use futures::{SinkExt, StreamExt};
+use log::{info, warn};
 use sak_p2p_trpt::{Connection, Msg, TxHashSyn};
 use tokio::sync::RwLockWriteGuard;
 
@@ -13,13 +13,18 @@ pub(crate) async fn handle_msg<'a>(
         Msg::TxHashSyn(sync_tx_hash) => {
             info!(
                 "Found sync request will be inserted after hash value \
-                comparison",
+                comparison, got msg type: TxHashSyn",
             );
 
             let req_hashes = machine
                 .blockchain
                 .compare_with_pool(sync_tx_hash.tx_hashes)
                 .await;
+
+            if req_hashes.is_empty() {
+                warn!("No difference, no need to request");
+                return;
+            }
 
             match conn
                 .socket
@@ -29,27 +34,41 @@ pub(crate) async fn handle_msg<'a>(
                 .await
             {
                 Ok(_) => {
-                    debug!(
-                        "requested tx hashes are successfully \
-                        transmitted to the peer node"
+                    info!(
+                        "Request the tx hashes to peer node, send msg type: TxHashAck"
                     );
                 }
                 Err(err) => {
-                    debug!("Failed to send requested tx, err: {}", err,);
+                    warn!("Failed to send requested tx, err: {}", err,);
                 }
             };
 
             match conn.socket.next().await {
-                Some(maybe_msg) => {
-                    println!("tx_syn have arrived");
+                Some(maybe_msg) => match maybe_msg {
+                    Ok(msg) => match msg {
+                        Msg::TxSyn(h) => {
+                            info!(
+                                "Received the requested txs, got msg type: \
+                                TxSyn"
+                            );
+
+                            machine.blockchain.insert_into_pool(h.txs).await;
+                        }
+                        _ => {
+                            warn!("Received an invalid type message");
+                        }
+                    },
+                    Err(err) => {
+                        warn!("Failed to parse the msg, err: {}", err);
+                    }
+                },
+                None => {
+                    warn!("Received an invalid data stream");
                 }
-                None => {}
             };
         }
-        Msg::TxSyn(h) => {
-            info!("Received the requested txs");
-
-            machine.blockchain.insert_into_pool(h.txs).await;
+        Msg::TxSyn(_) => {
+            warn!("Peer has sent invalid type message, type: TxSyn");
         }
         Msg::HandshakeSyn(_) => {
             warn!("Peer has sent invalid type message, type: HandshakeSyn");

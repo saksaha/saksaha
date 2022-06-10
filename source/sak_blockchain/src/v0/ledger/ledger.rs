@@ -1,10 +1,10 @@
 use super::{apis, db, tx_columns};
-use crate::{Block, Transaction};
 use sak_kv_db::{
     DBRawIteratorWithThreadMode, DBWithThreadMode, KeyValueDatabase,
     SingleThreaded,
 };
 use sak_logger::tinfo;
+use sak_types::{Block, Transaction};
 
 pub struct Ledger {
     ledger_db: KeyValueDatabase,

@@ -2,7 +2,7 @@ use crate::rpc::response::{ErrorResult, SuccessResult};
 use crate::system::SystemHandle;
 use hyper::{Body, Request, Response, StatusCode};
 use log::warn;
-use sak_blockchain::Transaction;
+use sak_types::Transaction;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 

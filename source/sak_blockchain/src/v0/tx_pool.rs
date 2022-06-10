@@ -1,7 +1,5 @@
-use crate::Hashable;
-
-use super::Transaction;
 use log::warn;
+use sak_types::{Hashable, Transaction};
 use std::{
     collections::{HashMap, HashSet},
     iter::FromIterator,

@@ -1,9 +1,10 @@
+use super::ledger::Ledger;
 use super::tx_pool::TxPool;
 use super::BlockchainEvent;
-use super::{ledger::Ledger, Block, Transaction};
 use crate::BoxedError;
 use crate::Runtime;
 use log::{info, warn};
+use sak_types::{Block, Transaction};
 use sak_vm::VM;
 use std::collections::HashMap;
 use std::sync::Arc;

@@ -1,7 +1,7 @@
 use crate::{BoxedError, TX_SYN_TYPE};
 use bytes::{BufMut, Bytes, BytesMut};
-use sak_blockchain::Transaction;
 use sak_p2p_frame::{Frame, Parse};
+use sak_types::Transaction;
 
 pub struct TxSyn {
     pub txs: Vec<Transaction>,

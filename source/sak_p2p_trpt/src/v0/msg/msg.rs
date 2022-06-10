@@ -6,6 +6,4 @@ pub enum Msg {
     TxSyn(TxSyn),
     TxHashSyn(TxHashSyn), // TxHashSyn
     TxHashAck(TxHashSyn), // TxHashAck
-                          // TxSyn
-                          // TxAck
 }
