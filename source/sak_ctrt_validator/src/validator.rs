@@ -1,34 +1,41 @@
+use serde::{Deserialize, Serialize};
+
+// sak_vm::storage
+#[derive(Serialize, Deserialize)]
+pub struct Storage {
+    // state: String,
+}
+
+impl Storage {
+    pub fn get_state(&self) {}
+    pub fn set_state(&self, str: String) {
+        println!("str: {}", str);
+    }
+}
+
 // validaotr init
-// return offset of pointer which has list of validator
 #[no_mangle]
 pub unsafe extern "C" fn init(
     // storage
     ptr: *mut u8,
     len: usize,
 ) -> *mut u8 {
-    let storage = Storage {};
+    // get data from the pointer
+    let data = Vec::from_raw_parts(ptr, len, len);
+    let data_string = String::from_utf8(data).unwrap();
+    // deserialize the data
+    let data_json: Storage =
+        serde_json::from_str(data_string.as_str()).unwrap();
 
-    // let validators = vec![
-    //     "0x0482982b0fdeb31daf3698cd6c64d7c\
-    //     7be747c97e77f9d9df23a66a7ffcec6b5\
-    //     109d7adcb57aa4436cc55cf778dfd3874\
-    //     d80e41125b7161a5b76b7c7a09adb74cc",\
-    //     0x046885b904a8b8cdd17cc40078ed114\
-    //     214586f197a664d6aa33d4b46cc3b712a\
-    //     fcdef3d4d808bc7843beaea9e1a4c5dde\
-    //     ea47cbd27ea1af5ca13719a2f42c39167,\
-    // ];
+    // serialize the data to return a new pointer
+    let storage_string = serde_json::to_value(data_json).unwrap().to_string();
+    let mut storage_bytes_vec = storage_string.as_bytes().to_owned();
 
-    // let mut validators_bytes_vec = validators.as_bytes().to_owned();
-    // let ptr = validators_bytes_vec.as_mut_ptr();
-    // // take ownership of the memory block where the result string
-    // // is written and ensure its destructor is not
-    // // called whe the object goes out of scope
-    // // at the end of the function
-    // std::mem::forget(validators_bytes_vec);
-    // // return the pointer to the validator
-    // // so the runtime can read data from this offset
-    // ptr
+    let ptr = storage_bytes_vec.as_mut_ptr();
+
+    std::mem::forget(storage_bytes_vec);
+
+    ptr
 }
 
 /// Allocate memory into the module's linear memory
@@ -75,7 +82,7 @@ pub unsafe extern "C" fn array_sum(ptr: *mut u8, len: usize) -> u8 {
 pub unsafe extern "C" fn upper(ptr: *mut u8, len: usize) -> *mut u8 {
     // create a `Vec<u8>` from the pointer and length
     // here we could also use Rust's excellent FFI
-    // libraries to read a string, but for simplicity,
+    // libraries to read a string, but Hfor simplicity,
     // we are using the same method as for plain byte arrays
     let data = Vec::from_raw_parts(ptr, len, len);
     // read a Rust `String` from the byte array,

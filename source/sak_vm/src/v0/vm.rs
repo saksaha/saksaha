@@ -3,15 +3,13 @@ use crate::{
     WASM,
 };
 use log::error;
-use serde::Serialize;
-use std::collections::BTreeMap;
 use wasmtime::*;
 
-// VALIDATOR DATA : \"name\":0x00...11
-const VALIDATOR_DATA_SIZE: u32 = 146;
-// VALIDATOR DUMMY : "[]"
-const VALIDATOR_DUMMY_SIZE: u32 = 4;
-const VALIDATOR_INIT_COUNT: u32 = 2;
+// // VALIDATOR DATA : \"name\":0x00...11
+// const VALIDATOR_DATA_SIZE: u32 = 146;
+// // VALIDATOR DUMMY : "[]"
+// const VALIDATOR_DUMMY_SIZE: u32 = 4;
+// const VALIDATOR_INIT_COUNT: u32 = 2;
 
 pub struct VM {}
 
@@ -30,33 +28,30 @@ impl VM {
 fn test_validator_init() -> Result<(), BoxedError> {
     let (instance, mut store) = create_instance(WASM.to_string())?;
 
+    // for test, empty storage
     let storage = Storage {};
+    let storage_json = serde_json::to_value(storage).unwrap().to_string();
 
-    let init: TypedFunc<(), i32> = {
-        // let ptr = memory::copy_memory(
-        //     &input.as_bytes().to_vec(),
-        //     &instance,
-        //     &mut store,
-        // )?;
+    // get pointer from wasm memory
+    let ptr = memory::copy_memory(
+        &storage_json.as_bytes().to_vec(),
+        &instance,
+        &mut store,
+    )?;
+    let size = storage_json.len();
 
+    let init: TypedFunc<(i32, i32), i32> = {
         instance
             .get_typed_func(&mut store, "init")
             .expect("expected init function not found")
     };
-
-    let ptr_offset = init.call(&mut store, ())? as isize;
-
-    println!("{:?}", ptr_offset);
+    let ptr_offset = init.call(&mut store, (ptr as i32, size as i32))? as isize;
+    // println!("ptr offset: {:?}", ptr_offset);
+    // println!("ptr: {:?}, size: {:?}", ptr, size);
 
     let memory = instance
         .get_memory(&mut store, MEMORY)
         .expect("expected memory not found");
-
-    // unsafe {
-    //     let raw = memory.data_ptr(&mut store).offset(ptr_offset);
-    //     println!("{:?}", raw);
-    //     println!("{:?}", *raw);
-    // }
 
     let res: String;
     unsafe {
@@ -65,7 +60,7 @@ fn test_validator_init() -> Result<(), BoxedError> {
             &memory,
             ptr_offset as u32,
             // validaotr_string.len() as u32,
-            VALIDATOR_DUMMY_SIZE + VALIDATOR_DATA_SIZE * VALIDATOR_INIT_COUNT,
+            size as u32,
         )
         .unwrap()
     }
