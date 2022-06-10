@@ -61,12 +61,12 @@ fn test_validator_init() -> Result<(), BoxedError> {
         // res =
         //     read_string(&store, &memory, ptr_offset as u32, 144 as u32).unwrap()
         // validator : 2
-        res =
-            read_string(&store, &memory, ptr_offset as u32, 277 as u32).unwrap()
+        // res =
+        //     read_string(&store, &memory, ptr_offset as u32, 277 as u32).unwrap()
 
         // validator : 3
-        // res =
-        //     read_string(&store, &memory, ptr_offset as u32, 410 as u32).unwrap()
+        res =
+            read_string(&store, &memory, ptr_offset as u32, 410 as u32).unwrap()
     }
 
     println!("res: {:?}", res);
