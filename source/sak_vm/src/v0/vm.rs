@@ -1,5 +1,8 @@
+use std::collections::BTreeMap;
+
 use crate::BoxedError;
 use log::error;
+use serde::Serialize;
 use wasmtime::*;
 
 const WASM: &str = "rust.wasm";
@@ -7,7 +10,14 @@ const ALLOC_FN: &str = "alloc";
 const MEMORY: &str = "memory";
 const ARRAY_SUM_FN: &str = "array_sum";
 const UPPER_FN: &str = "upper";
+const VALIDATOR_INIT_FN: &str = "validator_init";
 const DEALLOC_FN: &str = "dealloc";
+
+// VALIDATOR DATA : \"name\":0x00...11
+const VALIDATOR_DATA_SIZE: u32 = 146;
+// VALIDATOR DUMMY : "[]"
+const VALIDATOR_DUMMY_SIZE: u32 = 4;
+const VALIDATOR_INIT_COUNT: u32 = 2;
 
 pub struct VM {}
 
@@ -16,10 +26,55 @@ impl VM {
     pub fn run_vm(&self) -> Result<(), BoxedError> {
         // test_ex().unwrap();
         // test_array_sum();
-        test_upper();
+        // test_upper();
+        test_validator_init();
 
         Ok(())
     }
+}
+fn test_validator_init() {
+    let serialized_validator_state = validator_init().unwrap();
+    // then, write validator list to DB
+}
+
+fn validator_init() -> Result<(), BoxedError> {
+    // for getting length of data
+
+    let (instance, mut store) = create_instance(WASM.to_string())?;
+
+    let init: TypedFunc<(), i32> = instance
+        .get_typed_func(&mut store, "init")
+        .expect("expected init function not found");
+
+    let ptr_offset = init.call(&mut store, ())? as isize;
+
+    println!("{:?}", ptr_offset);
+
+    let memory = instance
+        .get_memory(&mut store, MEMORY)
+        .expect("expected memory not found");
+
+    // unsafe {
+    //     let raw = memory.data_ptr(&mut store).offset(ptr_offset);
+    //     println!("{:?}", raw);
+    //     println!("{:?}", *raw);
+    // }
+
+    let res: String;
+    unsafe {
+        res = read_string(
+            &store,
+            &memory,
+            ptr_offset as u32,
+            // validaotr_string.len() as u32,
+            VALIDATOR_DUMMY_SIZE + VALIDATOR_DATA_SIZE * VALIDATOR_INIT_COUNT,
+        )
+        .unwrap()
+    }
+
+    println!("Initial validators: {:?}", res);
+
+    Ok(())
 }
 
 fn test_upper() {
