@@ -1,21 +1,33 @@
-use std::collections::BTreeMap;
+// validaotr init
+// return offset of pointer which has list of validator
+#[no_mangle]
+pub unsafe extern "C" fn init() -> *mut u8 {
+    let validators = String::from(
+        "[\
+            \"validator_1\":\
+            0x0482982b0fdeb31daf3698cd6c64d7c\
+            7be747c97e77f9d9df23a66a7ffcec6b5\
+            109d7adcb57aa4436cc55cf778dfd3874\
+            d80e41125b7161a5b76b7c7a09adb74cc,\
+            \"validator_2\":\
+            0x046885b904a8b8cdd17cc40078ed114\
+            214586f197a664d6aa33d4b46cc3b712a\
+            fcdef3d4d808bc7843beaea9e1a4c5dde\
+            ea47cbd27ea1af5ca13719a2f42c39167,\
+        ]\
+            ",
+    );
 
-use sak_contract_std::state::State;
-
-pub fn init(ptr: i32, len: i32) {
-    let mut state = State {
-        validators: BTreeMap::default(),
-    };
-
-    state.validators.insert(vec![1], vec![1]);
-    state.validators.insert(vec![2], vec![2]);
-    state.validators.insert(vec![3], vec![3]);
-    state.validators.insert(vec![4], vec![4]);
-
-    // storage.set_state(serde_json::to_string(&state).unwrap());
-
-    let a = [0, 0];
-    // a.as_ptr()
+    let mut validators_bytes_vec = validators.as_bytes().to_owned();
+    let ptr = validators_bytes_vec.as_mut_ptr();
+    // take ownership of the memory block where the result string
+    // is written and ensure its destructor is not
+    // called whe the object goes out of scope
+    // at the end of the function
+    std::mem::forget(validators_bytes_vec);
+    // return the pointer to the validator
+    // so the runtime can read data from this offset
+    ptr
 }
 
 /// Allocate memory into the module's linear memory
