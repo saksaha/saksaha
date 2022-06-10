@@ -5,11 +5,12 @@ pub(super) mod test_utils {
     use crate::p2p::{P2PHost, P2PHostArgs};
     use crate::rpc::{RPCArgs, RPC};
     use crate::system::SystemHandle;
-    use sak_blockchain::{Blockchain, BlockchainArgs, Transaction};
+    use sak_blockchain::{Blockchain, BlockchainArgs};
     use sak_p2p_addr::{AddrStatus, UnknownAddr};
     use sak_p2p_disc::{Discovery, DiscoveryArgs};
     use sak_p2p_id::Credential;
     use sak_p2p_ptable::PeerTable;
+    use sak_types::Transaction;
     use std::net::SocketAddr;
     use std::sync::Arc;
     use tokio::net::TcpListener;

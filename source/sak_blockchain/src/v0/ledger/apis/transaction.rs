@@ -1,4 +1,6 @@
-use crate::{tx_columns, Hashable, Transaction};
+use crate::tx_columns;
+use sak_types::{Hashable, Transaction};
+
 use sak_kv_db::{KeyValueDatabase, WriteBatch};
 
 #[inline]

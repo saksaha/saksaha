@@ -1,4 +1,7 @@
-use crate::{BoxedError, Handshake, Msg, SyncTx, SyncTxHash};
+use crate::{
+    BoxedError, Handshake, Msg, TxHashSyn, TxSyn, HANDSHAKE_ACK_TYPE,
+    HANDSHAKE_SYN_TYPE, TX_HASH_ACK_TYPE, TX_HASH_SYN_TYPE, TX_SYN_TYPE,
+};
 use bytes::BytesMut;
 use sak_p2p_frame::{frame_io, Parse};
 use tokio_util::codec::{Decoder, Encoder};
@@ -16,9 +19,9 @@ impl Encoder<Msg> for P2PCodec {
         let frame = match item {
             Msg::HandshakeSyn(handshake) => handshake.into_syn_frame(),
             Msg::HandshakeAck(handshake) => handshake.into_ack_frame(),
-            // Msg::SyncTx(sync) => sync.into_frame(),
-            Msg::SyncTxHash(sync_tx_hash) => sync_tx_hash.into_frame(),
-            Msg::RequestTxs(sync_tx_hash) => sync_tx_hash.into_frame(),
+            Msg::TxSyn(sync) => sync.into_frame(),
+            Msg::TxHashSyn(sync_tx_hash) => sync_tx_hash.into_syn_frame(),
+            Msg::TxHashAck(sync_tx_hash) => sync_tx_hash.into_ack_frame(),
         };
 
         match frame_io::write_frame(dst, &frame) {
@@ -50,25 +53,25 @@ impl Decoder for P2PCodec {
             let msg_type = parse.next_string()?.to_lowercase();
 
             let msg = match msg_type.as_str() {
-                "hs_syn" => {
+                HANDSHAKE_SYN_TYPE => {
                     let handshake = Handshake::from_parse(&mut parse)?;
                     Msg::HandshakeSyn(handshake)
                 }
-                "hs_ack" => {
+                HANDSHAKE_ACK_TYPE => {
                     let handshake = Handshake::from_parse(&mut parse)?;
                     Msg::HandshakeAck(handshake)
                 }
-                // "sync_tx" => {
-                //     let sync = SyncTx::from_parse(&mut parse)?;
-                //     Msg::SyncTx(sync)
-                // }
-                "sync_tx_hash" => {
-                    let sync = SyncTxHash::from_parse(&mut parse)?;
-                    Msg::SyncTxHash(sync)
+                TX_HASH_SYN_TYPE => {
+                    let tx_hash_syn = TxHashSyn::from_parse(&mut parse)?;
+                    Msg::TxHashSyn(tx_hash_syn)
                 }
-                "request_txs" => {
-                    let sync = SyncTxHash::from_parse(&mut parse)?;
-                    Msg::SyncTxHash(sync)
+                TX_HASH_ACK_TYPE => {
+                    let tx_hash_ack = TxHashSyn::from_parse(&mut parse)?;
+                    Msg::TxHashAck(tx_hash_ack)
+                }
+                TX_SYN_TYPE => {
+                    let tx_syn = TxSyn::from_parse(&mut parse)?;
+                    Msg::TxSyn(tx_syn)
                 }
                 _ => {
                     return Err(format!(

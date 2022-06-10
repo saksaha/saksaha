@@ -1,18 +1,14 @@
-use crate::BoxedError;
+use crate::{BoxedError, TX_SYN_TYPE};
 use bytes::{BufMut, Bytes, BytesMut};
-use sak_blockchain::Transaction;
 use sak_p2p_frame::{Frame, Parse};
+use sak_types::Transaction;
 
-pub struct SyncTx {
+pub struct TxSyn {
     pub txs: Vec<Transaction>,
 }
 
-pub struct SyncTxHash {
-    pub tx_hashes: Vec<String>,
-}
-
-impl SyncTx {
-    pub(crate) fn from_parse(parse: &mut Parse) -> Result<SyncTx, BoxedError> {
+impl TxSyn {
+    pub(crate) fn from_parse(parse: &mut Parse) -> Result<TxSyn, BoxedError> {
         let tx_count = parse.next_int()?;
         let mut txs = Vec::with_capacity(tx_count as usize);
 
@@ -55,7 +51,7 @@ impl SyncTx {
             txs.push(tx);
         }
 
-        let m = SyncTx { txs };
+        let m = TxSyn { txs };
 
         Ok(m)
     }
@@ -65,7 +61,7 @@ impl SyncTx {
 
         let tx_count = self.txs.len();
 
-        frame.push_bulk(Bytes::from("sync_tx".as_bytes()));
+        frame.push_bulk(Bytes::from(TX_SYN_TYPE.as_bytes()));
         frame.push_int(tx_count as u64);
 
         for idx in 0..tx_count {
@@ -94,51 +90,6 @@ impl SyncTx {
             frame.push_bulk(Bytes::from(pi_bytes));
             frame.push_bulk(Bytes::from(signature_bytes));
             frame.push_bulk(Bytes::from(tx.contract.clone()));
-        }
-
-        frame
-    }
-}
-
-impl SyncTxHash {
-    pub(crate) fn from_parse(
-        parse: &mut Parse,
-    ) -> Result<SyncTxHash, BoxedError> {
-        let tx_count = parse.next_int()?;
-        let mut tx_hashes = Vec::with_capacity(tx_count as usize);
-
-        for _idx in 0..tx_count {
-            let tx_hash = {
-                let k = parse.next_bytes()?;
-                std::str::from_utf8(k.as_ref())?.into()
-            };
-
-            tx_hashes.push(tx_hash);
-        }
-
-        let m = SyncTxHash { tx_hashes };
-
-        Ok(m)
-    }
-
-    pub(crate) fn into_frame(&self) -> Frame {
-        let mut frame = Frame::array();
-
-        let tx_count = self.tx_hashes.len();
-
-        frame.push_bulk(Bytes::from("sync_tx_hash".as_bytes()));
-        frame.push_int(tx_count as u64);
-
-        for idx in 0..tx_count {
-            let tx = &self.tx_hashes[idx];
-
-            let tx_hash = {
-                let mut b = BytesMut::new();
-                b.put(tx.as_bytes());
-                b
-            };
-
-            frame.push_bulk(Bytes::from(tx_hash));
         }
 
         frame
