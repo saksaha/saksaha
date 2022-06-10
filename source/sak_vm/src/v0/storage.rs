@@ -1,5 +1,5 @@
 pub struct Storage {
-    state: String,
+    // state: String,
 }
 
 impl Storage {

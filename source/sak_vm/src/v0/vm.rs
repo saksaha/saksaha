@@ -1,17 +1,11 @@
-use std::collections::BTreeMap;
-
-use crate::BoxedError;
+use crate::{
+    memory, BoxedError, Storage, ARRAY_SUM_FN, DEALLOC_FN, MEMORY, UPPER_FN,
+    WASM,
+};
 use log::error;
 use serde::Serialize;
+use std::collections::BTreeMap;
 use wasmtime::*;
-
-const WASM: &str = "rust.wasm";
-const ALLOC_FN: &str = "alloc";
-const MEMORY: &str = "memory";
-const ARRAY_SUM_FN: &str = "array_sum";
-const UPPER_FN: &str = "upper";
-const VALIDATOR_INIT_FN: &str = "validator_init";
-const DEALLOC_FN: &str = "dealloc";
 
 // VALIDATOR DATA : \"name\":0x00...11
 const VALIDATOR_DATA_SIZE: u32 = 146;
@@ -27,24 +21,28 @@ impl VM {
         // test_ex().unwrap();
         // test_array_sum();
         // test_upper();
-        test_validator_init();
+        test_validator_init().unwrap();
 
         Ok(())
     }
 }
-fn test_validator_init() {
-    let serialized_validator_state = validator_init().unwrap();
-    // then, write validator list to DB
-}
 
-fn validator_init() -> Result<(), BoxedError> {
-    // for getting length of data
-
+fn test_validator_init() -> Result<(), BoxedError> {
     let (instance, mut store) = create_instance(WASM.to_string())?;
 
-    let init: TypedFunc<(), i32> = instance
-        .get_typed_func(&mut store, "init")
-        .expect("expected init function not found");
+    let storage = Storage {};
+
+    let init: TypedFunc<(), i32> = {
+        // let ptr = memory::copy_memory(
+        //     &input.as_bytes().to_vec(),
+        //     &instance,
+        //     &mut store,
+        // )?;
+
+        instance
+            .get_typed_func(&mut store, "init")
+            .expect("expected init function not found")
+    };
 
     let ptr_offset = init.call(&mut store, ())? as isize;
 
@@ -88,7 +86,8 @@ fn upper(input: String) -> Result<String, BoxedError> {
     let (instance, mut store) = create_instance(WASM.to_string())?;
 
     // write the input array to the module's linear memory
-    let ptr = copy_memory(&input.as_bytes().to_vec(), &instance, &mut store)?;
+    let ptr =
+        memory::copy_memory(&input.as_bytes().to_vec(), &instance, &mut store)?;
 
     // get the module's exported `upper` function
     let upper: TypedFunc<(i32, i32), i32> = instance
@@ -211,43 +210,6 @@ fn test_array_sum() {
     };
 }
 
-/// Copy a byte array into an instance's linear memory
-/// and return the offset relative to the module's memory.
-fn copy_memory(
-    bytes: &Vec<u8>,
-    instance: &Instance,
-    store: &mut Store<usize>,
-) -> Result<isize, BoxedError> {
-    // Get the "memory" export of the module.
-    // If the module does not export it, just panic,
-    // since we are not going to be able to copy array data.
-    let memory = instance
-        .get_memory(&mut *store, MEMORY)
-        .expect("expected memory not found");
-
-    // The module is not using any bindgen libraries, so it should export
-    // its own alloc function.
-    //
-    // Get the guest's exported alloc function, and call it with the
-    // length of the byte array we are trying to copy.
-    // The result is an offset relative to the module's linear memory, which is
-    // used to copy the bytes into the module's memory.
-    // Then, return the offset.
-    let alloc: TypedFunc<i32, i32> = instance
-        .get_typed_func(&mut *store, ALLOC_FN)
-        .expect("expected alloc function not found");
-
-    let guest_ptr_offset =
-        alloc.call(&mut *store, bytes.len() as i32)? as isize;
-
-    unsafe {
-        let raw = memory.data_ptr(&mut *store).offset(guest_ptr_offset);
-        raw.copy_from(bytes.as_ptr(), bytes.len());
-    }
-
-    return Ok(guest_ptr_offset);
-}
-
 /// Invoke the module's `array_sum` exported method
 /// and print the result to the console.
 fn array_sum(input: Vec<u8>) -> Result<i32, BoxedError> {
@@ -258,7 +220,7 @@ fn array_sum(input: Vec<u8>) -> Result<i32, BoxedError> {
     };
 
     // write the input array to the module's linear memory
-    let ptr = copy_memory(&input, &instance, &mut store)?;
+    let ptr = memory::copy_memory(&input, &instance, &mut store)?;
 
     // get the module's exported `array_sum` function
     let array_sum = instance
