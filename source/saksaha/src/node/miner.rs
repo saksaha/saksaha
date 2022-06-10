@@ -1,9 +1,9 @@
 use crate::machine::Machine;
+use log::error;
 use std::{
     sync::Arc,
     time::{Duration, SystemTime},
 };
-use log::error;
 
 const MINE_INTERVAL: u64 = 5000;
 
@@ -29,9 +29,17 @@ impl Miner {
             };
 
             if is_next_validator {
-                if let Err(err) = self.machine.blockchain.write_block().await {
-                    error!("Error writing block, err: {}", err);
-                }
+                // let block = Block {
+                // miner_signature:,
+                // transactions: self.machine.blockchain.tx_pool.new_tx_hashes,
+                // signatures:,
+                // created_at:,
+                // height:,
+                // }
+
+                // if let Err(err) = self.machine.blockchain.write_block().await {
+                //     error!("Error writing block, err: {}", err);
+                // }
             }
 
             sak_utils_time::wait_until_min_interval(time_since, mine_interval)

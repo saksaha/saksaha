@@ -1,4 +1,5 @@
 use env_logger::{Builder, Env};
+use log::info;
 use log::Record;
 use std::cmp::min;
 use std::io::Write;
@@ -53,7 +54,7 @@ fn init_logger(is_test: bool) {
 pub fn init(is_test: bool) {
     init_logger(is_test);
 
-    tinfo!("logger", "", "Logger is initialized");
+    info!("Logger is initialized");
 }
 
 #[macro_export]

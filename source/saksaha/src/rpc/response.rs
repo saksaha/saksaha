@@ -60,13 +60,14 @@ impl<E: Serialize> ErrorResult<E> {
         *res.body_mut() = {
             let data = serde_json::to_string(&self.data).unwrap();
 
-            let response = ErrorResponse {
+            let response = JsonResponse {
                 jsonrpc: JSON_RPC.into(),
-                error: Error {
+                result: None,
+                error: Some(Error {
                     code: self.code,
                     message: self.message.clone(),
                     data,
-                },
+                }),
                 id: self.id.clone(),
             };
 
@@ -87,8 +88,17 @@ pub(super) struct SuccessResponse {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+pub(super) struct JsonResponse {
+    jsonrpc: String,
+    error: Option<Error>,
+    result: Option<String>,
+    id: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub(super) struct ErrorResponse {
     jsonrpc: String,
+    result: Option<String>,
     error: Error,
     id: String,
 }

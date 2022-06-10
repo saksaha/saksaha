@@ -3,12 +3,11 @@ use super::utils::test_utils;
 #[cfg(test)]
 mod test_suite {
     use super::*;
-    use crate::rpc::response::{ErrorResponse, SuccessResponse};
+    use crate::blockchain;
+    use crate::rpc::response::{ErrorResponse, JsonResponse, SuccessResponse};
     use hyper::body::Buf;
     use hyper::{Body, Client, Method, Request, Uri};
-
-    #[cfg(test)]
-    use sak_blockchain::ledger_for_test;
+    use sak_blockchain::Blockchain;
     use sak_types::Hashable;
 
     #[tokio::test(flavor = "multi_thread")]
@@ -65,16 +64,17 @@ mod test_suite {
 
         {
             let blockchain = test_utils::make_blockchain().await;
-            let ledger = blockchain.ledger;
+            // let tx_db = blockchain.database.tx_db;
             let dummy_tx_val = test_utils::make_dummy_value();
 
             let old_tx_hash =
                 (&dummy_tx_val).get_hash().expect("fail to get hash");
 
-            ledger_for_test::delete_tx(&ledger, &old_tx_hash)
+            blockchain
+                .delete_tx(&old_tx_hash)
                 .expect("Tx should be deleted");
 
-            let _tx_hash = ledger
+            let _tx_hash = blockchain
                 .write_tx(dummy_tx_val)
                 .await
                 .expect("Tx should be written");
@@ -131,24 +131,27 @@ mod test_suite {
     async fn test_rpc_client_request_correct_transaction_hash() {
         test_utils::init();
 
-        {
+        let tx_hash = {
             let blockchain = test_utils::make_blockchain().await;
-            let ledger = blockchain.ledger;
+            // let tx_db = blockchain.database.tx_db;
             let dummy_tx_val = test_utils::make_dummy_value();
 
             let old_tx_hash =
                 (&dummy_tx_val).get_hash().expect("fail to get hash");
 
-            ledger_for_test::delete_tx(&ledger, &old_tx_hash)
+            blockchain
+                .delete_tx(&old_tx_hash)
                 .expect("Tx should be deleted");
 
-            let tx_hash = ledger
+            let tx_hash = blockchain
                 .write_tx(dummy_tx_val)
                 .await
                 .expect("Tx should be written");
 
             assert_eq!(old_tx_hash, tx_hash);
-        }
+
+            tx_hash
+        };
 
         let (rpc, rpc_socket_addr, _) = test_utils::make_rpc().await;
 
@@ -168,11 +171,15 @@ mod test_suite {
         let req = Request::builder()
             .method(Method::POST)
             .uri(uri)
-            .body(Body::from(
-                r#"{"hash": "8082e05e6adf824f9c024e64f9fb2f6b04bbf02d455f69807b5bc58976025cd0"}"#))
+            .body(Body::from(format!(
+                r#"
+                    {{"hash": "{}"}}
+                "#,
+                tx_hash,
+            )))
             .expect("request builder should be made");
 
-        println!("{:?}", req);
+        println!("Request: {:?}", req);
 
         let _res = match client.request(req).await {
             Ok(res) => {
@@ -180,7 +187,7 @@ mod test_suite {
                     .await
                     .expect("body should be parsed");
 
-                let _: SuccessResponse =
+                let _: JsonResponse =
                     match serde_json::from_reader(body.reader()) {
                         Ok(e) => {
                             log::info!("{:?}", e);

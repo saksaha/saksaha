@@ -20,7 +20,6 @@ impl Script for Test {
         log!("Executing `{} {:?}`", program, args);
 
         Cmd::new(program)
-            .env("RUST_LOG", "debug")
             .args(args)
             .stdout(Stdio::inherit())
             .stderr(Stdio::inherit())
