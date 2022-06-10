@@ -1,16 +1,20 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct Storage {
-    // state: String,
+    state: String,
 }
 
 impl Storage {
     pub fn init() -> Self {
-        Storage {}
+        Storage {
+            state: "initiated storage".to_string(),
+        }
     }
-    pub fn get_state(&self) {}
-    pub fn set_state(&self, str: String) {
-        println!("str: {}", str);
+    pub fn set_state(&mut self, msg: String) {
+        self.state = msg;
+    }
+    pub fn get_state(&self) -> String {
+        self.state.clone()
     }
 }

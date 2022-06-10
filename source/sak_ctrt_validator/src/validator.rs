@@ -1,17 +1,24 @@
 use serde::{Deserialize, Serialize};
 
-// sak_vm::storage
 #[derive(Serialize, Deserialize)]
 pub struct Storage {
-    // state: String,
+    state: String,
 }
 
 impl Storage {
-    pub fn get_state(&self) {}
-    pub fn set_state(&self, str: String) {
-        println!("str: {}", str);
+    pub fn init() -> Self {
+        Storage {
+            state: "initiated storage".to_string(),
+        }
+    }
+    pub fn set_state(&mut self, msg: String) {
+        self.state = msg;
+    }
+    pub fn get_state(&self) -> String {
+        self.state.clone()
     }
 }
+// sak_vm::storage
 
 // validaotr init
 #[no_mangle]
@@ -24,9 +31,11 @@ pub unsafe extern "C" fn init(
     let data = Vec::from_raw_parts(ptr, len, len);
     let data_string = String::from_utf8(data).unwrap();
     // deserialize the data
-    let data_json: Storage =
+    let mut data_json: Storage =
         serde_json::from_str(data_string.as_str()).unwrap();
 
+    // edit state
+    data_json.set_state("updated storage".to_string());
     // serialize the data to return a new pointer
     let storage_string = serde_json::to_value(data_json).unwrap().to_string();
     let mut storage_bytes_vec = storage_string.as_bytes().to_owned();
