@@ -37,6 +37,8 @@ impl Runtime {
         loop {
             let time_since = SystemTime::now();
 
+            self.tx_pool.next_update().await;
+
             let new_tx_hashes = self.tx_pool.get_new_tx_hashes().await;
 
             if !new_tx_hashes.is_empty() {
