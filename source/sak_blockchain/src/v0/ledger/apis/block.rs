@@ -1,6 +1,7 @@
-use crate::{block_columns, Block, Hashable};
+use crate::block_columns;
 use log::debug;
 use sak_kv_db::{KeyValueDatabase, WriteBatch};
+use sak_types::{Block, Hashable};
 
 #[inline]
 pub(crate) async fn get_block(

@@ -2,7 +2,8 @@ use super::*;
 
 #[cfg(test)]
 mod test {
-    use crate::{Blockchain, BlockchainArgs, Transaction};
+    use crate::{Blockchain, BlockchainArgs};
+    use sak_types::Transaction;
 
     fn init() {
         let _ = env_logger::builder().is_test(true).try_init();

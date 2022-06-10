@@ -1,5 +1,5 @@
 use super::Machine;
-use sak_blockchain::{Block, Transaction};
+use sak_types::{Block, Transaction};
 
 impl Machine {
     pub(crate) async fn send_transaction(

@@ -1,10 +1,7 @@
-use crate::BoxedError;
+use crate::{BoxedError, HANDSHAKE_ACK_TYPE, HANDSHAKE_SYN_TYPE};
 use bytes::{BufMut, Bytes, BytesMut};
 use sak_p2p_frame::{Frame, Parse};
 use std::time::{SystemTime, UNIX_EPOCH};
-
-pub const HANDSHAKE_SYN_TYPE: &'static str = "hs_syn";
-pub const HANDSHAKE_ACK_TYPE: &'static str = "hs_ack";
 
 pub struct Handshake {
     pub instance_id: String,

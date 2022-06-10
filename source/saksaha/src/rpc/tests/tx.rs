@@ -8,7 +8,8 @@ mod test_suite {
     use hyper::{Body, Client, Method, Request, Uri};
 
     #[cfg(test)]
-    use sak_blockchain::{ledger_for_test, Hashable};
+    use sak_blockchain::ledger_for_test;
+    use sak_types::Hashable;
 
     #[tokio::test(flavor = "multi_thread")]
     async fn test_rpc_client_and_send_wrong_transaction() {
