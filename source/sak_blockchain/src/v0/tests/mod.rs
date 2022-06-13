@@ -2,7 +2,8 @@ use super::*;
 
 #[cfg(test)]
 mod test {
-    use crate::{Blockchain, BlockchainArgs, Transaction};
+    use crate::{Blockchain, BlockchainArgs};
+    use sak_types::Transaction;
 
     fn init() {
         let _ = env_logger::builder().is_test(true).try_init();
@@ -58,13 +59,13 @@ mod test {
         init();
 
         let blockchain = make_blockchain().await;
-        let ledger = blockchain.ledger;
+        let tx_db = blockchain.database.tx_db;
 
         let dummy_tx_values = make_dummy_values();
         let mut tx_hashes = vec![];
 
         for tx_val in dummy_tx_values.iter() {
-            let h = ledger
+            let h = tx_db
                 .write_tx(tx_val.clone())
                 .await
                 .expect("Tx should be written");
@@ -74,7 +75,7 @@ mod test {
 
         for (idx, tx_hash) in tx_hashes.iter().enumerate() {
             let tx_val_retrieved =
-                ledger.read_tx(&tx_hash).await.expect("Tx should exist");
+                tx_db.read_tx(&tx_hash).await.expect("Tx should exist");
 
             assert_eq!(tx_val_retrieved.data, dummy_tx_values[idx].data);
         }
@@ -85,13 +86,13 @@ mod test {
         init();
 
         let blockchain = make_blockchain().await;
-        let ledger = blockchain.ledger;
+        let tx_db = blockchain.database.tx_db;
 
         let dummy_tx_values = make_dummy_values();
         let mut tx_hashes = vec![];
 
         for tx_val in dummy_tx_values.iter() {
-            let h = ledger
+            let h = tx_db
                 .write_tx(tx_val.clone())
                 .await
                 .expect("Tx should be written");
@@ -102,7 +103,7 @@ mod test {
         let target_idx = 0;
         let wrong_idx = 1;
 
-        let tx_val_retrieved = ledger
+        let tx_val_retrieved = tx_db
             .read_tx(&tx_hashes[target_idx])
             .await
             .expect("Tx should exist");
@@ -115,13 +116,13 @@ mod test {
         init();
 
         let blockchain = make_blockchain().await;
-        let ledger = blockchain.ledger;
+        let tx_db = blockchain.database.tx_db;
 
         let dummy_tx_values = make_dummy_values();
         let mut tx_hashes = vec![];
 
         for tx_val in dummy_tx_values.iter() {
-            let h = ledger
+            let h = tx_db
                 .write_tx(tx_val.clone())
                 .await
                 .expect("Tx should be written");
@@ -129,7 +130,7 @@ mod test {
             tx_hashes.push(h);
         }
 
-        let mut iter = ledger.iter();
+        let mut iter = tx_db.iter();
         iter.seek_to_first();
 
         let mut count = 0;

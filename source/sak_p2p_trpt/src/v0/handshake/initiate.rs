@@ -92,7 +92,7 @@ pub async fn initiate_handshake(
         }
     };
 
-    match conn.socket_tx.send(Msg::HandshakeSyn(handshake)).await {
+    match conn.socket.send(Msg::HandshakeSyn(handshake)).await {
         Ok(_) => (),
         Err(err) => {
             return Err(HandshakeInitError::FrameWriteFail {
@@ -101,7 +101,7 @@ pub async fn initiate_handshake(
         }
     };
 
-    let handshake_ack = match conn.socket_rx.next().await {
+    let handshake_ack = match conn.socket.next().await {
         Some(maybe_msg) => match maybe_msg {
             Ok(msg) => {
                 if let Msg::HandshakeAck(h) = msg {

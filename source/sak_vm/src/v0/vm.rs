@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::{
     memory, BoxedError, Storage, ARRAY_SUM_FN, DEALLOC_FN, MEMORY, UPPER_FN,
     WASM,
@@ -29,7 +31,9 @@ fn test_validator_init() -> Result<(), BoxedError> {
     let (instance, mut store) = create_instance(WASM.to_string())?;
 
     // for test, storage with one Vec<String> type field
-    let storage = Storage::init();
+    // let storage = Storage::init();
+    let storage: HashMap<String, String> = HashMap::with_capacity(10);
+
     let storage_json = serde_json::to_value(storage).unwrap().to_string();
     println!("storage_json: {:?}", storage_json);
 
@@ -39,17 +43,19 @@ fn test_validator_init() -> Result<(), BoxedError> {
         &instance,
         &mut store,
     )?;
+
     let size = storage_json.len();
     println!("ptr: {:?}, size: {:?}", ptr, size);
 
-    let init: TypedFunc<(i32, i32), i32> = {
+    let init: TypedFunc<(i32, i32), (i32, i32)> = {
         instance
             .get_typed_func(&mut store, "init")
             .expect("expected init function not found")
     };
 
-    let ptr_offset = init.call(&mut store, (ptr as i32, size as i32))? as isize;
+    let (ptr_offset, len) = init.call(&mut store, (ptr as i32, size as i32))?;
     println!("ptr offset: {:?}", ptr_offset);
+    println!("len: {}", len);
 
     let memory = instance
         .get_memory(&mut store, MEMORY)
@@ -66,13 +72,15 @@ fn test_validator_init() -> Result<(), BoxedError> {
 
         // validator : 3
         res =
-            read_string(&store, &memory, ptr_offset as u32, 410 as u32).unwrap()
+            read_string(&store, &memory, ptr_offset as u32, len as u32).unwrap()
     }
 
     println!("res: {:?}", res);
 
-    let res_json: Storage = serde_json::from_str(res.as_str()).unwrap();
-    println!("validator list after init(): {:?}", res_json.get_state());
+    // let res_json: storage = serde_json::from_str(res.as_str()).unwrap();
+    let res_json: HashMap<String, String> =
+        serde_json::from_str(res.as_str()).unwrap();
+    println!("validator list after init(): {:?}", res_json.get("power"));
 
     Ok(())
 }

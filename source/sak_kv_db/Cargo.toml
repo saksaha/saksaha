@@ -9,11 +9,6 @@ edition = "2018"
 colored = "2"
 sak_crypto = { path = "../sak_crypto" }
 sak_fs = { path = "../sak_fs" }
-sak_p2p_id = { path = "../sak_p2p_id" }
-sak_p2p_disc = { path = "../sak_p2p_disc" }
-sak_p2p_trpt = { path = "../sak_p2p_trpt" }
-sak_p2p_ptable = { path = "../sak_p2p_ptable" }
-sak_logger = { path = "../sak_logger" }
 serde = { version = "1.0.130", features = ["derive"] }
 serde_json = "1.0.59"
 rand = "0.8.4"

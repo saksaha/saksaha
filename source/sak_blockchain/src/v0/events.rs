@@ -1,4 +1,5 @@
 pub enum BlockchainEvent {
-    TxPoolChange(String), // tx_hash
-                          // LedgerBlockAdd(...)
+    // LedgerBlockAdd(...)
+    TxPoolStat(Vec<String>),
+    // TxPoolChanged(Vec<String>),
 }

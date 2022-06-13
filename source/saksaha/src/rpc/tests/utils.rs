@@ -5,17 +5,27 @@ pub(super) mod test_utils {
     use crate::p2p::{P2PHost, P2PHostArgs};
     use crate::rpc::{RPCArgs, RPC};
     use crate::system::SystemHandle;
-    use sak_blockchain::{Blockchain, BlockchainArgs, Transaction};
+    use sak_blockchain::{Blockchain, BlockchainArgs};
     use sak_p2p_addr::{AddrStatus, UnknownAddr};
     use sak_p2p_disc::{Discovery, DiscoveryArgs};
     use sak_p2p_id::Credential;
     use sak_p2p_ptable::PeerTable;
+    use sak_types::Transaction;
     use std::net::SocketAddr;
     use std::sync::Arc;
     use tokio::net::TcpListener;
 
+    const RUST_LOG_ENV: &str = "
+        sak_,
+        saksaha
+    ";
+
     pub fn init() {
-        let _ = env_logger::builder().is_test(true).try_init();
+        if std::env::var("RUST_LOG").is_err() {
+            std::env::set_var("RUST_LOG", RUST_LOG_ENV);
+        }
+
+        sak_logger::init(false);
     }
 
     pub(crate) async fn make_rpc() -> (RPC, SocketAddr, Arc<Machine>) {
@@ -98,6 +108,8 @@ pub(super) mod test_utils {
             let ln = LocalNode {
                 peer_table: p2p_peer_table.clone(),
                 machine: machine.clone(),
+                miner: true,
+                mine_interval: None,
             };
 
             ln

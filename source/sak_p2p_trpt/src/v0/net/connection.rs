@@ -10,8 +10,9 @@ use tokio_util::codec::Framed;
 
 pub struct Connection {
     pub socket_addr: SocketAddr,
-    pub socket_tx: SplitSink<Framed<TcpStream, P2PCodec>, Msg>,
-    pub socket_rx: SplitStream<Framed<TcpStream, P2PCodec>>,
+    // pub socket_tx: SplitSink<Framed<TcpStream, P2PCodec>, Msg>,
+    // pub socket_rx: SplitStream<Framed<TcpStream, P2PCodec>>,
+    pub socket: Framed<TcpStream, P2PCodec>,
 }
 
 impl Connection {
@@ -20,17 +21,17 @@ impl Connection {
 
         let p2p_codec = P2PCodec {};
 
-        let (tx, rx) = {
+        let socket = {
             let f = Framed::new(socket, p2p_codec);
-            let (tx, rx) = f.split();
 
-            (tx, rx)
+            f
         };
 
         let c = Connection {
             socket_addr,
-            socket_tx: tx,
-            socket_rx: rx,
+            // socket_tx: tx,
+            // socket_rx: rx,
+            socket,
         };
 
         Ok(c)
