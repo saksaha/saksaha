@@ -28,7 +28,14 @@ impl VM {
 }
 
 fn test_validator_init() -> Result<(), BoxedError> {
-    let (instance, mut store) = create_instance(WASM.to_string())?;
+    let (instance, mut store) = match create_instance(WASM.to_string()) {
+        Ok(r) => r,
+        Err(err) => {
+            return Err(
+                format!("Error creating an instance, err: {}", err).into()
+            );
+        }
+    };
 
     // for test, storage with one Vec<String> type field
     // let storage = Storage::init();
@@ -47,7 +54,7 @@ fn test_validator_init() -> Result<(), BoxedError> {
     let size = storage_json.len();
     println!("ptr: {:?}, size: {:?}", ptr, size);
 
-    let init: TypedFunc<(i32, i32), (i32, i32, i32)> = {
+    let init: TypedFunc<(i32, i32), (i32, i32)> = {
         instance
             .get_typed_func(&mut store, "init")
             .expect("expected init function not found")
@@ -57,7 +64,7 @@ fn test_validator_init() -> Result<(), BoxedError> {
         instance.get_typed_func(&mut store, "init").expect("init");
     // let ret = [Val::I32(0), Val::I32(0)];
 
-    let (ptr_offset, len) = init.call(&mut store, (ptr as i32, size as i32))?;
+    // let a = init.call(&mut store, (ptr as i32, size as i32))?;
     // println!("ptr offset: {:?}", ptr_offset);
     // println!("len: {}", len);
 
@@ -174,43 +181,44 @@ pub unsafe fn read_string(
     Ok(String::from(str))
 }
 
-// fn test_ex() -> Result<(), BoxedError> {
-//     let engine = Engine::default();
-//     let wat = r#"
-//         (module
-//             (import "host" "hello" (func $host_hello (param i32)))
+fn test_ex() -> Result<(), BoxedError> {
+    let engine = Engine::default();
+    let wat = r#"
+        (module
+            (import "host" "hello" (func $host_hello (param i32)))
 
-//             (func (export "hello")
-//                 i32.const 3
-//                 call $host_hello)
-//         )
-//     "#;
-//     let module = Module::new(&engine, wat)?;
-//     let import_count = module.imports().count();
+            (func (export "hello")
+                i32.const 3
+                call $host_hello)
+        )
+    "#;
+    let module = Module::new(&engine, wat)?;
+    let import_count = module.imports().count();
 
-//     println!("import count: {}", import_count);
+    println!("import count: {}", import_count);
 
-//     // All wasm objects operate within the context of a "store". Each
-//     // `Store` has a type parameter to store host-specific data, which in
-//     // this case we're using `4` for.
-//     let mut store = Store::new(&engine, 4);
-//     let host_hello =
-//         Func::wrap(&mut store, |caller: Caller<'_, u32>, param: i32| {
-//             println!("Got {} from WebAssembly", param);
-//             println!("my host state is: {}", caller.data());
-//         });
+    // All wasm objects operate within the context of a "store". Each
+    // `Store` has a type parameter to store host-specific data, which in
+    // this case we're using `4` for.
+    let mut store = Store::new(&engine, 4);
 
-//     // Instantiation of a module requires specifying its imports and then
-//     // afterwards we can fetch exports by name, as well as asserting the
-//     // type signature of the function with `get_typed_func`.
-//     let instance = Instance::new(&mut store, &module, &[host_hello.into()])?;
-//     let hello = instance.get_typed_func::<(), (), _>(&mut store, "hello")?;
+    let host_hello =
+        Func::wrap(&mut store, |caller: Caller<'_, u32>, param: i32| {
+            println!("Got {} from WebAssembly", param);
+            println!("my host state is: {}", caller.data());
+        });
 
-//     // And finally we can call the wasm!
-//     hello.call(&mut store, ())?;
+    // Instantiation of a module requires specifying its imports and then
+    // afterwards we can fetch exports by name, as well as asserting the
+    // type signature of the function with `get_typed_func`.
+    let instance = Instance::new(&mut store, &module, &[host_hello.into()])?;
+    let hello = instance.get_typed_func::<(), (), _>(&mut store, "hello")?;
 
-//     Ok(())
-// }
+    // And finally we can call the wasm!
+    hello.call(&mut store, ())?;
+
+    Ok(())
+}
 
 fn test_array_sum() {
     let input = vec![1 as u8, 2, 3, 4, 5];
@@ -282,14 +290,29 @@ fn create_instance(
             return Err(format!("Error creating a module, err: {}", err).into())
         }
     };
-    let instance = match Instance::new(&mut store, &module, &[]) {
-        Ok(i) => i,
-        Err(err) => {
-            return Err(
-                format!("Error creating an instance, err: {}", err).into()
-            )
-        }
-    };
+
+    let imports = module.imports();
+    println!("imports: {:?}", imports.len());
+
+    for i in module.imports() {
+        println!("imported: {}", i.name());
+    }
+
+    let host_hello =
+        Func::wrap(&mut store, |caller: Caller<'_, usize>, param: i32| {
+            println!("Got {} from WebAssembly", param);
+            println!("my host state is: {}", caller.data());
+        });
+
+    let instance =
+        match Instance::new(&mut store, &module, &[host_hello.into()]) {
+            Ok(i) => i,
+            Err(err) => {
+                return Err(
+                    format!("Error creating an instance, err: {}", err).into()
+                )
+            }
+        };
 
     //
 

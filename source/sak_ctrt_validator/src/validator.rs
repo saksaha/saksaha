@@ -22,6 +22,12 @@ impl Storage {
     }
 }
 
+extern "C" {
+    // fn temp(a: i32) -> i32;
+
+    fn hello(a: i32) -> i32;
+}
+
 // validator init
 #[no_mangle]
 pub unsafe extern "C" fn init(
@@ -29,6 +35,7 @@ pub unsafe extern "C" fn init(
     ptr: *mut u8,
     len: usize,
 ) -> (*mut u8, u8) {
+    let a = hello(3);
     // get data from the pointer
     let data = Vec::from_raw_parts(ptr, len, len);
     let data_string = String::from_utf8(data).unwrap();
