@@ -34,6 +34,7 @@ fn test_validator_init() -> Result<(), BoxedError> {
             return Err(format!("err: {}", err).into());
         }
     };
+    //
 
     // for test, storage with one Vec<String> type field
     // let storage = Storage::init();
@@ -49,17 +50,17 @@ fn test_validator_init() -> Result<(), BoxedError> {
         &mut store,
     )?;
 
-    let size = storage_json.len();
-    println!("ptr: {:?}, size: {:?}", ptr, size);
+    // let size = storage_json.len();
+    // println!("ptr: {:?}, size: {:?}", ptr, size);
 
-    let init: TypedFunc<(i32, i32), (i32, i32)> = {
+    let init: TypedFunc<(i32, i32), i32> = {
         instance
             .get_typed_func(&mut store, "init")
             .expect("expected init function not found")
     };
 
-    let init: TypedFunc<(i32, i32), (i32, i32)> =
-        instance.get_typed_func(&mut store, "init").expect("init");
+    // let init: TypedFunc<(i32, i32), (i32, i32)> =
+    //     instance.get_typed_func(&mut store, "init").expect("init");
     // let ret = [Val::I32(0), Val::I32(0)];
 
     // let a = init.call(&mut store, (ptr as i32, size as i32))?;
@@ -156,7 +157,7 @@ fn upper(input: String) -> Result<String, BoxedError> {
 }
 
 pub unsafe fn read_string(
-    store: &Store<usize>,
+    store: &Store<i32>,
     memory: &Memory,
     data_ptr: u32,
     len: u32,
@@ -274,13 +275,26 @@ fn array_sum(input: Vec<u8>) -> Result<i32, BoxedError> {
 
 fn create_instance(
     _filename: String,
-) -> Result<(Instance, Store<usize>), BoxedError> {
+) -> Result<(Instance, Store<i32>), BoxedError> {
     let wasm_bytes = include_bytes!("./sak_ctrt_validator.wasm");
 
     let engine =
         Engine::new(Config::new().wasm_multi_value(true).debug_info(true))?;
 
-    let mut store = Store::new(&engine, 0);
+    let mut store = Store::new(&engine, 3);
+
+    // let wat = r#"
+    //     (module
+    //         (import "env" "hello" (func $host_hello (param i32)))
+
+    //         (func (export "hello")
+    //             i32.const 3
+    //             call $host_hello)
+    //         (memory (export "memory") 1)
+    //     )
+    // "#;
+
+    // let module = Module::new(&engine, wat)?;
 
     let module = match Module::new(&engine, &wasm_bytes) {
         Ok(m) => m,
@@ -289,8 +303,6 @@ fn create_instance(
         }
     };
 
-    // let mut linker = Linker::new(&engine);
-
     let imports = module.imports();
     println!("imports: {:?}", imports.len());
 
@@ -298,21 +310,13 @@ fn create_instance(
         println!("imported: {}", i.name());
     }
 
-    // let host_hello =
-    // Func::wrap(&mut store, |caller: Caller<'_, usize>, param: i32| {
-    //     println!("Got {} from WebAssembly", param);
-    //     println!("my host state is: {}", caller.data());
-    // });enigne
-
     let mut linker = Linker::new(&engine);
-    linker.func_wrap(
-        "env",
-        "hello",
-        |caller: Caller<'_, usize>, param: i32| {
-            println!("Got {} from WebAssembly", param);
-            println!("my host state is: {}", caller.data());
-        },
-    )?;
+
+    linker.func_wrap("env", "hello", |a: i32, b: i32| {
+        println!("Got {}, {} from WebAssembly", a, b);
+        // println!("my host state is: {}", caller.data());
+        3
+    })?;
 
     let instance = match linker.instantiate(&mut store, &module) {
         Ok(i) => i,
@@ -322,17 +326,6 @@ fn create_instance(
             )
         }
     };
-
-    // let instance = match Instance::new(&mut store, &module, &[]) {
-    //     Ok(i) => i,
-    //     Err(err) => {
-    //         return Err(
-    //             format!("Error creating an instance, err: {}", err).into()
-    //         )
-    //     }
-    // };
-
-    //
 
     return Ok((instance, store));
 }

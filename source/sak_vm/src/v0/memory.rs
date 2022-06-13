@@ -9,7 +9,7 @@ use wasmtime::*;
 pub(crate) fn copy_memory(
     bytes: &Vec<u8>,
     instance: &Instance,
-    store: &mut Store<usize>,
+    store: &mut Store<i32>,
 ) -> Result<isize, BoxedError> {
     // Get the "memory" export of the module.
     // If the module does not export it, just panic,
