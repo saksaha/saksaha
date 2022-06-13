@@ -13,7 +13,6 @@ pub(crate) struct TxPool {
     tx_map: RwLock<HashMap<String, Transaction>>,
     tx_pool_event_rx: RwLock<Receiver<bool>>,
     tx_pool_event_tx: Sender<bool>,
-    // has_update_ev_queued: Mutex<>,
 }
 
 impl TxPool {
@@ -35,14 +34,11 @@ impl TxPool {
             RwLock::new(m)
         };
 
-        // let has_update_ev_queued = { Mutex::new(false) };
-
         TxPool {
             new_tx_hashes,
             tx_map,
             tx_pool_event_tx,
             tx_pool_event_rx,
-            // has_update_ev_queued,
         }
     }
 
@@ -93,16 +89,6 @@ impl TxPool {
             Ok(_) => (),
             Err(err) => return Err(format!("Can't send tx event")),
         };
-
-        // match self.has_update_ev_queued.try_lock() {
-        //     Ok(mut i) => {
-        //         *i = true;
-        //         tokio::spawn(async {
-        //             // sleep
-        //         })
-        //     }
-        //     Err(_) => (),
-        // };
 
         Ok(())
     }

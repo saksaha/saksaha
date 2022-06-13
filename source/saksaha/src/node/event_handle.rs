@@ -1,11 +1,17 @@
+use std::sync::Arc;
+
 use futures::{SinkExt, StreamExt};
 use log::{info, warn};
+use sak_p2p_ptable::Peer;
 use sak_p2p_trpt::{Connection, Msg, TxHashSync, TxSyn};
 use tokio::sync::RwLockWriteGuard;
 
 use crate::machine::Machine;
 
+use super::peer_node::PeerNode;
+
 pub(super) async fn handle_tx_pool_stat<'a>(
+    public_key: &str,
     conn: &'a mut RwLockWriteGuard<'_, Connection>,
     machine: &Machine,
     new_tx_hashes: Vec<String>,
@@ -18,10 +24,7 @@ pub(super) async fn handle_tx_pool_stat<'a>(
         .await
     {
         Ok(_) => {
-            info!(
-                "Incoming tx successfully requested to sync with \
-                the peer node, send msg type: TxHashSyn"
-            );
+            info!("Sending TxHashSyn, public_key: {}", public_key);
         }
         Err(err) => {
             warn!(
@@ -60,11 +63,7 @@ pub(super) async fn handle_tx_pool_stat<'a>(
 
     match conn.socket.send(Msg::TxSyn(TxSyn { txs })).await {
         Ok(_) => {
-            info!(
-                "requested transactions are successfully \
-                transmitted to the peer node, send msg \
-                type: TxHSyn"
-            );
+            info!("Sending TxSyn, public_key: {}", public_key);
         }
         Err(err) => {
             info!("Failed to send requested tx, err: {}", err,);

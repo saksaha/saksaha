@@ -55,14 +55,16 @@ impl LocalNode {
 
 async fn run_node_routine(peer_node: PeerNode, machine: Arc<Machine>) {
     loop {
-        let mut conn = peer_node.peer.transport.conn.write().await;
+        let mut conn = &mut peer_node.peer.transport.conn.write().await;
         let mut bc_event_rx = machine.blockchain.bc_event_rx.write().await;
+        let public_key = peer_node.peer.public_key_short();
 
         tokio::select! {
             Some(ev) = bc_event_rx.recv() => {
                 match ev {
                     BlockchainEvent::TxPoolStat(new_tx_hashes) => {
                         event_handle::handle_tx_pool_stat(
+                            public_key,
                             &mut conn,
                             &machine,
                             new_tx_hashes,
@@ -75,7 +77,7 @@ async fn run_node_routine(peer_node: PeerNode, machine: Arc<Machine>) {
                     Some(maybe_msg) => match maybe_msg {
                         Ok(msg) => {
                             let _ = msg_handler::handle_msg(
-                                msg, &machine, &mut conn).await;
+                                public_key, msg, &machine, &mut conn).await;
                         }
                         Err(err) => {
                             warn!("Failed to parse the msg, err: {}", err);

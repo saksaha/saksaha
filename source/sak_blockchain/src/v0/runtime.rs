@@ -1,6 +1,5 @@
 use crate::{v0::tx_pool::TxPool, BlockchainEvent};
 use log::error;
-use sak_task_queue::TaskQueue;
 use std::{
     sync::Arc,
     time::{Duration, SystemTime},
@@ -34,49 +33,23 @@ impl Runtime {
     }
 
     pub(crate) async fn run(&self) {
-        // loop {
-        //     let time_since = SystemTime::now();
-
-        //     // self.tx_pool.next_update().await;
-
-        //     let new_tx_hashes = self.tx_pool.get_new_tx_hashes().await;
-
-        //     {
-        //         match self
-        //             .bc_event_tx
-        //             .send(BlockchainEvent::TxPoolStat(new_tx_hashes))
-        //             .await
-        //         {
-        //             Ok(_) => (),
-        //             Err(err) => {
-        //                 error!("Error sending blockchain event, err: {}", err);
-        //             }
-        //         };
-        //     }
-
-        //     sak_utils_time::wait_until_min_interval(
-        //         time_since,
-        //         self.tx_pool_sync_interval,
-        //     )
-        //     .await;
-        // }
-        while let Some(_b) = self.tx_pool.next_update().await {
+        loop {
             let time_since = SystemTime::now();
-
-            // self.tx_pool.next_update().await;
 
             let new_tx_hashes = self.tx_pool.get_new_tx_hashes().await;
 
-            match self
-                .bc_event_tx
-                .send(BlockchainEvent::TxPoolStat(new_tx_hashes))
-                .await
-            {
-                Ok(_) => (),
-                Err(err) => {
-                    error!("Error sending blockchain event, err: {}", err);
-                }
-            };
+            if new_tx_hashes.len() > 0 {
+                match self
+                    .bc_event_tx
+                    .send(BlockchainEvent::TxPoolStat(new_tx_hashes))
+                    .await
+                {
+                    Ok(_) => (),
+                    Err(err) => {
+                        error!("Error sending blockchain event, err: {}", err);
+                    }
+                };
+            }
 
             sak_utils_time::wait_until_min_interval(
                 time_since,
