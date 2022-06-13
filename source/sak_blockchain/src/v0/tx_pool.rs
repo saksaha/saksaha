@@ -11,17 +11,17 @@ const TX_POOL_CAPACITY: usize = 100;
 pub(crate) struct TxPool {
     new_tx_hashes: RwLock<HashSet<String>>,
     tx_map: RwLock<HashMap<String, Transaction>>,
-    tx_pool_event_rx: RwLock<Receiver<bool>>,
-    tx_pool_event_tx: Sender<bool>,
+    // tx_pool_event_rx: RwLock<Receiver<bool>>,
+    // tx_pool_event_tx: Sender<bool>,
 }
 
 impl TxPool {
     pub(crate) fn new() -> TxPool {
-        let (tx_pool_event_tx, tx_pool_event_rx) = {
-            let (tx, rx) = mpsc::channel::<bool>(1);
+        // let (tx_pool_event_tx, tx_pool_event_rx) = {
+        //     let (tx, rx) = mpsc::channel::<bool>(1);
 
-            (tx, RwLock::new(rx))
-        };
+        //     (tx, RwLock::new(rx))
+        // };
 
         let new_tx_hashes = {
             let s = HashSet::new();
@@ -37,8 +37,8 @@ impl TxPool {
         TxPool {
             new_tx_hashes,
             tx_map,
-            tx_pool_event_tx,
-            tx_pool_event_rx,
+            // tx_pool_event_tx,
+            // tx_pool_event_rx,
         }
     }
 
@@ -67,14 +67,16 @@ impl TxPool {
         return ret;
     }
 
-    pub async fn next_update(&self) -> Option<bool> {
-        self.tx_pool_event_rx.write().await.recv().await
-    }
+    // pub async fn next_update(&self) -> Option<bool> {
+    //     self.tx_pool_event_rx.write().await.recv().await
+    // }
 
     pub async fn insert(&self, tx: Transaction) -> Result<(), String> {
+        println!("tx_pool insert()");
         let tx_hash = tx.get_hash()?;
 
         let mut tx_map_lock = self.tx_map.write().await;
+        println!("p1");
 
         if tx_map_lock.contains_key(&tx_hash) {
             return Err(format!("tx already exist"));
@@ -83,12 +85,15 @@ impl TxPool {
         };
 
         let mut new_tx_hashes_lock = self.new_tx_hashes.write().await;
+        println!("p2");
         new_tx_hashes_lock.insert(tx_hash);
 
-        match self.tx_pool_event_tx.send(true).await {
-            Ok(_) => (),
-            Err(err) => return Err(format!("Can't send tx event")),
-        };
+        // match self.tx_pool_event_tx.send(true).await {
+        //     Ok(_) => (),
+        //     Err(err) => return Err(format!("Can't send tx event")),
+        // };
+
+        println!("tx_pool insert() end");
 
         Ok(())
     }
@@ -115,5 +120,3 @@ impl TxPool {
         tx_pool
     }
 }
-
-pub struct TxPoolUpdateEvent {}

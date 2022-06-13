@@ -12,6 +12,7 @@ pub(crate) async fn send_transaction(
 ) -> Result<Response<Body>, hyper::Error> {
     let _body = match hyper::body::to_bytes(req.into_body()).await {
         Ok(b) => {
+            println!("rpc1");
             let body_bytes_vec = b.to_vec();
             let _body_str = match std::str::from_utf8(&body_bytes_vec) {
                 Ok(b) => {

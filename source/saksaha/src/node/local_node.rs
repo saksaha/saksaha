@@ -38,75 +38,35 @@ impl LocalNode {
         let mut peer_it_lock = peer_it.write().await;
 
         loop {
+            let machine = self.machine.clone();
+
             let peer = match peer_it_lock.next().await {
                 Ok(p) => p.clone(),
                 Err(_) => continue,
             };
 
-            let peer_node = PeerNode { peer };
-            let machine = self.machine.clone();
+            let bc_event_rx = {
+                let rx = machine
+                    .blockchain
+                    .bc_event_tx
+                    .clone()
+                    .read()
+                    .await
+                    .subscribe();
+
+                rx
+            };
+
+            let mut peer_node = PeerNode {
+                peer,
+                bc_event_rx,
+                machine,
+            };
 
             tokio::spawn(async move {
-                run_node_routine(peer_node, machine).await;
+                peer_node.run().await;
+                // run_node_routine(peer_node, machine).await;
             });
-        }
-    }
-}
-
-async fn run_node_routine(peer_node: PeerNode, machine: Arc<Machine>) {
-    debug!(
-        "Peer is registered as a peer node. Starting the routine, \
-        public_key: {}",
-        peer_node.peer.public_key_short()
-    );
-
-    loop {
-        let mut conn = &mut peer_node.peer.transport.conn.write().await;
-        // let mut bc_event_rx = machine.blockchain.bc_event_rx.write().await;
-        let public_key = peer_node.peer.public_key_short();
-        let mut bc_event_rx_2 = machine
-            .blockchain
-            .bc_event_tx
-            .clone()
-            .write()
-            .await
-            .subscribe();
-
-        tokio::select! {
-            Ok(ev) = bc_event_rx_2.recv() => {
-                match ev {
-                    BlockchainEvent::TxPoolStat(new_tx_hashes) => {
-                        event_handle::handle_tx_pool_stat(
-                            public_key,
-                            &mut conn,
-                            &machine,
-                            new_tx_hashes,
-                        ).await;
-                    },
-                }
-            },
-            maybe_msg = conn.socket.next() => {
-                match maybe_msg {
-                    Some(maybe_msg) => match maybe_msg {
-                        Ok(msg) => {
-                            let _ = msg_handler::handle_msg(
-                                public_key, msg, &machine, &mut conn).await;
-                        }
-                        Err(err) => {
-                            warn!("Failed to parse the msg, err: {}", err);
-                        }
-                    }
-                    None => {
-                        warn!("Peer has ended the connection");
-
-                        let mut status_lock = peer_node.peer.status.write()
-                            .await;
-
-                        *status_lock = PeerStatus::Disconnected;
-                        return;
-                    }
-                };
-            }
         }
     }
 }
