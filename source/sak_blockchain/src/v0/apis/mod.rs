@@ -54,11 +54,11 @@ impl Blockchain {
         self.database.tx_db.write_tx(tx).await
     }
 
-    pub async fn compare_with_pool(
+    pub async fn get_tx_pool_diff(
         &self,
         tx_hashes: Vec<String>,
     ) -> Vec<String> {
-        self.tx_pool.get_hash_diff(tx_hashes).await
+        self.tx_pool.get_tx_pool_diff(tx_hashes).await
     }
 
     pub async fn get_ack_txs_from_pool(

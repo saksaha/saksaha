@@ -152,7 +152,11 @@ impl Routine {
         };
 
         let blockchain = {
-            let b = blockchain::create_blockchain(config.app_prefix).await?;
+            let b = blockchain::create_blockchain(
+                config.app_prefix,
+                config.blockchain.tx_pool_sync_interval,
+            )
+            .await?;
             b
         };
 

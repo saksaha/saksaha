@@ -20,6 +20,7 @@ pub(crate) struct CLIArgs {
     pub(crate) cfg_profile: Option<String>,
     pub(crate) miner: bool,
     pub(crate) mine_interval: Option<u64>,
+    pub(crate) tx_pool_sync_interval: Option<u64>,
     pub(crate) bootstrap_urls: Option<Vec<String>>,
 }
 
@@ -239,6 +240,20 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
         None => None,
     };
 
+    let tx_pool_sync_interval = match matches.value_of("tx-pool-sync-interval")
+    {
+        Some(d) => match d.parse::<u64>() {
+            Ok(d) => Some(d),
+            Err(err) => {
+                return Err(format!(
+                    "Cannot parse tx pool sync interval (u64), err: {}",
+                    err,
+                ));
+            }
+        },
+        None => None,
+    };
+
     let app_prefix = match matches.value_of("app-prefix") {
         Some(m) => Some(String::from(m)),
         None => None,
@@ -263,6 +278,7 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
         bootstrap_urls,
         miner,
         mine_interval,
+        tx_pool_sync_interval,
         app_prefix,
     })
 }

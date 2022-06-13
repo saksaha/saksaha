@@ -60,6 +60,7 @@ fn main() {
         cfg_profile: cli_args.cfg_profile,
         miner: cli_args.miner,
         mine_interval: cli_args.mine_interval,
+        tx_pool_sync_interval: cli_args.tx_pool_sync_interval,
         app_prefix: cli_args.app_prefix,
     };
 

@@ -2,14 +2,14 @@ use crate::{BoxedError, TX_HASH_ACK_TYPE, TX_HASH_SYN_TYPE, TX_SYN_TYPE};
 use bytes::{BufMut, Bytes, BytesMut};
 use sak_p2p_frame::{Frame, Parse};
 
-pub struct TxHashSyn {
+pub struct TxHashSync {
     pub tx_hashes: Vec<String>,
 }
 
-impl TxHashSyn {
+impl TxHashSync {
     pub(crate) fn from_parse(
         parse: &mut Parse,
-    ) -> Result<TxHashSyn, BoxedError> {
+    ) -> Result<TxHashSync, BoxedError> {
         let tx_count = parse.next_int()?;
         let mut tx_hashes = Vec::with_capacity(tx_count as usize);
 
@@ -22,7 +22,7 @@ impl TxHashSyn {
             tx_hashes.push(tx_hash);
         }
 
-        let m = TxHashSyn { tx_hashes };
+        let m = TxHashSync { tx_hashes };
 
         Ok(m)
     }

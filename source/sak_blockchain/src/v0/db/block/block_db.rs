@@ -273,10 +273,8 @@ impl BlockDB {
 
     pub(crate) async fn write_block(
         &self,
-        // ledger_db: &KeyValueDatabase,
         block: Block,
     ) -> Result<String, String> {
-        // let db = &ledger_db.db;
         let db = &self.kv_db.db_instance;
 
         let mut batch = WriteBatch::default();
