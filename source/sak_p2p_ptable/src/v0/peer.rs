@@ -23,6 +23,12 @@ pub enum PeerStatus {
     Disconnected,
 }
 
+impl Peer {
+    pub fn public_key_short(&self) -> &str {
+        &self.public_key_str[..6]
+    }
+}
+
 impl std::fmt::Display for Peer {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let status = match &self.status.try_read() {

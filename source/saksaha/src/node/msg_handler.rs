@@ -1,28 +1,26 @@
 use crate::machine::Machine;
 use futures::{SinkExt, StreamExt};
 use log::{info, warn};
-use sak_p2p_trpt::{Connection, Msg, TxHashSyn};
+use sak_p2p_trpt::{Connection, Msg, TxHashSync};
 use tokio::sync::RwLockWriteGuard;
 
 pub(crate) async fn handle_msg<'a>(
+    public_key: &str,
     msg: Msg,
     machine: &Machine,
     conn: &'a mut RwLockWriteGuard<'_, Connection>,
 ) {
     let req_hashes = match msg {
-        Msg::TxHashSyn(sync_tx_hash) => {
-            info!(
-                "Found sync request will be inserted after hash value \
-                comparison, got msg type: TxHashSyn",
-            );
+        Msg::TxHashSyn(tx_hash_sync) => {
+            info!("Handle TxHashSyn msg, public_key: {}", public_key);
 
             let req_hashes = machine
                 .blockchain
-                .compare_with_pool(sync_tx_hash.tx_hashes)
+                .get_tx_pool_diff(tx_hash_sync.tx_hashes)
                 .await;
 
             if req_hashes.is_empty() {
-                warn!("No difference, no need to request");
+                // warn!("No difference, no need to request");
                 return;
             }
 
@@ -45,16 +43,12 @@ pub(crate) async fn handle_msg<'a>(
 
     match conn
         .socket
-        .send(Msg::TxHashAck(TxHashSyn {
+        .send(Msg::TxHashAck(TxHashSync {
             tx_hashes: req_hashes,
         }))
         .await
     {
-        Ok(_) => {
-            info!(
-                "Request the tx hashes to peer node, send msg type: TxHashAck"
-            );
-        }
+        Ok(_) => {}
         Err(err) => {
             warn!("Failed to send requested tx, err: {}", err,);
         }
@@ -64,10 +58,7 @@ pub(crate) async fn handle_msg<'a>(
         Some(maybe_msg) => match maybe_msg {
             Ok(msg) => match msg {
                 Msg::TxSyn(h) => {
-                    info!(
-                        "Received the requested txs, got msg type: \
-                                TxSyn"
-                    );
+                    info!("Handling TxSyn msg, public_key: {}", public_key);
 
                     machine.blockchain.insert_into_pool(h.txs).await;
                 }

@@ -1,39 +1,36 @@
 use super::tx_pool::TxPool;
 use super::BlockchainEvent;
-use crate::BoxedError;
 use crate::Database;
 use crate::Runtime;
-use log::{info, warn};
-use sak_types::{Block, Transaction};
+use log::info;
 use sak_vm::VM;
-use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::RwLock;
-use tokio::sync::{
-    mpsc,
-    mpsc::{Receiver, Sender},
-};
+use tokio::sync::{broadcast, broadcast::Receiver};
+use tokio::sync::{broadcast::Sender, RwLock};
 
 const BLOCKCHAIN_EVENT_QUEUE_CAPACITY: usize = 32;
 
 pub struct Blockchain {
     pub(crate) database: Database,
-    pub bc_event_rx: RwLock<Receiver<BlockchainEvent>>,
     pub(crate) tx_pool: Arc<TxPool>,
+    pub bc_event_tx: Arc<RwLock<Sender<BlockchainEvent>>>,
     vm: VM,
-    bc_event_tx: Arc<Sender<BlockchainEvent>>,
     runtime: Arc<Runtime>,
 }
 
 pub struct BlockchainArgs {
     pub app_prefix: String,
+    pub tx_pool_sync_interval: Option<u64>,
 }
 
 impl Blockchain {
     pub async fn init(
         blockchain_args: BlockchainArgs,
     ) -> Result<Blockchain, String> {
-        let BlockchainArgs { app_prefix } = blockchain_args;
+        let BlockchainArgs {
+            app_prefix,
+            tx_pool_sync_interval,
+        } = blockchain_args;
 
         let database = match Database::init(&app_prefix).await {
             Ok(d) => d,
@@ -53,26 +50,26 @@ impl Blockchain {
             Arc::new(t)
         };
 
-        let (bc_event_tx, bc_event_rx) = {
-            let (tx, rx) = mpsc::channel(BLOCKCHAIN_EVENT_QUEUE_CAPACITY);
+        let bc_event_tx = {
+            let (tx, _rx) = broadcast::channel(BLOCKCHAIN_EVENT_QUEUE_CAPACITY);
 
-            (Arc::new(tx), RwLock::new(rx))
+            Arc::new(RwLock::new(tx))
         };
 
         let runtime = {
-            let r = Runtime::init(tx_pool.clone(), bc_event_tx.clone());
+            let r = Runtime::init(
+                tx_pool.clone(),
+                bc_event_tx.clone(),
+                tx_pool_sync_interval,
+            );
 
             Arc::new(r)
         };
 
-        // let apis = Apis::new(database);
-
         let blockchain = Blockchain {
-            // apis,
             database,
             vm,
-            bc_event_tx: bc_event_tx.clone(),
-            bc_event_rx,
+            bc_event_tx,
             tx_pool: tx_pool.clone(),
             runtime,
         };

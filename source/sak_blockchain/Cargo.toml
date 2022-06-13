@@ -23,6 +23,7 @@ wasmtime = "0.37.0"
 wasmtime-wasi = "0.37.0"
 sak_utils_time = { path = "../sak_utils_time" }
 sak_types = { path = "../sak_types" }
+sak_task_queue = { path = "../sak_task_queue" }
 
 [lib]
 doctest = false # until stable beta is released
