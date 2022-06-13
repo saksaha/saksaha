@@ -60,7 +60,7 @@ impl Runtime {
         //     )
         //     .await;
         // }
-        while let Some(b) = self.tx_pool.next_update().await {
+        while let Some(_b) = self.tx_pool.next_update().await {
             let time_since = SystemTime::now();
 
             // self.tx_pool.next_update().await;

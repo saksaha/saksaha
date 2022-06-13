@@ -73,7 +73,6 @@ impl TxPool {
 
     pub async fn next_update(&self) -> Option<bool> {
         self.tx_pool_event_rx.write().await.recv().await
-        // tx_pool_event_rx_lock.recv
     }
 
     pub async fn insert(&self, tx: Transaction) -> Result<(), String> {

@@ -1,10 +1,8 @@
 use super::tx_pool::TxPool;
 use super::BlockchainEvent;
-use crate::BoxedError;
 use crate::Database;
 use crate::Runtime;
-use log::{info, warn};
-use sak_types::{Block, Transaction};
+use log::info;
 use sak_vm::VM;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -20,7 +18,7 @@ pub struct Blockchain {
     pub bc_event_rx: RwLock<Receiver<BlockchainEvent>>,
     pub(crate) tx_pool: Arc<TxPool>,
     vm: VM,
-    bc_event_tx: Arc<Sender<BlockchainEvent>>,
+    // bc_event_tx: Arc<Sender<BlockchainEvent>>,
     runtime: Arc<Runtime>,
 }
 
@@ -75,7 +73,7 @@ impl Blockchain {
         let blockchain = Blockchain {
             database,
             vm,
-            bc_event_tx: bc_event_tx.clone(),
+            // bc_event_tx: bc_event_tx.clone(),
             bc_event_rx,
             tx_pool: tx_pool.clone(),
             runtime,
