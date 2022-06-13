@@ -34,25 +34,49 @@ impl Runtime {
     }
 
     pub(crate) async fn run(&self) {
-        loop {
+        // loop {
+        //     let time_since = SystemTime::now();
+
+        //     // self.tx_pool.next_update().await;
+
+        //     let new_tx_hashes = self.tx_pool.get_new_tx_hashes().await;
+
+        //     {
+        //         match self
+        //             .bc_event_tx
+        //             .send(BlockchainEvent::TxPoolStat(new_tx_hashes))
+        //             .await
+        //         {
+        //             Ok(_) => (),
+        //             Err(err) => {
+        //                 error!("Error sending blockchain event, err: {}", err);
+        //             }
+        //         };
+        //     }
+
+        //     sak_utils_time::wait_until_min_interval(
+        //         time_since,
+        //         self.tx_pool_sync_interval,
+        //     )
+        //     .await;
+        // }
+        while let Some(b) = self.tx_pool.next_update().await {
             let time_since = SystemTime::now();
 
-            self.tx_pool.next_update().await;
+            // self.tx_pool.next_update().await;
 
             let new_tx_hashes = self.tx_pool.get_new_tx_hashes().await;
 
-            if !new_tx_hashes.is_empty() {
-                match self
-                    .bc_event_tx
-                    .send(BlockchainEvent::TxPoolStat(new_tx_hashes))
-                    .await
-                {
-                    Ok(_) => (),
-                    Err(err) => {
-                        error!("Error sending blockchain event, err: {}", err);
-                    }
-                };
-            }
+            match self
+                .bc_event_tx
+                .send(BlockchainEvent::TxPoolStat(new_tx_hashes))
+                .await
+            {
+                Ok(_) => (),
+                Err(err) => {
+                    error!("Error sending blockchain event, err: {}", err);
+                }
+            };
 
             sak_utils_time::wait_until_min_interval(
                 time_since,
