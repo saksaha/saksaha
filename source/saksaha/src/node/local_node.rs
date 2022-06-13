@@ -4,7 +4,7 @@ use crate::{
     node::{event_handle, msg_handler},
 };
 use futures::StreamExt;
-use log::warn;
+use log::{debug, warn};
 use sak_blockchain::BlockchainEvent;
 use sak_p2p_ptable::{PeerStatus, PeerTable};
 use std::sync::Arc;
@@ -54,6 +54,12 @@ impl LocalNode {
 }
 
 async fn run_node_routine(peer_node: PeerNode, machine: Arc<Machine>) {
+    debug!(
+        "Peer is registered as a peer node. Starting the routine, \
+        public_key: {}",
+        peer_node.peer.public_key_short()
+    );
+
     loop {
         let mut conn = &mut peer_node.peer.transport.conn.write().await;
         let mut bc_event_rx = machine.blockchain.bc_event_rx.write().await;
