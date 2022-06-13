@@ -31,9 +31,7 @@ fn test_validator_init() -> Result<(), BoxedError> {
     let (instance, mut store) = match create_instance(WASM.to_string()) {
         Ok(r) => r,
         Err(err) => {
-            return Err(
-                format!("Error creating an instance, err: {}", err).into()
-            );
+            return Err(format!("err: {}", err).into());
         }
     };
 
@@ -291,6 +289,8 @@ fn create_instance(
         }
     };
 
+    // let mut linker = Linker::new(&engine);
+
     let imports = module.imports();
     println!("imports: {:?}", imports.len());
 
@@ -298,21 +298,39 @@ fn create_instance(
         println!("imported: {}", i.name());
     }
 
-    let host_hello =
-        Func::wrap(&mut store, |caller: Caller<'_, usize>, param: i32| {
+    // let host_hello =
+    // Func::wrap(&mut store, |caller: Caller<'_, usize>, param: i32| {
+    //     println!("Got {} from WebAssembly", param);
+    //     println!("my host state is: {}", caller.data());
+    // });enigne
+
+    let mut linker = Linker::new(&engine);
+    linker.func_wrap(
+        "env",
+        "hello",
+        |caller: Caller<'_, usize>, param: i32| {
             println!("Got {} from WebAssembly", param);
             println!("my host state is: {}", caller.data());
-        });
+        },
+    )?;
 
-    let instance =
-        match Instance::new(&mut store, &module, &[host_hello.into()]) {
-            Ok(i) => i,
-            Err(err) => {
-                return Err(
-                    format!("Error creating an instance, err: {}", err).into()
-                )
-            }
-        };
+    let instance = match linker.instantiate(&mut store, &module) {
+        Ok(i) => i,
+        Err(err) => {
+            return Err(
+                format!("Error creating an instance, err: {}", err).into()
+            )
+        }
+    };
+
+    // let instance = match Instance::new(&mut store, &module, &[]) {
+    //     Ok(i) => i,
+    //     Err(err) => {
+    //         return Err(
+    //             format!("Error creating an instance, err: {}", err).into()
+    //         )
+    //     }
+    // };
 
     //
 
