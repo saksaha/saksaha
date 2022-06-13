@@ -1,3 +1,4 @@
+#[derive(Clone)]
 pub enum BlockchainEvent {
     // LedgerBlockAdd(...)
     TxPoolStat(Vec<String>),

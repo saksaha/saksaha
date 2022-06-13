@@ -62,11 +62,18 @@ async fn run_node_routine(peer_node: PeerNode, machine: Arc<Machine>) {
 
     loop {
         let mut conn = &mut peer_node.peer.transport.conn.write().await;
-        let mut bc_event_rx = machine.blockchain.bc_event_rx.write().await;
+        // let mut bc_event_rx = machine.blockchain.bc_event_rx.write().await;
         let public_key = peer_node.peer.public_key_short();
+        let mut bc_event_rx_2 = machine
+            .blockchain
+            .bc_event_tx
+            .clone()
+            .write()
+            .await
+            .subscribe();
 
         tokio::select! {
-            Some(ev) = bc_event_rx.recv() => {
+            Ok(ev) = bc_event_rx_2.recv() => {
                 match ev {
                     BlockchainEvent::TxPoolStat(new_tx_hashes) => {
                         event_handle::handle_tx_pool_stat(

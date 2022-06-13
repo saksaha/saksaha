@@ -5,11 +5,8 @@ use crate::Runtime;
 use log::info;
 use sak_vm::VM;
 use std::sync::Arc;
-use tokio::sync::RwLock;
-use tokio::sync::{
-    mpsc,
-    mpsc::{Receiver, Sender},
-};
+use tokio::sync::{broadcast, broadcast::Receiver};
+use tokio::sync::{broadcast::Sender, RwLock};
 
 const BLOCKCHAIN_EVENT_QUEUE_CAPACITY: usize = 32;
 
@@ -17,8 +14,8 @@ pub struct Blockchain {
     pub(crate) database: Database,
     pub bc_event_rx: RwLock<Receiver<BlockchainEvent>>,
     pub(crate) tx_pool: Arc<TxPool>,
+    pub bc_event_tx: Arc<RwLock<Sender<BlockchainEvent>>>,
     vm: VM,
-    // bc_event_tx: Arc<Sender<BlockchainEvent>>,
     runtime: Arc<Runtime>,
 }
 
@@ -55,9 +52,9 @@ impl Blockchain {
         };
 
         let (bc_event_tx, bc_event_rx) = {
-            let (tx, rx) = mpsc::channel(BLOCKCHAIN_EVENT_QUEUE_CAPACITY);
+            let (tx, rx) = broadcast::channel(BLOCKCHAIN_EVENT_QUEUE_CAPACITY);
 
-            (Arc::new(tx), RwLock::new(rx))
+            (Arc::new(RwLock::new(tx)), RwLock::new(rx))
         };
 
         let runtime = {
@@ -73,8 +70,8 @@ impl Blockchain {
         let blockchain = Blockchain {
             database,
             vm,
-            // bc_event_tx: bc_event_tx.clone(),
             bc_event_rx,
+            bc_event_tx,
             tx_pool: tx_pool.clone(),
             runtime,
         };

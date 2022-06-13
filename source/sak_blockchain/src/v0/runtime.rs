@@ -4,20 +4,20 @@ use std::{
     sync::Arc,
     time::{Duration, SystemTime},
 };
-use tokio::sync::mpsc::Sender;
+use tokio::sync::{broadcast::Sender, RwLock};
 
 const TX_POOL_SYNC_INTERVAL: u64 = 3000;
 
 pub struct Runtime {
     tx_pool: Arc<TxPool>,
-    bc_event_tx: Arc<Sender<BlockchainEvent>>,
+    bc_event_tx: Arc<RwLock<Sender<BlockchainEvent>>>,
     tx_pool_sync_interval: Duration,
 }
 
 impl Runtime {
     pub(crate) fn init(
         tx_pool: Arc<TxPool>,
-        bc_event_tx: Arc<Sender<BlockchainEvent>>,
+        bc_event_tx: Arc<RwLock<Sender<BlockchainEvent>>>,
         tx_pool_sync_interval: Option<u64>,
     ) -> Runtime {
         let tx_pool_sync_interval = match tx_pool_sync_interval {
@@ -41,8 +41,10 @@ impl Runtime {
             if new_tx_hashes.len() > 0 {
                 match self
                     .bc_event_tx
-                    .send(BlockchainEvent::TxPoolStat(new_tx_hashes))
+                    .clone()
+                    .write()
                     .await
+                    .send(BlockchainEvent::TxPoolStat(new_tx_hashes))
                 {
                     Ok(_) => (),
                     Err(err) => {
