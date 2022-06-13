@@ -47,40 +47,44 @@ fn test_validator_init() -> Result<(), BoxedError> {
     let size = storage_json.len();
     println!("ptr: {:?}, size: {:?}", ptr, size);
 
-    let init: TypedFunc<(i32, i32), (i32, i32)> = {
+    let init: TypedFunc<(i32, i32), (i32, i32, i32)> = {
         instance
             .get_typed_func(&mut store, "init")
             .expect("expected init function not found")
     };
 
+    let init: TypedFunc<(i32, i32), (i32, i32)> =
+        instance.get_typed_func(&mut store, "init").expect("init");
+    // let ret = [Val::I32(0), Val::I32(0)];
+
     let (ptr_offset, len) = init.call(&mut store, (ptr as i32, size as i32))?;
-    println!("ptr offset: {:?}", ptr_offset);
-    println!("len: {}", len);
+    // println!("ptr offset: {:?}", ptr_offset);
+    // println!("len: {}", len);
 
-    let memory = instance
-        .get_memory(&mut store, MEMORY)
-        .expect("expected memory not found");
+    // let memory = instance
+    //     .get_memory(&mut store, MEMORY)
+    //     .expect("expected memory not found");
 
-    let res: String;
-    unsafe {
-        // validator : 1
-        // res =
-        //     read_string(&store, &memory, ptr_offset as u32, 144 as u32).unwrap()
-        // validator : 2
-        // res =
-        //     read_string(&store, &memory, ptr_offset as u32, 277 as u32).unwrap()
+    // let res: String;
+    // unsafe {
+    //     // validator : 1
+    //     // res =
+    //     //     read_string(&store, &memory, ptr_offset as u32, 144 as u32).unwrap()
+    //     // validator : 2
+    //     // res =
+    //     //     read_string(&store, &memory, ptr_offset as u32, 277 as u32).unwrap()
 
-        // validator : 3
-        res =
-            read_string(&store, &memory, ptr_offset as u32, len as u32).unwrap()
-    }
+    //     // validator : 3
+    //     res =
+    //         read_string(&store, &memory, ptr_offset as u32, len as u32).unwrap()
+    // }
 
-    println!("res: {:?}", res);
+    // println!("res: {:?}", res);
 
-    // let res_json: storage = serde_json::from_str(res.as_str()).unwrap();
-    let res_json: HashMap<String, String> =
-        serde_json::from_str(res.as_str()).unwrap();
-    println!("validator list after init(): {:?}", res_json.get("power"));
+    // // let res_json: storage = serde_json::from_str(res.as_str()).unwrap();
+    // let res_json: HashMap<String, String> =
+    //     serde_json::from_str(res.as_str()).unwrap();
+    // println!("validator list after init(): {:?}", res_json.get("power"));
 
     Ok(())
 }
@@ -170,43 +174,43 @@ pub unsafe fn read_string(
     Ok(String::from(str))
 }
 
-fn test_ex() -> Result<(), BoxedError> {
-    let engine = Engine::default();
-    let wat = r#"
-        (module
-            (import "host" "hello" (func $host_hello (param i32)))
+// fn test_ex() -> Result<(), BoxedError> {
+//     let engine = Engine::default();
+//     let wat = r#"
+//         (module
+//             (import "host" "hello" (func $host_hello (param i32)))
 
-            (func (export "hello")
-                i32.const 3
-                call $host_hello)
-        )
-    "#;
-    let module = Module::new(&engine, wat)?;
-    let import_count = module.imports().count();
+//             (func (export "hello")
+//                 i32.const 3
+//                 call $host_hello)
+//         )
+//     "#;
+//     let module = Module::new(&engine, wat)?;
+//     let import_count = module.imports().count();
 
-    println!("import count: {}", import_count);
+//     println!("import count: {}", import_count);
 
-    // All wasm objects operate within the context of a "store". Each
-    // `Store` has a type parameter to store host-specific data, which in
-    // this case we're using `4` for.
-    let mut store = Store::new(&engine, 4);
-    let host_hello =
-        Func::wrap(&mut store, |caller: Caller<'_, u32>, param: i32| {
-            println!("Got {} from WebAssembly", param);
-            println!("my host state is: {}", caller.data());
-        });
+//     // All wasm objects operate within the context of a "store". Each
+//     // `Store` has a type parameter to store host-specific data, which in
+//     // this case we're using `4` for.
+//     let mut store = Store::new(&engine, 4);
+//     let host_hello =
+//         Func::wrap(&mut store, |caller: Caller<'_, u32>, param: i32| {
+//             println!("Got {} from WebAssembly", param);
+//             println!("my host state is: {}", caller.data());
+//         });
 
-    // Instantiation of a module requires specifying its imports and then
-    // afterwards we can fetch exports by name, as well as asserting the
-    // type signature of the function with `get_typed_func`.
-    let instance = Instance::new(&mut store, &module, &[host_hello.into()])?;
-    let hello = instance.get_typed_func::<(), (), _>(&mut store, "hello")?;
+//     // Instantiation of a module requires specifying its imports and then
+//     // afterwards we can fetch exports by name, as well as asserting the
+//     // type signature of the function with `get_typed_func`.
+//     let instance = Instance::new(&mut store, &module, &[host_hello.into()])?;
+//     let hello = instance.get_typed_func::<(), (), _>(&mut store, "hello")?;
 
-    // And finally we can call the wasm!
-    hello.call(&mut store, ())?;
+//     // And finally we can call the wasm!
+//     hello.call(&mut store, ())?;
 
-    Ok(())
-}
+//     Ok(())
+// }
 
 fn test_array_sum() {
     let input = vec![1 as u8, 2, 3, 4, 5];
@@ -267,8 +271,11 @@ fn create_instance(
 ) -> Result<(Instance, Store<usize>), BoxedError> {
     let wasm_bytes = include_bytes!("./sak_ctrt_validator.wasm");
 
-    let engine = Engine::default();
+    let engine =
+        Engine::new(Config::new().wasm_multi_value(true).debug_info(true))?;
+
     let mut store = Store::new(&engine, 0);
+
     let module = match Module::new(&engine, &wasm_bytes) {
         Ok(m) => m,
         Err(err) => {
