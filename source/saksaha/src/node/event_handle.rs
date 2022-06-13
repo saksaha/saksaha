@@ -1,10 +1,8 @@
-use super::peer_node::PeerNode;
 use crate::machine::Machine;
 use futures::{SinkExt, StreamExt};
 use log::{info, warn};
-use sak_p2p_ptable::Peer;
 use sak_p2p_trpt::{Connection, Msg, TxHashSync, TxSyn};
-use std::{sync::Arc, time::Duration};
+use std::time::Duration;
 use tokio::sync::RwLockWriteGuard;
 
 const RESPONSE_TIMEOUT: u64 = 2000;

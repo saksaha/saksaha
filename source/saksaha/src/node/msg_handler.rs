@@ -48,11 +48,7 @@ pub(crate) async fn handle_msg<'a>(
         }))
         .await
     {
-        Ok(_) => {
-            // info!(
-            //     "Request the tx hashes to peer node, send msg type: TxHashAck"
-            // );
-        }
+        Ok(_) => {}
         Err(err) => {
             warn!("Failed to send requested tx, err: {}", err,);
         }

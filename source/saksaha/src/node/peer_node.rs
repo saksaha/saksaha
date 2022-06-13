@@ -15,11 +15,7 @@ pub(crate) struct PeerNode {
 }
 
 impl PeerNode {
-    pub(in crate::node) async fn run(
-        &mut self,
-        // peer_node: PeerNode,
-        // machine: Arc<Machine>,
-    ) {
+    pub(in crate::node) async fn run(&mut self) {
         debug!(
             "Peer is registered as a peer node. Starting the routine, \
         public_key: {}",
@@ -31,11 +27,8 @@ impl PeerNode {
             // let mut bc_event_rx = machine.blockchain.bc_event_rx.write().await;
             let public_key = self.peer.public_key_short();
 
-            println!("power");
-
             tokio::select! {
                 Ok(ev) = self.bc_event_rx.recv() => {
-                    println!("11");
                     match ev {
                         BlockchainEvent::TxPoolStat(new_tx_hashes) => {
                             event_handle::handle_tx_pool_stat(
@@ -46,10 +39,8 @@ impl PeerNode {
                             ).await;
                         },
                     };
-                    println!("end1");
                 },
                 maybe_msg = conn.socket.next() => {
-                    println!("22");
                     match maybe_msg {
                         Some(maybe_msg) => match maybe_msg {
                             Ok(msg) => {
@@ -70,7 +61,6 @@ impl PeerNode {
                             return;
                         }
                     };
-                    println!("end2");
                 }
             }
         }

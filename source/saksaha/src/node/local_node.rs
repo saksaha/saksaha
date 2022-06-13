@@ -1,12 +1,6 @@
 use super::{miner::Miner, peer_node::PeerNode};
-use crate::{
-    machine::Machine,
-    node::{event_handle, msg_handler},
-};
-use futures::StreamExt;
-use log::{debug, warn};
-use sak_blockchain::BlockchainEvent;
-use sak_p2p_ptable::{PeerStatus, PeerTable};
+use crate::machine::Machine;
+use sak_p2p_ptable::PeerTable;
 use std::sync::Arc;
 
 pub(crate) struct LocalNode {
@@ -18,11 +12,6 @@ pub(crate) struct LocalNode {
 
 impl LocalNode {
     pub(crate) async fn run(&self) {
-        // let peer_node_rt = PeerNodeRoutine {};
-        // tokio::spawn(async {
-        //     peer_node_rt.run();
-        // });
-
         let machine = self.machine.clone();
         let mine_interval = self.mine_interval.clone();
         tokio::spawn(async move {
@@ -65,7 +54,6 @@ impl LocalNode {
 
             tokio::spawn(async move {
                 peer_node.run().await;
-                // run_node_routine(peer_node, machine).await;
             });
         }
     }
