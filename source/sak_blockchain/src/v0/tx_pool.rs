@@ -1,4 +1,4 @@
-use log::warn;
+use log::{error, warn};
 use sak_types::{Hashable, Transaction};
 use std::collections::{HashMap, HashSet};
 use tokio::sync::RwLock;
@@ -98,20 +98,21 @@ impl TxPool {
         tx_pool
     }
 
-    pub async fn contains(&self, tx: Transaction) -> Result<String, String> {
-        let tx_contract = match String::from_utf8(tx.contract) {
-            Ok(v) => v,
+    pub async fn contains(&self, tx: Transaction) -> bool {
+        let tx_map_lock = self.tx_map.read().await;
+
+        let tx_hash = match tx.get_hash() {
+            Ok(h) => h,
             Err(err) => {
-                return Err(format!("Invalid UTF-8 sequence, err: {}", err))
+                error!(
+                    "Could not get hash out of tx, critical error, \
+                    err: {}",
+                    err
+                );
+                return false;
             }
         };
 
-        let tx_map_lock = self.tx_map.read().await;
-
-        if tx_map_lock.contains_key(&tx_contract) {
-            return Err(format!("tx already exists : {}", tx_contract));
-        } else {
-            return Ok(format!("tx doesnt exist"));
-        };
+        tx_map_lock.contains_key(&tx_hash)
     }
 }

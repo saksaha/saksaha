@@ -221,11 +221,8 @@ mod test_suite {
             //     .await
             //     .expect("Can't send transaction");
 
-            // let tx_hash = blockchain
-            //     .tx_pool
-            //     .contains(dummy_tx_val.clone())
-            //     .await
-            //     .unwrap();
+            let tx_hash =
+                blockchain.tx_pool.contains(dummy_tx_val.clone()).await;
 
             // assert_eq!(old_tx_hash, tx_hash);
 
