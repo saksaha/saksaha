@@ -77,8 +77,13 @@ impl TxDB {
         let mut batch = WriteBatch::default();
 
         let tx_hash = match tx.get_hash() {
-            Ok(hash) => hash,
-            Err(_) => return Err(format!("Failed to get hash from tx_value")),
+            Ok(h) => h,
+            Err(err) => {
+                return Err(format!(
+                    "Could not get hash out of tx, critical error: {}",
+                    err
+                ))
+            }
         };
 
         let cf_handle = match db.cf_handle(tx_columns::CREATED_AT) {

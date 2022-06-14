@@ -69,9 +69,9 @@ impl Blockchain {
 
         let blockchain = Blockchain {
             database,
+            tx_pool: tx_pool.clone(),
             vm,
             bc_event_tx,
-            tx_pool: tx_pool.clone(),
             runtime,
         };
 

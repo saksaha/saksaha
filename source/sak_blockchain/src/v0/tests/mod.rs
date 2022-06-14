@@ -12,6 +12,7 @@ mod test {
     async fn make_blockchain() -> Blockchain {
         let blockchain_args = BlockchainArgs {
             app_prefix: String::from("test"),
+            tx_pool_sync_interval: None,
         };
 
         let blockchain = Blockchain::init(blockchain_args)
