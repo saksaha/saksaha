@@ -13,7 +13,6 @@ pub(crate) async fn write_tx(
     let mut batch = WriteBatch::default();
 
     let tx_hash = tx.contract.clone();
-    println!("tx.data : {:?}", tx.data);
 
     let cf_handle = match db.cf_handle(tx_columns::CREATED_AT) {
         Some(h) => h,
@@ -124,7 +123,7 @@ pub(crate) async fn read_tx(
                     Ok(vs) => vs.to_string(),
                     Err(err) => {
                         return Err(format!(
-                            "Invalid utf8 given, err: {},{},{}",
+                            "Invalid utf8 given, err: {}, {}, {}",
                             err, idx, v
                         ));
                     }
