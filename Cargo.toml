@@ -16,7 +16,7 @@ members = [
   "source/sak_task_queue",
   "source/sak_utils_time",
   "source/sak_utils_net",
-  "source/sak_contract",
+  "source/sak_contract_std",
   "source/sak_blockchain",
   "source/sak_vm",
 
