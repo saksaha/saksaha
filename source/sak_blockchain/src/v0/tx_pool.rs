@@ -101,21 +101,9 @@ impl TxPool {
         tx_pool
     }
 
-    pub async fn contains(&self, tx: Transaction) -> bool {
+    pub(crate) async fn contains(&self, tx_hash: &String) -> bool {
         let tx_map_lock = self.tx_map.read().await;
 
-        let tx_hash = match tx.get_hash() {
-            Ok(h) => h,
-            Err(err) => {
-                error!(
-                    "Could not get hash out of tx, critical error, \
-                    err: {}",
-                    err
-                );
-                return false;
-            }
-        };
-
-        tx_map_lock.contains_key(&tx_hash)
+        tx_map_lock.contains_key(tx_hash)
     }
 }

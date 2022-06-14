@@ -13,7 +13,7 @@ const BLOCKCHAIN_EVENT_QUEUE_CAPACITY: usize = 32;
 
 pub struct Blockchain {
     pub(crate) database: Database,
-    pub tx_pool: Arc<TxPool>,
+    pub(crate) tx_pool: Arc<TxPool>,
     pub bc_event_tx: Arc<RwLock<Sender<BlockchainEvent>>>,
     vm: VM,
     runtime: Arc<Runtime>,
@@ -69,9 +69,9 @@ impl Blockchain {
 
         let blockchain = Blockchain {
             database,
+            tx_pool: tx_pool.clone(),
             vm,
             bc_event_tx,
-            tx_pool: tx_pool.clone(),
             runtime,
         };
 

@@ -105,24 +105,24 @@ pub(super) mod test_utils {
             Arc::new(ps)
         };
 
-        let local_node = {
-            let ln = LocalNode {
-                peer_table: p2p_peer_table.clone(),
-                machine: machine.clone(),
-                miner: true,
-                mine_interval: None,
-            };
+        // let local_node = {
+        //     let ln = LocalNode {
+        //         peer_table: p2p_peer_table.clone(),
+        //         machine: machine.clone(),
+        //         miner: true,
+        //         mine_interval: None,
+        //     };
 
-            ln
-        };
+        //     ln
+        // };
 
-        let (p2p_discovery, disc_port) = {
-            let (d, disc_port) = Discovery::init(disc_args)
-                .await
-                .expect("Discovery should be initailized");
+        // let (p2p_discovery, disc_port) = {
+        //     let (d, disc_port) = Discovery::init(disc_args)
+        //         .await
+        //         .expect("Discovery should be initailized");
 
-            (Arc::new(d), disc_port)
-        };
+        //     (Arc::new(d), disc_port)
+        // };
 
         let (p2p_socket, p2p_socket_addr) =
             sak_utils_net::bind_tcp_socket(None)
@@ -196,7 +196,7 @@ pub(super) mod test_utils {
         blockchain
     }
 
-    pub(crate) fn make_dummy_value() -> Transaction {
+    pub(crate) fn make_dummy_tx() -> Transaction {
         Transaction {
             pi: String::from("0x111"),
             signature: String::from("0x1111"),
@@ -209,7 +209,7 @@ pub(super) mod test_utils {
         }
     }
 
-    pub(crate) fn make_dummy_values() -> Vec<Transaction> {
+    pub(crate) fn make_dummy_txs() -> Vec<Transaction> {
         vec![
             Transaction {
                 pi: String::from("0x111"),
