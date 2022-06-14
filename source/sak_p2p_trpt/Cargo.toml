@@ -26,6 +26,7 @@ colored = "2"
 chrono = "0.4"
 sak_utils_net = { path = "../sak_utils_net" }
 sak_types = { path = "../sak_types" }
+chacha20 = "0.9.0"
 
 [lib]
 doctest = false # until stable beta is released

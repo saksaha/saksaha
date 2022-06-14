@@ -1,7 +1,7 @@
 use crate::machine::Machine;
 use futures::{SinkExt, StreamExt};
 use log::{info, warn};
-use sak_p2p_trpt::{Connection, Msg, TxHashSync, TxSyn};
+use sak_p2p_trpt::{Msg, TxHashSync, TxSyn, UpgradedConnection};
 use std::time::Duration;
 use tokio::sync::RwLockWriteGuard;
 
@@ -9,7 +9,7 @@ const RESPONSE_TIMEOUT: u64 = 2000;
 
 pub(super) async fn handle_tx_pool_stat<'a>(
     public_key: &str,
-    conn: &'a mut RwLockWriteGuard<'_, Connection>,
+    conn: &'a mut RwLockWriteGuard<'_, UpgradedConnection>,
     machine: &Machine,
     new_tx_hashes: Vec<String>,
 ) {

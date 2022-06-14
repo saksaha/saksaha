@@ -1,7 +1,4 @@
-use crate::Connection;
-use crate::Handshake;
-use crate::Msg;
-use crate::Transport;
+use crate::{Connection, Handshake, Msg, Transport};
 use futures::SinkExt;
 use futures::StreamExt;
 use sak_p2p_id::Identity;
@@ -137,9 +134,10 @@ pub async fn initiate_handshake(
     let shared_secret =
         sak_crypto::make_shared_secret(my_secret_key, her_public_key);
 
+    let upgraded_conn = conn.upgrade(shared_secret, &[0; 12]);
+
     let transport = Transport {
-        conn: RwLock::new(conn),
-        shared_secret,
+        conn: RwLock::new(upgraded_conn),
     };
 
     return Ok(transport);
