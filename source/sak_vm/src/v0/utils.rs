@@ -1,8 +1,30 @@
 use crate::{BoxedError, ALLOC_FN, MEMORY};
-use log::error;
-use serde::Serialize;
-use std::collections::BTreeMap;
+use log::{error, info};
 use wasmtime::*;
+
+pub(crate) unsafe fn read_string(
+    store: &Store<i32>,
+    memory: &Memory,
+    data_ptr: u32,
+    len: u32,
+) -> Result<String, BoxedError> {
+    // get a raw byte array from the module's linear memory
+    // at offset `data_ptr` and length `len`.
+    let data = memory
+        .data(store)
+        .get(data_ptr as u32 as usize..)
+        .and_then(|arr| arr.get(..len as u32 as usize));
+    // attempt to read a UTF-8 string from the memory
+    let str = match data {
+        Some(data) => match std::str::from_utf8(data) {
+            Ok(s) => s,
+            Err(_) => return Err(format!("invalid utf-8").into()),
+        },
+        None => return Err(format!("pointer/length out of bounds").into()),
+    };
+
+    Ok(String::from(str))
+}
 
 /// Copy a byte array into an instance's linear memory
 /// and return the offset relative to the module's memory.

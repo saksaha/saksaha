@@ -1,9 +1,9 @@
 mod constants;
-pub(crate) mod memory;
 mod storage;
+mod utils;
 mod vm;
 
-pub use constants::*;
+pub(crate) use constants::*;
 pub use storage::*;
 pub use vm::*;
 
