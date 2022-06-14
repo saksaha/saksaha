@@ -9,7 +9,7 @@ pub struct VM {}
 impl VM {
     pub fn run_vm(&self) -> Result<(), BoxedError> {
         test_validator_init().unwrap();
-        test_validator_query().unwrap();
+        // test_validator_query().unwrap();
 
         Ok(())
     }
