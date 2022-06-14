@@ -1,8 +1,8 @@
-pub(crate) const MINER_SIGNATURE: &str = "miner_signature";
+pub(crate) const VALIDATOR_SIG: &str = "validator_sig";
 
-pub(crate) const TRANSACTIONS: &str = "transactions";
+pub(crate) const TX_HASHES: &str = "tx_hashes";
 
-pub(crate) const SIGNATURES: &str = "block_signatures";
+pub(crate) const WITNESS_SIGS: &str = "witness_sigs";
 
 pub(crate) const CREATED_AT: &str = "block_created_at";
 

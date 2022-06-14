@@ -2,9 +2,10 @@ use super::tx_pool::TxPool;
 use super::BlockchainEvent;
 use crate::Database;
 use crate::Runtime;
-use log::{info, warn};
-use sak_types::{Block, Hashable};
+use log::{error, info, warn};
+use sak_types::{BlockCandidate, Hashable, Transaction};
 use sak_vm::VM;
+use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::broadcast;
 use tokio::sync::{broadcast::Sender, RwLock};
@@ -22,6 +23,7 @@ pub struct Blockchain {
 pub struct BlockchainArgs {
     pub app_prefix: String,
     pub tx_pool_sync_interval: Option<u64>,
+    pub genesis_block: BlockCandidate,
 }
 
 impl Blockchain {
@@ -31,6 +33,7 @@ impl Blockchain {
         let BlockchainArgs {
             app_prefix,
             tx_pool_sync_interval,
+            genesis_block,
         } = blockchain_args;
 
         let database = match Database::init(&app_prefix).await {
@@ -75,7 +78,15 @@ impl Blockchain {
             runtime,
         };
 
-        blockchain.insert_genesis_block().await;
+        match blockchain.insert_genesis_block(genesis_block).await {
+            Ok(()) => (),
+            Err(err) => {
+                return Err(format!(
+                    "Cannot insert genesis block, err: {}",
+                    err,
+                ));
+            }
+        };
 
         info!("Initialized Blockchain");
 
@@ -97,19 +108,16 @@ impl Blockchain {
         });
     }
 
-    pub async fn insert_genesis_block(&self) {
-        let genesis_block = Block {
-            miner_signature: String::from("1"),
-            transactions: vec![String::from("1"), String::from("2")],
-            signatures: vec![String::from("1"), String::from("2")],
-            created_at: String::from(""),
-            height: String::from(""),
-        };
+    pub async fn insert_genesis_block(
+        &self,
+        genesis_block: BlockCandidate,
+    ) -> Result<(), String> {
+        let (block, txs) = genesis_block.extract();
 
-        let genesis_block_hash = match genesis_block.get_hash() {
-            Ok(h) => h,
-            Err(_) => return,
-        };
+        let genesis_block_hash = block.get_hash();
+
+        println!("(ToBeDeleted) Genesis Block : {:?}", &block);
+        println!("(ToBeDeleted) Genesis Hash : {}", &genesis_block_hash);
 
         match self.get_block(&genesis_block_hash).await {
             Ok(_) => {
@@ -117,11 +125,18 @@ impl Blockchain {
             }
             Err(_) => {
                 info!("Build a genesis block");
-
-                if let Err(_) = self.write_block(genesis_block).await {
-                    warn!("Cannot create genesis block");
+                if let Err(_) = self.write_block(block).await {
+                    error!("Cannot create genesis block");
                 };
             }
+        };
+
+        for tx in txs {
+            if let Err(err) = self.write_tx(tx).await {
+                error!("Could not write tx of genesis block, err: {}", err);
+            }
         }
+
+        Ok(())
     }
 }

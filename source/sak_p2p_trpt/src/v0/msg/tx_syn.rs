@@ -39,13 +39,7 @@ impl TxSyn {
                     p.to_vec()
                 };
 
-                Transaction {
-                    created_at,
-                    data,
-                    pi,
-                    signature,
-                    contract,
-                }
+                Transaction::new(created_at, data, pi, signature, contract)
             };
 
             txs.push(tx);
@@ -69,27 +63,27 @@ impl TxSyn {
 
             let created_at_bytes = {
                 let mut b = BytesMut::new();
-                b.put(tx.created_at.as_bytes());
+                b.put(tx.get_created_at().as_bytes());
                 b
             };
 
             let pi_bytes = {
                 let mut b = BytesMut::new();
-                b.put(tx.pi.as_bytes());
+                b.put(tx.get_pi().as_bytes());
                 b
             };
 
             let signature_bytes = {
                 let mut b = BytesMut::new();
-                b.put(tx.signature.as_bytes());
+                b.put(tx.get_signature().as_bytes());
                 b
             };
 
-            frame.push_bulk(Bytes::from(tx.data.clone()));
+            frame.push_bulk(Bytes::from(tx.get_data().clone()));
             frame.push_bulk(Bytes::from(created_at_bytes));
             frame.push_bulk(Bytes::from(pi_bytes));
             frame.push_bulk(Bytes::from(signature_bytes));
-            frame.push_bulk(Bytes::from(tx.contract.clone()));
+            frame.push_bulk(Bytes::from(tx.get_contract().clone()));
         }
 
         frame
