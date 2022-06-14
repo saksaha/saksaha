@@ -2,10 +2,11 @@ use super::tx_pool::TxPool;
 use super::BlockchainEvent;
 use crate::Database;
 use crate::Runtime;
-use log::info;
+use log::{info, warn};
+use sak_types::{Block, Hashable};
 use sak_vm::VM;
 use std::sync::Arc;
-use tokio::sync::{broadcast, broadcast::Receiver};
+use tokio::sync::broadcast;
 use tokio::sync::{broadcast::Sender, RwLock};
 
 const BLOCKCHAIN_EVENT_QUEUE_CAPACITY: usize = 32;
@@ -74,6 +75,8 @@ impl Blockchain {
             runtime,
         };
 
+        blockchain.insert_genesis_block().await;
+
         info!("Initialized Blockchain");
 
         Ok(blockchain)
@@ -92,5 +95,33 @@ impl Blockchain {
         tokio::spawn(async move {
             runtime.run().await;
         });
+    }
+
+    pub async fn insert_genesis_block(&self) {
+        let genesis_block = Block {
+            miner_signature: String::from("1"),
+            transactions: vec![String::from("1"), String::from("2")],
+            signatures: vec![String::from("1"), String::from("2")],
+            created_at: String::from(""),
+            height: String::from(""),
+        };
+
+        let genesis_block_hash = match genesis_block.get_hash() {
+            Ok(h) => h,
+            Err(_) => return,
+        };
+
+        match self.get_block(&genesis_block_hash).await {
+            Ok(_) => {
+                warn!("A Genesis block has already been created");
+            }
+            Err(_) => {
+                info!("Build a genesis block");
+
+                if let Err(_) = self.write_block(genesis_block).await {
+                    warn!("Cannot create genesis block");
+                };
+            }
+        }
     }
 }
