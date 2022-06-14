@@ -5,7 +5,7 @@ use tokio::sync::RwLock;
 
 const TX_POOL_CAPACITY: usize = 100;
 
-pub(crate) struct TxPool {
+pub struct TxPool {
     new_tx_hashes: RwLock<HashSet<String>>,
     tx_map: RwLock<HashMap<String, Transaction>>,
 }
@@ -98,14 +98,18 @@ impl TxPool {
         tx_pool
     }
 
-    pub async fn contain_check(
-        &self,
-        tx_hash_str: String,
-    ) -> Result<String, String> {
+    pub async fn contains(&self, tx: Transaction) -> Result<String, String> {
+        let tx_contract = match String::from_utf8(tx.contract) {
+            Ok(v) => v,
+            Err(err) => {
+                return Err(format!("Invalid UTF-8 sequence, err: {}", err))
+            }
+        };
+
         let tx_map_lock = self.tx_map.read().await;
 
-        if tx_map_lock.contains_key(&tx_hash_str) {
-            return Err(format!("tx already exists : {}", tx_hash_str));
+        if tx_map_lock.contains_key(&tx_contract) {
+            return Err(format!("tx already exists : {}", tx_contract));
         } else {
             return Ok(format!("tx doesnt exist"));
         };

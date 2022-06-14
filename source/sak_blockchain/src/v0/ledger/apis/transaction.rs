@@ -118,14 +118,13 @@ pub(crate) async fn read_tx(
                 return Err(format!("Fail to open ledger columns {}", cfn));
             }
         };
-        println!("cf_handle : {:?}, tx hash : {:?}", cfn, &tx_hash);
         tx_value_result[idx] = match db.get_cf(cf_handle, &tx_hash) {
             Ok(val) => match val {
                 Some(v) => match std::str::from_utf8(&v) {
                     Ok(vs) => vs.to_string(),
                     Err(err) => {
                         return Err(format!(
-                            "Invalid utf8 given, err: {},{:?},{:?}",
+                            "Invalid utf8 given, err: {},{},{}",
                             err, idx, v
                         ));
                     }

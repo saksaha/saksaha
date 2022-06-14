@@ -13,7 +13,7 @@ const BLOCKCHAIN_EVENT_QUEUE_CAPACITY: usize = 32;
 
 pub struct Blockchain {
     pub(crate) database: Database,
-    pub(crate) tx_pool: Arc<TxPool>,
+    pub tx_pool: Arc<TxPool>,
     pub bc_event_tx: Arc<RwLock<Sender<BlockchainEvent>>>,
     vm: VM,
     runtime: Arc<Runtime>,
@@ -80,18 +80,6 @@ impl Blockchain {
         info!("Initialized Blockchain");
 
         Ok(blockchain)
-    }
-
-    pub async fn tx_pool_contain(
-        &self,
-        tx: Transaction,
-    ) -> Result<String, String> {
-        match String::from_utf8(tx.contract.clone()) {
-            Ok(v) => return self.tx_pool.contain_check(v).await,
-            Err(err) => {
-                return Err(format!("Invalid UTF-8 sequence, err: {}", err))
-            }
-        };
     }
 
     pub async fn run(&self) {

@@ -37,6 +37,7 @@ pub(super) mod test_utils {
         let blockchain = {
             let blockchain_args = BlockchainArgs {
                 app_prefix: "test".to_string(),
+                tx_pool_sync_interval: None,
             };
 
             Blockchain::init(blockchain_args).await.unwrap()
@@ -185,6 +186,7 @@ pub(super) mod test_utils {
     pub(crate) async fn make_blockchain() -> Blockchain {
         let blockchain_args = BlockchainArgs {
             app_prefix: String::from("test"),
+            tx_pool_sync_interval: None,
         };
 
         let blockchain = Blockchain::init(blockchain_args)
