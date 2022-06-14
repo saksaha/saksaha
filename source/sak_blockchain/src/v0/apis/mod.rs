@@ -42,6 +42,18 @@ impl Blockchain {
         self.database.block_db.get_block(block_hash).await
     }
 
+    pub async fn get_block_by_height(
+        &self,
+        block_height: u64,
+    ) -> Result<Block, String> {
+        let block_hash = self
+            .database
+            .block_db
+            .get_block_hash_by_height(block_height)
+            .await?;
+        self.database.block_db.get_block(&block_hash).await
+    }
+
     pub async fn write_block(&self, block: Block) -> Result<String, String> {
         self.database.block_db.write_block(block).await
     }
