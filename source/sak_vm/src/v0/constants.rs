@@ -11,3 +11,5 @@ pub(crate) const UPPER_FN: &str = "upper";
 pub(crate) const VALIDATOR_INIT_FN: &str = "validator_init";
 
 pub(crate) const DEALLOC_FN: &str = "dealloc";
+
+pub(crate) const DEFAULT_VALIDATOR_HASHMAP_CAPACITY: usize = 10;

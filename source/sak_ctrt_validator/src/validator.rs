@@ -12,10 +12,10 @@ pub unsafe extern "C" fn init(
     len: usize,
 ) -> (*mut u8, i32) {
     // get data from the pointer
-    let data = Vec::from_raw_parts(ptr, len, len);
-    let data_string = String::from_utf8(data).unwrap();
-    let mut data_json: HashMap<&str, String> =
-        serde_json::from_str(data_string.as_str()).unwrap();
+    let storage = Vec::from_raw_parts(ptr, len, len);
+    let storage_serialized = String::from_utf8(storage).unwrap();
+    let mut storage_hashmap: HashMap<&str, String> =
+        serde_json::from_str(&storage_serialized.as_str()).unwrap();
 
     let validators = match serde_json::to_string(&vec![String::from(
         "\
@@ -29,24 +29,26 @@ pub unsafe extern "C" fn init(
         Err(err) => panic!("Cannot serialize validators, err: {}", err),
     };
 
-    data_json.insert("validators", validators);
+    storage_hashmap.insert("validators", validators);
 
     // serialize the data to return a new pointer
-    let storage_string = serde_json::to_value(data_json).unwrap().to_string();
-    let mut storage_bytes_vec = storage_string.as_bytes().to_owned();
+    let new_storage_serialized =
+        serde_json::to_value(storage_hashmap).unwrap().to_string();
+    let mut new_storage_bytes_vec =
+        new_storage_serialized.as_bytes().to_owned();
 
-    let ptr_new = storage_bytes_vec.as_mut_ptr();
+    let new_ptr = new_storage_bytes_vec.as_mut_ptr();
+    let len = new_storage_bytes_vec.clone().len();
 
-    let len = storage_bytes_vec.clone().len();
+    std::mem::forget(new_storage_bytes_vec);
 
-    std::mem::forget(storage_bytes_vec);
-
-    (ptr_new, len as i32)
+    (new_ptr, len as i32)
 }
 
 // takes storage and request object
 #[no_mangle]
-pub unsafe extern "C" fn query(// storage,
+pub unsafe extern "C" fn query(//
+    // storage,
     // req
 ) {
     // match req.ty {
