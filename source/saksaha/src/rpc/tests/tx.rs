@@ -213,18 +213,15 @@ mod test_suite {
             let blockchain = test_utils::make_blockchain().await;
             let dummy_tx_val = test_utils::make_dummy_value();
 
-            let old_tx_hash = String::from_utf8(dummy_tx_val.contract.clone())
-                .expect("Invalid uft8 given");
+            blockchain
+                .send_transaction(dummy_tx_val.clone())
+                .await
+                .expect("Can't send transaction");
 
-            // blockchain
-            //     .send_transaction(dummy_tx_val.clone())
-            //     .await
-            //     .expect("Can't send transaction");
-
-            let tx_hash =
+            let is_contain =
                 blockchain.tx_pool.contains(dummy_tx_val.clone()).await;
 
-            // assert_eq!(old_tx_hash, tx_hash);
+            assert_eq!(true, is_contain);
 
             dummy_tx_val
         };

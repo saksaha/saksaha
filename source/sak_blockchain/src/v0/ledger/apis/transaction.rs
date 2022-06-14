@@ -11,8 +11,15 @@ pub(crate) async fn write_tx(
     let db = &ledger_db.db;
 
     let mut batch = WriteBatch::default();
-
-    let tx_hash = tx.contract.clone();
+    let tx_hash = match tx.get_hash() {
+        Ok(h) => h,
+        Err(err) => {
+            return Err(format!(
+                "Could not get hash out of tx, critical error: {}",
+                err
+            ))
+        }
+    };
 
     let cf_handle = match db.cf_handle(tx_columns::CREATED_AT) {
         Some(h) => h,
@@ -70,15 +77,7 @@ pub(crate) async fn write_tx(
     batch.put_cf(cf_handle, &tx_hash, tx.contract);
 
     match db.write(batch) {
-        Ok(_) => {
-            match String::from_utf8(tx_hash) {
-                Ok(v) => return Ok(v),
-                Err(err) => {
-                    return Err(format!("Invalid UTF-8 sequence, err: {}", err))
-                }
-            };
-        }
-
+        Ok(_) => return Ok(tx_hash),
         Err(err) => {
             return Err(format!("Fail to write on ledger db, err: {}", err))
         }

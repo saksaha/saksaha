@@ -76,10 +76,13 @@ impl TxDB {
 
         let mut batch = WriteBatch::default();
 
-        let tx_hash = match String::from_utf8(tx.contract.clone()) {
-            Ok(v) => v,
+        let tx_hash = match tx.get_hash() {
+            Ok(h) => h,
             Err(err) => {
-                return Err(format!("Invalid UTF-8 sequence, err: {}", err))
+                return Err(format!(
+                    "Could not get hash out of tx, critical error: {}",
+                    err
+                ))
             }
         };
 
