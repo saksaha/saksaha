@@ -62,3 +62,42 @@ pub(crate) fn copy_memory(
 
     return Ok(guest_ptr_offset);
 }
+
+pub(crate) fn create_instance(
+    _filename: String,
+) -> Result<(Instance, Store<i32>), BoxedError> {
+    let wasm_bytes = include_bytes!("./sak_ctrt_validator.wasm");
+
+    let engine =
+        Engine::new(Config::new().wasm_multi_value(true).debug_info(true))?;
+
+    let mut store = Store::new(&engine, 3);
+
+    let module = match Module::new(&engine, &wasm_bytes) {
+        Ok(m) => {
+            {
+                for i in m.imports() {
+                    info!("imported: {}", i.name());
+                }
+            }
+
+            m
+        }
+        Err(err) => {
+            return Err(format!("Error creating a module, err: {}", err).into())
+        }
+    };
+
+    let linker = Linker::new(&engine);
+
+    let instance = match linker.instantiate(&mut store, &module) {
+        Ok(i) => i,
+        Err(err) => {
+            return Err(
+                format!("Error creating an instance, err: {}", err).into()
+            )
+        }
+    };
+
+    return Ok((instance, store));
+}
