@@ -277,7 +277,7 @@ mod test_suite {
             dummy_tx.get_hash().expect("Tx hash should be provided");
 
         let is_contain =
-            machine.blockchain.tx_pool.contains(dummy_tx_hash).await;
+            machine.blockchain.contains_in_tx_pool(&dummy_tx_hash).await;
 
         assert_eq!(true, is_contain);
     }
@@ -353,7 +353,7 @@ mod test_suite {
 
         let false_tx_hash = String::from("false_tx");
         let is_contain =
-            machine.blockchain.tx_pool_contains(false_tx_hash).await;
+            machine.blockchain.contains_in_tx_pool(&false_tx_hash).await;
 
         assert_eq!(false, is_contain);
     }
