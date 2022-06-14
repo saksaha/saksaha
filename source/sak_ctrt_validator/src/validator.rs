@@ -21,11 +21,11 @@ impl Storage {
     }
 }
 
-extern "C" {
-    // fn temp(a: i32) -> i32;
+// extern "C" {
+//     // fn temp(a: i32) -> i32;
 
-    fn hello(a: i32, b: i32) -> (i32, i32);
-}
+//     fn hello(a: i32, b: i32) -> (i32, i32);
+// }
 
 // validator init
 #[no_mangle]
@@ -33,8 +33,8 @@ pub unsafe extern "C" fn init(
     // storage
     ptr: *mut u8,
     len: usize,
-) -> i32 {
-    let ka = hello(3, 5);
+) -> (*mut u8, i32) {
+    // let ka = hello(3, 5);
     // get data from the pointer
     let data = Vec::from_raw_parts(ptr, len, len);
     let data_string = String::from_utf8(data).unwrap();
@@ -86,9 +86,9 @@ pub unsafe extern "C" fn init(
 
     std::mem::forget(storage_bytes_vec);
 
-    // (ptr_new, 1)
+    (ptr_new, len as i32)
     // ptr_new
-    1
+    // 1
 }
 
 /// Given a pointer to the start of a byte array and

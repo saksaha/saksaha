@@ -31,17 +31,22 @@ fn test_validator_init() -> Result<(), BoxedError> {
     let (instance, mut store) = match create_instance(WASM.to_string()) {
         Ok(r) => r,
         Err(err) => {
-            return Err(format!("err: {}", err).into());
+            return Err(
+                format!("Error creating an instance, err: {}", err).into()
+            );
         }
     };
-    //
 
     // for test, storage with one Vec<String> type field
     // let storage = Storage::init();
     let storage: HashMap<String, String> = HashMap::with_capacity(10);
 
+    println!("validator list before init():");
+    for (k, v) in storage.iter() {
+        println!("{}: {}", k, v);
+    }
+
     let storage_json = serde_json::to_value(storage).unwrap().to_string();
-    println!("storage_json: {:?}", storage_json);
 
     // get pointer from wasm memory
     let ptr = memory::copy_memory(
@@ -50,47 +55,50 @@ fn test_validator_init() -> Result<(), BoxedError> {
         &mut store,
     )?;
 
-    // let size = storage_json.len();
-    // println!("ptr: {:?}, size: {:?}", ptr, size);
+    let size = storage_json.len();
+    println!("ptr: {:?}, size: {:?}", ptr, size);
 
-    let init: TypedFunc<(i32, i32), i32> = {
+    let init: TypedFunc<(i32, i32), (i32, i32)> = {
         instance
             .get_typed_func(&mut store, "init")
             .expect("expected init function not found")
     };
 
-    // let init: TypedFunc<(i32, i32), (i32, i32)> =
-    //     instance.get_typed_func(&mut store, "init").expect("init");
-    // let ret = [Val::I32(0), Val::I32(0)];
+    let (ptr_offset, len) = init.call(&mut store, (ptr as i32, size as i32))?;
+    println!("ptr offset: {:?}", ptr_offset);
+    println!("len: {:?}", len);
 
     // let a = init.call(&mut store, (ptr as i32, size as i32))?;
     // println!("ptr offset: {:?}", ptr_offset);
     // println!("len: {}", len);
 
-    // let memory = instance
-    //     .get_memory(&mut store, MEMORY)
-    //     .expect("expected memory not found");
+    let memory = instance
+        .get_memory(&mut store, MEMORY)
+        .expect("expected memory not found");
 
-    // let res: String;
-    // unsafe {
-    //     // validator : 1
-    //     // res =
-    //     //     read_string(&store, &memory, ptr_offset as u32, 144 as u32).unwrap()
-    //     // validator : 2
-    //     // res =
-    //     //     read_string(&store, &memory, ptr_offset as u32, 277 as u32).unwrap()
+    let res: String;
+    unsafe {
+        // validator : 1
+        // res =
+        //     read_string(&store, &memory, ptr_offset as u32, 144 as u32).unwrap()
+        // validator : 2
+        // res =
+        //     read_string(&store, &memory, ptr_offset as u32, 277 as u32).unwrap()
 
-    //     // validator : 3
-    //     res =
-    //         read_string(&store, &memory, ptr_offset as u32, len as u32).unwrap()
-    // }
+        // validator : 3
+        res =
+            read_string(&store, &memory, ptr_offset as u32, len as u32).unwrap()
+    }
 
-    // println!("res: {:?}", res);
+    println!("res: {:?}", res);
 
-    // // let res_json: storage = serde_json::from_str(res.as_str()).unwrap();
-    // let res_json: HashMap<String, String> =
-    //     serde_json::from_str(res.as_str()).unwrap();
-    // println!("validator list after init(): {:?}", res_json.get("power"));
+    // let res_json: storage = serde_json::from_str(res.as_str()).unwrap();
+    let res_json: HashMap<String, String> =
+        serde_json::from_str(res.as_str()).unwrap();
+    println!("validator list after init(): ");
+    for (k, v) in res_json.iter() {
+        println!("{}: {}", k, v);
+    }
 
     Ok(())
 }
@@ -100,6 +108,78 @@ fn test_upper() {
     let res = upper(input.to_string()).unwrap();
     println!("Result from running {}: {:#?}", WASM, res);
 }
+
+// =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+// =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+// =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+// fn test_validator_init() -> Result<(), BoxedError> {
+//     let (instance, mut store) = match create_instance(WASM.to_string()) {
+//         Ok(r) => r,
+//         Err(err) => {
+//             return Err(format!("err: {}", err).into());
+//         }
+//     };
+//     //
+
+//     // for test, storage with one Vec<String> type field
+//     // let storage = Storage::init();
+//     let storage: HashMap<String, String> = HashMap::with_capacity(10);
+
+//     let storage_json = serde_json::to_value(storage).unwrap().to_string();
+//     println!("storage_json: {:?}", storage_json);
+
+//     // get pointer from wasm memory
+//     let ptr = memory::copy_memory(
+//         &storage_json.as_bytes().to_vec(),
+//         &instance,
+//         &mut store,
+//     )?;
+
+//     // let size = storage_json.len();
+//     // println!("ptr: {:?}, size: {:?}", ptr, size);
+
+//     let init: TypedFunc<(i32, i32), i32> = {
+//         instance
+//             .get_typed_func(&mut store, "init")
+//             .expect("expected init function not found")
+//     };
+
+//     // let init: TypedFunc<(i32, i32), (i32, i32)> =
+//     //     instance.get_typed_func(&mut store, "init").expect("init");
+//     // let ret = [Val::I32(0), Val::I32(0)];
+
+//     // let a = init.call(&mut store, (ptr as i32, size as i32))?;
+//     // println!("ptr offset: {:?}", ptr_offset);
+//     // println!("len: {}", len);
+
+//     let memory = instance
+//         .get_memory(&mut store, MEMORY)
+//         .expect("expected memory not found");
+
+//     // let res: String;
+//     // unsafe {
+//     //     // validator : 1
+//     //     // res =
+//     //     //     read_string(&store, &memory, ptr_offset as u32, 144 as u32).unwrap()
+//     //     // validator : 2
+//     //     // res =
+//     //     //     read_string(&store, &memory, ptr_offset as u32, 277 as u32).unwrap()
+
+//     //     // validator : 3
+//     //     res =
+//     //         read_string(&store, &memory, ptr_offset as u32, 410 as u32).unwrap()
+//     // }
+
+//     // println!("res: {:?}", res);
+
+//     // let res_json: storage = serde_json::from_str(res.as_str()).unwrap();
+//     // let res_json: HashMap<String, String> =
+//     //     serde_json::from_str(res.as_str()).unwrap();
+//     // println!("validator list after init(): {:?}", res_json.get("power"));
+
+//     Ok(())
+// }
 
 fn upper(input: String) -> Result<String, BoxedError> {
     // create a new Wasmtime instance
