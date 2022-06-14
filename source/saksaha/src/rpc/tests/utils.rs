@@ -37,6 +37,7 @@ pub(super) mod test_utils {
         let blockchain = {
             let blockchain_args = BlockchainArgs {
                 app_prefix: "test".to_string(),
+                tx_pool_sync_interval: None,
             };
 
             Blockchain::init(blockchain_args).await.unwrap()
@@ -104,24 +105,24 @@ pub(super) mod test_utils {
             Arc::new(ps)
         };
 
-        let local_node = {
-            let ln = LocalNode {
-                peer_table: p2p_peer_table.clone(),
-                machine: machine.clone(),
-                miner: true,
-                mine_interval: None,
-            };
+        // let local_node = {
+        //     let ln = LocalNode {
+        //         peer_table: p2p_peer_table.clone(),
+        //         machine: machine.clone(),
+        //         miner: true,
+        //         mine_interval: None,
+        //     };
 
-            ln
-        };
+        //     ln
+        // };
 
-        let (p2p_discovery, disc_port) = {
-            let (d, disc_port) = Discovery::init(disc_args)
-                .await
-                .expect("Discovery should be initailized");
+        // let (p2p_discovery, disc_port) = {
+        //     let (d, disc_port) = Discovery::init(disc_args)
+        //         .await
+        //         .expect("Discovery should be initailized");
 
-            (Arc::new(d), disc_port)
-        };
+        //     (Arc::new(d), disc_port)
+        // };
 
         let (p2p_socket, p2p_socket_addr) =
             sak_utils_net::bind_tcp_socket(None)
@@ -185,6 +186,7 @@ pub(super) mod test_utils {
     pub(crate) async fn make_blockchain() -> Blockchain {
         let blockchain_args = BlockchainArgs {
             app_prefix: String::from("test"),
+            tx_pool_sync_interval: None,
         };
 
         let blockchain = Blockchain::init(blockchain_args)
@@ -194,13 +196,61 @@ pub(super) mod test_utils {
         blockchain
     }
 
-    pub(crate) fn make_dummy_value() -> Transaction {
+    pub(crate) fn make_dummy_tx() -> Transaction {
         Transaction {
             pi: String::from("0x111"),
             signature: String::from("0x1111"),
             created_at: String::from("1346546123"),
-            data: String::from("one").as_bytes().to_vec(),
-            contract: String::from("one").as_bytes().to_vec(),
+            data: vec![
+                63, 64, 65, 66, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+            ],
+            contract: vec![75, 73, 72],
         }
+    }
+
+    pub(crate) fn make_dummy_txs() -> Vec<Transaction> {
+        vec![
+            Transaction {
+                pi: String::from("0x111"),
+                signature: String::from("0x1111"),
+                created_at: String::from("1346546123"),
+                data: vec![
+                    63, 64, 65, 66, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+                ],
+                contract: vec![1, 2, 3],
+            },
+            Transaction {
+                pi: String::from("0x222"),
+                signature: String::from("0x2222"),
+                created_at: String::from("1346546124"),
+                data: vec![
+                    93, 64, 65, 66, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+                ],
+                contract: String::from("Oxabcde1").as_bytes().to_vec(),
+            },
+            Transaction {
+                pi: String::from("0x333"),
+                signature: String::from("0x3333"),
+                created_at: String::from("1346546125"),
+                data: vec![
+                    73, 64, 65, 66, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+                ],
+                contract: String::from("Oxabcde12").as_bytes().to_vec(),
+            },
+            Transaction {
+                pi: String::from("0x444"),
+                signature: String::from("0x4444"),
+                created_at: String::from("1346546126"),
+                data: vec![
+                    83, 84, 85, 96, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+                ],
+                contract: String::from("Oxabcde123").as_bytes().to_vec(),
+            },
+        ]
     }
 }

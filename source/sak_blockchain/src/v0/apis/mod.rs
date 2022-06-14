@@ -1,7 +1,9 @@
-use crate::Blockchain;
+use super::tx_pool::TxPool;
+use crate::{Blockchain, Database};
 use log::warn;
 use sak_types::{Block, Transaction};
 
+// Implementing struct defined in the above file tree
 impl Blockchain {
     pub async fn query_contract(&self) -> Result<&[u8], String> {
         Ok(&[])
@@ -9,6 +11,10 @@ impl Blockchain {
 
     pub async fn execute_contract(&self) -> Result<&[u8], String> {
         Ok(&[])
+    }
+
+    pub async fn contains_in_tx_pool(&self, tx_hash: &String) -> bool {
+        self.tx_pool.contains(tx_hash).await
     }
 
     // rpc

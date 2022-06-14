@@ -11,10 +11,14 @@ pub(crate) async fn write_tx(
     let db = &ledger_db.db;
 
     let mut batch = WriteBatch::default();
-
     let tx_hash = match tx.get_hash() {
-        Ok(hash) => hash,
-        Err(_) => return Err(format!("Failed to get hash from tx_value")),
+        Ok(h) => h,
+        Err(err) => {
+            return Err(format!(
+                "Could not get hash out of tx, critical error: {}",
+                err
+            ))
+        }
     };
 
     let cf_handle = match db.cf_handle(tx_columns::CREATED_AT) {
@@ -112,15 +116,14 @@ pub(crate) async fn read_tx(
                 return Err(format!("Fail to open ledger columns {}", cfn));
             }
         };
-
         tx_value_result[idx] = match db.get_cf(cf_handle, &tx_hash) {
             Ok(val) => match val {
                 Some(v) => match std::str::from_utf8(&v) {
                     Ok(vs) => vs.to_string(),
                     Err(err) => {
                         return Err(format!(
-                            "Invalid utf8 given, err: {}",
-                            err,
+                            "Invalid utf8 given, err: {}, {}, {}",
+                            err, idx, v
                         ));
                     }
                 },

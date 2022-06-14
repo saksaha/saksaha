@@ -1,11 +1,11 @@
-use log::warn;
+use log::{error, warn};
 use sak_types::{Hashable, Transaction};
 use std::collections::{HashMap, HashSet};
 use tokio::sync::RwLock;
 
 const TX_POOL_CAPACITY: usize = 100;
 
-pub(crate) struct TxPool {
+pub struct TxPool {
     new_tx_hashes: RwLock<HashSet<String>>,
     tx_map: RwLock<HashMap<String, Transaction>>,
 }
@@ -55,7 +55,15 @@ impl TxPool {
     }
 
     pub async fn insert(&self, tx: Transaction) -> Result<(), String> {
-        let tx_hash = tx.get_hash()?;
+        let tx_hash = match tx.get_hash() {
+            Ok(h) => h,
+            Err(err) => {
+                return Err(format!(
+                    "Could not get hash out of tx, critical error: {}",
+                    err
+                ))
+            }
+        };
 
         let mut tx_map_lock = self.tx_map.write().await;
 
@@ -91,5 +99,11 @@ impl TxPool {
         }
 
         tx_pool
+    }
+
+    pub(crate) async fn contains(&self, tx_hash: &String) -> bool {
+        let tx_map_lock = self.tx_map.read().await;
+
+        tx_map_lock.contains_key(tx_hash)
     }
 }
