@@ -14,6 +14,7 @@ pub(crate) unsafe fn read_string(
         .data(store)
         .get(data_ptr as u32 as usize..)
         .and_then(|arr| arr.get(..len as u32 as usize));
+
     // attempt to read a UTF-8 string from the memory
     let str = match data {
         Some(data) => match std::str::from_utf8(data) {

@@ -1,7 +1,5 @@
 use super::utils;
-use crate::{
-    BoxedError, Storage, DEFAULT_VALIDATOR_HASHMAP_CAPACITY, MEMORY, WASM,
-};
+use crate::{BoxedError, DEFAULT_VALIDATOR_HASHMAP_CAPACITY, MEMORY, WASM};
 use log::{error, info};
 use sak_contract_std::Request;
 use std::collections::HashMap;
