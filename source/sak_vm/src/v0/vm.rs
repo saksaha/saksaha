@@ -1,10 +1,5 @@
-use super::{test2::test2, utils};
-use crate::{
-    test_validator_init, test_validator_query, BoxedError, MEMORY, WASM,
-};
+use crate::{test_validator_init, test_validator_query, BoxedError};
 use log::{error, info};
-use std::collections::HashMap;
-use wasmtime::*;
 
 pub struct VM {}
 

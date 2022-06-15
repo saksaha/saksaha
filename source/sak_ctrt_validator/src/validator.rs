@@ -4,14 +4,8 @@ use std::collections::HashMap;
 
 contract_bootstrap!();
 
-// validator init: takes storage
 #[no_mangle]
-pub unsafe extern "C" fn init(
-    // storage
-    ptr: *mut u8,
-    len: usize,
-) -> (*mut u8, i32) {
-    // get data from the pointer
+pub unsafe extern "C" fn init(ptr: *mut u8, len: usize) -> (*mut u8, i32) {
     let storage = Vec::from_raw_parts(ptr, len, len);
     let storage_serialized = String::from_utf8(storage).unwrap();
     let mut storage_hashmap: HashMap<&str, String> =
@@ -31,7 +25,6 @@ pub unsafe extern "C" fn init(
 
     storage_hashmap.insert("validators", validators);
 
-    // serialize the data to return a new pointer
     let new_storage_serialized =
         serde_json::to_value(storage_hashmap).unwrap().to_string();
     let mut new_storage_bytes_vec =
@@ -45,25 +38,13 @@ pub unsafe extern "C" fn init(
     (storage_ptr, storage_len as i32)
 }
 
-// takes storage and request object
 #[no_mangle]
 pub unsafe extern "C" fn query(
-    // storage
     storage_ptr: *mut u8,
     storage_len: usize,
-    // request
     request_ptr: *mut u8,
     request_len: usize,
 ) -> (*mut u8, i32) {
-    println!("{:?}, {}", storage_ptr, storage_len);
-
-    // let mut msg = String::from("aaaa");
-    // let ptr = msg.as_mut_ptr();
-    // let len = msg.len();
-    // std::mem::forget(msg);
-    // (ptr, len as i32)
-
-    // =-=-= Storage =-=-=
     let storage_bytes_vec = Vec::from_raw_parts(
         storage_ptr, //
         storage_len,
@@ -88,7 +69,6 @@ pub unsafe extern "C" fn query(
             }
         };
 
-    // =-=-= Request =-=-=
     let request_bytes_vec = Vec::from_raw_parts(
         request_ptr, //
         request_len,
@@ -113,7 +93,17 @@ pub unsafe extern "C" fn query(
             }
         };
 
-    // =-=-= Validators =-=-=
+    match request.req_type {
+        "get_validator" => {
+            return handle_get_validator(storage);
+        }
+        _ => {
+            panic!("Wrong request type has been found");
+        }
+    };
+}
+
+fn handle_get_validator(storage: Storage) -> (*mut u8, i32) {
     let validators_string = match storage.get("validators") {
         Some(v) => v,
         None => {
@@ -132,18 +122,10 @@ pub unsafe extern "C" fn query(
             }
         };
 
-    let mut validator = match request.ty {
-        "get_validator" => {
-            // return validator public key
-            validators[0].clone()
-        }
-        _ => {
-            panic!("Wrong request type has been found");
-        }
-    };
-
+    let mut validator = validators[0].clone();
     let validator_ptr = validator.as_mut_ptr();
     let validator_len = validator.len();
+
     std::mem::forget(validator);
     (validator_ptr, validator_len as i32)
 }

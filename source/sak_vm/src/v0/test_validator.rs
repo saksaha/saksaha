@@ -1,6 +1,6 @@
 use super::utils;
 use crate::{
-    BoxedError, DEFAULT_VALIDATOR_HASHMAP_CAPACITY, MEMORY, VALIDATOR, WASM,
+    BoxedError, DEFAULT_VALIDATOR_HASHMAP_CAPACITY, MEMORY, VALIDATOR,
 };
 use log::{error, info};
 use sak_contract_std::{Request, Storage};
@@ -134,7 +134,7 @@ pub(crate) fn test_validator_query() -> Result<(), BoxedError> {
 
     // =-=-=-=-=-=-= Request =-=-=-=-=-=-=
     let request = Request {
-        ty: "get_validator",
+        req_type: "get_validator",
     };
 
     let request_serialized = serde_json::to_value(request).unwrap().to_string();
