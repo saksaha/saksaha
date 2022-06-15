@@ -64,16 +64,16 @@ pub(crate) fn copy_memory(
 }
 
 pub(crate) fn create_instance(
-    _filename: String,
+    wasm: impl AsRef<[u8]>,
 ) -> Result<(Instance, Store<i32>), BoxedError> {
-    let wasm_bytes = include_bytes!("./sak_ctrt_validator.wasm");
+    // let wasm_bytes = include_bytes!("./sak_ctrt_validator.wasm");
 
     let engine =
         Engine::new(Config::new().wasm_multi_value(true).debug_info(true))?;
 
     let mut store = Store::new(&engine, 3);
 
-    let module = match Module::new(&engine, &wasm_bytes) {
+    let module = match Module::new(&engine, &wasm) {
         Ok(m) => {
             {
                 for i in m.imports() {

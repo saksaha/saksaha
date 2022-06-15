@@ -1,5 +1,6 @@
 mod constants;
 mod storage;
+mod test2;
 mod test_validator;
 mod utils;
 mod vm;

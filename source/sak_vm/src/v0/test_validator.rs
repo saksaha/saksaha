@@ -1,14 +1,14 @@
 use super::utils;
 use crate::{
-    BoxedError, Storage, DEFAULT_VALIDATOR_HASHMAP_CAPACITY, MEMORY, WASM,
+    BoxedError, DEFAULT_VALIDATOR_HASHMAP_CAPACITY, MEMORY, VALIDATOR, WASM,
 };
 use log::{error, info};
-use sak_contract_std::Request;
+use sak_contract_std::{Request, Storage};
 use std::collections::HashMap;
 use wasmtime::*;
 
 pub(crate) fn test_validator_init() -> Result<(), BoxedError> {
-    let (instance, mut store) = match utils::create_instance(WASM.to_string()) {
+    let (instance, mut store) = match utils::create_instance(VALIDATOR) {
         Ok(r) => r,
         Err(err) => {
             return Err(
@@ -43,24 +43,32 @@ pub(crate) fn test_validator_init() -> Result<(), BoxedError> {
             .expect("expected init function not found")
     };
 
-    // pass storage to init()
-    let (ptr_offset, len) = init.call(&mut store, (ptr as i32, size as i32))?;
+    let (storage_ptr, storage_len) =
+        init.call(&mut store, (ptr as i32, size as i32))?;
 
     let memory = instance
         .get_memory(&mut store, MEMORY)
         .expect("expected memory not found");
 
-    let res: String;
-    unsafe {
-        res = utils::read_string(&store, &memory, ptr_offset as u32, len as u32)
+    let storage_ret = {
+        let res: String;
+        unsafe {
+            res = utils::read_string(
+                &store,
+                &memory,
+                storage_ptr as u32,
+                storage_len as u32,
+            )
             .unwrap()
-    }
+        }
 
-    let res_json: Storage = serde_json::from_str(res.as_str()).unwrap();
+        let storage: Storage = serde_json::from_str(res.as_str()).unwrap();
 
-    println!("[init] validator list after init(): ");
+        println!("[init] validator list after init(): ");
+        storage
+    };
 
-    for (k, v) in res_json.iter() {
+    for (k, v) in storage_ret.iter() {
         println!("[init] - {}: {}", k, v);
     }
 
@@ -68,7 +76,7 @@ pub(crate) fn test_validator_init() -> Result<(), BoxedError> {
 }
 
 pub(crate) fn test_validator_query() -> Result<(), BoxedError> {
-    let (instance, mut store) = match utils::create_instance(WASM.to_string()) {
+    let (instance, mut store) = match utils::create_instance(VALIDATOR) {
         Ok(r) => r,
         Err(err) => {
             return Err(
@@ -76,6 +84,10 @@ pub(crate) fn test_validator_query() -> Result<(), BoxedError> {
             );
         }
     };
+
+    let memory = instance
+        .get_memory(&mut store, MEMORY)
+        .expect("expected memory not found");
 
     // =-=-= query( Storage, Request ) =-=-=
 
@@ -105,14 +117,21 @@ pub(crate) fn test_validator_query() -> Result<(), BoxedError> {
 
     let storage_serialized = serde_json::to_value(storage).unwrap().to_string();
 
+    // println!("Serialized storage: {}", storage_serialized);
+
     let storage_ptr = utils::copy_memory(
         &storage_serialized.as_bytes().to_vec(),
         &instance,
         &mut store,
     )?;
-    let storage_size = storage_serialized.len();
+    let storage_len = storage_serialized.len();
+
     println!("[query] address of serialized storage: {:?}", storage_ptr);
-    println!("[query] size of serialized storage: {:?}", storage_size);
+    println!("[query] len of serialized storage: {:?}", storage_len);
+    println!(
+        "[query] size of storage bytes len: {}",
+        storage_serialized.as_bytes().len(),
+    );
 
     // =-=-=-=-=-=-= Request =-=-=-=-=-=-=
     let request = Request {
@@ -127,9 +146,9 @@ pub(crate) fn test_validator_query() -> Result<(), BoxedError> {
         &mut store,
     )?;
 
-    let request_size = storage_serialized.len();
+    let request_len = request_serialized.len();
     println!("[query] address of serialized request: {:?}", request_ptr);
-    println!("[query] size of serialized request: {:?}", request_size);
+    println!("[query] len of serialized request: {:?}", request_len);
 
     // =-=-=-=-=-=-= calling query() =-=-=-=-=-=-=
     let query: TypedFunc<(i32, i32, i32, i32), (i32, i32)> = {
@@ -140,51 +159,89 @@ pub(crate) fn test_validator_query() -> Result<(), BoxedError> {
     };
 
     println!("good");
-    // pass storage, request
-    unsafe {
-        println!("good1");
-        let request_bytes_vec = Vec::from_raw_parts(
-            request_ptr as *mut u8, //
-            request_size,
-            request_size,
-        );
-        println!("good2: {:?}", request_bytes_vec);
 
-        let request_serialized = match String::from_utf8(request_bytes_vec) {
-            Ok(s) => {
-                println!("good3");
-                s
-            }
-            Err(err) => {
-                panic!("Cannot serialize storage, err: {}", err);
-            }
-        };
-        println!("request_serialized: {}", request_serialized);
+    // storage
+    {
+        // let (storage_ptr, storage_len) = query.call(
+        //     &mut store,
+        //     (
+        //         // storage_ptr as i32,
+        //         // storage_len as i32,
+        //         storage_ptr as i32,
+        //         storage_len as i32,
+        //         //
+        //         request_ptr as i32,
+        //         request_len as i32,
+        //     ),
+        // )?;
+
+        // let storage_ret = {
+        //     println!(
+        //         "[after query] storage_ptr: {}, len: {}",
+        //         storage_ptr, storage_len
+        //     );
+
+        //     let res: String;
+        //     unsafe {
+        //         res = utils::read_string(
+        //             &store,
+        //             &memory,
+        //             storage_ptr as u32,
+        //             storage_len as u32,
+        //         )
+        //         .unwrap()
+        //     }
+
+        //     let storage: Storage = serde_json::from_str(&res).unwrap();
+
+        //     println!("[init] validator list after init(): ");
+        //     storage
+        // };
+
+        // for (k, v) in storage_ret.iter() {
+        //     println!("[init] - {}: {}", k, v);
+        // }
     }
 
-    // let (ptr_offset, len) = query.call(
-    //     &mut store,
-    //     (
-    //         storage_ptr as i32,
-    //         storage_size as i32,
-    //         //
-    //         request_ptr as i32,
-    //         request_size as i32,
-    //     ),
-    // )?;
+    // request
+    {
+        let (request_ptr, request_len) = query.call(
+            &mut store,
+            (
+                // storage_ptr as i32,
+                // storage_len as i32,
+                storage_ptr as i32,
+                storage_len as i32,
+                //
+                request_ptr as i32,
+                request_len as i32,
+            ),
+        )?;
 
-    // let memory = instance
-    //     .get_memory(&mut store, MEMORY)
-    //     .expect("expected memory not found");
+        let res: String;
+        let request_ret = {
+            println!(
+                "[after query] request_ptr: {}, len: {}",
+                request_ptr, request_len
+            );
 
-    // let validator: String;
-    // unsafe {
-    //     validator =
-    //         utils::read_string(&store, &memory, ptr_offset as u32, len as u32)
-    //             .unwrap()
-    // }
+            unsafe {
+                res = utils::read_string(
+                    &store,
+                    &memory,
+                    request_ptr as u32,
+                    request_len as u32,
+                )
+                .unwrap()
+            }
 
-    // println!("validator: {:?}", validator);
+            let request: Request = serde_json::from_str(&res).unwrap();
+
+            request
+        };
+
+        println!("request: {:?}", request_ret);
+    }
 
     Ok(())
 }
