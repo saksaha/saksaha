@@ -18,4 +18,4 @@ use std::collections::HashMap;
 //     }
 // }
 
-pub type Storage = HashMap<String, String>;
+// pub type Storage = HashMap<String, String>;
