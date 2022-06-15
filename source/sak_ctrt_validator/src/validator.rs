@@ -64,131 +64,86 @@ pub unsafe extern "C" fn query(
     // (ptr, len as i32)
 
     // =-=-= Storage =-=-=
-    {
-        let storage_bytes_vec = Vec::from_raw_parts(
-            storage_ptr, //
-            storage_len,
-            storage_len,
-        );
+    let storage_bytes_vec = Vec::from_raw_parts(
+        storage_ptr, //
+        storage_len,
+        storage_len,
+    );
 
-        let storage_serialized = match String::from_utf8(storage_bytes_vec) {
+    let storage_serialized = match String::from_utf8(storage_bytes_vec) {
+        Ok(s) => s,
+        Err(err) => {
+            panic!("Cannot serialize storage, err: {}", err);
+        }
+    };
+
+    let storage: Storage =
+        match serde_json::from_str(&storage_serialized.as_str()) {
             Ok(s) => s,
             Err(err) => {
-                panic!("Cannot serialize storage, err: {}", err);
+                panic!(
+                    "Cannot Deserialize `HashMap` from storage, err: {}",
+                    err
+                );
             }
         };
 
-        let storage: Storage =
-            match serde_json::from_str(&storage_serialized.as_str()) {
-                Ok(s) => s,
-                Err(err) => {
-                    panic!(
-                        "Cannot Deserialize HashMap from storage, err: {}",
-                        err
-                    );
-                }
-            };
-
-        let mut storage_str = serde_json::to_string(&storage)
-            .expect("storage should be serialized");
-        let ptr = storage_str.as_mut_ptr();
-        let len = storage_str.len();
-        std::mem::forget(storage_str);
-    };
-
-    {
-        let request_bytes_vec =
-            Vec::from_raw_parts(request_ptr, request_len, request_len);
-
-        let request_serialized = match String::from_utf8(request_bytes_vec) {
-            Ok(s) => s,
-            Err(err) => {
-                panic!("Cannot serialize storage, err: {}", err);
-            }
-        };
-
-        let request: Request =
-            match serde_json::from_str(&request_serialized.as_str()) {
-                Ok(s) => s,
-                Err(err) => {
-                    panic!(
-                        "Cannot Deserialize HashMap from storage, err: {}",
-                        err
-                    );
-                }
-            };
-
-        let mut request_str = serde_json::to_string(&request)
-            .expect("storage should be serialized");
-        let ptr = request_str.as_mut_ptr();
-        let len = request_str.len();
-        std::mem::forget(request_str);
-        return (ptr, len as i32);
-    };
     // =-=-= Request =-=-=
-    // let request_bytes_vec = Vec::from_raw_parts(
-    //     ptr_request, //
-    //     len_request,
-    //     len_request,
-    // );
+    let request_bytes_vec = Vec::from_raw_parts(
+        request_ptr, //
+        request_len,
+        request_len,
+    );
 
-    // let request_serialized = match String::from_utf8(request_bytes_vec) {
-    //     Ok(s) => s,
-    //     Err(err) => {
-    //         panic!("Cannot serialize storage, err: {}", err);
-    //     }
-    // };
-    // =-=-=-=-=-=-=-=-=-=
+    let request_serialized = match String::from_utf8(request_bytes_vec) {
+        Ok(s) => s,
+        Err(err) => {
+            panic!("Cannot serialize storage, err: {}", err);
+        }
+    };
 
-    // let request_struct: Request =
-    //     match serde_json::from_str(&request_serialized.as_str()) {
-    //         Ok(s) => s,
-    //         Err(err) => {
-    //             panic!("Cannot Deserialize HashMap from storage, err: {}", err);
-    //         }
-    //     };
+    let request: Request =
+        match serde_json::from_str(&request_serialized.as_str()) {
+            Ok(s) => s,
+            Err(err) => {
+                panic!(
+                    "Cannot Deserialize `Storage` from request, err: {}",
+                    err
+                );
+            }
+        };
 
     // =-=-= Validators =-=-=
-    // let validators_string = match storage_hashmap.get("validators") {
-    //     Some(v) => v,
-    //     None => {
-    //         panic!("validators should be initialized");
-    //     }
-    // };
+    let validators_string = match storage.get("validators") {
+        Some(v) => v,
+        None => {
+            panic!("validators should be initialized");
+        }
+    };
 
-    // let validators_string = serde_json::to_value(vec!["deadbeef".to_string()])
-    //     .unwrap()
-    //     .to_string();
+    let validators: Vec<String> =
+        match serde_json::from_str(validators_string.as_str()) {
+            Ok(v) => v,
+            Err(err) => {
+                panic!(
+                    "validators should be contained in vector, err: {}",
+                    err
+                );
+            }
+        };
 
-    // let validators: Vec<String> =
-    //     match serde_json::from_str(validators_string.as_str()) {
-    //         Ok(v) => v,
-    //         Err(err) => {
-    //             panic!(
-    //                 "validators should be contained in vector, err: {}",
-    //                 err
-    //             );
-    //         }
-    //     };
+    let mut validator = match request.ty {
+        "get_validator" => {
+            // return validator public key
+            validators[0].clone()
+        }
+        _ => {
+            panic!("Wrong request type has been found");
+        }
+    };
 
-    // let mut validator = match request_struct.ty {
-    //     "get_validator" => {
-    //         // return validator public key
-    //         validators[0].clone()
-    //     }
-    //     _ => {
-    //         panic!("Wrong request type has been found");
-    //     }
-    // };
-
-    // let ptr = validator.as_mut_ptr();
-    // let len = validator.len();
-    // std::mem::forget(validator);
-    // (ptr, len as i32)
-
-    // let mut msg = String::from("aaaa");
-    // let ptr = msg.as_mut_ptr();
-    // let len = msg.len();
-    // std::mem::forget(msg);
-    // (ptr, len as i32)
+    let validator_ptr = validator.as_mut_ptr();
+    let validator_len = validator.len();
+    std::mem::forget(validator);
+    (validator_ptr, validator_len as i32)
 }

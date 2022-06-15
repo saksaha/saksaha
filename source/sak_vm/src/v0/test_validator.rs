@@ -92,7 +92,6 @@ pub(crate) fn test_validator_query() -> Result<(), BoxedError> {
     // =-=-= query( Storage, Request ) =-=-=
 
     // =-=-=-=-=-=-= Storage =-=-=-=-=-=-=
-    // for test
     let mut storage: HashMap<String, String> =
         HashMap::with_capacity(DEFAULT_VALIDATOR_HASHMAP_CAPACITY);
 
@@ -158,90 +157,28 @@ pub(crate) fn test_validator_query() -> Result<(), BoxedError> {
             .expect("expected query function not found")
     };
 
-    println!("good");
+    let (validator_ptr, validator_len) = query.call(
+        &mut store,
+        (
+            storage_ptr as i32,
+            storage_len as i32,
+            request_ptr as i32,
+            request_len as i32,
+        ),
+    )?;
 
-    // storage
-    {
-        // let (storage_ptr, storage_len) = query.call(
-        //     &mut store,
-        //     (
-        //         // storage_ptr as i32,
-        //         // storage_len as i32,
-        //         storage_ptr as i32,
-        //         storage_len as i32,
-        //         //
-        //         request_ptr as i32,
-        //         request_len as i32,
-        //     ),
-        // )?;
-
-        // let storage_ret = {
-        //     println!(
-        //         "[after query] storage_ptr: {}, len: {}",
-        //         storage_ptr, storage_len
-        //     );
-
-        //     let res: String;
-        //     unsafe {
-        //         res = utils::read_string(
-        //             &store,
-        //             &memory,
-        //             storage_ptr as u32,
-        //             storage_len as u32,
-        //         )
-        //         .unwrap()
-        //     }
-
-        //     let storage: Storage = serde_json::from_str(&res).unwrap();
-
-        //     println!("[init] validator list after init(): ");
-        //     storage
-        // };
-
-        // for (k, v) in storage_ret.iter() {
-        //     println!("[init] - {}: {}", k, v);
-        // }
+    let validator: String;
+    unsafe {
+        validator = utils::read_string(
+            &store,
+            &memory,
+            validator_ptr as u32,
+            validator_len as u32,
+        )
+        .unwrap()
     }
 
-    // request
-    {
-        let (request_ptr, request_len) = query.call(
-            &mut store,
-            (
-                // storage_ptr as i32,
-                // storage_len as i32,
-                storage_ptr as i32,
-                storage_len as i32,
-                //
-                request_ptr as i32,
-                request_len as i32,
-            ),
-        )?;
-
-        let res: String;
-        let request_ret = {
-            println!(
-                "[after query] request_ptr: {}, len: {}",
-                request_ptr, request_len
-            );
-
-            unsafe {
-                res = utils::read_string(
-                    &store,
-                    &memory,
-                    request_ptr as u32,
-                    request_len as u32,
-                )
-                .unwrap()
-            }
-
-            let request: Request = serde_json::from_str(&res).unwrap();
-
-            request
-        };
-
-        println!("request: {:?}", request_ret);
-    }
+    println!("[query] validator: {}", validator);
 
     Ok(())
 }
