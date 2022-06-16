@@ -3,4 +3,3 @@ wasm = "build --release --target wasm32-unknown-unknown"
 
 [build]
 rustflags = ["-C", "link-arg=-s"]
-target-dir = "./target"

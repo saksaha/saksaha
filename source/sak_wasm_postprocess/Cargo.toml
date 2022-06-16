@@ -1,0 +1,33 @@
+[package]
+name = "sak_wasm_postprocess"
+version = "0.1.0"
+edition = "2018"
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+log = "0.4.0"
+sak_logger = { path = "../sak_logger" }
+sak_fs = { path = "../sak_fs" }
+env_logger = "0.9.0"
+chrono = "0.4"
+serde = { version = "1.0.130", features = ["derive"] }
+serde_json = "1.0.59"
+serde_bytes = "0.11.6"
+rand = "0.8.4"
+wasmtime = "0.37.0"
+wasmtime-wasi = "0.37.0"
+sak_contract_std = { path = "../sak_contract_std/" }
+walrus = "0.18.0"
+wasm-bindgen-multi-value-xform = "=0.2.69"
+wasm-bindgen-wasm-conventions = "=0.2.69"
+wit-text = "0.8.0"
+wit-validator = "0.2.1"
+wit-walrus = "0.5.0"
+clap = { version = "3.1.6", features = ["cargo"] }
+
+[lib]
+doctest = false # until stable beta is released
+
+[[bin]]
+name = "cli"
+path = "src/bin/main.rs"
