@@ -1,16 +1,15 @@
-use crate::Hashable;
-use sak_crypto::sha3::{Digest, Sha3_256};
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
 pub struct Transaction {
-    pub created_at: String,
+    created_at: String,
     #[serde(with = "serde_bytes")]
-    pub data: Vec<u8>,
-    pub pi: String,
-    pub signature: String,
+    data: Vec<u8>,
+    pi: String,
+    signature: String,
     #[serde(with = "serde_bytes")]
-    pub contract: Vec<u8>,
+    contract: Vec<u8>,
+    hash: String,
 }
 
 pub enum TxType {
@@ -19,37 +18,60 @@ pub enum TxType {
     Others,
 }
 
-impl Hashable for Transaction {
-    fn get_hash(&self) -> Result<String, String> {
-        let hash = {
-            let mut h = Sha3_256::new();
-            let v = match serde_json::to_value(&self) {
-                Ok(v) => v,
-                Err(err) => {
-                    return Err(format!(
-                        "Failed to serialize self, err: {}",
-                        err
-                    ))
-                }
-            };
-            h.update(v.to_string());
-            h.finalize()
-        };
-
-        let h = format!("{:x}", hash);
-
-        Ok(h)
-    }
-}
-
 impl Transaction {
-    pub fn get_tx_type(&self) -> TxType {
+    pub fn new(
+        created_at: String,
+        data: Vec<u8>,
+        pi: String,
+        signature: String,
+        contract: Vec<u8>,
+    ) -> Transaction {
+        let hash = sak_crypto::compute_hash(&[
+            created_at.as_bytes(),
+            data.as_slice(),
+            pi.as_bytes(),
+            signature.as_bytes(),
+            contract.as_slice(),
+        ]);
+
+        Transaction {
+            created_at,
+            data,
+            pi,
+            signature,
+            contract,
+            hash,
+        }
+    }
+
+    pub fn get_created_at(&self) -> &String {
+        &self.created_at
+    }
+
+    pub fn get_data(&self) -> &Vec<u8> {
+        &self.data
+    }
+
+    pub fn get_pi(&self) -> &String {
+        &self.pi
+    }
+
+    pub fn get_signature(&self) -> &String {
+        &self.signature
+    }
+
+    pub fn get_contract(&self) -> &Vec<u8> {
+        &self.contract
+    }
+
+    pub fn get_hash(&self) -> &String {
+        &self.hash
+    }
+
+    fn __now_unused_get_tx_type(&self) -> TxType {
         let has_contract = self.contract.len() > 0;
 
         if has_contract {
-            // data peek
-            // return TxType::ContractDeploy;
-
             return TxType::ContractCall;
         }
 

@@ -50,9 +50,9 @@ impl BlockDB {
 
     fn make_cf_descriptors() -> Vec<ColumnFamilyDescriptor> {
         let columns = vec![
-            (block_columns::MINER_SIGNATURE, Options::default()),
-            (block_columns::TRANSACTIONS, Options::default()),
-            (block_columns::SIGNATURES, Options::default()),
+            (block_columns::VALIDATOR_SIG, Options::default()),
+            (block_columns::TX_HASHES, Options::default()),
+            (block_columns::WITNESS_SIGS, Options::default()),
             (block_columns::CREATED_AT, Options::default()),
             (block_columns::HEIGHT, Options::default()),
             (block_columns::BLOCK_HASH, Options::default()),
@@ -74,17 +74,17 @@ impl BlockDB {
     ) -> Result<Block, String> {
         let db = &self.kv_db.db_instance;
 
-        let cf_handle = match db.cf_handle(block_columns::MINER_SIGNATURE) {
+        let cf_handle = match db.cf_handle(block_columns::VALIDATOR_SIG) {
             Some(h) => h,
             None => {
                 return Err(format!(
                     "Fail to open ledger colums {}",
-                    block_columns::MINER_SIGNATURE
+                    block_columns::VALIDATOR_SIG
                 ));
             }
         };
 
-        let miner_signature = match db.get_cf(cf_handle, &block_hash) {
+        let validator_sig = match db.get_cf(cf_handle, &block_hash) {
             Ok(val) => match val {
                 Some(v) => match std::str::from_utf8(&v) {
                     Ok(vs) => vs.to_string(),
@@ -98,7 +98,7 @@ impl BlockDB {
                 None => {
                     return Err(format!(
                         "No matched value with tx_hash in {}, {}",
-                        block_columns::MINER_SIGNATURE,
+                        block_columns::VALIDATOR_SIG,
                         &block_hash,
                     ));
                 }
@@ -107,24 +107,25 @@ impl BlockDB {
                 return Err(format!(
                     "Fail to get value from ledger columns, column: {}, \
                     err: {}",
-                    block_columns::MINER_SIGNATURE,
+                    block_columns::VALIDATOR_SIG,
                     err,
                 ));
             }
         };
 
-        let cf_handle = match db.cf_handle(block_columns::TRANSACTIONS) {
+        let cf_handle = match db.cf_handle(block_columns::TX_HASHES) {
             Some(h) => h,
             None => {
                 return Err(format!(
                     "Fail to open ledger columns {}",
-                    block_columns::TRANSACTIONS
+                    block_columns::TX_HASHES
                 ));
             }
         };
+
         let get_cf_handle = db.get_cf(cf_handle, &block_hash);
 
-        let transactions = match get_cf_handle.as_ref() {
+        let tx_hashes = match get_cf_handle.as_ref() {
             Ok(val) => match val.as_ref() {
                 Some(v) => {
                     let th: Vec<String> = serde_json::from_slice(&v).unwrap();
@@ -133,7 +134,7 @@ impl BlockDB {
                 None => {
                     return Err(format!(
                         "No matched value with tx_hash in {}, {}",
-                        block_columns::TRANSACTIONS,
+                        block_columns::TX_HASHES,
                         &block_hash,
                     ));
                 }
@@ -142,24 +143,25 @@ impl BlockDB {
                 return Err(format!(
                     "Fail to get value from ledger columns, column: {}, \
                     err: {}",
-                    block_columns::TRANSACTIONS,
+                    block_columns::TX_HASHES,
                     err,
                 ));
             }
         };
 
-        let cf_handle = match db.cf_handle(block_columns::SIGNATURES) {
+        let cf_handle = match db.cf_handle(block_columns::WITNESS_SIGS) {
             Some(h) => h,
             None => {
                 return Err(format!(
                     "Fail to open ledger columns {}",
-                    block_columns::SIGNATURES
+                    block_columns::WITNESS_SIGS
                 ));
             }
         };
+
         let get_cf_handle = db.get_cf(cf_handle, &block_hash);
 
-        let signatures = match get_cf_handle.as_ref() {
+        let witness_sigs = match get_cf_handle.as_ref() {
             Ok(val) => match val.as_ref() {
                 Some(v) => {
                     let th: Vec<String> = serde_json::from_slice(&v).unwrap();
@@ -168,7 +170,7 @@ impl BlockDB {
                 None => {
                     return Err(format!(
                         "No matched value with tx_hash in {}, {}",
-                        block_columns::SIGNATURES,
+                        block_columns::WITNESS_SIGS,
                         &block_hash,
                     ));
                 }
@@ -177,7 +179,7 @@ impl BlockDB {
                 return Err(format!(
                     "Fail to get value from ledger columns, column: {}, \
                     err: {}",
-                    block_columns::SIGNATURES,
+                    block_columns::WITNESS_SIGS,
                     err,
                 ));
             }
@@ -261,20 +263,20 @@ impl BlockDB {
             }
         };
 
-        let b = Block {
-            miner_signature,
-            transactions,
-            signatures,
+        let b = Block::new(
+            validator_sig,
+            tx_hashes,
+            witness_sigs,
             created_at,
             height,
-        };
+        );
 
         Ok(b)
     }
 
     pub(crate) async fn get_block_hash_by_height(
         &self,
-        block_height: u64,
+        block_height: String,
     ) -> Result<String, String> {
         let db = &self.kv_db.db_instance;
 
@@ -288,8 +290,7 @@ impl BlockDB {
             }
         };
 
-        let block_hash = match db.get_cf(cf_handle, block_height.to_le_bytes())
-        {
+        let block_hash = match db.get_cf(cf_handle, &block_height) {
             Ok(val) => match val {
                 Some(v) => match std::str::from_utf8(&v) {
                     Ok(vs) => vs.to_string(),
@@ -329,74 +330,71 @@ impl BlockDB {
 
         let mut batch = WriteBatch::default();
 
-        let block_hash = match block.get_hash() {
-            Ok(hash) => hash,
-            Err(_) => {
-                return Err(format!("Failed to get hash from block_value"))
-            }
-        };
+        let block_hash = block.get_hash();
 
         debug!(
             "write_block(): created_at: {}, block_hash: {:?}",
-            block.created_at, block_hash
+            block.get_created_at(),
+            block_hash
         );
 
-        let cf_handle = match db.cf_handle(block_columns::MINER_SIGNATURE) {
+        let cf_handle = match db.cf_handle(block_columns::VALIDATOR_SIG) {
             Some(h) => h,
             None => {
                 return Err(format!(
                     "Fail to open ledger columns {}",
-                    block_columns::MINER_SIGNATURE
+                    block_columns::VALIDATOR_SIG
                 ))
             }
         };
 
-        batch.put_cf(cf_handle, &block_hash, block.miner_signature);
+        batch.put_cf(cf_handle, &block_hash, block.get_validator_sig());
 
-        let cf_handle = match db.cf_handle(block_columns::SIGNATURES) {
+        let cf_handle = match db.cf_handle(block_columns::WITNESS_SIGS) {
             Some(h) => h,
             None => {
                 return Err(format!(
                     "Fail to open ledger columns {}",
-                    block_columns::SIGNATURES
+                    block_columns::WITNESS_SIGS
                 ))
             }
         };
 
-        let ser_signatures = match serde_json::to_string(&block.signatures) {
-            Ok(v) => v,
-            Err(err) => {
-                return Err(format!(
-                    "Cannot serialize {}, err: {}",
-                    block_columns::SIGNATURES,
-                    err
-                ))
-            }
-        };
+        let ser_signatures =
+            match serde_json::to_string(block.get_witness_sigs()) {
+                Ok(v) => v,
+                Err(err) => {
+                    return Err(format!(
+                        "Cannot serialize {}, err: {}",
+                        block_columns::WITNESS_SIGS,
+                        err
+                    ))
+                }
+            };
 
         batch.put_cf(cf_handle, &block_hash, ser_signatures);
 
-        let cf_handle = match db.cf_handle(block_columns::TRANSACTIONS) {
+        let cf_handle = match db.cf_handle(block_columns::TX_HASHES) {
             Some(h) => h,
             None => {
                 return Err(format!(
                     "Fail to open ledger columns {}",
-                    block_columns::TRANSACTIONS
+                    block_columns::TX_HASHES
                 ))
             }
         };
 
-        let ser_transactions = match serde_json::to_string(&block.transactions)
-        {
-            Ok(v) => v,
-            Err(err) => {
-                return Err(format!(
-                    "Cannot serialize {}, err: {}",
-                    block_columns::TRANSACTIONS,
-                    err
-                ))
-            }
-        };
+        let ser_transactions =
+            match serde_json::to_string(&block.get_tx_hashes()) {
+                Ok(v) => v,
+                Err(err) => {
+                    return Err(format!(
+                        "Cannot serialize {}, err: {}",
+                        block_columns::TX_HASHES,
+                        err
+                    ))
+                }
+            };
 
         batch.put_cf(cf_handle, &block_hash, ser_transactions);
 
@@ -410,7 +408,7 @@ impl BlockDB {
             }
         };
 
-        batch.put_cf(cf_handle, &block_hash, block.created_at);
+        batch.put_cf(cf_handle, &block_hash, block.get_created_at());
 
         let cf_handle = match db.cf_handle(block_columns::HEIGHT) {
             Some(h) => h,
@@ -422,10 +420,10 @@ impl BlockDB {
             }
         };
 
-        batch.put_cf(cf_handle, &block_hash, block.height);
+        batch.put_cf(cf_handle, &block_hash, block.get_height());
 
         match db.write(batch) {
-            Ok(_) => return Ok(block_hash),
+            Ok(_) => return Ok(block_hash.clone()),
             Err(err) => {
                 return Err(format!("Fail to write on ledger db, err: {}", err))
             }

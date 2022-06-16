@@ -70,21 +70,13 @@ impl TxDB {
 
     pub(crate) async fn write_tx(
         &self,
-        tx: Transaction,
+        tx: &Transaction,
     ) -> Result<String, String> {
         let db = &self.kv_db.db_instance;
 
         let mut batch = WriteBatch::default();
 
-        let tx_hash = match tx.get_hash() {
-            Ok(h) => h,
-            Err(err) => {
-                return Err(format!(
-                    "Could not get hash out of tx, critical error: {}",
-                    err
-                ))
-            }
-        };
+        let tx_hash = tx.get_hash();
 
         let cf_handle = match db.cf_handle(tx_columns::CREATED_AT) {
             Some(h) => h,
@@ -95,7 +87,7 @@ impl TxDB {
                 ))
             }
         };
-        batch.put_cf(cf_handle, &tx_hash, tx.created_at);
+        batch.put_cf(cf_handle, tx_hash, tx.get_created_at());
 
         let cf_handle = match db.cf_handle(tx_columns::DATA) {
             Some(h) => h,
@@ -106,7 +98,7 @@ impl TxDB {
                 ))
             }
         };
-        batch.put_cf(cf_handle, &tx_hash, tx.data);
+        batch.put_cf(cf_handle, tx_hash, tx.get_data());
 
         let cf_handle = match db.cf_handle(tx_columns::PI) {
             Some(h) => h,
@@ -117,7 +109,7 @@ impl TxDB {
                 ))
             }
         };
-        batch.put_cf(cf_handle, &tx_hash, tx.pi);
+        batch.put_cf(cf_handle, tx_hash, tx.get_pi());
 
         let cf_handle = match db.cf_handle(tx_columns::SIG_VEC) {
             Some(h) => h,
@@ -128,7 +120,7 @@ impl TxDB {
                 ))
             }
         };
-        batch.put_cf(cf_handle, &tx_hash, tx.signature);
+        batch.put_cf(cf_handle, tx_hash, tx.get_signature());
 
         let cf_handle = match db.cf_handle(tx_columns::CONTRACT) {
             Some(h) => h,
@@ -139,10 +131,10 @@ impl TxDB {
                 ))
             }
         };
-        batch.put_cf(cf_handle, &tx_hash, tx.contract);
+        batch.put_cf(cf_handle, tx_hash, tx.get_contract());
 
         match db.write(batch) {
-            Ok(_) => return Ok(tx_hash),
+            Ok(_) => return Ok(tx_hash.clone()),
             Err(err) => {
                 return Err(format!("Fail to write on ledger db, err: {}", err))
             }
@@ -211,13 +203,13 @@ impl TxDB {
             };
         }
 
-        Ok(Transaction {
-            created_at: tx_value_result[0].clone(),
-            data: tx_value_result[1].as_bytes().to_vec(),
-            signature: tx_value_result[2].clone(),
-            pi: tx_value_result[3].clone(),
-            contract: tx_value_result[4].as_bytes().to_vec(),
-        })
+        Ok(Transaction::new(
+            tx_value_result[0].clone(),
+            tx_value_result[1].as_bytes().to_vec(),
+            tx_value_result[2].clone(),
+            tx_value_result[3].clone(),
+            tx_value_result[4].as_bytes().to_vec(),
+        ))
     }
 
     // for testing

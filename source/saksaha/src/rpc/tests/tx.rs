@@ -3,7 +3,6 @@ use super::utils::test_utils;
 #[cfg(test)]
 mod test_suite {
     use super::*;
-    use crate::blockchain;
     use crate::rpc::response::{ErrorResponse, JsonResponse, SuccessResponse};
     use hyper::body::Buf;
     use hyper::{Body, Client, Method, Request, Uri};
@@ -67,14 +66,14 @@ mod test_suite {
             let blockchain = test_utils::make_blockchain().await;
             let dummy_tx = test_utils::make_dummy_tx();
 
-            let old_tx_hash = (&dummy_tx).get_hash().expect("fail to get hash");
+            let old_tx_hash = (&dummy_tx).get_hash();
 
             blockchain
                 .delete_tx(&old_tx_hash)
                 .expect("Tx should be deleted");
 
             let _tx_hash = blockchain
-                .write_tx(dummy_tx)
+                .write_tx(&dummy_tx)
                 .await
                 .expect("Tx should be written");
         }
@@ -134,18 +133,18 @@ mod test_suite {
             let blockchain = test_utils::make_blockchain().await;
             let dummy_tx = test_utils::make_dummy_tx();
 
-            let old_tx_hash = (&dummy_tx).get_hash().expect("fail to get hash");
+            let old_tx_hash = (&dummy_tx).get_hash();
 
             blockchain
                 .delete_tx(&old_tx_hash)
                 .expect("Tx should be deleted");
 
             let tx_hash = blockchain
-                .write_tx(dummy_tx)
+                .write_tx(&dummy_tx)
                 .await
                 .expect("Tx should be written");
 
-            assert_eq!(old_tx_hash, tx_hash);
+            assert_eq!(old_tx_hash, &tx_hash);
 
             tx_hash
         };
@@ -239,11 +238,11 @@ mod test_suite {
                         "contract": {:?}
                     }}
                 "#,
-                dummy_tx.pi,
-                dummy_tx.signature,
-                dummy_tx.created_at,
-                dummy_tx.data,
-                dummy_tx.contract
+                dummy_tx.get_pi(),
+                dummy_tx.get_signature(),
+                dummy_tx.get_created_at(),
+                dummy_tx.get_data(),
+                dummy_tx.get_contract(),
             )))
             .expect("request builder should be made");
 
@@ -273,9 +272,7 @@ mod test_suite {
 
         tokio::time::sleep(Duration::from_secs(1)).await;
 
-        let dummy_tx_hash =
-            dummy_tx.get_hash().expect("Tx hash should be provided");
-
+        let dummy_tx_hash = dummy_tx.get_hash();
         let is_contain =
             machine.blockchain.contains_in_tx_pool(&dummy_tx_hash).await;
 
@@ -317,11 +314,11 @@ mod test_suite {
                         "contract": {:?}
                     }}
                 "#,
-                dummy_tx.pi,
-                dummy_tx.signature,
-                dummy_tx.created_at,
-                dummy_tx.data,
-                dummy_tx.contract
+                dummy_tx.get_pi(),
+                dummy_tx.get_signature(),
+                dummy_tx.get_created_at(),
+                dummy_tx.get_data(),
+                dummy_tx.get_contract(),
             )))
             .expect("request builder should be made");
 
