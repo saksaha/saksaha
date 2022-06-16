@@ -55,26 +55,18 @@ impl TxPool {
     }
 
     pub async fn insert(&self, tx: Transaction) -> Result<(), String> {
-        let tx_hash = match tx.get_hash() {
-            Ok(h) => h,
-            Err(err) => {
-                return Err(format!(
-                    "Could not get hash out of tx, critical error: {}",
-                    err
-                ))
-            }
-        };
+        let tx_hash = tx.get_hash();
 
         let mut tx_map_lock = self.tx_map.write().await;
 
-        if tx_map_lock.contains_key(&tx_hash) {
+        if tx_map_lock.contains_key(tx_hash) {
             return Err(format!("tx already exist"));
         } else {
             tx_map_lock.insert(tx_hash.clone(), tx.clone());
         };
 
         let mut new_tx_hashes_lock = self.new_tx_hashes.write().await;
-        new_tx_hashes_lock.insert(tx_hash);
+        new_tx_hashes_lock.insert(tx_hash.clone());
 
         Ok(())
     }

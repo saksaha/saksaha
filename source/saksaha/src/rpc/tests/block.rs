@@ -16,13 +16,13 @@ mod test_suite {
 
         let client = Client::new();
 
-        let block_value = Block {
-            miner_signature: String::from("1"),
-            transactions: vec![String::from("1"), String::from("2")],
-            signatures: vec![String::from("1"), String::from("2")],
-            created_at: String::from(""),
-            height: String::from(""),
-        };
+        let block_value = Block::new(
+            String::from("1"),
+            vec![String::from("1"), String::from("2")],
+            vec![String::from("1"), String::from("2")],
+            String::from(""),
+            String::from(""),
+        );
 
         let block_hash = {
             let block_hash = match machine
@@ -61,9 +61,10 @@ mod test_suite {
                         let _vht = match machine.get_block(hash).await {
                             Ok(block) => {
                                 println!("{:?}", block);
+
                                 assert_eq!(
-                                    &block.transactions,
-                                    &block_value.transactions,
+                                    &block.get_tx_hashes(),
+                                    &block_value.get_tx_hashes(),
                                 );
                             }
                             Err(_err) => panic!(),

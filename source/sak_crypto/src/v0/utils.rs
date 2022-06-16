@@ -1,3 +1,4 @@
+use base64ct::{Base64, Encoding};
 use k256::SecretKey;
 use k256::{
     ecdsa::{
@@ -9,6 +10,7 @@ use k256::{
     EncodedPoint, Secp256k1,
 };
 use rand_core::OsRng;
+use sha3::{Digest, Sha3_256};
 use std::{fmt::Write, num::ParseIntError};
 
 pub type PublicKey = k256::PublicKey;
@@ -106,6 +108,21 @@ pub fn verify(
         Ok(_) => Ok(()),
         Err(err) => Err(err.to_string()),
     }
+}
+
+pub fn compute_hash(values: &[impl AsRef<[u8]>]) -> String {
+    let mut hasher = Sha3_256::new();
+
+    for v in values {
+        hasher.update(v);
+    }
+
+    let result = {
+        let h = hasher.finalize();
+        format!("{:x}", h)
+    };
+
+    return result;
 }
 
 pub fn make_shared_secret(

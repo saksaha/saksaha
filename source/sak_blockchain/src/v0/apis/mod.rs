@@ -50,7 +50,7 @@ impl Blockchain {
 
     pub async fn get_block_by_height(
         &self,
-        block_height: u64,
+        block_height: String,
     ) -> Result<Block, String> {
         let block_hash = self
             .database
@@ -68,7 +68,7 @@ impl Blockchain {
         self.database.tx_db.delete_tx(key)
     }
 
-    pub async fn write_tx(&self, tx: Transaction) -> Result<String, String> {
+    pub async fn write_tx(&self, tx: &Transaction) -> Result<String, String> {
         self.database.tx_db.write_tx(tx).await
     }
 
