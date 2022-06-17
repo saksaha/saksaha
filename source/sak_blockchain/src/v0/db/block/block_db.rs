@@ -337,6 +337,19 @@ impl BlockDB {
             block.get_created_at(),
             block_hash
         );
+        // batch.put_cf(cf_handle, &block.height, block_hash.clone());
+
+        // let cf_handle = match db.cf_handle(block_columns::MINER_SIGNATURE) {
+        //     Some(h) => h,
+        //     None => {
+        //         return Err(format!(
+        //             "Fail to open ledger columns {}",
+        //             block_columns::MINER_SIGNATURE
+        //         ))
+        //     }
+        // };
+
+        // batch.put_cf(cf_handle_height, &block.height, block_hash.clone());
 
         let cf_handle = match db.cf_handle(block_columns::VALIDATOR_SIG) {
             Some(h) => h,
@@ -409,6 +422,18 @@ impl BlockDB {
         };
 
         batch.put_cf(cf_handle, &block_hash, block.get_created_at());
+
+        // put k : height && v : hash
+        let cf_handle = match db.cf_handle(block_columns::BLOCK_HASH) {
+            Some(h) => h,
+            None => {
+                return Err(format!(
+                    "Fail to open ledger columns {}",
+                    block_columns::BLOCK_HASH
+                ))
+            }
+        };
+        batch.put_cf(cf_handle, &block.height, &block_hash);
 
         let cf_handle = match db.cf_handle(block_columns::HEIGHT) {
             Some(h) => h,

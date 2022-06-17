@@ -8,7 +8,7 @@ pub struct Block {
     tx_hashes: Vec<String>,
     witness_sigs: Vec<String>,
     created_at: String,
-    height: String,
+    pub height: String,
     block_hash: String,
 }
 

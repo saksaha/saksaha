@@ -227,9 +227,7 @@ mod test {
         };
 
         let get_gen_hash = gen_block.get_hash();
-
         let gen_tx_hashes = gen_block.get_tx_hashes();
-
         assert_ne!(get_gen_hash, &String::from("false hash"));
 
         for tx_hash in gen_tx_hashes {
