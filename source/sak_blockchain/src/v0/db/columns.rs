@@ -19,3 +19,5 @@ pub(crate) const WITNESS_SIGS: &str = "witness_sigs";
 pub(crate) const HEIGHT: &str = "height";
 
 pub(crate) const BLOCK_HASH: &str = "block_hash";
+
+pub(crate) const CONTRACT_STATE: &str = "contract_state";

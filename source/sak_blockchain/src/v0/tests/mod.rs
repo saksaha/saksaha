@@ -2,6 +2,7 @@
 mod test {
     use crate::{Blockchain, BlockchainArgs};
     use sak_types::BlockCandidate;
+    use sak_types::ContractState;
     use sak_types::Hashable;
     use sak_types::Transaction;
 
@@ -83,6 +84,14 @@ mod test {
                 String::from("four").as_bytes().to_vec(),
             ),
         ]
+    }
+
+    fn make_dummy_state() -> ContractState {
+        ContractState::new(
+            String::from("0xcafecafe"),
+            vec![String::from("field_1"), String::from("field_2")],
+            vec![String::from("value_1"), String::from("value_2")],
+        )
     }
 
     #[tokio::test(flavor = "multi_thread")]
@@ -243,6 +252,36 @@ mod test {
             };
 
             assert_eq!(tx_hash, tx.get_hash());
+        }
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn test_save_a_contract_state_to_db() {
+        init();
+
+        let gen_block = make_dummy_genesis_block();
+        let blockchain = make_blockchain(gen_block).await;
+        let db = blockchain.database;
+
+        let dummy_state = make_dummy_state();
+
+        let contract_addr = dummy_state.get_contract_addr();
+        let field_name = dummy_state.get_field_name();
+        let field_value = dummy_state.get_field_value();
+
+        db.set_contract_state(&dummy_state)
+            .await
+            .expect("contract state should be saved");
+
+        for iter in field_name.iter().zip(field_value.iter()) {
+            let (field_name, field_value) = iter;
+
+            let key = format!("{}:{}", contract_addr, field_name);
+
+            assert_eq!(
+                db.get_contract_state_value(&key).await.unwrap(),
+                field_value.clone(),
+            );
         }
     }
 }
