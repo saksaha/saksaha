@@ -17,7 +17,7 @@ mod test_suite {
     use sak_p2p_ptable::PeerTable;
     use sak_p2p_trpt::{Msg, TxHashSync};
     use sak_task_queue::TaskQueue;
-    use sak_types::{Hashable, Transaction};
+    use sak_types::{BlockCandidate, Hashable, Transaction};
     use std::{sync::Arc, time::Duration};
 
     const RUST_LOG_ENV: &str = "
@@ -31,6 +31,33 @@ mod test_suite {
         }
 
         sak_logger::init(false);
+    }
+
+    fn make_dummy_genesis_block() -> BlockCandidate {
+        let genesis_block = BlockCandidate {
+            validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
+            transactions: vec![
+                Transaction::new(
+                    String::from("1"),
+                    vec![11, 11, 11],
+                    String::from("1"),
+                    String::from("1"),
+                    vec![11, 11, 11],
+                ),
+                Transaction::new(
+                    String::from("2"),
+                    vec![22, 22, 22],
+                    String::from("2"),
+                    String::from("2"),
+                    vec![22, 22, 22],
+                ),
+            ],
+            witness_sigs: vec![String::from("1"), String::from("2")],
+            created_at: String::from("2022061515340000"),
+            height: String::from("0"),
+        };
+
+        genesis_block
     }
 
     fn get_dummy_handshake_init_args(
@@ -177,9 +204,12 @@ mod test_suite {
         peer_table: Arc<PeerTable>,
     ) -> LocalNode {
         let blockchain = {
+            let genesis_block = make_dummy_genesis_block();
+
             let blockchain_args = BlockchainArgs {
                 app_prefix,
                 tx_pool_sync_interval: None,
+                genesis_block,
             };
 
             Blockchain::init(blockchain_args).await.unwrap()
@@ -262,17 +292,14 @@ mod test_suite {
             p2p_server_2.run().await;
         });
 
-        let sleep_work = tokio::spawn(async move {
-            tokio::time::sleep(Duration::from_secs(3)).await;
-        });
-
-        sleep_work.await.unwrap();
+        tokio::time::sleep(Duration::from_secs(3)).await;
 
         let task = P2PTask::InitiateHandshake {
             addr,
             identity: identity_1.clone(),
             peer_table: peer_table_1.clone(),
         };
+
         p2p_task_queue_1
             .push_back(task)
             .await
@@ -293,6 +320,7 @@ mod test_suite {
         });
 
         let peer_flag = peer_flag_handle.await.unwrap();
+
         println!("Is it registered?, {}", peer_flag);
         assert_eq!(peer_flag, true);
     }
@@ -336,6 +364,7 @@ mod test_suite {
 
         let local_node_1 =
             make_local_node("test_1".to_string(), peer_table_1.clone()).await;
+
         let local_node_2 =
             make_local_node("test_2".to_string(), peer_table_2.clone()).await;
 
@@ -359,29 +388,26 @@ mod test_suite {
             p2p_server_2.run().await;
         });
 
-        let sleep_work = tokio::spawn(async move {
-            tokio::time::sleep(Duration::from_secs(3)).await;
-        });
-
-        sleep_work.await.unwrap();
+        tokio::time::sleep(Duration::from_secs(3)).await;
 
         let task = P2PTask::InitiateHandshake {
             addr,
             identity: identity_1.clone(),
             peer_table: peer_table_1.clone(),
         };
+
         p2p_task_queue_1
             .push_back(task)
             .await
             .expect("InitiateHandshake task pushed in queue");
 
-        let dummy_txs = Transaction {
-            pi: String::from("0x1111"),
-            signature: String::from("0x1111"),
-            created_at: String::from("1346546123"),
-            data: String::from("one").as_bytes().to_vec(),
-            contract: String::from("one").as_bytes().to_vec(),
-        };
+        let dummy_txs = Transaction::new(
+            String::from("1346546123"),
+            String::from("one").as_bytes().to_vec(),
+            String::from("0x1111"),
+            String::from("0x1111"),
+            String::from("one").as_bytes().to_vec(),
+        );
 
         let peer_it = local_node_1.peer_table.new_iter();
         let mut peer_it_lock = peer_it.write().await;
@@ -394,7 +420,7 @@ mod test_suite {
         let conn = &mut peer.transport.conn.write().await;
         conn.socket
             .send(Msg::TxHashSyn(TxHashSync {
-                tx_hashes: vec![dummy_txs.get_hash().unwrap()],
+                tx_hashes: vec![dummy_txs.get_hash().to_string()],
             }))
             .await
             .unwrap();
@@ -414,12 +440,12 @@ mod test_suite {
                     Msg::TxHashSyn(tx_hash_sync) => {
                         println!(
                             "dummy :{:?}, got one :{:?}",
-                            dummy_txs.get_hash().unwrap(),
+                            dummy_txs.get_hash(),
                             tx_hash_sync.tx_hashes[0]
                         );
                         assert_eq!(
-                            dummy_txs.get_hash().unwrap(),
-                            tx_hash_sync.tx_hashes[0]
+                            dummy_txs.get_hash(),
+                            &tx_hash_sync.tx_hashes[0]
                         )
                     }
                     _ => {

@@ -3,9 +3,6 @@ mod msg;
 mod net;
 mod transport;
 
-#[cfg(test)]
-mod tests;
-
 pub use msg::*;
 pub use net::*;
 pub use transport::Transport;
