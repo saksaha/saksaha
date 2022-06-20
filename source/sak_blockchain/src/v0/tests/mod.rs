@@ -200,9 +200,11 @@ mod test {
                 Ok(b) => b,
                 Err(err) => panic!("Error : {}", err),
             };
+
         let gen_tx_by_height_hashes = gen_block_by_height.get_hash();
 
         let get_gen_hash = gen_block.get_hash();
+
         let gen_tx_hashes = gen_block.get_tx_hashes();
 
         assert_eq!(get_gen_hash, gen_block_hash);

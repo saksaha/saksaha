@@ -419,7 +419,7 @@ impl BlockDB {
                 ))
             }
         };
-        batch.put_cf(cf_handle, &block.height, &block_hash);
+        batch.put_cf(cf_handle, &block.get_height(), &block_hash);
 
         let cf_handle = match db.cf_handle(block_columns::HEIGHT) {
             Some(h) => h,
