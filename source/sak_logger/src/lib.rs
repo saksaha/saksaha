@@ -7,7 +7,14 @@ use std::io::Write;
 fn init_logger(is_test: bool) {
     let rust_log = match std::env::var("RUST_LOG") {
         Ok(l) => l,
-        Err(_) => "not given".to_string(),
+        Err(_) => {
+            println!(
+                "RUST_LOG is not given. This is probably not what you \
+                have wanted. Some logs might be dismissed"
+            );
+
+            "RUST_LOG_NOT_GIVEN".to_string()
+        }
     };
 
     println!("[logger] Initializing logger, RUST_LOG: {}", rust_log);

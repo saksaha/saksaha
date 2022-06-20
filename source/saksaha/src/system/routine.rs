@@ -1,6 +1,6 @@
 use super::shutdown::ShutdownMng;
 use super::SystemRunArgs;
-use crate::blockchain;
+use crate::blockchain::create_blockchain;
 use crate::config::Config;
 use crate::config::ProfiledConfig;
 use crate::machine::Machine;
@@ -152,7 +152,7 @@ impl Routine {
         };
 
         let blockchain = {
-            let b = blockchain::create_blockchain(
+            let b = create_blockchain(
                 config.app_prefix,
                 config.blockchain.tx_pool_sync_interval,
             )
