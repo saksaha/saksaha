@@ -1,22 +1,22 @@
-use sak_contract_std::{Request, Storage};
+use sak_contract_std::Request;
 use std::collections::HashMap;
 use wasmtime::TypedFunc;
 
-use crate::{
-    test_validator_query, BoxedError, DEFAULT_VALIDATOR_HASHMAP_CAPACITY,
-    MEMORY, VM,
-};
+use crate::{BoxedError, DEFAULT_VALIDATOR_HASHMAP_CAPACITY, MEMORY, VM};
 
 use super::utils;
 
 impl VM {
-    pub fn query(&self) -> Result<(), BoxedError> {
-        test_validator_query()?;
+    // pub fn query(&self) -> Result<(), BoxedError> {
+    //     test_validator_query()?;
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
-    pub fn get_validator(&self) -> Result<bool, BoxedError> {
+    pub fn get_validator(
+        &self,
+        public_key_str: &String,
+    ) -> Result<bool, BoxedError> {
         let (instance, mut store) =
             match utils::create_instance(&self.validator_contract) {
                 Ok(r) => r,
@@ -109,9 +109,10 @@ impl VM {
             .unwrap()
         }
 
-        println!("[query] validator: {}", validator);
+        println!("[query] query publickey: {}", validator);
+        println!("[query]    my publickey: {}", public_key_str);
 
-        // return validator == ;
+        // return Ok(validator.eq(public_key_str));
         Ok(true)
     }
 }

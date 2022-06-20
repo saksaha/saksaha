@@ -144,7 +144,7 @@ impl Routine {
                 p2p_port,
                 bootstrap_addrs: config.p2p.bootstrap_addrs,
                 secret: config.p2p.secret,
-                public_key_str: config.p2p.public_key_str,
+                public_key_str: config.p2p.public_key_str.clone(),
                 peer_table: peer_table.clone(),
             };
 
@@ -172,6 +172,7 @@ impl Routine {
                 machine: machine.clone(),
                 miner: config.node.miner,
                 mine_interval: config.node.mine_interval,
+                public_key_str: config.p2p.public_key_str,
             };
 
             ln

@@ -8,16 +8,20 @@ pub(crate) struct LocalNode {
     pub(crate) machine: Arc<Machine>,
     pub(crate) miner: bool,
     pub(crate) mine_interval: Option<u64>,
+    pub(crate) public_key_str: String,
 }
 
 impl LocalNode {
     pub(crate) async fn run(&self) {
         let machine = self.machine.clone();
         let mine_interval = self.mine_interval.clone();
+        let public_key_str = self.public_key_str.clone();
+
         tokio::spawn(async move {
             let miner = Miner {
                 machine,
                 mine_interval,
+                public_key_str,
             };
 
             miner.run().await;

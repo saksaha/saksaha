@@ -10,6 +10,7 @@ const MINE_INTERVAL: u64 = 5000;
 pub(super) struct Miner {
     pub(super) machine: Arc<Machine>,
     pub(super) mine_interval: Option<u64>,
+    pub(super) public_key_str: String,
 }
 
 impl Miner {
@@ -22,11 +23,15 @@ impl Miner {
         loop {
             let time_since = SystemTime::now();
             // if self.machine.blockchain.tx_pool.has_diff() {
-            let is_next_validator =
-                match self.machine.blockchain.get_vm().get_validator() {
-                    Ok(b) => b,
-                    Err(err) => return,
-                };
+            let is_next_validator = match self
+                .machine
+                .blockchain
+                .get_vm()
+                .get_validator(&self.public_key_str)
+            {
+                Ok(b) => b,
+                Err(err) => return,
+            };
 
             println!("{}", is_next_validator);
 
