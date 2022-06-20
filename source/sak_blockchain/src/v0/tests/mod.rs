@@ -195,11 +195,20 @@ mod test {
             Err(err) => panic!("Error : {}", err),
         };
 
+        let gen_block_by_height =
+            match blockchain.get_block_by_height(String::from("0")).await {
+                Ok(b) => b,
+                Err(err) => panic!("Error : {}", err),
+            };
+
+        let gen_tx_by_height_hashes = gen_block_by_height.get_hash();
+
         let get_gen_hash = gen_block.get_hash();
 
         let gen_tx_hashes = gen_block.get_tx_hashes();
 
         assert_eq!(get_gen_hash, gen_block_hash);
+        assert_eq!(get_gen_hash, gen_tx_by_height_hashes);
 
         for tx_hash in gen_tx_hashes {
             let tx = match blockchain.get_transaction(tx_hash).await {
@@ -227,9 +236,7 @@ mod test {
         };
 
         let get_gen_hash = gen_block.get_hash();
-
         let gen_tx_hashes = gen_block.get_tx_hashes();
-
         assert_ne!(get_gen_hash, &String::from("false hash"));
 
         for tx_hash in gen_tx_hashes {
