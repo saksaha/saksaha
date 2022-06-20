@@ -125,8 +125,9 @@ impl Blockchain {
             }
             Err(_) => {
                 info!("Build a genesis block");
-                if let Err(_) = self.write_block(block).await {
-                    error!("Cannot create genesis block");
+
+                if let Err(err) = self.write_block(block).await {
+                    error!("Cannot create genesis block, err: {}", err);
                 };
             }
         };

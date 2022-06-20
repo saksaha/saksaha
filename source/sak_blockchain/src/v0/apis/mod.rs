@@ -3,7 +3,6 @@ use crate::{Blockchain, Database};
 use log::warn;
 use sak_types::{Block, Transaction};
 
-// Implementing struct defined in the above file tree
 impl Blockchain {
     pub async fn query_contract(&self) -> Result<&[u8], String> {
         Ok(&[])
@@ -38,39 +37,36 @@ impl Blockchain {
         &self,
         tx_hash: &String,
     ) -> Result<Transaction, String> {
-        self.database.tx_db.read_tx(tx_hash).await
+        self.database.read_tx(tx_hash).await
     }
 
     pub async fn get_block(
         &self,
         block_hash: &String,
     ) -> Result<Block, String> {
-        self.database.block_db.get_block(block_hash).await
+        self.database.get_block(block_hash).await
     }
 
     pub async fn get_block_by_height(
         &self,
         block_height: String,
     ) -> Result<Block, String> {
-        let block_hash = self
-            .database
-            .block_db
-            .get_block_hash_by_height(block_height)
-            .await?;
+        let block_hash =
+            self.database.get_block_hash_by_height(block_height).await?;
 
-        self.database.block_db.get_block(&block_hash).await
+        self.database.get_block(&block_hash).await
     }
 
     pub async fn write_block(&self, block: Block) -> Result<String, String> {
-        self.database.block_db.write_block(block).await
+        self.database.write_block(block).await
     }
 
     pub fn delete_tx(&self, key: &String) -> Result<(), String> {
-        self.database.tx_db.delete_tx(key)
+        self.database.delete_tx(key)
     }
 
     pub async fn write_tx(&self, tx: &Transaction) -> Result<String, String> {
-        self.database.tx_db.write_tx(tx).await
+        self.database.write_tx(tx).await
     }
 
     pub async fn get_tx_pool_diff(
