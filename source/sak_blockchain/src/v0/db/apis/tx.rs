@@ -1,133 +1,71 @@
-use crate::BoxedError;
-use sak_fs::FS;
+use crate::{columns, Database};
 use sak_kv_db::{
-    ColumnFamilyDescriptor, DBRawIteratorWithThreadMode, DBWithThreadMode,
-    KeyValueDatabase, Options, SingleThreaded, WriteBatch,
+    DBRawIteratorWithThreadMode, DBWithThreadMode, KeyValueDatabase,
+    SingleThreaded, WriteBatch,
 };
-use sak_types::{Hashable, Transaction};
+use sak_types::Transaction;
 
-use super::tx_columns;
-
-pub(crate) struct TxDB {
-    kv_db: KeyValueDatabase,
-}
-
-impl TxDB {
-    pub(crate) fn init(app_prefix: &String) -> Result<TxDB, BoxedError> {
-        let tx_db_path = {
-            let app_path = FS::create_or_get_app_path(app_prefix)?;
-            let db_path = { app_path.join("db").join("tx") };
-
-            db_path
-        };
-
-        let options = {
-            let mut o = Options::default();
-            o.create_missing_column_families(true);
-            o.create_if_missing(true);
-
-            o
-        };
-
-        let cf_descriptors = TxDB::make_cf_descriptors();
-
-        let kv_db =
-            match KeyValueDatabase::new(tx_db_path, options, cf_descriptors) {
-                Ok(d) => d,
-                Err(err) => {
-                    return Err(format!(
-                        "Error initializing key value database, err: {}",
-                        err
-                    )
-                    .into());
-                }
-            };
-
-        let d = TxDB { kv_db };
-
-        Ok(d)
-    }
-
-    fn make_cf_descriptors() -> Vec<ColumnFamilyDescriptor> {
-        let columns = vec![
-            (tx_columns::TX_HASH, Options::default()),
-            (tx_columns::PI, Options::default()),
-            (tx_columns::SIG_VEC, Options::default()),
-            (tx_columns::CREATED_AT, Options::default()),
-            (tx_columns::DATA, Options::default()),
-            (tx_columns::CONTRACT, Options::default()),
-        ];
-
-        let cf = columns
-            .into_iter()
-            .map(|(col_name, options)| {
-                ColumnFamilyDescriptor::new(col_name, options)
-            })
-            .collect();
-
-        cf
-    }
-
+impl Database {
     pub(crate) async fn write_tx(
         &self,
         tx: &Transaction,
     ) -> Result<String, String> {
-        let db = &self.kv_db.db_instance;
+        let db = &self.ledger_db.db_instance;
 
         let mut batch = WriteBatch::default();
 
         let tx_hash = tx.get_hash();
 
-        let cf_handle = match db.cf_handle(tx_columns::CREATED_AT) {
+        let cf_handle = match db.cf_handle(columns::CREATED_AT) {
             Some(h) => h,
             None => {
                 return Err(format!(
                     "Fail to open ledger columns {}",
-                    tx_columns::CREATED_AT
+                    columns::CREATED_AT
                 ))
             }
         };
         batch.put_cf(cf_handle, tx_hash, tx.get_created_at());
 
-        let cf_handle = match db.cf_handle(tx_columns::DATA) {
+        let cf_handle = match db.cf_handle(columns::DATA) {
             Some(h) => h,
             None => {
                 return Err(format!(
                     "Fail to open ledger columns {}",
-                    tx_columns::DATA
+                    columns::DATA
                 ))
             }
         };
         batch.put_cf(cf_handle, tx_hash, tx.get_data());
 
-        let cf_handle = match db.cf_handle(tx_columns::PI) {
+        let cf_handle = match db.cf_handle(columns::PI) {
             Some(h) => h,
             None => {
                 return Err(format!(
                     "Fail to open ledger columns {}",
-                    tx_columns::PI
+                    columns::PI
                 ))
             }
         };
         batch.put_cf(cf_handle, tx_hash, tx.get_pi());
 
-        let cf_handle = match db.cf_handle(tx_columns::SIG_VEC) {
+        let cf_handle = match db.cf_handle(columns::SIG_VEC) {
             Some(h) => h,
             None => {
                 return Err(format!(
                     "Fail to open ledger columns {}",
-                    tx_columns::SIG_VEC
+                    columns::SIG_VEC
                 ))
             }
         };
         batch.put_cf(cf_handle, tx_hash, tx.get_signature());
 
-        let cf_handle = match db.cf_handle(tx_columns::CONTRACT) {
+        let cf_handle = match db.cf_handle(columns::CONTRACT) {
             Some(h) => h,
             None => {
                 return Err(format!(
                     "Fail to open ledger columns {}",
-                    tx_columns::CONTRACT
+                    columns::CONTRACT
                 ))
             }
         };
@@ -143,11 +81,9 @@ impl TxDB {
 
     pub(crate) async fn read_tx(
         &self,
-        // ledger_db: &KeyValueDatabase,
         tx_hash: &String,
     ) -> Result<Transaction, String> {
-        // let db = &ledger_db.db;
-        let db = &self.kv_db.db_instance;
+        let db = &self.ledger_db.db_instance;
 
         let mut tx_value_result = vec![
             String::from(""),
@@ -158,11 +94,11 @@ impl TxDB {
         ];
 
         let tx_values_col = vec![
-            tx_columns::CREATED_AT,
-            tx_columns::DATA,
-            tx_columns::SIG_VEC,
-            tx_columns::PI,
-            tx_columns::CONTRACT,
+            columns::CREATED_AT,
+            columns::DATA,
+            columns::SIG_VEC,
+            columns::PI,
+            columns::CONTRACT,
         ];
 
         let tx_values_it_map = tx_values_col.iter().map(|cf_name| cf_name);
@@ -214,10 +150,9 @@ impl TxDB {
 
     // for testing
     pub fn delete_tx(&self, key: &String) -> Result<(), String> {
-        // let db = &ledger.ledger_db.db;
-        let db = &self.kv_db.db_instance;
+        let db = &self.ledger_db.db_instance;
 
-        let created_at_cf = match db.cf_handle(tx_columns::CREATED_AT) {
+        let created_at_cf = match db.cf_handle(columns::CREATED_AT) {
             Some(h) => h,
             None => {
                 return Err(format!("Fail to open ledger columns `crated_at`"))
@@ -234,7 +169,7 @@ impl TxDB {
             }
         }
 
-        let data_cf = match db.cf_handle(tx_columns::DATA) {
+        let data_cf = match db.cf_handle(columns::DATA) {
             Some(h) => h,
             None => return Err(format!("Fail to open ledger columns `DATA`")),
         };
@@ -248,7 +183,7 @@ impl TxDB {
             }
         }
 
-        let pi_cf = match db.cf_handle(tx_columns::PI) {
+        let pi_cf = match db.cf_handle(columns::PI) {
             Some(h) => h,
             None => return Err(format!("Fail to open ledger columns `PI`")),
         };
@@ -262,7 +197,7 @@ impl TxDB {
             }
         }
 
-        let sig_vec_cf = match db.cf_handle(tx_columns::SIG_VEC) {
+        let sig_vec_cf = match db.cf_handle(columns::SIG_VEC) {
             Some(h) => h,
             None => {
                 return Err(format!("Fail to open ledger columns `SIG_VEC`"))
@@ -282,13 +217,14 @@ impl TxDB {
         Ok(())
     }
 
+    // for testing
     pub fn iter(
         &self,
     ) -> DBRawIteratorWithThreadMode<DBWithThreadMode<SingleThreaded>> {
-        let db = &self.kv_db.db_instance;
+        let db = &self.ledger_db.db_instance;
 
         let iter =
-            db.raw_iterator_cf(db.cf_handle(tx_columns::CREATED_AT).unwrap());
+            db.raw_iterator_cf(db.cf_handle(columns::CREATED_AT).unwrap());
 
         iter
     }
