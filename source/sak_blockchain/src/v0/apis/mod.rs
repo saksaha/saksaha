@@ -57,6 +57,7 @@ impl Blockchain {
             .block_db
             .get_block_hash_by_height(block_height)
             .await?;
+
         self.database.block_db.get_block(&block_hash).await
     }
 

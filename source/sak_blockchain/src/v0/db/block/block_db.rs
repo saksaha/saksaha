@@ -5,7 +5,7 @@ use sak_fs::FS;
 use sak_kv_db::{
     ColumnFamilyDescriptor, KeyValueDatabase, Options, WriteBatch,
 };
-use sak_types::{Block, Hashable};
+use sak_types::Block;
 
 pub(crate) struct BlockDB {
     pub(crate) kv_db: KeyValueDatabase,
@@ -333,9 +333,9 @@ impl BlockDB {
         let block_hash = block.get_hash();
 
         debug!(
-            "write_block(): created_at: {}, block_hash: {:?}",
+            "write_block(): created_at: {}, block_hash: {}",
             block.get_created_at(),
-            block_hash
+            block_hash,
         );
 
         let cf_handle = match db.cf_handle(block_columns::VALIDATOR_SIG) {
@@ -360,19 +360,19 @@ impl BlockDB {
             }
         };
 
-        let ser_signatures =
-            match serde_json::to_string(block.get_witness_sigs()) {
-                Ok(v) => v,
-                Err(err) => {
-                    return Err(format!(
-                        "Cannot serialize {}, err: {}",
-                        block_columns::WITNESS_SIGS,
-                        err
-                    ))
-                }
-            };
+        let witness_sigs = match serde_json::to_string(block.get_witness_sigs())
+        {
+            Ok(v) => v,
+            Err(err) => {
+                return Err(format!(
+                    "Cannot serialize {}, err: {}",
+                    block_columns::WITNESS_SIGS,
+                    err
+                ))
+            }
+        };
 
-        batch.put_cf(cf_handle, &block_hash, ser_signatures);
+        batch.put_cf(cf_handle, &block_hash, witness_sigs);
 
         let cf_handle = match db.cf_handle(block_columns::TX_HASHES) {
             Some(h) => h,
@@ -384,19 +384,18 @@ impl BlockDB {
             }
         };
 
-        let ser_transactions =
-            match serde_json::to_string(&block.get_tx_hashes()) {
-                Ok(v) => v,
-                Err(err) => {
-                    return Err(format!(
-                        "Cannot serialize {}, err: {}",
-                        block_columns::TX_HASHES,
-                        err
-                    ))
-                }
-            };
+        let transactions = match serde_json::to_string(&block.get_tx_hashes()) {
+            Ok(v) => v,
+            Err(err) => {
+                return Err(format!(
+                    "Cannot serialize {}, err: {}",
+                    block_columns::TX_HASHES,
+                    err
+                ))
+            }
+        };
 
-        batch.put_cf(cf_handle, &block_hash, ser_transactions);
+        batch.put_cf(cf_handle, &block_hash, transactions);
 
         let cf_handle = match db.cf_handle(block_columns::CREATED_AT) {
             Some(h) => h,
@@ -409,6 +408,18 @@ impl BlockDB {
         };
 
         batch.put_cf(cf_handle, &block_hash, block.get_created_at());
+
+        // put k : height && v : hash
+        let cf_handle = match db.cf_handle(block_columns::BLOCK_HASH) {
+            Some(h) => h,
+            None => {
+                return Err(format!(
+                    "Fail to open ledger columns {}",
+                    block_columns::BLOCK_HASH
+                ))
+            }
+        };
+        batch.put_cf(cf_handle, &block.get_height(), &block_hash);
 
         let cf_handle = match db.cf_handle(block_columns::HEIGHT) {
             Some(h) => h,
