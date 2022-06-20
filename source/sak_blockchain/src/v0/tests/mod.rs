@@ -91,21 +91,20 @@ mod test {
 
         let gen_block = make_dummy_genesis_block();
         let blockchain = make_blockchain(gen_block).await;
-        let tx_db = blockchain.database.tx_db;
+        let db = blockchain.database;
 
         let dummy_tx_values = make_dummy_txs();
         let mut tx_hashes = vec![];
 
         for tx_val in dummy_tx_values.iter() {
-            let h =
-                tx_db.write_tx(&tx_val).await.expect("Tx should be written");
+            let h = db.write_tx(&tx_val).await.expect("Tx should be written");
 
             tx_hashes.push(h);
         }
 
         for (idx, tx_hash) in tx_hashes.iter().enumerate() {
             let tx_val_retrieved =
-                tx_db.read_tx(&tx_hash).await.expect("Tx should exist");
+                db.read_tx(&tx_hash).await.expect("Tx should exist");
 
             assert_eq!(
                 tx_val_retrieved.get_data(),
@@ -120,14 +119,13 @@ mod test {
 
         let gen_block = make_dummy_genesis_block();
         let blockchain = make_blockchain(gen_block).await;
-        let tx_db = blockchain.database.tx_db;
+        let db = blockchain.database;
 
         let dummy_tx_values = make_dummy_txs();
         let mut tx_hashes = vec![];
 
         for tx_val in dummy_tx_values.iter() {
-            let h =
-                tx_db.write_tx(&tx_val).await.expect("Tx should be written");
+            let h = db.write_tx(&tx_val).await.expect("Tx should be written");
 
             tx_hashes.push(h);
         }
@@ -135,7 +133,7 @@ mod test {
         let target_idx = 0;
         let wrong_idx = 1;
 
-        let tx_val_retrieved = tx_db
+        let tx_val_retrieved = db
             .read_tx(&tx_hashes[target_idx])
             .await
             .expect("Tx should exist");
@@ -152,19 +150,18 @@ mod test {
 
         let gen_block = make_dummy_genesis_block();
         let blockchain = make_blockchain(gen_block).await;
-        let tx_db = blockchain.database.tx_db;
+        let db = blockchain.database;
 
         let dummy_tx_values = make_dummy_txs();
         let mut tx_hashes = vec![];
 
         for tx_val in dummy_tx_values.iter() {
-            let h =
-                tx_db.write_tx(&tx_val).await.expect("Tx should be written");
+            let h = db.write_tx(&tx_val).await.expect("Tx should be written");
 
             tx_hashes.push(h);
         }
 
-        let mut iter = tx_db.iter();
+        let mut iter = db.iter();
         iter.seek_to_first();
 
         let mut count = 0;
