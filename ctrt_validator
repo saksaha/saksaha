@@ -6,6 +6,7 @@ rm -rf ./source/sak_ctrt_validator/target
 cd ./source/sak_ctrt_validator
 cargo wasm
 cp ./target/wasm32-unknown-unknown/release/sak_ctrt_validator.wasm ~/work/saksaha/saksaha/source/sak_vm/src/v0/sak_ctrt_validator.wasm
+# wasm2wat ~/work/saksaha/saksaha/source/sak_vm/src/v0/sak_ctrt_validator.wasm &> ./sak_ctrt_validator_before.wat
 
 # util
 cd ~/work/saksaha/saksaha
@@ -22,6 +23,6 @@ cp ./sak_ctrt_validator.wasm.multivalue.wasm ~/work/saksaha/saksaha/source/sak_v
 cd ~/work/saksaha/saksaha
 rm -rf ../multivalue-util/
 
-wasm2wat ~/work/saksaha/saksaha/source/sak_vm/src/v0/sak_ctrt_validator.wasm &> ./sak_ctrt_validator.wat
+# wasm2wat ~/work/saksaha/saksaha/source/sak_vm/src/v0/sak_ctrt_validator.wasm &> ./sak_ctrt_validator.wat
 # wasm-decompile  ~/work/saksaha/saksaha/source/sak_vm/src/v0/sak_ctrt_validator.wasm -o wasm.c
 ./ci dev

@@ -19,6 +19,7 @@ members = [
   "source/sak_contract_std",
   "source/sak_blockchain",
   "source/sak_vm",
+  "source/sak_wasm_postprocess",
 
   # system contracts (each)
   "source/sak_ctrt_validator",
