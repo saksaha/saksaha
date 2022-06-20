@@ -1,10 +1,6 @@
-use crate::Connection;
-use sak_crypto::SharedSecret;
+use crate::UpgradedConnection;
 use tokio::sync::RwLock;
 
 pub struct Transport {
-    pub conn: RwLock<Connection>,
-    pub shared_secret: SharedSecret,
+    pub conn: RwLock<UpgradedConnection>,
 }
-
-impl Transport {}

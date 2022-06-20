@@ -77,6 +77,8 @@ impl Decoder for UdpCodec {
         &mut self,
         src: &mut BytesMut,
     ) -> Result<Option<Self::Item>, BoxedError> {
+        // let src = cipher.apply_keystream(src);
+
         if let Some(frame) = frame_io::parse_frame(src)? {
             // "cursor" like API which makes parsing the command easier.
             //

@@ -101,9 +101,10 @@ pub async fn receive_handshake(
         }
     };
 
+    let upgraded_conn = conn.upgrade(shared_secret, &[0; 12]);
+
     let transport = Transport {
-        conn: RwLock::new(conn),
-        shared_secret,
+        conn: RwLock::new(upgraded_conn),
     };
 
     return Ok(transport);

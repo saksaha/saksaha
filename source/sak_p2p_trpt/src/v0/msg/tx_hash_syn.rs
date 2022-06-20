@@ -1,4 +1,4 @@
-use crate::{BoxedError, TX_HASH_ACK_TYPE, TX_HASH_SYN_TYPE, TX_SYN_TYPE};
+use crate::{BoxedError, TX_HASH_ACK_TYPE, TX_HASH_SYN_TYPE};
 use bytes::{BufMut, Bytes, BytesMut};
 use sak_p2p_frame::{Frame, Parse};
 

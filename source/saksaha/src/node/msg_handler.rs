@@ -1,14 +1,14 @@
 use crate::machine::Machine;
 use futures::{SinkExt, StreamExt};
 use log::{info, warn};
-use sak_p2p_trpt::{Connection, Msg, TxHashSync};
+use sak_p2p_trpt::{Msg, TxHashSync, UpgradedConnection};
 use tokio::sync::RwLockWriteGuard;
 
 pub(crate) async fn handle_msg<'a>(
     public_key: &str,
     msg: Msg,
     machine: &Machine,
-    conn: &'a mut RwLockWriteGuard<'_, Connection>,
+    conn: &'a mut RwLockWriteGuard<'_, UpgradedConnection>,
 ) {
     let req_hashes = match msg {
         Msg::TxHashSyn(tx_hash_sync) => {
