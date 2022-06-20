@@ -46,7 +46,11 @@ impl Blockchain {
             }
         };
 
-        let vm = VM {};
+        let vm = VM {
+            validator_contract: genesis_block.transactions[0]
+                .get_data()
+                .clone(),
+        };
 
         let tx_pool = {
             let t = TxPool::new();
@@ -139,5 +143,9 @@ impl Blockchain {
         }
 
         Ok(())
+    }
+
+    pub fn get_vm(&self) -> &VM {
+        &self.vm
     }
 }

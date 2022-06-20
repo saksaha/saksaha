@@ -22,11 +22,13 @@ impl Miner {
         loop {
             let time_since = SystemTime::now();
             // if self.machine.blockchain.tx_pool.has_diff() {
-            let is_next_validator = {
-                let _ret = self.machine.blockchain.query_contract();
+            let is_next_validator =
+                match self.machine.blockchain.get_vm().get_validator() {
+                    Ok(b) => b,
+                    Err(err) => return,
+                };
 
-                true
-            };
+            println!("{}", is_next_validator);
 
             if is_next_validator {
                 // let block = Block {
