@@ -33,7 +33,7 @@ pub mod for_test {
 
             let addr = DiscAddr {
                 known_addr: KnownAddr {
-                    ip: "0.0.0.0".to_string(),
+                    ip: "127.0.0.1".to_string(),
                     disc_port,
                     p2p_port,
                     sig,
