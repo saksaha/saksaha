@@ -2,7 +2,6 @@
 mod test {
     use crate::{Blockchain, BlockchainArgs};
     use sak_types::BlockCandidate;
-    use sak_types::ContractState;
     use sak_types::Hashable;
     use sak_types::Transaction;
 
@@ -86,12 +85,12 @@ mod test {
         ]
     }
 
-    fn make_dummy_state() -> ContractState {
-        ContractState::new(
-            String::from("0xcafecafe"),
-            vec![String::from("field_1"), String::from("field_2")],
-            vec![String::from("value_1"), String::from("value_2")],
-        )
+    fn make_dummy_state() -> (String, String, String) {
+        let contract_addr = String::from("0xa1a2a3a4");
+        let field_name = String::from("test_field_name");
+        let field_value = String::from("test_field_value");
+
+        (contract_addr, field_name, field_value)
     }
 
     #[tokio::test(flavor = "multi_thread")]
@@ -263,35 +262,17 @@ mod test {
         let blockchain = make_blockchain(gen_block).await;
         let db = blockchain.database;
 
-        let dummy_state = make_dummy_state();
+        let (contract_addr, field_name, field_value) = make_dummy_state();
 
-        let contract_addr = dummy_state.get_contract_addr();
-        let field_name = dummy_state.get_field_name();
-        let field_value = dummy_state.get_field_value();
-
-        // set
-        for iter in field_name.iter().zip(field_value.iter()) {
-            let (field_name, field_value) = iter;
-            db.set_contract_state(
-                contract_addr.clone(),
-                field_name.clone(),
-                field_value.clone(),
-            )
+        db.set_contract_state(&contract_addr, &field_name, &field_value)
             .await
             .expect("contract state should be saved");
-        }
 
-        // get
-        for iter in field_name.iter().zip(field_value.iter()) {
-            let (field_name, field_value) = iter;
-
-            assert_eq!(
-                // db.get_contract_state(&contract_addr, &"A".to_string())
-                db.get_contract_state(&contract_addr, field_name)
-                    .await
-                    .unwrap(),
-                field_value.clone(),
-            );
-        }
+        assert_eq!(
+            db.get_contract_state(&contract_addr, &field_name)
+                .await
+                .unwrap(),
+            field_value.clone(),
+        );
     }
 }

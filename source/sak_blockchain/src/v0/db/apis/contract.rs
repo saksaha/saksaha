@@ -1,14 +1,11 @@
-use sak_kv_db::WriteBatch;
-use sak_types::ContractState;
-
 use crate::{columns, Database};
+use sak_kv_db::WriteBatch;
 
 impl Database {
     pub(crate) async fn get_contract_state(
         &self,
-        // key
         contract_addr: &String,
-        field: &String,
+        field_name: &String,
     ) -> Result<String, String> {
         let db = &self.ledger_db.db_instance;
 
@@ -17,12 +14,12 @@ impl Database {
             None => {
                 return Err(format!(
                     "Fail to open ledger colums {}",
-                    columns::VALIDATOR_SIG
+                    columns::CONTRACT_STATE
                 ));
             }
         };
 
-        let key = format!("{}:{}", contract_addr, field);
+        let key = format!("{}:{}", contract_addr, field_name);
 
         let value = match db.get_cf(cf_handle, &key) {
             Ok(val) => match val {
@@ -37,7 +34,7 @@ impl Database {
                 },
                 None => {
                     return Err(format!(
-                        "No matched value with tx_hash in {}, {}",
+                        "No matched value with key in {}, key: {}",
                         columns::CONTRACT_STATE,
                         &key,
                     ));
@@ -58,10 +55,9 @@ impl Database {
 
     pub(crate) async fn set_contract_state(
         &self,
-        // state: &ContractState,
-        contract_addr: String,
-        field_name: String,
-        field_value: String,
+        contract_addr: &String,
+        field_name: &String,
+        field_value: &String,
     ) -> Result<String, String> {
         let db = &self.ledger_db.db_instance;
 
@@ -72,7 +68,7 @@ impl Database {
             None => {
                 return Err(format!(
                     "Fail to open ledger columns {}",
-                    columns::CREATED_AT
+                    columns::CONTRACT_STATE
                 ))
             }
         };

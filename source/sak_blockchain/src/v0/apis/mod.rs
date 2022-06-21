@@ -1,7 +1,7 @@
 use super::tx_pool::TxPool;
 use crate::{Blockchain, Database};
 use log::warn;
-use sak_types::{Block, ContractState, Transaction};
+use sak_types::{Block, Transaction};
 
 impl Blockchain {
     pub async fn query_contract(&self) -> Result<&[u8], String> {
@@ -85,9 +85,9 @@ impl Blockchain {
 
     pub async fn set_contract_state(
         &self,
-        contract_addr: String,
-        field_name: String,
-        field_value: String,
+        contract_addr: &String,
+        field_name: &String,
+        field_value: &String,
     ) -> Result<String, String> {
         self.database
             .set_contract_state(contract_addr, field_name, field_value)
@@ -97,8 +97,10 @@ impl Blockchain {
     pub async fn get_contract_state(
         &self,
         contract_addr: &String,
-        field: &String,
+        field_name: &String,
     ) -> Result<String, String> {
-        self.database.get_contract_state(contract_addr, field).await
+        self.database
+            .get_contract_state(contract_addr, field_name)
+            .await
     }
 }
