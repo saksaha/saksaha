@@ -1,5 +1,5 @@
 use crate::{blockchain, machine::Machine};
-use log::error;
+use log::{error, info};
 use sak_p2p_id::Identity;
 use std::{
     sync::Arc,
@@ -21,21 +21,21 @@ impl Miner {
             None => Duration::from_millis(MINE_INTERVAL),
         };
 
+        info!("Starting Miner, mine_interval: {:?}", mine_interval);
+
         loop {
             let time_since = SystemTime::now();
-            // if self.machine.blockchain.tx_pool.has_diff() {
 
             let is_next_validator = match blockchain::get_validator() {
-                Ok(b) => {
-                    println!("[query] query publickey: {}", &b);
-                    println!(
-                        "[query]    my publickey: {}",
-                        &self.identity.credential.public_key_str
+                Ok(b) => b.eq(&self.identity.credential.public_key_str),
+                Err(err) => {
+                    error!(
+                        "Fatal error. Error getting next validator, err: {}",
+                        err,
                     );
 
-                    b.eq(&self.identity.credential.public_key_str)
+                    return;
                 }
-                Err(err) => return,
             };
 
             println!("{}", is_next_validator);
