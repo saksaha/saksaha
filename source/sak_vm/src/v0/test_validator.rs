@@ -1,12 +1,14 @@
-use super::utils;
-use crate::{BoxedError, DEFAULT_VALIDATOR_HASHMAP_CAPACITY, MEMORY};
-use log::{error, info};
-use sak_contract_std::{Request, Storage};
-use std::collections::HashMap;
-use wasmtime::*;
+// use super::utils;
+// use crate::{BoxedError, DEFAULT_VALIDATOR_HASHMAP_CAPACITY, MEMORY};
+// use log::{error, info};
+// use sak_contract_std::{Request, Storage};
+// use std::collections::HashMap;
+// use wasmtime::*;
 
 // pub(crate) fn test_validator_init() -> Result<(), BoxedError> {
-//     let (instance, mut store) = match utils::create_instance(VALIDATOR) {
+//     let validator = include_bytes!("./sak_ctrt_validator.wasm");
+
+//     let (instance, mut store) = match utils::create_instance(validator) {
 //         Ok(r) => r,
 //         Err(err) => {
 //             return Err(
@@ -74,7 +76,10 @@ use wasmtime::*;
 // }
 
 // pub(crate) fn test_validator_query() -> Result<(), BoxedError> {
-//     let (instance, mut store) = match utils::create_instance(VALIDATOR) {
+//     let validator = include_bytes!("./sak_ctrt_validator.wasm");
+//     println!("{:?}", validator);
+
+//     let (instance, mut store) = match utils::create_instance(validator) {
 //         Ok(r) => r,
 //         Err(err) => {
 //             return Err(

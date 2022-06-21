@@ -1,5 +1,4 @@
-use super::tx_pool::TxPool;
-use crate::{Blockchain, Database};
+use crate::Blockchain;
 use log::warn;
 use sak_types::{Block, Transaction};
 

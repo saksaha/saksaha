@@ -3,9 +3,8 @@ use super::BlockchainEvent;
 use crate::Database;
 use crate::Runtime;
 use log::{error, info, warn};
-use sak_types::{BlockCandidate, Hashable, Transaction};
+use sak_types::BlockCandidate;
 use sak_vm::VM;
-use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::broadcast;
 use tokio::sync::{broadcast::Sender, RwLock};
@@ -139,5 +138,9 @@ impl Blockchain {
         }
 
         Ok(())
+    }
+
+    pub fn get_vm(&self) -> &VM {
+        &self.vm
     }
 }

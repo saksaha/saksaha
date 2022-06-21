@@ -1,5 +1,6 @@
-use crate::machine::Machine;
-use log::error;
+use crate::{blockchain, machine::Machine};
+use log::{error, info};
+use sak_p2p_id::Identity;
 use std::{
     sync::Arc,
     time::{Duration, SystemTime},
@@ -10,6 +11,7 @@ const MINE_INTERVAL: u64 = 5000;
 pub(super) struct Miner {
     pub(super) machine: Arc<Machine>,
     pub(super) mine_interval: Option<u64>,
+    pub(super) identity: Arc<Identity>,
 }
 
 impl Miner {
@@ -19,14 +21,24 @@ impl Miner {
             None => Duration::from_millis(MINE_INTERVAL),
         };
 
+        info!("Starting Miner, mine_interval: {:?}", mine_interval);
+
         loop {
             let time_since = SystemTime::now();
-            // if self.machine.blockchain.tx_pool.has_diff() {
-            let is_next_validator = {
-                let _ret = self.machine.blockchain.query_contract();
 
-                true
+            let is_next_validator = match blockchain::get_validator() {
+                Ok(b) => b.eq(&self.identity.credential.public_key_str),
+                Err(err) => {
+                    error!(
+                        "Fatal error. Error getting next validator, err: {}",
+                        err,
+                    );
+
+                    return;
+                }
             };
+
+            println!("{}", is_next_validator);
 
             if is_next_validator {
                 // let block = Block {

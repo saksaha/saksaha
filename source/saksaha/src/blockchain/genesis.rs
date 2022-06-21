@@ -1,13 +1,15 @@
 use sak_types::{BlockCandidate, Transaction};
-use std::collections::HashMap;
 
 pub(super) fn make_genesis_block() -> BlockCandidate {
+    let ctrt_bytes =
+        include_bytes!("../../../sak_vm/src/v0/sak_ctrt_validator.wasm");
+
     let genesis_block = BlockCandidate {
         validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
         transactions: vec![
             Transaction::new(
                 String::from("1"),
-                vec![11, 11, 11],
+                ctrt_bytes.to_vec(),
                 String::from("1"),
                 String::from("1"),
                 vec![11, 11, 11],

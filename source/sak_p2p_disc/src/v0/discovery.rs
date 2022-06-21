@@ -2,7 +2,7 @@ use super::addr_monitor_routine::AddrMonitorRoutine;
 use super::dial_scheduler::{DialScheduler, DialSchedulerArgs};
 use super::server::{Server, ServerArgs};
 use super::task::runtime::DiscTaskRuntime;
-use crate::{AddrTable, Connection};
+use crate::{AddrTable, Connection, DiscIdentity};
 use colored::Colorize;
 use log::info;
 use sak_p2p_addr::UnknownAddr;
@@ -65,8 +65,8 @@ impl Discovery {
             None => Duration::from_millis(ADDR_MONITOR_INTERVAL),
         };
 
-        let identity = {
-            let i = Identity {
+        let disc_identity = {
+            let i = DiscIdentity {
                 credential: disc_args.credential,
                 p2p_port: disc_args.p2p_port,
                 disc_port,
@@ -111,7 +111,7 @@ impl Discovery {
         let server = {
             let server_args = ServerArgs {
                 udp_conn: udp_conn.clone(),
-                identity: identity.clone(),
+                identity: disc_identity.clone(),
                 addr_table: addr_table.clone(),
                 addr_expire_duration,
             };
@@ -134,7 +134,7 @@ impl Discovery {
             let h = DiscTaskRuntime::new(
                 disc_task_queue.clone(),
                 disc_args.disc_task_interval,
-                identity.clone(),
+                disc_identity.clone(),
                 addr_table.clone(),
                 udp_conn.clone(),
             );

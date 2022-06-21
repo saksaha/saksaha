@@ -39,8 +39,7 @@ pub(crate) struct P2PHostArgs {
     pub(crate) p2p_port: u16,
     pub(crate) p2p_max_conn_count: Option<u16>,
     pub(crate) bootstrap_addrs: Vec<UnknownAddr>,
-    pub(crate) secret: String,
-    pub(crate) public_key_str: String,
+    pub(crate) credential: Arc<Credential>,
     pub(crate) peer_table: Arc<PeerTable>,
 }
 
@@ -48,20 +47,6 @@ impl P2PHost {
     pub(crate) async fn init(
         p2p_host_args: P2PHostArgs,
     ) -> Result<P2PHost, String> {
-        let credential = {
-            let id = Credential::new(
-                p2p_host_args.secret,
-                p2p_host_args.public_key_str,
-            )?;
-
-            info!(
-                "Created p2p identity, public_key_str: {}",
-                id.public_key_str.yellow(),
-            );
-
-            Arc::new(id)
-        };
-
         let (p2p_task_runtime, p2p_task_queue) = {
             let p2p_task_queue = {
                 let capacity = match p2p_host_args.p2p_task_queue_capacity {
@@ -81,7 +66,16 @@ impl P2PHost {
             (runtime, p2p_task_queue)
         };
 
-        let (p2p_discovery, disc_port) = {
+        let identity = {
+            let i = Identity {
+                credential: p2p_host_args.credential.clone(),
+                p2p_port: p2p_host_args.p2p_port,
+            };
+
+            Arc::new(i)
+        };
+
+        let (p2p_discovery, _disc_port) = {
             let disc_args = DiscoveryArgs {
                 addr_expire_duration: p2p_host_args.addr_expire_duration,
                 addr_monitor_interval: p2p_host_args.addr_monitor_interval,
@@ -90,7 +84,7 @@ impl P2PHost {
                 disc_task_interval: p2p_host_args.disc_task_interval,
                 disc_task_queue_capacity: p2p_host_args
                     .disc_task_queue_capacity,
-                credential: credential.clone(),
+                credential: p2p_host_args.credential.clone(),
                 disc_port: p2p_host_args.disc_port,
                 p2p_port: p2p_host_args.p2p_port,
                 bootstrap_addrs: p2p_host_args.bootstrap_addrs,
@@ -99,16 +93,6 @@ impl P2PHost {
             let (disc, disc_port) = Discovery::init(disc_args).await?;
 
             (Arc::new(disc), disc_port)
-        };
-
-        let identity = {
-            let i = Identity {
-                credential: credential.clone(),
-                p2p_port: p2p_host_args.p2p_port,
-                disc_port,
-            };
-
-            Arc::new(i)
         };
 
         let p2p_server = {
@@ -146,7 +130,6 @@ impl P2PHost {
             p2p_task_runtime,
             p2p_server,
             peer_table: p2p_host_args.peer_table.clone(),
-            // local_node: p2p_host_args.local_node,
         };
 
         Ok(host)
@@ -168,5 +151,9 @@ impl P2PHost {
         };
 
         monitor
+    }
+
+    pub(crate) fn get_identity(&self) -> Arc<Identity> {
+        self.p2p_server.get_identity()
     }
 }

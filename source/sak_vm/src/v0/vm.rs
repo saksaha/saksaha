@@ -1,7 +1,9 @@
 use crate::BoxedError;
 use log::{error, info};
 
-pub struct VM {}
+pub struct VM {
+    // pub validator_contract: Vec<u8>,
+}
 
 impl VM {
     pub fn run_vm(&self) -> Result<(), BoxedError> {
