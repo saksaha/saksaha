@@ -81,4 +81,25 @@ impl Blockchain {
     ) -> Vec<Transaction> {
         self.tx_pool.get_ack_txs(tx_hashes).await
     }
+
+    pub async fn set_contract_state(
+        &self,
+        contract_addr: &String,
+        field_name: &String,
+        field_value: &String,
+    ) -> Result<String, String> {
+        self.database
+            .set_contract_state(contract_addr, field_name, field_value)
+            .await
+    }
+
+    pub async fn get_contract_state(
+        &self,
+        contract_addr: &String,
+        field_name: &String,
+    ) -> Result<String, String> {
+        self.database
+            .get_contract_state(contract_addr, field_name)
+            .await
+    }
 }
