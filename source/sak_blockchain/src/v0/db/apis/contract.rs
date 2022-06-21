@@ -4,10 +4,11 @@ use sak_types::ContractState;
 use crate::{columns, Database};
 
 impl Database {
-    pub(crate) async fn get_contract_state_value(
+    pub(crate) async fn get_contract_state(
         &self,
         // key
-        contract_addr_and_field: &String,
+        contract_addr: &String,
+        field: &String,
     ) -> Result<String, String> {
         let db = &self.ledger_db.db_instance;
 
@@ -21,7 +22,9 @@ impl Database {
             }
         };
 
-        let value = match db.get_cf(cf_handle, &contract_addr_and_field) {
+        let key = format!("{}:{}", contract_addr, field);
+
+        let value = match db.get_cf(cf_handle, &key) {
             Ok(val) => match val {
                 Some(v) => match std::str::from_utf8(&v) {
                     Ok(vs) => vs.to_string(),
@@ -36,7 +39,7 @@ impl Database {
                     return Err(format!(
                         "No matched value with tx_hash in {}, {}",
                         columns::CONTRACT_STATE,
-                        &contract_addr_and_field,
+                        &key,
                     ));
                 }
             },
@@ -55,7 +58,10 @@ impl Database {
 
     pub(crate) async fn set_contract_state(
         &self,
-        state: &ContractState,
+        // state: &ContractState,
+        contract_addr: String,
+        field_name: String,
+        field_value: String,
     ) -> Result<String, String> {
         let db = &self.ledger_db.db_instance;
 
@@ -71,19 +77,9 @@ impl Database {
             }
         };
 
-        let contract_addr = state.get_contract_addr();
+        let key = format!("{}:{}", contract_addr, field_name);
 
-        for iter in state //
-            .get_field_name()
-            .iter()
-            .zip(state.get_field_value())
-        {
-            let (field, value) = iter;
-
-            let key = format!("{}:{}", contract_addr, (*field).clone());
-
-            batch.put_cf(cf_handle, key, (*value).clone());
-        }
+        batch.put_cf(cf_handle, key, field_value);
 
         match db.write(batch) {
             Ok(_) => return Ok("".to_string().clone()),

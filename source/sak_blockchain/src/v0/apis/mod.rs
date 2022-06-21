@@ -85,17 +85,20 @@ impl Blockchain {
 
     pub async fn set_contract_state(
         &self,
-        state: &ContractState,
-    ) -> Result<String, String> {
-        self.database.set_contract_state(state).await
-    }
-
-    pub async fn get_contract_state_value(
-        &self,
-        contract_addr_and_field: &String,
+        contract_addr: String,
+        field_name: String,
+        field_value: String,
     ) -> Result<String, String> {
         self.database
-            .get_contract_state_value(contract_addr_and_field)
+            .set_contract_state(contract_addr, field_name, field_value)
             .await
+    }
+
+    pub async fn get_contract_state(
+        &self,
+        contract_addr: &String,
+        field: &String,
+    ) -> Result<String, String> {
+        self.database.get_contract_state(contract_addr, field).await
     }
 }

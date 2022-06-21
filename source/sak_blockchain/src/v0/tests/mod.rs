@@ -256,7 +256,7 @@ mod test {
     }
 
     #[tokio::test(flavor = "multi_thread")]
-    async fn test_save_a_contract_state_to_db() {
+    async fn test_set_and_get_contract_state_to_db() {
         init();
 
         let gen_block = make_dummy_genesis_block();
@@ -269,17 +269,27 @@ mod test {
         let field_name = dummy_state.get_field_name();
         let field_value = dummy_state.get_field_value();
 
-        db.set_contract_state(&dummy_state)
+        // set
+        for iter in field_name.iter().zip(field_value.iter()) {
+            let (field_name, field_value) = iter;
+            db.set_contract_state(
+                contract_addr.clone(),
+                field_name.clone(),
+                field_value.clone(),
+            )
             .await
             .expect("contract state should be saved");
+        }
 
+        // get
         for iter in field_name.iter().zip(field_value.iter()) {
             let (field_name, field_value) = iter;
 
-            let key = format!("{}:{}", contract_addr, field_name);
-
             assert_eq!(
-                db.get_contract_state_value(&key).await.unwrap(),
+                // db.get_contract_state(&contract_addr, &"A".to_string())
+                db.get_contract_state(&contract_addr, field_name)
+                    .await
+                    .unwrap(),
                 field_value.clone(),
             );
         }
