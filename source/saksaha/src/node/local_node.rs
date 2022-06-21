@@ -16,13 +16,13 @@ impl LocalNode {
     pub(crate) async fn run(&self) {
         let machine = self.machine.clone();
         let mine_interval = self.mine_interval.clone();
-        let public_key_str = self.identity.credential.public_key_str.clone();
+        let identity = self.identity.clone();
 
         tokio::spawn(async move {
             let miner = Miner {
                 machine,
                 mine_interval,
-                public_key_str,
+                identity,
             };
 
             miner.run().await;
