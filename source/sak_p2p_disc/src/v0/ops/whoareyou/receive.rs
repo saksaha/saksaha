@@ -1,5 +1,5 @@
 use super::{check, WhoAreYou};
-use crate::{AddrTable, Connection, DiscAddr, Msg};
+use crate::{AddrTable, Connection, DiscAddr, DiscIdentity, Msg};
 use chrono::Utc;
 use futures::sink::SinkExt;
 use log::error;
@@ -40,7 +40,7 @@ pub(crate) async fn recv_who_are_you(
     socket_addr: SocketAddr,
     udp_conn: Arc<Connection>,
     way_syn: WhoAreYou,
-    identity: Arc<Identity>,
+    identity: Arc<DiscIdentity>,
     addr_table: Arc<AddrTable>,
 ) -> Result<(), WhoAreYouRecvError> {
     let WhoAreYou {

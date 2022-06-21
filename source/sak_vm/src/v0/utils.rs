@@ -67,7 +67,7 @@ pub(crate) fn copy_memory(
 pub(crate) fn create_instance(
     wasm: impl AsRef<[u8]>,
 ) -> Result<(Instance, Store<i32>), BoxedError> {
-    // let wasm_bytes = include_bytes!("./sak_ctrt_validator.wasm");
+    // let wasm = include_bytes!("./sak_ctrt_validator.wasm");
 
     let engine =
         Engine::new(Config::new().wasm_multi_value(true).debug_info(true))?;

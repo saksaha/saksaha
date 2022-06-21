@@ -12,6 +12,7 @@ use crate::rpc::RPC;
 use crate::system::SystemHandle;
 use colored::Colorize;
 use log::{error, info};
+use sak_p2p_id::Credential;
 use sak_p2p_ptable::PeerTable;
 use std::sync::Arc;
 
@@ -127,6 +128,18 @@ impl Routine {
                 }
             };
 
+        let credential = {
+            let c =
+                Credential::new(config.p2p.secret, config.p2p.public_key_str)?;
+
+            info!(
+                "Created credential, public_key_str: {}",
+                c.public_key_str.yellow(),
+            );
+
+            Arc::new(c)
+        };
+
         let p2p_host = {
             let p2p_host_args = P2PHostArgs {
                 addr_expire_duration: config.p2p.addr_expire_duration,
@@ -143,8 +156,7 @@ impl Routine {
                 p2p_max_conn_count: config.p2p.p2p_max_conn_count,
                 p2p_port,
                 bootstrap_addrs: config.p2p.bootstrap_addrs,
-                secret: config.p2p.secret,
-                public_key_str: config.p2p.public_key_str,
+                credential: credential.clone(),
                 peer_table: peer_table.clone(),
             };
 
@@ -157,6 +169,7 @@ impl Routine {
                 config.blockchain.tx_pool_sync_interval,
             )
             .await?;
+
             b
         };
 
@@ -172,6 +185,7 @@ impl Routine {
                 machine: machine.clone(),
                 miner: config.node.miner,
                 mine_interval: config.node.mine_interval,
+                identity: p2p_host.get_identity(),
             };
 
             ln

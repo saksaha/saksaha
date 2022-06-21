@@ -1,12 +1,12 @@
 use super::DiscoveryTask;
-use crate::{whoareyou, AddrTable, Connection};
+use crate::{whoareyou, AddrTable, Connection, DiscIdentity};
 use sak_logger::tdebug;
 use sak_p2p_id::Identity;
 use std::sync::Arc;
 
 pub(crate) async fn run(
     task: DiscoveryTask,
-    identity: Arc<Identity>,
+    identity: Arc<DiscIdentity>,
     addr_table: Arc<AddrTable>,
     udp_conn: Arc<Connection>,
 ) {

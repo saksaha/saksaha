@@ -1,5 +1,5 @@
 use super::{check, WhoAreYou};
-use crate::{AddrTable, Connection, DiscAddr, Msg};
+use crate::{AddrTable, Connection, DiscAddr, DiscIdentity, Msg};
 use chrono::Utc;
 use futures::SinkExt;
 use sak_p2p_addr::{AddrStatus, KnownAddr, UnknownAddr};
@@ -28,7 +28,7 @@ pub(crate) enum WhoAreYouInitError {
 
 pub(crate) async fn init_who_are_you(
     unknown_addr: UnknownAddr,
-    identity: Arc<Identity>,
+    identity: Arc<DiscIdentity>,
     addr_table: Arc<AddrTable>,
     udp_conn: Arc<Connection>,
 ) -> Result<(), WhoAreYouInitError> {
@@ -86,7 +86,7 @@ pub(crate) async fn handle_who_are_you_ack(
     way_ack: WhoAreYou,
     socket_addr: SocketAddr,
     _udp_conn: Arc<Connection>,
-    _identity: Arc<Identity>,
+    _identity: Arc<DiscIdentity>,
     addr_table: Arc<AddrTable>,
 ) -> Result<(), String> {
     let WhoAreYou {

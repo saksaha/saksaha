@@ -1,6 +1,6 @@
 use crate::{
     whoareyou::{self, WhoAreYouRecvError},
-    AddrTable, BoxedError, Connection, Msg,
+    AddrTable, BoxedError, Connection, DiscIdentity, Msg,
 };
 use log::warn;
 use sak_p2p_id::Identity;
@@ -17,7 +17,7 @@ impl Handler {
         msg: Msg,
         socket_addr: SocketAddr,
         udp_conn: Arc<Connection>,
-        identity: Arc<Identity>,
+        identity: Arc<DiscIdentity>,
         addr_table: Arc<AddrTable>,
         _addr_expire_duration: Duration,
     ) -> Result<(), BoxedError> {
