@@ -23,9 +23,9 @@ impl Database {
 pub(crate) fn init_ledger_db(
     app_prefix: &String,
 ) -> Result<KeyValueDatabase, BoxedError> {
-    let tx_db_path = {
+    let ledger_db_path = {
         let app_path = FS::create_or_get_app_path(app_prefix)?;
-        let db_path = { app_path.join("db").join("tx") };
+        let db_path = { app_path.join("db").join("ledger") };
 
         db_path
     };
@@ -40,17 +40,17 @@ pub(crate) fn init_ledger_db(
 
     let cf_descriptors = make_ledger_db_cf_descriptors();
 
-    let kv_db = match KeyValueDatabase::new(tx_db_path, options, cf_descriptors)
-    {
-        Ok(d) => d,
-        Err(err) => {
-            return Err(format!(
-                "Error initializing key value database, err: {}",
-                err
-            )
-            .into());
-        }
-    };
+    let kv_db =
+        match KeyValueDatabase::new(ledger_db_path, options, cf_descriptors) {
+            Ok(d) => d,
+            Err(err) => {
+                return Err(format!(
+                    "Error initializing key value database, err: {}",
+                    err
+                )
+                .into());
+            }
+        };
 
     Ok(kv_db)
 }
@@ -68,6 +68,7 @@ fn make_ledger_db_cf_descriptors() -> Vec<ColumnFamilyDescriptor> {
         (columns::WITNESS_SIGS, Options::default()),
         (columns::HEIGHT, Options::default()),
         (columns::BLOCK_HASH, Options::default()),
+        (columns::CONTRACT_STATE, Options::default()),
     ];
 
     let cf = columns

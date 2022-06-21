@@ -85,6 +85,14 @@ mod test {
         ]
     }
 
+    fn make_dummy_state() -> (String, String, String) {
+        let contract_addr = String::from("0xa1a2a3a4");
+        let field_name = String::from("test_field_name");
+        let field_value = String::from("test_field_value");
+
+        (contract_addr, field_name, field_value)
+    }
+
     #[tokio::test(flavor = "multi_thread")]
     async fn test_put_and_get_transaction() {
         init();
@@ -244,5 +252,27 @@ mod test {
 
             assert_eq!(tx_hash, tx.get_hash());
         }
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn test_set_and_get_contract_state_to_db() {
+        init();
+
+        let gen_block = make_dummy_genesis_block();
+        let blockchain = make_blockchain(gen_block).await;
+        let db = blockchain.database;
+
+        let (contract_addr, field_name, field_value) = make_dummy_state();
+
+        db.set_contract_state(&contract_addr, &field_name, &field_value)
+            .await
+            .expect("contract state should be saved");
+
+        assert_eq!(
+            db.get_contract_state(&contract_addr, &field_name)
+                .await
+                .unwrap(),
+            field_value.clone(),
+        );
     }
 }
