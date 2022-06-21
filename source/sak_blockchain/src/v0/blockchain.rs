@@ -3,9 +3,8 @@ use super::BlockchainEvent;
 use crate::Database;
 use crate::Runtime;
 use log::{error, info, warn};
-use sak_types::{BlockCandidate, Hashable, Transaction};
+use sak_types::BlockCandidate;
 use sak_vm::VM;
-use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::broadcast;
 use tokio::sync::{broadcast::Sender, RwLock};
@@ -46,11 +45,7 @@ impl Blockchain {
             }
         };
 
-        let vm = VM {
-            validator_contract: genesis_block.transactions[0]
-                .get_data()
-                .clone(),
-        };
+        let vm = VM {};
 
         let tx_pool = {
             let t = TxPool::new();

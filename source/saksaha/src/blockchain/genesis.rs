@@ -1,5 +1,4 @@
 use sak_types::{BlockCandidate, Transaction};
-use std::collections::HashMap;
 
 pub(super) fn make_genesis_block() -> BlockCandidate {
     let ctrt_bytes =

@@ -1,4 +1,4 @@
-use crate::machine::Machine;
+use crate::{blockchain::get_validator, machine::Machine};
 use log::error;
 use std::{
     sync::Arc,
@@ -23,13 +23,17 @@ impl Miner {
         loop {
             let time_since = SystemTime::now();
             // if self.machine.blockchain.tx_pool.has_diff() {
-            let is_next_validator = match self
-                .machine
-                .blockchain
-                .get_vm()
-                .get_validator(&self.public_key_str)
-            {
-                Ok(b) => b,
+
+            let is_next_validator = match get_validator() {
+                Ok(b) => {
+                    println!("[query] query publickey: {}", &b);
+                    println!(
+                        "[query]    my publickey: {}",
+                        &self.public_key_str
+                    );
+
+                    b.eq(&self.public_key_str)
+                }
                 Err(err) => return,
             };
 

@@ -146,7 +146,6 @@ impl P2PHost {
             p2p_task_runtime,
             p2p_server,
             peer_table: p2p_host_args.peer_table.clone(),
-            // local_node: p2p_host_args.local_node,
         };
 
         Ok(host)
@@ -168,5 +167,9 @@ impl P2PHost {
         };
 
         monitor
+    }
+
+    pub(crate) fn get_identity(&self) -> Arc<Identity> {
+        self.p2p_server.get_identity()
     }
 }

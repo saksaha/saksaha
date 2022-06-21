@@ -157,6 +157,7 @@ impl Routine {
                 config.blockchain.tx_pool_sync_interval,
             )
             .await?;
+
             b
         };
 
@@ -172,7 +173,7 @@ impl Routine {
                 machine: machine.clone(),
                 miner: config.node.miner,
                 mine_interval: config.node.mine_interval,
-                public_key_str: config.p2p.public_key_str,
+                identity: p2p_host.get_identity(),
             };
 
             ln

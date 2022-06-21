@@ -1,8 +1,8 @@
-use crate::{test_validator_init, test_validator_query, BoxedError};
+use crate::BoxedError;
 use log::{error, info};
 
 pub struct VM {
-    pub validator_contract: Vec<u8>,
+    // pub validator_contract: Vec<u8>,
 }
 
 impl VM {
