@@ -18,13 +18,12 @@ impl PeerNode {
     pub(in crate::node) async fn run(&mut self) {
         debug!(
             "Peer is registered as a peer node. Starting the routine, \
-        public_key: {}",
+            public_key: {}",
             self.peer.public_key_short()
         );
 
         loop {
             let mut conn = &mut self.peer.transport.conn.write().await;
-            // let mut bc_event_rx = machine.blockchain.bc_event_rx.write().await;
             let public_key = self.peer.public_key_short();
 
             tokio::select! {
@@ -45,7 +44,11 @@ impl PeerNode {
                         Some(maybe_msg) => match maybe_msg {
                             Ok(msg) => {
                                 let _ = msg_handler::handle_msg(
-                                    public_key, msg, &self.machine, &mut conn).await;
+                                    public_key,
+                                    msg,
+                                    &self.machine,
+                                    &mut conn,
+                                ).await;
                             }
                             Err(err) => {
                                 warn!("Failed to parse the msg, err: {}", err);

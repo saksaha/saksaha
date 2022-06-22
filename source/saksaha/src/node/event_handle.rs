@@ -21,7 +21,7 @@ pub(super) async fn handle_tx_pool_stat<'a>(
         .await
     {
         Ok(_) => {
-            info!("Sending TxHashSyn, public_key: {}", public_key);
+            info!("Sending TxHashSyn, dst public_key: {}", public_key);
         }
         Err(err) => {
             warn!(
@@ -36,7 +36,11 @@ pub(super) async fn handle_tx_pool_stat<'a>(
 
     let txs = tokio::select! {
         _ = resp_timeout => {
-            warn!("Peer did not respond in time, public_key: {}", public_key);
+            warn!(
+                "Peer did not respond in time, dst public_key: {}",
+                public_key,
+            );
+
             return;
         },
         resp = conn.socket.next() => {
@@ -46,13 +50,18 @@ pub(super) async fn handle_tx_pool_stat<'a>(
                         Msg::TxHashAck(h) => {
                             let txs = machine
                                 .blockchain
-                                .get_ack_txs_from_pool(h.tx_hashes)
+                                .get_txs_from_pool(h.tx_hashes)
                                 .await;
 
                             txs
                         }
-                        _ => {
-                            warn!("Received an invalid type message");
+                        other_msg => {
+                            // tx_hash_syn
+                            warn!(
+                                "Received an invalid type message, msg: {:?}",
+                                other_msg,
+                            );
+
                             return;
                         }
                     },
@@ -69,12 +78,14 @@ pub(super) async fn handle_tx_pool_stat<'a>(
         },
     };
 
-    match conn.socket.send(Msg::TxSyn(TxSyn { txs })).await {
-        Ok(_) => {
-            info!("Sending TxSyn, public_key: {}", public_key);
-        }
-        Err(err) => {
-            info!("Failed to send requested tx, err: {}", err,);
+    if !txs.is_empty() {
+        match conn.socket.send(Msg::TxSyn(TxSyn { txs })).await {
+            Ok(_) => {
+                info!("Sending TxSyn, public_key: {}", public_key);
+            }
+            Err(err) => {
+                info!("Failed to send requested tx, err: {}", err,);
+            }
         }
     }
 }

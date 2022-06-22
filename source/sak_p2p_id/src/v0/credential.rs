@@ -45,7 +45,6 @@ impl Credential {
 
             let mut buf = [0; 65];
             buf.clone_from_slice(&b);
-
             let pk_encoded = sak_crypto::encode_hex(&b);
             if pk_encoded != public_key_str {
                 return Err(format!(

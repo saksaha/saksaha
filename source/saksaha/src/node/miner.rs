@@ -38,7 +38,7 @@ impl Miner {
                 }
             };
 
-            println!("{}", is_next_validator);
+            // info!("is_next_validator: {}", is_next_validator);
 
             if is_next_validator {
                 // let block = Block {

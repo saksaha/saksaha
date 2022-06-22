@@ -11,7 +11,7 @@ impl Blockchain {
         Ok(&[])
     }
 
-    pub async fn contains_in_tx_pool(&self, tx_hash: &String) -> bool {
+    pub async fn tx_pool_contains(&self, tx_hash: &String) -> bool {
         self.tx_pool.contains(tx_hash).await
     }
 
@@ -57,7 +57,24 @@ impl Blockchain {
     }
 
     pub async fn write_block(&self, block: Block) -> Result<String, String> {
-        self.database.write_block(block).await
+        let tx_hashes = block.get_tx_hashes();
+
+        let block_hash = match self.database.write_block(&block).await {
+            Ok(h) => h,
+            Err(err) => {
+                return Err(err);
+            }
+        };
+
+        match self.tx_pool.remove_txs(tx_hashes).await {
+            Ok(_) => {}
+            Err(_err) => {
+                // TODO
+                // self.database.remove_block(block_hash);
+            }
+        };
+
+        Ok(block_hash)
     }
 
     pub fn delete_tx(&self, key: &String) -> Result<(), String> {
@@ -75,11 +92,11 @@ impl Blockchain {
         self.tx_pool.get_tx_pool_diff(tx_hashes).await
     }
 
-    pub async fn get_ack_txs_from_pool(
+    pub async fn get_txs_from_pool(
         &self,
         tx_hashes: Vec<String>,
     ) -> Vec<Transaction> {
-        self.tx_pool.get_ack_txs(tx_hashes).await
+        self.tx_pool.get_txs(tx_hashes).await
     }
 
     pub async fn set_contract_state(
@@ -101,5 +118,16 @@ impl Blockchain {
         self.database
             .get_contract_state(contract_addr, field_name)
             .await
+    }
+
+    pub async fn get_txs_from_tx_pool(
+        &self,
+    ) -> (Vec<String>, Vec<Transaction>) {
+        let (h, t) = self.tx_pool.get_tx_pool().await;
+        (h, t)
+    }
+
+    pub fn get_gen_block_hash(&self) -> &Option<String> {
+        &self.gen_block_hash
     }
 }

@@ -6,7 +6,7 @@ use std::{
 };
 use tokio::sync::{broadcast::Sender, RwLock};
 
-const TX_POOL_SYNC_INTERVAL: u64 = 3000;
+const TX_POOL_SYNC_INTERVAL: u64 = 1000;
 
 pub struct Runtime {
     tx_pool: Arc<TxPool>,
@@ -35,8 +35,9 @@ impl Runtime {
     pub(crate) async fn run(&self) {
         loop {
             let time_since = SystemTime::now();
-
             let new_tx_hashes = self.tx_pool.get_new_tx_hashes().await;
+
+            // println!("new_tx_hashes :{:?}", new_tx_hashes);
 
             if new_tx_hashes.len() > 0 {
                 match self

@@ -260,19 +260,13 @@ impl Database {
 
     pub(crate) async fn write_block(
         &self,
-        block: Block,
+        block: &Block,
     ) -> Result<String, String> {
         let db = &self.ledger_db.db_instance;
 
         let mut batch = WriteBatch::default();
 
         let block_hash = block.get_hash();
-
-        debug!(
-            "write_block(): created_at: {}, block_hash: {}",
-            block.get_created_at(),
-            block_hash,
-        );
 
         let cf_handle = match db.cf_handle(columns::VALIDATOR_SIG) {
             Some(h) => h,

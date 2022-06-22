@@ -10,21 +10,16 @@ pub(crate) async fn handle_msg<'a>(
     machine: &Machine,
     conn: &'a mut RwLockWriteGuard<'_, UpgradedConnection>,
 ) {
-    let req_hashes = match msg {
+    let txs_to_request = match msg {
         Msg::TxHashSyn(tx_hash_sync) => {
-            info!("Handle TxHashSyn msg, public_key: {}", public_key);
+            info!("Handle TxHashSyn msg, src public_key: {}", public_key);
 
-            let req_hashes = machine
+            let txs_to_request = machine
                 .blockchain
                 .get_tx_pool_diff(tx_hash_sync.tx_hashes)
                 .await;
 
-            if req_hashes.is_empty() {
-                // warn!("No difference, no need to request");
-                return;
-            }
-
-            req_hashes
+            txs_to_request
         }
         Msg::TxSyn(_) => {
             warn!("Peer has sent invalid type message, type: TxSyn");
@@ -44,7 +39,7 @@ pub(crate) async fn handle_msg<'a>(
     match conn
         .socket
         .send(Msg::TxHashAck(TxHashSync {
-            tx_hashes: req_hashes,
+            tx_hashes: txs_to_request,
         }))
         .await
     {
@@ -58,12 +53,15 @@ pub(crate) async fn handle_msg<'a>(
         Some(maybe_msg) => match maybe_msg {
             Ok(msg) => match msg {
                 Msg::TxSyn(h) => {
-                    info!("Handling TxSyn msg, public_key: {}", public_key);
+                    info!("Handling TxSyn msg, src public_key: {}", public_key);
 
                     machine.blockchain.insert_into_pool(h.txs).await;
                 }
-                _ => {
-                    warn!("Received an invalid type message");
+                other_msg => {
+                    warn!(
+                        "Received an invalid type message, msg: {:?}",
+                        other_msg,
+                    );
                 }
             },
             Err(err) => {
