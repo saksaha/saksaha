@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod test {
     use crate::{Blockchain, BlockchainArgs};
+    use sak_types::Block;
     use sak_types::BlockCandidate;
     use sak_types::Hashable;
     use sak_types::Transaction;
@@ -37,8 +38,6 @@ mod test {
     }
 
     async fn make_blockchain(gen_block: BlockCandidate) -> Blockchain {
-        println!("(ToBeDeleted) Genesis Block : {:?}", gen_block);
-
         let blockchain_args = BlockchainArgs {
             app_prefix: String::from("test"),
             tx_pool_sync_interval: None,
@@ -190,15 +189,12 @@ mod test {
         init();
 
         let gen_block = make_dummy_genesis_block();
-        let (block, _) = gen_block.extract();
-        let gen_block_hash = block.get_hash();
-
         let blockchain = make_blockchain(gen_block).await;
 
-        let gen_block = match blockchain.get_block(gen_block_hash).await {
-            Ok(b) => b,
-            Err(err) => panic!("Error : {}", err),
-        };
+        let gen_block_hash = blockchain
+            .get_gen_block_hash()
+            .as_ref()
+            .expect("Genesis block should have been inserted");
 
         let gen_block_by_height =
             match blockchain.get_block_by_height(String::from("0")).await {
@@ -206,23 +202,9 @@ mod test {
                 Err(err) => panic!("Error : {}", err),
             };
 
-        let gen_tx_by_height_hashes = gen_block_by_height.get_hash();
+        let gen_block_hash_2 = gen_block_by_height.get_hash();
 
-        let get_gen_hash = gen_block.get_hash();
-
-        let gen_tx_hashes = gen_block.get_tx_hashes();
-
-        assert_eq!(get_gen_hash, gen_block_hash);
-        assert_eq!(get_gen_hash, gen_tx_by_height_hashes);
-
-        for tx_hash in gen_tx_hashes {
-            let tx = match blockchain.get_transaction(tx_hash).await {
-                Ok(t) => t,
-                Err(err) => panic!("Error : {}", err),
-            };
-
-            assert_eq!(tx_hash, tx.get_hash());
-        }
+        assert_eq!(gen_block_hash, gen_block_hash_2);
     }
 
     #[tokio::test(flavor = "multi_thread")]
@@ -230,15 +212,13 @@ mod test {
         init();
 
         let gen_block = make_dummy_genesis_block();
-        let (block, _) = gen_block.extract();
-        let gen_block_hash = block.get_hash();
-
         let blockchain = make_blockchain(gen_block).await;
 
-        let gen_block = match blockchain.get_block(gen_block_hash).await {
-            Ok(b) => b,
-            Err(err) => panic!("Error : {}", err),
-        };
+        let gen_block =
+            match blockchain.get_block_by_height(String::from("0")).await {
+                Ok(b) => b,
+                Err(err) => panic!("Error : {}", err),
+            };
 
         let get_gen_hash = gen_block.get_hash();
         let gen_tx_hashes = gen_block.get_tx_hashes();

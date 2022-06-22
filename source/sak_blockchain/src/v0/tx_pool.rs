@@ -5,7 +5,7 @@ use tokio::sync::RwLock;
 
 const TX_POOL_CAPACITY: usize = 100;
 
-pub struct TxPool {
+pub(crate) struct TxPool {
     new_tx_hashes: RwLock<HashSet<String>>,
     tx_map: RwLock<HashMap<String, Transaction>>,
 }
@@ -29,15 +29,28 @@ impl TxPool {
         }
     }
 
-    pub async fn get_new_tx_hashes(&self) -> Vec<String> {
+    pub(crate) async fn get_new_tx_hashes(&self) -> Vec<String> {
         let mut new_tx_hashes_lock = self.new_tx_hashes.write().await;
 
         let v: Vec<_> = new_tx_hashes_lock.drain().collect();
         v
     }
 
+    pub(crate) async fn get_tx_pool(&self) -> (Vec<String>, Vec<Transaction>) {
+        let tx_map_lock = self.tx_map.read().await;
+        let mut hashes = vec![];
+        let mut txs = vec![];
+
+        for (k, v) in tx_map_lock.iter() {
+            hashes.push(k.clone());
+            txs.push(v.clone());
+        }
+
+        (hashes, txs)
+    }
+
     // Returns hashes of transactions that I do not have
-    pub async fn get_tx_pool_diff(
+    pub(crate) async fn get_tx_pool_diff(
         &self,
         tx_hashes: Vec<String>,
     ) -> Vec<String> {
@@ -54,7 +67,7 @@ impl TxPool {
         return ret;
     }
 
-    pub async fn insert(&self, tx: Transaction) -> Result<(), String> {
+    pub(crate) async fn insert(&self, tx: Transaction) -> Result<(), String> {
         let tx_hash = tx.get_hash();
 
         let mut tx_map_lock = self.tx_map.write().await;
@@ -66,12 +79,41 @@ impl TxPool {
         };
 
         let mut new_tx_hashes_lock = self.new_tx_hashes.write().await;
-        new_tx_hashes_lock.insert(tx_hash.clone());
+        new_tx_hashes_lock.insert(tx_hash.to_string());
 
         Ok(())
     }
 
-    pub async fn get_ack_txs(
+    pub(crate) async fn remove_txs(
+        &self,
+        tx_hashes: &Vec<String>,
+    ) -> Result<Vec<String>, String> {
+        let mut tx_map_lock = self.tx_map.write().await;
+        let mut diff_hashes = vec![];
+
+        for tx_hash in tx_hashes.iter() {
+            if tx_map_lock.contains_key(tx_hash) {
+                let _tx = match tx_map_lock.remove(tx_hash) {
+                    Some(v) => v,
+                    None => {
+                        return Err(format!(
+                            "Can't remove tx having the tx_hash :{}",
+                            tx_hash
+                        ))
+                    }
+                };
+            } else {
+                diff_hashes.push(tx_hash.to_string());
+            };
+        }
+
+        let a = tx_map_lock.values().len();
+        println!("rest len: {}", a);
+
+        Ok(diff_hashes)
+    }
+
+    pub(crate) async fn get_txs(
         &self,
         tx_hashes: Vec<String>,
     ) -> Vec<Transaction> {
