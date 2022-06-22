@@ -1,7 +1,7 @@
 use super::{miner::Miner, peer_node::PeerNode};
 use crate::machine::Machine;
 use log::info;
-use sak_p2p_id::Identity;
+use sak_p2p_id::Credential;
 use sak_p2p_ptable::PeerTable;
 use std::sync::Arc;
 
@@ -10,21 +10,21 @@ pub(crate) struct LocalNode {
     pub(crate) machine: Arc<Machine>,
     pub(crate) miner: bool,
     pub(crate) mine_interval: Option<u64>,
-    pub(crate) identity: Arc<Identity>,
+    pub(crate) credential: Arc<Credential>,
 }
 
 impl LocalNode {
     pub(crate) async fn run(&self) {
         let machine = self.machine.clone();
         let mine_interval = self.mine_interval.clone();
-        let identity = self.identity.clone();
+        let credential = self.credential.clone();
 
         if self.miner {
             tokio::spawn(async move {
                 let miner = Miner {
                     machine,
                     mine_interval,
-                    identity,
+                    credential,
                 };
 
                 miner.run().await;

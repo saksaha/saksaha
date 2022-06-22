@@ -2,13 +2,24 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
 pub struct Transaction {
+    //
     created_at: String,
+
+    //
     #[serde(with = "serde_bytes")]
     data: Vec<u8>,
+
+    //
     pi: String,
+
+    //
     signature: String,
+
+    //
     #[serde(with = "serde_bytes")]
-    contract: Vec<u8>,
+    contract_addr: Vec<u8>,
+
+    // auto-generated value
     hash: String,
 }
 
@@ -24,14 +35,25 @@ impl Transaction {
         data: Vec<u8>,
         pi: String,
         signature: String,
-        contract: Vec<u8>,
+        contract_addr: Option<Vec<u8>>,
     ) -> Transaction {
+        let contract_addr = {
+            let mut v = vec![];
+
+            match contract_addr {
+                Some(a) => v.clone_from_slice(&a),
+                None => {}
+            };
+
+            v
+        };
+
         let hash = sak_crypto::compute_hash(&[
             created_at.as_bytes(),
             data.as_slice(),
             pi.as_bytes(),
             signature.as_bytes(),
-            contract.as_slice(),
+            contract_addr.as_slice(),
         ]);
 
         Transaction {
@@ -39,7 +61,7 @@ impl Transaction {
             data,
             pi,
             signature,
-            contract,
+            contract_addr,
             hash,
         }
     }
@@ -60,21 +82,21 @@ impl Transaction {
         &self.signature
     }
 
-    pub fn get_contract(&self) -> &Vec<u8> {
-        &self.contract
+    pub fn get_contract_addr(&self) -> &Vec<u8> {
+        &self.contract_addr
     }
 
     pub fn get_hash(&self) -> &String {
         &self.hash
     }
 
-    fn __now_unused_get_tx_type(&self) -> TxType {
-        let has_contract = self.contract.len() > 0;
+    // fn __now_unused_get_tx_type(&self) -> TxType {
+    //     let has_contract = self.contract_addr.len() > 0;
 
-        if has_contract {
-            return TxType::ContractCall;
-        }
+    //     if has_contract {
+    //         return TxType::ContractCall;
+    //     }
 
-        TxType::Others
-    }
+    //     TxType::Others
+    // }
 }

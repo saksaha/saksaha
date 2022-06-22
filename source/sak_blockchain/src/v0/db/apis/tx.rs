@@ -69,7 +69,7 @@ impl Database {
                 ))
             }
         };
-        batch.put_cf(cf_handle, tx_hash, tx.get_contract());
+        batch.put_cf(cf_handle, tx_hash, tx.get_contract_addr());
 
         match db.write(batch) {
             Ok(_) => return Ok(tx_hash.clone()),
@@ -144,7 +144,7 @@ impl Database {
             tx_value_result[1].as_bytes().to_vec(),
             tx_value_result[2].clone(),
             tx_value_result[3].clone(),
-            tx_value_result[4].as_bytes().to_vec(),
+            Some(tx_value_result[4].as_bytes().to_vec()),
         ))
     }
 

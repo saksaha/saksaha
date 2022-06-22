@@ -3,8 +3,6 @@ use super::task::runtime::P2PTaskRuntime;
 use super::task::P2PTask;
 use super::P2PMonitor;
 use super::{dial_scheduler::P2PDialScheduler, server::Server};
-use colored::Colorize;
-use log::info;
 use sak_p2p_addr::UnknownAddr;
 use sak_p2p_disc::{Discovery, DiscoveryArgs};
 use sak_p2p_id::{Credential, Identity};
@@ -151,9 +149,5 @@ impl P2PHost {
         };
 
         monitor
-    }
-
-    pub(crate) fn get_identity(&self) -> Arc<Identity> {
-        self.p2p_server.get_identity()
     }
 }

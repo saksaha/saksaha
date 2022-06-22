@@ -185,7 +185,7 @@ impl Routine {
                 machine: machine.clone(),
                 miner: config.node.miner,
                 mine_interval: config.node.mine_interval,
-                identity: p2p_host.get_identity(),
+                credential,
             };
 
             ln

@@ -35,12 +35,18 @@ impl TxSyn {
                     std::str::from_utf8(k.as_ref())?.into()
                 };
 
-                let contract = {
+                let contract_addr = {
                     let p = parse.next_bytes()?;
                     p.to_vec()
                 };
 
-                Transaction::new(created_at, data, pi, signature, contract)
+                Transaction::new(
+                    created_at,
+                    data,
+                    pi,
+                    signature,
+                    Some(contract_addr),
+                )
             };
 
             txs.push(tx);
@@ -84,7 +90,7 @@ impl TxSyn {
             frame.push_bulk(Bytes::from(created_at_bytes));
             frame.push_bulk(Bytes::from(pi_bytes));
             frame.push_bulk(Bytes::from(signature_bytes));
-            frame.push_bulk(Bytes::from(tx.get_contract().clone()));
+            frame.push_bulk(Bytes::from(tx.get_contract_addr().clone()));
         }
 
         frame

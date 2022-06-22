@@ -1,6 +1,6 @@
-use crate::{blockchain, machine::Machine};
+use crate::{blockchain::SystemContract, machine::Machine};
 use log::{error, info};
-use sak_p2p_id::Identity;
+use sak_p2p_id::Credential;
 use std::{
     sync::Arc,
     time::{Duration, SystemTime},
@@ -11,7 +11,7 @@ const MINE_INTERVAL: u64 = 5000;
 pub(super) struct Miner {
     pub(super) machine: Arc<Machine>,
     pub(super) mine_interval: Option<u64>,
-    pub(super) identity: Arc<Identity>,
+    pub(super) credential: Arc<Credential>,
 }
 
 impl Miner {
@@ -23,11 +23,43 @@ impl Miner {
 
         info!("Starting Miner, mine_interval: {:?}", mine_interval);
 
+        let mut system_contract = match SystemContract::init() {
+            Ok(s) => s,
+            Err(err) => {
+                error!(
+                    "Fatal error. Error initializing system contract, err: {}",
+                    err,
+                );
+
+                return;
+            }
+        };
+
+        match system_contract.set_validator() {
+            Ok(s) => s,
+            Err(err) => {
+                error!(
+                    "Fatal error. Error setting system contract, err: {}",
+                    err,
+                );
+
+                return;
+            }
+        };
+
         loop {
+            // self.machine.blockchain.call_contract(contract_addr, fn, fn_args)
             let time_since = SystemTime::now();
 
-            let is_next_validator = match blockchain::get_validator() {
-                Ok(b) => b.eq(&self.identity.credential.public_key_str),
+            let is_next_validator = match system_contract.get_validator() {
+                Ok(b) => {
+                    println!(
+                        "{},
+                        {}",
+                        &b, &self.credential.public_key_str
+                    );
+                    b.eq(&self.credential.public_key_str)
+                }
                 Err(err) => {
                     error!(
                         "Fatal error. Error getting next validator, err: {}",
