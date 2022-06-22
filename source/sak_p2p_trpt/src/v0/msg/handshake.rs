@@ -3,6 +3,7 @@ use bytes::{BufMut, Bytes, BytesMut};
 use sak_p2p_frame::{Frame, Parse};
 use std::time::{SystemTime, UNIX_EPOCH};
 
+#[derive(Debug)]
 pub struct Handshake {
     pub instance_id: String,
     pub src_p2p_port: u16,

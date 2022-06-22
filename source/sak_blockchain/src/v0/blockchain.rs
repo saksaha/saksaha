@@ -14,6 +14,7 @@ const BLOCKCHAIN_EVENT_QUEUE_CAPACITY: usize = 32;
 pub struct Blockchain {
     pub(crate) database: Database,
     pub(crate) tx_pool: Arc<TxPool>,
+    pub(crate) gen_block_hash: Option<String>,
     pub bc_event_tx: Arc<RwLock<Sender<BlockchainEvent>>>,
     vm: VM,
     runtime: Arc<Runtime>,
@@ -69,23 +70,27 @@ impl Blockchain {
             Arc::new(r)
         };
 
-        let blockchain = Blockchain {
+        let mut blockchain = Blockchain {
             database,
             tx_pool: tx_pool.clone(),
             vm,
             bc_event_tx,
             runtime,
+            gen_block_hash: None,
         };
 
-        match blockchain.insert_genesis_block(genesis_block).await {
-            Ok(()) => (),
-            Err(err) => {
-                return Err(format!(
-                    "Cannot insert genesis block, err: {}",
-                    err,
-                ));
-            }
-        };
+        let gen_block_hash =
+            match blockchain.insert_genesis_block(genesis_block).await {
+                Ok(h) => h,
+                Err(err) => {
+                    return Err(format!(
+                        "Cannot insert genesis block, err: {}",
+                        err,
+                    ));
+                }
+            };
+
+        blockchain.gen_block_hash = Some(gen_block_hash);
 
         info!("Initialized Blockchain");
 
@@ -110,15 +115,12 @@ impl Blockchain {
     pub async fn insert_genesis_block(
         &self,
         genesis_block: BlockCandidate,
-    ) -> Result<(), String> {
+    ) -> Result<String, String> {
         let (block, txs) = genesis_block.extract();
 
-        let genesis_block_hash = block.get_hash();
+        let gen_block_hash = block.get_hash().to_owned();
 
-        println!("(ToBeDeleted) Genesis Block : {:?}", &block);
-        println!("(ToBeDeleted) Genesis Hash : {}", &genesis_block_hash);
-
-        match self.get_block(&genesis_block_hash).await {
+        match self.get_block(&gen_block_hash).await {
             Ok(_) => {
                 warn!("A Genesis block has already been created");
             }
@@ -132,12 +134,12 @@ impl Blockchain {
         };
 
         for tx in txs {
-            if let Err(err) = self.write_tx(tx).await {
+            if let Err(err) = self.write_tx(&tx).await {
                 error!("Could not write tx of genesis block, err: {}", err);
             }
         }
 
-        Ok(())
+        Ok(gen_block_hash)
     }
 
     pub fn get_vm(&self) -> &VM {

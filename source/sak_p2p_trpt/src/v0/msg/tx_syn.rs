@@ -3,6 +3,7 @@ use bytes::{BufMut, Bytes, BytesMut};
 use sak_p2p_frame::{Frame, Parse};
 use sak_types::Transaction;
 
+#[derive(Debug)]
 pub struct TxSyn {
     pub txs: Vec<Transaction>,
 }

@@ -128,8 +128,7 @@ pub(super) mod test_utils {
                 p2p_max_conn_count: None,
                 p2p_port: p2p_socket_addr.port(),
                 bootstrap_addrs: vec![],
-                secret,
-                public_key_str,
+                credential: credential.clone(),
                 peer_table: p2p_peer_table,
             };
 
