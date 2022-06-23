@@ -1,11 +1,8 @@
+use super::utils;
+use crate::{BoxedError, MEMORY, VM};
 use std::collections::HashMap;
 use wasmtime::{Instance, Memory, Store, TypedFunc};
 
-use crate::{BoxedError, MEMORY, VM};
-
-use super::utils;
-
-// impl VM {
 pub fn init(
     validator_contract: &[u8],
 ) -> Result<(Instance, Store<i32>, Memory), BoxedError> {

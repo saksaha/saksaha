@@ -26,8 +26,18 @@ pub struct DLedgerArgs {
     pub genesis_block: BlockCandidate,
 }
 
+pub struct DLedgerInitState {
+    // genesis block insertion result
+    // contract_1_addr,
+    // contract_2_addr,
+    // contract_3_addr,
+    pub gen_block_insert_result: Vec<String>,
+}
+
 impl DLedger {
-    pub async fn init(blockchain_args: DLedgerArgs) -> Result<DLedger, String> {
+    pub async fn init(
+        blockchain_args: DLedgerArgs,
+    ) -> Result<(DLedger, DLedgerInitState), String> {
         let DLedgerArgs {
             app_prefix,
             tx_pool_sync_interval,
@@ -44,7 +54,7 @@ impl DLedger {
             }
         };
 
-        let vm = VM {};
+        let vm = VM::init()?;
 
         let tx_pool = {
             let t = TxPool::new();
@@ -90,21 +100,18 @@ impl DLedger {
 
         dist_ledger.gen_block_hash = Some(gen_block_hash);
 
+        let dledger_init_state = DLedgerInitState {
+            gen_block_insert_result: vec![],
+        };
+
         info!("Initialized Blockchain");
 
-        Ok(dist_ledger)
+        Ok((dist_ledger, dledger_init_state))
     }
 
     pub async fn run(&self) {
-        info!("Start running blockchain");
-        match self.vm.run_vm() {
-            Ok(_) => (),
-            Err(err) => {
-                println!("Error running vm, err: {}", err);
-            }
-        };
-
         let runtime = self.runtime.clone();
+
         tokio::spawn(async move {
             runtime.run().await;
         });

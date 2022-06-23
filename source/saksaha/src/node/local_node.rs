@@ -23,12 +23,7 @@ impl LocalNode {
 
         if self.miner {
             tokio::spawn(async move {
-                let miner = Miner {
-                    machine,
-                    mine_interval,
-                    // credential,
-                    identity,
-                };
+                let mut miner = Miner::init(machine, mine_interval, identity);
 
                 miner.run().await;
             });

@@ -1,4 +1,5 @@
 use super::shutdown::ShutdownMng;
+use super::BoxedError;
 use super::SystemRunArgs;
 use crate::blockchain::Blockchain;
 use crate::config::Config;
@@ -27,7 +28,7 @@ impl Routine {
     pub(super) async fn run(
         &self,
         sys_run_args: SystemRunArgs,
-    ) -> Result<(), String> {
+    ) -> Result<(), BoxedError> {
         log::info!("System is starting");
 
         let config = {
@@ -38,7 +39,8 @@ impl Routine {
                         return Err(format!(
                             "Could not create dev config, err: {}",
                             err
-                        ));
+                        )
+                        .into());
                     }
                 },
                 None => None,
@@ -80,7 +82,9 @@ impl Routine {
             ) {
                 Ok(c) => c,
                 Err(err) => {
-                    return Err(format!("Error creating config, err: {}", err));
+                    return Err(
+                        format!("Error creating config, err: {}", err).into()
+                    );
                 }
             }
         };
@@ -118,7 +122,8 @@ impl Routine {
                 }
                 Err(err) => {
                     error!("Could not bind a tcp socket for RPC, err: {}", err);
-                    return Err(err);
+
+                    return Err(err.into());
                 }
             };
 
@@ -137,7 +142,7 @@ impl Routine {
                         "Could not bind a tcp socket for P2P Host, err: {}",
                         err
                     );
-                    return Err(err);
+                    return Err(err.into());
                 }
             };
 
