@@ -13,6 +13,7 @@ use crate::system::SystemHandle;
 use colored::Colorize;
 use log::{error, info};
 use sak_p2p_id::Credential;
+use sak_p2p_id::Identity;
 use sak_p2p_ptable::PeerTable;
 use std::sync::Arc;
 
@@ -95,16 +96,14 @@ impl Routine {
 
         let (disc_socket, disc_port) = {
             let (socket, socket_addr) =
-                sak_utils_net::setup_udp_socket(disc_args.disc_port).await?;
-
-            let udp_conn = Connection::new(socket);
+                sak_utils_net::setup_udp_socket(config.p2p.disc_port).await?;
 
             info!(
                 "Bound udp socket for P2P discovery, addr: {}",
                 socket_addr.to_string().yellow(),
             );
 
-            (Arc::new(udp_conn), socket_addr.port())
+            (socket, socket_addr.port())
         };
 
         let (rpc_socket, _) =
@@ -142,16 +141,27 @@ impl Routine {
                 }
             };
 
-        let credential = {
-            let c =
-                Credential::new(config.p2p.secret, config.p2p.public_key_str)?;
+        // let credential = {
+        //     let c =
+        //         Credential::new(config.p2p.secret, config.p2p.public_key_str)?;
 
-            info!(
-                "Created credential, public_key_str: {}",
-                c.public_key_str.yellow(),
-            );
+        //     info!(
+        //         "Created credential, public_key_str: {}",
+        //         c.public_key_str.yellow(),
+        //     );
 
-            Arc::new(c)
+        //     Arc::new(c)
+        // };
+
+        let identity = {
+            let i = Identity::new(
+                config.p2p.secret,
+                config.p2p.public_key_str,
+                p2p_port,
+                disc_port,
+            )?;
+
+            Arc::new(i)
         };
 
         let p2p_host = {
@@ -170,7 +180,8 @@ impl Routine {
                 p2p_max_conn_count: config.p2p.p2p_max_conn_count,
                 p2p_port,
                 bootstrap_addrs: config.p2p.bootstrap_addrs,
-                credential: credential.clone(),
+                // credential: credential.clone(),
+                identity: identity.clone(),
                 peer_table: peer_table.clone(),
             };
 

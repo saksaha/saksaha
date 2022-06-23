@@ -9,7 +9,7 @@ use tokio::sync::Semaphore;
 const MAX_CONN_COUNT: usize = 50;
 
 pub(crate) struct Server {
-    udp_conn: Connection,
+    udp_conn: Arc<Connection>,
     conn_semaphore: Arc<Semaphore>,
     // identity: Arc<DiscIdentity>,
     identity: Arc<Identity>,
@@ -18,7 +18,7 @@ pub(crate) struct Server {
 }
 
 pub(crate) struct ServerArgs {
-    pub(crate) udp_conn: Connection,
+    pub(crate) udp_conn: Arc<Connection>,
     // pub(crate) identity: Arc<DiscIdentity>,
     pub(crate) identity: Arc<Identity>,
     pub(crate) addr_table: Arc<AddrTable>,

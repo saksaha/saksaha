@@ -9,7 +9,7 @@ use sak_p2p_id::{Credential, Identity};
 use sak_p2p_ptable::PeerTable;
 use sak_task_queue::TaskQueue;
 use std::sync::Arc;
-use tokio::net::TcpListener;
+use tokio::net::{TcpListener, UdpSocket};
 
 const P2P_TASK_QUEUE_CAPACITY: usize = 10;
 
@@ -37,7 +37,9 @@ pub(crate) struct P2PHostArgs {
     pub(crate) p2p_port: u16,
     pub(crate) p2p_max_conn_count: Option<u16>,
     pub(crate) bootstrap_addrs: Vec<UnknownAddr>,
-    pub(crate) credential: Arc<Credential>,
+    // pub(crate) credential: Arc<Credential>,
+    pub(crate) identity: Arc<Identity>,
+    pub(crate) udp_socket: UdpSocket,
     pub(crate) peer_table: Arc<PeerTable>,
 }
 
@@ -64,14 +66,14 @@ impl P2PHost {
             (runtime, p2p_task_queue)
         };
 
-        let identity = {
-            let i = Identity {
-                credential: p2p_host_args.credential.clone(),
-                p2p_port: p2p_host_args.p2p_port,
-            };
+        // let identity = {
+        //     let i = Identity {
+        //         credential: p2p_host_args.credential.clone(),
+        //         p2p_port: p2p_host_args.p2p_port,
+        //     };
 
-            Arc::new(i)
-        };
+        //     Arc::new(i)
+        // };
 
         let (p2p_discovery, _disc_port) = {
             let disc_args = DiscoveryArgs {
@@ -82,8 +84,10 @@ impl P2PHost {
                 disc_task_interval: p2p_host_args.disc_task_interval,
                 disc_task_queue_capacity: p2p_host_args
                     .disc_task_queue_capacity,
-                credential: p2p_host_args.credential.clone(),
-                disc_port: p2p_host_args.disc_port,
+                // credential: p2p_host_args.credential.clone(),
+                identity: p2p_host_args.identity.clone(),
+                udp_socket: p2p_host_args.udp_socket,
+                // disc_port: p2p_host_args.disc_port,
                 p2p_port: p2p_host_args.p2p_port,
                 bootstrap_addrs: p2p_host_args.bootstrap_addrs,
             };

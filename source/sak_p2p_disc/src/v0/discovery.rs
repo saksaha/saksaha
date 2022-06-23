@@ -31,7 +31,7 @@ pub struct DiscoveryArgs {
     pub disc_table_capacity: Option<u16>,
     pub disc_task_interval: Option<u16>,
     pub disc_task_queue_capacity: Option<u16>,
-    pub credential: Arc<Credential>,
+    // pub credential: Arc<Credential>,
     // pub disc_port: Option<u16>,
     pub p2p_port: u16,
     pub bootstrap_addrs: Vec<UnknownAddr>,
@@ -47,16 +47,16 @@ impl Discovery {
             // let (socket, socket_addr) =
             //     sak_utils_net::setup_udp_socket(disc_args.disc_port).await?;
 
-            let udp_conn = Connection::new(disc_args.udp_socket);
-
             let socket_addr = disc_args.udp_socket.local_addr()?;
+
+            let udp_conn = Connection::new(disc_args.udp_socket);
 
             info!(
                 "Bound udp socket for P2P discovery, addr: {}",
                 socket_addr.to_string().yellow(),
             );
 
-            (udp_conn, socket_addr.port())
+            (Arc::new(udp_conn), socket_addr.port())
         };
 
         let addr_expire_duration = match disc_args.addr_expire_duration {
@@ -116,7 +116,7 @@ impl Discovery {
 
         let server = {
             let server_args = ServerArgs {
-                udp_conn,
+                udp_conn: udp_conn.clone(),
                 // identity: disc_identity.clone(),
                 identity: disc_args.identity.clone(),
                 addr_table: addr_table.clone(),
@@ -141,9 +141,11 @@ impl Discovery {
             let h = DiscTaskRuntime::new(
                 disc_task_queue.clone(),
                 disc_args.disc_task_interval,
-                disc_identity.clone(),
+                // disc_identity.clone(),
+                disc_args.identity.clone(),
                 addr_table.clone(),
-                udp_conn.clone(),
+                // udp_conn.clone(),
+                udp_conn,
             );
 
             h
