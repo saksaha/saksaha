@@ -4,7 +4,7 @@ pub(super) mod test_utils {
     use crate::p2p::{P2PHost, P2PHostArgs};
     use crate::rpc::{RPCArgs, RPC};
     use crate::system::SystemHandle;
-    use sak_blockchain::{Blockchain, BlockchainArgs};
+    use sak_dist_ledger::{DLedger, DLedgerArgs};
     use sak_p2p_addr::{AddrStatus, UnknownAddr};
     use sak_p2p_disc::{Discovery, DiscoveryArgs};
     use sak_p2p_id::Credential;
@@ -28,6 +28,18 @@ pub(super) mod test_utils {
     }
 
     pub(crate) async fn make_rpc() -> (RPC, SocketAddr, Arc<Machine>) {
+        let (disc_socket, disc_port) = {
+            let (socket, socket_addr) =
+                sak_utils_net::setup_udp_socket(disc_port).await.unwrap();
+
+            info!(
+                "Bound udp socket for P2P discovery, addr: {}",
+                socket_addr.to_string().yellow(),
+            );
+
+            (socket, socket_addr.port())
+        };
+
         let (rpc_socket, rpc_socket_addr) =
             sak_utils_net::bind_tcp_socket(None)
                 .await
@@ -80,9 +92,16 @@ pub(super) mod test_utils {
             status: AddrStatus::Initialized,
         }];
 
-        let credential = {
-            let id = Credential::new(secret.clone(), public_key_str.clone())
-                .unwrap();
+        // let credential = {
+        //     let id = Credential::new(secret.clone(), public_key_str.clone())
+        //         .unwrap();
+        //     Arc::new(id)
+        // };
+
+        let identity = {
+            let id = Identity::new(secret, public_key_str, p2p_port, disc_port)
+                .expect("identity should be initialized");
+
             Arc::new(id)
         };
 
@@ -93,8 +112,8 @@ pub(super) mod test_utils {
             disc_task_queue_capacity: None,
             addr_expire_duration: None,
             addr_monitor_interval: None,
-            credential: credential.clone(),
-            disc_port: Some(35521),
+            udp_socket: disc_socket,
+            identity: identity.clone(),
             p2p_port: 1,
             bootstrap_addrs,
         };
@@ -114,9 +133,9 @@ pub(super) mod test_utils {
 
         let p2p_host = {
             let p2p_host_args = P2PHostArgs {
+                disc_socket,
                 addr_expire_duration: None,
                 addr_monitor_interval: None,
-                disc_port: None,
                 disc_dial_interval: None,
                 disc_table_capacity: None,
                 disc_task_interval: None,
@@ -128,7 +147,7 @@ pub(super) mod test_utils {
                 p2p_max_conn_count: None,
                 p2p_port: p2p_socket_addr.port(),
                 bootstrap_addrs: vec![],
-                credential: credential.clone(),
+                identity: identity.clone(),
                 peer_table: p2p_peer_table,
             };
 

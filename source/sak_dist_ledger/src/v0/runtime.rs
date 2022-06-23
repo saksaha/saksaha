@@ -1,4 +1,4 @@
-use crate::{v0::tx_pool::TxPool, BlockchainEvent};
+use crate::{v0::tx_pool::TxPool, DLedgerEvent};
 use log::error;
 use std::{
     sync::Arc,
@@ -10,14 +10,14 @@ const TX_POOL_SYNC_INTERVAL: u64 = 1000;
 
 pub struct Runtime {
     tx_pool: Arc<TxPool>,
-    bc_event_tx: Arc<RwLock<Sender<BlockchainEvent>>>,
+    bc_event_tx: Arc<RwLock<Sender<DLedgerEvent>>>,
     tx_pool_sync_interval: Duration,
 }
 
 impl Runtime {
     pub(crate) fn init(
         tx_pool: Arc<TxPool>,
-        bc_event_tx: Arc<RwLock<Sender<BlockchainEvent>>>,
+        bc_event_tx: Arc<RwLock<Sender<DLedgerEvent>>>,
         tx_pool_sync_interval: Option<u64>,
     ) -> Runtime {
         let tx_pool_sync_interval = match tx_pool_sync_interval {
@@ -45,7 +45,7 @@ impl Runtime {
                     .clone()
                     .write()
                     .await
-                    .send(BlockchainEvent::TxPoolStat(new_tx_hashes))
+                    .send(DLedgerEvent::TxPoolStat(new_tx_hashes))
                 {
                     Ok(_) => (),
                     Err(err) => {

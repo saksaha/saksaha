@@ -6,7 +6,7 @@ mod test_suite {
     use crate::rpc::response::{ErrorResponse, JsonResponse, SuccessResponse};
     use hyper::body::Buf;
     use hyper::{Body, Client, Method, Request, Uri};
-    use sak_blockchain::Blockchain;
+    use sak_dist_ledger::DLedger;
     use sak_types::Hashable;
     use std::time::Duration;
 

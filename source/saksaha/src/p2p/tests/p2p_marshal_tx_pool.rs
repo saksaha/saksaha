@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod test_suite {
+    use crate::blockchain::Blockchain;
     use crate::p2p::{P2PHost, P2PHostArgs};
     use crate::{
         machine::{self, Machine},
@@ -12,9 +13,9 @@ mod test_suite {
     };
     use colored::Colorize;
     use futures::{SinkExt, StreamExt};
-    use log::debug;
-    use sak_blockchain::{Blockchain, BlockchainArgs};
+    use log::{debug, info};
     use sak_crypto::{PublicKey, Signature};
+    use sak_dist_ledger::{DLedger, DLedgerArgs};
     use sak_p2p_addr::{AddrStatus, UnknownAddr};
     use sak_p2p_disc::{DiscAddr, Discovery, DiscoveryArgs};
     use sak_p2p_id::{Credential, Identity};
@@ -94,6 +95,18 @@ mod test_suite {
         secret: String,
         public_key_str: String,
     ) -> (P2PHost, Arc<LocalNode>, Arc<Machine>) {
+        let (disc_socket, disc_port) = {
+            let (socket, socket_addr) =
+                sak_utils_net::setup_udp_socket(disc_port).await.unwrap();
+
+            info!(
+                "Bound udp socket for P2P discovery, addr: {}",
+                socket_addr.to_string().yellow(),
+            );
+
+            (socket, socket_addr.port())
+        };
+
         let (p2p_socket, p2p_port) =
             match sak_utils_net::bind_tcp_socket(p2p_port).await {
                 Ok((socket, socket_addr)) => {
@@ -122,9 +135,16 @@ mod test_suite {
             Arc::new(ps)
         };
 
-        let credential = {
-            let id = Credential::new(secret, public_key_str)
-                .expect("p2p_identity should be initialized");
+        // let credential = {
+        //     let id = Credential::new(secret, public_key_str)
+        //         .expect("p2p_identity should be initialized");
+
+        //     Arc::new(id)
+        // };
+
+        let identity = {
+            let id = Identity::new(secret, public_key_str, p2p_port, disc_port)
+                .expect("identity should be initialized");
 
             Arc::new(id)
         };
@@ -148,7 +168,8 @@ mod test_suite {
         let p2p_host_args = P2PHostArgs {
             addr_expire_duration: None,
             addr_monitor_interval: None,
-            disc_port,
+            disc_socket,
+            // disc_port,
             disc_dial_interval: None,
             disc_table_capacity: None,
             disc_task_interval: None,
@@ -160,7 +181,8 @@ mod test_suite {
             p2p_port,
             p2p_max_conn_count: None,
             bootstrap_addrs,
-            credential: credential.clone(),
+            identity: identity.clone(),
+            // credential: credential.clone(),
             peer_table: p2p_peer_table.clone(),
         };
 
@@ -171,13 +193,9 @@ mod test_suite {
         let blockchain = {
             let genesis_block = make_dummy_genesis_block();
 
-            let blockchain_args = BlockchainArgs {
-                app_prefix,
-                tx_pool_sync_interval: None,
-                genesis_block,
-            };
-
-            Blockchain::init(blockchain_args).await.unwrap()
+            Blockchain::init(app_prefix, None, Some(genesis_block))
+                .await
+                .expect("blockchain should be initialized")
         };
 
         let machine = {
@@ -192,7 +210,8 @@ mod test_suite {
                 machine: machine.clone(),
                 miner: true,
                 mine_interval: None,
-                credential: credential.clone(),
+                identity: identity.clone(),
+                // credential: credential.clone(),
             };
 
             Arc::new(ln)
@@ -294,6 +313,7 @@ mod test_suite {
         local_node_1
             .machine
             .blockchain
+            .dledger
             .send_transaction(txs[0].clone())
             .await
             .expect("Node should be able to send a transaction");
@@ -301,6 +321,7 @@ mod test_suite {
         local_node_1
             .machine
             .blockchain
+            .dledger
             .send_transaction(txs[1].clone())
             .await
             .expect("Node should be able to send a transaction");
@@ -311,12 +332,14 @@ mod test_suite {
             let tx_pool_2_contains_tx1 = local_node_2
                 .machine
                 .blockchain
+                .dledger
                 .tx_pool_contains(txs[0].get_hash())
                 .await;
 
             let tx_pool_2_contains_tx2 = local_node_2
                 .machine
                 .blockchain
+                .dledger
                 .tx_pool_contains(txs[1].get_hash())
                 .await;
 
@@ -328,6 +351,7 @@ mod test_suite {
             local_node_1
                 .machine
                 .blockchain
+                .dledger
                 .write_block(block)
                 .await
                 .expect("Block should be written");
@@ -335,6 +359,7 @@ mod test_suite {
             let tx_pool_1_contains_tx1 = local_node_1
                 .machine
                 .blockchain
+                .dledger
                 .tx_pool_contains(txs[0].get_hash())
                 .await;
 

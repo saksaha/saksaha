@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod test {
-    use crate::{Blockchain, BlockchainArgs};
+    use crate::{DLedger, DLedgerArgs};
     use sak_types::Block;
     use sak_types::BlockCandidate;
     use sak_types::Hashable;
@@ -37,18 +37,18 @@ mod test {
         genesis_block
     }
 
-    async fn make_blockchain(gen_block: BlockCandidate) -> Blockchain {
-        let blockchain_args = BlockchainArgs {
+    async fn make_dist_ledger(gen_block: BlockCandidate) -> DLedger {
+        let dledger_args = DLedgerArgs {
             app_prefix: String::from("test"),
             tx_pool_sync_interval: None,
             genesis_block: gen_block,
         };
 
-        let blockchain = Blockchain::init(blockchain_args)
+        let dledger = DLedger::init(dledger_args)
             .await
             .expect("Blockchain should be initialized");
 
-        blockchain
+        dledger
     }
 
     fn make_dummy_txs() -> Vec<Transaction> {
@@ -97,7 +97,7 @@ mod test {
         init();
 
         let gen_block = make_dummy_genesis_block();
-        let blockchain = make_blockchain(gen_block).await;
+        let blockchain = make_dist_ledger(gen_block).await;
         let db = blockchain.database;
 
         let dummy_tx_values = make_dummy_txs();
@@ -125,7 +125,7 @@ mod test {
         init();
 
         let gen_block = make_dummy_genesis_block();
-        let blockchain = make_blockchain(gen_block).await;
+        let blockchain = make_dist_ledger(gen_block).await;
         let db = blockchain.database;
 
         let dummy_tx_values = make_dummy_txs();
@@ -156,7 +156,7 @@ mod test {
         init();
 
         let gen_block = make_dummy_genesis_block();
-        let blockchain = make_blockchain(gen_block).await;
+        let blockchain = make_dist_ledger(gen_block).await;
         let db = blockchain.database;
 
         let dummy_tx_values = make_dummy_txs();
@@ -189,7 +189,7 @@ mod test {
         init();
 
         let gen_block = make_dummy_genesis_block();
-        let blockchain = make_blockchain(gen_block).await;
+        let blockchain = make_dist_ledger(gen_block).await;
 
         let gen_block_hash = blockchain
             .get_gen_block_hash()
@@ -212,7 +212,7 @@ mod test {
         init();
 
         let gen_block = make_dummy_genesis_block();
-        let blockchain = make_blockchain(gen_block).await;
+        let blockchain = make_dist_ledger(gen_block).await;
 
         let gen_block =
             match blockchain.get_block_by_height(String::from("0")).await {
@@ -239,7 +239,7 @@ mod test {
         init();
 
         let gen_block = make_dummy_genesis_block();
-        let blockchain = make_blockchain(gen_block).await;
+        let blockchain = make_dist_ledger(gen_block).await;
         let db = blockchain.database;
 
         let (contract_addr, field_name, field_value) = make_dummy_state();

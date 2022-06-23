@@ -1,8 +1,8 @@
-use crate::Blockchain;
+use crate::DLedger;
 use log::warn;
 use sak_types::{Block, Transaction};
 
-impl Blockchain {
+impl DLedger {
     pub async fn query_contract(&self) -> Result<&[u8], String> {
         Ok(&[])
     }

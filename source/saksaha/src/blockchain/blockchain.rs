@@ -1,5 +1,6 @@
 use super::genesis;
-use sak_blockchain::{Blockchain, BlockchainArgs};
+use sak_dist_ledger::{DLedger, DLedgerArgs};
+use sak_types::BlockCandidate;
 
 // pub(crate) async fn create_blockchain(
 //     app_prefix: String,
@@ -16,25 +17,33 @@ use sak_blockchain::{Blockchain, BlockchainArgs};
 //     Blockchain::init(blockchain_args).await
 // }
 
-pub(crate) struct Bchain {
-    bc: Blockchain,
+pub(crate) struct Blockchain {
+    pub(crate) dledger: DLedger,
 }
 
-impl Bchain {
+impl Blockchain {
     pub async fn init(
         app_prefix: String,
         tx_pool_sync_interval: Option<u64>,
-    ) -> Result<Bchain, String> {
-        let genesis_block = genesis::make_genesis_block();
+        genesis_block: Option<BlockCandidate>,
+    ) -> Result<Blockchain, String> {
+        let genesis_block = match genesis_block {
+            Some(b) => b,
+            None => genesis::make_genesis_block(),
+        };
 
-        let blockchain_args = BlockchainArgs {
+        let dledger_args = DLedgerArgs {
             genesis_block,
             app_prefix,
             tx_pool_sync_interval,
         };
 
-        let bc = Blockchain::init(blockchain_args).await?;
+        let dledger = DLedger::init(dledger_args).await?;
 
-        Ok(Bchain { bc })
+        Ok(Blockchain { dledger })
+    }
+
+    pub async fn run(&self) {
+        self.dledger.run().await;
     }
 }

@@ -11,7 +11,8 @@ const MINE_INTERVAL: u64 = 5000;
 pub(super) struct Miner {
     pub(super) machine: Arc<Machine>,
     pub(super) mine_interval: Option<u64>,
-    pub(super) credential: Arc<Credential>,
+    // pub(super) credential: Arc<Credential>,
+    pub(super) identity: Arc<Identity>,
 }
 
 impl Miner {
@@ -56,9 +57,9 @@ impl Miner {
                     println!(
                         "{},
                         {}",
-                        &b, &self.credential.public_key_str
+                        &b, &self.identity.credential.public_key_str
                     );
-                    b.eq(&self.credential.public_key_str)
+                    b.eq(&self.identity.credential.public_key_str)
                 }
                 Err(err) => {
                     error!(

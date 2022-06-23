@@ -1,5 +1,5 @@
 use super::tx_pool::TxPool;
-use super::BlockchainEvent;
+use super::DLedgerEvent;
 use crate::Database;
 use crate::Runtime;
 use log::{error, info, warn};
@@ -11,26 +11,24 @@ use tokio::sync::{broadcast::Sender, RwLock};
 
 const BLOCKCHAIN_EVENT_QUEUE_CAPACITY: usize = 32;
 
-pub struct Blockchain {
+pub struct DLedger {
     pub(crate) database: Database,
     pub(crate) tx_pool: Arc<TxPool>,
     pub(crate) gen_block_hash: Option<String>,
-    pub bc_event_tx: Arc<RwLock<Sender<BlockchainEvent>>>,
+    pub bc_event_tx: Arc<RwLock<Sender<DLedgerEvent>>>,
     vm: VM,
     runtime: Arc<Runtime>,
 }
 
-pub struct BlockchainArgs {
+pub struct DLedgerArgs {
     pub app_prefix: String,
     pub tx_pool_sync_interval: Option<u64>,
     pub genesis_block: BlockCandidate,
 }
 
-impl Blockchain {
-    pub async fn init(
-        blockchain_args: BlockchainArgs,
-    ) -> Result<Blockchain, String> {
-        let BlockchainArgs {
+impl DLedger {
+    pub async fn init(blockchain_args: DLedgerArgs) -> Result<DLedger, String> {
+        let DLedgerArgs {
             app_prefix,
             tx_pool_sync_interval,
             genesis_block,
@@ -70,7 +68,7 @@ impl Blockchain {
             Arc::new(r)
         };
 
-        let mut blockchain = Blockchain {
+        let mut dist_ledger = DLedger {
             database,
             tx_pool: tx_pool.clone(),
             vm,
@@ -80,7 +78,7 @@ impl Blockchain {
         };
 
         let gen_block_hash =
-            match blockchain.insert_genesis_block(genesis_block).await {
+            match dist_ledger.insert_genesis_block(genesis_block).await {
                 Ok(h) => h,
                 Err(err) => {
                     return Err(format!(
@@ -90,11 +88,11 @@ impl Blockchain {
                 }
             };
 
-        blockchain.gen_block_hash = Some(gen_block_hash);
+        dist_ledger.gen_block_hash = Some(gen_block_hash);
 
         info!("Initialized Blockchain");
 
-        Ok(blockchain)
+        Ok(dist_ledger)
     }
 
     pub async fn run(&self) {

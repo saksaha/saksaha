@@ -10,21 +10,24 @@ pub(crate) struct LocalNode {
     pub(crate) machine: Arc<Machine>,
     pub(crate) miner: bool,
     pub(crate) mine_interval: Option<u64>,
-    pub(crate) credential: Arc<Credential>,
+    // pub(crate) credential: Arc<Credential>,
+    pub(crate) identity: Arc<Identity>,
 }
 
 impl LocalNode {
     pub(crate) async fn run(&self) {
         let machine = self.machine.clone();
         let mine_interval = self.mine_interval.clone();
-        let credential = self.credential.clone();
+        // let credential = self.credential.clone();
+        let identity = self.identity.clone();
 
         if self.miner {
             tokio::spawn(async move {
                 let miner = Miner {
                     machine,
                     mine_interval,
-                    credential,
+                    // credential,
+                    identity,
                 };
 
                 miner.run().await;
@@ -47,6 +50,7 @@ impl LocalNode {
             let bc_event_rx = {
                 let rx = machine
                     .blockchain
+                    .dledger
                     .bc_event_tx
                     .clone()
                     .read()

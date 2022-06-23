@@ -1,6 +1,6 @@
 use super::shutdown::ShutdownMng;
 use super::SystemRunArgs;
-use crate::blockchain::create_blockchain;
+use crate::blockchain::Blockchain;
 use crate::config::Config;
 use crate::config::ProfiledConfig;
 use crate::machine::Machine;
@@ -141,18 +141,6 @@ impl Routine {
                 }
             };
 
-        // let credential = {
-        //     let c =
-        //         Credential::new(config.p2p.secret, config.p2p.public_key_str)?;
-
-        //     info!(
-        //         "Created credential, public_key_str: {}",
-        //         c.public_key_str.yellow(),
-        //     );
-
-        //     Arc::new(c)
-        // };
-
         let identity = {
             let i = Identity::new(
                 config.p2p.secret,
@@ -168,7 +156,6 @@ impl Routine {
             let p2p_host_args = P2PHostArgs {
                 addr_expire_duration: config.p2p.addr_expire_duration,
                 addr_monitor_interval: config.p2p.addr_monitor_interval,
-                disc_port: config.p2p.disc_port,
                 disc_dial_interval: config.p2p.disc_dial_interval,
                 disc_table_capacity: config.p2p.disc_table_capacity,
                 disc_task_interval: config.p2p.disc_task_interval,
@@ -176,11 +163,11 @@ impl Routine {
                 p2p_task_interval: config.p2p.p2p_task_interval,
                 p2p_task_queue_capacity: config.p2p.p2p_task_queue_capacity,
                 p2p_dial_interval: config.p2p.p2p_dial_interval,
+                disc_socket,
                 p2p_socket,
                 p2p_max_conn_count: config.p2p.p2p_max_conn_count,
                 p2p_port,
                 bootstrap_addrs: config.p2p.bootstrap_addrs,
-                // credential: credential.clone(),
                 identity: identity.clone(),
                 peer_table: peer_table.clone(),
             };
@@ -189,9 +176,10 @@ impl Routine {
         };
 
         let blockchain = {
-            let b = create_blockchain(
+            let b = Blockchain::init(
                 config.app_prefix,
                 config.blockchain.tx_pool_sync_interval,
+                None,
             )
             .await?;
 
@@ -210,7 +198,8 @@ impl Routine {
                 machine: machine.clone(),
                 miner: config.node.miner,
                 mine_interval: config.node.mine_interval,
-                credential,
+                // credential,
+                identity: identity.clone(),
             };
 
             ln

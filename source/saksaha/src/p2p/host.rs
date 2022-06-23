@@ -25,7 +25,7 @@ pub(crate) struct P2PHost {
 pub(crate) struct P2PHostArgs {
     pub(crate) addr_expire_duration: Option<u64>,
     pub(crate) addr_monitor_interval: Option<u64>,
-    pub(crate) disc_port: Option<u16>,
+    // pub(crate) disc_port: Option<u16>,
     pub(crate) disc_dial_interval: Option<u16>,
     pub(crate) disc_table_capacity: Option<u16>,
     pub(crate) disc_task_interval: Option<u16>,
@@ -39,7 +39,7 @@ pub(crate) struct P2PHostArgs {
     pub(crate) bootstrap_addrs: Vec<UnknownAddr>,
     // pub(crate) credential: Arc<Credential>,
     pub(crate) identity: Arc<Identity>,
-    pub(crate) udp_socket: UdpSocket,
+    pub(crate) disc_socket: UdpSocket,
     pub(crate) peer_table: Arc<PeerTable>,
 }
 
@@ -86,7 +86,7 @@ impl P2PHost {
                     .disc_task_queue_capacity,
                 // credential: p2p_host_args.credential.clone(),
                 identity: p2p_host_args.identity.clone(),
-                udp_socket: p2p_host_args.udp_socket,
+                udp_socket: p2p_host_args.disc_socket,
                 // disc_port: p2p_host_args.disc_port,
                 p2p_port: p2p_host_args.p2p_port,
                 bootstrap_addrs: p2p_host_args.bootstrap_addrs,
@@ -101,7 +101,7 @@ impl P2PHost {
             let s = Server::new(
                 p2p_host_args.p2p_max_conn_count,
                 p2p_host_args.p2p_socket,
-                identity.clone(),
+                p2p_host_args.identity.clone(),
                 p2p_host_args.peer_table.clone(),
                 p2p_discovery.addr_table.clone(),
             );
@@ -116,7 +116,7 @@ impl P2PHost {
                 p2p_dial_interval: p2p_host_args.p2p_dial_interval,
                 p2p_task_queue: p2p_task_queue.clone(),
                 addrs_iter,
-                identity: identity.clone(),
+                identity: p2p_host_args.identity.clone(),
                 peer_table: p2p_host_args.peer_table.clone(),
             };
 

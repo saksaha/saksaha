@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod test_suite {
     use crate::{
+        blockchain::Blockchain,
         machine::{self, Machine},
         node::LocalNode,
         p2p::{
@@ -8,9 +9,11 @@ mod test_suite {
             task::{runtime::P2PTaskRuntime, P2PTask},
         },
     };
+    use colored::*;
     use futures::{SinkExt, StreamExt};
-    use sak_blockchain::{Blockchain, BlockchainArgs};
+    use log::info;
     use sak_crypto::{PublicKey, Signature};
+    use sak_dist_ledger::{DLedger, DLedgerArgs};
     use sak_p2p_addr::{AddrStatus, UnknownAddr};
     use sak_p2p_disc::{DiscAddr, Discovery, DiscoveryArgs};
     use sak_p2p_id::{Credential, Identity};
@@ -93,6 +96,18 @@ mod test_suite {
             .await
             .expect("p2p socket should be initialized");
 
+        let (disc_socket, disc_port) = {
+            let (socket, socket_addr) =
+                sak_utils_net::setup_udp_socket(disc_port).await.unwrap();
+
+            info!(
+                "Bound udp socket for P2P discovery, addr: {}",
+                socket_addr.to_string().yellow(),
+            );
+
+            (socket, socket_addr.port())
+        };
+
         let secret = String::from(
             "aa99cfd91cc6f3b541d28f3e0707f9c7bcf05cf495308294786ca450b501b5f2",
         );
@@ -114,12 +129,24 @@ mod test_suite {
             Arc::new(ps)
         };
 
-        let credential = {
-            let id = Credential::new(secret, public_key_str)
-                .expect("p2p_identity should be initialized");
+        let identity = {
+            let id = Identity::new(
+                secret,
+                public_key_str,
+                p2p_port.port(),
+                disc_port,
+            )
+            .expect("identity should be initialized");
 
             Arc::new(id)
         };
+
+        // let credential = {
+        //     let id = Credential::new(secret, public_key_str)
+        //         .expect("p2p_identity should be initialized");
+
+        //     Arc::new(id)
+        // };
 
         let p2p_task_queue = {
             let q = TaskQueue::new(5);
@@ -155,8 +182,9 @@ mod test_suite {
                 disc_table_capacity: None,
                 disc_task_interval: None,
                 disc_task_queue_capacity: None,
-                credential: credential.clone(),
-                disc_port,
+                // credential: credential.clone(),
+                identity: identity.clone(),
+                udp_socket: disc_socket,
                 p2p_port: p2p_port.port(),
                 bootstrap_addrs,
             };
@@ -166,16 +194,6 @@ mod test_suite {
                 .expect("Discovery should be initialized");
 
             Arc::new(d)
-        };
-
-        let identity = {
-            let i = Identity {
-                p2p_port: p2p_port.port(),
-                // disc_port: disc_port.unwrap(),
-                credential,
-            };
-
-            Arc::new(i)
         };
 
         let p2p_server = {
@@ -203,13 +221,15 @@ mod test_suite {
         let blockchain = {
             let genesis_block = make_dummy_genesis_block();
 
-            let blockchain_args = BlockchainArgs {
-                app_prefix,
-                tx_pool_sync_interval: None,
-                genesis_block,
-            };
+            // let blockchain_args = BlockchainArgs {
+            //     app_prefix,
+            //     tx_pool_sync_interval: None,
+            //     genesis_block,
+            // };
 
-            Blockchain::init(blockchain_args).await.unwrap()
+            Blockchain::init(app_prefix, None, Some(genesis_block))
+                .await
+                .unwrap()
         };
 
         let machine = {

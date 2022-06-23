@@ -42,12 +42,20 @@ pub struct DiscoveryArgs {
 impl Discovery {
     pub async fn init(
         disc_args: DiscoveryArgs,
-    ) -> Result<(Discovery, u16), BoxedError> {
+    ) -> Result<(Discovery, u16), String> {
         let (udp_conn, disc_port) = {
             // let (socket, socket_addr) =
             //     sak_utils_net::setup_udp_socket(disc_args.disc_port).await?;
 
-            let socket_addr = disc_args.udp_socket.local_addr()?;
+            let socket_addr = match disc_args.udp_socket.local_addr() {
+                Ok(a) => a,
+                Err(err) => {
+                    return Err(format!(
+                        "Cannot retrieve addr of udp socket, err: {}",
+                        err
+                    ));
+                }
+            };
 
             let udp_conn = Connection::new(disc_args.udp_socket);
 

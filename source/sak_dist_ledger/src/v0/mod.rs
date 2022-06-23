@@ -1,6 +1,6 @@
 mod apis;
-mod blockchain;
 mod db;
+mod dledger;
 mod events;
 mod runtime;
 mod tx_pool;
@@ -9,8 +9,8 @@ mod tx_pool;
 mod tests;
 
 pub use apis::*;
-pub use blockchain::*;
 pub(crate) use db::*;
+pub use dledger::*;
 pub use events::*;
 pub(crate) use runtime::*;
 
