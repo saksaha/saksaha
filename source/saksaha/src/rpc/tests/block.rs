@@ -27,6 +27,7 @@ mod test_suite {
         let block_hash = {
             let block_hash = match machine
                 .blockchain
+                .dledger
                 .write_block(block_value.clone())
                 .await
             {

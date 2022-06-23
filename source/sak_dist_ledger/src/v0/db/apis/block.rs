@@ -1,5 +1,4 @@
 use crate::{columns, Database};
-use log::debug;
 use sak_kv_db::WriteBatch;
 use sak_types::Block;
 

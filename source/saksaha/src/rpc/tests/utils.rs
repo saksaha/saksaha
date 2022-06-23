@@ -1,13 +1,15 @@
 #[cfg(test)]
 pub(super) mod test_utils {
-    use crate::machine::Machine;
     use crate::p2p::{P2PHost, P2PHostArgs};
     use crate::rpc::{RPCArgs, RPC};
     use crate::system::SystemHandle;
+    use crate::{blockchain::Blockchain, machine::Machine};
+    use colored::*;
+    use log::info;
     use sak_dist_ledger::{DLedger, DLedgerArgs};
     use sak_p2p_addr::{AddrStatus, UnknownAddr};
     use sak_p2p_disc::{Discovery, DiscoveryArgs};
-    use sak_p2p_id::Credential;
+    use sak_p2p_id::{Credential, Identity};
     use sak_p2p_ptable::PeerTable;
     use sak_types::{BlockCandidate, Transaction};
     use std::collections::HashMap;
@@ -30,7 +32,7 @@ pub(super) mod test_utils {
     pub(crate) async fn make_rpc() -> (RPC, SocketAddr, Arc<Machine>) {
         let (disc_socket, disc_port) = {
             let (socket, socket_addr) =
-                sak_utils_net::setup_udp_socket(disc_port).await.unwrap();
+                sak_utils_net::setup_udp_socket(None).await.unwrap();
 
             info!(
                 "Bound udp socket for P2P discovery, addr: {}",
@@ -48,13 +50,9 @@ pub(super) mod test_utils {
         let genesis_block = make_dummy_genesis_block();
 
         let blockchain = {
-            let blockchain_args = BlockchainArgs {
-                app_prefix: "test".to_string(),
-                tx_pool_sync_interval: None,
-                genesis_block,
-            };
-
-            Blockchain::init(blockchain_args).await.unwrap()
+            Blockchain::init("test".to_string(), None, Some(genesis_block))
+                .await
+                .unwrap()
         };
 
         let machine = {
@@ -99,24 +97,24 @@ pub(super) mod test_utils {
         // };
 
         let identity = {
-            let id = Identity::new(secret, public_key_str, p2p_port, disc_port)
+            let id = Identity::new(secret, public_key_str, 1, disc_port)
                 .expect("identity should be initialized");
 
             Arc::new(id)
         };
 
-        let disc_args = DiscoveryArgs {
-            disc_dial_interval: None,
-            disc_table_capacity: None,
-            disc_task_interval: None,
-            disc_task_queue_capacity: None,
-            addr_expire_duration: None,
-            addr_monitor_interval: None,
-            udp_socket: disc_socket,
-            identity: identity.clone(),
-            p2p_port: 1,
-            bootstrap_addrs,
-        };
+        // let disc_args = DiscoveryArgs {
+        //     disc_dial_interval: None,
+        //     disc_table_capacity: None,
+        //     disc_task_interval: None,
+        //     disc_task_queue_capacity: None,
+        //     addr_expire_duration: None,
+        //     addr_monitor_interval: None,
+        //     udp_socket: disc_socket,
+        //     identity: identity.clone(),
+        //     p2p_port: 1,
+        //     bootstrap_addrs,
+        // };
 
         let p2p_peer_table = {
             let ps = PeerTable::init(None)
@@ -193,14 +191,14 @@ pub(super) mod test_utils {
                     vec![11, 11, 11],
                     String::from("1"),
                     String::from("1"),
-                    vec![11, 11, 11],
+                    Some(vec![11, 11, 11]),
                 ),
                 Transaction::new(
                     String::from("2"),
                     vec![22, 22, 22],
                     String::from("2"),
                     String::from("2"),
-                    vec![22, 22, 22],
+                    Some(vec![22, 22, 22]),
                 ),
             ],
             witness_sigs: vec![String::from("1"), String::from("2")],
@@ -211,15 +209,15 @@ pub(super) mod test_utils {
         genesis_block
     }
 
-    pub(crate) async fn make_blockchain() -> Blockchain {
+    pub(crate) async fn make_blockchain() -> DLedger {
         let genesis_block = make_dummy_genesis_block();
-        let blockchain_args = BlockchainArgs {
+        let blockchain_args = DLedgerArgs {
             app_prefix: String::from("test"),
             tx_pool_sync_interval: None,
             genesis_block,
         };
 
-        let blockchain = Blockchain::init(blockchain_args)
+        let blockchain = DLedger::init(blockchain_args)
             .await
             .expect("Blockchain should be initialized");
 
@@ -235,7 +233,7 @@ pub(super) mod test_utils {
             ],
             String::from("0x111"),
             String::from("0x1111"),
-            vec![75, 73, 72],
+            Some(vec![75, 73, 72]),
         )
     }
 
@@ -249,7 +247,7 @@ pub(super) mod test_utils {
                 ],
                 String::from("0x111"),
                 String::from("0x1111"),
-                vec![1, 2, 3],
+                Some(vec![1, 2, 3]),
             ),
             Transaction::new(
                 String::from("131146546123"),
@@ -259,7 +257,7 @@ pub(super) mod test_utils {
                 ],
                 String::from("0x222"),
                 String::from("0x2222"),
-                vec![1, 2, 3],
+                Some(vec![1, 2, 3]),
             ),
             Transaction::new(
                 String::from("1346523"),
@@ -269,7 +267,7 @@ pub(super) mod test_utils {
                 ],
                 String::from("0x333"),
                 String::from("0x3333"),
-                vec![4, 1, 3],
+                Some(vec![4, 1, 3]),
             ),
             Transaction::new(
                 String::from("75346546123"),
@@ -279,7 +277,7 @@ pub(super) mod test_utils {
                 ],
                 String::from("0x444"),
                 String::from("0x4444"),
-                vec![1, 2, 2],
+                Some(vec![1, 2, 2]),
             ),
         ]
     }

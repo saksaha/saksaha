@@ -242,7 +242,7 @@ mod test_suite {
                 dummy_tx.get_signature(),
                 dummy_tx.get_created_at(),
                 dummy_tx.get_data(),
-                dummy_tx.get_contract(),
+                dummy_tx.get_contract_addr(),
             )))
             .expect("request builder should be made");
 
@@ -273,8 +273,11 @@ mod test_suite {
         tokio::time::sleep(Duration::from_secs(1)).await;
 
         let dummy_tx_hash = dummy_tx.get_hash();
-        let is_contain =
-            machine.blockchain.tx_pool_contains(&dummy_tx_hash).await;
+        let is_contain = machine
+            .blockchain
+            .dledger
+            .tx_pool_contains(&dummy_tx_hash)
+            .await;
 
         assert_eq!(true, is_contain);
     }
@@ -318,7 +321,7 @@ mod test_suite {
                 dummy_tx.get_signature(),
                 dummy_tx.get_created_at(),
                 dummy_tx.get_data(),
-                dummy_tx.get_contract(),
+                dummy_tx.get_contract_addr(),
             )))
             .expect("request builder should be made");
 
@@ -349,8 +352,11 @@ mod test_suite {
         tokio::time::sleep(Duration::from_secs(1)).await;
 
         let false_tx_hash = String::from("false_tx");
-        let is_contain =
-            machine.blockchain.tx_pool_contains(&false_tx_hash).await;
+        let is_contain = machine
+            .blockchain
+            .dledger
+            .tx_pool_contains(&false_tx_hash)
+            .await;
 
         assert_eq!(false, is_contain);
     }
