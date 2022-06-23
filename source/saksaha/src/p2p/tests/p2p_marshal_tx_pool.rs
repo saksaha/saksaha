@@ -51,14 +51,14 @@ mod test_suite {
                     vec![11, 11, 11],
                     String::from("1"),
                     String::from("1"),
-                    vec![11, 11, 11],
+                    Some(vec![11, 11, 11]),
                 ),
                 Transaction::new(
                     String::from("2"),
                     vec![22, 22, 22],
                     String::from("2"),
                     String::from("2"),
-                    vec![22, 22, 22],
+                    Some(vec![22, 22, 22]),
                 ),
             ],
             witness_sigs: vec![String::from("1"), String::from("2")],
@@ -168,15 +168,6 @@ mod test_suite {
             .await
             .expect("P2P Host should be initialized");
 
-        let identity = {
-            let i = Identity {
-                p2p_port,
-                credential,
-            };
-
-            Arc::new(i)
-        };
-
         let blockchain = {
             let genesis_block = make_dummy_genesis_block();
 
@@ -201,7 +192,7 @@ mod test_suite {
                 machine: machine.clone(),
                 miner: true,
                 mine_interval: None,
-                identity: identity.clone(),
+                credential: credential.clone(),
             };
 
             Arc::new(ln)
@@ -256,7 +247,7 @@ mod test_suite {
                 String::from("one").as_bytes().to_vec(),
                 String::from("0x1111"),
                 String::from("0x1111"),
-                String::from("one").as_bytes().to_vec(),
+                Some(String::from("one").as_bytes().to_vec()),
             );
 
             let dummy_tx2 = Transaction::new(
@@ -264,8 +255,9 @@ mod test_suite {
                 String::from("two").as_bytes().to_vec(),
                 String::from("0x2222"),
                 String::from("0x2222"),
-                String::from("two").as_bytes().to_vec(),
+                Some(String::from("two").as_bytes().to_vec()),
             );
+
             let c = BlockCandidate {
                 validator_sig: String::from(""),
                 transactions: vec![dummy_tx1, dummy_tx2],

@@ -1,7 +1,7 @@
 use super::{miner::Miner, peer_node::PeerNode};
 use crate::machine::Machine;
 use log::info;
-use sak_p2p_id::Credential;
+use sak_p2p_id::{Credential, Identity};
 use sak_p2p_ptable::PeerTable;
 use std::sync::Arc;
 

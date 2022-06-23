@@ -1,6 +1,6 @@
 use crate::{blockchain::SystemContract, machine::Machine};
 use log::{error, info};
-use sak_p2p_id::Credential;
+use sak_p2p_id::{Credential, Identity};
 use std::{
     sync::Arc,
     time::{Duration, SystemTime},

@@ -42,14 +42,14 @@ mod test_suite {
                     vec![11, 11, 11],
                     String::from("1"),
                     String::from("1"),
-                    vec![11, 11, 11],
+                    Some(vec![11, 11, 11]),
                 ),
                 Transaction::new(
                     String::from("2"),
                     vec![22, 22, 22],
                     String::from("2"),
                     String::from("2"),
-                    vec![22, 22, 22],
+                    Some(vec![22, 22, 22]),
                 ),
             ],
             witness_sigs: vec![String::from("1"), String::from("2")],
@@ -156,7 +156,7 @@ mod test_suite {
                 disc_task_interval: None,
                 disc_task_queue_capacity: None,
                 credential: credential.clone(),
-                disc_port: disc_port,
+                disc_port,
                 p2p_port: p2p_port.port(),
                 bootstrap_addrs,
             };
@@ -440,7 +440,7 @@ mod test_suite {
             String::from("one").as_bytes().to_vec(),
             String::from("0x1111"),
             String::from("0x1111"),
-            String::from("one").as_bytes().to_vec(),
+            Some(String::from("one").as_bytes().to_vec()),
         );
 
         let peer_it = local_node_1.peer_table.new_iter();

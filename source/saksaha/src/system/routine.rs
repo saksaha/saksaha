@@ -93,6 +93,20 @@ impl Routine {
             Arc::new(ps)
         };
 
+        let (disc_socket, disc_port) = {
+            let (socket, socket_addr) =
+                sak_utils_net::setup_udp_socket(disc_args.disc_port).await?;
+
+            let udp_conn = Connection::new(socket);
+
+            info!(
+                "Bound udp socket for P2P discovery, addr: {}",
+                socket_addr.to_string().yellow(),
+            );
+
+            (Arc::new(udp_conn), socket_addr.port())
+        };
+
         let (rpc_socket, _) =
             match sak_utils_net::bind_tcp_socket(config.rpc.rpc_port).await {
                 Ok((socket, socket_addr)) => {
