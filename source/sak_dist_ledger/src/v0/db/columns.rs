@@ -26,7 +26,7 @@ const CTR_STATE: &str = "ctr_state";
 
 // pub(crate) struct
 
-pub(crate) struct LedgerDBColumnFamilyBuilder {
+pub(crate) struct LedgerDBColumnFamily {
     // tx_hash: ColumnFamilyDescriptor,
     // pi: ColumnFamilyDescriptor,
     // sig_vec: ColumnFamilyDescriptor,
@@ -41,7 +41,7 @@ pub(crate) struct LedgerDBColumnFamilyBuilder {
     // ctr_state: ColumnFamilyDescriptor,
 }
 
-impl LedgerDBColumnFamilyBuilder {
+impl LedgerDBColumnFamily {
     pub fn new(db: &DB) -> LedgerDBColumnFamily {
         LedgerDBColumnFamily {
             // tx_hash: make_tx_hash_cf(),
@@ -108,24 +108,24 @@ fn make_ctr_state_cf() -> ColumnFamilyDescriptor {
     ColumnFamilyDescriptor::new(CTR_STATE, Options::default())
 }
 
-impl ColumnFamilyDescribable for LedgerDBColumnFamily {
-    fn get_cf_vec(&self) -> Vec<ColumnFamilyDescriptor> {
-        let mut v = vec![
-            make_tx_hash_cf(),
-            make_tx_hash_cf(),
-            make_pi_cf(),
-            make_sig_vec_cf(),
-            make_created_at_cf(),
-            make_data_cf(),
-            make_ctr_addr_cf(),
-            make_validator_sig_cf(),
-            make_tx_hashes_cf(),
-            make_witness_sigs_cf(),
-            make_block_height_cf(),
-            make_block_hash_cf(),
-            make_ctr_state_cf(),
-        ];
+// impl ColumnFamilyDescribable for LedgerDBColumnFamily {
+//     fn get_cf_vec(&self) -> Vec<ColumnFamilyDescriptor> {
+//         let mut v = vec![
+//             make_tx_hash_cf(),
+//             make_tx_hash_cf(),
+//             make_pi_cf(),
+//             make_sig_vec_cf(),
+//             make_created_at_cf(),
+//             make_data_cf(),
+//             make_ctr_addr_cf(),
+//             make_validator_sig_cf(),
+//             make_tx_hashes_cf(),
+//             make_witness_sigs_cf(),
+//             make_block_height_cf(),
+//             make_block_hash_cf(),
+//             make_ctr_state_cf(),
+//         ];
 
-        v
-    }
-}
+//         v
+//     }
+// }
