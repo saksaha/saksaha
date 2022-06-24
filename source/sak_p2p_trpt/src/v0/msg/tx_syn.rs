@@ -40,7 +40,7 @@ impl TxSyn {
                     p.to_vec()
                 };
 
-                Tx::new(created_at, data, pi, signature, contract_addr)
+                Tx::new(created_at, data, pi, signature, Some(contract_addr))
             };
 
             txs.push(tx);

@@ -35,8 +35,13 @@ impl Tx {
         data: Vec<u8>,
         pi: String,
         signature: String,
-        contract_addr: Vec<u8>,
+        contract_addr: Option<Vec<u8>>,
     ) -> Tx {
+        let contract_addr = match contract_addr {
+            Some(a) => a,
+            None => vec![],
+        };
+
         let hash = sak_crypto::compute_hash(&[
             created_at.as_bytes(),
             data.as_slice(),

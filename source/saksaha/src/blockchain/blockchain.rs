@@ -24,7 +24,7 @@ impl Blockchain {
     async fn _init(
         app_prefix: String,
         tx_pool_sync_interval: Option<u64>,
-        genesis_block: BlockCandidate,
+        genesis_block: GenesisBlock,
     ) -> Result<Blockchain, BoxedError> {
         let dist_ledger_args = DistLedgerArgs {
             // genesis_block,
@@ -32,32 +32,32 @@ impl Blockchain {
             tx_pool_sync_interval,
         };
 
-        let dist_ledger = DistLedger::init(dist_ledger_args).await?;
+        let dist_ledger = {
+            let d = DistLedger::init(dist_ledger_args).await?;
 
-        {
-            dist_ledger.write_block(genesis_block).await;
+            let gen_block_candidate = &genesis_block.block_candidate;
 
-            let gen_block = dist_ledger.get_gen_block().await?;
-            // check_if_gen_block_is_identitcal(gen_block, genesis_block)?
-        }
+            insert_genesis_block(&d, gen_block_candidate).await?;
 
-        let validator_contract_addr = {
-            // get addr from initial_state
-            "3"
+            d
         };
 
         let sys_contracts = {
-            let validator = Validator::init(validator_contract_addr);
+            let validator_ctr_addr = genesis_block.get_validator_ctr_addr();
+
+            let validator = Validator::init(validator_ctr_addr);
 
             let c = SystemContracts { validator };
 
             c
         };
 
-        Ok(Blockchain {
+        let blockchain = Blockchain {
             dist_ledger,
             sys_contracts,
-        })
+        };
+
+        Ok(blockchain)
     }
 
     pub async fn run(&self) {
@@ -69,24 +69,40 @@ impl Blockchain {
     }
 }
 
-// fn check_if_gen_block_is_identitcal(inserted_gen_block: Block, gen_block: BlockCandidate)
+async fn insert_genesis_block(
+    dist_ledger: &DistLedger,
+    genesis_block: &BlockCandidate,
+) -> Result<String, String> {
+    let persisted_gen_block_hash =
+        dist_ledger.write_block(&genesis_block).await?;
 
+    let (block, _) = genesis_block.extract();
+
+    if block.get_hash() != &persisted_gen_block_hash {
+        return Err(format!(
+            "Not identical genesis block. Hardwird genesis \
+                    block may have been tampered",
+        )
+        .into());
+    }
+
+    Ok(persisted_gen_block_hash)
+}
 mod testing {
-    use super::Blockchain;
-    use super::{BlockCandidate, GenesisBlock};
+    use super::*;
 
     impl Blockchain {
-        pub async fn test_init(
+        pub async fn _test_init(
             app_prefix: String,
             tx_pool_sync_interval: Option<u64>,
-            genesis_block: Option<BlockCandidate>,
-        ) {
+            genesis_block: Option<GenesisBlock>,
+        ) -> Result<Blockchain, BoxedError> {
             let gen_block = match genesis_block {
                 Some(b) => b,
                 None => GenesisBlock::create(),
             };
 
-            Self::_init(app_prefix, tx_pool_sync_interval, gen_block).await;
+            Self::_init(app_prefix, tx_pool_sync_interval, gen_block).await
         }
     }
 }

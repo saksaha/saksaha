@@ -1,19 +1,18 @@
 use sak_types::{Block, BlockCandidate, Tx};
 
-pub(crate) struct GenesisBlock {
-    // pub(crate) validator_contract_addr: &'static str,
-    pub(crate) block_candidate: BlockCandidate,
-}
-
 pub(crate) const VALIDATOR_SIG: &str = "alw";
 
-pub(crate) const VALIDATOR_CONTRACT_ADDR: &'static str = "alwekfj";
+pub(crate) const VALIDATOR_CTR_ADDR: &'static str = "validator_contract_addr";
 
 pub(crate) const VALIDATOR: &[u8] =
     include_bytes!("../../../../sak_vm/src/v0/sak_ctrt_validator.wasm");
 
+pub(crate) struct GenesisBlock {
+    pub(crate) block_candidate: BlockCandidate,
+}
+
 impl GenesisBlock {
-    pub fn create() -> BlockCandidate {
+    pub fn create() -> GenesisBlock {
         let validator_wasm = VALIDATOR.to_vec();
 
         let validator_deploy_tx = Tx::new(
@@ -21,7 +20,7 @@ impl GenesisBlock {
             validator_wasm,
             String::from("1"),
             String::from("1"),
-            vec![1],
+            Some(VALIDATOR_CTR_ADDR.as_bytes().to_vec()),
         );
 
         let some_other_tx = Tx::new(
@@ -29,10 +28,10 @@ impl GenesisBlock {
             vec![22, 22, 22],
             String::from("2"),
             String::from("2"),
-            vec![1],
+            Some(vec![1]),
         );
 
-        let genesis_block = BlockCandidate {
+        let block_candidate = BlockCandidate {
             validator_sig: VALIDATOR_SIG.to_string(),
             transactions: vec![validator_deploy_tx, some_other_tx],
             witness_sigs: vec![String::from("1"), String::from("2")],
@@ -40,6 +39,10 @@ impl GenesisBlock {
             height: String::from("0"),
         };
 
-        genesis_block
+        GenesisBlock { block_candidate }
+    }
+
+    pub fn get_validator_ctr_addr(&self) -> String {
+        VALIDATOR_CTR_ADDR.to_string()
     }
 }

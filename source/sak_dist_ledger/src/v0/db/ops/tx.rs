@@ -138,7 +138,7 @@ impl Database {
             tx_value_result[1].as_bytes().to_vec(),
             tx_value_result[2].clone(),
             tx_value_result[3].clone(),
-            tx_value_result[4].as_bytes().to_vec(),
+            Some(tx_value_result[4].as_bytes().to_vec()),
         ))
     }
 
@@ -210,16 +210,22 @@ impl Database {
 
         Ok(())
     }
+}
 
-    // for testing
-    pub fn iter(
-        &self,
-    ) -> DBRawIteratorWithThreadMode<DBWithThreadMode<SingleThreaded>> {
-        let db = &self.ledger_db.db_instance;
+pub mod testing {
+    use super::*;
 
-        let iter =
-            db.raw_iterator_cf(db.cf_handle(columns::CREATED_AT).unwrap());
+    impl Database {
+        pub fn iter(
+            &self,
+        ) -> DBRawIteratorWithThreadMode<DBWithThreadMode<SingleThreaded>>
+        {
+            let db = &self.ledger_db.db_instance;
 
-        iter
+            let iter =
+                db.raw_iterator_cf(db.cf_handle(columns::CREATED_AT).unwrap());
+
+            iter
+        }
     }
 }

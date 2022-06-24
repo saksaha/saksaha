@@ -16,7 +16,7 @@ impl DistLedger {
     }
 
     // rpc
-    pub async fn send_transaction(&self, tx: Tx) -> Result<(), String> {
+    pub async fn send_tx(&self, tx: Tx) -> Result<(), String> {
         self.is_valid_tx(&tx);
 
         self.tx_pool.insert(tx).await
@@ -31,10 +31,7 @@ impl DistLedger {
         }
     }
 
-    pub async fn get_transaction(
-        &self,
-        tx_hash: &String,
-    ) -> Result<Tx, String> {
+    pub async fn get_tx(&self, tx_hash: &String) -> Result<Tx, String> {
         self.database.read_tx(tx_hash).await
     }
 
@@ -57,7 +54,7 @@ impl DistLedger {
 
     pub async fn write_block(
         &self,
-        bc: BlockCandidate,
+        bc: &BlockCandidate,
     ) -> Result<String, String> {
         let (block, txs) = bc.extract();
 
@@ -88,10 +85,6 @@ impl DistLedger {
     pub fn delete_tx(&self, key: &String) -> Result<(), String> {
         self.database.delete_tx(key)
     }
-
-    // pub async fn write_tx(&self, tx: &Tx) -> Result<String, String> {
-    //     self.database.write_tx(tx).await
-    // }
 
     pub async fn get_tx_pool_diff(
         &self,

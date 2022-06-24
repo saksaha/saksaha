@@ -4,9 +4,7 @@ use log::{error, info};
 use sak_contract_std::{Request, Storage};
 use wasmtime::{Instance, Memory, Store, TypedFunc};
 
-pub struct VM {
-    _a: usize,
-}
+pub struct VM {}
 
 pub enum FnType {
     Query,
@@ -14,28 +12,9 @@ pub enum FnType {
 }
 
 impl VM {
-    pub fn init(// validator_contract: &[u8],
-    // ) -> Result<(Instance, Store<i32>, Memory), BoxedError> {
-    ) -> Result<VM, String> {
-        // let (instance, mut store) =
-        //     match utils::create_instance(validator_contract) {
-        //         Ok(r) => r,
-        //         Err(err) => {
-        //             return Err(format!(
-        //                 "Error creating an instance, err: {}",
-        //                 err
-        //             )
-        //             .into());
-        //         }
-        //     };
-
-        // let memory = instance
-        //     .get_memory(&mut store, MEMORY)
-        //     .expect("expected memory not found");
-
-        // Ok((instance, store, memory))
-
-        Ok(VM { _a: 0 })
+    pub fn init() -> Result<VM, String> {
+        let vm = VM {};
+        Ok(vm)
     }
 
     // pub fn query(
