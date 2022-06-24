@@ -1,11 +1,11 @@
 use crate::{BoxedError, TX_SYN_TYPE};
 use bytes::{BufMut, Bytes, BytesMut};
 use sak_p2p_frame::{Frame, Parse};
-use sak_types::Transaction;
+use sak_types::Tx;
 
 #[derive(Debug)]
 pub struct TxSyn {
-    pub txs: Vec<Transaction>,
+    pub txs: Vec<Tx>,
 }
 
 impl TxSyn {
@@ -40,7 +40,7 @@ impl TxSyn {
                     p.to_vec()
                 };
 
-                Transaction::new(created_at, data, pi, signature, contract_addr)
+                Tx::new(created_at, data, pi, signature, contract_addr)
             };
 
             txs.push(tx);

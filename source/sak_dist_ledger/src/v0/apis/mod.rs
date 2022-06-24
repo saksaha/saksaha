@@ -1,6 +1,6 @@
 use crate::DistLedger;
 use log::warn;
-use sak_types::{Block, Transaction};
+use sak_types::{Block, BlockCandidate, Tx};
 
 impl DistLedger {
     pub async fn query_contract(&self) -> Result<&[u8], String> {
@@ -16,17 +16,14 @@ impl DistLedger {
     }
 
     // rpc
-    pub async fn send_transaction(
-        &self,
-        tx: Transaction,
-    ) -> Result<(), String> {
+    pub async fn send_transaction(&self, tx: Tx) -> Result<(), String> {
         self.is_valid_tx(&tx);
 
         self.tx_pool.insert(tx).await
     }
 
     // peer_node
-    pub async fn insert_into_pool(&self, txs: Vec<Transaction>) {
+    pub async fn insert_into_pool(&self, txs: Vec<Tx>) {
         for tx in txs.into_iter() {
             if let Err(err) = self.tx_pool.insert(tx).await {
                 warn!("Error inserting {}", err);
@@ -37,7 +34,7 @@ impl DistLedger {
     pub async fn get_transaction(
         &self,
         tx_hash: &String,
-    ) -> Result<Transaction, String> {
+    ) -> Result<Tx, String> {
         self.database.read_tx(tx_hash).await
     }
 
@@ -58,7 +55,12 @@ impl DistLedger {
         self.database.get_block(&block_hash).await
     }
 
-    pub async fn write_block(&self, block: Block) -> Result<String, String> {
+    pub async fn write_block(
+        &self,
+        bc: BlockCandidate,
+    ) -> Result<String, String> {
+        let (block, txs) = bc.extract();
+
         let tx_hashes = block.get_tx_hashes();
 
         let block_hash = match self.database.write_block(&block).await {
@@ -67,6 +69,10 @@ impl DistLedger {
                 return Err(err);
             }
         };
+
+        for tx in txs {
+            self.database.write_tx(&tx).await?;
+        }
 
         match self.tx_pool.remove_txs(tx_hashes).await {
             Ok(_) => {}
@@ -83,9 +89,9 @@ impl DistLedger {
         self.database.delete_tx(key)
     }
 
-    pub async fn write_tx(&self, tx: &Transaction) -> Result<String, String> {
-        self.database.write_tx(tx).await
-    }
+    // pub async fn write_tx(&self, tx: &Tx) -> Result<String, String> {
+    //     self.database.write_tx(tx).await
+    // }
 
     pub async fn get_tx_pool_diff(
         &self,
@@ -94,10 +100,7 @@ impl DistLedger {
         self.tx_pool.get_tx_pool_diff(tx_hashes).await
     }
 
-    pub async fn get_txs_from_pool(
-        &self,
-        tx_hashes: Vec<String>,
-    ) -> Vec<Transaction> {
+    pub async fn get_txs_from_pool(&self, tx_hashes: Vec<String>) -> Vec<Tx> {
         self.tx_pool.get_txs(tx_hashes).await
     }
 
@@ -122,14 +125,8 @@ impl DistLedger {
             .await
     }
 
-    pub async fn get_txs_from_tx_pool(
-        &self,
-    ) -> (Vec<String>, Vec<Transaction>) {
+    pub async fn get_txs_from_tx_pool(&self) -> (Vec<String>, Vec<Tx>) {
         let (h, t) = self.tx_pool.get_tx_pool().await;
         (h, t)
-    }
-
-    pub fn get_gen_block_hash(&self) -> &Option<String> {
-        &self.gen_block_hash
     }
 }

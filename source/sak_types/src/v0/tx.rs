@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
-pub struct Transaction {
+pub struct Tx {
     //
     created_at: String,
 
@@ -29,14 +29,14 @@ pub enum TxType {
     Others,
 }
 
-impl Transaction {
+impl Tx {
     pub fn new(
         created_at: String,
         data: Vec<u8>,
         pi: String,
         signature: String,
         contract_addr: Vec<u8>,
-    ) -> Transaction {
+    ) -> Tx {
         let hash = sak_crypto::compute_hash(&[
             created_at.as_bytes(),
             data.as_slice(),
@@ -45,7 +45,7 @@ impl Transaction {
             contract_addr.as_slice(),
         ]);
 
-        Transaction {
+        Tx {
             created_at,
             data,
             pi,

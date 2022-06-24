@@ -13,7 +13,6 @@ use crate::rpc::RPC;
 use crate::system::SystemHandle;
 use colored::Colorize;
 use log::{error, info};
-use sak_p2p_id::Credential;
 use sak_p2p_id::Identity;
 use sak_p2p_ptable::PeerTable;
 use std::sync::Arc;
@@ -184,7 +183,6 @@ impl Routine {
             let b = Blockchain::init(
                 config.app_prefix,
                 config.blockchain.tx_pool_sync_interval,
-                None,
             )
             .await?;
 
@@ -203,7 +201,6 @@ impl Routine {
                 machine: machine.clone(),
                 miner: config.node.miner,
                 mine_interval: config.node.mine_interval,
-                // credential,
                 identity: identity.clone(),
             };
 

@@ -1,5 +1,4 @@
 use super::Hashable;
-use sak_crypto::sha3::{Digest, Sha3_256};
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq, Hash)]
@@ -76,9 +75,3 @@ impl Block {
         &self.block_hash
     }
 }
-
-// impl std::fmt::Display for Block {
-//     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-//         write!(f, "Block (height: {}, tx_hashes: {}, )")
-//     }
-// }

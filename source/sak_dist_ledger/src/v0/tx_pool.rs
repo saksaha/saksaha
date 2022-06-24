@@ -1,5 +1,5 @@
 use log::{error, warn};
-use sak_types::{Hashable, Transaction};
+use sak_types::Tx;
 use std::collections::{HashMap, HashSet};
 use tokio::sync::RwLock;
 
@@ -7,7 +7,7 @@ const TX_POOL_CAPACITY: usize = 100;
 
 pub(crate) struct TxPool {
     new_tx_hashes: RwLock<HashSet<String>>,
-    tx_map: RwLock<HashMap<String, Transaction>>,
+    tx_map: RwLock<HashMap<String, Tx>>,
 }
 
 impl TxPool {
@@ -36,7 +36,7 @@ impl TxPool {
         v
     }
 
-    pub(crate) async fn get_tx_pool(&self) -> (Vec<String>, Vec<Transaction>) {
+    pub(crate) async fn get_tx_pool(&self) -> (Vec<String>, Vec<Tx>) {
         let tx_map_lock = self.tx_map.read().await;
         let mut hashes = vec![];
         let mut txs = vec![];
@@ -67,7 +67,7 @@ impl TxPool {
         return ret;
     }
 
-    pub(crate) async fn insert(&self, tx: Transaction) -> Result<(), String> {
+    pub(crate) async fn insert(&self, tx: Tx) -> Result<(), String> {
         let tx_hash = tx.get_hash();
 
         let mut tx_map_lock = self.tx_map.write().await;
@@ -113,10 +113,7 @@ impl TxPool {
         Ok(diff_hashes)
     }
 
-    pub(crate) async fn get_txs(
-        &self,
-        tx_hashes: Vec<String>,
-    ) -> Vec<Transaction> {
+    pub(crate) async fn get_txs(&self, tx_hashes: Vec<String>) -> Vec<Tx> {
         let tx_map_lock = self.tx_map.read().await;
         let mut tx_pool = vec![];
 

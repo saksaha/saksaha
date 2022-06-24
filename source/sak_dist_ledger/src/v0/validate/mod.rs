@@ -1,6 +1,6 @@
 use super::DistLedger;
-use sak_types::Transaction;
+use sak_types::Tx;
 
 impl DistLedger {
-    pub fn is_valid_tx(&self, tx: &Transaction) {}
+    pub fn is_valid_tx(&self, tx: &Tx) {}
 }

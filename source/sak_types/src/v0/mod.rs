@@ -1,9 +1,11 @@
 mod block;
 mod block_candidate;
 mod hashable;
-mod transaction;
+mod tx;
+mod tx_candidate;
 
 pub use block::*;
 pub use block_candidate::*;
 pub use hashable::*;
-pub use transaction::*;
+pub use tx::*;
+pub use tx_candidate::*;

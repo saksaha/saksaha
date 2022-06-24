@@ -1,13 +1,12 @@
+use crate::{blockchain::genesis::VALIDATOR_CONTRACT_ADDR, system::BoxedError};
 use sak_contract_std::Request;
 use std::collections::HashMap;
 use wasmtime::{Instance, Memory, Store};
 
-use crate::{blockchain::genesis::VALIDATOR_CONTRACT_ADDR, system::BoxedError};
-
-pub(crate) const VALIDATOR: &[u8] =
+const VALIDATOR: &[u8] =
     include_bytes!("../../../../sak_vm/src/v0/sak_ctrt_validator.wasm");
 
-pub(crate) const DEFAULT_VALIDATOR_HASHMAP_CAPACITY: usize = 10;
+const DEFAULT_VALIDATOR_HASHMAP_CAPACITY: usize = 10;
 
 pub(crate) struct Validator {
     contract_addr: &'static str,
@@ -20,20 +19,13 @@ pub(crate) struct Validator {
 
 impl Validator {
     pub fn init(contract_addr: &'static str) -> Validator {
-        // let contract_addr = VALIDATOR_CONTRACT_ADDR;
-
         let v = Validator { contract_addr };
 
-        // let (instance, store, memory) = sak_vm::init(VALIDATOR)?;
-
-        // Ok(Validator {
-        //     instance,
-        //     store,
-        //     memory,
-        //     storage_ptr: 0,
-        //     storage_len: 0,
-        // })
         v
+    }
+
+    pub fn get_wasm() -> &'static [u8] {
+        VALIDATOR
     }
 
     pub fn get_next_validator(&self) -> Result<String, BoxedError> {

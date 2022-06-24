@@ -3,13 +3,10 @@ use sak_kv_db::{
     DBRawIteratorWithThreadMode, DBWithThreadMode, KeyValueDatabase,
     SingleThreaded, WriteBatch,
 };
-use sak_types::Transaction;
+use sak_types::Tx;
 
 impl Database {
-    pub(crate) async fn write_tx(
-        &self,
-        tx: &Transaction,
-    ) -> Result<String, String> {
+    pub(crate) async fn write_tx(&self, tx: &Tx) -> Result<String, String> {
         let db = &self.ledger_db.db_instance;
 
         let mut batch = WriteBatch::default();
@@ -79,10 +76,7 @@ impl Database {
         }
     }
 
-    pub(crate) async fn read_tx(
-        &self,
-        tx_hash: &String,
-    ) -> Result<Transaction, String> {
+    pub(crate) async fn read_tx(&self, tx_hash: &String) -> Result<Tx, String> {
         let db = &self.ledger_db.db_instance;
 
         let mut tx_value_result = vec![
@@ -139,7 +133,7 @@ impl Database {
             };
         }
 
-        Ok(Transaction::new(
+        Ok(Tx::new(
             tx_value_result[0].clone(),
             tx_value_result[1].as_bytes().to_vec(),
             tx_value_result[2].clone(),

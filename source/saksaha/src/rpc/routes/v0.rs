@@ -2,7 +2,7 @@ use crate::rpc::response::{ErrorResult, SuccessResult};
 use crate::system::SystemHandle;
 use hyper::{Body, Request, Response, StatusCode};
 use log::warn;
-use sak_types::Transaction;
+use sak_types::Tx;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
@@ -15,7 +15,7 @@ pub(crate) async fn send_transaction(
             let body_bytes_vec = b.to_vec();
             let _body_str = match std::str::from_utf8(&body_bytes_vec) {
                 Ok(b) => {
-                    let _tx_value: Transaction = match serde_json::from_str(b) {
+                    let _tx_value: Tx = match serde_json::from_str(b) {
                         Ok(v) => {
                             match sys_handle.machine.send_transaction(v).await {
                                 Ok(bool) => {
