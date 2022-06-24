@@ -40,7 +40,7 @@ pub(crate) fn init_ledger_db(
 
     // let cf_descriptors = make_ledger_db_cf_descriptors();
 
-    let cf = LedgerDBColumnFamily::new();
+    // let cf = LedgerDBColumnFamily::new();
 
     let kv_db = match KeyValueDatabase::new(ledger_db_path, options, cf) {
         Ok(d) => d,

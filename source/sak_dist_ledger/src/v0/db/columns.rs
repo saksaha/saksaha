@@ -1,4 +1,4 @@
-use sak_kv_db::{ColumnFamilyDescribable, ColumnFamilyDescriptor, Options};
+use sak_kv_db::{ColumnFamilyDescribable, ColumnFamilyDescriptor, Options, DB};
 
 const TX_HASH: &str = "tx_hash";
 
@@ -24,37 +24,38 @@ const BLOCK_HASH: &str = "block_hash";
 
 const CTR_STATE: &str = "ctr_state";
 
-pub(crate) struct LedgerDBColumnFamily {
-    tx_hash: ColumnFamilyDescriptor,
-    pi: ColumnFamilyDescriptor,
-    sig_vec: ColumnFamilyDescriptor,
-    created_at: ColumnFamilyDescriptor,
-    data: ColumnFamilyDescriptor,
-    ctr_addr: ColumnFamilyDescriptor,
-    validator_sig: ColumnFamilyDescriptor,
-    tx_hashes: ColumnFamilyDescriptor,
-    witness_sigs: ColumnFamilyDescriptor,
-    block_height: ColumnFamilyDescriptor,
-    block_hash: ColumnFamilyDescriptor,
-    ctr_state: ColumnFamilyDescriptor,
-    // make_cf_vec: fn() -> Vec<usize>,
+// pub(crate) struct
+
+pub(crate) struct LedgerDBColumnFamilyBuilder {
+    // tx_hash: ColumnFamilyDescriptor,
+    // pi: ColumnFamilyDescriptor,
+    // sig_vec: ColumnFamilyDescriptor,
+    // created_at: ColumnFamilyDescriptor,
+    // data: ColumnFamilyDescriptor,
+    // ctr_addr: ColumnFamilyDescriptor,
+    // validator_sig: ColumnFamilyDescriptor,
+    // tx_hashes: ColumnFamilyDescriptor,
+    // witness_sigs: ColumnFamilyDescriptor,
+    // block_height: ColumnFamilyDescriptor,
+    // block_hash: ColumnFamilyDescriptor,
+    // ctr_state: ColumnFamilyDescriptor,
 }
 
-impl LedgerDBColumnFamily {
-    pub fn new() -> LedgerDBColumnFamily {
+impl LedgerDBColumnFamilyBuilder {
+    pub fn new(db: &DB) -> LedgerDBColumnFamily {
         LedgerDBColumnFamily {
-            tx_hash: make_tx_hash_cf(),
-            pi: make_pi_cf(),
-            sig_vec: make_sig_vec_cf(),
-            created_at: make_created_at_cf(),
-            data: make_data_cf(),
-            ctr_addr: make_ctr_addr_cf(),
-            validator_sig: make_validator_sig_cf(),
-            tx_hashes: make_tx_hashes_cf(),
-            witness_sigs: make_witness_sigs_cf(),
-            block_height: make_block_height_cf(),
-            block_hash: make_block_hash_cf(),
-            ctr_state: make_ctr_state_cf(),
+            // tx_hash: make_tx_hash_cf(),
+            // pi: make_pi_cf(),
+            // sig_vec: make_sig_vec_cf(),
+            // created_at: make_created_at_cf(),
+            // data: make_data_cf(),
+            // ctr_addr: make_ctr_addr_cf(),
+            // validator_sig: make_validator_sig_cf(),
+            // tx_hashes: make_tx_hashes_cf(),
+            // witness_sigs: make_witness_sigs_cf(),
+            // block_height: make_block_height_cf(),
+            // block_hash: make_block_hash_cf(),
+            // ctr_state: make_ctr_state_cf(),
         }
     }
 }
