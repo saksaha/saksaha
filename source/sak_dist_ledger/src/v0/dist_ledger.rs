@@ -3,6 +3,7 @@ use super::DLedgerEvent;
 use crate::Database;
 use crate::Runtime;
 use log::{error, info, warn};
+use sak_types::Block;
 use sak_types::BlockCandidate;
 use sak_vm::VM;
 use std::sync::Arc;
@@ -11,7 +12,7 @@ use tokio::sync::{broadcast::Sender, RwLock};
 
 const BLOCKCHAIN_EVENT_QUEUE_CAPACITY: usize = 32;
 
-pub struct DLedger {
+pub struct DistLedger {
     pub(crate) database: Database,
     pub(crate) tx_pool: Arc<TxPool>,
     pub(crate) gen_block_hash: Option<String>,
@@ -20,13 +21,13 @@ pub struct DLedger {
     runtime: Arc<Runtime>,
 }
 
-pub struct DLedgerArgs {
+pub struct DistLedgerArgs {
     pub app_prefix: String,
     pub tx_pool_sync_interval: Option<u64>,
     pub genesis_block: BlockCandidate,
 }
 
-pub struct DLedgerInitState {
+pub struct DistLedgerInitState {
     // genesis block insertion result
     // contract_1_addr,
     // contract_2_addr,
@@ -34,11 +35,11 @@ pub struct DLedgerInitState {
     pub gen_block_insert_result: Vec<String>,
 }
 
-impl DLedger {
+impl DistLedger {
     pub async fn init(
-        blockchain_args: DLedgerArgs,
-    ) -> Result<(DLedger, DLedgerInitState), String> {
-        let DLedgerArgs {
+        blockchain_args: DistLedgerArgs,
+    ) -> Result<DistLedger, String> {
+        let DistLedgerArgs {
             app_prefix,
             tx_pool_sync_interval,
             genesis_block,
@@ -78,7 +79,7 @@ impl DLedger {
             Arc::new(r)
         };
 
-        let mut dist_ledger = DLedger {
+        let mut dist_ledger = DistLedger {
             database,
             tx_pool: tx_pool.clone(),
             vm,
@@ -100,13 +101,9 @@ impl DLedger {
 
         dist_ledger.gen_block_hash = Some(gen_block_hash);
 
-        let dledger_init_state = DLedgerInitState {
-            gen_block_insert_result: vec![],
-        };
-
         info!("Initialized Blockchain");
 
-        Ok((dist_ledger, dledger_init_state))
+        Ok(dist_ledger)
     }
 
     pub async fn run(&self) {
@@ -125,26 +122,31 @@ impl DLedger {
 
         let gen_block_hash = block.get_hash().to_owned();
 
-        match self.get_block(&gen_block_hash).await {
-            Ok(_) => {
-                warn!("A Genesis block has already been created");
-            }
-            Err(_) => {
-                info!("Build a genesis block");
+        if let Ok(b) = self.get_block(&gen_block_hash).await {
+            return Err(format!(
+                "Genesis block has already been inserted. \
+                Unusual access. Did you call this fn before?, block: {:?}",
+                b
+            ));
+        }
 
-                if let Err(err) = self.write_block(block).await {
-                    error!("Cannot create genesis block, err: {}", err);
-                };
-            }
-        };
+        {
+            if let Err(err) = self.write_block(block).await {
+                error!("Cannot create genesis block, err: {}", err);
+            };
 
-        for tx in txs {
-            if let Err(err) = self.write_tx(&tx).await {
-                error!("Could not write tx of genesis block, err: {}", err);
+            for tx in txs {
+                if let Err(err) = self.write_tx(&tx).await {
+                    error!("Could not write tx of genesis block, err: {}", err);
+                }
             }
         }
 
         Ok(gen_block_hash)
+    }
+
+    pub async fn get_gen_block(&self) -> Result<Block, String> {
+        self.get_block_by_height(String::from("0")).await
     }
 
     pub fn get_vm(&self) -> &VM {

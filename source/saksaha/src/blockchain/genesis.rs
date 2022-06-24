@@ -21,7 +21,7 @@ impl GenesisBlock {
             validator_wasm,
             String::from("1"),
             String::from("1"),
-            None,
+            vec![1],
         );
 
         let some_other_tx = Transaction::new(
@@ -29,7 +29,7 @@ impl GenesisBlock {
             vec![22, 22, 22],
             String::from("2"),
             String::from("2"),
-            None,
+            vec![1],
         );
 
         let genesis_block = BlockCandidate {

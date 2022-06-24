@@ -76,3 +76,9 @@ impl Block {
         &self.block_hash
     }
 }
+
+// impl std::fmt::Display for Block {
+//     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "Block (height: {}, tx_hashes: {}, )")
+//     }
+// }

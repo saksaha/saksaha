@@ -45,7 +45,7 @@ impl LocalNode {
             let bc_event_rx = {
                 let rx = machine
                     .blockchain
-                    .dledger
+                    .dist_ledger
                     .bc_event_tx
                     .clone()
                     .read()

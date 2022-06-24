@@ -6,7 +6,7 @@ impl Machine {
         &self,
         tx: Transaction,
     ) -> Result<(), String> {
-        self.blockchain.dledger.send_transaction(tx).await
+        self.blockchain.dist_ledger.send_transaction(tx).await
     }
 
     pub(crate) async fn get_transaction(
@@ -14,13 +14,13 @@ impl Machine {
         tx_hash: String,
     ) -> Result<Transaction, String> {
         println!("blockchain get_transaction() called");
-        self.blockchain.dledger.get_transaction(&tx_hash).await
+        self.blockchain.dist_ledger.get_transaction(&tx_hash).await
     }
 
     pub(crate) async fn get_block(
         &self,
         block: &String,
     ) -> Result<Block, String> {
-        self.blockchain.dledger.get_block(block).await
+        self.blockchain.dist_ledger.get_block(block).await
     }
 }

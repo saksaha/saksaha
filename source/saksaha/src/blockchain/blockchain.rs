@@ -3,11 +3,11 @@ use super::{
     sys_contracts::{SystemContracts, Validator},
 };
 use crate::system::BoxedError;
-use sak_dist_ledger::{DLedger, DLedgerArgs};
+use sak_dist_ledger::{DistLedger, DistLedgerArgs};
 use sak_types::BlockCandidate;
 
 pub(crate) struct Blockchain {
-    pub(crate) dledger: DLedger,
+    pub(crate) dist_ledger: DistLedger,
     pub(crate) sys_contracts: SystemContracts,
 }
 
@@ -22,13 +22,16 @@ impl Blockchain {
             None => GenesisBlock::create(),
         };
 
-        let dledger_args = DLedgerArgs {
+        let dist_ledger_args = DistLedgerArgs {
             genesis_block,
             app_prefix,
             tx_pool_sync_interval,
         };
 
-        let (dledger, initial_state) = DLedger::init(dledger_args).await?;
+        let dist_ledger = DistLedger::init(dist_ledger_args).await?;
+
+        let b = dist_ledger.get_gen_block().await?;
+        println!("gen block inserted: {:?}", b);
 
         let validator_contract_addr = {
             // get addr from initial_state
@@ -44,13 +47,13 @@ impl Blockchain {
         };
 
         Ok(Blockchain {
-            dledger,
+            dist_ledger,
             sys_contracts,
         })
     }
 
     pub async fn run(&self) {
-        self.dledger.run().await;
+        self.dist_ledger.run().await;
     }
 
     pub async fn get_next_validator(&self) -> Result<String, BoxedError> {

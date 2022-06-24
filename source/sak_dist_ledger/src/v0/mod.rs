@@ -1,16 +1,17 @@
 mod apis;
 mod db;
-mod dledger;
+mod dist_ledger;
 mod events;
 mod runtime;
 mod tx_pool;
+mod validate;
 
 #[cfg(test)]
 mod tests;
 
 pub use apis::*;
 pub(crate) use db::*;
-pub use dledger::*;
+pub use dist_ledger::*;
 pub use events::*;
 pub(crate) use runtime::*;
 

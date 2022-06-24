@@ -81,12 +81,17 @@ impl Miner {
                 match self.machine.blockchain.get_next_validator().await {
                     Ok(v) => v,
                     Err(err) => {
-                        error!("Could not get next validator, fatal error");
+                        error!(
+                            "Could not get next validator, fatal, err: {}",
+                            err
+                        );
                         self.error_count += 1;
 
                         continue;
                     }
                 };
+
+            println!("next validator: {}", next_validator);
 
             let is_next_validator =
                 next_validator == self.identity.credential.public_key_str;

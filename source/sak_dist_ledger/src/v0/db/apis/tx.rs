@@ -144,7 +144,7 @@ impl Database {
             tx_value_result[1].as_bytes().to_vec(),
             tx_value_result[2].clone(),
             tx_value_result[3].clone(),
-            Some(tx_value_result[4].as_bytes().to_vec()),
+            tx_value_result[4].as_bytes().to_vec(),
         ))
     }
 

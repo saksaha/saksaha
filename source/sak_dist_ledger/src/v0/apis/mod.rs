@@ -1,8 +1,8 @@
-use crate::DLedger;
+use crate::DistLedger;
 use log::warn;
 use sak_types::{Block, Transaction};
 
-impl DLedger {
+impl DistLedger {
     pub async fn query_contract(&self) -> Result<&[u8], String> {
         Ok(&[])
     }
@@ -20,6 +20,8 @@ impl DLedger {
         &self,
         tx: Transaction,
     ) -> Result<(), String> {
+        self.is_valid_tx(&tx);
+
         self.tx_pool.insert(tx).await
     }
 

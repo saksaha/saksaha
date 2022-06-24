@@ -35,19 +35,8 @@ impl Transaction {
         data: Vec<u8>,
         pi: String,
         signature: String,
-        contract_addr: Option<Vec<u8>>,
+        contract_addr: Vec<u8>,
     ) -> Transaction {
-        let contract_addr = {
-            let mut v = vec![];
-
-            match contract_addr {
-                Some(a) => v.clone_from_slice(&a),
-                None => {}
-            };
-
-            v
-        };
-
         let hash = sak_crypto::compute_hash(&[
             created_at.as_bytes(),
             data.as_slice(),
