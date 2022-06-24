@@ -107,9 +107,6 @@ impl TxPool {
             };
         }
 
-        let a = tx_map_lock.values().len();
-        println!("rest len: {}", a);
-
         Ok(diff_hashes)
     }
 

@@ -93,7 +93,7 @@ pub unsafe extern "C" fn query(
             }
         };
 
-    match request.req_type {
+    match request.req_type.as_ref() {
         "get_validator" => {
             return handle_get_validator(storage);
         }

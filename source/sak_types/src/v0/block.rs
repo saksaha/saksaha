@@ -22,6 +22,8 @@ impl Block {
         let block_hash = {
             let mut to_hash = vec![];
             let to_hash = {
+                to_hash.push(validator_sig.as_bytes());
+
                 to_hash.push(created_at.as_bytes());
 
                 for tx in tx_hashes.iter() {
@@ -73,5 +75,39 @@ impl Block {
 
     pub fn get_hash(&self) -> &String {
         &self.block_hash
+    }
+
+    pub(super) fn compute_block_hash(
+        validator_sig: &String,
+        tx_hashes: &Vec<String>,
+        witness_sigs: &Vec<String>,
+        created_at: &String,
+        height: &String,
+    ) -> String {
+        let block_hash = {
+            let mut to_hash = vec![];
+            let to_hash = {
+                to_hash.push(validator_sig.as_bytes());
+
+                to_hash.push(created_at.as_bytes());
+
+                for tx in tx_hashes.iter() {
+                    to_hash.push(tx.as_bytes());
+                }
+
+                for sig in witness_sigs.iter() {
+                    to_hash.push(sig.as_bytes());
+                }
+
+                to_hash.push(created_at.as_bytes());
+                to_hash.push(height.as_bytes());
+
+                to_hash.as_slice()
+            };
+
+            sak_crypto::compute_hash(to_hash)
+        };
+
+        block_hash
     }
 }

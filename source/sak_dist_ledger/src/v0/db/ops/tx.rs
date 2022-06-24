@@ -24,7 +24,7 @@ impl Database {
         };
         batch.put_cf(cf_handle, tx_hash, tx.get_created_at());
 
-        let cf_handle = match db.cf_handle(columns::DATA) {
+        let data_cf = match db.cf_handle(columns::DATA) {
             Some(h) => h,
             None => {
                 return Err(format!(
@@ -33,7 +33,7 @@ impl Database {
                 ))
             }
         };
-        batch.put_cf(cf_handle, tx_hash, tx.get_data());
+        batch.put_cf(data_cf, tx_hash, tx.get_data());
 
         let cf_handle = match db.cf_handle(columns::PI) {
             Some(h) => h,
@@ -68,7 +68,8 @@ impl Database {
         };
         batch.put_cf(cf_handle, tx_hash, tx.get_contract_addr());
 
-        //
+        // K: contract_addr => V: contract_bytecode (data)
+        batch.put_cf(data_cf, tx.get_contract_addr(), tx.get_data());
 
         match db.write(batch) {
             Ok(_) => return Ok(tx_hash.clone()),
@@ -94,7 +95,7 @@ impl Database {
             columns::DATA,
             columns::SIG_VEC,
             columns::PI,
-            columns::CONTRACT,
+            columns::CONTRACT_ADDR,
         ];
 
         let tx_values_it_map = tx_values_col.iter().map(|cf_name| cf_name);

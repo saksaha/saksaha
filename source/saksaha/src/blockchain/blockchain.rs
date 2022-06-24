@@ -3,6 +3,7 @@ use super::{
     sys_contracts::{SystemContracts, Validator},
 };
 use crate::system::BoxedError;
+use log::info;
 use sak_dist_ledger::{DistLedger, DistLedgerArgs};
 use sak_types::BlockCandidate;
 
@@ -27,7 +28,6 @@ impl Blockchain {
         genesis_block: GenesisBlock,
     ) -> Result<Blockchain, BoxedError> {
         let dist_ledger_args = DistLedgerArgs {
-            // genesis_block,
             app_prefix,
             tx_pool_sync_interval,
         };
@@ -65,7 +65,12 @@ impl Blockchain {
     }
 
     pub async fn get_next_validator(&self) -> Result<String, BoxedError> {
-        self.sys_contracts.validator.get_next_validator()
+        println!("getting next validator!!");
+
+        self.sys_contracts
+            .validator
+            .get_next_validator(&self.dist_ledger)
+            .await
     }
 }
 
@@ -73,21 +78,40 @@ async fn insert_genesis_block(
     dist_ledger: &DistLedger,
     genesis_block: &BlockCandidate,
 ) -> Result<String, String> {
-    let persisted_gen_block_hash =
-        dist_ledger.write_block(&genesis_block).await?;
+    let persisted_gen_block_hash = if let Some(b) =
+        dist_ledger.get_block_by_height(String::from("0")).await?
+    {
+        let block_hash = b.get_hash().to_string();
 
-    let (block, _) = genesis_block.extract();
+        info!(
+            "Genesis block is already persisted, block_hash: {}",
+            block_hash,
+        );
 
-    if block.get_hash() != &persisted_gen_block_hash {
+        block_hash
+    } else {
+        let b = dist_ledger.write_block(&genesis_block).await?;
+
+        info!("Wrote genesis block, block_hash: {}", &b);
+
+        b
+    };
+
+    let (gen_block, _) = genesis_block.extract();
+    let gen_block_hash = gen_block.get_hash();
+
+    if gen_block_hash != &persisted_gen_block_hash {
         return Err(format!(
             "Not identical genesis block. Hardwird genesis \
-                    block may have been tampered",
+            block may have been tampered, gen_block: {}, persisted: {}",
+            &gen_block_hash, &persisted_gen_block_hash,
         )
         .into());
     }
 
-    Ok(persisted_gen_block_hash)
+    Ok(persisted_gen_block_hash.to_string())
 }
+
 mod testing {
     use super::*;
 

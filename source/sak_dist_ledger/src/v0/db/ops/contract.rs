@@ -2,6 +2,42 @@ use crate::{columns, Database};
 use sak_kv_db::WriteBatch;
 
 impl Database {
+    pub(crate) async fn get_ctr_data(
+        &self,
+        ctr_addr: &String,
+    ) -> Result<Option<Vec<u8>>, String> {
+        let db = &self.ledger_db.db_instance;
+
+        let cf_handle = match db.cf_handle(columns::DATA) {
+            Some(h) => h,
+            None => {
+                return Err(format!(
+                    "Fail to open ledger colums {}",
+                    columns::CTR_STATE
+                ));
+            }
+        };
+
+        let key = ctr_addr;
+
+        let value = match db.get_cf(cf_handle, &key) {
+            Ok(val) => match val {
+                Some(v) => v,
+                None => return Ok(None),
+            },
+            Err(err) => {
+                return Err(format!(
+                    "Fail to get value from ledger columns, column: {}, \
+                    err: {}",
+                    columns::CTR_STATE,
+                    err,
+                ));
+            }
+        };
+
+        Ok(Some(value))
+    }
+
     pub(crate) async fn get_contract_state(
         &self,
         contract_addr: &String,
@@ -9,12 +45,12 @@ impl Database {
     ) -> Result<String, String> {
         let db = &self.ledger_db.db_instance;
 
-        let cf_handle = match db.cf_handle(columns::CONTRACT_STATE) {
+        let cf_handle = match db.cf_handle(columns::CTR_STATE) {
             Some(h) => h,
             None => {
                 return Err(format!(
                     "Fail to open ledger colums {}",
-                    columns::CONTRACT_STATE
+                    columns::CTR_STATE
                 ));
             }
         };
@@ -35,7 +71,7 @@ impl Database {
                 None => {
                     return Err(format!(
                         "No matched value with key in {}, key: {}",
-                        columns::CONTRACT_STATE,
+                        columns::CTR_STATE,
                         &key,
                     ));
                 }
@@ -44,7 +80,7 @@ impl Database {
                 return Err(format!(
                     "Fail to get value from ledger columns, column: {}, \
                     err: {}",
-                    columns::CONTRACT_STATE,
+                    columns::CTR_STATE,
                     err,
                 ));
             }
@@ -63,12 +99,12 @@ impl Database {
 
         let mut batch = WriteBatch::default();
 
-        let cf_handle = match db.cf_handle(columns::CONTRACT_STATE) {
+        let cf_handle = match db.cf_handle(columns::CTR_STATE) {
             Some(h) => h,
             None => {
                 return Err(format!(
                     "Fail to open ledger columns {}",
-                    columns::CONTRACT_STATE
+                    columns::CTR_STATE
                 ))
             }
         };

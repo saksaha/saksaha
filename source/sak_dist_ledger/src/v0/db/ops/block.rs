@@ -6,7 +6,7 @@ impl Database {
     pub(crate) async fn get_block(
         &self,
         block_hash: &String,
-    ) -> Result<Block, String> {
+    ) -> Result<Option<Block>, String> {
         let db = &self.ledger_db.db_instance;
 
         let cf_handle = match db.cf_handle(columns::VALIDATOR_SIG) {
@@ -30,13 +30,7 @@ impl Database {
                         ));
                     }
                 },
-                None => {
-                    return Err(format!(
-                        "No matched value with tx_hash in {}, {}",
-                        columns::VALIDATOR_SIG,
-                        &block_hash,
-                    ));
-                }
+                None => return Ok(None),
             },
             Err(err) => {
                 return Err(format!(
@@ -67,11 +61,7 @@ impl Database {
                     th
                 }
                 None => {
-                    return Err(format!(
-                        "No matched value with tx_hash in {}, {}",
-                        columns::TX_HASHES,
-                        &block_hash,
-                    ));
+                    return Ok(None);
                 }
             },
             Err(err) => {
@@ -102,13 +92,7 @@ impl Database {
                     let th: Vec<String> = serde_json::from_slice(&v).unwrap();
                     th
                 }
-                None => {
-                    return Err(format!(
-                        "No matched value with tx_hash in {}, {}",
-                        columns::WITNESS_SIGS,
-                        &block_hash,
-                    ));
-                }
+                None => return Ok(None),
             },
             Err(err) => {
                 return Err(format!(
@@ -141,13 +125,7 @@ impl Database {
                         ));
                     }
                 },
-                None => {
-                    return Err(format!(
-                        "No matched value with tx_hash in {}, {}",
-                        columns::CREATED_AT,
-                        &block_hash,
-                    ));
-                }
+                None => return Ok(None),
             },
             Err(err) => {
                 return Err(format!(
@@ -159,12 +137,12 @@ impl Database {
             }
         };
 
-        let cf_handle = match db.cf_handle(columns::HEIGHT) {
+        let cf_handle = match db.cf_handle(columns::BLOCK_HEIGHT) {
             Some(h) => h,
             None => {
                 return Err(format!(
                     "Fail to open ledger columns {}",
-                    columns::HEIGHT
+                    columns::BLOCK_HEIGHT
                 ));
             }
         };
@@ -180,19 +158,13 @@ impl Database {
                         ));
                     }
                 },
-                None => {
-                    return Err(format!(
-                        "No matched value with tx_hash in {}, {}",
-                        columns::HEIGHT,
-                        &block_hash,
-                    ));
-                }
+                None => return Ok(None),
             },
             Err(err) => {
                 return Err(format!(
                     "Fail to get value from ledger columns, column: {}, \
                     err: {}",
-                    columns::HEIGHT,
+                    columns::BLOCK_HEIGHT,
                     err,
                 ));
             }
@@ -206,13 +178,13 @@ impl Database {
             height,
         );
 
-        Ok(b)
+        Ok(Some(b))
     }
 
     pub(crate) async fn get_block_hash_by_height(
         &self,
         block_height: String,
-    ) -> Result<String, String> {
+    ) -> Result<Option<String>, String> {
         let db = &self.ledger_db.db_instance;
 
         let cf_handle = match db.cf_handle(columns::BLOCK_HASH) {
@@ -236,13 +208,7 @@ impl Database {
                         ));
                     }
                 },
-                None => {
-                    return Err(format!(
-                        "No matched value with tx_hash in {}, {}",
-                        columns::BLOCK_HASH,
-                        block_height,
-                    ));
-                }
+                None => return Ok(None),
             },
             Err(err) => {
                 return Err(format!(
@@ -254,7 +220,7 @@ impl Database {
             }
         };
 
-        Ok(block_hash)
+        Ok(Some(block_hash))
     }
 
     pub(crate) async fn write_block(
@@ -266,6 +232,8 @@ impl Database {
         let mut batch = WriteBatch::default();
 
         let block_hash = block.get_hash();
+
+        println!("write_block, hash: {}", block_hash);
 
         let cf_handle = match db.cf_handle(columns::VALIDATOR_SIG) {
             Some(h) => h,
@@ -350,12 +318,12 @@ impl Database {
         };
         batch.put_cf(cf_handle, &block.get_height(), &block_hash);
 
-        let cf_handle = match db.cf_handle(columns::HEIGHT) {
+        let cf_handle = match db.cf_handle(columns::BLOCK_HEIGHT) {
             Some(h) => h,
             None => {
                 return Err(format!(
                     "Fail to open ledger columns {}",
-                    columns::HEIGHT
+                    columns::BLOCK_HEIGHT
                 ))
             }
         };

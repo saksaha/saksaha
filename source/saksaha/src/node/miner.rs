@@ -39,30 +39,6 @@ impl Miner {
 
         info!("Starting Miner, mine_interval: {:?}", mine_interval);
 
-        //     let mut system_contract = match SystemContract::init() {
-        //         Ok(s) => s,
-        //         Err(err) => {
-        //             error!(
-        //                 "Fatal error. Error initializing system contract, err: {}",
-        //                 err,
-        //             );
-
-        //             return;
-        //         }
-        //     };
-
-        //     match system_contract.set_validator() {
-        //         Ok(s) => s,
-        //         Err(err) => {
-        //             error!(
-        //                 "Fatal error. Error setting system contract, err: {}",
-        //                 err,
-        //             );
-
-        //             return;
-        //         }
-        //     };
-
         loop {
             if self.error_count > 5 {
                 error!(
@@ -74,7 +50,6 @@ impl Miner {
                 return;
             }
 
-            // self.machine.blockchain.call_contract(contract_addr, fn, fn_args)
             let time_since = SystemTime::now();
 
             let next_validator =

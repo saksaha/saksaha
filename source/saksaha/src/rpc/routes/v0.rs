@@ -15,9 +15,15 @@ pub(crate) async fn send_transaction(
             let body_bytes_vec = b.to_vec();
             let _body_str = match std::str::from_utf8(&body_bytes_vec) {
                 Ok(b) => {
-                    let _tx_value: Tx = match serde_json::from_str(b) {
+                    let _tx_value: Tx = match &serde_json::from_str(b) {
                         Ok(v) => {
-                            match sys_handle.machine.send_transaction(v).await {
+                            match sys_handle
+                                .machine
+                                .blockchain
+                                .dist_ledger
+                                .get_tx(v)
+                                .await
+                            {
                                 Ok(bool) => {
                                     return SuccessResult {
                                         id: String::from("1"),
@@ -101,7 +107,13 @@ pub(crate) async fn get_transaction(
                 }
             };
 
-            match sys_handle.machine.get_transaction(body.hash).await {
+            match sys_handle
+                .machine
+                .blockchain
+                .dist_ledger
+                .get_tx(&body.hash)
+                .await
+            {
                 Ok(t) => {
                     println!("apowef: {:?}", t);
 
@@ -207,7 +219,13 @@ pub(crate) async fn get_block(
                 Ok(b) => {
                     let block_hash = b.to_string();
 
-                    match sys_handle.machine.get_block(&block_hash).await {
+                    match sys_handle
+                        .machine
+                        .blockchain
+                        .dist_ledger
+                        .get_block(&block_hash)
+                        .await
+                    {
                         Ok(_block) => {
                             return SuccessResult {
                                 id: String::from("1"),

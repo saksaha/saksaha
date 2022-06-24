@@ -13,32 +13,6 @@ pub struct BlockCandidate {
 }
 
 impl BlockCandidate {
-    pub fn get_hash(&self) -> String {
-        let block_hash = {
-            let mut to_hash = vec![];
-            let to_hash = {
-                to_hash.push(self.created_at.as_bytes());
-
-                for tx in self.transactions.iter() {
-                    to_hash.push(tx.get_hash().as_bytes());
-                }
-
-                for sig in self.witness_sigs.iter() {
-                    to_hash.push(sig.as_bytes());
-                }
-
-                to_hash.push(self.created_at.as_bytes());
-                to_hash.push(self.height.as_bytes());
-
-                to_hash.as_slice()
-            };
-
-            sak_crypto::compute_hash(to_hash)
-        };
-
-        block_hash
-    }
-
     pub fn extract(&self) -> (Block, Vec<&Tx>) {
         let (tx_hashes, txs) = {
             let mut hashes = vec![];

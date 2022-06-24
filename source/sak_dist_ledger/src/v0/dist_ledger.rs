@@ -18,7 +18,7 @@ pub struct DistLedger {
     pub(crate) database: Database,
     pub(crate) tx_pool: Arc<TxPool>,
     pub bc_event_tx: Arc<RwLock<Sender<DLedgerEvent>>>,
-    vm: VM,
+    pub(crate) vm: VM,
     runtime: Arc<Runtime>,
 }
 
@@ -89,25 +89,5 @@ impl DistLedger {
         tokio::spawn(async move {
             runtime.run().await;
         });
-    }
-
-    pub async fn get_gen_block(&self) -> Result<Block, String> {
-        self.get_block_by_height(String::from("0")).await
-    }
-
-    pub fn exec_ctr(
-        &self,
-        ctr_addr: String,
-        fn_type: FnType,
-        request: Request,
-    ) {
-
-        // let ctr = self.get_contract_state(tx_hashes)
-        // self.vm.exec(
-        //     contract_wasm: &[u8],
-        //     fn_type: FnType,
-        //     request: Request,
-        //     storage: Storage,
-        // )
     }
 }

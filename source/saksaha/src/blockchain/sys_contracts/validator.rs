@@ -1,9 +1,12 @@
 use crate::system::BoxedError;
+use sak_contract_std::Request;
+use sak_dist_ledger::DistLedger;
+use sak_vm::FnType;
 
 const DEFAULT_VALIDATOR_HASHMAP_CAPACITY: usize = 10;
 
 pub(crate) struct Validator {
-    contract_addr: String,
+    ctr_addr: String,
     // instance: Instance,
     // store: Store<i32>,
     // memory: Memory,
@@ -12,14 +15,29 @@ pub(crate) struct Validator {
 }
 
 impl Validator {
-    pub fn init(contract_addr: String) -> Validator {
-        let v = Validator { contract_addr };
+    pub fn init(ctr_addr: String) -> Validator {
+        let v = Validator { ctr_addr };
 
         v
     }
 
-    pub fn get_next_validator(&self) -> Result<String, BoxedError> {
-        Ok("opwer".into())
+    pub async fn get_next_validator(
+        &self,
+        dist_ledger: &DistLedger,
+    ) -> Result<String, BoxedError> {
+        let request = Request {
+            req_type: String::from("get_validator"),
+        };
+
+        let a = dist_ledger
+            .execute_ctr(&self.ctr_addr, FnType::Query, request)
+            .await?;
+
+        let b = std::str::from_utf8(a).unwrap();
+
+        let c = b.to_string();
+
+        Ok(c)
     }
 
     // pub fn get_validator(&mut self) -> Result<String, BoxedError> {
