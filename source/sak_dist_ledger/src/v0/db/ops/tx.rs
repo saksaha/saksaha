@@ -57,16 +57,18 @@ impl Database {
         };
         batch.put_cf(cf_handle, tx_hash, tx.get_signature());
 
-        let cf_handle = match db.cf_handle(columns::CONTRACT) {
+        let cf_handle = match db.cf_handle(columns::CONTRACT_ADDR) {
             Some(h) => h,
             None => {
                 return Err(format!(
                     "Fail to open ledger columns {}",
-                    columns::CONTRACT
+                    columns::CONTRACT_ADDR,
                 ))
             }
         };
         batch.put_cf(cf_handle, tx_hash, tx.get_contract_addr());
+
+        //
 
         match db.write(batch) {
             Ok(_) => return Ok(tx_hash.clone()),

@@ -8,7 +8,7 @@ pub(crate) const CREATED_AT: &str = "created_at";
 
 pub(crate) const DATA: &str = "data";
 
-pub(crate) const CONTRACT: &str = "contract";
+pub(crate) const CONTRACT_ADDR: &str = "contract_addr";
 
 pub(crate) const VALIDATOR_SIG: &str = "validator_sig";
 
