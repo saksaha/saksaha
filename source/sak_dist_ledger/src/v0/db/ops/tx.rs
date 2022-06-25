@@ -1,13 +1,13 @@
-use crate::{columns, Database};
+use crate::LedgerDB;
 use sak_kv_db::{
     DBRawIteratorWithThreadMode, DBWithThreadMode, KeyValueDatabase,
     SingleThreaded, WriteBatch,
 };
 use sak_types::Tx;
 
-impl Database {
+impl LedgerDB {
     pub(crate) async fn write_tx(&self, tx: &Tx) -> Result<String, String> {
-        let db = &self.ledger_db.db_instance;
+        let db = &self.kv_db.db_instance;
 
         let mut batch = WriteBatch::default();
 

@@ -1,12 +1,8 @@
 use super::tx_pool::TxPool;
 use super::DLedgerEvent;
-use crate::Database;
+use crate::LedgerDB;
 use crate::Runtime;
 use log::{error, info, warn};
-use sak_contract_std::Request;
-use sak_contract_std::Storage;
-use sak_types::Block;
-use sak_vm::FnType;
 use sak_vm::VM;
 use std::sync::Arc;
 use tokio::sync::broadcast;
@@ -15,7 +11,7 @@ use tokio::sync::{broadcast::Sender, RwLock};
 const BLOCKCHAIN_EVENT_QUEUE_CAPACITY: usize = 32;
 
 pub struct DistLedger {
-    pub(crate) database: Database,
+    pub(crate) ledger_db: LedgerDB,
     pub(crate) tx_pool: Arc<TxPool>,
     pub bc_event_tx: Arc<RwLock<Sender<DLedgerEvent>>>,
     pub(crate) vm: VM,
@@ -36,7 +32,7 @@ impl DistLedger {
             tx_pool_sync_interval,
         } = blockchain_args;
 
-        let database = match Database::init(&app_prefix).await {
+        let ledger_db = match LedgerDB::init(&app_prefix).await {
             Ok(d) => d,
             Err(err) => {
                 return Err(format!(
@@ -71,7 +67,7 @@ impl DistLedger {
         };
 
         let dist_ledger = DistLedger {
-            database,
+            ledger_db,
             tx_pool: tx_pool.clone(),
             vm,
             bc_event_tx,

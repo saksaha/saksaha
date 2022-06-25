@@ -15,4 +15,4 @@ pub use dist_ledger::*;
 pub use events::*;
 pub(crate) use runtime::*;
 
-pub(crate) type BoxedError = Box<dyn std::error::Error + Send + Sync>;
+pub type LedgerError = Box<dyn std::error::Error + Send + Sync>;

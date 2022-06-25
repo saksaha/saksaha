@@ -3,26 +3,17 @@ use log::info;
 use rocksdb::{ColumnFamilyDescriptor, Options, DB};
 use std::path::PathBuf;
 
-pub struct KeyValueDatabase<CF> {
+pub struct KeyValueDatabase {
     pub db_instance: DB,
     db_path_str: String,
-    cf: CF,
 }
 
-pub trait ColumnFamilyDescribable {
-    fn get_cf_vec(&self) -> Vec<ColumnFamilyDescriptor>;
-}
-
-impl<CF> KeyValueDatabase<CF>
-where
-    CF: ColumnFamilyDescribable,
-{
+impl KeyValueDatabase {
     pub fn new(
         db_path: PathBuf,
         options: Options,
-        cf: CF,
-        // cf_descriptors: Vec<ColumnFamilyDescriptor>,
-    ) -> Result<KeyValueDatabase<CF>, String> {
+        cf_descriptors: Vec<ColumnFamilyDescriptor>,
+    ) -> Result<KeyValueDatabase, String> {
         let db_path_str = match db_path.into_os_string().into_string() {
             Ok(s) => s,
             Err(err) => {
@@ -34,8 +25,6 @@ where
             "Try initializing KeyValueDatabase, db_path: {}",
             db_path_str,
         );
-
-        let cf_descriptors = cf.get_cf_vec();
 
         let db_instance = match DB::open_cf_descriptors(
             &options,
@@ -61,7 +50,6 @@ where
         Ok(KeyValueDatabase {
             db_instance,
             db_path_str,
-            cf,
         })
     }
 

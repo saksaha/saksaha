@@ -1,10 +1,10 @@
 #[cfg(test)]
 mod test {
-    use crate::{DLedger, DLedgerArgs};
+    use crate::{DistLedger, DistLedgerArgs};
     use sak_types::Block;
     use sak_types::BlockCandidate;
     use sak_types::Hashable;
-    use sak_types::Transaction;
+    use sak_types::Tx;
 
     fn init() {
         let _ = env_logger::builder().is_test(true).init();
@@ -37,44 +37,43 @@ mod test {
         genesis_block
     }
 
-    async fn make_dist_ledger(gen_block: BlockCandidate) -> DLedger {
-        let dledger_args = DLedgerArgs {
+    async fn make_dist_ledger(gen_block: BlockCandidate) -> DistLedger {
+        let dledger_args = DistLedgerArgs {
             app_prefix: String::from("test"),
             tx_pool_sync_interval: None,
-            genesis_block: gen_block,
         };
 
-        let dledger = DLedger::init(dledger_args)
+        let dist_ledger = DistLedger::init(dledger_args)
             .await
             .expect("Blockchain should be initialized");
 
-        dledger
+        dist_ledger
     }
 
-    fn make_dummy_txs() -> Vec<Transaction> {
+    fn make_dummy_txs() -> Vec<Tx> {
         vec![
-            Transaction::new(
+            Tx::new(
                 String::from("1346546123"),
                 String::from("one").as_bytes().to_vec(),
                 String::from("0x111"),
                 String::from("0x1111"),
                 Some(String::from("one").as_bytes().to_vec()),
             ),
-            Transaction::new(
+            Tx::new(
                 String::from("1346546124"),
                 String::from("two").as_bytes().to_vec(),
                 String::from("0x222"),
                 String::from("0x2222"),
                 Some(String::from("two").as_bytes().to_vec()),
             ),
-            Transaction::new(
+            Tx::new(
                 String::from("1346546125"),
                 String::from("three").as_bytes().to_vec(),
                 String::from("0x333"),
                 String::from("0x3333"),
                 Some(String::from("three").as_bytes().to_vec()),
             ),
-            Transaction::new(
+            Tx::new(
                 String::from("1346546126"),
                 String::from("four").as_bytes().to_vec(),
                 String::from("0x444"),
@@ -98,7 +97,7 @@ mod test {
 
         let gen_block = make_dummy_genesis_block();
         let blockchain = make_dist_ledger(gen_block).await;
-        let db = blockchain.database;
+        let db = blockchain.ledger_db;
 
         let dummy_tx_values = make_dummy_txs();
         let mut tx_hashes = vec![];
@@ -126,7 +125,7 @@ mod test {
 
         let gen_block = make_dummy_genesis_block();
         let blockchain = make_dist_ledger(gen_block).await;
-        let db = blockchain.database;
+        let db = blockchain.ledger_db;
 
         let dummy_tx_values = make_dummy_txs();
         let mut tx_hashes = vec![];
@@ -157,7 +156,7 @@ mod test {
 
         let gen_block = make_dummy_genesis_block();
         let blockchain = make_dist_ledger(gen_block).await;
-        let db = blockchain.database;
+        let db = blockchain.ledger_db;
 
         let dummy_tx_values = make_dummy_txs();
         let mut tx_hashes = vec![];
@@ -240,7 +239,7 @@ mod test {
 
         let gen_block = make_dummy_genesis_block();
         let blockchain = make_dist_ledger(gen_block).await;
-        let db = blockchain.database;
+        let db = blockchain.ledger_db;
 
         let (contract_addr, field_name, field_value) = make_dummy_state();
 
