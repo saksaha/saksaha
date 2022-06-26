@@ -1,9 +1,7 @@
 #[cfg(test)]
 mod test {
     use crate::{DistLedger, DistLedgerArgs};
-    use sak_types::Block;
     use sak_types::BlockCandidate;
-    use sak_types::Hashable;
     use sak_types::Tx;
 
     fn init() {

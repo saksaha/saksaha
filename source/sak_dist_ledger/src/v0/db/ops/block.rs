@@ -2,8 +2,6 @@ use crate::{LedgerDB, LedgerError};
 use sak_kv_db::WriteBatch;
 use sak_types::{Block, Tx};
 
-use super::tx;
-
 impl LedgerDB {
     pub(crate) fn get_block(
         &self,

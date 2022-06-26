@@ -22,18 +22,13 @@ impl DistLedger {
             ctr_addr, fn_type
         );
 
-        let ctr_wasm = match self.get_ctr_data(ctr_addr).await? {
-            Some(w) => w,
-            None => {
-                return Err(format!(
-                    "Could not find the contract, ctr_addr: {}",
-                    ctr_addr
-                )
-                .into());
-            }
-        };
+        let ctr_wasm = self
+            .ledger_db
+            .get_ctr_data_by_ctr_addr(ctr_addr)
+            .await?
+            .ok_or("ctr data (wasm) should exist")?;
 
-        // let ctr_state = self.get_contract_state(contract_addr, field_name)
+        // self.ledger_db.get_ctr_state(ctr_addr, )
 
         let mut storage: HashMap<String, String> = HashMap::with_capacity(10);
 
@@ -123,10 +118,6 @@ impl DistLedger {
             }
         };
 
-        // for tx in txs {
-        //     self.ledger_db.write_tx(&tx).await?;
-        // }
-
         match self.tx_pool.remove_txs(tx_hashes).await {
             Ok(_) => {}
             Err(_err) => {
@@ -153,12 +144,12 @@ impl DistLedger {
         self.tx_pool.get_txs(tx_hashes).await
     }
 
-    pub async fn get_ctr_data(
-        &self,
-        ctr_addr: &String,
-    ) -> Result<Option<Vec<u8>>, LedgerError> {
-        self.ledger_db.get_ctr_data_by_ctr_addr(ctr_addr).await
-    }
+    // pub async fn get_ctr_data(
+    //     &self,
+    //     ctr_addr: &String,
+    // ) -> Result<Option<Vec<u8>>, LedgerError> {
+    //     self.ledger_db.get_ctr_data_by_ctr_addr(ctr_addr).await
+    // }
 
     pub async fn set_contract_state(
         &self,

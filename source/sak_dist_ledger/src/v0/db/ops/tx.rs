@@ -3,6 +3,7 @@ use sak_kv_db::{WriteBatch, DB};
 use sak_types::Tx;
 
 impl LedgerDB {
+    #[cfg(test)]
     pub(crate) fn put_tx(&self, tx: &Tx) -> Result<String, LedgerError> {
         let db = &self.kv_db.db_instance;
 
