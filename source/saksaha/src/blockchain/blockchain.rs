@@ -79,8 +79,10 @@ async fn insert_genesis_block(
     genesis_block: &BlockCandidate,
 ) -> Result<String, String> {
     let persisted_gen_block_hash = if let Some(b) =
-        dist_ledger.get_block_by_height(String::from("0")).await?
-    {
+        match dist_ledger.get_block_by_height(String::from("0")).await {
+            Ok(b) => b,
+            Err(err) => return Err(err.to_string()),
+        } {
         let block_hash = b.get_hash().to_string();
 
         info!(
@@ -90,7 +92,10 @@ async fn insert_genesis_block(
 
         block_hash
     } else {
-        let b = dist_ledger.write_block(&genesis_block).await?;
+        let b = match dist_ledger.write_block(&genesis_block).await {
+            Ok(b) => b,
+            Err(err) => return Err(err.to_string()),
+        };
 
         info!("Wrote genesis block, block_hash: {}", &b);
 

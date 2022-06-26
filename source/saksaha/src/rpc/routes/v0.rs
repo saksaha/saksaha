@@ -36,7 +36,7 @@ pub(crate) async fn send_transaction(
                                         id: String::from("1"),
                                         status_code: StatusCode::BAD_REQUEST,
                                         code: 32600,
-                                        message: String::from(err),
+                                        message: String::from(err.to_string()),
                                         data: None,
                                     }
                                     .into_hyper_result();
@@ -224,7 +224,6 @@ pub(crate) async fn get_block(
                         .blockchain
                         .dist_ledger
                         .get_block(&block_hash)
-                        .await
                     {
                         Ok(_block) => {
                             return SuccessResult {

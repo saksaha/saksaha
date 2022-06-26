@@ -279,99 +279,131 @@ impl LedgerDB {
 
         self.schema.batch_put_validator_sig(
             db,
-            batch,
+            &mut batch,
             block_hash,
             block.get_validator_sig(),
         )?;
 
-        let cf_handle = match db.cf_handle(columns::WITNESS_SIGS) {
-            Some(h) => h,
-            None => {
-                return Err(format!(
-                    "Fail to open ledger columns {}",
-                    columns::WITNESS_SIGS
-                ))
-            }
-        };
+        // let cf_handle = match db.cf_handle(columns::WITNESS_SIGS) {
+        //     Some(h) => h,
+        //     None => {
+        //         return Err(format!(
+        //             "Fail to open ledger columns {}",
+        //             columns::WITNESS_SIGS
+        //         ))
+        //     }
+        // };
 
-        let witness_sigs = match serde_json::to_string(block.get_witness_sigs())
-        {
-            Ok(v) => v,
-            Err(err) => {
-                return Err(format!(
-                    "Cannot serialize {}, err: {}",
-                    columns::WITNESS_SIGS,
-                    err
-                ))
-            }
-        };
+        // let witness_sigs = match serde_json::to_string(block.get_witness_sigs())
+        // {
+        //     Ok(v) => v,
+        //     Err(err) => {
+        //         return Err(format!(
+        //             "Cannot serialize {}, err: {}",
+        //             columns::WITNESS_SIGS,
+        //             err
+        //         ))
+        //     }
+        // };
 
-        batch.put_cf(cf_handle, &block_hash, witness_sigs);
+        // batch.put_cf(cf_handle, &block_hash, witness_sigs);
 
-        let cf_handle = match db.cf_handle(columns::TX_HASHES) {
-            Some(h) => h,
-            None => {
-                return Err(format!(
-                    "Fail to open ledger columns {}",
-                    columns::TX_HASHES
-                ))
-            }
-        };
+        self.schema.batch_put_witness_sigs(
+            db,
+            &mut batch,
+            block_hash,
+            block.get_witness_sigs(),
+        )?;
 
-        let transactions = match serde_json::to_string(&block.get_tx_hashes()) {
-            Ok(v) => v,
-            Err(err) => {
-                return Err(format!(
-                    "Cannot serialize {}, err: {}",
-                    columns::TX_HASHES,
-                    err
-                ))
-            }
-        };
+        // let cf_handle = match db.cf_handle(columns::TX_HASHES) {
+        //     Some(h) => h,
+        //     None => {
+        //         return Err(format!(
+        //             "Fail to open ledger columns {}",
+        //             columns::TX_HASHES
+        //         ))
+        //     }
+        // };
 
-        batch.put_cf(cf_handle, &block_hash, transactions);
+        // let transactions = match serde_json::to_string(&block.get_tx_hashes()) {
+        //     Ok(v) => v,
+        //     Err(err) => {
+        //         return Err(format!(
+        //             "Cannot serialize {}, err: {}",
+        //             columns::TX_HASHES,
+        //             err
+        //         ))
+        //     }
+        // };
 
-        let cf_handle = match db.cf_handle(columns::CREATED_AT) {
-            Some(h) => h,
-            None => {
-                return Err(format!(
-                    "Fail to open ledger columns {}",
-                    columns::CREATED_AT
-                ))
-            }
-        };
+        // batch.put_cf(cf_handle, &block_hash, transactions);
 
-        batch.put_cf(cf_handle, &block_hash, block.get_created_at());
+        self.schema.batch_put_tx_hashes(
+            db,
+            &mut batch,
+            block_hash,
+            block.get_tx_hashes(),
+        )?;
+
+        // let cf_handle = match db.cf_handle(columns::CREATED_AT) {
+        //     Some(h) => h,
+        //     None => {
+        //         return Err(format!(
+        //             "Fail to open ledger columns {}",
+        //             columns::CREATED_AT
+        //         ))
+        //     }
+        // };
+
+        // batch.put_cf(cf_handle, &block_hash, block.get_created_at());
+
+        self.schema.batch_put_created_at(
+            db,
+            &mut batch,
+            block_hash,
+            block.get_created_at(),
+        )?;
 
         // put k : height && v : hash
-        let cf_handle = match db.cf_handle(columns::BLOCK_HASH) {
-            Some(h) => h,
-            None => {
-                return Err(format!(
-                    "Fail to open ledger columns {}",
-                    columns::BLOCK_HASH
-                ))
-            }
-        };
-        batch.put_cf(cf_handle, &block.get_height(), &block_hash);
+        // let cf_handle = match db.cf_handle(columns::BLOCK_HASH) {
+        //     Some(h) => h,
+        //     None => {
+        //         return Err(format!(
+        //             "Fail to open ledger columns {}",
+        //             columns::BLOCK_HASH
+        //         ))
+        //     }
+        // };
+        // batch.put_cf(cf_handle, &block.get_height(), &block_hash);
 
-        let cf_handle = match db.cf_handle(columns::BLOCK_HEIGHT) {
-            Some(h) => h,
-            None => {
-                return Err(format!(
-                    "Fail to open ledger columns {}",
-                    columns::BLOCK_HEIGHT
-                ))
-            }
-        };
+        self.schema.batch_put_block_hash(
+            db,
+            &mut batch,
+            block.get_height(),
+            block_hash,
+        )?;
 
-        batch.put_cf(cf_handle, &block_hash, block.get_height());
+        // let cf_handle = match db.cf_handle(columns::BLOCK_HEIGHT) {
+        //     Some(h) => h,
+        //     None => {
+        //         return Err(format!(
+        //             "Fail to open ledger columns {}",
+        //             columns::BLOCK_HEIGHT
+        //         ))
+        //     }
+        // };
 
-        match db.write(batch) {
-            Ok(_) => return Ok(block_hash.clone()),
-            Err(err) => {
-                return Err(format!("Fail to write on ledger db, err: {}", err))
-            }
-        }
+        // batch.put_cf(cf_handle, &block_hash, block.get_height());
+
+        self.schema.batch_put_block_height(
+            db,
+            &mut batch,
+            block_hash,
+            block.get_height(),
+        )?;
+
+        db.write(batch)?;
+
+        return Ok(block_hash.clone());
     }
 }

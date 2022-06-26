@@ -2,7 +2,7 @@ use crate::{LedgerDB, LedgerError};
 use sak_kv_db::WriteBatch;
 
 impl LedgerDB {
-    pub(crate) async fn get_ctr_data(
+    pub(crate) async fn get_ctr_data_by_ctr_addr(
         &self,
         ctr_addr: &String,
     ) -> Result<Option<Vec<u8>>, LedgerError> {
@@ -35,19 +35,24 @@ impl LedgerDB {
         //     }
         // };
 
-        let data = self
+        let tx_hash = self
             .schema
-            .get_data(db, ctr_addr)?
+            .get_tx_hash(db, ctr_addr)?
             .ok_or("ctr data does not exist")?;
 
-        Ok(Some(data))
+        let ctr_data = self
+            .schema
+            .get_data(db, &tx_hash)?
+            .ok_or("data does not exist")?;
+
+        Ok(Some(ctr_data))
     }
 
-    pub(crate) async fn get_contract_state(
+    pub(crate) async fn get_ctr_state(
         &self,
         ctr_addr: &String,
         field_name: &String,
-    ) -> Result<Option<String>, String> {
+    ) -> Result<Option<Vec<u8>>, LedgerError> {
         let db = &self.kv_db.db_instance;
 
         // let cf_handle = match db.cf_handle(columns::CTR_STATE) {
@@ -91,43 +96,49 @@ impl LedgerDB {
         //     }
         // };
 
+        let state_key = format!("{}:{}", ctr_addr, field_name);
+
         let ctr_state = self
             .schema
-            .get_ctr_state(db, ctr_addr, field_name)?
+            .get_ctr_state(db, &state_key)?
             .ok_or("ctr state does not exist")?;
 
         Ok(Some(ctr_state))
     }
 
-    pub(crate) async fn set_contract_state(
+    pub(crate) async fn put_ctr_state(
         &self,
         contract_addr: &String,
         field_name: &String,
         field_value: &String,
-    ) -> Result<String, String> {
-        let db = &self.ledger_db.db_instance;
+    ) -> Result<String, LedgerError> {
+        let db = &self.kv_db.db_instance;
 
         let mut batch = WriteBatch::default();
 
-        let cf_handle = match db.cf_handle(columns::CTR_STATE) {
-            Some(h) => h,
-            None => {
-                return Err(format!(
-                    "Fail to open ledger columns {}",
-                    columns::CTR_STATE
-                ))
-            }
-        };
+        // let cf_handle = match db.cf_handle(columns::CTR_STATE) {
+        //     Some(h) => h,
+        //     None => {
+        //         return Err(format!(
+        //             "Fail to open ledger columns {}",
+        //             columns::CTR_STATE
+        //         ))
+        //     }
+        // };
 
-        let key = format!("{}:{}", contract_addr, field_name);
+        let state_key = format!("{}:{}", contract_addr, field_name);
 
-        batch.put_cf(cf_handle, key, field_value);
+        // batch.put_cf(cf_handle, key, field_value);
 
-        match db.write(batch) {
-            Ok(_) => return Ok("".to_string().clone()),
-            Err(err) => {
-                return Err(format!("Fail to write on ledger db, err: {}", err))
-            }
-        }
+        self.schema.batch_put_ctr_state(
+            db,
+            &mut batch,
+            &state_key,
+            field_value,
+        )?;
+
+        db.write(batch)?;
+
+        return Ok("".to_string().clone());
     }
 }

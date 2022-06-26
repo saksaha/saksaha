@@ -19,7 +19,7 @@ impl GenesisBlock {
             String::from("1"),
             validator_wasm,
             String::from("1"),
-            String::from("1"),
+            vec![1],
             Some(VALIDATOR_CTR_ADDR.as_bytes().to_vec()),
         );
 
@@ -27,7 +27,7 @@ impl GenesisBlock {
             String::from("2"),
             vec![22, 22, 22],
             String::from("2"),
-            String::from("2"),
+            vec![2],
             Some(vec![1]),
         );
 

@@ -14,14 +14,14 @@ mod test {
         let genesis_block = BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
             transactions: vec![
-                Transaction::new(
+                Tx::new(
                     String::from("1"),
                     vec![11, 11, 11],
                     String::from("1"),
                     String::from("1"),
                     Some(vec![11, 11, 11]),
                 ),
-                Transaction::new(
+                Tx::new(
                     String::from("2"),
                     vec![22, 22, 22],
                     String::from("2"),
@@ -213,11 +213,10 @@ mod test {
         let gen_block = make_dummy_genesis_block();
         let blockchain = make_dist_ledger(gen_block).await;
 
-        let gen_block =
-            match blockchain.get_block_by_height(String::from("0")).await {
-                Ok(b) => b,
-                Err(err) => panic!("Error : {}", err),
-            };
+        let gen_block = blockchain
+            .get_block_by_height(String::from("0"))
+            .await?
+            .expect("gen block should exist");
 
         let get_gen_hash = gen_block.get_hash();
         let gen_tx_hashes = gen_block.get_tx_hashes();
@@ -243,7 +242,7 @@ mod test {
 
         let (contract_addr, field_name, field_value) = make_dummy_state();
 
-        db.set_contract_state(&contract_addr, &field_name, &field_value)
+        db.put_ctr_state(&contract_addr, &field_name, &field_value)
             .await
             .expect("contract state should be saved");
 

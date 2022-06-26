@@ -81,8 +81,11 @@ impl DistLedger {
         }
     }
 
-    pub async fn get_tx(&self, tx_hash: &String) -> Result<Tx, String> {
-        self.ledger_db.read_tx(tx_hash).await
+    pub async fn get_tx(
+        &self,
+        tx_hash: &String,
+    ) -> Result<Option<Tx>, LedgerError> {
+        self.ledger_db.get_tx(tx_hash).await
     }
 
     pub fn get_block(
@@ -135,7 +138,7 @@ impl DistLedger {
         Ok(block_hash)
     }
 
-    pub fn delete_tx(&self, key: &String) -> Result<(), String> {
+    pub fn delete_tx(&self, key: &String) -> Result<(), LedgerError> {
         self.ledger_db.delete_tx(key)
     }
 
@@ -154,7 +157,7 @@ impl DistLedger {
         &self,
         ctr_addr: &String,
     ) -> Result<Option<Vec<u8>>, LedgerError> {
-        self.ledger_db.get_ctr_data(ctr_addr).await
+        self.ledger_db.get_ctr_data_by_ctr_addr(ctr_addr).await
     }
 
     pub async fn set_contract_state(
@@ -162,19 +165,19 @@ impl DistLedger {
         contract_addr: &String,
         field_name: &String,
         field_value: &String,
-    ) -> Result<String, String> {
+    ) -> Result<String, LedgerError> {
         self.ledger_db
-            .set_contract_state(contract_addr, field_name, field_value)
+            .put_ctr_state(contract_addr, field_name, field_value)
             .await
     }
 
-    pub async fn get_contract_state(
+    pub async fn get_ctr_state(
         &self,
         contract_addr: &String,
         field_name: &String,
-    ) -> Result<String, String> {
-        self.database
-            .get_contract_state(contract_addr, field_name)
+    ) -> Result<Option<Vec<u8>>, LedgerError> {
+        self.ledger_db
+            .get_ctr_state(contract_addr, field_name)
             .await
     }
 

@@ -11,7 +11,7 @@ const TX_HASH: &str = "tx_hash";
 const PI: &str = "pi";
 
 //
-const SIG_VEC: &str = "sig_vec";
+const AUTHOR_SIG: &str = "author_sig";
 
 //
 const CREATED_AT: &str = "created_at";
@@ -105,11 +105,12 @@ impl LedgerDBSchema {
     pub(crate) fn get_created_at(
         &self,
         db: &DB,
-        block_hash: &String,
+        // TODO define enum to include various types of key variants
+        key: &String,
     ) -> Result<Option<String>, LedgerError> {
         let cf = make_cf_handle(db, CREATED_AT)?;
 
-        match db.get_cf(cf, block_hash)? {
+        match db.get_cf(cf, key)? {
             Some(v) => {
                 let str = String::from_utf8(v)?;
 
@@ -162,13 +163,33 @@ impl LedgerDBSchema {
     pub(crate) fn get_data(
         &self,
         db: &DB,
-        ctr_addr: &String,
+        key: &String,
     ) -> Result<Option<Vec<u8>>, LedgerError> {
         let cf = make_cf_handle(db, DATA)?;
 
-        match db.get_cf(cf, ctr_addr)? {
+        match db.get_cf(cf, key)? {
             Some(v) => {
                 return Ok(Some(v));
+            }
+            None => {
+                return Ok(None);
+            }
+        }
+    }
+
+    pub(crate) fn get_tx_hash(
+        &self,
+        db: &DB,
+        // ctr_addr
+        key: &String,
+    ) -> Result<Option<String>, LedgerError> {
+        let cf = make_cf_handle(db, TX_HASH)?;
+
+        match db.get_cf(cf, key)? {
+            Some(v) => {
+                let str = String::from_utf8(v)?;
+
+                return Ok(Some(str));
             }
             None => {
                 return Ok(None);
@@ -179,12 +200,9 @@ impl LedgerDBSchema {
     pub(crate) fn get_ctr_state(
         &self,
         db: &DB,
-        ctr_addr: &String,
-        field_name: &String,
+        state_key: &String,
     ) -> Result<Option<Vec<u8>>, LedgerError> {
         let cf = make_cf_handle(db, CTR_STATE)?;
-
-        let state_key = format!("{}:{}", ctr_addr, field_name);
 
         match db.get_cf(cf, state_key)? {
             Some(v) => {
@@ -196,10 +214,30 @@ impl LedgerDBSchema {
         }
     }
 
+    pub(crate) fn get_author_sig(
+        &self,
+        db: &DB,
+        // tx_hash
+        key: &String,
+    ) -> Result<Option<String>, LedgerError> {
+        let cf = make_cf_handle(db, AUTHOR_SIG)?;
+
+        match db.get_cf(cf, key)? {
+            Some(v) => {
+                let str = String::from_utf8(v)?;
+
+                return Ok(Some(str));
+            }
+            None => {
+                return Ok(None);
+            }
+        }
+    }
+
     pub(crate) fn batch_put_validator_sig(
         &self,
         db: &DB,
-        batch: WriteBatch,
+        batch: &mut WriteBatch,
         block_hash: &String,
         validator_sig: &String,
     ) -> Result<(), LedgerError> {
@@ -210,11 +248,262 @@ impl LedgerDBSchema {
         Ok(())
     }
 
+    pub(crate) fn batch_put_witness_sigs(
+        &self,
+        db: &DB,
+        batch: &mut WriteBatch,
+        block_hash: &String,
+        witness_sigs: &Vec<String>,
+    ) -> Result<(), LedgerError> {
+        let cf = make_cf_handle(db, WITNESS_SIGS)?;
+
+        let witness_sigs = serde_json::to_string(witness_sigs)?;
+
+        batch.put_cf(cf, block_hash, witness_sigs);
+
+        Ok(())
+    }
+
+    pub(crate) fn batch_put_tx_hashes(
+        &self,
+        db: &DB,
+        batch: &mut WriteBatch,
+        block_hash: &String,
+        tx_hashes: &Vec<String>,
+    ) -> Result<(), LedgerError> {
+        let cf = make_cf_handle(db, TX_HASHES)?;
+
+        let transactions = serde_json::to_string(tx_hashes)?;
+
+        batch.put_cf(cf, block_hash, transactions);
+
+        Ok(())
+    }
+
+    pub(crate) fn batch_put_created_at(
+        &self,
+        db: &DB,
+        batch: &mut WriteBatch,
+        block_hash: &String,
+        created_at: &String,
+    ) -> Result<(), LedgerError> {
+        let cf = make_cf_handle(db, CREATED_AT)?;
+
+        batch.put_cf(cf, block_hash, created_at);
+
+        Ok(())
+    }
+
+    pub(crate) fn batch_delete_created_at(
+        &self,
+        db: &DB,
+        batch: &mut WriteBatch,
+        // tx_hash,
+        key: &String,
+    ) -> Result<(), LedgerError> {
+        let cf = make_cf_handle(db, CREATED_AT)?;
+
+        batch.delete_cf(cf, key);
+
+        Ok(())
+    }
+
+    pub(crate) fn batch_put_block_hash(
+        &self,
+        db: &DB,
+        batch: &mut WriteBatch,
+        block_height: &String,
+        block_hash: &String,
+    ) -> Result<(), LedgerError> {
+        let cf = make_cf_handle(db, BLOCK_HEIGHT)?;
+
+        batch.put_cf(cf, block_height, block_hash);
+
+        Ok(())
+    }
+
+    pub(crate) fn batch_put_block_height(
+        &self,
+        db: &DB,
+        batch: &mut WriteBatch,
+        block_hash: &String,
+        block_height: &String,
+    ) -> Result<(), LedgerError> {
+        let cf = make_cf_handle(db, BLOCK_HASH)?;
+
+        batch.put_cf(cf, block_hash, block_height);
+
+        Ok(())
+    }
+
+    pub(crate) fn batch_put_ctr_state(
+        &self,
+        db: &DB,
+        batch: &mut WriteBatch,
+        state_key: &String,
+        field_value: &String,
+    ) -> Result<(), LedgerError> {
+        let cf = make_cf_handle(db, CTR_STATE)?;
+
+        batch.put_cf(cf, state_key, field_value);
+
+        Ok(())
+    }
+
+    pub(crate) fn batch_put_data(
+        &self,
+        db: &DB,
+        batch: &mut WriteBatch,
+        // tx_hash,
+        key: &String,
+        value: &Vec<u8>,
+    ) -> Result<(), LedgerError> {
+        let cf = make_cf_handle(db, DATA)?;
+
+        batch.put_cf(cf, key, value);
+
+        Ok(())
+    }
+
+    pub(crate) fn batch_delete_data(
+        &self,
+        db: &DB,
+        batch: &mut WriteBatch,
+        // tx_hash,
+        key: &String,
+    ) -> Result<(), LedgerError> {
+        let cf = make_cf_handle(db, DATA)?;
+
+        batch.delete_cf(cf, key);
+
+        Ok(())
+    }
+
+    pub(crate) fn get_pi(
+        &self,
+        db: &DB,
+        key: &String,
+    ) -> Result<Option<Vec<u8>>, LedgerError> {
+        let cf = make_cf_handle(db, PI)?;
+
+        match db.get_cf(cf, key)? {
+            Some(v) => {
+                return Ok(Some(v));
+            }
+            None => {
+                return Ok(None);
+            }
+        }
+    }
+
+    pub(crate) fn batch_put_pi(
+        &self,
+        db: &DB,
+        batch: &mut WriteBatch,
+        // tx_hash
+        key: &String,
+        value: &Vec<u8>,
+    ) -> Result<(), LedgerError> {
+        let cf = make_cf_handle(db, PI)?;
+
+        batch.put_cf(cf, key, value);
+
+        Ok(())
+    }
+
+    pub(crate) fn batch_delete_pi(
+        &self,
+        db: &DB,
+        batch: &mut WriteBatch,
+        // tx_hash
+        key: &String,
+    ) -> Result<(), LedgerError> {
+        let cf = make_cf_handle(db, PI)?;
+
+        batch.delete_cf(cf, key);
+
+        Ok(())
+    }
+
+    pub(crate) fn batch_put_author_sig(
+        &self,
+        db: &DB,
+        batch: &mut WriteBatch,
+        key: &String,
+        value: &String,
+    ) -> Result<(), LedgerError> {
+        let cf = make_cf_handle(db, AUTHOR_SIG)?;
+
+        batch.put_cf(cf, key, value);
+
+        Ok(())
+    }
+
+    pub(crate) fn batch_delete_author_sig(
+        &self,
+        db: &DB,
+        batch: &mut WriteBatch,
+        // tx_hash
+        key: &String,
+    ) -> Result<(), LedgerError> {
+        let cf = make_cf_handle(db, AUTHOR_SIG)?;
+
+        batch.delete_cf(cf, key);
+
+        Ok(())
+    }
+
+    pub(crate) fn get_ctr_addr(
+        &self,
+        db: &DB,
+        // tx_hash
+        key: &String,
+    ) -> Result<Option<Vec<u8>>, LedgerError> {
+        let cf = make_cf_handle(db, CTR_ADDR)?;
+
+        match db.get_cf(cf, key)? {
+            Some(v) => {
+                return Ok(Some(v));
+            }
+            None => {
+                return Ok(None);
+            }
+        }
+    }
+
+    pub(crate) fn batch_put_ctr_addr(
+        &self,
+        db: &DB,
+        batch: &mut WriteBatch,
+        key: &String,
+        value: &Vec<u8>,
+    ) -> Result<(), LedgerError> {
+        let cf = make_cf_handle(db, CTR_ADDR)?;
+
+        batch.put_cf(cf, key, value);
+
+        Ok(())
+    }
+
+    pub(crate) fn batch_put_tx_hash(
+        &self,
+        db: &DB,
+        batch: &mut WriteBatch,
+        key: &Vec<u8>,
+        value: &String,
+    ) -> Result<(), LedgerError> {
+        let cf = make_cf_handle(db, TX_HASH)?;
+
+        batch.put_cf(cf, key, value);
+
+        Ok(())
+    }
+
     pub(crate) fn make_cf_descriptors(&self) -> Vec<ColumnFamilyDescriptor> {
         vec![
             ColumnFamilyDescriptor::new(TX_HASH, Options::default()),
             ColumnFamilyDescriptor::new(PI, Options::default()),
-            ColumnFamilyDescriptor::new(SIG_VEC, Options::default()),
+            ColumnFamilyDescriptor::new(AUTHOR_SIG, Options::default()),
             ColumnFamilyDescriptor::new(CREATED_AT, Options::default()),
             ColumnFamilyDescriptor::new(DATA, Options::default()),
             ColumnFamilyDescriptor::new(CTR_ADDR, Options::default()),
