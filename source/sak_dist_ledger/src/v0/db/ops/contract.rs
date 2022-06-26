@@ -8,33 +8,6 @@ impl LedgerDB {
     ) -> Result<Option<Vec<u8>>, LedgerError> {
         let db = &self.kv_db.db_instance;
 
-        // let cf_handle = match db.cf_handle(columns::DATA) {
-        //     Some(h) => h,
-        //     None => {
-        //         return Err(format!(
-        //             "Fail to open ledger colums {}",
-        //             columns::CTR_STATE
-        //         ));
-        //     }
-        // };
-
-        // let key = ctr_addr;
-
-        // let value = match db.get_cf(cf_handle, &key) {
-        //     Ok(val) => match val {
-        //         Some(v) => v,
-        //         None => return Ok(None),
-        //     },
-        //     Err(err) => {
-        //         return Err(format!(
-        //             "Fail to get value from ledger columns, column: {}, \
-        //             err: {}",
-        //             columns::CTR_STATE,
-        //             err,
-        //         ));
-        //     }
-        // };
-
         let tx_hash = self
             .schema
             .get_tx_hash(db, ctr_addr)?
@@ -54,47 +27,6 @@ impl LedgerDB {
         field_name: &String,
     ) -> Result<Option<Vec<u8>>, LedgerError> {
         let db = &self.kv_db.db_instance;
-
-        // let cf_handle = match db.cf_handle(columns::CTR_STATE) {
-        //     Some(h) => h,
-        //     None => {
-        //         return Err(format!(
-        //             "Fail to open ledger colums {}",
-        //             columns::CTR_STATE
-        //         ));
-        //     }
-        // };
-
-        // let key = format!("{}:{}", contract_addr, field_name);
-
-        // let value = match db.get_cf(cf_handle, &key) {
-        //     Ok(val) => match val {
-        //         Some(v) => match std::str::from_utf8(&v) {
-        //             Ok(vs) => vs.to_string(),
-        //             Err(err) => {
-        //                 return Err(format!(
-        //                     "Invalid utf8 given, err: {}",
-        //                     err,
-        //                 ));
-        //             }
-        //         },
-        //         None => {
-        //             return Err(format!(
-        //                 "No matched value with key in {}, key: {}",
-        //                 columns::CTR_STATE,
-        //                 &key,
-        //             ));
-        //         }
-        //     },
-        //     Err(err) => {
-        //         return Err(format!(
-        //             "Fail to get value from ledger columns, column: {}, \
-        //             err: {}",
-        //             columns::CTR_STATE,
-        //             err,
-        //         ));
-        //     }
-        // };
 
         let state_key = format!("{}:{}", ctr_addr, field_name);
 
@@ -116,19 +48,7 @@ impl LedgerDB {
 
         let mut batch = WriteBatch::default();
 
-        // let cf_handle = match db.cf_handle(columns::CTR_STATE) {
-        //     Some(h) => h,
-        //     None => {
-        //         return Err(format!(
-        //             "Fail to open ledger columns {}",
-        //             columns::CTR_STATE
-        //         ))
-        //     }
-        // };
-
         let state_key = format!("{}:{}", contract_addr, field_name);
-
-        // batch.put_cf(cf_handle, key, field_value);
 
         self.schema.batch_put_ctr_state(
             db,

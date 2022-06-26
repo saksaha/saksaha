@@ -1,6 +1,6 @@
 use crate::{Peer, PeerIterator, Slot, SlotGuard};
 use colored::Colorize;
-use sak_logger::{tdebug, terr, tinfo};
+use log::{debug, error, info};
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::{
     mpsc::{self, UnboundedReceiver, UnboundedSender},
@@ -40,12 +40,7 @@ impl PeerTable {
                 match slots_tx.send(Arc::new(s)) {
                     Ok(_) => (),
                     Err(err) => {
-                        terr!(
-                            "p2p_peer_table",
-                            "table",
-                            "slots channel has been closed, err: {}",
-                            err,
-                        );
+                        error!("slots channel has been closed, err: {}", err,);
                     }
                 };
             }
@@ -77,12 +72,7 @@ impl PeerTable {
             peer_it,
         };
 
-        tinfo!(
-            "peer",
-            "",
-            "Initializing peer table, capacity: {}",
-            capacity
-        );
+        info!("Initializing peer table, capacity: {}", capacity);
 
         Ok(ps)
     }
@@ -102,24 +92,6 @@ impl PeerTable {
             }
         };
     }
-
-    // pub async fn get_mapped_peer_lock(
-    //     &self,
-    //     public_key: &PublicKey,
-    // ) -> Option<OwnedRwLockWriteGuard<Peer>> {
-    //     let peers_map_lock = self.peer_map.write().await;
-
-    //     match peers_map_lock.get(public_key) {
-    //         Some(n) => {
-    //             let node = n.clone().write_owned().await;
-
-    //             return Some(node);
-    //         }
-    //         None => {
-    //             return None;
-    //         }
-    //     };
-    // }
 
     pub async fn get_empty_slot(&self) -> Result<SlotGuard, String> {
         let mut slots_rx = self.slots_rx.write().await;
@@ -147,9 +119,7 @@ impl PeerTable {
     ) -> Result<Option<Arc<Peer>>, String> {
         let public_key_str = peer.public_key_str.clone();
 
-        tdebug!(
-            "p2p_peer_table",
-            "table",
+        debug!(
             "Peer table insert mapping, her_public_key: {},",
             public_key_str.green(),
         );

@@ -103,14 +103,14 @@ mod test {
         let mut tx_hashes = vec![];
 
         for tx_val in dummy_tx_values.iter() {
-            let h = db.write_tx(&tx_val).await.expect("Tx should be written");
+            let h = db.put_tx(&tx_val).expect("Tx should be written");
 
             tx_hashes.push(h);
         }
 
         for (idx, tx_hash) in tx_hashes.iter().enumerate() {
             let tx_val_retrieved =
-                db.get_tx(&tx_hash).await.expect("Tx should exist");
+                db.get_tx(tx_hash).await.expect("Tx should exist");
 
             assert_eq!(
                 tx_val_retrieved.unwrap().get_data(),
@@ -131,7 +131,7 @@ mod test {
         let mut tx_hashes = vec![];
 
         for tx_val in dummy_tx_values.iter() {
-            let h = db.write_tx(&tx_val).await.expect("Tx should be written");
+            let h = db.put_tx(&tx_val).expect("Tx should be written");
 
             tx_hashes.push(h);
         }
@@ -162,7 +162,7 @@ mod test {
         let mut tx_hashes = vec![];
 
         for tx_val in dummy_tx_values.iter() {
-            let h = db.write_tx(&tx_val).await.expect("Tx should be written");
+            let h = db.put_tx(&tx_val).expect("Tx should be written");
 
             tx_hashes.push(h);
         }

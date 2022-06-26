@@ -116,16 +116,16 @@ impl DistLedger {
 
         let tx_hashes = block.get_tx_hashes();
 
-        let block_hash = match self.ledger_db.write_block(&block).await {
+        let block_hash = match self.ledger_db.write_block(&block, &txs).await {
             Ok(h) => h,
             Err(err) => {
                 return Err(err);
             }
         };
 
-        for tx in txs {
-            self.ledger_db.write_tx(&tx).await?;
-        }
+        // for tx in txs {
+        //     self.ledger_db.write_tx(&tx).await?;
+        // }
 
         match self.tx_pool.remove_txs(tx_hashes).await {
             Ok(_) => {}
