@@ -13,14 +13,14 @@ mod test_suite {
     use futures::{SinkExt, StreamExt};
     use log::info;
     use sak_crypto::{PublicKey, Signature};
-    use sak_dist_ledger::{DLedger, DLedgerArgs};
+    use sak_dist_ledger::{DistLedger, DistLedgerArgs};
     use sak_p2p_addr::{AddrStatus, UnknownAddr};
     use sak_p2p_disc::{DiscAddr, Discovery, DiscoveryArgs};
     use sak_p2p_id::{Credential, Identity};
     use sak_p2p_ptable::PeerTable;
     use sak_p2p_trpt::{Msg, TxHashSync};
     use sak_task_queue::TaskQueue;
-    use sak_types::{BlockCandidate, Hashable, Transaction};
+    use sak_types::{BlockCandidate, Hashable, Tx};
     use std::{sync::Arc, time::Duration};
 
     const RUST_LOG_ENV: &str = "
@@ -40,18 +40,18 @@ mod test_suite {
         let genesis_block = BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
             transactions: vec![
-                Transaction::new(
+                Tx::new(
                     String::from("1"),
                     vec![11, 11, 11],
                     String::from("1"),
-                    String::from("1"),
+                    b"1".to_vec(),
                     Some(vec![11, 11, 11]),
                 ),
-                Transaction::new(
+                Tx::new(
                     String::from("2"),
                     vec![22, 22, 22],
                     String::from("2"),
-                    String::from("2"),
+                    b"2".to_vec(),
                     Some(vec![22, 22, 22]),
                 ),
             ],
@@ -219,7 +219,7 @@ mod test_suite {
 
     async fn make_machine(app_prefix: String) -> Arc<Machine> {
         let blockchain = {
-            let genesis_block = make_dummy_genesis_block();
+            // let genesis_block = make_dummy_genesis_block();
 
             // let blockchain_args = BlockchainArgs {
             //     app_prefix,
@@ -227,9 +227,8 @@ mod test_suite {
             //     genesis_block,
             // };
 
-            Blockchain::init(app_prefix, None, Some(genesis_block))
-                .await
-                .unwrap()
+            // Blockchain::init(app_prefix, None, Some(genesis_block))
+            Blockchain::init(app_prefix, None).await.unwrap()
         };
 
         let machine = {
@@ -455,11 +454,11 @@ mod test_suite {
             .await
             .expect("InitiateHandshake task pushed in queue");
 
-        let dummy_txs = Transaction::new(
+        let dummy_txs = Tx::new(
             String::from("1346546123"),
             String::from("one").as_bytes().to_vec(),
             String::from("0x1111"),
-            String::from("0x1111"),
+            b"0x1111".to_vec(),
             Some(String::from("one").as_bytes().to_vec()),
         );
 

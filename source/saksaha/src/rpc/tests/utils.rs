@@ -6,12 +6,12 @@ pub(super) mod test_utils {
     use crate::{blockchain::Blockchain, machine::Machine};
     use colored::*;
     use log::info;
-    use sak_dist_ledger::{DLedger, DLedgerArgs};
+    use sak_dist_ledger::{DistLedger, DistLedgerArgs};
     use sak_p2p_addr::{AddrStatus, UnknownAddr};
     use sak_p2p_disc::{Discovery, DiscoveryArgs};
     use sak_p2p_id::{Credential, Identity};
     use sak_p2p_ptable::PeerTable;
-    use sak_types::{BlockCandidate, Transaction};
+    use sak_types::{BlockCandidate, Tx};
     use std::collections::HashMap;
     use std::net::SocketAddr;
     use std::sync::Arc;
@@ -49,11 +49,8 @@ pub(super) mod test_utils {
 
         let genesis_block = make_dummy_genesis_block();
 
-        let blockchain = {
-            Blockchain::init("test".to_string(), None, Some(genesis_block))
-                .await
-                .unwrap()
-        };
+        let blockchain =
+            { Blockchain::init("test".to_string(), None).await.unwrap() };
 
         let machine = {
             let m = Machine { blockchain };
@@ -182,22 +179,22 @@ pub(super) mod test_utils {
         (rpc, rpc_socket_addr, machine)
     }
 
-    fn make_dummy_genesis_block() -> BlockCandidate {
+    pub fn make_dummy_genesis_block() -> BlockCandidate {
         let genesis_block = BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
             transactions: vec![
-                Transaction::new(
+                Tx::new(
                     String::from("1"),
                     vec![11, 11, 11],
                     String::from("1"),
-                    String::from("1"),
+                    b"1".to_vec(),
                     Some(vec![11, 11, 11]),
                 ),
-                Transaction::new(
+                Tx::new(
                     String::from("2"),
                     vec![22, 22, 22],
                     String::from("2"),
-                    String::from("2"),
+                    b"2".to_vec(),
                     Some(vec![22, 22, 22]),
                 ),
             ],
@@ -209,74 +206,73 @@ pub(super) mod test_utils {
         genesis_block
     }
 
-    pub(crate) async fn make_blockchain() -> DLedger {
+    pub(crate) async fn make_blockchain() -> DistLedger {
         let genesis_block = make_dummy_genesis_block();
-        let blockchain_args = DLedgerArgs {
+        let blockchain_args = DistLedgerArgs {
             app_prefix: String::from("test"),
             tx_pool_sync_interval: None,
-            genesis_block,
         };
 
-        let blockchain = DLedger::init(blockchain_args)
+        let blockchain = DistLedger::init(blockchain_args)
             .await
             .expect("Blockchain should be initialized");
 
         blockchain
     }
 
-    pub(crate) fn make_dummy_tx() -> Transaction {
-        Transaction::new(
+    pub(crate) fn make_dummy_tx() -> Tx {
+        Tx::new(
             String::from("1346546123"),
             vec![
                 63, 64, 65, 66, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
             ],
             String::from("0x111"),
-            String::from("0x1111"),
+            b"0x1111".to_vec(),
             Some(vec![75, 73, 72]),
         )
     }
 
-    pub(crate) fn make_dummy_txs() -> Vec<Transaction> {
+    pub(crate) fn make_dummy_txs() -> Vec<Tx> {
         vec![
-            Transaction::new(
+            Tx::new(
                 String::from("32346546123"),
                 vec![
                     63, 64, 65, 61, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
                 ],
                 String::from("0x111"),
-                String::from("0x1111"),
+                b"0x1111".to_vec(),
                 Some(vec![1, 2, 3]),
             ),
-            Transaction::new(
+            Tx::new(
                 String::from("131146546123"),
                 vec![
                     90, 32, 51, 210, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
                 ],
                 String::from("0x222"),
-                String::from("0x2222"),
+                b"0x2222".to_vec(),
                 Some(vec![1, 2, 3]),
             ),
-            Transaction::new(
+            Tx::new(
                 String::from("1346523"),
                 vec![
                     145, 12, 42, 66, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
                 ],
                 String::from("0x333"),
-                String::from("0x3333"),
+                b"0x3333".to_vec(),
                 Some(vec![4, 1, 3]),
             ),
-            Transaction::new(
+            Tx::new(
                 String::from("75346546123"),
                 vec![
                     63, 64, 65, 64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
                 ],
                 String::from("0x444"),
-                String::from("0x4444"),
+                b"0x4444".to_vec(),
                 Some(vec![1, 2, 2]),
             ),
         ]

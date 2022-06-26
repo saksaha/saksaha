@@ -15,14 +15,14 @@ mod test_suite {
     use futures::{SinkExt, StreamExt};
     use log::{debug, info};
     use sak_crypto::{PublicKey, Signature};
-    use sak_dist_ledger::{DLedger, DLedgerArgs};
+    use sak_dist_ledger::{DistLedger, DistLedgerArgs};
     use sak_p2p_addr::{AddrStatus, UnknownAddr};
     use sak_p2p_disc::{DiscAddr, Discovery, DiscoveryArgs};
     use sak_p2p_id::{Credential, Identity};
     use sak_p2p_ptable::PeerTable;
     use sak_p2p_trpt::{Msg, TxHashSync};
     use sak_task_queue::TaskQueue;
-    use sak_types::{Block, BlockCandidate, Hashable, Transaction};
+    use sak_types::{Block, BlockCandidate, Hashable, Tx};
     use std::{sync::Arc, time::Duration};
 
     const RUST_LOG_ENV: &str = "
@@ -47,18 +47,18 @@ mod test_suite {
         let genesis_block = BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
             transactions: vec![
-                Transaction::new(
+                Tx::new(
                     String::from("1"),
                     vec![11, 11, 11],
                     String::from("1"),
-                    String::from("1"),
+                    b"1".to_vec(),
                     Some(vec![11, 11, 11]),
                 ),
-                Transaction::new(
+                Tx::new(
                     String::from("2"),
                     vec![22, 22, 22],
                     String::from("2"),
-                    String::from("2"),
+                    b"2".to_vec(),
                     Some(vec![22, 22, 22]),
                 ),
             ],
@@ -193,7 +193,7 @@ mod test_suite {
         let blockchain = {
             let genesis_block = make_dummy_genesis_block();
 
-            Blockchain::init(app_prefix, None, Some(genesis_block))
+            Blockchain::init(app_prefix, None)
                 .await
                 .expect("blockchain should be initialized")
         };
@@ -260,20 +260,20 @@ mod test_suite {
         )
         .await;
 
-        let (block, txs) = {
-            let dummy_tx1 = Transaction::new(
+        let block_candidate = {
+            let dummy_tx1 = Tx::new(
                 String::from("1346546123"),
                 String::from("one").as_bytes().to_vec(),
                 String::from("0x1111"),
-                String::from("0x1111"),
+                b"0x1111".to_vec(),
                 Some(String::from("one").as_bytes().to_vec()),
             );
 
-            let dummy_tx2 = Transaction::new(
+            let dummy_tx2 = Tx::new(
                 String::from("45698744213"),
                 String::from("two").as_bytes().to_vec(),
                 String::from("0x2222"),
-                String::from("0x2222"),
+                b"0x2222".to_vec(),
                 Some(String::from("two").as_bytes().to_vec()),
             );
 
@@ -285,8 +285,10 @@ mod test_suite {
                 height: String::from(""),
             };
 
-            c.extract()
+            c
         };
+
+        let (block, txs) = block_candidate.extract();
 
         {
             let local_node_1 = local_node_1.clone();
@@ -313,16 +315,16 @@ mod test_suite {
         local_node_1
             .machine
             .blockchain
-            .dledger
-            .send_transaction(txs[0].clone())
+            .dist_ledger
+            .send_tx(txs[0].clone())
             .await
             .expect("Node should be able to send a transaction");
 
         local_node_1
             .machine
             .blockchain
-            .dledger
-            .send_transaction(txs[1].clone())
+            .dist_ledger
+            .send_tx(txs[1].clone())
             .await
             .expect("Node should be able to send a transaction");
 
@@ -332,14 +334,14 @@ mod test_suite {
             let tx_pool_2_contains_tx1 = local_node_2
                 .machine
                 .blockchain
-                .dledger
+                .dist_ledger
                 .tx_pool_contains(txs[0].get_hash())
                 .await;
 
             let tx_pool_2_contains_tx2 = local_node_2
                 .machine
                 .blockchain
-                .dledger
+                .dist_ledger
                 .tx_pool_contains(txs[1].get_hash())
                 .await;
 
@@ -351,15 +353,15 @@ mod test_suite {
             local_node_1
                 .machine
                 .blockchain
-                .dledger
-                .write_block(block)
+                .dist_ledger
+                .write_block(&block_candidate)
                 .await
                 .expect("Block should be written");
 
             let tx_pool_1_contains_tx1 = local_node_1
                 .machine
                 .blockchain
-                .dledger
+                .dist_ledger
                 .tx_pool_contains(txs[0].get_hash())
                 .await;
 
