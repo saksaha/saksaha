@@ -159,6 +159,43 @@ impl LedgerDBSchema {
         }
     }
 
+    pub(crate) fn get_data(
+        &self,
+        db: &DB,
+        ctr_addr: &String,
+    ) -> Result<Option<Vec<u8>>, LedgerError> {
+        let cf = make_cf_handle(db, DATA)?;
+
+        match db.get_cf(cf, ctr_addr)? {
+            Some(v) => {
+                return Ok(Some(v));
+            }
+            None => {
+                return Ok(None);
+            }
+        }
+    }
+
+    pub(crate) fn get_ctr_state(
+        &self,
+        db: &DB,
+        ctr_addr: &String,
+        field_name: &String,
+    ) -> Result<Option<Vec<u8>>, LedgerError> {
+        let cf = make_cf_handle(db, CTR_STATE)?;
+
+        let state_key = format!("{}:{}", ctr_addr, field_name);
+
+        match db.get_cf(cf, state_key)? {
+            Some(v) => {
+                return Ok(Some(v));
+            }
+            None => {
+                return Ok(None);
+            }
+        }
+    }
+
     pub(crate) fn batch_put_validator_sig(
         &self,
         db: &DB,

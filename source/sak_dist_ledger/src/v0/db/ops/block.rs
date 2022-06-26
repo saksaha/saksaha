@@ -3,7 +3,7 @@ use sak_kv_db::WriteBatch;
 use sak_types::Block;
 
 impl LedgerDB {
-    pub(crate) async fn get_block(
+    pub(crate) fn get_block(
         &self,
         block_hash: &String,
     ) -> Result<Option<Block>, LedgerError> {
@@ -206,7 +206,7 @@ impl LedgerDB {
         Ok(Some(b))
     }
 
-    pub(crate) async fn get_block_hash_by_height(
+    pub(crate) fn get_block_hash_by_height(
         &self,
         block_height: String,
     ) -> Result<Option<String>, LedgerError> {

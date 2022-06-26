@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::DistLedger;
+use crate::{DistLedger, LedgerError};
 use log::warn;
 use sak_contract_std::Request;
 use sak_types::{Block, BlockCandidate, Tx};
@@ -16,7 +16,7 @@ impl DistLedger {
         ctr_addr: &String,
         fn_type: FnType,
         request: Request,
-    ) -> Result<&[u8], String> {
+    ) -> Result<&[u8], LedgerError> {
         println!(
             "execute ctr!!, ctr_addr: {}, fn_type: {:?}",
             ctr_addr, fn_type
@@ -28,7 +28,8 @@ impl DistLedger {
                 return Err(format!(
                     "Could not find the contract, ctr_addr: {}",
                     ctr_addr
-                ));
+                )
+                .into());
             }
         };
 
@@ -52,7 +53,7 @@ impl DistLedger {
 
         let ret = match self.vm.exec(ctr_wasm, fn_type, request, storage) {
             Ok(ret) => ret,
-            Err(err) => return Err(err.to_string()),
+            Err(err) => return Err(err),
         };
 
         println!("returned!!!: {}", ret);
@@ -81,24 +82,24 @@ impl DistLedger {
     }
 
     pub async fn get_tx(&self, tx_hash: &String) -> Result<Tx, String> {
-        self.database.read_tx(tx_hash).await
+        self.ledger_db.read_tx(tx_hash).await
     }
 
-    pub async fn get_block(
+    pub fn get_block(
         &self,
         block_hash: &String,
-    ) -> Result<Option<Block>, String> {
-        self.database.get_block(block_hash).await
+    ) -> Result<Option<Block>, LedgerError> {
+        self.ledger_db.get_block(block_hash)
     }
 
     pub async fn get_block_by_height(
         &self,
         block_height: String,
-    ) -> Result<Option<Block>, String> {
+    ) -> Result<Option<Block>, LedgerError> {
         if let Some(block_hash) =
-            self.database.get_block_hash_by_height(block_height).await?
+            self.ledger_db.get_block_hash_by_height(block_height)?
         {
-            return self.database.get_block(&block_hash).await;
+            return self.ledger_db.get_block(&block_hash);
         } else {
             return Ok(None);
         }
@@ -107,12 +108,12 @@ impl DistLedger {
     pub async fn write_block(
         &self,
         bc: &BlockCandidate,
-    ) -> Result<String, String> {
+    ) -> Result<String, LedgerError> {
         let (block, txs) = bc.extract();
 
         let tx_hashes = block.get_tx_hashes();
 
-        let block_hash = match self.database.write_block(&block).await {
+        let block_hash = match self.ledger_db.write_block(&block).await {
             Ok(h) => h,
             Err(err) => {
                 return Err(err);
@@ -120,7 +121,7 @@ impl DistLedger {
         };
 
         for tx in txs {
-            self.database.write_tx(&tx).await?;
+            self.ledger_db.write_tx(&tx).await?;
         }
 
         match self.tx_pool.remove_txs(tx_hashes).await {
@@ -135,7 +136,7 @@ impl DistLedger {
     }
 
     pub fn delete_tx(&self, key: &String) -> Result<(), String> {
-        self.database.delete_tx(key)
+        self.ledger_db.delete_tx(key)
     }
 
     pub async fn get_tx_pool_diff(
@@ -152,8 +153,8 @@ impl DistLedger {
     pub async fn get_ctr_data(
         &self,
         ctr_addr: &String,
-    ) -> Result<Option<Vec<u8>>, String> {
-        self.database.get_ctr_data(ctr_addr).await
+    ) -> Result<Option<Vec<u8>>, LedgerError> {
+        self.ledger_db.get_ctr_data(ctr_addr).await
     }
 
     pub async fn set_contract_state(
@@ -162,7 +163,7 @@ impl DistLedger {
         field_name: &String,
         field_value: &String,
     ) -> Result<String, String> {
-        self.database
+        self.ledger_db
             .set_contract_state(contract_addr, field_name, field_value)
             .await
     }
