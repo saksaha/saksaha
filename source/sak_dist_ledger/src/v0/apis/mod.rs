@@ -1,4 +1,4 @@
-mod vm;
+mod ctr;
 
 use crate::{Consensus, DistLedger, LedgerError};
 use log::warn;
@@ -72,7 +72,7 @@ impl DistLedger {
             // (key, new_state)
 
             if tx.is_deplying_ctr() {
-                self.init_ctr(tx.get_ctr_addr(), &tx.get_data()[..4]);
+                // self.init_ctr(tx.get_ctr_addr(), &tx.get_data()[..4]);
             }
         }
 

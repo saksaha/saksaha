@@ -34,6 +34,8 @@ impl VM {
     ) -> Result<String, BoxedError> {
         let (instance, mut store, memory) = init_module(contract_wasm)?;
 
+        // let contract_fn = resolve_fn(fn_type);
+
         let fn_name = match fn_type {
             FnType::Init => "init",
             FnType::Query => "query",
@@ -102,6 +104,8 @@ pub fn is_wasm(contract_wasm: Vec<u8>) -> bool {
         Err(_) => false,
     }
 }
+
+pub fn resolve_fn(fn_type: FnType) {}
 
 fn init_module(
     contract_wasm: Vec<u8>,

@@ -7,17 +7,17 @@ use sak_vm::FnType;
 use std::{collections::HashMap, sync::Arc};
 
 impl DistLedger {
-    pub async fn init_ctr<'a>(
-        &self,
-        ctr_addr: &'a String,
-        ctr_wasm: &'a [u8],
-    ) -> (&'a String, &'a [u8]) {
-        let fn_type = FnType::Init;
-        // self.vm.exec(ctr_wasm, fn_type)
-        // (ctr_addr, &[]
+    // pub async fn init_ctr<'a>(
+    //     &self,
+    //     ctr_addr: &'a String,
+    //     ctr_wasm: &'a [u8],
+    // ) -> (&'a String, &'a [u8]) {
+    //     let fn_type = FnType::Init;
+    //     // self.vm.exec(ctr_wasm, fn_type)
+    //     // (ctr_addr, &[]
 
-        (ctr_addr, ctr_wasm)
-    }
+    //     (ctr_addr, ctr_wasm)
+    // }
 
     pub async fn exec_ctr(&self) {}
 
