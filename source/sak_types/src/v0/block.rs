@@ -41,16 +41,6 @@ impl Block {
             sak_crypto::compute_hash(to_hash)
         };
 
-        println!(
-            "new block!!!, val sig: {}, tx_hashes: {:?}, witness_sigs: {:?} , created_at: {}, height: {}, block_hash: {}",
-            validator_sig,
-            tx_hashes,
-            witness_sigs,
-            created_at,
-            height,
-            block_hash
-        );
-
         Block {
             validator_sig,
             tx_hashes,

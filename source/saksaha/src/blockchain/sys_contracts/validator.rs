@@ -1,22 +1,22 @@
-use crate::system::BoxedError;
+use crate::{blockchain::consensus::Pos, system::BoxedError};
 use sak_contract_std::Request;
 use sak_dist_ledger::DistLedger;
 use sak_vm::FnType;
 
-pub(crate) struct Validator {
+pub(in crate) struct Validator {
     ctr_addr: String,
 }
 
 impl Validator {
-    pub fn init(ctr_addr: String) -> Validator {
+    pub(crate) fn init(ctr_addr: String) -> Validator {
         let v = Validator { ctr_addr };
 
         v
     }
 
-    pub async fn get_next_validator(
+    pub(crate) async fn get_next_validator(
         &self,
-        dist_ledger: &DistLedger,
+        dist_ledger: &DistLedger<Pos>,
     ) -> Result<String, BoxedError> {
         let request = Request {
             req_type: String::from("get_validator"),

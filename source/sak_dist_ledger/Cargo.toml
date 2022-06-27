@@ -6,6 +6,7 @@ edition = "2018"
 
 [dependencies]
 log = "0.4.0"
+colored = "2"
 sak_kv_db = { path = "../sak_kv_db" }
 sak_logger = { path = "../sak_logger" }
 sak_contract_std = { path = "../sak_contract_std" }

@@ -1,4 +1,5 @@
 mod apis;
+mod consensus;
 mod db;
 mod dist_ledger;
 mod events;
@@ -10,6 +11,7 @@ mod validate;
 mod tests;
 
 pub use apis::*;
+pub use consensus::*;
 pub(crate) use db::*;
 pub use dist_ledger::*;
 pub use events::*;

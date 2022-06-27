@@ -6,7 +6,7 @@ use sak_contract_std::Request;
 use sak_types::{Block, BlockCandidate, Tx};
 use sak_vm::FnType;
 
-impl DistLedger {
+impl<C> DistLedger<C> {
     pub async fn query_contract(&self) -> Result<&[u8], String> {
         Ok(&[])
     }
@@ -95,19 +95,24 @@ impl DistLedger {
         if let Some(block_hash) =
             self.ledger_db.get_block_hash_by_height(block_height)?
         {
-            println!("get_block_by_height, hash: {}", block_hash);
-
             return self.ledger_db.get_block(&block_hash);
         } else {
             return Ok(None);
         }
     }
 
-    pub async fn write_block(
+    async fn write_block(
         &self,
         bc: &BlockCandidate,
     ) -> Result<String, LedgerError> {
-        let (block, txs) = self.verify_block_candidate(bc)?;
+        self._write_block()
+    }
+
+    async fn _write_block(
+        &self,
+        // bc: &BlockCandidate,
+    ) -> Result<String, LedgerError> {
+        let (block, txs) = self.prepare_to_write_block()?;
 
         let tx_hashes = block.get_tx_hashes();
 
@@ -115,14 +120,6 @@ impl DistLedger {
             Ok(h) => h,
             Err(err) => {
                 return Err(err);
-            }
-        };
-
-        match self.tx_pool.remove_txs(tx_hashes).await {
-            Ok(_) => {}
-            Err(_err) => {
-                // TODO
-                // self.database.remove_block(block_hash);
             }
         };
 
@@ -170,12 +167,16 @@ impl DistLedger {
         (h, t)
     }
 
-    fn verify_block_candidate<'a>(
+    async fn prepare_to_write_block(
         &self,
-        bc: &'a BlockCandidate,
-    ) -> Result<(Block, Vec<&'a Tx>), String> {
+        // bc: &'a BlockCandidate,
+    ) -> Result<(Block, Vec<&Tx>), String> {
+        let txs = self.tx_pool.remove_all().await?;
+
         // TODO verify
 
-        Ok(bc.extract())
+        // Ok(bc.extract())
+
+        return Err("power".into());
     }
 }

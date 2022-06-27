@@ -12,7 +12,6 @@ const MINE_INTERVAL: u64 = 5000;
 pub(super) struct Miner {
     pub(super) machine: Arc<Machine>,
     pub(super) mine_interval: Option<u64>,
-    // pub(super) credential: Arc<Credential>,
     pub(super) identity: Arc<Identity>,
     error_count: usize,
 }
@@ -52,24 +51,26 @@ impl Miner {
 
             let time_since = SystemTime::now();
 
-            let next_validator =
-                match self.machine.blockchain.get_next_validator().await {
-                    Ok(v) => v,
-                    Err(err) => {
-                        error!(
-                            "Could not get next validator, fatal, err: {}",
-                            err
-                        );
-                        self.error_count += 1;
+            self.machine.blockchain.dist_ledger.write_block();
 
-                        continue;
-                    }
-                };
+            // let next_validator =
+            //     match self.machine.blockchain.get_next_validator().await {
+            //         Ok(v) => v,
+            //         Err(err) => {
+            //             error!(
+            //                 "Could not get next validator, fatal, err: {}",
+            //                 err
+            //             );
+            //             self.error_count += 1;
 
-            println!("next validator: {}", next_validator);
+            //             continue;
+            //         }
+            //     };
 
-            let is_next_validator =
-                next_validator == self.identity.credential.public_key_str;
+            // println!("next validator: {}", next_validator);
+
+            // let is_next_validator =
+            //     next_validator == self.identity.credential.public_key_str;
 
             // let is_next_validator = match system_contract.get_validator() {
             //     Ok(b) => {
@@ -91,20 +92,6 @@ impl Miner {
             // };
 
             // info!("is_next_validator: {}", is_next_validator);
-
-            if is_next_validator {
-                // let block = Block {
-                // miner_signature:,
-                // transactions: self.machine.blockchain.tx_pool.new_tx_hashes,
-                // signatures:,
-                // created_at:,
-                // height:,
-                // }
-
-                // if let Err(err) = self.machine.blockchain.write_block().await {
-                //     error!("Error writing block, err: {}", err);
-                // }
-            }
 
             sak_utils_time::wait_until_min_interval(time_since, mine_interval)
                 .await;

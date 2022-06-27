@@ -84,30 +84,17 @@ impl TxPool {
         Ok(())
     }
 
-    pub(crate) async fn remove_txs(
+    pub(crate) async fn remove_all(
         &self,
-        tx_hashes: &Vec<String>,
+        // tx_hashes: &Vec<String>,
     ) -> Result<Vec<String>, String> {
         let mut tx_map_lock = self.tx_map.write().await;
-        let mut diff_hashes = vec![];
 
-        for tx_hash in tx_hashes.iter() {
-            if tx_map_lock.contains_key(tx_hash) {
-                let _tx = match tx_map_lock.remove(tx_hash) {
-                    Some(v) => v,
-                    None => {
-                        return Err(format!(
-                            "Can't remove tx having the tx_hash :{}",
-                            tx_hash
-                        ))
-                    }
-                };
-            } else {
-                diff_hashes.push(tx_hash.to_string());
-            };
-        }
+        let tx = tx_map_lock.keys().map(|k| k.clone()).collect();
 
-        Ok(diff_hashes)
+        tx_map_lock.clear();
+
+        Ok(tx)
     }
 
     pub(crate) async fn get_txs(&self, tx_hashes: Vec<String>) -> Vec<Tx> {

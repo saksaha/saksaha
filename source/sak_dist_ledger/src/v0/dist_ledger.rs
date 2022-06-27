@@ -1,7 +1,9 @@
 use super::tx_pool::TxPool;
 use super::DLedgerEvent;
+use crate::Consensus;
 use crate::LedgerDB;
 use crate::Runtime;
+use colored::Colorize;
 use log::{error, info, warn};
 use sak_types::BlockCandidate;
 use sak_vm::VM;
@@ -11,28 +13,32 @@ use tokio::sync::{broadcast::Sender, RwLock};
 
 const BLOCKCHAIN_EVENT_QUEUE_CAPACITY: usize = 32;
 
-pub struct DistLedger {
+pub struct DistLedger<C> {
     pub(crate) ledger_db: LedgerDB,
     pub(crate) tx_pool: Arc<TxPool>,
     pub bc_event_tx: Arc<RwLock<Sender<DLedgerEvent>>>,
     pub(crate) vm: VM,
+    consensus: C,
     runtime: Arc<Runtime>,
 }
 
-pub struct DistLedgerArgs {
+pub struct DistLedgerArgs<C> {
     pub app_prefix: String,
     pub tx_pool_sync_interval: Option<u64>,
     pub genesis_block: Option<BlockCandidate>,
+    pub consensus: C,
+    // pub consensus: Consensu
 }
 
-impl DistLedger {
-    pub async fn init<'a>(
-        blockchain_args: DistLedgerArgs,
-    ) -> Result<DistLedger, String> {
+impl<C> DistLedger<C> {
+    pub async fn init(
+        blockchain_args: DistLedgerArgs<C>,
+    ) -> Result<DistLedger<C>, String> {
         let DistLedgerArgs {
             app_prefix,
             tx_pool_sync_interval,
             genesis_block,
+            consensus,
         } = blockchain_args;
 
         let ledger_db = match LedgerDB::init(&app_prefix).await {
@@ -74,6 +80,7 @@ impl DistLedger {
             tx_pool: tx_pool.clone(),
             vm,
             bc_event_tx,
+            consensus,
             runtime,
         };
 
@@ -103,8 +110,6 @@ impl DistLedger {
                 Ok(b) => b,
                 Err(err) => return Err(err.to_string()),
             } {
-            println!("bb: {:?}", b);
-
             let block_hash = b.get_hash().to_string();
 
             info!(
@@ -114,12 +119,12 @@ impl DistLedger {
 
             block_hash
         } else {
+            info!("Genesis block not found, writing");
+
             let b = match self.write_block(&genesis_block).await {
                 Ok(b) => b,
                 Err(err) => return Err(err.to_string()),
             };
-
-            info!("Wrote genesis block, block_hash: {}", &b);
 
             b
         };
@@ -135,6 +140,8 @@ impl DistLedger {
             )
             .into());
         }
+
+        info!("Genesis block hash: {}", gen_block_hash.yellow());
 
         Ok(persisted_gen_block_hash.to_string())
     }
