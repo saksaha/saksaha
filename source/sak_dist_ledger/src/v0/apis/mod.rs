@@ -28,8 +28,6 @@ impl DistLedger {
             .await?
             .ok_or("ctr data (wasm) should exist")?;
 
-        // self.ledger_db.get_ctr_state(ctr_addr, )
-
         let mut storage: HashMap<String, String> = HashMap::with_capacity(10);
 
         storage.insert(
@@ -92,11 +90,13 @@ impl DistLedger {
 
     pub async fn get_block_by_height(
         &self,
-        block_height: String,
+        block_height: &String,
     ) -> Result<Option<Block>, LedgerError> {
         if let Some(block_hash) =
             self.ledger_db.get_block_hash_by_height(block_height)?
         {
+            println!("get_block_by_height, hash: {}", block_hash);
+
             return self.ledger_db.get_block(&block_hash);
         } else {
             return Ok(None);
@@ -107,7 +107,7 @@ impl DistLedger {
         &self,
         bc: &BlockCandidate,
     ) -> Result<String, LedgerError> {
-        let (block, txs) = bc.extract();
+        let (block, txs) = self.verify_block_candidate(bc)?;
 
         let tx_hashes = block.get_tx_hashes();
 
@@ -144,36 +144,38 @@ impl DistLedger {
         self.tx_pool.get_txs(tx_hashes).await
     }
 
-    // pub async fn get_ctr_data(
-    //     &self,
-    //     ctr_addr: &String,
-    // ) -> Result<Option<Vec<u8>>, LedgerError> {
-    //     self.ledger_db.get_ctr_data_by_ctr_addr(ctr_addr).await
-    // }
-
-    pub async fn set_contract_state(
+    pub async fn set_ctr_state(
         &self,
-        contract_addr: &String,
-        field_name: &String,
-        field_value: &String,
+        ctr_addr: &String,
+        // field_name: &String,
+        // field_value: &String,
+        ctr_state: &String,
     ) -> Result<String, LedgerError> {
         self.ledger_db
-            .put_ctr_state(contract_addr, field_name, field_value)
+            // .put_ctr_state(contract_addr, field_name, field_value)
+            .put_ctr_state(ctr_addr, ctr_state)
             .await
     }
 
     pub async fn get_ctr_state(
         &self,
         contract_addr: &String,
-        field_name: &String,
+        // field_name: &String,
     ) -> Result<Option<Vec<u8>>, LedgerError> {
-        self.ledger_db
-            .get_ctr_state(contract_addr, field_name)
-            .await
+        self.ledger_db.get_ctr_state(contract_addr).await
     }
 
     pub async fn get_txs_from_tx_pool(&self) -> (Vec<String>, Vec<Tx>) {
         let (h, t) = self.tx_pool.get_tx_pool().await;
         (h, t)
+    }
+
+    fn verify_block_candidate<'a>(
+        &self,
+        bc: &'a BlockCandidate,
+    ) -> Result<(Block, Vec<&'a Tx>), String> {
+        // TODO verify
+
+        Ok(bc.extract())
     }
 }

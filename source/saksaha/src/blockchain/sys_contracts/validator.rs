@@ -3,15 +3,8 @@ use sak_contract_std::Request;
 use sak_dist_ledger::DistLedger;
 use sak_vm::FnType;
 
-const DEFAULT_VALIDATOR_HASHMAP_CAPACITY: usize = 10;
-
 pub(crate) struct Validator {
     ctr_addr: String,
-    // instance: Instance,
-    // store: Store<i32>,
-    // memory: Memory,
-    // storage_ptr: isize,
-    // storage_len: usize,
 }
 
 impl Validator {
@@ -29,15 +22,15 @@ impl Validator {
             req_type: String::from("get_validator"),
         };
 
-        let a = dist_ledger
-            .execute_ctr(&self.ctr_addr, FnType::Query, request)
-            .await?;
+        let next_validator = {
+            let v = dist_ledger
+                .execute_ctr(&self.ctr_addr, FnType::Query, request)
+                .await?;
 
-        let b = std::str::from_utf8(a).unwrap();
+            String::from_utf8(v.to_vec())?
+        };
 
-        let c = b.to_string();
-
-        Ok(c)
+        Ok(next_validator)
     }
 
     // pub fn get_validator(&mut self) -> Result<String, BoxedError> {

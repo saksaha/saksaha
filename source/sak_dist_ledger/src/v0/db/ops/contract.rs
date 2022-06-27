@@ -24,15 +24,15 @@ impl LedgerDB {
     pub(crate) async fn get_ctr_state(
         &self,
         ctr_addr: &String,
-        field_name: &String,
+        // field_name: &String,
     ) -> Result<Option<Vec<u8>>, LedgerError> {
         let db = &self.kv_db.db_instance;
 
-        let state_key = format!("{}:{}", ctr_addr, field_name);
+        // let state_key = format!("{}:{}", ctr_addr, field_name);
 
         let ctr_state = self
             .schema
-            .get_ctr_state(db, &state_key)?
+            .get_ctr_state(db, &ctr_addr)?
             .ok_or("ctr state does not exist")?;
 
         Ok(Some(ctr_state))
@@ -40,22 +40,19 @@ impl LedgerDB {
 
     pub(crate) async fn put_ctr_state(
         &self,
-        contract_addr: &String,
-        field_name: &String,
-        field_value: &String,
+        ctr_addr: &String,
+        // field_name: &String,
+        // field_value: &String,
+        ctr_state: &String,
     ) -> Result<String, LedgerError> {
         let db = &self.kv_db.db_instance;
 
         let mut batch = WriteBatch::default();
 
-        let state_key = format!("{}:{}", contract_addr, field_name);
+        // let state_key = format!("{}:{}", contract_addr, field_name);
 
-        self.schema.batch_put_ctr_state(
-            db,
-            &mut batch,
-            &state_key,
-            field_value,
-        )?;
+        self.schema
+            .batch_put_ctr_state(db, &mut batch, &ctr_addr, ctr_state)?;
 
         db.write(batch)?;
 

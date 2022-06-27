@@ -127,7 +127,7 @@ impl LedgerDBSchema {
         db: &DB,
         block_hash: &String,
     ) -> Result<Option<String>, LedgerError> {
-        let cf = make_cf_handle(db, CREATED_AT)?;
+        let cf = make_cf_handle(db, BLOCK_HEIGHT)?;
 
         match db.get_cf(cf, block_hash)? {
             Some(v) => {
@@ -315,7 +315,12 @@ impl LedgerDBSchema {
         block_height: &String,
         block_hash: &String,
     ) -> Result<(), LedgerError> {
-        let cf = make_cf_handle(db, BLOCK_HEIGHT)?;
+        println!(
+            "put block hash hash: {}, hash: {}",
+            block_height, block_hash
+        );
+
+        let cf = make_cf_handle(db, BLOCK_HASH)?;
 
         batch.put_cf(cf, block_height, block_hash);
 
@@ -329,7 +334,12 @@ impl LedgerDBSchema {
         block_hash: &String,
         block_height: &String,
     ) -> Result<(), LedgerError> {
-        let cf = make_cf_handle(db, BLOCK_HASH)?;
+        println!(
+            "put block height height: {}, hash: {}",
+            block_height, block_hash
+        );
+
+        let cf = make_cf_handle(db, BLOCK_HEIGHT)?;
 
         batch.put_cf(cf, block_hash, block_height);
 

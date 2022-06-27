@@ -45,11 +45,11 @@ impl LedgerDB {
 
     pub(crate) fn get_block_hash_by_height(
         &self,
-        block_height: String,
+        block_height: &String,
     ) -> Result<Option<String>, LedgerError> {
         let db = &self.kv_db.db_instance;
 
-        self.schema.get_block_hash(db, &block_height)
+        self.schema.get_block_hash(db, block_height)
     }
 
     pub(crate) async fn write_block(
@@ -62,6 +62,12 @@ impl LedgerDB {
         let mut batch = WriteBatch::default();
 
         let block_hash = block.get_hash();
+
+        println!(
+            "write block, hash: {}, height: {}",
+            block_hash,
+            block.get_height()
+        );
 
         self.schema.batch_put_validator_sig(
             db,

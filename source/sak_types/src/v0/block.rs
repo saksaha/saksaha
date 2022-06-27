@@ -24,8 +24,6 @@ impl Block {
             let to_hash = {
                 to_hash.push(validator_sig.as_bytes());
 
-                to_hash.push(created_at.as_bytes());
-
                 for tx in tx_hashes.iter() {
                     to_hash.push(tx.as_bytes());
                 }
@@ -42,6 +40,16 @@ impl Block {
 
             sak_crypto::compute_hash(to_hash)
         };
+
+        println!(
+            "new block!!!, val sig: {}, tx_hashes: {:?}, witness_sigs: {:?} , created_at: {}, height: {}, block_hash: {}",
+            validator_sig,
+            tx_hashes,
+            witness_sigs,
+            created_at,
+            height,
+            block_hash
+        );
 
         Block {
             validator_sig,
