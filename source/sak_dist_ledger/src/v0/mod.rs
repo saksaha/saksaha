@@ -5,7 +5,6 @@ mod dist_ledger;
 mod events;
 mod runtime;
 mod tx_pool;
-mod validate;
 
 #[cfg(test)]
 mod tests;

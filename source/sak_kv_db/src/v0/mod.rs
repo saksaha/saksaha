@@ -2,6 +2,6 @@ pub mod database;
 
 pub use database::*;
 pub use rocksdb::{
-    ColumnFamily, ColumnFamilyDescriptor, DBRawIteratorWithThreadMode,
-    DBWithThreadMode, Options, SingleThreaded, WriteBatch, DB,
+    BoundColumnFamily, ColumnFamily, ColumnFamilyDescriptor,
+    DBRawIteratorWithThreadMode, Options, SingleThreaded, WriteBatch, DB,
 };

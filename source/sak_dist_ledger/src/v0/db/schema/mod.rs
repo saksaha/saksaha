@@ -1,7 +1,9 @@
+use std::sync::Arc;
+
 use crate::LedgerError;
 use sak_kv_db::{
-    ColumnFamily, ColumnFamilyDescriptor, KeyValueDatabase, Options,
-    WriteBatch, DB,
+    BoundColumnFamily, ColumnFamily, ColumnFamilyDescriptor, KeyValueDatabase,
+    Options, WriteBatch, DB,
 };
 
 //
@@ -54,7 +56,7 @@ impl LedgerDBSchema {
     ) -> Result<Option<String>, LedgerError> {
         let cf = make_cf_handle(db, VALIDATOR_SIG)?;
 
-        match db.get_cf(cf, block_hash)? {
+        match db.get_cf(&cf, block_hash)? {
             Some(v) => {
                 let str = String::from_utf8(v)?;
 
@@ -73,7 +75,7 @@ impl LedgerDBSchema {
     ) -> Result<Option<Vec<String>>, LedgerError> {
         let cf = make_cf_handle(db, TX_HASHES)?;
 
-        match db.get_cf(cf, block_hash)? {
+        match db.get_cf(&cf, block_hash)? {
             Some(v) => {
                 let th: Vec<String> = serde_json::from_slice(&v).unwrap();
                 return Ok(Some(th));
@@ -91,7 +93,7 @@ impl LedgerDBSchema {
     ) -> Result<Option<Vec<String>>, LedgerError> {
         let cf = make_cf_handle(db, WITNESS_SIGS)?;
 
-        match db.get_cf(cf, block_hash)? {
+        match db.get_cf(&cf, block_hash)? {
             Some(v) => {
                 let th: Vec<String> = serde_json::from_slice(&v).unwrap();
                 return Ok(Some(th));
@@ -110,7 +112,7 @@ impl LedgerDBSchema {
     ) -> Result<Option<String>, LedgerError> {
         let cf = make_cf_handle(db, CREATED_AT)?;
 
-        match db.get_cf(cf, key)? {
+        match db.get_cf(&cf, key)? {
             Some(v) => {
                 let str = String::from_utf8(v)?;
 
@@ -129,7 +131,7 @@ impl LedgerDBSchema {
     ) -> Result<Option<String>, LedgerError> {
         let cf = make_cf_handle(db, BLOCK_HEIGHT)?;
 
-        match db.get_cf(cf, block_hash)? {
+        match db.get_cf(&cf, block_hash)? {
             Some(v) => {
                 let str = String::from_utf8(v)?;
 
@@ -148,7 +150,7 @@ impl LedgerDBSchema {
     ) -> Result<Option<String>, LedgerError> {
         let cf = make_cf_handle(db, BLOCK_HASH)?;
 
-        match db.get_cf(cf, block_height)? {
+        match db.get_cf(&cf, block_height)? {
             Some(v) => {
                 let str = String::from_utf8(v)?;
 
@@ -167,7 +169,7 @@ impl LedgerDBSchema {
     ) -> Result<Option<Vec<u8>>, LedgerError> {
         let cf = make_cf_handle(db, DATA)?;
 
-        match db.get_cf(cf, key)? {
+        match db.get_cf(&cf, key)? {
             Some(v) => {
                 return Ok(Some(v));
             }
@@ -185,7 +187,7 @@ impl LedgerDBSchema {
     ) -> Result<Option<String>, LedgerError> {
         let cf = make_cf_handle(db, TX_HASH)?;
 
-        match db.get_cf(cf, key)? {
+        match db.get_cf(&cf, key)? {
             Some(v) => {
                 let str = String::from_utf8(v)?;
 
@@ -204,7 +206,7 @@ impl LedgerDBSchema {
     ) -> Result<Option<Vec<u8>>, LedgerError> {
         let cf = make_cf_handle(db, CTR_STATE)?;
 
-        match db.get_cf(cf, state_key)? {
+        match db.get_cf(&cf, state_key)? {
             Some(v) => {
                 return Ok(Some(v));
             }
@@ -222,7 +224,7 @@ impl LedgerDBSchema {
     ) -> Result<Option<String>, LedgerError> {
         let cf = make_cf_handle(db, AUTHOR_SIG)?;
 
-        match db.get_cf(cf, key)? {
+        match db.get_cf(&cf, key)? {
             Some(v) => {
                 let str = String::from_utf8(v)?;
 
@@ -243,7 +245,7 @@ impl LedgerDBSchema {
     ) -> Result<(), LedgerError> {
         let cf = make_cf_handle(db, VALIDATOR_SIG)?;
 
-        batch.put_cf(cf, block_hash, validator_sig);
+        batch.put_cf(&cf, block_hash, validator_sig);
 
         Ok(())
     }
@@ -259,7 +261,7 @@ impl LedgerDBSchema {
 
         let witness_sigs = serde_json::to_string(witness_sigs)?;
 
-        batch.put_cf(cf, block_hash, witness_sigs);
+        batch.put_cf(&cf, block_hash, witness_sigs);
 
         Ok(())
     }
@@ -275,7 +277,7 @@ impl LedgerDBSchema {
 
         let transactions = serde_json::to_string(tx_hashes)?;
 
-        batch.put_cf(cf, block_hash, transactions);
+        batch.put_cf(&cf, block_hash, transactions);
 
         Ok(())
     }
@@ -289,7 +291,7 @@ impl LedgerDBSchema {
     ) -> Result<(), LedgerError> {
         let cf = make_cf_handle(db, CREATED_AT)?;
 
-        batch.put_cf(cf, block_hash, created_at);
+        batch.put_cf(&cf, block_hash, created_at);
 
         Ok(())
     }
@@ -303,7 +305,7 @@ impl LedgerDBSchema {
     ) -> Result<(), LedgerError> {
         let cf = make_cf_handle(db, CREATED_AT)?;
 
-        batch.delete_cf(cf, key);
+        batch.delete_cf(&cf, key);
 
         Ok(())
     }
@@ -317,7 +319,7 @@ impl LedgerDBSchema {
     ) -> Result<(), LedgerError> {
         let cf = make_cf_handle(db, BLOCK_HASH)?;
 
-        batch.put_cf(cf, block_height, block_hash);
+        batch.put_cf(&cf, block_height, block_hash);
 
         Ok(())
     }
@@ -331,7 +333,7 @@ impl LedgerDBSchema {
     ) -> Result<(), LedgerError> {
         let cf = make_cf_handle(db, BLOCK_HEIGHT)?;
 
-        batch.put_cf(cf, block_hash, block_height);
+        batch.put_cf(&cf, block_hash, block_height);
 
         Ok(())
     }
@@ -345,7 +347,7 @@ impl LedgerDBSchema {
     ) -> Result<(), LedgerError> {
         let cf = make_cf_handle(db, CTR_STATE)?;
 
-        batch.put_cf(cf, state_key, field_value);
+        batch.put_cf(&cf, state_key, field_value);
 
         Ok(())
     }
@@ -360,7 +362,7 @@ impl LedgerDBSchema {
     ) -> Result<(), LedgerError> {
         let cf = make_cf_handle(db, DATA)?;
 
-        batch.put_cf(cf, key, value);
+        batch.put_cf(&cf, key, value);
 
         Ok(())
     }
@@ -374,7 +376,7 @@ impl LedgerDBSchema {
     ) -> Result<(), LedgerError> {
         let cf = make_cf_handle(db, DATA)?;
 
-        batch.delete_cf(cf, key);
+        batch.delete_cf(&cf, key);
 
         Ok(())
     }
@@ -386,7 +388,7 @@ impl LedgerDBSchema {
     ) -> Result<Option<Vec<u8>>, LedgerError> {
         let cf = make_cf_handle(db, PI)?;
 
-        match db.get_cf(cf, key)? {
+        match db.get_cf(&cf, key)? {
             Some(v) => {
                 return Ok(Some(v));
             }
@@ -406,7 +408,7 @@ impl LedgerDBSchema {
     ) -> Result<(), LedgerError> {
         let cf = make_cf_handle(db, PI)?;
 
-        batch.put_cf(cf, key, value);
+        batch.put_cf(&cf, key, value);
 
         Ok(())
     }
@@ -420,7 +422,7 @@ impl LedgerDBSchema {
     ) -> Result<(), LedgerError> {
         let cf = make_cf_handle(db, PI)?;
 
-        batch.delete_cf(cf, key);
+        batch.delete_cf(&cf, key);
 
         Ok(())
     }
@@ -434,7 +436,7 @@ impl LedgerDBSchema {
     ) -> Result<(), LedgerError> {
         let cf = make_cf_handle(db, AUTHOR_SIG)?;
 
-        batch.put_cf(cf, key, value);
+        batch.put_cf(&cf, key, value);
 
         Ok(())
     }
@@ -448,7 +450,7 @@ impl LedgerDBSchema {
     ) -> Result<(), LedgerError> {
         let cf = make_cf_handle(db, AUTHOR_SIG)?;
 
-        batch.delete_cf(cf, key);
+        batch.delete_cf(&cf, key);
 
         Ok(())
     }
@@ -461,7 +463,7 @@ impl LedgerDBSchema {
     ) -> Result<Option<Vec<u8>>, LedgerError> {
         let cf = make_cf_handle(db, CTR_ADDR)?;
 
-        match db.get_cf(cf, key)? {
+        match db.get_cf(&cf, key)? {
             Some(v) => {
                 return Ok(Some(v));
             }
@@ -480,7 +482,7 @@ impl LedgerDBSchema {
     ) -> Result<(), LedgerError> {
         let cf = make_cf_handle(db, CTR_ADDR)?;
 
-        batch.put_cf(cf, key, value);
+        batch.put_cf(&cf, key, value);
 
         Ok(())
     }
@@ -494,7 +496,7 @@ impl LedgerDBSchema {
     ) -> Result<(), LedgerError> {
         let cf = make_cf_handle(db, TX_HASH)?;
 
-        batch.put_cf(cf, key, value);
+        batch.put_cf(&cf, key, value);
 
         Ok(())
     }
@@ -520,7 +522,7 @@ impl LedgerDBSchema {
 fn make_cf_handle<'a>(
     db: &'a DB,
     col_name: &'static str,
-) -> Result<&'a ColumnFamily, String> {
+) -> Result<Arc<BoundColumnFamily<'a>>, String> {
     let cf_handle = match db.cf_handle(col_name) {
         Some(h) => h,
         None => {

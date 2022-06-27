@@ -27,7 +27,6 @@ pub struct DistLedgerArgs {
     pub tx_pool_sync_interval: Option<u64>,
     pub genesis_block: Option<BlockCandidate>,
     pub consensus: Box<dyn Consensus + Send + Sync>,
-    // pub consensus: Consensu
 }
 
 impl DistLedger {

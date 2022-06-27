@@ -24,19 +24,9 @@ impl Blockchain {
                 None => GenesisBlock::create(),
             };
 
-            // let sys_contracts = {
-            //     let validator_ctr_addr = genesis_block.get_validator_ctr_addr();
-
-            //     let validator = Validator::init(validator_ctr_addr);
-
-            //     let c = SystemContracts { validator };
-
-            //     c
-            // };
-
             let validator_ctr_addr = genesis_block.get_validator_ctr_addr();
 
-            let consensus = {
+            let consensus: Box<dyn Consensus + Send + Sync> = {
                 let c = Pos { validator_ctr_addr };
                 Box::new(c)
             };

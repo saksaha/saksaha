@@ -57,28 +57,35 @@ impl DistLedger {
             .await?
             .ok_or("ctr data (wasm) should exist")?;
 
-        let mut storage: HashMap<String, String> = HashMap::with_capacity(10);
+        let ctr_state = self
+            .ledger_db
+            .get_ctr_state(ctr_addr)?
+            .ok_or("ctr state should exist")?;
 
-        storage.insert(
-            "validators".to_string(),
-            serde_json::to_string(&vec![String::from(
-                "\
-            046885b904a8b8cdd17cc40078ed11421\
-            4586f197a664d6aa33d4b46cc3b712afc\
-            def3d4d808bc7843beaea9e1a4c5ddeea\
-            47cbd27ea1af5ca13719a2f42c39167\
-            ",
-            )])
-            .unwrap()
-            .to_string(),
-        );
+        println!("exec ctr, ctr_state: {:?}", ctr_state);
 
-        let ret = match self.vm.exec(ctr_wasm, fn_type, request, storage) {
-            Ok(ret) => ret,
-            Err(err) => return Err(err),
-        };
+        // let mut storage: HashMap<String, String> = HashMap::with_capacity(10);
 
-        println!("returned!!!: {}", ret);
+        // storage.insert(
+        //     "validators".to_string(),
+        //     serde_json::to_string(&vec![String::from(
+        //         "\
+        //     046885b904a8b8cdd17cc40078ed11421\
+        //     4586f197a664d6aa33d4b46cc3b712afc\
+        //     def3d4d808bc7843beaea9e1a4c5ddeea\
+        //     47cbd27ea1af5ca13719a2f42c39167\
+        //     ",
+        //     )])
+        //     .unwrap()
+        //     .to_string(),
+        // );
+
+        // let ret = match self.vm.exec(ctr_wasm, fn_type, request, storage) {
+        //     Ok(ret) => ret,
+        //     Err(err) => return Err(err),
+        // };
+
+        // println!("returned!!!: {}", ret);
 
         Ok(&[])
     }

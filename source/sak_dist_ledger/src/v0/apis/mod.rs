@@ -104,7 +104,7 @@ impl DistLedger {
             .await
     }
 
-    pub fn get_ctr_state(
+    pub async fn get_ctr_state(
         &self,
         contract_addr: &String,
         // field_name: &String,
@@ -117,7 +117,9 @@ impl DistLedger {
         (h, t)
     }
 
-    async fn prepare_to_write_block(&self) -> Result<BlockCandidate, String> {
+    async fn prepare_to_write_block(
+        &self,
+    ) -> Result<BlockCandidate, LedgerError> {
         println!("prepare to write block!!");
 
         let txs = self.tx_pool.remove_all().await?;
@@ -125,5 +127,10 @@ impl DistLedger {
         let bc = self.consensus.do_consensus(self, txs).await?;
 
         Ok(bc)
+    }
+
+    pub fn is_valid_tx(&self, _tx: &Tx) -> bool {
+        // TODO
+        true
     }
 }
