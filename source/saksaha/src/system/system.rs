@@ -23,7 +23,8 @@ pub struct SystemRunArgs {
     pub cfg_profile: Option<String>,
     pub miner: bool,
     pub mine_interval: Option<u64>,
-    pub tx_pool_sync_interval: Option<u64>,
+    pub tx_sync_interval: Option<u64>,
+    pub block_sync_interval: Option<u64>,
     pub app_prefix: Option<String>,
 }
 

@@ -1,52 +1,54 @@
 use log::{error, warn};
-use sak_types::Tx;
+use sak_types::{Block, Tx};
 use std::collections::{HashMap, HashSet};
 use tokio::sync::RwLock;
 
-const TX_POOL_CAPACITY: usize = 100;
+const SYNC_POOL_CAPACITY: usize = 100;
 
-pub(crate) struct TxPool {
+pub(crate) struct SyncPool {
+    new_blocks: RwLock<HashSet<(String, String)>>,
     new_tx_hashes: RwLock<HashSet<String>>,
     tx_map: RwLock<HashMap<String, Tx>>,
 }
 
-impl TxPool {
-    pub(crate) fn new() -> TxPool {
+impl SyncPool {
+    pub(crate) fn new() -> SyncPool {
         let new_tx_hashes = {
             let s = HashSet::new();
 
             RwLock::new(s)
         };
 
+        let new_blocks = {
+            let s = HashSet::new();
+
+            RwLock::new(s)
+        };
+
         let tx_map = {
-            let m = HashMap::with_capacity(TX_POOL_CAPACITY);
+            let m = HashMap::with_capacity(SYNC_POOL_CAPACITY);
             RwLock::new(m)
         };
 
-        TxPool {
+        SyncPool {
+            new_blocks,
             new_tx_hashes,
             tx_map,
         }
     }
 
-    pub(crate) async fn get_new_tx_hashes(&self) -> Vec<String> {
+    pub(crate) async fn drain_new_blocks(&self) -> Vec<(String, String)> {
+        let mut new_blocks_lock = self.new_blocks.write().await;
+
+        let v: Vec<_> = new_blocks_lock.drain().collect();
+        v
+    }
+
+    pub(crate) async fn drain_new_tx_hashes(&self) -> Vec<String> {
         let mut new_tx_hashes_lock = self.new_tx_hashes.write().await;
 
         let v: Vec<_> = new_tx_hashes_lock.drain().collect();
         v
-    }
-
-    pub(crate) async fn get_tx_pool(&self) -> (Vec<String>, Vec<Tx>) {
-        let tx_map_lock = self.tx_map.read().await;
-        let mut hashes = vec![];
-        let mut txs = vec![];
-
-        for (k, v) in tx_map_lock.iter() {
-            hashes.push(k.clone());
-            txs.push(v.clone());
-        }
-
-        (hashes, txs)
     }
 
     // Returns hashes of transactions that I do not have
@@ -67,7 +69,21 @@ impl TxPool {
         return ret;
     }
 
-    pub(crate) async fn insert(&self, tx: Tx) -> Result<(), String> {
+    pub(crate) async fn insert_block(
+        &self,
+        block: &Block,
+    ) -> Result<(), String> {
+        let mut new_blocks_lock = self.new_blocks.write().await;
+
+        let height = block.get_height().to_string();
+        let block_hash = block.get_hash().to_string();
+
+        new_blocks_lock.insert((height, block_hash));
+
+        Ok(())
+    }
+
+    pub(crate) async fn insert_tx(&self, tx: Tx) -> Result<(), String> {
         let tx_hash = tx.get_hash();
 
         let mut tx_map_lock = self.tx_map.write().await;
@@ -84,17 +100,22 @@ impl TxPool {
         Ok(())
     }
 
-    pub(crate) async fn remove_all(
-        &self,
-        // tx_hashes: &Vec<String>,
-    ) -> Result<Vec<Tx>, String> {
-        let mut tx_map_lock = self.tx_map.write().await;
+    pub(crate) async fn get_all_txs(&self) -> Result<Vec<Tx>, String> {
+        let tx_map_lock = self.tx_map.read().await;
 
         let tx = tx_map_lock.values().map(|v| v.clone()).collect();
 
-        tx_map_lock.clear();
-
         Ok(tx)
+    }
+
+    pub(crate) async fn remove_txs(&self, txs: &Vec<Tx>) -> Result<(), String> {
+        let mut tx_map_lock = self.tx_map.write().await;
+
+        for tx in txs {
+            tx_map_lock.remove(tx.get_hash());
+        }
+
+        Ok(())
     }
 
     pub(crate) async fn get_txs(&self, tx_hashes: Vec<String>) -> Vec<Tx> {
@@ -116,7 +137,7 @@ impl TxPool {
         tx_pool
     }
 
-    pub(crate) async fn contains(&self, tx_hash: &String) -> bool {
+    pub(crate) async fn contains_tx(&self, tx_hash: &String) -> bool {
         let tx_map_lock = self.tx_map.read().await;
 
         tx_map_lock.contains_key(tx_hash)

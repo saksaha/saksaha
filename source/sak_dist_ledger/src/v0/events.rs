@@ -1,15 +1,17 @@
-#[derive(Clone)]
-pub enum DLedgerEvent {
-    // LedgerBlockAdd(...)
+#[derive(Clone, Debug)]
+pub enum DistLedgerEvent {
     TxPoolStat(Vec<String>),
-    // TxPoolChanged(Vec<String>),
+    NewBlocks(Vec<(String, String)>),
 }
 
-impl std::fmt::Display for DLedgerEvent {
+impl std::fmt::Display for DistLedgerEvent {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::TxPoolStat(hashes) => {
                 write!(f, "TxPoolStat [hashes: {:?}]", hashes)
+            }
+            Self::NewBlocks(new_blocks) => {
+                write!(f, "NewBlocks [len: {}]", new_blocks.len())
             }
         }
     }

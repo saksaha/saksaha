@@ -8,22 +8,49 @@ use sak_vm::CtrFn;
 use std::{collections::HashMap, sync::Arc};
 
 impl DistLedger {
+    pub async fn get_blocks(
+        &self,
+        block_hashes: Vec<String>,
+    ) -> Result<Vec<Block>, LedgerError> {
+        self.ledger_db.get_blocks(block_hashes).await
+    }
+
+    pub async fn get_latest_block_hash(
+        &self,
+    ) -> Result<Option<(String, String)>, LedgerError> {
+        let last_block_height =
+            match self.ledger_db.get_last_block_height().await? {
+                Some(h) => h,
+                None => return Ok(None),
+            };
+
+        let latest_block_hash = match self
+            .ledger_db
+            .get_block_hash_by_height(&last_block_height)?
+        {
+            Some(block_hash) => block_hash.to_string(),
+            None => return Ok(None),
+        };
+
+        Ok(Some((last_block_height, latest_block_hash)))
+    }
+
     pub async fn tx_pool_contains(&self, tx_hash: &String) -> bool {
-        self.tx_pool.contains(tx_hash).await
+        self.sync_pool.contains_tx(tx_hash).await
     }
 
     // rpc
     pub async fn send_tx(&self, tx: Tx) -> Result<(), String> {
         self.is_valid_tx(&tx);
 
-        self.tx_pool.insert(tx).await
+        self.sync_pool.insert_tx(tx).await
     }
 
     // peer_node
     pub async fn insert_into_pool(&self, txs: Vec<Tx>) {
         for tx in txs.into_iter() {
-            if let Err(err) = self.tx_pool.insert(tx).await {
-                warn!("Error inserting {}", err);
+            if let Err(err) = self.sync_pool.insert_tx(tx).await {
+                warn!("Tx pool insertion aborted, reason: {}", err);
             };
         }
     }
@@ -55,6 +82,12 @@ impl DistLedger {
         }
     }
 
+    pub async fn get_last_block_height(
+        &self,
+    ) -> Result<Option<String>, String> {
+        self.ledger_db.get_last_block_height().await
+    }
+
     pub async fn write_block(
         &self,
         bc: Option<BlockCandidate>,
@@ -76,13 +109,12 @@ impl DistLedger {
                     // TODO
                     // Should be able to exec ctr
                 } else {
-                    let initial_ctr_state =
-                        self.vm.invoke(data, CtrFn::Init)?;
-
-                    state_updates.push(StateUpdate {
-                        ctr_addr: tx.get_ctr_addr().to_string(),
-                        new_state: initial_ctr_state,
-                    });
+                    if let Ok(state) = self.vm.invoke(data, CtrFn::Init) {
+                        state_updates.push(StateUpdate {
+                            ctr_addr: tx.get_ctr_addr().to_string(),
+                            new_state: state,
+                        });
+                    }
                 }
             }
         }
@@ -98,6 +130,10 @@ impl DistLedger {
             }
         };
 
+        if let Err(err) = self.sync_pool.insert_block(&block).await {
+            warn!("Error inserting block into the sync pool, err: {}", err);
+        }
+
         Ok(block_hash)
     }
 
@@ -109,11 +145,11 @@ impl DistLedger {
         &self,
         tx_hashes: Vec<String>,
     ) -> Vec<String> {
-        self.tx_pool.get_tx_pool_diff(tx_hashes).await
+        self.sync_pool.get_tx_pool_diff(tx_hashes).await
     }
 
     pub async fn get_txs_from_pool(&self, tx_hashes: Vec<String>) -> Vec<Tx> {
-        self.tx_pool.get_txs(tx_hashes).await
+        self.sync_pool.get_txs(tx_hashes).await
     }
 
     pub async fn get_ctr_state(
@@ -123,17 +159,14 @@ impl DistLedger {
         self.ledger_db.get_ctr_state(contract_addr)
     }
 
-    pub async fn get_txs_from_tx_pool(&self) -> (Vec<String>, Vec<Tx>) {
-        let (h, t) = self.tx_pool.get_tx_pool().await;
-        (h, t)
-    }
-
     async fn prepare_to_write_block(
         &self,
     ) -> Result<BlockCandidate, LedgerError> {
-        let txs = self.tx_pool.remove_all().await?;
+        let txs = self.sync_pool.get_all_txs().await?;
 
         let bc = self.consensus.do_consensus(self, txs).await?;
+
+        self.sync_pool.remove_txs(&bc.transactions).await?;
 
         Ok(bc)
     }
