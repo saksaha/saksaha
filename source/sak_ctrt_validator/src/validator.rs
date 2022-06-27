@@ -127,5 +127,6 @@ fn handle_get_validator(storage: Storage) -> (*mut u8, i32) {
     let validator_len = validator.len();
 
     std::mem::forget(validator);
+
     (validator_ptr, validator_len as i32)
 }

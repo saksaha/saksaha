@@ -460,12 +460,14 @@ impl LedgerDBSchema {
         db: &DB,
         // tx_hash
         key: &String,
-    ) -> Result<Option<Vec<u8>>, LedgerError> {
+    ) -> Result<Option<String>, LedgerError> {
         let cf = make_cf_handle(db, CTR_ADDR)?;
 
         match db.get_cf(&cf, key)? {
             Some(v) => {
-                return Ok(Some(v));
+                let str = String::from_utf8(v)?;
+
+                return Ok(Some(str));
             }
             None => {
                 return Ok(None);
@@ -478,7 +480,7 @@ impl LedgerDBSchema {
         db: &DB,
         batch: &mut WriteBatch,
         key: &String,
-        value: &Vec<u8>,
+        value: &String,
     ) -> Result<(), LedgerError> {
         let cf = make_cf_handle(db, CTR_ADDR)?;
 
@@ -491,7 +493,7 @@ impl LedgerDBSchema {
         &self,
         db: &DB,
         batch: &mut WriteBatch,
-        key: &Vec<u8>,
+        key: &String,
         value: &String,
     ) -> Result<(), LedgerError> {
         let cf = make_cf_handle(db, TX_HASH)?;

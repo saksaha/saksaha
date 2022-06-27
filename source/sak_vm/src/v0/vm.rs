@@ -2,7 +2,9 @@ use super::utils;
 use crate::{BoxedError, FnType, MEMORY};
 use log::{error, info};
 use sak_contract_std::{Request, Storage};
-use wasmtime::{Instance, Memory, Store, TypedFunc};
+use wasmtime::{
+    Config, Engine, Func, Instance, Memory, Module, Store, TypedFunc,
+};
 
 pub struct VM {}
 
@@ -11,6 +13,17 @@ impl VM {
         let vm = VM {};
         Ok(vm)
     }
+
+    // pub fn init_ctr(&self) {}
+
+    // pub fn query_ctr(
+    //     &self,
+    //     contract_wasm: Vec<u8>,
+    //     fn_type: FnType,
+    //     request: Request,
+    //     storage: Storage,
+    // ) -> Result<String, BoxedError> {
+    // }
 
     pub fn exec(
         &self,
@@ -22,6 +35,7 @@ impl VM {
         let (instance, mut store, memory) = init_module(contract_wasm)?;
 
         let fn_name = match fn_type {
+            FnType::Init => "init",
             FnType::Query => "query",
             FnType::Execute => "execute",
         };
@@ -72,6 +86,20 @@ impl VM {
         }
 
         Ok(ret)
+    }
+}
+
+pub fn is_wasm(contract_wasm: Vec<u8>) -> bool {
+    let engine = match Engine::new(&Config::new()) {
+        Ok(e) => e,
+        Err(_) => {
+            return false;
+        }
+    };
+
+    match Module::new(&engine, contract_wasm) {
+        Ok(_) => true,
+        Err(_) => false,
     }
 }
 

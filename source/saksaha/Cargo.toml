@@ -21,7 +21,7 @@ sak_utils_time = { path = "../sak_utils_time" }
 sak_utils_net = { path = "../sak_utils_net" }
 sak_task_queue = { path = "../sak_task_queue" }
 sak_types = { path = "../sak_types" }
-sak_vm = { path = "../sak_vm" }
+# sak_vm = { path = "../sak_vm" }
 sak_contract_std = { path = "../sak_contract_std" }
 clap = { version = "3.1.6", features = ["cargo"] }
 directories = "3.0"

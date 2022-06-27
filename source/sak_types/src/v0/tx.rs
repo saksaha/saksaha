@@ -16,11 +16,15 @@ pub struct Tx {
     author_sig: String,
 
     //
-    #[serde(with = "serde_bytes")]
-    ctr_addr: Vec<u8>,
+    ctr_addr: String,
 
     // auto-generated value
     hash: String,
+}
+
+pub struct ContractCallData {
+    pub fn_name: String,
+    pub args: Vec<Vec<u8>>,
 }
 
 pub enum TxType {
@@ -35,11 +39,11 @@ impl Tx {
         data: Vec<u8>,
         author_sig: String,
         pi: Vec<u8>,
-        ctr_addr: Option<Vec<u8>>,
+        ctr_addr: Option<String>,
     ) -> Tx {
         let ctr_addr = match ctr_addr {
             Some(a) => a,
-            None => vec![],
+            None => String::from(""),
         };
 
         let hash = sak_crypto::compute_hash(&[
@@ -47,7 +51,7 @@ impl Tx {
             data.as_slice(),
             pi.as_slice(),
             author_sig.as_bytes(),
-            ctr_addr.as_slice(),
+            ctr_addr.as_bytes(),
         ]);
 
         Tx {
@@ -76,11 +80,27 @@ impl Tx {
         &self.author_sig
     }
 
-    pub fn get_ctr_addr(&self) -> &Vec<u8> {
+    pub fn get_ctr_addr(&self) -> &String {
         &self.ctr_addr
     }
 
     pub fn get_hash(&self) -> &String {
         &self.hash
+    }
+
+    pub fn is_mutating_ctr_state(&self) -> bool {
+        self.ctr_addr.len() > 0
+    }
+
+    pub fn is_deplying_ctr(&self) -> bool {
+        self.ctr_addr.len() > 0
+            && self.data.len() > 4
+            && &self.data[..4] == &[123, 123, 123, 123]
+    }
+
+    pub fn is_executing_ctr(&self) -> bool {
+        self.ctr_addr.len() > 0
+            && self.data.len() > 4
+            && &self.data[..4] != &[123, 123, 123, 123]
     }
 }

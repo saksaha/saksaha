@@ -58,11 +58,4 @@ impl Blockchain {
     pub async fn run(&self) {
         self.dist_ledger.run().await;
     }
-
-    // pub async fn get_next_validator(&self) -> Result<String, BoxedError> {
-    //     self.sys_contracts
-    //         .validator
-    //         .get_next_validator(&self.dist_ledger)
-    //         .await
-    // }
 }

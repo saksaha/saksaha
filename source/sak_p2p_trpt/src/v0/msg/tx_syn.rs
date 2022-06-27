@@ -37,7 +37,7 @@ impl TxSyn {
 
                 let contract_addr = {
                     let p = parse.next_bytes()?;
-                    p.to_vec()
+                    std::str::from_utf8(p.as_ref())?.into()
                 };
 
                 Tx::new(created_at, data, pi, signature, Some(contract_addr))

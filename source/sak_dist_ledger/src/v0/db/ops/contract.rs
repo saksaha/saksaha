@@ -1,4 +1,5 @@
 use crate::{LedgerDB, LedgerError};
+use sak_contract_std::Storage;
 use sak_kv_db::WriteBatch;
 
 impl LedgerDB {
@@ -25,7 +26,7 @@ impl LedgerDB {
         &self,
         ctr_addr: &String,
         // field_name: &String,
-    ) -> Result<Option<Vec<u8>>, LedgerError> {
+    ) -> Result<Option<Storage>, LedgerError> {
         let db = &self.kv_db.db_instance;
 
         // let state_key = format!("{}:{}", ctr_addr, field_name);
@@ -35,7 +36,9 @@ impl LedgerDB {
             .get_ctr_state(db, &ctr_addr)?
             .ok_or("ctr state does not exist")?;
 
-        Ok(Some(ctr_state))
+        let storage: Storage = serde_json::from_slice(&ctr_state)?;
+
+        Ok(Some(storage))
     }
 
     pub(crate) async fn put_ctr_state(

@@ -20,7 +20,7 @@ impl GenesisBlock {
             validator_wasm,
             String::from("1"),
             vec![1],
-            Some(VALIDATOR_CTR_ADDR.as_bytes().to_vec()),
+            Some(VALIDATOR_CTR_ADDR.to_string()),
         );
 
         let some_other_tx = Tx::new(
@@ -28,7 +28,7 @@ impl GenesisBlock {
             vec![22, 22, 22],
             String::from("2"),
             vec![2],
-            Some(vec![1]),
+            Some(String::from("1")),
         );
 
         let block_candidate = BlockCandidate {

@@ -54,7 +54,7 @@ impl Miner {
             match self.machine.blockchain.dist_ledger.write_block(None).await {
                 Ok(_) => (),
                 Err(err) => {
-                    warn!("write_block failed, err: {}", err);
+                    warn!("write_block failed, err: {}", err.to_string());
                 }
             };
 

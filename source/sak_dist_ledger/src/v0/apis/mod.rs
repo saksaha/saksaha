@@ -2,7 +2,7 @@ mod vm;
 
 use crate::{Consensus, DistLedger, LedgerError};
 use log::warn;
-use sak_contract_std::Request;
+use sak_contract_std::{Request, Storage};
 use sak_types::{Block, BlockCandidate, Tx};
 use sak_vm::FnType;
 use std::{collections::HashMap, sync::Arc};
@@ -65,6 +65,16 @@ impl DistLedger {
         };
 
         let (block, txs) = bc.extract();
+        // let mut states = vec![];
+
+        for tx in txs.iter() {
+            // let new_state = self.exec_ctr();
+            // (key, new_state)
+
+            if tx.is_deplying_ctr() {
+                self.init_ctr(tx.get_ctr_addr(), &tx.get_data()[..4]);
+            }
+        }
 
         let block_hash = match self.ledger_db.write_block(&block, &txs).await {
             Ok(h) => h,
@@ -108,7 +118,7 @@ impl DistLedger {
         &self,
         contract_addr: &String,
         // field_name: &String,
-    ) -> Result<Option<Vec<u8>>, LedgerError> {
+    ) -> Result<Option<Storage>, LedgerError> {
         self.ledger_db.get_ctr_state(contract_addr)
     }
 
@@ -120,8 +130,6 @@ impl DistLedger {
     async fn prepare_to_write_block(
         &self,
     ) -> Result<BlockCandidate, LedgerError> {
-        println!("prepare to write block!!");
-
         let txs = self.tx_pool.remove_all().await?;
 
         let bc = self.consensus.do_consensus(self, txs).await?;
