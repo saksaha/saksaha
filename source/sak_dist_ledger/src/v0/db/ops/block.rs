@@ -55,7 +55,7 @@ impl LedgerDB {
     pub(crate) async fn write_block(
         &self,
         block: &Block,
-        txs: &Vec<&Tx>,
+        txs: &Vec<Tx>,
     ) -> Result<String, LedgerError> {
         let db = &self.kv_db.db_instance;
 

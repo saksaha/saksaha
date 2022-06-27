@@ -1,5 +1,5 @@
 use crate::machine::Machine;
-use log::{error, info};
+use log::{error, info, warn};
 use sak_p2p_id::{Credential, Identity};
 use std::{
     sync::Arc,
@@ -51,7 +51,12 @@ impl Miner {
 
             let time_since = SystemTime::now();
 
-            self.machine.blockchain.dist_ledger.write_block();
+            match self.machine.blockchain.dist_ledger.write_block(None).await {
+                Ok(_) => (),
+                Err(err) => {
+                    warn!("write_block failed, err: {}", err);
+                }
+            };
 
             // let next_validator =
             //     match self.machine.blockchain.get_next_validator().await {

@@ -21,7 +21,7 @@ impl LedgerDB {
         Ok(Some(ctr_data))
     }
 
-    pub(crate) async fn get_ctr_state(
+    pub(crate) fn get_ctr_state(
         &self,
         ctr_addr: &String,
         // field_name: &String,

@@ -1,5 +1,5 @@
-use super::Validator;
+// use super::Validator;
 
-pub(crate) struct SystemContracts {
-    pub(crate) validator: Validator,
-}
+// pub(crate) struct SystemContracts {
+//     pub(crate) validator: Validator,
+// }

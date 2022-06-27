@@ -13,12 +13,12 @@ pub struct BlockCandidate {
 }
 
 impl BlockCandidate {
-    pub fn extract(&self) -> (Block, Vec<&Tx>) {
+    pub fn extract(self) -> (Block, Vec<Tx>) {
         let (tx_hashes, txs) = {
             let mut hashes = vec![];
             let mut txs = vec![];
 
-            for tx in &self.transactions {
+            for tx in self.transactions {
                 hashes.push(tx.get_hash().clone());
                 txs.push(tx);
             }

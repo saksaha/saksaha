@@ -87,10 +87,10 @@ impl TxPool {
     pub(crate) async fn remove_all(
         &self,
         // tx_hashes: &Vec<String>,
-    ) -> Result<Vec<String>, String> {
+    ) -> Result<Vec<Tx>, String> {
         let mut tx_map_lock = self.tx_map.write().await;
 
-        let tx = tx_map_lock.keys().map(|k| k.clone()).collect();
+        let tx = tx_map_lock.values().map(|v| v.clone()).collect();
 
         tx_map_lock.clear();
 

@@ -1,59 +1,13 @@
-use std::collections::HashMap;
+mod vm;
 
-use crate::{DistLedger, LedgerError};
+use crate::{Consensus, DistLedger, LedgerError};
 use log::warn;
 use sak_contract_std::Request;
 use sak_types::{Block, BlockCandidate, Tx};
 use sak_vm::FnType;
+use std::{collections::HashMap, sync::Arc};
 
-impl<C> DistLedger<C> {
-    pub async fn query_contract(&self) -> Result<&[u8], String> {
-        Ok(&[])
-    }
-
-    pub async fn execute_ctr(
-        &self,
-        ctr_addr: &String,
-        fn_type: FnType,
-        request: Request,
-    ) -> Result<&[u8], LedgerError> {
-        println!(
-            "execute ctr!!, ctr_addr: {}, fn_type: {:?}",
-            ctr_addr, fn_type
-        );
-
-        let ctr_wasm = self
-            .ledger_db
-            .get_ctr_data_by_ctr_addr(ctr_addr)
-            .await?
-            .ok_or("ctr data (wasm) should exist")?;
-
-        let mut storage: HashMap<String, String> = HashMap::with_capacity(10);
-
-        storage.insert(
-            "validators".to_string(),
-            serde_json::to_string(&vec![String::from(
-                "\
-            046885b904a8b8cdd17cc40078ed11421\
-            4586f197a664d6aa33d4b46cc3b712afc\
-            def3d4d808bc7843beaea9e1a4c5ddeea\
-            47cbd27ea1af5ca13719a2f42c39167\
-            ",
-            )])
-            .unwrap()
-            .to_string(),
-        );
-
-        let ret = match self.vm.exec(ctr_wasm, fn_type, request, storage) {
-            Ok(ret) => ret,
-            Err(err) => return Err(err),
-        };
-
-        println!("returned!!!: {}", ret);
-
-        Ok(&[])
-    }
-
+impl DistLedger {
     pub async fn tx_pool_contains(&self, tx_hash: &String) -> bool {
         self.tx_pool.contains(tx_hash).await
     }
@@ -101,20 +55,16 @@ impl<C> DistLedger<C> {
         }
     }
 
-    async fn write_block(
+    pub async fn write_block(
         &self,
-        bc: &BlockCandidate,
+        bc: Option<BlockCandidate>,
     ) -> Result<String, LedgerError> {
-        self._write_block()
-    }
+        let bc = match bc {
+            Some(bc) => bc,
+            None => self.prepare_to_write_block().await?,
+        };
 
-    async fn _write_block(
-        &self,
-        // bc: &BlockCandidate,
-    ) -> Result<String, LedgerError> {
-        let (block, txs) = self.prepare_to_write_block()?;
-
-        let tx_hashes = block.get_tx_hashes();
+        let (block, txs) = bc.extract();
 
         let block_hash = match self.ledger_db.write_block(&block, &txs).await {
             Ok(h) => h,
@@ -154,12 +104,12 @@ impl<C> DistLedger<C> {
             .await
     }
 
-    pub async fn get_ctr_state(
+    pub fn get_ctr_state(
         &self,
         contract_addr: &String,
         // field_name: &String,
     ) -> Result<Option<Vec<u8>>, LedgerError> {
-        self.ledger_db.get_ctr_state(contract_addr).await
+        self.ledger_db.get_ctr_state(contract_addr)
     }
 
     pub async fn get_txs_from_tx_pool(&self) -> (Vec<String>, Vec<Tx>) {
@@ -167,16 +117,13 @@ impl<C> DistLedger<C> {
         (h, t)
     }
 
-    async fn prepare_to_write_block(
-        &self,
-        // bc: &'a BlockCandidate,
-    ) -> Result<(Block, Vec<&Tx>), String> {
+    async fn prepare_to_write_block(&self) -> Result<BlockCandidate, String> {
+        println!("prepare to write block!!");
+
         let txs = self.tx_pool.remove_all().await?;
 
-        // TODO verify
+        let bc = self.consensus.do_consensus(self, txs).await?;
 
-        // Ok(bc.extract())
-
-        return Err("power".into());
+        Ok(bc)
     }
 }

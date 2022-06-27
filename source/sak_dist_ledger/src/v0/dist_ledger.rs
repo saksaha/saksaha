@@ -13,27 +13,27 @@ use tokio::sync::{broadcast::Sender, RwLock};
 
 const BLOCKCHAIN_EVENT_QUEUE_CAPACITY: usize = 32;
 
-pub struct DistLedger<C> {
+pub struct DistLedger {
     pub(crate) ledger_db: LedgerDB,
     pub(crate) tx_pool: Arc<TxPool>,
     pub bc_event_tx: Arc<RwLock<Sender<DLedgerEvent>>>,
     pub(crate) vm: VM,
-    consensus: C,
+    pub(crate) consensus: Box<dyn Consensus + Send + Sync>,
     runtime: Arc<Runtime>,
 }
 
-pub struct DistLedgerArgs<C> {
+pub struct DistLedgerArgs {
     pub app_prefix: String,
     pub tx_pool_sync_interval: Option<u64>,
     pub genesis_block: Option<BlockCandidate>,
-    pub consensus: C,
+    pub consensus: Box<dyn Consensus + Send + Sync>,
     // pub consensus: Consensu
 }
 
-impl<C> DistLedger<C> {
+impl DistLedger {
     pub async fn init(
-        blockchain_args: DistLedgerArgs<C>,
-    ) -> Result<DistLedger<C>, String> {
+        blockchain_args: DistLedgerArgs,
+    ) -> Result<DistLedger, String> {
         let DistLedgerArgs {
             app_prefix,
             tx_pool_sync_interval,
@@ -85,7 +85,10 @@ impl<C> DistLedger<C> {
         };
 
         if let Some(bc) = genesis_block {
-            dist_ledger.insert_genesis_block(&bc).await?;
+            dist_ledger.insert_genesis_block(bc).await?;
+
+            // TODO
+            // genesis_block hash check
         }
 
         info!("Initialized Blockchain");
@@ -103,7 +106,7 @@ impl<C> DistLedger<C> {
 
     async fn insert_genesis_block(
         &self,
-        genesis_block: &BlockCandidate,
+        genesis_block: BlockCandidate,
     ) -> Result<String, String> {
         let persisted_gen_block_hash = if let Some(b) =
             match self.get_block_by_height(&String::from("0")).await {
@@ -121,7 +124,7 @@ impl<C> DistLedger<C> {
         } else {
             info!("Genesis block not found, writing");
 
-            let b = match self.write_block(&genesis_block).await {
+            let b = match self.write_block(Some(genesis_block)).await {
                 Ok(b) => b,
                 Err(err) => return Err(err.to_string()),
             };
@@ -129,19 +132,19 @@ impl<C> DistLedger<C> {
             b
         };
 
-        let (gen_block, _) = genesis_block.extract();
-        let gen_block_hash = gen_block.get_hash();
+        // let (gen_block, _) = genesis_block.extract();
+        // let gen_block_hash = gen_block.get_hash();
 
-        if gen_block_hash != &persisted_gen_block_hash {
-            return Err(format!(
-                "Not identical genesis block. Hardwird genesis \
-            block may have been tampered, gen_block: {}, persisted: {}",
-                &gen_block_hash, &persisted_gen_block_hash,
-            )
-            .into());
-        }
+        // if gen_block_hash != &persisted_gen_block_hash {
+        //     return Err(format!(
+        //         "Not identical genesis block. Hardwird genesis \
+        //     block may have been tampered, gen_block: {}, persisted: {}",
+        //         &gen_block_hash, &persisted_gen_block_hash,
+        //     )
+        //     .into());
+        // }
 
-        info!("Genesis block hash: {}", gen_block_hash.yellow());
+        // info!("Genesis block hash: {}", gen_block_hash.yellow());
 
         Ok(persisted_gen_block_hash.to_string())
     }
