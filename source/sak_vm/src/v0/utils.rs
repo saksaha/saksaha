@@ -1,4 +1,4 @@
-use crate::{BoxedError, ALLOC_FN, MEMORY};
+use crate::{VMError, ALLOC_FN, MEMORY};
 use log::{error, info};
 use wasmtime::*;
 
@@ -7,7 +7,7 @@ pub(crate) unsafe fn read_string(
     memory: &Memory,
     data_ptr: u32,
     len: u32,
-) -> Result<String, BoxedError> {
+) -> Result<String, VMError> {
     // get a raw byte array from the module's linear memory
     // at offset `data_ptr` and length `len`.
     let data = memory
@@ -33,7 +33,7 @@ pub(crate) fn copy_memory(
     bytes: &Vec<u8>,
     instance: &Instance,
     store: &mut Store<i32>,
-) -> Result<isize, BoxedError> {
+) -> Result<isize, VMError> {
     // Get the "memory" export of the module.
     // If the module does not export it, just panic,
     // since we are not going to be able to copy array data.
@@ -66,7 +66,7 @@ pub(crate) fn copy_memory(
 
 pub(crate) fn create_instance(
     wasm: impl AsRef<[u8]>,
-) -> Result<(Instance, Store<i32>), BoxedError> {
+) -> Result<(Instance, Store<i32>), VMError> {
     let engine =
         Engine::new(Config::new().wasm_multi_value(true).debug_info(true))?;
 

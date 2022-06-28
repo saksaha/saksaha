@@ -13,7 +13,7 @@ pub(crate) struct GenesisBlock {
 
 impl GenesisBlock {
     pub fn create() -> GenesisBlock {
-        let validator_wasm = VALIDATOR.to_vec();
+        let validator_wasm = [&[123, 123, 123, 123], VALIDATOR].concat();
 
         let validator_deploy_tx = Tx::new(
             String::from("1"),

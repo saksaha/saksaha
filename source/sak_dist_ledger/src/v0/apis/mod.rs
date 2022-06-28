@@ -4,7 +4,7 @@ use crate::{Consensus, DistLedger, LedgerError};
 use log::warn;
 use sak_contract_std::{Request, Storage};
 use sak_types::{Block, BlockCandidate, Tx};
-use sak_vm::FnType;
+use sak_vm::CtrFn;
 use std::{collections::HashMap, sync::Arc};
 
 impl DistLedger {
@@ -72,7 +72,17 @@ impl DistLedger {
             // (key, new_state)
 
             if tx.is_deplying_ctr() {
+                let ctr_wasm = &tx.get_data()[4..].to_vec();
+
+                let initial_ctr_state = self.vm.exec(ctr_wasm, CtrFn::Init)?;
+
+                // println!("power: {:?}", ret);
+
                 // self.init_ctr(tx.get_ctr_addr(), &tx.get_data()[..4]);
+
+                self.ledger_db
+                    .put_ctr_state(tx.get_ctr_addr(), &initial_ctr_state)
+                    .await?;
             }
         }
 

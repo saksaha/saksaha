@@ -3,24 +3,10 @@ use crate::{Consensus, LedgerError};
 use log::warn;
 use sak_contract_std::Request;
 use sak_types::{Block, BlockCandidate, Tx};
-use sak_vm::FnType;
+use sak_vm::CtrFn;
 use std::{collections::HashMap, sync::Arc};
 
 impl DistLedger {
-    // pub async fn init_ctr<'a>(
-    //     &self,
-    //     ctr_addr: &'a String,
-    //     ctr_wasm: &'a [u8],
-    // ) -> (&'a String, &'a [u8]) {
-    //     let fn_type = FnType::Init;
-    //     // self.vm.exec(ctr_wasm, fn_type)
-    //     // (ctr_addr, &[]
-
-    //     (ctr_addr, ctr_wasm)
-    // }
-
-    pub async fn exec_ctr(&self) {}
-
     pub async fn query_ctr(
         &self,
         ctr_addr: &String,
@@ -38,9 +24,13 @@ impl DistLedger {
             .get_ctr_state(ctr_addr)?
             .ok_or("ctr state should exist")?;
 
-        let fn_type = FnType::Query;
+        let ctr_fn = CtrFn::Query(request, ctr_state);
 
-        println!("exec ctr, ctr_state: {:?}", ctr_state);
+        let ctr_wasm = &ctr_wasm[4..];
+
+        let ret = self.vm.exec(ctr_wasm, ctr_fn)?;
+
+        println!("exec ctr, ctr_state: {:?}", ret);
 
         // let mut storage: HashMap<String, String> = HashMap::with_capacity(10);
 

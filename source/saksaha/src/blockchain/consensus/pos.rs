@@ -38,19 +38,20 @@ impl Consensus for Pos {
 
             println!("validator: {:?}", validator);
 
-            // if validator == myself {
+            // // if validator == myself {
 
-            // }
+            // // }
 
-            let bc = BlockCandidate {
-                validator_sig: String::from("1"),
-                transactions: txs,
-                witness_sigs: vec![],
-                created_at: String::from("1"),
-                height: String::from("1"),
-            };
+            // let bc = BlockCandidate {
+            //     validator_sig: String::from("1"),
+            //     transactions: txs,
+            //     witness_sigs: vec![],
+            //     created_at: String::from("1"),
+            //     height: String::from("1"),
+            // };
 
-            Ok(bc)
+            // Ok(bc)
+            return Err("awel".into());
         }
 
         Box::pin(_do_consensus(self, dist_ledger, txs))

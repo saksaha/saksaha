@@ -25,11 +25,8 @@ impl LedgerDB {
     pub(crate) fn get_ctr_state(
         &self,
         ctr_addr: &String,
-        // field_name: &String,
     ) -> Result<Option<Storage>, LedgerError> {
         let db = &self.kv_db.db_instance;
-
-        // let state_key = format!("{}:{}", ctr_addr, field_name);
 
         let ctr_state = self
             .schema

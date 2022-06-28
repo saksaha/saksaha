@@ -5,8 +5,11 @@ use std::collections::HashMap;
 contract_bootstrap!();
 
 #[no_mangle]
-pub unsafe extern "C" fn init(ptr: *mut u8, len: usize) -> (*mut u8, i32) {
-    let storage = Vec::from_raw_parts(ptr, len, len);
+pub unsafe extern "C" fn init(
+    storage_ptr: *mut u8,
+    storage_len: usize,
+) -> (*mut u8, i32) {
+    let storage = Vec::from_raw_parts(storage_ptr, storage_len, storage_len);
     let storage_serialized = String::from_utf8(storage).unwrap();
     let mut storage_hashmap: HashMap<&str, String> =
         serde_json::from_str(&storage_serialized.as_str()).unwrap();
