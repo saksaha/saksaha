@@ -5,6 +5,9 @@ mod test_validator;
 mod utils;
 mod vm;
 
+#[cfg(test)]
+mod tests;
+
 pub use apis::*;
 pub(crate) use constants::*;
 pub use ctr_fn::*;
