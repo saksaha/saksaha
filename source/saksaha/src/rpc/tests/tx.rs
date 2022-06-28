@@ -149,14 +149,15 @@ mod test_suite {
                 .await
                 .expect("Tx should be written");
 
-            let tx_hash = dist_ledger
+            let tx = dist_ledger
                 .get_tx(&old_tx_hash.clone())
                 .await
                 .expect("Tx should be exist")
-                .unwrap()
-                .get_hash();
+                .unwrap();
 
-            assert_eq!(tx_hash, old_tx_hash);
+            let tx_hash = tx.get_hash().clone();
+
+            assert_eq!(tx_hash, *old_tx_hash);
             tx_hash
         };
 

@@ -108,8 +108,7 @@ mod test {
 
     fn make_dummy_state() -> (String, String) {
         let contract_addr = String::from("0xa1a2a3a4");
-        let ctr_state = String::from("test_field_name");
-        // let field_value = String::from("test_field_value");
+        let ctr_state = String::from("test_ctr_state");
 
         (contract_addr, ctr_state)
     }
@@ -215,7 +214,10 @@ mod test {
         init();
 
         let gen_block = make_dummy_genesis_block();
-        let (block, _) = gen_block.extract();
+
+        let gen_block_same = make_dummy_genesis_block();
+        let (block, _) = gen_block_same.extract();
+
         let gen_block_hash = block.get_hash();
 
         let blockchain = make_dist_ledger(gen_block).await;
@@ -241,31 +243,35 @@ mod test {
         assert_eq!(gen_block_hash, gen_block_hash_2);
     }
 
-    // #[tokio::test(flavor = "multi_thread")]
-    // async fn test_insert_genesis_block_and_check_wrong_block_hash() {
-    //     init();
+    #[tokio::test(flavor = "multi_thread")]
+    async fn test_insert_genesis_block_and_check_wrong_block_hash() {
+        init();
 
-    //     let gen_block = make_dummy_genesis_block();
-    //     let blockchain = make_dist_ledger(gen_block).await;
+        let gen_block = make_dummy_genesis_block();
+        let dist_ledger = make_dist_ledger(gen_block).await;
 
-    //     let gen_block = blockchain
-    //         .get_block_by_height(String::from("0"))
-    //         .await?
-    //         .expect("gen block should exist");
+        let gen_block = dist_ledger
+            .get_block_by_height(&String::from("0"))
+            .await
+            .unwrap()
+            .expect("gen block should exist");
 
-    //     let get_gen_hash = gen_block.get_hash();
-    //     let gen_tx_hashes = gen_block.get_tx_hashes();
-    //     assert_ne!(get_gen_hash, &String::from("false hash"));
+        let get_gen_hash = gen_block.get_hash();
+        let gen_tx_hashes = gen_block.get_tx_hashes();
 
-    //     for tx_hash in gen_tx_hashes {
-    //         let tx = match blockchain.get_transaction(tx_hash).await {
-    //             Ok(t) => t,
-    //             Err(err) => panic!("Error : {}", err),
-    //         };
+        for tx_hash in gen_tx_hashes {
+            let tx = match dist_ledger.get_tx(tx_hash).await {
+                Ok(t) => t,
+                Err(err) => panic!("Error : {}", err),
+            };
 
-    //         assert_eq!(tx_hash, tx.get_hash());
-    //     }
-    // }
+            let tx = tx.unwrap();
+
+            assert_eq!(tx_hash, tx.get_hash());
+        }
+
+        assert_ne!(get_gen_hash, &String::from("false hash"));
+    }
 
     #[tokio::test(flavor = "multi_thread")]
     async fn test_set_and_get_contract_state_to_db() {
@@ -284,8 +290,10 @@ mod test {
         assert_eq!(
             db.get_ctr_state(&contract_addr)
                 .expect("Contract State should be exist")
+                .unwrap()
+                .get(&contract_addr)
                 .unwrap(),
-            ctr_state.clone().as_bytes()
+            &ctr_state.clone()
         );
     }
 }
