@@ -5,4 +5,4 @@ mod parse;
 pub use frame::Frame;
 pub use parse::*;
 
-pub type BoxedError = Box<dyn std::error::Error + Send + Sync>;
+pub(crate) type BoxedError = Box<dyn std::error::Error + Send + Sync>;

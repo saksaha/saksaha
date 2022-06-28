@@ -1,11 +1,11 @@
 use crate::{BoxedError, TX_SYN_TYPE};
 use bytes::{BufMut, Bytes, BytesMut};
 use sak_p2p_frame::{Frame, Parse};
-use sak_types::Transaction;
+use sak_types::Tx;
 
 #[derive(Debug)]
 pub struct TxSyn {
-    pub txs: Vec<Transaction>,
+    pub txs: Vec<Tx>,
 }
 
 impl TxSyn {
@@ -35,12 +35,12 @@ impl TxSyn {
                     std::str::from_utf8(k.as_ref())?.into()
                 };
 
-                let contract = {
+                let contract_addr = {
                     let p = parse.next_bytes()?;
-                    p.to_vec()
+                    std::str::from_utf8(p.as_ref())?.into()
                 };
 
-                Transaction::new(created_at, data, pi, signature, contract)
+                Tx::new(created_at, data, pi, signature, Some(contract_addr))
             };
 
             txs.push(tx);
@@ -70,13 +70,13 @@ impl TxSyn {
 
             let pi_bytes = {
                 let mut b = BytesMut::new();
-                b.put(tx.get_pi().as_bytes());
+                b.put(tx.get_pi().as_slice());
                 b
             };
 
             let signature_bytes = {
                 let mut b = BytesMut::new();
-                b.put(tx.get_signature().as_bytes());
+                b.put(tx.get_author_sig().as_bytes());
                 b
             };
 
@@ -84,7 +84,7 @@ impl TxSyn {
             frame.push_bulk(Bytes::from(created_at_bytes));
             frame.push_bulk(Bytes::from(pi_bytes));
             frame.push_bulk(Bytes::from(signature_bytes));
-            frame.push_bulk(Bytes::from(tx.get_contract().clone()));
+            frame.push_bulk(Bytes::from(tx.get_ctr_addr().clone()));
         }
 
         frame

@@ -1,6 +1,7 @@
 use super::shutdown::ShutdownMng;
+use super::BoxedError;
 use super::SystemRunArgs;
-use crate::blockchain::create_blockchain;
+use crate::blockchain::Blockchain;
 use crate::config::Config;
 use crate::config::ProfiledConfig;
 use crate::machine::Machine;
@@ -12,7 +13,7 @@ use crate::rpc::RPC;
 use crate::system::SystemHandle;
 use colored::Colorize;
 use log::{error, info};
-use sak_p2p_id::Credential;
+use sak_p2p_id::Identity;
 use sak_p2p_ptable::PeerTable;
 use std::sync::Arc;
 
@@ -26,7 +27,7 @@ impl Routine {
     pub(super) async fn run(
         &self,
         sys_run_args: SystemRunArgs,
-    ) -> Result<(), String> {
+    ) -> Result<(), BoxedError> {
         log::info!("System is starting");
 
         let config = {
@@ -37,7 +38,8 @@ impl Routine {
                         return Err(format!(
                             "Could not create dev config, err: {}",
                             err
-                        ));
+                        )
+                        .into());
                     }
                 },
                 None => None,
@@ -79,7 +81,9 @@ impl Routine {
             ) {
                 Ok(c) => c,
                 Err(err) => {
-                    return Err(format!("Error creating config, err: {}", err));
+                    return Err(
+                        format!("Error creating config, err: {}", err).into()
+                    );
                 }
             }
         };
@@ -91,6 +95,18 @@ impl Routine {
                 PeerTable::init(config.p2p.p2p_peer_table_capacity).await?;
 
             Arc::new(ps)
+        };
+
+        let (disc_socket, disc_port) = {
+            let (socket, socket_addr) =
+                sak_utils_net::setup_udp_socket(config.p2p.disc_port).await?;
+
+            info!(
+                "Bound udp socket for P2P discovery, addr: {}",
+                socket_addr.to_string().yellow(),
+            );
+
+            (socket, socket_addr.port())
         };
 
         let (rpc_socket, _) =
@@ -105,7 +121,8 @@ impl Routine {
                 }
                 Err(err) => {
                     error!("Could not bind a tcp socket for RPC, err: {}", err);
-                    return Err(err);
+
+                    return Err(err.into());
                 }
             };
 
@@ -124,27 +141,25 @@ impl Routine {
                         "Could not bind a tcp socket for P2P Host, err: {}",
                         err
                     );
-                    return Err(err);
+                    return Err(err.into());
                 }
             };
 
-        let credential = {
-            let c =
-                Credential::new(config.p2p.secret, config.p2p.public_key_str)?;
+        let identity = {
+            let i = Identity::new(
+                config.p2p.secret,
+                config.p2p.public_key_str,
+                p2p_port,
+                disc_port,
+            )?;
 
-            info!(
-                "Created credential, public_key_str: {}",
-                c.public_key_str.yellow(),
-            );
-
-            Arc::new(c)
+            Arc::new(i)
         };
 
         let p2p_host = {
             let p2p_host_args = P2PHostArgs {
                 addr_expire_duration: config.p2p.addr_expire_duration,
                 addr_monitor_interval: config.p2p.addr_monitor_interval,
-                disc_port: config.p2p.disc_port,
                 disc_dial_interval: config.p2p.disc_dial_interval,
                 disc_table_capacity: config.p2p.disc_table_capacity,
                 disc_task_interval: config.p2p.disc_task_interval,
@@ -152,11 +167,12 @@ impl Routine {
                 p2p_task_interval: config.p2p.p2p_task_interval,
                 p2p_task_queue_capacity: config.p2p.p2p_task_queue_capacity,
                 p2p_dial_interval: config.p2p.p2p_dial_interval,
+                disc_socket,
                 p2p_socket,
                 p2p_max_conn_count: config.p2p.p2p_max_conn_count,
                 p2p_port,
                 bootstrap_addrs: config.p2p.bootstrap_addrs,
-                credential: credential.clone(),
+                identity: identity.clone(),
                 peer_table: peer_table.clone(),
             };
 
@@ -164,9 +180,10 @@ impl Routine {
         };
 
         let blockchain = {
-            let b = create_blockchain(
+            let b = Blockchain::init(
                 config.app_prefix,
                 config.blockchain.tx_pool_sync_interval,
+                None,
             )
             .await?;
 
@@ -185,7 +202,7 @@ impl Routine {
                 machine: machine.clone(),
                 miner: config.node.miner,
                 mine_interval: config.node.mine_interval,
-                identity: p2p_host.get_identity(),
+                identity: identity.clone(),
             };
 
             ln

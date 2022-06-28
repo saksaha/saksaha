@@ -1,6 +1,5 @@
 mod default;
 mod machine;
-mod monitor;
 
 #[cfg(test)]
 mod test;

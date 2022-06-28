@@ -5,8 +5,11 @@ use std::collections::HashMap;
 contract_bootstrap!();
 
 #[no_mangle]
-pub unsafe extern "C" fn init(ptr: *mut u8, len: usize) -> (*mut u8, i32) {
-    let storage = Vec::from_raw_parts(ptr, len, len);
+pub unsafe extern "C" fn init(
+    storage_ptr: *mut u8,
+    storage_len: usize,
+) -> (*mut u8, i32) {
+    let storage = Vec::from_raw_parts(storage_ptr, storage_len, storage_len);
     let storage_serialized = String::from_utf8(storage).unwrap();
     let mut storage_hashmap: HashMap<&str, String> =
         serde_json::from_str(&storage_serialized.as_str()).unwrap();
@@ -93,7 +96,7 @@ pub unsafe extern "C" fn query(
             }
         };
 
-    match request.req_type {
+    match request.req_type.as_ref() {
         "get_validator" => {
             return handle_get_validator(storage);
         }
@@ -127,5 +130,6 @@ fn handle_get_validator(storage: Storage) -> (*mut u8, i32) {
     let validator_len = validator.len();
 
     std::mem::forget(validator);
+
     (validator_ptr, validator_len as i32)
 }

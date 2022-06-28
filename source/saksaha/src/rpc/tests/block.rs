@@ -16,18 +16,15 @@ mod test_suite {
 
         let client = Client::new();
 
-        let block_value = Block::new(
-            String::from("1"),
-            vec![String::from("1"), String::from("2")],
-            vec![String::from("1"), String::from("2")],
-            String::from(""),
-            String::from(""),
-        );
+        let block_candidate = test_utils::make_dummy_genesis_block();
+
+        let (block_value, _) = block_candidate.extract();
 
         let block_hash = {
             let block_hash = match machine
                 .blockchain
-                .write_block(block_value.clone())
+                .dist_ledger
+                .write_block(&block_candidate)
                 .await
             {
                 Ok(v) => v,
@@ -58,12 +55,16 @@ mod test_suite {
                 let _vh = match std::str::from_utf8(&body_bytes_vec) {
                     Ok(b) => {
                         let hash = &b.to_string();
-                        let _vht = match machine.get_block(hash).await {
+                        let _vht = match machine
+                            .blockchain
+                            .dist_ledger
+                            .get_block(hash)
+                        {
                             Ok(block) => {
                                 println!("{:?}", block);
 
                                 assert_eq!(
-                                    &block.get_tx_hashes(),
+                                    &block.unwrap().get_tx_hashes(),
                                     &block_value.get_tx_hashes(),
                                 );
                             }

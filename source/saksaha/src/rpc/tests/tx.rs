@@ -6,7 +6,7 @@ mod test_suite {
     use crate::rpc::response::{ErrorResponse, JsonResponse, SuccessResponse};
     use hyper::body::Buf;
     use hyper::{Body, Client, Method, Request, Uri};
-    use sak_blockchain::Blockchain;
+    use sak_dist_ledger::DistLedger;
     use sak_types::Hashable;
     use std::time::Duration;
 
@@ -73,6 +73,7 @@ mod test_suite {
                 .expect("Tx should be deleted");
 
             let _tx_hash = blockchain
+                .ledger_db
                 .write_tx(&dummy_tx)
                 .await
                 .expect("Tx should be written");
@@ -231,7 +232,7 @@ mod test_suite {
             .body(Body::from(format!(
                 r#"
                     {{
-                        "pi": "{}",
+                        "pi": "{:?}",
                         "signature": "{}",
                         "created_at": "{}",
                         "data": {:?},
@@ -239,10 +240,10 @@ mod test_suite {
                     }}
                 "#,
                 dummy_tx.get_pi(),
-                dummy_tx.get_signature(),
+                dummy_tx.get_author_sig(),
                 dummy_tx.get_created_at(),
                 dummy_tx.get_data(),
-                dummy_tx.get_contract(),
+                dummy_tx.get_ctr_addr(),
             )))
             .expect("request builder should be made");
 
@@ -273,8 +274,11 @@ mod test_suite {
         tokio::time::sleep(Duration::from_secs(1)).await;
 
         let dummy_tx_hash = dummy_tx.get_hash();
-        let is_contain =
-            machine.blockchain.tx_pool_contains(&dummy_tx_hash).await;
+        let is_contain = machine
+            .blockchain
+            .dist_ledger
+            .tx_pool_contains(&dummy_tx_hash)
+            .await;
 
         assert_eq!(true, is_contain);
     }
@@ -307,7 +311,7 @@ mod test_suite {
             .body(Body::from(format!(
                 r#"
                     {{
-                        "pi": "{}",
+                        "pi": "{:?}",
                         "signature": "{}",
                         "created_at": "{}",
                         "data": {:?},
@@ -315,10 +319,10 @@ mod test_suite {
                     }}
                 "#,
                 dummy_tx.get_pi(),
-                dummy_tx.get_signature(),
+                dummy_tx.get_author_sig(),
                 dummy_tx.get_created_at(),
                 dummy_tx.get_data(),
-                dummy_tx.get_contract(),
+                dummy_tx.get_ctr_addr(),
             )))
             .expect("request builder should be made");
 
@@ -349,8 +353,11 @@ mod test_suite {
         tokio::time::sleep(Duration::from_secs(1)).await;
 
         let false_tx_hash = String::from("false_tx");
-        let is_contain =
-            machine.blockchain.tx_pool_contains(&false_tx_hash).await;
+        let is_contain = machine
+            .blockchain
+            .dist_ledger
+            .tx_pool_contains(&false_tx_hash)
+            .await;
 
         assert_eq!(false, is_contain);
     }

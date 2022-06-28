@@ -2,7 +2,7 @@ use crate::node::msg_handler;
 use crate::{machine::Machine, node::event_handle};
 use futures::StreamExt;
 use log::{debug, warn};
-use sak_blockchain::BlockchainEvent;
+use sak_dist_ledger::DLedgerEvent;
 use sak_p2p_ptable::Peer;
 use sak_p2p_ptable::{PeerStatus, PeerTable};
 use std::sync::Arc;
@@ -10,7 +10,7 @@ use tokio::sync::broadcast::Receiver;
 
 pub(crate) struct PeerNode {
     pub(crate) peer: Arc<Peer>,
-    pub(crate) bc_event_rx: Receiver<BlockchainEvent>,
+    pub(crate) bc_event_rx: Receiver<DLedgerEvent>,
     pub(in crate::node) machine: Arc<Machine>,
 }
 
@@ -29,7 +29,7 @@ impl PeerNode {
             tokio::select! {
                 Ok(ev) = self.bc_event_rx.recv() => {
                     match ev {
-                        BlockchainEvent::TxPoolStat(new_tx_hashes) => {
+                        DLedgerEvent::TxPoolStat(new_tx_hashes) => {
                             event_handle::handle_tx_pool_stat(
                                 public_key,
                                 &mut conn,

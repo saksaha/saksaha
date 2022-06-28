@@ -40,7 +40,8 @@ pub(crate) async fn recv_who_are_you(
     socket_addr: SocketAddr,
     udp_conn: Arc<Connection>,
     way_syn: WhoAreYou,
-    identity: Arc<DiscIdentity>,
+    // identity: Arc<DiscIdentity>,
+    identity: Arc<Identity>,
     addr_table: Arc<AddrTable>,
 ) -> Result<(), WhoAreYouRecvError> {
     let WhoAreYou {

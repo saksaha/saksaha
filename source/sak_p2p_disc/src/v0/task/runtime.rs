@@ -13,7 +13,8 @@ const DISC_TASK_INTERVAL: u64 = 1000;
 pub(crate) struct DiscTaskRuntime {
     pub(crate) task_queue: Arc<TaskQueue<DiscoveryTask>>,
     pub(crate) disc_task_interval: Duration,
-    pub(crate) identity: Arc<DiscIdentity>,
+    // pub(crate) identity: Arc<DiscIdentity>,
+    pub(crate) identity: Arc<Identity>,
     pub(crate) addr_table: Arc<AddrTable>,
     pub(crate) udp_conn: Arc<Connection>,
 }
@@ -22,7 +23,9 @@ impl DiscTaskRuntime {
     pub(crate) fn new(
         task_queue: Arc<TaskQueue<DiscoveryTask>>,
         disc_task_interval: Option<u16>,
-        identity: Arc<DiscIdentity>,
+        // identity: Arc<DiscIdentity>,
+        identity: Arc<Identity>,
+
         addr_table: Arc<AddrTable>,
         udp_conn: Arc<Connection>,
     ) -> DiscTaskRuntime {

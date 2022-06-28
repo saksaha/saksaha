@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod test_suite {
+    use crate::blockchain::Blockchain;
     use crate::p2p::{P2PHost, P2PHostArgs};
     use crate::{
         machine::{self, Machine},
@@ -12,16 +13,16 @@ mod test_suite {
     };
     use colored::Colorize;
     use futures::{SinkExt, StreamExt};
-    use log::debug;
-    use sak_blockchain::{Blockchain, BlockchainArgs};
+    use log::{debug, info};
     use sak_crypto::{PublicKey, Signature};
+    use sak_dist_ledger::{DistLedger, DistLedgerArgs};
     use sak_p2p_addr::{AddrStatus, UnknownAddr};
     use sak_p2p_disc::{DiscAddr, Discovery, DiscoveryArgs};
     use sak_p2p_id::{Credential, Identity};
     use sak_p2p_ptable::PeerTable;
     use sak_p2p_trpt::{Msg, TxHashSync};
     use sak_task_queue::TaskQueue;
-    use sak_types::{Block, BlockCandidate, Hashable, Transaction};
+    use sak_types::{Block, BlockCandidate, Hashable, Tx};
     use std::{sync::Arc, time::Duration};
 
     const RUST_LOG_ENV: &str = "
@@ -46,19 +47,19 @@ mod test_suite {
         let genesis_block = BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
             transactions: vec![
-                Transaction::new(
+                Tx::new(
                     String::from("1"),
                     vec![11, 11, 11],
                     String::from("1"),
-                    String::from("1"),
-                    vec![11, 11, 11],
+                    b"1".to_vec(),
+                    Some(vec![11, 11, 11]),
                 ),
-                Transaction::new(
+                Tx::new(
                     String::from("2"),
                     vec![22, 22, 22],
                     String::from("2"),
-                    String::from("2"),
-                    vec![22, 22, 22],
+                    b"2".to_vec(),
+                    Some(vec![22, 22, 22]),
                 ),
             ],
             witness_sigs: vec![String::from("1"), String::from("2")],
@@ -94,6 +95,18 @@ mod test_suite {
         secret: String,
         public_key_str: String,
     ) -> (P2PHost, Arc<LocalNode>, Arc<Machine>) {
+        let (disc_socket, disc_port) = {
+            let (socket, socket_addr) =
+                sak_utils_net::setup_udp_socket(disc_port).await.unwrap();
+
+            info!(
+                "Bound udp socket for P2P discovery, addr: {}",
+                socket_addr.to_string().yellow(),
+            );
+
+            (socket, socket_addr.port())
+        };
+
         let (p2p_socket, p2p_port) =
             match sak_utils_net::bind_tcp_socket(p2p_port).await {
                 Ok((socket, socket_addr)) => {
@@ -122,9 +135,16 @@ mod test_suite {
             Arc::new(ps)
         };
 
-        let credential = {
-            let id = Credential::new(secret, public_key_str)
-                .expect("p2p_identity should be initialized");
+        // let credential = {
+        //     let id = Credential::new(secret, public_key_str)
+        //         .expect("p2p_identity should be initialized");
+
+        //     Arc::new(id)
+        // };
+
+        let identity = {
+            let id = Identity::new(secret, public_key_str, p2p_port, disc_port)
+                .expect("identity should be initialized");
 
             Arc::new(id)
         };
@@ -148,7 +168,8 @@ mod test_suite {
         let p2p_host_args = P2PHostArgs {
             addr_expire_duration: None,
             addr_monitor_interval: None,
-            disc_port,
+            disc_socket,
+            // disc_port,
             disc_dial_interval: None,
             disc_table_capacity: None,
             disc_task_interval: None,
@@ -160,7 +181,8 @@ mod test_suite {
             p2p_port,
             p2p_max_conn_count: None,
             bootstrap_addrs,
-            credential: credential.clone(),
+            identity: identity.clone(),
+            // credential: credential.clone(),
             peer_table: p2p_peer_table.clone(),
         };
 
@@ -168,25 +190,12 @@ mod test_suite {
             .await
             .expect("P2P Host should be initialized");
 
-        let identity = {
-            let i = Identity {
-                p2p_port,
-                credential,
-            };
-
-            Arc::new(i)
-        };
-
         let blockchain = {
             let genesis_block = make_dummy_genesis_block();
 
-            let blockchain_args = BlockchainArgs {
-                app_prefix,
-                tx_pool_sync_interval: None,
-                genesis_block,
-            };
-
-            Blockchain::init(blockchain_args).await.unwrap()
+            Blockchain::init(app_prefix, None)
+                .await
+                .expect("blockchain should be initialized")
         };
 
         let machine = {
@@ -202,6 +211,7 @@ mod test_suite {
                 miner: true,
                 mine_interval: None,
                 identity: identity.clone(),
+                // credential: credential.clone(),
             };
 
             Arc::new(ln)
@@ -250,22 +260,23 @@ mod test_suite {
         )
         .await;
 
-        let (block, txs) = {
-            let dummy_tx1 = Transaction::new(
+        let block_candidate = {
+            let dummy_tx1 = Tx::new(
                 String::from("1346546123"),
                 String::from("one").as_bytes().to_vec(),
                 String::from("0x1111"),
-                String::from("0x1111"),
-                String::from("one").as_bytes().to_vec(),
+                b"0x1111".to_vec(),
+                Some(String::from("one").as_bytes().to_vec()),
             );
 
-            let dummy_tx2 = Transaction::new(
+            let dummy_tx2 = Tx::new(
                 String::from("45698744213"),
                 String::from("two").as_bytes().to_vec(),
                 String::from("0x2222"),
-                String::from("0x2222"),
-                String::from("two").as_bytes().to_vec(),
+                b"0x2222".to_vec(),
+                Some(String::from("two").as_bytes().to_vec()),
             );
+
             let c = BlockCandidate {
                 validator_sig: String::from(""),
                 transactions: vec![dummy_tx1, dummy_tx2],
@@ -274,8 +285,10 @@ mod test_suite {
                 height: String::from(""),
             };
 
-            c.extract()
+            c
         };
+
+        let (block, txs) = block_candidate.extract();
 
         {
             let local_node_1 = local_node_1.clone();
@@ -302,14 +315,16 @@ mod test_suite {
         local_node_1
             .machine
             .blockchain
-            .send_transaction(txs[0].clone())
+            .dist_ledger
+            .send_tx(txs[0].clone())
             .await
             .expect("Node should be able to send a transaction");
 
         local_node_1
             .machine
             .blockchain
-            .send_transaction(txs[1].clone())
+            .dist_ledger
+            .send_tx(txs[1].clone())
             .await
             .expect("Node should be able to send a transaction");
 
@@ -319,12 +334,14 @@ mod test_suite {
             let tx_pool_2_contains_tx1 = local_node_2
                 .machine
                 .blockchain
+                .dist_ledger
                 .tx_pool_contains(txs[0].get_hash())
                 .await;
 
             let tx_pool_2_contains_tx2 = local_node_2
                 .machine
                 .blockchain
+                .dist_ledger
                 .tx_pool_contains(txs[1].get_hash())
                 .await;
 
@@ -336,13 +353,15 @@ mod test_suite {
             local_node_1
                 .machine
                 .blockchain
-                .write_block(block)
+                .dist_ledger
+                .write_block(&block_candidate)
                 .await
                 .expect("Block should be written");
 
             let tx_pool_1_contains_tx1 = local_node_1
                 .machine
                 .blockchain
+                .dist_ledger
                 .tx_pool_contains(txs[0].get_hash())
                 .await;
 
