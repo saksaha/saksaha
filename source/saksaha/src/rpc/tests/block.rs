@@ -4,7 +4,6 @@ use super::utils::test_utils;
 mod test_suite {
     use super::*;
     use hyper::{Body, Client, Method, Request, Uri};
-    use sak_types::Block;
 
     #[tokio::test(flavor = "multi_thread")]
     async fn test_rpc_client_and_get_block() {
@@ -24,7 +23,7 @@ mod test_suite {
             let block_hash = match machine
                 .blockchain
                 .dist_ledger
-                .write_block(&block_candidate)
+                .write_block(Some(block_candidate))
                 .await
             {
                 Ok(v) => v,

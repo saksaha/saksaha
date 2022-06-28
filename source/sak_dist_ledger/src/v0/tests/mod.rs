@@ -1,6 +1,8 @@
 #[cfg(test)]
 mod test {
+    use crate::Consensus;
     use crate::{DistLedger, DistLedgerArgs};
+    use async_trait::async_trait;
     use sak_types::BlockCandidate;
     use sak_types::Tx;
 
@@ -17,14 +19,14 @@ mod test {
                     vec![11, 11, 11],
                     String::from("1"),
                     b"1".to_vec(),
-                    Some(vec![11, 11, 11]),
+                    Some(String::from("11")),
                 ),
                 Tx::new(
                     String::from("2"),
                     vec![22, 22, 22],
                     String::from("2"),
                     b"2".to_vec(),
-                    Some(vec![22, 22, 22]),
+                    Some(String::from("22")),
                 ),
             ],
             witness_sigs: vec![String::from("1"), String::from("2")],
@@ -36,9 +38,18 @@ mod test {
     }
 
     async fn make_dist_ledger(gen_block: BlockCandidate) -> DistLedger {
+        let dummy_gen_block_candidate = make_dummy_genesis_block();
+        // let consensus = Box::new("test".to_string());
+        let consensus: Box<dyn Consensus + Send + Sync> = {
+            let c = Pos { validator_ctr_addr };
+            Box::new(c)
+        };
+
         let dledger_args = DistLedgerArgs {
             app_prefix: String::from("test"),
             tx_pool_sync_interval: None,
+            genesis_block: Some(dummy_gen_block_candidate),
+            consensus, // consensus: Box<dyn Consensus + Send + Sync>,
         };
 
         let dist_ledger = DistLedger::init(dledger_args)
@@ -55,28 +66,28 @@ mod test {
                 String::from("one").as_bytes().to_vec(),
                 String::from("0x111"),
                 b"0x1111".to_vec(),
-                Some(String::from("one").as_bytes().to_vec()),
+                Some(String::from("one")),
             ),
             Tx::new(
                 String::from("1346546124"),
                 String::from("two").as_bytes().to_vec(),
                 String::from("0x222"),
                 b"0x2222".to_vec(),
-                Some(String::from("two").as_bytes().to_vec()),
+                Some(String::from("two")),
             ),
             Tx::new(
                 String::from("1346546125"),
                 String::from("three").as_bytes().to_vec(),
                 String::from("0x333"),
                 b"0x3333".to_vec(),
-                Some(String::from("three").as_bytes().to_vec()),
+                Some(String::from("three")),
             ),
             Tx::new(
                 String::from("1346546126"),
                 String::from("four").as_bytes().to_vec(),
                 String::from("0x444"),
                 b"0x4444".to_vec(),
-                Some(String::from("four").as_bytes().to_vec()),
+                Some(String::from("four")),
             ),
         ]
     }
@@ -93,8 +104,9 @@ mod test {
     async fn test_put_and_get_transaction() {
         init();
 
-        let gen_block = make_dummy_genesis_block();
-        let blockchain = make_dist_ledger(gen_block).await;
+        // let gen_block = make_dummy_genesis_block();
+        // let blockchain = make_dist_ledger(gen_block).await;
+
         let db = blockchain.ledger_db;
 
         let dummy_tx_values = make_dummy_txs();
@@ -200,7 +212,7 @@ mod test {
         //     .expect("Genesis block should have been inserted");
 
         let gen_block_by_height =
-            match blockchain.get_block_by_height(String::from("0")).await {
+            match blockchain.get_block_by_height(&String::from("0")).await {
                 Ok(b) => match b {
                     Some(b) => b,
                     None => {
@@ -251,14 +263,13 @@ mod test {
 
         let (contract_addr, field_name, field_value) = make_dummy_state();
 
-        db.put_ctr_state(&contract_addr, &field_name, &field_value)
+        db.batch_put_ctr_state(&contract_addr, &field_name, &field_value)
             .await
             .expect("contract state should be saved");
 
         assert_eq!(
-            db.get_ctr_state(&contract_addr, &field_name)
-                .await
-                .unwrap()
+            db.get_ctr_state(&contract_addr)
+                .expect("Contract State should be exist")
                 .unwrap(),
             field_value.clone().as_bytes()
         );
