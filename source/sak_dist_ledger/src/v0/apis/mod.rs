@@ -1,7 +1,7 @@
 mod ctr;
 
-use crate::{Consensus, DistLedger, LedgerError, StateUpdate};
-use log::warn;
+use crate::{DistLedger, LedgerError, StateUpdate};
+use log::{debug, warn};
 use sak_contract_std::{Request, Storage};
 use sak_types::{Block, BlockCandidate, Tx, TxType};
 use sak_vm::CtrFn;
@@ -127,13 +127,33 @@ impl DistLedger {
     pub async fn write_block(
         &self,
         bc: Option<BlockCandidate>,
-    ) -> Result<String, LedgerError> {
+    ) -> Result<Option<String>, LedgerError> {
         let bc = match bc {
             Some(bc) => bc,
-            None => self.prepare_to_write_block().await?,
+            None => match self.prepare_to_write_block().await? {
+                Some(bc) => bc,
+                None => {
+                    debug!("No txs to write as a block, aborting");
+
+                    return Ok(None);
+                }
+            },
         };
 
         let (block, txs) = bc.extract();
+
+        match self.get_block(block.get_hash())? {
+            Some(_b) => {
+                return Err(format!(
+                    "This block is already persisted: block_hash: {}",
+                    block.get_hash()
+                )
+                .into())
+            }
+            None => {
+                warn!("There is no matched block");
+            }
+        };
 
         let mut state_updates = vec![];
 
@@ -149,17 +169,14 @@ impl DistLedger {
                     });
                 }
                 TxType::ContractCall => {
-                    let req = Request::parse(tx.get_data()).expect(
-                        "Request is required to invoke contract function",
-                    );
+                    let request = Request::parse(tx.get_data())?;
+                    let state =
+                        self.execute_ctr(tx.get_ctr_addr(), request).await?;
 
-                    // TODO
-                    // need a way to decide if tx is a querying one or executing one
-                    // plan: add a field in Request
-
-                    let _result = self.query_ctr(tx.get_ctr_addr(), req).await;
-                    // let _result =
-                    //     self.execute_ctr(tx.get_ctr_addr(), req).await;
+                    state_updates.push(StateUpdate {
+                        ctr_addr: tx.get_ctr_addr().to_string(),
+                        new_state: state,
+                    });
                 }
                 TxType::Plain => {}
             }
@@ -180,7 +197,7 @@ impl DistLedger {
             warn!("Error inserting block into the sync pool, err: {}", err);
         }
 
-        Ok(block_hash)
+        Ok(Some(block_hash))
     }
 
     pub fn delete_tx(&self, key: &String) -> Result<(), LedgerError> {
@@ -207,14 +224,18 @@ impl DistLedger {
 
     async fn prepare_to_write_block(
         &self,
-    ) -> Result<BlockCandidate, LedgerError> {
+    ) -> Result<Option<BlockCandidate>, LedgerError> {
         let txs = self.sync_pool.get_all_txs().await?;
+
+        if txs.is_empty() {
+            return Ok(None);
+        }
 
         let bc = self.consensus.do_consensus(self, txs).await?;
 
         self.sync_pool.remove_txs(&bc.transactions).await?;
 
-        Ok(bc)
+        Ok(Some(bc))
     }
 
     pub fn is_valid_tx(&self, _tx: &Tx) -> bool {

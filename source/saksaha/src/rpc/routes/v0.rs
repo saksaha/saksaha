@@ -2,66 +2,71 @@ use crate::rpc::response::{ErrorResult, SuccessResult};
 use crate::system::SystemHandle;
 use hyper::{Body, Request, Response, StatusCode};
 use log::warn;
+use sak_contract_std::Request as CtrRequest;
 use sak_types::Tx;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+
+#[derive(Deserialize, Debug)]
+struct SendTxBody {
+    created_at: String,
+    #[serde(with = "serde_bytes")]
+    data: Vec<u8>,
+    #[serde(with = "serde_bytes")]
+    pi: Vec<u8>,
+    author_sig: String,
+    ctr_addr: String,
+}
 
 pub(crate) async fn send_transaction(
     req: Request<Body>,
     sys_handle: Arc<SystemHandle>,
 ) -> Result<Response<Body>, hyper::Error> {
-    let _body = match hyper::body::to_bytes(req.into_body()).await {
+    match hyper::body::to_bytes(req.into_body()).await {
         Ok(b) => {
-            let body_bytes_vec = b.to_vec();
-            let _body_str = match std::str::from_utf8(&body_bytes_vec) {
-                Ok(b) => {
-                    let _tx_value: Tx = match &serde_json::from_str(b) {
-                        Ok(v) => {
-                            match sys_handle
-                                .machine
-                                .blockchain
-                                .dist_ledger
-                                .get_tx(v)
-                                .await
-                            {
-                                Ok(bool) => {
-                                    return SuccessResult {
-                                        id: String::from("1"),
-                                        result: bool,
-                                    }
-                                    .into_hyper_result();
-                                }
-                                Err(err) => {
-                                    return ErrorResult::<String> {
-                                        id: String::from("1"),
-                                        status_code: StatusCode::BAD_REQUEST,
-                                        code: 32600,
-                                        message: String::from(err.to_string()),
-                                        data: None,
-                                    }
-                                    .into_hyper_result();
-                                }
-                            }
-                        }
-                        Err(err) => {
-                            warn!("Error parsing request param, err: {}", err);
+            let _tx_value: Tx = match serde_json::from_slice::<SendTxBody>(&b) {
+                Ok(v) => {
+                    let tx = Tx::new(
+                        v.created_at,
+                        v.data,
+                        v.author_sig,
+                        v.pi,
+                        Some(v.ctr_addr),
+                    );
 
-                            return ErrorResult {
+                    match sys_handle
+                        .machine
+                        .blockchain
+                        .dist_ledger
+                        .send_tx(tx)
+                        .await
+                    {
+                        Ok(bool) => {
+                            return SuccessResult {
                                 id: String::from("1"),
-                                status_code: StatusCode::BAD_REQUEST,
-                                code: 32601,
-                                message: String::from("Invalid Request"),
-                                data: Some(err.to_string()),
+                                result: bool,
                             }
                             .into_hyper_result();
                         }
-                    };
+                        Err(err) => {
+                            return ErrorResult::<String> {
+                                id: String::from("1"),
+                                status_code: StatusCode::BAD_REQUEST,
+                                code: 32600,
+                                message: String::from(err.to_string()),
+                                data: None,
+                            }
+                            .into_hyper_result();
+                        }
+                    }
                 }
                 Err(err) => {
+                    warn!("Error parsing request param, err: {}", err);
+
                     return ErrorResult {
                         id: String::from("1"),
                         status_code: StatusCode::BAD_REQUEST,
-                        code: 32602,
+                        code: 32601,
                         message: String::from("Invalid Request"),
                         data: Some(err.to_string()),
                     }
@@ -262,6 +267,72 @@ pub(crate) async fn get_block(
                 status_code: StatusCode::NO_CONTENT,
                 code: 1414,
                 message: String::from("dummy"),
+                data: Some(err.to_string()),
+            }
+            .into_hyper_result();
+        }
+    };
+}
+
+#[derive(Deserialize, Debug)]
+pub(crate) struct CallContractBody {
+    ctr_addr: String,
+    request: CtrRequest,
+}
+
+pub(crate) async fn call_contract(
+    req: Request<Body>,
+    sys_handle: Arc<SystemHandle>,
+) -> Result<Response<Body>, hyper::Error> {
+    match hyper::body::to_bytes(req.into_body()).await {
+        Ok(b) => {
+            let body = match serde_json::from_slice::<CallContractBody>(&b) {
+                Ok(b) => b,
+                Err(err) => {
+                    return ErrorResult::<String> {
+                        id: String::from("1"),
+                        status_code: StatusCode::BAD_REQUEST,
+                        code: 32600,
+                        message: String::from("Invalid Request"),
+                        data: Some(err.to_string()),
+                    }
+                    .into_hyper_result();
+                }
+            };
+
+            match sys_handle
+                .machine
+                .blockchain
+                .dist_ledger
+                .query_ctr(&body.ctr_addr, body.request)
+                .await
+            {
+                Ok(t) => {
+                    return SuccessResult {
+                        id: String::from("1"),
+                        result: t,
+                    }
+                    .into_hyper_result();
+                }
+                Err(err) => {
+                    println!("apowef333: {:?}", err);
+                    return ErrorResult::<String> {
+                        id: String::from("1"),
+                        status_code: StatusCode::BAD_REQUEST,
+                        code: 32600,
+                        message: String::from("Invalid Request"),
+                        data: Some(err.to_string()),
+                    }
+                    .into_hyper_result();
+                }
+            }
+        }
+        Err(err) => {
+            return ErrorResult {
+                id: String::from("1"),
+                status_code: StatusCode::BAD_REQUEST,
+                code: 32600,
+                message: String::from("Invalid Request"),
                 data: Some(err.to_string()),
             }
             .into_hyper_result();

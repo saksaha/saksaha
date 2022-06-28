@@ -42,21 +42,6 @@ mod test {
         genesis_block
     }
 
-    pub(crate) async fn make_blockchain() -> Blockchain {
-        let genesis_block = make_dummy_genesis_block();
-
-        let blockchain =
-            Blockchain::init(String::from("test"), None, None, None)
-                .await
-                .expect("Blockchain should be made");
-
-        // let blockchain = DistLedger::init(blockchain_args)
-        //     .await
-        //     .expect("Blockchain should be initialized");
-
-        blockchain
-    }
-
     fn make_dummy_txs() -> Vec<Tx> {
         vec![
             Tx::new(

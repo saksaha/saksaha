@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use super::{
     genesis::GenesisBlock,
     // sys_contracts::{SystemContracts, Validator},
@@ -6,6 +8,7 @@ use super::{
 use crate::system::BoxedError;
 use log::info;
 use sak_dist_ledger::{Consensus, DistLedger, DistLedgerArgs};
+use sak_p2p_id::Identity;
 
 pub(crate) struct Blockchain {
     pub(crate) dist_ledger: DistLedger,
@@ -18,6 +21,7 @@ impl Blockchain {
         tx_sync_interval: Option<u64>,
         genesis_block: Option<GenesisBlock>,
         block_sync_interval: Option<u64>,
+        identity: Arc<Identity>,
     ) -> Result<Blockchain, BoxedError> {
         let (gen_block_candidate, consensus) = {
             let genesis_block = match genesis_block {
@@ -28,7 +32,10 @@ impl Blockchain {
             let validator_ctr_addr = genesis_block.get_validator_ctr_addr();
 
             let consensus: Box<dyn Consensus + Send + Sync> = {
-                let c = Pos { validator_ctr_addr };
+                let c = Pos {
+                    validator_ctr_addr,
+                    identity,
+                };
                 Box::new(c)
             };
 

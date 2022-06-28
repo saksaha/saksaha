@@ -185,6 +185,7 @@ impl Routine {
                 config.blockchain.tx_sync_interval,
                 None,
                 config.blockchain.block_sync_interval,
+                identity.clone(),
             )
             .await?;
 
@@ -203,7 +204,6 @@ impl Routine {
                 machine: machine.clone(),
                 miner: config.node.miner,
                 mine_interval: config.node.mine_interval,
-                identity: identity.clone(),
             };
 
             ln

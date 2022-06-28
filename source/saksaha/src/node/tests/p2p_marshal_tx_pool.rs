@@ -2,18 +2,13 @@
 mod test_suite {
     use crate::blockchain::Blockchain;
     use crate::p2p::{P2PHost, P2PHostArgs};
-    use crate::{
-        machine::{self, Machine},
-        node::LocalNode,
-    };
+    use crate::{machine::Machine, node::LocalNode};
     use colored::Colorize;
-    use futures::{SinkExt, StreamExt};
     use log::{debug, info};
     use sak_crypto::{PublicKey, Signature};
-    use sak_dist_ledger::{DistLedger, DistLedgerArgs};
     use sak_p2p_addr::{AddrStatus, UnknownAddr};
-    use sak_p2p_disc::{DiscAddr, Discovery, DiscoveryArgs};
-    use sak_p2p_id::{Credential, Identity};
+    use sak_p2p_disc::DiscAddr;
+    use sak_p2p_id::Identity;
     use sak_p2p_ptable::PeerTable;
     use sak_types::{BlockCandidate, Hashable, Tx};
     use std::{sync::Arc, time::Duration};
@@ -186,7 +181,7 @@ mod test_suite {
         let blockchain = {
             let genesis_block = make_dummy_genesis_block();
 
-            Blockchain::init(app_prefix, None, None, None)
+            Blockchain::init(app_prefix, None, None, None, identity.clone())
                 .await
                 .unwrap()
         };
@@ -203,7 +198,6 @@ mod test_suite {
                 machine: machine.clone(),
                 miner: true,
                 mine_interval: None,
-                identity: identity.clone(),
                 // credential: credential.clone(),
             };
 

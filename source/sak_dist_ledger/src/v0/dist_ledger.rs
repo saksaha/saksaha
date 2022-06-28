@@ -4,7 +4,7 @@ use crate::LedgerDB;
 use crate::Runtime;
 use crate::SyncPool;
 use colored::Colorize;
-use log::{error, info, warn};
+use log::info;
 use sak_types::BlockCandidate;
 use sak_vm::VM;
 use std::sync::Arc;
@@ -127,7 +127,10 @@ impl DistLedger {
             info!("Genesis block not found, writing");
 
             let b = match self.write_block(Some(genesis_block)).await {
-                Ok(b) => b,
+                Ok(b) => b.ok_or(
+                    "genesis block should have been written as it \
+                        does not exist at the moment",
+                )?,
                 Err(err) => return Err(err.to_string()),
             };
 
