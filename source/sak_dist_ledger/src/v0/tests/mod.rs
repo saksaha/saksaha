@@ -1,8 +1,7 @@
 #[cfg(test)]
 mod test {
-    use crate::Consensus;
+    use crate::{Consensus, ConsensusError};
     use crate::{DistLedger, DistLedgerArgs};
-    use async_trait::async_trait;
     use sak_types::BlockCandidate;
     use sak_types::Tx;
 
@@ -37,11 +36,26 @@ mod test {
         genesis_block
     }
 
+    use async_trait::async_trait;
+
+    pub struct Pos {}
+
+    #[async_trait]
+    impl Consensus for Pos {
+        async fn do_consensus(
+            &self,
+            dist_ledger: &DistLedger,
+            txs: Vec<Tx>,
+        ) -> Result<BlockCandidate, ConsensusError> {
+            return Err("awel".into());
+        }
+    }
+
     async fn make_dist_ledger(gen_block: BlockCandidate) -> DistLedger {
         let dummy_gen_block_candidate = make_dummy_genesis_block();
-        // let consensus = Box::new("test".to_string());
+
         let consensus: Box<dyn Consensus + Send + Sync> = {
-            let c = Pos { validator_ctr_addr };
+            let c = Pos {};
             Box::new(c)
         };
 
@@ -92,20 +106,20 @@ mod test {
         ]
     }
 
-    fn make_dummy_state() -> (String, String, String) {
+    fn make_dummy_state() -> (String, String) {
         let contract_addr = String::from("0xa1a2a3a4");
-        let field_name = String::from("test_field_name");
-        let field_value = String::from("test_field_value");
+        let ctr_state = String::from("test_field_name");
+        // let field_value = String::from("test_field_value");
 
-        (contract_addr, field_name, field_value)
+        (contract_addr, ctr_state)
     }
 
     #[tokio::test(flavor = "multi_thread")]
     async fn test_put_and_get_transaction() {
         init();
 
-        // let gen_block = make_dummy_genesis_block();
-        // let blockchain = make_dist_ledger(gen_block).await;
+        let gen_block = make_dummy_genesis_block();
+        let blockchain = make_dist_ledger(gen_block).await;
 
         let db = blockchain.ledger_db;
 
@@ -178,7 +192,7 @@ mod test {
         }
 
         let mut iter = db.kv_db.db_instance.raw_iterator_cf(
-            db.kv_db.db_instance.cf_handle("created_at").unwrap(),
+            &db.kv_db.db_instance.cf_handle("created_at").unwrap(),
         );
 
         iter.seek_to_first();
@@ -261,9 +275,9 @@ mod test {
         let blockchain = make_dist_ledger(gen_block).await;
         let db = blockchain.ledger_db;
 
-        let (contract_addr, field_name, field_value) = make_dummy_state();
+        let (contract_addr, ctr_state) = make_dummy_state();
 
-        db.batch_put_ctr_state(&contract_addr, &field_name, &field_value)
+        db.batch_put_ctr_state(&contract_addr, &ctr_state)
             .await
             .expect("contract state should be saved");
 
@@ -271,7 +285,7 @@ mod test {
             db.get_ctr_state(&contract_addr)
                 .expect("Contract State should be exist")
                 .unwrap(),
-            field_value.clone().as_bytes()
+            ctr_state.clone().as_bytes()
         );
     }
 }
