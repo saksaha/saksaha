@@ -49,8 +49,11 @@ pub(super) mod test_utils {
 
         let genesis_block = make_dummy_genesis_block();
 
-        let blockchain =
-            { Blockchain::init("test".to_string(), None).await.unwrap() };
+        let blockchain = {
+            Blockchain::init("test".to_string(), None, None)
+                .await
+                .unwrap()
+        };
 
         let machine = {
             let m = Machine { blockchain };
@@ -188,14 +191,14 @@ pub(super) mod test_utils {
                     vec![11, 11, 11],
                     String::from("1"),
                     b"1".to_vec(),
-                    Some(vec![11, 11, 11]),
+                    Some(String::from("11")),
                 ),
                 Tx::new(
                     String::from("2"),
                     vec![22, 22, 22],
                     String::from("2"),
                     b"2".to_vec(),
-                    Some(vec![22, 22, 22]),
+                    Some(String::from("22")),
                 ),
             ],
             witness_sigs: vec![String::from("1"), String::from("2")],
@@ -206,16 +209,16 @@ pub(super) mod test_utils {
         genesis_block
     }
 
-    pub(crate) async fn make_blockchain() -> DistLedger {
+    pub(crate) async fn make_blockchain() -> Blockchain {
         let genesis_block = make_dummy_genesis_block();
-        let blockchain_args = DistLedgerArgs {
-            app_prefix: String::from("test"),
-            tx_pool_sync_interval: None,
-        };
 
-        let blockchain = DistLedger::init(blockchain_args)
+        let blockchain = Blockchain::init(String::from("test"), None, None)
             .await
-            .expect("Blockchain should be initialized");
+            .expect("Blockchain should be made");
+
+        // let blockchain = DistLedger::init(blockchain_args)
+        //     .await
+        //     .expect("Blockchain should be initialized");
 
         blockchain
     }
@@ -229,7 +232,7 @@ pub(super) mod test_utils {
             ],
             String::from("0x111"),
             b"0x1111".to_vec(),
-            Some(vec![75, 73, 72]),
+            Some(String::from("0x1111")),
         )
     }
 
@@ -243,7 +246,7 @@ pub(super) mod test_utils {
                 ],
                 String::from("0x111"),
                 b"0x1111".to_vec(),
-                Some(vec![1, 2, 3]),
+                Some(String::from("0x1111")),
             ),
             Tx::new(
                 String::from("131146546123"),
@@ -253,7 +256,7 @@ pub(super) mod test_utils {
                 ],
                 String::from("0x222"),
                 b"0x2222".to_vec(),
-                Some(vec![1, 2, 3]),
+                Some(String::from("0x2222")),
             ),
             Tx::new(
                 String::from("1346523"),
@@ -263,7 +266,7 @@ pub(super) mod test_utils {
                 ],
                 String::from("0x333"),
                 b"0x3333".to_vec(),
-                Some(vec![4, 1, 3]),
+                Some(String::from("0x3333")),
             ),
             Tx::new(
                 String::from("75346546123"),
@@ -273,7 +276,7 @@ pub(super) mod test_utils {
                 ],
                 String::from("0x444"),
                 b"0x4444".to_vec(),
-                Some(vec![1, 2, 2]),
+                Some(String::from("0x4444")),
             ),
         ]
     }

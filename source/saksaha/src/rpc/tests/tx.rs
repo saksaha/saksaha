@@ -3,6 +3,7 @@ use super::utils::test_utils;
 #[cfg(test)]
 mod test_suite {
     use super::*;
+    use crate::blockchain::{self, Blockchain};
     use crate::rpc::response::{ErrorResponse, JsonResponse, SuccessResponse};
     use hyper::body::Buf;
     use hyper::{Body, Client, Method, Request, Uri};
@@ -68,13 +69,14 @@ mod test_suite {
 
             let old_tx_hash = (&dummy_tx).get_hash();
 
-            blockchain
+            let dist_ledger = blockchain.dist_ledger;
+
+            dist_ledger
                 .delete_tx(&old_tx_hash)
                 .expect("Tx should be deleted");
 
-            let _tx_hash = blockchain
-                .ledger_db
-                .write_tx(&dummy_tx)
+            let _tx_hash = dist_ledger
+                .send_tx(dummy_tx)
                 .await
                 .expect("Tx should be written");
         }
@@ -136,17 +138,26 @@ mod test_suite {
 
             let old_tx_hash = (&dummy_tx).get_hash();
 
-            blockchain
+            let dist_ledger = blockchain.dist_ledger;
+
+            dist_ledger
                 .delete_tx(&old_tx_hash)
                 .expect("Tx should be deleted");
 
-            let tx_hash = blockchain
-                .write_tx(&dummy_tx)
+            dist_ledger
+                .send_tx(dummy_tx.clone())
                 .await
                 .expect("Tx should be written");
 
-            assert_eq!(old_tx_hash, &tx_hash);
+            let tx = dist_ledger
+                .get_tx(&old_tx_hash.clone())
+                .await
+                .expect("Tx should be exist")
+                .unwrap();
 
+            let tx_hash = tx.get_hash().clone();
+
+            assert_eq!(tx_hash, *old_tx_hash);
             tx_hash
         };
 

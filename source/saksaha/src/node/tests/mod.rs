@@ -6,6 +6,8 @@ mod test {
     use sak_types::Hashable;
     use sak_types::Tx;
 
+    use crate::blockchain::Blockchain;
+
     fn init() {
         let _ = env_logger::builder().is_test(true).init();
     }
@@ -19,14 +21,14 @@ mod test {
                     vec![11, 11, 11],
                     String::from("1"),
                     b"1".to_vec(),
-                    Some(vec![11, 11, 11]),
+                    Some(String::from("11")),
                 ),
                 Tx::new(
                     String::from("2"),
                     vec![22, 22, 22],
                     String::from("2"),
                     b"2".to_vec(),
-                    Some(vec![22, 22, 22]),
+                    Some(String::from("22")),
                 ),
             ],
             witness_sigs: vec![String::from("1"), String::from("2")],
@@ -37,15 +39,16 @@ mod test {
         genesis_block
     }
 
-    async fn make_blockchain(gen_block: BlockCandidate) -> DistLedger {
-        let blockchain_args = DistLedgerArgs {
-            app_prefix: String::from("test"),
-            tx_pool_sync_interval: None,
-        };
+    pub(crate) async fn make_blockchain() -> Blockchain {
+        let genesis_block = make_dummy_genesis_block();
 
-        let blockchain = DistLedger::init(blockchain_args)
+        let blockchain = Blockchain::init(String::from("test"), None, None)
             .await
-            .expect("Blockchain should be initialized");
+            .expect("Blockchain should be made");
+
+        // let blockchain = DistLedger::init(blockchain_args)
+        //     .await
+        //     .expect("Blockchain should be initialized");
 
         blockchain
     }
@@ -57,28 +60,28 @@ mod test {
                 String::from("one").as_bytes().to_vec(),
                 String::from("0x111"),
                 b"0x1111".to_vec(),
-                Some(String::from("one").as_bytes().to_vec()),
+                Some(String::from("one")),
             ),
             Tx::new(
                 String::from("1346546124"),
                 String::from("two").as_bytes().to_vec(),
                 String::from("0x222"),
                 b"0x2222".to_vec(),
-                Some(String::from("two").as_bytes().to_vec()),
+                Some(String::from("two")),
             ),
             Tx::new(
                 String::from("1346546125"),
                 String::from("three").as_bytes().to_vec(),
                 String::from("0x333"),
                 b"0x3333".to_vec(),
-                Some(String::from("three").as_bytes().to_vec()),
+                Some(String::from("three")),
             ),
             Tx::new(
                 String::from("1346546126"),
                 String::from("four").as_bytes().to_vec(),
                 String::from("0x444"),
                 b"0x4444".to_vec(),
-                Some(String::from("four").as_bytes().to_vec()),
+                Some(String::from("four")),
             ),
         ]
     }
