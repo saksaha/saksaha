@@ -45,14 +45,14 @@ mod test_suite {
                     vec![11, 11, 11],
                     String::from("1"),
                     b"1".to_vec(),
-                    Some(vec![11, 11, 11]),
+                    Some(String::from("11")),
                 ),
                 Tx::new(
                     String::from("2"),
                     vec![22, 22, 22],
                     String::from("2"),
                     b"2".to_vec(),
-                    Some(vec![22, 22, 22]),
+                    Some(String::from("22")),
                 ),
             ],
             witness_sigs: vec![String::from("1"), String::from("2")],
@@ -228,7 +228,7 @@ mod test_suite {
             // };
 
             // Blockchain::init(app_prefix, None, Some(genesis_block))
-            Blockchain::init(app_prefix, None).await.unwrap()
+            Blockchain::init(app_prefix, None, None).await.unwrap()
         };
 
         let machine = {
@@ -459,7 +459,7 @@ mod test_suite {
             String::from("one").as_bytes().to_vec(),
             String::from("0x1111"),
             b"0x1111".to_vec(),
-            Some(String::from("one").as_bytes().to_vec()),
+            Some(String::from("one")),
         );
 
         let peer_it = local_node_1.peer_table.new_iter();

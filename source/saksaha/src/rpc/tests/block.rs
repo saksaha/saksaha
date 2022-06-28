@@ -17,6 +17,7 @@ mod test_suite {
         let client = Client::new();
 
         let block_candidate = test_utils::make_dummy_genesis_block();
+        let block_candidate_same = test_utils::make_dummy_genesis_block();
 
         let (block_value, _) = block_candidate.extract();
 
@@ -24,7 +25,7 @@ mod test_suite {
             let block_hash = match machine
                 .blockchain
                 .dist_ledger
-                .write_block(&block_candidate)
+                .write_block(Some(block_candidate_same))
                 .await
             {
                 Ok(v) => v,
