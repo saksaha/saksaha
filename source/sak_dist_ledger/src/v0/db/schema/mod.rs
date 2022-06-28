@@ -342,12 +342,14 @@ impl LedgerDBSchema {
         &self,
         db: &DB,
         batch: &mut WriteBatch,
-        state_key: &String,
-        field_value: &String,
+        ctr_addr: &String,
+        ctr_state: &String,
     ) -> Result<(), LedgerError> {
+        println!("ctr_addr: {}, ctr_state: {}", ctr_addr, ctr_state);
+
         let cf = make_cf_handle(db, CTR_STATE)?;
 
-        batch.put_cf(&cf, state_key, field_value);
+        batch.put_cf(&cf, ctr_addr, ctr_state);
 
         Ok(())
     }

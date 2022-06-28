@@ -38,8 +38,9 @@ impl LedgerDB {
         Ok(Some(storage))
     }
 
-    pub(crate) async fn put_ctr_state(
+    pub(crate) async fn batch_put_ctr_state(
         &self,
+
         ctr_addr: &String,
         // field_name: &String,
         // field_value: &String,

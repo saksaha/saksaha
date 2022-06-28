@@ -1,6 +1,6 @@
 mod ctr;
 
-use crate::{Consensus, DistLedger, LedgerError};
+use crate::{Consensus, DistLedger, LedgerError, StateUpdate};
 use log::warn;
 use sak_contract_std::{Request, Storage};
 use sak_types::{Block, BlockCandidate, Tx};
@@ -65,28 +65,32 @@ impl DistLedger {
         };
 
         let (block, txs) = bc.extract();
-        // let mut states = vec![];
+
+        let mut state_updates = vec![];
 
         for tx in txs.iter() {
-            // let new_state = self.exec_ctr();
-            // (key, new_state)
+            if tx.has_ctr_addr() {
+                let data = tx.get_data();
 
-            if tx.is_deplying_ctr() {
-                let ctr_wasm = &tx.get_data()[4..].to_vec();
+                if let Ok(_request) = Request::parse(data) {
+                    // TODO
+                    // Should be able to exec ctr
+                } else {
+                    let initial_ctr_state = self.vm.exec(data, CtrFn::Init)?;
 
-                let initial_ctr_state = self.vm.exec(ctr_wasm, CtrFn::Init)?;
-
-                // println!("power: {:?}", ret);
-
-                // self.init_ctr(tx.get_ctr_addr(), &tx.get_data()[..4]);
-
-                self.ledger_db
-                    .put_ctr_state(tx.get_ctr_addr(), &initial_ctr_state)
-                    .await?;
+                    state_updates.push(StateUpdate {
+                        ctr_addr: tx.get_ctr_addr().to_string(),
+                        new_state: initial_ctr_state,
+                    });
+                }
             }
         }
 
-        let block_hash = match self.ledger_db.write_block(&block, &txs).await {
+        let block_hash = match self
+            .ledger_db
+            .write_block(&block, &txs, state_updates)
+            .await
+        {
             Ok(h) => h,
             Err(err) => {
                 return Err(err);
@@ -111,23 +115,9 @@ impl DistLedger {
         self.tx_pool.get_txs(tx_hashes).await
     }
 
-    pub async fn set_ctr_state(
-        &self,
-        ctr_addr: &String,
-        // field_name: &String,
-        // field_value: &String,
-        ctr_state: &String,
-    ) -> Result<String, LedgerError> {
-        self.ledger_db
-            // .put_ctr_state(contract_addr, field_name, field_value)
-            .put_ctr_state(ctr_addr, ctr_state)
-            .await
-    }
-
     pub async fn get_ctr_state(
         &self,
         contract_addr: &String,
-        // field_name: &String,
     ) -> Result<Option<Storage>, LedgerError> {
         self.ledger_db.get_ctr_state(contract_addr)
     }

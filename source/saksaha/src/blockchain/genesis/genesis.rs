@@ -1,4 +1,4 @@
-use sak_types::{Block, BlockCandidate, Tx};
+use sak_types::{BlockCandidate, Tx};
 
 pub(crate) const VALIDATOR_SIG: &str = "alw";
 
@@ -13,7 +13,7 @@ pub(crate) struct GenesisBlock {
 
 impl GenesisBlock {
     pub fn create() -> GenesisBlock {
-        let validator_wasm = [&[123, 123, 123, 123], VALIDATOR].concat();
+        let validator_wasm = VALIDATOR.to_vec();
 
         let validator_deploy_tx = Tx::new(
             String::from("1"),
@@ -28,7 +28,7 @@ impl GenesisBlock {
             vec![22, 22, 22],
             String::from("2"),
             vec![2],
-            Some(String::from("1")),
+            None,
         );
 
         let block_candidate = BlockCandidate {

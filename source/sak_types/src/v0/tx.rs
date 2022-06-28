@@ -92,15 +92,7 @@ impl Tx {
         self.ctr_addr.len() > 0
     }
 
-    pub fn is_deplying_ctr(&self) -> bool {
+    pub fn has_ctr_addr(&self) -> bool {
         self.ctr_addr.len() > 0
-            && self.data.len() > 4
-            && &self.data[..4] == &[123, 123, 123, 123]
-    }
-
-    pub fn is_executing_ctr(&self) -> bool {
-        self.ctr_addr.len() > 0
-            && self.data.len() > 4
-            && &self.data[..4] != &[123, 123, 123, 123]
     }
 }

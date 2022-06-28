@@ -1,21 +1,15 @@
 use crate::DistLedger;
+use async_trait::async_trait;
 use sak_types::{BlockCandidate, Tx};
-use std::{future::Future, pin::Pin, sync::Arc};
+use std::{future::Future, pin::Pin};
 
+#[async_trait]
 pub trait Consensus {
-    fn do_consensus<'a>(
-        self: &'a Self,
-        dist_ledger: &'a DistLedger,
+    async fn do_consensus(
+        &self,
+        dist_ledger: &DistLedger,
         txs: Vec<Tx>,
-    ) -> Pin<
-        Box<
-            dyn Future<Output = Result<BlockCandidate, ConsensusError>>
-                + Send
-                + 'a,
-        >,
-    >
-    where
-        Self: 'a;
+    ) -> Result<BlockCandidate, ConsensusError>;
 }
 
 pub type ConsensusError = Box<dyn std::error::Error + Send + Sync>;

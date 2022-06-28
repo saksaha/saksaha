@@ -1,9 +1,8 @@
-use std::collections::HashMap;
-
 use super::utils;
 use crate::{CtrFn, VMError, MEMORY};
 use log::{error, info};
 use sak_contract_std::{Request, Storage};
+use std::collections::HashMap;
 use wasmtime::{
     Config, Engine, Func, Instance, Memory, Module, Store, TypedFunc,
 };
@@ -116,20 +115,6 @@ fn exec_query(
     }
 
     Ok(ret)
-}
-
-pub fn is_wasm(contract_wasm: Vec<u8>) -> bool {
-    let engine = match Engine::new(&Config::new()) {
-        Ok(e) => e,
-        Err(_) => {
-            return false;
-        }
-    };
-
-    match Module::new(&engine, contract_wasm) {
-        Ok(_) => true,
-        Err(_) => false,
-    }
 }
 
 fn init_module(

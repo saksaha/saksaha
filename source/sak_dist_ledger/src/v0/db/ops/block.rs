@@ -1,4 +1,5 @@
-use crate::{LedgerDB, LedgerError};
+use crate::{LedgerDB, LedgerError, StateUpdate};
+use log::debug;
 use sak_kv_db::WriteBatch;
 use sak_types::{Block, Tx};
 
@@ -56,18 +57,13 @@ impl LedgerDB {
         &self,
         block: &Block,
         txs: &Vec<Tx>,
+        state_updates: Vec<StateUpdate>,
     ) -> Result<String, LedgerError> {
         let db = &self.kv_db.db_instance;
 
         let mut batch = WriteBatch::default();
 
         let block_hash = block.get_hash();
-
-        println!(
-            "write block, hash: {}, height: {}",
-            block_hash,
-            block.get_height()
-        );
 
         self.schema.batch_put_validator_sig(
             db,
@@ -115,7 +111,22 @@ impl LedgerDB {
             self._batch_put_tx(db, &mut batch, tx)?;
         }
 
+        for su in state_updates {
+            self.schema.batch_put_ctr_state(
+                db,
+                &mut batch,
+                &su.ctr_addr,
+                &su.new_state,
+            )?;
+        }
+
         db.write(batch)?;
+
+        debug!(
+            "Success writing block, hash: {}, height: {}",
+            block_hash,
+            block.get_height()
+        );
 
         return Ok(block_hash.clone());
     }
