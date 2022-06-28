@@ -3,15 +3,13 @@ use super::task::runtime::P2PTaskRuntime;
 use super::task::P2PTask;
 use super::P2PMonitor;
 use super::{dial_scheduler::P2PDialScheduler, server::Server};
-use colored::Colorize;
-use log::info;
 use sak_p2p_addr::UnknownAddr;
 use sak_p2p_disc::{Discovery, DiscoveryArgs};
 use sak_p2p_id::{Credential, Identity};
 use sak_p2p_ptable::PeerTable;
 use sak_task_queue::TaskQueue;
 use std::sync::Arc;
-use tokio::net::TcpListener;
+use tokio::net::{TcpListener, UdpSocket};
 
 const P2P_TASK_QUEUE_CAPACITY: usize = 10;
 
@@ -27,7 +25,7 @@ pub(crate) struct P2PHost {
 pub(crate) struct P2PHostArgs {
     pub(crate) addr_expire_duration: Option<u64>,
     pub(crate) addr_monitor_interval: Option<u64>,
-    pub(crate) disc_port: Option<u16>,
+    // pub(crate) disc_port: Option<u16>,
     pub(crate) disc_dial_interval: Option<u16>,
     pub(crate) disc_table_capacity: Option<u16>,
     pub(crate) disc_task_interval: Option<u16>,
@@ -39,7 +37,9 @@ pub(crate) struct P2PHostArgs {
     pub(crate) p2p_port: u16,
     pub(crate) p2p_max_conn_count: Option<u16>,
     pub(crate) bootstrap_addrs: Vec<UnknownAddr>,
-    pub(crate) credential: Arc<Credential>,
+    // pub(crate) credential: Arc<Credential>,
+    pub(crate) identity: Arc<Identity>,
+    pub(crate) disc_socket: UdpSocket,
     pub(crate) peer_table: Arc<PeerTable>,
 }
 
@@ -66,14 +66,14 @@ impl P2PHost {
             (runtime, p2p_task_queue)
         };
 
-        let identity = {
-            let i = Identity {
-                credential: p2p_host_args.credential.clone(),
-                p2p_port: p2p_host_args.p2p_port,
-            };
+        // let identity = {
+        //     let i = Identity {
+        //         credential: p2p_host_args.credential.clone(),
+        //         p2p_port: p2p_host_args.p2p_port,
+        //     };
 
-            Arc::new(i)
-        };
+        //     Arc::new(i)
+        // };
 
         let (p2p_discovery, _disc_port) = {
             let disc_args = DiscoveryArgs {
@@ -84,8 +84,10 @@ impl P2PHost {
                 disc_task_interval: p2p_host_args.disc_task_interval,
                 disc_task_queue_capacity: p2p_host_args
                     .disc_task_queue_capacity,
-                credential: p2p_host_args.credential.clone(),
-                disc_port: p2p_host_args.disc_port,
+                // credential: p2p_host_args.credential.clone(),
+                identity: p2p_host_args.identity.clone(),
+                udp_socket: p2p_host_args.disc_socket,
+                // disc_port: p2p_host_args.disc_port,
                 p2p_port: p2p_host_args.p2p_port,
                 bootstrap_addrs: p2p_host_args.bootstrap_addrs,
             };
@@ -99,7 +101,7 @@ impl P2PHost {
             let s = Server::new(
                 p2p_host_args.p2p_max_conn_count,
                 p2p_host_args.p2p_socket,
-                identity.clone(),
+                p2p_host_args.identity.clone(),
                 p2p_host_args.peer_table.clone(),
                 p2p_discovery.addr_table.clone(),
             );
@@ -114,7 +116,7 @@ impl P2PHost {
                 p2p_dial_interval: p2p_host_args.p2p_dial_interval,
                 p2p_task_queue: p2p_task_queue.clone(),
                 addrs_iter,
-                identity: identity.clone(),
+                identity: p2p_host_args.identity.clone(),
                 peer_table: p2p_host_args.peer_table.clone(),
             };
 
@@ -151,9 +153,5 @@ impl P2PHost {
         };
 
         monitor
-    }
-
-    pub(crate) fn get_identity(&self) -> Arc<Identity> {
-        self.p2p_server.get_identity()
     }
 }

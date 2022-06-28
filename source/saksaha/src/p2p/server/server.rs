@@ -111,8 +111,4 @@ impl Server {
             });
         }
     }
-
-    pub fn get_identity(&self) -> Arc<Identity> {
-        self.identity.clone()
-    }
 }

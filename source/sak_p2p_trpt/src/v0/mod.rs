@@ -7,4 +7,4 @@ pub use msg::*;
 pub use net::*;
 pub use transport::Transport;
 
-pub type BoxedError = Box<dyn std::error::Error + Send + Sync>;
+pub(crate) type BoxedError = Box<dyn std::error::Error + Send + Sync>;

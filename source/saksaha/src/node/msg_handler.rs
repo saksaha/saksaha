@@ -16,6 +16,7 @@ pub(crate) async fn handle_msg<'a>(
 
             let txs_to_request = machine
                 .blockchain
+                .dist_ledger
                 .get_tx_pool_diff(tx_hash_sync.tx_hashes)
                 .await;
 
@@ -55,7 +56,11 @@ pub(crate) async fn handle_msg<'a>(
                 Msg::TxSyn(h) => {
                     info!("Handling TxSyn msg, src public_key: {}", public_key);
 
-                    machine.blockchain.insert_into_pool(h.txs).await;
+                    machine
+                        .blockchain
+                        .dist_ledger
+                        .insert_into_pool(h.txs)
+                        .await;
                 }
                 other_msg => {
                     warn!(

@@ -9,7 +9,7 @@ default-run = "sak"
 [dependencies]
 sak_logger = { path = "../sak_logger" }
 sak_crypto = { path = "../sak_crypto" }
-sak_blockchain = { path = "../sak_blockchain" }
+sak_dist_ledger = { path = "../sak_dist_ledger" }
 sak_fs = { path = "../sak_fs" }
 sak_proofs = { path = "../sak_proofs" }
 sak_p2p_addr = { path = "../sak_p2p_addr" }
@@ -21,7 +21,7 @@ sak_utils_time = { path = "../sak_utils_time" }
 sak_utils_net = { path = "../sak_utils_net" }
 sak_task_queue = { path = "../sak_task_queue" }
 sak_types = { path = "../sak_types" }
-sak_vm = { path = "../sak_vm" }
+async-trait = "0.1.56"
 sak_contract_std = { path = "../sak_contract_std" }
 clap = { version = "3.1.6", features = ["cargo"] }
 directories = "3.0"
@@ -45,6 +45,7 @@ url = { version = "2", features = ["serde"] }
 aes = "0.8.1"
 hex-literal = "0.3.4"
 ctr = "0.9.1"
+wasmtime = "0.37.0"
 
 [dev-dependencies]
 sha3 = "0.10.1"

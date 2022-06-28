@@ -17,7 +17,8 @@ impl Handler {
         msg: Msg,
         socket_addr: SocketAddr,
         udp_conn: Arc<Connection>,
-        identity: Arc<DiscIdentity>,
+        // identity: Arc<DiscIdentity>,
+        identity: Arc<Identity>,
         addr_table: Arc<AddrTable>,
         _addr_expire_duration: Duration,
     ) -> Result<(), BoxedError> {
@@ -52,7 +53,7 @@ impl Handler {
                     way_ack,
                     socket_addr,
                     udp_conn,
-                    identity,
+                    // identity,
                     addr_table,
                 )
                 .await?)

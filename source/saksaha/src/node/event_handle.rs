@@ -50,6 +50,7 @@ pub(super) async fn handle_tx_pool_stat<'a>(
                         Msg::TxHashAck(h) => {
                             let txs = machine
                                 .blockchain
+                                .dist_ledger
                                 .get_txs_from_pool(h.tx_hashes)
                                 .await;
 

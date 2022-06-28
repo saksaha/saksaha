@@ -1,19 +1,19 @@
 use crate::Block;
 use crate::Hashable;
-use crate::Transaction;
+use crate::Tx;
 use std::collections::{HashMap, HashSet};
 
 #[derive(Debug)]
 pub struct BlockCandidate {
     pub validator_sig: String,
-    pub transactions: Vec<Transaction>,
+    pub transactions: Vec<Tx>,
     pub witness_sigs: Vec<String>,
     pub created_at: String,
     pub height: String,
 }
 
 impl BlockCandidate {
-    pub fn extract(self) -> (Block, Vec<Transaction>) {
+    pub fn extract(self) -> (Block, Vec<Tx>) {
         let (tx_hashes, txs) = {
             let mut hashes = vec![];
             let mut txs = vec![];
