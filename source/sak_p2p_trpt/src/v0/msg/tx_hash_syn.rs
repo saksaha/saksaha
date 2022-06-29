@@ -3,14 +3,14 @@ use bytes::{BufMut, Bytes, BytesMut};
 use sak_p2p_frame::{Frame, Parse};
 
 #[derive(Debug)]
-pub struct TxHashSync {
+pub struct TxHashSynMsg {
     pub tx_hashes: Vec<String>,
 }
 
-impl TxHashSync {
+impl TxHashSynMsg {
     pub(crate) fn from_parse(
         parse: &mut Parse,
-    ) -> Result<TxHashSync, BoxedError> {
+    ) -> Result<TxHashSynMsg, BoxedError> {
         let tx_count = parse.next_int()?;
         let mut tx_hashes = Vec::with_capacity(tx_count as usize);
 
@@ -23,7 +23,7 @@ impl TxHashSync {
             tx_hashes.push(tx_hash);
         }
 
-        let m = TxHashSync { tx_hashes };
+        let m = TxHashSynMsg { tx_hashes };
 
         Ok(m)
     }

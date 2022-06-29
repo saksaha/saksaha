@@ -50,7 +50,7 @@ pub(super) mod test_utils {
         let genesis_block = make_dummy_genesis_block();
 
         let blockchain = {
-            Blockchain::init("test".to_string(), None, None)
+            Blockchain::init("test".to_string(), None, None, None)
                 .await
                 .unwrap()
         };
@@ -212,9 +212,10 @@ pub(super) mod test_utils {
     pub(crate) async fn make_blockchain() -> Blockchain {
         let genesis_block = make_dummy_genesis_block();
 
-        let blockchain = Blockchain::init(String::from("test"), None, None)
-            .await
-            .expect("Blockchain should be made");
+        let blockchain =
+            Blockchain::init(String::from("test"), None, None, None)
+                .await
+                .expect("Blockchain should be made");
 
         // let blockchain = DistLedger::init(blockchain_args)
         //     .await

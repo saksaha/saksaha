@@ -22,25 +22,24 @@ impl Consensus for Pos {
             arg: HashMap::new(),
         };
 
-        let validator = dist_ledger
+        let _validator = dist_ledger
             .query_ctr(&self.validator_ctr_addr, request)
             .await?;
 
-        println!("validator: {:?}", validator);
+        // println!("validator: {:?}", validator);
 
         // // if validator == myself {
 
         // // }
 
-        // let bc = BlockCandidate {
-        //     validator_sig: String::from("1"),
-        //     transactions: txs,
-        //     witness_sigs: vec![],
-        //     created_at: String::from("1"),
-        //     height: String::from("1"),
-        // };
+        let bc = BlockCandidate {
+            validator_sig: String::from("1"),
+            transactions: txs,
+            witness_sigs: vec![],
+            created_at: String::from("1"),
+            height: String::from("1"),
+        };
 
-        // Ok(bc)
-        return Err("awel".into());
+        Ok(bc)
     }
 }

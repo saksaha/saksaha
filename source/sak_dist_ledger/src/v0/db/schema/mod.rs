@@ -2,8 +2,8 @@ use std::sync::Arc;
 
 use crate::LedgerError;
 use sak_kv_db::{
-    BoundColumnFamily, ColumnFamily, ColumnFamilyDescriptor, KeyValueDatabase,
-    Options, WriteBatch, DB,
+    BoundColumnFamily, ColumnFamily, ColumnFamilyDescriptor, IteratorMode,
+    KeyValueDatabase, Options, WriteBatch, DB,
 };
 
 //
@@ -503,6 +503,29 @@ impl LedgerDBSchema {
         batch.put_cf(&cf, key, value);
 
         Ok(())
+    }
+
+    pub(crate) fn get_last_block_height(
+        &self,
+        db: &DB,
+    ) -> Result<Option<String>, String> {
+        let cf = make_cf_handle(db, BLOCK_HASH)?;
+
+        let mut iter = db.iterator_cf(&cf, IteratorMode::End);
+
+        let (height, _hash) = match iter.next() {
+            Some(a) => a,
+            None => return Ok(None),
+        };
+
+        let height = match String::from_utf8(height.to_vec()) {
+            Ok(h) => h,
+            Err(err) => {
+                return Err(format!("Invalid utf8 given, err : {}", err))
+            }
+        };
+
+        Ok(Some(height))
     }
 
     pub(crate) fn make_cf_descriptors(&self) -> Vec<ColumnFamilyDescriptor> {

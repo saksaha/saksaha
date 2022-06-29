@@ -4,12 +4,14 @@ use sak_p2p_frame::{Frame, Parse};
 use sak_types::Tx;
 
 #[derive(Debug)]
-pub struct TxSyn {
+pub struct TxSynMsg {
     pub txs: Vec<Tx>,
 }
 
-impl TxSyn {
-    pub(crate) fn from_parse(parse: &mut Parse) -> Result<TxSyn, BoxedError> {
+impl TxSynMsg {
+    pub(crate) fn from_parse(
+        parse: &mut Parse,
+    ) -> Result<TxSynMsg, BoxedError> {
         let tx_count = parse.next_int()?;
         let mut txs = Vec::with_capacity(tx_count as usize);
 
@@ -30,7 +32,7 @@ impl TxSyn {
                     std::str::from_utf8(k.as_ref())?.into()
                 };
 
-                let signature = {
+                let author_sig = {
                     let k = parse.next_bytes()?;
                     std::str::from_utf8(k.as_ref())?.into()
                 };
@@ -40,13 +42,13 @@ impl TxSyn {
                     std::str::from_utf8(p.as_ref())?.into()
                 };
 
-                Tx::new(created_at, data, pi, signature, Some(contract_addr))
+                Tx::new(created_at, data, author_sig, pi, Some(contract_addr))
             };
 
             txs.push(tx);
         }
 
-        let m = TxSyn { txs };
+        let m = TxSynMsg { txs };
 
         Ok(m)
     }
@@ -74,7 +76,7 @@ impl TxSyn {
                 b
             };
 
-            let signature_bytes = {
+            let author_sig_bytes = {
                 let mut b = BytesMut::new();
                 b.put(tx.get_author_sig().as_bytes());
                 b
@@ -83,7 +85,7 @@ impl TxSyn {
             frame.push_bulk(Bytes::from(tx.get_data().clone()));
             frame.push_bulk(Bytes::from(created_at_bytes));
             frame.push_bulk(Bytes::from(pi_bytes));
-            frame.push_bulk(Bytes::from(signature_bytes));
+            frame.push_bulk(Bytes::from(author_sig_bytes));
             frame.push_bulk(Bytes::from(tx.get_ctr_addr().clone()));
         }
 
