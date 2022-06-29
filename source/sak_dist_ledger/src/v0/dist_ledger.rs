@@ -1,8 +1,8 @@
-use super::tx_pool::TxPool;
-use super::DLedgerEvent;
+use super::DistLedgerEvent;
 use crate::Consensus;
 use crate::LedgerDB;
 use crate::Runtime;
+use crate::SyncPool;
 use colored::Colorize;
 use log::{error, info, warn};
 use sak_types::BlockCandidate;
@@ -15,8 +15,8 @@ const BLOCKCHAIN_EVENT_QUEUE_CAPACITY: usize = 32;
 
 pub struct DistLedger {
     pub(crate) ledger_db: LedgerDB,
-    pub(crate) tx_pool: Arc<TxPool>,
-    pub bc_event_tx: Arc<RwLock<Sender<DLedgerEvent>>>,
+    pub(crate) sync_pool: Arc<SyncPool>,
+    pub bc_event_tx: Arc<RwLock<Sender<DistLedgerEvent>>>,
     pub(crate) vm: VM,
     pub(crate) consensus: Box<dyn Consensus + Send + Sync>,
     runtime: Arc<Runtime>,
@@ -24,21 +24,23 @@ pub struct DistLedger {
 
 pub struct DistLedgerArgs {
     pub app_prefix: String,
-    pub tx_pool_sync_interval: Option<u64>,
+    pub tx_sync_interval: Option<u64>,
     pub genesis_block: Option<BlockCandidate>,
     pub consensus: Box<dyn Consensus + Send + Sync>,
+    pub block_sync_interval: Option<u64>,
 }
 
 impl DistLedger {
     pub async fn init(
-        blockchain_args: DistLedgerArgs,
+        dist_ledger_args: DistLedgerArgs,
     ) -> Result<DistLedger, String> {
         let DistLedgerArgs {
             app_prefix,
-            tx_pool_sync_interval,
+            tx_sync_interval,
             genesis_block,
             consensus,
-        } = blockchain_args;
+            block_sync_interval,
+        } = dist_ledger_args;
 
         let ledger_db = match LedgerDB::init(&app_prefix).await {
             Ok(d) => d,
@@ -52,10 +54,10 @@ impl DistLedger {
 
         let vm = VM::init()?;
 
-        let tx_pool = {
-            let t = TxPool::new();
+        let sync_pool = {
+            let p = SyncPool::new();
 
-            Arc::new(t)
+            Arc::new(p)
         };
 
         let bc_event_tx = {
@@ -66,9 +68,10 @@ impl DistLedger {
 
         let runtime = {
             let r = Runtime::init(
-                tx_pool.clone(),
+                sync_pool.clone(),
                 bc_event_tx.clone(),
-                tx_pool_sync_interval,
+                tx_sync_interval,
+                block_sync_interval,
             );
 
             Arc::new(r)
@@ -76,7 +79,7 @@ impl DistLedger {
 
         let dist_ledger = DistLedger {
             ledger_db,
-            tx_pool: tx_pool.clone(),
+            sync_pool: sync_pool.clone(),
             vm,
             bc_event_tx,
             consensus,
@@ -116,7 +119,7 @@ impl DistLedger {
 
             info!(
                 "Genesis block is already persisted, block_hash: {}",
-                block_hash,
+                block_hash.green(),
             );
 
             block_hash

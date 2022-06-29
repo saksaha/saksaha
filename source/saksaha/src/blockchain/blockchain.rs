@@ -15,8 +15,9 @@ pub(crate) struct Blockchain {
 impl Blockchain {
     pub(crate) async fn init(
         app_prefix: String,
-        tx_pool_sync_interval: Option<u64>,
+        tx_sync_interval: Option<u64>,
         genesis_block: Option<GenesisBlock>,
+        block_sync_interval: Option<u64>,
     ) -> Result<Blockchain, BoxedError> {
         let (gen_block_candidate, consensus) = {
             let genesis_block = match genesis_block {
@@ -36,9 +37,10 @@ impl Blockchain {
 
         let dist_ledger_args = DistLedgerArgs {
             app_prefix,
-            tx_pool_sync_interval,
+            tx_sync_interval,
             genesis_block: Some(gen_block_candidate),
             consensus,
+            block_sync_interval,
         };
 
         let dist_ledger = {

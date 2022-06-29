@@ -49,7 +49,8 @@ pub(crate) struct NodeConfig {
 
 #[derive(Debug)]
 pub(crate) struct BlockchainConfig {
-    pub(crate) tx_pool_sync_interval: Option<u64>,
+    pub(crate) tx_sync_interval: Option<u64>,
+    pub(crate) block_sync_interval: Option<u64>,
 }
 
 impl Config {
@@ -103,7 +104,8 @@ impl Config {
         let conf = Config {
             app_prefix: app_prefix.clone(),
             blockchain: BlockchainConfig {
-                tx_pool_sync_interval: sys_run_args.tx_pool_sync_interval,
+                tx_sync_interval: sys_run_args.tx_sync_interval,
+                block_sync_interval: sys_run_args.block_sync_interval,
             },
             node: NodeConfig {
                 miner: sys_run_args.miner,

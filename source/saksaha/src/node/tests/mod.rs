@@ -1,3 +1,6 @@
+mod p2p_marshal_tx_pool;
+mod p2p_stream_cipher;
+
 #[cfg(test)]
 mod test {
     use aes::cipher::typenum::Diff;
@@ -42,9 +45,10 @@ mod test {
     pub(crate) async fn make_blockchain() -> Blockchain {
         let genesis_block = make_dummy_genesis_block();
 
-        let blockchain = Blockchain::init(String::from("test"), None, None)
-            .await
-            .expect("Blockchain should be made");
+        let blockchain =
+            Blockchain::init(String::from("test"), None, None, None)
+                .await
+                .expect("Blockchain should be made");
 
         // let blockchain = DistLedger::init(blockchain_args)
         //     .await

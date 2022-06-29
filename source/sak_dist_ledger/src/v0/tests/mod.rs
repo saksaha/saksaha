@@ -1,9 +1,19 @@
+use std::collections::HashMap;
+
+use crate::DistLedger;
+use crate::{Consensus, ConsensusError};
+use async_trait::async_trait;
+use sak_contract_std::Request;
+use sak_types::{BlockCandidate, Tx};
+
 #[cfg(test)]
 mod test {
     use crate::{Consensus, ConsensusError};
     use crate::{DistLedger, DistLedgerArgs};
     use sak_types::BlockCandidate;
     use sak_types::Tx;
+
+    use super::Pos;
 
     fn init() {
         let _ = env_logger::builder().is_test(true).init();
@@ -36,37 +46,18 @@ mod test {
         genesis_block
     }
 
-    use async_trait::async_trait;
-
-    pub struct Pos {}
-
-    #[async_trait]
-    impl Consensus for Pos {
-        async fn do_consensus(
-            &self,
-            dist_ledger: &DistLedger,
-            txs: Vec<Tx>,
-        ) -> Result<BlockCandidate, ConsensusError> {
-            return Err("awel".into());
-        }
-    }
-
     async fn make_dist_ledger(gen_block: BlockCandidate) -> DistLedger {
-        let dummy_gen_block_candidate = make_dummy_genesis_block();
+        let pos = Box::new(Pos {});
 
-        let consensus: Box<dyn Consensus + Send + Sync> = {
-            let c = Pos {};
-            Box::new(c)
-        };
-
-        let dledger_args = DistLedgerArgs {
+        let dist_ledger_args = DistLedgerArgs {
             app_prefix: String::from("test"),
-            tx_pool_sync_interval: None,
-            genesis_block: Some(dummy_gen_block_candidate),
-            consensus, // consensus: Box<dyn Consensus + Send + Sync>,
+            tx_sync_interval: None,
+            genesis_block: None,
+            consensus: pos,
+            block_sync_interval: None,
         };
 
-        let dist_ledger = DistLedger::init(dledger_args)
+        let dist_ledger = DistLedger::init(dist_ledger_args)
             .await
             .expect("Blockchain should be initialized");
 
@@ -295,5 +286,44 @@ mod test {
                 .unwrap(),
             &ctr_state.clone()
         );
+    }
+}
+
+pub struct Pos {
+    // pub validator_ctr_addr: String,
+}
+
+#[async_trait]
+impl Consensus for Pos {
+    async fn do_consensus(
+        &self,
+        dist_ledger: &DistLedger,
+        txs: Vec<Tx>,
+    ) -> Result<BlockCandidate, ConsensusError> {
+        // let request = Request {
+        //     req_type: String::from("get_validator"),
+        //     arg: HashMap::new(),
+        // };
+
+        // let validator = dist_ledger
+        //     .query_ctr(&self.validator_ctr_addr, request)
+        //     .await?;
+
+        // println!("validator: {:?}", validator);
+
+        // // if validator == myself {
+
+        // // }
+
+        // let bc = BlockCandidate {
+        //     validator_sig: String::from("1"),
+        //     transactions: txs,
+        //     witness_sigs: vec![],
+        //     created_at: String::from("1"),
+        //     height: String::from("1"),
+        // };
+
+        // Ok(bc)
+        return Err("awel".into());
     }
 }

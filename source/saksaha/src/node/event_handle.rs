@@ -1,7 +1,11 @@
-use crate::machine::Machine;
+use crate::{machine::Machine, system::BoxedError};
 use futures::{SinkExt, StreamExt};
 use log::{info, warn};
-use sak_p2p_trpt::{Msg, TxHashSync, TxSyn, UpgradedConnection};
+use sak_p2p_trpt::{
+    BlockHashSynMsg, BlockSynMsg, Msg, TxHashSynMsg, TxSynMsg,
+    UpgradedConnection,
+};
+use sak_types::Block;
 use std::time::Duration;
 use tokio::sync::RwLockWriteGuard;
 
@@ -15,7 +19,7 @@ pub(super) async fn handle_tx_pool_stat<'a>(
 ) {
     match conn
         .socket
-        .send(Msg::TxHashSyn(TxHashSync {
+        .send(Msg::TxHashSyn(TxHashSynMsg {
             tx_hashes: new_tx_hashes,
         }))
         .await
@@ -80,7 +84,7 @@ pub(super) async fn handle_tx_pool_stat<'a>(
     };
 
     if !txs.is_empty() {
-        match conn.socket.send(Msg::TxSyn(TxSyn { txs })).await {
+        match conn.socket.send(Msg::TxSyn(TxSynMsg { txs })).await {
             Ok(_) => {
                 info!("Sending TxSyn, public_key: {}", public_key);
             }
@@ -89,4 +93,107 @@ pub(super) async fn handle_tx_pool_stat<'a>(
             }
         }
     }
+}
+
+pub(super) async fn handle_new_blocks_ev<'a>(
+    public_key: &str,
+    conn: &'a mut RwLockWriteGuard<'_, UpgradedConnection>,
+    machine: &Machine,
+    new_blocks: Vec<(String, String)>,
+) {
+    println!("sending block hash syn msg!!");
+
+    match conn
+        .socket
+        .send(Msg::BlockHashSyn(BlockHashSynMsg {
+            new_blocks: new_blocks.clone(),
+        }))
+        .await
+    {
+        Ok(_) => {
+            info!("Sending block hash syn, dst public_key: {}", public_key);
+        }
+        Err(err) => {
+            warn!(
+                "Failed to request to synchronize with peer node, err: {}",
+                err,
+            );
+        }
+    };
+
+    let resp_timeout =
+        tokio::time::sleep(Duration::from_millis(RESPONSE_TIMEOUT));
+
+    let _peer_height = tokio::select! {
+        _ = resp_timeout => {
+            warn!(
+                "Peer did not respond in time, dst public_key: {}",
+                public_key,
+            );
+
+            return;
+        },
+        resp = conn.socket.next() => {
+            match resp {
+                Some(maybe_msg) => match maybe_msg {
+                    Ok(msg) => match msg {
+                        Msg::BlockHashAck(block_hash_syn_msg) => {
+                            let _ = handle_block_hash_ack(block_hash_syn_msg, conn, machine).await;
+                        }
+                        other_msg => {
+                            // tx_hash_syn
+                            warn!(
+                                "Received an invalid type message, msg: {:?}",
+                                other_msg,
+                            );
+
+                            return;
+                        }
+                    },
+                    Err(err) => {
+                        warn!("Failed to parse the msg, err: {}", err);
+                        return;
+                    }
+                },
+                None => {
+                    warn!("Received an invalid data stream");
+                    return;
+                }
+            }
+        },
+    };
+}
+
+async fn handle_block_hash_ack<'a>(
+    block_hash_syn_msg: BlockHashSynMsg,
+    conn: &'a mut RwLockWriteGuard<'_, UpgradedConnection>,
+    machine: &Machine,
+) -> Result<(), BoxedError> {
+    let new_blocks = block_hash_syn_msg.new_blocks;
+
+    let block_hashes: Vec<&String> = new_blocks
+        .iter()
+        .map(|(_, block_hash)| block_hash)
+        .collect();
+
+    let block_candidates = machine
+        .blockchain
+        .dist_ledger
+        .get_block_candidates(block_hashes)
+        .await?;
+
+    if !block_candidates.is_empty() {
+        match conn
+            .socket
+            .send(Msg::BlockSyn(BlockSynMsg { block_candidates }))
+            .await
+        {
+            Ok(_) => {}
+            Err(err) => {
+                info!("Failed to send requested tx, err: {}", err,);
+            }
+        }
+    }
+
+    Ok(())
 }

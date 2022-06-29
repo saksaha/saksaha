@@ -5,11 +5,6 @@ mod test_suite {
     use crate::{
         machine::{self, Machine},
         node::LocalNode,
-        p2p::{
-            dial_scheduler::{P2PDialScheduler, P2PDialSchedulerArgs},
-            server::Server,
-            task::{runtime::P2PTaskRuntime, P2PTask},
-        },
     };
     use colored::Colorize;
     use futures::{SinkExt, StreamExt};
@@ -48,14 +43,14 @@ mod test_suite {
                 Tx::new(
                     String::from("1"),
                     vec![11, 11, 11],
-                    String::from("1"),
+                    String::from("marshal_test_author_sig_1"),
                     b"1".to_vec(),
                     Some(String::from("11")),
                 ),
                 Tx::new(
                     String::from("2"),
                     vec![22, 22, 22],
-                    String::from("2"),
+                    String::from("marshal_test_author_sig_2"),
                     b"2".to_vec(),
                     Some(String::from("22")),
                 ),
@@ -191,9 +186,9 @@ mod test_suite {
         let blockchain = {
             let genesis_block = make_dummy_genesis_block();
 
-            Blockchain::init(app_prefix, None, None)
+            Blockchain::init(app_prefix, None, None, None)
                 .await
-                .expect("blockchain should be initialized")
+                .unwrap()
         };
 
         let machine = {
@@ -281,7 +276,7 @@ mod test_suite {
                 transactions: dummy_txs.clone(),
                 witness_sigs: vec![],
                 created_at: String::from(""),
-                height: String::from(""),
+                height: String::from("1"),
             };
 
             c

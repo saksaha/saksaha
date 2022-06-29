@@ -182,8 +182,9 @@ impl Routine {
         let blockchain = {
             let b = Blockchain::init(
                 config.app_prefix,
-                config.blockchain.tx_pool_sync_interval,
+                config.blockchain.tx_sync_interval,
                 None,
+                config.blockchain.block_sync_interval,
             )
             .await?;
 

@@ -184,11 +184,20 @@ pub(super) fn create_app<'a>() -> Command<'a> {
                 ),
         )
         .arg(
-            Arg::new("tx-pool-sync-interval") //
-                .long("tx-pool-sync-interval")
+            Arg::new("tx-sync-interval") //
+                .long("tx-sync-interval")
                 .takes_value(true)
                 .long_help(
-                    "Tx pool sync (with peers) minimum interval \n\
+                    "Tx sync (with peers) minimum interval \n\
+                    in milliseconds e.g. 5000",
+                ),
+        )
+        .arg(
+            Arg::new("block-sync-interval") //
+                .long("block-sync-interval")
+                .takes_value(true)
+                .long_help(
+                    "Block sync  minimum interval \n\
                     in milliseconds e.g. 5000",
                 ),
         )
