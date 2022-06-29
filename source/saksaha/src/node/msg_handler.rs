@@ -1,6 +1,6 @@
 use crate::{machine::Machine, system::BoxedError};
 use futures::{SinkExt, StreamExt};
-use log::{info, warn};
+use log::{debug, info, warn};
 use sak_p2p_trpt::{
     BlockHashSynMsg, BlockSynMsg, Msg, TxHashSynMsg, UpgradedConnection,
 };
@@ -21,19 +21,11 @@ pub(crate) async fn handle_msg2<'a>(
                 .await
         }
         Msg::BlockHashSyn(block_hash_syn_msg) => {
-            println!("handle block hash sync!!!!");
-
-            handle_block_hash_syn(
-                public_key,
-                block_hash_syn_msg,
-                machine,
-                &mut conn,
-            )
-            .await?;
+            handle_block_hash_syn(block_hash_syn_msg, machine, &mut conn)
+                .await?;
         }
         Msg::BlockSyn(block_syn_msg) => {
-            handle_block_syn(public_key, block_syn_msg, machine, &mut conn)
-                .await?;
+            handle_block_syn(block_syn_msg, machine, &mut conn).await?;
         }
         _ => (),
     };
@@ -111,19 +103,24 @@ pub(crate) async fn handle_tx_hash_syn<'a>(
 }
 
 pub(crate) async fn handle_block_hash_syn<'a>(
-    public_key: &str,
     block_hash_syn_msg: BlockHashSynMsg,
     machine: &Machine,
     conn: &'a mut RwLockWriteGuard<'_, UpgradedConnection>,
 ) -> Result<(), BoxedError> {
     let new_blocks = block_hash_syn_msg.new_blocks;
 
-    let (last_block_height, latest_block_hash) = machine
+    let (_, latest_block_hash) = machine
         .blockchain
         .dist_ledger
         .get_latest_block_hash()
         .await?
         .ok_or("height does not exist")?;
+
+    debug!(
+        "handle block hash syn, latest_block_hash: {}, received_new_blocks: {:?}",
+        latest_block_hash,
+        new_blocks,
+    );
 
     let mut blocks_to_req = vec![];
     for (height, block_hash) in new_blocks {
@@ -145,20 +142,19 @@ pub(crate) async fn handle_block_hash_syn<'a>(
         }
     };
 
-    println!("sent block hash ack");
-
     Ok(())
 }
 
 pub(crate) async fn handle_block_syn<'a>(
-    public_key: &str,
     block_syn_msg: BlockSynMsg,
     machine: &Machine,
-    conn: &'a mut RwLockWriteGuard<'_, UpgradedConnection>,
+    _conn: &'a mut RwLockWriteGuard<'_, UpgradedConnection>,
 ) -> Result<(), BoxedError> {
-    let blocks = block_syn_msg.blocks;
+    let block_candidates = block_syn_msg.block_candidates;
 
-    // machine.blockchain.dist_ledger.write_block()
+    for bc in block_candidates {
+        machine.blockchain.dist_ledger.write_block(Some(bc)).await?;
+    }
 
     Ok(())
 }

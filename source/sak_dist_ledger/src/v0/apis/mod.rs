@@ -5,9 +5,45 @@ use log::warn;
 use sak_contract_std::{Request, Storage};
 use sak_types::{Block, BlockCandidate, Tx};
 use sak_vm::CtrFn;
-use std::{collections::HashMap, sync::Arc};
 
 impl DistLedger {
+    pub async fn get_block_candidates(
+        &self,
+        block_hashes: Vec<&String>,
+    ) -> Result<Vec<BlockCandidate>, LedgerError> {
+        let blocks = self.ledger_db.get_blocks(block_hashes).await?;
+
+        let mut block_candidates = vec![];
+
+        for b in blocks {
+            let tx_hashes = b.get_tx_hashes();
+
+            let mut txs = vec![];
+
+            for tx_hash in tx_hashes {
+                let tx = self
+                    .ledger_db
+                    .get_tx(tx_hash)
+                    .await?
+                    .ok_or("tx (of block candidate) should be persisted")?;
+
+                txs.push(tx)
+            }
+
+            let block_candidate = BlockCandidate {
+                validator_sig: b.get_validator_sig().to_string(),
+                transactions: txs,
+                witness_sigs: b.get_witness_sigs().to_owned(),
+                created_at: b.get_created_at().to_owned(),
+                height: b.get_height().to_owned(),
+            };
+
+            block_candidates.push(block_candidate);
+        }
+
+        Ok(block_candidates)
+    }
+
     pub async fn get_blocks(
         &self,
         block_hashes: Vec<&String>,

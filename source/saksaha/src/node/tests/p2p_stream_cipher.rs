@@ -54,15 +54,7 @@ mod test_suite {
     async fn create_client(
         p2p_port: Option<u16>,
         disc_port: Option<u16>,
-    ) -> (
-        // Arc<Server>,
-        // Arc<P2PTaskRuntime>,
-        // Arc<TaskQueue<P2PTask>>,
-        Arc<PeerTable>,
-        Arc<Identity>,
-        // Arc<Discovery>,
-        Arc<P2PHost>,
-    ) {
+    ) -> (Arc<PeerTable>, Arc<Identity>, Arc<P2PHost>) {
         let (p2p_socket, p2p_port) = sak_utils_net::bind_tcp_socket(p2p_port)
             .await
             .expect("p2p socket should be initialized");
@@ -152,68 +144,51 @@ mod test_suite {
             Arc::new(h)
         };
 
-        (
-            // p2p_server,
-            // p2p_task_runtime,
-            // p2p_task_queue,
-            p2p_peer_table,
-            identity,
-            p2p_host,
-            // p2p_peer_table,
-            // p2p_discovery,
-        )
+        (p2p_peer_table, identity, p2p_host)
     }
 
-    async fn make_machine(app_prefix: String) -> Arc<Machine> {
-        let blockchain = {
-            Blockchain::init(app_prefix, None, None, None)
-                .await
-                .unwrap()
-        };
+    // async fn make_machine(app_prefix: String) -> Arc<Machine> {
+    //     let blockchain = {
+    //         Blockchain::init(app_prefix, None, None, None)
+    //             .await
+    //             .unwrap()
+    //     };
 
-        let machine = {
-            let m = Machine { blockchain };
+    //     let machine = {
+    //         let m = Machine { blockchain };
 
-            Arc::new(m)
-        };
-        machine
-    }
+    //         Arc::new(m)
+    //     };
+    //     machine
+    // }
 
-    async fn make_local_node(
-        app_prefix: String,
-        peer_table: Arc<PeerTable>,
-        machine: Arc<Machine>,
-        identity: Arc<Identity>,
-    ) -> Arc<LocalNode> {
-        let local_node = {
-            let ln = LocalNode {
-                peer_table,
-                machine,
-                miner: true,
-                mine_interval: None,
-                identity,
-            };
+    // async fn make_local_node(
+    //     app_prefix: String,
+    //     peer_table: Arc<PeerTable>,
+    //     machine: Arc<Machine>,
+    //     identity: Arc<Identity>,
+    // ) -> Arc<LocalNode> {
+    //     let local_node = {
+    //         let ln = LocalNode {
+    //             peer_table,
+    //             machine,
+    //             miner: true,
+    //             mine_interval: None,
+    //             identity,
+    //         };
 
-            ln
-        };
+    //         ln
+    //     };
 
-        Arc::new(local_node)
-    }
+    //     Arc::new(local_node)
+    // }
 
     #[tokio::test(flavor = "multi_thread")]
     async fn test_is_handshake_successful() {
         init();
 
-        let (
-            // p2p_server_1,
-            // p2p_task_runtime_1,
-            // p2p_task_queue_1,
-            // identity_1,
-            peer_table_1,
-            // p2p_discovery_1,
-            identity_1,
-            p2p_host_1,
-        ) = create_client(Some(35519), Some(35518)).await;
+        let (peer_table_1, identity_1, p2p_host_1) =
+            create_client(Some(35519), Some(35518)).await;
 
         let (p2p_server_2, .., p2p_discovery_2) =
             create_client(Some(35521), Some(35520)).await;
