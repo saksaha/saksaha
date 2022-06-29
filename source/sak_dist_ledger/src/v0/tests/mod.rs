@@ -1,5 +1,8 @@
 #[cfg(test)]
 mod test {
+    use std::fmt::Error;
+
+    use crate::v0::tx_pool::TxPool;
     use crate::{Consensus, ConsensusError};
     use crate::{DistLedger, DistLedgerArgs};
     use sak_types::BlockCandidate;
@@ -295,5 +298,23 @@ mod test {
                 .unwrap(),
             &ctr_state.clone()
         );
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    #[should_panic]
+    async fn test_insert_invalid_contract_to_tx_pool() {
+        let test_wasm = include_bytes!("./test_wasm.wasm").to_vec();
+
+        let dummy_tx = Tx::new(
+            String::from("1346546123"),
+            test_wasm,
+            String::from("0x111"),
+            b"0x1111".to_vec(),
+            Some(String::from("test_wasm")),
+        );
+
+        let tx_pool = TxPool::new();
+
+        tx_pool.insert(dummy_tx).await.unwrap();
     }
 }

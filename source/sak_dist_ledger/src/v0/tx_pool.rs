@@ -1,5 +1,5 @@
-use log::{error, warn};
-use sak_types::Tx;
+use log::warn;
+use sak_types::{Tx, TxType};
 use std::collections::{HashMap, HashSet};
 use tokio::sync::RwLock;
 
@@ -68,6 +68,20 @@ impl TxPool {
     }
 
     pub(crate) async fn insert(&self, tx: Tx) -> Result<(), String> {
+        match tx.get_type() {
+            TxType::ContractDeploy => {
+                // check functions
+                match tx.is_valid_ctr_deploying_tx() {
+                    Ok(o) => o,
+                    Err(err) => {
+                        return Err(format!("Err: {:?}", err));
+                    }
+                }
+            }
+            TxType::ContractCall => {}
+            TxType::Plain => {}
+        };
+
         let tx_hash = tx.get_hash();
 
         let mut tx_map_lock = self.tx_map.write().await;
