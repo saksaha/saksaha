@@ -25,7 +25,7 @@ impl DistLedger {
 
         let ctr_fn = CtrFn::Query(request, ctr_state);
 
-        let ret = self.vm.exec(ctr_wasm, ctr_fn)?;
+        let ret = self.vm.invoke(ctr_wasm, ctr_fn)?;
 
         println!("exec ctr, ctr_state: {:?}", ret);
 
