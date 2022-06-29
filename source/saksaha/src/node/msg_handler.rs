@@ -1,7 +1,9 @@
 use crate::{machine::Machine, system::BoxedError};
 use futures::{SinkExt, StreamExt};
 use log::{info, warn};
-use sak_p2p_trpt::{BlockHashSynMsg, Msg, TxHashSynMsg, UpgradedConnection};
+use sak_p2p_trpt::{
+    BlockHashSynMsg, BlockSynMsg, Msg, TxHashSynMsg, UpgradedConnection,
+};
 use std::time::Duration;
 use tokio::sync::RwLockWriteGuard;
 
@@ -12,61 +14,39 @@ pub(crate) async fn handle_msg2<'a>(
     public_key: &str,
     machine: &Machine,
     mut conn: &'a mut RwLockWriteGuard<'_, UpgradedConnection>,
-) {
+) -> Result<(), BoxedError> {
     match msg {
-        Msg::TxHashSyn(tx_hash_sync) => {
-            handle_tx_hash_syn(public_key, tx_hash_sync, machine, &mut conn)
+        Msg::TxHashSyn(tx_hash_syn_msg) => {
+            handle_tx_hash_syn(public_key, tx_hash_syn_msg, machine, &mut conn)
                 .await
         }
-        Msg::BlockHashSyn(block_hash_sync) => {
+        Msg::BlockHashSyn(block_hash_syn_msg) => {
             println!("handle block hash sync!!!!");
 
             handle_block_hash_syn(
                 public_key,
-                block_hash_sync,
+                block_hash_syn_msg,
                 machine,
                 &mut conn,
             )
-            .await;
+            .await?;
+        }
+        Msg::BlockSyn(block_syn_msg) => {
+            handle_block_syn(public_key, block_syn_msg, machine, &mut conn)
+                .await?;
         }
         _ => (),
     };
+
+    Ok(())
 }
 
 pub(crate) async fn handle_tx_hash_syn<'a>(
     public_key: &str,
-    // msg: Msg,
     tx_hash_syn_msg: TxHashSynMsg,
     machine: &Machine,
     conn: &'a mut RwLockWriteGuard<'_, UpgradedConnection>,
 ) {
-    // let txs_to_request = match msg {
-    //     Msg::TxHashSyn(tx_hash_sync) => {
-    //         info!("Handle TxHashSyn msg, src public_key: {}", public_key);
-
-    //         let txs_to_request = machine
-    //             .blockchain
-    //             .dist_ledger
-    //             .get_tx_pool_diff(tx_hash_sync.tx_hashes)
-    //             .await;
-
-    //         txs_to_request
-    //     }
-    //     Msg::TxSyn(_) => {
-    //         warn!("Peer has sent invalid type message, type: TxSyn");
-    //         return;
-    //     }
-    //     Msg::HandshakeSyn(_) => {
-    //         warn!("Peer has sent invalid type message, type: HandshakeSyn");
-    //         return;
-    //     }
-    //     Msg::HandshakeAck(_) => {
-    //         warn!("Peer has sent invalid type message, type: HandshakeAck");
-    //         return;
-    //     }
-    //     _ => return,
-    // };
-
     let txs_to_request = machine
         .blockchain
         .dist_ledger
@@ -165,56 +145,20 @@ pub(crate) async fn handle_block_hash_syn<'a>(
         }
     };
 
-    let resp_timeout =
-        tokio::time::sleep(Duration::from_millis(RESPONSE_TIMEOUT));
+    println!("sent block hash ack");
 
-    let txs = tokio::select! {
-            _ = resp_timeout => {
-                warn!(
-                    "Peer did not respond in time, dst public_key: {}",
-                    public_key,
-                );
+    Ok(())
+}
 
-                return Ok(());
-            },
-            resp = conn.socket.next() => {
-                match resp{
-                    Some(maybe_msg) => match maybe_msg {
-                        Ok(msg) => match msg {
-                            Msg::BlockSyn(block_syn_msg) => {
-                                info!(
-                                    "Handling BlockSyn msg, src public_key: {}",
-                                    public_key
-                                );
+pub(crate) async fn handle_block_syn<'a>(
+    public_key: &str,
+    block_syn_msg: BlockSynMsg,
+    machine: &Machine,
+    conn: &'a mut RwLockWriteGuard<'_, UpgradedConnection>,
+) -> Result<(), BoxedError> {
+    let blocks = block_syn_msg.blocks;
 
-                                // match machine.blockchain.dist_ledger.write_blocks(b.blocks).await{
-                                //     Ok(b)=> {
-                                //         b
-                                //     },
-                                //     Err(err) => {
-                                //         warn!(" ****** There is a probability that an error will occur, but not return error, {} ", err);
-                                //         return;
-                                //     }
-                                // };
-                                warn!(" ****** There is a probability that an error will occur, but not return error");
-                            }
-                            other_msg => {
-                                warn!(
-                                    "Received an invalid type message, msg: {:?}",
-                                    other_msg,
-                                );
-                            }
-                        },
-                        Err(err) => {
-                            warn!("Failed to parse the msg, err: {}", err);
-                        }
-                    },
-                    None => {
-                        warn!("Received an invalid data stream");
-                    }
-            }
-        }
-    };
+    // machine.blockchain.dist_ledger.write_block()
 
     Ok(())
 }

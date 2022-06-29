@@ -23,11 +23,11 @@ impl LedgerDB {
 
     pub(crate) async fn get_blocks(
         &self,
-        block_hashes: Vec<String>,
+        block_hashes: Vec<&String>,
     ) -> Result<Vec<Block>, LedgerError> {
         let mut ret = vec![];
         for block_hash in block_hashes {
-            match self._get_block(&block_hash)? {
+            match self._get_block(block_hash)? {
                 Some(b) => ret.push(b),
                 None => (),
             }

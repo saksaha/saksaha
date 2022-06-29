@@ -10,7 +10,7 @@ use std::{collections::HashMap, sync::Arc};
 impl DistLedger {
     pub async fn get_blocks(
         &self,
-        block_hashes: Vec<String>,
+        block_hashes: Vec<&String>,
     ) -> Result<Vec<Block>, LedgerError> {
         self.ledger_db.get_blocks(block_hashes).await
     }

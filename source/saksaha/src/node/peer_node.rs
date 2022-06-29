@@ -54,13 +54,13 @@ impl PeerNode {
                     match maybe_msg {
                         Some(maybe_msg) => match maybe_msg {
                             Ok(msg) => {
-                                msg_handler::handle_msg2(
+                                let _ = msg_handler::handle_msg2(
                                     msg,
                                     public_key,
                                     &self.machine,
                                     &mut conn,
 
-                                ).await
+                                ).await;
                             }
                             Err(err) => {
                                 warn!("Failed to parse the msg, err: {}", err);
