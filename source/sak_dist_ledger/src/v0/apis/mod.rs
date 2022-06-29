@@ -76,7 +76,8 @@ impl DistLedger {
                     // TODO
                     // Should be able to exec ctr
                 } else {
-                    let initial_ctr_state = self.vm.exec(data, CtrFn::Init)?;
+                    let initial_ctr_state =
+                        self.vm.invoke(data, CtrFn::Init)?;
 
                     state_updates.push(StateUpdate {
                         ctr_addr: tx.get_ctr_addr().to_string(),

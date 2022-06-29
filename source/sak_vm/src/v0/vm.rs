@@ -15,7 +15,7 @@ impl VM {
         Ok(vm)
     }
 
-    pub fn exec(
+    pub fn invoke(
         &self,
         contract_wasm: impl AsRef<[u8]>,
         ctr_fn: CtrFn,
@@ -24,40 +24,29 @@ impl VM {
 
         match ctr_fn {
             CtrFn::Init => {
-                return exec_init(instance, store, memory);
+                return invoke_init(instance, store, memory);
             }
             CtrFn::Query(request, storage) => {
-                return exec_query(instance, store, memory, request, storage);
+                return invoke_query(instance, store, memory, request, storage);
             }
             CtrFn::Execute(request, storage) => {
-                return exec_query(instance, store, memory, request, storage);
+                return invoke_execute(
+                    instance, store, memory, request, storage,
+                );
             }
         }
     }
 }
 
-fn exec_init(
+fn invoke_init(
     instance: Instance,
     mut store: Store<i32>,
     memory: Memory,
 ) -> Result<String, VMError> {
-    let contract_fn: TypedFunc<(i32, i32), (i32, i32)> =
+    let contract_fn: TypedFunc<(), (i32, i32)> =
         { instance.get_typed_func(&mut store, "init")? };
 
-    let storage: HashMap<String, String> = HashMap::new();
-    let (storage_bytes, storage_len) = {
-        let str = serde_json::to_value(storage).unwrap().to_string();
-
-        (str.as_bytes().to_vec(), str.len())
-    };
-
-    // TODO
-    // Init should not use "storage", for the moment
-    let storage_ptr =
-        utils::copy_memory(&storage_bytes, &instance, &mut store)?;
-
-    let (ret_ptr, ret_len) = contract_fn
-        .call(&mut store, (storage_ptr as i32, storage_len as i32))?;
+    let (ret_ptr, ret_len) = contract_fn.call(&mut store, ())?;
 
     let ret: String;
     unsafe {
@@ -69,7 +58,7 @@ fn exec_init(
     Ok(ret)
 }
 
-fn exec_query(
+fn invoke_query(
     instance: Instance,
     mut store: Store<i32>,
     memory: Memory,
@@ -78,6 +67,54 @@ fn exec_query(
 ) -> Result<String, VMError> {
     let contract_fn: TypedFunc<(i32, i32, i32, i32), (i32, i32)> =
         { instance.get_typed_func(&mut store, "query")? };
+
+    let (request_bytes, request_len) = {
+        let str = serde_json::to_value(request).unwrap().to_string();
+
+        (str.as_bytes().to_vec(), str.len())
+    };
+
+    let request_ptr =
+        utils::copy_memory(&request_bytes, &instance, &mut store)?;
+
+    let (storage_bytes, storage_len) = {
+        let str = serde_json::to_value(storage).unwrap().to_string();
+
+        (str.as_bytes().to_vec(), str.len())
+    };
+
+    let storage_ptr =
+        utils::copy_memory(&storage_bytes, &instance, &mut store)?;
+
+    let (ret_ptr, ret_len) = contract_fn.call(
+        &mut store,
+        (
+            storage_ptr as i32,
+            storage_len as i32,
+            request_ptr as i32,
+            request_len as i32,
+        ),
+    )?;
+
+    let ret: String;
+    unsafe {
+        ret =
+            utils::read_string(&store, &memory, ret_ptr as u32, ret_len as u32)
+                .unwrap()
+    }
+
+    Ok(ret)
+}
+
+fn invoke_execute(
+    instance: Instance,
+    mut store: Store<i32>,
+    memory: Memory,
+    request: Request,
+    storage: Storage,
+) -> Result<String, VMError> {
+    let contract_fn: TypedFunc<(i32, i32, i32, i32), (i32, i32)> =
+        { instance.get_typed_func(&mut store, "execute")? };
 
     let (request_bytes, request_len) = {
         let str = serde_json::to_value(request).unwrap().to_string();
