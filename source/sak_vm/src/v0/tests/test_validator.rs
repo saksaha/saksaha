@@ -79,7 +79,7 @@ mod test {
         let ctr_fn = CtrFn::Init;
 
         let validator_list_from_init = vm
-            .exec(ctr_wasm, ctr_fn)
+            .invoke(ctr_wasm, ctr_fn)
             .expect("validator should be obtained");
 
         let ctr_validator_state: Storage =
@@ -126,7 +126,7 @@ mod test {
         let ctr_fn = CtrFn::Query(request, storage);
 
         let validator_from_fn_query = vm
-            .exec(ctr_wasm, ctr_fn)
+            .invoke(ctr_wasm, ctr_fn)
             .expect("validator should be obtained");
 
         println!("validator expected: {:?}", test_validator_vec[0]);
@@ -167,7 +167,7 @@ mod test {
         let ctr_fn = CtrFn::Execute(request, storage);
 
         let validator_state_from_fn_execute = vm
-            .exec(ctr_wasm, ctr_fn)
+            .invoke(ctr_wasm, ctr_fn)
             .expect("validator should be obtained");
 
         let validator_state: Storage =

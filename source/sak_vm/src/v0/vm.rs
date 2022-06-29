@@ -15,7 +15,7 @@ impl VM {
         Ok(vm)
     }
 
-    pub fn exec(
+    pub fn invoke(
         &self,
         contract_wasm: impl AsRef<[u8]>,
         ctr_fn: CtrFn,
@@ -24,19 +24,21 @@ impl VM {
 
         match ctr_fn {
             CtrFn::Init => {
-                return exec_init(instance, store, memory);
+                return invoke_init(instance, store, memory);
             }
             CtrFn::Query(request, storage) => {
-                return exec_query(instance, store, memory, request, storage);
+                return invoke_query(instance, store, memory, request, storage);
             }
             CtrFn::Execute(request, storage) => {
-                return exec_execute(instance, store, memory, request, storage);
+                return invoke_execute(
+                    instance, store, memory, request, storage,
+                );
             }
         }
     }
 }
 
-fn exec_init(
+fn invoke_init(
     instance: Instance,
     mut store: Store<i32>,
     memory: Memory,
@@ -56,7 +58,7 @@ fn exec_init(
     Ok(ret)
 }
 
-fn exec_query(
+fn invoke_query(
     instance: Instance,
     mut store: Store<i32>,
     memory: Memory,
@@ -104,7 +106,7 @@ fn exec_query(
     Ok(ret)
 }
 
-fn exec_execute(
+fn invoke_execute(
     instance: Instance,
     mut store: Store<i32>,
     memory: Memory,
