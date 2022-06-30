@@ -4,7 +4,6 @@ use super::utils::test_utils;
 mod test_suite {
     use super::*;
     use hyper::{Body, Client, Method, Request, Uri};
-    use sak_types::Block;
 
     #[tokio::test(flavor = "multi_thread")]
     async fn test_rpc_client_and_get_block() {
@@ -12,9 +11,9 @@ mod test_suite {
 
         let (rpc, rpc_socket_addr, machine) = test_utils::make_rpc().await;
 
-        let rpc_server = tokio::spawn(async move { rpc.run().await });
+        let _rpc_server = tokio::spawn(async move { rpc.run().await });
 
-        let client = Client::new();
+        let _client = Client::new();
 
         let block_candidate = test_utils::make_dummy_genesis_block();
         let block_candidate_same = test_utils::make_dummy_genesis_block();
@@ -47,7 +46,7 @@ mod test_suite {
         let req = Request::builder()
             .method(Method::POST)
             .uri(uri)
-            .body(Body::from(block_hash))
+            .body(Body::from(block_hash.unwrap()))
             .expect("request builder should be made");
 
         match hyper::body::to_bytes(req.into_body()).await {

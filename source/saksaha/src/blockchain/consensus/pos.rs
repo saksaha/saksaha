@@ -1,13 +1,13 @@
 use async_trait::async_trait;
 use sak_contract_std::Request;
 use sak_dist_ledger::{Consensus, ConsensusError, DistLedger};
+use sak_p2p_id::Identity;
 use sak_types::{BlockCandidate, Tx};
-use std::collections::HashMap;
-use std::future::Future;
-use std::pin::Pin;
+use std::{collections::HashMap, sync::Arc};
 
 pub struct Pos {
     pub validator_ctr_addr: String,
+    pub identity: Arc<Identity>,
 }
 
 #[async_trait]
@@ -18,28 +18,40 @@ impl Consensus for Pos {
         txs: Vec<Tx>,
     ) -> Result<BlockCandidate, ConsensusError> {
         let request = Request {
-            req_type: String::from("get_validator"),
-            arg: HashMap::new(),
+            req_type: "get_validator".to_string(),
+            arg: HashMap::with_capacity(10),
         };
 
-        let _validator = dist_ledger
+        let validator = dist_ledger
             .query_ctr(&self.validator_ctr_addr, request)
             .await?;
 
-        // println!("validator: {:?}", validator);
+        let height = next_height(dist_ledger.get_last_block_height().await?)?;
 
-        // // if validator == myself {
+        // TODO use identity
+        if !validator.is_empty() {
+            let bc = BlockCandidate {
+                validator_sig: String::from("1"),
+                transactions: txs,
+                witness_sigs: vec![],
+                created_at: String::from("1"),
+                height,
+            };
 
-        // // }
+            return Ok(bc);
+        }
 
-        let bc = BlockCandidate {
-            validator_sig: String::from("1"),
-            transactions: txs,
-            witness_sigs: vec![],
-            created_at: String::from("1"),
-            height: String::from("1"),
-        };
-
-        Ok(bc)
+        return Err("Not a valid validator".into());
     }
+}
+
+fn next_height(maybe_height: Option<String>) -> Result<String, ConsensusError> {
+    let height = if let Some(height) = maybe_height {
+        let h: i32 = height.parse()?;
+        format!("{}", h + 1)
+    } else {
+        format!("{}", 0)
+    };
+
+    Ok(height)
 }

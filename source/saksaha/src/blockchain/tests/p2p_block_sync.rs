@@ -5,7 +5,6 @@ mod test_suite {
     use crate::{machine::Machine, node::LocalNode};
     use colored::Colorize;
     use log::debug;
-    use sak_dist_ledger::{Consensus, DistLedger, DistLedgerArgs};
     // use sak_blockchain::{Blockchain, BlockchainArgs};
     use sak_p2p_addr::{AddrStatus, UnknownAddr};
     use sak_p2p_id::{Credential, Identity};
@@ -149,7 +148,7 @@ mod test_suite {
             .expect("P2P Host should be initialized");
 
         let blockchain = {
-            Blockchain::init(app_prefix, None, None, None)
+            Blockchain::init(app_prefix, None, None, None, identity.clone())
                 .await
                 .unwrap()
         };
@@ -166,7 +165,6 @@ mod test_suite {
                 machine: machine.clone(),
                 miner: false,
                 mine_interval: None,
-                identity: identity.clone(),
             };
 
             Arc::new(ln)

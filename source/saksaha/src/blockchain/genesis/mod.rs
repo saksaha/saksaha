@@ -1,3 +1,3 @@
 mod genesis;
 
-pub(super) use genesis::*;
+pub(crate) use genesis::*;

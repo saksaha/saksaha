@@ -1,7 +1,5 @@
 use crate::Block;
-use crate::Hashable;
 use crate::Tx;
-use std::collections::{HashMap, HashSet};
 
 #[derive(Debug)]
 pub struct BlockCandidate {

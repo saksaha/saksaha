@@ -35,6 +35,13 @@ fn get_routes() -> Vec<(Method, &'static str, Handler)> {
                 Box::pin(v0::get_block(req, sys_handle))
             }),
         ),
+        (
+            Method::POST,
+            "/apis/v0/call_contract",
+            Box::new(|req, sys_handle| {
+                Box::pin(v0::call_contract(req, sys_handle))
+            }),
+        ),
     ]
 }
 

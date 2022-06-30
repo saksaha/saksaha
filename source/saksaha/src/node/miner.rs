@@ -1,31 +1,23 @@
 use crate::machine::Machine;
 use log::{error, info, warn};
-use sak_p2p_id::{Credential, Identity};
 use std::{
     sync::Arc,
     time::{Duration, SystemTime},
 };
-use tokio::sync::RwLock;
 
 const MINE_INTERVAL: u64 = 5000;
 
 pub(super) struct Miner {
     pub(super) machine: Arc<Machine>,
     pub(super) mine_interval: Option<u64>,
-    pub(super) identity: Arc<Identity>,
     error_count: usize,
 }
 
 impl Miner {
-    pub fn init(
-        machine: Arc<Machine>,
-        mine_interval: Option<u64>,
-        identity: Arc<Identity>,
-    ) -> Miner {
+    pub fn init(machine: Arc<Machine>, mine_interval: Option<u64>) -> Miner {
         Miner {
             machine,
             mine_interval,
-            identity,
             error_count: 0,
         }
     }

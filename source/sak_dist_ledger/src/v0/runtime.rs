@@ -87,7 +87,7 @@ impl TxSyncRoutine {
                 {
                     Ok(_) => (),
                     Err(err) => {
-                        error!("Error sending blockchain event, err: {}", err);
+                        error!("Error sending tx sync event, err: {}", err);
                     }
                 };
             }
@@ -124,7 +124,7 @@ impl BlockSyncRoutine {
                 {
                     Ok(_) => (),
                     Err(err) => {
-                        error!("Error sending blockchain event, err: {}", err);
+                        error!("Error sending block sync event, err: {}", err);
                     }
                 };
             }
