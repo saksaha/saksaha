@@ -3,7 +3,7 @@ mod ctr;
 use crate::{Consensus, DistLedger, LedgerError, StateUpdate};
 use log::warn;
 use sak_contract_std::{Request, Storage};
-use sak_types::{Block, BlockCandidate, Tx};
+use sak_types::{Block, BlockCandidate, Tx, TxType};
 use sak_vm::CtrFn;
 
 impl DistLedger {
@@ -138,20 +138,30 @@ impl DistLedger {
         let mut state_updates = vec![];
 
         for tx in txs.iter() {
-            if tx.has_ctr_addr() {
-                let data = tx.get_data();
+            match tx.get_type() {
+                TxType::ContractDeploy => {
+                    let initial_ctr_state =
+                        self.vm.invoke(tx.get_data(), CtrFn::Init)?;
 
-                if let Ok(_request) = Request::parse(data) {
-                    // TODO
-                    // Should be able to exec ctr
-                } else {
-                    if let Ok(state) = self.vm.invoke(data, CtrFn::Init) {
-                        state_updates.push(StateUpdate {
-                            ctr_addr: tx.get_ctr_addr().to_string(),
-                            new_state: state,
-                        });
-                    }
+                    state_updates.push(StateUpdate {
+                        ctr_addr: tx.get_ctr_addr().to_string(),
+                        new_state: initial_ctr_state,
+                    });
                 }
+                TxType::ContractCall => {
+                    let req = Request::parse(tx.get_data()).expect(
+                        "Request is required to invoke contract function",
+                    );
+
+                    // TODO
+                    // need a way to decide if tx is a querying one or executing one
+                    // plan: add a field in Request
+
+                    let _result = self.query_ctr(tx.get_ctr_addr(), req).await;
+                    // let _result =
+                    //     self.execute_ctr(tx.get_ctr_addr(), req).await;
+                }
+                TxType::Plain => {}
             }
         }
 
