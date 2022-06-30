@@ -14,7 +14,7 @@ impl LedgerDB {
 
     pub(crate) fn get_block_hash_by_height(
         &self,
-        block_height: &String,
+        block_height: &u128,
     ) -> Result<Option<String>, LedgerError> {
         let db = &self.kv_db.db_instance;
 
@@ -116,7 +116,7 @@ impl LedgerDB {
 
     pub(crate) async fn get_last_block_height(
         &self,
-    ) -> Result<Option<String>, String> {
+    ) -> Result<Option<u128>, String> {
         let db = &self.kv_db.db_instance;
 
         let height = self.schema.get_last_block_height(db)?;

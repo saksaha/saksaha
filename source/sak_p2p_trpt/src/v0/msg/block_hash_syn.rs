@@ -50,7 +50,7 @@ impl BlockHashSynMsg {
 
         let block_count = self.new_blocks.len();
 
-        frame.push_int(block_count as u64);
+        frame.push_int(block_count as u128);
 
         for idx in 0..block_count {
             let (height, block_hash) = &self.new_blocks[idx];

@@ -52,7 +52,7 @@ mod test_suite {
             ],
             witness_sigs: vec![String::from("1"), String::from("2")],
             created_at: String::from("2022061515340000"),
-            height: String::from("0"),
+            height: 0,
         };
 
         genesis_block
@@ -270,7 +270,7 @@ mod test_suite {
                 transactions: dummy_txs.clone(),
                 witness_sigs: vec![],
                 created_at: String::from(""),
-                height: String::from("1"),
+                height: 1,
             };
 
             c

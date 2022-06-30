@@ -42,7 +42,7 @@ impl TxHashSynMsg {
         let tx_count = self.tx_hashes.len();
 
         frame.push_bulk(Bytes::from(msg_type.as_bytes()));
-        frame.push_int(tx_count as u64);
+        frame.push_int(tx_count as u128);
 
         for idx in 0..tx_count {
             let tx = &self.tx_hashes[idx];

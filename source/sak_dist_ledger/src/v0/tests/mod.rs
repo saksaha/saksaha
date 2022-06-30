@@ -5,14 +5,11 @@ use sak_types::{BlockCandidate, Tx};
 
 #[cfg(test)]
 mod test {
-
+    use super::Pos;
     use crate::SyncPool;
-
     use crate::{DistLedger, DistLedgerArgs};
     use sak_types::BlockCandidate;
     use sak_types::Tx;
-
-    use super::Pos;
 
     fn init() {
         let _ = env_logger::builder().is_test(true).init();
@@ -39,7 +36,7 @@ mod test {
             ],
             witness_sigs: vec![String::from("1"), String::from("2")],
             created_at: String::from("2022061515340000"),
-            height: String::from("0"),
+            height: 0,
         };
 
         genesis_block
@@ -218,16 +215,16 @@ mod test {
         //     .as_ref()
         //     .expect("Genesis block should have been inserted");
 
-        let gen_block_by_height =
-            match blockchain.get_block_by_height(&String::from("0")).await {
-                Ok(b) => match b {
-                    Some(b) => b,
-                    None => {
-                        panic!("cannot find genesis block");
-                    }
-                },
-                Err(err) => panic!("Error : {}", err),
-            };
+        let gen_block_by_height = match blockchain.get_block_by_height(&0).await
+        {
+            Ok(b) => match b {
+                Some(b) => b,
+                None => {
+                    panic!("cannot find genesis block");
+                }
+            },
+            Err(err) => panic!("Error : {}", err),
+        };
 
         let gen_block_hash_2 = gen_block_by_height.get_hash();
 
@@ -242,7 +239,7 @@ mod test {
         let dist_ledger = make_dist_ledger(gen_block).await;
 
         let gen_block = dist_ledger
-            .get_block_by_height(&String::from("0"))
+            .get_block_by_height(&0)
             .await
             .unwrap()
             .expect("gen block should exist");
