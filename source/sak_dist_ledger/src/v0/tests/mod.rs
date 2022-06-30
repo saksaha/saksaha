@@ -1,17 +1,13 @@
-use std::collections::HashMap;
-
 use crate::DistLedger;
 use crate::{Consensus, ConsensusError};
 use async_trait::async_trait;
-use sak_contract_std::Request;
 use sak_types::{BlockCandidate, Tx};
 
 #[cfg(test)]
 mod test {
-    use std::fmt::Error;
 
     use crate::SyncPool;
-    use crate::{Consensus, ConsensusError};
+
     use crate::{DistLedger, DistLedgerArgs};
     use sak_types::BlockCandidate;
     use sak_types::Tx;
@@ -210,6 +206,7 @@ mod test {
         let gen_block = make_dummy_genesis_block();
 
         let gen_block_same = make_dummy_genesis_block();
+
         let (block, _) = gen_block_same.extract();
 
         let gen_block_hash = block.get_hash();
@@ -310,41 +307,15 @@ mod test {
     }
 }
 
-pub struct Pos {
-    // pub validator_ctr_addr: String,
-}
+pub struct Pos {}
 
 #[async_trait]
 impl Consensus for Pos {
     async fn do_consensus(
         &self,
-        dist_ledger: &DistLedger,
-        txs: Vec<Tx>,
+        _dist_ledger: &DistLedger,
+        _txs: Vec<Tx>,
     ) -> Result<BlockCandidate, ConsensusError> {
-        // let request = Request {
-        //     req_type: String::from("get_validator"),
-        //     arg: HashMap::new(),
-        // };
-
-        // let validator = dist_ledger
-        //     .query_ctr(&self.validator_ctr_addr, request)
-        //     .await?;
-
-        // println!("validator: {:?}", validator);
-
-        // // if validator == myself {
-
-        // // }
-
-        // let bc = BlockCandidate {
-        //     validator_sig: String::from("1"),
-        //     transactions: txs,
-        //     witness_sigs: vec![],
-        //     created_at: String::from("1"),
-        //     height: String::from("1"),
-        // };
-
-        // Ok(bc)
         return Err("awel".into());
     }
 }

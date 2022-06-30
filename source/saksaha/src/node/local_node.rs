@@ -10,20 +10,16 @@ pub(crate) struct LocalNode {
     pub(crate) machine: Arc<Machine>,
     pub(crate) miner: bool,
     pub(crate) mine_interval: Option<u64>,
-    // pub(crate) credential: Arc<Credential>,
-    pub(crate) identity: Arc<Identity>,
 }
 
 impl LocalNode {
     pub(crate) async fn run(&self) {
         let machine = self.machine.clone();
         let mine_interval = self.mine_interval.clone();
-        // let credential = self.credential.clone();
-        let identity = self.identity.clone();
 
         if self.miner {
             tokio::spawn(async move {
-                let mut miner = Miner::init(machine, mine_interval, identity);
+                let mut miner = Miner::init(machine, mine_interval);
 
                 miner.run().await;
             });

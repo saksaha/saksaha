@@ -6,13 +6,10 @@ pub(super) mod test_utils {
     use crate::{blockchain::Blockchain, machine::Machine};
     use colored::*;
     use log::info;
-    use sak_dist_ledger::{DistLedger, DistLedgerArgs};
     use sak_p2p_addr::{AddrStatus, UnknownAddr};
-    use sak_p2p_disc::{Discovery, DiscoveryArgs};
-    use sak_p2p_id::{Credential, Identity};
+    use sak_p2p_id::Identity;
     use sak_p2p_ptable::PeerTable;
     use sak_types::{BlockCandidate, Tx};
-    use std::collections::HashMap;
     use std::net::SocketAddr;
     use std::sync::Arc;
 
@@ -49,18 +46,6 @@ pub(super) mod test_utils {
 
         let genesis_block = make_dummy_genesis_block();
 
-        let blockchain = {
-            Blockchain::init("test".to_string(), None, None, None)
-                .await
-                .unwrap()
-        };
-
-        let machine = {
-            let m = Machine { blockchain };
-
-            Arc::new(m)
-        };
-
         let secret = String::from(
             "aa99cfd91cc6f3b541d28f3e0707f9c7bcf05cf495308294786ca450b501b5f2",
         );
@@ -74,28 +59,6 @@ pub(super) mod test_utils {
                 ",
         );
 
-        let bootstrap_addrs = vec![UnknownAddr {
-            ip: String::from("127.0.0.1"),
-            disc_port: 35521,
-            p2p_port: None,
-            sig: None,
-            public_key_str: Some(String::from(
-                "\
-                04240874d8c323c22a571f735e835ed2\
-                f0619893a3989e557b1c9b4c699ac92b\
-                84d0dc478108629c0353f2876941f90d\
-                4b36346bcc19c6b625422adffb53b3a6af\
-                ",
-            )),
-            status: AddrStatus::Initialized,
-        }];
-
-        // let credential = {
-        //     let id = Credential::new(secret.clone(), public_key_str.clone())
-        //         .unwrap();
-        //     Arc::new(id)
-        // };
-
         let identity = {
             let id = Identity::new(secret, public_key_str, 1, disc_port)
                 .expect("identity should be initialized");
@@ -103,18 +66,23 @@ pub(super) mod test_utils {
             Arc::new(id)
         };
 
-        // let disc_args = DiscoveryArgs {
-        //     disc_dial_interval: None,
-        //     disc_table_capacity: None,
-        //     disc_task_interval: None,
-        //     disc_task_queue_capacity: None,
-        //     addr_expire_duration: None,
-        //     addr_monitor_interval: None,
-        //     udp_socket: disc_socket,
-        //     identity: identity.clone(),
-        //     p2p_port: 1,
-        //     bootstrap_addrs,
-        // };
+        let blockchain = {
+            Blockchain::init(
+                "test".to_string(),
+                None,
+                None,
+                None,
+                identity.clone(),
+            )
+            .await
+            .unwrap()
+        };
+
+        let machine = {
+            let m = Machine { blockchain };
+
+            Arc::new(m)
+        };
 
         let p2p_peer_table = {
             let ps = PeerTable::init(None)
@@ -212,10 +180,22 @@ pub(super) mod test_utils {
     pub(crate) async fn make_blockchain() -> Blockchain {
         let genesis_block = make_dummy_genesis_block();
 
-        let blockchain =
-            Blockchain::init(String::from("test"), None, None, None)
-                .await
-                .expect("Blockchain should be made");
+        let identity = {
+            let id = Identity::new("".to_string(), "".to_string(), 1, 0)
+                .expect("identity should be initialized");
+
+            Arc::new(id)
+        };
+
+        let blockchain = Blockchain::init(
+            String::from("test"),
+            None,
+            None,
+            None,
+            identity.clone(),
+        )
+        .await
+        .expect("Blockchain should be made");
 
         // let blockchain = DistLedger::init(blockchain_args)
         //     .await

@@ -1,17 +1,14 @@
 use crate::DistLedger;
-use crate::{Consensus, LedgerError};
-use log::warn;
+use crate::LedgerError;
 use sak_contract_std::Request;
-use sak_types::{Block, BlockCandidate, Tx};
 use sak_vm::CtrFn;
-use std::{collections::HashMap, sync::Arc};
 
 impl DistLedger {
     pub async fn query_ctr(
         &self,
         ctr_addr: &String,
         request: Request,
-    ) -> Result<&[u8], LedgerError> {
+    ) -> Result<String, LedgerError> {
         let ctr_wasm = self
             .ledger_db
             .get_ctr_data_by_ctr_addr(ctr_addr)
@@ -29,14 +26,14 @@ impl DistLedger {
 
         println!("invoke query ctr, ctr_state: {:?}", ret);
 
-        Ok(&[])
+        Ok(ret)
     }
 
     pub async fn execute_ctr(
         &self,
         ctr_addr: &String,
         request: Request,
-    ) -> Result<&[u8], LedgerError> {
+    ) -> Result<String, LedgerError> {
         let ctr_wasm = self
             .ledger_db
             .get_ctr_data_by_ctr_addr(ctr_addr)
@@ -54,6 +51,6 @@ impl DistLedger {
 
         println!("invoke execute ctr, ctr_state: {:?}", ret);
 
-        Ok(&[])
+        Ok(ret)
     }
 }
