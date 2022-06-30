@@ -79,7 +79,7 @@ impl DistLedger {
 
         let dist_ledger = DistLedger {
             ledger_db,
-            sync_pool: sync_pool.clone(),
+            sync_pool,
             vm,
             bc_event_tx,
             consensus,

@@ -8,6 +8,9 @@ use sak_types::{BlockCandidate, Tx};
 
 #[cfg(test)]
 mod test {
+    use std::fmt::Error;
+
+    use crate::SyncPool;
     use crate::{Consensus, ConsensusError};
     use crate::{DistLedger, DistLedgerArgs};
     use sak_types::BlockCandidate;
@@ -286,6 +289,24 @@ mod test {
                 .unwrap(),
             &ctr_state.clone()
         );
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    #[should_panic]
+    async fn test_insert_invalid_contract_to_tx_pool() {
+        let test_wasm = include_bytes!("./test_wasm.wasm").to_vec();
+
+        let dummy_tx = Tx::new(
+            String::from("1346546123"),
+            test_wasm,
+            String::from("0x111"),
+            b"0x1111".to_vec(),
+            Some(String::from("test_wasm")),
+        );
+
+        let sync_pool = SyncPool::new();
+
+        sync_pool.insert_tx(dummy_tx).await.unwrap();
     }
 }
 
