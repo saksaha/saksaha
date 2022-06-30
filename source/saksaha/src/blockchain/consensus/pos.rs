@@ -26,7 +26,8 @@ impl Consensus for Pos {
             .query_ctr(&self.validator_ctr_addr, request)
             .await?;
 
-        let height = next_height(dist_ledger.get_last_block_height().await?)?;
+        let height = next_height(dist_ledger.get_last_block_height().await?);
+        println!("height?: {}", height);
 
         // TODO use identity
         if !validator.is_empty() {
@@ -45,9 +46,9 @@ impl Consensus for Pos {
     }
 }
 
-fn next_height(maybe_height: Option<u128>) -> Result<u128, ConsensusError> {
+fn next_height(maybe_height: Option<u128>) -> u128 {
     match maybe_height {
-        Some(h) => Ok(h + 1),
-        None => Ok(0),
+        Some(h) => h + 1,
+        None => 0,
     }
 }
