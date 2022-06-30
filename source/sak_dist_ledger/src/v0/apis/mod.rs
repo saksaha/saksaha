@@ -182,6 +182,10 @@ impl DistLedger {
             }
         }
 
+        if let Err(err) = self.sync_pool.remove_txs(&txs).await {
+            warn!("Error removing txs into the tx pool, err: {}", err);
+        }
+
         let block_hash = match self
             .ledger_db
             .write_block(&block, &txs, state_updates)

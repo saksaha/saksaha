@@ -5,9 +5,10 @@ mod test_suite {
     use crate::{machine::Machine, node::LocalNode};
     use colored::Colorize;
     use log::debug;
-    // use sak_blockchain::{Blockchain, BlockchainArgs};
+
+    use crate::blockchain::tests::test_utils;
     use sak_p2p_addr::{AddrStatus, UnknownAddr};
-    use sak_p2p_id::{Credential, Identity};
+    use sak_p2p_id::Identity;
     use sak_p2p_ptable::PeerTable;
     use sak_types::{BlockCandidate, Tx};
     use std::{sync::Arc, time::Duration};
@@ -174,11 +175,22 @@ mod test_suite {
     }
 
     #[tokio::test(flavor = "multi_thread")]
+    async fn test_check_true_init_config() {
+        let app_prefix_vec = vec!["test_1".to_string(), "test_2".to_string()];
+        test_utils::test_config_init(app_prefix_vec.clone())
+            .expect("DB should be initiailzed");
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
     async fn test_block_sync_true() {
         init(None);
 
+        let app_prefix_vec = vec!["test_1".to_string(), "test_2".to_string()];
+        test_utils::test_config_init(app_prefix_vec.clone())
+            .expect("Test config should be initiailzed");
+
         let (p2p_host_1, local_node_1, machine_1) = create_client(
-            "test_1".to_string(),
+            app_prefix_vec[0].to_string(),
             Some(35519),
             Some(35518),
             String::from(
@@ -195,7 +207,7 @@ mod test_suite {
         .await;
 
         let (p2p_host_2, local_node_2, machine_2) = create_client(
-            "test_2".to_string(),
+            app_prefix_vec[1].to_string(),
             Some(35521),
             Some(35520),
             String::from(

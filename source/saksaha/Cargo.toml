@@ -9,6 +9,7 @@ default-run = "sak"
 [dependencies]
 sak_logger = { path = "../sak_logger" }
 sak_crypto = { path = "../sak_crypto" }
+sak_kv_db = { path = "../sak_kv_db" }
 sak_dist_ledger = { path = "../sak_dist_ledger" }
 sak_fs = { path = "../sak_fs" }
 sak_proofs = { path = "../sak_proofs" }
