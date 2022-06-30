@@ -40,7 +40,7 @@ impl LedgerDB {
         &self,
         block: &Block,
         txs: &Vec<Tx>,
-        state_updates: Vec<StateUpdate>,
+        state_updates: &StateUpdate,
     ) -> Result<String, LedgerError> {
         let db = &self.kv_db.db_instance;
 
@@ -94,14 +94,28 @@ impl LedgerDB {
             self._batch_put_tx(db, &mut batch, tx)?;
         }
 
-        for su in state_updates {
+        let su_keys = state_updates.keys();
+        for su_key in su_keys {
             self.schema.batch_put_ctr_state(
                 db,
                 &mut batch,
-                &su.ctr_addr,
-                &su.new_state,
+                &su_key,
+                &state_updates
+                    .get(su_key)
+                    .expect("contract state should be exist"),
             )?;
         }
+
+        // for su in state_updates {
+        //     let (key, value) = su.get_key_value();
+        //     self.schema.batch_put_ctr_state(
+        //         db,
+        //         &mut batch,
+        //         &su.get_key(),
+        //         // &su.ctr_addr,
+        //         &su.new_state,
+        //     )?;
+        // }
 
         db.write(batch)?;
 

@@ -352,7 +352,7 @@ impl LedgerDBSchema {
         ctr_addr: &String,
         ctr_state: &String,
     ) -> Result<(), LedgerError> {
-        println!("ctr_addr: {}, ctr_state: {}", ctr_addr, ctr_state);
+        // println!("ctr_addr: {}, ctr_state: {}", ctr_addr, ctr_state);
 
         let cf = make_cf_handle(db, CTR_STATE)?;
 

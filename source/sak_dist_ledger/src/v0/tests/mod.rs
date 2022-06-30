@@ -3,13 +3,16 @@ use crate::{Consensus, ConsensusError};
 use async_trait::async_trait;
 use sak_types::{BlockCandidate, Tx};
 
+mod utils;
+
 #[cfg(test)]
 mod test {
+    use super::utils;
     use super::Pos;
     use crate::SyncPool;
     use crate::{DistLedger, DistLedgerArgs};
-    use sak_types::BlockCandidate;
-    use sak_types::Tx;
+    use sak_contract_std::Storage;
+    use sak_types::{BlockCandidate, Tx};
 
     fn init() {
         let _ = env_logger::builder().is_test(true).init();
@@ -42,7 +45,7 @@ mod test {
         genesis_block
     }
 
-    async fn make_dist_ledger(gen_block: BlockCandidate) -> DistLedger {
+    async fn make_dist_ledger() -> DistLedger {
         let pos = Box::new(Pos {});
 
         let dist_ledger_args = DistLedgerArgs {
@@ -105,7 +108,7 @@ mod test {
         init();
 
         let gen_block = make_dummy_genesis_block();
-        let blockchain = make_dist_ledger(gen_block).await;
+        let blockchain = make_dist_ledger().await;
 
         let db = blockchain.ledger_db;
 
@@ -134,7 +137,7 @@ mod test {
         init();
 
         let gen_block = make_dummy_genesis_block();
-        let blockchain = make_dist_ledger(gen_block).await;
+        let blockchain = make_dist_ledger().await;
         let db = blockchain.ledger_db;
 
         let dummy_tx_values = make_dummy_txs();
@@ -165,7 +168,7 @@ mod test {
         init();
 
         let gen_block = make_dummy_genesis_block();
-        let blockchain = make_dist_ledger(gen_block).await;
+        let blockchain = make_dist_ledger().await;
         let db = blockchain.ledger_db;
 
         let dummy_tx_values = make_dummy_txs();
@@ -208,7 +211,7 @@ mod test {
 
         let gen_block_hash = block.get_hash();
 
-        let blockchain = make_dist_ledger(gen_block).await;
+        let blockchain = make_dist_ledger().await;
 
         // let gen_block_hash = blockchain
         //     .get_gen_block_hash()
@@ -236,7 +239,7 @@ mod test {
         init();
 
         let gen_block = make_dummy_genesis_block();
-        let dist_ledger = make_dist_ledger(gen_block).await;
+        let dist_ledger = make_dist_ledger().await;
 
         let gen_block = dist_ledger
             .get_block_by_height(&0)
@@ -266,7 +269,7 @@ mod test {
         init();
 
         let gen_block = make_dummy_genesis_block();
-        let blockchain = make_dist_ledger(gen_block).await;
+        let blockchain = make_dist_ledger().await;
         let db = blockchain.ledger_db;
 
         let (contract_addr, ctr_state) = make_dummy_state();
@@ -288,7 +291,7 @@ mod test {
     #[tokio::test(flavor = "multi_thread")]
     #[should_panic]
     async fn test_insert_invalid_contract_to_tx_pool() {
-        let test_wasm = include_bytes!("./test_wasm.wasm").to_vec();
+        let test_wasm = include_bytes!("./test_invalid_contract.wasm").to_vec();
 
         let dummy_tx = Tx::new(
             String::from("1346546123"),
@@ -301,6 +304,77 @@ mod test {
         let sync_pool = SyncPool::new();
 
         sync_pool.insert_tx(dummy_tx).await.unwrap();
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn test_deploy_ctr_when_dist_ledger_writes_a_new_block() {
+        let dist_ledger = make_dist_ledger().await;
+
+        dist_ledger.run().await;
+
+        dist_ledger
+            .write_block(utils::make_dummy_block_candidate_1())
+            .await
+            .expect("Block_1 must be written");
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn test_deploy_ctr_and_invoke_query_when_dist_ledger_writes_new_blocks(
+    ) {
+        let dist_ledger = make_dist_ledger().await;
+
+        dist_ledger.run().await;
+
+        println!("\n[+] Block1: Deploying test validator contract");
+        dist_ledger
+            .write_block(utils::make_dummy_block_candidate_1())
+            .await
+            .expect("Block_1 must be written");
+
+        println!("\n[+] Block2: Query::get_validator");
+        dist_ledger
+            .write_block(utils::make_dummy_block_candidate_with_query_tx())
+            .await
+            .expect("Block_2 must be written");
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn test_deploy_ctr_and_invoke_execute_and_query_when_dist_ledger_writes_new_blocks(
+    ) {
+        let ctr_addr: &String = &"test_wasm".to_string();
+
+        let dist_ledger = make_dist_ledger().await;
+
+        dist_ledger.run().await;
+
+        println!("\n[+] Block1: Deploying test validator contract");
+        dist_ledger
+            .write_block(utils::make_dummy_block_candidate_1())
+            .await
+            .expect("Block_1 must be written");
+
+        println!("\n[+] Block2: Execute::add_validator");
+        dist_ledger
+            .write_block(utils::make_dummy_block_candidate_with_execute_tx())
+            .await
+            .expect("Block_2 must be written");
+
+        println!("\n[+] Block3: Query::get_validator");
+        dist_ledger
+            .write_block(utils::make_dummy_block_candidate_with_query_tx())
+            .await
+            .expect("Block_3 must be written");
+
+        {
+            let result: Storage =
+                dist_ledger.get_ctr_state(ctr_addr).await.unwrap().unwrap();
+
+            println!("[*] result: {:#?}", result);
+
+            // let expected_state: Storage = Storage::new();
+            // expected_state.insert("validators", v)
+            // assert_eq!(result, Storage{});
+        }
     }
 }
 

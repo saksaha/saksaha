@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use wasmtime::{Config, Engine, Linker, Module, Store, TypedFunc};
 
-const WASM_MAGIC_NUMBER: [u8; 4] = [0x00, 0x61, 0x73, 0x6d];
+pub const WASM_MAGIC_NUMBER: [u8; 4] = [0x00, 0x61, 0x73, 0x6d];
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
 pub struct Tx {

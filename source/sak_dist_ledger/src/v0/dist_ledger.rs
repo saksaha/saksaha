@@ -91,8 +91,7 @@ impl DistLedger {
 
             // TODO
             // genesis_block hash check
-        }
-
+        };
         info!("Initialized Blockchain");
 
         Ok(dist_ledger)

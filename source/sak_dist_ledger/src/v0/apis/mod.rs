@@ -2,7 +2,7 @@ mod ctr;
 
 use crate::{DistLedger, LedgerError, StateUpdate};
 use log::{debug, warn};
-use sak_contract_std::{Request, Storage};
+use sak_contract_std::{CtrCallType, Request, Storage};
 use sak_types::{Block, BlockCandidate, Tx, TxType};
 use sak_vm::CtrFn;
 
@@ -140,8 +140,6 @@ impl DistLedger {
 
         let (block, txs) = bc.extract();
 
-        println!("block!!!!: {}", block.get_height());
-
         match self.get_block(block.get_hash())? {
             Some(_b) => {
                 return Err(format!(
@@ -155,31 +153,131 @@ impl DistLedger {
             }
         };
 
-        let mut state_updates = vec![];
+        let mut state_updates = StateUpdate::new(); // hashmap <K; ctr_addr => v ctr_state>
 
         for tx in txs.iter() {
             match tx.get_type() {
                 TxType::ContractDeploy => {
+                    println!("\n[Tx Iteration] deployed!");
                     let initial_ctr_state =
                         self.vm.invoke(tx.get_data(), CtrFn::Init)?;
 
-                    state_updates.push(StateUpdate {
-                        ctr_addr: tx.get_ctr_addr().to_string(),
-                        new_state: initial_ctr_state,
-                    });
-                }
-                TxType::ContractCall => {
-                    let request = Request::parse(tx.get_data())?;
-                    let state =
-                        self.execute_ctr(tx.get_ctr_addr(), request).await?;
+                    {
+                        let initial_ctr_state_result: Storage =
+                            serde_json::from_str(
+                                initial_ctr_state.clone().as_str(),
+                            )
+                            .unwrap();
 
-                    state_updates.push(StateUpdate {
-                        ctr_addr: tx.get_ctr_addr().to_string(),
-                        new_state: state,
-                    });
+                        println!(
+                            "[>>] [Deploy] initial state: {:#?}",
+                            initial_ctr_state_result
+                        );
+                    }
+
+                    match state_updates
+                        .insert(tx.get_ctr_addr().clone(), initial_ctr_state)
+                    {
+                        Some(_) => {
+                            println!("[state_update] the state of the contract has been initialized in the same block before");
+                        }
+                        None => {
+                            println!("[state_update] contract state has been initialized");
+                        }
+                    }
                 }
-                TxType::Plain => {}
-            }
+
+                TxType::ContractCall => {
+                    println!("\n[Tx Iteration] called!");
+                    let req = Request::parse(tx.get_data()).expect(
+                        "tx.data should be in form of struct `Request` to invoke contract function",
+                    );
+
+                    match req.ctr_call_type {
+                        CtrCallType::Query => {
+                            // self.query_ctr(tx.get_ctr_addr(), req).await?;
+
+                            {
+                                // log
+
+                                let validator = self
+                                    .query_ctr(tx.get_ctr_addr(), req)
+                                    .await?;
+
+                                println!(
+                                    "[>>]   [Query] validator: {:#?}",
+                                    validator
+                                );
+                            }
+                        }
+                        CtrCallType::Execute => {
+                            let new_state =
+                                match state_updates.get(tx.get_ctr_addr()) {
+                                    Some(previous_state) => {
+                                        //
+
+                                        let previous_state: Storage =
+                                        serde_json::from_str(
+                                            previous_state.as_str(),
+                                        )
+                                        .expect(
+                                            "previou state should be a storage",
+                                        );
+                                        let ctr_wasm = self
+                                            .ledger_db
+                                            .get_ctr_data_by_ctr_addr(
+                                                tx.get_ctr_addr(),
+                                            )
+                                            .await?
+                                            .ok_or(
+                                                "ctr data (wasm) should exist",
+                                            )?;
+
+                                        let ctr_fn =
+                                            CtrFn::Execute(req, previous_state);
+
+                                        let ret =
+                                            self.vm.invoke(ctr_wasm, ctr_fn)?;
+
+                                        ret
+                                    }
+                                    None => {
+                                        self.execute_ctr(tx.get_ctr_addr(), req)
+                                            .await?
+                                    }
+                                };
+
+                            {
+                                // log
+
+                                let new_state_result: Storage =
+                                    serde_json::from_str(new_state.as_str())
+                                        .unwrap();
+                                println!(
+                                    "[>>] [Execute] updated state: {:#?}",
+                                    new_state_result
+                                );
+                            }
+
+                            state_updates.insert(
+                                tx.get_ctr_addr().clone(),
+                                new_state.clone(),
+                            );
+                        }
+                    };
+                }
+                TxType::Plain => (),
+            };
+
+            // match state {
+            //     Some(state) => {
+            //         state_updates.push(StateUpdate {
+            //             ctr_addr: tx.get_ctr_addr().to_string(),
+            //             new_state: state,
+            //         });
+            //     }
+            //     None => {}
+            // }
         }
 
         if let Err(err) = self.sync_pool.remove_txs(&txs).await {
@@ -188,7 +286,7 @@ impl DistLedger {
 
         let block_hash = match self
             .ledger_db
-            .write_block(&block, &txs, state_updates)
+            .write_block(&block, &txs, &state_updates)
             .await
         {
             Ok(h) => h,

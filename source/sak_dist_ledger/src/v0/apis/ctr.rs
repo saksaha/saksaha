@@ -24,8 +24,6 @@ impl DistLedger {
 
         let ret = self.vm.invoke(ctr_wasm, ctr_fn)?;
 
-        println!("invoke query ctr, ctr_state: {:?}", ret);
-
         Ok(ret)
     }
 
@@ -48,8 +46,6 @@ impl DistLedger {
         let ctr_fn = CtrFn::Execute(request, ctr_state);
 
         let ret = self.vm.invoke(ctr_wasm, ctr_fn)?;
-
-        println!("invoke execute ctr, ctr_state: {:?}", ret);
 
         Ok(ret)
     }
