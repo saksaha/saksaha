@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 use wasmtime::{Config, Engine, Linker, Module, Store, TypedFunc};
 
+const WASM_MAGIC_NUMBER: [u8; 4] = [0x00, 0x61, 0x73, 0x6d];
+
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
 pub struct Tx {
     //
@@ -101,7 +103,7 @@ impl Tx {
         if self.has_ctr_addr() {
             let data = self.get_data().clone();
             if data.len() > 4 {
-                if data[0..4] == [0, 97, 115, 109] {
+                if data[0..4] == WASM_MAGIC_NUMBER {
                     return TxType::ContractDeploy;
                 } else {
                     return TxType::ContractCall;
