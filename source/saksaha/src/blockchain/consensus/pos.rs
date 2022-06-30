@@ -27,7 +27,6 @@ impl Consensus for Pos {
             .await?;
 
         let height = next_height(dist_ledger.get_last_block_height().await?);
-        println!("height?: {}", height);
 
         // TODO use identity
         if !validator.is_empty() {

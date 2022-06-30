@@ -11,8 +11,17 @@ mod test {
     use sak_types::BlockCandidate;
     use sak_types::Tx;
 
-    fn init() {
-        let _ = env_logger::builder().is_test(true).init();
+    const RUST_LOG_ENV: &str = "
+        sak_,
+        saksaha
+    ";
+
+    pub fn init() {
+        if std::env::var("RUST_LOG").is_err() {
+            std::env::set_var("RUST_LOG", RUST_LOG_ENV);
+        }
+
+        sak_logger::init(false);
     }
 
     fn make_dummy_genesis_block() -> BlockCandidate {
@@ -42,7 +51,7 @@ mod test {
         genesis_block
     }
 
-    async fn make_dist_ledger(gen_block: BlockCandidate) -> DistLedger {
+    async fn make_dist_ledger() -> DistLedger {
         let pos = Box::new(Pos {});
 
         let dist_ledger_args = DistLedgerArgs {
@@ -104,8 +113,7 @@ mod test {
     async fn test_put_and_get_transaction() {
         init();
 
-        let gen_block = make_dummy_genesis_block();
-        let blockchain = make_dist_ledger(gen_block).await;
+        let blockchain = make_dist_ledger().await;
 
         let db = blockchain.ledger_db;
 
@@ -133,8 +141,7 @@ mod test {
     async fn test_wrongful_put_and_get_transaction() {
         init();
 
-        let gen_block = make_dummy_genesis_block();
-        let blockchain = make_dist_ledger(gen_block).await;
+        let blockchain = make_dist_ledger().await;
         let db = blockchain.ledger_db;
 
         let dummy_tx_values = make_dummy_txs();
@@ -164,8 +171,7 @@ mod test {
     async fn raw_iterator_to_first() {
         init();
 
-        let gen_block = make_dummy_genesis_block();
-        let blockchain = make_dist_ledger(gen_block).await;
+        let blockchain = make_dist_ledger().await;
         let db = blockchain.ledger_db;
 
         let dummy_tx_values = make_dummy_txs();
@@ -200,15 +206,13 @@ mod test {
     async fn test_insert_genesis_block_and_check_tx() {
         init();
 
-        let gen_block = make_dummy_genesis_block();
-
         let gen_block_same = make_dummy_genesis_block();
 
         let (block, _) = gen_block_same.extract();
 
         let gen_block_hash = block.get_hash();
 
-        let blockchain = make_dist_ledger(gen_block).await;
+        let blockchain = make_dist_ledger().await;
 
         // let gen_block_hash = blockchain
         //     .get_gen_block_hash()
@@ -235,8 +239,7 @@ mod test {
     async fn test_insert_genesis_block_and_check_wrong_block_hash() {
         init();
 
-        let gen_block = make_dummy_genesis_block();
-        let dist_ledger = make_dist_ledger(gen_block).await;
+        let dist_ledger = make_dist_ledger().await;
 
         let gen_block = dist_ledger
             .get_block_by_height(&0)
@@ -265,8 +268,7 @@ mod test {
     async fn test_set_and_get_contract_state_to_db() {
         init();
 
-        let gen_block = make_dummy_genesis_block();
-        let blockchain = make_dist_ledger(gen_block).await;
+        let blockchain = make_dist_ledger().await;
         let db = blockchain.ledger_db;
 
         let (contract_addr, ctr_state) = make_dummy_state();
@@ -301,6 +303,34 @@ mod test {
         let sync_pool = SyncPool::new();
 
         sync_pool.insert_tx(dummy_tx).await.unwrap();
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn test_rpc_client_and_repeating_write_block() {
+        init();
+
+        let blockchain = make_dist_ledger().await;
+
+        for i in 0..10000 as u64 {
+            let block = BlockCandidate {
+                validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
+                transactions: vec![Tx::new(
+                    format!("{}", i),
+                    vec![11, 11, 11],
+                    String::from("1"),
+                    b"1".to_vec(),
+                    Some(String::from("11")),
+                )],
+                witness_sigs: vec![String::from("1"), String::from("2")],
+                created_at: String::from("2022061515340000"),
+                height: i as u128,
+            };
+
+            match blockchain.write_block(Some(block)).await {
+                Ok(v) => v,
+                Err(err) => panic!("Failed to write dummy block, err: {}", err),
+            };
+        }
     }
 }
 
