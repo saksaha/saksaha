@@ -95,7 +95,7 @@ impl Handshake {
         };
 
         frame.push_bulk(Bytes::from(msg_type.as_bytes()));
-        frame.push_int(self.src_p2p_port as u64);
+        frame.push_int(self.src_p2p_port as u128);
         frame.push_bulk(instance_id_bytes.into());
         frame.push_bulk(src_public_key_bytes.into());
         frame.push_bulk(dst_public_key_bytes.into());

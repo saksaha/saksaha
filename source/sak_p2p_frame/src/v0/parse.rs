@@ -105,7 +105,7 @@ impl Parse {
     ///
     /// If the next entry cannot be represented as an integer, then an error is
     /// returned.
-    pub fn next_int(&mut self) -> Result<u64, ParseError> {
+    pub fn next_int(&mut self) -> Result<u128, ParseError> {
         use atoi::atoi;
 
         const MSG: &str = "protocol error; invalid number";
@@ -116,9 +116,9 @@ impl Parse {
             // Simple and bulk frames must be parsed as integers. If the parsing
             // fails, an error is returned.
             Frame::Simple(data) => {
-                atoi::<u64>(data.as_bytes()).ok_or_else(|| MSG.into())
+                atoi::<u128>(data.as_bytes()).ok_or_else(|| MSG.into())
             }
-            Frame::Bulk(data) => atoi::<u64>(&data).ok_or_else(|| MSG.into()),
+            Frame::Bulk(data) => atoi::<u128>(&data).ok_or_else(|| MSG.into()),
             frame => Err(format!(
                 "protocol error; expected int frame but got {:?}",
                 frame

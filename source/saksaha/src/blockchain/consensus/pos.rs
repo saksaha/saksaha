@@ -45,13 +45,9 @@ impl Consensus for Pos {
     }
 }
 
-fn next_height(maybe_height: Option<String>) -> Result<String, ConsensusError> {
-    let height = if let Some(height) = maybe_height {
-        let h: i32 = height.parse()?;
-        format!("{}", h + 1)
-    } else {
-        format!("{}", 0)
-    };
-
-    Ok(height)
+fn next_height(maybe_height: Option<u128>) -> Result<u128, ConsensusError> {
+    match maybe_height {
+        Some(h) => Ok(h + 1),
+        None => Ok(0),
+    }
 }
