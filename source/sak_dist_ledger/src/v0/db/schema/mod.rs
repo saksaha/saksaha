@@ -1,10 +1,11 @@
-use std::sync::Arc;
-
 use crate::LedgerError;
 use sak_kv_db::{
     BoundColumnFamily, ColumnFamily, ColumnFamilyDescriptor, IteratorMode,
     KeyValueDatabase, Options, WriteBatch, DB,
 };
+use std::sync::Arc;
+
+const TARGET_BITS: usize = 16;
 
 //
 const TX_HASH: &str = "tx_hash";
@@ -128,14 +129,14 @@ impl LedgerDBSchema {
         &self,
         db: &DB,
         block_hash: &String,
-    ) -> Result<Option<String>, LedgerError> {
+    ) -> Result<Option<u128>, LedgerError> {
         let cf = make_cf_handle(db, BLOCK_HEIGHT)?;
 
         match db.get_cf(&cf, block_hash)? {
-            Some(v) => {
-                let str = String::from_utf8(v)?;
+            Some(h) => {
+                let height = sak_kv_db::convert_u8_slice_into_u128(&h)?;
 
-                return Ok(Some(str));
+                return Ok(Some(height));
             }
             None => {
                 return Ok(None);
@@ -146,11 +147,13 @@ impl LedgerDBSchema {
     pub(crate) fn get_block_hash(
         &self,
         db: &DB,
-        block_height: &String,
+        block_height: &u128,
     ) -> Result<Option<String>, LedgerError> {
         let cf = make_cf_handle(db, BLOCK_HASH)?;
 
-        match db.get_cf(&cf, block_height)? {
+        let v = block_height.to_be_bytes();
+
+        match db.get_cf(&cf, v)? {
             Some(v) => {
                 let str = String::from_utf8(v)?;
 
@@ -314,12 +317,14 @@ impl LedgerDBSchema {
         &self,
         db: &DB,
         batch: &mut WriteBatch,
-        block_height: &String,
+        block_height: &u128,
         block_hash: &String,
     ) -> Result<(), LedgerError> {
         let cf = make_cf_handle(db, BLOCK_HASH)?;
 
-        batch.put_cf(&cf, block_height, block_hash);
+        let v = block_height.to_be_bytes();
+
+        batch.put_cf(&cf, &v, block_hash);
 
         Ok(())
     }
@@ -329,11 +334,13 @@ impl LedgerDBSchema {
         db: &DB,
         batch: &mut WriteBatch,
         block_hash: &String,
-        block_height: &String,
+        block_height: &u128,
     ) -> Result<(), LedgerError> {
         let cf = make_cf_handle(db, BLOCK_HEIGHT)?;
 
-        batch.put_cf(&cf, block_hash, block_height);
+        let v = block_height.to_be_bytes();
+
+        batch.put_cf(&cf, block_hash, v);
 
         Ok(())
     }
@@ -508,22 +515,17 @@ impl LedgerDBSchema {
     pub(crate) fn get_last_block_height(
         &self,
         db: &DB,
-    ) -> Result<Option<String>, String> {
+    ) -> Result<Option<u128>, String> {
         let cf = make_cf_handle(db, BLOCK_HASH)?;
 
         let mut iter = db.iterator_cf(&cf, IteratorMode::End);
 
-        let (height, _hash) = match iter.next() {
+        let (height_bytes, _hash) = match iter.next() {
             Some(a) => a,
             None => return Ok(None),
         };
 
-        let height = match String::from_utf8(height.to_vec()) {
-            Ok(h) => h,
-            Err(err) => {
-                return Err(format!("Invalid utf8 given, err : {}", err))
-            }
-        };
+        let height = sak_kv_db::convert_u8_slice_into_u128(&height_bytes)?;
 
         Ok(Some(height))
     }

@@ -23,7 +23,7 @@ pub fn write_frame(dst: &mut BytesMut, frame: &Frame) -> Result<(), String> {
             dst.put_u8(b'*');
 
             // Encode the length of the array.
-            write_decimal(dst, val.len() as u64)?;
+            write_decimal(dst, val.len() as u128)?;
 
             // Iterate and encode each entry in the array.
             for fr in &**val {
@@ -62,7 +62,7 @@ fn write_value(dst: &mut BytesMut, frame: &Frame) -> Result<(), String> {
             let len = val.len();
 
             dst.put_u8(b'$');
-            write_decimal(dst, len as u64)?;
+            write_decimal(dst, len as u128)?;
             dst.put_slice(val);
             dst.put_slice(b"\r\n");
         }
@@ -73,7 +73,7 @@ fn write_value(dst: &mut BytesMut, frame: &Frame) -> Result<(), String> {
     Ok(())
 }
 
-pub fn write_decimal(dst: &mut BytesMut, val: u64) -> Result<(), String> {
+pub fn write_decimal(dst: &mut BytesMut, val: u128) -> Result<(), String> {
     use std::io::Write;
 
     // Convert the value to a string

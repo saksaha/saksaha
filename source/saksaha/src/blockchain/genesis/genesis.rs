@@ -36,7 +36,7 @@ impl GenesisBlock {
             transactions: vec![validator_deploy_tx, some_other_tx],
             witness_sigs: vec![String::from("1"), String::from("2")],
             created_at: String::from("2022061515340000"),
-            height: String::from("0"),
+            height: 0,
         };
 
         GenesisBlock { block_candidate }

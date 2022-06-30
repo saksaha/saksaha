@@ -59,7 +59,7 @@ impl TxSynMsg {
         let tx_count = self.txs.len();
 
         frame.push_bulk(Bytes::from(TX_SYN_TYPE.as_bytes()));
-        frame.push_int(tx_count as u64);
+        frame.push_int(tx_count as u128);
 
         for idx in 0..tx_count {
             let tx = &self.txs[idx];

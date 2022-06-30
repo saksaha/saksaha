@@ -1,4 +1,5 @@
 pub mod database;
+mod utils;
 
 pub use database::*;
 pub use rocksdb::{
@@ -6,3 +7,4 @@ pub use rocksdb::{
     DBRawIteratorWithThreadMode, DBWithThreadMode, Direction, IteratorMode,
     Options, WriteBatch, DB,
 };
+pub use utils::*;

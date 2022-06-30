@@ -111,7 +111,7 @@ impl DistLedger {
         genesis_block: BlockCandidate,
     ) -> Result<String, String> {
         let persisted_gen_block_hash = if let Some(b) =
-            match self.get_block_by_height(&String::from("0")).await {
+            match self.get_block_by_height(&0).await {
                 Ok(b) => b,
                 Err(err) => return Err(err.to_string()),
             } {
@@ -136,20 +136,6 @@ impl DistLedger {
 
             b
         };
-
-        // let (gen_block, _) = genesis_block.extract();
-        // let gen_block_hash = gen_block.get_hash();
-
-        // if gen_block_hash != &persisted_gen_block_hash {
-        //     return Err(format!(
-        //         "Not identical genesis block. Hardwird genesis \
-        //     block may have been tampered, gen_block: {}, persisted: {}",
-        //         &gen_block_hash, &persisted_gen_block_hash,
-        //     )
-        //     .into());
-        // }
-
-        // info!("Genesis block hash: {}", gen_block_hash.yellow());
 
         Ok(persisted_gen_block_hash.to_string())
     }

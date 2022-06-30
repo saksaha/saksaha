@@ -14,7 +14,7 @@ use std::string::FromUtf8Error;
 pub enum Frame {
     Simple(String),
     Error(String),
-    Integer(u64),
+    Integer(u128),
     Bulk(Bytes),
     Null,
     Array(Vec<Frame>),
@@ -54,7 +54,7 @@ impl Frame {
     /// # Panics
     ///
     /// panics if `self` is not an array
-    pub fn push_int(&mut self, value: u64) {
+    pub fn push_int(&mut self, value: u128) {
         match self {
             Frame::Array(vec) => {
                 vec.push(Frame::Integer(value));
@@ -243,12 +243,12 @@ fn skip(src: &mut Cursor<&[u8]>, n: usize) -> Result<(), Error> {
 }
 
 /// Read a new-line terminated decimal
-fn get_decimal(src: &mut Cursor<&[u8]>) -> Result<u64, Error> {
+fn get_decimal(src: &mut Cursor<&[u8]>) -> Result<u128, Error> {
     use atoi::atoi;
 
     let line = get_line(src)?;
 
-    atoi::<u64>(line)
+    atoi::<u128>(line)
         .ok_or_else(|| "protocol error; invalid frame format".into())
 }
 

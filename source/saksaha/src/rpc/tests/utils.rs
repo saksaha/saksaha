@@ -171,7 +171,7 @@ pub(super) mod test_utils {
             ],
             witness_sigs: vec![String::from("1"), String::from("2")],
             created_at: String::from("2022061515340000"),
-            height: String::from("0"),
+            height: 0,
         };
 
         genesis_block

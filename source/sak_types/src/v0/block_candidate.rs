@@ -7,7 +7,7 @@ pub struct BlockCandidate {
     pub transactions: Vec<Tx>,
     pub witness_sigs: Vec<String>,
     pub created_at: String,
-    pub height: String,
+    pub height: u128,
 }
 
 impl BlockCandidate {

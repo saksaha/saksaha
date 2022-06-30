@@ -27,10 +27,7 @@ impl BlockSynMsg {
                 std::str::from_utf8(&v)?.to_string()
             };
 
-            let block_height = {
-                let v = parse.next_bytes()?;
-                std::str::from_utf8(&v)?.to_string()
-            };
+            let block_height = parse.next_int()? as u128;
 
             let witness_sig_count = parse.next_int()?;
             let mut witness_sigs =
@@ -107,7 +104,7 @@ impl BlockSynMsg {
         let bc_count = self.block_candidates.len();
 
         frame.push_bulk(Bytes::from(BLOCK_SYN_TYPE.as_bytes()));
-        frame.push_int(bc_count as u64);
+        frame.push_int(bc_count as u128);
 
         for bc in &self.block_candidates {
             let validator_sig_bytes = {
@@ -122,20 +119,14 @@ impl BlockSynMsg {
                 b
             };
 
-            let height_bytes = {
-                let mut b = BytesMut::new();
-                b.put(bc.height.as_bytes());
-                b
-            };
-
             frame.push_bulk(Bytes::from(validator_sig_bytes));
             frame.push_bulk(Bytes::from(created_at_bytes));
-            frame.push_bulk(Bytes::from(height_bytes));
+            frame.push_int(bc.height as u128);
 
             let witness_sigs = &bc.witness_sigs;
             let witness_sig_count = witness_sigs.len();
 
-            frame.push_int(witness_sig_count as u64);
+            frame.push_int(witness_sig_count as u128);
 
             for idx in 0..witness_sig_count {
                 let witness_sig = &witness_sigs[idx];
@@ -151,7 +142,7 @@ impl BlockSynMsg {
             let txs = &bc.transactions;
             let tx_count = txs.len();
 
-            frame.push_int(tx_count as u64);
+            frame.push_int(tx_count as u128);
 
             for idx in 0..tx_count {
                 let tx = &txs[idx];

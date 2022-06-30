@@ -52,7 +52,7 @@ mod test_suite {
             ],
             witness_sigs: vec![String::from("1"), String::from("2")],
             created_at: String::from("2022061515340000"),
-            height: String::from("0"),
+            height: 0,
         };
 
         genesis_block
@@ -246,7 +246,7 @@ mod test_suite {
                 transactions: vec![dummy_tx1, dummy_tx2],
                 witness_sigs: vec![],
                 created_at: String::from(""),
-                height: String::from("1"),
+                height: 1,
             };
 
             c.extract()
@@ -317,7 +317,7 @@ mod test_suite {
                 .unwrap()
                 .unwrap();
 
-            assert_eq!(String::from("1"), last_height_1);
+            assert_eq!(1, last_height_1);
 
             tokio::time::sleep(Duration::from_secs(4)).await;
 
