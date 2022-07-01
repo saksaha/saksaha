@@ -50,46 +50,6 @@ impl Miner {
                 }
             };
 
-            // let next_validator =
-            //     match self.machine.blockchain.get_next_validator().await {
-            //         Ok(v) => v,
-            //         Err(err) => {
-            //             error!(
-            //                 "Could not get next validator, fatal, err: {}",
-            //                 err
-            //             );
-            //             self.error_count += 1;
-
-            //             continue;
-            //         }
-            //     };
-
-            // println!("next validator: {}", next_validator);
-
-            // let is_next_validator =
-            //     next_validator == self.identity.credential.public_key_str;
-
-            // let is_next_validator = match system_contract.get_validator() {
-            //     Ok(b) => {
-            //         println!(
-            //             "{},
-            //             {}",
-            //             &b, &self.identity.credential.public_key_str
-            //         );
-            //         b.eq(&self.identity.credential.public_key_str)
-            //     }
-            //     Err(err) => {
-            //         error!(
-            //             "Fatal error. Error getting next validator, err: {}",
-            //             err,
-            //         );
-
-            //         return;
-            //     }
-            // };
-
-            // info!("is_next_validator: {}", is_next_validator);
-
             sak_utils_time::wait_until_min_interval(time_since, mine_interval)
                 .await;
         }

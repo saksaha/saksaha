@@ -1,5 +1,6 @@
 use crate::DistLedger;
 use crate::LedgerError;
+use log::info;
 use sak_contract_std::Request;
 use sak_vm::CtrFn;
 
@@ -24,7 +25,7 @@ impl DistLedger {
 
         let ret = self.vm.invoke(ctr_wasm, ctr_fn)?;
 
-        println!("invoke query ctr, ctr_state: {:?}", ret);
+        info!("invoke query ctr, ctr_state: {:?}", ret);
 
         Ok(ret)
     }
@@ -49,7 +50,7 @@ impl DistLedger {
 
         let ret = self.vm.invoke(ctr_wasm, ctr_fn)?;
 
-        println!("invoke execute ctr, ctr_state: {:?}", ret);
+        info!("invoke execute ctr, ctr_state: {:?}", ret);
 
         Ok(ret)
     }

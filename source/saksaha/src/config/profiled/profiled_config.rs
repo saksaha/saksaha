@@ -8,6 +8,8 @@ pub(crate) struct ProfiledConfig {
 }
 
 pub(crate) struct ProfiledP2PConfig {
+    pub(crate) secret: Option<String>,
+    pub(crate) public_key_str: Option<String>,
     pub(crate) bootstrap_addrs: Vec<UnknownAddr>,
 }
 

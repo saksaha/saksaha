@@ -5,6 +5,8 @@ pub(super) fn get_config() -> ProfiledConfig {
     return ProfiledConfig {
         app_prefix: String::from("dev_local_2"),
         p2p: ProfiledP2PConfig {
+            secret: None,
+            public_key_str: None,
             bootstrap_addrs: vec![
                 UnknownAddr {
                     ip: String::from("127.0.0.1"),

@@ -28,8 +28,7 @@ impl Consensus for Pos {
 
         let height = next_height(dist_ledger.get_last_block_height().await?);
 
-        // TODO use identity
-        if !validator.is_empty() {
+        if self.identity.credential.public_key_str == validator {
             let bc = BlockCandidate {
                 validator_sig: String::from("1"),
                 transactions: txs,

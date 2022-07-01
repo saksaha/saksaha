@@ -62,7 +62,7 @@ impl Config {
     ) -> Result<Config, String> {
         let bootstrap_addrs = {
             let mut addrs = match profiled_config {
-                Some(c) => c.p2p.bootstrap_addrs,
+                Some(ref c) => c.p2p.bootstrap_addrs.clone(),
                 None => vec![],
             };
 
@@ -101,6 +101,23 @@ impl Config {
             addrs
         };
 
+        let (secret, public_key_str) = match profiled_config {
+            Some(pc) => {
+                let sc = match &pc.p2p.secret {
+                    Some(s) => s.clone(),
+                    None => pconfig.p2p.secret.clone(),
+                };
+
+                let pk = match &pc.p2p.public_key_str {
+                    Some(p) => p.clone(),
+                    None => pconfig.p2p.public_key_str.clone(),
+                };
+
+                (sc, pk)
+            }
+            None => (pconfig.p2p.secret, pconfig.p2p.public_key_str),
+        };
+
         let conf = Config {
             app_prefix: app_prefix.clone(),
             blockchain: BlockchainConfig {
@@ -129,8 +146,8 @@ impl Config {
                 p2p_max_conn_count: sys_run_args.p2p_max_conn_count,
                 addr_expire_duration: sys_run_args.addr_expire_duration,
                 addr_monitor_interval: sys_run_args.addr_monitor_interval,
-                secret: pconfig.p2p.secret.clone(),
-                public_key_str: pconfig.p2p.public_key_str.clone(),
+                secret,
+                public_key_str,
                 bootstrap_addrs,
             },
         };
