@@ -24,7 +24,7 @@ pub enum PeerStatus {
 }
 
 impl Peer {
-    pub fn public_key_short(&self) -> &str {
+    pub fn get_public_key_short(&self) -> &str {
         &self.public_key_str[..6]
     }
 }

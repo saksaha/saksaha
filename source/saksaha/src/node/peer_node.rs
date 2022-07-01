@@ -20,12 +20,12 @@ impl PeerNode {
         debug!(
             "Peer is registered as a peer node. Starting the routine, \
             public_key : {}",
-            self.peer.public_key_short()
+            self.peer.get_public_key_short()
         );
 
         loop {
             let mut conn = &mut self.peer.transport.conn.write().await;
-            let public_key = self.peer.public_key_short();
+            let public_key = self.peer.get_public_key_short();
 
             tokio::select! {
                 Ok(ev) = self.bc_event_rx.recv() => {
