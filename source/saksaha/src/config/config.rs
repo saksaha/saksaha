@@ -58,13 +58,10 @@ impl Config {
         app_prefix: String,
         sys_run_args: &SystemRunArgs,
         pconfig: PConfig,
-        profiled_config: Option<ProfiledConfig>,
+        profiled_config: ProfiledConfig,
     ) -> Result<Config, String> {
         let bootstrap_addrs = {
-            let mut addrs = match profiled_config {
-                Some(c) => c.p2p.bootstrap_addrs,
-                None => vec![],
-            };
+            let mut addrs = profiled_config.p2p.bootstrap_addrs.clone();
 
             if let Some(a) = &pconfig.p2p.bootstrap_addrs {
                 addrs = a.clone();
@@ -101,6 +98,23 @@ impl Config {
             addrs
         };
 
+        let secret = profiled_config
+            .p2p
+            .secret
+            .unwrap_or(pconfig.p2p.secret.clone());
+
+        let public_key_str = profiled_config
+            .p2p
+            .public_key_str
+            .unwrap_or(pconfig.p2p.public_key_str.clone());
+
+        let miner = profiled_config.node.miner || sys_run_args.miner;
+
+        let disc_port =
+            profiled_config.p2p.disc_port.or(sys_run_args.disc_port);
+
+        let rpc_port = profiled_config.rpc.rpc_port.or(sys_run_args.rpc_port);
+
         let conf = Config {
             app_prefix: app_prefix.clone(),
             blockchain: BlockchainConfig {
@@ -108,15 +122,13 @@ impl Config {
                 block_sync_interval: sys_run_args.block_sync_interval,
             },
             node: NodeConfig {
-                miner: sys_run_args.miner,
+                miner,
                 mine_interval: sys_run_args.mine_interval,
             },
             db: DBConfig {},
-            rpc: RPCConfig {
-                rpc_port: sys_run_args.rpc_port,
-            },
+            rpc: RPCConfig { rpc_port },
             p2p: P2PConfig {
-                disc_port: sys_run_args.disc_port,
+                disc_port,
                 disc_dial_interval: sys_run_args.disc_dial_interval,
                 disc_table_capacity: sys_run_args.disc_table_capacity,
                 disc_task_interval: sys_run_args.disc_task_interval,
@@ -129,8 +141,8 @@ impl Config {
                 p2p_max_conn_count: sys_run_args.p2p_max_conn_count,
                 addr_expire_duration: sys_run_args.addr_expire_duration,
                 addr_monitor_interval: sys_run_args.addr_monitor_interval,
-                secret: pconfig.p2p.secret.clone(),
-                public_key_str: pconfig.p2p.public_key_str.clone(),
+                secret,
+                public_key_str,
                 bootstrap_addrs,
             },
         };

@@ -6,7 +6,6 @@ pub(super) mod test_utils {
     use crate::{blockchain::Blockchain, machine::Machine};
     use colored::*;
     use log::info;
-    use sak_p2p_addr::{AddrStatus, UnknownAddr};
     use sak_p2p_id::Identity;
     use sak_p2p_ptable::PeerTable;
     use sak_types::{BlockCandidate, Tx};

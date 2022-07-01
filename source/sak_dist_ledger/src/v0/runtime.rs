@@ -1,5 +1,5 @@
 use crate::{DistLedgerEvent, SyncPool};
-use log::error;
+use log::warn;
 use std::{
     sync::Arc,
     time::{Duration, SystemTime},
@@ -87,7 +87,11 @@ impl TxSyncRoutine {
                 {
                     Ok(_) => (),
                     Err(err) => {
-                        error!("Error sending tx sync event, err: {}", err);
+                        warn!(
+                            "No active receiver handle to sync tx event, \
+                            err: {}",
+                            err
+                        );
                     }
                 };
             }
@@ -124,7 +128,11 @@ impl BlockSyncRoutine {
                 {
                     Ok(_) => (),
                     Err(err) => {
-                        error!("Error sending block sync event, err: {}", err);
+                        warn!(
+                            "No active receiver handle to sync tx event, \
+                            err: {}",
+                            err
+                        );
                     }
                 };
             }

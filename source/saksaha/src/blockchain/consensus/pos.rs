@@ -26,10 +26,9 @@ impl Consensus for Pos {
             .query_ctr(&self.validator_ctr_addr, request)
             .await?;
 
-        let height = next_height(dist_ledger.get_last_block_height().await?)?;
+        let height = next_height(dist_ledger.get_last_block_height().await?);
 
-        // TODO use identity
-        if !validator.is_empty() {
+        if self.identity.credential.public_key_str == validator {
             let bc = BlockCandidate {
                 validator_sig: String::from("1"),
                 transactions: txs,
@@ -45,9 +44,9 @@ impl Consensus for Pos {
     }
 }
 
-fn next_height(maybe_height: Option<u128>) -> Result<u128, ConsensusError> {
+fn next_height(maybe_height: Option<u128>) -> u128 {
     match maybe_height {
-        Some(h) => Ok(h + 1),
-        None => Ok(0),
+        Some(h) => h + 1,
+        None => 0,
     }
 }
