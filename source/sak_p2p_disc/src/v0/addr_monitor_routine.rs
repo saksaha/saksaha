@@ -24,7 +24,7 @@ impl AddrMonitorRoutine {
             drop(addr_map_lock);
 
             for (idx, addr) in addrs.iter().enumerate() {
-                // debug!("addr status [{}] - {}", idx, addr.known_addr,);
+                debug!("addr status [{}] - {}", idx, addr.known_addr,);
 
                 tokio::time::sleep(self.addr_monitor_interval).await;
             }
