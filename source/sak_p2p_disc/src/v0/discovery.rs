@@ -13,7 +13,7 @@ use tokio::net::UdpSocket;
 
 const DISC_TASK_QUEUE_CAPACITY: usize = 10;
 const ADDR_EXPIRE_DURATION: u64 = 3600;
-const ADDR_MONITOR_INTERVAL: u64 = 1000;
+const ADDR_MONITOR_INTERVAL: u64 = 3000;
 
 pub struct Discovery {
     disc_runtime: DiscRuntime,

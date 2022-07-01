@@ -35,7 +35,7 @@ impl Peer {
                 let mut addr_status_lock =
                     self.addr.known_addr.status.write().await;
 
-                addr_status_lock = AddrStatus::Disconnected;
+                *addr_status_lock = AddrStatus::Disconnected;
             }
             _ => (),
         }
