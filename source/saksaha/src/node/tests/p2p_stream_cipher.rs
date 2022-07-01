@@ -1,23 +1,13 @@
 #[cfg(test)]
 mod test_suite {
-    use crate::{
-        blockchain::Blockchain,
-        machine::{self, Machine},
-        node::LocalNode,
-        p2p::{P2PHost, P2PHostArgs},
-    };
+    use crate::p2p::{P2PHost, P2PHostArgs};
     use colored::*;
-    use futures::{SinkExt, StreamExt};
     use log::info;
     use sak_crypto::{PublicKey, Signature};
-    use sak_dist_ledger::{DistLedger, DistLedgerArgs};
     use sak_p2p_addr::{AddrStatus, UnknownAddr};
-    use sak_p2p_disc::{DiscAddr, Discovery, DiscoveryArgs};
-    use sak_p2p_id::{Credential, Identity};
+    use sak_p2p_disc::DiscAddr;
+    use sak_p2p_id::Identity;
     use sak_p2p_ptable::PeerTable;
-    use sak_p2p_trpt::{Msg, TxHashSynMsg};
-    use sak_task_queue::TaskQueue;
-    use sak_types::{BlockCandidate, Hashable, Tx};
     use std::{sync::Arc, time::Duration};
 
     const RUST_LOG_ENV: &str = "

@@ -3,13 +3,8 @@ mod p2p_stream_cipher;
 
 #[cfg(test)]
 mod test {
-    use aes::cipher::typenum::Diff;
-    use sak_dist_ledger::{DistLedger, DistLedgerArgs};
     use sak_types::BlockCandidate;
-    use sak_types::Hashable;
     use sak_types::Tx;
-
-    use crate::blockchain::Blockchain;
 
     fn init() {
         let _ = env_logger::builder().is_test(true).init();

@@ -17,8 +17,6 @@ use sak_p2p_id::Identity;
 use sak_p2p_ptable::PeerTable;
 use std::sync::Arc;
 
-const APP_PREFIX: &str = "default";
-
 pub(super) struct Routine {
     pub(super) shutdown_manager: ShutdownMng,
 }
@@ -33,7 +31,7 @@ impl Routine {
         let config = {
             let profiled_config = match &sys_run_args.cfg_profile {
                 Some(profile) => match ProfiledConfig::new(profile) {
-                    Ok(c) => Some(c),
+                    Ok(c) => c,
                     Err(err) => {
                         return Err(format!(
                             "Could not create dev config, err: {}",
@@ -42,15 +40,12 @@ impl Routine {
                         .into());
                     }
                 },
-                None => None,
+                None => ProfiledConfig::new_empty(),
             };
 
             let app_prefix = match &sys_run_args.app_prefix {
                 Some(ap) => ap.clone(),
-                None => match &profiled_config {
-                    Some(pc) => pc.app_prefix.clone(),
-                    None => APP_PREFIX.to_string(),
-                },
+                None => profiled_config.app_prefix.clone(),
             };
 
             info!("Resolved app_prefix: {}", app_prefix.yellow(),);

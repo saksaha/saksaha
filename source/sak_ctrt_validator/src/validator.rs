@@ -15,10 +15,8 @@ pub unsafe extern "C" fn init() -> (*mut u8, i32) {
 
     let validators_init = match serde_json::to_string(&vec![String::from(
         "\
-            046885b904a8b8cdd17cc40078ed11421\
-            4586f197a664d6aa33d4b46cc3b712afc\
-            def3d4d808bc7843beaea9e1a4c5ddeea\
-            47cbd27ea1af5ca13719a2f42c39167\
+            045739d074b8722891c307e8e75c9607e0b55a80778b42ef5f4640d4949dbf399\
+    2f6083b729baef9e9545c4e95590616fd382662a09653f2a966ff524989ae8c0f\
             ",
     )]) {
         Ok(s) => s,
