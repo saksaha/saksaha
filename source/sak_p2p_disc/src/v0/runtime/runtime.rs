@@ -1,15 +1,15 @@
-use super::AddrTable;
+use crate::AddrTable;
 use crate::DiscAddr;
 use log::debug;
 use std::sync::Arc;
 use std::time::Duration;
 
-pub(crate) struct AddrMonitorRoutine {
+pub(crate) struct DiscRuntime {
     pub(crate) addr_monitor_interval: Duration,
     pub(crate) addr_table: Arc<AddrTable>,
 }
 
-impl AddrMonitorRoutine {
+impl DiscRuntime {
     pub async fn run(&self) {
         let rest_after_one_iteration = self.addr_monitor_interval * 5;
 
