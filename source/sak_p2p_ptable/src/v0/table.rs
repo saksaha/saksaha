@@ -1,4 +1,4 @@
-use crate::{Peer, PeerIterator, Slot, SlotGuard};
+use crate::{Peer, PeerIterator, Runtime, Slot, SlotGuard};
 use colored::Colorize;
 use log::{debug, error, info};
 use std::{collections::HashMap, sync::Arc};
@@ -8,21 +8,22 @@ use tokio::sync::{
 };
 
 // const PEER_TABLE_CAPACITY: usize = 50;
-const PEER_TABLE_CAPACITY: usize = 5;
+const PEER_TABLE_CAPACITY: isize = 5;
 
 pub type PublicKey = String;
+pub type PeerMap = HashMap<PublicKey, Arc<Peer>>;
 
 pub struct PeerTable {
-    peer_map: RwLock<HashMap<PublicKey, Arc<Peer>>>,
-    slots_rx: RwLock<UnboundedReceiver<Arc<Slot>>>,
-    slots_tx: Arc<UnboundedSender<Arc<Slot>>>,
+    peer_map: Arc<RwLock<PeerMap>>,
+    slots_rx: RwLock<UnboundedReceiver<Slot>>,
+    slots_tx: Arc<UnboundedSender<Slot>>,
     peers_tx: Arc<UnboundedSender<Arc<Peer>>>,
     peer_it: Arc<RwLock<PeerIterator>>,
 }
 
 impl PeerTable {
     pub async fn init(
-        peer_table_capacity: Option<u16>,
+        peer_table_capacity: Option<i16>,
     ) -> Result<PeerTable, String> {
         let capacity = match peer_table_capacity {
             Some(c) => c.into(),
@@ -37,7 +38,7 @@ impl PeerTable {
             for idx in 0..capacity {
                 let s = Slot { idx };
 
-                match slots_tx.send(Arc::new(s)) {
+                match slots_tx.send(s) {
                     Ok(_) => (),
                     Err(err) => {
                         error!("slots channel has been closed, err: {}", err,);
@@ -60,14 +61,21 @@ impl PeerTable {
         let peer_map = {
             let m = HashMap::new();
 
-            RwLock::new(m)
+            Arc::new(RwLock::new(m))
         };
+
+        let runtime = Runtime {
+            peer_map: peer_map.clone(),
+        };
+
+        tokio::spawn(async move {
+            runtime.run().await;
+        });
 
         let ps = PeerTable {
             peer_map,
             slots_rx,
             slots_tx,
-            // peers_rx,
             peers_tx,
             peer_it,
         };

@@ -9,7 +9,7 @@ pub(crate) struct CLIArgs {
     pub(crate) disc_task_queue_capacity: Option<u16>,
     pub(crate) p2p_task_interval: Option<u16>,
     pub(crate) p2p_task_queue_capacity: Option<u16>,
-    pub(crate) p2p_peer_table_capacity: Option<u16>,
+    pub(crate) p2p_peer_table_capacity: Option<i16>,
     pub(crate) p2p_max_conn_count: Option<u16>,
     pub(crate) p2p_dial_interval: Option<u16>,
     pub(crate) app_prefix: Option<String>,
@@ -161,7 +161,7 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
 
     let p2p_peer_table_capacity =
         match matches.value_of("p2p-peer-table-capacity") {
-            Some(i) => match i.parse::<u16>() {
+            Some(i) => match i.parse::<i16>() {
                 Ok(interval) => Some(interval),
                 Err(err) => {
                     return Err(format!(

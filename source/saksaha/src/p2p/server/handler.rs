@@ -1,6 +1,6 @@
 use chrono::Utc;
 use futures::StreamExt;
-use log::warn;
+use log::{error, warn};
 use sak_p2p_disc::AddrTable;
 use sak_p2p_id::Identity;
 use sak_p2p_ptable::{Peer, PeerStatus, PeerTable};
@@ -89,7 +89,7 @@ async fn handle_handshake_syn_msg(
     let peer_slot_guard = match peer_table.get_empty_slot().await {
         Ok(s) => s,
         Err(err) => {
-            warn!(
+            error!(
                 "Empty slot is not available in the peer table, err: {}",
                 err
             );

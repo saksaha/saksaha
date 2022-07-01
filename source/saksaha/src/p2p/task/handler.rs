@@ -1,5 +1,5 @@
 use crate::p2p::task::P2PTask;
-use log::{debug, warn};
+use log::{debug, error, warn};
 use sak_p2p_ptable::{Peer, PeerStatus};
 use sak_p2p_trpt::{
     handshake::{self, HandshakeInitArgs},
@@ -17,24 +17,28 @@ pub(crate) async fn run(task: P2PTask) {
         } => {
             let known_addr = &addr.known_addr;
 
-            let peer_slot_guard = match peer_table
-                .get_mapped_peer(&known_addr.public_key_str)
-                .await
+            if let Some(p) =
+                peer_table.get_mapped_peer(&known_addr.public_key_str).await
             {
-                Some(_) => {
-                    warn!(
-                        "Peer already mapped, public_key: {}",
-                        &known_addr.public_key_str,
+                debug!(
+                    "Peer already mapped, public_key: {}",
+                    p.get_public_key_short()
+                );
+
+                return;
+            }
+
+            let peer_slot_guard = match peer_table.get_empty_slot().await {
+                Ok(p) => p,
+                Err(err) => {
+                    error!(
+                        "Fatal error. Empty slot is not available in the \
+                        peer table, err: {}",
+                        err
                     );
+
                     return;
                 }
-                None => match peer_table.get_empty_slot().await {
-                    Ok(s) => s,
-                    Err(_) => {
-                        warn!("Empty slot is not available in the peer table");
-                        return;
-                    }
-                },
             };
 
             let endpoint = known_addr.p2p_endpoint();
