@@ -3,17 +3,21 @@ use std::sync::Arc;
 use tokio::sync::mpsc::UnboundedSender;
 
 pub struct Slot {
-    pub idx: usize,
+    pub idx: isize,
 }
 
 pub struct SlotGuard {
-    pub slot: Arc<Slot>,
-    pub slots_tx: Arc<UnboundedSender<Arc<Slot>>>,
+    // pub slot: Arc<Slot>,
+    // pub slots_tx: Arc<UnboundedSender<Arc<Slot>>>,
+    pub slot: Slot,
+    pub slots_tx: Arc<UnboundedSender<Slot>>,
 }
 
 impl Drop for SlotGuard {
     fn drop(&mut self) {
-        match self.slots_tx.send(self.slot.clone()) {
+        let slot = std::mem::replace(&mut self.slot, Slot { idx: -1 });
+
+        match self.slots_tx.send(slot) {
             Ok(_) => (),
             Err(err) => {
                 terr!(

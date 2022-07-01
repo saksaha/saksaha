@@ -24,7 +24,7 @@ pub(crate) struct P2PConfig {
     pub(crate) p2p_task_queue_capacity: Option<u16>,
     pub(crate) p2p_dial_interval: Option<u16>,
     pub(crate) p2p_max_conn_count: Option<u16>,
-    pub(crate) p2p_peer_table_capacity: Option<u16>,
+    pub(crate) p2p_peer_table_capacity: Option<i16>,
     pub(crate) p2p_port: Option<u16>,
     pub(crate) addr_expire_duration: Option<u64>,
     pub(crate) addr_monitor_interval: Option<u64>,
