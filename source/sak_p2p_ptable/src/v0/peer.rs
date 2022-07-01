@@ -1,5 +1,6 @@
 use crate::SlotGuard;
 use chrono::{DateTime, Utc};
+use sak_p2p_addr::AddrStatus;
 use sak_p2p_disc::DiscAddr;
 use sak_p2p_trpt::Transport;
 use std::sync::Arc;
@@ -26,6 +27,21 @@ pub enum PeerStatus {
 impl Peer {
     pub fn get_public_key_short(&self) -> &str {
         &self.public_key_str[..6]
+    }
+
+    pub async fn set_status(&self, peer_status: PeerStatus) {
+        match &peer_status {
+            PeerStatus::Disconnected => {
+                let mut addr_status_lock =
+                    self.addr.known_addr.status.write().await;
+
+                addr_status_lock = AddrStatus::Disconnected;
+            }
+            _ => (),
+        }
+
+        let mut peer_status_lock = self.status.write().await;
+        *peer_status_lock = peer_status;
     }
 }
 

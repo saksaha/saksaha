@@ -1,5 +1,6 @@
 use crate::AddrTable;
 use crate::DiscAddr;
+use crate::PublicKey;
 use log::debug;
 use std::sync::Arc;
 use std::time::Duration;
@@ -18,13 +19,13 @@ impl DiscRuntime {
 
             let addr_map_lock = table.addr_map.read().await;
 
-            let addrs: Vec<Arc<DiscAddr>> =
-                addr_map_lock.values().map(|addr| addr.clone()).collect();
+            let public_keys: Vec<PublicKey> =
+                addr_map_lock.keys().map(|k| k.clone()).collect();
 
             drop(addr_map_lock);
 
-            for (idx, addr) in addrs.iter().enumerate() {
-                debug!("addr status [{}] - {}", idx, addr.known_addr,);
+            for public_key in public_keys.iter() {
+                // debug!("addr status [{}] - {}", idx, addr.known_addr,);
 
                 tokio::time::sleep(self.addr_monitor_interval).await;
             }
