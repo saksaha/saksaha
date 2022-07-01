@@ -1,7 +1,5 @@
 use super::{miner::Miner, peer_node::PeerNode};
 use crate::machine::Machine;
-use log::info;
-use sak_p2p_id::{Credential, Identity};
 use sak_p2p_ptable::PeerTable;
 use std::sync::Arc;
 
@@ -24,8 +22,6 @@ impl LocalNode {
                 miner.run().await;
             });
         }
-
-        info!("Running LocalNode, miner: {}", self.miner);
 
         let peer_it = self.peer_table.new_iter();
         let mut peer_it_lock = peer_it.write().await;

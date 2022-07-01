@@ -58,13 +58,10 @@ impl Config {
         app_prefix: String,
         sys_run_args: &SystemRunArgs,
         pconfig: PConfig,
-        profiled_config: Option<ProfiledConfig>,
+        profiled_config: ProfiledConfig,
     ) -> Result<Config, String> {
         let bootstrap_addrs = {
-            let mut addrs = match profiled_config {
-                Some(ref c) => c.p2p.bootstrap_addrs.clone(),
-                None => vec![],
-            };
+            let mut addrs = profiled_config.p2p.bootstrap_addrs.clone();
 
             if let Some(a) = &pconfig.p2p.bootstrap_addrs {
                 addrs = a.clone();
@@ -101,22 +98,22 @@ impl Config {
             addrs
         };
 
-        let (secret, public_key_str) = match profiled_config {
-            Some(pc) => {
-                let sc = match &pc.p2p.secret {
-                    Some(s) => s.clone(),
-                    None => pconfig.p2p.secret.clone(),
-                };
+        let secret = profiled_config
+            .p2p
+            .secret
+            .unwrap_or(pconfig.p2p.secret.clone());
 
-                let pk = match &pc.p2p.public_key_str {
-                    Some(p) => p.clone(),
-                    None => pconfig.p2p.public_key_str.clone(),
-                };
+        let public_key_str = profiled_config
+            .p2p
+            .public_key_str
+            .unwrap_or(pconfig.p2p.public_key_str.clone());
 
-                (sc, pk)
-            }
-            None => (pconfig.p2p.secret, pconfig.p2p.public_key_str),
-        };
+        let miner = profiled_config.node.miner || sys_run_args.miner;
+
+        let disc_port =
+            profiled_config.p2p.disc_port.or(sys_run_args.disc_port);
+
+        let rpc_port = profiled_config.rpc.rpc_port.or(sys_run_args.rpc_port);
 
         let conf = Config {
             app_prefix: app_prefix.clone(),
@@ -125,15 +122,13 @@ impl Config {
                 block_sync_interval: sys_run_args.block_sync_interval,
             },
             node: NodeConfig {
-                miner: sys_run_args.miner,
+                miner,
                 mine_interval: sys_run_args.mine_interval,
             },
             db: DBConfig {},
-            rpc: RPCConfig {
-                rpc_port: sys_run_args.rpc_port,
-            },
+            rpc: RPCConfig { rpc_port },
             p2p: P2PConfig {
-                disc_port: sys_run_args.disc_port,
+                disc_port,
                 disc_dial_interval: sys_run_args.disc_dial_interval,
                 disc_table_capacity: sys_run_args.disc_table_capacity,
                 disc_task_interval: sys_run_args.disc_task_interval,

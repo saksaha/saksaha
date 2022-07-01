@@ -1,4 +1,5 @@
 use crate::machine::Machine;
+use colored::Colorize;
 use log::{error, info, warn};
 use std::{
     sync::Arc,
@@ -28,7 +29,11 @@ impl Miner {
             None => Duration::from_millis(MINE_INTERVAL),
         };
 
-        info!("Starting Miner, mine_interval: {:?}", mine_interval);
+        info!(
+            "Starting {}, mine_interval: {:?}",
+            "miner".yellow(),
+            mine_interval
+        );
 
         loop {
             if self.error_count > 5 {

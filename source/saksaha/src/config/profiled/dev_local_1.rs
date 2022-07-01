@@ -1,10 +1,12 @@
 use super::{ProfiledConfig, ProfiledP2PConfig};
+use crate::config::{NodeConfig, RPCConfig};
 use sak_p2p_addr::{AddrStatus, UnknownAddr};
 
 pub(super) fn get_config() -> ProfiledConfig {
     return ProfiledConfig {
         app_prefix: String::from("dev_local_1"),
         p2p: ProfiledP2PConfig {
+            disc_port: Some(35518),
             secret: Some(String::from(
                 "7297b903877a957748b74068d63d6d5661481975240\
                 99fc1df5cd9e8814c66c7",
@@ -92,6 +94,13 @@ pub(super) fn get_config() -> ProfiledConfig {
                 // },
             ],
             // sec,
+        },
+        node: NodeConfig {
+            miner: true,
+            mine_interval: None,
+        },
+        rpc: RPCConfig {
+            rpc_port: Some(34418),
         },
     };
 }
