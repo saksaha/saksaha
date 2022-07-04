@@ -27,10 +27,6 @@ pub(crate) async fn handle_msg<'a>(
         Msg::BlockSyn(block_syn_msg) => {
             handle_block_syn(block_syn_msg, machine, &mut conn).await?;
         }
-        // Msg::BlockHeightSyn(block_height_syn_msg) => {
-        //     handle_block_height_syn(block_height_syn_msg, machine, &mut conn)
-        //         .await?;
-        // }
         _ => (),
     };
 
@@ -162,26 +158,3 @@ pub(crate) async fn handle_block_syn<'a>(
 
     Ok(())
 }
-
-// pub(crate) async fn handle_block_height_syn<'a>(
-//     block_height_syn_msg: BlockHeightSynMsg,
-//     machine: &Machine,
-//     conn: &'a mut RwLockWriteGuard<'_, UpgradedConnection>,
-// ) -> Result<(), BoxedError> {
-//     let latest_height = machine
-//         .blockchain
-//         .dist_ledger
-//         .get_latest_block_height()
-//         .await?
-//         .unwrap_or(0);
-
-//     conn.socket
-//         .send(Msg::BlockHeightAck(BlockHeightSynMsg {
-//             block_height: latest_height,
-//         }))
-//         .await?;
-
-//     println!("ack send ok");
-
-//     Ok(())
-// }

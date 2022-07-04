@@ -1,5 +1,4 @@
 mod block_hash_syn;
-mod block_height_syn;
 mod block_syn;
 mod handshake;
 mod msg;
@@ -8,7 +7,6 @@ mod tx_hash_syn;
 mod tx_syn;
 
 pub use block_hash_syn::*;
-pub use block_height_syn::*;
 pub use block_syn::*;
 pub use handshake::Handshake;
 pub use msg::Msg;
