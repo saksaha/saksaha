@@ -7,8 +7,6 @@ pub enum Msg {
     TxSyn(TxSynMsg),
     TxHashSyn(TxHashSynMsg),
     TxHashAck(TxHashSynMsg),
-    // HeightSyn(BlockHeightSync),
-    // HeightAck(BlockHeightSync),
     BlockHashSyn(BlockHashSynMsg),
     BlockHashAck(BlockHashSynMsg),
     BlockSyn(BlockSynMsg),

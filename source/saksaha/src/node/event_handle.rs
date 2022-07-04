@@ -99,7 +99,7 @@ pub(super) async fn handle_new_blocks_ev<'a>(
     public_key: &str,
     conn: &'a mut RwLockWriteGuard<'_, UpgradedConnection>,
     machine: &Machine,
-    new_blocks: Vec<(String, String)>,
+    new_blocks: Vec<(u128, String)>,
 ) {
     println!("sending block hash syn msg!!");
 

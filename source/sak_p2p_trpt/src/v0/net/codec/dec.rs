@@ -32,6 +32,10 @@ pub(super) fn decode_into_msg(
                 let tx_hash_ack = TxHashSynMsg::from_parse(&mut parse)?;
                 Msg::TxHashAck(tx_hash_ack)
             }
+            TX_SYN_TYPE => {
+                let tx_sync = TxSynMsg::from_parse(&mut parse)?;
+                Msg::TxSyn(tx_sync)
+            }
             BLOCK_HASH_SYN => {
                 let block_hash_sync = BlockHashSynMsg::from_parse(&mut parse)?;
                 Msg::BlockHashSyn(block_hash_sync)
@@ -40,15 +44,10 @@ pub(super) fn decode_into_msg(
                 let block_hash_sync = BlockHashSynMsg::from_parse(&mut parse)?;
                 Msg::BlockHashAck(block_hash_sync)
             }
-            TX_SYN_TYPE => {
-                let tx_sync = TxSynMsg::from_parse(&mut parse)?;
-                Msg::TxSyn(tx_sync)
-            }
             BLOCK_SYN_TYPE => {
                 let block_syn = BlockSynMsg::from_parse(&mut parse)?;
                 Msg::BlockSyn(block_syn)
             }
-
             _ => {
                 return Err(format!(
                     "Frame does have invalid msg_type, type: {}",

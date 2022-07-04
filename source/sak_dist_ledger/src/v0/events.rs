@@ -1,7 +1,7 @@
 #[derive(Clone, Debug)]
 pub enum DistLedgerEvent {
     TxPoolStat(Vec<String>),
-    NewBlocks(Vec<(String, String)>),
+    NewBlocks(Vec<(u128, String)>),
 }
 
 impl std::fmt::Display for DistLedgerEvent {

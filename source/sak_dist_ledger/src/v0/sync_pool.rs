@@ -6,7 +6,7 @@ use tokio::sync::RwLock;
 const SYNC_POOL_CAPACITY: usize = 100;
 
 pub(crate) struct SyncPool {
-    new_blocks: RwLock<HashSet<(String, String)>>,
+    new_blocks: RwLock<HashSet<(u128, String)>>,
     new_tx_hashes: RwLock<HashSet<String>>,
     tx_map: RwLock<HashMap<String, Tx>>,
 }
@@ -37,7 +37,7 @@ impl SyncPool {
         }
     }
 
-    pub(crate) async fn drain_new_blocks(&self) -> Vec<(String, String)> {
+    pub(crate) async fn drain_new_blocks(&self) -> Vec<(u128, String)> {
         let mut new_blocks_lock = self.new_blocks.write().await;
 
         let v: Vec<_> = new_blocks_lock.drain().collect();
@@ -75,10 +75,10 @@ impl SyncPool {
     ) -> Result<(), String> {
         let mut new_blocks_lock = self.new_blocks.write().await;
 
-        let height = block.get_height().to_string();
-        let block_hash = block.get_hash().to_string();
+        let height = block.get_height();
+        let block_hash = block.get_hash();
 
-        new_blocks_lock.insert((height, block_hash));
+        new_blocks_lock.insert((height.to_owned(), block_hash.to_owned()));
 
         Ok(())
     }
