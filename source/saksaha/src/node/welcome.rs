@@ -12,7 +12,7 @@ const RESPONSE_TIMEOUT: u64 = 2000;
 
 pub(crate) async fn handle_welcome<'a>(
     public_key: &str,
-    conn: &'a mut RwLockWriteGuard<'_, UpgradedConnection>,
+    conn: &mut RwLockWriteGuard<'_, UpgradedConnection>,
     machine: &Machine,
 ) -> Result<(), BoxedError> {
     let latest_height = machine

@@ -1,11 +1,10 @@
 use crate::node::msg_handler;
 use crate::{machine::Machine, node::event_handle};
-use futures::StreamExt;
-use log::{debug, error, info, warn};
+use futures::{SinkExt, StreamExt};
+use log::{debug, warn};
 use sak_dist_ledger::DistLedgerEvent;
 use sak_p2p_ptable::Peer;
 use sak_p2p_ptable::{PeerStatus, PeerTable};
-use sak_p2p_trpt::Msg;
 use std::sync::Arc;
 use tokio::sync::broadcast::Receiver;
 
@@ -51,7 +50,6 @@ impl PeerNode {
                                 new_tx_hashes,
                             ).await;
                         },
-
                     };
                 },
                 maybe_msg = conn.socket.next() => {
@@ -86,7 +84,7 @@ impl PeerNode {
     }
 
     async fn welcome_peer_node(&mut self) {
-        let mut conn = &mut self.peer.transport.conn.write().await;
+        let mut conn = self.peer.transport.conn.write().await;
         let public_key = self.peer.get_public_key_short();
 
         tokio::select! {
@@ -121,6 +119,7 @@ impl PeerNode {
                 };
             }
         };
+
         // match handle_welcome(public_key, conn, &self.machine).await {
         //     Ok(_) => info!("Try to sync incoming peers"),
         //     Err(err) => error!("Fail to sync incoming peers, err: {}", err),
