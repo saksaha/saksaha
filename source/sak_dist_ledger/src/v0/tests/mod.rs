@@ -55,6 +55,8 @@ mod test {
     }
 
     async fn make_dist_ledger() -> DistLedger {
+        sak_test_utils::init_test_config(vec![String::from("test")]).unwrap();
+
         let pos = Box::new(Pos {});
 
         let dist_ledger_args = DistLedgerArgs {
@@ -217,11 +219,6 @@ mod test {
 
         let blockchain = make_dist_ledger().await;
 
-        // let gen_block_hash = blockchain
-        //     .get_gen_block_hash()
-        //     .as_ref()
-        //     .expect("Genesis block should have been inserted");
-
         let gen_block_by_height = match blockchain.get_block_by_height(&0).await
         {
             Ok(b) => match b {
@@ -372,10 +369,6 @@ mod test {
                 dist_ledger.get_ctr_state(ctr_addr).await.unwrap().unwrap();
 
             println!("[*] result: {:#?}", result);
-
-            // let expected_state: Storage = Storage::new();
-            // expected_state.insert("validators", v)
-            // assert_eq!(result, Storage{});
         }
     }
     #[tokio::test(flavor = "multi_thread")]

@@ -106,17 +106,6 @@ impl LedgerDB {
             )?;
         }
 
-        // for su in state_updates {
-        //     let (key, value) = su.get_key_value();
-        //     self.schema.batch_put_ctr_state(
-        //         db,
-        //         &mut batch,
-        //         &su.get_key(),
-        //         // &su.ctr_addr,
-        //         &su.new_state,
-        //     )?;
-        // }
-
         db.write(batch)?;
 
         debug!(
