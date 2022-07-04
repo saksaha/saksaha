@@ -1,8 +1,8 @@
 use crate::{
-    BlockHashSynMsg, BlockSynMsg, BoxedError, Handshake, Msg, TxHashSynMsg,
-    TxHeightSynMsg, TxSynMsg, BLOCK_HASH_ACK, BLOCK_HASH_SYN, BLOCK_SYN_TYPE,
-    HANDSHAKE_ACK_TYPE, HANDSHAKE_SYN_TYPE, TX_HASH_ACK_TYPE, TX_HASH_SYN_TYPE,
-    TX_SYN_TYPE,
+    BlockHashSynMsg, BlockHeightSynMsg, BlockSynMsg, BoxedError, Handshake,
+    Msg, TxHashSynMsg, TxSynMsg, BLOCK_HASH_ACK, BLOCK_HASH_SYN,
+    BLOCK_SYN_TYPE, HANDSHAKE_ACK_TYPE, HANDSHAKE_SYN_TYPE, TX_HASH_ACK_TYPE,
+    TX_HASH_SYN_TYPE, TX_SYN_TYPE,
 };
 use bytes::BytesMut;
 use sak_p2p_frame::{frame_io, Parse};
@@ -37,8 +37,8 @@ pub(super) fn decode_into_msg(
                 Msg::TxSyn(tx_sync)
             }
             TX_HEIGHT_SYN_TYPE => {
-                let tx_height = TxHeightSynMsg::from_parse(&mut parse)?;
-                Msg::TxHeightSyn(tx_height)
+                let tx_height = BlockHeightSynMsg::from_parse(&mut parse)?;
+                Msg::BlockHeightSyn(tx_height)
             }
             BLOCK_HASH_SYN => {
                 let block_hash_sync = BlockHashSynMsg::from_parse(&mut parse)?;

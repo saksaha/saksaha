@@ -9,6 +9,7 @@ mod welcome;
 mod tests;
 
 pub(crate) use local_node::*;
+pub(crate) use welcome::*;
 
 // mod apis;
 // mod blockchain;

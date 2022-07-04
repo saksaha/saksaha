@@ -3,17 +3,17 @@ use bytes::Bytes;
 use sak_p2p_frame::{Frame, Parse};
 
 #[derive(Debug)]
-pub struct TxHeightSynMsg {
-    pub tx_height: u128,
+pub struct BlockHeightSynMsg {
+    pub block_height: u128,
 }
 
-impl TxHeightSynMsg {
+impl BlockHeightSynMsg {
     pub(crate) fn from_parse(
         parse: &mut Parse,
-    ) -> Result<TxHeightSynMsg, BoxedError> {
-        let tx_height = parse.next_int()?;
+    ) -> Result<BlockHeightSynMsg, BoxedError> {
+        let block_height = parse.next_int()?;
 
-        let m = TxHeightSynMsg { tx_height };
+        let m = BlockHeightSynMsg { block_height };
 
         Ok(m)
     }
@@ -30,7 +30,7 @@ impl TxHeightSynMsg {
         let mut frame = Frame::array();
 
         frame.push_bulk(Bytes::from(msg_type.as_bytes()));
-        frame.push_int(self.tx_height as u128);
+        frame.push_int(self.block_height as u128);
 
         frame
     }
