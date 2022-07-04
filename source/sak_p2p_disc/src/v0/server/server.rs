@@ -1,5 +1,5 @@
 use super::handler::Handler;
-use crate::{AddrTable, Connection, DiscIdentity};
+use crate::{AddrTable, Connection};
 use futures::StreamExt;
 use sak_logger::{terr, tinfo, twarn};
 use sak_p2p_id::Identity;
@@ -11,7 +11,6 @@ const MAX_CONN_COUNT: usize = 50;
 pub(crate) struct Server {
     udp_conn: Arc<Connection>,
     conn_semaphore: Arc<Semaphore>,
-    // identity: Arc<DiscIdentity>,
     identity: Arc<Identity>,
     addr_table: Arc<AddrTable>,
     addr_expire_duration: Duration,
@@ -19,7 +18,6 @@ pub(crate) struct Server {
 
 pub(crate) struct ServerArgs {
     pub(crate) udp_conn: Arc<Connection>,
-    // pub(crate) identity: Arc<DiscIdentity>,
     pub(crate) identity: Arc<Identity>,
     pub(crate) addr_table: Arc<AddrTable>,
     pub(crate) addr_expire_duration: u64,

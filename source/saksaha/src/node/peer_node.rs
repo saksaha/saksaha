@@ -69,10 +69,8 @@ impl PeerNode {
                         None => {
                             warn!("Peer has ended the connection");
 
-                            let mut status_lock = self.peer.status.write()
-                                .await;
+                            self.peer.set_status(PeerStatus::Disconnected).await;
 
-                            *status_lock = PeerStatus::Disconnected;
                             return;
                         }
                     };
