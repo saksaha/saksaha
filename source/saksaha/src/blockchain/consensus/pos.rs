@@ -26,7 +26,7 @@ impl Consensus for Pos {
             .query_ctr(&self.validator_ctr_addr, request)
             .await?;
 
-        let height = next_height(dist_ledger.get_last_block_height().await?);
+        let height = next_height(dist_ledger.get_latest_block_height().await?);
 
         if self.identity.credential.public_key_str == validator {
             let bc = BlockCandidate {

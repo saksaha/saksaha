@@ -114,12 +114,12 @@ impl LedgerDB {
         return Ok(block_hash.clone());
     }
 
-    pub(crate) async fn get_last_block_height(
+    pub(crate) async fn get_latest_block_height(
         &self,
     ) -> Result<Option<u128>, String> {
         let db = &self.kv_db.db_instance;
 
-        let height = self.schema.get_last_block_height(db)?;
+        let height = self.schema.get_latest_block_height(db)?;
 
         Ok(height)
     }

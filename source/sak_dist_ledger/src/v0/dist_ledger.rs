@@ -93,7 +93,7 @@ impl DistLedger {
             // genesis_block hash check
         }
 
-        let latest_height = match dist_ledger.get_last_block_height().await? {
+        let latest_height = match dist_ledger.get_latest_block_height().await? {
             Some(h) => h,
             None => 0,
         };

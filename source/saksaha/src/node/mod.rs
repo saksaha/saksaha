@@ -3,6 +3,8 @@ mod local_node;
 mod miner;
 mod msg_handler;
 mod peer_node;
+mod welcome;
+
 #[cfg(test)]
 mod tests;
 

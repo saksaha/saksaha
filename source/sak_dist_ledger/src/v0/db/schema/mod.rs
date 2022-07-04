@@ -510,7 +510,7 @@ impl LedgerDBSchema {
         Ok(())
     }
 
-    pub(crate) fn get_last_block_height(
+    pub(crate) fn get_latest_block_height(
         &self,
         db: &DB,
     ) -> Result<Option<u128>, String> {

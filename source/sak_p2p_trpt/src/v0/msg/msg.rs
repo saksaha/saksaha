@@ -1,4 +1,7 @@
-use crate::{BlockHashSynMsg, BlockSynMsg, Handshake, TxHashSynMsg, TxSynMsg};
+use crate::{
+    BlockHashSynMsg, BlockSynMsg, Handshake, TxHashSynMsg, TxHeightSynMsg,
+    TxSynMsg,
+};
 
 #[derive(Debug)]
 pub enum Msg {
@@ -7,6 +10,10 @@ pub enum Msg {
     TxSyn(TxSynMsg),
     TxHashSyn(TxHashSynMsg),
     TxHashAck(TxHashSynMsg),
+
+    TxHeightSyn(TxHeightSynMsg),
+    TxHeightAck(TxHeightSynMsg),
+
     // HeightSyn(BlockHeightSync),
     // HeightAck(BlockHeightSync),
     BlockHashSyn(BlockHashSynMsg),

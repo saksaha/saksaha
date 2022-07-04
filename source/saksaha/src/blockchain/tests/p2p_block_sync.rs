@@ -312,7 +312,7 @@ mod test_suite {
                 .machine
                 .blockchain
                 .dist_ledger
-                .get_last_block_height()
+                .get_latest_block_height()
                 .await
                 .unwrap()
                 .unwrap();
@@ -325,7 +325,7 @@ mod test_suite {
                 .machine
                 .blockchain
                 .dist_ledger
-                .get_last_block_height()
+                .get_latest_block_height()
                 .await
                 .unwrap()
                 .unwrap();
