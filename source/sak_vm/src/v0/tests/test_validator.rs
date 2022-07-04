@@ -5,7 +5,7 @@ mod test {
 
     use crate::{CtrFn, VM};
     use env_logger::init;
-    use sak_contract_std::{Request, Storage};
+    use sak_contract_std::{CtrCallType, Request, Storage};
 
     fn get_dummy_validator_1() -> String {
         String::from(
@@ -117,6 +117,7 @@ mod test {
         let request = Request {
             req_type: "get_validator".to_string(),
             arg: HashMap::with_capacity(10),
+            ctr_call_type: CtrCallType::Query,
         };
 
         let storage = get_test_validator_state(test_validator_vec.clone());
@@ -157,7 +158,11 @@ mod test {
             let mut arg = HashMap::with_capacity(10);
             arg.insert(String::from("validator"), get_dummy_validator_4());
 
-            let request = Request { req_type, arg };
+            let request = Request {
+                req_type,
+                arg,
+                ctr_call_type: CtrCallType::Execute,
+            };
             let storage = get_test_validator_state(test_validator_vec.clone());
 
             (request, storage)

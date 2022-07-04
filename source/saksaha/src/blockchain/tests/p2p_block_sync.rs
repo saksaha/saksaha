@@ -5,8 +5,6 @@ mod test_suite {
     use crate::{machine::Machine, node::LocalNode};
     use colored::Colorize;
     use log::debug;
-
-    use crate::blockchain::tests::test_utils;
     use sak_p2p_addr::{AddrStatus, UnknownAddr};
     use sak_p2p_id::Identity;
     use sak_p2p_ptable::PeerTable;
@@ -29,33 +27,6 @@ mod test_suite {
         }
 
         sak_logger::init(false);
-    }
-
-    fn make_dummy_genesis_block() -> BlockCandidate {
-        let genesis_block = BlockCandidate {
-            validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
-            transactions: vec![
-                Tx::new(
-                    String::from("1"),
-                    vec![11, 11, 11],
-                    String::from("1"),
-                    vec![1],
-                    Some(String::from("1")),
-                ),
-                Tx::new(
-                    String::from("2"),
-                    vec![22, 22, 22],
-                    String::from("2"),
-                    vec![2],
-                    Some(String::from("2")),
-                ),
-            ],
-            witness_sigs: vec![String::from("1"), String::from("2")],
-            created_at: String::from("2022061515340000"),
-            height: 0,
-        };
-
-        genesis_block
     }
 
     async fn create_client(
@@ -176,9 +147,11 @@ mod test_suite {
 
     #[tokio::test(flavor = "multi_thread")]
     async fn test_check_true_init_config() {
-        let app_prefix_vec = vec!["test_1".to_string(), "test_2".to_string()];
-        test_utils::test_config_init(app_prefix_vec.clone())
-            .expect("DB should be initiailzed");
+        sak_test_utils::init_test_config(vec![
+            String::from("test_1"),
+            String::from("test_2"),
+        ])
+        .expect("DB should be initialized");
     }
 
     #[tokio::test(flavor = "multi_thread")]
@@ -186,8 +159,9 @@ mod test_suite {
         init(None);
 
         let app_prefix_vec = vec!["test_1".to_string(), "test_2".to_string()];
-        test_utils::test_config_init(app_prefix_vec.clone())
-            .expect("Test config should be initiailzed");
+
+        sak_test_utils::init_test_config(app_prefix_vec.clone())
+            .expect("DB should be initialized");
 
         let (p2p_host_1, local_node_1, machine_1) = create_client(
             app_prefix_vec[0].to_string(),
@@ -224,7 +198,7 @@ mod test_suite {
         )
         .await;
 
-        let (block, txs) = {
+        let (_block, txs) = {
             let dummy_tx1 = Tx::new(
                 String::from("1133"),
                 String::from("one").as_bytes().to_vec(),

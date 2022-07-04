@@ -20,6 +20,7 @@ members = [
   "source/sak_dist_ledger",
   "source/sak_vm",
   "source/sak_wasm_postprocess",
+  "source/sak_test_utils",
 
   # system contracts (each)
   "source/sak_ctrt_validator",

@@ -1,7 +1,6 @@
 mod apis;
 mod constants;
 mod ctr_fn;
-mod test_validator;
 mod utils;
 mod vm;
 

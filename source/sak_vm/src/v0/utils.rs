@@ -83,7 +83,7 @@ pub(crate) fn create_instance(
             m
         }
         Err(err) => {
-            return Err(format!("Error creating a module, err: {}", err).into())
+            return Err(format!("Error creating a module, err: {}", err).into());
         }
     };
 

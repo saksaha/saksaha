@@ -1,10 +1,9 @@
 mod macros;
 mod request;
+mod storage;
 
 pub use request::*;
-use std::collections::HashMap;
 pub use std::error::Error;
+pub use storage::*;
 
-pub(crate) type BoxedError = Box<dyn std::error::Error + Send + Sync>;
-
-pub type Storage = HashMap<String, String>;
+pub type StorageError = Box<dyn std::error::Error + Send + Sync>;
