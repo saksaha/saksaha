@@ -82,8 +82,8 @@ impl PeerNode {
     }
 
     async fn welcome_peer_node(&mut self) {
-        let mut conn = self.peer.transport.conn.write().await;
-        let public_key = self.peer.get_public_key_short();
+        // let mut conn = self.peer.transport.conn.write().await;
+        // let public_key = self.peer.get_public_key_short();
 
         // tokio::select! {
         //     Ok(ev) = handle_welcome(public_key, &mut conn, &self.machine) => {

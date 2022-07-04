@@ -166,9 +166,9 @@ impl AddrTable {
         &self,
         addr: Arc<DiscAddr>,
     ) -> Result<Option<Arc<DiscAddr>>, String> {
-        println!("insert mapping");
+        // let mut addr_map = self.addr_map.write().await;
+        let mut addr_map = self.get_addr_map_write().await;
 
-        let mut addr_map = self.addr_map.write().await;
         let key = &addr.known_addr.public_key_str;
 
         debug!(
@@ -196,7 +196,6 @@ impl AddrTable {
     ) -> OwnedRwLockWriteGuard<AddrMap> {
         let addr_map = self.addr_map.clone().write_owned().await;
 
-        // addr_map.remove(public_key_str)
         addr_map
     }
 
@@ -205,7 +204,6 @@ impl AddrTable {
     ) -> OwnedRwLockReadGuard<AddrMap> {
         let addr_map = self.addr_map.clone().read_owned().await;
 
-        // addr_map.remove(public_key_str)
         addr_map
     }
 
