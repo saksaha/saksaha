@@ -36,10 +36,10 @@ pub(super) fn decode_into_msg(
                 let tx_sync = TxSynMsg::from_parse(&mut parse)?;
                 Msg::TxSyn(tx_sync)
             }
-            TX_HEIGHT_SYN_TYPE => {
-                let tx_height = BlockHeightSynMsg::from_parse(&mut parse)?;
-                Msg::BlockHeightSyn(tx_height)
-            }
+            // TX_HEIGHT_SYN_TYPE => {
+            //     let tx_height = BlockHeightSynMsg::from_parse(&mut parse)?;
+            //     Msg::BlockHeightSyn(tx_height)
+            // }
             BLOCK_HASH_SYN => {
                 let block_hash_sync = BlockHashSynMsg::from_parse(&mut parse)?;
                 Msg::BlockHashSyn(block_hash_sync)
