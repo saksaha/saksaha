@@ -8,7 +8,7 @@ use log::debug;
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::{
     mpsc::{self, Receiver, Sender, UnboundedReceiver, UnboundedSender},
-    Mutex, RwLock,
+    Mutex, OwnedRwLockReadGuard, OwnedRwLockWriteGuard, RwLock,
 };
 
 pub(crate) type PublicKey = String;
@@ -19,7 +19,7 @@ const DISC_TABLE_CAPACITY: usize = 5;
 
 /// TODO Table shall have Kademlia flavored buckets later on
 pub struct AddrTable {
-    pub(crate) addr_map: Arc<RwLock<AddrMap>>,
+    addr_map: Arc<RwLock<AddrMap>>,
     slots_tx: Arc<UnboundedSender<Arc<Slot>>>,
     slots_rx: RwLock<UnboundedReceiver<Arc<Slot>>>,
     known_addrs_tx: Arc<Sender<Arc<DiscAddr>>>,
@@ -166,13 +166,15 @@ impl AddrTable {
         &self,
         addr: Arc<DiscAddr>,
     ) -> Result<Option<Arc<DiscAddr>>, String> {
+        println!("insert mapping");
+
         let mut addr_map = self.addr_map.write().await;
         let key = &addr.known_addr.public_key_str;
 
         debug!(
             "Insert mapping! key: {}, value: (p2p_ep: {})",
-            key,
-            addr.known_addr.p2p_endpoint().green(),
+            addr.known_addr.get_public_ket_short().green(),
+            addr.known_addr.get_p2p_endpoint(),
         );
 
         match self.enqueue_known_addr(addr.clone()).await {
@@ -187,6 +189,24 @@ impl AddrTable {
         };
 
         return Ok(addr_map.insert(key.to_string(), addr.clone()));
+    }
+
+    pub(crate) async fn get_addr_map_write(
+        &self,
+    ) -> OwnedRwLockWriteGuard<AddrMap> {
+        let addr_map = self.addr_map.clone().write_owned().await;
+
+        // addr_map.remove(public_key_str)
+        addr_map
+    }
+
+    pub(crate) async fn get_addr_map_read(
+        &self,
+    ) -> OwnedRwLockReadGuard<AddrMap> {
+        let addr_map = self.addr_map.clone().read_owned().await;
+
+        // addr_map.remove(public_key_str)
+        addr_map
     }
 
     pub(crate) async fn remove_mapping(
@@ -205,7 +225,7 @@ impl AddrTable {
         for (idx, addr) in addr_map.values().enumerate() {
             println!("addr table elements [{}] - {}", idx, addr,);
 
-            addr_vec.push(addr.known_addr.disc_endpoint())
+            addr_vec.push(addr.known_addr.get_disc_endpoint())
         }
 
         addr_vec

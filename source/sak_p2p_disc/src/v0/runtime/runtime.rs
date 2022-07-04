@@ -16,11 +16,15 @@ impl DiscRuntime {
 
         loop {
             let time_since = SystemTime::now();
-            let addr_map_lock = &self.addr_table.addr_map.read().await;
+
+            println!("routine getting addr_map lock");
+
+            let addr_map_lock = &self.addr_table.get_addr_map_read().await;
 
             let public_keys: Vec<PublicKey> =
                 addr_map_lock.keys().map(|k| k.clone()).collect();
 
+            println!("routine dropping addr_map lock");
             drop(addr_map_lock);
 
             for public_key in public_keys.iter() {

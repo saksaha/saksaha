@@ -33,6 +33,8 @@ pub(crate) async fn init_who_are_you(
     addr_table: Arc<AddrTable>,
     udp_conn: Arc<Connection>,
 ) -> Result<(), WhoAreYouInitError> {
+    println!("init who are you");
+
     let her_disc_endpoint = unknown_addr.disc_endpoint();
     let my_disc_port = identity.disc_port;
 
@@ -89,6 +91,8 @@ pub(crate) async fn handle_who_are_you_ack(
     _udp_conn: Arc<Connection>,
     addr_table: Arc<AddrTable>,
 ) -> Result<(), String> {
+    println!("handle who are you ack");
+
     let WhoAreYou {
         src_sig: her_sig,
         src_disc_port: her_disc_port,
@@ -109,6 +113,8 @@ pub(crate) async fn handle_who_are_you_ack(
         };
 
     let slot_guard = addr_table.get_empty_slot().await?;
+
+    println!("fawef");
 
     let known_addr = KnownAddr {
         ip: socket_addr.ip().to_string(),

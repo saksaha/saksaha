@@ -14,12 +14,16 @@ pub struct KnownAddr {
 }
 
 impl KnownAddr {
-    pub fn disc_endpoint(&self) -> String {
+    pub fn get_disc_endpoint(&self) -> String {
         sak_utils_net::make_endpoint(&self.ip, self.disc_port)
     }
 
-    pub fn p2p_endpoint(&self) -> String {
+    pub fn get_p2p_endpoint(&self) -> String {
         sak_utils_net::make_endpoint(&self.ip, self.p2p_port)
+    }
+
+    pub fn get_public_ket_short(&self) -> &str {
+        &self.public_key_str[..6]
     }
 }
 
