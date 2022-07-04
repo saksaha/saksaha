@@ -4,7 +4,7 @@ use log::debug;
 use sak_p2p_addr::AddrStatus;
 use std::sync::Arc;
 use std::time::Duration;
-
+use std::time::SystemTime;
 pub(crate) struct DiscRuntime {
     pub(crate) addr_monitor_interval: Duration,
     pub(crate) addr_table: Arc<AddrTable>,
@@ -15,6 +15,7 @@ impl DiscRuntime {
         let rest_after_one_iteration = self.addr_monitor_interval * 5;
 
         loop {
+            let time_since = SystemTime::now();
             let addr_map_lock = &self.addr_table.addr_map.read().await;
 
             let public_keys: Vec<PublicKey> =
@@ -27,10 +28,20 @@ impl DiscRuntime {
                     drop_address_if_necessary(&self.addr_table, &public_key)
                         .await;
 
-                tokio::time::sleep(self.addr_monitor_interval).await;
+                sak_utils_time::wait_until_min_interval(
+                    time_since,
+                    self.addr_monitor_interval,
+                )
+                .await;
+                // tokio::time::sleep(self.addr_monitor_interval).await;
             }
 
-            tokio::time::sleep(rest_after_one_iteration).await;
+            sak_utils_time::wait_until_min_interval(
+                time_since,
+                rest_after_one_iteration,
+            )
+            .await;
+            // tokio::time::sleep(rest_after_one_iteration).await;
         }
     }
 }
