@@ -93,10 +93,11 @@ impl DistLedger {
             // genesis_block hash check
         }
 
-        let latest_height = match dist_ledger.get_latest_block_height().await? {
-            Some(h) => h,
-            None => 0,
-        };
+        let latest_height =
+            match dist_ledger.ledger_db.get_latest_block_height().await? {
+                Some(h) => h,
+                None => 0,
+            };
 
         info!(
             "Initialized Blockchain, latest height: {}",

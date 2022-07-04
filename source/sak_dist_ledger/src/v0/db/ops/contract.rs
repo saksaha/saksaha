@@ -38,19 +38,16 @@ impl LedgerDB {
         Ok(Some(storage))
     }
 
+    #[cfg(test)]
     pub(crate) async fn batch_put_ctr_state(
         &self,
 
         ctr_addr: &String,
-        // field_name: &String,
-        // field_value: &String,
         ctr_state: &String,
     ) -> Result<String, LedgerError> {
         let db = &self.kv_db.db_instance;
 
         let mut batch = WriteBatch::default();
-
-        // let state_key = format!("{}:{}", contract_addr, field_name);
 
         self.schema
             .batch_put_ctr_state(db, &mut batch, &ctr_addr, ctr_state)?;

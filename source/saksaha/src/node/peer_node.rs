@@ -8,7 +8,7 @@ use sak_p2p_ptable::{PeerStatus, PeerTable};
 use std::sync::Arc;
 use tokio::sync::broadcast::Receiver;
 
-use super::handle_welcome;
+// use super::handle_welcome;
 
 pub(crate) struct PeerNode {
     pub(crate) peer: Arc<Peer>,
@@ -71,10 +71,8 @@ impl PeerNode {
                         None => {
                             warn!("Peer has ended the connection");
 
-                            let mut status_lock = self.peer.status.write()
-                                .await;
+                            self.peer.set_status(PeerStatus::Disconnected).await;
 
-                            *status_lock = PeerStatus::Disconnected;
                             return;
                         }
                     };
@@ -120,34 +118,34 @@ impl PeerNode {
         //     }
         // };
 
-        match handle_welcome(public_key, &mut conn, &self.machine).await {
-            Ok(_) => info!("Try to sync incoming peers"),
-            Err(err) => error!("Fail to sync incoming peers, err: {}", err),
-        };
+        // match handle_welcome(public_key, &mut conn, &self.machine).await {
+        //     Ok(_) => info!("Try to sync incoming peers"),
+        //     Err(err) => error!("Fail to sync incoming peers, err: {}", err),
+        // };
 
-        match conn.socket.next().await {
-            Some(maybe_msg) => match maybe_msg {
-                Ok(msg) => {
-                    let _ = msg_handler::handle_msg2(
-                        msg,
-                        public_key,
-                        &self.machine,
-                        &mut conn,
-                    )
-                    .await;
-                }
-                Err(err) => {
-                    warn!("Failed to parse the msg, err: {}", err);
-                }
-            },
-            None => {
-                warn!("Peer has ended the connection");
+        // match conn.socket.next().await {
+        //     Some(maybe_msg) => match maybe_msg {
+        //         Ok(msg) => {
+        //             let _ = msg_handler::handle_msg2(
+        //                 msg,
+        //                 public_key,
+        //                 &self.machine,
+        //                 &mut conn,
+        //             )
+        //             .await;
+        //         }
+        //         Err(err) => {
+        //             warn!("Failed to parse the msg, err: {}", err);
+        //         }
+        //     },
+        //     None => {
+        //         warn!("Peer has ended the connection");
 
-                let mut status_lock = self.peer.status.write().await;
+        //         let mut status_lock = self.peer.status.write().await;
 
-                *status_lock = PeerStatus::Disconnected;
-                return;
-            }
-        }
+        //         *status_lock = PeerStatus::Disconnected;
+        //         return;
+        //     }
+        // }
     }
 }

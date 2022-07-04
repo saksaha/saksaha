@@ -6,6 +6,7 @@ pub enum AddrStatus {
     Initialized,
     WhoAreYouInProgress,
     WhoAreYouSuccess { at: DateTime<Utc> },
+    Disconnected,
 }
 
 impl AddrStatus {

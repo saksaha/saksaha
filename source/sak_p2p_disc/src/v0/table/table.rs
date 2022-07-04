@@ -11,12 +11,15 @@ use tokio::sync::{
     Mutex, RwLock,
 };
 
+pub(crate) type PublicKey = String;
+pub(crate) type AddrMap = HashMap<PublicKey, Arc<DiscAddr>>;
+
 // const DISC_TABLE_CAPACITY: usize = 100;
 const DISC_TABLE_CAPACITY: usize = 5;
 
 /// TODO Table shall have Kademlia flavored buckets later on
 pub struct AddrTable {
-    pub(crate) addr_map: Arc<RwLock<HashMap<String, Arc<DiscAddr>>>>,
+    pub(crate) addr_map: Arc<RwLock<AddrMap>>,
     slots_tx: Arc<UnboundedSender<Arc<Slot>>>,
     slots_rx: RwLock<UnboundedReceiver<Arc<Slot>>>,
     known_addrs_tx: Arc<Sender<Arc<DiscAddr>>>,
@@ -100,24 +103,6 @@ impl AddrTable {
 
         addr_map.get(public_key_str).map(|n| n.clone())
     }
-
-    // pub async fn get_mapped_addr_lock(
-    //     &self,
-    //     disc_endpoint: &String,
-    // ) -> Option<(OwnedRwLockWriteGuard<Addr>, Arc<RwLock<Addr>>)> {
-    //     let addr_map = self.addr_map.read().await;
-
-    //     match addr_map.get(disc_endpoint) {
-    //         Some(addr) => {
-    //             let addr_lock = addr.clone().write_owned().await;
-
-    //             return Some((addr_lock, addr.clone()));
-    //         }
-    //         None => {
-    //             return None;
-    //         }
-    //     };
-    // }
 
     pub(crate) async fn get_empty_slot(&self) -> Result<SlotGuard, String> {
         let mut slots_rx = self.slots_rx.write().await;

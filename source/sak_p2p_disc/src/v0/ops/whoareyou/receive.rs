@@ -1,5 +1,5 @@
 use super::{check, WhoAreYou};
-use crate::{AddrTable, Connection, DiscAddr, DiscIdentity, Msg};
+use crate::{AddrTable, Connection, DiscAddr, Msg};
 use chrono::Utc;
 use futures::sink::SinkExt;
 use log::error;

@@ -1,4 +1,4 @@
-use super::{handle_welcome, miner::Miner, peer_node::PeerNode};
+use super::{miner::Miner, peer_node::PeerNode};
 use crate::machine::Machine;
 use sak_p2p_ptable::PeerTable;
 use std::sync::Arc;
