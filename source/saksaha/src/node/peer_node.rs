@@ -1,22 +1,21 @@
 use crate::node::msg_handler;
 use crate::{machine::Machine, node::event_handle};
-use futures::StreamExt;
-use log::{debug, warn};
+use futures::{SinkExt, StreamExt};
+use log::{debug, error, info, warn};
 use sak_dist_ledger::DistLedgerEvent;
 use sak_p2p_ptable::Peer;
 use sak_p2p_ptable::{PeerStatus, PeerTable};
-use sak_p2p_trpt::Msg;
 use std::sync::Arc;
 use tokio::sync::broadcast::Receiver;
 
-pub(crate) struct PeerNode {
+pub(in crate::node) struct PeerNode {
     pub(crate) peer: Arc<Peer>,
     pub(crate) bc_event_rx: Receiver<DistLedgerEvent>,
-    pub(in crate::node) machine: Arc<Machine>,
+    pub(crate) machine: Arc<Machine>,
 }
 
 impl PeerNode {
-    pub(in crate::node) async fn run(&mut self) {
+    pub(crate) async fn run(&mut self) {
         debug!(
             "Peer is registered as a peer node. Starting the routine, \
             public_key : {}",
@@ -47,14 +46,13 @@ impl PeerNode {
                                 new_tx_hashes,
                             ).await;
                         },
-
                     };
                 },
                 maybe_msg = conn.socket.next() => {
                     match maybe_msg {
                         Some(maybe_msg) => match maybe_msg {
                             Ok(msg) => {
-                                let _ = msg_handler::handle_msg2(
+                                let _ = msg_handler::handle_msg(
                                     msg,
                                     public_key,
                                     &self.machine,

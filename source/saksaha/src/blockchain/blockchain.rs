@@ -1,18 +1,11 @@
-use std::sync::Arc;
-
-use super::{
-    genesis::GenesisBlock,
-    // sys_contracts::{SystemContracts, Validator},
-    Pos,
-};
+use super::{genesis::GenesisBlock, Pos};
 use crate::system::BoxedError;
-use log::info;
 use sak_dist_ledger::{Consensus, DistLedger, DistLedgerArgs};
 use sak_p2p_id::Identity;
+use std::sync::Arc;
 
 pub(crate) struct Blockchain {
     pub(crate) dist_ledger: DistLedger,
-    // pub(crate) sys_contracts: SystemContracts,
 }
 
 impl Blockchain {
@@ -56,10 +49,7 @@ impl Blockchain {
             d
         };
 
-        let blockchain = Blockchain {
-            dist_ledger,
-            // sys_contracts,
-        };
+        let blockchain = Blockchain { dist_ledger };
 
         Ok(blockchain)
     }

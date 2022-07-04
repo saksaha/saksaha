@@ -9,7 +9,7 @@ use tokio::sync::RwLockWriteGuard;
 
 const RESPONSE_TIMEOUT: u64 = 1000;
 
-pub(crate) async fn handle_msg2<'a>(
+pub(crate) async fn handle_msg<'a>(
     msg: Msg,
     public_key: &str,
     machine: &Machine,

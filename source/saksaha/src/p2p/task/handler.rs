@@ -41,7 +41,7 @@ pub(crate) async fn run(task: P2PTask) {
                 }
             };
 
-            let endpoint = known_addr.p2p_endpoint();
+            let endpoint = known_addr.get_p2p_endpoint();
 
             if sak_utils_net::is_my_endpoint(identity.p2p_port, &endpoint) {
                 warn!(

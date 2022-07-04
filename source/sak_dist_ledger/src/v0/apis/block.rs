@@ -53,7 +53,7 @@ impl DistLedger {
         &self,
     ) -> Result<Option<(u128, String)>, LedgerError> {
         let last_block_height =
-            match self.ledger_db.get_last_block_height().await? {
+            match self.ledger_db.get_latest_block_height().await? {
                 Some(h) => h,
                 None => return Ok(None),
             };
@@ -116,8 +116,10 @@ impl DistLedger {
         }
     }
 
-    pub async fn get_last_block_height(&self) -> Result<Option<u128>, String> {
-        self.ledger_db.get_last_block_height().await
+    pub async fn get_latest_block_height(
+        &self,
+    ) -> Result<Option<u128>, String> {
+        self.ledger_db.get_latest_block_height().await
     }
 
     pub async fn write_block(
@@ -129,7 +131,7 @@ impl DistLedger {
             None => match self.prepare_to_write_block().await? {
                 Some(bc) => bc,
                 None => {
-                    debug!("No txs to write as a block, aborting");
+                    // debug!("No txs to write as a block, aborting");
 
                     return Ok(None);
                 }

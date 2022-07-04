@@ -55,7 +55,7 @@ mod test {
     }
 
     async fn make_dist_ledger() -> DistLedger {
-        sak_test_utils::init_test_config(vec![String::from("test")]).unwrap();
+        sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
 
         let pos = Box::new(Pos {});
 

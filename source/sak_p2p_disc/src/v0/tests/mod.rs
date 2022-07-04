@@ -50,7 +50,7 @@ mod test {
             Some(addr) => {
                 println!(
                     "disc_1_mapped_addr: {}",
-                    addr.known_addr.disc_endpoint()
+                    addr.known_addr.get_disc_endpoint()
                 );
             }
             None => {
@@ -65,7 +65,7 @@ mod test {
             Some(addr) => {
                 println!(
                     "disc_2_mapped_addr: {}",
-                    addr.known_addr.disc_endpoint()
+                    addr.known_addr.get_disc_endpoint()
                 );
             }
             None => {

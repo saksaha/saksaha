@@ -5,6 +5,7 @@ use sak_p2p_addr::AddrStatus;
 use std::sync::Arc;
 use std::time::Duration;
 use std::time::SystemTime;
+
 pub(crate) struct DiscRuntime {
     pub(crate) addr_monitor_interval: Duration,
     pub(crate) addr_table: Arc<AddrTable>,
@@ -16,7 +17,8 @@ impl DiscRuntime {
 
         loop {
             let time_since = SystemTime::now();
-            let addr_map_lock = &self.addr_table.addr_map.read().await;
+
+            let addr_map_lock = self.addr_table.get_addr_map_read().await;
 
             let public_keys: Vec<PublicKey> =
                 addr_map_lock.keys().map(|k| k.clone()).collect();
@@ -52,6 +54,7 @@ async fn drop_address_if_necessary(
         Some(p) => p,
         None => return Ok(()),
     };
+
     let addr_status_lock = addr.known_addr.status.read().await;
 
     if let AddrStatus::Disconnected = *addr_status_lock {

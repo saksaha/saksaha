@@ -129,7 +129,7 @@ impl PeerTable {
 
         debug!(
             "Peer table insert mapping, her_public_key: {},",
-            public_key_str.green(),
+            peer.get_public_key_short().green(),
         );
 
         if let Err(err) = self.peers_tx.send(peer.clone()) {
@@ -148,7 +148,7 @@ impl PeerTable {
         let peer_map = self.peer_map.read().await;
 
         for (_, peer) in peer_map.values().enumerate() {
-            peer_vec.push(peer.addr.known_addr.p2p_endpoint().clone());
+            peer_vec.push(peer.addr.known_addr.get_p2p_endpoint().clone());
         }
 
         peer_vec

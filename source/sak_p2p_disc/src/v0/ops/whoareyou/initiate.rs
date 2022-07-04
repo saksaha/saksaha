@@ -28,7 +28,6 @@ pub(crate) enum WhoAreYouInitError {
 
 pub(crate) async fn init_who_are_you(
     unknown_addr: UnknownAddr,
-    // identity: Arc<DiscIdentity>,
     identity: Arc<Identity>,
     addr_table: Arc<AddrTable>,
     udp_conn: Arc<Connection>,

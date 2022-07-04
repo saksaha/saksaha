@@ -25,7 +25,6 @@ pub(crate) struct P2PHost {
 pub(crate) struct P2PHostArgs {
     pub(crate) addr_expire_duration: Option<u64>,
     pub(crate) addr_monitor_interval: Option<u64>,
-    // pub(crate) disc_port: Option<u16>,
     pub(crate) disc_dial_interval: Option<u16>,
     pub(crate) disc_table_capacity: Option<u16>,
     pub(crate) disc_task_interval: Option<u16>,
@@ -37,7 +36,6 @@ pub(crate) struct P2PHostArgs {
     pub(crate) p2p_port: u16,
     pub(crate) p2p_max_conn_count: Option<u16>,
     pub(crate) bootstrap_addrs: Vec<UnknownAddr>,
-    // pub(crate) credential: Arc<Credential>,
     pub(crate) identity: Arc<Identity>,
     pub(crate) disc_socket: UdpSocket,
     pub(crate) peer_table: Arc<PeerTable>,

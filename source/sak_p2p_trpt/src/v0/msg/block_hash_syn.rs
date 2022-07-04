@@ -5,7 +5,7 @@ use std::str;
 
 #[derive(Debug)]
 pub struct BlockHashSynMsg {
-    pub new_blocks: Vec<(String, String)>,
+    pub new_blocks: Vec<(u128, String)>,
 }
 
 impl BlockHashSynMsg {
@@ -18,13 +18,10 @@ impl BlockHashSynMsg {
 
         for _ in 0..block_count {
             let (height, block_hash) = {
-                let height = parse.next_bytes()?;
+                let height = parse.next_int()?;
                 let block_hash = parse.next_bytes()?;
 
-                (
-                    str::from_utf8(&height)?.to_string(),
-                    str::from_utf8(&block_hash)?.to_string(),
-                )
+                (height, str::from_utf8(&block_hash)?.to_string())
             };
 
             new_blocks.push((height, block_hash));
@@ -55,11 +52,11 @@ impl BlockHashSynMsg {
         for idx in 0..block_count {
             let (height, block_hash) = &self.new_blocks[idx];
 
-            let block_height = {
-                let mut b = BytesMut::new();
-                b.put(height.as_bytes());
-                b
-            };
+            // let block_height = {
+            //     let mut b = BytesMut::new();
+            //     b.put(height.as_bytes());
+            //     b
+            // };
 
             let block_hash = {
                 let mut b = BytesMut::new();
@@ -67,7 +64,8 @@ impl BlockHashSynMsg {
                 b
             };
 
-            frame.push_bulk(block_height.into());
+            // frame.push_bulk(block_height.into());
+            frame.push_int(*height as u128);
             frame.push_bulk(block_hash.into());
         }
 
