@@ -1,12 +1,11 @@
-use super::addr_monitor_routine::AddrMonitorRoutine;
 use super::dial_scheduler::{DialScheduler, DialSchedulerArgs};
 use super::server::{Server, ServerArgs};
 use super::task::runtime::DiscTaskRuntime;
-use crate::{AddrTable, BoxedError, Connection, DiscIdentity};
+use crate::{AddrTable, Connection, DiscRuntime};
 use colored::Colorize;
 use log::info;
 use sak_p2p_addr::UnknownAddr;
-use sak_p2p_id::{Credential, Identity};
+use sak_p2p_id::Identity;
 use sak_task_queue::TaskQueue;
 use std::sync::Arc;
 use std::time::Duration;
@@ -14,10 +13,10 @@ use tokio::net::UdpSocket;
 
 const DISC_TASK_QUEUE_CAPACITY: usize = 10;
 const ADDR_EXPIRE_DURATION: u64 = 3600;
-const ADDR_MONITOR_INTERVAL: u64 = 1000;
+const ADDR_MONITOR_INTERVAL: u64 = 3000;
 
 pub struct Discovery {
-    addr_monitor_routine: AddrMonitorRoutine,
+    disc_runtime: DiscRuntime,
     server: Server,
     dial_scheduler: DialScheduler,
     task_runtime: DiscTaskRuntime,
@@ -31,8 +30,6 @@ pub struct DiscoveryArgs {
     pub disc_table_capacity: Option<u16>,
     pub disc_task_interval: Option<u16>,
     pub disc_task_queue_capacity: Option<u16>,
-    // pub credential: Arc<Credential>,
-    // pub disc_port: Option<u16>,
     pub p2p_port: u16,
     pub bootstrap_addrs: Vec<UnknownAddr>,
     pub udp_socket: UdpSocket,
@@ -44,9 +41,6 @@ impl Discovery {
         disc_args: DiscoveryArgs,
     ) -> Result<(Discovery, u16), String> {
         let (udp_conn, disc_port) = {
-            // let (socket, socket_addr) =
-            //     sak_utils_net::setup_udp_socket(disc_args.disc_port).await?;
-
             let socket_addr = match disc_args.udp_socket.local_addr() {
                 Ok(a) => a,
                 Err(err) => {
@@ -76,16 +70,6 @@ impl Discovery {
             Some(d) => Duration::from_millis(d),
             None => Duration::from_millis(ADDR_MONITOR_INTERVAL),
         };
-
-        // let disc_identity = {
-        //     let i = DiscIdentity {
-        //         credential: disc_args.credential,
-        //         p2p_port: disc_args.p2p_port,
-        //         disc_port,
-        //     };
-
-        //     Arc::new(i)
-        // };
 
         let addr_table = {
             let t = match AddrTable::init(disc_args.disc_table_capacity).await {
@@ -136,8 +120,8 @@ impl Discovery {
             s
         };
 
-        let addr_monitor_routine = {
-            let r = AddrMonitorRoutine {
+        let disc_runtime = {
+            let r = DiscRuntime {
                 addr_monitor_interval,
                 addr_table: addr_table.clone(),
             };
@@ -164,7 +148,7 @@ impl Discovery {
             task_runtime,
             dial_scheduler,
             addr_table,
-            addr_monitor_routine,
+            disc_runtime,
         };
 
         Ok((disc, disc_port))
@@ -176,7 +160,7 @@ impl Discovery {
             self.server.run(),
             self.task_runtime.run(),
             self.dial_scheduler.run(),
-            self.addr_monitor_routine.run(),
+            self.disc_runtime.run(),
         );
     }
 }

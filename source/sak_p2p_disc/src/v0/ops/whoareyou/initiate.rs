@@ -1,5 +1,5 @@
 use super::{check, WhoAreYou};
-use crate::{AddrTable, Connection, DiscAddr, DiscIdentity, Msg};
+use crate::{AddrTable, Connection, DiscAddr, Msg};
 use chrono::Utc;
 use futures::SinkExt;
 use sak_p2p_addr::{AddrStatus, KnownAddr, UnknownAddr};
