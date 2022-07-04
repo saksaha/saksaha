@@ -1,6 +1,6 @@
 use crate::{
-    BlockHashSynMsg, BlockHeightSynMsg, BlockSynMsg, BoxedError, Handshake,
-    Msg, TxHashSynMsg, TxSynMsg, BLOCK_HASH_ACK, BLOCK_HASH_SYN,
+    BlockHashSynMsg, BlockSynMsg, BoxedError, Handshake, Msg, TxHashSynMsg,
+    TxSynMsg, BLOCK_HASH_ACK, BLOCK_HASH_SYN, BLOCK_HEIGHT_SYN_TYPE,
     BLOCK_SYN_TYPE, HANDSHAKE_ACK_TYPE, HANDSHAKE_SYN_TYPE, TX_HASH_ACK_TYPE,
     TX_HASH_SYN_TYPE, TX_SYN_TYPE,
 };
@@ -36,7 +36,7 @@ pub(super) fn decode_into_msg(
                 let tx_sync = TxSynMsg::from_parse(&mut parse)?;
                 Msg::TxSyn(tx_sync)
             }
-            // TX_HEIGHT_SYN_TYPE => {
+            // BLOCK_HEIGHT_SYN_TYPE => {
             //     let tx_height = BlockHeightSynMsg::from_parse(&mut parse)?;
             //     Msg::BlockHeightSyn(tx_height)
             // }

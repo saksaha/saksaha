@@ -131,7 +131,7 @@ impl DistLedger {
             None => match self.prepare_to_write_block().await? {
                 Some(bc) => bc,
                 None => {
-                    debug!("No txs to write as a block, aborting");
+                    // debug!("No txs to write as a block, aborting");
 
                     return Ok(None);
                 }

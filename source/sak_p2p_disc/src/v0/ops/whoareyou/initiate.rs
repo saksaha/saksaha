@@ -28,13 +28,10 @@ pub(crate) enum WhoAreYouInitError {
 
 pub(crate) async fn init_who_are_you(
     unknown_addr: UnknownAddr,
-    // identity: Arc<DiscIdentity>,
     identity: Arc<Identity>,
     addr_table: Arc<AddrTable>,
     udp_conn: Arc<Connection>,
 ) -> Result<(), WhoAreYouInitError> {
-    println!("init who are you");
-
     let her_disc_endpoint = unknown_addr.disc_endpoint();
     let my_disc_port = identity.disc_port;
 

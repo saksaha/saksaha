@@ -109,7 +109,6 @@ impl Discovery {
         let server = {
             let server_args = ServerArgs {
                 udp_conn: udp_conn.clone(),
-                // identity: disc_identity.clone(),
                 identity: disc_args.identity.clone(),
                 addr_table: addr_table.clone(),
                 addr_expire_duration,
@@ -133,10 +132,8 @@ impl Discovery {
             let h = DiscTaskRuntime::new(
                 disc_task_queue.clone(),
                 disc_args.disc_task_interval,
-                // disc_identity.clone(),
                 disc_args.identity.clone(),
                 addr_table.clone(),
-                // udp_conn.clone(),
                 udp_conn,
             );
 
