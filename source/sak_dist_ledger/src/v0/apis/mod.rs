@@ -140,17 +140,12 @@ impl DistLedger {
 
         let (block, txs) = bc.extract();
 
-        match self.get_block(block.get_hash())? {
-            Some(_b) => {
-                return Err(format!(
-                    "This block is already persisted: block_hash: {}",
-                    block.get_hash()
-                )
-                .into())
-            }
-            None => {
-                warn!("There is no matched block");
-            }
+        if let Some(_b) = self.get_block(block.get_hash())? {
+            return Err(format!(
+                "This block is already persisted: block_hash: {}",
+                block.get_hash()
+            )
+            .into());
         };
 
         let mut state_updates = StateUpdate::new(); // hashmap <K; ctr_addr => v ctr_state>

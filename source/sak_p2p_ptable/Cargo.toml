@@ -6,6 +6,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+sak_utils_time = { path = "../sak_utils_time" }
 sak_logger = { path = "../sak_logger" }
 sak_p2p_id = { path = "../sak_p2p_id" }
 sak_p2p_trpt = { path = "../sak_p2p_trpt" }
