@@ -159,6 +159,7 @@ pub(super) mod test_utils {
                     String::from("1"),
                     b"1".to_vec(),
                     Some(String::from("11")),
+                    0,
                 ),
                 Tx::new(
                     String::from("2"),
@@ -166,11 +167,13 @@ pub(super) mod test_utils {
                     String::from("2"),
                     b"2".to_vec(),
                     Some(String::from("22")),
+                    1,
                 ),
             ],
             witness_sigs: vec![String::from("1"), String::from("2")],
             created_at: String::from("2022061515340000"),
-            height: 0,
+            block_height: 0,
+            merkle_root: String::from("1"),
         };
 
         genesis_block
@@ -213,6 +216,7 @@ pub(super) mod test_utils {
             String::from("0x111"),
             b"0x1111".to_vec(),
             Some(String::from("0x1111")),
+            0,
         )
     }
 
@@ -227,6 +231,7 @@ pub(super) mod test_utils {
                 String::from("0x111"),
                 b"0x1111".to_vec(),
                 Some(String::from("0x1111")),
+                0,
             ),
             Tx::new(
                 String::from("131146546123"),
@@ -237,6 +242,7 @@ pub(super) mod test_utils {
                 String::from("0x222"),
                 b"0x2222".to_vec(),
                 Some(String::from("0x2222")),
+                1,
             ),
             Tx::new(
                 String::from("1346523"),
@@ -247,6 +253,7 @@ pub(super) mod test_utils {
                 String::from("0x333"),
                 b"0x3333".to_vec(),
                 Some(String::from("0x3333")),
+                2,
             ),
             Tx::new(
                 String::from("75346546123"),
@@ -257,6 +264,7 @@ pub(super) mod test_utils {
                 String::from("0x444"),
                 b"0x4444".to_vec(),
                 Some(String::from("0x4444")),
+                3,
             ),
         ]
     }

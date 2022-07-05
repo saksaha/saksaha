@@ -7,7 +7,8 @@ pub struct BlockCandidate {
     pub transactions: Vec<Tx>,
     pub witness_sigs: Vec<String>,
     pub created_at: String,
-    pub height: u128,
+    pub block_height: u128,
+    pub merkle_root: String,
 }
 
 impl BlockCandidate {
@@ -29,7 +30,8 @@ impl BlockCandidate {
             tx_hashes,
             vec![],
             self.created_at.clone(),
-            self.height.clone(),
+            self.block_height.clone(),
+            self.merkle_root.clone(),
         );
 
         return (block, txs);

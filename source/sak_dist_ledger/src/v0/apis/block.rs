@@ -1,5 +1,5 @@
 use crate::{DistLedger, LedgerError, StateUpdate};
-use log::{debug, warn};
+use log::warn;
 use sak_contract_std::{CtrCallType, Request, Storage};
 use sak_types::{Block, BlockCandidate, Tx, TxType};
 use sak_vm::CtrFn;
@@ -33,7 +33,8 @@ impl DistLedger {
                 transactions: txs,
                 witness_sigs: b.get_witness_sigs().to_owned(),
                 created_at: b.get_created_at().to_owned(),
-                height: b.get_height().to_owned(),
+                block_height: b.get_height().to_owned(),
+                merkle_root: b.get_merkle_root().to_owned(),
             };
 
             block_candidates.push(block_candidate);
