@@ -21,6 +21,7 @@ mod test {
                     String::from("1"),
                     b"1".to_vec(),
                     Some(String::from("11")),
+                    0,
                 ),
                 Tx::new(
                     String::from("2"),
@@ -28,11 +29,13 @@ mod test {
                     String::from("2"),
                     b"2".to_vec(),
                     Some(String::from("22")),
+                    1,
                 ),
             ],
             witness_sigs: vec![String::from("1"), String::from("2")],
             created_at: String::from("2022061515340000"),
-            height: 0,
+            block_height: 0,
+            merkle_root: String::from("1"),
         };
 
         genesis_block
@@ -46,6 +49,7 @@ mod test {
                 String::from("0x111"),
                 b"0x1111".to_vec(),
                 Some(String::from("one")),
+                0,
             ),
             Tx::new(
                 String::from("1346546124"),
@@ -53,6 +57,7 @@ mod test {
                 String::from("0x222"),
                 b"0x2222".to_vec(),
                 Some(String::from("two")),
+                1,
             ),
             Tx::new(
                 String::from("1346546125"),
@@ -60,6 +65,7 @@ mod test {
                 String::from("0x333"),
                 b"0x3333".to_vec(),
                 Some(String::from("three")),
+                2,
             ),
             Tx::new(
                 String::from("1346546126"),
@@ -67,6 +73,7 @@ mod test {
                 String::from("0x444"),
                 b"0x4444".to_vec(),
                 Some(String::from("four")),
+                3,
             ),
         ]
     }

@@ -27,6 +27,11 @@ impl BlockSynMsg {
                 std::str::from_utf8(&v)?.to_string()
             };
 
+            let merkle_root = {
+                let v = parse.next_bytes()?;
+                std::str::from_utf8(&v)?.to_string()
+            };
+
             let block_height = parse.next_int()? as u128;
 
             let witness_sig_count = parse.next_int()?;
@@ -72,12 +77,15 @@ impl BlockSynMsg {
                         std::str::from_utf8(p.as_ref())?.into()
                     };
 
+                    let tx_height = parse.next_int()? as u128;
+
                     Tx::new(
                         created_at,
                         data,
                         author_sig,
                         pi,
                         Some(contract_addr),
+                        tx_height,
                     )
                 };
 
@@ -89,7 +97,8 @@ impl BlockSynMsg {
                 transactions: txs,
                 witness_sigs,
                 created_at,
-                height: block_height,
+                block_height,
+                merkle_root,
             });
         }
 
@@ -119,9 +128,16 @@ impl BlockSynMsg {
                 b
             };
 
+            let merkle_root_bytes = {
+                let mut b = BytesMut::new();
+                b.put(bc.merkle_root.as_bytes());
+                b
+            };
+
             frame.push_bulk(Bytes::from(validator_sig_bytes));
             frame.push_bulk(Bytes::from(created_at_bytes));
-            frame.push_int(bc.height as u128);
+            frame.push_bulk(Bytes::from(merkle_root_bytes));
+            frame.push_int(bc.block_height as u128);
 
             let witness_sigs = &bc.witness_sigs;
             let witness_sig_count = witness_sigs.len();

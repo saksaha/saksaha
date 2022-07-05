@@ -26,6 +26,9 @@ const DATA: &str = "data";
 const CTR_ADDR: &str = "ctr_addr";
 
 //
+const TX_HEIGHT: &str = "tx_height";
+
+//
 const VALIDATOR_SIG: &str = "validator_sig";
 
 //
@@ -36,6 +39,9 @@ const WITNESS_SIGS: &str = "witness_sigs";
 
 //
 const BLOCK_HEIGHT: &str = "block_height";
+
+//
+const MERKLE_ROOT: &str = "merkle_root";
 
 //
 const BLOCK_HASH: &str = "block_hash";
@@ -137,6 +143,25 @@ impl LedgerDBSchema {
                 let height = sak_kv_db::convert_u8_slice_into_u128(&h)?;
 
                 return Ok(Some(height));
+            }
+            None => {
+                return Ok(None);
+            }
+        }
+    }
+
+    pub(crate) fn get_merkle_root(
+        &self,
+        db: &DB,
+        block_hash: &String,
+    ) -> Result<Option<String>, LedgerError> {
+        let cf = make_cf_handle(db, MERKLE_ROOT)?;
+
+        match db.get_cf(&cf, block_hash)? {
+            Some(v) => {
+                let str = String::from_utf8(v)?;
+
+                return Ok(Some(str));
             }
             None => {
                 return Ok(None);
@@ -345,6 +370,20 @@ impl LedgerDBSchema {
         Ok(())
     }
 
+    pub(crate) fn batch_put_merkle_root(
+        &self,
+        db: &DB,
+        batch: &mut WriteBatch,
+        block_hash: &String,
+        merkle_root: &String,
+    ) -> Result<(), LedgerError> {
+        let cf = make_cf_handle(db, MERKLE_ROOT)?;
+
+        batch.put_cf(&cf, block_hash, merkle_root);
+
+        Ok(())
+    }
+
     pub(crate) fn batch_put_ctr_state(
         &self,
         db: &DB,
@@ -482,6 +521,25 @@ impl LedgerDBSchema {
         }
     }
 
+    pub(crate) fn get_tx_height(
+        &self,
+        db: &DB,
+        key: &String,
+    ) -> Result<Option<u128>, LedgerError> {
+        let cf = make_cf_handle(db, TX_HEIGHT)?;
+
+        match db.get_cf(&cf, key)? {
+            Some(v) => {
+                let height = sak_kv_db::convert_u8_slice_into_u128(&v)?;
+
+                return Ok(Some(height));
+            }
+            None => {
+                return Ok(None);
+            }
+        }
+    }
+
     pub(crate) fn batch_put_ctr_addr(
         &self,
         db: &DB,
@@ -506,6 +564,22 @@ impl LedgerDBSchema {
         let cf = make_cf_handle(db, TX_HASH)?;
 
         batch.put_cf(&cf, key, value);
+
+        Ok(())
+    }
+
+    pub(crate) fn batch_put_tx_height(
+        &self,
+        db: &DB,
+        batch: &mut WriteBatch,
+        block_hash: &String,
+        tx_height: &u128,
+    ) -> Result<(), LedgerError> {
+        let cf = make_cf_handle(db, TX_HEIGHT)?;
+
+        let v = tx_height.to_be_bytes();
+
+        batch.put_cf(&cf, block_hash, v);
 
         Ok(())
     }
@@ -536,10 +610,12 @@ impl LedgerDBSchema {
             ColumnFamilyDescriptor::new(CREATED_AT, Options::default()),
             ColumnFamilyDescriptor::new(DATA, Options::default()),
             ColumnFamilyDescriptor::new(CTR_ADDR, Options::default()),
+            ColumnFamilyDescriptor::new(TX_HEIGHT, Options::default()),
             ColumnFamilyDescriptor::new(VALIDATOR_SIG, Options::default()),
             ColumnFamilyDescriptor::new(TX_HASHES, Options::default()),
             ColumnFamilyDescriptor::new(WITNESS_SIGS, Options::default()),
             ColumnFamilyDescriptor::new(BLOCK_HEIGHT, Options::default()),
+            ColumnFamilyDescriptor::new(MERKLE_ROOT, Options::default()),
             ColumnFamilyDescriptor::new(BLOCK_HASH, Options::default()),
             ColumnFamilyDescriptor::new(CTR_STATE, Options::default()),
         ]
