@@ -6,7 +6,7 @@ pub struct Block {
     tx_hashes: Vec<String>,
     witness_sigs: Vec<String>,
     created_at: String,
-    height: u128,
+    block_height: u128,
     block_hash: String,
 }
 
@@ -16,7 +16,7 @@ impl Block {
         tx_hashes: Vec<String>,
         witness_sigs: Vec<String>,
         created_at: String,
-        height: u128,
+        block_height: u128,
     ) -> Block {
         let block_hash = {
             let mut to_hash = vec![];
@@ -32,7 +32,6 @@ impl Block {
                 }
 
                 to_hash.push(created_at.as_bytes());
-                // to_hash.push(height.as_bytes());
 
                 to_hash.as_slice()
             };
@@ -45,7 +44,7 @@ impl Block {
             tx_hashes,
             witness_sigs,
             created_at,
-            height,
+            block_height,
             block_hash,
         }
     }
@@ -67,7 +66,7 @@ impl Block {
     }
 
     pub fn get_height(&self) -> &u128 {
-        &self.height
+        &self.block_height
     }
 
     pub fn get_hash(&self) -> &String {
