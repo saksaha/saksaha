@@ -27,7 +27,8 @@ impl Consensus for Pos {
             .query_ctr(&self.validator_ctr_addr, request)
             .await?;
 
-        let height = next_height(dist_ledger.get_latest_block_height().await?);
+        let block_height =
+            next_height(dist_ledger.get_latest_block_height().await?);
 
         if self.identity.credential.public_key_str == validator {
             let bc = BlockCandidate {
@@ -35,7 +36,8 @@ impl Consensus for Pos {
                 transactions: txs,
                 witness_sigs: vec![],
                 created_at: String::from("1"),
-                height,
+                block_height,
+                merkle_root: String::from("1"),
             };
 
             return Ok(bc);

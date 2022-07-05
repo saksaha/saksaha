@@ -21,6 +21,8 @@ pub struct Tx {
     //
     ctr_addr: String,
 
+    tx_height: u128,
+
     // auto-generated value
     hash: String,
 }
@@ -43,6 +45,7 @@ impl Tx {
         author_sig: String,
         pi: Vec<u8>,
         ctr_addr: Option<String>,
+        tx_height: u128,
     ) -> Tx {
         let ctr_addr = match ctr_addr {
             Some(a) => a,
@@ -55,6 +58,7 @@ impl Tx {
             pi.as_slice(),
             author_sig.as_bytes(),
             ctr_addr.as_bytes(),
+            tx_height.to_string().as_bytes(),
         ]);
 
         Tx {
@@ -63,6 +67,7 @@ impl Tx {
             pi,
             author_sig,
             ctr_addr,
+            tx_height,
             hash,
         }
     }
@@ -85,6 +90,10 @@ impl Tx {
 
     pub fn get_ctr_addr(&self) -> &String {
         &self.ctr_addr
+    }
+
+    pub fn get_tx_height(&self) -> &u128 {
+        &self.tx_height
     }
 
     pub fn get_hash(&self) -> &String {

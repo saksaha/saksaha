@@ -198,6 +198,7 @@ async fn test_block_sync_true() {
             String::from("p2p_block_sync_author_sig1"),
             vec![1],
             Some(String::from("1")),
+            0,
         );
 
         let dummy_tx2 = Tx::new(
@@ -206,6 +207,7 @@ async fn test_block_sync_true() {
             String::from("p2p_block_sync_author_sig2"),
             vec![2],
             Some(String::from("2")),
+            1,
         );
 
         let c = BlockCandidate {
@@ -213,7 +215,8 @@ async fn test_block_sync_true() {
             transactions: vec![dummy_tx1, dummy_tx2],
             witness_sigs: vec![],
             created_at: String::from(""),
-            height: 1,
+            block_height: 1,
+            merkle_root: String::from("1"),
         };
 
         c.extract()

@@ -12,6 +12,7 @@ pub(crate) fn make_dummy_block_candidate_1() -> Option<BlockCandidate> {
             String::from("0x111"),
             b"0x1111".to_vec(),
             Some(String::from("test_wasm")),
+            0,
         );
 
         BlockCandidate {
@@ -19,7 +20,8 @@ pub(crate) fn make_dummy_block_candidate_1() -> Option<BlockCandidate> {
             transactions: vec![dummy_ctr_deploying_tx],
             witness_sigs: vec![String::from("1"), String::from("2")],
             created_at: String::from("2022061515340000"),
-            height: 0,
+            block_height: 0,
+            merkle_root: String::from("2022061515340000"),
         }
     };
 
@@ -47,6 +49,7 @@ pub(crate) fn make_dummy_block_candidate_with_query_tx(
                 String::from("0x222"),
                 b"0x1111".to_vec(),
                 Some(String::from("test_wasm")),
+                1,
             )
         };
 
@@ -55,7 +58,8 @@ pub(crate) fn make_dummy_block_candidate_with_query_tx(
             transactions: vec![dummy_ctr_calling_query_tx],
             witness_sigs: vec![String::from("3"), String::from("4")],
             created_at: String::from("2022061515340000"),
-            height: 1,
+            block_height: 1,
+            merkle_root: String::from("2022061515340000"),
         }
     };
 
@@ -93,6 +97,7 @@ pub(crate) fn make_dummy_block_candidate_with_execute_tx(
                 String::from("0x444"),
                 b"0x1111".to_vec(),
                 Some(String::from("test_wasm")),
+                2,
             )
         };
 
@@ -124,6 +129,7 @@ pub(crate) fn make_dummy_block_candidate_with_execute_tx(
                 String::from("0x444"),
                 b"0x1111".to_vec(),
                 Some(String::from("test_wasm")),
+                3,
             )
         };
 
@@ -136,7 +142,8 @@ pub(crate) fn make_dummy_block_candidate_with_execute_tx(
             ],
             witness_sigs: vec![String::from("3"), String::from("4")],
             created_at: String::from("2022061515340000"),
-            height: 2,
+            block_height: 2,
+            merkle_root: String::from("2022061515340000"),
         }
     };
 

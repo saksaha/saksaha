@@ -41,6 +41,7 @@ mod test_suite {
                     String::from("marshal_test_author_sig_1"),
                     b"1".to_vec(),
                     Some(String::from("11")),
+                    0,
                 ),
                 Tx::new(
                     String::from("2"),
@@ -48,11 +49,13 @@ mod test_suite {
                     String::from("marshal_test_author_sig_2"),
                     b"2".to_vec(),
                     Some(String::from("22")),
+                    1,
                 ),
             ],
             witness_sigs: vec![String::from("1"), String::from("2")],
             created_at: String::from("2022061515340000"),
-            height: 0,
+            block_height: 0,
+            merkle_root: String::from("1"),
         };
 
         genesis_block
@@ -254,6 +257,7 @@ mod test_suite {
                 String::from("0x1111"),
                 b"0x1111".to_vec(),
                 Some(String::from("one")),
+                0,
             ),
             Tx::new(
                 String::from("45698744213"),
@@ -261,6 +265,7 @@ mod test_suite {
                 String::from("0x2222"),
                 b"0x2222".to_vec(),
                 Some(String::from("two")),
+                1,
             ),
         ];
 
@@ -270,7 +275,8 @@ mod test_suite {
                 transactions: dummy_txs.clone(),
                 witness_sigs: vec![],
                 created_at: String::from(""),
-                height: 1,
+                block_height: 1,
+                merkle_root: String::from("1"),
             };
 
             c

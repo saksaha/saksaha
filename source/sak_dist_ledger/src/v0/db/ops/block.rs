@@ -90,6 +90,13 @@ impl LedgerDB {
             block.get_height(),
         )?;
 
+        self.schema.batch_put_merkle_root(
+            db,
+            &mut batch,
+            block_hash,
+            block.get_merkle_root(),
+        )?;
+
         for tx in txs {
             self._batch_put_tx(db, &mut batch, tx)?;
         }
@@ -143,18 +150,21 @@ impl LedgerDB {
 
         let block_height = self.schema.get_block_height(db, &block_hash)?;
 
+        let merkle_root = self.schema.get_merkle_root(db, &block_hash)?;
+
         match (
             validator_sig,
             tx_hashes,
             witness_sigs,
             created_at,
             block_height,
+            merkle_root,
         ) {
-            (Some(vs), Some(th), Some(ws), Some(ca), Some(bh)) => {
-                let b = Block::new(vs, th, ws, ca, bh);
+            (Some(vs), Some(th), Some(ws), Some(ca), Some(bh), Some(mr)) => {
+                let b = Block::new(vs, th, ws, ca, bh, mr);
                 return Ok(Some(b));
             }
-            (None, None, None, None, None) => {
+            (None, None, None, None, None, None) => {
                 return Ok(None);
             }
             _ => {

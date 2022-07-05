@@ -21,6 +21,7 @@ impl GenesisBlock {
             String::from("1"),
             vec![1],
             Some(VALIDATOR_CTR_ADDR.to_string()),
+            0,
         );
 
         let some_other_tx = Tx::new(
@@ -29,6 +30,7 @@ impl GenesisBlock {
             String::from("2"),
             vec![2],
             None,
+            1,
         );
 
         let block_candidate = BlockCandidate {
@@ -36,7 +38,8 @@ impl GenesisBlock {
             transactions: vec![validator_deploy_tx, some_other_tx],
             witness_sigs: vec![String::from("1"), String::from("2")],
             created_at: String::from("2022061515340000"),
-            height: 0,
+            block_height: 0,
+            merkle_root: String::from("1"),
         };
 
         GenesisBlock { block_candidate }

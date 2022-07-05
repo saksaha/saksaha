@@ -43,7 +43,19 @@ impl LedgerDB {
             .get_ctr_addr(db, tx_hash)?
             .ok_or("ctr_addr does not exist")?;
 
-        let tx = Tx::new(created_at, data, author_sig, pi, Some(ctr_addr));
+        let tx_height = self
+            .schema
+            .get_tx_height(db, tx_hash)?
+            .ok_or("ctr_addr does not exist")?;
+
+        let tx = Tx::new(
+            created_at,
+            data,
+            author_sig,
+            pi,
+            Some(ctr_addr),
+            tx_height,
+        );
 
         Ok(Some(tx))
     }
@@ -80,6 +92,13 @@ impl LedgerDB {
             batch,
             tx_hash,
             tx.get_ctr_addr(),
+        )?;
+
+        self.schema.batch_put_tx_height(
+            db,
+            batch,
+            tx_hash,
+            tx.get_tx_height(),
         )?;
 
         match tx.get_type() {
