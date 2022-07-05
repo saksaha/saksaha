@@ -292,7 +292,7 @@ async fn test_block_sync_true() {
             .unwrap()
             .unwrap();
 
-        tokio::time::sleep(Duration::from_secs(1)).await;
+        tokio::time::sleep(Duration::from_secs(4)).await;
 
         assert_eq!(last_height_1, last_height_2);
     }
