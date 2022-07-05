@@ -1,20 +1,31 @@
 use bls12_381::Scalar;
+use ff::PrimeField;
 
-// const ROUND_CONSTANTS: [u8; 32] = [
-//     98, 247, 217, 20, 137, 93, 234, 35, 132, 161, 7, 185, 4, 48, 4, 150, 88,
-//     157, 102, 88, 85, 93, 148, 243, 254, 143, 87, 165, 182, 175, 145, 94,
-// ];
+pub struct MiMC;
 
-pub fn get_round_constants() -> Vec<Scalar> {
-    // let rounds: Scalar = Scalar::from_bytes(&ROUND_CONSTANTS).unwrap();
-    // rounds;
+impl MiMC {
+    pub fn get_mimc_constants() -> Vec<Scalar> {
+        let constants = (0..322)
+            .map(|idx| Scalar::from_bytes(&ROUND_CONSTANTS[idx]).unwrap())
+            .collect::<Vec<_>>();
+        constants
+    }
 
-    let constants = (0..322)
-        .map(|idx| Scalar::from_bytes(&ROUND_CONSTANTS[idx]).unwrap())
-        .collect::<Vec<_>>();
-    constants
+    pub fn mimc<S: PrimeField>(mut xl: S, mut xr: S, constants: &[S]) -> S {
+        for c in constants {
+            let mut tmp1 = xl;
+            tmp1.add_assign(c);
+            let mut tmp2 = tmp1.square();
+            tmp2.mul_assign(&tmp1);
+            tmp2.add_assign(&xr);
+            xr = xl;
+            xl = tmp2;
+        }
+
+        xl
+    }
 }
-// const ROUND_CONSTANTS2: Scalar = Scalar::from_bytes(&ROUND_CONSTANTS).unwrap();
+
 const ROUND_CONSTANTS: [[u8; 32]; 322] = [
     [
         215, 6, 227, 250, 89, 21, 242, 99, 33, 41, 72, 76, 50, 226, 167, 79,
