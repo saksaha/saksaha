@@ -18,7 +18,7 @@ impl BlockHashSynMsg {
 
         for _ in 0..block_count {
             let (height, block_hash) = {
-                let height = parse.next_int()?;
+                let height = parse.next_int()? as u128;
                 let block_hash = parse.next_bytes()?;
 
                 (height, str::from_utf8(&block_hash)?.to_string())
@@ -52,19 +52,12 @@ impl BlockHashSynMsg {
         for idx in 0..block_count {
             let (height, block_hash) = &self.new_blocks[idx];
 
-            // let block_height = {
-            //     let mut b = BytesMut::new();
-            //     b.put(height.as_bytes());
-            //     b
-            // };
-
             let block_hash = {
                 let mut b = BytesMut::new();
                 b.put(block_hash.as_bytes());
                 b
             };
 
-            // frame.push_bulk(block_height.into());
             frame.push_int(*height as u128);
             frame.push_bulk(block_hash.into());
         }

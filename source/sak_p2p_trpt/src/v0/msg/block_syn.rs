@@ -186,6 +186,7 @@ impl BlockSynMsg {
                 frame.push_bulk(Bytes::from(pi_bytes));
                 frame.push_bulk(Bytes::from(author_sig_bytes));
                 frame.push_bulk(Bytes::from(tx.get_ctr_addr().clone()));
+                frame.push_int(*tx.get_tx_height() as u128);
             }
         }
 

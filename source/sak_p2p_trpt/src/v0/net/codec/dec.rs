@@ -41,8 +41,8 @@ pub(super) fn decode_into_msg(
                 Msg::BlockHashSyn(block_hash_sync)
             }
             BLOCK_HASH_ACK => {
-                let block_hash_sync = BlockHashSynMsg::from_parse(&mut parse)?;
-                Msg::BlockHashAck(block_hash_sync)
+                let block_hash_ack = BlockHashSynMsg::from_parse(&mut parse)?;
+                Msg::BlockHashAck(block_hash_ack)
             }
             BLOCK_SYN_TYPE => {
                 let block_syn = BlockSynMsg::from_parse(&mut parse)?;

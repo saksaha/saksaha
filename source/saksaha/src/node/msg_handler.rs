@@ -128,6 +128,7 @@ pub(crate) async fn handle_block_hash_syn<'a>(
             blocks_to_req.push((height, block_hash));
         }
     }
+    println!("{:?}", blocks_to_req);
 
     match conn
         .socket

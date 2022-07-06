@@ -65,7 +65,7 @@ mod test {
         let dist_ledger_args = DistLedgerArgs {
             app_prefix: String::from("test"),
             tx_sync_interval: None,
-            genesis_block: None,
+            genesis_block: Some(make_dummy_genesis_block()),
             consensus: pos,
             block_sync_interval: None,
         };
