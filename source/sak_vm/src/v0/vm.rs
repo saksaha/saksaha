@@ -3,6 +3,7 @@ use crate::{CtrFn, VMError, MEMORY};
 use log::{error, info};
 use sak_contract_std::{Request, Storage};
 use std::collections::HashMap;
+use std::fmt;
 use wasmtime::{
     Config, Engine, Func, Instance, Memory, Module, Store, TypedFunc,
 };
