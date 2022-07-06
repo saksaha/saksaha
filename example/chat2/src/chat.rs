@@ -1,7 +1,7 @@
 use bytes::BytesMut;
 use rsa::{RsaPrivateKey, RsaPublicKey};
-use sak_proofs::coin_ownership::CoinProof;
-use sak_proofs::mimc::MiMC;
+use sak_proofs::CoinProof;
+use sak_proofs::MiMC;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
 

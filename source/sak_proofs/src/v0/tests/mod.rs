@@ -1,7 +1,6 @@
-use crate::{
-    coin_ownership::{CoinCircuit, CoinProof, TREE_DEPTH},
-    MiMC,
-};
+mod coin;
+
+use crate::{CoinCircuit, CoinProof, MiMC, CM_TREE_DEPTH};
 use bellman::groth16;
 use bls12_381::Scalar;
 use rand::rngs::OsRng;
@@ -41,7 +40,7 @@ pub fn performance_test() {
     println!("before generate proof");
     let auth_paths = tree.generate_auth_paths(0);
     let leaf = tree.nodes.get(0).unwrap().get(0).unwrap().hash;
-    let root = tree.root().hash;
+    let root = tree.get_root().hash;
 
     println!("\nauth_paths: {:?}", auth_paths);
     println!("\nroot: {:?}", root.to_bytes());
@@ -107,8 +106,8 @@ pub fn performance_test() {
     );
 
     // Create an instance of our circuit (with the preimage as a witness).
-    let mut auth_path: [Option<(Scalar, bool)>; TREE_DEPTH] =
-        [None; TREE_DEPTH];
+    let mut auth_path: [Option<(Scalar, bool)>; CM_TREE_DEPTH] =
+        [None; CM_TREE_DEPTH];
 
     for (idx, elem) in auth_path.clone().iter().enumerate() {
         let sib = auth_paths.get(idx).unwrap();

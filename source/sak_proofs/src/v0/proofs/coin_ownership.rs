@@ -12,10 +12,11 @@ use std::fs::File;
 use std::io::Write;
 
 //
-pub const TREE_DEPTH: usize = 5;
+pub const CM_TREE_DEPTH: usize = 5;
 
-//
-pub const MIMC_ROUNDS: usize = 322;
+pub const CM_TREE_CAPACITY: usize = 2_usize.pow(CM_TREE_DEPTH as u32);
+
+// const MIMC_ROUNDS: usize = 322;
 
 pub struct CoinProof;
 
@@ -38,7 +39,7 @@ impl CoinProof {
             let params = {
                 let c = CoinCircuit {
                     leaf: None,
-                    auth_path: [None; TREE_DEPTH],
+                    auth_path: [None; CM_TREE_DEPTH],
                     constants: &constants,
                 };
 
@@ -68,14 +69,21 @@ impl CoinProof {
             leaves.push(iter.clone());
         });
 
-        let tree = MerkleTree::new(leaves, TREE_DEPTH, &constants);
+        let hasher = |xl, xr| {
+            let hash =
+                MiMC::mimc(Scalar::from(xl), Scalar::from(xr), constants);
+
+            hash
+        };
+
+        let tree = MerkleTree::new(leaves, CM_TREE_DEPTH, &constants, &hasher);
         tree
     }
 
     pub fn generate_proof(idx: usize) -> Proof<Bls12> {
         let constants = MiMC::get_mimc_constants();
 
-        let tree = Self::get_merkle_tree(&constants);
+        let tree = CoinProof::get_merkle_tree(&constants);
 
         // make auth_paths and leaf of {idx}
         let auth_paths = tree.generate_auth_paths(idx.try_into().unwrap());
@@ -89,11 +97,11 @@ impl CoinProof {
 
         println!("leaf: {:?}", leaf);
 
-        let de_params = Self::get_params(&constants);
+        let de_params = CoinProof::get_params(&constants);
 
         // convert auth_paths => [auth_path]
-        let mut auth_path: [Option<(Scalar, bool)>; TREE_DEPTH] =
-            [None; TREE_DEPTH];
+        let mut auth_path: [Option<(Scalar, bool)>; CM_TREE_DEPTH] =
+            [None; CM_TREE_DEPTH];
 
         for (idx, _) in auth_path.clone().iter().enumerate() {
             let sib = auth_paths.get(idx).unwrap();
@@ -115,11 +123,11 @@ impl CoinProof {
     pub fn verify_proof(proof: &Proof<Bls12>) -> bool {
         let constants = MiMC::get_mimc_constants();
 
-        let de_params = Self::get_params(&constants);
+        let de_params = CoinProof::get_params(&constants);
 
-        let tree = Self::get_merkle_tree(&constants);
+        let tree = CoinProof::get_merkle_tree(&constants);
 
-        let root = tree.root().hash;
+        let root = tree.get_root().hash;
 
         let leaf = tree.nodes.get(0).unwrap().get(0).unwrap().hash;
 
@@ -141,7 +149,7 @@ impl CoinProof {
 
 pub struct CoinCircuit<'a, S: PrimeField> {
     pub leaf: Option<S>,
-    pub auth_path: [Option<(S, bool)>; TREE_DEPTH],
+    pub auth_path: [Option<(S, bool)>; CM_TREE_DEPTH],
     pub constants: &'a [S],
 }
 
@@ -167,7 +175,6 @@ impl<'a, S: PrimeField> Circuit<S> for CoinCircuit<'a, S> {
                 )
                 .unwrap();
 
-                // start mimc
                 let xl_value;
                 let xr_value;
 
@@ -184,7 +191,6 @@ impl<'a, S: PrimeField> Circuit<S> for CoinCircuit<'a, S> {
                     None => (S::default(), false),
                 };
 
-                // cur_is_right
                 if match is_right {
                     Some(a) => a,
                     None => false,
@@ -196,17 +202,7 @@ impl<'a, S: PrimeField> Circuit<S> for CoinCircuit<'a, S> {
                     xr_value = Some(temp.0);
                 }
 
-                // println!("[-] xl: {:?}\n[-] xr: {:?}\n", xl_value, xr_value);
-
                 cur = MiMC::mimc_cs(cs, xl_value, xr_value, &self.constants);
-
-                // println!("[cur]     : {:?}", cur);
-
-                // println!("circuit public input {:?}", cur.unwrap());
-                // end of mimc
-
-                // let cur_str = convert_to_str(cur.clone());
-                // println!("\nlayer_idx: {}, cur: {}", idx, cur_str);
             }
         };
 
@@ -221,9 +217,10 @@ impl<'a, S: PrimeField> Circuit<S> for CoinCircuit<'a, S> {
         // };
 
         // cs.alloc_input(
-        //     || "image",
+        //     || "leaft",
         //     || leaf.ok_or(SynthesisError::AssignmentMissing),
         // )?;
+
         println!("final circuit public input {:?}", cur);
 
         Ok(())

@@ -1,6 +1,6 @@
 use bellman::{ConstraintSystem, SynthesisError};
 use bls12_381::Scalar;
-use ff::{PrimeField, PrimeFieldBits};
+use ff::PrimeField;
 
 pub const MIMC_ROUNDS: usize = 322;
 
@@ -34,8 +34,7 @@ impl MiMC {
         mut xr_value: Option<S>,
         round_constants: &[S],
     ) -> Option<S> {
-        // let round_constants = MiMC::get_mimc_constants();
-
+        // Allocate the first component of the preimage.
         let mut xl = cs
             .alloc(
                 || "preimage xl",
@@ -44,7 +43,6 @@ impl MiMC {
             .unwrap();
 
         // Allocate the second component of the preimage.
-        // let mut xr_value = self.xr;
         let mut xr = cs
             .alloc(
                 || "preimage xr",
@@ -54,14 +52,14 @@ impl MiMC {
 
         for i in 0..MIMC_ROUNDS {
             // xL, xR := xR + (xL + Ci)^3, xL
-            // let cs = &mut cs.namespace(|| format!("round {}", i));
+            let cs = &mut cs.namespace(|| format!("round {}", i));
 
             // tmp = (xL + Ci)^2
             let tmp_value = xl_value.map(|mut e| {
-                let a = &round_constants[i];
                 e.add_assign(&round_constants[i]);
                 e.square()
             });
+
             let tmp = cs
                 .alloc(
                     || "tmp",
