@@ -1,5 +1,8 @@
+use bellman::{ConstraintSystem, SynthesisError};
 use bls12_381::Scalar;
-use ff::PrimeField;
+use ff::{PrimeField, PrimeFieldBits};
+
+pub const MIMC_ROUNDS: usize = 322;
 
 pub struct MiMC;
 
@@ -23,6 +26,90 @@ impl MiMC {
         }
 
         xl
+    }
+
+    pub fn mimc_cs<S: PrimeField, CS: ConstraintSystem<S>>(
+        cs: &mut CS,
+        mut xl_value: Option<S>,
+        mut xr_value: Option<S>,
+        round_constants: &[S],
+    ) -> Option<S> {
+        // let round_constants = MiMC::get_mimc_constants();
+
+        let mut xl = cs
+            .alloc(
+                || "preimage xl",
+                || xl_value.ok_or(SynthesisError::AssignmentMissing),
+            )
+            .unwrap();
+
+        // Allocate the second component of the preimage.
+        // let mut xr_value = self.xr;
+        let mut xr = cs
+            .alloc(
+                || "preimage xr",
+                || xr_value.ok_or(SynthesisError::AssignmentMissing),
+            )
+            .unwrap();
+
+        for i in 0..MIMC_ROUNDS {
+            // xL, xR := xR + (xL + Ci)^3, xL
+            // let cs = &mut cs.namespace(|| format!("round {}", i));
+
+            // tmp = (xL + Ci)^2
+            let tmp_value = xl_value.map(|mut e| {
+                let a = &round_constants[i];
+                e.add_assign(&round_constants[i]);
+                e.square()
+            });
+            let tmp = cs
+                .alloc(
+                    || "tmp",
+                    || tmp_value.ok_or(SynthesisError::AssignmentMissing),
+                )
+                .unwrap();
+
+            cs.enforce(
+                || "tmp = (xL + Ci)^2",
+                |lc| lc + xl + (round_constants[i], CS::one()),
+                |lc| lc + xl + (round_constants[i], CS::one()),
+                |lc| lc + tmp,
+            );
+
+            // new_xL = xR + (xL + Ci)^3
+            // new_xL = xR + tmp * (xL + Ci)
+            // new_xL - xR = tmp * (xL + Ci)
+            let new_xl_value = xl_value.map(|mut e| {
+                e.add_assign(&round_constants[i]);
+                e.mul_assign(&tmp_value.unwrap());
+                e.add_assign(&xr_value.unwrap());
+                e
+            });
+
+            let new_xl = cs
+                .alloc(
+                    || "new_xl",
+                    || new_xl_value.ok_or(SynthesisError::AssignmentMissing),
+                )
+                .unwrap();
+
+            cs.enforce(
+                || "new_xL = xR + (xL + Ci)^3",
+                |lc| lc + tmp,
+                |lc| lc + xl + (round_constants[i], CS::one()),
+                |lc| lc + new_xl - xr,
+            );
+
+            // xR = xL
+            xr = xl;
+            xr_value = xl_value;
+
+            // xL = new_xL
+            xl = new_xl;
+            xl_value = new_xl_value;
+        }
+
+        xl_value
     }
 }
 

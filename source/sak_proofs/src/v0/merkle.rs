@@ -59,6 +59,7 @@ impl MerkleTree {
         for l in data.into_iter() {
             let xl: u64 = l.into();
             let xr: u64 = (l + 1).into();
+
             let hash =
                 MiMC::mimc(Scalar::from(xl), Scalar::from(xr), constants);
 
@@ -70,6 +71,7 @@ impl MerkleTree {
             leaves.push(n);
         }
 
+        // println!("[*] leaves: {:#?}", leaves);
         let mut nodes = vec![leaves];
 
         for h in 1..=height {
@@ -103,12 +105,12 @@ impl MerkleTree {
         }
 
         for (idx, e) in nodes.iter().enumerate() {
-            println!(
-                "node idx: {}: node_len: {}, node: {:?}\n",
-                idx,
-                e.len(),
-                e
-            );
+            // println!(
+            //     "node idx: {}: node_len: {}, node: {:?}\n",
+            //     idx,
+            //     e.len(),
+            //     e
+            // );
         }
 
         MerkleTree {

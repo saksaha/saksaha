@@ -1,6 +1,6 @@
-mod merkle;
-mod mimc;
-mod proofs;
+pub mod merkle;
+pub mod mimc;
+pub mod proofs;
 
 #[cfg(test)]
 mod tests;

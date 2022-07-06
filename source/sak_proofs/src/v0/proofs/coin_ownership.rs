@@ -126,7 +126,7 @@ impl CoinProof {
         // Prepare the verification key (for proof verification).
         let pvk = groth16::prepare_verifying_key(&de_params.vk);
 
-        match groth16::verify_proof(&pvk, &proof, &[root, leaf]) {
+        match groth16::verify_proof(&pvk, &proof, &[root]) {
             Ok(_) => {
                 println!("verify success!");
                 true
@@ -168,8 +168,8 @@ impl<'a, S: PrimeField> Circuit<S> for CoinCircuit<'a, S> {
                 .unwrap();
 
                 // start mimc
-                let mut xl_value;
-                let mut xr_value;
+                let xl_value;
+                let xr_value;
 
                 let is_right = cur_is_right.get_value().and_then(|v| {
                     if v {
@@ -196,76 +196,12 @@ impl<'a, S: PrimeField> Circuit<S> for CoinCircuit<'a, S> {
                     xr_value = Some(temp.0);
                 }
 
-                println!("xl: {:?}, xr: {:?}", xl_value, xr_value);
+                // println!("[-] xl: {:?}\n[-] xr: {:?}\n", xl_value, xr_value);
 
-                let mut xl = cs.alloc(
-                    || "preimage xl",
-                    || xl_value.ok_or(SynthesisError::AssignmentMissing),
-                )?;
+                cur = MiMC::mimc_cs(cs, xl_value, xr_value, &self.constants);
 
-                // Allocate the second component of the preimage.
-                // let mut xr_value = self.xr;
-                let mut xr = cs.alloc(
-                    || "preimage xr",
-                    || xr_value.ok_or(SynthesisError::AssignmentMissing),
-                )?;
+                // println!("[cur]     : {:?}", cur);
 
-                for i in 0..MIMC_ROUNDS {
-                    // xL, xR := xR + (xL + Ci)^3, xL
-                    // let cs = &mut cs.namespace(|| format!("round {}", i));
-
-                    // tmp = (xL + Ci)^2
-                    let tmp_value = xl_value.map(|mut e| {
-                        e.add_assign(&self.constants[i]);
-                        e.square()
-                    });
-                    let tmp = cs.alloc(
-                        || "tmp",
-                        || tmp_value.ok_or(SynthesisError::AssignmentMissing),
-                    )?;
-
-                    cs.enforce(
-                        || "tmp = (xL + Ci)^2",
-                        |lc| lc + xl + (self.constants[i], CS::one()),
-                        |lc| lc + xl + (self.constants[i], CS::one()),
-                        |lc| lc + tmp,
-                    );
-
-                    // new_xL = xR + (xL + Ci)^3
-                    // new_xL = xR + tmp * (xL + Ci)
-                    // new_xL - xR = tmp * (xL + Ci)
-                    let new_xl_value = xl_value.map(|mut e| {
-                        e.add_assign(&self.constants[i]);
-                        e.mul_assign(&tmp_value.unwrap());
-                        e.add_assign(&xr_value.unwrap());
-                        e
-                    });
-
-                    let new_xl = cs.alloc(
-                        || "new_xl",
-                        || {
-                            new_xl_value
-                                .ok_or(SynthesisError::AssignmentMissing)
-                        },
-                    )?;
-
-                    cs.enforce(
-                        || "new_xL = xR + (xL + Ci)^3",
-                        |lc| lc + tmp,
-                        |lc| lc + xl + (self.constants[i], CS::one()),
-                        |lc| lc + new_xl - xr,
-                    );
-
-                    // xR = xL
-                    xr = xl;
-                    xr_value = xl_value;
-
-                    // xL = new_xL
-                    xl = new_xl;
-                    xl_value = new_xl_value;
-                }
-
-                cur = xl_value;
                 // println!("circuit public input {:?}", cur.unwrap());
                 // end of mimc
 
@@ -279,15 +215,15 @@ impl<'a, S: PrimeField> Circuit<S> for CoinCircuit<'a, S> {
             || cur.ok_or(SynthesisError::AssignmentMissing),
         )?;
 
-        let leaf = match self.leaf {
-            Some(a) => Some(a),
-            None => Some(S::default()),
-        };
+        // let leaf = match self.leaf {
+        //     Some(a) => Some(a),
+        //     None => Some(S::default()),
+        // };
 
-        cs.alloc_input(
-            || "image",
-            || leaf.ok_or(SynthesisError::AssignmentMissing),
-        )?;
+        // cs.alloc_input(
+        //     || "image",
+        //     || leaf.ok_or(SynthesisError::AssignmentMissing),
+        // )?;
         println!("final circuit public input {:?}", cur);
 
         Ok(())
