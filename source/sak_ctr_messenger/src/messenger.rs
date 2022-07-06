@@ -1,4 +1,4 @@
-use sak_contract_std::{contract_bootstrap, Request, Storage};
+use sak_contract_std::{contract_bootstrap, define_execute, Request, Storage};
 use std::collections::HashMap;
 
 type ExecuteArgs = HashMap<String, String>;
@@ -102,73 +102,89 @@ pub unsafe extern "C" fn query(
     };
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn execute(
-    storage_ptr: *mut u8,
-    storage_len: usize,
-    request_ptr: *mut u8,
-    request_len: usize,
-) -> (*mut u8, i32) {
-    let storage_bytes_vec = Vec::from_raw_parts(
-        storage_ptr, //
-        storage_len,
-        storage_len,
-    );
+define_execute!();
 
-    let storage_serialized = match String::from_utf8(storage_bytes_vec) {
-        Ok(s) => s,
-        Err(err) => {
-            panic!("Cannot serialize storage, err: {}", err);
-        }
-    };
-
-    let storage: Storage =
-        match serde_json::from_str(&storage_serialized.as_str()) {
-            Ok(s) => s,
-            Err(err) => {
-                panic!(
-                    "Cannot Deserialize `HashMap` from storage, err: {}",
-                    err
-                );
-            }
-        };
-
-    let request_bytes_vec = Vec::from_raw_parts(
-        request_ptr, //
-        request_len,
-        request_len,
-    );
-
-    let request_serialized = match String::from_utf8(request_bytes_vec) {
-        Ok(s) => s,
-        Err(err) => {
-            panic!("Cannot serialize storage, err: {}", err);
-        }
-    };
-
-    let request: Request =
-        match serde_json::from_str(&request_serialized.as_str()) {
-            Ok(s) => s,
-            Err(err) => {
-                panic!(
-                    "Cannot Deserialize `Storage` from request, err: {}",
-                    err
-                );
-            }
-        };
-
+pub fn execute2(storage: &mut Storage, request: Request) {
     match request.req_type.as_ref() {
         "open_channel" => {
-            return handle_open_channel(storage, request.arg);
+            handle_open_channel(storage, request.arg);
         }
         "send_msg" => {
-            return handle_send_msg(storage, request.arg);
+            handle_send_msg(storage, request.arg);
         }
         _ => {
             panic!("Wrong request type has been found");
         }
     };
 }
+
+// #[no_mangle]
+// pub unsafe extern "C" fn execute(
+//     storage_ptr: *mut u8,
+//     storage_len: usize,
+//     request_ptr: *mut u8,
+//     request_len: usize,
+// ) -> (*mut u8, i32) {
+//     let storage_bytes_vec = Vec::from_raw_parts(
+//         storage_ptr, //
+//         storage_len,
+//         storage_len,
+//     );
+
+//     let storage_serialized = match String::from_utf8(storage_bytes_vec) {
+//         Ok(s) => s,
+//         Err(err) => {
+//             panic!("Cannot serialize storage, err: {}", err);
+//         }
+//     };
+
+//     let storage: Storage =
+//         match serde_json::from_str(&storage_serialized.as_str()) {
+//             Ok(s) => s,
+//             Err(err) => {
+//                 panic!(
+//                     "Cannot Deserialize `HashMap` from storage, err: {}",
+//                     err
+//                 );
+//             }
+//         };
+
+//     let request_bytes_vec = Vec::from_raw_parts(
+//         request_ptr, //
+//         request_len,
+//         request_len,
+//     );
+
+//     let request_serialized = match String::from_utf8(request_bytes_vec) {
+//         Ok(s) => s,
+//         Err(err) => {
+//             panic!("Cannot serialize storage, err: {}", err);
+//         }
+//     };
+
+//     let request: Request =
+//         match serde_json::from_str(&request_serialized.as_str()) {
+//             Ok(s) => s,
+//             Err(err) => {
+//                 panic!(
+//                     "Cannot Deserialize `Storage` from request, err: {}",
+//                     err
+//                 );
+//             }
+//         };
+
+//     match request.req_type.as_ref() {
+//         "open_channel" => {
+//             return handle_open_channel(storage, request.arg);
+//         }
+//         "send_msg" => {
+//             return handle_send_msg(storage, request.arg);
+//         }
+//         _ => {
+//             panic!("Wrong request type has been found");
+//         }
+//     };
+// }
 
 fn handle_get_msgs(storage: Storage, args: ExecuteArgs) -> (*mut u8, i32) {
     let channel_id = match args.get(ARG_CHANNEL_ID) {
@@ -194,10 +210,7 @@ fn handle_get_msgs(storage: Storage, args: ExecuteArgs) -> (*mut u8, i32) {
     (msgs_ptr, msgs_len as i32)
 }
 
-fn handle_open_channel(
-    mut storage: Storage,
-    args: ExecuteArgs,
-) -> (*mut u8, i32) {
+fn handle_open_channel(storage: &mut Storage, args: ExecuteArgs) {
     let her_pk = match args.get(ARG_HER_PK) {
         Some(v) => v,
         None => {
@@ -219,22 +232,25 @@ fn handle_open_channel(
         None => {}
     };
 
-    let mut storage_new = Storage::with_capacity(10);
-    storage_new.insert(her_pk.clone(), channel_id.clone());
+    // storage_new.insert(her_pk.clone(), channel_id.clone());
+    //
 
-    let storage_serialized = serde_json::to_string(&storage_new).unwrap();
+    // let mut storage_new = Storage::with_capacity(10);
+    // storage_new.insert(her_pk.clone(), channel_id.clone());
 
-    let mut storage_bytes_vec = storage_serialized.as_bytes().to_owned();
+    // let storage_serialized = serde_json::to_string(&storage_new).unwrap();
 
-    let storage_ptr = storage_bytes_vec.as_mut_ptr();
-    let storage_len = storage_bytes_vec.len();
+    // let mut storage_bytes_vec = storage_serialized.as_bytes().to_owned();
 
-    std::mem::forget(storage_bytes_vec);
+    // let storage_ptr = storage_bytes_vec.as_mut_ptr();
+    // let storage_len = storage_bytes_vec.len();
 
-    (storage_ptr, storage_len as i32)
+    // std::mem::forget(storage_bytes_vec);
+
+    // (storage_ptr, storage_len as i32)
 }
 
-fn handle_send_msg(mut storage: Storage, args: ExecuteArgs) -> (*mut u8, i32) {
+fn handle_send_msg(storage: &mut Storage, args: ExecuteArgs) {
     let channel_id = match args.get(ARG_CHANNEL_ID) {
         Some(v) => v,
         None => {
@@ -268,17 +284,20 @@ fn handle_send_msg(mut storage: Storage, args: ExecuteArgs) -> (*mut u8, i32) {
 
     let chat_new = serde_json::to_string(&msgs_vec).unwrap();
 
-    let mut storage_new = Storage::with_capacity(STORAGE_CAP);
-    storage_new.insert(channel_id.clone(), chat_new);
+    // storage_new.insert(channel_id.clone(), chat_new);
+    //
 
-    let storage_serialized = serde_json::to_string(&storage_new).unwrap();
+    // let mut storage_new = Storage::with_capacity(STORAGE_CAP);
+    // storage_new.insert(channel_id.clone(), chat_new);
 
-    let mut storage_bytes_vec = storage_serialized.as_bytes().to_owned();
+    // let storage_serialized = serde_json::to_string(&storage_new).unwrap();
 
-    let storage_ptr = storage_bytes_vec.as_mut_ptr();
-    let storage_len = storage_bytes_vec.len();
+    // let mut storage_bytes_vec = storage_serialized.as_bytes().to_owned();
 
-    std::mem::forget(storage_bytes_vec);
+    // let storage_ptr = storage_bytes_vec.as_mut_ptr();
+    // let storage_len = storage_bytes_vec.len();
 
-    (storage_ptr, storage_len as i32)
+    // std::mem::forget(storage_bytes_vec);
+
+    // (storage_ptr, storage_len as i32)
 }

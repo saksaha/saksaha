@@ -1,6 +1,5 @@
 #[cfg(test)]
 mod test {
-
     use std::collections::HashMap;
     const STORAGE_CAP: usize = 100;
     const DUMMY_CHANNEL_ID_1: &str = "dummy_channel_1";
@@ -47,7 +46,7 @@ mod test {
         init();
         let vm = VM::init().expect("VM should be initiated");
 
-        let ctr_wasm = include_bytes!("../sak_ctrt_messenger.wasm").to_vec();
+        let ctr_wasm = include_bytes!("../sak_ctr_messenger.wasm").to_vec();
         let ctr_fn = CtrFn::Init;
 
         let messenger_states_invoked = vm
@@ -92,7 +91,7 @@ mod test {
             }
         };
 
-        let ctr_wasm = include_bytes!("../sak_ctrt_messenger.wasm").to_vec();
+        let ctr_wasm = include_bytes!("../sak_ctr_messenger.wasm").to_vec();
         let ctr_fn = CtrFn::Query(request, messages_state);
 
         let messages_from_query = vm
@@ -133,7 +132,7 @@ mod test {
             (req, storage)
         };
 
-        let ctr_wasm = include_bytes!("../sak_ctrt_messenger.wasm").to_vec();
+        let ctr_wasm = include_bytes!("../sak_ctr_messenger.wasm").to_vec();
         let ctr_fn = CtrFn::Execute(request, storage);
 
         let state_serialized = match vm.invoke(ctr_wasm, ctr_fn) {
@@ -175,7 +174,7 @@ mod test {
             (req, storage)
         };
 
-        let ctr_wasm = include_bytes!("../sak_ctrt_messenger.wasm").to_vec();
+        let ctr_wasm = include_bytes!("../sak_ctr_messenger.wasm").to_vec();
         let ctr_fn = CtrFn::Execute(request, storage);
 
         let chats_state_serialized = vm
