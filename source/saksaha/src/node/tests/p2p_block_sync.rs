@@ -6,7 +6,7 @@ use log::debug;
 use sak_p2p_addr::{AddrStatus, UnknownAddr};
 use sak_p2p_id::Identity;
 use sak_p2p_ptable::PeerTable;
-use sak_types::{BlockCandidate, Tx};
+use sak_types::{BlockCandidate, Tx, TxCandidate};
 use std::{sync::Arc, time::Duration};
 
 const RUST_LOG_ENV: &str = "
@@ -191,6 +191,22 @@ async fn test_block_sync_true() {
     )
     .await;
 
+    let dummy_tx1 = TxCandidate::new(
+        String::from("1133"),
+        String::from("one").as_bytes().to_vec(),
+        String::from("p2p_block_sync_author_sig1"),
+        vec![1],
+        Some(String::from("1")),
+    );
+
+    let dummy_tx2 = TxCandidate::new(
+        String::from("22"),
+        String::from("two").as_bytes().to_vec(),
+        String::from("p2p_block_sync_author_sig2"),
+        vec![2],
+        Some(String::from("2")),
+    );
+
     let (_block, txs) = {
         let dummy_tx1 = Tx::new(
             String::from("1133"),
@@ -198,7 +214,7 @@ async fn test_block_sync_true() {
             String::from("p2p_block_sync_author_sig1"),
             vec![1],
             Some(String::from("1")),
-            0,
+            1,
         );
 
         let dummy_tx2 = Tx::new(
@@ -207,7 +223,7 @@ async fn test_block_sync_true() {
             String::from("p2p_block_sync_author_sig2"),
             vec![2],
             Some(String::from("2")),
-            1,
+            2,
         );
 
         let c = BlockCandidate {
@@ -219,7 +235,7 @@ async fn test_block_sync_true() {
             merkle_root: String::from("1"),
         };
 
-        c.extract()
+        c.extract(String::from("1"))
     };
 
     {
@@ -240,7 +256,7 @@ async fn test_block_sync_true() {
         .machine
         .blockchain
         .dist_ledger
-        .send_tx(txs[0].clone())
+        .send_tx(dummy_tx1.clone())
         .await
         .expect("Node should be able to send a transaction");
 

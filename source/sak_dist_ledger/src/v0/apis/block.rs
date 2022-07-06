@@ -1,7 +1,7 @@
 use crate::{DistLedger, LedgerError, StateUpdate};
 use log::warn;
 use sak_contract_std::{CtrCallType, Request, Storage};
-use sak_types::{Block, BlockCandidate, Tx, TxType};
+use sak_types::{Block, BlockCandidate, Tx, TxCandidate, TxType};
 use sak_vm::CtrFn;
 
 impl DistLedger {
@@ -75,15 +75,18 @@ impl DistLedger {
     }
 
     // rpc
-    pub async fn send_tx(&self, tx: Tx) -> Result<(), String> {
-        self.is_valid_tx(&tx);
+    pub async fn send_tx(
+        &self,
+        tx_candidate: TxCandidate,
+    ) -> Result<(), String> {
+        self.is_valid_tx(&tx_candidate);
 
-        self.sync_pool.insert_tx(tx).await
+        self.sync_pool.insert_tx(tx_candidate).await
     }
 
     // peer_node
-    pub async fn insert_into_pool(&self, txs: Vec<Tx>) {
-        for tx in txs.into_iter() {
+    pub async fn insert_into_pool(&self, tx_candidates: Vec<TxCandidate>) {
+        for tx in tx_candidates.into_iter() {
             if let Err(err) = self.sync_pool.insert_tx(tx).await {
                 warn!("Tx pool insertion aborted, reason: {}", err);
             };
@@ -123,6 +126,10 @@ impl DistLedger {
         self.ledger_db.get_latest_block_height().await
     }
 
+    pub async fn get_latest_tx_height(&self) -> Result<Option<u128>, String> {
+        self.ledger_db.get_latest_tx_height().await
+    }
+
     pub async fn write_block(
         &self,
         bc: Option<BlockCandidate>,
@@ -139,7 +146,9 @@ impl DistLedger {
             },
         };
 
-        let (block, txs) = bc.extract();
+        let merkle_root = self.get_merkle_root(&bc);
+
+        let (block, txs) = bc.extract(merkle_root);
 
         if let Some(_b) = self.get_block(block.get_hash())? {
             return Err(format!(
@@ -227,6 +236,8 @@ impl DistLedger {
             }
         };
 
+        // self.upgrade_merkle_tree(&txs);
+
         if let Err(err) = self.sync_pool.insert_block(&block).await {
             warn!("Error inserting block into the sync pool, err: {}", err);
         }
@@ -245,7 +256,10 @@ impl DistLedger {
         self.sync_pool.get_tx_pool_diff(tx_hashes).await
     }
 
-    pub async fn get_txs_from_pool(&self, tx_hashes: Vec<String>) -> Vec<Tx> {
+    pub async fn get_txs_from_pool(
+        &self,
+        tx_hashes: Vec<String>,
+    ) -> Vec<TxCandidate> {
         self.sync_pool.get_txs(tx_hashes).await
     }
 
@@ -272,8 +286,18 @@ impl DistLedger {
         Ok(Some(bc))
     }
 
-    pub fn is_valid_tx(&self, _tx: &Tx) -> bool {
+    pub fn is_valid_tx(&self, _tx: &TxCandidate) -> bool {
         // TODO
         true
+    }
+
+    fn get_merkle_root(&self, bc: &BlockCandidate) -> String {
+        let merkle_root = &mut self.merkle_tree.clone();
+
+        for tx in &bc.transactions {
+            merkle_root.upgrade_node(tx.get_tx_height().to_owned());
+        }
+
+        merkle_root.root().hash.to_string()
     }
 }

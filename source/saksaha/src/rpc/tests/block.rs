@@ -19,7 +19,7 @@ mod test_suite {
         let block_candidate = test_utils::make_dummy_genesis_block();
         let block_candidate_same = test_utils::make_dummy_genesis_block();
 
-        let (block_value, _) = block_candidate.extract();
+        let (block_value, _) = block_candidate.extract(String::from("1"));
 
         let block_hash = {
             let block_hash = match machine

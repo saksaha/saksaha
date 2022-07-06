@@ -1,6 +1,6 @@
 use crate::{LedgerDB, LedgerError};
 use sak_kv_db::{WriteBatch, DB};
-use sak_types::{Tx, TxType, WASM_MAGIC_NUMBER};
+use sak_types::{Tx, TxType};
 
 impl LedgerDB {
     #[cfg(test)]
@@ -101,6 +101,13 @@ impl LedgerDB {
             tx.get_tx_height(),
         )?;
 
+        self.schema.batch_put_tx_height_by_hash(
+            db,
+            batch,
+            tx.get_tx_height(),
+            tx_hash,
+        )?;
+
         match tx.get_type() {
             TxType::ContractDeploy => {
                 self.schema.batch_put_tx_hash(
@@ -115,6 +122,16 @@ impl LedgerDB {
         }
 
         Ok(tx_hash.clone())
+    }
+
+    pub(crate) async fn get_latest_tx_height(
+        &self,
+    ) -> Result<Option<u128>, String> {
+        let db = &self.kv_db.db_instance;
+
+        let height = self.schema.get_latest_tx_height(db)?;
+
+        Ok(height)
     }
 }
 

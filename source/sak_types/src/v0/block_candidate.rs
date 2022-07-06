@@ -12,7 +12,7 @@ pub struct BlockCandidate {
 }
 
 impl BlockCandidate {
-    pub fn extract(self) -> (Block, Vec<Tx>) {
+    pub fn extract(self, merkle_root: String) -> (Block, Vec<Tx>) {
         let (tx_hashes, txs) = {
             let mut hashes = vec![];
             let mut txs = vec![];
@@ -31,7 +31,7 @@ impl BlockCandidate {
             vec![],
             self.created_at.clone(),
             self.block_height.clone(),
-            self.merkle_root.clone(),
+            merkle_root,
         );
 
         return (block, txs);

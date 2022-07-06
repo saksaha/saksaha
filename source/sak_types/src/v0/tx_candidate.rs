@@ -1,52 +1,30 @@
 use serde::{Deserialize, Serialize};
 use wasmtime::{Config, Engine, Linker, Module, Store, TypedFunc};
 
+use crate::TxType;
+
 pub const WASM_MAGIC_NUMBER: [u8; 4] = [0x00, 0x61, 0x73, 0x6d];
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
-pub struct Tx {
-    //
+pub struct TxCandidate {
     created_at: String,
-
-    //
     #[serde(with = "serde_bytes")]
     data: Vec<u8>,
-
-    //
     pi: Vec<u8>,
-
-    //
     author_sig: String,
-
-    //
     ctr_addr: String,
-
-    tx_height: u128,
-
     // auto-generated value
     hash: String,
 }
 
-pub struct ContractCallData {
-    pub fn_name: String,
-    pub args: Vec<Vec<u8>>,
-}
-
-pub enum TxType {
-    ContractCall,
-    ContractDeploy,
-    Plain,
-}
-
-impl Tx {
+impl TxCandidate {
     pub fn new(
         created_at: String,
         data: Vec<u8>,
         author_sig: String,
         pi: Vec<u8>,
         ctr_addr: Option<String>,
-        tx_height: u128,
-    ) -> Tx {
+    ) -> TxCandidate {
         let ctr_addr = match ctr_addr {
             Some(a) => a,
             None => String::from(""),
@@ -58,16 +36,14 @@ impl Tx {
             pi.as_slice(),
             author_sig.as_bytes(),
             ctr_addr.as_bytes(),
-            // tx_height.to_string().as_bytes(),
         ]);
 
-        Tx {
+        TxCandidate {
             created_at,
             data,
             pi,
             author_sig,
             ctr_addr,
-            tx_height,
             hash,
         }
     }
@@ -90,10 +66,6 @@ impl Tx {
 
     pub fn get_ctr_addr(&self) -> &String {
         &self.ctr_addr
-    }
-
-    pub fn get_tx_height(&self) -> &u128 {
-        &self.tx_height
     }
 
     pub fn get_hash(&self) -> &String {
@@ -190,7 +162,6 @@ impl Tx {
                     ));
                 }
             }
-            // .expect("expected execute function is not found")
         };
 
         Ok(())

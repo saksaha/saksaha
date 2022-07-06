@@ -5,7 +5,8 @@ use crate::Runtime;
 use crate::SyncPool;
 use colored::Colorize;
 use log::info;
-use sak_types::BlockCandidate;
+use sak_proofs::{coin_ownership::CoinProof, MerkleTree, MiMC};
+use sak_types::{BlockCandidate, Tx};
 use sak_vm::VM;
 use std::sync::Arc;
 use tokio::sync::broadcast;
@@ -20,6 +21,7 @@ pub struct DistLedger {
     pub(crate) vm: VM,
     pub(crate) consensus: Box<dyn Consensus + Send + Sync>,
     runtime: Arc<Runtime>,
+    pub(crate) merkle_tree: MerkleTree,
 }
 
 pub struct DistLedgerArgs {
@@ -77,6 +79,13 @@ impl DistLedger {
             Arc::new(r)
         };
 
+        let merkle_tree = {
+            let constants = MiMC::get_mimc_constants();
+            let tree = CoinProof::get_merkle_tree(&constants);
+
+            tree
+        };
+
         let dist_ledger = DistLedger {
             ledger_db,
             sync_pool,
@@ -84,6 +93,7 @@ impl DistLedger {
             bc_event_tx,
             consensus,
             runtime,
+            merkle_tree,
         };
 
         if let Some(bc) = genesis_block {
@@ -147,5 +157,11 @@ impl DistLedger {
         };
 
         Ok(persisted_gen_block_hash.to_string())
+    }
+
+    pub(crate) fn upgrade_merkle_tree(&mut self, txs: &Vec<Tx>) {
+        for tx in txs {
+            self.merkle_tree.upgrade_node(tx.get_tx_height().to_owned());
+        }
     }
 }

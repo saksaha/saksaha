@@ -25,8 +25,11 @@ const DATA: &str = "data";
 //
 const CTR_ADDR: &str = "ctr_addr";
 
-//
+// by hash
 const TX_HEIGHT: &str = "tx_height";
+
+// by hash
+const TX_HEIGHT_BY_HASH: &str = "tx_height_by_hash";
 
 //
 const VALIDATOR_SIG: &str = "validator_sig";
@@ -584,11 +587,45 @@ impl LedgerDBSchema {
         Ok(())
     }
 
+    pub(crate) fn batch_put_tx_height_by_hash(
+        &self,
+        db: &DB,
+        batch: &mut WriteBatch,
+        tx_height: &u128,
+        tx_hash: &String,
+    ) -> Result<(), LedgerError> {
+        let cf = make_cf_handle(db, TX_HEIGHT_BY_HASH)?;
+
+        let v = tx_height.to_be_bytes();
+
+        batch.put_cf(&cf, v, tx_hash);
+
+        Ok(())
+    }
+
     pub(crate) fn get_latest_block_height(
         &self,
         db: &DB,
     ) -> Result<Option<u128>, String> {
         let cf = make_cf_handle(db, BLOCK_HASH)?;
+
+        let mut iter = db.iterator_cf(&cf, IteratorMode::End);
+
+        let (height_bytes, _hash) = match iter.next() {
+            Some(a) => a,
+            None => return Ok(None),
+        };
+
+        let height = sak_kv_db::convert_u8_slice_into_u128(&height_bytes)?;
+
+        Ok(Some(height))
+    }
+
+    pub(crate) fn get_latest_tx_height(
+        &self,
+        db: &DB,
+    ) -> Result<Option<u128>, String> {
+        let cf = make_cf_handle(db, TX_HEIGHT_BY_HASH)?;
 
         let mut iter = db.iterator_cf(&cf, IteratorMode::End);
 
@@ -611,6 +648,7 @@ impl LedgerDBSchema {
             ColumnFamilyDescriptor::new(DATA, Options::default()),
             ColumnFamilyDescriptor::new(CTR_ADDR, Options::default()),
             ColumnFamilyDescriptor::new(TX_HEIGHT, Options::default()),
+            ColumnFamilyDescriptor::new(TX_HEIGHT_BY_HASH, Options::default()),
             ColumnFamilyDescriptor::new(VALIDATOR_SIG, Options::default()),
             ColumnFamilyDescriptor::new(TX_HASHES, Options::default()),
             ColumnFamilyDescriptor::new(WITNESS_SIGS, Options::default()),

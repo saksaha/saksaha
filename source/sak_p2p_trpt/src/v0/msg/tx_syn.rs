@@ -1,11 +1,11 @@
 use crate::{BoxedError, TX_SYN_TYPE};
 use bytes::{BufMut, Bytes, BytesMut};
 use sak_p2p_frame::{Frame, Parse};
-use sak_types::Tx;
+use sak_types::TxCandidate;
 
 #[derive(Debug)]
 pub struct TxSynMsg {
-    pub txs: Vec<Tx>,
+    pub txs: Vec<TxCandidate>,
 }
 
 impl TxSynMsg {
@@ -42,15 +42,15 @@ impl TxSynMsg {
                     std::str::from_utf8(p.as_ref())?.into()
                 };
 
-                let tx_height = parse.next_int()? as u128;
+                // let tx_height = parse.next_int()? as u128;
 
-                Tx::new(
+                TxCandidate::new(
                     created_at,
                     data,
                     author_sig,
                     pi,
                     Some(contract_addr),
-                    tx_height,
+                    // tx_height,
                 )
             };
 
@@ -96,7 +96,7 @@ impl TxSynMsg {
             frame.push_bulk(Bytes::from(pi_bytes));
             frame.push_bulk(Bytes::from(author_sig_bytes));
             frame.push_bulk(Bytes::from(tx.get_ctr_addr().clone()));
-            frame.push_int(*tx.get_tx_height() as u128);
+            // frame.push_int(*tx.get_tx_height() as u128);
         }
 
         frame

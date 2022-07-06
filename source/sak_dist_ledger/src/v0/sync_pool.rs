@@ -1,5 +1,5 @@
-use log::{error, warn};
-use sak_types::{Block, Tx, TxType};
+use log::warn;
+use sak_types::{Block, Tx, TxCandidate, TxType};
 use std::collections::{HashMap, HashSet};
 use tokio::sync::RwLock;
 
@@ -8,7 +8,7 @@ const SYNC_POOL_CAPACITY: usize = 100;
 pub(crate) struct SyncPool {
     new_blocks: RwLock<HashSet<(u128, String)>>,
     new_tx_hashes: RwLock<HashSet<String>>,
-    tx_map: RwLock<HashMap<String, Tx>>,
+    tx_map: RwLock<HashMap<String, TxCandidate>>,
 }
 
 impl SyncPool {
@@ -83,7 +83,10 @@ impl SyncPool {
         Ok(())
     }
 
-    pub(crate) async fn insert_tx(&self, tx: Tx) -> Result<(), String> {
+    pub(crate) async fn insert_tx(
+        &self,
+        tx: TxCandidate,
+    ) -> Result<(), String> {
         match tx.get_type() {
             TxType::ContractDeploy => {
                 // check functions
@@ -114,7 +117,7 @@ impl SyncPool {
         Ok(())
     }
 
-    pub(crate) async fn get_all_txs(&self) -> Result<Vec<Tx>, String> {
+    pub(crate) async fn get_all_txs(&self) -> Result<Vec<TxCandidate>, String> {
         let tx_map_lock = self.tx_map.read().await;
 
         let tx = tx_map_lock.values().map(|v| v.clone()).collect();
@@ -132,7 +135,10 @@ impl SyncPool {
         Ok(())
     }
 
-    pub(crate) async fn get_txs(&self, tx_hashes: Vec<String>) -> Vec<Tx> {
+    pub(crate) async fn get_txs(
+        &self,
+        tx_hashes: Vec<String>,
+    ) -> Vec<TxCandidate> {
         let tx_map_lock = self.tx_map.read().await;
         let mut tx_pool = vec![];
 

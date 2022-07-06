@@ -10,7 +10,7 @@ mod test_suite {
     use sak_p2p_disc::DiscAddr;
     use sak_p2p_id::Identity;
     use sak_p2p_ptable::PeerTable;
-    use sak_types::{BlockCandidate, Hashable, Tx};
+    use sak_types::{BlockCandidate, Hashable, Tx, TxCandidate};
     use std::{sync::Arc, time::Duration};
 
     const RUST_LOG_ENV: &str = "
@@ -250,29 +250,44 @@ mod test_suite {
         )
         .await;
 
-        let dummy_txs = vec![
-            Tx::new(
-                String::from("1346546123"),
-                String::from("one").as_bytes().to_vec(),
-                String::from("0x1111"),
-                b"0x1111".to_vec(),
-                Some(String::from("one")),
-                0,
-            ),
-            Tx::new(
-                String::from("45698744213"),
-                String::from("two").as_bytes().to_vec(),
-                String::from("0x2222"),
-                b"0x2222".to_vec(),
-                Some(String::from("two")),
-                1,
-            ),
-        ];
+        let dummy_tx1 = TxCandidate::new(
+            String::from("1133"),
+            String::from("one").as_bytes().to_vec(),
+            String::from("p2p_block_sync_author_sig1"),
+            vec![1],
+            Some(String::from("1")),
+        );
 
-        let block_candidate = {
+        let dummy_tx2 = TxCandidate::new(
+            String::from("22"),
+            String::from("two").as_bytes().to_vec(),
+            String::from("p2p_block_sync_author_sig2"),
+            vec![2],
+            Some(String::from("2")),
+        );
+
+        let block = {
+            let dummy_tx1 = Tx::new(
+                String::from("1133"),
+                String::from("one").as_bytes().to_vec(),
+                String::from("p2p_block_sync_author_sig1"),
+                vec![1],
+                Some(String::from("1")),
+                1,
+            );
+
+            let dummy_tx2 = Tx::new(
+                String::from("22"),
+                String::from("two").as_bytes().to_vec(),
+                String::from("p2p_block_sync_author_sig2"),
+                vec![2],
+                Some(String::from("2")),
+                2,
+            );
+
             let c = BlockCandidate {
                 validator_sig: String::from(""),
-                transactions: dummy_txs.clone(),
+                transactions: vec![dummy_tx1, dummy_tx2],
                 witness_sigs: vec![],
                 created_at: String::from(""),
                 block_height: 1,
@@ -308,7 +323,7 @@ mod test_suite {
             .machine
             .blockchain
             .dist_ledger
-            .send_tx(dummy_txs[0].clone())
+            .send_tx(dummy_tx1.clone())
             .await
             .expect("Node should be able to send a transaction");
 
@@ -316,7 +331,7 @@ mod test_suite {
             .machine
             .blockchain
             .dist_ledger
-            .send_tx(dummy_txs[1].clone())
+            .send_tx(dummy_tx2.clone())
             .await
             .expect("Node should be able to send a transaction");
 
@@ -327,14 +342,14 @@ mod test_suite {
                 .machine
                 .blockchain
                 .dist_ledger
-                .tx_pool_contains(dummy_txs[0].get_hash())
+                .tx_pool_contains(dummy_tx1.get_hash())
                 .await;
 
             let tx_pool_2_contains_tx2 = local_node_2
                 .machine
                 .blockchain
                 .dist_ledger
-                .tx_pool_contains(dummy_txs[1].get_hash())
+                .tx_pool_contains(dummy_tx2.get_hash())
                 .await;
 
             assert_eq!(tx_pool_2_contains_tx1, true);
@@ -346,7 +361,7 @@ mod test_suite {
                 .machine
                 .blockchain
                 .dist_ledger
-                .write_block(Some(block_candidate))
+                .write_block(Some(block))
                 .await
                 .expect("Block should be written");
 
@@ -354,7 +369,7 @@ mod test_suite {
                 .machine
                 .blockchain
                 .dist_ledger
-                .tx_pool_contains(dummy_txs[0].get_hash())
+                .tx_pool_contains(dummy_tx1.get_hash())
                 .await;
 
             assert_eq!(tx_pool_1_contains_tx1, false);

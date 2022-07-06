@@ -1,7 +1,8 @@
 use crate::MiMC;
 use bls12_381::Scalar;
+use std::convert::TryInto;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct MerkleTree {
     pub nodes: Vec<Vec<Node>>,
     pub height: usize,
@@ -49,10 +50,10 @@ impl MerkleTree {
         let mut leaves = vec![];
         let leaf_count = data.len();
 
-        println!(
-            "Create tree, leaf_count: {}, height: {}, data: {:?}",
-            leaf_count, height, data,
-        );
+        // println!(
+        //     "Create tree, leaf_count: {}, height: {}, data: {:?}",
+        //     leaf_count, height, data,
+        // );
 
         let d = data.clone();
 
@@ -102,14 +103,14 @@ impl MerkleTree {
             nodes.push(nodes_at_height);
         }
 
-        for (idx, e) in nodes.iter().enumerate() {
-            println!(
-                "node idx: {}: node_len: {}, node: {:?}\n",
-                idx,
-                e.len(),
-                e
-            );
-        }
+        // for (idx, e) in nodes.iter().enumerate() {
+        //     println!(
+        //         "node idx: {}: node_len: {}, node: {:?}\n",
+        //         idx,
+        //         e.len(),
+        //         e
+        //     );
+        // }
 
         MerkleTree {
             nodes,
@@ -166,5 +167,26 @@ impl MerkleTree {
         }
 
         auth_path
+    }
+
+    pub fn upgrade_node(&mut self, idx: u128) {
+        let auth_paths = self.generate_auth_paths(idx.try_into().unwrap());
+
+        for (ix, p) in auth_paths.iter().enumerate() {
+            println!("auth path [{}] - {:?}", ix, p);
+            let position = ix + p.direction as usize;
+            let nodes = self
+                .nodes
+                .get_mut(position)
+                .unwrap()
+                .get_mut(position)
+                .unwrap();
+            let dummy_node = Node {
+                val: None,
+                hash: bls12_381::Scalar::from(idx as u64),
+            };
+            *nodes = dummy_node;
+        }
+        // self.nodes.get_mut((h - 1) as usize);
     }
 }

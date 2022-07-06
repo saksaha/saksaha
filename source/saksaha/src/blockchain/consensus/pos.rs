@@ -2,7 +2,8 @@ use async_trait::async_trait;
 use sak_contract_std::{CtrCallType, Request};
 use sak_dist_ledger::{Consensus, ConsensusError, DistLedger};
 use sak_p2p_id::Identity;
-use sak_types::{BlockCandidate, Tx};
+use sak_proofs::MerkleTree;
+use sak_types::{BlockCandidate, Tx, TxCandidate};
 use std::{collections::HashMap, sync::Arc};
 
 pub struct Pos {
@@ -15,7 +16,7 @@ impl Consensus for Pos {
     async fn do_consensus(
         &self,
         dist_ledger: &DistLedger,
-        txs: Vec<Tx>,
+        tx_candidates: Vec<TxCandidate>,
     ) -> Result<BlockCandidate, ConsensusError> {
         let request = Request {
             req_type: "get_validator".to_string(),
@@ -30,7 +31,26 @@ impl Consensus for Pos {
         let block_height =
             next_height(dist_ledger.get_latest_block_height().await?);
 
+        let latest_tx_height =
+            next_height(dist_ledger.get_latest_tx_height().await?);
+
         if self.identity.credential.public_key_str == validator {
+            let mut txs = vec![];
+
+            for (ix, tx_candidate) in tx_candidates.iter().enumerate() {
+                let tx_height = latest_tx_height + ix as u128;
+
+                let tx = Tx::new(
+                    tx_candidate.get_created_at().to_owned(),
+                    tx_candidate.get_data().to_owned(),
+                    tx_candidate.get_author_sig().to_owned(),
+                    tx_candidate.get_pi().to_owned(),
+                    Some(tx_candidate.get_ctr_addr().to_owned()),
+                    tx_height,
+                );
+                txs.push(tx);
+            }
+
             let bc = BlockCandidate {
                 validator_sig: String::from("1"),
                 transactions: txs,

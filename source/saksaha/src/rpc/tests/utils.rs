@@ -8,7 +8,7 @@ pub(super) mod test_utils {
     use log::info;
     use sak_p2p_id::Identity;
     use sak_p2p_ptable::PeerTable;
-    use sak_types::{BlockCandidate, Tx};
+    use sak_types::{BlockCandidate, Tx, TxCandidate};
     use std::net::SocketAddr;
     use std::sync::Arc;
 
@@ -206,8 +206,8 @@ pub(super) mod test_utils {
         blockchain
     }
 
-    pub(crate) fn make_dummy_tx() -> Tx {
-        Tx::new(
+    pub(crate) fn make_dummy_tx() -> TxCandidate {
+        TxCandidate::new(
             String::from("1346546123"),
             vec![
                 63, 64, 65, 66, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -216,7 +216,6 @@ pub(super) mod test_utils {
             String::from("0x111"),
             b"0x1111".to_vec(),
             Some(String::from("0x1111")),
-            0,
         )
     }
 
