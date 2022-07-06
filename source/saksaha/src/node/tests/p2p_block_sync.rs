@@ -230,7 +230,7 @@ async fn test_block_sync_true() {
 
         let local_node_2 = local_node_2.clone();
         tokio::spawn(async move {
-            tokio::join!(p2p_host_2.run(), local_node_2.run(), machine_2.run(),);
+            tokio::join!(p2p_host_2.run(), local_node_2.run());
         });
     }
 
@@ -259,6 +259,7 @@ async fn test_block_sync_true() {
         tokio::time::sleep(Duration::from_secs(2)).await;
 
         assert_eq!(tx_pool_2_contains_tx1, true);
+        println!("test 1 passed");
     }
 
     {
@@ -280,6 +281,7 @@ async fn test_block_sync_true() {
             .unwrap();
 
         assert_eq!(1, last_height_1);
+        println!("test 2 passed");
 
         tokio::time::sleep(Duration::from_secs(4)).await;
 
@@ -292,9 +294,10 @@ async fn test_block_sync_true() {
             .unwrap()
             .unwrap();
 
-        tokio::time::sleep(Duration::from_secs(4)).await;
+        tokio::time::sleep(Duration::from_secs(2)).await;
 
         assert_eq!(last_height_1, last_height_2);
+        println!("test 3 passed");
     }
 
     {
