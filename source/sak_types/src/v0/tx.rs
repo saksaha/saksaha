@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use wasmtime::{Config, Engine, Linker, Module, Store, TypedFunc};
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
 pub struct Tx {

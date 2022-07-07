@@ -209,6 +209,9 @@ impl DistLedger {
                 }
                 TxType::Plain => (),
             };
+
+            // get rt
+            // let rt =
         }
 
         if let Err(err) = self.sync_pool.remove_tcs(&tcs).await {
@@ -296,4 +299,44 @@ impl DistLedger {
 
     //     merkle_root.root().hash.to_string()
     // }
+
+    fn get_auth_paths(&self, idx: u64, height: u64) -> Vec<u64> {
+        let mut auth_path = vec![];
+
+        let mut curr_idx = idx;
+
+        for h in 0..height {
+            let sibling_idx = get_sibling_idx(curr_idx);
+
+            let v = self.get_latest_block_height()
+            let sibling = self
+                .nodes
+                .get(h as usize)
+                .unwrap()
+                .get(sibling_idx as usize)
+                .unwrap();
+
+            let direction = if sibling_idx % 2 == 0 { true } else { false };
+
+            let p = Path {
+                direction,
+                hash: sibling.hash.clone(),
+            };
+
+            auth_path.push(p);
+
+            let parent_idx = get_parent_idx(curr_idx);
+            curr_idx = parent_idx;
+        }
+
+        auth_path
+    }
+}
+
+fn get_sibling_idx(idx: u64) -> u64 {
+    if idx % 2 == 0 {
+        idx + 1
+    } else {
+        idx - 1
+    }
 }

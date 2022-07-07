@@ -142,6 +142,17 @@ impl LedgerDB {
 
         Ok(height)
     }
+
+    pub(crate) async fn get_cm_by_height(
+        &self,
+        height: u64,
+    ) -> Result<Option<u128>, String> {
+        let db = &self.kv_db.db_instance;
+
+        let height = self.schema.get_cm(db, height)?;
+
+        Ok(height)
+    }
 }
 
 pub mod testing {

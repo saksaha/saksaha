@@ -93,18 +93,18 @@ impl BlockSynMsg {
         //         txs.push(tx);
         //     }
 
-            // blocks.push(Block {
-            //     validator_sig,
-            //     transactions: txs,
-            //     witness_sigs,
-            //     created_at,
-            //     block_height,
-            //     merkle_root,
-            // });
+        // blocks.push(Block {
+        //     validator_sig,
+        //     transactions: txs,
+        //     witness_sigs,
+        //     created_at,
+        //     block_height,
+        //     merkle_root,
+        // });
         // }
 
-        let m = BlockSynMsg { 
-            // blocks 
+        let m = BlockSynMsg {
+            // blocks
         };
 
         Ok(m)
