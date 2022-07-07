@@ -1,13 +1,12 @@
-use crate::{
-    get_mimc_constants, mimc, mimc_cs, CoinCircuit, CoinProof, Hasher,
-    MerkleTree, CM_TREE_DEPTH,
-};
+use crate::{get_mimc_constants, mimc, mimc_cs, Hasher, MerkleTree};
 use bellman::gadgets::boolean::AllocatedBit;
-use bellman::groth16::{self, Proof};
+use bellman::groth16::{self, Parameters, Proof};
 use bellman::{Circuit, ConstraintSystem, SynthesisError};
 use bls12_381::{Bls12, Scalar};
 use rand::rngs::OsRng;
 use rand::RngCore;
+use std::fs::File;
+use std::io::Write;
 
 const TEST_TREE_DEPTH: usize = 3;
 
@@ -85,7 +84,7 @@ impl Circuit<Scalar> for TestCoinCircuit {
         //     || leaf.ok_or(SynthesisError::AssignmentMissing),
         // )?;
 
-        println!("final circuit public input {:?}", cur);
+        println!("Final value found in the circuit {:?}", cur);
 
         Ok(())
     }
@@ -107,7 +106,7 @@ fn make_test_context() -> (MerkleTree, Scalar, Scalar) {
     // let pk = MiMC::mimc_single_arg(&sk);
 
     let pk = hasher.prf(Scalar::from(0), sk);
-    println!("[-] sk: {}, \n[-] pk: {}", sk, pk);
+    // println!("[-] sk: {}, \n[-] pk: {}\n", sk, pk);
 
     // let s = 5;
     // let r = 6;
@@ -135,29 +134,60 @@ fn make_test_context() -> (MerkleTree, Scalar, Scalar) {
     )
 }
 
-fn make_proof(mt: MerkleTree) -> Proof<Bls12> {
+pub fn test_get_params(constants: &[Scalar]) -> Parameters<Bls12> {
+    let is_file_exist = std::path::Path::new("mimc_params").exists();
+    let mut v = vec![];
+    if is_file_exist {
+        // read
+        v = std::fs::read("mimc_params").unwrap();
+    } else {
+        // generate and write
+        let params = {
+            let c = TestCoinCircuit {
+                leaf: None,
+                auth_path: [None; TEST_TREE_DEPTH],
+                constants: constants.to_vec(),
+            };
+
+            groth16::generate_random_parameters::<Bls12, _, _>(c, &mut OsRng)
+                .unwrap()
+        };
+        // write param to file
+        let mut file = File::create("mimc_params").unwrap();
+
+        params.write(&mut v).unwrap();
+        // write origin buf
+        file.write_all(&v);
+    }
+
+    let de_params = Parameters::<Bls12>::read(&v[..], false).unwrap();
+    de_params
+}
+
+fn generate_proof(mt: MerkleTree) -> Proof<Bls12> {
+    println!("[***] generate_proof()");
     let proof = {
         let constants = get_mimc_constants();
-        let de_params = CoinProof::get_params(&constants);
+        let de_params = test_get_params(&constants);
 
         // `rt` check
         let auth_path = {
-            let tree = mt;
+            let tree = &mt;
             let root = tree.get_root().hash;
 
-            // println!("root: {:?}", root);
+            println!("root: {:?}", root);
 
             let idx = 0;
             let auth_paths = tree.generate_auth_paths(idx);
 
-            // for (idx, p) in auth_paths.iter().enumerate() {
-            //     println!("auth path [{}] - {:?}", idx, p);
-            // }
+            for (idx, p) in auth_paths.iter().enumerate() {
+                println!("auth path [{}] - {:?}", idx, p);
+            }
 
             let leaf =
                 tree.nodes.get(0).unwrap().get(idx as usize).unwrap().hash;
 
-            // println!("leaf: {:?}", leaf);
+            println!("leaf: {:?}", leaf);
 
             // convert auth_paths => [auth_path]
             let mut auth_path: [Option<(Scalar, bool)>; TEST_TREE_DEPTH] =
@@ -172,8 +202,10 @@ fn make_proof(mt: MerkleTree) -> Proof<Bls12> {
             auth_path
         };
 
+        let leaf = Some(mt.nodes.get(0).unwrap().get(0).unwrap().hash);
+
         let c = TestCoinCircuit {
-            leaf: None,
+            leaf,
             auth_path,
             constants,
         };
@@ -184,28 +216,28 @@ fn make_proof(mt: MerkleTree) -> Proof<Bls12> {
         proof
     };
 
-    println!("[+] proof: {:?}", proof);
+    // println!("[+] proof: {:?}", proof);
 
     proof
 }
 
-fn verify_proof(proof: Proof<Bls12>) -> bool {
-    // let de_params = CoinProof::get_params(&constants);
-    // // Prepare the verification key (for proof verification).
-    // let pvk = groth16::prepare_verifying_key(&de_params.vk);
+fn verify_proof(proof: Proof<Bls12>, public_inputs: &[Scalar]) -> bool {
+    let constants = get_mimc_constants();
+    let de_params = test_get_params(&constants);
+    // Prepare the verification key (for proof verification).
+    let pvk = groth16::prepare_verifying_key(&de_params.vk);
 
-    // match groth16::verify_proof(&pvk, &proof, &[root]) {
-    //     Ok(_) => {
-    //         println!("verify success!");
-    //         true
-    //     }
-    //     Err(err) => {
-    //         println!("verify_proof(), err: {}", err);
-    //         false
-    //     }
-    // }
-
-    true
+    println!("[verify_proof] rt: {:?}", public_inputs[0]);
+    match groth16::verify_proof(&pvk, &proof, public_inputs) {
+        Ok(_) => {
+            println!("verify success!");
+            true
+        }
+        Err(err) => {
+            println!("verify_proof(), err: {}", err);
+            false
+        }
+    }
 }
 
 #[tokio::test(flavor = "multi_thread")]
@@ -213,18 +245,19 @@ pub async fn test_coin_ownership_default() {
     // sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
     env_logger::init();
 
-    println!("[!] test coin ownership start!!!!!!!!!!!!!!!!!!!!!!!!!");
+    println!("[!] test coin ownership start!!!!!!!!!!!!!!!!!!!!!!!!!\n");
 
     let (mt, sk, pk) = make_test_context();
-    println!("[+] Test context has been constructed");
+    let public_inputs: Vec<Scalar> = vec![mt.get_root().hash];
 
-    let proof = make_proof(mt);
-    println!("[+] Test Proof has been calculated");
+    println!("[+] Test context has been constructed\n");
 
-    let result = verify_proof(proof);
-    println!("[+] Test Verification has been done");
+    let proof = generate_proof(mt);
+    println!("[+] Test Proof has been calculated\n");
 
-    println!("[!] test coin ownership ends...");
+    let result = verify_proof(proof, &public_inputs);
+    println!("[+] Test Verification has been done\n");
 
-    assert!(true);
+    assert!(result);
+    println!("[!] verify success!");
 }
