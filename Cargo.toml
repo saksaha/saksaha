@@ -24,6 +24,7 @@ members = [
 
   # system contracts (each)
   "source/sak_ctrt_validator",
+  "source/sak_ctr_messenger",
 
   # internals
   "internals/ci",
