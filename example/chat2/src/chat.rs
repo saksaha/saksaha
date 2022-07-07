@@ -2,6 +2,8 @@ use bytes::BytesMut;
 use rsa::{RsaPrivateKey, RsaPublicKey};
 use sak_proofs::CoinProof;
 use sak_proofs::MiMC;
+// use sak_proofs::constants::get_round_constants;
+// use sak_proofs::{get_merkle_tree, verify_proof};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
 
@@ -27,6 +29,7 @@ impl Chat {
         println!("Shared Private key: {:?}", self.priv_key);
         println!("Channel id: {:?}", self.channel);
 
+        // let tree = get_merkle_tree(&get_round_constants());
         let tree = CoinProof::get_merkle_tree(&MiMC::get_mimc_constants());
         println!("[ledger] Transactions up to so far: {:?}\n", tree.data);
 

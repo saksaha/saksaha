@@ -37,6 +37,7 @@ mod test {
                     String::from("1"),
                     b"1".to_vec(),
                     Some(String::from("11")),
+                    0,
                 ),
                 Tx::new(
                     String::from("2"),
@@ -44,11 +45,13 @@ mod test {
                     String::from("2"),
                     b"2".to_vec(),
                     Some(String::from("22")),
+                    1,
                 ),
             ],
             witness_sigs: vec![String::from("1"), String::from("2")],
             created_at: String::from("2022061515340000"),
-            height: 0,
+            block_height: 0,
+            merkle_root: String::from("2022061515340000"),
         };
 
         genesis_block
@@ -62,7 +65,7 @@ mod test {
         let dist_ledger_args = DistLedgerArgs {
             app_prefix: String::from("test"),
             tx_sync_interval: None,
-            genesis_block: None,
+            genesis_block: Some(make_dummy_genesis_block()),
             consensus: pos,
             block_sync_interval: None,
         };
@@ -82,6 +85,7 @@ mod test {
                 String::from("0x111"),
                 b"0x1111".to_vec(),
                 Some(String::from("one")),
+                0,
             ),
             Tx::new(
                 String::from("1346546124"),
@@ -89,6 +93,7 @@ mod test {
                 String::from("0x222"),
                 b"0x2222".to_vec(),
                 Some(String::from("two")),
+                1,
             ),
             Tx::new(
                 String::from("1346546125"),
@@ -96,6 +101,7 @@ mod test {
                 String::from("0x333"),
                 b"0x3333".to_vec(),
                 Some(String::from("three")),
+                2,
             ),
             Tx::new(
                 String::from("1346546126"),
@@ -103,6 +109,7 @@ mod test {
                 String::from("0x444"),
                 b"0x4444".to_vec(),
                 Some(String::from("four")),
+                3,
             ),
         ]
     }
@@ -298,6 +305,7 @@ mod test {
             String::from("0x111"),
             b"0x1111".to_vec(),
             Some(String::from("test_wasm")),
+            0,
         );
 
         let sync_pool = SyncPool::new();
@@ -386,10 +394,12 @@ mod test {
                     String::from("1"),
                     b"1".to_vec(),
                     Some(String::from("11")),
+                    i.into(),
                 )],
                 witness_sigs: vec![String::from("1"), String::from("2")],
                 created_at: String::from("2022061515340000"),
-                height: i as u128,
+                block_height: i as u128,
+                merkle_root: String::from("2022061515340000"),
             };
 
             match blockchain.write_block(Some(block)).await {

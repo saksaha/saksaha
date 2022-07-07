@@ -42,7 +42,16 @@ impl TxSynMsg {
                     std::str::from_utf8(p.as_ref())?.into()
                 };
 
-                Tx::new(created_at, data, author_sig, pi, Some(contract_addr))
+                let tx_height = parse.next_int()? as u128;
+
+                Tx::new(
+                    created_at,
+                    data,
+                    author_sig,
+                    pi,
+                    Some(contract_addr),
+                    tx_height,
+                )
             };
 
             txs.push(tx);
@@ -87,6 +96,7 @@ impl TxSynMsg {
             frame.push_bulk(Bytes::from(pi_bytes));
             frame.push_bulk(Bytes::from(author_sig_bytes));
             frame.push_bulk(Bytes::from(tx.get_ctr_addr().clone()));
+            frame.push_int(*tx.get_tx_height() as u128);
         }
 
         frame
