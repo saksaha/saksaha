@@ -14,6 +14,10 @@ impl MiMC {
         constants
     }
 
+    pub fn mimc_single_arg<S: PrimeField>(xl: S, constants: &[S]) -> S {
+        MiMC::mimc(xl, S::zero(), constants)
+    }
+
     pub fn mimc<S: PrimeField>(mut xl: S, mut xr: S, constants: &[S]) -> S {
         for c in constants {
             let mut tmp1 = xl;

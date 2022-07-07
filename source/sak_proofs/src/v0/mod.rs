@@ -1,3 +1,4 @@
+mod blake2s;
 mod merkle;
 mod mimc;
 mod proofs;

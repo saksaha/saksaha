@@ -1,14 +1,30 @@
+use crate::v0::blake2s::blake2s_fn;
 use crate::{CoinCircuit, CoinProof, MerkleTree, MiMC, CM_TREE_DEPTH};
 use bellman::groth16;
-use blake2s_simd::blake2s as blake2s_fn;
 use bls12_381::Scalar;
 use rand::rngs::OsRng;
 use rand::RngCore;
 
 fn make_test_context() -> (MerkleTree) {
-    let pk = 0;
+    // mint
+    let v = 100; // 100 sak
 
-    let sk = 0;
+    let mut key = [0u8; 16];
+    OsRng.fill_bytes(&mut key);
+    let random_u64 = OsRng.next_u64();
+
+    let sk = random_u64.to_be_bytes();
+    println!("random_u64: {}", random_u64);
+
+    let pk = blake2s_fn(&sk);
+    println!("sk: {:?}, pk: {:?}", sk, pk);
+
+    let s = 5;
+    let r = 6;
+    let rho = 7;
+
+    // let k = MiMC::mimc(Scalar::from())
+    // MiMC::mimc()
 
     let constants = MiMC::get_mimc_constants();
 
@@ -29,20 +45,6 @@ fn make_test_context() -> (MerkleTree) {
 pub async fn test_coin_ownership_default() {
     sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
     env_logger::init();
-
-    println!("test start!!!!!!!!!!!!!");
-
-    let mut key = [0u8; 16];
-    OsRng.fill_bytes(&mut key);
-    let random_u64 = OsRng.next_u64();
-
-    let sk = random_u64.to_be_bytes();
-
-    println!("random_u64: {}", random_u64);
-
-    let pk = blake2s_fn(&sk);
-
-    println!("sk: {:?}, pk: {:?}", sk, pk);
 
     let proof = {
         let constants = MiMC::get_mimc_constants();
