@@ -13,6 +13,7 @@ const TEST_TREE_DEPTH: usize = 3;
 struct TestCoinCircuit {
     pub leaf: Option<Scalar>,
     pub auth_path: [Option<(Scalar, bool)>; TEST_TREE_DEPTH],
+    pub sk: Option<Scalar>,
     pub constants: Vec<Scalar>,
 }
 
@@ -21,6 +22,8 @@ impl Circuit<Scalar> for TestCoinCircuit {
         self,
         cs: &mut CS,
     ) -> Result<(), SynthesisError> {
+        let hasher = Hasher::new();
+
         let mut cur = match self.leaf {
             Some(a) => Some(a),
             None => Some(Scalar::default()),
@@ -74,17 +77,21 @@ impl Circuit<Scalar> for TestCoinCircuit {
             || cur.ok_or(SynthesisError::AssignmentMissing),
         )?;
 
-        // let leaf = match self.leaf {
-        //     Some(a) => Some(a),
-        //     None => Some(S::default()),
-        // };
+        let sk = match self.sk {
+            Some(a) => Some(a),
+            None => Some(Scalar::default()),
+        };
 
-        // cs.alloc_input(
-        //     || "leaft",
-        //     || leaf.ok_or(SynthesisError::AssignmentMissing),
-        // )?;
+        let pk: Option<Scalar> = hasher.prf_cs(cs, Some(Scalar::from(0)), sk);
 
-        println!("Final value found in the circuit {:?}", cur);
+        cs.alloc_input(
+            || "pk",
+            || pk.ok_or(SynthesisError::AssignmentMissing),
+        )?;
+
+        println!("[+] test coin circuit final values:");
+        println!("<1> rt: {:?}", cur);
+        println!("<2> pk: {:?}", pk);
 
         Ok(())
     }
@@ -106,7 +113,7 @@ fn make_test_context() -> (MerkleTree, Scalar, Scalar) {
     // let pk = MiMC::mimc_single_arg(&sk);
 
     let pk = hasher.prf(Scalar::from(0), sk);
-    // println!("[-] sk: {}, \n[-] pk: {}\n", sk, pk);
+    println!("[-] sk: {}, \n[-] pk: {}\n", sk, pk);
 
     // let s = 5;
     // let r = 6;
@@ -146,6 +153,7 @@ pub fn test_get_params(constants: &[Scalar]) -> Parameters<Bls12> {
             let c = TestCoinCircuit {
                 leaf: None,
                 auth_path: [None; TEST_TREE_DEPTH],
+                sk: None,
                 constants: constants.to_vec(),
             };
 
@@ -164,8 +172,7 @@ pub fn test_get_params(constants: &[Scalar]) -> Parameters<Bls12> {
     de_params
 }
 
-fn generate_proof(mt: MerkleTree) -> Proof<Bls12> {
-    println!("[***] generate_proof()");
+fn generate_proof(mt: MerkleTree, sk: Scalar) -> Proof<Bls12> {
     let proof = {
         let constants = get_mimc_constants();
         let de_params = test_get_params(&constants);
@@ -203,10 +210,12 @@ fn generate_proof(mt: MerkleTree) -> Proof<Bls12> {
         };
 
         let leaf = Some(mt.nodes.get(0).unwrap().get(0).unwrap().hash);
+        let sk = Some(sk);
 
         let c = TestCoinCircuit {
             leaf,
             auth_path,
+            sk,
             constants,
         };
 
@@ -248,11 +257,11 @@ pub async fn test_coin_ownership_default() {
     println!("[!] test coin ownership start!!!!!!!!!!!!!!!!!!!!!!!!!\n");
 
     let (mt, sk, pk) = make_test_context();
-    let public_inputs: Vec<Scalar> = vec![mt.get_root().hash];
+    let public_inputs: Vec<Scalar> = vec![mt.get_root().hash, pk];
 
     println!("[+] Test context has been constructed\n");
 
-    let proof = generate_proof(mt);
+    let proof = generate_proof(mt, sk);
     println!("[+] Test Proof has been calculated\n");
 
     let result = verify_proof(proof, &public_inputs);
