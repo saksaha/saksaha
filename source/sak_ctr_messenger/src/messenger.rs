@@ -1,4 +1,7 @@
-use sak_contract_std::{contract_bootstrap, define_execute, Request, Storage};
+use sak_contract_std::{
+    contract_bootstrap, define_execute, define_init, define_query, Request,
+    Storage,
+};
 use std::collections::HashMap;
 
 type ExecuteArgs = HashMap<String, String>;
@@ -11,8 +14,8 @@ const STORAGE_CAP: usize = 100;
 
 contract_bootstrap!();
 
-#[no_mangle]
-pub unsafe extern "C" fn init() -> (*mut u8, i32) {
+define_init!();
+pub fn init2() -> Storage {
     let mut storage_init = Storage::with_capacity(STORAGE_CAP);
 
     let dummy_chat = match serde_json::to_string(&vec![
@@ -25,73 +28,11 @@ pub unsafe extern "C" fn init() -> (*mut u8, i32) {
 
     storage_init.insert(String::from(DUMMY_CHANNEL_ID_1), dummy_chat);
 
-    let storage_serialized =
-        serde_json::to_value(storage_init).unwrap().to_string();
-    let mut storage_bytes_vec = storage_serialized.as_bytes().to_owned();
-
-    let storage_ptr = storage_bytes_vec.as_mut_ptr();
-    let storage_len = storage_bytes_vec.len();
-
-    std::mem::forget(storage_bytes_vec);
-
-    (storage_ptr, storage_len as i32)
+    return storage_init;
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn query(
-    storage_ptr: *mut u8,
-    storage_len: usize,
-    request_ptr: *mut u8,
-    request_len: usize,
-) -> (*mut u8, i32) {
-    let storage_bytes_vec = Vec::from_raw_parts(
-        storage_ptr, //
-        storage_len,
-        storage_len,
-    );
-
-    let storage_serialized = match String::from_utf8(storage_bytes_vec) {
-        Ok(s) => s,
-        Err(err) => {
-            panic!("Cannot serialize storage, err: {}", err);
-        }
-    };
-
-    let storage: Storage =
-        match serde_json::from_str(&storage_serialized.as_str()) {
-            Ok(s) => s,
-            Err(err) => {
-                panic!(
-                    "Cannot Deserialize `HashMap` from storage, err: {}",
-                    err
-                );
-            }
-        };
-
-    let request_bytes_vec = Vec::from_raw_parts(
-        request_ptr, //
-        request_len,
-        request_len,
-    );
-
-    let request_serialized = match String::from_utf8(request_bytes_vec) {
-        Ok(s) => s,
-        Err(err) => {
-            panic!("Cannot serialize storage, err: {}", err);
-        }
-    };
-
-    let request: Request =
-        match serde_json::from_str(&request_serialized.as_str()) {
-            Ok(s) => s,
-            Err(err) => {
-                panic!(
-                    "Cannot Deserialize `Storage` from request, err: {}",
-                    err
-                );
-            }
-        };
-
+define_query!();
+pub fn query2(request: Request, storage: Storage) -> String {
     match request.req_type.as_ref() {
         "get_msgs" => {
             return handle_get_msgs(storage, request.arg);
@@ -103,7 +44,6 @@ pub unsafe extern "C" fn query(
 }
 
 define_execute!();
-
 pub fn execute2(storage: &mut Storage, request: Request) {
     match request.req_type.as_ref() {
         "open_channel" => {
@@ -118,75 +58,7 @@ pub fn execute2(storage: &mut Storage, request: Request) {
     };
 }
 
-// #[no_mangle]
-// pub unsafe extern "C" fn execute(
-//     storage_ptr: *mut u8,
-//     storage_len: usize,
-//     request_ptr: *mut u8,
-//     request_len: usize,
-// ) -> (*mut u8, i32) {
-//     let storage_bytes_vec = Vec::from_raw_parts(
-//         storage_ptr, //
-//         storage_len,
-//         storage_len,
-//     );
-
-//     let storage_serialized = match String::from_utf8(storage_bytes_vec) {
-//         Ok(s) => s,
-//         Err(err) => {
-//             panic!("Cannot serialize storage, err: {}", err);
-//         }
-//     };
-
-//     let storage: Storage =
-//         match serde_json::from_str(&storage_serialized.as_str()) {
-//             Ok(s) => s,
-//             Err(err) => {
-//                 panic!(
-//                     "Cannot Deserialize `HashMap` from storage, err: {}",
-//                     err
-//                 );
-//             }
-//         };
-
-//     let request_bytes_vec = Vec::from_raw_parts(
-//         request_ptr, //
-//         request_len,
-//         request_len,
-//     );
-
-//     let request_serialized = match String::from_utf8(request_bytes_vec) {
-//         Ok(s) => s,
-//         Err(err) => {
-//             panic!("Cannot serialize storage, err: {}", err);
-//         }
-//     };
-
-//     let request: Request =
-//         match serde_json::from_str(&request_serialized.as_str()) {
-//             Ok(s) => s,
-//             Err(err) => {
-//                 panic!(
-//                     "Cannot Deserialize `Storage` from request, err: {}",
-//                     err
-//                 );
-//             }
-//         };
-
-//     match request.req_type.as_ref() {
-//         "open_channel" => {
-//             return handle_open_channel(storage, request.arg);
-//         }
-//         "send_msg" => {
-//             return handle_send_msg(storage, request.arg);
-//         }
-//         _ => {
-//             panic!("Wrong request type has been found");
-//         }
-//     };
-// }
-
-fn handle_get_msgs(storage: Storage, args: ExecuteArgs) -> (*mut u8, i32) {
+fn handle_get_msgs(storage: Storage, args: ExecuteArgs) -> String {
     let channel_id = match args.get(ARG_CHANNEL_ID) {
         Some(v) => v,
         None => {
@@ -201,13 +73,13 @@ fn handle_get_msgs(storage: Storage, args: ExecuteArgs) -> (*mut u8, i32) {
         }
     };
 
-    let mut msgs = msgs_serialized.clone();
-    let msgs_ptr = msgs.as_mut_ptr();
-    let msgs_len = msgs.len();
+    msgs_serialized.clone()
+    // let msgs_ptr = msgs.as_mut_ptr();
+    // let msgs_len = msgs.len();
 
-    std::mem::forget(msgs);
+    // std::mem::forget(msgs);
 
-    (msgs_ptr, msgs_len as i32)
+    // (msgs_ptr, msgs_len as i32)
 }
 
 fn handle_open_channel(storage: &mut Storage, args: ExecuteArgs) {

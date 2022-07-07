@@ -144,7 +144,7 @@ fn write_out_wasm_returning_multi_value(
         p.join(format!("{}.multivalue.wasm", stem))
     };
 
-    let a = output_file_path.to_str().unwrap().to_owned();
+    // let a = output_file_path.to_str().unwrap().to_owned();
 
     // println!("[postprocess] output_file_path: {:?}", output_file_path);
 
