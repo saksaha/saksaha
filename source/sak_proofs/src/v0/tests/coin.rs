@@ -14,90 +14,22 @@ struct TestCoinCircuit {
     pub leaf: Option<Scalar>,
     pub auth_path: [Option<(Scalar, bool)>; TEST_TREE_DEPTH],
     pub sk: Option<Scalar>,
+    pub rho: Option<Scalar>,
+    pub r: Option<Scalar>,
+    pub s: Option<Scalar>,
     pub constants: Vec<Scalar>,
 }
 
-impl Circuit<Scalar> for TestCoinCircuit {
-    fn synthesize<CS: ConstraintSystem<Scalar>>(
-        self,
-        cs: &mut CS,
-    ) -> Result<(), SynthesisError> {
-        let hasher = Hasher::new();
-
-        let mut cur = match self.leaf {
-            Some(a) => Some(a),
-            None => Some(Scalar::default()),
-        };
-
-        {
-            for (idx, layer) in self.auth_path.iter().enumerate() {
-                println!("idx: {}, layer: {:?}", idx, layer);
-
-                let cs = &mut cs.namespace(|| format!("layer {}", idx));
-
-                let cur_is_right = AllocatedBit::alloc(
-                    cs.namespace(|| "cur is right"),
-                    layer.as_ref().map(|&(_, d)| d),
-                )
-                .unwrap();
-
-                let xl_value;
-                let xr_value;
-
-                let is_right = cur_is_right.get_value().and_then(|v| {
-                    if v {
-                        Some(true)
-                    } else {
-                        Some(false)
-                    }
-                });
-
-                let temp = match *layer {
-                    Some(a) => a,
-                    None => (Scalar::default(), false),
-                };
-
-                if match is_right {
-                    Some(a) => a,
-                    None => false,
-                } {
-                    xl_value = Some(temp.0);
-                    xr_value = cur;
-                } else {
-                    xl_value = cur;
-                    xr_value = Some(temp.0);
-                }
-
-                cur = mimc_cs(cs, xl_value, xr_value, &self.constants);
-            }
-        };
-
-        cs.alloc_input(
-            || "image",
-            || cur.ok_or(SynthesisError::AssignmentMissing),
-        )?;
-
-        let sk = match self.sk {
-            Some(a) => Some(a),
-            None => Some(Scalar::default()),
-        };
-
-        let pk: Option<Scalar> = hasher.prf_cs(cs, Some(Scalar::from(0)), sk);
-
-        cs.alloc_input(
-            || "pk",
-            || pk.ok_or(SynthesisError::AssignmentMissing),
-        )?;
-
-        println!("[+] test coin circuit final values:");
-        println!("<1> rt: {:?}", cur);
-        println!("<2> pk: {:?}", pk);
-
-        Ok(())
-    }
-}
-
-fn make_test_context() -> (MerkleTree, Scalar, Scalar) {
+fn make_test_context() -> (
+    MerkleTree, // mt,
+    Scalar,     // sk,
+    Scalar,     // r,
+    Scalar,     // s,
+    Scalar,     // rho,
+    Scalar,     // pk,
+    Scalar,     // sn,
+    Scalar,     // k,
+) {
     // mint
     let v = 100; // 100 sak
 
@@ -108,16 +40,18 @@ fn make_test_context() -> (MerkleTree, Scalar, Scalar) {
     let hasher = Hasher::new();
 
     let sk = Scalar::from(random_u64);
-    let sk_bytes = random_u64.to_be_bytes();
+    // let sk_bytes = random_u64.to_be_bytes();
 
     // let pk = MiMC::mimc_single_arg(&sk);
-
     let pk = hasher.prf(Scalar::from(0), sk);
-    println!("[-] sk: {}, \n[-] pk: {}\n", sk, pk);
 
-    // let s = 5;
-    // let r = 6;
-    // let rho = 7;
+    let s = Scalar::from(5);
+    let r = Scalar::from(6);
+    let rho = Scalar::from(7);
+
+    let sn = hasher.prf(sk, rho);
+
+    let k = hasher.comm(r, hasher.prf(pk, rho));
 
     // // let k = MiMC::mimc(Scalar::from())
     // // MiMC::mimc()
@@ -135,13 +69,18 @@ fn make_test_context() -> (MerkleTree, Scalar, Scalar) {
     let mt = MerkleTree::new(data, 3, &constants, &hasher);
 
     (
-        mt, // [gen_proof] : merkle_tree
-        sk, // [gen_proof] : secret key
-        pk, // [ver_proof] : public key
+        mt,  // [gen_proof] : merkle_tree
+        sk,  // [gen_proof] : secret key
+        r,   // [gen_proof] : random sample value `r`
+        s,   // [gen_proof] : random sample value `s`
+        rho, // [gen_proof] : rho value
+        pk,  // [ver_proof] : public key
+        sn,  // [ver_proof] : serial number
+        k,   // [ver_proof] : middle value (commitment) `k`
     )
 }
 
-pub fn test_get_params(constants: &[Scalar]) -> Parameters<Bls12> {
+pub fn get_params_test(constants: &[Scalar]) -> Parameters<Bls12> {
     let is_file_exist = std::path::Path::new("mimc_params").exists();
     let mut v = vec![];
     if is_file_exist {
@@ -154,6 +93,9 @@ pub fn test_get_params(constants: &[Scalar]) -> Parameters<Bls12> {
                 leaf: None,
                 auth_path: [None; TEST_TREE_DEPTH],
                 sk: None,
+                rho: None,
+                r: None,
+                s: None,
                 constants: constants.to_vec(),
             };
 
@@ -172,10 +114,16 @@ pub fn test_get_params(constants: &[Scalar]) -> Parameters<Bls12> {
     de_params
 }
 
-fn generate_proof(mt: MerkleTree, sk: Scalar) -> Proof<Bls12> {
+fn generate_proof_test(
+    mt: MerkleTree,
+    sk: Scalar,
+    rho: Scalar,
+    r: Scalar,
+    s: Scalar,
+) -> Proof<Bls12> {
     let proof = {
         let constants = get_mimc_constants();
-        let de_params = test_get_params(&constants);
+        let de_params = get_params_test(&constants);
 
         // `rt` check
         let auth_path = {
@@ -211,11 +159,17 @@ fn generate_proof(mt: MerkleTree, sk: Scalar) -> Proof<Bls12> {
 
         let leaf = Some(mt.nodes.get(0).unwrap().get(0).unwrap().hash);
         let sk = Some(sk);
+        let rho = Some(rho);
+        let r = Some(r);
+        let s = Some(s);
 
         let c = TestCoinCircuit {
             leaf,
             auth_path,
             sk,
+            rho,
+            r,
+            s,
             constants,
         };
 
@@ -232,11 +186,15 @@ fn generate_proof(mt: MerkleTree, sk: Scalar) -> Proof<Bls12> {
 
 fn verify_proof(proof: Proof<Bls12>, public_inputs: &[Scalar]) -> bool {
     let constants = get_mimc_constants();
-    let de_params = test_get_params(&constants);
+    let de_params = get_params_test(&constants);
     // Prepare the verification key (for proof verification).
     let pvk = groth16::prepare_verifying_key(&de_params.vk);
 
-    println!("[verify_proof] rt: {:?}", public_inputs[0]);
+    println!("[public_inputs] rt: {:?}", public_inputs[0]);
+    println!("[public_inputs] pk: {:?}", public_inputs[1]);
+    println!("[public_inputs] sn: {:?}", public_inputs[2]);
+    println!("[public_inputs] k:  {:?}", public_inputs[3]);
+
     match groth16::verify_proof(&pvk, &proof, public_inputs) {
         Ok(_) => {
             println!("verify success!");
@@ -249,6 +207,118 @@ fn verify_proof(proof: Proof<Bls12>, public_inputs: &[Scalar]) -> bool {
     }
 }
 
+impl Circuit<Scalar> for TestCoinCircuit {
+    fn synthesize<CS: ConstraintSystem<Scalar>>(
+        self,
+        cs: &mut CS,
+    ) -> Result<(), SynthesisError> {
+        let hasher = Hasher::new();
+
+        let mut rt = match self.leaf {
+            Some(a) => Some(a),
+            None => Some(Scalar::default()),
+        };
+
+        let sk = match self.sk {
+            Some(a) => Some(a),
+            None => Some(Scalar::default()),
+        };
+
+        let rho = match self.rho {
+            Some(a) => Some(a),
+            None => Some(Scalar::default()),
+        };
+
+        let r = match self.r {
+            Some(a) => Some(a),
+            None => Some(Scalar::default()),
+        };
+
+        // rt
+        {
+            for (idx, layer) in self.auth_path.iter().enumerate() {
+                println!("idx: {}, layer: {:?}", idx, layer);
+
+                let cs = &mut cs.namespace(|| format!("layer {}", idx));
+
+                let cur_is_right = AllocatedBit::alloc(
+                    cs.namespace(|| "cur is right"),
+                    layer.as_ref().map(|&(_, d)| d),
+                )
+                .unwrap();
+
+                let xl_value;
+                let xr_value;
+
+                let is_right = cur_is_right.get_value().and_then(|v| {
+                    if v {
+                        Some(true)
+                    } else {
+                        Some(false)
+                    }
+                });
+
+                let temp = match *layer {
+                    Some(a) => a,
+                    None => (Scalar::default(), false),
+                };
+
+                if match is_right {
+                    Some(a) => a,
+                    None => false,
+                } {
+                    xl_value = Some(temp.0);
+                    xr_value = rt;
+                } else {
+                    xl_value = rt;
+                    xr_value = Some(temp.0);
+                }
+
+                rt = mimc_cs(cs, xl_value, xr_value, &self.constants);
+            }
+        };
+
+        // pk == PRF(a_sk, 0)
+        let pk: Option<Scalar> = hasher.prf_cs(cs, Some(Scalar::from(0)), sk);
+
+        // sn == PRF(a_sk, rho)
+        let sn: Option<Scalar> = hasher.prf_cs(cs, sk, rho);
+
+        // k == COMM(r, PRF(a_pk, rho))
+        let k_tmp: Option<Scalar> = hasher.prf_cs(cs, pk, rho);
+        let k: Option<Scalar> = hasher.comm_cs(cs, r, k_tmp);
+
+        cs.alloc_input(
+            || "rt",
+            || rt.ok_or(SynthesisError::AssignmentMissing),
+        )?;
+
+        cs.alloc_input(
+            || "pk",
+            || pk.ok_or(SynthesisError::AssignmentMissing),
+        )?;
+
+        cs.alloc_input(
+            || "sn",
+            || sn.ok_or(SynthesisError::AssignmentMissing),
+        )?;
+
+        cs.alloc_input(
+            //
+            || "k",
+            || k.ok_or(SynthesisError::AssignmentMissing),
+        )?;
+
+        println!("[+] Final values from test circuit :");
+        println!("<1> rt: {:?}", rt);
+        println!("<2> pk: {:?}", pk);
+        println!("<3> sn: {:?}", sn);
+        println!("<4> k:  {:?}", k);
+
+        Ok(())
+    }
+}
+
 #[tokio::test(flavor = "multi_thread")]
 pub async fn test_coin_ownership_default() {
     // sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
@@ -256,17 +326,26 @@ pub async fn test_coin_ownership_default() {
 
     println!("[!] test coin ownership start!!!!!!!!!!!!!!!!!!!!!!!!!\n");
 
-    let (mt, sk, pk) = make_test_context();
-    let public_inputs: Vec<Scalar> = vec![mt.get_root().hash, pk];
+    println!("\n[+] Test Context creating");
+    let (
+        mt,  // merkle tree
+        sk,  // secret key
+        r,   // random sample value `r`
+        s,   // random sample value `s`
+        rho, // rho value
+        pk,  // public key
+        sn,  // serial number
+        k,   // middle value (commitment) `k`
+    ) = make_test_context();
 
-    println!("[+] Test context has been constructed\n");
+    let rt = mt.get_root().hash; // root hash value
 
-    let proof = generate_proof(mt, sk);
-    println!("[+] Test Proof has been calculated\n");
+    println!("\n[+] Test Proof calculating");
+    let proof = generate_proof_test(mt, sk, rho, r, s);
 
+    println!("\n[+] Test Verificationn");
+    let public_inputs: Vec<Scalar> = vec![rt, pk, sn, k];
     let result = verify_proof(proof, &public_inputs);
-    println!("[+] Test Verification has been done\n");
 
     assert!(result);
-    println!("[!] verify success!");
 }
