@@ -1,12 +1,7 @@
 use super::utils;
 use crate::{CtrFn, VMError, EXECUTE, INIT, MEMORY, QUERY};
-use log::{error, info};
 use sak_contract_std::{Request, Storage};
-use std::collections::HashMap;
-use std::fmt;
-use wasmtime::{
-    Config, Engine, Func, Instance, Memory, Module, Store, TypedFunc,
-};
+use wasmtime::{Instance, Memory, Store, TypedFunc};
 
 pub struct VM {}
 
