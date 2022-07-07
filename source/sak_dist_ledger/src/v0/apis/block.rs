@@ -1,47 +1,47 @@
-use crate::{DistLedger, LedgerError, StateUpdate};
+use crate::{get_tx_type, DistLedger, LedgerError, RtUpdate, StateUpdate};
 use log::warn;
 use sak_contract_std::{CtrCallType, Request, Storage};
 use sak_types::{Block, BlockCandidate, Tx, TxCandidate, TxType};
 use sak_vm::CtrFn;
 
 impl DistLedger {
-    pub async fn get_block_candidates(
-        &self,
-        block_hashes: Vec<&String>,
-    ) -> Result<Vec<BlockCandidate>, LedgerError> {
-        let blocks = self.ledger_db.get_blocks(block_hashes).await?;
+    // pub async fn get_block_candidates(
+    //     &self,
+    //     block_hashes: Vec<&String>,
+    // ) -> Result<Vec<BlockCandidate>, LedgerError> {
+    //     let blocks = self.ledger_db.get_blocks(block_hashes).await?;
 
-        let mut block_candidates = vec![];
+    //     let mut block_candidates = vec![];
 
-        for b in blocks {
-            let tx_hashes = b.get_tx_hashes();
+    //     for b in blocks {
+    //         let tx_hashes = b.get_tx_hashes();
 
-            let mut txs = vec![];
+    //         let mut txs = vec![];
 
-            for tx_hash in tx_hashes {
-                let tx = self
-                    .ledger_db
-                    .get_tx(tx_hash)
-                    .await?
-                    .ok_or("tx (of block candidate) should be persisted")?;
+    //         for tx_hash in tx_hashes {
+    //             let tx = self
+    //                 .ledger_db
+    //                 .get_tx(tx_hash)
+    //                 .await?
+    //                 .ok_or("tx (of block candidate) should be persisted")?;
 
-                txs.push(tx)
-            }
+    //             txs.push(tx)
+    //         }
 
-            let block_candidate = BlockCandidate {
-                validator_sig: b.get_validator_sig().to_string(),
-                transactions: txs,
-                witness_sigs: b.get_witness_sigs().to_owned(),
-                created_at: b.get_created_at().to_owned(),
-                block_height: b.get_height().to_owned(),
-                merkle_root: b.get_merkle_root().to_owned(),
-            };
+    //         let block_candidate = BlockCandidate {
+    //             validator_sig: b.get_validator_sig().to_string(),
+    //             transactions: txs,
+    //             witness_sigs: b.get_witness_sigs().to_owned(),
+    //             created_at: b.get_created_at().to_owned(),
+    //             block_height: b.get_height().to_owned(),
+    //             merkle_root: b.get_merkle_root().to_owned(),
+    //         };
 
-            block_candidates.push(block_candidate);
-        }
+    //         block_candidates.push(block_candidate);
+    //     }
 
-        Ok(block_candidates)
-    }
+    //     Ok(block_candidates)
+    // }
 
     pub async fn get_blocks(
         &self,
@@ -136,7 +136,7 @@ impl DistLedger {
     ) -> Result<Option<String>, LedgerError> {
         let bc = match bc {
             Some(bc) => bc,
-            None => match self.prepare_to_write_block().await? {
+            None => match self.make_block_candidate().await? {
                 Some(bc) => bc,
                 None => {
                     // debug!("No txs to write as a block, aborting");
@@ -146,9 +146,74 @@ impl DistLedger {
             },
         };
 
-        let merkle_root = self.get_merkle_root(&bc);
+        let latest_block_height = self.get_latest_block_height().await?;
+        let latest_tx_height = self.get_latest_tx_height().await?;
 
-        let (block, txs) = bc.extract(merkle_root);
+        // let (block, txs) = bc.upgrade(latest_block_height, latest_tx_height);
+        let tcs = bc.tx_candidates;
+
+        let mut state_updates = StateUpdate::new();
+        let mut rt_updates = RtUpdate::new();
+
+        for tc in tcs.iter() {
+            let ctr_addr = tc.get_ctr_addr();
+            let data = tc.get_data();
+            let tx_type = get_tx_type(ctr_addr, data);
+
+            match tx_type {
+                TxType::ContractDeploy => {
+                    let initial_ctr_state =
+                        self.vm.invoke(data, CtrFn::Init)?;
+
+                    state_updates.insert(ctr_addr.clone(), initial_ctr_state);
+                }
+
+                TxType::ContractCall => {
+                    let req = Request::parse(data)?;
+
+                    match req.ctr_call_type {
+                        CtrCallType::Query => {
+                            self.query_ctr(ctr_addr, req).await?;
+                        }
+                        CtrCallType::Execute => {
+                            let new_state = match state_updates.get(ctr_addr) {
+                                Some(previous_state) => {
+                                    let previous_state: Storage =
+                                        sak_contract_std::parse_storage(
+                                            previous_state.as_str(),
+                                        )?;
+
+                                    let ctr_wasm = self
+                                        .ledger_db
+                                        .get_ctr_data_by_ctr_addr(ctr_addr)
+                                        .await?
+                                        .ok_or(
+                                            "ctr data (wasm) should exist",
+                                        )?;
+
+                                    let ctr_fn =
+                                        CtrFn::Execute(req, previous_state);
+
+                                    let ret =
+                                        self.vm.invoke(ctr_wasm, ctr_fn)?;
+
+                                    ret
+                                }
+                                None => self.execute_ctr(ctr_addr, req).await?,
+                            };
+
+                            state_updates
+                                .insert(ctr_addr.clone(), new_state.clone());
+                        }
+                    };
+                }
+                TxType::Plain => (),
+            };
+        }
+
+        if let Err(err) = self.sync_pool.remove_tcs(&tcs).await {
+            warn!("Error removing txs into the tx pool, err: {}", err);
+        }
 
         if let Some(_b) = self.get_block(block.get_hash())? {
             return Err(format!(
@@ -157,73 +222,6 @@ impl DistLedger {
             )
             .into());
         };
-
-        let mut state_updates = StateUpdate::new();
-
-        for tx in txs.iter() {
-            match tx.get_type() {
-                TxType::ContractDeploy => {
-                    let initial_ctr_state =
-                        self.vm.invoke(tx.get_data(), CtrFn::Init)?;
-
-                    state_updates
-                        .insert(tx.get_ctr_addr().clone(), initial_ctr_state);
-                }
-
-                TxType::ContractCall => {
-                    let req = Request::parse(tx.get_data())?;
-
-                    match req.ctr_call_type {
-                        CtrCallType::Query => {
-                            self.query_ctr(tx.get_ctr_addr(), req).await?;
-                        }
-                        CtrCallType::Execute => {
-                            let new_state =
-                                match state_updates.get(tx.get_ctr_addr()) {
-                                    Some(previous_state) => {
-                                        let previous_state: Storage =
-                                            sak_contract_std::parse_storage(
-                                                previous_state.as_str(),
-                                            )?;
-
-                                        let ctr_wasm = self
-                                            .ledger_db
-                                            .get_ctr_data_by_ctr_addr(
-                                                tx.get_ctr_addr(),
-                                            )
-                                            .await?
-                                            .ok_or(
-                                                "ctr data (wasm) should exist",
-                                            )?;
-
-                                        let ctr_fn =
-                                            CtrFn::Execute(req, previous_state);
-
-                                        let ret =
-                                            self.vm.invoke(ctr_wasm, ctr_fn)?;
-
-                                        ret
-                                    }
-                                    None => {
-                                        self.execute_ctr(tx.get_ctr_addr(), req)
-                                            .await?
-                                    }
-                                };
-
-                            state_updates.insert(
-                                tx.get_ctr_addr().clone(),
-                                new_state.clone(),
-                            );
-                        }
-                    };
-                }
-                TxType::Plain => (),
-            };
-        }
-
-        if let Err(err) = self.sync_pool.remove_txs(&txs).await {
-            warn!("Error removing txs into the tx pool, err: {}", err);
-        }
 
         let block_hash = match self
             .ledger_db
@@ -270,7 +268,7 @@ impl DistLedger {
         self.ledger_db.get_ctr_state(contract_addr)
     }
 
-    async fn prepare_to_write_block(
+    async fn make_block_candidate(
         &self,
     ) -> Result<Option<BlockCandidate>, LedgerError> {
         let txs = self.sync_pool.get_all_txs().await?;
@@ -281,7 +279,7 @@ impl DistLedger {
 
         let bc = self.consensus.do_consensus(self, txs).await?;
 
-        self.sync_pool.remove_txs(&bc.transactions).await?;
+        self.sync_pool.remove_txs(&bc.tx_candidates).await?;
 
         Ok(Some(bc))
     }
@@ -291,13 +289,13 @@ impl DistLedger {
         true
     }
 
-    fn get_merkle_root(&self, bc: &BlockCandidate) -> String {
-        let merkle_root = &mut self.merkle_tree.clone();
+    // fn get_merkle_root(&self, bc: &BlockCandidate) -> String {
+    //     let merkle_root = &mut self.merkle_tree.clone();
 
-        for tx in &bc.transactions {
-            merkle_root.upgrade_node(tx.get_tx_height().to_owned());
-        }
+    //     // for tx in &bc.transactions {
+    //     //     merkle_root.upgrade_node(tx.get_tx_height().to_owned());
+    //     // }
 
-        merkle_root.root().hash.to_string()
-    }
+    //     merkle_root.root().hash.to_string()
+    // }
 }

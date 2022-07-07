@@ -3,6 +3,8 @@ use sak_types::{Block, Tx, TxCandidate, TxType};
 use std::collections::{HashMap, HashSet};
 use tokio::sync::RwLock;
 
+use crate::get_tx_type;
+
 const SYNC_POOL_CAPACITY: usize = 100;
 
 pub(crate) struct SyncPool {
@@ -85,30 +87,35 @@ impl SyncPool {
 
     pub(crate) async fn insert_tx(
         &self,
-        tx: TxCandidate,
+        tc: TxCandidate,
     ) -> Result<(), String> {
-        match tx.get_type() {
-            TxType::ContractDeploy => {
-                // check functions
-                match tx.is_valid_ctr_deploying_tx() {
-                    Ok(o) => o,
-                    Err(err) => {
-                        return Err(format!("Err: {:?}", err));
+        {
+            // Check if tx is valid ctr deploying type
+            let ctr_addr = tc.get_ctr_addr();
+            let data = tc.get_data();
+
+            let tx_type = get_tx_type(ctr_addr, data);
+            match tx_type {
+                TxType::ContractDeploy => {
+                    // check functions
+                    let maybe_wasm = tc.get_data();
+                    if !sak_vm::is_valid_wasm(maybe_wasm) {
+                        return Err(format!("Not valid wasm data"));
                     }
                 }
-            }
-            TxType::ContractCall => {}
-            TxType::Plain => {}
-        };
+                TxType::ContractCall => {}
+                TxType::Plain => {}
+            };
+        }
 
-        let tx_hash = tx.get_hash();
+        let tx_hash = tc.get_hash();
 
         let mut tx_map_lock = self.tx_map.write().await;
 
         if tx_map_lock.contains_key(tx_hash) {
             return Err(format!("tx already exist"));
         } else {
-            tx_map_lock.insert(tx_hash.clone(), tx.clone());
+            tx_map_lock.insert(tx_hash.clone(), tc.clone());
         };
 
         let mut new_tx_hashes_lock = self.new_tx_hashes.write().await;
@@ -125,7 +132,10 @@ impl SyncPool {
         Ok(tx)
     }
 
-    pub(crate) async fn remove_txs(&self, txs: &Vec<Tx>) -> Result<(), String> {
+    pub(crate) async fn remove_tcs(
+        &self,
+        txs: &Vec<TxCandidate>,
+    ) -> Result<(), String> {
         let mut tx_map_lock = self.tx_map.write().await;
 
         for tx in txs {

@@ -176,16 +176,24 @@ async fn handle_block_hash_ack<'a>(
         .map(|(_, block_hash)| block_hash)
         .collect();
 
-    let block_candidates = machine
+    // let block_candidates = machine
+    //     .blockchain
+    //     .dist_ledger
+    //     .get_block_candidates(block_hashes)
+    //     .await?;
+
+    let blocks = machine
         .blockchain
         .dist_ledger
-        .get_block_candidates(block_hashes)
+        .get_blocks(block_hashes)
         .await?;
 
     if !block_candidates.is_empty() {
         match conn
             .socket
-            .send(Msg::BlockSyn(BlockSynMsg { block_candidates }))
+            .send(Msg::BlockSyn(BlockSynMsg { 
+                // blocks
+            }))
             .await
         {
             Ok(_) => {}

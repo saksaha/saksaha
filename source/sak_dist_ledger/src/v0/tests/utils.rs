@@ -1,27 +1,27 @@
 use sak_contract_std::{CtrCallType, Request};
-use sak_types::{BlockCandidate, Tx};
+use sak_types::{BlockCandidate, Tx, TxCandidate};
 use std::collections::HashMap;
 
 pub(crate) fn make_dummy_block_candidate_1() -> Option<BlockCandidate> {
     let test_wasm = include_bytes!("./test_valid_contract.wasm").to_vec();
 
     let block_candidate: BlockCandidate = {
-        let dummy_ctr_deploying_tx = Tx::new(
-            String::from("1346546123"),
-            test_wasm,
-            String::from("0x111"),
-            b"0x1111".to_vec(),
-            Some(String::from("test_wasm")),
-            0,
+        let dummy_ctr_deploying_tc = TxCandidate::new(
+            String::from("1"),
+            vec![11, 11, 11],
+            String::from("1"),
+            b"1".to_vec(),
+            None,
+            Some(String::from("11")),
         );
 
         BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
-            transactions: vec![dummy_ctr_deploying_tx],
+            tx_candidates: vec![dummy_ctr_deploying_tc],
             witness_sigs: vec![String::from("1"), String::from("2")],
             created_at: String::from("2022061515340000"),
-            block_height: 0,
-            merkle_root: String::from("2022061515340000"),
+            // block_height: 0,
+            // merkle_root: String::from("2022061515340000"),
         }
     };
 
@@ -31,7 +31,7 @@ pub(crate) fn make_dummy_block_candidate_1() -> Option<BlockCandidate> {
 pub(crate) fn make_dummy_block_candidate_with_query_tx(
 ) -> Option<BlockCandidate> {
     let block_candidate: BlockCandidate = {
-        let dummy_ctr_calling_query_tx: Tx = {
+        let dummy_ctr_calling_query_tc: TxCandidate = {
             let request_query_get_validator: Request = {
                 Request {
                     req_type: "get_validator".to_string(),
@@ -40,26 +40,26 @@ pub(crate) fn make_dummy_block_candidate_with_query_tx(
                 }
             };
 
-            Tx::new(
-                String::from("0973948293"),
+            TxCandidate::new(
+                String::from("created_at0"),
                 serde_json::to_string(&request_query_get_validator)
                     .unwrap()
                     .as_bytes()
                     .to_vec(),
-                String::from("0x222"),
-                b"0x1111".to_vec(),
-                Some(String::from("test_wasm")),
-                1,
+                String::from("author_sig0"),
+                vec![0], // pi
+                Some(String::from("ctr_addr0")),
+                None,
             )
         };
 
         BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
-            transactions: vec![dummy_ctr_calling_query_tx],
+            tx_candidates: vec![dummy_ctr_calling_query_tc],
             witness_sigs: vec![String::from("3"), String::from("4")],
             created_at: String::from("2022061515340000"),
-            block_height: 1,
-            merkle_root: String::from("2022061515340000"),
+            // block_height: 1,
+            // merkle_root: String::from("2022061515340000"),
         }
     };
 
@@ -87,17 +87,17 @@ pub(crate) fn make_dummy_block_candidate_with_execute_tx(
             ctr_call_type: CtrCallType::Execute,
         };
 
-        let dummy_ctr_calling_execute_add_validator_tx_1: Tx = {
-            Tx::new(
-                String::from("3479422851"),
+        let dummy_ctr_calling_execute_add_validator_tc_1 = {
+            TxCandidate::new(
+                String::from("created_at1"),
                 serde_json::to_string(&request_execute_add_validator_1)
                     .unwrap()
                     .as_bytes()
                     .to_vec(),
-                String::from("0x444"),
-                b"0x1111".to_vec(),
-                Some(String::from("test_wasm")),
-                2,
+                String::from("author_sig1"),
+                vec![1], // pi
+                Some(String::from("ctr_addr1")),
+                None,
             )
         };
 
@@ -119,31 +119,31 @@ pub(crate) fn make_dummy_block_candidate_with_execute_tx(
             ctr_call_type: CtrCallType::Execute,
         };
 
-        let dummy_ctr_calling_execute_add_validator_tx_2: Tx = {
-            Tx::new(
-                String::from("3479422851"),
+        let dummy_ctr_calling_execute_add_validator_tc_2 = {
+            TxCandidate::new(
+                String::from("created_at2"),
                 serde_json::to_string(&request_execute_add_validator_2)
                     .unwrap()
                     .as_bytes()
                     .to_vec(),
-                String::from("0x444"),
-                b"0x1111".to_vec(),
-                Some(String::from("test_wasm")),
-                3,
+                String::from("author_sig2"),
+                vec![2], // pi
+                Some(String::from("ctr_addr2")),
+                None,
             )
         };
 
         BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
-            transactions: vec![
+            tx_candidates: vec![
                 //
-                dummy_ctr_calling_execute_add_validator_tx_1,
-                dummy_ctr_calling_execute_add_validator_tx_2,
+                dummy_ctr_calling_execute_add_validator_tc_1,
+                dummy_ctr_calling_execute_add_validator_tc_2,
             ],
             witness_sigs: vec![String::from("3"), String::from("4")],
             created_at: String::from("2022061515340000"),
-            block_height: 2,
-            merkle_root: String::from("2022061515340000"),
+            // block_height: 2,
+            // merkle_root: String::from("2022061515340000"),
         }
     };
 

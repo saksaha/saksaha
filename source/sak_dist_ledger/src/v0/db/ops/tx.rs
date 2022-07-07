@@ -48,14 +48,7 @@ impl LedgerDB {
             .get_tx_height(db, tx_hash)?
             .ok_or("ctr_addr does not exist")?;
 
-        let tx = Tx::new(
-            created_at,
-            data,
-            author_sig,
-            pi,
-            Some(ctr_addr),
-            tx_height,
-        );
+        let tx = Tx::new(created_at, data, author_sig, pi, ctr_addr, tx_height);
 
         Ok(Some(tx))
     }

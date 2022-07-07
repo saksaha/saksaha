@@ -5,7 +5,7 @@ use sak_types::TxCandidate;
 
 #[derive(Debug)]
 pub struct TxSynMsg {
-    pub txs: Vec<TxCandidate>,
+    pub tcs: Vec<TxCandidate>,
 }
 
 impl TxSynMsg {
@@ -13,10 +13,10 @@ impl TxSynMsg {
         parse: &mut Parse,
     ) -> Result<TxSynMsg, BoxedError> {
         let tx_count = parse.next_int()?;
-        let mut txs = Vec::with_capacity(tx_count as usize);
+        let mut tcs = Vec::with_capacity(tx_count as usize);
 
         for _idx in 0..tx_count {
-            let tx = {
+            let tc = {
                 let data = {
                     let p = parse.next_bytes()?;
                     p.to_vec()
@@ -54,10 +54,10 @@ impl TxSynMsg {
                 )
             };
 
-            txs.push(tx);
+            tcs.push(tc);
         }
 
-        let m = TxSynMsg { txs };
+        let m = TxSynMsg { tcs };
 
         Ok(m)
     }
@@ -65,37 +65,37 @@ impl TxSynMsg {
     pub(crate) fn into_frame(&self) -> Frame {
         let mut frame = Frame::array();
 
-        let tx_count = self.txs.len();
+        let tc_count = self.tcs.len();
 
         frame.push_bulk(Bytes::from(TX_SYN_TYPE.as_bytes()));
-        frame.push_int(tx_count as u128);
+        frame.push_int(tc_count as u128);
 
-        for idx in 0..tx_count {
-            let tx = &self.txs[idx];
+        for idx in 0..tc_count {
+            let tc = &self.tcs[idx];
 
             let created_at_bytes = {
                 let mut b = BytesMut::new();
-                b.put(tx.get_created_at().as_bytes());
+                b.put(tc.get_created_at().as_bytes());
                 b
             };
 
             let pi_bytes = {
                 let mut b = BytesMut::new();
-                b.put(tx.get_pi().as_slice());
+                b.put(tc.get_pi().as_slice());
                 b
             };
 
             let author_sig_bytes = {
                 let mut b = BytesMut::new();
-                b.put(tx.get_author_sig().as_bytes());
+                b.put(tc.get_author_sig().as_bytes());
                 b
             };
 
-            frame.push_bulk(Bytes::from(tx.get_data().clone()));
+            frame.push_bulk(Bytes::from(tc.get_data().clone()));
             frame.push_bulk(Bytes::from(created_at_bytes));
             frame.push_bulk(Bytes::from(pi_bytes));
             frame.push_bulk(Bytes::from(author_sig_bytes));
-            frame.push_bulk(Bytes::from(tx.get_ctr_addr().clone()));
+            frame.push_bulk(Bytes::from(tc.get_ctr_addr().clone()));
             // frame.push_int(*tx.get_tx_height() as u128);
         }
 

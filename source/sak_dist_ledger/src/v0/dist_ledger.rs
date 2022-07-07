@@ -21,7 +21,7 @@ pub struct DistLedger {
     pub(crate) vm: VM,
     pub(crate) consensus: Box<dyn Consensus + Send + Sync>,
     runtime: Arc<Runtime>,
-    pub(crate) merkle_tree: MerkleTree,
+    // pub(crate) merkle_tree: MerkleTree,
 }
 
 pub struct DistLedgerArgs {
@@ -93,7 +93,7 @@ impl DistLedger {
             bc_event_tx,
             consensus,
             runtime,
-            merkle_tree,
+            // merkle_tree,
         };
 
         if let Some(bc) = genesis_block {
@@ -159,9 +159,9 @@ impl DistLedger {
         Ok(persisted_gen_block_hash.to_string())
     }
 
-    pub(crate) fn upgrade_merkle_tree(&mut self, txs: &Vec<Tx>) {
-        for tx in txs {
-            self.merkle_tree.upgrade_node(tx.get_tx_height().to_owned());
-        }
-    }
+    // pub(crate) fn upgrade_merkle_tree(&mut self, txs: &Vec<Tx>) {
+    //     for tx in txs {
+    //         self.merkle_tree.upgrade_node(tx.get_tx_height().to_owned());
+    //     }
+    // }
 }

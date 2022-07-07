@@ -1,4 +1,5 @@
 use super::utils;
+use crate::wasm_bootstrap;
 use crate::{CtrFn, VMError, MEMORY};
 use log::{error, info};
 use sak_contract_std::{Request, Storage};
@@ -50,9 +51,13 @@ fn invoke_init(
 
     let ret: String;
     unsafe {
-        ret =
-            utils::read_string(&store, &memory, ret_ptr as u32, ret_len as u32)
-                .unwrap()
+        ret = wasm_bootstrap::read_string(
+            &store,
+            &memory,
+            ret_ptr as u32,
+            ret_len as u32,
+        )
+        .unwrap()
     }
 
     Ok(ret)
@@ -75,7 +80,7 @@ fn invoke_query(
     };
 
     let request_ptr =
-        utils::copy_memory(&request_bytes, &instance, &mut store)?;
+        wasm_bootstrap::copy_memory(&request_bytes, &instance, &mut store)?;
 
     let (storage_bytes, storage_len) = {
         let str = serde_json::to_value(storage).unwrap().to_string();
@@ -84,7 +89,7 @@ fn invoke_query(
     };
 
     let storage_ptr =
-        utils::copy_memory(&storage_bytes, &instance, &mut store)?;
+        wasm_bootstrap::copy_memory(&storage_bytes, &instance, &mut store)?;
 
     let (ret_ptr, ret_len) = contract_fn.call(
         &mut store,
@@ -98,9 +103,13 @@ fn invoke_query(
 
     let ret: String;
     unsafe {
-        ret =
-            utils::read_string(&store, &memory, ret_ptr as u32, ret_len as u32)
-                .unwrap()
+        ret = wasm_bootstrap::read_string(
+            &store,
+            &memory,
+            ret_ptr as u32,
+            ret_len as u32,
+        )
+        .unwrap()
     }
 
     Ok(ret)
@@ -123,7 +132,7 @@ fn invoke_execute(
     };
 
     let request_ptr =
-        utils::copy_memory(&request_bytes, &instance, &mut store)?;
+        wasm_bootstrap::copy_memory(&request_bytes, &instance, &mut store)?;
 
     let (storage_bytes, storage_len) = {
         let str = serde_json::to_value(storage).unwrap().to_string();
@@ -132,7 +141,7 @@ fn invoke_execute(
     };
 
     let storage_ptr =
-        utils::copy_memory(&storage_bytes, &instance, &mut store)?;
+        wasm_bootstrap::copy_memory(&storage_bytes, &instance, &mut store)?;
 
     let (ret_ptr, ret_len) = contract_fn.call(
         &mut store,
@@ -146,9 +155,13 @@ fn invoke_execute(
 
     let ret: String;
     unsafe {
-        ret =
-            utils::read_string(&store, &memory, ret_ptr as u32, ret_len as u32)
-                .unwrap()
+        ret = wasm_bootstrap::read_string(
+            &store,
+            &memory,
+            ret_ptr as u32,
+            ret_len as u32,
+        )
+        .unwrap()
     }
 
     Ok(ret)
