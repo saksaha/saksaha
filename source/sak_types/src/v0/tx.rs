@@ -20,6 +20,9 @@ pub struct Tx {
     ctr_addr: String,
 
     //
+    cm: String,
+
+    //
     tx_height: u128,
 
     // auto-generated value
@@ -45,6 +48,7 @@ impl Tx {
         pi: Vec<u8>,
         ctr_addr: String,
         hash: String,
+        cm: String,
         tx_height: u128,
     ) -> Tx {
         Tx {
@@ -53,6 +57,7 @@ impl Tx {
             pi,
             author_sig,
             ctr_addr,
+            cm,
             tx_height,
             hash,
         }
@@ -80,6 +85,10 @@ impl Tx {
 
     pub fn get_tx_height(&self) -> &u128 {
         &self.tx_height
+    }
+
+    pub fn get_cm(&self) -> &String {
+        &self.cm
     }
 
     pub fn get_hash(&self) -> &String {
@@ -244,6 +253,7 @@ impl TxCandidate {
             self.pi,
             self.ctr_addr,
             self.hash,
+            self.cm,
             tx_height,
         )
     }
@@ -266,6 +276,10 @@ impl TxCandidate {
 
     pub fn get_ctr_addr(&self) -> &String {
         &self.ctr_addr
+    }
+
+    pub fn get_cm(&self) -> &String {
+        &self.cm
     }
 
     pub fn get_hash(&self) -> &String {

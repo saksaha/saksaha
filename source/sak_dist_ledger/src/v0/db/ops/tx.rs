@@ -1,4 +1,4 @@
-use crate::{LedgerDB, LedgerError};
+use crate::{get_tx_type, LedgerDB, LedgerError};
 use sak_kv_db::{WriteBatch, DB};
 use sak_types::{Tx, TxType};
 
@@ -48,7 +48,21 @@ impl LedgerDB {
             .get_tx_height(db, tx_hash)?
             .ok_or("ctr_addr does not exist")?;
 
-        let tx = Tx::new(created_at, data, author_sig, pi, ctr_addr, tx_height);
+        let cm = self
+            .schema
+            .get_cm(db, tx_hash)?
+            .ok_or("ctr_addr does not exist")?;
+
+        let tx = Tx::new(
+            created_at,
+            data,
+            author_sig,
+            pi,
+            ctr_addr,
+            tx_hash.to_owned(),
+            cm,
+            tx_height,
+        );
 
         Ok(Some(tx))
     }
@@ -94,14 +108,16 @@ impl LedgerDB {
             tx.get_tx_height(),
         )?;
 
-        self.schema.batch_put_tx_height_by_hash(
+        self.schema.batch_put_tx_hash_by_height(
             db,
             batch,
             tx.get_tx_height(),
             tx_hash,
         )?;
 
-        match tx.get_type() {
+        self.schema.batch_put_cm(db, batch, tx_hash, tx.get_cm())?;
+
+        match get_tx_type(tx.get_ctr_addr(), tx.get_data()) {
             TxType::ContractDeploy => {
                 self.schema.batch_put_tx_hash(
                     db,

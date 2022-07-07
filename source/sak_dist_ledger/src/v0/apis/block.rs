@@ -234,8 +234,6 @@ impl DistLedger {
             }
         };
 
-        // self.upgrade_merkle_tree(&txs);
-
         if let Err(err) = self.sync_pool.insert_block(&block).await {
             warn!("Error inserting block into the sync pool, err: {}", err);
         }
@@ -279,7 +277,7 @@ impl DistLedger {
 
         let bc = self.consensus.do_consensus(self, txs).await?;
 
-        self.sync_pool.remove_txs(&bc.tx_candidates).await?;
+        self.sync_pool.remove_tcs(&bc.tx_candidates).await?;
 
         Ok(Some(bc))
     }

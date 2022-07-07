@@ -28,9 +28,13 @@ const CTR_ADDR: &str = "ctr_addr";
 // by hash
 const TX_HEIGHT: &str = "tx_height";
 
-// by hash
-const TX_HEIGHT_BY_HASH: &str = "tx_height_by_hash";
+// by height
+const TX_HASH_BY_HEIGHT: &str = "TX_HASH_BY_HEIGHT";
 
+// by hash
+const CM: &str = "cm";
+
+///// Block
 //
 const VALIDATOR_SIG: &str = "validator_sig";
 
@@ -543,6 +547,25 @@ impl LedgerDBSchema {
         }
     }
 
+    pub(crate) fn get_cm(
+        &self,
+        db: &DB,
+        key: &String,
+    ) -> Result<Option<String>, LedgerError> {
+        let cf = make_cf_handle(db, CM)?;
+
+        match db.get_cf(&cf, key)? {
+            Some(v) => {
+                let str = String::from_utf8(v)?;
+
+                return Ok(Some(str));
+            }
+            None => {
+                return Ok(None);
+            }
+        }
+    }
+
     pub(crate) fn batch_put_ctr_addr(
         &self,
         db: &DB,
@@ -587,18 +610,32 @@ impl LedgerDBSchema {
         Ok(())
     }
 
-    pub(crate) fn batch_put_tx_height_by_hash(
+    pub(crate) fn batch_put_tx_hash_by_height(
         &self,
         db: &DB,
         batch: &mut WriteBatch,
         tx_height: &u128,
         tx_hash: &String,
     ) -> Result<(), LedgerError> {
-        let cf = make_cf_handle(db, TX_HEIGHT_BY_HASH)?;
+        let cf = make_cf_handle(db, TX_HASH_BY_HEIGHT)?;
 
         let v = tx_height.to_be_bytes();
 
         batch.put_cf(&cf, v, tx_hash);
+
+        Ok(())
+    }
+
+    pub(crate) fn batch_put_cm(
+        &self,
+        db: &DB,
+        batch: &mut WriteBatch,
+        key: &String,
+        value: &String,
+    ) -> Result<(), LedgerError> {
+        let cf = make_cf_handle(db, CM)?;
+
+        batch.put_cf(&cf, key, value);
 
         Ok(())
     }
@@ -625,7 +662,7 @@ impl LedgerDBSchema {
         &self,
         db: &DB,
     ) -> Result<Option<u128>, String> {
-        let cf = make_cf_handle(db, TX_HEIGHT_BY_HASH)?;
+        let cf = make_cf_handle(db, TX_HASH_BY_HEIGHT)?;
 
         let mut iter = db.iterator_cf(&cf, IteratorMode::End);
 
@@ -648,7 +685,8 @@ impl LedgerDBSchema {
             ColumnFamilyDescriptor::new(DATA, Options::default()),
             ColumnFamilyDescriptor::new(CTR_ADDR, Options::default()),
             ColumnFamilyDescriptor::new(TX_HEIGHT, Options::default()),
-            ColumnFamilyDescriptor::new(TX_HEIGHT_BY_HASH, Options::default()),
+            ColumnFamilyDescriptor::new(TX_HASH_BY_HEIGHT, Options::default()),
+            ColumnFamilyDescriptor::new(CM, Options::default()),
             ColumnFamilyDescriptor::new(VALIDATOR_SIG, Options::default()),
             ColumnFamilyDescriptor::new(TX_HASHES, Options::default()),
             ColumnFamilyDescriptor::new(WITNESS_SIGS, Options::default()),

@@ -86,6 +86,7 @@ mod test {
                 vec![0], // pi
                 String::from("ctr_addr0"),
                 String::from("hash0"),
+                String::from("cm0"),
                 0,
             ),
             Tx::new(
@@ -95,6 +96,7 @@ mod test {
                 vec![1], // pi
                 String::from("ctr_addr1"),
                 String::from("hash1"),
+                String::from("cm1"),
                 1,
             ),
             Tx::new(
@@ -104,6 +106,7 @@ mod test {
                 vec![2], // pi
                 String::from("ctr_addr2"),
                 String::from("hash2"),
+                String::from("cm2"),
                 2,
             ),
             Tx::new(
@@ -113,6 +116,7 @@ mod test {
                 vec![3], // pi
                 String::from("ctr_addr3"),
                 String::from("hash3"),
+                String::from("cm3"),
                 3,
             ),
         ]

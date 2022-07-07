@@ -29,7 +29,7 @@ impl TxSynMsg {
 
                 let pi = {
                     let k = parse.next_bytes()?;
-                    std::str::from_utf8(k.as_ref())?.into()
+                    k.to_vec()
                 };
 
                 let author_sig = {
@@ -42,6 +42,11 @@ impl TxSynMsg {
                     std::str::from_utf8(p.as_ref())?.into()
                 };
 
+                let cm = {
+                    let p = parse.next_bytes()?;
+                    std::str::from_utf8(p.as_ref())?.into()
+                };
+
                 // let tx_height = parse.next_int()? as u128;
 
                 TxCandidate::new(
@@ -50,7 +55,7 @@ impl TxSynMsg {
                     author_sig,
                     pi,
                     Some(contract_addr),
-                    // tx_height,
+                    Some(cm), // tx_height,
                 )
             };
 
@@ -96,6 +101,7 @@ impl TxSynMsg {
             frame.push_bulk(Bytes::from(pi_bytes));
             frame.push_bulk(Bytes::from(author_sig_bytes));
             frame.push_bulk(Bytes::from(tc.get_ctr_addr().clone()));
+            frame.push_bulk(Bytes::from(tc.get_cm().clone()));
             // frame.push_int(*tx.get_tx_height() as u128);
         }
 

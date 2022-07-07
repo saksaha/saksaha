@@ -79,13 +79,6 @@ impl DistLedger {
             Arc::new(r)
         };
 
-        let merkle_tree = {
-            let constants = MiMC::get_mimc_constants();
-            let tree = CoinProof::get_merkle_tree(&constants);
-
-            tree
-        };
-
         let dist_ledger = DistLedger {
             ledger_db,
             sync_pool,
@@ -158,10 +151,4 @@ impl DistLedger {
 
         Ok(persisted_gen_block_hash.to_string())
     }
-
-    // pub(crate) fn upgrade_merkle_tree(&mut self, txs: &Vec<Tx>) {
-    //     for tx in txs {
-    //         self.merkle_tree.upgrade_node(tx.get_tx_height().to_owned());
-    //     }
-    // }
 }
