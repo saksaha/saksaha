@@ -17,6 +17,7 @@ struct TestCoinCircuit {
     pub rho: Option<Scalar>,
     pub r: Option<Scalar>,
     pub s: Option<Scalar>,
+    pub v: Option<Scalar>,
     pub constants: Vec<Scalar>,
 }
 
@@ -26,12 +27,14 @@ fn make_test_context() -> (
     Scalar,     // r,
     Scalar,     // s,
     Scalar,     // rho,
+    Scalar,     // v,
     Scalar,     // pk,
     Scalar,     // sn,
     Scalar,     // k,
+    Scalar,     // cm,
 ) {
     // mint
-    let v = 100; // 100 sak
+    let v = Scalar::from(100); // 100 sak
 
     let mut key = [0u8; 16];
     OsRng.fill_bytes(&mut key);
@@ -53,6 +56,7 @@ fn make_test_context() -> (
 
     let k = hasher.comm(r, hasher.prf(pk, rho));
 
+    let cm = hasher.comm(s, hasher.prf(v, k));
     // // let k = MiMC::mimc(Scalar::from())
     // // MiMC::mimc()
 
@@ -74,9 +78,11 @@ fn make_test_context() -> (
         r,   // [gen_proof] : random sample value `r`
         s,   // [gen_proof] : random sample value `s`
         rho, // [gen_proof] : rho value
+        v,   // [gen_proof] : value of coin `v`
         pk,  // [ver_proof] : public key
         sn,  // [ver_proof] : serial number
         k,   // [ver_proof] : middle value (commitment) `k`
+        cm,  // [ver_proof] : commitment `cm`
     )
 }
 
@@ -96,6 +102,7 @@ pub fn get_params_test(constants: &[Scalar]) -> Parameters<Bls12> {
                 rho: None,
                 r: None,
                 s: None,
+                v: None,
                 constants: constants.to_vec(),
             };
 
@@ -120,6 +127,7 @@ fn generate_proof_test(
     rho: Scalar,
     r: Scalar,
     s: Scalar,
+    v: Scalar,
 ) -> Proof<Bls12> {
     let proof = {
         let constants = get_mimc_constants();
@@ -162,6 +170,7 @@ fn generate_proof_test(
         let rho = Some(rho);
         let r = Some(r);
         let s = Some(s);
+        let v = Some(v);
 
         let c = TestCoinCircuit {
             leaf,
@@ -170,6 +179,7 @@ fn generate_proof_test(
             rho,
             r,
             s,
+            v,
             constants,
         };
 
@@ -194,6 +204,7 @@ fn verify_proof(proof: Proof<Bls12>, public_inputs: &[Scalar]) -> bool {
     println!("[public_inputs] pk: {:?}", public_inputs[1]);
     println!("[public_inputs] sn: {:?}", public_inputs[2]);
     println!("[public_inputs] k:  {:?}", public_inputs[3]);
+    println!("[public_inputs] cm: {:?}", public_inputs[4]);
 
     match groth16::verify_proof(&pvk, &proof, public_inputs) {
         Ok(_) => {
@@ -230,6 +241,16 @@ impl Circuit<Scalar> for TestCoinCircuit {
         };
 
         let r = match self.r {
+            Some(a) => Some(a),
+            None => Some(Scalar::default()),
+        };
+
+        let s = match self.s {
+            Some(a) => Some(a),
+            None => Some(Scalar::default()),
+        };
+
+        let v = match self.v {
             Some(a) => Some(a),
             None => Some(Scalar::default()),
         };
@@ -288,6 +309,10 @@ impl Circuit<Scalar> for TestCoinCircuit {
         let k_tmp: Option<Scalar> = hasher.prf_cs(cs, pk, rho);
         let k: Option<Scalar> = hasher.comm_cs(cs, r, k_tmp);
 
+        // cm == COMM(s, PRF(v, k))
+        let cm_tmp: Option<Scalar> = hasher.prf_cs(cs, v, k);
+        let cm: Option<Scalar> = hasher.comm_cs(cs, s, cm_tmp);
+
         cs.alloc_input(
             || "rt",
             || rt.ok_or(SynthesisError::AssignmentMissing),
@@ -309,11 +334,17 @@ impl Circuit<Scalar> for TestCoinCircuit {
             || k.ok_or(SynthesisError::AssignmentMissing),
         )?;
 
+        cs.alloc_input(
+            || "cm",
+            || cm.ok_or(SynthesisError::AssignmentMissing),
+        )?;
+
         println!("[+] Final values from test circuit :");
         println!("<1> rt: {:?}", rt);
         println!("<2> pk: {:?}", pk);
         println!("<3> sn: {:?}", sn);
         println!("<4> k:  {:?}", k);
+        println!("<4> cm: {:?}", cm);
 
         Ok(())
     }
@@ -333,18 +364,20 @@ pub async fn test_coin_ownership_default() {
         r,   // random sample value `r`
         s,   // random sample value `s`
         rho, // rho value
+        v,   // value of coin `v`
         pk,  // public key
         sn,  // serial number
         k,   // middle value (commitment) `k`
+        cm,  // commitment `cm`
     ) = make_test_context();
 
     let rt = mt.get_root().hash; // root hash value
 
     println!("\n[+] Test Proof calculating");
-    let proof = generate_proof_test(mt, sk, rho, r, s);
+    let proof = generate_proof_test(mt, sk, rho, r, s, v);
 
     println!("\n[+] Test Verificationn");
-    let public_inputs: Vec<Scalar> = vec![rt, pk, sn, k];
+    let public_inputs: Vec<Scalar> = vec![rt, pk, sn, k, cm];
     let result = verify_proof(proof, &public_inputs);
 
     assert!(result);
