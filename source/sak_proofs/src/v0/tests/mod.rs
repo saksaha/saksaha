@@ -124,7 +124,7 @@ pub fn performance_test() {
     let c = CoinCircuit {
         leaf: Some(leaf),
         auth_path,
-        constants: &constants,
+        constants,
     };
 
     let circuit_time = SystemTime::now();

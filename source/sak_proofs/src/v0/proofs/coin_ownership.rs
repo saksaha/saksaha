@@ -40,7 +40,7 @@ impl CoinProof {
                 let c = CoinCircuit {
                     leaf: None,
                     auth_path: [None; CM_TREE_DEPTH],
-                    constants: &constants,
+                    constants: constants.to_vec(),
                 };
 
                 groth16::generate_random_parameters::<Bls12, _, _>(
@@ -110,7 +110,7 @@ impl CoinProof {
         let c = CoinCircuit {
             leaf: Some(leaf),
             auth_path,
-            constants: &constants,
+            constants,
         };
 
         let proof =
@@ -146,20 +146,20 @@ impl CoinProof {
     }
 }
 
-pub struct CoinCircuit<'a, S: PrimeField> {
-    pub leaf: Option<S>,
-    pub auth_path: [Option<(S, bool)>; CM_TREE_DEPTH],
-    pub constants: &'a [S],
+pub struct CoinCircuit {
+    pub leaf: Option<Scalar>,
+    pub auth_path: [Option<(Scalar, bool)>; CM_TREE_DEPTH],
+    pub constants: Vec<Scalar>,
 }
 
-impl<'a, S: PrimeField> Circuit<S> for CoinCircuit<'a, S> {
-    fn synthesize<CS: ConstraintSystem<S>>(
+impl Circuit<Scalar> for CoinCircuit {
+    fn synthesize<CS: ConstraintSystem<Scalar>>(
         self,
         cs: &mut CS,
     ) -> Result<(), SynthesisError> {
         let mut cur = match self.leaf {
             Some(a) => Some(a),
-            None => Some(S::default()),
+            None => Some(Scalar::default()),
         };
 
         {
@@ -187,7 +187,7 @@ impl<'a, S: PrimeField> Circuit<S> for CoinCircuit<'a, S> {
 
                 let temp = match *layer {
                     Some(a) => a,
-                    None => (S::default(), false),
+                    None => (Scalar::default(), false),
                 };
 
                 if match is_right {
