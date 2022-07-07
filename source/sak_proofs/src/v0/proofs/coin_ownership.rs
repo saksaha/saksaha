@@ -1,4 +1,4 @@
-use crate::{MerkleTree, MiMC};
+use crate::{get_mimc_constants, mimc, mimc_cs, MerkleTree};
 use bellman::gadgets::boolean::AllocatedBit;
 use bellman::groth16::{Parameters, PreparedVerifyingKey, Proof, VerifyingKey};
 use bellman::{groth16, Circuit, ConstraintSystem, SynthesisError};
@@ -70,8 +70,7 @@ impl CoinProof {
         });
 
         let hasher = |xl, xr| {
-            let hash =
-                MiMC::mimc(Scalar::from(xl), Scalar::from(xr), constants);
+            let hash = mimc(Scalar::from(xl), Scalar::from(xr), constants);
 
             hash
         };
@@ -81,7 +80,7 @@ impl CoinProof {
     }
 
     pub fn generate_proof(idx: usize) -> Proof<Bls12> {
-        let constants = MiMC::get_mimc_constants();
+        let constants = get_mimc_constants();
 
         let tree = CoinProof::get_merkle_tree(&constants);
 
@@ -121,7 +120,7 @@ impl CoinProof {
     }
 
     pub fn verify_proof(proof: &Proof<Bls12>) -> bool {
-        let constants = MiMC::get_mimc_constants();
+        let constants = get_mimc_constants();
 
         let de_params = CoinProof::get_params(&constants);
 
@@ -202,7 +201,7 @@ impl<'a, S: PrimeField> Circuit<S> for CoinCircuit<'a, S> {
                     xr_value = Some(temp.0);
                 }
 
-                cur = MiMC::mimc_cs(cs, xl_value, xr_value, &self.constants);
+                cur = mimc_cs(cs, xl_value, xr_value, &self.constants);
             }
         };
 

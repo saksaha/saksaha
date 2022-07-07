@@ -1,6 +1,6 @@
 mod coin;
 
-use crate::{CoinCircuit, CoinProof, MiMC, CM_TREE_DEPTH};
+use crate::{get_mimc_constants, CoinCircuit, CoinProof, CM_TREE_DEPTH};
 use bellman::groth16;
 use bls12_381::Scalar;
 use rand::rngs::OsRng;
@@ -27,7 +27,7 @@ pub fn performance_test() {
     // let constants = (0..MIMC_ROUNDS)
     //     .map(|_| Scalar::random(&mut rng))
     //     .collect::<Vec<_>>();
-    let constants = MiMC::get_mimc_constants();
+    let constants = get_mimc_constants();
     // println!("constants : {:?}", constants);
 
     // let mut bytes_constants = constants.clone();

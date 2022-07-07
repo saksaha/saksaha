@@ -1,5 +1,6 @@
-use crate::MiMC;
 use bls12_381::Scalar;
+
+use crate::mimc;
 
 #[derive(Debug)]
 pub struct MerkleTree {
@@ -91,7 +92,7 @@ impl MerkleTree {
                     xl = cn.hash;
                 } else {
                     let xr = cn.hash;
-                    let hs = MiMC::mimc(xl, xr, &constants);
+                    let hs = mimc(xl, xr, &constants);
 
                     let n = Node {
                         val: None,
