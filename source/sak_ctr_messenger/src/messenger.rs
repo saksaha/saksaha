@@ -232,22 +232,7 @@ fn handle_open_channel(storage: &mut Storage, args: ExecuteArgs) {
         None => {}
     };
 
-    // storage_new.insert(her_pk.clone(), channel_id.clone());
-    //
-
-    // let mut storage_new = Storage::with_capacity(10);
-    // storage_new.insert(her_pk.clone(), channel_id.clone());
-
-    // let storage_serialized = serde_json::to_string(&storage_new).unwrap();
-
-    // let mut storage_bytes_vec = storage_serialized.as_bytes().to_owned();
-
-    // let storage_ptr = storage_bytes_vec.as_mut_ptr();
-    // let storage_len = storage_bytes_vec.len();
-
-    // std::mem::forget(storage_bytes_vec);
-
-    // (storage_ptr, storage_len as i32)
+    storage.insert(her_pk.clone(), channel_id.clone());
 }
 
 fn handle_send_msg(storage: &mut Storage, args: ExecuteArgs) {
@@ -284,20 +269,7 @@ fn handle_send_msg(storage: &mut Storage, args: ExecuteArgs) {
 
     let chat_new = serde_json::to_string(&msgs_vec).unwrap();
 
-    // storage_new.insert(channel_id.clone(), chat_new);
-    //
+    storage.remove(channel_id);
 
-    // let mut storage_new = Storage::with_capacity(STORAGE_CAP);
-    // storage_new.insert(channel_id.clone(), chat_new);
-
-    // let storage_serialized = serde_json::to_string(&storage_new).unwrap();
-
-    // let mut storage_bytes_vec = storage_serialized.as_bytes().to_owned();
-
-    // let storage_ptr = storage_bytes_vec.as_mut_ptr();
-    // let storage_len = storage_bytes_vec.len();
-
-    // std::mem::forget(storage_bytes_vec);
-
-    // (storage_ptr, storage_len as i32)
+    storage.insert(channel_id.clone(), chat_new);
 }
