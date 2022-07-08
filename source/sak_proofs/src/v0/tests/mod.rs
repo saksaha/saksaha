@@ -1,7 +1,6 @@
-use crate::{
-    coin_ownership::{CoinCircuit, CoinProof, TREE_DEPTH},
-    MiMC,
-};
+mod coin;
+
+use crate::{get_mimc_constants, CoinCircuit, CoinProof, CM_TREE_DEPTH};
 use bellman::groth16;
 use bls12_381::Scalar;
 use rand::rngs::OsRng;
@@ -28,7 +27,7 @@ pub fn performance_test() {
     // let constants = (0..MIMC_ROUNDS)
     //     .map(|_| Scalar::random(&mut rng))
     //     .collect::<Vec<_>>();
-    let constants = MiMC::get_mimc_constants();
+    let constants = get_mimc_constants();
     // println!("constants : {:?}", constants);
 
     // let mut bytes_constants = constants.clone();
@@ -41,7 +40,7 @@ pub fn performance_test() {
     println!("before generate proof");
     let auth_paths = tree.generate_auth_paths(0);
     let leaf = tree.nodes.get(0).unwrap().get(0).unwrap().hash;
-    let root = tree.root().hash;
+    let root = tree.get_root().hash;
 
     println!("\nauth_paths: {:?}", auth_paths);
     println!("\nroot: {:?}", root.to_bytes());
@@ -107,8 +106,8 @@ pub fn performance_test() {
     );
 
     // Create an instance of our circuit (with the preimage as a witness).
-    let mut auth_path: [Option<(Scalar, bool)>; TREE_DEPTH] =
-        [None; TREE_DEPTH];
+    let mut auth_path: [Option<(Scalar, bool)>; CM_TREE_DEPTH] =
+        [None; CM_TREE_DEPTH];
 
     for (idx, elem) in auth_path.clone().iter().enumerate() {
         let sib = auth_paths.get(idx).unwrap();
@@ -125,7 +124,7 @@ pub fn performance_test() {
     let c = CoinCircuit {
         leaf: Some(leaf),
         auth_path,
-        constants: &constants,
+        constants,
     };
 
     let circuit_time = SystemTime::now();
