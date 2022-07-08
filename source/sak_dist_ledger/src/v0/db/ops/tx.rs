@@ -174,6 +174,21 @@ impl LedgerDB {
         Ok(tx_hash.clone())
     }
 
+    pub(crate) async fn get_txs(
+        &self,
+        tx_hashes: &Vec<String>,
+    ) -> Result<Vec<Tx>, LedgerError> {
+        let mut ret = vec![];
+        for tx_hash in tx_hashes {
+            match self.get_tx(tx_hash).await? {
+                Some(b) => ret.push(b),
+                None => (),
+            }
+        }
+
+        Ok(ret)
+    }
+
     pub(crate) async fn get_latest_tx_height(
         &self,
     ) -> Result<Option<u128>, LedgerError> {

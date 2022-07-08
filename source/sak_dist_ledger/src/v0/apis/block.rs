@@ -58,6 +58,13 @@ impl DistLedger {
         self.ledger_db.get_blocks(block_hashes).await
     }
 
+    pub async fn get_txs(
+        &self,
+        tx_hashes: &Vec<String>,
+    ) -> Result<Vec<Tx>, LedgerError> {
+        self.ledger_db.get_txs(tx_hashes).await
+    }
+
     pub async fn get_latest_block_hash(
         &self,
     ) -> Result<Option<(u128, String)>, LedgerError> {
@@ -184,6 +191,7 @@ impl DistLedger {
         let latest_tx_height = self.get_latest_tx_height().await?;
         let latest_rt = self.get_latest_rt().await?;
 
+        let latest_rt = self.get_latest_rt().await?;
         let tcs = &bc.tx_candidates;
 
         let mut state_updates = StateUpdate::new();
@@ -256,7 +264,6 @@ impl DistLedger {
 
         // [+] After rt_updates has been updated, `bc` is going to be upgraded
         // [-] which means it can be `extract`ed into `block` and `txs`.
-        // let (block, txs) = bc.upgrade(latest_block_height, latest_tx_height);
         let (block, txs) =
             bc.upgrade(latest_block_height, latest_tx_height, latest_rt);
 

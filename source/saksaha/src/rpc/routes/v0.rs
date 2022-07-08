@@ -16,6 +16,15 @@ struct SendTxBody {
     pi: Vec<u8>,
     author_sig: String,
     ctr_addr: String,
+    cm: String,
+    v: String,
+    k: String,
+    s: String,
+    sn_1: String,
+    sn_2: String,
+    cm_1: String,
+    cm_2: String,
+    rt: String,
 }
 
 pub(crate) async fn send_transaction(
@@ -33,6 +42,15 @@ pub(crate) async fn send_transaction(
                             v.author_sig,
                             v.pi,
                             Some(v.ctr_addr),
+                            Some(v.cm),
+                            Some(v.v),
+                            Some(v.k),
+                            Some(v.s),
+                            Some(v.sn_1),
+                            Some(v.sn_2),
+                            Some(v.cm_1),
+                            Some(v.cm_2),
+                            Some(v.rt),
                         );
 
                         match sys_handle

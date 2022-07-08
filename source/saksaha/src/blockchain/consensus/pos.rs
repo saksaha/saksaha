@@ -35,7 +35,7 @@ impl Consensus for Pos {
         //     next_height(dist_ledger.get_latest_tx_height().await?);
 
         if self.identity.credential.public_key_str == validator {
-            let mut txs = vec![];
+            // let mut txs = vec![];
 
             // for (ix, tx_candidate) in tx_candidates.iter().enumerate() {
             //     // let tx_height = latest_tx_height + ix as u128;

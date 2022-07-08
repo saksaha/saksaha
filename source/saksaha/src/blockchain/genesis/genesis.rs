@@ -1,4 +1,4 @@
-use sak_types::{BlockCandidate, Tx};
+use sak_types::{BlockCandidate, Tx, TxCandidate};
 
 pub(crate) const VALIDATOR_SIG: &str = "alw";
 
@@ -15,42 +15,38 @@ impl GenesisBlock {
     pub fn create() -> GenesisBlock {
         let validator_wasm = VALIDATOR.to_vec();
 
-        let validator_deploy_tx = Tx::new(
+        let validator_deploy_tx = TxCandidate::new(
             String::from("1"),
             validator_wasm,
             String::from("1"),
             vec![1],
             Some(VALIDATOR_CTR_ADDR.to_string()),
-            0,
-            String::from("1"),
-            String::from("1"),
-            String::from("1"),
-            String::from("1"),
-            String::from("1"),
-            String::from("1"),
-            String::from("1"),
-            String::from("1"),
-            String::from("1"),
-            String::from("1"),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
         );
 
-        let some_other_tx = Tx::new(
+        let some_other_tx = TxCandidate::new(
             String::from("2"),
             vec![22, 22, 22],
             String::from("2"),
             vec![2],
             None,
-            1,
-            String::from("2"),
-            String::from("2"),
-            String::from("2"),
-            String::from("2"),
-            String::from("2"),
-            String::from("2"),
-            String::from("2"),
-            String::from("2"),
-            String::from("2"),
-            String::from("2"),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
         );
 
         let block_candidate = BlockCandidate {
