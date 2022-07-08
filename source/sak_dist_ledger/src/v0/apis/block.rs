@@ -122,11 +122,11 @@ impl DistLedger {
 
     pub async fn get_latest_block_height(
         &self,
-    ) -> Result<Option<u128>, String> {
+    ) -> Result<Option<u128>, LedgerError> {
         self.ledger_db.get_latest_block_height().await
     }
 
-    pub async fn get_latest_tx_height(&self) -> Result<Option<u128>, String> {
+    pub async fn get_latest_tx_height(&self) -> Result<Option<u128>, LedgerError> {
         self.ledger_db.get_latest_tx_height().await
     }
 

@@ -117,6 +117,13 @@ impl LedgerDB {
 
         self.schema.batch_put_cm(db, batch, tx_hash, tx.get_cm())?;
 
+        self.schema.batch_put_cm_by_height(
+            db,
+            batch,
+            tx.get_tx_height(),
+            tx.get_cm(),
+        )?;
+
         match get_tx_type(tx.get_ctr_addr(), tx.get_data()) {
             TxType::ContractDeploy => {
                 self.schema.batch_put_tx_hash(
@@ -135,7 +142,7 @@ impl LedgerDB {
 
     pub(crate) async fn get_latest_tx_height(
         &self,
-    ) -> Result<Option<u128>, String> {
+    ) -> Result<Option<u128>, LedgerError> {
         let db = &self.kv_db.db_instance;
 
         let height = self.schema.get_latest_tx_height(db)?;
@@ -145,13 +152,11 @@ impl LedgerDB {
 
     pub(crate) async fn get_cm_by_height(
         &self,
-        height: u64,
-    ) -> Result<Option<u128>, String> {
+        height: &u128,
+    ) -> Result<Option<String>, LedgerError> {
         let db = &self.kv_db.db_instance;
 
-        let height = self.schema.get_cm(db, height)?;
-
-        Ok(height)
+        self.schema.get_cm_by_height(db, height)
     }
 }
 
@@ -159,18 +164,6 @@ pub mod testing {
     use super::*;
 
     impl LedgerDB {
-        // pub fn iter(
-        //     &self,
-        // ) -> DBRawIteratorWithThreadMode<DBWithThreadMode<SingleThreaded>>
-        // {
-        //     let db = &self.kv_db.db_instance;
-
-        //     let iter =
-        //         db.raw_iterator_cf(db.cf_handle(columns::CREATED_AT).unwrap());
-
-        //     iter
-        // }
-
         pub fn delete_tx(&self, tx_hash: &String) -> Result<(), LedgerError> {
             let db = &self.kv_db.db_instance;
 

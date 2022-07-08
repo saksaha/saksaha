@@ -34,6 +34,9 @@ const TX_HASH_BY_HEIGHT: &str = "TX_HASH_BY_HEIGHT";
 // by hash
 const CM: &str = "cm";
 
+// by height
+const CM_BY_HEIGHT: &str = "cm_by_height";
+
 ///// Block
 //
 const VALIDATOR_SIG: &str = "validator_sig";
@@ -550,9 +553,31 @@ impl LedgerDBSchema {
     pub(crate) fn get_cm(
         &self,
         db: &DB,
+        // tx_hash
         key: &String,
     ) -> Result<Option<String>, LedgerError> {
         let cf = make_cf_handle(db, CM)?;
+
+        match db.get_cf(&cf, key)? {
+            Some(v) => {
+                let str = String::from_utf8(v)?;
+
+                return Ok(Some(str));
+            }
+            None => {
+                return Ok(None);
+            }
+        }
+    }
+
+    pub(crate) fn get_cm_by_height(
+        &self,
+        db: &DB,
+        tx_height: &u128,
+    ) -> Result<Option<String>, LedgerError> {
+        let cf = make_cf_handle(db, CM_BY_HEIGHT)?;
+
+        let key = tx_height.to_be_bytes();
 
         match db.get_cf(&cf, key)? {
             Some(v) => {
@@ -640,6 +665,22 @@ impl LedgerDBSchema {
         Ok(())
     }
 
+    pub(crate) fn batch_put_cm_by_height(
+        &self,
+        db: &DB,
+        batch: &mut WriteBatch,
+        tx_height: &u128,
+        value: &String,
+    ) -> Result<(), LedgerError> {
+        let cf = make_cf_handle(db, CM_BY_HEIGHT)?;
+
+        let v = tx_height.to_be_bytes();
+
+        batch.put_cf(&cf, v, value);
+
+        Ok(())
+    }
+
     pub(crate) fn get_latest_block_height(
         &self,
         db: &DB,
@@ -687,6 +728,7 @@ impl LedgerDBSchema {
             ColumnFamilyDescriptor::new(TX_HEIGHT, Options::default()),
             ColumnFamilyDescriptor::new(TX_HASH_BY_HEIGHT, Options::default()),
             ColumnFamilyDescriptor::new(CM, Options::default()),
+            ColumnFamilyDescriptor::new(CM_BY_HEIGHT, Options::default()),
             ColumnFamilyDescriptor::new(VALIDATOR_SIG, Options::default()),
             ColumnFamilyDescriptor::new(TX_HASHES, Options::default()),
             ColumnFamilyDescriptor::new(WITNESS_SIGS, Options::default()),

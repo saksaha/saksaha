@@ -5,8 +5,7 @@ use crate::Runtime;
 use crate::SyncPool;
 use colored::Colorize;
 use log::info;
-use sak_proofs::{coin_ownership::CoinProof, MerkleTree, MiMC};
-use sak_types::{BlockCandidate, Tx};
+use sak_types::BlockCandidate;
 use sak_vm::VM;
 use std::sync::Arc;
 use tokio::sync::broadcast;
@@ -96,11 +95,20 @@ impl DistLedger {
             // genesis_block hash check
         }
 
-        let latest_height =
-            match dist_ledger.ledger_db.get_latest_block_height().await? {
-                Some(h) => h,
-                None => 0,
-            };
+        let latest_height = {
+            let maybe_height =
+                match dist_ledger.ledger_db.get_latest_block_height().await {
+                    Ok(h) => h,
+                    Err(err) => {
+                        return Err(format!(
+                            "Failed to get latest block height, err: {}",
+                            err,
+                        ))
+                    }
+                };
+
+            maybe_height.unwrap_or(0)
+        };
 
         info!(
             "Initialized Blockchain, latest height: {}",
