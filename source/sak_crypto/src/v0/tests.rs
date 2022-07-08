@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod test {
-    pub type PublicKey = k256::PublicKey;
+    use crate::{aes_encrypt, derive_aes_key, PublicKey};
     use base64ct::{Base64, Encoding};
     use k256::SecretKey;
     use k256::{
@@ -12,12 +12,23 @@ mod test {
         elliptic_curve::sec1::ToEncodedPoint,
         EncodedPoint,
     };
-
     use k256::{elliptic_curve::ecdh::SharedSecret, Secp256k1};
-
     use rand_core::OsRng;
     use sha3::{Digest, Sha3_256};
     use std::{fmt::Write, num::ParseIntError};
+
+    pub fn init() {
+        const RUST_LOG_ENV: &str = "
+            sak_,
+            saksaha
+        ";
+
+        if std::env::var("RUST_LOG").is_err() {
+            std::env::set_var("RUST_LOG", RUST_LOG_ENV);
+        }
+
+        sak_logger::init(false);
+    }
 
     #[test]
     fn it_creates_signature() {
@@ -69,45 +80,39 @@ mod test {
     }
 
     #[test]
-    fn a() {
-        // alice
-        let alice_secret = {
-            let alice_secret_bytes = {
-                let secret = String::from(
-                    "7297b903877a957748b74068d63d6d5661481975240\
-                    99fc1df5cd9e8814c66c7",
-                );
+    fn test_ecies_variant() {
+        init();
 
-                crate::decode_hex(&secret).unwrap()
-            };
+        sak_test_utils::init_test_config(&vec!["test".to_string()]).unwrap();
 
-            let s = SecretKey::from_bytes(alice_secret_bytes).unwrap();
-            s
-            // let encoded_point = EncodedPoint::from(s.public_key());
-            // encoded_point
+        let (bob_pk, bob_sk) = {
+            let sk = crate::generate_key();
+            let pk = sk.public_key();
+            (pk, sk)
         };
 
-        let bob_secret = {
-            let secret_bytes = {
-                let secret = String::from("0");
+        // alice is the sender of the message
+        let (e_pk, e_sk) = {
+            let sk = crate::generate_key();
+            let pk = sk.public_key();
 
-                crate::decode_hex(&secret).unwrap()
-            };
-
-            let s = SecretKey::from_bytes(secret_bytes).unwrap();
-            s
-            // let encoded_point = EncodedPoint::from(s.public_key());
-            // encoded_point
+            (pk, sk)
         };
 
-        // let a = EncodedPoint::from(bob_secret.public_key());
-        let p = bob_secret.public_key();
+        let msg = "hello";
+        println!("msg: {}", msg);
 
-        // shared_secret
-        let ss = k256::elliptic_curve::ecdh::diffie_hellman(
-            alice_secret.to_secret_scalar(),
-            p.as_affine(),
-        );
+        let aes_key = derive_aes_key(e_sk, bob_pk);
+        println!("aes_key: {:?}", aes_key);
 
+        let cipher_text = aes_encrypt(&aes_key, msg.as_bytes()).unwrap();
+        println!("cipher_text: {:?}", cipher_text);
+
+        let mut msg_to_send = Vec::new();
+
+        msg_to_send.extend_from_slice(&e_pk.to_encoded_point(false).to_bytes());
+        msg_to_send.extend(cipher_text);
+
+        println!("msg_to_send: {:?}", msg_to_send);
     }
 }

@@ -1,8 +1,10 @@
+mod ecies;
 mod utils;
 
 #[cfg(test)]
 mod tests;
 
+pub use ecies::*;
 pub use k256::{
     ecdsa::{
         signature::{Signer, Verifier},
@@ -17,3 +19,4 @@ pub use utils::*;
 
 pub type PublicKey = k256::PublicKey;
 pub type SharedSecret = SSecret<Secp256k1>;
+pub type CryptoError = Box<dyn std::error::Error + Send + Sync>;
