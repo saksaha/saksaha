@@ -59,6 +59,16 @@ const BLOCK_HASH: &str = "block_hash";
 //
 const CTR_STATE: &str = "ctr_state";
 
+/*
+
+  | Key      | Column Family | Value   |
+--------------------------------------------------
+  | Ctr Addr | Tx Hash       | Tx Hash |
+  | Ctr Addr | Tx Hash       | Tx Hash |
+
+
+
+*/
 pub(crate) struct LedgerDBSchema {}
 
 impl LedgerDBSchema {
