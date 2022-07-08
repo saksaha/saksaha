@@ -20,11 +20,17 @@ pub struct Tx {
 
     //
     cm: String,
-
-    //
-    tx_height: u128,
+    v: String,
+    k: String,
+    s: String,
+    sn_1: String,
+    sn_2: String,
+    cm_1: String,
+    cm_2: String,
+    rt: String,
 
     // auto-generated value
+    tx_height: u128,
     hash: String,
 }
 
@@ -48,6 +54,14 @@ impl Tx {
         ctr_addr: String,
         hash: String,
         cm: String,
+        v: String,
+        k: String,
+        s: String,
+        sn_1: String,
+        sn_2: String,
+        cm_1: String,
+        cm_2: String,
+        rt: String,
         tx_height: u128,
     ) -> Tx {
         Tx {
@@ -57,6 +71,14 @@ impl Tx {
             author_sig,
             ctr_addr,
             cm,
+            v,
+            k,
+            s,
+            sn_1,
+            sn_2,
+            cm_1,
+            cm_2,
+            rt,
             tx_height,
             hash,
         }
@@ -90,6 +112,38 @@ impl Tx {
         &self.cm
     }
 
+    pub fn get_v(&self) -> &String {
+        &self.v
+    }
+
+    pub fn get_k(&self) -> &String {
+        &self.k
+    }
+
+    pub fn get_s(&self) -> &String {
+        &self.s
+    }
+
+    pub fn get_sn_1(&self) -> &String {
+        &self.sn_1
+    }
+
+    pub fn get_sn_2(&self) -> &String {
+        &self.sn_2
+    }
+
+    pub fn get_cm_1(&self) -> &String {
+        &self.cm_1
+    }
+
+    pub fn get_cm_2(&self) -> &String {
+        &self.cm_2
+    }
+
+    pub fn get_rt(&self) -> &String {
+        &self.rt
+    }
+
     pub fn get_hash(&self) -> &String {
         &self.hash
     }
@@ -101,93 +155,6 @@ impl Tx {
     pub fn has_ctr_addr(&self) -> bool {
         self.ctr_addr.len() > 0
     }
-
-    // pub fn get_type(&self) -> TxType {
-    //     if self.has_ctr_addr() {
-    //         let data = self.get_data().clone();
-    //         if data.len() > 4 {
-    //             if data[0..4] == WASM_MAGIC_NUMBER {
-    //                 return TxType::ContractDeploy;
-    //             } else {
-    //                 return TxType::ContractCall;
-    //             }
-    //         }
-    //     }
-
-    //     return TxType::Plain;
-    // }
-
-    // pub fn is_valid_ctr_deploying_tx(&self) -> Result<(), String> {
-    //     let wasm = self.get_data();
-
-    //     let engine =
-    //         Engine::new(Config::new().wasm_multi_value(true).debug_info(true))
-    //             .unwrap();
-
-    //     let mut store = Store::new(&engine, 3);
-
-    //     let module = match Module::new(&engine, &wasm) {
-    //         Ok(m) => {
-    //             {
-    //                 for i in m.imports() {
-    //                     println!("imported: {}", i.name());
-    //                 }
-    //             }
-
-    //             m
-    //         }
-    //         Err(err) => {
-    //             panic!("Error creating a module, err: {}", err);
-    //         }
-    //     };
-
-    //     let linker = Linker::new(&engine);
-
-    //     let instance = match linker.instantiate(&mut store, &module) {
-    //         Ok(i) => i,
-    //         Err(err) => {
-    //             panic!("Error creating an instance, err: {}", err);
-    //         }
-    //     };
-
-    //     let _init: TypedFunc<(), (i32, i32)> = {
-    //         match instance.get_typed_func(&mut store, "init") {
-    //             Ok(o) => o,
-    //             Err(err) => {
-    //                 return Err(format!(
-    //                     "expected init function is not found, err: {:?}",
-    //                     err
-    //                 ));
-    //             }
-    //         }
-    //     };
-
-    //     let _query: TypedFunc<(i32, i32, i32, i32), (i32, i32)> = {
-    //         match instance.get_typed_func(&mut store, "query") {
-    //             Ok(o) => o,
-    //             Err(err) => {
-    //                 return Err(format!(
-    //                     "expected query function is not found, err: {:?}",
-    //                     err
-    //                 ));
-    //             }
-    //         }
-    //     };
-
-    //     let _execute: TypedFunc<(i32, i32, i32, i32), (i32, i32)> = {
-    //         match instance.get_typed_func(&mut store, "execute") {
-    //             Ok(o) => o,
-    //             Err(err) => {
-    //                 return Err(format!(
-    //                     "expected execute function is not found, err: {:?}",
-    //                     err
-    //                 ));
-    //             }
-    //         }
-    //     };
-
-    //     Ok(())
-    // }
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
@@ -199,6 +166,15 @@ pub struct TxCandidate {
     author_sig: String,
     ctr_addr: String,
     cm: String,
+
+    v: String,
+    k: String,
+    s: String,
+    sn_1: String,
+    sn_2: String,
+    cm_1: String,
+    cm_2: String,
+    rt: String,
 
     // auto-generated value
     hash: String,
@@ -212,16 +188,25 @@ impl TxCandidate {
         pi: Vec<u8>,
         ctr_addr: Option<String>,
         cm: Option<String>,
+        v: Option<String>,
+        k: Option<String>,
+        s: Option<String>,
+        sn_1: Option<String>,
+        sn_2: Option<String>,
+        cm_1: Option<String>,
+        cm_2: Option<String>,
+        rt: Option<String>,
     ) -> TxCandidate {
-        let ctr_addr = match ctr_addr {
-            Some(a) => a,
-            None => String::from(""),
-        };
-
-        let cm = match cm {
-            Some(c) => c,
-            None => String::from(""),
-        };
+        let ctr_addr = ctr_addr.unwrap_or(String::from(""));
+        let cm = cm.unwrap_or(String::from(""));
+        let v = v.unwrap_or(String::from(""));
+        let k = k.unwrap_or(String::from(""));
+        let s = s.unwrap_or(String::from(""));
+        let sn_1 = sn_1.unwrap_or(String::from(""));
+        let sn_2 = sn_2.unwrap_or(String::from(""));
+        let cm_1 = cm_1.unwrap_or(String::from(""));
+        let cm_2 = cm_2.unwrap_or(String::from(""));
+        let rt = rt.unwrap_or(String::from(""));
 
         let hashable_items = vec![
             created_at.as_bytes(),
@@ -240,6 +225,14 @@ impl TxCandidate {
             author_sig,
             ctr_addr,
             cm,
+            v,
+            k,
+            s,
+            sn_1,
+            sn_2,
+            cm_1,
+            cm_2,
+            rt,
             hash,
         }
     }
@@ -253,6 +246,14 @@ impl TxCandidate {
             self.ctr_addr,
             self.hash,
             self.cm,
+            self.v,
+            self.k,
+            self.s,
+            self.sn_1,
+            self.sn_2,
+            self.cm_1,
+            self.cm_2,
+            self.rt,
             tx_height,
         )
     }
@@ -279,6 +280,38 @@ impl TxCandidate {
 
     pub fn get_cm(&self) -> &String {
         &self.cm
+    }
+
+    pub fn get_v(&self) -> &String {
+        &self.v
+    }
+
+    pub fn get_k(&self) -> &String {
+        &self.k
+    }
+
+    pub fn get_s(&self) -> &String {
+        &self.s
+    }
+
+    pub fn get_sn_1(&self) -> &String {
+        &self.sn_1
+    }
+
+    pub fn get_sn_2(&self) -> &String {
+        &self.sn_2
+    }
+
+    pub fn get_cm_1(&self) -> &String {
+        &self.cm_1
+    }
+
+    pub fn get_cm_2(&self) -> &String {
+        &self.cm_2
+    }
+
+    pub fn get_rt(&self) -> &String {
+        &self.rt
     }
 
     pub fn get_hash(&self) -> &String {

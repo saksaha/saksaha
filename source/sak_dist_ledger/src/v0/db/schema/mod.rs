@@ -1,43 +1,56 @@
 use crate::LedgerError;
 use sak_kv_db::{
-    BoundColumnFamily, ColumnFamily, ColumnFamilyDescriptor, IteratorMode,
-    KeyValueDatabase, Options, WriteBatch, DB,
+    BoundColumnFamily, ColumnFamilyDescriptor, IteratorMode, Options,
+    WriteBatch, DB,
 };
 use std::sync::Arc;
 
 const TARGET_BITS: usize = 16;
 
-//
+/*
+
+  | Column Family | Key | Value |
+--------------------------------------------------
+  | TX_HASH             | CTR_ADDR      | Tx Hash       |
+  | PI                  | TX_Hash       | PI            |
+  | AUTHOR_SIG          | TX_Hash       | AUTHOR_SIG    |
+  | CREATED_AT          | TX_Hash       | CREATED_AT    |
+  | DATA                | TX_Hash       | DATA          |
+  | CTR_ADDR            | TX_Hash       | CTR_ADDR      |
+  | TX_HEIGHT           | TX_Hash       | TX_HEIGHT     |
+  | TX_HASH_BY_HEIGHT   | TX_HEIGHT     | TX_HASH       |
+  | CM                  | TX_Hash       | CM            |
+  | CM_BY_HEIGHT        | TX_HEIGHT     | CM            |
+  | V                   | TX_Hash       | V             |
+  | K                   | TX_Hash       | K             |
+  | S                   | TX_Hash       | S             |
+  | SN_1                | TX_Hash       | SN_1          |
+  | SN_2                | TX_Hash       | SN_2          |
+  | CM_1                | TX_Hash       | CM_1          |
+  | CM_2                | TX_Hash       | CM_2          |
+  | RT                  | TX_Hash       | RT          |
+*/
+//// TX
 const TX_HASH: &str = "tx_hash";
-
-//
 const PI: &str = "pi";
-
-//
 const AUTHOR_SIG: &str = "author_sig";
-
-//
 const CREATED_AT: &str = "created_at";
-
-//
 const DATA: &str = "data";
-
-//
 const CTR_ADDR: &str = "ctr_addr";
-
-// by hash
 const TX_HEIGHT: &str = "tx_height";
-
-// by height
 const TX_HASH_BY_HEIGHT: &str = "TX_HASH_BY_HEIGHT";
-
-// by hash
 const CM: &str = "cm";
-
-// by height
 const CM_BY_HEIGHT: &str = "cm_by_height";
+const V: &str = "v";
+const K: &str = "k";
+const S: &str = "s";
+const SN_1: &str = "sn_1";
+const SN_2: &str = "sn_2";
+const CM_1: &str = "cm_1";
+const CM_2: &str = "cm_2";
+const RT: &str = "rt";
 
-///// Block
+//// Block
 //
 const VALIDATOR_SIG: &str = "validator_sig";
 
@@ -69,6 +82,7 @@ const CTR_STATE: &str = "ctr_state";
 
 
 */
+
 pub(crate) struct LedgerDBSchema {}
 
 impl LedgerDBSchema {
@@ -601,6 +615,158 @@ impl LedgerDBSchema {
         }
     }
 
+    pub(crate) fn get_v(
+        &self,
+        db: &DB,
+        key: &String,
+    ) -> Result<Option<String>, LedgerError> {
+        let cf = make_cf_handle(db, V)?;
+
+        match db.get_cf(&cf, key)? {
+            Some(v) => {
+                let str = String::from_utf8(v)?;
+
+                return Ok(Some(str));
+            }
+            None => {
+                return Ok(None);
+            }
+        }
+    }
+
+    pub(crate) fn get_k(
+        &self,
+        db: &DB,
+        key: &String,
+    ) -> Result<Option<String>, LedgerError> {
+        let cf = make_cf_handle(db, K)?;
+
+        match db.get_cf(&cf, key)? {
+            Some(v) => {
+                let str = String::from_utf8(v)?;
+
+                return Ok(Some(str));
+            }
+            None => {
+                return Ok(None);
+            }
+        }
+    }
+
+    pub(crate) fn get_s(
+        &self,
+        db: &DB,
+        key: &String,
+    ) -> Result<Option<String>, LedgerError> {
+        let cf = make_cf_handle(db, S)?;
+
+        match db.get_cf(&cf, key)? {
+            Some(v) => {
+                let str = String::from_utf8(v)?;
+
+                return Ok(Some(str));
+            }
+            None => {
+                return Ok(None);
+            }
+        }
+    }
+
+    pub(crate) fn get_sn_1(
+        &self,
+        db: &DB,
+        key: &String,
+    ) -> Result<Option<String>, LedgerError> {
+        let cf = make_cf_handle(db, SN_1)?;
+
+        match db.get_cf(&cf, key)? {
+            Some(v) => {
+                let str = String::from_utf8(v)?;
+
+                return Ok(Some(str));
+            }
+            None => {
+                return Ok(None);
+            }
+        }
+    }
+
+    pub(crate) fn get_sn_2(
+        &self,
+        db: &DB,
+        key: &String,
+    ) -> Result<Option<String>, LedgerError> {
+        let cf = make_cf_handle(db, SN_2)?;
+
+        match db.get_cf(&cf, key)? {
+            Some(v) => {
+                let str = String::from_utf8(v)?;
+
+                return Ok(Some(str));
+            }
+            None => {
+                return Ok(None);
+            }
+        }
+    }
+
+    pub(crate) fn get_cm_1(
+        &self,
+        db: &DB,
+        key: &String,
+    ) -> Result<Option<String>, LedgerError> {
+        let cf = make_cf_handle(db, CM_1)?;
+
+        match db.get_cf(&cf, key)? {
+            Some(v) => {
+                let str = String::from_utf8(v)?;
+
+                return Ok(Some(str));
+            }
+            None => {
+                return Ok(None);
+            }
+        }
+    }
+
+    pub(crate) fn get_cm_2(
+        &self,
+        db: &DB,
+        key: &String,
+    ) -> Result<Option<String>, LedgerError> {
+        let cf = make_cf_handle(db, CM_2)?;
+
+        match db.get_cf(&cf, key)? {
+            Some(v) => {
+                let str = String::from_utf8(v)?;
+
+                return Ok(Some(str));
+            }
+            None => {
+                return Ok(None);
+            }
+        }
+    }
+
+    pub(crate) fn get_rt(
+        &self,
+        db: &DB,
+        key: &String,
+    ) -> Result<Option<String>, LedgerError> {
+        let cf = make_cf_handle(db, RT)?;
+
+        match db.get_cf(&cf, key)? {
+            Some(v) => {
+                let str = String::from_utf8(v)?;
+
+                return Ok(Some(str));
+            }
+            None => {
+                return Ok(None);
+            }
+        }
+    }
+
     pub(crate) fn batch_put_ctr_addr(
         &self,
         db: &DB,
@@ -691,6 +857,118 @@ impl LedgerDBSchema {
         Ok(())
     }
 
+    pub(crate) fn batch_put_v(
+        &self,
+        db: &DB,
+        batch: &mut WriteBatch,
+        key: &String,
+        value: &String,
+    ) -> Result<(), LedgerError> {
+        let cf = make_cf_handle(db, V)?;
+
+        batch.put_cf(&cf, key, value);
+
+        Ok(())
+    }
+
+    pub(crate) fn batch_put_k(
+        &self,
+        db: &DB,
+        batch: &mut WriteBatch,
+        key: &String,
+        value: &String,
+    ) -> Result<(), LedgerError> {
+        let cf = make_cf_handle(db, K)?;
+
+        batch.put_cf(&cf, key, value);
+
+        Ok(())
+    }
+
+    pub(crate) fn batch_put_s(
+        &self,
+        db: &DB,
+        batch: &mut WriteBatch,
+        key: &String,
+        value: &String,
+    ) -> Result<(), LedgerError> {
+        let cf = make_cf_handle(db, S)?;
+
+        batch.put_cf(&cf, key, value);
+
+        Ok(())
+    }
+
+    pub(crate) fn batch_put_sn_1(
+        &self,
+        db: &DB,
+        batch: &mut WriteBatch,
+        key: &String,
+        value: &String,
+    ) -> Result<(), LedgerError> {
+        let cf = make_cf_handle(db, SN_1)?;
+
+        batch.put_cf(&cf, key, value);
+
+        Ok(())
+    }
+
+    pub(crate) fn batch_put_sn_2(
+        &self,
+        db: &DB,
+        batch: &mut WriteBatch,
+        key: &String,
+        value: &String,
+    ) -> Result<(), LedgerError> {
+        let cf = make_cf_handle(db, SN_2)?;
+
+        batch.put_cf(&cf, key, value);
+
+        Ok(())
+    }
+
+    pub(crate) fn batch_put_cm_1(
+        &self,
+        db: &DB,
+        batch: &mut WriteBatch,
+        key: &String,
+        value: &String,
+    ) -> Result<(), LedgerError> {
+        let cf = make_cf_handle(db, CM_1)?;
+
+        batch.put_cf(&cf, key, value);
+
+        Ok(())
+    }
+
+    pub(crate) fn batch_put_cm_2(
+        &self,
+        db: &DB,
+        batch: &mut WriteBatch,
+        key: &String,
+        value: &String,
+    ) -> Result<(), LedgerError> {
+        let cf = make_cf_handle(db, CM_2)?;
+
+        batch.put_cf(&cf, key, value);
+
+        Ok(())
+    }
+
+    pub(crate) fn batch_put_rt(
+        &self,
+        db: &DB,
+        batch: &mut WriteBatch,
+        key: &String,
+        value: &String,
+    ) -> Result<(), LedgerError> {
+        let cf = make_cf_handle(db, RT)?;
+
+        batch.put_cf(&cf, key, value);
+
+        Ok(())
+    }
+
     pub(crate) fn get_latest_block_height(
         &self,
         db: &DB,
@@ -739,6 +1017,14 @@ impl LedgerDBSchema {
             ColumnFamilyDescriptor::new(TX_HASH_BY_HEIGHT, Options::default()),
             ColumnFamilyDescriptor::new(CM, Options::default()),
             ColumnFamilyDescriptor::new(CM_BY_HEIGHT, Options::default()),
+            ColumnFamilyDescriptor::new(V, Options::default()),
+            ColumnFamilyDescriptor::new(K, Options::default()),
+            ColumnFamilyDescriptor::new(S, Options::default()),
+            ColumnFamilyDescriptor::new(SN_1, Options::default()),
+            ColumnFamilyDescriptor::new(SN_2, Options::default()),
+            ColumnFamilyDescriptor::new(CM_1, Options::default()),
+            ColumnFamilyDescriptor::new(CM_2, Options::default()),
+            ColumnFamilyDescriptor::new(RT, Options::default()),
             ColumnFamilyDescriptor::new(VALIDATOR_SIG, Options::default()),
             ColumnFamilyDescriptor::new(TX_HASHES, Options::default()),
             ColumnFamilyDescriptor::new(WITNESS_SIGS, Options::default()),

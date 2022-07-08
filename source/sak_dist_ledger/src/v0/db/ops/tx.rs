@@ -46,12 +46,36 @@ impl LedgerDB {
         let tx_height = self
             .schema
             .get_tx_height(db, tx_hash)?
-            .ok_or("ctr_addr does not exist")?;
+            .ok_or("tx_height does not exist")?;
 
         let cm = self
             .schema
             .get_cm(db, tx_hash)?
-            .ok_or("ctr_addr does not exist")?;
+            .ok_or("cm does not exist")?;
+
+        let v = self.schema.get_v(db, tx_hash)?.ok_or("v does not exist")?;
+        let k = self.schema.get_k(db, tx_hash)?.ok_or("k does not exist")?;
+        let s = self.schema.get_s(db, tx_hash)?.ok_or("s does not exist")?;
+        let sn_1 = self
+            .schema
+            .get_sn_1(db, tx_hash)?
+            .ok_or("sn_1 does not exist")?;
+        let sn_2 = self
+            .schema
+            .get_sn_2(db, tx_hash)?
+            .ok_or("sn_2 does not exist")?;
+        let cm_1 = self
+            .schema
+            .get_cm_1(db, tx_hash)?
+            .ok_or("cm_1 does not exist")?;
+        let cm_2 = self
+            .schema
+            .get_cm_2(db, tx_hash)?
+            .ok_or("cm_2 does not exist")?;
+        let rt = self
+            .schema
+            .get_rt(db, tx_hash)?
+            .ok_or("rt does not exist")?;
 
         let tx = Tx::new(
             created_at,
@@ -61,6 +85,14 @@ impl LedgerDB {
             ctr_addr,
             tx_hash.to_owned(),
             cm,
+            v,
+            k,
+            s,
+            sn_1,
+            sn_2,
+            cm_1,
+            cm_2,
+            rt,
             tx_height,
         );
 
@@ -123,6 +155,8 @@ impl LedgerDB {
             tx.get_tx_height(),
             tx.get_cm(),
         )?;
+
+        // self.schema.batch_put_cm(db, batch, tx_hash, tx.get_cm())?;
 
         match get_tx_type(tx.get_ctr_addr(), tx.get_data()) {
             TxType::ContractDeploy => {
