@@ -4,7 +4,6 @@ use bellman::groth16::{Parameters, PreparedVerifyingKey, Proof, VerifyingKey};
 use bellman::{groth16, Circuit, ConstraintSystem, SynthesisError};
 use bls12_381::Bls12;
 use bls12_381::Scalar;
-use ff::PrimeField;
 use pairing::MultiMillerLoop;
 use rand::rngs::OsRng;
 use std::convert::TryInto;
@@ -209,16 +208,6 @@ impl Circuit<Scalar> for CoinCircuit {
             || "image",
             || cur.ok_or(SynthesisError::AssignmentMissing),
         )?;
-
-        // let leaf = match self.leaf {
-        //     Some(a) => Some(a),
-        //     None => Some(S::default()),
-        // };
-
-        // cs.alloc_input(
-        //     || "leaft",
-        //     || leaf.ok_or(SynthesisError::AssignmentMissing),
-        // )?;
 
         println!("final circuit public input {:?}", cur);
 

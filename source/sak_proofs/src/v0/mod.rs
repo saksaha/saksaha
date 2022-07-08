@@ -10,3 +10,5 @@ pub use hasher::*;
 pub use merkle::*;
 pub use mimc::*;
 pub use proofs::*;
+
+pub type ProofError = Box<dyn std::error::Error + Send + Sync>;
