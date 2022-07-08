@@ -1,4 +1,3 @@
-mod apis;
 mod constants;
 mod ctr_fn;
 mod utils;
@@ -8,7 +7,6 @@ pub(crate) mod wasm_bootstrap;
 #[cfg(test)]
 mod tests;
 
-pub use apis::*;
 pub(crate) use constants::*;
 pub use ctr_fn::*;
 pub use utils::*;

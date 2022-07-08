@@ -1,10 +1,9 @@
-use crate::{MerkleTree, MiMC};
+use crate::{get_mimc_constants, mimc, mimc_cs, MerkleTree};
 use bellman::gadgets::boolean::AllocatedBit;
 use bellman::groth16::{Parameters, PreparedVerifyingKey, Proof, VerifyingKey};
 use bellman::{groth16, Circuit, ConstraintSystem, SynthesisError};
 use bls12_381::Bls12;
 use bls12_381::Scalar;
-use ff::PrimeField;
 use pairing::MultiMillerLoop;
 use rand::rngs::OsRng;
 use std::convert::TryInto;
@@ -12,10 +11,11 @@ use std::fs::File;
 use std::io::Write;
 
 //
-pub const TREE_DEPTH: usize = 5;
+pub const CM_TREE_DEPTH: usize = 5;
 
-//
-pub const MIMC_ROUNDS: usize = 322;
+pub const CM_TREE_CAPACITY: usize = 2_usize.pow(CM_TREE_DEPTH as u32);
+
+// const MIMC_ROUNDS: usize = 322;
 
 pub struct CoinProof;
 
@@ -38,8 +38,8 @@ impl CoinProof {
             let params = {
                 let c = CoinCircuit {
                     leaf: None,
-                    auth_path: [None; TREE_DEPTH],
-                    constants: &constants,
+                    auth_path: [None; CM_TREE_DEPTH],
+                    constants: constants.to_vec(),
                 };
 
                 groth16::generate_random_parameters::<Bls12, _, _>(
@@ -68,14 +68,20 @@ impl CoinProof {
             leaves.push(iter.clone());
         });
 
-        let tree = MerkleTree::new(leaves, TREE_DEPTH, &constants);
+        let hasher = |xl, xr| {
+            let hash = mimc(Scalar::from(xl), Scalar::from(xr), constants);
+
+            hash
+        };
+
+        let tree = MerkleTree::new(leaves, CM_TREE_DEPTH, &constants, &hasher);
         tree
     }
 
     pub fn generate_proof(idx: usize) -> Proof<Bls12> {
-        let constants = MiMC::get_mimc_constants();
+        let constants = get_mimc_constants();
 
-        let tree = Self::get_merkle_tree(&constants);
+        let tree = CoinProof::get_merkle_tree(&constants);
 
         // make auth_paths and leaf of {idx}
         let auth_paths = tree.generate_auth_paths(idx.try_into().unwrap());
@@ -89,11 +95,11 @@ impl CoinProof {
 
         println!("leaf: {:?}", leaf);
 
-        let de_params = Self::get_params(&constants);
+        let de_params = CoinProof::get_params(&constants);
 
         // convert auth_paths => [auth_path]
-        let mut auth_path: [Option<(Scalar, bool)>; TREE_DEPTH] =
-            [None; TREE_DEPTH];
+        let mut auth_path: [Option<(Scalar, bool)>; CM_TREE_DEPTH] =
+            [None; CM_TREE_DEPTH];
 
         for (idx, _) in auth_path.clone().iter().enumerate() {
             let sib = auth_paths.get(idx).unwrap();
@@ -103,7 +109,7 @@ impl CoinProof {
         let c = CoinCircuit {
             leaf: Some(leaf),
             auth_path,
-            constants: &constants,
+            constants,
         };
 
         let proof =
@@ -113,20 +119,20 @@ impl CoinProof {
     }
 
     pub fn verify_proof(proof: &Proof<Bls12>) -> bool {
-        let constants = MiMC::get_mimc_constants();
+        let constants = get_mimc_constants();
 
-        let de_params = Self::get_params(&constants);
+        let de_params = CoinProof::get_params(&constants);
 
-        let tree = Self::get_merkle_tree(&constants);
+        let tree = CoinProof::get_merkle_tree(&constants);
 
-        let root = tree.root().hash;
+        let root = tree.get_root().hash;
 
         let leaf = tree.nodes.get(0).unwrap().get(0).unwrap().hash;
 
         // Prepare the verification key (for proof verification).
         let pvk = groth16::prepare_verifying_key(&de_params.vk);
 
-        match groth16::verify_proof(&pvk, &proof, &[root, leaf]) {
+        match groth16::verify_proof(&pvk, &proof, &[root]) {
             Ok(_) => {
                 println!("verify success!");
                 true
@@ -139,20 +145,20 @@ impl CoinProof {
     }
 }
 
-pub struct CoinCircuit<'a, S: PrimeField> {
-    pub leaf: Option<S>,
-    pub auth_path: [Option<(S, bool)>; TREE_DEPTH],
-    pub constants: &'a [S],
+pub struct CoinCircuit {
+    pub leaf: Option<Scalar>,
+    pub auth_path: [Option<(Scalar, bool)>; CM_TREE_DEPTH],
+    pub constants: Vec<Scalar>,
 }
 
-impl<'a, S: PrimeField> Circuit<S> for CoinCircuit<'a, S> {
-    fn synthesize<CS: ConstraintSystem<S>>(
+impl Circuit<Scalar> for CoinCircuit {
+    fn synthesize<CS: ConstraintSystem<Scalar>>(
         self,
         cs: &mut CS,
     ) -> Result<(), SynthesisError> {
         let mut cur = match self.leaf {
             Some(a) => Some(a),
-            None => Some(S::default()),
+            None => Some(Scalar::default()),
         };
 
         {
@@ -167,9 +173,8 @@ impl<'a, S: PrimeField> Circuit<S> for CoinCircuit<'a, S> {
                 )
                 .unwrap();
 
-                // start mimc
-                let mut xl_value;
-                let mut xr_value;
+                let xl_value;
+                let xr_value;
 
                 let is_right = cur_is_right.get_value().and_then(|v| {
                     if v {
@@ -181,10 +186,9 @@ impl<'a, S: PrimeField> Circuit<S> for CoinCircuit<'a, S> {
 
                 let temp = match *layer {
                     Some(a) => a,
-                    None => (S::default(), false),
+                    None => (Scalar::default(), false),
                 };
 
-                // cur_is_right
                 if match is_right {
                     Some(a) => a,
                     None => false,
@@ -196,81 +200,7 @@ impl<'a, S: PrimeField> Circuit<S> for CoinCircuit<'a, S> {
                     xr_value = Some(temp.0);
                 }
 
-                println!("xl: {:?}, xr: {:?}", xl_value, xr_value);
-
-                let mut xl = cs.alloc(
-                    || "preimage xl",
-                    || xl_value.ok_or(SynthesisError::AssignmentMissing),
-                )?;
-
-                // Allocate the second component of the preimage.
-                // let mut xr_value = self.xr;
-                let mut xr = cs.alloc(
-                    || "preimage xr",
-                    || xr_value.ok_or(SynthesisError::AssignmentMissing),
-                )?;
-
-                for i in 0..MIMC_ROUNDS {
-                    // xL, xR := xR + (xL + Ci)^3, xL
-                    // let cs = &mut cs.namespace(|| format!("round {}", i));
-
-                    // tmp = (xL + Ci)^2
-                    let tmp_value = xl_value.map(|mut e| {
-                        e.add_assign(&self.constants[i]);
-                        e.square()
-                    });
-                    let tmp = cs.alloc(
-                        || "tmp",
-                        || tmp_value.ok_or(SynthesisError::AssignmentMissing),
-                    )?;
-
-                    cs.enforce(
-                        || "tmp = (xL + Ci)^2",
-                        |lc| lc + xl + (self.constants[i], CS::one()),
-                        |lc| lc + xl + (self.constants[i], CS::one()),
-                        |lc| lc + tmp,
-                    );
-
-                    // new_xL = xR + (xL + Ci)^3
-                    // new_xL = xR + tmp * (xL + Ci)
-                    // new_xL - xR = tmp * (xL + Ci)
-                    let new_xl_value = xl_value.map(|mut e| {
-                        e.add_assign(&self.constants[i]);
-                        e.mul_assign(&tmp_value.unwrap());
-                        e.add_assign(&xr_value.unwrap());
-                        e
-                    });
-
-                    let new_xl = cs.alloc(
-                        || "new_xl",
-                        || {
-                            new_xl_value
-                                .ok_or(SynthesisError::AssignmentMissing)
-                        },
-                    )?;
-
-                    cs.enforce(
-                        || "new_xL = xR + (xL + Ci)^3",
-                        |lc| lc + tmp,
-                        |lc| lc + xl + (self.constants[i], CS::one()),
-                        |lc| lc + new_xl - xr,
-                    );
-
-                    // xR = xL
-                    xr = xl;
-                    xr_value = xl_value;
-
-                    // xL = new_xL
-                    xl = new_xl;
-                    xl_value = new_xl_value;
-                }
-
-                cur = xl_value;
-                // println!("circuit public input {:?}", cur.unwrap());
-                // end of mimc
-
-                // let cur_str = convert_to_str(cur.clone());
-                // println!("\nlayer_idx: {}, cur: {}", idx, cur_str);
+                cur = mimc_cs(cs, xl_value, xr_value, &self.constants);
             }
         };
 
@@ -279,15 +209,6 @@ impl<'a, S: PrimeField> Circuit<S> for CoinCircuit<'a, S> {
             || cur.ok_or(SynthesisError::AssignmentMissing),
         )?;
 
-        let leaf = match self.leaf {
-            Some(a) => Some(a),
-            None => Some(S::default()),
-        };
-
-        cs.alloc_input(
-            || "image",
-            || leaf.ok_or(SynthesisError::AssignmentMissing),
-        )?;
         println!("final circuit public input {:?}", cur);
 
         Ok(())

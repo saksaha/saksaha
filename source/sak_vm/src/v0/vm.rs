@@ -1,12 +1,9 @@
 use super::utils;
 use crate::wasm_bootstrap;
-use crate::{CtrFn, VMError, MEMORY};
+use crate::{CtrFn, VMError, EXECUTE, INIT, MEMORY, QUERY};
 use log::{error, info};
 use sak_contract_std::{Request, Storage};
-use std::collections::HashMap;
-use wasmtime::{
-    Config, Engine, Func, Instance, Memory, Module, Store, TypedFunc,
-};
+use wasmtime::{Instance, Memory, Store, TypedFunc};
 
 pub struct VM {}
 
@@ -45,7 +42,7 @@ fn invoke_init(
     memory: Memory,
 ) -> Result<String, VMError> {
     let contract_fn: TypedFunc<(), (i32, i32)> =
-        { instance.get_typed_func(&mut store, "init")? };
+        { instance.get_typed_func(&mut store, INIT)? };
 
     let (ret_ptr, ret_len) = contract_fn.call(&mut store, ())?;
 
@@ -71,7 +68,7 @@ fn invoke_query(
     storage: Storage,
 ) -> Result<String, VMError> {
     let contract_fn: TypedFunc<(i32, i32, i32, i32), (i32, i32)> =
-        { instance.get_typed_func(&mut store, "query")? };
+        { instance.get_typed_func(&mut store, QUERY)? };
 
     let (request_bytes, request_len) = {
         let str = serde_json::to_value(request).unwrap().to_string();
@@ -123,7 +120,7 @@ fn invoke_execute(
     storage: Storage,
 ) -> Result<String, VMError> {
     let contract_fn: TypedFunc<(i32, i32, i32, i32), (i32, i32)> =
-        { instance.get_typed_func(&mut store, "execute")? };
+        { instance.get_typed_func(&mut store, EXECUTE)? };
 
     let (request_bytes, request_len) = {
         let str = serde_json::to_value(request).unwrap().to_string();

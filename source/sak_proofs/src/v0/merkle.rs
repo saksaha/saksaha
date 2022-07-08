@@ -1,9 +1,10 @@
-use crate::MiMC;
 use bls12_381::Scalar;
 use log::debug;
 use std::convert::TryInto;
 
-#[derive(Debug, Clone)]
+use crate::mimc;
+
+#[derive(Debug)]
 pub struct MerkleTree {
     pub nodes: Vec<Vec<Node>>,
     pub height: usize,
@@ -47,6 +48,7 @@ impl MerkleTree {
         data: Vec<u32>,
         height: usize,
         constants: &[Scalar],
+        hasher: &dyn Fn(u64, u64) -> Scalar,
     ) -> MerkleTree {
         let mut leaves = vec![];
         let leaf_count = data.len();
@@ -61,8 +63,8 @@ impl MerkleTree {
         for l in data.into_iter() {
             let xl: u64 = l.into();
             let xr: u64 = (l + 1).into();
-            let hash =
-                MiMC::mimc(Scalar::from(xl), Scalar::from(xr), constants);
+
+            let hash = hasher(xl, xr);
 
             let n = Node {
                 val: Some([l]),
@@ -72,6 +74,7 @@ impl MerkleTree {
             leaves.push(n);
         }
 
+        // println!("[*] leaves: {:#?}", leaves);
         let mut nodes = vec![leaves];
 
         for h in 1..=height {
@@ -91,7 +94,7 @@ impl MerkleTree {
                     xl = cn.hash;
                 } else {
                     let xr = cn.hash;
-                    let hs = MiMC::mimc(xl, xr, &constants);
+                    let hs = mimc(xl, xr, &constants);
 
                     let n = Node {
                         val: None,
@@ -111,7 +114,7 @@ impl MerkleTree {
         }
     }
 
-    pub fn root(&self) -> &Node {
+    pub fn get_root(&self) -> &Node {
         let highest_nodes = self.nodes.get(self.nodes.len() - 1).unwrap();
         highest_nodes.get(0).unwrap()
     }

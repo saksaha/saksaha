@@ -1,11 +1,9 @@
 #[cfg(test)]
 mod test {
-
-    use std::collections::HashMap;
-
     use crate::{CtrFn, VM};
     use env_logger::init;
     use sak_contract_std::{CtrCallType, Request, Storage};
+    use std::collections::HashMap;
 
     fn get_dummy_validator_1() -> String {
         String::from(
