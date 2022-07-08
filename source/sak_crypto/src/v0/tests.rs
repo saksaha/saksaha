@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod test {
-    use crate::{aes_encrypt, derive_aes_key, PublicKey};
+    use crate::{aes_decrypt, aes_encrypt, derive_aes_key, PublicKey};
     use base64ct::{Base64, Encoding};
     use k256::SecretKey;
     use k256::{
@@ -99,20 +99,34 @@ mod test {
             (pk, sk)
         };
 
-        let msg = "hello";
-        println!("msg: {}", msg);
+        let plaintext = "hello";
+        println!("plaintext: {}", plaintext);
 
         let aes_key = derive_aes_key(e_sk, bob_pk);
         println!("aes_key: {:?}", aes_key);
 
-        let cipher_text = aes_encrypt(&aes_key, msg.as_bytes()).unwrap();
-        println!("cipher_text: {:?}", cipher_text);
+        let cipher_text = aes_encrypt(&aes_key, plaintext.as_bytes()).unwrap();
+        // println!("cipher_text: {:?}", cipher_text);
 
-        let mut msg_to_send = Vec::new();
+        let mut msg = Vec::new();
 
-        msg_to_send.extend_from_slice(&e_pk.to_encoded_point(false).to_bytes());
-        msg_to_send.extend(cipher_text);
+        let pubkey_bytes = &e_pk.to_encoded_point(false).to_bytes();
 
-        println!("msg_to_send: {:?}", msg_to_send);
+        println!("pubkey_bytes ({}): {:?}", pubkey_bytes.len(), pubkey_bytes);
+
+        println!("cipher_text ({}): {:?}", cipher_text.len(), cipher_text);
+
+        msg.extend_from_slice(pubkey_bytes);
+        msg.extend_from_slice(cipher_text.as_slice());
+
+        println!();
+        println!("msg: {:?}", msg);
+
+        {
+            let e_pk_bytes = &msg[..65];
+            let e_pk = PublicKey::from_sec1_bytes(e_pk_bytes).unwrap();
+
+            aes_decrypt(msg.as_slice(), bob_sk);
+        };
     }
 }
