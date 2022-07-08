@@ -197,6 +197,15 @@ async fn test_block_sync_true() {
         String::from("p2p_block_sync_author_sig1"),
         vec![1],
         Some(String::from("1")),
+        Some(String::from("1")),
+        Some(String::from("1")),
+        Some(String::from("1")),
+        Some(String::from("1")),
+        Some(String::from("1")),
+        Some(String::from("1")),
+        Some(String::from("1")),
+        Some(String::from("1")),
+        Some(String::from("1")),
     );
 
     let dummy_tx2 = TxCandidate::new(
@@ -205,37 +214,26 @@ async fn test_block_sync_true() {
         String::from("p2p_block_sync_author_sig2"),
         vec![2],
         Some(String::from("2")),
+        Some(String::from("2")),
+        Some(String::from("2")),
+        Some(String::from("2")),
+        Some(String::from("2")),
+        Some(String::from("2")),
+        Some(String::from("2")),
+        Some(String::from("2")),
+        Some(String::from("2")),
+        Some(String::from("2")),
     );
 
     let (_block, txs) = {
-        let dummy_tx1 = Tx::new(
-            String::from("1133"),
-            String::from("one").as_bytes().to_vec(),
-            String::from("p2p_block_sync_author_sig1"),
-            vec![1],
-            Some(String::from("1")),
-            1,
-        );
-
-        let dummy_tx2 = Tx::new(
-            String::from("22"),
-            String::from("two").as_bytes().to_vec(),
-            String::from("p2p_block_sync_author_sig2"),
-            vec![2],
-            Some(String::from("2")),
-            2,
-        );
-
         let c = BlockCandidate {
             validator_sig: String::from(""),
-            transactions: vec![dummy_tx1, dummy_tx2],
+            tx_candidates: vec![dummy_tx1, dummy_tx2],
             witness_sigs: vec![],
             created_at: String::from(""),
-            block_height: 1,
-            merkle_root: String::from("1"),
         };
 
-        c.extract(String::from("1"))
+        c.upgrade(None, None, None)
     };
 
     {
