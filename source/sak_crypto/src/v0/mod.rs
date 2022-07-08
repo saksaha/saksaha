@@ -1,5 +1,8 @@
 mod utils;
 
+#[cfg(test)]
+mod tests;
+
 pub use k256::{
     ecdsa::{
         signature::{Signer, Verifier},
