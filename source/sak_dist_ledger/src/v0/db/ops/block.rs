@@ -1,4 +1,4 @@
-use crate::{LedgerDB, LedgerError, StateUpdate};
+use crate::{LedgerDB, LedgerError, RtUpdate, StateUpdate};
 use colored::Colorize;
 use log::debug;
 use sak_kv_db::{WriteBatch, DB};
@@ -41,6 +41,7 @@ impl LedgerDB {
         block: &Block,
         txs: &Vec<Tx>,
         state_updates: &StateUpdate,
+        rt_updates: &RtUpdate,
     ) -> Result<String, LedgerError> {
         let db = &self.kv_db.db_instance;
 

@@ -127,6 +127,27 @@ impl LedgerDBSchema {
         }
     }
 
+    pub(crate) fn get_tx_hash_by_height(
+        &self,
+        db: &DB,
+        tx_height: &u128,
+    ) -> Result<Option<String>, LedgerError> {
+        let cf = make_cf_handle(db, TX_HASH_BY_HEIGHT)?;
+
+        let key = tx_height.to_be_bytes();
+
+        match db.get_cf(&cf, key)? {
+            Some(v) => {
+                let str = String::from_utf8(v)?;
+
+                return Ok(Some(str));
+            }
+            None => {
+                return Ok(None);
+            }
+        }
+    }
+
     pub(crate) fn get_witness_sigs(
         &self,
         db: &DB,

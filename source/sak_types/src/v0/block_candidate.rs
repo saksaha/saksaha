@@ -13,6 +13,51 @@ pub struct BlockCandidate {
 }
 
 impl BlockCandidate {
+    pub fn upgrade(
+        &self,
+        latest_block_height: Option<u128>,
+        latest_tx_height: Option<u128>,
+        latest_merkle_root: Option<String>,
+    ) -> (Block, Vec<Tx>) {
+        let block_height = match latest_block_height {
+            Some(h) => h,
+            None => 0,
+        };
+
+        let tx_height = match latest_tx_height {
+            Some(h) => h,
+            None => 0,
+        };
+
+        let mut merkle_root = match latest_merkle_root {
+            Some(rt) => rt,
+            None => String::from(""),
+        };
+
+        let mut txs: Vec<Tx> = Vec::new();
+        let mut tx_hashes: Vec<String> = vec![];
+
+        for (i, tc) in self.tx_candidates.iter().enumerate() {
+            let tx = tc.clone().upgrade(tx_height + i as u128);
+
+            merkle_root = tx.get_rt().clone();
+
+            txs.push(tx.clone());
+            let tx_hash = tx.get_hash();
+            tx_hashes.push(tx_hash.clone());
+        }
+
+        let block = Block::new(
+            self.validator_sig.clone(),
+            tx_hashes,
+            self.witness_sigs.clone(),
+            self.created_at.clone(),
+            block_height,
+            merkle_root, //
+        );
+
+        (block, txs)
+    }
     //
     // pub fn resolve_txs(
     //     self,

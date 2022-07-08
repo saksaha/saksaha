@@ -2,6 +2,7 @@ use crate::{get_tx_type, DistLedger, LedgerError, RtUpdate, StateUpdate};
 use log::warn;
 use sak_contract_std::{CtrCallType, Request, Storage};
 use sak_types::{Block, BlockCandidate, Tx, TxCandidate, TxType};
+use sak_proofs::{Path};
 use sak_vm::CtrFn;
 
 impl DistLedger {
@@ -42,6 +43,13 @@ impl DistLedger {
 
     //     Ok(block_candidates)
     // }
+
+    pub async fn get_cm_list()
+        // block_hashes: Vec<&String>,
+    // ) -> Result<Vec<Block>, LedgerError> {
+        // self.ledger_db.get_blocks(block_hashes).await
+    {
+    }
 
     pub async fn get_blocks(
         &self,
@@ -130,6 +138,31 @@ impl DistLedger {
         self.ledger_db.get_latest_tx_height().await
     }
 
+    pub async fn get_latest_rt(&self, ) -> Result<Option<String>, LedgerError> {
+        let latest_tx_height = match self.ledger_db.get_latest_tx_height().await?{
+            Some(h) =>{
+                h
+            } ,
+            None => {
+               return Ok(None);
+                // return Err(format!("Cannot find latest tx height").into());
+            },
+        };
+
+        let latest_tx_hash = match self.ledger_db.get_tx_hash_by_height(&latest_tx_height).await? {
+            Some(h) => {
+                h
+            },
+                None => {
+                return Ok(None);
+            }
+        };
+
+        self.ledger_db.get_rt(&latest_tx_hash).await
+
+    }
+
+
     pub async fn write_block(
         &self,
         bc: Option<BlockCandidate>,
@@ -149,7 +182,8 @@ impl DistLedger {
         let latest_block_height = self.get_latest_block_height().await?;
         let latest_tx_height = self.get_latest_tx_height().await?;
 
-        // let (block, txs) = bc.upgrade(latest_block_height, latest_tx_height);
+        let latest_block = self.get_latest_block_height()
+        let (block, txs) = bc.upgrade(latest_block_height, latest_tx_height);
         let tcs = bc.tx_candidates;
 
         let mut state_updates = StateUpdate::new();
@@ -204,19 +238,30 @@ impl DistLedger {
 
                             state_updates
                                 .insert(ctr_addr.clone(), new_state.clone());
+
                         }
                     };
                 }
-                TxType::Plain => (),
+                TxType::Plain => {
+                    // get `idx` and `height` from tx.`CM`
+
+
+                },
             };
 
-            // get rt
+
             // let rt =
+            // rt_updates.insert(rt)
         }
 
         if let Err(err) = self.sync_pool.remove_tcs(&tcs).await {
             warn!("Error removing txs into the tx pool, err: {}", err);
         }
+
+        // [+] After rt_updates has been updated, `bc` is going to be upgraded
+        // [-] which means it can be `extract`ed into `block` and `txs`.
+        let (block, txs) = bc.upgrade(latest_block_height, latest_tx_height);
+
 
         if let Some(_b) = self.get_block(block.get_hash())? {
             return Err(format!(
@@ -228,7 +273,7 @@ impl DistLedger {
 
         let block_hash = match self
             .ledger_db
-            .write_block(&block, &txs, &state_updates)
+            .write_block(&block, &txs, &state_updates, &rt_updates)
             .await
         {
             Ok(h) => h,

@@ -184,6 +184,15 @@ impl LedgerDB {
         Ok(height)
     }
 
+    pub(crate) async fn get_tx_hash_by_height(
+        &self,
+        height: &u128,
+    ) -> Result<Option<String>, LedgerError> {
+        let db = &self.kv_db.db_instance;
+
+        self.schema.get_tx_hash_by_height(db, height)
+    }
+
     pub(crate) async fn get_cm_by_height(
         &self,
         height: &u128,
@@ -191,6 +200,15 @@ impl LedgerDB {
         let db = &self.kv_db.db_instance;
 
         self.schema.get_cm_by_height(db, height)
+    }
+
+    pub(crate) async fn get_rt(
+        &self,
+        tx_hash: &String,
+    ) -> Result<Option<String>, LedgerError> {
+        let db = &self.kv_db.db_instance;
+
+        self.schema.get_rt(db, tx_hash)
     }
 }
 
