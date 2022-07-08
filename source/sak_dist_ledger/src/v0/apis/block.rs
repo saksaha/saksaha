@@ -1,8 +1,8 @@
 use crate::{get_tx_type, DistLedger, LedgerError, RtUpdate, StateUpdate};
 use log::warn;
 use sak_contract_std::{CtrCallType, Request, Storage};
+use sak_proofs::Path;
 use sak_types::{Block, BlockCandidate, Tx, TxCandidate, TxType};
-use sak_proofs::{Path};
 use sak_vm::CtrFn;
 
 impl DistLedger {
@@ -45,9 +45,9 @@ impl DistLedger {
     // }
 
     pub async fn get_cm_list()
-        // block_hashes: Vec<&String>,
+    // block_hashes: Vec<&String>,
     // ) -> Result<Vec<Block>, LedgerError> {
-        // self.ledger_db.get_blocks(block_hashes).await
+    // self.ledger_db.get_blocks(block_hashes).await
     {
     }
 
@@ -134,34 +134,35 @@ impl DistLedger {
         self.ledger_db.get_latest_block_height().await
     }
 
-    pub async fn get_latest_tx_height(&self) -> Result<Option<u128>, LedgerError> {
+    pub async fn get_latest_tx_height(
+        &self,
+    ) -> Result<Option<u128>, LedgerError> {
         self.ledger_db.get_latest_tx_height().await
     }
 
-    pub async fn get_latest_rt(&self, ) -> Result<Option<String>, LedgerError> {
-        let latest_tx_height = match self.ledger_db.get_latest_tx_height().await?{
-            Some(h) =>{
-                h
-            } ,
-            None => {
-               return Ok(None);
-                // return Err(format!("Cannot find latest tx height").into());
-            },
-        };
-
-        let latest_tx_hash = match self.ledger_db.get_tx_hash_by_height(&latest_tx_height).await? {
-            Some(h) => {
-                h
-            },
+    pub async fn get_latest_rt(&self) -> Result<Option<String>, LedgerError> {
+        let latest_tx_height =
+            match self.ledger_db.get_latest_tx_height().await? {
+                Some(h) => h,
                 None => {
+                    return Ok(None);
+                    // return Err(format!("Cannot find latest tx height").into());
+                }
+            };
+
+        let latest_tx_hash = match self
+            .ledger_db
+            .get_tx_hash_by_height(&latest_tx_height)
+            .await?
+        {
+            Some(h) => h,
+            None => {
                 return Ok(None);
             }
         };
 
         self.ledger_db.get_rt(&latest_tx_hash).await
-
     }
-
 
     pub async fn write_block(
         &self,
@@ -181,10 +182,9 @@ impl DistLedger {
 
         let latest_block_height = self.get_latest_block_height().await?;
         let latest_tx_height = self.get_latest_tx_height().await?;
+        let latest_rt = self.get_latest_rt().await?;
 
-        let latest_block = self.get_latest_block_height()
-        let (block, txs) = bc.upgrade(latest_block_height, latest_tx_height);
-        let tcs = bc.tx_candidates;
+        let tcs = &bc.tx_candidates;
 
         let mut state_updates = StateUpdate::new();
         let mut rt_updates = RtUpdate::new();
@@ -238,17 +238,13 @@ impl DistLedger {
 
                             state_updates
                                 .insert(ctr_addr.clone(), new_state.clone());
-
                         }
                     };
                 }
                 TxType::Plain => {
                     // get `idx` and `height` from tx.`CM`
-
-
-                },
+                }
             };
-
 
             // let rt =
             // rt_updates.insert(rt)
@@ -260,8 +256,9 @@ impl DistLedger {
 
         // [+] After rt_updates has been updated, `bc` is going to be upgraded
         // [-] which means it can be `extract`ed into `block` and `txs`.
-        let (block, txs) = bc.upgrade(latest_block_height, latest_tx_height);
-
+        // let (block, txs) = bc.upgrade(latest_block_height, latest_tx_height);
+        let (block, txs) =
+            bc.upgrade(latest_block_height, latest_tx_height, latest_rt);
 
         if let Some(_b) = self.get_block(block.get_hash())? {
             return Err(format!(
@@ -345,37 +342,37 @@ impl DistLedger {
     //     merkle_root.root().hash.to_string()
     // }
 
-    fn get_auth_paths(&self, idx: u64, height: u64) -> Vec<u64> {
-        let mut auth_path = vec![];
+    // fn get_auth_paths(&self, idx: u64, height: u64) -> Vec<u64> {
+    //     let mut auth_path = vec![];
 
-        let mut curr_idx = idx;
+    //     let mut curr_idx = idx;
 
-        for h in 0..height {
-            let sibling_idx = get_sibling_idx(curr_idx);
+    //     for h in 0..height {
+    //         let sibling_idx = get_sibling_idx(curr_idx);
 
-            let v = self.get_latest_block_height()
-            let sibling = self
-                .nodes
-                .get(h as usize)
-                .unwrap()
-                .get(sibling_idx as usize)
-                .unwrap();
+    //         let v = self.get_latest_block_height()
+    //         let sibling = self
+    //             .nodes
+    //             .get(h as usize)
+    //             .unwrap()
+    //             .get(sibling_idx as usize)
+    //             .unwrap();
 
-            let direction = if sibling_idx % 2 == 0 { true } else { false };
+    //         let direction = if sibling_idx % 2 == 0 { true } else { false };
 
-            let p = Path {
-                direction,
-                hash: sibling.hash.clone(),
-            };
+    //         let p = Path {
+    //             direction,
+    //             hash: sibling.hash.clone(),
+    //         };
 
-            auth_path.push(p);
+    //         auth_path.push(p);
 
-            let parent_idx = get_parent_idx(curr_idx);
-            curr_idx = parent_idx;
-        }
+    //         let parent_idx = get_parent_idx(curr_idx);
+    //         curr_idx = parent_idx;
+    //     }
 
-        auth_path
-    }
+    //     auth_path
+    // }
 }
 
 fn get_sibling_idx(idx: u64) -> u64 {

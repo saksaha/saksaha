@@ -81,7 +81,7 @@ pub(crate) async fn handle_tx_hash_syn<'a>(
                             );
 
                             machine.blockchain.dist_ledger
-                                .insert_into_pool(h.txs).await;
+                                .insert_into_pool(h.tcs).await;
                         }
                         other_msg => {
                             warn!(
@@ -151,7 +151,7 @@ pub(crate) async fn handle_block_syn<'a>(
     machine: &Machine,
     _conn: &'a mut RwLockWriteGuard<'_, UpgradedConnection>,
 ) -> Result<(), BoxedError> {
-    let block_candidates = block_syn_msg.block_candidates;
+    let block_candidates = block_syn_msg;
 
     for bc in block_candidates {
         machine.blockchain.dist_ledger.write_block(Some(bc)).await?;

@@ -84,7 +84,7 @@ pub(super) async fn handle_tx_pool_stat<'a>(
     };
 
     if !txs.is_empty() {
-        match conn.socket.send(Msg::TxSyn(TxSynMsg { txs })).await {
+        match conn.socket.send(Msg::TxSyn(TxSynMsg { tcs })).await {
             Ok(_) => {
                 info!("Sending TxSyn, public_key: {}", public_key);
             }
