@@ -124,7 +124,7 @@ pub struct TxCandidate {
     author_sig: String,
 
     //
-    ctr_addr: String,
+    ctr_addr: Option<String>,
 
     //
     variant: TxCandidateVariant,
@@ -134,72 +134,108 @@ pub struct TxCandidate {
 }
 
 impl TxCandidate {
-    pub fn new(
+    // pub fn new(
+    //     created_at: String,
+    //     data: Vec<u8>,
+    //     author_sig: String,
+    //     ctr_addr: Option<String>,
+    //     pi: Option<Vec<u8>>,
+    //     cm: Option<Vec<u8>>,
+    //     v: Option<String>,
+    //     k: Option<String>,
+    //     s: Option<String>,
+    //     sn_1: Option<String>,
+    //     sn_2: Option<String>,
+    //     cm_1: Option<Vec<u8>>,
+    //     cm_2: Option<Vec<u8>>,
+    //     merkle_rt: Option<Vec<u8>>,
+    // ) -> Result<TxCandidate, TypesError> {
+    //     let variant = match (cm, v, k, s, pi, sn_1, sn_2, cm_1, cm_2, merkle_rt)
+    //     {
+    //         (
+    //             Some(cm),
+    //             Some(v),
+    //             Some(k),
+    //             Some(s),
+    //             None,
+    //             None,
+    //             None,
+    //             None,
+    //             None,
+    //             None,
+    //         ) => {
+    //             let variant =
+    //                 TxCandidateVariant::Mint(MintTxCandidate { cm, v, k, s });
+
+    //             variant
+    //         }
+    //         (
+    //             None,
+    //             None,
+    //             None,
+    //             None,
+    //             Some(pi),
+    //             Some(sn_1),
+    //             Some(sn_2),
+    //             Some(cm_1),
+    //             Some(cm_2),
+    //             Some(merkle_rt),
+    //         ) => {
+    //             let variant = TxCandidateVariant::Pour(PourTxCandidate {
+    //                 pi,
+    //                 sn_1,
+    //                 sn_2,
+    //                 cm_1,
+    //                 cm_2,
+    //                 merkle_rt,
+    //             });
+
+    //             variant
+    //         }
+    //         _ => {
+    //             return Err(
+    //                 format!("Tx candidate arguments are invalid.").into()
+    //             )
+    //         }
+    //     };
+
+    //     let ctr_addr = ctr_addr.unwrap_or(String::from(""));
+
+    //     let mut hashable_items = variant.get_hashable_items();
+
+    //     let mut extra_hashable_items = vec![
+    //         created_at.as_bytes(),
+    //         data.as_slice(),
+    //         author_sig.as_bytes(),
+    //     ];
+
+    //     hashable_items.append(&mut extra_hashable_items);
+
+    //     let tx_hash = sak_crypto::compute_hash(&hashable_items);
+
+    //     let c = TxCandidate {
+    //         created_at,
+    //         data,
+    //         author_sig,
+    //         ctr_addr,
+    //         variant,
+    //         tx_hash,
+    //     };
+
+    //     Ok(c)
+    // }
+
+    pub fn new_mint_tx_candidate(
         created_at: String,
         data: Vec<u8>,
         author_sig: String,
-        pi: Option<Vec<u8>>,
         ctr_addr: Option<String>,
-        cm: Option<Vec<u8>>,
-        v: Option<String>,
-        k: Option<String>,
-        s: Option<String>,
-        sn_1: Option<String>,
-        sn_2: Option<String>,
-        cm_1: Option<Vec<u8>>,
-        cm_2: Option<Vec<u8>>,
-        merkle_rt: Option<Vec<u8>>,
-    ) -> Result<TxCandidate, TypesError> {
-        let variant = match (cm, v, k, s, pi, sn_1, sn_2, cm_1, cm_2, merkle_rt)
-        {
-            (
-                Some(cm),
-                Some(v),
-                Some(k),
-                Some(s),
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-            ) => {
-                let variant =
-                    TxCandidateVariant::Mint(MintTxCandidate { cm, v, k, s });
-
-                variant
-            }
-            (
-                None,
-                None,
-                None,
-                None,
-                Some(pi),
-                Some(sn_1),
-                Some(sn_2),
-                Some(cm_1),
-                Some(cm_2),
-                Some(merkle_rt),
-            ) => {
-                let variant = TxCandidateVariant::Pour(PourTxCandidate {
-                    pi,
-                    sn_1,
-                    sn_2,
-                    cm_1,
-                    cm_2,
-                    merkle_rt,
-                });
-
-                variant
-            }
-            _ => {
-                return Err(
-                    format!("Tx candidate arguments are invalid.").into()
-                )
-            }
-        };
-
-        let ctr_addr = ctr_addr.unwrap_or(String::from(""));
+        cm: Vec<u8>,
+        v: String,
+        k: String,
+        s: String,
+    ) -> TxCandidate {
+        let variant = TxCandidateVariant::Mint(MintTxCandidate { cm, v, k, s });
 
         let mut hashable_items = variant.get_hashable_items();
 
@@ -213,21 +249,17 @@ impl TxCandidate {
 
         let tx_hash = sak_crypto::compute_hash(&hashable_items);
 
-        let c = TxCandidate {
+        TxCandidate {
+            variant,
             created_at,
             data,
             author_sig,
             ctr_addr,
-            variant,
             tx_hash,
-        };
-
-        Ok(c)
+        }
     }
 
-    pub fn new_mint() {}
-
-    pub fn new_pour() {}
+    pub fn new_pour_tx_candidate() {}
 
     pub fn upgrade(self, tx_height: u128) -> Tx {
         Tx::new(self, tx_height)
