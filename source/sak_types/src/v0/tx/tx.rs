@@ -112,8 +112,13 @@ impl Tx {
     }
 }
 
+pub enum TxCandidate {
+    Mint(MintTxCandidate),
+    Pour(PourTxCandidate),
+}
+
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
-pub struct TxCandidate {
+pub struct TxCandidate2 {
     //
     created_at: String,
 
