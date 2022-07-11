@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+pub const WASM_MAGIC_NUMBER: [u8; 4] = [0x00, 0x61, 0x73, 0x6d];
+
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
 pub struct Tx {
     //
@@ -39,10 +41,15 @@ pub struct ContractCallData {
     pub args: Vec<Vec<u8>>,
 }
 
-pub enum TxCtrType {
+pub enum TxCtrOp {
     ContractCall,
     ContractDeploy,
-    Plain,
+    None,
+}
+
+pub enum TxCoinOp {
+    Mint,
+    Pour,
 }
 
 impl Tx {
@@ -154,6 +161,10 @@ impl Tx {
 
     pub fn has_ctr_addr(&self) -> bool {
         self.ctr_addr.len() > 0
+    }
+
+    pub fn get_tx_op(&self) -> (TxCtrOp, TxCoinOp) {
+        get_tx_op(&self.ctr_addr, &self.data, &self.cm)
     }
 }
 
@@ -325,4 +336,38 @@ impl TxCandidate {
     pub fn has_ctr_addr(&self) -> bool {
         self.ctr_addr.len() > 0
     }
+
+    pub fn get_tx_op(&self) -> (TxCtrOp, TxCoinOp) {
+        get_tx_op(&self.ctr_addr, &self.data, &self.cm)
+    }
+}
+
+fn get_tx_op(
+    ctr_addr: &String,
+    data: &Vec<u8>,
+    cm: &String,
+) -> (TxCtrOp, TxCoinOp) {
+    let tx_ctr_type = {
+        let mut c = TxCtrOp::None;
+        if ctr_addr.len() > 0 {
+            if data.len() > 4 {
+                if data[0..4] == WASM_MAGIC_NUMBER {
+                    c = TxCtrOp::ContractDeploy;
+                } else {
+                    c = TxCtrOp::ContractCall;
+                }
+            }
+        }
+        c
+    };
+
+    let tx_coin_op = {
+        if cm.len() > 0 {
+            TxCoinOp::Mint
+        } else {
+            TxCoinOp::Pour
+        }
+    };
+
+    return (tx_ctr_type, tx_coin_op);
 }

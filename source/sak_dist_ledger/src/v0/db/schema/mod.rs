@@ -264,12 +264,14 @@ impl LedgerDBSchema {
         &self,
         db: &DB,
         key: &String,
-    ) -> Result<Option<Vec<u8>>, LedgerError> {
+    ) -> Result<Option<String>, LedgerError> {
         let cf = make_cf_handle(db, MERKLE_NODE)?;
 
         match db.get_cf(&cf, key)? {
             Some(v) => {
-                return Ok(Some(v));
+                let str = String::from_utf8(v)?;
+
+                return Ok(Some(str));
             }
             None => {
                 return Ok(None);

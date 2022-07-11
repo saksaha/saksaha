@@ -1,6 +1,6 @@
-use crate::{get_tx_ctr_type, LedgerDB, LedgerError};
+use crate::{LedgerDB, LedgerError};
 use sak_kv_db::{WriteBatch, DB};
-use sak_types::{Tx, TxCtrType};
+use sak_types::{Tx, TxCoinOp, TxCtrOp};
 
 impl LedgerDB {
     #[cfg(test)]
@@ -54,24 +54,31 @@ impl LedgerDB {
             .ok_or("cm does not exist")?;
 
         let v = self.schema.get_v(db, tx_hash)?.ok_or("v does not exist")?;
+
         let k = self.schema.get_k(db, tx_hash)?.ok_or("k does not exist")?;
+
         let s = self.schema.get_s(db, tx_hash)?.ok_or("s does not exist")?;
+
         let sn_1 = self
             .schema
             .get_sn_1(db, tx_hash)?
             .ok_or("sn_1 does not exist")?;
+
         let sn_2 = self
             .schema
             .get_sn_2(db, tx_hash)?
             .ok_or("sn_2 does not exist")?;
+
         let cm_1 = self
             .schema
             .get_cm_1(db, tx_hash)?
             .ok_or("cm_1 does not exist")?;
+
         let cm_2 = self
             .schema
             .get_cm_2(db, tx_hash)?
             .ok_or("cm_2 does not exist")?;
+
         let rt = self
             .schema
             .get_rt(db, tx_hash)?
@@ -157,9 +164,10 @@ impl LedgerDB {
         )?;
 
         // self.schema.batch_put_cm(db, batch, tx_hash, tx.get_cm())?;
+        let (tx_ctr_op, _) = tx.get_tx_op();
 
-        match get_tx_ctr_type(tx.get_ctr_addr(), tx.get_data()) {
-            TxCtrType::ContractDeploy => {
+        match tx_ctr_op {
+            TxCtrOp::ContractDeploy => {
                 self.schema.batch_put_tx_hash(
                     db,
                     batch,
@@ -167,8 +175,8 @@ impl LedgerDB {
                     tx_hash,
                 )?;
             }
-            TxCtrType::ContractCall => {}
-            TxCtrType::Plain => {}
+            TxCtrOp::ContractCall => {}
+            TxCtrOp::None => {}
         }
 
         Ok(tx_hash.clone())
@@ -215,6 +223,15 @@ impl LedgerDB {
         let db = &self.kv_db.db_instance;
 
         self.schema.get_cm_by_height(db, height)
+    }
+
+    pub(crate) async fn get_merkle_node(
+        &self,
+        location: &String,
+    ) -> Result<Option<String>, LedgerError> {
+        let db = &self.kv_db.db_instance;
+
+        self.schema.get_merkle_node(db, location)
     }
 
     pub(crate) async fn get_rt(

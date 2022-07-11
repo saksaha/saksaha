@@ -1,9 +1,7 @@
 use log::warn;
-use sak_types::{Block, Tx, TxCandidate, TxType};
+use sak_types::{Block, Tx, TxCandidate, TxCoinOp, TxCtrOp};
 use std::collections::{HashMap, HashSet};
 use tokio::sync::RwLock;
-
-use crate::get_tx_type;
 
 const SYNC_POOL_CAPACITY: usize = 100;
 
@@ -91,20 +89,18 @@ impl SyncPool {
     ) -> Result<(), String> {
         {
             // Check if tx is valid ctr deploying type
-            let ctr_addr = tc.get_ctr_addr();
-            let data = tc.get_data();
+            let (tx_ctr_op, tx_coin_op) = tc.get_tx_op();
 
-            let tx_type = get_tx_type(ctr_addr, data);
-            match tx_type {
-                TxType::ContractDeploy => {
+            match tx_ctr_op {
+                TxCtrOp::ContractDeploy => {
                     // check functions
                     let maybe_wasm = tc.get_data();
                     if !sak_vm::is_valid_wasm(maybe_wasm) {
                         return Err(format!("Not valid wasm data"));
                     }
                 }
-                TxType::ContractCall => {}
-                TxType::Plain => {}
+                TxCtrOp::ContractCall => {}
+                TxCtrOp::None => {}
             };
         }
 

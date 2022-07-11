@@ -1,8 +1,8 @@
-use crate::{get_tx_ctr_type, DistLedger, LedgerError, RtUpdate, StateUpdate};
+use crate::{DistLedger, LedgerError, RtUpdate, StateUpdate};
 use log::warn;
 use sak_contract_std::{CtrCallType, Request, Storage};
 use sak_proofs::Path;
-use sak_types::{Block, BlockCandidate, Tx, TxCandidate, TxCtrType};
+use sak_types::{Block, BlockCandidate, Tx, TxCandidate, TxCoinOp, TxCtrOp};
 use sak_vm::CtrFn;
 
 impl DistLedger {
@@ -146,6 +146,8 @@ impl DistLedger {
         let latest_tx_height = self.get_latest_tx_height().await?;
         let latest_rt = self.get_latest_rt().await?;
 
+        let latest_tx_height = self.get_latest_tx_height().await?;
+
         let latest_rt = self.get_latest_rt().await?;
         let tcs = &bc.tx_candidates;
 
@@ -155,18 +157,17 @@ impl DistLedger {
         for tc in tcs.iter() {
             let ctr_addr = tc.get_ctr_addr();
             let data = tc.get_data();
-            let tx_ctr_type = get_tx_ctr_type(ctr_addr, data);
-            let tx_proof_type = get_tx_proof_type();
+            let (tx_ctr_op, tx_coin_op) = tc.get_tx_op();
 
-            match tx_ctr_type {
-                TxCtrType::ContractDeploy => {
+            match tx_ctr_op {
+                TxCtrOp::ContractDeploy => {
                     let initial_ctr_state =
                         self.vm.invoke(data, CtrFn::Init)?;
 
                     state_updates.insert(ctr_addr.clone(), initial_ctr_state);
                 }
 
-                TxCtrType::ContractCall => {
+                TxCtrOp::ContractCall => {
                     let req = Request::parse(data)?;
 
                     match req.ctr_call_type {
@@ -205,10 +206,29 @@ impl DistLedger {
                         }
                     };
                 }
-                TxCtrType::Plain => {
+                TxCtrOp::None => {
                     // get `idx` and `height` from tx.`CM`
                 }
             };
+
+            match tx_coin_op {
+                TxCoinOp::Mint => {
+                    if let Some(th) = latest_tx_height {
+                        let auth_path =
+                            sak_proofs::get_auth_path(th as u64 + 1);
+
+                        for (height, node_idx) in auth_path.iter().enumerate() {
+                            let location = format!("{}_{}", height, node_idx);
+
+                            self.ledger_db.get_merkle_node(&location);
+                        }
+                    }
+                    // let cm = tc.get_cm();
+
+                    // tx.get_cm
+                }
+                TxCoinOp::Pour => {}
+            }
 
             // let rt =
             // rt_updates.insert(rt)
