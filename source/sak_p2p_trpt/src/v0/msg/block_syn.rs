@@ -153,7 +153,7 @@ impl BlockSynMsg {
                     )
                 };
 
-                tx_hashes.push(tx.get_hash().to_owned());
+                tx_hashes.push(tx.get_tx_hash().to_owned());
                 txs.push(tx);
             }
 
@@ -257,7 +257,7 @@ impl BlockSynMsg {
                 frame.push_bulk(Bytes::from(pi_bytes));
                 frame.push_bulk(Bytes::from(author_sig_bytes));
                 frame.push_bulk(Bytes::from(tx.get_ctr_addr().clone()));
-                frame.push_bulk(Bytes::from(tx.get_hash().clone()));
+                frame.push_bulk(Bytes::from(tx.get_tx_hash().clone()));
                 frame.push_bulk(Bytes::from(tx.get_cm().clone()));
                 frame.push_bulk(Bytes::from(tx.get_v().clone()));
                 frame.push_bulk(Bytes::from(tx.get_k().clone()));

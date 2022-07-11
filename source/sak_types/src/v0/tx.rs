@@ -33,7 +33,7 @@ pub struct Tx {
 
     // auto-generated value
     tx_height: u128,
-    hash: String,
+    tx_hash: String,
 }
 
 pub struct ContractCallData {
@@ -59,7 +59,7 @@ impl Tx {
         author_sig: String,
         pi: Vec<u8>,
         ctr_addr: String,
-        hash: String,
+        tx_hash: String,
         cm: String,
         v: String,
         k: String,
@@ -87,7 +87,7 @@ impl Tx {
             cm_2,
             rt,
             tx_height,
-            hash,
+            tx_hash,
         }
     }
 
@@ -151,8 +151,8 @@ impl Tx {
         &self.rt
     }
 
-    pub fn get_hash(&self) -> &String {
-        &self.hash
+    pub fn get_tx_hash(&self) -> &String {
+        &self.tx_hash
     }
 
     pub fn is_mutating_ctr_state(&self) -> bool {
@@ -188,7 +188,7 @@ pub struct TxCandidate {
     rt: String,
 
     // auto-generated value
-    hash: String,
+    tx_hash: String,
 }
 
 impl TxCandidate {
@@ -227,7 +227,7 @@ impl TxCandidate {
             cm.as_bytes(),
         ];
 
-        let hash = sak_crypto::compute_hash(&hashable_items);
+        let tx_hash = sak_crypto::compute_hash(&hashable_items);
 
         TxCandidate {
             created_at,
@@ -244,7 +244,7 @@ impl TxCandidate {
             cm_1,
             cm_2,
             rt,
-            hash,
+            tx_hash,
         }
     }
 
@@ -255,7 +255,7 @@ impl TxCandidate {
             self.author_sig,
             self.pi,
             self.ctr_addr,
-            self.hash,
+            self.tx_hash,
             self.cm,
             self.v,
             self.k,
@@ -325,8 +325,8 @@ impl TxCandidate {
         &self.rt
     }
 
-    pub fn get_hash(&self) -> &String {
-        &self.hash
+    pub fn get_tx_hash(&self) -> &String {
+        &self.tx_hash
     }
 
     pub fn is_mutating_ctr_state(&self) -> bool {

@@ -301,7 +301,7 @@ mod test_suite {
         let block = {
             let c = BlockCandidate {
                 validator_sig: String::from(""),
-                tx_candidates: vec![dummy_tx1, dummy_tx2],
+                tx_candidates: vec![dummy_tx1.clone(), dummy_tx2.clone()],
                 witness_sigs: vec![],
                 created_at: String::from(""),
             };
@@ -354,14 +354,14 @@ mod test_suite {
                 .machine
                 .blockchain
                 .dist_ledger
-                .tx_pool_contains(dummy_tx1.get_hash())
+                .tx_pool_contains(dummy_tx1.get_tx_hash())
                 .await;
 
             let tx_pool_2_contains_tx2 = local_node_2
                 .machine
                 .blockchain
                 .dist_ledger
-                .tx_pool_contains(dummy_tx2.get_hash())
+                .tx_pool_contains(dummy_tx2.get_tx_hash())
                 .await;
 
             assert_eq!(tx_pool_2_contains_tx1, true);
@@ -381,7 +381,7 @@ mod test_suite {
                 .machine
                 .blockchain
                 .dist_ledger
-                .tx_pool_contains(dummy_tx1.get_hash())
+                .tx_pool_contains(dummy_tx1.get_tx_hash())
                 .await;
 
             assert_eq!(tx_pool_1_contains_tx1, false);

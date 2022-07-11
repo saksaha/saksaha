@@ -225,16 +225,16 @@ async fn test_block_sync_true() {
         Some(String::from("2")),
     );
 
-    let (_block, txs) = {
-        let c = BlockCandidate {
-            validator_sig: String::from(""),
-            tx_candidates: vec![dummy_tx1, dummy_tx2],
-            witness_sigs: vec![],
-            created_at: String::from(""),
-        };
+    // let (_block, txs) = {
+    //     let c = BlockCandidate {
+    //         validator_sig: String::from(""),
+    //         tx_candidates: vec![dummy_tx1, dummy_tx2],
+    //         witness_sigs: vec![],
+    //         created_at: String::from(""),
+    //     };
 
-        c.upgrade(None, None, None)
-    };
+    //     c.upgrade(None, None, None)
+    // };
 
     {
         let local_node_1 = local_node_1.clone();
@@ -261,13 +261,13 @@ async fn test_block_sync_true() {
     tokio::time::sleep(Duration::from_secs(2)).await;
 
     {
-        println!("check if node2 has tx: {}", txs[0].get_hash());
+        println!("check if node2 has tx: {}", dummy_tx1.get_tx_hash());
 
         let tx_pool_2_contains_tx1 = local_node_2
             .machine
             .blockchain
             .dist_ledger
-            .tx_pool_contains(txs[0].get_hash())
+            .tx_pool_contains(dummy_tx1.get_tx_hash())
             .await;
 
         tokio::time::sleep(Duration::from_secs(2)).await;
@@ -319,7 +319,7 @@ async fn test_block_sync_true() {
             .machine
             .blockchain
             .dist_ledger
-            .tx_pool_contains(txs[0].get_hash())
+            .tx_pool_contains(dummy_tx2.get_tx_hash())
             .await;
 
         assert_eq!(tx_pool_2_contains_tx1, false);

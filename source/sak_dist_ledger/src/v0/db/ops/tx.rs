@@ -112,7 +112,7 @@ impl LedgerDB {
         batch: &mut WriteBatch,
         tx: &Tx,
     ) -> Result<String, LedgerError> {
-        let tx_hash = tx.get_hash();
+        let tx_hash = tx.get_tx_hash();
 
         self.schema.batch_put_created_at(
             db,

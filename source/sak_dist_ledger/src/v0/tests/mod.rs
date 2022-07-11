@@ -270,34 +270,6 @@ mod test {
         assert_eq!(count, tx_hashes.len());
     }
 
-    // #[tokio::test(flavor = "multi_thread")]
-    // async fn test_insert_genesis_block_and_check_tx() {
-    //     init();
-
-    //     let gen_block_same = make_dummy_genesis_block();
-
-    //     let (block, _) = gen_block_same.extract(String::from("1"));
-
-    //     let gen_block_hash = block.get_hash();
-
-    //     let blockchain = make_dist_ledger().await;
-
-    //     let gen_block_by_height = match blockchain.get_block_by_height(&0).await
-    //     {
-    //         Ok(b) => match b {
-    //             Some(b) => b,
-    //             None => {
-    //                 panic!("cannot find genesis block");
-    //             }
-    //         },
-    //         Err(err) => panic!("Error : {}", err),
-    //     };
-
-    //     let gen_block_hash_2 = gen_block_by_height.get_hash();
-
-    //     assert_eq!(gen_block_hash, gen_block_hash_2);
-    // }
-
     #[tokio::test(flavor = "multi_thread")]
     async fn test_insert_genesis_block_and_check_wrong_block_hash() {
         init();
@@ -321,7 +293,7 @@ mod test {
 
             let tx = tx.unwrap();
 
-            assert_eq!(tx_hash, tx.get_hash());
+            assert_eq!(tx_hash, tx.get_tx_hash());
         }
 
         assert_ne!(get_gen_hash, &String::from("false hash"));
@@ -383,10 +355,10 @@ mod test {
 
         dist_ledger.run().await;
 
-        dist_ledger
-            .write_block(utils::make_dummy_block_candidate_1())
-            .await
-            .expect("Block_1 must be written");
+        // dist_ledger
+        //     .write_block(utils::make_dummy_block_candidate_1())
+        //     .await
+        //     .expect("Block_1 must be written");
     }
 
     #[tokio::test(flavor = "multi_thread")]

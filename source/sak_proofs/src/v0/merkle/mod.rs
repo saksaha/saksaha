@@ -100,14 +100,14 @@ impl MerkleTree {
         highest_nodes.get(0).unwrap()
     }
 
-    pub fn sibling(&self, height: usize, idx: u64) -> &Node {
-        let len: u64 = self.nodes.len() as u64;
+    pub fn sibling(&self, height: u64, idx: u64) -> &Node {
+        let len = self.nodes.len() as u64;
         if idx >= len - 1 {
             panic!("Invalid idx, cannot get sibling node");
         }
 
         let sibling_idx = get_sibling_idx(idx);
-        let nodes_at_height = self.nodes.get(height).unwrap();
+        let nodes_at_height = self.nodes.get(height as usize).unwrap();
         let n = nodes_at_height.get(sibling_idx as usize).unwrap();
 
         n
@@ -178,13 +178,15 @@ impl MerkleTree {
     }
 }
 
-pub fn get_auth_path(leaf_idx: u64) -> Vec<u64> {
-    // let height = self.height;
+pub fn get_auth_path(leaf_idx: u64) -> (Vec<u64>, Vec<u64>) {
     let mut auth_path = vec![];
+    let mut update_path = vec![];
 
     let mut curr_idx = leaf_idx;
 
     for _curr_height in 0..TREE_DEPTH {
+        update_path.push(curr_idx);
+
         let sibling_idx = get_sibling_idx(curr_idx);
 
         // let location = (curr_height, curr_idx);
@@ -196,7 +198,7 @@ pub fn get_auth_path(leaf_idx: u64) -> Vec<u64> {
         curr_idx = parent_idx;
     }
 
-    auth_path
+    (auth_path, update_path)
 }
 
 fn copy_node(node: &Node) -> Node {

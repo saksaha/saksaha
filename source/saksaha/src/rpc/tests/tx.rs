@@ -67,7 +67,7 @@ mod test_suite {
             let blockchain = test_utils::make_blockchain().await;
             let dummy_tx = test_utils::make_dummy_tx();
 
-            let old_tx_hash = (&dummy_tx).get_hash();
+            let old_tx_hash = (&dummy_tx).get_tx_hash();
 
             let dist_ledger = blockchain.dist_ledger;
 
@@ -136,7 +136,7 @@ mod test_suite {
             let blockchain = test_utils::make_blockchain().await;
             let dummy_tx = test_utils::make_dummy_tx();
 
-            let old_tx_hash = (&dummy_tx).get_hash();
+            let old_tx_hash = (&dummy_tx).get_tx_hash();
 
             let dist_ledger = blockchain.dist_ledger;
 
@@ -155,7 +155,7 @@ mod test_suite {
                 .expect("Tx should be exist")
                 .unwrap();
 
-            let tx_hash = tx.get_hash().clone();
+            let tx_hash = tx.get_tx_hash().clone();
 
             assert_eq!(tx_hash, *old_tx_hash);
             tx_hash
@@ -284,7 +284,7 @@ mod test_suite {
 
         tokio::time::sleep(Duration::from_secs(1)).await;
 
-        let dummy_tx_hash = dummy_tx.get_hash();
+        let dummy_tx_hash = dummy_tx.get_tx_hash();
         let is_contain = machine
             .blockchain
             .dist_ledger

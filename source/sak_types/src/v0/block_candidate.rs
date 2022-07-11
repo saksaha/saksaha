@@ -43,7 +43,7 @@ impl BlockCandidate {
             merkle_root = tx.get_rt().clone();
 
             txs.push(tx.clone());
-            let tx_hash = tx.get_hash();
+            let tx_hash = tx.get_tx_hash();
             tx_hashes.push(tx_hash.clone());
         }
 

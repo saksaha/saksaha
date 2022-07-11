@@ -1047,7 +1047,7 @@ impl LedgerDBSchema {
 
         let mut iter = db.iterator_cf(&cf, IteratorMode::End);
 
-        let (height_bytes, _hash) = match iter.next() {
+        let (_hash, height_bytes) = match iter.next() {
             Some(a) => a,
             None => return Ok(None),
         };

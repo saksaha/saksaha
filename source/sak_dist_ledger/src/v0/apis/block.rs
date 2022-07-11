@@ -1,9 +1,6 @@
-use crate::{DistLedger, LedgerError, RtUpdate, StateUpdate};
-use log::warn;
-use sak_contract_std::{CtrCallType, Request, Storage};
-use sak_proofs::Path;
-use sak_types::{Block, BlockCandidate, Tx, TxCandidate, TxCoinOp, TxCtrOp};
-use sak_vm::CtrFn;
+use crate::{DistLedger, LedgerError};
+use sak_contract_std::Storage;
+use sak_types::{Block, Tx, TxCandidate};
 
 impl DistLedger {
     pub async fn get_blocks(
@@ -18,6 +15,13 @@ impl DistLedger {
         tx_hashes: &Vec<String>,
     ) -> Result<Vec<Tx>, LedgerError> {
         self.ledger_db.get_txs(tx_hashes).await
+    }
+
+    pub async fn get_merkle_node(
+        &self,
+        location: &String,
+    ) -> Result<Option<String>, LedgerError> {
+        self.ledger_db.get_merkle_node(location).await
     }
 
     pub async fn get_latest_block_hash(
@@ -40,27 +44,12 @@ impl DistLedger {
         Ok(Some((last_block_height, latest_block_hash)))
     }
 
-    pub async fn tx_pool_contains(&self, tx_hash: &String) -> bool {
-        self.sync_pool.contains_tx(tx_hash).await
-    }
-
     // rpc
     pub async fn send_tx(
         &self,
         tx_candidate: TxCandidate,
     ) -> Result<(), String> {
-        self.is_valid_tx(&tx_candidate);
-
         self.sync_pool.insert_tx(tx_candidate).await
-    }
-
-    // peer_node
-    pub async fn insert_into_pool(&self, tx_candidates: Vec<TxCandidate>) {
-        for tx in tx_candidates.into_iter() {
-            if let Err(err) = self.sync_pool.insert_tx(tx).await {
-                warn!("Tx pool insertion aborted, reason: {}", err);
-            };
-        }
     }
 
     pub async fn get_tx(
@@ -126,242 +115,10 @@ impl DistLedger {
         self.ledger_db.get_rt(&latest_tx_hash).await
     }
 
-    pub async fn write_block(
-        &self,
-        bc: Option<BlockCandidate>,
-    ) -> Result<Option<String>, LedgerError> {
-        let bc = match bc {
-            Some(bc) => bc,
-            None => match self.make_block_candidate().await? {
-                Some(bc) => bc,
-                None => {
-                    // debug!("No txs to write as a block, aborting");
-
-                    return Ok(None);
-                }
-            },
-        };
-
-        let latest_block_height = self.get_latest_block_height().await?;
-        let latest_tx_height = self.get_latest_tx_height().await?;
-        let latest_rt = self.get_latest_rt().await?;
-
-        let latest_tx_height = self.get_latest_tx_height().await?;
-
-        let latest_rt = self.get_latest_rt().await?;
-        let tcs = &bc.tx_candidates;
-
-        let mut state_updates = StateUpdate::new();
-        let mut rt_updates = RtUpdate::new();
-
-        for tc in tcs.iter() {
-            let ctr_addr = tc.get_ctr_addr();
-            let data = tc.get_data();
-            let (tx_ctr_op, tx_coin_op) = tc.get_tx_op();
-
-            match tx_ctr_op {
-                TxCtrOp::ContractDeploy => {
-                    let initial_ctr_state =
-                        self.vm.invoke(data, CtrFn::Init)?;
-
-                    state_updates.insert(ctr_addr.clone(), initial_ctr_state);
-                }
-
-                TxCtrOp::ContractCall => {
-                    let req = Request::parse(data)?;
-
-                    match req.ctr_call_type {
-                        CtrCallType::Query => {
-                            self.query_ctr(ctr_addr, req).await?;
-                        }
-                        CtrCallType::Execute => {
-                            let new_state = match state_updates.get(ctr_addr) {
-                                Some(previous_state) => {
-                                    let previous_state: Storage =
-                                        sak_contract_std::parse_storage(
-                                            previous_state.as_str(),
-                                        )?;
-
-                                    let ctr_wasm = self
-                                        .ledger_db
-                                        .get_ctr_data_by_ctr_addr(ctr_addr)
-                                        .await?
-                                        .ok_or(
-                                            "ctr data (wasm) should exist",
-                                        )?;
-
-                                    let ctr_fn =
-                                        CtrFn::Execute(req, previous_state);
-
-                                    let ret =
-                                        self.vm.invoke(ctr_wasm, ctr_fn)?;
-
-                                    ret
-                                }
-                                None => self.execute_ctr(ctr_addr, req).await?,
-                            };
-
-                            state_updates
-                                .insert(ctr_addr.clone(), new_state.clone());
-                        }
-                    };
-                }
-                TxCtrOp::None => {
-                    // get `idx` and `height` from tx.`CM`
-                }
-            };
-
-            match tx_coin_op {
-                TxCoinOp::Mint => {
-                    if let Some(th) = latest_tx_height {
-                        let auth_path =
-                            sak_proofs::get_auth_path(th as u64 + 1);
-
-                        for (height, node_idx) in auth_path.iter().enumerate() {
-                            let location = format!("{}_{}", height, node_idx);
-
-                            self.ledger_db.get_merkle_node(&location);
-                        }
-                    }
-                    // let cm = tc.get_cm();
-
-                    // tx.get_cm
-                }
-                TxCoinOp::Pour => {}
-            }
-
-            // let rt =
-            // rt_updates.insert(rt)
-        }
-
-        if let Err(err) = self.sync_pool.remove_tcs(&tcs).await {
-            warn!("Error removing txs into the tx pool, err: {}", err);
-        }
-
-        // [+] After rt_updates has been updated, `bc` is going to be upgraded
-        // [-] which means it can be `extract`ed into `block` and `txs`.
-        let (block, txs) =
-            bc.upgrade(latest_block_height, latest_tx_height, latest_rt);
-
-        if let Some(_b) = self.get_block(block.get_hash())? {
-            return Err(format!(
-                "This block is already persisted: block_hash: {}",
-                block.get_hash()
-            )
-            .into());
-        };
-
-        let block_hash = match self
-            .ledger_db
-            .write_block(&block, &txs, &state_updates, &rt_updates)
-            .await
-        {
-            Ok(h) => h,
-            Err(err) => {
-                return Err(err);
-            }
-        };
-
-        if let Err(err) = self.sync_pool.insert_block(&block).await {
-            warn!("Error inserting block into the sync pool, err: {}", err);
-        }
-
-        Ok(Some(block_hash))
-    }
-
-    pub fn delete_tx(&self, key: &String) -> Result<(), LedgerError> {
-        self.ledger_db.delete_tx(key)
-    }
-
-    pub async fn get_tx_pool_diff(
-        &self,
-        tx_hashes: Vec<String>,
-    ) -> Vec<String> {
-        self.sync_pool.get_tx_pool_diff(tx_hashes).await
-    }
-
-    pub async fn get_txs_from_pool(
-        &self,
-        tx_hashes: Vec<String>,
-    ) -> Vec<TxCandidate> {
-        self.sync_pool.get_txs(tx_hashes).await
-    }
-
     pub async fn get_ctr_state(
         &self,
         contract_addr: &String,
     ) -> Result<Option<Storage>, LedgerError> {
         self.ledger_db.get_ctr_state(contract_addr)
-    }
-
-    async fn make_block_candidate(
-        &self,
-    ) -> Result<Option<BlockCandidate>, LedgerError> {
-        let tx_candidates = self.sync_pool.get_all_txs().await?;
-
-        if tx_candidates.is_empty() {
-            return Ok(None);
-        }
-
-        let bc = self.consensus.do_consensus(self, tx_candidates).await?;
-
-        self.sync_pool.remove_tcs(&bc.tx_candidates).await?;
-
-        Ok(Some(bc))
-    }
-
-    pub fn is_valid_tx(&self, _tx: &TxCandidate) -> bool {
-        // TODO
-        true
-    }
-
-    // fn get_merkle_root(&self, bc: &BlockCandidate) -> String {
-    //     let merkle_root = &mut self.merkle_tree.clone();
-
-    //     // for tx in &bc.transactions {
-    //     //     merkle_root.upgrade_node(tx.get_tx_height().to_owned());
-    //     // }
-
-    //     merkle_root.root().hash.to_string()
-    // }
-
-    // fn get_auth_paths(&self, idx: u64, height: u64) -> Vec<u64> {
-    //     let mut auth_path = vec![];
-
-    //     let mut curr_idx = idx;
-
-    //     for h in 0..height {
-    //         let sibling_idx = get_sibling_idx(curr_idx);
-
-    //         let v = self.get_latest_block_height()
-    //         let sibling = self
-    //             .nodes
-    //             .get(h as usize)
-    //             .unwrap()
-    //             .get(sibling_idx as usize)
-    //             .unwrap();
-
-    //         let direction = if sibling_idx % 2 == 0 { true } else { false };
-
-    //         let p = Path {
-    //             direction,
-    //             hash: sibling.hash.clone(),
-    //         };
-
-    //         auth_path.push(p);
-
-    //         let parent_idx = get_parent_idx(curr_idx);
-    //         curr_idx = parent_idx;
-    //     }
-
-    //     auth_path
-    // }
-}
-
-fn get_sibling_idx(idx: u64) -> u64 {
-    if idx % 2 == 0 {
-        idx + 1
-    } else {
-        idx - 1
     }
 }
