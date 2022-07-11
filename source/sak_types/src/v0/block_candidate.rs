@@ -40,7 +40,7 @@ impl BlockCandidate {
         for (i, tc) in self.tx_candidates.iter().enumerate() {
             let tx = tc.clone().upgrade(tx_height + i as u128);
 
-            merkle_root = tx.get_rt().clone();
+            merkle_root = tx.get_merkle_rt().clone();
 
             txs.push(tx.clone());
             let tx_hash = tx.get_tx_hash();

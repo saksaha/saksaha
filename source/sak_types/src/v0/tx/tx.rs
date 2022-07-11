@@ -70,72 +70,72 @@ impl Tx {
         &self.tx_candidate.data
     }
 
-    pub fn get_pi(&self) -> &Vec<u8> {
-        &self.tx_candidate.get_pi()
+    pub fn get_pi(&self) -> Option<&Vec<u8>> {
+        self.tx_candidate.get_pi()
     }
 
     pub fn get_author_sig(&self) -> &String {
-        &self.author_sig
+        &self.tx_candidate.author_sig
     }
 
     pub fn get_ctr_addr(&self) -> &String {
-        &self.ctr_addr
+        &self.tx_candidate.ctr_addr
     }
 
     pub fn get_tx_height(&self) -> &u128 {
         &self.tx_height
     }
 
-    pub fn get_cm(&self) -> &Vec<u8> {
-        &self.cm
+    pub fn get_cm(&self) -> Option<&Vec<u8>> {
+        self.tx_candidate.get_cm()
     }
 
-    pub fn get_v(&self) -> &String {
-        &self.v
+    pub fn get_v(&self) -> Option<&String> {
+        self.tx_candidate.get_v()
     }
 
-    pub fn get_k(&self) -> &String {
-        &self.k
+    pub fn get_k(&self) -> Option<&String> {
+        self.tx_candidate.get_k()
     }
 
-    pub fn get_s(&self) -> &String {
-        &self.s
+    pub fn get_s(&self) -> Option<&String> {
+        self.tx_candidate.get_s()
     }
 
-    pub fn get_sn_1(&self) -> &String {
-        &self.sn_1
+    pub fn get_sn_1(&self) -> Option<&String> {
+        self.tx_candidate.get_sn_1()
     }
 
-    pub fn get_sn_2(&self) -> &String {
-        &self.sn_2
+    pub fn get_sn_2(&self) -> Option<&String> {
+        self.tx_candidate.get_sn_2()
     }
 
-    pub fn get_cm_1(&self) -> &Vec<u8> {
-        &self.cm_1
+    pub fn get_cm_1(&self) -> Option<&Vec<u8>> {
+        self.tx_candidate.get_cm_1()
     }
 
-    pub fn get_cm_2(&self) -> &Vec<u8> {
-        &self.cm_2
+    pub fn get_cm_2(&self) -> Option<&Vec<u8>> {
+        self.tx_candidate.get_cm_2()
     }
 
-    pub fn get_rt(&self) -> &String {
-        &self.rt
+    pub fn get_merkle_rt(&self) -> Option<&Vec<u8>> {
+        self.tx_candidate.get_merkle_rt()
     }
 
     pub fn get_tx_hash(&self) -> &String {
-        &self.tx_hash
+        &self.tx_candidate.tx_hash
     }
 
     pub fn is_mutating_ctr_state(&self) -> bool {
-        self.ctr_addr.len() > 0
+        self.tx_candidate.ctr_addr.len() > 0
     }
 
     pub fn has_ctr_addr(&self) -> bool {
-        self.ctr_addr.len() > 0
+        self.tx_candidate.ctr_addr.len() > 0
     }
 
     pub fn get_tx_op(&self) -> (TxCtrOp, TxCoinOp) {
-        get_tx_op(&self.ctr_addr, &self.data, &self.cm)
+        self.tx_candidate.get_tx_op()
     }
 }
 
@@ -182,7 +182,7 @@ impl TxCandidate {
         sn_2: Option<String>,
         cm_1: Option<Vec<u8>>,
         cm_2: Option<Vec<u8>>,
-        merkle_rt: Option<String>,
+        merkle_rt: Option<Vec<u8>>,
     ) -> Result<TxCandidate, TypesError> {
         let variant = match (cm, v, k, s, pi, sn_1, sn_2, cm_1, cm_2, merkle_rt)
         {
@@ -260,24 +260,25 @@ impl TxCandidate {
     }
 
     pub fn upgrade(self, tx_height: u128) -> Tx {
-        Tx::new(
-            self.created_at,
-            self.data,
-            self.author_sig,
-            self.pi,
-            self.ctr_addr,
-            self.tx_hash,
-            self.cm,
-            self.v,
-            self.k,
-            self.s,
-            self.sn_1,
-            self.sn_2,
-            self.cm_1,
-            self.cm_2,
-            self.rt,
-            tx_height,
-        )
+        Tx::new(self, tx_height)
+        // Tx::new(
+        //     self.created_at,
+        //     self.data,
+        //     self.author_sig,
+        //     self.pi,
+        //     self.ctr_addr,
+        //     self.tx_hash,
+        //     self.cm,
+        //     self.v,
+        //     self.k,
+        //     self.s,
+        //     self.sn_1,
+        //     self.sn_2,
+        //     self.cm_1,
+        //     self.cm_2,
+        //     self.rt,
+        //     tx_height,
+        // )
     }
 
     pub fn get_created_at(&self) -> &String {
@@ -288,8 +289,12 @@ impl TxCandidate {
         &self.data
     }
 
-    pub fn get_pi(&self) -> &Vec<u8> {
-        &self.pi
+    pub fn get_pi(&self) -> Option<&Vec<u8>> {
+        if let TxCandidateVariant::Pour(v) = &self.variant {
+            return Some(&v.pi);
+        } else {
+            return None;
+        }
     }
 
     pub fn get_author_sig(&self) -> &String {
@@ -300,40 +305,76 @@ impl TxCandidate {
         &self.ctr_addr
     }
 
-    pub fn get_cm(&self) -> &Vec<u8> {
-        &self.cm
+    pub fn get_cm(&self) -> Option<&Vec<u8>> {
+        if let TxCandidateVariant::Mint(v) = &self.variant {
+            return Some(&v.cm);
+        } else {
+            return None;
+        }
     }
 
-    pub fn get_v(&self) -> &String {
-        &self.v
+    pub fn get_v(&self) -> Option<&String> {
+        if let TxCandidateVariant::Mint(v) = &self.variant {
+            return Some(&v.v);
+        } else {
+            return None;
+        }
     }
 
-    pub fn get_k(&self) -> &String {
-        &self.k
+    pub fn get_k(&self) -> Option<&String> {
+        if let TxCandidateVariant::Mint(v) = &self.variant {
+            return Some(&v.k);
+        } else {
+            return None;
+        }
     }
 
-    pub fn get_s(&self) -> &String {
-        &self.s
+    pub fn get_s(&self) -> Option<&String> {
+        if let TxCandidateVariant::Mint(v) = &self.variant {
+            return Some(&v.s);
+        } else {
+            return None;
+        }
     }
 
-    pub fn get_sn_1(&self) -> &String {
-        &self.sn_1
+    pub fn get_sn_1(&self) -> Option<&String> {
+        if let TxCandidateVariant::Pour(v) = &self.variant {
+            return Some(&v.sn_1);
+        } else {
+            return None;
+        }
     }
 
-    pub fn get_sn_2(&self) -> &String {
-        &self.sn_2
+    pub fn get_sn_2(&self) -> Option<&String> {
+        if let TxCandidateVariant::Pour(v) = &self.variant {
+            return Some(&v.sn_2);
+        } else {
+            return None;
+        }
     }
 
-    pub fn get_cm_1(&self) -> &Vec<u8> {
-        &self.cm_1
+    pub fn get_cm_1(&self) -> Option<&Vec<u8>> {
+        if let TxCandidateVariant::Pour(v) = &self.variant {
+            return Some(&v.cm_1);
+        } else {
+            return None;
+        }
     }
 
-    pub fn get_cm_2(&self) -> &Vec<u8> {
-        &self.cm_2
+    pub fn get_cm_2(&self) -> Option<&Vec<u8>> {
+        if let TxCandidateVariant::Pour(v) = &self.variant {
+            return Some(&v.cm_2);
+        } else {
+            return None;
+        }
     }
 
-    pub fn get_rt(&self) -> &String {
-        &self.rt
+    pub fn get_merkle_rt(&self) -> Option<&Vec<u8>> {
+        if let TxCandidateVariant::Pour(v) = &self.variant {
+            return Some(&v.merkle_rt);
+        } else {
+            return None;
+        }
     }
 
     pub fn get_tx_hash(&self) -> &String {
@@ -349,14 +390,15 @@ impl TxCandidate {
     }
 
     pub fn get_tx_op(&self) -> (TxCtrOp, TxCoinOp) {
-        get_tx_op(&self.ctr_addr, &self.data, &self.cm)
+        get_tx_op(&self.ctr_addr, &self.data, &self.variant)
     }
 }
 
 fn get_tx_op(
     ctr_addr: &String,
     data: &Vec<u8>,
-    cm: &Vec<u8>,
+    // cm: &Vec<u8>,
+    variant: &TxCandidateVariant,
 ) -> (TxCtrOp, TxCoinOp) {
     let tx_ctr_type = {
         let mut c = TxCtrOp::None;
@@ -373,7 +415,7 @@ fn get_tx_op(
     };
 
     let tx_coin_op = {
-        if cm.len() > 0 {
+        if let TxCandidateVariant::Mint(_) = variant {
             TxCoinOp::Mint
         } else {
             TxCoinOp::Pour
@@ -387,7 +429,7 @@ pub mod for_testing {
     use super::*;
 
     impl TxCandidate {
-        pub fn new_dummy_tx_candidate_1() -> TxCandidate {
+        pub fn new_dummy_tx_candidate_1() -> Result<TxCandidate, TypesError> {
             TxCandidate::new(
                 String::from("1"),
                 vec![11, 11, 11],
@@ -402,11 +444,11 @@ pub mod for_testing {
                 Some(String::from("11")),
                 Some(vec![11, 11, 11]),
                 Some(vec![11, 11, 11]),
-                Some(String::from("11")),
+                Some(vec![11, 11, 11]),
             )
         }
 
-        pub fn new_dummy_tx_candidate_2() -> TxCandidate {
+        pub fn new_dummy_tx_candidate_2() -> Result<TxCandidate, TypesError> {
             TxCandidate::new(
                 String::from("2"),
                 vec![2, 2, 2],
@@ -421,11 +463,11 @@ pub mod for_testing {
                 Some(String::from("22")),
                 Some(vec![2, 2, 2]),
                 Some(vec![2, 2, 2]),
-                Some(String::from("22")),
+                Some(vec![2, 2, 2]),
             )
         }
 
-        pub fn new_dummy_tx_candidate_3() -> TxCandidate {
+        pub fn new_dummy_tx_candidate_3() -> Result<TxCandidate, TypesError> {
             TxCandidate::new(
                 String::from("3"),
                 vec![3, 3, 3],
@@ -440,94 +482,52 @@ pub mod for_testing {
                 Some(String::from("33")),
                 Some(vec![33, 33, 33]),
                 Some(vec![33, 33, 33]),
-                Some(String::from("33")),
+                Some(vec![33, 33, 33]),
+            )
+        }
+
+        pub fn new_dummy_tx_candidate_4() -> Result<TxCandidate, TypesError> {
+            TxCandidate::new(
+                String::from("4"),
+                vec![4, 4, 4],
+                String::from("4"),
+                Some(b"4".to_vec()),
+                Some(String::from("44")),
+                Some(vec![44, 44, 44]),
+                Some(String::from("44")),
+                Some(String::from("44")),
+                Some(String::from("44")),
+                Some(String::from("44")),
+                Some(String::from("44")),
+                Some(vec![44, 44, 44]),
+                Some(vec![44, 44, 44]),
+                Some(vec![44, 44, 44]),
             )
         }
     }
 
     impl Tx {
-        pub fn new_dummy_tx_1() -> Tx {
-            Tx::new(
-                String::from("111"),
-                String::from("one").as_bytes().to_vec(),
-                String::from("0x111"),
-                b"0x1".to_vec(),
-                String::from("one"),
-                String::from("one"),
-                vec![],
-                String::from("one"),
-                String::from("one"),
-                String::from("one"),
-                String::from("one"),
-                String::from("one"),
-                vec![1],
-                vec![1],
-                String::from("one"),
-                1,
-            )
+        pub fn new_dummy_tx_1() -> Result<Tx, TypesError> {
+            let c = TxCandidate::new_dummy_tx_candidate_1()?;
+            Ok(c.upgrade(0))
         }
 
-        pub fn new_dummy_tx_2() -> Tx {
-            Tx::new(
-                String::from("2"),
-                String::from("2").as_bytes().to_vec(),
-                String::from("0x2"),
-                b"0x2".to_vec(),
-                String::from("2"),
-                String::from("2"),
-                vec![],
-                String::from("2"),
-                String::from("2"),
-                String::from("2"),
-                String::from("2"),
-                String::from("2"),
-                vec![2],
-                vec![2],
-                String::from("2"),
-                2,
-            )
+        pub fn new_dummy_tx_2() -> Result<Tx, TypesError> {
+            let c = TxCandidate::new_dummy_tx_candidate_2()?;
+
+            Ok(c.upgrade(1))
         }
 
-        pub fn new_dummy_tx_3() -> Tx {
-            Tx::new(
-                String::from("3"),
-                String::from("3").as_bytes().to_vec(),
-                String::from("0x3"),
-                b"0x3".to_vec(),
-                String::from("3"),
-                String::from("3"),
-                vec![],
-                String::from("3"),
-                String::from("3"),
-                String::from("3"),
-                String::from("3"),
-                String::from("3"),
-                vec![3],
-                vec![3],
-                String::from("3"),
-                3,
-            )
+        pub fn new_dummy_tx_3() -> Result<Tx, TypesError> {
+            let c = TxCandidate::new_dummy_tx_candidate_3()?;
+
+            Ok(c.upgrade(2))
         }
 
-        pub fn new_dummy_tx_4() -> Tx {
-            Tx::new(
-                String::from("4"),
-                String::from("4").as_bytes().to_vec(),
-                String::from("0x4"),
-                b"0x3".to_vec(),
-                String::from("4"),
-                String::from("4"),
-                vec![],
-                String::from("4"),
-                String::from("4"),
-                String::from("4"),
-                String::from("4"),
-                String::from("4"),
-                vec![4],
-                vec![4],
-                String::from("4"),
-                4,
-            )
+        pub fn new_dummy_tx_4() -> Result<Tx, TypesError> {
+            let c = TxCandidate::new_dummy_tx_candidate_4()?;
+
+            Ok(c.upgrade(3))
         }
     }
 }

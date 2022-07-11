@@ -21,7 +21,7 @@ pub struct PourTxCandidate {
     pub sn_2: String,
     pub cm_1: Vec<u8>,
     pub cm_2: Vec<u8>,
-    pub merkle_rt: String,
+    pub merkle_rt: Vec<u8>,
 }
 
 impl TxCandidateVariant {
