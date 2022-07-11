@@ -25,7 +25,7 @@ pub struct PourTxCandidate {
 }
 
 impl TxCandidateVariant {
-    pub(crate) fn get_hashable_items(&self) -> &Vec<&[u8]> {
-        &vec![]
+    pub(crate) fn get_hashable_items(&self) -> Vec<&[u8]> {
+        vec![]
     }
 }

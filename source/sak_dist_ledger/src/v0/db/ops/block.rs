@@ -1,4 +1,4 @@
-use crate::{LedgerDB, LedgerError, RtUpdate, StateUpdate};
+use crate::{CtrStateUpdate, LedgerDB, LedgerError, MerkleUpdate};
 use colored::Colorize;
 use log::debug;
 use sak_kv_db::{WriteBatch, DB};
@@ -40,8 +40,8 @@ impl LedgerDB {
         &self,
         block: &Block,
         txs: &Vec<Tx>,
-        state_updates: &StateUpdate,
-        rt_updates: &RtUpdate,
+        ctr_state_updates: &CtrStateUpdate,
+        merkle_updates: &MerkleUpdate,
     ) -> Result<String, LedgerError> {
         let db = &self.kv_db.db_instance;
 
@@ -95,20 +95,20 @@ impl LedgerDB {
             db,
             &mut batch,
             block_hash,
-            block.get_merkle_root(),
+            block.get_merkle_rt(),
         )?;
 
         for tx in txs {
             self._batch_put_tx(db, &mut batch, tx)?;
         }
 
-        let su_keys = state_updates.keys();
+        let su_keys = ctr_state_updates.keys();
         for su_key in su_keys {
             self.schema.batch_put_ctr_state(
                 db,
                 &mut batch,
                 &su_key,
-                &state_updates
+                &ctr_state_updates
                     .get(su_key)
                     .expect("contract state should be exist"),
             )?;
@@ -151,7 +151,7 @@ impl LedgerDB {
 
         let block_height = self.schema.get_block_height(db, &block_hash)?;
 
-        let merkle_root = self.schema.get_merkle_root(db, &block_hash)?;
+        let merkle_rt = self.schema.get_merkle_rt(db, &block_hash)?;
 
         match (
             validator_sig,
@@ -159,7 +159,7 @@ impl LedgerDB {
             witness_sigs,
             created_at,
             block_height,
-            merkle_root,
+            merkle_rt,
         ) {
             (Some(vs), Some(th), Some(ws), Some(ca), Some(bh), Some(mr)) => {
                 let b = Block::new(vs, th, ws, ca, bh, mr);

@@ -5,36 +5,10 @@ pub const WASM_MAGIC_NUMBER: [u8; 4] = [0x00, 0x61, 0x73, 0x6d];
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
 pub struct Tx {
-    // //
-    // created_at: String,
-
-    // //
-    // #[serde(with = "serde_bytes")]
-    // data: Vec<u8>,
-
-    // //
-    // pi: Vec<u8>,
-
-    // //
-    // author_sig: String,
-
-    // //
-    // ctr_addr: String,
-
-    // //
-    // cm: Vec<u8>,
-    // v: String,
-    // k: String,
-    // s: String,
-    // sn_1: String,
-    // sn_2: String,
-    // cm_1: Vec<u8>,
-    // cm_2: Vec<u8>,
-    // rt: String,
+    //
     tx_candidate: TxCandidate,
 
-    // auto-generated value
-    // tx_hash: String,
+    //
     tx_height: u128,
 }
 
@@ -47,11 +21,6 @@ pub enum TxCtrOp {
     ContractCall,
     ContractDeploy,
     None,
-}
-
-pub enum TxCoinOp {
-    Mint,
-    Pour,
 }
 
 impl Tx {
@@ -134,36 +103,33 @@ impl Tx {
         self.tx_candidate.ctr_addr.len() > 0
     }
 
-    pub fn get_tx_op(&self) -> (TxCtrOp, TxCoinOp) {
-        self.tx_candidate.get_tx_op()
+    pub fn get_ctr_op(&self) -> TxCtrOp {
+        self.tx_candidate.get_ctr_op()
+    }
+
+    pub fn get_tx_variant(&self) -> &TxCandidateVariant {
+        &self.tx_candidate.get_tx_variant()
     }
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
 pub struct TxCandidate {
+    //
     created_at: String,
+
+    //
     #[serde(with = "serde_bytes")]
     data: Vec<u8>,
+    //
     author_sig: String,
+
+    //
     ctr_addr: String,
 
+    //
     variant: TxCandidateVariant,
 
-    // pi: Vec<u8>,
-
-    // TxMint will have this value instead of "cm_1" or "cm_2".
-    // cm: Vec<u8>,
-
-    // v: String,
-    // k: String,
-    // s: String,
-    // sn_1: String,
-    // sn_2: String,
-    // cm_1: Vec<u8>,
-    // cm_2: Vec<u8>,
-    // rt: String,
-
-    // auto-generated value
+    // auto generated value
     tx_hash: String,
 }
 
@@ -259,26 +225,12 @@ impl TxCandidate {
         Ok(c)
     }
 
+    pub fn new_mint() {}
+
+    pub fn new_pour() {}
+
     pub fn upgrade(self, tx_height: u128) -> Tx {
         Tx::new(self, tx_height)
-        // Tx::new(
-        //     self.created_at,
-        //     self.data,
-        //     self.author_sig,
-        //     self.pi,
-        //     self.ctr_addr,
-        //     self.tx_hash,
-        //     self.cm,
-        //     self.v,
-        //     self.k,
-        //     self.s,
-        //     self.sn_1,
-        //     self.sn_2,
-        //     self.cm_1,
-        //     self.cm_2,
-        //     self.rt,
-        //     tx_height,
-        // )
     }
 
     pub fn get_created_at(&self) -> &String {
@@ -381,6 +333,10 @@ impl TxCandidate {
         &self.tx_hash
     }
 
+    pub fn get_tx_variant(&self) -> &TxCandidateVariant {
+        &self.variant
+    }
+
     pub fn is_mutating_ctr_state(&self) -> bool {
         self.ctr_addr.len() > 0
     }
@@ -389,17 +345,12 @@ impl TxCandidate {
         self.ctr_addr.len() > 0
     }
 
-    pub fn get_tx_op(&self) -> (TxCtrOp, TxCoinOp) {
-        get_tx_op(&self.ctr_addr, &self.data, &self.variant)
+    pub fn get_ctr_op(&self) -> TxCtrOp {
+        get_ctr_op(&self.ctr_addr, &self.data)
     }
 }
 
-fn get_tx_op(
-    ctr_addr: &String,
-    data: &Vec<u8>,
-    // cm: &Vec<u8>,
-    variant: &TxCandidateVariant,
-) -> (TxCtrOp, TxCoinOp) {
+fn get_ctr_op(ctr_addr: &String, data: &Vec<u8>) -> TxCtrOp {
     let tx_ctr_type = {
         let mut c = TxCtrOp::None;
         if ctr_addr.len() > 0 {
@@ -414,15 +365,7 @@ fn get_tx_op(
         c
     };
 
-    let tx_coin_op = {
-        if let TxCandidateVariant::Mint(_) = variant {
-            TxCoinOp::Mint
-        } else {
-            TxCoinOp::Pour
-        }
-    };
-
-    return (tx_ctr_type, tx_coin_op);
+    return tx_ctr_type;
 }
 
 pub mod for_testing {

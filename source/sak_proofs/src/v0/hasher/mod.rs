@@ -21,7 +21,7 @@ impl Hasher {
         &self,
         xl: &[u8; 32],
         xr: &[u8; 32],
-    ) -> Result<Scalar, ProofError> {
+    ) -> Result<[u8; 32], ProofError> {
         let ct_option = Scalar::from_bytes(xl);
         let xl = if bool::from(ct_option.is_some()) {
             ct_option.unwrap()
@@ -36,7 +36,9 @@ impl Hasher {
             return Err(format!("Convert to scalar has failed").into());
         };
 
-        Ok(mimc(xl, xr, &self.constants))
+        let res = mimc(xl, xr, &self.constants);
+
+        Ok(res.to_bytes())
     }
 
     #[allow(dead_code)]

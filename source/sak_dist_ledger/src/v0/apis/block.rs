@@ -20,7 +20,7 @@ impl DistLedger {
     pub async fn get_merkle_node(
         &self,
         location: &String,
-    ) -> Result<Option<String>, LedgerError> {
+    ) -> Result<Option<Vec<u8>>, LedgerError> {
         self.ledger_db.get_merkle_node(location).await
     }
 
@@ -91,7 +91,9 @@ impl DistLedger {
         self.ledger_db.get_latest_tx_height().await
     }
 
-    pub async fn get_latest_rt(&self) -> Result<Option<String>, LedgerError> {
+    pub async fn get_latest_merkle_rt(
+        &self,
+    ) -> Result<Option<Vec<u8>>, LedgerError> {
         let latest_tx_height =
             match self.ledger_db.get_latest_tx_height().await? {
                 Some(h) => h,
@@ -112,7 +114,7 @@ impl DistLedger {
             }
         };
 
-        self.ledger_db.get_rt(&latest_tx_hash).await
+        self.ledger_db.get_merkle_rt(&latest_tx_hash).await
     }
 
     pub async fn get_ctr_state(

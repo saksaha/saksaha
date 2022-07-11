@@ -203,24 +203,22 @@ impl LedgerDBSchema {
         }
     }
 
-    pub(crate) fn get_merkle_root(
-        &self,
-        db: &DB,
-        block_hash: &String,
-    ) -> Result<Option<String>, LedgerError> {
-        let cf = make_cf_handle(db, MERKLE_ROOT)?;
+    // pub(crate) fn get_merkle_rt(
+    //     &self,
+    //     db: &DB,
+    //     block_hash: &String,
+    // ) -> Result<Option<Vec<u8>>, LedgerError> {
+    //     let cf = make_cf_handle(db, MERKLE_ROOT)?;
 
-        match db.get_cf(&cf, block_hash)? {
-            Some(v) => {
-                let str = String::from_utf8(v)?;
-
-                return Ok(Some(str));
-            }
-            None => {
-                return Ok(None);
-            }
-        }
-    }
+    //     match db.get_cf(&cf, block_hash)? {
+    //         Some(v) => {
+    //             return Ok(Some(v));
+    //         }
+    //         None => {
+    //             return Ok(None);
+    //         }
+    //     }
+    // }
 
     pub(crate) fn get_block_hash(
         &self,
@@ -264,14 +262,12 @@ impl LedgerDBSchema {
         &self,
         db: &DB,
         key: &String,
-    ) -> Result<Option<String>, LedgerError> {
+    ) -> Result<Option<Vec<u8>>, LedgerError> {
         let cf = make_cf_handle(db, MERKLE_NODE)?;
 
         match db.get_cf(&cf, key)? {
             Some(v) => {
-                let str = String::from_utf8(v)?;
-
-                return Ok(Some(str));
+                return Ok(Some(v));
             }
             None => {
                 return Ok(None);
@@ -461,7 +457,7 @@ impl LedgerDBSchema {
         db: &DB,
         batch: &mut WriteBatch,
         block_hash: &String,
-        merkle_root: &String,
+        merkle_root: &Vec<u8>,
     ) -> Result<(), LedgerError> {
         let cf = make_cf_handle(db, MERKLE_ROOT)?;
 
@@ -794,18 +790,16 @@ impl LedgerDBSchema {
         }
     }
 
-    pub(crate) fn get_rt(
+    pub(crate) fn get_merkle_rt(
         &self,
         db: &DB,
         key: &String,
-    ) -> Result<Option<String>, LedgerError> {
+    ) -> Result<Option<Vec<u8>>, LedgerError> {
         let cf = make_cf_handle(db, MERKLE_RT)?;
 
         match db.get_cf(&cf, key)? {
             Some(v) => {
-                let str = String::from_utf8(v)?;
-
-                return Ok(Some(str));
+                return Ok(Some(v));
             }
             None => {
                 return Ok(None);

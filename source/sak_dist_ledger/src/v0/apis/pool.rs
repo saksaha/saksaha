@@ -1,8 +1,8 @@
-use crate::{DistLedger, LedgerError, RtUpdate, StateUpdate};
+use crate::{CtrStateUpdate, DistLedger, LedgerError, MerkleUpdate};
 use log::warn;
 use sak_contract_std::{CtrCallType, Request, Storage};
 use sak_proofs::Path;
-use sak_types::{Block, BlockCandidate, Tx, TxCandidate, TxCoinOp, TxCtrOp};
+use sak_types::{Block, BlockCandidate, Tx, TxCandidate, TxCtrOp};
 use sak_vm::CtrFn;
 
 impl DistLedger {

@@ -1,7 +1,9 @@
 use crate::{BoxedError, TX_SYN_TYPE};
 use bytes::{BufMut, Bytes, BytesMut};
 use sak_p2p_frame::{Frame, Parse};
-use sak_types::TxCandidate;
+use sak_types::{
+    MintTxCandidate, PourTxCandidate, TxCandidate, TxCandidateVariant,
+};
 
 #[derive(Debug)]
 pub struct TxSynMsg {
@@ -13,10 +15,13 @@ impl TxSynMsg {
         parse: &mut Parse,
     ) -> Result<TxSynMsg, BoxedError> {
         let tx_count = parse.next_int()?;
+
         let mut tcs = Vec::with_capacity(tx_count as usize);
 
         for _idx in 0..tx_count {
             let tc = {
+                let tx_variant_type = parse.next_string()?;
+
                 let data = {
                     let p = parse.next_bytes()?;
                     p.to_vec()
@@ -25,11 +30,6 @@ impl TxSynMsg {
                 let created_at = {
                     let k = parse.next_bytes()?;
                     std::str::from_utf8(k.as_ref())?.into()
-                };
-
-                let pi = {
-                    let k = parse.next_bytes()?;
-                    k.to_vec()
                 };
 
                 let author_sig = {
@@ -42,52 +42,75 @@ impl TxSynMsg {
                     std::str::from_utf8(p.as_ref())?.into()
                 };
 
-                let cm = {
-                    let p = parse.next_bytes()?;
-                    std::str::from_utf8(p.as_ref())?.into()
-                };
+                let tx_variant = match tx_variant_type.as_ref() {
+                    "mint" => {
+                        let cm = {
+                            let p = parse.next_bytes()?;
+                            std::str::from_utf8(p.as_ref())?.into()
+                        };
 
-                let v = {
-                    let p = parse.next_bytes()?;
-                    std::str::from_utf8(p.as_ref())?.into()
-                };
+                        let v = {
+                            let p = parse.next_bytes()?;
+                            std::str::from_utf8(p.as_ref())?.into()
+                        };
 
-                let k = {
-                    let p = parse.next_bytes()?;
-                    std::str::from_utf8(p.as_ref())?.into()
-                };
+                        let k = {
+                            let p = parse.next_bytes()?;
+                            std::str::from_utf8(p.as_ref())?.into()
+                        };
 
-                let s = {
-                    let p = parse.next_bytes()?;
-                    std::str::from_utf8(p.as_ref())?.into()
-                };
+                        let s = {
+                            let p = parse.next_bytes()?;
+                            std::str::from_utf8(p.as_ref())?.into()
+                        };
 
-                let sn_1 = {
-                    let p = parse.next_bytes()?;
-                    std::str::from_utf8(p.as_ref())?.into()
-                };
+                        let variant = MintTxCandidate { cm, v, k, s };
 
-                let sn_2 = {
-                    let p = parse.next_bytes()?;
-                    std::str::from_utf8(p.as_ref())?.into()
-                };
+                        TxCandidateVariant::Mint(variant)
+                    }
+                    "pour" => {
+                        let pi = {
+                            let k = parse.next_bytes()?;
+                            k.to_vec()
+                        };
 
-                let cm_1 = {
-                    let p = parse.next_bytes()?;
-                    std::str::from_utf8(p.as_ref())?.into()
-                };
+                        let sn_1 = {
+                            let p = parse.next_bytes()?;
+                            std::str::from_utf8(p.as_ref())?.into()
+                        };
 
-                let cm_2 = {
-                    let p = parse.next_bytes()?;
-                    std::str::from_utf8(p.as_ref())?.into()
-                };
+                        let sn_2 = {
+                            let p = parse.next_bytes()?;
+                            std::str::from_utf8(p.as_ref())?.into()
+                        };
 
-                let rt = {
-                    let p = parse.next_bytes()?;
-                    std::str::from_utf8(p.as_ref())?.into()
-                };
+                        let cm_1 = {
+                            let p = parse.next_bytes()?;
+                            std::str::from_utf8(p.as_ref())?.into()
+                        };
 
-                // let tx_height = parse.next_int()? as u128;
+                        let cm_2 = {
+                            let p = parse.next_bytes()?;
+                            std::str::from_utf8(p.as_ref())?.into()
+                        };
+
+                        let merkle_rt = {
+                            let p = parse.next_bytes()?;
+                            std::str::from_utf8(p.as_ref())?.into()
+                        };
+
+                        let v = PourTxCandidate {
+                            pi,
+                            sn_1,
+                            sn_2,
+                            cm_1,
+                            cm_2,
+                            merkle_rt,
+                        };
+
+                        TxCandidateVariant::Pour(v)
+                    }
+                };
 
                 TxCandidate::new(
                     created_at,

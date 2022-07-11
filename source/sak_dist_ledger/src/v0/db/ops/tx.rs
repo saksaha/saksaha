@@ -1,6 +1,6 @@
 use crate::{LedgerDB, LedgerError};
 use sak_kv_db::{WriteBatch, DB};
-use sak_types::{Tx, TxCoinOp, TxCtrOp};
+use sak_types::{Tx, TxCandidate, TxCandidateVariant, TxCtrOp};
 
 impl LedgerDB {
     #[cfg(test)]
@@ -33,75 +33,39 @@ impl LedgerDB {
             .get_author_sig(db, tx_hash)?
             .ok_or("author_sig does not exist")?;
 
-        let pi = self
-            .schema
-            .get_pi(db, tx_hash)?
-            .ok_or("pi does not exist")?;
+        let pi = self.schema.get_pi(db, tx_hash)?;
 
-        let ctr_addr = self
-            .schema
-            .get_ctr_addr(db, tx_hash)?
-            .ok_or("ctr_addr does not exist")?;
+        let ctr_addr = self.schema.get_ctr_addr(db, tx_hash)?;
 
         let tx_height = self
             .schema
             .get_tx_height(db, tx_hash)?
             .ok_or("tx_height does not exist")?;
 
-        let cm = self
-            .schema
-            .get_cm(db, tx_hash)?
-            .ok_or("cm does not exist")?;
+        let cm = self.schema.get_cm(db, tx_hash)?;
 
-        let v = self.schema.get_v(db, tx_hash)?.ok_or("v does not exist")?;
+        let v = self.schema.get_v(db, tx_hash)?;
 
-        let k = self.schema.get_k(db, tx_hash)?.ok_or("k does not exist")?;
+        let k = self.schema.get_k(db, tx_hash)?;
 
-        let s = self.schema.get_s(db, tx_hash)?.ok_or("s does not exist")?;
+        let s = self.schema.get_s(db, tx_hash)?;
 
-        let sn_1 = self
-            .schema
-            .get_sn_1(db, tx_hash)?
-            .ok_or("sn_1 does not exist")?;
+        let sn_1 = self.schema.get_sn_1(db, tx_hash)?;
 
-        let sn_2 = self
-            .schema
-            .get_sn_2(db, tx_hash)?
-            .ok_or("sn_2 does not exist")?;
+        let sn_2 = self.schema.get_sn_2(db, tx_hash)?;
 
-        let cm_1 = self
-            .schema
-            .get_cm_1(db, tx_hash)?
-            .ok_or("cm_1 does not exist")?;
+        let cm_1 = self.schema.get_cm_1(db, tx_hash)?;
 
-        let cm_2 = self
-            .schema
-            .get_cm_2(db, tx_hash)?
-            .ok_or("cm_2 does not exist")?;
+        let cm_2 = self.schema.get_cm_2(db, tx_hash)?;
 
-        let rt = self
-            .schema
-            .get_rt(db, tx_hash)?
-            .ok_or("rt does not exist")?;
+        let merkle_rt = self.schema.get_merkle_rt(db, tx_hash)?;
 
-        let tx = Tx::new(
-            created_at,
-            data,
-            author_sig,
-            pi,
-            ctr_addr,
-            tx_hash.to_owned(),
-            cm,
-            v,
-            k,
-            s,
-            sn_1,
-            sn_2,
-            cm_1,
-            cm_2,
-            rt,
-            tx_height,
-        );
+        let tx_candidate = TxCandidate::new(
+            created_at, data, author_sig, pi, ctr_addr, cm, v, k, s, sn_1,
+            sn_2, cm_1, cm_2, merkle_rt,
+        )?;
+
+        let tx = Tx::new(tx_candidate, tx_height);
 
         Ok(Some(tx))
     }
@@ -112,7 +76,25 @@ impl LedgerDB {
         batch: &mut WriteBatch,
         tx: &Tx,
     ) -> Result<String, LedgerError> {
+        let tx_variant = tx.get_tx_variant();
+
         let tx_hash = tx.get_tx_hash();
+
+        match tx_variant {
+            TxCandidateVariant::Mint(v) => {
+                self.schema.batch_put_cm(db, batch, tx_hash, &v.cm)?;
+
+                self.schema.batch_put_cm_by_height(
+                    db,
+                    batch,
+                    tx.get_tx_height(),
+                    &v.cm,
+                )?;
+            }
+            TxCandidateVariant::Pour(v) => {
+                self.schema.batch_put_pi(db, batch, tx_hash, &v.pi)?;
+            }
+        };
 
         self.schema.batch_put_created_at(
             db,
@@ -123,8 +105,6 @@ impl LedgerDB {
 
         self.schema
             .batch_put_data(db, batch, tx_hash, tx.get_data())?;
-
-        self.schema.batch_put_pi(db, batch, tx_hash, tx.get_pi())?;
 
         self.schema.batch_put_author_sig(
             db,
@@ -154,17 +134,7 @@ impl LedgerDB {
             tx_hash,
         )?;
 
-        self.schema.batch_put_cm(db, batch, tx_hash, tx.get_cm())?;
-
-        self.schema.batch_put_cm_by_height(
-            db,
-            batch,
-            tx.get_tx_height(),
-            tx.get_cm(),
-        )?;
-
-        // self.schema.batch_put_cm(db, batch, tx_hash, tx.get_cm())?;
-        let (tx_ctr_op, _) = tx.get_tx_op();
+        let tx_ctr_op = tx.get_ctr_op();
 
         match tx_ctr_op {
             TxCtrOp::ContractDeploy => {
@@ -228,19 +198,19 @@ impl LedgerDB {
     pub(crate) async fn get_merkle_node(
         &self,
         location: &String,
-    ) -> Result<Option<String>, LedgerError> {
+    ) -> Result<Option<Vec<u8>>, LedgerError> {
         let db = &self.kv_db.db_instance;
 
         self.schema.get_merkle_node(db, location)
     }
 
-    pub(crate) async fn get_rt(
+    pub(crate) async fn get_merkle_rt(
         &self,
         tx_hash: &String,
-    ) -> Result<Option<String>, LedgerError> {
+    ) -> Result<Option<Vec<u8>>, LedgerError> {
         let db = &self.kv_db.db_instance;
 
-        self.schema.get_rt(db, tx_hash)
+        self.schema.get_merkle_rt(db, tx_hash)
     }
 }
 

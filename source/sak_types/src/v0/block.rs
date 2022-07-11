@@ -7,7 +7,7 @@ pub struct Block {
     witness_sigs: Vec<String>,
     created_at: String,
     block_height: u128,
-    merkle_root: String,
+    merkle_rt: Vec<u8>,
     block_hash: String,
 }
 
@@ -18,7 +18,7 @@ impl Block {
         witness_sigs: Vec<String>,
         created_at: String,
         block_height: u128,
-        merkle_root: String,
+        merkle_rt: Vec<u8>,
     ) -> Block {
         let block_hash = {
             let mut to_hash = vec![];
@@ -35,7 +35,7 @@ impl Block {
 
                 to_hash.push(created_at.as_bytes());
 
-                to_hash.push(merkle_root.as_bytes());
+                to_hash.push(merkle_rt.as_slice());
 
                 to_hash.as_slice()
             };
@@ -49,7 +49,7 @@ impl Block {
             witness_sigs,
             created_at,
             block_height,
-            merkle_root,
+            merkle_rt,
             block_hash,
         }
     }
@@ -78,7 +78,7 @@ impl Block {
         &self.block_hash
     }
 
-    pub fn get_merkle_root(&self) -> &String {
-        &self.merkle_root
+    pub fn get_merkle_rt(&self) -> &Vec<u8> {
+        &self.merkle_rt
     }
 }

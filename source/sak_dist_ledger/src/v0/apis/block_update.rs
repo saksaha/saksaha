@@ -1,9 +1,11 @@
-use crate::{DistLedger, LedgerError, RtUpdate, StateUpdate};
+use crate::{CtrStateUpdate, DistLedger, LedgerError, MerkleUpdate};
 use log::warn;
 use sak_contract_std::{CtrCallType, Request, Storage};
-use sak_proofs::Path;
-use sak_types::{Block, BlockCandidate, Tx, TxCandidate, TxCoinOp, TxCtrOp};
+use sak_types::{
+    Block, BlockCandidate, Tx, TxCandidate, TxCandidateVariant, TxCtrOp,
+};
 use sak_vm::CtrFn;
+use std::convert::TryInto;
 
 impl DistLedger {
     pub async fn write_block(
@@ -27,30 +29,29 @@ impl DistLedger {
 
         let latest_block_height = self.get_latest_block_height().await?;
         let latest_tx_height = self.get_latest_tx_height().await?;
-        let latest_rt = self.get_latest_rt().await?;
+        let latest_merkle_rt = self.get_latest_merkle_rt().await?;
 
-        let latest_tx_height = self.get_latest_tx_height().await?;
-
-        let latest_rt = self.get_latest_rt().await?;
         let tcs = &bc.tx_candidates;
 
-        let mut state_updates = StateUpdate::new();
-        let mut rt_updates = RtUpdate::new();
+        let mut ctr_state_updates = CtrStateUpdate::new();
+        let mut merkle_updates = MerkleUpdate::new();
 
         println!("iterating a total of {} tcs", tcs.len());
+
         for tc in tcs.iter() {
             println!("\niterating tc, {:?}", tc);
 
             let ctr_addr = tc.get_ctr_addr();
             let data = tc.get_data();
-            let (tx_ctr_op, tx_coin_op) = tc.get_tx_op();
+            let tx_ctr_op = tc.get_ctr_op();
 
             match tx_ctr_op {
                 TxCtrOp::ContractDeploy => {
                     let initial_ctr_state =
                         self.vm.invoke(data, CtrFn::Init)?;
 
-                    state_updates.insert(ctr_addr.clone(), initial_ctr_state);
+                    ctr_state_updates
+                        .insert(ctr_addr.clone(), initial_ctr_state);
                 }
 
                 TxCtrOp::ContractCall => {
@@ -61,7 +62,9 @@ impl DistLedger {
                             self.query_ctr(ctr_addr, req).await?;
                         }
                         CtrCallType::Execute => {
-                            let new_state = match state_updates.get(ctr_addr) {
+                            let new_state = match ctr_state_updates
+                                .get(ctr_addr)
+                            {
                                 Some(previous_state) => {
                                     let previous_state: Storage =
                                         sak_contract_std::parse_storage(
@@ -87,7 +90,7 @@ impl DistLedger {
                                 None => self.execute_ctr(ctr_addr, req).await?,
                             };
 
-                            state_updates
+                            ctr_state_updates
                                 .insert(ctr_addr.clone(), new_state.clone());
                         }
                     };
@@ -97,8 +100,10 @@ impl DistLedger {
                 }
             };
 
-            match tx_coin_op {
-                TxCoinOp::Mint => {
+            let tx_variant = tc.get_tx_variant();
+
+            match tx_variant {
+                TxCandidateVariant::Mint(v) => {
                     let next_th = match self.get_latest_tx_height().await? {
                         Some(th) => th + 1,
                         None => 0,
@@ -125,21 +130,51 @@ impl DistLedger {
                             update_path[*idx as usize + 1]
                         );
 
-                        let cm = tc.get_cm();
-                        let sib_cm = sibling_node.unwrap_or(String::from("0"));
+                        let cm = {
+                            let v = tc
+                                .get_cm()
+                                .ok_or("CM should exist in mint tx")?
+                                .to_owned();
+
+                            let ret: [u8; 32] = match v.try_into() {
+                                Ok(r) => r,
+                                Err(_) => {
+                                    return Err(format!(
+                                        "Could not convert cm into an array"
+                                    )
+                                    .into())
+                                }
+                            };
+
+                            ret
+                        };
+
+                        let sib_cm = {
+                            let v = sibling_node.unwrap_or(vec![0]);
+
+                            let ret: [u8; 32] = match v.try_into() {
+                                Ok(r) => r,
+                                Err(_) => {
+                                    return Err(format!(
+                                        "Could not convert sibling cm into \
+                                        an array"
+                                    )
+                                    .into())
+                                }
+                            };
+
+                            ret
+                        };
+
+                        let merkle_node = self.hasher.mimc2(&cm, &sib_cm);
 
                         println!(
                             "update loc, {}, hash of two, {:?} and {:?}",
                             update_loc, cm, sib_cm
                         );
-
-                        // cm
-                        // self.hasher.mimc2()
-
-                        // rt_updates.insert(update_loc)
                     }
                 }
-                TxCoinOp::Pour => {}
+                TxCandidateVariant::Pour(v) => {}
             }
 
             // let rt =
@@ -150,10 +185,16 @@ impl DistLedger {
             warn!("Error removing txs into the tx pool, err: {}", err);
         }
 
-        // [+] After rt_updates has been updated, `bc` is going to be upgraded
-        // [-] which means it can be `extract`ed into `block` and `txs`.
-        let (block, txs) =
-            bc.upgrade(latest_block_height, latest_tx_height, latest_rt);
+        let next_merkle_rt = match merkle_updates.get("31_0") {
+            Some(r) => r,
+            None => return Err(format!("next merkle root is missing").into()),
+        };
+
+        let (block, txs) = bc.upgrade(
+            latest_block_height,
+            latest_tx_height,
+            next_merkle_rt.to_owned(),
+        );
 
         if let Some(_b) = self.get_block(block.get_hash())? {
             return Err(format!(
@@ -165,7 +206,7 @@ impl DistLedger {
 
         let block_hash = match self
             .ledger_db
-            .write_block(&block, &txs, &state_updates, &rt_updates)
+            .write_block(&block, &txs, &ctr_state_updates, &merkle_updates)
             .await
         {
             Ok(h) => h,
