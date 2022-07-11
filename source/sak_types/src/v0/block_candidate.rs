@@ -17,7 +17,7 @@ impl BlockCandidate {
         &self,
         latest_block_height: Option<u128>,
         latest_tx_height: Option<u128>,
-        latest_merkle_root: Option<String>,
+        latest_merkle_root: Option<Vec<u8>>,
     ) -> (Block, Vec<Tx>) {
         let block_height = match latest_block_height {
             Some(h) => h,
@@ -31,7 +31,7 @@ impl BlockCandidate {
 
         let mut merkle_root = match latest_merkle_root {
             Some(rt) => rt,
-            None => String::from(""),
+            None => vec![],
         };
 
         let mut txs: Vec<Tx> = Vec::new();
@@ -40,7 +40,7 @@ impl BlockCandidate {
         for (i, tc) in self.tx_candidates.iter().enumerate() {
             let tx = tc.clone().upgrade(tx_height + i as u128);
 
-            merkle_root = tx.get_merkle_rt().clone();
+            // merkle_root = tx.get_merkle_rt().clone();
 
             txs.push(tx.clone());
             let tx_hash = tx.get_tx_hash();
