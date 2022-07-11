@@ -1,8 +1,9 @@
-use crate::{get_mimc_constants, mimc, mimc_cs};
+use crate::{get_mimc_constants, mimc, mimc_cs, ProofError};
 use bellman::{ConstraintSystem, SynthesisError};
 use bls12_381::Scalar;
+use ff::PrimeField;
 
-pub(crate) struct Hasher {
+pub struct Hasher {
     constants: Vec<Scalar>,
 }
 
@@ -16,21 +17,26 @@ impl Hasher {
         }
     }
 
-    pub fn mimc2(xl: impl AsRef<[u8]>, xr: impl AsRef<[u8]>) -> Scalar {
-        let a = Scalar::from(xl);
-        // let xl = Scalar::from_bytes(&xl);
-        // for c in constants {
-        //     let mut tmp1 = xl;
-        //     tmp1.add_assign(c);
-        //     let mut tmp2 = tmp1.square();
-        //     tmp2.mul_assign(&tmp1);
-        //     tmp2.add_assign(&xr);
-        //     xr = xl;
-        //     xl = tmp2;
-        // }
+    pub fn mimc2(
+        &self,
+        xl: &[u8; 32],
+        xr: &[u8; 32],
+    ) -> Result<Scalar, ProofError> {
+        let ct_option = Scalar::from_bytes(xl);
+        let xl = if bool::from(ct_option.is_some()) {
+            ct_option.unwrap()
+        } else {
+            return Err(format!("Convert to scalar has failed").into());
+        };
 
-        // xl
-        Scalar::from(0)
+        let ct_option = Scalar::from_bytes(xr);
+        let xr = if bool::from(ct_option.is_some()) {
+            ct_option.unwrap()
+        } else {
+            return Err(format!("Convert to scalar has failed").into());
+        };
+
+        Ok(mimc(xl, xr, &self.constants))
     }
 
     #[allow(dead_code)]

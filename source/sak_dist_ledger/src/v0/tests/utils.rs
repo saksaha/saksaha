@@ -10,16 +10,16 @@ pub(crate) fn make_dummy_block_candidate_1() -> Option<BlockCandidate> {
             String::from("1"),
             vec![11, 11, 11],
             String::from("1"),
-            b"1".to_vec(),
+            Some(b"1".to_vec()),
             None,
-            Some(String::from("11")),
+            None,
             Some(String::from("v")),
             Some(String::from("k")),
             Some(String::from("s")),
             Some(String::from("sn_1")),
             Some(String::from("sn_2")),
-            Some(String::from("cm_1")),
-            Some(String::from("cm_2")),
+            Some(vec![1]),
+            Some(vec![1]),
             Some(String::from("rt")),
         );
 
@@ -55,7 +55,7 @@ pub(crate) fn make_dummy_block_candidate_with_query_tx(
                     .as_bytes()
                     .to_vec(),
                 String::from("author_sig0"),
-                vec![0], // pi
+                Some(vec![0]), // pi
                 Some(String::from("ctr_addr0")),
                 None,
                 Some(String::from("v")),
@@ -63,8 +63,8 @@ pub(crate) fn make_dummy_block_candidate_with_query_tx(
                 Some(String::from("s")),
                 Some(String::from("sn_1")),
                 Some(String::from("sn_2")),
-                Some(String::from("cm_1")),
-                Some(String::from("cm_2")),
+                Some(vec![1]),
+                Some(vec![1]),
                 Some(String::from("rt")),
             )
         };
@@ -111,7 +111,7 @@ pub(crate) fn make_dummy_block_candidate_with_execute_tx(
                     .as_bytes()
                     .to_vec(),
                 String::from("author_sig1"),
-                vec![1], // pi
+                Some(vec![1]), // pi
                 Some(String::from("ctr_addr1")),
                 None,
                 Some(String::from("v")),
@@ -119,8 +119,8 @@ pub(crate) fn make_dummy_block_candidate_with_execute_tx(
                 Some(String::from("s")),
                 Some(String::from("sn_1")),
                 Some(String::from("sn_2")),
-                Some(String::from("cm_1")),
-                Some(String::from("cm_2")),
+                Some(vec![1]),
+                Some(vec![1]),
                 Some(String::from("rt")),
             )
         };
@@ -151,7 +151,7 @@ pub(crate) fn make_dummy_block_candidate_with_execute_tx(
                     .as_bytes()
                     .to_vec(),
                 String::from("author_sig2"),
-                vec![2], // pi
+                Some(vec![2]), // pi
                 Some(String::from("ctr_addr2")),
                 None,
                 Some(String::from("v")),
@@ -159,8 +159,8 @@ pub(crate) fn make_dummy_block_candidate_with_execute_tx(
                 Some(String::from("s")),
                 Some(String::from("sn_1")),
                 Some(String::from("sn_2")),
-                Some(String::from("cm_1")),
-                Some(String::from("cm_2")),
+                Some(vec![1]),
+                Some(vec![1]),
                 Some(String::from("rt")),
             )
         };

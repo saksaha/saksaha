@@ -631,14 +631,12 @@ impl LedgerDBSchema {
         db: &DB,
         // tx_hash
         key: &String,
-    ) -> Result<Option<String>, LedgerError> {
+    ) -> Result<Option<Vec<u8>>, LedgerError> {
         let cf = make_cf_handle(db, CM)?;
 
         match db.get_cf(&cf, key)? {
             Some(v) => {
-                let str = String::from_utf8(v)?;
-
-                return Ok(Some(str));
+                return Ok(Some(v));
             }
             None => {
                 return Ok(None);
@@ -766,14 +764,12 @@ impl LedgerDBSchema {
         &self,
         db: &DB,
         key: &String,
-    ) -> Result<Option<String>, LedgerError> {
+    ) -> Result<Option<Vec<u8>>, LedgerError> {
         let cf = make_cf_handle(db, CM_1)?;
 
         match db.get_cf(&cf, key)? {
             Some(v) => {
-                let str = String::from_utf8(v)?;
-
-                return Ok(Some(str));
+                return Ok(Some(v));
             }
             None => {
                 return Ok(None);
@@ -785,14 +781,12 @@ impl LedgerDBSchema {
         &self,
         db: &DB,
         key: &String,
-    ) -> Result<Option<String>, LedgerError> {
+    ) -> Result<Option<Vec<u8>>, LedgerError> {
         let cf = make_cf_handle(db, CM_2)?;
 
         match db.get_cf(&cf, key)? {
             Some(v) => {
-                let str = String::from_utf8(v)?;
-
-                return Ok(Some(str));
+                return Ok(Some(v));
             }
             None => {
                 return Ok(None);
@@ -884,7 +878,7 @@ impl LedgerDBSchema {
         db: &DB,
         batch: &mut WriteBatch,
         key: &String,
-        value: &String,
+        value: &Vec<u8>,
     ) -> Result<(), LedgerError> {
         let cf = make_cf_handle(db, CM)?;
 
@@ -898,13 +892,13 @@ impl LedgerDBSchema {
         db: &DB,
         batch: &mut WriteBatch,
         tx_height: &u128,
-        value: &String,
+        cm: &Vec<u8>,
     ) -> Result<(), LedgerError> {
         let cf = make_cf_handle(db, CM)?;
 
         let v = tx_height.to_be_bytes();
 
-        batch.put_cf(&cf, v, value);
+        batch.put_cf(&cf, v, cm);
 
         Ok(())
     }

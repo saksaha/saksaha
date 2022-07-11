@@ -10,21 +10,26 @@ use std::sync::Arc;
 #[derive(Deserialize, Debug)]
 struct SendTxBody {
     created_at: String,
+
     #[serde(with = "serde_bytes")]
     data: Vec<u8>,
+
     #[serde(with = "serde_bytes")]
-    pi: Vec<u8>,
+    pi: Option<Vec<u8>>,
+
     author_sig: String,
-    ctr_addr: String,
-    cm: String,
-    v: String,
-    k: String,
-    s: String,
-    sn_1: String,
-    sn_2: String,
-    cm_1: String,
-    cm_2: String,
-    rt: String,
+
+    ctr_addr: Option<String>,
+
+    cm: Option<Vec<u8>>,
+    v: Option<String>,
+    k: Option<String>,
+    s: Option<String>,
+    sn_1: Option<String>,
+    sn_2: Option<String>,
+    cm_1: Option<Vec<u8>>,
+    cm_2: Option<Vec<u8>>,
+    rt: Option<String>,
 }
 
 pub(crate) async fn send_transaction(
@@ -36,6 +41,20 @@ pub(crate) async fn send_transaction(
             let _tx_value: TxCandidate =
                 match serde_json::from_slice::<SendTxBody>(&b) {
                     Ok(v) => {
+                        // created_at: String,
+                        // data: Vec<u8>,
+                        // author_sig: String,
+                        // pi: Vec<u8>,
+                        // ctr_addr: Option<String>,
+                        // cm: Option<Vec<u8>>,
+                        // v: Option<String>,
+                        // k: Option<String>,
+                        // s: Option<String>,
+                        // sn_1: Option<String>,
+                        // sn_2: Option<String>,
+                        // cm_1: Option<Vec<u8>>,
+                        // cm_2: Option<Vec<u8>>,
+                        // rt: Option<String>,
                         let tx_candidate = TxCandidate::new(
                             v.created_at,
                             v.data,

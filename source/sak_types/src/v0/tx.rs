@@ -21,14 +21,14 @@ pub struct Tx {
     ctr_addr: String,
 
     //
-    cm: String,
+    cm: Vec<u8>,
     v: String,
     k: String,
     s: String,
     sn_1: String,
     sn_2: String,
-    cm_1: String,
-    cm_2: String,
+    cm_1: Vec<u8>,
+    cm_2: Vec<u8>,
     rt: String,
 
     // auto-generated value
@@ -60,14 +60,14 @@ impl Tx {
         pi: Vec<u8>,
         ctr_addr: String,
         tx_hash: String,
-        cm: String,
+        cm: Vec<u8>,
         v: String,
         k: String,
         s: String,
         sn_1: String,
         sn_2: String,
-        cm_1: String,
-        cm_2: String,
+        cm_1: Vec<u8>,
+        cm_2: Vec<u8>,
         rt: String,
         tx_height: u128,
     ) -> Tx {
@@ -115,7 +115,7 @@ impl Tx {
         &self.tx_height
     }
 
-    pub fn get_cm(&self) -> &String {
+    pub fn get_cm(&self) -> &Vec<u8> {
         &self.cm
     }
 
@@ -139,11 +139,11 @@ impl Tx {
         &self.sn_2
     }
 
-    pub fn get_cm_1(&self) -> &String {
+    pub fn get_cm_1(&self) -> &Vec<u8> {
         &self.cm_1
     }
 
-    pub fn get_cm_2(&self) -> &String {
+    pub fn get_cm_2(&self) -> &Vec<u8> {
         &self.cm_2
     }
 
@@ -176,15 +176,17 @@ pub struct TxCandidate {
     pi: Vec<u8>,
     author_sig: String,
     ctr_addr: String,
-    cm: String,
+
+    // TxMint will have this value instead of "cm_1" or "cm_2".
+    cm: Vec<u8>,
 
     v: String,
     k: String,
     s: String,
     sn_1: String,
     sn_2: String,
-    cm_1: String,
-    cm_2: String,
+    cm_1: Vec<u8>,
+    cm_2: Vec<u8>,
     rt: String,
 
     // auto-generated value
@@ -196,27 +198,28 @@ impl TxCandidate {
         created_at: String,
         data: Vec<u8>,
         author_sig: String,
-        pi: Vec<u8>,
+        pi: Option<Vec<u8>>,
         ctr_addr: Option<String>,
-        cm: Option<String>,
+        cm: Option<Vec<u8>>,
         v: Option<String>,
         k: Option<String>,
         s: Option<String>,
         sn_1: Option<String>,
         sn_2: Option<String>,
-        cm_1: Option<String>,
-        cm_2: Option<String>,
+        cm_1: Option<Vec<u8>>,
+        cm_2: Option<Vec<u8>>,
         rt: Option<String>,
     ) -> TxCandidate {
         let ctr_addr = ctr_addr.unwrap_or(String::from(""));
-        let cm = cm.unwrap_or(String::from(""));
+        let cm = cm.unwrap_or(Vec::new());
+        let pi = pi.unwrap_or(Vec::new());
         let v = v.unwrap_or(String::from(""));
         let k = k.unwrap_or(String::from(""));
         let s = s.unwrap_or(String::from(""));
         let sn_1 = sn_1.unwrap_or(String::from(""));
         let sn_2 = sn_2.unwrap_or(String::from(""));
-        let cm_1 = cm_1.unwrap_or(String::from(""));
-        let cm_2 = cm_2.unwrap_or(String::from(""));
+        let cm_1 = cm_1.unwrap_or(Vec::new());
+        let cm_2 = cm_2.unwrap_or(Vec::new());
         let rt = rt.unwrap_or(String::from(""));
 
         let hashable_items = vec![
@@ -224,7 +227,7 @@ impl TxCandidate {
             data.as_slice(),
             pi.as_slice(),
             author_sig.as_bytes(),
-            cm.as_bytes(),
+            cm.as_slice(),
         ];
 
         let tx_hash = sak_crypto::compute_hash(&hashable_items);
@@ -289,7 +292,7 @@ impl TxCandidate {
         &self.ctr_addr
     }
 
-    pub fn get_cm(&self) -> &String {
+    pub fn get_cm(&self) -> &Vec<u8> {
         &self.cm
     }
 
@@ -313,11 +316,11 @@ impl TxCandidate {
         &self.sn_2
     }
 
-    pub fn get_cm_1(&self) -> &String {
+    pub fn get_cm_1(&self) -> &Vec<u8> {
         &self.cm_1
     }
 
-    pub fn get_cm_2(&self) -> &String {
+    pub fn get_cm_2(&self) -> &Vec<u8> {
         &self.cm_2
     }
 
@@ -345,7 +348,7 @@ impl TxCandidate {
 fn get_tx_op(
     ctr_addr: &String,
     data: &Vec<u8>,
-    cm: &String,
+    cm: &Vec<u8>,
 ) -> (TxCtrOp, TxCoinOp) {
     let tx_ctr_type = {
         let mut c = TxCtrOp::None;
@@ -370,4 +373,153 @@ fn get_tx_op(
     };
 
     return (tx_ctr_type, tx_coin_op);
+}
+
+pub mod for_testing {
+    use super::*;
+
+    impl TxCandidate {
+        pub fn new_dummy_tx_candidate_1() -> TxCandidate {
+            TxCandidate::new(
+                String::from("1"),
+                vec![11, 11, 11],
+                String::from("1"),
+                Some(b"1".to_vec()),
+                Some(String::from("11")),
+                Some(vec![11, 11, 11]),
+                Some(String::from("11")),
+                Some(String::from("11")),
+                Some(String::from("11")),
+                Some(String::from("11")),
+                Some(String::from("11")),
+                Some(vec![11, 11, 11]),
+                Some(vec![11, 11, 11]),
+                Some(String::from("11")),
+            )
+        }
+
+        pub fn new_dummy_tx_candidate_2() -> TxCandidate {
+            TxCandidate::new(
+                String::from("2"),
+                vec![2, 2, 2],
+                String::from("2"),
+                Some(b"2".to_vec()),
+                Some(String::from("22")),
+                Some(vec![2, 2, 2]),
+                Some(String::from("22")),
+                Some(String::from("22")),
+                Some(String::from("22")),
+                Some(String::from("22")),
+                Some(String::from("22")),
+                Some(vec![2, 2, 2]),
+                Some(vec![2, 2, 2]),
+                Some(String::from("22")),
+            )
+        }
+
+        pub fn new_dummy_tx_candidate_3() -> TxCandidate {
+            TxCandidate::new(
+                String::from("3"),
+                vec![3, 3, 3],
+                String::from("3"),
+                Some(b"3".to_vec()),
+                Some(String::from("33")),
+                Some(vec![33, 33, 33]),
+                Some(String::from("33")),
+                Some(String::from("33")),
+                Some(String::from("33")),
+                Some(String::from("33")),
+                Some(String::from("33")),
+                Some(vec![33, 33, 33]),
+                Some(vec![33, 33, 33]),
+                Some(String::from("33")),
+            )
+        }
+    }
+
+    impl Tx {
+        pub fn new_dummy_tx_1() -> Tx {
+            Tx::new(
+                String::from("111"),
+                String::from("one").as_bytes().to_vec(),
+                String::from("0x111"),
+                b"0x1".to_vec(),
+                String::from("one"),
+                String::from("one"),
+                vec![],
+                String::from("one"),
+                String::from("one"),
+                String::from("one"),
+                String::from("one"),
+                String::from("one"),
+                vec![1],
+                vec![1],
+                String::from("one"),
+                1,
+            )
+        }
+
+        pub fn new_dummy_tx_2() -> Tx {
+            Tx::new(
+                String::from("2"),
+                String::from("2").as_bytes().to_vec(),
+                String::from("0x2"),
+                b"0x2".to_vec(),
+                String::from("2"),
+                String::from("2"),
+                vec![],
+                String::from("2"),
+                String::from("2"),
+                String::from("2"),
+                String::from("2"),
+                String::from("2"),
+                vec![2],
+                vec![2],
+                String::from("2"),
+                2,
+            )
+        }
+
+        pub fn new_dummy_tx_3() -> Tx {
+            Tx::new(
+                String::from("3"),
+                String::from("3").as_bytes().to_vec(),
+                String::from("0x3"),
+                b"0x3".to_vec(),
+                String::from("3"),
+                String::from("3"),
+                vec![],
+                String::from("3"),
+                String::from("3"),
+                String::from("3"),
+                String::from("3"),
+                String::from("3"),
+                vec![3],
+                vec![3],
+                String::from("3"),
+                3,
+            )
+        }
+
+        pub fn new_dummy_tx_4() -> Tx {
+            Tx::new(
+                String::from("4"),
+                String::from("4").as_bytes().to_vec(),
+                String::from("0x4"),
+                b"0x3".to_vec(),
+                String::from("4"),
+                String::from("4"),
+                vec![],
+                String::from("4"),
+                String::from("4"),
+                String::from("4"),
+                String::from("4"),
+                String::from("4"),
+                vec![4],
+                vec![4],
+                String::from("4"),
+                4,
+            )
+        }
+    }
 }

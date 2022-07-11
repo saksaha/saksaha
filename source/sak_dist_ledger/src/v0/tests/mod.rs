@@ -35,32 +35,32 @@ mod test {
                     String::from("1"),
                     vec![11, 11, 11],
                     String::from("1"),
-                    b"1".to_vec(),
+                    Some(b"1".to_vec()),
                     None,
-                    Some(String::from("11")),
+                    None,
                     Some(String::from("v")),
                     Some(String::from("k")),
                     Some(String::from("s")),
                     Some(String::from("sn_1")),
                     Some(String::from("sn_2")),
-                    Some(String::from("cm_1")),
-                    Some(String::from("cm_2")),
+                    Some(vec![1]),
+                    Some(vec![1]),
                     Some(String::from("rt")),
                 ),
                 TxCandidate::new(
                     String::from("2"),
                     vec![22, 22, 22],
                     String::from("2"),
-                    b"2".to_vec(),
+                    Some(b"2".to_vec()),
                     None,
-                    Some(String::from("22")),
+                    None,
                     Some(String::from("v")),
                     Some(String::from("k")),
                     Some(String::from("s")),
                     Some(String::from("sn_1")),
                     Some(String::from("sn_2")),
-                    Some(String::from("cm_1")),
-                    Some(String::from("cm_2")),
+                    Some(vec![2]),
+                    Some(vec![2]),
                     Some(String::from("rt")),
                 ),
             ],
@@ -102,14 +102,14 @@ mod test {
                 vec![0], // pi
                 String::from("ctr_addr0"),
                 String::from("hash0"),
-                String::from("cm0"),
+                Vec::new(),
                 String::from("v"),
                 String::from("k"),
                 String::from("s"),
                 String::from("sn_1"),
                 String::from("sn_2"),
-                String::from("cm_1"),
-                String::from("cm_2"),
+                vec![0],
+                vec![0],
                 String::from("rt"),
                 0,
             ),
@@ -117,17 +117,17 @@ mod test {
                 String::from("created_at1"),
                 String::from("data1").as_bytes().to_vec(),
                 String::from("author_sig1"),
-                vec![1], // pi
+                vec![0], // pi
                 String::from("ctr_addr1"),
                 String::from("hash1"),
-                String::from("cm1"),
+                vec![],
                 String::from("v"),
                 String::from("k"),
                 String::from("s"),
                 String::from("sn_1"),
                 String::from("sn_2"),
-                String::from("cm_1"),
-                String::from("cm_2"),
+                vec![1],
+                vec![1],
                 String::from("rt"),
                 1,
             ),
@@ -138,14 +138,14 @@ mod test {
                 vec![2], // pi
                 String::from("ctr_addr2"),
                 String::from("hash2"),
-                String::from("cm2"),
+                vec![],
                 String::from("v"),
                 String::from("k"),
                 String::from("s"),
                 String::from("sn_1"),
                 String::from("sn_2"),
-                String::from("cm_1"),
-                String::from("cm_2"),
+                vec![1],
+                vec![1],
                 String::from("rt"),
                 2,
             ),
@@ -156,14 +156,14 @@ mod test {
                 vec![3], // pi
                 String::from("ctr_addr3"),
                 String::from("hash3"),
-                String::from("cm3"),
+                vec![],
                 String::from("v"),
                 String::from("k"),
                 String::from("s"),
                 String::from("sn_1"),
                 String::from("sn_2"),
-                String::from("cm_1"),
-                String::from("cm_2"),
+                vec![1],
+                vec![1],
                 String::from("rt"),
                 3,
             ),
@@ -331,7 +331,7 @@ mod test {
             String::from("created_at0"),
             test_wasm,
             String::from("author_sig0"),
-            vec![0], // pi
+            Some(vec![0]), // pi
             Some(String::from("ctr_addr0")),
             None,
             Some(String::from("v")),
@@ -339,8 +339,8 @@ mod test {
             Some(String::from("s")),
             Some(String::from("sn_1")),
             Some(String::from("sn_2")),
-            Some(String::from("cm_1")),
-            Some(String::from("cm_2")),
+            Some(vec![1]),
+            Some(vec![2]),
             Some(String::from("rt")),
         );
 
@@ -350,15 +350,22 @@ mod test {
     }
 
     #[tokio::test(flavor = "multi_thread")]
+    async fn test_write_a_genesis_block() {
+        let dist_ledger = make_dist_ledger().await;
+
+        dist_ledger.run().await;
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
     async fn test_deploy_ctr_when_dist_ledger_writes_a_new_block() {
         let dist_ledger = make_dist_ledger().await;
 
         dist_ledger.run().await;
 
-        // dist_ledger
-        //     .write_block(utils::make_dummy_block_candidate_1())
-        //     .await
-        //     .expect("Block_1 must be written");
+        dist_ledger
+            .write_block(utils::make_dummy_block_candidate_1())
+            .await
+            .expect("Block_1 must be written");
     }
 
     #[tokio::test(flavor = "multi_thread")]
@@ -431,7 +438,7 @@ mod test {
                         String::from("created_at0"),
                         vec![0, 0, 0], // data
                         String::from("author_sig0"),
-                        vec![0], // pi
+                        Some(vec![0]), // pi
                         Some(String::from("ctr_addr0")),
                         None,
                         Some(String::from("v")),
@@ -439,8 +446,8 @@ mod test {
                         Some(String::from("s")),
                         Some(String::from("sn_1")),
                         Some(String::from("sn_2")),
-                        Some(String::from("cm_1")),
-                        Some(String::from("cm_2")),
+                        Some(vec![1]),
+                        Some(vec![1]),
                         Some(String::from("rt")),
                     ),
                 ],
@@ -478,7 +485,7 @@ mod test {
                         String::from("created_at0"),
                         vec![0, 0, 0], // data
                         String::from("author_sig0"),
-                        vec![0], // pi
+                        Some(vec![0]), // pi
                         Some(String::from("ctr_addr0")),
                         None,
                         Some(String::from("v")),
@@ -486,15 +493,15 @@ mod test {
                         Some(String::from("s")),
                         Some(String::from("sn_1")),
                         Some(String::from("sn_2")),
-                        Some(String::from("cm_1")),
-                        Some(String::from("cm_2")),
+                        Some(vec![0]),
+                        Some(vec![0]),
                         Some(String::from("rt")),
                     ),
                     TxCandidate::new(
                         String::from("created_at1"),
                         vec![1, 1, 1], // data
                         String::from("author_sig1"),
-                        vec![1], // pi
+                        Some(vec![1]), // pi
                         Some(String::from("ctr_addr1")),
                         None,
                         Some(String::from("v")),
@@ -502,8 +509,8 @@ mod test {
                         Some(String::from("s")),
                         Some(String::from("sn_1")),
                         Some(String::from("sn_2")),
-                        Some(String::from("cm_1")),
-                        Some(String::from("cm_2")),
+                        Some(vec![1]),
+                        Some(vec![1]),
                         Some(String::from("rt")),
                     ),
                 ],

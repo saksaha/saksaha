@@ -127,12 +127,14 @@ impl DistLedger {
 
                         let cm = tc.get_cm();
                         let sib_cm = sibling_node.unwrap_or(String::from("0"));
-                        // let hash = sak_proofs::
 
                         println!(
-                            "update loc, {}, hash of two, {} and {}",
+                            "update loc, {}, hash of two, {:?} and {:?}",
                             update_loc, cm, sib_cm
                         );
+
+                        // cm
+                        // self.hasher.mimc2()
 
                         // rt_updates.insert(update_loc)
                     }
