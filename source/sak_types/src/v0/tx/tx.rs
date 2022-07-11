@@ -1,39 +1,41 @@
+use crate::{MintTxCandidate, PourTxCandidate, TxCandidateVariant, TypesError};
 use serde::{Deserialize, Serialize};
 
 pub const WASM_MAGIC_NUMBER: [u8; 4] = [0x00, 0x61, 0x73, 0x6d];
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
 pub struct Tx {
-    //
-    created_at: String,
+    // //
+    // created_at: String,
 
-    //
-    #[serde(with = "serde_bytes")]
-    data: Vec<u8>,
+    // //
+    // #[serde(with = "serde_bytes")]
+    // data: Vec<u8>,
 
-    //
-    pi: Vec<u8>,
+    // //
+    // pi: Vec<u8>,
 
-    //
-    author_sig: String,
+    // //
+    // author_sig: String,
 
-    //
-    ctr_addr: String,
+    // //
+    // ctr_addr: String,
 
-    //
-    cm: Vec<u8>,
-    v: String,
-    k: String,
-    s: String,
-    sn_1: String,
-    sn_2: String,
-    cm_1: Vec<u8>,
-    cm_2: Vec<u8>,
-    rt: String,
+    // //
+    // cm: Vec<u8>,
+    // v: String,
+    // k: String,
+    // s: String,
+    // sn_1: String,
+    // sn_2: String,
+    // cm_1: Vec<u8>,
+    // cm_2: Vec<u8>,
+    // rt: String,
+    tx_candidate: TxCandidate,
 
     // auto-generated value
+    // tx_hash: String,
     tx_height: u128,
-    tx_hash: String,
 }
 
 pub struct ContractCallData {
@@ -53,54 +55,23 @@ pub enum TxCoinOp {
 }
 
 impl Tx {
-    pub fn new(
-        created_at: String,
-        data: Vec<u8>,
-        author_sig: String,
-        pi: Vec<u8>,
-        ctr_addr: String,
-        tx_hash: String,
-        cm: Vec<u8>,
-        v: String,
-        k: String,
-        s: String,
-        sn_1: String,
-        sn_2: String,
-        cm_1: Vec<u8>,
-        cm_2: Vec<u8>,
-        rt: String,
-        tx_height: u128,
-    ) -> Tx {
+    pub fn new(tx_candidate: TxCandidate, tx_height: u128) -> Tx {
         Tx {
-            created_at,
-            data,
-            pi,
-            author_sig,
-            ctr_addr,
-            cm,
-            v,
-            k,
-            s,
-            sn_1,
-            sn_2,
-            cm_1,
-            cm_2,
-            rt,
+            tx_candidate,
             tx_height,
-            tx_hash,
         }
     }
 
     pub fn get_created_at(&self) -> &String {
-        &self.created_at
+        &self.tx_candidate.created_at
     }
 
     pub fn get_data(&self) -> &Vec<u8> {
-        &self.data
+        &self.tx_candidate.data
     }
 
     pub fn get_pi(&self) -> &Vec<u8> {
-        &self.pi
+        &self.tx_candidate.get_pi()
     }
 
     pub fn get_author_sig(&self) -> &String {
@@ -173,21 +144,24 @@ pub struct TxCandidate {
     created_at: String,
     #[serde(with = "serde_bytes")]
     data: Vec<u8>,
-    pi: Vec<u8>,
     author_sig: String,
     ctr_addr: String,
 
-    // TxMint will have this value instead of "cm_1" or "cm_2".
-    cm: Vec<u8>,
+    variant: TxCandidateVariant,
 
-    v: String,
-    k: String,
-    s: String,
-    sn_1: String,
-    sn_2: String,
-    cm_1: Vec<u8>,
-    cm_2: Vec<u8>,
-    rt: String,
+    // pi: Vec<u8>,
+
+    // TxMint will have this value instead of "cm_1" or "cm_2".
+    // cm: Vec<u8>,
+
+    // v: String,
+    // k: String,
+    // s: String,
+    // sn_1: String,
+    // sn_2: String,
+    // cm_1: Vec<u8>,
+    // cm_2: Vec<u8>,
+    // rt: String,
 
     // auto-generated value
     tx_hash: String,
@@ -208,47 +182,81 @@ impl TxCandidate {
         sn_2: Option<String>,
         cm_1: Option<Vec<u8>>,
         cm_2: Option<Vec<u8>>,
-        rt: Option<String>,
-    ) -> TxCandidate {
-        let ctr_addr = ctr_addr.unwrap_or(String::from(""));
-        let cm = cm.unwrap_or(Vec::new());
-        let pi = pi.unwrap_or(Vec::new());
-        let v = v.unwrap_or(String::from(""));
-        let k = k.unwrap_or(String::from(""));
-        let s = s.unwrap_or(String::from(""));
-        let sn_1 = sn_1.unwrap_or(String::from(""));
-        let sn_2 = sn_2.unwrap_or(String::from(""));
-        let cm_1 = cm_1.unwrap_or(Vec::new());
-        let cm_2 = cm_2.unwrap_or(Vec::new());
-        let rt = rt.unwrap_or(String::from(""));
+        merkle_rt: Option<String>,
+    ) -> Result<TxCandidate, TypesError> {
+        let variant = match (cm, v, k, s, pi, sn_1, sn_2, cm_1, cm_2, merkle_rt)
+        {
+            (
+                Some(cm),
+                Some(v),
+                Some(k),
+                Some(s),
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+            ) => {
+                let variant =
+                    TxCandidateVariant::Mint(MintTxCandidate { cm, v, k, s });
 
-        let hashable_items = vec![
+                variant
+            }
+            (
+                None,
+                None,
+                None,
+                None,
+                Some(pi),
+                Some(sn_1),
+                Some(sn_2),
+                Some(cm_1),
+                Some(cm_2),
+                Some(merkle_rt),
+            ) => {
+                let variant = TxCandidateVariant::Pour(PourTxCandidate {
+                    pi,
+                    sn_1,
+                    sn_2,
+                    cm_1,
+                    cm_2,
+                    merkle_rt,
+                });
+
+                variant
+            }
+            _ => {
+                return Err(
+                    format!("Tx candidate arguments are invalid.").into()
+                )
+            }
+        };
+
+        let ctr_addr = ctr_addr.unwrap_or(String::from(""));
+
+        let mut hashable_items = variant.get_hashable_items();
+
+        let mut extra_hashable_items = vec![
             created_at.as_bytes(),
             data.as_slice(),
-            pi.as_slice(),
             author_sig.as_bytes(),
-            cm.as_slice(),
         ];
+
+        hashable_items.append(&mut extra_hashable_items);
 
         let tx_hash = sak_crypto::compute_hash(&hashable_items);
 
-        TxCandidate {
+        let c = TxCandidate {
             created_at,
             data,
-            pi,
             author_sig,
             ctr_addr,
-            cm,
-            v,
-            k,
-            s,
-            sn_1,
-            sn_2,
-            cm_1,
-            cm_2,
-            rt,
+            variant,
             tx_hash,
-        }
+        };
+
+        Ok(c)
     }
 
     pub fn upgrade(self, tx_height: u128) -> Tx {
