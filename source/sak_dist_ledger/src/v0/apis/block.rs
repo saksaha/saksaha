@@ -1,56 +1,11 @@
-use crate::{get_tx_type, DistLedger, LedgerError, RtUpdate, StateUpdate};
+use crate::{get_tx_ctr_type, DistLedger, LedgerError, RtUpdate, StateUpdate};
 use log::warn;
 use sak_contract_std::{CtrCallType, Request, Storage};
 use sak_proofs::Path;
-use sak_types::{Block, BlockCandidate, Tx, TxCandidate, TxType};
+use sak_types::{Block, BlockCandidate, Tx, TxCandidate, TxCtrType};
 use sak_vm::CtrFn;
 
 impl DistLedger {
-    // pub async fn get_block_candidates(
-    //     &self,
-    //     block_hashes: Vec<&String>,
-    // ) -> Result<Vec<BlockCandidate>, LedgerError> {
-    //     let blocks = self.ledger_db.get_blocks(block_hashes).await?;
-
-    //     let mut block_candidates = vec![];
-
-    //     for b in blocks {
-    //         let tx_hashes = b.get_tx_hashes();
-
-    //         let mut txs = vec![];
-
-    //         for tx_hash in tx_hashes {
-    //             let tx = self
-    //                 .ledger_db
-    //                 .get_tx(tx_hash)
-    //                 .await?
-    //                 .ok_or("tx (of block candidate) should be persisted")?;
-
-    //             txs.push(tx)
-    //         }
-
-    //         let block_candidate = BlockCandidate {
-    //             validator_sig: b.get_validator_sig().to_string(),
-    //             transactions: txs,
-    //             witness_sigs: b.get_witness_sigs().to_owned(),
-    //             created_at: b.get_created_at().to_owned(),
-    //             block_height: b.get_height().to_owned(),
-    //             merkle_root: b.get_merkle_root().to_owned(),
-    //         };
-
-    //         block_candidates.push(block_candidate);
-    //     }
-
-    //     Ok(block_candidates)
-    // }
-
-    pub async fn get_cm_list()
-    // block_hashes: Vec<&String>,
-    // ) -> Result<Vec<Block>, LedgerError> {
-    // self.ledger_db.get_blocks(block_hashes).await
-    {
-    }
-
     pub async fn get_blocks(
         &self,
         block_hashes: Vec<&String>,
@@ -200,17 +155,18 @@ impl DistLedger {
         for tc in tcs.iter() {
             let ctr_addr = tc.get_ctr_addr();
             let data = tc.get_data();
-            let tx_type = get_tx_type(ctr_addr, data);
+            let tx_ctr_type = get_tx_ctr_type(ctr_addr, data);
+            let tx_proof_type = get_tx_proof_type();
 
-            match tx_type {
-                TxType::ContractDeploy => {
+            match tx_ctr_type {
+                TxCtrType::ContractDeploy => {
                     let initial_ctr_state =
                         self.vm.invoke(data, CtrFn::Init)?;
 
                     state_updates.insert(ctr_addr.clone(), initial_ctr_state);
                 }
 
-                TxType::ContractCall => {
+                TxCtrType::ContractCall => {
                     let req = Request::parse(data)?;
 
                     match req.ctr_call_type {
@@ -249,7 +205,7 @@ impl DistLedger {
                         }
                     };
                 }
-                TxType::Plain => {
+                TxCtrType::Plain => {
                     // get `idx` and `height` from tx.`CM`
                 }
             };
@@ -321,13 +277,13 @@ impl DistLedger {
     async fn make_block_candidate(
         &self,
     ) -> Result<Option<BlockCandidate>, LedgerError> {
-        let txs = self.sync_pool.get_all_txs().await?;
+        let tx_candidates = self.sync_pool.get_all_txs().await?;
 
-        if txs.is_empty() {
+        if tx_candidates.is_empty() {
             return Ok(None);
         }
 
-        let bc = self.consensus.do_consensus(self, txs).await?;
+        let bc = self.consensus.do_consensus(self, tx_candidates).await?;
 
         self.sync_pool.remove_tcs(&bc.tx_candidates).await?;
 

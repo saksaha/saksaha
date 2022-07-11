@@ -1,6 +1,6 @@
-use crate::{get_tx_type, LedgerDB, LedgerError};
+use crate::{get_tx_ctr_type, LedgerDB, LedgerError};
 use sak_kv_db::{WriteBatch, DB};
-use sak_types::{Tx, TxType};
+use sak_types::{Tx, TxCtrType};
 
 impl LedgerDB {
     #[cfg(test)]
@@ -158,8 +158,8 @@ impl LedgerDB {
 
         // self.schema.batch_put_cm(db, batch, tx_hash, tx.get_cm())?;
 
-        match get_tx_type(tx.get_ctr_addr(), tx.get_data()) {
-            TxType::ContractDeploy => {
+        match get_tx_ctr_type(tx.get_ctr_addr(), tx.get_data()) {
+            TxCtrType::ContractDeploy => {
                 self.schema.batch_put_tx_hash(
                     db,
                     batch,
@@ -167,8 +167,8 @@ impl LedgerDB {
                     tx_hash,
                 )?;
             }
-            TxType::ContractCall => {}
-            TxType::Plain => {}
+            TxCtrType::ContractCall => {}
+            TxCtrType::Plain => {}
         }
 
         Ok(tx_hash.clone())

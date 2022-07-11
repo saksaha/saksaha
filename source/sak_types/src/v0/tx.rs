@@ -39,7 +39,7 @@ pub struct ContractCallData {
     pub args: Vec<Vec<u8>>,
 }
 
-pub enum TxType {
+pub enum TxCtrType {
     ContractCall,
     ContractDeploy,
     Plain,

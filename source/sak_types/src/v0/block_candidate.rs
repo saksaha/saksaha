@@ -58,6 +58,7 @@ impl BlockCandidate {
 
         (block, txs)
     }
+
     //
     // pub fn resolve_txs(
     //     self,
