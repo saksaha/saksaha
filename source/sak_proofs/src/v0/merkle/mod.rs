@@ -1,7 +1,8 @@
-use crate::mimc;
 use bls12_381::Scalar;
 use log::debug;
 use std::convert::TryInto;
+
+use crate::mimc;
 
 pub const TREE_DEPTH: u64 = 32;
 

@@ -1,16 +1,12 @@
 mod constants;
 
+use self::constants::ROUND_CONSTANTS;
 use bellman::{ConstraintSystem, SynthesisError};
 use bls12_381::Scalar;
 use ff::PrimeField;
 
-use self::constants::ROUND_CONSTANTS;
-
 pub const MIMC_ROUNDS: usize = 322;
 
-// pub struct MiMC;
-
-// impl MiMC {
 pub fn get_mimc_constants() -> Vec<Scalar> {
     let constants = (0..322)
         .map(|idx| Scalar::from_bytes(&ROUND_CONSTANTS[idx]).unwrap())

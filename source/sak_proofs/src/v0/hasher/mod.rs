@@ -16,6 +16,23 @@ impl Hasher {
         }
     }
 
+    pub fn mimc2(xl: impl AsRef<[u8]>, xr: impl AsRef<[u8]>) -> Scalar {
+        let a = Scalar::from(xl);
+        // let xl = Scalar::from_bytes(&xl);
+        // for c in constants {
+        //     let mut tmp1 = xl;
+        //     tmp1.add_assign(c);
+        //     let mut tmp2 = tmp1.square();
+        //     tmp2.mul_assign(&tmp1);
+        //     tmp2.add_assign(&xr);
+        //     xr = xl;
+        //     xl = tmp2;
+        // }
+
+        // xl
+        Scalar::from(0)
+    }
+
     #[allow(dead_code)]
     fn mimc_cs_scalar<CS: ConstraintSystem<Scalar>>(
         &self,

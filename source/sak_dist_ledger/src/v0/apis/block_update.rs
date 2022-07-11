@@ -113,6 +113,9 @@ impl DistLedger {
                         }
 
                         let sibling_loc = format!("{}_{}", height, idx);
+
+                        println!("sibling loc, {}", sibling_loc);
+
                         let sibling_node =
                             self.get_merkle_node(&sibling_loc).await?;
 
