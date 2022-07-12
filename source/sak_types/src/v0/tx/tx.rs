@@ -21,10 +21,10 @@ impl Tx {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct MintTx {
     //
-    tx_candidate: MintTxCandidate,
+    pub tx_candidate: MintTxCandidate,
 
     //
-    tx_height: u128,
+    pub tx_height: u128,
 }
 
 impl MintTx {
@@ -39,10 +39,10 @@ impl MintTx {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct PourTx {
     //
-    tx_candidate: PourTxCandidate,
+    pub tx_candidate: PourTxCandidate,
 
     //
-    tx_height: u128,
+    pub tx_height: u128,
 }
 
 impl PourTx {

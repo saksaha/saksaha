@@ -19,28 +19,28 @@ impl TxCandidate {
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct MintTxCandidate {
     //
-    created_at: String,
+    pub created_at: String,
 
     //
     #[serde(with = "serde_bytes")]
-    data: Vec<u8>,
+    pub data: Vec<u8>,
     //
-    author_sig: String,
+    pub author_sig: String,
 
     //
-    ctr_addr: String,
+    pub ctr_addr: String,
 
     //
-    cm: Vec<u8>,
+    pub cm: Vec<u8>,
 
     //
-    v: String,
+    pub v: String,
 
     //
-    k: String,
+    pub k: String,
 
     //
-    s: String,
+    pub s: String,
 
     //
     tx_hash: String,
@@ -92,24 +92,37 @@ impl MintTxCandidate {
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct PourTxCandidate {
-    created_at: String,
+    //
+    pub created_at: String,
 
     //
     #[serde(with = "serde_bytes")]
-    data: Vec<u8>,
+    pub data: Vec<u8>,
     //
-    author_sig: String,
+    pub author_sig: String,
 
     //
-    ctr_addr: String,
+    pub ctr_addr: String,
 
-    pi: Vec<u8>,
-    sn_1: Vec<u8>,
-    sn_2: Vec<u8>,
-    cm_1: Vec<u8>,
-    cm_2: Vec<u8>,
-    merkle_rt: Vec<u8>,
+    //
+    pub pi: Vec<u8>,
 
+    //
+    pub sn_1: Vec<u8>,
+
+    //
+    pub sn_2: Vec<u8>,
+
+    //
+    pub cm_1: Vec<u8>,
+
+    //
+    pub cm_2: Vec<u8>,
+
+    //
+    pub merkle_rt: Vec<u8>,
+
+    //
     tx_hash: String,
 }
 

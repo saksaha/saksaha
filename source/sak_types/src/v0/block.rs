@@ -4,12 +4,12 @@ use crate::Tx;
 
 #[derive(Deserialize, Serialize, Debug, PartialEq, Eq, Hash)]
 pub struct Block {
-    validator_sig: String,
-    tx_hashes: Vec<String>,
-    witness_sigs: Vec<String>,
-    created_at: String,
-    block_height: u128,
-    merkle_rt: Vec<u8>,
+    pub validator_sig: String,
+    pub tx_hashes: Vec<String>,
+    pub witness_sigs: Vec<String>,
+    pub created_at: String,
+    pub block_height: u128,
+    pub merkle_rt: Vec<u8>,
     block_hash: String,
 }
 
@@ -56,31 +56,31 @@ impl Block {
         }
     }
 
-    pub fn get_validator_sig(&self) -> &String {
-        &self.validator_sig
-    }
+    // pub fn get_validator_sig(&self) -> &String {
+    //     &self.validator_sig
+    // }
 
-    pub fn get_witness_sigs(&self) -> &Vec<String> {
-        &self.witness_sigs
-    }
+    // pub fn get_witness_sigs(&self) -> &Vec<String> {
+    //     &self.witness_sigs
+    // }
 
-    pub fn get_created_at(&self) -> &String {
-        &self.created_at
-    }
+    // pub fn get_created_at(&self) -> &String {
+    //     &self.created_at
+    // }
 
-    pub fn get_tx_hashes(&self) -> &Vec<String> {
-        &self.tx_hashes
-    }
+    // pub fn get_tx_hashes(&self) -> &Vec<String> {
+    //     &self.tx_hashes
+    // }
 
-    pub fn get_block_height(&self) -> &u128 {
-        &self.block_height
-    }
+    // pub fn get_block_height(&self) -> &u128 {
+    //     &self.block_height
+    // }
 
-    pub fn get_hash(&self) -> &String {
+    pub fn get_block_hash(&self) -> &String {
         &self.block_hash
     }
 
-    pub fn get_merkle_rt(&self) -> &Vec<u8> {
-        &self.merkle_rt
-    }
+    // pub fn get_merkle_rt(&self) -> &Vec<u8> {
+    //     &self.merkle_rt
+    // }
 }
