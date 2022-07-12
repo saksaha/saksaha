@@ -1,14 +1,21 @@
 use serde::{Deserialize, Serialize};
 
+use crate::Tx;
+
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Block {
     validator_sig: String,
+
     tx_hashes: Vec<String>,
     witness_sigs: Vec<String>,
     created_at: String,
     block_height: u128,
     merkle_rt: Vec<u8>,
     block_hash: String,
+
+    //
+    #[serde(skip_serializing, skip_deserializing)]
+    transactions: Vec<Tx>,
 }
 
 impl Block {
@@ -19,6 +26,7 @@ impl Block {
         created_at: String,
         block_height: u128,
         merkle_rt: Vec<u8>,
+        transactions: Vec<Tx>,
     ) -> Block {
         let block_hash = {
             let mut to_hash = vec![];
@@ -51,6 +59,7 @@ impl Block {
             block_height,
             merkle_rt,
             block_hash,
+            transactions,
         }
     }
 
