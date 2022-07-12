@@ -174,24 +174,17 @@ async fn handle_mint_tx_candidate(
         None => 0,
     };
 
-    let (auth_path, update_path) =
-        sak_proofs::get_auth_path(next_tx_height as u64);
+    let auth_path = sak_proofs::get_auth_path(next_tx_height as u64);
 
     for (height, auth_node_idx) in auth_path.iter().enumerate() {
-        if auth_path.len() - 1 == height {
+        if height == auth_path.len() - 1 {
             break;
         }
 
         let sibling_loc = format!("{}_{}", height, auth_node_idx);
-
-        println!("sibling loc, {}", sibling_loc);
-
         let sibling_node = dist_ledger.get_merkle_node(&sibling_loc).await?;
 
-        let update_loc =
-            format!("{}_{}", height + 1, update_path[*idx as usize + 1]);
-
-        let cm = {
+        let curr_cm = {
             let v = tc.cm.to_vec();
 
             let ret: [u8; 32] = match v.try_into() {
@@ -223,12 +216,16 @@ async fn handle_mint_tx_candidate(
             ret
         };
 
-        let merkle_node = dist_ledger.hasher.mimc2(&cm, &sib_cm);
+        let merkle_node = dist_ledger.hasher.mimc2(&curr_cm, &sib_cm)?.to_vec();
+        let parent_idx = sak_proofs::get_parent_idx(*auth_node_idx);
+        let update_loc = format!("{}_{}", height + 1, parent_idx);
 
         println!(
             "update loc, {}, hash of two, {:?} and {:?}",
-            update_loc, cm, sib_cm
+            update_loc, curr_cm, sib_cm
         );
+
+        merkle_update.insert(update_loc, merkle_node);
     }
 
     Ok(())

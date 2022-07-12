@@ -1,6 +1,8 @@
-use crate::{LedgerDB, LedgerError};
-use sak_kv_db::{WriteBatch, DB};
-use sak_types::{Tx, TxCandidate, TxCandidateVariant, TxCtrOp};
+use crate::{LedgerDB, LedgerDBSchema, LedgerError};
+use sak_kv_db::{KeyValueDatabase, WriteBatch, DB};
+use sak_types::{
+    MintTx, MintTxCandidate, PourTx, PourTxCandidate, Tx, TxCandidate, TxCtrOp,
+};
 
 impl LedgerDB {
     #[cfg(test)]
@@ -9,7 +11,10 @@ impl LedgerDB {
 
         let mut batch = WriteBatch::default();
 
-        self._batch_put_tx(db, &mut batch, tx)
+        match tx {
+            Tx::Mint(t) => batch_put_mint_tx(db, &self.schema, &mut batch, t),
+            Tx::Pour(t) => batch_put_pour_tx(db, &self.schema, &mut batch, t),
+        }
     }
 
     pub(crate) async fn get_tx(
@@ -18,138 +23,17 @@ impl LedgerDB {
     ) -> Result<Option<Tx>, LedgerError> {
         let db = &self.kv_db.db_instance;
 
-        let created_at = self
+        let tx_type = self
             .schema
-            .get_created_at(db, tx_hash)?
-            .ok_or("created_at does not exist")?;
+            .get_tx_type(db, tx_hash)?
+            .ok_or("tx type should exist")?;
 
-        let data = self
-            .schema
-            .get_data(db, tx_hash)?
-            .ok_or("data does not exist")?;
-
-        let author_sig = self
-            .schema
-            .get_author_sig(db, tx_hash)?
-            .ok_or("author_sig does not exist")?;
-
-        let pi = self.schema.get_pi(db, tx_hash)?;
-
-        let ctr_addr = self.schema.get_ctr_addr(db, tx_hash)?;
-
-        let tx_height = self
-            .schema
-            .get_tx_height(db, tx_hash)?
-            .ok_or("tx_height does not exist")?;
-
-        let cm = self.schema.get_cm(db, tx_hash)?;
-
-        let v = self.schema.get_v(db, tx_hash)?;
-
-        let k = self.schema.get_k(db, tx_hash)?;
-
-        let s = self.schema.get_s(db, tx_hash)?;
-
-        let sn_1 = self.schema.get_sn_1(db, tx_hash)?;
-
-        let sn_2 = self.schema.get_sn_2(db, tx_hash)?;
-
-        let cm_1 = self.schema.get_cm_1(db, tx_hash)?;
-
-        let cm_2 = self.schema.get_cm_2(db, tx_hash)?;
-
-        let merkle_rt = self.schema.get_merkle_rt(db, tx_hash)?;
-
-        let tx_candidate = TxCandidate::new(
-            created_at, data, author_sig, pi, ctr_addr, cm, v, k, s, sn_1,
-            sn_2, cm_1, cm_2, merkle_rt,
-        )?;
-
-        let tx = Tx::new(tx_candidate, tx_height);
+        let tx = match tx_type.as_ref() {
+            "mint" => get_mint_tx(db, &self.schema, tx_hash),
+            "pour" => get_pour_tx(db, &self.schema, tx_hash),
+        }?;
 
         Ok(Some(tx))
-    }
-
-    pub(super) fn _batch_put_tx(
-        &self,
-        db: &DB,
-        batch: &mut WriteBatch,
-        tx: &Tx,
-    ) -> Result<String, LedgerError> {
-        let tx_variant = tx.get_tx_variant();
-
-        let tx_hash = tx.get_tx_hash();
-
-        match tx_variant {
-            TxCandidateVariant::Mint(v) => {
-                self.schema.batch_put_cm(db, batch, tx_hash, &v.cm)?;
-
-                self.schema.batch_put_cm_by_height(
-                    db,
-                    batch,
-                    tx.get_tx_height(),
-                    &v.cm,
-                )?;
-            }
-            TxCandidateVariant::Pour(v) => {
-                self.schema.batch_put_pi(db, batch, tx_hash, &v.pi)?;
-            }
-        };
-
-        self.schema.batch_put_created_at(
-            db,
-            batch,
-            tx_hash,
-            tx.get_created_at(),
-        )?;
-
-        self.schema
-            .batch_put_data(db, batch, tx_hash, tx.get_data())?;
-
-        self.schema.batch_put_author_sig(
-            db,
-            batch,
-            tx_hash,
-            tx.get_author_sig(),
-        )?;
-
-        self.schema.batch_put_ctr_addr(
-            db,
-            batch,
-            tx_hash,
-            tx.get_ctr_addr(),
-        )?;
-
-        self.schema.batch_put_tx_height(
-            db,
-            batch,
-            tx_hash,
-            tx.get_tx_height(),
-        )?;
-
-        self.schema.batch_put_tx_hash_by_height(
-            db,
-            batch,
-            tx.get_tx_height(),
-            tx_hash,
-        )?;
-
-        let tx_ctr_op = tx.get_ctr_op();
-
-        match tx_ctr_op {
-            TxCtrOp::ContractDeploy => {
-                self.schema.batch_put_tx_hash(
-                    db,
-                    batch,
-                    tx.get_ctr_addr(),
-                    tx_hash,
-                )?;
-            }
-            TxCtrOp::ContractCall => {}
-            TxCtrOp::None => {}
-        }
-
-        Ok(tx_hash.clone())
     }
 
     pub(crate) async fn get_txs(
@@ -212,6 +96,173 @@ impl LedgerDB {
 
         self.schema.get_merkle_rt(db, tx_hash)
     }
+}
+
+fn get_mint_tx(
+    db: &DB,
+    schema: &LedgerDBSchema,
+    tx_hash: &String,
+) -> Result<Tx, LedgerError> {
+    let created_at = schema
+        .get_created_at(db, tx_hash)?
+        .ok_or("created_at does not exist")?;
+
+    let data = schema.get_data(db, tx_hash)?.ok_or("data does not exist")?;
+
+    let author_sig = schema
+        .get_author_sig(db, tx_hash)?
+        .ok_or("author_sig does not exist")?;
+
+    let ctr_addr = schema.get_ctr_addr(db, tx_hash)?;
+
+    let cm = schema.get_cm(db, tx_hash)?.ok_or("cm should exist")?;
+
+    let v = schema.get_v(db, tx_hash)?.ok_or("v should exist")?;
+
+    let k = schema.get_k(db, tx_hash)?.ok_or("k should exist")?;
+
+    let s = schema.get_s(db, tx_hash)?.ok_or("s shoudl exist")?;
+
+    let tx_height = schema
+        .get_tx_height(db, tx_hash)?
+        .ok_or("tx_height does not exist")?;
+
+    let tx_candidate = MintTxCandidate::new(
+        created_at, data, author_sig, ctr_addr, cm, v, k, s,
+    );
+
+    let tx = Tx::Mint(MintTx::new(tx_candidate, tx_height));
+
+    Ok(tx)
+}
+
+fn get_pour_tx(
+    db: &DB,
+    schema: &LedgerDBSchema,
+    tx_hash: &String,
+) -> Result<Tx, LedgerError> {
+    let created_at = schema
+        .get_created_at(db, tx_hash)?
+        .ok_or("created_at does not exist")?;
+
+    let data = schema.get_data(db, tx_hash)?.ok_or("data does not exist")?;
+
+    let author_sig = schema
+        .get_author_sig(db, tx_hash)?
+        .ok_or("author_sig does not exist")?;
+
+    let ctr_addr = schema.get_ctr_addr(db, tx_hash)?;
+
+    let pi = schema.get_pi(db, tx_hash)?.ok_or("pi should exist")?;
+
+    let sn_1 = schema.get_sn_1(db, tx_hash)?.ok_or("sn_1 should exist")?;
+
+    let sn_2 = schema.get_cm_2(db, tx_hash)?.ok_or("sn_2 should exist")?;
+
+    let cm_1 = schema.get_cm_1(db, tx_hash)?.ok_or("cm_1 should exist")?;
+
+    let cm_2 = schema.get_cm_2(db, tx_hash)?.ok_or("cm_2 should exist")?;
+
+    let merkle_rt = schema
+        .get_merkle_rt(db, tx_hash)?
+        .ok_or("merkle_root should exist")?;
+
+    let tx_candidate = PourTxCandidate::new(
+        created_at, data, author_sig, ctr_addr, pi, sn_1, sn_2, cm_1, cm_2,
+        merkle_rt,
+    );
+
+    let tx_height = schema
+        .get_tx_height(db, tx_hash)?
+        .ok_or("tx_height does not exist")?;
+
+    let tx = Tx::Pour(PourTx::new(tx_candidate, tx_height));
+
+    Ok(tx)
+}
+
+fn batch_put_mint_tx(
+    db: &DB,
+    schema: &LedgerDBSchema,
+    batch: &mut WriteBatch,
+    tx: &MintTx,
+) -> Result<String, LedgerError> {
+    let tc = tx.tx_candidate;
+
+    let tx_hash = tc.get_tx_hash();
+
+    schema.batch_put_cm(db, batch, tx_hash, &tc.cm)?;
+
+    schema.batch_put_cm_by_height(db, batch, &tx.tx_height, &tc.cm)?;
+
+    schema.batch_put_created_at(db, batch, tx_hash, &tc.created_at)?;
+
+    schema.batch_put_data(db, batch, tx_hash, &tc.data)?;
+
+    schema.batch_put_author_sig(db, batch, tx_hash, &tc.author_sig)?;
+
+    schema.batch_put_ctr_addr(db, batch, tx_hash, &tc.ctr_addr)?;
+
+    schema.batch_put_tx_height(db, batch, tx_hash, &tx.tx_height)?;
+
+    schema.batch_put_tx_hash_by_height(db, batch, &tx.tx_height, tx_hash)?;
+
+    let tx_ctr_op = tc.get_ctr_op();
+
+    match tx_ctr_op {
+        TxCtrOp::ContractDeploy => {
+            schema.batch_put_tx_hash(db, batch, &tc.ctr_addr, tx_hash)?;
+        }
+        TxCtrOp::ContractCall => {}
+        TxCtrOp::None => {}
+    }
+
+    Ok(tx_hash.clone())
+}
+
+fn batch_put_pour_tx(
+    db: &DB,
+    schema: &LedgerDBSchema,
+    batch: &mut WriteBatch,
+    tx: &PourTx,
+) -> Result<String, LedgerError> {
+    let tc = tx.tx_candidate;
+
+    let tx_hash = tc.get_tx_hash();
+
+    schema.batch_put_created_at(db, batch, tx_hash, &tc.created_at)?;
+
+    schema.batch_put_data(db, batch, tx_hash, &tc.data)?;
+
+    schema.batch_put_author_sig(db, batch, tx_hash, &tc.author_sig)?;
+
+    schema.batch_put_ctr_addr(db, batch, tx_hash, &tc.ctr_addr)?;
+
+    schema.batch_put_tx_height(db, batch, tx_hash, &tx.tx_height)?;
+
+    schema.batch_put_tx_hash_by_height(db, batch, &tx.tx_height, tx_hash)?;
+
+    schema.batch_put_sn_1(db, batch, tx_hash, &tc.sn_1)?;
+
+    schema.batch_put_sn_2(db, batch, tx_hash, &tc.sn_2)?;
+
+    schema.batch_put_cm_1(db, batch, tx_hash, &tc.cm_1)?;
+
+    schema.batch_put_cm_2(db, batch, tx_hash, &tc.cm_2)?;
+
+    schema.batch_put_merkle_rt(db, batch, tx_hash, &tc.merkle_rt)?;
+
+    let tx_ctr_op = tc.get_ctr_op();
+
+    match tx_ctr_op {
+        TxCtrOp::ContractDeploy => {
+            schema.batch_put_tx_hash(db, batch, &tc.ctr_addr, tx_hash)?;
+        }
+        TxCtrOp::ContractCall => {}
+        TxCtrOp::None => {}
+    }
+
+    Ok(tx_hash.clone())
 }
 
 pub mod testing {

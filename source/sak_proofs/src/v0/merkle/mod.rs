@@ -181,16 +181,12 @@ impl MerkleTree {
 
 pub fn get_auth_path(leaf_idx: u64) -> Vec<u64> {
     let mut auth_path = vec![];
-    let mut update_path = vec![];
 
     let mut curr_idx = leaf_idx;
 
     for _curr_height in 0..TREE_DEPTH {
-        update_path.push(curr_idx);
-
         let sibling_idx = get_sibling_idx(curr_idx);
 
-        // let location = (curr_height, curr_idx);
         let location = sibling_idx;
 
         auth_path.push(location);
@@ -218,6 +214,6 @@ fn get_sibling_idx(idx: u64) -> u64 {
     }
 }
 
-fn get_parent_idx(idx: u64) -> u64 {
+pub fn get_parent_idx(idx: u64) -> u64 {
     idx / 2
 }

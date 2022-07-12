@@ -11,47 +11,49 @@ use std::sync::Arc;
 // TX_HEIGHT => TX_HASH
 const TX_HASH: &str = "tx_hash";
 
-// TX_Hash =>       PI
+const TX_TYPE: &str = "tx_type";
+
+// TX_Hash => PI
 const PI: &str = "pi";
 
-//TX_Hash       | AUTHOR_SIG    |
+//TX_Hash  AUTHOR_SIG
 const AUTHOR_SIG: &str = "author_sig";
 
-// TX_Hash       | CREATED_AT    |
+// TX_Hash  CREATED_AT
 const CREATED_AT: &str = "created_at";
 
-// TX_Hash       | DATA          |
+// TX_Hash       | DATA
 const DATA: &str = "data";
 
-//  TX_Hash       | CTR_ADDR      |
+//  TX_Hash       | CTR_ADDR
 const CTR_ADDR: &str = "ctr_addr";
 
-//  TX_Hash       | TX_HEIGHT     |
+//  TX_Hash       | TX_HEIGHT
 const TX_HEIGHT: &str = "tx_height";
 
-// TX_Hash       | CM            |
-//  TX_HEIGHT     | CM            |
+// TX_Hash       | CM
+//  TX_HEIGHT     | CM
 const CM: &str = "cm";
 
-//  TX_Hash       | V             |
+//  TX_Hash       | V
 const V: &str = "v";
 
-//   TX_Hash       | K             |
+//   TX_Hash       | K
 const K: &str = "k";
 
 // TX_Hash => S
 const S: &str = "s";
 
-//  TX_Hash       | SN_1          |
+//  TX_Hash       | SN_1
 const SN_1: &str = "sn_1";
 
-//  TX_Hash       | SN_2          |
+//  TX_Hash       | SN_2
 const SN_2: &str = "sn_2";
 
 // TX_Hash => CM_1
 const CM_1: &str = "cm_1";
 
-// TX_Hash       | CM_2          |
+// TX_Hash       | CM_2
 const CM_2: &str = "cm_2";
 
 // TX_HASH => MERKLE_RT
@@ -96,6 +98,25 @@ impl LedgerDBSchema {
         let cf = make_cf_handle(db, VALIDATOR_SIG)?;
 
         match db.get_cf(&cf, block_hash)? {
+            Some(v) => {
+                let str = String::from_utf8(v)?;
+
+                return Ok(Some(str));
+            }
+            None => {
+                return Ok(None);
+            }
+        };
+    }
+
+    pub(crate) fn get_tx_type(
+        &self,
+        db: &DB,
+        tx_hash: &String,
+    ) -> Result<Option<String>, LedgerError> {
+        let cf = make_cf_handle(db, TX_TYPE)?;
+
+        match db.get_cf(&cf, tx_hash)? {
             Some(v) => {
                 let str = String::from_utf8(v)?;
 
@@ -202,23 +223,6 @@ impl LedgerDBSchema {
             }
         }
     }
-
-    // pub(crate) fn get_merkle_rt(
-    //     &self,
-    //     db: &DB,
-    //     block_hash: &String,
-    // ) -> Result<Option<Vec<u8>>, LedgerError> {
-    //     let cf = make_cf_handle(db, MERKLE_ROOT)?;
-
-    //     match db.get_cf(&cf, block_hash)? {
-    //         Some(v) => {
-    //             return Ok(Some(v));
-    //         }
-    //         None => {
-    //             return Ok(None);
-    //         }
-    //     }
-    // }
 
     pub(crate) fn get_block_hash(
         &self,
@@ -378,6 +382,20 @@ impl LedgerDBSchema {
         Ok(())
     }
 
+    pub(crate) fn batch_put_tx_type(
+        &self,
+        db: &DB,
+        batch: &mut WriteBatch,
+        tx_hash: &String,
+        tx_type: &String,
+    ) -> Result<(), LedgerError> {
+        let cf = make_cf_handle(db, TX_TYPE)?;
+
+        batch.put_cf(&cf, tx_hash, tx_type);
+
+        Ok(())
+    }
+
     pub(crate) fn batch_put_created_at(
         &self,
         db: &DB,
@@ -448,20 +466,6 @@ impl LedgerDBSchema {
         let v = block_height.to_be_bytes();
 
         batch.put_cf(&cf, block_hash, v);
-
-        Ok(())
-    }
-
-    pub(crate) fn batch_put_merkle_root(
-        &self,
-        db: &DB,
-        batch: &mut WriteBatch,
-        block_hash: &String,
-        merkle_root: &Vec<u8>,
-    ) -> Result<(), LedgerError> {
-        let cf = make_cf_handle(db, MERKLE_ROOT)?;
-
-        batch.put_cf(&cf, block_hash, merkle_root);
 
         Ok(())
     }
@@ -586,7 +590,6 @@ impl LedgerDBSchema {
     pub(crate) fn get_ctr_addr(
         &self,
         db: &DB,
-        // tx_hash
         key: &String,
     ) -> Result<Option<String>, LedgerError> {
         let cf = make_cf_handle(db, CTR_ADDR)?;
@@ -722,14 +725,12 @@ impl LedgerDBSchema {
         &self,
         db: &DB,
         key: &String,
-    ) -> Result<Option<String>, LedgerError> {
+    ) -> Result<Option<Vec<u8>>, LedgerError> {
         let cf = make_cf_handle(db, SN_1)?;
 
         match db.get_cf(&cf, key)? {
             Some(v) => {
-                let str = String::from_utf8(v)?;
-
-                return Ok(Some(str));
+                return Ok(Some(v));
             }
             None => {
                 return Ok(None);
@@ -741,14 +742,12 @@ impl LedgerDBSchema {
         &self,
         db: &DB,
         key: &String,
-    ) -> Result<Option<String>, LedgerError> {
+    ) -> Result<Option<Vec<u8>>, LedgerError> {
         let cf = make_cf_handle(db, SN_2)?;
 
         match db.get_cf(&cf, key)? {
             Some(v) => {
-                let str = String::from_utf8(v)?;
-
-                return Ok(Some(str));
+                return Ok(Some(v));
             }
             None => {
                 return Ok(None);
@@ -944,7 +943,7 @@ impl LedgerDBSchema {
         db: &DB,
         batch: &mut WriteBatch,
         key: &String,
-        value: &String,
+        value: &Vec<u8>,
     ) -> Result<(), LedgerError> {
         let cf = make_cf_handle(db, SN_1)?;
 
@@ -958,7 +957,7 @@ impl LedgerDBSchema {
         db: &DB,
         batch: &mut WriteBatch,
         key: &String,
-        value: &String,
+        value: &Vec<u8>,
     ) -> Result<(), LedgerError> {
         let cf = make_cf_handle(db, SN_2)?;
 
@@ -972,7 +971,7 @@ impl LedgerDBSchema {
         db: &DB,
         batch: &mut WriteBatch,
         key: &String,
-        value: &String,
+        value: &Vec<u8>,
     ) -> Result<(), LedgerError> {
         let cf = make_cf_handle(db, CM_1)?;
 
@@ -986,7 +985,7 @@ impl LedgerDBSchema {
         db: &DB,
         batch: &mut WriteBatch,
         key: &String,
-        value: &String,
+        value: &Vec<u8>,
     ) -> Result<(), LedgerError> {
         let cf = make_cf_handle(db, CM_2)?;
 
@@ -995,12 +994,12 @@ impl LedgerDBSchema {
         Ok(())
     }
 
-    pub(crate) fn batch_put_rt(
+    pub(crate) fn batch_put_merkle_rt(
         &self,
         db: &DB,
         batch: &mut WriteBatch,
         key: &String,
-        value: &String,
+        value: &Vec<u8>,
     ) -> Result<(), LedgerError> {
         let cf = make_cf_handle(db, MERKLE_RT)?;
 
@@ -1054,6 +1053,7 @@ impl LedgerDBSchema {
             ColumnFamilyDescriptor::new(DATA, Options::default()),
             ColumnFamilyDescriptor::new(CTR_ADDR, Options::default()),
             ColumnFamilyDescriptor::new(TX_HEIGHT, Options::default()),
+            ColumnFamilyDescriptor::new(TX_TYPE, Options::default()),
             ColumnFamilyDescriptor::new(CM, Options::default()),
             ColumnFamilyDescriptor::new(V, Options::default()),
             ColumnFamilyDescriptor::new(K, Options::default()),
