@@ -139,7 +139,7 @@ impl DistLedger {
                 Ok(b) => b,
                 Err(err) => return Err(err.to_string()),
             } {
-            let block_hash = b.get_hash().to_string();
+            let block_hash = b.get_block_hash().to_string();
 
             info!(
                 "Genesis block is already persisted, block_hash: {}",

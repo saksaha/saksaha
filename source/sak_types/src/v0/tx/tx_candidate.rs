@@ -1,6 +1,8 @@
 use crate::{MintTx, PourTx, Tx, TxCtrOp, TypesError, WASM_MAGIC_NUMBER};
 use serde::{Deserialize, Serialize};
 
+use super::utils;
+
 #[derive(Deserialize, Serialize, Debug, PartialEq, Eq)]
 pub enum TxCandidate {
     Mint(MintTxCandidate),
@@ -83,6 +85,10 @@ impl MintTxCandidate {
 
     pub fn get_tx_hash(&self) -> &String {
         return &self.tx_hash;
+    }
+
+    pub fn get_ctr_op(&self) -> TxCtrOp {
+        utils::get_ctr_op(&self.ctr_addr, &self.data)
     }
 
     pub fn upgrade(self, tx_height: u128) -> Tx {
@@ -171,6 +177,10 @@ impl PourTxCandidate {
 
     pub fn get_tx_hash(&self) -> &String {
         return &self.tx_hash;
+    }
+
+    pub fn get_ctr_op(&self) -> TxCtrOp {
+        utils::get_ctr_op(&self.ctr_addr, &self.data)
     }
 }
 

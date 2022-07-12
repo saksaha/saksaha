@@ -179,7 +179,7 @@ impl MerkleTree {
     }
 }
 
-pub fn get_auth_path(leaf_idx: u64) -> (Vec<u64>, Vec<u64>) {
+pub fn get_auth_path(leaf_idx: u64) -> Vec<u64> {
     let mut auth_path = vec![];
     let mut update_path = vec![];
 
@@ -199,7 +199,7 @@ pub fn get_auth_path(leaf_idx: u64) -> (Vec<u64>, Vec<u64>) {
         curr_idx = parent_idx;
     }
 
-    (auth_path, update_path)
+    auth_path
 }
 
 fn copy_node(node: &Node) -> Node {
