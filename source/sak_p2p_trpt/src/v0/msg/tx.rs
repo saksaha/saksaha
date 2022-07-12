@@ -161,6 +161,8 @@ pub(crate) fn put_mint_tx_candidate_into_frame(
     frame: &mut Frame,
     tc: MintTxCandidate,
 ) {
+    let tx_hash = tc.get_tx_hash().to_string();
+
     frame.push_bulk(Bytes::from(tc.data));
     frame.push_bulk(Bytes::from(tc.created_at));
     frame.push_bulk(Bytes::from(tc.author_sig));
@@ -169,10 +171,10 @@ pub(crate) fn put_mint_tx_candidate_into_frame(
     frame.push_bulk(Bytes::from(tc.v));
     frame.push_bulk(Bytes::from(tc.k));
     frame.push_bulk(Bytes::from(tc.s));
-    frame.push_bulk(Bytes::from(tc.get_tx_hash().to_string()));
+    frame.push_bulk(Bytes::from(tx_hash));
 }
 
-pub(crate) fn put_mint_tx_into_frame(frame: &mut Frame, tx: &MintTx) {
+pub(crate) fn put_mint_tx_into_frame(frame: &mut Frame, tx: MintTx) {
     let tc = tx.tx_candidate;
 
     put_mint_tx_candidate_into_frame(frame, tc);
@@ -184,6 +186,8 @@ pub(crate) fn put_pour_tx_candidate_into_frame(
     frame: &mut Frame,
     tc: PourTxCandidate,
 ) {
+    let tx_hash = tc.get_tx_hash().to_string();
+
     frame.push_bulk(Bytes::from(tc.data));
     frame.push_bulk(Bytes::from(tc.created_at));
     frame.push_bulk(Bytes::from(tc.author_sig));
@@ -194,10 +198,10 @@ pub(crate) fn put_pour_tx_candidate_into_frame(
     frame.push_bulk(Bytes::from(tc.cm_1));
     frame.push_bulk(Bytes::from(tc.cm_2));
     frame.push_bulk(Bytes::from(tc.merkle_rt));
-    frame.push_bulk(Bytes::from(tc.get_tx_hash().to_string()));
+    frame.push_bulk(Bytes::from(tx_hash));
 }
 
-pub(crate) fn put_pour_tx_into_frame(frame: &mut Frame, tx: &PourTx) {
+pub(crate) fn put_pour_tx_into_frame(frame: &mut Frame, tx: PourTx) {
     let tc = tx.tx_candidate;
 
     put_pour_tx_candidate_into_frame(frame, tc);

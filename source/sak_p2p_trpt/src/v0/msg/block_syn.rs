@@ -59,6 +59,13 @@ impl BlockSynMsg {
                     match tx_type.as_ref() {
                         "mint" => tx::parse_mint_tx(parse)?,
                         "pour" => tx::parse_pour_tx(parse)?,
+                        _ => {
+                            return Err(format!(
+                                "Invalid tx type to parse, tx_type: {}",
+                                tx_type
+                            )
+                            .into());
+                        }
                     }
                 };
 
@@ -83,7 +90,7 @@ impl BlockSynMsg {
         Ok(m)
     }
 
-    pub(crate) fn into_frame(&self) -> Frame {
+    pub(crate) fn into_frame(self) -> Frame {
         let mut frame = Frame::array();
 
         let block_count = self.blocks.len();
@@ -91,7 +98,7 @@ impl BlockSynMsg {
         frame.push_bulk(Bytes::from(BLOCK_SYN_TYPE.as_bytes()));
         frame.push_int(block_count as u128);
 
-        for (block, txs) in &self.blocks {
+        for (block, txs) in self.blocks {
             frame.push_bulk(Bytes::from(block.validator_sig.to_string()));
             frame.push_bulk(Bytes::from(block.created_at.to_string()));
             frame.push_bulk(Bytes::from(block.merkle_rt));
@@ -113,7 +120,7 @@ impl BlockSynMsg {
 
             frame.push_int(tx_count as u128);
 
-            for tx in txs {
+            for tx in txs.into_iter() {
                 match tx {
                     Tx::Mint(t) => {
                         tx::put_mint_tx_into_frame(&mut frame, t);

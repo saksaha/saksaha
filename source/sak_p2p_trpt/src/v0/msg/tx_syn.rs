@@ -44,7 +44,7 @@ impl TxSynMsg {
         Ok(m)
     }
 
-    pub(crate) fn into_frame(&self) -> Frame {
+    pub(crate) fn into_frame(self) -> Frame {
         let mut frame = Frame::array();
 
         let tx_candidates = self.tx_candidates;
@@ -54,7 +54,7 @@ impl TxSynMsg {
 
         frame.push_int(tc_count as u128);
 
-        for tc in tx_candidates {
+        for tc in tx_candidates.into_iter() {
             match tc {
                 TxCandidate::Mint(tc) => {
                     tx::put_mint_tx_candidate_into_frame(&mut frame, tc);

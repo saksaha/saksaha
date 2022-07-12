@@ -80,7 +80,7 @@ impl DistLedger {
 
         let block_hash = match self
             .ledger_db
-            .write_block(&block, &txs, &ctr_state_update, &merkle_update)
+            .put_block(&block, &txs, &ctr_state_update, &merkle_update)
             .await
         {
             Ok(h) => h,

@@ -1,5 +1,5 @@
 use log::warn;
-use sak_types::{Block, Tx, TxCandidate, TxCoinOp, TxCtrOp};
+use sak_types::{Block, Tx, TxCandidate, TxCtrOp};
 use std::collections::{HashMap, HashSet};
 use tokio::sync::RwLock;
 

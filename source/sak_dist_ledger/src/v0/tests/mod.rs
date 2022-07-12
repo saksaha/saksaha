@@ -1,9 +1,9 @@
+mod utils;
+
 use crate::DistLedger;
 use crate::{Consensus, ConsensusError};
 use async_trait::async_trait;
 use sak_types::{BlockCandidate, TxCandidate};
-
-mod utils;
 
 #[cfg(test)]
 mod test {
@@ -12,6 +12,8 @@ mod test {
     use crate::SyncPool;
     use crate::{DistLedger, DistLedgerArgs};
     use sak_contract_std::Storage;
+    use sak_types::PourTx;
+    use sak_types::PourTxCandidate;
     use sak_types::{BlockCandidate, Tx, TxCandidate};
 
     const RUST_LOG_ENV: &str = "
@@ -30,40 +32,7 @@ mod test {
     fn make_dummy_genesis_block() -> BlockCandidate {
         let genesis_block = BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
-            tx_candidates: vec![
-                TxCandidate::new(
-                    String::from("1"),
-                    vec![11, 11, 11],
-                    String::from("1"),
-                    Some(b"1".to_vec()),
-                    None,
-                    None,
-                    Some(String::from("v")),
-                    Some(String::from("k")),
-                    Some(String::from("s")),
-                    Some(String::from("sn_1")),
-                    Some(String::from("sn_2")),
-                    Some(vec![1]),
-                    Some(vec![1]),
-                    Some(String::from("rt")),
-                ),
-                TxCandidate::new(
-                    String::from("2"),
-                    vec![22, 22, 22],
-                    String::from("2"),
-                    Some(b"2".to_vec()),
-                    None,
-                    None,
-                    Some(String::from("v")),
-                    Some(String::from("k")),
-                    Some(String::from("s")),
-                    Some(String::from("sn_1")),
-                    Some(String::from("sn_2")),
-                    Some(vec![2]),
-                    Some(vec![2]),
-                    Some(String::from("rt")),
-                ),
-            ],
+            tx_candidates: vec![TxCandidate::new_dummy_pour_1()],
             witness_sigs: vec![String::from("1"), String::from("2")],
             created_at: String::from("2022061515340000"),
             // block_height: 0,
@@ -95,78 +64,10 @@ mod test {
 
     fn make_dummy_txs() -> Vec<Tx> {
         vec![
-            Tx::new(
-                String::from("created_at0"),
-                String::from("data0").as_bytes().to_vec(),
-                String::from("author_sig0"),
-                vec![0], // pi
-                String::from("ctr_addr0"),
-                String::from("hash0"),
-                Vec::new(),
-                String::from("v"),
-                String::from("k"),
-                String::from("s"),
-                String::from("sn_1"),
-                String::from("sn_2"),
-                vec![0],
-                vec![0],
-                String::from("rt"),
-                0,
-            ),
-            Tx::new(
-                String::from("created_at1"),
-                String::from("data1").as_bytes().to_vec(),
-                String::from("author_sig1"),
-                vec![0], // pi
-                String::from("ctr_addr1"),
-                String::from("hash1"),
-                vec![],
-                String::from("v"),
-                String::from("k"),
-                String::from("s"),
-                String::from("sn_1"),
-                String::from("sn_2"),
-                vec![1],
-                vec![1],
-                String::from("rt"),
-                1,
-            ),
-            Tx::new(
-                String::from("created_at2"),
-                String::from("data2").as_bytes().to_vec(),
-                String::from("author_sig2"),
-                vec![2], // pi
-                String::from("ctr_addr2"),
-                String::from("hash2"),
-                vec![],
-                String::from("v"),
-                String::from("k"),
-                String::from("s"),
-                String::from("sn_1"),
-                String::from("sn_2"),
-                vec![1],
-                vec![1],
-                String::from("rt"),
-                2,
-            ),
-            Tx::new(
-                String::from("created_at3"),
-                String::from("data3").as_bytes().to_vec(),
-                String::from("author_sig3"),
-                vec![3], // pi
-                String::from("ctr_addr3"),
-                String::from("hash3"),
-                vec![],
-                String::from("v"),
-                String::from("k"),
-                String::from("s"),
-                String::from("sn_1"),
-                String::from("sn_2"),
-                vec![1],
-                vec![1],
-                String::from("rt"),
-                3,
-            ),
+            Tx::new_dummy_pour_tx_1(),
+            Tx::new_dummy_pour_tx_2(),
+            Tx::new_dummy_pour_tx_3(),
+            Tx::new_dummy_pour_tx_4(),
         ]
     }
 
@@ -195,11 +96,14 @@ mod test {
         }
 
         for (idx, tx_hash) in tx_hashes.iter().enumerate() {
-            let tx_val_retrieved =
-                db.get_tx(tx_hash).await.expect("Tx should exist");
+            let tx_val_retrieved = db
+                .get_tx(tx_hash)
+                .await
+                .expect("Tx should exist")
+                .expect("tx should exist");
 
             assert_eq!(
-                tx_val_retrieved.unwrap().get_data(),
+                tx_val_retrieved.get_data(),
                 dummy_tx_values[idx].get_data()
             );
         }
@@ -282,18 +186,18 @@ mod test {
             .unwrap()
             .expect("gen block should exist");
 
-        let get_gen_hash = gen_block.get_hash();
-        let gen_tx_hashes = gen_block.get_tx_hashes();
+        let get_gen_hash = gen_block.get_block_hash();
+        let gen_tx_hashes = gen_block.tx_hashes;
 
         for tx_hash in gen_tx_hashes {
-            let tx = match dist_ledger.get_tx(tx_hash).await {
+            let tx = match dist_ledger.get_tx(&tx_hash).await {
                 Ok(t) => t,
                 Err(err) => panic!("Error : {}", err),
             };
 
             let tx = tx.unwrap();
 
-            assert_eq!(tx_hash, tx.get_tx_hash());
+            assert_eq!(&tx_hash, tx.get_tx_hash());
         }
 
         assert_ne!(get_gen_hash, &String::from("false hash"));
@@ -327,22 +231,7 @@ mod test {
     async fn test_insert_invalid_contract_to_tx_pool() {
         let test_wasm = include_bytes!("./test_invalid_contract.wasm").to_vec();
 
-        let dummy_tx = TxCandidate::new(
-            String::from("created_at0"),
-            test_wasm,
-            String::from("author_sig0"),
-            Some(vec![0]), // pi
-            Some(String::from("ctr_addr0")),
-            None,
-            Some(String::from("v")),
-            Some(String::from("k")),
-            Some(String::from("s")),
-            Some(String::from("sn_1")),
-            Some(String::from("sn_2")),
-            Some(vec![1]),
-            Some(vec![2]),
-            Some(String::from("rt")),
-        );
+        let dummy_tx = TxCandidate::new_dummy_pour_1();
 
         let sync_pool = SyncPool::new();
 
@@ -432,25 +321,7 @@ mod test {
         for i in 0..10000 as u64 {
             let block = BlockCandidate {
                 validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
-                tx_candidates: vec![
-                    //
-                    TxCandidate::new(
-                        String::from("created_at0"),
-                        vec![0, 0, 0], // data
-                        String::from("author_sig0"),
-                        Some(vec![0]), // pi
-                        Some(String::from("ctr_addr0")),
-                        None,
-                        Some(String::from("v")),
-                        Some(String::from("k")),
-                        Some(String::from("s")),
-                        Some(String::from("sn_1")),
-                        Some(String::from("sn_2")),
-                        Some(vec![1]),
-                        Some(vec![1]),
-                        Some(String::from("rt")),
-                    ),
-                ],
+                tx_candidates: vec![TxCandidate::new_dummy_pour_1()],
                 witness_sigs: vec![String::from("1"), String::from("2")],
                 created_at: String::from("2022061515340000"),
                 // block_height: i as u128,
@@ -481,38 +352,8 @@ mod test {
             let block = BlockCandidate {
                 validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
                 tx_candidates: vec![
-                    TxCandidate::new(
-                        String::from("created_at0"),
-                        vec![0, 0, 0], // data
-                        String::from("author_sig0"),
-                        Some(vec![0]), // pi
-                        Some(String::from("ctr_addr0")),
-                        None,
-                        Some(String::from("v")),
-                        Some(String::from("k")),
-                        Some(String::from("s")),
-                        Some(String::from("sn_1")),
-                        Some(String::from("sn_2")),
-                        Some(vec![0]),
-                        Some(vec![0]),
-                        Some(String::from("rt")),
-                    ),
-                    TxCandidate::new(
-                        String::from("created_at1"),
-                        vec![1, 1, 1], // data
-                        String::from("author_sig1"),
-                        Some(vec![1]), // pi
-                        Some(String::from("ctr_addr1")),
-                        None,
-                        Some(String::from("v")),
-                        Some(String::from("k")),
-                        Some(String::from("s")),
-                        Some(String::from("sn_1")),
-                        Some(String::from("sn_2")),
-                        Some(vec![1]),
-                        Some(vec![1]),
-                        Some(String::from("rt")),
-                    ),
+                    TxCandidate::new_dummy_pour_1(),
+                    TxCandidate::new_dummy_pour_2(),
                 ],
                 witness_sigs: vec![String::from("1"), String::from("2")],
                 created_at: String::from("2022061515340000"),

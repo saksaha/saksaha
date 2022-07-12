@@ -1,27 +1,13 @@
 use sak_contract_std::{CtrCallType, Request};
-use sak_types::{BlockCandidate, Tx, TxCandidate};
+use sak_types::{BlockCandidate, PourTxCandidate, Tx, TxCandidate};
 use std::collections::HashMap;
 
+#[cfg(test)]
 pub(crate) fn make_dummy_block_candidate_1() -> Option<BlockCandidate> {
     let test_wasm = include_bytes!("./test_valid_contract.wasm").to_vec();
 
     let block_candidate: BlockCandidate = {
-        let dummy_ctr_deploying_tc = TxCandidate::new(
-            String::from("1"),
-            vec![11, 11, 11],
-            String::from("1"),
-            Some(b"1".to_vec()),
-            None,
-            None,
-            Some(String::from("v")),
-            Some(String::from("k")),
-            Some(String::from("s")),
-            Some(String::from("sn_1")),
-            Some(String::from("sn_2")),
-            Some(vec![1]),
-            Some(vec![1]),
-            Some(String::from("rt")),
-        );
+        let dummy_ctr_deploying_tc = TxCandidate::new_dummy_pour_1();
 
         BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
@@ -48,25 +34,21 @@ pub(crate) fn make_dummy_block_candidate_with_query_tx(
                 }
             };
 
-            TxCandidate::new(
-                String::from("created_at0"),
+            TxCandidate::Pour(PourTxCandidate::new(
+                String::from("created_at_0"),
                 serde_json::to_string(&request_query_get_validator)
                     .unwrap()
                     .as_bytes()
                     .to_vec(),
-                String::from("author_sig0"),
-                Some(vec![0]), // pi
-                Some(String::from("ctr_addr0")),
-                None,
-                Some(String::from("v")),
-                Some(String::from("k")),
-                Some(String::from("s")),
-                Some(String::from("sn_1")),
-                Some(String::from("sn_2")),
-                Some(vec![1]),
-                Some(vec![1]),
-                Some(String::from("rt")),
-            )
+                String::from("author_sig_0"),
+                Some(String::from("ctr_addr_0")),
+                vec![0],
+                vec![0],
+                vec![0],
+                vec![0],
+                vec![0],
+                vec![0],
+            ))
         };
 
         BlockCandidate {
@@ -103,27 +85,22 @@ pub(crate) fn make_dummy_block_candidate_with_execute_tx(
             ctr_call_type: CtrCallType::Execute,
         };
 
-        let dummy_ctr_calling_execute_add_validator_tc_1 = {
-            TxCandidate::new(
-                String::from("created_at1"),
+        let dummy_ctr_calling_execute_add_validator_tc_1 =
+            TxCandidate::Pour(PourTxCandidate::new(
+                String::from("created_at_1"),
                 serde_json::to_string(&request_execute_add_validator_1)
                     .unwrap()
                     .as_bytes()
                     .to_vec(),
-                String::from("author_sig1"),
-                Some(vec![1]), // pi
-                Some(String::from("ctr_addr1")),
-                None,
-                Some(String::from("v")),
-                Some(String::from("k")),
-                Some(String::from("s")),
-                Some(String::from("sn_1")),
-                Some(String::from("sn_2")),
-                Some(vec![1]),
-                Some(vec![1]),
-                Some(String::from("rt")),
-            )
-        };
+                String::from("author_sig_1"),
+                Some(String::from("ctr_addr_1")),
+                vec![22],
+                vec![22],
+                vec![22],
+                vec![22],
+                vec![22],
+                vec![22],
+            ));
 
         let dummy_validator_2 = String::from(
             "\
@@ -143,27 +120,22 @@ pub(crate) fn make_dummy_block_candidate_with_execute_tx(
             ctr_call_type: CtrCallType::Execute,
         };
 
-        let dummy_ctr_calling_execute_add_validator_tc_2 = {
-            TxCandidate::new(
-                String::from("created_at2"),
+        let dummy_ctr_calling_execute_add_validator_tc_2 =
+            TxCandidate::Pour(PourTxCandidate::new(
+                String::from("created_at_2"),
                 serde_json::to_string(&request_execute_add_validator_2)
                     .unwrap()
                     .as_bytes()
                     .to_vec(),
-                String::from("author_sig2"),
-                Some(vec![2]), // pi
-                Some(String::from("ctr_addr2")),
-                None,
-                Some(String::from("v")),
-                Some(String::from("k")),
-                Some(String::from("s")),
-                Some(String::from("sn_1")),
-                Some(String::from("sn_2")),
-                Some(vec![1]),
-                Some(vec![1]),
-                Some(String::from("rt")),
-            )
-        };
+                String::from("author_sig_2"),
+                Some(String::from("ctr_addr_2")),
+                vec![22],
+                vec![22],
+                vec![22],
+                vec![22],
+                vec![22],
+                vec![22],
+            ));
 
         BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),

@@ -5,7 +5,7 @@ use sak_types::{
 };
 
 impl LedgerDB {
-    pub(crate) async fn batch_put_tx(
+    pub(crate) fn batch_put_tx(
         &self,
         batch: &mut WriteBatch,
         tx: &Tx,

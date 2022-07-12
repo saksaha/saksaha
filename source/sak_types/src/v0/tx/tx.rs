@@ -16,6 +16,13 @@ impl Tx {
             Tx::Pour(t) => t.tx_candidate.get_tx_hash(),
         }
     }
+
+    pub fn get_data(&self) -> &Vec<u8> {
+        match &self {
+            Tx::Mint(t) => &t.tx_candidate.data,
+            Tx::Pour(t) => &t.tx_candidate.data,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -66,30 +73,32 @@ pub enum TxCtrOp {
 }
 
 pub mod for_testing {
+    use crate::TxCandidate;
+
     use super::*;
 
     impl Tx {
-        pub fn new_dummy_pour_tx_1() -> Result<Tx, TypesError> {
-            let c = PourTxCandidate::new_dummy_1();
-            Ok(c.upgrade(0))
+        pub fn new_dummy_pour_tx_1() -> Tx {
+            let c = TxCandidate::new_dummy_pour_1();
+            c.upgrade(0)
         }
 
-        pub fn new_dummy_pour_tx_2() -> Result<Tx, TypesError> {
-            let c = PourTxCandidate::new_dummy_2();
+        pub fn new_dummy_pour_tx_2() -> Tx {
+            let c = TxCandidate::new_dummy_pour_2();
 
-            Ok(c.upgrade(1))
+            c.upgrade(1)
         }
 
-        pub fn new_dummy_pour_tx_3() -> Result<Tx, TypesError> {
-            let c = PourTxCandidate::new_dummy_3();
+        pub fn new_dummy_pour_tx_3() -> Tx {
+            let c = TxCandidate::new_dummy_pour_3();
 
-            Ok(c.upgrade(2))
+            c.upgrade(2)
         }
 
-        pub fn new_dummy_pour_tx_4() -> Result<Tx, TypesError> {
-            let c = PourTxCandidate::new_dummy_4();
+        pub fn new_dummy_pour_tx_4() -> Tx {
+            let c = TxCandidate::new_dummy_pour_4();
 
-            Ok(c.upgrade(3))
+            c.upgrade(3)
         }
     }
 }

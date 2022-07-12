@@ -99,7 +99,7 @@ impl LedgerDB {
         )?;
 
         for tx in txs {
-            self.batch_put_tx(db, &mut batch, tx)?;
+            self.batch_put_tx(&mut batch, tx)?;
         }
 
         let su_keys = ctr_state_updates.keys();
