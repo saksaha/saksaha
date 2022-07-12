@@ -1,9 +1,7 @@
-use crate::{BoxedError, TX_SYN_TYPE};
+use crate::{TrptError, TX_SYN_TYPE};
 use bytes::{BufMut, Bytes, BytesMut};
 use sak_p2p_frame::{Frame, Parse};
-use sak_types::{
-    MintTxCandidate, PourTxCandidate, TxCandidate, TxCandidateVariant,
-};
+use sak_types::{MintTxCandidate, PourTxCandidate, TxCandidate};
 
 #[derive(Debug)]
 pub struct TxSynMsg {
@@ -11,16 +9,14 @@ pub struct TxSynMsg {
 }
 
 impl TxSynMsg {
-    pub(crate) fn from_parse(
-        parse: &mut Parse,
-    ) -> Result<TxSynMsg, BoxedError> {
+    pub(crate) fn from_parse(parse: &mut Parse) -> Result<TxSynMsg, TrptError> {
         let tx_count = parse.next_int()?;
 
         let mut tcs = Vec::with_capacity(tx_count as usize);
 
         for _idx in 0..tx_count {
             let tc = {
-                let tx_variant_type = parse.next_string()?;
+                let tx_variant = parse.next_string()?;
 
                 let data = {
                     let p = parse.next_bytes()?;
