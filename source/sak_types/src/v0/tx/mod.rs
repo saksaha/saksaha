@@ -1,5 +1,6 @@
 mod tx;
-mod variant;
+mod tx_candidate;
+mod utils;
 
 pub use tx::*;
-pub use variant::*;
+pub use tx_candidate::*;
