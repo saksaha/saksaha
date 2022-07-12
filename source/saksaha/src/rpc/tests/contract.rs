@@ -3,7 +3,6 @@ use super::utils::test_utils;
 #[cfg(test)]
 mod test_suite {
     use crate::{blockchain::GenesisBlock, rpc::response::JsonResponse};
-
     use super::*;
     use hyper::body::Buf;
     use hyper::{Body, Client, Method, Request, Uri};
@@ -12,7 +11,8 @@ mod test_suite {
     async fn test_call_contract() {
         test_utils::init();
 
-        let (rpc, rpc_socket_addr, _machine) = test_utils::make_rpc().await;
+        let (rpc, rpc_socket_addr, _machine) =
+            test_utils::make_test_context().await;
 
         let client = Client::new();
 

@@ -1,6 +1,7 @@
-use sak_types::{BlockCandidate, Tx, TxCandidate};
+use sak_proofs::Hasher;
+use sak_types::{BlockCandidate, MintTxCandidate, Tx, TxCandidate};
 
-pub(crate) const VALIDATOR_SIG: &str = "alw";
+pub(crate) const VALIDATOR_SIG: &str = "validator_sig";
 
 pub(crate) const VALIDATOR_CTR_ADDR: &'static str = "validator_contract_addr";
 
@@ -15,29 +16,35 @@ impl GenesisBlock {
     pub fn create() -> GenesisBlock {
         let validator_wasm = VALIDATOR.to_vec();
 
+        // created_at: String,
+        // data: Vec<u8>,
+        // author_sig: String,
+        // ctr_addr: Option<String>,
+        // cm: Vec<u8>,
+        // v: String,
+        // k: String,
+        // s: String,
+
+        let v = 100_000;
+        let k = 13;
+        let s = 24;
+
+        let hasher = Hasher::new();
+        let cm = hasher.comm2(s, hasher.prf(v, k)).to_bytes();
+
+        let mint_tx_1 = TxCandidate::Mint(MintTxCandidate::new(
+            String::from("initial_mint_created_at"),
+            vec!["initial_mint_data"],
+            VALIDATOR_SIG,
+            None,
+        ));
+
         let validator_deploy_tx = TxCandidate::new(
             String::from("1"),
             validator_wasm,
             String::from("1"),
             vec![1],
             Some(VALIDATOR_CTR_ADDR.to_string()),
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        );
-
-        let some_other_tx = TxCandidate::new(
-            String::from("2"),
-            vec![22, 22, 22],
-            String::from("2"),
-            vec![2],
-            None,
             None,
             None,
             None,

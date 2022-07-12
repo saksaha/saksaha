@@ -8,14 +8,14 @@ mod test_suite {
     use hyper::body::Buf;
     use hyper::{Body, Client, Method, Request, Uri};
     use sak_dist_ledger::DistLedger;
-    use sak_types::Hashable;
+    use sak_types::{Hashable, PourTxCandidate, TxCandidate};
     use std::time::Duration;
 
     #[tokio::test(flavor = "multi_thread")]
     async fn test_rpc_client_and_send_wrong_transaction() {
         test_utils::init();
 
-        let (rpc, rpc_socket_addr, _) = test_utils::make_rpc().await;
+        let (rpc, rpc_socket_addr, _) = test_utils::make_test_context().await;
 
         let _rpc_server = tokio::spawn(async move { rpc.run().await });
 
@@ -65,7 +65,8 @@ mod test_suite {
 
         {
             let blockchain = test_utils::make_blockchain().await;
-            let dummy_tx = test_utils::make_dummy_tx();
+
+            let dummy_tx = TxCandidate::new_dummy_pour_1();
 
             let old_tx_hash = (&dummy_tx).get_tx_hash();
 
@@ -81,7 +82,7 @@ mod test_suite {
                 .expect("Tx should be written");
         }
 
-        let (rpc, rpc_socket_addr, _) = test_utils::make_rpc().await;
+        let (rpc, rpc_socket_addr, _) = test_utils::make_test_context().await;
 
         let _rpc_server = tokio::spawn(async move { rpc.run().await });
 
@@ -134,7 +135,8 @@ mod test_suite {
 
         let tx_hash = {
             let blockchain = test_utils::make_blockchain().await;
-            let dummy_tx = test_utils::make_dummy_tx();
+
+            let dummy_tx = TxCandidate::new_dummy_pour_1();
 
             let old_tx_hash = (&dummy_tx).get_tx_hash();
 
@@ -161,7 +163,7 @@ mod test_suite {
             tx_hash
         };
 
-        let (rpc, rpc_socket_addr, _) = test_utils::make_rpc().await;
+        let (rpc, rpc_socket_addr, _) = test_utils::make_test_context().await;
 
         let _rpc_server = tokio::spawn(async move { rpc.run().await });
 
@@ -219,13 +221,10 @@ mod test_suite {
     async fn test_if_send_transaction_puts_tx_into_tx_pool() {
         test_utils::init();
 
-        let dummy_tx = {
-            let tx = test_utils::make_dummy_tx();
+        let tc_dummy = PourTxCandidate::new_dummy_1();
 
-            tx
-        };
-
-        let (rpc, rpc_socket_addr, machine) = test_utils::make_rpc().await;
+        let (rpc, rpc_socket_addr, machine) =
+            test_utils::make_test_context().await;
         let _rpc_server = tokio::spawn(async move { rpc.run().await });
         let client = Client::new();
 
@@ -250,11 +249,11 @@ mod test_suite {
                         "contract": {:?}
                     }}
                 "#,
-                dummy_tx.get_pi(),
-                dummy_tx.get_author_sig(),
-                dummy_tx.get_created_at(),
-                dummy_tx.get_data(),
-                dummy_tx.get_ctr_addr(),
+                tc_dummy.pi,
+                tc_dummy.author_sig,
+                tc_dummy.created_at,
+                tc_dummy.data,
+                tc_dummy.ctr_addr,
             )))
             .expect("request builder should be made");
 
@@ -284,7 +283,8 @@ mod test_suite {
 
         tokio::time::sleep(Duration::from_secs(1)).await;
 
-        let dummy_tx_hash = dummy_tx.get_tx_hash();
+        let dummy_tx_hash = tc_dummy.get_tx_hash();
+
         let is_contain = machine
             .blockchain
             .dist_ledger
@@ -298,13 +298,10 @@ mod test_suite {
     async fn test_if_send_transaction_puts_false_tx_into_tx_pool() {
         test_utils::init();
 
-        let dummy_tx = {
-            let tx = test_utils::make_dummy_tx();
+        let tc_dummy = PourTxCandidate::new_dummy_1();
 
-            tx
-        };
-
-        let (rpc, rpc_socket_addr, machine) = test_utils::make_rpc().await;
+        let (rpc, rpc_socket_addr, machine) =
+            test_utils::make_test_context().await;
         let _rpc_server = tokio::spawn(async move { rpc.run().await });
         let client = Client::new();
 
@@ -329,11 +326,11 @@ mod test_suite {
                         "contract": {:?}
                     }}
                 "#,
-                dummy_tx.get_pi(),
-                dummy_tx.get_author_sig(),
-                dummy_tx.get_created_at(),
-                dummy_tx.get_data(),
-                dummy_tx.get_ctr_addr(),
+                tc_dummy.pi,
+                tc_dummy.author_sig,
+                tc_dummy.created_at,
+                tc_dummy.data,
+                tc_dummy.ctr_addr,
             )))
             .expect("request builder should be made");
 

@@ -15,25 +15,15 @@ pub struct BlockCandidate {
 impl BlockCandidate {
     pub fn upgrade(
         self,
-        latest_block_height: Option<u128>,
-        latest_tx_height: Option<u128>,
+        next_block_height: u128,
+        next_tx_height: u128,
         next_merkle_rt: Vec<u8>,
     ) -> (Block, Vec<Tx>) {
-        let block_height = match latest_block_height {
-            Some(h) => h,
-            None => 0,
-        };
-
-        let tx_height = match latest_tx_height {
-            Some(h) => h,
-            None => 0,
-        };
-
         let mut txs: Vec<Tx> = Vec::new();
         let mut tx_hashes: Vec<String> = vec![];
 
         for (i, tc) in self.tx_candidates.into_iter().enumerate() {
-            let tx = tc.upgrade(tx_height + i as u128);
+            let tx = tc.upgrade(next_tx_height + i as u128);
             let tx_hash = tx.get_tx_hash();
 
             tx_hashes.push(tx_hash.to_owned());
@@ -45,7 +35,7 @@ impl BlockCandidate {
             tx_hashes,
             self.witness_sigs.clone(),
             self.created_at.clone(),
-            block_height,
+            next_block_height,
             next_merkle_rt,
         );
 

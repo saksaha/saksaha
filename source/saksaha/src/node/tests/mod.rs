@@ -28,10 +28,10 @@ mod test {
 
     fn make_dummy_txs() -> Vec<Tx> {
         vec![
-            Tx::new_dummy_pour_tx_1(),
-            Tx::new_dummy_pour_tx_2(),
-            Tx::new_dummy_pour_tx_3(),
-            Tx::new_dummy_pour_tx_4(),
+            Tx::new_dummy_pour_1(),
+            Tx::new_dummy_pour_2(),
+            Tx::new_dummy_pour_3(),
+            Tx::new_dummy_pour_4(),
         ]
     }
 }

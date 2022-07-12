@@ -5,7 +5,7 @@ use sak_types::{
     Block, BlockCandidate, MintTxCandidate, PourTxCandidate, Tx, TxCandidate,
     TxCtrOp,
 };
-use sak_vm::{CtrFn, VM};
+use sak_vm::CtrFn;
 use std::convert::TryInto;
 
 impl DistLedger {
@@ -27,9 +27,12 @@ impl DistLedger {
             },
         };
 
-        let latest_block_height = self.get_latest_block_height().await?;
-        let latest_tx_height = self.get_latest_tx_height().await?;
-        let latest_merkle_rt = self.get_latest_merkle_rt().await?;
+        let next_block_height =
+            self.get_latest_block_height().await?.unwrap_or(0);
+
+        let next_tx_height = self.get_latest_tx_height().await?.unwrap_or(0);
+
+        // let latest_merkle_rt = self.get_latest_merkle_rt().await?;
         let tcs = &bc.tx_candidates;
         let mut ctr_state_update = CtrStateUpdate::new();
         let mut merkle_update = MerkleUpdate::new();
@@ -41,7 +44,7 @@ impl DistLedger {
 
             match tx_candidate {
                 TxCandidate::Mint(tc) => {
-                    handle_mint_tx_candidate(
+                    let _ = handle_mint_tx_candidate(
                         self,
                         tc,
                         &mut ctr_state_update,
@@ -65,8 +68,8 @@ impl DistLedger {
         };
 
         let (block, txs) = bc.upgrade(
-            latest_block_height,
-            latest_tx_height,
+            next_block_height,
+            next_tx_height,
             next_merkle_rt.to_owned(),
         );
 

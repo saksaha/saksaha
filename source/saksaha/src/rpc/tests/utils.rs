@@ -25,7 +25,7 @@ pub(super) mod test_utils {
         sak_logger::init(false);
     }
 
-    pub(crate) async fn make_rpc() -> (RPC, SocketAddr, Arc<Machine>) {
+    pub(crate) async fn make_test_context() -> (RPC, SocketAddr, Arc<Machine>) {
         let (disc_socket, disc_port) = {
             let (socket, socket_addr) =
                 sak_utils_net::setup_udp_socket(None).await.unwrap();
@@ -153,40 +153,8 @@ pub(super) mod test_utils {
         let genesis_block = BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
             tx_candidates: vec![
-                TxCandidate::new_dummy_tx_candidate_1(),
-                // TxCandidate::new(
-                //     String::from("1"),
-                //     vec![11, 11, 11],
-                //     String::from("1"),
-                //     b"1".to_vec(),
-                //     Some(String::from("11")),
-                //     Some(vec![]),
-                //     Some(String::from("11")),
-                //     Some(String::from("11")),
-                //     Some(String::from("11")),
-                //     Some(String::from("11")),
-                //     Some(String::from("11")),
-                //     Some(vec![1]),
-                //     Some(vec![1]),
-                //     Some(String::from("11")),
-                // ),
-                TxCandidate::new_dummy_tx_candidate_2(),
-                // TxCandidate::new(
-                //     String::from("2"),
-                //     vec![22, 22, 22],
-                //     String::from("2"),
-                //     b"2".to_vec(),
-                //     Some(String::from("22")),
-                //     Some(vec![]),
-                //     Some(String::from("22")),
-                //     Some(String::from("22")),
-                //     Some(String::from("22")),
-                //     Some(String::from("22")),
-                //     Some(String::from("22")),
-                //     Some(vec![2]),
-                //     Some(vec![2]),
-                //     Some(String::from("22")),
-                // ),
+                TxCandidate::new_dummy_pour_1(),
+                TxCandidate::new_dummy_pour_2(),
             ],
             witness_sigs: vec![String::from("1"), String::from("2")],
             created_at: String::from("2022061515340000"),
@@ -215,123 +183,15 @@ pub(super) mod test_utils {
         .await
         .expect("Blockchain should be made");
 
-        // let blockchain = DistLedger::init(blockchain_args)
-        //     .await
-        //     .expect("Blockchain should be initialized");
-
         blockchain
-    }
-
-    pub(crate) fn make_dummy_tx() -> TxCandidate {
-        // TxCandidate::new(
-        //     String::from("1346546123"),
-        //     vec![
-        //         63, 64, 65, 66, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        //         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-        //     ],
-        //     String::from("0x111"),
-        //     b"0x1111".to_vec(),
-        //     Some(String::from("0x1111")),
-        //     Some(vec![0]),
-        //     Some(String::from("0x1111")),
-        //     Some(String::from("0x1111")),
-        //     Some(String::from("0x1111")),
-        //     Some(String::from("0x1111")),
-        //     Some(String::from("0x1111")),
-        //     Some(vec![0]),
-        //     Some(vec![0]),
-        //     Some(String::from("0x1111")),
-        // )
-        TxCandidate::new_dummy_tx_candidate_1()
     }
 
     pub(crate) fn make_dummy_txs() -> Vec<Tx> {
         vec![
-            // Tx::new(
-            //     String::from("32346546123"),
-            //     vec![
-            //         63, 64, 65, 61, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            //         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-            //     ],
-            //     String::from("0x111"),
-            //     b"0x1111".to_vec(),
-            //     String::from("0x1111"),
-            //     String::from("0x1111"),
-            //     vec![],
-            //     String::from("0x1111"),
-            //     String::from("0x1111"),
-            //     String::from("0x1111"),
-            //     String::from("0x1111"),
-            //     String::from("0x1111"),
-            //     vec![0],
-            //     vec![0],
-            //     String::from("0x1111"),
-            //     0,
-            // ),
-            Tx::new_dummy_tx_1(),
-            Tx::new(
-                String::from("32346546123"),
-                vec![
-                    63, 64, 65, 61, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-                ],
-                String::from("0x111"),
-                b"0x1111".to_vec(),
-                String::from("0x1111"),
-                String::from("0x1111"),
-                vec![],
-                String::from("0x1111"),
-                String::from("0x1111"),
-                String::from("0x1111"),
-                String::from("0x1111"),
-                String::from("0x1111"),
-                vec![1],
-                vec![1],
-                String::from("0x1111"),
-                1,
-            ),
-            Tx::new(
-                String::from("32346546123"),
-                vec![
-                    63, 64, 65, 61, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-                ],
-                String::from("0x111"),
-                b"0x1111".to_vec(),
-                String::from("0x1111"),
-                String::from("0x1111"),
-                vec![],
-                String::from("0x1111"),
-                String::from("0x1111"),
-                String::from("0x1111"),
-                String::from("0x1111"),
-                String::from("0x1111"),
-                vec![2],
-                vec![2],
-                String::from("0x1111"),
-                2,
-            ),
-            Tx::new(
-                String::from("32346546123"),
-                vec![
-                    63, 64, 65, 61, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-                ],
-                String::from("0x111"),
-                b"0x1111".to_vec(),
-                String::from("0x1111"),
-                String::from("0x1111"),
-                vec![],
-                String::from("0x1111"),
-                String::from("0x1111"),
-                String::from("0x1111"),
-                String::from("0x1111"),
-                String::from("0x1111"),
-                vec![3],
-                vec![3],
-                String::from("0x1111"),
-                3,
-            ),
+            Tx::new_dummy_pour_1(),
+            Tx::new_dummy_pour_2(),
+            Tx::new_dummy_pour_3(),
+            Tx::new_dummy_pour_4(),
         ]
     }
 }

@@ -210,7 +210,33 @@ pub mod for_testing {
 
     impl TxCandidate {
         pub fn new_dummy_pour_1() -> TxCandidate {
-            TxCandidate::Pour(PourTxCandidate::new(
+            let pour_tx_candidate_dummy_1 = PourTxCandidate::new_dummy_1();
+
+            TxCandidate::Pour(pour_tx_candidate_dummy_1)
+        }
+
+        pub fn new_dummy_pour_2() -> TxCandidate {
+            let pour_tx_candidate_dummy_2 = PourTxCandidate::new_dummy_2();
+
+            TxCandidate::Pour(pour_tx_candidate_dummy_2)
+        }
+
+        pub fn new_dummy_pour_3() -> TxCandidate {
+            let pour_tx_candidate_dummy_3 = PourTxCandidate::new_dummy_3();
+
+            TxCandidate::Pour(pour_tx_candidate_dummy_3)
+        }
+
+        pub fn new_dummy_pour_4() -> TxCandidate {
+            let pour_tx_candidate_dummy_4 = PourTxCandidate::new_dummy_4();
+
+            TxCandidate::Pour(pour_tx_candidate_dummy_4)
+        }
+    }
+
+    impl PourTxCandidate {
+        pub fn new_dummy_1() -> PourTxCandidate {
+            PourTxCandidate::new(
                 String::from("created_at_1"),
                 vec![11, 11, 11],
                 String::from("author_sig_1"),
@@ -221,11 +247,11 @@ pub mod for_testing {
                 vec![11, 11, 11],
                 vec![11, 11, 11],
                 vec![11, 11, 11],
-            ))
+            )
         }
 
-        pub fn new_dummy_pour_2() -> TxCandidate {
-            TxCandidate::Pour(PourTxCandidate::new(
+        pub fn new_dummy_2() -> PourTxCandidate {
+            PourTxCandidate::new(
                 String::from("created_at_2"),
                 vec![22, 22, 22],
                 String::from("author_sig_2"),
@@ -236,11 +262,11 @@ pub mod for_testing {
                 vec![22, 22, 22],
                 vec![22, 22, 22],
                 vec![22, 22, 22],
-            ))
+            )
         }
 
-        pub fn new_dummy_pour_3() -> TxCandidate {
-            TxCandidate::Pour(PourTxCandidate::new(
+        pub fn new_dummy_3() -> PourTxCandidate {
+            PourTxCandidate::new(
                 String::from("created_at_3"),
                 vec![33, 33, 33],
                 String::from("author_sig_3"),
@@ -251,11 +277,11 @@ pub mod for_testing {
                 vec![33, 33, 33],
                 vec![33, 33, 33],
                 vec![33, 33, 33],
-            ))
+            )
         }
 
-        pub fn new_dummy_pour_4() -> TxCandidate {
-            TxCandidate::Pour(PourTxCandidate::new(
+        pub fn new_dummy_4() -> PourTxCandidate {
+            PourTxCandidate::new(
                 String::from("created_at_4"),
                 vec![44, 44, 44],
                 String::from("author_sig_4"),
@@ -266,69 +292,7 @@ pub mod for_testing {
                 vec![44, 44, 44],
                 vec![44, 44, 44],
                 vec![44, 44, 44],
-            ))
+            )
         }
-    }
-
-    impl PourTxCandidate {
-        // pub fn new_dummy_1() -> PourTxCandidate {
-        //     PourTxCandidate::new(
-        //         String::from("created_at_1"),
-        //         vec![11, 11, 11],
-        //         String::from("author_sig_1"),
-        //         Some(String::from("ctr_addr_1")),
-        //         vec![11, 11, 11],
-        //         vec![11, 11, 11],
-        //         vec![11, 11, 11],
-        //         vec![11, 11, 11],
-        //         vec![11, 11, 11],
-        //         vec![11, 11, 11],
-        //     )
-        // }
-
-        // pub fn new_dummy_2() -> PourTxCandidate {
-        //     PourTxCandidate::new(
-        //         String::from("created_at_2"),
-        //         vec![22, 22, 22],
-        //         String::from("author_sig_2"),
-        //         Some(String::from("ctr_addr_2")),
-        //         vec![22, 22, 22],
-        //         vec![22, 22, 22],
-        //         vec![22, 22, 22],
-        //         vec![22, 22, 22],
-        //         vec![22, 22, 22],
-        //         vec![22, 22, 22],
-        //     )
-        // }
-
-        // pub fn new_dummy_3() -> PourTxCandidate {
-        //     PourTxCandidate::new(
-        //         String::from("created_at_3"),
-        //         vec![33, 33, 33],
-        //         String::from("author_sig_3"),
-        //         Some(String::from("ctr_addr_3")),
-        //         vec![33, 33, 33],
-        //         vec![33, 33, 33],
-        //         vec![33, 33, 33],
-        //         vec![33, 33, 33],
-        //         vec![33, 33, 33],
-        //         vec![33, 33, 33],
-        //     )
-        // }
-
-        // pub fn new_dummy_4() -> PourTxCandidate {
-        //     PourTxCandidate::new(
-        //         String::from("created_at_4"),
-        //         vec![44, 44, 44],
-        //         String::from("author_sig_4"),
-        //         Some(String::from("ctr_addr_4")),
-        //         vec![44, 44, 44],
-        //         vec![44, 44, 44],
-        //         vec![44, 44, 44],
-        //         vec![44, 44, 44],
-        //         vec![44, 44, 44],
-        //         vec![44, 44, 44],
-        //     )
-        // }
     }
 }

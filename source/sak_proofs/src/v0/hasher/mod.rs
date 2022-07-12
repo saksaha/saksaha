@@ -22,18 +22,23 @@ impl Hasher {
         xl: &[u8; 32],
         xr: &[u8; 32],
     ) -> Result<[u8; 32], ProofError> {
-        let ct_option = Scalar::from_bytes(xl);
-        let xl = if bool::from(ct_option.is_some()) {
-            ct_option.unwrap()
-        } else {
-            return Err(format!("Convert to scalar has failed").into());
+        let xl = {
+            let ct_option = Scalar::from_bytes(xl);
+
+            if bool::from(ct_option.is_some()) {
+                ct_option.unwrap()
+            } else {
+                return Err(format!("Convert to scalar has failed").into());
+            }
         };
 
-        let ct_option = Scalar::from_bytes(xr);
-        let xr = if bool::from(ct_option.is_some()) {
-            ct_option.unwrap()
-        } else {
-            return Err(format!("Convert to scalar has failed").into());
+        let xr = {
+            let ct_option = Scalar::from_bytes(xr);
+            if bool::from(ct_option.is_some()) {
+                ct_option.unwrap()
+            } else {
+                return Err(format!("Convert to scalar has failed").into());
+            }
         };
 
         let res = mimc(xl, xr, &self.constants);
@@ -66,6 +71,10 @@ impl Hasher {
         x: Option<Scalar>,
     ) -> Option<Scalar> {
         self.mimc_cs_scalar(cs, z, x)
+    }
+
+    pub fn comm2(&self, r: &[u8; 32], x: &[u8; 32]) -> &[u8; 32] {
+        mimc(r, x, &self.constants)
     }
 
     /// commitment generating hash function

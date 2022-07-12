@@ -9,9 +9,16 @@ fn get_routes() -> Vec<(Method, &'static str, Handler)> {
     vec![
         (
             Method::POST,
-            "/apis/v0/send_transaction",
+            "/apis/v0/send_mint_tx",
             Box::new(|req, sys_handle| {
-                Box::pin(v0::send_transaction(req, sys_handle))
+                Box::pin(v0::send_mint_tx(req, sys_handle))
+            }),
+        ),
+        (
+            Method::POST,
+            "/apis/v0/send_pour_tx",
+            Box::new(|req, sys_handle| {
+                Box::pin(v0::send_pour_tx(req, sys_handle))
             }),
         ),
         (

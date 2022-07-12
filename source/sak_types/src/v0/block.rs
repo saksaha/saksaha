@@ -1,7 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-use crate::Tx;
-
 #[derive(Deserialize, Serialize, Debug, PartialEq, Eq, Hash)]
 pub struct Block {
     pub validator_sig: String,
@@ -56,31 +54,7 @@ impl Block {
         }
     }
 
-    // pub fn get_validator_sig(&self) -> &String {
-    //     &self.validator_sig
-    // }
-
-    // pub fn get_witness_sigs(&self) -> &Vec<String> {
-    //     &self.witness_sigs
-    // }
-
-    // pub fn get_created_at(&self) -> &String {
-    //     &self.created_at
-    // }
-
-    // pub fn get_tx_hashes(&self) -> &Vec<String> {
-    //     &self.tx_hashes
-    // }
-
-    // pub fn get_block_height(&self) -> &u128 {
-    //     &self.block_height
-    // }
-
     pub fn get_block_hash(&self) -> &String {
         &self.block_hash
     }
-
-    // pub fn get_merkle_rt(&self) -> &Vec<u8> {
-    //     &self.merkle_rt
-    // }
 }
