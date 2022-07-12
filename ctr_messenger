@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-
+rm -rf ../multivalue-util
 rm -rf ./target/wasm32-unknown-unknown/release/sak_ctr_messenger.wasm
 rm -rf ./target/wasm32-unknown-unknown/release/sak_ctr_messenger.d
 cd ./source/sak_ctr_messenger

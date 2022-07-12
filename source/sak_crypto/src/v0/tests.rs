@@ -108,25 +108,27 @@ mod test {
         let cipher_text = aes_encrypt(&aes_key, plaintext.as_bytes()).unwrap();
         // println!("cipher_text: {:?}", cipher_text);
 
-        let mut msg = Vec::new();
+        // let mut msg = Vec::new();
 
-        let pubkey_bytes = &e_pk.to_encoded_point(false).to_bytes();
+        // let pubkey_bytes = &e_pk.to_encoded_point(false).to_bytes();
 
-        println!("pubkey_bytes ({}): {:?}", pubkey_bytes.len(), pubkey_bytes);
+        // println!("pubkey_bytes ({}): {:?}", pubkey_bytes.len(), pubkey_bytes);
 
-        println!("cipher_text ({}): {:?}", cipher_text.len(), cipher_text);
+        // println!("cipher_text ({}): {:?}", cipher_text.len(), cipher_text);
 
-        msg.extend_from_slice(pubkey_bytes);
-        msg.extend_from_slice(cipher_text.as_slice());
+        // msg.extend_from_slice(pubkey_bytes);
+        // msg.extend_from_slice(cipher_text.as_slice());
 
-        println!();
-        println!("msg: {:?}", msg);
+        // println!();
+        // println!("msg: {:?}", msg);
 
         {
-            let e_pk_bytes = &msg[..65];
-            let e_pk = PublicKey::from_sec1_bytes(e_pk_bytes).unwrap();
+            // let e_pk_bytes = &msg[..65];
+            // let e_pk = PublicKey::from_sec1_bytes(e_pk_bytes).unwrap();
 
-            aes_decrypt(msg.as_slice(), bob_sk);
+            let aes_key = derive_aes_key(bob_sk, e_pk);
+
+            let _plaintext = aes_decrypt(&aes_key, cipher_text.as_slice());
         };
     }
 }
