@@ -36,7 +36,7 @@ impl LedgerDB {
         Ok(ret)
     }
 
-    pub(crate) async fn write_block(
+    pub(crate) async fn put_block(
         &self,
         block: &Block,
         txs: &Vec<Tx>,
@@ -47,40 +47,40 @@ impl LedgerDB {
 
         let mut batch = WriteBatch::default();
 
-        let block_hash = block.get_hash();
+        let block_hash = block.get_block_hash();
 
         self.schema.batch_put_validator_sig(
             db,
             &mut batch,
             block_hash,
-            block.get_validator_sig(),
+            &block.validator_sig,
         )?;
 
         self.schema.batch_put_witness_sigs(
             db,
             &mut batch,
             block_hash,
-            block.get_witness_sigs(),
+            &block.witness_sigs,
         )?;
 
         self.schema.batch_put_tx_hashes(
             db,
             &mut batch,
             block_hash,
-            block.get_tx_hashes(),
+            &block.tx_hashes,
         )?;
 
         self.schema.batch_put_created_at(
             db,
             &mut batch,
             block_hash,
-            block.get_created_at(),
+            &block.created_at,
         )?;
 
         self.schema.batch_put_block_hash(
             db,
             &mut batch,
-            block.get_height(),
+            &block.block_height,
             block_hash,
         )?;
 
@@ -88,18 +88,18 @@ impl LedgerDB {
             db,
             &mut batch,
             block_hash,
-            block.get_height(),
+            &block.block_height,
         )?;
 
-        self.schema.batch_put_merkle_root(
+        self.schema.batch_put_merkle_rt(
             db,
             &mut batch,
             block_hash,
-            block.get_merkle_rt(),
+            &block.merkle_rt,
         )?;
 
         for tx in txs {
-            self._batch_put_tx(db, &mut batch, tx)?;
+            self.batch_put_tx(db, &mut batch, tx)?;
         }
 
         let su_keys = ctr_state_updates.keys();
@@ -119,7 +119,7 @@ impl LedgerDB {
         debug!(
             "Success writing block, hash: {}, height: {}",
             block_hash.green(),
-            block.get_height()
+            block.block_height,
         );
 
         return Ok(block_hash.clone());

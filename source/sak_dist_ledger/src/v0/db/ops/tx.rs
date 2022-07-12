@@ -1,20 +1,23 @@
 use crate::{LedgerDB, LedgerDBSchema, LedgerError};
-use sak_kv_db::{KeyValueDatabase, WriteBatch, DB};
+use sak_kv_db::{WriteBatch, DB};
 use sak_types::{
-    MintTx, MintTxCandidate, PourTx, PourTxCandidate, Tx, TxCandidate, TxCtrOp,
+    MintTx, MintTxCandidate, PourTx, PourTxCandidate, Tx, TxCtrOp,
 };
 
 impl LedgerDB {
-    #[cfg(test)]
-    pub(crate) fn put_tx(&self, tx: &Tx) -> Result<String, LedgerError> {
+    pub(crate) async fn batch_put_tx(
+        &self,
+        batch: &mut WriteBatch,
+        tx: &Tx,
+    ) -> Result<(), LedgerError> {
         let db = &self.kv_db.db_instance;
 
-        let mut batch = WriteBatch::default();
-
         match tx {
-            Tx::Mint(t) => batch_put_mint_tx(db, &self.schema, &mut batch, t),
-            Tx::Pour(t) => batch_put_pour_tx(db, &self.schema, &mut batch, t),
-        }
+            Tx::Mint(t) => batch_put_mint_tx(db, &self.schema, batch, t),
+            Tx::Pour(t) => batch_put_pour_tx(db, &self.schema, batch, t),
+        };
+
+        Ok(())
     }
 
     pub(crate) async fn get_tx(
@@ -41,6 +44,7 @@ impl LedgerDB {
         tx_hashes: &Vec<String>,
     ) -> Result<Vec<Tx>, LedgerError> {
         let mut ret = vec![];
+
         for tx_hash in tx_hashes {
             match self.get_tx(tx_hash).await? {
                 Some(b) => ret.push(b),
@@ -269,7 +273,25 @@ pub mod testing {
     use super::*;
 
     impl LedgerDB {
-        pub fn delete_tx(&self, tx_hash: &String) -> Result<(), LedgerError> {
+        pub(crate) fn put_tx(&self, tx: &Tx) -> Result<String, LedgerError> {
+            let db = &self.kv_db.db_instance;
+
+            let mut batch = WriteBatch::default();
+
+            match tx {
+                Tx::Mint(t) => {
+                    batch_put_mint_tx(db, &self.schema, &mut batch, t)
+                }
+                Tx::Pour(t) => {
+                    batch_put_pour_tx(db, &self.schema, &mut batch, t)
+                }
+            }
+        }
+
+        pub(crate) fn delete_tx(
+            &self,
+            tx_hash: &String,
+        ) -> Result<(), LedgerError> {
             let db = &self.kv_db.db_instance;
 
             let mut batch = WriteBatch::default();
