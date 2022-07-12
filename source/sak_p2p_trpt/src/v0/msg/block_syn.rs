@@ -1,12 +1,11 @@
 use crate::{TrptError, BLOCK_SYN_TYPE};
 use bytes::{BufMut, Bytes, BytesMut};
 use sak_p2p_frame::{Frame, Parse};
-use sak_types::{Block, MintTx, MintTxCandidate, Tx};
+use sak_types::{Block, MintTx, MintTxCandidate, PourTxCandidate, Tx};
 
 #[derive(Debug)]
 pub struct BlockSynMsg {
-    pub blocks: Vec<Block>,
-    pub txs: Vec<Vec<Tx>>,
+    pub blocks: Vec<(Block, Vec<Tx>)>,
 }
 
 impl BlockSynMsg {
@@ -16,8 +15,6 @@ impl BlockSynMsg {
         let block_count = parse.next_int()?;
 
         let mut blocks = Vec::with_capacity(block_count as usize);
-        let mut txs_vec = vec![vec![]];
-        // let mut tx_hashes = vec![];
 
         for _ in 0..block_count {
             let validator_sig = {
@@ -30,9 +27,9 @@ impl BlockSynMsg {
                 std::str::from_utf8(&v)?.to_string()
             };
 
-            let merkle_root = {
+            let merkle_rt = {
                 let v = parse.next_bytes()?;
-                std::str::from_utf8(&v)?.to_string()
+                v.to_vec()
             };
 
             let block_height = parse.next_int()? as u128;
@@ -58,32 +55,29 @@ impl BlockSynMsg {
                 let tx = {
                     let tx_type = parse.next_string()?;
 
-                    let tx = match tx_type.as_ref() {
+                    match tx_type.as_ref() {
                         "mint" => parse_mint_tx(parse)?,
                         "pour" => parse_pour_tx(parse)?,
-                    };
+                    }
                 };
 
                 tx_hashes.push(tx.get_tx_hash().to_owned());
                 txs.push(tx);
             }
 
-            blocks.push(Block::new(
+            let block = Block::new(
                 validator_sig,
                 tx_hashes,
                 witness_sigs,
                 created_at,
                 block_height,
-                merkle_root,
-            ));
+                merkle_rt,
+            );
 
-            txs_vec.push(txs);
+            blocks.push((block, txs));
         }
 
-        let m = BlockSynMsg {
-            blocks,
-            txs: txs_vec,
-        };
+        let m = BlockSynMsg { blocks };
 
         Ok(m)
     }
@@ -91,37 +85,37 @@ impl BlockSynMsg {
     pub(crate) fn into_frame(&self) -> Frame {
         let mut frame = Frame::array();
 
-        let bc_count = self.blocks.len();
-        let mut ix = 0;
+        let block_count = self.blocks.len();
+        // let mut ix = 0;
 
         frame.push_bulk(Bytes::from(BLOCK_SYN_TYPE.as_bytes()));
-        frame.push_int(bc_count as u128);
+        frame.push_int(block_count as u128);
 
-        for bc in &self.blocks {
+        for (block, txs) in &self.blocks {
             let validator_sig_bytes = {
                 let mut b = BytesMut::new();
-                b.put(bc.get_validator_sig().as_bytes());
+                b.put(block.get_validator_sig().as_bytes());
                 b
             };
 
             let created_at_bytes = {
                 let mut b = BytesMut::new();
-                b.put(bc.get_created_at().as_bytes());
+                b.put(block.get_created_at().as_bytes());
                 b
             };
 
             let merkle_root_bytes = {
                 let mut b = BytesMut::new();
-                b.put(bc.get_merkle_rt().as_bytes());
+                b.put(block.get_merkle_rt().as_slice());
                 b
             };
 
             frame.push_bulk(Bytes::from(validator_sig_bytes));
             frame.push_bulk(Bytes::from(created_at_bytes));
             frame.push_bulk(Bytes::from(merkle_root_bytes));
-            frame.push_int(bc.get_height().to_owned() as u128);
+            frame.push_int(block.get_block_height().to_owned() as u128);
 
-            let witness_sigs = bc.get_witness_sigs();
+            let witness_sigs = block.get_witness_sigs();
             let witness_sig_count = witness_sigs.len();
 
             frame.push_int(witness_sig_count as u128);
@@ -137,7 +131,7 @@ impl BlockSynMsg {
                 frame.push_bulk(Bytes::from(witness_sig_bytes));
             }
 
-            let txs = &self.txs[ix];
+            // let txs = &self.txs[ix];
             let tx_count = txs.len();
 
             frame.push_int(tx_count as u128);
@@ -204,12 +198,7 @@ fn parse_mint_tx(parse: &mut Parse) -> Result<Tx, TrptError> {
         std::str::from_utf8(k.as_ref())?.into()
     };
 
-    let contract_addr = {
-        let p = parse.next_bytes()?;
-        std::str::from_utf8(p.as_ref())?.into()
-    };
-
-    let tx_hash = {
+    let ctr_addr = {
         let p = parse.next_bytes()?;
         std::str::from_utf8(p.as_ref())?.into()
     };
@@ -234,40 +223,97 @@ fn parse_mint_tx(parse: &mut Parse) -> Result<Tx, TrptError> {
         std::str::from_utf8(p.as_ref())?.into()
     };
 
+    let _tx_hash: String = {
+        let p = parse.next_bytes()?;
+        std::str::from_utf8(p.as_ref())?.into()
+    };
+
     let tx_height = parse.next_int()? as u128;
 
     let mint_tx = MintTxCandidate::new(
         created_at,
         data,
         author_sig,
-        ctr_addr,
+        Some(ctr_addr),
         cm,
-        v ,
-        k ,
-        s ,
+        v,
+        k,
+        s,
+    );
 
-    ).upgrade(tx_height)
-
-    Tx::Mint(mint_tx)
-
-    // Tx::new(
-    //     created_at,
-    //     data,
-    //     author_sig,
-    //     pi,
-    //     contract_addr,
-    //     tx_hash,
-    //     cm,
-    //     v,
-    //     k,
-    //     s,
-    //     sn_1,
-    //     sn_2,
-    //     cm_1,
-    //     cm_2,
-    //     rt,
-    //     tx_height,
-    // )
+    Ok(mint_tx.upgrade(tx_height))
 }
 
-fn parse_pour_tx(parse: &mut Parse) -> Tx {}
+fn parse_pour_tx(parse: &mut Parse) -> Result<Tx, TrptError> {
+    let data = {
+        let p = parse.next_bytes()?;
+        p.to_vec()
+    };
+
+    let created_at = {
+        let k = parse.next_bytes()?;
+        std::str::from_utf8(k.as_ref())?.into()
+    };
+
+    let author_sig = {
+        let k = parse.next_bytes()?;
+        std::str::from_utf8(k.as_ref())?.into()
+    };
+
+    let ctr_addr = {
+        let p = parse.next_bytes()?;
+        std::str::from_utf8(p.as_ref())?.into()
+    };
+
+    let pi = {
+        let b = parse.next_bytes()?;
+        b.to_vec()
+    };
+
+    let sn_1 = {
+        let b = parse.next_bytes()?;
+        b.to_vec()
+    };
+
+    let sn_2 = {
+        let b = parse.next_bytes()?;
+        b.to_vec()
+    };
+
+    let cm_1 = {
+        let b = parse.next_bytes()?;
+        b.to_vec()
+    };
+
+    let cm_2 = {
+        let b = parse.next_bytes()?;
+        b.to_vec()
+    };
+
+    let merkle_rt = {
+        let b = parse.next_bytes()?;
+        b.to_vec()
+    };
+
+    let _tx_hash: String = {
+        let p = parse.next_bytes()?;
+        std::str::from_utf8(p.as_ref())?.into()
+    };
+
+    let tx_height = parse.next_int()? as u128;
+
+    let pour_tx = PourTxCandidate::new(
+        created_at,
+        data,
+        author_sig,
+        Some(ctr_addr),
+        pi,
+        sn_1,
+        sn_2,
+        cm_1,
+        cm_2,
+        merkle_rt,
+    );
+
+    Ok(pour_tx.upgrade(tx_height))
+}

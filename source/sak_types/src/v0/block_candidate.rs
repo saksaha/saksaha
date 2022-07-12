@@ -18,7 +18,7 @@ impl BlockCandidate {
         latest_block_height: Option<u128>,
         latest_tx_height: Option<u128>,
         next_merkle_rt: Vec<u8>,
-    ) -> Block {
+    ) -> (Block, Vec<Tx>) {
         let block_height = match latest_block_height {
             Some(h) => h,
             None => 0,
@@ -47,9 +47,8 @@ impl BlockCandidate {
             self.created_at.clone(),
             block_height,
             next_merkle_rt,
-            txs,
         );
 
-        block
+        (block, txs)
     }
 }

@@ -28,7 +28,7 @@ pub struct MintTxCandidate {
     author_sig: String,
 
     //
-    ctr_addr: Option<String>,
+    ctr_addr: String,
 
     //
     cm: Vec<u8>,
@@ -57,10 +57,13 @@ impl MintTxCandidate {
         k: String,
         s: String,
     ) -> MintTxCandidate {
+        let ctr_addr = ctr_addr.unwrap_or(String::from(""));
+
         let hashable_items = vec![
             created_at.as_bytes(),
             data.as_slice(),
             author_sig.as_bytes(),
+            ctr_addr.as_bytes(),
         ];
 
         let tx_hash = sak_crypto::compute_hash(&hashable_items);
@@ -78,11 +81,11 @@ impl MintTxCandidate {
         }
     }
 
-    pub(crate) fn get_tx_hash(&self) -> &String {
+    pub fn get_tx_hash(&self) -> &String {
         return &self.tx_hash;
     }
 
-    pub(crate) fn upgrade(self, tx_height: u128) -> Tx {
+    pub fn upgrade(self, tx_height: u128) -> Tx {
         Tx::Mint(MintTx::new(self, tx_height))
     }
 }
@@ -98,7 +101,7 @@ pub struct PourTxCandidate {
     author_sig: String,
 
     //
-    ctr_addr: Option<String>,
+    ctr_addr: String,
 
     pi: Vec<u8>,
     sn_1: Vec<u8>,
@@ -111,7 +114,7 @@ pub struct PourTxCandidate {
 }
 
 impl PourTxCandidate {
-    pub(crate) fn new(
+    pub fn new(
         created_at: String,
         data: Vec<u8>,
         author_sig: String,
@@ -123,10 +126,13 @@ impl PourTxCandidate {
         cm_2: Vec<u8>,
         merkle_rt: Vec<u8>,
     ) -> PourTxCandidate {
+        let ctr_addr = ctr_addr.unwrap_or(String::from(""));
+
         let hashable_items = vec![
             created_at.as_bytes(),
             data.as_slice(),
             author_sig.as_bytes(),
+            ctr_addr.as_bytes(),
         ];
 
         let tx_hash = sak_crypto::compute_hash(&hashable_items);
@@ -146,11 +152,11 @@ impl PourTxCandidate {
         }
     }
 
-    pub(crate) fn upgrade(self, tx_height: u128) -> Tx {
+    pub fn upgrade(self, tx_height: u128) -> Tx {
         Tx::Pour(PourTx::new(self, tx_height))
     }
 
-    pub(crate) fn get_tx_hash(&self) -> &String {
+    pub fn get_tx_hash(&self) -> &String {
         return &self.tx_hash;
     }
 }
