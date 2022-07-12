@@ -35,40 +35,8 @@ mod test_suite {
         let genesis_block = BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
             tx_candidates: vec![
-                // TxCandidate::new(
-                //     String::from("1"),
-                //     vec![11, 11, 11],
-                //     String::from("marshal_test_author_sig_1"),
-                //     b"1".to_vec(),
-                //     Some(String::from("11")),
-                //     Some(vec![11]),
-                //     Some(String::from("11")),
-                //     Some(String::from("11")),
-                //     Some(String::from("11")),
-                //     Some(String::from("11")),
-                //     Some(String::from("11")),
-                //     Some(vec![11]),
-                //     Some(vec![11]),
-                //     Some(String::from("11")),
-                // ),
-                TxCandidate::new_dummy_tx_candidate_1(),
-                // TxCandidate::new(
-                //     String::from("2"),
-                //     vec![22, 22, 22],
-                //     String::from("marshal_test_author_sig_2"),
-                //     b"2".to_vec(),
-                //     Some(String::from("22")),
-                //     Some(vec![22]),
-                //     Some(String::from("22")),
-                //     Some(String::from("22")),
-                //     Some(String::from("22")),
-                //     Some(String::from("22")),
-                //     Some(String::from("22")),
-                //     Some(vec![22]),
-                //     Some(vec![22]),
-                //     Some(String::from("22")),
-                // ),
-                TxCandidate::new_dummy_tx_candidate_2(),
+                TxCandidate::new_dummy_pour_1(),
+                TxCandidate::new_dummy_pour_2(),
             ],
             witness_sigs: vec![String::from("1"), String::from("2")],
             created_at: String::from("2022061515340000"),
@@ -266,39 +234,8 @@ mod test_suite {
         )
         .await;
 
-        let dummy_tx1 = TxCandidate::new(
-            String::from("1133"),
-            String::from("one").as_bytes().to_vec(),
-            String::from("p2p_block_sync_author_sig1"),
-            vec![1],
-            Some(String::from("1")),
-            Some(vec![1]),
-            Some(String::from("1")),
-            Some(String::from("1")),
-            Some(String::from("1")),
-            Some(String::from("1")),
-            Some(String::from("1")),
-            Some(vec![1]),
-            Some(vec![1]),
-            Some(String::from("1")),
-        );
-
-        let dummy_tx2 = TxCandidate::new(
-            String::from("22"),
-            String::from("two").as_bytes().to_vec(),
-            String::from("p2p_block_sync_author_sig2"),
-            vec![2],
-            Some(String::from("2")),
-            Some(vec![2]),
-            Some(String::from("2")),
-            Some(String::from("2")),
-            Some(String::from("2")),
-            Some(String::from("2")),
-            Some(String::from("2")),
-            Some(vec![2]),
-            Some(vec![2]),
-            Some(String::from("2")),
-        );
+        let dummy_tx1 = TxCandidate::new_dummy_pour_1();
+        let dummy_tx2 = TxCandidate::new_dummy_pour_1();
 
         let block = {
             let c = BlockCandidate {

@@ -75,8 +75,8 @@ impl SyncPool {
     ) -> Result<(), String> {
         let mut new_blocks_lock = self.new_blocks.write().await;
 
-        let height = block.get_height();
-        let block_hash = block.get_hash();
+        let height = block.block_height;
+        let block_hash = block.get_block_hash();
 
         new_blocks_lock.insert((height.to_owned(), block_hash.to_owned()));
 
@@ -89,7 +89,8 @@ impl SyncPool {
     ) -> Result<(), String> {
         {
             // Check if tx is valid ctr deploying type
-            let (tx_ctr_op, tx_coin_op) = tc.get_tx_op();
+            // let (tx_ctr_op, tx_coin_op) = tc.get_tx_op();
+            let tx_ctr_op = tc.get_ctr_op();
 
             match tx_ctr_op {
                 TxCtrOp::ContractDeploy => {
@@ -104,14 +105,14 @@ impl SyncPool {
             };
         }
 
-        let tx_hash = tc.get_tx_hash();
+        let tx_hash = tc.get_tx_hash().to_string();
 
         let mut tx_map_lock = self.tx_map.write().await;
 
-        if tx_map_lock.contains_key(tx_hash) {
+        if tx_map_lock.contains_key(&tx_hash) {
             return Err(format!("tx already exist"));
         } else {
-            tx_map_lock.insert(tx_hash.clone(), tc.clone());
+            tx_map_lock.insert(tx_hash.clone(), tc);
         };
 
         let mut new_tx_hashes_lock = self.new_tx_hashes.write().await;
@@ -123,9 +124,9 @@ impl SyncPool {
     pub(crate) async fn get_all_txs(&self) -> Result<Vec<TxCandidate>, String> {
         let tx_map_lock = self.tx_map.read().await;
 
-        let tx = tx_map_lock.values().map(|v| v.clone()).collect();
+        let txs = tx_map_lock.values().map(|v| v.clone()).collect();
 
-        Ok(tx)
+        Ok(txs)
     }
 
     pub(crate) async fn remove_tcs(

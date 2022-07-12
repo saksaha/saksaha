@@ -41,20 +41,6 @@ pub(crate) async fn send_transaction(
             let _tx_value: TxCandidate =
                 match serde_json::from_slice::<SendTxBody>(&b) {
                     Ok(v) => {
-                        // created_at: String,
-                        // data: Vec<u8>,
-                        // author_sig: String,
-                        // pi: Vec<u8>,
-                        // ctr_addr: Option<String>,
-                        // cm: Option<Vec<u8>>,
-                        // v: Option<String>,
-                        // k: Option<String>,
-                        // s: Option<String>,
-                        // sn_1: Option<String>,
-                        // sn_2: Option<String>,
-                        // cm_1: Option<Vec<u8>>,
-                        // cm_2: Option<Vec<u8>>,
-                        // rt: Option<String>,
                         let tx_candidate = TxCandidate::new(
                             v.created_at,
                             v.data,

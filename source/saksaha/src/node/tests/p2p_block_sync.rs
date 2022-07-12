@@ -191,39 +191,8 @@ async fn test_block_sync_true() {
     )
     .await;
 
-    let dummy_tx1 = TxCandidate::new(
-        String::from("1133"),
-        String::from("one").as_bytes().to_vec(),
-        String::from("p2p_block_sync_author_sig1"),
-        vec![1],
-        Some(String::from("1")),
-        Some(vec![1]),
-        Some(String::from("1")),
-        Some(String::from("1")),
-        Some(String::from("1")),
-        Some(String::from("1")),
-        Some(String::from("1")),
-        Some(vec![1]),
-        Some(vec![1]),
-        Some(String::from("1")),
-    );
-
-    let dummy_tx2 = TxCandidate::new(
-        String::from("22"),
-        String::from("two").as_bytes().to_vec(),
-        String::from("p2p_block_sync_author_sig2"),
-        vec![2],
-        Some(String::from("2")),
-        Some(vec![2]),
-        Some(String::from("2")),
-        Some(String::from("2")),
-        Some(String::from("2")),
-        Some(String::from("2")),
-        Some(String::from("2")),
-        Some(vec![2]),
-        Some(vec![2]),
-        Some(String::from("2")),
-    );
+    let dummy_tx1 = TxCandidate::new_dummy_pour_1();
+    let dummy_tx2 = TxCandidate::new_dummy_pour_2();
 
     // let (_block, txs) = {
     //     let c = BlockCandidate {

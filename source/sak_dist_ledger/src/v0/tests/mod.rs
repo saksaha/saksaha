@@ -187,7 +187,7 @@ mod test {
             .expect("gen block should exist");
 
         let get_gen_hash = gen_block.get_block_hash();
-        let gen_tx_hashes = gen_block.tx_hashes;
+        let gen_tx_hashes = &gen_block.tx_hashes;
 
         for tx_hash in gen_tx_hashes {
             let tx = match dist_ledger.get_tx(&tx_hash).await {
@@ -197,7 +197,7 @@ mod test {
 
             let tx = tx.unwrap();
 
-            assert_eq!(&tx_hash, tx.get_tx_hash());
+            assert_eq!(tx_hash, tx.get_tx_hash());
         }
 
         assert_ne!(get_gen_hash, &String::from("false hash"));

@@ -1,19 +1,39 @@
+use super::utils;
 use crate::{MintTx, PourTx, Tx, TxCtrOp, TypesError, WASM_MAGIC_NUMBER};
 use serde::{Deserialize, Serialize};
 
-use super::utils;
-
-#[derive(Deserialize, Serialize, Debug, PartialEq, Eq)]
+#[derive(Deserialize, Serialize, Debug, PartialEq, Eq, Clone)]
 pub enum TxCandidate {
     Mint(MintTxCandidate),
     Pour(PourTxCandidate),
 }
 
 impl TxCandidate {
-    pub(crate) fn upgrade(self, tx_height: u128) -> Tx {
+    pub fn upgrade(self, tx_height: u128) -> Tx {
         match self {
             TxCandidate::Mint(c) => c.upgrade(tx_height),
             TxCandidate::Pour(c) => c.upgrade(tx_height),
+        }
+    }
+
+    pub fn get_ctr_op(&self) -> TxCtrOp {
+        match self {
+            TxCandidate::Mint(c) => c.get_ctr_op(),
+            TxCandidate::Pour(c) => c.get_ctr_op(),
+        }
+    }
+
+    pub fn get_data(&self) -> &Vec<u8> {
+        match &self {
+            TxCandidate::Mint(c) => &c.data,
+            TxCandidate::Pour(c) => &c.data,
+        }
+    }
+
+    pub fn get_tx_hash(&self) -> &String {
+        match &self {
+            TxCandidate::Mint(c) => c.get_tx_hash(),
+            TxCandidate::Pour(c) => c.get_tx_hash(),
         }
     }
 }
@@ -26,6 +46,7 @@ pub struct MintTxCandidate {
     //
     #[serde(with = "serde_bytes")]
     pub data: Vec<u8>,
+
     //
     pub author_sig: String,
 

@@ -12,7 +12,7 @@ impl LedgerDB {
     ) -> Result<(), LedgerError> {
         let db = &self.kv_db.db_instance;
 
-        match tx {
+        let _ = match tx {
             Tx::Mint(t) => batch_put_mint_tx(db, &self.schema, batch, t),
             Tx::Pour(t) => batch_put_pour_tx(db, &self.schema, batch, t),
         };
@@ -34,6 +34,7 @@ impl LedgerDB {
         let tx = match tx_type.as_ref() {
             "mint" => get_mint_tx(db, &self.schema, tx_hash),
             "pour" => get_pour_tx(db, &self.schema, tx_hash),
+            _ => Err(format!("Invalid tx type, {}", tx_type).into()),
         }?;
 
         Ok(Some(tx))
@@ -191,7 +192,7 @@ fn batch_put_mint_tx(
     batch: &mut WriteBatch,
     tx: &MintTx,
 ) -> Result<String, LedgerError> {
-    let tc = tx.tx_candidate;
+    let tc = &tx.tx_candidate;
 
     let tx_hash = tc.get_tx_hash();
 
@@ -230,7 +231,7 @@ fn batch_put_pour_tx(
     batch: &mut WriteBatch,
     tx: &PourTx,
 ) -> Result<String, LedgerError> {
-    let tc = tx.tx_candidate;
+    let tc = &tx.tx_candidate;
 
     let tx_hash = tc.get_tx_hash();
 

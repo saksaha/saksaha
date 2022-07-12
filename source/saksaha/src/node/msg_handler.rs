@@ -81,7 +81,7 @@ pub(crate) async fn handle_tx_hash_syn<'a>(
                             );
 
                             machine.blockchain.dist_ledger
-                                .insert_into_pool(h.tcs).await;
+                                .insert_into_pool(h.tx_candidates).await;
                         }
                         other_msg => {
                             warn!(
