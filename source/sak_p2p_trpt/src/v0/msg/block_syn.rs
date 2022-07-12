@@ -1,7 +1,7 @@
-use crate::{BoxedError, BLOCK_SYN_TYPE};
+use crate::{TrptError, BLOCK_SYN_TYPE};
 use bytes::{BufMut, Bytes, BytesMut};
 use sak_p2p_frame::{Frame, Parse};
-use sak_types::{Block, Tx};
+use sak_types::{Block, MintTx, MintTxCandidate, Tx};
 
 #[derive(Debug)]
 pub struct BlockSynMsg {
@@ -12,14 +12,14 @@ pub struct BlockSynMsg {
 impl BlockSynMsg {
     pub(crate) fn from_parse(
         parse: &mut Parse,
-    ) -> Result<BlockSynMsg, BoxedError> {
-        let bc_count = parse.next_int()?;
+    ) -> Result<BlockSynMsg, TrptError> {
+        let block_count = parse.next_int()?;
 
-        let mut blocks = Vec::with_capacity(bc_count as usize);
+        let mut blocks = Vec::with_capacity(block_count as usize);
         let mut txs_vec = vec![vec![]];
         // let mut tx_hashes = vec![];
 
-        for _ in 0..bc_count {
+        for _ in 0..block_count {
             let validator_sig = {
                 let v = parse.next_bytes()?;
                 std::str::from_utf8(&v)?.to_string()
@@ -56,101 +56,12 @@ impl BlockSynMsg {
 
             for _ in 0..tx_count {
                 let tx = {
-                    let data = {
-                        let p = parse.next_bytes()?;
-                        p.to_vec()
+                    let tx_type = parse.next_string()?;
+
+                    let tx = match tx_type.as_ref() {
+                        "mint" => parse_mint_tx(parse)?,
+                        "pour" => parse_pour_tx(parse)?,
                     };
-
-                    let created_at = {
-                        let k = parse.next_bytes()?;
-                        std::str::from_utf8(k.as_ref())?.into()
-                    };
-
-                    let pi = {
-                        let k = parse.next_bytes()?;
-                        std::str::from_utf8(k.as_ref())?.into()
-                    };
-
-                    let author_sig = {
-                        let k = parse.next_bytes()?;
-                        std::str::from_utf8(k.as_ref())?.into()
-                    };
-
-                    let contract_addr = {
-                        let p = parse.next_bytes()?;
-                        std::str::from_utf8(p.as_ref())?.into()
-                    };
-
-                    let tx_hash = {
-                        let p = parse.next_bytes()?;
-                        std::str::from_utf8(p.as_ref())?.into()
-                    };
-
-                    let cm = {
-                        let p = parse.next_bytes()?;
-                        std::str::from_utf8(p.as_ref())?.into()
-                    };
-
-                    let v = {
-                        let p = parse.next_bytes()?;
-                        std::str::from_utf8(p.as_ref())?.into()
-                    };
-
-                    let k = {
-                        let p = parse.next_bytes()?;
-                        std::str::from_utf8(p.as_ref())?.into()
-                    };
-
-                    let s = {
-                        let p = parse.next_bytes()?;
-                        std::str::from_utf8(p.as_ref())?.into()
-                    };
-
-                    let sn_1 = {
-                        let p = parse.next_bytes()?;
-                        std::str::from_utf8(p.as_ref())?.into()
-                    };
-
-                    let sn_2 = {
-                        let p = parse.next_bytes()?;
-                        std::str::from_utf8(p.as_ref())?.into()
-                    };
-
-                    let cm_1 = {
-                        let p = parse.next_bytes()?;
-                        std::str::from_utf8(p.as_ref())?.into()
-                    };
-
-                    let cm_2 = {
-                        let p = parse.next_bytes()?;
-                        std::str::from_utf8(p.as_ref())?.into()
-                    };
-
-                    let rt = {
-                        let p = parse.next_bytes()?;
-                        std::str::from_utf8(p.as_ref())?.into()
-                    };
-
-                    let tx_height = parse.next_int()? as u128;
-
-                    Tx::new(
-                        created_at,
-                        data,
-                        author_sig,
-                        pi,
-                        contract_addr,
-                        tx_hash,
-                        cm,
-                        v,
-                        k,
-                        s,
-                        sn_1,
-                        sn_2,
-                        cm_1,
-                        cm_2,
-                        rt,
-                        tx_height,
-                    )
                 };
 
                 tx_hashes.push(tx.get_tx_hash().to_owned());
@@ -201,7 +112,7 @@ impl BlockSynMsg {
 
             let merkle_root_bytes = {
                 let mut b = BytesMut::new();
-                b.put(bc.get_merkle_root().as_bytes());
+                b.put(bc.get_merkle_rt().as_bytes());
                 b
             };
 
@@ -276,3 +187,87 @@ impl BlockSynMsg {
         frame
     }
 }
+
+fn parse_mint_tx(parse: &mut Parse) -> Result<Tx, TrptError> {
+    let data = {
+        let p = parse.next_bytes()?;
+        p.to_vec()
+    };
+
+    let created_at = {
+        let k = parse.next_bytes()?;
+        std::str::from_utf8(k.as_ref())?.into()
+    };
+
+    let author_sig = {
+        let k = parse.next_bytes()?;
+        std::str::from_utf8(k.as_ref())?.into()
+    };
+
+    let contract_addr = {
+        let p = parse.next_bytes()?;
+        std::str::from_utf8(p.as_ref())?.into()
+    };
+
+    let tx_hash = {
+        let p = parse.next_bytes()?;
+        std::str::from_utf8(p.as_ref())?.into()
+    };
+
+    let cm = {
+        let p = parse.next_bytes()?;
+        std::str::from_utf8(p.as_ref())?.into()
+    };
+
+    let v = {
+        let p = parse.next_bytes()?;
+        std::str::from_utf8(p.as_ref())?.into()
+    };
+
+    let k = {
+        let p = parse.next_bytes()?;
+        std::str::from_utf8(p.as_ref())?.into()
+    };
+
+    let s = {
+        let p = parse.next_bytes()?;
+        std::str::from_utf8(p.as_ref())?.into()
+    };
+
+    let tx_height = parse.next_int()? as u128;
+
+    let mint_tx = MintTxCandidate::new(
+        created_at,
+        data,
+        author_sig,
+        ctr_addr,
+        cm,
+        v ,
+        k ,
+        s ,
+
+    ).upgrade(tx_height)
+
+    Tx::Mint(mint_tx)
+
+    // Tx::new(
+    //     created_at,
+    //     data,
+    //     author_sig,
+    //     pi,
+    //     contract_addr,
+    //     tx_hash,
+    //     cm,
+    //     v,
+    //     k,
+    //     s,
+    //     sn_1,
+    //     sn_2,
+    //     cm_1,
+    //     cm_2,
+    //     rt,
+    //     tx_height,
+    // )
+}
+
+fn parse_pour_tx(parse: &mut Parse) -> Tx {}

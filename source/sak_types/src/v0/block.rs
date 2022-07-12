@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::Tx;
 
-#[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Deserialize, Serialize, Debug, PartialEq, Eq, Hash)]
 pub struct Block {
     validator_sig: String,
 

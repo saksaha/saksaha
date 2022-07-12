@@ -18,6 +18,7 @@ impl TxCandidate {
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct MintTxCandidate {
+    //
     created_at: String,
 
     //
@@ -29,16 +30,24 @@ pub struct MintTxCandidate {
     //
     ctr_addr: Option<String>,
 
+    //
     cm: Vec<u8>,
+
+    //
     v: String,
+
+    //
     k: String,
+
+    //
     s: String,
 
+    //
     tx_hash: String,
 }
 
 impl MintTxCandidate {
-    pub(crate) fn new(
+    pub fn new(
         created_at: String,
         data: Vec<u8>,
         author_sig: String,
