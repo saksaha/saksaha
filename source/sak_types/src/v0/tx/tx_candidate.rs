@@ -220,6 +220,12 @@ pub mod for_testing {
     use crate::U8Array;
 
     impl TxCandidate {
+        pub fn new_dummy_mint_1() -> TxCandidate {
+            let mint_tx_candidate_dummy_1 = MintTxCandidate::new_dummy_1();
+
+            TxCandidate::Mint(mint_tx_candidate_dummy_1)
+        }
+
         pub fn new_dummy_pour_1() -> TxCandidate {
             let pour_tx_candidate_dummy_1 = PourTxCandidate::new_dummy_1();
 
@@ -242,6 +248,25 @@ pub mod for_testing {
             let pour_tx_candidate_dummy_4 = PourTxCandidate::new_dummy_4();
 
             TxCandidate::Pour(pour_tx_candidate_dummy_4)
+        }
+    }
+
+    impl MintTxCandidate {
+        pub fn new_dummy_1() -> MintTxCandidate {
+            // created_at: String,
+            // data: Vec<u8>,
+            // author_sig: String,
+            // ctr_addr: Option<String>,
+            // cm: [u8; 32],
+            // v: [u8; 32],
+            // k: [u8; 32],
+            // s: [u8; 32],
+            MintTxCandidate::new(
+                String::from("created_at_mint_1"),
+                vec![1],
+                String::from("author_sig_mint_1"),
+                None,
+            )
         }
     }
 

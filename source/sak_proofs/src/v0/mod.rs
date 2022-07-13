@@ -1,12 +1,9 @@
-// mod hasher;
 mod merkle;
-// pub mod mimc;
 mod proofs;
 
 #[cfg(test)]
 mod tests;
 
-// pub use hasher::*;
 pub use merkle::*;
 pub use proofs::*;
 

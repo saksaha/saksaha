@@ -21,7 +21,7 @@ impl GenesisBlock {
         let hasher = Hasher::new();
 
         let mint_tx_1 = {
-            let v = Scalar::from(1000);
+            let v = Scalar::from(1_000);
 
             let s = {
                 let arr = U8Array::new_empty_32();

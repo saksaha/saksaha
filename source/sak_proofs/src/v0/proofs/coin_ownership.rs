@@ -1,7 +1,7 @@
 use crate::MerkleTree;
-use bellman::gadgets::boolean::AllocatedBit;
-use bellman::groth16::{Parameters, PreparedVerifyingKey, Proof, VerifyingKey};
-use bellman::{groth16, Circuit, ConstraintSystem, SynthesisError};
+// use bellman::gadgets::boolean::AllocatedBit;
+// use bellman::groth16::{Parameters, PreparedVerifyingKey, Proof, VerifyingKey};
+// use bellman::{groth16, Circuit, ConstraintSystem, SynthesisError};
 use pairing::MultiMillerLoop;
 use rand::rngs::OsRng;
 use sak_crypto::{mimc, Bls12, Scalar};
