@@ -214,7 +214,7 @@ impl PourTxCandidate {
 }
 
 pub mod for_testing {
-    use sak_crypto::{Hasher, ScalarExt};
+    use sak_crypto::{Hasher, Scalar, ScalarExt};
 
     use super::*;
     use crate::U8Array;
@@ -253,37 +253,53 @@ pub mod for_testing {
 
     impl MintTxCandidate {
         pub fn new_dummy_1() -> MintTxCandidate {
-            // created_at: String,
-            // data: Vec<u8>,
-            // author_sig: String,
-            // ctr_addr: Option<String>,
-            // cm: [u8; 32],
-            // v: [u8; 32],
-            // k: [u8; 32],
-            // s: [u8; 32],
+            let hasher = Hasher::new();
+
+            let v = Scalar::from(1_000);
+
+            let s = {
+                let arr = U8Array::new_empty_32();
+
+                ScalarExt::parse_arr(&arr).unwrap()
+            };
+
+            let r = {
+                let arr = U8Array::new_empty_32();
+
+                ScalarExt::parse_arr(&arr).unwrap()
+            };
+
+            let rho = {
+                let arr = U8Array::new_empty_32();
+
+                ScalarExt::parse_arr(&arr).unwrap()
+            };
+
+            let a_pk = {
+                let arr = U8Array::new_empty_32();
+
+                ScalarExt::parse_arr(&arr).unwrap()
+            };
+
+            let k = hasher.comm2(r, a_pk, rho);
+
+            let cm = hasher.comm2(s, v, k);
+
             MintTxCandidate::new(
                 String::from("created_at_mint_1"),
                 vec![1],
                 String::from("author_sig_mint_1"),
                 None,
+                cm.to_bytes(),
+                v.to_bytes(),
+                k.to_bytes(),
+                s.to_bytes(),
             )
         }
     }
 
     impl PourTxCandidate {
         pub fn new_dummy_1() -> PourTxCandidate {
-            // created_at: String,
-            // data: Vec<u8>,
-            // author_sig: String,
-            // ctr_addr: Option<String>,
-            // pi: Vec<u8>,
-            // sn_1: [u8; 32],
-            // sn_2: [u8; 32],
-            // cm_1: [u8; 32],
-            // cm_2: [u8; 32],
-            // merkle_rt: [u8; 32],
-            // let v = Scalar::from(1000);
-
             let hasher = Hasher::new();
 
             let pi = vec![0];
