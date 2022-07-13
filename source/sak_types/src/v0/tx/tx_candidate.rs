@@ -23,6 +23,13 @@ impl TxCandidate {
         }
     }
 
+    pub fn get_ctr_addr(&self) -> &String {
+        match &self {
+            TxCandidate::Mint(c) => &c.ctr_addr,
+            TxCandidate::Pour(c) => &c.ctr_addr,
+        }
+    }
+
     pub fn get_data(&self) -> &Vec<u8> {
         match &self {
             TxCandidate::Mint(c) => &c.data,
@@ -125,6 +132,7 @@ pub struct PourTxCandidate {
     //
     #[serde(with = "serde_bytes")]
     pub data: Vec<u8>,
+
     //
     pub author_sig: String,
 
@@ -135,16 +143,16 @@ pub struct PourTxCandidate {
     pub pi: Vec<u8>,
 
     //
-    pub sn_1: Vec<u8>,
+    pub sn_1: [u8; 32],
 
     //
-    pub sn_2: Vec<u8>,
+    pub sn_2: [u8; 32],
 
     //
-    pub cm_1: Vec<u8>,
+    pub cm_1: [u8; 32],
 
     //
-    pub cm_2: Vec<u8>,
+    pub cm_2: [u8; 32],
 
     //
     pub merkle_rt: [u8; 32],
@@ -160,10 +168,10 @@ impl PourTxCandidate {
         author_sig: String,
         ctr_addr: Option<String>,
         pi: Vec<u8>,
-        sn_1: Vec<u8>,
-        sn_2: Vec<u8>,
-        cm_1: Vec<u8>,
-        cm_2: Vec<u8>,
+        sn_1: [u8; 32],
+        sn_2: [u8; 32],
+        cm_1: [u8; 32],
+        cm_2: [u8; 32],
         merkle_rt: [u8; 32],
     ) -> PourTxCandidate {
         let ctr_addr = ctr_addr.unwrap_or(String::from(""));
@@ -238,16 +246,77 @@ pub mod for_testing {
 
     impl PourTxCandidate {
         pub fn new_dummy_1() -> PourTxCandidate {
+            // created_at: String,
+            // data: Vec<u8>,
+            // author_sig: String,
+            // ctr_addr: Option<String>,
+            // pi: Vec<u8>,
+            // sn_1: [u8; 32],
+            // sn_2: [u8; 32],
+            // cm_1: [u8; 32],
+            // cm_2: [u8; 32],
+            // merkle_rt: [u8; 32],
+            let v = Scalar::from(1000);
+
+            let pi = vec![0];
+
+            let cm_1 = {
+                let s = {
+                    let arr = U8Array::new_empty_32();
+
+                    ScalarExt::parse_arr(&arr)?
+                };
+
+                let r = {
+                    let arr = U8Array::new_empty_32();
+
+                    ScalarExt::parse_arr(&arr)?
+                };
+
+                let rho = {
+                    let arr = U8Array::new_empty_32();
+
+                    ScalarExt::parse_arr(&arr)?
+                };
+
+                let a_pk = {
+                    let arr = U8Array::new_empty_32();
+
+                    ScalarExt::parse_arr(&arr)?
+                };
+
+                let k = hasher.comm2(r, a_pk, rho);
+
+                hasher.comm2(s, v, k)
+            };
+
+            let cm_2 = {
+                let k = hasher.comm2(r, a_pk, rho);
+
+                hasher.comm2(s, v, k)
+            };
+
+            let ptc = PourTxCandidate::new(
+                String::from("initial_mint_created_at"),
+                vec![0],
+                VALIDATOR_SIG.to_string(),
+                None,
+                cm.to_bytes(),
+                v.to_bytes(),
+                k.to_bytes(),
+                s.to_bytes(),
+            );
+
             PourTxCandidate::new(
                 String::from("created_at_1"),
                 vec![11, 11, 11],
                 String::from("author_sig_1"),
                 Some(String::from("ctr_addr_1")),
                 vec![11, 11, 11],
-                vec![11, 11, 11],
-                vec![11, 11, 11],
-                vec![11, 11, 11],
-                vec![11, 11, 11],
+                U8Array::new_empty_32(),
+                U8Array::new_empty_32(),
+                U8Array::new_empty_32(),
+                U8Array::new_empty_32(),
                 U8Array::new_empty_32(),
             )
         }
@@ -259,10 +328,10 @@ pub mod for_testing {
                 String::from("author_sig_2"),
                 Some(String::from("ctr_addr_2")),
                 vec![22, 22, 22],
-                vec![22, 22, 22],
-                vec![22, 22, 22],
-                vec![22, 22, 22],
-                vec![22, 22, 22],
+                U8Array::new_empty_32(),
+                U8Array::new_empty_32(),
+                U8Array::new_empty_32(),
+                U8Array::new_empty_32(),
                 U8Array::new_empty_32(),
             )
         }
@@ -273,11 +342,11 @@ pub mod for_testing {
                 vec![33, 33, 33],
                 String::from("author_sig_3"),
                 Some(String::from("ctr_addr_3")),
-                vec![33, 33, 33],
-                vec![33, 33, 33],
-                vec![33, 33, 33],
-                vec![33, 33, 33],
-                vec![33, 33, 33],
+                vec![22, 22, 22],
+                U8Array::new_empty_32(),
+                U8Array::new_empty_32(),
+                U8Array::new_empty_32(),
+                U8Array::new_empty_32(),
                 U8Array::new_empty_32(),
             )
         }
@@ -289,10 +358,10 @@ pub mod for_testing {
                 String::from("author_sig_4"),
                 Some(String::from("ctr_addr_4")),
                 vec![44, 44, 44],
-                vec![44, 44, 44],
-                vec![44, 44, 44],
-                vec![44, 44, 44],
-                vec![44, 44, 44],
+                U8Array::new_empty_32(),
+                U8Array::new_empty_32(),
+                U8Array::new_empty_32(),
+                U8Array::new_empty_32(),
                 U8Array::new_empty_32(),
             )
         }

@@ -20,7 +20,7 @@ impl DistLedger {
     pub async fn get_merkle_node(
         &self,
         location: &String,
-    ) -> Result<Option<Vec<u8>>, LedgerError> {
+    ) -> Result<Option<[u8; 32]>, LedgerError> {
         self.ledger_db.get_merkle_node(location).await
     }
 

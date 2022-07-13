@@ -35,16 +35,12 @@ mod test {
             tx_candidates: vec![TxCandidate::new_dummy_pour_1()],
             witness_sigs: vec![String::from("1"), String::from("2")],
             created_at: String::from("2022061515340000"),
-            // block_height: 0,
-            // merkle_root: String::from("2022061515340000"),
         };
 
         genesis_block
     }
 
     async fn make_dist_ledger() -> DistLedger {
-        sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
-
         let pos = Box::new(Pos {});
 
         let dist_ledger_args = DistLedgerArgs {
@@ -81,6 +77,7 @@ mod test {
     #[tokio::test(flavor = "multi_thread")]
     async fn test_put_and_get_transaction() {
         init();
+        sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
 
         let blockchain = make_dist_ledger().await;
 

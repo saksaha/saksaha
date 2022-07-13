@@ -1,6 +1,7 @@
 use super::DistLedgerEvent;
 use crate::Consensus;
 use crate::LedgerDB;
+use crate::LedgerError;
 use crate::Runtime;
 use crate::SyncPool;
 use colored::Colorize;
@@ -36,7 +37,7 @@ pub struct DistLedgerArgs {
 impl DistLedger {
     pub async fn init(
         dist_ledger_args: DistLedgerArgs,
-    ) -> Result<DistLedger, String> {
+    ) -> Result<DistLedger, LedgerError> {
         let DistLedgerArgs {
             app_prefix,
             tx_sync_interval,
@@ -45,15 +46,7 @@ impl DistLedger {
             block_sync_interval,
         } = dist_ledger_args;
 
-        let ledger_db = match LedgerDB::init(&app_prefix).await {
-            Ok(d) => d,
-            Err(err) => {
-                return Err(format!(
-                    "Error initializing database, err: {}",
-                    err,
-                ));
-            }
-        };
+        let ledger_db = LedgerDB::init(&app_prefix).await?;
 
         let vm = VM::init()?;
 
@@ -99,24 +92,13 @@ impl DistLedger {
             // genesis_block hash check
         }
 
-        let latest_height = {
-            let maybe_height =
-                match dist_ledger.ledger_db.get_latest_block_height().await {
-                    Ok(h) => h,
-                    Err(err) => {
-                        return Err(format!(
-                            "Failed to get latest block height, err: {}",
-                            err,
-                        ))
-                    }
-                };
-
-            maybe_height.unwrap_or(0)
-        };
+        let latest_height =
+            dist_ledger.ledger_db.get_latest_block_height().await?;
 
         info!(
-            "Initialized Blockchain, latest height: {}",
-            latest_height.to_string().yellow(),
+            "Initialized Blockchain, latest height (none if genesis \
+                block has not be inserted): {:?}",
+            latest_height,
         );
 
         Ok(dist_ledger)

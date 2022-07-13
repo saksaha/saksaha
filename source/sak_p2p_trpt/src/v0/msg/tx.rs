@@ -107,22 +107,26 @@ pub(crate) fn parse_pour_tx_candidate(
 
     let sn_1 = {
         let b = parse.next_bytes()?;
-        b.to_vec()
+
+        utils::convert_bytes_into_u8_32(b)?
     };
 
     let sn_2 = {
         let b = parse.next_bytes()?;
-        b.to_vec()
+
+        utils::convert_bytes_into_u8_32(b)?
     };
 
     let cm_1 = {
         let b = parse.next_bytes()?;
-        b.to_vec()
+
+        utils::convert_bytes_into_u8_32(b)?
     };
 
     let cm_2 = {
         let b = parse.next_bytes()?;
-        b.to_vec()
+
+        utils::convert_bytes_into_u8_32(b)?
     };
 
     let merkle_rt = {
@@ -196,10 +200,10 @@ pub(crate) fn put_pour_tx_candidate_into_frame(
     frame.push_bulk(Bytes::from(tc.author_sig));
     frame.push_bulk(Bytes::from(tc.ctr_addr));
     frame.push_bulk(Bytes::from(tc.pi));
-    frame.push_bulk(Bytes::from(tc.sn_1));
-    frame.push_bulk(Bytes::from(tc.sn_2));
-    frame.push_bulk(Bytes::from(tc.cm_1));
-    frame.push_bulk(Bytes::from(tc.cm_2));
+    frame.push_bulk(Bytes::copy_from_slice(&tc.sn_1));
+    frame.push_bulk(Bytes::copy_from_slice(&tc.sn_2));
+    frame.push_bulk(Bytes::copy_from_slice(&tc.cm_1));
+    frame.push_bulk(Bytes::copy_from_slice(&tc.cm_2));
     frame.push_bulk(Bytes::copy_from_slice(&tc.merkle_rt));
     frame.push_bulk(Bytes::from(tx_hash));
 }

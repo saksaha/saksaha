@@ -43,10 +43,10 @@ pub(crate) fn make_dummy_block_candidate_with_query_tx(
                 String::from("author_sig_0"),
                 Some(String::from("ctr_addr_0")),
                 vec![0],
-                vec![0],
-                vec![0],
-                vec![0],
-                vec![0],
+                U8Array::new_empty_32(),
+                U8Array::new_empty_32(),
+                U8Array::new_empty_32(),
+                U8Array::new_empty_32(),
                 U8Array::new_empty_32(),
             ))
         };
@@ -95,10 +95,10 @@ pub(crate) fn make_dummy_block_candidate_with_execute_tx(
                 String::from("author_sig_1"),
                 Some(String::from("ctr_addr_1")),
                 vec![22],
-                vec![22],
-                vec![22],
-                vec![22],
-                vec![22],
+                U8Array::new_empty_32(),
+                U8Array::new_empty_32(),
+                U8Array::new_empty_32(),
+                U8Array::new_empty_32(),
                 U8Array::new_empty_32(),
             ));
 
@@ -130,10 +130,10 @@ pub(crate) fn make_dummy_block_candidate_with_execute_tx(
                 String::from("author_sig_2"),
                 Some(String::from("ctr_addr_2")),
                 vec![22],
-                vec![22],
-                vec![22],
-                vec![22],
-                vec![22],
+                U8Array::new_empty_32(),
+                U8Array::new_empty_32(),
+                U8Array::new_empty_32(),
+                U8Array::new_empty_32(),
                 U8Array::new_empty_32(),
             ));
 

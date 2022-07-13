@@ -4,7 +4,7 @@ use sak_contract_std::{CtrCallType, Request, Storage};
 use sak_proofs::{Scalar, ScalarExt};
 use sak_types::{
     Block, BlockCandidate, MintTxCandidate, PourTxCandidate, Tx, TxCandidate,
-    TxCtrOp,
+    TxCtrOp, U8Array,
 };
 use sak_vm::CtrFn;
 use std::convert::TryInto;
@@ -14,8 +14,6 @@ impl DistLedger {
         &self,
         bc: Option<BlockCandidate>,
     ) -> Result<Option<String>, LedgerError> {
-        println!("write block()!!");
-
         let bc = match bc {
             Some(bc) => bc,
             None => match self.make_block_candidate().await? {
@@ -33,28 +31,37 @@ impl DistLedger {
 
         let next_tx_height = self.get_latest_tx_height().await?.unwrap_or(0);
 
-        // let latest_merkle_rt = self.get_latest_merkle_rt().await?;
         let tcs = &bc.tx_candidates;
         let mut ctr_state_update = CtrStateUpdate::new();
         let mut merkle_update = MerkleUpdate::new();
 
-        println!("iterating a total of {} tcs", tcs.len());
+        println!(
+            "write_block, tc count: {}, next_block_height: {}, \
+            next_tx_height: {}",
+            tcs.len(),
+            next_block_height,
+            next_tx_height
+        );
 
         for tx_candidate in tcs.iter() {
-            println!("\niterating tc, {:?}", tx_candidate);
-
             match tx_candidate {
                 TxCandidate::Mint(tc) => {
-                    let _ = handle_mint_tx_candidate(
+                    handle_mint_tx_candidate(
                         self,
                         tc,
                         &mut ctr_state_update,
                         &mut merkle_update,
                     )
-                    .await;
+                    .await?;
                 }
                 TxCandidate::Pour(tc) => {
-                    handle_pour(tc);
+                    handle_pour_tx_candidate(
+                        self,
+                        tc,
+                        &mut ctr_state_update,
+                        &mut merkle_update,
+                    )
+                    .await?;
                 }
             };
         }
@@ -105,15 +112,18 @@ impl DistLedger {
     }
 }
 
-async fn prepare_ctr_state_update(
+async fn process_ctr_state_update(
     dist_ledger: &DistLedger,
-    tc: &MintTxCandidate,
+    // tc: TxCandidate,
+    ctr_addr: &String,
+    data: &[u8],
+    tx_ctr_op: TxCtrOp,
     ctr_state_update: &mut CtrStateUpdate,
 ) -> Result<(), LedgerError> {
     let vm = &dist_ledger.vm;
-    let ctr_addr = &tc.ctr_addr;
-    let data = &tc.data;
-    let tx_ctr_op = tc.get_ctr_op();
+    // let ctr_addr = tc.get_ctr_addr();
+    // let data = &tc.get_data();
+    // let tx_ctr_op = tc.get_ctr_op();
 
     match tx_ctr_op {
         TxCtrOp::ContractDeploy => {
@@ -171,7 +181,17 @@ async fn handle_mint_tx_candidate(
     ctr_state_update: &mut CtrStateUpdate,
     merkle_update: &mut MerkleUpdate,
 ) -> Result<(), LedgerError> {
-    prepare_ctr_state_update(dist_ledger, tc, ctr_state_update).await;
+    let ctr_addr = &tc.ctr_addr;
+    let data = &tc.data;
+    let tx_ctr_op = tc.get_ctr_op();
+    process_ctr_state_update(
+        dist_ledger,
+        ctr_addr,
+        data,
+        tx_ctr_op,
+        ctr_state_update,
+    )
+    .await?;
 
     let next_tx_height = match dist_ledger.get_latest_tx_height().await? {
         Some(th) => th + 1,
@@ -179,6 +199,11 @@ async fn handle_mint_tx_candidate(
     };
 
     let auth_path = sak_proofs::get_auth_path(next_tx_height as u64);
+
+    // println!(
+    //     "next_tx_height: {}, auth_path: {:?}",
+    //     next_tx_height, auth_path
+    // );
 
     for (height, auth_node_idx) in auth_path.iter().enumerate() {
         if height == auth_path.len() - 1 {
@@ -189,19 +214,21 @@ async fn handle_mint_tx_candidate(
         let sibling_node = dist_ledger
             .get_merkle_node(&sibling_loc)
             .await?
-            .unwrap_or(vec![0]);
+            .unwrap_or(U8Array::new_empty_32());
 
         let curr_cm = ScalarExt::parse_arr(&tc.cm)?;
-        let sib_cm = ScalarExt::parse_vec(sibling_node)?;
+
+        let sib_cm = ScalarExt::parse_arr(&sibling_node)?;
 
         let merkle_node = dist_ledger.hasher.mimc(curr_cm, sib_cm).to_bytes();
+
         let parent_idx = sak_proofs::get_parent_idx(*auth_node_idx);
         let update_loc = format!("{}_{}", height + 1, parent_idx);
 
-        println!(
-            "update loc, {}, hash of two, {:?} and {:?}",
-            update_loc, curr_cm, sib_cm
-        );
+        // println!(
+        //     "update loc, {}, hash of two, {:?} and {:?}",
+        //     update_loc, curr_cm, sib_cm
+        // );
 
         merkle_update.insert(update_loc, merkle_node);
     }
@@ -209,4 +236,74 @@ async fn handle_mint_tx_candidate(
     Ok(())
 }
 
-fn handle_pour(tc: &PourTxCandidate) {}
+async fn handle_pour_tx_candidate(
+    dist_ledger: &DistLedger,
+    tc: &PourTxCandidate,
+    ctr_state_update: &mut CtrStateUpdate,
+    merkle_update: &mut MerkleUpdate,
+) -> Result<(), LedgerError> {
+    let ctr_addr = &tc.ctr_addr;
+    let data = &tc.data;
+    let tx_ctr_op = tc.get_ctr_op();
+
+    process_ctr_state_update(
+        dist_ledger,
+        ctr_addr,
+        data,
+        tx_ctr_op,
+        ctr_state_update,
+    )
+    .await?;
+
+    let next_tx_height = match dist_ledger.get_latest_tx_height().await? {
+        Some(th) => th + 1,
+        None => 0,
+    };
+
+    for idx in 0..2 {
+        let auth_path = sak_proofs::get_auth_path(next_tx_height as u64 + idx);
+
+        println!(
+            "next_tx_height: {}, auth_path: {:?}",
+            next_tx_height, auth_path
+        );
+
+        let cms = vec![&tc.cm_1, &tc.cm_2];
+
+        for (height, auth_node_idx) in auth_path.iter().enumerate() {
+            if height == auth_path.len() - 1 {
+                break;
+            }
+
+            let sibling_loc = format!("{}_{}", height, auth_node_idx);
+
+            let sibling_node = dist_ledger
+                .get_merkle_node(&sibling_loc)
+                .await?
+                .unwrap_or(U8Array::new_empty_32());
+
+            // let cm_1 = ScalarExt::parse_arr(&tc.cm_1)?;
+
+            // let cm_1 = ScalarExt::parse_arr(&tc.cm_1)?;
+
+            // let cm_2 = ScalarExt::parse_arr(&tc.cm_1)?;
+
+            // let sib_cm = ScalarExt::parse_arr(&sibling_node)?;
+
+            // let merkle_node =
+            //     dist_ledger.hasher.mimc(curr_cm, sib_cm).to_bytes();
+
+            // let parent_idx = sak_proofs::get_parent_idx(*auth_node_idx);
+            // let update_loc = format!("{}_{}", height + 1, parent_idx);
+
+            // // println!(
+            // //     "update loc, {}, hash of two, {:?} and {:?}",
+            // //     update_loc, curr_cm, sib_cm
+            // // );
+
+            // merkle_update.insert(update_loc, merkle_node);
+        }
+    }
+
+    Ok(())
+}

@@ -87,7 +87,7 @@ impl LedgerDB {
     pub(crate) async fn get_merkle_node(
         &self,
         location: &String,
-    ) -> Result<Option<Vec<u8>>, LedgerError> {
+    ) -> Result<Option<[u8; 32]>, LedgerError> {
         let db = &self.kv_db.db_instance;
 
         self.schema.get_merkle_node(db, location)

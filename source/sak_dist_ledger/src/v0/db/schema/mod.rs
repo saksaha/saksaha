@@ -267,12 +267,14 @@ impl LedgerDBSchema {
         &self,
         db: &DB,
         key: &String,
-    ) -> Result<Option<Vec<u8>>, LedgerError> {
+    ) -> Result<Option<[u8; 32]>, LedgerError> {
         let cf = make_cf_handle(db, MERKLE_NODE)?;
 
         match db.get_cf(&cf, key)? {
             Some(v) => {
-                return Ok(Some(v));
+                let arr = sak_kv_db::convert_vec_into_u8_32(v)?;
+
+                return Ok(Some(arr));
             }
             None => {
                 return Ok(None);
@@ -728,12 +730,14 @@ impl LedgerDBSchema {
         &self,
         db: &DB,
         key: &String,
-    ) -> Result<Option<Vec<u8>>, LedgerError> {
+    ) -> Result<Option<[u8; 32]>, LedgerError> {
         let cf = make_cf_handle(db, SN_1)?;
 
         match db.get_cf(&cf, key)? {
             Some(v) => {
-                return Ok(Some(v));
+                let arr = sak_kv_db::convert_vec_into_u8_32(v)?;
+
+                return Ok(Some(arr));
             }
             None => {
                 return Ok(None);
@@ -745,12 +749,14 @@ impl LedgerDBSchema {
         &self,
         db: &DB,
         key: &String,
-    ) -> Result<Option<Vec<u8>>, LedgerError> {
+    ) -> Result<Option<[u8; 32]>, LedgerError> {
         let cf = make_cf_handle(db, SN_2)?;
 
         match db.get_cf(&cf, key)? {
             Some(v) => {
-                return Ok(Some(v));
+                let arr = sak_kv_db::convert_vec_into_u8_32(v)?;
+
+                return Ok(Some(arr));
             }
             None => {
                 return Ok(None);
@@ -762,12 +768,14 @@ impl LedgerDBSchema {
         &self,
         db: &DB,
         key: &String,
-    ) -> Result<Option<Vec<u8>>, LedgerError> {
+    ) -> Result<Option<[u8; 32]>, LedgerError> {
         let cf = make_cf_handle(db, CM_1)?;
 
         match db.get_cf(&cf, key)? {
             Some(v) => {
-                return Ok(Some(v));
+                let arr = sak_kv_db::convert_vec_into_u8_32(v)?;
+
+                return Ok(Some(arr));
             }
             None => {
                 return Ok(None);
@@ -779,12 +787,14 @@ impl LedgerDBSchema {
         &self,
         db: &DB,
         key: &String,
-    ) -> Result<Option<Vec<u8>>, LedgerError> {
+    ) -> Result<Option<[u8; 32]>, LedgerError> {
         let cf = make_cf_handle(db, CM_2)?;
 
         match db.get_cf(&cf, key)? {
             Some(v) => {
-                return Ok(Some(v));
+                let arr = sak_kv_db::convert_vec_into_u8_32(v)?;
+
+                return Ok(Some(arr));
             }
             None => {
                 return Ok(None);
@@ -955,7 +965,7 @@ impl LedgerDBSchema {
         db: &DB,
         batch: &mut WriteBatch,
         key: &String,
-        value: &Vec<u8>,
+        value: &[u8; 32],
     ) -> Result<(), LedgerError> {
         let cf = make_cf_handle(db, SN_1)?;
 
@@ -969,7 +979,7 @@ impl LedgerDBSchema {
         db: &DB,
         batch: &mut WriteBatch,
         key: &String,
-        value: &Vec<u8>,
+        value: &[u8; 32],
     ) -> Result<(), LedgerError> {
         let cf = make_cf_handle(db, SN_2)?;
 
@@ -983,7 +993,7 @@ impl LedgerDBSchema {
         db: &DB,
         batch: &mut WriteBatch,
         key: &String,
-        value: &Vec<u8>,
+        value: &[u8; 32],
     ) -> Result<(), LedgerError> {
         let cf = make_cf_handle(db, CM_1)?;
 
@@ -997,7 +1007,7 @@ impl LedgerDBSchema {
         db: &DB,
         batch: &mut WriteBatch,
         key: &String,
-        value: &Vec<u8>,
+        value: &[u8; 32],
     ) -> Result<(), LedgerError> {
         let cf = make_cf_handle(db, CM_2)?;
 
