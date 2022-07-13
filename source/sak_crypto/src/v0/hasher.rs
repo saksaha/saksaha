@@ -1,5 +1,7 @@
 use crate::mimc;
+use crate::CryptoError;
 use crate::Scalar;
+use crate::ScalarExt;
 use bellman::{ConstraintSystem, SynthesisError};
 
 pub struct Hasher {
@@ -29,8 +31,18 @@ impl Hasher {
         mimc::mimc_cs(cs, a, b, &self.constants)
     }
 
-    /// pseudo random function
-    #[allow(dead_code)]
+    pub fn prf2(
+        &self,
+        a: &[u8; 32],
+        b: &[u8; 32],
+    ) -> Result<Scalar, CryptoError> {
+        let s = ScalarExt::parse_arr_wide(a, b)?;
+
+        let ret = mimc::mimc_single_arg(s, &self.constants);
+
+        Ok(ret)
+    }
+
     pub fn prf(&self, z: Scalar, x: Scalar) -> Scalar {
         mimc::mimc(z, x, &self.constants)
     }
@@ -46,13 +58,28 @@ impl Hasher {
         self.mimc_cs_scalar(cs, z, x)
     }
 
-    pub fn comm2(&self, a: Scalar, b: Scalar, c: Scalar) -> Scalar {
-        let r1 = mimc::mimc(b, c, &self.constants);
+    pub fn comm2(
+        &self,
+        a: &[u8; 32],
+        b: &[u8; 32],
+        c: &[u8; 32],
+    ) -> Result<Scalar, CryptoError> {
+        let s1 = ScalarExt::parse_arr(a)?;
 
-        let r2 = mimc::mimc(a, r1, &self.constants);
+        let s2 = ScalarExt::parse_arr_wide(b, c)?;
 
-        r2
+        let ret = mimc::mimc(s1, s2, &self.constants);
+
+        Ok(ret)
     }
+
+    // pub fn comm2(&self, a: Scalar, b: Scalar, c: Scalar) -> Scalar {
+    //     let r1 = mimc::mimc(b, c, &self.constants);
+
+    //     let r2 = mimc::mimc(a, r1, &self.constants);
+
+    //     r2
+    // }
 
     pub fn comm(&self, r: Scalar, x: Scalar) -> Scalar {
         mimc::mimc(r, x, &self.constants)

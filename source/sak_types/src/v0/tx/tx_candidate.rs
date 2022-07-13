@@ -307,33 +307,17 @@ pub mod for_testing {
 
             let v = Scalar::from(1_000);
 
-            let s = {
-                let arr = U8Array::new_empty_32();
+            let s = U8Array::new_empty_32();
 
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
+            let r = U8Array::new_empty_32();
 
-            let r = {
-                let arr = U8Array::new_empty_32();
+            let rho = U8Array::new_empty_32();
 
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
+            let a_pk = U8Array::new_empty_32();
 
-            let rho = {
-                let arr = U8Array::new_empty_32();
+            let k = hasher.comm2(&r, &a_pk, &rho).unwrap();
 
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let a_pk = {
-                let arr = U8Array::new_empty_32();
-
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let k = hasher.comm2(r, a_pk, rho);
-
-            let cm = hasher.comm2(s, v, k);
+            let cm = hasher.comm2(&s, &v, &k).unwrap();
 
             MintTxCandidate::new(
                 String::from("created_at_mint_2"),
