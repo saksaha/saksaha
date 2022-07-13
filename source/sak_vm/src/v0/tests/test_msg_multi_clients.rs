@@ -58,6 +58,136 @@ fn make_test_context() -> (
     )
 }
 
+fn check_channel(
+    my_pk: PublicKey,
+    my_sk: SecretKey,
+    storage: Storage,
+) -> ([u8; 32], String) {
+    let my_pk_str = pk_serialize(my_pk);
+    let input_serialized = storage.get(&my_pk_str).unwrap();
+    let [eph_pk_str, ch_id, pk_sig_encrypted, open_ch_empty]: [String; 4] =
+        serde_json::from_str(&input_serialized.as_str()).unwrap();
+
+    let aes_key = {
+        let eph_pk_bytes_vec: Vec<u8> =
+            serde_json::from_str(&eph_pk_str).unwrap();
+        let eph_pk =
+            PublicKey::from_sec1_bytes(eph_pk_bytes_vec.as_slice()).unwrap();
+
+        let aes_key = sak_crypto::derive_aes_key(my_sk, eph_pk);
+
+        let ciphertext_empty: Vec<u8> =
+            serde_json::from_str(&open_ch_empty).unwrap();
+
+        let plaintext_empty =
+            sak_crypto::aes_decrypt(&aes_key, ciphertext_empty.as_slice())
+                .unwrap();
+
+        let empty_chat: Vec<String> =
+            serde_json::from_str(&plaintext_empty).unwrap();
+
+        assert_eq!(0, empty_chat.len());
+
+        aes_key
+    };
+
+    // 2-2. verify who opened the channel() from open_ch_src_pk
+    {
+        let ciphertext_pk_sig: Vec<u8> =
+            serde_json::from_str(&pk_sig_encrypted).unwrap();
+
+        let plaintext_pk_sig: String =
+            sak_crypto::aes_decrypt(&aes_key, ciphertext_pk_sig.as_slice())
+                .unwrap();
+        let [ch_maker_pk_expected, ch_maker_sig]: [String; 2] =
+            serde_json::from_str(&plaintext_pk_sig).unwrap();
+
+        let sig_bytes_vec: Vec<u8> =
+            serde_json::from_str(&ch_maker_sig).unwrap();
+        let ch_maker_sign_key = SigningKey::from_bytes(&sig_bytes_vec).unwrap();
+
+        let ch_maker_pk_from_vk = ch_maker_sign_key.verifying_key();
+        let ch_maker_pk_from_sign = serde_json::to_string(
+            ch_maker_pk_from_vk.to_encoded_point(false).as_bytes(),
+        )
+        .unwrap();
+
+        assert_eq!(ch_maker_pk_expected, ch_maker_pk_from_sign);
+    }
+
+    (aes_key, ch_id)
+}
+
+fn send_msg(
+    msg: String,
+    pk: PublicKey,
+    ch_id: String,
+    aes_key: [u8; 32],
+    storage: Storage,
+    vm: &VM,
+) -> (Storage, Vec<String>) {
+    // send the message from B to A
+    let (state_send_msg, new_chat) = {
+        let msgs_serialized = storage.get(&ch_id).unwrap();
+        let ciphertext_msgs: Vec<u8> =
+            serde_json::from_str(msgs_serialized.as_str()).unwrap();
+
+        let plaintext_msgs =
+            sak_crypto::aes_decrypt(&aes_key, ciphertext_msgs.as_slice())
+                .unwrap();
+
+        let mut old_chat: Vec<String> =
+            serde_json::from_str(&plaintext_msgs).unwrap();
+
+        let my_pk_str = pk_serialize(pk);
+        let msg_pk = vec![msg, my_pk_str.clone()];
+        let serialized_msg = vec_str_serialize(&msg_pk);
+
+        old_chat.push(serialized_msg);
+        let chat_vec_str = vec_str_serialize(&old_chat);
+
+        let ciphertext =
+            sak_crypto::aes_encrypt(&aes_key, chat_vec_str.as_bytes()).unwrap();
+
+        let ciphertext_str = vec_u8_serialize(&ciphertext);
+
+        let mut arg = HashMap::with_capacity(10);
+        arg.insert(String::from(ARG_CH_ID), ch_id);
+        arg.insert(String::from(ARG_SERIALIZED_INPUT), ciphertext_str);
+
+        let req = Request {
+            req_type: String::from("send_msg"),
+            arg,
+            ctr_call_type: CtrCallType::Execute,
+        };
+
+        let ctr_wasm = include_bytes!("../sak_ctr_messenger.wasm").to_vec();
+        let ctr_fn = CtrFn::Execute(req, storage);
+
+        let state_invoked = match vm.invoke(ctr_wasm, ctr_fn) {
+            Ok(s) => s,
+            Err(err) => panic!("failed to invoke contract : {}", err),
+        };
+
+        let state_send_msg: Storage =
+            serde_json::from_str(state_invoked.as_str()).unwrap();
+
+        let msgs_serialized = state_send_msg.get(DUMMY_CHANNEL_ID_1).unwrap();
+        let ciphertext_msgs: Vec<u8> =
+            serde_json::from_str(msgs_serialized.as_str()).unwrap();
+
+        let plaintext_msgs =
+            sak_crypto::aes_decrypt(&aes_key, ciphertext_msgs.as_slice())
+                .unwrap();
+
+        let msgs: Vec<String> = serde_json::from_str(&plaintext_msgs).unwrap();
+
+        assert_eq!(old_chat, msgs);
+        (state_send_msg, old_chat)
+    };
+    (state_send_msg, new_chat)
+}
+
 fn pk_serialize(input: PublicKey) -> String {
     let ret = serde_json::to_string(input.to_encoded_point(false).as_bytes())
         .unwrap();
@@ -137,7 +267,13 @@ async fn test_multi_clients_chat() {
         (req, storage)
     };
 
-    let (eph_pk_str, got_ch_id, a_pk_sig_encrypted, open_ch_empty) = {
+    let (
+        state_open_channel,
+        eph_pk_str,
+        got_ch_id,
+        a_pk_sig_encrypted,
+        open_ch_empty,
+    ) = {
         let ctr_wasm = include_bytes!("../sak_ctr_messenger.wasm").to_vec();
         let ctr_fn = CtrFn::Execute(request, storage.clone());
 
@@ -154,122 +290,38 @@ async fn test_multi_clients_chat() {
             4] = serde_json::from_str(&input_serialized.as_str()).unwrap();
 
         assert_eq!(DUMMY_CHANNEL_ID_1, got_ch_id);
-        (eph_pk_str, got_ch_id, a_pk_sig_encrypted, open_ch_empty)
+        (
+            state_open_channel,
+            eph_pk_str,
+            got_ch_id,
+            a_pk_sig_encrypted,
+            open_ch_empty,
+        )
     };
 
     /*  ********************************************************************* */
     // 2. Execute the send_msg function from B to A
-    // 2-1. check whether the message sender knows the SS or not.
-    let (empty_chat, aes_key_from_b) = {
-        let eph_pk_bytes_vec: Vec<u8> =
-            serde_json::from_str(&eph_pk_str).unwrap();
-        let eph_pk =
-            PublicKey::from_sec1_bytes(eph_pk_bytes_vec.as_slice()).unwrap();
+    // check whether the message sender knows the SS or not, and verify who opened the channel
+    let (aes_key_from_b, ch_id) =
+        check_channel(b_pk, b_sk, state_open_channel.clone());
 
-        let aes_key_from_b = sak_crypto::derive_aes_key(b_sk, eph_pk);
+    // send the message from B to A
+    let msgs = vec![
+        String::from("Hello, A"),
+        String::from("B, welcome to saksaha!"),
+    ];
 
-        let ciphertext_empty: Vec<u8> =
-            serde_json::from_str(&open_ch_empty).unwrap();
-
-        let plaintext_empty = sak_crypto::aes_decrypt(
-            &aes_key_from_b,
-            ciphertext_empty.as_slice(),
-        )
-        .unwrap();
-
-        let empty_chat: Vec<String> =
-            serde_json::from_str(&plaintext_empty).unwrap();
-
-        assert_eq!(0, empty_chat.len());
-
-        (empty_chat, aes_key_from_b)
-    };
-
-    // 2-2. verify who opened the channel() from open_ch_src_pk
-    {
-        let ciphertext_a_pk_sig: Vec<u8> =
-            serde_json::from_str(&a_pk_sig_encrypted).unwrap();
-
-        let plaintext_a_pk_sig: String = sak_crypto::aes_decrypt(
-            &aes_key_from_b,
-            ciphertext_a_pk_sig.as_slice(),
-        )
-        .unwrap();
-        let [a_pk_from_cipher, a_sig]: [String; 2] =
-            serde_json::from_str(&plaintext_a_pk_sig).unwrap();
-
-        let a_pk_expected = pk_serialize(a_pk);
-
-        // verify a_pk == a_pk_from_cipher
-        assert_eq!(a_pk_expected, a_pk_from_cipher);
-
-        let sig_str_bytes_vec: Vec<u8> = serde_json::from_str(&a_sig).unwrap();
-        let a_sign_key = SigningKey::from_bytes(&sig_str_bytes_vec).unwrap();
-
-        let a_pk_from_vk = a_sign_key.verifying_key();
-        let a_pk_from_sign = serde_json::to_string(
-            a_pk_from_vk.to_encoded_point(false).as_bytes(),
-        )
-        .unwrap();
-        // verify a_pk == a_pk_from_sign
-        assert_eq!(a_pk_expected, a_pk_from_sign);
-    }
-
-    // 2-3. send the message from the sender(B) to the receiver(A)
-    let (state_send_msg, new_chat) = {
-        let msg = String::from("Hello, A");
-        let msg_w_pk = vec![msg, b_pk_str.clone()];
-        let serialized_msg = vec_str_serialize(&msg_w_pk);
-
-        let mut new_chat = empty_chat;
-        new_chat.push(serialized_msg);
-        let chat_vec_str = vec_str_serialize(&new_chat);
-
-        let ciphertext =
-            sak_crypto::aes_encrypt(&aes_key_from_b, chat_vec_str.as_bytes())
-                .unwrap();
-
-        let ciphertext_str = vec_u8_serialize(&ciphertext);
-
-        let mut arg = HashMap::with_capacity(10);
-        arg.insert(String::from(ARG_CH_ID), got_ch_id);
-        arg.insert(String::from(ARG_SERIALIZED_INPUT), ciphertext_str);
-
-        let req = Request {
-            req_type: String::from("send_msg"),
-            arg,
-            ctr_call_type: CtrCallType::Execute,
-        };
-
-        let ctr_wasm = include_bytes!("../sak_ctr_messenger.wasm").to_vec();
-        let ctr_fn = CtrFn::Execute(req, storage);
-
-        let state_invoked = match vm.invoke(ctr_wasm, ctr_fn) {
-            Ok(s) => s,
-            Err(err) => panic!("failed to invoke contract : {}", err),
-        };
-
-        let state_send_msg: Storage =
-            serde_json::from_str(state_invoked.as_str()).unwrap();
-
-        let msgs_serialized = state_send_msg.get(DUMMY_CHANNEL_ID_1).unwrap();
-        let ciphertext_msgs: Vec<u8> =
-            serde_json::from_str(msgs_serialized.as_str()).unwrap();
-
-        let plaintext_msgs = sak_crypto::aes_decrypt(
-            &aes_key_from_b,
-            ciphertext_msgs.as_slice(),
-        )
-        .unwrap();
-
-        let msgs: Vec<String> = serde_json::from_str(&plaintext_msgs).unwrap();
-
-        assert_eq!(new_chat, msgs);
-        (state_send_msg, new_chat)
-    };
+    let (state_send_msg, new_chat) = send_msg(
+        msgs[0].clone(),
+        b_pk,
+        ch_id.clone(),
+        aes_key_from_b.clone(),
+        state_open_channel,
+        &vm,
+    );
 
     /*  ********************************************************************* */
-    // 3. user A reads the message sent from B
+    // 3. User A reads the message sent by B
     {
         let request = {
             let mut arg = HashMap::with_capacity(1);
@@ -286,7 +338,7 @@ async fn test_multi_clients_chat() {
         };
 
         let ctr_wasm = include_bytes!("../sak_ctr_messenger.wasm").to_vec();
-        let ctr_fn = CtrFn::Query(request, state_send_msg);
+        let ctr_fn = CtrFn::Query(request, state_send_msg.clone());
 
         let messages_from_query = vm
             .invoke(ctr_wasm, ctr_fn)
@@ -308,11 +360,32 @@ async fn test_multi_clients_chat() {
             let (msg, pk): (String, String) =
                 serde_json::from_str(&msg).unwrap();
 
-            println!("Sender {:?} says: {:?}", pk, msg);
             msg_vec.push(msg);
             pk_vec.push(pk);
         }
 
         assert_eq!(new_chat, msgs);
+    }
+
+    /*  ********************************************************************* */
+    // 4. User A replies to B, and shows the chat between A & B
+    let (state_send_msg_2, new_chat) = send_msg(
+        msgs[1].clone(),
+        a_pk,
+        ch_id.clone(),
+        aes_key_from_a.clone(),
+        state_send_msg,
+        &vm,
+    );
+    let mut msg_vec = Vec::new();
+    let mut pk_vec = Vec::new();
+
+    for (i, item) in new_chat.clone().iter().enumerate() {
+        let (msg, pk): (String, String) = serde_json::from_str(&item).unwrap();
+
+        println!("\n MSG Sender {:?} \nsays: {:?}", pk, msg);
+        msg_vec.push(msg.clone());
+        pk_vec.push(pk);
+        assert_eq!(msgs[i], msg);
     }
 }
