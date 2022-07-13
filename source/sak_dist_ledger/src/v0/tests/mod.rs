@@ -1,9 +1,9 @@
+mod utils;
+
 use crate::DistLedger;
 use crate::{Consensus, ConsensusError};
 use async_trait::async_trait;
-use sak_types::{BlockCandidate, Tx};
-
-mod utils;
+use sak_types::{BlockCandidate, TxCandidate};
 
 #[cfg(test)]
 mod test {
@@ -12,7 +12,9 @@ mod test {
     use crate::SyncPool;
     use crate::{DistLedger, DistLedgerArgs};
     use sak_contract_std::Storage;
-    use sak_types::{BlockCandidate, Tx};
+    use sak_types::PourTx;
+    use sak_types::PourTxCandidate;
+    use sak_types::{BlockCandidate, Tx, TxCandidate};
 
     const RUST_LOG_ENV: &str = "
         sak_,
@@ -30,28 +32,11 @@ mod test {
     fn make_dummy_genesis_block() -> BlockCandidate {
         let genesis_block = BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
-            transactions: vec![
-                Tx::new(
-                    String::from("1"),
-                    vec![11, 11, 11],
-                    String::from("1"),
-                    b"1".to_vec(),
-                    Some(String::from("11")),
-                    0,
-                ),
-                Tx::new(
-                    String::from("2"),
-                    vec![22, 22, 22],
-                    String::from("2"),
-                    b"2".to_vec(),
-                    Some(String::from("22")),
-                    1,
-                ),
-            ],
+            tx_candidates: vec![TxCandidate::new_dummy_pour_1()],
             witness_sigs: vec![String::from("1"), String::from("2")],
             created_at: String::from("2022061515340000"),
-            block_height: 0,
-            merkle_root: String::from("2022061515340000"),
+            // block_height: 0,
+            // merkle_root: String::from("2022061515340000"),
         };
 
         genesis_block
@@ -79,38 +64,10 @@ mod test {
 
     fn make_dummy_txs() -> Vec<Tx> {
         vec![
-            Tx::new(
-                String::from("1346546123"),
-                String::from("one").as_bytes().to_vec(),
-                String::from("0x111"),
-                b"0x1111".to_vec(),
-                Some(String::from("one")),
-                0,
-            ),
-            Tx::new(
-                String::from("1346546124"),
-                String::from("two").as_bytes().to_vec(),
-                String::from("0x222"),
-                b"0x2222".to_vec(),
-                Some(String::from("two")),
-                1,
-            ),
-            Tx::new(
-                String::from("1346546125"),
-                String::from("three").as_bytes().to_vec(),
-                String::from("0x333"),
-                b"0x3333".to_vec(),
-                Some(String::from("three")),
-                2,
-            ),
-            Tx::new(
-                String::from("1346546126"),
-                String::from("four").as_bytes().to_vec(),
-                String::from("0x444"),
-                b"0x4444".to_vec(),
-                Some(String::from("four")),
-                3,
-            ),
+            Tx::new_dummy_pour_1(),
+            Tx::new_dummy_pour_2(),
+            Tx::new_dummy_pour_3(),
+            Tx::new_dummy_pour_4(),
         ]
     }
 
@@ -139,11 +96,14 @@ mod test {
         }
 
         for (idx, tx_hash) in tx_hashes.iter().enumerate() {
-            let tx_val_retrieved =
-                db.get_tx(tx_hash).await.expect("Tx should exist");
+            let tx_val_retrieved = db
+                .get_tx(tx_hash)
+                .await
+                .expect("Tx should exist")
+                .expect("tx should exist");
 
             assert_eq!(
-                tx_val_retrieved.unwrap().get_data(),
+                tx_val_retrieved.get_data(),
                 dummy_tx_values[idx].get_data()
             );
         }
@@ -215,34 +175,6 @@ mod test {
     }
 
     #[tokio::test(flavor = "multi_thread")]
-    async fn test_insert_genesis_block_and_check_tx() {
-        init();
-
-        let gen_block_same = make_dummy_genesis_block();
-
-        let (block, _) = gen_block_same.extract();
-
-        let gen_block_hash = block.get_hash();
-
-        let blockchain = make_dist_ledger().await;
-
-        let gen_block_by_height = match blockchain.get_block_by_height(&0).await
-        {
-            Ok(b) => match b {
-                Some(b) => b,
-                None => {
-                    panic!("cannot find genesis block");
-                }
-            },
-            Err(err) => panic!("Error : {}", err),
-        };
-
-        let gen_block_hash_2 = gen_block_by_height.get_hash();
-
-        assert_eq!(gen_block_hash, gen_block_hash_2);
-    }
-
-    #[tokio::test(flavor = "multi_thread")]
     async fn test_insert_genesis_block_and_check_wrong_block_hash() {
         init();
 
@@ -254,18 +186,18 @@ mod test {
             .unwrap()
             .expect("gen block should exist");
 
-        let get_gen_hash = gen_block.get_hash();
-        let gen_tx_hashes = gen_block.get_tx_hashes();
+        let get_gen_hash = gen_block.get_block_hash();
+        let gen_tx_hashes = &gen_block.tx_hashes;
 
         for tx_hash in gen_tx_hashes {
-            let tx = match dist_ledger.get_tx(tx_hash).await {
+            let tx = match dist_ledger.get_tx(&tx_hash).await {
                 Ok(t) => t,
                 Err(err) => panic!("Error : {}", err),
             };
 
             let tx = tx.unwrap();
 
-            assert_eq!(tx_hash, tx.get_hash());
+            assert_eq!(tx_hash, tx.get_tx_hash());
         }
 
         assert_ne!(get_gen_hash, &String::from("false hash"));
@@ -299,18 +231,18 @@ mod test {
     async fn test_insert_invalid_contract_to_tx_pool() {
         let test_wasm = include_bytes!("./test_invalid_contract.wasm").to_vec();
 
-        let dummy_tx = Tx::new(
-            String::from("1346546123"),
-            test_wasm,
-            String::from("0x111"),
-            b"0x1111".to_vec(),
-            Some(String::from("test_wasm")),
-            0,
-        );
+        let dummy_tx = TxCandidate::new_dummy_pour_1();
 
         let sync_pool = SyncPool::new();
 
         sync_pool.insert_tx(dummy_tx).await.unwrap();
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn test_write_a_genesis_block() {
+        let dist_ledger = make_dist_ledger().await;
+
+        dist_ledger.run().await;
     }
 
     #[tokio::test(flavor = "multi_thread")]
@@ -379,6 +311,7 @@ mod test {
             println!("[*] result: {:#?}", result);
         }
     }
+
     #[tokio::test(flavor = "multi_thread")]
     async fn test_rpc_client_and_repeating_write_block() {
         init();
@@ -388,25 +321,61 @@ mod test {
         for i in 0..10000 as u64 {
             let block = BlockCandidate {
                 validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
-                transactions: vec![Tx::new(
-                    format!("{}", i),
-                    vec![11, 11, 11],
-                    String::from("1"),
-                    b"1".to_vec(),
-                    Some(String::from("11")),
-                    i.into(),
-                )],
+                tx_candidates: vec![TxCandidate::new_dummy_pour_1()],
                 witness_sigs: vec![String::from("1"), String::from("2")],
                 created_at: String::from("2022061515340000"),
-                block_height: i as u128,
-                merkle_root: String::from("2022061515340000"),
+                // block_height: i as u128,
+                // merkle_root: String::from("2022061515340000"),
             };
 
             match blockchain.write_block(Some(block)).await {
                 Ok(v) => v,
                 Err(err) => panic!("Failed to write dummy block, err: {}", err),
             };
+
+            let tx_height =
+                blockchain.get_latest_tx_height().await.unwrap().unwrap();
+
+            println!("tx_height: {}", tx_height);
         }
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn test_rpc_client_and_repeating_write_block_and_get_tx_height() {
+        init();
+
+        let blockchain = make_dist_ledger().await;
+
+        let repeat = 100;
+
+        for i in 0..repeat as u64 {
+            let block = BlockCandidate {
+                validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
+                tx_candidates: vec![
+                    TxCandidate::new_dummy_pour_1(),
+                    TxCandidate::new_dummy_pour_2(),
+                ],
+                witness_sigs: vec![String::from("1"), String::from("2")],
+                created_at: String::from("2022061515340000"),
+                // block_height: i as u128,
+                // merkle_root: String::from("2022061515340000"),
+            };
+
+            println!("eeeeeeeeeeeeeeeee");
+            match blockchain.write_block(Some(block)).await {
+                Ok(v) => v,
+                Err(err) => panic!("Failed to write dummy block, err: {}", err),
+            };
+
+            let tx_height =
+                blockchain.get_latest_tx_height().await.unwrap().unwrap();
+
+            println!("tx_height: {}", tx_height);
+        }
+
+        let tx_height =
+            blockchain.get_latest_tx_height().await.unwrap().unwrap();
+        assert_eq!(2 * repeat - 1, tx_height);
     }
 }
 
@@ -417,7 +386,7 @@ impl Consensus for Pos {
     async fn do_consensus(
         &self,
         _dist_ledger: &DistLedger,
-        _txs: Vec<Tx>,
+        _txs: Vec<TxCandidate>,
     ) -> Result<BlockCandidate, ConsensusError> {
         return Err("awel".into());
     }

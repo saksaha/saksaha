@@ -1,5 +1,5 @@
 use crate::{
-    BlockHashSynMsg, BlockSynMsg, BoxedError, Handshake, Msg, TxHashSynMsg,
+    BlockHashSynMsg, BlockSynMsg, Handshake, Msg, TrptError, TxHashSynMsg,
     TxSynMsg, BLOCK_HASH_ACK, BLOCK_HASH_SYN, BLOCK_SYN_TYPE,
     HANDSHAKE_ACK_TYPE, HANDSHAKE_SYN_TYPE, TX_HASH_ACK_TYPE, TX_HASH_SYN_TYPE,
     TX_SYN_TYPE,
@@ -9,7 +9,7 @@ use sak_p2p_frame::{frame_io, Parse};
 
 pub(super) fn decode_into_msg(
     src: &mut BytesMut,
-) -> Result<Option<Msg>, BoxedError> {
+) -> Result<Option<Msg>, TrptError> {
     if let Some(frame) = frame_io::parse_frame(src)? {
         let mut parse = Parse::new(frame)?;
 

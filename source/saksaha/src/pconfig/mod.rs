@@ -1,5 +1,6 @@
 use colored::Colorize;
 use log::info;
+use sak_crypto::ToEncodedPoint;
 use sak_fs::FS;
 use sak_logger::tinfo;
 use sak_p2p_addr::UnknownAddr;
@@ -124,6 +125,7 @@ impl PConfig {
 
     fn create_new_config() -> PConfig {
         let sk = sak_crypto::generate_key();
+
         let (sk, pk) = sak_crypto::encode_into_key_pair(sk);
         let pconf = PConfig {
             p2p: PersistedP2PConfig {

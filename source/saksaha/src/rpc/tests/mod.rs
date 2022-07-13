@@ -1,4 +1,4 @@
 mod block;
-mod ctrt;
+mod contract;
 mod tx;
 mod utils;

@@ -1,6 +1,4 @@
-use crate::{
-    get_mimc_constants, mimc, mimc_cs, Hasher, MerkleTree, ProofError,
-};
+use crate::{mimc, Hasher, MerkleTree, ProofError};
 use bellman::gadgets::boolean::AllocatedBit;
 use bellman::groth16::{self, Parameters, Proof};
 use bellman::{Circuit, ConstraintSystem, SynthesisError};
@@ -63,10 +61,10 @@ fn make_test_context() -> (
     // // let k = MiMC::mimc(Scalar::from())
     // // MiMC::mimc()
 
-    let constants = get_mimc_constants();
+    let constants = mimc::get_mimc_constants();
 
     let hasher = |xl, xr| {
-        let hash = mimc(Scalar::from(xl), Scalar::from(xr), &constants);
+        let hash = mimc::mimc(Scalar::from(xl), Scalar::from(xr), &constants);
 
         hash
     };
@@ -136,7 +134,7 @@ fn make_proof(
     s: Scalar,
     v: Scalar,
 ) -> Result<Proof<Bls12>, ProofError> {
-    let constants = get_mimc_constants();
+    let constants = mimc::get_mimc_constants();
     let de_params = get_params_test(&constants);
 
     // `rt` check
@@ -207,7 +205,7 @@ fn make_proof(
 }
 
 fn verify_proof(proof: Proof<Bls12>, public_inputs: &[Scalar]) -> bool {
-    let constants = get_mimc_constants();
+    let constants = mimc::get_mimc_constants();
     let de_params = get_params_test(&constants);
 
     // Prepare the verification key (for proof verification).
@@ -288,7 +286,7 @@ impl Circuit<Scalar> for TestCoinCircuit {
                     xr_value = Some(temp.0);
                 }
 
-                rt = mimc_cs(cs, xl_value, xr_value, &self.constants);
+                rt = mimc::mimc_cs(cs, xl_value, xr_value, &self.constants);
             }
         };
 

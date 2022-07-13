@@ -10,7 +10,7 @@ mod test_suite {
     use sak_p2p_disc::DiscAddr;
     use sak_p2p_id::Identity;
     use sak_p2p_ptable::PeerTable;
-    use sak_types::{BlockCandidate, Hashable, Tx};
+    use sak_types::{BlockCandidate, Hashable, Tx, TxCandidate};
     use std::{sync::Arc, time::Duration};
 
     const RUST_LOG_ENV: &str = "
@@ -34,28 +34,12 @@ mod test_suite {
     fn make_dummy_genesis_block() -> BlockCandidate {
         let genesis_block = BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
-            transactions: vec![
-                Tx::new(
-                    String::from("1"),
-                    vec![11, 11, 11],
-                    String::from("marshal_test_author_sig_1"),
-                    b"1".to_vec(),
-                    Some(String::from("11")),
-                    0,
-                ),
-                Tx::new(
-                    String::from("2"),
-                    vec![22, 22, 22],
-                    String::from("marshal_test_author_sig_2"),
-                    b"2".to_vec(),
-                    Some(String::from("22")),
-                    1,
-                ),
+            tx_candidates: vec![
+                TxCandidate::new_dummy_pour_1(),
+                TxCandidate::new_dummy_pour_2(),
             ],
             witness_sigs: vec![String::from("1"), String::from("2")],
             created_at: String::from("2022061515340000"),
-            block_height: 0,
-            merkle_root: String::from("1"),
         };
 
         genesis_block
@@ -250,33 +234,15 @@ mod test_suite {
         )
         .await;
 
-        let dummy_txs = vec![
-            Tx::new(
-                String::from("1346546123"),
-                String::from("one").as_bytes().to_vec(),
-                String::from("0x1111"),
-                b"0x1111".to_vec(),
-                Some(String::from("one")),
-                0,
-            ),
-            Tx::new(
-                String::from("45698744213"),
-                String::from("two").as_bytes().to_vec(),
-                String::from("0x2222"),
-                b"0x2222".to_vec(),
-                Some(String::from("two")),
-                1,
-            ),
-        ];
+        let dummy_tx1 = TxCandidate::new_dummy_pour_1();
+        let dummy_tx2 = TxCandidate::new_dummy_pour_1();
 
-        let block_candidate = {
+        let block = {
             let c = BlockCandidate {
                 validator_sig: String::from(""),
-                transactions: dummy_txs.clone(),
+                tx_candidates: vec![dummy_tx1.clone(), dummy_tx2.clone()],
                 witness_sigs: vec![],
                 created_at: String::from(""),
-                block_height: 1,
-                merkle_root: String::from("1"),
             };
 
             c
@@ -308,7 +274,7 @@ mod test_suite {
             .machine
             .blockchain
             .dist_ledger
-            .send_tx(dummy_txs[0].clone())
+            .send_tx(dummy_tx1.clone())
             .await
             .expect("Node should be able to send a transaction");
 
@@ -316,7 +282,7 @@ mod test_suite {
             .machine
             .blockchain
             .dist_ledger
-            .send_tx(dummy_txs[1].clone())
+            .send_tx(dummy_tx2.clone())
             .await
             .expect("Node should be able to send a transaction");
 
@@ -327,14 +293,14 @@ mod test_suite {
                 .machine
                 .blockchain
                 .dist_ledger
-                .tx_pool_contains(dummy_txs[0].get_hash())
+                .tx_pool_contains(dummy_tx1.get_tx_hash())
                 .await;
 
             let tx_pool_2_contains_tx2 = local_node_2
                 .machine
                 .blockchain
                 .dist_ledger
-                .tx_pool_contains(dummy_txs[1].get_hash())
+                .tx_pool_contains(dummy_tx2.get_tx_hash())
                 .await;
 
             assert_eq!(tx_pool_2_contains_tx1, true);
@@ -346,7 +312,7 @@ mod test_suite {
                 .machine
                 .blockchain
                 .dist_ledger
-                .write_block(Some(block_candidate))
+                .write_block(Some(block))
                 .await
                 .expect("Block should be written");
 
@@ -354,7 +320,7 @@ mod test_suite {
                 .machine
                 .blockchain
                 .dist_ledger
-                .tx_pool_contains(dummy_txs[0].get_hash())
+                .tx_pool_contains(dummy_tx1.get_tx_hash())
                 .await;
 
             assert_eq!(tx_pool_1_contains_tx1, false);

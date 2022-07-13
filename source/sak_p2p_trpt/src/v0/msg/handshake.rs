@@ -1,4 +1,4 @@
-use crate::{BoxedError, HANDSHAKE_ACK_TYPE, HANDSHAKE_SYN_TYPE};
+use crate::{TrptError, HANDSHAKE_ACK_TYPE, HANDSHAKE_SYN_TYPE};
 use bytes::{BufMut, Bytes, BytesMut};
 use sak_p2p_frame::{Frame, Parse};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -12,7 +12,7 @@ pub struct Handshake {
 }
 
 #[derive(Debug)]
-pub struct HandshakeParseError(BoxedError);
+pub struct HandshakeParseError(TrptError);
 
 impl Handshake {
     pub fn new(
@@ -42,7 +42,7 @@ impl Handshake {
         })
     }
 
-    pub fn from_parse(parse: &mut Parse) -> Result<Handshake, BoxedError> {
+    pub fn from_parse(parse: &mut Parse) -> Result<Handshake, TrptError> {
         let src_p2p_port = {
             let p = parse.next_int()? as u16;
             p

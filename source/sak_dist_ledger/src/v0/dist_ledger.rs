@@ -5,6 +5,7 @@ use crate::Runtime;
 use crate::SyncPool;
 use colored::Colorize;
 use log::info;
+use sak_proofs::Hasher;
 use sak_types::BlockCandidate;
 use sak_vm::VM;
 use std::sync::Arc;
@@ -20,6 +21,8 @@ pub struct DistLedger {
     pub(crate) vm: VM,
     pub(crate) consensus: Box<dyn Consensus + Send + Sync>,
     runtime: Arc<Runtime>,
+    pub(crate) hasher: Hasher,
+    // pub(crate) merkle_tree: MerkleTree,
 }
 
 pub struct DistLedgerArgs {
@@ -77,6 +80,8 @@ impl DistLedger {
             Arc::new(r)
         };
 
+        let hasher = Hasher::new();
+
         let dist_ledger = DistLedger {
             ledger_db,
             sync_pool,
@@ -84,6 +89,7 @@ impl DistLedger {
             bc_event_tx,
             consensus,
             runtime,
+            hasher,
         };
 
         if let Some(bc) = genesis_block {
@@ -93,11 +99,20 @@ impl DistLedger {
             // genesis_block hash check
         }
 
-        let latest_height =
-            match dist_ledger.ledger_db.get_latest_block_height().await? {
-                Some(h) => h,
-                None => 0,
-            };
+        let latest_height = {
+            let maybe_height =
+                match dist_ledger.ledger_db.get_latest_block_height().await {
+                    Ok(h) => h,
+                    Err(err) => {
+                        return Err(format!(
+                            "Failed to get latest block height, err: {}",
+                            err,
+                        ))
+                    }
+                };
+
+            maybe_height.unwrap_or(0)
+        };
 
         info!(
             "Initialized Blockchain, latest height: {}",
@@ -124,7 +139,7 @@ impl DistLedger {
                 Ok(b) => b,
                 Err(err) => return Err(err.to_string()),
             } {
-            let block_hash = b.get_hash().to_string();
+            let block_hash = b.get_block_hash().to_string();
 
             info!(
                 "Genesis block is already persisted, block_hash: {}",

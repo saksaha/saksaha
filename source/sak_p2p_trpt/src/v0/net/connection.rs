@@ -1,5 +1,5 @@
 use super::codec::P2PCodec;
-use crate::{BoxedError, UpgradedP2PCodec};
+use crate::{TrptError, UpgradedP2PCodec};
 use chacha20::{cipher::KeyIvInit, ChaCha20};
 use sak_crypto::SharedSecret;
 use std::net::SocketAddr;
@@ -17,7 +17,7 @@ pub struct UpgradedConnection {
 }
 
 impl Connection {
-    pub fn new(socket: TcpStream) -> Result<Connection, BoxedError> {
+    pub fn new(socket: TcpStream) -> Result<Connection, TrptError> {
         let socket_addr = socket.peer_addr()?;
 
         let p2p_codec = P2PCodec {};

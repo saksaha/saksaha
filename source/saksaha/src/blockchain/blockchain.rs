@@ -2,6 +2,7 @@ use super::{genesis::GenesisBlock, Pos};
 use crate::system::BoxedError;
 use sak_dist_ledger::{Consensus, DistLedger, DistLedgerArgs};
 use sak_p2p_id::Identity;
+use sak_proofs::CoinProof;
 use std::sync::Arc;
 
 pub(crate) struct Blockchain {
@@ -19,7 +20,7 @@ impl Blockchain {
         let (gen_block_candidate, consensus) = {
             let genesis_block = match genesis_block {
                 Some(b) => b,
-                None => GenesisBlock::create(),
+                None => GenesisBlock::create()?,
             };
 
             let validator_ctr_addr = genesis_block.get_validator_ctr_addr();
@@ -29,6 +30,7 @@ impl Blockchain {
                     validator_ctr_addr,
                     identity,
                 };
+
                 Box::new(c)
             };
 
