@@ -214,7 +214,7 @@ impl PourTxCandidate {
 }
 
 pub mod for_testing {
-    use sak_crypto::ScalarExt;
+    use sak_crypto::{Hasher, ScalarExt};
 
     use super::*;
     use crate::U8Array;
@@ -259,53 +259,83 @@ pub mod for_testing {
             // merkle_rt: [u8; 32],
             // let v = Scalar::from(1000);
 
+            let hasher = Hasher::new();
+
             let pi = vec![0];
 
             let cm_1 = {
+                let v = {
+                    let arr = U8Array::new_empty_32();
+                    ScalarExt::parse_arr(&arr).unwrap()
+                };
+
                 let s = {
                     let arr = U8Array::new_empty_32();
-
                     ScalarExt::parse_arr(&arr).unwrap()
                 };
 
                 let r = {
                     let arr = U8Array::new_empty_32();
-
                     ScalarExt::parse_arr(&arr).unwrap()
                 };
 
                 let rho = {
                     let arr = U8Array::new_empty_32();
-
                     ScalarExt::parse_arr(&arr).unwrap()
                 };
 
                 let a_pk = {
                     let arr = U8Array::new_empty_32();
-
                     ScalarExt::parse_arr(&arr).unwrap()
                 };
 
-                // let k = hasher.comm2(r, a_pk, rho);
-
-                // hasher.comm2(s, v, k)
+                let k = hasher.comm2(r, a_pk, rho);
+                let cm = hasher.comm2(s, v, k);
+                cm
             };
 
-            // let cm_2 = {
-            //     let k = hasher.comm2(r, a_pk, rho);
+            let cm_2 = {
+                let v = {
+                    let arr = U8Array::new_empty_32();
+                    ScalarExt::parse_arr(&arr).unwrap()
+                };
 
-            //     hasher.comm2(s, v, k)
-            // };
+                let s = {
+                    let arr = U8Array::new_empty_32();
+                    ScalarExt::parse_arr(&arr).unwrap()
+                };
+
+                let r = {
+                    let arr = U8Array::new_empty_32();
+                    ScalarExt::parse_arr(&arr).unwrap()
+                };
+
+                let rho = {
+                    let arr = U8Array::new_empty_32();
+                    ScalarExt::parse_arr(&arr).unwrap()
+                };
+
+                let a_pk = {
+                    let arr = U8Array::new_empty_32();
+                    ScalarExt::parse_arr(&arr).unwrap()
+                };
+
+                let k = hasher.comm2(r, a_pk, rho);
+                let cm = hasher.comm2(s, v, k);
+                cm
+            };
 
             // let ptc = PourTxCandidate::new(
             //     String::from("initial_mint_created_at"),
             //     vec![0],
             //     VALIDATOR_SIG.to_string(),
             //     None,
-            //     cm.to_bytes(),
-            //     v.to_bytes(),
-            //     k.to_bytes(),
-            //     s.to_bytes(),
+            //     pi,
+            //     sn_1,
+            //     sn_2,
+            //     cm_1,
+            //     cm_1,
+            //     merkle_rt,
             // );
 
             PourTxCandidate::new(
