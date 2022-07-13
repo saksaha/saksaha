@@ -30,7 +30,7 @@ fn make_test_context() -> (
 
     let a_sign_key_vec = a_sign_key.to_bytes().to_vec();
 
-    let a_sig_str = vec_u8_serialize(&a_sign_key_vec);
+    let a_sig_str = vec_serialize(&a_sign_key_vec);
 
     let a_verfying_key = a_sign_key.verifying_key();
     let a_verfying_key_str = vk_serialize(a_verfying_key);
@@ -41,7 +41,7 @@ fn make_test_context() -> (
 
     // plaintext = chain_id + a_pk + a_sig
     let plaintext: Vec<String> = vec![a_pk_str, a_sig_str];
-    let plaintext_str = vec_str_serialize(&plaintext);
+    let plaintext_str = vec_serialize(&plaintext);
 
     let storage = Storage::new();
 
@@ -141,15 +141,15 @@ fn send_msg(
 
         let my_pk_str = pk_serialize(pk);
         let msg_pk = vec![msg, my_pk_str.clone()];
-        let serialized_msg = vec_str_serialize(&msg_pk);
+        let serialized_msg = vec_serialize(&msg_pk);
 
         old_chat.push(serialized_msg);
-        let chat_vec_str = vec_str_serialize(&old_chat);
+        let chat_vec_str = vec_serialize(&old_chat);
 
         let ciphertext =
             sak_crypto::aes_encrypt(&aes_key, chat_vec_str.as_bytes()).unwrap();
 
-        let ciphertext_str = vec_u8_serialize(&ciphertext);
+        let ciphertext_str = vec_serialize(&ciphertext);
 
         let mut arg = HashMap::with_capacity(10);
         arg.insert(String::from(ARG_CH_ID), ch_id);
@@ -194,21 +194,20 @@ fn pk_serialize(input: PublicKey) -> String {
     ret
 }
 
-fn vec_u8_serialize(input: &Vec<u8>) -> String {
-    let ret = serde_json::to_string(input).unwrap();
-    ret
-}
-
-fn vec_str_serialize(input: &Vec<String>) -> String {
-    let ret = serde_json::to_string(input).unwrap();
-    ret
-}
-
 fn vk_serialize(input: VerifyingKey) -> String {
     let ret = serde_json::to_string(input.to_encoded_point(false).as_bytes())
         .unwrap();
     ret
 }
+
+fn vec_serialize<T>(input: &T) -> String
+where
+    T: serde::ser::Serialize,
+{
+    let ret = serde_json::to_string(input).unwrap();
+    ret
+}
+
 #[tokio::test(flavor = "multi_thread")]
 async fn test_multi_clients_chat() {
     /* 0. Init and make a test context */
@@ -231,14 +230,14 @@ async fn test_multi_clients_chat() {
             sak_crypto::aes_encrypt(&aes_key_from_a, plaintext.as_bytes())
                 .unwrap();
 
-        let a_pk_sig_encrypted = vec_u8_serialize(&ciphertext);
+        let a_pk_sig_encrypted = vec_serialize(&ciphertext);
 
         let empty_chat: Vec<String> = vec![];
-        let empty_chat_str = vec_str_serialize(&empty_chat);
+        let empty_chat_str = vec_serialize(&empty_chat);
         let ciphertext_empty =
             sak_crypto::aes_encrypt(&aes_key_from_a, empty_chat_str.as_bytes())
                 .unwrap();
-        let open_ch_empty = vec_u8_serialize(&ciphertext_empty);
+        let open_ch_empty = vec_serialize(&ciphertext_empty);
 
         (a_pk_sig_encrypted, open_ch_empty, aes_key_from_a)
     };
@@ -251,7 +250,7 @@ async fn test_multi_clients_chat() {
             let open_ch_input: Vec<String> =
                 vec![eph_pk_str, ch_id, a_pk_sig_encrypted, open_ch_empty];
 
-            vec_str_serialize(&open_ch_input)
+            vec_serialize(&open_ch_input)
         };
 
         let mut arg = HashMap::with_capacity(10);
@@ -267,13 +266,7 @@ async fn test_multi_clients_chat() {
         (req, storage)
     };
 
-    let (
-        state_open_channel,
-        eph_pk_str,
-        got_ch_id,
-        a_pk_sig_encrypted,
-        open_ch_empty,
-    ) = {
+    let (state_open_channel,) = {
         let ctr_wasm = include_bytes!("../sak_ctr_messenger.wasm").to_vec();
         let ctr_fn = CtrFn::Execute(request, storage.clone());
 
@@ -286,17 +279,11 @@ async fn test_multi_clients_chat() {
             serde_json::from_str(state_invoked.as_str()).unwrap();
 
         let input_serialized = state_open_channel.get(&b_pk_str).unwrap();
-        let [eph_pk_str, got_ch_id, a_pk_sig_encrypted, open_ch_empty]: [String;
+        let [_eph_pk_str, got_ch_id, _a_pk_sig_encrypted, _open_ch_empty]: [String;
             4] = serde_json::from_str(&input_serialized.as_str()).unwrap();
 
         assert_eq!(DUMMY_CHANNEL_ID_1, got_ch_id);
-        (
-            state_open_channel,
-            eph_pk_str,
-            got_ch_id,
-            a_pk_sig_encrypted,
-            open_ch_empty,
-        )
+        (state_open_channel,)
     };
 
     /*  ********************************************************************* */
@@ -369,7 +356,7 @@ async fn test_multi_clients_chat() {
 
     /*  ********************************************************************* */
     // 4. User A replies to B, and shows the chat between A & B
-    let (state_send_msg_2, new_chat) = send_msg(
+    let (_state_send_msg_2, new_chat) = send_msg(
         msgs[1].clone(),
         a_pk,
         ch_id.clone(),
