@@ -305,7 +305,7 @@ pub mod for_testing {
         pub fn new_dummy_2() -> MintTxCandidate {
             let hasher = Hasher::new();
 
-            let v = Scalar::from(1_000);
+            let v = ;
 
             let s = U8Array::new_empty_32();
 
