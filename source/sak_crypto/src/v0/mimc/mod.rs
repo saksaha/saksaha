@@ -1,9 +1,9 @@
 mod constants;
 
 use self::constants::ROUND_CONSTANTS;
+use crate::Scalar;
 use bellman::{ConstraintSystem, SynthesisError};
 use ff::PrimeField;
-use sak_crypto::Scalar;
 
 pub const MIMC_ROUNDS: usize = 322;
 

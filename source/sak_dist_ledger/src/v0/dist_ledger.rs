@@ -6,7 +6,7 @@ use crate::Runtime;
 use crate::SyncPool;
 use colored::Colorize;
 use log::info;
-use sak_proofs::Hasher;
+use sak_crypto::Hasher;
 use sak_types::BlockCandidate;
 use sak_vm::VM;
 use std::sync::Arc;

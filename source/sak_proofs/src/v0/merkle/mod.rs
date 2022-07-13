@@ -1,7 +1,5 @@
-use crate::mimc;
-use bls12_381::Scalar;
 use log::debug;
-use std::convert::TryInto;
+use sak_crypto::{mimc, Scalar};
 
 pub const TREE_DEPTH: u64 = 32;
 

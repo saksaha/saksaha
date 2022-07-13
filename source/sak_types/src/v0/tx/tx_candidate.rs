@@ -214,9 +214,10 @@ impl PourTxCandidate {
 }
 
 pub mod for_testing {
-    use crate::U8Array;
+    use sak_crypto::ScalarExt;
 
     use super::*;
+    use crate::U8Array;
 
     impl TxCandidate {
         pub fn new_dummy_pour_1() -> TxCandidate {
@@ -256,7 +257,7 @@ pub mod for_testing {
             // cm_1: [u8; 32],
             // cm_2: [u8; 32],
             // merkle_rt: [u8; 32],
-            let v = Scalar::from(1000);
+            // let v = Scalar::from(1000);
 
             let pi = vec![0];
 
@@ -264,48 +265,48 @@ pub mod for_testing {
                 let s = {
                     let arr = U8Array::new_empty_32();
 
-                    ScalarExt::parse_arr(&arr)?
+                    ScalarExt::parse_arr(&arr).unwrap()
                 };
 
                 let r = {
                     let arr = U8Array::new_empty_32();
 
-                    ScalarExt::parse_arr(&arr)?
+                    ScalarExt::parse_arr(&arr).unwrap()
                 };
 
                 let rho = {
                     let arr = U8Array::new_empty_32();
 
-                    ScalarExt::parse_arr(&arr)?
+                    ScalarExt::parse_arr(&arr).unwrap()
                 };
 
                 let a_pk = {
                     let arr = U8Array::new_empty_32();
 
-                    ScalarExt::parse_arr(&arr)?
+                    ScalarExt::parse_arr(&arr).unwrap()
                 };
 
-                let k = hasher.comm2(r, a_pk, rho);
+                // let k = hasher.comm2(r, a_pk, rho);
 
-                hasher.comm2(s, v, k)
+                // hasher.comm2(s, v, k)
             };
 
-            let cm_2 = {
-                let k = hasher.comm2(r, a_pk, rho);
+            // let cm_2 = {
+            //     let k = hasher.comm2(r, a_pk, rho);
 
-                hasher.comm2(s, v, k)
-            };
+            //     hasher.comm2(s, v, k)
+            // };
 
-            let ptc = PourTxCandidate::new(
-                String::from("initial_mint_created_at"),
-                vec![0],
-                VALIDATOR_SIG.to_string(),
-                None,
-                cm.to_bytes(),
-                v.to_bytes(),
-                k.to_bytes(),
-                s.to_bytes(),
-            );
+            // let ptc = PourTxCandidate::new(
+            //     String::from("initial_mint_created_at"),
+            //     vec![0],
+            //     VALIDATOR_SIG.to_string(),
+            //     None,
+            //     cm.to_bytes(),
+            //     v.to_bytes(),
+            //     k.to_bytes(),
+            //     s.to_bytes(),
+            // );
 
             PourTxCandidate::new(
                 String::from("created_at_1"),

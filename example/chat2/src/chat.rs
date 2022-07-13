@@ -1,6 +1,7 @@
 use bytes::BytesMut;
 use rsa::{RsaPrivateKey, RsaPublicKey};
-use sak_proofs::{mimc, CoinProof};
+use sak_crypto::mimc;
+use sak_proofs::CoinProof;
 // use sak_proofs::MiMC;
 // use sak_proofs::constants::get_round_constants;
 // use sak_proofs::{get_merkle_tree, verify_proof};

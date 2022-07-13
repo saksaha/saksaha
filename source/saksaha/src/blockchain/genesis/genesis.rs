@@ -1,4 +1,4 @@
-use sak_proofs::{Hasher, Scalar, ScalarExt};
+use sak_crypto::{Hasher, Scalar, ScalarExt};
 use sak_types::{BlockCandidate, MintTxCandidate, Tx, TxCandidate, U8Array};
 
 use crate::system::BoxedError;

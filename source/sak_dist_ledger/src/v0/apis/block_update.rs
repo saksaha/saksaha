@@ -1,7 +1,7 @@
 use crate::{CtrStateUpdate, DistLedger, LedgerError, MerkleUpdate};
 use log::warn;
 use sak_contract_std::{CtrCallType, Request, Storage};
-use sak_proofs::{Scalar, ScalarExt};
+use sak_crypto::ScalarExt;
 use sak_types::{
     Block, BlockCandidate, MintTxCandidate, PourTxCandidate, Tx, TxCandidate,
     TxCtrOp, U8Array,

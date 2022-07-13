@@ -73,9 +73,8 @@ pub enum TxCtrOp {
 }
 
 pub mod for_testing {
-    use crate::TxCandidate;
-
     use super::*;
+    use crate::TxCandidate;
 
     impl Tx {
         pub fn new_dummy_pour_1() -> Tx {

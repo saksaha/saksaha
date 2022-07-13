@@ -1,10 +1,11 @@
-use crate::{mimc, Hasher, MerkleTree, ProofError};
+use crate::{MerkleTree, ProofError};
 use bellman::gadgets::boolean::AllocatedBit;
 use bellman::groth16::{self, Parameters, Proof};
 use bellman::{Circuit, ConstraintSystem, SynthesisError};
-use bls12_381::{Bls12, Scalar};
 use rand::rngs::OsRng;
 use rand::RngCore;
+use sak_crypto::mimc;
+use sak_crypto::{Bls12, Hasher, Scalar};
 use std::fs::File;
 use std::io::Write;
 

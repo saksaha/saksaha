@@ -1,11 +1,10 @@
-use crate::ProofError;
-use bls12_381::Scalar;
+use crate::{CryptoError, Scalar};
 use std::convert::TryInto;
 
 pub struct ScalarExt;
 
 impl ScalarExt {
-    pub fn parse_arr(arr: &[u8; 32]) -> Result<Scalar, ProofError> {
+    pub fn parse_arr(arr: &[u8; 32]) -> Result<Scalar, CryptoError> {
         let s = Scalar::from_bytes(arr);
 
         if s.is_some().into() {
@@ -16,7 +15,7 @@ impl ScalarExt {
         }
     }
 
-    pub fn parse_vec(v: Vec<u8>) -> Result<Scalar, ProofError> {
+    pub fn parse_vec(v: Vec<u8>) -> Result<Scalar, CryptoError> {
         let arr = {
             let ret: [u8; 32] = match v.try_into() {
                 Ok(r) => r,
