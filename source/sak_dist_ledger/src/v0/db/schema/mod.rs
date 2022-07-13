@@ -3,6 +3,7 @@ use sak_kv_db::{
     BoundColumnFamily, ColumnFamilyDescriptor, IteratorMode, Options,
     WriteBatch, DB,
 };
+use std::convert::TryInto;
 use std::sync::Arc;
 
 // const TARGET_BITS: usize = 16;
@@ -630,12 +631,21 @@ impl LedgerDBSchema {
         db: &DB,
         // tx_hash
         key: &String,
-    ) -> Result<Option<Vec<u8>>, LedgerError> {
+    ) -> Result<Option<[u8; 32]>, LedgerError> {
         let cf = make_cf_handle(db, CM)?;
 
         match db.get_cf(&cf, key)? {
             Some(v) => {
-                return Ok(Some(v));
+                let arr: [u8; 32] = match v.try_into() {
+                    Ok(a) => a,
+                    Err(err) => {
+                        return Err(
+                            format!("Cannot convert cm into an array",).into()
+                        )
+                    }
+                };
+
+                return Ok(Some(arr));
             }
             None => {
                 return Ok(None);
@@ -793,12 +803,21 @@ impl LedgerDBSchema {
         &self,
         db: &DB,
         key: &String,
-    ) -> Result<Option<Vec<u8>>, LedgerError> {
+    ) -> Result<Option<[u8; 32]>, LedgerError> {
         let cf = make_cf_handle(db, MERKLE_RT)?;
 
         match db.get_cf(&cf, key)? {
             Some(v) => {
-                return Ok(Some(v));
+                let arr: [u8; 32] = match v.try_into() {
+                    Ok(a) => a,
+                    Err(err) => {
+                        return Err(
+                            format!("Cannot convert cm into an array",).into()
+                        )
+                    }
+                };
+
+                return Ok(Some(arr));
             }
             None => {
                 return Ok(None);
@@ -871,7 +890,7 @@ impl LedgerDBSchema {
         db: &DB,
         batch: &mut WriteBatch,
         key: &String,
-        value: &Vec<u8>,
+        value: &[u8; 32],
     ) -> Result<(), LedgerError> {
         let cf = make_cf_handle(db, CM)?;
 
@@ -885,7 +904,7 @@ impl LedgerDBSchema {
         db: &DB,
         batch: &mut WriteBatch,
         tx_height: &u128,
-        cm: &Vec<u8>,
+        cm: &[u8; 32],
     ) -> Result<(), LedgerError> {
         let cf = make_cf_handle(db, CM)?;
 
@@ -999,7 +1018,7 @@ impl LedgerDBSchema {
         db: &DB,
         batch: &mut WriteBatch,
         key: &String,
-        value: &Vec<u8>,
+        value: &[u8; 32],
     ) -> Result<(), LedgerError> {
         let cf = make_cf_handle(db, MERKLE_RT)?;
 

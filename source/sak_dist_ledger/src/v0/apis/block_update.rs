@@ -1,6 +1,7 @@
 use crate::{CtrStateUpdate, DistLedger, LedgerError, MerkleUpdate};
 use log::warn;
 use sak_contract_std::{CtrCallType, Request, Storage};
+use sak_proofs::{Scalar, ScalarExt};
 use sak_types::{
     Block, BlockCandidate, MintTxCandidate, PourTxCandidate, Tx, TxCandidate,
     TxCtrOp,
@@ -185,41 +186,15 @@ async fn handle_mint_tx_candidate(
         }
 
         let sibling_loc = format!("{}_{}", height, auth_node_idx);
-        let sibling_node = dist_ledger.get_merkle_node(&sibling_loc).await?;
+        let sibling_node = dist_ledger
+            .get_merkle_node(&sibling_loc)
+            .await?
+            .unwrap_or(vec![0]);
 
-        let curr_cm = {
-            let v = tc.cm.to_vec();
+        let curr_cm = ScalarExt::parse_bytes(&tc.cm)?;
+        let sib_cm = ScalarExt::parse_vec(sibling_node)?;
 
-            let ret: [u8; 32] = match v.try_into() {
-                Ok(r) => r,
-                Err(_) => {
-                    return Err(
-                        format!("Could not convert cm into an array").into()
-                    )
-                }
-            };
-
-            ret
-        };
-
-        let sib_cm = {
-            let v = sibling_node.unwrap_or(vec![0]);
-
-            let ret: [u8; 32] = match v.try_into() {
-                Ok(r) => r,
-                Err(_) => {
-                    return Err(format!(
-                        "Could not convert sibling cm into \
-                                        an array"
-                    )
-                    .into())
-                }
-            };
-
-            ret
-        };
-
-        let merkle_node = dist_ledger.hasher.mimc2(&curr_cm, &sib_cm)?.to_vec();
+        let merkle_node = dist_ledger.hasher.mimc(curr_cm, sib_cm).to_bytes();
         let parent_idx = sak_proofs::get_parent_idx(*auth_node_idx);
         let update_loc = format!("{}_{}", height + 1, parent_idx);
 

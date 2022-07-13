@@ -30,7 +30,7 @@ impl GenesisBlock {
         let s = 24;
 
         let hasher = Hasher::new();
-        let cm = hasher.comm2(s, hasher.prf(v, k)).to_bytes();
+        let cm = hasher.comm(s, hasher.prf(v, k)).to_bytes();
 
         let mint_tx_1 = TxCandidate::Mint(MintTxCandidate::new(
             String::from("initial_mint_created_at"),

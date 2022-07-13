@@ -17,7 +17,7 @@ impl BlockCandidate {
         self,
         next_block_height: u128,
         next_tx_height: u128,
-        next_merkle_rt: Vec<u8>,
+        next_merkle_rt: [u8; 32],
     ) -> (Block, Vec<Tx>) {
         let mut txs: Vec<Tx> = Vec::new();
         let mut tx_hashes: Vec<String> = vec![];

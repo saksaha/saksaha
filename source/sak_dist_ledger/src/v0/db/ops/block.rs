@@ -1,4 +1,7 @@
-use crate::{CtrStateUpdate, LedgerDB, LedgerError, MerkleUpdate};
+use crate::{
+    CtrStateUpdate, DistLedger, LedgerDB, LedgerDBSchema, LedgerError,
+    MerkleUpdate,
+};
 use colored::Colorize;
 use log::debug;
 use sak_kv_db::{WriteBatch, DB};
@@ -9,7 +12,7 @@ impl LedgerDB {
         &self,
         block_hash: &String,
     ) -> Result<Option<Block>, LedgerError> {
-        self._get_block(block_hash)
+        get_block(&self.kv_db.db_instance, &self.schema, block_hash)
     }
 
     pub(crate) fn get_block_hash_by_height(
@@ -27,7 +30,8 @@ impl LedgerDB {
     ) -> Result<Vec<Block>, LedgerError> {
         let mut ret = vec![];
         for block_hash in block_hashes {
-            match self._get_block(block_hash)? {
+            match get_block(&self.kv_db.db_instance, &self.schema, block_hash)?
+            {
                 Some(b) => ret.push(b),
                 None => (),
             }
@@ -134,47 +138,49 @@ impl LedgerDB {
 
         Ok(height)
     }
+}
 
-    fn _get_block(
-        &self,
-        block_hash: &String,
-    ) -> Result<Option<Block>, LedgerError> {
-        let db = &self.kv_db.db_instance;
+fn get_block(
+    db: &DB,
+    schema: &LedgerDBSchema,
+    block_hash: &String,
+) -> Result<Option<Block>, LedgerError> {
+    // let db = &dist_ledger.kv_db.db_instance;
+    // let schema = &dist_ledger.schema;
 
-        let validator_sig = self.schema.get_validator_sig(db, &block_hash)?;
+    let validator_sig = schema.get_validator_sig(db, &block_hash)?;
 
-        let tx_hashes = self.schema.get_tx_hashes(db, &block_hash)?;
+    let tx_hashes = schema.get_tx_hashes(db, &block_hash)?;
 
-        let witness_sigs = self.schema.get_witness_sigs(db, &block_hash)?;
+    let witness_sigs = schema.get_witness_sigs(db, &block_hash)?;
 
-        let created_at = self.schema.get_created_at(db, &block_hash)?;
+    let created_at = schema.get_created_at(db, &block_hash)?;
 
-        let block_height = self.schema.get_block_height(db, &block_hash)?;
+    let block_height = schema.get_block_height(db, &block_hash)?;
 
-        let merkle_rt = self.schema.get_merkle_rt(db, &block_hash)?;
+    let merkle_rt = schema.get_merkle_rt(db, &block_hash)?;
 
-        match (
-            validator_sig,
-            tx_hashes,
-            witness_sigs,
-            created_at,
-            block_height,
-            merkle_rt,
-        ) {
-            (Some(vs), Some(th), Some(ws), Some(ca), Some(bh), Some(mr)) => {
-                let b = Block::new(vs, th, ws, ca, bh, mr);
-                return Ok(Some(b));
-            }
-            (None, None, None, None, None, None) => {
-                return Ok(None);
-            }
-            _ => {
-                return Err(format!(
-                    "Block is corrupted. Some data is missing, block_hash: {}",
-                    block_hash,
-                )
-                .into());
-            }
+    match (
+        validator_sig,
+        tx_hashes,
+        witness_sigs,
+        created_at,
+        block_height,
+        merkle_rt,
+    ) {
+        (Some(vs), Some(th), Some(ws), Some(ca), Some(bh), Some(mr)) => {
+            let b = Block::new(vs, th, ws, ca, bh, mr);
+            return Ok(Some(b));
+        }
+        (None, None, None, None, None, None) => {
+            return Ok(None);
+        }
+        _ => {
+            return Err(format!(
+                "Block is corrupted. Some data is missing, block_hash: {}",
+                block_hash,
+            )
+            .into());
         }
     }
 }

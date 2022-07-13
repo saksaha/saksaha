@@ -7,7 +7,7 @@ pub struct Block {
     pub witness_sigs: Vec<String>,
     pub created_at: String,
     pub block_height: u128,
-    pub merkle_rt: Vec<u8>,
+    pub merkle_rt: [u8; 32],
     block_hash: String,
 }
 
@@ -18,7 +18,7 @@ impl Block {
         witness_sigs: Vec<String>,
         created_at: String,
         block_height: u128,
-        merkle_rt: Vec<u8>,
+        merkle_rt: [u8; 32],
     ) -> Block {
         let block_hash = {
             let mut to_hash = vec![];

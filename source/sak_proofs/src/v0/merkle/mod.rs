@@ -1,8 +1,7 @@
+use crate::mimc;
 use bls12_381::Scalar;
 use log::debug;
 use std::convert::TryInto;
-
-use crate::mimc;
 
 pub const TREE_DEPTH: u64 = 32;
 
@@ -76,7 +75,7 @@ impl MerkleTree {
                     xl = cn.hash;
                 } else {
                     let xr = cn.hash;
-                    let hs = mimc(xl, xr, &constants);
+                    let hs = mimc::mimc(xl, xr, &constants);
 
                     let n = Node {
                         val: None,
@@ -145,31 +144,6 @@ impl MerkleTree {
 
         auth_path
     }
-
-    // pub fn upgrade_node(&mut self, idx: u128) {
-    //     let auth_paths = self.generate_auth_paths(idx.try_into().unwrap());
-
-    //     for (ix, p) in auth_paths.iter().enumerate() {
-    //         println!("auth path [{}] - {:?}", ix, p);
-
-    //         let position = ix + p.direction as usize;
-
-    //         let nodes = self
-    //             .nodes
-    //             .get_mut(position)
-    //             .unwrap()
-    //             .get_mut(position)
-    //             .unwrap();
-
-    //         let dummy_node = Node {
-    //             val: None,
-    //             hash: bls12_381::Scalar::from(idx as u64),
-    //         };
-
-    //         *nodes = dummy_node;
-    //     }
-    //     // self.nodes.get_mut((h - 1) as usize);
-    // }
 
     pub fn display_tree(&self) {
         for (idx, e) in self.nodes.iter().enumerate() {

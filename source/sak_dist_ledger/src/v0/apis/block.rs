@@ -93,7 +93,7 @@ impl DistLedger {
 
     pub async fn get_latest_merkle_rt(
         &self,
-    ) -> Result<Option<Vec<u8>>, LedgerError> {
+    ) -> Result<Option<[u8; 32]>, LedgerError> {
         let latest_tx_height =
             match self.ledger_db.get_latest_tx_height().await? {
                 Some(h) => h,

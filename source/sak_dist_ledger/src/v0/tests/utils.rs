@@ -1,5 +1,5 @@
 use sak_contract_std::{CtrCallType, Request};
-use sak_types::{BlockCandidate, PourTxCandidate, Tx, TxCandidate};
+use sak_types::{BlockCandidate, PourTxCandidate, Tx, TxCandidate, U8Array};
 use std::collections::HashMap;
 
 #[cfg(test)]
@@ -47,7 +47,7 @@ pub(crate) fn make_dummy_block_candidate_with_query_tx(
                 vec![0],
                 vec![0],
                 vec![0],
-                vec![0],
+                U8Array::new_empty_32(),
             ))
         };
 
@@ -99,7 +99,7 @@ pub(crate) fn make_dummy_block_candidate_with_execute_tx(
                 vec![22],
                 vec![22],
                 vec![22],
-                vec![22],
+                U8Array::new_empty_32(),
             ));
 
         let dummy_validator_2 = String::from(
@@ -134,7 +134,7 @@ pub(crate) fn make_dummy_block_candidate_with_execute_tx(
                 vec![22],
                 vec![22],
                 vec![22],
-                vec![22],
+                U8Array::new_empty_32(),
             ));
 
         BlockCandidate {

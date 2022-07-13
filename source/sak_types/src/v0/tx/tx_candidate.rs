@@ -54,7 +54,7 @@ pub struct MintTxCandidate {
     pub ctr_addr: String,
 
     //
-    pub cm: Vec<u8>,
+    pub cm: [u8; 32],
 
     //
     pub v: String,
@@ -75,7 +75,7 @@ impl MintTxCandidate {
         data: Vec<u8>,
         author_sig: String,
         ctr_addr: Option<String>,
-        cm: Vec<u8>,
+        cm: [u8; 32],
         v: String,
         k: String,
         s: String,
@@ -147,7 +147,7 @@ pub struct PourTxCandidate {
     pub cm_2: Vec<u8>,
 
     //
-    pub merkle_rt: Vec<u8>,
+    pub merkle_rt: [u8; 32],
 
     //
     tx_hash: String,
@@ -164,7 +164,7 @@ impl PourTxCandidate {
         sn_2: Vec<u8>,
         cm_1: Vec<u8>,
         cm_2: Vec<u8>,
-        merkle_rt: Vec<u8>,
+        merkle_rt: [u8; 32],
     ) -> PourTxCandidate {
         let ctr_addr = ctr_addr.unwrap_or(String::from(""));
 
@@ -206,6 +206,8 @@ impl PourTxCandidate {
 }
 
 pub mod for_testing {
+    use crate::U8Array;
+
     use super::*;
 
     impl TxCandidate {
@@ -246,7 +248,7 @@ pub mod for_testing {
                 vec![11, 11, 11],
                 vec![11, 11, 11],
                 vec![11, 11, 11],
-                vec![11, 11, 11],
+                U8Array::new_empty_32(),
             )
         }
 
@@ -261,7 +263,7 @@ pub mod for_testing {
                 vec![22, 22, 22],
                 vec![22, 22, 22],
                 vec![22, 22, 22],
-                vec![22, 22, 22],
+                U8Array::new_empty_32(),
             )
         }
 
@@ -276,7 +278,7 @@ pub mod for_testing {
                 vec![33, 33, 33],
                 vec![33, 33, 33],
                 vec![33, 33, 33],
-                vec![33, 33, 33],
+                U8Array::new_empty_32(),
             )
         }
 
@@ -291,7 +293,7 @@ pub mod for_testing {
                 vec![44, 44, 44],
                 vec![44, 44, 44],
                 vec![44, 44, 44],
-                vec![44, 44, 44],
+                U8Array::new_empty_32(),
             )
         }
     }

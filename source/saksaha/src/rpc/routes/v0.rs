@@ -14,7 +14,7 @@ struct SendMintTxBody {
     data: Vec<u8>,
     author_sig: String,
     ctr_addr: Option<String>,
-    cm: Vec<u8>,
+    cm: [u8; 32],
     v: String,
     k: String,
     s: String,

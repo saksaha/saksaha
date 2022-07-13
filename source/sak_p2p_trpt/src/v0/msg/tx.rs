@@ -1,3 +1,5 @@
+use std::convert::TryInto;
+
 use crate::{TrptError, BLOCK_SYN_TYPE};
 use bytes::{BufMut, Bytes, BytesMut};
 use sak_p2p_frame::{Frame, Parse};
@@ -28,7 +30,16 @@ pub(crate) fn parse_mint_tx_candidate(
 
     let cm = {
         let p = parse.next_bytes()?;
-        std::str::from_utf8(p.as_ref())?.into()
+        // let p = &p[..];
+        if p.len() != 32 {
+            return Err(
+                format!("cm has invalid length, len: {}", p.len()).into()
+            );
+        }
+
+        let ret: [u8; 32] = (&p[..]).try_into()?;
+
+        ret
     };
 
     let v = {
@@ -131,8 +142,6 @@ pub(crate) fn parse_pour_tx_candidate(
         std::str::from_utf8(p.as_ref())?.into()
     };
 
-    let tx_height = parse.next_int()? as u128;
-
     let pour_tx = PourTxCandidate::new(
         created_at,
         data,
@@ -167,7 +176,7 @@ pub(crate) fn put_mint_tx_candidate_into_frame(
     frame.push_bulk(Bytes::from(tc.created_at));
     frame.push_bulk(Bytes::from(tc.author_sig));
     frame.push_bulk(Bytes::from(tc.ctr_addr));
-    frame.push_bulk(Bytes::from(tc.cm));
+    frame.push_bulk(Bytes::copy_from_slice(&tc.cm));
     frame.push_bulk(Bytes::from(tc.v));
     frame.push_bulk(Bytes::from(tc.k));
     frame.push_bulk(Bytes::from(tc.s));
