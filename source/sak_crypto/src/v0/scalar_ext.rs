@@ -15,7 +15,7 @@ impl ScalarExt {
         }
     }
 
-    pub fn parse_arr_wide(
+    pub fn _parse_arr_wide(
         arr1: &[u8; 32],
         arr2: &[u8; 32],
     ) -> Result<Scalar, CryptoError> {

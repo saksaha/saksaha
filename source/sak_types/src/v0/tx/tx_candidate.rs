@@ -214,40 +214,45 @@ impl PourTxCandidate {
 }
 
 pub mod for_testing {
-    use sak_crypto::{Hasher, Scalar, ScalarExt};
-
     use super::*;
     use crate::U8Array;
+    use sak_crypto::{Hasher, Scalar, ScalarExt};
 
     impl TxCandidate {
         pub fn new_dummy_mint_1() -> TxCandidate {
-            let mint_tx_candidate_dummy_1 = MintTxCandidate::new_dummy_1();
+            let tx_candidate = MintTxCandidate::new_dummy_1();
 
-            TxCandidate::Mint(mint_tx_candidate_dummy_1)
+            TxCandidate::Mint(tx_candidate)
+        }
+
+        pub fn new_dummy_mint_2() -> TxCandidate {
+            let tx_candidate = MintTxCandidate::new_dummy_2();
+
+            TxCandidate::Mint(tx_candidate)
         }
 
         pub fn new_dummy_pour_1() -> TxCandidate {
-            let pour_tx_candidate_dummy_1 = PourTxCandidate::new_dummy_1();
+            let tx_candidate = PourTxCandidate::new_dummy_1();
 
-            TxCandidate::Pour(pour_tx_candidate_dummy_1)
+            TxCandidate::Pour(tx_candidate)
         }
 
         pub fn new_dummy_pour_2() -> TxCandidate {
-            let pour_tx_candidate_dummy_2 = PourTxCandidate::new_dummy_2();
+            let tx_candidate = PourTxCandidate::new_dummy_2();
 
-            TxCandidate::Pour(pour_tx_candidate_dummy_2)
+            TxCandidate::Pour(tx_candidate)
         }
 
         pub fn new_dummy_pour_3() -> TxCandidate {
-            let pour_tx_candidate_dummy_3 = PourTxCandidate::new_dummy_3();
+            let tx_candidate = PourTxCandidate::new_dummy_3();
 
-            TxCandidate::Pour(pour_tx_candidate_dummy_3)
+            TxCandidate::Pour(tx_candidate)
         }
 
         pub fn new_dummy_pour_4() -> TxCandidate {
-            let pour_tx_candidate_dummy_4 = PourTxCandidate::new_dummy_4();
+            let tx_candidate = PourTxCandidate::new_dummy_4();
 
-            TxCandidate::Pour(pour_tx_candidate_dummy_4)
+            TxCandidate::Pour(tx_candidate)
         }
     }
 
@@ -289,6 +294,51 @@ pub mod for_testing {
                 String::from("created_at_mint_1"),
                 vec![1],
                 String::from("author_sig_mint_1"),
+                None,
+                cm.to_bytes(),
+                v.to_bytes(),
+                k.to_bytes(),
+                s.to_bytes(),
+            )
+        }
+
+        pub fn new_dummy_2() -> MintTxCandidate {
+            let hasher = Hasher::new();
+
+            let v = Scalar::from(1_000);
+
+            let s = {
+                let arr = U8Array::new_empty_32();
+
+                ScalarExt::parse_arr(&arr).unwrap()
+            };
+
+            let r = {
+                let arr = U8Array::new_empty_32();
+
+                ScalarExt::parse_arr(&arr).unwrap()
+            };
+
+            let rho = {
+                let arr = U8Array::new_empty_32();
+
+                ScalarExt::parse_arr(&arr).unwrap()
+            };
+
+            let a_pk = {
+                let arr = U8Array::new_empty_32();
+
+                ScalarExt::parse_arr(&arr).unwrap()
+            };
+
+            let k = hasher.comm2(r, a_pk, rho);
+
+            let cm = hasher.comm2(s, v, k);
+
+            MintTxCandidate::new(
+                String::from("created_at_mint_2"),
+                vec![2],
+                String::from("author_sig_mint_2"),
                 None,
                 cm.to_bytes(),
                 v.to_bytes(),
