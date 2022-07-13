@@ -1,5 +1,5 @@
 use super::{dec, enc};
-use crate::{BoxedError, Msg};
+use crate::{Msg, TrptError};
 use bytes::BytesMut;
 use chacha20::cipher::StreamCipher;
 use chacha20::ChaCha20;
@@ -10,13 +10,13 @@ pub struct UpgradedP2PCodec {
 }
 
 impl Encoder<Msg> for UpgradedP2PCodec {
-    type Error = BoxedError;
+    type Error = TrptError;
 
     fn encode(
         &mut self,
         item: Msg,
         dst: &mut BytesMut,
-    ) -> Result<(), BoxedError> {
+    ) -> Result<(), TrptError> {
         enc::encode_into_frame(item, dst)?;
 
         self.cipher.apply_keystream(dst);
@@ -27,12 +27,12 @@ impl Encoder<Msg> for UpgradedP2PCodec {
 
 impl Decoder for UpgradedP2PCodec {
     type Item = Msg;
-    type Error = BoxedError;
+    type Error = TrptError;
 
     fn decode(
         &mut self,
         src: &mut BytesMut,
-    ) -> Result<Option<Self::Item>, BoxedError> {
+    ) -> Result<Option<Self::Item>, TrptError> {
         self.cipher.apply_keystream(src);
 
         return dec::decode_into_msg(src);
@@ -42,13 +42,13 @@ impl Decoder for UpgradedP2PCodec {
 pub struct P2PCodec {}
 
 impl Encoder<Msg> for P2PCodec {
-    type Error = BoxedError;
+    type Error = TrptError;
 
     fn encode(
         &mut self,
         item: Msg,
         dst: &mut BytesMut,
-    ) -> Result<(), BoxedError> {
+    ) -> Result<(), TrptError> {
         enc::encode_into_frame(item, dst)?;
 
         return Ok(());
@@ -57,12 +57,12 @@ impl Encoder<Msg> for P2PCodec {
 
 impl Decoder for P2PCodec {
     type Item = Msg;
-    type Error = BoxedError;
+    type Error = TrptError;
 
     fn decode(
         &mut self,
         src: &mut BytesMut,
-    ) -> Result<Option<Self::Item>, BoxedError> {
+    ) -> Result<Option<Self::Item>, TrptError> {
         return dec::decode_into_msg(src);
     }
 }

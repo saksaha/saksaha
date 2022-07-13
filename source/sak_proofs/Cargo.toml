@@ -8,6 +8,8 @@ edition = "2018"
 [dependencies]
 sak_crypto = { path = "../sak_crypto" }
 sak_logger = { path = "../sak_logger" }
+sak_types = { path = "../sak_types" }
+log = "0.4.0"
 bellman = "0.11.1"
 bls12_381 = "0.6.0"
 ff = "0.11"

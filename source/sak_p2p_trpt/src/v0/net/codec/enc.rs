@@ -1,12 +1,12 @@
-use crate::{BoxedError, Msg};
+use crate::{Msg, TrptError};
 use bytes::BytesMut;
 use sak_p2p_frame::frame_io;
 
 pub(super) fn encode_into_frame(
     item: Msg,
     dst: &mut BytesMut,
-) -> Result<(), BoxedError> {
-    let frame = match &item {
+) -> Result<(), TrptError> {
+    let frame = match item {
         Msg::HandshakeSyn(handshake) => handshake.into_syn_frame(),
         Msg::HandshakeAck(handshake) => handshake.into_ack_frame(),
         Msg::TxSyn(sync) => sync.into_frame(),

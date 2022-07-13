@@ -1,13 +1,13 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Deserialize, Serialize, Debug, PartialEq, Eq, Hash)]
 pub struct Block {
-    validator_sig: String,
-    tx_hashes: Vec<String>,
-    witness_sigs: Vec<String>,
-    created_at: String,
-    block_height: u128,
-    merkle_root: String,
+    pub validator_sig: String,
+    pub tx_hashes: Vec<String>,
+    pub witness_sigs: Vec<String>,
+    pub created_at: String,
+    pub block_height: u128,
+    pub merkle_rt: [u8; 32],
     block_hash: String,
 }
 
@@ -18,7 +18,7 @@ impl Block {
         witness_sigs: Vec<String>,
         created_at: String,
         block_height: u128,
-        merkle_root: String,
+        merkle_rt: [u8; 32],
     ) -> Block {
         let block_hash = {
             let mut to_hash = vec![];
@@ -35,7 +35,7 @@ impl Block {
 
                 to_hash.push(created_at.as_bytes());
 
-                to_hash.push(merkle_root.as_bytes());
+                to_hash.push(merkle_rt.as_slice());
 
                 to_hash.as_slice()
             };
@@ -49,36 +49,12 @@ impl Block {
             witness_sigs,
             created_at,
             block_height,
-            merkle_root,
+            merkle_rt,
             block_hash,
         }
     }
 
-    pub fn get_validator_sig(&self) -> &String {
-        &self.validator_sig
-    }
-
-    pub fn get_witness_sigs(&self) -> &Vec<String> {
-        &self.witness_sigs
-    }
-
-    pub fn get_created_at(&self) -> &String {
-        &self.created_at
-    }
-
-    pub fn get_tx_hashes(&self) -> &Vec<String> {
-        &self.tx_hashes
-    }
-
-    pub fn get_height(&self) -> &u128 {
-        &self.block_height
-    }
-
-    pub fn get_hash(&self) -> &String {
+    pub fn get_block_hash(&self) -> &String {
         &self.block_hash
-    }
-
-    pub fn get_merkle_root(&self) -> &String {
-        &self.merkle_root
     }
 }

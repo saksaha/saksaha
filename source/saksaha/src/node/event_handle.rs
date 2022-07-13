@@ -38,7 +38,7 @@ pub(super) async fn handle_tx_pool_stat<'a>(
     let resp_timeout =
         tokio::time::sleep(Duration::from_millis(RESPONSE_TIMEOUT));
 
-    let txs = tokio::select! {
+    let tx_candidates = tokio::select! {
         _ = resp_timeout => {
             warn!(
                 "Peer did not respond in time, dst public_key: {}",
@@ -83,8 +83,12 @@ pub(super) async fn handle_tx_pool_stat<'a>(
         },
     };
 
-    if !txs.is_empty() {
-        match conn.socket.send(Msg::TxSyn(TxSynMsg { txs })).await {
+    if !tx_candidates.is_empty() {
+        match conn
+            .socket
+            .send(Msg::TxSyn(TxSynMsg { tx_candidates }))
+            .await
+        {
             Ok(_) => {
                 info!("Sending TxSyn, public_key: {}", public_key);
             }
@@ -101,8 +105,6 @@ pub(super) async fn handle_new_blocks_ev<'a>(
     machine: &Machine,
     new_blocks: Vec<(u128, String)>,
 ) {
-    println!("sending block hash syn msg!!");
-
     match conn
         .socket
         .send(Msg::BlockHashSyn(BlockHashSynMsg {
@@ -176,16 +178,30 @@ async fn handle_block_hash_ack<'a>(
         .map(|(_, block_hash)| block_hash)
         .collect();
 
-    let block_candidates = machine
+    let blocks = machine
         .blockchain
         .dist_ledger
-        .get_block_candidates(block_hashes)
+        .get_blocks(block_hashes)
         .await?;
 
-    if !block_candidates.is_empty() {
+    let mut blocks_to_send = Vec::with_capacity(blocks.len());
+
+    for block in blocks {
+        let txs = machine
+            .blockchain
+            .dist_ledger
+            .get_txs(&block.tx_hashes)
+            .await?;
+
+        blocks_to_send.push((block, txs));
+    }
+
+    if !blocks_to_send.is_empty() {
         match conn
             .socket
-            .send(Msg::BlockSyn(BlockSynMsg { block_candidates }))
+            .send(Msg::BlockSyn(BlockSynMsg {
+                blocks: blocks_to_send,
+            }))
             .await
         {
             Ok(_) => {}

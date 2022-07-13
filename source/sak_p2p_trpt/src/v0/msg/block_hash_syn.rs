@@ -1,4 +1,4 @@
-use crate::{BoxedError, BLOCK_HASH_ACK, BLOCK_HASH_SYN};
+use crate::{TrptError, BLOCK_HASH_ACK, BLOCK_HASH_SYN};
 use bytes::{BufMut, Bytes, BytesMut};
 use sak_p2p_frame::{Frame, Parse};
 use std::str;
@@ -11,7 +11,7 @@ pub struct BlockHashSynMsg {
 impl BlockHashSynMsg {
     pub(crate) fn from_parse(
         parse: &mut Parse,
-    ) -> Result<BlockHashSynMsg, BoxedError> {
+    ) -> Result<BlockHashSynMsg, TrptError> {
         let block_count = parse.next_int()?;
 
         let mut new_blocks = Vec::with_capacity(block_count as usize);

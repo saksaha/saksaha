@@ -1,5 +1,5 @@
-use log::{error, warn};
-use sak_types::{Block, Tx, TxType};
+use log::warn;
+use sak_types::{Block, Tx, TxCandidate, TxCtrOp};
 use std::collections::{HashMap, HashSet};
 use tokio::sync::RwLock;
 
@@ -8,7 +8,7 @@ const SYNC_POOL_CAPACITY: usize = 100;
 pub(crate) struct SyncPool {
     new_blocks: RwLock<HashSet<(u128, String)>>,
     new_tx_hashes: RwLock<HashSet<String>>,
-    tx_map: RwLock<HashMap<String, Tx>>,
+    tx_map: RwLock<HashMap<String, TxCandidate>>,
 }
 
 impl SyncPool {
@@ -75,37 +75,44 @@ impl SyncPool {
     ) -> Result<(), String> {
         let mut new_blocks_lock = self.new_blocks.write().await;
 
-        let height = block.get_height();
-        let block_hash = block.get_hash();
+        let height = block.block_height;
+        let block_hash = block.get_block_hash();
 
         new_blocks_lock.insert((height.to_owned(), block_hash.to_owned()));
 
         Ok(())
     }
 
-    pub(crate) async fn insert_tx(&self, tx: Tx) -> Result<(), String> {
-        match tx.get_type() {
-            TxType::ContractDeploy => {
-                // check functions
-                match tx.is_valid_ctr_deploying_tx() {
-                    Ok(o) => o,
-                    Err(err) => {
-                        return Err(format!("Err: {:?}", err));
+    pub(crate) async fn insert_tx(
+        &self,
+        tc: TxCandidate,
+    ) -> Result<(), String> {
+        {
+            // Check if tx is valid ctr deploying type
+            // let (tx_ctr_op, tx_coin_op) = tc.get_tx_op();
+            let tx_ctr_op = tc.get_ctr_op();
+
+            match tx_ctr_op {
+                TxCtrOp::ContractDeploy => {
+                    // check functions
+                    let maybe_wasm = tc.get_data();
+                    if !sak_vm::is_valid_wasm(maybe_wasm) {
+                        return Err(format!("Not valid wasm data"));
                     }
                 }
-            }
-            TxType::ContractCall => {}
-            TxType::Plain => {}
-        };
+                TxCtrOp::ContractCall => {}
+                TxCtrOp::None => {}
+            };
+        }
 
-        let tx_hash = tx.get_hash();
+        let tx_hash = tc.get_tx_hash().to_string();
 
         let mut tx_map_lock = self.tx_map.write().await;
 
-        if tx_map_lock.contains_key(tx_hash) {
+        if tx_map_lock.contains_key(&tx_hash) {
             return Err(format!("tx already exist"));
         } else {
-            tx_map_lock.insert(tx_hash.clone(), tx.clone());
+            tx_map_lock.insert(tx_hash.clone(), tc);
         };
 
         let mut new_tx_hashes_lock = self.new_tx_hashes.write().await;
@@ -114,25 +121,31 @@ impl SyncPool {
         Ok(())
     }
 
-    pub(crate) async fn get_all_txs(&self) -> Result<Vec<Tx>, String> {
+    pub(crate) async fn get_all_txs(&self) -> Result<Vec<TxCandidate>, String> {
         let tx_map_lock = self.tx_map.read().await;
 
-        let tx = tx_map_lock.values().map(|v| v.clone()).collect();
+        let txs = tx_map_lock.values().map(|v| v.clone()).collect();
 
-        Ok(tx)
+        Ok(txs)
     }
 
-    pub(crate) async fn remove_txs(&self, txs: &Vec<Tx>) -> Result<(), String> {
+    pub(crate) async fn remove_tcs(
+        &self,
+        txs: &Vec<TxCandidate>,
+    ) -> Result<(), String> {
         let mut tx_map_lock = self.tx_map.write().await;
 
         for tx in txs {
-            tx_map_lock.remove(tx.get_hash());
+            tx_map_lock.remove(tx.get_tx_hash());
         }
 
         Ok(())
     }
 
-    pub(crate) async fn get_txs(&self, tx_hashes: Vec<String>) -> Vec<Tx> {
+    pub(crate) async fn get_txs(
+        &self,
+        tx_hashes: Vec<String>,
+    ) -> Vec<TxCandidate> {
         let tx_map_lock = self.tx_map.read().await;
         let mut tx_pool = vec![];
 
