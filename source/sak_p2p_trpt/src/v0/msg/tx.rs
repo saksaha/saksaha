@@ -1,9 +1,7 @@
-use std::convert::TryInto;
-
-use crate::{TrptError, BLOCK_SYN_TYPE};
-use bytes::{BufMut, Bytes, BytesMut};
+use crate::{utils, TrptError};
+use bytes::Bytes;
 use sak_p2p_frame::{Frame, Parse};
-use sak_types::{Block, MintTx, MintTxCandidate, PourTx, PourTxCandidate, Tx};
+use sak_types::{MintTx, MintTxCandidate, PourTx, PourTxCandidate, Tx};
 
 pub(crate) fn parse_mint_tx_candidate(
     parse: &mut Parse,
@@ -30,31 +28,26 @@ pub(crate) fn parse_mint_tx_candidate(
 
     let cm = {
         let p = parse.next_bytes()?;
-        // let p = &p[..];
-        if p.len() != 32 {
-            return Err(
-                format!("cm has invalid length, len: {}", p.len()).into()
-            );
-        }
 
-        let ret: [u8; 32] = (&p[..]).try_into()?;
-
-        ret
+        utils::convert_bytes_into_u8_32(p)?
     };
 
     let v = {
         let p = parse.next_bytes()?;
-        std::str::from_utf8(p.as_ref())?.into()
+
+        utils::convert_bytes_into_u8_32(p)?
     };
 
     let k = {
         let p = parse.next_bytes()?;
-        std::str::from_utf8(p.as_ref())?.into()
+
+        utils::convert_bytes_into_u8_32(p)?
     };
 
     let s = {
         let p = parse.next_bytes()?;
-        std::str::from_utf8(p.as_ref())?.into()
+
+        utils::convert_bytes_into_u8_32(p)?
     };
 
     let _tx_hash: String = {
@@ -134,7 +127,8 @@ pub(crate) fn parse_pour_tx_candidate(
 
     let merkle_rt = {
         let b = parse.next_bytes()?;
-        b.to_vec()
+
+        utils::convert_bytes_into_u8_32(b)?
     };
 
     let _tx_hash: String = {
@@ -177,9 +171,9 @@ pub(crate) fn put_mint_tx_candidate_into_frame(
     frame.push_bulk(Bytes::from(tc.author_sig));
     frame.push_bulk(Bytes::from(tc.ctr_addr));
     frame.push_bulk(Bytes::copy_from_slice(&tc.cm));
-    frame.push_bulk(Bytes::from(tc.v));
-    frame.push_bulk(Bytes::from(tc.k));
-    frame.push_bulk(Bytes::from(tc.s));
+    frame.push_bulk(Bytes::copy_from_slice(&tc.v));
+    frame.push_bulk(Bytes::copy_from_slice(&tc.k));
+    frame.push_bulk(Bytes::copy_from_slice(&tc.s));
     frame.push_bulk(Bytes::from(tx_hash));
 }
 
@@ -206,7 +200,7 @@ pub(crate) fn put_pour_tx_candidate_into_frame(
     frame.push_bulk(Bytes::from(tc.sn_2));
     frame.push_bulk(Bytes::from(tc.cm_1));
     frame.push_bulk(Bytes::from(tc.cm_2));
-    frame.push_bulk(Bytes::from(tc.merkle_rt));
+    frame.push_bulk(Bytes::copy_from_slice(&tc.merkle_rt));
     frame.push_bulk(Bytes::from(tx_hash));
 }
 

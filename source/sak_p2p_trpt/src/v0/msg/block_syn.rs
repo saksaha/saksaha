@@ -1,5 +1,5 @@
 use super::tx;
-use crate::{TrptError, BLOCK_SYN_TYPE};
+use crate::{utils, TrptError, BLOCK_SYN_TYPE};
 use bytes::{BufMut, Bytes, BytesMut};
 use sak_p2p_frame::{Frame, Parse};
 use sak_types::{Block, MintTx, MintTxCandidate, PourTxCandidate, Tx};
@@ -29,8 +29,8 @@ impl BlockSynMsg {
             };
 
             let merkle_rt = {
-                let v = parse.next_bytes()?;
-                v.to_vec()
+                let b = parse.next_bytes()?;
+                utils::convert_bytes_into_u8_32(b)?
             };
 
             let block_height = parse.next_int()? as u128;
@@ -101,7 +101,7 @@ impl BlockSynMsg {
         for (block, txs) in self.blocks {
             frame.push_bulk(Bytes::from(block.validator_sig.to_string()));
             frame.push_bulk(Bytes::from(block.created_at.to_string()));
-            frame.push_bulk(Bytes::from(block.merkle_rt));
+            frame.push_bulk(Bytes::copy_from_slice(&block.merkle_rt));
             frame.push_int(block.block_height as u128);
 
             {

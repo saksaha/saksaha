@@ -5,8 +5,8 @@ use std::convert::TryInto;
 pub struct ScalarExt;
 
 impl ScalarExt {
-    pub fn parse_bytes(b: &[u8; 32]) -> Result<Scalar, ProofError> {
-        let s = Scalar::from_bytes(b);
+    pub fn parse_arr(arr: &[u8; 32]) -> Result<Scalar, ProofError> {
+        let s = Scalar::from_bytes(arr);
 
         if s.is_some().into() {
             let ret = s.unwrap();
@@ -32,6 +32,6 @@ impl ScalarExt {
             ret
         };
 
-        ScalarExt::parse_bytes(&arr)
+        ScalarExt::parse_arr(&arr)
     }
 }

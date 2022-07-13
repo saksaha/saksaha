@@ -57,13 +57,13 @@ pub struct MintTxCandidate {
     pub cm: [u8; 32],
 
     //
-    pub v: String,
+    pub v: [u8; 32],
 
     //
-    pub k: String,
+    pub k: [u8; 32],
 
     //
-    pub s: String,
+    pub s: [u8; 32],
 
     //
     tx_hash: String,
@@ -76,9 +76,9 @@ impl MintTxCandidate {
         author_sig: String,
         ctr_addr: Option<String>,
         cm: [u8; 32],
-        v: String,
-        k: String,
-        s: String,
+        v: [u8; 32],
+        k: [u8; 32],
+        s: [u8; 32],
     ) -> MintTxCandidate {
         let ctr_addr = ctr_addr.unwrap_or(String::from(""));
 

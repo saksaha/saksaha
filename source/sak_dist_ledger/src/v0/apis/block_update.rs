@@ -191,7 +191,7 @@ async fn handle_mint_tx_candidate(
             .await?
             .unwrap_or(vec![0]);
 
-        let curr_cm = ScalarExt::parse_bytes(&tc.cm)?;
+        let curr_cm = ScalarExt::parse_arr(&tc.cm)?;
         let sib_cm = ScalarExt::parse_vec(sibling_node)?;
 
         let merkle_node = dist_ledger.hasher.mimc(curr_cm, sib_cm).to_bytes();

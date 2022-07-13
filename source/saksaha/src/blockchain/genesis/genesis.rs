@@ -1,5 +1,7 @@
-use sak_proofs::Hasher;
-use sak_types::{BlockCandidate, MintTxCandidate, Tx, TxCandidate};
+use sak_proofs::{Hasher, Scalar, ScalarExt};
+use sak_types::{BlockCandidate, MintTxCandidate, Tx, TxCandidate, U8Array};
+
+use crate::system::BoxedError;
 
 pub(crate) const VALIDATOR_SIG: &str = "validator_sig";
 
@@ -13,57 +15,107 @@ pub(crate) struct GenesisBlock {
 }
 
 impl GenesisBlock {
-    pub fn create() -> GenesisBlock {
+    pub fn create() -> Result<GenesisBlock, BoxedError> {
         let validator_wasm = VALIDATOR.to_vec();
 
-        // created_at: String,
-        // data: Vec<u8>,
-        // author_sig: String,
-        // ctr_addr: Option<String>,
-        // cm: Vec<u8>,
-        // v: String,
-        // k: String,
-        // s: String,
-
-        let v = 100_000;
-        let k = 13;
-        let s = 24;
-
         let hasher = Hasher::new();
-        let cm = hasher.comm(s, hasher.prf(v, k)).to_bytes();
 
-        let mint_tx_1 = TxCandidate::Mint(MintTxCandidate::new(
-            String::from("initial_mint_created_at"),
-            vec!["initial_mint_data"],
-            VALIDATOR_SIG,
-            None,
-        ));
+        let mint_tx_1 = {
+            let v = Scalar::from(1000);
 
-        let validator_deploy_tx = TxCandidate::new(
-            String::from("1"),
-            validator_wasm,
-            String::from("1"),
-            vec![1],
-            Some(VALIDATOR_CTR_ADDR.to_string()),
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        );
+            let s = {
+                let arr = U8Array::new_empty_32();
+
+                ScalarExt::parse_arr(&arr)?
+            };
+
+            let r = {
+                let arr = U8Array::new_empty_32();
+
+                ScalarExt::parse_arr(&arr)?
+            };
+
+            let rho = {
+                let arr = U8Array::new_empty_32();
+
+                ScalarExt::parse_arr(&arr)?
+            };
+
+            let a_pk = {
+                let arr = U8Array::new_empty_32();
+
+                ScalarExt::parse_arr(&arr)?
+            };
+
+            let k = hasher.comm2(r, a_pk, rho);
+
+            let cm = hasher.comm2(s, v, k);
+
+            TxCandidate::Mint(MintTxCandidate::new(
+                String::from("initial_mint_created_at"),
+                vec![0],
+                VALIDATOR_SIG.to_string(),
+                None,
+                cm.to_bytes(),
+                v.to_bytes(),
+                k.to_bytes(),
+                s.to_bytes(),
+            ))
+        };
+
+        let validator_deploy_tx = {
+            let v = Scalar::from(1000);
+
+            let s = {
+                let arr = U8Array::new_empty_32();
+
+                ScalarExt::parse_arr(&arr)?
+            };
+
+            let r = {
+                let arr = U8Array::new_empty_32();
+
+                ScalarExt::parse_arr(&arr)?
+            };
+
+            let rho = {
+                let arr = U8Array::new_empty_32();
+
+                ScalarExt::parse_arr(&arr)?
+            };
+
+            let a_pk = {
+                let arr = U8Array::new_empty_32();
+
+                ScalarExt::parse_arr(&arr)?
+            };
+
+            let k = hasher.comm2(r, a_pk, rho);
+
+            let cm = hasher.comm2(s, v, k);
+
+            TxCandidate::Mint(MintTxCandidate::new(
+                String::from("initial_mint_created_at"),
+                validator_wasm,
+                VALIDATOR_SIG.to_string(),
+                Some(VALIDATOR_CTR_ADDR.to_string()),
+                cm.to_bytes(),
+                v.to_bytes(),
+                k.to_bytes(),
+                s.to_bytes(),
+            ))
+        };
 
         let block_candidate = BlockCandidate {
             validator_sig: VALIDATOR_SIG.to_string(),
-            tx_candidates: vec![validator_deploy_tx, some_other_tx],
+            tx_candidates: vec![mint_tx_1, validator_deploy_tx],
             witness_sigs: vec![String::from("1"), String::from("2")],
             created_at: String::from("2022061515340000"),
         };
 
-        GenesisBlock { block_candidate }
+        let gen_block = GenesisBlock { block_candidate };
+
+        Ok(gen_block)
     }
 
     pub fn get_validator_ctr_addr(&self) -> String {

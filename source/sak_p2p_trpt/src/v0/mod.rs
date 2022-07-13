@@ -2,6 +2,7 @@ pub mod handshake;
 mod msg;
 mod net;
 mod transport;
+pub(crate) mod utils;
 
 pub use msg::*;
 pub use net::*;

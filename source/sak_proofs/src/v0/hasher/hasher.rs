@@ -71,31 +71,31 @@ impl Hasher {
     }
 }
 
-fn convert_and_mimc(
-    xl: &[u8; 32],
-    xr: &[u8; 32],
-    constants: &Vec<Scalar>,
-) -> Result<Scalar, ProofError> {
-    let xl = {
-        let ct_option = Scalar::from_bytes(xl);
+// fn convert_and_mimc(
+//     xl: &[u8; 32],
+//     xr: &[u8; 32],
+//     constants: &Vec<Scalar>,
+// ) -> Result<Scalar, ProofError> {
+//     let xl = {
+//         let ct_option = Scalar::from_bytes(xl);
 
-        if bool::from(ct_option.is_some()) {
-            ct_option.unwrap()
-        } else {
-            return Err(format!("Convert to scalar has failed").into());
-        }
-    };
+//         if bool::from(ct_option.is_some()) {
+//             ct_option.unwrap()
+//         } else {
+//             return Err(format!("Convert to scalar has failed").into());
+//         }
+//     };
 
-    let xr = {
-        let ct_option = Scalar::from_bytes(xr);
-        if bool::from(ct_option.is_some()) {
-            ct_option.unwrap()
-        } else {
-            return Err(format!("Convert to scalar has failed").into());
-        }
-    };
+//     let xr = {
+//         let ct_option = Scalar::from_bytes(xr);
+//         if bool::from(ct_option.is_some()) {
+//             ct_option.unwrap()
+//         } else {
+//             return Err(format!("Convert to scalar has failed").into());
+//         }
+//     };
 
-    let res = mimc::mimc(xl, xr, constants);
+//     let res = mimc::mimc(xl, xr, constants);
 
-    Ok(res)
-}
+//     Ok(res)
+// }

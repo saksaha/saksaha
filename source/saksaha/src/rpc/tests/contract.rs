@@ -2,8 +2,8 @@ use super::utils::test_utils;
 
 #[cfg(test)]
 mod test_suite {
-    use crate::{blockchain::GenesisBlock, rpc::response::JsonResponse};
     use super::*;
+    use crate::{blockchain::GenesisBlock, rpc::response::JsonResponse};
     use hyper::body::Buf;
     use hyper::{Body, Client, Method, Request, Uri};
 
@@ -18,7 +18,7 @@ mod test_suite {
 
         tokio::spawn(async move { rpc.run().await });
 
-        let genesis_block = GenesisBlock::create();
+        let genesis_block = GenesisBlock::create().unwrap();
         let validator_ctr_addr = genesis_block.get_validator_ctr_addr();
 
         let uri: Uri = {

@@ -10,4 +10,6 @@ pub use hashable::*;
 pub use tx::*;
 pub use u8_array::*;
 
-pub(crate) type TypesError = Box<dyn std::error::Error + Send + Sync>;
+pub type TypesError = Box<dyn std::error::Error + Send + Sync>;
+
+// pub type MimcDigest = [u8; 32];

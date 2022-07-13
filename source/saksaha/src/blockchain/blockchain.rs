@@ -20,7 +20,7 @@ impl Blockchain {
         let (gen_block_candidate, consensus) = {
             let genesis_block = match genesis_block {
                 Some(b) => b,
-                None => GenesisBlock::create(),
+                None => GenesisBlock::create()?,
             };
 
             let validator_ctr_addr = genesis_block.get_validator_ctr_addr();

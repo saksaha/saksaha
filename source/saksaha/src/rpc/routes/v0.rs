@@ -15,9 +15,9 @@ struct SendMintTxBody {
     author_sig: String,
     ctr_addr: Option<String>,
     cm: [u8; 32],
-    v: String,
-    k: String,
-    s: String,
+    v: [u8; 32],
+    k: [u8; 32],
+    s: [u8; 32],
 }
 
 #[derive(Deserialize, Debug)]
@@ -33,7 +33,7 @@ struct SendPourTxBody {
     sn_2: Vec<u8>,
     cm_1: Vec<u8>,
     cm_2: Vec<u8>,
-    merkle_rt: Vec<u8>,
+    merkle_rt: [u8; 32],
 }
 
 pub(crate) async fn send_mint_tx(

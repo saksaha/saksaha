@@ -8,3 +8,5 @@ pub use rocksdb::{
     Options, WriteBatch, DB,
 };
 pub use utils::*;
+
+pub(crate) type KvDBError = Box<dyn std::error::Error + Send + Sync>;

@@ -636,14 +636,7 @@ impl LedgerDBSchema {
 
         match db.get_cf(&cf, key)? {
             Some(v) => {
-                let arr: [u8; 32] = match v.try_into() {
-                    Ok(a) => a,
-                    Err(err) => {
-                        return Err(
-                            format!("Cannot convert cm into an array",).into()
-                        )
-                    }
-                };
+                let arr = sak_kv_db::convert_vec_into_u8_32(v)?;
 
                 return Ok(Some(arr));
             }
@@ -678,14 +671,14 @@ impl LedgerDBSchema {
         &self,
         db: &DB,
         key: &String,
-    ) -> Result<Option<String>, LedgerError> {
+    ) -> Result<Option<[u8; 32]>, LedgerError> {
         let cf = make_cf_handle(db, V)?;
 
         match db.get_cf(&cf, key)? {
             Some(v) => {
-                let str = String::from_utf8(v)?;
+                let arr = sak_kv_db::convert_vec_into_u8_32(v)?;
 
-                return Ok(Some(str));
+                return Ok(Some(arr));
             }
             None => {
                 return Ok(None);
@@ -697,14 +690,14 @@ impl LedgerDBSchema {
         &self,
         db: &DB,
         key: &String,
-    ) -> Result<Option<String>, LedgerError> {
+    ) -> Result<Option<[u8; 32]>, LedgerError> {
         let cf = make_cf_handle(db, K)?;
 
         match db.get_cf(&cf, key)? {
             Some(v) => {
-                let str = String::from_utf8(v)?;
+                let arr = sak_kv_db::convert_vec_into_u8_32(v)?;
 
-                return Ok(Some(str));
+                return Ok(Some(arr));
             }
             None => {
                 return Ok(None);
@@ -716,14 +709,14 @@ impl LedgerDBSchema {
         &self,
         db: &DB,
         key: &String,
-    ) -> Result<Option<String>, LedgerError> {
+    ) -> Result<Option<[u8; 32]>, LedgerError> {
         let cf = make_cf_handle(db, S)?;
 
         match db.get_cf(&cf, key)? {
             Some(v) => {
-                let str = String::from_utf8(v)?;
+                let arr = sak_kv_db::convert_vec_into_u8_32(v)?;
 
-                return Ok(Some(str));
+                return Ok(Some(arr));
             }
             None => {
                 return Ok(None);
