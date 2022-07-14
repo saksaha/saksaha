@@ -2,6 +2,19 @@ use log::info;
 use sak_fs::FS;
 use sak_kv_db::{Options, DB};
 
+pub fn init_test_log() {
+    const RUST_LOG_ENV: &str = "
+            sak_,
+            saksaha
+        ";
+
+    if std::env::var("RUST_LOG").is_err() {
+        std::env::set_var("RUST_LOG", RUST_LOG_ENV);
+    }
+
+    sak_logger::init(false);
+}
+
 pub fn init_test_config(app_prefixes: &Vec<String>) -> Result<(), String> {
     for app_prefix in app_prefixes {
         let db_path = FS::create_or_get_app_path(app_prefix)
