@@ -69,7 +69,7 @@ impl PConfig {
 
         let (sk, pk) = sak_crypto::encode_into_key_pair(sk);
 
-        let acc_addr = sak_crypto::create_acc_addr(&pk);
+        // let (addr_pk, addr_sk) = sak_crypto::create_addr_key_pair(&pk);
 
         let pconf = PConfig {
             p2p: PersistedP2PConfig {
