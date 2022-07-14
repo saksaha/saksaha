@@ -6,10 +6,16 @@ use std::collections::HashMap;
 
 type ExecuteArgs = HashMap<String, String>;
 
-const ARG_CHANNEL_ID: &str = "channel_id";
+// open_channel const types
+pub(crate) const ARG_CH_ID: &str = "ch_id";
+pub(crate) const ARG_CIPHER_TEXT: &str = "cipher_text";
+pub(crate) const ARG_EPH_PK: &str = "eph_pk";
+pub(crate) const ARG_SRC_PK: &str = "src_pk";
+pub(crate) const ARG_DST_PK: &str = "dst_pk";
+pub(crate) const ARG_SERIALIZED_INPUT: &str = "serialized_input";
+pub(crate) const DUMMY_CHANNEL_ID_1: &str = "ch_12";
+
 const ARG_MESSAGE: &str = "message";
-const ARG_HER_PK: &str = "her_pk";
-const DUMMY_CHANNEL_ID_1: &str = "dummy_channel_1";
 const STORAGE_CAP: usize = 100;
 
 contract_bootstrap!();
@@ -59,7 +65,7 @@ pub fn execute2(storage: &mut Storage, request: Request) {
 }
 
 fn handle_get_msgs(storage: Storage, args: ExecuteArgs) -> String {
-    let channel_id = match args.get(ARG_CHANNEL_ID) {
+    let channel_id = match args.get(ARG_CH_ID) {
         Some(v) => v,
         None => {
             panic!("Args should contain a channel_id");
@@ -83,65 +89,52 @@ fn handle_get_msgs(storage: Storage, args: ExecuteArgs) -> String {
 }
 
 fn handle_open_channel(storage: &mut Storage, args: ExecuteArgs) {
-    let her_pk = match args.get(ARG_HER_PK) {
+    let dst_pk = match args.get(ARG_DST_PK) {
         Some(v) => v,
         None => {
             panic!("args should contain the her_pk");
         }
     };
 
-    let channel_id = match args.get(ARG_CHANNEL_ID) {
+    let input_serialized = match args.get(ARG_SERIALIZED_INPUT) {
         Some(v) => v,
         None => {
-            panic!("args should contain the channel_id");
+            panic!("args should contain the input_serialized");
         }
     };
 
-    match storage.get_mut(channel_id) {
+    let [_eph_pk_str, ch_id, _open_ch_src, open_ch_empty]: [String; 4] =
+        serde_json::from_str(&input_serialized.as_str()).unwrap();
+
+    match storage.get_mut(&ch_id) {
         Some(_) => {
-            panic!("The channel is already opened with the channel_id, {channel_id}");
+            panic!(
+                "The channel is already opened with the channel_id, {ch_id}"
+            );
         }
         None => {}
     };
 
-    storage.insert(her_pk.clone(), channel_id.clone());
+    storage.insert(dst_pk.clone(), input_serialized.clone()); // put in the open_channel storage
+    storage.insert(ch_id.clone(), open_ch_empty); // put in the chats storage
 }
 
 fn handle_send_msg(storage: &mut Storage, args: ExecuteArgs) {
-    let channel_id = match args.get(ARG_CHANNEL_ID) {
+    let channel_id = match args.get(ARG_CH_ID) {
         Some(v) => v,
         None => {
             panic!("args should contain the channel_id");
         }
     };
 
-    let msg_new = match args.get(ARG_MESSAGE) {
+    let input_serialized = match args.get(ARG_SERIALIZED_INPUT) {
         Some(v) => v,
         None => {
             panic!("args should contain the msg");
         }
     };
 
-    let msgs_serialized = match storage.get_mut(channel_id) {
-        Some(v) => v,
-        None => {
-            panic!("storage should contain the channel_id");
-        }
-    };
-
-    let mut msgs_vec: Vec<String> =
-        match serde_json::from_str(msgs_serialized.as_str()) {
-            Ok(v) => v,
-            Err(err) => {
-                panic!("should be contained in vector, err: {}", err);
-            }
-        };
-
-    msgs_vec.push(msg_new.clone());
-
-    let chat_new = serde_json::to_string(&msgs_vec).unwrap();
-
     storage.remove(channel_id);
 
-    storage.insert(channel_id.clone(), chat_new);
+    storage.insert(channel_id.clone(), input_serialized.clone());
 }
