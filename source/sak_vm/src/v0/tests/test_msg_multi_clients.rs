@@ -192,12 +192,6 @@ fn pk_serialize(input: PublicKey) -> String {
     ret
 }
 
-fn vk_serialize(input: VerifyingKey) -> String {
-    let ret = serde_json::to_string(input.to_encoded_point(false).as_bytes())
-        .unwrap();
-    ret
-}
-
 fn vec_serialize<T>(input: &T) -> String
 where
     T: serde::ser::Serialize,
@@ -394,8 +388,10 @@ async fn test_multi_clients_chat() {
         let (msg, pk): (String, String) = serde_json::from_str(&item).unwrap();
 
         println!("\n MSG Sender {:?} \nsays: {:?}", pk, msg);
+
         msg_vec.push(msg.clone());
         pk_vec.push(pk);
+
         assert_eq!(msgs[i], msg);
     }
 }
