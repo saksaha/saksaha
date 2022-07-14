@@ -12,12 +12,13 @@ impl U8Array {
         ]
     }
 
-    pub fn from_int(v: u64) -> Result<[u8; 32], TypesError> {
-        let ret: [u8; 32] = match v.to_le_bytes() {
-            Ok(v) => v,
-            Err(err) => return Err(format!("aflwkej").into()),
-        };
+    pub fn from_int(v: u64) -> [u8; 32] {
+        let arr: [u8; 8] = v.to_le_bytes();
 
-        Ok(ret)
+        let mut ret = [0u8; 32];
+
+        let _ = &ret[24..].copy_from_slice(&arr);
+
+        ret
     }
 }

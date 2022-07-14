@@ -218,6 +218,8 @@ pub mod for_testing {
     use crate::U8Array;
     use sak_crypto::{Hasher, Scalar, ScalarExt};
 
+    // const a: [u8; 32] = U8Array::new_empty_32();
+
     impl TxCandidate {
         pub fn new_dummy_mint_1() -> TxCandidate {
             let tx_candidate = MintTxCandidate::new_dummy_1();
@@ -260,52 +262,7 @@ pub mod for_testing {
         pub fn new_dummy_1() -> MintTxCandidate {
             let hasher = Hasher::new();
 
-            let v = Scalar::from(1_000);
-
-            let s = {
-                let arr = U8Array::new_empty_32();
-
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let r = {
-                let arr = U8Array::new_empty_32();
-
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let rho = {
-                let arr = U8Array::new_empty_32();
-
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let a_pk = {
-                let arr = U8Array::new_empty_32();
-
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let k = hasher.comm2(r, a_pk, rho);
-
-            let cm = hasher.comm2(s, v, k);
-
-            MintTxCandidate::new(
-                String::from("created_at_mint_1"),
-                vec![1],
-                String::from("author_sig_mint_1"),
-                None,
-                cm.to_bytes(),
-                v.to_bytes(),
-                k.to_bytes(),
-                s.to_bytes(),
-            )
-        }
-
-        pub fn new_dummy_2() -> MintTxCandidate {
-            let hasher = Hasher::new();
-
-            let v = ;
+            let v = U8Array::from_int(1_000);
 
             let s = U8Array::new_empty_32();
 
@@ -317,17 +274,46 @@ pub mod for_testing {
 
             let k = hasher.comm2(&r, &a_pk, &rho).unwrap();
 
-            let cm = hasher.comm2(&s, &v, &k).unwrap();
+            let cm = hasher.comm2(&s, &v, &k.to_bytes()).unwrap();
 
             MintTxCandidate::new(
-                String::from("created_at_mint_2"),
-                vec![2],
-                String::from("author_sig_mint_2"),
+                String::from("created_at_mint_1"),
+                vec![1],
+                String::from("author_sig_mint_1"),
                 None,
                 cm.to_bytes(),
-                v.to_bytes(),
+                v,
                 k.to_bytes(),
-                s.to_bytes(),
+                s,
+            )
+        }
+
+        pub fn new_dummy_2() -> MintTxCandidate {
+            let hasher = Hasher::new();
+
+            let v = U8Array::from_int(1_000);
+
+            let s = U8Array::new_empty_32();
+
+            let r = U8Array::new_empty_32();
+
+            let rho = U8Array::new_empty_32();
+
+            let a_pk = U8Array::new_empty_32();
+
+            let k = hasher.comm2(&r, &a_pk, &rho).unwrap();
+
+            let cm = hasher.comm2(&s, &v, &k.to_bytes()).unwrap();
+
+            MintTxCandidate::new(
+                String::from("created_at_mint_1"),
+                vec![1],
+                String::from("author_sig_mint_1"),
+                None,
+                cm.to_bytes(),
+                v,
+                k.to_bytes(),
+                s,
             )
         }
     }
@@ -338,65 +324,23 @@ pub mod for_testing {
 
             let pi = vec![0];
 
+            let sn_1 = { hasher::mimc(a_sk, rho_old) };
+
             let cm_1 = {
-                let v = {
-                    let arr = U8Array::new_empty_32();
-                    ScalarExt::parse_arr(&arr).unwrap()
-                };
+                let v = U8Array::new_empty_32();
 
-                let s = {
-                    let arr = U8Array::new_empty_32();
-                    ScalarExt::parse_arr(&arr).unwrap()
-                };
+                let s = U8Array::new_empty_32();
 
-                let r = {
-                    let arr = U8Array::new_empty_32();
-                    ScalarExt::parse_arr(&arr).unwrap()
-                };
+                let r = U8Array::new_empty_32();
 
-                let rho = {
-                    let arr = U8Array::new_empty_32();
-                    ScalarExt::parse_arr(&arr).unwrap()
-                };
+                let rho = U8Array::new_empty_32();
 
-                let a_pk = {
-                    let arr = U8Array::new_empty_32();
-                    ScalarExt::parse_arr(&arr).unwrap()
-                };
+                let a_pk = U8Array::new_empty_32();
 
-                let k = hasher.comm2(r, a_pk, rho);
-                let cm = hasher.comm2(s, v, k);
-                cm
-            };
+                let k = hasher.comm2(&r, &a_pk, &rho).unwrap();
 
-            let cm_2 = {
-                let v = {
-                    let arr = U8Array::new_empty_32();
-                    ScalarExt::parse_arr(&arr).unwrap()
-                };
+                let cm = hasher.comm2(&s, &v, &k.to_bytes());
 
-                let s = {
-                    let arr = U8Array::new_empty_32();
-                    ScalarExt::parse_arr(&arr).unwrap()
-                };
-
-                let r = {
-                    let arr = U8Array::new_empty_32();
-                    ScalarExt::parse_arr(&arr).unwrap()
-                };
-
-                let rho = {
-                    let arr = U8Array::new_empty_32();
-                    ScalarExt::parse_arr(&arr).unwrap()
-                };
-
-                let a_pk = {
-                    let arr = U8Array::new_empty_32();
-                    ScalarExt::parse_arr(&arr).unwrap()
-                };
-
-                let k = hasher.comm2(r, a_pk, rho);
-                let cm = hasher.comm2(s, v, k);
                 cm
             };
 
