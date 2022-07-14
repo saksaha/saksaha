@@ -9,14 +9,32 @@ use k256::{
     EncodedPoint, Secp256k1,
 };
 use rand_core::OsRng;
-use sha3::{Digest, Sha3_256};
+use sha3::{Digest, Keccak256, Keccak256Core, Sha3_256};
 use std::{fmt::Write, num::ParseIntError};
 
 pub type PublicKey = k256::PublicKey;
 
+pub fn keccak256(data: &[u8]) -> String {
+    let mut hasher = Keccak256::default();
+    hasher.update(data);
+
+    let result = {
+        let h = hasher.finalize();
+        format!("{:x}", h)
+    };
+
+    result
+}
+
 pub fn generate_key() -> SecretKey {
     let secret = SecretKey::random(&mut OsRng);
     return secret;
+}
+
+pub fn create_addr_key_pair(pk: &String) -> (String, String) {
+    let d = pk[2..].as_bytes();
+    let h = keccak256(d);
+    h[24..].to_string()
 }
 
 pub fn encode_into_key_pair(sk: SecretKey) -> (String, String) {

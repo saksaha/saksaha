@@ -218,7 +218,9 @@ pub mod for_testing {
     use crate::U8Array;
     use sak_crypto::{Hasher, Scalar, ScalarExt};
 
-    // const a: [u8; 32] = U8Array::new_empty_32();
+    // const rho_0: [u8; 32] = U8Array::new_empty_32();
+    // const rho_1: [u8; 32] = U8Array::new_empty_32();
+    // const rho_2: [u8; 32] = U8Array::new_empty_32();
 
     impl TxCandidate {
         pub fn new_dummy_mint_1() -> TxCandidate {
@@ -324,7 +326,7 @@ pub mod for_testing {
 
             let pi = vec![0];
 
-            let sn_1 = { hasher::mimc(a_sk, rho_old) };
+            // let sn_1 = { hasher::mimc(a_sk, rho_old) };
 
             let cm_1 = {
                 let v = U8Array::new_empty_32();

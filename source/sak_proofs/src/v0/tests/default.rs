@@ -1,6 +1,6 @@
 use crate::{CoinCircuit, CoinProof, CM_TREE_DEPTH};
-use bellman::groth16;
 use rand::rngs::OsRng;
+use sak_crypto::groth16;
 use sak_crypto::{mimc, Scalar};
 use std::time::SystemTime;
 

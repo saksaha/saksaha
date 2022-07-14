@@ -21,35 +21,19 @@ impl GenesisBlock {
         let hasher = Hasher::new();
 
         let mint_tx_1 = {
-            let v = Scalar::from(1_000);
+            let v = U8Array::new_empty_32();
 
-            let s = {
-                let arr = U8Array::new_empty_32();
+            let s = U8Array::new_empty_32();
 
-                ScalarExt::parse_arr(&arr)?
-            };
+            let r = U8Array::new_empty_32();
 
-            let r = {
-                let arr = U8Array::new_empty_32();
+            let rho = U8Array::new_empty_32();
 
-                ScalarExt::parse_arr(&arr)?
-            };
+            let a_pk = U8Array::new_empty_32();
 
-            let rho = {
-                let arr = U8Array::new_empty_32();
+            let k = hasher.comm2(&r, &a_pk, &rho)?;
 
-                ScalarExt::parse_arr(&arr)?
-            };
-
-            let a_pk = {
-                let arr = U8Array::new_empty_32();
-
-                ScalarExt::parse_arr(&arr)?
-            };
-
-            let k = hasher.comm2(r, a_pk, rho);
-
-            let cm = hasher.comm2(s, v, k);
+            let cm = hasher.comm2(&s, &v, &k.to_bytes())?;
 
             TxCandidate::Mint(MintTxCandidate::new(
                 String::from("initial_mint_created_at"),
@@ -57,42 +41,26 @@ impl GenesisBlock {
                 VALIDATOR_SIG.to_string(),
                 None,
                 cm.to_bytes(),
-                v.to_bytes(),
+                v,
                 k.to_bytes(),
-                s.to_bytes(),
+                s,
             ))
         };
 
         let validator_deploy_tx = {
-            let v = Scalar::from(1000);
+            let v = U8Array::new_empty_32();
 
-            let s = {
-                let arr = U8Array::new_empty_32();
+            let s = U8Array::new_empty_32();
 
-                ScalarExt::parse_arr(&arr)?
-            };
+            let r = U8Array::new_empty_32();
 
-            let r = {
-                let arr = U8Array::new_empty_32();
+            let rho = U8Array::new_empty_32();
 
-                ScalarExt::parse_arr(&arr)?
-            };
+            let a_pk = U8Array::new_empty_32();
 
-            let rho = {
-                let arr = U8Array::new_empty_32();
+            let k = hasher.comm2(&r, &a_pk, &rho)?;
 
-                ScalarExt::parse_arr(&arr)?
-            };
-
-            let a_pk = {
-                let arr = U8Array::new_empty_32();
-
-                ScalarExt::parse_arr(&arr)?
-            };
-
-            let k = hasher.comm2(r, a_pk, rho);
-
-            let cm = hasher.comm2(s, v, k);
+            let cm = hasher.comm2(&s, &v, &k.to_bytes())?;
 
             TxCandidate::Mint(MintTxCandidate::new(
                 String::from("initial_mint_created_at"),
@@ -100,9 +68,9 @@ impl GenesisBlock {
                 VALIDATOR_SIG.to_string(),
                 Some(VALIDATOR_CTR_ADDR.to_string()),
                 cm.to_bytes(),
-                v.to_bytes(),
+                v,
                 k.to_bytes(),
-                s.to_bytes(),
+                s,
             ))
         };
 
