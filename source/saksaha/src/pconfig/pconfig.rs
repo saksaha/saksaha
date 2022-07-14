@@ -17,9 +17,9 @@ pub struct PConfig {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct PersistedP2PConfig {
     pub secret: String,
-    pub public_key_str: String,
-    // pub addr_pk: String,
-    // pub addr_sk: String,
+    pub public_key: String,
+    pub addr_pk: String,
+    pub addr_sk: String,
     pub bootstrap_addrs: Option<Vec<UnknownAddr>>,
     pub p2p_port: Option<u16>,
     pub disc_port: Option<u16>,
@@ -74,7 +74,7 @@ impl PConfig {
         let pconf = PConfig {
             p2p: PersistedP2PConfig {
                 secret: sk,
-                public_key_str: pk,
+                public_key: pk,
                 // acc_addr,
                 bootstrap_addrs: None,
                 p2p_port: None,
