@@ -37,6 +37,13 @@ pub fn generate_key() -> SecretKey {
 //     h[24..].to_string()
 // }
 
+pub fn generate_key_pair() -> (SecretKey, PublicKey) {
+    let secret = SecretKey::random(&mut OsRng);
+    let public_key = secret.public_key();
+
+    (secret, public_key)
+}
+
 pub fn encode_into_key_pair(sk: SecretKey) -> (String, String) {
     let pk = sk.public_key();
 
@@ -150,62 +157,4 @@ pub fn make_shared_secret(
         my_secret_key.to_secret_scalar(),
         her_public.as_affine(),
     )
-}
-
-#[cfg(test)]
-mod test {
-    use k256::{
-        ecdh::EphemeralSecret,
-        ecdsa::{
-            signature::{Signer, Verifier},
-            Signature, SigningKey, VerifyingKey,
-        },
-        elliptic_curve::sec1::ToEncodedPoint,
-        EncodedPoint, PublicKey, SecretKey,
-    };
-    use rand_core::OsRng;
-
-    #[test]
-    fn it_creates_signature() {
-        let signing_key = SigningKey::random(&mut OsRng); // Serialize with `::to_bytes()`
-        let message = b"ECDSA proves knowledge of a secret number in the context of a single message";
-
-        let signature: Signature = signing_key.sign(message);
-        let verify_key = VerifyingKey::from(&signing_key); // Serialize with `::to_encoded_point()`
-
-        assert!(verify_key.verify(message, &signature).is_ok());
-    }
-
-    #[test]
-    fn it_creates_shared_secret() {
-        // Alice
-        let alice_secret = EphemeralSecret::random(&mut OsRng);
-        let alice_pk_bytes = EncodedPoint::from(alice_secret.public_key());
-
-        let sk = SecretKey::random(&mut OsRng);
-        let sk_bytes = sk.to_bytes();
-
-        print!("secret key: {:?}", sk);
-        print!("secret key bytes: {:?}", alice_pk_bytes);
-
-        let sk_rec = SecretKey::from_bytes(sk_bytes).unwrap();
-        print!("recovered secret key {:?}", sk_rec);
-
-        let public_key = sk.public_key();
-        let enc_point = public_key.to_encoded_point(false);
-        let enc_point_bytes = enc_point.as_bytes();
-
-        print!("public key: {:?}", public_key);
-        print!("encoded point: {:?}", enc_point);
-        print!("encoded point as bytes: {:?}", enc_point_bytes);
-
-        let public_key_rec =
-            PublicKey::from_sec1_bytes(enc_point_bytes).unwrap();
-        let enc_point_rec = public_key_rec.to_encoded_point(false);
-
-        print!("public key rec: {:?}", public_key_rec);
-        print!("encoded point rec: {:?}", &enc_point_rec);
-
-        assert_eq!(enc_point, enc_point_rec);
-    }
 }

@@ -18,8 +18,8 @@ pub struct PConfig {
 pub struct PersistedP2PConfig {
     pub secret: String,
     pub public_key: String,
-    pub addr_pk: String,
-    pub addr_sk: String,
+    // pub addr_pk: String,
+    // pub addr_sk: String,
     pub bootstrap_addrs: Option<Vec<UnknownAddr>>,
     pub p2p_port: Option<u16>,
     pub disc_port: Option<u16>,

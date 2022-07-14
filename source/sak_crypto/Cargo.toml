@@ -17,6 +17,13 @@ pairing = "0.21.0"
 sha3 = "0.10.1"
 rand_core = "0.6.3"
 rand = "0.8.4"
+base64ct = { version = "1.5.0", features = ["alloc"] }
+hkdf = "0.12.3"
+sha2 = "0.10.1"
+aes-gcm-siv = "0.10.3"
+
+[dev-dependencies]
+sak_test_utils = { path = "../sak_test_utils" }
 
 [lib]
 doctest = false # until stable beta is released

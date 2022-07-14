@@ -1,7 +1,10 @@
 mod crypto;
+mod ecies;
 mod hasher;
 pub mod mimc;
 mod scalar_ext;
+#[cfg(test)]
+mod tests;
 
 pub use bellman::gadgets::boolean::AllocatedBit;
 pub use bellman::groth16::{
@@ -10,6 +13,8 @@ pub use bellman::groth16::{
 };
 pub use bellman::{groth16, Circuit, ConstraintSystem, SynthesisError};
 pub use bls12_381::{Bls12, Scalar};
+
+pub use ecies::*;
 pub use k256::{
     ecdsa::{
         signature::{Signer, Verifier},
@@ -27,5 +32,4 @@ pub use scalar_ext::*;
 
 pub type PublicKey = k256::PublicKey;
 pub type SharedSecret = SSecret<Secp256k1>;
-
 pub type CryptoError = Box<dyn std::error::Error + Send + Sync>;
