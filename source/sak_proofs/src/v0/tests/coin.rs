@@ -1,4 +1,4 @@
-use crate::{MerkleTree, ProofError};
+use crate::{MerkleTree, Path, ProofError};
 use rand::rngs::OsRng;
 use rand::RngCore;
 use sak_crypto::{
@@ -11,20 +11,24 @@ use std::io::Write;
 
 const TEST_TREE_DEPTH: usize = 3;
 
-// TODO Scalar -> [u8; 32]
 struct TestCoinCircuit {
     pub hasher: Hasher,
-    pub leaf: Option<Scalar>,
-    pub auth_path: [Option<(Scalar, bool)>; TEST_TREE_DEPTH],
 
-    //
+    // old coins
+    pub cm_old_1: Option<[u8; 32]>,
+    pub cm_old_2: Option<[u8; 32]>,
+    pub auth_path_1: [Option<(Scalar, bool)>; TEST_TREE_DEPTH],
+    pub auth_path_2: [Option<(Scalar, bool)>; TEST_TREE_DEPTH],
+    pub merkle_rt_old: Option<[u8; 32]>,
+
+    // new coin 1
     pub a_sk_1: Option<Scalar>,
     pub rho_1: Option<Scalar>,
     pub r_1: Option<Scalar>,
     pub s_1: Option<Scalar>,
     pub v_1: Option<Scalar>,
 
-    //
+    // new coin 2
     pub a_sk_2: Option<Scalar>,
     pub rho_2: Option<Scalar>,
     pub r_2: Option<Scalar>,
@@ -36,7 +40,7 @@ struct TestCoinCircuit {
 
 fn make_test_context() -> (
     MerkleTree, // mt,
-    //1
+    // new coin 1
     Scalar, // a_sk_1,
     Scalar, // r_1,
     Scalar, // s_1,
@@ -46,7 +50,7 @@ fn make_test_context() -> (
     Scalar, // sn_1,
     Scalar, // k_1,
     Scalar, // cm_1,
-    //2
+    // new coin 2
     Scalar, // a_sk_2,
     Scalar, // r_2,
     Scalar, // s_2,
@@ -99,15 +103,9 @@ fn make_test_context() -> (
 
     let constants = mimc::get_mimc_constants();
 
-    let hasher = |xl, xr| {
-        let hash = mimc::mimc(Scalar::from(xl), Scalar::from(xr), &constants);
-
-        hash
-    };
-
     let data = vec![0, 1, 2, 3, 4, 5, 6, 7];
 
-    let mt = MerkleTree::new(data, 3, &constants, &hasher);
+    let mt = MerkleTree::new(3, &constants);
 
     (
         mt, // [gen_proof] : merkle_tree
@@ -147,15 +145,22 @@ pub fn get_params_test(constants: &[Scalar]) -> Parameters<Bls12> {
         let params = {
             let c = TestCoinCircuit {
                 hasher,
-                leaf: None,
-                auth_path: [None; TEST_TREE_DEPTH],
-                //
+
+                // old coins
+                cm_old_1: None,
+                cm_old_2: None,
+                auth_path_1: [None; TEST_TREE_DEPTH],
+                auth_path_2: [None; TEST_TREE_DEPTH],
+                merkle_rt_old: None,
+
+                // new coin 1
                 a_sk_1: None,
                 rho_1: None,
                 r_1: None,
                 s_1: None,
                 v_1: None,
-                //
+
+                // new coin 2
                 a_sk_2: None,
                 rho_2: None,
                 r_2: None,
@@ -181,14 +186,22 @@ pub fn get_params_test(constants: &[Scalar]) -> Parameters<Bls12> {
 
 fn make_proof(
     tgt_leaf_idx: usize,
-    mt: MerkleTree,
-    //
+
+    // old coins
+    cm_old_1: [u8; 32],
+    cm_old_2: [u8; 32],
+    auth_path_1: Vec<Path>,
+    auth_path_2: Vec<Path>,
+    merkle_rt_old: [u8; 32],
+
+    // new coin 1
     a_sk_1: Scalar,
     rho_1: Scalar,
     r_1: Scalar,
     s_1: Scalar,
     v_1: Scalar,
-    //
+
+    // new coin 1
     a_sk_2: Scalar,
     rho_2: Scalar,
     r_2: Scalar,
@@ -198,39 +211,6 @@ fn make_proof(
     let constants = mimc::get_mimc_constants();
     let de_params = get_params_test(&constants);
 
-    // `rt` check
-    let auth_path = {
-        let tree = &mt;
-        let root = tree.get_root().hash;
-
-        println!("root: {:?}", root);
-
-        let idx = 0;
-        let auth_paths = tree.generate_auth_paths(idx);
-
-        for (idx, p) in auth_paths.iter().enumerate() {
-            println!("auth path [{}] - {:?}", idx, p);
-        }
-
-        let target_leaf =
-            tree.nodes.get(0).unwrap().get(tgt_leaf_idx).unwrap().hash;
-
-        println!("target_leaf: {:?}, idx: {}", target_leaf, idx);
-
-        // convert auth_paths => [auth_path]
-        let mut auth_path: [Option<(Scalar, bool)>; TEST_TREE_DEPTH] =
-            [None; TEST_TREE_DEPTH];
-
-        for (idx, _) in auth_path.clone().iter().enumerate() {
-            let sib = auth_paths.get(idx).unwrap();
-            auth_path[idx] = Some((sib.hash.clone(), sib.direction.clone()));
-        }
-
-        auth_path
-    };
-
-    let leaf = Some(mt.nodes.get(0).unwrap().get(tgt_leaf_idx).unwrap().hash);
-    //
     let a_sk_1 = Some(a_sk_1);
     let rho_1 = Some(rho_1);
     let r_1 = Some(r_1);
@@ -247,8 +227,6 @@ fn make_proof(
 
     let c = TestCoinCircuit {
         hasher,
-        leaf,
-        auth_path,
         //
         a_sk_1,
         rho_1,
@@ -476,7 +454,7 @@ impl Circuit<Scalar> for TestCoinCircuit {
 #[tokio::test(flavor = "multi_thread")]
 pub async fn test_coin_ownership_default() {
     // sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
-    env_logger::init();
+    sak_test_utils::init_test_log();
 
     println!("[!] test coin ownership start!!!!!!!!!!!!!!!!!!!!!!!!!\n");
 
@@ -511,8 +489,8 @@ pub async fn test_coin_ownership_default() {
     let tgt_leaf_idx = 0;
 
     println!("\n[+] Test Proof calculating");
+
     let proof = make_proof(
-        //
         tgt_leaf_idx,
         mt,
         //
