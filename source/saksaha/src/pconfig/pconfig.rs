@@ -1,6 +1,6 @@
 use colored::Colorize;
 use log::info;
-use sak_crypto::ToEncodedPoint;
+use sak_crypto::{SakKey, ToEncodedPoint};
 use sak_fs::FS;
 use sak_logger::tinfo;
 use sak_p2p_addr::UnknownAddr;
@@ -18,8 +18,7 @@ pub struct PConfig {
 pub struct PersistedP2PConfig {
     pub secret: String,
     pub public_key: String,
-    // pub addr_pk: String,
-    // pub addr_sk: String,
+    pub acc_addr: String,
     pub bootstrap_addrs: Option<Vec<UnknownAddr>>,
     pub p2p_port: Option<u16>,
     pub disc_port: Option<u16>,
@@ -65,17 +64,22 @@ impl PConfig {
     }
 
     fn create_new_config() -> PConfig {
-        let sk = sak_crypto::generate_key();
+        // let sk = sak_crypto::generate_key();
+        let (sk, pk) = SakKey::generate();
 
-        let (sk, pk) = sak_crypto::encode_into_key_pair(sk);
+        let secret_str = sak_crypto::encode_hex(&sk.to_bytes());
+        let public_key_str =
+            sak_crypto::encode_hex(&pk.to_encoded_point(false).to_bytes());
+
+        let acc_addr = SakKey::create_acc_addr(&pk);
 
         // let (addr_pk, addr_sk) = sak_crypto::create_addr_key_pair(&pk);
 
         let pconf = PConfig {
             p2p: PersistedP2PConfig {
-                secret: sk,
-                public_key: pk,
-                // acc_addr,
+                secret: secret_str,
+                public_key: public_key_str,
+                acc_addr,
                 bootstrap_addrs: None,
                 p2p_port: None,
                 disc_port: None,

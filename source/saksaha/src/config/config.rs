@@ -106,7 +106,7 @@ impl Config {
         let public_key_str = profiled_config
             .p2p
             .public_key_str
-            .unwrap_or(pconfig.p2p.public_key_str.clone());
+            .unwrap_or(pconfig.p2p.public_key.clone());
 
         let miner = profiled_config.node.miner || sys_run_args.miner;
 
