@@ -1,13 +1,18 @@
+use crate::ProofError;
 use log::debug;
 use sak_crypto::{mimc, Scalar};
+use std::convert::TryInto;
 
-pub const TREE_DEPTH: u64 = 32;
+pub const TREE_DEPTH: u32 = 5;
+
+pub const TREE_CAPACITY: u32 = 2_u32.pow(TREE_DEPTH);
 
 #[derive(Debug)]
 pub struct MerkleTree {
-    pub nodes: Vec<Vec<Node>>,
-    pub height: usize,
-    pub data: Vec<u32>,
+    // pub nodes: Vec<Vec<Node>>,
+    // pub height: usize,
+    // pub data: Vec<u32>,
+    pub leaves: Vec<[u8; 32]>,
 }
 
 #[derive(Debug, Clone)]
@@ -23,93 +28,96 @@ pub struct Path {
 }
 
 impl MerkleTree {
-    pub fn new(
-        data: Vec<u32>,
+    pub fn init(
+        data: &[[u8; 32]],
         height: usize,
         constants: &[Scalar],
         hasher: &dyn Fn(u64, u64) -> Scalar,
-    ) -> MerkleTree {
-        let mut leaves = vec![];
-        let leaf_count = data.len();
+    ) -> Result<MerkleTree, ProofError> {
+        let data_count = data.len();
+
+        if data_count as u32 > TREE_CAPACITY {
+            return Err(format!(
+                "Data too many to be contained in the tree, \
+                len: {}, capacity: {}",
+                data.len(),
+                TREE_CAPACITY
+            )
+            .into());
+        }
+
+        let mut leaves = vec![[0u8; 32]; TREE_CAPACITY.try_into()?];
+
+        leaves.copy_from_slice(data);
 
         // println!(
         //     "Create tree, leaf_count: {}, height: {}, data: {:?}",
         //     leaf_count, height, data,
         // );
 
-        let d = data.clone();
+        // for h in 1..=height {
+        //     let child_nodes = nodes.get_mut((h - 1) as usize).unwrap();
+        //     let mut nodes_at_height = vec![];
 
-        for l in data.into_iter() {
-            let xl: u64 = l.into();
-            let xr: u64 = (l + 1).into();
+        //     if child_nodes.len() % 2 == 1 {
+        //         let l = child_nodes.last().unwrap();
+        //         let last_node = copy_node(l);
+        //         child_nodes.push(last_node);
+        //     }
 
-            let hash = hasher(xl, xr);
+        //     let mut xl = Scalar::default();
 
-            let n = Node {
-                val: Some([l]),
-                hash,
-            };
+        //     for (idx, cn) in child_nodes.iter().enumerate() {
+        //         if idx % 2 == 0 {
+        //             xl = cn.hash;
+        //         } else {
+        //             let xr = cn.hash;
+        //             let hs = mimc::mimc(xl, xr, &constants);
 
-            leaves.push(n);
-        }
+        //             let n = Node {
+        //                 val: None,
+        //                 hash: hs,
+        //             };
 
-        // println!("[*] leaves: {:#?}", leaves);
-        let mut nodes = vec![leaves];
+        //             nodes_at_height.push(n);
+        //         }
+        //     }
+        //     nodes.push(nodes_at_height);
+        // }
 
-        for h in 1..=height {
-            let child_nodes = nodes.get_mut((h - 1) as usize).unwrap();
-            let mut nodes_at_height = vec![];
+        let t = MerkleTree {
+            // nodes,
+            // height,
+            // data: d,
+            leaves,
+        };
 
-            if child_nodes.len() % 2 == 1 {
-                let l = child_nodes.last().unwrap();
-                let last_node = copy_node(l);
-                child_nodes.push(last_node);
-            }
-
-            let mut xl = Scalar::default();
-
-            for (idx, cn) in child_nodes.iter().enumerate() {
-                if idx % 2 == 0 {
-                    xl = cn.hash;
-                } else {
-                    let xr = cn.hash;
-                    let hs = mimc::mimc(xl, xr, &constants);
-
-                    let n = Node {
-                        val: None,
-                        hash: hs,
-                    };
-
-                    nodes_at_height.push(n);
-                }
-            }
-            nodes.push(nodes_at_height);
-        }
-
-        MerkleTree {
-            nodes,
-            height,
-            data: d,
-        }
+        Ok(t)
     }
 
-    pub fn get_root(&self) -> &Node {
-        let highest_nodes = self.nodes.get(self.nodes.len() - 1).unwrap();
-        highest_nodes.get(0).unwrap()
-    }
+    // pub fn get_root(&self) -> &Node {
+    //     let highest_nodes = self.nodes.get(self.nodes.len() - 1).unwrap();
+    //     highest_nodes.get(0).unwrap()
+    // }
 
-    pub fn sibling(&self, height: u64, idx: u64) -> &Node {
-        let len = self.nodes.len() as u64;
-        if idx >= len - 1 {
-            panic!("Invalid idx, cannot get sibling node");
-        }
+    // pub fn compute_root(&self) -> &[u8; 32] {
+    //     &[0u8; 32]
+    //     // let highest_nodes = self.nodes.get(self.nodes.len() - 1).unwrap();
+    //     // highest_nodes.get(0).unwrap()
+    // }
 
-        let sibling_idx = get_sibling_idx(idx);
-        let nodes_at_height = self.nodes.get(height as usize).unwrap();
-        let n = nodes_at_height.get(sibling_idx as usize).unwrap();
+    // pub fn sibling(&self, height: u64, idx: u64) -> &Node {
+    //     let len = self.nodes.len() as u64;
+    //     if idx >= len - 1 {
+    //         panic!("Invalid idx, cannot get sibling node");
+    //     }
 
-        n
-    }
+    //     let sibling_idx = get_sibling_idx(idx);
+    //     let nodes_at_height = self.nodes.get(height as usize).unwrap();
+    //     let n = nodes_at_height.get(sibling_idx as usize).unwrap();
+
+    //     n
+    // }
 
     pub fn generate_auth_paths(&self, idx: u64) -> Vec<Path> {
         let height = self.height;
@@ -144,10 +152,9 @@ impl MerkleTree {
     }
 
     pub fn display_tree(&self) {
-        for (idx, e) in self.nodes.iter().enumerate() {
-            debug!("node idx: {}: node_len: {}, node: {:?}\n", idx, e.len(), e);
+        for (idx, l) in self.leaves.iter().enumerate() {
+            debug!("leaf idx: {}: leaf: {:?}\n", idx, l);
         }
-        // todo
     }
 }
 
