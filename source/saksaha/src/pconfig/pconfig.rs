@@ -64,16 +64,15 @@ impl PConfig {
     }
 
     fn create_new_config() -> PConfig {
-        // let sk = sak_crypto::generate_key();
         let (sk, pk) = SakKey::generate();
+
+        println!("power33333333333: {:?}", sk.to_bytes());
 
         let secret_str = sak_crypto::encode_hex(&sk.to_bytes());
         let public_key_str =
             sak_crypto::encode_hex(&pk.to_encoded_point(false).to_bytes());
 
         let acc_addr = SakKey::create_acc_addr(&pk);
-
-        // let (addr_pk, addr_sk) = sak_crypto::create_addr_key_pair(&pk);
 
         let pconf = PConfig {
             p2p: PersistedP2PConfig {

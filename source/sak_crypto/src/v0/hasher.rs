@@ -18,9 +18,29 @@ impl Hasher {
         }
     }
 
-    pub fn mimc(&self, xl: Scalar, xr: Scalar) -> Scalar {
-        mimc::mimc(xl, xr, &self.constants)
+    pub fn mimc(
+        &self,
+        a: &[u8; 32],
+        b: &[u8; 32],
+    ) -> Result<Scalar, CryptoError> {
+        let a = ScalarExt::parse_arr(a)?;
+        let b = ScalarExt::parse_arr(b)?;
+        let h = mimc::mimc(a, b, &self.constants);
+
+        Ok(h)
     }
+
+    pub fn mimc_single(&self, a: &[u8; 32]) -> Result<Scalar, CryptoError> {
+        let a = ScalarExt::parse_arr(a)?;
+        let b = Scalar::zero();
+        let h = mimc::mimc(a, b, &self.constants);
+
+        Ok(h)
+    }
+
+    // pub fn mimc(&self, xl: Scalar, xr: Scalar) -> Scalar {
+    //     mimc::mimc(xl, xr, &self.constants)
+    // }
 
     fn mimc_cs_scalar<CS: ConstraintSystem<Scalar>>(
         &self,

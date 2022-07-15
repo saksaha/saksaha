@@ -216,11 +216,13 @@ async fn handle_mint_tx_candidate(
             .await?
             .unwrap_or(U8Array::new_empty_32());
 
-        let curr_cm = ScalarExt::parse_arr(&tc.cm)?;
+        // let curr_cm = ScalarExt::parse_arr(&tc.cm)?;
+        let curr_cm = &tc.cm;
 
-        let sib_cm = ScalarExt::parse_arr(&sibling_node)?;
+        // let sib_cm = ScalarExt::parse_arr(&sibling_node)?;
+        let sib_cm = &sibling_node;
 
-        let merkle_node = dist_ledger.hasher.mimc(curr_cm, sib_cm).to_bytes();
+        let merkle_node = dist_ledger.hasher.mimc(curr_cm, sib_cm)?.to_bytes();
 
         let parent_idx = sak_proofs::get_parent_idx(*auth_node_idx);
         let update_loc = format!("{}_{}", height + 1, parent_idx);

@@ -2,11 +2,17 @@ use super::TxCandidate;
 use crate::{MintTxCandidate, PourTxCandidate, Tx, U8Array};
 use sak_crypto::Hasher;
 
-fn get_sk_1() {}
+fn get_addr_sk_1() -> [u8; 32] {
+    [
+        213, 142, 186, 101, 114, 0, 81, 8, 38, 83, 254, 23, 201, 180, 239, 177,
+        240, 61, 215, 11, 16, 98, 140, 106, 139, 184, 41, 201, 89, 70, 192,
+        109,
+    ]
+}
 
-fn get_sk_2() {}
+fn get_addr_sk_2() {}
 
-fn get_sk_3() {}
+fn get_addr_sk_3() {}
 
 fn get_s_1() -> [u8; 32] {
     U8Array::new_empty_32()
@@ -123,9 +129,11 @@ impl MintTxCandidate {
 
         let rho = get_rho_1();
 
-        let a_pk = U8Array::new_empty_32();
+        let addr_sk = get_addr_sk_1();
 
-        let k = hasher.comm2(&r, &a_pk, &rho).unwrap();
+        let addr_pk = hasher.mimc_single(&addr_sk).unwrap();
+
+        let k = hasher.comm2(&r, &addr_pk.to_bytes(), &rho).unwrap();
 
         let cm = hasher.comm2(&s, &v, &k.to_bytes()).unwrap();
 
