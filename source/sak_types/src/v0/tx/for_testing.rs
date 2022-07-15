@@ -2,9 +2,9 @@ use super::TxCandidate;
 use crate::{MintTxCandidate, PourTxCandidate, Tx, U8Array};
 use sak_crypto::Hasher;
 
-fn get_cm_1() -> [u8; 32] {}
+// fn get_cm_1() -> [u8; 32] {}
 
-fn get_cm_2() -> [u8; 32] {}
+// fn get_cm_2() -> [u8; 32] {}
 
 fn get_addr_sk_1() -> [u8; 32] {
     [
@@ -197,8 +197,8 @@ impl PourTxCandidate {
             let r_1 = get_r_1();
 
             let sn = hasher.mimc(&addr_sk_1, &rho_1).unwrap().to_bytes();
+
             sn
-            // hasher::mimc(a_sk, rho_old)
         };
 
         let sn_2 = {
@@ -213,8 +213,11 @@ impl PourTxCandidate {
             let sn = hasher.mimc(&addr_sk_1, &rho_2).unwrap().to_bytes();
 
             sn
-            // hasher::mimc(a_sk, rho_old)
         };
+
+        // CoinProof
+
+        // let cm_old_1 =
 
         // let cm_1 = {
         //     let v = U8Array::new_empty_32();
