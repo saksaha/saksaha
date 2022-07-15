@@ -2,9 +2,9 @@ use super::TxCandidate;
 use crate::{MintTxCandidate, PourTxCandidate, Tx, U8Array};
 use sak_crypto::Hasher;
 
-fn get_cm_1() -> [u8; 32] {}
+// fn get_cm_1() -> [u8; 32] {}
 
-fn get_cm_2() -> [u8; 32] {}
+// fn get_cm_2() -> [u8; 32] {}
 
 fn get_addr_sk_1() -> [u8; 32] {
     [

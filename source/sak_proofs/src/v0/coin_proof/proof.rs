@@ -1,6 +1,6 @@
 use crate::CoinCircuit;
-use crate::CM_TREE_DEPTH;
 use crate::MerkleTree;
+use crate::CM_TREE_DEPTH;
 use pairing::MultiMillerLoop;
 use rand::rngs::OsRng;
 use sak_crypto::{
@@ -128,6 +128,7 @@ impl CoinProof {
         // Prepare the verification key (for proof verification).
         let pvk = groth16::prepare_verifying_key(&de_params.vk);
 
+        println!("Wll");
         match groth16::verify_proof(&pvk, &proof, &[root]) {
             Ok(_) => {
                 println!("verify success!");
