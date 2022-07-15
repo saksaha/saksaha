@@ -55,8 +55,8 @@ fn get_rho_4() -> [u8; 32] {
 }
 
 impl Tx {
-    pub fn new_dummy_pour_1_2_3() -> Tx {
-        let c = TxCandidate::new_dummy_pour_1_2_3();
+    pub fn new_dummy_pour_1_2_to_3() -> Tx {
+        let c = TxCandidate::new_dummy_pour_1_2_to_3();
         c.upgrade(0)
     }
 
@@ -92,8 +92,8 @@ impl TxCandidate {
         TxCandidate::Mint(tx_candidate)
     }
 
-    pub fn new_dummy_pour_1_2_3() -> TxCandidate {
-        let tx_candidate = PourTxCandidate::new_dummy_1_2_3();
+    pub fn new_dummy_pour_1_2_to_3() -> TxCandidate {
+        let tx_candidate = PourTxCandidate::new_dummy_1_2_to_3();
 
         TxCandidate::Pour(tx_candidate)
     }
@@ -180,30 +180,55 @@ impl MintTxCandidate {
 }
 
 impl PourTxCandidate {
-    pub fn new_dummy_1_2_3() -> PourTxCandidate {
+    pub fn new_dummy_1_2_to_3() -> PourTxCandidate {
         let hasher = Hasher::new();
 
-        let pi = vec![0];
+        let sn_1 = {
+            let addr_sk_1 = get_addr_sk_1();
 
-        // let sn_1 = { hasher::mimc(a_sk, rho_old) };
+            let addr_pk_1 = hasher.mimc_single(&addr_sk_1).unwrap().to_bytes();
 
-        let cm_1 = {
-            let v = U8Array::new_empty_32();
+            let rho_1 = get_rho_1();
 
-            let s = U8Array::new_empty_32();
+            let r_1 = get_r_1();
 
-            let r = U8Array::new_empty_32();
-
-            let rho = U8Array::new_empty_32();
-
-            let a_pk = U8Array::new_empty_32();
-
-            let k = hasher.comm2(&r, &a_pk, &rho).unwrap();
-
-            let cm = hasher.comm2(&s, &v, &k.to_bytes());
-
-            cm
+            let sn = hasher.mimc(&addr_sk_1, &rho_1).unwrap().to_bytes();
+            sn
+            // hasher::mimc(a_sk, rho_old)
         };
+
+        let sn_2 = {
+            let addr_sk_1 = get_addr_sk_1();
+
+            let addr_pk_1 = hasher.mimc_single(&addr_sk_1).unwrap().to_bytes();
+
+            let rho_2 = get_rho_1();
+
+            let r_2 = get_r_1();
+
+            let sn = hasher.mimc(&addr_sk_1, &rho_2).unwrap().to_bytes();
+
+            sn
+            // hasher::mimc(a_sk, rho_old)
+        };
+
+        // let cm_1 = {
+        //     let v = U8Array::new_empty_32();
+
+        //     let s = U8Array::new_empty_32();
+
+        //     let r = U8Array::new_empty_32();
+
+        //     let rho = U8Array::new_empty_32();
+
+        //     let a_pk = U8Array::new_empty_32();
+
+        //     let k = hasher.comm2(&r, &a_pk, &rho).unwrap();
+
+        //     let cm = hasher.comm2(&s, &v, &k.to_bytes());
+
+        //     cm
+        // };
 
         // let ptc = PourTxCandidate::new(
         //     String::from("initial_mint_created_at"),
@@ -217,6 +242,8 @@ impl PourTxCandidate {
         //     cm_1,
         //     merkle_rt,
         // );
+
+        let pi = vec![0];
 
         PourTxCandidate::new(
             String::from("created_at_1"),

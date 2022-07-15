@@ -13,7 +13,7 @@ fn make_dummy_genesis_block() -> BlockCandidate {
     let genesis_block = BlockCandidate {
         validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
         tx_candidates: vec![
-            TxCandidate::new_dummy_pour_1_2_3(),
+            TxCandidate::new_dummy_pour_1_2_to_3(),
             TxCandidate::new_dummy_pour_2(),
         ],
         witness_sigs: vec![String::from("1"), String::from("2")],
@@ -185,8 +185,8 @@ async fn test_two_nodes_tx_pool_marshal_check_true() {
     )
     .await;
 
-    let dummy_tx1 = TxCandidate::new_dummy_pour_1_2_3();
-    let dummy_tx2 = TxCandidate::new_dummy_pour_1_2_3();
+    let dummy_tx1 = TxCandidate::new_dummy_pour_1_2_to_3();
+    let dummy_tx2 = TxCandidate::new_dummy_pour_1_2_to_3();
 
     let block = {
         let c = BlockCandidate {

@@ -62,7 +62,7 @@ async fn test_set_and_get_contract_state_to_db() {
 async fn test_insert_invalid_contract_to_tx_pool() {
     let test_wasm = include_bytes!("./test_invalid_contract.wasm").to_vec();
 
-    let dummy_tx = TxCandidate::new_dummy_pour_1_2_3();
+    let dummy_tx = TxCandidate::new_dummy_pour_1_2_to_3();
 
     let sync_pool = SyncPool::new();
 
@@ -152,7 +152,7 @@ async fn test_rpc_client_and_repeating_write_block() {
     for i in 0..10000 as u64 {
         let block = BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
-            tx_candidates: vec![TxCandidate::new_dummy_pour_1_2_3()],
+            tx_candidates: vec![TxCandidate::new_dummy_pour_1_2_to_3()],
             witness_sigs: vec![String::from("1"), String::from("2")],
             created_at: String::from("2022061515340000"),
             // block_height: i as u128,
@@ -184,7 +184,7 @@ async fn test_rpc_client_and_repeating_write_block_and_get_tx_height() {
         let block = BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
             tx_candidates: vec![
-                TxCandidate::new_dummy_pour_1_2_3(),
+                TxCandidate::new_dummy_pour_1_2_to_3(),
                 TxCandidate::new_dummy_pour_2(),
             ],
             witness_sigs: vec![String::from("1"), String::from("2")],

@@ -61,7 +61,7 @@ async fn test_rpc_client_request_wrong_transaction_hash() {
     {
         let blockchain = utils::make_blockchain().await;
 
-        let dummy_tx = TxCandidate::new_dummy_pour_1_2_3();
+        let dummy_tx = TxCandidate::new_dummy_pour_1_2_to_3();
 
         let old_tx_hash = (&dummy_tx).get_tx_hash();
 
@@ -129,7 +129,7 @@ async fn test_rpc_client_request_correct_transaction_hash() {
     let tx_hash = {
         let blockchain = utils::make_blockchain().await;
 
-        let dummy_tx = TxCandidate::new_dummy_pour_1_2_3();
+        let dummy_tx = TxCandidate::new_dummy_pour_1_2_to_3();
 
         let old_tx_hash = (&dummy_tx).get_tx_hash();
 
@@ -211,7 +211,7 @@ async fn test_if_send_transaction_puts_tx_into_tx_pool() {
     sak_test_utils::init_test_log();
     sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
 
-    let tc_dummy = PourTxCandidate::new_dummy_1_2_3();
+    let tc_dummy = PourTxCandidate::new_dummy_1_2_to_3();
 
     let (rpc, rpc_socket_addr, machine) = utils::make_test_context().await;
     let _rpc_server = tokio::spawn(async move { rpc.run().await });
@@ -284,7 +284,7 @@ async fn test_if_send_transaction_puts_false_tx_into_tx_pool() {
     sak_test_utils::init_test_log();
     sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
 
-    let tc_dummy = PourTxCandidate::new_dummy_1_2_3();
+    let tc_dummy = PourTxCandidate::new_dummy_1_2_to_3();
 
     let (rpc, rpc_socket_addr, machine) = utils::make_test_context().await;
     let _rpc_server = tokio::spawn(async move { rpc.run().await });

@@ -17,13 +17,13 @@ impl Consensus for DummyPos {
     }
 }
 
-pub(crate) fn make_dummy_genesis_block() -> BlockCandidate {
+pub(crate) fn make_dummy_genesis_block_1() -> BlockCandidate {
     let genesis_block = BlockCandidate {
         validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
         tx_candidates: vec![
             TxCandidate::new_dummy_mint_1(),
             TxCandidate::new_dummy_mint_2(),
-            TxCandidate::new_dummy_pour_1_2_3(),
+            TxCandidate::new_dummy_pour_1_2_to_3(),
         ],
         witness_sigs: vec![String::from("1"), String::from("2")],
         created_at: String::from("2022061515340000"),
@@ -38,7 +38,7 @@ pub(crate) async fn make_dist_ledger() -> DistLedger {
     let dist_ledger_args = DistLedgerArgs {
         app_prefix: String::from("test"),
         tx_sync_interval: None,
-        genesis_block: Some(make_dummy_genesis_block()),
+        genesis_block: Some(make_dummy_genesis_block_1()),
         consensus: pos,
         block_sync_interval: None,
     };
@@ -52,7 +52,7 @@ pub(crate) async fn make_dist_ledger() -> DistLedger {
 
 pub(crate) fn make_dummy_txs() -> Vec<Tx> {
     vec![
-        Tx::new_dummy_pour_1_2_3(),
+        Tx::new_dummy_pour_1_2_to_3(),
         Tx::new_dummy_pour_2(),
         Tx::new_dummy_pour_3(),
         Tx::new_dummy_pour_4(),
@@ -75,7 +75,7 @@ pub(crate) fn make_dummy_block_candidate_1() -> Option<BlockCandidate> {
     // let test_wasm = include_bytes!("./test_valid_contract.wasm").to_vec();
 
     let block_candidate: BlockCandidate = {
-        let dummy_ctr_deploying_tc = TxCandidate::new_dummy_pour_1_2_3();
+        let dummy_ctr_deploying_tc = TxCandidate::new_dummy_pour_1_2_to_3();
 
         BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),

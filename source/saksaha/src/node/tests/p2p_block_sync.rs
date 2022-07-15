@@ -174,7 +174,7 @@ async fn test_block_sync_true() {
     )
     .await;
 
-    let dummy_tx1 = TxCandidate::new_dummy_pour_1_2_3();
+    let dummy_tx1 = TxCandidate::new_dummy_pour_1_2_to_3();
     let dummy_tx2 = TxCandidate::new_dummy_pour_2();
 
     {
