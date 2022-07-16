@@ -6,6 +6,7 @@ use sak_crypto::{
 };
 use sak_crypto::{mimc, Parameters};
 use sak_crypto::{Bls12, Hasher, Scalar};
+use sak_types::U8Array;
 use std::fs::File;
 use std::io::Write;
 
@@ -61,44 +62,34 @@ fn make_test_context() -> (
     Scalar, // k_2,
     Scalar, // cm_2,
 ) {
-    let (a_sk_1, r_1, s_1, rho_1, v_1, pk_1, sn_1, k_1, cm_1) = {
-        let mut key = [0u8; 16];
-        OsRng.fill_bytes(&mut key);
-        let random_u64 = OsRng.next_u64();
-
+    let (addr_sk_1, r_1, s_1, rho_1, v_1) = {
         let hasher = Hasher::new();
 
-        let a_sk_1 = Scalar::from(random_u64);
-        let r_1 = Scalar::from(6);
-        let s_1 = Scalar::from(5);
-        let rho_1 = Scalar::from(7);
-        let v_1 = Scalar::from(100); // 100 sak
-        let a_pk_1 = hasher.prf(Scalar::from(0), a_sk_1);
-        let sn_1 = hasher.prf(a_sk_1, rho_1);
-        let k_1 = hasher.comm(r_1, hasher.prf(a_pk_1, rho_1));
-        let cm_1 = hasher.comm(s_1, hasher.prf(v_1, k_1));
+        let addr_sk_1 = U8Array::new_empty_32();
+        let r_1 = U8Array::new_empty_32();
+        let s_1 = U8Array::new_empty_32();
+        let rho_1 = U8Array::new_empty_32();
+        let v_1 = U8Array::from_int(100);
 
-        (a_sk_1, r_1, s_1, rho_1, v_1, a_pk_1, sn_1, k_1, cm_1)
+        // 100 sak
+        // let a_pk_1 = hasher.prf(Scalar::from(0), a_sk_1);
+        // let sn_1 = hasher.prf(a_sk_1, rho_1);
+        // let k_1 = hasher.comm(r_1, hasher.prf(a_pk_1, rho_1));
+        // let cm_1 = hasher.comm(s_1, hasher.prf(v_1, k_1));
+
+        (addr_sk_1, r_1, s_1, rho_1, v_1)
     };
 
     let (a_sk_2, r_2, s_2, rho_2, v_2, pk_2, sn_2, k_2, cm_2) = {
-        let mut key = [0u8; 16];
-        OsRng.fill_bytes(&mut key);
-        let random_u64 = OsRng.next_u64();
-
         let hasher = Hasher::new();
 
-        let a_sk_2 = Scalar::from(random_u64);
-        let r_2 = Scalar::from(6);
-        let s_2 = Scalar::from(5);
-        let rho_2 = Scalar::from(7);
-        let v_2 = Scalar::from(200); // 200 sak
-        let a_pk_2 = hasher.prf(Scalar::from(0), a_sk_2);
-        let sn_2 = hasher.prf(a_sk_2, rho_2);
-        let k_2 = hasher.comm(r_2, hasher.prf(a_pk_2, rho_2));
-        let cm_2 = hasher.comm(s_2, hasher.prf(v_2, k_2));
+        let addr_sk_2 = U8Array::new_empty_32();
+        let r_2 = U8Array::new_empty_32();
+        let s_2 = U8Array::new_empty_32();
+        let rho_2 = U8Array::new_empty_32();
+        let v_2 = U8Array::from_int(100);
 
-        (a_sk_2, r_2, s_2, rho_2, v_2, a_pk_2, sn_2, k_2, cm_2)
+        (addr_sk_2, r_2, s_2, rho_2, v_2, a_pk_2, sn_2, k_2, cm_2)
     };
 
     let constants = mimc::get_mimc_constants();
