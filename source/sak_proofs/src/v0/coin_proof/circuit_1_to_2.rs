@@ -61,11 +61,6 @@ impl Circuit<Scalar> for CoinProofCircuit1to2 {
         let s_2 = self.s_2.or(Some(Scalar::default()));
         let v_2 = self.v_2.or(Some(Scalar::default()));
 
-        // self.auth_pathmap(|p| {// });
-
-        // let auth_path_
-        // 1 = self.auth_path_1.or(Some([(Scalar::default(), false); 3]));
-
         // rt
         {
             for (idx, layer) in self.auth_path_1.iter().enumerate() {

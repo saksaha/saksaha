@@ -2,7 +2,8 @@ use crate::{CoinProofCircuit1to2, MerkleTree, Path, ProofError};
 use rand::rngs::OsRng;
 use rand::RngCore;
 use sak_crypto::{
-    groth16, AllocatedBit, Circuit, ConstraintSystem, Proof, SynthesisError,
+    groth16, AllocatedBit, Circuit, ConstraintSystem, Proof, ScalarExt,
+    SynthesisError,
 };
 use sak_crypto::{mimc, Parameters};
 use sak_crypto::{Bls12, Hasher, Scalar};
@@ -13,58 +14,114 @@ use std::io::Write;
 const TEST_TREE_DEPTH: usize = 3;
 
 fn make_test_context() -> (
-    MerkleTree, // mt,
-                // new coin 1
-                // Scalar, // a_sk_1,
-                // Scalar, // r_1,
-                // Scalar, // s_1,
-                // Scalar, // rho_1,
-                // Scalar, // v_1,
-                // Scalar, // a_pk_1,
-                // Scalar, // sn_1,
-                // Scalar, // k_1,
-                // Scalar, // cm_1,
-                // // new coin 2
-                // Scalar, // a_sk_2,
-                // Scalar, // r_2,
-                // Scalar, // s_2,
-                // Scalar, // rho_2,
-                // Scalar, // v_2,
-                // Scalar, // a_pk_2,
-                // Scalar, // sn_2,
-                // Scalar, // k_2,
-                // Scalar, // cm_2,
+    // merkle root
+    Scalar,
+    // old coin 1
+    Scalar, // addr_sk_1_old,
+    Scalar, // r_1_old,
+    Scalar, // s_1_old,
+    Scalar, // rho_1_old,
+    Scalar, // v_1_old,
+    // new coin 1
+    Scalar, // addr_sk_1,
+    Scalar, // r_1,
+    Scalar, // s_1,
+    Scalar, // rho_1,
+    Scalar, // v_1,
+    // new coin 2
+    Scalar, // addr_sk_2,
+    Scalar, // r_2,
+    Scalar, // s_2,
+    Scalar, // rho_2,
+    Scalar, // v_2,
 ) {
     let hasher = Hasher::new();
 
-    let (addr_sk_1, r_1, s_1, rho_1, v_1) = {
-        let hasher = Hasher::new();
+    let (addr_sk_1_old, r_1_old, s_1_old, rho_1_old, v_1_old) = {
+        let addr_sk = {
+            let arr = U8Array::new_empty_32();
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
 
-        let addr_sk_1 = U8Array::new_empty_32();
-        let r_1 = U8Array::new_empty_32();
-        let s_1 = U8Array::new_empty_32();
-        let rho_1 = U8Array::new_empty_32();
-        let v_1 = U8Array::from_int(100);
+        let r = {
+            let arr = U8Array::new_empty_32();
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
 
-        // 100 sak
-        // let a_pk_1 = hasher.prf(Scalar::from(0), a_sk_1);
-        // let sn_1 = hasher.prf(a_sk_1, rho_1);
-        // let k_1 = hasher.comm(r_1, hasher.prf(a_pk_1, rho_1));
-        // let cm_1 = hasher.comm(s_1, hasher.prf(v_1, k_1));
+        let s = {
+            let arr = U8Array::new_empty_32();
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
 
-        (addr_sk_1, r_1, s_1, rho_1, v_1)
+        let rho = {
+            let arr = U8Array::new_empty_32();
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        let v = {
+            let arr = U8Array::from_int(100);
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        (addr_sk, r, s, rho, v)
     };
 
-    let (a_sk_2, r_2, s_2, rho_2, v_2) = {
-        let hasher = Hasher::new();
+    let (addr_sk_1, r_1, s_1, rho_1, v_1) = {
+        let addr_sk = {
+            let arr = U8Array::new_empty_32();
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
 
-        let addr_sk_2 = U8Array::new_empty_32();
-        let r_2 = U8Array::new_empty_32();
-        let s_2 = U8Array::new_empty_32();
-        let rho_2 = U8Array::new_empty_32();
-        let v_2 = U8Array::from_int(100);
+        let r = {
+            let arr = U8Array::new_empty_32();
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
 
-        (addr_sk_2, r_2, s_2, rho_2, v_2)
+        let s = {
+            let arr = U8Array::new_empty_32();
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        let rho = {
+            let arr = U8Array::new_empty_32();
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        let v = {
+            let arr = U8Array::from_int(100);
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        (addr_sk, r, s, rho, v)
+    };
+
+    let (addr_sk_2, r_2, s_2, rho_2, v_2) = {
+        let addr_sk = {
+            let arr = U8Array::new_empty_32();
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        let r = {
+            let arr = U8Array::new_empty_32();
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        let s = {
+            let arr = U8Array::new_empty_32();
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        let rho = {
+            let arr = U8Array::new_empty_32();
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        let v = {
+            let arr = U8Array::from_int(100);
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        (addr_sk, r, s, rho, v)
     };
 
     let constants = mimc::get_mimc_constants();
@@ -73,28 +130,31 @@ fn make_test_context() -> (
 
     let merkle_tree = MerkleTree::new(3, &constants);
 
+    let merkle_rt = {
+        let arr = U8Array::new_empty_32();
+        ScalarExt::parse_arr(&arr).unwrap()
+    };
+
     (
-        merkle_tree, // [gen_proof] : merkle_tree
-                     //
-                     // a_sk_1, // [gen_proof] : secret key
-                     // r_1,    // [gen_proof] : random sample value `r`
-                     // s_1,    // [gen_proof] : random sample value `s`
-                     // rho_1,  // [gen_proof] : rho value
-                     // v_1,    // [gen_proof] : value of coin `v`
-                     // pk_1,   // [ver_proof] : public key
-                     // sn_1,   // [ver_proof] : serial number
-                     // k_1,    // [ver_proof] : middle value (commitment) `k`
-                     // cm_1,   // [ver_proof] : commitment `cm`
-                     // //
-                     // a_sk_2, // [gen_proof] : secret key
-                     // r_2,    // [gen_proof] : random sample value `r`
-                     // s_2,    // [gen_proof] : random sample value `s`
-                     // rho_2,  // [gen_proof] : rho value
-                     // v_2,    // [gen_proof] : value of coin `v`
-                     // pk_2,   // [ver_proof] : public key
-                     // sn_2,   // [ver_proof] : serial number
-                     // k_2,    // [ver_proof] : middle value (commitment) `k`
-                     // cm_2,   // [ver_proof] : commitment `cm`
+        merkle_rt, //
+        // old coin 1
+        addr_sk_1_old, // [gen_proof] : secret key
+        r_1_old,       // [gen_proof] : random sample value `r`
+        s_1_old,       // [gen_proof] : random sample value `s`
+        rho_1_old,     // [gen_proof] : rho value
+        v_1_old,       // [gen_proof] : value of coin `v`
+        // new coin 1
+        addr_sk_1,
+        r_1,
+        s_1,
+        rho_1,
+        v_1,
+        // new coin 2
+        addr_sk_2,
+        r_2,
+        s_2,
+        rho_2,
+        v_2,
     )
 }
 
@@ -281,29 +341,27 @@ pub async fn test_coin_ownership_default() {
 
     println!("\n[+] Test Context creating");
 
-    // let (
-    //     mt, // merkle tree
-    //     //
-    //     a_sk_1, // secret key
-    //     r_1,    // random sample value `r`
-    //     s_1,    // random sample value `s`
-    //     rho_1,  // rho value
-    //     v_1,    // value of coin `v`
-    //     a_pk_1, // public key
-    //     sn_1,   // serial number
-    //     k_1,    // middle value (commitment) `k`
-    //     cm_1,   // commitment `cm`
-    //     //
-    //     a_sk_2, // secret key
-    //     r_2,    // random sample value `r`
-    //     s_2,    // random sample value `s`
-    //     rho_2,  // rho value
-    //     v_2,    // value of coin `v`
-    //     a_pk_2, // public key
-    //     sn_2,   // serial number
-    //     k_2,    // middle value (commitment) `k`
-    //     cm_2,   // commitment `cm`
-    // ) = make_test_context();
+    let (
+        merkle_rt, // merkle tree
+        //
+        addr_sk_1_old, // secret key
+        r_1_old,       // random sample value `r`
+        s_1_old,       // random sample value `s`
+        rho_1_old,     // rho value
+        v_1_old,       // value of coin `v`
+        //
+        addr_sk_1, // secret key
+        r_1,       // random sample value `r`
+        s_1,       // random sample value `s`
+        rho_1,     // rho value
+        v_1,       // value of coin `v`
+        //
+        addr_sk_2, // secret key
+        r_2,       // random sample value `r`
+        s_2,       // random sample value `s`
+        rho_2,     // rho value
+        v_2,       // value of coin `v`
+    ) = make_test_context();
 
     // let rt = mt.get_root().hash; // root hash value
 

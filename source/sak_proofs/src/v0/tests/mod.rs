@@ -1,3 +1,3 @@
 mod benchmark;
 mod coin;
-mod dummy;
+mod hasher;
