@@ -142,8 +142,10 @@ fn handle_open_channel(storage: &mut Storage, args: ExecuteArgs) {
         }
     };
 
-    let [_eph_pk_str, ch_id, _open_ch_src, open_ch_empty]: [String; 4] =
-        serde_json::from_str(&input_serialized.as_str()).unwrap();
+    let (ch_id, open_ch_empty) = {
+        let ret: Vec<String> = serde_json::from_str(&input_serialized).unwrap();
+        (ret[1].clone(), ret[3].clone())
+    };
 
     match storage.get_mut(&ch_id) {
         Some(_) => {
@@ -161,7 +163,6 @@ fn handle_open_channel(storage: &mut Storage, args: ExecuteArgs) {
             open_ch_data.push(input_serialized.clone());
             let input_serialized_new =
                 serde_json::to_string(&open_ch_data).unwrap();
-            storage.remove(dst_pk);
             storage.insert(dst_pk.clone(), input_serialized_new);
         }
         None => {
@@ -190,8 +191,6 @@ fn handle_send_msg(storage: &mut Storage, args: ExecuteArgs) {
             panic!("args should contain the msg");
         }
     };
-
-    storage.remove(channel_id);
 
     storage.insert(channel_id.clone(), input_serialized.clone());
 }

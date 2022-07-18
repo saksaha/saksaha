@@ -342,9 +342,8 @@ async fn test_multi_clients_chat() {
         let ch_list = {
             let open_ch_data_vec: Vec<String> =
                 serde_json::from_str(&open_ch_data_vec.as_str()).unwrap();
-            for data in open_ch_data_vec {
-                let res: Vec<String> =
-                    serde_json::from_str(&data.as_str()).unwrap();
+            for data in &open_ch_data_vec {
+                let res: Vec<String> = serde_json::from_str(data).unwrap();
                 ch_id_vec.push(res[1].clone());
             }
 
@@ -414,9 +413,9 @@ async fn test_multi_clients_chat() {
         let mut msg_vec = Vec::new();
         let mut pk_vec = Vec::new();
 
-        for msg in msgs.clone() {
+        for msg in &msgs {
             let (msg, pk): (String, String) =
-                serde_json::from_str(&msg).unwrap();
+                serde_json::from_str(msg).unwrap();
 
             msg_vec.push(msg);
             pk_vec.push(pk);
@@ -426,7 +425,7 @@ async fn test_multi_clients_chat() {
     }
 
     /*  ********************************************************************* */
-    // 4. User A replies to B, and shows the chat between A & B
+    // 4. User A replies to B, and reads the chat between A & B
     let msg_a_to_b = String::from("B, welcome to saksaha!");
 
     let (_state_send_msg_2, new_chat) = send_msg(
@@ -442,7 +441,7 @@ async fn test_multi_clients_chat() {
 
     let msgs = [msg_b_to_a, msg_a_to_b];
 
-    for (i, item) in new_chat.clone().iter().enumerate() {
+    for (i, item) in (&new_chat).iter().enumerate() {
         let (msg, pk): (String, String) = serde_json::from_str(&item).unwrap();
 
         println!("\n MSG Sender {:?} \nsays: {:?}", pk, msg);
