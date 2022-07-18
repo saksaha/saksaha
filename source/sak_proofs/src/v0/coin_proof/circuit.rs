@@ -12,7 +12,7 @@ use std::io::Write;
 
 pub struct CoinCircuit {
     pub leaf: Option<Scalar>,
-    pub auth_path: [Option<(Scalar, bool)>; CM_TREE_DEPTH],
+    pub auth_path: [Option<(Scalar, bool)>; CM_TREE_DEPTH as usize],
     pub constants: Vec<Scalar>,
 }
 

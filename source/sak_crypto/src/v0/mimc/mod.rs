@@ -55,13 +55,6 @@ pub fn mimc_cs<S: PrimeField, CS: ConstraintSystem<S>>(
         )
         .unwrap();
 
-    cs.enforce(
-        || "tmp = (xL + Ci)^2",
-        |lc| lc + xl + (round_constants[i], CS::one()),
-        |lc| lc + xl + (round_constants[i], CS::one()),
-        |lc| lc + tmp,
-    );
-
     for i in 0..MIMC_ROUNDS {
         // xL, xR := xR + (xL + Ci)^3, xL
         let cs = &mut cs.namespace(|| format!("round {}", i));

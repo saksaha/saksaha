@@ -22,122 +22,124 @@ impl CoinProof {
     }
 
     // TODO use sak::fs
-    pub fn get_params(constants: &[Scalar]) -> Parameters<Bls12> {
-        let is_file_exist = std::path::Path::new("mimc_params").exists();
-        let mut v = vec![];
-        if is_file_exist {
-            // read
-            v = std::fs::read("mimc_params").unwrap();
-        } else {
-            // generate and write
-            let params = {
-                let c = CoinCircuit {
-                    leaf: None,
-                    auth_path: [None; CM_TREE_DEPTH],
-                    constants: constants.to_vec(),
-                };
+    // pub fn get_params(constants: &[Scalar]) -> Parameters<Bls12> {
+    //     let is_file_exist = std::path::Path::new("mimc_params").exists();
+    //     let mut v = vec![];
+    //     if is_file_exist {
+    //         // read
+    //         v = std::fs::read("mimc_params").unwrap();
+    //     } else {
+    //         // generate and write
+    //         let params = {
+    //             let c = CoinCircuit {
+    //                 leaf: None,
+    //                 auth_path: [None; CM_TREE_DEPTH],
+    //                 constants: constants.to_vec(),
+    //             };
 
-                groth16::generate_random_parameters::<Bls12, _, _>(
-                    c, &mut OsRng,
-                )
-                .unwrap()
-            };
-            // write param to file
-            let mut file = File::create("mimc_params").unwrap();
+    //             groth16::generate_random_parameters::<Bls12, _, _>(
+    //                 c, &mut OsRng,
+    //             )
+    //             .unwrap()
+    //         };
+    //         // write param to file
+    //         let mut file = File::create("mimc_params").unwrap();
 
-            params.write(&mut v).unwrap();
-            // write origin buf
-            file.write_all(&v);
-        }
+    //         params.write(&mut v).unwrap();
+    //         // write origin buf
+    //         file.write_all(&v);
+    //     }
 
-        println!("params len: {}", v.len());
+    //     println!("params len: {}", v.len());
 
-        let de_params = Parameters::<Bls12>::read(&v[..], false).unwrap();
-        de_params
-    }
+    //     let de_params = Parameters::<Bls12>::read(&v[..], false).unwrap();
+    //     de_params
+    // }
 
-    pub fn get_merkle_tree(constants: &[Scalar]) -> MerkleTree {
-        let mut leaves: Vec<u32> = vec![];
+    // pub fn get_merkle_tree(constants: &[Scalar]) -> MerkleTree {
+    //     let mut leaves: Vec<u32> = vec![];
 
-        (0..32).for_each(|iter| {
-            leaves.push(iter.clone());
-        });
+    //     (0..32).for_each(|iter| {
+    //         leaves.push(iter.clone());
+    //     });
 
-        let hasher = |xl, xr| {
-            let hash =
-                mimc::mimc(Scalar::from(xl), Scalar::from(xr), constants);
+    //     // let hasher = |xl, xr| {
+    //     //     let hash =
+    //     //         mimc::mimc(Scalar::from(xl), Scalar::from(xr), constants);
 
-            hash
-        };
+    //     //     hash
+    //     // };
 
-        let tree = MerkleTree::new(leaves, CM_TREE_DEPTH, &constants, &hasher);
-        tree
-    }
+    //     // let tree = MerkleTree::new(leaves, CM_TREE_DEPTH, &constants, &hasher);
+    //     let tree = MerkleTree::new(CM_TREE_DEPTH, &constants);
 
-    pub fn generate_proof(idx: usize) -> Proof<Bls12> {
-        let constants = mimc::get_mimc_constants();
+    //     tree
+    // }
 
-        let tree = CoinProof::get_merkle_tree(&constants);
+    // pub fn generate_proof(idx: usize) -> Proof<Bls12> {
+    //     let constants = mimc::get_mimc_constants();
 
-        // make auth_paths and leaf of {idx}
-        let auth_paths = tree.generate_auth_paths(idx.try_into().unwrap());
+    //     let tree = CoinProof::get_merkle_tree(&constants);
 
-        // println!("auth path ({}): {:?}", auth_paths.len(), auth_paths);
-        for (idx, p) in auth_paths.iter().enumerate() {
-            println!("auth path [{}] - {:?}", idx, p);
-        }
+    //     // make auth_paths and leaf of {idx}
+    //     let auth_paths = tree.generate_auth_paths(idx.try_into().unwrap());
 
-        let leaf = tree.nodes.get(0).unwrap().get(idx).unwrap().hash;
+    //     // println!("auth path ({}): {:?}", auth_paths.len(), auth_paths);
+    //     for (idx, p) in auth_paths.iter().enumerate() {
+    //         println!("auth path [{}] - {:?}", idx, p);
+    //     }
 
-        println!("leaf: {:?}", leaf);
+    //     // let leaf = tree.nodes.get(0).unwrap().get(idx).unwrap().hash;
 
-        let de_params = CoinProof::get_params(&constants);
+    //     // println!("leaf: {:?}", leaf);
 
-        // convert auth_paths => [auth_path]
-        let mut auth_path: [Option<(Scalar, bool)>; CM_TREE_DEPTH] =
-            [None; CM_TREE_DEPTH];
+    //     let de_params = CoinProof::get_params(&constants);
 
-        for (idx, _) in auth_path.clone().iter().enumerate() {
-            let sib = auth_paths.get(idx).unwrap();
-            auth_path[idx] = Some((sib.hash.clone(), sib.direction.clone()));
-        }
+    //     // convert auth_paths => [auth_path]
+    //     // let mut auth_path: [Option<(Scalar, bool)>; CM_TREE_DEPTH as usize] =
+    //     //     [None; CM_TREE_DEPTH as usize];
 
-        let c = CoinCircuit {
-            leaf: Some(leaf),
-            auth_path,
-            constants,
-        };
+    //     // for (idx, _) in auth_path.clone().iter().enumerate() {
+    //     //     let sib = auth_paths.get(idx).unwrap();
+    //     //     auth_path[idx] = Some((sib.hash.clone(), sib.direction.clone()));
+    //     // }
 
-        let proof =
-            groth16::create_random_proof(c, &de_params, &mut OsRng).unwrap();
+    //     // let c = CoinCircuit {
+    //     //     leaf: Some(leaf),
+    //     //     auth_path,
+    //     //     constants,
+    //     // };
 
-        proof
-    }
+    //     let proof =
+    //         groth16::create_random_proof(c, &de_params, &mut OsRng).unwrap();
 
-    pub fn verify_proof(proof: &Proof<Bls12>) -> bool {
-        let constants = mimc::get_mimc_constants();
+    //     proof
+    // }
 
-        let de_params = CoinProof::get_params(&constants);
+    // pub fn verify_proof(proof: &Proof<Bls12>) -> bool {
+    //     let constants = mimc::get_mimc_constants();
 
-        let tree = CoinProof::get_merkle_tree(&constants);
+    //     let de_params = CoinProof::get_params(&constants);
 
-        let root = tree.get_root().hash;
+    //     let tree = CoinProof::get_merkle_tree(&constants);
 
-        let leaf = tree.nodes.get(0).unwrap().get(0).unwrap().hash;
+    //     let root = tree.get_root().hash;
 
-        // Prepare the verification key (for proof verification).
-        let pvk = groth16::prepare_verifying_key(&de_params.vk);
+    //     let leaf = tree.nodes.get(0).unwrap().get(0).unwrap().hash;
 
-        println!("Wll");
-        match groth16::verify_proof(&pvk, &proof, &[root]) {
-            Ok(_) => {
-                println!("verify success!");
-                true
-            }
-            Err(err) => {
-                println!("verify_proof(), err: {}", err);
-                false
-            }
-        }
-    }
+    //     // Prepare the verification key (for proof verification).
+    //     let pvk = groth16::prepare_verifying_key(&de_params.vk);
+
+    //     println!("Wll");
+    //     match groth16::verify_proof(&pvk, &proof, &[root]) {
+    //         Ok(_) => {
+    //             println!("verify success!");
+    //             true
+    //         }
+    //         Err(err) => {
+    //             println!("verify_proof(), err: {}", err);
+    //             false
+    //         }
+    //     }
+    // }
 }

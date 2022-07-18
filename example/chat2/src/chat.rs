@@ -30,44 +30,44 @@ impl Chat {
         println!("Shared Private key: {:?}", self.priv_key);
         println!("Channel id: {:?}", self.channel);
 
-        // let tree = get_merkle_tree(&get_round_constants());
-        let tree = CoinProof::get_merkle_tree(&mimc::get_mimc_constants());
-        println!("[ledger] Transactions up to so far: {:?}\n", tree.data);
+        //     // let tree = get_merkle_tree(&get_round_constants());
+        //     let tree = CoinProof::get_merkle_tree(&mimc::get_mimc_constants());
+        //     println!("[ledger] Transactions up to so far: {:?}\n", tree.data);
 
-        println!("Start typing, cid: {}", self.cid);
+        //     println!("Start typing, cid: {}", self.cid);
 
-        loop {
-            let mut buffer = String::new();
-            std::io::stdin()
-                .read_line(&mut buffer)
-                .expect("invalid message");
+        //     loop {
+        //         let mut buffer = String::new();
+        //         std::io::stdin()
+        //             .read_line(&mut buffer)
+        //             .expect("invalid message");
 
-            print!("You: {} [channel: {:?}]", buffer, self.channel);
+        //         print!("You: {} [channel: {:?}]", buffer, self.channel);
 
-            let write_buf = buffer.as_bytes();
-            self.stream.write(&write_buf[..]).await;
+        //         let write_buf = buffer.as_bytes();
+        //         self.stream.write(&write_buf[..]).await;
 
-            let tid = self.cid.parse::<usize>().unwrap();
-            println!("Transaction I know: {}", tid);
+        //         let tid = self.cid.parse::<usize>().unwrap();
+        //         println!("Transaction I know: {}", tid);
 
-            let proof = CoinProof::generate_proof(tid);
-            let verified = CoinProof::verify_proof(&proof);
-            println!("proof: {:?}, verified: {}", proof, verified);
+        //         let proof = CoinProof::generate_proof(tid);
+        //         let verified = CoinProof::verify_proof(&proof);
+        //         println!("proof: {:?}, verified: {}", proof, verified);
 
-            let mut read_buf = BytesMut::with_capacity(256);
+        //         let mut read_buf = BytesMut::with_capacity(256);
 
-            self.stream.read_buf(&mut read_buf).await;
+        //         self.stream.read_buf(&mut read_buf).await;
 
-            let msg = match std::str::from_utf8(&read_buf) {
-                Ok(m) => m,
-                Err(err) => {
-                    println!("Wrong string, bytes: {:?}", read_buf);
+        //         let msg = match std::str::from_utf8(&read_buf) {
+        //             Ok(m) => m,
+        //             Err(err) => {
+        //                 println!("Wrong string, bytes: {:?}", read_buf);
 
-                    std::process::exit(1);
-                }
-            };
+        //                 std::process::exit(1);
+        //             }
+        //         };
 
-            print!("Her: {} [channel: {:?}]", msg, self.channel);
-        }
+        //         print!("Her: {} [channel: {:?}]", msg, self.channel);
+        //     }
     }
 }

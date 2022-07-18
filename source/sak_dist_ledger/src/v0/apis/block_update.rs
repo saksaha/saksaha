@@ -198,42 +198,42 @@ async fn handle_mint_tx_candidate(
         None => 0,
     };
 
-    let auth_path = sak_proofs::get_auth_path(next_tx_height as u64);
+    // let auth_path = sak_proofs::get_auth_path(next_tx_height as u64);
 
     // println!(
     //     "next_tx_height: {}, auth_path: {:?}",
     //     next_tx_height, auth_path
     // );
 
-    for (height, auth_node_idx) in auth_path.iter().enumerate() {
-        if height == auth_path.len() - 1 {
-            break;
-        }
+    // for (height, auth_node_idx) in auth_path.iter().enumerate() {
+    //     if height == auth_path.len() - 1 {
+    //         break;
+    //     }
 
-        let sibling_loc = format!("{}_{}", height, auth_node_idx);
-        let sibling_node = dist_ledger
-            .get_merkle_node(&sibling_loc)
-            .await?
-            .unwrap_or(U8Array::new_empty_32());
+    //     let sibling_loc = format!("{}_{}", height, auth_node_idx);
+    //     let sibling_node = dist_ledger
+    //         .get_merkle_node(&sibling_loc)
+    //         .await?
+    //         .unwrap_or(U8Array::new_empty_32());
 
-        // let curr_cm = ScalarExt::parse_arr(&tc.cm)?;
-        let curr_cm = &tc.cm;
+    //     // let curr_cm = ScalarExt::parse_arr(&tc.cm)?;
+    //     let curr_cm = &tc.cm;
 
-        // let sib_cm = ScalarExt::parse_arr(&sibling_node)?;
-        let sib_cm = &sibling_node;
+    //     // let sib_cm = ScalarExt::parse_arr(&sibling_node)?;
+    //     let sib_cm = &sibling_node;
 
-        let merkle_node = dist_ledger.hasher.mimc(curr_cm, sib_cm)?.to_bytes();
+    //     let merkle_node = dist_ledger.hasher.mimc(curr_cm, sib_cm)?.to_bytes();
 
-        let parent_idx = sak_proofs::get_parent_idx(*auth_node_idx);
-        let update_loc = format!("{}_{}", height + 1, parent_idx);
+    //     let parent_idx = sak_proofs::get_parent_idx(*auth_node_idx);
+    //     let update_loc = format!("{}_{}", height + 1, parent_idx);
 
-        // println!(
-        //     "update loc, {}, hash of two, {:?} and {:?}",
-        //     update_loc, curr_cm, sib_cm
-        // );
+    //     // println!(
+    //     //     "update loc, {}, hash of two, {:?} and {:?}",
+    //     //     update_loc, curr_cm, sib_cm
+    //     // );
 
-        merkle_update.insert(update_loc, merkle_node);
-    }
+    //     merkle_update.insert(update_loc, merkle_node);
+    // }
 
     Ok(())
 }
@@ -262,50 +262,50 @@ async fn handle_pour_tx_candidate(
         None => 0,
     };
 
-    for idx in 0..2 {
-        let auth_path = sak_proofs::get_auth_path(next_tx_height as u64 + idx);
+    // for idx in 0..2 {
+    //     let auth_path = sak_proofs::get_auth_path(next_tx_height as u64 + idx);
 
-        println!(
-            "next_tx_height: {}, auth_path: {:?}",
-            next_tx_height, auth_path
-        );
+    //     println!(
+    //         "next_tx_height: {}, auth_path: {:?}",
+    //         next_tx_height, auth_path
+    //     );
 
-        let cms = vec![&tc.cm_1, &tc.cm_2];
+    //     let cms = vec![&tc.cm_1, &tc.cm_2];
 
-        for (height, auth_node_idx) in auth_path.iter().enumerate() {
-            if height == auth_path.len() - 1 {
-                break;
-            }
+    //     for (height, auth_node_idx) in auth_path.iter().enumerate() {
+    //         if height == auth_path.len() - 1 {
+    //             break;
+    //         }
 
-            let sibling_loc = format!("{}_{}", height, auth_node_idx);
+    //         let sibling_loc = format!("{}_{}", height, auth_node_idx);
 
-            let sibling_node = dist_ledger
-                .get_merkle_node(&sibling_loc)
-                .await?
-                .unwrap_or(U8Array::new_empty_32());
+    //         let sibling_node = dist_ledger
+    //             .get_merkle_node(&sibling_loc)
+    //             .await?
+    //             .unwrap_or(U8Array::new_empty_32());
 
-            // let cm_1 = ScalarExt::parse_arr(&tc.cm_1)?;
+    //         // let cm_1 = ScalarExt::parse_arr(&tc.cm_1)?;
 
-            // let cm_1 = ScalarExt::parse_arr(&tc.cm_1)?;
+    //         // let cm_1 = ScalarExt::parse_arr(&tc.cm_1)?;
 
-            // let cm_2 = ScalarExt::parse_arr(&tc.cm_1)?;
+    //         // let cm_2 = ScalarExt::parse_arr(&tc.cm_1)?;
 
-            // let sib_cm = ScalarExt::parse_arr(&sibling_node)?;
+    //         // let sib_cm = ScalarExt::parse_arr(&sibling_node)?;
 
-            // let merkle_node =
-            //     dist_ledger.hasher.mimc(curr_cm, sib_cm).to_bytes();
+    //         // let merkle_node =
+    //         //     dist_ledger.hasher.mimc(curr_cm, sib_cm).to_bytes();
 
-            // let parent_idx = sak_proofs::get_parent_idx(*auth_node_idx);
-            // let update_loc = format!("{}_{}", height + 1, parent_idx);
+    //         // let parent_idx = sak_proofs::get_parent_idx(*auth_node_idx);
+    //         // let update_loc = format!("{}_{}", height + 1, parent_idx);
 
-            // // println!(
-            // //     "update loc, {}, hash of two, {:?} and {:?}",
-            // //     update_loc, curr_cm, sib_cm
-            // // );
+    //         // // println!(
+    //         // //     "update loc, {}, hash of two, {:?} and {:?}",
+    //         // //     update_loc, curr_cm, sib_cm
+    //         // // );
 
-            // merkle_update.insert(update_loc, merkle_node);
-        }
-    }
+    //         // merkle_update.insert(update_loc, merkle_node);
+    //     }
+    // }
 
     Ok(())
 }
