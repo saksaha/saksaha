@@ -16,7 +16,7 @@ pub(crate) struct CoinProofCircuit1to2 {
     pub hasher: Hasher,
 
     // old coin (1)
-    pub a_sk_1_old: Option<Scalar>,
+    pub addr_sk_1_old: Option<Scalar>,
     pub rho_1_old: Option<Scalar>,
     pub r_1_old: Option<Scalar>,
     pub s_1_old: Option<Scalar>,
@@ -26,14 +26,14 @@ pub(crate) struct CoinProofCircuit1to2 {
     pub merkle_rt: Option<Scalar>,
 
     // new coin 1
-    pub a_sk_1: Option<Scalar>,
+    pub addr_sk_1: Option<Scalar>,
     pub rho_1: Option<Scalar>,
     pub r_1: Option<Scalar>,
     pub s_1: Option<Scalar>,
     pub v_1: Option<Scalar>,
 
     // new coin 2
-    pub a_sk_2: Option<Scalar>,
+    pub addr_sk_2: Option<Scalar>,
     pub rho_2: Option<Scalar>,
     pub r_2: Option<Scalar>,
     pub s_2: Option<Scalar>,

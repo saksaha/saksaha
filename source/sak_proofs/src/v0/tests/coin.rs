@@ -173,7 +173,7 @@ pub fn get_params_test(constants: &[Scalar]) -> Parameters<Bls12> {
                 hasher,
 
                 // old coins
-                a_sk_1_old: None,
+                addr_sk_1_old: None,
                 rho_1_old: None,
                 r_1_old: None,
                 s_1_old: None,
@@ -182,14 +182,14 @@ pub fn get_params_test(constants: &[Scalar]) -> Parameters<Bls12> {
                 merkle_rt: None,
 
                 // new coin 1
-                a_sk_1: None,
+                addr_sk_1: None,
                 rho_1: None,
                 r_1: None,
                 s_1: None,
                 v_1: None,
 
                 // new coin 2
-                a_sk_2: None,
+                addr_sk_2: None,
                 rho_2: None,
                 r_2: None,
                 s_2: None,
@@ -216,7 +216,7 @@ fn make_proof(
     tgt_leaf_idx: usize,
 
     // old coins
-    a_sk_1_old: Scalar,
+    addr_sk_1_old: Scalar,
     rho_1_old: Scalar,
     r_1_old: Scalar,
     s_1_old: Scalar,
@@ -225,14 +225,14 @@ fn make_proof(
     merkle_rt: Scalar,
 
     // new coin 1
-    a_sk_1: Scalar,
+    addr_sk_1: Scalar,
     rho_1: Scalar,
     r_1: Scalar,
     s_1: Scalar,
     v_1: Scalar,
 
     // new coin 1
-    a_sk_2: Scalar,
+    addr_sk_2: Scalar,
     rho_2: Scalar,
     r_2: Scalar,
     s_2: Scalar,
@@ -241,7 +241,7 @@ fn make_proof(
     let constants = mimc::get_mimc_constants();
     let de_params = get_params_test(&constants);
 
-    let a_sk_1_old = Some(a_sk_1_old);
+    let addr_sk_1_old = Some(addr_sk_1_old);
     let rho_1_old = Some(rho_1_old);
     let r_1_old = Some(r_1_old);
     let s_1_old = Some(s_1_old);
@@ -250,13 +250,13 @@ fn make_proof(
     let auth_path_1 = auth_path_1.map(|p| Some(p));
     let merkle_rt = Some(merkle_rt);
 
-    let a_sk_1 = Some(a_sk_1);
+    let addr_sk_1 = Some(addr_sk_1);
     let rho_1 = Some(rho_1);
     let r_1 = Some(r_1);
     let s_1 = Some(s_1);
     let v_1 = Some(v_1);
     //
-    let a_sk_2 = Some(a_sk_2);
+    let addr_sk_2 = Some(addr_sk_2);
     let rho_2 = Some(rho_2);
     let r_2 = Some(r_2);
     let s_2 = Some(s_2);
@@ -267,7 +267,7 @@ fn make_proof(
     let c = CoinProofCircuit1to2 {
         hasher,
         //
-        a_sk_1_old,
+        addr_sk_1_old,
         rho_1_old,
         r_1_old,
         s_1_old,
@@ -277,13 +277,13 @@ fn make_proof(
         auth_path_1,
         merkle_rt,
         //
-        a_sk_1,
+        addr_sk_1,
         rho_1,
         r_1,
         s_1,
         v_1,
         //
-        a_sk_2,
+        addr_sk_2,
         rho_2,
         r_2,
         s_2,
@@ -369,23 +369,28 @@ pub async fn test_coin_ownership_default() {
 
     println!("\n[+] Test Proof calculating");
 
-    // let proof = make_proof(
-    //     tgt_leaf_idx,
-    //     mt,
-    //     //
-    //     a_sk_1,
-    //     rho_1,
-    //     r_1,
-    //     s_1,
-    //     v_1,
-    //     //
-    //     a_sk_2,
-    //     rho_2,
-    //     r_2,
-    //     s_2,
-    //     v_2,
-    // )
-    // .unwrap();
+    let proof = make_proof(
+        tgt_leaf_idx,
+        addr_sk_1_old,
+        rho_1,
+        r_1,
+        s_1,
+        v_1,
+        merkle_rt,
+        //
+        addr_sk_1,
+        rho_1,
+        r_1,
+        s_1,
+        v_1,
+        //
+        addr_sk_2,
+        rho_2,
+        r_2,
+        s_2,
+        v_2,
+    )
+    .unwrap();
 
     // println!("\n[+] Test Verificationn");
     // let public_inputs: Vec<Scalar> = vec![
