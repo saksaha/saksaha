@@ -8,6 +8,7 @@ use sak_crypto::{
 use sak_crypto::{mimc, Parameters};
 use sak_crypto::{Bls12, Hasher, Scalar};
 use sak_types::U8Array;
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::Write;
 
@@ -15,6 +16,7 @@ const TEST_TREE_DEPTH: usize = 3;
 
 fn make_test_context() -> (
     // old coin 1
+    Scalar,              // addr_pk_1_old,
     Scalar,              // addr_sk_1_old,
     Scalar,              // r_1_old,
     Scalar,              // s_1_old,
@@ -38,24 +40,34 @@ fn make_test_context() -> (
 ) {
     let hasher = Hasher::new();
 
-    let (addr_sk_1_old, r_1_old, s_1_old, rho_1_old, v_1_old, cm_1_old) = {
+    let (
+        addr_pk_1_old,
+        addr_sk_1_old,
+        r_1_old,
+        s_1_old,
+        rho_1_old,
+        v_1_old,
+        cm_1_old,
+    ) = {
         let addr_sk = {
-            let arr = U8Array::new_empty_32();
+            let arr = U8Array::from_int(1);
             ScalarExt::parse_arr(&arr).unwrap()
         };
 
+        let addr_pk = hasher.mimc_single_scalar(addr_sk).unwrap();
+
         let r = {
-            let arr = U8Array::new_empty_32();
+            let arr = U8Array::from_int(2);
             ScalarExt::parse_arr(&arr).unwrap()
         };
 
         let s = {
-            let arr = U8Array::new_empty_32();
+            let arr = U8Array::from_int(3);
             ScalarExt::parse_arr(&arr).unwrap()
         };
 
         let rho = {
-            let arr = U8Array::new_empty_32();
+            let arr = U8Array::from_int(4);
             ScalarExt::parse_arr(&arr).unwrap()
         };
 
@@ -65,11 +77,12 @@ fn make_test_context() -> (
         };
 
         let cm = {
-            let arr = U8Array::from_int(100);
-            ScalarExt::parse_arr(&arr).unwrap()
+            let k = hasher.comm2_scalar(addr_pk, rho, r);
+
+            hasher.comm2_scalar(s, v, k)
         };
 
-        (addr_sk, r, s, rho, v, cm)
+        (addr_pk, addr_sk, r, s, rho, v, cm)
     };
 
     let (addr_sk_1, r_1, s_1, rho_1, v_1) = {
@@ -132,14 +145,74 @@ fn make_test_context() -> (
 
     let constants = mimc::get_mimc_constants();
 
-    // let data = vec![0, 1, 2, 3, 4, 5, 6, 7];
-
     let merkle_tree = MerkleTree::new(TEST_TREE_DEPTH as u32, &constants);
 
-    let merkle_rt = {
-        let arr = U8Array::new_empty_32();
-        ScalarExt::parse_arr(&arr).unwrap()
+    let merkle_nodes = {
+        let mut m = HashMap::new();
+
+        let node_0_1 = {
+            let arr = U8Array::new_empty_32();
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        let node_1_1 = {
+            let node_0_2 = {
+                let arr = U8Array::new_empty_32();
+                ScalarExt::parse_arr(&arr).unwrap()
+            };
+
+            let node_0_3 = {
+                let arr = U8Array::new_empty_32();
+                ScalarExt::parse_arr(&arr).unwrap()
+            };
+
+            let h = hasher.mimc_scalar(node_0_2, node_0_3);
+            h
+        };
+
+        let node_2_1 = {
+            let node_0_4 = {
+                let arr = U8Array::new_empty_32();
+                ScalarExt::parse_arr(&arr).unwrap()
+            };
+
+            let node_0_5 = {
+                let arr = U8Array::new_empty_32();
+                ScalarExt::parse_arr(&arr).unwrap()
+            };
+
+            let node_0_6 = {
+                let arr = U8Array::new_empty_32();
+                ScalarExt::parse_arr(&arr).unwrap()
+            };
+
+            let node_0_7 = {
+                let arr = U8Array::new_empty_32();
+                ScalarExt::parse_arr(&arr).unwrap()
+            };
+
+            let node_1_2 = hasher.mimc_scalar(node_0_4, node_0_5);
+
+            let node_1_3 = hasher.mimc_scalar(node_0_6, node_0_7);
+
+            hasher.mimc_scalar(node_1_2, node_1_3)
+        };
+
+        let node_1_0 = hasher.mimc_scalar(cm_1_old, node_0_1);
+
+        let node_2_0 = hasher.mimc_scalar(node_1_0, node_1_1);
+
+        let node_3_0 = hasher.mimc_scalar(node_2_0, node_2_1);
+
+        m.insert("0_1", node_0_1);
+        m.insert("1_1", node_1_1);
+        m.insert("2_1", node_2_1);
+        m.insert("3_0", node_3_0);
+
+        m
     };
+
+    let merkle_rt = *merkle_nodes.get("3_0").unwrap();
 
     let auth_path_1 = {
         let v = merkle_tree.generate_auth_paths(0);
@@ -153,12 +226,10 @@ fn make_test_context() -> (
                 );
             }
 
-            let merkle_node = {
-                let arr = U8Array::from_int(100);
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
+            let key = format!("{}_{}", idx, p.idx);
+            let merkle_node = merkle_nodes.get(key.as_str()).unwrap();
 
-            ret[idx] = (merkle_node, p.direction);
+            ret[idx] = (merkle_node.clone(), p.direction);
         });
 
         ret
@@ -166,6 +237,7 @@ fn make_test_context() -> (
 
     (
         // old coin 1
+        addr_pk_1_old,
         addr_sk_1_old, // [gen_proof] : secret key
         r_1_old,       // [gen_proof] : random sample value `r`
         s_1_old,       // [gen_proof] : random sample value `s`
@@ -209,6 +281,7 @@ pub fn get_params_test(constants: &[Scalar]) -> Parameters<Bls12> {
                 r_1_old: None,
                 s_1_old: None,
                 v_1_old: None,
+                cm_1_old: None,
                 auth_path_1: [None; TEST_TREE_DEPTH],
                 merkle_rt: None,
 
@@ -268,6 +341,9 @@ fn make_proof(
     s_2: Scalar,
     v_2: Scalar,
 ) -> Result<Proof<Bls12>, ProofError> {
+    println!("power!!! auth path: {:#?}", auth_path_1);
+    println!("power!!! rt: {:#?}", merkle_rt);
+
     let constants = mimc::get_mimc_constants();
     let de_params = get_params_test(&constants);
 
@@ -276,6 +352,7 @@ fn make_proof(
     let r_1_old = Some(r_1_old);
     let s_1_old = Some(s_1_old);
     let v_1_old = Some(v_1_old);
+    let cm_1_old = Some(cm_1_old);
 
     let auth_path_1 = auth_path_1.map(|p| Some(p));
     let merkle_rt = Some(merkle_rt);
@@ -296,23 +373,25 @@ fn make_proof(
 
     let c = CoinProofCircuit1to2 {
         hasher,
-        //
+
+        // old coin 1
         addr_sk_1_old,
         rho_1_old,
         r_1_old,
         s_1_old,
         v_1_old,
-
-        //
+        cm_1_old,
         auth_path_1,
         merkle_rt,
-        //
+
+        // new coin 1
         addr_sk_1,
         rho_1,
         r_1,
         s_1,
         v_1,
-        //
+
+        // new coin 2
         addr_sk_2,
         rho_2,
         r_2,
@@ -345,10 +424,10 @@ fn verify_proof(proof: Proof<Bls12>, public_inputs: &[Scalar]) -> bool {
     let pvk = groth16::prepare_verifying_key(&de_params.vk);
 
     println!("[public_inputs] rt: {:?}", public_inputs[0]);
-    println!("[public_inputs] pk: {:?}", public_inputs[1]);
-    println!("[public_inputs] sn: {:?}", public_inputs[2]);
-    println!("[public_inputs] k:  {:?}", public_inputs[3]);
-    println!("[public_inputs] cm: {:?}", public_inputs[4]);
+    // println!("[public_inputs] pk: {:?}", public_inputs[1]);
+    // println!("[public_inputs] sn: {:?}", public_inputs[2]);
+    // println!("[public_inputs] k:  {:?}", public_inputs[3]);
+    // println!("[public_inputs] cm: {:?}", public_inputs[4]);
 
     match groth16::verify_proof(&pvk, &proof, public_inputs) {
         Ok(_) => {
@@ -373,6 +452,7 @@ pub async fn test_coin_ownership_default() {
 
     let (
         //
+        addr_pk_1_old,
         addr_sk_1_old, // secret key
         r_1_old,       // random sample value `r`
         s_1_old,       // random sample value `s`
@@ -394,8 +474,6 @@ pub async fn test_coin_ownership_default() {
         rho_2,     // rho value
         v_2,       // value of coin `v`
     ) = make_test_context();
-
-    let tgt_leaf_idx = 0;
 
     println!("\n[+] Test Proof calculating");
 
@@ -423,13 +501,16 @@ pub async fn test_coin_ownership_default() {
     )
     .unwrap();
 
-    // println!("\n[+] Test Verificationn");
-    // let public_inputs: Vec<Scalar> = vec![
-    //     rt, //
-    //     a_pk_1, sn_1, k_1, cm_1, //
-    //     a_pk_2, sn_2, k_2, cm_2,
-    // ];
-    // let result = verify_proof(proof, &public_inputs);
+    let addr_pk_1_old = Scalar::default();
 
-    // assert!(result);
+    // println!("\n[+] Test Verificationn");
+    let public_inputs: Vec<Scalar> = vec![
+        merkle_rt,
+        addr_pk_1_old, //
+                       // a_pk_1, sn_1, k_1, cm_1, //
+                       // a_pk_2, sn_2, k_2, cm_2,
+    ];
+    let result = verify_proof(proof, &public_inputs);
+
+    assert!(result);
 }

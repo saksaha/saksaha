@@ -22,6 +22,7 @@ pub struct Node {
 
 #[derive(Debug, Clone)]
 pub struct Path {
+    pub idx: u32,
     pub direction: bool,
 }
 
@@ -61,12 +62,15 @@ impl MerkleTree {
         let mut auth_path = vec![];
         let mut curr_idx = idx;
 
-        for h in 0..height {
+        for _ in 0..height {
             let sibling_idx = get_sibling_idx(curr_idx);
 
             let direction = if sibling_idx % 2 == 0 { true } else { false };
 
-            let p = Path { direction };
+            let p = Path {
+                idx: sibling_idx,
+                direction,
+            };
 
             auth_path.push(p);
 

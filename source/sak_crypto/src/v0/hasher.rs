@@ -30,6 +30,10 @@ impl Hasher {
         Ok(h)
     }
 
+    pub fn mimc_scalar(&self, a: Scalar, b: Scalar) -> Scalar {
+        mimc::mimc(a, b, &self.constants)
+    }
+
     pub fn mimc_single(&self, a: &[u8; 32]) -> Result<Scalar, CryptoError> {
         let a = ScalarExt::parse_arr(a)?;
         let b = Scalar::zero();
@@ -38,11 +42,23 @@ impl Hasher {
         Ok(h)
     }
 
-    // pub fn mimc(&self, xl: Scalar, xr: Scalar) -> Scalar {
-    //     mimc::mimc(xl, xr, &self.constants)
-    // }
+    pub fn mimc_single_scalar(&self, a: Scalar) -> Result<Scalar, CryptoError> {
+        let b = Scalar::zero();
+        let h = mimc::mimc(a, b, &self.constants);
 
-    fn mimc_cs_scalar<CS: ConstraintSystem<Scalar>>(
+        Ok(h)
+    }
+
+    pub fn mimc_single_scalar_cs<CS: ConstraintSystem<Scalar>>(
+        &self,
+        cs: &mut CS,
+        a: Option<Scalar>,
+    ) -> Option<Scalar> {
+        let b = Some(Scalar::zero());
+        mimc::mimc_cs(cs, a, b, &self.constants)
+    }
+
+    fn mimc_scalar_cs<CS: ConstraintSystem<Scalar>>(
         &self,
         cs: &mut CS,
         a: Option<Scalar>,
@@ -75,7 +91,7 @@ impl Hasher {
         z: Option<Scalar>,
         x: Option<Scalar>,
     ) -> Option<Scalar> {
-        self.mimc_cs_scalar(cs, z, x)
+        self.mimc_scalar_cs(cs, z, x)
     }
 
     pub fn comm2(
@@ -93,13 +109,13 @@ impl Hasher {
         Ok(ret)
     }
 
-    // pub fn comm2(&self, a: Scalar, b: Scalar, c: Scalar) -> Scalar {
-    //     let r1 = mimc::mimc(b, c, &self.constants);
+    pub fn comm2_scalar(&self, a: Scalar, b: Scalar, c: Scalar) -> Scalar {
+        let r1 = mimc::mimc(b, c, &self.constants);
 
-    //     let r2 = mimc::mimc(a, r1, &self.constants);
+        let r2 = mimc::mimc(a, r1, &self.constants);
 
-    //     r2
-    // }
+        r2
+    }
 
     pub fn comm(&self, r: Scalar, x: Scalar) -> Scalar {
         mimc::mimc(r, x, &self.constants)
@@ -113,6 +129,6 @@ impl Hasher {
         r: Option<Scalar>,
         x: Option<Scalar>,
     ) -> Option<Scalar> {
-        self.mimc_cs_scalar(cs, r, x)
+        self.mimc_scalar_cs(cs, r, x)
     }
 }
