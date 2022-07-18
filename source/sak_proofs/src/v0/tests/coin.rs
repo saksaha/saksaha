@@ -14,14 +14,15 @@ use std::io::Write;
 const TEST_TREE_DEPTH: usize = 3;
 
 fn make_test_context() -> (
-    // merkle root
-    Scalar,
     // old coin 1
-    Scalar, // addr_sk_1_old,
-    Scalar, // r_1_old,
-    Scalar, // s_1_old,
-    Scalar, // rho_1_old,
-    Scalar, // v_1_old,
+    Scalar,              // addr_sk_1_old,
+    Scalar,              // r_1_old,
+    Scalar,              // s_1_old,
+    Scalar,              // rho_1_old,
+    Scalar,              // v_1_old,
+    Scalar,              // cm_1_old,
+    [(Scalar, bool); 3], // auth_path_1,
+    Scalar,              // merkle rt
     // new coin 1
     Scalar, // addr_sk_1,
     Scalar, // r_1,
@@ -37,7 +38,7 @@ fn make_test_context() -> (
 ) {
     let hasher = Hasher::new();
 
-    let (addr_sk_1_old, r_1_old, s_1_old, rho_1_old, v_1_old) = {
+    let (addr_sk_1_old, r_1_old, s_1_old, rho_1_old, v_1_old, cm_1_old) = {
         let addr_sk = {
             let arr = U8Array::new_empty_32();
             ScalarExt::parse_arr(&arr).unwrap()
@@ -63,7 +64,12 @@ fn make_test_context() -> (
             ScalarExt::parse_arr(&arr).unwrap()
         };
 
-        (addr_sk, r, s, rho, v)
+        let cm = {
+            let arr = U8Array::from_int(100);
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        (addr_sk, r, s, rho, v, cm)
     };
 
     let (addr_sk_1, r_1, s_1, rho_1, v_1) = {
@@ -126,23 +132,48 @@ fn make_test_context() -> (
 
     let constants = mimc::get_mimc_constants();
 
-    let data = vec![0, 1, 2, 3, 4, 5, 6, 7];
+    // let data = vec![0, 1, 2, 3, 4, 5, 6, 7];
 
-    let merkle_tree = MerkleTree::new(3, &constants);
+    let merkle_tree = MerkleTree::new(TEST_TREE_DEPTH as u32, &constants);
 
     let merkle_rt = {
         let arr = U8Array::new_empty_32();
         ScalarExt::parse_arr(&arr).unwrap()
     };
 
+    let auth_path_1 = {
+        let v = merkle_tree.generate_auth_paths(0);
+        let mut ret = [(Scalar::default(), false); TEST_TREE_DEPTH];
+
+        v.iter().enumerate().for_each(|(idx, p)| {
+            if idx >= ret.len() {
+                panic!(
+                    "Invalid assignment to a fixed sized array, idx: {}",
+                    idx
+                );
+            }
+
+            let merkle_node = {
+                let arr = U8Array::from_int(100);
+                ScalarExt::parse_arr(&arr).unwrap()
+            };
+
+            ret[idx] = (merkle_node, p.direction);
+        });
+
+        ret
+    };
+
     (
-        merkle_rt, //
         // old coin 1
         addr_sk_1_old, // [gen_proof] : secret key
         r_1_old,       // [gen_proof] : random sample value `r`
         s_1_old,       // [gen_proof] : random sample value `s`
         rho_1_old,     // [gen_proof] : rho value
         v_1_old,       // [gen_proof] : value of coin `v`
+        cm_1_old,
+        auth_path_1,
+        merkle_rt,
         // new coin 1
         addr_sk_1,
         r_1,
@@ -213,14 +244,13 @@ pub fn get_params_test(constants: &[Scalar]) -> Parameters<Bls12> {
 }
 
 fn make_proof(
-    tgt_leaf_idx: usize,
-
     // old coins
     addr_sk_1_old: Scalar,
     rho_1_old: Scalar,
     r_1_old: Scalar,
     s_1_old: Scalar,
     v_1_old: Scalar,
+    cm_1_old: Scalar,
     auth_path_1: [(Scalar, bool); 3],
     merkle_rt: Scalar,
 
@@ -302,7 +332,7 @@ fn make_proof(
         }
     };
 
-    // println!("[+] proof: {:?}", proof);
+    println!("[+] proof: {:?}", proof);
 
     Ok(proof)
 }
@@ -334,7 +364,7 @@ fn verify_proof(proof: Proof<Bls12>, public_inputs: &[Scalar]) -> bool {
 
 #[tokio::test(flavor = "multi_thread")]
 pub async fn test_coin_ownership_default() {
-    // sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
+    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
     sak_test_utils::init_test_log();
 
     println!("[!] test coin ownership start!!!!!!!!!!!!!!!!!!!!!!!!!\n");
@@ -342,13 +372,15 @@ pub async fn test_coin_ownership_default() {
     println!("\n[+] Test Context creating");
 
     let (
-        merkle_rt, // merkle tree
         //
         addr_sk_1_old, // secret key
         r_1_old,       // random sample value `r`
         s_1_old,       // random sample value `s`
         rho_1_old,     // rho value
         v_1_old,       // value of coin `v`
+        cm_1_old,
+        auth_path_1,
+        merkle_rt, // merkle tree
         //
         addr_sk_1, // secret key
         r_1,       // random sample value `r`
@@ -363,19 +395,18 @@ pub async fn test_coin_ownership_default() {
         v_2,       // value of coin `v`
     ) = make_test_context();
 
-    // let rt = mt.get_root().hash; // root hash value
-
     let tgt_leaf_idx = 0;
 
     println!("\n[+] Test Proof calculating");
 
     let proof = make_proof(
-        tgt_leaf_idx,
         addr_sk_1_old,
         rho_1,
         r_1,
         s_1,
         v_1,
+        cm_1_old,
+        auth_path_1,
         merkle_rt,
         //
         addr_sk_1,

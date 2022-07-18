@@ -49,19 +49,18 @@ impl Circuit<Scalar> for CoinProofCircuit1to2 {
     ) -> Result<(), SynthesisError> {
         let mut merkle_rt = self.merkle_rt.or(Some(Scalar::default()));
 
-        let a_sk_1 = self.a_sk_1.or(Some(Scalar::default()));
+        let a_sk_1 = self.addr_sk_1.or(Some(Scalar::default()));
         let rho_1 = self.rho_1.or(Some(Scalar::default()));
         let r_1 = self.r_1.or(Some(Scalar::default()));
         let s_1 = self.s_1.or(Some(Scalar::default()));
         let v_1 = self.v_1.or(Some(Scalar::default()));
 
-        let a_sk_2 = self.a_sk_2.or(Some(Scalar::default()));
+        let a_sk_2 = self.addr_sk_2.or(Some(Scalar::default()));
         let rho_2 = self.rho_2.or(Some(Scalar::default()));
         let r_2 = self.r_2.or(Some(Scalar::default()));
         let s_2 = self.s_2.or(Some(Scalar::default()));
         let v_2 = self.v_2.or(Some(Scalar::default()));
 
-        // rt
         {
             for (idx, layer) in self.auth_path_1.iter().enumerate() {
                 println!("idx: {}, layer: {:?}", idx, layer);
@@ -72,7 +71,7 @@ impl Circuit<Scalar> for CoinProofCircuit1to2 {
                     cs.namespace(|| "cur is right"),
                     layer.as_ref().map(|&(_, d)| d),
                 )
-                .unwrap();
+                .expect("cur_is_right");
 
                 let xl_value;
                 let xr_value;
