@@ -23,7 +23,7 @@ pub(crate) fn make_dummy_genesis_block_1() -> BlockCandidate {
         tx_candidates: vec![
             TxCandidate::new_dummy_mint_1(),
             TxCandidate::new_dummy_mint_2(),
-            TxCandidate::new_dummy_pour_1_2_to_3(),
+            // TxCandidate::new_dummy_pour_1_2_to_3(),
         ],
         witness_sigs: vec![String::from("1"), String::from("2")],
         created_at: String::from("2022061515340000"),

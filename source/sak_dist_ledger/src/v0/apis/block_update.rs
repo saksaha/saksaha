@@ -121,9 +121,6 @@ async fn process_ctr_state_update(
     ctr_state_update: &mut CtrStateUpdate,
 ) -> Result<(), LedgerError> {
     let vm = &dist_ledger.vm;
-    // let ctr_addr = tc.get_ctr_addr();
-    // let data = &tc.get_data();
-    // let tx_ctr_op = tc.get_ctr_op();
 
     match tx_ctr_op {
         TxCtrOp::ContractDeploy => {
@@ -193,47 +190,54 @@ async fn handle_mint_tx_candidate(
     )
     .await?;
 
+    // process_merkle_update(dist_ledger, &merkle_update, &tc.cm);
+
     let next_tx_height = match dist_ledger.get_latest_tx_height().await? {
         Some(th) => th + 1,
         None => 0,
     };
 
-    // let auth_path = sak_proofs::get_auth_path(next_tx_height as u64);
+    let auth_path = dist_ledger
+        .merkle_tree
+        .generate_auth_paths(next_tx_height as u32);
 
-    // println!(
-    //     "next_tx_height: {}, auth_path: {:?}",
-    //     next_tx_height, auth_path
-    // );
+    println!(
+        "next_tx_height: {}, auth_path: {:?}",
+        next_tx_height, auth_path
+    );
 
-    // for (height, auth_node_idx) in auth_path.iter().enumerate() {
-    //     if height == auth_path.len() - 1 {
-    //         break;
-    //     }
+    let mut curr_cm = tc.cm;
 
-    //     let sibling_loc = format!("{}_{}", height, auth_node_idx);
-    //     let sibling_node = dist_ledger
-    //         .get_merkle_node(&sibling_loc)
-    //         .await?
-    //         .unwrap_or(U8Array::new_empty_32());
+    for (height, path) in auth_path.iter().enumerate() {
+        if height == auth_path.len() - 1 {
+            return Err(format!(
+                "Wrong auth path calculation, height greater \
+                than auth path len"
+            )
+            .into());
+        }
 
-    //     // let curr_cm = ScalarExt::parse_arr(&tc.cm)?;
-    //     let curr_cm = &tc.cm;
+        let sibling_idx = path.idx;
+        let sibling_loc = format!("{}_{}", height, sibling_idx);
+        let sibling_node = dist_ledger
+            .get_merkle_node(&sibling_loc)
+            .await?
+            .unwrap_or(U8Array::new_empty_32());
 
-    //     // let sib_cm = ScalarExt::parse_arr(&sibling_node)?;
-    //     let sib_cm = &sibling_node;
+        let sib_cm = &sibling_node;
+        let merkle_node = dist_ledger.hasher.mimc(&curr_cm, sib_cm)?.to_bytes();
 
-    //     let merkle_node = dist_ledger.hasher.mimc(curr_cm, sib_cm)?.to_bytes();
+        let parent_idx = sak_proofs::get_parent_idx(sibling_idx);
+        let update_loc = format!("{}_{}", height + 1, parent_idx);
 
-    //     let parent_idx = sak_proofs::get_parent_idx(*auth_node_idx);
-    //     let update_loc = format!("{}_{}", height + 1, parent_idx);
+        println!(
+            "update loc, {}, hash of two, {:?} and {:?}",
+            update_loc, curr_cm, sib_cm
+        );
 
-    //     // println!(
-    //     //     "update loc, {}, hash of two, {:?} and {:?}",
-    //     //     update_loc, curr_cm, sib_cm
-    //     // );
-
-    //     merkle_update.insert(update_loc, merkle_node);
-    // }
+        merkle_update.insert(update_loc, merkle_node);
+        curr_cm = merkle_node;
+    }
 
     Ok(())
 }
@@ -309,3 +313,56 @@ async fn handle_pour_tx_candidate(
 
     Ok(())
 }
+
+// async fn process_merkle_update(
+//     dist_ledger: &DistLedger,
+//     tc: &TxCandidate,
+//     merkle_update: &mut MerkleUpdate,
+// ) -> Result<(), LedgerError> {
+//     let next_tx_height = match dist_ledger.get_latest_tx_height().await? {
+//         Some(th) => th + 1,
+//         None => 0,
+//     };
+
+//     let auth_path = dist_ledger
+//         .merkle_tree
+//         .generate_auth_paths(next_tx_height as u32);
+
+//     println!(
+//         "next_tx_height: {}, auth_path: {:?}",
+//         next_tx_height, auth_path
+//     );
+
+//     for (height, path) in auth_path.iter().enumerate() {
+//         if height == auth_path.len() - 1 {
+//             return Err(format!(
+//                 "Wrong auth path calculation, height greater \
+//                 than auth path len"
+//             )
+//             .into());
+//         }
+
+//         let sibling_idx = path.idx;
+//         let sibling_loc = format!("{}_{}", height, sibling_idx);
+//         let sibling_node = dist_ledger
+//             .get_merkle_node(&sibling_loc)
+//             .await?
+//             .unwrap_or(U8Array::new_empty_32());
+
+//         let curr_cm = &tc.cm;
+//         let sib_cm = &sibling_node;
+//         let merkle_node = dist_ledger.hasher.mimc(curr_cm, sib_cm)?.to_bytes();
+
+//         let parent_idx = sak_proofs::get_parent_idx(sibling_idx);
+//         let update_loc = format!("{}_{}", height + 1, parent_idx);
+
+//         println!(
+//             "update loc, {}, hash of two, {:?} and {:?}",
+//             update_loc, curr_cm, sib_cm
+//         );
+
+//         merkle_update.insert(update_loc, merkle_node);
+//     }
+
+//     Ok(())
+// }

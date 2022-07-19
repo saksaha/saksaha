@@ -7,6 +7,7 @@ use crate::SyncPool;
 use colored::Colorize;
 use log::info;
 use sak_crypto::Hasher;
+use sak_proofs::MerkleTree;
 use sak_types::BlockCandidate;
 use sak_vm::VM;
 use std::sync::Arc;
@@ -23,6 +24,7 @@ pub struct DistLedger {
     pub(crate) consensus: Box<dyn Consensus + Send + Sync>,
     runtime: Arc<Runtime>,
     pub(crate) hasher: Hasher,
+    pub(crate) merkle_tree: MerkleTree,
     // pub(crate) merkle_tree: MerkleTree,
 }
 
@@ -75,6 +77,9 @@ impl DistLedger {
 
         let hasher = Hasher::new();
 
+        let merkle_tree =
+            MerkleTree::new(3 as u32, &hasher.get_mimc_constants());
+
         let dist_ledger = DistLedger {
             ledger_db,
             sync_pool,
@@ -83,6 +88,7 @@ impl DistLedger {
             consensus,
             runtime,
             hasher,
+            merkle_tree,
         };
 
         if let Some(bc) = genesis_block {
