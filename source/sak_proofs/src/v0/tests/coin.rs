@@ -90,7 +90,7 @@ fn make_test_context() -> TestContext {
         };
 
         let cm = {
-            let k = hasher.comm2_scalar(addr_pk, rho, r);
+            let k = hasher.comm2_scalar(r, addr_pk, rho);
 
             hasher.comm2_scalar(s, v, k)
         };
@@ -494,8 +494,8 @@ pub async fn test_coin_ownership_default() {
         test_context.addr_pk_1_old,
         test_context.addr_sk_1_old,
         test_context.rho_1_old,
-        test_context.r_1,
-        test_context.s_1,
+        test_context.r_1_old,
+        test_context.s_1_old,
         test_context.v_1_old,
         test_context.cm_1_old,
         test_context.auth_path_1,
@@ -524,8 +524,6 @@ pub async fn test_coin_ownership_default() {
         test_context.cm_1,
         test_context.cm_2,
     ];
-
-    println!("asdfalkwsjeflkaj");
 
     let result = verify_proof(proof, &public_inputs, &test_context.hasher);
 
