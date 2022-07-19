@@ -57,47 +57,21 @@ impl Circuit<Scalar> for CoinProofCircuit1to2 {
         let s_1_old = self.s_1_old.or(Some(Scalar::default()));
         let v_1_old = self.v_1_old.or(Some(Scalar::default()));
 
-        {
-            let k = self.hasher.comm2_scalar_cs(
-                cs,
-                r_1_old,
-                addr_pk_1_old,
-                rho_1_old,
-            );
-
-            let cm = self.hasher.comm2_scalar_cs(cs, s_1_old, v_1_old, k);
-
-            println!("123 cm: {:?}", cm);
-            println!("123 cm_1_old: {:?}", cm_1_old);
-
-            let cm_1_old = cs
-                .alloc(
-                    || "cm_1_old",
-                    || cm_1_old.ok_or(SynthesisError::AssignmentMissing),
-                )
-                .unwrap();
-
-            let cm = cs
-                .alloc(|| "cm", || cm.ok_or(SynthesisError::AssignmentMissing))
-                .unwrap();
-
-            cs.enforce(
-                || "cm_1_old = cm",
-                |lc| lc + cm_1_old,
-                |lc| lc + CS::one(),
-                |lc| lc + cm,
-            );
-        }
+        check_cm_commitments(
+            cs,
+            cm_1_old,
+            addr_pk_1_old,
+            rho_1_old,
+            r_1_old,
+            s_1_old,
+            v_1_old,
+            &self.hasher,
+        );
 
         let sn_1 = self.hasher.mimc_scalar_cs(cs, addr_sk_1_old, rho_1_old);
 
-        let merkle_rt = climb_up_tree(
-            cs,
-            cm_1_old,
-            &self.auth_path_1,
-            // &self.constants,
-            &self.hasher,
-        );
+        let merkle_rt =
+            climb_up_tree(cs, cm_1_old, &self.auth_path_1, &self.hasher);
 
         let addr_pk_1 = self.addr_pk_1.or(Some(Scalar::default()));
         let rho_1 = self.rho_1.or(Some(Scalar::default()));
@@ -110,6 +84,17 @@ impl Circuit<Scalar> for CoinProofCircuit1to2 {
             self.hasher.comm2_scalar_cs(cs, s_1, v_1, k)
         };
 
+        check_cm_commitments(
+            cs,
+            cm_1,
+            addr_pk_1,
+            rho_1,
+            r_1,
+            s_1,
+            v_1,
+            &self.hasher,
+        );
+
         let addr_pk_2 = self.addr_pk_2.or(Some(Scalar::default()));
         let rho_2 = self.rho_2.or(Some(Scalar::default()));
         let r_2 = self.r_2.or(Some(Scalar::default()));
@@ -120,6 +105,17 @@ impl Circuit<Scalar> for CoinProofCircuit1to2 {
             let k = self.hasher.comm2_scalar_cs(cs, r_2, addr_pk_2, rho_2);
             self.hasher.comm2_scalar_cs(cs, s_2, v_2, k)
         };
+
+        check_cm_commitments(
+            cs,
+            cm_2,
+            addr_pk_2,
+            rho_2,
+            r_2,
+            s_2,
+            v_2,
+            &self.hasher,
+        );
 
         require_equal_val_summation(cs, v_1_old, v_1, v_2);
 
@@ -145,9 +141,6 @@ impl Circuit<Scalar> for CoinProofCircuit1to2 {
             )?;
         }
 
-        println!();
-        println!("[+] Final values from test circuit :");
-
         Ok(())
     }
 }
@@ -161,7 +154,7 @@ fn climb_up_tree<CS: ConstraintSystem<Scalar>>(
     let mut curr = leaf;
 
     for (idx, merkle_node) in auth_path.iter().enumerate() {
-        println!("idx: {}, sibling: {:?}", idx, merkle_node);
+        // println!("idx: {}, sibling: {:?}", idx, merkle_node);
 
         let cs = &mut cs.namespace(|| format!("height {}", idx));
 
@@ -202,6 +195,41 @@ fn climb_up_tree<CS: ConstraintSystem<Scalar>>(
     }
 
     return curr;
+}
+
+fn check_cm_commitments<CS: ConstraintSystem<Scalar>>(
+    cs: &mut CS,
+    cm_old: Option<Scalar>,
+    addr_pk: Option<Scalar>,
+    rho: Option<Scalar>,
+    r: Option<Scalar>,
+    s: Option<Scalar>,
+    v: Option<Scalar>,
+    hasher: &Hasher,
+) {
+    {
+        let k = hasher.comm2_scalar_cs(cs, r, addr_pk, rho);
+
+        let cm_computed = hasher.comm2_scalar_cs(cs, s, v, k);
+
+        let cm_1_old = cs
+            .alloc(|| "cm", || cm_old.ok_or(SynthesisError::AssignmentMissing))
+            .unwrap();
+
+        let cm = cs
+            .alloc(
+                || "cm_computed",
+                || cm_computed.ok_or(SynthesisError::AssignmentMissing),
+            )
+            .unwrap();
+
+        cs.enforce(
+            || "cm = cm_computed",
+            |lc| lc + cm_1_old,
+            |lc| lc + CS::one(),
+            |lc| lc + cm,
+        );
+    }
 }
 
 fn require_equal_val_summation<CS: ConstraintSystem<Scalar>>(

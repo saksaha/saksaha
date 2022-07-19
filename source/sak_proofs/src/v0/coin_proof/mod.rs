@@ -1,8 +1,6 @@
-mod circuit;
 mod circuit_1_to_2;
 mod proof;
 
-pub use circuit::*;
 pub use circuit_1_to_2::*;
 pub use proof::*;
 

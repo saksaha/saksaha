@@ -1,4 +1,3 @@
-use crate::CoinCircuit;
 use crate::MerkleTree;
 use crate::CM_TREE_DEPTH;
 use pairing::MultiMillerLoop;

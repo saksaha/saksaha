@@ -131,13 +131,7 @@ fn make_test_context() -> TestContext {
         let cm = {
             let k = hasher.comm2_scalar(r, addr_pk, rho);
 
-            let ret = hasher.comm2_scalar(s, v, k);
-
-            // println!("make test context cm_1!!!123123: {:?}",);
-            // println!("make test context cm_1!!!123123: {:?}", ret);
-            // println!("make test context cm_1!!!123123: {:?}", ret);
-
-            ret
+            hasher.comm2_scalar(s, v, k)
         };
 
         (addr_sk, addr_pk, r, s, rho, v, cm)
@@ -304,7 +298,6 @@ fn make_test_context() -> TestContext {
 pub fn get_test_params(constants: &[Scalar]) -> Parameters<Bls12> {
     let param_path = std::path::Path::new(PARAM_FILE_NAME);
     let is_file_exist = param_path.exists();
-    println!("param file exists!!, path: {:?}", param_path);
 
     let mut v = vec![];
 
@@ -454,8 +447,6 @@ fn make_proof(
             .into());
         }
     };
-
-    println!("[+] proof: {:?}", proof);
 
     Ok(proof)
 }
