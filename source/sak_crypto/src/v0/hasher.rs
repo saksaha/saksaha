@@ -121,18 +121,21 @@ impl Hasher {
         r2
     }
 
-    pub fn comm(&self, r: Scalar, x: Scalar) -> Scalar {
-        mimc::mimc(r, x, &self.constants)
-    }
-
-    /// commitment generating hash function for constraint system
-    #[allow(dead_code)]
-    pub fn comm_cs<CS: ConstraintSystem<Scalar>>(
+    pub fn comm2_scalar_cs<CS: ConstraintSystem<Scalar>>(
         &self,
         cs: &mut CS,
-        r: Option<Scalar>,
-        x: Option<Scalar>,
+        a: Option<Scalar>,
+        b: Option<Scalar>,
+        c: Option<Scalar>,
     ) -> Option<Scalar> {
-        self.mimc_scalar_cs(cs, r, x)
+        let r1 = self.mimc_scalar_cs(cs, b, c);
+
+        let r2 = self.mimc_scalar_cs(cs, a, r1);
+
+        r2
+    }
+
+    pub fn comm(&self, r: Scalar, x: Scalar) -> Scalar {
+        mimc::mimc(r, x, &self.constants)
     }
 }

@@ -15,7 +15,8 @@ const TEST_TREE_DEPTH: usize = 3;
 pub(crate) struct CoinProofCircuit1to2 {
     pub hasher: Hasher,
 
-    // old coin (1)
+    // old coin 1
+    pub addr_pk_1_old: Option<Scalar>,
     pub addr_sk_1_old: Option<Scalar>,
     pub rho_1_old: Option<Scalar>,
     pub r_1_old: Option<Scalar>,
@@ -27,14 +28,14 @@ pub(crate) struct CoinProofCircuit1to2 {
     // pub merkle_rt: Option<Scalar>,
 
     // new coin 1
-    pub addr_sk_1: Option<Scalar>,
+    pub addr_pk_1: Option<Scalar>,
     pub rho_1: Option<Scalar>,
     pub r_1: Option<Scalar>,
     pub s_1: Option<Scalar>,
     pub v_1: Option<Scalar>,
 
     // new coin 2
-    pub addr_sk_2: Option<Scalar>,
+    pub addr_pk_2: Option<Scalar>,
     pub rho_2: Option<Scalar>,
     pub r_2: Option<Scalar>,
     pub s_2: Option<Scalar>,
@@ -48,24 +49,45 @@ impl Circuit<Scalar> for CoinProofCircuit1to2 {
         self,
         cs: &mut CS,
     ) -> Result<(), SynthesisError> {
-        // let mut merkle_rt = self.merkle_rt.or(Some(Scalar::default()));
-
         let rho_1_old = self.rho_1_old.or(Some(Scalar::default()));
+        let addr_pk_1_old = self.addr_pk_1_old.or(Some(Scalar::default()));
         let addr_sk_1_old = self.addr_sk_1_old.or(Some(Scalar::default()));
-        //
-
-        let addr_sk_1 = self.addr_sk_1.or(Some(Scalar::default()));
-        let rho_1 = self.rho_1.or(Some(Scalar::default()));
-        let r_1 = self.r_1.or(Some(Scalar::default()));
-        let s_1 = self.s_1.or(Some(Scalar::default()));
-        let v_1 = self.v_1.or(Some(Scalar::default()));
         let cm_1_old = self.cm_1_old.or(Some(Scalar::default()));
+        let r_1_old = self.r_1_old.or(Some(Scalar::default()));
+        let s_1_old = self.s_1_old.or(Some(Scalar::default()));
+        let v_1_old = self.v_1_old.or(Some(Scalar::default()));
 
-        let a_sk_2 = self.addr_sk_2.or(Some(Scalar::default()));
-        let rho_2 = self.rho_2.or(Some(Scalar::default()));
-        let r_2 = self.r_2.or(Some(Scalar::default()));
-        let s_2 = self.s_2.or(Some(Scalar::default()));
-        let v_2 = self.v_2.or(Some(Scalar::default()));
+        {
+            let k = self.hasher.comm2_scalar_cs(
+                cs,
+                r_1_old,
+                addr_pk_1_old,
+                rho_1_old,
+            );
+
+            let cm = self.hasher.comm2_scalar_cs(cs, s_1_old, v_1_old, k);
+
+            println!("123 cm: {:?}", cm);
+            println!("123 cm_1_old: {:?}", cm_1_old);
+
+            let cm_1_old = cs
+                .alloc(
+                    || "cm_1_old",
+                    || cm_1_old.ok_or(SynthesisError::AssignmentMissing),
+                )
+                .unwrap();
+
+            let cm = cs
+                .alloc(|| "cm", || cm.ok_or(SynthesisError::AssignmentMissing))
+                .unwrap();
+
+            cs.enforce(
+                || "cm_1_old = cm",
+                |lc| lc + cm_1_old,
+                |lc| lc + CS::one(),
+                |lc| lc + cm,
+            );
+        }
 
         let sn_1 = self.hasher.mimc_scalar_cs(cs, addr_sk_1_old, rho_1_old);
 
@@ -77,16 +99,31 @@ impl Circuit<Scalar> for CoinProofCircuit1to2 {
             &self.hasher,
         );
 
-        println!("power111111: {:?}", addr_sk_1_old);
-        println!("power222222: {:?}", rho_1_old);
-        println!("power3333333: {:?}", sn_1);
+        let addr_pk_1 = self.addr_pk_1.or(Some(Scalar::default()));
+        let rho_1 = self.rho_1.or(Some(Scalar::default()));
+        let r_1 = self.r_1.or(Some(Scalar::default()));
+        let s_1 = self.s_1.or(Some(Scalar::default()));
+        let v_1 = self.v_1.or(Some(Scalar::default()));
+
+        let cm_1 = {
+            let k = self.hasher.comm2_scalar_cs(cs, r_1, addr_pk_1, rho_1);
+            self.hasher.comm2_scalar_cs(cs, s_1, v_1, k)
+        };
+
+        let addr_pk_2 = self.addr_pk_2.or(Some(Scalar::default()));
+        let rho_2 = self.rho_2.or(Some(Scalar::default()));
+        let r_2 = self.r_2.or(Some(Scalar::default()));
+        let s_2 = self.s_2.or(Some(Scalar::default()));
+        let v_2 = self.v_2.or(Some(Scalar::default()));
+
+        let cm_2 = {
+            let k = self.hasher.comm2_scalar_cs(cs, r_2, addr_pk_2, rho_2);
+            self.hasher.comm2_scalar_cs(cs, s_2, v_2, k)
+        };
+
+        require_equal_val_summation(cs, v_1_old, v_1, v_2);
 
         {
-            cs.alloc_input(
-                || "merkle_rt",
-                || merkle_rt.ok_or(SynthesisError::AssignmentMissing),
-            )?;
-
             cs.alloc_input(
                 || "merkle_rt",
                 || merkle_rt.ok_or(SynthesisError::AssignmentMissing),
@@ -97,62 +134,19 @@ impl Circuit<Scalar> for CoinProofCircuit1to2 {
                 || sn_1.ok_or(SynthesisError::AssignmentMissing),
             )?;
 
-            // cs.alloc_input(
-            //     || "a_pk_1",
-            //     || a_pk_1.ok_or(SynthesisError::AssignmentMissing),
-            // )?;
+            cs.alloc_input(
+                || "cm_1",
+                || cm_1.ok_or(SynthesisError::AssignmentMissing),
+            )?;
 
-            // cs.alloc_input(
-            //     || "sn_1",
-            //     || sn_1.ok_or(SynthesisError::AssignmentMissing),
-            // )?;
-
-            // cs.alloc_input(
-            //     //
-            //     || "k_1",
-            //     || k_1.ok_or(SynthesisError::AssignmentMissing),
-            // )?;
-
-            // cs.alloc_input(
-            //     || "cm_1",
-            //     || cm_1.ok_or(SynthesisError::AssignmentMissing),
-            // )?;
-
-            // cs.alloc_input(
-            //     || "a_pk_2",
-            //     || a_pk_2.ok_or(SynthesisError::AssignmentMissing),
-            // )?;
-
-            // cs.alloc_input(
-            //     || "sn_2",
-            //     || sn_2.ok_or(SynthesisError::AssignmentMissing),
-            // )?;
-
-            // cs.alloc_input(
-            //     //
-            //     || "k_2",
-            //     || k_2.ok_or(SynthesisError::AssignmentMissing),
-            // )?;
-
-            // cs.alloc_input(
-            //     || "cm_2",
-            //     || cm_2.ok_or(SynthesisError::AssignmentMissing),
-            // )?;
+            cs.alloc_input(
+                || "cm_2",
+                || cm_2.ok_or(SynthesisError::AssignmentMissing),
+            )?;
         }
 
         println!();
         println!("[+] Final values from test circuit :");
-        // println!("<1> merkle_rt: {:?}", merkle_rt);
-        //
-        // println!("<2> a_pk_1: {:?}", a_pk_1);
-        // println!("<3> sn_1: {:?}", sn_1);
-        // println!("<4> k_1:  {:?}", k_1);
-        // println!("<5> cm_1: {:?}", cm_1);
-        // //
-        // println!("<6> a_pk_2: {:?}", a_pk_2);
-        // println!("<7> sn_2: {:?}", sn_2);
-        // println!("<8> k_2:  {:?}", k_2);
-        // println!("<9> cm_2: {:?}", cm_2);
 
         Ok(())
     }
@@ -162,7 +156,6 @@ fn climb_up_tree<CS: ConstraintSystem<Scalar>>(
     cs: &mut CS,
     leaf: Option<Scalar>,
     auth_path: &[Option<(Scalar, bool)>; TEST_TREE_DEPTH],
-    // constants: &Vec<Scalar>,
     hasher: &Hasher,
 ) -> Option<Scalar> {
     let mut curr = leaf;
@@ -209,4 +202,41 @@ fn climb_up_tree<CS: ConstraintSystem<Scalar>>(
     }
 
     return curr;
+}
+
+fn require_equal_val_summation<CS: ConstraintSystem<Scalar>>(
+    cs: &mut CS,
+    v_old: Option<Scalar>,
+    v_1: Option<Scalar>,
+    v_2: Option<Scalar>,
+) {
+    let v_old = cs
+        .alloc(
+            || "v_old",
+            || v_old.ok_or(SynthesisError::AssignmentMissing),
+        )
+        .unwrap();
+
+    {
+        let v_1_new = cs
+            .alloc(
+                || "preimage v_1",
+                || v_1.ok_or(SynthesisError::AssignmentMissing),
+            )
+            .unwrap();
+
+        let v_2_new = cs
+            .alloc(
+                || "preimage v_2",
+                || v_2.ok_or(SynthesisError::AssignmentMissing),
+            )
+            .unwrap();
+
+        cs.enforce(
+            || "tmp = v_1 + v_2",
+            |lc| lc + v_1_new + v_2_new,
+            |lc| lc + CS::one(),
+            |lc| lc + v_old,
+        );
+    };
 }
