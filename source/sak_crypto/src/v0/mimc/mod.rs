@@ -8,18 +8,18 @@ use sha2::digest::typenum::private::IsEqualPrivate;
 
 pub const MIMC_ROUNDS: usize = 322;
 
-pub fn get_mimc_constants() -> Vec<Scalar> {
+pub(crate) fn get_mimc_constants() -> Vec<Scalar> {
     let constants = (0..322)
         .map(|idx| Scalar::from_bytes(&ROUND_CONSTANTS[idx]).unwrap())
         .collect::<Vec<_>>();
     constants
 }
 
-pub fn mimc_single_arg<S: PrimeField>(xl: S, constants: &[S]) -> S {
+pub(crate) fn mimc_single_arg<S: PrimeField>(xl: S, constants: &[S]) -> S {
     mimc(xl, S::zero(), constants)
 }
 
-pub fn mimc<S: PrimeField>(mut xl: S, mut xr: S, constants: &[S]) -> S {
+pub(crate) fn mimc<S: PrimeField>(mut xl: S, mut xr: S, constants: &[S]) -> S {
     for c in constants {
         let mut tmp1 = xl;
         tmp1.add_assign(c);
@@ -33,7 +33,7 @@ pub fn mimc<S: PrimeField>(mut xl: S, mut xr: S, constants: &[S]) -> S {
     xl
 }
 
-pub fn mimc_cs<S: PrimeField, CS: ConstraintSystem<S>>(
+pub(crate) fn mimc_cs<S: PrimeField, CS: ConstraintSystem<S>>(
     cs: &mut CS,
     mut xl_value: Option<S>,
     mut xr_value: Option<S>,

@@ -18,6 +18,10 @@ impl Hasher {
         }
     }
 
+    pub fn get_mimc_constants(&self) -> &Vec<Scalar> {
+        return &self.constants;
+    }
+
     pub fn mimc(
         &self,
         a: &[u8; 32],
@@ -58,7 +62,7 @@ impl Hasher {
         mimc::mimc_cs(cs, a, b, &self.constants)
     }
 
-    fn mimc_scalar_cs<CS: ConstraintSystem<Scalar>>(
+    pub fn mimc_scalar_cs<CS: ConstraintSystem<Scalar>>(
         &self,
         cs: &mut CS,
         a: Option<Scalar>,

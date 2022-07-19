@@ -24,7 +24,7 @@ pub(crate) struct CoinProofCircuit1to2 {
     pub cm_1_old: Option<Scalar>,
 
     pub auth_path_1: [Option<(Scalar, bool)>; TEST_TREE_DEPTH],
-    pub merkle_rt: Option<Scalar>,
+    // pub merkle_rt: Option<Scalar>,
 
     // new coin 1
     pub addr_sk_1: Option<Scalar>,
@@ -48,8 +48,9 @@ impl Circuit<Scalar> for CoinProofCircuit1to2 {
         self,
         cs: &mut CS,
     ) -> Result<(), SynthesisError> {
-        let mut merkle_rt = self.merkle_rt.or(Some(Scalar::default()));
+        // let mut merkle_rt = self.merkle_rt.or(Some(Scalar::default()));
 
+        let rho_1_old = self.rho_1_old.or(Some(Scalar::default()));
         let addr_sk_1_old = self.addr_sk_1_old.or(Some(Scalar::default()));
         //
 
@@ -66,23 +67,36 @@ impl Circuit<Scalar> for CoinProofCircuit1to2 {
         let s_2 = self.s_2.or(Some(Scalar::default()));
         let v_2 = self.v_2.or(Some(Scalar::default()));
 
-        // sn_1
-        let addr_pk_1_old =
-            self.hasher.mimc_single_scalar_cs(cs, self.addr_sk_1_old);
+        let sn_1 = self.hasher.mimc_scalar_cs(cs, addr_sk_1_old, rho_1_old);
 
-        let curr =
-            climb_up_tree(cs, cm_1_old, &self.auth_path_1, &self.constants);
+        let merkle_rt = climb_up_tree(
+            cs,
+            cm_1_old,
+            &self.auth_path_1,
+            // &self.constants,
+            &self.hasher,
+        );
+
+        println!("power111111: {:?}", addr_sk_1_old);
+        println!("power222222: {:?}", rho_1_old);
+        println!("power3333333: {:?}", sn_1);
 
         {
             cs.alloc_input(
                 || "merkle_rt",
-                || curr.ok_or(SynthesisError::AssignmentMissing),
+                || merkle_rt.ok_or(SynthesisError::AssignmentMissing),
             )?;
 
             cs.alloc_input(
-                || "addr_pk_1_old",
-                || addr_pk_1_old.ok_or(SynthesisError::AssignmentMissing),
+                || "merkle_rt",
+                || merkle_rt.ok_or(SynthesisError::AssignmentMissing),
             )?;
+
+            cs.alloc_input(
+                || "sn_1",
+                || sn_1.ok_or(SynthesisError::AssignmentMissing),
+            )?;
+
             // cs.alloc_input(
             //     || "a_pk_1",
             //     || a_pk_1.ok_or(SynthesisError::AssignmentMissing),
@@ -128,7 +142,7 @@ impl Circuit<Scalar> for CoinProofCircuit1to2 {
 
         println!();
         println!("[+] Final values from test circuit :");
-        println!("<1> merkle_rt: {:?}", merkle_rt);
+        // println!("<1> merkle_rt: {:?}", merkle_rt);
         //
         // println!("<2> a_pk_1: {:?}", a_pk_1);
         // println!("<3> sn_1: {:?}", sn_1);
@@ -148,7 +162,8 @@ fn climb_up_tree<CS: ConstraintSystem<Scalar>>(
     cs: &mut CS,
     leaf: Option<Scalar>,
     auth_path: &[Option<(Scalar, bool)>; TEST_TREE_DEPTH],
-    constants: &Vec<Scalar>,
+    // constants: &Vec<Scalar>,
+    hasher: &Hasher,
 ) -> Option<Scalar> {
     let mut curr = leaf;
 
@@ -190,7 +205,7 @@ fn climb_up_tree<CS: ConstraintSystem<Scalar>>(
             xr_value = Some(temp.0);
         }
 
-        curr = mimc::mimc_cs(cs, xl_value, xr_value, constants);
+        curr = hasher.mimc_scalar_cs(cs, xl_value, xr_value);
     }
 
     return curr;
