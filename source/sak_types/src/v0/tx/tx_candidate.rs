@@ -1,5 +1,7 @@
 use super::utils;
-use crate::{MintTx, PourTx, Tx, TxCtrOp, TypesError, WASM_MAGIC_NUMBER};
+use crate::{
+    MintTx, PourTx, Tx, TxCtrOp, TxType, TypesError, WASM_MAGIC_NUMBER,
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Debug, PartialEq, Eq, Clone)]
@@ -111,6 +113,10 @@ impl MintTxCandidate {
         }
     }
 
+    pub fn get_tx_type(&self) -> TxType {
+        TxType::Mint
+    }
+
     pub fn get_tx_hash(&self) -> &String {
         return &self.tx_hash;
     }
@@ -202,6 +208,10 @@ impl PourTxCandidate {
 
     pub fn upgrade(self, tx_height: u128) -> Tx {
         Tx::Pour(PourTx::new(self, tx_height))
+    }
+
+    pub fn get_tx_type(&self) -> TxType {
+        TxType::Pour
     }
 
     pub fn get_tx_hash(&self) -> &String {

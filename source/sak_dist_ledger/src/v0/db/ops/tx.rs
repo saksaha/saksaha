@@ -1,7 +1,7 @@
 use crate::{LedgerDB, LedgerDBSchema, LedgerError};
 use sak_kv_db::{WriteBatch, DB};
 use sak_types::{
-    MintTx, MintTxCandidate, PourTx, PourTxCandidate, Tx, TxCtrOp,
+    MintTx, MintTxCandidate, PourTx, PourTxCandidate, Tx, TxCtrOp, TxType,
 };
 
 impl LedgerDB {
@@ -26,15 +26,17 @@ impl LedgerDB {
     ) -> Result<Option<Tx>, LedgerError> {
         let db = &self.kv_db.db_instance;
 
+        println!("get_tx, hash: {:?}", tx_hash);
+
         let tx_type = self
             .schema
             .get_tx_type(db, tx_hash)?
             .ok_or("tx type should exist")?;
 
-        let tx = match tx_type.as_ref() {
-            "mint" => get_mint_tx(db, &self.schema, tx_hash),
-            "pour" => get_pour_tx(db, &self.schema, tx_hash),
-            _ => Err(format!("Invalid tx type, {}", tx_type).into()),
+        let tx = match tx_type {
+            TxType::Mint => get_mint_tx(db, &self.schema, tx_hash),
+            TxType::Pour => get_pour_tx(db, &self.schema, tx_hash),
+            _ => Err(format!("Invalid tx type, {:?}", tx_type).into()),
         }?;
 
         Ok(Some(tx))
@@ -109,7 +111,7 @@ fn get_mint_tx(
     tx_hash: &String,
 ) -> Result<Tx, LedgerError> {
     let created_at = schema
-        .get_created_at(db, tx_hash)?
+        .get_tx_created_at(db, tx_hash)?
         .ok_or("created_at does not exist")?;
 
     let data = schema.get_data(db, tx_hash)?.ok_or("data does not exist")?;
@@ -147,7 +149,7 @@ fn get_pour_tx(
     tx_hash: &String,
 ) -> Result<Tx, LedgerError> {
     let created_at = schema
-        .get_created_at(db, tx_hash)?
+        .get_tx_created_at(db, tx_hash)?
         .ok_or("created_at does not exist")?;
 
     let data = schema.get_data(db, tx_hash)?.ok_or("data does not exist")?;
@@ -196,17 +198,25 @@ fn batch_put_mint_tx(
 
     let tx_hash = tc.get_tx_hash();
 
+    schema.batch_put_tx_type(db, batch, tx_hash, tc.get_tx_type())?;
+
     schema.batch_put_cm(db, batch, tx_hash, &tc.cm)?;
 
     schema.batch_put_cm_by_height(db, batch, &tx.tx_height, &tc.cm)?;
 
-    schema.batch_put_created_at(db, batch, tx_hash, &tc.created_at)?;
+    schema.batch_put_tx_created_at(db, batch, tx_hash, &tc.created_at)?;
 
     schema.batch_put_data(db, batch, tx_hash, &tc.data)?;
 
     schema.batch_put_author_sig(db, batch, tx_hash, &tc.author_sig)?;
 
     schema.batch_put_ctr_addr(db, batch, tx_hash, &tc.ctr_addr)?;
+
+    schema.batch_put_v(db, batch, tx_hash, &tc.v)?;
+
+    schema.batch_put_k(db, batch, tx_hash, &tc.k)?;
+
+    schema.batch_put_s(db, batch, tx_hash, &tc.s)?;
 
     schema.batch_put_tx_height(db, batch, tx_hash, &tx.tx_height)?;
 
@@ -235,7 +245,9 @@ fn batch_put_pour_tx(
 
     let tx_hash = tc.get_tx_hash();
 
-    schema.batch_put_created_at(db, batch, tx_hash, &tc.created_at)?;
+    schema.batch_put_tx_type(db, batch, tx_hash, tc.get_tx_type())?;
+
+    schema.batch_put_tx_created_at(db, batch, tx_hash, &tc.created_at)?;
 
     schema.batch_put_data(db, batch, tx_hash, &tc.data)?;
 
@@ -244,6 +256,8 @@ fn batch_put_pour_tx(
     schema.batch_put_ctr_addr(db, batch, tx_hash, &tc.ctr_addr)?;
 
     schema.batch_put_tx_height(db, batch, tx_hash, &tx.tx_height)?;
+
+    schema.batch_put_pi(db, batch, tx_hash, &tc.pi)?;
 
     schema.batch_put_tx_hash_by_height(db, batch, &tx.tx_height, tx_hash)?;
 
@@ -279,14 +293,18 @@ pub mod testing {
 
             let mut batch = WriteBatch::default();
 
-            match tx {
+            let tx_hash = match tx {
                 Tx::Mint(t) => {
-                    batch_put_mint_tx(db, &self.schema, &mut batch, t)
+                    batch_put_mint_tx(db, &self.schema, &mut batch, t)?
                 }
                 Tx::Pour(t) => {
-                    batch_put_pour_tx(db, &self.schema, &mut batch, t)
+                    batch_put_pour_tx(db, &self.schema, &mut batch, t)?
                 }
-            }
+            };
+
+            db.write(batch)?;
+
+            Ok(tx_hash)
         }
 
         pub(crate) fn delete_tx(

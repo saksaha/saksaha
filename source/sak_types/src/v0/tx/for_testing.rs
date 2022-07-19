@@ -59,8 +59,8 @@ fn get_rho_4() -> [u8; 32] {
 }
 
 impl Tx {
-    pub fn new_dummy_pour_1_2_to_3() -> Tx {
-        let c = TxCandidate::new_dummy_pour_1_2_to_3();
+    pub fn new_dummy_pour_m1_to_p3_p4() -> Tx {
+        let c = TxCandidate::new_dummy_pour_m1_to_p3_p4();
         c.upgrade(0)
     }
 
@@ -96,8 +96,8 @@ impl TxCandidate {
         TxCandidate::Mint(tx_candidate)
     }
 
-    pub fn new_dummy_pour_1_2_to_3() -> TxCandidate {
-        let tx_candidate = PourTxCandidate::new_dummy_1_2_to_3();
+    pub fn new_dummy_pour_m1_to_p3_p4() -> TxCandidate {
+        let tx_candidate = PourTxCandidate::new_dummy_m1_to_p3_p4();
 
         TxCandidate::Pour(tx_candidate)
     }
@@ -184,7 +184,7 @@ impl MintTxCandidate {
 }
 
 impl PourTxCandidate {
-    pub fn new_dummy_1_2_to_3() -> PourTxCandidate {
+    pub fn new_dummy_m1_to_p3_p4() -> PourTxCandidate {
         let hasher = Hasher::new();
 
         let sn_1 = {

@@ -93,9 +93,6 @@ impl DistLedger {
 
         if let Some(bc) = genesis_block {
             dist_ledger.insert_genesis_block(bc).await?;
-
-            // TODO
-            // genesis_block hash check
         }
 
         let latest_height =

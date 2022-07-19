@@ -23,7 +23,6 @@ pub(crate) fn make_dummy_genesis_block_1() -> BlockCandidate {
         tx_candidates: vec![
             TxCandidate::new_dummy_mint_1(),
             TxCandidate::new_dummy_mint_2(),
-            // TxCandidate::new_dummy_pour_1_2_to_3(),
         ],
         witness_sigs: vec![String::from("1"), String::from("2")],
         created_at: String::from("2022061515340000"),
@@ -52,10 +51,10 @@ pub(crate) async fn make_dist_ledger() -> DistLedger {
 
 pub(crate) fn make_dummy_txs() -> Vec<Tx> {
     vec![
-        Tx::new_dummy_pour_1_2_to_3(),
-        Tx::new_dummy_pour_2(),
-        Tx::new_dummy_pour_3(),
-        Tx::new_dummy_pour_4(),
+        Tx::new_dummy_pour_m1_to_p3_p4(),
+        // Tx::new_dummy_pour_2(),
+        // Tx::new_dummy_pour_3(),
+        // Tx::new_dummy_pour_4(),
     ]
 }
 
@@ -75,7 +74,7 @@ pub(crate) fn make_dummy_block_candidate_1() -> Option<BlockCandidate> {
     // let test_wasm = include_bytes!("./test_valid_contract.wasm").to_vec();
 
     let block_candidate: BlockCandidate = {
-        let dummy_ctr_deploying_tc = TxCandidate::new_dummy_pour_1_2_to_3();
+        let dummy_ctr_deploying_tc = TxCandidate::new_dummy_pour_m1_to_p3_p4();
 
         BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),

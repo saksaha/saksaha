@@ -74,7 +74,7 @@ impl LedgerDB {
             &block.tx_hashes,
         )?;
 
-        self.schema.batch_put_created_at(
+        self.schema.batch_put_block_created_at(
             db,
             &mut batch,
             block_hash,
@@ -145,16 +145,13 @@ fn get_block(
     schema: &LedgerDBSchema,
     block_hash: &String,
 ) -> Result<Option<Block>, LedgerError> {
-    // let db = &dist_ledger.kv_db.db_instance;
-    // let schema = &dist_ledger.schema;
-
     let validator_sig = schema.get_validator_sig(db, &block_hash)?;
 
     let tx_hashes = schema.get_tx_hashes(db, &block_hash)?;
 
     let witness_sigs = schema.get_witness_sigs(db, &block_hash)?;
 
-    let created_at = schema.get_created_at(db, &block_hash)?;
+    let created_at = schema.get_block_created_at(db, &block_hash)?;
 
     let block_height = schema.get_block_height(db, &block_hash)?;
 
