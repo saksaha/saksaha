@@ -43,7 +43,8 @@ impl DistLedger {
             next_tx_height
         );
 
-        for tx_candidate in tcs.iter() {
+        for (idx, tx_candidate) in tcs.iter().enumerate() {
+            let tx_height = next_tx_height as usize + idx;
             match tx_candidate {
                 TxCandidate::Mint(tc) => {
                     handle_mint_tx_candidate(
@@ -51,6 +52,7 @@ impl DistLedger {
                         tc,
                         &mut ctr_state_update,
                         &mut merkle_update,
+                        tx_height as u32,
                     )
                     .await?;
                 }
@@ -70,7 +72,8 @@ impl DistLedger {
             warn!("Error removing txs into the tx pool, err: {}", err);
         }
 
-        let next_merkle_rt = match merkle_update.get("31_0") {
+        // let next_merkle_rt = match merkle_update.get("31_0") {
+        let next_merkle_rt = match merkle_update.get("3_0") {
             Some(r) => r,
             None => return Err(format!("next merkle root is missing").into()),
         };
@@ -177,6 +180,7 @@ async fn handle_mint_tx_candidate(
     tc: &MintTxCandidate,
     ctr_state_update: &mut CtrStateUpdate,
     merkle_update: &mut MerkleUpdate,
+    next_tx_height: u32,
 ) -> Result<(), LedgerError> {
     let ctr_addr = &tc.ctr_addr;
     let data = &tc.data;
@@ -192,10 +196,10 @@ async fn handle_mint_tx_candidate(
 
     // process_merkle_update(dist_ledger, &merkle_update, &tc.cm);
 
-    let next_tx_height = match dist_ledger.get_latest_tx_height().await? {
-        Some(th) => th + 1,
-        None => 0,
-    };
+    // let next_tx_height = match dist_ledger.get_latest_tx_height().await? {
+    //     Some(th) => th + 1,
+    //     None => 0,
+    // };
 
     let auth_path = dist_ledger
         .merkle_tree
@@ -209,14 +213,6 @@ async fn handle_mint_tx_candidate(
     let mut curr_cm = tc.cm;
 
     for (height, path) in auth_path.iter().enumerate() {
-        if height == auth_path.len() - 1 {
-            return Err(format!(
-                "Wrong auth path calculation, height greater \
-                than auth path len"
-            )
-            .into());
-        }
-
         let sibling_idx = path.idx;
         let sibling_loc = format!("{}_{}", height, sibling_idx);
         let sibling_node = dist_ledger

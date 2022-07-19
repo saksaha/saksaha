@@ -10,6 +10,7 @@ async fn test_put_and_get_transaction() {
     let db = blockchain.ledger_db;
 
     let dummy_tx_values = utils::make_dummy_txs();
+
     let mut tx_hashes = vec![];
 
     for tx_val in dummy_tx_values.iter() {
