@@ -26,8 +26,13 @@ impl DistLedger {
             },
         };
 
-        let next_block_height =
-            self.get_latest_block_height().await?.unwrap_or(0);
+        let next_block_height = match self.get_latest_block_height().await? {
+            Some(h) => h,
+            None => {
+                warn!("Block height does not exist. Possibly the first block");
+                0
+            }
+        };
 
         let next_tx_height = self.get_latest_tx_height().await?.unwrap_or(0);
 
@@ -117,7 +122,6 @@ impl DistLedger {
 
 async fn process_ctr_state_update(
     dist_ledger: &DistLedger,
-    // tc: TxCandidate,
     ctr_addr: &String,
     data: &[u8],
     tx_ctr_op: TxCtrOp,
@@ -185,6 +189,7 @@ async fn handle_mint_tx_candidate(
     let ctr_addr = &tc.ctr_addr;
     let data = &tc.data;
     let tx_ctr_op = tc.get_ctr_op();
+
     process_ctr_state_update(
         dist_ledger,
         ctr_addr,

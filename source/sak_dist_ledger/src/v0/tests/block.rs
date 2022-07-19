@@ -41,7 +41,10 @@ async fn test_write_a_genesis_block() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
-async fn test_deploy_ctr_when_dist_ledger_writes_a_new_block() {
+async fn test_write_a_new_block_after_genesis() {
+    sak_test_utils::init_test_log();
+    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
+
     let dist_ledger = utils::make_dist_ledger().await;
 
     dist_ledger.run().await;

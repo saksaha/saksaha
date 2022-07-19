@@ -106,16 +106,20 @@ impl LedgerDB {
             self.batch_put_tx(&mut batch, tx)?;
         }
 
-        let su_keys = ctr_state_updates.keys();
-        for su_key in su_keys {
+        for ctr_addr in ctr_state_updates.keys() {
             self.schema.batch_put_ctr_state(
                 db,
                 &mut batch,
-                &su_key,
+                &ctr_addr,
                 &ctr_state_updates
-                    .get(su_key)
+                    .get(ctr_addr)
                     .expect("contract state should be exist"),
             )?;
+        }
+
+        for (loc, node_val) in merkle_updates {
+            self.schema
+                .batch_put_merkle_node(db, &mut batch, loc, node_val)?;
         }
 
         db.write(batch)?;

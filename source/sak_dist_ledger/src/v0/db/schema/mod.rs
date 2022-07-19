@@ -1,4 +1,4 @@
-use crate::LedgerError;
+use crate::{LedgerError, MerkleNodeLoc};
 use sak_kv_db::{
     BoundColumnFamily, ColumnFamilyDescriptor, IteratorMode, Options,
     WriteBatch, DB,
@@ -429,12 +429,12 @@ impl LedgerDBSchema {
         &self,
         db: &DB,
         batch: &mut WriteBatch,
-        location: &String,
-        node_val: &String,
+        merkle_node_loc: &MerkleNodeLoc,
+        node_val: &[u8; 32],
     ) -> Result<(), LedgerError> {
         let cf = make_cf_handle(db, MERKLE_NODE)?;
 
-        batch.put_cf(&cf, location, node_val);
+        batch.put_cf(&cf, merkle_node_loc, node_val);
 
         Ok(())
     }

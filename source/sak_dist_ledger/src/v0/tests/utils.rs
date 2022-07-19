@@ -71,18 +71,12 @@ pub(crate) fn make_dummy_pos() -> Box<DummyPos> {
 
 #[cfg(test)]
 pub(crate) fn make_dummy_block_candidate_1() -> Option<BlockCandidate> {
-    // let test_wasm = include_bytes!("./test_valid_contract.wasm").to_vec();
-
     let block_candidate: BlockCandidate = {
-        let dummy_ctr_deploying_tc = TxCandidate::new_dummy_pour_m1_to_p3_p4();
-
         BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
-            tx_candidates: vec![dummy_ctr_deploying_tc],
+            tx_candidates: vec![TxCandidate::new_dummy_pour_m1_to_p3_p4()],
             witness_sigs: vec![String::from("1"), String::from("2")],
             created_at: String::from("2022061515340000"),
-            // block_height: 0,
-            // merkle_root: String::from("2022061515340000"),
         }
     };
 
