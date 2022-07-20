@@ -77,13 +77,13 @@ impl LedgerDB {
         self.schema.get_tx_hash_by_height(db, height)
     }
 
-    pub(crate) async fn get_cm_by_height(
+    pub(crate) async fn get_cm_by_cm_idx(
         &self,
-        height: &u128,
+        cm_idx: &u128,
     ) -> Result<Option<String>, LedgerError> {
         let db = &self.kv_db.db_instance;
 
-        self.schema.get_cm_by_height(db, height)
+        self.schema.get_cm_by_idx(db, cm_idx)
     }
 
     pub(crate) async fn get_merkle_node(
@@ -269,7 +269,7 @@ fn batch_put_pour_tx(
 
     schema.batch_put_cm_2(db, batch, tx_hash, &tc.cm_2)?;
 
-    schema.batch_put_merkle_rt(db, batch, tx_hash, &tc.merkle_rt)?;
+    schema.batch_put_prf_merkle_rt(db, batch, tx_hash, &tc.merkle_rt)?;
 
     let tx_ctr_op = tc.get_ctr_op();
 
@@ -316,7 +316,7 @@ pub mod testing {
             let mut batch = WriteBatch::default();
 
             self.schema
-                .batch_delete_created_at(db, &mut batch, tx_hash)?;
+                .batch_delete_tx_created_at(db, &mut batch, tx_hash)?;
 
             self.schema.batch_delete_data(db, &mut batch, tx_hash)?;
 
