@@ -13,8 +13,7 @@ use tokio::net::TcpListener;
 use tokio::sync::RwLock;
 
 pub(crate) struct RPC {
-    // rpc_server: RPCServer,
-    pub(crate) sys_handle: SystemHandle,
+    pub(crate) sys_handle: Arc<SystemHandle>,
     pub(crate) rpc_socket: TcpListener,
 }
 
@@ -25,21 +24,17 @@ pub(crate) struct RPCArgs {
 
 impl RPC {
     pub(crate) fn init(rpc_args: RPCArgs) -> Result<RPC, String> {
+        let sys_handle = Arc::new(rpc_args.sys_handle);
+
         let rpc = RPC {
             rpc_socket: rpc_args.rpc_socket,
-            sys_handle: rpc_args.sys_handle,
+            sys_handle,
         };
 
         Ok(rpc)
     }
 
     pub(crate) async fn run(self) -> Result<(), SaksahaError> {
-        // async fn handle(
-        //     _: Request<Body>,
-        // ) -> Result<Response<Body>, Infallible> {
-        //     Ok(Response::new("Hello, World!".into()))
-        // }
-
         let addr_incoming = match AddrIncoming::from_listener(self.rpc_socket) {
             Ok(a) => a,
             Err(err) => {
@@ -51,31 +46,32 @@ impl RPC {
             }
         };
 
-        let router = Router::new();
+        let sys_handle = self.sys_handle.clone();
 
-        let make_svc = service::make_service_fn(|_conn| async {
-            println!("power123");
-            let service_fn =
-                Ok::<_, Infallible>(service::service_fn(|req| async {
-                    println!("1313");
-                    Ok::<Response<Body>, Infallible>(Response::new(
-                        "Hello, World!".into(),
-                    ))
-                }));
-            service_fn
+        let make_svc = service::make_service_fn(move |_conn| {
+            let router = Router::new();
+            let sys_handle = sys_handle.clone();
+
+            async move {
+                let service_fn =
+                    Ok::<_, Infallible>(service::service_fn(move |req| {
+                        let routed = router.route(req, sys_handle.clone());
+
+                        async move {
+                            let res = routed.await;
+
+                            Ok::<Response<Body>, Infallible>(Response::new(
+                                "Hello, World!".into(),
+                            ))
+                        }
+                    }));
+                service_fn
+            }
         });
 
-        // let make_svc = MakeSvc {
-        //     router,
-        //     sys_handle: self.sys_handle,
-        // };
-
-        // let hyper_server = Server::builder(addr_incoming).serve(make_svc);
-        // let mut hyper_server_guard = self.hyper_server.write().await;
-
         tokio::spawn(async move {
-            let hyper_server = Server::builder(addr_incoming).serve(make_svc);
-            let result = hyper_server.await;
+            let _hyper_server =
+                Server::builder(addr_incoming).serve(make_svc).await;
         });
 
         Ok(())

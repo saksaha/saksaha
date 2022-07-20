@@ -8,3 +8,5 @@ mod server;
 mod tests;
 
 pub(crate) use rpc::*;
+
+pub(crate) type RPCError = Box<dyn std::error::Error + Send + Sync>;
