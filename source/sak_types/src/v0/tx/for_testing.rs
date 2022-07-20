@@ -171,9 +171,9 @@ impl MintTxCandidate {
         let cm = hasher.comm2(&s, &v, &k.to_bytes()).unwrap();
 
         MintTxCandidate::new(
-            String::from("created_at_mint_1"),
-            vec![1],
-            String::from("author_sig_mint_1"),
+            String::from("created_at_mint_2"),
+            vec![2],
+            String::from("author_sig_mint_2"),
             None,
             cm.to_bytes(),
             v,

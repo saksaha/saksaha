@@ -85,6 +85,12 @@ impl DistLedger {
         self.ledger_db.get_latest_block_height().await
     }
 
+    pub async fn get_total_cm_count(
+        &self,
+    ) -> Result<Option<u128>, LedgerError> {
+        self.ledger_db.get_total_cm_count().await
+    }
+
     pub async fn get_latest_tx_height(
         &self,
     ) -> Result<Option<u128>, LedgerError> {
@@ -114,7 +120,7 @@ impl DistLedger {
             }
         };
 
-        self.ledger_db.get_merkle_rt(&latest_tx_hash).await
+        self.ledger_db.get_block_merkle_rt(&latest_tx_hash).await
     }
 
     pub async fn get_ctr_state(

@@ -95,13 +95,13 @@ impl LedgerDB {
         self.schema.get_merkle_node(db, location)
     }
 
-    pub(crate) async fn get_merkle_rt(
+    pub(crate) async fn get_block_merkle_rt(
         &self,
         tx_hash: &String,
     ) -> Result<Option<[u8; 32]>, LedgerError> {
         let db = &self.kv_db.db_instance;
 
-        self.schema.get_merkle_rt(db, tx_hash)
+        self.schema.get_block_merkle_rt(db, tx_hash)
     }
 }
 
@@ -171,7 +171,7 @@ fn get_pour_tx(
     let cm_2 = schema.get_cm_2(db, tx_hash)?.ok_or("cm_2 should exist")?;
 
     let merkle_rt = schema
-        .get_merkle_rt(db, tx_hash)?
+        .get_prf_merkle_rt(db, tx_hash)?
         .ok_or("merkle_root should exist")?;
 
     let tx_candidate = PourTxCandidate::new(

@@ -47,6 +47,12 @@ impl LedgerDB {
         ctr_state_updates: &CtrStateUpdate,
         merkle_updates: &MerkleUpdate,
     ) -> Result<String, LedgerError> {
+        println!(
+            "data to write, block: {:?}, \ntxs: {:?}, \n
+            ctr_state_updates: {:?},\n merkle_updates: {:?}",
+            block, txs, ctr_state_updates, merkle_updates
+        );
+
         let db = &self.kv_db.db_instance;
 
         let mut batch = WriteBatch::default();
@@ -124,12 +130,6 @@ impl LedgerDB {
 
         db.write(batch)?;
 
-        debug!(
-            "Success writing block, hash: {}, height: {}",
-            block_hash.green(),
-            block.block_height,
-        );
-
         return Ok(block_hash.clone());
     }
 
@@ -141,6 +141,16 @@ impl LedgerDB {
         let height = self.schema.get_latest_block_height(db)?;
 
         Ok(height)
+    }
+
+    pub(crate) async fn get_total_cm_count(
+        &self,
+    ) -> Result<Option<u128>, LedgerError> {
+        let db = &self.kv_db.db_instance;
+
+        let total_cm_count = self.schema.get_total_cm_count(db)?;
+
+        Ok(total_cm_count)
     }
 }
 
@@ -159,7 +169,9 @@ fn get_block(
 
     let block_height = schema.get_block_height(db, &block_hash)?;
 
-    let merkle_rt = schema.get_merkle_rt(db, &block_hash)?;
+    let block_merkle_rt = schema.get_block_merkle_rt(db, &block_hash)?;
+
+    let block_cm_count = schema.get_block_cm_count(db, &block_hash)?;
 
     match (
         validator_sig,
@@ -167,13 +179,22 @@ fn get_block(
         witness_sigs,
         created_at,
         block_height,
-        merkle_rt,
+        block_merkle_rt,
+        block_cm_count,
     ) {
-        (Some(vs), Some(th), Some(ws), Some(ca), Some(bh), Some(mr)) => {
-            let b = Block::new(vs, th, ws, ca, bh, mr);
+        (
+            Some(vs),
+            Some(th),
+            Some(ws),
+            Some(ca),
+            Some(bh),
+            Some(mr),
+            Some(bcc),
+        ) => {
+            let b = Block::new(vs, th, ws, ca, bh, mr, bcc);
             return Ok(Some(b));
         }
-        (None, None, None, None, None, None) => {
+        (None, None, None, None, None, None, None) => {
             return Ok(None);
         }
         _ => {

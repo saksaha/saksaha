@@ -18,6 +18,13 @@ impl TxCandidate {
         }
     }
 
+    pub fn get_cm_count(&self) -> u128 {
+        match self {
+            TxCandidate::Mint(_) => 1,
+            TxCandidate::Pour(_) => 2,
+        }
+    }
+
     pub fn get_ctr_op(&self) -> TxCtrOp {
         match self {
             TxCandidate::Mint(c) => c.get_ctr_op(),

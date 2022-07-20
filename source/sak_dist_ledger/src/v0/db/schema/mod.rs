@@ -41,6 +41,10 @@ const CM_1: &str = "cm_1";
 
 const CM_2: &str = "cm_2";
 
+const BLOCK_CM_COUNT: &str = "block_cm_count";
+
+const TOTAL_CM_COUNT: &str = "total_cm_count";
+
 const BLOCK_MERKLE_RT: &str = "block_merkle_rt";
 
 const PRF_MERKLE_RT: &str = "prf_merkle_rt";
@@ -434,6 +438,8 @@ impl LedgerDBSchema {
     ) -> Result<(), LedgerError> {
         let cf = make_cf_handle(db, MERKLE_NODE)?;
 
+        println!("writing!!!: k: {:?}, v: {:?}", merkle_node_loc, node_val);
+
         batch.put_cf(&cf, merkle_node_loc, node_val);
 
         Ok(())
@@ -807,12 +813,75 @@ impl LedgerDBSchema {
         }
     }
 
-    pub(crate) fn get_merkle_rt(
+    pub(crate) fn get_total_cm_count(
+        &self,
+        db: &DB,
+    ) -> Result<Option<u128>, LedgerError> {
+        let cf = make_cf_handle(db, TOTAL_CM_COUNT)?;
+
+        match db.get_cf(&cf, &[0])? {
+            Some(v) => {
+                let val = sak_kv_db::convert_u8_slice_into_u128(&v)?;
+
+                return Ok(Some(val));
+            }
+            None => {
+                return Ok(None);
+            }
+        }
+    }
+
+    pub(crate) fn get_block_cm_count(
+        &self,
+        db: &DB,
+        key: &BlockHash,
+    ) -> Result<Option<u128>, LedgerError> {
+        let cf = make_cf_handle(db, BLOCK_CM_COUNT)?;
+
+        match db.get_cf(&cf, key)? {
+            Some(v) => {
+                let val = sak_kv_db::convert_u8_slice_into_u128(&v)?;
+
+                return Ok(Some(val));
+            }
+            None => {
+                return Ok(None);
+            }
+        }
+    }
+
+    pub(crate) fn get_block_merkle_rt(
         &self,
         db: &DB,
         key: &BlockHash,
     ) -> Result<Option<[u8; 32]>, LedgerError> {
         let cf = make_cf_handle(db, BLOCK_MERKLE_RT)?;
+
+        match db.get_cf(&cf, key)? {
+            Some(v) => {
+                let arr: [u8; 32] = match v.try_into() {
+                    Ok(a) => a,
+                    Err(err) => {
+                        return Err(
+                            format!("Cannot convert cm into an array",).into()
+                        )
+                    }
+                };
+
+                return Ok(Some(arr));
+            }
+            None => {
+                return Ok(None);
+            }
+        }
+    }
+
+    pub(crate) fn get_prf_merkle_rt(
+        &self,
+        db: &DB,
+        key: &BlockHash,
+    ) -> Result<Option<[u8; 32]>, LedgerError> {
+        let cf = make_cf_handle(db, PRF_MERKLE_RT)?;
 
         match db.get_cf(&cf, key)? {
             Some(v) => {
@@ -1053,6 +1122,24 @@ impl LedgerDBSchema {
         Ok(Some(height))
     }
 
+    // pub(crate) fn get_latest_cm_idx(
+    //     &self,
+    //     db: &DB,
+    // ) -> Result<Option<u128>, String> {
+    //     let cf = make_cf_handle(db, BLOCK_HASH)?;
+
+    //     let mut iter = db.iterator_cf(&cf, IteratorMode::End);
+
+    //     let (height_bytes, _hash) = match iter.next() {
+    //         Some(a) => a,
+    //         None => return Ok(None),
+    //     };
+
+    //     let height = sak_kv_db::convert_u8_slice_into_u128(&height_bytes)?;
+
+    //     Ok(Some(height))
+    // }
+
     pub(crate) fn get_latest_tx_height(
         &self,
         db: &DB,
@@ -1099,6 +1186,8 @@ impl LedgerDBSchema {
             ColumnFamilyDescriptor::new(BLOCK_HEIGHT, Options::default()),
             ColumnFamilyDescriptor::new(BLOCK_HASH, Options::default()),
             ColumnFamilyDescriptor::new(CTR_STATE, Options::default()),
+            ColumnFamilyDescriptor::new(BLOCK_CM_COUNT, Options::default()),
+            ColumnFamilyDescriptor::new(TOTAL_CM_COUNT, Options::default()),
         ]
     }
 }
