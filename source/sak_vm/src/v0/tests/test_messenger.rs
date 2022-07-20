@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod test {
+    use crate::*;
     use std::collections::HashMap;
     const STORAGE_CAP: usize = 100;
     const DUMMY_CHANNEL_ID_1: &str = "dummy_channel_1";
@@ -105,6 +106,49 @@ mod test {
         println!("messages acquired: {:?}", messages);
 
         assert_eq!(test_dummy_messege, messages);
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn test_messenger_get_ch_list() {
+        let vm = VM::init().expect("VM should be initiated");
+
+        let her_pk = get_her_pk();
+
+        let dummy_messeges = get_multi_messages();
+
+        let (request, storage) = {
+            let mut arg = HashMap::with_capacity(2);
+            arg.insert(String::from(ARG_DST_PK), her_pk.clone());
+
+            let req = Request {
+                req_type: String::from("get_ch_list"),
+                arg,
+                ctr_call_type: CtrCallType::Execute,
+            };
+            let storage = make_dummy_storage(&dummy_messeges);
+            (req, storage)
+        };
+
+        let ctr_wasm = include_bytes!("../sak_ctr_messenger.wasm").to_vec();
+        let ctr_fn = CtrFn::Query(request, storage);
+
+        let ch_list_serialized = match vm.invoke(ctr_wasm, ctr_fn) {
+            Ok(s) => s,
+            Err(err) => panic!("failed to invoke contract : {}", err),
+        };
+
+        let open_ch_data_vec: Vec<Vec<String>> =
+            serde_json::from_str(&ch_list_serialized).unwrap();
+
+        let mut ch_list = vec![];
+        for data in open_ch_data_vec {
+            ch_list.push(data[1].clone());
+        }
+
+        println!("expected channel id : {:?}", DUMMY_CHANNEL_ID_2);
+        println!("updated channel id: {:?}", ch_list);
+
+        assert_eq!(vec![DUMMY_CHANNEL_ID_2], ch_list);
     }
 
     #[tokio::test(flavor = "multi_thread")]

@@ -59,10 +59,35 @@ fn check_channel(
         serde_json::to_string(my_pk.to_encoded_point(false).as_bytes())
             .unwrap();
 
-    let input_serialized = storage.get(&my_pk_str).unwrap();
+    let open_ch_data_vec = storage.get(&my_pk_str).unwrap();
 
-    let [eph_pk_str, ch_id, pk_sig_encrypted, open_ch_empty]: [String; 4] =
-        serde_json::from_str(&input_serialized.as_str()).unwrap();
+    let [mut eph_pk_str_vec, mut ch_id_vec,mut  pk_sig_encrypted_vec,mut  open_ch_empty_vec]: [Vec<String>;
+        4] = [vec![], vec![], vec![], vec![]];
+
+    let (eph_pk_str, ch_id, pk_sig_encrypted, open_ch_empty) = {
+        let open_ch_data_vec: Vec<String> =
+            serde_json::from_str(&open_ch_data_vec).unwrap();
+        for data in open_ch_data_vec {
+            let res: Vec<String> =
+                serde_json::from_str(&data.as_str()).unwrap();
+            eph_pk_str_vec.push(res[0].clone());
+            ch_id_vec.push(res[1].clone());
+            pk_sig_encrypted_vec.push(res[2].clone());
+            open_ch_empty_vec.push(res[3].clone());
+        }
+
+        let idx = match ch_id_vec.iter().position(|r| r == DUMMY_CHANNEL_ID_1) {
+            Some(o) => o,
+            _ => panic!("ch_id should be stored"),
+        };
+
+        (
+            eph_pk_str_vec[idx].clone(),
+            ch_id_vec[idx].clone(),
+            pk_sig_encrypted_vec[idx].clone(),
+            open_ch_empty_vec[idx].clone(),
+        )
+    };
 
     let aes_key = {
         let eph_pk_bytes_vec: Vec<u8> =
@@ -112,6 +137,37 @@ fn check_channel(
     }
 
     (aes_key, ch_id)
+}
+
+fn test_get_ch_list(pk: PublicKey, storage: Storage, vm: &VM) -> Vec<String> {
+    let pk_str =
+        serde_json::to_string(pk.to_encoded_point(false).as_bytes()).unwrap();
+
+    let request = {
+        let mut arg = HashMap::with_capacity(2);
+        arg.insert(String::from(ARG_DST_PK), pk_str.clone());
+
+        let req = Request {
+            req_type: String::from("get_ch_list"),
+            arg,
+            ctr_call_type: CtrCallType::Execute,
+        };
+        req
+    };
+
+    let ctr_wasm = include_bytes!("../sak_ctr_messenger.wasm").to_vec();
+    let ctr_fn = CtrFn::Query(request, storage.clone());
+
+    let ch_list_serialized = match vm.invoke(ctr_wasm, ctr_fn) {
+        Ok(s) => s,
+        Err(err) => panic!("failed to invoke contract : {}", err),
+    };
+
+    let ch_list: Vec<String> =
+        serde_json::from_str(&ch_list_serialized).unwrap();
+
+    assert_eq!(vec![DUMMY_CHANNEL_ID_1], ch_list);
+    ch_list
 }
 
 fn send_msg(
@@ -279,31 +335,32 @@ async fn test_multi_clients_chat() {
         let state_open_channel: Storage =
             serde_json::from_str(state_invoked.as_str()).unwrap();
 
-        let input_serialized = state_open_channel.get(&b_pk_str).unwrap();
+        let open_ch_data_vec = state_open_channel.get(&b_pk_str).unwrap();
 
-        let (_eph_pk_str, ch_id, _a_pk_sig_encrypted, _open_ch_empty) = {
-            let res: Vec<String> =
-                serde_json::from_str(&input_serialized.as_str()).unwrap();
+        let mut ch_id_vec = vec![];
 
-            (
-                res[0].clone(),
-                res[1].clone(),
-                res[2].clone(),
-                res[3].clone(),
-            )
+        let ch_list = {
+            let open_ch_data_vec: Vec<String> =
+                serde_json::from_str(&open_ch_data_vec.as_str()).unwrap();
+            for data in &open_ch_data_vec {
+                let res: Vec<String> = serde_json::from_str(data).unwrap();
+                ch_id_vec.push(res[1].clone());
+            }
+
+            ch_id_vec
         };
 
-        assert_eq!(DUMMY_CHANNEL_ID_1, ch_id);
+        assert_eq!(vec![DUMMY_CHANNEL_ID_1], ch_list);
 
         (state_open_channel,)
     };
 
     /*  ********************************************************************* */
-    // 2. Request send_msg B -> A
-    // check whether the message sender knows the SharedSecret or not, and
-    // verify who opened the channel
+    // 2. Request get_ch_list and send_msg B -> A
     let (aes_key_from_b, ch_id) =
         check_channel(b_pk, b_sk, state_after_open_ch.clone());
+
+    test_get_ch_list(b_pk, state_after_open_ch.clone(), &vm);
 
     let msg_b_to_a = String::from("Hello, A");
 
@@ -317,7 +374,7 @@ async fn test_multi_clients_chat() {
     );
 
     /*  ********************************************************************* */
-    // 3. User A reads the message sent by B
+    // 3. User A check A's channl list and reads the message sent by B
     {
         let request = {
             let mut arg = HashMap::with_capacity(1);
@@ -356,9 +413,9 @@ async fn test_multi_clients_chat() {
         let mut msg_vec = Vec::new();
         let mut pk_vec = Vec::new();
 
-        for msg in msgs.clone() {
+        for msg in &msgs {
             let (msg, pk): (String, String) =
-                serde_json::from_str(&msg).unwrap();
+                serde_json::from_str(msg).unwrap();
 
             msg_vec.push(msg);
             pk_vec.push(pk);
@@ -368,7 +425,7 @@ async fn test_multi_clients_chat() {
     }
 
     /*  ********************************************************************* */
-    // 4. User A replies to B, and shows the chat between A & B
+    // 4. User A replies to B, and reads the chat between A & B
     let msg_a_to_b = String::from("B, welcome to saksaha!");
 
     let (_state_send_msg_2, new_chat) = send_msg(
@@ -384,7 +441,7 @@ async fn test_multi_clients_chat() {
 
     let msgs = [msg_b_to_a, msg_a_to_b];
 
-    for (i, item) in new_chat.clone().iter().enumerate() {
+    for (i, item) in (&new_chat).iter().enumerate() {
         let (msg, pk): (String, String) = serde_json::from_str(&item).unwrap();
 
         println!("\n MSG Sender {:?} \nsays: {:?}", pk, msg);
