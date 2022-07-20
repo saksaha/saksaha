@@ -29,10 +29,10 @@ struct SendPourTxBody {
     ctr_addr: Option<String>,
     #[serde(with = "serde_bytes")]
     pi: Vec<u8>,
-    sn_1: Vec<u8>,
-    sn_2: Vec<u8>,
-    cm_1: Vec<u8>,
-    cm_2: Vec<u8>,
+    sn_1: [u8; 32],
+    sn_2: [u8; 32],
+    cm_1: [u8; 32],
+    cm_2: [u8; 32],
     merkle_rt: [u8; 32],
 }
 
@@ -61,6 +61,7 @@ pub(crate) async fn send_mint_tx(
                             .machine
                             .blockchain
                             .dist_ledger
+                            .apis
                             .send_tx(tx_candidate)
                             .await
                         {
@@ -137,6 +138,7 @@ pub(crate) async fn send_pour_tx(
                             .machine
                             .blockchain
                             .dist_ledger
+                            .apis
                             .send_tx(tx_candidate)
                             .await
                         {
@@ -215,6 +217,7 @@ pub(crate) async fn get_transaction(
                 .machine
                 .blockchain
                 .dist_ledger
+                .apis
                 .get_tx(&body.hash)
                 .await
             {
@@ -327,6 +330,7 @@ pub(crate) async fn get_block(
                         .machine
                         .blockchain
                         .dist_ledger
+                        .apis
                         .get_block(&block_hash)
                     {
                         Ok(_block) => {
@@ -403,6 +407,7 @@ pub(crate) async fn call_contract(
                 .machine
                 .blockchain
                 .dist_ledger
+                .apis
                 .query_ctr(&body.ctr_addr, body.request)
                 .await
             {

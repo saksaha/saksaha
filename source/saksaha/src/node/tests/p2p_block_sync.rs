@@ -6,26 +6,8 @@ use log::debug;
 use sak_p2p_addr::{AddrStatus, UnknownAddr};
 use sak_p2p_id::Identity;
 use sak_p2p_ptable::PeerTable;
-use sak_types::{BlockCandidate, Tx, TxCandidate};
+use sak_types::TxCandidate;
 use std::{sync::Arc, time::Duration};
-
-const RUST_LOG_ENV: &str = "
-    sak_,
-    saksaha
-";
-
-pub fn init(rust_log_env: Option<&str>) {
-    let rust_log_env = match rust_log_env {
-        Some(l) => l,
-        None => RUST_LOG_ENV,
-    };
-
-    if std::env::var("RUST_LOG").is_err() {
-        std::env::set_var("RUST_LOG", rust_log_env);
-    }
-
-    sak_logger::init(false);
-}
 
 async fn create_client(
     app_prefix: String,
@@ -148,7 +130,8 @@ async fn test_check_true_init_config() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_block_sync_true() {
-    init(None);
+    sak_test_utils::init_test_log();
+    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
 
     let app_prefix_vec = vec![String::from("test_1"), String::from("test_2")];
 
@@ -191,19 +174,8 @@ async fn test_block_sync_true() {
     )
     .await;
 
-    let dummy_tx1 = TxCandidate::new_dummy_pour_1();
+    let dummy_tx1 = TxCandidate::new_dummy_pour_m1_to_p3_p4();
     let dummy_tx2 = TxCandidate::new_dummy_pour_2();
-
-    // let (_block, txs) = {
-    //     let c = BlockCandidate {
-    //         validator_sig: String::from(""),
-    //         tx_candidates: vec![dummy_tx1, dummy_tx2],
-    //         witness_sigs: vec![],
-    //         created_at: String::from(""),
-    //     };
-
-    //     c.upgrade(None, None, None)
-    // };
 
     {
         let local_node_1 = local_node_1.clone();
@@ -223,6 +195,7 @@ async fn test_block_sync_true() {
         .machine
         .blockchain
         .dist_ledger
+        .apis
         .send_tx(dummy_tx1.clone())
         .await
         .expect("Node should be able to send a transaction");
@@ -236,6 +209,7 @@ async fn test_block_sync_true() {
             .machine
             .blockchain
             .dist_ledger
+            .apis
             .tx_pool_contains(dummy_tx1.get_tx_hash())
             .await;
 
@@ -250,6 +224,7 @@ async fn test_block_sync_true() {
             .machine
             .blockchain
             .dist_ledger
+            .apis
             .write_block(None)
             .await
             .expect("Block should be written");
@@ -258,8 +233,8 @@ async fn test_block_sync_true() {
             .machine
             .blockchain
             .dist_ledger
+            .apis
             .get_latest_block_height()
-            .await
             .unwrap()
             .unwrap();
 
@@ -272,8 +247,8 @@ async fn test_block_sync_true() {
             .machine
             .blockchain
             .dist_ledger
+            .apis
             .get_latest_block_height()
-            .await
             .unwrap()
             .unwrap();
 
@@ -288,6 +263,7 @@ async fn test_block_sync_true() {
             .machine
             .blockchain
             .dist_ledger
+            .apis
             .tx_pool_contains(dummy_tx2.get_tx_hash())
             .await;
 

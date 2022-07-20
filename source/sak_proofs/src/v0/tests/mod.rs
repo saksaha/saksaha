@@ -1,2 +1,2 @@
+mod benchmark;
 mod coin;
-mod default;

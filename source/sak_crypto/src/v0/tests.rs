@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod test {
-    use crate::{aes_decrypt, aes_encrypt, derive_aes_key, PublicKey};
+    use crate::{aes_decrypt, aes_encrypt, derive_aes_key, PublicKey, SakKey};
     use base64ct::{Base64, Encoding};
     use k256::SecretKey;
     use k256::{
@@ -86,15 +86,14 @@ mod test {
         sak_test_utils::init_test_config(&vec!["test".to_string()]).unwrap();
 
         let (bob_pk, bob_sk) = {
-            let sk = crate::generate_key();
-            let pk = sk.public_key();
+            let (sk, pk) = SakKey::generate();
+            // let pk = sk.public_key();
             (pk, sk)
         };
 
         // alice is the sender of the message
         let (e_pk, e_sk) = {
-            let sk = crate::generate_key();
-            let pk = sk.public_key();
+            let (sk, pk) = SakKey::generate();
 
             (pk, sk)
         };

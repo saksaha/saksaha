@@ -1,15 +1,12 @@
-use crate::mimc;
-use bls12_381::Scalar;
 use log::debug;
-use std::convert::TryInto;
+use sak_crypto::{mimc, Scalar};
 
-pub const TREE_DEPTH: u64 = 32;
+pub const TREE_DEPTH: u32 = 5;
+pub const TREE_CAPACITY: u32 = 2_u32.pow(TREE_DEPTH);
 
 #[derive(Debug)]
 pub struct MerkleTree {
-    pub nodes: Vec<Vec<Node>>,
-    pub height: usize,
-    pub data: Vec<u32>,
+    pub height: u32,
 }
 
 #[derive(Debug, Clone)]
@@ -20,120 +17,30 @@ pub struct Node {
 
 #[derive(Debug, Clone)]
 pub struct Path {
+    pub idx: u128,
     pub direction: bool,
-    pub hash: Scalar,
 }
 
 impl MerkleTree {
-    pub fn new(
-        data: Vec<u32>,
-        height: usize,
-        constants: &[Scalar],
-        hasher: &dyn Fn(u64, u64) -> Scalar,
-    ) -> MerkleTree {
-        let mut leaves = vec![];
-        let leaf_count = data.len();
+    pub fn new(height: u32) -> MerkleTree {
+        let t = MerkleTree { height };
 
-        // println!(
-        //     "Create tree, leaf_count: {}, height: {}, data: {:?}",
-        //     leaf_count, height, data,
-        // );
-
-        let d = data.clone();
-
-        for l in data.into_iter() {
-            let xl: u64 = l.into();
-            let xr: u64 = (l + 1).into();
-
-            let hash = hasher(xl, xr);
-
-            let n = Node {
-                val: Some([l]),
-                hash,
-            };
-
-            leaves.push(n);
-        }
-
-        // println!("[*] leaves: {:#?}", leaves);
-        let mut nodes = vec![leaves];
-
-        for h in 1..=height {
-            let child_nodes = nodes.get_mut((h - 1) as usize).unwrap();
-            let mut nodes_at_height = vec![];
-
-            if child_nodes.len() % 2 == 1 {
-                let l = child_nodes.last().unwrap();
-                let last_node = copy_node(l);
-                child_nodes.push(last_node);
-            }
-
-            let mut xl = Scalar::default();
-
-            for (idx, cn) in child_nodes.iter().enumerate() {
-                if idx % 2 == 0 {
-                    xl = cn.hash;
-                } else {
-                    let xr = cn.hash;
-                    let hs = mimc::mimc(xl, xr, &constants);
-
-                    let n = Node {
-                        val: None,
-                        hash: hs,
-                    };
-
-                    nodes_at_height.push(n);
-                }
-            }
-            nodes.push(nodes_at_height);
-        }
-
-        MerkleTree {
-            nodes,
-            height,
-            data: d,
-        }
+        t
     }
 
-    pub fn get_root(&self) -> &Node {
-        let highest_nodes = self.nodes.get(self.nodes.len() - 1).unwrap();
-        highest_nodes.get(0).unwrap()
-    }
-
-    pub fn sibling(&self, height: u64, idx: u64) -> &Node {
-        let len = self.nodes.len() as u64;
-        if idx >= len - 1 {
-            panic!("Invalid idx, cannot get sibling node");
-        }
-
-        let sibling_idx = get_sibling_idx(idx);
-        let nodes_at_height = self.nodes.get(height as usize).unwrap();
-        let n = nodes_at_height.get(sibling_idx as usize).unwrap();
-
-        n
-    }
-
-    pub fn generate_auth_paths(&self, idx: u64) -> Vec<Path> {
+    pub fn generate_auth_paths(&self, idx: u128) -> Vec<Path> {
         let height = self.height;
         let mut auth_path = vec![];
-
         let mut curr_idx = idx;
 
-        for h in 0..height {
+        for _ in 0..height {
             let sibling_idx = get_sibling_idx(curr_idx);
-
-            let sibling = self
-                .nodes
-                .get(h as usize)
-                .unwrap()
-                .get(sibling_idx as usize)
-                .unwrap();
 
             let direction = if sibling_idx % 2 == 0 { true } else { false };
 
             let p = Path {
+                idx: sibling_idx,
                 direction,
-                hash: sibling.hash.clone(),
             };
 
             auth_path.push(p);
@@ -144,43 +51,9 @@ impl MerkleTree {
 
         auth_path
     }
-
-    pub fn display_tree(&self) {
-        for (idx, e) in self.nodes.iter().enumerate() {
-            debug!("node idx: {}: node_len: {}, node: {:?}\n", idx, e.len(), e);
-        }
-        // todo
-    }
 }
 
-pub fn get_auth_path(leaf_idx: u64) -> Vec<u64> {
-    let mut auth_path = vec![];
-
-    let mut curr_idx = leaf_idx;
-
-    for _curr_height in 0..TREE_DEPTH {
-        let sibling_idx = get_sibling_idx(curr_idx);
-
-        let location = sibling_idx;
-
-        auth_path.push(location);
-
-        let parent_idx = get_parent_idx(curr_idx);
-        curr_idx = parent_idx;
-    }
-
-    auth_path
-}
-
-fn copy_node(node: &Node) -> Node {
-    Node {
-        val: node.val,
-
-        hash: node.hash.clone(),
-    }
-}
-
-fn get_sibling_idx(idx: u64) -> u64 {
+fn get_sibling_idx(idx: u128) -> u128 {
     if idx % 2 == 0 {
         idx + 1
     } else {
@@ -188,6 +61,6 @@ fn get_sibling_idx(idx: u64) -> u64 {
     }
 }
 
-pub fn get_parent_idx(idx: u64) -> u64 {
+pub fn get_parent_idx(idx: u128) -> u128 {
     idx / 2
 }

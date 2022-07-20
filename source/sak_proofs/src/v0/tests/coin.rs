@@ -1,112 +1,338 @@
-use crate::{mimc, Hasher, MerkleTree, ProofError};
-use bellman::gadgets::boolean::AllocatedBit;
-use bellman::groth16::{self, Parameters, Proof};
-use bellman::{Circuit, ConstraintSystem, SynthesisError};
-use bls12_381::{Bls12, Scalar};
+use crate::{CoinProofCircuit1to2, MerkleTree, Path, ProofError};
 use rand::rngs::OsRng;
 use rand::RngCore;
+use sak_crypto::{
+    groth16, AllocatedBit, Circuit, ConstraintSystem, Proof, ScalarExt,
+    SynthesisError,
+};
+use sak_crypto::{mimc, Parameters};
+use sak_crypto::{Bls12, Hasher, Scalar};
+use sak_types::U8Array;
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::Write;
 
 const TEST_TREE_DEPTH: usize = 3;
+const PARAM_FILE_NAME: &str = "mimc_params";
 
-struct TestCoinCircuit {
+pub struct TestContext {
     pub hasher: Hasher,
-    pub leaf: Option<Scalar>,
-    pub auth_path: [Option<(Scalar, bool)>; TEST_TREE_DEPTH],
-    pub sk: Option<Scalar>,
-    pub rho: Option<Scalar>,
-    pub r: Option<Scalar>,
-    pub s: Option<Scalar>,
-    pub v: Option<Scalar>,
-    pub constants: Vec<Scalar>,
+
+    // old coin 1
+    pub addr_pk_1_old: Scalar,
+    pub addr_sk_1_old: Scalar,
+    pub r_1_old: Scalar,
+    pub s_1_old: Scalar,
+    pub rho_1_old: Scalar,
+    pub v_1_old: Scalar,
+    pub cm_1_old: Scalar,
+    pub auth_path_1: [(Scalar, bool); 3],
+    pub merkle_rt: Scalar,
+    pub sn_1: Scalar,
+
+    // new coin 1
+    pub addr_sk_1: Scalar,
+    pub addr_pk_1: Scalar,
+    pub r_1: Scalar,
+    pub s_1: Scalar,
+    pub rho_1: Scalar,
+    pub v_1: Scalar,
+    pub cm_1: Scalar,
+
+    // new coin 2
+    pub addr_sk_2: Scalar,
+    pub addr_pk_2: Scalar,
+    pub r_2: Scalar,
+    pub s_2: Scalar,
+    pub rho_2: Scalar,
+    pub v_2: Scalar,
+    pub cm_2: Scalar,
 }
 
-fn make_test_context() -> (
-    MerkleTree, // mt,
-    Scalar,     // sk,
-    Scalar,     // r,
-    Scalar,     // s,
-    Scalar,     // rho,
-    Scalar,     // v,
-    Scalar,     // pk,
-    Scalar,     // sn,
-    Scalar,     // k,
-    Scalar,     // cm,
-) {
-    // mint
-    let v = Scalar::from(100); // 100 sak
-
-    let mut key = [0u8; 16];
-    OsRng.fill_bytes(&mut key);
-    let random_u64 = OsRng.next_u64();
-
+fn make_test_context() -> TestContext {
     let hasher = Hasher::new();
 
-    let sk = Scalar::from(random_u64);
-    // let sk_bytes = random_u64.to_be_bytes();
+    let (
+        addr_pk_1_old,
+        addr_sk_1_old,
+        r_1_old,
+        s_1_old,
+        rho_1_old,
+        v_1_old,
+        cm_1_old,
+        sn_1,
+    ) = {
+        let addr_sk = {
+            let arr = U8Array::from_int(1);
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
 
-    // let pk = MiMC::mimc_single_arg(&sk);
-    let pk = hasher.prf(Scalar::from(0), sk);
+        let addr_pk = hasher.mimc_single_scalar(addr_sk).unwrap();
 
-    let s = Scalar::from(5);
-    let r = Scalar::from(6);
-    let rho = Scalar::from(7);
+        let r = {
+            let arr = U8Array::from_int(2);
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
 
-    let sn = hasher.prf(sk, rho);
+        let s = {
+            let arr = U8Array::from_int(3);
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
 
-    let k = hasher.comm(r, hasher.prf(pk, rho));
+        let rho = {
+            let arr = U8Array::from_int(4);
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
 
-    let cm = hasher.comm(s, hasher.prf(v, k));
-    // // let k = MiMC::mimc(Scalar::from())
-    // // MiMC::mimc()
+        let v = {
+            let arr = U8Array::from_int(100);
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
 
-    let constants = mimc::get_mimc_constants();
+        let cm = {
+            let k = hasher.comm2_scalar(r, addr_pk, rho);
 
-    let hasher = |xl, xr| {
-        let hash = mimc::mimc(Scalar::from(xl), Scalar::from(xr), &constants);
+            hasher.comm2_scalar(s, v, k)
+        };
 
-        hash
+        let sn = hasher.mimc_scalar(addr_sk, rho);
+
+        (addr_pk, addr_sk, r, s, rho, v, cm, sn)
     };
 
-    let data = vec![0, 1, 2, 3, 4, 5, 6, 7];
+    let (addr_sk_1, addr_pk_1, r_1, s_1, rho_1, v_1, cm_1) = {
+        let addr_sk = {
+            let arr = U8Array::from_int(11);
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
 
-    let mt = MerkleTree::new(data, 3, &constants, &hasher);
+        let addr_pk = hasher.mimc_single_scalar(addr_sk).unwrap();
 
-    (
-        mt,  // [gen_proof] : merkle_tree
-        sk,  // [gen_proof] : secret key
-        r,   // [gen_proof] : random sample value `r`
-        s,   // [gen_proof] : random sample value `s`
-        rho, // [gen_proof] : rho value
-        v,   // [gen_proof] : value of coin `v`
-        pk,  // [ver_proof] : public key
-        sn,  // [ver_proof] : serial number
-        k,   // [ver_proof] : middle value (commitment) `k`
-        cm,  // [ver_proof] : commitment `cm`
-    )
+        let r = {
+            let arr = U8Array::from_int(12);
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        let s = {
+            let arr = U8Array::from_int(13);
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        let rho = {
+            let arr = U8Array::from_int(14);
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        let v = {
+            let arr = U8Array::from_int(60);
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        let cm = {
+            let k = hasher.comm2_scalar(r, addr_pk, rho);
+
+            hasher.comm2_scalar(s, v, k)
+        };
+
+        (addr_sk, addr_pk, r, s, rho, v, cm)
+    };
+
+    let (addr_sk_2, addr_pk_2, r_2, s_2, rho_2, v_2, cm_2) = {
+        let addr_sk = {
+            let arr = U8Array::from_int(21);
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        let addr_pk = hasher.mimc_single_scalar(addr_sk).unwrap();
+
+        let r = {
+            let arr = U8Array::from_int(22);
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        let s = {
+            let arr = U8Array::from_int(23);
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        let rho = {
+            let arr = U8Array::from_int(24);
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        let v = {
+            let arr = U8Array::from_int(40);
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        let cm = {
+            let k = hasher.comm2_scalar(r, addr_pk, rho);
+
+            hasher.comm2_scalar(s, v, k)
+        };
+
+        (addr_sk, addr_pk, r, s, rho, v, cm)
+    };
+
+    let merkle_tree = MerkleTree::new(TEST_TREE_DEPTH as u32);
+
+    let merkle_nodes = {
+        let mut m = HashMap::new();
+
+        let node_0_1 = {
+            let arr = U8Array::new_empty_32();
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        let node_1_1 = {
+            let node_0_2 = {
+                let arr = U8Array::new_empty_32();
+                ScalarExt::parse_arr(&arr).unwrap()
+            };
+
+            let node_0_3 = {
+                let arr = U8Array::new_empty_32();
+                ScalarExt::parse_arr(&arr).unwrap()
+            };
+
+            let h = hasher.mimc_scalar(node_0_2, node_0_3);
+            h
+        };
+
+        let node_2_1 = {
+            let node_0_4 = {
+                let arr = U8Array::new_empty_32();
+                ScalarExt::parse_arr(&arr).unwrap()
+            };
+
+            let node_0_5 = {
+                let arr = U8Array::new_empty_32();
+                ScalarExt::parse_arr(&arr).unwrap()
+            };
+
+            let node_0_6 = {
+                let arr = U8Array::new_empty_32();
+                ScalarExt::parse_arr(&arr).unwrap()
+            };
+
+            let node_0_7 = {
+                let arr = U8Array::new_empty_32();
+                ScalarExt::parse_arr(&arr).unwrap()
+            };
+
+            let node_1_2 = hasher.mimc_scalar(node_0_4, node_0_5);
+
+            let node_1_3 = hasher.mimc_scalar(node_0_6, node_0_7);
+
+            hasher.mimc_scalar(node_1_2, node_1_3)
+        };
+
+        let node_1_0 = hasher.mimc_scalar(cm_1_old, node_0_1);
+
+        let node_2_0 = hasher.mimc_scalar(node_1_0, node_1_1);
+
+        let node_3_0 = hasher.mimc_scalar(node_2_0, node_2_1);
+
+        m.insert("0_1", node_0_1);
+        m.insert("1_1", node_1_1);
+        m.insert("2_1", node_2_1);
+        m.insert("3_0", node_3_0);
+
+        m
+    };
+
+    let merkle_rt = *merkle_nodes.get("3_0").unwrap();
+
+    let auth_path_1 = {
+        let v = merkle_tree.generate_auth_paths(0);
+        let mut ret = [(Scalar::default(), false); TEST_TREE_DEPTH];
+
+        v.iter().enumerate().for_each(|(idx, p)| {
+            if idx >= ret.len() {
+                panic!(
+                    "Invalid assignment to a fixed sized array, idx: {}",
+                    idx
+                );
+            }
+
+            let key = format!("{}_{}", idx, p.idx);
+            let merkle_node = merkle_nodes.get(key.as_str()).unwrap();
+
+            ret[idx] = (merkle_node.clone(), p.direction);
+        });
+
+        ret
+    };
+
+    TestContext {
+        hasher,
+        addr_pk_1_old,
+        addr_sk_1_old,
+        r_1_old,
+        s_1_old,
+        rho_1_old,
+        v_1_old,
+        cm_1_old,
+        auth_path_1,
+        merkle_rt,
+        sn_1,
+        addr_sk_1,
+        addr_pk_1,
+        r_1,
+        s_1,
+        rho_1,
+        v_1,
+        cm_1,
+        addr_sk_2,
+        addr_pk_2,
+        r_2,
+        s_2,
+        rho_2,
+        v_2,
+        cm_2,
+    }
 }
 
-pub fn get_params_test(constants: &[Scalar]) -> Parameters<Bls12> {
-    let is_file_exist = std::path::Path::new("mimc_params").exists();
+pub fn get_test_params(constants: &[Scalar]) -> Parameters<Bls12> {
+    let param_path = std::path::Path::new(PARAM_FILE_NAME);
+    let is_file_exist = param_path.exists();
+
     let mut v = vec![];
+
     if is_file_exist {
         // read
-        v = std::fs::read("mimc_params").unwrap();
+        v = std::fs::read(PARAM_FILE_NAME).unwrap();
     } else {
         // generate and write
         let hasher = Hasher::new();
 
         let params = {
-            let c = TestCoinCircuit {
+            let c = CoinProofCircuit1to2 {
                 hasher,
-                leaf: None,
-                auth_path: [None; TEST_TREE_DEPTH],
-                sk: None,
-                rho: None,
-                r: None,
-                s: None,
-                v: None,
+
+                // old coins
+                addr_pk_1_old: None,
+                addr_sk_1_old: None,
+                rho_1_old: None,
+                r_1_old: None,
+                s_1_old: None,
+                v_1_old: None,
+                cm_1_old: None,
+                auth_path_1: [None; TEST_TREE_DEPTH],
+
+                // new coin 1
+                addr_pk_1: None,
+                rho_1: None,
+                r_1: None,
+                s_1: None,
+                v_1: None,
+
+                // new coin 2
+                addr_pk_2: None,
+                rho_2: None,
+                r_2: None,
+                s_2: None,
+                v_2: None,
                 constants: constants.to_vec(),
             };
 
@@ -114,7 +340,7 @@ pub fn get_params_test(constants: &[Scalar]) -> Parameters<Bls12> {
                 .unwrap()
         };
         // write param to file
-        let mut file = File::create("mimc_params").unwrap();
+        let mut file = File::create(PARAM_FILE_NAME).unwrap();
 
         params.write(&mut v).unwrap();
         // write origin buf
@@ -126,65 +352,86 @@ pub fn get_params_test(constants: &[Scalar]) -> Parameters<Bls12> {
 }
 
 fn make_proof(
-    tgt_leaf_idx: usize,
-    mt: MerkleTree,
-    sk: Scalar,
-    rho: Scalar,
-    r: Scalar,
-    s: Scalar,
-    v: Scalar,
+    // old coins
+    addr_pk_1_old: Scalar,
+    addr_sk_1_old: Scalar,
+    rho_1_old: Scalar,
+    r_1_old: Scalar,
+    s_1_old: Scalar,
+    v_1_old: Scalar,
+    cm_1_old: Scalar,
+    auth_path_1: [(Scalar, bool); 3],
+
+    // new coin 1
+    addr_pk_1: Scalar,
+    rho_1: Scalar,
+    r_1: Scalar,
+    s_1: Scalar,
+    v_1: Scalar,
+
+    // new coin 1
+    addr_pk_2: Scalar,
+    rho_2: Scalar,
+    r_2: Scalar,
+    s_2: Scalar,
+    v_2: Scalar,
 ) -> Result<Proof<Bls12>, ProofError> {
-    let constants = mimc::get_mimc_constants();
-    let de_params = get_params_test(&constants);
+    println!("power!!! auth path: {:#?}", auth_path_1);
 
-    // `rt` check
-    let auth_path = {
-        let tree = &mt;
-        let root = tree.get_root().hash;
-
-        println!("root: {:?}", root);
-
-        let idx = 0;
-        let auth_paths = tree.generate_auth_paths(idx);
-
-        for (idx, p) in auth_paths.iter().enumerate() {
-            println!("auth path [{}] - {:?}", idx, p);
-        }
-
-        let target_leaf =
-            tree.nodes.get(0).unwrap().get(tgt_leaf_idx).unwrap().hash;
-
-        println!("target_leaf: {:?}, idx: {}", target_leaf, idx);
-
-        // convert auth_paths => [auth_path]
-        let mut auth_path: [Option<(Scalar, bool)>; TEST_TREE_DEPTH] =
-            [None; TEST_TREE_DEPTH];
-
-        for (idx, _) in auth_path.clone().iter().enumerate() {
-            let sib = auth_paths.get(idx).unwrap();
-            auth_path[idx] = Some((sib.hash.clone(), sib.direction.clone()));
-        }
-
-        auth_path
-    };
-
-    let leaf = Some(mt.nodes.get(0).unwrap().get(tgt_leaf_idx).unwrap().hash);
-    let sk = Some(sk);
-    let rho = Some(rho);
-    let r = Some(r);
-    let s = Some(s);
-    let v = Some(v);
     let hasher = Hasher::new();
 
-    let c = TestCoinCircuit {
+    let constants = hasher.get_mimc_constants().to_vec();
+    let de_params = get_test_params(&constants);
+
+    let addr_pk_1_old = Some(addr_pk_1_old);
+    let addr_sk_1_old = Some(addr_sk_1_old);
+    let rho_1_old = Some(rho_1_old);
+    let r_1_old = Some(r_1_old);
+    let s_1_old = Some(s_1_old);
+    let v_1_old = Some(v_1_old);
+    let cm_1_old = Some(cm_1_old);
+    let auth_path_1 = auth_path_1.map(|p| Some(p));
+
+    //
+    let addr_pk_1 = Some(addr_pk_1);
+    let rho_1 = Some(rho_1);
+    let r_1 = Some(r_1);
+    let s_1 = Some(s_1);
+    let v_1 = Some(v_1);
+
+    //
+    let addr_pk_2 = Some(addr_pk_2);
+    let rho_2 = Some(rho_2);
+    let r_2 = Some(r_2);
+    let s_2 = Some(s_2);
+    let v_2 = Some(v_2);
+
+    let c = CoinProofCircuit1to2 {
         hasher,
-        leaf,
-        auth_path,
-        sk,
-        rho,
-        r,
-        s,
-        v,
+
+        // old coin 1
+        addr_pk_1_old,
+        addr_sk_1_old,
+        rho_1_old,
+        r_1_old,
+        s_1_old,
+        v_1_old,
+        cm_1_old,
+        auth_path_1,
+
+        // new coin 1
+        addr_pk_1,
+        rho_1,
+        r_1,
+        s_1,
+        v_1,
+
+        // new coin 2
+        addr_pk_2,
+        rho_2,
+        r_2,
+        s_2,
+        v_2,
         constants,
     };
 
@@ -199,23 +446,19 @@ fn make_proof(
         }
     };
 
-    // println!("[+] proof: {:?}", proof);
-
     Ok(proof)
 }
 
-fn verify_proof(proof: Proof<Bls12>, public_inputs: &[Scalar]) -> bool {
-    let constants = mimc::get_mimc_constants();
-    let de_params = get_params_test(&constants);
-
-    // Prepare the verification key (for proof verification).
+fn verify_proof(
+    proof: Proof<Bls12>,
+    public_inputs: &[Scalar],
+    hasher: &Hasher,
+) -> bool {
+    let constants = hasher.get_mimc_constants();
+    let de_params = get_test_params(&constants);
     let pvk = groth16::prepare_verifying_key(&de_params.vk);
 
-    println!("[public_inputs] rt: {:?}", public_inputs[0]);
-    println!("[public_inputs] pk: {:?}", public_inputs[1]);
-    println!("[public_inputs] sn: {:?}", public_inputs[2]);
-    println!("[public_inputs] k:  {:?}", public_inputs[3]);
-    println!("[public_inputs] cm: {:?}", public_inputs[4]);
+    println!("[public_inputs] {:?}", public_inputs);
 
     match groth16::verify_proof(&pvk, &proof, public_inputs) {
         Ok(_) => {
@@ -229,152 +472,49 @@ fn verify_proof(proof: Proof<Bls12>, public_inputs: &[Scalar]) -> bool {
     }
 }
 
-impl Circuit<Scalar> for TestCoinCircuit {
-    fn synthesize<CS: ConstraintSystem<Scalar>>(
-        self,
-        cs: &mut CS,
-    ) -> Result<(), SynthesisError> {
-        let mut rt = self.leaf.or(Some(Scalar::default()));
-
-        let sk = self.sk.or(Some(Scalar::default()));
-
-        let rho = self.rho.or(Some(Scalar::default()));
-
-        let r = self.r.or(Some(Scalar::default()));
-
-        let s = self.s.or(Some(Scalar::default()));
-
-        let v = self.v.or(Some(Scalar::default()));
-
-        // rt
-        {
-            for (idx, layer) in self.auth_path.iter().enumerate() {
-                println!("idx: {}, layer: {:?}", idx, layer);
-
-                let cs = &mut cs.namespace(|| format!("layer {}", idx));
-
-                let cur_is_right = AllocatedBit::alloc(
-                    cs.namespace(|| "cur is right"),
-                    layer.as_ref().map(|&(_, d)| d),
-                )
-                .unwrap();
-
-                let xl_value;
-                let xr_value;
-
-                let is_right = cur_is_right.get_value().and_then(|v| {
-                    if v {
-                        Some(true)
-                    } else {
-                        Some(false)
-                    }
-                });
-
-                let temp = match *layer {
-                    Some(a) => a,
-                    None => (Scalar::default(), false),
-                };
-
-                if match is_right {
-                    Some(a) => a,
-                    None => false,
-                } {
-                    xl_value = Some(temp.0);
-                    xr_value = rt;
-                } else {
-                    xl_value = rt;
-                    xr_value = Some(temp.0);
-                }
-
-                rt = mimc::mimc_cs(cs, xl_value, xr_value, &self.constants);
-            }
-        };
-
-        // pk == PRF(a_sk, 0)
-        let pk: Option<Scalar> =
-            self.hasher.prf_cs(cs, Some(Scalar::from(0)), sk);
-
-        // sn == PRF(a_sk, rho)
-        let sn: Option<Scalar> = self.hasher.prf_cs(cs, sk, rho);
-
-        // k == COMM(r, PRF(a_pk, rho))
-        let k_tmp: Option<Scalar> = self.hasher.prf_cs(cs, pk, rho);
-        let k: Option<Scalar> = self.hasher.comm_cs(cs, r, k_tmp);
-
-        // cm == COMM(s, PRF(v, k))
-        let cm_tmp: Option<Scalar> = self.hasher.prf_cs(cs, v, k);
-        let cm: Option<Scalar> = self.hasher.comm_cs(cs, s, cm_tmp);
-
-        cs.alloc_input(
-            || "rt",
-            || rt.ok_or(SynthesisError::AssignmentMissing),
-        )?;
-
-        cs.alloc_input(
-            || "pk",
-            || pk.ok_or(SynthesisError::AssignmentMissing),
-        )?;
-
-        cs.alloc_input(
-            || "sn",
-            || sn.ok_or(SynthesisError::AssignmentMissing),
-        )?;
-
-        cs.alloc_input(
-            //
-            || "k",
-            || k.ok_or(SynthesisError::AssignmentMissing),
-        )?;
-
-        cs.alloc_input(
-            || "cm",
-            || cm.ok_or(SynthesisError::AssignmentMissing),
-        )?;
-
-        println!();
-        println!("[+] Final values from test circuit :");
-        println!("<1> rt: {:?}", rt);
-        println!("<2> pk: {:?}", pk);
-        println!("<3> sn: {:?}", sn);
-        println!("<4> k:  {:?}", k);
-        println!("<4> cm: {:?}", cm);
-
-        Ok(())
-    }
-}
-
 #[tokio::test(flavor = "multi_thread")]
 pub async fn test_coin_ownership_default() {
-    // sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
-    env_logger::init();
+    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
+    sak_test_utils::init_test_log();
 
-    println!("[!] test coin ownership start!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+    let test_context = make_test_context();
 
-    println!("\n[+] Test Context creating");
+    let proof = make_proof(
+        test_context.addr_pk_1_old,
+        test_context.addr_sk_1_old,
+        test_context.rho_1_old,
+        test_context.r_1_old,
+        test_context.s_1_old,
+        test_context.v_1_old,
+        test_context.cm_1_old,
+        test_context.auth_path_1,
+        //
+        // test_context.addr_sk_1,
+        test_context.addr_pk_1,
+        test_context.rho_1,
+        test_context.r_1,
+        test_context.s_1,
+        test_context.v_1,
+        //
+        // test_context.addr_sk_2,
+        test_context.addr_pk_2,
+        test_context.rho_2,
+        test_context.r_2,
+        test_context.s_2,
+        test_context.v_2,
+    )
+    .unwrap();
 
-    let (
-        mt,  // merkle tree
-        sk,  // secret key
-        r,   // random sample value `r`
-        s,   // random sample value `s`
-        rho, // rho value
-        v,   // value of coin `v`
-        pk,  // public key
-        sn,  // serial number
-        k,   // middle value (commitment) `k`
-        cm,  // commitment `cm`
-    ) = make_test_context();
+    println!("proof generated!!");
 
-    let rt = mt.get_root().hash; // root hash value
+    let public_inputs: Vec<Scalar> = vec![
+        test_context.merkle_rt,
+        test_context.sn_1,
+        test_context.cm_1,
+        test_context.cm_2,
+    ];
 
-    let tgt_leaf_idx = 0;
-
-    println!("\n[+] Test Proof calculating");
-    let proof = make_proof(tgt_leaf_idx, mt, sk, rho, r, s, v).unwrap();
-
-    println!("\n[+] Test Verificationn");
-    let public_inputs: Vec<Scalar> = vec![rt, pk, sn, k, cm];
-    let result = verify_proof(proof, &public_inputs);
+    let result = verify_proof(proof, &public_inputs, &test_context.hasher);
 
     assert!(result);
 }

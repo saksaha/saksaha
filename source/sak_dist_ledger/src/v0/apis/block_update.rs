@@ -1,21 +1,55 @@
-use crate::{CtrStateUpdate, DistLedger, LedgerError, MerkleUpdate};
-use log::warn;
+use crate::{
+    CtrStateUpdate, DistLedger, DistLedgerApis, LedgerError, MerkleUpdate,
+};
+use colored::Colorize;
+use log::{debug, info, warn};
 use sak_contract_std::{CtrCallType, Request, Storage};
-use sak_proofs::{Scalar, ScalarExt};
+use sak_crypto::ScalarExt;
 use sak_types::{
     Block, BlockCandidate, MintTxCandidate, PourTxCandidate, Tx, TxCandidate,
-    TxCtrOp,
+    TxCtrOp, U8Array,
 };
 use sak_vm::CtrFn;
-use std::convert::TryInto;
 
-impl DistLedger {
+impl DistLedgerApis {
+    pub async fn insert_genesis_block(
+        &self,
+        genesis_block: BlockCandidate,
+    ) -> Result<String, String> {
+        let persisted_gen_block_hash = if let Some(b) =
+            match self.get_block_by_height(&0).await {
+                Ok(b) => b,
+                Err(err) => return Err(err.to_string()),
+            } {
+            let block_hash = b.get_block_hash().to_string();
+
+            info!(
+                "Genesis block is already persisted, block_hash: {}",
+                block_hash.green(),
+            );
+
+            block_hash
+        } else {
+            info!("Genesis block not found, writing");
+
+            let b = match self.write_block(Some(genesis_block)).await {
+                Ok(b) => b.ok_or(
+                    "genesis block should have been written as it \
+                        does not exist at the moment",
+                )?,
+                Err(err) => return Err(err.to_string()),
+            };
+
+            b
+        };
+
+        Ok(persisted_gen_block_hash.to_string())
+    }
+
     pub async fn write_block(
         &self,
         bc: Option<BlockCandidate>,
     ) -> Result<Option<String>, LedgerError> {
-        println!("write block()!!");
-
         let bc = match bc {
             Some(bc) => bc,
             None => match self.make_block_candidate().await? {
@@ -28,42 +62,76 @@ impl DistLedger {
             },
         };
 
-        let next_block_height =
-            self.get_latest_block_height().await?.unwrap_or(0);
+        let next_block_height = match self.get_latest_block_height()? {
+            Some(h) => h + 1,
+            None => {
+                warn!("Block height does not exist. Possibly the first block");
+                0
+            }
+        };
 
-        let next_tx_height = self.get_latest_tx_height().await?.unwrap_or(0);
+        let ledger_cm_count = match self.get_ledger_cm_count().await? {
+            Some(h) => h,
+            None => {
+                warn!(
+                    "Total cm count does not exist. Possibly the first block"
+                );
 
-        // let latest_merkle_rt = self.get_latest_merkle_rt().await?;
+                0
+            }
+        };
+
+        let next_tx_height = match self.get_latest_tx_height().await? {
+            Some(th) => th + 1,
+            None => 0,
+        };
+
         let tcs = &bc.tx_candidates;
         let mut ctr_state_update = CtrStateUpdate::new();
         let mut merkle_update = MerkleUpdate::new();
 
-        println!("iterating a total of {} tcs", tcs.len());
+        debug!(
+            "write_block, tc count: {}, next_block_height: {}, \
+            next_tx_height: {}, ledger_cm_count: {}",
+            tcs.len(),
+            next_block_height,
+            next_tx_height,
+            ledger_cm_count,
+        );
 
-        for tx_candidate in tcs.iter() {
-            println!("\niterating tc, {:?}", tx_candidate);
-
-            match tx_candidate {
+        let mut added_cm_count: u128 = 0;
+        for tx_candidate in tcs {
+            let cm_count = match tx_candidate {
                 TxCandidate::Mint(tc) => {
-                    let _ = handle_mint_tx_candidate(
+                    handle_mint_tx_candidate(
                         self,
                         tc,
                         &mut ctr_state_update,
                         &mut merkle_update,
+                        ledger_cm_count,
                     )
-                    .await;
+                    .await?
                 }
                 TxCandidate::Pour(tc) => {
-                    handle_pour(tc);
+                    handle_pour_tx_candidate(
+                        self,
+                        tc,
+                        &mut ctr_state_update,
+                        &mut merkle_update,
+                        ledger_cm_count,
+                    )
+                    .await?
                 }
             };
+
+            added_cm_count += cm_count;
         }
 
         if let Err(err) = self.sync_pool.remove_tcs(&tcs).await {
             warn!("Error removing txs into the tx pool, err: {}", err);
         }
 
-        let next_merkle_rt = match merkle_update.get("31_0") {
+        let next_merkle_rt = match merkle_update.get("3_0") {
             Some(r) => r,
             None => return Err(format!("next merkle root is missing").into()),
         };
@@ -82,9 +150,18 @@ impl DistLedger {
             .into());
         };
 
+        let total_cm_count = ledger_cm_count + added_cm_count;
+
         let block_hash = match self
             .ledger_db
-            .put_block(&block, &txs, &ctr_state_update, &merkle_update)
+            .schema
+            .put_block(
+                &block,
+                &txs,
+                &ctr_state_update,
+                &merkle_update,
+                total_cm_count,
+            )
             .await
         {
             Ok(h) => h,
@@ -97,23 +174,28 @@ impl DistLedger {
             warn!("Error inserting block into the sync pool, err: {}", err);
         }
 
+        debug!(
+            "Success writing block, hash: {}, height: {}",
+            block_hash.green(),
+            block.block_height,
+        );
+
         Ok(Some(block_hash))
     }
 
     pub fn delete_tx(&self, key: &String) -> Result<(), LedgerError> {
-        self.ledger_db.delete_tx(key)
+        self.ledger_db.schema.delete_tx(key)
     }
 }
 
-async fn prepare_ctr_state_update(
-    dist_ledger: &DistLedger,
-    tc: &MintTxCandidate,
+async fn process_ctr_state_update(
+    apis: &DistLedgerApis,
+    ctr_addr: &String,
+    data: &[u8],
+    tx_ctr_op: TxCtrOp,
     ctr_state_update: &mut CtrStateUpdate,
 ) -> Result<(), LedgerError> {
-    let vm = &dist_ledger.vm;
-    let ctr_addr = &tc.ctr_addr;
-    let data = &tc.data;
-    let tx_ctr_op = tc.get_ctr_op();
+    let vm = &apis.vm;
 
     match tx_ctr_op {
         TxCtrOp::ContractDeploy => {
@@ -127,7 +209,7 @@ async fn prepare_ctr_state_update(
 
             match req.ctr_call_type {
                 CtrCallType::Query => {
-                    dist_ledger.query_ctr(&ctr_addr, req).await?;
+                    apis.query_ctr(&ctr_addr, req).await?;
                 }
                 CtrCallType::Execute => {
                     let new_state = match ctr_state_update.get(ctr_addr) {
@@ -137,8 +219,9 @@ async fn prepare_ctr_state_update(
                                     previous_state.as_str(),
                                 )?;
 
-                            let ctr_wasm = dist_ledger
+                            let ctr_wasm = apis
                                 .ledger_db
+                                .schema
                                 .get_ctr_data_by_ctr_addr(&ctr_addr)
                                 .await?
                                 .ok_or("ctr data (wasm) should exist")?;
@@ -149,7 +232,7 @@ async fn prepare_ctr_state_update(
 
                             ret
                         }
-                        None => dist_ledger.execute_ctr(&ctr_addr, req).await?,
+                        None => apis.execute_ctr(&ctr_addr, req).await?,
                     };
 
                     ctr_state_update
@@ -166,47 +249,88 @@ async fn prepare_ctr_state_update(
 }
 
 async fn handle_mint_tx_candidate(
-    dist_ledger: &DistLedger,
+    apis: &DistLedgerApis,
     tc: &MintTxCandidate,
     ctr_state_update: &mut CtrStateUpdate,
     merkle_update: &mut MerkleUpdate,
-) -> Result<(), LedgerError> {
-    prepare_ctr_state_update(dist_ledger, tc, ctr_state_update).await;
+    total_cm_count: u128,
+) -> Result<u128, LedgerError> {
+    let ctr_addr = &tc.ctr_addr;
+    let data = &tc.data;
+    let tx_ctr_op = tc.get_ctr_op();
 
-    let next_tx_height = match dist_ledger.get_latest_tx_height().await? {
-        Some(th) => th + 1,
-        None => 0,
-    };
+    process_ctr_state_update(apis, ctr_addr, data, tx_ctr_op, ctr_state_update)
+        .await?;
 
-    let auth_path = sak_proofs::get_auth_path(next_tx_height as u64);
+    let cm_count = process_merkle_update(
+        apis,
+        merkle_update,
+        vec![&tc.cm],
+        total_cm_count,
+    )
+    .await?;
 
-    for (height, auth_node_idx) in auth_path.iter().enumerate() {
-        if height == auth_path.len() - 1 {
-            break;
-        }
-
-        let sibling_loc = format!("{}_{}", height, auth_node_idx);
-        let sibling_node = dist_ledger
-            .get_merkle_node(&sibling_loc)
-            .await?
-            .unwrap_or(vec![0]);
-
-        let curr_cm = ScalarExt::parse_arr(&tc.cm)?;
-        let sib_cm = ScalarExt::parse_vec(sibling_node)?;
-
-        let merkle_node = dist_ledger.hasher.mimc(curr_cm, sib_cm).to_bytes();
-        let parent_idx = sak_proofs::get_parent_idx(*auth_node_idx);
-        let update_loc = format!("{}_{}", height + 1, parent_idx);
-
-        println!(
-            "update loc, {}, hash of two, {:?} and {:?}",
-            update_loc, curr_cm, sib_cm
-        );
-
-        merkle_update.insert(update_loc, merkle_node);
-    }
-
-    Ok(())
+    Ok(cm_count)
 }
 
-fn handle_pour(tc: &PourTxCandidate) {}
+async fn handle_pour_tx_candidate(
+    apis: &DistLedgerApis,
+    tc: &PourTxCandidate,
+    ctr_state_update: &mut CtrStateUpdate,
+    merkle_update: &mut MerkleUpdate,
+    total_cm_count: u128,
+) -> Result<u128, LedgerError> {
+    let ctr_addr = &tc.ctr_addr;
+    let data = &tc.data;
+    let tx_ctr_op = tc.get_ctr_op();
+
+    process_ctr_state_update(apis, ctr_addr, data, tx_ctr_op, ctr_state_update)
+        .await?;
+
+    let cm_count = process_merkle_update(
+        apis,
+        merkle_update,
+        vec![&tc.cm_1, &tc.cm_2],
+        total_cm_count,
+    )
+    .await?;
+
+    Ok(cm_count)
+}
+
+async fn process_merkle_update(
+    apis: &DistLedgerApis,
+    merkle_update: &mut MerkleUpdate,
+    cms: Vec<&[u8; 32]>,
+    total_cm_count: u128,
+) -> Result<u128, LedgerError> {
+    let cm_count = cms.len() as u128;
+
+    for (idx, cm) in cms.iter().enumerate() {
+        let leaf_idx = total_cm_count + idx as u128;
+        let auth_path = apis.merkle_tree.generate_auth_paths(leaf_idx);
+
+        let leaf_loc = format!("{}_{}", 0, leaf_idx);
+        merkle_update.insert(leaf_loc, **cm);
+
+        for (height, path) in auth_path.iter().enumerate() {
+            let sibling_idx = path.idx;
+            let sibling_loc = format!("{}_{}", height, sibling_idx);
+            let sibling_node = apis
+                .get_merkle_node(&sibling_loc)
+                .await?
+                .unwrap_or(U8Array::new_empty_32());
+
+            let curr_cm = cm;
+            let sib_cm = &sibling_node;
+            let merkle_node = apis.hasher.mimc(*curr_cm, sib_cm)?.to_bytes();
+
+            let parent_idx = sak_proofs::get_parent_idx(sibling_idx);
+            let update_loc = format!("{}_{}", height + 1, parent_idx);
+
+            merkle_update.insert(update_loc, merkle_node);
+        }
+    }
+
+    Ok(cm_count)
+}

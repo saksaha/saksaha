@@ -55,6 +55,7 @@ pub(super) async fn handle_tx_pool_stat<'a>(
                             let txs = machine
                                 .blockchain
                                 .dist_ledger
+                                .apis
                                 .get_txs_from_pool(h.tx_hashes)
                                 .await;
 
@@ -181,6 +182,7 @@ async fn handle_block_hash_ack<'a>(
     let blocks = machine
         .blockchain
         .dist_ledger
+        .apis
         .get_blocks(block_hashes)
         .await?;
 
@@ -190,6 +192,7 @@ async fn handle_block_hash_ack<'a>(
         let txs = machine
             .blockchain
             .dist_ledger
+            .apis
             .get_txs(&block.tx_hashes)
             .await?;
 

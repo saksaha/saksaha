@@ -1,4 +1,3 @@
-use base64ct::{Base64, Encoding};
 use k256::SecretKey;
 use k256::{
     ecdsa::{
@@ -6,34 +5,23 @@ use k256::{
         Signature, SigningKey, VerifyingKey,
     },
     elliptic_curve::ecdh::SharedSecret,
-    elliptic_curve::sec1::ToEncodedPoint,
     EncodedPoint, Secp256k1,
 };
-use rand_core::OsRng;
-use sha3::{Digest, Sha3_256};
+use sha3::{Digest, Keccak256, Sha3_256};
 use std::{fmt::Write, num::ParseIntError};
 
 pub type PublicKey = k256::PublicKey;
 
-pub fn generate_key() -> SecretKey {
-    let secret = SecretKey::random(&mut OsRng);
-    return secret;
-}
+pub fn keccak256(data: &[u8]) -> String {
+    let mut hasher = Keccak256::default();
+    hasher.update(data);
 
-pub fn generate_key_pair() -> (SecretKey, PublicKey) {
-    let secret = SecretKey::random(&mut OsRng);
-    let public_key = secret.public_key();
+    let result = {
+        let h = hasher.finalize();
+        format!("{:x}", h)
+    };
 
-    (secret, public_key)
-}
-
-pub fn encode_into_key_pair(sk: SecretKey) -> (String, String) {
-    let pk = sk.public_key();
-
-    let sk_str = encode_hex(sk.to_bytes().as_slice());
-    let pk_str = encode_hex(pk.to_encoded_point(false).as_bytes());
-
-    return (sk_str, pk_str);
+    result
 }
 
 pub fn decode_hex(s: &String) -> std::result::Result<Vec<u8>, ParseIntError> {
