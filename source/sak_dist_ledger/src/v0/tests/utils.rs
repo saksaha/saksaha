@@ -1,4 +1,6 @@
-use crate::{Consensus, ConsensusError, DistLedger, DistLedgerArgs};
+use crate::{
+    Consensus, ConsensusError, DistLedger, DistLedgerApis, DistLedgerArgs,
+};
 use async_trait::async_trait;
 use sak_contract_std::{CtrCallType, Request};
 use sak_types::{BlockCandidate, PourTxCandidate, Tx, TxCandidate, U8Array};
@@ -10,7 +12,7 @@ pub struct DummyPos {}
 impl Consensus for DummyPos {
     async fn do_consensus(
         &self,
-        _dist_ledger: &DistLedger,
+        _dist_ledger_apis: &DistLedgerApis,
         _txs: Vec<TxCandidate>,
     ) -> Result<BlockCandidate, ConsensusError> {
         return Err("awel".into());

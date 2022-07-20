@@ -1,11 +1,13 @@
-use crate::{CtrStateUpdate, DistLedger, LedgerError, MerkleUpdate};
+use crate::{
+    CtrStateUpdate, DistLedger, DistLedgerApis, LedgerError, MerkleUpdate,
+};
 use log::warn;
 use sak_contract_std::{CtrCallType, Request, Storage};
 use sak_proofs::Path;
 use sak_types::{Block, BlockCandidate, Tx, TxCandidate, TxCtrOp};
 use sak_vm::CtrFn;
 
-impl DistLedger {
+impl DistLedgerApis {
     // peer_node
     pub async fn insert_into_pool(&self, tx_candidates: Vec<TxCandidate>) {
         for tx in tx_candidates.into_iter() {

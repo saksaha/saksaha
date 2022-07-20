@@ -1,6 +1,8 @@
-use crate::{CtrStateUpdate, DistLedger, LedgerError, MerkleUpdate};
+use crate::{
+    CtrStateUpdate, DistLedger, DistLedgerApis, LedgerError, MerkleUpdate,
+};
 use colored::Colorize;
-use log::{debug, warn};
+use log::{debug, info, warn};
 use sak_contract_std::{CtrCallType, Request, Storage};
 use sak_crypto::ScalarExt;
 use sak_types::{
@@ -9,7 +11,41 @@ use sak_types::{
 };
 use sak_vm::CtrFn;
 
-impl DistLedger {
+impl DistLedgerApis {
+    pub async fn insert_genesis_block(
+        &self,
+        genesis_block: BlockCandidate,
+    ) -> Result<String, String> {
+        let persisted_gen_block_hash = if let Some(b) =
+            match self.get_block_by_height(&0).await {
+                Ok(b) => b,
+                Err(err) => return Err(err.to_string()),
+            } {
+            let block_hash = b.get_block_hash().to_string();
+
+            info!(
+                "Genesis block is already persisted, block_hash: {}",
+                block_hash.green(),
+            );
+
+            block_hash
+        } else {
+            info!("Genesis block not found, writing");
+
+            let b = match self.write_block(Some(genesis_block)).await {
+                Ok(b) => b.ok_or(
+                    "genesis block should have been written as it \
+                        does not exist at the moment",
+                )?,
+                Err(err) => return Err(err.to_string()),
+            };
+
+            b
+        };
+
+        Ok(persisted_gen_block_hash.to_string())
+    }
+
     pub async fn write_block(
         &self,
         bc: Option<BlockCandidate>,
@@ -152,13 +188,14 @@ impl DistLedger {
 }
 
 async fn process_ctr_state_update(
-    dist_ledger: &DistLedger,
+    // dist_ledger: &DistLedger,
+    apis: &DistLedgerApis,
     ctr_addr: &String,
     data: &[u8],
     tx_ctr_op: TxCtrOp,
     ctr_state_update: &mut CtrStateUpdate,
 ) -> Result<(), LedgerError> {
-    let vm = &dist_ledger.vm;
+    let vm = &apis.vm;
 
     match tx_ctr_op {
         TxCtrOp::ContractDeploy => {
@@ -172,7 +209,7 @@ async fn process_ctr_state_update(
 
             match req.ctr_call_type {
                 CtrCallType::Query => {
-                    dist_ledger.query_ctr(&ctr_addr, req).await?;
+                    apis.query_ctr(&ctr_addr, req).await?;
                 }
                 CtrCallType::Execute => {
                     let new_state = match ctr_state_update.get(ctr_addr) {
@@ -182,7 +219,7 @@ async fn process_ctr_state_update(
                                     previous_state.as_str(),
                                 )?;
 
-                            let ctr_wasm = dist_ledger
+                            let ctr_wasm = apis
                                 .ledger_db
                                 .get_ctr_data_by_ctr_addr(&ctr_addr)
                                 .await?
@@ -194,7 +231,7 @@ async fn process_ctr_state_update(
 
                             ret
                         }
-                        None => dist_ledger.execute_ctr(&ctr_addr, req).await?,
+                        None => apis.execute_ctr(&ctr_addr, req).await?,
                     };
 
                     ctr_state_update
@@ -211,7 +248,8 @@ async fn process_ctr_state_update(
 }
 
 async fn handle_mint_tx_candidate(
-    dist_ledger: &DistLedger,
+    // dist_ledger: &DistLedger,
+    apis: &DistLedgerApis,
     tc: &MintTxCandidate,
     ctr_state_update: &mut CtrStateUpdate,
     merkle_update: &mut MerkleUpdate,
@@ -221,17 +259,11 @@ async fn handle_mint_tx_candidate(
     let data = &tc.data;
     let tx_ctr_op = tc.get_ctr_op();
 
-    process_ctr_state_update(
-        dist_ledger,
-        ctr_addr,
-        data,
-        tx_ctr_op,
-        ctr_state_update,
-    )
-    .await?;
+    process_ctr_state_update(apis, ctr_addr, data, tx_ctr_op, ctr_state_update)
+        .await?;
 
     let cm_count = process_merkle_update(
-        dist_ledger,
+        apis,
         merkle_update,
         vec![&tc.cm],
         total_cm_count,
@@ -242,7 +274,8 @@ async fn handle_mint_tx_candidate(
 }
 
 async fn handle_pour_tx_candidate(
-    dist_ledger: &DistLedger,
+    // dist_ledger: &DistLedger,
+    apis: &DistLedgerApis,
     tc: &PourTxCandidate,
     ctr_state_update: &mut CtrStateUpdate,
     merkle_update: &mut MerkleUpdate,
@@ -252,17 +285,11 @@ async fn handle_pour_tx_candidate(
     let data = &tc.data;
     let tx_ctr_op = tc.get_ctr_op();
 
-    process_ctr_state_update(
-        dist_ledger,
-        ctr_addr,
-        data,
-        tx_ctr_op,
-        ctr_state_update,
-    )
-    .await?;
+    process_ctr_state_update(apis, ctr_addr, data, tx_ctr_op, ctr_state_update)
+        .await?;
 
     let cm_count = process_merkle_update(
-        dist_ledger,
+        apis,
         merkle_update,
         vec![&tc.cm_1, &tc.cm_2],
         total_cm_count,
@@ -273,7 +300,8 @@ async fn handle_pour_tx_candidate(
 }
 
 async fn process_merkle_update(
-    dist_ledger: &DistLedger,
+    // dist_ledger: &DistLedger,
+    apis: &DistLedgerApis,
     merkle_update: &mut MerkleUpdate,
     cms: Vec<&[u8; 32]>,
     total_cm_count: u128,
@@ -281,22 +309,21 @@ async fn process_merkle_update(
     let cm_count = cms.len() as u128;
 
     for (idx, cm) in cms.iter().enumerate() {
-        let auth_path = dist_ledger
+        let auth_path = apis
             .merkle_tree
             .generate_auth_paths(total_cm_count + idx as u128);
 
         for (height, path) in auth_path.iter().enumerate() {
             let sibling_idx = path.idx;
             let sibling_loc = format!("{}_{}", height, sibling_idx);
-            let sibling_node = dist_ledger
+            let sibling_node = apis
                 .get_merkle_node(&sibling_loc)
                 .await?
                 .unwrap_or(U8Array::new_empty_32());
 
             let curr_cm = cm;
             let sib_cm = &sibling_node;
-            let merkle_node =
-                dist_ledger.hasher.mimc(curr_cm, sib_cm)?.to_bytes();
+            let merkle_node = apis.hasher.mimc(curr_cm, sib_cm)?.to_bytes();
 
             let parent_idx = sak_proofs::get_parent_idx(sibling_idx);
             let update_loc = format!("{}_{}", height + 1, parent_idx);

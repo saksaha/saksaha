@@ -8,17 +8,23 @@ async fn test_set_and_get_contract_state_to_db() {
     sak_test_utils::init_test_log();
     sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
 
-    let blockchain = utils::make_dist_ledger().await;
-    let db = blockchain.ledger_db;
+    let dist_ledger = utils::make_dist_ledger().await;
+    // let db = dist_ledger.apis.ledger_db;
 
     let (contract_addr, ctr_state) = utils::make_dummy_state();
 
-    db.batch_put_ctr_state(&contract_addr, &ctr_state)
+    dist_ledger
+        .apis
+        .ledger_db
+        .batch_put_ctr_state(&contract_addr, &ctr_state)
         .await
         .expect("contract state should be saved");
 
     assert_eq!(
-        db.get_ctr_state(&contract_addr)
+        dist_ledger
+            .apis
+            .get_ctr_state(&contract_addr)
+            .await
             .expect("Contract State should be exist")
             .unwrap()
             .get(&contract_addr)
@@ -49,26 +55,36 @@ async fn test_deploy_ctr_and_invoke_execute_and_query_when_dist_ledger_writes_ne
     dist_ledger.run().await;
 
     println!("\n[+] Block1: Deploying test validator contract");
+
     dist_ledger
+        .apis
         .write_block(utils::make_dummy_block_candidate_1())
         .await
         .expect("Block_1 must be written");
 
     println!("\n[+] Block2: Execute::add_validator");
+
     dist_ledger
+        .apis
         .write_block(utils::make_dummy_block_candidate_with_execute_tx())
         .await
         .expect("Block_2 must be written");
 
     println!("\n[+] Block3: Query::get_validator");
+
     dist_ledger
+        .apis
         .write_block(utils::make_dummy_block_candidate_with_query_tx())
         .await
         .expect("Block_3 must be written");
 
     {
-        let result: Storage =
-            dist_ledger.get_ctr_state(ctr_addr).await.unwrap().unwrap();
+        let result: Storage = dist_ledger
+            .apis
+            .get_ctr_state(ctr_addr)
+            .await
+            .unwrap()
+            .unwrap();
 
         println!("[*] result: {:#?}", result);
     }

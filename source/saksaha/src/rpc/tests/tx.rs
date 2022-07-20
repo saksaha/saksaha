@@ -1,10 +1,8 @@
 use super::utils;
-use crate::blockchain::{self, Blockchain};
-use crate::rpc::response::{ErrorResponse, JsonResponse, SuccessResponse};
+use crate::rpc::response::{ErrorResponse, JsonResponse};
 use hyper::body::Buf;
 use hyper::{Body, Client, Method, Request, Uri};
-use sak_dist_ledger::DistLedger;
-use sak_types::{Hashable, PourTxCandidate, TxCandidate};
+use sak_types::{PourTxCandidate, TxCandidate};
 use std::time::Duration;
 
 #[tokio::test(flavor = "multi_thread")]
@@ -68,10 +66,12 @@ async fn test_rpc_client_request_wrong_transaction_hash() {
         let dist_ledger = blockchain.dist_ledger;
 
         dist_ledger
+            .apis
             .delete_tx(&old_tx_hash)
             .expect("Tx should be deleted");
 
         let _tx_hash = dist_ledger
+            .apis
             .send_tx(dummy_tx)
             .await
             .expect("Tx should be written");
@@ -136,15 +136,18 @@ async fn test_rpc_client_request_correct_transaction_hash() {
         let dist_ledger = blockchain.dist_ledger;
 
         dist_ledger
+            .apis
             .delete_tx(&old_tx_hash)
             .expect("Tx should be deleted");
 
         dist_ledger
+            .apis
             .send_tx(dummy_tx.clone())
             .await
             .expect("Tx should be written");
 
         let tx = dist_ledger
+            .apis
             .get_tx(&old_tx_hash.clone())
             .await
             .expect("Tx should be exist")
@@ -273,6 +276,7 @@ async fn test_if_send_transaction_puts_tx_into_tx_pool() {
     let is_contain = machine
         .blockchain
         .dist_ledger
+        .apis
         .tx_pool_contains(&dummy_tx_hash)
         .await;
 
@@ -345,6 +349,7 @@ async fn test_if_send_transaction_puts_false_tx_into_tx_pool() {
     let is_contain = machine
         .blockchain
         .dist_ledger
+        .apis
         .tx_pool_contains(&false_tx_hash)
         .await;
 

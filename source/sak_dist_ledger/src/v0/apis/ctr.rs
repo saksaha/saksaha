@@ -1,10 +1,11 @@
 use crate::DistLedger;
+use crate::DistLedgerApis;
 use crate::LedgerError;
 use log::info;
 use sak_contract_std::Request;
 use sak_vm::CtrFn;
 
-impl DistLedger {
+impl DistLedgerApis {
     pub async fn query_ctr(
         &self,
         ctr_addr: &String,

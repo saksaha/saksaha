@@ -1,8 +1,8 @@
-use crate::{DistLedger, LedgerError};
+use crate::{DistLedger, DistLedgerApis, LedgerError};
 use sak_contract_std::Storage;
 use sak_types::{Block, Tx, TxCandidate};
 
-impl DistLedger {
+impl DistLedgerApis {
     pub async fn get_blocks(
         &self,
         block_hashes: Vec<&String>,

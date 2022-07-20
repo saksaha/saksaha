@@ -195,6 +195,7 @@ async fn test_block_sync_true() {
         .machine
         .blockchain
         .dist_ledger
+        .apis
         .send_tx(dummy_tx1.clone())
         .await
         .expect("Node should be able to send a transaction");
@@ -208,6 +209,7 @@ async fn test_block_sync_true() {
             .machine
             .blockchain
             .dist_ledger
+            .apis
             .tx_pool_contains(dummy_tx1.get_tx_hash())
             .await;
 
@@ -222,6 +224,7 @@ async fn test_block_sync_true() {
             .machine
             .blockchain
             .dist_ledger
+            .apis
             .write_block(None)
             .await
             .expect("Block should be written");
@@ -230,6 +233,7 @@ async fn test_block_sync_true() {
             .machine
             .blockchain
             .dist_ledger
+            .apis
             .get_latest_block_height()
             .await
             .unwrap()
@@ -244,6 +248,7 @@ async fn test_block_sync_true() {
             .machine
             .blockchain
             .dist_ledger
+            .apis
             .get_latest_block_height()
             .await
             .unwrap()
@@ -260,6 +265,7 @@ async fn test_block_sync_true() {
             .machine
             .blockchain
             .dist_ledger
+            .apis
             .tx_pool_contains(dummy_tx2.get_tx_hash())
             .await;
 

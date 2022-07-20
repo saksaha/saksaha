@@ -1,5 +1,6 @@
 use super::DistLedgerEvent;
 use crate::Consensus;
+use crate::DistLedgerApis;
 use crate::LedgerDB;
 use crate::LedgerError;
 use crate::Runtime;
@@ -17,14 +18,15 @@ use tokio::sync::{broadcast::Sender, RwLock};
 const BLOCKCHAIN_EVENT_QUEUE_CAPACITY: usize = 32;
 
 pub struct DistLedger {
-    pub(crate) ledger_db: LedgerDB,
-    pub(crate) sync_pool: Arc<SyncPool>,
+    pub apis: DistLedgerApis,
+    // pub(crate) ledger_db: LedgerDB,
+    // pub(crate) sync_pool: Arc<SyncPool>,
     pub bc_event_tx: Arc<RwLock<Sender<DistLedgerEvent>>>,
-    pub(crate) vm: VM,
-    pub(crate) consensus: Box<dyn Consensus + Send + Sync>,
+    // pub(crate) vm: VM,
+    // pub(crate) consensus: Box<dyn Consensus + Send + Sync>,
     runtime: Arc<Runtime>,
-    pub(crate) hasher: Hasher,
-    pub(crate) merkle_tree: MerkleTree,
+    // pub(crate) hasher: Hasher,
+    // pub(crate) merkle_tree: MerkleTree,
 }
 
 pub struct DistLedgerArgs {
@@ -78,23 +80,37 @@ impl DistLedger {
 
         let merkle_tree = MerkleTree::new(3 as u32);
 
-        let dist_ledger = DistLedger {
+        let apis = DistLedgerApis {
             ledger_db,
-            sync_pool,
             vm,
-            bc_event_tx,
-            consensus,
-            runtime,
-            hasher,
+            sync_pool,
             merkle_tree,
+            hasher,
+            consensus,
+        };
+
+        let dist_ledger = DistLedger {
+            apis,
+            // ledger_db,
+            // sync_pool,
+            // vm,
+            bc_event_tx,
+            // consensus,
+            runtime,
+            // hasher,
+            // merkle_tree,
         };
 
         if let Some(bc) = genesis_block {
-            dist_ledger.insert_genesis_block(bc).await?;
+            // dist_ledger.insert_genesis_block(bc).await?;
+            dist_ledger.apis.insert_genesis_block(bc).await?;
         }
 
+        // let latest_height =
+        //     dist_ledger.ledger_db.get_latest_block_height().await?;
+
         let latest_height =
-            dist_ledger.ledger_db.get_latest_block_height().await?;
+            dist_ledger.apis.ledger_db.get_latest_block_height().await?;
 
         info!(
             "Initialized Blockchain, latest height (none if genesis \
@@ -113,37 +129,37 @@ impl DistLedger {
         });
     }
 
-    async fn insert_genesis_block(
-        &self,
-        genesis_block: BlockCandidate,
-    ) -> Result<String, String> {
-        let persisted_gen_block_hash = if let Some(b) =
-            match self.get_block_by_height(&0).await {
-                Ok(b) => b,
-                Err(err) => return Err(err.to_string()),
-            } {
-            let block_hash = b.get_block_hash().to_string();
+    // async fn insert_genesis_block(
+    //     &self,
+    //     genesis_block: BlockCandidate,
+    // ) -> Result<String, String> {
+    //     let persisted_gen_block_hash = if let Some(b) =
+    //         match self.get_block_by_height(&0).await {
+    //             Ok(b) => b,
+    //             Err(err) => return Err(err.to_string()),
+    //         } {
+    //         let block_hash = b.get_block_hash().to_string();
 
-            info!(
-                "Genesis block is already persisted, block_hash: {}",
-                block_hash.green(),
-            );
+    //         info!(
+    //             "Genesis block is already persisted, block_hash: {}",
+    //             block_hash.green(),
+    //         );
 
-            block_hash
-        } else {
-            info!("Genesis block not found, writing");
+    //         block_hash
+    //     } else {
+    //         info!("Genesis block not found, writing");
 
-            let b = match self.write_block(Some(genesis_block)).await {
-                Ok(b) => b.ok_or(
-                    "genesis block should have been written as it \
-                        does not exist at the moment",
-                )?,
-                Err(err) => return Err(err.to_string()),
-            };
+    //         let b = match self.write_block(Some(genesis_block)).await {
+    //             Ok(b) => b.ok_or(
+    //                 "genesis block should have been written as it \
+    //                     does not exist at the moment",
+    //             )?,
+    //             Err(err) => return Err(err.to_string()),
+    //         };
 
-            b
-        };
+    //         b
+    //     };
 
-        Ok(persisted_gen_block_hash.to_string())
-    }
+    //     Ok(persisted_gen_block_hash.to_string())
+    // }
 }

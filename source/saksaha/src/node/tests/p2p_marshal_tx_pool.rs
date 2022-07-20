@@ -217,6 +217,7 @@ async fn test_two_nodes_tx_pool_marshal_check_true() {
         .machine
         .blockchain
         .dist_ledger
+        .apis
         .send_tx(dummy_tx1.clone())
         .await
         .expect("Node should be able to send a transaction");
@@ -225,6 +226,7 @@ async fn test_two_nodes_tx_pool_marshal_check_true() {
         .machine
         .blockchain
         .dist_ledger
+        .apis
         .send_tx(dummy_tx2.clone())
         .await
         .expect("Node should be able to send a transaction");
@@ -236,6 +238,7 @@ async fn test_two_nodes_tx_pool_marshal_check_true() {
             .machine
             .blockchain
             .dist_ledger
+            .apis
             .tx_pool_contains(dummy_tx1.get_tx_hash())
             .await;
 
@@ -243,6 +246,7 @@ async fn test_two_nodes_tx_pool_marshal_check_true() {
             .machine
             .blockchain
             .dist_ledger
+            .apis
             .tx_pool_contains(dummy_tx2.get_tx_hash())
             .await;
 
@@ -255,6 +259,7 @@ async fn test_two_nodes_tx_pool_marshal_check_true() {
             .machine
             .blockchain
             .dist_ledger
+            .apis
             .write_block(Some(block))
             .await
             .expect("Block should be written");
@@ -263,6 +268,7 @@ async fn test_two_nodes_tx_pool_marshal_check_true() {
             .machine
             .blockchain
             .dist_ledger
+            .apis
             .tx_pool_contains(dummy_tx1.get_tx_hash())
             .await;
 

@@ -21,6 +21,7 @@ async fn test_rpc_client_and_get_block() {
         let block_hash = match machine
             .blockchain
             .dist_ledger
+            .apis
             .write_block(Some(block_candidate_same))
             .await
         {
@@ -52,19 +53,23 @@ async fn test_rpc_client_and_get_block() {
             let _vh = match std::str::from_utf8(&body_bytes_vec) {
                 Ok(b) => {
                     let hash = &b.to_string();
-                    let _vht =
-                        match machine.blockchain.dist_ledger.get_block(hash) {
-                            Ok(block) => {
-                                println!("{:?}", block);
+                    let _vht = match machine
+                        .blockchain
+                        .dist_ledger
+                        .apis
+                        .get_block(hash)
+                    {
+                        Ok(block) => {
+                            println!("{:?}", block);
 
-                                // TODO compare some values here!
-                                // assert_eq!(
-                                //     &block.unwrap().get_tx_hashes(),
-                                //     &block_value.get_tx_hashes(),
-                                // );
-                            }
-                            Err(_err) => panic!(),
-                        };
+                            // TODO compare some values here!
+                            // assert_eq!(
+                            //     &block.unwrap().get_tx_hashes(),
+                            //     &block_value.get_tx_hashes(),
+                            // );
+                        }
+                        Err(_err) => panic!(),
+                    };
                 }
                 Err(_err) => panic!(),
             };
