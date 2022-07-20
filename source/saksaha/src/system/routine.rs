@@ -1,5 +1,5 @@
 use super::shutdown::ShutdownMng;
-use super::BoxedError;
+use super::SaksahaError;
 use super::SystemRunArgs;
 use crate::blockchain::Blockchain;
 use crate::config::Config;
@@ -25,7 +25,7 @@ impl Routine {
     pub(super) async fn run(
         &self,
         sys_run_args: SystemRunArgs,
-    ) -> Result<(), BoxedError> {
+    ) -> Result<(), SaksahaError> {
         log::info!("System is starting");
 
         let config = {
@@ -212,12 +212,10 @@ impl Routine {
                     Arc::new(m)
                 };
 
-                let h = SystemHandle {
+                SystemHandle {
                     machine: machine.clone(),
                     p2p_monitor,
-                };
-
-                Arc::new(h)
+                }
             };
 
             let rpc_args = RPCArgs {

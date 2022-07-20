@@ -1,4 +1,4 @@
-use crate::{machine::Machine, system::BoxedError};
+use crate::{machine::Machine, SaksahaError};
 use futures::{SinkExt, StreamExt};
 use log::{info, warn};
 use sak_p2p_trpt::{
@@ -171,7 +171,7 @@ async fn handle_block_hash_ack<'a>(
     block_hash_syn_msg: BlockHashSynMsg,
     conn: &'a mut RwLockWriteGuard<'_, UpgradedConnection>,
     machine: &Machine,
-) -> Result<(), BoxedError> {
+) -> Result<(), SaksahaError> {
     let new_blocks = block_hash_syn_msg.new_blocks;
 
     let block_hashes: Vec<&String> = new_blocks

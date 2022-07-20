@@ -3,7 +3,7 @@ mod cli;
 
 use crate::cli::CLIArgs;
 use sak_logger::{terr, tinfo};
-use saksaha::system::{System, SystemRunArgs};
+use saksaha::{System, SystemRunArgs};
 
 const RUST_LOG_ENV: &str = "
     sak_,
