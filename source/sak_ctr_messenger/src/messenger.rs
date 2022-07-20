@@ -43,6 +43,9 @@ pub fn query2(request: Request, storage: Storage) -> String {
         "get_msgs" => {
             return handle_get_msgs(storage, request.arg);
         }
+        "get_ch_list" => {
+            return handle_get_ch_list(storage, request.arg);
+        }
         _ => {
             panic!("Wrong request type has been found");
         }
@@ -88,6 +91,42 @@ fn handle_get_msgs(storage: Storage, args: ExecuteArgs) -> String {
     // (msgs_ptr, msgs_len as i32)
 }
 
+fn handle_get_ch_list(storage: Storage, args: ExecuteArgs) -> String {
+    let dst_pk = match args.get(ARG_DST_PK) {
+        Some(v) => v,
+        None => {
+            panic!("Args should contain a channel_id");
+        }
+    };
+
+    let mut ch_list = vec![];
+
+    match storage.get(dst_pk) {
+        Some(v) => v,
+        None => {
+            panic!("ch_list should be obtained");
+        }
+    };
+
+    match storage.get(dst_pk) {
+        Some(o) => {
+            let open_ch_data: Vec<String> =
+                serde_json::from_str(&o.as_str()).unwrap();
+
+            for data in open_ch_data {
+                let [_a, ch_id, _c, _d]: [String; 4] =
+                    serde_json::from_str(&data).unwrap();
+                ch_list.push(ch_id);
+            }
+        }
+        None => {}
+    };
+
+    let ch_list_serialized = serde_json::to_string(&ch_list).unwrap();
+
+    ch_list_serialized.clone()
+}
+
 fn handle_open_channel(storage: &mut Storage, args: ExecuteArgs) {
     let dst_pk = match args.get(ARG_DST_PK) {
         Some(v) => v,
@@ -103,8 +142,10 @@ fn handle_open_channel(storage: &mut Storage, args: ExecuteArgs) {
         }
     };
 
-    let [_eph_pk_str, ch_id, _open_ch_src, open_ch_empty]: [String; 4] =
-        serde_json::from_str(&input_serialized.as_str()).unwrap();
+    let (ch_id, open_ch_empty) = {
+        let ret: Vec<String> = serde_json::from_str(&input_serialized).unwrap();
+        (ret[1].clone(), ret[3].clone())
+    };
 
     match storage.get_mut(&ch_id) {
         Some(_) => {
@@ -115,8 +156,25 @@ fn handle_open_channel(storage: &mut Storage, args: ExecuteArgs) {
         None => {}
     };
 
-    storage.insert(dst_pk.clone(), input_serialized.clone()); // put in the open_channel storage
-    storage.insert(ch_id.clone(), open_ch_empty); // put in the chats storage
+    match storage.get_mut(dst_pk) {
+        Some(o) => {
+            let mut open_ch_data: Vec<String> =
+                serde_json::from_str(&o.as_str()).unwrap();
+            open_ch_data.push(input_serialized.clone());
+            let input_serialized_new =
+                serde_json::to_string(&open_ch_data).unwrap();
+            storage.insert(dst_pk.clone(), input_serialized_new);
+        }
+        None => {
+            let mut open_ch_data = vec![];
+            open_ch_data.push(input_serialized.clone());
+            let input_serialized_new =
+                serde_json::to_string(&open_ch_data).unwrap();
+            storage.insert(dst_pk.clone(), input_serialized_new.clone());
+        }
+    };
+
+    storage.insert(ch_id.clone(), open_ch_empty);
 }
 
 fn handle_send_msg(storage: &mut Storage, args: ExecuteArgs) {
@@ -133,8 +191,6 @@ fn handle_send_msg(storage: &mut Storage, args: ExecuteArgs) {
             panic!("args should contain the msg");
         }
     };
-
-    storage.remove(channel_id);
 
     storage.insert(channel_id.clone(), input_serialized.clone());
 }
