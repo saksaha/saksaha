@@ -46,12 +46,18 @@ impl LedgerDB {
         txs: &Vec<Tx>,
         ctr_state_updates: &CtrStateUpdate,
         merkle_updates: &MerkleUpdate,
+        updated_ledger_cm_count: u128,
     ) -> Result<String, LedgerError> {
-        println!(
-            "data to write, block: {:?}, \ntxs: {:?}, \n
-            ctr_state_updates: {:?},\n merkle_updates: {:?}",
-            block, txs, ctr_state_updates, merkle_updates
-        );
+        // println!(
+        //     "data to write, block: {:?}, \ntxs: {:?},\n\
+        //     ctr_state_updates: {:?},\n merkle_updates: {:?}, \n\
+        //     updated_ledger_cm_count: {}",
+        //     block,
+        //     txs,
+        //     ctr_state_updates,
+        //     merkle_updates,
+        //     updated_ledger_cm_count,
+        // );
 
         let db = &self.kv_db.db_instance;
 
@@ -97,8 +103,14 @@ impl LedgerDB {
         self.schema.batch_put_block_cm_count(
             db,
             &mut batch,
-            &block.block_height,
             block_hash,
+            block.block_cm_count,
+        )?;
+
+        self.schema.batch_put_ledger_cm_count(
+            db,
+            &mut batch,
+            updated_ledger_cm_count,
         )?;
 
         self.schema.batch_put_block_height(
@@ -150,14 +162,14 @@ impl LedgerDB {
         Ok(height)
     }
 
-    pub(crate) async fn get_total_cm_count(
+    pub(crate) async fn get_ledger_cm_count(
         &self,
     ) -> Result<Option<u128>, LedgerError> {
         let db = &self.kv_db.db_instance;
 
-        let total_cm_count = self.schema.get_total_cm_count(db)?;
+        let ledger_cm_count = self.schema.get_ledger_cm_count(db)?;
 
-        Ok(total_cm_count)
+        Ok(ledger_cm_count)
     }
 }
 

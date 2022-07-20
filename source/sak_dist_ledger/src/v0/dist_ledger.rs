@@ -25,7 +25,6 @@ pub struct DistLedger {
     runtime: Arc<Runtime>,
     pub(crate) hasher: Hasher,
     pub(crate) merkle_tree: MerkleTree,
-    // pub(crate) merkle_tree: MerkleTree,
 }
 
 pub struct DistLedgerArgs {
@@ -77,8 +76,7 @@ impl DistLedger {
 
         let hasher = Hasher::new();
 
-        let merkle_tree =
-            MerkleTree::new(3 as u32, &hasher.get_mimc_constants());
+        let merkle_tree = MerkleTree::new(3 as u32);
 
         let dist_ledger = DistLedger {
             ledger_db,

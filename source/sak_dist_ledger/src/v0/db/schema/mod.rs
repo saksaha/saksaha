@@ -7,6 +7,10 @@ use sak_types::{BlockHash, CtrAddr, TxHash, TxType};
 use std::convert::TryInto;
 use std::sync::Arc;
 
+mod keys {
+    pub(super) const SINGLETON: &[u8; 1] = &[0];
+}
+
 const TX_HASH: &str = "tx_hash";
 
 const TX_TYPE: &str = "tx_type";
@@ -43,7 +47,7 @@ const CM_2: &str = "cm_2";
 
 const BLOCK_CM_COUNT: &str = "block_cm_count";
 
-const TOTAL_CM_COUNT: &str = "total_cm_count";
+const LEDGER_CM_COUNT: &str = "ledger_cm_count";
 
 const BLOCK_MERKLE_RT: &str = "block_merkle_rt";
 
@@ -445,6 +449,21 @@ impl LedgerDBSchema {
         Ok(())
     }
 
+    pub(crate) fn batch_put_ledger_cm_count(
+        &self,
+        db: &DB,
+        batch: &mut WriteBatch,
+        cm_count: u128,
+    ) -> Result<(), LedgerError> {
+        let cf = make_cf_handle(db, LEDGER_CM_COUNT)?;
+
+        let v = cm_count.to_be_bytes();
+
+        batch.put_cf(&cf, keys::SINGLETON, &v);
+
+        Ok(())
+    }
+
     pub(crate) fn batch_put_merkle_node(
         &self,
         db: &DB,
@@ -453,8 +472,6 @@ impl LedgerDBSchema {
         node_val: &[u8; 32],
     ) -> Result<(), LedgerError> {
         let cf = make_cf_handle(db, MERKLE_NODE)?;
-
-        println!("writing!!!: k: {:?}, v: {:?}", merkle_node_loc, node_val);
 
         batch.put_cf(&cf, merkle_node_loc, node_val);
 
@@ -829,13 +846,13 @@ impl LedgerDBSchema {
         }
     }
 
-    pub(crate) fn get_total_cm_count(
+    pub(crate) fn get_ledger_cm_count(
         &self,
         db: &DB,
     ) -> Result<Option<u128>, LedgerError> {
-        let cf = make_cf_handle(db, TOTAL_CM_COUNT)?;
+        let cf = make_cf_handle(db, LEDGER_CM_COUNT)?;
 
-        match db.get_cf(&cf, &[0])? {
+        match db.get_cf(&cf, keys::SINGLETON)? {
             Some(v) => {
                 let val = sak_kv_db::convert_u8_slice_into_u128(&v)?;
 
@@ -1203,7 +1220,7 @@ impl LedgerDBSchema {
             ColumnFamilyDescriptor::new(BLOCK_HASH, Options::default()),
             ColumnFamilyDescriptor::new(CTR_STATE, Options::default()),
             ColumnFamilyDescriptor::new(BLOCK_CM_COUNT, Options::default()),
-            ColumnFamilyDescriptor::new(TOTAL_CM_COUNT, Options::default()),
+            ColumnFamilyDescriptor::new(LEDGER_CM_COUNT, Options::default()),
         ]
     }
 }

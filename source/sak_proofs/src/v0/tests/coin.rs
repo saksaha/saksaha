@@ -174,9 +174,7 @@ fn make_test_context() -> TestContext {
         (addr_sk, addr_pk, r, s, rho, v, cm)
     };
 
-    let constants = hasher.get_mimc_constants();
-
-    let merkle_tree = MerkleTree::new(TEST_TREE_DEPTH as u32, &constants);
+    let merkle_tree = MerkleTree::new(TEST_TREE_DEPTH as u32);
 
     let merkle_nodes = {
         let mut m = HashMap::new();
