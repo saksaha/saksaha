@@ -155,7 +155,7 @@ impl LedgerDBSchema {
             Some(v) => {
                 let arr: [u8; 32] = match v.try_into() {
                     Ok(a) => a,
-                    Err(err) => {
+                    Err(_) => {
                         return Err(
                             format!("Cannot convert cm into an array",).into()
                         )

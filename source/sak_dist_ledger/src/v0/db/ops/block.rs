@@ -120,7 +120,7 @@ impl LedgerDB {
             &block.block_height,
         )?;
 
-        self.schema.batch_put_merkle_rt(
+        self.schema.batch_put_block_merkle_rt(
             db,
             &mut batch,
             block_hash,

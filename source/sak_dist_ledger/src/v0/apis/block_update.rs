@@ -188,7 +188,6 @@ impl DistLedgerApis {
 }
 
 async fn process_ctr_state_update(
-    // dist_ledger: &DistLedger,
     apis: &DistLedgerApis,
     ctr_addr: &String,
     data: &[u8],
@@ -248,7 +247,6 @@ async fn process_ctr_state_update(
 }
 
 async fn handle_mint_tx_candidate(
-    // dist_ledger: &DistLedger,
     apis: &DistLedgerApis,
     tc: &MintTxCandidate,
     ctr_state_update: &mut CtrStateUpdate,
@@ -274,7 +272,6 @@ async fn handle_mint_tx_candidate(
 }
 
 async fn handle_pour_tx_candidate(
-    // dist_ledger: &DistLedger,
     apis: &DistLedgerApis,
     tc: &PourTxCandidate,
     ctr_state_update: &mut CtrStateUpdate,
@@ -300,7 +297,6 @@ async fn handle_pour_tx_candidate(
 }
 
 async fn process_merkle_update(
-    // dist_ledger: &DistLedger,
     apis: &DistLedgerApis,
     merkle_update: &mut MerkleUpdate,
     cms: Vec<&[u8; 32]>,
@@ -309,9 +305,11 @@ async fn process_merkle_update(
     let cm_count = cms.len() as u128;
 
     for (idx, cm) in cms.iter().enumerate() {
-        let auth_path = apis
-            .merkle_tree
-            .generate_auth_paths(total_cm_count + idx as u128);
+        let leaf_idx = total_cm_count + idx as u128;
+        let auth_path = apis.merkle_tree.generate_auth_paths(leaf_idx);
+
+        let leaf_loc = format!("{}_{}", 0, leaf_idx);
+        merkle_update.insert(leaf_loc, **cm);
 
         for (height, path) in auth_path.iter().enumerate() {
             let sibling_idx = path.idx;
@@ -323,7 +321,7 @@ async fn process_merkle_update(
 
             let curr_cm = cm;
             let sib_cm = &sibling_node;
-            let merkle_node = apis.hasher.mimc(curr_cm, sib_cm)?.to_bytes();
+            let merkle_node = apis.hasher.mimc(*curr_cm, sib_cm)?.to_bytes();
 
             let parent_idx = sak_proofs::get_parent_idx(sibling_idx);
             let update_loc = format!("{}_{}", height + 1, parent_idx);

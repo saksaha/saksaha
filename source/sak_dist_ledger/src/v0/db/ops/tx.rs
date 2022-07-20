@@ -77,14 +77,14 @@ impl LedgerDB {
         self.schema.get_tx_hash_by_height(db, height)
     }
 
-    pub(crate) async fn get_cm_by_cm_idx(
-        &self,
-        cm_idx: &u128,
-    ) -> Result<Option<String>, LedgerError> {
-        let db = &self.kv_db.db_instance;
+    // pub(crate) async fn get_cm_by_cm_idx(
+    //     &self,
+    //     cm_idx: &u128,
+    // ) -> Result<Option<String>, LedgerError> {
+    //     let db = &self.kv_db.db_instance;
 
-        self.schema.get_cm_by_idx(db, cm_idx)
-    }
+    //     self.schema.get_cm_by_idx(db, cm_idx)
+    // }
 
     pub(crate) async fn get_merkle_node(
         &self,
@@ -202,7 +202,7 @@ fn batch_put_mint_tx(
 
     schema.batch_put_cm(db, batch, tx_hash, &tc.cm)?;
 
-    schema.batch_put_cm_by_height(db, batch, &tx.tx_height, &tc.cm)?;
+    // schema.batch_put_cm_by_id(db, batch, &tx.tx_height, &tc.cm)?;
 
     schema.batch_put_tx_created_at(db, batch, tx_hash, &tc.created_at)?;
 
