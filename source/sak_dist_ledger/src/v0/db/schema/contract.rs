@@ -1,14 +1,8 @@
+use crate::LedgerError;
 use crate::{cfs, LedgerDBSchema};
-use crate::{LedgerError, MerkleNodeLoc};
 use sak_contract_std::Storage;
-use sak_kv_db::DB;
-use sak_kv_db::{
-    BoundColumnFamily, ColumnFamilyDescriptor, IteratorMode, Options,
-    WriteBatch,
-};
-use sak_types::{BlockHash, CtrAddr, TxHash, TxType};
-use std::convert::TryInto;
-use std::sync::Arc;
+use sak_kv_db::WriteBatch;
+use sak_types::CtrAddr;
 
 impl LedgerDBSchema {
     pub(crate) async fn get_ctr_data_by_ctr_addr(
@@ -18,7 +12,7 @@ impl LedgerDBSchema {
         // let db = &self.kv_db.db_instance;
 
         let tx_hash = self
-            .get_tx_hash(ctr_addr)?
+            .get_tx_hash_by_ctr_addr(ctr_addr)?
             .ok_or("ctr data does not exist")?;
 
         let ctr_data = self.get_data(&tx_hash)?.ok_or("data does not exist")?;
@@ -41,12 +35,12 @@ impl LedgerDBSchema {
     //     Ok(Some(storage))
     // }
 
-    pub(crate) fn get_tx_hash(
+    pub(crate) fn get_tx_hash_by_ctr_addr(
         &self,
         // db: &DB,
         key: &CtrAddr,
     ) -> Result<Option<String>, LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::TX_HASH)?;
+        let cf = self.make_cf_handle(&self.db, cfs::TX_HASH_BY_CTR_ADDR)?;
 
         match self.db.get_cf(&cf, key)? {
             Some(v) => {
@@ -103,7 +97,7 @@ impl LedgerDBSchema {
         key: &CtrAddr,
         value: &String,
     ) -> Result<(), LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::TX_HASH)?;
+        let cf = self.make_cf_handle(&self.db, cfs::TX_HASH_BY_CTR_ADDR)?;
 
         batch.put_cf(&cf, key, value);
 

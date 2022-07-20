@@ -66,6 +66,7 @@ pub struct ContractCallData {
     pub args: Vec<Vec<u8>>,
 }
 
+#[derive(Debug)]
 pub enum TxCtrOp {
     ContractCall,
     ContractDeploy,
