@@ -310,4 +310,19 @@ impl PourTxCandidate {
             U8Array::new_empty_32(),
         )
     }
+
+    pub fn new_dummy_validator_ctrt() -> PourTxCandidate {
+        PourTxCandidate::new(
+            String::from("created_at_4"),
+            vec![44, 44, 44],
+            String::from("author_sig_4"),
+            Some(String::from("ctr_addr_4")),
+            vec![44, 44, 44],
+            U8Array::new_empty_32(),
+            U8Array::new_empty_32(),
+            U8Array::new_empty_32(),
+            U8Array::new_empty_32(),
+            U8Array::new_empty_32(),
+        )
+    }
 }

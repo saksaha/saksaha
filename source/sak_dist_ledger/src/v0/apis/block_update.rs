@@ -128,7 +128,7 @@ impl DistLedgerApis {
             warn!("Error removing txs into the tx pool, err: {}", err);
         }
 
-        let next_merkle_rt = match merkle_update.get("4_0") {
+        let next_merkle_rt = match merkle_update.get("15_0") {
             Some(r) => r,
             None => return Err(format!("next merkle root is missing").into()),
         };
@@ -196,6 +196,8 @@ async fn process_ctr_state_update(
 
     match tx_ctr_op {
         TxCtrOp::ContractDeploy => {
+            println!("deploy");
+
             let initial_ctr_state = vm.invoke(&data, CtrFn::Init)?;
 
             ctr_state_update.insert(ctr_addr.clone(), initial_ctr_state);
@@ -209,6 +211,8 @@ async fn process_ctr_state_update(
                     apis.query_ctr(&ctr_addr, req).await?;
                 }
                 CtrCallType::Execute => {
+                    println!("execute");
+
                     let new_state = match ctr_state_update.get(ctr_addr) {
                         Some(previous_state) => {
                             let previous_state: Storage =

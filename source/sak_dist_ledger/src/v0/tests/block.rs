@@ -98,15 +98,6 @@ async fn test_sequential_write_block() {
             Ok(v) => v,
             Err(err) => panic!("Failed to write dummy block, err: {}", err),
         };
-
-        // let tx_height = dist_ledger
-        //     .apis
-        //     .get_latest_tx_height()
-        //     .await
-        //     .unwrap()
-        //     .unwrap();
-
-        // println!("tx_height: {}", tx_height);
     }
 }
 
@@ -127,22 +118,13 @@ async fn test_sequential_write_block_and_get_tx_height() {
                 TxCandidate::new_dummy_pour_2(),
             ],
             witness_sigs: vec![String::from("1"), String::from("2")],
-            created_at: String::from("2022061515340000"),
+            created_at: format!("{}", i),
         };
 
         match dist_ledger.apis.write_block(Some(block)).await {
             Ok(v) => v,
             Err(err) => panic!("Failed to write dummy block, err: {}", err),
         };
-
-        let tx_height = dist_ledger
-            .apis
-            .get_latest_tx_height()
-            .await
-            .unwrap()
-            .unwrap();
-
-        println!("tx_height: {}", tx_height);
     }
 
     let tx_height = dist_ledger
@@ -152,5 +134,5 @@ async fn test_sequential_write_block_and_get_tx_height() {
         .unwrap()
         .unwrap();
 
-    assert_eq!(2 * repeat - 1, tx_height);
+    assert_eq!(2 * repeat - 1 + 2, tx_height);
 }

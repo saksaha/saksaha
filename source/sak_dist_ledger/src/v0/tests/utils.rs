@@ -152,15 +152,20 @@ pub(crate) fn make_dummy_block_candidate_with_execute_tx(
             ctr_call_type: CtrCallType::Execute,
         };
 
+        let data = [
+            &WASM_MAGIC_NUMBER,
+            serde_json::to_string(&request_execute_add_validator_1)
+                .unwrap()
+                .as_bytes(),
+        ]
+        .concat();
+
         let dummy_ctr_calling_execute_add_validator_tc_1 =
             TxCandidate::Pour(PourTxCandidate::new(
                 String::from("created_at_1"),
-                serde_json::to_string(&request_execute_add_validator_1)
-                    .unwrap()
-                    .as_bytes()
-                    .to_vec(),
+                data.to_vec(),
                 String::from("author_sig_1"),
-                Some(String::from("ctr_addr_1")),
+                Some(String::from("initial_mint")),
                 vec![22],
                 U8Array::new_empty_32(),
                 U8Array::new_empty_32(),
@@ -187,13 +192,18 @@ pub(crate) fn make_dummy_block_candidate_with_execute_tx(
             ctr_call_type: CtrCallType::Execute,
         };
 
+        let data = [
+            &WASM_MAGIC_NUMBER,
+            serde_json::to_string(&request_execute_add_validator_2)
+                .unwrap()
+                .as_bytes(),
+        ]
+        .concat();
+
         let dummy_ctr_calling_execute_add_validator_tc_2 =
             TxCandidate::Pour(PourTxCandidate::new(
                 String::from("created_at_2"),
-                serde_json::to_string(&request_execute_add_validator_2)
-                    .unwrap()
-                    .as_bytes()
-                    .to_vec(),
+                data.to_vec(),
                 String::from("author_sig_2"),
                 Some(String::from("ctr_addr_2")),
                 vec![22],
