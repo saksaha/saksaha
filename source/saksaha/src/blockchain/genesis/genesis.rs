@@ -1,7 +1,6 @@
+use crate::SaksahaError;
 use sak_crypto::{Hasher, Scalar, ScalarExt};
 use sak_types::{BlockCandidate, MintTxCandidate, Tx, TxCandidate, U8Array};
-
-use crate::system::BoxedError;
 
 pub(crate) const VALIDATOR_SIG: &str = "validator_sig";
 
@@ -15,7 +14,7 @@ pub(crate) struct GenesisBlock {
 }
 
 impl GenesisBlock {
-    pub fn create() -> Result<GenesisBlock, BoxedError> {
+    pub fn create() -> Result<GenesisBlock, SaksahaError> {
         let validator_wasm = VALIDATOR.to_vec();
 
         let hasher = Hasher::new();
