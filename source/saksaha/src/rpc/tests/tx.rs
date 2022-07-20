@@ -1,246 +1,238 @@
-use super::utils::test_utils;
+use super::utils;
+use crate::rpc::response::{ErrorResponse, JsonResponse};
+use hyper::body::Buf;
+use hyper::{Body, Client, Method, Request, Uri};
+use sak_types::{PourTxCandidate, TxCandidate};
+use std::time::Duration;
 
-#[cfg(test)]
-mod test_suite {
-    use super::*;
-    use crate::blockchain::{self, Blockchain};
-    use crate::rpc::response::{ErrorResponse, JsonResponse, SuccessResponse};
-    use hyper::body::Buf;
-    use hyper::{Body, Client, Method, Request, Uri};
-    use sak_dist_ledger::DistLedger;
-    use sak_types::{Hashable, PourTxCandidate, TxCandidate};
-    use std::time::Duration;
+#[tokio::test(flavor = "multi_thread")]
+async fn test_rpc_client_and_send_wrong_transaction() {
+    sak_test_utils::init_test_log();
+    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
 
-    #[tokio::test(flavor = "multi_thread")]
-    async fn test_rpc_client_and_send_wrong_transaction() {
-        test_utils::init();
+    let (rpc, rpc_socket_addr, _) = utils::make_test_context().await;
 
-        let (rpc, rpc_socket_addr, _) = test_utils::make_test_context().await;
+    let _rpc_server = tokio::spawn(async move { rpc.run().await });
 
-        let _rpc_server = tokio::spawn(async move { rpc.run().await });
+    let client = Client::new();
 
-        let client = Client::new();
+    let uri: Uri = {
+        let u = format!(
+            "http://localhost:{}/apis/v0/send_transaction",
+            rpc_socket_addr.port()
+        );
 
-        let uri: Uri = {
-            let u = format!(
-                "http://localhost:{}/apis/v0/send_transaction",
-                rpc_socket_addr.port()
-            );
+        u.parse().expect("URI should be made")
+    };
 
-            u.parse().expect("URI should be made")
-        };
+    let req = Request::builder()
+        .method(Method::POST)
+        .uri(uri)
+        .body(Body::from("123"))
+        .expect("request builder should be made");
 
-        let req = Request::builder()
-            .method(Method::POST)
-            .uri(uri)
-            .body(Body::from("123"))
-            .expect("request builder should be made");
-
-        let _result = match client.request(req).await {
-            Ok(mut res) => {
-                let body = hyper::body::aggregate(&mut res)
-                    .await
-                    .expect("body should be parsed");
-
-                let _: ErrorResponse =
-                    match serde_json::from_reader(body.reader()) {
-                        Ok(e) => e,
-                        Err(err) => {
-                            panic!(
-                                "Response should be 'error_response', {}",
-                                err
-                            );
-                        }
-                    };
-            }
-            Err(err) => {
-                panic!("error: {}", err);
-            }
-        };
-    }
-
-    #[tokio::test(flavor = "multi_thread")]
-    async fn test_rpc_client_request_wrong_transaction_hash() {
-        test_utils::init();
-
-        {
-            let blockchain = test_utils::make_blockchain().await;
-
-            let dummy_tx = TxCandidate::new_dummy_pour_1();
-
-            let old_tx_hash = (&dummy_tx).get_tx_hash();
-
-            let dist_ledger = blockchain.dist_ledger;
-
-            dist_ledger
-                .delete_tx(&old_tx_hash)
-                .expect("Tx should be deleted");
-
-            let _tx_hash = dist_ledger
-                .send_tx(dummy_tx)
+    let _result = match client.request(req).await {
+        Ok(mut res) => {
+            let body = hyper::body::aggregate(&mut res)
                 .await
-                .expect("Tx should be written");
+                .expect("body should be parsed");
+
+            let _: ErrorResponse = match serde_json::from_reader(body.reader())
+            {
+                Ok(e) => e,
+                Err(err) => {
+                    panic!("Response should be 'error_response', {}", err);
+                }
+            };
         }
+        Err(err) => {
+            panic!("error: {}", err);
+        }
+    };
+}
 
-        let (rpc, rpc_socket_addr, _) = test_utils::make_test_context().await;
+#[tokio::test(flavor = "multi_thread")]
+async fn test_rpc_client_request_wrong_transaction_hash() {
+    sak_test_utils::init_test_log();
+    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
 
-        let _rpc_server = tokio::spawn(async move { rpc.run().await });
+    {
+        let blockchain = utils::make_blockchain().await;
 
-        let client = Client::new();
+        let dummy_tx = TxCandidate::new_dummy_pour_m1_to_p3_p4();
 
-        let uri: Uri = {
-            let u = format!(
-                "http://localhost:{}/apis/v0/get_transaction",
-                rpc_socket_addr.port()
-            );
+        let old_tx_hash = (&dummy_tx).get_tx_hash();
 
-            u.parse().expect("URI should be made")
-        };
+        let dist_ledger = blockchain.dist_ledger;
 
-        let req = Request::builder()
-            .method(Method::POST)
-            .uri(uri)
-            .body(Body::from(r#"{"hash": "1q2w3e4r"}"#))
-            .expect("request builder should be made");
+        dist_ledger
+            .apis
+            .delete_tx(&old_tx_hash)
+            .expect("Tx should be deleted");
 
-        let _res = match client.request(req).await {
-            Ok(res) => {
-                let body = hyper::body::aggregate(res)
-                    .await
-                    .expect("body should be parsed");
-
-                let _: ErrorResponse =
-                    match serde_json::from_reader(body.reader()) {
-                        Ok(e) => {
-                            log::info!("{:?}", e);
-                            e
-                        }
-                        Err(err) => {
-                            panic!(
-                                "Response should be 'error_response', {}",
-                                err
-                            );
-                        }
-                    };
-            }
-            Err(err) => {
-                panic!("error: {}", err);
-            }
-        };
+        let _tx_hash = dist_ledger
+            .apis
+            .send_tx(dummy_tx)
+            .await
+            .expect("Tx should be written");
     }
 
-    #[tokio::test(flavor = "multi_thread")]
-    async fn test_rpc_client_request_correct_transaction_hash() {
-        test_utils::init();
+    let (rpc, rpc_socket_addr, _) = utils::make_test_context().await;
 
-        let tx_hash = {
-            let blockchain = test_utils::make_blockchain().await;
+    let _rpc_server = tokio::spawn(async move { rpc.run().await });
 
-            let dummy_tx = TxCandidate::new_dummy_pour_1();
+    let client = Client::new();
 
-            let old_tx_hash = (&dummy_tx).get_tx_hash();
+    let uri: Uri = {
+        let u = format!(
+            "http://localhost:{}/apis/v0/get_transaction",
+            rpc_socket_addr.port()
+        );
 
-            let dist_ledger = blockchain.dist_ledger;
+        u.parse().expect("URI should be made")
+    };
 
-            dist_ledger
-                .delete_tx(&old_tx_hash)
-                .expect("Tx should be deleted");
+    let req = Request::builder()
+        .method(Method::POST)
+        .uri(uri)
+        .body(Body::from(r#"{"hash": "1q2w3e4r"}"#))
+        .expect("request builder should be made");
 
-            dist_ledger
-                .send_tx(dummy_tx.clone())
+    let _res = match client.request(req).await {
+        Ok(res) => {
+            let body = hyper::body::aggregate(res)
                 .await
-                .expect("Tx should be written");
+                .expect("body should be parsed");
 
-            let tx = dist_ledger
-                .get_tx(&old_tx_hash.clone())
-                .await
-                .expect("Tx should be exist")
-                .unwrap();
+            let _: ErrorResponse = match serde_json::from_reader(body.reader())
+            {
+                Ok(e) => {
+                    log::info!("{:?}", e);
+                    e
+                }
+                Err(err) => {
+                    panic!("Response should be 'error_response', {}", err);
+                }
+            };
+        }
+        Err(err) => {
+            panic!("error: {}", err);
+        }
+    };
+}
 
-            let tx_hash = tx.get_tx_hash().clone();
+#[tokio::test(flavor = "multi_thread")]
+async fn test_rpc_client_request_correct_transaction_hash() {
+    sak_test_utils::init_test_log();
+    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
 
-            assert_eq!(tx_hash, *old_tx_hash);
-            tx_hash
-        };
+    let tx_hash = {
+        let blockchain = utils::make_blockchain().await;
 
-        let (rpc, rpc_socket_addr, _) = test_utils::make_test_context().await;
+        let dummy_tx = TxCandidate::new_dummy_pour_m1_to_p3_p4();
 
-        let _rpc_server = tokio::spawn(async move { rpc.run().await });
+        let old_tx_hash = (&dummy_tx).get_tx_hash();
 
-        let client = Client::new();
+        let dist_ledger = blockchain.dist_ledger;
 
-        let uri: Uri = {
-            let u = format!(
-                "http://localhost:{}/apis/v0/get_transaction",
-                rpc_socket_addr.port()
-            );
+        dist_ledger
+            .apis
+            .delete_tx(&old_tx_hash)
+            .expect("Tx should be deleted");
 
-            u.parse().expect("URI should be made")
-        };
+        dist_ledger
+            .apis
+            .send_tx(dummy_tx.clone())
+            .await
+            .expect("Tx should be written");
 
-        let req = Request::builder()
-            .method(Method::POST)
-            .uri(uri)
-            .body(Body::from(format!(
-                r#"
+        let tx = dist_ledger
+            .apis
+            .get_tx(&old_tx_hash.clone())
+            .await
+            .expect("Tx should be exist")
+            .unwrap();
+
+        let tx_hash = tx.get_tx_hash().clone();
+
+        assert_eq!(tx_hash, *old_tx_hash);
+        tx_hash
+    };
+
+    let (rpc, rpc_socket_addr, _) = utils::make_test_context().await;
+
+    let _rpc_server = tokio::spawn(async move { rpc.run().await });
+
+    let client = Client::new();
+
+    let uri: Uri = {
+        let u = format!(
+            "http://localhost:{}/apis/v0/get_transaction",
+            rpc_socket_addr.port()
+        );
+
+        u.parse().expect("URI should be made")
+    };
+
+    let req = Request::builder()
+        .method(Method::POST)
+        .uri(uri)
+        .body(Body::from(format!(
+            r#"
                     {{"hash": "{}"}}
                 "#,
-                tx_hash,
-            )))
-            .expect("request builder should be made");
+            tx_hash,
+        )))
+        .expect("request builder should be made");
 
-        println!("Request: {:?}", req);
+    println!("Request: {:?}", req);
 
-        let _res = match client.request(req).await {
-            Ok(res) => {
-                let body = hyper::body::aggregate(res)
-                    .await
-                    .expect("body should be parsed");
+    let _res = match client.request(req).await {
+        Ok(res) => {
+            let body = hyper::body::aggregate(res)
+                .await
+                .expect("body should be parsed");
 
-                let _: JsonResponse =
-                    match serde_json::from_reader(body.reader()) {
-                        Ok(e) => {
-                            log::info!("{:?}", e);
-                            e
-                        }
-                        Err(err) => {
-                            panic!(
-                                "Response should be 'error_response', {}",
-                                err
-                            );
-                        }
-                    };
-            }
-            Err(err) => {
-                panic!("error: {}", err);
-            }
-        };
-    }
+            let _: JsonResponse = match serde_json::from_reader(body.reader()) {
+                Ok(e) => {
+                    log::info!("{:?}", e);
+                    e
+                }
+                Err(err) => {
+                    panic!("Response should be 'error_response', {}", err);
+                }
+            };
+        }
+        Err(err) => {
+            panic!("error: {}", err);
+        }
+    };
+}
 
-    #[tokio::test(flavor = "multi_thread")]
-    async fn test_if_send_transaction_puts_tx_into_tx_pool() {
-        test_utils::init();
+#[tokio::test(flavor = "multi_thread")]
+async fn test_if_send_transaction_puts_tx_into_tx_pool() {
+    sak_test_utils::init_test_log();
+    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
 
-        let tc_dummy = PourTxCandidate::new_dummy_1();
+    let tc_dummy = PourTxCandidate::new_dummy_m1_to_p3_p4();
 
-        let (rpc, rpc_socket_addr, machine) =
-            test_utils::make_test_context().await;
-        let _rpc_server = tokio::spawn(async move { rpc.run().await });
-        let client = Client::new();
+    let (rpc, rpc_socket_addr, machine) = utils::make_test_context().await;
+    let _rpc_server = tokio::spawn(async move { rpc.run().await });
+    let client = Client::new();
 
-        let uri: Uri = {
-            let u = format!(
-                "http://localhost:{}/apis/v0/send_transaction",
-                rpc_socket_addr.port()
-            );
-            u.parse().expect("URI should be made")
-        };
+    let uri: Uri = {
+        let u = format!(
+            "http://localhost:{}/apis/v0/send_transaction",
+            rpc_socket_addr.port()
+        );
+        u.parse().expect("URI should be made")
+    };
 
-        let req = Request::builder()
-            .method(Method::POST)
-            .uri(uri.clone())
-            .body(Body::from(format!(
-                r#"
+    let req = Request::builder()
+        .method(Method::POST)
+        .uri(uri.clone())
+        .body(Body::from(format!(
+            r#"
                     {{
                         "pi": "{:?}",
                         "signature": "{}",
@@ -249,75 +241,72 @@ mod test_suite {
                         "contract": {:?}
                     }}
                 "#,
-                tc_dummy.pi,
-                tc_dummy.author_sig,
-                tc_dummy.created_at,
-                tc_dummy.data,
-                tc_dummy.ctr_addr,
-            )))
-            .expect("request builder should be made");
+            tc_dummy.pi,
+            tc_dummy.author_sig,
+            tc_dummy.created_at,
+            tc_dummy.data,
+            tc_dummy.ctr_addr,
+        )))
+        .expect("request builder should be made");
 
-        let _res = match client.request(req).await {
-            Ok(res) => {
-                let body = hyper::body::aggregate(res)
-                    .await
-                    .expect("body should be parsed");
-                let _: JsonResponse =
-                    match serde_json::from_reader(body.reader()) {
-                        Ok(e) => {
-                            log::info!("log info dbg {:?}", e);
-                            e
-                        }
-                        Err(err) => {
-                            panic!(
-                                "Response should be 'error_response', {}",
-                                err
-                            );
-                        }
-                    };
-            }
-            Err(err) => {
-                panic!("error: {}", err);
-            }
-        };
+    let _res = match client.request(req).await {
+        Ok(res) => {
+            let body = hyper::body::aggregate(res)
+                .await
+                .expect("body should be parsed");
+            let _: JsonResponse = match serde_json::from_reader(body.reader()) {
+                Ok(e) => {
+                    log::info!("log info dbg {:?}", e);
+                    e
+                }
+                Err(err) => {
+                    panic!("Response should be 'error_response', {}", err);
+                }
+            };
+        }
+        Err(err) => {
+            panic!("error: {}", err);
+        }
+    };
 
-        tokio::time::sleep(Duration::from_secs(1)).await;
+    tokio::time::sleep(Duration::from_secs(1)).await;
 
-        let dummy_tx_hash = tc_dummy.get_tx_hash();
+    let dummy_tx_hash = tc_dummy.get_tx_hash();
 
-        let is_contain = machine
-            .blockchain
-            .dist_ledger
-            .tx_pool_contains(&dummy_tx_hash)
-            .await;
+    let is_contain = machine
+        .blockchain
+        .dist_ledger
+        .apis
+        .tx_pool_contains(&dummy_tx_hash)
+        .await;
 
-        assert_eq!(true, is_contain);
-    }
+    assert_eq!(true, is_contain);
+}
 
-    #[tokio::test(flavor = "multi_thread")]
-    async fn test_if_send_transaction_puts_false_tx_into_tx_pool() {
-        test_utils::init();
+#[tokio::test(flavor = "multi_thread")]
+async fn test_if_send_transaction_puts_false_tx_into_tx_pool() {
+    sak_test_utils::init_test_log();
+    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
 
-        let tc_dummy = PourTxCandidate::new_dummy_1();
+    let tc_dummy = PourTxCandidate::new_dummy_m1_to_p3_p4();
 
-        let (rpc, rpc_socket_addr, machine) =
-            test_utils::make_test_context().await;
-        let _rpc_server = tokio::spawn(async move { rpc.run().await });
-        let client = Client::new();
+    let (rpc, rpc_socket_addr, machine) = utils::make_test_context().await;
+    let _rpc_server = tokio::spawn(async move { rpc.run().await });
+    let client = Client::new();
 
-        let uri: Uri = {
-            let u = format!(
-                "http://localhost:{}/apis/v0/send_transaction",
-                rpc_socket_addr.port()
-            );
-            u.parse().expect("URI should be made")
-        };
+    let uri: Uri = {
+        let u = format!(
+            "http://localhost:{}/apis/v0/send_transaction",
+            rpc_socket_addr.port()
+        );
+        u.parse().expect("URI should be made")
+    };
 
-        let req = Request::builder()
-            .method(Method::POST)
-            .uri(uri.clone())
-            .body(Body::from(format!(
-                r#"
+    let req = Request::builder()
+        .method(Method::POST)
+        .uri(uri.clone())
+        .body(Body::from(format!(
+            r#"
                     {{
                         "pi": "{:?}",
                         "signature": "{}",
@@ -326,47 +315,43 @@ mod test_suite {
                         "contract": {:?}
                     }}
                 "#,
-                tc_dummy.pi,
-                tc_dummy.author_sig,
-                tc_dummy.created_at,
-                tc_dummy.data,
-                tc_dummy.ctr_addr,
-            )))
-            .expect("request builder should be made");
+            tc_dummy.pi,
+            tc_dummy.author_sig,
+            tc_dummy.created_at,
+            tc_dummy.data,
+            tc_dummy.ctr_addr,
+        )))
+        .expect("request builder should be made");
 
-        let _res = match client.request(req).await {
-            Ok(res) => {
-                let body = hyper::body::aggregate(res)
-                    .await
-                    .expect("body should be parsed");
-                let _: JsonResponse =
-                    match serde_json::from_reader(body.reader()) {
-                        Ok(e) => {
-                            log::info!("log info dbg {:?}", e);
-                            e
-                        }
-                        Err(err) => {
-                            panic!(
-                                "Response should be 'error_response', {}",
-                                err
-                            );
-                        }
-                    };
-            }
-            Err(err) => {
-                panic!("error: {}", err);
-            }
-        };
+    let _res = match client.request(req).await {
+        Ok(res) => {
+            let body = hyper::body::aggregate(res)
+                .await
+                .expect("body should be parsed");
+            let _: JsonResponse = match serde_json::from_reader(body.reader()) {
+                Ok(e) => {
+                    log::info!("log info dbg {:?}", e);
+                    e
+                }
+                Err(err) => {
+                    panic!("Response should be 'error_response', {}", err);
+                }
+            };
+        }
+        Err(err) => {
+            panic!("error: {}", err);
+        }
+    };
 
-        tokio::time::sleep(Duration::from_secs(1)).await;
+    tokio::time::sleep(Duration::from_secs(1)).await;
 
-        let false_tx_hash = String::from("false_tx");
-        let is_contain = machine
-            .blockchain
-            .dist_ledger
-            .tx_pool_contains(&false_tx_hash)
-            .await;
+    let false_tx_hash = String::from("false_tx");
+    let is_contain = machine
+        .blockchain
+        .dist_ledger
+        .apis
+        .tx_pool_contains(&false_tx_hash)
+        .await;
 
-        assert_eq!(false, is_contain);
-    }
+    assert_eq!(false, is_contain);
 }

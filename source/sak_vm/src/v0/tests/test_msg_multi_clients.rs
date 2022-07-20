@@ -2,7 +2,7 @@ use crate::*;
 use crate::{CtrFn, VM};
 use sak_contract_std::{CtrCallType, Request, Storage};
 use sak_crypto::{
-    PublicKey, SecretKey, SigningKey, ToEncodedPoint, VerifyingKey,
+    PublicKey, SakKey, SecretKey, SigningKey, ToEncodedPoint, VerifyingKey,
 };
 use std::collections::HashMap;
 
@@ -20,9 +20,9 @@ fn make_test_context() -> (
 ) {
     let vm = VM::init().expect("VM should be initiated");
 
-    let (a_sk, a_pk) = sak_crypto::generate_key_pair();
-    let (b_sk, b_pk) = sak_crypto::generate_key_pair();
-    let (eph_sk, eph_pk) = sak_crypto::generate_key_pair();
+    let (a_sk, a_pk) = SakKey::generate();
+    let (b_sk, b_pk) = SakKey::generate();
+    let (eph_sk, eph_pk) = SakKey::generate();
 
     let ch_id = String::from(DUMMY_CHANNEL_ID_1);
 

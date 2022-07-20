@@ -88,7 +88,8 @@ impl TxSyncRoutine {
                     Ok(_) => (),
                     Err(err) => {
                         warn!(
-                            "No active receiver handle to sync tx event, \
+                            "No active tx sync routine receiver handle to \
+                                sync tx event, \
                             err: {}",
                             err
                         );

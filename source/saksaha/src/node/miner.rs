@@ -48,7 +48,14 @@ impl Miner {
 
             let time_since = SystemTime::now();
 
-            match self.machine.blockchain.dist_ledger.write_block(None).await {
+            match self
+                .machine
+                .blockchain
+                .dist_ledger
+                .apis
+                .write_block(None)
+                .await
+            {
                 Ok(_) => (),
                 Err(err) => {
                     warn!("write_block failed, err: {}", err.to_string());

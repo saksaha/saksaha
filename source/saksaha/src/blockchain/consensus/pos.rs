@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use sak_contract_std::{CtrCallType, Request};
-use sak_dist_ledger::{Consensus, ConsensusError, DistLedger};
+use sak_dist_ledger::{Consensus, ConsensusError, DistLedger, DistLedgerApis};
 use sak_p2p_id::Identity;
 use sak_proofs::MerkleTree;
 use sak_types::{BlockCandidate, Tx, TxCandidate};
@@ -15,7 +15,7 @@ pub struct Pos {
 impl Consensus for Pos {
     async fn do_consensus(
         &self,
-        dist_ledger: &DistLedger,
+        dist_ledger_apis: &DistLedgerApis,
         tx_candidates: Vec<TxCandidate>,
     ) -> Result<BlockCandidate, ConsensusError> {
         let request = Request {
@@ -24,7 +24,7 @@ impl Consensus for Pos {
             ctr_call_type: CtrCallType::Query,
         };
 
-        let validator = dist_ledger
+        let validator = dist_ledger_apis
             .query_ctr(&self.validator_ctr_addr, request)
             .await?;
 

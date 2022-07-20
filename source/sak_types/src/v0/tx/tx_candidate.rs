@@ -1,5 +1,7 @@
 use super::utils;
-use crate::{MintTx, PourTx, Tx, TxCtrOp, TypesError, WASM_MAGIC_NUMBER};
+use crate::{
+    MintTx, PourTx, Tx, TxCtrOp, TxType, TypesError, WASM_MAGIC_NUMBER,
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Debug, PartialEq, Eq, Clone)]
@@ -16,10 +18,24 @@ impl TxCandidate {
         }
     }
 
+    pub fn get_cm_count(&self) -> u128 {
+        match self {
+            TxCandidate::Mint(_) => 1,
+            TxCandidate::Pour(_) => 2,
+        }
+    }
+
     pub fn get_ctr_op(&self) -> TxCtrOp {
         match self {
             TxCandidate::Mint(c) => c.get_ctr_op(),
             TxCandidate::Pour(c) => c.get_ctr_op(),
+        }
+    }
+
+    pub fn get_ctr_addr(&self) -> &String {
+        match &self {
+            TxCandidate::Mint(c) => &c.ctr_addr,
+            TxCandidate::Pour(c) => &c.ctr_addr,
         }
     }
 
@@ -104,6 +120,10 @@ impl MintTxCandidate {
         }
     }
 
+    pub fn get_tx_type(&self) -> TxType {
+        TxType::Mint
+    }
+
     pub fn get_tx_hash(&self) -> &String {
         return &self.tx_hash;
     }
@@ -125,6 +145,7 @@ pub struct PourTxCandidate {
     //
     #[serde(with = "serde_bytes")]
     pub data: Vec<u8>,
+
     //
     pub author_sig: String,
 
@@ -135,16 +156,16 @@ pub struct PourTxCandidate {
     pub pi: Vec<u8>,
 
     //
-    pub sn_1: Vec<u8>,
+    pub sn_1: [u8; 32],
 
     //
-    pub sn_2: Vec<u8>,
+    pub sn_2: [u8; 32],
 
     //
-    pub cm_1: Vec<u8>,
+    pub cm_1: [u8; 32],
 
     //
-    pub cm_2: Vec<u8>,
+    pub cm_2: [u8; 32],
 
     //
     pub merkle_rt: [u8; 32],
@@ -160,10 +181,10 @@ impl PourTxCandidate {
         author_sig: String,
         ctr_addr: Option<String>,
         pi: Vec<u8>,
-        sn_1: Vec<u8>,
-        sn_2: Vec<u8>,
-        cm_1: Vec<u8>,
-        cm_2: Vec<u8>,
+        sn_1: [u8; 32],
+        sn_2: [u8; 32],
+        cm_1: [u8; 32],
+        cm_2: [u8; 32],
         merkle_rt: [u8; 32],
     ) -> PourTxCandidate {
         let ctr_addr = ctr_addr.unwrap_or(String::from(""));
@@ -196,105 +217,15 @@ impl PourTxCandidate {
         Tx::Pour(PourTx::new(self, tx_height))
     }
 
+    pub fn get_tx_type(&self) -> TxType {
+        TxType::Pour
+    }
+
     pub fn get_tx_hash(&self) -> &String {
         return &self.tx_hash;
     }
 
     pub fn get_ctr_op(&self) -> TxCtrOp {
         utils::get_ctr_op(&self.ctr_addr, &self.data)
-    }
-}
-
-pub mod for_testing {
-    use crate::U8Array;
-
-    use super::*;
-
-    impl TxCandidate {
-        pub fn new_dummy_pour_1() -> TxCandidate {
-            let pour_tx_candidate_dummy_1 = PourTxCandidate::new_dummy_1();
-
-            TxCandidate::Pour(pour_tx_candidate_dummy_1)
-        }
-
-        pub fn new_dummy_pour_2() -> TxCandidate {
-            let pour_tx_candidate_dummy_2 = PourTxCandidate::new_dummy_2();
-
-            TxCandidate::Pour(pour_tx_candidate_dummy_2)
-        }
-
-        pub fn new_dummy_pour_3() -> TxCandidate {
-            let pour_tx_candidate_dummy_3 = PourTxCandidate::new_dummy_3();
-
-            TxCandidate::Pour(pour_tx_candidate_dummy_3)
-        }
-
-        pub fn new_dummy_pour_4() -> TxCandidate {
-            let pour_tx_candidate_dummy_4 = PourTxCandidate::new_dummy_4();
-
-            TxCandidate::Pour(pour_tx_candidate_dummy_4)
-        }
-    }
-
-    impl PourTxCandidate {
-        pub fn new_dummy_1() -> PourTxCandidate {
-            PourTxCandidate::new(
-                String::from("created_at_1"),
-                vec![11, 11, 11],
-                String::from("author_sig_1"),
-                Some(String::from("ctr_addr_1")),
-                vec![11, 11, 11],
-                vec![11, 11, 11],
-                vec![11, 11, 11],
-                vec![11, 11, 11],
-                vec![11, 11, 11],
-                U8Array::new_empty_32(),
-            )
-        }
-
-        pub fn new_dummy_2() -> PourTxCandidate {
-            PourTxCandidate::new(
-                String::from("created_at_2"),
-                vec![22, 22, 22],
-                String::from("author_sig_2"),
-                Some(String::from("ctr_addr_2")),
-                vec![22, 22, 22],
-                vec![22, 22, 22],
-                vec![22, 22, 22],
-                vec![22, 22, 22],
-                vec![22, 22, 22],
-                U8Array::new_empty_32(),
-            )
-        }
-
-        pub fn new_dummy_3() -> PourTxCandidate {
-            PourTxCandidate::new(
-                String::from("created_at_3"),
-                vec![33, 33, 33],
-                String::from("author_sig_3"),
-                Some(String::from("ctr_addr_3")),
-                vec![33, 33, 33],
-                vec![33, 33, 33],
-                vec![33, 33, 33],
-                vec![33, 33, 33],
-                vec![33, 33, 33],
-                U8Array::new_empty_32(),
-            )
-        }
-
-        pub fn new_dummy_4() -> PourTxCandidate {
-            PourTxCandidate::new(
-                String::from("created_at_4"),
-                vec![44, 44, 44],
-                String::from("author_sig_4"),
-                Some(String::from("ctr_addr_4")),
-                vec![44, 44, 44],
-                vec![44, 44, 44],
-                vec![44, 44, 44],
-                vec![44, 44, 44],
-                vec![44, 44, 44],
-                U8Array::new_empty_32(),
-            )
-        }
     }
 }

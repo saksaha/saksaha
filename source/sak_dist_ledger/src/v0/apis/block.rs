@@ -1,41 +1,42 @@
-use crate::{DistLedger, LedgerError};
+use crate::{DistLedger, DistLedgerApis, LedgerError};
 use sak_contract_std::Storage;
-use sak_types::{Block, Tx, TxCandidate};
+use sak_types::{Block, CtrAddr, Tx, TxCandidate};
 
-impl DistLedger {
+impl DistLedgerApis {
     pub async fn get_blocks(
         &self,
         block_hashes: Vec<&String>,
     ) -> Result<Vec<Block>, LedgerError> {
-        self.ledger_db.get_blocks(block_hashes).await
+        self.ledger_db.schema.get_blocks(block_hashes).await
     }
 
     pub async fn get_txs(
         &self,
         tx_hashes: &Vec<String>,
     ) -> Result<Vec<Tx>, LedgerError> {
-        self.ledger_db.get_txs(tx_hashes).await
+        self.ledger_db.schema.get_txs(tx_hashes).await
     }
 
     pub async fn get_merkle_node(
         &self,
         location: &String,
-    ) -> Result<Option<Vec<u8>>, LedgerError> {
-        self.ledger_db.get_merkle_node(location).await
+    ) -> Result<Option<[u8; 32]>, LedgerError> {
+        self.ledger_db.schema.get_merkle_node(location)
     }
 
     pub async fn get_latest_block_hash(
         &self,
     ) -> Result<Option<(u128, String)>, LedgerError> {
         let last_block_height =
-            match self.ledger_db.get_latest_block_height().await? {
+            match self.ledger_db.schema.get_latest_block_height()? {
                 Some(h) => h,
                 None => return Ok(None),
             };
 
         let latest_block_hash = match self
             .ledger_db
-            .get_block_hash_by_height(&last_block_height)?
+            .schema
+            .get_block_hash_by_block_height(&last_block_height)?
         {
             Some(block_hash) => block_hash.to_string(),
             None => return Ok(None),
@@ -56,71 +57,84 @@ impl DistLedger {
         &self,
         tx_hash: &String,
     ) -> Result<Option<Tx>, LedgerError> {
-        self.ledger_db.get_tx(tx_hash).await
+        self.ledger_db.schema.get_tx(tx_hash).await
     }
 
     pub fn get_block(
         &self,
         block_hash: &String,
     ) -> Result<Option<Block>, LedgerError> {
-        self.ledger_db.get_block(block_hash)
+        self.ledger_db.schema.get_block(block_hash)
+        // self.get_block(&self.kv_db.db_instance, &self.schema, block_hash)
     }
 
     pub async fn get_block_by_height(
         &self,
         block_height: &u128,
     ) -> Result<Option<Block>, LedgerError> {
-        if let Some(block_hash) =
-            self.ledger_db.get_block_hash_by_height(block_height)?
+        if let Some(block_hash) = self
+            .ledger_db
+            .schema
+            .get_block_hash_by_block_height(block_height)?
         {
-            return self.ledger_db.get_block(&block_hash);
+            return self.ledger_db.schema.get_block(&block_hash);
         } else {
             return Ok(None);
         }
     }
 
-    pub async fn get_latest_block_height(
+    pub fn get_latest_block_height(&self) -> Result<Option<u128>, LedgerError> {
+        self.ledger_db.schema.get_latest_block_height()
+    }
+
+    pub async fn get_ledger_cm_count(
         &self,
     ) -> Result<Option<u128>, LedgerError> {
-        self.ledger_db.get_latest_block_height().await
+        self.ledger_db.schema.get_ledger_cm_count()
     }
 
     pub async fn get_latest_tx_height(
         &self,
     ) -> Result<Option<u128>, LedgerError> {
-        self.ledger_db.get_latest_tx_height().await
+        self.ledger_db.schema.get_latest_tx_height()
     }
 
-    pub async fn get_latest_merkle_rt(
+    pub async fn get_latest_block_merkle_rt(
         &self,
     ) -> Result<Option<[u8; 32]>, LedgerError> {
-        let latest_tx_height =
-            match self.ledger_db.get_latest_tx_height().await? {
+        let latest_block_height =
+            match self.ledger_db.schema.get_latest_block_height()? {
                 Some(h) => h,
-                None => {
-                    return Ok(None);
-                    // return Err(format!("Cannot find latest tx height").into());
-                }
+                None => return Ok(None),
             };
 
-        let latest_tx_hash = match self
+        let latest_block_hash = match self
             .ledger_db
-            .get_tx_hash_by_height(&latest_tx_height)
-            .await?
+            .schema
+            .get_block_hash_by_block_height(&latest_block_height)?
         {
             Some(h) => h,
             None => {
-                return Ok(None);
+                return Err(format!(
+                    "Block hash at height ({}) does not exist",
+                    latest_block_height
+                )
+                .into())
             }
         };
 
-        self.ledger_db.get_merkle_rt(&latest_tx_hash).await
+        let latest_merkle_rt = self
+            .ledger_db
+            .schema
+            .get_block_merkle_rt(&latest_block_hash)?;
+
+        Ok(latest_merkle_rt)
     }
 
     pub async fn get_ctr_state(
         &self,
-        contract_addr: &String,
+        contract_addr: &CtrAddr,
     ) -> Result<Option<Storage>, LedgerError> {
-        self.ledger_db.get_ctr_state(contract_addr)
+        self.ledger_db.schema.get_ctr_state(contract_addr)
     }
 }

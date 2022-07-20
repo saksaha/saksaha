@@ -73,6 +73,8 @@ impl BlockSynMsg {
                 txs.push(tx);
             }
 
+            let total_cm_count = parse.next_int()?;
+
             let block = Block::new(
                 validator_sig,
                 tx_hashes,
@@ -80,6 +82,7 @@ impl BlockSynMsg {
                 created_at,
                 block_height,
                 merkle_rt,
+                total_cm_count,
             );
 
             blocks.push((block, txs));

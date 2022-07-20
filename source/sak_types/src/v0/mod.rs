@@ -1,7 +1,7 @@
 mod block;
 mod block_candidate;
 mod hashable;
-mod tx;
+pub mod tx;
 mod u8_array;
 
 pub use block::*;

@@ -42,6 +42,7 @@ pub(crate) async fn handle_tx_hash_syn<'a>(
     let txs_to_request = machine
         .blockchain
         .dist_ledger
+        .apis
         .get_tx_pool_diff(tx_hash_syn_msg.tx_hashes)
         .await;
 
@@ -81,6 +82,7 @@ pub(crate) async fn handle_tx_hash_syn<'a>(
                             );
 
                             machine.blockchain.dist_ledger
+                                .apis
                                 .insert_into_pool(h.tx_candidates).await;
                         }
                         other_msg => {
@@ -112,6 +114,7 @@ pub(crate) async fn handle_block_hash_syn<'a>(
     let (_, latest_block_hash) = machine
         .blockchain
         .dist_ledger
+        .apis
         .get_latest_block_hash()
         .await?
         .ok_or("height does not exist")?;

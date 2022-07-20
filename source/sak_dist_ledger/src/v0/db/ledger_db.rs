@@ -4,8 +4,8 @@ use sak_fs::FS;
 use sak_kv_db::{KeyValueDatabase, Options};
 
 pub(crate) struct LedgerDB {
-    pub(crate) kv_db: KeyValueDatabase,
-    pub(super) schema: LedgerDBSchema,
+    // pub(crate) kv_db: KeyValueDatabase,
+    pub(crate) schema: LedgerDBSchema,
 }
 
 impl LedgerDB {
@@ -27,12 +27,10 @@ impl LedgerDB {
             o
         };
 
-        let schema = LedgerDBSchema::new();
-
         let kv_db = match KeyValueDatabase::new(
             ledger_db_path,
             options,
-            schema.make_cf_descriptors(),
+            LedgerDBSchema::make_cf_descriptors(),
         ) {
             Ok(d) => d,
             Err(err) => {
@@ -44,7 +42,9 @@ impl LedgerDB {
             }
         };
 
-        let database = LedgerDB { kv_db, schema };
+        let schema = LedgerDBSchema::new(kv_db.db_instance);
+
+        let database = LedgerDB { schema };
 
         info!("Initialized Database");
 
