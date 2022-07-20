@@ -105,12 +105,9 @@ pub(crate) async fn make_test_context() -> (RPC, SocketAddr, Arc<Machine>) {
     };
 
     let rpc = {
-        let sys_handle = {
-            let h = SystemHandle {
-                machine: machine.clone(),
-                p2p_monitor,
-            };
-            Arc::new(h)
+        let sys_handle = SystemHandle {
+            machine: machine.clone(),
+            p2p_monitor,
         };
 
         let rpc_args = RPCArgs {
