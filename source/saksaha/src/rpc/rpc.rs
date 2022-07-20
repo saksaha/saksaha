@@ -34,11 +34,11 @@ impl RPC {
     }
 
     pub(crate) async fn run(self) -> Result<(), SaksahaError> {
-        async fn handle(
-            _: Request<Body>,
-        ) -> Result<Response<Body>, Infallible> {
-            Ok(Response::new("Hello, World!".into()))
-        }
+        // async fn handle(
+        //     _: Request<Body>,
+        // ) -> Result<Response<Body>, Infallible> {
+        //     Ok(Response::new("Hello, World!".into()))
+        // }
 
         let addr_incoming = match AddrIncoming::from_listener(self.rpc_socket) {
             Ok(a) => a,
@@ -54,7 +54,15 @@ impl RPC {
         let router = Router::new();
 
         let make_svc = service::make_service_fn(|_conn| async {
-            Ok::<_, Infallible>(service::service_fn(handle))
+            println!("power123");
+            let service_fn =
+                Ok::<_, Infallible>(service::service_fn(|req| async {
+                    println!("1313");
+                    Ok::<Response<Body>, Infallible>(Response::new(
+                        "Hello, World!".into(),
+                    ))
+                }));
+            service_fn
         });
 
         // let make_svc = MakeSvc {
@@ -62,8 +70,13 @@ impl RPC {
         //     sys_handle: self.sys_handle,
         // };
 
-        let hyper_server = Server::builder(addr_incoming).serve(make_svc);
+        // let hyper_server = Server::builder(addr_incoming).serve(make_svc);
         // let mut hyper_server_guard = self.hyper_server.write().await;
+
+        tokio::spawn(async move {
+            let hyper_server = Server::builder(addr_incoming).serve(make_svc);
+            let result = hyper_server.await;
+        });
 
         Ok(())
     }
