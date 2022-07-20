@@ -362,15 +362,8 @@ impl LedgerDBSchema {
             self.batch_put_tx(&mut batch, tx)?;
         }
 
-        for ctr_addr in ctr_state_updates.keys() {
-            self.batch_put_ctr_state(
-                // db,
-                &mut batch,
-                &ctr_addr,
-                &ctr_state_updates
-                    .get(ctr_addr)
-                    .expect("contract state should be exist"),
-            )?;
+        for (ctr_addr, ctr_state) in ctr_state_updates {
+            self.batch_put_ctr_state(&mut batch, ctr_addr, ctr_state)?;
         }
 
         for (loc, node_val) in merkle_updates {
@@ -451,7 +444,7 @@ impl LedgerDBSchema {
         block_hash: &BlockHash,
         cm_count: u128,
     ) -> Result<(), LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::BLOCK_CREATED_AT)?;
+        let cf = self.make_cf_handle(&self.db, cfs::BLOCK_CM_COUNT)?;
 
         let v = cm_count.to_be_bytes();
 

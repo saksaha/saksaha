@@ -91,11 +91,11 @@ impl LedgerDBSchema {
         &self,
         // db: &DB,
     ) -> Result<Option<u128>, LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::TX_HEIGHT)?;
+        let cf = self.make_cf_handle(&self.db, cfs::TX_HASH_BY_HEIGHT)?;
 
         let mut iter = self.db.iterator_cf(&cf, IteratorMode::End);
 
-        let (_hash, height_bytes) = match iter.next() {
+        let (height_bytes, _hash) = match iter.next() {
             Some(a) => a,
             None => return Ok(None),
         };

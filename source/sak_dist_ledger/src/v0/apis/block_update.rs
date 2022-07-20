@@ -1,13 +1,10 @@
-use crate::{
-    CtrStateUpdate, DistLedger, DistLedgerApis, LedgerError, MerkleUpdate,
-};
+use crate::{CtrStateUpdate, DistLedgerApis, LedgerError, MerkleUpdate};
 use colored::Colorize;
 use log::{debug, info, warn};
 use sak_contract_std::{CtrCallType, Request, Storage};
-use sak_crypto::ScalarExt;
 use sak_types::{
-    Block, BlockCandidate, MintTxCandidate, PourTxCandidate, Tx, TxCandidate,
-    TxCtrOp, U8Array,
+    BlockCandidate, MintTxCandidate, PourTxCandidate, TxCandidate, TxCtrOp,
+    U8Array,
 };
 use sak_vm::CtrFn;
 
@@ -131,7 +128,7 @@ impl DistLedgerApis {
             warn!("Error removing txs into the tx pool, err: {}", err);
         }
 
-        let next_merkle_rt = match merkle_update.get("3_0") {
+        let next_merkle_rt = match merkle_update.get("15_0") {
             Some(r) => r,
             None => return Err(format!("next merkle root is missing").into()),
         };
@@ -175,7 +172,7 @@ impl DistLedgerApis {
         }
 
         debug!(
-            "Success writing block, hash: {}, height: {}",
+            "Success writing block, hash: {}, block_height: {}",
             block_hash.green(),
             block.block_height,
         );
@@ -199,6 +196,8 @@ async fn process_ctr_state_update(
 
     match tx_ctr_op {
         TxCtrOp::ContractDeploy => {
+            println!("deploy");
+
             let initial_ctr_state = vm.invoke(&data, CtrFn::Init)?;
 
             ctr_state_update.insert(ctr_addr.clone(), initial_ctr_state);
@@ -212,6 +211,8 @@ async fn process_ctr_state_update(
                     apis.query_ctr(&ctr_addr, req).await?;
                 }
                 CtrCallType::Execute => {
+                    println!("execute");
+
                     let new_state = match ctr_state_update.get(ctr_addr) {
                         Some(previous_state) => {
                             let previous_state: Storage =

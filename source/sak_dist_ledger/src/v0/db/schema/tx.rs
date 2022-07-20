@@ -1,16 +1,11 @@
+use crate::LedgerError;
 use crate::{cfs, LedgerDBSchema};
-use crate::{LedgerError, MerkleNodeLoc};
+use sak_kv_db::WriteBatch;
 use sak_kv_db::DB;
-use sak_kv_db::{
-    BoundColumnFamily, ColumnFamilyDescriptor, IteratorMode, Options,
-    WriteBatch,
-};
 use sak_types::{
     BlockHash, CtrAddr, MintTx, MintTxCandidate, PourTx, PourTxCandidate, Tx,
     TxCtrOp, TxHash, TxType,
 };
-use std::convert::TryInto;
-use std::sync::Arc;
 
 // getter
 impl LedgerDBSchema {
@@ -166,7 +161,7 @@ impl LedgerDBSchema {
         // db: &DB,
         tx_height: &u128,
     ) -> Result<Option<String>, LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::TX_HASH)?;
+        let cf = self.make_cf_handle(&self.db, cfs::TX_HASH_BY_HEIGHT)?;
 
         let key = tx_height.to_be_bytes();
 
@@ -567,8 +562,6 @@ impl LedgerDBSchema {
     ) -> Result<(), LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::TX_TYPE)?;
 
-        println!("put tx type, hash: {:?}", tx_hash);
-
         batch.put_cf(&cf, tx_hash, &[tx_type as u8]);
 
         Ok(())
@@ -700,14 +693,14 @@ impl LedgerDBSchema {
         &self,
         // db: &DB,
         batch: &mut WriteBatch,
-        block_hash: &BlockHash,
+        tx_hash: &TxHash,
         tx_height: &u128,
     ) -> Result<(), LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::TX_HEIGHT)?;
 
         let v = tx_height.to_be_bytes();
 
-        batch.put_cf(&cf, block_hash, v);
+        batch.put_cf(&cf, tx_hash, v);
 
         Ok(())
     }
@@ -719,7 +712,7 @@ impl LedgerDBSchema {
         tx_height: &u128,
         tx_hash: &String,
     ) -> Result<(), LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::TX_HASH)?;
+        let cf = self.make_cf_handle(&self.db, cfs::TX_HASH_BY_HEIGHT)?;
 
         let v = tx_height.to_be_bytes();
 

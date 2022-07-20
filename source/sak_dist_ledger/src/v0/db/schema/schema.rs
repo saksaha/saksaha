@@ -1,10 +1,8 @@
-use crate::{cfs, LedgerError, MerkleNodeLoc};
+use crate::cfs;
 use sak_kv_db::{
     BoundColumnFamily, ColumnFamilyDescriptor, IteratorMode, Options,
     WriteBatch, DB,
 };
-use sak_types::{BlockHash, CtrAddr, TxHash, TxType};
-use std::convert::TryInto;
 use std::sync::Arc;
 
 pub(crate) struct LedgerDBSchema {
@@ -18,7 +16,14 @@ impl LedgerDBSchema {
 
     pub(crate) fn make_cf_descriptors() -> Vec<ColumnFamilyDescriptor> {
         vec![
-            ColumnFamilyDescriptor::new(cfs::TX_HASH, Options::default()),
+            ColumnFamilyDescriptor::new(
+                cfs::TX_HASH_BY_HEIGHT,
+                Options::default(),
+            ),
+            ColumnFamilyDescriptor::new(
+                cfs::TX_HASH_BY_CTR_ADDR,
+                Options::default(),
+            ),
             ColumnFamilyDescriptor::new(cfs::PI, Options::default()),
             ColumnFamilyDescriptor::new(cfs::AUTHOR_SIG, Options::default()),
             ColumnFamilyDescriptor::new(cfs::TX_CREATED_AT, Options::default()),

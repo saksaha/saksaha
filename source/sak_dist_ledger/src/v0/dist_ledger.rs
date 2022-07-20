@@ -5,7 +5,6 @@ use crate::LedgerDB;
 use crate::LedgerError;
 use crate::Runtime;
 use crate::SyncPool;
-use colored::Colorize;
 use log::info;
 use sak_crypto::Hasher;
 use sak_proofs::MerkleTree;
@@ -16,6 +15,7 @@ use tokio::sync::broadcast;
 use tokio::sync::{broadcast::Sender, RwLock};
 
 const BLOCKCHAIN_EVENT_QUEUE_CAPACITY: usize = 32;
+const MERKLE_TREE_HEIGHT: usize = 16;
 
 pub struct DistLedger {
     pub apis: DistLedgerApis,
@@ -78,7 +78,7 @@ impl DistLedger {
 
         let hasher = Hasher::new();
 
-        let merkle_tree = MerkleTree::new(3 as u32);
+        let merkle_tree = MerkleTree::new(MERKLE_TREE_HEIGHT as u32);
 
         let apis = DistLedgerApis {
             ledger_db,
