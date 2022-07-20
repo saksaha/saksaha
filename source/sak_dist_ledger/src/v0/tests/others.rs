@@ -1,6 +1,7 @@
 use super::utils;
 use crate::SyncPool;
 use sak_contract_std::Storage;
+use sak_kv_db::WriteBatch;
 use sak_types::{BlockCandidate, Tx, TxCandidate};
 
 #[tokio::test(flavor = "multi_thread")]
@@ -13,11 +14,13 @@ async fn test_set_and_get_contract_state_to_db() {
 
     let (contract_addr, ctr_state) = utils::make_dummy_state();
 
+    let mut batch = WriteBatch::default();
+
     dist_ledger
         .apis
         .ledger_db
-        .batch_put_ctr_state(&contract_addr, &ctr_state)
-        .await
+        .schema
+        .batch_put_ctr_state(&mut batch, &contract_addr, &ctr_state)
         .expect("contract state should be saved");
 
     assert_eq!(

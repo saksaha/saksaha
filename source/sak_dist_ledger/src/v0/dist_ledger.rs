@@ -109,8 +109,11 @@ impl DistLedger {
         // let latest_height =
         //     dist_ledger.ledger_db.get_latest_block_height().await?;
 
-        let latest_height =
-            dist_ledger.apis.ledger_db.get_latest_block_height().await?;
+        let latest_height = dist_ledger
+            .apis
+            .ledger_db
+            .schema
+            .get_latest_block_height()?;
 
         info!(
             "Initialized Blockchain, latest height (none if genesis \

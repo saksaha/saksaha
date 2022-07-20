@@ -1,6 +1,6 @@
 mod block;
 mod block_update;
-mod ctr;
+mod contract;
 mod pool;
 
 use crate::{Consensus, LedgerDB, SyncPool};

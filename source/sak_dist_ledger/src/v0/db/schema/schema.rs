@@ -7,14 +7,16 @@ use sak_types::{BlockHash, CtrAddr, TxHash, TxType};
 use std::convert::TryInto;
 use std::sync::Arc;
 
-pub(crate) struct LedgerDBSchema {}
+pub(crate) struct LedgerDBSchema {
+    pub(super) db: DB,
+}
 
 impl LedgerDBSchema {
-    pub(crate) fn new() -> LedgerDBSchema {
-        LedgerDBSchema {}
+    pub(crate) fn new(db: DB) -> LedgerDBSchema {
+        LedgerDBSchema { db }
     }
 
-    pub(crate) fn make_cf_descriptors(&self) -> Vec<ColumnFamilyDescriptor> {
+    pub(crate) fn make_cf_descriptors() -> Vec<ColumnFamilyDescriptor> {
         vec![
             ColumnFamilyDescriptor::new(cfs::TX_HASH, Options::default()),
             ColumnFamilyDescriptor::new(cfs::PI, Options::default()),

@@ -1,5 +1,6 @@
 use crate::{cfs, LedgerDBSchema};
 use crate::{LedgerError, MerkleNodeLoc};
+use sak_contract_std::Storage;
 use sak_kv_db::DB;
 use sak_kv_db::{
     BoundColumnFamily, ColumnFamilyDescriptor, IteratorMode, Options,
@@ -10,14 +11,44 @@ use std::convert::TryInto;
 use std::sync::Arc;
 
 impl LedgerDBSchema {
+    pub(crate) async fn get_ctr_data_by_ctr_addr(
+        &self,
+        ctr_addr: &String,
+    ) -> Result<Option<Vec<u8>>, LedgerError> {
+        // let db = &self.kv_db.db_instance;
+
+        let tx_hash = self
+            .get_tx_hash(ctr_addr)?
+            .ok_or("ctr data does not exist")?;
+
+        let ctr_data = self.get_data(&tx_hash)?.ok_or("data does not exist")?;
+
+        Ok(Some(ctr_data))
+    }
+
+    // pub(crate) fn get_ctr_state(
+    //     &self,
+    //     ctr_addr: &String,
+    // ) -> Result<Option<Storage>, LedgerError> {
+    //     // let db = &self.kv_db.db_instance;
+
+    //     let ctr_state = self
+    //         .get_ctr_state(&ctr_addr)?
+    //         .ok_or("ctr state does not exist")?;
+
+    //     let storage: Storage = serde_json::from_slice(&ctr_state)?;
+
+    //     Ok(Some(storage))
+    // }
+
     pub(crate) fn get_tx_hash(
         &self,
-        db: &DB,
+        // db: &DB,
         key: &CtrAddr,
     ) -> Result<Option<String>, LedgerError> {
-        let cf = self.make_cf_handle(db, cfs::TX_HASH)?;
+        let cf = self.make_cf_handle(&self.db, cfs::TX_HASH)?;
 
-        match db.get_cf(&cf, key)? {
+        match self.db.get_cf(&cf, key)? {
             Some(v) => {
                 let str = String::from_utf8(v)?;
 
@@ -31,14 +62,16 @@ impl LedgerDBSchema {
 
     pub(crate) fn get_ctr_state(
         &self,
-        db: &DB,
+        // db: &DB,
         ctr_addr: &CtrAddr,
-    ) -> Result<Option<Vec<u8>>, LedgerError> {
-        let cf = self.make_cf_handle(db, cfs::CTR_STATE)?;
+    ) -> Result<Option<Storage>, LedgerError> {
+        let cf = self.make_cf_handle(&self.db, cfs::CTR_STATE)?;
 
-        match db.get_cf(&cf, ctr_addr)? {
+        match self.db.get_cf(&cf, ctr_addr)? {
             Some(v) => {
-                return Ok(Some(v));
+                let storage: Storage = serde_json::from_slice(&v)?;
+
+                return Ok(Some(storage));
             }
             None => {
                 return Ok(None);
@@ -51,12 +84,12 @@ impl LedgerDBSchema {
 impl LedgerDBSchema {
     pub(crate) fn batch_put_ctr_state(
         &self,
-        db: &DB,
+        // db: &DB,
         batch: &mut WriteBatch,
         ctr_addr: &CtrAddr,
         ctr_state: &String,
     ) -> Result<(), LedgerError> {
-        let cf = self.make_cf_handle(db, cfs::CTR_STATE)?;
+        let cf = self.make_cf_handle(&self.db, cfs::CTR_STATE)?;
 
         batch.put_cf(&cf, ctr_addr, ctr_state);
 
@@ -65,12 +98,12 @@ impl LedgerDBSchema {
 
     pub(crate) fn batch_put_tx_hash(
         &self,
-        db: &DB,
+        // db: &DB,
         batch: &mut WriteBatch,
         key: &CtrAddr,
         value: &String,
     ) -> Result<(), LedgerError> {
-        let cf = self.make_cf_handle(db, cfs::TX_HASH)?;
+        let cf = self.make_cf_handle(&self.db, cfs::TX_HASH)?;
 
         batch.put_cf(&cf, key, value);
 

@@ -7,8 +7,6 @@ async fn test_put_and_get_transaction() {
 
     let dist_ledger = utils::make_dist_ledger().await;
 
-    // let db = blockchain.ledger_db;
-
     let dummy_tx_values = utils::make_dummy_txs();
 
     let mut tx_hashes = vec![];
@@ -17,6 +15,7 @@ async fn test_put_and_get_transaction() {
         let h = dist_ledger
             .apis
             .ledger_db
+            .schema
             .put_tx(&tx_val)
             .expect("Tx should be written");
 

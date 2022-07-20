@@ -235,7 +235,6 @@ async fn test_block_sync_true() {
             .dist_ledger
             .apis
             .get_latest_block_height()
-            .await
             .unwrap()
             .unwrap();
 
@@ -250,7 +249,6 @@ async fn test_block_sync_true() {
             .dist_ledger
             .apis
             .get_latest_block_height()
-            .await
             .unwrap()
             .unwrap();
 

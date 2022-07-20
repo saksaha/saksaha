@@ -13,12 +13,12 @@ use std::sync::Arc;
 impl LedgerDBSchema {
     pub(crate) fn get_merkle_node(
         &self,
-        db: &DB,
+        // db: &DB,
         key: &String,
     ) -> Result<Option<[u8; 32]>, LedgerError> {
-        let cf = self.make_cf_handle(db, cfs::MERKLE_NODE)?;
+        let cf = self.make_cf_handle(&self.db, cfs::MERKLE_NODE)?;
 
-        match db.get_cf(&cf, key)? {
+        match self.db.get_cf(&cf, key)? {
             Some(v) => {
                 let arr = sak_kv_db::convert_vec_into_u8_32(v)?;
 
@@ -53,11 +53,11 @@ impl LedgerDBSchema {
 
     pub(crate) fn get_ledger_cm_count(
         &self,
-        db: &DB,
+        // db: &DB,
     ) -> Result<Option<u128>, LedgerError> {
-        let cf = self.make_cf_handle(db, cfs::LEDGER_CM_COUNT)?;
+        let cf = self.make_cf_handle(&self.db, cfs::LEDGER_CM_COUNT)?;
 
-        match db.get_cf(&cf, keys::SINGLETON)? {
+        match self.db.get_cf(&cf, keys::SINGLETON)? {
             Some(v) => {
                 let val = sak_kv_db::convert_u8_slice_into_u128(&v)?;
 
@@ -71,11 +71,11 @@ impl LedgerDBSchema {
 
     pub(crate) fn get_latest_block_height(
         &self,
-        db: &DB,
-    ) -> Result<Option<u128>, String> {
-        let cf = self.make_cf_handle(db, cfs::BLOCK_HASH)?;
+        // db: &DB,
+    ) -> Result<Option<u128>, LedgerError> {
+        let cf = self.make_cf_handle(&self.db, cfs::BLOCK_HASH)?;
 
-        let mut iter = db.iterator_cf(&cf, IteratorMode::End);
+        let mut iter = self.db.iterator_cf(&cf, IteratorMode::End);
 
         let (height_bytes, _hash) = match iter.next() {
             Some(a) => a,
@@ -89,11 +89,11 @@ impl LedgerDBSchema {
 
     pub(crate) fn get_latest_tx_height(
         &self,
-        db: &DB,
-    ) -> Result<Option<u128>, String> {
-        let cf = self.make_cf_handle(db, cfs::TX_HEIGHT)?;
+        // db: &DB,
+    ) -> Result<Option<u128>, LedgerError> {
+        let cf = self.make_cf_handle(&self.db, cfs::TX_HEIGHT)?;
 
-        let mut iter = db.iterator_cf(&cf, IteratorMode::End);
+        let mut iter = self.db.iterator_cf(&cf, IteratorMode::End);
 
         let (_hash, height_bytes) = match iter.next() {
             Some(a) => a,
@@ -110,11 +110,11 @@ impl LedgerDBSchema {
 impl LedgerDBSchema {
     pub(crate) fn batch_put_ledger_cm_count(
         &self,
-        db: &DB,
+        // db: &DB,
         batch: &mut WriteBatch,
         cm_count: u128,
     ) -> Result<(), LedgerError> {
-        let cf = self.make_cf_handle(db, cfs::LEDGER_CM_COUNT)?;
+        let cf = self.make_cf_handle(&self.db, cfs::LEDGER_CM_COUNT)?;
 
         let v = cm_count.to_be_bytes();
 
@@ -125,12 +125,12 @@ impl LedgerDBSchema {
 
     pub(crate) fn batch_put_merkle_node(
         &self,
-        db: &DB,
+        // db: &DB,
         batch: &mut WriteBatch,
         merkle_node_loc: &MerkleNodeLoc,
         node_val: &[u8; 32],
     ) -> Result<(), LedgerError> {
-        let cf = self.make_cf_handle(db, cfs::MERKLE_NODE)?;
+        let cf = self.make_cf_handle(&self.db, cfs::MERKLE_NODE)?;
 
         batch.put_cf(&cf, merkle_node_loc, node_val);
 
@@ -139,12 +139,12 @@ impl LedgerDBSchema {
 
     pub(crate) fn batch_put_cm_by_idx(
         &self,
-        db: &DB,
+        // db: &DB,
         batch: &mut WriteBatch,
         cm_idx: &u128,
         cm: &[u8; 32],
     ) -> Result<(), LedgerError> {
-        let cf = self.make_cf_handle(db, cfs::CM)?;
+        let cf = self.make_cf_handle(&self.db, cfs::CM)?;
 
         let v = cm_idx.to_be_bytes();
 
