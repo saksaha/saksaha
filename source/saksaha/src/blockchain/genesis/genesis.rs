@@ -1,6 +1,6 @@
 use crate::SaksahaError;
-use sak_crypto::{Hasher, Scalar, ScalarExt};
-use sak_types::{BlockCandidate, MintTxCandidate, Tx, TxCandidate, U8Array};
+use sak_crypto::Hasher;
+use sak_types::{BlockCandidate, MintTxCandidate, TxCandidate, U8Array};
 
 pub(crate) const VALIDATOR_SIG: &str = "validator_sig";
 

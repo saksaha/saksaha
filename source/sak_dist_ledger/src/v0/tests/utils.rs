@@ -3,7 +3,10 @@ use crate::{
 };
 use async_trait::async_trait;
 use sak_contract_std::{CtrCallType, Request};
-use sak_types::{BlockCandidate, PourTxCandidate, Tx, TxCandidate, U8Array};
+use sak_types::{
+    BlockCandidate, PourTxCandidate, Tx, TxCandidate, U8Array,
+    WASM_MAGIC_NUMBER,
+};
 use std::collections::HashMap;
 
 pub struct DummyPos {}
@@ -98,13 +101,10 @@ pub(crate) fn make_dummy_block_candidate_with_query_tx(
             };
 
             TxCandidate::Pour(PourTxCandidate::new(
-                String::from("created_at_0"),
-                serde_json::to_string(&request_query_get_validator)
-                    .unwrap()
-                    .as_bytes()
-                    .to_vec(),
-                String::from("author_sig_0"),
-                Some(String::from("ctr_addr_0")),
+                String::from("created_at_1"),
+                WASM_MAGIC_NUMBER.to_vec(),
+                String::from("author_sig_1"),
+                Some(String::from("ctr_addr_1")),
                 vec![0],
                 U8Array::new_empty_32(),
                 U8Array::new_empty_32(),
@@ -119,15 +119,13 @@ pub(crate) fn make_dummy_block_candidate_with_query_tx(
             tx_candidates: vec![dummy_ctr_calling_query_tc],
             witness_sigs: vec![String::from("3"), String::from("4")],
             created_at: String::from("2022061515340000"),
-            // block_height: 1,
-            // merkle_root: String::from("2022061515340000"),
         }
     };
 
     Some(block_candidate)
 }
 
-pub(crate) fn make_dummy_block_candidate_with_execute_tx(
+pub(crate) fn make_dummy_block_candidate_calling_validator_ctr(
 ) -> Option<BlockCandidate> {
     let block_candidate = {
         let dummy_validator_1 = String::from(
@@ -148,15 +146,20 @@ pub(crate) fn make_dummy_block_candidate_with_execute_tx(
             ctr_call_type: CtrCallType::Execute,
         };
 
+        let data = [
+            // &WASM_MAGIC_NUMBER,
+            serde_json::to_string(&request_execute_add_validator_1)
+                .unwrap()
+                .as_bytes(),
+        ]
+        .concat();
+
         let dummy_ctr_calling_execute_add_validator_tc_1 =
             TxCandidate::Pour(PourTxCandidate::new(
                 String::from("created_at_1"),
-                serde_json::to_string(&request_execute_add_validator_1)
-                    .unwrap()
-                    .as_bytes()
-                    .to_vec(),
+                data.to_vec(),
                 String::from("author_sig_1"),
-                Some(String::from("ctr_addr_1")),
+                Some(String::from("test_validator_1")),
                 vec![22],
                 U8Array::new_empty_32(),
                 U8Array::new_empty_32(),
@@ -183,15 +186,17 @@ pub(crate) fn make_dummy_block_candidate_with_execute_tx(
             ctr_call_type: CtrCallType::Execute,
         };
 
+        let data = [serde_json::to_string(&request_execute_add_validator_2)
+            .unwrap()
+            .as_bytes()]
+        .concat();
+
         let dummy_ctr_calling_execute_add_validator_tc_2 =
             TxCandidate::Pour(PourTxCandidate::new(
                 String::from("created_at_2"),
-                serde_json::to_string(&request_execute_add_validator_2)
-                    .unwrap()
-                    .as_bytes()
-                    .to_vec(),
+                data.to_vec(),
                 String::from("author_sig_2"),
-                Some(String::from("ctr_addr_2")),
+                Some(String::from("test_validator_1")),
                 vec![22],
                 U8Array::new_empty_32(),
                 U8Array::new_empty_32(),
@@ -203,14 +208,11 @@ pub(crate) fn make_dummy_block_candidate_with_execute_tx(
         BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
             tx_candidates: vec![
-                //
                 dummy_ctr_calling_execute_add_validator_tc_1,
                 dummy_ctr_calling_execute_add_validator_tc_2,
             ],
             witness_sigs: vec![String::from("3"), String::from("4")],
             created_at: String::from("2022061515340000"),
-            // block_height: 2,
-            // merkle_root: String::from("2022061515340000"),
         }
     };
 

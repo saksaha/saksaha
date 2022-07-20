@@ -3,7 +3,9 @@ pub(crate) mod keys {
 }
 
 pub(crate) mod cfs {
-    pub const TX_HASH: &str = "tx_hash";
+    pub const TX_HASH_BY_HEIGHT: &str = "tx_hash_by_height";
+
+    pub const TX_HASH_BY_CTR_ADDR: &str = "tx_hash_by_ctr_addr";
 
     pub const TX_TYPE: &str = "tx_type";
 
