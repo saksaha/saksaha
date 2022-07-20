@@ -429,6 +429,22 @@ impl LedgerDBSchema {
         Ok(())
     }
 
+    pub(crate) fn batch_put_block_cm_count(
+        &self,
+        db: &DB,
+        batch: &mut WriteBatch,
+        block_hash: &BlockHash,
+        cm_count: u128,
+    ) -> Result<(), LedgerError> {
+        let cf = make_cf_handle(db, BLOCK_CREATED_AT)?;
+
+        let v = cm_count.to_be_bytes();
+
+        batch.put_cf(&cf, block_hash, &v);
+
+        Ok(())
+    }
+
     pub(crate) fn batch_put_merkle_node(
         &self,
         db: &DB,

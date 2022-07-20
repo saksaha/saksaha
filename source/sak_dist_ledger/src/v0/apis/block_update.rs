@@ -34,7 +34,7 @@ impl DistLedger {
             }
         };
 
-        let total_cm_count = match self.get_total_cm_count().await? {
+        let mut total_cm_count = match self.get_total_cm_count().await? {
             Some(h) => h,
             None => {
                 warn!(
@@ -64,28 +64,32 @@ impl DistLedger {
         );
 
         for (idx, tx_candidate) in tcs.iter().enumerate() {
-            match tx_candidate {
+            let cm_count = match tx_candidate {
                 TxCandidate::Mint(tc) => {
-                    let cm_count = handle_mint_tx_candidate(
+                    handle_mint_tx_candidate(
                         self,
                         tc,
                         &mut ctr_state_update,
                         &mut merkle_update,
                         next_tx_height + idx as u128,
+                        total_cm_count,
                     )
-                    .await?;
+                    .await?
                 }
                 TxCandidate::Pour(tc) => {
-                    let cm_count = handle_pour_tx_candidate(
+                    handle_pour_tx_candidate(
                         self,
                         tc,
                         &mut ctr_state_update,
                         &mut merkle_update,
                         next_tx_height + idx as u128,
+                        total_cm_count,
                     )
-                    .await?;
+                    .await?
                 }
             };
+
+            total_cm_count += cm_count;
         }
 
         if let Err(err) = self.sync_pool.remove_tcs(&tcs).await {
@@ -206,7 +210,8 @@ async fn handle_mint_tx_candidate(
     ctr_state_update: &mut CtrStateUpdate,
     merkle_update: &mut MerkleUpdate,
     next_tx_height: u128,
-) -> Result<usize, LedgerError> {
+    total_cm_count: u128,
+) -> Result<u128, LedgerError> {
     let ctr_addr = &tc.ctr_addr;
     let data = &tc.data;
     let tx_ctr_op = tc.get_ctr_op();
@@ -225,6 +230,7 @@ async fn handle_mint_tx_candidate(
         merkle_update,
         vec![&tc.cm],
         next_tx_height,
+        total_cm_count,
     )
     .await?;
 
@@ -237,7 +243,8 @@ async fn handle_pour_tx_candidate(
     ctr_state_update: &mut CtrStateUpdate,
     merkle_update: &mut MerkleUpdate,
     next_tx_height: u128,
-) -> Result<usize, LedgerError> {
+    total_cm_count: u128,
+) -> Result<u128, LedgerError> {
     let ctr_addr = &tc.ctr_addr;
     let data = &tc.data;
     let tx_ctr_op = tc.get_ctr_op();
@@ -256,6 +263,7 @@ async fn handle_pour_tx_candidate(
         merkle_update,
         vec![&tc.cm_1, &tc.cm_2],
         next_tx_height,
+        total_cm_count,
     )
     .await?;
 
@@ -267,14 +275,15 @@ async fn process_merkle_update(
     merkle_update: &mut MerkleUpdate,
     cms: Vec<&[u8; 32]>,
     next_tx_height: u128,
-) -> Result<usize, LedgerError> {
-    let cm_count = cms.len();
+    total_cm_count: u128,
+) -> Result<u128, LedgerError> {
+    let cm_count = cms.len() as u128;
     let mut curr_tx_height = next_tx_height;
 
-    for cm in cms {
+    for (idx, cm) in cms.iter().enumerate() {
         let auth_path = dist_ledger
             .merkle_tree
-            .generate_auth_paths(curr_tx_height as u32);
+            .generate_auth_paths(total_cm_count + idx as u128);
 
         for (height, path) in auth_path.iter().enumerate() {
             let sibling_idx = path.idx;

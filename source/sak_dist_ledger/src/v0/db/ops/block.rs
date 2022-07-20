@@ -94,6 +94,13 @@ impl LedgerDB {
             block_hash,
         )?;
 
+        self.schema.batch_put_block_cm_count(
+            db,
+            &mut batch,
+            &block.block_height,
+            block_hash,
+        )?;
+
         self.schema.batch_put_block_height(
             db,
             &mut batch,

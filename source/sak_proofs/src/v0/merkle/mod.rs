@@ -22,7 +22,7 @@ pub struct Node {
 
 #[derive(Debug, Clone)]
 pub struct Path {
-    pub idx: u32,
+    pub idx: u128,
     pub direction: bool,
 }
 
@@ -57,7 +57,7 @@ impl MerkleTree {
     //     n
     // }
 
-    pub fn generate_auth_paths(&self, idx: u32) -> Vec<Path> {
+    pub fn generate_auth_paths(&self, idx: u128) -> Vec<Path> {
         let height = self.height;
         let mut auth_path = vec![];
         let mut curr_idx = idx;
@@ -101,7 +101,7 @@ impl MerkleTree {
 //     auth_path
 // }
 
-fn get_sibling_idx(idx: u32) -> u32 {
+fn get_sibling_idx(idx: u128) -> u128 {
     if idx % 2 == 0 {
         idx + 1
     } else {
@@ -109,6 +109,6 @@ fn get_sibling_idx(idx: u32) -> u32 {
     }
 }
 
-pub fn get_parent_idx(idx: u32) -> u32 {
+pub fn get_parent_idx(idx: u128) -> u128 {
     idx / 2
 }
