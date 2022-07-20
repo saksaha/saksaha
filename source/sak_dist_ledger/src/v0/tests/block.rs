@@ -1,7 +1,5 @@
 use super::utils;
-use crate::SyncPool;
-use sak_contract_std::Storage;
-use sak_types::{BlockCandidate, Tx, TxCandidate};
+use sak_types::{BlockCandidate, TxCandidate};
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_insert_genesis_block_and_check_wrong_block_hash() {
@@ -59,6 +57,9 @@ async fn test_write_a_new_block_after_genesis() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_deploy_ctr_and_invoke_query_when_dist_ledger_writes_new_blocks() {
+    sak_test_utils::init_test_log();
+    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
+
     let dist_ledger = utils::make_dist_ledger().await;
 
     dist_ledger.run().await;
@@ -85,12 +86,12 @@ async fn test_sequential_write_block() {
 
     let dist_ledger = utils::make_dist_ledger().await;
 
-    for i in 0..10000 as u64 {
+    for i in 0..100 as u64 {
         let block = BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
             tx_candidates: vec![TxCandidate::new_dummy_pour_m1_to_p3_p4()],
             witness_sigs: vec![String::from("1"), String::from("2")],
-            created_at: String::from("2022061515340000"),
+            created_at: format!("{}", i),
         };
 
         match dist_ledger.apis.write_block(Some(block)).await {
@@ -98,14 +99,14 @@ async fn test_sequential_write_block() {
             Err(err) => panic!("Failed to write dummy block, err: {}", err),
         };
 
-        let tx_height = dist_ledger
-            .apis
-            .get_latest_tx_height()
-            .await
-            .unwrap()
-            .unwrap();
+        // let tx_height = dist_ledger
+        //     .apis
+        //     .get_latest_tx_height()
+        //     .await
+        //     .unwrap()
+        //     .unwrap();
 
-        println!("tx_height: {}", tx_height);
+        // println!("tx_height: {}", tx_height);
     }
 }
 
@@ -129,7 +130,6 @@ async fn test_sequential_write_block_and_get_tx_height() {
             created_at: String::from("2022061515340000"),
         };
 
-        println!("eeeeeeeeeeeeeeeee");
         match dist_ledger.apis.write_block(Some(block)).await {
             Ok(v) => v,
             Err(err) => panic!("Failed to write dummy block, err: {}", err),

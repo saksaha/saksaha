@@ -1,5 +1,5 @@
 use super::TxCandidate;
-use crate::{MintTxCandidate, PourTxCandidate, Tx, U8Array};
+use crate::{MintTxCandidate, PourTxCandidate, Tx, U8Array, WASM_MAGIC_NUMBER};
 use sak_crypto::Hasher;
 
 // fn get_cm_1() -> [u8; 32] {}
@@ -254,7 +254,7 @@ impl PourTxCandidate {
 
         PourTxCandidate::new(
             String::from("created_at_1"),
-            vec![11, 11, 11],
+            WASM_MAGIC_NUMBER.to_vec(),
             String::from("author_sig_1"),
             Some(String::from("ctr_addr_1")),
             vec![11, 11, 11],

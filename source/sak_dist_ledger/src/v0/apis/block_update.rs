@@ -1,13 +1,10 @@
-use crate::{
-    CtrStateUpdate, DistLedger, DistLedgerApis, LedgerError, MerkleUpdate,
-};
+use crate::{CtrStateUpdate, DistLedgerApis, LedgerError, MerkleUpdate};
 use colored::Colorize;
 use log::{debug, info, warn};
 use sak_contract_std::{CtrCallType, Request, Storage};
-use sak_crypto::ScalarExt;
 use sak_types::{
-    Block, BlockCandidate, MintTxCandidate, PourTxCandidate, Tx, TxCandidate,
-    TxCtrOp, U8Array,
+    BlockCandidate, MintTxCandidate, PourTxCandidate, TxCandidate, TxCtrOp,
+    U8Array,
 };
 use sak_vm::CtrFn;
 
@@ -131,7 +128,7 @@ impl DistLedgerApis {
             warn!("Error removing txs into the tx pool, err: {}", err);
         }
 
-        let next_merkle_rt = match merkle_update.get("3_0") {
+        let next_merkle_rt = match merkle_update.get("4_0") {
             Some(r) => r,
             None => return Err(format!("next merkle root is missing").into()),
         };

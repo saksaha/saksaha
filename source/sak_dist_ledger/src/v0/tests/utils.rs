@@ -3,7 +3,10 @@ use crate::{
 };
 use async_trait::async_trait;
 use sak_contract_std::{CtrCallType, Request};
-use sak_types::{BlockCandidate, PourTxCandidate, Tx, TxCandidate, U8Array};
+use sak_types::{
+    BlockCandidate, PourTxCandidate, Tx, TxCandidate, U8Array,
+    WASM_MAGIC_NUMBER,
+};
 use std::collections::HashMap;
 
 pub struct DummyPos {}
@@ -98,13 +101,14 @@ pub(crate) fn make_dummy_block_candidate_with_query_tx(
             };
 
             TxCandidate::Pour(PourTxCandidate::new(
-                String::from("created_at_0"),
-                serde_json::to_string(&request_query_get_validator)
-                    .unwrap()
-                    .as_bytes()
-                    .to_vec(),
-                String::from("author_sig_0"),
-                Some(String::from("ctr_addr_0")),
+                String::from("created_at_1"),
+                WASM_MAGIC_NUMBER.to_vec(),
+                // serde_json::to_string(&request_query_get_validator)
+                //     .unwrap()
+                //     .as_bytes()
+                //     .to_vec(),
+                String::from("author_sig_1"),
+                Some(String::from("ctr_addr_1")),
                 vec![0],
                 U8Array::new_empty_32(),
                 U8Array::new_empty_32(),

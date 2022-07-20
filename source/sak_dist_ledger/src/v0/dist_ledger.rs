@@ -5,7 +5,6 @@ use crate::LedgerDB;
 use crate::LedgerError;
 use crate::Runtime;
 use crate::SyncPool;
-use colored::Colorize;
 use log::info;
 use sak_crypto::Hasher;
 use sak_proofs::MerkleTree;
@@ -78,7 +77,7 @@ impl DistLedger {
 
         let hasher = Hasher::new();
 
-        let merkle_tree = MerkleTree::new(3 as u32);
+        let merkle_tree = MerkleTree::new(4 as u32);
 
         let apis = DistLedgerApis {
             ledger_db,
