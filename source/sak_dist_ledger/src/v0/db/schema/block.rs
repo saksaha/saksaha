@@ -451,7 +451,7 @@ impl LedgerDBSchema {
         block_hash: &BlockHash,
         cm_count: u128,
     ) -> Result<(), LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::BLOCK_CREATED_AT)?;
+        let cf = self.make_cf_handle(&self.db, cfs::BLOCK_CM_COUNT)?;
 
         let v = cm_count.to_be_bytes();
 

@@ -12,10 +12,7 @@ async fn test_rpc_client_and_get_block() {
 
     let _client = Client::new();
 
-    let block_candidate = utils::make_dummy_genesis_block();
-    let block_candidate_same = utils::make_dummy_genesis_block();
-
-    // let (block_value, _) = block_candidate.upgrade(None, None, None);
+    let block_candidate_same = utils::make_dummy_tx_pour_block();
 
     let block_hash = {
         let block_hash = match machine
@@ -44,7 +41,7 @@ async fn test_rpc_client_and_get_block() {
     let req = Request::builder()
         .method(Method::POST)
         .uri(uri)
-        .body(Body::from(block_hash.unwrap()))
+        .body(Body::from(block_hash.clone().unwrap()))
         .expect("request builder should be made");
 
     match hyper::body::to_bytes(req.into_body()).await {
@@ -53,6 +50,7 @@ async fn test_rpc_client_and_get_block() {
             let _vh = match std::str::from_utf8(&body_bytes_vec) {
                 Ok(b) => {
                     let hash = &b.to_string();
+                    println!("block hash : {:?}", hash);
                     let _vht = match machine
                         .blockchain
                         .dist_ledger
@@ -60,15 +58,19 @@ async fn test_rpc_client_and_get_block() {
                         .get_block(hash)
                     {
                         Ok(block) => {
-                            println!("{:?}", block);
+                            // println!("{:?}", &block);
+                            let block = block.unwrap();
+                            let block_hash_from_get_block =
+                                block.get_block_hash();
 
-                            // TODO compare some values here!
-                            // assert_eq!(
-                            //     &block.unwrap().get_tx_hashes(),
-                            //     &block_value.get_tx_hashes(),
-                            // );
+                            let block_hash_expected = block_hash.unwrap();
+
+                            assert_eq!(
+                                block_hash_expected,
+                                block_hash_from_get_block.to_string()
+                            );
                         }
-                        Err(_err) => panic!(),
+                        Err(_err) => panic!("error : {:?}", _err),
                     };
                 }
                 Err(_err) => panic!(),
