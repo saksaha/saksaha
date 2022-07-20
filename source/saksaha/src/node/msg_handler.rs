@@ -1,4 +1,4 @@
-use crate::{machine::Machine, system::BoxedError};
+use crate::{machine::Machine, SaksahaError};
 use futures::{SinkExt, StreamExt};
 use log::{debug, info, warn};
 use sak_p2p_trpt::{
@@ -14,7 +14,7 @@ pub(crate) async fn handle_msg<'a>(
     public_key: &str,
     machine: &Machine,
     mut conn: &'a mut RwLockWriteGuard<'_, UpgradedConnection>,
-) -> Result<(), BoxedError> {
+) -> Result<(), SaksahaError> {
     match msg {
         Msg::TxHashSyn(tx_hash_syn_msg) => {
             handle_tx_hash_syn(public_key, tx_hash_syn_msg, machine, &mut conn)
@@ -108,7 +108,7 @@ pub(crate) async fn handle_block_hash_syn<'a>(
     block_hash_syn_msg: BlockHashSynMsg,
     machine: &Machine,
     conn: &'a mut RwLockWriteGuard<'_, UpgradedConnection>,
-) -> Result<(), BoxedError> {
+) -> Result<(), SaksahaError> {
     let new_blocks = block_hash_syn_msg.new_blocks;
 
     let (_, latest_block_hash) = machine
@@ -153,7 +153,7 @@ pub(crate) async fn handle_block_syn<'a>(
     block_syn_msg: BlockSynMsg,
     machine: &Machine,
     _conn: &'a mut RwLockWriteGuard<'_, UpgradedConnection>,
-) -> Result<(), BoxedError> {
+) -> Result<(), SaksahaError> {
     let block_candidates = block_syn_msg;
 
     // for bc in block_candidates.blocks {
