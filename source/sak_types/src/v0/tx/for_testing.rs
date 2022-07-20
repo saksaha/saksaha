@@ -2,9 +2,10 @@ use super::TxCandidate;
 use crate::{MintTxCandidate, PourTxCandidate, Tx, U8Array, WASM_MAGIC_NUMBER};
 use sak_crypto::Hasher;
 
-// fn get_cm_1() -> [u8; 32] {}
+pub(crate) const VALIDATOR_CTR_ADDR: &'static str = "test_validator_1";
 
-// fn get_cm_2() -> [u8; 32] {}
+pub(crate) const VALIDATOR: &[u8] =
+    include_bytes!("../../../../sak_vm/src/v0/sak_ctrt_validator.wasm");
 
 fn get_addr_sk_1() -> [u8; 32] {
     [
@@ -13,10 +14,6 @@ fn get_addr_sk_1() -> [u8; 32] {
         109,
     ]
 }
-
-fn get_addr_sk_2() {}
-
-fn get_addr_sk_3() {}
 
 fn get_s_1() -> [u8; 32] {
     U8Array::new_empty_32()
@@ -123,6 +120,8 @@ impl TxCandidate {
 
 impl MintTxCandidate {
     pub fn new_dummy_1() -> MintTxCandidate {
+        let validator_wasm = VALIDATOR.to_vec();
+
         let hasher = Hasher::new();
 
         let v = U8Array::from_int(1_000);
@@ -143,9 +142,9 @@ impl MintTxCandidate {
 
         MintTxCandidate::new(
             String::from("created_at_mint_1"),
-            vec![1],
+            validator_wasm,
             String::from("author_sig_mint_1"),
-            None,
+            Some(VALIDATOR_CTR_ADDR.to_string()),
             cm.to_bytes(),
             v,
             k.to_bytes(),

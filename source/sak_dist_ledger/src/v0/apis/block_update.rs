@@ -172,7 +172,7 @@ impl DistLedgerApis {
         }
 
         debug!(
-            "Success writing block, hash: {}, height: {}",
+            "Success writing block, hash: {}, block_height: {}",
             block_hash.green(),
             block.block_height,
         );
