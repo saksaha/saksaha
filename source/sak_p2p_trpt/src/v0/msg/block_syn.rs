@@ -16,6 +16,7 @@ impl BlockSynMsg {
         let block_count = parse.next_int()?;
 
         let mut blocks = Vec::with_capacity(block_count as usize);
+        let mut block_cm_count = 0;
 
         for _ in 0..block_count {
             let validator_sig = {
@@ -54,20 +55,6 @@ impl BlockSynMsg {
 
             for _ in 0..tx_count {
                 let tx = {
-                    // let tx_type = parse.next_string()?;
-
-                    // match tx_type.as_ref() {
-                    //     "mint" => tx::parse_mint_tx(parse)?,
-                    //     "pour" => tx::parse_pour_tx(parse)?,
-                    //     _ => {
-                    //         return Err(format!(
-                    //             "Invalid tx type to parse, tx_type: {}",
-                    //             tx_type
-                    //         )
-                    //         .into());
-                    //     }
-                    // }
-
                     let tx_type = {
                         let p = parse.next_bytes()?;
 
@@ -83,8 +70,6 @@ impl BlockSynMsg {
                         TxType::from(*t)
                     };
 
-                    println!("tc_type: {:?}", tx_type);
-
                     match tx_type {
                         TxType::Mint => tx::parse_mint_tx(parse)?,
                         TxType::Pour => tx::parse_pour_tx(parse)?,
@@ -97,15 +82,13 @@ impl BlockSynMsg {
                         }
                     }
                 };
+                block_cm_count += tx.get_cm_count();
 
                 tx_hashes.push(tx.get_tx_hash().to_owned());
                 txs.push(tx);
             }
-            println!("end1");
 
-            let total_cm_count = parse.next_int()?;
-
-            println!("end2");
+            // let block_cm_count = parse.next_int()?;
 
             let block = Block::new(
                 validator_sig,
@@ -114,13 +97,11 @@ impl BlockSynMsg {
                 created_at,
                 block_height,
                 merkle_rt,
-                total_cm_count,
+                block_cm_count as u128,
             );
 
             blocks.push((block, txs));
         }
-
-        println!("end");
 
         let m = BlockSynMsg { blocks };
 

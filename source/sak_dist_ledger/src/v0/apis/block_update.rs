@@ -128,7 +128,7 @@ impl DistLedgerApis {
             warn!("Error removing txs into the tx pool, err: {}", err);
         }
 
-        let next_merkle_rt = match merkle_update.get("15_0") {
+        let next_merkle_rt = match merkle_update.get("16_0") {
             Some(r) => r,
             None => return Err(format!("next merkle root is missing").into()),
         };
@@ -147,7 +147,7 @@ impl DistLedgerApis {
             .into());
         };
 
-        let total_cm_count = ledger_cm_count + added_cm_count;
+        let updated_ledger_cm_count = ledger_cm_count + added_cm_count;
 
         let block_hash = match self
             .ledger_db
@@ -157,7 +157,7 @@ impl DistLedgerApis {
                 &txs,
                 &ctr_state_update,
                 &merkle_update,
-                total_cm_count,
+                updated_ledger_cm_count,
             )
             .await
         {
@@ -250,7 +250,7 @@ async fn handle_mint_tx_candidate(
     tc: &MintTxCandidate,
     ctr_state_update: &mut CtrStateUpdate,
     merkle_update: &mut MerkleUpdate,
-    total_cm_count: u128,
+    ledger_cm_count: u128,
 ) -> Result<u128, LedgerError> {
     let ctr_addr = &tc.ctr_addr;
     let data = &tc.data;
@@ -263,7 +263,7 @@ async fn handle_mint_tx_candidate(
         apis,
         merkle_update,
         vec![&tc.cm],
-        total_cm_count,
+        ledger_cm_count,
     )
     .await?;
 
@@ -275,7 +275,7 @@ async fn handle_pour_tx_candidate(
     tc: &PourTxCandidate,
     ctr_state_update: &mut CtrStateUpdate,
     merkle_update: &mut MerkleUpdate,
-    total_cm_count: u128,
+    ledger_cm_count: u128,
 ) -> Result<u128, LedgerError> {
     let ctr_addr = &tc.ctr_addr;
     let data = &tc.data;
@@ -288,7 +288,7 @@ async fn handle_pour_tx_candidate(
         apis,
         merkle_update,
         vec![&tc.cm_1, &tc.cm_2],
-        total_cm_count,
+        ledger_cm_count,
     )
     .await?;
 
@@ -299,30 +299,48 @@ async fn process_merkle_update(
     apis: &DistLedgerApis,
     merkle_update: &mut MerkleUpdate,
     cms: Vec<&[u8; 32]>,
-    total_cm_count: u128,
+    ledger_cm_count: u128,
 ) -> Result<u128, LedgerError> {
     let cm_count = cms.len() as u128;
 
     for (idx, cm) in cms.iter().enumerate() {
-        let leaf_idx = total_cm_count + idx as u128;
+        let leaf_idx = ledger_cm_count + idx as u128;
         let auth_path = apis.merkle_tree.generate_auth_paths(leaf_idx);
 
         let leaf_loc = format!("{}_{}", 0, leaf_idx);
         merkle_update.insert(leaf_loc, **cm);
 
         for (height, path) in auth_path.iter().enumerate() {
-            let sibling_idx = path.idx;
+            let curr_idx = path.idx;
+            let sibling_idx = match path.direction {
+                true => path.idx + 1,
+                false => path.idx - 1,
+            };
+
+            // let sibling_idx = path.idx;
             let sibling_loc = format!("{}_{}", height, sibling_idx);
-            let sibling_node = apis
-                .get_merkle_node(&sibling_loc)
-                .await?
-                .unwrap_or(U8Array::new_empty_32());
+            let sibling_node = match merkle_update.get(&sibling_loc) {
+                Some(n) => *n,
+                None => apis
+                    .get_merkle_node(&sibling_loc)
+                    .await?
+                    .unwrap_or(U8Array::new_empty_32()),
+            };
 
-            let curr_cm = cm;
-            let sib_cm = &sibling_node;
-            let merkle_node = apis.hasher.mimc(*curr_cm, sib_cm)?.to_bytes();
+            let curr_loc = format!("{}_{}", height, curr_idx);
+            let curr_node = match merkle_update.get(&curr_loc) {
+                Some(n) => *n,
+                None => apis
+                    .get_merkle_node(&curr_loc)
+                    .await?
+                    .unwrap_or(U8Array::new_empty_32()),
+            };
 
-            let parent_idx = sak_proofs::get_parent_idx(sibling_idx);
+            let merkle_node =
+                apis.hasher.mimc(&curr_node, &sibling_node)?.to_bytes();
+
+            let parent_idx = sak_proofs::get_parent_idx(curr_idx);
+            // let parent_idx = sak_proofs::get_parent_idx(sibling_idx);
             let update_loc = format!("{}_{}", height + 1, parent_idx);
 
             merkle_update.insert(update_loc, merkle_node);

@@ -1,4 +1,4 @@
-use crate::{MintTxCandidate, PourTxCandidate, TypesError};
+use crate::{MintTxCandidate, PourTxCandidate};
 use serde::{Deserialize, Serialize};
 
 pub const WASM_MAGIC_NUMBER: [u8; 4] = [0x00, 0x61, 0x73, 0x6d];
@@ -21,6 +21,13 @@ impl Tx {
         match &self {
             Tx::Mint(t) => &t.tx_candidate.data,
             Tx::Pour(t) => &t.tx_candidate.data,
+        }
+    }
+
+    pub fn get_cm_count(&self) -> usize {
+        match &self {
+            Tx::Mint(t) => [&t.tx_candidate.cm].len(),
+            Tx::Pour(t) => [&t.tx_candidate.cm_1, &t.tx_candidate.cm_2].len(),
         }
     }
 }

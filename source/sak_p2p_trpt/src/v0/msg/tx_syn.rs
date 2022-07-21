@@ -18,7 +18,6 @@ impl TxSynMsg {
 
         for _idx in 0..tc_count {
             let tc = {
-                // let tc_type
                 let tc_type = {
                     let p = parse.next_bytes()?;
 
@@ -33,8 +32,6 @@ impl TxSynMsg {
                     };
                     TxType::from(*t)
                 };
-
-                println!("tc_type: {:?}", tc_type);
 
                 match tc_type {
                     TxType::Mint => {
