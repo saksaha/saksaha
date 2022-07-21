@@ -37,7 +37,7 @@ pub(in crate::rpc) fn get_routes() -> HashMap<&'static str, Handler> {
         Path {
             url: "/apis/v0/call_contract",
             handler: Box::new(|req, sys_handle| {
-                Box::pin(v0::call_contract(req, sys_handle))
+                Box::pin(v0::query_ctr(req, sys_handle))
             }),
         },
     ];

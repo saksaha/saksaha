@@ -9,18 +9,18 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
 #[derive(Serialize, Deserialize, Debug)]
-pub(crate) struct CallContractBody {
+pub(crate) struct QueryCtrBody {
     pub ctr_addr: String,
     pub req: CtrRequest,
 }
 
-pub(crate) async fn call_contract(
+pub(crate) async fn query_ctr(
     req: Request<Body>,
     sys_handle: Arc<SystemHandle>,
 ) -> Result<Response<Body>, RPCError> {
     let b = hyper::body::to_bytes(req.into_body()).await?;
 
-    let rb = serde_json::from_slice::<CallContractBody>(&b)?;
+    let rb = serde_json::from_slice::<QueryCtrBody>(&b)?;
 
     match sys_handle
         .machine
