@@ -1,7 +1,3 @@
-use std::convert::TryInto;
-
-use crate::TypesError;
-
 pub struct U8Array;
 
 impl U8Array {

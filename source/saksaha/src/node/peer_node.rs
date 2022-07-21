@@ -61,6 +61,8 @@ impl PeerNode {
                                 ).await;
                             }
                             Err(err) => {
+                        println!("hjere44");
+
                                 warn!("Failed to parse the msg, err: {}", err);
                             }
                         }

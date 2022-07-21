@@ -334,13 +334,17 @@ pub(crate) async fn get_block(
                         .get_block(&block_hash)
                     {
                         Ok(_block) => {
+                            println!("ok");
+
                             return SuccessResult {
                                 id: String::from("1"),
                                 result: String::from(""),
                             }
-                            .into_hyper_result()
+                            .into_hyper_result();
                         }
                         Err(err) => {
+                            println!("err");
+
                             return ErrorResult {
                                 id: String::from("1"),
                                 status_code: StatusCode::NO_CONTENT,

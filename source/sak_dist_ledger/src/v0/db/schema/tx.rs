@@ -3,8 +3,8 @@ use crate::{cfs, LedgerDBSchema};
 use sak_kv_db::WriteBatch;
 use sak_kv_db::DB;
 use sak_types::{
-    BlockHash, CtrAddr, MintTx, MintTxCandidate, PourTx, PourTxCandidate, Tx,
-    TxCtrOp, TxHash, TxType,
+    MintTx, MintTxCandidate, PourTx, PourTxCandidate, Tx, TxCtrOp, TxHash,
+    TxType,
 };
 
 // getter
