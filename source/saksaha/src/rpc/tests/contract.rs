@@ -47,15 +47,15 @@ async fn test_call_contract() {
                 .await
                 .expect("body should be parsed");
 
-            let _: JsonResponse = match serde_json::from_reader(body.reader()) {
-                Ok(e) => {
-                    log::info!("log info dbg {:?}", e);
-                    e
-                }
-                Err(err) => {
-                    panic!("Response should be 'error_response', {}", err);
-                }
-            };
+            // let _: JsonResponse = match serde_json::from_reader(body.reader()) {
+            //     Ok(e) => {
+            //         log::info!("log info dbg {:?}", e);
+            //         e
+            //     }
+            //     Err(err) => {
+            //         panic!("Response should be 'error_response', {}", err);
+            //     }
+            // };
         }
         Err(_) => {
             println!("4");

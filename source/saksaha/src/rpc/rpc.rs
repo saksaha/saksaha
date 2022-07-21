@@ -1,9 +1,7 @@
+use super::server::RPCServer;
+use crate::SystemHandle;
 use std::sync::Arc;
 use tokio::net::TcpListener;
-
-use crate::SystemHandle;
-
-use super::server::RPCServer;
 
 pub(crate) struct RPC {
     rpc_server: Arc<RPCServer>,

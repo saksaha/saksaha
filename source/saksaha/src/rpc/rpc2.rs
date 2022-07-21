@@ -65,9 +65,7 @@ impl RPCServer2 {
 
                     async {
                         let a = res.await;
-                        Ok::<Response<Body>, Infallible>(Response::new(
-                            "Hello, World!".into(),
-                        ))
+                        a
                     }
                 }))
             }

@@ -1,5 +1,5 @@
 use super::utils;
-use crate::rpc::response::{ErrorResponse, JsonResponse};
+use crate::rpc::response::JsonResponse;
 use hyper::body::Buf;
 use hyper::{Body, Client, Method, Request, Uri};
 use sak_types::{PourTxCandidate, TxCandidate};
@@ -37,13 +37,13 @@ async fn test_rpc_client_and_send_wrong_transaction() {
                 .await
                 .expect("body should be parsed");
 
-            let _: ErrorResponse = match serde_json::from_reader(body.reader())
-            {
-                Ok(e) => e,
-                Err(err) => {
-                    panic!("Response should be 'error_response', {}", err);
-                }
-            };
+            // let _: ErrorResponse = match serde_json::from_reader(body.reader())
+            // {
+            //     Ok(e) => e,
+            //     Err(err) => {
+            //         panic!("Response should be 'error_response', {}", err);
+            //     }
+            // };
         }
         Err(err) => {
             panic!("error: {}", err);
@@ -104,16 +104,16 @@ async fn test_rpc_client_request_wrong_transaction_hash() {
                 .await
                 .expect("body should be parsed");
 
-            let _: ErrorResponse = match serde_json::from_reader(body.reader())
-            {
-                Ok(e) => {
-                    log::info!("{:?}", e);
-                    e
-                }
-                Err(err) => {
-                    panic!("Response should be 'error_response', {}", err);
-                }
-            };
+            // let _: ErrorResponse = match serde_json::from_reader(body.reader())
+            // {
+            //     Ok(e) => {
+            //         log::info!("{:?}", e);
+            //         e
+            //     }
+            //     Err(err) => {
+            //         panic!("Response should be 'error_response', {}", err);
+            //     }
+            // };
         }
         Err(err) => {
             panic!("error: {}", err);
@@ -193,15 +193,15 @@ async fn test_rpc_client_request_correct_transaction_hash() {
                 .await
                 .expect("body should be parsed");
 
-            let _: JsonResponse = match serde_json::from_reader(body.reader()) {
-                Ok(e) => {
-                    log::info!("{:?}", e);
-                    e
-                }
-                Err(err) => {
-                    panic!("Response should be 'error_response', {}", err);
-                }
-            };
+            // let _: JsonResponse = match serde_json::from_reader(body.reader()) {
+            //     Ok(e) => {
+            //         log::info!("{:?}", e);
+            //         e
+            //     }
+            //     Err(err) => {
+            //         panic!("Response should be 'error_response', {}", err);
+            //     }
+            // };
         }
         Err(err) => {
             panic!("error: {}", err);
@@ -254,15 +254,16 @@ async fn test_if_send_transaction_puts_tx_into_tx_pool() {
             let body = hyper::body::aggregate(res)
                 .await
                 .expect("body should be parsed");
-            let _: JsonResponse = match serde_json::from_reader(body.reader()) {
-                Ok(e) => {
-                    log::info!("log info dbg {:?}", e);
-                    e
-                }
-                Err(err) => {
-                    panic!("Response should be 'error_response', {}", err);
-                }
-            };
+
+            // let _: JsonResponse = match serde_json::from_reader(body.reader()) {
+            //     Ok(e) => {
+            //         log::info!("log info dbg {:?}", e);
+            //         e
+            //     }
+            //     Err(err) => {
+            //         panic!("Response should be 'error_response', {}", err);
+            //     }
+            // };
         }
         Err(err) => {
             panic!("error: {}", err);
@@ -328,15 +329,16 @@ async fn test_if_send_transaction_puts_false_tx_into_tx_pool() {
             let body = hyper::body::aggregate(res)
                 .await
                 .expect("body should be parsed");
-            let _: JsonResponse = match serde_json::from_reader(body.reader()) {
-                Ok(e) => {
-                    log::info!("log info dbg {:?}", e);
-                    e
-                }
-                Err(err) => {
-                    panic!("Response should be 'error_response', {}", err);
-                }
-            };
+
+            // let _: JsonResponse = match serde_json::from_reader(body.reader()) {
+            //     Ok(e) => {
+            //         log::info!("log info dbg {:?}", e);
+            //         e
+            //     }
+            //     Err(err) => {
+            //         panic!("Response should be 'error_response', {}", err);
+            //     }
+            // };
         }
         Err(err) => {
             panic!("error: {}", err);

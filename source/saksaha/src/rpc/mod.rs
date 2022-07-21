@@ -10,6 +10,7 @@ mod rpc2;
 #[cfg(test)]
 mod tests;
 
+pub(crate) use response::*;
 pub(crate) use rpc::*;
 pub(crate) use rpc2::*;
 

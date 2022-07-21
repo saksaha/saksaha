@@ -1,7 +1,9 @@
+use super::RPCError;
 use crate::rpc::routes::v0;
 use crate::system::SystemHandle;
 use crate::SaksahaError;
 use hyper::{Body, Method, Request, Response, StatusCode};
+use serde::Serialize;
 use std::collections::HashMap;
 use std::future::Future;
 use std::pin::Pin;
@@ -26,60 +28,50 @@ pub(crate) type Handler = Box<
         + Sync,
 >;
 
-pub(crate) type Handler2 = Box<
-    dyn Fn(
-            Request<Body>,
-            Arc<SystemHandle>,
-        ) -> Pin<
-            Box<dyn Future<Output = Result<usize, SaksahaError>> + Send + Sync>,
-        > + Send
-        + Sync,
->;
-
 fn get_routes() -> Vec<(Method, &'static str, Handler)> {
     vec![
-        (
-            Method::POST,
-            "/apis/v0/send_mint_tx",
-            Box::new(|req, sys_handle| {
-                Box::pin(v0::send_mint_tx(req, sys_handle))
-            }),
-        ),
-        (
-            Method::POST,
-            "/apis/v0/send_pour_tx",
-            Box::new(|req, sys_handle| {
-                Box::pin(v0::send_pour_tx(req, sys_handle))
-            }),
-        ),
-        (
-            Method::POST,
-            "/apis/v0/get_status",
-            Box::new(|req, sys_handle| {
-                Box::pin(v0::get_status(req, sys_handle))
-            }),
-        ),
-        (
-            Method::POST,
-            "/apis/v0/get_transaction",
-            Box::new(|req, sys_handle| {
-                Box::pin(v0::get_transaction(req, sys_handle))
-            }),
-        ),
-        (
-            Method::POST,
-            "/apis/v0/get_block",
-            Box::new(|req, sys_handle| {
-                Box::pin(v0::get_block(req, sys_handle))
-            }),
-        ),
-        (
-            Method::POST,
-            "/apis/v0/call_contract",
-            Box::new(|req, sys_handle| {
-                Box::pin(v0::call_contract(req, sys_handle))
-            }),
-        ),
+    //     (
+    //         Method::POST,
+    //         "/apis/v0/send_mint_tx",
+    //         Box::new(|req, sys_handle| {
+    //             Box::pin(v0::send_mint_tx(req, sys_handle))
+    //         }),
+    //     ),
+    //     (
+    //         Method::POST,
+    //         "/apis/v0/send_pour_tx",
+    //         Box::new(|req, sys_handle| {
+    //             Box::pin(v0::send_pour_tx(req, sys_handle))
+    //         }),
+    //     ),
+    //     (
+    //         Method::POST,
+    //         "/apis/v0/get_status",
+    //         Box::new(|req, sys_handle| {
+    //             Box::pin(v0::get_status(req, sys_handle))
+    //         }),
+    //     ),
+    //     (
+    //         Method::POST,
+    //         "/apis/v0/get_transaction",
+    //         Box::new(|req, sys_handle| {
+    //             Box::pin(v0::get_transaction(req, sys_handle))
+    //         }),
+    //     ),
+    //     (
+    //         Method::POST,
+    //         "/apis/v0/get_block",
+    //         Box::new(|req, sys_handle| {
+    //             Box::pin(v0::get_block(req, sys_handle))
+    //         }),
+    //     ),
+    //     (
+    //         Method::POST,
+    //         "/apis/v0/call_contract",
+    //         Box::new(|req, sys_handle| {
+    //             Box::pin(v0::call_contract(req, sys_handle))
+    //         }),
+    //     ),
     ]
 }
 

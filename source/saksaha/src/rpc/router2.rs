@@ -1,50 +1,63 @@
-use super::{router::Handler2, routes::v0};
+use super::{routes::v0, RPCError};
 use crate::{SaksahaError, SystemHandle};
 use futures::Future;
 use hyper::{Body, Method, Request, Response, StatusCode};
+use once_cell::sync::OnceCell;
+use serde::Serialize;
 use std::{collections::HashMap, pin::Pin, sync::Arc};
 
-static ROUTE_MAP: OnceCell<HashMap<&'static str, Handler2>> = OnceCell::new();
+pub(crate) type Handler2 = Box<
+    dyn Fn(
+            Request<Body>,
+            Arc<SystemHandle>,
+        ) -> Pin<
+            Box<
+                dyn Future<Output = Result<Response<Body>, RPCError>>
+                    + Send
+                    + Sync,
+            >,
+        > + Send
+        + Sync,
+>;
 
 fn initialize_routes() -> HashMap<&'static str, Handler2> {
     let paths: Vec<Path> = vec![
         Path {
             url: "/apis/v0/send_mint_tx",
             handler: Box::new(|req, sys_handle| {
-                // Box::pin(v0::send_mint_tx(req, sys_handle))
-                Box::pin(async { Ok(1) })
+                Box::pin(v0::send_mint_tx(req, sys_handle))
             }),
         },
-        // Path {
-        //     url: "/apis/v0/send_pour_tx",
-        //     handler: Box::new(|req, sys_handle| {
-        //         Box::pin(v0::send_pour_tx(req, sys_handle))
-        //     }),
-        // },
-        // Path {
-        //     url: "/apis/v0/get_status",
-        //     handler: Box::new(|req, sys_handle| {
-        //         Box::pin(v0::get_status(req, sys_handle))
-        //     }),
-        // },
-        // Path {
-        //     url: "/apis/v0/get_transaction",
-        //     handler: Box::new(|req, sys_handle| {
-        //         Box::pin(v0::get_transaction(req, sys_handle))
-        //     }),
-        // },
-        // Path {
-        //     url: "/apis/v0/get_block",
-        //     handler: Box::new(|req, sys_handle| {
-        //         Box::pin(v0::get_block(req, sys_handle))
-        //     }),
-        // },
-        // Path {
-        //     url: "/apis/v0/call_contract",
-        //     handler: Box::new(|req, sys_handle| {
-        //         Box::pin(v0::call_contract(req, sys_handle))
-        //     }),
-        // },
+        Path {
+            url: "/apis/v0/send_pour_tx",
+            handler: Box::new(|req, sys_handle| {
+                Box::pin(v0::send_pour_tx(req, sys_handle))
+            }),
+        },
+        Path {
+            url: "/apis/v0/get_status",
+            handler: Box::new(|req, sys_handle| {
+                Box::pin(v0::get_status(req, sys_handle))
+            }),
+        },
+        Path {
+            url: "/apis/v0/get_transaction",
+            handler: Box::new(|req, sys_handle| {
+                Box::pin(v0::get_transaction(req, sys_handle))
+            }),
+        },
+        Path {
+            url: "/apis/v0/get_block",
+            handler: Box::new(|req, sys_handle| {
+                Box::pin(v0::get_block(req, sys_handle))
+            }),
+        },
+        Path {
+            url: "/apis/v0/call_contract",
+            handler: Box::new(|req, sys_handle| {
+                Box::pin(v0::call_contract(req, sys_handle))
+            }),
+        },
     ];
 
     let mut map = HashMap::new();
@@ -56,7 +69,7 @@ fn initialize_routes() -> HashMap<&'static str, Handler2> {
 }
 
 pub(crate) struct Router2 {
-    routes: HashMap<&'static str, Handler2>,
+    route_map: Arc<HashMap<&'static str, Handler2>>,
 }
 
 struct Path {
@@ -66,32 +79,37 @@ struct Path {
 
 impl Router2 {
     pub fn new() -> Router2 {
-        let routes = initialize_routes();
+        let route_map = Arc::new(initialize_routes());
 
-        Router2 { routes }
+        Router2 { route_map }
     }
 
     pub(crate) fn route(
         &self,
         req: Request<Body>,
         sys_handle: Arc<SystemHandle>,
-    ) -> Pin<Box<dyn Future<Output = Result<usize, SaksahaError>> + Send + Sync>>
-    {
+    ) -> Pin<
+        Box<
+            dyn Future<Output = Result<Response<Body>, hyper::Error>>
+                + Send
+                + Sync,
+        >,
+    > {
         println!("method: {}, req: {}", req.method(), req.uri().path());
 
-        if let Some(h) = self.routes.get(req.uri().path()) {
-            Box::pin(async {
-                let b = h(req, sys_handle).await;
-                b
-            })
-        } else {
-            return Box::pin(async {
-                println!("Not found");
+        let route_map = self.route_map.clone();
 
-                // return Ok(make_not_found_response());
-                return Ok(1);
-            });
-        }
+        Box::pin(async move {
+            let route_map = route_map.clone();
+
+            if let Some(handler) = route_map.get(req.uri().path()) {
+                let res = handler(req, sys_handle).await;
+
+                return Ok(make_not_found_response());
+            } else {
+                return Ok(make_not_found_response());
+            }
+        })
     }
 }
 
