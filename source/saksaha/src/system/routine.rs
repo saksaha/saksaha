@@ -212,10 +212,12 @@ impl Routine {
                     Arc::new(m)
                 };
 
-                SystemHandle {
+                let s = SystemHandle {
                     machine: machine.clone(),
                     p2p_monitor,
-                }
+                };
+
+                Arc::new(s)
             };
 
             let rpc_args = RPCArgs {
