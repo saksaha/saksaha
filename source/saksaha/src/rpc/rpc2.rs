@@ -62,8 +62,9 @@ impl RPCServer2 {
             async {
                 Ok::<_, Infallible>(service::service_fn(move |req| {
                     let res = router.route(req, sys_handle_clone.clone());
+
                     async {
-                        res.await;
+                        let a = res.await;
                         Ok::<Response<Body>, Infallible>(Response::new(
                             "Hello, World!".into(),
                         ))

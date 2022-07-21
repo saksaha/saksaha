@@ -1,5 +1,6 @@
 use crate::rpc::routes::v0;
 use crate::system::SystemHandle;
+use crate::SaksahaError;
 use hyper::{Body, Method, Request, Response, StatusCode};
 use std::collections::HashMap;
 use std::future::Future;
@@ -25,53 +26,17 @@ pub(crate) type Handler = Box<
         + Sync,
 >;
 
-// struct A<F, Fut>
-// where
-//     F: Fn(Request<Body>, Arc<SystemHandle>) -> Fut,
-//     Fut: Future<Output = Result<Response<Body>, hyper::Error>>,
-// {
-//     f: F,
-// }
+pub(crate) type Handler2 = Box<
+    dyn Fn(
+            Request<Body>,
+            Arc<SystemHandle>,
+        ) -> Pin<
+            Box<dyn Future<Output = Result<usize, SaksahaError>> + Send + Sync>,
+        > + Send
+        + Sync,
+>;
 
 fn get_routes() -> Vec<(Method, &'static str, Handler)> {
-    // fn get_routes() {
-    // let aa: Vec<Handler> = vec![
-    //     Box::new(|req, sys_handle| Box::pin(v0::send_mint_tx(req, sys_handle))),
-    //     Box::new(|req, sys_handle| Box::pin(v0::send_mint_tx(req, sys_handle))),
-    // ];
-
-    // let mut a: HashMap<&'static str, Handler> = HashMap::new();
-    // a.insert(
-    //     "aa",
-    //     Box::new(|req, sys_handle| Box::pin(v0::send_mint_tx(req, sys_handle))),
-    // );
-    // a.insert(
-    //     "aa",
-    //     Box::new(|req, sys_handle| Box::pin(v0::send_mint_tx(req, sys_handle))),
-    // );
-
-    // [
-    // (
-    //     "/apis/v0/send_mint_tx",
-    //     Box::new(|req, sys_handle| {
-    //         Box::pin(v0::send_mint_tx(req, sys_handle))
-    //     }) as Handler,
-    // ),
-    // (
-    //     "/apis/v0/send_mint_tx",
-    //     // 1,
-    //     Box::new(|req, sys_handle| {
-    //         Box::pin(v0::send_pour_tx(req, sys_handle))
-    //     }),
-    // ),
-    // (
-    //     "/apis/v0/send_mint_tx",
-    //     Box::new(|req, sys_handle| {
-    //         Box::pin(v0::send_pour_tx(req, sys_handle))
-    //     }),
-    // ),
-    // ]);
-
     vec![
         (
             Method::POST,
