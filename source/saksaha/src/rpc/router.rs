@@ -34,21 +34,37 @@ pub(crate) type Handler = Box<
 // }
 
 // fn get_routes() -> Vec<(Method, &'static str, Handler)> {
-fn get_routes() -> HashMap<&'static str, Handler> {
-    HashMap::from([
-        (
-            "/apis/v0/send_mint_tx",
-            Box::new(|req, sys_handle| {
-                Box::pin(v0::send_mint_tx(req, sys_handle))
-            }) as Handler,
-        ),
-        // (
-        //     "/apis/v0/send_mint_tx",
-        //     Box::new(|req, sys_handle| {
-        //         Box::pin(v0::send_pour_tx(req, sys_handle))
-        //     }),
-        // ),
-    ])
+fn get_routes() {
+    let aa: Vec<Handler> = vec![
+        Box::new(|req, sys_handle| Box::pin(v0::send_mint_tx(req, sys_handle))),
+        Box::new(|req, sys_handle| Box::pin(v0::send_mint_tx(req, sys_handle))),
+    ];
+
+    let mut a: HashMap<&'static str, Handler> = HashMap::new();
+    a.insert("aa", Box::new(|req, sys_handle| Box::pin(v0::send_mint_tx(req, sys_handle))));
+    a.insert("aa", Box::new(|req, sys_handle| Box::pin(v0::send_mint_tx(req, sys_handle))));
+
+    //     [
+    //     // (
+    //     //     "/apis/v0/send_mint_tx",
+    //     //     Box::new(|req, sys_handle| {
+    //     //         Box::pin(v0::send_mint_tx(req, sys_handle))
+    //     //     }) as Handler,
+    //     // ),
+    //     (
+    //         "/apis/v0/send_mint_tx",
+    //         // 1,
+    //         Box::new(|req, sys_handle| {
+    //             Box::pin(v0::send_pour_tx(req, sys_handle))
+    //         }),
+    //     ),
+    //     // (
+    //     //     "/apis/v0/send_mint_tx",
+    //     //     Box::new(|req, sys_handle| {
+    //     //         Box::pin(v0::send_pour_tx(req, sys_handle))
+    //     //     }),
+    //     // ),
+    // ]);
 
     // let v = vec![
     //     (
@@ -98,17 +114,20 @@ fn get_routes() -> HashMap<&'static str, Handler> {
 }
 
 pub(crate) struct Router {
-    pub(crate) routes: Arc<Vec<(Method, &'static str, Handler)>>,
+    // pub(crate) routes: >,
 }
 
 impl Router {
     pub(crate) fn new() -> Router {
         let routes = {
             let r = get_routes();
-            Arc::new(r)
+            // Arc::new(r)
+            r
         };
 
-        Router { routes }
+        Router { 
+            //routes 
+        }
     }
 
     pub(crate) fn route(
