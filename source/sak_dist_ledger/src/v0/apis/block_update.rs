@@ -196,7 +196,7 @@ async fn process_ctr_state_update(
 
     match tx_ctr_op {
         TxCtrOp::ContractDeploy => {
-            println!("deploy");
+            println!("Deploy");
 
             let initial_ctr_state = vm.invoke(&data, CtrFn::Init)?;
 

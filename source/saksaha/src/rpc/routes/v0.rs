@@ -202,10 +202,15 @@ pub(crate) async fn get_block(
     }
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub(crate) struct CallContractBody {
     ctr_addr: String,
     request: CtrRequest,
+}
+impl CallContractBody {
+    pub fn new(ctr_addr: String, request: CtrRequest) -> CallContractBody {
+        CallContractBody { ctr_addr, request }
+    }
 }
 
 pub(crate) async fn call_contract(
