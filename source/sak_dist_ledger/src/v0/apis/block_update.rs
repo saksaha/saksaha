@@ -317,7 +317,6 @@ async fn process_merkle_update(
                 false => path.idx - 1,
             };
 
-            // let sibling_idx = path.idx;
             let sibling_loc = format!("{}_{}", height, sibling_idx);
             let sibling_node = match merkle_update.get(&sibling_loc) {
                 Some(n) => *n,
@@ -340,7 +339,6 @@ async fn process_merkle_update(
                 apis.hasher.mimc(&curr_node, &sibling_node)?.to_bytes();
 
             let parent_idx = sak_proofs::get_parent_idx(curr_idx);
-            // let parent_idx = sak_proofs::get_parent_idx(sibling_idx);
             let update_loc = format!("{}_{}", height + 1, parent_idx);
 
             merkle_update.insert(update_loc, merkle_node);

@@ -138,7 +138,7 @@ async fn test_sequential_write_block_and_get_tx_height() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
-async fn test_write_block_and_get_merkle_node() {
+async fn test_write_block_and_check_merkle_rt_changed() {
     sak_test_utils::init_test_log();
     sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
 
@@ -146,6 +146,7 @@ async fn test_write_block_and_get_merkle_node() {
 
     for i in 0..5 as u64 {
         let cm: [u8; 32] = [i as u8; 32];
+
         let block = BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
             tx_candidates: vec![TxCandidate::new_dummy_pour_variant_cm(cm)],
