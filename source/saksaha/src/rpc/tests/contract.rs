@@ -3,7 +3,6 @@ use crate::rpc::routes::v0::CallContractBody;
 use crate::{blockchain::GenesisBlock, rpc::response::JsonResponse};
 use hyper::body::Buf;
 use hyper::{Body, Client, Method, Request, Uri};
-// use sak_contract_std::Request as CtrRequest;
 use sak_contract_std::{CtrCallType, Request as CtrRequest};
 use std::collections::HashMap;
 
@@ -32,12 +31,13 @@ async fn test_call_contract() {
 
     let request = {
         let ctr_addr = validator_ctr_addr;
-        let ctr_req = CtrRequest {
+        let req = CtrRequest {
             req_type: "get_validator".to_string(),
             arg: HashMap::with_capacity(10),
             ctr_call_type: CtrCallType::Query,
         };
-        let call_ctr_body = CallContractBody::new(ctr_addr, ctr_req);
+
+        let call_ctr_body = CallContractBody { ctr_addr, req };
 
         call_ctr_body
     };

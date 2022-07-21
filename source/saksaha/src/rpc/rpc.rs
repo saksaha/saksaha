@@ -1,10 +1,9 @@
+use super::router::Router;
 use crate::{SaksahaError, SystemHandle};
 use hyper::{server::conn::AddrIncoming, service, Server};
 use log::{error, info};
 use std::{convert::Infallible, sync::Arc};
 use tokio::net::TcpListener;
-
-use super::router::Router;
 
 pub(crate) struct RPCArgs {
     pub sys_handle: Arc<SystemHandle>,
