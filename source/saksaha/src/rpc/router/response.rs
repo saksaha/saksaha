@@ -1,20 +1,21 @@
-use super::{errors, header::HeaderFactory, HandleError, HandleError2};
-use crate::rpc::RPCError;
+use super::HandleError;
+use super::utils;
+use crate::rpc::{router::HeaderFactory, RPCError};
 use hyper::{
     header::{HeaderValue, CONTENT_TYPE},
     Body, Response, StatusCode,
 };
 use serde::{Deserialize, Serialize};
 
-const JSON_RPC_VERSION: &'static str = "2.0";
+pub(in crate::rpc) const JSON_RPC_VERSION: &'static str = "2.0";
 
 #[derive(Serialize, Deserialize, Debug)]
 pub(in crate::rpc) struct RPCResponse {}
 
 #[derive(Serialize, Debug)]
-pub(in crate::rpc) struct JsonResponse<'a, D: Serialize> {
+pub(in crate::rpc) struct JsonResponse<D: Serialize> {
     jsonrpc: &'static str,
-    error: Option<HandleError2<'a>>,
+    error: Option<HandleError>,
     result: Option<D>,
     id: String,
 }
@@ -43,7 +44,13 @@ impl RPCResponse {
 
             let body_str = match serde_json::to_string(&response) {
                 Ok(s) => s,
-                Err(err) => return handle_serialize_error(id, header_factory),
+                Err(err) => {
+                    return utils::make_serialize_err_response(
+                        id,
+                        header_factory,
+                        Some(err.into()),
+                    )
+                }
             };
 
             Body::from(body_str)
@@ -63,14 +70,13 @@ impl RPCResponse {
         res.headers_mut()
             .insert(CONTENT_TYPE, header_factory.application_json.clone());
 
-        *res.status_mut() = StatusCode::OK;
+        *res.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
 
         *res.body_mut() = {
             let response: JsonResponse<()> = JsonResponse {
                 jsonrpc: JSON_RPC_VERSION.into(),
-                error: Some(HandleError2 {
-                    code: "1",
-                    desc: "a",
+                error: Some(HandleError {
+                    msg: error.to_string(),
                 }),
                 result: None,
                 id: id.to_string(),
@@ -78,7 +84,13 @@ impl RPCResponse {
 
             let body_str = match serde_json::to_string(&response) {
                 Ok(s) => s,
-                Err(err) => return handle_serialize_error(id, header_factory),
+                Err(err) => {
+                    return utils::make_serialize_err_response(
+                        id,
+                        header_factory,
+                        Some(err.into()),
+                    );
+                }
             };
 
             Body::from(body_str)
@@ -86,37 +98,4 @@ impl RPCResponse {
 
         res
     }
-}
-
-fn handle_serialize_error(
-    id: String,
-    header_factory: &HeaderFactory,
-) -> Response<Body> {
-    let mut res = Response::default();
-
-    res.headers_mut()
-        .insert(CONTENT_TYPE, header_factory.application_json.clone());
-
-    *res.status_mut() = StatusCode::OK;
-
-    *res.body_mut() = {
-        let response: JsonResponse<()> = JsonResponse {
-            jsonrpc: JSON_RPC_VERSION.into(),
-            error: Some(HandleError2 {
-                code: "1",
-                desc: "1",
-            }),
-            result: None,
-            id: id.to_string(),
-        };
-
-        let body_str = match serde_json::to_string(&response) {
-            Ok(s) => s,
-            Err(err) => return handle_serialize_error(id, header_factory),
-        };
-
-        Body::from(body_str)
-    };
-
-    res
 }

@@ -1,10 +1,8 @@
-use std::io::Read;
-
-use crate::rpc::response::JsonResponse;
-
 use super::utils;
+use crate::rpc::router::RPCResponse;
 use hyper::body::Buf;
 use hyper::{Body, Client, Method, Request, Uri};
+use std::io::Read;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_rpc_client_and_get_block() {

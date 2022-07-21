@@ -1,5 +1,5 @@
 use super::utils;
-use crate::rpc::response::JsonResponse;
+use crate::rpc::router::RPCResponse;
 use hyper::body::Buf;
 use hyper::{Body, Client, Method, Request, Uri};
 use sak_types::{BlockCandidate, PourTxCandidate, TxCandidate};

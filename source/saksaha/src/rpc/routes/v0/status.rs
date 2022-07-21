@@ -1,5 +1,5 @@
 use crate::{
-    rpc::{RPCError, RPCResponse},
+    rpc::{router::RPCResponse, RPCError},
     system::SystemHandle,
 };
 use hyper::{Body, Request, Response, StatusCode};
@@ -10,13 +10,13 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
 #[derive(Serialize, Deserialize, Debug)]
-struct NodeStatus {
+struct GetNodeStatusResponse {
     addr_vec: Vec<String>,
     peer_vec: Vec<String>,
 }
 
 pub(crate) async fn get_status(
-    req: Request<Body>,
+    _req: Request<Body>,
     sys_handle: Arc<SystemHandle>,
 ) -> Result<Response<Body>, RPCError> {
     let addr_vec = sys_handle
@@ -28,11 +28,8 @@ pub(crate) async fn get_status(
 
     let peer_vec = sys_handle.p2p_monitor.peer_table.get_status().await;
 
-    let result = NodeStatus {
-        addr_vec, //
-        peer_vec,
-    };
-
-    return Ok(RPCResponse::new_success(String::from("1"), result));
+    return Ok(RPCResponse::new_success(
+        String::from("1"),
+        GetNodeStatusResponse { addr_vec, peer_vec },
+    ));
 }
-

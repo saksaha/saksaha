@@ -1,5 +1,5 @@
 use crate::{
-    rpc::{RPCError, RPCResponse},
+    rpc::{router::RPCResponse, RPCError},
     system::SystemHandle,
 };
 use hyper::{Body, Request, Response, StatusCode};
@@ -9,9 +9,14 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
 #[derive(Serialize, Deserialize, Debug)]
-pub(crate) struct QueryCtrBody {
+pub(crate) struct QueryCtrRequest {
     pub ctr_addr: String,
     pub req: CtrRequest,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub(crate) struct QueryCtrResponse {
+    pub result: String,
 }
 
 pub(crate) async fn query_ctr(
@@ -20,7 +25,7 @@ pub(crate) async fn query_ctr(
 ) -> Result<Response<Body>, RPCError> {
     let b = hyper::body::to_bytes(req.into_body()).await?;
 
-    let rb = serde_json::from_slice::<QueryCtrBody>(&b)?;
+    let rb = serde_json::from_slice::<QueryCtrRequest>(&b)?;
 
     match sys_handle
         .machine
@@ -31,7 +36,10 @@ pub(crate) async fn query_ctr(
         .await
     {
         Ok(t) => {
-            return Ok(RPCResponse::new_success(String::from("1"), t));
+            return Ok(RPCResponse::new_success(
+                String::from("1"),
+                QueryCtrResponse { result: t },
+            ));
         }
         Err(err) => {
             return Ok(RPCResponse::new_error(String::from("1"), err.into()));

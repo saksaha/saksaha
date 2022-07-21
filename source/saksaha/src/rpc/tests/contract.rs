@@ -1,6 +1,7 @@
 use super::utils;
-use crate::rpc::routes::v0::CallContractBody;
-use crate::{blockchain::GenesisBlock, rpc::response::JsonResponse};
+use crate::blockchain::GenesisBlock;
+use crate::rpc::router::RPCResponse;
+use crate::rpc::routes::v0::QueryCtrRequest;
 use hyper::body::Buf;
 use hyper::{Body, Client, Method, Request, Uri};
 use sak_contract_std::{CtrCallType, Request as CtrRequest};
@@ -37,7 +38,7 @@ async fn test_call_contract() {
             ctr_call_type: CtrCallType::Query,
         };
 
-        let call_ctr_body = CallContractBody { ctr_addr, req };
+        let call_ctr_body = QueryCtrRequest { ctr_addr, req };
 
         call_ctr_body
     };

@@ -1,7 +1,10 @@
-use super::{route_map::Handler, routes};
-use crate::SystemHandle;
+use super::utils;
+use crate::{
+    rpc::{route_map::Handler, routes, RPCError},
+    SystemHandle,
+};
 use futures::Future;
-use hyper::{Body, Method, Request, Response, StatusCode};
+use hyper::{Body, Method, Request, Response};
 use std::{collections::HashMap, pin::Pin, sync::Arc};
 
 pub(crate) struct Router {
@@ -35,21 +38,18 @@ impl Router {
 
             if let Some(handler) = route_map.get(req.uri().path()) {
                 println!("found handler");
-                let res = handler(req, sys_handle).await;
 
-                return Ok(make_not_found_response());
+                match handler(req, sys_handle).await {
+                    Ok(r) => return Ok(r),
+                    Err(err) => {
+                        return Ok(utils::make_error_response(err));
+                    }
+                }
             } else {
                 println!("not found handler");
 
-                return Ok(make_not_found_response());
+                return Ok(utils::make_not_found_response());
             }
         })
     }
-}
-
-fn make_not_found_response() -> Response<Body> {
-    let mut res: Response<Body> = Response::default();
-    *res.status_mut() = StatusCode::NOT_FOUND;
-    *res.body_mut() = Body::from("not found");
-    res
 }

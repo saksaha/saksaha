@@ -1,5 +1,5 @@
 use crate::{
-    rpc::{RPCError, RPCResponse},
+    rpc::{router::RPCResponse, RPCError},
     system::SystemHandle,
 };
 use hyper::{Body, Request, Response, StatusCode};
