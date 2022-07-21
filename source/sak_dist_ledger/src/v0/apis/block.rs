@@ -1,4 +1,4 @@
-use crate::{DistLedger, DistLedgerApis, LedgerError};
+use crate::{DistLedgerApis, LedgerError};
 use sak_contract_std::Storage;
 use sak_types::{Block, CtrAddr, Tx, TxCandidate};
 

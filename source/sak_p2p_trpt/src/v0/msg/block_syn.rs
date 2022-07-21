@@ -1,8 +1,8 @@
 use super::tx;
 use crate::{utils, TrptError, BLOCK_SYN_TYPE};
-use bytes::{BufMut, Bytes, BytesMut};
+use bytes::Bytes;
 use sak_p2p_frame::{Frame, Parse};
-use sak_types::{Block, MintTx, MintTxCandidate, PourTxCandidate, Tx};
+use sak_types::{Block, Tx, TxType};
 
 #[derive(Debug)]
 pub struct BlockSynMsg {
@@ -54,14 +54,43 @@ impl BlockSynMsg {
 
             for _ in 0..tx_count {
                 let tx = {
-                    let tx_type = parse.next_string()?;
+                    // let tx_type = parse.next_string()?;
 
-                    match tx_type.as_ref() {
-                        "mint" => tx::parse_mint_tx(parse)?,
-                        "pour" => tx::parse_pour_tx(parse)?,
+                    // match tx_type.as_ref() {
+                    //     "mint" => tx::parse_mint_tx(parse)?,
+                    //     "pour" => tx::parse_pour_tx(parse)?,
+                    //     _ => {
+                    //         return Err(format!(
+                    //             "Invalid tx type to parse, tx_type: {}",
+                    //             tx_type
+                    //         )
+                    //         .into());
+                    //     }
+                    // }
+
+                    let tx_type = {
+                        let p = parse.next_bytes()?;
+
+                        let t = match p[..].get(0) {
+                            Some(v) => v,
+                            None => {
+                                return Err(format!(
+                                    "Invalid tx type to parse, tx_type"
+                                )
+                                .into())
+                            }
+                        };
+                        TxType::from(*t)
+                    };
+
+                    println!("tc_type: {:?}", tx_type);
+
+                    match tx_type {
+                        TxType::Mint => tx::parse_mint_tx(parse)?,
+                        TxType::Pour => tx::parse_pour_tx(parse)?,
                         _ => {
                             return Err(format!(
-                                "Invalid tx type to parse, tx_type: {}",
+                                "Invalid tx type to parse, tx_type: {:?}",
                                 tx_type
                             )
                             .into());
@@ -72,8 +101,11 @@ impl BlockSynMsg {
                 tx_hashes.push(tx.get_tx_hash().to_owned());
                 txs.push(tx);
             }
+            println!("end1");
 
             let total_cm_count = parse.next_int()?;
+
+            println!("end2");
 
             let block = Block::new(
                 validator_sig,
@@ -87,6 +119,8 @@ impl BlockSynMsg {
 
             blocks.push((block, txs));
         }
+
+        println!("end");
 
         let m = BlockSynMsg { blocks };
 
