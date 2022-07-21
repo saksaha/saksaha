@@ -1,11 +1,77 @@
 use crate::rpc::routes::v0;
 use crate::system::SystemHandle;
 use hyper::{Body, Method, Request, Response, StatusCode};
+use std::collections::HashMap;
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
 
+pub(in crate::rpc) struct Route {
+    url: &'static str,
+    handler: Handler,
+}
+
+pub(crate) type Handler = Box<
+    dyn Fn(
+            Request<Body>,
+            Arc<SystemHandle>,
+        ) -> Pin<
+            Box<
+                dyn Future<Output = Result<Response<Body>, hyper::Error>>
+                    + Send
+                    + Sync,
+            >,
+        > + Send
+        + Sync,
+>;
+
+// struct A<F, Fut>
+// where
+//     F: Fn(Request<Body>, Arc<SystemHandle>) -> Fut,
+//     Fut: Future<Output = Result<Response<Body>, hyper::Error>>,
+// {
+//     f: F,
+// }
+
 fn get_routes() -> Vec<(Method, &'static str, Handler)> {
+    // fn get_routes() {
+    // let aa: Vec<Handler> = vec![
+    //     Box::new(|req, sys_handle| Box::pin(v0::send_mint_tx(req, sys_handle))),
+    //     Box::new(|req, sys_handle| Box::pin(v0::send_mint_tx(req, sys_handle))),
+    // ];
+
+    // let mut a: HashMap<&'static str, Handler> = HashMap::new();
+    // a.insert(
+    //     "aa",
+    //     Box::new(|req, sys_handle| Box::pin(v0::send_mint_tx(req, sys_handle))),
+    // );
+    // a.insert(
+    //     "aa",
+    //     Box::new(|req, sys_handle| Box::pin(v0::send_mint_tx(req, sys_handle))),
+    // );
+
+    // [
+    // (
+    //     "/apis/v0/send_mint_tx",
+    //     Box::new(|req, sys_handle| {
+    //         Box::pin(v0::send_mint_tx(req, sys_handle))
+    //     }) as Handler,
+    // ),
+    // (
+    //     "/apis/v0/send_mint_tx",
+    //     // 1,
+    //     Box::new(|req, sys_handle| {
+    //         Box::pin(v0::send_pour_tx(req, sys_handle))
+    //     }),
+    // ),
+    // (
+    //     "/apis/v0/send_mint_tx",
+    //     Box::new(|req, sys_handle| {
+    //         Box::pin(v0::send_pour_tx(req, sys_handle))
+    //     }),
+    // ),
+    // ]);
+
     vec![
         (
             Method::POST,
@@ -52,19 +118,6 @@ fn get_routes() -> Vec<(Method, &'static str, Handler)> {
     ]
 }
 
-pub(crate) type Handler = Box<
-    dyn Fn(
-            Request<Body>,
-            Arc<SystemHandle>,
-        ) -> Pin<
-            Box<
-                dyn Future<Output = Result<Response<Body>, hyper::Error>>
-                    + Send,
-            >,
-        > + Send
-        + Sync,
->;
-
 pub(crate) struct Router {
     pub(crate) routes: Arc<Vec<(Method, &'static str, Handler)>>,
 }
@@ -74,6 +127,7 @@ impl Router {
         let routes = {
             let r = get_routes();
             Arc::new(r)
+            // r
         };
 
         Router { routes }
@@ -84,7 +138,11 @@ impl Router {
         req: Request<Body>,
         sys_handle: Arc<SystemHandle>,
     ) -> Pin<
-        Box<dyn Future<Output = Result<Response<Body>, hyper::Error>> + Send>,
+        Box<
+            dyn Future<Output = Result<Response<Body>, hyper::Error>>
+                + Send
+                + Sync,
+        >,
     > {
         println!("method: {}, req: {}", req.method(), req.uri().path());
 
