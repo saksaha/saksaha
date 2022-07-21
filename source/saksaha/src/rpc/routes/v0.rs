@@ -207,6 +207,7 @@ pub(crate) struct CallContractBody {
     ctr_addr: String,
     request: CtrRequest,
 }
+
 impl CallContractBody {
     pub fn new(ctr_addr: String, request: CtrRequest) -> CallContractBody {
         CallContractBody { ctr_addr, request }

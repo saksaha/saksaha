@@ -1,4 +1,3 @@
-use crate::DistLedger;
 use crate::DistLedgerApis;
 use crate::LedgerError;
 use log::info;

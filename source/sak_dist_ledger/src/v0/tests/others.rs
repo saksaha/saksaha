@@ -1,6 +1,5 @@
 use super::utils;
 use crate::SyncPool;
-use sak_contract_std::Storage;
 use sak_types::TxCandidate;
 
 #[tokio::test(flavor = "multi_thread")]

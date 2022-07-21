@@ -1,11 +1,6 @@
-use crate::{
-    CtrStateUpdate, DistLedger, DistLedgerApis, LedgerError, MerkleUpdate,
-};
+use crate::{DistLedgerApis, LedgerError};
 use log::warn;
-use sak_contract_std::{CtrCallType, Request, Storage};
-use sak_proofs::Path;
-use sak_types::{Block, BlockCandidate, Tx, TxCandidate, TxCtrOp};
-use sak_vm::CtrFn;
+use sak_types::{BlockCandidate, TxCandidate};
 
 impl DistLedgerApis {
     // peer_node
