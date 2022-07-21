@@ -10,7 +10,6 @@ use crate::p2p::{P2PHost, P2PHostArgs};
 use crate::pconfig::PConfig;
 use crate::rpc::RPCArgs;
 use crate::rpc::RPC;
-use crate::rpc::RPC2;
 use crate::system::SystemHandle;
 use colored::Colorize;
 use log::{error, info};
@@ -226,12 +225,11 @@ impl Routine {
                 rpc_socket,
             };
 
-            // RPC::init(rpc_args)?
-            RPC2::init(rpc_args)?
+            RPC::init(rpc_args)?
         };
 
         let system_thread = tokio::spawn(async move {
-            tokio::join!(
+            let _ = tokio::join!(
                 rpc.run(),
                 p2p_host.run(),
                 local_node.run(),
