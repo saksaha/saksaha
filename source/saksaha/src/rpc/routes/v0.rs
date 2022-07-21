@@ -142,10 +142,10 @@ pub(crate) async fn send_pour_tx(
                             .send_tx(tx_candidate)
                             .await
                         {
-                            Ok(bool) => {
+                            Ok(null) => {
                                 return SuccessResult {
                                     id: String::from("1"),
-                                    result: bool,
+                                    result: null,
                                 }
                                 .into_hyper_result();
                             }
@@ -200,7 +200,7 @@ pub(crate) async fn get_transaction(
     match hyper::body::to_bytes(req.into_body()).await {
         Ok(b) => {
             let body: GetTransactionBody = match serde_json::from_slice(&b) {
-                Ok(b) => GetTransactionBody { hash: b },
+                Ok(s) => s,
                 Err(err) => {
                     return ErrorResult::<String> {
                         id: String::from("1"),
@@ -222,8 +222,6 @@ pub(crate) async fn get_transaction(
                 .await
             {
                 Ok(t) => {
-                    println!("apowef: {:?}", t);
-
                     return SuccessResult {
                         id: String::from("1"),
                         result: t,
@@ -231,7 +229,6 @@ pub(crate) async fn get_transaction(
                     .into_hyper_result();
                 }
                 Err(err) => {
-                    println!("apowef333: {:?}", err);
                     return ErrorResult::<String> {
                         id: String::from("1"),
                         status_code: StatusCode::BAD_REQUEST,
@@ -377,10 +374,15 @@ pub(crate) async fn get_block(
     };
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub(crate) struct CallContractBody {
     ctr_addr: String,
     request: CtrRequest,
+}
+impl CallContractBody {
+    pub fn new(ctr_addr: String, request: CtrRequest) -> CallContractBody {
+        CallContractBody { ctr_addr, request }
+    }
 }
 
 pub(crate) async fn call_contract(
@@ -389,8 +391,8 @@ pub(crate) async fn call_contract(
 ) -> Result<Response<Body>, hyper::Error> {
     match hyper::body::to_bytes(req.into_body()).await {
         Ok(b) => {
-            let body = match serde_json::from_slice::<CallContractBody>(&b) {
-                Ok(b) => b,
+            let body: CallContractBody = match serde_json::from_slice(&b) {
+                Ok(s) => s,
                 Err(err) => {
                     return ErrorResult::<String> {
                         id: String::from("1"),
@@ -419,7 +421,6 @@ pub(crate) async fn call_contract(
                     .into_hyper_result();
                 }
                 Err(err) => {
-                    println!("apowef333: {:?}", err);
                     return ErrorResult::<String> {
                         id: String::from("1"),
                         status_code: StatusCode::BAD_REQUEST,

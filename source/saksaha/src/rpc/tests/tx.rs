@@ -2,7 +2,7 @@ use super::utils;
 use crate::rpc::response::{ErrorResponse, JsonResponse};
 use hyper::body::Buf;
 use hyper::{Body, Client, Method, Request, Uri};
-use sak_types::{PourTxCandidate, TxCandidate};
+use sak_types::{BlockCandidate, PourTxCandidate, TxCandidate};
 use std::time::Duration;
 
 #[tokio::test(flavor = "multi_thread")]
@@ -18,7 +18,7 @@ async fn test_rpc_client_and_send_wrong_transaction() {
 
     let uri: Uri = {
         let u = format!(
-            "http://localhost:{}/apis/v0/send_transaction",
+            "http://localhost:{}/apis/v0/send_pour_tx",
             rpc_socket_addr.port()
         );
 
@@ -69,6 +69,14 @@ async fn test_rpc_client_request_wrong_transaction_hash() {
             .apis
             .delete_tx(&old_tx_hash)
             .expect("Tx should be deleted");
+
+        let bc = Some(BlockCandidate {
+            validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
+            tx_candidates: vec![dummy_tx.clone()],
+            witness_sigs: vec![String::from("1"), String::from("2")],
+            created_at: format!("{}", 0),
+        });
+        dist_ledger.apis.write_block(bc).await.unwrap();
 
         let _tx_hash = dist_ledger
             .apis
@@ -140,11 +148,20 @@ async fn test_rpc_client_request_correct_transaction_hash() {
             .delete_tx(&old_tx_hash)
             .expect("Tx should be deleted");
 
-        dist_ledger
-            .apis
-            .send_tx(dummy_tx.clone())
-            .await
-            .expect("Tx should be written");
+        // dist_ledger
+        //     .apis
+        //     .send_tx(dummy_tx.clone())
+        //     .await
+        //     .expect("Tx should be written");
+
+        let bc = Some(BlockCandidate {
+            validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
+            tx_candidates: vec![dummy_tx.clone()],
+            witness_sigs: vec![String::from("1"), String::from("2")],
+            created_at: format!("{}", 0),
+        });
+
+        dist_ledger.apis.write_block(bc).await.unwrap();
 
         let tx = dist_ledger
             .apis
@@ -156,7 +173,7 @@ async fn test_rpc_client_request_correct_transaction_hash() {
         let tx_hash = tx.get_tx_hash().clone();
 
         assert_eq!(tx_hash, *old_tx_hash);
-        tx_hash
+        old_tx_hash.clone()
     };
 
     let (rpc, rpc_socket_addr, _) = utils::make_test_context().await;
@@ -185,8 +202,6 @@ async fn test_rpc_client_request_correct_transaction_hash() {
         )))
         .expect("request builder should be made");
 
-    println!("Request: {:?}", req);
-
     let _res = match client.request(req).await {
         Ok(res) => {
             let body = hyper::body::aggregate(res)
@@ -195,7 +210,7 @@ async fn test_rpc_client_request_correct_transaction_hash() {
 
             let _: JsonResponse = match serde_json::from_reader(body.reader()) {
                 Ok(e) => {
-                    log::info!("{:?}", e);
+                    log::info!("get tx success! : {:?}", e);
                     e
                 }
                 Err(err) => {
@@ -222,7 +237,7 @@ async fn test_if_send_transaction_puts_tx_into_tx_pool() {
 
     let uri: Uri = {
         let u = format!(
-            "http://localhost:{}/apis/v0/send_transaction",
+            "http://localhost:{}/apis/v0/send_pour_tx",
             rpc_socket_addr.port()
         );
         u.parse().expect("URI should be made")
@@ -234,11 +249,16 @@ async fn test_if_send_transaction_puts_tx_into_tx_pool() {
         .body(Body::from(format!(
             r#"
                     {{
-                        "pi": "{:?}",
-                        "signature": "{}",
+                        "pi": {:?},
+                        "author_sig": "{}",
                         "created_at": "{}",
                         "data": {:?},
-                        "contract": {:?}
+                        "ctr_addr": {:?},
+                        "sn_1": {:?},
+                        "sn_2": {:?},
+                        "cm_1": {:?},
+                        "cm_2": {:?},
+                        "merkle_rt": {:?}                        
                     }}
                 "#,
             tc_dummy.pi,
@@ -246,6 +266,11 @@ async fn test_if_send_transaction_puts_tx_into_tx_pool() {
             tc_dummy.created_at,
             tc_dummy.data,
             tc_dummy.ctr_addr,
+            tc_dummy.sn_1,
+            tc_dummy.sn_2,
+            tc_dummy.cm_1,
+            tc_dummy.cm_2,
+            tc_dummy.merkle_rt,
         )))
         .expect("request builder should be made");
 
@@ -296,7 +321,7 @@ async fn test_if_send_transaction_puts_false_tx_into_tx_pool() {
 
     let uri: Uri = {
         let u = format!(
-            "http://localhost:{}/apis/v0/send_transaction",
+            "http://localhost:{}/apis/v0/send_pour_tx",
             rpc_socket_addr.port()
         );
         u.parse().expect("URI should be made")
@@ -308,11 +333,16 @@ async fn test_if_send_transaction_puts_false_tx_into_tx_pool() {
         .body(Body::from(format!(
             r#"
                     {{
-                        "pi": "{:?}",
-                        "signature": "{}",
+                        "pi": {:?},
+                        "author_sig": "{}",
                         "created_at": "{}",
                         "data": {:?},
-                        "contract": {:?}
+                        "ctr_addr": {:?},
+                        "sn_1": {:?},
+                        "sn_2": {:?},
+                        "cm_1": {:?},
+                        "cm_2": {:?},
+                        "merkle_rt": {:?}                        
                     }}
                 "#,
             tc_dummy.pi,
@@ -320,6 +350,11 @@ async fn test_if_send_transaction_puts_false_tx_into_tx_pool() {
             tc_dummy.created_at,
             tc_dummy.data,
             tc_dummy.ctr_addr,
+            tc_dummy.sn_1,
+            tc_dummy.sn_2,
+            tc_dummy.cm_1,
+            tc_dummy.cm_2,
+            tc_dummy.merkle_rt,
         )))
         .expect("request builder should be made");
 

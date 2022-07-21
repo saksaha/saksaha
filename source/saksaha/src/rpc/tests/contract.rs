@@ -1,7 +1,11 @@
 use super::utils;
+use crate::rpc::routes::v0::CallContractBody;
 use crate::{blockchain::GenesisBlock, rpc::response::JsonResponse};
 use hyper::body::Buf;
 use hyper::{Body, Client, Method, Request, Uri};
+// use sak_contract_std::Request as CtrRequest;
+use sak_contract_std::{CtrCallType, Request as CtrRequest};
+use std::collections::HashMap;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_call_contract() {
@@ -26,19 +30,24 @@ async fn test_call_contract() {
         u.parse().expect("URI should be made")
     };
 
+    let request = {
+        let ctr_addr = validator_ctr_addr;
+        let ctr_req = CtrRequest {
+            req_type: "get_validator".to_string(),
+            arg: HashMap::with_capacity(10),
+            ctr_call_type: CtrCallType::Query,
+        };
+        let call_ctr_body = CallContractBody::new(ctr_addr, ctr_req);
+
+        call_ctr_body
+    };
+
+    let body_string = serde_json::to_string(&request).unwrap();
+
     let req = Request::builder()
         .method(Method::POST)
         .uri(uri.clone())
-        .body(Body::from(format!(
-            r#"
-                    {{
-                        "ctr_addr": {:?},
-                        "ctr_fn": {:?}
-                    }}
-                "#,
-            validator_ctr_addr,
-            "get_validator".to_string(),
-        )))
+        .body(Body::from(body_string))
         .expect("request builder should be made");
 
     match client.request(req).await {
