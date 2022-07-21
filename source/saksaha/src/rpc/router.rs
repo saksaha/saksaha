@@ -33,101 +33,104 @@ pub(crate) type Handler = Box<
 //     f: F,
 // }
 
-// fn get_routes() -> Vec<(Method, &'static str, Handler)> {
-fn get_routes() {
-    let aa: Vec<Handler> = vec![
-        Box::new(|req, sys_handle| Box::pin(v0::send_mint_tx(req, sys_handle))),
-        Box::new(|req, sys_handle| Box::pin(v0::send_mint_tx(req, sys_handle))),
-    ];
+fn get_routes() -> Vec<(Method, &'static str, Handler)> {
+    // fn get_routes() {
+    // let aa: Vec<Handler> = vec![
+    //     Box::new(|req, sys_handle| Box::pin(v0::send_mint_tx(req, sys_handle))),
+    //     Box::new(|req, sys_handle| Box::pin(v0::send_mint_tx(req, sys_handle))),
+    // ];
 
-    let mut a: HashMap<&'static str, Handler> = HashMap::new();
-    a.insert("aa", Box::new(|req, sys_handle| Box::pin(v0::send_mint_tx(req, sys_handle))));
-    a.insert("aa", Box::new(|req, sys_handle| Box::pin(v0::send_mint_tx(req, sys_handle))));
+    // let mut a: HashMap<&'static str, Handler> = HashMap::new();
+    // a.insert(
+    //     "aa",
+    //     Box::new(|req, sys_handle| Box::pin(v0::send_mint_tx(req, sys_handle))),
+    // );
+    // a.insert(
+    //     "aa",
+    //     Box::new(|req, sys_handle| Box::pin(v0::send_mint_tx(req, sys_handle))),
+    // );
 
-    //     [
-    //     // (
-    //     //     "/apis/v0/send_mint_tx",
-    //     //     Box::new(|req, sys_handle| {
-    //     //         Box::pin(v0::send_mint_tx(req, sys_handle))
-    //     //     }) as Handler,
-    //     // ),
-    //     (
-    //         "/apis/v0/send_mint_tx",
-    //         // 1,
-    //         Box::new(|req, sys_handle| {
-    //             Box::pin(v0::send_pour_tx(req, sys_handle))
-    //         }),
-    //     ),
-    //     // (
-    //     //     "/apis/v0/send_mint_tx",
-    //     //     Box::new(|req, sys_handle| {
-    //     //         Box::pin(v0::send_pour_tx(req, sys_handle))
-    //     //     }),
-    //     // ),
+    // [
+    // (
+    //     "/apis/v0/send_mint_tx",
+    //     Box::new(|req, sys_handle| {
+    //         Box::pin(v0::send_mint_tx(req, sys_handle))
+    //     }) as Handler,
+    // ),
+    // (
+    //     "/apis/v0/send_mint_tx",
+    //     // 1,
+    //     Box::new(|req, sys_handle| {
+    //         Box::pin(v0::send_pour_tx(req, sys_handle))
+    //     }),
+    // ),
+    // (
+    //     "/apis/v0/send_mint_tx",
+    //     Box::new(|req, sys_handle| {
+    //         Box::pin(v0::send_pour_tx(req, sys_handle))
+    //     }),
+    // ),
     // ]);
 
-    // let v = vec![
-    //     (
-    //         Method::POST,
-    //         "/apis/v0/send_mint_tx",
-    //         Box::new(|req, sys_handle| {
-    //             Box::pin(v0::send_mint_tx(req, sys_handle))
-    //         }),
-    //     ),
-    //     (
-    //         Method::POST,
-    //         "/apis/v0/send_pour_tx",
-    //         Box::new(|req, sys_handle| {
-    //             Box::pin(v0::send_pour_tx(req, sys_handle))
-    //         }),
-    //     ),
-    //     (
-    //         Method::POST,
-    //         "/apis/v0/get_status",
-    //         Box::new(|req, sys_handle| {
-    //             Box::pin(v0::get_status(req, sys_handle))
-    //         }),
-    //     ),
-    //     (
-    //         Method::POST,
-    //         "/apis/v0/get_transaction",
-    //         Box::new(|req, sys_handle| {
-    //             Box::pin(v0::get_transaction(req, sys_handle))
-    //         }),
-    //     ),
-    //     (
-    //         Method::POST,
-    //         "/apis/v0/get_block",
-    //         Box::new(|req, sys_handle| {
-    //             Box::pin(v0::get_block(req, sys_handle))
-    //         }),
-    //     ),
-    //     (
-    //         Method::POST,
-    //         "/apis/v0/call_contract",
-    //         Box::new(|req, sys_handle| {
-    //             Box::pin(v0::call_contract(req, sys_handle))
-    //         }),
-    //     ),
-    // ];
-    // v
+    vec![
+        (
+            Method::POST,
+            "/apis/v0/send_mint_tx",
+            Box::new(|req, sys_handle| {
+                Box::pin(v0::send_mint_tx(req, sys_handle))
+            }),
+        ),
+        (
+            Method::POST,
+            "/apis/v0/send_pour_tx",
+            Box::new(|req, sys_handle| {
+                Box::pin(v0::send_pour_tx(req, sys_handle))
+            }),
+        ),
+        (
+            Method::POST,
+            "/apis/v0/get_status",
+            Box::new(|req, sys_handle| {
+                Box::pin(v0::get_status(req, sys_handle))
+            }),
+        ),
+        (
+            Method::POST,
+            "/apis/v0/get_transaction",
+            Box::new(|req, sys_handle| {
+                Box::pin(v0::get_transaction(req, sys_handle))
+            }),
+        ),
+        (
+            Method::POST,
+            "/apis/v0/get_block",
+            Box::new(|req, sys_handle| {
+                Box::pin(v0::get_block(req, sys_handle))
+            }),
+        ),
+        (
+            Method::POST,
+            "/apis/v0/call_contract",
+            Box::new(|req, sys_handle| {
+                Box::pin(v0::call_contract(req, sys_handle))
+            }),
+        ),
+    ]
 }
 
 pub(crate) struct Router {
-    // pub(crate) routes: >,
+    pub(crate) routes: Arc<Vec<(Method, &'static str, Handler)>>,
 }
 
 impl Router {
     pub(crate) fn new() -> Router {
         let routes = {
             let r = get_routes();
-            // Arc::new(r)
-            r
+            Arc::new(r)
+            // r
         };
 
-        Router { 
-            //routes 
-        }
+        Router { routes }
     }
 
     pub(crate) fn route(
