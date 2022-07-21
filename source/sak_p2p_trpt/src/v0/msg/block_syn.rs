@@ -1,8 +1,8 @@
 use super::tx;
 use crate::{utils, TrptError, BLOCK_SYN_TYPE};
-use bytes::{BufMut, Bytes, BytesMut};
+use bytes::Bytes;
 use sak_p2p_frame::{Frame, Parse};
-use sak_types::{Block, MintTx, MintTxCandidate, PourTxCandidate, Tx};
+use sak_types::{Block, Tx, TxType};
 
 #[derive(Debug)]
 pub struct BlockSynMsg {
@@ -16,6 +16,7 @@ impl BlockSynMsg {
         let block_count = parse.next_int()?;
 
         let mut blocks = Vec::with_capacity(block_count as usize);
+        let mut block_cm_count = 0;
 
         for _ in 0..block_count {
             let validator_sig = {
@@ -54,26 +55,40 @@ impl BlockSynMsg {
 
             for _ in 0..tx_count {
                 let tx = {
-                    let tx_type = parse.next_string()?;
+                    let tx_type = {
+                        let p = parse.next_bytes()?;
 
-                    match tx_type.as_ref() {
-                        "mint" => tx::parse_mint_tx(parse)?,
-                        "pour" => tx::parse_pour_tx(parse)?,
+                        let t = match p[..].get(0) {
+                            Some(v) => v,
+                            None => {
+                                return Err(format!(
+                                    "Invalid tx type to parse, tx_type"
+                                )
+                                .into())
+                            }
+                        };
+                        TxType::from(*t)
+                    };
+
+                    match tx_type {
+                        TxType::Mint => tx::parse_mint_tx(parse)?,
+                        TxType::Pour => tx::parse_pour_tx(parse)?,
                         _ => {
                             return Err(format!(
-                                "Invalid tx type to parse, tx_type: {}",
+                                "Invalid tx type to parse, tx_type: {:?}",
                                 tx_type
                             )
                             .into());
                         }
                     }
                 };
+                block_cm_count += tx.get_cm_count();
 
                 tx_hashes.push(tx.get_tx_hash().to_owned());
                 txs.push(tx);
             }
 
-            let total_cm_count = parse.next_int()?;
+            // let block_cm_count = parse.next_int()?;
 
             let block = Block::new(
                 validator_sig,
@@ -82,7 +97,7 @@ impl BlockSynMsg {
                 created_at,
                 block_height,
                 merkle_rt,
-                total_cm_count,
+                block_cm_count as u128,
             );
 
             blocks.push((block, txs));

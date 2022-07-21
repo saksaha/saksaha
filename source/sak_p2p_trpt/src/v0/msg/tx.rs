@@ -169,7 +169,9 @@ pub(crate) fn put_mint_tx_candidate_into_frame(
     tc: MintTxCandidate,
 ) {
     let tx_hash = tc.get_tx_hash().to_string();
+    let tc_type = vec![tc.get_tx_type() as u8];
 
+    frame.push_bulk(Bytes::copy_from_slice(&tc_type));
     frame.push_bulk(Bytes::from(tc.data));
     frame.push_bulk(Bytes::from(tc.created_at));
     frame.push_bulk(Bytes::from(tc.author_sig));
@@ -194,7 +196,9 @@ pub(crate) fn put_pour_tx_candidate_into_frame(
     tc: PourTxCandidate,
 ) {
     let tx_hash = tc.get_tx_hash().to_string();
+    let tc_type = vec![tc.get_tx_type() as u8];
 
+    frame.push_bulk(Bytes::copy_from_slice(&tc_type));
     frame.push_bulk(Bytes::from(tc.data));
     frame.push_bulk(Bytes::from(tc.created_at));
     frame.push_bulk(Bytes::from(tc.author_sig));

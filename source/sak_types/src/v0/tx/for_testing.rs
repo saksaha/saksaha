@@ -116,6 +116,12 @@ impl TxCandidate {
 
         TxCandidate::Pour(tx_candidate)
     }
+
+    pub fn new_dummy_pour_variant_cm(cm: [u8; 32]) -> TxCandidate {
+        let tx_candidate = PourTxCandidate::new_dummy_5(cm);
+
+        TxCandidate::Pour(tx_candidate)
+    }
 }
 
 impl MintTxCandidate {
@@ -305,6 +311,21 @@ impl PourTxCandidate {
             U8Array::new_empty_32(),
             U8Array::new_empty_32(),
             U8Array::new_empty_32(),
+            U8Array::new_empty_32(),
+            U8Array::new_empty_32(),
+        )
+    }
+
+    pub fn new_dummy_5(cm: [u8; 32]) -> PourTxCandidate {
+        PourTxCandidate::new(
+            String::from("created_at_4"),
+            vec![44, 44, 44],
+            String::from("author_sig_4"),
+            Some(String::from("ctr_addr_4")),
+            vec![44, 44, 44],
+            U8Array::new_empty_32(),
+            U8Array::new_empty_32(),
+            cm,
             U8Array::new_empty_32(),
             U8Array::new_empty_32(),
         )

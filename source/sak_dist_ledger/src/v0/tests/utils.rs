@@ -55,12 +55,7 @@ pub(crate) async fn make_dist_ledger() -> DistLedger {
 }
 
 pub(crate) fn make_dummy_txs() -> Vec<Tx> {
-    vec![
-        Tx::new_dummy_pour_m1_to_p3_p4(),
-        // Tx::new_dummy_pour_2(),
-        // Tx::new_dummy_pour_3(),
-        // Tx::new_dummy_pour_4(),
-    ]
+    vec![Tx::new_dummy_pour_m1_to_p3_p4()]
 }
 
 pub(crate) fn make_dummy_state() -> (String, String) {
