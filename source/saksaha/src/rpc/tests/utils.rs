@@ -112,6 +112,8 @@ pub(crate) async fn make_test_context() -> (RPC, SocketAddr, Arc<Machine>) {
             p2p_monitor,
         };
 
+        let sys_handle = Arc::new(sys_handle);
+
         let rpc_args = RPCArgs {
             sys_handle,
             rpc_socket,
