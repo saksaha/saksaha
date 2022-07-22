@@ -41,7 +41,7 @@ pub enum HandshakeInitError {
     #[error("Failed to parse Handshake ack msg, err: {err}")]
     HandshakeAckParseFail { err: String },
 
-    #[error("Handshake is not fully arrived")]
+    #[error("Handshake ack is not arrived")]
     HandshakeAckNotYetArrived,
 
     #[error(
