@@ -177,7 +177,9 @@ async fn test_sequential_sync_block_if_block_is_correct() {
 
     let dist_ledger = utils::make_dist_ledger().await;
 
-    for i in 1..5 as u64 {
+    let repeat = 5;
+
+    for i in 1..repeat as u64 {
         println!("{}", i);
         let txs = utils::make_dummy_txs();
 
@@ -196,4 +198,9 @@ async fn test_sequential_sync_block_if_block_is_correct() {
             Err(err) => panic!("Failed to write dummy block, err: {}", err),
         };
     }
+
+    let latest_block_height =
+        dist_ledger.apis.get_latest_block_height().unwrap().unwrap();
+
+    assert_eq!(latest_block_height, repeat - 1);
 }
