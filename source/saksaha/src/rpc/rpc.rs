@@ -1,4 +1,4 @@
-use super::router::Router;
+use super::{router::Router, routes};
 use crate::{SaksahaError, SystemHandle};
 use hyper::{server::conn::AddrIncoming, service, Server};
 use log::{error, info};
@@ -55,8 +55,10 @@ impl RPCServer {
 
         let sys_handle = sys_handle.clone();
         let make_svc = service::make_service_fn(move |_conn| {
+            let routes = Arc::new(routes::get_routes());
+
             let router = {
-                let r = Router::new();
+                let r: Router<Arc<SystemHandle>> = Router::new(routes);
                 r
             };
 

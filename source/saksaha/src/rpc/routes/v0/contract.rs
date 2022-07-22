@@ -1,5 +1,5 @@
 use crate::{
-    rpc::{router::RPCResponse, RPCError},
+    rpc::{router::utils, RPCError},
     system::SystemHandle,
 };
 use hyper::{Body, Request, Response, StatusCode};
@@ -36,13 +36,16 @@ pub(crate) async fn query_ctr(
         .await
     {
         Ok(t) => {
-            return Ok(RPCResponse::new_success(
+            return Ok(utils::make_success_response(
                 String::from("1"),
                 QueryCtrResponse { result: t },
             ));
         }
         Err(err) => {
-            return Ok(RPCResponse::new_error(String::from("1"), err.into()));
+            return Ok(utils::make_error_response(
+                Some(String::from("1")),
+                err.into(),
+            ));
         }
     }
 }

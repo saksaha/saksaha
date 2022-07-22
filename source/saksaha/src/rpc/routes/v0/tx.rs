@@ -1,5 +1,5 @@
 use crate::{
-    rpc::{router::RPCResponse, RPCError},
+    rpc::{router::utils, RPCError},
     system::SystemHandle,
 };
 use hyper::{Body, Request, Response, StatusCode};
@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
 #[derive(Serialize, Deserialize, Debug)]
-struct SendMintTxBody {
+struct SendMintTxRequest {
     created_at: String,
     #[serde(with = "serde_bytes")]
     data: Vec<u8>,
@@ -23,7 +23,7 @@ struct SendMintTxBody {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct SendPourTxBody {
+struct SendPourTxRequest {
     created_at: String,
     #[serde(with = "serde_bytes")]
     data: Vec<u8>,
@@ -44,7 +44,7 @@ pub(crate) async fn send_mint_tx(
 ) -> Result<Response<Body>, RPCError> {
     let b = hyper::body::to_bytes(req.into_body()).await?;
 
-    let rb = serde_json::from_slice::<SendMintTxBody>(&b)?;
+    let rb = serde_json::from_slice::<SendMintTxRequest>(&b)?;
 
     let tx_candidate = TxCandidate::Mint(MintTxCandidate::new(
         rb.created_at,
@@ -66,10 +66,16 @@ pub(crate) async fn send_mint_tx(
         .await
     {
         Ok(bool) => {
-            return Ok(RPCResponse::new_success(String::from("1"), "success"));
+            return Ok(utils::make_success_response(
+                String::from("1"),
+                "success",
+            ));
         }
         Err(err) => {
-            return Ok(RPCResponse::new_error(String::from("1"), err.into()));
+            return Ok(utils::make_error_response(
+                Some(String::from("1")),
+                err.into(),
+            ));
         }
     }
 }
@@ -80,7 +86,7 @@ pub(crate) async fn send_pour_tx(
 ) -> Result<Response<Body>, RPCError> {
     let b = hyper::body::to_bytes(req.into_body()).await?;
 
-    let rb = serde_json::from_slice::<SendPourTxBody>(&b)?;
+    let rb = serde_json::from_slice::<SendPourTxRequest>(&b)?;
 
     let tx_candidate = TxCandidate::Pour(PourTxCandidate::new(
         rb.created_at,
@@ -104,47 +110,49 @@ pub(crate) async fn send_pour_tx(
         .await
     {
         Ok(bool) => {
-            return Ok(RPCResponse::new_success(String::from("1"), "success"));
+            return Ok(utils::make_success_response(
+                String::from("1"),
+                "success",
+            ));
         }
         Err(err) => {
-            return Ok(RPCResponse::new_error(String::from("1"), err.into()));
+            return Ok(utils::make_error_response(
+                Some(String::from("1")),
+                err.into(),
+            ));
         }
     }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct GetTransactionBody {
+struct GetTxRequest {
     hash: String,
 }
 
-pub(crate) async fn get_transaction(
+pub(crate) async fn get_tx(
     req: Request<Body>,
     sys_handle: Arc<SystemHandle>,
 ) -> Result<Response<Body>, RPCError> {
     let b = hyper::body::to_bytes(req.into_body()).await?;
 
-    let rb = serde_json::from_slice::<SendMintTxBody>(&b)?;
-
-    let body: GetTransactionBody = match serde_json::from_slice(&b) {
-        Ok(b) => GetTransactionBody { hash: b },
-        Err(err) => {
-            return Ok(RPCResponse::new_error(String::from("1"), err.into()));
-        }
-    };
+    let rb = serde_json::from_slice::<GetTxRequest>(&b)?;
 
     match sys_handle
         .machine
         .blockchain
         .dist_ledger
         .apis
-        .get_tx(&body.hash)
+        .get_tx(&rb.hash)
         .await
     {
         Ok(t) => {
-            return Ok(RPCResponse::new_success(String::from("1"), t));
+            return Ok(utils::make_success_response(String::from("1"), t));
         }
         Err(err) => {
-            return Ok(RPCResponse::new_error(String::from("1"), err.into()));
+            return Ok(utils::make_error_response(
+                Some(String::from("1")),
+                err.into(),
+            ));
         }
     }
 }

@@ -1,13 +1,13 @@
-use super::RPCError;
 use crate::SystemHandle;
+use crate::rpc::RPCError;
 use futures::Future;
 use hyper::{Body, Request, Response};
 use std::{collections::HashMap, pin::Pin, sync::Arc};
 
-pub(crate) type Handler = Box<
+pub(crate) type Handler<C> = Box<
     dyn Fn(
             Request<Body>,
-            Arc<SystemHandle>,
+            C,
         ) -> Pin<
             Box<
                 dyn Future<Output = Result<Response<Body>, RPCError>>
@@ -18,7 +18,7 @@ pub(crate) type Handler = Box<
         + Sync,
 >;
 
-pub(crate) struct Path {
-    pub url: &'static str,
-    pub handler: Handler,
+pub(crate) struct Path<C> {
+    pub method: &'static str,
+    pub handler: Handler<C>,
 }

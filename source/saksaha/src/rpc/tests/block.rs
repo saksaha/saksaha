@@ -1,5 +1,5 @@
 use super::utils;
-use crate::rpc::router::{HandleError, JsonResponse, RPCResponse};
+use crate::rpc::router::{HandleError, JsonResponse};
 use crate::rpc::routes::v0::{GetBlockRequest, GetBlockResponse};
 use bytes::Bytes;
 use hyper::body::Buf;

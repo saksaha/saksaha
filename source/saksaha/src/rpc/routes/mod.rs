@@ -1,42 +1,44 @@
 pub(in crate::rpc) mod v0;
 
-use super::route_map::{Handler, Path};
-use std::collections::HashMap;
+use super::router::{Handler, Path};
+use crate::SystemHandle;
+use std::{collections::HashMap, sync::Arc};
 
-pub(in crate::rpc) fn get_routes() -> HashMap<&'static str, Handler> {
-    let paths: Vec<Path> = vec![
+pub(in crate::rpc) fn get_routes(
+) -> HashMap<&'static str, Handler<Arc<SystemHandle>>> {
+    let paths: Vec<Path<Arc<SystemHandle>>> = vec![
         Path {
-            url: "/apis/v0/send_mint_tx",
+            method: "send_mint_tx",
             handler: Box::new(|req, sys_handle| {
                 Box::pin(v0::send_mint_tx(req, sys_handle))
             }),
         },
         Path {
-            url: "/apis/v0/send_pour_tx",
+            method: "send_pour_tx",
             handler: Box::new(|req, sys_handle| {
                 Box::pin(v0::send_pour_tx(req, sys_handle))
             }),
         },
         Path {
-            url: "/apis/v0/get_status",
+            method: "get_status",
             handler: Box::new(|req, sys_handle| {
                 Box::pin(v0::get_status(req, sys_handle))
             }),
         },
         Path {
-            url: "/apis/v0/get_transaction",
+            method: "get_tx",
             handler: Box::new(|req, sys_handle| {
-                Box::pin(v0::get_transaction(req, sys_handle))
+                Box::pin(v0::get_tx(req, sys_handle))
             }),
         },
         Path {
-            url: "/apis/v0/get_block",
+            method: "get_block",
             handler: Box::new(|req, sys_handle| {
                 Box::pin(v0::get_block(req, sys_handle))
             }),
         },
         Path {
-            url: "/apis/v0/call_contract",
+            method: "call_contract",
             handler: Box::new(|req, sys_handle| {
                 Box::pin(v0::query_ctr(req, sys_handle))
             }),
@@ -45,7 +47,7 @@ pub(in crate::rpc) fn get_routes() -> HashMap<&'static str, Handler> {
 
     let mut map = HashMap::new();
     for p in paths.into_iter() {
-        map.insert(p.url, p.handler);
+        map.insert(p.method, p.handler);
     }
 
     map

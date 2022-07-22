@@ -1,4 +1,3 @@
-mod route_map;
 mod router;
 mod routes;
 mod rpc;

@@ -1,6 +1,5 @@
 use super::utils;
 use crate::blockchain::GenesisBlock;
-use crate::rpc::router::RPCResponse;
 use crate::rpc::routes::v0::QueryCtrRequest;
 use hyper::body::Buf;
 use hyper::{Body, Client, Method, Request, Uri};
