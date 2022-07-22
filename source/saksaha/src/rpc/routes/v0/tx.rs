@@ -1,5 +1,8 @@
 use crate::{
-    rpc::{router::utils, RPCError},
+    rpc::{
+        router::{utils, Params},
+        RPCError,
+    },
     system::SystemHandle,
 };
 use hyper::{Body, Request, Response, StatusCode};
@@ -39,12 +42,12 @@ struct SendPourTxRequest {
 }
 
 pub(crate) async fn send_mint_tx(
-    req: Request<Body>,
+    params: Params,
     sys_handle: Arc<SystemHandle>,
 ) -> Result<Response<Body>, RPCError> {
-    let b = hyper::body::to_bytes(req.into_body()).await?;
+    let params = params.ok_or::<RPCError>("".into())?;
 
-    let rb = serde_json::from_slice::<SendMintTxRequest>(&b)?;
+    let rb = utils::parse_params::<SendMintTxRequest>(&params)?;
 
     let tx_candidate = TxCandidate::Mint(MintTxCandidate::new(
         rb.created_at,
@@ -81,12 +84,12 @@ pub(crate) async fn send_mint_tx(
 }
 
 pub(crate) async fn send_pour_tx(
-    req: Request<Body>,
+    params: Params,
     sys_handle: Arc<SystemHandle>,
 ) -> Result<Response<Body>, RPCError> {
-    let b = hyper::body::to_bytes(req.into_body()).await?;
+    let params = params.ok_or::<RPCError>("".into())?;
 
-    let rb = serde_json::from_slice::<SendPourTxRequest>(&b)?;
+    let rb = utils::parse_params::<SendPourTxRequest>(&params)?;
 
     let tx_candidate = TxCandidate::Pour(PourTxCandidate::new(
         rb.created_at,
@@ -130,12 +133,12 @@ struct GetTxRequest {
 }
 
 pub(crate) async fn get_tx(
-    req: Request<Body>,
+    params: Params,
     sys_handle: Arc<SystemHandle>,
 ) -> Result<Response<Body>, RPCError> {
-    let b = hyper::body::to_bytes(req.into_body()).await?;
+    let params = params.ok_or::<RPCError>("".into())?;
 
-    let rb = serde_json::from_slice::<GetTxRequest>(&b)?;
+    let rb = utils::parse_params::<GetTxRequest>(&params)?;
 
     match sys_handle
         .machine

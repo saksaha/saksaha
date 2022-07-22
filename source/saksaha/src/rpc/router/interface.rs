@@ -17,10 +17,10 @@ pub(in crate::rpc) struct JsonResponse<R: Serialize> {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub(in crate::rpc) struct JsonRequest<P: Serialize> {
+pub(in crate::rpc) struct JsonRequest {
     pub jsonrpc: String,
     pub method: String,
-    pub params: Option<P>,
+    pub params: Option<Vec<u8>>,
     pub id: String,
 }
 

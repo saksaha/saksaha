@@ -1,5 +1,5 @@
 use super::utils;
-use crate::rpc::router::{HandleError, JsonResponse};
+use crate::rpc::router::{HandleError, JsonRequest, JsonResponse};
 use crate::rpc::routes::v0::{GetBlockRequest, GetBlockResponse};
 use bytes::Bytes;
 use hyper::body::Buf;
@@ -51,7 +51,18 @@ async fn test_rpc_client_and_get_block() {
             block_hash: original_block_hash.to_string(),
         };
 
-        let str = serde_json::to_string(&r).unwrap();
+        let params = serde_json::to_string(&r).unwrap().as_bytes().to_vec();
+
+        let json_request = JsonRequest {
+            jsonrpc: "2.0".to_string(),
+            method: "get_block".to_string(),
+            params: Some(params),
+            id: "test_1".to_string(),
+        };
+
+        let str = serde_json::to_string(&json_request).unwrap();
+
+        println!("request body str (for debugging): {}", str);
 
         Body::from(str)
     };

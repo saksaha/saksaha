@@ -1,12 +1,16 @@
-use crate::SystemHandle;
 use crate::rpc::RPCError;
+use crate::SystemHandle;
 use futures::Future;
 use hyper::{Body, Request, Response};
-use std::{collections::HashMap, pin::Pin, sync::Arc};
+use std::pin::Pin;
+
+pub type MethodName = &'static str;
+
+pub type Params = Option<Vec<u8>>;
 
 pub(crate) type Handler<C> = Box<
     dyn Fn(
-            Request<Body>,
+            Params,
             C,
         ) -> Pin<
             Box<
@@ -19,6 +23,6 @@ pub(crate) type Handler<C> = Box<
 >;
 
 pub(crate) struct Path<C> {
-    pub method: &'static str,
+    pub method: MethodName,
     pub handler: Handler<C>,
 }

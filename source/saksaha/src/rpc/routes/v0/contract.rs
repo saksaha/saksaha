@@ -1,5 +1,8 @@
 use crate::{
-    rpc::{router::utils, RPCError},
+    rpc::{
+        router::{utils, Params},
+        RPCError,
+    },
     system::SystemHandle,
 };
 use hyper::{Body, Request, Response, StatusCode};
@@ -20,12 +23,12 @@ pub(crate) struct QueryCtrResponse {
 }
 
 pub(crate) async fn query_ctr(
-    req: Request<Body>,
+    params: Params,
     sys_handle: Arc<SystemHandle>,
 ) -> Result<Response<Body>, RPCError> {
-    let b = hyper::body::to_bytes(req.into_body()).await?;
+    let params = params.ok_or::<RPCError>("".into())?;
 
-    let rb = serde_json::from_slice::<QueryCtrRequest>(&b)?;
+    let rb = utils::parse_params::<QueryCtrRequest>(&params)?;
 
     match sys_handle
         .machine

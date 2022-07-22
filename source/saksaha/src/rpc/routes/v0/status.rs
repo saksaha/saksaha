@@ -1,5 +1,5 @@
 use crate::{
-    rpc::{router::utils, RPCError},
+    rpc::{router::utils, router::Params, RPCError},
     system::SystemHandle,
 };
 use hyper::{Body, Request, Response, StatusCode};
@@ -16,7 +16,7 @@ struct GetNodeStatusResponse {
 }
 
 pub(crate) async fn get_status(
-    _req: Request<Body>,
+    params: Params,
     sys_handle: Arc<SystemHandle>,
 ) -> Result<Response<Body>, RPCError> {
     let addr_vec = sys_handle
