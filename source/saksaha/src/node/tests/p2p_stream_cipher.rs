@@ -126,31 +126,14 @@ async fn test_is_handshake_successful() {
     let (peer_table_1, identity_1, p2p_host_1) =
         create_client(Some(35519), Some(35518)).await;
 
-    let (p2p_server_2, .., p2p_discovery_2) =
-        create_client(Some(35521), Some(35520)).await;
-
-    let addr = {
-        let p2p_port = 35521;
-        let disc_port = 35520;
-
-        let public_key = sak_crypto::convert_public_key_str_into_public_key(
-            &identity_1.credential.public_key_str,
-        )
-        .unwrap();
-
-        let addr = get_dummy_handshake_init_args(
-            public_key,
-            identity_1.credential.public_key_str.clone(),
-            identity_1.credential.sig,
-            p2p_port,
-            disc_port,
-        );
-
-        addr
-    };
+    let (.., p2p_host_2) = create_client(Some(35521), Some(35520)).await;
 
     tokio::spawn(async move {
         p2p_host_1.run().await;
+    });
+
+    tokio::spawn(async move {
+        p2p_host_2.run().await;
     });
 
     tokio::time::sleep(Duration::from_secs(3)).await;
@@ -171,7 +154,6 @@ async fn test_is_handshake_successful() {
 
     let peer_flag = peer_flag_handle.await.unwrap();
 
-    println!("Is it registered?, {}", peer_flag);
     assert_eq!(peer_flag, true);
 }
 

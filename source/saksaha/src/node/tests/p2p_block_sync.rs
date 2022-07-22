@@ -1,123 +1,7 @@
-use crate::blockchain::Blockchain;
-use crate::p2p::{P2PHost, P2PHostArgs};
-use crate::{machine::Machine, node::LocalNode};
-use colored::Colorize;
-use log::debug;
-use sak_p2p_addr::{AddrStatus, UnknownAddr};
-use sak_p2p_id::Identity;
-use sak_p2p_ptable::PeerTable;
 use sak_types::TxCandidate;
-use std::{sync::Arc, time::Duration};
+use std::time::Duration;
 
-async fn create_client(
-    app_prefix: String,
-    p2p_port: Option<u16>,
-    disc_port: Option<u16>,
-    secret: String,
-    public_key_str: String,
-    miner: bool,
-) -> (P2PHost, Arc<LocalNode>, Arc<Machine>) {
-    let (disc_socket, disc_port) =
-        sak_utils_net::setup_udp_socket(disc_port).await.unwrap();
-
-    let (p2p_socket, p2p_port) = match sak_utils_net::bind_tcp_socket(p2p_port)
-        .await
-    {
-        Ok((socket, socket_addr)) => {
-            debug!(
-                "Bound tcp socket for P2P host, addr: {}",
-                socket_addr.to_string().yellow(),
-            );
-
-            (socket, socket_addr.port())
-        }
-        Err(err) => {
-            debug!("Could not bind a tcp socket for P2P Host, err: {}", err);
-
-            panic!("p2p socet should open");
-        }
-    };
-
-    let p2p_peer_table = {
-        let ps = PeerTable::init(None)
-            .await
-            .expect("Peer table should be initialized");
-
-        Arc::new(ps)
-    };
-
-    let bootstrap_addrs = vec![UnknownAddr {
-        ip: String::from("127.0.0.1"),
-        disc_port: 35518,
-        p2p_port: None,
-        sig: None,
-        public_key_str: Some(String::from(
-            "\
-                    04715796a40b0d58fc14a3c4ebee21cb\
-                    806763066a7f1a17adbc256999764443\
-                    beb8109cfd000718535c5aa27513a2ed\
-                    afc6e8bdbe7c27edc2980f9bbc25142fc5\
-                    ",
-        )),
-        status: AddrStatus::Initialized,
-    }];
-
-    let identity = {
-        let i =
-            Identity::new(secret, public_key_str, p2p_port, disc_port.port())
-                .expect("identity should be initialized");
-
-        Arc::new(i)
-    };
-
-    let p2p_host_args = P2PHostArgs {
-        disc_socket,
-        addr_expire_duration: None,
-        addr_monitor_interval: None,
-        disc_dial_interval: None,
-        disc_table_capacity: None,
-        disc_task_interval: None,
-        disc_task_queue_capacity: None,
-        p2p_socket,
-        p2p_task_interval: None,
-        p2p_task_queue_capacity: None,
-        p2p_dial_interval: None,
-        p2p_port,
-        p2p_max_conn_count: None,
-        bootstrap_addrs,
-        identity: identity.clone(),
-        peer_table: p2p_peer_table.clone(),
-    };
-
-    let p2p_host = P2PHost::init(p2p_host_args)
-        .await
-        .expect("P2P Host should be initialized");
-
-    let blockchain = {
-        Blockchain::init(app_prefix, None, None, None, identity.clone())
-            .await
-            .unwrap()
-    };
-
-    let machine = {
-        let m = Machine { blockchain };
-
-        Arc::new(m)
-    };
-
-    let local_node = {
-        let ln = LocalNode {
-            peer_table: p2p_peer_table.clone(),
-            machine: machine.clone(),
-            miner,
-            mine_interval: Some(1000),
-        };
-
-        Arc::new(ln)
-    };
-
-    (p2p_host, local_node, machine)
-}
+use super::utils::create_client;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_check_true_init_config() {
@@ -151,7 +35,7 @@ async fn test_block_sync_true() {
             b42ef5f4640d4949dbf3992f6083b729baef9e9545c4\
             e95590616fd382662a09653f2a966ff524989ae8c0f",
         ),
-        true,
+        // true,
     )
     .await;
 
@@ -170,7 +54,7 @@ async fn test_block_sync_true() {
                     84d0dc478108629c0353f2876941f90d\
                     4b36346bcc19c6b625422adffb53b3a6af",
         ),
-        false,
+        // false,
     )
     .await;
 
@@ -180,12 +64,12 @@ async fn test_block_sync_true() {
     {
         let local_node_1 = local_node_1.clone();
         tokio::spawn(async move {
-            tokio::join!(p2p_host_1.run(), local_node_1.run(), machine_1.run(),);
+            tokio::join!(p2p_host_1.run(), local_node_1.run(), machine_1.run());
         });
 
         let local_node_2 = local_node_2.clone();
         tokio::spawn(async move {
-            tokio::join!(p2p_host_2.run(), local_node_2.run());
+            tokio::join!(p2p_host_2.run(), local_node_2.run(), machine_2.run());
         });
     }
 
@@ -220,14 +104,14 @@ async fn test_block_sync_true() {
     }
 
     {
-        local_node_1
-            .machine
-            .blockchain
-            .dist_ledger
-            .apis
-            .write_block(None)
-            .await
-            .expect("Block should be written");
+        // local_node_1
+        //     .machine
+        //     .blockchain
+        //     .dist_ledger
+        //     .apis
+        //     .write_block(None)
+        //     .await
+        //     .expect("Block should be written");
 
         let last_height_1 = local_node_1
             .machine

@@ -180,7 +180,6 @@ async fn test_sequential_sync_block_if_block_is_correct() {
     let repeat = 5;
 
     for i in 1..repeat as u64 {
-        println!("{}", i);
         let txs = utils::make_dummy_txs();
 
         let block = Block::new(
