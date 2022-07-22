@@ -6,12 +6,6 @@ use std::sync::Arc;
 use thiserror::Error;
 use tokio::sync::RwLock;
 
-pub struct HandshakeInitArgs {
-    pub identity: Arc<Identity>,
-    pub conn: Connection,
-    pub public_key_str: String,
-}
-
 #[derive(Error, Debug)]
 pub enum HandshakeInitError {
     #[error("Could not intilize handshake msg, err: {err}")]
@@ -69,6 +63,12 @@ pub enum HandshakeInitError {
     NotKnownAddr,
 }
 
+pub struct HandshakeInitArgs {
+    pub identity: Arc<Identity>,
+    pub conn: Connection,
+    pub public_key_str: String,
+}
+
 pub async fn initiate_handshake(
     handshake_init_args: HandshakeInitArgs,
 ) -> Result<Transport, HandshakeInitError> {
@@ -113,7 +113,9 @@ pub async fn initiate_handshake(
                 });
             }
         },
-        None => return Err(HandshakeInitError::HandshakeAckNotYetArrived),
+        None => {
+            return Err(HandshakeInitError::HandshakeAckNotYetArrived);
+        }
     };
 
     let her_public_key_str = handshake_ack.src_public_key_str;
@@ -133,6 +135,11 @@ pub async fn initiate_handshake(
 
     let shared_secret =
         sak_crypto::make_shared_secret(my_secret_key, her_public_key);
+
+    println!(
+        "[test] [init] shared_secret: {:?}",
+        shared_secret.as_bytes()
+    );
 
     let upgraded_conn = conn.upgrade(shared_secret, &[0; 12]);
 

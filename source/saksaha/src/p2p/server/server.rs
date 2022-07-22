@@ -81,7 +81,9 @@ impl Server {
                 }
             };
 
-            let conn = match Connection::new(socket) {
+            let conn_id = sak_crypto::rand();
+
+            let conn = match Connection::new(socket, conn_id) {
                 Ok(c) => {
                     debug!(
                         "Accepted a tcp connection from source, \

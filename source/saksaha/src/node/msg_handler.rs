@@ -17,14 +17,17 @@ pub(crate) async fn handle_msg<'a>(
 ) -> Result<(), SaksahaError> {
     match msg {
         Msg::TxHashSyn(tx_hash_syn_msg) => {
+            println!("handling tx hash syn");
             handle_tx_hash_syn(public_key, tx_hash_syn_msg, machine, &mut conn)
                 .await
         }
         Msg::BlockHashSyn(block_hash_syn_msg) => {
+            println!("handling block hash syn");
             handle_block_hash_syn(block_hash_syn_msg, machine, &mut conn)
                 .await?;
         }
         Msg::BlockSyn(block_syn_msg) => {
+            println!("handling block syn");
             handle_block_syn(block_syn_msg, machine, &mut conn).await?;
         }
         _ => (),

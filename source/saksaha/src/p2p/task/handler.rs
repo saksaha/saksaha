@@ -52,9 +52,11 @@ pub(crate) async fn run(task: P2PTask) {
                 return;
             }
 
+            let conn_id = sak_crypto::rand();
+
             let conn = match TcpStream::connect(&endpoint).await {
                 Ok(s) => {
-                    let c = match Connection::new(s) {
+                    let c = match Connection::new(s, conn_id) {
                         Ok(c) => c,
                         Err(err) => {
                             warn!("Error creating a connection, err: {}", err);

@@ -5,7 +5,7 @@ use super::P2PMonitor;
 use super::{dial_scheduler::P2PDialScheduler, server::Server};
 use sak_p2p_addr::UnknownAddr;
 use sak_p2p_disc::{Discovery, DiscoveryArgs};
-use sak_p2p_id::{Credential, Identity};
+use sak_p2p_id::Identity;
 use sak_p2p_ptable::PeerTable;
 use sak_task_queue::TaskQueue;
 use std::sync::Arc;
@@ -64,15 +64,6 @@ impl P2PHost {
             (runtime, p2p_task_queue)
         };
 
-        // let identity = {
-        //     let i = Identity {
-        //         credential: p2p_host_args.credential.clone(),
-        //         p2p_port: p2p_host_args.p2p_port,
-        //     };
-
-        //     Arc::new(i)
-        // };
-
         let (p2p_discovery, _disc_port) = {
             let disc_args = DiscoveryArgs {
                 addr_expire_duration: p2p_host_args.addr_expire_duration,
@@ -82,10 +73,8 @@ impl P2PHost {
                 disc_task_interval: p2p_host_args.disc_task_interval,
                 disc_task_queue_capacity: p2p_host_args
                     .disc_task_queue_capacity,
-                // credential: p2p_host_args.credential.clone(),
                 identity: p2p_host_args.identity.clone(),
                 udp_socket: p2p_host_args.disc_socket,
-                // disc_port: p2p_host_args.disc_port,
                 p2p_port: p2p_host_args.p2p_port,
                 bootstrap_addrs: p2p_host_args.bootstrap_addrs,
             };

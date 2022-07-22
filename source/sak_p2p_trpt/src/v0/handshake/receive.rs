@@ -57,9 +57,9 @@ pub async fn receive_handshake(
 
     let Handshake {
         instance_id,
+        src_p2p_port: _,
         src_public_key_str: her_public_key_str,
         dst_public_key_str: my_public_key_str,
-        ..
     } = handshake_syn;
 
     if my_public_key_str != identity.credential.public_key_str {
@@ -67,23 +67,6 @@ pub async fn receive_handshake(
             public_key: my_public_key_str,
         });
     }
-
-    let my_secret_key = &identity.credential.secret_key;
-    let her_public_key =
-        match sak_crypto::convert_public_key_str_into_public_key(
-            &her_public_key_str,
-        ) {
-            Ok(pk) => pk,
-            Err(err) => {
-                return Err(HandshakeRecvError::PublicKeyCreateFail {
-                    public_key: her_public_key_str,
-                    err,
-                })
-            }
-        };
-
-    let shared_secret =
-        sak_crypto::make_shared_secret(my_secret_key, her_public_key);
 
     let handshake = Handshake {
         instance_id: instance_id.clone(),
@@ -100,6 +83,29 @@ pub async fn receive_handshake(
             });
         }
     };
+
+    let my_secret_key = &identity.credential.secret_key;
+
+    let her_public_key =
+        match sak_crypto::convert_public_key_str_into_public_key(
+            &her_public_key_str,
+        ) {
+            Ok(pk) => pk,
+            Err(err) => {
+                return Err(HandshakeRecvError::PublicKeyCreateFail {
+                    public_key: her_public_key_str,
+                    err,
+                })
+            }
+        };
+
+    let shared_secret =
+        sak_crypto::make_shared_secret(my_secret_key, her_public_key);
+
+    println!(
+        "[test] [recv] shared_secret: {:?}",
+        shared_secret.as_bytes()
+    );
 
     let upgraded_conn = conn.upgrade(shared_secret, &[0; 12]);
 
