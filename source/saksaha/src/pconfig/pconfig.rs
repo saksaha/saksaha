@@ -66,8 +66,6 @@ impl PConfig {
     fn create_new_config() -> PConfig {
         let (sk, pk) = SakKey::generate();
 
-        println!("power33333333333: {:?}", sk.to_bytes());
-
         let secret_str = sak_crypto::encode_hex(&sk.to_bytes());
         let public_key_str =
             sak_crypto::encode_hex(&pk.to_encoded_point(false).to_bytes());

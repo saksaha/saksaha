@@ -27,8 +27,6 @@ pub(crate) async fn make_test_context() -> (RPC, SocketAddr, Arc<Machine>) {
         .await
         .expect("rpc socket should be initialized");
 
-    let genesis_block = make_dummy_genesis_block();
-
     let secret = String::from(
         "aa99cfd91cc6f3b541d28f3e0707f9c7bcf05cf495308294786ca450b501b5f2",
     );
@@ -125,8 +123,8 @@ pub(crate) async fn make_test_context() -> (RPC, SocketAddr, Arc<Machine>) {
     (rpc, rpc_socket_addr, machine)
 }
 
-pub fn make_dummy_genesis_block() -> BlockCandidate {
-    let genesis_block = BlockCandidate {
+pub fn make_dummy_tx_pour_block() -> BlockCandidate {
+    let tx_pour_block = BlockCandidate {
         validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
         tx_candidates: vec![
             TxCandidate::new_dummy_pour_m1_to_p3_p4(),
@@ -136,14 +134,37 @@ pub fn make_dummy_genesis_block() -> BlockCandidate {
         created_at: String::from("2022061515340000"),
     };
 
-    genesis_block
+    tx_pour_block
 }
 
 pub(crate) async fn make_blockchain() -> Blockchain {
-    let genesis_block = make_dummy_genesis_block();
+    let (_disc_socket, disc_port) = {
+        let (socket, socket_addr) =
+            sak_utils_net::setup_udp_socket(None).await.unwrap();
+
+        info!(
+            "Bound udp socket for P2P discovery, addr: {}",
+            socket_addr.to_string().yellow(),
+        );
+
+        (socket, socket_addr.port())
+    };
+
+    let secret = String::from(
+        "aa99cfd91cc6f3b541d28f3e0707f9c7bcf05cf495308294786ca450b501b5f2",
+    );
+
+    let public_key_str = String::from(
+        "\
+                04240874d8c323c22a571f735e835ed2\
+                f0619893a3989e557b1c9b4c699ac92b\
+                84d0dc478108629c0353f2876941f90d\
+                4b36346bcc19c6b625422adffb53b3a6af\
+                ",
+    );
 
     let identity = {
-        let id = Identity::new("".to_string(), "".to_string(), 1, 0)
+        let id = Identity::new(secret, public_key_str, 1, disc_port)
             .expect("identity should be initialized");
 
         Arc::new(id)
