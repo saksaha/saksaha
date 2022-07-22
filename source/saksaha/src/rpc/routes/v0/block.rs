@@ -22,10 +22,12 @@ pub(in crate::rpc) struct GetBlockResponse {
 }
 
 pub(crate) async fn get_block(
+    id: String,
     params: Params,
     sys_handle: Arc<SystemHandle>,
 ) -> Result<Response<Body>, RPCError> {
-    let params = params.ok_or::<RPCError>("".into())?;
+    let params =
+        params.ok_or::<RPCError>("get_block should contain parms".into())?;
 
     let rb: GetBlockRequest = utils::parse_params::<GetBlockRequest>(&params)?;
 
@@ -39,10 +41,7 @@ pub(crate) async fn get_block(
         Ok(block) => {
             let get_block_resp = GetBlockResponse { block };
 
-            return Ok(utils::make_success_response(
-                String::from("1"),
-                get_block_resp,
-            ));
+            return Ok(utils::make_success_response(id, get_block_resp));
         }
         Err(err) => {
             return Ok(utils::make_error_response(

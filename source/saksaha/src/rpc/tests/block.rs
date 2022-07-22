@@ -1,13 +1,7 @@
 use super::utils;
-use crate::rpc::router::{HandleError, JsonRequest, JsonResponse};
+use crate::rpc::router::{JsonRequest, JsonResponse};
 use crate::rpc::routes::v0::{GetBlockRequest, GetBlockResponse};
-use bytes::Bytes;
-use hyper::body::Buf;
 use hyper::{Body, Client, Method, Request, Uri};
-use serde::de::DeserializeOwned;
-use serde::{Deserialize, Serialize};
-use std::borrow::Cow;
-use std::io::Read;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_rpc_client_and_get_block() {
@@ -62,8 +56,6 @@ async fn test_rpc_client_and_get_block() {
 
         let str = serde_json::to_string(&json_request).unwrap();
 
-        println!("request body str (for debugging): {}", str);
-
         Body::from(str)
     };
 
@@ -77,14 +69,8 @@ async fn test_rpc_client_and_get_block() {
 
     let b = hyper::body::to_bytes(resp.into_body()).await.unwrap();
 
-    let resp_str = std::str::from_utf8(&b).unwrap();
-
-    println!("response (for debugging): {}", resp_str);
-
     let json_response =
         serde_json::from_slice::<JsonResponse<GetBlockResponse>>(&b).unwrap();
-
-    println!("resp struct: {:?}", json_response);
 
     let result = json_response.result.unwrap();
 
