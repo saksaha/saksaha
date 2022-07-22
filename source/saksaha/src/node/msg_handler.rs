@@ -131,7 +131,6 @@ pub(crate) async fn handle_block_hash_syn<'a>(
             blocks_to_req.push((height, block_hash));
         }
     }
-    println!("{:?}", blocks_to_req);
 
     match conn
         .socket
@@ -154,11 +153,16 @@ pub(crate) async fn handle_block_syn<'a>(
     machine: &Machine,
     _conn: &'a mut RwLockWriteGuard<'_, UpgradedConnection>,
 ) -> Result<(), SaksahaError> {
-    let block_candidates = block_syn_msg;
+    let blocks = block_syn_msg.blocks;
 
-    // for bc in block_candidates.blocks {
-    //     machine.blockchain.dist_ledger.write_block(Some(bc)).await?;
-    // }
+    for (block, txs) in blocks {
+        machine
+            .blockchain
+            .dist_ledger
+            .apis
+            .sync_block(block, txs)
+            .await?;
+    }
 
     Ok(())
 }

@@ -1,5 +1,5 @@
 use super::utils;
-use sak_types::{BlockCandidate, TxCandidate};
+use sak_types::{Block, BlockCandidate, TxCandidate};
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_insert_genesis_block_and_check_wrong_block_hash() {
@@ -147,14 +147,14 @@ async fn test_write_block_and_check_merkle_rt_changed() {
     for i in 0..5 as u64 {
         let cm: [u8; 32] = [i as u8; 32];
 
-        let block = BlockCandidate {
+        let bc = BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
             tx_candidates: vec![TxCandidate::new_dummy_pour_variant_cm(cm)],
             witness_sigs: vec![String::from("1")],
             created_at: format!("{}", i),
         };
 
-        match dist_ledger.apis.write_block(Some(block)).await {
+        match dist_ledger.apis.write_block(Some(bc)).await {
             Ok(v) => v,
             Err(err) => panic!("Failed to write dummy block, err: {}", err),
         };
@@ -167,5 +167,34 @@ async fn test_write_block_and_check_merkle_rt_changed() {
             .unwrap();
 
         println!("merkle_rt: {:?}", merkle_rt);
+    }
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn test_sequential_sync_block_and() {
+    sak_test_utils::init_test_log();
+    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
+
+    let dist_ledger = utils::make_dist_ledger().await;
+
+    for i in 0..5 as u64 {
+        let cm: [u8; 32] = [i as u8; 32];
+
+        let txs = utils::make_dummy_txs();
+
+        let block = Block::new(
+            String::from("validator_sig"),
+            vec![String::from("tx_hashes")],
+            vec![String::from("witness_sigs")],
+            String::from("created_at"),
+            i as u128,
+            [0; 32],
+            i as u128,
+        );
+
+        match dist_ledger.apis.sync_block(block, txs).await {
+            Ok(v) => v,
+            Err(err) => panic!("Failed to write dummy block, err: {}", err),
+        };
     }
 }

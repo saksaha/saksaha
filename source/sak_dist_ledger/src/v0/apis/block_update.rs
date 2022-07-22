@@ -3,8 +3,8 @@ use colored::Colorize;
 use log::{debug, info, warn};
 use sak_contract_std::{CtrCallType, Request, Storage};
 use sak_types::{
-    BlockCandidate, MintTxCandidate, PourTxCandidate, TxCandidate, TxCtrOp,
-    U8Array,
+    Block, BlockCandidate, MintTxCandidate, PourTxCandidate, Tx, TxCandidate,
+    TxCtrOp, U8Array,
 };
 use sak_vm::CtrFn;
 
@@ -173,6 +173,88 @@ impl DistLedgerApis {
 
         debug!(
             "Success writing block, hash: {}, block_height: {}",
+            block_hash.green(),
+            block.block_height,
+        );
+
+        Ok(Some(block_hash))
+    }
+
+    pub async fn sync_block(
+        &self,
+        block: Block,
+        txs: Vec<Tx>,
+    ) -> Result<Option<String>, LedgerError> {
+        let ledger_cm_count = match self.get_ledger_cm_count().await? {
+            Some(h) => h,
+            None => {
+                warn!(
+                    "Total cm count does not exist. Possibly the first block"
+                );
+
+                0
+            }
+        };
+
+        let mut ctr_state_update = CtrStateUpdate::new();
+        let mut merkle_update = MerkleUpdate::new();
+
+        let mut added_cm_count: u128 = 0;
+        for tx in &txs {
+            let cm_count = match tx {
+                Tx::Mint(tx) => {
+                    handle_mint_tx_candidate(
+                        self,
+                        &tx.tx_candidate,
+                        &mut ctr_state_update,
+                        &mut merkle_update,
+                        ledger_cm_count,
+                    )
+                    .await?
+                }
+                Tx::Pour(tx) => {
+                    handle_pour_tx_candidate(
+                        self,
+                        &tx.tx_candidate,
+                        &mut ctr_state_update,
+                        &mut merkle_update,
+                        ledger_cm_count,
+                    )
+                    .await?
+                }
+            };
+
+            added_cm_count += cm_count;
+        }
+
+        if let Some(_b) = self.get_block(block.get_block_hash())? {
+            return Err(format!(
+                "This block is already persisted: block_hash: {}",
+                block.get_block_hash()
+            )
+            .into());
+        };
+
+        let updated_ledger_cm_count = ledger_cm_count + added_cm_count;
+
+        let block_hash = self
+            .ledger_db
+            .schema
+            .put_block(
+                &block,
+                &txs,
+                &ctr_state_update,
+                &merkle_update,
+                updated_ledger_cm_count,
+            )
+            .await?;
+
+        if let Err(err) = self.sync_pool.insert_block(&block).await {
+            warn!("Error inserting block into the sync pool, err: {}", err);
+        }
+
+        debug!(
+            "Successfully sync block, hash: {}, block_height: {}",
             block_hash.green(),
             block.block_height,
         );

@@ -31,8 +31,6 @@ impl LedgerDBSchema {
     ) -> Result<Option<Tx>, LedgerError> {
         // let db = &self.kv_db.db_instance;
 
-        println!("get_tx, hash: {:?}", tx_hash);
-
         let tx_type = self
             // .schema
             .get_tx_type(tx_hash)?
