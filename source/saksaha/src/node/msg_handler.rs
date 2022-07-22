@@ -155,7 +155,18 @@ pub(crate) async fn handle_block_syn<'a>(
 ) -> Result<(), SaksahaError> {
     let blocks = block_syn_msg.blocks;
 
+    let latest_block_height = machine
+        .blockchain
+        .dist_ledger
+        .apis
+        .get_latest_block_height()?
+        .unwrap_or(0);
+
     for (block, txs) in blocks {
+        if block.block_height != (latest_block_height + 1) {
+            return Err("received not continuous block height".into());
+        }
+
         machine
             .blockchain
             .dist_ledger
