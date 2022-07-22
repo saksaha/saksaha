@@ -229,7 +229,7 @@ impl Routine {
         };
 
         let system_thread = tokio::spawn(async move {
-            tokio::join!(
+            let _ = tokio::join!(
                 rpc.run(),
                 p2p_host.run(),
                 local_node.run(),
