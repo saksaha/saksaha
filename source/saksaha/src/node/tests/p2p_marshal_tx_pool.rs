@@ -1,7 +1,6 @@
+use super::utils::create_client;
 use sak_types::{BlockCandidate, TxCandidate};
 use std::time::Duration;
-
-use super::utils::create_client;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_two_nodes_tx_pool_marshal_check_true() {
@@ -12,7 +11,7 @@ async fn test_two_nodes_tx_pool_marshal_check_true() {
     ])
     .unwrap();
 
-    let (p2p_host_1, local_node_1, machine_1) = create_client(
+    let (p2p_host_1, local_node_1, machine_1, _, _) = create_client(
         "test_1".to_string(),
         Some(35519),
         Some(35518), // disc_port
@@ -29,7 +28,7 @@ async fn test_two_nodes_tx_pool_marshal_check_true() {
     )
     .await;
 
-    let (p2p_host_2, local_node_2, machine_2) = create_client(
+    let (p2p_host_2, local_node_2, machine_2, _, _) = create_client(
         "test_2".to_string(),
         Some(35521),
         Some(35520), // disc_port
@@ -73,7 +72,7 @@ async fn test_two_nodes_tx_pool_marshal_check_true() {
         });
     }
 
-    tokio::time::sleep(Duration::from_secs(2)).await;
+    tokio::time::sleep(Duration::from_secs(3)).await;
 
     local_node_1
         .machine

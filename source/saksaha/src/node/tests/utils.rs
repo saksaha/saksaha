@@ -17,7 +17,13 @@ pub(crate) async fn create_client(
     disc_port: Option<u16>,
     secret: String,
     public_key_str: String,
-) -> (P2PHost, Arc<LocalNode>, Arc<Machine>) {
+) -> (
+    P2PHost,
+    Arc<LocalNode>,
+    Arc<Machine>,
+    Arc<PeerTable>,
+    Arc<Identity>,
+) {
     let (disc_socket, disc_port) = {
         let (socket, socket_addr) =
             sak_utils_net::setup_udp_socket(disc_port).await.unwrap();
@@ -126,7 +132,7 @@ pub(crate) async fn create_client(
         Arc::new(ln)
     };
 
-    (p2p_host, local_node, machine)
+    (p2p_host, local_node, machine, p2p_peer_table, identity)
 }
 
 // pub(crate) async fn create_client(

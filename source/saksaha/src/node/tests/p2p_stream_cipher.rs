@@ -1,3 +1,4 @@
+use super::utils;
 use crate::p2p::{P2PHost, P2PHostArgs};
 use colored::*;
 use log::info;
@@ -8,125 +9,72 @@ use sak_p2p_id::Identity;
 use sak_p2p_ptable::PeerTable;
 use std::{sync::Arc, time::Duration};
 
-fn get_dummy_handshake_init_args(
-    public_key: PublicKey,
-    public_key_str: String,
-    src_sig: Signature,
-    p2p_port: u16,
-    disc_port: u16,
-) -> Arc<DiscAddr> {
-    let a = DiscAddr::new_dummy(
-        public_key,
-        public_key_str,
-        src_sig,
-        disc_port,
-        p2p_port,
-    );
+// fn get_dummy_handshake_init_args(
+//     public_key: PublicKey,
+//     public_key_str: String,
+//     src_sig: Signature,
+//     p2p_port: u16,
+//     disc_port: u16,
+// ) -> Arc<DiscAddr> {
+//     let a = DiscAddr::new_dummy(
+//         public_key,
+//         public_key_str,
+//         src_sig,
+//         disc_port,
+//         p2p_port,
+//     );
 
-    Arc::new(a)
-}
-
-async fn create_client(
-    p2p_port: Option<u16>,
-    disc_port: Option<u16>,
-) -> (Arc<PeerTable>, Arc<Identity>, Arc<P2PHost>) {
-    let (p2p_socket, p2p_port) = sak_utils_net::bind_tcp_socket(p2p_port)
-        .await
-        .expect("p2p socket should be initialized");
-
-    let (disc_socket, disc_port) = {
-        let (socket, socket_addr) =
-            sak_utils_net::setup_udp_socket(disc_port).await.unwrap();
-
-        info!(
-            "Bound udp socket for P2P discovery, addr: {}",
-            socket_addr.to_string().yellow(),
-        );
-
-        (socket, socket_addr.port())
-    };
-
-    let secret = String::from(
-        "aa99cfd91cc6f3b541d28f3e0707f9c7bcf05cf495308294786ca450b501b5f2",
-    );
-
-    let public_key_str = String::from(
-        "\
-            04240874d8c323c22a571f735e835ed2\
-            f0619893a3989e557b1c9b4c699ac92b\
-            84d0dc478108629c0353f2876941f90d\
-            4b36346bcc19c6b625422adffb53b3a6af\
-            ",
-    );
-
-    let p2p_peer_table = {
-        let ps = PeerTable::init(None)
-            .await
-            .expect("Peer table should be initialized");
-
-        Arc::new(ps)
-    };
-
-    let identity = {
-        let id =
-            Identity::new(secret, public_key_str, p2p_port.port(), disc_port)
-                .expect("identity should be initialized");
-
-        Arc::new(id)
-    };
-
-    let bootstrap_addrs = vec![UnknownAddr {
-        ip: String::from("127.0.0.1"),
-        disc_port: 35518,
-        p2p_port: None,
-        sig: None,
-        public_key_str: Some(String::from(
-            "\
-                            04715796a40b0d58fc14a3c4ebee21cb\
-                            806763066a7f1a17adbc256999764443\
-                            beb8109cfd000718535c5aa27513a2ed\
-                            afc6e8bdbe7c27edc2980f9bbc25142fc5\
-                            ",
-        )),
-        status: AddrStatus::Initialized,
-    }];
-
-    let p2p_host_args = P2PHostArgs {
-        addr_expire_duration: None,
-        addr_monitor_interval: None,
-        disc_dial_interval: None,
-        disc_table_capacity: None,
-        disc_task_interval: None,
-        disc_task_queue_capacity: None,
-        p2p_socket,
-        p2p_task_interval: None,
-        p2p_task_queue_capacity: None,
-        p2p_dial_interval: None,
-        p2p_port: p2p_port.port(),
-        p2p_max_conn_count: None,
-        bootstrap_addrs,
-        identity: identity.clone(),
-        disc_socket,
-        peer_table: p2p_peer_table.clone(),
-    };
-
-    let p2p_host = {
-        let h = P2PHost::init(p2p_host_args).await.unwrap();
-        Arc::new(h)
-    };
-
-    (p2p_peer_table, identity, p2p_host)
-}
+//     Arc::new(a)
+// }
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_is_handshake_successful() {
     sak_test_utils::init_test_log();
     sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
 
-    let (peer_table_1, identity_1, p2p_host_1) =
-        create_client(Some(35519), Some(35518)).await;
+    let app_prefix_vec = vec![String::from("test_1"), String::from("test_2")];
 
-    let (.., p2p_host_2) = create_client(Some(35521), Some(35520)).await;
+    // let (peer_table_1, identity_1, p2p_host_1) =
+    //     create_client(Some(35519), Some(35518)).await;
+
+    let (p2p_host_1, local_node_1, machine_1, peer_table_1, identity_1) =
+        utils::create_client(
+            app_prefix_vec[0].to_string(),
+            Some(35519),
+            Some(35518),
+            String::from(
+                "7297b903877a957748b74068d63d6d5661481975240\
+            99fc1df5cd9e8814c66c7",
+            ),
+            String::from(
+                "045739d074b8722891c307e8e75c9607e0b55a80778\
+            b42ef5f4640d4949dbf3992f6083b729baef9e9545c4\
+            e95590616fd382662a09653f2a966ff524989ae8c0f",
+            ),
+            // true,
+        )
+        .await;
+
+    // let (.., p2p_host_2) = create_client(Some(35521), Some(35520)).await;
+    let (p2p_host_2, local_node_2, machine_2, peer_table_2, _) =
+        utils::create_client(
+            app_prefix_vec[1].to_string(),
+            Some(35521),
+            Some(35520),
+            String::from(
+                "aa99cfd91cc6f3b541d28f3e0707f9c7bcf05cf495308294786\
+                    ca450b501b5f2",
+            ),
+            String::from(
+                "\
+                    04240874d8c323c22a571f735e835ed2\
+                    f0619893a3989e557b1c9b4c699ac92b\
+                    84d0dc478108629c0353f2876941f90d\
+                    4b36346bcc19c6b625422adffb53b3a6af",
+            ),
+            // false,
+        )
+        .await;
 
     tokio::spawn(async move {
         p2p_host_1.run().await;
@@ -141,11 +89,14 @@ async fn test_is_handshake_successful() {
     let peer_flag_handle = tokio::spawn(async move {
         tokio::time::sleep(Duration::from_secs(3)).await;
 
-        let is_peer_registered = match peer_table_1
+        let is_peer_registered = match peer_table_2
             .get_mapped_peer(&identity_1.credential.public_key_str)
             .await
         {
-            Some(_) => true,
+            Some(p) => {
+                println!("Peer is successfully mapped!");
+                true
+            }
             None => false,
         };
 
