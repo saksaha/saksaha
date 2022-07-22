@@ -37,8 +37,6 @@ impl Router {
             let route_map = route_map.clone();
 
             if let Some(handler) = route_map.get(req.uri().path()) {
-                println!("found handler");
-
                 match handler(req, sys_handle).await {
                     Ok(r) => return Ok(r),
                     Err(err) => {

@@ -1,6 +1,7 @@
+pub(in crate::rpc) mod v0;
+
 use super::route_map::{Handler, Path};
 use std::collections::HashMap;
-pub(super) mod v0;
 
 pub(in crate::rpc) fn get_routes() -> HashMap<&'static str, Handler> {
     let paths: Vec<Path> = vec![

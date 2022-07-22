@@ -1,5 +1,5 @@
-use super::HandleError;
 use super::utils;
+use super::HandleError;
 use crate::rpc::{router::HeaderFactory, RPCError};
 use hyper::{
     header::{HeaderValue, CONTENT_TYPE},
@@ -12,12 +12,12 @@ pub(in crate::rpc) const JSON_RPC_VERSION: &'static str = "2.0";
 #[derive(Serialize, Deserialize, Debug)]
 pub(in crate::rpc) struct RPCResponse {}
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub(in crate::rpc) struct JsonResponse<D: Serialize> {
-    jsonrpc: &'static str,
-    error: Option<HandleError>,
-    result: Option<D>,
-    id: String,
+    pub jsonrpc: String,
+    pub error: Option<HandleError>,
+    pub result: Option<D>,
+    pub id: String,
 }
 
 impl RPCResponse {
@@ -47,7 +47,6 @@ impl RPCResponse {
                 Err(err) => {
                     return utils::make_serialize_err_response(
                         id,
-                        header_factory,
                         Some(err.into()),
                     )
                 }
@@ -87,7 +86,6 @@ impl RPCResponse {
                 Err(err) => {
                     return utils::make_serialize_err_response(
                         id,
-                        header_factory,
                         Some(err.into()),
                     );
                 }

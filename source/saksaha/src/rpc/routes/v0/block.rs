@@ -8,12 +8,12 @@ use sak_types::Block;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub(in crate::rpc) struct GetBlockRequest {
     pub block_hash: String,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub(in crate::rpc) struct GetBlockResponse {
     pub block: Option<Block>,
 }

@@ -1,8 +1,7 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub(crate) struct HandleError {
     // pub code: &'a str,
     pub msg: String,
 }
-

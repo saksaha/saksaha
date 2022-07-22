@@ -9,7 +9,7 @@ use sak_types::{MintTxCandidate, PourTxCandidate, Tx, TxCandidate};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 struct SendMintTxBody {
     created_at: String,
     #[serde(with = "serde_bytes")]
@@ -22,7 +22,7 @@ struct SendMintTxBody {
     s: [u8; 32],
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 struct SendPourTxBody {
     created_at: String,
     #[serde(with = "serde_bytes")]
@@ -112,7 +112,7 @@ pub(crate) async fn send_pour_tx(
     }
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 struct GetTransactionBody {
     hash: String,
 }

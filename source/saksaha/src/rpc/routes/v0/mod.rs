@@ -1,9 +1,9 @@
-mod tx;
-mod contract;
 mod block;
+mod contract;
 mod status;
+mod tx;
 
-pub(crate) use tx::*;
-pub(crate) use contract::*;
-pub(crate) use block::*;
-pub(crate) use status::*;
+pub(in crate::rpc) use block::*;
+pub(in crate::rpc) use contract::*;
+pub(in crate::rpc) use status::*;
+pub(in crate::rpc) use tx::*;

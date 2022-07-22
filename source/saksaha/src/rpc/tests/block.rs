@@ -1,7 +1,12 @@
 use super::utils;
-use crate::rpc::router::RPCResponse;
+use crate::rpc::router::{HandleError, JsonResponse, RPCResponse};
+use crate::rpc::routes::v0::{GetBlockRequest, GetBlockResponse};
+use bytes::Bytes;
 use hyper::body::Buf;
 use hyper::{Body, Client, Method, Request, Uri};
+use serde::de::DeserializeOwned;
+use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 use std::io::Read;
 
 #[tokio::test(flavor = "multi_thread")]
@@ -11,13 +16,13 @@ async fn test_rpc_client_and_get_block() {
 
     let (rpc, rpc_socket_addr, machine) = utils::make_test_context().await;
 
-    let _rpc_server = tokio::spawn(async move { rpc.run().await });
+    tokio::spawn(async move { rpc.run().await });
 
-    let _client = Client::new();
+    let client = Client::new();
 
     let block_candidate_same = utils::make_dummy_tx_pour_block();
 
-    let block_hash = {
+    let original_block_hash = {
         let block_hash = match machine
             .blockchain
             .dist_ledger
@@ -29,7 +34,7 @@ async fn test_rpc_client_and_get_block() {
             Err(err) => panic!("Failed to write dummy block, err: {}", err),
         };
 
-        block_hash
+        block_hash.unwrap()
     };
 
     let uri: Uri = {
@@ -41,44 +46,43 @@ async fn test_rpc_client_and_get_block() {
         u.parse().expect("URI should be made")
     };
 
+    let body = {
+        let r = GetBlockRequest {
+            block_hash: original_block_hash.to_string(),
+        };
+
+        let str = serde_json::to_string(&r).unwrap();
+
+        Body::from(str)
+    };
+
     let req = Request::builder()
         .method(Method::POST)
         .uri(uri)
-        .body(Body::from(block_hash.clone().unwrap()))
+        .body(body)
         .expect("request builder should be made");
 
-    match hyper::body::to_bytes(req.into_body()).await {
-        Ok(b) => {
-            let body_bytes_vec = b.to_vec();
-            let _vh = match std::str::from_utf8(&body_bytes_vec) {
-                Ok(b) => {
-                    let hash = &b.to_string();
-                    println!("block hash : {:?}", hash);
-                    let _vht = match machine
-                        .blockchain
-                        .dist_ledger
-                        .apis
-                        .get_block(hash)
-                    {
-                        Ok(block) => {
-                            // println!("{:?}", &block);
-                            let block = block.unwrap();
-                            let block_hash_from_get_block =
-                                block.get_block_hash();
+    let resp = client.request(req).await.unwrap();
 
-                            let block_hash_expected = block_hash.unwrap();
+    let b = hyper::body::to_bytes(resp.into_body()).await.unwrap();
 
-                            assert_eq!(
-                                block_hash_expected,
-                                block_hash_from_get_block.to_string()
-                            );
-                        }
-                        Err(_err) => panic!("error : {:?}", _err),
-                    };
-                }
-                Err(_err) => panic!(),
-            };
-        }
-        Err(_err) => panic!(),
-    }
+    let resp_str = std::str::from_utf8(&b).unwrap();
+
+    println!("response (for debugging): {}", resp_str);
+
+    let json_response =
+        serde_json::from_slice::<JsonResponse<GetBlockResponse>>(&b).unwrap();
+
+    println!("resp struct: {:?}", json_response);
+
+    let result = json_response.result.unwrap();
+
+    let block_acquired = result.block.unwrap();
+
+    println!(
+        "block hash (from rpc response) : {:?}",
+        block_acquired.get_block_hash(),
+    );
+
+    assert_eq!(block_acquired.get_block_hash(), &original_block_hash);
 }
