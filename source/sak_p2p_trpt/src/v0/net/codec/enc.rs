@@ -1,22 +1,37 @@
-use crate::{Msg, TrptError};
+use crate::{
+    Msg, TrptError, BLOCK_HASH_ACK, BLOCK_HASH_SYN, BLOCK_SYN_TYPE,
+    HANDSHAKE_ACK_TYPE, HANDSHAKE_SYN_TYPE, TX_HASH_ACK_TYPE, TX_HASH_SYN_TYPE,
+    TX_SYN_TYPE,
+};
 use bytes::BytesMut;
 use sak_p2p_frame::frame_io;
 
 pub(super) fn encode_into_frame(
     item: Msg,
     dst: &mut BytesMut,
-) -> Result<(), TrptError> {
-    let frame = match item {
+) -> Result<&'static str, TrptError> {
+    let (frame, msg_type) = match item {
         // Msg::Hello(hello) => hello.into_frame(),
-        Msg::HandshakeSyn(handshake) => handshake.into_syn_frame(),
-        Msg::HandshakeAck(handshake) => handshake.into_ack_frame(),
-        Msg::TxSyn(sync) => sync.into_frame(),
-        Msg::TxHashSyn(sync_tx_hash) => sync_tx_hash.into_syn_frame(),
-        Msg::TxHashAck(sync_tx_hash) => sync_tx_hash.into_ack_frame(),
-        Msg::BlockHashSyn(block_hash_sync) => block_hash_sync.into_syn_frame(),
-        Msg::BlockHashAck(block_hash_sync) => block_hash_sync.into_ack_frame(),
-        Msg::BlockSyn(sync_block) => sync_block.into_frame(),
-        _ => panic!("invalid message"),
+        Msg::HandshakeSyn(handshake) => {
+            (handshake.into_syn_frame(), HANDSHAKE_SYN_TYPE)
+        }
+        Msg::HandshakeAck(handshake) => {
+            (handshake.into_ack_frame(), HANDSHAKE_ACK_TYPE)
+        }
+        Msg::TxSyn(sync) => (sync.into_frame(), TX_SYN_TYPE),
+        Msg::TxHashSyn(sync_tx_hash) => {
+            (sync_tx_hash.into_syn_frame(), TX_HASH_SYN_TYPE)
+        }
+        Msg::TxHashAck(sync_tx_hash) => {
+            (sync_tx_hash.into_ack_frame(), TX_HASH_ACK_TYPE)
+        }
+        Msg::BlockHashSyn(block_hash_sync) => {
+            (block_hash_sync.into_syn_frame(), BLOCK_HASH_SYN)
+        }
+        Msg::BlockHashAck(block_hash_sync) => {
+            (block_hash_sync.into_ack_frame(), BLOCK_HASH_ACK)
+        }
+        Msg::BlockSyn(sync_block) => (sync_block.into_frame(), BLOCK_SYN_TYPE),
     };
 
     match frame_io::write_frame(dst, &frame) {
@@ -30,5 +45,5 @@ pub(super) fn encode_into_frame(
         }
     };
 
-    Ok(())
+    Ok(msg_type)
 }

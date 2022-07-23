@@ -14,7 +14,6 @@ async fn test_check_true_init_config() {
 #[tokio::test(flavor = "multi_thread")]
 async fn test_block_sync_true() {
     sak_test_utils::init_test_log();
-    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
 
     let app_prefix_vec = vec![String::from("test_1"), String::from("test_2")];
     sak_test_utils::init_test_config(&app_prefix_vec)

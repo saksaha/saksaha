@@ -49,6 +49,8 @@ impl PeerNode {
                     };
                 },
                 maybe_msg = conn.socket.next() => {
+                    println!("22, msg: {:?}", maybe_msg);
+
                     match maybe_msg {
                         Some(maybe_msg) => match maybe_msg {
                             Ok(msg) => {
@@ -61,8 +63,6 @@ impl PeerNode {
                                 ).await;
                             }
                             Err(err) => {
-                        println!("hjere44");
-
                                 warn!("Failed to parse the msg, err: {}", err);
                             }
                         }

@@ -22,7 +22,7 @@ impl Connection {
     pub fn new(socket: TcpStream, id: usize) -> Result<Connection, TrptError> {
         let socket_addr = socket.peer_addr()?;
 
-        let p2p_codec = P2PCodec {};
+        let p2p_codec = P2PCodec { id };
 
         let socket = Framed::new(socket, p2p_codec);
 
