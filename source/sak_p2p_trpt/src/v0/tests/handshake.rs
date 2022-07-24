@@ -1,10 +1,10 @@
-// use crate::handshake::{initiate_handshake, HandshakeInitArgs};
 use crate::net::Connection;
 use crate::{handshake::*, Msg, TxHashSynMsg, UpgradedP2PCodec};
 use crate::{Handshake, Transport};
 use chacha20::cipher::StreamCipher;
 use chacha20::{ChaCha20, ChaChaCore};
 use futures::{SinkExt, StreamExt};
+use log::{debug, info};
 use sak_p2p_id::Identity;
 use std::borrow::BorrowMut;
 use std::ops::Deref;
@@ -142,9 +142,6 @@ async fn handshake_init(
     my_identity: Arc<Identity>,
     her_identity: Arc<Identity>,
 ) -> Transport {
-    // let tcp_stream = accept(p2p_socket).await.unwrap();
-    // let conn = Connection::new(tcp_stream).unwrap();
-
     log::debug!(
         "[init] send handshake_syn, peer node: {:?}",
         conn.socket_addr
@@ -182,8 +179,7 @@ async fn handshake_init(
 async fn handshake_recv(
     p2p_socket: TcpListener,
     my_identity: Arc<Identity>,
-    her_identity: Arc<Identity>,
-) -> Transport {
+) -> (Transport, String) {
     let conn_id = sak_crypto::rand();
 
     let tcp_stream = accept(p2p_socket).await.unwrap();
@@ -196,16 +192,7 @@ async fn handshake_recv(
         conn_id,
     );
 
-    let handshake = Handshake::new(
-        // her_identity.p2p_port,
-        conn.socket_addr.port(),
-        her_identity.credential.public_key_str.clone(),
-        (*my_identity).credential.public_key_str.clone(),
-    )
-    .unwrap();
-
     let handshake_recv_args = HandshakeRecvArgs {
-        handshake_syn: handshake,
         identity: my_identity.to_owned(),
     };
 
@@ -214,25 +201,28 @@ async fn handshake_recv(
         conn.socket_addr
     );
 
-    let transport = match receive_handshake(handshake_recv_args, conn).await {
-        Ok(t) => {
-            log::info!(
-                "[recv] peer successfuly constructs a `shared secret key` after handshaking"
-            );
-            t
-        }
-        Err(err) => {
-            log::warn!(
-                "Error processing InitiateHandshake, discarding, \
+    let (transport, her_public_key_str) =
+        match receive_handshake(handshake_recv_args, conn).await {
+            Ok(t) => {
+                log::info!(
+                    "[recv] peer successfuly constructs a `shared \
+                secret key` after handshaking"
+                );
+
+                t
+            }
+            Err(err) => {
+                log::warn!(
+                    "Error processing InitiateHandshake, discarding, \
                             err: {}",
-                err,
-            );
+                    err,
+                );
 
-            panic!();
-        }
-    };
+                panic!();
+            }
+        };
 
-    transport
+    (transport, her_public_key_str)
 }
 
 #[tokio::test(flavor = "multi_thread")]
@@ -256,33 +246,24 @@ async fn test_handshake_works() {
     let identity_2_clone = identity_2.clone();
 
     tokio::spawn(async move {
-        let transport_1 = handshake_init(
-            conn_2,
-            // tcp_listener_1,
-            identity_1_clone,
-            identity_2_clone,
-        )
-        .await;
+        let transport_1 =
+            handshake_init(conn_2, identity_1_clone, identity_2_clone).await;
 
         println!("preparing to send msg,");
 
-        tokio::time::sleep(Duration::from_secs(10)).await;
-
         let mut conn_1_lock = transport_1.conn.write().await;
 
-        // let msg = TxHashSynMsg {
-        //     tx_hashes: vec!["123".to_string()],
-        // };
+        let msg = TxHashSynMsg {
+            tx_hashes: vec!["123".to_string()],
+        };
 
-        // conn_1_lock.socket.send(Msg::TxHashSyn(msg)).await.unwrap();
+        conn_1_lock.socket.send(Msg::TxHashSyn(msg)).await.unwrap();
     });
 
-    let identity_1_clone = identity_1.clone();
     let identity_2_clone = identity_2.clone();
     tokio::spawn(async move {
-        let transport_2 =
-            handshake_recv(tcp_listener_2, identity_2_clone, identity_1_clone)
-                .await;
+        let (transport_2, _) =
+            handshake_recv(tcp_listener_2, identity_2_clone).await;
 
         let mut conn_2_lock = transport_2.conn.write().await;
 

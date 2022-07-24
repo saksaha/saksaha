@@ -1,12 +1,25 @@
+use crate::TrptError;
 use crate::{Connection, Handshake, Msg, Transport};
 use futures::SinkExt;
+use futures::StreamExt;
+use log::warn;
 use sak_p2p_id::Identity;
+use std::net::SocketAddr;
 use std::sync::Arc;
 use thiserror::Error;
 use tokio::sync::RwLock;
 
 #[derive(Error, Debug)]
 pub enum HandshakeRecvError {
+    #[error("Msg of this type is not expected at this stage.")]
+    InvalidMsgType,
+
+    #[error("Could not parse the message, err: {err}")]
+    MsgParseError { err: TrptError },
+
+    #[error("Peer has ended the connection, socket_addr: {socket_addr}")]
+    PeerEndedConnection { socket_addr: SocketAddr },
+
     #[error(
         "She does not know my public key correct, my public key (she knows)\
         : {public_key}"
@@ -42,18 +55,37 @@ pub enum HandshakeRecvError {
 }
 
 pub struct HandshakeRecvArgs {
-    pub handshake_syn: Handshake,
+    // pub handshake_syn: Handshake,
     pub identity: Arc<Identity>,
 }
 
 pub async fn receive_handshake(
     handshake_recv_args: HandshakeRecvArgs,
     mut conn: Connection,
-) -> Result<Transport, HandshakeRecvError> {
+) -> Result<(Transport, String), HandshakeRecvError> {
     let HandshakeRecvArgs {
-        handshake_syn,
+        // handshake_syn,
         identity,
     } = handshake_recv_args;
+
+    let handshake_syn = match conn.socket.next().await {
+        Some(maybe_msg) => match maybe_msg {
+            Ok(msg) => match msg {
+                Msg::HandshakeSyn(handshake) => handshake,
+                _ => {
+                    return Err(HandshakeRecvError::InvalidMsgType);
+                }
+            },
+            Err(err) => {
+                return Err(HandshakeRecvError::MsgParseError { err });
+            }
+        },
+        None => {
+            return Err(HandshakeRecvError::PeerEndedConnection {
+                socket_addr: conn.socket_addr,
+            });
+        }
+    };
 
     let Handshake {
         instance_id,
@@ -113,5 +145,5 @@ pub async fn receive_handshake(
         conn: RwLock::new(upgraded_conn),
     };
 
-    return Ok(transport);
+    return Ok((transport, her_public_key_str));
 }
