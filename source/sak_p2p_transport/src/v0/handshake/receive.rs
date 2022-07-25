@@ -1,12 +1,25 @@
+use crate::TrptError;
 use crate::{Connection, Handshake, Msg, Transport};
 use futures::SinkExt;
+use futures::StreamExt;
+use log::warn;
 use sak_p2p_id::Identity;
+use std::net::SocketAddr;
 use std::sync::Arc;
 use thiserror::Error;
 use tokio::sync::RwLock;
 
 #[derive(Error, Debug)]
 pub enum HandshakeRecvError {
+    #[error("Msg of this type is not expected at this stage.")]
+    InvalidMsgType,
+
+    #[error("Could not parse the message, err: {err}")]
+    MsgParseError { err: TrptError },
+
+    #[error("Peer has ended the connection, socket_addr: {socket_addr}")]
+    PeerEndedConnection { socket_addr: SocketAddr },
+
     #[error(
         "She does not know my public key correct, my public key (she knows)\
         : {public_key}"
@@ -42,24 +55,39 @@ pub enum HandshakeRecvError {
 }
 
 pub struct HandshakeRecvArgs {
-    pub handshake_syn: Handshake,
     pub identity: Arc<Identity>,
 }
 
 pub async fn receive_handshake(
     handshake_recv_args: HandshakeRecvArgs,
     mut conn: Connection,
-) -> Result<Transport, HandshakeRecvError> {
-    let HandshakeRecvArgs {
-        handshake_syn,
-        identity,
-    } = handshake_recv_args;
+) -> Result<(Transport, String), HandshakeRecvError> {
+    let HandshakeRecvArgs { identity } = handshake_recv_args;
+
+    let handshake_syn = match conn.socket.next().await {
+        Some(maybe_msg) => match maybe_msg {
+            Ok(msg) => match msg {
+                Msg::HandshakeSyn(handshake) => handshake,
+                _ => {
+                    return Err(HandshakeRecvError::InvalidMsgType);
+                }
+            },
+            Err(err) => {
+                return Err(HandshakeRecvError::MsgParseError { err });
+            }
+        },
+        None => {
+            return Err(HandshakeRecvError::PeerEndedConnection {
+                socket_addr: conn.socket_addr,
+            });
+        }
+    };
 
     let Handshake {
         instance_id,
+        src_p2p_port: _,
         src_public_key_str: her_public_key_str,
         dst_public_key_str: my_public_key_str,
-        ..
     } = handshake_syn;
 
     if my_public_key_str != identity.credential.public_key_str {
@@ -67,23 +95,6 @@ pub async fn receive_handshake(
             public_key: my_public_key_str,
         });
     }
-
-    let my_secret_key = &identity.credential.secret_key;
-    let her_public_key =
-        match sak_crypto::convert_public_key_str_into_public_key(
-            &her_public_key_str,
-        ) {
-            Ok(pk) => pk,
-            Err(err) => {
-                return Err(HandshakeRecvError::PublicKeyCreateFail {
-                    public_key: her_public_key_str,
-                    err,
-                })
-            }
-        };
-
-    let shared_secret =
-        sak_crypto::make_shared_secret(my_secret_key, her_public_key);
 
     let handshake = Handshake {
         instance_id: instance_id.clone(),
@@ -101,11 +112,29 @@ pub async fn receive_handshake(
         }
     };
 
+    let my_secret_key = &identity.credential.secret_key;
+
+    let her_public_key =
+        match sak_crypto::convert_public_key_str_into_public_key(
+            &her_public_key_str,
+        ) {
+            Ok(pk) => pk,
+            Err(err) => {
+                return Err(HandshakeRecvError::PublicKeyCreateFail {
+                    public_key: her_public_key_str,
+                    err,
+                })
+            }
+        };
+
+    let shared_secret =
+        sak_crypto::make_shared_secret(my_secret_key, her_public_key);
+
     let upgraded_conn = conn.upgrade(shared_secret, &[0; 12]);
 
     let transport = Transport {
         conn: RwLock::new(upgraded_conn),
     };
 
-    return Ok(transport);
+    return Ok((transport, her_public_key_str));
 }

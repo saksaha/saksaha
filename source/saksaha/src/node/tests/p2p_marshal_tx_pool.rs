@@ -1,4 +1,13 @@
+use super::utils;
 use super::utils::create_client;
+use crate::blockchain::Blockchain;
+use crate::p2p::{P2PHost, P2PHostArgs};
+use crate::{machine::Machine, node::LocalNode};
+use colored::Colorize;
+use log::{debug, info};
+use sak_p2p_addr::{AddrStatus, UnknownAddr};
+use sak_p2p_id::Identity;
+use sak_p2p_ptable::PeerTable;
 use sak_types::{BlockCandidate, TxCandidate};
 use std::time::Duration;
 
@@ -11,38 +20,43 @@ async fn test_two_nodes_tx_pool_marshal_check_true() {
     ])
     .unwrap();
 
-    let (p2p_host_1, local_node_1, machine_1, _, _) = create_client(
+    let (p2p_host_1, local_node_1, machine_1, _, _) = utils::create_client(
         "test_1".to_string(),
         Some(35519),
-        Some(35518), // disc_port
+        Some(35518),
         String::from(
-            "4649b25129b6206cb9bedd7356ba17d57a0ff1e\
-                    1939f02e01cf59ab2a61633bb",
+            "\
+                7297b903877a957748b74068d63d6d566\
+                148197524099fc1df5cd9e8814c66c7",
         ),
         String::from(
             "\
-                04fbd9336fcbb603a5cf80435e193c107eaf80cd3a7e93009f15\
-                6c410444d59db3b3bcccae6bc6f736b43ee9542ee657955b94984\
-                7dcedc79dd295950af9e87f03",
+                045739d074b8722891c307e8e75c9607e\
+                0b55a80778b42ef5f4640d4949dbf3992\
+                f6083b729baef9e9545c4e95590616fd3\
+                82662a09653f2a966ff524989ae8c0f",
         ),
+        // true,
     )
     .await;
 
-    let (p2p_host_2, local_node_2, machine_2, _, _) = create_client(
+    let (p2p_host_2, local_node_2, machine_2, _, _) = utils::create_client(
         "test_2".to_string(),
         Some(35521),
-        Some(35520), // disc_port
+        Some(35520),
         String::from(
-            "aa99cfd91cc6f3b541d28f3e0707f9c7bcf05cf495308294786\
-                    ca450b501b5f2",
+            "\
+                aa99cfd91cc6f3b541d28f3e0707f9c7b\
+                cf05cf495308294786ca450b501b5f2",
         ),
         String::from(
             "\
-                    04240874d8c323c22a571f735e835ed2\
-                    f0619893a3989e557b1c9b4c699ac92b\
-                    84d0dc478108629c0353f2876941f90d\
-                    4b36346bcc19c6b625422adffb53b3a6af",
+                04240874d8c323c22a571f735e835ed2\
+                f0619893a3989e557b1c9b4c699ac92b\
+                84d0dc478108629c0353f2876941f90d\
+                4b36346bcc19c6b625422adffb53b3a6af",
         ),
+        // false,
     )
     .await;
 
@@ -92,7 +106,7 @@ async fn test_two_nodes_tx_pool_marshal_check_true() {
         .await
         .expect("Node should be able to send a transaction");
 
-    tokio::time::sleep(Duration::from_secs(2)).await;
+    tokio::time::sleep(Duration::from_secs(3)).await;
 
     {
         let tx_pool_2_contains_tx1 = local_node_2

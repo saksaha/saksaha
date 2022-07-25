@@ -1,7 +1,7 @@
 use crate::{machine::Machine, SaksahaError};
 use futures::{SinkExt, StreamExt};
 use log::{info, warn};
-use sak_p2p_trpt::{
+use sak_p2p_transport::{
     BlockHashSynMsg, BlockSynMsg, Msg, TxHashSynMsg, TxSynMsg,
     UpgradedConnection,
 };

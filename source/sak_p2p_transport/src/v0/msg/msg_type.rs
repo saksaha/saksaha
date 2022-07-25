@@ -13,3 +13,5 @@ pub(crate) const BLOCK_HASH_SYN: &str = "block_hash_syn";
 pub(crate) const BLOCK_HASH_ACK: &str = "block_hash_ack";
 
 pub(crate) const BLOCK_SYN_TYPE: &str = "block_syn";
+
+pub(crate) const PING_TYPE: &str = "ping";

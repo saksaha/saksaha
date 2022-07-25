@@ -1,9 +1,12 @@
 use crate::blockchain::Blockchain;
-use crate::p2p::{P2PHost, P2PHostArgs};
-use crate::{machine::Machine, node::LocalNode};
+use crate::machine::Machine;
+use crate::node::LocalNode;
+use crate::p2p::P2PHost;
+use crate::p2p::P2PHostArgs;
 use colored::Colorize;
 use log::debug;
-use sak_p2p_addr::{AddrStatus, UnknownAddr};
+use sak_p2p_addr::AddrStatus;
+use sak_p2p_addr::UnknownAddr;
 use sak_p2p_id::Identity;
 use sak_p2p_ptable::PeerTable;
 use sak_types::BlockCandidate;

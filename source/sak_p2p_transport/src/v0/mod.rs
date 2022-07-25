@@ -1,8 +1,11 @@
 pub mod handshake;
 mod msg;
-mod net;
+pub(crate) mod net;
 mod transport;
 pub(crate) mod utils;
+
+#[cfg(test)]
+mod tests;
 
 pub use msg::*;
 pub use net::*;

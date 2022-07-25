@@ -9,7 +9,7 @@ edition = "2018"
 sak_utils_time = { path = "../sak_utils_time" }
 sak_logger = { path = "../sak_logger" }
 sak_p2p_id = { path = "../sak_p2p_id" }
-sak_p2p_trpt = { path = "../sak_p2p_trpt" }
+sak_p2p_transport = { path = "../sak_p2p_transport" }
 sak_p2p_disc = { path = "../sak_p2p_disc" }
 sak_p2p_addr = { path = "../sak_p2p_addr" }
 rand_core = "0.6.3"

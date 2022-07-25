@@ -12,7 +12,7 @@ members = [
   "source/sak_p2p_frame",
   "source/sak_p2p_disc",
   "source/sak_p2p_id",
-  "source/sak_p2p_trpt",
+  "source/sak_p2p_transport",
   "source/sak_task_queue",
   "source/sak_utils_time",
   "source/sak_utils_net",
