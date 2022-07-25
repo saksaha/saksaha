@@ -1,47 +1,50 @@
-use crossterm::{
-    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
-    execute,
-    terminal::{
-        disable_raw_mode, enable_raw_mode, EnterAlternateScreen,
-        LeaveAlternateScreen,
-    },
-};
-use std::{io, thread, time::Duration};
-use tui::{
-    backend::CrosstermBackend,
-    layout::{Constraint, Direction, Layout},
-    widgets::{Block, Borders, Widget},
-    Terminal,
-};
-
-pub(crate) type BoxedError = Box<dyn std::error::Error + Send + Sync>;
+use envelope_tui::app::App;
+use envelope_tui::io::handler::IoAsyncHandler;
+use envelope_tui::io::IoEvent;
+use envelope_tui::start_ui;
+use envelope_tui::BoxedError;
+use log::error;
+use log::LevelFilter;
+use std::sync::Arc;
 
 fn main() -> Result<(), BoxedError> {
-    println!("Hello, world2!");
+    let runtime = tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build();
 
-    // setup terminal
-    enable_raw_mode()?;
-    let mut stdout = io::stdout();
-    execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
-    let backend = CrosstermBackend::new(stdout);
-    let mut terminal = Terminal::new(backend)?;
+    match runtime {
+        Ok(r) => r.block_on(async {
+            let (sync_io_tx, mut sync_io_rx) =
+                tokio::sync::mpsc::channel::<IoEvent>(100);
 
-    terminal.draw(|f| {
-        let size = f.size();
-        let block = Block::default().title("Block").borders(Borders::ALL);
-        f.render_widget(block, size);
-    })?;
+            // We need to share the App between thread
+            let app =
+                Arc::new(tokio::sync::Mutex::new(App::new(sync_io_tx.clone())));
+            let app_ui = Arc::clone(&app);
 
-    thread::sleep(Duration::from_millis(3000));
+            // Configure log
+            tui_logger::init_logger(LevelFilter::Debug).unwrap();
+            tui_logger::set_default_level(log::LevelFilter::Debug);
 
-    // restore terminal
-    disable_raw_mode()?;
-    execute!(
-        terminal.backend_mut(),
-        LeaveAlternateScreen,
-        DisableMouseCapture
-    )?;
-    terminal.show_cursor()?;
+            // Handle IO in a specifc thread
+            tokio::spawn(async move {
+                let mut handler = IoAsyncHandler::new(app);
+                while let Some(io_event) = sync_io_rx.recv().await {
+                    handler.handle_io_event(io_event).await;
+                }
+            });
+
+            match start_ui(&app_ui).await {
+                Ok(_) => (),
+                Err(err) => {
+                    error!("Error starting the ui, err: {}", err);
+                }
+            };
+        }),
+        Err(err) => {
+            return Err(format!("runtime fail, err: {:?}", err).into());
+        }
+    };
 
     Ok(())
 }

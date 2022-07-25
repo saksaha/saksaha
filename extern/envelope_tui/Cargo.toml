@@ -10,8 +10,11 @@ sak_logger = { path = "../../source/sak_logger" }
 sak_crypto = { path = "../../source/sak_crypto" }
 sak_fs = { path = "../../source/sak_fs" }
 sak_types = { path = "../../source/sak_types" }
+log = "0.4"
 tui = "0.18.0"
+tui-logger = "0.8"
 crossterm = "0.23"
+tokio = { version = "1.20.0", features = ["full"] }
 
 [dev-dependencies]
 sak_test_utils = { path = "../../source/sak_test_utils" }
