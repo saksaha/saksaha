@@ -1,6 +1,5 @@
 use crate::{LedgerDBSchema, LedgerError};
 use log::info;
-use sak_fs::FS;
 use sak_kv_db::{KeyValueDatabase, Options};
 
 pub(crate) struct LedgerDB {
@@ -13,7 +12,7 @@ impl LedgerDB {
         app_prefix: &String,
     ) -> Result<LedgerDB, LedgerError> {
         let ledger_db_path = {
-            let app_path = FS::create_or_get_app_path(app_prefix)?;
+            let app_path = sak_fs::create_or_get_app_path(app_prefix)?;
             let db_path = { app_path.join("db").join("ledger") };
 
             db_path
