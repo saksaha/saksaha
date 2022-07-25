@@ -1,0 +1,21 @@
+[package]
+name = "envelope_tui"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+sak_logger = { path = "../../source/sak_logger" }
+sak_crypto = { path = "../../source/sak_crypto" }
+sak_fs = { path = "../../source/sak_fs" }
+sak_types = { path = "../../source/sak_types" }
+tui = "0.18.0"
+crossterm = "0.23"
+
+[dev-dependencies]
+sak_test_utils = { path = "../../source/sak_test_utils" }
+
+[[bin]]
+name = "envelope_tui"
+path = "src/bin/main.rs"
