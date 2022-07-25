@@ -1,10 +1,9 @@
-use log::{debug, error, warn};
-
 use self::actions::Actions;
 use self::state::AppState;
 use crate::app::actions::Action;
 use crate::inputs::key::Key;
 use crate::io::IoEvent;
+use log::{debug, error, warn};
 
 pub mod actions;
 pub mod state;

@@ -18,6 +18,24 @@ pub fn draw<B>(rect: &mut Frame<B>, app: &App)
 where
     B: Backend,
 {
+    let state = get_some_state();
+
+    // if the state is at "landing page",
+    if state {
+        draw_ch_list_view(rect, app);
+    } else {
+        println!("draw some other views");
+    }
+}
+
+fn get_some_state() -> bool {
+    true
+}
+
+fn draw_ch_list_view<B>(rect: &mut Frame<B>, app: &App)
+where
+    B: Backend,
+{
     let size = rect.size();
     check_size(&size);
 

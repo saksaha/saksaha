@@ -4,10 +4,11 @@ use crate::BoxedError;
 use log::{error, info};
 use std::sync::Arc;
 use std::time::Duration;
+use tokio::sync::Mutex;
 
 /// In the IO thread, we handle IO event without blocking the UI thread
 pub struct IoAsyncHandler {
-    app: Arc<tokio::sync::Mutex<App>>,
+    app: Arc<Mutex<App>>,
 }
 
 impl IoAsyncHandler {

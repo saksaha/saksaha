@@ -1,6 +1,5 @@
-use std::fmt::{self, Display, Formatter};
-
 use crossterm::event;
+use std::fmt::{self, Display, Formatter};
 
 /// Represents an key.
 #[derive(PartialEq, Eq, Clone, Copy, Hash, Debug)]

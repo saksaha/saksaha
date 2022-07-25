@@ -1,8 +1,7 @@
+use crate::inputs::key::Key;
 use std::collections::HashMap;
 use std::fmt::{self, Display};
 use std::slice::Iter;
-
-use crate::inputs::key::Key;
 
 /// We define all available action
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]

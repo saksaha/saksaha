@@ -6,6 +6,7 @@ use envelope_tui::BoxedError;
 use log::error;
 use log::LevelFilter;
 use std::sync::Arc;
+use tokio::sync::Mutex;
 
 fn main() -> Result<(), BoxedError> {
     let runtime = tokio::runtime::Builder::new_multi_thread()
@@ -18,8 +19,7 @@ fn main() -> Result<(), BoxedError> {
                 tokio::sync::mpsc::channel::<IoEvent>(100);
 
             // We need to share the App between thread
-            let app =
-                Arc::new(tokio::sync::Mutex::new(App::new(sync_io_tx.clone())));
+            let app = Arc::new(Mutex::new(App::new(sync_io_tx.clone())));
             let app_ui = Arc::clone(&app);
 
             // Configure log
@@ -29,6 +29,7 @@ fn main() -> Result<(), BoxedError> {
             // Handle IO in a specifc thread
             tokio::spawn(async move {
                 let mut handler = IoAsyncHandler::new(app);
+
                 while let Some(io_event) = sync_io_rx.recv().await {
                     handler.handle_io_event(io_event).await;
                 }
