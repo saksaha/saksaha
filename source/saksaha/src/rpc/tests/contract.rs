@@ -1,7 +1,7 @@
 use super::utils;
 use crate::blockchain::GenesisBlock;
-use crate::rpc::routes::v0::QueryCtrRequest;
-use hyper::body::Buf;
+use crate::rpc::router::{JsonRequest, JsonResponse};
+use crate::rpc::routes::v0::{QueryCtrRequest, QueryCtrResponse};
 use hyper::{Body, Client, Method, Request, Uri};
 use sak_contract_std::{CtrCallType, Request as CtrRequest};
 use std::collections::HashMap;
@@ -20,6 +20,11 @@ async fn test_call_contract() {
     let genesis_block = GenesisBlock::create().unwrap();
     let validator_ctr_addr = genesis_block.get_validator_ctr_addr();
 
+    let expected_validator = String::from(
+        "045739d074b8722891c307e8e75c9607e0b55a80778b42ef5f4640d4949dbf3992f60\
+        83b729baef9e9545c4e95590616fd382662a09653f2a966ff524989ae8c0f",
+    );
+
     let uri: Uri = {
         let u = format!(
             "http://localhost:{}/apis/v0/call_contract",
@@ -29,7 +34,7 @@ async fn test_call_contract() {
         u.parse().expect("URI should be made")
     };
 
-    let request = {
+    let body = {
         let ctr_addr = validator_ctr_addr;
         let req = CtrRequest {
             req_type: "get_validator".to_string(),
@@ -37,38 +42,43 @@ async fn test_call_contract() {
             ctr_call_type: CtrCallType::Query,
         };
 
-        let call_ctr_body = QueryCtrRequest { ctr_addr, req };
+        let call_ctr_req = QueryCtrRequest { ctr_addr, req };
+        let params = serde_json::to_string(&call_ctr_req)
+            .unwrap()
+            .as_bytes()
+            .to_vec();
 
-        call_ctr_body
+        let json_request = JsonRequest {
+            jsonrpc: "2.0".to_string(),
+            method: "call_contract".to_string(),
+            params: Some(params),
+            id: "test_1".to_string(),
+        };
+
+        let str = serde_json::to_string(&json_request).unwrap();
+
+        println!("request body str (for debugging): {}", str);
+
+        Body::from(str)
     };
-
-    let body_string = serde_json::to_string(&request).unwrap();
 
     let req = Request::builder()
         .method(Method::POST)
-        .uri(uri.clone())
-        .body(Body::from(body_string))
+        .uri(uri)
+        .body(body)
         .expect("request builder should be made");
 
-    match client.request(req).await {
-        Ok(res) => {
-            let body = hyper::body::aggregate(res)
-                .await
-                .expect("body should be parsed");
+    let resp = client.request(req).await.unwrap();
 
-            // let _: JsonResponse = match serde_json::from_reader(body.reader()) {
-            //     Ok(e) => {
-            //         log::info!("log info dbg {:?}", e);
-            //         e
-            //     }
-            //     Err(err) => {
-            //         panic!("Response should be 'error_response', {}", err);
-            //     }
-            // };
-        }
-        Err(_) => {
-            println!("4");
-            panic!()
-        }
-    }
+    let b = hyper::body::to_bytes(resp.into_body()).await.unwrap();
+
+    let json_response =
+        serde_json::from_slice::<JsonResponse<QueryCtrResponse>>(&b).unwrap();
+
+    let query_ctr_response = json_response.result.unwrap();
+    let query_result = query_ctr_response.result;
+
+    println!("query_result (from rpc response) : {:?}", query_result,);
+
+    assert_eq!(expected_validator, query_result);
 }

@@ -10,12 +10,13 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
 #[derive(Serialize, Deserialize, Debug)]
-struct GetNodeStatusResponse {
+pub struct GetNodeStatusResponse {
     addr_vec: Vec<String>,
     peer_vec: Vec<String>,
 }
 
 pub(crate) async fn get_status(
+    id: String,
     params: Params,
     sys_handle: Arc<SystemHandle>,
 ) -> Result<Response<Body>, RPCError> {
@@ -29,7 +30,7 @@ pub(crate) async fn get_status(
     let peer_vec = sys_handle.p2p_monitor.peer_table.get_status().await;
 
     return Ok(utils::make_success_response(
-        String::from("1"),
+        id,
         GetNodeStatusResponse { addr_vec, peer_vec },
     ));
 }

@@ -46,7 +46,7 @@ where
             };
 
             if let Some(handler) = route_map.get(json_request.method.as_str()) {
-                match handler(json_request.params, ctx).await {
+                match handler(json_request.id, json_request.params, ctx).await {
                     Ok(r) => return Ok(r),
                     Err(err) => {
                         return Ok(utils::make_error_response(None, err));
