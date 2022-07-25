@@ -1,7 +1,7 @@
 use crate::{
     Msg, TrptError, BLOCK_HASH_ACK, BLOCK_HASH_SYN, BLOCK_SYN_TYPE,
-    HANDSHAKE_ACK_TYPE, HANDSHAKE_SYN_TYPE, TX_HASH_ACK_TYPE, TX_HASH_SYN_TYPE,
-    TX_SYN_TYPE,
+    HANDSHAKE_ACK_TYPE, HANDSHAKE_SYN_TYPE, PING_TYPE, TX_HASH_ACK_TYPE,
+    TX_HASH_SYN_TYPE, TX_SYN_TYPE,
 };
 use bytes::BytesMut;
 use sak_p2p_frame::frame_io;
@@ -11,7 +11,7 @@ pub(super) fn encode_into_frame(
     dst: &mut BytesMut,
 ) -> Result<&'static str, TrptError> {
     let (frame, msg_type) = match item {
-        // Msg::Hello(hello) => hello.into_frame(),
+        Msg::Ping(ping) => (ping.into_frame(), PING_TYPE),
         Msg::HandshakeSyn(handshake) => {
             (handshake.into_syn_frame(), HANDSHAKE_SYN_TYPE)
         }

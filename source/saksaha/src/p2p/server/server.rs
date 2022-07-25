@@ -3,7 +3,7 @@ use log::{debug, warn};
 use sak_p2p_disc::AddrTable;
 use sak_p2p_id::Identity;
 use sak_p2p_ptable::PeerTable;
-use sak_p2p_trpt::Connection;
+use sak_p2p_transport::Connection;
 use std::{sync::Arc, time::Duration};
 use tokio::{
     net::{TcpListener, TcpStream},

@@ -1,4 +1,6 @@
-use crate::{BlockHashSynMsg, BlockSynMsg, Handshake, TxHashSynMsg, TxSynMsg};
+use crate::{
+    BlockHashSynMsg, BlockSynMsg, Handshake, PingMsg, TxHashSynMsg, TxSynMsg,
+};
 
 #[derive(Debug)]
 pub enum Msg {
@@ -17,5 +19,6 @@ pub enum Msg {
     BlockHashSyn(BlockHashSynMsg),
 
     BlockHashAck(BlockHashSynMsg),
-    // Hello(HelloMsg),
+
+    Ping(PingMsg),
 }

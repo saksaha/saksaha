@@ -1,7 +1,7 @@
 use crate::{machine::Machine, SaksahaError};
 use futures::{SinkExt, StreamExt};
 use log::{debug, info, warn};
-use sak_p2p_trpt::{
+use sak_p2p_transport::{
     BlockHashSynMsg, BlockSynMsg, Msg, TxHashSynMsg, UpgradedConnection,
 };
 use std::time::Duration;
@@ -30,7 +30,9 @@ pub(crate) async fn handle_msg<'a>(
             println!("handling block syn");
             handle_block_syn(block_syn_msg, machine, &mut conn).await?;
         }
-        _ => (),
+        _ => {
+            warn!("Msg not valid at this stage, discarding, msg: {:?}", msg);
+        }
     };
 
     Ok(())

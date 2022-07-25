@@ -4,7 +4,7 @@ use futures::SinkExt;
 use sak_p2p_addr::{AddrStatus, UnknownAddr};
 use sak_p2p_id::Identity;
 use sak_p2p_ptable::PeerTable;
-use sak_p2p_trpt::{Msg, TxHashSynMsg};
+use sak_p2p_transport::{Msg, TxHashSynMsg};
 use sak_types::TxCandidate;
 use std::{sync::Arc, time::Duration};
 

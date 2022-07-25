@@ -15,7 +15,7 @@ use sak_p2p_addr::{AddrStatus, UnknownAddr};
 use sak_p2p_disc::{DiscAddr, Discovery, DiscoveryArgs};
 use sak_p2p_id::Identity;
 use sak_p2p_ptable::PeerTable;
-use sak_p2p_trpt::Msg;
+use sak_p2p_transport::Msg;
 use sak_task_queue::TaskQueue;
 use sak_types::{BlockCandidate, Tx};
 use std::{sync::Arc, time::Duration};

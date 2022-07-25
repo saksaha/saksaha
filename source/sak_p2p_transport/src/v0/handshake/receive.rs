@@ -55,7 +55,6 @@ pub enum HandshakeRecvError {
 }
 
 pub struct HandshakeRecvArgs {
-    // pub handshake_syn: Handshake,
     pub identity: Arc<Identity>,
 }
 
@@ -63,10 +62,7 @@ pub async fn receive_handshake(
     handshake_recv_args: HandshakeRecvArgs,
     mut conn: Connection,
 ) -> Result<(Transport, String), HandshakeRecvError> {
-    let HandshakeRecvArgs {
-        // handshake_syn,
-        identity,
-    } = handshake_recv_args;
+    let HandshakeRecvArgs { identity } = handshake_recv_args;
 
     let handshake_syn = match conn.socket.next().await {
         Some(maybe_msg) => match maybe_msg {

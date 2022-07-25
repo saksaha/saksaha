@@ -1,8 +1,8 @@
 use crate::{
-    BlockHashSynMsg, BlockSynMsg, Handshake, Msg, TrptError, TxHashSynMsg,
-    TxSynMsg, BLOCK_HASH_ACK, BLOCK_HASH_SYN, BLOCK_SYN_TYPE,
-    HANDSHAKE_ACK_TYPE, HANDSHAKE_SYN_TYPE, TX_HASH_ACK_TYPE, TX_HASH_SYN_TYPE,
-    TX_SYN_TYPE,
+    BlockHashSynMsg, BlockSynMsg, Handshake, Msg, PingMsg, TrptError,
+    TxHashSynMsg, TxSynMsg, BLOCK_HASH_ACK, BLOCK_HASH_SYN, BLOCK_SYN_TYPE,
+    HANDSHAKE_ACK_TYPE, HANDSHAKE_SYN_TYPE, PING_TYPE, TX_HASH_ACK_TYPE,
+    TX_HASH_SYN_TYPE, TX_SYN_TYPE,
 };
 use bytes::BytesMut;
 use sak_p2p_frame::{frame_io, Parse};
@@ -48,11 +48,10 @@ pub(super) fn decode_into_msg(
                 let block_syn = BlockSynMsg::from_parse(&mut parse)?;
                 Msg::BlockSyn(block_syn)
             }
-            // HELLO_TYPE => {
-            //     println!("123123");
-            //     let hello_msg = HelloMsg::from_parse(&mut parse)?;
-            //     Msg::Hello(hello_msg)
-            // }
+            PING_TYPE => {
+                let ping = PingMsg::from_parse(&mut parse)?;
+                Msg::Ping(ping)
+            }
             _ => {
                 return Err(format!(
                     "Frame does have invalid msg_type, type: {}",

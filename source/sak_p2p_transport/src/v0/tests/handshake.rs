@@ -1,15 +1,9 @@
 use crate::net::Connection;
-use crate::{handshake::*, Msg, TxHashSynMsg, UpgradedP2PCodec};
-use crate::{Handshake, Transport};
-use chacha20::cipher::StreamCipher;
-use chacha20::{ChaCha20, ChaChaCore};
+use crate::Transport;
+use crate::{handshake::*, Msg, PingMsg};
 use futures::{SinkExt, StreamExt};
-use log::{debug, info};
 use sak_p2p_id::Identity;
-use std::borrow::BorrowMut;
-use std::ops::Deref;
 use std::sync::Arc;
-use std::time::Duration;
 use tokio::net::{TcpListener, TcpStream};
 
 async fn connect_to_endpoint(endpoint: &String) -> Connection {
@@ -106,10 +100,6 @@ async fn make_test_context() -> (
     let endpoint_1 = format!("{}:{}", ip, p2p_port_1);
     let endpoint_2 = format!("{}:{}", ip, p2p_port_2);
 
-    // let (tcp_listener_1, _) = sak_utils_net::bind_tcp_socket(Some(p2p_port_1))
-    //     .await
-    //     .unwrap();
-
     let (tcp_listener_2, _) = sak_utils_net::bind_tcp_socket(Some(p2p_port_2))
         .await
         .unwrap();
@@ -138,7 +128,6 @@ async fn accept(p2p_socket: TcpListener) -> Result<TcpStream, String> {
 
 async fn handshake_init(
     conn: Connection,
-    // p2p_socket: TcpListener,
     my_identity: Arc<Identity>,
     her_identity: Arc<Identity>,
 ) -> Transport {
@@ -171,8 +160,6 @@ async fn handshake_init(
         }
     };
 
-    // let mut conn_lock = transport.conn.write().await;
-    // conn.write()
     transport
 }
 
@@ -183,6 +170,7 @@ async fn handshake_recv(
     let conn_id = sak_crypto::rand();
 
     println!("prepare to recv msg,");
+
     let tcp_stream = accept(p2p_socket).await.unwrap();
 
     let conn = Connection::new(tcp_stream, conn_id).unwrap();
@@ -246,44 +234,40 @@ async fn test_handshake_works() {
     let identity_1_clone = identity_1.clone();
     let identity_2_clone = identity_2.clone();
 
+    let rand = sak_crypto::rand() as u128;
+
     // send
-    tokio::spawn(async move {
+    let t1 = tokio::spawn(async move {
         let transport_1 =
             handshake_init(conn_2, identity_1_clone, identity_2_clone).await;
-
-        println!("[111] sleep... before send msg");
-        tokio::time::sleep(Duration::from_secs(2)).await;
 
         println!("preparing to send msg,");
 
         let mut conn_1_lock = transport_1.conn.write().await;
 
-        let msg = TxHashSynMsg {
-            tx_hashes: vec!["123".to_string()],
-        };
+        let msg = PingMsg { nonce: rand };
 
-        conn_1_lock.socket.send(Msg::TxHashSyn(msg)).await.unwrap();
+        conn_1_lock.socket.send(Msg::Ping(msg)).await.unwrap();
     });
 
     let identity_2_clone = identity_2.clone();
 
     //recv
-    tokio::spawn(async move {
+    let t2 = tokio::spawn(async move {
         let (transport_2, _) =
             handshake_recv(tcp_listener_2, identity_2_clone).await;
 
-        println!("[222] wait... before recv msg");
         let mut conn_2_lock = transport_2.conn.write().await;
 
         let maybe_msg = conn_2_lock.socket.next().await;
-        println!("1414 maybe_msg after next: {:?}", maybe_msg);
 
-        let result = match maybe_msg {
+        let ping = match maybe_msg {
             Some(maybe_msg) => match maybe_msg {
                 Ok(msg) => match msg {
-                    Msg::TxHashSyn(msg) => {
-                        println!("tx hash syn: {:?}", msg);
-                        msg
+                    Msg::Ping(p) => {
+                        println!("ping: {:?}, rand received!", p);
+
+                        p
                     }
                     _ => {
                         panic!();
@@ -300,114 +284,10 @@ async fn test_handshake_works() {
             }
         };
 
-        println!("expected value: {:?}", "123".to_string());
-        println!("received value: {:?}", result.tx_hashes[0]);
+        let rand_recvd = ping.nonce;
 
-        assert_eq!(result.tx_hashes[0], "123".to_string());
-        println!("test pass!");
-
-        // let mut count = 0;
-        // loop {
-        //     println!("loop start");
-        //     let maybe_msg = conn_2_lock.socket.next().await;
-
-        //     if count > 10 {
-        //         return;
-        //     }
-
-        //     println!("5551313 maybe_msg after next: {:?}", maybe_msg);
-
-        //     match maybe_msg {
-        //         Some(maybe_msg) => match maybe_msg {
-        //             Ok(msg) => match msg {
-        //                 // Msg::Hello(hello) => {
-        //                 //     println!("hello: {:?}", hello);
-        //                 // }
-        // Msg::TxHashSyn(msg) => {
-        //     println!("tx hash syn: {:?}", msg);
-        // }
-        //                 _ => {
-        //                     println!("invalid msg");
-        //                 }
-        //             },
-        //             Err(err) => {
-        //                 println!("alwekfj33, err: {}", err);
-        //             }
-        //         },
-        //         None => {
-        //             println!("alwekfj44");
-        //             count += 1;
-        //         }
-        //     }
-        // }
+        assert_eq!(rand, rand_recvd, "rand should be equal");
     });
 
-    // let (trpt_1, trpt_2) = tokio::join!(transport_1, transport_2);
-
-    // println!("234234 handshake done!!!");
-
-    // tokio::spawn(async move {
-    //     tokio::time::sleep(Duration::from_secs(4)).await;
-
-    //     let mut conn_2_lock = trpt_2.conn.write().await;
-
-    //     let mut count = 0;
-
-    //     loop {
-    //         if count > 10 {
-    //             break;
-    //         }
-
-    //         println!("555 maybe_msg before next");
-
-    //         let maybe_msg = conn_2_lock.socket.next().await;
-
-    //         println!("555 maybe_msg after next: {:?}", maybe_msg);
-
-    //         // match maybe_msg {
-    //         //     Some(maybe_msg) => match maybe_msg {
-    //         //         Ok(msg) => match msg {
-    //         //             Msg::Hello(hello) => {
-    //         //                 println!("hello: {:?}", hello);
-    //         //             }
-    //         //             Msg::TxHashSyn(msg) => {
-    //         //                 println!("tx hash syn: {:?}", msg);
-    //         //             }
-    //         //             _ => {
-    //         //                 panic!("invalid msg");
-    //         //             }
-    //         //         },
-    //         //         Err(err) => {
-    //         //             println!("alwekfj33, err: {}", err);
-    //         //         }
-    //         //     },
-    //         //     None => {
-    //         //         println!("alwekfj44");
-    //         //         count += 1;
-    //         //     }
-    //         // }
-    //     }
-
-    //     tokio::time::sleep(Duration::from_secs(100)).await;
-    // });
-
-    // tokio::spawn(async move {
-    //     let mut conn_1_lock = trpt_1.conn.write().await;
-
-    //     println!("666 before send");
-
-    //     let a = TxHashSynMsg {
-    //         tx_hashes: vec!["123".to_string()],
-    //     };
-
-    //     // let b = HelloMsg { nonce: 1 };
-
-    //     conn_1_lock.socket.send(Msg::TxHashSyn(a)).await.unwrap();
-
-    //     // println!("666 after send");
-
-    //     tokio::time::sleep(Duration::from_secs(100)).await;
-    // });
-
-    tokio::time::sleep(Duration::from_secs(100)).await;
+    let _ = tokio::join!(t1, t2);
 }

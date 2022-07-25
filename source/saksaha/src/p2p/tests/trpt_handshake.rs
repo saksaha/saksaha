@@ -18,7 +18,7 @@
 // use sak_p2p_id::Identity;
 // use sak_p2p_ptable::PeerTable;
 // use sak_p2p_ptable::PeerTable;
-// use sak_p2p_trpt::{Msg, TxHashSync};
+// use sak_p2p_transport::{Msg, TxHashSync};
 // use sak_task_queue::TaskQueue;
 // use sak_types::{BlockCandidate, Tx};
 // use std::{sync::Arc, time::Duration};
