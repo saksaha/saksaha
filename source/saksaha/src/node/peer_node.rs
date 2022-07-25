@@ -3,8 +3,7 @@ use crate::{machine::Machine, node::event_handle};
 use futures::{SinkExt, StreamExt};
 use log::{debug, error, info, warn};
 use sak_dist_ledger::DistLedgerEvent;
-use sak_p2p_ptable::Peer;
-use sak_p2p_ptable::{PeerStatus, PeerTable};
+use sak_p2p_peertable::{Peer, PeerStatus, PeerTable};
 use std::sync::Arc;
 use tokio::sync::broadcast::Receiver;
 

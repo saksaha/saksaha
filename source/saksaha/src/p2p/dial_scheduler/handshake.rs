@@ -1,8 +1,8 @@
 use crate::p2p::task::P2PTask;
 use log::error;
-use sak_p2p_disc::AddrsIterator;
+use sak_p2p_discovery::AddrsIterator;
 use sak_p2p_id::Identity;
-use sak_p2p_ptable::PeerTable;
+use sak_p2p_peertable::PeerTable;
 use sak_task_queue::TaskQueue;
 use std::{
     sync::Arc,
