@@ -1,5 +1,5 @@
 [package]
-name = "sak_p2p_disc"
+name = "sak_p2p_discovery"
 version = "0.1.0"
 edition = "2018"
 

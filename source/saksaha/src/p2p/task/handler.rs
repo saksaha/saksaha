@@ -1,6 +1,6 @@
 use crate::p2p::task::P2PTask;
 use log::{debug, error, warn};
-use sak_p2p_ptable::{Peer, PeerStatus};
+use sak_p2p_peertable::{Peer, PeerStatus};
 use sak_p2p_transport::{
     handshake::{self, HandshakeInitArgs},
     Connection,

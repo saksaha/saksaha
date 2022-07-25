@@ -14,7 +14,7 @@ use crate::system::SystemHandle;
 use colored::Colorize;
 use log::{error, info};
 use sak_p2p_id::Identity;
-use sak_p2p_ptable::PeerTable;
+use sak_p2p_peertable::PeerTable;
 use std::sync::Arc;
 
 pub(super) struct Routine {
