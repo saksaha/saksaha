@@ -1,3 +1,4 @@
+use sak_types::TxCandidate;
 use std::time::Duration;
 use symbols::line;
 use tui::backend::Backend;
@@ -107,21 +108,33 @@ fn draw_body<'a>(loading: bool, state: &AppState) -> Paragraph<'a> {
     } else {
         "Not Initialized !"
     };
+
     let loading_text = if loading { "Loading..." } else { "" };
+
     let sleep_text = if let Some(sleeps) = state.count_sleep() {
         format!("Sleep count: {}", sleeps)
     } else {
         String::default()
     };
+
     let tick_text = if let Some(ticks) = state.count_tick() {
         format!("Tick count: {}", ticks)
     } else {
         String::default()
     };
+
+    let sleep_text_2 = if let Some(sleeps) = state.count_sleep() {
+        let mint_tc_1 = TxCandidate::new_dummy_mint_1();
+        format!("Mint tx candidate: {:?}", mint_tc_1)
+    } else {
+        String::default()
+    };
+
     Paragraph::new(vec![
         Spans::from(Span::raw(initialized_text)),
         Spans::from(Span::raw(loading_text)),
         Spans::from(Span::raw(sleep_text)),
+        Spans::from(Span::raw(sleep_text_2)),
         Spans::from(Span::raw(tick_text)),
     ])
     .style(Style::default().fg(Color::LightCyan))

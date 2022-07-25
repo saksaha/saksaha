@@ -5,17 +5,26 @@ use inputs::InputEvent;
 use io::IoEvent;
 use std::sync::Arc;
 use std::time::Duration;
+use tokio::sync::Mutex;
 use tui::backend::CrosstermBackend;
 use tui::Terminal;
 
 pub mod app;
 pub mod inputs;
 pub mod io;
+mod pconfig;
 
 pub type BoxedError = Box<dyn std::error::Error + Send + Sync>;
 
+pub struct XArg {
+    pub app: Arc<Mutex<App>>,
+    pub pconfig_path: Option<String>,
+}
+
+// ...
 pub async fn start_ui(
     app: &Arc<tokio::sync::Mutex<App>>,
+    xarg: XArg,
 ) -> Result<(), BoxedError> {
     // Configure Crossterm backend for tui
     let stdout = std::io::stdout();

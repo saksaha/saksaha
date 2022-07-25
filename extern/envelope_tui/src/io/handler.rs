@@ -12,7 +12,7 @@ pub struct IoAsyncHandler {
 }
 
 impl IoAsyncHandler {
-    pub fn new(app: Arc<tokio::sync::Mutex<App>>) -> Self {
+    pub fn new(app: Arc<Mutex<App>>) -> Self {
         Self { app }
     }
 
