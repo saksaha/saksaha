@@ -1,7 +1,7 @@
 use crate::p2p::task::P2PTask;
 use log::{debug, error, warn};
 use sak_p2p_ptable::{Peer, PeerStatus};
-use sak_p2p_trpt::{
+use sak_p2p_transport::{
     handshake::{self, HandshakeInitArgs},
     Connection,
 };
@@ -52,9 +52,11 @@ pub(crate) async fn run(task: P2PTask) {
                 return;
             }
 
+            let conn_id = sak_crypto::rand();
+
             let conn = match TcpStream::connect(&endpoint).await {
                 Ok(s) => {
-                    let c = match Connection::new(s) {
+                    let c = match Connection::new(s, conn_id) {
                         Ok(c) => c,
                         Err(err) => {
                             warn!("Error creating a connection, err: {}", err);

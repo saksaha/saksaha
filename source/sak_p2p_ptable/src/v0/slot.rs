@@ -23,7 +23,7 @@ impl Drop for SlotGuard {
                 terr!(
                     "p2p_peer_table",
                     "slot",
-                    "Cannot send the released slot back to the queue,
+                    "Cannot send the released slot back to the queue,\
                     err: {}",
                     err,
                 );

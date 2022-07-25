@@ -9,24 +9,27 @@ use tokio_util::codec::Framed;
 pub struct Connection {
     pub socket_addr: SocketAddr,
     pub socket: Framed<TcpStream, P2PCodec>,
+    pub id: usize,
 }
 
 pub struct UpgradedConnection {
     pub socket_addr: SocketAddr,
     pub socket: Framed<TcpStream, UpgradedP2PCodec>,
+    pub id: usize,
 }
 
 impl Connection {
-    pub fn new(socket: TcpStream) -> Result<Connection, TrptError> {
+    pub fn new(socket: TcpStream, id: usize) -> Result<Connection, TrptError> {
         let socket_addr = socket.peer_addr()?;
 
-        let p2p_codec = P2PCodec {};
+        let p2p_codec = P2PCodec { id };
 
         let socket = Framed::new(socket, p2p_codec);
 
         let c = Connection {
             socket_addr,
             socket,
+            id,
         };
 
         Ok(c)
@@ -42,11 +45,14 @@ impl Connection {
             nonce.into(),
         );
 
-        let socket = self.socket.map_codec(|_| UpgradedP2PCodec { cipher });
+        let id = self.id;
+
+        let socket = self.socket.map_codec(|_| UpgradedP2PCodec { cipher, id });
 
         UpgradedConnection {
             socket_addr: self.socket_addr.clone(),
             socket,
+            id,
         }
     }
 }

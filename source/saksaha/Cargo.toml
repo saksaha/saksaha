@@ -17,7 +17,7 @@ sak_p2p_addr = { path = "../sak_p2p_addr" }
 sak_p2p_ptable = { path = "../sak_p2p_ptable" }
 sak_p2p_id = { path = "../sak_p2p_id" }
 sak_p2p_disc = { path = "../sak_p2p_disc" }
-sak_p2p_trpt = { path = "../sak_p2p_trpt" }
+sak_p2p_transport = { path = "../sak_p2p_transport" }
 sak_utils_time = { path = "../sak_utils_time" }
 sak_utils_net = { path = "../sak_utils_net" }
 sak_task_queue = { path = "../sak_task_queue" }

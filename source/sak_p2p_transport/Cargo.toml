@@ -1,5 +1,5 @@
 [package]
-name = "sak_p2p_trpt"
+name = "sak_p2p_transport"
 version = "0.1.0"
 edition = "2018"
 
@@ -24,9 +24,13 @@ bytes = "1"
 atoi = "0.4.0"
 colored = "2"
 chrono = "0.4"
-sak_utils_net = { path = "../sak_utils_net" }
 sak_types = { path = "../sak_types" }
 chacha20 = "0.9.0"
+
+[dev-dependencies]
+sak_utils_net = { path = "../sak_utils_net" }
+sak_p2p_ptable = { path = "../sak_p2p_ptable" }
+sak_test_utils = { path = "../sak_test_utils" }
 
 [lib]
 doctest = false # until stable beta is released

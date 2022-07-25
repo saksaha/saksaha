@@ -2,7 +2,7 @@ use crate::SlotGuard;
 use chrono::{DateTime, Utc};
 use sak_p2p_addr::AddrStatus;
 use sak_p2p_disc::DiscAddr;
-use sak_p2p_trpt::Transport;
+use sak_p2p_transport::Transport;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 

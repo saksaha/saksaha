@@ -6,6 +6,7 @@ use chacha20::ChaCha20;
 use tokio_util::codec::{Decoder, Encoder};
 
 pub struct UpgradedP2PCodec {
+    pub(crate) id: usize,
     pub(crate) cipher: ChaCha20,
 }
 
@@ -17,7 +18,7 @@ impl Encoder<Msg> for UpgradedP2PCodec {
         item: Msg,
         dst: &mut BytesMut,
     ) -> Result<(), TrptError> {
-        enc::encode_into_frame(item, dst)?;
+        let _msg_type = enc::encode_into_frame(item, dst)?;
 
         self.cipher.apply_keystream(dst);
 
@@ -39,7 +40,9 @@ impl Decoder for UpgradedP2PCodec {
     }
 }
 
-pub struct P2PCodec {}
+pub struct P2PCodec {
+    pub(crate) id: usize,
+}
 
 impl Encoder<Msg> for P2PCodec {
     type Error = TrptError;
@@ -49,7 +52,7 @@ impl Encoder<Msg> for P2PCodec {
         item: Msg,
         dst: &mut BytesMut,
     ) -> Result<(), TrptError> {
-        enc::encode_into_frame(item, dst)?;
+        let _msg_type = enc::encode_into_frame(item, dst)?;
 
         return Ok(());
     }
