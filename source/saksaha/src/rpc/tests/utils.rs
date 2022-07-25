@@ -5,7 +5,7 @@ use crate::{blockchain::Blockchain, machine::Machine};
 use colored::*;
 use log::info;
 use sak_p2p_id::Identity;
-use sak_p2p_ptable::PeerTable;
+use sak_p2p_peertable::PeerTable;
 use sak_types::{BlockCandidate, Tx, TxCandidate};
 use std::net::SocketAddr;
 use std::sync::Arc;

@@ -8,33 +8,12 @@ use sak_p2p_transport::{Msg, TxHashSynMsg};
 use sak_types::TxCandidate;
 use std::{sync::Arc, time::Duration};
 
-// fn get_dummy_handshake_init_args(
-//     public_key: PublicKey,
-//     public_key_str: String,
-//     src_sig: Signature,
-//     p2p_port: u16,
-//     disc_port: u16,
-// ) -> Arc<DiscAddr> {
-//     let a = DiscAddr::new_dummy(
-//         public_key,
-//         public_key_str,
-//         src_sig,
-//         disc_port,
-//         p2p_port,
-//     );
-
-//     Arc::new(a)
-// }
-
 #[tokio::test(flavor = "multi_thread")]
 async fn test_two_nodes_talk_on_stream_cipher() {
     sak_test_utils::init_test_log();
     sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
 
     let app_prefix_vec = vec![String::from("test_1"), String::from("test_2")];
-
-    // let (peer_table_1, identity_1, p2p_host_1) =
-    //     create_client(Some(35519), Some(35518)).await;
 
     let (p2p_host_1, local_node_1, machine_1, peer_table_1, identity_1) =
         utils::create_client(

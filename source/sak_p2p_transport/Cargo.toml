@@ -10,7 +10,7 @@ sak_crypto = { path = "../sak_crypto" }
 sak_p2p_addr = { path = "../sak_p2p_addr" }
 sak_p2p_id = { path = "../sak_p2p_id" }
 sak_p2p_frame = { path = "../sak_p2p_frame" }
-sak_p2p_disc = { path = "../sak_p2p_disc" }
+sak_p2p_discovery = { path = "../sak_p2p_discovery" }
 sak_logger = { path = "../sak_logger" }
 serde = { version = "1.0.130", features = ["derive"] }
 serde_json = "1.0.59"
@@ -29,7 +29,7 @@ chacha20 = "0.9.0"
 
 [dev-dependencies]
 sak_utils_net = { path = "../sak_utils_net" }
-sak_p2p_ptable = { path = "../sak_p2p_ptable" }
+sak_p2p_peertable = { path = "../sak_p2p_peertable" }
 sak_test_utils = { path = "../sak_test_utils" }
 
 [lib]

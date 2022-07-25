@@ -1,7 +1,7 @@
 use super::{miner::Miner, peer_node::PeerNode};
 use crate::machine::Machine;
-use sak_p2p_ptable::PeerTable;
-use std::{sync::Arc, time::Duration};
+use sak_p2p_peertable::PeerTable;
+use std::sync::Arc;
 
 pub(crate) struct LocalNode {
     pub(crate) peer_table: Arc<PeerTable>,

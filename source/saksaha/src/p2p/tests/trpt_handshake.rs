@@ -1,33 +1,7 @@
-// use crate::p2p::{P2PHost, P2PHostArgs};
-// use crate::{
-//     blockchain::Blockchain,
-//     machine::Machine,
-//     p2p::{
-//         server::Server,
-//         task::{runtime::P2PTaskRuntime, P2PTask},
-//     },
-// };
-// use colored::*;
-// use futures::{SinkExt, StreamExt};
-// use log::info;
-// use sak_crypto::{PublicKey, Signature};
-// use sak_p2p_addr::{AddrStatus, UnknownAddr};
-// use sak_p2p_addr::{AddrStatus, UnknownAddr};
-// use sak_p2p_disc::{DiscAddr, Discovery, DiscoveryArgs};
-// use sak_p2p_id::Identity;
-// use sak_p2p_id::Identity;
-// use sak_p2p_ptable::PeerTable;
-// use sak_p2p_ptable::PeerTable;
-// use sak_p2p_transport::{Msg, TxHashSync};
-// use sak_task_queue::TaskQueue;
-// use sak_types::{BlockCandidate, Tx};
-// use std::{sync::Arc, time::Duration};
-// use std::{sync::Arc, time::Duration};
-
 use crate::p2p::{P2PHost, P2PHostArgs};
 use sak_p2p_addr::{AddrStatus, UnknownAddr};
 use sak_p2p_id::Identity;
-use sak_p2p_ptable::PeerTable;
+use sak_p2p_peertable::PeerTable;
 use std::{sync::Arc, time::Duration};
 
 fn init_test() {

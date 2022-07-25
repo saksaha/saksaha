@@ -1,9 +1,9 @@
 use chrono::Utc;
 use futures::StreamExt;
 use log::{error, warn};
-use sak_p2p_disc::AddrTable;
+use sak_p2p_discovery::AddrTable;
 use sak_p2p_id::Identity;
-use sak_p2p_ptable::{Peer, PeerStatus, PeerTable};
+use sak_p2p_peertable::{Peer, PeerStatus, PeerTable};
 use sak_p2p_transport::{
     handshake::{self, HandshakeRecvArgs},
     Connection, Handshake, Msg,
