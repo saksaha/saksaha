@@ -1,61 +1,19 @@
 use super::utils;
-use hyper::body::Buf;
+use crate::rpc::router::{JsonRequest, JsonResponse};
+use crate::rpc::routes::v0::{
+    GetTxRequest, SendMintTxRequest, SendPourTxRequest,
+};
 use hyper::{Body, Client, Method, Request, Uri};
-use sak_types::{BlockCandidate, PourTxCandidate, TxCandidate};
-use std::time::Duration;
+use sak_types::{
+    BlockCandidate, MintTxCandidate, PourTxCandidate, Tx, TxCandidate,
+};
 
 #[tokio::test(flavor = "multi_thread")]
-async fn test_rpc_client_and_send_wrong_transaction() {
+async fn test_rpc_client_request_correct_get_tx() {
     sak_test_utils::init_test_log();
     sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
 
-    let (rpc, rpc_socket_addr, _) = utils::make_test_context().await;
-
-    let _rpc_server = tokio::spawn(async move { rpc.run().await });
-
-    let client = Client::new();
-
-    let uri: Uri = {
-        let u = format!(
-            "http://localhost:{}/apis/v0/send_pour_tx",
-            rpc_socket_addr.port()
-        );
-
-        u.parse().expect("URI should be made")
-    };
-
-    let req = Request::builder()
-        .method(Method::POST)
-        .uri(uri)
-        .body(Body::from("123"))
-        .expect("request builder should be made");
-
-    let _result = match client.request(req).await {
-        Ok(mut res) => {
-            let body = hyper::body::aggregate(&mut res)
-                .await
-                .expect("body should be parsed");
-
-            // let _: ErrorResponse = match serde_json::from_reader(body.reader())
-            // {
-            //     Ok(e) => e,
-            //     Err(err) => {
-            //         panic!("Response should be 'error_response', {}", err);
-            //     }
-            // };
-        }
-        Err(err) => {
-            panic!("error: {}", err);
-        }
-    };
-}
-
-#[tokio::test(flavor = "multi_thread")]
-async fn test_rpc_client_request_wrong_transaction_hash() {
-    sak_test_utils::init_test_log();
-    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
-
-    {
+    let expected_tx_hash = {
         let blockchain = utils::make_blockchain().await;
 
         let dummy_tx = TxCandidate::new_dummy_pour_m1_to_p3_p4();
@@ -68,90 +26,6 @@ async fn test_rpc_client_request_wrong_transaction_hash() {
             .apis
             .delete_tx(&old_tx_hash)
             .expect("Tx should be deleted");
-
-        let bc = Some(BlockCandidate {
-            validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
-            tx_candidates: vec![dummy_tx.clone()],
-            witness_sigs: vec![String::from("1"), String::from("2")],
-            created_at: format!("{}", 0),
-        });
-        dist_ledger.apis.write_block(bc).await.unwrap();
-
-        let _tx_hash = dist_ledger
-            .apis
-            .send_tx(dummy_tx)
-            .await
-            .expect("Tx should be written");
-    }
-
-    let (rpc, rpc_socket_addr, _) = utils::make_test_context().await;
-
-    let _rpc_server = tokio::spawn(async move { rpc.run().await });
-
-    let client = Client::new();
-
-    let uri: Uri = {
-        let u = format!(
-            "http://localhost:{}/apis/v0/get_transaction",
-            rpc_socket_addr.port()
-        );
-
-        u.parse().expect("URI should be made")
-    };
-
-    let req = Request::builder()
-        .method(Method::POST)
-        .uri(uri)
-        .body(Body::from(r#"{"hash": "1q2w3e4r"}"#))
-        .expect("request builder should be made");
-
-    let _res = match client.request(req).await {
-        Ok(res) => {
-            let body = hyper::body::aggregate(res)
-                .await
-                .expect("body should be parsed");
-
-            // let _: ErrorResponse = match serde_json::from_reader(body.reader())
-            // {
-            //     Ok(e) => {
-            //         log::info!("{:?}", e);
-            //         e
-            //     }
-            //     Err(err) => {
-            //         panic!("Response should be 'error_response', {}", err);
-            //     }
-            // };
-        }
-        Err(err) => {
-            panic!("error: {}", err);
-        }
-    };
-}
-
-#[tokio::test(flavor = "multi_thread")]
-async fn test_rpc_client_request_correct_transaction_hash() {
-    sak_test_utils::init_test_log();
-    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
-
-    let tx_hash = {
-        let blockchain = utils::make_blockchain().await;
-
-        let dummy_tx = TxCandidate::new_dummy_pour_m1_to_p3_p4();
-
-        let old_tx_hash = (&dummy_tx).get_tx_hash();
-
-        let dist_ledger = blockchain.dist_ledger;
-
-        dist_ledger
-            .apis
-            .delete_tx(&old_tx_hash)
-            .expect("Tx should be deleted");
-
-        // dist_ledger
-        //     .apis
-        //     .send_tx(dummy_tx.clone())
-        //     .await
-        //     .expect("Tx should be written");
 
         let bc = Some(BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
@@ -175,63 +49,168 @@ async fn test_rpc_client_request_correct_transaction_hash() {
         old_tx_hash.clone()
     };
 
-    let (rpc, rpc_socket_addr, _) = utils::make_test_context().await;
-
-    let _rpc_server = tokio::spawn(async move { rpc.run().await });
+    let (rpc, rpc_socket_addr, _machine) = utils::make_test_context().await;
 
     let client = Client::new();
 
+    tokio::spawn(async move { rpc.run().await });
+
     let uri: Uri = {
         let u = format!(
-            "http://localhost:{}/apis/v0/get_transaction",
+            "http://localhost:{}/apis/v0/get_tx",
             rpc_socket_addr.port()
         );
 
         u.parse().expect("URI should be made")
     };
 
+    let body = {
+        let send_req = GetTxRequest {
+            hash: expected_tx_hash.clone(),
+        };
+
+        let params = serde_json::to_string(&send_req)
+            .unwrap()
+            .as_bytes()
+            .to_vec();
+
+        let json_request = JsonRequest {
+            jsonrpc: "2.0".to_string(),
+            method: "get_tx".to_string(),
+            params: Some(params),
+            id: "test_1".to_string(),
+        };
+
+        let str = serde_json::to_string(&json_request).unwrap();
+
+        Body::from(str)
+    };
+
     let req = Request::builder()
         .method(Method::POST)
         .uri(uri)
-        .body(Body::from(format!(
-            r#"
-                    {{"hash": "{}"}}
-                "#,
-            tx_hash,
-        )))
+        .body(body)
         .expect("request builder should be made");
 
-    let _res = match client.request(req).await {
-        Ok(res) => {
-            let body = hyper::body::aggregate(res)
-                .await
-                .expect("body should be parsed");
+    let resp = client.request(req).await.unwrap();
 
-            // let _: JsonResponse = match serde_json::from_reader(body.reader()) {
-            //     Ok(e) => {
-            //         log::info!("{:?}", e);
-            //         e
-            //     }
-            //     Err(err) => {
-            //         panic!("Response should be 'error_response', {}", err);
-            //     }
-            // };
-        }
-        Err(err) => {
-            panic!("error: {}", err);
-        }
-    };
+    let b = hyper::body::to_bytes(resp.into_body()).await.unwrap();
+
+    let json_response = serde_json::from_slice::<JsonResponse<Tx>>(&b).unwrap();
+
+    let tx_from_res = json_response.result.unwrap();
+    let tx_hash_from_res = tx_from_res.get_tx_hash();
+
+    assert_eq!(&expected_tx_hash, tx_hash_from_res);
 }
 
 #[tokio::test(flavor = "multi_thread")]
-async fn test_if_send_transaction_puts_tx_into_tx_pool() {
+async fn test_rpc_client_request_wrong_get_tx() {
+    sak_test_utils::init_test_log();
+    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
+
+    let _expected_tx_hash = {
+        let blockchain = utils::make_blockchain().await;
+
+        let dummy_tx = TxCandidate::new_dummy_pour_m1_to_p3_p4();
+
+        let old_tx_hash = (&dummy_tx).get_tx_hash();
+
+        let dist_ledger = blockchain.dist_ledger;
+
+        dist_ledger
+            .apis
+            .delete_tx(&old_tx_hash)
+            .expect("Tx should be deleted");
+
+        let bc = Some(BlockCandidate {
+            validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
+            tx_candidates: vec![dummy_tx.clone()],
+            witness_sigs: vec![String::from("1"), String::from("2")],
+            created_at: format!("{}", 0),
+        });
+
+        dist_ledger.apis.write_block(bc).await.unwrap();
+
+        let tx = dist_ledger
+            .apis
+            .get_tx(&old_tx_hash.clone())
+            .await
+            .expect("Tx should be exist")
+            .unwrap();
+
+        let tx_hash = tx.get_tx_hash().clone();
+
+        assert_eq!(tx_hash, *old_tx_hash);
+        old_tx_hash.clone()
+    };
+
+    let (rpc, rpc_socket_addr, _machine) = utils::make_test_context().await;
+
+    let client = Client::new();
+
+    tokio::spawn(async move { rpc.run().await });
+
+    let uri: Uri = {
+        let u = format!(
+            "http://localhost:{}/apis/v0/get_tx",
+            rpc_socket_addr.port()
+        );
+
+        u.parse().expect("URI should be made")
+    };
+
+    let false_tx_hash = String::from("false_tx_hash");
+
+    let body = {
+        let send_req = GetTxRequest {
+            hash: false_tx_hash,
+        };
+
+        let params = serde_json::to_string(&send_req)
+            .unwrap()
+            .as_bytes()
+            .to_vec();
+
+        let json_request = JsonRequest {
+            jsonrpc: "2.0".to_string(),
+            method: "get_tx".to_string(),
+            params: Some(params),
+            id: "test_1".to_string(),
+        };
+
+        let str = serde_json::to_string(&json_request).unwrap();
+
+        Body::from(str)
+    };
+
+    let req = Request::builder()
+        .method(Method::POST)
+        .uri(uri)
+        .body(body)
+        .expect("request builder should be made");
+
+    let resp = client.request(req).await.unwrap();
+
+    let b = hyper::body::to_bytes(resp.into_body()).await.unwrap();
+
+    let json_response = serde_json::from_slice::<JsonResponse<Tx>>(&b).unwrap();
+
+    assert!(json_response.result == None);
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn test_rpc_reqeust_correct_send_pour_tx() {
     sak_test_utils::init_test_log();
     sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
 
     let tc_dummy = PourTxCandidate::new_dummy_m1_to_p3_p4();
+    let expected_tc_hash = tc_dummy.get_tx_hash().clone();
 
     let (rpc, rpc_socket_addr, machine) = utils::make_test_context().await;
-    let _rpc_server = tokio::spawn(async move { rpc.run().await });
+
+    tokio::spawn(async move { rpc.run().await });
+
     let client = Client::new();
 
     let uri: Uri = {
@@ -242,81 +221,73 @@ async fn test_if_send_transaction_puts_tx_into_tx_pool() {
         u.parse().expect("URI should be made")
     };
 
-    let req = Request::builder()
-        .method(Method::POST)
-        .uri(uri.clone())
-        .body(Body::from(format!(
-            r#"
-                    {{
-                        "pi": {:?},
-                        "author_sig": "{}",
-                        "created_at": "{}",
-                        "data": {:?},
-                        "ctr_addr": {:?},
-                        "sn_1": {:?},
-                        "sn_2": {:?},
-                        "cm_1": {:?},
-                        "cm_2": {:?},
-                        "merkle_rt": {:?}                        
-                    }}
-                "#,
-            tc_dummy.pi,
-            tc_dummy.author_sig,
+    let body = {
+        let send_req = SendPourTxRequest::new(
             tc_dummy.created_at,
             tc_dummy.data,
-            tc_dummy.ctr_addr,
+            tc_dummy.author_sig,
+            Some(tc_dummy.ctr_addr),
+            tc_dummy.pi,
             tc_dummy.sn_1,
             tc_dummy.sn_2,
             tc_dummy.cm_1,
             tc_dummy.cm_2,
             tc_dummy.merkle_rt,
-        )))
-        .expect("request builder should be made");
+        );
 
-    let _res = match client.request(req).await {
-        Ok(res) => {
-            let body = hyper::body::aggregate(res)
-                .await
-                .expect("body should be parsed");
+        let params = serde_json::to_string(&send_req)
+            .unwrap()
+            .as_bytes()
+            .to_vec();
 
-            // let _: JsonResponse = match serde_json::from_reader(body.reader()) {
-            //     Ok(e) => {
-            //         log::info!("log info dbg {:?}", e);
-            //         e
-            //     }
-            //     Err(err) => {
-            //         panic!("Response should be 'error_response', {}", err);
-            //     }
-            // };
-        }
-        Err(err) => {
-            panic!("error: {}", err);
-        }
+        let json_request = JsonRequest {
+            jsonrpc: "2.0".to_string(),
+            method: "send_pour_tx".to_string(),
+            params: Some(params),
+            id: "test_1".to_string(),
+        };
+
+        let str = serde_json::to_string(&json_request).unwrap();
+
+        Body::from(str)
     };
 
-    tokio::time::sleep(Duration::from_secs(1)).await;
+    let req = Request::builder()
+        .method(Method::POST)
+        .uri(uri)
+        .body(body)
+        .expect("request builder should be made");
 
-    let dummy_tx_hash = tc_dummy.get_tx_hash();
+    let resp = client.request(req).await.unwrap();
+
+    let b = hyper::body::to_bytes(resp.into_body()).await.unwrap();
+
+    let json_response =
+        serde_json::from_slice::<JsonResponse<String>>(&b).unwrap();
+
+    let send_success = json_response.result.unwrap();
+
+    assert_eq!("success", send_success);
 
     let is_contain = machine
         .blockchain
         .dist_ledger
         .apis
-        .tx_pool_contains(&dummy_tx_hash)
+        .tx_pool_contains(&expected_tc_hash)
         .await;
 
     assert_eq!(true, is_contain);
 }
 
 #[tokio::test(flavor = "multi_thread")]
-async fn test_if_send_transaction_puts_false_tx_into_tx_pool() {
+async fn test_rpc_reqeust_wrong_send_pour_tx() {
     sak_test_utils::init_test_log();
     sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
 
-    let tc_dummy = PourTxCandidate::new_dummy_m1_to_p3_p4();
+    let (rpc, rpc_socket_addr, _machine) = utils::make_test_context().await;
 
-    let (rpc, rpc_socket_addr, machine) = utils::make_test_context().await;
-    let _rpc_server = tokio::spawn(async move { rpc.run().await });
+    tokio::spawn(async move { rpc.run().await });
+
     let client = Client::new();
 
     let uri: Uri = {
@@ -327,67 +298,171 @@ async fn test_if_send_transaction_puts_false_tx_into_tx_pool() {
         u.parse().expect("URI should be made")
     };
 
-    let req = Request::builder()
-        .method(Method::POST)
-        .uri(uri.clone())
-        .body(Body::from(format!(
-            r#"
-                    {{
-                        "pi": {:?},
-                        "author_sig": "{}",
-                        "created_at": "{}",
-                        "data": {:?},
-                        "ctr_addr": {:?},
-                        "sn_1": {:?},
-                        "sn_2": {:?},
-                        "cm_1": {:?},
-                        "cm_2": {:?},
-                        "merkle_rt": {:?}                        
-                    }}
-                "#,
-            tc_dummy.pi,
-            tc_dummy.author_sig,
-            tc_dummy.created_at,
-            tc_dummy.data,
-            tc_dummy.ctr_addr,
-            tc_dummy.sn_1,
-            tc_dummy.sn_2,
-            tc_dummy.cm_1,
-            tc_dummy.cm_2,
-            tc_dummy.merkle_rt,
-        )))
-        .expect("request builder should be made");
+    let body = {
+        let send_req = String::from("False request");
 
-    let _res = match client.request(req).await {
-        Ok(res) => {
-            let body = hyper::body::aggregate(res)
-                .await
-                .expect("body should be parsed");
+        let params = serde_json::to_string(&send_req)
+            .unwrap()
+            .as_bytes()
+            .to_vec();
 
-            // let _: JsonResponse = match serde_json::from_reader(body.reader()) {
-            //     Ok(e) => {
-            //         log::info!("log info dbg {:?}", e);
-            //         e
-            //     }
-            //     Err(err) => {
-            //         panic!("Response should be 'error_response', {}", err);
-            //     }
-            // };
-        }
-        Err(err) => {
-            panic!("error: {}", err);
-        }
+        let json_request = JsonRequest {
+            jsonrpc: "2.0".to_string(),
+            method: "send_pour_tx".to_string(),
+            params: Some(params),
+            id: "test_1".to_string(),
+        };
+
+        let str = serde_json::to_string(&json_request).unwrap();
+
+        Body::from(str)
     };
 
-    tokio::time::sleep(Duration::from_secs(1)).await;
+    let req = Request::builder()
+        .method(Method::POST)
+        .uri(uri)
+        .body(body)
+        .expect("request builder should be made");
 
-    let false_tx_hash = String::from("false_tx");
+    let resp = client.request(req).await.unwrap();
+
+    let b = hyper::body::to_bytes(resp.into_body()).await.unwrap();
+
+    let json_response =
+        serde_json::from_slice::<JsonResponse<String>>(&b).unwrap();
+
+    assert!(json_response.result == None);
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn test_rpc_reqeust_correct_send_mint_tx() {
+    sak_test_utils::init_test_log();
+    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
+
+    let tc_dummy = MintTxCandidate::new_dummy_2();
+    let expected_tc_hash = tc_dummy.get_tx_hash().clone();
+
+    let (rpc, rpc_socket_addr, machine) = utils::make_test_context().await;
+
+    tokio::spawn(async move { rpc.run().await });
+
+    let client = Client::new();
+
+    let uri: Uri = {
+        let u = format!(
+            "http://localhost:{}/apis/v0/send_mint_tx",
+            rpc_socket_addr.port()
+        );
+        u.parse().expect("URI should be made")
+    };
+
+    let body = {
+        let send_req = SendMintTxRequest::new(
+            tc_dummy.created_at,
+            tc_dummy.data,
+            tc_dummy.author_sig,
+            Some(tc_dummy.ctr_addr),
+            tc_dummy.cm,
+            tc_dummy.v,
+            tc_dummy.k,
+            tc_dummy.s,
+        );
+
+        let params = serde_json::to_string(&send_req)
+            .unwrap()
+            .as_bytes()
+            .to_vec();
+
+        let json_request = JsonRequest {
+            jsonrpc: "2.0".to_string(),
+            method: "send_mint_tx".to_string(),
+            params: Some(params),
+            id: "test_1".to_string(),
+        };
+
+        let str = serde_json::to_string(&json_request).unwrap();
+
+        Body::from(str)
+    };
+
+    let req = Request::builder()
+        .method(Method::POST)
+        .uri(uri)
+        .body(body)
+        .expect("request builder should be made");
+
+    let resp = client.request(req).await.unwrap();
+
+    let b = hyper::body::to_bytes(resp.into_body()).await.unwrap();
+
+    let json_response =
+        serde_json::from_slice::<JsonResponse<String>>(&b).unwrap();
+
+    let send_success = json_response.result.unwrap();
+
+    assert_eq!("success", send_success);
+
     let is_contain = machine
         .blockchain
         .dist_ledger
         .apis
-        .tx_pool_contains(&false_tx_hash)
+        .tx_pool_contains(&expected_tc_hash)
         .await;
 
-    assert_eq!(false, is_contain);
+    assert_eq!(true, is_contain);
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn test_rpc_reqeust_wrong_send_mint_tx() {
+    sak_test_utils::init_test_log();
+    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
+
+    let (rpc, rpc_socket_addr, _machine) = utils::make_test_context().await;
+
+    tokio::spawn(async move { rpc.run().await });
+
+    let client = Client::new();
+
+    let uri: Uri = {
+        let u = format!(
+            "http://localhost:{}/apis/v0/send_mint_tx",
+            rpc_socket_addr.port()
+        );
+        u.parse().expect("URI should be made")
+    };
+
+    let body = {
+        let send_req = String::from("False request");
+
+        let params = serde_json::to_string(&send_req)
+            .unwrap()
+            .as_bytes()
+            .to_vec();
+
+        let json_request = JsonRequest {
+            jsonrpc: "2.0".to_string(),
+            method: "send_mint_tx".to_string(),
+            params: Some(params),
+            id: "test_1".to_string(),
+        };
+
+        let str = serde_json::to_string(&json_request).unwrap();
+
+        Body::from(str)
+    };
+
+    let req = Request::builder()
+        .method(Method::POST)
+        .uri(uri)
+        .body(body)
+        .expect("request builder should be made");
+
+    let resp = client.request(req).await.unwrap();
+
+    let b = hyper::body::to_bytes(resp.into_body()).await.unwrap();
+
+    let json_response =
+        serde_json::from_slice::<JsonResponse<String>>(&b).unwrap();
+
+    assert!(json_response.result == None);
 }

@@ -23,6 +23,7 @@ pub(crate) struct QueryCtrResponse {
 }
 
 pub(crate) async fn query_ctr(
+    id: String,
     params: Params,
     sys_handle: Arc<SystemHandle>,
 ) -> Result<Response<Body>, RPCError> {
@@ -40,7 +41,7 @@ pub(crate) async fn query_ctr(
     {
         Ok(t) => {
             return Ok(utils::make_success_response(
-                String::from("1"),
+                id,
                 QueryCtrResponse { result: t },
             ));
         }
