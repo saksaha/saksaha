@@ -34,5 +34,5 @@ members = [
   "example/chat2",
 
    # extern
-  "extern/envelope_tui",
+  "extern/envelope_term",
 ]

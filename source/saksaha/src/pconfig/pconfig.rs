@@ -1,13 +1,10 @@
 use colored::Colorize;
 use log::info;
 use sak_crypto::{SakKey, ToEncodedPoint};
-use sak_fs::FS;
-use sak_logger::tinfo;
 use sak_p2p_addr::UnknownAddr;
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 
-use crate::pconfig::fs;
+use crate::{pconfig::fs, SaksahaError};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct PConfig {
@@ -25,7 +22,7 @@ pub struct PersistedP2PConfig {
 }
 
 impl PConfig {
-    pub fn new(app_prefix: &String) -> Result<PConfig, String> {
+    pub fn new(app_prefix: &String) -> Result<PConfig, SaksahaError> {
         info!("Loading persisted config...");
 
         let config_file_path = fs::get_config_file_path(app_prefix)?;
@@ -42,7 +39,11 @@ impl PConfig {
                 config_file_path,
             );
 
-            return fs::load(config_file_path);
+            let data = sak_fs::load(config_file_path)?;
+
+            let pconfig = serde_yaml::from_slice::<PConfig>(&data)?;
+
+            Ok(pconfig)
         } else {
             info!(
                 "Could not find a config file at the path. \
@@ -52,14 +53,11 @@ impl PConfig {
 
             let pconfig = PConfig::create_new_config();
 
-            let pconf = match fs::persist(pconfig, config_file_path) {
-                Ok(p) => p,
-                Err(err) => {
-                    return Err(err);
-                }
-            };
+            let data = serde_yaml::to_string(&pconfig)?;
 
-            return Ok(pconf);
+            sak_fs::persist(data, config_file_path)?;
+
+            Ok(pconfig)
         }
     }
 
