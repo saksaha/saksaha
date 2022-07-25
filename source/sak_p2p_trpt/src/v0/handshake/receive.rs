@@ -134,11 +134,6 @@ pub async fn receive_handshake(
     let shared_secret =
         sak_crypto::make_shared_secret(my_secret_key, her_public_key);
 
-    println!(
-        "[test] [recv] shared_secret: {:?}",
-        shared_secret.as_bytes()
-    );
-
     let upgraded_conn = conn.upgrade(shared_secret, &[0; 12]);
 
     let transport = Transport {

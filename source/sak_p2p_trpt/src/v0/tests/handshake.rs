@@ -182,6 +182,7 @@ async fn handshake_recv(
 ) -> (Transport, String) {
     let conn_id = sak_crypto::rand();
 
+    println!("prepare to recv msg,");
     let tcp_stream = accept(p2p_socket).await.unwrap();
 
     let conn = Connection::new(tcp_stream, conn_id).unwrap();
@@ -245,9 +246,13 @@ async fn test_handshake_works() {
     let identity_1_clone = identity_1.clone();
     let identity_2_clone = identity_2.clone();
 
+    // send
     tokio::spawn(async move {
         let transport_1 =
             handshake_init(conn_2, identity_1_clone, identity_2_clone).await;
+
+        println!("[111] sleep... before send msg");
+        tokio::time::sleep(Duration::from_secs(2)).await;
 
         println!("preparing to send msg,");
 
@@ -261,16 +266,47 @@ async fn test_handshake_works() {
     });
 
     let identity_2_clone = identity_2.clone();
+
+    //recv
     tokio::spawn(async move {
         let (transport_2, _) =
             handshake_recv(tcp_listener_2, identity_2_clone).await;
 
+        println!("[222] wait... before recv msg");
         let mut conn_2_lock = transport_2.conn.write().await;
 
         let maybe_msg = conn_2_lock.socket.next().await;
         println!("1414 maybe_msg after next: {:?}", maybe_msg);
 
-        let mut count = 0;
+        let result = match maybe_msg {
+            Some(maybe_msg) => match maybe_msg {
+                Ok(msg) => match msg {
+                    Msg::TxHashSyn(msg) => {
+                        println!("tx hash syn: {:?}", msg);
+                        msg
+                    }
+                    _ => {
+                        panic!();
+                    }
+                },
+                Err(err) => {
+                    println!("Err: {}", err);
+                    panic!();
+                }
+            },
+            None => {
+                println!("No msg..");
+                panic!();
+            }
+        };
+
+        println!("expected value: {:?}", "123".to_string());
+        println!("received value: {:?}", result.tx_hashes[0]);
+
+        assert_eq!(result.tx_hashes[0], "123".to_string());
+        println!("test pass!");
+
+        // let mut count = 0;
         // loop {
         //     println!("loop start");
         //     let maybe_msg = conn_2_lock.socket.next().await;
@@ -287,9 +323,9 @@ async fn test_handshake_works() {
         //                 // Msg::Hello(hello) => {
         //                 //     println!("hello: {:?}", hello);
         //                 // }
-        //                 Msg::TxHashSyn(msg) => {
-        //                     println!("tx hash syn: {:?}", msg);
-        //                 }
+        // Msg::TxHashSyn(msg) => {
+        //     println!("tx hash syn: {:?}", msg);
+        // }
         //                 _ => {
         //                     println!("invalid msg");
         //                 }

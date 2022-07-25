@@ -28,7 +28,7 @@ impl Encoder<Msg> for UpgradedP2PCodec {
         );
         // let v = dst.to_vec();
 
-        // self.cipher.apply_keystream(dst);
+        self.cipher.apply_keystream(dst);
 
         // println!(
         //     "111 id: {}, after encoding, len: {}, before cipher: {:?}, \n@after cipher: {:?}",
@@ -55,7 +55,7 @@ impl Decoder for UpgradedP2PCodec {
 
         // let v = src.to_vec();
 
-        // self.cipher.apply_keystream(src);
+        self.cipher.apply_keystream(src);
 
         // println!(
         //     "222 id: {}, before decoding, len: {}, before cipher: {:?}, \n@after cipher: {:?}",
