@@ -14,7 +14,7 @@ pub mod inputs;
 pub mod io;
 mod pconfig;
 
-pub type BoxedError = Box<dyn std::error::Error + Send + Sync>;
+pub type EnvelopeError = Box<dyn std::error::Error + Send + Sync>;
 
 pub struct XArg {
     pub app: Arc<Mutex<App>>,
@@ -25,7 +25,7 @@ pub struct XArg {
 pub async fn start_ui(
     app: &Arc<tokio::sync::Mutex<App>>,
     xarg: XArg,
-) -> Result<(), BoxedError> {
+) -> Result<(), EnvelopeError> {
     // Configure Crossterm backend for tui
     let stdout = std::io::stdout();
     crossterm::terminal::enable_raw_mode()?;
