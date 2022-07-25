@@ -29,7 +29,10 @@ members = [
   # internals
   "internals/ci",
 
-  # example
+  # example (deprecated)
   "example/chat",
   "example/chat2",
+
+   # extern
+  "extern/envelope_tui",
 ]
