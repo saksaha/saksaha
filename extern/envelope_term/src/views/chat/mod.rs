@@ -27,8 +27,7 @@ where
             [
                 Constraint::Length(3),
                 Constraint::Min(10),
-                Constraint::Length(3),
-                Constraint::Length(7),
+                Constraint::Length(10),
             ]
             .as_ref(),
         )
@@ -42,7 +41,7 @@ where
         .constraints([Constraint::Min(20), Constraint::Length(32)].as_ref())
         .split(chunks[1]);
 
-    let body = utils::draw_body(app.is_loading(), app.get_state());
+    let body = utils::draw_ch_list(app.is_loading(), app.get_state());
     rect.render_widget(body, body_chunks[0]);
 
     let help = utils::draw_help(app.actions());

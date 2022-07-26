@@ -1,13 +1,15 @@
 use crate::app::{Actions, App, AppState, View};
+use crate::io::InputMode;
 use sak_types::TxCandidate;
 use std::time::Duration;
 use symbols::line;
 use tui::backend::Backend;
 use tui::layout::{Alignment, Constraint, Direction, Layout, Rect};
 use tui::style::{Color, Modifier, Style};
-use tui::text::{Span, Spans};
+use tui::text::{Span, Spans, Text};
 use tui::widgets::{
-    Block, BorderType, Borders, Cell, LineGauge, Paragraph, Row, Table,
+    Block, BorderType, Borders, Cell, LineGauge, List, ListItem, Paragraph,
+    Row, Table, Tabs,
 };
 use tui::{symbols, Frame};
 use tui_logger::TuiLoggerWidget;
@@ -21,20 +23,86 @@ pub(crate) fn check_size(rect: &Rect) {
     }
 }
 
-pub(crate) fn draw_tabs<'a>() -> Paragraph<'a> {
-    Paragraph::new(vec![Spans::from(vec![
-        Span::raw("Channels "),
-        Span::raw("Ch+"),
-    ])])
-    .style(Style::default())
-    .alignment(Alignment::Left)
-    .block(
-        Block::default()
-            .title("Tabs")
-            .borders(Borders::ALL)
-            .style(Style::default().fg(Color::White))
-            .border_type(BorderType::Plain),
-    )
+pub(crate) fn draw_open_ch<'a>(
+    state: &AppState,
+) -> (Paragraph, Paragraph, List) {
+    let msg = "Typing is currently disabled (helper text)";
+    let style = Style::default().add_modifier(Modifier::RAPID_BLINK);
+
+    let mut text = Text::from(Spans::from(msg));
+    text.patch_style(style);
+
+    let help_message = Paragraph::new(text);
+
+    let input = Paragraph::new(state.input_text.as_ref())
+        .style(match state.input_mode {
+            InputMode::Normal => Style::default(),
+            InputMode::Editing => Style::default().fg(Color::Yellow),
+        })
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .title("Type your friend's public key"),
+        );
+
+    // match app.input_mode {
+    //     InputMode::Normal =>
+    //         // Hide the cursor. `Frame` does this by default, so we don't need to do anything here
+    //         {}
+
+    //     InputMode::Editing => {
+    //         // Make the cursor visible and ask tui-rs to put it at the specified coordinates after rendering
+    //         f.set_cursor(
+    //             // Put cursor past the end of the input text
+    //             chunks[1].x + app.input.width() as u16 + 1,
+    //             // Move one line down, from the border to the input line
+    //             chunks[1].y + 1,
+    //         )
+    //     }
+    // }
+
+    // let messages: Vec<ListItem> = app
+    //     .messages
+    //     .iter()
+    //     .enumerate()
+    //     .map(|(i, m)| {
+    //         let content = vec![Spans::from(Span::raw(format!("{}: {}", i, m)))];
+    //         ListItem::new(content)
+    //     })
+    //     .collect();
+
+    let messages: Vec<ListItem> =
+        vec![ListItem::new(vec![Spans::from(Span::raw("some message"))])];
+
+    let messages = List::new(messages)
+        .block(Block::default().borders(Borders::ALL).title("Messages"));
+
+    (help_message, input, messages)
+}
+
+pub(crate) fn draw_tabs<'a>(state: &AppState) -> Tabs {
+    let labels = ["Channels", "Open channel", "Chat (#id)"]
+        .iter()
+        .map(|t| {
+            let (first, rest) = t.split_at(1);
+            Spans::from(vec![
+                Span::styled(first, Style::default().fg(Color::Yellow)),
+                Span::styled(rest, Style::default().fg(Color::Green)),
+            ])
+        })
+        .collect();
+
+    let tabs = Tabs::new(labels)
+        .block(Block::default().borders(Borders::ALL).title("Tabs"))
+        .select(0)
+        .style(Style::default().fg(Color::Cyan))
+        .highlight_style(
+            Style::default()
+                .add_modifier(Modifier::BOLD)
+                .bg(Color::Black),
+        );
+
+    tabs
 }
 
 pub(crate) fn draw_title<'a>() -> Paragraph<'a> {
@@ -49,7 +117,10 @@ pub(crate) fn draw_title<'a>() -> Paragraph<'a> {
         )
 }
 
-pub(crate) fn draw_body<'a>(loading: bool, state: &AppState) -> Paragraph<'a> {
+pub(crate) fn draw_ch_list<'a>(
+    loading: bool,
+    state: &AppState,
+) -> Paragraph<'a> {
     let initialized_text = if state.is_initialized() {
         "Initialized"
     } else {
@@ -82,13 +153,15 @@ pub(crate) fn draw_body<'a>(loading: bool, state: &AppState) -> Paragraph<'a> {
         Spans::from(Span::raw(loading_text)),
         Spans::from(Span::raw(sleep_text)),
         Spans::from(Span::raw(sleep_text_2)),
-        Spans::from(Span::raw(tick_text)),
+        Spans::from(Span::raw(tick_text.to_string())),
+        Spans::from(Span::raw(tick_text.to_string())),
+        Spans::from(Span::raw(tick_text.to_string())),
     ])
     .style(Style::default().fg(Color::LightCyan))
     .alignment(Alignment::Left)
     .block(
         Block::default()
-            // .title("Body")
+            .title("Channel list")
             .borders(Borders::ALL)
             .style(Style::default().fg(Color::White))
             .border_type(BorderType::Plain),
@@ -116,11 +189,11 @@ pub(crate) fn draw_duration(duration: &Duration) -> LineGauge {
         .ratio(ratio)
 }
 
-pub(crate) fn draw_help(actions: &Actions) -> Table {
+pub(crate) fn draw_help(actions: &Actions) -> Paragraph {
     let key_style = Style::default().fg(Color::LightCyan);
     let help_style = Style::default().fg(Color::Gray);
 
-    let mut rows = vec![];
+    let mut v = vec![];
     for action in actions.actions().iter() {
         let mut first = true;
         for key in action.keys() {
@@ -128,25 +201,26 @@ pub(crate) fn draw_help(actions: &Actions) -> Table {
                 first = false;
                 action.to_string()
             } else {
-                String::from("")
+                action.to_string()
+                // String::from("")
             };
-            let row = Row::new(vec![
-                Cell::from(Span::styled(key.to_string(), key_style)),
-                Cell::from(Span::styled(help, help_style)),
-            ]);
-            rows.push(row);
+
+            v.push(Span::styled(key.to_string() + " ", key_style));
+            v.push(Span::styled(help, help_style));
+            v.push(Span::from(" / "));
         }
     }
 
-    Table::new(rows)
+    Paragraph::new(Spans::from(v))
+        .style(Style::default())
+        .alignment(Alignment::Left)
         .block(
             Block::default()
+                .title("Shortcuts")
                 .borders(Borders::ALL)
-                .border_type(BorderType::Plain)
-                .title("Help"),
+                .style(Style::default().fg(Color::White))
+                .border_type(BorderType::Plain),
         )
-        .widths(&[Constraint::Length(11), Constraint::Min(20)])
-        .column_spacing(1)
 }
 
 pub(crate) fn draw_logs<'a>() -> TuiLoggerWidget<'a> {
@@ -178,3 +252,36 @@ pub(crate) fn draw_dummy<'a>() -> Paragraph<'a> {
                 .border_type(BorderType::Plain),
         )
 }
+
+// pub(crate) fn __draw_help(actions: &Actions) -> Table {
+//     let key_style = Style::default().fg(Color::LightCyan);
+//     let help_style = Style::default().fg(Color::Gray);
+
+//     let mut rows = vec![];
+//     for action in actions.actions().iter() {
+//         let mut first = true;
+//         for key in action.keys() {
+//             let help = if first {
+//                 first = false;
+//                 action.to_string()
+//             } else {
+//                 String::from("")
+//             };
+//             let row = Row::new(vec![
+//                 Cell::from(Span::styled(key.to_string(), key_style)),
+//                 Cell::from(Span::styled(help, help_style)),
+//             ]);
+//             rows.push(row);
+//         }
+//     }
+
+//     Table::new(rows)
+//         .block(
+//             Block::default()
+//                 .borders(Borders::ALL)
+//                 .border_type(BorderType::Plain)
+//                 .title("Help"),
+//         )
+//         .widths(&[Constraint::Length(11), Constraint::Min(20)])
+//         .column_spacing(1)
+// }

@@ -1,3 +1,4 @@
+use crate::io::InputMode;
 use std::time::Duration;
 
 #[repr(u8)]
@@ -15,6 +16,8 @@ pub(crate) struct AppState {
     duration: Duration,
     counter_sleep: u32,
     counter_tick: u64,
+    pub input_mode: InputMode,
+    pub input_text: String,
     pub view: View,
 }
 
@@ -29,6 +32,8 @@ impl AppState {
             duration,
             counter_sleep,
             counter_tick,
+            input_mode: InputMode::Normal,
+            input_text: "user input".to_string(),
             view: View::Landing,
         }
     }
@@ -126,6 +131,8 @@ impl Default for AppState {
             duration: Duration::from_secs(1),
             counter_sleep: 0,
             counter_tick: 0,
+            input_mode: InputMode::Normal,
+            input_text: "user input".to_string(),
             view: View::Landing,
         }
     }
