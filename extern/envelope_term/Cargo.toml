@@ -25,5 +25,5 @@ serde_yaml = "0.8"
 sak_test_utils = { path = "../../source/sak_test_utils" }
 
 [[bin]]
-name = "envelope_tui"
+name = "envelope_term"
 path = "src/bin/main.rs"
