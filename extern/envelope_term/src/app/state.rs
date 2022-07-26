@@ -16,6 +16,7 @@ pub(crate) struct AppState {
     duration: Duration,
     counter_sleep: u32,
     counter_tick: u64,
+    pub ch_list: Vec<String>,
     pub input_mode: InputMode,
     pub input_text: String,
     pub view: View,
@@ -32,6 +33,7 @@ impl AppState {
             duration,
             counter_sleep,
             counter_tick,
+            ch_list: vec![],
             input_mode: InputMode::Normal,
             input_text: "user input".to_string(),
             view: View::Landing,
@@ -67,6 +69,10 @@ impl AppState {
         } else {
             None
         }
+    }
+
+    pub fn set_some_state(&mut self, data: String) {
+        self.ch_list = vec!["power".into(), "power2".into()];
     }
 
     pub fn count_tick(&self) -> Option<u64> {
@@ -131,6 +137,7 @@ impl Default for AppState {
             duration: Duration::from_secs(1),
             counter_sleep: 0,
             counter_tick: 0,
+            ch_list: vec![],
             input_mode: InputMode::Normal,
             input_text: "user input".to_string(),
             view: View::Landing,
