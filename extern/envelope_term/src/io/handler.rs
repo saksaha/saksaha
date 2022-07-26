@@ -1,6 +1,6 @@
 use super::IoEvent;
 use crate::app::App;
-use crate::BoxedError;
+use crate::EnvelopeError;
 use log::{error, info};
 use std::sync::Arc;
 use std::time::Duration;
@@ -32,7 +32,7 @@ impl IoAsyncHandler {
     }
 
     /// We use dummy implementation here, just wait 1s
-    async fn do_initialize(&mut self) -> Result<(), BoxedError> {
+    async fn do_initialize(&mut self) -> Result<(), EnvelopeError> {
         info!("🚀 Initialize the application");
         let mut app = self.app.lock().await;
         tokio::time::sleep(Duration::from_secs(1)).await;
@@ -43,7 +43,10 @@ impl IoAsyncHandler {
     }
 
     /// Just take a little break
-    async fn do_sleep(&mut self, duration: Duration) -> Result<(), BoxedError> {
+    async fn do_sleep(
+        &mut self,
+        duration: Duration,
+    ) -> Result<(), EnvelopeError> {
         info!("😴 Go sleeping for {:?}...", duration);
         tokio::time::sleep(duration).await;
         info!("⏰ Wake up !");
