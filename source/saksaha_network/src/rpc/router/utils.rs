@@ -1,9 +1,9 @@
-use super::{HandleError, JsonResponse, JSON_RPC_VERSION};
 use crate::rpc::{router::HeaderFactory, RPCError};
 use hyper::{
     header::{HeaderValue, CONTENT_TYPE},
     Body, Response, StatusCode,
 };
+use sak_rpc_interface::{JsonRPCError, JsonRequest, JsonResponse, JSON_RPC_2};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 pub(in crate::rpc) fn parse_params<P: DeserializeOwned>(
@@ -33,7 +33,7 @@ pub(in crate::rpc) fn make_success_response<D: Serialize>(
 
     *res.body_mut() = {
         let response = JsonResponse {
-            jsonrpc: JSON_RPC_VERSION.into(),
+            jsonrpc: JSON_RPC_2.into(),
             error: None,
             result: Some(result),
             id: id.to_string(),
@@ -120,8 +120,8 @@ pub(in crate::rpc) fn make_error_response(
 
     *res.body_mut() = {
         let response: JsonResponse<()> = JsonResponse {
-            jsonrpc: JSON_RPC_VERSION.into(),
-            error: Some(HandleError {
+            jsonrpc: JSON_RPC_2.into(),
+            error: Some(JsonRPCError {
                 msg: error.to_string(),
             }),
             result: None,

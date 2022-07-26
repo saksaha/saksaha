@@ -1,9 +1,8 @@
-use crate::rpc::router::JsonRequest;
-
 use super::{utils, Handler};
 use futures::Future;
 use hyper::{Body, Request, Response};
 use log::debug;
+use sak_rpc_interface::JsonRequest;
 use std::{collections::HashMap, pin::Pin, sync::Arc};
 
 pub(crate) struct Router<C> {

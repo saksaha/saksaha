@@ -135,27 +135,13 @@ pub(crate) fn draw_ch_list<'a>(
         String::default()
     };
 
-    let tick_text = if let Some(ticks) = state.count_tick() {
-        format!("Tick count: {}", ticks)
-    } else {
-        String::default()
-    };
-
-    let sleep_text_2 = if let Some(sleeps) = state.count_sleep() {
-        let mint_tc_1 = TxCandidate::new_dummy_mint_1();
-        format!("Mint tx candidate: {:?}", mint_tc_1)
-    } else {
-        String::default()
-    };
+    let foo: String = state.ch_list.join("/");
 
     Paragraph::new(vec![
         Spans::from(Span::raw(initialized_text)),
         Spans::from(Span::raw(loading_text)),
         Spans::from(Span::raw(sleep_text)),
-        Spans::from(Span::raw(sleep_text_2)),
-        Spans::from(Span::raw(tick_text.to_string())),
-        Spans::from(Span::raw(tick_text.to_string())),
-        Spans::from(Span::raw(tick_text.to_string())),
+        Spans::from(Span::raw(foo)),
     ])
     .style(Style::default().fg(Color::LightCyan))
     .alignment(Alignment::Left)

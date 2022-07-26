@@ -20,6 +20,7 @@ sak_p2p_discovery = { path = "../sak_p2p_discovery" }
 sak_p2p_transport = { path = "../sak_p2p_transport" }
 sak_utils_time = { path = "../sak_utils_time" }
 sak_utils_net = { path = "../sak_utils_net" }
+sak_rpc_interface = { path = "../sak_rpc_interface" }
 sak_task_queue = { path = "../sak_task_queue" }
 sak_types = { path = "../sak_types" }
 async-trait = "0.1.56"

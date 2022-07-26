@@ -6,6 +6,7 @@ use crate::io::IoEvent;
 use crate::{views, EnvelopeError};
 use log::error;
 use log::LevelFilter;
+use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::Mutex;
@@ -29,15 +30,17 @@ pub fn run(term_args: TermArgs) -> Result<(), EnvelopeError> {
                 tokio::sync::mpsc::channel::<IoEvent>(100);
 
             // We need to share the App between thread
-            let app = Arc::new(Mutex::new(App::new(sync_io_tx.clone())));
-            let app_clone = app.clone();
-            let app_ui = Arc::clone(&app);
+            let app = {
+                let a = App::new(sync_io_tx.clone());
+
+                Arc::new(Mutex::new(a))
+            };
 
             // Configure log
             tui_logger::init_logger(LevelFilter::Debug).unwrap();
             tui_logger::set_default_level(log::LevelFilter::Debug);
 
-            // Handle IO in a specifc thread
+            let app_clone = app.clone();
             tokio::spawn(async move {
                 let mut handler = IoAsyncHandler::new(app_clone);
 
@@ -46,7 +49,7 @@ pub fn run(term_args: TermArgs) -> Result<(), EnvelopeError> {
                 }
             });
 
-            match start_ui(&app_ui).await {
+            match start_app(app).await {
                 Ok(_) => (),
                 Err(err) => {
                     error!("Error starting the ui, err: {}", err);
@@ -61,9 +64,7 @@ pub fn run(term_args: TermArgs) -> Result<(), EnvelopeError> {
     Ok(())
 }
 
-pub async fn start_ui(
-    app: &Arc<tokio::sync::Mutex<App>>,
-) -> Result<(), EnvelopeError> {
+pub async fn start_app(app: Arc<Mutex<App>>) -> Result<(), EnvelopeError> {
     // Configure Crossterm backend for tui
     let stdout = std::io::stdout();
     crossterm::terminal::enable_raw_mode()?;
@@ -83,6 +84,25 @@ pub async fn start_ui(
         // Here we assume the the first load is a long task
         app.dispatch(IoEvent::Initialize).await;
     }
+
+    let app_clone = app.clone();
+    tokio::spawn(async move {
+        tokio::time::sleep(Duration::from_secs(5)).await;
+
+        let mut app = app_clone.lock().await;
+
+        if let Ok(r) = saksaha::query_contract(
+            "ctr_addr".into(),
+            "some_method".into(),
+            HashMap::default(),
+        )
+        .await
+        {
+            if let Some(d) = r.result {
+                app.dispatch(IoEvent::Receive(d.result)).await;
+            }
+        }
+    });
 
     loop {
         let mut app = app.lock().await;

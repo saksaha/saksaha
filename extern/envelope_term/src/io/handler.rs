@@ -21,6 +21,7 @@ impl IoAsyncHandler {
         let result = match io_event {
             IoEvent::Initialize => self.do_initialize().await,
             IoEvent::Sleep(duration) => self.do_sleep(duration).await,
+            IoEvent::Receive(data) => self.handle_receive_data(data).await,
         };
 
         if let Err(err) = result {
@@ -53,6 +54,18 @@ impl IoAsyncHandler {
         // Notify the app for having slept
         let mut app = self.app.lock().await;
         app.slept();
+
+        Ok(())
+    }
+
+    async fn handle_receive_data(
+        &mut self,
+        data: String,
+    ) -> Result<(), EnvelopeError> {
+        info!("😴 Receive data!! Set some state with data {:?}...", data);
+        // Notify the app for having slept
+        let mut app = self.app.lock().await;
+        app.set_some_state(data);
 
         Ok(())
     }
