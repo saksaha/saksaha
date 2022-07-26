@@ -1,11 +1,11 @@
 use clap::ArgMatches;
 use clap::{arg, command, value_parser, ArgAction, Command};
-use envelope_tui::app::App;
-use envelope_tui::io::handler::IoAsyncHandler;
-use envelope_tui::io::IoEvent;
-use envelope_tui::start_ui;
-use envelope_tui::BoxedError;
-use envelope_tui::XArg;
+use envelope_term::app::App;
+use envelope_term::io::handler::IoAsyncHandler;
+use envelope_term::io::IoEvent;
+use envelope_term::start_ui;
+use envelope_term::EnvelopeError;
+use envelope_term::XArg;
 use log::error;
 use log::LevelFilter;
 use std::path::PathBuf;
@@ -37,7 +37,7 @@ fn get_cli_args() -> ArgMatches {
     matches
 }
 
-fn main() -> Result<(), BoxedError> {
+fn main() -> Result<(), EnvelopeError> {
     let cli_args = get_cli_args();
 
     let pconfig_path = resolve_pconfig_path();
