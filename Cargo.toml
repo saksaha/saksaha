@@ -7,6 +7,7 @@ members = [
   "source/sak_proofs",
   "source/sak_fs",
   "source/sak_kv_db",
+  "source/sak_rpc_interface",
   "source/sak_p2p_addr",
   "source/sak_p2p_peertable",
   "source/sak_p2p_frame",
