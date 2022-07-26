@@ -1,3 +1,4 @@
+use crate::app::{Actions, App, AppState, View};
 use sak_types::TxCandidate;
 use std::time::Duration;
 use symbols::line;
@@ -11,31 +12,35 @@ use tui::widgets::{
 use tui::{symbols, Frame};
 use tui_logger::TuiLoggerWidget;
 
-use super::actions::Actions;
-use super::state::AppState;
-use crate::app::App;
-
 pub fn draw<B>(rect: &mut Frame<B>, app: &App)
 where
     B: Backend,
 {
-    // let state = get_some_state();
+    let state = app.get_state();
 
-    // if the state is at "landing page",
-    if app.page == 0 {
-        draw_ch_list_view(rect, app);
-    } else if app.page == 1 {
-        draw_ch_dummy_view(rect, app);
-    } else {
-        println!("draw some other views");
+    println!("draw(): state: {:?}", state);
+
+    if !state.is_initialized() {
+        draw_logo(rect, app);
+    }
+
+    match state.view {
+        View::ChList => {
+            draw_ch_list(rect, app);
+        }
+        View::OpenCh => {
+            draw_open_ch(rect, app);
+        }
+        View::Logo => {
+            draw_logo(rect, app);
+        }
+        View::Chat => {
+            draw_chat(rect, app);
+        }
     }
 }
 
-fn get_some_state() -> bool {
-    true
-}
-
-fn draw_ch_list_view<B>(rect: &mut Frame<B>, app: &App)
+fn draw_chat<B>(rect: &mut Frame<B>, app: &App)
 where
     B: Backend,
 {
@@ -66,14 +71,14 @@ where
         .constraints([Constraint::Min(20), Constraint::Length(32)].as_ref())
         .split(chunks[1]);
 
-    let body = draw_body(app.is_loading(), app.state());
+    let body = draw_body(app.is_loading(), app.get_state());
     rect.render_widget(body, body_chunks[0]);
 
     let help = draw_help(app.actions());
     rect.render_widget(help, body_chunks[1]);
 
     // Duration LineGauge
-    if let Some(duration) = app.state().duration() {
+    if let Some(duration) = app.get_state().duration() {
         let duration_block = draw_duration(duration);
         rect.render_widget(duration_block, chunks[2]);
     }
@@ -83,7 +88,75 @@ where
     rect.render_widget(logs, chunks[3]);
 }
 
-fn draw_ch_dummy_view<B>(rect: &mut Frame<B>, app: &App)
+fn draw_logo<B>(rect: &mut Frame<B>, app: &App)
+where
+    B: Backend,
+{
+    let size = rect.size();
+    check_size(&size);
+
+    // Vertical layout
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Min(10), Constraint::Length(12)].as_ref())
+        .split(size);
+
+    let title = draw_title();
+    rect.render_widget(title, chunks[0]);
+
+    let logs = draw_logs();
+    rect.render_widget(logs, chunks[1]);
+}
+
+fn draw_ch_list<B>(rect: &mut Frame<B>, app: &App)
+where
+    B: Backend,
+{
+    let size = rect.size();
+    check_size(&size);
+
+    // Vertical layout
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints(
+            [
+                Constraint::Length(3),
+                Constraint::Min(10),
+                Constraint::Length(3),
+                Constraint::Length(12),
+            ]
+            .as_ref(),
+        )
+        .split(size);
+
+    // Title
+    let title = draw_title();
+    rect.render_widget(title, chunks[0]);
+
+    // Body & Help
+    let body_chunks = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Min(20), Constraint::Length(32)].as_ref())
+        .split(chunks[1]);
+
+    let body = draw_body(app.is_loading(), app.get_state());
+    rect.render_widget(body, body_chunks[0]);
+
+    let help = draw_help(app.actions());
+    rect.render_widget(help, body_chunks[1]);
+
+    // Duration LineGauge
+    if let Some(duration) = app.get_state().duration() {
+        let duration_block = draw_duration(duration);
+        rect.render_widget(duration_block, chunks[2]);
+    }
+
+    // Logs
+    let logs = draw_logs();
+    rect.render_widget(logs, chunks[3]);
+}
+
+fn draw_open_ch<B>(rect: &mut Frame<B>, app: &App)
 where
     B: Backend,
 {

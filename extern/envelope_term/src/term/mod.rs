@@ -1,10 +1,9 @@
-use crate::app::ui;
 use crate::app::{App, AppReturn};
 use crate::inputs::events::Events;
 use crate::inputs::InputEvent;
 use crate::io::handler::IoAsyncHandler;
 use crate::io::IoEvent;
-use crate::EnvelopeError;
+use crate::{views, EnvelopeError};
 use log::error;
 use log::LevelFilter;
 use std::sync::Arc;
@@ -74,7 +73,7 @@ pub async fn start_ui(
     terminal.hide_cursor()?;
 
     // User event handler
-    let tick_rate = Duration::from_millis(200);
+    let tick_rate = Duration::from_millis(500);
     let mut events = Events::new(tick_rate);
 
     // Trigger state change from Init to Initialized
@@ -89,7 +88,7 @@ pub async fn start_ui(
         let mut app = app.lock().await;
 
         // Render
-        terminal.draw(|rect| ui::draw(rect, &app))?;
+        terminal.draw(|rect| views::draw(rect, &app))?;
 
         // Handle inputs
         let result = match events.next().await {

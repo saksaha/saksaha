@@ -20,7 +20,6 @@ pub struct App {
     /// State
     is_loading: bool,
     state: AppState,
-    pub page: u16,
 }
 
 impl App {
@@ -34,14 +33,13 @@ impl App {
             actions,
             is_loading,
             state,
-            page: 0,
         }
     }
 
-    pub fn run(&mut self) {}
-
     /// Handle a user action
     pub async fn do_action(&mut self, key: Key) -> AppReturn {
+        println!("do action: key: {}, actions: {:?}", key, self.actions);
+
         if let Some(action) = self.actions.find(key) {
             debug!("Run action [{:?}]", action);
             match action {
@@ -56,13 +54,20 @@ impl App {
                 // IncrementDelay and DecrementDelay is handled in the UI thread
                 Action::IncrementDelay => {
                     self.state.increment_delay();
-                    self.page += 1;
-                    self.page = self.page % 2;
                     AppReturn::Continue
                 }
                 // Note, that we clamp the duration, so we stay >= 0
                 Action::DecrementDelay => {
                     self.state.decrement_delay();
+                    AppReturn::Continue
+                }
+                Action::ShowChList => {
+                    self.state.set_view_ch_list();
+                    AppReturn::Continue
+                }
+
+                Action::ShowOpenCh => {
+                    self.state.set_view_open_ch();
                     AppReturn::Continue
                 }
             }
@@ -92,7 +97,8 @@ impl App {
     pub fn actions(&self) -> &Actions {
         &self.actions
     }
-    pub fn state(&self) -> &AppState {
+
+    pub(crate) fn get_state(&self) -> &AppState {
         &self.state
     }
 
@@ -107,8 +113,11 @@ impl App {
             Action::Sleep,
             Action::IncrementDelay,
             Action::DecrementDelay,
+            Action::ShowOpenCh,
+            Action::ShowChList,
         ]
         .into();
+
         self.state = AppState::initialized()
     }
 
