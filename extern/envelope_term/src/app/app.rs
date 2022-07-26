@@ -59,6 +59,15 @@ impl App {
                     self.state.decrement_delay();
                     AppReturn::Continue
                 }
+                Action::ShowChList => {
+                    self.state.set_view_ch_list();
+                    AppReturn::Continue
+                }
+
+                Action::ShowOpenCh => {
+                    self.state.set_view_open_ch();
+                    AppReturn::Continue
+                }
             }
         } else {
             warn!("No action accociated to {}", key);
@@ -86,7 +95,8 @@ impl App {
     pub fn actions(&self) -> &Actions {
         &self.actions
     }
-    pub fn state(&self) -> &AppState {
+
+    pub(crate) fn get_state(&self) -> &AppState {
         &self.state
     }
 
@@ -101,8 +111,11 @@ impl App {
             Action::Sleep,
             Action::IncrementDelay,
             Action::DecrementDelay,
+            Action::ShowOpenCh,
+            Action::ShowChList,
         ]
         .into();
+
         self.state = AppState::initialized()
     }
 

@@ -16,7 +16,8 @@ impl Script for Dev {
             None => vec![],
         };
 
-        let args = [vec!["run", "--package", "saksaha", "--"], args].concat();
+        let args =
+            [vec!["run", "--package", "saksaha_network", "--"], args].concat();
 
         log!(
             "Found subcommand, script: {}, executing `{} {}`",
