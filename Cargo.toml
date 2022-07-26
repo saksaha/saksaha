@@ -2,7 +2,7 @@
 
 members = [
   "source/sak_logger",
-  "source/saksaha",
+  "source/saksaha_network",
   "source/sak_crypto",
   "source/sak_proofs",
   "source/sak_fs",
@@ -35,4 +35,5 @@ members = [
 
    # extern
   "extern/envelope_term",
+  "extern/saksaha_rs",
 ]

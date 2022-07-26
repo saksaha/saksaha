@@ -1,16 +1,9 @@
 use clap::ArgMatches;
 use clap::{arg, command, value_parser, ArgAction, Command};
-use envelope_term::app::App;
-use envelope_term::io::handler::IoAsyncHandler;
-use envelope_term::io::IoEvent;
-use envelope_term::start_ui;
+use envelope_term::term;
+use envelope_term::term::TermArgs;
 use envelope_term::EnvelopeError;
-use envelope_term::XArg;
-use log::error;
-use log::LevelFilter;
 use std::path::PathBuf;
-use std::sync::Arc;
-use tokio::sync::Mutex;
 
 fn get_cli_args() -> ArgMatches {
     let matches = command!() // requires `cargo` feature
@@ -42,49 +35,9 @@ fn main() -> Result<(), EnvelopeError> {
 
     let pconfig_path = resolve_pconfig_path();
 
-    let runtime = tokio::runtime::Builder::new_multi_thread()
-        .enable_all()
-        .build();
+    let term_args = TermArgs { pconfig_path };
 
-    match runtime {
-        Ok(r) => r.block_on(async {
-            let (sync_io_tx, mut sync_io_rx) =
-                tokio::sync::mpsc::channel::<IoEvent>(100);
-
-            // We need to share the App between thread
-            let app = Arc::new(Mutex::new(App::new(sync_io_tx.clone())));
-            let app_clone = app.clone();
-            let app_ui = Arc::clone(&app);
-
-            // Configure log
-            tui_logger::init_logger(LevelFilter::Debug).unwrap();
-            tui_logger::set_default_level(log::LevelFilter::Debug);
-
-            // Handle IO in a specifc thread
-            tokio::spawn(async move {
-                let mut handler = IoAsyncHandler::new(app_clone);
-
-                while let Some(io_event) = sync_io_rx.recv().await {
-                    handler.handle_io_event(io_event).await;
-                }
-            });
-
-            let xarg = XArg {
-                app: app.clone(),
-                pconfig_path,
-            };
-
-            match start_ui(&app_ui, xarg).await {
-                Ok(_) => (),
-                Err(err) => {
-                    error!("Error starting the ui, err: {}", err);
-                }
-            };
-        }),
-        Err(err) => {
-            return Err(format!("runtime fail, err: {:?}", err).into());
-        }
-    };
+    term::run(term_args)?;
 
     Ok(())
 }
