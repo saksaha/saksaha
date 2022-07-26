@@ -1,5 +1,5 @@
 [package]
-name = "envelope_term"
+name = "saksaha"
 version = "0.0.1"
 edition = "2021"
 
@@ -10,8 +10,8 @@ directories = "3.0"
 sak_fs = { path = "../../source/sak_fs" }
 sak_logger = { path = "../../source/sak_logger" }
 sak_crypto = { path = "../../source/sak_crypto" }
+sak_contract_std = { path = "../../source/sak_contract_std" }
 sak_types = { path = "../../source/sak_types" }
-saksaha = { path = "../saksaha_rs" }
 log = "0.4"
 tui = "0.18.0"
 tui-logger = "0.8"
@@ -21,10 +21,8 @@ serde = { version = "1.0.130", features = ["derive"] }
 serde_json = "1.0.59"
 clap = { version = "3.2.14", features = ["cargo"] }
 serde_yaml = "0.8"
+hyper = { version = "0.14", features = ["full"] }
 
 [dev-dependencies]
 sak_test_utils = { path = "../../source/sak_test_utils" }
 
-[[bin]]
-name = "envelope_term"
-path = "src/bin/main.rs"

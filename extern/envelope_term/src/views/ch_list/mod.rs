@@ -1,3 +1,4 @@
+use super::utils;
 use crate::app::{Actions, App, AppState, View};
 use sak_types::TxCandidate;
 use std::time::Duration;
@@ -11,8 +12,6 @@ use tui::widgets::{
 };
 use tui::{symbols, Frame};
 use tui_logger::TuiLoggerWidget;
-
-use super::utils;
 
 pub(crate) fn draw_ch_list<B>(rect: &mut Frame<B>, app: &App)
 where
