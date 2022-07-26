@@ -41,13 +41,6 @@ async fn test_call_get_block_with_good_params() {
     };
 
     let body = {
-        // let r = GetBlockRequest {
-        //     block_hash: original_block_hash.to_string(),
-        // };
-
-        // let params = serde_json::to_string(&r).unwrap().as_bytes().to_vec();
-
-        // original_block_hash == 973f486c42f67e8520367a46f1a13caf969224d99d1b2f02943c6d926b7bc04b
         let params = 
 r#"
 {
