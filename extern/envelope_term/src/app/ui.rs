@@ -19,11 +19,13 @@ pub fn draw<B>(rect: &mut Frame<B>, app: &App)
 where
     B: Backend,
 {
-    let state = get_some_state();
+    // let state = get_some_state();
 
     // if the state is at "landing page",
-    if state {
+    if app.page == 0 {
         draw_ch_list_view(rect, app);
+    } else if app.page == 1 {
+        draw_ch_dummy_view(rect, app);
     } else {
         println!("draw some other views");
     }
@@ -79,6 +81,33 @@ where
     // Logs
     let logs = draw_logs();
     rect.render_widget(logs, chunks[3]);
+}
+
+fn draw_ch_dummy_view<B>(rect: &mut Frame<B>, app: &App)
+where
+    B: Backend,
+{
+    let size = rect.size();
+    check_size(&size);
+
+    // Vertical layout
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Length(3)].as_ref())
+        .split(size);
+
+    // Title
+    let title = draw_title();
+    rect.render_widget(title, chunks[0]);
+
+    // Body & Help
+    let body_chunks = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Min(20)].as_ref())
+        .split(chunks[0]);
+
+    let body = draw_dummy();
+    rect.render_widget(body, body_chunks[0]);
 }
 
 fn draw_title<'a>() -> Paragraph<'a> {
@@ -218,4 +247,16 @@ fn draw_logs<'a>() -> TuiLoggerWidget<'a> {
                 .borders(Borders::ALL),
         )
         .style(Style::default().fg(Color::White).bg(Color::Black))
+}
+
+fn draw_dummy<'a>() -> Paragraph<'a> {
+    Paragraph::new("Dummy Channel")
+        .style(Style::default().fg(Color::LightCyan))
+        .alignment(Alignment::Center)
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .style(Style::default().fg(Color::White))
+                .border_type(BorderType::Plain),
+        )
 }

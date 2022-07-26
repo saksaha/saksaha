@@ -1,5 +1,5 @@
+use super::actions::Actions;
 use super::state::AppState;
-use super::{actions::Actions, state::TabsState};
 use crate::app::actions::Action;
 use crate::inputs::key::Key;
 use crate::io::IoEvent;
@@ -20,7 +20,7 @@ pub struct App {
     /// State
     is_loading: bool,
     state: AppState,
-    pub tabs: TabsState,
+    pub page: u16,
 }
 
 impl App {
@@ -34,11 +34,7 @@ impl App {
             actions,
             is_loading,
             state,
-            tabs: TabsState::new(vec![
-                "Show Channel".to_string(),
-                "Open Channel".to_string(),
-                "In Channel".to_string(),
-            ]),
+            page: 0,
         }
     }
 
@@ -60,6 +56,8 @@ impl App {
                 // IncrementDelay and DecrementDelay is handled in the UI thread
                 Action::IncrementDelay => {
                     self.state.increment_delay();
+                    self.page += 1;
+                    self.page = self.page % 2;
                     AppReturn::Continue
                 }
                 // Note, that we clamp the duration, so we stay >= 0
