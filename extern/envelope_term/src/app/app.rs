@@ -42,6 +42,8 @@ impl App {
         }
     }
 
+    pub fn run(&mut self) {}
+
     /// Handle a user action
     pub async fn do_action(&mut self, key: Key) -> AppReturn {
         if let Some(action) = self.actions.find(key) {
