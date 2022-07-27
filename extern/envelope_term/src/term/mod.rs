@@ -1,15 +1,20 @@
+use crate::app::View;
 use crate::app::{App, AppReturn};
 use crate::inputs::events::Events;
 use crate::inputs::InputEvent;
 use crate::io::handler::IoAsyncHandler;
+use crate::io::InputMode;
 use crate::io::IoEvent;
 use crate::{views, EnvelopeError};
+use crossterm::event;
+use crossterm::event::{poll, read, Event, KeyCode, KeyEvent};
 use log::error;
 use log::LevelFilter;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::Mutex;
+use tui::backend::Backend;
 use tui::backend::CrosstermBackend;
 use tui::Terminal;
 
@@ -112,7 +117,11 @@ pub async fn start_app(app: Arc<Mutex<App>>) -> Result<(), EnvelopeError> {
 
         // Handle inputs
         let result = match events.next().await {
-            InputEvent::Input(key) => app.do_action(key).await,
+            InputEvent::Input(key) => match app.get_state().input_mode {
+                InputMode::Normal => app.handle_normal_key(key).await,
+                InputMode::Editing => app.handle_edit_key(key).await,
+            },
+
             InputEvent::Tick => app.update_on_tick().await,
         };
 

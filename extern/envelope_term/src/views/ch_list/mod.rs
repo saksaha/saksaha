@@ -8,6 +8,9 @@ pub(crate) fn draw_ch_list<B>(rect: &mut Frame<B>, app: &mut App)
 where
     B: Backend,
 {
+    let state = app.get_state_mut();
+    let is_loading = state.is_loading;
+
     let size = rect.size();
     utils::check_size(&size);
 
@@ -23,7 +26,7 @@ where
         )
         .split(size);
 
-    let tabs = utils::draw_tabs(app.get_state());
+    let tabs = utils::draw_tabs(state);
     rect.render_widget(tabs, chunks[0]);
 
     {
@@ -32,12 +35,12 @@ where
             .constraints([Constraint::Min(10), Constraint::Length(4)].as_ref())
             .split(chunks[1]);
 
-        let ch_list = utils::draw_ch_list(app.is_loading(), app.get_state());
+        let ch_list = utils::draw_ch_list(is_loading, state);
         // rect.render_widget(ch_list, body_chunks[0]);
         rect.render_stateful_widget(
             ch_list,
             body_chunks[0],
-            &mut app.state.ch_list_state,
+            &mut state.ch_list_state,
         );
 
         let help = utils::draw_help(app.actions());

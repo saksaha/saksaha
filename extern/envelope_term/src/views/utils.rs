@@ -13,6 +13,7 @@ use tui::widgets::{
 };
 use tui::{symbols, Frame};
 use tui_logger::TuiLoggerWidget;
+use unicode_width::UnicodeWidthStr;
 
 pub(crate) fn check_size(rect: &Rect) {
     if rect.width < 52 {
@@ -23,16 +24,56 @@ pub(crate) fn check_size(rect: &Rect) {
     }
 }
 
-pub(crate) fn draw_open_ch<'a>(
-    state: &AppState,
-) -> (Paragraph, Paragraph, List) {
-    let msg = "Typing is currently disabled (helper text)";
-    let style = Style::default().add_modifier(Modifier::RAPID_BLINK);
+pub(crate) fn draw_open_ch<'a, B>(
+    app: &'a App,
+    rect: &mut Frame<B>,
+    chunks: &Vec<Rect>,
+) -> (Paragraph<'a>, Paragraph<'a>, List<'a>)
+where
+    B: Backend,
+{
+    let state = app.get_state();
 
-    let mut text = Text::from(Spans::from(msg));
-    text.patch_style(style);
+    let (msg, style) = match app.get_state().input_mode {
+        InputMode::Normal => (
+            vec![
+                Span::raw("Press "),
+                Span::styled(
+                    "q",
+                    Style::default().add_modifier(Modifier::BOLD),
+                ),
+                Span::raw(" to exit, "),
+                Span::styled(
+                    "i",
+                    Style::default().add_modifier(Modifier::BOLD),
+                ),
+                Span::raw(" to start editing."),
+            ],
+            Style::default().add_modifier(Modifier::RAPID_BLINK),
+        ),
+        InputMode::Editing => (
+            vec![
+                Span::raw("Press "),
+                Span::styled(
+                    "Esc",
+                    Style::default().add_modifier(Modifier::BOLD),
+                ),
+                Span::raw(" to stop editing, "),
+                Span::styled(
+                    "Enter",
+                    Style::default().add_modifier(Modifier::BOLD),
+                ),
+                Span::raw(" to record the message"),
+            ],
+            Style::default(),
+        ),
+    };
 
-    let help_message = Paragraph::new(text);
+    let help_msg = {
+        let mut text = Text::from(Spans::from(msg));
+        text.patch_style(style);
+        Paragraph::new(text)
+    };
 
     let input = Paragraph::new(state.input_text.as_ref())
         .style(match state.input_mode {
@@ -45,39 +86,38 @@ pub(crate) fn draw_open_ch<'a>(
                 .title("Type your friend's public key"),
         );
 
-    // match app.input_mode {
-    //     InputMode::Normal =>
-    //         // Hide the cursor. `Frame` does this by default, so we don't need to do anything here
-    //         {}
+    let input_returned = {
+        let content = vec![Spans::from(Span::raw(format!(
+            "Her pk: {}",
+            state.input_returned
+        )))];
 
-    //     InputMode::Editing => {
-    //         // Make the cursor visible and ask tui-rs to put it at the specified coordinates after rendering
-    //         f.set_cursor(
-    //             // Put cursor past the end of the input text
-    //             chunks[1].x + app.input.width() as u16 + 1,
-    //             // Move one line down, from the border to the input line
-    //             chunks[1].y + 1,
-    //         )
-    //     }
-    // }
+        let v = vec![ListItem::new(content)];
 
-    // let messages: Vec<ListItem> = app
-    //     .messages
-    //     .iter()
-    //     .enumerate()
-    //     .map(|(i, m)| {
-    //         let content = vec![Spans::from(Span::raw(format!("{}: {}", i, m)))];
-    //         ListItem::new(content)
-    //     })
-    //     .collect();
+        List::new(v).block(
+            Block::default()
+                .borders(Borders::ALL)
+                .title("Open channel progress"),
+        )
+    };
 
-    let messages: Vec<ListItem> =
-        vec![ListItem::new(vec![Spans::from(Span::raw("some message"))])];
+    match state.input_mode {
+        InputMode::Normal =>
+            // Hide the cursor. `Frame` does this by default, so we don't need to do anything here
+            {}
 
-    let messages = List::new(messages)
-        .block(Block::default().borders(Borders::ALL).title("Messages"));
+        InputMode::Editing => {
+            // Make the cursor visible and ask tui-rs to put it at the specified coordinates after rendering
+            rect.set_cursor(
+                // Put cursor past the end of the input text
+                chunks[1].x + state.input_text.width() as u16 + 1,
+                // Move one line down, from the border to the input line
+                chunks[1].y + 2,
+            )
+        }
+    }
 
-    (help_message, input, messages)
+    (help_msg, input, input_returned)
 }
 
 pub(crate) fn draw_tabs<'a>(state: &AppState) -> Tabs {
