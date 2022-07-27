@@ -1,7 +1,7 @@
 use super::utils;
-use crate::rpc::routes::v0:: GetBlockResponse;
-use sak_rpc_interface::{JsonRequest, JsonResponse};
+use crate::rpc::routes::v0::GetBlockResponse;
 use hyper::{Body, Client, Method, Request, Uri};
+use sak_rpc_interface::{JsonRequest, JsonResponse};
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_call_get_block_with_good_params() {
@@ -41,7 +41,7 @@ async fn test_call_get_block_with_good_params() {
     };
 
     let body = {
-        let params = 
+        let params =
 r#"
 {
     "block_hash": "973f486c42f67e8520367a46f1a13caf969224d99d1b2f02943c6d926b7bc04b"
@@ -119,10 +119,11 @@ async fn test_call_get_block_with_wrong_params() {
 
     let body = {
         // original_block_hash == 973f486c42f67e8520367a46f1a13caf969224d99d1b2f02943c6d926b7bc04b
-        let params = 
-r#"
+        let params = r#"
 973f486c42f67e8520367a46f1a13caf969224d99d1b2f02943c6d926b7bc04b
-"#.as_bytes().to_vec();
+"#
+        .as_bytes()
+        .to_vec();
 
         let json_request = JsonRequest {
             jsonrpc: "2.0".to_string(),
@@ -170,4 +171,3 @@ r#"
 
     //
 }
-

@@ -92,9 +92,9 @@ pub async fn start_app(app: Arc<Mutex<App>>) -> Result<(), EnvelopeError> {
         let mut app = app_clone.lock().await;
 
         if let Ok(r) = saksaha::query_contract(
-            "ctr_addr".into(),
-            "some_method".into(),
-            HashMap::default(),
+            "envelope_contract_addr".into(),
+            "get_ch_list".into(),
+            HashMap::with_capacity(10),
         )
         .await
         {
@@ -108,7 +108,7 @@ pub async fn start_app(app: Arc<Mutex<App>>) -> Result<(), EnvelopeError> {
         let mut app = app.lock().await;
 
         // Render
-        terminal.draw(|rect| views::draw(rect, &app))?;
+        terminal.draw(|rect| views::draw(rect, &mut app))?;
 
         // Handle inputs
         let result = match events.next().await {
