@@ -75,9 +75,14 @@ impl DistLedgerApis {
         offset: Option<u128>,
         limit: Option<u128>,
     ) -> Result<Vec<Block>, LedgerError> {
-        let latest_bh = self.get_latest_block_height()?.unwrap();
+        let latest_bh = match self.get_latest_block_height()? {
+            Some(bh) => bh,
+            None => {
+                return Err(format!("Cannot find latest block height").into())
+            }
+        };
 
-        let offset = match offset {
+        let upper = match offset {
             Some(bh) => {
                 if latest_bh < bh {
                     latest_bh
@@ -93,10 +98,10 @@ impl DistLedgerApis {
             None => GET_BLOCK_HASH_LIST_DEFAULT_SIZE,
         };
 
-        let lower_bound = {
-            if offset < limit {
-                if offset > GET_BLOCK_HASH_LIST_DEFAULT_SIZE {
-                    offset - GET_BLOCK_HASH_LIST_DEFAULT_SIZE + 1
+        let lower = {
+            if upper < limit {
+                if upper > GET_BLOCK_HASH_LIST_DEFAULT_SIZE {
+                    upper - GET_BLOCK_HASH_LIST_DEFAULT_SIZE + 1
                 } else {
                     0
                 }
@@ -107,7 +112,7 @@ impl DistLedgerApis {
 
         let mut block_hash_list: Vec<BlockHash> = Vec::new();
 
-        for bh in (lower_bound..=offset).rev().step_by(1) {
+        for bh in (lower..=upper).rev().step_by(1) {
             match self.get_block_by_height(&bh).await {
                 Ok(maybe_block) => match maybe_block {
                     Some(block) => {

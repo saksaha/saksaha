@@ -1,8 +1,8 @@
 use super::utils;
-use sak_rpc_interface::{JsonRequest,JsonResponse};
-use sak_types::BlockHash;
-use crate::rpc::routes::v0::{ GetBlockResponse, GetBlockHashListResponse};
+use crate::rpc::routes::v0::{GetBlockHashListResponse, GetBlockResponse};
 use hyper::{Body, Client, Method, Request, Uri};
+use sak_rpc_interface::{JsonRequest, JsonResponse};
+use sak_types::BlockHash;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_call_get_block_with_good_params() {
@@ -33,21 +33,20 @@ async fn test_call_get_block_with_good_params() {
     };
 
     let uri: Uri = {
-        let u = format!(
-            "http://localhost:{}",
-            rpc_socket_addr.port()
-        );
+        let u = format!("http://localhost:{}", rpc_socket_addr.port());
 
         u.parse().expect("URI should be made")
     };
 
     let body = {
-        let params = 
-r#"
+        let params = r#"
 {
-    "block_hash": "973f486c42f67e8520367a46f1a13caf969224d99d1b2f02943c6d926b7bc04b"
+    "block_hash":
+    "973f486c42f67e8520367a46f1a13caf969224d99d1b2f02943c6d926b7bc04b"
 }
-"#.as_bytes().to_vec();
+"#
+        .as_bytes()
+        .to_vec();
 
         let json_request = JsonRequest {
             jsonrpc: "2.0".to_string(),
@@ -119,10 +118,11 @@ async fn test_call_get_block_with_wrong_params() {
     };
 
     let body = {
-        let params = 
-r#"
+        let params = r#"
 973f486c42f67e8520367a46f1a13caf969224d99d1b2f02943c6d926b7bc04b
-"#.as_bytes().to_vec();
+"#
+        .as_bytes()
+        .to_vec();
 
         let json_request = JsonRequest {
             jsonrpc: "2.0".to_string(),
@@ -171,7 +171,6 @@ r#"
     //
 }
 
-
 #[tokio::test(flavor = "multi_thread")]
 async fn test_call_get_block_list() {
     sak_test_utils::init_test_log();
@@ -180,8 +179,6 @@ async fn test_call_get_block_list() {
     let (rpc, rpc_socket_addr, machine) = utils::make_test_context().await;
 
     tokio::spawn(async move { rpc.run().await });
-
-
 
     let mut block_hashes: Vec<String> = Vec::new();
 
@@ -207,27 +204,25 @@ async fn test_call_get_block_list() {
     }
 
     let uri: Uri = {
-        let u = format!(
-            "http://localhost:{}",
-            rpc_socket_addr.port()
-        );
+        let u = format!("http://localhost:{}", rpc_socket_addr.port());
 
         u.parse().expect("URI should be made")
     };
 
     let body = {
-        let params = 
-r#"
+        let params = r#"
 {
     "offset": 5,
     "limit": 1000 
 }
-"#.as_bytes().to_vec();
+"#
+        .as_bytes()
+        .to_vec();
 
         let json_request = JsonRequest {
             jsonrpc: "2.0".to_string(),
             method: "get_block_list".to_string(),
-            params:Some(params), 
+            params: Some(params),
             id: "test_1".to_string(),
         };
 
@@ -235,7 +230,6 @@ r#"
 
         Body::from(str)
     };
-
 
     let req = Request::builder()
         .method(Method::POST)
@@ -247,29 +241,31 @@ r#"
 
     let response = client.request(req).await.unwrap();
 
-    let response_bytes = hyper::body::to_bytes(response.into_body()).await.unwrap();
+    let response_bytes =
+        hyper::body::to_bytes(response.into_body()).await.unwrap();
 
-    let json_response =
-        serde_json::from_slice::<JsonResponse<GetBlockHashListResponse>>(&response_bytes).unwrap();
+    let json_response = serde_json::from_slice::<
+        JsonResponse<GetBlockHashListResponse>,
+    >(&response_bytes)
+    .unwrap();
 
     let result = json_response.result.unwrap();
 
     let block_acquired = result.block_list;
 
     let block_acquired_hashes: Vec<BlockHash> = block_acquired
-            .iter()
-            .map(|block| block.get_block_hash().to_owned())
-            .collect();
-
-
+        .iter()
+        .map(|block| block.get_block_hash().to_owned())
+        .collect();
 
     println!("----");
     println!("[+] original block hashes: {:#?}", block_hashes);
     println!("[+] acquired block hashes: {:#?}", block_acquired_hashes);
 
-
-    let genesis_block_hash = "a668dad403e3074d9cb07502257acd4413e5e42cdfaa164736298162de3d24a3".to_owned();
-
+    let genesis_block_hash = "\
+        a668dad403e3074d9cb07502257acd441\
+        3e5e42cdfaa164736298162de3d24a3"
+        .to_owned();
 
     assert_eq!(block_hashes[4], block_acquired_hashes[0]);
     assert_eq!(block_hashes[3], block_acquired_hashes[1]);
@@ -277,6 +273,4 @@ r#"
     assert_eq!(block_hashes[1], block_acquired_hashes[3]);
     assert_eq!(block_hashes[0], block_acquired_hashes[4]);
     assert_eq!(genesis_block_hash, block_acquired_hashes[5]);
-
 }
-
