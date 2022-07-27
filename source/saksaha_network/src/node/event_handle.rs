@@ -5,7 +5,6 @@ use sak_p2p_transport::{
     BlockHashSynMsg, BlockSynMsg, Msg, TxHashSynMsg, TxSynMsg,
     UpgradedConnection,
 };
-use sak_types::Block;
 use std::time::Duration;
 use tokio::sync::RwLockWriteGuard;
 

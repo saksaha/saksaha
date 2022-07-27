@@ -1,9 +1,9 @@
 use super::utils;
 use crate::blockchain::GenesisBlock;
-use crate::rpc::router::{JsonRequest, JsonResponse};
 use crate::rpc::routes::v0::{QueryCtrRequest, QueryCtrResponse};
 use hyper::{Body, Client, Method, Request, Uri};
 use sak_contract_std::{CtrCallType, Request as CtrRequest};
+use sak_rpc_interface::{JsonRequest, JsonResponse};
 use std::collections::HashMap;
 
 #[tokio::test(flavor = "multi_thread")]
