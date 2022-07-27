@@ -68,11 +68,11 @@ impl App {
                     AppReturn::Continue
                 }
                 Action::Down => {
-                    self.state.next();
+                    self.state.next_ch();
                     AppReturn::Continue
                 }
                 Action::Up => {
-                    self.state.previous();
+                    self.state.previous_ch();
                     AppReturn::Continue
                 }
             }

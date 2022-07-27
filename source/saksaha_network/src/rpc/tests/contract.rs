@@ -112,9 +112,10 @@ async fn test_rpc_reqeust_envelope_send_pour_tx() {
 
     let body = {
         let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
+
         let mut arg = HashMap::with_capacity(2);
-        arg.insert(String::from("her_pk"), String::from("her_pk12345"));
-        arg.insert(String::from("channel_id"), String::from("dummy_channel_2"));
+        arg.insert(String::from("dst_pk"), "her_pk".to_string());
+        arg.insert(String::from("serialized_input"), "dummy".to_string());
 
         let req = CtrRequest {
             req_type: String::from("open_channel"),
@@ -167,12 +168,12 @@ async fn test_rpc_reqeust_envelope_send_pour_tx() {
 
     assert_eq!("success", send_success);
 
-    // let is_contain = machine
-    //     .blockchain
-    //     .dist_ledger
-    //     .apis
-    //     .tx_pool_contains(&expected_tc_hash)
-    //     .await;
+    let is_contain = machine
+        .blockchain
+        .dist_ledger
+        .apis
+        .tx_pool_contains(&expected_tc_hash)
+        .await;
 
-    // assert_eq!(true, is_contain);
+    assert_eq!(true, is_contain);
 }

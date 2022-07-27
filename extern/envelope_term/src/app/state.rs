@@ -18,7 +18,7 @@ pub struct AppState {
     duration: Duration,
     counter_sleep: u32,
     counter_tick: u64,
-    pub list_state: ListState,
+    pub ch_list_state: ListState,
     pub ch_list: Vec<String>,
     pub input_mode: InputMode,
     pub input_text: String,
@@ -36,7 +36,7 @@ impl AppState {
             duration,
             counter_sleep,
             counter_tick,
-            list_state: ListState::default(),
+            ch_list_state: ListState::default(),
             ch_list: vec![],
             input_mode: InputMode::Normal,
             input_text: "user input".to_string(),
@@ -133,19 +133,8 @@ impl AppState {
         }
     }
 
-    // pub fn selected(&self) -> Option<usize> {
-    //     self.selected
-    // }
-
-    // pub fn select(&mut self, index: Option<usize>) {
-    //     self.selected = index;
-    //     // if index.is_none() {
-    //     //     self.offset = 0;
-    //     // }
-    // }
-
-    pub fn next(&mut self) {
-        let i = match self.list_state.selected() {
+    pub fn next_ch(&mut self) {
+        let i = match self.ch_list_state.selected() {
             Some(i) => {
                 if i >= self.ch_list.len() - 1 {
                     0
@@ -155,11 +144,11 @@ impl AppState {
             }
             None => 0,
         };
-        self.list_state.select(Some(i));
+        self.ch_list_state.select(Some(i));
     }
 
-    pub fn previous(&mut self) {
-        let i = match self.list_state.selected() {
+    pub fn previous_ch(&mut self) {
+        let i = match self.ch_list_state.selected() {
             Some(i) => {
                 if i == 0 {
                     self.ch_list.len() - 1
@@ -169,11 +158,7 @@ impl AppState {
             }
             None => 0,
         };
-        self.list_state.select(Some(i));
-    }
-
-    fn unselect(&mut self) {
-        self.list_state.select(None);
+        self.ch_list_state.select(Some(i));
     }
 }
 
@@ -184,7 +169,7 @@ impl Default for AppState {
             duration: Duration::from_secs(1),
             counter_sleep: 0,
             counter_tick: 0,
-            list_state: ListState::default(),
+            ch_list_state: ListState::default(),
             ch_list: vec![],
             input_mode: InputMode::Normal,
             input_text: "user input".to_string(),
@@ -192,22 +177,3 @@ impl Default for AppState {
         }
     }
 }
-
-// #[derive(Debug, Clone, Default)]
-// pub struct ListState {
-//     offset: usize,
-//     selected: Option<usize>,
-// }
-
-// impl ListState {
-//     pub fn selected(&self) -> Option<usize> {
-//         self.selected
-//     }
-
-//     pub fn select(&mut self, index: Option<usize>) {
-//         self.selected = index;
-//         if index.is_none() {
-//             self.offset = 0;
-//         }
-//     }
-// }
