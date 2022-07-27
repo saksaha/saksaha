@@ -122,23 +122,28 @@ fn invoke_execute(
     let contract_fn: TypedFunc<(i32, i32, i32, i32), (i32, i32)> =
         { instance.get_typed_func(&mut store, EXECUTE)? };
 
+    println!("1");
     let (request_bytes, request_len) = {
         let str = serde_json::to_value(request).unwrap().to_string();
 
         (str.as_bytes().to_vec(), str.len())
     };
+    println!("2");
 
     let request_ptr =
         wasm_bootstrap::copy_memory(&request_bytes, &instance, &mut store)?;
+    println!("3");
 
     let (storage_bytes, storage_len) = {
         let str = serde_json::to_value(storage).unwrap().to_string();
 
         (str.as_bytes().to_vec(), str.len())
     };
+    println!("4");
 
     let storage_ptr =
         wasm_bootstrap::copy_memory(&storage_bytes, &instance, &mut store)?;
+    println!("5");
 
     let (ret_ptr, ret_len) = contract_fn.call(
         &mut store,
@@ -149,6 +154,7 @@ fn invoke_execute(
             request_len as i32,
         ),
     )?;
+    println!("6");
 
     let ret: String;
     unsafe {

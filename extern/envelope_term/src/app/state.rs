@@ -71,8 +71,8 @@ impl AppState {
         }
     }
 
-    pub fn set_some_state(&mut self, data: String) {
-        self.ch_list = vec!["power".into(), "power2".into()];
+    pub fn set_some_state(&mut self, data: Vec<String>) {
+        self.ch_list = data;
     }
 
     pub fn count_tick(&self) -> Option<u64> {

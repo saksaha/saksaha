@@ -278,6 +278,7 @@ async fn process_ctr_state_update(
 
     match tx_ctr_op {
         TxCtrOp::ContractDeploy => {
+            println!("55");
             let initial_ctr_state = vm.invoke(&data, CtrFn::Init)?;
 
             ctr_state_update.insert(ctr_addr.clone(), initial_ctr_state);
@@ -291,12 +292,14 @@ async fn process_ctr_state_update(
                     apis.query_ctr(&ctr_addr, req).await?;
                 }
                 CtrCallType::Execute => {
+                    println!("22");
                     let new_state = match ctr_state_update.get(ctr_addr) {
                         Some(previous_state) => {
                             let previous_state: Storage =
                                 sak_contract_std::parse_storage(
                                     previous_state.as_str(),
                                 )?;
+                            println!("33");
 
                             let ctr_wasm = apis
                                 .ledger_db
@@ -308,6 +311,7 @@ async fn process_ctr_state_update(
                             let ctr_fn = CtrFn::Execute(req, previous_state);
 
                             let ret = vm.invoke(ctr_wasm, ctr_fn)?;
+                            println!("44");
 
                             ret
                         }

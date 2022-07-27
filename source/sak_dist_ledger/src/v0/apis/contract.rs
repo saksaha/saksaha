@@ -53,6 +53,7 @@ impl DistLedgerApis {
 
         let ctr_fn = CtrFn::Execute(request, ctr_state);
 
+        println!("123123 ctr wasm: {:?}, ctr_fn: {:?}", ctr_wasm, ctr_fn);
         let ret = self.vm.invoke(ctr_wasm, ctr_fn)?;
 
         info!("invoke execute ctr, ctr_state: {:?}", ret);

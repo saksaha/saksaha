@@ -15,24 +15,23 @@ pub struct QueryCtrRequest {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct QueryCtrResponse {
-    pub result: String,
+    pub result: Vec<String>,
 }
 
 pub async fn query_contract(
     ctr_addr: String,
-    method_name: String,
+    method: String,
     arg: HashMap<String, String>,
 ) -> Result<JsonResponse<QueryCtrResponse>, SaksahaSDKError> {
-    let endpoint_test = "http://localhost:12345/rpc/v0";
+    let endpoint_test = "http://localhost:34418/rpc/v0";
 
     let client = Client::new();
     let uri: Uri = { endpoint_test.parse().expect("URI should be made") };
 
     let body = {
-        let ctr_addr = ctr_addr;
         let req = CtrRequest {
-            req_type: "get_validator".to_string(),
-            arg: HashMap::with_capacity(10),
+            req_type: method.clone(),
+            arg,
             ctr_call_type: CtrCallType::Query,
         };
 
@@ -41,7 +40,7 @@ pub async fn query_contract(
 
         let json_request = JsonRequest {
             jsonrpc: "2.0".to_string(),
-            method: "call_contract".to_string(),
+            method,
             params: Some(params),
             id: "test_1".to_string(),
         };
@@ -57,12 +56,21 @@ pub async fn query_contract(
         .body(body)
         .expect("request builder should be made");
 
+    let resp = client.request(req).await.unwrap();
+
+    // let b = hyper::body::to_bytes(resp.into_body()).await.unwrap();
+
+    // let json_response =
+    //     serde_json::from_slice::<JsonResponse<QueryCtrResponse>>(&b).unwrap();
+
+    // Ok(json_response)
+
     {
         let json_response = JsonResponse {
             jsonrpc: "2.0".to_string(),
             error: None,
             result: Some(QueryCtrResponse {
-                result: "power".to_string(),
+                result: vec!["ch_1".to_string()],
             }),
             id: "1312".to_string(),
         };
