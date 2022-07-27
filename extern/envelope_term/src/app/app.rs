@@ -2,7 +2,10 @@ use super::actions::Actions;
 use super::state::AppState;
 use crate::app::actions::Action;
 use crate::inputs::key::Key;
+use crate::io::InputMode;
 use crate::io::IoEvent;
+use crossterm::event::KeyCode;
+
 use log::{debug, error, warn};
 
 #[derive(Debug, PartialEq, Eq)]
@@ -20,6 +23,9 @@ pub struct App {
     /// State
     is_loading: bool,
     state: AppState,
+    pub input: String,
+    pub input_mode: InputMode,
+    pub messages: Vec<String>,
 }
 
 impl App {
@@ -33,37 +39,31 @@ impl App {
             actions,
             is_loading,
             state,
+            input: String::new(),
+            input_mode: InputMode::Normal,
+            messages: Vec::new(),
         }
     }
 
     /// Handle a user action
-    pub async fn do_action(&mut self, key: Key) -> AppReturn {
+    pub async fn handle_normal_key(&mut self, key: Key) -> AppReturn {
         if let Some(action) = self.actions.find(key) {
             debug!("Run action [{:?}]", action);
             match action {
                 Action::Quit => AppReturn::Exit,
-                Action::Sleep => {
-                    if let Some(duration) = self.state.duration().cloned() {
-                        // Sleep is an I/O action, we dispatch on the IO channel that's run on another thread
-                        self.dispatch(IoEvent::Sleep(duration)).await
-                    }
+                Action::Sleep => AppReturn::Continue,
+                Action::SwitchEditMode => {
+                    self.input_mode = InputMode::Editing;
                     AppReturn::Continue
                 }
-                // IncrementDelay and DecrementDelay is handled in the UI thread
-                Action::IncrementDelay => {
-                    self.state.increment_delay();
-                    AppReturn::Continue
-                }
-                // Note, that we clamp the duration, so we stay >= 0
-                Action::DecrementDelay => {
-                    self.state.decrement_delay();
+                Action::SwitchNormalMode => {
+                    self.input_mode = InputMode::Normal;
                     AppReturn::Continue
                 }
                 Action::ShowChList => {
                     self.state.set_view_ch_list();
                     AppReturn::Continue
                 }
-
                 Action::ShowOpenCh => {
                     self.state.set_view_open_ch();
                     AppReturn::Continue
@@ -72,6 +72,40 @@ impl App {
         } else {
             warn!("No action accociated to {}", key);
             AppReturn::Continue
+        }
+    }
+
+    pub async fn handle_open_ch_key(&mut self, key: Key) -> AppReturn {
+        match key {
+            Key::Enter => {
+                // let her_pk = self.input.drain(..);
+                // self.input_mode = InputMode::Normal;
+                self.messages.push(self.input.drain(..).collect());
+                AppReturn::Continue
+            }
+            Key::Char(c) => {
+                self.input.push(c);
+                AppReturn::Continue
+            }
+            Key::Backspace => {
+                self.input.pop();
+                AppReturn::Continue
+            }
+            Key::Esc => {
+                self.input_mode = InputMode::Normal;
+                AppReturn::Continue
+            }
+            _ => AppReturn::Continue,
+        }
+    }
+
+    pub async fn handle_others(&mut self, key: Key) -> AppReturn {
+        match key {
+            Key::Esc => {
+                self.input_mode = InputMode::Normal;
+                AppReturn::Continue
+            }
+            _ => AppReturn::Continue,
         }
     }
 
@@ -110,8 +144,8 @@ impl App {
         self.actions = vec![
             Action::Quit,
             Action::Sleep,
-            Action::IncrementDelay,
-            Action::DecrementDelay,
+            Action::SwitchEditMode,
+            Action::SwitchNormalMode,
             Action::ShowOpenCh,
             Action::ShowChList,
         ]

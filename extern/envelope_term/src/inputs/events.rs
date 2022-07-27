@@ -7,6 +7,7 @@ use std::time::Duration;
 
 /// A small event handler that wrap crossterm input and tick event. Each event
 /// type is handled in its own thread and returned to a common `Receiver`
+
 pub struct Events {
     rx: tokio::sync::mpsc::Receiver<InputEvent>,
     // Need to be kept around to prevent disposing the sender side.

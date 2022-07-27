@@ -1,15 +1,20 @@
+use crate::app::View;
 use crate::app::{App, AppReturn};
 use crate::inputs::events::Events;
 use crate::inputs::InputEvent;
 use crate::io::handler::IoAsyncHandler;
+use crate::io::InputMode;
 use crate::io::IoEvent;
 use crate::{views, EnvelopeError};
+use crossterm::event;
+use crossterm::event::{poll, read, Event, KeyCode, KeyEvent};
 use log::error;
 use log::LevelFilter;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::Mutex;
+use tui::backend::Backend;
 use tui::backend::CrosstermBackend;
 use tui::Terminal;
 
@@ -112,7 +117,17 @@ pub async fn start_app(app: Arc<Mutex<App>>) -> Result<(), EnvelopeError> {
 
         // Handle inputs
         let result = match events.next().await {
-            InputEvent::Input(key) => app.do_action(key).await,
+            InputEvent::Input(key) => match app.input_mode {
+                InputMode::Normal => app.handle_normal_key(key).await,
+                InputMode::Editing => {
+                    let state = app.get_state();
+                    match state.view {
+                        View::OpenCh => app.handle_open_ch_key(key).await,
+                        _ => app.handle_others(key).await,
+                    }
+                }
+            },
+
             InputEvent::Tick => app.update_on_tick().await,
         };
 
@@ -129,4 +144,42 @@ pub async fn start_app(app: Arc<Mutex<App>>) -> Result<(), EnvelopeError> {
     crossterm::terminal::disable_raw_mode()?;
 
     Ok(())
+}
+
+pub async fn run_input_mode(
+    // terminal: &mut Terminal<B>,
+    app: Arc<Mutex<App>>,
+) -> Result<(), EnvelopeError> {
+    loop {
+        if let Event::Key(key) = event::read()? {
+            let mut app = app.lock().await;
+            match app.input_mode {
+                InputMode::Normal => {}
+                // match key.code {
+                //     KeyCode::Char('i') => {
+                //         app.input_mode = InputMode::Editing;
+                //     }
+                //     KeyCode::Char('q') => {
+                //         return Ok(());
+                //     }
+                //     _ => {}
+                // },
+                InputMode::Editing => match key.code {
+                    // KeyCode::Enter => {
+                    //     app.messages.push(app.input.drain(..).collect());
+                    // }
+                    KeyCode::Char(c) => {
+                        app.input.push(c);
+                    }
+                    KeyCode::Backspace => {
+                        app.input.pop();
+                    }
+                    KeyCode::Esc => {
+                        app.input_mode = InputMode::Normal;
+                    }
+                    _ => {}
+                },
+            }
+        }
+    }
 }

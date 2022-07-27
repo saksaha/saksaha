@@ -11,7 +11,7 @@ pub enum IoEvent {
 }
 
 #[derive(Debug)]
-pub(crate) enum InputMode {
+pub enum InputMode {
     Normal,
     Editing,
 }

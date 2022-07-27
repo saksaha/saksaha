@@ -1,18 +1,13 @@
+use super::utils;
 use crate::app::{Actions, App, AppState, View};
-use sak_types::TxCandidate;
-use std::time::Duration;
-use symbols::line;
+use crate::io::InputMode;
 use tui::backend::Backend;
 use tui::layout::{Alignment, Constraint, Direction, Layout, Rect};
 use tui::style::{Color, Modifier, Style};
-use tui::text::{Span, Spans};
-use tui::widgets::{
-    Block, BorderType, Borders, Cell, LineGauge, Paragraph, Row, Table,
-};
+use tui::text::{Span, Spans, Text};
+use tui::widgets::Paragraph;
+use tui::widgets::{Block, BorderType, Borders};
 use tui::{symbols, Frame};
-use tui_logger::TuiLoggerWidget;
-
-use super::utils;
 
 pub(crate) fn draw_open_ch<B>(rect: &mut Frame<B>, app: &App)
 where
@@ -50,7 +45,24 @@ where
         ])
         .split(body_chunks[0]);
 
-    let (help_message, input, messages) = utils::draw_open_ch(app.get_state());
+    let (help_message, input, messages) = utils::draw_open_ch(app);
+
+    // match app.input_mode {
+    //     InputMode::Normal =>
+    //         // Hide the cursor. `Frame` does this by default, so we don't need to do anything here
+    //         {}
+
+    //     InputMode::Editing => {
+    //         // Make the cursor visible and ask tui-rs to put it at the specified coordinates after rendering
+    //         f.set_cursor(
+    //             // Put cursor past the end of the input text
+    //             chunks[1].x + app.input.width() as u16 + 1,
+    //             // Move one line down, from the border to the input line
+    //             chunks[1].y + 1,
+    //         )
+    //     }
+    // }
+
     rect.render_widget(help_message, open_ch_chunks[0]);
     rect.render_widget(input, open_ch_chunks[1]);
     rect.render_widget(messages, open_ch_chunks[2]);

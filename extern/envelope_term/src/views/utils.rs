@@ -23,9 +23,7 @@ pub(crate) fn check_size(rect: &Rect) {
     }
 }
 
-pub(crate) fn draw_open_ch<'a>(
-    state: &AppState,
-) -> (Paragraph, Paragraph, List) {
+pub(crate) fn draw_open_ch<'a>(app: &App) -> (Paragraph, Paragraph, List) {
     let msg = "Typing is currently disabled (helper text)";
     let style = Style::default().add_modifier(Modifier::RAPID_BLINK);
 
@@ -34,8 +32,8 @@ pub(crate) fn draw_open_ch<'a>(
 
     let help_message = Paragraph::new(text);
 
-    let input = Paragraph::new(state.input_text.as_ref())
-        .style(match state.input_mode {
+    let input = Paragraph::new(app.input.as_ref())
+        .style(match app.input_mode {
             InputMode::Normal => Style::default(),
             InputMode::Editing => Style::default().fg(Color::Yellow),
         })
@@ -45,34 +43,18 @@ pub(crate) fn draw_open_ch<'a>(
                 .title("Type your friend's public key"),
         );
 
-    // match app.input_mode {
-    //     InputMode::Normal =>
-    //         // Hide the cursor. `Frame` does this by default, so we don't need to do anything here
-    //         {}
+    let messages: Vec<ListItem> = app
+        .messages
+        .iter()
+        .enumerate()
+        .map(|(i, m)| {
+            let content = vec![Spans::from(Span::raw(format!("{}: {}", i, m)))];
+            ListItem::new(content)
+        })
+        .collect();
 
-    //     InputMode::Editing => {
-    //         // Make the cursor visible and ask tui-rs to put it at the specified coordinates after rendering
-    //         f.set_cursor(
-    //             // Put cursor past the end of the input text
-    //             chunks[1].x + app.input.width() as u16 + 1,
-    //             // Move one line down, from the border to the input line
-    //             chunks[1].y + 1,
-    //         )
-    //     }
-    // }
-
-    // let messages: Vec<ListItem> = app
-    //     .messages
-    //     .iter()
-    //     .enumerate()
-    //     .map(|(i, m)| {
-    //         let content = vec![Spans::from(Span::raw(format!("{}: {}", i, m)))];
-    //         ListItem::new(content)
-    //     })
-    //     .collect();
-
-    let messages: Vec<ListItem> =
-        vec![ListItem::new(vec![Spans::from(Span::raw("some message"))])];
+    // let messages: Vec<ListItem> =
+    //     vec![ListItem::new(vec![Spans::from(Span::raw("some message"))])];
 
     let messages = List::new(messages)
         .block(Block::default().borders(Borders::ALL).title("Messages"));
