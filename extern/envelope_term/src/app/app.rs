@@ -25,7 +25,7 @@ pub struct App {
     state: AppState,
     pub input: String,
     pub input_mode: InputMode,
-    pub messages: Vec<String>,
+    pub messages: String,
 }
 
 impl App {
@@ -41,7 +41,7 @@ impl App {
             state,
             input: String::new(),
             input_mode: InputMode::Normal,
-            messages: Vec::new(),
+            messages: String::new(),
         }
     }
 
@@ -78,9 +78,9 @@ impl App {
     pub async fn handle_open_ch_key(&mut self, key: Key) -> AppReturn {
         match key {
             Key::Enter => {
-                // let her_pk = self.input.drain(..);
+                self.messages = self.input.drain(..).collect();
                 // self.input_mode = InputMode::Normal;
-                self.messages.push(self.input.drain(..).collect());
+                // self.messages = self.input.drain();
                 AppReturn::Continue
             }
             Key::Char(c) => {

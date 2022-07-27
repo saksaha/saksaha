@@ -13,6 +13,7 @@ use tui::widgets::{
 };
 use tui::{symbols, Frame};
 use tui_logger::TuiLoggerWidget;
+use unicode_width::UnicodeWidthStr;
 
 pub(crate) fn check_size(rect: &Rect) {
     if rect.width < 52 {
@@ -23,13 +24,50 @@ pub(crate) fn check_size(rect: &Rect) {
     }
 }
 
-pub(crate) fn draw_open_ch<'a>(app: &App) -> (Paragraph, Paragraph, List) {
-    let msg = "Typing is currently disabled (helper text)";
-    let style = Style::default().add_modifier(Modifier::RAPID_BLINK);
-
+pub(crate) fn draw_open_ch<'a, B>(
+    app: &'a App,
+    rect: &mut Frame<B>,
+    chunks: &Vec<Rect>,
+) -> (Paragraph<'a>, Paragraph<'a>, List<'a>)
+where
+    B: Backend,
+{
+    let (msg, style) = match app.input_mode {
+        InputMode::Normal => (
+            vec![
+                Span::raw("Press "),
+                Span::styled(
+                    "q",
+                    Style::default().add_modifier(Modifier::BOLD),
+                ),
+                Span::raw(" to exit, "),
+                Span::styled(
+                    "i",
+                    Style::default().add_modifier(Modifier::BOLD),
+                ),
+                Span::raw(" to start editing."),
+            ],
+            Style::default().add_modifier(Modifier::RAPID_BLINK),
+        ),
+        InputMode::Editing => (
+            vec![
+                Span::raw("Press "),
+                Span::styled(
+                    "Esc",
+                    Style::default().add_modifier(Modifier::BOLD),
+                ),
+                Span::raw(" to stop editing, "),
+                Span::styled(
+                    "Enter",
+                    Style::default().add_modifier(Modifier::BOLD),
+                ),
+                Span::raw(" to record the message"),
+            ],
+            Style::default(),
+        ),
+    };
     let mut text = Text::from(Spans::from(msg));
     text.patch_style(style);
-
     let help_message = Paragraph::new(text);
 
     let input = Paragraph::new(app.input.as_ref())
@@ -43,21 +81,33 @@ pub(crate) fn draw_open_ch<'a>(app: &App) -> (Paragraph, Paragraph, List) {
                 .title("Type your friend's public key"),
         );
 
-    let messages: Vec<ListItem> = app
-        .messages
-        .iter()
-        .enumerate()
-        .map(|(i, m)| {
-            let content = vec![Spans::from(Span::raw(format!("{}: {}", i, m)))];
-            ListItem::new(content)
-        })
-        .collect();
+    let messages: Vec<ListItem> = {
+        let content =
+            vec![Spans::from(Span::raw(format!("Her pk: {}", app.messages)))];
+        vec![ListItem::new(content)]
+    };
 
-    // let messages: Vec<ListItem> =
-    //     vec![ListItem::new(vec![Spans::from(Span::raw("some message"))])];
+    let messages = List::new(messages).block(
+        Block::default()
+            .borders(Borders::ALL)
+            .title("Open channel progress"),
+    );
 
-    let messages = List::new(messages)
-        .block(Block::default().borders(Borders::ALL).title("Messages"));
+    match app.input_mode {
+        InputMode::Normal =>
+            // Hide the cursor. `Frame` does this by default, so we don't need to do anything here
+            {}
+
+        InputMode::Editing => {
+            // Make the cursor visible and ask tui-rs to put it at the specified coordinates after rendering
+            rect.set_cursor(
+                // Put cursor past the end of the input text
+                chunks[1].x + app.input.width() as u16 + 1,
+                // Move one line down, from the border to the input line
+                chunks[1].y + 2,
+            )
+        }
+    }
 
     (help_message, input, messages)
 }

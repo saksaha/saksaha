@@ -45,23 +45,8 @@ where
         ])
         .split(body_chunks[0]);
 
-    let (help_message, input, messages) = utils::draw_open_ch(app);
-
-    // match app.input_mode {
-    //     InputMode::Normal =>
-    //         // Hide the cursor. `Frame` does this by default, so we don't need to do anything here
-    //         {}
-
-    //     InputMode::Editing => {
-    //         // Make the cursor visible and ask tui-rs to put it at the specified coordinates after rendering
-    //         f.set_cursor(
-    //             // Put cursor past the end of the input text
-    //             chunks[1].x + app.input.width() as u16 + 1,
-    //             // Move one line down, from the border to the input line
-    //             chunks[1].y + 1,
-    //         )
-    //     }
-    // }
+    let (help_message, input, messages) =
+        utils::draw_open_ch(app, rect, &chunks);
 
     rect.render_widget(help_message, open_ch_chunks[0]);
     rect.render_widget(input, open_ch_chunks[1]);
