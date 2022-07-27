@@ -1,5 +1,5 @@
 use super::utils;
-use crate::rpc::routes::v0::{GetBlockHashListResponse, GetBlockResponse};
+use crate::rpc::routes::v0::{GetBlockListResponse, GetBlockResponse};
 use hyper::{Body, Client, Method, Request, Uri};
 use sak_rpc_interface::{JsonRequest, JsonResponse};
 use sak_types::BlockHash;
@@ -245,7 +245,7 @@ async fn test_call_get_block_list() {
         hyper::body::to_bytes(response.into_body()).await.unwrap();
 
     let json_response = serde_json::from_slice::<
-        JsonResponse<GetBlockHashListResponse>,
+        JsonResponse<GetBlockListResponse>,
     >(&response_bytes)
     .unwrap();
 
@@ -262,15 +262,9 @@ async fn test_call_get_block_list() {
     println!("[+] original block hashes: {:#?}", block_hashes);
     println!("[+] acquired block hashes: {:#?}", block_acquired_hashes);
 
-    let genesis_block_hash = "\
-        a668dad403e3074d9cb07502257acd441\
-        3e5e42cdfaa164736298162de3d24a3"
-        .to_owned();
-
     assert_eq!(block_hashes[4], block_acquired_hashes[0]);
     assert_eq!(block_hashes[3], block_acquired_hashes[1]);
     assert_eq!(block_hashes[2], block_acquired_hashes[2]);
     assert_eq!(block_hashes[1], block_acquired_hashes[3]);
     assert_eq!(block_hashes[0], block_acquired_hashes[4]);
-    assert_eq!(genesis_block_hash, block_acquired_hashes[5]);
 }

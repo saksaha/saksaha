@@ -53,13 +53,13 @@ pub(crate) async fn get_block(
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub(in crate::rpc) struct GetBlockHashListRequest {
+pub(in crate::rpc) struct GetBlockListRequest {
     pub offset: Option<u128>,
     pub limit: Option<u128>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub(in crate::rpc) struct GetBlockHashListResponse {
+pub(in crate::rpc) struct GetBlockListResponse {
     pub block_list: Vec<Block>,
 }
 
@@ -72,8 +72,8 @@ pub(crate) async fn get_block_list(
         "get_block_list should contain params(block_height)".into(),
     )?;
 
-    let rb: GetBlockHashListRequest =
-        utils::parse_params::<GetBlockHashListRequest>(&params)?;
+    let rb: GetBlockListRequest =
+        utils::parse_params::<GetBlockListRequest>(&params)?;
 
     match sys_handle
         .machine
@@ -84,7 +84,7 @@ pub(crate) async fn get_block_list(
         .await
     {
         Ok(block_list) => {
-            let get_block_resp = GetBlockHashListResponse { block_list };
+            let get_block_resp = GetBlockListResponse { block_list };
 
             return Ok(utils::make_success_response(id, get_block_resp));
         }
