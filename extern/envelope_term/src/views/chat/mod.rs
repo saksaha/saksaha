@@ -47,6 +47,6 @@ where
     let help = utils::draw_help(app.actions());
     rect.render_widget(help, body_chunks[1]);
 
-    let logs = utils::draw_logs();
-    rect.render_widget(logs, chunks[3]);
+    // let logs = utils::draw_logs();
+    // rect.render_widget(logs, chunks[3]);
 }
