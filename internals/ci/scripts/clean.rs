@@ -1,26 +1,25 @@
-use crate::scripts::BoxedError;
-use crate::{log, script::Script};
+use crate::{log, CIError};
 use clap::{ArgMatches, Command};
 use std::process::Command as Cmd;
 
 pub(crate) struct Clean;
 
-impl Script for Clean {
-    fn handle_matches(matches: &ArgMatches) -> Result<(), BoxedError> {
-        let program = "cargo";
+// impl Script for Clean {
+//     fn handle_matches(matches: &ArgMatches) -> Result<(), CIError> {
+//         let program = "cargo";
 
-        let args = match matches.values_of("args") {
-            Some(a) => a.collect(),
-            None => vec![],
-        };
-        let args = [vec!["clean", "--"], args].concat();
+//         let args = match matches.values_of("args") {
+//             Some(a) => a.collect(),
+//             None => vec![],
+//         };
+//         let args = [vec!["clean", "--"], args].concat();
 
-        log!("Executing `{} {:?}`", program, args,);
+//         log!("Executing `{} {:?}`", program, args,);
 
-        let cmd = Cmd::new(program).args(args).spawn().expect("failed to run");
+//         let cmd = Cmd::new(program).args(args).spawn().expect("failed to run");
 
-        cmd.wait_with_output().unwrap();
+//         cmd.wait_with_output().unwrap();
 
-        Ok(())
-    }
-}
+//         Ok(())
+//     }
+// }

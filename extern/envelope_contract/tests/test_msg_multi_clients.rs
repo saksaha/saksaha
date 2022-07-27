@@ -1,9 +1,9 @@
-use crate::*;
-use crate::{CtrFn, VM};
+use super::DUMMY_CHANNEL_ID_1;
 use sak_contract_std::{CtrCallType, Request, Storage};
 use sak_crypto::{
     PublicKey, SakKey, SecretKey, SigningKey, ToEncodedPoint, VerifyingKey,
 };
+use sak_vm::{CtrFn, VM};
 use std::collections::HashMap;
 
 fn make_test_context() -> (

@@ -1,5 +1,4 @@
-use crate::scripts::BoxedError;
-use crate::{log, script::Script};
+use crate::{log, CIError};
 use clap::ArgMatches;
 use std::{
     fs,
@@ -11,16 +10,16 @@ use std::{
 
 pub(crate) struct Expand;
 
-impl Script for Expand {
-    fn handle_matches(matches: &ArgMatches) -> Result<(), BoxedError> {
-        let dest = PathBuf::from_str(r"target/expand/debug")
-            .expect("destination path");
+// impl Script for Expand {
+//     fn handle_matches(matches: &ArgMatches) -> Result<(), CIError> {
+//         let dest = PathBuf::from_str(r"target/expand/debug")
+//             .expect("destination path");
 
-        expand(dest);
+//         expand(dest);
 
-        Ok(())
-    }
-}
+//         Ok(())
+//     }
+// }
 
 pub(crate) fn expand(dest: PathBuf) {
     let is_rust_fmt = check_rustfmt();

@@ -20,12 +20,10 @@ members = [
   "source/sak_contract_std",
   "source/sak_dist_ledger",
   "source/sak_vm",
-  "source/sak_wasm_postprocess",
   "source/sak_test_utils",
 
   # system contracts (each)
   "source/sak_ctrt_validator",
-  "source/sak_ctr_messenger",
 
   # internals
   "internals/ci",
@@ -37,4 +35,6 @@ members = [
    # extern
   "extern/envelope_term",
   "extern/saksaha_rs",
+  "extern/envelope_contract",
+  "extern/wasm_postprocess"
 ]

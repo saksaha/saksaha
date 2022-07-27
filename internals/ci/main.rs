@@ -1,7 +1,9 @@
 mod ci_log;
-mod cli;
-mod script;
 mod scripts;
+
+use crate::scripts::{build, dev, test};
+
+pub(crate) type CIError = Box<dyn std::error::Error + Send + Sync>;
 
 fn main() {
     let curr_dir = match std::env::current_dir() {
@@ -42,10 +44,41 @@ fn main() {
         );
     }
 
-    match cli::run_app() {
+    match run_script() {
         Ok(_) => (),
         Err(err) => {
             log!("Error running script, err: {}", err);
         }
     };
+}
+
+fn run_script() -> Result<(), CIError> {
+    let mut args = std::env::args();
+
+    let second_arg = args
+        .nth(1)
+        .expect("CI needs a second argument, the name of script to run");
+
+    log!("script name (2nd arg): {:?}", second_arg);
+
+    match second_arg.as_str() {
+        "dev" => {
+            dev::run(args)?;
+        }
+        "build" => {
+            build::run(args)?;
+        }
+        "test" => {
+            test::run(args)?;
+        }
+        _ => {
+            return Err(format!(
+                "Could not find the script of name: {}",
+                second_arg,
+            )
+            .into());
+        }
+    };
+
+    Ok(())
 }

@@ -1,28 +1,36 @@
-use crate::log;
-use crate::script::Script;
-use crate::scripts::BoxedError;
+use crate::{log, CIError};
 use clap::ArgMatches;
-use std::process::Command as Cmd;
+use colored::Colorize;
+use std::env::Args;
+use std::process::{Command as Cmd, Stdio};
 
 pub(crate) struct Build;
 
-impl Script for Build {
-    fn handle_matches(matches: &ArgMatches) -> Result<(), BoxedError> {
-        let program = "cargo";
+pub(crate) fn run(args: Args) -> Result<(), CIError> {
+    let program = "cargo";
 
-        let args = match matches.values_of("args") {
-            Some(a) => a.collect(),
-            None => vec![],
-        };
+    let cli_args: Vec<String> = args.map(|a| a.to_string()).collect();
 
-        let args = [vec!["build"], args].concat();
+    let args_1: Vec<String> = ["build", "--package", "saksaha_network", "--"]
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
 
-        log!("Executing `{} {:?}`", program, args,);
+    let args = [args_1, cli_args].concat();
 
-        let cmd = Cmd::new(program).args(args).spawn().expect("failed to run");
+    log!(
+        "Found subcommand, script: {}, executing `{} {}`",
+        "dev",
+        program.yellow(),
+        args.join(" ").yellow(),
+    );
 
-        cmd.wait_with_output().unwrap();
+    Cmd::new(program)
+        .args(args)
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit())
+        .output()
+        .expect("failed to run");
 
-        Ok(())
-    }
+    Ok(())
 }
