@@ -1,8 +1,8 @@
 use super::utils;
+use crate::blockchain::GenesisBlock;
 use crate::rpc::routes::v0::{QueryCtrRequest, QueryCtrResponse};
 use crate::{
-    blockchain::{GenesisBlock, ENVELOPE_CTR_ADDR},
-    rpc::routes::v0::SendPourTxRequest,
+    blockchain::ENVELOPE_CTR_ADDR, rpc::routes::v0::SendPourTxRequest,
 };
 use hyper::{Body, Client, Method, Request, Uri};
 use sak_contract_std::{CtrCallType, Request as CtrRequest};
