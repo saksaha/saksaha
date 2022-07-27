@@ -1,5 +1,6 @@
-mod ci_log;
+mod pipeline;
 mod scripts;
+mod utils;
 
 use crate::scripts::{build, dev, test};
 
