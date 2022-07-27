@@ -7,6 +7,7 @@ use std::time::Duration;
 
 /// A small event handler that wrap crossterm input and tick event. Each event
 /// type is handled in its own thread and returned to a common `Receiver`
+
 pub struct Events {
     rx: tokio::sync::mpsc::Receiver<InputEvent>,
     // Need to be kept around to prevent disposing the sender side.
@@ -23,6 +24,7 @@ impl Events {
 
         let event_tx = tx.clone();
         let event_stop_capture = stop_capture.clone();
+
         tokio::spawn(async move {
             loop {
                 // poll for tick rate duration, if no event, sent tick event.
@@ -38,9 +40,11 @@ impl Events {
                         }
                     }
                 }
+
                 if let Err(err) = event_tx.send(InputEvent::Tick).await {
                     error!("Oops!, {}", err);
                 }
+
                 if event_stop_capture.load(Ordering::Relaxed) {
                     break;
                 }

@@ -21,6 +21,7 @@ serde = { version = "1.0.130", features = ["derive"] }
 serde_json = "1.0.59"
 clap = { version = "3.2.14", features = ["cargo"] }
 serde_yaml = "0.8"
+unicode-width = "0.1.5"
 
 [dev-dependencies]
 sak_test_utils = { path = "../../source/sak_test_utils" }
