@@ -8,22 +8,26 @@ use std::slice::Iter;
 pub enum Action {
     Quit,
     Sleep,
-    IncrementDelay,
-    DecrementDelay,
+    SwitchEditMode,
+    SwitchNormalMode,
     ShowChList,
     ShowOpenCh,
+    Down,
+    Up,
 }
 
 impl Action {
     /// All available actions
     pub fn iterator() -> Iter<'static, Action> {
-        static ACTIONS: [Action; 6] = [
+        static ACTIONS: [Action; 8] = [
             Action::Quit,
             Action::Sleep,
-            Action::IncrementDelay,
-            Action::DecrementDelay,
+            Action::SwitchEditMode,
+            Action::SwitchNormalMode,
             Action::ShowChList,
             Action::ShowOpenCh,
+            Action::Down,
+            Action::Up,
         ];
         ACTIONS.iter()
     }
@@ -33,10 +37,12 @@ impl Action {
         match self {
             Action::Quit => &[Key::Ctrl('c'), Key::Char('q')],
             Action::Sleep => &[Key::Char('s')],
-            Action::IncrementDelay => &[Key::Char('+')],
-            Action::DecrementDelay => &[Key::Char('-')],
+            Action::SwitchEditMode => &[Key::Char('i')],
+            Action::SwitchNormalMode => &[Key::Esc],
             Action::ShowChList => &[Key::Char('1')],
             Action::ShowOpenCh => &[Key::Char('2')],
+            Action::Down => &[Key::Down],
+            Action::Up => &[Key::Up],
         }
     }
 }
@@ -47,10 +53,12 @@ impl Display for Action {
         let str = match self {
             Action::Quit => "Quit",
             Action::Sleep => "Sleep",
-            Action::IncrementDelay => "Increment delay",
-            Action::DecrementDelay => "Decrement delay",
+            Action::SwitchEditMode => "Switch to Edit Mode",
+            Action::SwitchNormalMode => "Switch to Normal Mode",
             Action::ShowChList => "Show channel list",
             Action::ShowOpenCh => "Show open channel",
+            Action::Down => "Down",
+            Action::Up => "Up",
         };
         write!(f, "{}", str)
     }
@@ -138,8 +146,8 @@ mod tests {
         let _actions: Actions = vec![
             Action::Quit,
             Action::Sleep,
-            Action::IncrementDelay,
-            Action::DecrementDelay,
+            Action::SwitchEditMode,
+            Action::SwitchNormalMode,
         ]
         .into();
     }
@@ -149,12 +157,12 @@ mod tests {
     fn should_panic_when_create_actions_conflict_key() {
         let _actions: Actions = vec![
             Action::Quit,
-            Action::DecrementDelay,
+            Action::SwitchNormalMode,
             Action::Sleep,
-            Action::IncrementDelay,
-            Action::IncrementDelay,
+            Action::SwitchEditMode,
+            Action::SwitchEditMode,
             Action::Quit,
-            Action::DecrementDelay,
+            Action::SwitchNormalMode,
         ]
         .into();
     }

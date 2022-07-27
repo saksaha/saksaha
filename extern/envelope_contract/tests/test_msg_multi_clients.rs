@@ -6,7 +6,7 @@ use sak_crypto::{
 use sak_vm::{CtrFn, VM};
 use std::collections::HashMap;
 
-fn make_test_context() -> (
+pub(crate) fn make_test_context() -> (
     SecretKey,
     PublicKey,
     SecretKey,
@@ -50,7 +50,7 @@ fn make_test_context() -> (
     )
 }
 
-fn check_channel(
+pub(crate) fn check_channel(
     my_pk: PublicKey,
     my_sk: SecretKey,
     storage: Storage,
@@ -139,7 +139,11 @@ fn check_channel(
     (aes_key, ch_id)
 }
 
-fn test_get_ch_list(pk: PublicKey, storage: Storage, vm: &VM) -> Vec<String> {
+pub(crate) fn test_get_ch_list(
+    pk: PublicKey,
+    storage: Storage,
+    vm: &VM,
+) -> Vec<String> {
     let pk_str =
         serde_json::to_string(pk.to_encoded_point(false).as_bytes()).unwrap();
 
@@ -170,7 +174,7 @@ fn test_get_ch_list(pk: PublicKey, storage: Storage, vm: &VM) -> Vec<String> {
     ch_list
 }
 
-fn send_msg(
+pub(crate) fn send_msg(
     msg: &String,
     pk: PublicKey,
     ch_id: String,
@@ -242,13 +246,13 @@ fn send_msg(
     (state_send_msg, new_chat)
 }
 
-fn pk_serialize(input: PublicKey) -> String {
+pub fn pk_serialize(input: PublicKey) -> String {
     let ret = serde_json::to_string(input.to_encoded_point(false).as_bytes())
         .unwrap();
     ret
 }
 
-fn vec_serialize<T>(input: &T) -> String
+pub fn vec_serialize<T>(input: &T) -> String
 where
     T: serde::ser::Serialize,
 {
@@ -323,7 +327,7 @@ async fn test_multi_clients_chat() {
         (req, storage)
     };
 
-    let (state_after_open_ch,) = {
+    let state_after_open_ch = {
         let ctr_wasm = include_bytes!("../sak_ctr_messenger.wasm").to_vec();
         let ctr_fn = CtrFn::Execute(open_ch_req, storage.clone());
 
@@ -352,7 +356,7 @@ async fn test_multi_clients_chat() {
 
         assert_eq!(vec![DUMMY_CHANNEL_ID_1], ch_list);
 
-        (state_open_channel,)
+        state_open_channel
     };
 
     /*  ********************************************************************* */

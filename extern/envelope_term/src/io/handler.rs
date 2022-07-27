@@ -60,7 +60,7 @@ impl IoAsyncHandler {
 
     async fn handle_receive_data(
         &mut self,
-        data: String,
+        data: Vec<String>,
     ) -> Result<(), EnvelopeError> {
         info!("😴 Receive data!! Set some state with data {:?}...", data);
         // Notify the app for having slept
