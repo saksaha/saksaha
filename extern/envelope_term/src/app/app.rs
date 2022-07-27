@@ -67,6 +67,10 @@ impl App {
                     self.state.set_view_open_ch();
                     AppReturn::Continue
                 }
+                Action::ShowChat => {
+                    self.state.set_view_chat();
+                    AppReturn::Continue
+                }
                 Action::Down => {
                     self.state.next_ch();
                     AppReturn::Continue
@@ -121,6 +125,7 @@ impl App {
             Action::DecrementDelay,
             Action::ShowOpenCh,
             Action::ShowChList,
+            Action::ShowChat,
             Action::Down,
             Action::Up,
         ]

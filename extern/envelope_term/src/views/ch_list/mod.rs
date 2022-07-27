@@ -33,11 +33,11 @@ where
             .split(chunks[1]);
 
         let ch_list = utils::draw_ch_list(app.is_loading(), app.get_state());
-        // rect.render_widget(ch_list, body_chunks[0]);
+
         rect.render_stateful_widget(
             ch_list,
             body_chunks[0],
-            &mut app.state.list_state,
+            &mut app.state.ch_list_state,
         );
 
         let help = utils::draw_help(app.actions());
