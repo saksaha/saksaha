@@ -12,18 +12,22 @@ pub enum Action {
     DecrementDelay,
     ShowChList,
     ShowOpenCh,
+    Down,
+    Up,
 }
 
 impl Action {
     /// All available actions
     pub fn iterator() -> Iter<'static, Action> {
-        static ACTIONS: [Action; 6] = [
+        static ACTIONS: [Action; 8] = [
             Action::Quit,
             Action::Sleep,
             Action::IncrementDelay,
             Action::DecrementDelay,
             Action::ShowChList,
             Action::ShowOpenCh,
+            Action::Down,
+            Action::Up,
         ];
         ACTIONS.iter()
     }
@@ -37,6 +41,8 @@ impl Action {
             Action::DecrementDelay => &[Key::Char('-')],
             Action::ShowChList => &[Key::Char('1')],
             Action::ShowOpenCh => &[Key::Char('2')],
+            Action::Down => &[Key::Down],
+            Action::Up => &[Key::Up],
         }
     }
 }
@@ -51,6 +57,8 @@ impl Display for Action {
             Action::DecrementDelay => "Decrement delay",
             Action::ShowChList => "Show channel list",
             Action::ShowOpenCh => "Show open channel",
+            Action::Down => "Down",
+            Action::Up => "Up",
         };
         write!(f, "{}", str)
     }

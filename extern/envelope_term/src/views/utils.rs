@@ -117,41 +117,24 @@ pub(crate) fn draw_title<'a>() -> Paragraph<'a> {
         )
 }
 
-pub(crate) fn draw_ch_list<'a>(
-    loading: bool,
-    state: &AppState,
-) -> Paragraph<'a> {
-    let initialized_text = if state.is_initialized() {
-        "Initialized"
-    } else {
-        "Not Initialized !"
-    };
+pub(crate) fn draw_ch_list<'a>(loading: bool, state: &AppState) -> List<'a> {
+    let items: Vec<ListItem> = state
+        .ch_list
+        .iter()
+        .map(|i| {
+            ListItem::new(i.clone())
+                .style(Style::default().fg(Color::White).bg(Color::Black))
+        })
+        .collect();
 
-    let loading_text = if loading { "Loading..." } else { "" };
-
-    let sleep_text = if let Some(sleeps) = state.count_sleep() {
-        format!("Sleep count: {}", sleeps)
-    } else {
-        String::default()
-    };
-
-    let foo: String = state.ch_list.join("/");
-
-    Paragraph::new(vec![
-        Spans::from(Span::raw(initialized_text)),
-        Spans::from(Span::raw(loading_text)),
-        Spans::from(Span::raw(sleep_text)),
-        Spans::from(Span::raw(foo)),
-    ])
-    .style(Style::default().fg(Color::LightCyan))
-    .alignment(Alignment::Left)
-    .block(
-        Block::default()
-            .title("Channel list")
-            .borders(Borders::ALL)
-            .style(Style::default().fg(Color::White))
-            .border_type(BorderType::Plain),
-    )
+    List::new(items)
+        .block(Block::default().borders(Borders::ALL).title("List"))
+        .highlight_style(
+            Style::default()
+                .bg(Color::LightRed)
+                .add_modifier(Modifier::BOLD),
+        )
+        .highlight_symbol(">> ")
 }
 
 pub(crate) fn draw_duration(duration: &Duration) -> LineGauge {

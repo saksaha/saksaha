@@ -9,6 +9,11 @@ pub(crate) const VALIDATOR_CTR_ADDR: &'static str = "validator_contract_addr";
 pub(crate) const VALIDATOR: &[u8] =
     include_bytes!("../../../../sak_vm/src/v0/sak_ctrt_validator.wasm");
 
+pub(crate) const ENVELOPE_CTR_ADDR: &'static str = "envelope_contract_addr";
+
+pub(crate) const ENVELOPE: &[u8] =
+    include_bytes!("../../../../sak_vm/src/v0/sak_ctr_messenger.wasm");
+
 pub(crate) struct GenesisBlock {
     pub(crate) block_candidate: BlockCandidate,
 }
@@ -16,6 +21,7 @@ pub(crate) struct GenesisBlock {
 impl GenesisBlock {
     pub fn create() -> Result<GenesisBlock, SaksahaError> {
         let validator_wasm = VALIDATOR.to_vec();
+        let envelope_wasm = ENVELOPE.to_vec();
 
         let hasher = Hasher::new();
 
@@ -36,9 +42,9 @@ impl GenesisBlock {
 
             TxCandidate::Mint(MintTxCandidate::new(
                 String::from("initial_mint_created_at"),
-                vec![0],
+                envelope_wasm,
                 VALIDATOR_SIG.to_string(),
-                None,
+                Some(ENVELOPE_CTR_ADDR.to_string()),
                 cm.to_bytes(),
                 v,
                 k.to_bytes(),

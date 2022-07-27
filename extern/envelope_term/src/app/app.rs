@@ -19,7 +19,7 @@ pub struct App {
     actions: Actions,
     /// State
     is_loading: bool,
-    state: AppState,
+    pub state: AppState,
 }
 
 impl App {
@@ -63,9 +63,16 @@ impl App {
                     self.state.set_view_ch_list();
                     AppReturn::Continue
                 }
-
                 Action::ShowOpenCh => {
                     self.state.set_view_open_ch();
+                    AppReturn::Continue
+                }
+                Action::Down => {
+                    self.state.next_ch();
+                    AppReturn::Continue
+                }
+                Action::Up => {
+                    self.state.previous_ch();
                     AppReturn::Continue
                 }
             }
@@ -114,6 +121,8 @@ impl App {
             Action::DecrementDelay,
             Action::ShowOpenCh,
             Action::ShowChList,
+            Action::Down,
+            Action::Up,
         ]
         .into();
 
@@ -128,7 +137,7 @@ impl App {
         self.state.incr_sleep();
     }
 
-    pub fn set_some_state(&mut self, data: String) {
+    pub fn set_some_state(&mut self, data: Vec<String>) {
         self.state.set_some_state(data);
     }
 }

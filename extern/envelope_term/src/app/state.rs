@@ -1,3 +1,5 @@
+use tui::widgets::ListState;
+
 use crate::io::InputMode;
 use std::time::Duration;
 
@@ -11,11 +13,12 @@ pub enum View {
 }
 
 #[derive(Debug)]
-pub(crate) struct AppState {
+pub struct AppState {
     initialized: bool,
     duration: Duration,
     counter_sleep: u32,
     counter_tick: u64,
+    pub ch_list_state: ListState,
     pub ch_list: Vec<String>,
     pub input_mode: InputMode,
     pub input_text: String,
@@ -33,6 +36,7 @@ impl AppState {
             duration,
             counter_sleep,
             counter_tick,
+            ch_list_state: ListState::default(),
             ch_list: vec![],
             input_mode: InputMode::Normal,
             input_text: "user input".to_string(),
@@ -71,8 +75,8 @@ impl AppState {
         }
     }
 
-    pub fn set_some_state(&mut self, data: String) {
-        self.ch_list = vec!["power".into(), "power2".into()];
+    pub fn set_some_state(&mut self, data: Vec<String>) {
+        self.ch_list = data;
     }
 
     pub fn count_tick(&self) -> Option<u64> {
@@ -128,6 +132,34 @@ impl AppState {
             self.view = View::ChList;
         }
     }
+
+    pub fn next_ch(&mut self) {
+        let i = match self.ch_list_state.selected() {
+            Some(i) => {
+                if i >= self.ch_list.len() - 1 {
+                    0
+                } else {
+                    i + 1
+                }
+            }
+            None => 0,
+        };
+        self.ch_list_state.select(Some(i));
+    }
+
+    pub fn previous_ch(&mut self) {
+        let i = match self.ch_list_state.selected() {
+            Some(i) => {
+                if i == 0 {
+                    self.ch_list.len() - 1
+                } else {
+                    i - 1
+                }
+            }
+            None => 0,
+        };
+        self.ch_list_state.select(Some(i));
+    }
 }
 
 impl Default for AppState {
@@ -137,6 +169,7 @@ impl Default for AppState {
             duration: Duration::from_secs(1),
             counter_sleep: 0,
             counter_tick: 0,
+            ch_list_state: ListState::default(),
             ch_list: vec![],
             input_mode: InputMode::Normal,
             input_text: "user input".to_string(),
