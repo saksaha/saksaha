@@ -56,7 +56,7 @@ pub async fn query_contract(
         .body(body)
         .expect("request builder should be made");
 
-    let resp = client.request(req).await.unwrap();
+    // let resp = client.request(req).await.unwrap();
 
     // let b = hyper::body::to_bytes(resp.into_body()).await.unwrap();
 
@@ -70,7 +70,7 @@ pub async fn query_contract(
             jsonrpc: "2.0".to_string(),
             error: None,
             result: Some(QueryCtrResponse {
-                result: vec!["ch_1".to_string()],
+                result: vec!["ch_1".to_string(), "ch_2".to_string()],
             }),
             id: "1312".to_string(),
         };

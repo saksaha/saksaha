@@ -135,10 +135,8 @@ async fn test_rpc_reqeust_envelope_send_pour_tx() {
             tc_dummy.merkle_rt,
         );
 
-        let params = serde_json::to_string(&send_req)
-            .unwrap()
-            .as_bytes()
-            .to_vec();
+        let params = serde_json::to_vec(&send_req).unwrap();
+        println!("param: {:?}", params);
 
         let json_request = JsonRequest {
             jsonrpc: "2.0".to_string(),

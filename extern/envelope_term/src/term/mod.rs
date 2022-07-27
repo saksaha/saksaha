@@ -108,7 +108,7 @@ pub async fn start_app(app: Arc<Mutex<App>>) -> Result<(), EnvelopeError> {
         let mut app = app.lock().await;
 
         // Render
-        terminal.draw(|rect| views::draw(rect, &app))?;
+        terminal.draw(|rect| views::draw(rect, &mut app))?;
 
         // Handle inputs
         let result = match events.next().await {

@@ -308,7 +308,6 @@ async fn process_ctr_state_update(
                             let ctr_fn = CtrFn::Execute(req, previous_state);
 
                             let ret = vm.invoke(ctr_wasm, ctr_fn)?;
-                            println!("44");
 
                             ret
                         }
