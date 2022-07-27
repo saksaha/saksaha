@@ -8,7 +8,7 @@ use log::debug;
 use sak_p2p_addr::AddrStatus;
 use sak_p2p_addr::UnknownAddr;
 use sak_p2p_id::Identity;
-use sak_p2p_ptable::PeerTable;
+use sak_p2p_peertable::PeerTable;
 use sak_types::BlockCandidate;
 use sak_types::Tx;
 use sak_types::TxCandidate;

@@ -1,5 +1,4 @@
 use log::info;
-use sak_fs::FS;
 use sak_kv_db::{Options, DB};
 
 pub fn init_test_log() {
@@ -17,7 +16,7 @@ pub fn init_test_log() {
 
 pub fn init_test_config(app_prefixes: &Vec<String>) -> Result<(), String> {
     for app_prefix in app_prefixes {
-        let db_path = FS::create_or_get_app_path(app_prefix)
+        let db_path = sak_fs::create_or_get_app_path(app_prefix)
             .expect("Failed to create or get the db_path");
         let ledger_path = db_path.join("db").join("ledger");
 
