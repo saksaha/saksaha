@@ -1,6 +1,8 @@
 use crate::{DistLedgerApis, LedgerError};
 use sak_contract_std::Storage;
-use sak_types::{Block, CtrAddr, Tx, TxCandidate};
+use sak_types::{tx::BlockHash, Block, CtrAddr, Tx, TxCandidate};
+
+const GET_BLOCK_HASH_LIST_DEFAULT_SIZE: u128 = 10;
 
 impl DistLedgerApis {
     pub async fn get_blocks(
@@ -70,24 +72,49 @@ impl DistLedgerApis {
 
     pub async fn get_block_list(
         &self,
-        block_height: &u128,
-    ) -> Result<Vec<Option<String>>, LedgerError> {
-        println!(
-            "[dist_ledger/apis/block.rs] block_height: {:?}",
-            block_height
-        );
+        offset: Option<u128>,
+        limit: Option<u128>,
+    ) -> Result<Vec<Block>, LedgerError> {
+        let latest_bh = self.get_latest_block_height()?.unwrap();
 
-        let mut block_hash_list: Vec<Option<String>> = Vec::new();
+        let offset = match offset {
+            Some(bh) => {
+                if latest_bh < bh {
+                    latest_bh
+                } else {
+                    bh
+                }
+            }
+            None => latest_bh,
+        };
 
-        for i in (*block_height)..(*block_height) + 10 {
-            match self.get_block_by_height(&i).await {
+        let limit = match limit {
+            Some(l) => l,
+            None => GET_BLOCK_HASH_LIST_DEFAULT_SIZE,
+        };
+
+        let lower_bound = {
+            if offset < limit {
+                if offset > GET_BLOCK_HASH_LIST_DEFAULT_SIZE {
+                    offset - GET_BLOCK_HASH_LIST_DEFAULT_SIZE + 1
+                } else {
+                    0
+                }
+            } else {
+                limit
+            }
+        };
+
+        let mut block_hash_list: Vec<BlockHash> = Vec::new();
+
+        for bh in (lower_bound..=offset).rev().step_by(1) {
+            match self.get_block_by_height(&bh).await {
                 Ok(maybe_block) => match maybe_block {
                     Some(block) => {
-                        block_hash_list
-                            .push(Some(block.get_block_hash().to_owned()));
+                        block_hash_list.push(block.get_block_hash().to_owned());
                     }
                     None => {
-                        block_hash_list.push(None);
+                        break;
                     }
                 },
                 Err(err) => {
@@ -100,12 +127,21 @@ impl DistLedgerApis {
             }
         }
 
-        println!(
-            "[dist_ledger/apis/block.rs] block_hash list: {:#?}",
-            block_hash_list
-        );
+        let block_hash_list_tmp: Vec<&BlockHash> =
+            block_hash_list.iter().collect();
 
-        Ok(block_hash_list)
+        let block_list = match self.get_blocks(block_hash_list_tmp).await {
+            Ok(bl) => bl,
+            Err(err) => {
+                return Err(format!(
+                    "some of the block_hashes in ({:?}) is wrong",
+                    err
+                )
+                .into())
+            }
+        };
+
+        Ok(block_list)
     }
 
     pub async fn get_block_by_height(

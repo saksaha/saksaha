@@ -1,6 +1,7 @@
 use super::utils;
 use sak_rpc_interface::{JsonRequest,JsonResponse};
-use crate::rpc::routes::v0::{ GetBlockResponse, GetBlockListResponse};
+use sak_types::BlockHash;
+use crate::rpc::routes::v0::{ GetBlockResponse, GetBlockHashListResponse};
 use hyper::{Body, Client, Method, Request, Uri};
 
 #[tokio::test(flavor = "multi_thread")]
@@ -204,7 +205,6 @@ async fn test_call_get_block_list() {
 
         block_hashes.push(block_hash)
     }
-    println!("[+] block_hash: {:#?}", block_hashes);
 
     let uri: Uri = {
         let u = format!(
@@ -214,13 +214,13 @@ async fn test_call_get_block_list() {
 
         u.parse().expect("URI should be made")
     };
-    println!("[+] URI: {:#?}", uri);
 
     let body = {
         let params = 
 r#"
 {
-    "block_height": 3
+    "offset": 5,
+    "limit": 1000 
 }
 "#.as_bytes().to_vec();
 
@@ -242,7 +242,6 @@ r#"
         .uri(uri)
         .body(body)
         .expect("request builder should be made");
-    println!("[+] Request: {:#?}", req);
 
     let client = Client::new();
 
@@ -251,30 +250,33 @@ r#"
     let response_bytes = hyper::body::to_bytes(response.into_body()).await.unwrap();
 
     let json_response =
-        serde_json::from_slice::<JsonResponse<GetBlockListResponse>>(&response_bytes).unwrap();
-    println!("[+] json_response: {:#?}", json_response);
+        serde_json::from_slice::<JsonResponse<GetBlockHashListResponse>>(&response_bytes).unwrap();
 
     let result = json_response.result.unwrap();
-    println!("[+] result: {:#?}", result);
 
-    let block_hashes_acquired = result.block_list;
-    println!("[+] block hashes acquired: {:#?}", block_hashes_acquired);
+    let block_acquired = result.block_list;
+
+    let block_acquired_hashes: Vec<BlockHash> = block_acquired
+            .iter()
+            .map(|block| block.get_block_hash().to_owned())
+            .collect();
+
 
 
     println!("----");
     println!("[+] original block hashes: {:#?}", block_hashes);
-    println!("[+] index starts at: {}, acquired block hashes: {:#?}", 3, block_hashes_acquired);
+    println!("[+] acquired block hashes: {:#?}", block_acquired_hashes);
 
-    assert_eq!(&Some(block_hashes[2].clone()), &block_hashes_acquired[0]);
-    assert_eq!(&Some(block_hashes[3].clone()), &block_hashes_acquired[1]);
-    assert_eq!(&Some(block_hashes[4].clone()), &block_hashes_acquired[2]);
-    assert_eq!(&Some(block_hashes[5].clone()), &block_hashes_acquired[3]);
-    assert_eq!(&Some(block_hashes[6].clone()), &block_hashes_acquired[4]);
-    assert_eq!(&Some(block_hashes[7].clone()), &block_hashes_acquired[5]);
-    assert_eq!(&Some(block_hashes[8].clone()), &block_hashes_acquired[6]);
-    assert_eq!(&Some(block_hashes[9].clone()), &block_hashes_acquired[7]);
-    assert_eq!(&None, &block_hashes_acquired[8]);
-    assert_eq!(&None, &block_hashes_acquired[9]);
 
+    let genesis_block_hash = "a668dad403e3074d9cb07502257acd4413e5e42cdfaa164736298162de3d24a3".to_owned();
+
+
+    assert_eq!(block_hashes[4], block_acquired_hashes[0]);
+    assert_eq!(block_hashes[3], block_acquired_hashes[1]);
+    assert_eq!(block_hashes[2], block_acquired_hashes[2]);
+    assert_eq!(block_hashes[1], block_acquired_hashes[3]);
+    assert_eq!(block_hashes[0], block_acquired_hashes[4]);
+    assert_eq!(genesis_block_hash, block_acquired_hashes[5]);
 
 }
+
