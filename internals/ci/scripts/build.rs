@@ -1,3 +1,4 @@
+use crate::utils::Kommand;
 use crate::{log, CIError};
 use colored::Colorize;
 use std::env::Args;
@@ -15,15 +16,7 @@ pub(crate) fn run(args: Args) -> Result<(), CIError> {
 
     let args = [args_1, cli_args].concat();
 
-    log!(
-        "Found subcommand, script: {}, executing `{} {}`",
-        "dev",
-        program.yellow(),
-        args.join(" ").yellow(),
-    );
-
-    Cmd::new(program)
-        .args(args)
+    Kommand::new(program, args)
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
         .output()

@@ -1,4 +1,5 @@
 use crate::log;
+use crate::utils::Kommand;
 use crate::CIError;
 use colored::Colorize;
 use std::env::Args;
@@ -17,17 +18,7 @@ pub(crate) fn run(args: Args) -> Result<(), CIError> {
     let args =
         vec![vec!["test".to_string()], cli_args, cargo_test_args].concat();
 
-    log!(
-        "Found subcommand, script: {}, executing `{} {}`",
-        "dev",
-        program.yellow(),
-        args.join(" ").yellow(),
-    );
-
-    // env::set_var("RUST_BACKTRACE", "1");
-
-    Cmd::new(program)
-        .args(args)
+    Kommand::new(program, args)
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
         .output()

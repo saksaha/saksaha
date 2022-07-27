@@ -21,6 +21,7 @@ members = [
   "source/sak_dist_ledger",
   "source/sak_vm",
   "source/sak_test_utils",
+  "source/wasm_postprocess",
 
   # Contracts (independently compiled and processed)
   "source/sak_validator",
@@ -34,7 +35,6 @@ members = [
 
    # extern
   "extern/envelope_term",
-  "extern/saksaha_rs",
   "extern/envelope_contract",
-  "extern/wasm_postprocess"
+  "extern/saksaha_rs"
 ]
