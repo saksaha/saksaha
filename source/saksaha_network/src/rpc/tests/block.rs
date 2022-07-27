@@ -1,6 +1,6 @@
 use super::utils;
-use crate::rpc::router::{JsonRequest, JsonResponse};
 use crate::rpc::routes::v0:: GetBlockResponse;
+use sak_rpc_interface::{JsonRequest, JsonResponse};
 use hyper::{Body, Client, Method, Request, Uri};
 
 #[tokio::test(flavor = "multi_thread")]

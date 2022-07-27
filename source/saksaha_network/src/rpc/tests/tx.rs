@@ -1,9 +1,9 @@
 use super::utils;
-use crate::rpc::router::{JsonRequest, JsonResponse};
 use crate::rpc::routes::v0::{
     GetTxRequest, SendMintTxRequest, SendPourTxRequest,
 };
 use hyper::{Body, Client, Method, Request, Uri};
+use sak_rpc_interface::{JsonRequest, JsonResponse};
 use sak_types::{
     BlockCandidate, MintTxCandidate, PourTxCandidate, Tx, TxCandidate,
 };
