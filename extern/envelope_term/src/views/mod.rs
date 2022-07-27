@@ -8,7 +8,7 @@ use crate::app::{App, View};
 use tui::backend::Backend;
 use tui::Frame;
 
-pub fn draw<B>(rect: &mut Frame<B>, app: &App)
+pub fn draw<B>(rect: &mut Frame<B>, app: &mut App)
 where
     B: Backend,
 {

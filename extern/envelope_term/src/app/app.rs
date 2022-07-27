@@ -53,6 +53,14 @@ impl App {
                     self.state.set_view_open_ch();
                     AppReturn::Continue
                 }
+                Action::Down => {
+                    self.state.next_ch();
+                    AppReturn::Continue
+                }
+                Action::Up => {
+                    self.state.previous_ch();
+                    AppReturn::Continue
+                }
             }
         } else {
             warn!("No action accociated to {}", key);
@@ -123,6 +131,10 @@ impl App {
         &self.state
     }
 
+    pub(crate) fn get_state_mut(&mut self) -> &mut AppState {
+        &mut self.state
+    }
+
     pub fn is_loading(&self) -> bool {
         self.state.is_loading
     }
@@ -135,6 +147,8 @@ impl App {
             Action::SwitchNormalMode,
             Action::ShowOpenCh,
             Action::ShowChList,
+            Action::Down,
+            Action::Up,
         ]
         .into();
 
@@ -149,7 +163,7 @@ impl App {
         self.state.incr_sleep();
     }
 
-    pub fn set_some_state(&mut self, data: String) {
+    pub fn set_some_state(&mut self, data: Vec<String>) {
         self.state.set_some_state(data);
     }
 }
