@@ -1,10 +1,7 @@
 use crate::{log, CIError};
-use clap::ArgMatches;
 use colored::Colorize;
 use std::env::Args;
 use std::process::{Command as Cmd, Stdio};
-
-pub(crate) struct Build;
 
 pub(crate) fn run(args: Args) -> Result<(), CIError> {
     let program = "cargo";

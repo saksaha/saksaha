@@ -1,8 +1,5 @@
 use crate::{log, CIError};
-use clap::{ArgMatches, Command};
 use std::process::Command as Cmd;
-
-pub(crate) struct Clean;
 
 // impl Script for Clean {
 //     fn handle_matches(matches: &ArgMatches) -> Result<(), CIError> {

@@ -1,14 +1,10 @@
 use crate::{log, CIError};
-use clap::ArgMatches;
 use std::{
     fs,
     io::{ErrorKind, Write},
     path::PathBuf,
     process::{Command as Cmd, Stdio},
-    str::FromStr,
 };
-
-pub(crate) struct Expand;
 
 // impl Script for Expand {
 //     fn handle_matches(matches: &ArgMatches) -> Result<(), CIError> {

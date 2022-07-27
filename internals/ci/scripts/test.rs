@@ -1,12 +1,8 @@
 use crate::log;
 use crate::CIError;
-use clap::ArgMatches;
 use colored::Colorize;
-use std::env::{self, Args};
-use std::path::PathBuf;
+use std::env::Args;
 use std::process::{Command as Cmd, Stdio};
-
-pub(crate) struct Test;
 
 pub(crate) fn run(args: Args) -> Result<(), CIError> {
     let program = "cargo";
