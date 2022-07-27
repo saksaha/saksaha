@@ -16,3 +16,4 @@ pub(crate) const ARG_SRC_PK: &str = "src_pk";
 pub(crate) const ARG_DST_PK: &str = "dst_pk";
 pub(crate) const ARG_SERIALIZED_INPUT: &str = "serialized_input";
 pub(crate) const DUMMY_CHANNEL_ID_1: &str = "ch_12";
+pub(crate) const DUMMY_CHANNEL_ID_2: &str = "ch_23";
