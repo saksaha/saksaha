@@ -68,6 +68,46 @@ impl DistLedgerApis {
         // self.get_block(&self.kv_db.db_instance, &self.schema, block_hash)
     }
 
+    pub async fn get_block_list(
+        &self,
+        block_height: &u128,
+    ) -> Result<Vec<Option<String>>, LedgerError> {
+        println!(
+            "[dist_ledger/apis/block.rs] block_height: {:?}",
+            block_height
+        );
+
+        let mut block_hash_list: Vec<Option<String>> = Vec::new();
+
+        for i in (*block_height)..(*block_height) + 10 {
+            match self.get_block_by_height(&i).await {
+                Ok(maybe_block) => match maybe_block {
+                    Some(block) => {
+                        block_hash_list
+                            .push(Some(block.get_block_hash().to_owned()));
+                    }
+                    None => {
+                        block_hash_list.push(None);
+                    }
+                },
+                Err(err) => {
+                    return Err(format!(
+                        "Block hash at height ({}) does not exist",
+                        err
+                    )
+                    .into())
+                }
+            }
+        }
+
+        println!(
+            "[dist_ledger/apis/block.rs] block_hash list: {:#?}",
+            block_hash_list
+        );
+
+        Ok(block_hash_list)
+    }
+
     pub async fn get_block_by_height(
         &self,
         block_height: &u128,

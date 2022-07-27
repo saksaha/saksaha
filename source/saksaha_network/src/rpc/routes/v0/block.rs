@@ -51,3 +51,47 @@ pub(crate) async fn get_block(
         }
     }
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+pub(in crate::rpc) struct GetBlockListRequest {
+    pub block_height: u128,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub(in crate::rpc) struct GetBlockListResponse {
+    pub block_list: Vec<Option<String>>,
+}
+
+pub(crate) async fn get_block_list(
+    id: String,
+    params: Params,
+    sys_handle: Arc<SystemHandle>,
+) -> Result<Response<Body>, RPCError> {
+    let params = params.ok_or::<RPCError>(
+        "get_block_list should contain params(block_height)".into(),
+    )?;
+
+    let rb: GetBlockListRequest =
+        utils::parse_params::<GetBlockListRequest>(&params)?;
+
+    match sys_handle
+        .machine
+        .blockchain
+        .dist_ledger
+        .apis
+        .get_block_list(&rb.block_height)
+        .await
+    {
+        Ok(block_list) => {
+            let get_block_resp = GetBlockListResponse { block_list };
+
+            return Ok(utils::make_success_response(id, get_block_resp));
+        }
+        Err(err) => {
+            return Ok(utils::make_error_response(
+                Some(String::from("1")),
+                err.into(),
+            ));
+        }
+    }
+}
