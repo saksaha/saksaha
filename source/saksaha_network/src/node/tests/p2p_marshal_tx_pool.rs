@@ -1,5 +1,10 @@
 use super::utils;
+use crate::p2p::P2PHost;
+use crate::{machine::Machine, node::LocalNode};
+use sak_p2p_id::Identity;
+use sak_p2p_peertable::PeerTable;
 use sak_types::{BlockCandidate, TxCandidate};
+use std::sync::Arc;
 use std::time::Duration;
 
 #[tokio::test(flavor = "multi_thread")]
@@ -11,7 +16,13 @@ async fn test_two_nodes_tx_pool_marshal_check_true() {
     ])
     .unwrap();
 
-    let (p2p_host_1, local_node_1, machine_1, _, _) = utils::create_client(
+    let (p2p_host_1, local_node_1, machine_1, _, _): (
+        P2PHost,
+        Arc<LocalNode>,
+        Arc<Machine>,
+        Arc<PeerTable>,
+        Arc<Identity>,
+    ) = utils::create_client(
         "test_1".to_string(),
         Some(35519),
         Some(35518),
@@ -31,7 +42,13 @@ async fn test_two_nodes_tx_pool_marshal_check_true() {
     )
     .await;
 
-    let (p2p_host_2, local_node_2, machine_2, _, _) = utils::create_client(
+    let (p2p_host_2, local_node_2, machine_2, _, _): (
+        P2PHost,
+        Arc<LocalNode>,
+        Arc<Machine>,
+        Arc<PeerTable>,
+        Arc<Identity>,
+    ) = utils::create_client(
         "test_2".to_string(),
         Some(35521),
         Some(35520),

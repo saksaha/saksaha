@@ -38,6 +38,12 @@ pub(in crate::rpc) fn get_routes(
             }),
         },
         Path {
+            method: "get_block_list",
+            handler: Box::new(|id, params, sys_handle| {
+                Box::pin(v0::get_block_list(id, params, sys_handle))
+            }),
+        },
+        Path {
             method: "call_contract",
             handler: Box::new(|id, params, sys_handle| {
                 Box::pin(v0::query_ctr(id, params, sys_handle))
