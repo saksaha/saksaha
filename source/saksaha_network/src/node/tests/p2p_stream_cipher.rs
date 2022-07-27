@@ -3,7 +3,7 @@ use crate::p2p::{P2PHost, P2PHostArgs};
 use futures::SinkExt;
 use sak_p2p_addr::{AddrStatus, UnknownAddr};
 use sak_p2p_id::Identity;
-use sak_p2p_ptable::PeerTable;
+use sak_p2p_peertable::PeerTable;
 use sak_p2p_transport::{Msg, TxHashSynMsg};
 use sak_types::TxCandidate;
 use std::{sync::Arc, time::Duration};
