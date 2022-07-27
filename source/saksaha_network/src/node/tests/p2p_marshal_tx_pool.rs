@@ -7,7 +7,7 @@ use colored::Colorize;
 use log::{debug, info};
 use sak_p2p_addr::{AddrStatus, UnknownAddr};
 use sak_p2p_id::Identity;
-use sak_p2p_ptable::PeerTable;
+use sak_p2p_peertable::PeerTable;
 use sak_types::{BlockCandidate, TxCandidate};
 use std::time::Duration;
 
