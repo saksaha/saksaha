@@ -16,9 +16,11 @@ pub(crate) struct AppState {
     duration: Duration,
     counter_sleep: u32,
     counter_tick: u64,
+    pub is_loading: bool,
     pub ch_list: Vec<String>,
     pub input_mode: InputMode,
     pub input_text: String,
+    pub input_returned: String,
     pub view: View,
 }
 
@@ -34,8 +36,10 @@ impl AppState {
             counter_sleep,
             counter_tick,
             ch_list: vec![],
+            is_loading: false,
             input_mode: InputMode::Normal,
             input_text: "user input".to_string(),
+            input_returned: String::default(),
             view: View::Landing,
         }
     }
@@ -45,19 +49,12 @@ impl AppState {
     }
 
     pub fn incr_sleep(&mut self) {
-        // if let Self::Initialized { counter_sleep, .. } = self {
-        //     *counter_sleep += 1;
-        // }
         if self.initialized {
             self.counter_sleep += 1;
         }
     }
 
     pub fn incr_tick(&mut self) {
-        // if let Self::Initialized { counter_tick, .. } = self {
-        //     *counter_tick += 1;
-        // }
-
         if self.initialized {
             self.counter_tick += 1;
         }
@@ -138,8 +135,10 @@ impl Default for AppState {
             counter_sleep: 0,
             counter_tick: 0,
             ch_list: vec![],
+            is_loading: false,
             input_mode: InputMode::Normal,
             input_text: "user input".to_string(),
+            input_returned: String::default(),
             view: View::Landing,
         }
     }

@@ -24,6 +24,7 @@ impl Events {
 
         let event_tx = tx.clone();
         let event_stop_capture = stop_capture.clone();
+
         tokio::spawn(async move {
             loop {
                 // poll for tick rate duration, if no event, sent tick event.
@@ -39,9 +40,11 @@ impl Events {
                         }
                     }
                 }
+
                 if let Err(err) = event_tx.send(InputEvent::Tick).await {
                     error!("Oops!, {}", err);
                 }
+
                 if event_stop_capture.load(Ordering::Relaxed) {
                     break;
                 }

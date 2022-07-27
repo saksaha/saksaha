@@ -32,7 +32,9 @@ pub(crate) fn draw_open_ch<'a, B>(
 where
     B: Backend,
 {
-    let (msg, style) = match app.input_mode {
+    let state = app.get_state();
+
+    let (msg, style) = match app.get_state().input_mode {
         InputMode::Normal => (
             vec![
                 Span::raw("Press "),
@@ -66,12 +68,15 @@ where
             Style::default(),
         ),
     };
-    let mut text = Text::from(Spans::from(msg));
-    text.patch_style(style);
-    let help_message = Paragraph::new(text);
 
-    let input = Paragraph::new(app.input.as_ref())
-        .style(match app.input_mode {
+    let help_msg = {
+        let mut text = Text::from(Spans::from(msg));
+        text.patch_style(style);
+        Paragraph::new(text)
+    };
+
+    let input = Paragraph::new(state.input_text.as_ref())
+        .style(match state.input_mode {
             InputMode::Normal => Style::default(),
             InputMode::Editing => Style::default().fg(Color::Yellow),
         })
@@ -81,19 +86,22 @@ where
                 .title("Type your friend's public key"),
         );
 
-    let messages: Vec<ListItem> = {
-        let content =
-            vec![Spans::from(Span::raw(format!("Her pk: {}", app.messages)))];
-        vec![ListItem::new(content)]
+    let input_returned = {
+        let content = vec![Spans::from(Span::raw(format!(
+            "Her pk: {}",
+            state.input_returned
+        )))];
+
+        let v = vec![ListItem::new(content)];
+
+        List::new(v).block(
+            Block::default()
+                .borders(Borders::ALL)
+                .title("Open channel progress"),
+        )
     };
 
-    let messages = List::new(messages).block(
-        Block::default()
-            .borders(Borders::ALL)
-            .title("Open channel progress"),
-    );
-
-    match app.input_mode {
+    match state.input_mode {
         InputMode::Normal =>
             // Hide the cursor. `Frame` does this by default, so we don't need to do anything here
             {}
@@ -102,14 +110,14 @@ where
             // Make the cursor visible and ask tui-rs to put it at the specified coordinates after rendering
             rect.set_cursor(
                 // Put cursor past the end of the input text
-                chunks[1].x + app.input.width() as u16 + 1,
+                chunks[1].x + state.input_text.width() as u16 + 1,
                 // Move one line down, from the border to the input line
                 chunks[1].y + 2,
             )
         }
     }
 
-    (help_message, input, messages)
+    (help_msg, input, input_returned)
 }
 
 pub(crate) fn draw_tabs<'a>(state: &AppState) -> Tabs {
