@@ -37,7 +37,7 @@ where
         rect.render_stateful_widget(
             ch_list,
             body_chunks[0],
-            &mut app.state.list_state,
+            &mut app.state.ch_list_state,
         );
 
         let help = utils::draw_help(app.actions());
