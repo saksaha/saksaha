@@ -22,8 +22,8 @@ members = [
   "source/sak_vm",
   "source/sak_test_utils",
 
-  # system contracts (each)
-  "source/sak_ctrt_validator",
+  # Contracts (independently compiled and processed)
+  "source/sak_validator",
 
   # internals
   "internals/ci",

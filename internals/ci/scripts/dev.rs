@@ -1,10 +1,14 @@
 use crate::log;
+use crate::pipeline;
 use crate::CIError;
 use colored::Colorize;
 use std::env::Args;
 use std::process::{Command as Cmd, Stdio};
 
 pub(crate) fn run(args: Args) -> Result<(), CIError> {
+    pipeline::build_system_contracts();
+    pipeline::build_3rd_party_contracts();
+
     let program = "cargo";
 
     let cli_args: Vec<String> = args.map(|a| a.to_string()).collect();
@@ -23,14 +27,12 @@ pub(crate) fn run(args: Args) -> Result<(), CIError> {
         args.join(" ").yellow(),
     );
 
-    // env::set_var("RUST_BACKTRACE", "1");
-
-    Cmd::new(program)
-        .args(args)
-        .stdout(Stdio::inherit())
-        .stderr(Stdio::inherit())
-        .output()
-        .expect("failed to run");
+    // Cmd::new(program)
+    //     .args(args)
+    //     .stdout(Stdio::inherit())
+    //     .stderr(Stdio::inherit())
+    //     .output()
+    //     .expect("failed to run");
 
     Ok(())
 }
