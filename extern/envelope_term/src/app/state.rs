@@ -1,6 +1,7 @@
 use tui::widgets::ListState;
 
 use crate::io::InputMode;
+use chrono::{DateTime, Local};
 use std::time::Duration;
 
 #[repr(u8)]
@@ -15,15 +16,16 @@ pub enum View {
 #[derive(Debug)]
 pub struct AppState {
     initialized: bool,
-    duration: Duration,
     counter_sleep: u32,
     counter_tick: u64,
+    scroll_messages_view: usize,
     pub is_loading: bool,
     pub ch_list_state: ListState,
     pub ch_list: Vec<String>,
     pub input_mode: InputMode,
     pub input_text: String,
     pub input_returned: String,
+    pub chats: Vec<ChatMessage>,
     pub view: View,
 }
 
@@ -35,16 +37,36 @@ impl AppState {
 
         AppState {
             initialized: true,
-            duration,
             counter_sleep,
             counter_tick,
+            scroll_messages_view: 0,
             ch_list_state: ListState::default(),
             ch_list: vec![],
             is_loading: false,
             input_mode: InputMode::Normal,
             input_text: String::default(),
             input_returned: String::default(),
+            chats: vec![],
             view: View::Landing,
+        }
+    }
+    pub fn scroll_messages_view(&self) -> usize {
+        self.scroll_messages_view
+    }
+
+    pub fn messages_scroll(&mut self, movement: ScrollMovement) {
+        match movement {
+            ScrollMovement::Up => {
+                if self.scroll_messages_view > 0 {
+                    self.scroll_messages_view -= 1;
+                }
+            }
+            ScrollMovement::Down => {
+                self.scroll_messages_view += 1;
+            }
+            ScrollMovement::Start => {
+                self.scroll_messages_view += 0;
+            }
         }
     }
 
@@ -89,26 +111,8 @@ impl AppState {
         }
     }
 
-    pub fn duration(&self) -> Option<&Duration> {
-        if self.initialized {
-            Some(&self.duration)
-        } else {
-            None
-        }
-    }
-
-    pub fn increment_delay(&mut self) {
-        if self.initialized {
-            let secs = (self.duration.as_secs() + 1).clamp(1, 10);
-            self.duration = Duration::from_secs(secs);
-        }
-    }
-
-    pub fn decrement_delay(&mut self) {
-        if self.initialized {
-            let secs = (self.duration.as_secs() - 1).clamp(1, 10);
-            self.duration = Duration::from_secs(secs);
-        }
+    pub fn set_input_messages(&mut self, msg: String) {
+        self.chats.push(ChatMessage::new(msg));
     }
 
     pub fn set_view_landing(&mut self) {
@@ -168,16 +172,38 @@ impl Default for AppState {
     fn default() -> Self {
         AppState {
             initialized: false,
-            duration: Duration::from_secs(1),
             counter_sleep: 0,
             counter_tick: 0,
+            scroll_messages_view: 0,
             ch_list_state: ListState::default(),
             ch_list: vec![],
             is_loading: false,
             input_mode: InputMode::Normal,
             input_text: String::default(),
             input_returned: String::default(),
+            chats: vec![],
             view: View::Landing,
         }
     }
+}
+
+#[derive(Debug)]
+pub struct ChatMessage {
+    pub date: DateTime<Local>,
+    pub msg: String,
+}
+
+impl ChatMessage {
+    pub fn new(msg: String) -> ChatMessage {
+        ChatMessage {
+            date: Local::now(),
+            msg,
+        }
+    }
+}
+
+pub enum ScrollMovement {
+    Up,
+    Down,
+    Start,
 }

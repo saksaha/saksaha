@@ -26,7 +26,7 @@ async fn test_sak_sdk_send_tx_mint() {
     let open_ch_input = {
         let open_ch_input: Vec<String> = vec![
             "eph_pk_str".to_string(),
-            "ch_id5".to_string(),
+            "ch_id8".to_string(),
             "a_pk_sig_encrypted".to_string(),
             "open_ch_empty".to_string(),
         ];
@@ -51,7 +51,7 @@ async fn test_sak_sdk_send_tx_pour() {
     let open_ch_input = {
         let open_ch_input: Vec<String> = vec![
             "eph_pk_str".to_string(),
-            "ch_id4".to_string(),
+            "ch_id7".to_string(),
             "a_pk_sig_encrypted".to_string(),
             "open_ch_empty".to_string(),
         ];
