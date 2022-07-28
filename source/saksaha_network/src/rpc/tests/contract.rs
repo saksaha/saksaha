@@ -9,6 +9,7 @@ use sak_contract_std::{CtrCallType, Request as CtrRequest};
 use sak_rpc_interface::{JsonRequest, JsonResponse};
 use sak_types::PourTxCandidate;
 use std::collections::HashMap;
+use std::time::Duration;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_call_contract() {
@@ -103,8 +104,9 @@ async fn test_rpc_reqeust_envelope_send_pour_tx() {
 
     let uri: Uri = {
         let u = format!(
-            "http://localhost:{}/apis/v0/send_pour_tx",
-            rpc_socket_addr.port(),
+            "http://localhost:{}/apis/v0/",
+            34418,
+            // rpc_socket_addr.port(),
         );
         u.parse().expect("URI should be made")
     };
@@ -113,8 +115,18 @@ async fn test_rpc_reqeust_envelope_send_pour_tx() {
         let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
 
         let mut arg = HashMap::with_capacity(2);
+        let open_ch_input = {
+            let open_ch_input: Vec<String> = vec![
+                "eph_pk_str".to_string(),
+                "ch_id".to_string(),
+                "a_pk_sig_encrypted".to_string(),
+                "open_ch_empty".to_string(),
+            ];
+
+            serde_json::to_string(&open_ch_input).unwrap()
+        };
         arg.insert(String::from("dst_pk"), "her_pk".to_string());
-        arg.insert(String::from("serialized_input"), "dummy".to_string());
+        arg.insert(String::from("serialized_input"), open_ch_input);
 
         let req = CtrRequest {
             req_type: String::from("open_channel"),
@@ -165,13 +177,4 @@ async fn test_rpc_reqeust_envelope_send_pour_tx() {
     let send_success = json_response.result.unwrap();
 
     assert_eq!("success", send_success);
-
-    let is_contain = machine
-        .blockchain
-        .dist_ledger
-        .apis
-        .tx_pool_contains(&expected_tc_hash)
-        .await;
-
-    assert_eq!(true, is_contain);
 }
