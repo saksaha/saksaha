@@ -1,14 +1,13 @@
-use crate::app::{Actions, App, AppState, View};
+use crate::app::{Actions, App, AppState};
 use crate::io::InputMode;
 use std::time::Duration;
 use symbols::line;
 use tui::backend::Backend;
-use tui::layout::{Alignment, Constraint, Direction, Layout, Rect};
+use tui::layout::{Alignment, Rect};
 use tui::style::{Color, Modifier, Style};
 use tui::text::{Span, Spans, Text};
 use tui::widgets::{
-    Block, BorderType, Borders, Cell, LineGauge, List, ListItem, Paragraph,
-    Row, Table, Tabs,
+    Block, BorderType, Borders, LineGauge, List, ListItem, Paragraph, Tabs,
 };
 use tui::{symbols, Frame};
 use tui_logger::TuiLoggerWidget;
