@@ -1,6 +1,6 @@
 use crate::{
     rpc::{
-        router::{utils, Params},
+        router::{self, Params},
         RPCError,
     },
     system::SystemHandle,
@@ -94,13 +94,14 @@ impl SendPourTxRequest {
 }
 
 pub(crate) async fn send_mint_tx(
+    res: Response<Body>,
     id: String,
     params: Params,
     sys_handle: Arc<SystemHandle>,
 ) -> Result<Response<Body>, RPCError> {
     let params = params.ok_or::<RPCError>("".into())?;
 
-    let rb = utils::parse_params::<SendMintTxRequest>(&params)?;
+    let rb = router::parse_params::<SendMintTxRequest>(&params)?;
 
     let tx_candidate = TxCandidate::Mint(MintTxCandidate::new(
         rb.created_at,
@@ -122,10 +123,11 @@ pub(crate) async fn send_mint_tx(
         .await
     {
         Ok(bool) => {
-            return Ok(utils::make_success_response(id, "success"));
+            return Ok(router::make_success_response(res, id, "success"));
         }
         Err(err) => {
-            return Ok(utils::make_error_response(
+            return Ok(router::make_error_response(
+                res,
                 Some(String::from("1")),
                 err.into(),
             ));
@@ -134,13 +136,14 @@ pub(crate) async fn send_mint_tx(
 }
 
 pub(crate) async fn send_pour_tx(
+    res: Response<Body>,
     id: String,
     params: Params,
     sys_handle: Arc<SystemHandle>,
 ) -> Result<Response<Body>, RPCError> {
     let params = params.ok_or::<RPCError>("".into())?;
 
-    let rb = utils::parse_params::<SendPourTxRequest>(&params)?;
+    let rb = router::parse_params::<SendPourTxRequest>(&params)?;
 
     let tx_candidate = TxCandidate::Pour(PourTxCandidate::new(
         rb.created_at,
@@ -164,10 +167,11 @@ pub(crate) async fn send_pour_tx(
         .await
     {
         Ok(bool) => {
-            return Ok(utils::make_success_response(id, "success"));
+            return Ok(router::make_success_response(res, id, "success"));
         }
         Err(err) => {
-            return Ok(utils::make_error_response(
+            return Ok(router::make_error_response(
+                res,
                 Some(String::from("1")),
                 err.into(),
             ));
@@ -181,13 +185,14 @@ pub struct GetTxRequest {
 }
 
 pub(crate) async fn get_tx(
+    res: Response<Body>,
     id: String,
     params: Params,
     sys_handle: Arc<SystemHandle>,
 ) -> Result<Response<Body>, RPCError> {
     let params = params.ok_or::<RPCError>("".into())?;
 
-    let rb = utils::parse_params::<GetTxRequest>(&params)?;
+    let rb = router::parse_params::<GetTxRequest>(&params)?;
 
     match sys_handle
         .machine
@@ -198,10 +203,11 @@ pub(crate) async fn get_tx(
         .await
     {
         Ok(t) => {
-            return Ok(utils::make_success_response(id, t));
+            return Ok(router::make_success_response(res, id, t));
         }
         Err(err) => {
-            return Ok(utils::make_error_response(
+            return Ok(router::make_error_response(
+                res,
                 Some(String::from("1")),
                 err.into(),
             ));

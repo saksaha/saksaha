@@ -6,16 +6,8 @@ use hyper::{
 use sak_rpc_interface::{JsonRPCError, JsonRequest, JsonResponse, JSON_RPC_2};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
-pub(in crate::rpc) fn parse_params<P: DeserializeOwned>(
-    params: &Vec<u8>,
-) -> Result<P, RPCError> {
-    match serde_json::from_slice(params) {
-        Ok(r) => Ok(r),
-        Err(err) => Err(format!("Cannot parse params, err: {}", err).into()),
-    }
-}
-
 pub(in crate::rpc) fn make_success_response<D: Serialize>(
+    res: Response<Body>,
     id: String,
     result: D,
 ) -> Response<Body> {
@@ -45,7 +37,7 @@ pub(in crate::rpc) fn make_success_response<D: Serialize>(
         let body_str = match serde_json::to_string(&response) {
             Ok(s) => s,
             Err(err) => {
-                return make_serialize_err_response(id, Some(err.into()))
+                return make_serialize_err_response(res, id, Some(err.into()))
             }
         };
 
@@ -56,6 +48,7 @@ pub(in crate::rpc) fn make_success_response<D: Serialize>(
 }
 
 pub(in crate::rpc) fn make_serialize_err_response(
+    res: Response<Body>,
     id: String,
     original_err: Option<RPCError>,
 ) -> Response<Body> {
@@ -80,13 +73,13 @@ pub(in crate::rpc) fn make_serialize_err_response(
     *res.body_mut() = {
         let msg = format!(
             r#"
-{{
-    id: {},
-    error: {{
-        msg: Cannot serialize error, original err (if any): {}
+    {{
+        id: {},
+        error: {{
+            msg: Cannot serialize error, original err (if any): {}
+        }}
     }}
-}}
-"#,
+    "#,
             id, err,
         );
 
@@ -104,6 +97,7 @@ pub(in crate::rpc) fn make_not_found_response() -> Response<Body> {
 }
 
 pub(in crate::rpc) fn make_error_response(
+    res: Response<Body>,
     id: Option<String>,
     error: RPCError,
 ) -> Response<Body> {
@@ -138,7 +132,7 @@ pub(in crate::rpc) fn make_error_response(
         let body_str = match serde_json::to_string(&response) {
             Ok(s) => s,
             Err(err) => {
-                return make_serialize_err_response(id, Some(err.into()));
+                return make_serialize_err_response(res, id, Some(err.into()));
             }
         };
 

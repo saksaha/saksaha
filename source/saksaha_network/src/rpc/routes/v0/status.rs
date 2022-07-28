@@ -1,5 +1,8 @@
 use crate::{
-    rpc::{router::utils, router::Params, RPCError},
+    rpc::{
+        router::{self, Params},
+        RPCError,
+    },
     system::SystemHandle,
 };
 use hyper::{Body, Request, Response, StatusCode};
@@ -16,6 +19,7 @@ pub struct GetNodeStatusResponse {
 }
 
 pub(crate) async fn get_status(
+    res: Response<Body>,
     id: String,
     params: Params,
     sys_handle: Arc<SystemHandle>,
@@ -29,7 +33,8 @@ pub(crate) async fn get_status(
 
     let peer_vec = sys_handle.p2p_monitor.peer_table.get_status().await;
 
-    return Ok(utils::make_success_response(
+    return Ok(router::make_success_response(
+        res,
         id,
         GetNodeStatusResponse { addr_vec, peer_vec },
     ));

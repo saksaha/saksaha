@@ -10,6 +10,7 @@ pub type Params = Option<Vec<u8>>;
 
 pub(crate) type Handler<C> = Box<
     dyn Fn(
+            Response<Body>,
             String,
             Params,
             C,

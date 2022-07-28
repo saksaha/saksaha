@@ -1,4 +1,3 @@
-use super::utils;
 use crate::rpc::{router::HeaderFactory, RPCError};
 use hyper::{
     header::{HeaderValue, CONTENT_TYPE},

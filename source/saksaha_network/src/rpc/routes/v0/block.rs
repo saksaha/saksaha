@@ -1,6 +1,6 @@
 use crate::{
     rpc::{
-        router::{utils, Params},
+        router::{self, Params, RouterError},
         RPCError,
     },
     system::SystemHandle,
@@ -22,14 +22,21 @@ pub(in crate::rpc) struct GetBlockResponse {
 }
 
 pub(crate) async fn get_block(
+    res: Response<Body>,
     id: String,
     params: Params,
     sys_handle: Arc<SystemHandle>,
-) -> Result<Response<Body>, RPCError> {
-    let params =
-        params.ok_or::<RPCError>("get_block should contain parms".into())?;
+) -> Result<Response<Body>, RouterError> {
+    let params = match params
+        .ok_or::<RPCError>("get_block should contain parms".into())
+    {
+        Ok(p) => p,
+        Err(err) => return Err(RouterError::new(err, res)),
+    };
+    // .map_err(|err| RouterError::new(err, res))?;
 
-    let rb: GetBlockRequest = utils::parse_params::<GetBlockRequest>(&params)?;
+    let rb: GetBlockRequest = router::parse_params::<GetBlockRequest>(&params)
+        .map_err(|err| RouterError::new(err, res))?;
 
     match sys_handle
         .machine
@@ -41,10 +48,11 @@ pub(crate) async fn get_block(
         Ok(block) => {
             let get_block_resp = GetBlockResponse { block };
 
-            return Ok(utils::make_success_response(id, get_block_resp));
+            return Ok(router::make_success_response(res, id, get_block_resp));
         }
         Err(err) => {
-            return Ok(utils::make_error_response(
+            return Ok(router::make_error_response(
+                res,
                 Some(String::from("1")),
                 err.into(),
             ));
@@ -64,6 +72,7 @@ pub(in crate::rpc) struct GetBlockListResponse {
 }
 
 pub(crate) async fn get_block_list(
+    res: Response<Body>,
     id: String,
     params: Params,
     sys_handle: Arc<SystemHandle>,
@@ -73,7 +82,7 @@ pub(crate) async fn get_block_list(
     )?;
 
     let rb: GetBlockListRequest =
-        utils::parse_params::<GetBlockListRequest>(&params)?;
+        router::parse_params::<GetBlockListRequest>(&params)?;
 
     match sys_handle
         .machine
@@ -86,10 +95,11 @@ pub(crate) async fn get_block_list(
         Ok(block_list) => {
             let get_block_resp = GetBlockListResponse { block_list };
 
-            return Ok(utils::make_success_response(id, get_block_resp));
+            return Ok(router::make_success_response(res, id, get_block_resp));
         }
         Err(err) => {
-            return Ok(utils::make_error_response(
+            return Ok(router::make_error_response(
+                res,
                 Some(String::from("1")),
                 err.into(),
             ));
