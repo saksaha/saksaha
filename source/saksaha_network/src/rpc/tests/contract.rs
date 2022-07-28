@@ -104,8 +104,7 @@ async fn test_rpc_reqeust_envelope_send_pour_tx() {
     let uri: Uri = {
         let u = format!(
             "http://localhost:{}/apis/v0/send_pour_tx",
-            34418,
-            // rpc_socket_addr.port(),
+            rpc_socket_addr.port(),
         );
         u.parse().expect("URI should be made")
     };
@@ -137,7 +136,6 @@ async fn test_rpc_reqeust_envelope_send_pour_tx() {
         );
 
         let params = serde_json::to_vec(&send_req).unwrap();
-        println!("param: {:?}", params);
 
         let json_request = JsonRequest {
             jsonrpc: "2.0".to_string(),

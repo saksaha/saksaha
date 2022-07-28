@@ -53,6 +53,10 @@ impl App {
                     self.state.set_view_open_ch();
                     AppReturn::Continue
                 }
+                Action::ShowChat => {
+                    self.state.set_view_chat();
+                    AppReturn::Continue
+                }
                 Action::Down => {
                     self.state.next_ch();
                     AppReturn::Continue
@@ -74,6 +78,8 @@ impl App {
             Key::Enter => {
                 self.state.input_returned =
                     self.state.input_text.drain(..).collect();
+                self.state
+                    .set_input_messages(self.state.input_returned.clone());
                 AppReturn::Continue
             }
             Key::Char(c) => {
@@ -147,6 +153,7 @@ impl App {
             Action::SwitchNormalMode,
             Action::ShowOpenCh,
             Action::ShowChList,
+            Action::ShowChat,
             Action::Down,
             Action::Up,
         ]
