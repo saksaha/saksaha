@@ -37,6 +37,8 @@ where
 
             let b = hyper::body::to_bytes(req.into_body()).await?;
 
+            println!("12344, b: {:?}", b);
+
             let json_request: JsonRequest = match serde_json::from_slice(&b) {
                 Ok(r) => r,
                 Err(err) => {
@@ -44,10 +46,13 @@ where
                 }
             };
 
+            println!("123");
+
             if let Some(handler) = route_map.get(json_request.method.as_str()) {
                 match handler(json_request.id, json_request.params, ctx).await {
                     Ok(r) => return Ok(r),
                     Err(err) => {
+                        println!("12333");
                         return Ok(utils::make_error_response(None, err));
                     }
                 }

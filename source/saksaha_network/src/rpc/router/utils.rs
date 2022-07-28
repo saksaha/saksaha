@@ -26,8 +26,27 @@ pub(in crate::rpc) fn make_success_response<D: Serialize>(
 
     let mut res = Response::default();
 
-    res.headers_mut()
-        .insert(CONTENT_TYPE, header_factory.application_json.clone());
+    {
+        let headers = res.headers_mut();
+
+        headers.insert(CONTENT_TYPE, header_factory.application_json.clone());
+        headers.insert(
+            hyper::header::ACCESS_CONTROL_ALLOW_ORIGIN,
+            HeaderValue::from_static("*"),
+        );
+        headers.insert(
+            hyper::header::ACCESS_CONTROL_ALLOW_METHODS,
+            HeaderValue::from_static("*"),
+        );
+        headers.insert(
+            hyper::header::ACCESS_CONTROL_ALLOW_HEADERS,
+            HeaderValue::from_static("*"),
+        );
+        headers.insert(
+            hyper::header::ACCESS_CONTROL_EXPOSE_HEADERS,
+            HeaderValue::from_static("*"),
+        );
+    }
 
     *res.status_mut() = StatusCode::OK;
 
@@ -111,10 +130,31 @@ pub(in crate::rpc) fn make_error_response(
             been initialized.",
     );
 
+    println!("err: {:?}", error);
+
     let mut res = Response::default();
 
-    res.headers_mut()
-        .insert(CONTENT_TYPE, header_factory.application_json.clone());
+    {
+        let headers = res.headers_mut();
+
+        headers.insert(CONTENT_TYPE, header_factory.application_json.clone());
+        headers.insert(
+            hyper::header::ACCESS_CONTROL_ALLOW_ORIGIN,
+            HeaderValue::from_static("*"),
+        );
+        headers.insert(
+            hyper::header::ACCESS_CONTROL_ALLOW_METHODS,
+            HeaderValue::from_static("*"),
+        );
+        headers.insert(
+            hyper::header::ACCESS_CONTROL_ALLOW_HEADERS,
+            HeaderValue::from_static("*"),
+        );
+        headers.insert(
+            hyper::header::ACCESS_CONTROL_EXPOSE_HEADERS,
+            HeaderValue::from_static("*"),
+        );
+    }
 
     *res.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
 
