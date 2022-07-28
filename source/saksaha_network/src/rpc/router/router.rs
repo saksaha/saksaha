@@ -1,3 +1,5 @@
+use crate::rpc::middlewares::HandleResult;
+
 use super::{utils, Handler};
 use futures::Future;
 use hyper::{Body, Method, Request, Response};
@@ -24,13 +26,7 @@ where
         req: Request<Body>,
         res: Response<Body>,
         ctx: C,
-    ) -> Pin<
-        Box<
-            dyn Future<Output = Result<Response<Body>, hyper::Error>>
-                + Send
-                + Sync,
-        >,
-    > {
+    ) -> HandleResult<C> {
         let route_map = self.route_map.clone();
 
         Box::pin(async move {
@@ -41,6 +37,9 @@ where
             let json_request: JsonRequest = match serde_json::from_slice(&b) {
                 Ok(r) => r,
                 Err(err) => {
+                    // let a = HandleResult::End(
+
+                    // )
                     return Ok(utils::make_error_response(None, Box::new(err)));
                 }
             };

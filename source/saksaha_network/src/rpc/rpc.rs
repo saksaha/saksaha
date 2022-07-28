@@ -1,9 +1,12 @@
 use super::{
-    middlewares::cors,
+    middlewares::make_cors,
     router::{utils, Router},
     routes,
 };
-use crate::{rpc::middlewares::NextFn, SaksahaError, SystemHandle};
+use crate::{
+    rpc::middlewares::{cors, Middleware, StateMachine},
+    SaksahaError, SystemHandle,
+};
 use futures::Future;
 use hyper::{
     server::conn::AddrIncoming, service, Body, Method, Response, Server,
@@ -72,6 +75,20 @@ impl RPCServer {
 
             let sys_handle = sys_handle.clone();
 
+            let c = Middleware(Box::new(cors));
+
+            let r = Middleware(Box::new(|req, res, ctx| {
+                router.route(req, res, ctx)
+            }));
+
+            let state_machine = {
+                let m = StateMachine {
+                    middlewares: vec![c],
+                };
+
+                Arc::new(m)
+            };
+
             async move {
                 Ok::<_, Infallible>(service::service_fn(move |req| {
                     debug!(
@@ -82,26 +99,19 @@ impl RPCServer {
 
                     let sys_handle_clone = sys_handle.clone();
                     let router_clone = router.clone();
-
-                    // let middlewares = [cors];
+                    let state_machine_clone = state_machine.clone();
 
                     async move {
-                        let mut res: Response<Body> = Response::default();
+                        let mut resp: Response<Body> = Response::default();
 
-                        // let f = Box::new(|req, res| res);
-                        // NextFn(Box::new(|req, res, next| res));
-
-                        // let a = cors(req, res, f);
-
-                        // if req.method() == Method::OPTIONS {
-                        //     let r = cors().await;
-                        //     return r;
-                        // }
-
-                        let res = router_clone
-                            .clone()
-                            .route(req, res, sys_handle_clone.clone())
+                        let res = state_machine_clone
+                            .run(req, resp, sys_handle_clone)
                             .await;
+
+                        // let res = router_clone
+                        //     .clone()
+                        //     .route(req, res, sys_handle_clone.clone())
+                        //     .await;
                         res
                     }
                 }))
