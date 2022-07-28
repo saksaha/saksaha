@@ -96,7 +96,7 @@ pub async fn start_app(app: Arc<Mutex<App>>) -> Result<(), EnvelopeError> {
 
         let mut app = app_clone.lock().await;
 
-        if let Ok(r) = saksaha::query_contract(
+        if let Ok(r) = saksaha::call_contract(
             "envelope_contract_addr".into(),
             "get_ch_list".into(),
             HashMap::with_capacity(10),

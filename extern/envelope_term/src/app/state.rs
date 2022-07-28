@@ -72,8 +72,14 @@ impl AppState {
         }
     }
 
-    pub fn set_some_state(&mut self, data: Vec<String>) {
-        self.ch_list = data;
+    pub fn set_some_state(&mut self, data: String) {
+        // let ch_list: Vec<String> =
+        self.ch_list = match serde_json::from_str(&data) {
+            Ok(c) => c,
+            Err(err) => {
+                panic!("Cannot Deserialize `data`:, err: {}", err);
+            }
+        };
     }
 
     pub fn count_tick(&self) -> Option<u64> {
