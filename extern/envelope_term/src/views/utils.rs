@@ -1,6 +1,5 @@
 use crate::app::{Actions, App, AppState, View};
 use crate::io::InputMode;
-use sak_types::TxCandidate;
 use std::time::Duration;
 use symbols::line;
 use tui::backend::Backend;
@@ -312,9 +311,9 @@ where
                 .title("Write a message"),
         );
 
-    let input_returned = {
+    let message_panel = {
         let content: Vec<Spans> = state
-            .input_messages
+            .chats
             .iter()
             .rev()
             .map(|m| {
@@ -351,38 +350,5 @@ where
         }
     }
 
-    (help_msg, input, input_returned)
+    (help_msg, input, message_panel)
 }
-
-// pub(crate) fn __draw_help(actions: &Actions) -> Table {
-//     let key_style = Style::default().fg(Color::LightCyan);
-//     let help_style = Style::default().fg(Color::Gray);
-
-//     let mut rows = vec![];
-//     for action in actions.actions().iter() {
-//         let mut first = true;
-//         for key in action.keys() {
-//             let help = if first {
-//                 first = false;
-//                 action.to_string()
-//             } else {
-//                 String::from("")
-//             };
-//             let row = Row::new(vec![
-//                 Cell::from(Span::styled(key.to_string(), key_style)),
-//                 Cell::from(Span::styled(help, help_style)),
-//             ]);
-//             rows.push(row);
-//         }
-//     }
-
-//     Table::new(rows)
-//         .block(
-//             Block::default()
-//                 .borders(Borders::ALL)
-//                 .border_type(BorderType::Plain)
-//                 .title("Help"),
-//         )
-//         .widths(&[Constraint::Length(11), Constraint::Min(20)])
-//         .column_spacing(1)
-// }

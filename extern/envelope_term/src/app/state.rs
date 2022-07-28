@@ -25,7 +25,7 @@ pub struct AppState {
     pub input_mode: InputMode,
     pub input_text: String,
     pub input_returned: String,
-    pub input_messages: Vec<ChatMessage>,
+    pub chats: Vec<ChatMessage>,
     pub view: View,
 }
 
@@ -46,7 +46,7 @@ impl AppState {
             input_mode: InputMode::Normal,
             input_text: String::default(),
             input_returned: String::default(),
-            input_messages: vec![],
+            chats: vec![],
             view: View::Landing,
         }
     }
@@ -99,7 +99,7 @@ impl AppState {
     }
 
     pub fn set_input_messages(&mut self, msg: String) {
-        self.input_messages.push(ChatMessage::new(msg));
+        self.chats.push(ChatMessage::new(msg));
     }
 
     pub fn set_view_landing(&mut self) {
@@ -168,7 +168,7 @@ impl Default for AppState {
             input_mode: InputMode::Normal,
             input_text: String::default(),
             input_returned: String::default(),
-            input_messages: vec![],
+            chats: vec![],
             view: View::Landing,
         }
     }
