@@ -18,7 +18,7 @@ pub(crate) fn run(args: Args) -> Result<(), CIError> {
     let args =
         vec![vec!["test".to_string()], cli_args, cargo_test_args].concat();
 
-    Kommand::new(program, args)
+    Kommand::new(program, args, None)?
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
         .output()

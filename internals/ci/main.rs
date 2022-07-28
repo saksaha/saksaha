@@ -1,5 +1,5 @@
-mod pipeline;
 mod scripts;
+mod tasks;
 mod utils;
 
 use crate::scripts::{build, dev, test};

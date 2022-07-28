@@ -19,7 +19,8 @@ pub(crate) fn build_system_contracts() -> Result<(), CIError> {
             let args = ["wasm"].iter().map(|s| s.to_string()).collect();
 
             println!("current: {:?}", p);
-            Kommand::new(program, args).current_dir(p).output()?;
+
+            Kommand::new(program, args, None)?.current_dir(p).output()?;
         } else {
             return Err(format!("contract path should exist").into());
         }
