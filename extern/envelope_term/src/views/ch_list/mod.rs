@@ -36,7 +36,6 @@ where
             .split(chunks[1]);
 
         let ch_list = utils::draw_ch_list(is_loading, state);
-        // rect.render_widget(ch_list, body_chunks[0]);
         rect.render_stateful_widget(
             ch_list,
             body_chunks[0],

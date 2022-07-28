@@ -12,6 +12,7 @@ pub enum Action {
     SwitchNormalMode,
     ShowChList,
     ShowOpenCh,
+    ShowChat,
     Down,
     Up,
 }
@@ -19,13 +20,14 @@ pub enum Action {
 impl Action {
     /// All available actions
     pub fn iterator() -> Iter<'static, Action> {
-        static ACTIONS: [Action; 8] = [
+        static ACTIONS: [Action; 9] = [
             Action::Quit,
             Action::Sleep,
             Action::SwitchEditMode,
             Action::SwitchNormalMode,
             Action::ShowChList,
             Action::ShowOpenCh,
+            Action::ShowChat,
             Action::Down,
             Action::Up,
         ];
@@ -41,6 +43,7 @@ impl Action {
             Action::SwitchNormalMode => &[Key::Esc],
             Action::ShowChList => &[Key::Char('1')],
             Action::ShowOpenCh => &[Key::Char('2')],
+            Action::ShowChat => &[Key::Char('3')],
             Action::Down => &[Key::Down],
             Action::Up => &[Key::Up],
         }
@@ -57,6 +60,7 @@ impl Display for Action {
             Action::SwitchNormalMode => "Switch to Normal Mode",
             Action::ShowChList => "Show channel list",
             Action::ShowOpenCh => "Show open channel",
+            Action::ShowChat => "Show chatting",
             Action::Down => "Down",
             Action::Up => "Up",
         };

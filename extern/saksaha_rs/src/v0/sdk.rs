@@ -59,6 +59,7 @@ pub async fn query_contract(
     // let resp = client.request(req).await.unwrap();
 
     // let b = hyper::body::to_bytes(resp.into_body()).await.unwrap();
+    // println!("{:?}", b);
 
     // let json_response =
     //     serde_json::from_slice::<JsonResponse<QueryCtrResponse>>(&b).unwrap();
