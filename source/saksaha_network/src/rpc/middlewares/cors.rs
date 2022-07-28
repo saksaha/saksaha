@@ -1,19 +1,29 @@
+use super::NextFn;
 use futures::Future;
 use hyper::{
     header::{self, HeaderValue},
-    Body, Request, Response,
+    Body, Method, Request, Response,
 };
-use std::pin::Pin;
+use std::{pin::Pin, sync::Arc};
 
-// pub(in crate::rpc) fn cors() -> Pin<
-//     Box<
-//         dyn Future<Output = Result<Response<Body>, hyper::Error>> + Send + Sync,
-//     >,
-// > {
-//     Box::pin(async { Ok(make_cors_response()) })
-// }
+pub(in crate::rpc) fn cors(
+    req: Request<Body>,
+    res: Response<Body>,
+    next: Arc<NextFn>,
+) -> Pin<
+    Box<
+        dyn Future<Output = Result<Response<Body>, hyper::Error>> + Send + Sync,
+    >,
+> {
+    // if req.method() == Method::OPTIONS {
+    //     return Ok();
+    // }
 
-pub(in crate::rpc) fn cors(req: Request<Body>, res: Response<Body>) {}
+    // let f = &next.0;
+    // f(req, res, next.clone)
+    let n = next.clone();
+    return (n.0)(req, res, next); // route
+}
 
 fn make_cors_response() -> Response<Body> {
     let mut res = Response::default();

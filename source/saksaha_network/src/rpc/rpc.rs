@@ -3,7 +3,7 @@ use super::{
     router::{utils, Router},
     routes,
 };
-use crate::{SaksahaError, SystemHandle};
+use crate::{rpc::middlewares::NextFn, SaksahaError, SystemHandle};
 use futures::Future;
 use hyper::{
     server::conn::AddrIncoming, service, Body, Method, Response, Server,
@@ -83,12 +83,15 @@ impl RPCServer {
                     let sys_handle_clone = sys_handle.clone();
                     let router_clone = router.clone();
 
-                    let middlewares = [cors, router_clone.route];
+                    // let middlewares = [cors];
 
                     async move {
                         let mut res: Response<Body> = Response::default();
 
-                        cors(req, res);
+                        // let f = Box::new(|req, res| res);
+                        // NextFn(Box::new(|req, res, next| res));
+
+                        // let a = cors(req, res, f);
 
                         // if req.method() == Method::OPTIONS {
                         //     let r = cors().await;
@@ -97,7 +100,7 @@ impl RPCServer {
 
                         let res = router_clone
                             .clone()
-                            .route(req, sys_handle_clone.clone())
+                            .route(req, res, sys_handle_clone.clone())
                             .await;
                         res
                     }

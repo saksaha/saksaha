@@ -1,9 +1,20 @@
 mod cors;
 
 pub(in crate::rpc) use cors::*;
+use futures::Future;
 use hyper::{Body, Request, Response};
+use std::{pin::Pin, sync::Arc};
 
-pub(in crate::rpc) type NextFn =
-    dyn Fn(Request<Body>, Response<Body>, NFn) -> Response<Body>;
-
-type NFn = dyn Fn(Request<Body>, Response<Body>, NextFn) -> Response<Body>;
+pub(in crate::rpc) struct NextFn(
+    pub  dyn Fn(
+        Request<Body>,
+        Response<Body>,
+        Arc<NextFn>,
+    ) -> Pin<
+        Box<
+            dyn Future<Output = Result<Response<Body>, hyper::Error>>
+                + Send
+                + Sync,
+        >,
+    >,
+);
