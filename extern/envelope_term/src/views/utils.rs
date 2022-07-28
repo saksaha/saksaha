@@ -254,7 +254,7 @@ pub(crate) fn draw_chat<'a, B>(
     app: &'a App,
     rect: &mut Frame<B>,
     chunks: &Rect,
-) -> (Paragraph<'a>, Paragraph<'a>, List<'a>)
+) -> (Paragraph<'a>, Paragraph<'a>, Paragraph<'a>)
 where
     B: Backend,
 {
@@ -316,13 +316,23 @@ where
         let content: Vec<Spans> = state
             .input_messages
             .iter()
-            .map(|m| Spans::from(Span::raw(format!("{}", m))))
+            .rev()
+            .map(|m| {
+                let date = m.date.format("%H:%M:%S ").to_string();
+
+                Spans::from(vec![
+                    Span::styled(date, Style::default().fg(Color::DarkGray)),
+                    Span::raw(format!("{}", m.msg)),
+                ])
+            })
             .collect();
 
-        let v = vec![ListItem::new(content)];
-
-        List::new(v)
-            .block(Block::default().borders(Borders::ALL).title("Messages"))
+        Paragraph::new(content)
+            .block(Block::default().borders(Borders::ALL).title(Span::styled(
+                "Messages",
+                Style::default().add_modifier(Modifier::BOLD),
+            )))
+            .scroll((state.scroll_messages_view() as u16, 0))
     };
 
     match state.input_mode {

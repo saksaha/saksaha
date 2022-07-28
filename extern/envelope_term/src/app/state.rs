@@ -1,6 +1,7 @@
 use tui::widgets::ListState;
 
 use crate::io::InputMode;
+use chrono::{DateTime, Local};
 use std::time::Duration;
 
 #[repr(u8)]
@@ -17,13 +18,14 @@ pub struct AppState {
     initialized: bool,
     counter_sleep: u32,
     counter_tick: u64,
+    scroll_messages_view: usize,
     pub is_loading: bool,
     pub ch_list_state: ListState,
     pub ch_list: Vec<String>,
     pub input_mode: InputMode,
     pub input_text: String,
     pub input_returned: String,
-    pub input_messages: Vec<String>,
+    pub input_messages: Vec<ChatMessage>,
     pub view: View,
 }
 
@@ -37,6 +39,7 @@ impl AppState {
             initialized: true,
             counter_sleep,
             counter_tick,
+            scroll_messages_view: 0,
             ch_list_state: ListState::default(),
             ch_list: vec![],
             is_loading: false,
@@ -45,6 +48,25 @@ impl AppState {
             input_returned: String::default(),
             input_messages: vec![],
             view: View::Landing,
+        }
+    }
+    pub fn scroll_messages_view(&self) -> usize {
+        self.scroll_messages_view
+    }
+
+    pub fn messages_scroll(&mut self, movement: ScrollMovement) {
+        match movement {
+            ScrollMovement::Up => {
+                if self.scroll_messages_view > 0 {
+                    self.scroll_messages_view -= 1;
+                }
+            }
+            ScrollMovement::Down => {
+                self.scroll_messages_view += 1;
+            }
+            ScrollMovement::Start => {
+                self.scroll_messages_view += 0;
+            }
         }
     }
 
@@ -77,7 +99,7 @@ impl AppState {
     }
 
     pub fn set_input_messages(&mut self, msg: String) {
-        self.input_messages.push(msg);
+        self.input_messages.push(ChatMessage::new(msg));
     }
 
     pub fn set_view_landing(&mut self) {
@@ -139,6 +161,7 @@ impl Default for AppState {
             initialized: false,
             counter_sleep: 0,
             counter_tick: 0,
+            scroll_messages_view: 0,
             ch_list_state: ListState::default(),
             ch_list: vec![],
             is_loading: false,
@@ -149,4 +172,25 @@ impl Default for AppState {
             view: View::Landing,
         }
     }
+}
+
+#[derive(Debug)]
+pub struct ChatMessage {
+    pub date: DateTime<Local>,
+    pub msg: String,
+}
+
+impl ChatMessage {
+    pub fn new(msg: String) -> ChatMessage {
+        ChatMessage {
+            date: Local::now(),
+            msg,
+        }
+    }
+}
+
+pub enum ScrollMovement {
+    Up,
+    Down,
+    Start,
 }
