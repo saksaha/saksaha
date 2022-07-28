@@ -1,8 +1,15 @@
-use super::{router::Router, routes};
+use super::{
+    middlewares::cors,
+    router::{utils, Router},
+    routes,
+};
 use crate::{SaksahaError, SystemHandle};
-use hyper::{server::conn::AddrIncoming, service, Server};
-use log::{error, info};
-use std::{convert::Infallible, sync::Arc};
+use futures::Future;
+use hyper::{
+    server::conn::AddrIncoming, service, Body, Method, Response, Server,
+};
+use log::{debug, error, info};
+use std::{convert::Infallible, pin::Pin, sync::Arc};
 use tokio::net::TcpListener;
 
 pub(crate) struct RPCArgs {
@@ -53,24 +60,44 @@ impl RPCServer {
             }
         };
 
-        let sys_handle = sys_handle.clone();
         let make_svc = service::make_service_fn(move |_conn| {
-            let routes = Arc::new(routes::get_routes());
+            println!("111");
 
             let router = {
-                let r: Router<Arc<SystemHandle>> = Router::new(routes);
-                r
+                let routes = routes::get_routes();
+                let router = Router::new(routes);
+
+                Arc::new(router)
             };
 
-            let sys_handle_clone = sys_handle.clone();
+            let sys_handle = sys_handle.clone();
 
-            async {
+            async move {
                 Ok::<_, Infallible>(service::service_fn(move |req| {
-                    let res = router.route(req, sys_handle_clone.clone());
+                    debug!(
+                        "rpc, method: {}, uri: {}",
+                        req.method(),
+                        req.uri().path()
+                    );
 
-                    async {
-                        let a = res.await;
-                        a
+                    let sys_handle_clone = sys_handle.clone();
+                    let router_clone = router.clone();
+
+                    async move {
+                        let mut res: Response<Body> = Response::default();
+
+                        cors(req, res);
+
+                        // if req.method() == Method::OPTIONS {
+                        //     let r = cors().await;
+                        //     return r;
+                        // }
+
+                        let res = router_clone
+                            .clone()
+                            .route(req, sys_handle_clone.clone())
+                            .await;
+                        res
                     }
                 }))
             }
