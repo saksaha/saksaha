@@ -2,6 +2,7 @@ use crate::SaksahaSDKError;
 use hyper::{Body, Client, Method, Request, Uri};
 use sak_contract_std::{CtrCallType, Request as CtrRequest};
 use sak_rpc_interface::{JsonRequest, JsonResponse};
+use sak_types::U8Array;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -130,11 +131,11 @@ pub async fn send_tx_pour(
             String::from("author_sig_1"),
             Some(ctr_addr),
             vec![11, 11, 11],
-            new_empty_32_temp(),
-            new_empty_32_temp(),
-            new_empty_32_temp(),
-            new_empty_32_temp(),
-            new_empty_32_temp(),
+            U8Array::new_empty_32(),
+            U8Array::new_empty_32(),
+            U8Array::new_empty_32(),
+            U8Array::new_empty_32(),
+            U8Array::new_empty_32(),
         );
 
         let params = serde_json::to_string(&send_req)?.as_bytes().to_vec();
@@ -190,10 +191,10 @@ pub async fn send_tx_mint(
             serde_json::to_vec(&req).unwrap(),
             String::from("author_sig_1"),
             Some(ctr_addr),
-            new_empty_32_temp(),
-            new_empty_32_temp(),
-            new_empty_32_temp(),
-            new_empty_32_temp(),
+            U8Array::new_empty_32(),
+            U8Array::new_empty_32(),
+            U8Array::new_empty_32(),
+            U8Array::new_empty_32(),
         );
 
         let params = serde_json::to_string(&send_req)?.as_bytes().to_vec();
