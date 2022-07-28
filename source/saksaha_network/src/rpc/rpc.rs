@@ -83,6 +83,8 @@ impl RPCServer {
                     let sys_handle_clone = sys_handle.clone();
                     let router_clone = router.clone();
 
+                    let middlewares = [cors, router_clone.route];
+
                     async move {
                         let mut res: Response<Body> = Response::default();
 
