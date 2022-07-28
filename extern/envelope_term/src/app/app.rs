@@ -170,7 +170,7 @@ impl App {
         self.state.incr_sleep();
     }
 
-    pub fn set_some_state(&mut self, data: Vec<String>) {
+    pub fn set_some_state(&mut self, data: String) {
         self.state.set_some_state(data);
     }
 }

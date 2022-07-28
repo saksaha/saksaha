@@ -99,7 +99,7 @@ pub async fn start_app(app: Arc<Mutex<App>>) -> Result<(), EnvelopeError> {
         let mut arg = HashMap::with_capacity(2);
         arg.insert(String::from("dst_pk"), "her_pk".to_string());
 
-        if let Ok(r) = saksaha::query_contract(
+        if let Ok(r) = saksaha::call_contract(
             "envelope_contract_addr".into(),
             "get_ch_list".into(),
             arg,
