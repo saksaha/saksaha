@@ -10,7 +10,6 @@ use tui::widgets::{
     Block, BorderType, Borders, Cell, LineGauge, Paragraph, Row, Table,
 };
 use tui::{symbols, Frame};
-use tui_logger::TuiLoggerWidget;
 
 use super::utils;
 
@@ -33,20 +32,33 @@ where
         )
         .split(size);
 
-    let title = utils::draw_title();
-    rect.render_widget(title, chunks[0]);
+    let tabs = utils::draw_tabs(app.get_state());
+    rect.render_widget(tabs, chunks[0]);
 
     let body_chunks = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([Constraint::Min(20), Constraint::Length(32)].as_ref())
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Min(10), Constraint::Length(4)].as_ref())
         .split(chunks[1]);
 
-    let body = utils::draw_ch_list(app.is_loading(), app.get_state());
-    rect.render_widget(body, body_chunks[0]);
+    let open_ch_chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Min(1),
+            Constraint::Length(1),
+            Constraint::Length(3),
+        ])
+        .split(body_chunks[0]);
+
+    let (help_message, input, messages) =
+        utils::draw_chat(app, rect, &chunks[1]);
+
+    rect.render_widget(help_message, open_ch_chunks[1]);
+    rect.render_widget(input, open_ch_chunks[2]);
+    rect.render_widget(messages, open_ch_chunks[0]);
 
     let help = utils::draw_help(app.actions());
     rect.render_widget(help, body_chunks[1]);
 
-    // let logs = utils::draw_logs();
-    // rect.render_widget(logs, chunks[3]);
+    let logs = utils::draw_logs();
+    rect.render_widget(logs, chunks[2]);
 }

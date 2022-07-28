@@ -250,16 +250,98 @@ pub(crate) fn draw_logs<'a>() -> TuiLoggerWidget<'a> {
         .style(Style::default().fg(Color::White).bg(Color::Black))
 }
 
-pub(crate) fn draw_dummy<'a>() -> Paragraph<'a> {
-    Paragraph::new("Dummy Channel")
-        .style(Style::default().fg(Color::LightCyan))
-        .alignment(Alignment::Center)
+pub(crate) fn draw_chat<'a, B>(
+    app: &'a App,
+    rect: &mut Frame<B>,
+    chunks: &Rect,
+) -> (Paragraph<'a>, Paragraph<'a>, List<'a>)
+where
+    B: Backend,
+{
+    let state = app.get_state();
+
+    let (msg, style) = match app.get_state().input_mode {
+        InputMode::Normal => (
+            vec![
+                Span::raw("Press "),
+                Span::styled(
+                    "q",
+                    Style::default().add_modifier(Modifier::BOLD),
+                ),
+                Span::raw(" to exit, "),
+                Span::styled(
+                    "i",
+                    Style::default().add_modifier(Modifier::BOLD),
+                ),
+                Span::raw(" to start editing."),
+            ],
+            Style::default().add_modifier(Modifier::RAPID_BLINK),
+        ),
+        InputMode::Editing => (
+            vec![
+                Span::raw("Press "),
+                Span::styled(
+                    "Esc",
+                    Style::default().add_modifier(Modifier::BOLD),
+                ),
+                Span::raw(" to stop editing, "),
+                Span::styled(
+                    "Enter",
+                    Style::default().add_modifier(Modifier::BOLD),
+                ),
+                Span::raw(" to record the message"),
+            ],
+            Style::default(),
+        ),
+    };
+
+    let help_msg = {
+        let mut text = Text::from(Spans::from(msg));
+        text.patch_style(style);
+        Paragraph::new(text)
+    };
+
+    let input = Paragraph::new(state.input_text.as_ref())
+        .style(match state.input_mode {
+            InputMode::Normal => Style::default(),
+            InputMode::Editing => Style::default().fg(Color::Yellow),
+        })
         .block(
             Block::default()
                 .borders(Borders::ALL)
-                .style(Style::default().fg(Color::White))
-                .border_type(BorderType::Plain),
-        )
+                .title("Write a message"),
+        );
+
+    let input_returned = {
+        let content: Vec<Spans> = state
+            .input_messages
+            .iter()
+            .map(|m| Spans::from(Span::raw(format!("{}", m))))
+            .collect();
+
+        let v = vec![ListItem::new(content)];
+
+        List::new(v)
+            .block(Block::default().borders(Borders::ALL).title("Messages"))
+    };
+
+    match state.input_mode {
+        InputMode::Normal =>
+            // Hide the cursor. `Frame` does this by default, so we don't need to do anything here
+            {}
+
+        InputMode::Editing => {
+            // Make the cursor visible and ask tui-rs to put it at the specified coordinates after rendering
+            rect.set_cursor(
+                // Put cursor past the end of the input text
+                chunks.x + state.input_text.width() as u16 + 1,
+                // Move one line down, from the border to the input line
+                chunks.height - 3,
+            )
+        }
+    }
+
+    (help_msg, input, input_returned)
 }
 
 // pub(crate) fn __draw_help(actions: &Actions) -> Table {

@@ -15,7 +15,6 @@ pub enum View {
 #[derive(Debug)]
 pub struct AppState {
     initialized: bool,
-    duration: Duration,
     counter_sleep: u32,
     counter_tick: u64,
     pub is_loading: bool,
@@ -24,6 +23,7 @@ pub struct AppState {
     pub input_mode: InputMode,
     pub input_text: String,
     pub input_returned: String,
+    pub input_messages: Vec<String>,
     pub view: View,
 }
 
@@ -35,7 +35,6 @@ impl AppState {
 
         AppState {
             initialized: true,
-            duration,
             counter_sleep,
             counter_tick,
             ch_list_state: ListState::default(),
@@ -44,6 +43,7 @@ impl AppState {
             input_mode: InputMode::Normal,
             input_text: String::default(),
             input_returned: String::default(),
+            input_messages: vec![],
             view: View::Landing,
         }
     }
@@ -64,14 +64,6 @@ impl AppState {
         }
     }
 
-    pub fn count_sleep(&self) -> Option<u32> {
-        if self.initialized {
-            Some(self.counter_sleep)
-        } else {
-            None
-        }
-    }
-
     pub fn set_some_state(&mut self, data: Vec<String>) {
         self.ch_list = data;
     }
@@ -84,26 +76,8 @@ impl AppState {
         }
     }
 
-    pub fn duration(&self) -> Option<&Duration> {
-        if self.initialized {
-            Some(&self.duration)
-        } else {
-            None
-        }
-    }
-
-    pub fn increment_delay(&mut self) {
-        if self.initialized {
-            let secs = (self.duration.as_secs() + 1).clamp(1, 10);
-            self.duration = Duration::from_secs(secs);
-        }
-    }
-
-    pub fn decrement_delay(&mut self) {
-        if self.initialized {
-            let secs = (self.duration.as_secs() - 1).clamp(1, 10);
-            self.duration = Duration::from_secs(secs);
-        }
+    pub fn set_input_messages(&mut self, msg: String) {
+        self.input_messages.push(msg);
     }
 
     pub fn set_view_landing(&mut self) {
@@ -163,7 +137,6 @@ impl Default for AppState {
     fn default() -> Self {
         AppState {
             initialized: false,
-            duration: Duration::from_secs(1),
             counter_sleep: 0,
             counter_tick: 0,
             ch_list_state: ListState::default(),
@@ -172,6 +145,7 @@ impl Default for AppState {
             input_mode: InputMode::Normal,
             input_text: String::default(),
             input_returned: String::default(),
+            input_messages: vec![],
             view: View::Landing,
         }
     }

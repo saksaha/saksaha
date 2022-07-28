@@ -78,6 +78,8 @@ impl App {
             Key::Enter => {
                 self.state.input_returned =
                     self.state.input_text.drain(..).collect();
+                self.state
+                    .set_input_messages(self.state.input_returned.clone());
                 AppReturn::Continue
             }
             Key::Char(c) => {
