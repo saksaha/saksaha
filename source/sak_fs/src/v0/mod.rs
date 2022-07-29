@@ -33,14 +33,43 @@ pub fn create_or_get_app_path(app_prefix: &String) -> Result<PathBuf, FSError> {
     }
 }
 
-pub fn persist(data: String, target_path: PathBuf) -> Result<(), FSError> {
-    if target_path.exists() {
+pub fn create_or_get_app_path_evl(
+    app_prefix: &String,
+) -> Result<PathBuf, FSError> {
+    if let Some(dir) = ProjectDirs::from("com", "Envelope", "Envelope") {
+        let app_root_path = dir.config_dir();
+
+        if !app_root_path.exists() {
+            if let Err(err) = fs::create_dir(app_root_path) {
+                return Err(format!("app_root create dir, err: {}", err).into());
+            }
+        }
+
+        let prefixed_app_path = app_root_path.join(app_prefix);
+
+        if !prefixed_app_path.exists() {
+            if let Err(err) = fs::create_dir(prefixed_app_path.clone()) {
+                return Err(format!("Cannot create dir, err: {}", err).into());
+            }
+        }
+
+        return Ok(prefixed_app_path);
+    } else {
         return Err(format!(
-            "Path does not exist, path: {}",
-            target_path.to_string_lossy()
+            "No valid app (config) path provided by the operating system"
         )
         .into());
     }
+}
+
+pub fn persist(data: String, target_path: PathBuf) -> Result<(), FSError> {
+    // if target_path.exists() {
+    //     return Err(format!(
+    //         "Path already exists, path: {}",
+    //         target_path.to_string_lossy()
+    //     )
+    //     .into());
+    // }
 
     let target_path_str = target_path.to_string_lossy().yellow();
 
