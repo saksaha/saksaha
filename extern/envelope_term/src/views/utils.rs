@@ -155,7 +155,7 @@ pub(crate) fn draw_title<'a>() -> Paragraph<'a> {
         )
 }
 
-pub(crate) fn draw_ch_list<'a>(loading: bool, state: &AppState) -> List<'a> {
+pub(crate) fn draw_ch_list<'a>(state: &AppState) -> List<'a> {
     let items: Vec<ListItem> = state
         .ch_list
         .iter()
@@ -173,27 +173,6 @@ pub(crate) fn draw_ch_list<'a>(loading: bool, state: &AppState) -> List<'a> {
                 .add_modifier(Modifier::BOLD),
         )
         .highlight_symbol(">> ")
-}
-
-pub(crate) fn draw_duration(duration: &Duration) -> LineGauge {
-    let sec = duration.as_secs();
-    let label = format!("{}s", sec);
-    let ratio = sec as f64 / 10.0;
-    LineGauge::default()
-        .block(
-            Block::default()
-                .borders(Borders::ALL)
-                .title("Sleep duration"),
-        )
-        .gauge_style(
-            Style::default()
-                .fg(Color::Cyan)
-                .bg(Color::Black)
-                .add_modifier(Modifier::BOLD),
-        )
-        .line_set(line::THICK)
-        .label(label)
-        .ratio(ratio)
 }
 
 pub(crate) fn draw_help(actions: &Actions) -> Paragraph {

@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::time::Duration;
 
 use super::state::AppState;
 use super::{actions::Actions, View};
@@ -69,6 +68,10 @@ impl App {
                 }
                 Action::Up => {
                     self.state.previous_ch();
+                    AppReturn::Continue
+                }
+                Action::Enter => {
+                    self.state.set_view_chat();
                     AppReturn::Continue
                 }
             }
