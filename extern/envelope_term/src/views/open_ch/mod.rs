@@ -1,13 +1,8 @@
 use super::utils;
-use crate::app::{Actions, App, AppState, View};
-use crate::io::InputMode;
+use crate::app::App;
 use tui::backend::Backend;
-use tui::layout::{Alignment, Constraint, Direction, Layout, Rect};
-use tui::style::{Color, Modifier, Style};
-use tui::text::{Span, Spans, Text};
-use tui::widgets::Paragraph;
-use tui::widgets::{Block, BorderType, Borders};
-use tui::{symbols, Frame};
+use tui::layout::{Constraint, Direction, Layout};
+use tui::Frame;
 
 pub(crate) fn draw_open_ch<B>(rect: &mut Frame<B>, app: &App)
 where

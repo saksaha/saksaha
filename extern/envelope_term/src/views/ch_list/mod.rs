@@ -9,7 +9,6 @@ where
     B: Backend,
 {
     let state = app.get_state_mut();
-    let is_loading = state.is_loading;
 
     let size = rect.size();
     utils::check_size(&size);
@@ -35,7 +34,7 @@ where
             .constraints([Constraint::Min(10), Constraint::Length(4)].as_ref())
             .split(chunks[1]);
 
-        let ch_list = utils::draw_ch_list(is_loading, state);
+        let ch_list = utils::draw_ch_list(state);
         rect.render_stateful_widget(
             ch_list,
             body_chunks[0],

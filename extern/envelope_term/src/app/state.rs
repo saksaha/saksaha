@@ -2,7 +2,6 @@ use tui::widgets::ListState;
 
 use crate::io::InputMode;
 use chrono::{DateTime, Local};
-use std::time::Duration;
 
 #[repr(u8)]
 #[derive(Clone, Debug)]
@@ -25,13 +24,13 @@ pub struct AppState {
     pub input_mode: InputMode,
     pub input_text: String,
     pub input_returned: String,
+    pub chat_input: String,
     pub chats: Vec<ChatMessage>,
     pub view: View,
 }
 
 impl AppState {
     pub fn initialized() -> Self {
-        let duration = Duration::from_secs(1);
         let counter_sleep = 0;
         let counter_tick = 0;
 
@@ -46,6 +45,7 @@ impl AppState {
             input_mode: InputMode::Normal,
             input_text: String::default(),
             input_returned: String::default(),
+            chat_input: String::default(),
             chats: vec![],
             view: View::Landing,
         }
@@ -86,14 +86,6 @@ impl AppState {
         }
     }
 
-    pub fn count_sleep(&self) -> Option<u32> {
-        if self.initialized {
-            Some(self.counter_sleep)
-        } else {
-            None
-        }
-    }
-
     pub fn set_some_state(&mut self, data: String) {
         self.ch_list = match serde_json::from_str(&data) {
             Ok(c) => c,
@@ -101,14 +93,6 @@ impl AppState {
                 panic!("Cannot Deserialize `data`:, err: {}", err);
             }
         };
-    }
-
-    pub fn count_tick(&self) -> Option<u64> {
-        if self.initialized {
-            Some(self.counter_tick)
-        } else {
-            None
-        }
     }
 
     pub fn set_input_messages(&mut self, msg: String) {
@@ -181,6 +165,7 @@ impl Default for AppState {
             input_mode: InputMode::Normal,
             input_text: String::default(),
             input_returned: String::default(),
+            chat_input: String::default(),
             chats: vec![],
             view: View::Landing,
         }

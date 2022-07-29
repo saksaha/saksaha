@@ -1,4 +1,3 @@
-use crate::app::View;
 use crate::app::{App, AppReturn};
 use crate::inputs::events::Events;
 use crate::inputs::InputEvent;
@@ -6,15 +5,11 @@ use crate::io::handler::IoAsyncHandler;
 use crate::io::InputMode;
 use crate::io::IoEvent;
 use crate::{views, EnvelopeError};
-use crossterm::event;
-use crossterm::event::{poll, read, Event, KeyCode, KeyEvent};
 use log::error;
 use log::LevelFilter;
-use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::Mutex;
-use tui::backend::Backend;
 use tui::backend::CrosstermBackend;
 use tui::Terminal;
 
@@ -95,21 +90,7 @@ pub async fn start_app(app: Arc<Mutex<App>>) -> Result<(), EnvelopeError> {
         tokio::time::sleep(Duration::from_secs(5)).await;
 
         let mut app = app_clone.lock().await;
-
-        let mut arg = HashMap::with_capacity(2);
-        arg.insert(String::from("dst_pk"), "her_pk".to_string());
-
-        if let Ok(r) = saksaha::call_contract(
-            "envelope_contract_addr".into(),
-            "get_ch_list".into(),
-            arg,
-        )
-        .await
-        {
-            if let Some(d) = r.result {
-                app.dispatch(IoEvent::Receive(d.result)).await;
-            }
-        }
+        app.get_ch_list().await;
     });
 
     loop {
