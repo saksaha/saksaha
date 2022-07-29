@@ -1,68 +1,28 @@
 use super::fs;
 use crate::EnvelopeError;
 use directories::ProjectDirs;
-use log::info;
+use log::{info, warn};
 use sak_crypto::{SakKey, ToEncodedPoint};
-use sak_logger::tinfo;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::path::PathBuf;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct PConfig {
-    // public_key: String,
-    // secret: String,
+    user_name: String,
+    public_key: String,
+    secret: String,
+    key_storage: HashMap<String, [u8; 32]>,
 }
 
 impl PConfig {
-    // pub fn new() -> Self {
-    //     PConfig {
-    //         public_key: "power".into(),
-    //         secret: "secret".into(),
-    //     }
-    // }
-
-    pub fn load(path: Option<PathBuf>) -> Self {
-        // HOME_PATH/CONFIG_PATH/ENVELOPE_PATH/{name-space}/config.yaml
-        // create_or_get_app_path()
-
-        // let path = path.unwrap_or(PathBuf)
-
-        // info!(
-        //     "Loading pconfig from path: {}",
-        //     path.to_string_lossy().yellow()
-        // );
-
-        // if !path.exists() {
-        //     return Err(format!("Path does not exist"));
-        // }
-
-        // let file = match std::fs::read_to_string(path.to_owned()) {
-        //     Ok(f) => f,
-        //     Err(err) => {
-        //         return Err(format!("Could not read the file, err: {}", err));
-        //     }
-        // };
-
-        // match serde_yaml::from_str(file.as_str()) {
-        //     Ok(pconf) => return Ok(pconf),
-        //     Err(err) => {
-        //         return Err(format!("Could not deserialize pconfig, err: {}", err));
-        //     }
-        // }
-
-        PConfig {
-            // public_key: "power".into(),
-            // secret: "secret".into(),
-        }
-    }
-
     pub fn new(app_prefix: &String) -> Result<PConfig, EnvelopeError> {
         info!("Loading persisted config...");
 
         let config_file_path = fs::get_config_file_path(app_prefix)?;
 
         info!(
-            "Config file path is resolved, app_prefix: {}, \
+            "Config file path is resolEved, app_prefix: {}, \
                 config_file_path: {:?}",
             app_prefix, config_file_path,
         );
@@ -85,7 +45,8 @@ impl PConfig {
                 config_file_path,
             );
 
-            let pconfig = PConfig::create_new_config();
+            let mut pconfig = PConfig::create_new_config();
+            pconfig.user_name = app_prefix.clone();
 
             let data = serde_yaml::to_string(&pconfig)?;
 
@@ -95,18 +56,90 @@ impl PConfig {
         }
     }
 
+    pub fn insert_ch_key(
+        &mut self,
+        ch_id: String,
+        key: [u8; 32],
+    ) -> Result<(), EnvelopeError> {
+        self.key_storage.insert(ch_id, key);
+        let user_name = self.user_name.clone();
+        let config_file_path = fs::get_config_file_path(&user_name)?;
+        let data = serde_yaml::to_string(&self)?;
+        sak_fs::persist(data, config_file_path)?;
+        return Ok(());
+    }
+
+    pub fn get_ch_key(
+        &self,
+        ch_id: &String,
+    ) -> Result<[u8; 32], EnvelopeError> {
+        let v = match self.key_storage.get(ch_id) {
+            Some(v) => v,
+            None => {
+                return Err(
+                    format!("no matching epherial key with ch_id").into()
+                );
+            }
+        };
+        Ok(*v)
+    }
+
+    pub fn load(app_prefix: &String) -> Result<Self, EnvelopeError> {
+        let path = fs::get_config_file_path(app_prefix)?;
+
+        // info!(
+        //     "Loading pconfig from path: {}",
+        //     path.to_string_lossy().yellow()
+        // );
+
+        if !path.exists() {
+            warn!("Path does not exist");
+        }
+
+        let file = match std::fs::read_to_string(path.to_owned()) {
+            Ok(f) => f,
+            Err(err) => {
+                return Err(
+                    format!("Could not read the file, err: {}", err).into()
+                );
+            }
+        };
+
+        match serde_yaml::from_str(file.as_str()) {
+            Ok(pconf) => return Ok(pconf),
+            Err(err) => {
+                return Err(format!(
+                    "Could not deserialize pconfig, err: {}",
+                    err
+                )
+                .into());
+            }
+        }
+    }
+
     fn create_new_config() -> PConfig {
         let (sk, pk) = SakKey::generate();
 
         let secret_str = sak_crypto::encode_hex(&sk.to_bytes());
+
         let public_key_str =
             sak_crypto::encode_hex(&pk.to_encoded_point(false).to_bytes());
 
-        let acc_addr = SakKey::create_acc_addr(&pk);
+        // let acc_addr = SakKey::create_acc_addr(&pk);
+        let key_storage = HashMap::new();
 
-        let pconf = PConfig {};
+        let pconf = PConfig {
+            user_name: String::new(),
+            public_key: public_key_str,
+            secret: secret_str,
+            key_storage,
+        };
 
         pconf
+    }
+
+    pub fn get_sk_pk(&self) -> (String, String) {
+        (self.secret.clone(), self.public_key.clone())
     }
 }
 
