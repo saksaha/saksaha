@@ -1,11 +1,17 @@
 use crate::SaksahaSDKError;
 use hyper::{Body, Client, Method, Request, Uri};
+use rand::rngs::OsRng;
 use sak_contract_std::{CtrCallType, Request as CtrRequest};
+use sak_crypto::{groth16, mimc, Bls12, Circuit, Hasher, Proof, Scalar};
+use sak_proofs::{
+    CoinProof, CoinProofCircuit1to2, NewCoin, OldCoin, ProofError,
+};
 use sak_rpc_interface::{JsonRequest, JsonResponse};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::{char::from_u32_unchecked, collections::HashMap};
 
 pub const A: usize = 1;
+pub const TREE_DEPTH: usize = 3;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct QueryCtrRequest {
@@ -86,4 +92,38 @@ pub async fn query_contract(
     //     serde_json::from_slice::<JsonResponse<QueryCtrResponse>>(&b)?;
 
     // Ok(json_response)
+}
+
+// -------------------------------- proof
+
+fn generate_proof_1_to_2(
+    coin_1_old: OldCoin,
+    coin_1_new: NewCoin,
+    coin_2_new: NewCoin,
+) -> Result<Proof<Bls12>, ProofError> {
+    let hasher = Hasher::new();
+    let constants = hasher.get_mimc_constants().to_vec();
+
+    let de_params = sak_proofs::get_1_to_2_params(&constants);
+
+    let c = CoinProofCircuit1to2 {
+        hasher,
+        coin_1_old,
+        coin_1_new,
+        coin_2_new,
+        constants,
+    };
+
+    let proof = match groth16::create_random_proof(c, &de_params, &mut OsRng) {
+        Ok(p) => p,
+        Err(err) => {
+            return Err(format!(
+                "Failed to generate groth16 proof, err: {}",
+                err
+            )
+            .into());
+        }
+    };
+
+    Ok(proof)
 }

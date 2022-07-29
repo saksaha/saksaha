@@ -1,4 +1,4 @@
-use crate::{MerkleTree, Path, ProofError};
+use crate::{MerkleTree, NewCoin, OldCoin, Path, ProofError, CM_TREE_DEPTH};
 use rand::rngs::OsRng;
 use rand::RngCore;
 use sak_crypto::{
@@ -10,38 +10,59 @@ use sak_types::U8Array;
 use std::fs::File;
 use std::io::Write;
 
-const TEST_TREE_DEPTH: usize = 3;
+const PARAM_FILE_NAME: &str = "mimc_params_1_to_2";
 
-pub(crate) struct CoinProofCircuit1to2 {
+pub struct CoinProofCircuit1to2 {
     pub hasher: Hasher,
 
-    // old coin 1
-    pub addr_pk_1_old: Option<Scalar>,
-    pub addr_sk_1_old: Option<Scalar>,
-    pub rho_1_old: Option<Scalar>,
-    pub r_1_old: Option<Scalar>,
-    pub s_1_old: Option<Scalar>,
-    pub v_1_old: Option<Scalar>,
-    pub cm_1_old: Option<Scalar>,
+    pub coin_1_old: OldCoin,
 
-    pub auth_path_1: [Option<(Scalar, bool)>; TEST_TREE_DEPTH],
-    // pub merkle_rt: Option<Scalar>,
+    pub coin_1_new: NewCoin,
 
-    // new coin 1
-    pub addr_pk_1: Option<Scalar>,
-    pub rho_1: Option<Scalar>,
-    pub r_1: Option<Scalar>,
-    pub s_1: Option<Scalar>,
-    pub v_1: Option<Scalar>,
-
-    // new coin 2
-    pub addr_pk_2: Option<Scalar>,
-    pub rho_2: Option<Scalar>,
-    pub r_2: Option<Scalar>,
-    pub s_2: Option<Scalar>,
-    pub v_2: Option<Scalar>,
+    pub coin_2_new: NewCoin,
 
     pub constants: Vec<Scalar>,
+}
+
+pub fn get_1_to_2_params(constants: &[Scalar]) -> Parameters<Bls12> {
+    let param_path = std::path::Path::new(PARAM_FILE_NAME);
+    let is_file_exist = param_path.exists();
+
+    let mut v = vec![];
+
+    if is_file_exist {
+        // read
+        v = std::fs::read(PARAM_FILE_NAME).unwrap();
+    } else {
+        // generate and write
+        let hasher = Hasher::new();
+
+        let coin_1_old = OldCoin::default();
+        let coin_1_new = NewCoin::default();
+        let coin_2_new = NewCoin::default();
+
+        let params = {
+            let c = CoinProofCircuit1to2 {
+                hasher,
+                coin_1_old,
+                coin_1_new,
+                coin_2_new,
+                constants: constants.to_vec(),
+            };
+
+            groth16::generate_random_parameters::<Bls12, _, _>(c, &mut OsRng)
+                .unwrap()
+        };
+        // write param to file
+        let mut file = File::create(PARAM_FILE_NAME).unwrap();
+
+        params.write(&mut v).unwrap();
+        // write origin buf
+        file.write_all(&v);
+    }
+
+    let de_params = Parameters::<Bls12>::read(&v[..], false).unwrap();
+    de_params
 }
 
 impl Circuit<Scalar> for CoinProofCircuit1to2 {
@@ -49,13 +70,13 @@ impl Circuit<Scalar> for CoinProofCircuit1to2 {
         self,
         cs: &mut CS,
     ) -> Result<(), SynthesisError> {
-        let rho_1_old = self.rho_1_old.or(Some(Scalar::default()));
-        let addr_pk_1_old = self.addr_pk_1_old.or(Some(Scalar::default()));
-        let addr_sk_1_old = self.addr_sk_1_old.or(Some(Scalar::default()));
-        let cm_1_old = self.cm_1_old.or(Some(Scalar::default()));
-        let r_1_old = self.r_1_old.or(Some(Scalar::default()));
-        let s_1_old = self.s_1_old.or(Some(Scalar::default()));
-        let v_1_old = self.v_1_old.or(Some(Scalar::default()));
+        let rho_1_old = self.coin_1_old.rho.or(Some(Scalar::default()));
+        let addr_pk_1_old = self.coin_1_old.addr_pk.or(Some(Scalar::default()));
+        let addr_sk_1_old = self.coin_1_old.addr_sk.or(Some(Scalar::default()));
+        let cm_1_old = self.coin_1_old.cm.or(Some(Scalar::default()));
+        let r_1_old = self.coin_1_old.r.or(Some(Scalar::default()));
+        let s_1_old = self.coin_1_old.s.or(Some(Scalar::default()));
+        let v_1_old = self.coin_1_old.v.or(Some(Scalar::default()));
 
         check_cm_commitments(
             cs,
@@ -70,54 +91,68 @@ impl Circuit<Scalar> for CoinProofCircuit1to2 {
 
         let sn_1 = self.hasher.mimc_scalar_cs(cs, addr_sk_1_old, rho_1_old);
 
-        let merkle_rt =
-            climb_up_tree(cs, cm_1_old, &self.auth_path_1, &self.hasher);
+        let merkle_rt = climb_up_tree(
+            cs,
+            cm_1_old,
+            &self.coin_1_old.auth_path,
+            &self.hasher,
+        );
 
-        let addr_pk_1 = self.addr_pk_1.or(Some(Scalar::default()));
-        let rho_1 = self.rho_1.or(Some(Scalar::default()));
-        let r_1 = self.r_1.or(Some(Scalar::default()));
-        let s_1 = self.s_1.or(Some(Scalar::default()));
-        let v_1 = self.v_1.or(Some(Scalar::default()));
+        let addr_pk_1_new = self.coin_1_new.addr_pk.or(Some(Scalar::default()));
+        let rho_1_new = self.coin_1_new.rho.or(Some(Scalar::default()));
+        let r_1_new = self.coin_1_new.r.or(Some(Scalar::default()));
+        let s_1_new = self.coin_1_new.s.or(Some(Scalar::default()));
+        let v_1_new = self.coin_1_new.v.or(Some(Scalar::default()));
 
-        let cm_1 = {
-            let k = self.hasher.comm2_scalar_cs(cs, r_1, addr_pk_1, rho_1);
-            self.hasher.comm2_scalar_cs(cs, s_1, v_1, k)
+        let cm_1_new = {
+            let k = self.hasher.comm2_scalar_cs(
+                cs,
+                r_1_new,
+                addr_pk_1_new,
+                rho_1_new,
+            );
+            self.hasher.comm2_scalar_cs(cs, s_1_new, v_1_new, k)
         };
 
         check_cm_commitments(
             cs,
-            cm_1,
-            addr_pk_1,
-            rho_1,
-            r_1,
-            s_1,
-            v_1,
+            cm_1_new,
+            addr_pk_1_new,
+            rho_1_new,
+            r_1_new,
+            s_1_new,
+            v_1_new,
             &self.hasher,
         );
 
-        let addr_pk_2 = self.addr_pk_2.or(Some(Scalar::default()));
-        let rho_2 = self.rho_2.or(Some(Scalar::default()));
-        let r_2 = self.r_2.or(Some(Scalar::default()));
-        let s_2 = self.s_2.or(Some(Scalar::default()));
-        let v_2 = self.v_2.or(Some(Scalar::default()));
+        let addr_pk_2_new = self.coin_2_new.addr_pk.or(Some(Scalar::default()));
+        let rho_2_new = self.coin_2_new.rho.or(Some(Scalar::default()));
+        let r_2_new = self.coin_2_new.r.or(Some(Scalar::default()));
+        let s_2_new = self.coin_2_new.s.or(Some(Scalar::default()));
+        let v_2_new = self.coin_2_new.v.or(Some(Scalar::default()));
 
-        let cm_2 = {
-            let k = self.hasher.comm2_scalar_cs(cs, r_2, addr_pk_2, rho_2);
-            self.hasher.comm2_scalar_cs(cs, s_2, v_2, k)
+        let cm_2_new = {
+            let k = self.hasher.comm2_scalar_cs(
+                cs,
+                r_2_new,
+                addr_pk_2_new,
+                rho_2_new,
+            );
+            self.hasher.comm2_scalar_cs(cs, s_2_new, v_2_new, k)
         };
 
         check_cm_commitments(
             cs,
-            cm_2,
-            addr_pk_2,
-            rho_2,
-            r_2,
-            s_2,
-            v_2,
+            cm_2_new,
+            addr_pk_2_new,
+            rho_2_new,
+            r_2_new,
+            s_2_new,
+            v_2_new,
             &self.hasher,
         );
 
-        require_equal_val_summation(cs, v_1_old, v_1, v_2);
+        require_equal_val_summation(cs, v_1_old, v_1_new, v_2_new);
 
         {
             cs.alloc_input(
@@ -126,18 +161,18 @@ impl Circuit<Scalar> for CoinProofCircuit1to2 {
             )?;
 
             cs.alloc_input(
-                || "sn_1",
+                || "sn_old_1",
                 || sn_1.ok_or(SynthesisError::AssignmentMissing),
             )?;
 
             cs.alloc_input(
-                || "cm_1",
-                || cm_1.ok_or(SynthesisError::AssignmentMissing),
+                || "cm_new_1",
+                || cm_1_new.ok_or(SynthesisError::AssignmentMissing),
             )?;
 
             cs.alloc_input(
-                || "cm_2",
-                || cm_2.ok_or(SynthesisError::AssignmentMissing),
+                || "cm_2_new",
+                || cm_2_new.ok_or(SynthesisError::AssignmentMissing),
             )?;
         }
 
@@ -145,10 +180,10 @@ impl Circuit<Scalar> for CoinProofCircuit1to2 {
     }
 }
 
-fn climb_up_tree<CS: ConstraintSystem<Scalar>>(
+pub fn climb_up_tree<CS: ConstraintSystem<Scalar>>(
     cs: &mut CS,
     leaf: Option<Scalar>,
-    auth_path: &[Option<(Scalar, bool)>; TEST_TREE_DEPTH],
+    auth_path: &[Option<(Scalar, bool)>; CM_TREE_DEPTH as usize],
     hasher: &Hasher,
 ) -> Option<Scalar> {
     let mut curr = leaf;
@@ -197,7 +232,7 @@ fn climb_up_tree<CS: ConstraintSystem<Scalar>>(
     return curr;
 }
 
-fn check_cm_commitments<CS: ConstraintSystem<Scalar>>(
+pub fn check_cm_commitments<CS: ConstraintSystem<Scalar>>(
     cs: &mut CS,
     cm_old: Option<Scalar>,
     addr_pk: Option<Scalar>,
@@ -232,7 +267,7 @@ fn check_cm_commitments<CS: ConstraintSystem<Scalar>>(
     }
 }
 
-fn require_equal_val_summation<CS: ConstraintSystem<Scalar>>(
+pub fn require_equal_val_summation<CS: ConstraintSystem<Scalar>>(
     cs: &mut CS,
     v_old: Option<Scalar>,
     v_1: Option<Scalar>,
