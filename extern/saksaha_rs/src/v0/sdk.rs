@@ -1,5 +1,6 @@
 use crate::SaksahaSDKError;
 use hyper::{Body, Client, Method, Request, Uri};
+use log::warn;
 use sak_contract_std::{CtrCallType, Request as CtrRequest};
 use sak_rpc_interface::{JsonRequest, JsonResponse};
 use sak_types::U8Array;
@@ -125,6 +126,7 @@ pub async fn send_tx_pour(
         };
 
         // ***** Need to change dummy values to real values
+
         let send_req = SendPourTxRequest::new(
             String::from("created_at_1"),
             serde_json::to_vec(&req)?,
@@ -185,11 +187,14 @@ pub async fn send_tx_mint(
         };
 
         // ***** Need to change dummy values to real values
-        let send_req = SendMintTxRequest::new(
+
+        let send_req = SendPourTxRequest::new(
             String::from("created_at_1"),
             serde_json::to_vec(&req)?,
             String::from("author_sig_1"),
             Some(ctr_addr),
+            vec![11, 11, 11],
+            U8Array::new_empty_32(),
             U8Array::new_empty_32(),
             U8Array::new_empty_32(),
             U8Array::new_empty_32(),
