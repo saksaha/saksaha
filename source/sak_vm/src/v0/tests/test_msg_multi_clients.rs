@@ -378,7 +378,7 @@ async fn test_multi_clients_chat() {
     );
 
     /*  ********************************************************************* */
-    // 3. User A check A's channl list and reads the message sent by B
+    // 3. Request get_msgs
     {
         let request = {
             let mut arg = HashMap::with_capacity(1);

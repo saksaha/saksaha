@@ -1,5 +1,6 @@
 use crate::SaksahaSDKError;
 use hyper::{Body, Client, Method, Request, Uri};
+use log::warn;
 use sak_contract_std::{CtrCallType, Request as CtrRequest};
 use sak_rpc_interface::{JsonRequest, JsonResponse};
 use sak_types::U8Array;
@@ -125,9 +126,10 @@ pub async fn send_tx_pour(
         };
 
         // ***** Need to change dummy values to real values
+
         let send_req = SendPourTxRequest::new(
             String::from("created_at_1"),
-            serde_json::to_vec(&req).unwrap(),
+            serde_json::to_vec(&req)?,
             String::from("author_sig_1"),
             Some(ctr_addr),
             vec![11, 11, 11],
@@ -158,12 +160,11 @@ pub async fn send_tx_pour(
         .body(body)
         .expect("request builder should be made");
 
-    let resp = client.request(req).await.unwrap();
+    let resp = client.request(req).await?;
 
-    let b = hyper::body::to_bytes(resp.into_body()).await.unwrap();
+    let b = hyper::body::to_bytes(resp.into_body()).await?;
 
-    let json_response =
-        serde_json::from_slice::<JsonResponse<String>>(&b).unwrap();
+    let json_response = serde_json::from_slice::<JsonResponse<String>>(&b)?;
 
     Ok(json_response)
 }
@@ -186,11 +187,14 @@ pub async fn send_tx_mint(
         };
 
         // ***** Need to change dummy values to real values
-        let send_req = SendMintTxRequest::new(
+
+        let send_req = SendPourTxRequest::new(
             String::from("created_at_1"),
-            serde_json::to_vec(&req).unwrap(),
+            serde_json::to_vec(&req)?,
             String::from("author_sig_1"),
             Some(ctr_addr),
+            vec![11, 11, 11],
+            U8Array::new_empty_32(),
             U8Array::new_empty_32(),
             U8Array::new_empty_32(),
             U8Array::new_empty_32(),
@@ -217,12 +221,11 @@ pub async fn send_tx_mint(
         .body(body)
         .expect("request builder should be made");
 
-    let resp = client.request(req).await.unwrap();
+    let resp = client.request(req).await?;
 
-    let b = hyper::body::to_bytes(resp.into_body()).await.unwrap();
+    let b = hyper::body::to_bytes(resp.into_body()).await?;
 
-    let json_response =
-        serde_json::from_slice::<JsonResponse<String>>(&b).unwrap();
+    let json_response = serde_json::from_slice::<JsonResponse<String>>(&b)?;
 
     Ok(json_response)
 }
@@ -265,12 +268,12 @@ pub async fn call_contract(
         .body(body)
         .expect("request builder should be made");
 
-    let resp = client.request(req).await.unwrap();
+    let resp = client.request(req).await?;
 
-    let b = hyper::body::to_bytes(resp.into_body()).await.unwrap();
+    let b = hyper::body::to_bytes(resp.into_body()).await?;
 
     let json_response =
-        serde_json::from_slice::<JsonResponse<QueryCtrResponse>>(&b).unwrap();
+        serde_json::from_slice::<JsonResponse<QueryCtrResponse>>(&b)?;
 
     Ok(json_response)
 }
