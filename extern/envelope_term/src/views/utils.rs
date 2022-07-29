@@ -118,8 +118,8 @@ where
     (help_msg, input, input_returned)
 }
 
-pub(crate) fn draw_tabs<'a>(state: &AppState) -> Tabs {
-    let labels = ["Channels", "Open channel", "Chat (#id)"]
+pub(crate) fn draw_tabs<'a>(state: &'a AppState) -> Tabs {
+    let labels = ["Channels", "Open channel", "Chat (#)"]
         .iter()
         .map(|t| {
             let (first, rest) = t.split_at(1);
@@ -142,6 +142,14 @@ pub(crate) fn draw_tabs<'a>(state: &AppState) -> Tabs {
 
     tabs
 }
+
+// pub(crate) fn draw_dummy<'a>(state: &AppState) -> [&str; 3] {
+//     [
+//         "Channels",
+//         "Open channel",
+//         &format!("Chat (#{})", state.ch_list_state.selected().unwrap_or(0)),
+//     ]
+// }
 
 pub(crate) fn draw_title<'a>() -> Paragraph<'a> {
     Paragraph::new("Envelope")

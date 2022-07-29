@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use super::state::AppState;
+use super::{state::AppState, ChannelState};
 use super::{actions::Actions, View};
 use crate::io::InputMode;
 use crate::io::IoEvent;
@@ -70,8 +70,15 @@ impl App {
                     self.state.previous_ch();
                     AppReturn::Continue
                 }
-                Action::Enter => {
-                    self.state.set_view_chat();
+                Action::Right => {
+                    match self.get_state().view {
+                        View::ChList => {
+                            self.get_messages().await;
+                            self.state.set_view_chat();
+                        }
+                        _ => {}
+                    }
+
                     AppReturn::Continue
                 }
             }
@@ -93,13 +100,12 @@ impl App {
                         self.open_ch(&self.state.input_returned)
                             .await
                             .unwrap_or("None".to_owned());
-
-                        // be omitted due to delay
-                        // self.get_ch_list().await;
                     }
                     View::Chat => {
                         self.state.chat_input =
                             self.state.input_text.drain(..).collect();
+
+                        // self.send_messages().await;
 
                         self.state
                             .set_input_messages(self.state.chat_input.clone());
@@ -183,6 +189,7 @@ impl App {
             Action::ShowChat,
             Action::Down,
             Action::Up,
+            Action::Right,
         ]
         .into();
 
@@ -197,34 +204,40 @@ impl App {
         self.state.incr_sleep();
     }
 
-    pub fn set_some_state(&mut self, data: String) {
-        self.state.set_some_state(data);
+    pub fn set_ch_list_state(&mut self, data: String) {
+        self.state.set_ch_list_state(data);
+    }
+
+    pub fn set_msg_state(&mut self, data: String) {
+        self.state.set_msg_state(data);
     }
 
     pub async fn open_ch(
         &self,
+        my_pk: &String,
         her_pk: &String,
     ) -> Result<String, EnvelopeError> {
         let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
-
+        let channel_name = format!("Channel_{}", self.state.ch_list.len());
         let mut arg = HashMap::with_capacity(2);
         let open_ch_input = {
             let open_ch_input: Vec<String> = vec![
                 her_pk.to_string(),
-                format!("Channel_{}", self.state.ch_list.len()),
+                channel_name,
                 "a_pk_sig_encrypted".to_string(),
                 "open_ch_empty".to_string(),
             ];
 
             serde_json::to_string(&open_ch_input)?
         };
-        arg.insert(String::from("dst_pk"), "her_pk".to_string());
+        arg.insert(my_pk.clone(), her_pk.clone());
         arg.insert(String::from("serialized_input"), open_ch_input);
 
         let req_type = String::from("open_channel");
         let json_response =
             saksaha::send_tx_pour(ctr_addr, req_type, arg).await?;
-        let result = json_response.result.unwrap_or("None".to_string());
+
+        ChannelState::new(channel_name, her_pk, my_pk)
 
         Ok(result)
     }
@@ -244,5 +257,50 @@ impl App {
                 self.dispatch(IoEvent::Receive(d.result)).await;
             }
         }
+    }
+
+    pub async fn get_messages(&mut self) {
+        let mut arg = HashMap::with_capacity(2);
+        arg.insert(String::from("dst_pk"), "her_pk".to_string());
+
+        if let Ok(r) = saksaha::call_contract(
+            ENVELOPE_CTR_ADDR.into(),
+            "get_msgs".into(),
+            arg,
+        )
+        .await
+        {
+            if let Some(d) = r.result {
+                self.dispatch(IoEvent::GetMessages(d.result)).await;
+            }
+        }
+    }
+
+    pub async fn send_messages(
+        &self,
+        her_pk: &String,
+    ) -> Result<String, EnvelopeError> {
+        let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
+
+        let mut arg = HashMap::with_capacity(2);
+        let open_ch_input = {
+            let open_ch_input: Vec<String> = vec![
+                her_pk.to_string(),
+                format!("Channel_{}", self.state.ch_list.len()),
+                "a_pk_sig_encrypted".to_string(),
+                "open_ch_empty".to_string(),
+            ];
+
+            serde_json::to_string(&open_ch_input)?
+        };
+        arg.insert(String::from("dst_pk"), "her_pk".to_string());
+        arg.insert(String::from("serialized_input"), open_ch_input);
+
+        let req_type = String::from("send_msg");
+        let json_response =
+            saksaha::send_tx_pour(ctr_addr, req_type, arg).await?;
+        let result = json_response.result.unwrap_or("None".to_string());
+
+        Ok(result)
     }
 }

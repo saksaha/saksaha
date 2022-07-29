@@ -86,11 +86,20 @@ impl AppState {
         }
     }
 
-    pub fn set_some_state(&mut self, data: String) {
+    pub fn set_ch_list_state(&mut self, data: String) {
         self.ch_list = match serde_json::from_str(&data) {
             Ok(c) => c,
             Err(err) => {
                 panic!("Cannot Deserialize `data`:, err: {}", err);
+            }
+        };
+    }
+
+    pub fn set_msg_state(&mut self, data: String) {
+        self.chats = match serde_json::from_str::<Vec<String>>(&data) {
+            Ok(c) => c.into_iter().map(|m| ChatMessage::new(m)).collect(),
+            Err(err) => {
+                panic!("Cannot Deserialize `msg`:, err: {}", err);
             }
         };
     }
@@ -183,6 +192,27 @@ impl ChatMessage {
         ChatMessage {
             date: Local::now(),
             msg,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct ChannelState {
+    pub channel_name: String,
+    pub her_pk: String,
+    pub my_pk: String,
+}
+
+impl ChannelState {
+    pub fn new(
+        channel_name: String,
+        her_pk: String,
+        my_pk: String,
+    ) -> ChannelState {
+        ChannelState {
+            channel_name,
+            her_pk,
+            my_pk,
         }
     }
 }
