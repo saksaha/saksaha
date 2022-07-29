@@ -1,7 +1,8 @@
+mod utils;
+
 use self::utils::*;
 use super::fs;
 use crate::pconfig::*;
-mod utils;
 use saksaha::*;
 use std::time::Duration;
 use std::{collections::HashMap, thread::sleep};
