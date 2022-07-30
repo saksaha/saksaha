@@ -1,15 +1,13 @@
-use crate::app::{Actions, App, AppState, View};
+use crate::app::{Actions, App, AppState};
 use crate::io::InputMode;
-use sak_types::TxCandidate;
 use std::time::Duration;
 use symbols::line;
 use tui::backend::Backend;
-use tui::layout::{Alignment, Constraint, Direction, Layout, Rect};
+use tui::layout::{Alignment, Rect};
 use tui::style::{Color, Modifier, Style};
 use tui::text::{Span, Spans, Text};
 use tui::widgets::{
-    Block, BorderType, Borders, Cell, LineGauge, List, ListItem, Paragraph,
-    Row, Table, Tabs,
+    Block, BorderType, Borders, LineGauge, List, ListItem, Paragraph, Tabs,
 };
 use tui::{symbols, Frame};
 use tui_logger::TuiLoggerWidget;
@@ -157,7 +155,7 @@ pub(crate) fn draw_title<'a>() -> Paragraph<'a> {
         )
 }
 
-pub(crate) fn draw_ch_list<'a>(loading: bool, state: &AppState) -> List<'a> {
+pub(crate) fn draw_ch_list<'a>(state: &AppState) -> List<'a> {
     let items: Vec<ListItem> = state
         .ch_list
         .iter()
@@ -175,27 +173,6 @@ pub(crate) fn draw_ch_list<'a>(loading: bool, state: &AppState) -> List<'a> {
                 .add_modifier(Modifier::BOLD),
         )
         .highlight_symbol(">> ")
-}
-
-pub(crate) fn draw_duration(duration: &Duration) -> LineGauge {
-    let sec = duration.as_secs();
-    let label = format!("{}s", sec);
-    let ratio = sec as f64 / 10.0;
-    LineGauge::default()
-        .block(
-            Block::default()
-                .borders(Borders::ALL)
-                .title("Sleep duration"),
-        )
-        .gauge_style(
-            Style::default()
-                .fg(Color::Cyan)
-                .bg(Color::Black)
-                .add_modifier(Modifier::BOLD),
-        )
-        .line_set(line::THICK)
-        .label(label)
-        .ratio(ratio)
 }
 
 pub(crate) fn draw_help(actions: &Actions) -> Paragraph {
@@ -250,47 +227,106 @@ pub(crate) fn draw_logs<'a>() -> TuiLoggerWidget<'a> {
         .style(Style::default().fg(Color::White).bg(Color::Black))
 }
 
-pub(crate) fn draw_dummy<'a>() -> Paragraph<'a> {
-    Paragraph::new("Dummy Channel")
-        .style(Style::default().fg(Color::LightCyan))
-        .alignment(Alignment::Center)
+pub(crate) fn draw_chat<'a, B>(
+    app: &'a App,
+    rect: &mut Frame<B>,
+    chunks: &Rect,
+) -> (Paragraph<'a>, Paragraph<'a>, Paragraph<'a>)
+where
+    B: Backend,
+{
+    let state = app.get_state();
+
+    let (msg, style) = match app.get_state().input_mode {
+        InputMode::Normal => (
+            vec![
+                Span::raw("Press "),
+                Span::styled(
+                    "q",
+                    Style::default().add_modifier(Modifier::BOLD),
+                ),
+                Span::raw(" to exit, "),
+                Span::styled(
+                    "i",
+                    Style::default().add_modifier(Modifier::BOLD),
+                ),
+                Span::raw(" to start editing."),
+            ],
+            Style::default().add_modifier(Modifier::RAPID_BLINK),
+        ),
+        InputMode::Editing => (
+            vec![
+                Span::raw("Press "),
+                Span::styled(
+                    "Esc",
+                    Style::default().add_modifier(Modifier::BOLD),
+                ),
+                Span::raw(" to stop editing, "),
+                Span::styled(
+                    "Enter",
+                    Style::default().add_modifier(Modifier::BOLD),
+                ),
+                Span::raw(" to record the message"),
+            ],
+            Style::default(),
+        ),
+    };
+
+    let help_msg = {
+        let mut text = Text::from(Spans::from(msg));
+        text.patch_style(style);
+        Paragraph::new(text)
+    };
+
+    let input = Paragraph::new(state.input_text.as_ref())
+        .style(match state.input_mode {
+            InputMode::Normal => Style::default(),
+            InputMode::Editing => Style::default().fg(Color::Yellow),
+        })
         .block(
             Block::default()
                 .borders(Borders::ALL)
-                .style(Style::default().fg(Color::White))
-                .border_type(BorderType::Plain),
-        )
+                .title("Write a message"),
+        );
+
+    let message_panel = {
+        let content: Vec<Spans> = state
+            .chats
+            .iter()
+            .rev()
+            .map(|m| {
+                let date = m.date.format("%H:%M:%S ").to_string();
+
+                Spans::from(vec![
+                    Span::styled(date, Style::default().fg(Color::DarkGray)),
+                    Span::raw(format!("{}", m.msg)),
+                ])
+            })
+            .collect();
+
+        Paragraph::new(content)
+            .block(Block::default().borders(Borders::ALL).title(Span::styled(
+                "Messages",
+                Style::default().add_modifier(Modifier::BOLD),
+            )))
+            .scroll((state.scroll_messages_view() as u16, 0))
+    };
+
+    match state.input_mode {
+        InputMode::Normal =>
+            // Hide the cursor. `Frame` does this by default, so we don't need to do anything here
+            {}
+
+        InputMode::Editing => {
+            // Make the cursor visible and ask tui-rs to put it at the specified coordinates after rendering
+            rect.set_cursor(
+                // Put cursor past the end of the input text
+                chunks.x + state.input_text.width() as u16 + 1,
+                // Move one line down, from the border to the input line
+                chunks.height - 3,
+            )
+        }
+    }
+
+    (help_msg, input, message_panel)
 }
-
-// pub(crate) fn __draw_help(actions: &Actions) -> Table {
-//     let key_style = Style::default().fg(Color::LightCyan);
-//     let help_style = Style::default().fg(Color::Gray);
-
-//     let mut rows = vec![];
-//     for action in actions.actions().iter() {
-//         let mut first = true;
-//         for key in action.keys() {
-//             let help = if first {
-//                 first = false;
-//                 action.to_string()
-//             } else {
-//                 String::from("")
-//             };
-//             let row = Row::new(vec![
-//                 Cell::from(Span::styled(key.to_string(), key_style)),
-//                 Cell::from(Span::styled(help, help_style)),
-//             ]);
-//             rows.push(row);
-//         }
-//     }
-
-//     Table::new(rows)
-//         .block(
-//             Block::default()
-//                 .borders(Borders::ALL)
-//                 .border_type(BorderType::Plain)
-//                 .title("Help"),
-//         )
-//         .widths(&[Constraint::Length(11), Constraint::Min(20)])
-//         .column_spacing(1)
-// }
