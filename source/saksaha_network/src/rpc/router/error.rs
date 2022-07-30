@@ -1,8 +1,5 @@
 use crate::rpc::RPCError;
-use hyper::{
-    header::{HeaderValue, CONTENT_TYPE},
-    Body, Response, StatusCode,
-};
+use hyper::{Body, Response, StatusCode};
 
 #[derive(Debug)]
 pub(in crate::rpc) struct RouterError {

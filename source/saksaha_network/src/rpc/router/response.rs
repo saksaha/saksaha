@@ -1,3 +1,4 @@
+use super::RouterError;
 use crate::rpc::{router::HeaderFactory, RPCError};
 use hyper::{
     header::{HeaderValue, CONTENT_TYPE},
@@ -6,9 +7,13 @@ use hyper::{
 use sak_rpc_interface::{JsonRPCError, JsonRequest, JsonResponse, JSON_RPC_2};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
+pub(in crate::rpc) struct RouteState {
+    pub id: String,
+    pub resp: Response<Body>,
+}
+
 pub(in crate::rpc) fn make_success_response<D: Serialize>(
-    res: Response<Body>,
-    id: String,
+    route_state: RouteState,
     result: D,
 ) -> Response<Body> {
     let header_factory = HeaderFactory::get_instance().expect(
@@ -31,13 +36,17 @@ pub(in crate::rpc) fn make_success_response<D: Serialize>(
             jsonrpc: JSON_RPC_2.into(),
             error: None,
             result: Some(result),
-            id: id.to_string(),
+            id: route_state.id.to_string(),
         };
 
         let body_str = match serde_json::to_string(&response) {
             Ok(s) => s,
             Err(err) => {
-                return make_serialize_err_response(res, id, Some(err.into()))
+                return make_serialize_err_response(
+                    route_state.resp,
+                    route_state.id,
+                    Some(err.into()),
+                );
             }
         };
 
@@ -48,7 +57,7 @@ pub(in crate::rpc) fn make_success_response<D: Serialize>(
 }
 
 pub(in crate::rpc) fn make_serialize_err_response(
-    res: Response<Body>,
+    mut resp: Response<Body>,
     id: String,
     original_err: Option<RPCError>,
 ) -> Response<Body> {
@@ -57,12 +66,12 @@ pub(in crate::rpc) fn make_serialize_err_response(
             been initialized.",
     );
 
-    let mut res = Response::default();
+    // let resp = Response::default();
 
-    res.headers_mut()
+    resp.headers_mut()
         .insert(CONTENT_TYPE, header_factory.application_json.clone());
 
-    *res.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+    *resp.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
 
     let err = if let Some(e) = original_err {
         e.to_string()
@@ -70,7 +79,7 @@ pub(in crate::rpc) fn make_serialize_err_response(
         "".into()
     };
 
-    *res.body_mut() = {
+    *resp.body_mut() = {
         let msg = format!(
             r#"
     {{
@@ -86,7 +95,7 @@ pub(in crate::rpc) fn make_serialize_err_response(
         Body::from(msg)
     };
 
-    res
+    resp
 }
 
 pub(in crate::rpc) fn make_not_found_response() -> Response<Body> {
@@ -97,8 +106,9 @@ pub(in crate::rpc) fn make_not_found_response() -> Response<Body> {
 }
 
 pub(in crate::rpc) fn make_error_response(
-    res: Response<Body>,
+    mut resp: Response<Body>,
     id: Option<String>,
+    // route_state: RouteState,
     error: RPCError,
 ) -> Response<Body> {
     let id = id.unwrap_or("none".to_string());
@@ -110,16 +120,16 @@ pub(in crate::rpc) fn make_error_response(
 
     println!("err: {:?}", error);
 
-    let mut res = Response::default();
+    // let mut res = Response::default();
 
     {
-        let headers = res.headers_mut();
+        let headers = resp.headers_mut();
         headers.insert(CONTENT_TYPE, header_factory.application_json.clone());
     }
 
-    *res.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+    *resp.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
 
-    *res.body_mut() = {
+    *resp.body_mut() = {
         let response: JsonResponse<()> = JsonResponse {
             jsonrpc: JSON_RPC_2.into(),
             error: Some(JsonRPCError {
@@ -132,12 +142,17 @@ pub(in crate::rpc) fn make_error_response(
         let body_str = match serde_json::to_string(&response) {
             Ok(s) => s,
             Err(err) => {
-                return make_serialize_err_response(res, id, Some(err.into()));
+                return make_serialize_err_response(
+                    resp,
+                    id,
+                    // route_state,
+                    Some(err.into()),
+                );
             }
         };
 
         Body::from(body_str)
     };
 
-    res
+    resp
 }

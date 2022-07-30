@@ -1,3 +1,4 @@
+use super::{RouteState, RouterError};
 use crate::rpc::RPCError;
 use crate::SystemHandle;
 use futures::Future;
@@ -8,23 +9,20 @@ pub type MethodName = &'static str;
 
 pub type Params = Option<Vec<u8>>;
 
-pub(crate) type Handler<C> = Box<
+pub(in crate::rpc) type Handler<C> = Box<
     dyn Fn(
-            Response<Body>,
-            String,
+            // Response<Body>,
+            // String,
+            RouteState,
             Params,
             C,
-        ) -> Pin<
-            Box<
-                dyn Future<Output = Result<Response<Body>, RPCError>>
-                    + Send
-                    + Sync,
-            >,
-        > + Send
+        )
+            -> Pin<Box<dyn Future<Output = Response<Body>> + Send + Sync>>
+        + Send
         + Sync,
 >;
 
-pub(crate) struct Path<C> {
+pub(in crate::rpc) struct Path<C> {
     pub method: MethodName,
     pub handler: Handler<C>,
 }

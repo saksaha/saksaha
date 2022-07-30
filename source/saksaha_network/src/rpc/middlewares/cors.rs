@@ -1,47 +1,36 @@
-use super::{HandleResult, Middleware};
-use futures::Future;
+use crate::rpc::server::HandleResult;
 use hyper::{
     header::{self, HeaderValue},
     Body, Method, Request, Response,
 };
-use std::{pin::Pin, sync::Arc};
 
 pub(in crate::rpc) fn cors<C>(
     req: Request<Body>,
-    res: Response<Body>,
+    mut resp: Response<Body>,
     ctx: C,
 ) -> HandleResult<C> {
-    println!("cors!!!");
-    // if req.method() == Method::OPTIONS {
-    //     return Ok();
-    // }
+    let headers = resp.headers_mut();
 
-    HandleResult::Passing(req, res, ctx)
-}
+    headers.insert(
+        header::ACCESS_CONTROL_ALLOW_ORIGIN,
+        HeaderValue::from_static("*"),
+    );
+    headers.insert(
+        header::ACCESS_CONTROL_ALLOW_METHODS,
+        HeaderValue::from_static("*"),
+    );
+    headers.insert(
+        header::ACCESS_CONTROL_ALLOW_HEADERS,
+        HeaderValue::from_static("*"),
+    );
+    headers.insert(
+        header::ACCESS_CONTROL_EXPOSE_HEADERS,
+        HeaderValue::from_static("*"),
+    );
 
-fn make_cors_response() -> Response<Body> {
-    let mut res = Response::default();
-
-    {
-        let headers = res.headers_mut();
-
-        headers.insert(
-            header::ACCESS_CONTROL_ALLOW_ORIGIN,
-            HeaderValue::from_static("*"),
-        );
-        headers.insert(
-            header::ACCESS_CONTROL_ALLOW_METHODS,
-            HeaderValue::from_static("*"),
-        );
-        headers.insert(
-            header::ACCESS_CONTROL_ALLOW_HEADERS,
-            HeaderValue::from_static("*"),
-        );
-        headers.insert(
-            header::ACCESS_CONTROL_EXPOSE_HEADERS,
-            HeaderValue::from_static("*"),
-        );
+    if req.method() == Method::OPTIONS {
+        return HandleResult::End(Box::pin(async { Ok(resp) }));
     }
 
-    res
+    HandleResult::Passing(req, resp, ctx)
 }

@@ -1,5 +1,6 @@
-use super::{response, Handler};
-use crate::rpc::middlewares::HandleResult;
+use crate::rpc::server::HandleResult;
+
+use super::{response, Handler, RouteState};
 use futures::Future;
 use hyper::{Body, Method, Request, Response};
 use log::debug;
@@ -14,7 +15,9 @@ impl<C> Router<C>
 where
     C: Send + Sync + 'static,
 {
-    pub fn new(route_map: HashMap<&'static str, Handler<C>>) -> Router<C> {
+    pub(in crate::rpc) fn new(
+        route_map: HashMap<&'static str, Handler<C>>,
+    ) -> Router<C> {
         let route_map = Arc::new(route_map);
 
         Router { route_map }
@@ -23,7 +26,7 @@ where
     pub(in crate::rpc) fn route(
         &self,
         req: Request<Body>,
-        res: Response<Body>,
+        resp: Response<Body>,
         ctx: C,
     ) -> HandleResult<C> {
         let route_map = self.route_map.clone();
@@ -31,30 +34,37 @@ where
         let result = Box::pin(async move {
             let route_map = route_map.clone();
 
-            let b = hyper::body::to_bytes(req.into_body()).await?;
+            let rb = match hyper::body::to_bytes(req.into_body()).await {
+                Ok(b) => b,
+                Err(err) => {
+                    return Ok(response::make_error_response(
+                        resp,
+                        None,
+                        err.into(),
+                    ));
+                }
+            };
 
-            let json_request: JsonRequest = match serde_json::from_slice(&b) {
+            let json_request: JsonRequest = match serde_json::from_slice(&rb) {
                 Ok(r) => r,
                 Err(err) => {
                     return Ok(response::make_error_response(
-                        res,
+                        resp,
                         None,
                         Box::new(err),
                     ));
                 }
             };
 
+            let route_state = RouteState {
+                id: json_request.id,
+                resp,
+            };
+
             if let Some(handler) = route_map.get(json_request.method.as_str()) {
-                match handler(res, json_request.id, json_request.params, ctx)
-                    .await
-                {
-                    Ok(r) => return Ok(r),
-                    Err(err) => {
-                        return Ok(response::make_error_response(
-                            res, None, err,
-                        ));
-                    }
-                }
+                let resp = handler(route_state, json_request.params, ctx).await;
+
+                Ok(resp)
             } else {
                 return Ok(response::make_not_found_response());
             }

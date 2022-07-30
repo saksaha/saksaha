@@ -1,3 +1,4 @@
+use super::Middleware;
 use futures::Future;
 use hyper::{Body, Request, Response};
 use std::{pin::Pin, sync::Arc};
@@ -13,26 +14,6 @@ pub(in crate::rpc) enum HandleResult<C> {
             >,
         >,
     ),
-}
-
-pub(in crate::rpc) struct Middleware<C>(
-    pub  Box<
-        dyn Fn(Request<Body>, Response<Body>, C) -> HandleResult<C>
-            + Send
-            + Sync,
-    >,
-);
-
-impl<C> Middleware<C> {
-    pub fn new(
-        f: Box<
-            dyn Fn(Request<Body>, Response<Body>, C) -> HandleResult<C>
-                + Send
-                + Sync,
-        >,
-    ) -> Middleware<C> {
-        Middleware(f)
-    }
 }
 
 pub(in crate::rpc) struct StateMachine<C> {

@@ -1,6 +1,6 @@
 use crate::{
     rpc::{
-        router::{self, Params},
+        router::{self, Params, RouteState},
         RPCError,
     },
     system::SystemHandle,
@@ -93,15 +93,19 @@ impl SendPourTxRequest {
     }
 }
 
-pub(crate) async fn send_mint_tx(
-    res: Response<Body>,
-    id: String,
+pub(in crate::rpc) async fn send_mint_tx(
+    route_state: RouteState,
     params: Params,
     sys_handle: Arc<SystemHandle>,
-) -> Result<Response<Body>, RPCError> {
-    let params = params.ok_or::<RPCError>("".into())?;
+) -> Response<Body> {
+    let params = router::require_some_params!(
+        route_state,
+        params,
+        "send_mint_tx should contain params",
+    );
 
-    let rb = router::parse_params::<SendMintTxRequest>(&params)?;
+    let rb: SendMintTxRequest =
+        router::require_params_parsed!(route_state, &params);
 
     let tx_candidate = TxCandidate::Mint(MintTxCandidate::new(
         rb.created_at,
@@ -123,27 +127,31 @@ pub(crate) async fn send_mint_tx(
         .await
     {
         Ok(bool) => {
-            return Ok(router::make_success_response(res, id, "success"));
+            return router::make_success_response(route_state, "success");
         }
         Err(err) => {
-            return Ok(router::make_error_response(
-                res,
-                Some(String::from("1")),
+            return router::make_error_response(
+                route_state.resp,
+                Some(route_state.id),
                 err.into(),
-            ));
+            );
         }
     }
 }
 
-pub(crate) async fn send_pour_tx(
-    res: Response<Body>,
-    id: String,
+pub(in crate::rpc) async fn send_pour_tx(
+    route_state: RouteState,
     params: Params,
     sys_handle: Arc<SystemHandle>,
-) -> Result<Response<Body>, RPCError> {
-    let params = params.ok_or::<RPCError>("".into())?;
+) -> Response<Body> {
+    let params = router::require_some_params!(
+        route_state,
+        params,
+        "send_pour_tx should contain params",
+    );
 
-    let rb = router::parse_params::<SendPourTxRequest>(&params)?;
+    let rb: SendPourTxRequest =
+        router::require_params_parsed!(route_state, &params);
 
     let tx_candidate = TxCandidate::Pour(PourTxCandidate::new(
         rb.created_at,
@@ -167,14 +175,14 @@ pub(crate) async fn send_pour_tx(
         .await
     {
         Ok(bool) => {
-            return Ok(router::make_success_response(res, id, "success"));
+            return router::make_success_response(route_state, "success");
         }
         Err(err) => {
-            return Ok(router::make_error_response(
-                res,
-                Some(String::from("1")),
+            return router::make_error_response(
+                route_state.resp,
+                Some(route_state.id),
                 err.into(),
-            ));
+            );
         }
     }
 }
@@ -184,15 +192,18 @@ pub struct GetTxRequest {
     pub hash: String,
 }
 
-pub(crate) async fn get_tx(
-    res: Response<Body>,
-    id: String,
+pub(in crate::rpc) async fn get_tx(
+    route_state: RouteState,
     params: Params,
     sys_handle: Arc<SystemHandle>,
-) -> Result<Response<Body>, RPCError> {
-    let params = params.ok_or::<RPCError>("".into())?;
+) -> Response<Body> {
+    let params = router::require_some_params!(
+        route_state,
+        params,
+        "get_tx should contain params",
+    );
 
-    let rb = router::parse_params::<GetTxRequest>(&params)?;
+    let rb: GetTxRequest = router::require_params_parsed!(route_state, &params);
 
     match sys_handle
         .machine
@@ -203,14 +214,14 @@ pub(crate) async fn get_tx(
         .await
     {
         Ok(t) => {
-            return Ok(router::make_success_response(res, id, t));
+            return router::make_success_response(route_state, t);
         }
         Err(err) => {
-            return Ok(router::make_error_response(
-                res,
-                Some(String::from("1")),
+            return router::make_error_response(
+                route_state.resp,
+                Some(route_state.id),
                 err.into(),
-            ));
+            );
         }
     }
 }
