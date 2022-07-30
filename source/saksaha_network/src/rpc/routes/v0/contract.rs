@@ -1,6 +1,6 @@
 use crate::{
     rpc::{
-        router::{utils, Params},
+        router::{self, Params, RouteState},
         RPCError,
     },
     system::SystemHandle,
@@ -22,14 +22,19 @@ pub(crate) struct QueryCtrResponse {
     pub result: String,
 }
 
-pub(crate) async fn query_ctr(
-    id: String,
+pub(in crate::rpc) async fn query_ctr(
+    route_state: RouteState,
     params: Params,
     sys_handle: Arc<SystemHandle>,
-) -> Result<Response<Body>, RPCError> {
-    let params = params.ok_or::<RPCError>("".into())?;
+) -> Response<Body> {
+    let params = router::require_some_params!(
+        route_state,
+        params,
+        "query_ctr should contain params",
+    );
 
-    let rb = utils::parse_params::<QueryCtrRequest>(&params)?;
+    let rb: QueryCtrRequest =
+        router::require_params_parsed!(route_state, &params);
 
     match sys_handle
         .machine
@@ -40,16 +45,17 @@ pub(crate) async fn query_ctr(
         .await
     {
         Ok(t) => {
-            return Ok(utils::make_success_response(
-                id,
+            return router::make_success_response(
+                route_state,
                 QueryCtrResponse { result: t },
-            ));
+            );
         }
         Err(err) => {
-            return Ok(utils::make_error_response(
-                Some(String::from("1")),
+            return router::make_error_response(
+                route_state.resp,
+                Some(route_state.id),
                 err.into(),
-            ));
+            );
         }
     }
 }
