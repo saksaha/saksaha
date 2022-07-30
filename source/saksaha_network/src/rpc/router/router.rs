@@ -1,11 +1,8 @@
-use crate::rpc::server::HandleResult;
-
 use super::{response, Handler, RouteState};
-use futures::Future;
-use hyper::{Body, Method, Request, Response};
-use log::debug;
+use crate::rpc::server::HandleResult;
+use hyper::{Body, Request, Response};
 use sak_rpc_interface::JsonRequest;
-use std::{collections::HashMap, pin::Pin, sync::Arc};
+use std::{collections::HashMap, sync::Arc};
 
 pub(crate) struct Router<C> {
     route_map: Arc<HashMap<&'static str, Handler<C>>>,

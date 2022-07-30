@@ -1,8 +1,6 @@
-use super::{RouteState, RouterError};
-use crate::rpc::RPCError;
-use crate::SystemHandle;
+use super::RouteState;
 use futures::Future;
-use hyper::{Body, Request, Response};
+use hyper::{Body, Response};
 use std::pin::Pin;
 
 pub type MethodName = &'static str;
@@ -11,8 +9,6 @@ pub type Params = Option<Vec<u8>>;
 
 pub(in crate::rpc) type Handler<C> = Box<
     dyn Fn(
-            // Response<Body>,
-            // String,
             RouteState,
             Params,
             C,

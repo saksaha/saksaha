@@ -1,6 +1,6 @@
 use crate::{
     rpc::{
-        router::{self, Params, RouteState, RouterError},
+        router::{self, Params, RouteState},
         RPCError,
     },
     system::SystemHandle,

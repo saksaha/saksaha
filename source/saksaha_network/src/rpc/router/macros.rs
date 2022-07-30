@@ -1,5 +1,3 @@
-use crate::rpc::router;
-
 macro_rules! require_some_params {
     ($route_state: expr, $obj: expr, $msg: tt) => {
         match $obj {

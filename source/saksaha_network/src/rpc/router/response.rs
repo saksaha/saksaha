@@ -1,11 +1,7 @@
-use super::RouterError;
 use crate::rpc::{router::HeaderFactory, RPCError};
-use hyper::{
-    header::{HeaderValue, CONTENT_TYPE},
-    Body, Response, StatusCode,
-};
-use sak_rpc_interface::{JsonRPCError, JsonRequest, JsonResponse, JSON_RPC_2};
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use hyper::{header::CONTENT_TYPE, Body, Response, StatusCode};
+use sak_rpc_interface::{JsonRPCError, JsonResponse, JSON_RPC_2};
+use serde::Serialize;
 
 pub(in crate::rpc) struct RouteState {
     pub id: String,
@@ -66,8 +62,6 @@ pub(in crate::rpc) fn make_serialize_err_response(
             been initialized.",
     );
 
-    // let resp = Response::default();
-
     resp.headers_mut()
         .insert(CONTENT_TYPE, header_factory.application_json.clone());
 
@@ -119,8 +113,6 @@ pub(in crate::rpc) fn make_error_response(
     );
 
     println!("err: {:?}", error);
-
-    // let mut res = Response::default();
 
     {
         let headers = resp.headers_mut();
