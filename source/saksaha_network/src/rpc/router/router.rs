@@ -48,7 +48,11 @@ where
                     return Ok(response::make_error_response(
                         resp,
                         None,
-                        Box::new(err),
+                        format!(
+                            "Failed to parse as json_request, err: {}",
+                            err
+                        )
+                        .into(),
                     ));
                 }
             };
@@ -57,6 +61,8 @@ where
                 id: json_request.id,
                 resp,
             };
+
+            println!("113");
 
             if let Some(handler) = route_map.get(json_request.method.as_str()) {
                 let resp = handler(route_state, json_request.params, ctx).await;

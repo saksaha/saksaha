@@ -45,11 +45,7 @@ pub(in crate::rpc) async fn get_block(
         Ok(block) => {
             let get_block_resp = GetBlockResponse { block };
 
-            return router::make_success_response(
-                // res, id,
-                route_state,
-                get_block_resp,
-            );
+            return router::make_success_response(route_state, get_block_resp);
         }
         Err(err) => {
             return router::make_error_response(
@@ -77,11 +73,15 @@ pub(in crate::rpc) async fn get_block_list(
     params: Params,
     sys_handle: Arc<SystemHandle>,
 ) -> Response<Body> {
+    println!("123");
+    // let params = params.unwrap_or(vec![]);
     let params = router::require_some_params!(
         route_state,
         params,
-        "get_block_list should contain params (block_height)",
+        "get_block_list should contain params",
     );
+
+    println!("params, {:?}", params);
 
     let rb: GetBlockListRequest =
         router::require_params_parsed!(route_state, &params);

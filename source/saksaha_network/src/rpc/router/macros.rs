@@ -18,7 +18,6 @@ macro_rules! require_some_params {
                 return router::make_error_response(
                     $route_state.resp,
                     Some($route_state.id),
-                    // $route_state,
                     $msg.into(),
                 );
             }
@@ -34,7 +33,6 @@ macro_rules! require_params_parsed {
                 return router::make_error_response(
                     $route_state.resp,
                     Some($route_state.id),
-                    // $route_state,
                     err.into(),
                 );
             }
