@@ -2,7 +2,7 @@ use super::Middleware;
 use futures::Future;
 use hyper::{Body, Request, Response};
 use log::error;
-use std::{pin::Pin, sync::Arc};
+use std::{pin::Pin};
 
 pub(in crate::rpc) enum HandleResult<C> {
     Passing(Request<Body>, Response<Body>, C),

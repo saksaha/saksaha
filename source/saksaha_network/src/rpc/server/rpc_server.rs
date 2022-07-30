@@ -3,11 +3,9 @@ use crate::{
     rpc::{middlewares::cors, router::Router, routes},
     SaksahaError, SystemHandle,
 };
-use hyper::{
-    server::conn::AddrIncoming, service, Body, Method, Response, Server,
-};
-use log::{debug, error, info};
-use std::{convert::Infallible, pin::Pin, sync::Arc};
+use hyper::{server::conn::AddrIncoming, service, Body, Response, Server};
+use log::{debug, error};
+use std::{convert::Infallible, sync::Arc};
 use tokio::net::TcpListener;
 
 pub(in crate::rpc) struct RPCServer {}
