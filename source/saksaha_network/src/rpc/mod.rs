@@ -1,6 +1,8 @@
+mod middlewares;
 mod router;
 mod routes;
 mod rpc;
+mod server;
 
 #[cfg(test)]
 mod tests;
