@@ -73,8 +73,6 @@ pub(in crate::rpc) async fn get_block_list(
     params: Params,
     sys_handle: Arc<SystemHandle>,
 ) -> Response<Body> {
-    println!("123");
-    // let params = params.unwrap_or(vec![]);
     let params = router::require_some_params!(
         route_state,
         params,

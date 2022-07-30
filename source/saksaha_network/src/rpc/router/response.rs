@@ -17,17 +17,17 @@ pub(in crate::rpc) fn make_success_response<D: Serialize>(
             been initialized.",
     );
 
-    let mut res = Response::default();
+    let mut resp = route_state.resp;
 
     {
-        let headers = res.headers_mut();
+        let headers = resp.headers_mut();
 
         headers.insert(CONTENT_TYPE, header_factory.application_json.clone());
     }
 
-    *res.status_mut() = StatusCode::OK;
+    *resp.status_mut() = StatusCode::OK;
 
-    *res.body_mut() = {
+    *resp.body_mut() = {
         let response = JsonResponse {
             jsonrpc: JSON_RPC_2.into(),
             error: None,
@@ -39,7 +39,7 @@ pub(in crate::rpc) fn make_success_response<D: Serialize>(
             Ok(s) => s,
             Err(err) => {
                 return make_serialize_err_response(
-                    route_state.resp,
+                    resp,
                     route_state.id,
                     Some(err.into()),
                 );
@@ -49,7 +49,7 @@ pub(in crate::rpc) fn make_success_response<D: Serialize>(
         Body::from(body_str)
     };
 
-    res
+    resp
 }
 
 pub(in crate::rpc) fn make_serialize_err_response(
@@ -92,17 +92,19 @@ pub(in crate::rpc) fn make_serialize_err_response(
     resp
 }
 
-pub(in crate::rpc) fn make_not_found_response() -> Response<Body> {
-    let mut res: Response<Body> = Response::default();
-    *res.status_mut() = StatusCode::NOT_FOUND;
-    *res.body_mut() = Body::from("not found");
-    res
+pub(in crate::rpc) fn make_not_found_response(
+    route_state: RouteState,
+) -> Response<Body> {
+    let mut resp = route_state.resp;
+
+    *resp.status_mut() = StatusCode::NOT_FOUND;
+    *resp.body_mut() = Body::from("not found");
+    resp
 }
 
 pub(in crate::rpc) fn make_error_response(
     mut resp: Response<Body>,
     id: Option<String>,
-    // route_state: RouteState,
     error: RPCError,
 ) -> Response<Body> {
     let id = id.unwrap_or("none".to_string());
