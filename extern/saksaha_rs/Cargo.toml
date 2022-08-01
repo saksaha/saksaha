@@ -7,12 +7,14 @@ edition = "2021"
 
 [dependencies]
 directories = "3.0"
+serde_bytes = "0.11.6"
 sak_fs = { path = "../../source/sak_fs" }
 sak_logger = { path = "../../source/sak_logger" }
 sak_rpc_interface = { path = "../../source/sak_rpc_interface" }
 sak_crypto = { path = "../../source/sak_crypto" }
 sak_contract_std = { path = "../../source/sak_contract_std" }
 sak_types = { path = "../../source/sak_types" }
+sak_proofs = { path = "../../source/sak_proofs" }
 log = "0.4"
 tui = "0.18.0"
 tui-logger = "0.8"
@@ -26,4 +28,3 @@ hyper = { version = "0.14", features = ["full"] }
 
 [dev-dependencies]
 sak_test_utils = { path = "../../source/sak_test_utils" }
-

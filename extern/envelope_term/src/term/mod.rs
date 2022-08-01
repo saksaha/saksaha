@@ -2,11 +2,11 @@ use crate::app::{App, AppReturn};
 use crate::inputs::events::Events;
 use crate::inputs::InputEvent;
 use crate::io::handler::IoAsyncHandler;
+use crate::io::InputMode;
 use crate::io::IoEvent;
 use crate::{views, EnvelopeError};
 use log::error;
 use log::LevelFilter;
-use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::Mutex;
@@ -15,10 +15,11 @@ use tui::Terminal;
 
 pub struct TermArgs {
     pub pconfig_path: Option<String>,
+    pub user_prefix: String,
 }
 
 pub fn run(term_args: TermArgs) -> Result<(), EnvelopeError> {
-    let TermArgs { pconfig_path } = term_args;
+    // let TermArgs { pconfig_path } = term_args;
 
     let runtime = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
@@ -31,7 +32,7 @@ pub fn run(term_args: TermArgs) -> Result<(), EnvelopeError> {
 
             // We need to share the App between thread
             let app = {
-                let a = App::new(sync_io_tx.clone());
+                let a = App::new(sync_io_tx.clone(), &term_args.user_prefix);
 
                 Arc::new(Mutex::new(a))
             };
@@ -90,29 +91,22 @@ pub async fn start_app(app: Arc<Mutex<App>>) -> Result<(), EnvelopeError> {
         tokio::time::sleep(Duration::from_secs(5)).await;
 
         let mut app = app_clone.lock().await;
-
-        if let Ok(r) = saksaha::query_contract(
-            "ctr_addr".into(),
-            "some_method".into(),
-            HashMap::default(),
-        )
-        .await
-        {
-            if let Some(d) = r.result {
-                app.dispatch(IoEvent::Receive(d.result)).await;
-            }
-        }
+        app.get_ch_list().await;
     });
 
     loop {
         let mut app = app.lock().await;
 
         // Render
-        terminal.draw(|rect| views::draw(rect, &app))?;
+        terminal.draw(|rect| views::draw(rect, &mut app))?;
 
         // Handle inputs
         let result = match events.next().await {
-            InputEvent::Input(key) => app.do_action(key).await,
+            InputEvent::Input(key) => match app.get_state().input_mode {
+                InputMode::Normal => app.handle_normal_key(key).await,
+                InputMode::Editing => app.handle_edit_key(key).await,
+            },
+
             InputEvent::Tick => app.update_on_tick().await,
         };
 

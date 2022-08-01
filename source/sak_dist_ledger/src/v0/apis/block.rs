@@ -1,6 +1,8 @@
 use crate::{DistLedgerApis, LedgerError};
 use sak_contract_std::Storage;
-use sak_types::{Block, CtrAddr, Tx, TxCandidate};
+use sak_types::{tx::BlockHash, Block, CtrAddr, Tx, TxCandidate};
+
+const GET_BLOCK_HASH_LIST_DEFAULT_SIZE: u128 = 10;
 
 impl DistLedgerApis {
     pub async fn get_blocks(
@@ -66,6 +68,85 @@ impl DistLedgerApis {
     ) -> Result<Option<Block>, LedgerError> {
         self.ledger_db.schema.get_block(block_hash)
         // self.get_block(&self.kv_db.db_instance, &self.schema, block_hash)
+    }
+
+    pub async fn get_block_list(
+        &self,
+        offset: Option<u128>,
+        limit: Option<u128>,
+    ) -> Result<Vec<Block>, LedgerError> {
+        let latest_bh = match self.get_latest_block_height()? {
+            Some(bh) => bh,
+            None => {
+                return Err(format!("Cannot find latest block height").into())
+            }
+        };
+
+        let upper = match offset {
+            Some(bh) => {
+                if latest_bh < bh {
+                    latest_bh
+                } else {
+                    bh
+                }
+            }
+            None => latest_bh,
+        };
+
+        let limit = match limit {
+            Some(l) => l,
+            None => GET_BLOCK_HASH_LIST_DEFAULT_SIZE,
+        };
+
+        let lower = {
+            if upper < limit {
+                if upper > GET_BLOCK_HASH_LIST_DEFAULT_SIZE {
+                    upper - GET_BLOCK_HASH_LIST_DEFAULT_SIZE + 1
+                } else {
+                    0
+                }
+            } else {
+                limit
+            }
+        };
+
+        let mut block_hash_list: Vec<BlockHash> = Vec::new();
+
+        for bh in (lower..=upper).rev().step_by(1) {
+            match self.get_block_by_height(&bh).await {
+                Ok(maybe_block) => match maybe_block {
+                    Some(block) => {
+                        block_hash_list.push(block.get_block_hash().to_owned());
+                    }
+                    None => {
+                        break;
+                    }
+                },
+                Err(err) => {
+                    return Err(format!(
+                        "Block hash at height ({}) does not exist",
+                        err
+                    )
+                    .into())
+                }
+            }
+        }
+
+        let block_hash_list_tmp: Vec<&BlockHash> =
+            block_hash_list.iter().collect();
+
+        let block_list = match self.get_blocks(block_hash_list_tmp).await {
+            Ok(bl) => bl,
+            Err(err) => {
+                return Err(format!(
+                    "some of the block_hashes in ({:?}) is wrong",
+                    err
+                )
+                .into())
+            }
+        };
+
+        Ok(block_list)
     }
 
     pub async fn get_block_by_height(

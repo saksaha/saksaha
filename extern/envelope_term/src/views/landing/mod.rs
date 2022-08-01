@@ -1,16 +1,7 @@
 use crate::app::{Actions, App, AppState, View};
-use sak_types::TxCandidate;
-use std::time::Duration;
-use symbols::line;
 use tui::backend::Backend;
 use tui::layout::{Alignment, Constraint, Direction, Layout, Rect};
-use tui::style::{Color, Modifier, Style};
-use tui::text::{Span, Spans};
-use tui::widgets::{
-    Block, BorderType, Borders, Cell, LineGauge, Paragraph, Row, Table,
-};
 use tui::{symbols, Frame};
-use tui_logger::TuiLoggerWidget;
 
 use super::utils;
 
@@ -32,9 +23,6 @@ where
             .as_ref(),
         )
         .split(size);
-
-    let title = utils::draw_title();
-    rect.render_widget(title, chunks[0]);
 
     let title = utils::draw_title();
     rect.render_widget(title, chunks[0]);

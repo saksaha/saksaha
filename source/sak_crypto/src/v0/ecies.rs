@@ -3,7 +3,6 @@ use aes_gcm_siv::aead::{Aead, NewAead};
 use aes_gcm_siv::{Aes256GcmSiv, Key, Nonce}; // Or `Aes128GcmSiv`
 use hkdf::Hkdf;
 use k256::elliptic_curve::sec1::ToEncodedPoint;
-use rand::{thread_rng, Rng};
 use sha2::Sha256;
 use sha3::Sha3_256;
 

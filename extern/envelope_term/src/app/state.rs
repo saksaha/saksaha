@@ -1,5 +1,7 @@
+use tui::widgets::ListState;
+
 use crate::io::InputMode;
-use std::time::Duration;
+use chrono::{DateTime, Local};
 
 #[repr(u8)]
 #[derive(Clone, Debug)]
@@ -11,32 +13,60 @@ pub enum View {
 }
 
 #[derive(Debug)]
-pub(crate) struct AppState {
+pub struct AppState {
     initialized: bool,
-    duration: Duration,
     counter_sleep: u32,
     counter_tick: u64,
-    pub ch_list: Vec<String>,
+    scroll_messages_view: usize,
+    pub is_loading: bool,
+    pub ch_list_state: ListState,
+    pub ch_list: Vec<ChannelState>,
     pub input_mode: InputMode,
     pub input_text: String,
+    pub input_returned: String,
+    pub chat_input: String,
+    pub chats: Vec<ChatMessage>,
     pub view: View,
 }
 
 impl AppState {
     pub fn initialized() -> Self {
-        let duration = Duration::from_secs(1);
         let counter_sleep = 0;
         let counter_tick = 0;
 
         AppState {
             initialized: true,
-            duration,
             counter_sleep,
             counter_tick,
+            scroll_messages_view: 0,
+            ch_list_state: ListState::default(),
             ch_list: vec![],
+            is_loading: false,
             input_mode: InputMode::Normal,
-            input_text: "user input".to_string(),
+            input_text: String::default(),
+            input_returned: String::default(),
+            chat_input: String::default(),
+            chats: vec![],
             view: View::Landing,
+        }
+    }
+    pub fn scroll_messages_view(&self) -> usize {
+        self.scroll_messages_view
+    }
+
+    pub fn messages_scroll(&mut self, movement: ScrollMovement) {
+        match movement {
+            ScrollMovement::Up => {
+                if self.scroll_messages_view > 0 {
+                    self.scroll_messages_view -= 1;
+                }
+            }
+            ScrollMovement::Down => {
+                self.scroll_messages_view += 1;
+            }
+            ScrollMovement::Start => {
+                self.scroll_messages_view += 0;
+            }
         }
     }
 
@@ -45,64 +75,40 @@ impl AppState {
     }
 
     pub fn incr_sleep(&mut self) {
-        // if let Self::Initialized { counter_sleep, .. } = self {
-        //     *counter_sleep += 1;
-        // }
         if self.initialized {
             self.counter_sleep += 1;
         }
     }
 
     pub fn incr_tick(&mut self) {
-        // if let Self::Initialized { counter_tick, .. } = self {
-        //     *counter_tick += 1;
-        // }
-
         if self.initialized {
             self.counter_tick += 1;
         }
     }
 
-    pub fn count_sleep(&self) -> Option<u32> {
-        if self.initialized {
-            Some(self.counter_sleep)
-        } else {
-            None
-        }
+    pub fn set_ch_list(&mut self, data: String) {
+        self.ch_list = match serde_json::from_str::<Vec<String>>(&data) {
+            Ok(c) => c
+                .into_iter()
+                .map(|m| ChannelState::new(m, String::from("")))
+                .collect(),
+            Err(err) => {
+                panic!("Cannot Deserialize `data`:, err: {}", err);
+            }
+        };
     }
 
-    pub fn set_some_state(&mut self, data: String) {
-        self.ch_list = vec!["power".into(), "power2".into()];
+    pub fn set_chats(&mut self, data: String) {
+        self.chats = match serde_json::from_str::<Vec<String>>(&data) {
+            Ok(c) => c.into_iter().map(|m| ChatMessage::new(m)).collect(),
+            Err(err) => {
+                panic!("Cannot Deserialize `msg`:, err: {}", err);
+            }
+        };
     }
 
-    pub fn count_tick(&self) -> Option<u64> {
-        if self.initialized {
-            Some(self.counter_tick)
-        } else {
-            None
-        }
-    }
-
-    pub fn duration(&self) -> Option<&Duration> {
-        if self.initialized {
-            Some(&self.duration)
-        } else {
-            None
-        }
-    }
-
-    pub fn increment_delay(&mut self) {
-        if self.initialized {
-            let secs = (self.duration.as_secs() + 1).clamp(1, 10);
-            self.duration = Duration::from_secs(secs);
-        }
-    }
-
-    pub fn decrement_delay(&mut self) {
-        if self.initialized {
-            let secs = (self.duration.as_secs() - 1).clamp(1, 10);
-            self.duration = Duration::from_secs(secs);
-        }
+    pub fn set_input_messages(&mut self, msg: String) {
+        self.chats.push(ChatMessage::new(msg));
     }
 
     pub fn set_view_landing(&mut self) {
@@ -128,19 +134,88 @@ impl AppState {
             self.view = View::ChList;
         }
     }
+
+    pub fn next_ch(&mut self) {
+        let i = match self.ch_list_state.selected() {
+            Some(i) => {
+                if i >= self.ch_list.len() - 1 {
+                    0
+                } else {
+                    i + 1
+                }
+            }
+            None => 0,
+        };
+        self.ch_list_state.select(Some(i));
+    }
+
+    pub fn previous_ch(&mut self) {
+        let i = match self.ch_list_state.selected() {
+            Some(i) => {
+                if i == 0 {
+                    self.ch_list.len() - 1
+                } else {
+                    i - 1
+                }
+            }
+            None => 0,
+        };
+        self.ch_list_state.select(Some(i));
+    }
 }
 
 impl Default for AppState {
     fn default() -> Self {
         AppState {
             initialized: false,
-            duration: Duration::from_secs(1),
             counter_sleep: 0,
             counter_tick: 0,
+            scroll_messages_view: 0,
+            ch_list_state: ListState::default(),
             ch_list: vec![],
+            is_loading: false,
             input_mode: InputMode::Normal,
-            input_text: "user input".to_string(),
+            input_text: String::default(),
+            input_returned: String::default(),
+            chat_input: String::default(),
+            chats: vec![],
             view: View::Landing,
         }
     }
+}
+
+#[derive(Debug)]
+pub struct ChatMessage {
+    pub date: DateTime<Local>,
+    pub msg: String,
+}
+
+impl ChatMessage {
+    pub fn new(msg: String) -> ChatMessage {
+        ChatMessage {
+            date: Local::now(),
+            msg,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct ChannelState {
+    pub channel_name: String,
+    pub her_pk: String,
+}
+
+impl ChannelState {
+    pub fn new(channel_name: String, her_pk: String) -> ChannelState {
+        ChannelState {
+            channel_name,
+            her_pk,
+        }
+    }
+}
+
+pub enum ScrollMovement {
+    Up,
+    Down,
+    Start,
 }
