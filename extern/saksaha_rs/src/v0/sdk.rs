@@ -281,9 +281,7 @@ pub async fn call_contract(
 
 pub async fn generate_proof_1_to_2(
     coin_1_old: OldCoin,
-
     coin_1_new: NewCoin,
-
     coin_2_new: NewCoin,
 ) -> Result<Proof<Bls12>, ProofError> {
     let hasher = Hasher::new();
