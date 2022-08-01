@@ -143,14 +143,6 @@ pub(crate) fn draw_tabs<'a>(state: &'a AppState) -> Tabs {
     tabs
 }
 
-// pub(crate) fn draw_dummy<'a>(state: &AppState) -> [&str; 3] {
-//     [
-//         "Channels",
-//         "Open channel",
-//         &format!("Chat (#{})", state.ch_list_state.selected().unwrap_or(0)),
-//     ]
-// }
-
 pub(crate) fn draw_title<'a>() -> Paragraph<'a> {
     Paragraph::new("Envelope")
         .style(Style::default().fg(Color::LightCyan))
@@ -168,7 +160,7 @@ pub(crate) fn draw_ch_list<'a>(state: &AppState) -> List<'a> {
         .ch_list
         .iter()
         .map(|i| {
-            ListItem::new(i.clone())
+            ListItem::new(i.channel_name.clone())
                 .style(Style::default().fg(Color::White).bg(Color::Black))
         })
         .collect();

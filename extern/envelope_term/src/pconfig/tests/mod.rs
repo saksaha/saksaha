@@ -42,6 +42,8 @@ async fn test_sak_ecies_open_channel() {
     let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
     let ch_id = DUMMY_CHANNEL_ID_1.to_string();
 
+    println!("{}", b_pk_str);
+
     // insert ch key store
     user1.insert_ch_key(ch_id.clone(), aes_key_from_a);
 

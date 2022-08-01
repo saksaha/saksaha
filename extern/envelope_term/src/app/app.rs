@@ -105,9 +105,16 @@ impl App {
                         self.state.input_returned =
                             self.state.input_text.drain(..).collect();
 
-                        self.open_ch(&mut self.state.input_returned)
-                            .await
-                            .unwrap_or("None".to_owned());
+                        let (sk, pk) = SakKey::generate();
+
+                        let pk = sak_crypto::encode_hex(
+                            &pk.to_encoded_point(false).to_bytes(),
+                        );
+                        // let pk = self.state.input_returned.clone();
+                        if let Err(err) = self.open_ch(&pk).await {
+                            println!("111111111 in after, {}", err);
+                            return AppReturn::Continue;
+                        };
                     }
                     View::Chat => {
                         self.state.chat_input =
@@ -223,11 +230,11 @@ impl App {
     pub async fn open_ch(
         &mut self,
         her_pk: &String,
-    ) -> Result<ChannelState, EnvelopeError> {
+    ) -> Result<(), EnvelopeError> {
         let open_ch_input = self.make_encryption(her_pk).await?;
 
         let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
-        let channel_name = format!("Channel_{}", self.state.ch_list.len());
+        let channel_name = her_pk.clone();
         let mut arg = HashMap::with_capacity(2);
         // let open_ch_input = {
         //     let open_ch_input: Vec<String> = vec![
@@ -239,15 +246,20 @@ impl App {
 
         //     serde_json::to_string(&open_ch_input)?
         // };
-        let my_pk = self.pconfig.get_sk_pk().1;
-        arg.insert(my_pk.clone(), her_pk.clone());
+
+        // let my_pk = self.pconfig.get_sk_pk().1;
+        arg.insert(String::from("dst_pk"), her_pk.clone());
         arg.insert(String::from("serialized_input"), open_ch_input);
 
         let req_type = String::from("open_channel");
         let _json_response =
             saksaha::send_tx_pour(ctr_addr, req_type, arg).await?;
 
-        Ok(ChannelState::new(channel_name, her_pk.clone(), my_pk))
+        self.state
+            .ch_list
+            .push(ChannelState::new(channel_name, her_pk.clone()));
+
+        Ok(())
     }
 
     pub async fn get_ch_list(&mut self) {
@@ -320,18 +332,19 @@ impl App {
             self.make_envelope_context()?;
 
         let her_pk_str_vec: Vec<u8> = sak_crypto::decode_hex(her_pk)?;
-        let her_pk = PublicKey::from_sec1_bytes(&her_pk_str_vec.as_slice())?;
+        let her_pk_pub =
+            PublicKey::from_sec1_bytes(&her_pk_str_vec.as_slice())?;
 
         let eph_pk_str =
             serde_json::to_string(eph_pk.to_encoded_point(false).as_bytes())
                 .unwrap();
 
-        let her_pk_str =
-            serde_json::to_string(her_pk.to_encoded_point(false).as_bytes())
-                .unwrap();
+        let her_pk_str = serde_json::to_string(
+            her_pk_pub.to_encoded_point(false).as_bytes(),
+        )?;
 
         let (a_pk_sig_encrypted, open_ch_empty, aes_key_from_a) = {
-            let aes_key_from_a = sak_crypto::derive_aes_key(eph_sk, her_pk);
+            let aes_key_from_a = sak_crypto::derive_aes_key(eph_sk, her_pk_pub);
 
             let a_credential_encrypted = {
                 let ciphertext = sak_crypto::aes_encrypt(
@@ -353,7 +366,8 @@ impl App {
             (a_credential_encrypted, open_ch_empty, aes_key_from_a)
         };
 
-        let ch_id = "DUMMY_CHANNEL_ID_1".to_string();
+        // let ch_id = "DUMMY_CHANNEL_ID_1".to_string();
+        let ch_id = her_pk.clone();
         let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
 
         // insert ch key store
