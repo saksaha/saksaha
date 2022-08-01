@@ -105,14 +105,13 @@ impl App {
                         self.state.input_returned =
                             self.state.input_text.drain(..).collect();
 
-                        let (sk, pk) = SakKey::generate();
+                        let (_sk, pk) = SakKey::generate();
 
                         let pk = sak_crypto::encode_hex(
                             &pk.to_encoded_point(false).to_bytes(),
                         );
                         // let pk = self.state.input_returned.clone();
-                        if let Err(err) = self.open_ch(&pk).await {
-                            println!("111111111 in after, {}", err);
+                        if let Err(_) = self.open_ch(&pk).await {
                             return AppReturn::Continue;
                         };
                     }
@@ -236,16 +235,6 @@ impl App {
         let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
         let channel_name = her_pk.clone();
         let mut arg = HashMap::with_capacity(2);
-        // let open_ch_input = {
-        //     let open_ch_input: Vec<String> = vec![
-        //         her_pk.to_string(),
-        //         channel_name,
-        //         "a_pk_sig_encrypted".to_string(),
-        //         "open_ch_empty".to_string(),
-        //     ];
-
-        //     serde_json::to_string(&open_ch_input)?
-        // };
 
         // let my_pk = self.pconfig.get_sk_pk().1;
         arg.insert(String::from("dst_pk"), her_pk.clone());
