@@ -4,7 +4,7 @@ use sak_proofs::{MerkleTree, NewCoin, OldCoin, CM_TREE_DEPTH};
 use sak_types::U8Array;
 use std::collections::HashMap;
 
-use crate::generate_proof_1_to_2;
+use crate::{generate_proof_1_to_2, get_auth_path};
 
 fn make_test_context() -> (OldCoin, NewCoin, NewCoin, Scalar) {
     let hasher = Hasher::new();
@@ -285,7 +285,9 @@ pub async fn test_get_auth_path() {
     sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
 
     let idx: u128 = 0;
-    let ret = crate::get_auth_path(idx).await.unwrap();
+    let resp = get_auth_path(idx).await.unwrap();
 
-    println!("ret: {:#?}", ret);
+    let auth_path = resp.result.unwrap().result;
+
+    println!("{:?}", auth_path);
 }

@@ -105,7 +105,7 @@ impl DistLedgerApis {
                         tc,
                         &mut ctr_state_update,
                         &mut merkle_update,
-                        ledger_cm_count,
+                        added_cm_count + ledger_cm_count,
                     )
                     .await?
                 }
@@ -115,7 +115,7 @@ impl DistLedgerApis {
                         tc,
                         &mut ctr_state_update,
                         &mut merkle_update,
-                        ledger_cm_count,
+                        added_cm_count + ledger_cm_count,
                     )
                     .await?
                 }
@@ -386,10 +386,14 @@ async fn process_merkle_update(
     let cm_count = cms.len() as u128;
 
     for (idx, cm) in cms.iter().enumerate() {
+        println!("idx: {:?}", idx);
         let leaf_idx = ledger_cm_count + idx as u128;
         let auth_path = apis.merkle_tree.generate_auth_paths(leaf_idx);
 
         let leaf_loc = format!("{}_{}", 0, leaf_idx);
+
+        println!("[+] updating leaf_loc: {:#?}, merkle: {:?}", leaf_loc, **cm);
+
         merkle_update.insert(leaf_loc, **cm);
 
         for (height, path) in auth_path.iter().enumerate() {
@@ -422,6 +426,11 @@ async fn process_merkle_update(
 
             let parent_idx = sak_proofs::get_parent_idx(curr_idx);
             let update_loc = format!("{}_{}", height + 1, parent_idx);
+
+            println!(
+                "[+] updating loc!: {:#?}, merkle_node: {:?}",
+                update_loc, merkle_node
+            );
 
             merkle_update.insert(update_loc, merkle_node);
         }
