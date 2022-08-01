@@ -1,5 +1,6 @@
-// This code is heavily influenced by wasm-multi-value-reverse-polyfil code
+// This code is heavily inspired by wasm-multi-value-reverse-polyfil code
 // https://github.com/vmx/wasm-multi-value-reverse-polyfill
+use colored::Colorize;
 use std::{env, fs, path::PathBuf, process};
 use walrus::{ExportId, ExportItem, FunctionId, Module, ValType};
 
@@ -70,9 +71,14 @@ fn get_ids_by_name(
 
 fn write_out_wasm_returning_multi_value(
     src_path: PathBuf,
-    output_path: PathBuf,
+    output_path: Option<PathBuf>,
     args: Vec<String>,
 ) {
+    println!(
+        "[wasm_postprocess] Start processing file: {}",
+        src_path.to_string_lossy(),
+    );
+
     let transformations = parse_args(&args);
 
     let wasm = wit_text::parse_file(&src_path)
@@ -131,36 +137,32 @@ fn write_out_wasm_returning_multi_value(
 
     let output_bytes = module.emit_wasm();
 
-    let output_file_path = {
-        let stem = output_path
-            .file_stem()
-            .unwrap()
-            .to_str()
-            .unwrap()
-            .to_owned();
+    let opath = output_path.unwrap_or_else(|| {
+        let stem = src_path.file_stem().unwrap().to_str().unwrap().to_owned();
 
-        let mut p = output_path;
+        let mut p = src_path;
         p.pop();
-        p.join(format!("{}.multivalue.wasm", stem))
-    };
+        p.join(format!("{}.postprocess.wasm", stem))
+    });
 
-    // let a = output_file_path.to_str().unwrap().to_owned();
+    println!(
+        "[wasm_postprocess] writing output to path: {}",
+        opath.to_string_lossy().yellow()
+    );
 
-    // println!("[postprocess] output_file_path: {:?}", output_file_path);
-
-    fs::write(&output_file_path, output_bytes)
-        .expect(&format!("failed to write to '{:?}'", output_file_path));
+    fs::write(&opath, output_bytes)
+        .expect(&format!("failed to write to '{:?}'", opath));
 }
 
 pub fn make_wasm_have_multiple_returns(
     src_path: PathBuf,
-    output_path: PathBuf,
+    output_path: Option<PathBuf>,
 ) {
     let init_arg = String::from("init i32 i32");
-
     let query_arg = String::from("query i32 i32");
+    let execute = String::from("execute i32 i32");
 
-    let args = vec![init_arg, query_arg];
+    let args = vec![init_arg, query_arg, execute];
 
     write_out_wasm_returning_multi_value(src_path, output_path, args);
 }

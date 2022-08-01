@@ -1,7 +1,6 @@
 use clap::{Arg, Command};
-use log::info;
 use std::path::PathBuf;
-use std::{os::unix::prelude::ExitStatusExt, process::ExitCode};
+use std::process::ExitCode;
 
 const RUST_LOG_ENV: &str = "
     sak_,
@@ -39,11 +38,12 @@ fn main() -> ExitCode {
     let matches = app.get_matches();
 
     let output_path = {
-        let p = matches
-            .value_of("output")
-            .expect("Output should be provided");
-
-        PathBuf::from(p)
+        let output = matches.value_of("output");
+        if let Some(p) = output {
+            Some(PathBuf::from(p))
+        } else {
+            None
+        }
     };
 
     let wasm_file = {
@@ -56,6 +56,6 @@ fn main() -> ExitCode {
     return ExitCode::SUCCESS;
 }
 
-fn postprocess_wasm_file(src_path: PathBuf, output_path: PathBuf) {
+fn postprocess_wasm_file(src_path: PathBuf, output_path: Option<PathBuf>) {
     wasm_postprocess::make_wasm_have_multiple_returns(src_path, output_path);
 }

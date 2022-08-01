@@ -24,6 +24,7 @@ wit-text = "0.8.0"
 wit-validator = "0.2.1"
 wit-walrus = "0.5.0"
 clap = { version = "3.1.6", features = ["cargo"] }
+colored = "2"
 
 [dev-dependencies]
 sak_test_utils = { path = "../../source/sak_test_utils" }

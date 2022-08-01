@@ -7,8 +7,9 @@ use std::env::Args;
 use std::process::{Command as Cmd, Stdio};
 
 pub(crate) fn run(args: Args) -> Result<(), CIError> {
+    tasks::clean_prebuild()?;
     tasks::build_system_contracts()?;
-    tasks::build_3rd_party_contracts();
+    tasks::build_3rd_party_contracts()?;
 
     let program = "cargo";
 
