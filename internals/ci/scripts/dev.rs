@@ -1,4 +1,5 @@
 use crate::log;
+use crate::paths::Paths;
 use crate::tasks;
 use crate::utils::Kommand;
 use crate::CIError;
@@ -7,9 +8,12 @@ use std::env::Args;
 use std::process::{Command as Cmd, Stdio};
 
 pub(crate) fn run(args: Args) -> Result<(), CIError> {
-    tasks::clean_prebuild()?;
-    tasks::build_system_contracts()?;
-    tasks::build_3rd_party_contracts()?;
+    if !tasks::naively_check_if_prebuild_has_done()? {
+        log!("prebuild has not been done yet. Will do");
+
+        tasks::build_system_contracts()?;
+        tasks::build_3rd_party_contracts()?;
+    }
 
     let program = "cargo";
 
