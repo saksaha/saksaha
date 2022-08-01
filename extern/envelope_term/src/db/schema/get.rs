@@ -75,13 +75,14 @@ impl EnvelopeDBSchema {
     pub async fn get_aes_key(
         &self,
         ch_id: &String,
-    ) -> Result<Option<String>, EnvelopeError> {
+    ) -> Result<Option<[u8; 32]>, EnvelopeError> {
         let cf = self.make_cf_handle(&self.db, cfs::AES_KEY)?;
         match self.db.get_cf(&cf, ch_id)? {
             Some(v) => {
                 let str = String::from_utf8(v)?;
+                let u8_arr = serde_json::from_str(&str)?;
 
-                return Ok(Some(str));
+                return Ok(Some(u8_arr));
             }
             None => {
                 return Ok(None);

@@ -2,10 +2,12 @@ use std::collections::HashMap;
 
 use super::{actions::Actions, View};
 use super::{state::AppState, ChannelState};
+use crate::db::EnvelopeDB;
+use crate::db::{USER_1, USER_2};
+use crate::io::InputMode;
 use crate::io::IoEvent;
 use crate::{app::actions::Action, ENVELOPE_CTR_ADDR};
 use crate::{inputs::key::Key, EnvelopeError};
-use crate::{io::InputMode, pconfig::PConfig};
 
 use log::{debug, error, warn};
 use sak_contract_std::{CtrCallType, Request as CtrRequest};
@@ -21,25 +23,30 @@ pub struct App {
     io_tx: tokio::sync::mpsc::Sender<IoEvent>,
     actions: Actions,
     state: AppState,
-    pconfig: PConfig,
+    db: EnvelopeDB,
 }
 
 impl App {
-    pub fn new(
+    pub async fn new(
         io_tx: tokio::sync::mpsc::Sender<IoEvent>,
         user_prefix: &String,
-    ) -> Self {
+    ) -> Result<Self, EnvelopeError> {
         let actions = vec![Action::Quit].into();
         let state = AppState::default();
-        let pconfig = PConfig::new(user_prefix)
-            .expect("Cannot initialize pconfig, fatal error");
 
-        Self {
+        let db = EnvelopeDB::init(&user_prefix).await?;
+
+        let partner_prefix = USER_2.to_string();
+
+        db.register_user(&user_prefix).await?;
+        db.register_user(&partner_prefix).await?;
+
+        Ok(Self {
             io_tx,
             actions,
             state,
-            pconfig,
-        }
+            db,
+        })
     }
 
     pub async fn handle_normal_key(&mut self, key: Key) -> AppReturn {
@@ -252,9 +259,20 @@ impl App {
         Ok(())
     }
 
-    pub async fn get_ch_list(&mut self) {
+    pub async fn get_ch_list(&mut self) -> Result<(), EnvelopeError> {
         let mut arg = HashMap::with_capacity(2);
-        arg.insert(String::from("dst_pk"), "her_pk".to_string());
+
+        let her_pk = match self.db.schema.get_my_pk(&USER_2.to_string()).await?
+        {
+            Some(v) => v,
+            None => {
+                return Err(
+                    format!("failed to get secret key from user id",).into()
+                )
+            }
+        };
+
+        arg.insert(String::from("dst_pk"), her_pk.to_string());
 
         let req = CtrRequest {
             req_type: "get_ch_list".to_string(),
@@ -262,13 +280,13 @@ impl App {
             ctr_call_type: CtrCallType::Query,
         };
 
-        if let Ok(r) =
-            saksaha::call_contract(ENVELOPE_CTR_ADDR.into(), req).await
-        {
+        if let Ok(r) = saksaha::query_ctr(ENVELOPE_CTR_ADDR.into(), req).await {
             if let Some(d) = r.result {
+                warn!("d.result : {:?}", d.result);
                 self.dispatch(IoEvent::Receive(d.result)).await;
             }
         }
+        Ok(())
     }
 
     pub async fn get_messages(&mut self) {
@@ -281,9 +299,7 @@ impl App {
             ctr_call_type: CtrCallType::Query,
         };
 
-        if let Ok(r) =
-            saksaha::call_contract(ENVELOPE_CTR_ADDR.into(), req).await
-        {
+        if let Ok(r) = saksaha::query_ctr(ENVELOPE_CTR_ADDR.into(), req).await {
             if let Some(d) = r.result {
                 self.dispatch(IoEvent::GetMessages(d.result)).await;
             }
@@ -322,20 +338,30 @@ impl App {
         &mut self,
         her_pk: &String,
     ) -> Result<String, EnvelopeError> {
-        let (_a_sk, a_pk, eph_sk, eph_pk, credential) =
-            self.make_envelope_context()?;
+        let my_sk = match self.db.schema.get_my_sk(&USER_1.to_string()).await? {
+            Some(v) => v,
+            None => {
+                return Err(
+                    format!("failed to get secret key from user id",).into()
+                )
+            }
+        };
 
-        let her_pk_str_vec: Vec<u8> = sak_crypto::decode_hex(her_pk)?;
-        let her_pk_pub =
-            PublicKey::from_sec1_bytes(&her_pk_str_vec.as_slice())?;
+        let my_sig = match self.db.schema.get_my_sig(&my_sk).await? {
+            Some(v) => v,
+            None => {
+                return Err(
+                    format!("failed to get my signature from sk",).into()
+                )
+            }
+        };
 
+        let (eph_sk, eph_pk) = SakKey::generate();
         let eph_pk_str =
-            serde_json::to_string(eph_pk.to_encoded_point(false).as_bytes())
-                .unwrap();
+            serde_json::to_string(eph_pk.to_encoded_point(false).as_bytes())?;
 
-        let her_pk_str = serde_json::to_string(
-            her_pk_pub.to_encoded_point(false).as_bytes(),
-        )?;
+        let her_pk_vec: Vec<u8> = sak_crypto::decode_hex(her_pk)?;
+        let her_pk_pub = PublicKey::from_sec1_bytes(&her_pk_vec.as_slice())?;
 
         let (a_pk_sig_encrypted, open_ch_empty, aes_key_from_a) = {
             let aes_key_from_a = sak_crypto::derive_aes_key(eph_sk, her_pk_pub);
@@ -343,65 +369,37 @@ impl App {
             let a_credential_encrypted = {
                 let ciphertext = sak_crypto::aes_encrypt(
                     &aes_key_from_a,
-                    credential.as_bytes(),
+                    my_sig.as_bytes(),
                 )?;
-                serde_json::to_string(&ciphertext).unwrap()
+                serde_json::to_string(&ciphertext)?
             };
 
             let empty_chat: Vec<String> = vec![];
-            let empty_chat_str = serde_json::to_string(&empty_chat).unwrap();
+            let empty_chat_str = serde_json::to_string(&empty_chat)?;
             let ciphertext_empty = sak_crypto::aes_encrypt(
                 &aes_key_from_a,
                 empty_chat_str.as_bytes(),
             )?;
-            let open_ch_empty =
-                serde_json::to_string(&ciphertext_empty).unwrap();
+            let open_ch_empty = serde_json::to_string(&ciphertext_empty)?;
 
             (a_credential_encrypted, open_ch_empty, aes_key_from_a)
         };
 
-        // let ch_id = "DUMMY_CHANNEL_ID_1".to_string();
-        let ch_id = her_pk.clone();
-        let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
-
-        // insert ch key store
-        self.pconfig.insert_ch_key(ch_id.clone(), aes_key_from_a)?;
-
         let open_ch_input = {
+            // ch_id should be encrypted by aes_key
+            let ch_id = her_pk.clone();
+
+            self.db
+                .schema
+                .put_ch_data(&ch_id, her_pk, &aes_key_from_a)
+                .await?;
+
             let open_ch_input: Vec<String> =
                 vec![eph_pk_str, ch_id, a_pk_sig_encrypted, open_ch_empty];
 
-            serde_json::to_string(&open_ch_input).unwrap()
+            serde_json::to_string(&open_ch_input)?
         };
 
         Ok(open_ch_input)
-    }
-
-    pub(crate) fn make_envelope_context(
-        &self,
-    ) -> Result<
-        (SecretKey, PublicKey, SecretKey, PublicKey, String),
-        EnvelopeError,
-    > {
-        let (a_sk_str, a_pk_str) = self.pconfig.get_sk_pk();
-        let a_pk_str_vec: Vec<u8> = sak_crypto::decode_hex(&a_pk_str)?;
-        let a_pk = PublicKey::from_sec1_bytes(a_pk_str_vec.as_slice())?;
-        let a_sk_str_vec: Vec<u8> = sak_crypto::decode_hex(&a_sk_str)?;
-        let a_sk = SecretKey::from_bytes(a_sk_str_vec.as_slice())?;
-
-        let (eph_sk, eph_pk) = SakKey::generate();
-
-        let a_sig_str = {
-            let a_sign_key = SigningKey::from(&a_sk);
-            let a_sign_key_vec = a_sign_key.to_bytes().to_vec();
-            serde_json::to_string(&a_sign_key_vec)?
-        };
-
-        let a_credential = {
-            let v: Vec<String> = vec![a_pk_str, a_sig_str];
-            serde_json::to_string(&v)?
-        };
-
-        Ok((a_sk, a_pk, eph_sk, eph_pk, a_credential))
     }
 }

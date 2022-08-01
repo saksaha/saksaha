@@ -44,7 +44,7 @@ pub(in crate::rpc) fn get_routes(
             }),
         },
         Path {
-            method: "call_contract",
+            method: "query_ctr",
             handler: Box::new(|route_state, params, sys_handle| {
                 Box::pin(v0::query_ctr(route_state, params, sys_handle))
             }),

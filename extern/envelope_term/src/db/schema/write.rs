@@ -26,12 +26,14 @@ impl EnvelopeDBSchema {
         &self,
         ch_id: &String,
         her_pk: &String,
-        aes_key: &String,
+        aes_key: &[u8; 32],
     ) -> Result<(), EnvelopeError> {
         let mut batch = WriteBatch::default();
 
+        let aes_key_str = serde_json::to_string(&aes_key)?;
+
         self.batch_put_her_pk(&mut batch, ch_id, her_pk)?;
-        self.batch_put_aes_key(&mut batch, ch_id, aes_key)?;
+        self.batch_put_aes_key(&mut batch, ch_id, &aes_key_str)?;
 
         self.db.write(batch)?;
 
