@@ -15,7 +15,7 @@ pub enum Action {
     ShowChat,
     Down,
     Up,
-    Enter,
+    Right,
 }
 
 impl Action {
@@ -31,7 +31,7 @@ impl Action {
             Action::ShowChat,
             Action::Down,
             Action::Up,
-            Action::Enter,
+            Action::Right,
         ];
         ACTIONS.iter()
     }
@@ -48,7 +48,7 @@ impl Action {
             Action::ShowChat => &[Key::Char('3')],
             Action::Down => &[Key::Down],
             Action::Up => &[Key::Up],
-            Action::Enter => &[Key::Enter],
+            Action::Right => &[Key::Right],
         }
     }
 }
@@ -66,7 +66,7 @@ impl Display for Action {
             Action::ShowChat => "Show chatting",
             Action::Down => "Down",
             Action::Up => "Up",
-            Action::Enter => "Enter the channel",
+            Action::Right => "move to chat room",
         };
         write!(f, "{}", str)
     }

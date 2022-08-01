@@ -15,10 +15,11 @@ use tui::Terminal;
 
 pub struct TermArgs {
     pub pconfig_path: Option<String>,
+    pub user_prefix: String,
 }
 
 pub fn run(term_args: TermArgs) -> Result<(), EnvelopeError> {
-    let TermArgs { pconfig_path } = term_args;
+    // let TermArgs { pconfig_path } = term_args;
 
     let runtime = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
@@ -31,7 +32,7 @@ pub fn run(term_args: TermArgs) -> Result<(), EnvelopeError> {
 
             // We need to share the App between thread
             let app = {
-                let a = App::new(sync_io_tx.clone());
+                let a = App::new(sync_io_tx.clone(), &term_args.user_prefix);
 
                 Arc::new(Mutex::new(a))
             };
