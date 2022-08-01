@@ -18,7 +18,3 @@ sak_vm = { path = "../../source/sak_vm" }
 tokio = { version = "1.12.0", features = ["full"] }
 sak_crypto = { path = "../../source/sak_crypto" }
 
-[profile.release]
-lto = true
-opt-level = "z"
-panic = "abort"

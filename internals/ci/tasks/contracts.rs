@@ -17,6 +17,23 @@ struct Contract {
     path: PathBuf,
 }
 
+pub(crate) fn naively_check_if_prebuild_has_done() -> Result<bool, CIError> {
+    let prebuild_path = Paths::prebuild()?;
+
+    for file in std::fs::read_dir(prebuild_path)? {
+        let f = file?;
+        let file_name = f.file_name();
+
+        if file_name == ".gitkeep" {
+            // do nothing
+        } else {
+            return Ok(true);
+        }
+    }
+
+    Ok(false)
+}
+
 pub(crate) fn build_3rd_party_contracts() -> Result<(), CIError> {
     log!("build 3rd party contracts");
 
@@ -37,7 +54,7 @@ pub(crate) fn build_3rd_party_contracts() -> Result<(), CIError> {
         })
         .collect::<Result<Vec<PathBuf>, CIError>>()?;
 
-    persist_build_receipt_file("build_external_contracts.json", receipt)?;
+    persist_build_receipt_file("external_contracts.build.json", receipt)?;
 
     Ok(())
 }
@@ -62,7 +79,7 @@ pub(crate) fn build_system_contracts() -> Result<(), CIError> {
         })
         .collect::<Result<Vec<PathBuf>, CIError>>()?;
 
-    persist_build_receipt_file("build_system_contracts.json", receipt)?;
+    persist_build_receipt_file("system_contracts.build.json", receipt)?;
 
     Ok(())
 }
