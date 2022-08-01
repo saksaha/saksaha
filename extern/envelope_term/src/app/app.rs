@@ -8,6 +8,7 @@ use crate::{inputs::key::Key, EnvelopeError};
 use crate::{io::InputMode, pconfig::PConfig};
 
 use log::{debug, error, warn};
+use sak_contract_std::{CtrCallType, Request as CtrRequest};
 use sak_crypto::{PublicKey, SakKey, SecretKey, SigningKey, ToEncodedPoint};
 
 #[derive(Debug, PartialEq, Eq)]
@@ -218,12 +219,12 @@ impl App {
         self.state.incr_sleep();
     }
 
-    pub fn set_ch_list_state(&mut self, data: String) {
-        self.state.set_ch_list_state(data);
+    pub fn set_ch_list(&mut self, data: String) {
+        self.state.set_ch_list(data);
     }
 
-    pub fn set_msg_state(&mut self, data: String) {
-        self.state.set_msg_state(data);
+    pub fn set_chats(&mut self, data: String) {
+        self.state.set_chats(data);
     }
 
     pub async fn open_ch(
@@ -255,12 +256,14 @@ impl App {
         let mut arg = HashMap::with_capacity(2);
         arg.insert(String::from("dst_pk"), "her_pk".to_string());
 
-        if let Ok(r) = saksaha::call_contract(
-            ENVELOPE_CTR_ADDR.into(),
-            "get_ch_list".into(),
+        let req = CtrRequest {
+            req_type: "get_ch_list".to_string(),
             arg,
-        )
-        .await
+            ctr_call_type: CtrCallType::Query,
+        };
+
+        if let Ok(r) =
+            saksaha::call_contract(ENVELOPE_CTR_ADDR.into(), req).await
         {
             if let Some(d) = r.result {
                 self.dispatch(IoEvent::Receive(d.result)).await;
@@ -272,12 +275,14 @@ impl App {
         let mut arg = HashMap::with_capacity(2);
         arg.insert(String::from("dst_pk"), "her_pk".to_string());
 
-        if let Ok(r) = saksaha::call_contract(
-            ENVELOPE_CTR_ADDR.into(),
-            "get_msgs".into(),
+        let req = CtrRequest {
+            req_type: "get_msgs".to_string(),
             arg,
-        )
-        .await
+            ctr_call_type: CtrCallType::Query,
+        };
+
+        if let Ok(r) =
+            saksaha::call_contract(ENVELOPE_CTR_ADDR.into(), req).await
         {
             if let Some(d) = r.result {
                 self.dispatch(IoEvent::GetMessages(d.result)).await;

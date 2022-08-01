@@ -86,7 +86,7 @@ impl AppState {
         }
     }
 
-    pub fn set_ch_list_state(&mut self, data: String) {
+    pub fn set_ch_list(&mut self, data: String) {
         self.ch_list = match serde_json::from_str::<Vec<String>>(&data) {
             Ok(c) => c
                 .into_iter()
@@ -98,7 +98,7 @@ impl AppState {
         };
     }
 
-    pub fn set_msg_state(&mut self, data: String) {
+    pub fn set_chats(&mut self, data: String) {
         self.chats = match serde_json::from_str::<Vec<String>>(&data) {
             Ok(c) => c.into_iter().map(|m| ChatMessage::new(m)).collect(),
             Err(err) => {
