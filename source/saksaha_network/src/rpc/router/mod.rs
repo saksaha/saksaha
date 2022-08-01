@@ -1,10 +1,11 @@
 mod header;
-mod interface;
+mod macros;
+mod response;
 mod route_map;
 mod router;
-pub(super) mod utils;
 
 pub(in crate::rpc) use header::*;
-pub(in crate::rpc) use interface::*;
+pub(in crate::rpc) use macros::*;
+pub(in crate::rpc) use response::*;
 pub(in crate::rpc) use route_map::*;
 pub(in crate::rpc) use router::*;
