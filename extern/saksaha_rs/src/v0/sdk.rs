@@ -1,10 +1,9 @@
 use crate::SaksahaSDKError;
 use hyper::{Body, Client, Method, Request, Uri};
 use log::warn;
-use rand::rngs::OsRng;
 use sak_contract_std::{CtrCallType, Request as CtrRequest};
 use sak_crypto::{
-    groth16, mimc, Bls12, Circuit, Hasher, Proof, Scalar, ScalarExt,
+    groth16, mimc, os_rng, Bls12, Circuit, Hasher, Proof, Scalar, ScalarExt,
 };
 use sak_proofs::{
     get_mimc_params_1_to_2, CoinProof, CoinProofCircuit1to2, MerkleTree,
@@ -300,7 +299,8 @@ pub async fn generate_proof_1_to_2(
         constants,
     };
 
-    let proof = match groth16::create_random_proof(c, &de_params, &mut OsRng) {
+    let proof = match groth16::create_random_proof(c, &de_params, &mut os_rng())
+    {
         Ok(p) => p,
         Err(err) => {
             return Err(format!(

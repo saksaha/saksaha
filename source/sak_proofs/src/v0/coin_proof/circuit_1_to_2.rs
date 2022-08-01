@@ -1,12 +1,8 @@
-use crate::{MerkleTree, NewCoin, OldCoin, Path, ProofError, CM_TREE_DEPTH};
-use rand::rngs::OsRng;
-use rand::RngCore;
+use crate::{NewCoin, OldCoin, CM_TREE_DEPTH};
 use sak_crypto::{
-    groth16, AllocatedBit, Circuit, ConstraintSystem, Proof, SynthesisError,
+    groth16, os_rng, AllocatedBit, Bls12, Circuit, ConstraintSystem, Hasher,
+    Parameters, Scalar, SynthesisError,
 };
-use sak_crypto::{mimc, Parameters};
-use sak_crypto::{Bls12, Hasher, Scalar};
-use sak_types::U8Array;
 use std::fs::File;
 use std::io::Write;
 
@@ -50,7 +46,7 @@ pub fn get_mimc_params_1_to_2(constants: &[Scalar]) -> Parameters<Bls12> {
                 constants: constants.to_vec(),
             };
 
-            groth16::generate_random_parameters::<Bls12, _, _>(c, &mut OsRng)
+            groth16::generate_random_parameters::<Bls12, _, _>(c, &mut os_rng())
                 .unwrap()
         };
         // write param to file

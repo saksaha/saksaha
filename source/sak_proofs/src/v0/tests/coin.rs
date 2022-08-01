@@ -1,15 +1,7 @@
-use crate::{
-    CoinProofCircuit1to2, MerkleTree, NewCoin, OldCoin, Path, ProofError,
-    CM_TREE_DEPTH,
-};
-use rand::rngs::OsRng;
-use rand::RngCore;
+use crate::{CoinProofCircuit1to2, MerkleTree, NewCoin, OldCoin, ProofError};
 use sak_crypto::{
-    groth16, AllocatedBit, Circuit, ConstraintSystem, Proof, ScalarExt,
-    SynthesisError,
+    groth16, os_rng, Bls12, Hasher, Parameters, Proof, Scalar, ScalarExt,
 };
-use sak_crypto::{mimc, Parameters};
-use sak_crypto::{Bls12, Hasher, Scalar};
 use sak_types::U8Array;
 use std::collections::HashMap;
 use std::fs::File;
@@ -322,7 +314,7 @@ pub fn get_test_params(constants: &[Scalar]) -> Parameters<Bls12> {
                 constants: constants.to_vec(),
             };
 
-            groth16::generate_random_parameters::<Bls12, _, _>(c, &mut OsRng)
+            groth16::generate_random_parameters::<Bls12, _, _>(c, &mut os_rng())
                 .unwrap()
         };
         // write param to file
@@ -404,7 +396,8 @@ fn make_proof(
         constants,
     };
 
-    let proof = match groth16::create_random_proof(c, &de_params, &mut OsRng) {
+    let proof = match groth16::create_random_proof(c, &de_params, &mut os_rng())
+    {
         Ok(p) => p,
         Err(err) => {
             return Err(format!(
