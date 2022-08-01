@@ -13,7 +13,7 @@ impl Kommand {
         let curr_dir = curr_dir.unwrap_or(std::env::current_dir()?);
 
         log!(
-            "Found subcommand, script: {}, ,curr_dir: {:?}, executing `{} {}`",
+            "Found subcommand, script: {}, curr_dir: {:?}, executing `{} {}`",
             "dev",
             curr_dir,
             program.yellow(),
@@ -21,6 +21,7 @@ impl Kommand {
         );
 
         let mut cmd = Command::new(program);
+        cmd.current_dir(curr_dir);
         cmd.args(args);
 
         Ok(cmd)
