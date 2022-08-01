@@ -51,10 +51,6 @@ wasmtime = "0.37.0"
 [dev-dependencies]
 sak_test_utils = { path = "../sak_test_utils" }
 
-[build-dependencies]
-chrono = "0.4"
-sak_wasm_postprocess = { path = "../sak_wasm_postprocess" }
-
 [[bin]]
 name = "sak"
 path = "src/bin/sak/main.rs"

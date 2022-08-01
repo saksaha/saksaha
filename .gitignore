@@ -1,4 +1,3 @@
-
 # Created by https://www.toptal.com/developers/gitignore/api/go,vim,osx,java,node,rust,linux,python,windows,intellij,visualstudiocode
 # Edit at https://www.toptal.com/developers/gitignore?templates=go,vim,osx,java,node,rust,linux,python,windows,intellij,visualstudiocode
 
@@ -534,3 +533,6 @@ $RECYCLE.BIN/
 
 build/**
 !build/.gitkeep
+
+source/prebuild/**.*
+!source/prebuild/.gitkeep

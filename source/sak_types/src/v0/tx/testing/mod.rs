@@ -5,7 +5,7 @@ use sak_crypto::Hasher;
 pub(crate) const VALIDATOR_CTR_ADDR: &'static str = "test_validator_1";
 
 pub(crate) const VALIDATOR: &[u8] =
-    include_bytes!("../../../../sak_vm/src/v0/sak_ctrt_validator.wasm");
+    include_bytes!("../../../../../prebuild/sak_validator.postprocess.wasm");
 
 fn get_addr_sk_1() -> [u8; 32] {
     [
