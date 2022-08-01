@@ -1,5 +1,4 @@
 use crate::pconfig::PConfig;
-use sak_contract_std::{CtrCallType, Request, Storage};
 use sak_crypto::{
     PublicKey, SakKey, SecretKey, SigningKey, ToEncodedPoint, VerifyingKey,
 };
@@ -52,9 +51,6 @@ pub(crate) fn make_envelope_test_context(
 
     // let (b_sk, b_pk)
     let (eph_sk, eph_pk) = SakKey::generate();
-
-    let a_pk_str = pk_serialize(a_pk);
-    let b_pk_str = pk_serialize(b_pk);
 
     let a_sig_str = {
         let a_sign_key = SigningKey::from(&a_sk);

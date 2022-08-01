@@ -1,6 +1,6 @@
 use crate::{
     rpc::{
-        router::{utils, Params},
+        router::{self, Params, RouteState},
         RPCError,
     },
     system::SystemHandle,
@@ -21,14 +21,19 @@ pub(crate) struct AuthPathResponse {
     pub result: Vec<Option<[u8; 32]>>,
 }
 
-pub(crate) async fn get_auth_path(
-    id: String,
+pub(in crate::rpc) async fn get_auth_path(
+    route_state: RouteState,
     params: Params,
     sys_handle: Arc<SystemHandle>,
-) -> Result<Response<Body>, RPCError> {
-    let params = params.ok_or::<RPCError>("".into())?;
+) -> Response<Body> {
+    let params = router::require_some_params!(
+        route_state,
+        params,
+        "get_auth_path should contain params",
+    );
 
-    let rb = utils::parse_params::<AuthPathRequest>(&params)?;
+    let rb: AuthPathRequest =
+        router::require_params_parsed!(route_state, &params);
 
     let locations = rb.location;
 
@@ -47,16 +52,17 @@ pub(crate) async fn get_auth_path(
                 auth_path.push(n);
             }
             Err(err) => {
-                return Ok(utils::make_error_response(
-                    Some(String::from("1")),
+                return router::make_error_response(
+                    route_state.resp,
+                    Some(route_state.id),
                     err.into(),
-                ));
+                );
             }
         }
     }
 
-    Ok(utils::make_success_response(
-        id,
+    router::make_success_response(
+        route_state,
         AuthPathResponse { result: auth_path },
-    ))
+    )
 }

@@ -116,8 +116,8 @@ where
     (help_msg, input, input_returned)
 }
 
-pub(crate) fn draw_tabs<'a>(state: &AppState) -> Tabs {
-    let labels = ["[1] Channels", "[2] Open channel", "[3] Chat (#id)"]
+pub(crate) fn draw_tabs<'a>(state: &'a AppState) -> Tabs {
+    let labels = ["Channels", "Open channel", "Chat (#)"]
         .iter()
         .map(|t| {
             let (first, rest) = t.split_at(3);
@@ -158,7 +158,7 @@ pub(crate) fn draw_ch_list<'a>(state: &AppState) -> List<'a> {
         .ch_list
         .iter()
         .map(|i| {
-            ListItem::new(i.clone())
+            ListItem::new(i.channel_name.clone())
                 .style(Style::default().fg(Color::White).bg(Color::Black))
         })
         .collect();
