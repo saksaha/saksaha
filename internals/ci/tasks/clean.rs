@@ -1,14 +1,9 @@
-use crate::{log, CIError};
+use crate::{log, paths::Paths, CIError};
 
 pub(crate) fn clean_prebuild() -> Result<(), CIError> {
     log!("Clean prebuild path");
 
-    let curr_dir = std::env::current_dir()?;
-
-    let prebuild_path = curr_dir.join("source/prebuild");
-    if !prebuild_path.exists() {
-        return Err(format!("prebuild path does not exist").into());
-    }
+    let prebuild_path = Paths::prebuild()?;
 
     for file in std::fs::read_dir(prebuild_path)? {
         let f = file?;
@@ -19,6 +14,18 @@ pub(crate) fn clean_prebuild() -> Result<(), CIError> {
         } else {
             std::fs::remove_file(f.path())?;
         }
+    }
+
+    Ok(())
+}
+
+pub(crate) fn clean_target() -> Result<(), CIError> {
+    log!("Clean target path");
+
+    let target_path = Paths::curr()?.join("target");
+
+    if target_path.exists() {
+        std::fs::remove_dir_all(target_path)?;
     }
 
     Ok(())
