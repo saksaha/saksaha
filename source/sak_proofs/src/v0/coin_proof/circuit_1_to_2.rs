@@ -24,7 +24,7 @@ pub struct CoinProofCircuit1to2 {
     pub constants: Vec<Scalar>,
 }
 
-pub fn get_1_to_2_params(constants: &[Scalar]) -> Parameters<Bls12> {
+pub fn get_mimc_params_1_to_2(constants: &[Scalar]) -> Parameters<Bls12> {
     let param_path = std::path::Path::new(PARAM_FILE_NAME);
     let is_file_exist = param_path.exists();
 

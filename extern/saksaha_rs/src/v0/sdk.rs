@@ -3,9 +3,12 @@ use hyper::{Body, Client, Method, Request, Uri};
 use log::warn;
 use rand::rngs::OsRng;
 use sak_contract_std::{CtrCallType, Request as CtrRequest};
-use sak_crypto::{groth16, mimc, Bls12, Circuit, Hasher, Proof, Scalar};
+use sak_crypto::{
+    groth16, mimc, Bls12, Circuit, Hasher, Proof, Scalar, ScalarExt,
+};
 use sak_proofs::{
-    CoinProof, CoinProofCircuit1to2, NewCoin, OldCoin, ProofError,
+    get_mimc_params_1_to_2, CoinProof, CoinProofCircuit1to2, MerkleTree,
+    NewCoin, OldCoin, Path, ProofError, CM_TREE_DEPTH,
 };
 use sak_rpc_interface::{JsonRequest, JsonResponse};
 use sak_types::U8Array;
@@ -284,17 +287,17 @@ pub async fn call_contract(
     Ok(json_response)
 }
 
-// -------------------------------- proof
-
-fn generate_proof_1_to_2(
+pub async fn generate_proof_1_to_2(
     coin_1_old: OldCoin,
+
     coin_1_new: NewCoin,
+
     coin_2_new: NewCoin,
 ) -> Result<Proof<Bls12>, ProofError> {
     let hasher = Hasher::new();
     let constants = hasher.get_mimc_constants().to_vec();
 
-    let de_params = sak_proofs::get_1_to_2_params(&constants);
+    let de_params = sak_proofs::get_mimc_params_1_to_2(&constants);
 
     let c = CoinProofCircuit1to2 {
         hasher,
@@ -316,4 +319,91 @@ fn generate_proof_1_to_2(
     };
 
     Ok(proof)
+}
+
+pub async fn verify_proof_1_to_2(
+    proof: Proof<Bls12>,
+    public_inputs: &[Scalar],
+    hasher: &Hasher,
+) -> bool {
+    let constants = hasher.get_mimc_constants();
+    let de_params = get_mimc_params_1_to_2(&constants);
+    let pvk = groth16::prepare_verifying_key(&de_params.vk);
+
+    match groth16::verify_proof(&pvk, &proof, public_inputs) {
+        Ok(_) => {
+            println!("verify success!");
+            true
+        }
+        Err(err) => {
+            println!("verify_proof(), err: {}", err);
+            false
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct AuthPathRequest {
+    pub location: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct AuthPathResponse {
+    pub result: Vec<Option<[u8; 32]>>,
+}
+
+pub async fn get_auth_path(
+    idx: u128,
+) -> Result<JsonResponse<AuthPathResponse>, SaksahaSDKError> {
+    let merkle_tree = MerkleTree::new(CM_TREE_DEPTH as u32);
+
+    let auth_path = merkle_tree.generate_auth_paths(idx);
+
+    let mut merkle_node_locations = Vec::new();
+
+    for (height, path) in auth_path.iter().enumerate() {
+        let key = format!("{}_{}", height, path.idx);
+
+        merkle_node_locations.push(key);
+    }
+
+    {
+        let endpoint_test = "http://localhost:34418/rpc/v0";
+
+        let client = Client::new();
+        let uri: Uri = { endpoint_test.parse().expect("URI should be made") };
+
+        let body = {
+            let send_req = AuthPathRequest {
+                location: merkle_node_locations,
+            };
+            let params = serde_json::to_string(&send_req)?.as_bytes().to_vec();
+
+            let json_request = JsonRequest {
+                jsonrpc: "2.0".to_string(),
+                method: "get_auth_path".to_string(),
+                params: Some(params),
+                id: "test_1".to_string(),
+            };
+
+            let str = serde_json::to_string(&json_request)?;
+
+            Body::from(str)
+        };
+
+        let req = Request::builder()
+            .method(Method::POST)
+            .uri(uri)
+            .body(body)
+            .expect("request builder should be made");
+
+        let resp = client.request(req).await?;
+
+        let b = hyper::body::to_bytes(resp.into_body()).await?;
+
+        let json_response =
+            serde_json::from_slice::<JsonResponse<AuthPathResponse>>(&b)?;
+
+        Ok(json_response)
+    }
 }

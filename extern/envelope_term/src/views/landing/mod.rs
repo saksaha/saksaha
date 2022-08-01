@@ -27,9 +27,6 @@ where
     let title = utils::draw_title();
     rect.render_widget(title, chunks[0]);
 
-    let title = utils::draw_title();
-    rect.render_widget(title, chunks[0]);
-
     let logs = utils::draw_logs();
     rect.render_widget(logs, chunks[1]);
 }

@@ -427,7 +427,8 @@ fn verify_proof(
     let de_params = get_test_params(&constants);
     let pvk = groth16::prepare_verifying_key(&de_params.vk);
 
-    println!("[public_inputs] {:?}", public_inputs);
+    println!("[+] proof: {:?}", proof);
+    println!("[+] public input: {:?}", public_inputs);
 
     match groth16::verify_proof(&pvk, &proof, public_inputs) {
         Ok(_) => {
