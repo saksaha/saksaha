@@ -5,7 +5,7 @@ pub use circuit_1_to_2::*;
 pub use proof::*;
 use sak_crypto::Scalar;
 
-pub const CM_TREE_DEPTH: u32 = 3;
+pub const CM_TREE_DEPTH: u32 = 4;
 pub const CM_TREE_CAPACITY: usize = 2_usize.pow(CM_TREE_DEPTH as u32);
 
 pub struct OldCoin {

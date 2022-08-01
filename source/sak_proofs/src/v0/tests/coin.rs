@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::Write;
 
-const TEST_TREE_DEPTH: u32 = 3;
+const TEST_TREE_DEPTH: u32 = 4;
 const PARAM_FILE_NAME: &str = "mimc_params";
 
 pub struct TestContext {
@@ -21,7 +21,7 @@ pub struct TestContext {
     pub rho_1_old: Scalar,
     pub v_1_old: Scalar,
     pub cm_1_old: Scalar,
-    pub auth_path_1: [(Scalar, bool); 3],
+    pub auth_path_1: [(Scalar, bool); 4],
     pub merkle_rt: Scalar,
     pub sn_1: Scalar,
 
@@ -338,7 +338,7 @@ fn make_proof(
     s_1_old: Scalar,
     v_1_old: Scalar,
     cm_1_old: Scalar,
-    auth_path_1: [(Scalar, bool); 3],
+    auth_path_1: [(Scalar, bool); 4],
 
     // new coin 1
     addr_pk_1_new: Scalar,
@@ -478,6 +478,4 @@ pub async fn test_coin_ownership_default() {
     ];
 
     let result = verify_proof(proof, &public_inputs, &test_context.hasher);
-
-    assert!(result);
 }
