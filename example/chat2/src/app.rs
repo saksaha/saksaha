@@ -1,8 +1,8 @@
 use crate::chat::Chat;
 use crate::data::client_0;
-use rand::rngs::OsRng;
 use rsa::pkcs8::FromPrivateKey;
 use rsa::{PaddingScheme, PublicKey, RsaPrivateKey, RsaPublicKey};
+use sak_crypto::os_rng;
 use tokio::net::{TcpListener, TcpStream};
 use tokio::{self, signal};
 
@@ -65,7 +65,7 @@ async fn start_routine(cid: String) {
         let channel_data = b"channel_id";
         let padding = PaddingScheme::new_pkcs1v15_encrypt();
         let channel = pub_key
-            .encrypt(&mut OsRng, padding, &channel_data[..])
+            .encrypt(&mut os_rng(), padding, &channel_data[..])
             .expect("channel should be encrypted");
 
         let my_ip = client_0::IP;
@@ -133,7 +133,7 @@ async fn start_routine(cid: String) {
         let channel_data = b"channel_id";
         let padding = PaddingScheme::new_pkcs1v15_encrypt();
         let channel = pub_key
-            .encrypt(&mut OsRng, padding, &channel_data[..])
+            .encrypt(&mut os_rng(), padding, &channel_data[..])
             .expect("channel should be encrypted");
 
         let dst_id = client_0::IP;

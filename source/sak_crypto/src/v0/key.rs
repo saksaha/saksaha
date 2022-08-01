@@ -1,12 +1,11 @@
-use crate::PublicKey;
+use crate::{os_rng, PublicKey};
 use k256::{elliptic_curve::sec1::ToEncodedPoint, SecretKey};
-use rand_core::OsRng;
 
 pub struct SakKey;
 
 impl SakKey {
     pub fn generate() -> (SecretKey, PublicKey) {
-        let secret = SecretKey::random(&mut OsRng);
+        let secret = SecretKey::random(&mut os_rng());
         let public_key = secret.public_key();
 
         (secret, public_key)
