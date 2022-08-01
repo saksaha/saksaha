@@ -1,18 +1,13 @@
-use crate::{CoinProofCircuit1to2, MerkleTree, Path, ProofError};
-use rand::rngs::OsRng;
-use rand::RngCore;
+use crate::{CoinProofCircuit1to2, MerkleTree, NewCoin, OldCoin, ProofError};
 use sak_crypto::{
-    groth16, AllocatedBit, Circuit, ConstraintSystem, Proof, ScalarExt,
-    SynthesisError,
+    groth16, os_rng, Bls12, Hasher, Parameters, Proof, Scalar, ScalarExt,
 };
-use sak_crypto::{mimc, Parameters};
-use sak_crypto::{Bls12, Hasher, Scalar};
 use sak_types::U8Array;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::Write;
 
-const TEST_TREE_DEPTH: usize = 3;
+const TEST_TREE_DEPTH: u32 = 4;
 const PARAM_FILE_NAME: &str = "mimc_params";
 
 pub struct TestContext {
@@ -26,7 +21,7 @@ pub struct TestContext {
     pub rho_1_old: Scalar,
     pub v_1_old: Scalar,
     pub cm_1_old: Scalar,
-    pub auth_path_1: [(Scalar, bool); 3],
+    pub auth_path_1: [(Scalar, bool); 4],
     pub merkle_rt: Scalar,
     pub sn_1: Scalar,
 
@@ -245,7 +240,7 @@ fn make_test_context() -> TestContext {
 
     let auth_path_1 = {
         let v = merkle_tree.generate_auth_paths(0);
-        let mut ret = [(Scalar::default(), false); TEST_TREE_DEPTH];
+        let mut ret = [(Scalar::default(), false); TEST_TREE_DEPTH as usize];
 
         v.iter().enumerate().for_each(|(idx, p)| {
             if idx >= ret.len() {
@@ -306,37 +301,20 @@ pub fn get_test_params(constants: &[Scalar]) -> Parameters<Bls12> {
         // generate and write
         let hasher = Hasher::new();
 
+        let coin_1_old = OldCoin::default();
+        let coin_1_new = NewCoin::default();
+        let coin_2_new = NewCoin::default();
+
         let params = {
             let c = CoinProofCircuit1to2 {
                 hasher,
-
-                // old coins
-                addr_pk_1_old: None,
-                addr_sk_1_old: None,
-                rho_1_old: None,
-                r_1_old: None,
-                s_1_old: None,
-                v_1_old: None,
-                cm_1_old: None,
-                auth_path_1: [None; TEST_TREE_DEPTH],
-
-                // new coin 1
-                addr_pk_1: None,
-                rho_1: None,
-                r_1: None,
-                s_1: None,
-                v_1: None,
-
-                // new coin 2
-                addr_pk_2: None,
-                rho_2: None,
-                r_2: None,
-                s_2: None,
-                v_2: None,
+                coin_1_old,
+                coin_1_new,
+                coin_2_new,
                 constants: constants.to_vec(),
             };
 
-            groth16::generate_random_parameters::<Bls12, _, _>(c, &mut OsRng)
+            groth16::generate_random_parameters::<Bls12, _, _>(c, &mut os_rng())
                 .unwrap()
         };
         // write param to file
@@ -360,21 +338,21 @@ fn make_proof(
     s_1_old: Scalar,
     v_1_old: Scalar,
     cm_1_old: Scalar,
-    auth_path_1: [(Scalar, bool); 3],
+    auth_path_1: [(Scalar, bool); 4],
 
     // new coin 1
-    addr_pk_1: Scalar,
-    rho_1: Scalar,
-    r_1: Scalar,
-    s_1: Scalar,
-    v_1: Scalar,
+    addr_pk_1_new: Scalar,
+    rho_1_new: Scalar,
+    r_1_new: Scalar,
+    s_1_new: Scalar,
+    v_1_new: Scalar,
 
     // new coin 1
-    addr_pk_2: Scalar,
-    rho_2: Scalar,
-    r_2: Scalar,
-    s_2: Scalar,
-    v_2: Scalar,
+    addr_pk_2_new: Scalar,
+    rho_2_new: Scalar,
+    r_2_new: Scalar,
+    s_2_new: Scalar,
+    v_2_new: Scalar,
 ) -> Result<Proof<Bls12>, ProofError> {
     println!("power!!! auth path: {:#?}", auth_path_1);
 
@@ -383,59 +361,43 @@ fn make_proof(
     let constants = hasher.get_mimc_constants().to_vec();
     let de_params = get_test_params(&constants);
 
-    let addr_pk_1_old = Some(addr_pk_1_old);
-    let addr_sk_1_old = Some(addr_sk_1_old);
-    let rho_1_old = Some(rho_1_old);
-    let r_1_old = Some(r_1_old);
-    let s_1_old = Some(s_1_old);
-    let v_1_old = Some(v_1_old);
-    let cm_1_old = Some(cm_1_old);
-    let auth_path_1 = auth_path_1.map(|p| Some(p));
+    let coin_1_old = OldCoin {
+        addr_pk: Some(addr_pk_1_old),
+        addr_sk: Some(addr_sk_1_old),
+        rho: Some(rho_1_old),
+        r: Some(r_1_old),
+        s: Some(s_1_old),
+        v: Some(v_1_old),
+        cm: Some(cm_1_old),
+        auth_path: auth_path_1.map(|p| Some(p)),
+    };
 
-    //
-    let addr_pk_1 = Some(addr_pk_1);
-    let rho_1 = Some(rho_1);
-    let r_1 = Some(r_1);
-    let s_1 = Some(s_1);
-    let v_1 = Some(v_1);
+    let coin_1_new = NewCoin {
+        addr_pk: Some(addr_pk_1_new),
+        rho: Some(rho_1_new),
+        r: Some(r_1_new),
+        s: Some(s_1_new),
+        v: Some(v_1_new),
+    };
 
-    //
-    let addr_pk_2 = Some(addr_pk_2);
-    let rho_2 = Some(rho_2);
-    let r_2 = Some(r_2);
-    let s_2 = Some(s_2);
-    let v_2 = Some(v_2);
+    let coin_2_new = NewCoin {
+        addr_pk: Some(addr_pk_2_new),
+        rho: Some(rho_2_new),
+        r: Some(r_2_new),
+        s: Some(s_2_new),
+        v: Some(v_2_new),
+    };
 
     let c = CoinProofCircuit1to2 {
         hasher,
-
-        // old coin 1
-        addr_pk_1_old,
-        addr_sk_1_old,
-        rho_1_old,
-        r_1_old,
-        s_1_old,
-        v_1_old,
-        cm_1_old,
-        auth_path_1,
-
-        // new coin 1
-        addr_pk_1,
-        rho_1,
-        r_1,
-        s_1,
-        v_1,
-
-        // new coin 2
-        addr_pk_2,
-        rho_2,
-        r_2,
-        s_2,
-        v_2,
+        coin_1_old,
+        coin_1_new,
+        coin_2_new,
         constants,
     };
 
-    let proof = match groth16::create_random_proof(c, &de_params, &mut OsRng) {
+    let proof = match groth16::create_random_proof(c, &de_params, &mut os_rng())
+    {
         Ok(p) => p,
         Err(err) => {
             return Err(format!(
@@ -458,7 +420,8 @@ fn verify_proof(
     let de_params = get_test_params(&constants);
     let pvk = groth16::prepare_verifying_key(&de_params.vk);
 
-    println!("[public_inputs] {:?}", public_inputs);
+    println!("[+] proof: {:?}", proof);
+    println!("[+] public input: {:?}", public_inputs);
 
     match groth16::verify_proof(&pvk, &proof, public_inputs) {
         Ok(_) => {
@@ -515,6 +478,4 @@ pub async fn test_coin_ownership_default() {
     ];
 
     let result = verify_proof(proof, &public_inputs, &test_context.hasher);
-
-    assert!(result);
 }

@@ -12,7 +12,6 @@ sak_types = { path = "../sak_types" }
 log = "0.4.0"
 ff = "0.11"
 pairing = "0.21.0"
-rand = { version = "0.8.4", features = ["getrandom"] }
 sha2 = "0.9.8"
 env_logger = "0.9.0"
 blake2s_simd = "1.0.0"

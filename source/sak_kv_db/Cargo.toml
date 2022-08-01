@@ -11,7 +11,6 @@ sak_crypto = { path = "../sak_crypto" }
 sak_fs = { path = "../sak_fs" }
 serde = { version = "1.0.130", features = ["derive"] }
 serde_json = "1.0.59"
-rand = "0.8.4"
 log = "0.4.0"
 thiserror = "1.0"
 tokio = { version = "1.12.0", features = ["full"] }
@@ -19,7 +18,10 @@ bytes = "1"
 atoi = "0.4.0"
 k256 = { version = "0.9.6", features = ["ecdh"] }
 chrono = "0.4"
-rocksdb = { version = "0.18.0", default-features = false, features = ["lz4", "multi-threaded-cf"] }
+rocksdb = { version = "0.18.0", default-features = false, features = [
+  "lz4",
+  "multi-threaded-cf",
+] }
 
 [lib]
 doctest = false # until stable beta is released

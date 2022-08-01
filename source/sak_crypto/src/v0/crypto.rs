@@ -7,16 +7,10 @@ use k256::{
     elliptic_curve::ecdh::SharedSecret,
     EncodedPoint, Secp256k1,
 };
-use rand::prelude::*;
 use sha3::{Digest, Keccak256, Sha3_256};
 use std::{fmt::Write, num::ParseIntError};
 
 pub type PublicKey = k256::PublicKey;
-
-pub fn rand() -> usize {
-    let mut rng = rand::thread_rng();
-    rng.gen::<usize>() % 1000000
-}
 
 pub fn keccak256(data: &[u8]) -> String {
     let mut hasher = Keccak256::default();

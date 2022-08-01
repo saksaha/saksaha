@@ -1,7 +1,5 @@
 use crate::app::{Actions, App, AppState};
 use crate::io::InputMode;
-use std::time::Duration;
-use symbols::line;
 use tui::backend::Backend;
 use tui::layout::{Alignment, Rect};
 use tui::style::{Color, Modifier, Style};
@@ -9,7 +7,7 @@ use tui::text::{Span, Spans, Text};
 use tui::widgets::{
     Block, BorderType, Borders, LineGauge, List, ListItem, Paragraph, Tabs,
 };
-use tui::{symbols, Frame};
+use tui::Frame;
 use tui_logger::TuiLoggerWidget;
 use unicode_width::UnicodeWidthStr;
 
@@ -122,7 +120,7 @@ pub(crate) fn draw_tabs<'a>(state: &'a AppState) -> Tabs {
     let labels = ["Channels", "Open channel", "Chat (#)"]
         .iter()
         .map(|t| {
-            let (first, rest) = t.split_at(1);
+            let (first, rest) = t.split_at(3);
             Spans::from(vec![
                 Span::styled(first, Style::default().fg(Color::Yellow)),
                 Span::styled(rest, Style::default().fg(Color::Green)),
@@ -330,3 +328,36 @@ where
 
     (help_msg, input, message_panel)
 }
+
+// pub(crate) fn __draw_help(actions: &Actions) -> Table {
+//     let key_style = Style::default().fg(Color::LightCyan);
+//     let help_style = Style::default().fg(Color::Gray);
+
+//     let mut rows = vec![];
+//     for action in actions.actions().iter() {
+//         let mut first = true;
+//         for key in action.keys() {
+//             let help = if first {
+//                 first = false;
+//                 action.to_string()
+//             } else {
+//                 String::from("")
+//             };
+//             let row = Row::new(vec![
+//                 Cell::from(Span::styled(key.to_string(), key_style)),
+//                 Cell::from(Span::styled(help, help_style)),
+//             ]);
+//             rows.push(row);
+//         }
+//     }
+
+//     Table::new(rows)
+//         .block(
+//             Block::default()
+//                 .borders(Borders::ALL)
+//                 .border_type(BorderType::Plain)
+//                 .title("Help"),
+//         )
+//         .widths(&[Constraint::Length(11), Constraint::Min(20)])
+//         .column_spacing(1)
+// }

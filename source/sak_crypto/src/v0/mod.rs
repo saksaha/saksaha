@@ -3,6 +3,7 @@ mod ecies;
 mod hasher;
 mod key;
 pub mod mimc;
+mod random;
 mod scalar_ext;
 #[cfg(test)]
 mod tests;
@@ -29,6 +30,7 @@ pub use crypto::*;
 pub use ecies::*;
 pub use hasher::*;
 pub use key::*;
+pub use random::*;
 pub use scalar_ext::*;
 
 pub type PublicKey = k256::PublicKey;

@@ -1,11 +1,12 @@
 use crate::{cfs, keys, LedgerDBSchema};
 use crate::{LedgerError, MerkleNodeLoc};
+use sak_crypto::ScalarExt;
 use sak_kv_db::DB;
 use sak_kv_db::{
     BoundColumnFamily, ColumnFamilyDescriptor, IteratorMode, Options,
     WriteBatch,
 };
-use sak_types::{BlockHash, CtrAddr, TxHash, TxType};
+use sak_types::{BlockHash, CtrAddr, TxHash, TxType, U8Array};
 use std::convert::TryInto;
 use std::sync::Arc;
 
@@ -25,7 +26,11 @@ impl LedgerDBSchema {
                 return Ok(Some(arr));
             }
             None => {
-                return Ok(None);
+                let zero_value = {
+                    let arr = U8Array::new_empty_32();
+                    ScalarExt::parse_arr(&arr).unwrap()
+                };
+                return Ok(Some(zero_value.to_bytes()));
             }
         }
     }
