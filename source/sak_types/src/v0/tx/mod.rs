@@ -1,4 +1,4 @@
-pub mod for_testing;
+pub mod testing;
 mod tx;
 mod tx_candidate;
 mod tx_type;

@@ -1,13 +1,27 @@
+mod paths;
 mod scripts;
 mod tasks;
 mod utils;
 
-use crate::scripts::{build, dev, test};
+use crate::{
+    paths::Paths,
+    scripts::{build, dev, test},
+};
 
 pub(crate) type CIError = Box<dyn std::error::Error + Send + Sync>;
 
-fn main() {
-    let curr_dir = match std::env::current_dir() {
+fn main() -> Result<(), CIError> {
+    validate_curr_dir()?;
+
+    run_script()?;
+
+    Ok(())
+}
+
+fn validate_curr_dir() -> Result<(), CIError> {
+    let curr_dir = std::env::current_dir()?;
+
+    let curr_dir_str = match std::env::current_dir() {
         Ok(cd) => cd
             .into_os_string()
             .into_string()
@@ -35,22 +49,19 @@ fn main() {
     log!(
         "CI is starting, project root: {}, current working directory: {}",
         project_root,
-        curr_dir,
+        curr_dir_str,
     );
 
-    if project_root != curr_dir {
+    if project_root != curr_dir_str {
         log!(
             "Warning! You may be running this script not from the project \
             root with `ci` script"
         );
     }
 
-    match run_script() {
-        Ok(_) => (),
-        Err(err) => {
-            log!("Error running script, err: {}", err);
-        }
-    };
+    Paths::init(curr_dir)?;
+
+    Ok(())
 }
 
 fn run_script() -> Result<(), CIError> {

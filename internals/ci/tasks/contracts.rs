@@ -1,8 +1,16 @@
-use crate::{log, utils::Kommand, CIError};
+use crate::{log, paths::Paths, utils::Kommand, CIError};
+use serde::{Deserialize, Serialize};
 use std::{
     path::PathBuf,
     process::{Command as Cmd, Stdio},
+    time::SystemTime,
 };
+
+#[derive(Serialize, Deserialize)]
+struct ContractCompileReceipt {
+    build_time: SystemTime,
+    outputs: Vec<PathBuf>,
+}
 
 struct Contract {
     name: &'static str,
@@ -12,28 +20,68 @@ struct Contract {
 pub(crate) fn build_3rd_party_contracts() -> Result<(), CIError> {
     log!("build 3rd party contracts");
 
+    let external_path = Paths::external()?;
+
+    let contracts = vec![Contract {
+        name: "envelope_contract",
+        path: external_path.join("envelope_contract"),
+    }];
+
+    let receipt = contracts
+        .into_iter()
+        .map(|ctr| {
+            let wasm_path = build_contract(ctr)?;
+            let output_path = post_process_wasm(wasm_path)?;
+
+            Ok(output_path)
+        })
+        .collect::<Result<Vec<PathBuf>, CIError>>()?;
+
+    persist_build_receipt_file("build_external_contracts.json", receipt)?;
+
     Ok(())
 }
 
 pub(crate) fn build_system_contracts() -> Result<(), CIError> {
     log!("build system contracts");
 
-    let curr_dir = std::env::current_dir()?;
-
-    let prebuild_path = curr_dir.join("source/prebuild");
-    if !prebuild_path.exists() {
-        return Err(format!("prebuild path does not exist").into());
-    }
+    let source_path = Paths::source()?;
 
     let sys_contracts = vec![Contract {
         name: "sak_validator",
-        path: curr_dir.join("source/sak_validator"),
+        path: source_path.join("sak_validator"),
     }];
 
-    for ctr in sys_contracts {
-        let wasm_path = build_contract(ctr)?;
-        post_process_wasm(wasm_path)?;
-    }
+    let receipt = sys_contracts
+        .into_iter()
+        .map(|ctr| {
+            let wasm_path = build_contract(ctr)?;
+            let output_path = post_process_wasm(wasm_path)?;
+
+            Ok(output_path)
+        })
+        .collect::<Result<Vec<PathBuf>, CIError>>()?;
+
+    persist_build_receipt_file("build_system_contracts.json", receipt)?;
+
+    Ok(())
+}
+
+fn persist_build_receipt_file(
+    file_name: &str,
+    receipt: Vec<PathBuf>,
+) -> Result<(), CIError> {
+    let build_time = SystemTime::now();
+
+    let receipt_path = Paths::prebuild()?.join(file_name);
+
+    let receipt = ContractCompileReceipt {
+        build_time,
+        outputs: receipt,
+    };
+    let receipt_str = serde_json::to_string_pretty(&receipt)?;
+
+    std::fs::write(receipt_path, receipt_str)?;
 
     Ok(())
 }
@@ -50,7 +98,7 @@ fn add_cargo_optimizing_flags(cmd: &mut Cmd) {
 
 fn build_contract(ctr: Contract) -> Result<PathBuf, CIError> {
     if ctr.path.exists() {
-        let curr_dir = std::env::current_dir()?;
+        let curr_path = Paths::curr()?;
 
         let program = "cargo";
 
@@ -72,7 +120,7 @@ fn build_contract(ctr: Contract) -> Result<PathBuf, CIError> {
             .output()
             .expect("failed to run");
 
-        let wasm_path = curr_dir
+        let wasm_path = curr_path
             .join("target/wasm32-unknown-unknown/release")
             .join(format!("{}.wasm", ctr.name));
 
@@ -80,9 +128,8 @@ fn build_contract(ctr: Contract) -> Result<PathBuf, CIError> {
             return Err(format!("compiled wasm does not exist").into());
         }
 
-        let wasm_dest_path = curr_dir
-            .join("source/prebuild")
-            .join(format!("{}.wasm", ctr.name));
+        let wasm_dest_path =
+            Paths::prebuild()?.join(format!("{}.wasm", ctr.name));
 
         std::fs::copy(&wasm_path, &wasm_dest_path)?;
 
@@ -92,8 +139,9 @@ fn build_contract(ctr: Contract) -> Result<PathBuf, CIError> {
     }
 }
 
-fn post_process_wasm(wasm_path: PathBuf) -> Result<(), CIError> {
-    wasm_postprocess::make_wasm_have_multiple_returns(wasm_path, None);
+fn post_process_wasm(wasm_path: PathBuf) -> Result<PathBuf, CIError> {
+    let ret =
+        wasm_postprocess::make_wasm_have_multiple_returns(wasm_path, None)?;
 
-    Ok(())
+    Ok(ret)
 }
