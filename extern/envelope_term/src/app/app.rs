@@ -1,13 +1,15 @@
 use std::collections::HashMap;
 
-use super::state::AppState;
 use super::{actions::Actions, View};
-use crate::io::InputMode;
+use super::{state::AppState, ChannelState};
 use crate::io::IoEvent;
 use crate::{app::actions::Action, ENVELOPE_CTR_ADDR};
 use crate::{inputs::key::Key, EnvelopeError};
+use crate::{io::InputMode, pconfig::PConfig};
 
 use log::{debug, error, warn};
+use sak_contract_std::{CtrCallType, Request as CtrRequest};
+use sak_crypto::{PublicKey, SakKey, SecretKey, SigningKey, ToEncodedPoint};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum AppReturn {
@@ -19,17 +21,24 @@ pub struct App {
     io_tx: tokio::sync::mpsc::Sender<IoEvent>,
     actions: Actions,
     state: AppState,
+    pconfig: PConfig,
 }
 
 impl App {
-    pub fn new(io_tx: tokio::sync::mpsc::Sender<IoEvent>) -> Self {
+    pub fn new(
+        io_tx: tokio::sync::mpsc::Sender<IoEvent>,
+        user_prefix: &String,
+    ) -> Self {
         let actions = vec![Action::Quit].into();
         let state = AppState::default();
+        let pconfig = PConfig::new(user_prefix)
+            .expect("Cannot initialize pconfig, fatal error");
 
         Self {
             io_tx,
             actions,
             state,
+            pconfig,
         }
     }
 
@@ -70,8 +79,15 @@ impl App {
                     self.state.previous_ch();
                     AppReturn::Continue
                 }
-                Action::Enter => {
-                    self.state.set_view_chat();
+                Action::Right => {
+                    match self.get_state().view {
+                        View::ChList => {
+                            self.get_messages().await;
+                            self.state.set_view_chat();
+                        }
+                        _ => {}
+                    }
+
                     AppReturn::Continue
                 }
             }
@@ -90,16 +106,21 @@ impl App {
                         self.state.input_returned =
                             self.state.input_text.drain(..).collect();
 
-                        self.open_ch(&self.state.input_returned)
-                            .await
-                            .unwrap_or("None".to_owned());
+                        let (_sk, pk) = SakKey::generate();
 
-                        // be omitted due to delay
-                        // self.get_ch_list().await;
+                        let pk = sak_crypto::encode_hex(
+                            &pk.to_encoded_point(false).to_bytes(),
+                        );
+                        // let pk = self.state.input_returned.clone();
+                        if let Err(_) = self.open_ch(&pk).await {
+                            return AppReturn::Continue;
+                        };
                     }
                     View::Chat => {
                         self.state.chat_input =
                             self.state.input_text.drain(..).collect();
+
+                        // self.send_messages().await;
 
                         self.state
                             .set_input_messages(self.state.chat_input.clone());
@@ -183,6 +204,7 @@ impl App {
             Action::ShowChat,
             Action::Down,
             Action::Up,
+            Action::Right,
         ]
         .into();
 
@@ -197,11 +219,78 @@ impl App {
         self.state.incr_sleep();
     }
 
-    pub fn set_some_state(&mut self, data: String) {
-        self.state.set_some_state(data);
+    pub fn set_ch_list(&mut self, data: String) {
+        self.state.set_ch_list(data);
+    }
+
+    pub fn set_chats(&mut self, data: String) {
+        self.state.set_chats(data);
     }
 
     pub async fn open_ch(
+        &mut self,
+        her_pk: &String,
+    ) -> Result<(), EnvelopeError> {
+        let open_ch_input = self.make_encryption(her_pk).await?;
+
+        let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
+        let channel_name = her_pk.clone();
+        let mut arg = HashMap::with_capacity(2);
+
+        // let my_pk = self.pconfig.get_sk_pk().1;
+        arg.insert(String::from("dst_pk"), her_pk.clone());
+        arg.insert(String::from("serialized_input"), open_ch_input);
+
+        let req_type = String::from("open_channel");
+        let _json_response =
+            saksaha::send_tx_pour(ctr_addr, req_type, arg).await?;
+
+        self.state
+            .ch_list
+            .push(ChannelState::new(channel_name, her_pk.clone()));
+
+        Ok(())
+    }
+
+    pub async fn get_ch_list(&mut self) {
+        let mut arg = HashMap::with_capacity(2);
+        arg.insert(String::from("dst_pk"), "her_pk".to_string());
+
+        let req = CtrRequest {
+            req_type: "get_ch_list".to_string(),
+            arg,
+            ctr_call_type: CtrCallType::Query,
+        };
+
+        if let Ok(r) =
+            saksaha::call_contract(ENVELOPE_CTR_ADDR.into(), req).await
+        {
+            if let Some(d) = r.result {
+                self.dispatch(IoEvent::Receive(d.result)).await;
+            }
+        }
+    }
+
+    pub async fn get_messages(&mut self) {
+        let mut arg = HashMap::with_capacity(2);
+        arg.insert(String::from("dst_pk"), "her_pk".to_string());
+
+        let req = CtrRequest {
+            req_type: "get_msgs".to_string(),
+            arg,
+            ctr_call_type: CtrCallType::Query,
+        };
+
+        if let Ok(r) =
+            saksaha::call_contract(ENVELOPE_CTR_ADDR.into(), req).await
+        {
+            if let Some(d) = r.result {
+                self.dispatch(IoEvent::GetMessages(d.result)).await;
+            }
+        }
+    }
+
+    pub async fn send_messages(
         &self,
         her_pk: &String,
     ) -> Result<String, EnvelopeError> {
@@ -221,7 +310,7 @@ impl App {
         arg.insert(String::from("dst_pk"), "her_pk".to_string());
         arg.insert(String::from("serialized_input"), open_ch_input);
 
-        let req_type = String::from("open_channel");
+        let req_type = String::from("send_msg");
         let json_response =
             saksaha::send_tx_pour(ctr_addr, req_type, arg).await?;
         let result = json_response.result.unwrap_or("None".to_string());
@@ -229,20 +318,90 @@ impl App {
         Ok(result)
     }
 
-    pub async fn get_ch_list(&mut self) {
-        let mut arg = HashMap::with_capacity(2);
-        arg.insert(String::from("dst_pk"), "her_pk".to_string());
+    async fn make_encryption(
+        &mut self,
+        her_pk: &String,
+    ) -> Result<String, EnvelopeError> {
+        let (_a_sk, a_pk, eph_sk, eph_pk, credential) =
+            self.make_envelope_context()?;
 
-        if let Ok(r) = saksaha::call_contract(
-            ENVELOPE_CTR_ADDR.into(),
-            "get_ch_list".into(),
-            arg,
-        )
-        .await
-        {
-            if let Some(d) = r.result {
-                self.dispatch(IoEvent::Receive(d.result)).await;
-            }
-        }
+        let her_pk_str_vec: Vec<u8> = sak_crypto::decode_hex(her_pk)?;
+        let her_pk_pub =
+            PublicKey::from_sec1_bytes(&her_pk_str_vec.as_slice())?;
+
+        let eph_pk_str =
+            serde_json::to_string(eph_pk.to_encoded_point(false).as_bytes())
+                .unwrap();
+
+        let her_pk_str = serde_json::to_string(
+            her_pk_pub.to_encoded_point(false).as_bytes(),
+        )?;
+
+        let (a_pk_sig_encrypted, open_ch_empty, aes_key_from_a) = {
+            let aes_key_from_a = sak_crypto::derive_aes_key(eph_sk, her_pk_pub);
+
+            let a_credential_encrypted = {
+                let ciphertext = sak_crypto::aes_encrypt(
+                    &aes_key_from_a,
+                    credential.as_bytes(),
+                )?;
+                serde_json::to_string(&ciphertext).unwrap()
+            };
+
+            let empty_chat: Vec<String> = vec![];
+            let empty_chat_str = serde_json::to_string(&empty_chat).unwrap();
+            let ciphertext_empty = sak_crypto::aes_encrypt(
+                &aes_key_from_a,
+                empty_chat_str.as_bytes(),
+            )?;
+            let open_ch_empty =
+                serde_json::to_string(&ciphertext_empty).unwrap();
+
+            (a_credential_encrypted, open_ch_empty, aes_key_from_a)
+        };
+
+        // let ch_id = "DUMMY_CHANNEL_ID_1".to_string();
+        let ch_id = her_pk.clone();
+        let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
+
+        // insert ch key store
+        self.pconfig.insert_ch_key(ch_id.clone(), aes_key_from_a)?;
+
+        let open_ch_input = {
+            let open_ch_input: Vec<String> =
+                vec![eph_pk_str, ch_id, a_pk_sig_encrypted, open_ch_empty];
+
+            serde_json::to_string(&open_ch_input).unwrap()
+        };
+
+        Ok(open_ch_input)
+    }
+
+    pub(crate) fn make_envelope_context(
+        &self,
+    ) -> Result<
+        (SecretKey, PublicKey, SecretKey, PublicKey, String),
+        EnvelopeError,
+    > {
+        let (a_sk_str, a_pk_str) = self.pconfig.get_sk_pk();
+        let a_pk_str_vec: Vec<u8> = sak_crypto::decode_hex(&a_pk_str)?;
+        let a_pk = PublicKey::from_sec1_bytes(a_pk_str_vec.as_slice())?;
+        let a_sk_str_vec: Vec<u8> = sak_crypto::decode_hex(&a_sk_str)?;
+        let a_sk = SecretKey::from_bytes(a_sk_str_vec.as_slice())?;
+
+        let (eph_sk, eph_pk) = SakKey::generate();
+
+        let a_sig_str = {
+            let a_sign_key = SigningKey::from(&a_sk);
+            let a_sign_key_vec = a_sign_key.to_bytes().to_vec();
+            serde_json::to_string(&a_sign_key_vec)?
+        };
+
+        let a_credential = {
+            let v: Vec<String> = vec![a_pk_str, a_sig_str];
+            serde_json::to_string(&v)?
+        };
+
+        Ok((a_sk, a_pk, eph_sk, eph_pk, a_credential))
     }
 }

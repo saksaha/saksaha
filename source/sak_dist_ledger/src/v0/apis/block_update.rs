@@ -105,7 +105,7 @@ impl DistLedgerApis {
                         tc,
                         &mut ctr_state_update,
                         &mut merkle_update,
-                        ledger_cm_count,
+                        added_cm_count + ledger_cm_count,
                     )
                     .await?
                 }
@@ -115,7 +115,7 @@ impl DistLedgerApis {
                         tc,
                         &mut ctr_state_update,
                         &mut merkle_update,
-                        ledger_cm_count,
+                        added_cm_count + ledger_cm_count,
                     )
                     .await?
                 }
@@ -390,6 +390,7 @@ async fn process_merkle_update(
         let auth_path = apis.merkle_tree.generate_auth_paths(leaf_idx);
 
         let leaf_loc = format!("{}_{}", 0, leaf_idx);
+
         merkle_update.insert(leaf_loc, **cm);
 
         for (height, path) in auth_path.iter().enumerate() {
