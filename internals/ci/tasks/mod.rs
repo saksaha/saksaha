@@ -29,36 +29,8 @@ pub(crate) fn build_system_contracts() -> Result<(), CIError> {
     }];
 
     for ctr in sys_contracts {
-        build_contract(ctr)?;
-        // if ctr.path.exists() {
-        //     let program = "cargo";
-
-        //     let args = ["wasm"].iter().map(|s| s.to_string()).collect();
-
-        //     log!(
-        //         "building system contract, name: {}, path: {:?}",
-        //         ctr.name,
-        //         ctr.path,
-        //     );
-
-        //     let mut cargo = Kommand::new(program, args, Some(ctr.path))?;
-
-        //     add_cargo_optimizing_flags(&mut cargo);
-
-        //     cargo
-        //         .stdout(Stdio::inherit())
-        //         .stderr(Stdio::inherit())
-        //         .output()
-        //         .expect("failed to run");
-
-        //     let wasm_path = curr_dir
-        //         .join("build/wasm32-unknown-unknown/release")
-        //         .join(format!("{}.wasm", ctr.name));
-
-        //     println!("power: {:?}", wasm_path);
-        // } else {
-        //     return Err(format!("contract path should exist").into());
-        // }
+        let wasm_path = build_contract(ctr)?;
+        post_process_wasm(wasm_path)?;
     }
 
     Ok(())
@@ -74,8 +46,10 @@ fn add_cargo_optimizing_flags(cmd: &mut Cmd) {
     cmd.env("CARGO_PROFILE_RELEASE_PANIC", "abort");
 }
 
-fn build_contract(ctr: Contract) -> Result<(), CIError> {
+fn build_contract(ctr: Contract) -> Result<PathBuf, CIError> {
     if ctr.path.exists() {
+        let curr_dir = std::env::current_dir()?;
+
         let program = "cargo";
 
         let args = ["wasm"].iter().map(|s| s.to_string()).collect();
@@ -97,13 +71,35 @@ fn build_contract(ctr: Contract) -> Result<(), CIError> {
             .expect("failed to run");
 
         let wasm_path = curr_dir
-            .join("build/wasm32-unknown-unknown/release")
+            .join("target/wasm32-unknown-unknown/release")
             .join(format!("{}.wasm", ctr.name));
 
         println!("power: {:?}", wasm_path);
 
-        Ok(())
+        if !wasm_path.exists() {
+            return Err(format!("compiled wasm does not exist").into());
+        }
+
+        let wasm_dest_path = curr_dir
+            .join("source/prebuild")
+            .join(format!("{}.wasm", ctr.name));
+
+        std::fs::copy(&wasm_path, &wasm_dest_path)?;
+
+        Ok(wasm_dest_path)
     } else {
         return Err(format!("contract path should exist").into());
     }
+}
+
+fn post_process_wasm(wasm_path: PathBuf) -> Result<(), CIError> {
+    let output_path = {
+        let mut p = wasm_path.clone();
+        p.set_file_name("power");
+        p
+    };
+
+    wasm_postprocess::make_wasm_have_multiple_returns(wasm_path, output_path);
+
+    Ok(())
 }

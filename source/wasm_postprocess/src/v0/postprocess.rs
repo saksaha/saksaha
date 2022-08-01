@@ -69,17 +69,17 @@ fn get_ids_by_name(
 }
 
 fn write_out_wasm_returning_multi_value(
-    input_path: &str,
+    src_path: PathBuf,
+    output_path: PathBuf,
     args: Vec<String>,
-    output_path: &str,
 ) {
     let transformations = parse_args(&args);
 
-    let wasm = wit_text::parse_file(&input_path)
-        .expect(&format!("input file `{}` cannot be parsed", input_path));
+    let wasm = wit_text::parse_file(&src_path)
+        .expect(&format!("input file `{:?}` cannot be parsed", src_path));
 
     wit_validator::validate(&wasm)
-        .expect(&format!("failed to validate `{}`", input_path));
+        .expect(&format!("failed to validate `{:?}`", src_path));
 
     let mut module = walrus::ModuleConfig::new()
         .strict_validate(false)
@@ -132,14 +132,14 @@ fn write_out_wasm_returning_multi_value(
     let output_bytes = module.emit_wasm();
 
     let output_file_path = {
-        let stem = PathBuf::from(output_path)
+        let stem = output_path
             .file_stem()
             .unwrap()
             .to_str()
             .unwrap()
             .to_owned();
 
-        let mut p = PathBuf::from(output_path);
+        let mut p = output_path;
         p.pop();
         p.join(format!("{}.multivalue.wasm", stem))
     };
@@ -152,12 +152,15 @@ fn write_out_wasm_returning_multi_value(
         .expect(&format!("failed to write to '{:?}'", output_file_path));
 }
 
-pub fn make_wasm_have_multiple_returns(wasm_path: &str, output_path: &str) {
+pub fn make_wasm_have_multiple_returns(
+    src_path: PathBuf,
+    output_path: PathBuf,
+) {
     let init_arg = String::from("init i32 i32");
 
     let query_arg = String::from("query i32 i32");
 
     let args = vec![init_arg, query_arg];
 
-    write_out_wasm_returning_multi_value(wasm_path, args, output_path);
+    write_out_wasm_returning_multi_value(src_path, output_path, args);
 }
