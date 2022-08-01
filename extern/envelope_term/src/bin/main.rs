@@ -35,7 +35,11 @@ fn main() -> Result<(), EnvelopeError> {
 
     let pconfig_path = resolve_pconfig_path();
 
-    let term_args = TermArgs { pconfig_path };
+    let user_prefix = String::from("user_1");
+    let term_args = TermArgs {
+        pconfig_path,
+        user_prefix,
+    };
 
     term::run(term_args)?;
 

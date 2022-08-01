@@ -1,7 +1,9 @@
+mod utils;
+
 use self::utils::*;
 use super::fs;
 use crate::pconfig::*;
-mod utils;
+use sak_contract_std::{CtrCallType, Request as CtrRequest};
 use saksaha::*;
 use std::time::Duration;
 use std::{collections::HashMap, thread::sleep};
@@ -40,6 +42,8 @@ async fn test_sak_ecies_open_channel() {
 
     let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
     let ch_id = DUMMY_CHANNEL_ID_1.to_string();
+
+    println!("{}", b_pk_str);
 
     // insert ch key store
     user1.insert_ch_key(ch_id.clone(), aes_key_from_a);
@@ -80,22 +84,21 @@ async fn test_sak_ecies_get_msgs_and_send_msg() {
 
     let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
 
-    let (req_type_get_msgs, arg_get_msgs) = {
+    let req = {
         let mut arg = HashMap::with_capacity(2);
         arg.insert(String::from(ARG_CH_ID), DUMMY_CHANNEL_ID_1.to_string());
 
         let req_type = "get_msgs".to_string();
-        (req_type, arg)
+
+        CtrRequest {
+            req_type,
+            arg,
+            ctr_call_type: CtrCallType::Query,
+        }
     };
 
     let mut old_chat: Vec<String> = {
-        let json_response = call_contract(
-            ctr_addr.clone(),
-            req_type_get_msgs.clone(),
-            arg_get_msgs.clone(),
-        )
-        .await
-        .unwrap();
+        let json_response = call_contract(ctr_addr.clone(), req).await.unwrap();
         let query_res = json_response.result.unwrap().result;
 
         let messages: Vec<u8> =
@@ -149,13 +152,20 @@ async fn test_sak_ecies_get_msgs_and_send_msg() {
     println!(" ********************** get_msgs start ********************** ");
 
     {
-        let json_response = call_contract(
-            ctr_addr.clone(),
-            req_type_get_msgs.clone(),
-            arg_get_msgs.clone(),
-        )
-        .await
-        .unwrap();
+        let req = {
+            let mut arg = HashMap::with_capacity(2);
+            arg.insert(String::from(ARG_CH_ID), DUMMY_CHANNEL_ID_1.to_string());
+
+            let req_type = "get_msgs".to_string();
+
+            CtrRequest {
+                req_type,
+                arg,
+                ctr_call_type: CtrCallType::Query,
+            }
+        };
+
+        let json_response = call_contract(ctr_addr.clone(), req).await.unwrap();
         let query_res = json_response.result.unwrap().result;
 
         let messages: Vec<u8> =

@@ -20,7 +20,7 @@ pub struct AppState {
     scroll_messages_view: usize,
     pub is_loading: bool,
     pub ch_list_state: ListState,
-    pub ch_list: Vec<String>,
+    pub ch_list: Vec<ChannelState>,
     pub input_mode: InputMode,
     pub input_text: String,
     pub input_returned: String,
@@ -86,11 +86,23 @@ impl AppState {
         }
     }
 
-    pub fn set_some_state(&mut self, data: String) {
-        self.ch_list = match serde_json::from_str(&data) {
-            Ok(c) => c,
+    pub fn set_ch_list(&mut self, data: String) {
+        self.ch_list = match serde_json::from_str::<Vec<String>>(&data) {
+            Ok(c) => c
+                .into_iter()
+                .map(|m| ChannelState::new(m, String::from("")))
+                .collect(),
             Err(err) => {
                 panic!("Cannot Deserialize `data`:, err: {}", err);
+            }
+        };
+    }
+
+    pub fn set_chats(&mut self, data: String) {
+        self.chats = match serde_json::from_str::<Vec<String>>(&data) {
+            Ok(c) => c.into_iter().map(|m| ChatMessage::new(m)).collect(),
+            Err(err) => {
+                panic!("Cannot Deserialize `msg`:, err: {}", err);
             }
         };
     }
@@ -183,6 +195,21 @@ impl ChatMessage {
         ChatMessage {
             date: Local::now(),
             msg,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct ChannelState {
+    pub channel_name: String,
+    pub her_pk: String,
+}
+
+impl ChannelState {
+    pub fn new(channel_name: String, her_pk: String) -> ChannelState {
+        ChannelState {
+            channel_name,
+            her_pk,
         }
     }
 }

@@ -232,8 +232,7 @@ pub async fn send_tx_mint(
 
 pub async fn call_contract(
     ctr_addr: String,
-    req_type: String,
-    arg: HashMap<String, String>,
+    req: CtrRequest,
 ) -> Result<JsonResponse<QueryCtrResponse>, SaksahaSDKError> {
     let endpoint_test = "http://localhost:34418/rpc/v0";
 
@@ -241,12 +240,6 @@ pub async fn call_contract(
     let uri: Uri = { endpoint_test.parse().expect("URI should be made") };
 
     let body = {
-        let req = CtrRequest {
-            req_type: req_type.clone(),
-            arg,
-            ctr_call_type: CtrCallType::Query,
-        };
-
         let send_req = QueryCtrRequest { ctr_addr, req };
         let params = serde_json::to_string(&send_req)?.as_bytes().to_vec();
 
