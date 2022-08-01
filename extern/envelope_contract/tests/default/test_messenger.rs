@@ -1,4 +1,7 @@
-use super::{DUMMY_CHANNEL_ID_1, STORAGE_CAP};
+use super::{
+    ARG_DST_PK, DUMMY_CHANNEL_ID_1, DUMMY_CHANNEL_ID_2, ENVELOPE_CONTRACT,
+    STORAGE_CAP,
+};
 use sak_contract_std::{CtrCallType, Request, Storage};
 use sak_vm::{CtrFn, VM};
 use std::collections::HashMap;
@@ -22,6 +25,7 @@ fn make_dummy_storage(msgs: &Vec<String>) -> Storage {
     let mut ret = Storage::with_capacity(STORAGE_CAP);
 
     let key = String::from(DUMMY_CHANNEL_ID_1);
+
     let value = serde_json::to_string(&msgs).unwrap();
 
     ret.insert(key, value);
@@ -40,7 +44,7 @@ async fn test_messenger_init() {
     // init();
     let vm = VM::init().expect("VM should be initiated");
 
-    let ctr_wasm = include_bytes!("../sak_ctr_messenger.wasm").to_vec();
+    let ctr_wasm = ENVELOPE_CONTRACT.to_vec();
     let ctr_fn = CtrFn::Init;
 
     let messenger_states_invoked = vm
@@ -84,7 +88,7 @@ async fn test_messenger_get_msgs() {
         }
     };
 
-    let ctr_wasm = include_bytes!("../sak_ctr_messenger.wasm").to_vec();
+    let ctr_wasm = ENVELOPE_CONTRACT.to_vec();
     let ctr_fn = CtrFn::Query(request, messages_state);
 
     let messages_from_query = vm
@@ -121,7 +125,7 @@ async fn test_messenger_get_ch_list() {
         (req, storage)
     };
 
-    let ctr_wasm = include_bytes!("../sak_ctr_messenger.wasm").to_vec();
+    let ctr_wasm = ENVELOPE_CONTRACT.to_vec();
     let ctr_fn = CtrFn::Query(request, storage);
 
     let ch_list_serialized = match vm.invoke(ctr_wasm, ctr_fn) {
@@ -168,7 +172,7 @@ async fn test_messenger_open_channel() {
         (req, storage)
     };
 
-    let ctr_wasm = include_bytes!("../sak_ctr_messenger.wasm").to_vec();
+    let ctr_wasm = ENVELOPE_CONTRACT.to_vec();
     let ctr_fn = CtrFn::Execute(request, storage);
 
     let state_serialized = match vm.invoke(ctr_wasm, ctr_fn) {
@@ -210,7 +214,7 @@ async fn test_messenger_send_msg() {
         (req, storage)
     };
 
-    let ctr_wasm = include_bytes!("../sak_ctr_messenger.wasm").to_vec();
+    let ctr_wasm = ENVELOPE_CONTRACT.to_vec();
     let ctr_fn = CtrFn::Execute(request, storage);
 
     let chats_state_serialized = vm

@@ -51,32 +51,34 @@ fn get_val_type(raw_type: &&str) -> Result<ValType, PostProcessError> {
 fn parse_args(
     args: &[String],
 ) -> Result<Vec<(String, Vec<ValType>)>, PostProcessError> {
-    let mut transformations = vec![];
+    let transformations = args
+        .iter()
+        .map(|raw_input| {
+            let mut input_split: Vec<&str> =
+                raw_input.split_whitespace().collect();
 
-    for raw_input in args.iter() {
-        let mut input_split: Vec<&str> = raw_input.split_whitespace().collect();
+            let function_name = input_split.remove(0).to_string();
 
-        let function_name = input_split.remove(0).to_string();
+            let val_types = input_split
+                .iter()
+                .map(|input| {
+                    let val_type = get_val_type(&input)?;
+                    Ok(val_type)
+                })
+                .collect::<Result<Vec<ValType>, PostProcessError>>()?;
 
-        let val_types = input_split
-            .iter()
-            .map(|input| {
-                let val_type = get_val_type(&input)?;
-                Ok(val_type)
-            })
-            .collect::<Result<Vec<ValType>, PostProcessError>>()?;
-
-        if val_types.len() < 2 {
-            return Err(format!(
+            if val_types.len() < 2 {
+                return Err(format!(
                 "there must be at least two return types for function `{}`, \
                 else it's not a multi-value return",
                 function_name,
             )
-            .into());
-        }
+                .into());
+            }
 
-        transformations.push((function_name, val_types));
-    }
+            Ok((function_name, val_types))
+        })
+        .collect::<Result<Vec<(String, Vec<ValType>)>, PostProcessError>>()?;
 
     Ok(transformations)
 }

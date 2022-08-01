@@ -1,4 +1,8 @@
-use super::DUMMY_CHANNEL_ID_1;
+use super::{
+    ARG_DST_PK, DUMMY_CHANNEL_ID_1, DUMMY_CHANNEL_ID_2, ENVELOPE_CONTRACT,
+    STORAGE_CAP,
+};
+use crate::default::{ARG_CH_ID, ARG_SERIALIZED_INPUT};
 use sak_contract_std::{CtrCallType, Request, Storage};
 use sak_crypto::{
     PublicKey, SakKey, SecretKey, SigningKey, ToEncodedPoint, VerifyingKey,
@@ -61,18 +65,25 @@ pub(crate) fn check_channel(
 
     let open_ch_data_vec = storage.get(&my_pk_str).unwrap();
 
-    let [mut eph_pk_str_vec, mut ch_id_vec,mut  pk_sig_encrypted_vec,mut  open_ch_empty_vec]: [Vec<String>;
-        4] = [vec![], vec![], vec![], vec![]];
+    let mut eph_pk_str_vec = vec![];
+    let mut ch_id_vec = vec![];
+    let mut pk_sig_encrypted_vec = vec![];
+    let mut open_ch_empty_vec = vec![];
 
     let (eph_pk_str, ch_id, pk_sig_encrypted, open_ch_empty) = {
         let open_ch_data_vec: Vec<String> =
             serde_json::from_str(&open_ch_data_vec).unwrap();
+
         for data in open_ch_data_vec {
             let res: Vec<String> =
                 serde_json::from_str(&data.as_str()).unwrap();
+
             eph_pk_str_vec.push(res[0].clone());
+
             ch_id_vec.push(res[1].clone());
+
             pk_sig_encrypted_vec.push(res[2].clone());
+
             open_ch_empty_vec.push(res[3].clone());
         }
 
@@ -159,7 +170,7 @@ pub(crate) fn test_get_ch_list(
         req
     };
 
-    let ctr_wasm = include_bytes!("../sak_ctr_messenger.wasm").to_vec();
+    let ctr_wasm = ENVELOPE_CONTRACT.to_vec();
     let ctr_fn = CtrFn::Query(request, storage.clone());
 
     let ch_list_serialized = match vm.invoke(ctr_wasm, ctr_fn) {
@@ -171,6 +182,7 @@ pub(crate) fn test_get_ch_list(
         serde_json::from_str(&ch_list_serialized).unwrap();
 
     assert_eq!(vec![DUMMY_CHANNEL_ID_1], ch_list);
+
     ch_list
 }
 
@@ -217,7 +229,7 @@ pub(crate) fn send_msg(
             ctr_call_type: CtrCallType::Execute,
         };
 
-        let ctr_wasm = include_bytes!("../sak_ctr_messenger.wasm").to_vec();
+        let ctr_wasm = ENVELOPE_CONTRACT.to_vec();
         let ctr_fn = CtrFn::Execute(req, storage);
 
         let state_invoked = match vm.invoke(ctr_wasm, ctr_fn) {
@@ -328,7 +340,7 @@ async fn test_multi_clients_chat() {
     };
 
     let state_after_open_ch = {
-        let ctr_wasm = include_bytes!("../sak_ctr_messenger.wasm").to_vec();
+        let ctr_wasm = ENVELOPE_CONTRACT.to_vec();
         let ctr_fn = CtrFn::Execute(open_ch_req, storage.clone());
 
         let state_invoked = match vm.invoke(ctr_wasm, ctr_fn) {
@@ -394,7 +406,7 @@ async fn test_multi_clients_chat() {
             }
         };
 
-        let ctr_wasm = include_bytes!("../sak_ctr_messenger.wasm").to_vec();
+        let ctr_wasm = ENVELOPE_CONTRACT.to_vec();
         let ctr_fn = CtrFn::Query(request, state_send_msg.clone());
 
         let messages_from_query = vm
