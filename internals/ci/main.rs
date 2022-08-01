@@ -1,10 +1,27 @@
-mod ci_log;
-mod cli;
-mod script;
+mod paths;
 mod scripts;
+mod tasks;
+mod utils;
 
-fn main() {
-    let curr_dir = match std::env::current_dir() {
+use crate::{
+    paths::Paths,
+    scripts::{build, dev, test},
+};
+
+pub(crate) type CIError = Box<dyn std::error::Error + Send + Sync>;
+
+fn main() -> Result<(), CIError> {
+    validate_curr_dir()?;
+
+    run_script()?;
+
+    Ok(())
+}
+
+fn validate_curr_dir() -> Result<(), CIError> {
+    let curr_dir = std::env::current_dir()?;
+
+    let curr_dir_str = match std::env::current_dir() {
         Ok(cd) => cd
             .into_os_string()
             .into_string()
@@ -32,20 +49,48 @@ fn main() {
     log!(
         "CI is starting, project root: {}, current working directory: {}",
         project_root,
-        curr_dir,
+        curr_dir_str,
     );
 
-    if project_root != curr_dir {
+    if project_root != curr_dir_str {
         log!(
             "Warning! You may be running this script not from the project \
             root with `ci` script"
         );
     }
 
-    match cli::run_app() {
-        Ok(_) => (),
-        Err(err) => {
-            log!("Error running script, err: {}", err);
+    Paths::init(curr_dir)?;
+
+    Ok(())
+}
+
+fn run_script() -> Result<(), CIError> {
+    let mut args = std::env::args();
+
+    let second_arg = args
+        .nth(1)
+        .expect("CI needs a second argument, the name of script to run");
+
+    log!("script name (2nd arg): {:?}", second_arg);
+
+    match second_arg.as_str() {
+        "dev" => {
+            dev::run(args)?;
+        }
+        "build" => {
+            build::run(args)?;
+        }
+        "test" => {
+            test::run(args)?;
+        }
+        _ => {
+            return Err(format!(
+                "Could not find the script of name: {}",
+                second_arg,
+            )
+            .into());
         }
     };
+
+    Ok(())
 }
