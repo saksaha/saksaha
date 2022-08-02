@@ -1,4 +1,4 @@
-use crate::node::msg_handler;
+use super::msg_handle;
 use crate::{machine::Machine, node::event_handle};
 use futures::{SinkExt, StreamExt};
 use log::{debug, error, info, warn};
@@ -48,12 +48,10 @@ impl PeerNode {
                     };
                 },
                 maybe_msg = conn.socket.next() => {
-                    println!("22, msg: {:?}", maybe_msg);
-
                     match maybe_msg {
                         Some(maybe_msg) => match maybe_msg {
                             Ok(msg) => {
-                                let _ = msg_handler::handle_msg(
+                                let _ = msg_handle::handle_msg(
                                     msg,
                                     public_key,
                                     &self.machine,
