@@ -9,7 +9,7 @@ use hyper::{Body, Request, Response, StatusCode};
 use log::warn;
 use sak_contract_std::Request as CtrRequest;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
+use std::{fmt::Error, sync::Arc};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub(crate) struct AuthPathRequest {
@@ -18,7 +18,7 @@ pub(crate) struct AuthPathRequest {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub(crate) struct AuthPathResponse {
-    pub result: Vec<Option<[u8; 32]>>,
+    pub result: Vec<Option<([u8; 32], bool)>>,
 }
 
 pub(in crate::rpc) async fn get_auth_path(
@@ -48,9 +48,45 @@ pub(in crate::rpc) async fn get_auth_path(
             .get_merkle_node(&loc)
             .await
         {
-            Ok(n) => {
-                auth_path.push(n);
-            }
+            Ok(n) => match n {
+                Some(v) => {
+                    let split = loc.split("_");
+
+                    let vec: Vec<&str> = split.collect();
+
+                    let direction = vec[vec.len() - 1];
+
+                    let direction = direction.parse::<u128>();
+
+                    let direction = match direction {
+                        Ok(d) => d,
+                        Err(err) => {
+                            return router::make_error_response(
+                                route_state.resp,
+                                Some(route_state.id),
+                                err.into(),
+                            );
+                        }
+                    };
+
+                    let direction: bool = {
+                        if direction % 2 == 1 {
+                            false
+                        } else {
+                            true
+                        }
+                    };
+
+                    auth_path.push(Some((v, direction)));
+                }
+                None => {
+                    return router::make_error_response(
+                        route_state.resp,
+                        Some(route_state.id),
+                        format!("cannot get merkle node value").into(),
+                    );
+                }
+            },
             Err(err) => {
                 return router::make_error_response(
                     route_state.resp,

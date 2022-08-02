@@ -37,14 +37,14 @@ impl LedgerDBSchema {
 
     pub(crate) fn get_cm_by_idx(
         &self,
-        db: &DB,
+        // db: &DB,
         cm_idx: &u128,
     ) -> Result<Option<String>, LedgerError> {
-        let cf = self.make_cf_handle(db, cfs::CM)?;
+        let cf = self.make_cf_handle(&self.db, cfs::CM)?;
 
         let key = cm_idx.to_be_bytes();
 
-        match db.get_cf(&cf, key)? {
+        match self.db.get_cf(&cf, key)? {
             Some(v) => {
                 let str = String::from_utf8(v)?;
 

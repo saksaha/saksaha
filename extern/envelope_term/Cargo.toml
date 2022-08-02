@@ -28,6 +28,9 @@ chrono = "0.4"
 
 [dev-dependencies]
 sak_test_utils = { path = "../../source/sak_test_utils" }
+sak_dist_ledger = { path = "../../source/sak_dist_ledger" }
+saksaha_network = { path = "../../source/saksaha_network" }
+async-trait = "0.1.56"
 
 [[bin]]
 name = "envelope_term"

@@ -5,6 +5,7 @@ use sak_contract_std::{CtrCallType, Request as CtrRequest};
 use sak_crypto::{
     PublicKey, SakKey, SecretKey, SigningKey, ToEncodedPoint, VerifyingKey,
 };
+use sak_types::U8Array;
 use std::collections::HashMap;
 
 #[tokio::test(flavor = "multi_thread")]
@@ -59,6 +60,7 @@ async fn test_sak_sdk_get_msgs() {
 #[tokio::test(flavor = "multi_thread")]
 async fn test_sak_sdk_send_tx_mint() {
     let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
+    let req_type = String::from("open_channel");
 
     let mut arg = HashMap::with_capacity(2);
     let open_ch_input = {
@@ -74,8 +76,18 @@ async fn test_sak_sdk_send_tx_mint() {
     arg.insert(String::from("dst_pk"), "her_pk".to_string());
     arg.insert(String::from("serialized_input"), open_ch_input);
 
-    let req_type = String::from("open_channel");
-    let json_response = send_tx_mint(ctr_addr, req_type, arg).await.unwrap();
+    let json_response = send_tx_mint(
+        // Some(ctr_addr),
+        None,
+        req_type,
+        arg,
+        U8Array::new_empty_32(), // cm
+        U8Array::new_empty_32(), // v
+        U8Array::new_empty_32(), // k
+        U8Array::new_empty_32(), // s
+    )
+    .await
+    .unwrap();
     let result = json_response.result.unwrap();
 
     assert_eq!("success", result);
@@ -84,6 +96,7 @@ async fn test_sak_sdk_send_tx_mint() {
 #[tokio::test(flavor = "multi_thread")]
 async fn test_sak_sdk_send_tx_pour_for_open_channel() {
     let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
+    let req_type = String::from("open_channel");
 
     let mut arg = HashMap::with_capacity(2);
     let open_ch_input = {
@@ -99,7 +112,6 @@ async fn test_sak_sdk_send_tx_pour_for_open_channel() {
     arg.insert(String::from("dst_pk"), "her_pk".to_string());
     arg.insert(String::from("serialized_input"), open_ch_input);
 
-    let req_type = String::from("open_channel");
     let json_response = send_tx_pour(ctr_addr, req_type, arg).await.unwrap();
     let result = json_response.result.unwrap();
 

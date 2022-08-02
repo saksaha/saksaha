@@ -178,9 +178,14 @@ pub async fn send_tx_pour(
 }
 
 pub async fn send_tx_mint(
-    ctr_addr: String,
+    ctr_addr: Option<String>,
     req_type: String,
     arg: HashMap<String, String>,
+
+    cm: [u8; 32],
+    v: [u8; 32],
+    k: [u8; 32],
+    s: [u8; 32],
 ) -> Result<JsonResponse<String>, SaksahaSDKError> {
     let endpoint_test = "http://localhost:34418/rpc/v0";
 
@@ -194,19 +199,15 @@ pub async fn send_tx_mint(
             ctr_call_type: CtrCallType::Execute,
         };
 
-        // ***** Need to change dummy values to real values
-
-        let send_req = SendPourTxRequest::new(
+        let send_req = SendMintTxRequest::new(
             String::from("created_at_1"),
             serde_json::to_vec(&req)?,
             String::from("author_sig_1"),
-            Some(ctr_addr),
-            vec![11, 11, 11],
-            U8Array::new_empty_32(),
-            U8Array::new_empty_32(),
-            U8Array::new_empty_32(),
-            U8Array::new_empty_32(),
-            U8Array::new_empty_32(),
+            ctr_addr,
+            cm,
+            v,
+            k,
+            s,
         );
 
         let params = serde_json::to_string(&send_req)?.as_bytes().to_vec();
@@ -280,6 +281,7 @@ pub async fn call_contract(
 }
 
 pub async fn generate_proof_1_to_2(
+    // coin_1_old: OldCoin,
     coin_1_old: OldCoin,
     coin_1_new: NewCoin,
     coin_2_new: NewCoin,
@@ -340,7 +342,7 @@ pub struct AuthPathRequest {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct AuthPathResponse {
-    pub result: Vec<Option<[u8; 32]>>,
+    pub result: Vec<Option<([u8; 32], bool)>>,
 }
 
 pub async fn get_auth_path(
@@ -369,6 +371,7 @@ pub async fn get_auth_path(
                 location: merkle_node_locations,
             };
             let params = serde_json::to_string(&send_req)?.as_bytes().to_vec();
+            println!("{:?}", params);
 
             let json_request = JsonRequest {
                 jsonrpc: "2.0".to_string(),
@@ -398,3 +401,46 @@ pub async fn get_auth_path(
         Ok(json_response)
     }
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GenProofRequest {
+    // coin_1_old
+    pub addr_pk_1_old: [u8; 32],
+    pub addr_sk_1_old: [u8; 32],
+    pub rho_1_old: [u8; 32],
+    pub r_1_old: [u8; 32],
+    pub s_1_old: [u8; 32],
+    pub v_1_old: [u8; 32],
+    pub cm_1_old: [u8; 32],
+    pub auth_path_1_old: [Option<([u8; 32], bool)>; CM_TREE_DEPTH as usize],
+
+    // coin_1_new
+    pub addr_pk_1_new: [u8; 32],
+    pub rho_1_new: [u8; 32],
+    pub r_1_new: [u8; 32],
+    pub s_1_new: [u8; 32],
+    pub v_1_new: [u8; 32],
+
+    // coin_2_new
+    pub addr_pk_2_new: [u8; 32],
+    pub rho_2_new: [u8; 32],
+    pub r_2_new: [u8; 32],
+    pub s_2_new: [u8; 32],
+    pub v_2_new: [u8; 32],
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GenProofResponse {
+    pub pi: Vec<Option<[u8; 32]>>,
+}
+
+// pub async fn gen_proof(
+//     coin_1_old: OldCoin,
+//     coin_1_new: NewCoin,
+//     coin_2_new: NewCoin,
+// ) -> Result<JsonResponse<GenProofRequest>, SaksahaSDKError> {
+//     let hasher = Hasher::new();
+//     let constants = hasher.get_mimc_constants().to_vec();
+
+//     let de_params = sak_proofs::get_mimc_params_1_to_2(&constants);
+// }

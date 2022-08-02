@@ -26,6 +26,13 @@ impl DistLedgerApis {
         self.ledger_db.schema.get_merkle_node(location)
     }
 
+    pub async fn get_cm_by_idx(
+        &self,
+        cm_idx: &u128,
+    ) -> Result<Option<String>, LedgerError> {
+        self.ledger_db.schema.get_cm_by_idx(cm_idx)
+    }
+
     pub async fn get_latest_block_hash(
         &self,
     ) -> Result<Option<(u128, String)>, LedgerError> {

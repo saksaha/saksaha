@@ -32,6 +32,8 @@ async fn test_call_get_block_with_good_params() {
         block_hash.unwrap()
     };
 
+    println!("original_block_hash: {:?}", original_block_hash);
+
     let uri: Uri = {
         let u = format!("http://localhost:{}", rpc_socket_addr.port());
 
@@ -76,6 +78,7 @@ async fn test_call_get_block_with_good_params() {
         serde_json::from_slice::<JsonResponse<GetBlockResponse>>(&b).unwrap();
 
     let result = json_response.result.unwrap();
+    println!("[+] result: {:?}", result);
 
     let block_acquired = result.block.unwrap();
 
