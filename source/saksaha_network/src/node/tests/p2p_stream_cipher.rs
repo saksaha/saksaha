@@ -2,8 +2,6 @@ use super::utils;
 use crate::{machine::Machine, node::LocalNode, p2p::P2PHost};
 use sak_p2p_id::Identity;
 use sak_p2p_peertable::PeerTable;
-use sak_p2p_transport::{Msg, TxHashSynMsg};
-use sak_types::TxCandidate;
 use std::{sync::Arc, time::Duration};
 
 #[tokio::test(flavor = "multi_thread")]

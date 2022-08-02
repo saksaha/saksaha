@@ -7,10 +7,7 @@ use crate::{
 use hyper::{Body, Client, Method, Request, Uri};
 use sak_contract_std::{CtrCallType, Request as CtrRequest};
 use sak_rpc_interface::{JsonRequest, JsonResponse};
-<<<<<<< HEAD
-=======
 use sak_types::PourTxCandidate;
->>>>>>> dev
 use std::collections::HashMap;
 use std::time::Duration;
 

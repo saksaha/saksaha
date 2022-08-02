@@ -1,11 +1,18 @@
-use crate::log;
 use crate::utils::Kommand;
 use crate::CIError;
+use crate::{log, tasks};
 use colored::Colorize;
 use std::env::Args;
 use std::process::{Command as Cmd, Stdio};
 
 pub(crate) fn run(args: Args) -> Result<(), CIError> {
+    if !tasks::naively_check_if_prebuild_has_done()? {
+        log!("prebuild has not been done yet. Will do");
+
+        tasks::build_system_contracts()?;
+        tasks::build_3rd_party_contracts()?;
+    }
+
     let program = "cargo";
 
     let cli_args: Vec<String> = args.map(|a| a.to_string()).collect();

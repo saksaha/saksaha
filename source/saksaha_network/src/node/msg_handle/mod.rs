@@ -1,14 +1,11 @@
 use crate::{machine::Machine, SaksahaError};
-use futures::{SinkExt, StreamExt};
+use futures::SinkExt;
 use log::{debug, info, warn};
 use sak_p2p_transport::{
     BlockHashSynMsg, BlockSynMsg, Msg, TxHashSynMsg, TxSynMsg,
     UpgradedConnection,
 };
-use std::{sync::Arc, time::Duration};
 use tokio::sync::RwLockWriteGuard;
-
-const RESPONSE_TIMEOUT: u64 = 1000;
 
 pub(crate) async fn handle_msg<'a>(
     msg: Msg,
@@ -25,15 +22,8 @@ pub(crate) async fn handle_msg<'a>(
             handle_tx_hash_ack(public_key, tx_hash_ack, machine, &mut conn)
                 .await;
         }
-        Msg::TxSyn(h) => {
-            info!("Handling TxSyn msg, src public_key: {}", public_key);
-
-            machine
-                .blockchain
-                .dist_ledger
-                .apis
-                .insert_into_pool(h.tx_candidates)
-                .await;
+        Msg::TxSyn(tx_syn) => {
+            handle_tx_syn(tx_syn, machine).await?;
         }
         Msg::BlockHashSyn(block_hash_syn_msg) => {
             handle_block_hash_syn(block_hash_syn_msg, machine, &mut conn)
@@ -83,6 +73,20 @@ async fn handle_tx_hash_ack(
     }
 }
 
+async fn handle_tx_syn(
+    tx_syn: TxSynMsg,
+    machine: &Machine,
+) -> Result<(), SaksahaError> {
+    machine
+        .blockchain
+        .dist_ledger
+        .apis
+        .insert_into_pool(tx_syn.tx_candidates)
+        .await;
+
+    Ok(())
+}
+
 async fn handle_tx_hash_syn<'a>(
     public_key: &str,
     tx_hash_syn_msg: TxHashSynMsg,
@@ -108,50 +112,6 @@ async fn handle_tx_hash_syn<'a>(
             warn!("Failed to send requested tx, err: {}", err,);
         }
     };
-
-    // let resp_timeout =
-    //     tokio::time::sleep(Duration::from_millis(RESPONSE_TIMEOUT));
-
-    // let _txs = tokio::select! {
-    //     _ = resp_timeout => {
-    //         warn!(
-    //             "Peer did not respond in time, dst public_key: {}",
-    //             public_key,
-    //         );
-
-    //         return;
-    //     },
-    //     resp = conn.socket.next() => {
-    //         match resp {
-    //             Some(maybe_msg) => match maybe_msg {
-    //                 Ok(msg) => match msg {
-    //                     Msg::TxSyn(h) => {
-    //                         info!(
-    //                             "Handling TxSyn msg, src public_key: {}",
-    //                             public_key
-    //                         );
-
-    //                         machine.blockchain.dist_ledger
-    //                             .apis
-    //                             .insert_into_pool(h.tx_candidates).await;
-    //                     }
-    //                     other_msg => {
-    //                         warn!(
-    //                             "Received an invalid type message, msg: {:?}",
-    //                             other_msg,
-    //                         );
-    //                     }
-    //                 },
-    //                 Err(err) => {
-    //                     warn!("Failed to parse the msg, err: {}", err);
-    //                 }
-    //             },
-    //             None => {
-    //                 warn!("Received an invalid data stream");
-    //             }
-    //         };
-    //     }
-    // };
 }
 
 async fn handle_block_hash_syn<'a>(

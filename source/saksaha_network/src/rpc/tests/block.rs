@@ -1,10 +1,5 @@
 use super::utils;
-<<<<<<< HEAD
-use sak_rpc_interface::{JsonRequest, JsonResponse};
-use crate::rpc::routes::v0:: GetBlockResponse;
-=======
 use crate::rpc::routes::v0::{GetBlockListResponse, GetBlockResponse};
->>>>>>> dev
 use hyper::{Body, Client, Method, Request, Uri};
 use sak_rpc_interface::{JsonRequest, JsonResponse};
 use sak_types::BlockHash;
