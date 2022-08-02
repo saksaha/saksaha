@@ -66,7 +66,7 @@ impl IoAsyncHandler {
         info!("😴 Receive data!! Set some state with data {:?}...", data);
         // Notify the app for having slept
         let mut app = self.app.lock().await;
-        app.set_ch_list(data);
+        app.set_ch_list(data)?;
 
         Ok(())
     }

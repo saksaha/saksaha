@@ -283,14 +283,12 @@ impl App {
                 saksaha::query_ctr(ENVELOPE_CTR_ADDR.into(), req).await
             {
                 if let Some(d) = r.result {
-                    warn!("d.result : {:?}", d.result);
                     self.dispatch(IoEvent::Receive(d.result)).await;
                 }
             }
         } else {
-            let temp: String = String::from("[]");
-            // self.state.ch_list
-            self.dispatch(IoEvent::Receive(temp)).await;
+            let empty_vec: String = String::from("[]");
+            self.dispatch(IoEvent::Receive(empty_vec)).await;
         }
 
         Ok(())
