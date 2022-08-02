@@ -26,9 +26,11 @@ impl DistLedgerApis {
 
         let ctr_fn = CtrFn::Query(request, ctr_state);
 
+        println!("ctr_fn : {:?}", ctr_fn);
+
         let ret = self.vm.invoke(ctr_wasm, ctr_fn)?;
 
-        info!("invoke query ctr, ctr_state: {:?}", ret);
+        info!("invoke query ctr result : {:?}", ret);
 
         Ok(ret)
     }
@@ -53,9 +55,11 @@ impl DistLedgerApis {
 
         let ctr_fn = CtrFn::Execute(request, ctr_state);
 
+        println!("ctr_fn : {:?}", ctr_fn);
+
         let ret = self.vm.invoke(ctr_wasm, ctr_fn)?;
 
-        info!("invoke execute ctr, ctr_state: {:?}", ret);
+        info!("invoke execute ctr result, ctr_state: {:?}", ret);
 
         Ok(ret)
     }

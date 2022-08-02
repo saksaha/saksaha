@@ -24,7 +24,7 @@ async fn test_sak_sdk_get_ch_list() {
         }
     };
 
-    let json_response = call_contract(ctr_addr, req).await.unwrap();
+    let json_response = query_ctr(ctr_addr, req).await.unwrap();
     let Query_res = json_response.result.unwrap();
     let ch_list: Vec<String> = serde_json::from_str(&Query_res.result).unwrap();
 
@@ -48,7 +48,7 @@ async fn test_sak_sdk_get_msgs() {
         }
     };
 
-    let json_response = call_contract(ctr_addr, req).await.unwrap();
+    let json_response = query_ctr(ctr_addr, req).await.unwrap();
     let query_res = json_response.result.unwrap();
     println!(" query_res : {:?}", query_res);
     let get_msgs: String = serde_json::from_str(&query_res.result).unwrap();

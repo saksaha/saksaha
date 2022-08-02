@@ -1,4 +1,5 @@
 mod app;
+mod db;
 mod inputs;
 mod io;
 mod pconfig;

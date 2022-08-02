@@ -32,7 +32,9 @@ pub fn run(term_args: TermArgs) -> Result<(), EnvelopeError> {
 
             // We need to share the App between thread
             let app = {
-                let a = App::new(sync_io_tx.clone(), &term_args.user_prefix);
+                let a = App::init(sync_io_tx.clone(), &term_args.user_prefix)
+                    .await
+                    .expect("App should be initialized");
 
                 Arc::new(Mutex::new(a))
             };

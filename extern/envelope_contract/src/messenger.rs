@@ -102,13 +102,6 @@ fn handle_get_ch_list(storage: Storage, args: ExecuteArgs) -> String {
     let mut ch_list = vec![];
 
     match storage.get(dst_pk) {
-        Some(v) => v,
-        None => {
-            panic!("ch_list should be obtained");
-        }
-    };
-
-    match storage.get(dst_pk) {
         Some(o) => {
             let open_ch_data: Vec<String> =
                 serde_json::from_str(&o.as_str()).unwrap();

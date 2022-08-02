@@ -42,8 +42,6 @@ where
                 }
             };
 
-            println!("request bytes: {:?}", rb);
-
             let json_request: JsonRequest = match serde_json::from_slice(&rb) {
                 Ok(r) => r,
                 Err(err) => {
@@ -67,7 +65,6 @@ where
             if let Some(handler) = route_map.get(json_request.method.as_str()) {
                 let resp = handler(route_state, json_request.params, ctx).await;
 
-                println!("1313");
                 Ok(resp)
             } else {
                 return Ok(response::make_not_found_response(route_state));
