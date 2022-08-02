@@ -89,7 +89,7 @@ async fn test_call_contract() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
-async fn test_rpc_reqeust_envelope_send_pour_tx() {
+async fn test_rpc_request_envelope_send_pour_tx() {
     sak_test_utils::init_test_log();
     sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
 
