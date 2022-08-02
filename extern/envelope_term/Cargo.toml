@@ -13,6 +13,7 @@ sak_contract_std = { path = "../../source/sak_contract_std" }
 sak_crypto = { path = "../../source/sak_crypto" }
 sak_types = { path = "../../source/sak_types" }
 sak_kv_db = { path = "../../source/sak_kv_db" }
+sak_proofs = { path = "../../source/sak_proofs" }
 saksaha = { path = "../saksaha_rs" }
 log = "0.4"
 tui = "0.18.0"

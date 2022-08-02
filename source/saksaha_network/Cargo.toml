@@ -28,12 +28,10 @@ sak_contract_std = { path = "../sak_contract_std" }
 clap = { version = "3.1.6", features = ["cargo"] }
 directories = "3.0"
 bytes = "1"
-rand_core = "0.6.3"
 serde = { version = "1.0.130", features = ["derive"] }
 serde_json = "1.0.59"
 serde_yaml = "0.8"
 serde_bytes = "0.11.6"
-rand = "0.8.4"
 tokio = { version = "1.12.0", features = ["full"] }
 tokio-util = { version = "0.7.2", features = ["full"] }
 hyper = { version = "0.14", features = ["full"] }
@@ -52,10 +50,6 @@ wasmtime = "0.37.0"
 
 [dev-dependencies]
 sak_test_utils = { path = "../sak_test_utils" }
-
-[build-dependencies]
-chrono = "0.4"
-sak_wasm_postprocess = { path = "../sak_wasm_postprocess" }
 
 [[bin]]
 name = "sak"

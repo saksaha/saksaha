@@ -7,12 +7,12 @@ pub(crate) const VALIDATOR_SIG: &str = "validator_sig";
 pub(crate) const VALIDATOR_CTR_ADDR: &'static str = "validator_contract_addr";
 
 pub(crate) const VALIDATOR: &[u8] =
-    include_bytes!("../../../../sak_vm/src/v0/sak_ctrt_validator.wasm");
+    include_bytes!("../../../../prebuild/sak_validator.postprocess.wasm");
 
 pub(crate) const ENVELOPE_CTR_ADDR: &'static str = "envelope_contract_addr";
 
 pub(crate) const ENVELOPE: &[u8] =
-    include_bytes!("../../../../sak_vm/src/v0/sak_ctr_messenger.wasm");
+    include_bytes!("../../../../prebuild/envelope_contract.postprocess.wasm");
 
 pub(crate) struct GenesisBlock {
     pub(crate) block_candidate: BlockCandidate,
