@@ -5,20 +5,20 @@ use crate::{
     },
     system::SystemHandle,
 };
-use hyper::{Body, Request, Response, StatusCode};
+use hyper::{Body, Response};
 use log::warn;
-use sak_contract_std::Request as CtrRequest;
+use sak_types::Block;
 use serde::{Deserialize, Serialize};
-use std::{fmt::Error, sync::Arc};
+use std::sync::Arc;
 
 #[derive(Serialize, Deserialize, Debug)]
-pub(crate) struct AuthPathRequest {
-    pub location: Vec<String>,
+pub(in crate::rpc) struct GetAuthPathRequest {
+    pub cm_idx: u128,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub(crate) struct AuthPathResponse {
-    pub result: Vec<Option<([u8; 32], bool)>>,
+pub(in crate::rpc) struct GetAuthPathResponse {
+    pub auth_path: Vec<([u8; 32], bool)>,
 }
 
 pub(in crate::rpc) async fn get_auth_path(
@@ -32,73 +32,28 @@ pub(in crate::rpc) async fn get_auth_path(
         "get_auth_path should contain params",
     );
 
-    let rb: AuthPathRequest =
+    let rb: GetAuthPathRequest =
         router::require_params_parsed!(route_state, &params);
 
-    let locations = rb.location;
+    match sys_handle
+        .machine
+        .blockchain
+        .dist_ledger
+        .apis
+        .get_auth_path(&rb.cm_idx)
+        .await
+    {
+        Ok(auth_path) => {
+            let get_block_resp = GetAuthPathResponse { auth_path };
 
-    let mut auth_path = Vec::new();
-
-    for loc in locations {
-        match sys_handle
-            .machine
-            .blockchain
-            .dist_ledger
-            .apis
-            .get_merkle_node(&loc)
-            .await
-        {
-            Ok(n) => match n {
-                Some(v) => {
-                    let split = loc.split("_");
-
-                    let vec: Vec<&str> = split.collect();
-
-                    let direction = vec[vec.len() - 1];
-
-                    let direction = direction.parse::<u128>();
-
-                    let direction = match direction {
-                        Ok(d) => d,
-                        Err(err) => {
-                            return router::make_error_response(
-                                route_state.resp,
-                                Some(route_state.id),
-                                err.into(),
-                            );
-                        }
-                    };
-
-                    let direction: bool = {
-                        if direction % 2 == 1 {
-                            false
-                        } else {
-                            true
-                        }
-                    };
-
-                    auth_path.push(Some((v, direction)));
-                }
-                None => {
-                    return router::make_error_response(
-                        route_state.resp,
-                        Some(route_state.id),
-                        format!("cannot get merkle node value").into(),
-                    );
-                }
-            },
-            Err(err) => {
-                return router::make_error_response(
-                    route_state.resp,
-                    Some(route_state.id),
-                    err.into(),
-                );
-            }
+            return router::make_success_response(route_state, get_block_resp);
+        }
+        Err(err) => {
+            return router::make_error_response(
+                route_state.resp,
+                Some(route_state.id),
+                err.into(),
+            );
         }
     }
-
-    router::make_success_response(
-        route_state,
-        AuthPathResponse { result: auth_path },
-    )
 }

@@ -8,7 +8,7 @@ use sak_crypto::Scalar;
 pub const CM_TREE_DEPTH: u32 = 4;
 pub const CM_TREE_CAPACITY: usize = 2_usize.pow(CM_TREE_DEPTH as u32);
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct OldCoin {
     pub addr_pk: Option<Scalar>,
 
@@ -49,6 +49,7 @@ impl OldCoin {
     }
 }
 
+#[derive(Debug, Copy, Clone)]
 pub struct NewCoin {
     pub addr_pk: Option<Scalar>,
 

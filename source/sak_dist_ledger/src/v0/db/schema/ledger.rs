@@ -16,21 +16,21 @@ impl LedgerDBSchema {
         &self,
         // db: &DB,
         key: &String,
-    ) -> Result<Option<[u8; 32]>, LedgerError> {
+    ) -> Result<[u8; 32], LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::MERKLE_NODE)?;
 
         match self.db.get_cf(&cf, key)? {
             Some(v) => {
                 let arr = sak_kv_db::convert_vec_into_u8_32(v)?;
 
-                return Ok(Some(arr));
+                return Ok(arr);
             }
             None => {
                 let zero_value = {
                     let arr = U8Array::new_empty_32();
                     ScalarExt::parse_arr(&arr).unwrap()
                 };
-                return Ok(Some(zero_value.to_bytes()));
+                return Ok(zero_value.to_bytes());
             }
         }
     }

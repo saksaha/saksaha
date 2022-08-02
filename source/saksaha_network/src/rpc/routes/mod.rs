@@ -49,12 +49,6 @@ pub(in crate::rpc) fn get_routes(
                 Box::pin(v0::query_ctr(route_state, params, sys_handle))
             }),
         },
-        Path {
-            method: "get_auth_path",
-            handler: Box::new(|route_state, params, sys_handle| {
-                Box::pin(v0::get_auth_path(route_state, params, sys_handle))
-            }),
-        },
     ];
 
     let mut map = HashMap::new();

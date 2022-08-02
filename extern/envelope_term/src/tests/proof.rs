@@ -1,8 +1,60 @@
+use async_trait::async_trait;
 use sak_crypto::{Hasher, Scalar, ScalarExt};
+use sak_dist_ledger::{
+    Consensus, ConsensusError, DistLedger, DistLedgerApis, DistLedgerArgs,
+};
 use sak_proofs::{MerkleTree, NewCoin, OldCoin, CM_TREE_DEPTH};
-use sak_types::U8Array;
-use saksaha::{generate_proof_1_to_2, get_auth_path, send_tx_mint};
+use sak_types::{BlockCandidate, TxCandidate, U8Array};
+use saksaha::{
+    generate_proof_1_to_2, get_auth_path, send_tx_mint, verify_proof_1_to_2,
+};
 use std::{collections::HashMap, time::Duration};
+
+pub struct DummyPos {}
+
+#[async_trait]
+impl Consensus for DummyPos {
+    async fn do_consensus(
+        &self,
+        _dist_ledger_apis: &DistLedgerApis,
+        _txs: Vec<TxCandidate>,
+    ) -> Result<BlockCandidate, ConsensusError> {
+        return Err("awel".into());
+    }
+}
+
+pub(crate) fn make_dummy_genesis_block(tx: TxCandidate) -> BlockCandidate {
+    let genesis_block = BlockCandidate {
+        validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
+        tx_candidates: vec![tx],
+        witness_sigs: vec![String::from("1"), String::from("2")],
+        created_at: String::from("2022061515340000"),
+    };
+
+    genesis_block
+}
+
+pub(crate) fn make_dummy_pos() -> Box<DummyPos> {
+    Box::new(DummyPos {})
+}
+
+pub(crate) async fn make_dist_ledger(block: BlockCandidate) -> DistLedger {
+    let pos = make_dummy_pos();
+
+    let dist_ledger_args = DistLedgerArgs {
+        app_prefix: String::from("test"),
+        tx_sync_interval: None,
+        genesis_block: Some(block),
+        consensus: pos,
+        block_sync_interval: None,
+    };
+
+    let dist_ledger = DistLedger::init(dist_ledger_args)
+        .await
+        .expect("Blockchain should be initialized");
+
+    dist_ledger
+}
 
 pub struct Coin {
     pub addr_sk: [u8; 32],
@@ -15,7 +67,7 @@ pub struct Coin {
     pub cm: [u8; 32],
 }
 
-fn generate_a_coin(value: u64) -> Coin {
+fn generate_a_dummy_coin(value: u64) -> Coin {
     let hasher = Hasher::new();
 
     let addr_sk = U8Array::from_int(sak_crypto::rand() as u64).to_owned();
@@ -63,60 +115,42 @@ async fn test_generate_a_proof() {
     sak_test_utils::init_test_log();
     sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
 
-    // 1. User mint a new coin (coin_1_old)
-    let coin_1_old = generate_a_coin(100);
+    let coin_1_old = generate_a_dummy_coin(100);
 
-    // 2. send tx_mint to the blockchain
-    {
-        let ctr_addr: Option<String> = None;
-        let req_type = String::from("");
-        let arg: HashMap<String, String> = HashMap::new();
-
-        let resp = send_tx_mint(
-            ctr_addr,
-            req_type,
-            arg,
-            coin_1_old.cm,
-            coin_1_old.v,
-            coin_1_old.k,
-            coin_1_old.s,
-        )
-        .await
-        .unwrap();
-
-        println!("[+] Response: {:#?}", resp);
-
-        println!("[+] Sleep 6 seconds...");
-        tokio::time::sleep(Duration::from_secs(6)).await;
-    }
-
-    // 3. generate 2 new coins (coin_1_new, coin_2_new)
-    let coin_1_new = generate_a_coin(60);
-
-    let coin_2_new = generate_a_coin(40);
+    let tx = TxCandidate::new_dummy_mint_custom(
+        coin_1_old.cm,
+        coin_1_old.v,
+        coin_1_old.k,
+        coin_1_old.s,
+    );
+    let genesis_block = make_dummy_genesis_block(tx);
+    let dist_ledger = make_dist_ledger(genesis_block).await;
 
     // 4. generate a proof for tx_pour
-    let cm_1_old_idx: u128 = 2;
+    let cm_1_old_idx: u128 = 0;
 
-    let auth_path_json_resp = get_auth_path(cm_1_old_idx).await.unwrap();
+    let merkle_tree = MerkleTree::new(CM_TREE_DEPTH as u32);
+    let auth_path_idx = merkle_tree.generate_auth_paths(cm_1_old_idx);
 
-    let auth_path = auth_path_json_resp.result.unwrap().result;
+    let mut auth_path =
+        [Some((Scalar::default(), false)); CM_TREE_DEPTH as usize];
 
-    let auth_path: Vec<Option<(Scalar, bool)>> = auth_path
-        .into_iter()
-        .map(|e| match e {
-            Some(n) => {
-                let node_value = n.0;
-                Some((ScalarExt::parse_arr(&node_value).unwrap(), n.1))
-            }
-            None => {
-                panic!()
-            }
-        })
-        .collect();
+    for (idx, p) in auth_path_idx.iter().enumerate() {
+        if idx >= auth_path.len() {
+            panic!("Invalid assignment to a fixed sized array, idx: {}", idx);
+        }
 
-    let auth_path: [Option<(Scalar, bool)>; CM_TREE_DEPTH as usize] =
-        auth_path.try_into().unwrap();
+        let key = format!("{}_{}", idx, p.idx);
+
+        let merkle_node = dist_ledger.apis.get_merkle_node(&key).await.unwrap();
+
+        let merkle_node = ScalarExt::parse_arr(&merkle_node).unwrap();
+
+        auth_path[idx] = Some((merkle_node, p.direction));
+    }
+
+    let coin_1_new = generate_a_dummy_coin(60);
+    let coin_2_new = generate_a_dummy_coin(40);
 
     let coin_1_old = OldCoin {
         addr_pk: Some(ScalarExt::parse_arr(&coin_1_old.addr_pk).unwrap()),
@@ -145,11 +179,70 @@ async fn test_generate_a_proof() {
         v: Some(ScalarExt::parse_arr(&coin_2_new.v).unwrap()),
     };
 
-    println!("[+] Waiting for proof...");
-
+    println!("\n[+] Waiting for generating pi...");
     let pi = generate_proof_1_to_2(coin_1_old, coin_1_new, coin_2_new).await;
 
     println!("[!] pi: {:#?}", pi);
 
-    // `saksaha_network` should valid the `proof`
+    println!("\n[+] Verifying  pi...");
+    {
+        let hasher = Hasher::new();
+
+        let merkle_rt = {
+            let mut merkle_rt = coin_1_old.cm.unwrap();
+
+            for i in auth_path {
+                let (v, _) = i.unwrap();
+
+                merkle_rt = hasher.mimc_scalar(merkle_rt, v);
+            }
+
+            merkle_rt
+        };
+
+        let sn_1_old = hasher.mimc_scalar(
+            coin_1_old.clone().addr_sk.unwrap(),
+            coin_1_old.clone().rho.unwrap(),
+        );
+
+        let cm_1_new = {
+            let k = hasher.comm2_scalar(
+                coin_1_new.clone().r.unwrap(),
+                coin_1_new.clone().addr_pk.unwrap(),
+                coin_1_new.clone().rho.unwrap(),
+            );
+
+            let cm_1_new = hasher.comm2_scalar(
+                coin_1_new.clone().s.unwrap(),
+                coin_1_new.clone().v.unwrap(),
+                k,
+            );
+
+            cm_1_new
+        };
+
+        let cm_2_new = {
+            let k = hasher.comm2_scalar(
+                coin_2_new.clone().r.unwrap(),
+                coin_2_new.clone().addr_pk.unwrap(),
+                coin_2_new.clone().rho.unwrap(),
+            );
+
+            let cm_2_new = hasher.comm2_scalar(
+                coin_2_new.clone().s.unwrap(),
+                coin_2_new.clone().v.unwrap(),
+                k,
+            );
+
+            cm_2_new
+        };
+
+        let public_inputs = [merkle_rt, sn_1_old, cm_1_new, cm_2_new];
+
+        assert_eq!(
+            verify_proof_1_to_2(pi.unwrap(), &public_inputs, &hasher).await,
+            true
+        );
+    }
+    tokio::time::sleep(Duration::from_secs(100)).await;
 }
