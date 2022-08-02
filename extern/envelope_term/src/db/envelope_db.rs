@@ -6,7 +6,6 @@ use sak_crypto::{
 use sak_kv_db::{KeyValueDatabase, Options};
 
 pub(crate) struct EnvelopeDB {
-    // pub(crate) kv_db: KeyValueDatabase,
     pub(crate) schema: EnvelopeDBSchema,
 }
 

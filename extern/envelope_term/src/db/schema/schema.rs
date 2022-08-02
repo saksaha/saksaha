@@ -1,14 +1,14 @@
 use crate::db::schema::cfs;
 
-pub(crate) struct EnvelopeDBSchema {
-    pub(crate) db: DB,
-}
-
 use sak_kv_db::{
     BoundColumnFamily, ColumnFamilyDescriptor, IteratorMode, Options,
     WriteBatch, DB,
 };
 use std::sync::Arc;
+
+pub(crate) struct EnvelopeDBSchema {
+    pub(crate) db: DB,
+}
 
 impl EnvelopeDBSchema {
     pub(crate) fn new(db: DB) -> EnvelopeDBSchema {

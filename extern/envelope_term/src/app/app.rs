@@ -27,7 +27,7 @@ pub struct App {
 }
 
 impl App {
-    pub async fn new(
+    pub async fn init(
         io_tx: tokio::sync::mpsc::Sender<IoEvent>,
         user_prefix: &String,
     ) -> Result<Self, EnvelopeError> {
@@ -36,10 +36,12 @@ impl App {
 
         let db = EnvelopeDB::init(&user_prefix).await?;
 
-        let partner_prefix = USER_2.to_string();
-
-        db.register_user(&user_prefix).await?;
-        db.register_user(&partner_prefix).await?;
+        // for test, dummy
+        {
+            let partner_prefix = USER_2.to_string();
+            db.register_user(&user_prefix).await?;
+            db.register_user(&partner_prefix).await?;
+        }
 
         Ok(Self {
             io_tx,
@@ -226,8 +228,9 @@ impl App {
         self.state.incr_sleep();
     }
 
-    pub fn set_ch_list(&mut self, data: String) {
-        self.state.set_ch_list(data);
+    pub fn set_ch_list(&mut self, data: String) -> Result<(), EnvelopeError> {
+        self.state.set_ch_list(data)?;
+        Ok(())
     }
 
     pub fn set_chats(&mut self, data: String) {
@@ -262,30 +265,34 @@ impl App {
     pub async fn get_ch_list(&mut self) -> Result<(), EnvelopeError> {
         let mut arg = HashMap::with_capacity(2);
 
-        let her_pk = match self.db.schema.get_my_pk(&USER_2.to_string()).await?
+        let her_pk = match self.db.schema.get_my_pk(&USER_1.to_string()).await?
         {
             Some(v) => v,
-            None => {
-                return Err(
-                    format!("failed to get secret key from user id",).into()
-                )
-            }
+            None => String::default(),
         };
+        if her_pk.len() > 0 {
+            arg.insert(String::from("dst_pk"), her_pk.to_string());
 
-        arg.insert(String::from("dst_pk"), her_pk.to_string());
+            let req = CtrRequest {
+                req_type: "get_ch_list".to_string(),
+                arg,
+                ctr_call_type: CtrCallType::Query,
+            };
 
-        let req = CtrRequest {
-            req_type: "get_ch_list".to_string(),
-            arg,
-            ctr_call_type: CtrCallType::Query,
-        };
-
-        if let Ok(r) = saksaha::query_ctr(ENVELOPE_CTR_ADDR.into(), req).await {
-            if let Some(d) = r.result {
-                warn!("d.result : {:?}", d.result);
-                self.dispatch(IoEvent::Receive(d.result)).await;
+            if let Ok(r) =
+                saksaha::query_ctr(ENVELOPE_CTR_ADDR.into(), req).await
+            {
+                if let Some(d) = r.result {
+                    warn!("d.result : {:?}", d.result);
+                    self.dispatch(IoEvent::Receive(d.result)).await;
+                }
             }
+        } else {
+            let temp: String = String::from("[]");
+            // self.state.ch_list
+            self.dispatch(IoEvent::Receive(temp)).await;
         }
+
         Ok(())
     }
 
