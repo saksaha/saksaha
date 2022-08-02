@@ -33,19 +33,11 @@ impl DistLedgerApis {
     ) -> Result<Vec<([u8; 32], bool)>, LedgerError> {
         let merkle_tree = MerkleTree::new(CM_TREE_DEPTH);
 
-        let auth_path_idx = merkle_tree.generate_auth_paths(*cm_idx);
+        let auth_path_idx = merkle_tree.generate_auth_paths(cm_idx.to_owned());
 
-        // let v = merkle_tree.generate_auth_paths(0);
         let mut ret: Vec<([u8; 32], bool)> = Vec::new();
 
         for (idx, p) in auth_path_idx.iter().enumerate() {
-            if idx >= ret.len() {
-                panic!(
-                    "Invalid assignment to a fixed sized array, idx: {}",
-                    idx
-                );
-            }
-
             let key = format!("{}_{}", idx, p.idx);
 
             let merkle_node = match self.get_merkle_node(&key).await {

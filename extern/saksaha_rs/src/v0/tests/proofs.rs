@@ -342,8 +342,6 @@ pub async fn test_make_a_proof_and_verify_it() {
     .await;
 
     println!("proof: {:#?}", proof);
-
-    // let public_input = vec![merkle_rt, coin_1_old.sn_1]
 }
 
 #[tokio::test(flavor = "multi_thread")]
@@ -354,5 +352,6 @@ pub async fn test_get_auth_path() {
     let idx: u128 = 0;
     let resp = get_auth_path(idx).await.unwrap();
 
-    let auth_path = resp.result.unwrap().result;
+    let auth_path = resp.result.unwrap();
+    println!("[+] auth_path: {:?}", auth_path);
 }

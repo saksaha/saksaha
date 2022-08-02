@@ -336,70 +336,56 @@ pub async fn verify_proof_1_to_2(
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct AuthPathRequest {
-    pub location: Vec<String>,
+pub struct GetAuthPathRequest {
+    pub cm_idx: u128,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct AuthPathResponse {
-    pub result: Vec<Option<([u8; 32], bool)>>,
+pub struct GetAuthPathResponse {
+    pub auth_path: Vec<([u8; 32], bool)>,
 }
 
 pub async fn get_auth_path(
     idx: u128,
-) -> Result<JsonResponse<AuthPathResponse>, SaksahaSDKError> {
-    let merkle_tree = MerkleTree::new(CM_TREE_DEPTH as u32);
+) -> Result<JsonResponse<GetAuthPathResponse>, SaksahaSDKError> {
+    let endpoint_test = "http://localhost:34418/rpc/v0";
 
-    let auth_path = merkle_tree.generate_auth_paths(idx);
+    let client = Client::new();
+    let uri: Uri = { endpoint_test.parse().expect("URI should be made") };
 
-    let mut merkle_node_locations = Vec::new();
+    let body = {
+        let send_req = GetAuthPathRequest { cm_idx: idx };
+        let params = serde_json::to_string(&send_req)?.as_bytes().to_vec();
 
-    for (height, path) in auth_path.iter().enumerate() {
-        let key = format!("{}_{}", height, path.idx);
-
-        merkle_node_locations.push(key);
-    }
-
-    {
-        let endpoint_test = "http://localhost:34418/rpc/v0";
-
-        let client = Client::new();
-        let uri: Uri = { endpoint_test.parse().expect("URI should be made") };
-
-        let body = {
-            let send_req = AuthPathRequest {
-                location: merkle_node_locations,
-            };
-            let params = serde_json::to_string(&send_req)?.as_bytes().to_vec();
-            println!("{:?}", params);
-
-            let json_request = JsonRequest {
-                jsonrpc: "2.0".to_string(),
-                method: "get_auth_path".to_string(),
-                params: Some(params),
-                id: "test_1".to_string(),
-            };
-
-            let str = serde_json::to_string(&json_request)?;
-
-            Body::from(str)
+        let json_request = JsonRequest {
+            jsonrpc: "2.0".to_string(),
+            method: "get_auth_path".to_string(),
+            params: Some(params),
+            id: "test_1".to_string(),
         };
 
-        let req = Request::builder()
-            .method(Method::POST)
-            .uri(uri)
-            .body(body)
-            .expect("request builder should be made");
+        let str = serde_json::to_string(&json_request)?;
 
-        let resp = client.request(req).await?;
+        Body::from(str)
+    };
 
-        let b = hyper::body::to_bytes(resp.into_body()).await?;
+    let req = Request::builder()
+        .method(Method::POST)
+        .uri(uri)
+        .body(body)
+        .expect("request builder should be made");
 
-        let json_response =
-            serde_json::from_slice::<JsonResponse<AuthPathResponse>>(&b)?;
+    let resp = client.request(req).await?;
 
-        Ok(json_response)
-    }
+    let b = hyper::body::to_bytes(resp.into_body()).await?;
+
+    println!("b: {:#?}", b);
+
+    let json_response =
+        serde_json::from_slice::<JsonResponse<GetAuthPathResponse>>(&b)?;
+    println!("[+] idx: {:?}", idx);
+
+    Ok(json_response)
 }
 
 #[derive(Serialize, Deserialize, Debug)]
