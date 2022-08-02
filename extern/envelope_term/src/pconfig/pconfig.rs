@@ -3,17 +3,17 @@
 // use directories::ProjectDirs;
 // use log::{info, warn};
 // use sak_crypto::{SakKey, ToEncodedPoint};
-// use serde::{Deserialize, Serialize};
-// use std::collections::HashMap;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 // use std::path::PathBuf;
 
-// #[derive(Serialize, Deserialize, Debug)]
-// pub struct PConfig {
-//     user_name: String,
-//     public_key: String,
-//     secret: String,
-//     key_storage: HashMap<String, [u8; 32]>,
-// }
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PConfig {
+    user_name: String,
+    public_key: String,
+    secret: String,
+    key_storage: HashMap<String, [u8; 32]>,
+}
 
 // impl PConfig {
 //     pub fn new(app_prefix: &String) -> Result<PConfig, EnvelopeError> {
