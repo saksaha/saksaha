@@ -44,9 +44,12 @@ pub(in crate::rpc) async fn get_auth_path(
         .await
     {
         Ok(auth_path) => {
-            let get_block_resp = GetAuthPathResponse { auth_path };
+            let get_auth_path_resp = GetAuthPathResponse { auth_path };
 
-            return router::make_success_response(route_state, get_block_resp);
+            return router::make_success_response(
+                route_state,
+                get_auth_path_resp,
+            );
         }
         Err(err) => {
             return router::make_error_response(
