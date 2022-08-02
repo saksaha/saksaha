@@ -1,7 +1,9 @@
 use tui::widgets::ListState;
 
 use crate::io::InputMode;
+use crate::EnvelopeError;
 use chrono::{DateTime, Local};
+use log::debug;
 
 #[repr(u8)]
 #[derive(Clone, Debug)]
@@ -86,16 +88,22 @@ impl AppState {
         }
     }
 
-    pub fn set_ch_list(&mut self, data: String) {
-        self.ch_list = match serde_json::from_str::<Vec<String>>(&data) {
-            Ok(c) => c
-                .into_iter()
-                .map(|m| ChannelState::new(m, String::from("")))
-                .collect(),
+    pub fn set_ch_list(&mut self, data: String) -> Result<(), EnvelopeError> {
+        match serde_json::from_str::<Vec<String>>(&data) {
+            Ok(c) => {
+                for i in c.into_iter() {
+                    self.ch_list.push(ChannelState::new(i, String::from("")));
+                }
+            }
             Err(err) => {
-                panic!("Cannot Deserialize `data`:, err: {}", err);
+                return Err(format!(
+                    "Cannot Deserialize `data`:, err: {}",
+                    err
+                )
+                .into());
             }
         };
+        Ok(())
     }
 
     pub fn set_chats(&mut self, data: String) {
