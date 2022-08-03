@@ -1,4 +1,4 @@
-use super::error::WalletError;
+use super::{error::WalletError, routine::Routine};
 use log::error;
 
 pub struct App {}
@@ -32,16 +32,6 @@ impl App {
                 return Err(format!("runtime fail, err: {:?}", err).into());
             }
         };
-
-        Ok(())
-    }
-}
-
-struct Routine {}
-
-impl Routine {
-    pub(crate) async fn run(&self) -> Result<(), WalletError> {
-        println!("wallet main routine start");
 
         Ok(())
     }

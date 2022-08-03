@@ -1,9 +1,9 @@
-use super::EnvelopeDBSchema;
+use super::DBSchema;
 use crate::db::cfs;
 use crate::WalletError;
 use sak_kv_db::WriteBatch;
 
-impl EnvelopeDBSchema {
+impl DBSchema {
     pub(crate) async fn put_user_data(
         &self,
         my_id: &String,

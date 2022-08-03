@@ -1,18 +1,16 @@
-use crate::{db::EnvelopeDBSchema, WalletError};
+use crate::{db::DBSchema, WalletError};
 use log::{info, warn};
 use sak_crypto::{
     PublicKey, SakKey, SecretKey, SigningKey, ToEncodedPoint, VerifyingKey,
 };
 use sak_kv_db::{KeyValueDatabase, Options};
 
-pub(crate) struct EnvelopeDB {
-    pub(crate) schema: EnvelopeDBSchema,
+pub(crate) struct DB {
+    pub(crate) schema: DBSchema,
 }
 
-impl EnvelopeDB {
-    pub(crate) async fn init(
-        app_prefix: &String,
-    ) -> Result<EnvelopeDB, WalletError> {
+impl DB {
+    pub(crate) async fn init(app_prefix: &String) -> Result<DB, WalletError> {
         let envelope_db_path = {
             let app_path = sak_fs::create_or_get_app_path_evl(app_prefix)?;
             let db_path = { app_path.join("db") };
@@ -31,7 +29,7 @@ impl EnvelopeDB {
         let kv_db = match KeyValueDatabase::new(
             envelope_db_path,
             options,
-            EnvelopeDBSchema::make_cf_descriptors(),
+            DBSchema::make_cf_descriptors(),
         ) {
             Ok(d) => d,
             Err(err) => {
@@ -43,13 +41,13 @@ impl EnvelopeDB {
             }
         };
 
-        let schema = EnvelopeDBSchema::new(kv_db.db_instance);
+        let schema = DBSchema::new(kv_db.db_instance);
 
-        let database = EnvelopeDB { schema };
+        let db = DB { schema };
 
         info!("Initialized Database");
 
-        Ok(database)
+        Ok(db)
     }
 
     pub(crate) async fn register_user(

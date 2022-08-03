@@ -1,18 +1,17 @@
 use crate::db::schema::cfs;
-
 use sak_kv_db::{
     BoundColumnFamily, ColumnFamilyDescriptor, IteratorMode, Options,
     WriteBatch, DB,
 };
 use std::sync::Arc;
 
-pub(crate) struct EnvelopeDBSchema {
+pub(crate) struct DBSchema {
     pub(crate) db: DB,
 }
 
-impl EnvelopeDBSchema {
-    pub(crate) fn new(db: DB) -> EnvelopeDBSchema {
-        EnvelopeDBSchema { db }
+impl DBSchema {
+    pub(crate) fn new(db: DB) -> DBSchema {
+        DBSchema { db }
     }
 
     pub(crate) fn make_cf_descriptors() -> Vec<ColumnFamilyDescriptor> {

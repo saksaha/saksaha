@@ -1,8 +1,8 @@
-use super::EnvelopeDBSchema;
+use super::DBSchema;
 use crate::db::cfs;
 use crate::WalletError;
 
-impl EnvelopeDBSchema {
+impl DBSchema {
     pub async fn get_my_sk(
         &self,
         user_id: &String,

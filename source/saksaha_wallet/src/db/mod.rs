@@ -1,6 +1,6 @@
-mod envelope_db;
+mod db;
 mod schema;
 mod tests;
 
-pub(crate) use envelope_db::*;
+pub(crate) use db::*;
 pub(crate) use schema::*;
