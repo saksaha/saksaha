@@ -296,28 +296,3 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
         app_prefix,
     })
 }
-
-#[cfg(test)]
-mod test {
-    use super::app;
-
-    #[test]
-    fn test_if_app_matches_dev_mode() {
-        let args = vec!["", "--dev-mode", "dev-local"];
-
-        let app = app::create_app();
-        let matches = app.get_matches_from(args);
-
-        assert_eq!(matches.value_of("dev-mode"), Some("dev-local"));
-    }
-
-    #[test]
-    fn test_empty_dev_mode() {
-        let args = vec![""];
-
-        let app = app::create_app();
-        let matches = app.get_matches_from(args);
-
-        assert_eq!(matches.value_of("dev-mode"), None);
-    }
-}
