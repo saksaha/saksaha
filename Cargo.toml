@@ -22,6 +22,7 @@ members = [
   "source/sak_vm",
   "source/sak_test_utils",
   "source/wasm_postprocess",
+  "source/saksaha_rs",
 
   # Contracts (independently compiled and processed)
   "source/sak_validator",
@@ -29,13 +30,8 @@ members = [
   # internals
   "internals/ci",
 
-  # example (deprecated)
-  "example/chat",
-  "example/chat2",
-
    # extern
   "extern/envelope_term",
   "extern/envelope_contract",
-  "extern/saksaha_rs"
 ]
 
