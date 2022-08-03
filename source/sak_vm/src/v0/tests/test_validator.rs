@@ -114,7 +114,7 @@ async fn test_call_ctr_validator_fn_query() {
     // Query(request, storage);
     let request = Request {
         req_type: "get_validator".to_string(),
-        arg: HashMap::with_capacity(10),
+        args: HashMap::with_capacity(10),
         ctr_call_type: CtrCallType::Query,
     };
 
@@ -153,12 +153,12 @@ async fn test_call_ctr_validator_fn_execute_add_validator() {
     let (request, storage) = {
         let req_type = String::from("add_validator");
 
-        let mut arg = HashMap::with_capacity(10);
-        arg.insert(String::from("validator"), get_dummy_validator_4());
+        let mut args = HashMap::with_capacity(10);
+        args.insert(String::from("validator"), get_dummy_validator_4());
 
         let request = Request {
             req_type,
-            arg,
+            args,
             ctr_call_type: CtrCallType::Execute,
         };
         let storage = get_test_validator_state(test_validator_vec.clone());
