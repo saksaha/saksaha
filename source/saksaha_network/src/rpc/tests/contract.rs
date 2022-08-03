@@ -9,7 +9,6 @@ use sak_contract_std::{CtrCallType, Request as CtrRequest};
 use sak_rpc_interface::{JsonRequest, JsonResponse};
 use sak_types::PourTxCandidate;
 use std::collections::HashMap;
-use std::time::Duration;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_call_contract() {
@@ -43,7 +42,7 @@ async fn test_call_contract() {
         let ctr_addr = validator_ctr_addr;
         let req = CtrRequest {
             req_type: "get_validator".to_string(),
-            arg: HashMap::with_capacity(10),
+            args: HashMap::with_capacity(10),
             ctr_call_type: CtrCallType::Query,
         };
 
@@ -114,7 +113,7 @@ async fn test_rpc_request_envelope_send_pour_tx() {
     let body = {
         let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
 
-        let mut arg = HashMap::with_capacity(2);
+        let mut args = HashMap::with_capacity(2);
         let open_ch_input = {
             let open_ch_input: Vec<String> = vec![
                 "eph_pk_str".to_string(),
@@ -125,12 +124,12 @@ async fn test_rpc_request_envelope_send_pour_tx() {
 
             serde_json::to_string(&open_ch_input).unwrap()
         };
-        arg.insert(String::from("dst_pk"), "her_pk".to_string());
-        arg.insert(String::from("serialized_input"), open_ch_input);
+        args.insert(String::from("dst_pk"), "her_pk".to_string());
+        args.insert(String::from("serialized_input"), open_ch_input);
 
         let req = CtrRequest {
             req_type: String::from("open_channel"),
-            arg,
+            args,
             ctr_call_type: CtrCallType::Execute,
         };
 

@@ -90,7 +90,7 @@ pub(crate) fn make_dummy_block_candidate_with_query_tx(
             let request_query_get_validator: Request = {
                 Request {
                     req_type: "get_validator".to_string(),
-                    arg: HashMap::with_capacity(10),
+                    args: HashMap::with_capacity(10),
                     ctr_call_type: CtrCallType::Query,
                 }
             };
@@ -132,12 +132,12 @@ pub(crate) fn make_dummy_block_candidate_calling_validator_ctr(
                 ",
         );
 
-        let mut arg = HashMap::with_capacity(10);
-        arg.insert(String::from("validator"), dummy_validator_1);
+        let mut args = HashMap::with_capacity(10);
+        args.insert(String::from("validator"), dummy_validator_1);
 
         let request_execute_add_validator_1 = Request {
             req_type: "add_validator".to_string(),
-            arg,
+            args,
             ctr_call_type: CtrCallType::Execute,
         };
 
@@ -172,12 +172,12 @@ pub(crate) fn make_dummy_block_candidate_calling_validator_ctr(
                 ",
         );
 
-        let mut arg = HashMap::with_capacity(10);
-        arg.insert(String::from("validator"), dummy_validator_2);
+        let mut args = HashMap::with_capacity(10);
+        args.insert(String::from("validator"), dummy_validator_2);
 
         let request_execute_add_validator_2 = Request {
             req_type: "add_validator".to_string(),
-            arg,
+            args,
             ctr_call_type: CtrCallType::Execute,
         };
 
