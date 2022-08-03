@@ -21,6 +21,7 @@ sak_crypto = { path = "../../source/sak_crypto" }
 sak_types = { path = "../../source/sak_types" }
 sak_kv_db = { path = "../../source/sak_kv_db" }
 sak_proofs = { path = "../../source/sak_proofs" }
+sak_utils_net = { path = "../sak_utils_net" }
 
 [[bin]]
 name = "wallet"
