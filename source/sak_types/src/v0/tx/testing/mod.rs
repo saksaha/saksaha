@@ -81,6 +81,16 @@ impl Tx {
 }
 
 impl TxCandidate {
+    pub fn new_dummy_mint_custom(
+        cm: [u8; 32],
+        v: [u8; 32],
+        k: [u8; 32],
+        s: [u8; 32],
+    ) -> TxCandidate {
+        let tx_candidate = MintTxCandidate::new_dummy_custom(cm, v, k, s);
+
+        TxCandidate::Mint(tx_candidate)
+    }
     pub fn new_dummy_mint_1() -> TxCandidate {
         let tx_candidate = MintTxCandidate::new_dummy_1();
 
@@ -125,6 +135,26 @@ impl TxCandidate {
 }
 
 impl MintTxCandidate {
+    pub fn new_dummy_custom(
+        cm: [u8; 32],
+        v: [u8; 32],
+        k: [u8; 32],
+        s: [u8; 32],
+    ) -> MintTxCandidate {
+        let validator_wasm = VALIDATOR.to_vec();
+
+        MintTxCandidate::new(
+            String::from("created_at_mint_custom_1"),
+            validator_wasm,
+            String::from("author_sig_mint_custom_1"),
+            Some(VALIDATOR_CTR_ADDR.to_string()),
+            cm,
+            v,
+            k,
+            s,
+        )
+    }
+
     pub fn new_dummy_1() -> MintTxCandidate {
         let validator_wasm = VALIDATOR.to_vec();
 
