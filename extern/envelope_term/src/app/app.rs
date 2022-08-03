@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use super::{actions::Actions, View};
 use super::{state::AppState, ChannelState};
 use crate::db::EnvelopeDB;
@@ -8,10 +6,10 @@ use crate::io::InputMode;
 use crate::io::IoEvent;
 use crate::{app::actions::Action, ENVELOPE_CTR_ADDR};
 use crate::{inputs::key::Key, EnvelopeError};
-
 use log::{debug, error, warn};
 use sak_contract_std::{CtrCallType, Request as CtrRequest};
 use sak_crypto::{PublicKey, SakKey, SecretKey, SigningKey, ToEncodedPoint};
+use std::collections::HashMap;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum AppReturn {
@@ -263,7 +261,7 @@ impl App {
     }
 
     pub async fn get_ch_list(&mut self) -> Result<(), EnvelopeError> {
-        let mut arg = HashMap::with_capacity(2);
+        let mut args = HashMap::with_capacity(2);
 
         let her_pk = match self.db.schema.get_my_pk(&USER_1.to_string()).await?
         {
@@ -271,11 +269,11 @@ impl App {
             None => String::default(),
         };
         if her_pk.len() > 0 {
-            arg.insert(String::from("dst_pk"), her_pk.to_string());
+            args.insert(String::from("dst_pk"), her_pk.to_string());
 
             let req = CtrRequest {
                 req_type: "get_ch_list".to_string(),
-                arg,
+                args,
                 ctr_call_type: CtrCallType::Query,
             };
 
@@ -295,12 +293,12 @@ impl App {
     }
 
     pub async fn get_messages(&mut self) {
-        let mut arg = HashMap::with_capacity(2);
-        arg.insert(String::from("dst_pk"), "her_pk".to_string());
+        let mut args = HashMap::with_capacity(2);
+        args.insert(String::from("dst_pk"), "her_pk".to_string());
 
         let req = CtrRequest {
             req_type: "get_msgs".to_string(),
-            arg,
+            args,
             ctr_call_type: CtrCallType::Query,
         };
 

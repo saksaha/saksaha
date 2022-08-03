@@ -103,12 +103,12 @@ async fn test_messenger_get_msgs() {
     let messages_state = make_dummy_storage(&test_dummy_messege);
 
     let request = {
-        let mut arg = HashMap::with_capacity(1);
-        arg.insert(String::from(ARG_CH_ID), String::from(DUMMY_CHANNEL_ID_1));
+        let mut args = HashMap::with_capacity(1);
+        args.insert(String::from(ARG_CH_ID), String::from(DUMMY_CHANNEL_ID_1));
 
         Request {
             req_type: "get_msgs".to_string(),
-            arg,
+            args,
             ctr_call_type: CtrCallType::Query,
         }
     };
@@ -140,12 +140,12 @@ async fn test_messenger_get_ch_list() {
     let dummy_messeges = get_multi_messages();
 
     let (request, storage) = {
-        let mut arg = HashMap::with_capacity(2);
-        arg.insert(String::from(ARG_DST_PK), her_pk.clone());
+        let mut args = HashMap::with_capacity(2);
+        args.insert(String::from(ARG_DST_PK), her_pk.clone());
 
         let req = Request {
             req_type: String::from("get_ch_list"),
-            arg,
+            args,
             ctr_call_type: CtrCallType::Query,
         };
         let storage = make_dummy_storage(&dummy_messeges);
@@ -195,13 +195,13 @@ async fn test_messenger_open_channel() {
     };
 
     let (request, storage) = {
-        let mut arg = HashMap::with_capacity(2);
-        arg.insert(String::from(ARG_DST_PK), new_pk.clone());
-        arg.insert(String::from(ARG_SERIALIZED_INPUT), input);
+        let mut args = HashMap::with_capacity(2);
+        args.insert(String::from(ARG_DST_PK), new_pk.clone());
+        args.insert(String::from(ARG_SERIALIZED_INPUT), input);
 
         let req = Request {
             req_type: String::from("open_channel"),
-            arg,
+            args,
             ctr_call_type: CtrCallType::Execute,
         };
         let storage = make_dummy_storage(&dummy_messeges);
@@ -245,13 +245,13 @@ async fn test_messenger_send_msg() {
     let expected_msg = get_single_message();
 
     let (request, storage) = {
-        let mut arg = HashMap::with_capacity(2);
-        arg.insert(String::from(ARG_CH_ID), String::from(DUMMY_CHANNEL_ID_3));
-        arg.insert(String::from(ARG_SERIALIZED_INPUT), expected_msg.clone());
+        let mut args = HashMap::with_capacity(2);
+        args.insert(String::from(ARG_CH_ID), String::from(DUMMY_CHANNEL_ID_3));
+        args.insert(String::from(ARG_SERIALIZED_INPUT), expected_msg.clone());
 
         let req = Request {
             req_type: String::from("send_msg"),
-            arg,
+            args,
             ctr_call_type: CtrCallType::Execute,
         };
         let storage = make_dummy_storage(&dummy_messeges);

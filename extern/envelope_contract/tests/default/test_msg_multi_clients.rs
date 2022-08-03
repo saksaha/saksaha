@@ -43,6 +43,7 @@ pub(crate) fn make_test_context() -> CryptoMaterial {
     };
 
     println!("a_pk :{:?}", a_pk_str);
+
     println!("b_pk :{:?}", b_pk_str);
 
     let credential = {
@@ -51,6 +52,7 @@ pub(crate) fn make_test_context() -> CryptoMaterial {
     };
 
     let storage = Storage::new();
+
     CryptoMaterial {
         a_sk,
         a_pk,
@@ -169,12 +171,12 @@ pub(crate) fn test_get_ch_list(
         serde_json::to_string(pk.to_encoded_point(false).as_bytes()).unwrap();
 
     let request = {
-        let mut arg = HashMap::with_capacity(2);
-        arg.insert(String::from(ARG_DST_PK), pk_str.clone());
+        let mut args = HashMap::with_capacity(2);
+        args.insert(String::from(ARG_DST_PK), pk_str.clone());
 
         let req = Request {
             req_type: String::from("get_ch_list"),
-            arg,
+            args,
             ctr_call_type: CtrCallType::Execute,
         };
         req
@@ -232,13 +234,13 @@ pub(crate) fn send_msg(
 
         let ciphertext_str = vec_serialize(&ciphertext);
 
-        let mut arg = HashMap::with_capacity(10);
-        arg.insert(String::from(ARG_CH_ID), ch_id);
-        arg.insert(String::from(ARG_SERIALIZED_INPUT), ciphertext_str);
+        let mut args = HashMap::with_capacity(10);
+        args.insert(String::from(ARG_CH_ID), ch_id);
+        args.insert(String::from(ARG_SERIALIZED_INPUT), ciphertext_str);
 
         let req = Request {
             req_type: String::from("send_msg"),
-            arg,
+            args,
             ctr_call_type: CtrCallType::Execute,
         };
 
@@ -341,13 +343,13 @@ async fn test_multi_clients_chat() {
             serde_json::to_string(&open_ch_input).unwrap()
         };
 
-        let mut arg = HashMap::with_capacity(10);
-        arg.insert(String::from(ARG_DST_PK), b_pk_str.clone());
-        arg.insert(String::from(ARG_SERIALIZED_INPUT), open_ch_input);
+        let mut args = HashMap::with_capacity(10);
+        args.insert(String::from(ARG_DST_PK), b_pk_str.clone());
+        args.insert(String::from(ARG_SERIALIZED_INPUT), open_ch_input);
 
         let req = Request {
             req_type: String::from("open_channel"),
-            arg,
+            args,
             ctr_call_type: CtrCallType::Execute,
         };
 
@@ -408,15 +410,15 @@ async fn test_multi_clients_chat() {
     // 3. Request get_msgs
     {
         let request = {
-            let mut arg = HashMap::with_capacity(1);
-            arg.insert(
+            let mut args = HashMap::with_capacity(1);
+            args.insert(
                 String::from(ARG_CH_ID),
                 String::from(DUMMY_CHANNEL_ID_1),
             );
 
             Request {
                 req_type: "get_msgs".to_string(),
-                arg,
+                args,
                 ctr_call_type: CtrCallType::Query,
             }
         };
