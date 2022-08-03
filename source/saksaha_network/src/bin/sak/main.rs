@@ -18,7 +18,7 @@ fn main() {
             std::env::set_var("RUST_LOG", RUST_LOG_ENV);
         }
 
-        sak_logger::init(false);
+        let _ = sak_logger::init(false);
     }
 
     let cli_args: CLIArgs = match cli::get_args() {

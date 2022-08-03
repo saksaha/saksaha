@@ -55,9 +55,5 @@ sak_test_utils = { path = "../sak_test_utils" }
 name = "sak"
 path = "src/bin/sak/main.rs"
 
-[[bin]]
-name = "faucet"
-path = "src/bin/faucet/main.rs"
-
 [lib]
 doctest = false # until stable beta is released
