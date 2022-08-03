@@ -239,7 +239,7 @@ pub async fn send_tx_mint(
     Ok(json_response)
 }
 
-pub async fn call_contract(
+pub async fn query_ctr(
     ctr_addr: String,
     req: CtrRequest,
 ) -> Result<JsonResponse<QueryCtrResponse>, SaksahaSDKError> {
@@ -254,7 +254,7 @@ pub async fn call_contract(
 
         let json_request = JsonRequest {
             jsonrpc: "2.0".to_string(),
-            method: "call_contract".to_string(),
+            method: "query_ctr".to_string(),
             params: Some(params),
             id: "test_1".to_string(),
         };
