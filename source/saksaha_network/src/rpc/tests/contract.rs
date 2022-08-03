@@ -94,7 +94,7 @@ async fn test_rpc_request_envelope_send_pour_tx() {
 
     let tc_dummy = PourTxCandidate::new_dummy_m1_to_p3_p4();
 
-    let (rpc, rpc_socket_addr, machine) = utils::make_test_context().await;
+    let (rpc, rpc_socket_addr, _machine) = utils::make_test_context().await;
 
     let client = Client::new();
 
@@ -142,11 +142,7 @@ async fn test_rpc_request_envelope_send_pour_tx() {
             tc_dummy.merkle_rt,
         );
 
-        // let params = serde_json::to_vec(&send_req).unwrap();
-        let params = serde_json::to_string(&send_req)
-            .unwrap()
-            .as_bytes()
-            .to_vec();
+        let params = serde_json::to_vec(&send_req).unwrap();
 
         let json_request = JsonRequest {
             jsonrpc: "2.0".to_string(),
