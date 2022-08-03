@@ -1,7 +1,7 @@
 use crate::SaksahaSDKError;
 use hyper::{Body, Client, Method, Request, Uri};
 use log::warn;
-use sak_contract_std::{CtrCallType, Request as CtrRequest};
+use sak_contract_std::{CtrCallType, Request as CtrRequest, RequestArgs};
 use sak_crypto::{
     groth16, mimc, os_rng, Bls12, Circuit, Hasher, Proof, Scalar, ScalarExt,
 };
@@ -119,7 +119,7 @@ impl SendMintTxRequest {
 pub async fn send_tx_pour(
     ctr_addr: String,
     req_type: String,
-    arg: HashMap<String, String>,
+    args: RequestArgs,
 ) -> Result<JsonResponse<String>, SaksahaSDKError> {
     let endpoint_test = "http://localhost:34418/rpc/v0";
 
@@ -129,7 +129,7 @@ pub async fn send_tx_pour(
     let body = {
         let req = CtrRequest {
             req_type: req_type.clone(),
-            arg,
+            args,
             ctr_call_type: CtrCallType::Execute,
         };
 
@@ -180,7 +180,7 @@ pub async fn send_tx_pour(
 pub async fn send_tx_mint(
     ctr_addr: Option<String>,
     req_type: String,
-    arg: HashMap<String, String>,
+    args: RequestArgs,
 
     cm: [u8; 32],
     v: [u8; 32],
@@ -195,7 +195,7 @@ pub async fn send_tx_mint(
     let body = {
         let req = CtrRequest {
             req_type: req_type.clone(),
-            arg,
+            args,
             ctr_call_type: CtrCallType::Execute,
         };
 

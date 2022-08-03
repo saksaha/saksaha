@@ -1,27 +1,30 @@
-use super::{
-    ARG_DST_PK, DUMMY_CHANNEL_ID_1, DUMMY_CHANNEL_ID_2, ENVELOPE_CONTRACT,
-    STORAGE_CAP,
-};
+use super::{ARG_DST_PK, DUMMY_CHANNEL_ID_1, ENVELOPE_CONTRACT};
 use crate::default::{ARG_CH_ID, ARG_SERIALIZED_INPUT};
 use sak_contract_std::{CtrCallType, Request, Storage};
-use sak_crypto::{
-    PublicKey, SakKey, SecretKey, SigningKey, ToEncodedPoint, VerifyingKey,
-};
+use sak_crypto::{PublicKey, SakKey, SecretKey, SigningKey, ToEncodedPoint};
 use sak_vm::{CtrFn, VM};
 use std::collections::HashMap;
 
-pub(crate) fn make_test_context() -> (
-    SecretKey,
-    PublicKey,
-    SecretKey,
-    PublicKey,
-    SecretKey,
-    PublicKey,
-    String,
-    String,
-    Storage,
-    VM,
-) {
+#[cfg(test)]
+pub struct CryptoMaterial {
+    a_sk: SecretKey,
+    a_pk: PublicKey,
+    b_sk: SecretKey,
+    b_pk: PublicKey,
+    eph_sk: SecretKey,
+    eph_pk: PublicKey,
+    credential: String,
+    ch_id: String,
+    storage: Storage,
+    vm: VM,
+}
+
+pub struct UnlockChannel {
+    aes_key: [u8; 32],
+    ch_id: String,
+}
+
+pub(crate) fn make_test_context() -> CryptoMaterial {
     let vm = VM::init().expect("VM should be initiated");
 
     let (a_sk, a_pk) = SakKey::generate();
@@ -40,6 +43,7 @@ pub(crate) fn make_test_context() -> (
     };
 
     println!("a_pk :{:?}", a_pk_str);
+
     println!("b_pk :{:?}", b_pk_str);
 
     let credential = {
@@ -49,16 +53,25 @@ pub(crate) fn make_test_context() -> (
 
     let storage = Storage::new();
 
-    (
-        a_sk, a_pk, b_sk, b_pk, eph_sk, eph_pk, credential, ch_id, storage, vm,
-    )
+    CryptoMaterial {
+        a_sk,
+        a_pk,
+        b_sk,
+        b_pk,
+        eph_sk,
+        eph_pk,
+        credential,
+        ch_id,
+        storage,
+        vm,
+    }
 }
 
-pub(crate) fn check_channel(
+pub(crate) fn unlock_channel(
     my_pk: PublicKey,
     my_sk: SecretKey,
     storage: Storage,
-) -> ([u8; 32], String) {
+) -> UnlockChannel {
     let my_pk_str =
         serde_json::to_string(my_pk.to_encoded_point(false).as_bytes())
             .unwrap();
@@ -146,8 +159,7 @@ pub(crate) fn check_channel(
 
         assert_eq!(ch_maker_pk_expected, ch_maker_pk_from_sign);
     }
-
-    (aes_key, ch_id)
+    UnlockChannel { aes_key, ch_id }
 }
 
 pub(crate) fn test_get_ch_list(
@@ -159,12 +171,12 @@ pub(crate) fn test_get_ch_list(
         serde_json::to_string(pk.to_encoded_point(false).as_bytes()).unwrap();
 
     let request = {
-        let mut arg = HashMap::with_capacity(2);
-        arg.insert(String::from(ARG_DST_PK), pk_str.clone());
+        let mut args = HashMap::with_capacity(2);
+        args.insert(String::from(ARG_DST_PK), pk_str.clone());
 
         let req = Request {
             req_type: String::from("get_ch_list"),
-            arg,
+            args,
             ctr_call_type: CtrCallType::Execute,
         };
         req
@@ -194,8 +206,8 @@ pub(crate) fn send_msg(
     storage: Storage,
     vm: &VM,
 ) -> (Storage, Vec<String>) {
-    // send the message from B to A
-    let (state_send_msg, new_chat) = {
+    // decrypt the existing chat
+    let mut chat = {
         let msgs_serialized = storage.get(&ch_id).unwrap();
         let ciphertext_msgs: Vec<u8> =
             serde_json::from_str(msgs_serialized.as_str()).unwrap();
@@ -204,58 +216,60 @@ pub(crate) fn send_msg(
             sak_crypto::aes_decrypt(&aes_key, ciphertext_msgs.as_slice())
                 .unwrap();
 
-        let mut old_chat: Vec<String> =
-            serde_json::from_str(&plaintext_msgs).unwrap();
+        let chat: Vec<String> = serde_json::from_str(&plaintext_msgs).unwrap();
+        chat
+    };
 
+    // execute contract to send a message
+    let state_after_send_msg = {
         let my_pk_str = pk_serialize(pk);
         let msg_pk = vec![msg, &my_pk_str];
         let serialized_msg = vec_serialize(&msg_pk);
 
-        old_chat.push(serialized_msg);
-        let chat_vec_str = vec_serialize(&old_chat);
+        chat.push(serialized_msg);
+        let chat_vec_str = vec_serialize(&chat);
 
         let ciphertext =
             sak_crypto::aes_encrypt(&aes_key, chat_vec_str.as_bytes()).unwrap();
 
         let ciphertext_str = vec_serialize(&ciphertext);
 
-        let mut arg = HashMap::with_capacity(10);
-        arg.insert(String::from(ARG_CH_ID), ch_id);
-        arg.insert(String::from(ARG_SERIALIZED_INPUT), ciphertext_str);
+        let mut args = HashMap::with_capacity(10);
+        args.insert(String::from(ARG_CH_ID), ch_id);
+        args.insert(String::from(ARG_SERIALIZED_INPUT), ciphertext_str);
 
         let req = Request {
             req_type: String::from("send_msg"),
-            arg,
+            args,
             ctr_call_type: CtrCallType::Execute,
         };
 
         let ctr_wasm = ENVELOPE_CONTRACT.to_vec();
         let ctr_fn = CtrFn::Execute(req, storage);
 
-        let state_invoked = match vm.invoke(ctr_wasm, ctr_fn) {
+        let state = match vm.invoke(ctr_wasm, ctr_fn) {
             Ok(s) => s,
             Err(err) => panic!("failed to invoke contract : {}", err),
         };
 
-        let state_send_msg: Storage =
-            serde_json::from_str(state_invoked.as_str()).unwrap();
+        let state: Storage = serde_json::from_str(state.as_str()).unwrap();
 
-        let msgs_serialized = state_send_msg.get(DUMMY_CHANNEL_ID_1).unwrap();
-        let ciphertext_msgs: Vec<u8> =
-            serde_json::from_str(msgs_serialized.as_str()).unwrap();
-
-        let plaintext_msgs =
-            sak_crypto::aes_decrypt(&aes_key, ciphertext_msgs.as_slice())
-                .unwrap();
-
-        let msgs: Vec<String> = serde_json::from_str(&plaintext_msgs).unwrap();
-
-        assert_eq!(old_chat, msgs);
-
-        (state_send_msg, old_chat)
+        state
     };
 
-    (state_send_msg, new_chat)
+    // decrypt chat
+    let msgs_serialized = state_after_send_msg.get(DUMMY_CHANNEL_ID_1).unwrap();
+    let ciphertext_msgs: Vec<u8> =
+        serde_json::from_str(msgs_serialized.as_str()).unwrap();
+
+    let plaintext_msgs =
+        sak_crypto::aes_decrypt(&aes_key, ciphertext_msgs.as_slice()).unwrap();
+
+    let msgs: Vec<String> = serde_json::from_str(&plaintext_msgs).unwrap();
+
+    assert_eq!(chat, msgs);
+
+    (state_after_send_msg, chat)
 }
 
 pub fn pk_serialize(input: PublicKey) -> String {
@@ -278,8 +292,8 @@ async fn test_multi_clients_chat() {
     sak_test_utils::init_test_log();
     sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
 
-    let (
-        _a_sk,
+    let CryptoMaterial {
+        a_sk,
         a_pk,
         b_sk,
         b_pk,
@@ -289,12 +303,15 @@ async fn test_multi_clients_chat() {
         ch_id,
         storage,
         vm,
-    ) = make_test_context();
+    } = make_test_context();
+
+    let _a_sk = a_sk;
 
     let eph_pk_str = pk_serialize(eph_pk);
 
     let b_pk_str = pk_serialize(b_pk);
 
+    // prepare data to open channel
     let (a_pk_sig_encrypted, open_ch_empty, aes_key_from_a) = {
         let aes_key_from_a = sak_crypto::derive_aes_key(eph_sk, b_pk);
 
@@ -326,13 +343,13 @@ async fn test_multi_clients_chat() {
             serde_json::to_string(&open_ch_input).unwrap()
         };
 
-        let mut arg = HashMap::with_capacity(10);
-        arg.insert(String::from(ARG_DST_PK), b_pk_str.clone());
-        arg.insert(String::from(ARG_SERIALIZED_INPUT), open_ch_input);
+        let mut args = HashMap::with_capacity(10);
+        args.insert(String::from(ARG_DST_PK), b_pk_str.clone());
+        args.insert(String::from(ARG_SERIALIZED_INPUT), open_ch_input);
 
         let req = Request {
             req_type: String::from("open_channel"),
-            arg,
+            args,
             ctr_call_type: CtrCallType::Execute,
         };
 
@@ -373,8 +390,8 @@ async fn test_multi_clients_chat() {
 
     /*  ********************************************************************* */
     // 2. Request get_ch_list and send_msg B -> A
-    let (aes_key_from_b, ch_id) =
-        check_channel(b_pk, b_sk, state_after_open_ch.clone());
+    let UnlockChannel { aes_key, ch_id } =
+        unlock_channel(b_pk, b_sk, state_after_open_ch.clone());
 
     test_get_ch_list(b_pk, state_after_open_ch.clone(), &vm);
 
@@ -384,7 +401,7 @@ async fn test_multi_clients_chat() {
         &msg_b_to_a,
         b_pk,
         ch_id.clone(),
-        aes_key_from_b.clone(),
+        aes_key.clone(),
         state_after_open_ch,
         &vm,
     );
@@ -393,15 +410,15 @@ async fn test_multi_clients_chat() {
     // 3. Request get_msgs
     {
         let request = {
-            let mut arg = HashMap::with_capacity(1);
-            arg.insert(
+            let mut args = HashMap::with_capacity(1);
+            args.insert(
                 String::from(ARG_CH_ID),
                 String::from(DUMMY_CHANNEL_ID_1),
             );
 
             Request {
                 req_type: "get_msgs".to_string(),
-                arg,
+                args,
                 ctr_call_type: CtrCallType::Query,
             }
         };

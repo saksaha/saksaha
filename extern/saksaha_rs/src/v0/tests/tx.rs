@@ -1,6 +1,5 @@
-use crate::v0::sdk::*;
-
 use super::utils::*;
+use crate::v0::sdk::*;
 use sak_contract_std::{CtrCallType, Request as CtrRequest};
 use sak_crypto::{
     PublicKey, SakKey, SecretKey, SigningKey, ToEncodedPoint, VerifyingKey,
@@ -13,14 +12,14 @@ async fn test_sak_sdk_get_ch_list() {
     let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
 
     let req = {
-        let mut arg = HashMap::with_capacity(2);
-        arg.insert(String::from("dst_pk"), "her_pk".to_string());
+        let mut args = HashMap::with_capacity(2);
+        args.insert(String::from("dst_pk"), "her_pk".to_string());
 
         let req_type = String::from("get_ch_list");
 
         CtrRequest {
             req_type,
-            arg,
+            args,
             ctr_call_type: CtrCallType::Query,
         }
     };
@@ -37,14 +36,14 @@ async fn test_sak_sdk_get_msgs() {
     let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
 
     let req = {
-        let mut arg = HashMap::with_capacity(2);
-        arg.insert(String::from(ARG_CH_ID), String::from("channel_0"));
+        let mut args = HashMap::with_capacity(2);
+        args.insert(String::from(ARG_CH_ID), String::from("channel_0"));
 
         let req_type = "get_msgs".to_string();
 
         CtrRequest {
             req_type,
-            arg,
+            args,
             ctr_call_type: CtrCallType::Query,
         }
     };
