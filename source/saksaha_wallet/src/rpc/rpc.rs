@@ -38,7 +38,5 @@ impl RPC {
 
     pub async fn run(self) {
         println!("rpc starts");
-
-        tokio::time::sleep(Duration::from_secs(100)).await;
     }
 }

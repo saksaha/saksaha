@@ -10,10 +10,10 @@ impl Routine {
     ) -> Result<(), WalletError> {
         println!("wallet main routine start");
 
-        let rpc = RPC::init(app_args.rpc_port);
+        let rpc = RPC::init(app_args.rpc_port).await?;
 
         tokio::spawn(async move {
-            tokio::join!(rpc.run(),);
+            tokio::join!(rpc.run());
 
             println!("main process ended");
         });
