@@ -187,6 +187,42 @@ impl DistLedgerApis {
         Ok(block_list)
     }
 
+    pub async fn get_entire_block_info_list(
+        &self,
+    ) -> Result<Vec<(u128, BlockHash)>, LedgerError> {
+        let latest_bh = match self.get_latest_block_height()? {
+            Some(bh) => bh,
+            None => {
+                return Err(format!("Cannot find latest block height").into())
+            }
+        };
+
+        let mut block_hash_list: Vec<(u128, BlockHash)> = Vec::new();
+
+        for bh in (0..=latest_bh).rev().step_by(1) {
+            match self.get_block_by_height(&bh).await {
+                Ok(maybe_block) => match maybe_block {
+                    Some(block) => {
+                        block_hash_list
+                            .push((bh, block.get_block_hash().to_owned()));
+                    }
+                    None => {
+                        break;
+                    }
+                },
+                Err(err) => {
+                    return Err(format!(
+                        "Block hash at height ({}) does not exist",
+                        err
+                    )
+                    .into())
+                }
+            }
+        }
+
+        Ok(block_hash_list)
+    }
+
     pub async fn get_block_by_height(
         &self,
         block_height: &u128,

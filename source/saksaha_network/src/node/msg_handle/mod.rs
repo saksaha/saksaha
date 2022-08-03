@@ -1,40 +1,44 @@
 use crate::{machine::Machine, SaksahaError};
-use futures::SinkExt;
+use futures::{stream::SplitSink, SinkExt};
 use log::{debug, info, warn};
 use sak_p2p_transport::{
     BlockHashSynMsg, BlockSynMsg, Msg, TxHashSynMsg, TxSynMsg,
-    UpgradedConnection,
+    UpgradedConnection, UpgradedP2PCodec,
 };
+use tokio::net::TcpStream;
 use tokio::sync::RwLockWriteGuard;
+use tokio_util::codec::Framed;
 
 pub(crate) async fn handle_msg<'a>(
     msg: Msg,
     public_key: &str,
     machine: &Machine,
-    mut conn: &'a mut RwLockWriteGuard<'_, UpgradedConnection>,
+    socket_tx: &mut SplitSink<Framed<TcpStream, UpgradedP2PCodec>, Msg>,
+    // mut conn: &'a mut RwLockWriteGuard<'_, UpgradedConnection>,
 ) -> Result<(), SaksahaError> {
     match msg {
         Msg::TxHashSyn(tx_hash_syn) => {
-            handle_tx_hash_syn(public_key, tx_hash_syn, machine, &mut conn)
+            handle_tx_hash_syn(public_key, tx_hash_syn, machine, socket_tx)
                 .await
         }
         Msg::TxHashAck(tx_hash_ack) => {
-            handle_tx_hash_ack(public_key, tx_hash_ack, machine, &mut conn)
+            handle_tx_hash_ack(public_key, tx_hash_ack, machine, socket_tx)
                 .await;
         }
         Msg::TxSyn(tx_syn) => {
             handle_tx_syn(tx_syn, machine).await?;
         }
         Msg::BlockHashSyn(block_hash_syn_msg) => {
-            handle_block_hash_syn(block_hash_syn_msg, machine, &mut conn)
+            handle_block_hash_syn(block_hash_syn_msg, machine, socket_tx)
                 .await?;
         }
         Msg::BlockSyn(block_syn_msg) => {
-            handle_block_syn(block_syn_msg, machine, &mut conn).await?;
+            handle_block_syn(block_syn_msg, machine).await?;
         }
         Msg::BlockHashAck(block_hash_syn_msg) => {
             let _ =
-                handle_block_hash_ack(block_hash_syn_msg, conn, machine).await;
+                handle_block_hash_ack(block_hash_syn_msg, machine, socket_tx)
+                    .await;
         }
         _ => {
             warn!("Msg not valid at this stage, discarding, msg: {:?}", msg);
@@ -48,7 +52,7 @@ async fn handle_tx_hash_ack(
     public_key: &str,
     tx_hash_ack: TxHashSynMsg,
     machine: &Machine,
-    conn: &mut RwLockWriteGuard<'_, UpgradedConnection>,
+    socket_tx: &mut SplitSink<Framed<TcpStream, UpgradedP2PCodec>, Msg>,
 ) {
     let tx_candidates = machine
         .blockchain
@@ -58,11 +62,7 @@ async fn handle_tx_hash_ack(
         .await;
 
     if !tx_candidates.is_empty() {
-        match conn
-            .socket
-            .send(Msg::TxSyn(TxSynMsg { tx_candidates }))
-            .await
-        {
+        match socket_tx.send(Msg::TxSyn(TxSynMsg { tx_candidates })).await {
             Ok(_) => {
                 info!("Sending TxSyn, public_key: {}", public_key);
             }
@@ -87,11 +87,11 @@ async fn handle_tx_syn(
     Ok(())
 }
 
-async fn handle_tx_hash_syn<'a>(
+async fn handle_tx_hash_syn(
     public_key: &str,
     tx_hash_syn_msg: TxHashSynMsg,
     machine: &Machine,
-    conn: &'a mut RwLockWriteGuard<'_, UpgradedConnection>,
+    socket_tx: &mut SplitSink<Framed<TcpStream, UpgradedP2PCodec>, Msg>,
 ) {
     let txs_to_request = machine
         .blockchain
@@ -100,8 +100,7 @@ async fn handle_tx_hash_syn<'a>(
         .get_tx_pool_diff(tx_hash_syn_msg.tx_hashes)
         .await;
 
-    match conn
-        .socket
+    match socket_tx
         .send(Msg::TxHashAck(TxHashSynMsg {
             tx_hashes: txs_to_request,
         }))
@@ -117,7 +116,7 @@ async fn handle_tx_hash_syn<'a>(
 async fn handle_block_hash_syn<'a>(
     block_hash_syn_msg: BlockHashSynMsg,
     machine: &Machine,
-    conn: &'a mut RwLockWriteGuard<'_, UpgradedConnection>,
+    socket_tx: &mut SplitSink<Framed<TcpStream, UpgradedP2PCodec>, Msg>,
 ) -> Result<(), SaksahaError> {
     let new_blocks = block_hash_syn_msg.new_blocks;
 
@@ -142,8 +141,7 @@ async fn handle_block_hash_syn<'a>(
         }
     }
 
-    match conn
-        .socket
+    match socket_tx
         .send(Msg::BlockHashAck(BlockHashSynMsg {
             new_blocks: blocks_to_req,
         }))
@@ -158,10 +156,9 @@ async fn handle_block_hash_syn<'a>(
     Ok(())
 }
 
-async fn handle_block_syn<'a>(
+async fn handle_block_syn(
     block_syn_msg: BlockSynMsg,
     machine: &Machine,
-    _conn: &'a mut RwLockWriteGuard<'_, UpgradedConnection>,
 ) -> Result<(), SaksahaError> {
     let blocks = block_syn_msg.blocks;
 
@@ -188,10 +185,10 @@ async fn handle_block_syn<'a>(
     Ok(())
 }
 
-async fn handle_block_hash_ack<'a>(
+async fn handle_block_hash_ack(
     block_hash_syn_msg: BlockHashSynMsg,
-    conn: &'a mut RwLockWriteGuard<'_, UpgradedConnection>,
     machine: &Machine,
+    socket_tx: &mut SplitSink<Framed<TcpStream, UpgradedP2PCodec>, Msg>,
 ) -> Result<(), SaksahaError> {
     let new_blocks = block_hash_syn_msg.new_blocks;
 
@@ -221,8 +218,7 @@ async fn handle_block_hash_ack<'a>(
     }
 
     if !blocks_to_send.is_empty() {
-        match conn
-            .socket
+        match socket_tx
             .send(Msg::BlockSyn(BlockSynMsg {
                 blocks: blocks_to_send,
             }))
