@@ -41,14 +41,9 @@ async fn test_call_get_block_with_good_params() {
     };
 
     let body = {
-        let params = r#"
-{
-    "block_hash":
-    "973f486c42f67e8520367a46f1a13caf969224d99d1b2f02943c6d926b7bc04b"
-}
-"#
-        .as_bytes()
-        .to_vec();
+        let params = format!("{{\"block_hash\":\"{}\"}}", original_block_hash)
+            .as_bytes()
+            .to_vec();
 
         let json_request = JsonRequest {
             jsonrpc: "2.0".to_string(),
@@ -216,7 +211,7 @@ async fn test_call_get_block_list() {
         let params = r#"
 {
     "offset": 5,
-    "limit": 1000 
+    "limit": 1000
 }
 "#
         .as_bytes()
