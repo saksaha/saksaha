@@ -16,6 +16,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: Add WASM to rustup target
+      run: rustup target add wasm32-unknown-unknown
     - name: Run test script
       run: ./ci test -p saksaha_network
 
