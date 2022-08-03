@@ -1,13 +1,16 @@
-use crate::{rpc::RPC, WalletError};
+use crate::{rpc::RPC, AppArgs, WalletError};
 use log::{error, info};
 
 pub(crate) struct Routine {}
 
 impl Routine {
-    pub(crate) async fn run(&self) -> Result<(), WalletError> {
+    pub(crate) async fn run(
+        self,
+        app_args: AppArgs,
+    ) -> Result<(), WalletError> {
         println!("wallet main routine start");
 
-        let rpc = RPC::init();
+        let rpc = RPC::init(app_args.rpc_port);
 
         tokio::spawn(async move {
             tokio::join!(rpc.run(),);

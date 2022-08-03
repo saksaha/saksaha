@@ -3,12 +3,17 @@ use log::error;
 
 pub struct App {}
 
+pub struct AppArgs {
+    pub app_prefix: Option<String>,
+    pub rpc_port: Option<u16>,
+}
+
 impl App {
     pub fn init() -> App {
         App {}
     }
 
-    pub fn run(&self) -> Result<(), WalletError> {
+    pub fn run(self, app_args: AppArgs) -> Result<(), WalletError> {
         let runtime = tokio::runtime::Builder::new_multi_thread()
             .enable_all()
             .build();
@@ -17,7 +22,7 @@ impl App {
             Ok(r) => r.block_on(async {
                 let routine = Routine {};
 
-                match routine.run().await {
+                match routine.run(app_args).await {
                     Ok(_) => (),
                     Err(err) => {
                         error!(
