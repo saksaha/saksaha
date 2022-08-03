@@ -5,7 +5,7 @@ mod utils;
 
 use crate::{
     paths::Paths,
-    scripts::{build, clean, dev, test},
+    scripts::{build, build_contracts, clean, dev, dev_evl_term, test},
 };
 
 pub(crate) type CIError = Box<dyn std::error::Error + Send + Sync>;
@@ -85,6 +85,12 @@ fn run_script() -> Result<(), CIError> {
         }
         "clean" => {
             clean::run(args)?;
+        }
+        "dev_evl_term" => {
+            dev_evl_term::run(args)?;
+        }
+        "build_contracts" => {
+            build_contracts::run(args)?;
         }
         _ => {
             return Err(format!(
