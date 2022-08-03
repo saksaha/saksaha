@@ -2,7 +2,7 @@ mod middlewares;
 mod router;
 mod routes;
 mod rpc;
-mod server;
+// mod server;
 
 #[cfg(test)]
 mod tests;

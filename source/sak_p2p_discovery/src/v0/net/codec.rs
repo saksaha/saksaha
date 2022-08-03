@@ -1,4 +1,4 @@
-use crate::{whoareyou::WhoAreYou, BoxedError, Msg};
+use crate::{whoareyou::WhoAreYou, Msg, P2PDiscError};
 use bytes::BytesMut;
 use sak_p2p_frame::{frame_io, Parse};
 use std::error::Error;
@@ -7,7 +7,7 @@ use tokio_util::codec::{Decoder, Encoder};
 pub(crate) struct UdpCodec {}
 
 impl Encoder<Msg> for UdpCodec {
-    type Error = BoxedError;
+    type Error = P2PDiscError;
 
     fn encode(
         &mut self,
@@ -71,12 +71,12 @@ impl Encoder<Msg> for UdpCodec {
 
 impl Decoder for UdpCodec {
     type Item = Msg;
-    type Error = BoxedError;
+    type Error = P2PDiscError;
 
     fn decode(
         &mut self,
         src: &mut BytesMut,
-    ) -> Result<Option<Self::Item>, BoxedError> {
+    ) -> Result<Option<Self::Item>, P2PDiscError> {
         if let Some(frame) = frame_io::parse_frame(src)? {
             // "cursor" like API which makes parsing the command easier.
             //

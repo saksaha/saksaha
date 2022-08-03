@@ -1,7 +1,7 @@
 use super::{response, Handler, RouteState};
-use crate::rpc::server::HandleResult;
 use hyper::{Body, Request, Response};
 use sak_rpc_interface::JsonRequest;
+use sak_rpc_server::HandleResult;
 use std::{collections::HashMap, sync::Arc};
 
 pub(crate) struct Router<C> {

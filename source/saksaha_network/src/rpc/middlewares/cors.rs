@@ -1,8 +1,8 @@
-use crate::rpc::server::HandleResult;
 use hyper::{
     header::{self, HeaderValue},
     Body, Method, Request, Response,
 };
+use sak_rpc_server::HandleResult;
 
 pub(in crate::rpc) fn cors<C>(
     req: Request<Body>,

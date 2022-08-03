@@ -1,7 +1,10 @@
-use super::server::RPCServer;
+// use super::server::RPCServer;
 use crate::{SaksahaError, SystemHandle};
+use sak_rpc_server::{Middleware, RPCServer};
 use std::sync::Arc;
 use tokio::net::TcpListener;
+
+use super::{router::Router, routes};
 
 pub(crate) struct RPCArgs {
     pub sys_handle: Arc<SystemHandle>,
@@ -28,6 +31,26 @@ impl RPC {
     }
 
     pub(crate) async fn run(self) -> Result<(), SaksahaError> {
-        self.server.run(self.rpc_socket, self.sys_handle)
+        let router = {
+            let routes = routes::get_routes();
+            let router = Router::new(routes);
+
+            Arc::new(router)
+        };
+
+        let route = {
+            let router_clone = router.clone();
+
+            let m = Middleware::new(Box::new(move |req, res, ctx| {
+                router_clone.route(req, res, ctx)
+            }));
+
+            m
+        };
+
+        let middlewares = vec![route];
+
+        self.server
+            .run(self.rpc_socket, self.sys_handle, middlewares)
     }
 }

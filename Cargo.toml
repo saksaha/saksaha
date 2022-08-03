@@ -19,6 +19,7 @@ members = [
   "source/sak_utils_net",
   "source/sak_contract_std",
   "source/sak_dist_ledger",
+  "source/sak_rpc_server",
   "source/sak_vm",
   "source/sak_test_utils",
   "source/wasm_postprocess",
