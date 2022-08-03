@@ -403,19 +403,13 @@ async fn process_merkle_update(
             let sibling_loc = format!("{}_{}", height, sibling_idx);
             let sibling_node = match merkle_update.get(&sibling_loc) {
                 Some(n) => *n,
-                None => apis
-                    .get_merkle_node(&sibling_loc)
-                    .await?
-                    .unwrap_or(U8Array::new_empty_32()),
+                None => apis.get_merkle_node(&sibling_loc).await?,
             };
 
             let curr_loc = format!("{}_{}", height, curr_idx);
             let curr_node = match merkle_update.get(&curr_loc) {
                 Some(n) => *n,
-                None => apis
-                    .get_merkle_node(&curr_loc)
-                    .await?
-                    .unwrap_or(U8Array::new_empty_32()),
+                None => apis.get_merkle_node(&curr_loc).await?,
             };
 
             let merkle_node =

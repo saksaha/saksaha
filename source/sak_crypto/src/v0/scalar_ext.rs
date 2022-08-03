@@ -51,4 +51,10 @@ impl ScalarExt {
 
         ScalarExt::parse_arr(&arr)
     }
+
+    pub fn parse_string(s: String) -> Result<Scalar, CryptoError> {
+        let sb = { s.as_bytes().to_vec() };
+
+        ScalarExt::parse_vec(sb)
+    }
 }
