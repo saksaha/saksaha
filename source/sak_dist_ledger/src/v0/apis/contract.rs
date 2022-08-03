@@ -53,9 +53,10 @@ impl DistLedgerApis {
             .get_ctr_state(ctr_addr)?
             .ok_or("ctr state should exist")?;
 
-        let ctr_fn = CtrFn::Execute(request, ctr_state);
+        println!("ctr_fn, request, args: {:?}", request.args);
+        println!("ctr_fn, ctr_state: {:?}", ctr_state);
 
-        println!("ctr_fn : {:?}", ctr_fn);
+        let ctr_fn = CtrFn::Execute(request, ctr_state);
 
         let ret = self.vm.invoke(ctr_wasm, ctr_fn)?;
 

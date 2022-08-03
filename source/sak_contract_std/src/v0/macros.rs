@@ -1,3 +1,15 @@
+// fn return_error(err: Error) {
+//     let mut err_msg: String =
+//         ContractError::new(format!("{}", err).into()).err_msg;
+
+//     let ptr = err_msg.as_mut_ptr();
+//     let len = err_msg.len();
+
+//     std::mem::forget(err_msg);
+
+//     return (ptr, len as i32);
+// }
+
 #[macro_export]
 macro_rules! contract_bootstrap {
     () => {
@@ -49,8 +61,23 @@ macro_rules! define_init {
 
             let storage_init = init2();
 
-            let storage_serialized =
-                serde_json::to_value(storage_init).unwrap().to_string();
+            let storage_serialized: String =
+                match serde_json::to_value(storage_init) {
+                    Ok(s) => s.to_string(),
+                    Err(err) => {
+                        let mut err_msg: String =
+                            ContractError::new(format!("{}", err).into())
+                                .err_msg;
+
+                        let ptr = err_msg.as_mut_ptr();
+                        let len = err_msg.len();
+
+                        std::mem::forget(err_msg);
+
+                        return (ptr, len as i32);
+                    }
+                };
+
             let mut storage_bytes_vec =
                 storage_serialized.as_bytes().to_owned();
 
@@ -83,7 +110,16 @@ macro_rules! define_query {
             let storage_serialized = match String::from_utf8(storage_bytes_vec) {
                 Ok(s) => s,
                 Err(err) => {
-                    panic!("Cannot serialize storage, err: {}", err);
+                    let mut err_msg: String =
+                        ContractError::new(format!("Cannot serialize storage, err: {}", err).into())
+                            .err_msg;
+
+                    let ptr = err_msg.as_mut_ptr();
+                    let len = err_msg.len();
+
+                    std::mem::forget(err_msg);
+
+                    return (ptr, len as i32);
                 }
             };
 
@@ -91,10 +127,16 @@ macro_rules! define_query {
                 match serde_json::from_str(&storage_serialized.as_str()) {
                     Ok(s) => s,
                     Err(err) => {
-                        panic!(
-                            "Cannot Deserialize `HashMap` from storage, err: {}",
-                            err
-                        );
+                        let mut err_msg: String =
+                            ContractError::new(format!("Cannot Deserialize `HashMap` from storage, err: {}", err).into())
+                                .err_msg;
+
+                        let ptr = err_msg.as_mut_ptr();
+                        let len = err_msg.len();
+
+                        std::mem::forget(err_msg);
+
+                        return (ptr, len as i32);
                     }
                 };
 
@@ -107,7 +149,16 @@ macro_rules! define_query {
             let request_serialized = match String::from_utf8(request_bytes_vec) {
                 Ok(s) => s,
                 Err(err) => {
-                    panic!("Cannot serialize storage, err: {}", err);
+                    let mut err_msg: String =
+                        ContractError::new(format!("Cannot serialize storage, err: {}", err).into())
+                            .err_msg;
+
+                    let ptr = err_msg.as_mut_ptr();
+                    let len = err_msg.len();
+
+                    std::mem::forget(err_msg);
+
+                    return (ptr, len as i32);
                 }
             };
 
@@ -115,14 +166,32 @@ macro_rules! define_query {
                 match serde_json::from_str(&request_serialized.as_str()) {
                     Ok(s) => s,
                     Err(err) => {
-                        panic!(
-                            "Cannot Deserialize `Storage` from request, err: {}",
-                            err
-                        );
+                        let mut err_msg: String =
+                            ContractError::new(format!("Cannot Deserialize `Storage` from request, err: {}", err).into())
+                                .err_msg;
+
+                        let ptr = err_msg.as_mut_ptr();
+                        let len = err_msg.len();
+
+                        std::mem::forget(err_msg);
+
+                        return (ptr, len as i32);
                     }
                 };
 
-            let mut ret = query2(request, storage);
+            let mut ret = match query2(request, storage){
+                Ok(r) => r,
+                Err(err) => {
+                    let mut err_msg: String = err.err_msg;
+
+                    let ptr = err_msg.as_mut_ptr();
+                    let len = err_msg.len();
+
+                    std::mem::forget(err_msg);
+
+                    return (ptr, len as i32);
+                }
+            };
 
             let ret_ptr = ret.as_mut_ptr();
             let ret_len = ret.len();
@@ -153,7 +222,16 @@ macro_rules! define_execute {
             let storage_serialized = match String::from_utf8(storage_bytes_vec) {
                 Ok(s) => s,
                 Err(err) => {
-                    panic!("Cannot serialize storage, err: {}", err);
+                    let mut err_msg: String =
+                        ContractError::new(format!("Cannot serialize storage, err: {}", err).into())
+                            .err_msg;
+
+                    let ptr = err_msg.as_mut_ptr();
+                    let len = err_msg.len();
+
+                    std::mem::forget(err_msg);
+
+                    return (ptr, len as i32);
                 }
             };
 
@@ -161,10 +239,16 @@ macro_rules! define_execute {
                 match serde_json::from_str(&storage_serialized.as_str()) {
                     Ok(s) => s,
                     Err(err) => {
-                        panic!(
-                            "Cannot Deserialize `HashMap` from storage, err: {}",
-                            err
-                        );
+                        let mut err_msg: String =
+                            ContractError::new(format!("Cannot Deserialize `HashMap` from storage, err: {}", err).into())
+                                .err_msg;
+
+                        let ptr = err_msg.as_mut_ptr();
+                        let len = err_msg.len();
+
+                        std::mem::forget(err_msg);
+
+                        return (ptr, len as i32);
                     }
                 };
 
@@ -177,7 +261,16 @@ macro_rules! define_execute {
             let request_serialized = match String::from_utf8(request_bytes_vec) {
                 Ok(s) => s,
                 Err(err) => {
-                    panic!("Cannot serialize storage, err: {}", err);
+                    let mut err_msg: String =
+                        ContractError::new(format!("Cannot serialize storage, err: {}", err).into())
+                            .err_msg;
+
+                    let ptr = err_msg.as_mut_ptr();
+                    let len = err_msg.len();
+
+                    std::mem::forget(err_msg);
+
+                    return (ptr, len as i32);
                 }
             };
 
@@ -185,17 +278,51 @@ macro_rules! define_execute {
                 match serde_json::from_str(&request_serialized.as_str()) {
                     Ok(s) => s,
                     Err(err) => {
-                        panic!(
-                            "Cannot Deserialize `Storage` from request, err: {}",
-                            err
-                        );
+                        let mut err_msg: String =
+                            ContractError::new(format!("Cannot Deserialize `Storage` from request, err: {}", err).into())
+                                .err_msg;
+
+                        let ptr = err_msg.as_mut_ptr();
+                        let len = err_msg.len();
+
+                        std::mem::forget(err_msg);
+
+                        return (ptr, len as i32);
                     }
                 };
 
             // storage mutated
-            execute2(&mut storage, request);
+            match execute2(&mut storage, request) {
+                Ok(_) => {}
+                Err(err) => {
+                    let mut err_msg: String = err.err_msg;
 
-            let storage_serialized = serde_json::to_string(&storage).unwrap();
+                    let ptr = err_msg.as_mut_ptr();
+                    let len = err_msg.len();
+
+                    std::mem::forget(err_msg);
+
+                    return (ptr, len as i32);
+                }
+            };
+
+            let storage_serialized = match serde_json::to_string(&storage) {
+
+                Ok(s) => s,
+                Err(err) => {
+                    let mut err_msg: String =
+                        ContractError::new(format!("err: {}", err).into())
+                            .err_msg;
+
+                    let ptr = err_msg.as_mut_ptr();
+                    let len = err_msg.len();
+
+                    std::mem::forget(err_msg);
+
+                    return (ptr, len as i32);
+                }
+            };
+
             let mut storage_bytes_vec = storage_serialized.as_bytes().to_owned();
 
             let storage_ptr = storage_bytes_vec.as_mut_ptr();

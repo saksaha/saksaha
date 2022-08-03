@@ -113,14 +113,36 @@ impl App {
                         self.state.input_returned =
                             self.state.input_text.drain(..).collect();
 
-                        let (_sk, pk) = SakKey::generate();
-
-                        let pk = sak_crypto::encode_hex(
-                            &pk.to_encoded_point(false).to_bytes(),
-                        );
+                        // need to check validity of `self.state.input_returned`
                         // let pk = self.state.input_returned.clone();
-                        if let Err(_) = self.open_ch(&pk).await {
-                            return AppReturn::Continue;
+
+                        // for dev
+                        {
+                            let user_2_sk = self
+                                .db
+                                .schema
+                                .get_my_sk(&USER_2.to_string())
+                                .await
+                                .unwrap()
+                                .unwrap();
+
+                            let user_2_pk = self
+                                .db
+                                .schema
+                                .get_my_pk(&user_2_sk)
+                                .await
+                                .unwrap()
+                                .unwrap();
+
+                            // let (_sk, dummy_pk) = SakKey::generate();
+
+                            // let dummy_pk_string = sak_crypto::encode_hex(
+                            //     &dummy_pk.to_encoded_point(false).to_bytes(),
+                            // );
+
+                            if let Err(_) = self.open_ch(&user_2_pk).await {
+                                return AppReturn::Continue;
+                            }
                         };
                     }
                     View::Chat => {

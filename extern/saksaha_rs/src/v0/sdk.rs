@@ -12,7 +12,7 @@ use sak_proofs::{
 use sak_rpc_interface::{JsonRequest, JsonResponse};
 use sak_types::U8Array;
 use serde::{Deserialize, Serialize};
-use std::{char::from_u32_unchecked, collections::HashMap};
+use std::{char::from_u32_unchecked, collections::HashMap, time};
 
 pub const A: usize = 1;
 pub const TREE_DEPTH: usize = 3;
@@ -134,18 +134,18 @@ pub async fn send_tx_pour(
         };
 
         // ***** Need to change dummy values to real values
-
         let send_req = SendPourTxRequest::new(
-            String::from("created_at_1"),
+            String::from(format!("created_at_{:?}", time::SystemTime::now())),
             serde_json::to_vec(&req)?,
             String::from("author_sig_1"),
             Some(ctr_addr),
-            vec![11, 11, 11],
-            U8Array::new_empty_32(),
-            U8Array::new_empty_32(),
-            U8Array::new_empty_32(),
-            U8Array::new_empty_32(),
-            U8Array::new_empty_32(),
+            //
+            vec![11, 11, 11],        // pi
+            U8Array::new_empty_32(), // sn_1
+            U8Array::new_empty_32(), // sn_2 (will be deleted)
+            U8Array::new_empty_32(), // cm_1
+            U8Array::new_empty_32(), // cm_2
+            U8Array::new_empty_32(), // merkle_rt
         );
 
         let params = serde_json::to_string(&send_req)?.as_bytes().to_vec();
