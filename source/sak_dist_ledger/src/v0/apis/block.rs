@@ -1,5 +1,6 @@
 use crate::{DistLedgerApis, LedgerError};
 use sak_contract_std::Storage;
+use sak_proofs::{MerkleTree, CM_TREE_DEPTH};
 use sak_types::{tx::BlockHash, Block, CtrAddr, Tx, TxCandidate};
 
 const GET_BLOCK_HASH_LIST_DEFAULT_SIZE: u128 = 10;
@@ -22,8 +23,45 @@ impl DistLedgerApis {
     pub async fn get_merkle_node(
         &self,
         location: &String,
-    ) -> Result<Option<[u8; 32]>, LedgerError> {
+    ) -> Result<[u8; 32], LedgerError> {
         self.ledger_db.schema.get_merkle_node(location)
+    }
+
+    pub async fn get_auth_path(
+        &self,
+        cm_idx: &u128,
+    ) -> Result<Vec<([u8; 32], bool)>, LedgerError> {
+        let merkle_tree = MerkleTree::new(CM_TREE_DEPTH);
+
+        let auth_path_idx = merkle_tree.generate_auth_paths(cm_idx.to_owned());
+
+        let mut ret: Vec<([u8; 32], bool)> = Vec::new();
+
+        for (idx, p) in auth_path_idx.iter().enumerate() {
+            let key = format!("{}_{}", idx, p.idx);
+
+            let merkle_node = match self.get_merkle_node(&key).await {
+                Ok(m) => m,
+                Err(err) => {
+                    return Err(format!(
+                        "Couldn't get the merkle node value, err: {}",
+                        err
+                    )
+                    .into())
+                }
+            };
+
+            ret.push((merkle_node, p.direction));
+        }
+
+        Ok(ret)
+    }
+
+    pub async fn get_cm_by_idx(
+        &self,
+        cm_idx: &u128,
+    ) -> Result<Option<String>, LedgerError> {
+        self.ledger_db.schema.get_cm_by_idx(cm_idx)
     }
 
     pub async fn get_latest_block_hash(
