@@ -54,7 +54,7 @@ async fn test_call_contract() {
 
         let json_request = JsonRequest {
             jsonrpc: "2.0".to_string(),
-            method: "call_contract".to_string(),
+            method: "query_ctr".to_string(),
             params: Some(params),
             id: "test_1".to_string(),
         };
@@ -93,20 +93,16 @@ async fn test_rpc_request_envelope_send_pour_tx() {
     sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
 
     let tc_dummy = PourTxCandidate::new_dummy_m1_to_p3_p4();
-    let expected_tc_hash = tc_dummy.get_tx_hash().clone();
 
-    let (rpc, rpc_socket_addr, machine) = utils::make_test_context().await;
-
-    tokio::spawn(async move { rpc.run().await });
+    let (rpc, rpc_socket_addr, _machine) = utils::make_test_context().await;
 
     let client = Client::new();
 
+    tokio::spawn(async move { rpc.run().await });
+
     let uri: Uri = {
-        let u = format!(
-            "http://localhost:{}/apis/v0/",
-            34418,
-            // rpc_socket_addr.port(),
-        );
+        let u =
+            format!("http://localhost:{}/apis/v0/", rpc_socket_addr.port(),);
         u.parse().expect("URI should be made")
     };
 

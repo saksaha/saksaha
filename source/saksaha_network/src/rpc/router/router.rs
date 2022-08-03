@@ -71,8 +71,6 @@ where
             }
         });
 
-        println!("power!!");
-
         HandleResult::End(result)
     }
 }

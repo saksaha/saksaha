@@ -38,7 +38,7 @@ async fn test_two_nodes_tx_pool_marshal_check_true() {
                 f6083b729baef9e9545c4e95590616fd3\
                 82662a09653f2a966ff524989ae8c0f",
         ),
-        // true,
+        true,
     )
     .await;
 
@@ -64,7 +64,7 @@ async fn test_two_nodes_tx_pool_marshal_check_true() {
                 84d0dc478108629c0353f2876941f90d\
                 4b36346bcc19c6b625422adffb53b3a6af",
         ),
-        // false,
+        false,
     )
     .await;
 

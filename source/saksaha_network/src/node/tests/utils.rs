@@ -17,6 +17,7 @@ pub(crate) async fn create_client(
     disc_port: Option<u16>,
     secret: String,
     public_key_str: String,
+    miner: bool,
 ) -> (
     P2PHost,
     Arc<LocalNode>,
@@ -125,7 +126,7 @@ pub(crate) async fn create_client(
         let ln = LocalNode {
             peer_table: p2p_peer_table.clone(),
             machine: machine.clone(),
-            miner: true,
+            miner,
             mine_interval: None,
         };
 
