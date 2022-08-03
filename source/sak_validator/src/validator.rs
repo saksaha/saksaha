@@ -1,8 +1,6 @@
-use sak_contract_std::{contract_bootstrap, Request, Storage};
+use sak_contract_std::{contract_bootstrap, Request, RequestArgs, Storage};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-
-type ExecuteArgs = HashMap<String, String>;
 
 const PUB_KEY_LEN: usize = 130;
 const VALIDATOR_LEN: usize = PUB_KEY_LEN;
@@ -160,7 +158,7 @@ pub unsafe extern "C" fn execute(
 
     match request.req_type.as_ref() {
         "add_validator" => {
-            return handle_add_validator(storage, request.arg);
+            return handle_add_validator(storage, request.args);
         }
         // "remove_validator" => {
         //     return handle_remove_validator(storage);
@@ -201,7 +199,7 @@ fn handle_get_validator(storage: Storage) -> (*mut u8, i32) {
 
 fn handle_add_validator(
     mut storage: Storage,
-    args: ExecuteArgs,
+    args: RequestArgs,
 ) -> (*mut u8, i32) {
     let validators_string = match storage.get_mut("validators") {
         Some(v) => v,

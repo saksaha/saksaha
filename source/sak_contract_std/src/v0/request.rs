@@ -7,10 +7,12 @@ pub enum CtrCallType {
     Execute,
 }
 
+pub type RequestArgs = HashMap<String, String>;
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Request {
     pub req_type: String,
-    pub arg: HashMap<String, String>,
+    pub args: RequestArgs,
     pub ctr_call_type: CtrCallType,
 }
 
