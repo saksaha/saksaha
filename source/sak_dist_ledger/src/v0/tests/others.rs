@@ -1,6 +1,4 @@
 use super::utils;
-use crate::SyncPool;
-use sak_types::TxCandidate;
 use sak_vm::CtrFn;
 use sak_vm::VM;
 
