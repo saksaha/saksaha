@@ -1,6 +1,8 @@
 use super::utils;
 use crate::SyncPool;
 use sak_types::TxCandidate;
+use sak_vm::CtrFn;
+use sak_vm::VM;
 
 #[tokio::test(flavor = "multi_thread")]
 #[should_panic]
@@ -10,11 +12,12 @@ async fn test_insert_invalid_contract_to_tx_pool() {
 
     let test_wasm = include_bytes!("./test_invalid_contract.wasm").to_vec();
 
-    let dummy_tx = TxCandidate::new_dummy_pour_m1_to_p3_p4();
+    let vm = VM::init().expect("VM should be initiated");
 
-    let sync_pool = SyncPool::new();
+    let ctr_fn = CtrFn::Init;
 
-    sync_pool.insert_tx(dummy_tx).await.unwrap();
+    vm.invoke(test_wasm, ctr_fn)
+        .expect("This test should panic");
 }
 
 #[tokio::test(flavor = "multi_thread")]
