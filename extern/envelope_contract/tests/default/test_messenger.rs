@@ -68,33 +68,6 @@ fn make_dummy_open_ch_input() -> OpenChInput {
 }
 
 #[tokio::test(flavor = "multi_thread")]
-async fn test_messenger_init() {
-    // init();
-    let vm = VM::init().expect("VM should be initiated");
-
-    let ctr_wasm = ENVELOPE_CONTRACT.to_vec();
-    let ctr_fn = CtrFn::Init;
-
-    let messenger_states_invoked = vm
-        .invoke(ctr_wasm, ctr_fn)
-        .expect("channels should be obtained");
-
-    let messenger_states: Storage =
-        serde_json::from_str(messenger_states_invoked.as_str()).unwrap();
-
-    let messages: Vec<String> =
-        serde_json::from_str(messenger_states.get(INIT_CHANNEL_ID_1).unwrap())
-            .unwrap();
-
-    let messages_expected = get_multi_messages();
-
-    println!("messages expected: {:?}", messages_expected);
-    println!("messages acquired: {:?}", messages);
-
-    assert_eq!(messages_expected, messages);
-}
-
-#[tokio::test(flavor = "multi_thread")]
 async fn test_messenger_get_msgs() {
     let vm = VM::init().expect("VM should be initiated");
 

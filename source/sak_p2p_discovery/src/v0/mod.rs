@@ -16,4 +16,4 @@ pub(crate) use ops::*;
 pub(crate) use runtime::*;
 pub use table::*;
 
-pub(crate) type BoxedError = Box<dyn std::error::Error + Send + Sync>;
+pub(crate) type P2PDiscError = Box<dyn std::error::Error + Send + Sync>;

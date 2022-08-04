@@ -27,6 +27,7 @@ pub(crate) struct CLIArgs {
 
 pub(crate) fn get_args() -> Result<CLIArgs, String> {
     let app = app::create_app();
+
     let matches = app.get_matches();
 
     let rpc_port = match matches.value_of("rpc-port") {

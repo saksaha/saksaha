@@ -1,6 +1,6 @@
 use crate::{
     v0::ops::msg_type::{WHO_ARE_YOU_ACK_TYPE, WHO_ARE_YOU_SYN_TYPE},
-    BoxedError,
+    P2PDiscError,
 };
 use bytes::{BufMut, Bytes, BytesMut};
 use sak_crypto::Signature;
@@ -47,7 +47,7 @@ impl WhoAreYou {
 
     pub(crate) fn parse_frames(
         parse: &mut Parse,
-    ) -> Result<WhoAreYou, BoxedError> {
+    ) -> Result<WhoAreYou, P2PDiscError> {
         let src_p2p_port = parse.next_int()? as u16;
 
         let src_sig = {

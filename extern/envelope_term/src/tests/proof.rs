@@ -244,5 +244,4 @@ async fn test_generate_a_proof() {
             true
         );
     }
-    tokio::time::sleep(Duration::from_secs(100)).await;
 }
