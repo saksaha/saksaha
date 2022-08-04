@@ -1,5 +1,7 @@
-use super::server::RPCServer;
+use super::routes;
 use crate::{SaksahaError, SystemHandle};
+use hyper_rpc_router::Router;
+use hyper_server::{cors, Middleware, RPCServer};
 use std::sync::Arc;
 use tokio::net::TcpListener;
 
@@ -28,6 +30,26 @@ impl RPC {
     }
 
     pub(crate) async fn run(self) -> Result<(), SaksahaError> {
-        self.server.run(self.rpc_socket, self.sys_handle)
+        let router = {
+            let routes = routes::get_routes();
+            let router = Router::new(routes);
+
+            router
+        };
+
+        let cors = Middleware::new(Box::new(cors));
+
+        let route = {
+            let m = Middleware::new(Box::new(move |req, res, ctx| {
+                router.route(req, res, ctx)
+            }));
+
+            m
+        };
+
+        let middlewares = vec![cors, route];
+
+        self.server
+            .run(self.rpc_socket, self.sys_handle, middlewares)
     }
 }

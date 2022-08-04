@@ -1,11 +1,9 @@
-use crate::{
-    rpc::{
-        router::{self, Params, RouteState},
-        RPCError,
-    },
-    system::SystemHandle,
-};
+use crate::{rpc::RPCError, system::SystemHandle};
 use hyper::{Body, Response};
+use hyper_rpc_router::{
+    make_error_response, make_success_response, require_params_parsed,
+    require_some_params, Params, RouteState,
+};
 use log::warn;
 use sak_types::Block;
 use serde::{Deserialize, Serialize};
@@ -26,14 +24,13 @@ pub(in crate::rpc) async fn get_auth_path(
     params: Params,
     sys_handle: Arc<SystemHandle>,
 ) -> Response<Body> {
-    let params = router::require_some_params!(
+    let params = require_some_params!(
         route_state,
         params,
         "get_auth_path should contain params",
     );
 
-    let rb: GetAuthPathRequest =
-        router::require_params_parsed!(route_state, &params);
+    let rb: GetAuthPathRequest = require_params_parsed!(route_state, &params);
 
     match sys_handle
         .machine
@@ -46,13 +43,10 @@ pub(in crate::rpc) async fn get_auth_path(
         Ok(auth_path) => {
             let get_auth_path_resp = GetAuthPathResponse { auth_path };
 
-            return router::make_success_response(
-                route_state,
-                get_auth_path_resp,
-            );
+            return make_success_response(route_state, get_auth_path_resp);
         }
         Err(err) => {
-            return router::make_error_response(
+            return make_error_response(
                 route_state.resp,
                 Some(route_state.id),
                 err.into(),

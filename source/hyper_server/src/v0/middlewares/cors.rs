@@ -1,14 +1,14 @@
-use crate::rpc::server::HandleResult;
+use crate::MiddlewareResult;
 use hyper::{
     header::{self, HeaderValue},
     Body, Method, Request, Response,
 };
 
-pub(in crate::rpc) fn cors<C>(
+pub fn cors<C>(
     req: Request<Body>,
     mut resp: Response<Body>,
     ctx: C,
-) -> HandleResult<C> {
+) -> MiddlewareResult<C> {
     let headers = resp.headers_mut();
 
     headers.insert(
@@ -29,8 +29,8 @@ pub(in crate::rpc) fn cors<C>(
     );
 
     if req.method() == Method::OPTIONS {
-        return HandleResult::End(Box::pin(async { Ok(resp) }));
+        return MiddlewareResult::End(Box::pin(async { Ok(resp) }));
     }
 
-    HandleResult::Passing(req, resp, ctx)
+    MiddlewareResult::Passing(req, resp, ctx)
 }

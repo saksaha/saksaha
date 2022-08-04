@@ -1,11 +1,6 @@
-use crate::{
-    rpc::{
-        router::{self, Params, RouteState},
-        RPCError,
-    },
-    system::SystemHandle,
-};
+use crate::{rpc::RPCError, system::SystemHandle};
 use hyper::{Body, Request, Response, StatusCode};
+use hyper_rpc_router::{make_success_response, Params, RouteState};
 use log::warn;
 use sak_contract_std::Request as CtrRequest;
 use sak_types::{MintTxCandidate, PourTxCandidate, Tx, TxCandidate};
@@ -32,7 +27,7 @@ pub(in crate::rpc) async fn get_status(
 
     let peer_vec = sys_handle.p2p_monitor.peer_table.get_status().await;
 
-    return router::make_success_response(
+    return make_success_response(
         route_state,
         GetNodeStatusResponse { addr_vec, peer_vec },
     );

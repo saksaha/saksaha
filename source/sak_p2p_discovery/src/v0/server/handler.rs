@@ -1,6 +1,6 @@
 use crate::{
     whoareyou::{self, WhoAreYouRecvError},
-    AddrTable, BoxedError, Connection, Msg,
+    AddrTable, Connection, Msg, P2PDiscError,
 };
 use log::warn;
 use sak_p2p_id::Identity;
@@ -20,7 +20,7 @@ impl Handler {
         identity: Arc<Identity>,
         addr_table: Arc<AddrTable>,
         _addr_expire_duration: Duration,
-    ) -> Result<(), BoxedError> {
+    ) -> Result<(), P2PDiscError> {
         match msg {
             Msg::WhoAreYouSyn(way_syn) => {
                 let res = whoareyou::recv_who_are_you(
