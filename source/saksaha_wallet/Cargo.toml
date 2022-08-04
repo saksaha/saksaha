@@ -14,12 +14,16 @@ clap = { version = "3.2.14", features = ["cargo"] }
 futures = "0.3.21"
 serde = { version = "1.0.130", features = ["derive"] }
 serde_json = "1.0.59"
+saksaha = { path = "../../source/saksaha_rs" }
+saksaha_network = { path = "../../source/saksaha_network" }
+serde_bytes = "0.11.6"
 sak_fs = { path = "../../source/sak_fs" }
 sak_logger = { path = "../../source/sak_logger" }
 sak_contract_std = { path = "../../source/sak_contract_std" }
+hyper = { version = "0.14", features = ["full"] }
+hyper_server = { path = "../../source/hyper_server" }
+hyper_rpc_router = { path = "../../source/hyper_rpc_router" }
 sak_crypto = { path = "../../source/sak_crypto" }
-saksaha = { path = "../../source/saksaha_rs" }
-saksaha_network = { path = "../../source/saksaha_network" }
 sak_types = { path = "../../source/sak_types" }
 sak_kv_db = { path = "../../source/sak_kv_db" }
 sak_proofs = { path = "../../source/sak_proofs" }
