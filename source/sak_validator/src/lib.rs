@@ -1,6 +1,6 @@
+mod params;
 mod state;
 mod validator;
 
-pub fn foo(a: usize) -> usize {
-    return a;
-}
+pub use params::*;
+pub use validator::*;

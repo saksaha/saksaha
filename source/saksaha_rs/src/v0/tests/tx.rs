@@ -12,8 +12,8 @@ async fn test_sak_sdk_get_ch_list() {
     let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
 
     let req = {
-        let mut args = HashMap::with_capacity(2);
-        args.insert(String::from("dst_pk"), "her_pk".to_string());
+        // let mut args = HashMap::with_capacity(2);
+        // args.insert(String::from("dst_pk"), "her_pk".to_string());
 
         let req_type = String::from("get_ch_list");
 
