@@ -1,10 +1,10 @@
 use super::{response, Handler, RouteState};
 use hyper::{Body, Request, Response};
-use hyper_server::HandleResult;
+use hyper_server::MiddlewareResult;
 use sak_rpc_interface::JsonRequest;
 use std::{collections::HashMap, sync::Arc};
 
-pub(crate) struct Router<C> {
+pub struct Router<C> {
     route_map: Arc<HashMap<&'static str, Handler<C>>>,
 }
 
@@ -12,20 +12,18 @@ impl<C> Router<C>
 where
     C: Send + Sync + 'static,
 {
-    pub(in crate::rpc) fn new(
-        route_map: HashMap<&'static str, Handler<C>>,
-    ) -> Router<C> {
+    pub fn new(route_map: HashMap<&'static str, Handler<C>>) -> Router<C> {
         let route_map = Arc::new(route_map);
 
         Router { route_map }
     }
 
-    pub(in crate::rpc) fn route(
+    pub fn route(
         &self,
         req: Request<Body>,
         resp: Response<Body>,
         ctx: C,
-    ) -> HandleResult<C> {
+    ) -> MiddlewareResult<C> {
         let route_map = self.route_map.clone();
 
         let result = Box::pin(async move {
@@ -71,6 +69,6 @@ where
             }
         });
 
-        HandleResult::End(result)
+        MiddlewareResult::End(result)
     }
 }

@@ -1,7 +1,9 @@
-use crate::WalletError;
+use crate::{rpc::routes, WalletError};
 use colored::Colorize;
+use hyper_rpc_router::Router;
+use hyper_server::{cors, Middleware, RPCServer};
 use log::{error, info};
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 use tokio::net::TcpListener;
 
 pub(crate) struct RPC {
@@ -38,5 +40,28 @@ impl RPC {
 
     pub async fn run(self) {
         println!("rpc starts");
+
+        let router = {
+            let routes = routes::get_routes();
+            let router = Router::new(routes);
+
+            router
+        };
+
+        let cors = Middleware::new(Box::new(cors));
+
+        let route = {
+            let m = Middleware::new(Box::new(move |req, res, ctx| {
+                router.route(req, res, ctx)
+            }));
+
+            m
+        };
+
+        let middlewares = vec![cors, route];
+
+        let rpc_server = RPCServer {};
+
+        rpc_server.run(self.rpc_socket, Arc::new(0), middlewares);
     }
 }
