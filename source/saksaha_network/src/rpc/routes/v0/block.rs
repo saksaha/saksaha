@@ -1,6 +1,9 @@
 use crate::{rpc::RPCError, system::SystemHandle};
 use hyper::{Body, Request, Response};
-use hyper_rpc_router::{Params, RouteState};
+use hyper_rpc_router::{
+    make_error_response, make_success_response, require_params_parsed,
+    require_some_params, Params, RouteState,
+};
 use log::warn;
 use sak_types::Block;
 use serde::{Deserialize, Serialize};
@@ -21,14 +24,13 @@ pub(in crate::rpc) async fn get_block(
     params: Params,
     sys_handle: Arc<SystemHandle>,
 ) -> Response<Body> {
-    let params = router::require_some_params!(
+    let params = require_some_params!(
         route_state,
         params,
         "get_block should contain params",
     );
 
-    let rb: GetBlockRequest =
-        router::require_params_parsed!(route_state, &params);
+    let rb: GetBlockRequest = require_params_parsed!(route_state, &params);
 
     match sys_handle
         .machine
@@ -40,10 +42,10 @@ pub(in crate::rpc) async fn get_block(
         Ok(block) => {
             let get_block_resp = GetBlockResponse { block };
 
-            return router::make_success_response(route_state, get_block_resp);
+            return make_success_response(route_state, get_block_resp);
         }
         Err(err) => {
-            return router::make_error_response(
+            return make_error_response(
                 route_state.resp,
                 Some(route_state.id),
                 err.into(),
@@ -68,14 +70,13 @@ pub(in crate::rpc) async fn get_block_list(
     params: Params,
     sys_handle: Arc<SystemHandle>,
 ) -> Response<Body> {
-    let params = router::require_some_params!(
+    let params = require_some_params!(
         route_state,
         params,
         "get_block_list should contain params",
     );
 
-    let rb: GetBlockListRequest =
-        router::require_params_parsed!(route_state, &params);
+    let rb: GetBlockListRequest = require_params_parsed!(route_state, &params);
 
     match sys_handle
         .machine
@@ -88,10 +89,10 @@ pub(in crate::rpc) async fn get_block_list(
         Ok(block_list) => {
             let get_block_resp = GetBlockListResponse { block_list };
 
-            return router::make_success_response(route_state, get_block_resp);
+            return make_success_response(route_state, get_block_resp);
         }
         Err(err) => {
-            return router::make_error_response(
+            return make_error_response(
                 route_state.resp,
                 Some(route_state.id),
                 err.into(),

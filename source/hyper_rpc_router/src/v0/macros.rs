@@ -4,7 +4,7 @@ macro_rules! require_some_params {
         match $obj {
             Some(t) => t,
             None => {
-                return router::make_error_response(
+                return hyper_rpc_router::make_error_response(
                     $route_state.resp,
                     Some($route_state.id),
                     $msg.into(),
@@ -16,7 +16,7 @@ macro_rules! require_some_params {
         match $obj {
             Some(t) => t,
             None => {
-                return router::make_error_response(
+                return hyper_rpc_router::make_error_response(
                     $route_state.resp,
                     Some($route_state.id),
                     $msg.into(),
@@ -32,7 +32,7 @@ macro_rules! require_params_parsed {
         match serde_json::from_slice($params) {
             Ok(r) => r,
             Err(err) => {
-                return router::make_error_response(
+                return hyper_rpc_router::make_error_response(
                     $route_state.resp,
                     Some($route_state.id),
                     err.into(),
@@ -53,6 +53,3 @@ macro_rules! require_params_parsed {
         }
     };
 }
-
-// pub use require_params_parsed;
-// pub use require_some_params;
