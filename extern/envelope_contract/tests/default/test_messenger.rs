@@ -3,16 +3,19 @@ use super::{
     DUMMY_CHANNEL_ID_2, DUMMY_CHANNEL_ID_3, ENVELOPE_CONTRACT,
     INIT_CHANNEL_ID_1, STORAGE_CAP,
 };
+use envelope_contract::{
+    EnvelopeStorage, GetChListParams, GetMsgParams, OpenCh, OpenChParams,
+};
 use sak_contract_std::{CtrCallType, Request, Storage};
 use sak_vm::{CtrFn, VM};
 use std::collections::HashMap;
 
-pub(crate) struct OpenChInput {
-    eph_pk: String,
-    ch_id: String,
-    sign: String,
-    chat: String,
-}
+// pub(crate) struct OpenChInput {
+//     eph_pk: String,
+//     ch_id: String,
+//     sign: String,
+//     chat: String,
+// }
 
 fn get_single_message() -> String {
     String::from("Hello! I belong to saksaha")
@@ -29,41 +32,58 @@ fn get_her_pk() -> String {
     String::from("her_pk12345")
 }
 
-fn make_dummy_storage(msgs: &Vec<String>) -> Storage {
-    let mut ret = Storage::with_capacity(STORAGE_CAP);
+fn make_mock_storage(msgs: &Vec<String>) -> Storage {
+    let mut open_ch_reqs = HashMap::new();
+    open_ch_reqs.insert(
+        get_her_pk(),
+        vec![OpenCh {
+            ch_id: "ch_id_1".to_string(),
+            eph_key: "eph_key_1".to_string(),
+            sig: "sig_1".to_string(),
+        }],
+    );
 
-    let key = String::from(DUMMY_CHANNEL_ID_1);
+    let mut chats = HashMap::new();
+    chats.insert(DUMMY_CHANNEL_ID_1.to_string(), msgs.clone());
 
-    let value = serde_json::to_string(&msgs).unwrap();
+    let envelope_storage = EnvelopeStorage {
+        open_ch_reqs,
+        chats,
+    };
 
-    ret.insert(key, value);
+    // let mut ret = Storage::with_capacity(STORAGE_CAP);
 
-    let key = String::from(get_her_pk());
+    // let key = String::from(DUMMY_CHANNEL_ID_1);
 
-    let input: Vec<String> = vec![
-        String::default(),
-        DUMMY_CHANNEL_ID_1.to_string(),
-        String::default(),
-        String::default(),
-    ];
+    // let value = serde_json::to_string(&msgs).unwrap();
 
-    let input = serde_json::to_string(&input).unwrap();
+    // ret.insert(key, value);
 
-    let input_vec: Vec<String> = vec![input];
+    // let key = String::from(get_her_pk());
 
-    let value = serde_json::to_string(&input_vec).unwrap();
+    // let input: Vec<String> = vec![
+    //     String::default(),
+    //     DUMMY_CHANNEL_ID_1.to_string(),
+    //     String::default(),
+    //     String::default(),
+    // ];
 
-    ret.insert(key, value);
+    // let input = serde_json::to_string(&input).unwrap();
 
-    ret
+    // let input_vec: Vec<String> = vec![input];
+
+    // let value = serde_json::to_string(&input_vec).unwrap();
+
+    // ret.insert(key, value);
+
+    serde_json::to_vec(&envelope_storage).unwrap()
 }
 
-fn make_dummy_open_ch_input() -> OpenChInput {
-    OpenChInput {
-        eph_pk: String::default(),
+fn make_mock_open_ch() -> OpenCh {
+    OpenCh {
+        eph_key: String::default(),
         ch_id: DUMMY_CHANNEL_ID_2.to_string(),
-        sign: String::default(),
-        chat: String::default(),
+        sig: String::default(),
     }
 }
 
@@ -73,11 +93,17 @@ async fn test_messenger_get_msgs() {
 
     let test_dummy_messege = get_multi_messages();
 
-    let messages_state = make_dummy_storage(&test_dummy_messege);
+    let messages_state = make_mock_storage(&test_dummy_messege);
 
     let request = {
-        let mut args = HashMap::with_capacity(1);
-        args.insert(String::from(ARG_CH_ID), String::from(DUMMY_CHANNEL_ID_1));
+        let get_msg_params = GetMsgParams {
+            ch_id: DUMMY_CHANNEL_ID_1.to_string(),
+        };
+
+        let args = serde_json::to_vec(&get_msg_params).unwrap();
+
+        // let mut args = HashMap::with_capacity(1);
+        // args.insert(String::from(ARG_CH_ID), String::from(DUMMY_CHANNEL_ID_1));
 
         Request {
             req_type: "get_msgs".to_string(),
@@ -113,15 +139,23 @@ async fn test_messenger_get_ch_list() {
     let dummy_messeges = get_multi_messages();
 
     let (request, storage) = {
-        let mut args = HashMap::with_capacity(2);
-        args.insert(String::from(ARG_DST_PK), her_pk.clone());
+        // let mut args = HashMap::with_capacity(2);
+        // args.insert(String::from(ARG_DST_PK), her_pk.clone());
+
+        let get_ch_list_params = GetChListParams {
+            dst_pk: her_pk.clone(),
+        };
+
+        let args = serde_json::to_vec(&get_ch_list_params).unwrap();
 
         let req = Request {
             req_type: String::from("get_ch_list"),
             args,
             ctr_call_type: CtrCallType::Query,
         };
-        let storage = make_dummy_storage(&dummy_messeges);
+
+        let storage = make_mock_storage(&dummy_messeges);
+
         (req, storage)
     };
 
@@ -152,32 +186,45 @@ async fn test_messenger_open_channel() {
 
     let dummy_messeges = get_multi_messages();
 
-    let OpenChInput {
-        eph_pk,
+    let OpenCh {
+        eph_key,
         ch_id,
-        sign,
-        chat,
-    } = make_dummy_open_ch_input();
+        sig,
+        // chat,
+    } = make_mock_open_ch();
 
-    let input = {
-        let input = vec![eph_pk, ch_id, sign, chat];
+    // let input = {
+    //     let input = vec![eph_key, ch_id, si, chat];
 
-        let input_str = serde_json::to_string(&input).unwrap();
+    //     let input_str = serde_json::to_string(&input).unwrap();
 
-        input_str
-    };
+    //     input_str
+    // };
 
     let (request, storage) = {
-        let mut args = HashMap::with_capacity(2);
-        args.insert(String::from(ARG_DST_PK), new_pk.clone());
-        args.insert(String::from(ARG_SERIALIZED_INPUT), input);
+        // let mut args = HashMap::with_capacity(2);
+        // args.insert(String::from(ARG_DST_PK), new_pk.clone());
+        // args.insert(String::from(ARG_SERIALIZED_INPUT), input);
+
+        let open_ch_params = OpenChParams {
+            dst_pk: new_pk.clone(),
+            open_ch: OpenCh {
+                ch_id,
+                eph_key,
+                sig,
+            },
+        };
+
+        let args = serde_json::to_vec(&open_ch_params).unwrap();
 
         let req = Request {
             req_type: String::from("open_channel"),
             args,
             ctr_call_type: CtrCallType::Execute,
         };
-        let storage = make_dummy_storage(&dummy_messeges);
+
+        let storage = make_mock_storage(&dummy_messeges);
+
         (req, storage)
     };
 
@@ -190,7 +237,7 @@ async fn test_messenger_open_channel() {
             Err(err) => panic!("faeild to invoke contract : {}", err),
         };
 
-        let chats_state: Storage =
+        let storage: Storage =
             serde_json::from_str(state_serialized.as_str()).unwrap();
 
         let open_ch_serialized = chats_state.get(&new_pk).unwrap();

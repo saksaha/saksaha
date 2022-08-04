@@ -1,5 +1,5 @@
-mod messenger;
+mod envelope;
 mod params;
 
-pub use messenger::*;
+pub use envelope::*;
 pub use params::*;

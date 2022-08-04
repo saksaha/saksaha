@@ -14,16 +14,10 @@ pub mod request_type {
 pub type PublicKey = String;
 pub type ChannelId = String;
 
-// pub const ARG_CH_ID: &str = "ch_id";
-
-// pub const ARG_DST_PK: &str = "dst_pk";
-
-// pub const ARG_SERIALIZED_INPUT: &str = "serialized_input";
-
 pub const STORAGE_CAP: usize = 100;
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct MsgStorage {
+pub struct EnvelopeStorage {
     open_ch_reqs: HashMap<PublicKey, Vec<OpenCh>>,
     chats: HashMap<ChannelId, Vec<String>>,
 }
@@ -39,13 +33,12 @@ contract_bootstrap!();
 
 define_init!();
 pub fn init2() -> Result<Storage, ContractError> {
-    // let storage_init = Storage::with_capacity(STORAGE_CAP);
-    let storage = MsgStorage {
+    let evl_storage = EnvelopeStorage {
         open_ch_reqs: HashMap::new(),
         chats: HashMap::new(),
     };
 
-    let v = serde_json::to_vec(&storage)?;
+    let v = serde_json::to_vec(&evl_storage)?;
 
     Ok(v)
 }
@@ -94,7 +87,7 @@ fn handle_get_msgs(
     storage: Storage,
     args: RequestArgs,
 ) -> Result<String, ContractError> {
-    let msg_storage: MsgStorage = serde_json::from_slice(&storage)?;
+    let evl_storage: EnvelopeStorage = serde_json::from_slice(&storage)?;
 
     let get_msg_params: GetMsgParams = serde_json::from_slice(&args)?;
 
@@ -118,7 +111,7 @@ fn handle_get_msgs(
 
     let ch_id = get_msg_params.ch_id;
 
-    let chats = msg_storage
+    let chats = evl_storage
         .chats
         .get(&ch_id)
         .ok_or(format!("Chat is not initialized, ch_id: {}", &ch_id))?;
@@ -132,33 +125,14 @@ fn handle_get_ch_list(
     storage: Storage,
     args: RequestArgs,
 ) -> Result<String, ContractError> {
-    let msg_storage: MsgStorage = serde_json::from_slice(&storage)?;
+    let evl_storage: EnvelopeStorage = serde_json::from_slice(&storage)?;
 
     let get_ch_list_params: GetChListParams = serde_json::from_slice(&args)?;
 
-    // let dst_pk = match args.get(&get_ch_list_params.dst_pk) {
-    //     Some(v) => v,
-    //     None => {
-    //         return Err(ContractError::new(
-    //             format!("Args should contain a channel_id").into(),
-    //         ));
-    //     }
-    // };
-
     let mut ch_list = vec![];
 
-    match msg_storage.open_ch_reqs.get(&get_ch_list_params.dst_pk) {
+    match evl_storage.open_ch_reqs.get(&get_ch_list_params.dst_pk) {
         Some(open_channels) => {
-            // let open_ch_data: Vec<String> =
-            //     match serde_json::from_str(&o.as_str()) {
-            //         Ok(vs) => vs,
-            //         Err(err) => {
-            //             return Err(ContractError::new(
-            //                 format!("err: {:?}", err).into(),
-            //             ));
-            //         }
-            //     };
-
             for open_ch in open_channels {
                 // let [_a, ch_id, _c]: [String; 3] =
                 //     match serde_json::from_str(&data) {
@@ -190,21 +164,12 @@ fn handle_open_channel(
     storage: &mut Storage,
     args: RequestArgs,
 ) -> Result<(), ContractError> {
-    let mut msg_storage: MsgStorage = serde_json::from_slice(&storage)?;
+    let mut evl_storage: EnvelopeStorage = serde_json::from_slice(&storage)?;
 
     let open_ch_params: OpenChParams = serde_json::from_slice(&args)?;
 
     let dst_pk = open_ch_params.dst_pk;
     let open_ch = open_ch_params.open_ch;
-
-    // let dst_pk = match args.get(ARG_DST_PK) {
-    //     Some(v) => v,
-    //     None => {
-    //         return Err(ContractError::new(
-    //             format!("args should contain the her_pk").into(),
-    //         ));
-    //     }
-    // };
 
     // (ch_id, eph_key, sig)
     // let input_serialized = match args.get(ARG_SERIALIZED_INPUT) {
@@ -230,7 +195,7 @@ fn handle_open_channel(
     //     (ret[1].clone(), ret[3].clone())
     // };
 
-    match msg_storage.chats.get_mut(&open_ch.ch_id) {
+    match evl_storage.chats.get_mut(&open_ch.ch_id) {
         Some(_) => {
             return Err(ContractError::new(
                 format!("The channel is already opened").into(),
@@ -245,7 +210,7 @@ fn handle_open_channel(
     //     sig: open_ch_params.sig,
     // };
 
-    match msg_storage.open_ch_reqs.get_mut(&dst_pk) {
+    match evl_storage.open_ch_reqs.get_mut(&dst_pk) {
         Some(open_channels) => {
             // let mut open_ch_data: Vec<String> =
             //     match serde_json::from_str(&o.as_str()) {
@@ -290,7 +255,7 @@ fn handle_open_channel(
             //         }
             //     };
 
-            msg_storage.open_ch_reqs.insert(dst_pk, vec![open_ch]);
+            evl_storage.open_ch_reqs.insert(dst_pk, vec![open_ch]);
 
             // storage.insert(dst_pk.clone(), input_serialized_new.clone());
         }
@@ -298,7 +263,7 @@ fn handle_open_channel(
 
     // storage.insert(ch_id.clone(), open_ch_empty);
 
-    *storage = serde_json::to_vec(&msg_storage)?;
+    *storage = serde_json::to_vec(&evl_storage)?;
 
     Ok(())
 }
@@ -307,7 +272,7 @@ fn handle_send_msg(
     storage: &mut Storage,
     args: RequestArgs,
 ) -> Result<(), ContractError> {
-    let mut msg_storage: MsgStorage = serde_json::from_slice(&storage)?;
+    let mut evl_storage: EnvelopeStorage = serde_json::from_slice(&storage)?;
 
     let send_msg_params: SendMsgParams = serde_json::from_slice(&args)?;
 
@@ -333,14 +298,14 @@ fn handle_send_msg(
 
     let ch_id = send_msg_params.ch_id;
 
-    let chats = msg_storage
+    let chats = evl_storage
         .chats
         .get_mut(&ch_id)
         .ok_or(format!("Channel is not initialied, ch_id: {}", ch_id))?;
 
     chats.push(send_msg_params.msg);
 
-    *storage = serde_json::to_vec(&msg_storage)?;
+    *storage = serde_json::to_vec(&evl_storage)?;
 
     Ok(())
 }
