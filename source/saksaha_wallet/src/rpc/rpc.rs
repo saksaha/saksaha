@@ -38,5 +38,27 @@ impl RPC {
 
     pub async fn run(self) {
         println!("rpc starts");
+
+        let router = {
+            let routes = routes::get_routes();
+            let router = Router::new(routes);
+
+            router
+        };
+
+        let cors = Middleware::new(Box::new(cors));
+
+        let route = {
+            let m = Middleware::new(Box::new(move |req, res, ctx| {
+                router.route(req, res, ctx)
+            }));
+
+            m
+        };
+
+        let middlewares = vec![cors, route];
+
+        self.server
+            .run(self.rpc_socket, self.sys_handle, middlewares)
     }
 }

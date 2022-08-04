@@ -1,11 +1,6 @@
-use crate::{
-    rpc::{
-        router::{self, Params, RouteState},
-        RPCError,
-    },
-    system::SystemHandle,
-};
+use crate::{rpc::RPCError, system::SystemHandle};
 use hyper::{Body, Request, Response};
+use hyper_rpc_router::{Params, RouteState};
 use log::warn;
 use sak_types::Block;
 use serde::{Deserialize, Serialize};

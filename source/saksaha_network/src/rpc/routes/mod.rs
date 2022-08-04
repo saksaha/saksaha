@@ -1,7 +1,7 @@
 pub(in crate::rpc) mod v0;
 
-use super::router::{Handler, Path};
 use crate::SystemHandle;
+use hyper_rpc_router::{Handler, Path};
 use std::{collections::HashMap, sync::Arc};
 
 pub(in crate::rpc) fn get_routes(

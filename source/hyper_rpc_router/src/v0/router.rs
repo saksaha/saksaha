@@ -4,7 +4,7 @@ use hyper_server::MiddlewareResult;
 use sak_rpc_interface::JsonRequest;
 use std::{collections::HashMap, sync::Arc};
 
-pub(crate) struct Router<C> {
+pub struct Router<C> {
     route_map: Arc<HashMap<&'static str, Handler<C>>>,
 }
 

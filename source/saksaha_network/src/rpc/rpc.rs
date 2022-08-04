@@ -1,12 +1,9 @@
-// use super::server::RPCServer;
+use super::routes;
 use crate::{SaksahaError, SystemHandle};
 use hyper_rpc_router::Router;
 use hyper_server::{cors, Middleware, RPCServer};
 use std::sync::Arc;
 use tokio::net::TcpListener;
-
-use super::routes;
-// use super::{router::Router, routes};
 
 pub(crate) struct RPCArgs {
     pub sys_handle: Arc<SystemHandle>,
@@ -37,15 +34,12 @@ impl RPC {
             let routes = routes::get_routes();
             let router = Router::new(routes);
 
-            // Arc::new(router)
             router
         };
 
         let cors = Middleware::new(Box::new(cors));
 
         let route = {
-            // let router_clone = router.clone();
-
             let m = Middleware::new(Box::new(move |req, res, ctx| {
                 router.route(req, res, ctx)
             }));
