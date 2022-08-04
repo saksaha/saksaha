@@ -75,130 +75,137 @@ macro_rules! define_query {
             request_ptr: *mut u8,
             request_len: usize,
         ) -> (*mut u8, i32) {
-            let storage_bytes_vec = Vec::from_raw_parts(
+            let mut storage: Storage = Vec::from_raw_parts(
                 storage_ptr, //
                 storage_len,
                 storage_len,
             );
 
-            let storage_serialized = match String::from_utf8(storage_bytes_vec)
-            {
-                Ok(s) => s,
-                Err(err) => {
-                    let mut err_msg: String = ContractError::new(
-                        format!(
-                            "Cannot serialize storage, \
-                            err: {}",
-                            err
-                        )
-                        .into(),
-                    )
-                    .err_msg;
+            let ret_ptr = storage.as_mut_ptr();
+            let ret_len = storage.len();
 
-                    let ptr = err_msg.as_mut_ptr();
-                    let len = err_msg.len();
-
-                    std::mem::forget(err_msg);
-
-                    return (ptr, len as i32);
-                }
-            };
-
-            let storage: Storage =
-                match serde_json::from_str(&storage_serialized.as_str()) {
-                    Ok(s) => s,
-                    Err(err) => {
-                        let mut err_msg: String = ContractError::new(
-                            format!(
-                                "Cannot Deserialize \
-                                `HashMap` from storage, err: {}",
-                                err
-                            )
-                            .into(),
-                        )
-                        .err_msg;
-
-                        let ptr = err_msg.as_mut_ptr();
-                        let len = err_msg.len();
-
-                        std::mem::forget(err_msg);
-
-                        return (ptr, len as i32);
-                    }
-                };
-
-            let request_bytes_vec = Vec::from_raw_parts(
-                request_ptr, //
-                request_len,
-                request_len,
-            );
-
-            let request_serialized = match String::from_utf8(request_bytes_vec)
-            {
-                Ok(s) => s,
-                Err(err) => {
-                    let mut err_msg: String = ContractError::new(
-                        format!(
-                            "Cannot serialize storage, \
-                            err: {}",
-                            err
-                        )
-                        .into(),
-                    )
-                    .err_msg;
-
-                    let ptr = err_msg.as_mut_ptr();
-                    let len = err_msg.len();
-
-                    std::mem::forget(err_msg);
-
-                    return (ptr, len as i32);
-                }
-            };
-
-            let request: Request =
-                match serde_json::from_str(&request_serialized.as_str()) {
-                    Ok(s) => s,
-                    Err(err) => {
-                        let mut err_msg: String = ContractError::new(
-                            format!(
-                                "Cannot Deserialize \
-                                `Storage` from request, err: {}",
-                                err
-                            )
-                            .into(),
-                        )
-                        .err_msg;
-
-                        let ptr = err_msg.as_mut_ptr();
-                        let len = err_msg.len();
-
-                        std::mem::forget(err_msg);
-
-                        return (ptr, len as i32);
-                    }
-                };
-
-            let mut ret = match query2(request, storage) {
-                Ok(r) => r,
-                Err(err) => {
-                    let mut err_msg: String = err.err_msg;
-
-                    let ptr = err_msg.as_mut_ptr();
-                    let len = err_msg.len();
-
-                    std::mem::forget(err_msg);
-
-                    return (ptr, len as i32);
-                }
-            };
-
-            let ret_ptr = ret.as_mut_ptr();
-            let ret_len = ret.len();
-
-            std::mem::forget(ret);
+            // std::mem::forget();
 
             (ret_ptr, ret_len as i32)
+
+            // let storage_serialized = match String::from_utf8(storage_bytes_vec)
+            // {
+            //     Ok(s) => s,
+            //     Err(err) => {
+            //         let mut err_msg: String = ContractError::new(
+            //             format!(
+            //                 "Cannot serialize storage, \
+            //                 err: {}",
+            //                 err
+            //             )
+            //             .into(),
+            //         )
+            //         .err_msg;
+
+            //         let ptr = err_msg.as_mut_ptr();
+            //         let len = err_msg.len();
+
+            //         std::mem::forget(err_msg);
+
+            //         return (ptr, len as i32);
+            //     }
+            // };
+
+            // let storage: Storage =
+            //     match serde_json::from_str(&storage_serialized.as_str()) {
+            //         Ok(s) => s,
+            //         Err(err) => {
+            //             let mut err_msg: String = ContractError::new(
+            //                 format!(
+            //                     "Cannot Deserialize \
+            //                     `HashMap` from storage, err: {}",
+            //                     err
+            //                 )
+            //                 .into(),
+            //             )
+            //             .err_msg;
+
+            //             let ptr = err_msg.as_mut_ptr();
+            //             let len = err_msg.len();
+
+            //             std::mem::forget(err_msg);
+
+            //             return (ptr, len as i32);
+            //         }
+            //     };
+
+            // let request_bytes_vec = Vec::from_raw_parts(
+            //     request_ptr, //
+            //     request_len,
+            //     request_len,
+            // );
+
+            // let request_serialized = match String::from_utf8(request_bytes_vec)
+            // {
+            //     Ok(s) => s,
+            //     Err(err) => {
+            //         let mut err_msg: String = ContractError::new(
+            //             format!(
+            //                 "Cannot serialize storage, \
+            //                 err: {}",
+            //                 err
+            //             )
+            //             .into(),
+            //         )
+            //         .err_msg;
+
+            //         let ptr = err_msg.as_mut_ptr();
+            //         let len = err_msg.len();
+
+            //         std::mem::forget(err_msg);
+
+            //         return (ptr, len as i32);
+            //     }
+            // };
+
+            // let request: Request =
+            //     match serde_json::from_str(&request_serialized.as_str()) {
+            //         Ok(s) => s,
+            //         Err(err) => {
+            //             let mut err_msg: String = ContractError::new(
+            //                 format!(
+            //                     "Cannot Deserialize \
+            //                     `Storage` from request, err: {}",
+            //                     err
+            //                 )
+            //                 .into(),
+            //             )
+            //             .err_msg;
+
+            //             let ptr = err_msg.as_mut_ptr();
+            //             let len = err_msg.len();
+
+            //             std::mem::forget(err_msg);
+
+            //             return (ptr, len as i32);
+            //         }
+            //     };
+
+            // let mut ret = match query2(request, storage) {
+            //     Ok(r) => r,
+            //     Err(err) => {
+            //         let mut err_msg: String = err.err_msg;
+
+            //         let ptr = err_msg.as_mut_ptr();
+            //         let len = err_msg.len();
+
+            //         std::mem::forget(err_msg);
+
+            //         return (ptr, len as i32);
+            //     }
+            // };
+
+            // let ret_ptr = ret.as_mut_ptr();
+            // let ret_len = ret.len();
+
+            // std::mem::forget(ret);
+
+            // (ret_ptr, ret_len as i32)
         }
     };
 }

@@ -45,9 +45,12 @@ pub(in crate::rpc) async fn query_ctr(
         .await
     {
         Ok(t) => {
+            let result: String =
+                router::require_params_parsed!(route_state, &t);
+
             return router::make_success_response(
                 route_state,
-                QueryCtrResponse { result: t },
+                QueryCtrResponse { result },
             );
         }
         Err(err) => {

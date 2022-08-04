@@ -11,13 +11,15 @@ impl DistLedgerApis {
         &self,
         ctr_addr: &CtrAddr,
         request: Request,
-    ) -> Result<String, LedgerError> {
+    ) -> Result<Vec<u8>, LedgerError> {
         let ctr_wasm = self
             .ledger_db
             .schema
             .get_ctr_data_by_ctr_addr(ctr_addr)
             .await?
             .ok_or("ctr data (wasm) should exist")?;
+
+        println!("power00, ctr_addr: {}", ctr_addr);
 
         let ctr_state = self
             .ledger_db
@@ -31,9 +33,9 @@ impl DistLedgerApis {
 
         let ret = self.vm.invoke(ctr_wasm, ctr_fn)?;
 
-        if &ret[0..4] == "$$__" {
-            return Err(format!("{}", &ret[4..]).into());
-        }
+        // if &ret[0..4] == "$$__" {
+        //     return Err(format!("{}", &ret[4..]).into());
+        // }
 
         info!("invoke query ctr result : {:?}", ret);
 
@@ -44,7 +46,7 @@ impl DistLedgerApis {
         &self,
         ctr_addr: &CtrAddr,
         request: Request,
-    ) -> Result<String, LedgerError> {
+    ) -> Result<Vec<u8>, LedgerError> {
         let ctr_wasm = self
             .ledger_db
             .schema
@@ -65,9 +67,11 @@ impl DistLedgerApis {
 
         let ret = self.vm.invoke(ctr_wasm, ctr_fn)?;
 
-        if &ret[0..4] == "$$__" {
-            return Err(format!("{}", &ret[4..]).into());
-        }
+        // if &ret[0..4] == "$$__" {
+        //     let a: String = serde_json::from_slice(&ret)?;
+
+        //     return Err(format!("Some error {}", &ret[4..]).into());
+        // }
 
         info!("invoke execute ctr result, ctr_state: {:?}", ret);
 

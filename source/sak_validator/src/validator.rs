@@ -31,20 +31,27 @@ pub fn query2(
     request: Request,
     storage: Storage,
 ) -> Result<String, ContractError> {
-    match request.req_type.as_ref() {
-        "get_validator" => {
-            return handle_get_validator(storage);
-        }
-        _ => {
-            panic!("Wrong request type has been found");
-        }
-    };
+    return Ok("apo.".to_string());
+    // match request.req_type.as_ref() {
+    //     "get_validator" => {
+    //         return handle_get_validator(storage);
+    //     }
+    //     _ => {
+    //         return Err(ContractError {
+    //             err_msg: "Wrong request type has been found".to_string(),
+    //         });
+    //     }
+    // };
 }
 
 fn handle_get_validator(storage: Storage) -> Result<String, ContractError> {
     let validator_storage: ValidatorStorage = serde_json::from_slice(&storage)?;
 
-    let validator = validator_storage.validators[0].to_string();
+    let validator = validator_storage
+        .validators
+        .get(0)
+        .ok_or(format!("Validators are empty"))?
+        .to_string();
 
     Ok(validator)
 }
@@ -59,7 +66,9 @@ pub fn execute2(
             return handle_add_validator(storage, request.args);
         }
         _ => {
-            panic!("Wrong request type has been found");
+            return Err(ContractError {
+                err_msg: "Wrong request type has been found".to_string(),
+            });
         }
     };
 }

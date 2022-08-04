@@ -47,8 +47,6 @@ impl DistLedgerApis {
         &self,
         bc: Option<BlockCandidate>,
     ) -> Result<Option<String>, LedgerError> {
-        println!("123123");
-
         let bc = match bc {
             Some(bc) => bc,
             None => match self.make_block_candidate().await? {
@@ -295,10 +293,10 @@ async fn process_ctr_state_update(
                 CtrCallType::Execute => {
                     let new_state = match ctr_state_update.get(ctr_addr) {
                         Some(previous_state) => {
-                            let previous_state: Storage =
-                                sak_contract_std::parse_storage(
-                                    previous_state.as_str(),
-                                )?;
+                            // let previous_state: Storage =
+                            //     sak_contract_std::parse_storage(
+                            //         previous_state.as_str(),
+                            //     )?;
 
                             let ctr_wasm = apis
                                 .ledger_db
@@ -307,7 +305,8 @@ async fn process_ctr_state_update(
                                 .await?
                                 .ok_or("ctr data (wasm) should exist")?;
 
-                            let ctr_fn = CtrFn::Execute(req, previous_state);
+                            let ctr_fn =
+                                CtrFn::Execute(req, previous_state.to_vec());
 
                             let ret = vm.invoke(ctr_wasm, ctr_fn)?;
 
