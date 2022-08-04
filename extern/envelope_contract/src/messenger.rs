@@ -174,8 +174,7 @@ fn handle_open_channel(
         Some(_) => {
             return Err(ContractError::new(
                 format!(
-                    "The channel is already\
-                        opened with the channel_id, {ch_id}"
+                    "The channel is already opened with the channel_id, {ch_id}"
                 )
                 .into(),
             ));

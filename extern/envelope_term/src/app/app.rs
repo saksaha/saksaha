@@ -275,9 +275,15 @@ impl App {
         let _json_response =
             saksaha::send_tx_pour(ctr_addr, req_type, arg).await?;
 
-        self.state
+        if !self
+            .state
             .ch_list
-            .push(ChannelState::new(channel_name, her_pk.clone()));
+            .contains(&ChannelState::new(channel_name.clone(), her_pk.clone()))
+        {
+            self.state
+                .ch_list
+                .push(ChannelState::new(channel_name, her_pk.clone()));
+        }
 
         Ok(())
     }
