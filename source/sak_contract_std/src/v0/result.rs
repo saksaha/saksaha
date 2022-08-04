@@ -2,6 +2,8 @@ use serde::{Deserialize, Serialize};
 
 pub type ContractError = Box<dyn std::error::Error + Send + Sync>;
 
+pub const ERROR_PLACEHOLDER: [u8; 6] = [1, 2, 3, 4, 5, 6];
+
 // #[derive(Serialize, Deserialize, Debug, PartialEq)]
 // pub enum Status {
 //     SUCCESS,
@@ -54,7 +56,7 @@ pub type ContractError = Box<dyn std::error::Error + Send + Sync>;
 // }
 
 pub fn make_error_vec(err: ContractError) -> Vec<u8> {
-    format!("$$__CTR_ERROR_{}", err.to_string())
-        .as_bytes()
-        .to_vec()
+    let v = err.to_string().as_bytes().to_vec();
+
+    [ERROR_PLACEHOLDER.to_vec(), v].concat()
 }

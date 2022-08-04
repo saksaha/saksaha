@@ -36,9 +36,7 @@ pub fn query2(
             return handle_get_validator(storage);
         }
         _ => {
-            return Err(ContractError {
-                err_msg: "Wrong request type has been found".to_string(),
-            });
+            return Err(format!("Wrong request type has been found").into());
         }
     };
 }
@@ -66,9 +64,7 @@ pub fn execute2(
             return handle_add_validator(storage, request.args);
         }
         _ => {
-            return Err(ContractError {
-                err_msg: "Wrong request type has been found".to_string(),
-            });
+            return Err(format!("Wrong request type has been found").into());
         }
     };
 }

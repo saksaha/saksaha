@@ -2,7 +2,7 @@ use super::utils;
 use crate::wasm_bootstrap;
 use crate::{CtrFn, VMError, EXECUTE, INIT, MEMORY, QUERY};
 use log::{error, info};
-use sak_contract_std::{ContractError, ContractResult, Request, Storage};
+use sak_contract_std::{Request, Storage, ERROR_PLACEHOLDER};
 use wasmtime::{Instance, Memory, Store, TypedFunc};
 
 pub struct VM {}
@@ -17,7 +17,7 @@ impl VM {
         &self,
         contract_wasm: impl AsRef<[u8]>,
         ctr_fn: CtrFn,
-    ) -> Result<ContractResult, VMError> {
+    ) -> Result<Vec<u8>, VMError> {
         let (instance, store, memory) = init_module(contract_wasm)?;
 
         let invoked = match ctr_fn {
@@ -30,9 +30,15 @@ impl VM {
             }
         };
 
-        let contract_result: ContractResult = serde_json::from_slice(&invoked)?;
+        if invoked.len() > 6 {
+            if &invoked[..6] == &ERROR_PLACEHOLDER {
+                let err_msg: String = serde_json::from_slice(&invoked[6..])?;
 
-        Ok(contract_result)
+                return Err(err_msg.into());
+            }
+        }
+
+        Ok(invoked)
     }
 }
 
