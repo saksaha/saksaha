@@ -24,15 +24,15 @@ pub const STORAGE_CAP: usize = 100;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct MsgStorage {
-    channels: HashMap<PublicKey, Vec<OpenCh>>,
+    open_ch_reqs: HashMap<PublicKey, Vec<OpenCh>>,
     chats: HashMap<ChannelId, Vec<String>>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct OpenCh {
-    ch_id: String,
-    eph_key: String,
-    sig: String,
+    pub ch_id: String,
+    pub eph_key: String,
+    pub sig: String,
 }
 
 contract_bootstrap!();
@@ -41,7 +41,7 @@ define_init!();
 pub fn init2() -> Result<Storage, ContractError> {
     // let storage_init = Storage::with_capacity(STORAGE_CAP);
     let storage = MsgStorage {
-        channels: HashMap::new(),
+        open_ch_reqs: HashMap::new(),
         chats: HashMap::new(),
     };
 
@@ -147,7 +147,7 @@ fn handle_get_ch_list(
 
     let mut ch_list = vec![];
 
-    match msg_storage.channels.get(&get_ch_list_params.dst_pk) {
+    match msg_storage.open_ch_reqs.get(&get_ch_list_params.dst_pk) {
         Some(open_channels) => {
             // let open_ch_data: Vec<String> =
             //     match serde_json::from_str(&o.as_str()) {
@@ -194,6 +194,9 @@ fn handle_open_channel(
 
     let open_ch_params: OpenChParams = serde_json::from_slice(&args)?;
 
+    let dst_pk = open_ch_params.dst_pk;
+    let open_ch = open_ch_params.open_ch;
+
     // let dst_pk = match args.get(ARG_DST_PK) {
     //     Some(v) => v,
     //     None => {
@@ -227,7 +230,7 @@ fn handle_open_channel(
     //     (ret[1].clone(), ret[3].clone())
     // };
 
-    match msg_storage.chats.get_mut(&open_ch_params.ch_id) {
+    match msg_storage.chats.get_mut(&open_ch.ch_id) {
         Some(_) => {
             return Err(ContractError::new(
                 format!("The channel is already opened").into(),
@@ -236,13 +239,13 @@ fn handle_open_channel(
         None => {}
     };
 
-    let open_ch = OpenCh {
-        ch_id: open_ch_params.ch_id,
-        eph_key: open_ch_params.eph_pk,
-        sig: open_ch_params.sig,
-    };
+    // let open_ch = OpenCh {
+    //     ch_id: open_.ch_id,
+    //     eph_key: open_ch_params.eph_pk,
+    //     sig: open_ch_params.sig,
+    // };
 
-    match msg_storage.channels.get_mut(&open_ch_params.dst_pk) {
+    match msg_storage.open_ch_reqs.get_mut(&dst_pk) {
         Some(open_channels) => {
             // let mut open_ch_data: Vec<String> =
             //     match serde_json::from_str(&o.as_str()) {
@@ -287,9 +290,7 @@ fn handle_open_channel(
             //         }
             //     };
 
-            msg_storage
-                .channels
-                .insert(open_ch_params.dst_pk, vec![open_ch]);
+            msg_storage.open_ch_reqs.insert(dst_pk, vec![open_ch]);
 
             // storage.insert(dst_pk.clone(), input_serialized_new.clone());
         }
