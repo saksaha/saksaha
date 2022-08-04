@@ -18,8 +18,8 @@ pub const STORAGE_CAP: usize = 100;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct EnvelopeStorage {
-    open_ch_reqs: HashMap<PublicKey, Vec<OpenCh>>,
-    chats: HashMap<ChannelId, Vec<String>>,
+    pub open_ch_reqs: HashMap<PublicKey, Vec<OpenCh>>,
+    pub chats: HashMap<ChannelId, Vec<String>>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

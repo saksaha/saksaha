@@ -194,7 +194,7 @@ async fn test_call_ctr_validator_fn_execute_add_validator() {
 
     // let validators_string = validator_state.get("validators").unwrap();
 
-    // let validators: Vec<String> =
+    // let validators: Vec<String>.as_str() =
     //     serde_json::from_str(validators_string.as_str()).unwrap();
 
     let validators = validator_storage.validators;
@@ -204,3 +204,32 @@ async fn test_call_ctr_validator_fn_execute_add_validator() {
 
     assert!(validators.contains(&get_dummy_validator_4()));
 }
+
+// #[tokio::test(flavor = "multi_thread")]
+// async fn test_deploy_ctr_and_invoke_execute_and_query_when_dist_ledger_writes_new_blocks(
+// ) {
+//     sak_test_utils::init_test_log();
+//     sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
+
+//     let dist_ledger = utils::make_dist_ledger().await;
+
+//     dist_ledger.run().await;
+
+//     println!("\n[+] Block1: Deploying test validator contract");
+
+//     dist_ledger
+//         .apis
+//         .write_block(utils::make_dummy_block_candidate_1())
+//         .await
+//         .expect("Block_1 must be written");
+
+//     println!("\n[+] Block2: Execute::add_validator");
+
+//     dist_ledger
+//         .apis
+//         .write_block(utils::make_dummy_block_candidate_calling_validator_ctr())
+//         .await
+//         .expect("Block_2 must be written");
+
+//     println!("\n[+] Block3: Query::get_validator");
+// }

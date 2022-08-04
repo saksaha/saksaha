@@ -5,6 +5,7 @@ use super::{
 };
 use envelope_contract::{
     EnvelopeStorage, GetChListParams, GetMsgParams, OpenCh, OpenChParams,
+    SendMsgParams,
 };
 use sak_contract_std::{CtrCallType, Request, Storage};
 use sak_vm::{CtrFn, VM};
@@ -240,17 +241,23 @@ async fn test_messenger_open_channel() {
         let storage: Storage =
             serde_json::from_str(state_serialized.as_str()).unwrap();
 
-        let open_ch_serialized = chats_state.get(&new_pk).unwrap();
-        let open_ch_vec: Vec<String> =
-            serde_json::from_str(open_ch_serialized).unwrap();
+        let envelope_storage: EnvelopeStorage =
+            serde_json::from_slice(&storage).unwrap();
 
-        let open_ch: Vec<String> =
-            serde_json::from_str(&open_ch_vec[0]).unwrap();
+        let open_ch_reqs = envelope_storage.open_ch_reqs.get(&new_pk).unwrap();
+
+        // let open_ch_vec: Vec<String> =
+        //     serde_json::from_str(open_ch_serialized).unwrap();
+
+        // let open_ch: Vec<String> =
+        //     serde_json::from_str(&open_ch_reqs[0]).unwrap();
+
+        let open_ch = open_ch_reqs.get(0).unwrap();
 
         println!("expected channel id : {:?}", DUMMY_CHANNEL_ID_2);
         println!("updated channel id: {:?}", open_ch);
 
-        let ch_id = &open_ch[1];
+        let ch_id = &open_ch.ch_id;
 
         assert_eq!(DUMMY_CHANNEL_ID_2, ch_id);
     }
@@ -269,12 +276,21 @@ async fn test_messenger_send_msg() {
         args.insert(String::from(ARG_CH_ID), String::from(DUMMY_CHANNEL_ID_3));
         args.insert(String::from(ARG_SERIALIZED_INPUT), expected_msg.clone());
 
+        let send_msg_params = SendMsgParams {
+            ch_id: String::from(DUMMY_CHANNEL_ID_3),
+            msg: expected_msg.clone(),
+        };
+
+        let args = serde_json::to_vec(&send_msg_params).unwrap();
+
         let req = Request {
             req_type: String::from("send_msg"),
             args,
             ctr_call_type: CtrCallType::Execute,
         };
-        let storage = make_dummy_storage(&dummy_messeges);
+
+        let storage = make_mock_storage(&dummy_messeges);
+
         (req, storage)
     };
 
@@ -286,12 +302,20 @@ async fn test_messenger_send_msg() {
             .invoke(ctr_wasm, ctr_fn)
             .expect("State should be obtained");
 
-        let chats_state: Storage =
+        let storage: Storage =
             serde_json::from_str(chats_state_serialized.as_str()).unwrap();
 
-        let msg = chats_state.get(DUMMY_CHANNEL_ID_3).unwrap();
-        println!("expected msgs: {:?}", expected_msg);
-        println!("updated msgs: {:?}", msg);
+        let envelope_storage: EnvelopeStorage =
+            serde_json::from_slice(&storage).unwrap();
+
+        let chats = envelope_storage.chats.get(DUMMY_CHANNEL_ID_3).unwrap();
+
+        let msg = chats.get(0).unwrap();
+
+        // let msg = chat.get(DUMMY_CHANNEL_ID_3).unwrap();
+
+        println!("expected msg: {:?}", expected_msg);
+        println!("updated msg: {:?}", msg);
 
         assert_eq!(&expected_msg, msg);
     };
