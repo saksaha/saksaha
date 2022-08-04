@@ -13,6 +13,12 @@ impl From<serde_json::Error> for ContractError {
     }
 }
 
+impl From<String> for ContractError {
+    fn from(src: String) -> ContractError {
+        ContractError { err_msg: src }
+    }
+}
+
 impl ContractError {
     pub fn new(err_msg_input: String) -> Self {
         ContractError {

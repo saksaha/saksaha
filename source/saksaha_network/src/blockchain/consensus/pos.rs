@@ -19,7 +19,7 @@ impl Consensus for Pos {
     ) -> Result<BlockCandidate, ConsensusError> {
         let request = Request {
             req_type: "get_validator".to_string(),
-            args: HashMap::with_capacity(10),
+            args: vec![],
             ctr_call_type: CtrCallType::Query,
         };
 
