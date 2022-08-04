@@ -1,11 +1,9 @@
-use crate::{
-    rpc::{
-        router::{self, Params, RouteState},
-        RPCError,
-    },
-    system::SystemHandle,
-};
+use crate::{rpc::RPCError, system::SystemHandle};
 use hyper::{Body, Request, Response, StatusCode};
+use hyper_rpc_router::{
+    make_error_response, make_success_response, require_params_parsed,
+    require_some_params, Params, RouteState,
+};
 use log::warn;
 use sak_contract_std::Request as CtrRequest;
 use sak_types::{MintTxCandidate, PourTxCandidate, Tx, TxCandidate};
@@ -98,14 +96,13 @@ pub(in crate::rpc) async fn send_mint_tx(
     params: Params,
     sys_handle: Arc<SystemHandle>,
 ) -> Response<Body> {
-    let params = router::require_some_params!(
+    let params = require_some_params!(
         route_state,
         params,
         "send_mint_tx should contain params",
     );
 
-    let rb: SendMintTxRequest =
-        router::require_params_parsed!(route_state, &params);
+    let rb: SendMintTxRequest = require_params_parsed!(route_state, &params);
 
     let tx_candidate = TxCandidate::Mint(MintTxCandidate::new(
         rb.created_at,
@@ -127,10 +124,10 @@ pub(in crate::rpc) async fn send_mint_tx(
         .await
     {
         Ok(bool) => {
-            return router::make_success_response(route_state, "success");
+            return make_success_response(route_state, "success");
         }
         Err(err) => {
-            return router::make_error_response(
+            return make_error_response(
                 route_state.resp,
                 Some(route_state.id),
                 err.into(),
@@ -144,14 +141,13 @@ pub(in crate::rpc) async fn send_pour_tx(
     params: Params,
     sys_handle: Arc<SystemHandle>,
 ) -> Response<Body> {
-    let params = router::require_some_params!(
+    let params = require_some_params!(
         route_state,
         params,
         "send_pour_tx should contain params",
     );
 
-    let rb: SendPourTxRequest =
-        router::require_params_parsed!(route_state, &params);
+    let rb: SendPourTxRequest = require_params_parsed!(route_state, &params);
 
     let tx_candidate = TxCandidate::Pour(PourTxCandidate::new(
         rb.created_at,
@@ -175,10 +171,10 @@ pub(in crate::rpc) async fn send_pour_tx(
         .await
     {
         Ok(bool) => {
-            return router::make_success_response(route_state, "success");
+            return make_success_response(route_state, "success");
         }
         Err(err) => {
-            return router::make_error_response(
+            return make_error_response(
                 route_state.resp,
                 Some(route_state.id),
                 err.into(),
@@ -197,13 +193,13 @@ pub(in crate::rpc) async fn get_tx(
     params: Params,
     sys_handle: Arc<SystemHandle>,
 ) -> Response<Body> {
-    let params = router::require_some_params!(
+    let params = require_some_params!(
         route_state,
         params,
         "get_tx should contain params",
     );
 
-    let rb: GetTxRequest = router::require_params_parsed!(route_state, &params);
+    let rb: GetTxRequest = require_params_parsed!(route_state, &params);
 
     match sys_handle
         .machine
@@ -214,10 +210,10 @@ pub(in crate::rpc) async fn get_tx(
         .await
     {
         Ok(t) => {
-            return router::make_success_response(route_state, t);
+            return make_success_response(route_state, t);
         }
         Err(err) => {
-            return router::make_error_response(
+            return make_error_response(
                 route_state.resp,
                 Some(route_state.id),
                 err.into(),

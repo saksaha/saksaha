@@ -18,6 +18,8 @@ sak_p2p_peertable = { path = "../sak_p2p_peertable" }
 sak_p2p_id = { path = "../sak_p2p_id" }
 sak_p2p_discovery = { path = "../sak_p2p_discovery" }
 sak_p2p_transport = { path = "../sak_p2p_transport" }
+hyper_server = { path = "../hyper_server" }
+hyper_rpc_router = { path = "../hyper_rpc_router" }
 sak_utils_time = { path = "../sak_utils_time" }
 sak_utils_net = { path = "../sak_utils_net" }
 sak_rpc_interface = { path = "../sak_rpc_interface" }
