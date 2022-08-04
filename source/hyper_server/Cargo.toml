@@ -1,5 +1,5 @@
 [package]
-name = "sak_rpc_server"
+name = "hyper_server"
 version = "0.1.0"
 edition = "2018"
 

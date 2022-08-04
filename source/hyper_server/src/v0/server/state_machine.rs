@@ -2,9 +2,9 @@ use super::Middleware;
 use futures::Future;
 use hyper::{Body, Request, Response};
 use log::error;
-use std::pin::Pin;
+use std::{pin::Pin, sync::Arc};
 
-pub enum HandleResult<C> {
+pub enum MiddlewareResult<C> {
     Passing(Request<Body>, Response<Body>, C),
     End(
         Pin<
@@ -18,7 +18,7 @@ pub enum HandleResult<C> {
 }
 
 pub struct StateMachine<C> {
-    pub middlewares: Vec<Middleware<C>>,
+    pub middlewares: Arc<Vec<Middleware<C>>>,
 }
 
 impl<C> StateMachine<C> {
@@ -38,18 +38,18 @@ impl<C> StateMachine<C> {
         let mut rs = res;
         let mut ct = ctx;
 
-        for m in &self.middlewares {
+        for m in self.middlewares.iter() {
             let f = &m.0;
 
             match f(rq, rs, ct) {
-                HandleResult::Passing(req, res, ctx) => {
+                MiddlewareResult::Passing(req, res, ctx) => {
                     rq = req;
                     rs = res;
                     ct = ctx;
 
                     continue;
                 }
-                HandleResult::End(res) => return res,
+                MiddlewareResult::End(res) => return res,
             }
         }
 

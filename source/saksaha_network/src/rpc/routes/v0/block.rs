@@ -79,8 +79,6 @@ pub(in crate::rpc) async fn get_block_list(
         "get_block_list should contain params",
     );
 
-    println!("params, {:?}", params);
-
     let rb: GetBlockListRequest =
         router::require_params_parsed!(route_state, &params);
 
