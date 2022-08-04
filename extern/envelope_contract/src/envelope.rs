@@ -47,7 +47,7 @@ define_query!();
 pub fn query2(
     request: Request,
     storage: Storage,
-) -> Result<String, ContractError> {
+) -> Result<Vec<u8>, ContractError> {
     match request.req_type.as_ref() {
         "get_msgs" => {
             return handle_get_msgs(storage, request.args);
@@ -86,7 +86,7 @@ pub fn execute2(
 fn handle_get_msgs(
     storage: Storage,
     args: RequestArgs,
-) -> Result<String, ContractError> {
+) -> Result<Vec<u8>, ContractError> {
     let evl_storage: EnvelopeStorage = serde_json::from_slice(&storage)?;
 
     let get_msg_params: GetMsgParams = serde_json::from_slice(&args)?;
@@ -116,7 +116,7 @@ fn handle_get_msgs(
         .get(&ch_id)
         .ok_or(format!("Chat is not initialized, ch_id: {}", &ch_id))?;
 
-    let ret = serde_json::to_string(chats)?;
+    let ret = serde_json::to_vec(chats)?;
 
     Ok(ret)
 }
@@ -124,7 +124,7 @@ fn handle_get_msgs(
 fn handle_get_ch_list(
     storage: Storage,
     args: RequestArgs,
-) -> Result<String, ContractError> {
+) -> Result<Vec<u8>, ContractError> {
     let evl_storage: EnvelopeStorage = serde_json::from_slice(&storage)?;
 
     let get_ch_list_params: GetChListParams = serde_json::from_slice(&args)?;
@@ -150,14 +150,14 @@ fn handle_get_ch_list(
         None => {}
     }
 
-    let ch_list_serialized = match serde_json::to_string(&ch_list) {
+    let ret = match serde_json::to_vec(&ch_list) {
         Ok(s) => s,
         Err(err) => {
             return Err(ContractError::new(format!("err: {:?}", err).into()));
         }
     };
 
-    Ok(ch_list_serialized.clone())
+    Ok(ret)
 }
 
 fn handle_open_channel(

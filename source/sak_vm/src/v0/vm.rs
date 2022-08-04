@@ -2,7 +2,7 @@ use super::utils;
 use crate::wasm_bootstrap;
 use crate::{CtrFn, VMError, EXECUTE, INIT, MEMORY, QUERY};
 use log::{error, info};
-use sak_contract_std::{Request, Storage};
+use sak_contract_std::{ContractError, ContractResult, Request, Storage};
 use wasmtime::{Instance, Memory, Store, TypedFunc};
 
 pub struct VM {}
@@ -17,22 +17,22 @@ impl VM {
         &self,
         contract_wasm: impl AsRef<[u8]>,
         ctr_fn: CtrFn,
-    ) -> Result<Vec<u8>, VMError> {
+    ) -> Result<ContractResult, VMError> {
         let (instance, store, memory) = init_module(contract_wasm)?;
 
-        match ctr_fn {
-            CtrFn::Init => {
-                return invoke_init(instance, store, memory);
-            }
+        let invoked = match ctr_fn {
+            CtrFn::Init => invoke_init(instance, store, memory)?,
             CtrFn::Query(request, storage) => {
-                return invoke_query(instance, store, memory, request, storage);
+                invoke_query(instance, store, memory, request, storage)?
             }
             CtrFn::Execute(request, storage) => {
-                return invoke_execute(
-                    instance, store, memory, request, storage,
-                );
+                invoke_execute(instance, store, memory, request, storage)?
             }
-        }
+        };
+
+        let contract_result: ContractResult = serde_json::from_slice(&invoked)?;
+
+        Ok(contract_result)
     }
 }
 
@@ -119,8 +119,6 @@ fn invoke_query(
         }
     };
 
-    println!("33");
-
     let ret: Vec<u8>;
     unsafe {
         ret = wasm_bootstrap::read_memory(
@@ -130,8 +128,6 @@ fn invoke_query(
             ret_len as u32,
         )?
     }
-
-    println!("44");
 
     Ok(ret)
 }

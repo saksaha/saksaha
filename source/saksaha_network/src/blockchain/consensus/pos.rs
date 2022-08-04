@@ -29,7 +29,7 @@ impl Consensus for Pos {
             .query_ctr(&self.validator_ctr_addr, request)
             .await?;
 
-        println!("power22");
+        println!("power22, validator: {:?}", validator);
 
         let validator_str: String = serde_json::from_slice(&validator)?;
 

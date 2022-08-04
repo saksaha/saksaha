@@ -1,10 +1,10 @@
-mod error;
 mod macros;
 mod request;
+mod result;
 mod storage;
 
-pub use error::*;
 pub use request::*;
+pub use result::*;
 pub use std::error::Error;
 pub use storage::*;
 

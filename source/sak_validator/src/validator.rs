@@ -18,7 +18,7 @@ pub struct ValidatorStorage {
 contract_bootstrap!();
 
 define_init!();
-pub fn init2() -> Result<Storage, ContractError> {
+pub fn init2() -> Result<Vec<u8>, ContractError> {
     let storage = ValidatorStorage { validators: vec![] };
 
     let v = serde_json::to_vec(&storage)?;
@@ -30,30 +30,30 @@ define_query!();
 pub fn query2(
     request: Request,
     storage: Storage,
-) -> Result<String, ContractError> {
-    return Ok("apo.".to_string());
-    // match request.req_type.as_ref() {
-    //     "get_validator" => {
-    //         return handle_get_validator(storage);
-    //     }
-    //     _ => {
-    //         return Err(ContractError {
-    //             err_msg: "Wrong request type has been found".to_string(),
-    //         });
-    //     }
-    // };
+) -> Result<Vec<u8>, ContractError> {
+    match request.req_type.as_ref() {
+        "get_validator" => {
+            return handle_get_validator(storage);
+        }
+        _ => {
+            return Err(ContractError {
+                err_msg: "Wrong request type has been found".to_string(),
+            });
+        }
+    };
 }
 
-fn handle_get_validator(storage: Storage) -> Result<String, ContractError> {
+fn handle_get_validator(storage: Storage) -> Result<Vec<u8>, ContractError> {
     let validator_storage: ValidatorStorage = serde_json::from_slice(&storage)?;
 
     let validator = validator_storage
         .validators
         .get(0)
-        .ok_or(format!("Validators are empty"))?
-        .to_string();
+        .ok_or(format!("Validators are empty"))?;
 
-    Ok(validator)
+    let ret = serde_json::to_vec(validator)?;
+
+    Ok(ret)
 }
 
 define_execute!();

@@ -1,7 +1,7 @@
 use crate::{CtrStateUpdate, DistLedgerApis, LedgerError, MerkleUpdate};
 use colored::Colorize;
-use log::{debug, info, warn};
-use sak_contract_std::{CtrCallType, Request, Storage};
+use log::{debug, error, info, warn};
+use sak_contract_std::{CtrCallType, Request, Status, Storage};
 use sak_types::{
     Block, BlockCandidate, MintTxCandidate, PourTxCandidate, Tx, TxCandidate,
     TxCtrOp, U8Array,
@@ -278,9 +278,13 @@ async fn process_ctr_state_update(
 
     match tx_ctr_op {
         TxCtrOp::ContractDeploy => {
-            let initial_ctr_state = vm.invoke(&data, CtrFn::Init)?;
+            let ctr_result = vm.invoke(&data, CtrFn::Init)?;
 
-            ctr_state_update.insert(ctr_addr.clone(), initial_ctr_state);
+            if ctr_result.is_ok() {
+                ctr_state_update.insert(ctr_addr.clone(), ctr_result.data);
+            } else {
+                return Err(format!("Error deploying contract"));
+            }
         }
 
         TxCtrOp::ContractCall => {
