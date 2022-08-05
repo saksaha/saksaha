@@ -124,7 +124,7 @@ impl App {
                             let user_2_sk = self
                                 .db
                                 .schema
-                                .get_my_sk(&USER_2.to_string())
+                                .get_my_sk_by_user_id(&USER_2.to_string())
                                 .await
                                 .unwrap()
                                 .unwrap();
@@ -132,7 +132,7 @@ impl App {
                             let user_2_pk = self
                                 .db
                                 .schema
-                                .get_my_pk(&user_2_sk)
+                                .get_my_pk_by_sk(&user_2_sk)
                                 .await
                                 .unwrap()
                                 .unwrap();
@@ -408,7 +408,12 @@ impl App {
         &mut self,
         her_pk: &String,
     ) -> Result<OpenCh, EnvelopeError> {
-        let my_sk = match self.db.schema.get_my_sk(&USER_1.to_string()).await? {
+        let my_sk = match self
+            .db
+            .schema
+            .get_my_sk_by_user_id(&USER_1.to_string())
+            .await?
+        {
             Some(v) => v,
             None => {
                 return Err(

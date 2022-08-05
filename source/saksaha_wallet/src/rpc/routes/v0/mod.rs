@@ -16,6 +16,12 @@ pub struct SendTxRequest {
     val: [u8; 32],
 }
 
+impl SendTxRequest {
+    pub(crate) fn get_value(&self) -> [u8; 32] {
+        self.val
+    }
+}
+
 pub(in crate::rpc) async fn send_tx(
     route_state: RouteState,
     params: Params,
@@ -24,7 +30,7 @@ pub(in crate::rpc) async fn send_tx(
     let params = require_some_params!(
         route_state,
         params,
-        "send_pour_tx should contain params",
+        "send_tx should contain params",
     );
 
     let rb: SendTxRequest = require_params_parsed!(route_state, &params);

@@ -20,21 +20,24 @@ pub struct OwnCoin {
     pub useable: Option<bool>,
 }
 
-pub(crate) async fn put_old_coin(old_coin: OldCoin) {
+pub(crate) async fn prepare_old_coin(
+    idx: [u8; 32],
+) -> Result<OldCoin, WalletError> {
+    //TODO :
+    let idx = 0;
+    let auth_path = get_auth_path(idx).await?;
+    let coin = OldCoin::default();
+    put_old_coin(&coin);
+    Ok(coin)
+}
+
+pub(crate) async fn put_old_coin(old_coin: &OldCoin) {
     // self.db.schema.put_old_coin
 }
 
 pub(crate) async fn get_old_coin(cm: String) -> OldCoin {
     // self.db.schema.get_old_coin
     OldCoin::default()
-}
-
-pub(crate) async fn generate_old_coin(
-    idx: u128,
-) -> Result<OldCoin, WalletError> {
-    // TODO: if failed to load full auth_path, return error
-    let auth_path = get_auth_path(idx).await?;
-    Ok(OldCoin::default())
 }
 
 pub(crate) async fn put_new_coin(new_coin: NewCoin) {
