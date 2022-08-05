@@ -87,8 +87,8 @@ impl Server {
                 Ok(c) => {
                     debug!(
                         "Accepted a tcp connection from source, \
-                        peer_addr: {:?}",
-                        c.socket_addr,
+                        peer_addr: {:?}, conn_id: {}",
+                        c.socket_addr, conn_id,
                     );
 
                     c

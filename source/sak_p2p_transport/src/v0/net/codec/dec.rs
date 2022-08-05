@@ -8,9 +8,23 @@ use bytes::BytesMut;
 use sak_p2p_frame::{frame_io, Parse};
 
 pub(super) fn decode_into_msg(
+    id: usize,
     src: &mut BytesMut,
 ) -> Result<Option<Msg>, TrptError> {
-    if let Some(frame) = frame_io::parse_frame(src)? {
+    let maybe_frame = match frame_io::parse_frame(src) {
+        Ok(f) => f,
+        Err(err) => {
+            return Err(format!(
+                "Error parsing the frame, conn_id: {}, original_err: {}",
+                id, err
+            )
+            .into())
+        }
+    };
+
+    if let Some(frame) = maybe_frame {
+        println!("\n 222 parsed frame!!! id: {}, frame: {:?}\n", id, frame);
+
         let mut parse = Parse::new(frame)?;
 
         let msg_type = parse.next_string()?.to_lowercase();

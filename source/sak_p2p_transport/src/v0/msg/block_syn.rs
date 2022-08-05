@@ -123,7 +123,7 @@ impl BlockSynMsg {
             frame.push_int(block.block_height as u128);
 
             {
-                let witness_sigs = block.witness_sigs;
+                let witness_sigs = &block.witness_sigs;
                 let witness_sig_count = witness_sigs.len();
 
                 frame.push_int(witness_sig_count as u128);

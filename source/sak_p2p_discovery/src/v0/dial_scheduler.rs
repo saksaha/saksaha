@@ -1,5 +1,5 @@
 use super::task::DiscoveryTask;
-use sak_logger::{tinfo, twarn};
+use log::{info, warn};
 use sak_p2p_addr::UnknownAddr;
 use sak_task_queue::TaskQueue;
 use std::{sync::Arc, time::Duration};
@@ -35,9 +35,7 @@ impl DialScheduler {
             bootstrap_addrs,
         };
 
-        tinfo!(
-            "p2p_discovery",
-            "dial_schd",
+        info!(
             "Discovery dial scheduler is initialized. Disc dial min \
             interval: {:?}",
             disc_dial_interval,
@@ -52,17 +50,10 @@ impl DialScheduler {
     ) {
         let total_count = bootstrap_addrs.len();
 
-        tinfo!(
-            "p2p_discovery",
-            "dial_schd",
-            "Enqueueing bootstrap addrs, total count: {}",
-            total_count,
-        );
+        info!("Enqueueing bootstrap addrs, total count: {}", total_count,);
 
         for (idx, addr) in bootstrap_addrs.iter().enumerate() {
-            tinfo!(
-                "p2p_discovery",
-                "dial_schd",
+            info!(
                 "-- [{}/{}] enqueueing bootstrap addr, disc_endpoint: {}",
                 idx + 1,
                 total_count,
@@ -74,12 +65,7 @@ impl DialScheduler {
             match self.disc_task_queue.push_back(task).await {
                 Ok(_) => {}
                 Err(err) => {
-                    twarn!(
-                        "p2p_discovery",
-                        "dial_schd",
-                        "Cannot enqueue a bootstrap addr, err: {}",
-                        err,
-                    );
+                    warn!("Cannot enqueue a bootstrap addr, err: {}", err,);
                 }
             };
         }

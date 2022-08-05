@@ -57,7 +57,15 @@ pub(crate) async fn run(task: P2PTask) {
             let conn = match TcpStream::connect(&endpoint).await {
                 Ok(s) => {
                     let c = match Connection::new(s, conn_id) {
-                        Ok(c) => c,
+                        Ok(c) => {
+                            debug!(
+                                "Successfully connected to endpoint: {}, \
+                                conn_id: {}",
+                                &endpoint, conn_id
+                            );
+
+                            c
+                        }
                         Err(err) => {
                             warn!("Error creating a connection, err: {}", err);
                             return;
