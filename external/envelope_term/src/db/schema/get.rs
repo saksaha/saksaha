@@ -3,7 +3,7 @@ use crate::db::cfs;
 use crate::EnvelopeError;
 
 impl EnvelopeDBSchema {
-    pub async fn get_my_sk(
+    pub async fn get_my_sk_by_user_id(
         &self,
         user_id: &String,
     ) -> Result<Option<String>, EnvelopeError> {
@@ -20,7 +20,7 @@ impl EnvelopeDBSchema {
         };
     }
 
-    pub async fn get_my_pk(
+    pub async fn get_my_pk_by_sk(
         &self,
         my_sk: &String,
     ) -> Result<Option<String>, EnvelopeError> {
@@ -37,7 +37,7 @@ impl EnvelopeDBSchema {
         };
     }
 
-    pub async fn get_my_sig(
+    pub async fn get_my_sig_by_sk(
         &self,
         my_sk: &String,
     ) -> Result<Option<String>, EnvelopeError> {
@@ -54,7 +54,7 @@ impl EnvelopeDBSchema {
         };
     }
 
-    pub async fn get_her_pk(
+    pub async fn get_her_pk_by_ch_id(
         &self,
         ch_id: &String,
     ) -> Result<Option<String>, EnvelopeError> {
@@ -71,7 +71,7 @@ impl EnvelopeDBSchema {
         };
     }
 
-    pub async fn get_aes_key(
+    pub async fn get_aes_key_by_ch_id(
         &self,
         ch_id: &String,
     ) -> Result<Option<[u8; 32]>, EnvelopeError> {
