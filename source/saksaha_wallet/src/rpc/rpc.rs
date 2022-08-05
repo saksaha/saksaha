@@ -1,4 +1,8 @@
-use crate::{rpc::routes, WalletError};
+use crate::{
+    rpc::{ctx::RouteCtx, routes},
+    wallet::Wallet,
+    WalletError,
+};
 use colored::Colorize;
 use hyper_rpc_router::Router;
 use hyper_server::{cors, Middleware, RPCServer};
@@ -9,10 +13,14 @@ use tokio::net::TcpListener;
 pub(crate) struct RPC {
     rpc_port: u16,
     rpc_socket: TcpListener,
+    wallet: Arc<Wallet>,
 }
 
 impl RPC {
-    pub async fn init(rpc_port: Option<u16>) -> Result<RPC, WalletError> {
+    pub async fn init(
+        rpc_port: Option<u16>,
+        wallet: Arc<Wallet>,
+    ) -> Result<RPC, WalletError> {
         let (rpc_socket, socket_addr) =
             match sak_utils_net::bind_tcp_socket(rpc_port).await {
                 Ok((socket, socket_addr)) => {
@@ -33,12 +41,13 @@ impl RPC {
         let rpc = RPC {
             rpc_port: socket_addr.port(),
             rpc_socket,
+            wallet,
         };
 
         Ok(rpc)
     }
 
-    pub async fn run(self) {
+    pub async fn run(self) -> Result<(), WalletError> {
         println!("rpc starts");
 
         let router = {
@@ -62,6 +71,16 @@ impl RPC {
 
         let rpc_server = RPCServer {};
 
-        rpc_server.run(self.rpc_socket, Arc::new(0), middlewares);
+        let ctx = {
+            let c = RouteCtx {
+                wallet: self.wallet,
+            };
+
+            Arc::new(c)
+        };
+
+        rpc_server.run(self.rpc_socket, ctx, middlewares).await?;
+
+        Ok(())
     }
 }
