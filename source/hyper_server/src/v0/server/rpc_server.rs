@@ -31,25 +31,10 @@ impl RPCServer {
         let middlewares = Arc::new(middlewares);
 
         let make_svc = service::make_service_fn(move |_conn| {
-            // let sys_handle = sys_handle.clone();
             let ctx = ctx.clone();
-
-            // let cors = Middleware::new(Box::new(cors));
-
-            // let route = {
-            //     let router_clone = router.clone();
-
-            //     let m = Middleware::new(Box::new(move |req, res, ctx| {
-            //         router_clone.route(req, res, ctx)
-            //     }));
-
-            //     m
-            // };
 
             let state_machine = {
                 let m = StateMachine {
-                    // middlewares: vec![cors, route],
-                    // middlewares: vec![],
                     middlewares: middlewares.clone(),
                 };
 
@@ -64,7 +49,6 @@ impl RPCServer {
                         req.uri().path()
                     );
 
-                    // let sys_handle_clone = sys_handle.clone();
                     let ctx_clone = ctx.clone();
                     let state_machine_clone = state_machine.clone();
                     let resp: Response<Body> = Response::default();
