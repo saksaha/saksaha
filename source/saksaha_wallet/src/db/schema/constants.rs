@@ -2,17 +2,21 @@ pub const USER_1: &str = "user_1";
 pub const USER_2: &str = "user_2";
 
 pub(crate) mod cfs {
-    pub const MY_SK: &str = "my_sk";
+    // pub const CM: &str = "cm";
 
-    pub const MY_PK: &str = "my_pk";
+    pub const RHO: &str = "rho";
 
-    pub const MY_SIG: &str = "my_sig";
+    pub const R: &str = "r";
 
-    pub const CH_ID: &str = "ch_id";
+    pub const S: &str = "s";
 
-    pub const HER_PK: &str = "her_pk";
+    pub const V: &str = "v";
 
-    pub const AES_KEY: &str = "aes_key";
+    pub const A_PK: &str = "a_pk";
+
+    pub const A_SK: &str = "a_sk";
+
+    pub const STATUS: &str = "status";
 
     pub const USER_ID: &str = "user_id";
 }

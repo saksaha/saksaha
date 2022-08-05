@@ -1,15 +1,11 @@
-mod balance;
-mod utils;
-
-use crate::db::tests::utils::*;
 use crate::db::WalletDB;
-use crate::db::{USER_1, USER_2};
-use std::time::Duration;
-use std::{collections::HashMap, thread::sleep};
+
+async fn make_dummy_wallet_db() -> WalletDB {
+    WalletDB::init(&"test".to_string()).await.unwrap()
+}
 
 #[tokio::test(flavor = "multi_thread")]
-async fn test_envelope_db_user_register() {
-    let test_string = String::from("test");
+async fn test_wallet_get_all_coins() {
 
     // TODO fix!
     // let db = WalletDB::init(&test_string).await.unwrap();

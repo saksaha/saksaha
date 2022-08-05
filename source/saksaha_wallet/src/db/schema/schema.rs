@@ -16,12 +16,14 @@ impl DBSchema {
 
     pub(crate) fn make_cf_descriptors() -> Vec<ColumnFamilyDescriptor> {
         vec![
-            ColumnFamilyDescriptor::new(cfs::MY_SK, Options::default()),
-            ColumnFamilyDescriptor::new(cfs::MY_PK, Options::default()),
-            ColumnFamilyDescriptor::new(cfs::MY_SIG, Options::default()),
-            ColumnFamilyDescriptor::new(cfs::CH_ID, Options::default()),
-            ColumnFamilyDescriptor::new(cfs::HER_PK, Options::default()),
-            ColumnFamilyDescriptor::new(cfs::AES_KEY, Options::default()),
+            // ColumnFamilyDescriptor::new(cfs::CM, Options::default()),
+            ColumnFamilyDescriptor::new(cfs::RHO, Options::default()),
+            ColumnFamilyDescriptor::new(cfs::R, Options::default()),
+            ColumnFamilyDescriptor::new(cfs::S, Options::default()),
+            ColumnFamilyDescriptor::new(cfs::V, Options::default()),
+            ColumnFamilyDescriptor::new(cfs::A_SK, Options::default()),
+            ColumnFamilyDescriptor::new(cfs::A_PK, Options::default()),
+            ColumnFamilyDescriptor::new(cfs::STATUS, Options::default()),
             ColumnFamilyDescriptor::new(cfs::USER_ID, Options::default()),
         ]
     }
