@@ -51,5 +51,6 @@ impl RPC {
 
         self.server
             .run(self.rpc_socket, self.sys_handle, middlewares)
+            .await
     }
 }

@@ -26,11 +26,11 @@ clap = { version = "3.2.14", features = ["cargo"] }
 serde_yaml = "0.8"
 unicode-width = "0.1.5"
 chrono = "0.4"
+envelope_contract = { path = "../envelope_contract" }
 
 [dev-dependencies]
 sak_test_utils = { path = "../../source/sak_test_utils" }
 sak_dist_ledger = { path = "../../source/sak_dist_ledger" }
-saksaha_network = { path = "../../source/saksaha_network" }
 async-trait = "0.1.56"
 
 [[bin]]

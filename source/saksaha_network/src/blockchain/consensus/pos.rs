@@ -19,15 +19,21 @@ impl Consensus for Pos {
     ) -> Result<BlockCandidate, ConsensusError> {
         let request = Request {
             req_type: "get_validator".to_string(),
-            args: HashMap::with_capacity(10),
+            args: vec![],
             ctr_call_type: CtrCallType::Query,
         };
+
+        println!("power11");
 
         let validator = dist_ledger_apis
             .query_ctr(&self.validator_ctr_addr, request)
             .await?;
 
-        if self.identity.credential.public_key_str == validator {
+        println!("power22, validator: {:?}", validator);
+
+        let validator_str: String = serde_json::from_slice(&validator)?;
+
+        if self.identity.credential.public_key_str == validator_str {
             let bc = BlockCandidate {
                 validator_sig: String::from("1"),
                 tx_candidates,

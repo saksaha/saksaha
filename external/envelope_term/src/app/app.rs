@@ -6,6 +6,9 @@ use crate::io::InputMode;
 use crate::io::IoEvent;
 use crate::{app::actions::Action, ENVELOPE_CTR_ADDR};
 use crate::{inputs::key::Key, EnvelopeError};
+use envelope_contract::{
+    GetChListParams, GetMsgParams, OpenCh, OpenChParams, SendMsgParams,
+};
 use log::{debug, error, warn};
 use sak_contract_std::{CtrCallType, Request as CtrRequest};
 use sak_crypto::{PublicKey, SakKey, SecretKey, SigningKey, ToEncodedPoint};
@@ -113,14 +116,36 @@ impl App {
                         self.state.input_returned =
                             self.state.input_text.drain(..).collect();
 
-                        let (_sk, pk) = SakKey::generate();
-
-                        let pk = sak_crypto::encode_hex(
-                            &pk.to_encoded_point(false).to_bytes(),
-                        );
+                        // need to check validity of `self.state.input_returned`
                         // let pk = self.state.input_returned.clone();
-                        if let Err(_) = self.open_ch(&pk).await {
-                            return AppReturn::Continue;
+
+                        // for dev
+                        {
+                            let user_2_sk = self
+                                .db
+                                .schema
+                                .get_my_sk(&USER_2.to_string())
+                                .await
+                                .unwrap()
+                                .unwrap();
+
+                            let user_2_pk = self
+                                .db
+                                .schema
+                                .get_my_pk(&user_2_sk)
+                                .await
+                                .unwrap()
+                                .unwrap();
+
+                            // let (_sk, dummy_pk) = SakKey::generate();
+
+                            // let dummy_pk_string = sak_crypto::encode_hex(
+                            //     &dummy_pk.to_encoded_point(false).to_bytes(),
+                            // );
+
+                            if let Err(_) = self.open_ch(&user_2_pk).await {
+                                return AppReturn::Continue;
+                            }
                         };
                     }
                     View::Chat => {
@@ -239,37 +264,59 @@ impl App {
         &mut self,
         her_pk: &String,
     ) -> Result<(), EnvelopeError> {
-        let open_ch_input = self.make_encryption(her_pk).await?;
+        let open_ch = self.encrypt_open_ch(her_pk).await?;
 
         let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
-        let channel_name = her_pk.clone();
-        let mut arg = HashMap::with_capacity(2);
 
+        let channel_name = her_pk.clone();
+
+        // let mut arg = HashMap::with_capacity(2);
         // let my_pk = self.pconfig.get_sk_pk().1;
-        arg.insert(String::from("dst_pk"), her_pk.clone());
-        arg.insert(String::from("serialized_input"), open_ch_input);
+        // arg.insert(String::from("dst_pk"), her_pk.clone());
+        // arg.insert(String::from("serialized_input"), open_ch_input);
+
+        let open_ch_params = OpenChParams {
+            dst_pk: her_pk.clone(),
+            open_ch,
+        };
 
         let req_type = String::from("open_channel");
-        let _json_response =
-            saksaha::send_tx_pour(ctr_addr, req_type, arg).await?;
 
-        self.state
+        let args = serde_json::to_vec(&open_ch_params)?;
+
+        let _json_response =
+            saksaha::send_tx_pour(ctr_addr, req_type, args).await?;
+
+        if !self
+            .state
             .ch_list
-            .push(ChannelState::new(channel_name, her_pk.clone()));
+            .contains(&ChannelState::new(channel_name.clone(), her_pk.clone()))
+        {
+            self.state
+                .ch_list
+                .push(ChannelState::new(channel_name, her_pk.clone()));
+        }
 
         Ok(())
     }
 
     pub async fn get_ch_list(&mut self) -> Result<(), EnvelopeError> {
-        let mut args = HashMap::with_capacity(2);
+        // let mut args = HashMap::with_capacity(2);
 
         let her_pk = match self.db.schema.get_my_pk(&USER_1.to_string()).await?
         {
             Some(v) => v,
             None => String::default(),
         };
+
+        let get_ch_list_params = GetChListParams {
+            dst_pk: her_pk.to_string(),
+        };
+
+        let args = serde_json::to_vec(&get_ch_list_params)?;
+
         if her_pk.len() > 0 {
-            args.insert(String::from("dst_pk"), her_pk.to_string());
+            // args.insert(String::from("dst_pk"), her_pk.to_string());
 
             let req = CtrRequest {
                 req_type: "get_ch_list".to_string(),
@@ -292,9 +339,15 @@ impl App {
         Ok(())
     }
 
-    pub async fn get_messages(&mut self) {
-        let mut args = HashMap::with_capacity(2);
-        args.insert(String::from("dst_pk"), "her_pk".to_string());
+    pub async fn get_messages(&mut self) -> Result<(), EnvelopeError> {
+        let get_msg_params = GetMsgParams {
+            ch_id: "ch_id".to_string(),
+        };
+
+        let args = serde_json::to_vec(&get_msg_params)?;
+
+        // let mut args = HashMap::with_capacity(2);
+        // args.insert(String::from("dst_pk"), "her_pk".to_string());
 
         let req = CtrRequest {
             req_type: "get_msgs".to_string(),
@@ -307,6 +360,8 @@ impl App {
                 self.dispatch(IoEvent::GetMessages(d.result)).await;
             }
         }
+
+        Ok(())
     }
 
     pub async fn send_messages(
@@ -315,32 +370,44 @@ impl App {
     ) -> Result<String, EnvelopeError> {
         let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
 
-        let mut arg = HashMap::with_capacity(2);
-        let open_ch_input = {
-            let open_ch_input: Vec<String> = vec![
-                her_pk.to_string(),
-                format!("Channel_{}", self.state.ch_list.len()),
-                "a_pk_sig_encrypted".to_string(),
-                "open_ch_empty".to_string(),
-            ];
-
-            serde_json::to_string(&open_ch_input)?
+        let send_msg_params = SendMsgParams {
+            ch_id: "ch_id".to_string(),
+            msg: "msg 123".to_string(),
         };
-        arg.insert(String::from("dst_pk"), "her_pk".to_string());
-        arg.insert(String::from("serialized_input"), open_ch_input);
 
-        let req_type = String::from("send_msg");
+        // let mut arg = HashMap::with_capacity(2);
+        // let open_ch_input = {
+        //     let open_ch_input: Vec<String> = vec![
+        //         her_pk.to_string(),
+        //         format!("Channel_{}", self.state.ch_list.len()),
+        //         "a_pk_sig_encrypted".to_string(),
+        //         "open_ch_empty".to_string(),
+        //     ];
+
+        //     serde_json::to_string(&open_ch_input)?
+        // };
+
+        // arg.insert(String::from("dst_pk"), "her_pk".to_string());
+
+        // arg.insert(String::from("serialized_input"), open_ch_input);
+
+        let args = serde_json::to_vec(&send_msg_params)?;
+
+        let req_type = envelope_contract::request_type::SEND_MSG.to_string();
+
         let json_response =
-            saksaha::send_tx_pour(ctr_addr, req_type, arg).await?;
+            saksaha::send_tx_pour(ctr_addr, req_type, args).await?;
+
         let result = json_response.result.unwrap_or("None".to_string());
 
         Ok(result)
     }
 
-    async fn make_encryption(
+    // Now we do not do encryption nonetheless
+    async fn encrypt_open_ch(
         &mut self,
         her_pk: &String,
-    ) -> Result<String, EnvelopeError> {
+    ) -> Result<OpenCh, EnvelopeError> {
         let my_sk = match self.db.schema.get_my_sk(&USER_1.to_string()).await? {
             Some(v) => v,
             None => {
@@ -366,7 +433,7 @@ impl App {
         let her_pk_vec: Vec<u8> = sak_crypto::decode_hex(her_pk)?;
         let her_pk_pub = PublicKey::from_sec1_bytes(&her_pk_vec.as_slice())?;
 
-        let (a_pk_sig_encrypted, open_ch_empty, aes_key_from_a) = {
+        let (a_pk_sig_encrypted, aes_key_from_a) = {
             let aes_key_from_a = sak_crypto::derive_aes_key(eph_sk, her_pk_pub);
 
             let a_credential_encrypted = {
@@ -374,35 +441,40 @@ impl App {
                     &aes_key_from_a,
                     my_sig.as_bytes(),
                 )?;
+
                 serde_json::to_string(&ciphertext)?
             };
 
-            let empty_chat: Vec<String> = vec![];
-            let empty_chat_str = serde_json::to_string(&empty_chat)?;
-            let ciphertext_empty = sak_crypto::aes_encrypt(
-                &aes_key_from_a,
-                empty_chat_str.as_bytes(),
-            )?;
-            let open_ch_empty = serde_json::to_string(&ciphertext_empty)?;
+            // let empty_chat: Vec<String> = vec![];
+            // let empty_chat_str = serde_json::to_string(&empty_chat)?;
+            // let ciphertext_empty = sak_crypto::aes_encrypt(
+            //     &aes_key_from_a,
+            //     empty_chat_str.as_bytes(),
+            // )?;
+            // let open_ch_empty = serde_json::to_string(&ciphertext_empty)?;
 
-            (a_credential_encrypted, open_ch_empty, aes_key_from_a)
+            (a_credential_encrypted, aes_key_from_a)
         };
 
-        let open_ch_input = {
-            // ch_id should be encrypted by aes_key
-            let ch_id = her_pk.clone();
+        // ch_id should be encrypted by aes_key
+        let ch_id = her_pk.clone();
 
-            self.db
-                .schema
-                .put_ch_data(&ch_id, her_pk, &aes_key_from_a)
-                .await?;
+        self.db
+            .schema
+            .put_ch_data(&ch_id, her_pk, &aes_key_from_a)
+            .await?;
 
-            let open_ch_input: Vec<String> =
-                vec![eph_pk_str, ch_id, a_pk_sig_encrypted, open_ch_empty];
+        // let open_ch_input: Vec<String> =
+        //     vec![eph_pk_str, ch_id, a_pk_sig_encrypted, ];
 
-            serde_json::to_string(&open_ch_input)?
+        // serde_json::to_string(&open_ch_input)?
+
+        let open_ch = OpenCh {
+            ch_id,
+            eph_key: eph_pk_str,
+            sig: a_pk_sig_encrypted,
         };
 
-        Ok(open_ch_input)
+        Ok(open_ch)
     }
 }

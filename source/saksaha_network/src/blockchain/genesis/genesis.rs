@@ -79,6 +79,35 @@ impl GenesisBlock {
             ))
         };
 
+        // let validator_init_tx = {
+        //     let v = U8Array::new_empty_32();
+
+        //     let s = U8Array::new_empty_32();
+
+        //     let r = U8Array::new_empty_32();
+
+        //     let rho = U8Array::new_empty_32();
+
+        //     let a_pk = U8Array::new_empty_32();
+
+        //     let k = hasher.comm2(&r, &a_pk, &rho)?;
+
+        //     let cm = hasher.comm2(&s, &v, &k.to_bytes())?;
+
+        //     let data = 1;
+
+        //     TxCandidate::Mint(MintTxCandidate::new(
+        //         String::from("initial_mint_created_at"),
+        //         data, //  data
+        //         VALIDATOR_SIG.to_string(),
+        //         Some(VALIDATOR_CTR_ADDR.to_string()),
+        //         cm.to_bytes(),
+        //         v,
+        //         k.to_bytes(),
+        //         s,
+        //     ))
+        // };
+
         let block_candidate = BlockCandidate {
             validator_sig: VALIDATOR_SIG.to_string(),
             tx_candidates: vec![mint_tx_1, validator_deploy_tx],

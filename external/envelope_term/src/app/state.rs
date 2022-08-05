@@ -207,7 +207,7 @@ impl ChatMessage {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct ChannelState {
     pub channel_name: String,
     pub her_pk: String,

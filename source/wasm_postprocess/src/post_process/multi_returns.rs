@@ -11,7 +11,7 @@ pub fn make_wasm_have_multiple_returns(
 ) -> Result<PathBuf, PostProcessError> {
     let init_arg = String::from("init i32 i32");
     let query_arg = String::from("query i32 i32");
-    let execute = String::from("execute i32 i32");
+    let execute = String::from("execute i32 i32 i32 i32");
 
     let args = vec![init_arg, query_arg, execute];
 
