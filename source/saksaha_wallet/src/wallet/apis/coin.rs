@@ -4,14 +4,23 @@ use sak_crypto::{
     groth16, mimc, os_rng, Bls12, Circuit, Hasher, Proof, Scalar, ScalarExt,
 };
 use sak_proofs::{MerkleTree, NewCoin, OldCoin, CM_TREE_DEPTH};
+use sak_types::Balance;
 use saksaha::{generate_proof_1_to_2, get_auth_path};
 use std::{collections::HashMap, time::Duration};
 
 impl WalletApis {
-    pub fn get_balance(&self) {
-        // from db
-        // get some data
-        // return
+    pub async fn get_balance(
+        &self,
+        id: String,
+        key: String,
+    ) -> Result<Balance, WalletError> {
+        println!("wallet apis, get_balance, id: {}", id);
+
+        &self.db.schema;
+
+        let b = Balance { val: 0 };
+
+        Ok(b)
     }
 
     pub async fn send_tx(
