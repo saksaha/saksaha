@@ -19,8 +19,6 @@ impl DistLedgerApis {
             .await?
             .ok_or("ctr data (wasm) should exist")?;
 
-        println!("power00, ctr_addr: {}", ctr_addr);
-
         let ctr_state = self
             .ledger_db
             .schema
@@ -29,14 +27,11 @@ impl DistLedgerApis {
 
         let ctr_fn = CtrFn::Query(request, ctr_state);
 
-        println!("ctr_fn : {:?}", ctr_fn);
-        println!("ctr_fn, ctr_addr : {:?}", ctr_addr);
-
         let receipt = self.vm.invoke(ctr_wasm, ctr_fn)?;
 
         let result = receipt.result;
 
-        info!("invoke query ctr result : {:?}", result);
+        info!("invoke query ctr result: {:?}", result);
 
         Ok(result)
     }
