@@ -291,7 +291,10 @@ async fn process_ctr_state_update(
 
             match req.ctr_call_type {
                 CtrCallType::Query => {
-                    apis.query_ctr(&ctr_addr, req).await?;
+                    warn!(
+                        "Tx may contain contract 'execute' request, \
+                        but not 'query'"
+                    );
                 }
                 CtrCallType::Execute => {
                     let new_state = match ctr_state_update.get(ctr_addr) {
@@ -306,9 +309,10 @@ async fn process_ctr_state_update(
                             let ctr_fn =
                                 CtrFn::Execute(req, previous_state.to_vec());
 
-                            let ret = vm.invoke(ctr_wasm, ctr_fn)?;
+                            let receipt = vm.invoke(ctr_wasm, ctr_fn)?;
 
-                            ret.updated_storage
+                            receipt
+                                .updated_storage
                                 .ok_or("State needs to be updated")?
                         }
                         None => apis.execute_ctr(&ctr_addr, req).await?,
