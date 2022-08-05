@@ -5,3 +5,4 @@ mod rpc;
 mod wallet;
 
 pub use app::*;
+pub use wallet::*;
