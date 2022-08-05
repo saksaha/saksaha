@@ -23,11 +23,19 @@ impl Consensus for Pos {
             ctr_call_type: CtrCallType::Query,
         };
 
-        println!("power11");
-
-        let validator = dist_ledger_apis
+        let validator = match dist_ledger_apis
             .query_ctr(&self.validator_ctr_addr, request)
-            .await?;
+            .await
+        {
+            Ok(v) => v,
+            Err(err) => {
+                return Err(format!(
+                    "Error retrieving a validator, err: {}",
+                    err
+                )
+                .into());
+            }
+        };
 
         println!("power22, validator: {:?}", validator);
 
