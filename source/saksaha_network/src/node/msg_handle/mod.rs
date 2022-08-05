@@ -2,11 +2,9 @@ use crate::{machine::Machine, SaksahaError};
 use futures::{stream::SplitSink, SinkExt};
 use log::{debug, info, warn};
 use sak_p2p_transport::{
-    BlockHashSynMsg, BlockSynMsg, Msg, TxHashSynMsg, TxSynMsg,
-    UpgradedConnection, UpgradedP2PCodec,
+    BlockHashSynMsg, BlockSynMsg, Msg, TxHashSynMsg, TxSynMsg, UpgradedP2PCodec,
 };
 use tokio::net::TcpStream;
-use tokio::sync::RwLockWriteGuard;
 use tokio_util::codec::Framed;
 
 pub(crate) async fn handle_msg<'a>(
@@ -14,7 +12,6 @@ pub(crate) async fn handle_msg<'a>(
     public_key: &str,
     machine: &Machine,
     socket_tx: &mut SplitSink<Framed<TcpStream, UpgradedP2PCodec>, Msg>,
-    // mut conn: &'a mut RwLockWriteGuard<'_, UpgradedConnection>,
 ) -> Result<(), SaksahaError> {
     match msg {
         Msg::TxHashSyn(tx_hash_syn) => {
@@ -67,7 +64,7 @@ async fn handle_tx_hash_ack(
                 info!("Sending TxSyn, public_key: {}", public_key);
             }
             Err(err) => {
-                info!("Failed to send requested tx, err: {}", err,);
+                info!("Failed to handle TxHashAck, err: {}", err,);
             }
         }
     }
@@ -108,7 +105,7 @@ async fn handle_tx_hash_syn(
     {
         Ok(_) => {}
         Err(err) => {
-            warn!("Failed to send requested tx, err: {}", err,);
+            warn!("Failed to handle TxHashSyn msg, err: {}", err,);
         }
     };
 }
@@ -149,7 +146,7 @@ async fn handle_block_hash_syn<'a>(
     {
         Ok(_) => {}
         Err(err) => {
-            warn!("Failed to send requested tx, err: {}", err,);
+            warn!("Failed to handle BlockHashSyn, err: {}", err,);
         }
     };
 
@@ -226,7 +223,7 @@ async fn handle_block_hash_ack(
         {
             Ok(_) => {}
             Err(err) => {
-                info!("Failed to send requested tx, err: {}", err,);
+                info!("Failed to handle blockHashAck, err: {}", err,);
             }
         }
     }

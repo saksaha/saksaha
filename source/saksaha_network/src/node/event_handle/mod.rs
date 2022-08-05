@@ -1,5 +1,5 @@
-use crate::{machine::Machine, SaksahaError};
-use futures::{executor::block_on, stream::SplitSink, SinkExt};
+use crate::machine::Machine;
+use futures::{stream::SplitSink, SinkExt};
 use log::{info, warn};
 use sak_p2p_transport::{BlockHashSynMsg, Msg, TxHashSynMsg, UpgradedP2PCodec};
 use tokio::net::TcpStream;
