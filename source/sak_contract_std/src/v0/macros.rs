@@ -80,8 +80,10 @@ macro_rules! define_init {
     () => {
         #[no_mangle]
         pub unsafe extern "C" fn init() -> (*mut u8, i32) {
-            let storage: Result<Vec<u8>, sak_contract_std::ContractError> =
-                init2();
+            let storage: Result<
+                sak_contract_std::Storage,
+                sak_contract_std::ContractError,
+            > = init2();
 
             let mut storage = sak_contract_std::return_err_2!(storage);
 
@@ -121,11 +123,13 @@ macro_rules! define_query {
 
             let request: Request = sak_contract_std::return_err_2!(request);
 
-            let result: Result<Vec<u8>, sak_contract_std::ContractError> =
-                query2(request, storage);
+            let result: Result<
+                sak_contract_std::InvokeResult,
+                sak_contract_std::ContractError,
+            > = query2(request, storage);
 
             {
-                let mut result: Vec<u8> =
+                let mut result: sak_contract_std::InvokeResult =
                     sak_contract_std::return_err_2!(result);
 
                 let result_ptr = result.as_mut_ptr();
@@ -165,11 +169,13 @@ macro_rules! define_execute {
 
             let request: Request = sak_contract_std::return_err_4!(request);
 
-            let result: Result<Vec<u8>, sak_contract_std::ContractError> =
-                execute2(request, &mut storage);
+            let result: Result<
+                sak_contract_std::InvokeResult,
+                sak_contract_std::ContractError,
+            > = execute2(request, &mut storage);
 
             {
-                let mut result: Vec<u8> =
+                let mut result: sak_contract_std::InvokeResult =
                     sak_contract_std::return_err_4!(result);
 
                 let result_ptr = result.as_mut_ptr();

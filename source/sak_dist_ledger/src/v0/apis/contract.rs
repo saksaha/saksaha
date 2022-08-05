@@ -34,10 +34,6 @@ impl DistLedgerApis {
 
         let ret = self.vm.invoke(ctr_wasm, ctr_fn)?;
 
-        // if &ret[0..4] == "$$__" {
-        //     return Err(format!("{}", &ret[4..]).into());
-        // }
-
         info!(
             "invoke query ctr result : {:?}",
             String::from_utf8(ret.clone())
@@ -79,12 +75,6 @@ impl DistLedgerApis {
         let ctr_fn = CtrFn::Execute(request, ctr_state);
 
         let ret = self.vm.invoke(ctr_wasm, ctr_fn)?;
-
-        // if &ret[0..4] == "$$__" {
-        //     let a: String = serde_json::from_slice(&ret)?;
-
-        //     return Err(format!("Some error {}", &ret[4..]).into());
-        // }
 
         info!("invoke execute ctr result, ctr_state: {:?}", ret);
 

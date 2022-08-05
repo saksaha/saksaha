@@ -1,5 +1,4 @@
 use crate::{VMError, ALLOC_FN, MEMORY};
-use log::{error, info};
 use wasmtime::*;
 
 pub(crate) unsafe fn read_memory(
