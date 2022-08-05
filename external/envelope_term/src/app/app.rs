@@ -124,7 +124,7 @@ impl App {
                             let user_2_sk = self
                                 .db
                                 .schema
-                                .get_my_sk(&USER_2.to_string())
+                                .get_my_sk_by_user_id(&USER_2.to_string())
                                 .await
                                 .unwrap()
                                 .unwrap();
@@ -132,7 +132,7 @@ impl App {
                             let user_2_pk = self
                                 .db
                                 .schema
-                                .get_my_pk(&user_2_sk)
+                                .get_my_pk_by_sk(&user_2_sk)
                                 .await
                                 .unwrap()
                                 .unwrap();
@@ -303,11 +303,11 @@ impl App {
     pub async fn get_ch_list(&mut self) -> Result<(), EnvelopeError> {
         // let mut args = HashMap::with_capacity(2);
 
-        let her_pk = match self.db.schema.get_my_pk(&USER_1.to_string()).await?
-        {
-            Some(v) => v,
-            None => String::default(),
-        };
+        let her_pk =
+            match self.db.schema.get_my_pk_by_sk(&USER_1.to_string()).await? {
+                Some(v) => v,
+                None => String::default(),
+            };
 
         let get_ch_list_params = GetChListParams {
             dst_pk: her_pk.to_string(),
@@ -408,7 +408,12 @@ impl App {
         &mut self,
         her_pk: &String,
     ) -> Result<OpenCh, EnvelopeError> {
-        let my_sk = match self.db.schema.get_my_sk(&USER_1.to_string()).await? {
+        let my_sk = match self
+            .db
+            .schema
+            .get_my_sk_by_user_id(&USER_1.to_string())
+            .await?
+        {
             Some(v) => v,
             None => {
                 return Err(
@@ -417,7 +422,7 @@ impl App {
             }
         };
 
-        let my_sig = match self.db.schema.get_my_sig(&my_sk).await? {
+        let my_sig = match self.db.schema.get_my_sig_by_sk(&my_sk).await? {
             Some(v) => v,
             None => {
                 return Err(

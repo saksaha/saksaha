@@ -56,7 +56,7 @@ impl EnvelopeDB {
         &self,
         user_id: &String,
     ) -> Result<(), EnvelopeError> {
-        match self.schema.get_my_sk(user_id).await? {
+        match self.schema.get_my_sk_by_user_id(user_id).await? {
             Some(_) => {
                 warn!("user_id already exists");
                 return Ok(());
