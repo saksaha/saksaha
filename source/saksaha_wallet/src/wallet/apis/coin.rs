@@ -1,12 +1,12 @@
 use super::WalletApis;
 use crate::WalletError;
+use crate::rpc::routes::get_routes
 use sak_crypto::{
     groth16, mimc, os_rng, Bls12, Circuit, Hasher, Proof, Scalar, ScalarExt,
 };
 use sak_proofs::{MerkleTree, NewCoin, OldCoin, CM_TREE_DEPTH};
 use sak_types::Balance;
 use saksaha::{generate_proof_1_to_2, get_auth_path};
-use std::{collections::HashMap, time::Duration};
 
 impl WalletApis {
     pub async fn get_balance(
@@ -29,7 +29,7 @@ impl WalletApis {
         // send_tx_req: SendTxRequest,
     ) -> Result<(), WalletError> {
         {
-            // let val = send_tx_req.get_value();
+            // saksaha::send_tx_pour(ctr_addr, req_type, args);
 
             // let old_coin = prepare_old_coin(val).await?;
             // saksaha::send_tx_pour(ctr_addr, req_type, arg).await?;

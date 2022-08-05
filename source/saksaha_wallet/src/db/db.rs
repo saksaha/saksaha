@@ -10,14 +10,15 @@ impl WalletDB {
     pub(crate) async fn init(
         app_prefix: &String,
     ) -> Result<WalletDB, WalletError> {
-        let envelope_db_path = {
-            let app_path = sak_fs::create_or_get_app_path_evl(app_prefix)?;
+        let db_name = sak_fs::DBName::Wallet;
+        let wallet_db_path = {
+            let app_path = sak_fs::create_or_get_app_path(db_name, app_prefix)?;
             let db_path = { app_path.join("db") };
 
             db_path
         };
 
-        info!("Envelope db path: {:?}", envelope_db_path);
+        info!("Envelope db path: {:?}", wallet_db_path);
 
         let options = {
             let mut o = Options::default();
@@ -28,7 +29,7 @@ impl WalletDB {
         };
 
         let kv_db = match KeyValueDatabase::new(
-            envelope_db_path,
+            wallet_db_path,
             options,
             DBSchema::make_cf_descriptors(),
         ) {
