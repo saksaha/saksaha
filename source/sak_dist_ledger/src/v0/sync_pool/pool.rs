@@ -100,7 +100,9 @@ impl SyncPool {
                         return Err(format!("Not valid wasm data"));
                     }
                 }
-                TxCtrOp::ContractCall => {}
+                TxCtrOp::ContractCall => {
+                    //
+                }
                 TxCtrOp::None => {}
             };
         }

@@ -58,7 +58,7 @@ impl Miner {
             {
                 Ok(_) => (),
                 Err(err) => {
-                    warn!("write_block failed, err: {}", err.to_string());
+                    error!("write_block failed, err: {}", err.to_string());
                 }
             };
 
