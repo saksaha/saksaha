@@ -23,9 +23,19 @@ impl Consensus for Pos {
             ctr_call_type: CtrCallType::Query,
         };
 
-        let validator = dist_ledger_apis
+        let validator = match dist_ledger_apis
             .query_ctr(&self.validator_ctr_addr, request)
-            .await?;
+            .await
+        {
+            Ok(v) => v,
+            Err(err) => {
+                return Err(format!(
+                    "Error retrieving a validator, err: {}",
+                    err
+                )
+                .into());
+            }
+        };
 
         if self.identity.credential.public_key_str == validator {
             let bc = BlockCandidate {
