@@ -1,6 +1,6 @@
 use crate::{CtrStateUpdate, DistLedgerApis, LedgerError, MerkleUpdate};
 use colored::Colorize;
-use log::{debug, info, warn};
+use log::{debug, error, info, warn};
 use sak_contract_std::{CtrCallType, Request, Storage};
 use sak_types::{
     Block, BlockCandidate, MintTxCandidate, PourTxCandidate, Tx, TxCandidate,
@@ -278,9 +278,12 @@ async fn process_ctr_state_update(
 
     match tx_ctr_op {
         TxCtrOp::ContractDeploy => {
-            let initial_ctr_state = vm.invoke(&data, CtrFn::Init)?;
+            let receipt = vm.invoke(&data, CtrFn::Init)?;
+            let storage = receipt
+                .updated_storage
+                .ok_or("Contract state needs to be initialized")?;
 
-            ctr_state_update.insert(ctr_addr.clone(), initial_ctr_state);
+            ctr_state_update.insert(ctr_addr.clone(), storage);
         }
 
         TxCtrOp::ContractCall => {
@@ -293,11 +296,6 @@ async fn process_ctr_state_update(
                 CtrCallType::Execute => {
                     let new_state = match ctr_state_update.get(ctr_addr) {
                         Some(previous_state) => {
-                            let previous_state: Storage =
-                                sak_contract_std::parse_storage(
-                                    previous_state.as_str(),
-                                )?;
-
                             let ctr_wasm = apis
                                 .ledger_db
                                 .schema
@@ -305,11 +303,13 @@ async fn process_ctr_state_update(
                                 .await?
                                 .ok_or("ctr data (wasm) should exist")?;
 
-                            let ctr_fn = CtrFn::Execute(req, previous_state);
+                            let ctr_fn =
+                                CtrFn::Execute(req, previous_state.to_vec());
 
                             let ret = vm.invoke(ctr_wasm, ctr_fn)?;
 
-                            ret
+                            ret.updated_storage
+                                .ok_or("State needs to be updated")?
                         }
                         None => apis.execute_ctr(&ctr_addr, req).await?,
                     };

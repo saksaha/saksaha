@@ -19,7 +19,7 @@ impl Paths {
             return Err(format!("prebuild path does not exist").into());
         }
 
-        let external = curr_dir.join("extern");
+        let external = curr_dir.join("external");
         if !external.exists() {
             return Err(format!("external path does not exist").into());
         }

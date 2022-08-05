@@ -63,9 +63,7 @@ impl LedgerDBSchema {
 
         match self.db.get_cf(&cf, ctr_addr)? {
             Some(v) => {
-                let storage: Storage = serde_json::from_slice(&v)?;
-
-                return Ok(Some(storage));
+                return Ok(Some(v));
             }
             None => {
                 return Ok(None);
@@ -81,7 +79,7 @@ impl LedgerDBSchema {
         // db: &DB,
         batch: &mut WriteBatch,
         ctr_addr: &CtrAddr,
-        ctr_state: &String,
+        ctr_state: &Storage,
     ) -> Result<(), LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::CTR_STATE)?;
 
