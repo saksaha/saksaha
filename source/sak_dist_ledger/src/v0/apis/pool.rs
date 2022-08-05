@@ -39,8 +39,6 @@ impl DistLedgerApis {
             return Ok(None);
         }
 
-        println!("11");
-
         let bc = self.consensus.do_consensus(self, tx_candidates).await?;
 
         println!("22");

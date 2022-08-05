@@ -18,9 +18,7 @@ impl Encoder<Msg> for UpgradedP2PCodec {
         item: Msg,
         dst: &mut BytesMut,
     ) -> Result<(), TrptError> {
-        // println!("encode success: {:?}", item);
         enc::encode_into_frame(item, dst)?;
-        println!("after encode: {:?}", dst);
 
         self.cipher.apply_keystream(dst);
 
@@ -37,7 +35,6 @@ impl Decoder for UpgradedP2PCodec {
         src: &mut BytesMut,
     ) -> Result<Option<Self::Item>, TrptError> {
         self.cipher.apply_keystream(src);
-        println!("after encode: {:?}", src);
 
         return dec::decode_into_msg(src);
     }
