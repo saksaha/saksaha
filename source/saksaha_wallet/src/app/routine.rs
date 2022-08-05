@@ -1,4 +1,6 @@
-use crate::{rpc::RPC, AppArgs, WalletError};
+use std::sync::Arc;
+
+use crate::{rpc::RPC, wallet::Wallet, AppArgs, WalletError};
 use log::{error, info};
 
 pub(crate) struct Routine {}
@@ -10,7 +12,12 @@ impl Routine {
     ) -> Result<(), WalletError> {
         println!("wallet main routine start");
 
-        let rpc = RPC::init(app_args.rpc_port).await?;
+        let wallet = {
+            let w = Wallet::new();
+            Arc::new(w)
+        };
+
+        let rpc = RPC::init(app_args.rpc_port, wallet).await?;
 
         tokio::spawn(async move {
             tokio::join!(rpc.run());
