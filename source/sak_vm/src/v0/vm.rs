@@ -23,6 +23,11 @@ impl VM {
         let invoked = match ctr_fn {
             CtrFn::Init => invoke_init(instance, store, memory)?,
             CtrFn::Query(request, storage) => {
+                println!("[+] Invoke, request: {:#?}", request);
+                println!(
+                    "[+] Invoke, storage: {:#?}",
+                    String::from_utf8(storage.clone())
+                );
                 invoke_query(instance, store, memory, request, storage)?
             }
             CtrFn::Execute(request, storage) => {
@@ -30,10 +35,9 @@ impl VM {
             }
         };
 
-        println!("invoke: {:?}", invoked);
+        println!("invoke: {:?}", String::from_utf8(invoked.clone()));
 
         if invoked.len() > 6 {
-            println!("awepo");
             if &invoked[..6] == &ERROR_PLACEHOLDER {
                 let err_msg: &str = std::str::from_utf8(&invoked[6..])?;
 
@@ -132,8 +136,6 @@ fn invoke_query(
             ret_len as u32,
         )?
     }
-
-    println!("query, ret: {:?}", ret);
 
     Ok(ret)
 }

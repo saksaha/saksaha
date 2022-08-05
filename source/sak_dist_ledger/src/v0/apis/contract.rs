@@ -30,6 +30,7 @@ impl DistLedgerApis {
         let ctr_fn = CtrFn::Query(request, ctr_state);
 
         println!("ctr_fn : {:?}", ctr_fn);
+        println!("ctr_fn, ctr_addr : {:?}", ctr_addr);
 
         let ret = self.vm.invoke(ctr_wasm, ctr_fn)?;
 
@@ -37,7 +38,10 @@ impl DistLedgerApis {
         //     return Err(format!("{}", &ret[4..]).into());
         // }
 
-        info!("invoke query ctr result : {:?}", ret);
+        info!(
+            "invoke query ctr result : {:?}",
+            String::from_utf8(ret.clone())
+        );
 
         Ok(ret)
     }
@@ -60,8 +64,17 @@ impl DistLedgerApis {
             .get_ctr_state(ctr_addr)?
             .ok_or("ctr state should exist")?;
 
-        println!("ctr_fn, request, args: {:?}", request.args);
-        println!("ctr_fn, ctr_state: {:?}", ctr_state);
+        {
+            println!("[+] Execute Contract");
+            println!(
+                "[-] request.args: {:?}",
+                String::from_utf8(request.args.clone()).unwrap()
+            );
+            println!(
+                "[-] ctr_state: {:?}",
+                String::from_utf8(ctr_state.clone())
+            );
+        }
 
         let ctr_fn = CtrFn::Execute(request, ctr_state);
 

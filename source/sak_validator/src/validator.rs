@@ -19,7 +19,12 @@ contract_bootstrap!();
 
 define_init!();
 pub fn init2() -> Result<Vec<u8>, ContractError> {
-    let storage = ValidatorStorage { validators: vec![] };
+    let storage = ValidatorStorage {
+        validators: vec!["045739d074b8722891c307e8e75c9607e0b55a80778\
+                b42ef5f4640d4949dbf3992f6083b729baef9e9545c4\
+                e95590616fd382662a09653f2a966ff524989ae8c0f"
+            .to_string()],
+    };
 
     let v = serde_json::to_vec(&storage)?;
 
