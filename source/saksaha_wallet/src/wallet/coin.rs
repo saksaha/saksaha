@@ -16,6 +16,8 @@ pub struct OwnCoin {
     pub s: Option<Scalar>,
 
     pub v: Option<Scalar>,
+
+    pub useable: Option<bool>,
 }
 
 pub(crate) async fn put_old_coin(old_coin: OldCoin) {

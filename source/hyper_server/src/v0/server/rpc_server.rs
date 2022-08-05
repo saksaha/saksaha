@@ -8,7 +8,7 @@ use tokio::net::TcpListener;
 pub struct RPCServer {}
 
 impl RPCServer {
-    pub fn run<C>(
+    pub async fn run<C>(
         self,
         rpc_socket: TcpListener,
         ctx: C,
@@ -79,13 +79,11 @@ impl RPCServer {
             }
         });
 
-        tokio::spawn(async move {
-            let server = Server::builder(addr_incoming).serve(make_svc);
+        let server = Server::builder(addr_incoming).serve(make_svc);
 
-            if let Err(err) = server.await {
-                error!("Error running rpc server, err: {}", err);
-            }
-        });
+        if let Err(err) = server.await {
+            error!("Error running rpc server, err: {}", err);
+        }
 
         Ok(())
     }
