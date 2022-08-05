@@ -61,12 +61,6 @@ fn get_test_validator_state(validators: Vec<String>) -> Storage {
 
     let mut ret = Storage::with_capacity(10);
 
-    // let key = String::from("validators");
-    // let value = serde_json::to_vec(&validators_vec).unwrap();
-
-    // ret.insert(key, value);
-
-    // ret
     serde_json::to_vec(&validator_stage).unwrap()
 }
 
@@ -74,35 +68,32 @@ fn get_test_validator_state(validators: Vec<String>) -> Storage {
 async fn test_call_ctr_validator_fn_init() {
     sak_test_utils::init_test_log();
 
-    // sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
-
     let vm = VM::init().expect("VM should be initiated");
 
     let ctr_wasm = VALIDATOR.to_vec();
     let ctr_fn = CtrFn::Init;
 
-    let validator_list_from_init = vm
+    let receipt = vm
         .invoke(ctr_wasm, ctr_fn)
         .expect("validator should be obtained");
 
-    println!("1, {}", validator_list_from_init);
+    let updated_state = receipt
+        .updated_storage
+        .ok_or("Init needs to return state")
+        .unwrap();
 
-    // let ctr_validator_state: Storage =
-    //     serde_json::from_str(validator_list_from_init.as_str()).unwrap();
+    let ctr_validator_state: ValidatorStorage =
+        serde_json::from_slice(&updated_state).unwrap();
 
-    // let validator_list_from_ctr: Vec<String> =
-    //     serde_json::from_str(ctr_validator_state.get("validators").unwrap())
-    //         .unwrap();
+    let validator_list_expected = vec![get_test_validator()];
 
-    // let validator_list_expected = vec![get_test_validator()];
+    println!("validator list expected: {:?}", validator_list_expected);
+    println!(
+        "validator list acquired: {:?}",
+        ctr_validator_state.validators
+    );
 
-    // println!("validator list expected: {:?}", validator_list_expected);
-    // println!("validator list acquired: {:?}", validator_list_from_ctr);
-
-    // assert_eq!(
-    //     validator_list_expected, //
-    //     validator_list_from_ctr
-    // );
+    assert_eq!(validator_list_expected, ctr_validator_state.validators);
 }
 
 #[tokio::test(flavor = "multi_thread")]
@@ -130,7 +121,7 @@ async fn test_call_ctr_validator_fn_query() {
     let ctr_wasm = VALIDATOR.to_vec();
     let ctr_fn = CtrFn::Query(request, storage);
 
-    let validator_from_fn_query = vm
+    let receipt = vm
         .invoke(ctr_wasm, ctr_fn)
         .expect("validator should be obtained");
 

@@ -278,9 +278,12 @@ async fn process_ctr_state_update(
 
     match tx_ctr_op {
         TxCtrOp::ContractDeploy => {
-            let ctr_result = vm.invoke(&data, CtrFn::Init)?;
+            let receipt = vm.invoke(&data, CtrFn::Init)?;
+            let storage = receipt
+                .updated_storage
+                .ok_or("Contract state needs to be initialized")?;
 
-            ctr_state_update.insert(ctr_addr.clone(), ctr_result);
+            ctr_state_update.insert(ctr_addr.clone(), storage);
         }
 
         TxCtrOp::ContractCall => {
@@ -293,11 +296,6 @@ async fn process_ctr_state_update(
                 CtrCallType::Execute => {
                     let new_state = match ctr_state_update.get(ctr_addr) {
                         Some(previous_state) => {
-                            // let previous_state: Storage =
-                            //     sak_contract_std::parse_storage(
-                            //         previous_state.as_str(),
-                            //     )?;
-
                             let ctr_wasm = apis
                                 .ledger_db
                                 .schema
@@ -310,7 +308,8 @@ async fn process_ctr_state_update(
 
                             let ret = vm.invoke(ctr_wasm, ctr_fn)?;
 
-                            ret
+                            ret.updated_storage
+                                .ok_or("State needs to be updated")?
                         }
                         None => apis.execute_ctr(&ctr_addr, req).await?,
                     };

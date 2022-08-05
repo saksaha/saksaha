@@ -28,22 +28,11 @@ impl VM {
                 return invoke_query(instance, store, memory, request, storage)
             }
             CtrFn::Execute(request, storage) => {
-                println!("powerpower");
-
                 return invoke_execute(
                     instance, store, memory, request, storage,
                 );
             }
         };
-
-        // println!("invoke: {:?}", String::from_utf8(invoked.clone()));
-        // if invoked.len() > 6 {
-        //     if &invoked[..6] == &ERROR_PLACEHOLDER {
-        //         let err_msg: &str = std::str::from_utf8(&invoked[6..])?;
-
-        //         return Err(err_msg.into());
-        //     }
-        // }
     }
 }
 
@@ -67,7 +56,9 @@ fn invoke_init(
         )?;
     }
 
-    // Ok(ret)
+    let receipt = InvokeReceipt::from_init(storage)?;
+
+    Ok(receipt)
 }
 
 fn invoke_query(
@@ -76,7 +67,7 @@ fn invoke_query(
     memory: Memory,
     request: Request,
     storage: Storage,
-) -> Result<Vec<u8>, VMError> {
+) -> Result<InvokeReceipt, VMError> {
     let contract_fn: TypedFunc<(i32, i32, i32, i32), (i32, i32)> =
         { instance.get_typed_func(&mut store, QUERY)? };
 
@@ -86,16 +77,11 @@ fn invoke_query(
         (str.as_bytes().to_vec(), str.len())
     };
 
-    println!("11");
-
     let request_ptr =
         wasm_bootstrap::copy_memory(&request_bytes, &instance, &mut store)?;
 
     let storage_len = storage.len();
-    let storage_bytes = storage;
-
-    println!("22");
-
+    let storage_bytes = storage.clone();
     let storage_ptr =
         wasm_bootstrap::copy_memory(&storage_bytes, &instance, &mut store)?;
 
@@ -119,9 +105,9 @@ fn invoke_query(
         }
     };
 
-    let ret: Vec<u8>;
+    let result: Vec<u8>;
     unsafe {
-        ret = wasm_bootstrap::read_memory(
+        result = wasm_bootstrap::read_memory(
             &store,
             &memory,
             result_ptr as u32,
@@ -129,7 +115,9 @@ fn invoke_query(
         )?
     }
 
-    Ok(ret)
+    let receipt = InvokeReceipt::from_query(result)?;
+
+    Ok(receipt)
 }
 
 fn invoke_execute(
@@ -138,7 +126,7 @@ fn invoke_execute(
     memory: Memory,
     request: Request,
     storage: Storage,
-) -> Result<(Storage, InvokeResult), VMError> {
+) -> Result<InvokeReceipt, VMError> {
     let contract_fn: TypedFunc<(i32, i32, i32, i32), (i32, i32, i32, i32)> =
         { instance.get_typed_func(&mut store, EXECUTE)? };
 
@@ -201,7 +189,9 @@ fn invoke_execute(
         )?
     }
 
-    Ok((storage, result))
+    let receipt = InvokeReceipt::from_execute(result, storage)?;
+
+    Ok(receipt)
 }
 
 fn init_module(
@@ -223,12 +213,13 @@ fn init_module(
     Ok((instance, store, memory))
 }
 
-fn resolve_invoke_res(invoked: InvokeResult) -> String {
-    if invoked.len() > 6 {
-        if &invoked[..6] == &ERROR_PLACEHOLDER {
-            let err_msg: &str = std::str::from_utf8(&invoked[6..])?;
+// fn require_valid_result(invoked: InvokeResult) -> String {
+//     if invoked.len() > 6 {
+//         if &invoked[..6] == &ERROR_PLACEHOLDER {
+//             let err_msg: &str = std::str::from_utf8(&invoked[6..])?;
 
-            return Err(err_msg.into());
-        }
-    }
-}
+//             return Err(err_msg.into());
+//         }
+//     }
+//     e
+// }

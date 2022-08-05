@@ -103,9 +103,6 @@ async fn test_messenger_get_msgs() {
 
         let args = serde_json::to_vec(&get_msg_params).unwrap();
 
-        // let mut args = HashMap::with_capacity(1);
-        // args.insert(String::from(ARG_CH_ID), String::from(DUMMY_CHANNEL_ID_1));
-
         Request {
             req_type: "get_msgs".to_string(),
             args,
@@ -117,17 +114,19 @@ async fn test_messenger_get_msgs() {
         let ctr_wasm = ENVELOPE_CONTRACT.to_vec();
         let ctr_fn = CtrFn::Query(request, messages_state);
 
-        let messages_from_query = vm
+        let receipt = vm
             .invoke(ctr_wasm, ctr_fn)
             .expect("message should be obtained");
 
-        let messages: Vec<String> =
-            serde_json::from_str(messages_from_query.as_str()).unwrap();
+        let result = receipt.result;
+
+        let chats: Vec<String> = serde_json::from_slice(&result).unwrap();
 
         println!("messages expected: {:?}", test_dummy_messege);
-        println!("messages acquired: {:?}", messages);
 
-        assert_eq!(test_dummy_messege, messages);
+        println!("messages acquired: {:?}", chats);
+
+        assert_eq!(test_dummy_messege, chats);
     }
 }
 
@@ -164,15 +163,13 @@ async fn test_messenger_get_ch_list() {
         let ctr_wasm = ENVELOPE_CONTRACT.to_vec();
         let ctr_fn = CtrFn::Query(request, storage);
 
-        let ch_list_serialized = match vm.invoke(ctr_wasm, ctr_fn) {
-            Ok(s) => s,
-            Err(err) => panic!("failed to invoke contract : {}", err),
-        };
+        let receipt = vm.invoke(ctr_wasm, ctr_fn).unwrap();
 
         let open_ch_data_vec: Vec<String> =
-            serde_json::from_str(&ch_list_serialized).unwrap();
+            serde_json::from_slice(&receipt.result).unwrap();
 
         println!("expected channel id : {:?}", vec![DUMMY_CHANNEL_ID_1]);
+
         println!("updated channel id: {:?}", open_ch_data_vec);
 
         assert_eq!(vec![DUMMY_CHANNEL_ID_1], open_ch_data_vec);
@@ -191,22 +188,9 @@ async fn test_messenger_open_channel() {
         eph_key,
         ch_id,
         sig,
-        // chat,
     } = make_mock_open_ch();
 
-    // let input = {
-    //     let input = vec![eph_key, ch_id, si, chat];
-
-    //     let input_str = serde_json::to_string(&input).unwrap();
-
-    //     input_str
-    // };
-
     let (request, storage) = {
-        // let mut args = HashMap::with_capacity(2);
-        // args.insert(String::from(ARG_DST_PK), new_pk.clone());
-        // args.insert(String::from(ARG_SERIALIZED_INPUT), input);
-
         let open_ch_params = OpenChParams {
             dst_pk: new_pk.clone(),
             open_ch: OpenCh {
@@ -233,24 +217,20 @@ async fn test_messenger_open_channel() {
         let ctr_wasm = ENVELOPE_CONTRACT.to_vec();
         let ctr_fn = CtrFn::Execute(request, storage);
 
-        let state_serialized = match vm.invoke(ctr_wasm, ctr_fn) {
-            Ok(s) => s,
-            Err(err) => panic!("faeild to invoke contract : {}", err),
-        };
+        let receipt = vm.invoke(ctr_wasm, ctr_fn).unwrap();
+
+        let updated_storage = receipt
+            .updated_storage
+            .ok_or("State needs to be updated, ")
+            .unwrap();
 
         let storage: Storage =
-            serde_json::from_str(state_serialized.as_str()).unwrap();
+            serde_json::from_slice(&updated_storage).unwrap();
 
         let envelope_storage: EnvelopeStorage =
             serde_json::from_slice(&storage).unwrap();
 
         let open_ch_reqs = envelope_storage.open_ch_reqs.get(&new_pk).unwrap();
-
-        // let open_ch_vec: Vec<String> =
-        //     serde_json::from_str(open_ch_serialized).unwrap();
-
-        // let open_ch: Vec<String> =
-        //     serde_json::from_str(&open_ch_reqs[0]).unwrap();
 
         let open_ch = open_ch_reqs.get(0).unwrap();
 
@@ -298,12 +278,14 @@ async fn test_messenger_send_msg() {
         let ctr_wasm = ENVELOPE_CONTRACT.to_vec();
         let ctr_fn = CtrFn::Execute(request, storage);
 
-        let chats_state_serialized = vm
+        let receipt = vm
             .invoke(ctr_wasm, ctr_fn)
             .expect("State should be obtained");
 
+        let updated_storage = receipt.updated_storage.unwrap();
+
         let storage: Storage =
-            serde_json::from_str(chats_state_serialized.as_str()).unwrap();
+            serde_json::from_slice(&updated_storage).unwrap();
 
         let envelope_storage: EnvelopeStorage =
             serde_json::from_slice(&storage).unwrap();
@@ -312,9 +294,8 @@ async fn test_messenger_send_msg() {
 
         let msg = chats.get(0).unwrap();
 
-        // let msg = chat.get(DUMMY_CHANNEL_ID_3).unwrap();
-
         println!("expected msg: {:?}", expected_msg);
+
         println!("updated msg: {:?}", msg);
 
         assert_eq!(&expected_msg, msg);

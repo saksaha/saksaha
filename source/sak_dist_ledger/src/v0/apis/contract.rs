@@ -32,14 +32,13 @@ impl DistLedgerApis {
         println!("ctr_fn : {:?}", ctr_fn);
         println!("ctr_fn, ctr_addr : {:?}", ctr_addr);
 
-        let ret = self.vm.invoke(ctr_wasm, ctr_fn)?;
+        let receipt = self.vm.invoke(ctr_wasm, ctr_fn)?;
 
-        info!(
-            "invoke query ctr result : {:?}",
-            String::from_utf8(ret.clone())
-        );
+        let result = receipt.result;
 
-        Ok(ret)
+        info!("invoke query ctr result : {:?}", result);
+
+        Ok(result)
     }
 
     pub async fn execute_ctr(
@@ -74,10 +73,14 @@ impl DistLedgerApis {
 
         let ctr_fn = CtrFn::Execute(request, ctr_state);
 
-        let ret = self.vm.invoke(ctr_wasm, ctr_fn)?;
+        let receipt = self.vm.invoke(ctr_wasm, ctr_fn)?;
 
-        info!("invoke execute ctr result, ctr_state: {:?}", ret);
+        let state = receipt
+            .updated_storage
+            .ok_or("State needs to be updated after execution")?;
 
-        Ok(ret)
+        info!("invoke execute ctr result, next ctr_state: {:?}", state);
+
+        Ok(state)
     }
 }
