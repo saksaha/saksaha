@@ -1,13 +1,12 @@
 use crate::{VMError, ALLOC_FN, MEMORY};
-use log::{error, info};
 use wasmtime::*;
 
-pub(crate) unsafe fn read_string(
+pub(crate) unsafe fn read_memory(
     store: &Store<i32>,
     memory: &Memory,
     data_ptr: u32,
     len: u32,
-) -> Result<String, VMError> {
+) -> Result<Vec<u8>, VMError> {
     // get a raw byte array from the module's linear memory
     // at offset `data_ptr` and length `len`.
     let data = memory
@@ -16,15 +15,12 @@ pub(crate) unsafe fn read_string(
         .and_then(|arr| arr.get(..len as u32 as usize));
 
     // attempt to read a UTF-8 string from the memory
-    let str = match data {
-        Some(data) => match std::str::from_utf8(data) {
-            Ok(s) => s,
-            Err(_) => return Err(format!("invalid utf-8").into()),
-        },
+    let d = match data {
+        Some(data) => data.to_vec(),
         None => return Err(format!("pointer/length out of bounds").into()),
     };
 
-    Ok(String::from(str))
+    Ok(d)
 }
 
 /// Copy a byte array into an instance's linear memory

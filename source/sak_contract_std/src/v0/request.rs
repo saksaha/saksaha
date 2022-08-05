@@ -7,7 +7,8 @@ pub enum CtrCallType {
     Execute,
 }
 
-pub type RequestArgs = HashMap<String, String>;
+// pub type RequestArgs = HashMap<String, String>;
+pub type RequestArgs = Vec<u8>;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Request {
