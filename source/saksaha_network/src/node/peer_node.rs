@@ -1,9 +1,11 @@
 use super::msg_handle;
 use crate::{machine::Machine, node::event_handle};
+use futures::SinkExt;
 use futures::StreamExt;
 use log::{debug, warn};
 use sak_dist_ledger::DistLedgerEvent;
 use sak_p2p_peertable::{Peer, PeerStatus};
+use sak_p2p_transport::{BlockHashSynMsg, Msg};
 use std::sync::Arc;
 use tokio::sync::broadcast::Receiver;
 
@@ -23,17 +25,30 @@ impl PeerNode {
 
         {
             let peer_clone = self.peer.clone();
-            let public_key = self.peer.get_public_key_short();
             let machine_clone = self.machine.clone();
 
             tokio::spawn(async move {
                 let mut conn = peer_clone.transport.conn.write().await;
-                event_handle::handle_new_peers_ev(
-                    public_key,
-                    &mut conn.socket_tx,
-                    &machine_clone,
-                )
-                .await;
+                // event_handle::handle_new_peers_ev(
+                //     public_key,
+                //     &mut conn.socket_tx,
+                //     &machine_clone,
+                // )
+                // .await;
+
+                let blocks = machine_clone
+                    .blockchain
+                    .dist_ledger
+                    .apis
+                    .get_entire_block_info_list()
+                    .await
+                    .unwrap_or(vec![]);
+
+                conn.socket_tx
+                    .send(Msg::BlockHashSyn(BlockHashSynMsg {
+                        new_blocks: blocks,
+                    }))
+                    .await
             });
         }
 
