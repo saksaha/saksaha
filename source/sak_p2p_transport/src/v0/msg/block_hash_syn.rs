@@ -25,6 +25,7 @@ impl BlockHashSynMsg {
             };
 
             new_blocks.push((height, block_hash));
+            println!("new blocks: {:?}", new_blocks);
         }
 
         let m = BlockHashSynMsg { new_blocks };
