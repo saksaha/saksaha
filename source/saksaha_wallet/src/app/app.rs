@@ -3,9 +3,12 @@ use log::error;
 
 pub struct App {}
 
+#[derive(Debug)]
 pub struct AppArgs {
     pub app_prefix: Option<String>,
     pub rpc_port: Option<u16>,
+    pub id: Option<String>,
+    pub key: Option<String>,
 }
 
 impl App {

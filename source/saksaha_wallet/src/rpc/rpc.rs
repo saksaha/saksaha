@@ -10,6 +10,8 @@ use log::{error, info};
 use std::{sync::Arc, time::Duration};
 use tokio::net::TcpListener;
 
+const RPC_PORT: u16 = 36612;
+
 pub(crate) struct RPC {
     rpc_port: u16,
     rpc_socket: TcpListener,
@@ -21,8 +23,14 @@ impl RPC {
         rpc_port: Option<u16>,
         wallet: Arc<Wallet>,
     ) -> Result<RPC, WalletError> {
+        let rpc_port = rpc_port.unwrap_or_else(|| {
+            info!("rpc_port is not provided, defaults to {}", RPC_PORT);
+
+            RPC_PORT
+        });
+
         let (rpc_socket, socket_addr) =
-            match sak_utils_net::bind_tcp_socket(rpc_port).await {
+            match sak_utils_net::bind_tcp_socket(Some(rpc_port)).await {
                 Ok((socket, socket_addr)) => {
                     info!(
                         "Bound tcp socket for RPC, addr: {}",
@@ -48,8 +56,6 @@ impl RPC {
     }
 
     pub async fn run(self) -> Result<(), WalletError> {
-        println!("rpc starts");
-
         let router = {
             let routes = routes::get_routes();
             let router = Router::new(routes);
@@ -78,6 +84,8 @@ impl RPC {
 
             Arc::new(c)
         };
+
+        info!("RPC server runs");
 
         rpc_server.run(self.rpc_socket, ctx, middlewares).await?;
 

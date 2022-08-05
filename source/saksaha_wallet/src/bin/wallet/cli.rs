@@ -5,6 +5,8 @@ use saksaha_wallet::WalletError;
 pub(crate) struct CLIArgs {
     pub(crate) app_prefix: Option<String>,
     pub(crate) rpc_port: Option<u16>,
+    pub(crate) id: Option<String>,
+    pub(crate) key: Option<String>,
 }
 
 pub(crate) fn get_args() -> Result<CLIArgs, WalletError> {
@@ -31,9 +33,21 @@ pub(crate) fn get_args() -> Result<CLIArgs, WalletError> {
         None => None,
     };
 
+    let id = match matches.value_of("id") {
+        Some(m) => Some(String::from(m)),
+        None => None,
+    };
+
+    let key = match matches.value_of("key") {
+        Some(m) => Some(String::from(m)),
+        None => None,
+    };
+
     Ok(CLIArgs {
         rpc_port,
         app_prefix,
+        id,
+        key,
     })
 }
 
@@ -61,6 +75,24 @@ fn create_app<'a>() -> Command<'a> {
                 .long_help(
                     "Port to which bind RPC server \n\
                     e.g. 21452",
+                ),
+        )
+        .arg(
+            Arg::new("id") //
+                .long("id")
+                .takes_value(true)
+                .long_help(
+                    "User identifier \n\
+                    e.g. User_1234",
+                ),
+        )
+        .arg(
+            Arg::new("key") //
+                .long("cipher key")
+                .takes_value(true)
+                .long_help(
+                    "Key by which encrypt and decrypt data \n\
+                    e.g. LKJ3jfkwala11fass",
                 ),
         )
 }

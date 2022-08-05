@@ -47,6 +47,26 @@ impl OldCoin {
             auth_path: [None; CM_TREE_DEPTH as usize],
         }
     }
+
+    pub fn new() -> Self {
+        OldCoin {
+            addr_pk: None,
+
+            addr_sk: None,
+
+            rho: None,
+
+            r: None,
+
+            s: None,
+
+            v: None,
+
+            cm: None,
+
+            auth_path: [None; CM_TREE_DEPTH as usize],
+        }
+    }
 }
 
 #[derive(Debug, Copy, Clone)]
