@@ -56,18 +56,16 @@ pub fn query2(
             return handle_get_ch_list(storage, request.args);
         }
         _ => {
-            return Err(ContractError::new(
-                format!("Wrong request type has been found").into(),
-            ));
+            return Err(format!("Wrong request type has been found").into());
         }
     }
 }
 
 define_execute!();
 pub fn execute2(
-    storage: &mut Storage,
     request: Request,
-) -> Result<(), ContractError> {
+    storage: &mut Storage,
+) -> Result<Vec<u8>, ContractError> {
     match request.req_type.as_ref() {
         request_type::OPEN_CH => {
             return handle_open_channel(storage, request.args);
@@ -76,9 +74,7 @@ pub fn execute2(
             return handle_send_msg(storage, request.args);
         }
         _ => {
-            return Err(ContractError::new(
-                format!("Wrong request type has been found").into(),
-            ));
+            return Err(format!("Wrong request type has been found").into());
         }
     }
 }
@@ -153,7 +149,7 @@ fn handle_get_ch_list(
     let ret = match serde_json::to_vec(&ch_list) {
         Ok(s) => s,
         Err(err) => {
-            return Err(ContractError::new(format!("err: {:?}", err).into()));
+            return Err(format!("err: {:?}", err).into());
         }
     };
 
@@ -163,7 +159,7 @@ fn handle_get_ch_list(
 fn handle_open_channel(
     storage: &mut Storage,
     args: RequestArgs,
-) -> Result<(), ContractError> {
+) -> Result<Vec<u8>, ContractError> {
     let mut evl_storage: EnvelopeStorage = serde_json::from_slice(&storage)?;
 
     let open_ch_params: OpenChParams = serde_json::from_slice(&args)?;
@@ -197,9 +193,7 @@ fn handle_open_channel(
 
     match evl_storage.chats.get_mut(&open_ch.ch_id) {
         Some(_) => {
-            return Err(ContractError::new(
-                format!("The channel is already opened").into(),
-            ));
+            return Err(format!("The channel is already opened").into());
         }
         None => {}
     };
@@ -265,13 +259,13 @@ fn handle_open_channel(
 
     *storage = serde_json::to_vec(&evl_storage)?;
 
-    Ok(())
+    Ok(vec![])
 }
 
 fn handle_send_msg(
     storage: &mut Storage,
     args: RequestArgs,
-) -> Result<(), ContractError> {
+) -> Result<Vec<u8>, ContractError> {
     let mut evl_storage: EnvelopeStorage = serde_json::from_slice(&storage)?;
 
     let send_msg_params: SendMsgParams = serde_json::from_slice(&args)?;
@@ -307,5 +301,5 @@ fn handle_send_msg(
 
     *storage = serde_json::to_vec(&evl_storage)?;
 
-    Ok(())
+    Ok(vec![])
 }

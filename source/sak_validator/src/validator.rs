@@ -56,9 +56,9 @@ fn handle_get_validator(storage: Storage) -> Result<Vec<u8>, ContractError> {
 
 define_execute!();
 pub fn execute2(
-    storage: &mut Storage,
     request: Request,
-) -> Result<(), ContractError> {
+    storage: &mut Storage,
+) -> Result<Vec<u8>, ContractError> {
     match request.req_type.as_ref() {
         "add_validator" => {
             return handle_add_validator(storage, request.args);
@@ -72,7 +72,7 @@ pub fn execute2(
 fn handle_add_validator(
     storage: &mut Storage,
     args: RequestArgs,
-) -> Result<(), ContractError> {
+) -> Result<Vec<u8>, ContractError> {
     let mut validator_storage: ValidatorStorage =
         serde_json::from_slice(&storage)?;
 
@@ -85,5 +85,5 @@ fn handle_add_validator(
 
     *storage = serde_json::to_vec(&validator_storage)?;
 
-    Ok(())
+    Ok(vec![])
 }

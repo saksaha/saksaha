@@ -30,9 +30,12 @@ impl VM {
             }
         };
 
+        println!("invoke: {:?}", invoked);
+
         if invoked.len() > 6 {
+            println!("awepo");
             if &invoked[..6] == &ERROR_PLACEHOLDER {
-                let err_msg: String = serde_json::from_slice(&invoked[6..])?;
+                let err_msg: &str = std::str::from_utf8(&invoked[6..])?;
 
                 return Err(err_msg.into());
             }
@@ -100,11 +103,6 @@ fn invoke_query(
     let storage_ptr =
         wasm_bootstrap::copy_memory(&storage_bytes, &instance, &mut store)?;
 
-    println!(
-        "222, {} {} {} {}",
-        storage_ptr, storage_len, request_ptr, request_len
-    );
-
     let (ret_ptr, ret_len) = match contract_fn.call(
         &mut store,
         (
@@ -134,6 +132,8 @@ fn invoke_query(
             ret_len as u32,
         )?
     }
+
+    println!("query, ret: {:?}", ret);
 
     Ok(ret)
 }

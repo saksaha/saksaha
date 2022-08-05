@@ -29,19 +29,47 @@ macro_rules! contract_bootstrap {
 }
 
 #[macro_export]
-macro_rules! return_err {
+macro_rules! return_err_2 {
     ($obj: expr) => {
         match $obj {
             Ok(r) => r,
             Err(err) => {
-                let err_vec = sak_contract_std::make_error_vec(err.into());
+                let mut err = sak_contract_std::make_error_vec(err.into());
 
-                let ptr = err_vec.as_mut_ptr();
-                let len = err_vec.len();
+                let err_ptr = err.as_mut_ptr();
+                let err_len = err.len();
 
-                std::mem::forget(err_vec);
+                std::mem::forget(err);
 
-                return (ptr, len as i32);
+                return (err_ptr, err_len as i32);
+            }
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! return_err_4 {
+    ($obj: expr) => {
+        match $obj {
+            Ok(r) => r,
+            Err(err) => {
+                let mut err = sak_contract_std::make_error_vec(err.into());
+
+                let err_ptr = err.as_mut_ptr();
+                let err_len = err.len();
+
+                std::mem::forget(err);
+
+                let mut empty_vec = Vec::new();
+                let empty_vec_ptr = empty_vec.as_mut_ptr();
+                let empty_vec_len = empty_vec.len();
+
+                return (
+                    err_ptr,
+                    err_len as i32,
+                    empty_vec_ptr,
+                    empty_vec_len as i32,
+                );
             }
         }
     };
@@ -55,7 +83,7 @@ macro_rules! define_init {
             let storage: Result<Vec<u8>, sak_contract_std::ContractError> =
                 init2();
 
-            let storage = sak_contract_std::return_err!(storage);
+            let mut storage = sak_contract_std::return_err_2!(storage);
 
             let storage_ptr = storage.as_mut_ptr();
             let storage_len = storage.len();
@@ -77,7 +105,7 @@ macro_rules! define_query {
             request_ptr: *mut u8,
             request_len: usize,
         ) -> (*mut u8, i32) {
-            let mut storage: Storage = Vec::from_raw_parts(
+            let storage: Storage = Vec::from_raw_parts(
                 storage_ptr, //
                 storage_len,
                 storage_len,
@@ -91,19 +119,21 @@ macro_rules! define_query {
 
             let request = serde_json::from_slice(&request);
 
-            let request: Request = sak_contract_std::return_err!(request);
+            let request: Request = sak_contract_std::return_err_2!(request);
 
-            let ret: Result<Vec<u8>, sak_contract_std::ContractError> =
+            let result: Result<Vec<u8>, sak_contract_std::ContractError> =
                 query2(request, storage);
 
             {
-                let ret: Vec<u8> = sak_contract_std::return_err!(ret);
-                let ret_ptr = ret.as_mut_ptr();
-                let ret_len = ret.len();
+                let mut result: Vec<u8> =
+                    sak_contract_std::return_err_2!(result);
 
-                std::mem::forget(ret);
+                let result_ptr = result.as_mut_ptr();
+                let result_len = result.len();
 
-                return (ret_ptr, ret_len as i32);
+                std::mem::forget(result);
+
+                return (result_ptr, result_len as i32);
             }
         }
     };
@@ -118,151 +148,45 @@ macro_rules! define_execute {
             storage_len: usize,
             request_ptr: *mut u8,
             request_len: usize,
-        ) -> (*mut u8, i32) {
-            let storage_bytes_vec = Vec::from_raw_parts(
+        ) -> (*mut u8, i32, *mut u8, i32) {
+            let mut storage = Vec::from_raw_parts(
                 storage_ptr, //
                 storage_len,
                 storage_len,
             );
 
-            let storage_serialized = match String::from_utf8(storage_bytes_vec)
-            {
-                Ok(s) => s,
-                Err(err) => {
-                    let mut err_msg: String = ContractError::new(
-                        format!(
-                            "Cannot serialize storage, \
-                            err: {}",
-                            err
-                        )
-                        .into(),
-                    )
-                    .err_msg;
-
-                    let ptr = err_msg.as_mut_ptr();
-                    let len = err_msg.len();
-
-                    std::mem::forget(err_msg);
-
-                    return (ptr, len as i32);
-                }
-            };
-
-            let mut storage: Storage =
-                match serde_json::from_str(&storage_serialized.as_str()) {
-                    Ok(s) => s,
-                    Err(err) => {
-                        let mut err_msg: String = ContractError::new(
-                            format!(
-                                "Cannot Deserialize \
-                                `HashMap` from storage, err: {}",
-                                err
-                            )
-                            .into(),
-                        )
-                        .err_msg;
-
-                        let ptr = err_msg.as_mut_ptr();
-                        let len = err_msg.len();
-
-                        std::mem::forget(err_msg);
-
-                        return (ptr, len as i32);
-                    }
-                };
-
-            let request_bytes_vec = Vec::from_raw_parts(
+            let request = Vec::from_raw_parts(
                 request_ptr, //
                 request_len,
                 request_len,
             );
 
-            let request_serialized = match String::from_utf8(request_bytes_vec)
+            let request = serde_json::from_slice(&request);
+
+            let request: Request = sak_contract_std::return_err_4!(request);
+
+            let result: Result<Vec<u8>, sak_contract_std::ContractError> =
+                execute2(request, &mut storage);
+
             {
-                Ok(s) => s,
-                Err(err) => {
-                    let mut err_msg: String = ContractError::new(
-                        format!(
-                            "Cannot serialize storage, \
-                            err: {}",
-                            err
-                        )
-                        .into(),
-                    )
-                    .err_msg;
+                let mut result: Vec<u8> =
+                    sak_contract_std::return_err_4!(result);
 
-                    let ptr = err_msg.as_mut_ptr();
-                    let len = err_msg.len();
+                let result_ptr = result.as_mut_ptr();
+                let result_len = result.len();
 
-                    std::mem::forget(err_msg);
+                let storage_ptr = storage.as_mut_ptr();
+                let storage_len = storage.len();
 
-                    return (ptr, len as i32);
-                }
-            };
+                std::mem::forget(storage);
 
-            let request: Request =
-                match serde_json::from_str(&request_serialized.as_str()) {
-                    Ok(s) => s,
-                    Err(err) => {
-                        let mut err_msg: String = ContractError::new(
-                            format!(
-                                "Cannot Deserialize \
-                                `Storage` from request, err: {}",
-                                err
-                            )
-                            .into(),
-                        )
-                        .err_msg;
-
-                        let ptr = err_msg.as_mut_ptr();
-                        let len = err_msg.len();
-
-                        std::mem::forget(err_msg);
-
-                        return (ptr, len as i32);
-                    }
-                };
-
-            // storage mutated
-            match execute2(&mut storage, request) {
-                Ok(_) => {}
-                Err(err) => {
-                    let mut err_msg: String = err.err_msg;
-
-                    let ptr = err_msg.as_mut_ptr();
-                    let len = err_msg.len();
-
-                    std::mem::forget(err_msg);
-
-                    return (ptr, len as i32);
-                }
-            };
-
-            let storage_serialized = match serde_json::to_string(&storage) {
-                Ok(s) => s,
-                Err(err) => {
-                    let mut err_msg: String =
-                        ContractError::new(format!("err: {}", err).into())
-                            .err_msg;
-
-                    let ptr = err_msg.as_mut_ptr();
-                    let len = err_msg.len();
-
-                    std::mem::forget(err_msg);
-
-                    return (ptr, len as i32);
-                }
-            };
-
-            let mut storage_bytes_vec =
-                storage_serialized.as_bytes().to_owned();
-
-            let storage_ptr = storage_bytes_vec.as_mut_ptr();
-            let storage_len = storage_bytes_vec.len();
-
-            std::mem::forget(storage_bytes_vec);
-
-            (storage_ptr, storage_len as i32)
+                (
+                    storage_ptr,
+                    storage_len as i32,
+                    result_ptr,
+                    result_len as i32,
+                )
+            }
         }
     };
 }
