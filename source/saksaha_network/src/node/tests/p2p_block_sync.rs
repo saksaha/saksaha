@@ -91,7 +91,7 @@ async fn test_block_sync_true() {
         });
     }
 
-    tokio::time::sleep(Duration::from_secs(5)).await;
+    tokio::time::sleep(Duration::from_secs(2)).await;
 
     local_node_1
         .machine

@@ -10,7 +10,6 @@ pub(super) fn encode_into_frame(
     item: Msg,
     dst: &mut BytesMut,
 ) -> Result<&'static str, TrptError> {
-    println!("msg: {:?}", item);
     let (frame, msg_type) = match item {
         Msg::Ping(ping) => (ping.into_frame(), PING_TYPE),
         Msg::HandshakeSyn(handshake) => {
