@@ -108,7 +108,6 @@ async fn test_call_ctr_validator_fn_query() {
         get_dummy_validator_3(),
     ];
 
-    // Query(request, storage);
     let request = Request {
         req_type: "get_validator".to_string(),
         args: vec![],
@@ -117,22 +116,22 @@ async fn test_call_ctr_validator_fn_query() {
 
     let storage = get_test_validator_state(test_validator_vec.clone());
 
-    // ctr_execute(ctr_wasm, ctr_fn)
     let ctr_wasm = VALIDATOR.to_vec();
+
     let ctr_fn = CtrFn::Query(request, storage);
 
     let receipt = vm
         .invoke(ctr_wasm, ctr_fn)
         .expect("validator should be obtained");
 
-    println!("validator expected: {:?}", test_validator_vec[0]);
-    println!("validator acquired: {:?}", validator_from_fn_query);
+    let validators: Vec<String> =
+        serde_json::from_slice(&receipt.result).unwrap();
 
-    assert_eq!(
-        //
-        test_validator_vec[0],
-        validator_from_fn_query
-    );
+    println!("validator expected: {:?}", test_validator_vec[0]);
+
+    println!("validator acquired: {:?}", validators[0]);
+
+    assert_eq!(test_validator_vec[0], validators[0]);
 }
 
 #[tokio::test(flavor = "multi_thread")]
@@ -173,24 +172,19 @@ async fn test_call_ctr_validator_fn_execute_add_validator() {
     let ctr_wasm = VALIDATOR.to_vec();
     let ctr_fn = CtrFn::Execute(request, storage);
 
-    let validator_state_from_fn_execute = vm
+    let receipt = vm
         .invoke(ctr_wasm, ctr_fn)
         .expect("validator should be obtained");
 
-    // let validator_state: Storage =
-    //     serde_json::from_str(validator_state_from_fn_execute.as_str()).unwrap();
+    let updated_storage = receipt.updated_storage.unwrap();
 
     let validator_storage: ValidatorStorage =
-        serde_json::from_str(validator_state_from_fn_execute.as_str()).unwrap();
-
-    // let validators_string = validator_state.get("validators").unwrap();
-
-    // let validators: Vec<String>.as_str() =
-    //     serde_json::from_str(validators_string.as_str()).unwrap();
+        serde_json::from_slice(&updated_storage).unwrap();
 
     let validators = validator_storage.validators;
 
     println!("original validator list: {:?}", test_validator_vec);
+
     println!("updated validator list: {:?}", validators);
 
     assert!(validators.contains(&get_dummy_validator_4()));
