@@ -39,6 +39,8 @@ impl DistLedgerApis {
             return Ok(None);
         }
 
+        println!("123123");
+
         let bc = self.consensus.do_consensus(self, tx_candidates).await?;
 
         self.sync_pool.remove_tcs(&bc.tx_candidates).await?;

@@ -29,6 +29,7 @@ impl PeerNode {
 
             tokio::spawn(async move {
                 let mut conn = peer_clone.transport.conn.write().await;
+
                 // event_handle::handle_new_peers_ev(
                 //     public_key,
                 //     &mut conn.socket_tx,
