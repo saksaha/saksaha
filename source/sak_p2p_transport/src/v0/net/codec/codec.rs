@@ -19,15 +19,26 @@ impl Encoder<Msg> for UpgradedP2PCodec {
         dst: &mut BytesMut,
     ) -> Result<(), TrptError> {
         let rand = sak_crypto::rand();
-        println!("\n555 upgraded encoding!!, r: {}, msg: {:?}", rand, item);
+
+        println!(
+            "\n555 upgraded encoding!!, id: {}, r: {}, msg: {:?}, dst: {:?}",
+            self.id,
+            rand,
+            item,
+            dst.to_vec(),
+        );
 
         enc::encode_into_frame(self.id, item, dst)?;
+
+        let t = dst.to_vec();
 
         self.cipher.apply_keystream(dst);
 
         println!(
-            "\n666 upgraded encoded!!, r: {}, buf: {:?}",
+            "\n666 upgraded encoded!!, id: {}, r: {}, original buf: {:?}\nbuf: {:?}",
+            self.id,
             rand,
+            t,
             dst.to_vec()
         );
 
@@ -43,11 +54,16 @@ impl Decoder for UpgradedP2PCodec {
         &mut self,
         src: &mut BytesMut,
     ) -> Result<Option<Self::Item>, TrptError> {
-        println!("\n1313 upgraded decoding, src: {:?}", src.to_vec());
+        let t = src.to_vec();
 
         self.cipher.apply_keystream(src);
 
-        println!("\n1313 upgraded decoded, src: {:?}", src.to_vec());
+        println!(
+            "\n1313 upgraded decoded, id: {}, original buf: {:?}\nsrc: {:?}",
+            self.id,
+            t,
+            src.to_vec()
+        );
 
         return dec::decode_into_msg(self.id, src);
     }

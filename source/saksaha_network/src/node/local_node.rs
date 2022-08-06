@@ -54,7 +54,7 @@ impl LocalNode {
             };
 
             tokio::spawn(async move {
-                peer_node.run_hello().await;
+                // peer_node.run_hello().await;
                 peer_node.run().await;
             });
         }
