@@ -1,4 +1,5 @@
 use super::msg_handle;
+use super::task::NodeTaskQueue;
 use crate::{machine::Machine, node::event_handle};
 use futures::SinkExt;
 use futures::StreamExt;
@@ -11,9 +12,10 @@ use std::time::Duration;
 use tokio::sync::broadcast::Receiver;
 
 pub(in crate::node) struct PeerNode {
-    pub(crate) peer: Arc<Peer>,
-    pub(crate) bc_event_rx: Receiver<DistLedgerEvent>,
-    pub(crate) machine: Arc<Machine>,
+    pub peer: Arc<Peer>,
+    pub bc_event_rx: Receiver<DistLedgerEvent>,
+    pub machine: Arc<Machine>,
+    pub task_queue: NodeTaskQueue,
 }
 
 impl PeerNode {
