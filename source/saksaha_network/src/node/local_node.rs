@@ -1,7 +1,13 @@
-use super::{miner::Miner, peer_node::PeerNode};
+use super::{
+    miner::Miner,
+    peer_node::PeerNode,
+    task::{NodeTask, NodeTaskQueue},
+};
 use crate::machine::Machine;
+use futures::Future;
 use sak_p2p_peertable::PeerTable;
-use std::sync::Arc;
+use sak_task_queue::{TaskQueue, TaskQueue2};
+use std::{pin::Pin, sync::Arc};
 
 pub(crate) struct LocalNode {
     pub(crate) peer_table: Arc<PeerTable>,
@@ -47,6 +53,9 @@ impl LocalNode {
                 rx
             };
 
+            let task_queue = NodeTaskQueue::init();
+            // TaskQueue2::init(10, f).await;
+
             let mut peer_node = PeerNode {
                 peer,
                 bc_event_rx,
@@ -54,7 +63,6 @@ impl LocalNode {
             };
 
             tokio::spawn(async move {
-                // peer_node.run_hello().await;
                 peer_node.run().await;
             });
         }

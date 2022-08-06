@@ -120,7 +120,7 @@ async fn test_block_sync_true() {
         println!("[success] node_2 has tx_1 (shared from node_1)");
     }
 
-    // tokio::time::sleep(Duration::from_secs(50)).await;
+    tokio::time::sleep(Duration::from_secs(3)).await;
 
     {
         // local_node_1
