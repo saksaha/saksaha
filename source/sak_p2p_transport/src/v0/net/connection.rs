@@ -47,7 +47,12 @@ impl Connection {
 
         let id = self.id;
 
-        let socket = self.socket.map_codec(|_| UpgradedP2PCodec { cipher, id });
+        let socket = self.socket.map_codec(|_| UpgradedP2PCodec {
+            cipher,
+            id,
+            msgs_sent: vec![],
+            msgs_recv: vec![],
+        });
 
         UpgradedConnection {
             socket_addr: self.socket_addr.clone(),

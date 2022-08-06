@@ -24,30 +24,6 @@ impl PeerNode {
             self.peer.get_public_key_short()
         );
 
-        // let t = {
-        //     let peer_clone = self.peer.clone();
-        //     let machine_clone = self.machine.clone();
-
-        //     tokio::spawn(async move {
-        //         let mut conn = peer_clone.transport.conn.write().await;
-
-        //         let blocks = machine_clone
-        //             .blockchain
-        //             .dist_ledger
-        //             .apis
-        //             .get_entire_block_info_list()
-        //             .await
-        //             .unwrap_or(vec![]);
-
-        //         conn.socket
-        //             .send(Msg::BlockHashSyn(BlockHashSynMsg {
-        //                 new_blocks: blocks,
-        //             }))
-        //             .await
-        //     })
-        //     .await
-        // };
-
         loop {
             let mut conn = &mut self.peer.transport.conn.write().await;
             let public_key = self.peer.get_public_key_short();
