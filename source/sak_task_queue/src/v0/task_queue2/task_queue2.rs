@@ -12,32 +12,28 @@ use tokio::sync::{
 
 const TASK_MIN_INTERVAL: u64 = 1000;
 
+pub type Handler<T> = Box<dyn Fn(T) -> Pin<Box<dyn Future<Output = ()>>>>;
+
 pub struct TaskQueue2<T>
 // where
 //     T: Send + Sync,
 {
     tx: Sender<T>,
     rx: Mutex<Receiver<T>>,
+    handler: Handler<T>,
 }
 
 impl<T> TaskQueue2<T>
 where
     T: std::fmt::Display, // + Send + Sync + 'static,
 {
-    pub async fn init(
-        capacity: usize,
-        handler: Box<
-            dyn Fn() -> impl Future<Output = ()>,
-            // Pin<Box<dyn Future<Output = ()> + Send + Sync>>
-            //         + Send
-            //         + Sync,
-        >,
-    ) -> TaskQueue2<T> {
+    pub async fn init(capacity: usize, handler: Handler<T>) -> TaskQueue2<T> {
         let (tx, rx) = mpsc::channel(capacity);
 
         TaskQueue2 {
             tx,
             rx: Mutex::new(rx),
+            handler,
         }
     }
 
@@ -73,6 +69,7 @@ where
 pub struct TaskRuntime2<T> {
     pub(crate) task_queue: Arc<TaskQueue2<T>>,
     pub(crate) task_min_interval: Duration,
+    pub(crate) handler: Handler<T>,
 }
 
 impl<T> TaskRuntime2<T>
@@ -82,6 +79,7 @@ where
     pub(crate) fn new(
         task_queue: Arc<TaskQueue2<T>>,
         disc_task_interval: Option<u16>,
+        handler: Handler<T>,
     ) -> TaskRuntime2<T> {
         let task_min_interval = match disc_task_interval {
             Some(i) => Duration::from_millis(i.into()),
@@ -91,6 +89,7 @@ where
         TaskRuntime2 {
             task_queue,
             task_min_interval,
+            handler,
         }
     }
 
@@ -117,7 +116,7 @@ where
                 }
             };
 
-            // handler::run(task).await;
+            (self.handler)(task).await;
 
             // sak_utils_time::wait_until_min_interval(
             //     time_since,
