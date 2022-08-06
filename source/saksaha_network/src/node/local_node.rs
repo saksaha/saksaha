@@ -53,13 +53,14 @@ impl LocalNode {
                 rx
             };
 
-            let task_queue = NodeTaskQueue::init();
+            let task_queue = NodeTaskQueue::init(None).await;
             // TaskQueue2::init(10, f).await;
 
             let mut peer_node = PeerNode {
                 peer,
                 bc_event_rx,
                 machine,
+                task_queue,
             };
 
             tokio::spawn(async move {
