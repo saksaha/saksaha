@@ -53,8 +53,9 @@ impl LocalNode {
                 rx
             };
 
-            let task_queue = NodeTaskQueue::init(None).await;
+            // let task_queue = NodeTaskQueue::init(None).await;
             // TaskQueue2::init(10, f).await;
+            let task_queue = TaskQueue::new(10);
 
             let mut peer_node = PeerNode {
                 peer,

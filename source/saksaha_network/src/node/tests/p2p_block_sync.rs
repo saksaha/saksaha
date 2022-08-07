@@ -44,7 +44,8 @@ async fn test_block_sync_true() {
                 f6083b729baef9e9545c4e95590616fd3\
                 82662a09653f2a966ff524989ae8c0f",
         ),
-        true,
+        // true,
+        false,
     )
     .await;
 
@@ -75,6 +76,7 @@ async fn test_block_sync_true() {
     .await;
 
     let dummy_tx1 = TxCandidate::new_dummy_pour_m1_to_p3_p4();
+
     let dummy_tx2 = TxCandidate::new_dummy_pour_2();
 
     tokio::time::sleep(Duration::from_secs(5)).await;
@@ -93,7 +95,18 @@ async fn test_block_sync_true() {
 
     tokio::time::sleep(Duration::from_secs(2)).await;
 
+    // tokio::time::sleep(Duration::from_secs(50)).await;
+
     local_node_1
+        .machine
+        .blockchain
+        .dist_ledger
+        .apis
+        .send_tx(dummy_tx1.clone())
+        .await
+        .expect("Node should be able to send a transaction");
+
+    local_node_2
         .machine
         .blockchain
         .dist_ledger
@@ -122,56 +135,56 @@ async fn test_block_sync_true() {
 
     tokio::time::sleep(Duration::from_secs(3)).await;
 
-    {
-        // local_node_1
-        //     .machine
-        //     .blockchain
-        //     .dist_ledger
-        //     .apis
-        //     .write_block(None)
-        //     .await
-        //     .expect("Block should be written");
+    // {
+    //     // local_node_1
+    //     //     .machine
+    //     //     .blockchain
+    //     //     .dist_ledger
+    //     //     .apis
+    //     //     .write_block(None)
+    //     //     .await
+    //     //     .expect("Block should be written");
 
-        let last_height_1 = local_node_1
-            .machine
-            .blockchain
-            .dist_ledger
-            .apis
-            .get_latest_block_height()
-            .unwrap()
-            .unwrap();
+    //     let last_height_1 = local_node_1
+    //         .machine
+    //         .blockchain
+    //         .dist_ledger
+    //         .apis
+    //         .get_latest_block_height()
+    //         .unwrap()
+    //         .unwrap();
 
-        assert_eq!(1, last_height_1);
-        println!("test 2 passed");
+    //     assert_eq!(1, last_height_1);
+    //     println!("test 2 passed");
 
-        tokio::time::sleep(Duration::from_secs(4)).await;
+    //     tokio::time::sleep(Duration::from_secs(4)).await;
 
-        let last_height_2 = local_node_2
-            .machine
-            .blockchain
-            .dist_ledger
-            .apis
-            .get_latest_block_height()
-            .unwrap()
-            .unwrap();
+    //     let last_height_2 = local_node_2
+    //         .machine
+    //         .blockchain
+    //         .dist_ledger
+    //         .apis
+    //         .get_latest_block_height()
+    //         .unwrap()
+    //         .unwrap();
 
-        assert_eq!(last_height_1, last_height_2);
-        println!("test 3 passed");
-    }
+    //     assert_eq!(last_height_1, last_height_2);
+    //     println!("test 3 passed");
+    // }
 
-    tokio::time::sleep(Duration::from_secs(2)).await;
+    // tokio::time::sleep(Duration::from_secs(2)).await;
 
-    {
-        let tx_pool_2_contains_tx1 = local_node_2
-            .machine
-            .blockchain
-            .dist_ledger
-            .apis
-            .tx_pool_contains(dummy_tx2.get_tx_hash())
-            .await;
+    // {
+    //     let tx_pool_2_contains_tx1 = local_node_2
+    //         .machine
+    //         .blockchain
+    //         .dist_ledger
+    //         .apis
+    //         .tx_pool_contains(dummy_tx2.get_tx_hash())
+    //         .await;
 
-        assert_eq!(tx_pool_2_contains_tx1, false);
-    }
+    //     assert_eq!(tx_pool_2_contains_tx1, false);
+    // }
 }
 
 #[tokio::test(flavor = "multi_thread")]
