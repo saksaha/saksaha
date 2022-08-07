@@ -12,4 +12,6 @@ pub type TxHash = String;
 
 pub type BlockHash = String;
 
+pub type BlockHeight = u128;
+
 pub type CtrAddr = String;

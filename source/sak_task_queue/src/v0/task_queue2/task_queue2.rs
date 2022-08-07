@@ -20,7 +20,7 @@ where
     T: Send + Sync,
 {
     tx: Sender<T>,
-    // rx: Mutex<Receiver<T>>,
+    // rx: Receiver<T>,
 }
 
 impl<T> TaskQueue2<T>
@@ -34,12 +34,12 @@ where
     ) -> TaskQueue2<T> {
         let (tx, rx) = mpsc::channel(capacity);
 
-        let rx = Arc::new(Mutex::new(rx));
+        // let rx = Arc::new(Mutex::new(rx));
         let handler = Arc::new(handler);
 
         tokio::spawn(async move {
             let runtime = TaskRuntime2::new(
-                rx.clone(),
+                rx,
                 // rx.clone(),
                 task_min_interval,
                 handler.clone(),
@@ -50,6 +50,7 @@ where
 
         let task_queue = TaskQueue2 {
             tx,
+            // rx,
             // rx: Mutex::new(rx),
         };
 
@@ -86,7 +87,7 @@ where
 }
 
 pub(crate) struct TaskRuntime2<T> {
-    pub task_rx: Arc<Mutex<Receiver<T>>>,
+    pub task_rx: Receiver<T>,
     pub task_min_interval: Duration,
     pub handler: Arc<Handler<T>>,
 }
@@ -97,7 +98,7 @@ where
 {
     pub fn new(
         // task_queue: Arc<TaskQueue2<T>>,
-        task_rx: Arc<Mutex<Receiver<T>>>,
+        task_rx: Receiver<T>,
         disc_task_interval: Option<u16>,
         handler: Arc<Handler<T>>,
     ) -> TaskRuntime2<T> {
@@ -117,7 +118,7 @@ where
     pub(crate) async fn run(self) {
         let task_min_interval = &self.task_min_interval;
         // let task_queue = &self.task_queue;
-        let mut task_rx = self.task_rx.lock().await;
+        let mut task_rx = self.task_rx;
 
         loop {
             let time_since = SystemTime::now();
@@ -130,7 +131,7 @@ where
                 }
                 None => {
                     error!(
-                        "Cannot handle p2p discovery task any more, channel\
+                        "Cannot receive tasks any more, channel \
                         might have been closed,",
                     );
                     return;

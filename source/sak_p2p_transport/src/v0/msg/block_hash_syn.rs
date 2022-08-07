@@ -1,11 +1,12 @@
 use crate::{TrptError, BLOCK_HASH_ACK, BLOCK_HASH_SYN};
 use bytes::{BufMut, Bytes, BytesMut};
 use sak_p2p_frame::{Frame, Parse};
+use sak_types::BlockHeight;
 use std::str;
 
 #[derive(Debug)]
 pub struct BlockHashSynMsg {
-    pub new_blocks: Vec<(u128, String)>,
+    pub new_blocks: Vec<(BlockHeight, String)>,
 }
 
 impl BlockHashSynMsg {

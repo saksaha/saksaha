@@ -5,7 +5,7 @@ use sak_kv_db::{
     BoundColumnFamily, ColumnFamilyDescriptor, IteratorMode, Options,
     WriteBatch,
 };
-use sak_types::{Block, BlockHash, CtrAddr, Tx, TxHash, TxType};
+use sak_types::{Block, BlockHash, BlockHeight, CtrAddr, Tx, TxHash, TxType};
 use std::convert::TryInto;
 use std::sync::Arc;
 
@@ -162,7 +162,7 @@ impl LedgerDBSchema {
         &self,
         // db: &DB,
         block_hash: &BlockHash,
-    ) -> Result<Option<u128>, LedgerError> {
+    ) -> Result<Option<BlockHeight>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::BLOCK_HEIGHT)?;
 
         match self.db.get_cf(&cf, block_hash)? {
@@ -179,7 +179,7 @@ impl LedgerDBSchema {
 
     pub(crate) fn get_block_hash_by_block_height(
         &self,
-        block_height: &u128,
+        block_height: &BlockHeight,
     ) -> Result<Option<String>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::BLOCK_HASH)?;
 
@@ -457,7 +457,7 @@ impl LedgerDBSchema {
         &self,
         // db: &DB,
         batch: &mut WriteBatch,
-        block_height: &u128,
+        block_height: &BlockHeight,
         block_hash: &BlockHash,
     ) -> Result<(), LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::BLOCK_HASH)?;
@@ -474,7 +474,7 @@ impl LedgerDBSchema {
         // db: &DB,
         batch: &mut WriteBatch,
         block_hash: &BlockHash,
-        block_height: &u128,
+        block_height: &BlockHeight,
     ) -> Result<(), LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::BLOCK_HEIGHT)?;
 
