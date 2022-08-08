@@ -3,7 +3,7 @@ use log::{debug, error, warn};
 use sak_p2p_peertable::{Peer, PeerStatus};
 use sak_p2p_transport::{
     handshake::{self, HandshakeInitArgs},
-    Connection,
+    Conn,
 };
 use std::sync::Arc;
 use tokio::{net::TcpStream, sync::RwLock};
@@ -56,7 +56,7 @@ pub(crate) async fn run(task: P2PTask) {
 
             let conn = match TcpStream::connect(&endpoint).await {
                 Ok(s) => {
-                    let c = match Connection::new(s, conn_id) {
+                    let c = match Conn::new(s, conn_id) {
                         Ok(c) => {
                             debug!(
                                 "Successfully connected to endpoint: {}, \

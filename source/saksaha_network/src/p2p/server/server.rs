@@ -3,7 +3,7 @@ use log::{debug, warn};
 use sak_p2p_discovery::AddrTable;
 use sak_p2p_id::Identity;
 use sak_p2p_peertable::PeerTable;
-use sak_p2p_transport::Connection;
+use sak_p2p_transport::Conn;
 use std::{sync::Arc, time::Duration};
 use tokio::{
     net::{TcpListener, TcpStream},
@@ -83,7 +83,7 @@ impl Server {
 
             let conn_id = sak_crypto::rand();
 
-            let conn = match Connection::new(socket, conn_id) {
+            let conn = match Conn::new(socket, conn_id) {
                 Ok(c) => {
                     debug!(
                         "Accepted a tcp connection from source, \
