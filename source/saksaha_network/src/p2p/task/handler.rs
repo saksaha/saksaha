@@ -56,7 +56,7 @@ pub(crate) async fn run(task: P2PTask) {
 
             let conn = match TcpStream::connect(&endpoint).await {
                 Ok(s) => {
-                    let c = match Conn::new(s, conn_id) {
+                    let c = match Conn::new(s, conn_id, true) {
                         Ok(c) => {
                             debug!(
                                 "Successfully connected to endpoint: {}, \

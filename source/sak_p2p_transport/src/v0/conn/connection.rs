@@ -10,10 +10,15 @@ pub struct Conn {
     pub socket_addr: SocketAddr,
     pub socket: Framed<TcpStream, P2PCodec>,
     pub id: usize,
+    is_initiator: bool,
 }
 
 impl Conn {
-    pub fn new(socket: TcpStream, id: usize) -> Result<Conn, TrptError> {
+    pub fn new(
+        socket: TcpStream,
+        id: usize,
+        is_initiator: bool,
+    ) -> Result<Conn, TrptError> {
         let socket_addr = socket.peer_addr()?;
 
         let p2p_codec = P2PCodec { id };
@@ -24,6 +29,7 @@ impl Conn {
             socket_addr,
             socket,
             id,
+            is_initiator,
         };
 
         Ok(c)
@@ -48,6 +54,11 @@ impl Conn {
             msgs_recv: vec![],
         });
 
-        UpgradedConn::new(self.socket_addr.clone(), socket, id)
+        UpgradedConn::new(
+            self.socket_addr.clone(),
+            socket,
+            id,
+            self.is_initiator,
+        )
     }
 }
