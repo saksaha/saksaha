@@ -94,7 +94,9 @@ impl PeerNode {
                 //         }
                 //     };
                 // },
-                maybe_msg = conn.socket.next() => {
+                maybe_msg = conn
+                    // .socket
+                    .next_msg() => {
                     println!("2222222222, pub_key: {}", self.peer.get_public_key_short());
                     match maybe_msg {
                         Some(maybe_msg) => match maybe_msg {
@@ -150,7 +152,7 @@ impl PeerNode {
                 .unwrap_or(vec![]);
 
             match conn
-                .socket
+                // .socket
                 .send(Msg::BlockHashSyn(BlockHashSynMsg { new_blocks: blocks }))
                 .await
             {

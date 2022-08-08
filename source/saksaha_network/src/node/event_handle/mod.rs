@@ -14,7 +14,7 @@ pub(super) async fn handle_tx_pool_stat<'a>(
     new_tx_hashes: Vec<String>,
 ) {
     match conn
-        .socket
+        // .socket
         .send(Msg::TxHashSyn(TxHashSynMsg {
             tx_hashes: new_tx_hashes,
         }))
@@ -40,7 +40,7 @@ pub(super) async fn handle_new_blocks_ev<'a>(
     new_blocks: Vec<(u128, String)>,
 ) {
     match conn
-        .socket
+        // .socket
         .send(Msg::BlockHashSyn(BlockHashSynMsg {
             new_blocks: new_blocks.clone(),
         }))
@@ -60,7 +60,7 @@ pub(super) async fn handle_new_blocks_ev<'a>(
 
 pub(super) async fn handle_new_peers_ev<'a>(
     public_key: &str,
-    conn: &'a mut RwLockWriteGuard<'_, UpgradedConnection>,
+    conn: &'a mut RwLockWriteGuard<'_, UpgradedConn>,
     machine: &Machine,
 ) {
     let blocks = machine
@@ -72,7 +72,7 @@ pub(super) async fn handle_new_peers_ev<'a>(
         .unwrap_or(vec![]);
 
     match conn
-        .socket
+        // .socket
         .send(Msg::BlockHashSyn(BlockHashSynMsg { new_blocks: blocks }))
         .await
     {

@@ -2,7 +2,7 @@ use log::{debug, error, warn};
 use sak_p2p_peertable::{Peer, PeerStatus};
 use sak_p2p_transport::{
     handshake::{self, HandshakeInitArgs},
-    Connection,
+    Conn,
 };
 use std::sync::Arc;
 use tokio::{net::TcpStream, sync::RwLock};
