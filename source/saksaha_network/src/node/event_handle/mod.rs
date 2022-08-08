@@ -2,14 +2,14 @@ use crate::machine::Machine;
 use futures::{stream::SplitSink, SinkExt};
 use log::{info, warn};
 use sak_p2p_transport::{
-    BlockHashSynMsg, Msg, TxHashSynMsg, UpgradedConnection, UpgradedP2PCodec,
+    BlockHashSynMsg, Msg, TxHashSynMsg, UpgradedConn, UpgradedP2PCodec,
 };
 use tokio::{net::TcpStream, sync::RwLockWriteGuard};
 use tokio_util::codec::Framed;
 
 pub(super) async fn handle_tx_pool_stat<'a>(
     public_key: &str,
-    conn: &'a mut RwLockWriteGuard<'_, UpgradedConnection>,
+    conn: &'a mut RwLockWriteGuard<'_, UpgradedConn>,
     _machine: &Machine,
     new_tx_hashes: Vec<String>,
 ) {
@@ -34,7 +34,7 @@ pub(super) async fn handle_tx_pool_stat<'a>(
 
 pub(super) async fn handle_new_blocks_ev<'a>(
     public_key: &str,
-    conn: &'a mut RwLockWriteGuard<'_, UpgradedConnection>,
+    conn: &'a mut RwLockWriteGuard<'_, UpgradedConn>,
     // socket_tx: &mut SplitSink<Framed<TcpStream, UpgradedP2PCodec>, Msg>,
     _machine: &Machine,
     new_blocks: Vec<(u128, String)>,

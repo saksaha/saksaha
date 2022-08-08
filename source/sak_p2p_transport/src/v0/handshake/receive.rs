@@ -1,5 +1,5 @@
 use crate::TrptError;
-use crate::{Connection, Handshake, Msg, Transport};
+use crate::{Conn, Handshake, Msg, Transport};
 use futures::SinkExt;
 use futures::StreamExt;
 use log::warn;
@@ -60,7 +60,7 @@ pub struct HandshakeRecvArgs {
 
 pub async fn receive_handshake(
     handshake_recv_args: HandshakeRecvArgs,
-    mut conn: Connection,
+    mut conn: Conn,
 ) -> Result<(Transport, String), HandshakeRecvError> {
     let HandshakeRecvArgs { identity } = handshake_recv_args;
 

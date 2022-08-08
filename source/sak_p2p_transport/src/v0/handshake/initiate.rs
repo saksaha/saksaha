@@ -1,4 +1,4 @@
-use crate::{Connection, Handshake, Msg, Transport};
+use crate::{Conn, Handshake, Msg, Transport};
 use futures::SinkExt;
 use futures::StreamExt;
 use sak_p2p_id::Identity;
@@ -65,7 +65,7 @@ pub enum HandshakeInitError {
 
 pub struct HandshakeInitArgs {
     pub identity: Arc<Identity>,
-    pub conn: Connection,
+    pub conn: Conn,
     pub public_key_str: String,
 }
 
