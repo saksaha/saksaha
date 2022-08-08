@@ -11,7 +11,7 @@ async fn connect_to_endpoint(endpoint: &String) -> Conn {
 
     match TcpStream::connect(&endpoint).await {
         Ok(s) => {
-            let c = match Conn::new(s, conn_id) {
+            let c = match Conn::new(s, conn_id, true) {
                 Ok(c) => c,
                 Err(err) => {
                     log::warn!("Error creating a connection, err: {}", err);
@@ -173,7 +173,7 @@ async fn handshake_recv(
 
     let tcp_stream = accept(p2p_socket).await.unwrap();
 
-    let conn = Conn::new(tcp_stream, conn_id).unwrap();
+    let conn = Conn::new(tcp_stream, conn_id, false).unwrap();
 
     log::debug!(
         "[recv] receive handshake_syn, peer node: {:?}, conn_id: {}",

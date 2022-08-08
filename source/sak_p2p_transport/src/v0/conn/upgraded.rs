@@ -13,8 +13,7 @@ use tokio::{
 };
 use tokio_util::codec::Framed;
 
-static mut IS_INIT: bool = false;
-
+#[derive(Debug)]
 pub struct IOTurn;
 
 pub struct UpgradedConn {
@@ -29,11 +28,12 @@ pub struct UpgradedConn {
 }
 
 impl UpgradedConn {
-    pub fn new(
+    pub async fn init(
         socket_addr: SocketAddr,
         socket: Framed<TcpStream, UpgradedP2PCodec>,
         id: usize,
-    ) -> UpgradedConn {
+        is_initiator: bool,
+    ) -> Result<UpgradedConn, TrptError> {
         let (send_turn_tx, mut send_turn_rx) = {
             let (tx, mut rx) = mpsc::channel(10);
 
@@ -46,7 +46,15 @@ impl UpgradedConn {
             (tx, rx)
         };
 
-        UpgradedConn {
+        let turn = IOTurn {};
+
+        if is_initiator {
+            send_turn_tx.send(turn).await?;
+        } else {
+            recv_turn_tx.send(turn).await?;
+        }
+
+        let upgraded_conn = UpgradedConn {
             send_turn_rx,
             send_turn_tx,
             recv_turn_rx,
@@ -55,21 +63,30 @@ impl UpgradedConn {
             socket_addr,
             socket,
             id,
-        }
+        };
+
+        Ok(upgraded_conn)
     }
 
     pub async fn send(&mut self, msg: Msg) -> Result<(), TrptError> {
-        unsafe {
-            if IS_INIT {
-            } else {
-            }
-        }
-        // self.recv_turn_tx
+        let turn =
+            self.recv_turn_rx.recv().await.ok_or(format!(
+                "recv turn cannot be sent. Channel is closed",
+            ))?;
 
-        self.socket.send(msg).await
+        self.socket.send(msg).await;
+
+        self.send_turn_tx.send(turn).await;
+
+        Ok(())
     }
 
     pub async fn next_msg(&mut self) -> Option<Result<Msg, TrptError>> {
-        self.socket.next().await
+        // let turn =
+        //     self.send_turn_rx.recv().await.ok_or(format!(
+        //         "send turn cannot be sent. Channel is closed",
+        //     ))?;
+
+        let a = self.socket.next().await;
     }
 }
