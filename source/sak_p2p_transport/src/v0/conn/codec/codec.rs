@@ -20,10 +20,10 @@ impl Encoder<Msg> for UpgradedP2PCodec {
     ) -> Result<(), TrptError> {
         let rand = sak_crypto::rand();
 
-        println!(
-            "\n555 upgraded encoding!!, id: {}, r: {}, msg: {:?}",
-            self.id, rand, item,
-        );
+        // println!(
+        //     "\n555 upgraded encoding!!, id: {}, r: {}, msg: {:?}",
+        //     self.id, rand, item,
+        // );
 
         let name = item.name();
 
@@ -33,13 +33,13 @@ impl Encoder<Msg> for UpgradedP2PCodec {
 
         self.cipher.apply_keystream(dst);
 
-        println!(
-            "\n666 upgraded encoded!!, id: {}, r: {}, \noriginal buf: {:?}\nbuf: {:?}",
-            self.id,
-            rand,
-            t,
-            dst.to_vec()
-        );
+        // println!(
+        //     "\n666 upgraded encoded!!, id: {}, r: {}, \noriginal buf: {:?}\nbuf: {:?}",
+        //     self.id,
+        //     rand,
+        //     t,
+        //     dst.to_vec()
+        // );
 
         return Ok(());
     }
@@ -57,12 +57,12 @@ impl Decoder for UpgradedP2PCodec {
 
         self.cipher.apply_keystream(src);
 
-        println!(
-            "\n1313 upgraded decoded, id: {}\noriginal buf: {:?}\nsrc: {:?}",
-            self.id,
-            t,
-            src.to_vec()
-        );
+        // println!(
+        //     "\n1313 upgraded decoded, id: {}\noriginal buf: {:?}\nsrc: {:?}",
+        //     self.id,
+        //     t,
+        //     src.to_vec()
+        // );
 
         let msg = dec::decode_into_msg(self.id, src);
 
@@ -82,11 +82,11 @@ impl Encoder<Msg> for P2PCodec {
         item: Msg,
         dst: &mut BytesMut,
     ) -> Result<(), TrptError> {
-        println!("\n555 encoding!!, item: {:?}", item);
+        // println!("\n555 encoding!!, item: {:?}", item);
 
         let _msg_type = enc::encode_into_frame(self.id, item, dst)?;
 
-        println!("\n666 encoded!!, buf: {:?}", dst.to_vec());
+        // println!("\n666 encoded!!, buf: {:?}", dst.to_vec());
 
         return Ok(());
     }
@@ -100,7 +100,7 @@ impl Decoder for P2PCodec {
         &mut self,
         src: &mut BytesMut,
     ) -> Result<Option<Self::Item>, TrptError> {
-        println!("\n1313 decoding, src: {:?}", src.to_vec());
+        // println!("\n1313 decoding, src: {:?}", src.to_vec());
 
         return dec::decode_into_msg(self.id, src);
     }

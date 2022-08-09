@@ -41,6 +41,8 @@ impl PeerNode {
         // });
 
         loop {
+            println!("loop!");
+
             let mut conn = &mut self.peer.transport.conn.write().await;
             let public_key = self.peer.get_public_key_short();
 
