@@ -69,7 +69,7 @@ impl UpgradedConn {
     }
 
     pub async fn send(&mut self, msg: Msg) -> Result<(), TrptError> {
-        println!("send request!");
+        println!("send request!, my id: {}", self.id);
 
         let turn =
             self.send_turn_rx.recv().await.ok_or(format!(
@@ -90,6 +90,8 @@ impl UpgradedConn {
     pub async fn next_msg(
         &mut self,
     ) -> Result<Option<Result<Msg, TrptError>>, TrptError> {
+        println!("recv requested!, my id: {}", self.id);
+
         let turn =
             self.recv_turn_rx.recv().await.ok_or(format!(
                 "send turn cannot be sent. Channel is closed",
