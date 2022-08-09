@@ -116,10 +116,10 @@ async fn test_chacha20_two_parties_in_series() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
-async fn test_chacha20_two_parties_async_fail_2() {
+async fn test_chacha20_two_parties_async() {
     let key = [0x42; 32];
     let nonce = [0x24; 12];
-    let plaintext1 = hex!("00010203 04050607 08090a0b 0c0d0e0f");
+    let plaintext = hex!("00010203 04050607 08090a0b 0c0d0e0f");
     let plaintext2 = hex!("00020304 04050607 08090a0b 0c0d0e0f");
     let ciphertext = hex!("e405626e 4f1236b3 670ee428 332ea20e");
 
@@ -129,42 +129,36 @@ async fn test_chacha20_two_parties_async_fail_2() {
 
     let mut cipher2 = ChaCha20::new(&key.into(), &nonce.into());
 
-    let mut buffer2 = plaintext1.clone();
+    let mut buffer1 = plaintext.clone();
 
-    let mut buffer2_2 = plaintext2.clone();
+    let mut buffer1_2 = plaintext2.clone();
 
-    println!("\noriginal buffer1: {:?}", buffer2);
-    println!("original buffer2_2: {:?}", buffer2_2);
-
-    {
-        cipher1.apply_keystream(&mut buffer2);
-        println!("cipher encrypts buf2: {:?}", buffer2);
-    }
-
-    assert_eq!(buffer2, ciphertext);
+    println!("\noriginal buffer: {:?}", buffer1);
+    println!("original buffer1_2: {:?}", buffer1_2);
 
     {
-        cipher2.apply_keystream(&mut buffer2_2);
-        println!("cipher2 encrypts buf2_2: {:?}", buffer2_2);
+        cipher1.apply_keystream(&mut buffer1);
+        println!("cipher encrypts, buf1: {:?}", buffer1);
+        assert_eq!(buffer1, ciphertext);
     }
 
     {
-        cipher1.apply_keystream(&mut buffer2_2);
-        println!("cipher1 deciphers buf2_2: {:?}", buffer2_2);
+        cipher1.apply_keystream(&mut buffer1_2);
+        println!("cipher encrypts, buf1_2: {:?}", buffer1_2);
+        // assert_eq!(buffer1_2, ciphertext);
     }
 
     {
+        let mut buffer2 = buffer1.clone();
         cipher2.apply_keystream(&mut buffer2);
-        println!("cipher2 deciphers buf2: {:?}", buffer2);
+        println!("cipher2 deciphers, buf: {:?}", buffer2);
     }
 
-    assert_ne!(
-        buffer2_2, plaintext2,
-        "Order matters, if not encrypt/decrpyt in order, \
-        things will break"
-    );
-
-    assert_ne!(buffer2_2, plaintext2);
+    {
+        let mut buffer2 = buffer1_2.clone();
+        cipher2.apply_keystream(&mut buffer2);
+        println!("cipher2 deciphers, buf: {:?}", buffer2);
+    }
 }
 
 #[tokio::test(flavor = "multi_thread")]
