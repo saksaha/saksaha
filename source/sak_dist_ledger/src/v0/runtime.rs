@@ -119,6 +119,8 @@ impl BlockSyncRoutine {
 
             let new_blocks = self.sync_pool.drain_new_blocks().await;
 
+            println!("block sync, new_blocks: {:?}", new_blocks);
+
             if new_blocks.len() > 0 {
                 match self
                     .bc_event_tx
@@ -127,7 +129,9 @@ impl BlockSyncRoutine {
                     .await
                     .send(DistLedgerEvent::NewBlocks(new_blocks))
                 {
-                    Ok(_) => (),
+                    Ok(_) => {
+                        println!("block event queued!");
+                    }
                     Err(err) => {
                         warn!(
                             "No active receiver handle to sync tx event, \

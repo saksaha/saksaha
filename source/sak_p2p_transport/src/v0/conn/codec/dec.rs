@@ -23,8 +23,6 @@ pub(super) fn decode_into_msg(
     };
 
     if let Some(frame) = maybe_frame {
-        println!("\n 222 parsed frame!!! id: {}, frame: {:?}\n", id, frame);
-
         let mut parse = Parse::new(frame)?;
 
         let msg_type = parse.next_string()?.to_lowercase();
