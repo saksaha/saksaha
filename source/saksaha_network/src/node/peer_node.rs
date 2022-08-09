@@ -28,7 +28,7 @@ impl PeerNode {
             self.peer.get_public_key_short()
         );
 
-        let task_pusher = self.task_queue.new_pusher();
+        // let task_pusher = self.task_queue.new_pusher();
 
         // tokio::spawn(async move {
         //     println!("task push after 5 seconds");
@@ -41,21 +41,21 @@ impl PeerNode {
         // });
 
         loop {
-            println!("loop!");
-
             let mut conn = &mut self.peer.transport.conn.write().await;
+
             let public_key = self.peer.get_public_key_short();
 
             tokio::select! {
                 Ok(ev) = self.bc_event_rx.recv() => {
-                    println!("111111111, pub_key: {}", self.peer.get_public_key_short());
+                    println!("111111111, peer pub_key: {}, ev: {:?}",
+                        self.peer.get_public_key_short(), ev);
+
                     match ev {
                         DistLedgerEvent::NewBlocks(new_blocks) => {
                             event_handle::handle_new_blocks_ev(
                                 public_key,
                                 &mut conn,
                                 &self.machine,
-                                // height,
                                 new_blocks,
                             ).await;
                         },
@@ -68,7 +68,9 @@ impl PeerNode {
                             ).await;
                         },
                     };
-                    println!("--end 111111111, pub_key: {}", self.peer.get_public_key_short());
+
+                    println!("--end 111111111, pub_key: {}",
+                        self.peer.get_public_key_short());
                 },
                 // Ok(task) = self.task_queue.pop_front() => {
                 //     let blocks = self.machine
@@ -99,12 +101,15 @@ impl PeerNode {
                 maybe_msg = conn
                     // .socket
                     .next_msg() => {
-                    println!("2222222222, pub_key: {}", self.peer.get_public_key_short());
+                    println!("2222222222, pub_key: {}",
+                        self.peer.get_public_key_short());
 
                     let maybe_msg = match maybe_msg {
                         Ok(m) => m,
                         Err(err) => {
-                            error!("Could not receive a peer node msg, err: {}", err);
+                            error!("Could not receive a peer node msg, \
+                                err: {}", err);
+
                             continue;
                         }
                     };
@@ -134,7 +139,8 @@ impl PeerNode {
                         }
                     };
 
-                    println!("---end 2222222222, pub_key: {}", self.peer.get_public_key_short());
+                    println!("---end 2222222222, pub_key: {}",
+                        self.peer.get_public_key_short());
                 }
             };
         }

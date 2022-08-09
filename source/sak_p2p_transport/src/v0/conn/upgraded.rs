@@ -69,16 +69,20 @@ impl UpgradedConn {
     }
 
     pub async fn send(&mut self, msg: Msg) -> Result<(), TrptError> {
+        println!("send request!");
+
         let turn =
-            self.recv_turn_rx.recv().await.ok_or(format!(
-                "recv turn cannot be sent. Channel is closed",
+            self.send_turn_rx.recv().await.ok_or(format!(
+                "send turn cannot be sent. Channel is closed",
             ))?;
 
-        println!("send turn!, id: {}", self.id);
+        println!("send turn!, my id: {}", self.id);
 
         self.socket.send(msg).await?;
 
-        self.send_turn_tx.send(turn).await?;
+        println!("sent msg!, my id: {}", self.id);
+
+        self.recv_turn_tx.send(turn).await?;
 
         Ok(())
     }
@@ -87,15 +91,17 @@ impl UpgradedConn {
         &mut self,
     ) -> Result<Option<Result<Msg, TrptError>>, TrptError> {
         let turn =
-            self.send_turn_rx.recv().await.ok_or(format!(
+            self.recv_turn_rx.recv().await.ok_or(format!(
                 "send turn cannot be sent. Channel is closed",
             ))?;
 
-        println!("recv turn!, id: {}", self.id);
+        println!("recv turn!, my id: {}", self.id);
 
         let msg = self.socket.next().await;
 
-        self.recv_turn_tx.send(turn).await?;
+        println!("recvd msg!, my id: {}, msg: {:?}", self.id, msg);
+
+        self.send_turn_tx.send(turn).await?;
 
         Ok(msg)
     }
