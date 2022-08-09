@@ -52,6 +52,9 @@ pub enum HandshakeRecvError {
 
     #[error("handshake has been done with this peer lately")]
     HandshakeRecentlySucceeded,
+
+    #[error("Could not connect connection, err: {err}")]
+    ConnectionCreateFail { err: String },
 }
 
 pub struct HandshakeRecvArgs {
@@ -130,7 +133,17 @@ pub async fn receive_handshake(
     let shared_secret =
         sak_crypto::make_shared_secret(my_secret_key, her_public_key);
 
-    let upgraded_conn = conn.upgrade(shared_secret, &[0; 12]).await;
+    let upgraded_conn = match conn
+        .upgrade(shared_secret, &[0; 12], &her_public_key_str)
+        .await
+    {
+        Ok(c) => c,
+        Err(err) => {
+            return Err(HandshakeRecvError::ConnectionCreateFail {
+                err: err.to_string(),
+            });
+        }
+    };
 
     let transport = Transport {
         conn: RwLock::new(upgraded_conn),
