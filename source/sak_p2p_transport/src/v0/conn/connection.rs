@@ -29,7 +29,7 @@ impl Conn {
             socket_addr,
             socket,
             id,
-            is_initiator: !is_initiator,
+            is_initiator,
         };
 
         Ok(c)
