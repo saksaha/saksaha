@@ -16,7 +16,8 @@ impl WalletApis {
     ) -> Result<Balance, WalletError> {
         println!("wallet apis, get_balance, id: {}", id);
 
-        &self.db.schema;
+        // &self.db.schema.get_user_id(cm);
+        // &self.db.schema.get_v(cm);
 
         let b = Balance { val: 0 };
 

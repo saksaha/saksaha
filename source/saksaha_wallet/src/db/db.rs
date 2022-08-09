@@ -1,9 +1,13 @@
-use crate::{db::DBSchema, WalletError};
 use log::{info, warn};
+use sak_crypto::{SakKey, SigningKey, ToEncodedPoint};
 use sak_kv_db::{KeyValueDatabase, Options};
 
+use crate::app::WalletError;
+
+use super::WalletDBSchema;
+
 pub(crate) struct WalletDB {
-    pub(crate) schema: DBSchema,
+    pub(crate) schema: WalletDBSchema,
 }
 
 impl WalletDB {
@@ -30,7 +34,7 @@ impl WalletDB {
         let kv_db = match KeyValueDatabase::new(
             envelope_db_path,
             options,
-            DBSchema::make_cf_descriptors(),
+            WalletDBSchema::make_cf_descriptors(),
         ) {
             Ok(d) => d,
             Err(err) => {
@@ -42,10 +46,52 @@ impl WalletDB {
             }
         };
 
-        let schema = DBSchema::new(kv_db.db_instance);
+        let schema = WalletDBSchema::new(kv_db.db_instance);
 
         let wallet_db = WalletDB { schema };
 
         Ok(wallet_db)
     }
+
+    // pub(crate) async fn register_user(
+    //     &self,
+    //     user_id: &String,
+    // ) -> Result<(), WalletError> {
+    //     match self.schema.get_my_sk(user_id).await? {
+    //         Some(_) => {
+    //             warn!("user_id already exists");
+    //             return Ok(());
+    //         }
+    //         None => (),
+    //     };
+
+    //     let (secret_str, public_key_str, sig_str) = {
+    //         let (sk, pk) = SakKey::generate();
+    //         let secret_str = sak_crypto::encode_hex(&sk.to_bytes());
+
+    //         let public_key_str =
+    //             sak_crypto::encode_hex(&pk.to_encoded_point(false).to_bytes());
+
+    //         let sig_str = {
+    //             let sign_key = SigningKey::from(&sk);
+    //             let sign_key_vec = sign_key.to_bytes().to_vec();
+    //             match serde_json::to_string(&sign_key_vec) {
+    //                 Ok(str) => str,
+    //                 Err(err) => {
+    //                     return Err(format!(
+    //                         "Failed to change vec to string, err: {}",
+    //                         err
+    //                     )
+    //                     .into());
+    //                 }
+    //             }
+    //         };
+    //         (secret_str, public_key_str, sig_str)
+    //     };
+
+    //     self.schema
+    //         .put_user_data(user_id, &secret_str, &public_key_str, &sig_str)
+    //         .await?;
+    //     Ok(())
+    // }
 }

@@ -18,6 +18,12 @@ pub(crate) fn get_routes() -> HashMap<&'static str, Handler<Arc<RouteCtx>>> {
                 Box::pin(v0::get_balance(route_state, params, ctx))
             }),
         },
+        // Path {
+        //     method: "get_all_coins",
+        //     handler: Box::new(|route_state, params, ctx| {
+        //         Box::pin(v0::get_all_coins(route_state, params, ctx))
+        //     }),
+        // },
     ];
 
     let mut map = HashMap::new();

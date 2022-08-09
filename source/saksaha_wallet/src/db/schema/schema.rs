@@ -5,13 +5,13 @@ use sak_kv_db::{
 };
 use std::sync::Arc;
 
-pub(crate) struct DBSchema {
+pub(crate) struct WalletDBSchema {
     pub(crate) db: DB,
 }
 
-impl DBSchema {
-    pub(crate) fn new(db: DB) -> DBSchema {
-        DBSchema { db }
+impl WalletDBSchema {
+    pub(crate) fn new(db: DB) -> WalletDBSchema {
+        WalletDBSchema { db }
     }
 
     pub(crate) fn make_cf_descriptors() -> Vec<ColumnFamilyDescriptor> {
@@ -25,6 +25,8 @@ impl DBSchema {
             ColumnFamilyDescriptor::new(cfs::A_PK, Options::default()),
             ColumnFamilyDescriptor::new(cfs::STATUS, Options::default()),
             ColumnFamilyDescriptor::new(cfs::USER_ID, Options::default()),
+            ColumnFamilyDescriptor::new(cfs::CM_IDX, Options::default()),
+            ColumnFamilyDescriptor::new(cfs::CM, Options::default()),
         ]
     }
 

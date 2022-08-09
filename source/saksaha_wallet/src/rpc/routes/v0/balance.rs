@@ -9,8 +9,8 @@ use std::sync::Arc;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub(in crate::rpc) struct GetBalanceRequest {
-    id: String,
-    key: String,
+    pub id: String,
+    pub key: String,
 }
 
 pub(in crate::rpc) async fn get_balance(

@@ -1,15 +1,11 @@
-use super::DBSchema;
+use super::WalletDBSchema;
 use crate::db::cfs;
 use crate::WalletError;
 use sak_kv_db::WriteBatch;
 
-impl DBSchema {
+impl WalletDBSchema {
     pub(crate) async fn put_coin_data(
         &self,
-        // my_id: &String,
-        // sk: &String,
-        // pk: &String,
-        // sig: &String,
         cm: &String,
         rho: &String,
         r: &String,
@@ -19,6 +15,7 @@ impl DBSchema {
         a_sk: &String,
         user_id: &String,
         status: &String,
+        cm_idx: &u128,
     ) -> Result<(), WalletError> {
         let mut batch = WriteBatch::default();
 
@@ -30,6 +27,9 @@ impl DBSchema {
         self.batch_put_a_sk(&mut batch, cm, a_sk)?;
         self.batch_put_user_id(&mut batch, cm, user_id)?;
         self.batch_put_status(&mut batch, cm, status)?;
+        self.batch_put_cm_idx(&mut batch, cm, &cm_idx)?;
+
+        self.batch_put_cm_by_cm_idx(&mut batch, cm_idx, cm)?;
 
         self.db.write(batch)?;
 
@@ -38,7 +38,6 @@ impl DBSchema {
 
     pub(crate) async fn put_status(
         &self,
-        // ch_id: &String,
         cm: &String,
         status: &String,
     ) -> Result<(), WalletError> {
@@ -151,6 +150,96 @@ impl DBSchema {
         let cf = self.make_cf_handle(&self.db, cfs::STATUS)?;
 
         batch.put_cf(&cf, cm, status);
+
+        Ok(())
+    }
+
+    pub(crate) fn batch_put_cm_idx(
+        &self,
+        batch: &mut WriteBatch,
+        cm: &String,
+        cm_idx: &u128,
+    ) -> Result<(), WalletError> {
+        let cf = self.make_cf_handle(&self.db, cfs::CM_IDX)?;
+
+        let cm_idx = cm_idx.to_be_bytes();
+
+        println!("111: {:?}", cm_idx);
+        batch.put_cf(&cf, cm, cm_idx);
+
+        Ok(())
+    }
+
+    pub(crate) fn batch_put_cm_by_cm_idx(
+        &self,
+        batch: &mut WriteBatch,
+        cm_idx: &u128,
+        cm: &String,
+    ) -> Result<(), WalletError> {
+        let cf = self.make_cf_handle(&self.db, cfs::CM)?;
+
+        let cm_idx = cm_idx.to_be_bytes();
+
+        batch.put_cf(&cf, cm_idx, cm);
+
+        Ok(())
+    }
+
+    pub(crate) async fn put_user_data(
+        &self,
+        my_id: &String,
+        sk: &String,
+        pk: &String,
+        sig: &String,
+    ) -> Result<String, WalletError> {
+        let mut batch = WriteBatch::default();
+
+        self.batch_put_my_sk(&mut batch, my_id, sk)?;
+        self.batch_put_my_pk(&mut batch, sk, pk)?;
+        self.batch_put_my_sig(&mut batch, sk, sig)?;
+
+        self.db.write(batch)?;
+
+        Ok(sk.to_string())
+    }
+
+    pub(crate) fn batch_put_my_sk(
+        &self,
+        // db: &DB,
+        batch: &mut WriteBatch,
+        user_id: &String,
+        sk: &String,
+    ) -> Result<(), WalletError> {
+        let cf = self.make_cf_handle(&self.db, cfs::MY_SK)?;
+        batch.put_cf(&cf, user_id, sk);
+
+        Ok(())
+    }
+
+    pub(crate) fn batch_put_my_pk(
+        &self,
+        // db: &DB,
+        batch: &mut WriteBatch,
+        sk: &String,
+        pk: &String,
+    ) -> Result<(), WalletError> {
+        let cf = self.make_cf_handle(&self.db, cfs::MY_PK)?;
+
+        batch.put_cf(&cf, sk, pk);
+
+        Ok(())
+    }
+
+    pub(crate) fn batch_put_my_sig(
+        &self,
+        // db: &DB,
+        batch: &mut WriteBatch,
+        sk: &String,
+        sig: &String,
+    ) -> Result<(), WalletError> {
+        let cf = self.make_cf_handle(&self.db, cfs::MY_SIG)?;
+
+        batch.put_cf(&cf, sk, sig);
 
         Ok(())
     }
