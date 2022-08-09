@@ -61,6 +61,9 @@ pub enum HandshakeInitError {
 
     #[error("PeerNode has an unknown addr")]
     NotKnownAddr,
+
+    #[error("Could not connect connection, err: {err}")]
+    ConnectionCreateFail { err: String },
 }
 
 pub struct HandshakeInitArgs {
@@ -136,7 +139,17 @@ pub async fn initiate_handshake(
     let shared_secret =
         sak_crypto::make_shared_secret(my_secret_key, her_public_key);
 
-    let upgraded_conn = conn.upgrade(shared_secret, &[0; 12]).await;
+    let upgraded_conn = match conn
+        .upgrade(shared_secret, &[0; 12], &her_public_key_str)
+        .await
+    {
+        Ok(c) => c,
+        Err(err) => {
+            return Err(HandshakeInitError::ConnectionCreateFail {
+                err: err.to_string(),
+            });
+        }
+    };
 
     let transport = Transport {
         conn: RwLock::new(upgraded_conn),

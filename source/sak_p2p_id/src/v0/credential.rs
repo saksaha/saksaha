@@ -1,5 +1,9 @@
 use sak_crypto::{SecretKey, Signature, SigningKey, ToEncodedPoint};
 
+use crate::IDError;
+
+use super::utils;
+
 // 64 + 1 (flag for whether the key is compressed or not)
 pub const PUBLIC_KEY_LEN: usize = 64 + 1;
 pub const SAKSAHA: &[u8; 7] = b"saksaha";
@@ -70,5 +74,9 @@ impl Credential {
         };
 
         Ok(credential)
+    }
+
+    pub fn get_public_key_short(&self) -> Result<&str, IDError> {
+        utils::make_public_key_short(&self.public_key_str)
     }
 }

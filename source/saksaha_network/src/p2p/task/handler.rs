@@ -52,16 +52,13 @@ pub(crate) async fn run(task: P2PTask) {
                 return;
             }
 
-            let conn_id = sak_crypto::rand();
-
             let conn = match TcpStream::connect(&endpoint).await {
                 Ok(s) => {
-                    let c = match Conn::new(s, conn_id, true) {
+                    let c = match Conn::new(s, true) {
                         Ok(c) => {
                             debug!(
-                                "Successfully connected to endpoint: {}, \
-                                conn_id: {}",
-                                &endpoint, conn_id
+                                "Successfully connected to endpoint: {}",
+                                &endpoint,
                             );
 
                             c
