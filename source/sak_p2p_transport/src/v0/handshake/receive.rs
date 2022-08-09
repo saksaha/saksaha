@@ -130,7 +130,7 @@ pub async fn receive_handshake(
     let shared_secret =
         sak_crypto::make_shared_secret(my_secret_key, her_public_key);
 
-    let upgraded_conn = conn.upgrade(shared_secret, &[0; 12]);
+    let upgraded_conn = conn.upgrade(shared_secret, &[0; 12]).await;
 
     let transport = Transport {
         conn: RwLock::new(upgraded_conn),

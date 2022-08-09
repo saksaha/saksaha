@@ -7,7 +7,7 @@ use std::net::SocketAddr;
 use tokio::{
     net::TcpStream,
     sync::{
-        mpsc::{self, Receiver, Sender},
+        mpsc::{self, Receiver, Sender, UnboundedReceiver, UnboundedSender},
         RwLock,
     },
 };
@@ -33,15 +33,15 @@ impl UpgradedConn {
         socket: Framed<TcpStream, UpgradedP2PCodec>,
         id: usize,
         is_initiator: bool,
-    ) -> Result<UpgradedConn, TrptError> {
+    ) -> UpgradedConn {
         let (send_turn_tx, mut send_turn_rx) = {
-            let (tx, mut rx) = mpsc::channel(10);
+            let (tx, mut rx) = mpsc::channel(5);
 
             (tx, rx)
         };
 
         let (recv_turn_tx, mut recv_turn_rx) = {
-            let (tx, mut rx) = mpsc::channel(10);
+            let (tx, mut rx) = mpsc::channel(5);
 
             (tx, rx)
         };
@@ -49,9 +49,9 @@ impl UpgradedConn {
         let turn = IOTurn {};
 
         if is_initiator {
-            send_turn_tx.send(turn).await?;
+            send_turn_tx.send(turn).await;
         } else {
-            recv_turn_tx.send(turn).await?;
+            recv_turn_tx.send(turn).await;
         }
 
         let upgraded_conn = UpgradedConn {
@@ -65,7 +65,7 @@ impl UpgradedConn {
             id,
         };
 
-        Ok(upgraded_conn)
+        upgraded_conn
     }
 
     pub async fn send(&mut self, msg: Msg) -> Result<(), TrptError> {
@@ -74,19 +74,29 @@ impl UpgradedConn {
                 "recv turn cannot be sent. Channel is closed",
             ))?;
 
-        self.socket.send(msg).await;
+        println!("send turn!, id: {}", self.id);
 
-        self.send_turn_tx.send(turn).await;
+        self.socket.send(msg).await?;
+
+        self.send_turn_tx.send(turn).await?;
 
         Ok(())
     }
 
-    pub async fn next_msg(&mut self) -> Option<Result<Msg, TrptError>> {
-        // let turn =
-        //     self.send_turn_rx.recv().await.ok_or(format!(
-        //         "send turn cannot be sent. Channel is closed",
-        //     ))?;
+    pub async fn next_msg(
+        &mut self,
+    ) -> Result<Option<Result<Msg, TrptError>>, TrptError> {
+        let turn =
+            self.send_turn_rx.recv().await.ok_or(format!(
+                "send turn cannot be sent. Channel is closed",
+            ))?;
 
-        let a = self.socket.next().await;
+        println!("recv turn!, id: {}", self.id);
+
+        let msg = self.socket.next().await;
+
+        self.recv_turn_tx.send(turn).await?;
+
+        Ok(msg)
     }
 }

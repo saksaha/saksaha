@@ -35,7 +35,7 @@ impl Conn {
         Ok(c)
     }
 
-    pub fn upgrade(
+    pub async fn upgrade(
         self,
         shared_secret: SharedSecret,
         nonce: &[u8],
@@ -47,18 +47,16 @@ impl Conn {
 
         let id = self.id;
 
-        let socket = self.socket.map_codec(|_| UpgradedP2PCodec {
-            cipher,
-            id,
-            msgs_sent: vec![],
-            msgs_recv: vec![],
-        });
+        let socket = self.socket.map_codec(|_| UpgradedP2PCodec { cipher, id });
 
-        UpgradedConn::new(
+        let upgraded_conn = UpgradedConn::init(
             self.socket_addr.clone(),
             socket,
             id,
             self.is_initiator,
         )
+        .await;
+
+        upgraded_conn
     }
 }
