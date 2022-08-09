@@ -119,7 +119,7 @@ impl BlockSyncRoutine {
 
             let new_blocks = self.sync_pool.drain_new_blocks().await;
 
-            println!("block sync, new_blocks: {:?}", new_blocks);
+            // println!("block sync, new_blocks: {:?}", new_blocks);
 
             if new_blocks.len() > 0 {
                 match self

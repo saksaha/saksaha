@@ -7,11 +7,9 @@ use std::sync::Arc;
 use tokio::net::{TcpListener, TcpStream};
 
 async fn connect_to_endpoint(endpoint: &String) -> Conn {
-    let conn_id = sak_crypto::rand();
-
     match TcpStream::connect(&endpoint).await {
         Ok(s) => {
-            let c = match Conn::new(s, conn_id, true) {
+            let c = match Conn::new(s, true) {
                 Ok(c) => c,
                 Err(err) => {
                     log::warn!("Error creating a connection, err: {}", err);
@@ -21,9 +19,8 @@ async fn connect_to_endpoint(endpoint: &String) -> Conn {
 
             log::debug!(
                 "(caller) TCP connected to destination for test, \
-                        peer_addr: {:?}, conn_id: {}",
+                        peer_addr: {:?}",
                 c.socket_addr,
-                conn_id,
             );
 
             c
@@ -173,7 +170,7 @@ async fn handshake_recv(
 
     let tcp_stream = accept(p2p_socket).await.unwrap();
 
-    let conn = Conn::new(tcp_stream, conn_id, false).unwrap();
+    let conn = Conn::new(tcp_stream, false).unwrap();
 
     log::debug!(
         "[recv] receive handshake_syn, peer node: {:?}, conn_id: {}",
@@ -228,6 +225,8 @@ async fn test_handshake_works() {
         endpoint_2,
         tcp_listener_2,
     ) = make_test_context().await;
+
+    // identity_1.credential.
 
     let conn_2 = connect_to_endpoint(&endpoint_2).await;
 

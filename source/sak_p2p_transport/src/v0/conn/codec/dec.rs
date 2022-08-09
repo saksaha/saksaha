@@ -8,15 +8,14 @@ use bytes::BytesMut;
 use sak_p2p_frame::{frame_io, Parse};
 
 pub(super) fn decode_into_msg(
-    id: usize,
     src: &mut BytesMut,
 ) -> Result<Option<Msg>, TrptError> {
     let maybe_frame = match frame_io::parse_frame(src) {
         Ok(f) => f,
         Err(err) => {
             return Err(format!(
-                "Error parsing the frame, conn_id: {}, original_err: {}",
-                id, err
+                "Error parsing the frame, original_err: {}",
+                err
             )
             .into())
         }
