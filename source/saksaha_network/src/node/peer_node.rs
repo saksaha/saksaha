@@ -4,7 +4,7 @@ use super::task::NodeTaskQueue;
 use crate::{machine::Machine, node::event_handle};
 use futures::SinkExt;
 use futures::StreamExt;
-use log::{debug, warn};
+use log::{debug, error, warn};
 use sak_dist_ledger::DistLedgerEvent;
 use sak_p2p_peertable::{Peer, PeerStatus};
 use sak_p2p_transport::{BlockHashSynMsg, Msg};
@@ -98,6 +98,15 @@ impl PeerNode {
                     // .socket
                     .next_msg() => {
                     println!("2222222222, pub_key: {}", self.peer.get_public_key_short());
+
+                    let maybe_msg = match maybe_msg {
+                        Ok(m) => m,
+                        Err(err) => {
+                            error!("Could not receive a peer node msg, err: {}", err);
+                            continue;
+                        }
+                    };
+
                     match maybe_msg {
                         Some(maybe_msg) => match maybe_msg {
                             Ok(msg) => {
@@ -122,6 +131,7 @@ impl PeerNode {
                             return;
                         }
                     };
+
                     println!("---end 2222222222, pub_key: {}", self.peer.get_public_key_short());
                 }
             };

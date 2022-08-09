@@ -8,8 +8,6 @@ use tokio_util::codec::{Decoder, Encoder};
 pub struct UpgradedP2PCodec {
     pub(crate) id: usize,
     pub(crate) cipher: ChaCha20,
-    pub(crate) msgs_recv: Vec<String>,
-    pub(crate) msgs_sent: Vec<String>,
 }
 
 impl Encoder<Msg> for UpgradedP2PCodec {
@@ -35,13 +33,10 @@ impl Encoder<Msg> for UpgradedP2PCodec {
 
         self.cipher.apply_keystream(dst);
 
-        self.msgs_sent.push(name);
-
         println!(
-            "\n666 upgraded encoded!!, id: {}, r: {}, msgs_sent: {:?},\noriginal buf: {:?}\nbuf: {:?}",
+            "\n666 upgraded encoded!!, id: {}, r: {}, \noriginal buf: {:?}\nbuf: {:?}",
             self.id,
             rand,
-            self.msgs_sent,
             t,
             dst.to_vec()
         );
@@ -63,21 +58,13 @@ impl Decoder for UpgradedP2PCodec {
         self.cipher.apply_keystream(src);
 
         println!(
-            "\n1313 upgraded decoded, id: {}, msgs_recv: {:?}\noriginal buf: {:?}\nsrc: {:?}",
+            "\n1313 upgraded decoded, id: {}\noriginal buf: {:?}\nsrc: {:?}",
             self.id,
-            self.msgs_recv,
             t,
             src.to_vec()
         );
 
         let msg = dec::decode_into_msg(self.id, src);
-        println!("11122");
-
-        if let Ok(ref m) = msg {
-            if let Some(ref m) = m {
-                self.msgs_recv.push(m.name());
-            }
-        }
 
         msg
     }
