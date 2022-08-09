@@ -81,14 +81,12 @@ impl Server {
                 }
             };
 
-            let conn_id = sak_crypto::rand();
-
-            let conn = match Conn::new(socket, conn_id, false) {
+            let conn = match Conn::new(socket, false) {
                 Ok(c) => {
                     debug!(
                         "Accepted a tcp connection from source, \
-                        peer_addr: {:?}, conn_id: {}",
-                        c.socket_addr, conn_id,
+                        peer_addr: {:?}",
+                        c.socket_addr,
                     );
 
                     c

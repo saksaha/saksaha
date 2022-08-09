@@ -6,7 +6,6 @@ use chacha20::ChaCha20;
 use tokio_util::codec::{Decoder, Encoder};
 
 pub struct UpgradedP2PCodec {
-    pub(crate) id: usize,
     pub(crate) cipher: ChaCha20,
 }
 
@@ -27,7 +26,7 @@ impl Encoder<Msg> for UpgradedP2PCodec {
 
         let name = item.name();
 
-        enc::encode_into_frame(self.id, item, dst)?;
+        enc::encode_into_frame(item, dst)?;
 
         let t = dst.to_vec();
 
@@ -53,7 +52,7 @@ impl Decoder for UpgradedP2PCodec {
         &mut self,
         src: &mut BytesMut,
     ) -> Result<Option<Self::Item>, TrptError> {
-        let t = src.to_vec();
+        // let t = src.to_vec();
 
         self.cipher.apply_keystream(src);
 
@@ -64,15 +63,13 @@ impl Decoder for UpgradedP2PCodec {
         //     src.to_vec()
         // );
 
-        let msg = dec::decode_into_msg(self.id, src);
+        let msg = dec::decode_into_msg(src);
 
         msg
     }
 }
 
-pub struct P2PCodec {
-    pub(crate) id: usize,
-}
+pub struct P2PCodec {}
 
 impl Encoder<Msg> for P2PCodec {
     type Error = TrptError;
@@ -82,11 +79,7 @@ impl Encoder<Msg> for P2PCodec {
         item: Msg,
         dst: &mut BytesMut,
     ) -> Result<(), TrptError> {
-        // println!("\n555 encoding!!, item: {:?}", item);
-
-        let _msg_type = enc::encode_into_frame(self.id, item, dst)?;
-
-        // println!("\n666 encoded!!, buf: {:?}", dst.to_vec());
+        let _msg_type = enc::encode_into_frame(item, dst)?;
 
         return Ok(());
     }
@@ -100,8 +93,6 @@ impl Decoder for P2PCodec {
         &mut self,
         src: &mut BytesMut,
     ) -> Result<Option<Self::Item>, TrptError> {
-        // println!("\n1313 decoding, src: {:?}", src.to_vec());
-
-        return dec::decode_into_msg(self.id, src);
+        return dec::decode_into_msg(src);
     }
 }

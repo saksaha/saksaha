@@ -7,7 +7,6 @@ use bytes::BytesMut;
 use sak_p2p_frame::frame_io;
 
 pub(super) fn encode_into_frame(
-    id: usize,
     item: Msg,
     dst: &mut BytesMut,
 ) -> Result<&'static str, TrptError> {
