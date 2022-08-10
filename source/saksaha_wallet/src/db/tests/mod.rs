@@ -1,4 +1,8 @@
+mod coin;
 mod utils;
+
+pub(crate) use utils::*;
+
 use crate::db::tests::utils::*;
 use crate::db::WalletDB;
 use crate::db::{USER_1, USER_2};

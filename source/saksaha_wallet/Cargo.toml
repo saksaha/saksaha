@@ -29,6 +29,9 @@ sak_kv_db = { path = "../../source/sak_kv_db" }
 sak_proofs = { path = "../../source/sak_proofs" }
 sak_utils_net = { path = "../sak_utils_net" }
 
+[dev-dependencies]
+sak_test_utils = { path = "../sak_test_utils" }
+
 [[bin]]
 name = "wallet"
 path = "src/bin/wallet/main.rs"

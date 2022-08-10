@@ -9,8 +9,8 @@ use std::sync::Arc;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub(in crate::rpc) struct GetBalanceRequest {
-    id: String,
-    key: String,
+    pub id: String,
+    pub key: String,
 }
 
 pub(in crate::rpc) async fn get_balance(
@@ -28,53 +28,17 @@ pub(in crate::rpc) async fn get_balance(
 
     let rb: GetBalanceRequest = require_params_parsed!(route_state, &params);
 
-    let _ = ctx.wallet.apis.get_balance(rb.id, rb.key).await;
-
-    let is_success = true;
-
-    if is_success {
-        hyper_rpc_router::make_success_response(
+    match ctx.wallet.apis.get_balance(rb.id, rb.key).await {
+        Ok(b) => hyper_rpc_router::make_success_response(
             route_state,
-            "get balance success",
-        )
-    } else {
-        return hyper_rpc_router::make_error_response(
-            route_state.resp,
-            Some(route_state.id),
-            "some error".into(),
-        );
+            format!("get balance success, {:?}", b.val),
+        ),
+        Err(err) => {
+            return hyper_rpc_router::make_error_response(
+                route_state.resp,
+                Some(route_state.id),
+                format!("some error, err: {:?}", err).into(),
+            )
+        }
     }
-
-    // let tx_candidate = TxCandidate::Pour(PourTxCandidate::new(
-    //     rb.created_at,
-    //     rb.data,
-    //     rb.author_sig,
-    //     rb.ctr_addr,
-    //     rb.pi,
-    //     rb.sn_1,
-    //     rb.sn_2,
-    //     rb.cm_1,
-    //     rb.cm_2,
-    //     rb.merkle_rt,
-    // ));
-
-    // match sys_handle
-    //     .machine
-    //     .blockchain
-    //     .dist_ledger
-    //     .apis
-    //     .send_tx(tx_candidate)
-    //     .await
-    // {
-    //     Ok(bool) => {
-    //         return make_success_response(route_state, "success");
-    //     }
-    //     Err(err) => {
-    //         return make_error_response(
-    //             route_state.resp,
-    //             Some(route_state.id),
-    //             err.into(),
-    //         );
-    //     }
-    // }
 }
