@@ -1,4 +1,4 @@
-use super::tx;
+use super::tx_utils;
 use crate::{utils, TrptError, BLOCK_SYN_TYPE};
 use bytes::Bytes;
 use sak_p2p_frame::{Frame, Parse};
@@ -71,8 +71,8 @@ impl BlockSynMsg {
                     };
 
                     match tx_type {
-                        TxType::Mint => tx::parse_mint_tx(parse)?,
-                        TxType::Pour => tx::parse_pour_tx(parse)?,
+                        TxType::Mint => tx_utils::parse_mint_tx(parse)?,
+                        TxType::Pour => tx_utils::parse_pour_tx(parse)?,
                         _ => {
                             return Err(format!(
                                 "Invalid tx type to parse, tx_type: {:?}",
@@ -141,10 +141,10 @@ impl BlockSynMsg {
             for tx in txs.into_iter() {
                 match tx {
                     Tx::Mint(t) => {
-                        tx::put_mint_tx_into_frame(&mut frame, t);
+                        tx_utils::put_mint_tx_into_frame(&mut frame, t);
                     }
                     Tx::Pour(t) => {
-                        tx::put_pour_tx_into_frame(&mut frame, t);
+                        tx_utils::put_pour_tx_into_frame(&mut frame, t);
                     }
                 }
             }
