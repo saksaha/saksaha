@@ -1,8 +1,11 @@
+use std::collections::HashMap;
+
 use super::utils;
 use crate::{wasm_bootstrap, InvokeReceipt};
 use crate::{CtrFn, VMError, EXECUTE, INIT, MEMORY, QUERY};
 use log::{error, info};
 use sak_contract_std::{InvokeResult, Request, Storage, ERROR_PLACEHOLDER};
+use serde::{Deserialize, Serialize};
 use wasmtime::{Instance, Memory, Store, TypedFunc};
 
 pub struct VM {}
@@ -131,7 +134,6 @@ fn invoke_execute(
         { instance.get_typed_func(&mut store, EXECUTE)? };
 
     let (request_bytes, request_len) = {
-        // let str = serde_json::to_value(request)?.to_string();
         let vec = serde_json::to_vec(&request)?;
         let vec_len = vec.len();
 
@@ -142,13 +144,76 @@ fn invoke_execute(
         wasm_bootstrap::copy_memory(&request_bytes, &instance, &mut store)?;
 
     let (storage_bytes, storage_len) = {
-        let str = serde_json::to_value(storage)?.to_string();
+        let vec = serde_json::to_vec(&storage)?;
+        let vec_len = vec.len();
 
-        (str.as_bytes().to_vec(), str.len())
+        (vec, vec_len)
     };
 
     let storage_ptr =
         wasm_bootstrap::copy_memory(&storage_bytes, &instance, &mut store)?;
+
+    println!("111, request: {:?}, storage: {:?}", request, storage);
+
+    let x = [
+        91, 57, 49, 44, 52, 57, 44, 53, 48, 44, 53, 49, 44, 52, 52, 44, 53, 49,
+        44, 53, 50, 44, 52, 52, 44, 52, 57, 44, 52, 57, 44, 52, 57, 44, 52, 52,
+        44, 52, 57, 44, 52, 57, 44, 53, 48, 44, 52, 52, 44, 52, 57, 44, 52, 56,
+        44, 52, 57, 44, 52, 52, 44, 52, 57, 44, 52, 57, 44, 52, 56, 44, 52, 52,
+        44, 53, 55, 44, 53, 51, 44, 52, 52, 44, 53, 55, 44, 53, 55, 44, 52, 52,
+        44, 52, 57, 44, 52, 56, 44, 53, 50, 44, 52, 52, 44, 53, 55, 44, 53, 51,
+        44, 52, 52, 44, 52, 57, 44, 52, 57, 44, 53, 50, 44, 52, 52, 44, 52, 57,
+        44, 52, 56, 44, 52, 57, 44, 52, 52, 44, 52, 57, 44, 52, 57, 44, 53, 49,
+        44, 52, 52, 44, 52, 57, 44, 52, 57, 44, 53, 51, 44, 52, 52, 44, 53, 49,
+        44, 53, 50, 44, 52, 52, 44, 53, 51, 44, 53, 54, 44, 52, 52, 44, 52, 57,
+        44, 53, 48, 44, 53, 49, 44, 52, 52, 44, 52, 57, 44, 53, 48, 44, 53, 51,
+        44, 52, 52, 44, 53, 50, 44, 53, 50, 44, 52, 52, 44, 53, 49, 44, 53, 50,
+        44, 52, 52, 44, 53, 55, 44, 53, 55, 44, 52, 52, 44, 52, 57, 44, 52, 56,
+        44, 53, 50, 44, 52, 52, 44, 53, 55, 44, 53, 53, 44, 52, 52, 44, 52, 57,
+        44, 52, 57, 44, 53, 52, 44, 52, 52, 44, 52, 57, 44, 52, 57, 44, 53, 51,
+        44, 52, 52, 44, 53, 49, 44, 53, 50, 44, 52, 52, 44, 53, 51, 44, 53, 54,
+        44, 52, 52, 44, 52, 57, 44, 53, 48, 44, 53, 49, 44, 52, 52, 44, 52, 57,
+        44, 53, 48, 44, 53, 51, 44, 52, 52, 44, 52, 57, 44, 53, 48, 44, 53, 51,
+        44, 57, 51, 93,
+    ];
+
+    let x2 = [
+        91, 49, 50, 51, 44, 51, 52, 44, 49, 49, 49, 44, 49, 49, 50, 44, 49, 48,
+        49, 44, 49, 49, 48, 44, 57, 53, 44, 57, 57, 44, 49, 48, 52, 44, 57, 53,
+        44, 49, 49, 52, 44, 49, 48, 49, 44, 49, 49, 51, 44, 49, 49, 53, 44, 51,
+        52, 44, 53, 56, 44, 49, 50, 51, 44, 49, 50, 53, 44, 52, 52, 44, 51, 52,
+        44, 57, 57, 44, 49, 48, 52, 44, 57, 55, 44, 49, 49, 54, 44, 49, 49, 53,
+        44, 51, 52, 44, 53, 56, 44, 49, 50, 51, 44, 49, 50, 53, 44, 49, 50, 53,
+        93,
+    ];
+
+    let x3 = [
+        123, 34, 111, 112, 101, 110, 95, 99, 104, 95, 114, 101, 113, 115, 34,
+        58, 123, 125, 44, 34, 99, 104, 97, 116, 115, 34, 58, 123, 125, 125,
+    ];
+
+    let _ = match serde_json::from_slice::<Vec<u8>>(&x3) {
+        Ok(v) => match serde_json::from_slice::<EnvelopeStorage>(&v) {
+            Ok(vv) => {
+                println!("333!!!!!!! evl_storage: {:?}", vv);
+            }
+            Err(err) => {
+                println!("power3!!!!!!!!!: {:?}", err);
+            }
+        },
+        Err(err) => {
+            println!("power1!!!!!!!!!: {:?}", err);
+        }
+    };
+
+    let _ = match serde_json::from_slice::<EnvelopeStorage>(&x2) {
+        Ok(v) => {
+            println!("222!!!!!!! evl_storage: {:?}", v);
+        }
+        Err(err) => {
+            println!("power2!!!!!!!!!: {:?}", err);
+        }
+    };
 
     let (storage_ptr, storage_len, result_ptr, result_len) = match contract_fn
         .call(
@@ -181,10 +246,7 @@ fn invoke_execute(
         )?
     }
 
-    info!(
-        " ************** after fn_call execute get_ctr_state: {:?}",
-        storage
-    );
+    info!(" ************** after execute, storage: {:?}", storage);
 
     let result: Vec<u8>;
     unsafe {
@@ -195,6 +257,8 @@ fn invoke_execute(
             result_len as u32,
         )?
     }
+
+    info!(" ************** after execute, result: {:?}", result);
 
     let receipt = InvokeReceipt::from_execute(result, storage)?;
 
@@ -220,13 +284,15 @@ fn init_module(
     Ok((instance, store, memory))
 }
 
-// fn require_valid_result(invoked: InvokeResult) -> String {
-//     if invoked.len() > 6 {
-//         if &invoked[..6] == &ERROR_PLACEHOLDER {
-//             let err_msg: &str = std::str::from_utf8(&invoked[6..])?;
+#[derive(Serialize, Deserialize, Debug)]
+pub struct EnvelopeStorage {
+    pub open_ch_reqs: HashMap<String, Vec<OpenCh>>,
+    pub chats: HashMap<String, Vec<String>>,
+}
 
-//             return Err(err_msg.into());
-//         }
-//     }
-//     e
-// }
+#[derive(Serialize, Deserialize, Debug)]
+pub struct OpenCh {
+    pub ch_id: String,
+    pub eph_key: String,
+    pub sig: String,
+}
