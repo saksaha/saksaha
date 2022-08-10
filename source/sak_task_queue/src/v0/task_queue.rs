@@ -27,12 +27,6 @@ where
         }
     }
 
-    pub fn new_pusher(&self) -> TaskPusher<T> {
-        let tx = self.tx.clone();
-
-        TaskPusher::new(tx)
-    }
-
     pub async fn push_back(&self, task: T) -> Result<(), String> {
         let task_str = task.to_string();
 
@@ -56,32 +50,32 @@ where
     }
 }
 
-pub struct TaskPusher<T>
-where
-    T: std::fmt::Display + Send + Sync + 'static,
-{
-    tx: Arc<Sender<T>>,
-}
+// pub struct TaskPusher<T>
+// where
+//     T: std::fmt::Display + Send + Sync + 'static,
+// {
+//     tx: Arc<Sender<T>>,
+// }
 
-impl<T> TaskPusher<T>
-where
-    T: std::fmt::Display + Send + Sync + 'static,
-{
-    pub fn new(tx: Arc<Sender<T>>) -> TaskPusher<T> {
-        TaskPusher { tx }
-    }
+// impl<T> TaskPusher<T>
+// where
+//     T: std::fmt::Display + Send + Sync + 'static,
+// {
+//     pub fn new(tx: Arc<Sender<T>>) -> TaskPusher<T> {
+//         TaskPusher { tx }
+//     }
 
-    pub async fn push_back(&self, task: T) -> Result<(), String> {
-        let task_str = task.to_string();
+//     pub async fn push_back(&self, task: T) -> Result<(), String> {
+//         let task_str = task.to_string();
 
-        match self.tx.send(task).await {
-            Ok(_) => return Ok(()),
-            Err(err) => {
-                return Err(format!(
-                    "Cannot add a new task, task: {}, err: {}",
-                    task_str, err,
-                ));
-            }
-        };
-    }
-}
+//         match self.tx.send(task).await {
+//             Ok(_) => return Ok(()),
+//             Err(err) => {
+//                 return Err(format!(
+//                     "Cannot add a new task, task: {}, err: {}",
+//                     task_str, err,
+//                 ));
+//             }
+//         };
+//     }
+// }

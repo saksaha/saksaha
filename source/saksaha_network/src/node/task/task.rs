@@ -1,10 +1,15 @@
 use sak_p2p_discovery::DiscAddr;
 use sak_p2p_id::Identity;
-use sak_p2p_peertable::PeerTable;
+use sak_p2p_peertable::{Peer, PeerTable};
+use sak_types::TxCandidate;
 use std::sync::Arc;
 
 pub(in crate::node) enum NodeTask {
-    Hello,
+    SendHello,
+    SendTxSyn {
+        tx_candidates: Vec<TxCandidate>,
+        peer: Arc<Peer>,
+    },
     // InitiateHandshake {
     //     addr: Arc<DiscAddr>,
     //     identity: Arc<Identity>,
