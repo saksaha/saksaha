@@ -1,5 +1,6 @@
 use sak_crypto::Scalar;
 
+#[derive(Debug)]
 pub(crate) struct Coin {
     pub addr_pk: Option<Scalar>,
 
@@ -15,6 +16,8 @@ pub(crate) struct Coin {
 
     pub cm: Option<Scalar>,
 
+    pub user_id: Option<String>,
+
     pub status: Option<bool>,
 }
 
@@ -28,6 +31,8 @@ pub(crate) struct OwnCoin {
     pub s: Option<Scalar>,
 
     pub v: Option<Scalar>,
+
+    pub user_id: Option<String>,
 
     pub status: Option<bool>,
 }

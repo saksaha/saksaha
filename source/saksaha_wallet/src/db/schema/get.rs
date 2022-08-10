@@ -158,9 +158,12 @@ impl WalletDBSchema {
 
     pub async fn get_cm(
         &self,
-        cm_idx: &String,
+        cm_idx: &u128,
     ) -> Result<Option<String>, WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::CM)?;
+
+        let cm_idx = cm_idx.to_be_bytes();
+
         match self.db.get_cf(&cf, cm_idx)? {
             Some(v) => {
                 let str = String::from_utf8(v)?;

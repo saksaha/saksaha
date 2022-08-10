@@ -27,7 +27,7 @@ impl WalletDBSchema {
         self.batch_put_a_sk(&mut batch, cm, a_sk)?;
         self.batch_put_user_id(&mut batch, cm, user_id)?;
         self.batch_put_status(&mut batch, cm, status)?;
-        self.batch_put_cm_idx(&mut batch, cm, &cm_idx)?;
+        self.batch_put_cm_idx(&mut batch, cm, cm_idx)?;
 
         self.batch_put_cm_by_cm_idx(&mut batch, cm_idx, cm)?;
 
@@ -164,7 +164,6 @@ impl WalletDBSchema {
 
         let cm_idx = cm_idx.to_be_bytes();
 
-        println!("111: {:?}", cm_idx);
         batch.put_cf(&cf, cm, cm_idx);
 
         Ok(())

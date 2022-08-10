@@ -1,5 +1,5 @@
 use crate::{
-    db::{tests::make_dummy_db, WalletDB, USER_1},
+    db::{tests::make_dummy_db, WalletDB, USER_1, USER_2},
     WalletError,
 };
 
@@ -42,13 +42,12 @@ async fn get_dummy_random_gen_coins(
 }
 
 #[tokio::test(flavor = "multi_thread")]
-async fn test_wallet_get_all_coins() {
+async fn test_wallet_store_coins() {
     sak_test_utils::init_test_log();
-    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
 
     let db = make_dummy_db().await;
 
-    for idx in 0..9 {
+    for idx in 0..5 {
         let (addr_pk, addr_sk, rho, r, s, v, cm, status) =
             get_dummy_random_gen_coins().await;
 
@@ -69,6 +68,43 @@ async fn test_wallet_get_all_coins() {
             .unwrap();
     }
 
+    for idx in 5..10 {
+        let (addr_pk, addr_sk, rho, r, s, v, cm, status) =
+            get_dummy_random_gen_coins().await;
+
+        db.schema
+            .put_coin_data(
+                &cm.to_string(),
+                &rho.to_string(),
+                &r.to_string(),
+                &s.to_string(),
+                &v.to_string(),
+                &addr_pk.to_string(),
+                &addr_sk.to_string(),
+                &USER_2.to_string(),
+                &status.to_string(),
+                &idx,
+            )
+            .await
+            .unwrap();
+    }
+
     let latest_cm_idx = db.schema.get_latest_cm_idx().unwrap().unwrap();
     println!("latest_cm_idx: {:?}", latest_cm_idx);
+
+    for idx in 0..5 {
+        let cm = db.schema.get_cm(&idx).await.unwrap().unwrap();
+        let user_id = db.schema.get_user_id(&cm).await.unwrap().unwrap();
+
+        println!("[+] user_id: {:?}, USER_1: {:?}", user_id, USER_1);
+        assert_eq!(user_id, USER_1);
+    }
+
+    for idx in 5..10 {
+        let cm = db.schema.get_cm(&idx).await.unwrap().unwrap();
+        let user_id = db.schema.get_user_id(&cm).await.unwrap().unwrap();
+
+        println!("[+] user_id: {:?}, USER_2: {:?}", user_id, USER_2);
+        assert_eq!(user_id, USER_2);
+    }
 }

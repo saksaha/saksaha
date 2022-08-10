@@ -1,5 +1,6 @@
 use super::WalletApis;
-use crate::WalletError;
+use crate::{wallet::apis::decode_hex_string_to_u64, WalletError};
+use log::debug;
 use sak_crypto::{
     groth16, mimc, os_rng, Bls12, Circuit, Hasher, Proof, Scalar, ScalarExt,
 };
@@ -16,10 +17,59 @@ impl WalletApis {
     ) -> Result<Balance, WalletError> {
         println!("wallet apis, get_balance, id: {}", id);
 
-        // &self.db.schema.get_user_id(cm);
-        // &self.db.schema.get_v(cm);
+        let latest_cm_idx = match self.db.schema.get_latest_cm_idx()? {
+            Some(i) => i,
+            None => {
+                return Err(format!(
+                    "Wallet is empty, the balance must be zero"
+                )
+                .into())
+            }
+        };
 
-        let b = Balance { val: 0 };
+        let mut balance: u64 = 0;
+
+        // debug!("latest cm idx: {:?}", latest_cm_idx);
+
+        for cm_idx in 0..=latest_cm_idx {
+            let cm: String = match self.db.schema.get_cm(&cm_idx).await {
+                Ok(c) => match c {
+                    Some(c) => c,
+                    None => {
+                        return Err(format!(
+                            "No cm has been found at idx: {:?}",
+                            cm_idx
+                        )
+                        .into())
+                    }
+                },
+                Err(err) => {
+                    return Err(
+                        format!("Failed to get cm, err: {:?}", err).into()
+                    )
+                }
+            };
+
+            let user = match self.db.schema.get_user_id(&cm).await? {
+                Some(u) => u,
+                None => return Err(format!("Failed to get user_id").into()),
+            };
+
+            if user == id {
+                let v = match self.db.schema.get_v(&cm).await? {
+                    Some(v) => {
+                        let v = decode_hex_string_to_u64(&v).await?;
+
+                        v
+                    }
+                    None => return Err(format!("Failed to get value").into()),
+                };
+
+                balance += v;
+            }
+        }
+
+        let b = Balance { val: balance };
 
         Ok(b)
     }
