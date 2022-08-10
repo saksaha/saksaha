@@ -2,9 +2,8 @@ mod apis;
 mod coin;
 mod user;
 
-pub(crate) use apis::*;
-
 use crate::WalletError;
+pub(crate) use apis::*;
 
 pub(crate) async fn decode_hex_string_to_u64(
     val: &String,
