@@ -21,10 +21,4 @@ pub(crate) mod cfs {
     pub const USER_ID: &str = "user_id";
 
     pub const CM_IDX: &str = "cm_idx";
-
-    pub const MY_SK: &str = "my_sk";
-
-    pub const MY_PK: &str = "my_pk";
-
-    pub const MY_SIG: &str = "my_sig";
 }
