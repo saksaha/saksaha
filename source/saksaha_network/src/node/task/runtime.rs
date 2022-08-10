@@ -1,64 +1,32 @@
-// use super::{handler, NodeTask};
-// use log::{debug, error};
-// use sak_task_queue::TaskQueue;
-// use std::{
-//     sync::Arc,
-//     time::{Duration, SystemTime},
-// };
+use crate::node::SaksahaNodeError;
 
-// const TASK_MIN_INTERVAL: u64 = 1000;
+use super::{NodeRuntimeCtx, NodeTask};
+use sak_task_queue::{HandlerFn, TaskQueue, TaskRuntime};
+use std::{pin::Pin, sync::Arc};
 
-// pub(in crate::node) struct TaskRuntime {
-//     pub(crate) task_queue: Arc<TaskQueue<NodeTask>>,
-//     pub(crate) task_min_interval: Duration,
-// }
+pub(in crate::node) fn create_node_task_runtime(
+    node_task_queue_clone: Arc<TaskQueue<NodeTask>>,
+    node_task_min_interval: Option<u64>,
+    node_runtime_ctx: NodeRuntimeCtx,
+) -> TaskRuntime<NodeTask, NodeRuntimeCtx> {
+    let handle_fn: HandlerFn<NodeTask> = Box::new(|task: NodeTask| {
+        Box::pin(async {
+            handle_task(task).await;
+        })
+    });
 
-// impl TaskRuntime {
-//     pub(crate) fn new(
-//         task_queue: Arc<TaskQueue<NodeTask>>,
-//         disc_task_interval: Option<u16>,
-//     ) -> TaskRuntime {
-//         let task_min_interval = match disc_task_interval {
-//             Some(i) => Duration::from_millis(i.into()),
-//             None => Duration::from_millis(TASK_MIN_INTERVAL),
-//         };
+    let node_task_runtime = TaskRuntime::new(
+        node_task_queue_clone,
+        node_task_min_interval,
+        node_runtime_ctx,
+        handle_fn,
+    );
 
-//         TaskRuntime {
-//             task_queue,
-//             task_min_interval,
-//         }
-//     }
+    node_task_runtime
+}
 
-//     pub(crate) async fn run(&self) {
-//         let task_min_interval = &self.task_min_interval;
-//         let task_queue = &self.task_queue;
+async fn handle_task(task: NodeTask) -> Result<(), SaksahaNodeError> {
+    // match task {}
 
-//         loop {
-//             let time_since = SystemTime::now();
-
-//             let task = match task_queue.pop_front().await {
-//                 Ok(t) => {
-//                     debug!("Pop P2PTask - {}", t,);
-
-//                     t
-//                 }
-//                 Err(err) => {
-//                     error!(
-//                         "Cannot handle p2p discovery task any more, \
-//                                 err: {}",
-//                         err,
-//                     );
-//                     return;
-//                 }
-//             };
-
-//             handler::run(task).await;
-
-//             sak_utils_time::wait_until_min_interval(
-//                 time_since,
-//                 *task_min_interval,
-//             )
-//             .await;
-//         }
-//     }
-// }
+    Ok(())
+}

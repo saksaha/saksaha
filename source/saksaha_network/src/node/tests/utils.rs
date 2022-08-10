@@ -90,7 +90,6 @@ pub(crate) async fn create_client(
         addr_expire_duration: None,
         addr_monitor_interval: None,
         disc_socket,
-        // disc_port,
         disc_dial_interval: None,
         disc_table_capacity: None,
         disc_task_interval: None,
@@ -103,7 +102,6 @@ pub(crate) async fn create_client(
         p2p_max_conn_count: None,
         bootstrap_addrs,
         identity: identity.clone(),
-        // credential: credential.clone(),
         peer_table: p2p_peer_table.clone(),
     };
 
@@ -128,6 +126,7 @@ pub(crate) async fn create_client(
             machine: machine.clone(),
             miner,
             mine_interval: None,
+            node_task_min_interval: None,
         };
 
         Arc::new(ln)

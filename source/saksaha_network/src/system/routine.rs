@@ -199,6 +199,7 @@ impl Routine {
                 machine: machine.clone(),
                 miner: config.node.miner,
                 mine_interval: config.node.mine_interval,
+                node_task_min_interval: config.node.node_task_min_interval,
             };
 
             ln

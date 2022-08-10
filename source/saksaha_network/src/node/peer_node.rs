@@ -16,7 +16,7 @@ pub(in crate::node) struct PeerNode {
     pub peer: Arc<Peer>,
     pub bc_event_rx: Receiver<DistLedgerEvent>,
     pub machine: Arc<Machine>,
-    pub task_queue: Arc<TaskQueue<NodeTask>>,
+    pub node_task_queue: Arc<TaskQueue<NodeTask>>,
 }
 
 impl PeerNode {
@@ -97,7 +97,7 @@ impl PeerNode {
                                     msg,
                                     &self.machine,
                                     &mut conn_lock,
-                                    &self.task_queue,
+                                    &self.node_task_queue,
                                     &self.peer,
                                 ).await;
                             }
