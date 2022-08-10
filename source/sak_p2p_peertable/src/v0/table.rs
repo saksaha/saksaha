@@ -125,7 +125,7 @@ impl PeerTable {
         &self,
         peer: Arc<Peer>,
     ) -> Result<Option<Arc<Peer>>, String> {
-        let public_key_str = peer.public_key_str.clone();
+        let public_key_str = peer.get_public_key().to_string();
 
         debug!(
             "Peer table insert mapping, her_public_key: {},",
@@ -148,7 +148,8 @@ impl PeerTable {
         let peer_map = self.peer_map.read().await;
 
         for (_, peer) in peer_map.values().enumerate() {
-            peer_vec.push(peer.addr.known_addr.get_p2p_endpoint().clone());
+            peer_vec
+                .push(peer.get_addr().known_addr.get_p2p_endpoint().clone());
         }
 
         peer_vec

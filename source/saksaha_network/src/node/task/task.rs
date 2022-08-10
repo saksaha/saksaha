@@ -5,16 +5,13 @@ use sak_types::TxCandidate;
 use std::sync::Arc;
 
 pub(in crate::node) enum NodeTask {
-    SendHello,
+    SendHello {
+        her_public_key: String,
+    },
     SendTxSyn {
         tx_candidates: Vec<TxCandidate>,
-        peer: Arc<Peer>,
+        her_public_key: String,
     },
-    // InitiateHandshake {
-    //     addr: Arc<DiscAddr>,
-    //     identity: Arc<Identity>,
-    //     peer_table: Arc<PeerTable>,
-    // },
 }
 
 impl std::fmt::Display for NodeTask {
