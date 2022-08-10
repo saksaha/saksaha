@@ -1,9 +1,12 @@
-use crate::{db::DBSchema, WalletError};
-use log::{info, warn};
+use log::info;
 use sak_kv_db::{KeyValueDatabase, Options};
 
+use crate::app::WalletError;
+
+use super::WalletDBSchema;
+
 pub(crate) struct WalletDB {
-    pub(crate) schema: DBSchema,
+    pub(crate) schema: WalletDBSchema,
 }
 
 impl WalletDB {
@@ -13,12 +16,13 @@ impl WalletDB {
         let db_name = sak_fs::DBName::Wallet;
         let wallet_db_path = {
             let app_path = sak_fs::create_or_get_app_path(db_name, app_prefix)?;
+
             let db_path = { app_path.join("db") };
 
             db_path
         };
 
-        info!("Envelope db path: {:?}", wallet_db_path);
+        info!("Wallet db path: {:?}", wallet_db_path);
 
         let options = {
             let mut o = Options::default();
@@ -31,7 +35,7 @@ impl WalletDB {
         let kv_db = match KeyValueDatabase::new(
             wallet_db_path,
             options,
-            DBSchema::make_cf_descriptors(),
+            WalletDBSchema::make_cf_descriptors(),
         ) {
             Ok(d) => d,
             Err(err) => {
@@ -43,7 +47,7 @@ impl WalletDB {
             }
         };
 
-        let schema = DBSchema::new(kv_db.db_instance);
+        let schema = WalletDBSchema::new(kv_db.db_instance);
 
         let wallet_db = WalletDB { schema };
 
