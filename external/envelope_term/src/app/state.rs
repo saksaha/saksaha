@@ -1,7 +1,7 @@
 use tui::widgets::ListState;
 
-use crate::io::InputMode;
 use crate::EnvelopeError;
+use crate::{io::InputMode, term::get_balance_from_wallet};
 use chrono::{DateTime, Local};
 use log::debug;
 
@@ -29,6 +29,7 @@ pub struct AppState {
     pub chat_input: String,
     pub chats: Vec<ChatMessage>,
     pub view: View,
+    pub my_balance: String,
 }
 
 impl AppState {
@@ -50,6 +51,7 @@ impl AppState {
             chat_input: String::default(),
             chats: vec![],
             view: View::Landing,
+            my_balance: String::from("0"),
         }
     }
     pub fn scroll_messages_view(&self) -> usize {
@@ -143,6 +145,8 @@ impl AppState {
         }
     }
 
+    pub async fn set_balance(&mut self) {}
+
     pub fn next_ch(&mut self) {
         let i = match self.ch_list_state.selected() {
             Some(i) => {
@@ -188,6 +192,7 @@ impl Default for AppState {
             chat_input: String::default(),
             chats: vec![],
             view: View::Landing,
+            my_balance: String::from("0"),
         }
     }
 }
