@@ -62,7 +62,7 @@ async fn drop_peer_if_necessary(
         None => return Ok(()),
     };
 
-    let peer_status = peer.status.read().await;
+    let peer_status = peer.get_peer_status().read().await;
 
     if let PeerStatus::Disconnected = *peer_status {
         let pkey = peer.get_public_key_short();

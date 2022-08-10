@@ -26,7 +26,13 @@ pub(in crate::node) fn create_node_task_runtime(
 }
 
 async fn handle_task(task: NodeTask) -> Result<(), SaksahaNodeError> {
-    // match task {}
+    match task {
+        NodeTask::SendHello { her_public_key } => {}
+        NodeTask::SendTxSyn {
+            tx_candidates,
+            her_public_key,
+        } => {}
+    };
 
     Ok(())
 }
