@@ -59,6 +59,8 @@ impl DistLedgerApis {
             .get_ctr_state(ctr_addr)?
             .ok_or("ctr state should exist")?;
 
+        info!(" ************** schema get_ctr_state: {:?}", ctr_state);
+
         {
             println!("[+] Execute Contract");
             println!(

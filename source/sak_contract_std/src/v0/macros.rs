@@ -34,7 +34,7 @@ macro_rules! return_err_2 {
         match $obj {
             Ok(r) => r,
             Err(err) => {
-                let mut err = sak_contract_std::make_error_vec(err.into());
+                let mut err = sak_contract_std::make_error_vec(err.into(), "");
 
                 let err_ptr = err.as_mut_ptr();
                 let err_len = err.len();
@@ -49,11 +49,11 @@ macro_rules! return_err_2 {
 
 #[macro_export]
 macro_rules! return_err_4 {
-    ($obj: expr) => {
+    ($obj: expr, $msg: expr) => {
         match $obj {
             Ok(r) => r,
             Err(err) => {
-                let mut err = sak_contract_std::make_error_vec(err.into());
+                let mut err = sak_contract_std::make_error_vec($obj, $msg);
 
                 let err_ptr = err.as_mut_ptr();
                 let err_len = err.len();
@@ -167,7 +167,10 @@ macro_rules! define_execute {
 
             let request = serde_json::from_slice(&request);
 
-            let request: Request = sak_contract_std::return_err_4!(request);
+            let request: Request = sak_contract_std::return_err_4!(
+                request, ""
+
+            );
 
             let result: Result<
                 sak_contract_std::InvokeResult,
@@ -176,7 +179,7 @@ macro_rules! define_execute {
 
             {
                 let mut result: sak_contract_std::InvokeResult =
-                    sak_contract_std::return_err_4!(result);
+                    sak_contract_std::return_err_4!(result, "Invoke result wrong");
 
                 let result_ptr = result.as_mut_ptr();
                 let result_len = result.len();

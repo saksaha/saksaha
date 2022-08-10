@@ -38,6 +38,10 @@ impl WalletApis {
 
         {
             // let old_coin = prepare_old_coin(val).await?;
+
+            // spend old coin, update state to the "used"
+            // should prepare (pi, sn_1,  sn_2, cm_1, cm_2, merkle_rt) to send tx pour
+
             saksaha::send_tx_pour(ctr_addr, req_type, args).await?;
         }
 

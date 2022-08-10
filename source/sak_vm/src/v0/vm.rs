@@ -131,9 +131,11 @@ fn invoke_execute(
         { instance.get_typed_func(&mut store, EXECUTE)? };
 
     let (request_bytes, request_len) = {
-        let str = serde_json::to_value(request)?.to_string();
+        // let str = serde_json::to_value(request)?.to_string();
+        let vec = serde_json::to_vec(&request)?;
+        let vec_len = vec.len();
 
-        (str.as_bytes().to_vec(), str.len())
+        (vec, vec_len)
     };
 
     let request_ptr =
@@ -178,6 +180,11 @@ fn invoke_execute(
             storage_len as u32,
         )?
     }
+
+    info!(
+        " ************** after fn_call execute get_ctr_state: {:?}",
+        storage
+    );
 
     let result: Vec<u8>;
     unsafe {

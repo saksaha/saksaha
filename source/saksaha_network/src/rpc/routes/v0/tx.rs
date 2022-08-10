@@ -149,6 +149,8 @@ pub(in crate::rpc) async fn send_pour_tx(
 
     let rb: SendPourTxRequest = require_params_parsed!(route_state, &params);
 
+    println!(" saksaha_network rb : {:?}", rb);
+
     let tx_candidate = TxCandidate::Pour(PourTxCandidate::new(
         rb.created_at,
         rb.data,
