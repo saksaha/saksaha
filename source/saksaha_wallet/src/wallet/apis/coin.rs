@@ -1,6 +1,7 @@
 use super::WalletApis;
 use crate::WalletError;
-use crate::rpc::routes::get_routes
+
+use crate::rpc::routes::v0::WalletSendTxRequest;
 use sak_crypto::{
     groth16, mimc, os_rng, Bls12, Circuit, Hasher, Proof, Scalar, ScalarExt,
 };
@@ -25,14 +26,19 @@ impl WalletApis {
 
     pub async fn send_tx(
         &self,
-        val: usize,
+        req: WalletSendTxRequest,
         // send_tx_req: SendTxRequest,
     ) -> Result<(), WalletError> {
-        {
-            // saksaha::send_tx_pour(ctr_addr, req_type, args);
+        let WalletSendTxRequest {
+            val,
+            ctr_addr,
+            req_type,
+            args,
+        } = req;
 
+        {
             // let old_coin = prepare_old_coin(val).await?;
-            // saksaha::send_tx_pour(ctr_addr, req_type, arg).await?;
+            saksaha::send_tx_pour(ctr_addr, req_type, args).await?;
         }
 
         // from db

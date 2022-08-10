@@ -9,16 +9,11 @@ use std::sync::Arc;
 pub type RequestArgs = Vec<u8>;
 
 #[derive(Serialize, Deserialize, Debug)]
-pub(in crate::rpc) struct SendTxRequest {
-    // created_at: String,
-    // #[serde(with = "serde_bytes")]
-    // data: Vec<u8>,
-    // author_sig: String,
-    // ctr_addr: Option<String>,
-    val: usize,
-    ctr_addr: String,
-    req_type: String,
-    args: RequestArgs,
+pub(crate) struct WalletSendTxRequest {
+    pub val: usize,
+    pub ctr_addr: String,
+    pub req_type: String,
+    pub args: RequestArgs,
 }
 
 pub(in crate::rpc) async fn send_tx(
@@ -32,9 +27,9 @@ pub(in crate::rpc) async fn send_tx(
         "send_tx should contain params",
     );
 
-    let rb: SendTxRequest = require_params_parsed!(route_state, &params);
-
-    let _ = ctx.wallet.apis.send_tx(rb.val).await;
+    let rb: WalletSendTxRequest = require_params_parsed!(route_state, &params);
+    println!(" rb: {:?}", rb);
+    let _ = ctx.wallet.apis.send_tx(rb).await;
 
     let is_success = true;
 
