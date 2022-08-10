@@ -1,8 +1,12 @@
-use super::{miner::Miner, peer_node::PeerNode, task::NodeTask};
+use super::{
+    miner::Miner,
+    peer_node::PeerNode,
+    task::{runtime, NodeRuntimeCtx, NodeTask},
+};
 use crate::machine::Machine;
 use futures::Future;
 use sak_p2p_peertable::PeerTable;
-use sak_task_queue::TaskQueue;
+use sak_task_queue::{TaskQueue, TaskRuntime};
 use std::{pin::Pin, sync::Arc};
 
 pub(crate) struct LocalNode {
@@ -10,6 +14,7 @@ pub(crate) struct LocalNode {
     pub(crate) machine: Arc<Machine>,
     pub(crate) miner: bool,
     pub(crate) mine_interval: Option<u64>,
+    pub(crate) node_task_min_interval: Option<u64>,
 }
 
 impl LocalNode {
@@ -25,7 +30,22 @@ impl LocalNode {
             });
         }
 
-        let task_queue = Arc::new(TaskQueue::new(100));
+        let node_task_queue = Arc::new(TaskQueue::new(100));
+        let node_task_queue_clone = node_task_queue.clone();
+        let node_task_min_interval = self.node_task_min_interval.clone();
+        let node_runtime_ctx = NodeRuntimeCtx {
+            peer_table: self.peer_table.clone(),
+        };
+
+        tokio::spawn(async move {
+            let node_task_runtime = runtime::create_node_task_runtime(
+                node_task_queue_clone,
+                node_task_min_interval,
+                node_runtime_ctx,
+            );
+
+            // node_task_runtime.run().await;
+        });
 
         let peer_it = self.peer_table.new_iter();
         let mut peer_it_lock = peer_it.write().await;
@@ -55,7 +75,7 @@ impl LocalNode {
                 peer,
                 bc_event_rx,
                 machine,
-                task_queue: task_queue.clone(),
+                node_task_queue: node_task_queue.clone(),
             };
 
             tokio::spawn(async move {

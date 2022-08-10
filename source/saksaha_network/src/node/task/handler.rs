@@ -1,3 +1,4 @@
+use super::NodeTask;
 use log::{debug, error, warn};
 use sak_p2p_peertable::{Peer, PeerStatus};
 use sak_p2p_transport::{
@@ -6,8 +7,6 @@ use sak_p2p_transport::{
 };
 use std::sync::Arc;
 use tokio::{net::TcpStream, sync::RwLock};
-
-use super::NodeTask;
 
 pub(in crate::node) async fn run(task: NodeTask) {
     // match task {
