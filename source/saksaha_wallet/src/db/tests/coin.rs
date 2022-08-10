@@ -1,12 +1,12 @@
 use crate::{
     db::{tests::make_dummy_db, WalletDB, USER_1, USER_2},
-    WalletError,
+    types::Status,
 };
 
-use sak_crypto::{rand, Hasher, Scalar, ScalarExt};
+use sak_crypto::{Hasher, Scalar, ScalarExt};
 use sak_types::U8Array;
 
-async fn get_dummy_random_gen_coins(
+async fn get_dummy_random_gen_coin(
 ) -> (Scalar, Scalar, Scalar, Scalar, Scalar, Scalar, Scalar, bool) {
     let hasher = Hasher::new();
 
@@ -41,15 +41,64 @@ async fn get_dummy_random_gen_coins(
     )
 }
 
+async fn get_dummy_coin(
+    rho: u64,
+    r: u64,
+    s: u64,
+    v: u64,
+    addr_sk: u64,
+) -> (
+    Scalar,
+    Scalar,
+    Scalar,
+    Scalar,
+    Scalar,
+    Scalar,
+    Scalar,
+    Status,
+) {
+    let hasher = Hasher::new();
+
+    let addr_sk = U8Array::from_int(addr_sk).to_owned();
+    let addr_pk = hasher.mimc_single(&addr_sk).unwrap();
+    let rho = U8Array::from_int(rho);
+    let r = U8Array::from_int(r);
+    let s = U8Array::from_int(s);
+    let v = U8Array::from_int(v);
+    let k = hasher.comm2_scalar(
+        ScalarExt::parse_arr(&r).unwrap(),
+        addr_pk,
+        ScalarExt::parse_arr(&rho).unwrap(),
+    );
+    let cm = hasher.comm2_scalar(
+        ScalarExt::parse_arr(&s).unwrap(),
+        ScalarExt::parse_arr(&v).unwrap(),
+        k,
+    );
+
+    let status = Status::Unused;
+
+    (
+        addr_pk,
+        ScalarExt::parse_arr(&addr_sk).unwrap(),
+        ScalarExt::parse_arr(&rho).unwrap(),
+        ScalarExt::parse_arr(&r).unwrap(),
+        ScalarExt::parse_arr(&s).unwrap(),
+        ScalarExt::parse_arr(&v).unwrap(),
+        cm,
+        status,
+    )
+}
+
 #[tokio::test(flavor = "multi_thread")]
-async fn test_wallet_store_coins() {
+async fn test_wallet_store_randomly_generated_coins() {
     sak_test_utils::init_test_log();
 
     let db = make_dummy_db().await;
 
     for idx in 0..5 {
         let (addr_pk, addr_sk, rho, r, s, v, cm, status) =
-            get_dummy_random_gen_coins().await;
+            get_dummy_random_gen_coin().await;
 
         db.schema
             .put_coin_data(
@@ -70,7 +119,7 @@ async fn test_wallet_store_coins() {
 
     for idx in 5..10 {
         let (addr_pk, addr_sk, rho, r, s, v, cm, status) =
-            get_dummy_random_gen_coins().await;
+            get_dummy_random_gen_coin().await;
 
         db.schema
             .put_coin_data(
@@ -106,5 +155,85 @@ async fn test_wallet_store_coins() {
 
         println!("[+] user_id: {:?}, USER_2: {:?}", user_id, USER_2);
         assert_eq!(user_id, USER_2);
+    }
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn test_wallet_store_coins() {
+    sak_test_utils::init_test_log();
+
+    let db = make_dummy_db().await;
+
+    for idx in 0..5 {
+        let (addr_pk, addr_sk, rho, r, s, v, cm, status) = get_dummy_coin(
+            10 + idx,
+            10 + idx,
+            10 + idx,
+            100 + idx * 100,
+            10 + idx,
+        )
+        .await;
+
+        db.schema
+            .put_coin_data(
+                &cm.to_string(),
+                &rho.to_string(),
+                &r.to_string(),
+                &s.to_string(),
+                &v.to_string(),
+                &addr_pk.to_string(),
+                &addr_sk.to_string(),
+                &USER_1.to_string(),
+                &status.to_string(),
+                &(idx as u128),
+            )
+            .await
+            .unwrap();
+    }
+
+    for idx in 0..5 {
+        let cm = db.schema.get_cm(&idx).await.unwrap().unwrap();
+        let rho = db.schema.get_rho(&cm).await.unwrap().unwrap();
+        let r = db.schema.get_r(&cm).await.unwrap().unwrap();
+        let s = db.schema.get_s(&cm).await.unwrap().unwrap();
+        let v = db.schema.get_v(&cm).await.unwrap().unwrap();
+        let addr_sk = db.schema.get_a_sk(&cm).await.unwrap().unwrap();
+        let user_id = db.schema.get_user_id(&cm).await.unwrap().unwrap();
+        let status = db.schema.get_status(&cm).await.unwrap().unwrap();
+
+        assert_eq!(user_id, USER_1);
+
+        assert_eq!(status, "Unused".to_string());
+
+        assert_eq!(
+            rho,
+            ScalarExt::parse_arr(&U8Array::from_int(&(idx as u64) + 10))
+                .unwrap()
+                .to_string()
+        );
+        assert_eq!(
+            r,
+            ScalarExt::parse_arr(&U8Array::from_int(&(idx as u64) + 10))
+                .unwrap()
+                .to_string()
+        );
+        assert_eq!(
+            s,
+            ScalarExt::parse_arr(&U8Array::from_int(&(idx as u64) + 10))
+                .unwrap()
+                .to_string()
+        );
+        assert_eq!(
+            addr_sk,
+            ScalarExt::parse_arr(&U8Array::from_int(&(idx as u64) + 10))
+                .unwrap()
+                .to_string()
+        );
+        assert_eq!(
+            v,
+            ScalarExt::parse_arr(&U8Array::from_int(&(idx as u64) * 100 + 100))
+                .unwrap()
+                .to_string()
+        );
     }
 }

@@ -1,5 +1,5 @@
 use crate::SaksahaError;
-use sak_crypto::Hasher;
+use sak_crypto::{Hasher, ScalarExt};
 use sak_types::{BlockCandidate, MintTxCandidate, TxCandidate, U8Array};
 
 pub(crate) const VALIDATOR_SIG: &str = "validator_sig";
@@ -26,17 +26,21 @@ impl GenesisBlock {
         let hasher = Hasher::new();
 
         let mint_tx_1 = {
-            let v = U8Array::new_empty_32();
+            let rho = U8Array::from_int(0x11);
 
-            let s = U8Array::new_empty_32();
+            let r = U8Array::from_int(0x12);
 
-            let r = U8Array::new_empty_32();
+            let s = U8Array::from_int(0x13);
 
-            let rho = U8Array::new_empty_32();
+            let v = U8Array::from_int(100);
 
-            let a_pk = U8Array::new_empty_32();
+            let a_sk = U8Array::from_int(0x14);
 
-            let k = hasher.comm2(&r, &a_pk, &rho)?;
+            let a_pk = hasher
+                .mimc_single_scalar(ScalarExt::parse_arr(&a_sk)?)
+                .unwrap();
+
+            let k = hasher.comm2(&r, &a_pk.to_bytes(), &rho)?;
 
             let cm = hasher.comm2(&s, &v, &k.to_bytes())?;
 
@@ -53,17 +57,21 @@ impl GenesisBlock {
         };
 
         let validator_deploy_tx = {
-            let v = U8Array::new_empty_32();
+            let rho = U8Array::from_int(0x21);
 
-            let s = U8Array::new_empty_32();
+            let r = U8Array::from_int(0x22);
 
-            let r = U8Array::new_empty_32();
+            let s = U8Array::from_int(0x23);
 
-            let rho = U8Array::new_empty_32();
+            let v = U8Array::from_int(100);
 
-            let a_pk = U8Array::new_empty_32();
+            let a_sk = U8Array::from_int(0x24);
 
-            let k = hasher.comm2(&r, &a_pk, &rho)?;
+            let a_pk = hasher
+                .mimc_single_scalar(ScalarExt::parse_arr(&a_sk)?)
+                .unwrap();
+
+            let k = hasher.comm2(&r, &a_pk.to_bytes(), &rho)?;
 
             let cm = hasher.comm2(&s, &v, &k.to_bytes())?;
 
