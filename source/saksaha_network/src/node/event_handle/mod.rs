@@ -14,7 +14,6 @@ pub(super) async fn handle_tx_pool_stat<'a>(
     new_tx_hashes: Vec<String>,
 ) {
     match conn
-        // .socket
         .send(Msg::TxHashSyn(TxHashSynMsg {
             tx_hashes: new_tx_hashes,
         }))

@@ -9,3 +9,5 @@ mod task;
 mod tests;
 
 pub(crate) use local_node::*;
+
+pub(crate) type SaksahaNodeError = Box<dyn std::error::Error + Send + Sync>;

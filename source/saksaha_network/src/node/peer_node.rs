@@ -1,6 +1,5 @@
 use super::msg_handle;
 use super::task::NodeTask;
-use super::task::NodeTaskQueue;
 use crate::{machine::Machine, node::event_handle};
 use futures::SinkExt;
 use futures::StreamExt;
@@ -17,7 +16,7 @@ pub(in crate::node) struct PeerNode {
     pub peer: Arc<Peer>,
     pub bc_event_rx: Receiver<DistLedgerEvent>,
     pub machine: Arc<Machine>,
-    pub task_queue: TaskQueue<NodeTask>,
+    pub task_queue: Arc<TaskQueue<NodeTask>>,
 }
 
 impl PeerNode {
@@ -28,20 +27,8 @@ impl PeerNode {
             self.peer.get_public_key_short()
         );
 
-        // let task_pusher = self.task_queue.new_pusher();
-
-        // tokio::spawn(async move {
-        //     println!("task push after 5 seconds");
-
-        //     tokio::time::sleep(Duration::from_secs(5)).await;
-
-        //     let t = NodeTask::Hello;
-
-        //     let _ = task_pusher.push_back(t).await;
-        // });
-
         loop {
-            let mut conn = &mut self.peer.transport.conn.write().await;
+            let mut conn_lock = &mut self.peer.transport.conn.write().await;
 
             let public_key = self.peer.get_public_key_short();
 
@@ -54,7 +41,7 @@ impl PeerNode {
                         DistLedgerEvent::NewBlocks(new_blocks) => {
                             event_handle::handle_new_blocks_ev(
                                 public_key,
-                                &mut conn,
+                                &mut conn_lock,
                                 &self.machine,
                                 new_blocks,
                             ).await;
@@ -62,7 +49,7 @@ impl PeerNode {
                         DistLedgerEvent::TxPoolStat(new_tx_hashes) => {
                             event_handle::handle_tx_pool_stat(
                                 public_key,
-                                &mut conn,
+                                &mut conn_lock,
                                 &self.machine,
                                 new_tx_hashes,
                             ).await;
@@ -98,31 +85,20 @@ impl PeerNode {
                 //         }
                 //     };
                 // },
-                maybe_msg = conn
-                    // .socket
+                maybe_msg = conn_lock
                     .next_msg() => {
                     println!("2222222222, pub_key: {}",
                         self.peer.get_public_key_short());
-
-                    let maybe_msg = match maybe_msg {
-                        Ok(m) => m,
-                        Err(err) => {
-                            error!("Could not receive a peer node msg, \
-                                err: {}", err);
-
-                            continue;
-                        }
-                    };
 
                     match maybe_msg {
                         Some(maybe_msg) => match maybe_msg {
                             Ok(msg) => {
                                 let _ = msg_handle::handle_msg(
                                     msg,
-                                    public_key,
                                     &self.machine,
-                                    &mut conn,
-
+                                    &mut conn_lock,
+                                    &self.task_queue,
+                                    &self.peer,
                                 ).await;
                             }
                             Err(err) => {
