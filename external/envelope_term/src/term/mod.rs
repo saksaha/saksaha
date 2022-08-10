@@ -103,7 +103,7 @@ pub async fn start_app(app: Arc<Mutex<App>>) -> Result<(), EnvelopeError> {
         let mut app = app.lock().await;
 
         // get_balance
-        let balance = get_balance_from_wallet(&"user_1".to_owned()).await;
+        // let balance = get_balance_from_wallet(&"user_1".to_owned()).await;
 
         // Render
         terminal.draw(|rect| views::draw(rect, &mut app))?;

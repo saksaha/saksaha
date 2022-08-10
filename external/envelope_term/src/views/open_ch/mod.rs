@@ -15,16 +15,31 @@ where
         .direction(Direction::Vertical)
         .constraints(
             [
-                Constraint::Length(3),
+                Constraint::Length(6),
                 Constraint::Min(10),
                 Constraint::Length(10),
             ]
             .as_ref(),
         )
         .split(size);
+    {
+        let head_chunks = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(
+                [
+                    Constraint::Length(3), //
+                    Constraint::Length(3),
+                ]
+                .as_ref(),
+            )
+            .split(chunks[0]);
 
-    let tabs = utils::draw_tabs(app.get_state());
-    rect.render_widget(tabs, chunks[0]);
+        let tabs = utils::draw_tabs(app.get_state());
+        rect.render_widget(tabs, head_chunks[0]);
+
+        let balance = utils::draw_balance(app.get_state());
+        rect.render_widget(balance, head_chunks[1]);
+    }
 
     let body_chunks = Layout::default()
         .direction(Direction::Vertical)
