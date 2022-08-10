@@ -1,4 +1,5 @@
 use super::{
+    event_handle::BlockchainEventRoutine,
     miner::Miner,
     peer_node::PeerNode,
     task::{runtime, NodeRuntimeCtx, NodeTask},
@@ -8,6 +9,7 @@ use futures::Future;
 use sak_p2p_peertable::PeerTable;
 use sak_task_queue::{TaskQueue, TaskRuntime};
 use std::{pin::Pin, sync::Arc};
+use tokio::sync::RwLock;
 
 pub(crate) struct LocalNode {
     pub(crate) peer_table: Arc<PeerTable>,
@@ -30,6 +32,20 @@ impl LocalNode {
             });
         }
 
+        let machine = self.machine.clone();
+        let bc_event_rx = {
+            let rx = machine
+                .blockchain
+                .dist_ledger
+                .bc_event_tx
+                .clone()
+                .read()
+                .await
+                .subscribe();
+
+            rx
+        };
+
         let node_task_queue = Arc::new(TaskQueue::new(100));
         let node_task_queue_clone = node_task_queue.clone();
         let node_task_min_interval = self.node_task_min_interval.clone();
@@ -47,6 +63,17 @@ impl LocalNode {
             // node_task_runtime.run().await;
         });
 
+        let mut bc_event_routine = BlockchainEventRoutine {
+            bc_event_rx,
+            // public_key: public_key.to_string(),
+            machine: self.machine.clone(),
+            node_task_queue: node_task_queue.clone(),
+        };
+
+        tokio::spawn(async move {
+            bc_event_routine.run().await;
+        });
+
         let peer_it = self.peer_table.new_iter();
         let mut peer_it_lock = peer_it.write().await;
 
@@ -58,22 +85,9 @@ impl LocalNode {
                 Err(_) => continue,
             };
 
-            let bc_event_rx = {
-                let rx = machine
-                    .blockchain
-                    .dist_ledger
-                    .bc_event_tx
-                    .clone()
-                    .read()
-                    .await
-                    .subscribe();
-
-                rx
-            };
-
             let mut peer_node = PeerNode {
                 peer,
-                bc_event_rx,
+                // bc_event_rx,
                 machine,
                 node_task_queue: node_task_queue.clone(),
             };
