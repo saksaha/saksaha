@@ -110,14 +110,12 @@ pub(crate) async fn run(task: P2PTask) {
             };
 
             let peer = {
-                let p = Peer {
-                    p2p_port: known_addr.p2p_port,
-                    public_key_str: known_addr.public_key_str.clone(),
-                    addr,
+                let p = Peer::new(
                     transport,
-                    status: RwLock::new(PeerStatus::HandshakeInit),
+                    RwLock::new(PeerStatus::HandshakeInit),
+                    addr,
                     peer_slot_guard,
-                };
+                );
 
                 Arc::new(p)
             };

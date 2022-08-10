@@ -59,16 +59,12 @@ impl Handler {
         };
 
         let peer = {
-            let p = Peer {
+            let p = Peer::new(
                 transport,
-                p2p_port: addr.known_addr.p2p_port,
-                public_key_str: addr.known_addr.public_key_str.clone(),
+                RwLock::new(PeerStatus::HandshakeSuccess { at: Utc::now() }),
                 addr,
-                status: RwLock::new(PeerStatus::HandshakeSuccess {
-                    at: Utc::now(),
-                }),
                 peer_slot_guard,
-            };
+            );
 
             Arc::new(p)
         };

@@ -1,26 +1,26 @@
 use super::msg_handle;
 use super::task::NodeTask;
-use crate::{machine::Machine, node::event_handle};
-use futures::SinkExt;
-use futures::StreamExt;
+use crate::{
+    machine::Machine,
+    node::event_handle::{self, BlockchainEventRoutine},
+};
 use log::{debug, error, warn};
 use sak_dist_ledger::DistLedgerEvent;
 use sak_p2p_peertable::{Peer, PeerStatus};
 use sak_p2p_transport::{BlockHashSynMsg, Msg};
 use sak_task_queue::TaskQueue;
 use std::sync::Arc;
-use std::time::Duration;
 use tokio::sync::broadcast::Receiver;
 
 pub(in crate::node) struct PeerNode {
     pub peer: Arc<Peer>,
-    pub bc_event_rx: Receiver<DistLedgerEvent>,
+    // pub bc_event_rx: Receiver<DistLedgerEvent>,
     pub machine: Arc<Machine>,
     pub node_task_queue: Arc<TaskQueue<NodeTask>>,
 }
 
 impl PeerNode {
-    pub(crate) async fn run(&mut self) {
+    pub(crate) async fn run(self) {
         debug!(
             "Peer is registered as a peer node. Starting the routine, \
             public_key : {}",
@@ -29,94 +29,31 @@ impl PeerNode {
 
         let public_key = self.peer.get_public_key_short();
         let node_task_queue = self.node_task_queue.clone();
-        // let bc_event_tx = self.bc_event_rx
 
-        tokio::spawn(async move {
-            loop {
-                let ev = match &self.bc_event_rx.recv().await {
-                    Ok(e) => e,
-                    Err(err) => {
-                        error!("Error receiving bc event, err: {}", err);
+        // let mut bc_event_routine = BlockchainEventRoutine {
+        //     bc_event_rx: self.bc_event_rx,
+        //     public_key: public_key.to_string(),
+        //     machine: self.machine.clone(),
+        //     node_task_queue: node_task_queue.clone(),
+        // };
 
-                        continue;
-                    }
-                };
-
-                println!(
-                    "111111111, peer pub_key: {}, ev: {:?}",
-                    self.peer.get_public_key_short(),
-                    ev
-                );
-
-                match ev {
-                    DistLedgerEvent::NewBlocks(new_blocks) => {
-                        event_handle::handle_new_blocks_ev(
-                            public_key,
-                            // &mut conn_lock,
-                            &self.machine,
-                            new_blocks,
-                            node_task_queue,
-                        )
-                        .await;
-                    }
-                    DistLedgerEvent::TxPoolStat(new_tx_hashes) => {
-                        event_handle::handle_tx_pool_stat(
-                            public_key,
-                            // &mut conn_lock,
-                            &self.machine,
-                            new_tx_hashes,
-                            node_task_queue,
-                        )
-                        .await;
-                    }
-                };
-
-                println!(
-                    "--end 111111111, pub_key: {}",
-                    self.peer.get_public_key_short()
-                );
-            }
-        });
+        // tokio::spawn(async move {
+        //     bc_event_routine.run().await;
+        // });
 
         loop {
             let mut conn_lock =
                 &mut self.peer.get_transport().conn.write().await;
 
             tokio::select! {
-                // Ok(ev) = self.bc_event_rx.recv() => {
-                //     println!("111111111, peer pub_key: {}, ev: {:?}",
-                //         self.peer.get_public_key_short(), ev);
-
-                //     match ev {
-                //         DistLedgerEvent::NewBlocks(new_blocks) => {
-                //             event_handle::handle_new_blocks_ev(
-                //                 public_key,
-                //                 &mut conn_lock,
-                //                 &self.machine,
-                //                 new_blocks,
-                //             ).await;
-                //         },
-                //         DistLedgerEvent::TxPoolStat(new_tx_hashes) => {
-                //             event_handle::handle_tx_pool_stat(
-                //                 public_key,
-                //                 &mut conn_lock,
-                //                 &self.machine,
-                //                 new_tx_hashes,
-                //             ).await;
-                //         },
-                //     };
-
-                //     println!("--end 111111111, pub_key: {}",
-                //         self.peer.get_public_key_short());
-                // },
                 Ok(task) = self.node_task_queue.pop_front() => {
-                    let blocks = self.machine
-                        .blockchain
-                        .dist_ledger
-                        .apis
-                        .get_entire_block_info_list()
-                        .await
-                        .unwrap_or(vec![]);
+                    // let blocks = self.machine
+                    //     .blockchain
+                    //     .dist_ledger
+                    //     .apis
+                    //     .get_entire_block_info_list()
+                    //     .await
+                    //     .unwrap_or(vec![]);
 
                     // match conn
                     //     .socket
@@ -172,41 +109,41 @@ impl PeerNode {
         }
     }
 
-    pub(crate) async fn run_hello(&mut self) {
-        debug!(
-            "Peer is registered as a peer node. Say hello, \
-            public_key : {}",
-            self.peer.get_public_key_short()
-        );
+    // pub(crate) async fn run_hello(&mut self) {
+    //     debug!(
+    //         "Peer is registered as a peer node. Say hello, \
+    //         public_key : {}",
+    //         self.peer.get_public_key_short()
+    //     );
 
-        let peer_clone = self.peer.clone();
-        let machine_clone = self.machine.clone();
+    //     let peer_clone = self.peer.clone();
+    //     let machine_clone = self.machine.clone();
 
-        let _ = tokio::spawn(async move {
-            tokio::time::sleep(Duration::from_secs(2)).await;
+    //     let _ = tokio::spawn(async move {
+    //         tokio::time::sleep(Duration::from_secs(2)).await;
 
-            let mut conn = peer_clone.get_transport().conn.write().await;
+    //         let mut conn = peer_clone.get_transport().conn.write().await;
 
-            let blocks = machine_clone
-                .blockchain
-                .dist_ledger
-                .apis
-                .get_entire_block_info_list()
-                .await
-                .unwrap_or(vec![]);
+    //         let blocks = machine_clone
+    //             .blockchain
+    //             .dist_ledger
+    //             .apis
+    //             .get_entire_block_info_list()
+    //             .await
+    //             .unwrap_or(vec![]);
 
-            match conn
-                .send(Msg::BlockHashSyn(BlockHashSynMsg { new_blocks: blocks }))
-                .await
-            {
-                Ok(_) => {
-                    debug!("Sending BlockHashSyn",);
-                }
-                Err(err) => {
-                    warn!("Failed to BlockHashSyn, err: {}", err,);
-                }
-            };
-        })
-        .await;
-    }
+    //         match conn
+    //             .send(Msg::BlockHashSyn(BlockHashSynMsg { new_blocks: blocks }))
+    //             .await
+    //         {
+    //             Ok(_) => {
+    //                 debug!("Sending BlockHashSyn",);
+    //             }
+    //             Err(err) => {
+    //                 warn!("Failed to BlockHashSyn, err: {}", err,);
+    //             }
+    //         };
+    //     })
+    //     .await;
+    // }
 }
