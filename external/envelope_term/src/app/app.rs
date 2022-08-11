@@ -4,6 +4,7 @@ use crate::db::EnvelopeDB;
 use crate::db::{USER_1, USER_2};
 use crate::io::InputMode;
 use crate::io::IoEvent;
+use crate::term::get_balance_from_wallet;
 use crate::{app::actions::Action, ENVELOPE_CTR_ADDR};
 use crate::{inputs::key::Key, EnvelopeError};
 use chrono::Local;
@@ -105,6 +106,10 @@ impl App {
                         _ => {}
                     }
 
+                    AppReturn::Continue
+                }
+                Action::UpdateBalance => {
+                    self.state.set_balance().await;
                     AppReturn::Continue
                 }
             }
@@ -244,6 +249,8 @@ impl App {
             Action::Down,
             Action::Up,
             Action::Right,
+            //
+            Action::UpdateBalance,
         ]
         .into();
 
