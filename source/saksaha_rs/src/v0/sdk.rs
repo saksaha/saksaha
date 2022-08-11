@@ -45,7 +45,7 @@ pub struct SendPourTxRequest {
     #[serde(with = "serde_bytes")]
     pi: Vec<u8>,
     sn_1: [u8; 32],
-    sn_2: [u8; 32],
+    // sn_2: [u8; 32],
     cm_1: [u8; 32],
     cm_2: [u8; 32],
     merkle_rt: [u8; 32],
@@ -59,7 +59,7 @@ impl SendPourTxRequest {
         ctr_addr: Option<String>,
         pi: Vec<u8>,
         sn_1: [u8; 32],
-        sn_2: [u8; 32],
+        // sn_2: [u8; 32],
         cm_1: [u8; 32],
         cm_2: [u8; 32],
         merkle_rt: [u8; 32],
@@ -71,7 +71,7 @@ impl SendPourTxRequest {
             ctr_addr,
             pi,
             sn_1,
-            sn_2,
+            // sn_2,
             cm_1,
             cm_2,
             merkle_rt,
@@ -117,6 +117,12 @@ impl SendMintTxRequest {
 }
 
 pub async fn send_tx_pour(
+    // pi: Proof<Bls12>,
+    // sn_1: U8Array,
+    // sn_2: U8Array,
+    // cm_1: Scalar,
+    // cm_2: Scalar,
+    // merkle_rt: Scalar,
     ctr_addr: String,
     req_type: String,
     args: RequestArgs,
@@ -142,7 +148,7 @@ pub async fn send_tx_pour(
             //
             vec![11, 11, 11],        // pi
             U8Array::new_empty_32(), // sn_1
-            U8Array::new_empty_32(), // sn_2 (will be deleted)
+            // U8Array::new_empty_32(), // sn_2 (will be deleted)
             U8Array::new_empty_32(), // cm_1
             U8Array::new_empty_32(), // cm_2
             U8Array::new_empty_32(), // merkle_rt

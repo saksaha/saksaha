@@ -2,6 +2,7 @@ use super::Status;
 use sak_crypto::Hasher;
 use sak_crypto::Scalar;
 use sak_crypto::ScalarExt;
+use sak_proofs::NewCoin;
 use sak_types::Balance;
 use sak_types::U8Array;
 
@@ -27,7 +28,7 @@ pub(crate) struct Coin {
 }
 
 impl Coin {
-    pub(crate) fn new(value: u64, user_id: String) -> Coin {
+    pub(crate) fn new(value: u64, user_id: &String) -> Coin {
         let hasher = Hasher::new();
 
         let addr_sk = U8Array::from_int(sak_crypto::rand() as u64).to_owned();
@@ -62,24 +63,22 @@ impl Coin {
             s: Some(s),
             v: Some(v),
             cm: Some(cm),
-            user_id: Some(user_id),
+            user_id: Some(user_id.clone()),
             status: Some(Status::Unused),
         }
     }
-}
-
-pub(crate) struct OwnCoin {
-    pub addr_sk: Option<Scalar>,
-
-    pub rho: Option<Scalar>,
-
-    pub r: Option<Scalar>,
-
-    pub s: Option<Scalar>,
-
-    pub v: Option<Scalar>,
-
-    pub user_id: Option<String>,
-
-    pub status: Option<Status>,
+    pub(crate) fn extract(&self) -> NewCoin {
+        let addr_pk = self.addr_pk;
+        let rho = self.rho;
+        let r = self.r;
+        let s = self.s;
+        let v = self.v;
+        NewCoin {
+            addr_pk,
+            rho,
+            r,
+            s,
+            v,
+        }
+    }
 }
