@@ -2,7 +2,7 @@ use super::msg_handle;
 use super::task::NodeTask;
 use crate::{
     machine::Machine,
-    node::event_handle::{self, BlockchainEventRoutine},
+    node::event_handle::{self, LedgerEventRoutine},
 };
 use log::{debug, error, warn};
 use sak_dist_ledger::DistLedgerEvent;
@@ -29,17 +29,6 @@ impl PeerNode {
 
         let public_key = self.peer.get_public_key_short();
         let node_task_queue = self.node_task_queue.clone();
-
-        // let mut bc_event_routine = BlockchainEventRoutine {
-        //     bc_event_rx: self.bc_event_rx,
-        //     public_key: public_key.to_string(),
-        //     machine: self.machine.clone(),
-        //     node_task_queue: node_task_queue.clone(),
-        // };
-
-        // tokio::spawn(async move {
-        //     bc_event_routine.run().await;
-        // });
 
         loop {
             let mut conn_lock =

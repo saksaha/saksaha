@@ -1,5 +1,5 @@
 use super::{
-    event_handle::BlockchainEventRoutine,
+    event_handle::LedgerEventRoutine,
     miner::Miner,
     peer_node::PeerNode,
     task::{NodeTask, NodeTaskRuntime, NodeTaskRuntimeCtx},
@@ -26,7 +26,7 @@ impl LocalNode {
         let node_task_queue = Arc::new(TaskQueue::new(100));
 
         {
-            // miner routine
+            // Miner routine
             if self.miner {
                 tokio::spawn(async move {
                     let mut miner = Miner::init(machine, mine_interval);
@@ -37,7 +37,7 @@ impl LocalNode {
         }
 
         {
-            // node task routine
+            // Node task routine
             let node_task_queue_clone = node_task_queue.clone();
             let node_runtime_ctx = NodeTaskRuntimeCtx {
                 peer_table: self.peer_table.clone(),
@@ -54,13 +54,13 @@ impl LocalNode {
         }
 
         {
-            // blockchain event routine
+            // Ledger event routine
             let machine = self.machine.clone();
-            let bc_event_rx = {
+            let ledger_event_rx = {
                 let rx = machine
                     .blockchain
                     .dist_ledger
-                    .bc_event_tx
+                    .ledger_event_tx
                     .clone()
                     .read()
                     .await
@@ -69,14 +69,14 @@ impl LocalNode {
                 rx
             };
 
-            let mut bc_event_routine = BlockchainEventRoutine {
-                bc_event_rx,
+            let mut ledger_event_routine = LedgerEventRoutine {
+                ledger_event_rx,
                 machine: self.machine.clone(),
                 node_task_queue: node_task_queue.clone(),
             };
 
             tokio::spawn(async move {
-                bc_event_routine.run().await;
+                ledger_event_routine.run().await;
             });
         }
 
