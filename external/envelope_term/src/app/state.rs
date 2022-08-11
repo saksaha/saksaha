@@ -108,7 +108,10 @@ impl AppState {
 
     pub fn set_chats(&mut self, data: String) {
         self.chats = match serde_json::from_str::<Vec<String>>(&data) {
-            Ok(c) => c.into_iter().map(|m| ChatMessage::new(m)).collect(),
+            Ok(c) => c
+                .into_iter()
+                .map(|m| ChatMessage::new(m, "undefined".to_string()))
+                .collect(),
             Err(err) => {
                 panic!("Cannot Deserialize `msg`:, err: {}", err);
             }
@@ -116,7 +119,9 @@ impl AppState {
     }
 
     pub fn set_input_messages(&mut self, msg: String) {
-        self.chats.push(ChatMessage::new(msg));
+        let user = String::from("me");
+
+        self.chats.push(ChatMessage::new(msg, user));
     }
 
     pub fn set_view_landing(&mut self) {
@@ -196,13 +201,15 @@ impl Default for AppState {
 pub struct ChatMessage {
     pub date: DateTime<Local>,
     pub msg: String,
+    pub user: String,
 }
 
 impl ChatMessage {
-    pub fn new(msg: String) -> ChatMessage {
+    pub fn new(msg: String, user: String) -> ChatMessage {
         ChatMessage {
             date: Local::now(),
             msg,
+            user,
         }
     }
 }
