@@ -27,7 +27,6 @@ serde_yaml = "0.8"
 unicode-width = "0.1.5"
 chrono = "0.4"
 envelope_contract = { path = "../envelope_contract" }
-
 hyper = { version = "0.14", features = ["full"] }
 sak_rpc_interface = { path = "../../source/sak_rpc_interface" }
 

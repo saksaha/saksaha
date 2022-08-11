@@ -1,9 +1,4 @@
 use hyper::{Body, Client, Method, Request, Uri};
-use log::debug;
-// use sak_contract_std::Request;
-// use sak_types::U8Array;
-// use std::env::Args;
-// use std::time::SystemTime;
 use sak_rpc_interface::{JsonRequest, JsonResponse};
 
 use crate::EnvelopeError;
@@ -45,30 +40,4 @@ pub async fn get_balance_from_wallet(
     let json_response = serde_json::from_slice::<JsonResponse<String>>(&b)?;
 
     Ok(json_response)
-}
-
-pub async fn get_balance() -> Result<String, EnvelopeError> {
-    let result = match get_balance_from_wallet(&"user_1".to_owned()).await {
-        Ok(b) => {
-            let ret = b.result;
-
-            match ret {
-                Some(b) => b,
-                None => {
-                    return Err(
-                        format!("Failed to get balance from wallet").into()
-                    )
-                }
-            }
-        }
-        Err(err) => {
-            return Err(format!(
-                "Failed to get balance from wallet, err: {:?}",
-                err
-            )
-            .into())
-        }
-    };
-
-    Ok(result)
 }
