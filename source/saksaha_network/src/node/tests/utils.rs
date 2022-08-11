@@ -20,7 +20,8 @@ pub(crate) async fn create_client(
     miner: bool,
 ) -> (
     P2PHost,
-    Arc<LocalNode>,
+    // Arc<LocalNode>,
+    LocalNode,
     Arc<Machine>,
     Arc<PeerTable>,
     Arc<Identity>,
@@ -129,7 +130,7 @@ pub(crate) async fn create_client(
             node_task_min_interval: None,
         };
 
-        Arc::new(ln)
+        ln
     };
 
     (p2p_host, local_node, machine, p2p_peer_table, identity)
