@@ -7,16 +7,14 @@ use futures::{stream::SplitSink, SinkExt};
 use log::{debug, info, warn};
 use sak_p2p_peertable::Peer;
 use sak_p2p_transport::{
-    BlockHashSynMsg, BlockSynMsg, Msg, TxHashSynMsg, TxSynMsg, UpgradedConn,
-    UpgradedP2PCodec,
+    BlockHashSynMsg, BlockSynMsg, Msg, MsgType, TxAckMsg, TxHashSynMsg,
+    TxSynMsg, UpgradedConn, UpgradedP2PCodec,
 };
 use sak_task_queue::TaskQueue;
 use sak_types::TxCandidate;
 use std::sync::Arc;
 use tokio::{net::TcpStream, sync::RwLockWriteGuard};
 
-// send tx_syn
-// recv tx_ack
 pub(in crate::node) async fn send_tx_syn(
     peer: &Arc<Peer>,
     tx_candidates: Vec<TxCandidate>,
@@ -34,12 +32,36 @@ pub(in crate::node) async fn send_tx_syn(
         .await
         .ok_or(format!("tx syn needs to be followed by tx syn ack"))??;
 
+    let msg = match msg {
+        Msg::TxAck(m) => (),
+        _ => {
+            return Err(
+                format!("Only tx ack should arrive at this point").into()
+            );
+        }
+    };
+
     Ok(())
 }
 
-// recv tx_syn
-// send tx_ack
-pub(in crate::node) async fn recv_tx_syn() {}
+pub(in crate::node) async fn recv_tx_syn(
+    tx_syn: TxSynMsg,
+    machine: &Machine,
+    mut conn: RwLockWriteGuard<'_, UpgradedConn>,
+) -> Result<(), SaksahaNodeError> {
+    machine
+        .blockchain
+        .dist_ledger
+        .apis
+        .insert_into_pool(tx_syn.tx_candidates)
+        .await;
+
+    let msg = Msg::TxAck(TxAckMsg {});
+
+    conn.send(msg).await;
+
+    Ok(())
+}
 
 pub(super) async fn handle_tx_hash_syn<'a>(
     tx_hash_syn_msg: TxHashSynMsg,

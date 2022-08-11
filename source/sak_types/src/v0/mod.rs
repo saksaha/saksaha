@@ -2,7 +2,7 @@ mod balance;
 mod block;
 mod block_candidate;
 mod hashable;
-pub mod tx;
+mod tx;
 mod u8_array;
 
 pub use balance::*;
