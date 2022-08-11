@@ -36,22 +36,22 @@ impl LocalNode {
             }
         }
 
-        {
-            // Node task routine
-            let node_task_queue_clone = node_task_queue.clone();
-            let node_runtime_ctx = NodeTaskRuntimeCtx {
-                peer_table: self.peer_table.clone(),
-            };
-            let node_task_runtime = NodeTaskRuntime::new(
-                node_task_queue_clone,
-                self.node_task_min_interval,
-                node_runtime_ctx,
-            );
+        // {
+        //     // Node task routine
+        //     let node_task_queue_clone = node_task_queue.clone();
+        //     let node_runtime_ctx = NodeTaskRuntimeCtx {
+        //         peer_table: self.peer_table.clone(),
+        //     };
+        //     let node_task_runtime = NodeTaskRuntime::new(
+        //         node_task_queue_clone,
+        //         self.node_task_min_interval,
+        //         node_runtime_ctx,
+        //     );
 
-            tokio::spawn(async move {
-                node_task_runtime.run().await;
-            });
-        }
+        //     tokio::spawn(async move {
+        //         node_task_runtime.run().await;
+        //     });
+        // }
 
         {
             // Ledger event routine
@@ -93,7 +93,6 @@ impl LocalNode {
 
             let mut peer_node = PeerNode {
                 peer,
-                // bc_event_rx,
                 machine,
                 node_task_queue: node_task_queue.clone(),
             };

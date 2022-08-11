@@ -5,17 +5,23 @@ use sak_p2p_transport::{
     BlockHashSynMsg, Msg, TxHashSynMsg, UpgradedConn, UpgradedP2PCodec,
 };
 use sak_task_queue::TaskQueue;
+use sak_types::{BlockHash, BlockHeight, TxHash};
 use std::sync::Arc;
 use tokio::{net::TcpStream, sync::RwLockWriteGuard};
 use tokio_util::codec::Framed;
 
 pub(super) async fn handle_tx_pool_stat<'a>(
-    // public_key: &str,
-    // conn: &'a mut RwLockWriteGuard<'_, UpgradedConn>,
     _machine: &Machine,
-    new_tx_hashes: &Vec<String>,
+    new_tx_hashes: Vec<TxHash>,
     node_task_queue: &Arc<TaskQueue<NodeTask>>,
 ) {
+    node_task_queue
+        .push_back(NodeTask::SendTxHashSyn {
+            tx_hashes: new_tx_hashes,
+            her_public_key: None,
+        })
+        .await;
+
     // match conn
     //     .send(Msg::TxHashSyn(TxHashSynMsg {
     //         tx_hashes: new_tx_hashes,
@@ -35,12 +41,17 @@ pub(super) async fn handle_tx_pool_stat<'a>(
 }
 
 pub(super) async fn handle_new_blocks_ev<'a>(
-    // public_key: &str,
-    // conn: &'a mut RwLockWriteGuard<'_, UpgradedConn>,
     _machine: &Machine,
-    new_blocks: &Vec<(u128, String)>,
+    new_blocks: Vec<(BlockHeight, BlockHash)>,
     node_task_queue: &Arc<TaskQueue<NodeTask>>,
 ) {
+    node_task_queue
+        .push_back(NodeTask::SendBlockHashSyn {
+            new_blocks: new_blocks.clone(),
+            her_public_key: None,
+        })
+        .await;
+
     // match conn
     //     // .socket
     //     .send(Msg::BlockHashSyn(BlockHashSynMsg {
@@ -60,32 +71,32 @@ pub(super) async fn handle_new_blocks_ev<'a>(
     // };
 }
 
-pub(super) async fn handle_new_peers_ev<'a>(
-    // public_key: &str,
-    conn: &'a mut RwLockWriteGuard<'_, UpgradedConn>,
-    machine: &Machine,
-) {
-    let blocks = machine
-        .blockchain
-        .dist_ledger
-        .apis
-        .get_entire_block_info_list()
-        .await
-        .unwrap_or(vec![]);
+// pub(super) async fn handle_new_peers_ev<'a>(
+//     // public_key: &str,
+//     conn: &'a mut RwLockWriteGuard<'_, UpgradedConn>,
+//     machine: &Machine,
+// ) {
+//     let blocks = machine
+//         .blockchain
+//         .dist_ledger
+//         .apis
+//         .get_entire_block_info_list()
+//         .await
+//         .unwrap_or(vec![]);
 
-    match conn
-        // .socket
-        .send(Msg::BlockHashSyn(BlockHashSynMsg { new_blocks: blocks }))
-        .await
-    {
-        Ok(_) => {
-            // info!("Sending block hash syn, dst public_key: {}", public_key);
-        }
-        Err(err) => {
-            warn!(
-                "Failed to request to synchronize with peer node, err: {}",
-                err,
-            );
-        }
-    };
-}
+//     match conn
+//         // .socket
+//         .send(Msg::BlockHashSyn(BlockHashSynMsg { new_blocks: blocks }))
+//         .await
+//     {
+//         Ok(_) => {
+//             // info!("Sending block hash syn, dst public_key: {}", public_key);
+//         }
+//         Err(err) => {
+//             warn!(
+//                 "Failed to request to synchronize with peer node, err: {}",
+//                 err,
+//             );
+//         }
+//     };
+// }

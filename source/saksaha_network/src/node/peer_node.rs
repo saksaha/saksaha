@@ -34,67 +34,95 @@ impl PeerNode {
             let mut conn_lock =
                 &mut self.peer.get_transport().conn.write().await;
 
-            tokio::select! {
-                Ok(task) = self.node_task_queue.pop_front() => {
-                    // let blocks = self.machine
-                    //     .blockchain
-                    //     .dist_ledger
-                    //     .apis
-                    //     .get_entire_block_info_list()
-                    //     .await
-                    //     .unwrap_or(vec![]);
+            let maybe_msg = conn_lock.next_msg().await;
 
-                    // match conn
-                    //     .socket
-                    //     .send(Msg::BlockHashSyn(
-                    //         BlockHashSynMsg {
-                    //             new_blocks: blocks
-                    //         }
-                    //     ))
-                    //     .await
-                    // {
-                    //     Ok(_) => {
-                    //         debug!("Sending BlockHashSyn",);
-                    //     }
-                    //     Err(err) => {
-                    //         warn!("Failed to BlockHashSyn, err: {}", err,);
-                    //     }
-                    // };
+            match maybe_msg {
+                Some(maybe_msg) => match maybe_msg {
+                    Ok(msg) => {
+                        let _ = msg_handle::handle_msg(
+                            msg,
+                            &self.machine,
+                            &mut conn_lock,
+                            &self.node_task_queue,
+                            &self.peer,
+                        )
+                        .await;
+                    }
+                    Err(err) => {
+                        warn!("Failed to parse the msg, err: {}", err);
+                    }
                 },
-                maybe_msg = conn_lock
-                    .next_msg() => {
-                    println!("2222222222, pub_key: {}",
-                        self.peer.get_public_key_short());
+                None => {
+                    warn!("Peer has ended the connection");
 
-                    match maybe_msg {
-                        Some(maybe_msg) => match maybe_msg {
-                            Ok(msg) => {
-                                let _ = msg_handle::handle_msg(
-                                    msg,
-                                    &self.machine,
-                                    &mut conn_lock,
-                                    &self.node_task_queue,
-                                    &self.peer,
-                                ).await;
-                            }
-                            Err(err) => {
-                                warn!("Failed to parse the msg, err: {}", err);
-                            }
-                        }
-                        None => {
-                            warn!("Peer has ended the connection");
+                    self.peer.set_peer_status(PeerStatus::Disconnected).await;
 
-                            self.peer.set_peer_status(PeerStatus::Disconnected)
-                                .await;
-
-                            return;
-                        }
-                    };
-
-                    println!("---end 2222222222, pub_key: {}",
-                        self.peer.get_public_key_short());
+                    return;
                 }
             };
+
+            // tokio::select! {
+            //     Ok(task) = self.node_task_queue.pop_front() => {
+            //         // let blocks = self.machine
+            //         //     .blockchain
+            //         //     .dist_ledger
+            //         //     .apis
+            //         //     .get_entire_block_info_list()
+            //         //     .await
+            //         //     .unwrap_or(vec![]);
+
+            //         // match conn
+            //         //     .socket
+            //         //     .send(Msg::BlockHashSyn(
+            //         //         BlockHashSynMsg {
+            //         //             new_blocks: blocks
+            //         //         }
+            //         //     ))
+            //         //     .await
+            //         // {
+            //         //     Ok(_) => {
+            //         //         debug!("Sending BlockHashSyn",);
+            //         //     }
+            //         //     Err(err) => {
+            //         //         warn!("Failed to BlockHashSyn, err: {}", err,);
+            //         //     }
+            //         // };
+            //     },
+            //     // maybe_msg =
+            //         conn_lock
+            //         .next_msg() => {
+            //         println!("2222222222, pub_key: {}",
+            //             self.peer.get_public_key_short());
+
+            //         match maybe_msg {
+            //             Some(maybe_msg) => match maybe_msg {
+            //                 Ok(msg) => {
+            //                     let _ = msg_handle::handle_msg(
+            //                         msg,
+            //                         &self.machine,
+            //                         &mut conn_lock,
+            //                         &self.node_task_queue,
+            //                         &self.peer,
+            //                     ).await;
+            //                 }
+            //                 Err(err) => {
+            //                     warn!("Failed to parse the msg, err: {}", err);
+            //                 }
+            //             }
+            //             None => {
+            //                 warn!("Peer has ended the connection");
+
+            //                 self.peer.set_peer_status(PeerStatus::Disconnected)
+            //                     .await;
+
+            //                 return;
+            //             }
+            //         };
+
+            //         println!("---end 2222222222, pub_key: {}",
+            //             self.peer.get_public_key_short());
+            //     }
+            // };
         }
     }
 

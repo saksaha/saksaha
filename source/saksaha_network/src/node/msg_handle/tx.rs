@@ -66,7 +66,7 @@ pub(super) async fn handle_tx_hash_syn<'a>(
     task_queue
         .push_back(NodeTask::SendTxSyn {
             tx_candidates,
-            her_public_key: peer.get_public_key().to_string(),
+            her_public_key: Some(peer.get_public_key().to_string()),
         })
         .await?;
 

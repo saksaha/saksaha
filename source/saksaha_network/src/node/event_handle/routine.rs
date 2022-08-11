@@ -34,7 +34,7 @@ impl LedgerEventRoutine {
                 DistLedgerEvent::NewBlocks(new_blocks) => {
                     event_handle::handle_new_blocks_ev(
                         &self.machine,
-                        &new_blocks,
+                        new_blocks,
                         &self.node_task_queue,
                     )
                     .await;
@@ -42,7 +42,7 @@ impl LedgerEventRoutine {
                 DistLedgerEvent::TxPoolStat(new_tx_hashes) => {
                     event_handle::handle_tx_pool_stat(
                         &self.machine,
-                        &new_tx_hashes,
+                        new_tx_hashes,
                         &self.node_task_queue,
                     )
                     .await;
