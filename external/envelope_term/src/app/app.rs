@@ -92,6 +92,11 @@ impl App {
                 Action::Right => {
                     match self.get_state().view {
                         View::ChList => {
+                            let curr_ch = self
+                                .state
+                                .ch_list_state
+                                .selected()
+                                .unwrap_or(0);
                             self.get_messages().await;
                             self.state.set_view_chat();
                         }

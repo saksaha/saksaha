@@ -297,6 +297,10 @@ where
 
                 Spans::from(vec![
                     Span::styled(date, Style::default().fg(Color::DarkGray)),
+                    Span::styled(
+                        format!("({}) ", m.user),
+                        Style::default().fg(Color::LightYellow),
+                    ),
                     Span::raw(format!("{}", m.msg)),
                 ])
             })
