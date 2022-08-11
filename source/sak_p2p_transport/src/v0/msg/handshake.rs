@@ -1,4 +1,4 @@
-use crate::{TrptError, HANDSHAKE_ACK_TYPE, HANDSHAKE_SYN_TYPE};
+use crate::{MsgType, TrptError};
 use bytes::{BufMut, Bytes, BytesMut};
 use sak_p2p_frame::{Frame, Parse};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -103,10 +103,10 @@ impl Handshake {
     }
 
     pub fn into_syn_frame(&self) -> Frame {
-        self.into_frame(HANDSHAKE_SYN_TYPE)
+        self.into_frame(MsgType::HANDSHAKE_SYN)
     }
 
     pub fn into_ack_frame(&self) -> Frame {
-        self.into_frame(HANDSHAKE_ACK_TYPE)
+        self.into_frame(MsgType::HANDSHAKE_ACK)
     }
 }

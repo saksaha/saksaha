@@ -1,3 +1,5 @@
+use crate::node::msg_handle;
+
 use super::NodeTask;
 use async_trait::async_trait;
 use log::{debug, error, warn};
@@ -59,24 +61,12 @@ async fn handle_send_tx_syn(
             &her_public_key
         ))?;
 
-        let mut conn = peer.get_transport().conn.write().await;
-
-        let tx_syn_msg = Msg::TxSyn(TxSynMsg {
-            tx_candidates: tx_candidates.clone(),
-        });
-
-        conn.send(tx_syn_msg).await?;
+        msg_handle::send_tx_syn(&peer, tx_candidates).await?;
     } else {
         let peer_map_lock = peer_table.get_peer_map().read().await;
 
         for (_pk, peer) in peer_map_lock.iter() {
-            let mut conn = peer.get_transport().conn.write().await;
-
-            let tx_syn_msg = Msg::TxSyn(TxSynMsg {
-                tx_candidates: tx_candidates.clone(),
-            });
-
-            conn.send(tx_syn_msg).await?;
+            msg_handle::send_tx_syn(peer, tx_candidates.clone()).await?;
         }
     }
 
