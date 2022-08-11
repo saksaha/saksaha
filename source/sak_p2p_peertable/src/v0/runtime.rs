@@ -1,4 +1,4 @@
-use crate::{PTableError, PeerMap, PeerStatus};
+use crate::{PeerMap, PeerStatus, PeerTableError};
 use log::debug;
 use std::{
     sync::Arc,
@@ -54,7 +54,7 @@ async fn get_all_public_keys(peer_map: &Arc<RwLock<PeerMap>>) -> Vec<String> {
 async fn drop_peer_if_necessary(
     peer_map: &Arc<RwLock<PeerMap>>,
     public_key: &String,
-) -> Result<(), PTableError> {
+) -> Result<(), PeerTableError> {
     let mut peer_map_lock = peer_map.write().await;
 
     let peer = match peer_map_lock.get(public_key) {

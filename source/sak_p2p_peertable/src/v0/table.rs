@@ -1,4 +1,4 @@
-use crate::{Peer, PeerIterator, Runtime, Slot, SlotGuard};
+use crate::{Peer, PeerIterator, PeerTableError, Runtime, Slot, SlotGuard};
 use colored::Colorize;
 use log::{debug, error, info};
 use std::{collections::HashMap, sync::Arc};
@@ -7,8 +7,7 @@ use tokio::sync::{
     RwLock,
 };
 
-// const PEER_TABLE_CAPACITY: usize = 50;
-const PEER_TABLE_CAPACITY: isize = 5;
+const PEER_TABLE_CAPACITY: isize = 30;
 
 pub type PublicKey = String;
 pub type PeerMap = HashMap<PublicKey, Arc<Peer>>;
@@ -24,7 +23,7 @@ pub struct PeerTable {
 impl PeerTable {
     pub async fn init(
         peer_table_capacity: Option<i16>,
-    ) -> Result<PeerTable, String> {
+    ) -> Result<PeerTable, PeerTableError> {
         let capacity = match peer_table_capacity {
             Some(c) => c.into(),
             None => PEER_TABLE_CAPACITY,
@@ -89,7 +88,7 @@ impl PeerTable {
         &self,
         public_key: &PublicKey,
     ) -> Option<Arc<Peer>> {
-        let peers_map_lock = self.peer_map.write().await;
+        let peers_map_lock = self.peer_map.read().await;
 
         match peers_map_lock.get(public_key) {
             Some(n) => {
@@ -101,7 +100,7 @@ impl PeerTable {
         };
     }
 
-    pub async fn get_empty_slot(&self) -> Result<SlotGuard, String> {
+    pub async fn get_empty_slot(&self) -> Result<SlotGuard, PeerTableError> {
         let mut slots_rx = self.slots_rx.write().await;
 
         match slots_rx.recv().await {
@@ -115,8 +114,9 @@ impl PeerTable {
             }
             None => {
                 return Err(format!(
-                    "Unusual circumstance. Peer slots have been closed"
-                ));
+                    "Peer slots have beeen closed. Critical error"
+                )
+                .into());
             }
         }
     }
@@ -124,7 +124,7 @@ impl PeerTable {
     pub async fn insert_mapping(
         &self,
         peer: Arc<Peer>,
-    ) -> Result<Option<Arc<Peer>>, String> {
+    ) -> Result<Option<Arc<Peer>>, PeerTableError> {
         let public_key_str = peer.get_public_key().to_string();
 
         debug!(
@@ -132,14 +132,16 @@ impl PeerTable {
             peer.get_public_key_short().green(),
         );
 
+        let mut peer_map = self.peer_map.write().await;
+
         if let Err(err) = self.peers_tx.send(peer.clone()) {
             return Err(format!(
                 "Cannot send to peer queue, rx might have been closed, err: {}",
                 err,
-            ));
+            )
+            .into());
         }
 
-        let mut peer_map = self.peer_map.write().await;
         Ok(peer_map.insert(public_key_str, peer))
     }
 

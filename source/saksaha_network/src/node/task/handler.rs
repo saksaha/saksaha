@@ -1,3 +1,5 @@
+use crate::node::SaksahaNodeError;
+
 use super::NodeTask;
 use async_trait::async_trait;
 use log::{debug, error, warn};
@@ -11,17 +13,20 @@ use std::sync::Arc;
 use tokio::{net::TcpStream, sync::RwLock};
 
 pub(in crate::node) struct NodeTaskHandler {
-    pub mapped_peers: Arc<RwLock<Vec<Arc<Peer>>>>,
+    pub peer_table: Arc<PeerTable>,
 }
 
 #[async_trait]
 impl TaskHandler<NodeTask> for NodeTaskHandler {
-    async fn handle_task(&self, task: NodeTask) {
+    async fn handle_task(
+        &self,
+        task: NodeTask,
+    ) -> Result<(), SaksahaNodeError> {
         println!("handle new task: {}", task);
 
         match task {
             NodeTask::SendHello { her_public_key } => {
-                // self.peer_table.
+                self.peer_table.get_mapped_peer(&her_public_key)
             }
             NodeTask::SendTxSyn {
                 tx_candidates,
@@ -36,5 +41,7 @@ impl TaskHandler<NodeTask> for NodeTaskHandler {
                 her_public_key,
             } => {}
         };
+
+        Ok(())
     }
 }
