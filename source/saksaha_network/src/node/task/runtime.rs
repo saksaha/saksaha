@@ -29,7 +29,9 @@ impl NodeTaskRuntime {
         NodeTaskRuntime { task_runtime }
     }
 
-    pub async fn run(&self) {}
+    pub async fn run(self) {
+        self.task_runtime.run().await;
+    }
 }
 
 async fn handle_task(task: NodeTask) -> Result<(), SaksahaNodeError> {
