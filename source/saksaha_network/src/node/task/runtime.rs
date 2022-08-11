@@ -13,11 +13,12 @@ impl NodeTaskRuntime {
         node_task_min_interval: Option<u64>,
         node_task_runtime_ctx: NodeTaskRuntimeCtx,
     ) -> NodeTaskRuntime {
-        let handle_fn: HandlerFn<NodeTask> = Box::new(|task: NodeTask| {
-            Box::pin(async {
-                handle_task(task).await;
-            })
-        });
+        let handle_fn: HandlerFn<NodeTask, NodeTaskRuntimeCtx> =
+            Box::new(|task: NodeTask, ctx: &NodeTaskRuntimeCtx| {
+                Box::pin(async {
+                    handle_task(task, ctx).await;
+                })
+            });
 
         let task_runtime = TaskRuntime::new(
             node_task_queue_clone,
@@ -34,11 +35,22 @@ impl NodeTaskRuntime {
     }
 }
 
-async fn handle_task(task: NodeTask) -> Result<(), SaksahaNodeError> {
+async fn handle_task(
+    task: NodeTask,
+    ctx: &NodeTaskRuntimeCtx,
+) -> Result<(), SaksahaNodeError> {
     match task {
         NodeTask::SendHello { her_public_key } => {}
+        NodeTask::SendTxHashSyn {
+            tx_hashes,
+            her_public_key,
+        } => {}
         NodeTask::SendTxSyn {
             tx_candidates,
+            her_public_key,
+        } => {}
+        NodeTask::SendBlockHashSyn {
+            new_blocks,
             her_public_key,
         } => {}
     };

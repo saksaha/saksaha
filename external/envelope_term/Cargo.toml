@@ -31,7 +31,7 @@ envelope_contract = { path = "../envelope_contract" }
 [dev-dependencies]
 sak_test_utils = { path = "../../source/sak_test_utils" }
 sak_dist_ledger = { path = "../../source/sak_dist_ledger" }
-async-trait = "0.1.56"
+async-trait = "0.1.57"
 
 [[bin]]
 name = "envelope_term"
