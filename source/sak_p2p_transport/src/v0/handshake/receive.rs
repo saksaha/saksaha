@@ -1,5 +1,5 @@
-use crate::TrptError;
-use crate::{Conn, Handshake, Msg, Transport};
+use crate::{Conn, Msg, Transport};
+use crate::{HandshakeMsg, TrptError};
 use futures::SinkExt;
 use futures::StreamExt;
 use log::warn;
@@ -86,7 +86,7 @@ pub async fn receive_handshake(
         }
     };
 
-    let Handshake {
+    let HandshakeMsg {
         instance_id,
         src_p2p_port: _,
         src_public_key_str: her_public_key_str,
@@ -99,14 +99,14 @@ pub async fn receive_handshake(
         });
     }
 
-    let handshake = Handshake {
+    let handshake_msg = HandshakeMsg {
         instance_id: instance_id.clone(),
         src_p2p_port: identity.p2p_port,
         src_public_key_str: my_public_key_str.clone(),
         dst_public_key_str: her_public_key_str.clone(),
     };
 
-    match conn.socket.send(Msg::HandshakeAck(handshake)).await {
+    match conn.socket.send(Msg::HandshakeAck(handshake_msg)).await {
         Ok(_) => (),
         Err(err) => {
             return Err(HandshakeRecvError::AckSendFail {

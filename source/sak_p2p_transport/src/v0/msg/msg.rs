@@ -1,24 +1,29 @@
 use crate::{
-    BlockHashSynMsg, BlockSynMsg, Handshake, PingMsg, TxHashSynMsg, TxSynMsg,
+    BlockHashSynMsg, BlockSynMsg, HandshakeMsg, PingMsg, TxAckMsg,
+    TxHashSynMsg, TxSynMsg,
 };
 
 #[derive(Debug)]
 pub enum Msg {
-    HandshakeSyn(Handshake),
+    HandshakeSyn(HandshakeMsg),
 
-    HandshakeAck(Handshake),
-
-    TxSyn(TxSynMsg),
+    HandshakeAck(HandshakeMsg),
 
     TxHashSyn(TxHashSynMsg),
 
     TxHashAck(TxHashSynMsg),
 
-    BlockSyn(BlockSynMsg),
+    TxSyn(TxSynMsg),
+
+    TxAck(TxAckMsg),
 
     BlockHashSyn(BlockHashSynMsg),
 
     BlockHashAck(BlockHashSynMsg),
+
+    BlockSyn(BlockSynMsg),
+
+    BlockAck(BlockSynMsg),
 
     Ping(PingMsg),
 }

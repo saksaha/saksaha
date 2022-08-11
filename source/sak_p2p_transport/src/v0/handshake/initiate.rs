@@ -1,4 +1,5 @@
-use crate::{Conn, Handshake, Msg, Transport};
+use crate::HandshakeMsg;
+use crate::{Conn, Msg, Transport};
 use futures::SinkExt;
 use futures::StreamExt;
 use sak_p2p_id::Identity;
@@ -81,7 +82,7 @@ pub async fn initiate_handshake(
         public_key_str,
     } = handshake_init_args;
 
-    let handshake = match Handshake::new(
+    let handshake_msg = match HandshakeMsg::new(
         identity.p2p_port,
         identity.credential.public_key_str.clone(),
         public_key_str,
@@ -92,7 +93,7 @@ pub async fn initiate_handshake(
         }
     };
 
-    match conn.socket.send(Msg::HandshakeSyn(handshake)).await {
+    match conn.socket.send(Msg::HandshakeSyn(handshake_msg)).await {
         Ok(_) => (),
         Err(err) => {
             return Err(HandshakeInitError::FrameWriteFail {
