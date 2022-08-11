@@ -1,6 +1,6 @@
 use super::TxCandidate;
 use crate::{MintTxCandidate, PourTxCandidate, Tx, U8Array, WASM_MAGIC_NUMBER};
-use sak_crypto::Hasher;
+use sak_crypto::{Hasher, ScalarExt};
 
 pub(crate) const VALIDATOR_CTR_ADDR: &'static str = "test_validator_1";
 
@@ -91,6 +91,7 @@ impl TxCandidate {
 
         TxCandidate::Mint(tx_candidate)
     }
+
     pub fn new_dummy_mint_1() -> TxCandidate {
         let tx_candidate = MintTxCandidate::new_dummy_1();
 
@@ -99,6 +100,25 @@ impl TxCandidate {
 
     pub fn new_dummy_mint_2() -> TxCandidate {
         let tx_candidate = MintTxCandidate::new_dummy_2();
+
+        TxCandidate::Mint(tx_candidate)
+    }
+
+    pub fn new_dummy_mint_3() -> TxCandidate {
+        let tx_candidate = MintTxCandidate::new_dummy_3();
+
+        TxCandidate::Mint(tx_candidate)
+    }
+
+    pub fn new_dummy_mint_4() -> TxCandidate {
+        let tx_candidate = MintTxCandidate::new_dummy_4();
+
+        TxCandidate::Mint(tx_candidate)
+    }
+
+    pub fn new_dummy_deploying_contract(contract_data: Vec<u8>) -> TxCandidate {
+        let tx_candidate =
+            MintTxCandidate::new_dummy_deploying_contract(contract_data);
 
         TxCandidate::Mint(tx_candidate)
     }
@@ -209,6 +229,107 @@ impl MintTxCandidate {
             String::from("created_at_mint_2"),
             vec![2],
             String::from("author_sig_mint_2"),
+            None,
+            cm.to_bytes(),
+            v,
+            k.to_bytes(),
+            s,
+        )
+    }
+
+    pub fn new_dummy_3() -> MintTxCandidate {
+        let hasher = Hasher::new();
+
+        let rho = U8Array::from_int(0x11);
+
+        let r = U8Array::from_int(0x12);
+
+        let s = U8Array::from_int(0x13);
+
+        let v = U8Array::from_int(100);
+
+        let a_sk = U8Array::from_int(0x14);
+
+        let a_pk = hasher
+            .mimc_single_scalar(ScalarExt::parse_arr(&a_sk).unwrap())
+            .unwrap();
+
+        let k = hasher.comm2(&r, &a_pk.to_bytes(), &rho).unwrap();
+
+        let cm = hasher.comm2(&s, &v, &k.to_bytes()).unwrap();
+
+        MintTxCandidate::new(
+            String::from("created_at_mint_3"),
+            vec![3],
+            String::from("author_sig_mint_3"),
+            None,
+            cm.to_bytes(),
+            v,
+            k.to_bytes(),
+            s,
+        )
+    }
+
+    pub fn new_dummy_4() -> MintTxCandidate {
+        let hasher = Hasher::new();
+
+        let rho = U8Array::from_int(0x21);
+
+        let r = U8Array::from_int(0x22);
+
+        let s = U8Array::from_int(0x23);
+
+        let v = U8Array::from_int(100);
+
+        let a_sk = U8Array::from_int(0x24);
+
+        let a_pk = hasher
+            .mimc_single_scalar(ScalarExt::parse_arr(&a_sk).unwrap())
+            .unwrap();
+
+        let k = hasher.comm2(&r, &a_pk.to_bytes(), &rho).unwrap();
+
+        let cm = hasher.comm2(&s, &v, &k.to_bytes()).unwrap();
+
+        MintTxCandidate::new(
+            String::from("created_at_mint_4"),
+            vec![4],
+            String::from("author_sig_mint_4"),
+            None,
+            cm.to_bytes(),
+            v,
+            k.to_bytes(),
+            s,
+        )
+    }
+
+    pub fn new_dummy_deploying_contract(
+        contract_data: Vec<u8>,
+    ) -> MintTxCandidate {
+        let hasher = Hasher::new();
+
+        let rho = U8Array::new_empty_32();
+
+        let r = U8Array::new_empty_32();
+
+        let s = U8Array::new_empty_32();
+
+        let v = U8Array::new_empty_32();
+
+        let a_sk = U8Array::new_empty_32();
+
+        let a_pk = hasher
+            .mimc_single_scalar(ScalarExt::parse_arr(&a_sk).unwrap())
+            .unwrap();
+
+        let k = hasher.comm2(&r, &a_pk.to_bytes(), &rho).unwrap();
+
+        let cm = hasher.comm2(&s, &v, &k.to_bytes()).unwrap();
+
+        MintTxCandidate::new(
+            String::from("created_at_mint_3"),
+            contract_data,
+            String::from("author_sig_mint_3"),
             None,
             cm.to_bytes(),
             v,

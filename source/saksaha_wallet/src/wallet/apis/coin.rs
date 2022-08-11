@@ -1,19 +1,17 @@
 use super::WalletApis;
-use crate::{wallet::apis::decode_hex_string_to_u64, WalletError};
-use log::debug;
-use sak_crypto::{
-    groth16, mimc, os_rng, Bls12, Circuit, Hasher, Proof, Scalar, ScalarExt,
+use crate::{
+    types::Status, wallet::apis::decode_hex_string_to_u64, WalletError,
 };
-use sak_proofs::{MerkleTree, NewCoin, OldCoin, CM_TREE_DEPTH};
+use sak_crypto::{Bls12, Proof};
+use sak_proofs::{NewCoin, OldCoin};
 use sak_types::Balance;
 use saksaha::{generate_proof_1_to_2, get_auth_path};
-use std::{collections::HashMap, time::Duration};
 
 impl WalletApis {
     pub async fn get_balance(
         &self,
         id: String,
-        key: String,
+        _key: String,
     ) -> Result<Balance, WalletError> {
         println!("wallet apis, get_balance, id: {}", id);
 
@@ -53,6 +51,15 @@ impl WalletApis {
             let user = match self.db.schema.get_user_id(&cm).await? {
                 Some(u) => u,
                 None => return Err(format!("Failed to get user_id").into()),
+            };
+
+            let _status = match self.db.schema.get_status(&cm).await? {
+                Some(s) => {
+                    if s == Status::Used {
+                        continue;
+                    }
+                }
+                None => return Err(format!("Failed to get status").into()),
             };
 
             if user == id {

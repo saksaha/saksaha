@@ -4,6 +4,7 @@ use crate::db::EnvelopeDB;
 use crate::db::{USER_1, USER_2};
 use crate::io::InputMode;
 use crate::io::IoEvent;
+use crate::term::get_balance_from_wallet;
 use crate::{app::actions::Action, ENVELOPE_CTR_ADDR};
 use crate::{inputs::key::Key, EnvelopeError};
 use envelope_contract::{
@@ -92,12 +93,21 @@ impl App {
                 Action::Right => {
                     match self.get_state().view {
                         View::ChList => {
+                            let curr_ch = self
+                                .state
+                                .ch_list_state
+                                .selected()
+                                .unwrap_or(0);
                             self.get_messages().await;
                             self.state.set_view_chat();
                         }
                         _ => {}
                     }
 
+                    AppReturn::Continue
+                }
+                Action::UpdateBalance => {
+                    self.state.set_balance().await;
                     AppReturn::Continue
                 }
             }
@@ -237,6 +247,8 @@ impl App {
             Action::Down,
             Action::Up,
             Action::Right,
+            //
+            Action::UpdateBalance,
         ]
         .into();
 

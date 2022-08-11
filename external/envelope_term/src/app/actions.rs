@@ -16,12 +16,14 @@ pub enum Action {
     Down,
     Up,
     Right,
+    //
+    UpdateBalance,
 }
 
 impl Action {
     /// All available actions
     pub fn iterator() -> Iter<'static, Action> {
-        static ACTIONS: [Action; 10] = [
+        static ACTIONS: [Action; 11] = [
             Action::Quit,
             Action::Sleep,
             Action::SwitchEditMode,
@@ -32,6 +34,8 @@ impl Action {
             Action::Down,
             Action::Up,
             Action::Right,
+            //
+            Action::UpdateBalance,
         ];
         ACTIONS.iter()
     }
@@ -49,6 +53,8 @@ impl Action {
             Action::Down => &[Key::Down],
             Action::Up => &[Key::Up],
             Action::Right => &[Key::Right],
+            //
+            Action::UpdateBalance => &[Key::Char('$')],
         }
     }
 }
@@ -67,6 +73,8 @@ impl Display for Action {
             Action::Down => "Down",
             Action::Up => "Up",
             Action::Right => "move to chat room",
+            //
+            Action::UpdateBalance => "Show my balance in wallet",
         };
         write!(f, "{}", str)
     }

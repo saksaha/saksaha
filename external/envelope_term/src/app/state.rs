@@ -1,9 +1,10 @@
 use tui::widgets::ListState;
 
-use crate::io::InputMode;
+use crate::db::USER_1;
 use crate::EnvelopeError;
+use crate::{io::InputMode, term::get_balance_from_wallet};
 use chrono::{DateTime, Local};
-use log::debug;
+use log::{debug, info, warn};
 
 #[repr(u8)]
 #[derive(Clone, Debug)]
@@ -29,6 +30,7 @@ pub struct AppState {
     pub chat_input: String,
     pub chats: Vec<ChatMessage>,
     pub view: View,
+    pub balance: String,
 }
 
 impl AppState {
@@ -50,6 +52,7 @@ impl AppState {
             chat_input: String::default(),
             chats: vec![],
             view: View::Landing,
+            balance: String::from("0"),
         }
     }
     pub fn scroll_messages_view(&self) -> usize {
@@ -108,7 +111,10 @@ impl AppState {
 
     pub fn set_chats(&mut self, data: String) {
         self.chats = match serde_json::from_str::<Vec<String>>(&data) {
-            Ok(c) => c.into_iter().map(|m| ChatMessage::new(m)).collect(),
+            Ok(c) => c
+                .into_iter()
+                .map(|m| ChatMessage::new(m, "undefined".to_string()))
+                .collect(),
             Err(err) => {
                 panic!("Cannot Deserialize `msg`:, err: {}", err);
             }
@@ -116,7 +122,9 @@ impl AppState {
     }
 
     pub fn set_input_messages(&mut self, msg: String) {
-        self.chats.push(ChatMessage::new(msg));
+        let user = String::from("me");
+
+        self.chats.push(ChatMessage::new(msg, user));
     }
 
     pub fn set_view_landing(&mut self) {
@@ -141,6 +149,37 @@ impl AppState {
         if self.initialized {
             self.view = View::ChList;
         }
+    }
+
+    pub async fn set_balance(&mut self) {
+        //TODO get user_id via params
+        let tmp_user_id = USER_1.to_owned();
+
+        let balance = match get_balance_from_wallet(&tmp_user_id).await {
+            Ok(resp) => {
+                info!("Success to get response from wallet");
+                let result = match resp.result {
+                    Some(b) => {
+                        info!("Updating balance, balance: {}", b);
+                        b
+                    }
+                    None => {
+                        warn!("Failed to get balance, Set balance as default value \'0\'");
+                        String::from("0")
+                    }
+                };
+
+                result
+            }
+
+            Err(err) => {
+                warn!("Failed to get balance from wallet, err: {}", err);
+
+                String::from("0")
+            }
+        };
+
+        self.balance = balance;
     }
 
     pub fn next_ch(&mut self) {
@@ -188,6 +227,7 @@ impl Default for AppState {
             chat_input: String::default(),
             chats: vec![],
             view: View::Landing,
+            balance: String::from("0"),
         }
     }
 }
@@ -196,13 +236,15 @@ impl Default for AppState {
 pub struct ChatMessage {
     pub date: DateTime<Local>,
     pub msg: String,
+    pub user: String,
 }
 
 impl ChatMessage {
-    pub fn new(msg: String) -> ChatMessage {
+    pub fn new(msg: String, user: String) -> ChatMessage {
         ChatMessage {
             date: Local::now(),
             msg,
+            user,
         }
     }
 }
