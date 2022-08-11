@@ -11,7 +11,7 @@ use std::sync::Arc;
 use tokio::{net::TcpStream, sync::RwLock};
 
 pub(in crate::node) struct NodeTaskHandler {
-    pub peer_table: Arc<PeerTable>,
+    pub mapped_peers: Arc<RwLock<Vec<Arc<Peer>>>>,
 }
 
 #[async_trait]

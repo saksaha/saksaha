@@ -5,7 +5,6 @@ use super::{
     task::{NodeTask, NodeTaskHandler},
 };
 use crate::machine::Machine;
-use futures::Future;
 use sak_p2p_peertable::{Peer, PeerTable};
 use sak_task_queue::{TaskQueue, TaskRuntime};
 use std::{pin::Pin, sync::Arc, time::Duration};
@@ -17,7 +16,6 @@ pub(crate) struct LocalNode {
     pub miner: bool,
     pub mine_interval: Option<u64>,
     pub node_task_min_interval: Option<u64>,
-    pub mapped_peers: Vec<Arc<Peer>>,
 }
 
 impl LocalNode {
@@ -28,15 +26,12 @@ impl LocalNode {
         mine_interval: Option<u64>,
         node_task_min_interval: Option<u64>,
     ) -> LocalNode {
-        let mapped_peers = vec![];
-
         LocalNode {
             peer_table,
             machine,
             miner,
             mine_interval,
             node_task_min_interval,
-            mapped_peers,
         }
     }
 
@@ -60,7 +55,7 @@ impl LocalNode {
         {
             // Node task routine
             let node_task_handler = Box::new(NodeTaskHandler {
-                peer_table: self.peer_table.clone(),
+                // mapped_peers: self.mapped_peers.clone(),
             });
 
             let task_runtime = TaskRuntime::new(
@@ -101,30 +96,30 @@ impl LocalNode {
             });
         }
 
-        let peer_it = self.peer_table.new_iter();
-        let mut peer_it_lock = peer_it.write().await;
+        {
+            let peer_it = self.peer_table.new_iter();
+            let mut peer_it_lock = peer_it.write().await;
 
-        loop {
-            let machine = self.machine.clone();
+            loop {
+                let machine = self.machine.clone();
 
-            let peer = match peer_it_lock.next().await {
-                Ok(p) => p.clone(),
-                Err(_) => continue,
-            };
+                let peer = match peer_it_lock.next().await {
+                    Ok(p) => p.clone(),
+                    Err(_) => continue,
+                };
 
-            let peer_node = PeerNode {
-                peer: peer.clone(),
-                machine,
-                node_task_queue: node_task_queue.clone(),
-            };
+                let peer_node = PeerNode {
+                    peer: peer.clone(),
+                    machine,
+                    node_task_queue: node_task_queue.clone(),
+                };
 
-            tokio::spawn(async move {
-                peer_node.run().await;
-            });
+                tokio::spawn(async move {
+                    peer_node.run().await;
+                });
 
-            tokio::time::sleep(Duration::from_secs(1)).await;
-
-            self.mapped_peers.push(peer);
+                tokio::time::sleep(Duration::from_secs(1)).await;
+            }
         }
     }
 }
