@@ -6,6 +6,7 @@ use crate::io::InputMode;
 use crate::io::IoEvent;
 use crate::{app::actions::Action, ENVELOPE_CTR_ADDR};
 use crate::{inputs::key::Key, EnvelopeError};
+use chrono::Local;
 use envelope_contract::{
     GetChListParams, GetMsgParams, OpenCh, OpenChParams, SendMsgParams,
 };
@@ -69,7 +70,8 @@ impl App {
                     AppReturn::Continue
                 }
                 Action::ShowChList => {
-                    self.get_ch_list().await;
+                    let _ = self.get_ch_list().await;
+                    // let _ = self.get_ch_list_from_local().await;
                     self.state.set_view_ch_list();
                     AppReturn::Continue
                 }
@@ -269,28 +271,26 @@ impl App {
         &mut self,
         her_pk: &String,
     ) -> Result<(), EnvelopeError> {
-        let open_ch = self.encrypt_open_ch(her_pk).await?;
+        let channel_name = format!("({}){}", Local::now(), her_pk.clone());
 
-        let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
+        let my_pk = self.get_pk(&USER_1.to_string()).await?;
 
-        let channel_name = her_pk.clone();
+        for i in [her_pk, &my_pk] {
+            let open_ch = self.encrypt_open_ch(her_pk).await?;
+            let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
 
-        // let mut arg = HashMap::with_capacity(2);
-        // let my_pk = self.pconfig.get_sk_pk().1;
-        // arg.insert(String::from("dst_pk"), her_pk.clone());
-        // arg.insert(String::from("serialized_input"), open_ch_input);
+            let open_ch_params = OpenChParams {
+                dst_pk: i.clone(),
+                open_ch,
+            };
 
-        let open_ch_params = OpenChParams {
-            dst_pk: her_pk.clone(),
-            open_ch,
-        };
+            let req_type = String::from("open_ch");
 
-        let req_type = String::from("open_channel");
+            let args = serde_json::to_vec(&open_ch_params)?;
 
-        let args = serde_json::to_vec(&open_ch_params)?;
-
-        let _json_response =
-            saksaha::send_tx_pour(ctr_addr, req_type, args).await?;
+            let _json_response =
+                saksaha::send_tx_pour(ctr_addr, req_type, args).await?;
+        }
 
         if !self
             .state
@@ -306,31 +306,21 @@ impl App {
     }
 
     pub async fn get_ch_list(&mut self) -> Result<(), EnvelopeError> {
-        // let mut args = HashMap::with_capacity(2);
-
-        let her_pk =
-            match self.db.schema.get_my_pk_by_sk(&USER_1.to_string()).await? {
-                Some(v) => v,
-                None => String::default(),
-            };
+        let my_pk = self.get_pk(&USER_1.to_string()).await?;
 
         let get_ch_list_params = GetChListParams {
-            dst_pk: her_pk.to_string(),
+            dst_pk: my_pk.clone(),
         };
 
         let args = serde_json::to_vec(&get_ch_list_params)?;
 
-        if her_pk.len() > 0 {
-            // args.insert(String::from("dst_pk"), her_pk.to_string());
-
-            let req = CtrRequest {
-                req_type: "get_ch_list".to_string(),
+        if my_pk.len() > 0 {
+            if let Ok(r) = saksaha::query_ctr(
+                ENVELOPE_CTR_ADDR.to_string(),
+                "get_ch_list".to_string(),
                 args,
-                ctr_call_type: CtrCallType::Query,
-            };
-
-            if let Ok(r) =
-                saksaha::query_ctr(ENVELOPE_CTR_ADDR.into(), req).await
+            )
+            .await
             {
                 if let Some(d) = r.result {
                     self.dispatch(IoEvent::Receive(d.result)).await;
@@ -354,13 +344,13 @@ impl App {
         // let mut args = HashMap::with_capacity(2);
         // args.insert(String::from("dst_pk"), "her_pk".to_string());
 
-        let req = CtrRequest {
-            req_type: "get_msgs".to_string(),
+        if let Ok(r) = saksaha::query_ctr(
+            ENVELOPE_CTR_ADDR.into(),
+            "get_msgs".to_string(),
             args,
-            ctr_call_type: CtrCallType::Query,
-        };
-
-        if let Ok(r) = saksaha::query_ctr(ENVELOPE_CTR_ADDR.into(), req).await {
+        )
+        .await
+        {
             if let Some(d) = r.result {
                 self.dispatch(IoEvent::GetMessages(d.result)).await;
             }
@@ -486,5 +476,32 @@ impl App {
         };
 
         Ok(open_ch)
+    }
+
+    pub async fn get_ch_list_from_local(
+        &mut self,
+        her_pk: &String,
+    ) -> Result<(), EnvelopeError> {
+        if let Some(c) = self.db.schema.get_her_pk_by_ch_id(&her_pk).await? {
+            self.state
+                .ch_list
+                .push(ChannelState::new(her_pk.clone(), c));
+        };
+
+        Ok(())
+    }
+
+    async fn get_pk(&self, user: &String) -> Result<String, EnvelopeError> {
+        let user_2_sk =
+            self.db.schema.get_my_sk_by_user_id(user).await?.ok_or("")?;
+
+        let user_2_pk = self
+            .db
+            .schema
+            .get_my_pk_by_sk(&user_2_sk)
+            .await?
+            .ok_or("")?;
+
+        Ok(user_2_pk)
     }
 }

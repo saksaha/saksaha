@@ -9,6 +9,8 @@ use std::collections::HashMap;
 pub mod request_type {
     pub const OPEN_CH: &'static str = "open_ch";
     pub const SEND_MSG: &'static str = "send_msg";
+    pub const GET_CH_LIST: &'static str = "get_ch_list";
+    pub const GET_MSG: &'static str = "get_msgs";
 }
 
 pub type PublicKey = String;
@@ -49,14 +51,16 @@ pub fn query2(
     storage: Storage,
 ) -> Result<Vec<u8>, ContractError> {
     match request.req_type.as_ref() {
-        "get_msgs" => {
+        request_type::GET_MSG => {
             return handle_get_msgs(storage, request.args);
         }
-        "get_ch_list" => {
+        request_type::GET_CH_LIST => {
             return handle_get_ch_list(storage, request.args);
         }
         _ => {
-            return Err(format!("Wrong request type has been found").into());
+            return Err(
+                format!("Wrong request type has been found in query").into()
+            );
         }
     }
 }
@@ -74,7 +78,10 @@ pub fn execute2(
             return handle_send_msg(storage, request.args);
         }
         _ => {
-            return Err(format!("Wrong request type has been found").into());
+            return Err(format!(
+                "Wrong request type has been found in execution"
+            )
+            .into());
         }
     }
 }
