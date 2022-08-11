@@ -5,10 +5,10 @@ use crate::{
 };
 use futures::{stream::SplitSink, SinkExt};
 use log::{debug, info, warn};
-use sak_p2p_peertable::Peer;
+use sak_p2p_peertable::{Peer, PeerTable};
 use sak_p2p_transport::{
-    BlockHashSynMsg, BlockSynMsg, Msg, MsgType, TxAckMsg, TxHashSynMsg,
-    TxSynMsg, UpgradedConn, UpgradedP2PCodec,
+    BlockHashSynMsg, BlockSynMsg, Msg, MsgType, SendReceipt, TxAckMsg,
+    TxHashSynMsg, TxSynMsg, UpgradedConn, UpgradedP2PCodec,
 };
 use sak_task_queue::TaskQueue;
 use sak_types::TxCandidate;
@@ -16,14 +16,56 @@ use std::sync::Arc;
 use tokio::{net::TcpStream, sync::RwLockWriteGuard};
 
 pub(in crate::node) async fn send_tx_syn(
+    tx_candidates: Vec<TxCandidate>,
+    her_public_key: Option<String>,
+    peer_table: &Arc<PeerTable>,
+    // peer: &Arc<Peer>,
+    // tx_candidates: Vec<TxCandidate>,
+) -> Result<(), SaksahaNodeError> {
+    if let Some(ref her_pk) = her_public_key {
+        let peer = peer_table.get_mapped_peer(&her_pk).await.ok_or(format!(
+            "peer does not exist, key: {:?}",
+            &her_public_key
+        ))?;
+
+        send_tx_syn_each(&peer, tx_candidates).await?;
+    } else {
+        let peer_map_lock = peer_table.get_peer_map().read().await;
+
+        for (_pk, peer) in peer_map_lock.iter() {
+            send_tx_syn_each(peer, tx_candidates.clone()).await?;
+        }
+    }
+
+    Ok(())
+}
+
+pub(in crate::node) async fn recv_tx_syn(
+    tx_syn: TxSynMsg,
+    machine: &Machine,
+    mut conn: RwLockWriteGuard<'_, UpgradedConn>,
+) -> Result<SendReceipt, SaksahaNodeError> {
+    machine
+        .blockchain
+        .dist_ledger
+        .apis
+        .insert_into_pool(tx_syn.tx_candidates)
+        .await;
+
+    let tx_ack_msg = Msg::TxAck(TxAckMsg {});
+
+    let receipt = conn.send(tx_ack_msg).await?;
+
+    Ok(receipt)
+}
+
+async fn send_tx_syn_each(
     peer: &Arc<Peer>,
     tx_candidates: Vec<TxCandidate>,
 ) -> Result<(), SaksahaNodeError> {
     let mut conn = peer.get_transport().conn.write().await;
 
-    let tx_syn_msg = Msg::TxSyn(TxSynMsg {
-        tx_candidates: tx_candidates.clone(),
-    });
+    let tx_syn_msg = Msg::TxSyn(TxSynMsg { tx_candidates });
 
     conn.send(tx_syn_msg).await?;
 
@@ -40,25 +82,6 @@ pub(in crate::node) async fn send_tx_syn(
             );
         }
     };
-
-    Ok(())
-}
-
-pub(in crate::node) async fn recv_tx_syn(
-    tx_syn: TxSynMsg,
-    machine: &Machine,
-    mut conn: RwLockWriteGuard<'_, UpgradedConn>,
-) -> Result<(), SaksahaNodeError> {
-    machine
-        .blockchain
-        .dist_ledger
-        .apis
-        .insert_into_pool(tx_syn.tx_candidates)
-        .await;
-
-    let msg = Msg::TxAck(TxAckMsg {});
-
-    conn.send(msg).await;
 
     Ok(())
 }

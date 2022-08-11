@@ -14,11 +14,36 @@ pub(in crate::node) async fn send_block_hash_syn() {}
 pub(in crate::node) async fn recv_block_hash_syn(
     block_hash_syn_msg: BlockHashSynMsg,
     machine: &Arc<Machine>,
-    conn: RwLockWriteGuard<'_, UpgradedConn>,
+    mut conn: RwLockWriteGuard<'_, UpgradedConn>,
 ) -> Result<SendReceipt, SaksahaNodeError> {
-    let receipt = SendReceipt {
-        __created_by_sending: false,
-    };
+    let new_blocks = block_hash_syn_msg.new_blocks;
+
+    let (_, latest_block_hash) = machine
+        .blockchain
+        .dist_ledger
+        .apis
+        .get_latest_block_hash()
+        .await?
+        .ok_or("height does not exist")?;
+
+    debug!(
+        "handle block hash syn, latest_block_hash: {}, received_new_blocks: {:?}",
+        latest_block_hash,
+        new_blocks,
+    );
+
+    let mut blocks_to_req = vec![];
+    for (height, block_hash) in new_blocks {
+        if block_hash != latest_block_hash {
+            blocks_to_req.push((height, block_hash));
+        }
+    }
+
+    let receipt = conn
+        .send(Msg::BlockHashAck(BlockHashSynMsg {
+            new_blocks: blocks_to_req,
+        }))
+        .await?;
 
     Ok(receipt)
 }

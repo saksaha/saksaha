@@ -28,7 +28,7 @@ pub(in crate::node) async fn handle_msg<'a>(
     task_queue: &Arc<TaskQueue<NodeTask>>,
     peer: &Arc<Peer>,
 ) -> Result<(), SaksahaError> {
-    let res: SendReceipt = match msg {
+    let _: SendReceipt = match msg {
         Msg::TxHashSyn(tx_hash_syn) => {
             tx_hash::recv_tx_hash_syn(
                 tx_hash_syn,
