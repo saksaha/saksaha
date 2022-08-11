@@ -6,8 +6,16 @@ use crate::{
 use sak_crypto::{Hasher, Scalar, ScalarExt};
 use sak_types::U8Array;
 
-async fn get_dummy_random_gen_coin(
-) -> (Scalar, Scalar, Scalar, Scalar, Scalar, Scalar, Scalar, bool) {
+async fn get_dummy_random_gen_coin() -> (
+    Scalar,
+    Scalar,
+    Scalar,
+    Scalar,
+    Scalar,
+    Scalar,
+    Scalar,
+    Status,
+) {
     let hasher = Hasher::new();
 
     let addr_sk = U8Array::from_int(sak_crypto::rand() as u64).to_owned();
@@ -27,7 +35,7 @@ async fn get_dummy_random_gen_coin(
         k,
     );
 
-    let status = true;
+    let status = Status::Unused;
 
     (
         addr_pk,
@@ -91,7 +99,7 @@ async fn get_dummy_coin(
 }
 
 #[tokio::test(flavor = "multi_thread")]
-async fn test_wallet_store_randomly_generated_coins() {
+async fn test_wallet_db_store_randomly_generated_coins() {
     sak_test_utils::init_test_log();
 
     let db = make_dummy_db().await;
@@ -101,7 +109,7 @@ async fn test_wallet_store_randomly_generated_coins() {
             get_dummy_random_gen_coin().await;
 
         db.schema
-            .put_coin_data(
+            .put_coin(
                 &cm.to_string(),
                 &rho.to_string(),
                 &r.to_string(),
@@ -110,7 +118,7 @@ async fn test_wallet_store_randomly_generated_coins() {
                 &addr_pk.to_string(),
                 &addr_sk.to_string(),
                 &USER_1.to_string(),
-                &status.to_string(),
+                &status,
                 &idx,
             )
             .await
@@ -122,7 +130,7 @@ async fn test_wallet_store_randomly_generated_coins() {
             get_dummy_random_gen_coin().await;
 
         db.schema
-            .put_coin_data(
+            .put_coin(
                 &cm.to_string(),
                 &rho.to_string(),
                 &r.to_string(),
@@ -131,7 +139,7 @@ async fn test_wallet_store_randomly_generated_coins() {
                 &addr_pk.to_string(),
                 &addr_sk.to_string(),
                 &USER_2.to_string(),
-                &status.to_string(),
+                &status,
                 &idx,
             )
             .await
@@ -159,7 +167,7 @@ async fn test_wallet_store_randomly_generated_coins() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
-async fn test_wallet_store_coins() {
+async fn test_wallet_db_store_coins() {
     sak_test_utils::init_test_log();
 
     let db = make_dummy_db().await;
@@ -175,7 +183,7 @@ async fn test_wallet_store_coins() {
         .await;
 
         db.schema
-            .put_coin_data(
+            .put_coin(
                 &cm.to_string(),
                 &rho.to_string(),
                 &r.to_string(),
@@ -184,7 +192,7 @@ async fn test_wallet_store_coins() {
                 &addr_pk.to_string(),
                 &addr_sk.to_string(),
                 &USER_1.to_string(),
-                &status.to_string(),
+                &status,
                 &(idx as u128),
             )
             .await
@@ -203,7 +211,7 @@ async fn test_wallet_store_coins() {
 
         assert_eq!(user_id, USER_1);
 
-        assert_eq!(status, "Unused".to_string());
+        assert_eq!(status, Status::Unused);
 
         assert_eq!(
             rho,

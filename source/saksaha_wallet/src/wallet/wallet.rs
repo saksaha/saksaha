@@ -90,7 +90,7 @@ async fn init_for_demo(wallet: &Wallet) -> Result<(), WalletError> {
             .apis
             .db
             .schema
-            .put_coin_data(
+            .put_coin(
                 &coin.cm.unwrap().to_string(),
                 &coin.rho.unwrap().to_string(),
                 &coin.r.unwrap().to_string(),
@@ -99,7 +99,7 @@ async fn init_for_demo(wallet: &Wallet) -> Result<(), WalletError> {
                 &coin.addr_pk.unwrap().to_string(),
                 &coin.addr_sk.unwrap().to_string(),
                 &coin.user_id.unwrap().to_string(),
-                &coin.status.unwrap().to_string(),
+                &coin.status.unwrap(),
                 &0,
             )
             .await?;
@@ -116,7 +116,7 @@ async fn init_for_demo(wallet: &Wallet) -> Result<(), WalletError> {
             .apis
             .db
             .schema
-            .put_coin_data(
+            .put_coin(
                 &coin.cm.unwrap().to_string(),
                 &coin.rho.unwrap().to_string(),
                 &coin.r.unwrap().to_string(),
@@ -125,7 +125,7 @@ async fn init_for_demo(wallet: &Wallet) -> Result<(), WalletError> {
                 &coin.addr_pk.unwrap().to_string(),
                 &coin.addr_sk.unwrap().to_string(),
                 &coin.user_id.unwrap().to_string(),
-                &coin.status.unwrap().to_string(),
+                &coin.status.unwrap(),
                 &1,
             )
             .await?;

@@ -9,13 +9,14 @@ impl WalletDBSchema {
     pub async fn get_status(
         &self,
         cm: &String,
-    ) -> Result<Option<String>, WalletError> {
+    ) -> Result<Option<Status>, WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::STATUS)?;
         match self.db.get_cf(&cf, cm)? {
             Some(v) => {
-                let str = String::from_utf8(v)?;
+                // let str = String::from_utf8(v)?;
+                let status: Status = Status::from_u8(v)?;
 
-                return Ok(Some(str));
+                return Ok(Some(status));
             }
             None => {
                 return Ok(None);
@@ -198,7 +199,7 @@ impl WalletDBSchema {
     }
 
     // setter
-    pub(crate) async fn put_coin_data(
+    pub(crate) async fn put_coin(
         &self,
         cm: &String,
         rho: &String,
@@ -208,7 +209,7 @@ impl WalletDBSchema {
         a_pk: &String,
         a_sk: &String,
         user_id: &String,
-        status: &String,
+        status: &Status,
         cm_idx: &u128,
     ) -> Result<(), WalletError> {
         let mut batch = WriteBatch::default();
@@ -233,7 +234,7 @@ impl WalletDBSchema {
     pub(crate) async fn put_status(
         &self,
         cm: &String,
-        status: &String,
+        status: &Status,
     ) -> Result<(), WalletError> {
         let mut batch = WriteBatch::default();
 
@@ -339,7 +340,7 @@ impl WalletDBSchema {
         &self,
         batch: &mut WriteBatch,
         cm: &String,
-        status: &String,
+        status: &Status,
     ) -> Result<(), WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::STATUS)?;
 

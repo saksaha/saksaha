@@ -55,7 +55,7 @@ impl WalletApis {
 
             let _status = match self.db.schema.get_status(&cm).await? {
                 Some(s) => {
-                    if s == "Used" {
+                    if s == Status::Used {
                         continue;
                     }
                 }
