@@ -13,6 +13,9 @@ use tokio::sync::Mutex;
 use tui::backend::CrosstermBackend;
 use tui::Terminal;
 
+mod wallet;
+pub(crate) use wallet::*;
+
 pub struct TermArgs {
     pub pconfig_path: Option<String>,
     pub user_prefix: String,
@@ -98,6 +101,9 @@ pub async fn start_app(app: Arc<Mutex<App>>) -> Result<(), EnvelopeError> {
 
     loop {
         let mut app = app.lock().await;
+
+        // get_balance
+        // let balance = get_balance_from_wallet(&"user_1".to_owned()).await;
 
         // Render
         terminal.draw(|rect| views::draw(rect, &mut app))?;

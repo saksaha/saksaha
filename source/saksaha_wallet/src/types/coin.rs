@@ -1,3 +1,4 @@
+use super::Status;
 use sak_crypto::Scalar;
 
 #[derive(Debug)]
@@ -18,7 +19,7 @@ pub(crate) struct Coin {
 
     pub user_id: Option<String>,
 
-    pub status: Option<bool>,
+    pub status: Option<Status>,
 }
 
 pub(crate) struct OwnCoin {
@@ -34,5 +35,5 @@ pub(crate) struct OwnCoin {
 
     pub user_id: Option<String>,
 
-    pub status: Option<bool>,
+    pub status: Option<Status>,
 }

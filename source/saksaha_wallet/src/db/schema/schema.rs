@@ -1,8 +1,5 @@
 use crate::db::schema::cfs;
-use sak_kv_db::{
-    BoundColumnFamily, ColumnFamilyDescriptor, IteratorMode, Options,
-    WriteBatch, DB,
-};
+use sak_kv_db::{BoundColumnFamily, ColumnFamilyDescriptor, Options, DB};
 use std::sync::Arc;
 
 pub(crate) struct WalletDBSchema {

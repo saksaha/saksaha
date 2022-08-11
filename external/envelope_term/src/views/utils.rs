@@ -141,6 +141,42 @@ pub(crate) fn draw_tabs<'a>(state: &'a AppState) -> Tabs {
     tabs
 }
 
+pub(crate) fn draw_balance<'a>(state: &'a AppState) -> Paragraph {
+    // let (msg, style) = match state.{
+    let (msg, style) = (
+        vec![
+            Span::styled("My Balance: ", Style::default()),
+            Span::styled(
+                format!("     {} ", state.balance),
+                Style::default()
+                    .add_modifier(Modifier::BOLD)
+                    .fg(Color::LightYellow),
+            ),
+            Span::styled("(Sak)", Style::default()),
+        ],
+        Style::default(),
+    );
+
+    let balance = {
+        let mut text = Text::from(Spans::from(msg));
+
+        text.patch_style(style);
+
+        Paragraph::new(text)
+            .style(Style::default())
+            .alignment(Alignment::Left)
+            .block(
+                Block::default()
+                    .title("Balance")
+                    .borders(Borders::ALL)
+                    .style(Style::default().fg(Color::Gray))
+                    .border_type(BorderType::Plain),
+            )
+    };
+
+    balance
+}
+
 pub(crate) fn draw_title<'a>() -> Paragraph<'a> {
     Paragraph::new("Envelope")
         .style(Style::default().fg(Color::LightCyan))
