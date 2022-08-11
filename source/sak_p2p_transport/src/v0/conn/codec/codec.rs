@@ -17,15 +17,6 @@ impl Encoder<Msg> for UpgradedP2PCodec {
         item: Msg,
         dst: &mut BytesMut,
     ) -> Result<(), TrptError> {
-        let rand = sak_crypto::rand();
-
-        // println!(
-        //     "\n555 upgraded encoding!!, id: {}, r: {}, msg: {:?}",
-        //     self.id, rand, item,
-        // );
-
-        let name = item.name();
-
         enc::encode_into_frame(item, dst)?;
 
         let t = dst.to_vec();

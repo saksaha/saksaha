@@ -14,13 +14,13 @@ use sak_task_queue::TaskQueue;
 use std::sync::Arc;
 use tokio::{net::TcpStream, sync::RwLockWriteGuard};
 
-// send tx_syn
-// recv tx_ack
-pub(in crate::node) async fn send_tx_syn() {}
+// send tx_hash_syn
+// recv tx_hash_ack
+pub(in crate::node) async fn send_tx_hash_syn() {}
 
-// recv tx_syn
-// send tx_ack
-pub(in crate::node) async fn recv_tx_syn() {}
+// recv tx_hash_syn
+// send tx_hash_ack
+pub(in crate::node) async fn recv_tx_hash_syn() {}
 
 pub(super) async fn handle_tx_hash_syn<'a>(
     tx_hash_syn_msg: TxHashSynMsg,

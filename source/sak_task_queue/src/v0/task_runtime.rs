@@ -1,4 +1,4 @@
-use crate::TaskQueue;
+use crate::{TaskQueue, TaskQueueError};
 use async_trait::async_trait;
 use futures::Future;
 use log::{debug, error};

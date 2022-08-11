@@ -23,18 +23,18 @@ pub enum Msg {
     Ping(PingMsg),
 }
 
-impl Msg {
-    pub fn name(&self) -> String {
+impl std::fmt::Display for Msg {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self {
-            Msg::HandshakeSyn(_) => String::from("handshake_syn"),
-            Msg::HandshakeAck(_) => String::from("handshake_ack"),
-            Msg::TxSyn(_) => String::from("tx_syn"),
-            Msg::TxHashSyn(_) => String::from("tx_hash_syn"),
-            Msg::TxHashAck(_) => String::from("tx_hash_ack"),
-            Msg::BlockSyn(_) => String::from("block_syn"),
-            Msg::BlockHashSyn(_) => String::from("block_hash_syn"),
-            Msg::BlockHashAck(_) => String::from("block_hash_ack"),
-            Msg::Ping(_) => String::from("ping"),
+            Msg::HandshakeSyn(_) => write!(f, "handshake_syn"),
+            Msg::HandshakeAck(_) => write!(f, "handshake_ack"),
+            Msg::TxSyn(_) => write!(f, "tx_syn"),
+            Msg::TxHashSyn(_) => write!(f, "tx_hash_syn"),
+            Msg::TxHashAck(_) => write!(f, "tx_hash_ack"),
+            Msg::BlockSyn(_) => write!(f, "block_syn"),
+            Msg::BlockHashSyn(_) => write!(f, "block_hash_syn"),
+            Msg::BlockHashAck(_) => write!(f, "block_hash_ack"),
+            Msg::Ping(_) => write!(f, "ping"),
         }
     }
 }

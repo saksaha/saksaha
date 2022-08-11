@@ -27,7 +27,7 @@ impl UpgradedConn {
     }
 
     pub async fn send(&mut self, msg: Msg) -> Result<(), TrptError> {
-        println!("send msg!, conn id: {}", self.conn_id);
+        println!("send msg!, msg: {}, conn id: {}", msg, self.conn_id);
 
         self.socket.send(msg).await?;
 

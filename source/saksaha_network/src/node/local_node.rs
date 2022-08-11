@@ -105,15 +105,15 @@ impl LocalNode {
         }
 
         {
-            let peer_it = self.peer_table.new_iter();
-            let mut peer_it_lock = peer_it.write().await;
+            let peer_queue_iter = self.peer_table.peer_queue_iter();
+            let mut peer_queue_iter_lock = peer_queue_iter.write().await;
 
             loop {
                 let time_since = SystemTime::now();
 
                 let machine = self.machine.clone();
 
-                let peer = match peer_it_lock.next().await {
+                let peer = match peer_queue_iter_lock.next().await {
                     Ok(p) => p.clone(),
                     Err(_) => continue,
                 };
