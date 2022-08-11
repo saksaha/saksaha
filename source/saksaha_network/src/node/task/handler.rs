@@ -20,7 +20,9 @@ impl TaskHandler<NodeTask> for NodeTaskHandler {
         println!("handle new task: {}", task);
 
         match task {
-            NodeTask::SendHello { her_public_key } => {}
+            NodeTask::SendHello { her_public_key } => {
+                // self.peer_table.
+            }
             NodeTask::SendTxSyn {
                 tx_candidates,
                 her_public_key,

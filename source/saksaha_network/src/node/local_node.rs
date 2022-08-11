@@ -6,21 +6,41 @@ use super::{
 };
 use crate::machine::Machine;
 use futures::Future;
-use sak_p2p_peertable::PeerTable;
+use sak_p2p_peertable::{Peer, PeerTable};
 use sak_task_queue::{TaskQueue, TaskRuntime};
-use std::{pin::Pin, sync::Arc};
+use std::{pin::Pin, sync::Arc, time::Duration};
 use tokio::sync::RwLock;
 
 pub(crate) struct LocalNode {
-    pub(crate) peer_table: Arc<PeerTable>,
-    pub(crate) machine: Arc<Machine>,
-    pub(crate) miner: bool,
-    pub(crate) mine_interval: Option<u64>,
-    pub(crate) node_task_min_interval: Option<u64>,
+    pub peer_table: Arc<PeerTable>,
+    pub machine: Arc<Machine>,
+    pub miner: bool,
+    pub mine_interval: Option<u64>,
+    pub node_task_min_interval: Option<u64>,
+    pub mapped_peers: Vec<Arc<Peer>>,
 }
 
 impl LocalNode {
-    pub(crate) async fn run(self) {
+    pub fn new(
+        peer_table: Arc<PeerTable>,
+        machine: Arc<Machine>,
+        miner: bool,
+        mine_interval: Option<u64>,
+        node_task_min_interval: Option<u64>,
+    ) -> LocalNode {
+        let mapped_peers = vec![];
+
+        LocalNode {
+            peer_table,
+            machine,
+            miner,
+            mine_interval,
+            node_task_min_interval,
+            mapped_peers,
+        }
+    }
+
+    pub(crate) async fn run(mut self) {
         let machine = self.machine.clone();
         let mine_interval = self.mine_interval.clone();
         let node_task_queue = Arc::new(TaskQueue::new(100));
@@ -92,8 +112,8 @@ impl LocalNode {
                 Err(_) => continue,
             };
 
-            let mut peer_node = PeerNode {
-                peer,
+            let peer_node = PeerNode {
+                peer: peer.clone(),
                 machine,
                 node_task_queue: node_task_queue.clone(),
             };
@@ -101,6 +121,10 @@ impl LocalNode {
             tokio::spawn(async move {
                 peer_node.run().await;
             });
+
+            tokio::time::sleep(Duration::from_secs(1)).await;
+
+            self.mapped_peers.push(peer);
         }
     }
 }

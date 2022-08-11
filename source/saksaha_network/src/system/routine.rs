@@ -194,13 +194,13 @@ impl Routine {
         };
 
         let local_node = {
-            let ln = LocalNode {
-                peer_table: peer_table.clone(),
-                machine: machine.clone(),
-                miner: config.node.miner,
-                mine_interval: config.node.mine_interval,
-                node_task_min_interval: config.node.node_task_min_interval,
-            };
+            let ln = LocalNode::new(
+                peer_table.clone(),
+                machine.clone(),
+                config.node.miner,
+                config.node.mine_interval,
+                config.node.node_task_min_interval,
+            );
 
             ln
         };

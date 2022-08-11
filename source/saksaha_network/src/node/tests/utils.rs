@@ -20,7 +20,6 @@ pub(crate) async fn create_client(
     miner: bool,
 ) -> (
     P2PHost,
-    // Arc<LocalNode>,
     LocalNode,
     Arc<Machine>,
     Arc<PeerTable>,
@@ -122,13 +121,13 @@ pub(crate) async fn create_client(
     };
 
     let local_node = {
-        let ln = LocalNode {
-            peer_table: p2p_peer_table.clone(),
-            machine: machine.clone(),
+        let ln = LocalNode::new(
+            p2p_peer_table.clone(),
+            machine.clone(),
             miner,
-            mine_interval: None,
-            node_task_min_interval: None,
-        };
+            None,
+            None,
+        );
 
         ln
     };
