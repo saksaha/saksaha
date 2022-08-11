@@ -10,7 +10,7 @@ pub type RequestArgs = Vec<u8>;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub(crate) struct WalletSendTxRequest {
-    pub val: usize,
+    pub gas: usize,
     pub ctr_addr: String,
     pub req_type: String,
     pub args: RequestArgs,

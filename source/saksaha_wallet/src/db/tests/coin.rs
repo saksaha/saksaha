@@ -93,16 +93,16 @@ async fn test_wallet_store_coins() {
     println!("latest_cm_idx: {:?}", latest_cm_idx);
 
     for idx in 0..5 {
-        let cm = db.schema.get_cm(&idx).await.unwrap().unwrap();
-        let user_id = db.schema.get_user_id(&cm).await.unwrap().unwrap();
+        let cm = db.schema.get_cm(&idx).unwrap().unwrap();
+        let user_id = db.schema.get_user_id(&cm).unwrap().unwrap();
 
         println!("[+] user_id: {:?}, USER_1: {:?}", user_id, USER_1);
         assert_eq!(user_id, USER_1);
     }
 
     for idx in 5..10 {
-        let cm = db.schema.get_cm(&idx).await.unwrap().unwrap();
-        let user_id = db.schema.get_user_id(&cm).await.unwrap().unwrap();
+        let cm = db.schema.get_cm(&idx).unwrap().unwrap();
+        let user_id = db.schema.get_user_id(&cm).unwrap().unwrap();
 
         println!("[+] user_id: {:?}, USER_2: {:?}", user_id, USER_2);
         assert_eq!(user_id, USER_2);

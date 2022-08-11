@@ -180,8 +180,6 @@ fn invoke_execute(
         )?
     }
 
-    info!(" ************** after execute, storage: {:?}", storage);
-
     let result: Vec<u8>;
     unsafe {
         result = wasm_bootstrap::read_memory(
@@ -191,8 +189,6 @@ fn invoke_execute(
             result_len as u32,
         )?
     }
-
-    info!(" ************** after execute, result: {:?}", result);
 
     let receipt = InvokeReceipt::from_execute(result, storage)?;
 

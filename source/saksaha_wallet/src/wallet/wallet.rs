@@ -31,6 +31,15 @@ impl Wallet {
     }
 }
 
+// pub struct SendTxPourRequest {
+//     pi: U8Array,
+//     sn_1: U8Array,
+//     sn_2: U8Array,
+//     cm_1: U8Array,
+//     cm_2: U8Array,
+//     merkle_rt: U8Array,
+// }
+
 async fn init_for_demo(wallet: &Wallet) -> Result<(), WalletError> {
     {
         let user_id = "user_1".to_string();

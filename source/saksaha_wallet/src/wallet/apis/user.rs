@@ -10,7 +10,7 @@ impl WalletApis {
         &self,
         user_id: &String,
     ) -> Result<(), WalletError> {
-        match self.db.schema.get_my_sk(user_id).await? {
+        match self.db.schema.get_my_sk(user_id)? {
             Some(_) => {
                 warn!("user_id already exists");
                 return Ok(());

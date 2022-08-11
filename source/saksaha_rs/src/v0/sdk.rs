@@ -133,7 +133,7 @@ pub async fn send_tx_pour(
             ctr_call_type: CtrCallType::Execute,
         };
 
-        // ***** Need to change dummy values to real values
+        // *** Need to change dummy values to real values
         let send_req = SendPourTxRequest::new(
             String::from(format!("created_at_{:?}", time::SystemTime::now())),
             serde_json::to_vec(&req)?,
@@ -419,14 +419,3 @@ pub struct GenProofRequest {
 pub struct GenProofResponse {
     pub pi: Vec<Option<[u8; 32]>>,
 }
-
-// pub async fn gen_proof(
-//     coin_1_old: OldCoin,
-//     coin_1_new: NewCoin,
-//     coin_2_new: NewCoin,
-// ) -> Result<JsonResponse<GenProofRequest>, SaksahaSDKError> {
-//     let hasher = Hasher::new();
-//     let constants = hasher.get_mimc_constants().to_vec();
-
-//     let de_params = sak_proofs::get_mimc_params_1_to_2(&constants);
-// }

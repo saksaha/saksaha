@@ -67,6 +67,13 @@ impl OldCoin {
             auth_path: [None; CM_TREE_DEPTH as usize],
         }
     }
+
+    pub fn update_auth_path(
+        &mut self,
+        auth_path: [Option<(Scalar, bool)>; CM_TREE_DEPTH as usize],
+    ) {
+        self.auth_path = auth_path;
+    }
 }
 
 #[derive(Debug, Copy, Clone)]

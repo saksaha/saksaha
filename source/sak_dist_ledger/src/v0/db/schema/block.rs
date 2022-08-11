@@ -362,7 +362,6 @@ impl LedgerDBSchema {
             self.batch_put_tx(&mut batch, tx)?;
         }
 
-        println!(" **************  ctr state : {:?}", ctr_state_updates);
         for (ctr_addr, ctr_state) in ctr_state_updates {
             self.batch_put_ctr_state(&mut batch, ctr_addr, ctr_state)?;
         }
