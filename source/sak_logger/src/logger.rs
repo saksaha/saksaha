@@ -1,3 +1,4 @@
+use chrono::Local;
 use colored::Colorize;
 use env_logger::Logger;
 use env_logger::{Builder, Env};
@@ -57,7 +58,12 @@ fn build_logger(is_test: bool) -> Logger {
     Builder::from_env(env)
         .is_test(is_test)
         .format(|buf, record| {
-            let timestamp = buf.timestamp_seconds().to_string().dimmed();
+            let timestamp = {
+                Local::now()
+                    .format("%y-%m-%d %H:%M:%S")
+                    .to_string()
+                    .dimmed()
+            };
             let style = buf.default_level_style(record.level());
             let level = format!("{:<width$}", record.level(), width = 5);
 

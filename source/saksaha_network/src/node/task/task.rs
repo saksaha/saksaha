@@ -30,7 +30,7 @@ impl std::fmt::Display for NodeTask {
                 write!(f, "SendHello",)
             }
             Self::SendTxHashSyn { .. } => {
-                write!(f, "SendTxHasnSyn",)
+                write!(f, "SendTxHashSyn",)
             }
             Self::SendTxSyn { .. } => {
                 write!(f, "SendTxSyn",)

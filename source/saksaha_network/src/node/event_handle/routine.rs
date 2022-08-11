@@ -22,22 +22,22 @@ impl LedgerEventRoutine {
             let ev = match self.ledger_event_rx.recv().await {
                 Ok(e) => e,
                 Err(err) => {
-                    error!("Error receiving bc event, err: {}", err);
+                    error!("Error receiving ledger event, err: {}", err);
 
                     continue;
                 }
             };
 
-            debug!("Ledger event: {:?}", ev);
+            debug!("Handling ledger event: {:?}", ev);
 
-            match ev {
+            let event_handle_res = match ev {
                 DistLedgerEvent::NewBlocks(new_blocks) => {
                     event_handle::handle_new_blocks_ev(
                         &self.machine,
                         new_blocks,
                         &self.node_task_queue,
                     )
-                    .await;
+                    .await
                 }
                 DistLedgerEvent::TxPoolStat(new_tx_hashes) => {
                     event_handle::handle_tx_pool_stat(
@@ -45,9 +45,13 @@ impl LedgerEventRoutine {
                         new_tx_hashes,
                         &self.node_task_queue,
                     )
-                    .await;
+                    .await
                 }
             };
+
+            if let Err(err) = event_handle_res {
+                warn!("Error handling ledger event, err: {}", err);
+            }
         }
     }
 }

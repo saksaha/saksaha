@@ -1,4 +1,7 @@
-use crate::{machine::Machine, node::task::NodeTask};
+use crate::{
+    machine::Machine,
+    node::{task::NodeTask, SaksahaNodeError},
+};
 use futures::{stream::SplitSink, SinkExt};
 use log::{info, warn};
 use sak_p2p_transport::{
@@ -14,13 +17,13 @@ pub(super) async fn handle_tx_pool_stat<'a>(
     _machine: &Machine,
     new_tx_hashes: Vec<TxHash>,
     node_task_queue: &Arc<TaskQueue<NodeTask>>,
-) {
+) -> Result<(), SaksahaNodeError> {
     node_task_queue
         .push_back(NodeTask::SendTxHashSyn {
             tx_hashes: new_tx_hashes,
             her_public_key: None,
         })
-        .await;
+        .await
 
     // match conn
     //     .send(Msg::TxHashSyn(TxHashSynMsg {
@@ -44,13 +47,13 @@ pub(super) async fn handle_new_blocks_ev<'a>(
     _machine: &Machine,
     new_blocks: Vec<(BlockHeight, BlockHash)>,
     node_task_queue: &Arc<TaskQueue<NodeTask>>,
-) {
+) -> Result<(), SaksahaNodeError> {
     node_task_queue
         .push_back(NodeTask::SendBlockHashSyn {
             new_blocks: new_blocks.clone(),
             her_public_key: None,
         })
-        .await;
+        .await
 
     // match conn
     //     // .socket
