@@ -1,7 +1,6 @@
 mod block;
 mod tx;
-
-use std::sync::Arc;
+mod tx_hash;
 
 use crate::{machine::Machine, SaksahaError};
 use futures::{stream::SplitSink, SinkExt};
@@ -12,6 +11,7 @@ use sak_p2p_transport::{
     UpgradedP2PCodec,
 };
 use sak_task_queue::TaskQueue;
+use std::sync::Arc;
 use tokio::{net::TcpStream, sync::RwLockWriteGuard};
 use tokio_util::codec::Framed;
 

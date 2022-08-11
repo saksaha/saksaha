@@ -1,14 +1,13 @@
-use crate::node::SaksahaNodeError;
-
 use super::NodeTask;
 use async_trait::async_trait;
 use log::{debug, error, warn};
 use sak_p2p_peertable::{Peer, PeerStatus, PeerTable};
 use sak_p2p_transport::{
     handshake::{self, HandshakeInitArgs},
-    Conn,
+    Conn, Msg, TxHashSynMsg, TxSynMsg,
 };
-use sak_task_queue::TaskHandler;
+use sak_task_queue::{TaskHandler, TaskQueueError};
+use sak_types::TxCandidate;
 use std::sync::Arc;
 use tokio::{net::TcpStream, sync::RwLock};
 
@@ -18,30 +17,70 @@ pub(in crate::node) struct NodeTaskHandler {
 
 #[async_trait]
 impl TaskHandler<NodeTask> for NodeTaskHandler {
-    async fn handle_task(
-        &self,
-        task: NodeTask,
-    ) -> Result<(), SaksahaNodeError> {
+    async fn handle_task(&self, task: NodeTask) {
         println!("handle new task: {}", task);
 
-        match task {
-            NodeTask::SendHello { her_public_key } => {
-                self.peer_table.get_mapped_peer(&her_public_key)
-            }
+        let res = match task {
             NodeTask::SendTxSyn {
                 tx_candidates,
                 her_public_key,
-            } => {}
+            } => {
+                handle_send_tx_syn(
+                    tx_candidates,
+                    her_public_key,
+                    &self.peer_table,
+                )
+                .await
+            }
             NodeTask::SendTxHashSyn {
                 tx_hashes,
                 her_public_key,
-            } => {}
+            } => Ok(()),
             NodeTask::SendBlockHashSyn {
                 new_blocks,
                 her_public_key,
-            } => {}
+            } => Ok(()),
         };
 
-        Ok(())
+        if let Err(err) = res {
+            warn!("Task handle failed, err: {}", err);
+        }
     }
 }
+
+async fn handle_send_tx_syn(
+    tx_candidates: Vec<TxCandidate>,
+    her_public_key: Option<String>,
+    peer_table: &Arc<PeerTable>,
+) -> Result<(), TaskQueueError> {
+    if let Some(ref her_pk) = her_public_key {
+        let peer = peer_table.get_mapped_peer(&her_pk).await.ok_or(format!(
+            "peer does not exist, key: {:?}",
+            &her_public_key
+        ))?;
+
+        let mut conn = peer.get_transport().conn.write().await;
+
+        let tx_syn_msg = Msg::TxSyn(TxSynMsg {
+            tx_candidates: tx_candidates.clone(),
+        });
+
+        conn.send(tx_syn_msg).await?;
+    } else {
+        let peer_map_lock = peer_table.get_peer_map().read().await;
+
+        for (_pk, peer) in peer_map_lock.iter() {
+            let mut conn = peer.get_transport().conn.write().await;
+
+            let tx_syn_msg = Msg::TxSyn(TxSynMsg {
+                tx_candidates: tx_candidates.clone(),
+            });
+
+            conn.send(tx_syn_msg).await?;
+        }
+    }
+
+    Ok(())
+}
+
+// async fn handle_send_tx_syn() {}
