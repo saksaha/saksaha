@@ -13,13 +13,15 @@ const TASK_MIN_INTERVAL: u64 = 1000;
 // pub type HandlerFn<T> =
 //     Box<dyn Fn(T) -> Pin<Box<dyn Future<Output = ()> + Send + Sync>>>;
 
+pub type TaskHandlerType<T> = Box<dyn TaskHandler<T> + Send + Sync>;
+
 pub struct TaskRuntime<T>
 where
     T: std::fmt::Display + Send + Sync + 'static,
 {
     task_queue: Arc<TaskQueue<T>>,
     task_min_interval: Duration,
-    // task_handler: Box<dyn TaskHandler>,
+    task_handler: TaskHandlerType<T>,
 }
 
 impl<T> TaskRuntime<T>
@@ -29,7 +31,7 @@ where
     pub fn new(
         task_queue: Arc<TaskQueue<T>>,
         task_min_interval: Option<u64>,
-        // task_handler: Box<dyn TaskHandler>,
+        task_handler: TaskHandlerType<T>,
     ) -> TaskRuntime<T> {
         let task_min_interval = match task_min_interval {
             Some(i) => Duration::from_millis(i.into()),
@@ -39,7 +41,7 @@ where
         TaskRuntime {
             task_queue,
             task_min_interval,
-            // task_handler,
+            task_handler,
         }
     }
 
@@ -66,7 +68,7 @@ where
                 }
             };
 
-            // self.task_handler.handle_task().await;
+            self.task_handler.handle_task(task).await;
 
             sak_utils_time::wait_until_min_interval(
                 time_since,
@@ -78,9 +80,9 @@ where
 }
 
 #[async_trait]
-pub trait TaskHandler
-// where
-//     T: std::fmt::Display + Send + Sync + 'static,
+pub trait TaskHandler<T>
+where
+    T: std::fmt::Display + Send + Sync + 'static,
 {
-    async fn handle_task(&self);
+    async fn handle_task(&self, task: T);
 }

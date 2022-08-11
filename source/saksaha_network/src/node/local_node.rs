@@ -50,7 +50,7 @@ impl LocalNode {
             let task_runtime = TaskRuntime::new(
                 node_task_queue.clone(),
                 node_task_min_interval,
-                // node_task_handler,
+                node_task_handler,
             );
 
             tokio::spawn(async move {

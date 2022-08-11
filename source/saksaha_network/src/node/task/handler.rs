@@ -13,6 +13,6 @@ use tokio::{net::TcpStream, sync::RwLock};
 pub(in crate::node) struct NodeTaskHandler {}
 
 #[async_trait]
-impl TaskHandler for NodeTaskHandler {
-    async fn handle_task(&self) {}
+impl TaskHandler<NodeTask> for NodeTaskHandler {
+    async fn handle_task(&self, task: NodeTask) {}
 }
