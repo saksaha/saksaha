@@ -260,7 +260,17 @@ fn handle_send_msg(
     storage: &mut Storage,
     args: RequestArgs,
 ) -> Result<Vec<u8>, ContractError> {
-    let mut evl_storage: EnvelopeStorage = serde_json::from_slice(&storage)?;
+    let mut evl_storage: EnvelopeStorage =
+        match serde_json::from_slice(&storage) {
+            Ok(e) => e,
+            Err(err) => {
+                return Err(format!(
+                    "Failed to restore evl_storage, err: {:?}",
+                    err
+                )
+                .into())
+            }
+        };
 
     let send_msg_params: SendMsgParams = serde_json::from_slice(&args)?;
 

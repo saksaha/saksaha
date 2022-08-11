@@ -1,3 +1,4 @@
+use super::Status;
 use sak_crypto::Hasher;
 use sak_crypto::Scalar;
 use sak_crypto::ScalarExt;
@@ -22,7 +23,7 @@ pub(crate) struct Coin {
 
     pub user_id: Option<String>,
 
-    pub status: Option<bool>,
+    pub status: Option<Status>,
 }
 
 impl Coin {
@@ -62,7 +63,7 @@ impl Coin {
             v: Some(v),
             cm: Some(cm),
             user_id: Some(user_id),
-            status: Some(false),
+            status: Some(Status::Unused),
         }
     }
 }
@@ -80,5 +81,5 @@ pub(crate) struct OwnCoin {
 
     pub user_id: Option<String>,
 
-    pub status: Option<bool>,
+    pub status: Option<Status>,
 }
