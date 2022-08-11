@@ -13,7 +13,7 @@ async fn test_two_nodes_talk_on_stream_cipher() {
 
     let (p2p_host_1, _local_node_1, _machine_1, _peer_table_1, identity_1): (
         P2PHost,
-        Arc<LocalNode>,
+        LocalNode,
         Arc<Machine>,
         Arc<PeerTable>,
         Arc<Identity>,
@@ -37,7 +37,7 @@ async fn test_two_nodes_talk_on_stream_cipher() {
     // let (.., p2p_host_2) = create_client(Some(35521), Some(35520)).await;
     let (p2p_host_2, _local_node_2, _machine_2, peer_table_2, _): (
         P2PHost,
-        Arc<LocalNode>,
+        LocalNode,
         Arc<Machine>,
         Arc<PeerTable>,
         Arc<Identity>,

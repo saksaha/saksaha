@@ -20,7 +20,7 @@ pub(crate) struct LocalNode {
 }
 
 impl LocalNode {
-    pub(crate) async fn run(&self) {
+    pub(crate) async fn run(self) {
         let machine = self.machine.clone();
         let mine_interval = self.mine_interval.clone();
         let node_task_queue = Arc::new(TaskQueue::new(100));
@@ -39,13 +39,9 @@ impl LocalNode {
 
         {
             // Node task routine
-            // let node_task_queue_clone = node_task_queue.clone();
-            // let node_task_runtime = NodeTaskRuntime::new(
-            //     node_task_queue_clone,
-            //     self.node_task_min_interval,
-            // );
-
-            let node_task_handler = Box::new(NodeTaskHandler {});
+            let node_task_handler = Box::new(NodeTaskHandler {
+                peer_table: self.peer_table.clone(),
+            });
 
             let task_runtime = TaskRuntime::new(
                 node_task_queue.clone(),
@@ -60,9 +56,9 @@ impl LocalNode {
 
         {
             // Ledger event routine
-            let machine = self.machine.clone();
             let ledger_event_rx = {
-                let rx = machine
+                let rx = self
+                    .machine
                     .blockchain
                     .dist_ledger
                     .ledger_event_tx
