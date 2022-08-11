@@ -1,7 +1,7 @@
 use crate::{DistLedgerApis, LedgerError};
 use sak_contract_std::Storage;
 use sak_proofs::{MerkleTree, CM_TREE_DEPTH};
-use sak_types::{tx::BlockHash, Block, CtrAddr, Tx, TxCandidate};
+use sak_types::{Block, BlockHash, CtrAddr, Tx, TxCandidate};
 
 const GET_BLOCK_HASH_LIST_DEFAULT_SIZE: u128 = 10;
 

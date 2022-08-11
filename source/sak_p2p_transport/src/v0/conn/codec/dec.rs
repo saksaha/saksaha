@@ -1,6 +1,6 @@
 use crate::{
-    BlockHashSynMsg, BlockSynMsg, Handshake, Msg, MsgType, PingMsg, TrptError,
-    TxAckMsg, TxHashSynMsg, TxSynMsg,
+    BlockHashSynMsg, BlockSynMsg, HandshakeMsg, Msg, MsgType, PingMsg,
+    TrptError, TxAckMsg, TxHashSynMsg, TxSynMsg,
 };
 use bytes::BytesMut;
 use sak_p2p_frame::{frame_io, Parse};
@@ -26,11 +26,11 @@ pub(super) fn decode_into_msg(
 
         let msg = match msg_type.as_str() {
             MsgType::HANDSHAKE_SYN => {
-                let handshake = Handshake::from_parse(&mut parse)?;
+                let handshake = HandshakeMsg::from_parse(&mut parse)?;
                 Msg::HandshakeSyn(handshake)
             }
             MsgType::HANDSHAKE_ACK => {
-                let handshake = Handshake::from_parse(&mut parse)?;
+                let handshake = HandshakeMsg::from_parse(&mut parse)?;
                 Msg::HandshakeAck(handshake)
             }
             MsgType::TX_HASH_SYN => {

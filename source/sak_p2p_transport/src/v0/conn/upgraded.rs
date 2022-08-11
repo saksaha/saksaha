@@ -4,6 +4,10 @@ use std::net::SocketAddr;
 use tokio::net::TcpStream;
 use tokio_util::codec::Framed;
 
+pub struct SendReceipt {
+    __created_by_sending: bool,
+}
+
 pub struct UpgradedConn {
     socket_addr: SocketAddr,
     conn_id: String,
@@ -26,12 +30,16 @@ impl UpgradedConn {
         upgraded_conn
     }
 
-    pub async fn send(&mut self, msg: Msg) -> Result<(), TrptError> {
+    pub async fn send(&mut self, msg: Msg) -> Result<SendReceipt, TrptError> {
         println!("send msg!, msg: {}, conn id: {}", msg, self.conn_id);
 
         self.socket.send(msg).await?;
 
-        Ok(())
+        let receipt = SendReceipt {
+            __created_by_sending: true,
+        };
+
+        Ok(receipt)
     }
 
     pub async fn next_msg(&mut self) -> Option<Result<Msg, TrptError>> {

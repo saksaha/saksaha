@@ -1,11 +1,27 @@
-use crate::{machine::Machine, SaksahaError};
+use std::sync::Arc;
+
+use crate::{machine::Machine, node::SaksahaNodeError, SaksahaError};
 use futures::{stream::SplitSink, SinkExt};
 use log::{debug, info, warn};
 use sak_p2p_transport::{
-    BlockHashSynMsg, BlockSynMsg, Msg, TxHashSynMsg, TxSynMsg, UpgradedConn,
-    UpgradedP2PCodec,
+    BlockHashSynMsg, BlockSynMsg, Msg, SendReceipt, TxHashSynMsg, TxSynMsg,
+    UpgradedConn, UpgradedP2PCodec,
 };
 use tokio::{net::TcpStream, sync::RwLockWriteGuard};
+
+pub(in crate::node) async fn send_block_hash_syn() {}
+
+pub(in crate::node) async fn recv_block_hash_syn(
+    block_hash_syn_msg: BlockHashSynMsg,
+    machine: &Arc<Machine>,
+    conn: RwLockWriteGuard<'_, UpgradedConn>,
+) -> Result<SendReceipt, SaksahaNodeError> {
+    let receipt = SendReceipt {
+        __created_by_sending: false,
+    };
+
+    Ok(receipt)
+}
 
 pub(super) async fn handle_block_hash_syn<'a>(
     block_hash_syn_msg: BlockHashSynMsg,

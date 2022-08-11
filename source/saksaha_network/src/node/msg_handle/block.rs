@@ -1,11 +1,51 @@
-use crate::{machine::Machine, SaksahaError};
+use std::sync::Arc;
+
+use crate::{machine::Machine, node::SaksahaNodeError, SaksahaError};
 use futures::{stream::SplitSink, SinkExt};
 use log::{debug, info, warn};
 use sak_p2p_transport::{
-    BlockHashSynMsg, BlockSynMsg, Msg, TxHashSynMsg, TxSynMsg, UpgradedConn,
-    UpgradedP2PCodec,
+    BlockAckMsg, BlockHashSynMsg, BlockSynMsg, Msg, SendReceipt, TxHashSynMsg,
+    TxSynMsg, UpgradedConn, UpgradedP2PCodec,
 };
 use tokio::{net::TcpStream, sync::RwLockWriteGuard};
+
+pub(in crate::node) async fn send_block_syn() -> Result<(), SaksahaNodeError> {
+    Ok(())
+}
+
+pub(in crate::node) async fn recv_block_syn(
+    block_syn_msg: BlockSynMsg,
+    machine: &Arc<Machine>,
+    mut conn: RwLockWriteGuard<'_, UpgradedConn>,
+) -> Result<SendReceipt, SaksahaNodeError> {
+    let blocks = block_syn_msg.blocks;
+
+    let latest_block_height = machine
+        .blockchain
+        .dist_ledger
+        .apis
+        .get_latest_block_height()?
+        .unwrap_or(0);
+
+    for (block, txs) in blocks {
+        if block.block_height != (latest_block_height + 1) {
+            return Err("received not continuous block height".into());
+        }
+
+        machine
+            .blockchain
+            .dist_ledger
+            .apis
+            .sync_block(block, txs)
+            .await?;
+    }
+
+    let block_ack_msg = Msg::BlockAck(BlockAckMsg {});
+
+    let receipt = conn.send(block_ack_msg).await?;
+
+    Ok(receipt)
+}
 
 pub(super) async fn handle_block_hash_syn<'a>(
     block_hash_syn_msg: BlockHashSynMsg,

@@ -1,4 +1,4 @@
-pub(crate) mod MsgType {
+pub mod MsgType {
     pub const HANDSHAKE_SYN: &str = "hs_syn";
 
     pub const HANDSHAKE_ACK: &str = "hs_ack";

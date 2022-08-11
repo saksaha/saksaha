@@ -30,8 +30,7 @@ impl PeerNode {
         let node_task_queue = self.node_task_queue.clone();
 
         loop {
-            let mut conn_lock =
-                &mut self.peer.get_transport().conn.write().await;
+            let mut conn_lock = self.peer.get_transport().conn.write().await;
 
             let maybe_msg = conn_lock.next_msg().await;
 
@@ -41,7 +40,7 @@ impl PeerNode {
                         let _ = msg_handle::handle_msg(
                             msg,
                             &self.machine,
-                            &mut conn_lock,
+                            conn_lock,
                             &self.node_task_queue,
                             &self.peer,
                         )
