@@ -14,7 +14,6 @@ use tokio::sync::broadcast::Receiver;
 
 pub(in crate::node) struct PeerNode {
     pub peer: Arc<Peer>,
-    // pub bc_event_rx: Receiver<DistLedgerEvent>,
     pub machine: Arc<Machine>,
     pub node_task_queue: Arc<TaskQueue<NodeTask>>,
 }
