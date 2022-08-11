@@ -2,7 +2,7 @@ use super::{
     event_handle::LedgerEventRoutine,
     miner::Miner,
     peer_node::PeerNode,
-    task::{NodeTask, NodeTaskRuntime, NodeTaskRuntimeCtx},
+    task::{NodeTask, NodeTaskHandler},
 };
 use crate::machine::Machine;
 use futures::Future;
@@ -24,6 +24,7 @@ impl LocalNode {
         let machine = self.machine.clone();
         let mine_interval = self.mine_interval.clone();
         let node_task_queue = Arc::new(TaskQueue::new(100));
+        let node_task_min_interval = self.node_task_min_interval.clone();
 
         {
             // Miner routine
@@ -36,22 +37,26 @@ impl LocalNode {
             }
         }
 
-        // {
-        //     // Node task routine
-        //     let node_task_queue_clone = node_task_queue.clone();
-        //     let node_runtime_ctx = NodeTaskRuntimeCtx {
-        //         peer_table: self.peer_table.clone(),
-        //     };
-        //     let node_task_runtime = NodeTaskRuntime::new(
-        //         node_task_queue_clone,
-        //         self.node_task_min_interval,
-        //         node_runtime_ctx,
-        //     );
+        {
+            // Node task routine
+            // let node_task_queue_clone = node_task_queue.clone();
+            // let node_task_runtime = NodeTaskRuntime::new(
+            //     node_task_queue_clone,
+            //     self.node_task_min_interval,
+            // );
 
-        //     tokio::spawn(async move {
-        //         node_task_runtime.run().await;
-        //     });
-        // }
+            let node_task_handler = Box::new(NodeTaskHandler {});
+
+            let task_runtime = TaskRuntime::new(
+                node_task_queue.clone(),
+                node_task_min_interval,
+                // node_task_handler,
+            );
+
+            tokio::spawn(async move {
+                task_runtime.run().await;
+            });
+        }
 
         {
             // Ledger event routine
