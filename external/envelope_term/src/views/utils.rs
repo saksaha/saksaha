@@ -147,7 +147,7 @@ pub(crate) fn draw_balance<'a>(state: &'a AppState) -> Paragraph {
         vec![
             Span::styled("My Balance: ", Style::default()),
             Span::styled(
-                format!("     {} ", state.my_balance),
+                format!("     {} ", state.balance),
                 Style::default()
                     .add_modifier(Modifier::BOLD)
                     .fg(Color::LightYellow),

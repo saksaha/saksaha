@@ -100,7 +100,7 @@ async fn init_for_demo(wallet: &Wallet) -> Result<(), WalletError> {
                 &coin.addr_sk.unwrap().to_string(),
                 &coin.user_id.unwrap().to_string(),
                 &coin.status.unwrap().to_string(),
-                &1,
+                &0,
             )
             .await?;
     }

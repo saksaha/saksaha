@@ -13,10 +13,11 @@ pub enum Action {
     ShowChList,
     ShowOpenCh,
     ShowChat,
-    ShowMyBalance,
     Down,
     Up,
     Right,
+    //
+    UpdateBalance,
 }
 
 impl Action {
@@ -30,10 +31,11 @@ impl Action {
             Action::ShowChList,
             Action::ShowOpenCh,
             Action::ShowChat,
-            Action::ShowMyBalance,
             Action::Down,
             Action::Up,
             Action::Right,
+            //
+            Action::UpdateBalance,
         ];
         ACTIONS.iter()
     }
@@ -48,10 +50,11 @@ impl Action {
             Action::ShowChList => &[Key::Char('1')],
             Action::ShowOpenCh => &[Key::Char('2')],
             Action::ShowChat => &[Key::Char('3')],
-            Action::ShowMyBalance => &[Key::Char('$')],
             Action::Down => &[Key::Down],
             Action::Up => &[Key::Up],
             Action::Right => &[Key::Right],
+            //
+            Action::UpdateBalance => &[Key::Char('$')],
         }
     }
 }
@@ -67,10 +70,11 @@ impl Display for Action {
             Action::ShowChList => "Show channel list",
             Action::ShowOpenCh => "Show open channel",
             Action::ShowChat => "Show chatting",
-            Action::ShowMyBalance => "Show my balance in wallet",
             Action::Down => "Down",
             Action::Up => "Up",
             Action::Right => "move to chat room",
+            //
+            Action::UpdateBalance => "Show my balance in wallet",
         };
         write!(f, "{}", str)
     }

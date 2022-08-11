@@ -82,10 +82,6 @@ impl App {
                     self.state.set_view_chat();
                     AppReturn::Continue
                 }
-                Action::ShowMyBalance => {
-                    self.state.set_balance();
-                    AppReturn::Continue
-                }
                 Action::Down => {
                     self.state.next_ch();
                     AppReturn::Continue
@@ -103,6 +99,10 @@ impl App {
                         _ => {}
                     }
 
+                    AppReturn::Continue
+                }
+                Action::UpdateBalance => {
+                    self.state.set_balance().await;
                     AppReturn::Continue
                 }
             }
@@ -242,6 +242,8 @@ impl App {
             Action::Down,
             Action::Up,
             Action::Right,
+            //
+            Action::UpdateBalance,
         ]
         .into();
 

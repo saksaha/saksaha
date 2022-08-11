@@ -1,4 +1,5 @@
 use hyper::{Body, Client, Method, Request, Uri};
+use log::debug;
 // use sak_contract_std::Request;
 // use sak_types::U8Array;
 // use std::env::Args;
@@ -14,15 +15,9 @@ pub async fn get_balance_from_wallet(
 
     let client = Client::new();
     let uri: Uri = { endpoint.parse().expect("URI should be made") };
-    let params = format!(
-        "{{\
-        \"id\": {},\
-        \"key\": user_1_key\
-        }}",
-        user_id
-    )
-    .as_bytes()
-    .to_vec();
+    let params = format!(r#"{{"id": "{}","key": "user_1_key"}}"#, user_id)
+        .as_bytes()
+        .to_vec();
 
     let body = {
         let json_request = JsonRequest {
