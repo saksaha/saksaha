@@ -1,4 +1,4 @@
-use crate::{TrptError, TX_HASH_ACK_TYPE, TX_HASH_SYN_TYPE};
+use crate::{MsgType, TrptError};
 use bytes::{BufMut, Bytes, BytesMut};
 use sak_p2p_frame::{Frame, Parse};
 
@@ -29,11 +29,11 @@ impl TxHashSynMsg {
     }
 
     pub fn into_syn_frame(&self) -> Frame {
-        self.into_frame(TX_HASH_SYN_TYPE)
+        self.into_frame(MsgType::TX_HASH_SYN)
     }
 
     pub fn into_ack_frame(&self) -> Frame {
-        self.into_frame(TX_HASH_ACK_TYPE)
+        self.into_frame(MsgType::TX_HASH_ACK)
     }
 
     fn into_frame(&self, msg_type: &'static str) -> Frame {

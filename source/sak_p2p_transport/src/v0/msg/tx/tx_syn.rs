@@ -1,6 +1,6 @@
 use crate::tx_utils;
+use crate::MsgType;
 use crate::TrptError;
-use crate::TX_SYN_TYPE;
 use bytes::Bytes;
 use sak_p2p_frame::{Frame, Parse};
 use sak_types::{TxCandidate, TxType};
@@ -64,7 +64,7 @@ impl TxSynMsg {
         let tx_candidates = self.tx_candidates;
         let tc_count = tx_candidates.len();
 
-        frame.push_bulk(Bytes::from(TX_SYN_TYPE.as_bytes()));
+        frame.push_bulk(Bytes::from(MsgType::TX_SYN));
 
         frame.push_int(tc_count as u128);
 

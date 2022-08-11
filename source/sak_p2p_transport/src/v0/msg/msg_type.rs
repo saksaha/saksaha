@@ -17,5 +17,7 @@ pub(crate) mod MsgType {
 
     pub const BLOCK_SYN: &str = "block_syn";
 
+    pub const BLOCK_ACK: &str = "block_ack";
+
     pub const PING: &str = "ping";
 }

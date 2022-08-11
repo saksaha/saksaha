@@ -1,7 +1,6 @@
 use crate::{MsgType, TrptError};
-use bytes::{BufMut, Bytes, BytesMut};
+use bytes::Bytes;
 use sak_p2p_frame::{Frame, Parse};
-use std::str;
 
 #[derive(Debug)]
 pub struct PingMsg {
