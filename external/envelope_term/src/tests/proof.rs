@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use sak_crypto::{Hasher, Scalar, ScalarExt};
+use sak_crypto::{Bls12, Hasher, Proof, Scalar, ScalarExt};
 use sak_dist_ledger::{
     Consensus, ConsensusError, DistLedger, DistLedgerApis, DistLedgerArgs,
 };
@@ -8,7 +8,7 @@ use sak_types::{BlockCandidate, TxCandidate, U8Array};
 use saksaha::{
     generate_proof_1_to_2, get_auth_path, send_tx_mint, verify_proof_1_to_2,
 };
-use std::{collections::HashMap, time::Duration};
+use std::{collections::HashMap, sync::Arc, time::Duration};
 
 pub struct DummyPos {}
 
@@ -180,11 +180,25 @@ async fn test_generate_a_proof() {
     };
 
     println!("\n[+] Waiting for generating pi...");
-    let pi = generate_proof_1_to_2(coin_1_old, coin_1_new, coin_2_new).await;
+    let pi = generate_proof_1_to_2(coin_1_old, coin_1_new, coin_2_new)
+        .await
+        .unwrap();
 
     println!("[!] pi: {:#?}", pi);
 
+    {
+        let mut pi_ser = Vec::new();
+        pi.write(&mut pi_ser).unwrap();
+
+        println!("[!] pi serialized, len: {}, {:?}", pi_ser.len(), pi_ser);
+
+        let pi_des: Proof<Bls12> = Proof::read(&*pi_ser).unwrap();
+
+        println!("[!] pi deserialized: {:#?}", pi_des);
+    }
+
     println!("\n[+] Verifying  pi...");
+
     {
         let hasher = Hasher::new();
 
@@ -240,7 +254,7 @@ async fn test_generate_a_proof() {
         let public_inputs = [merkle_rt, sn_1_old, cm_1_new, cm_2_new];
 
         assert_eq!(
-            verify_proof_1_to_2(pi.unwrap(), &public_inputs, &hasher).await,
+            verify_proof_1_to_2(pi, &public_inputs, &hasher).await,
             true
         );
     }
