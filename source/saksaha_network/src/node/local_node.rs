@@ -7,8 +7,14 @@ use super::{
 use crate::machine::Machine;
 use sak_p2p_peertable::{Peer, PeerTable};
 use sak_task_queue::{TaskQueue, TaskRuntime};
-use std::{pin::Pin, sync::Arc, time::Duration};
+use std::{
+    pin::Pin,
+    sync::Arc,
+    time::{Duration, SystemTime},
+};
 use tokio::sync::RwLock;
+
+const PEER_REGISTER_MIN_INTERVAL: u64 = 1000;
 
 pub(crate) struct LocalNode {
     pub peer_table: Arc<PeerTable>,
@@ -35,11 +41,13 @@ impl LocalNode {
         }
     }
 
-    pub(crate) async fn run(mut self) {
+    pub(crate) async fn run(self) {
         let machine = self.machine.clone();
         let mine_interval = self.mine_interval.clone();
         let node_task_queue = Arc::new(TaskQueue::new(100));
         let node_task_min_interval = self.node_task_min_interval.clone();
+        let peer_register_min_interval =
+            Duration::from_millis(PEER_REGISTER_MIN_INTERVAL);
 
         {
             // Miner routine
@@ -55,7 +63,7 @@ impl LocalNode {
         {
             // Node task routine
             let node_task_handler = Box::new(NodeTaskHandler {
-                // mapped_peers: self.mapped_peers.clone(),
+                peer_table: self.peer_table.clone(),
             });
 
             let task_runtime = TaskRuntime::new(
@@ -101,6 +109,8 @@ impl LocalNode {
             let mut peer_it_lock = peer_it.write().await;
 
             loop {
+                let time_since = SystemTime::now();
+
                 let machine = self.machine.clone();
 
                 let peer = match peer_it_lock.next().await {
@@ -118,7 +128,11 @@ impl LocalNode {
                     peer_node.run().await;
                 });
 
-                tokio::time::sleep(Duration::from_secs(1)).await;
+                sak_utils_time::wait_until_min_interval(
+                    time_since,
+                    peer_register_min_interval,
+                )
+                .await;
             }
         }
     }
