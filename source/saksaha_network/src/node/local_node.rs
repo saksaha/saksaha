@@ -60,22 +60,22 @@ impl LocalNode {
             }
         }
 
-        {
-            // Node task routine
-            let node_task_handler = Box::new(NodeTaskHandler {
-                peer_table: self.peer_table.clone(),
-            });
+        // {
+        //     // Node task routine
+        //     let node_task_handler = Box::new(NodeTaskHandler {
+        //         peer_table: self.peer_table.clone(),
+        //     });
 
-            let task_runtime = TaskRuntime::new(
-                node_task_queue.clone(),
-                node_task_min_interval,
-                node_task_handler,
-            );
+        //     let task_runtime = TaskRuntime::new(
+        //         node_task_queue.clone(),
+        //         node_task_min_interval,
+        //         node_task_handler,
+        //     );
 
-            tokio::spawn(async move {
-                task_runtime.run().await;
-            });
-        }
+        //     tokio::spawn(async move {
+        //         task_runtime.run().await;
+        //     });
+        // }
 
         {
             // Ledger event routine
