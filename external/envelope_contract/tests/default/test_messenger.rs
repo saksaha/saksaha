@@ -37,11 +37,18 @@ fn make_mock_storage(msgs: &Vec<String>) -> Storage {
     let mut open_ch_reqs = HashMap::new();
     open_ch_reqs.insert(
         get_her_pk(),
-        vec![OpenCh {
-            ch_id: "ch_id_1".to_string(),
-            eph_key: "eph_key_1".to_string(),
-            sig: "sig_1".to_string(),
-        }],
+        vec![
+            OpenCh {
+                ch_id: "ch_id_1".to_string(),
+                eph_key: "eph_key_1".to_string(),
+                sig: "sig_1".to_string(),
+            },
+            OpenCh {
+                ch_id: DUMMY_CHANNEL_ID_1.to_string(),
+                eph_key: "eph_key_1".to_string(),
+                sig: "sig_1".to_string(),
+            },
+        ],
     );
 
     let mut chats = HashMap::new();
@@ -90,6 +97,7 @@ fn make_mock_open_ch() -> OpenCh {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_messenger_get_msgs() {
+    sak_test_utils::init_test_log();
     let vm = VM::init().expect("VM should be initiated");
 
     let test_dummy_messege = get_multi_messages();
@@ -132,6 +140,7 @@ async fn test_messenger_get_msgs() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_messenger_get_ch_list() {
+    sak_test_utils::init_test_log();
     let vm = VM::init().expect("VM should be initiated");
 
     let her_pk = get_her_pk();
@@ -178,6 +187,7 @@ async fn test_messenger_get_ch_list() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_messenger_open_channel() {
+    sak_test_utils::init_test_log();
     let vm = VM::init().expect("VM should be initiated");
 
     let new_pk = "abcdef".to_string();
@@ -245,6 +255,7 @@ async fn test_messenger_open_channel() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_messenger_send_msg() {
+    sak_test_utils::init_test_log();
     let vm = VM::init().expect("VM should be initiated");
 
     let dummy_messeges = get_multi_messages();
@@ -283,6 +294,11 @@ async fn test_messenger_send_msg() {
             .expect("State should be obtained");
 
         let updated_storage = receipt.updated_storage.unwrap();
+
+        println!(
+            "updated_storage: {:#?}",
+            String::from_utf8(updated_storage.clone())
+        );
 
         let storage: Storage =
             serde_json::from_slice(&updated_storage).unwrap();
