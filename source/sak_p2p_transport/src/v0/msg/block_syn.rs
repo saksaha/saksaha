@@ -1,5 +1,5 @@
 use super::tx_utils;
-use crate::{utils, TrptError, BLOCK_SYN_TYPE};
+use crate::{utils, MsgType, TrptError};
 use bytes::Bytes;
 use sak_p2p_frame::{Frame, Parse};
 use sak_types::{Block, Tx, TxType};
@@ -113,7 +113,7 @@ impl BlockSynMsg {
 
         let block_count = self.blocks.len();
 
-        frame.push_bulk(Bytes::from(BLOCK_SYN_TYPE.as_bytes()));
+        frame.push_bulk(Bytes::from(MsgType::BLOCK_SYN));
         frame.push_int(block_count as u128);
 
         for (block, txs) in self.blocks {

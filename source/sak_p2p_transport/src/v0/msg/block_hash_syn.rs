@@ -1,4 +1,4 @@
-use crate::{TrptError, BLOCK_HASH_ACK, BLOCK_HASH_SYN};
+use crate::{MsgType, TrptError};
 use bytes::{BufMut, Bytes, BytesMut};
 use sak_p2p_frame::{Frame, Parse};
 use sak_types::BlockHeight;
@@ -35,11 +35,11 @@ impl BlockHashSynMsg {
     }
 
     pub fn into_syn_frame(&self) -> Frame {
-        self.into_frame(BLOCK_HASH_SYN)
+        self.into_frame(MsgType::BLOCK_HASH_SYN)
     }
 
     pub fn into_ack_frame(&self) -> Frame {
-        self.into_frame(BLOCK_HASH_ACK)
+        self.into_frame(MsgType::BLOCK_HASH_ACK)
     }
 
     fn into_frame(&self, msg_type: &'static str) -> Frame {

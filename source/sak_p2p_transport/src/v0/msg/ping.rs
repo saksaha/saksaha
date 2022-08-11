@@ -1,4 +1,4 @@
-use crate::{TrptError, PING_TYPE};
+use crate::{MsgType, TrptError};
 use bytes::{BufMut, Bytes, BytesMut};
 use sak_p2p_frame::{Frame, Parse};
 use std::str;
@@ -20,7 +20,7 @@ impl PingMsg {
     pub(crate) fn into_frame(&self) -> Frame {
         let mut frame = Frame::array();
 
-        frame.push_bulk(Bytes::from(PING_TYPE.as_bytes()));
+        frame.push_bulk(Bytes::from(MsgType::PING));
 
         frame.push_int(self.nonce as u128);
 

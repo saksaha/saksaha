@@ -6,56 +6,13 @@ use sak_p2p_frame::{Frame, Parse};
 use sak_types::{TxCandidate, TxType};
 
 #[derive(Debug)]
-pub struct TxSynMsg {
-    pub tx_candidates: Vec<TxCandidate>,
-}
+pub struct TxAckMsg {}
 
-impl TxSynMsg {
-    pub(crate) fn from_parse(parse: &mut Parse) -> Result<TxSynMsg, TrptError> {
-        let tc_count = parse.next_int()?;
+impl TxAckMsg {
+    pub(crate) fn from_parse(parse: &mut Parse) -> Result<TxAckMsg, TrptError> {
+        let msg = TxAckMsg {};
 
-        let mut tx_candidates = Vec::with_capacity(tc_count as usize);
-
-        for _idx in 0..tc_count {
-            let tc = {
-                let tc_type = {
-                    let p = parse.next_bytes()?;
-
-                    let t = match p[..].get(0) {
-                        Some(v) => v,
-                        None => {
-                            return Err(format!(
-                                "Invalid tc type to parse, tc_type"
-                            )
-                            .into())
-                        }
-                    };
-                    TxType::from(*t)
-                };
-
-                match tc_type {
-                    TxType::Mint => TxCandidate::Mint(
-                        tx_utils::parse_mint_tx_candidate(parse)?,
-                    ),
-                    TxType::Pour => TxCandidate::Pour(
-                        tx_utils::parse_pour_tx_candidate(parse)?,
-                    ),
-                    _ => {
-                        return Err(format!(
-                            "tx candidate type is invalid, {:?}",
-                            tc_type
-                        )
-                        .into())
-                    }
-                }
-            };
-
-            tx_candidates.push(tc);
-        }
-
-        let m = TxSynMsg { tx_candidates };
-
-        Ok(m)
+        Ok(msg)
     }
 
     pub(crate) fn into_frame(self) -> Frame {

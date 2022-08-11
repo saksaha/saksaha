@@ -11,12 +11,31 @@ use sak_p2p_transport::{
     UpgradedP2PCodec,
 };
 use sak_task_queue::TaskQueue;
+use sak_types::TxCandidate;
 use std::sync::Arc;
 use tokio::{net::TcpStream, sync::RwLockWriteGuard};
 
 // send tx_syn
 // recv tx_ack
-pub(in crate::node) async fn send_tx_syn() {}
+pub(in crate::node) async fn send_tx_syn(
+    peer: &Arc<Peer>,
+    tx_candidates: Vec<TxCandidate>,
+) -> Result<(), SaksahaNodeError> {
+    let mut conn = peer.get_transport().conn.write().await;
+
+    let tx_syn_msg = Msg::TxSyn(TxSynMsg {
+        tx_candidates: tx_candidates.clone(),
+    });
+
+    conn.send(tx_syn_msg).await?;
+
+    let msg = conn
+        .next_msg()
+        .await
+        .ok_or(format!("tx syn needs to be followed by tx syn ack"))??;
+
+    Ok(())
+}
 
 // recv tx_syn
 // send tx_ack
