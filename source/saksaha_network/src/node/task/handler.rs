@@ -27,12 +27,18 @@ impl TaskHandler<NodeTask> for NodeTaskHandler {
                 tx_candidates,
                 her_public_key,
             } => {
-                handle_send_tx_syn(
+                msg_handle::send_tx_syn(
                     tx_candidates,
                     her_public_key,
                     &self.peer_table,
                 )
-                .await
+                .await?
+                // handle_send_tx_syn(
+                //     tx_candidates,
+                //     her_public_key,
+                //     &self.peer_table,
+                // )
+                // .await
             }
             NodeTask::SendTxHashSyn {
                 tx_hashes,
@@ -50,27 +56,25 @@ impl TaskHandler<NodeTask> for NodeTaskHandler {
     }
 }
 
-async fn handle_send_tx_syn(
-    tx_candidates: Vec<TxCandidate>,
-    her_public_key: Option<String>,
-    peer_table: &Arc<PeerTable>,
-) -> Result<(), TaskQueueError> {
-    if let Some(ref her_pk) = her_public_key {
-        let peer = peer_table.get_mapped_peer(&her_pk).await.ok_or(format!(
-            "peer does not exist, key: {:?}",
-            &her_public_key
-        ))?;
+// async fn handle_send_tx_syn(
+//     tx_candidates: Vec<TxCandidate>,
+//     her_public_key: Option<String>,
+//     peer_table: &Arc<PeerTable>,
+// ) -> Result<(), TaskQueueError> {
+//     if let Some(ref her_pk) = her_public_key {
+//         let peer = peer_table.get_mapped_peer(&her_pk).await.ok_or(format!(
+//             "peer does not exist, key: {:?}",
+//             &her_public_key
+//         ))?;
 
-        msg_handle::send_tx_syn(&peer, tx_candidates).await?;
-    } else {
-        let peer_map_lock = peer_table.get_peer_map().read().await;
+//         msg_handle::send_tx_syn(&peer, tx_candidates).await?;
+//     } else {
+//         let peer_map_lock = peer_table.get_peer_map().read().await;
 
-        for (_pk, peer) in peer_map_lock.iter() {
-            msg_handle::send_tx_syn(peer, tx_candidates.clone()).await?;
-        }
-    }
+//         for (_pk, peer) in peer_map_lock.iter() {
+//             msg_handle::send_tx_syn(peer, tx_candidates.clone()).await?;
+//         }
+//     }
 
-    Ok(())
-}
-
-// async fn handle_send_tx_syn() {}
+//     Ok(())
+// }

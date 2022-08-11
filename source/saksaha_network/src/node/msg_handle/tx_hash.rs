@@ -36,47 +36,6 @@ pub(in crate::node) async fn recv_tx_hash_syn(
         }))
         .await?;
 
-    let msg = conn
-        .next_msg()
-        .await
-        .ok_or(format!("tx hash ack is empty"))??;
-
-    let tx_hash_ack = match msg {
-        Msg::TxHashAck(m) => m,
-        _ => {
-            return Err(format!(
-                "Only tx hash msg is expected, msg: {:?}",
-                msg
-            )
-            .into());
-        }
-    };
-
-    let tx_candidates = machine
-        .blockchain
-        .dist_ledger
-        .apis
-        .get_txs_from_pool(tx_hash_ack.tx_hashes)
-        .await;
-
-    task_queue
-        .push_back(NodeTask::SendTxSyn {
-            tx_candidates,
-            her_public_key: Some(peer.get_public_key().to_string()),
-        })
-        .await?;
-
-    // if !tx_candidates.is_empty() {
-    //     match conn.send(Msg::TxSyn(TxSynMsg { tx_candidates })).await {
-    //         Ok(_) => {
-    //             // info!("Sending TxSyn, public_key: {}", public_key);
-    //         }
-    //         Err(err) => {
-    //             info!("Failed to handle TxHashAck, err: {}", err,);
-    //         }
-    //     }
-    // }
-
     Ok(receipt)
 }
 
