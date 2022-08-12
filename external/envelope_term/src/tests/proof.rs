@@ -4,7 +4,9 @@ use sak_dist_ledger::{
     Consensus, ConsensusError, DistLedger, DistLedgerApis, DistLedgerArgs,
 };
 use sak_proofs::{MerkleTree, NewCoin, OldCoin, CM_TREE_DEPTH};
-use sak_types::{BlockCandidate, TxCandidate, U8Array};
+use sak_types::{BlockCandidate, TxCandidate};
+use type_extension::U8Array;
+
 use saksaha::{
     generate_proof_1_to_2, get_auth_path, send_tx_mint, verify_proof_1_to_2,
 };

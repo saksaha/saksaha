@@ -14,6 +14,7 @@ sak_fs = { path = "../sak_fs" }
 sak_vm = { path = "../sak_vm" }
 sak_p2p_id = { path = "../sak_p2p_id" }
 sak_crypto = { path = "../sak_crypto" }
+type_extension = { path = "../type_extension" }
 sak_proofs = { path = "../sak_proofs" }
 env_logger = "0.9.0"
 chrono = "0.4"

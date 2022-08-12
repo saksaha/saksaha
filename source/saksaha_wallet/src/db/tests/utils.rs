@@ -3,7 +3,7 @@ use crate::db::WalletDB;
 pub(crate) async fn make_dummy_db() -> WalletDB {
     let test_string: String = "test_wallet".to_string();
 
-    let db = WalletDB::init(&test_string).await.unwrap();
+    let db = WalletDB::init(&test_string).unwrap();
 
     db
 }

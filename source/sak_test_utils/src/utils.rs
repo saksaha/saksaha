@@ -1,6 +1,8 @@
 use log::info;
 use sak_kv_db::{Options, DB};
 
+const APP_NAME: &str = "saksaha";
+
 pub fn init_test_log() {
     const RUST_LOG_ENV: &str = "
             sak_,
@@ -16,8 +18,7 @@ pub fn init_test_log() {
 
 pub fn init_test_config(app_prefixes: &Vec<String>) -> Result<(), String> {
     for app_prefix in app_prefixes {
-        let db_name = sak_fs::DBName::Saksaha;
-        let db_path = sak_fs::create_or_get_app_path(db_name, app_prefix)
+        let db_path = sak_fs::create_or_get_app_path(APP_NAME, app_prefix)
             .expect("Failed to create or get the db_path");
         let ledger_path = db_path.join("db").join("ledger");
 

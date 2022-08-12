@@ -2,10 +2,10 @@ use crate::{CoinProofCircuit1to2, MerkleTree, NewCoin, OldCoin, ProofError};
 use sak_crypto::{
     groth16, os_rng, Bls12, Hasher, Parameters, Proof, Scalar, ScalarExt,
 };
-use sak_types::U8Array;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::Write;
+use type_extension::U8Array;
 
 const TEST_TREE_DEPTH: u32 = 4;
 const PARAM_FILE_NAME: &str = "mimc_params";

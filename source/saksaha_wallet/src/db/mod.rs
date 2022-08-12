@@ -1,4 +1,5 @@
 mod db;
+mod raw;
 mod schema;
 mod tests;
 
