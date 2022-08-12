@@ -332,7 +332,6 @@
 //         (a_credential_encrypted, open_ch_empty, aes_key_from_a)
 //     };
 
-//     /*  ******************************************************************** */
 //     // 1. Request open_channel A -> B
 //     let (open_ch_req, storage) = {
 //         // open_ch_input = [eph_pk_str, ch_id, open_ch_src, open_ch_empty]
@@ -388,7 +387,6 @@
 //         state_open_channel
 //     };
 
-//     /*  ********************************************************************* */
 //     // 2. Request get_ch_list and send_msg B -> A
 //     let UnlockChannel { aes_key, ch_id } =
 //         unlock_channel(b_pk, b_sk, state_after_open_ch.clone());
@@ -406,7 +404,6 @@
 //         &vm,
 //     );
 
-//     /*  ********************************************************************* */
 //     // 3. Request get_msgs
 //     {
 //         let request = {
@@ -457,7 +454,6 @@
 //         assert_eq!(new_chat, msgs);
 //     }
 
-//     /*  ********************************************************************* */
 //     // 4. User A replies to B, and reads the chat between A & B
 //     let msg_a_to_b = String::from("B, welcome to saksaha!");
 
