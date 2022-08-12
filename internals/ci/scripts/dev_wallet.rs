@@ -18,13 +18,13 @@ pub(crate) fn run(args: Args) -> Result<(), CIError> {
     let args = [args_1, cli_args].concat();
 
     use std::io::{BufRead, BufReader, BufWriter, Write};
-    let stdin = std::io::stdin();
-    for line in stdin.lock().lines() {
-        println!("you typed: {}", line.unwrap());
-    }
+    // let stdin = std::io::stdin();
+    // for line in stdin.lock().lines() {
+    //     println!("you typed: {}", line.unwrap());
+    // }
 
     let proc = Kommand::new(program, args, None)?
-        .stdin(Stdio::piped())
+        .stdin(Stdio::inherit())
         .stdout(Stdio::inherit())
         // .stderr(Stdio::inherit())
         .spawn()
@@ -32,7 +32,7 @@ pub(crate) fn run(args: Args) -> Result<(), CIError> {
 
     // let _ = cmd.wait_with_output();
 
-    proc.stdin.as_ref().unwrap().write(b"alwkej").unwrap();
+    // proc.stdin.as_ref().unwrap().write(b"alwkej").unwrap();
 
     let res = proc.wait_with_output()?;
 

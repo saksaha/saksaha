@@ -35,7 +35,7 @@ fn main() -> Result<(), WalletError> {
         println!("11l");
 
         for line in stdin.lock().lines() {
-            println!("{}", line.unwrap());
+            println!("44, {}", line.unwrap());
         }
 
         thread::sleep(Duration::from_secs(1));
