@@ -1,8 +1,11 @@
+use std::collections::HashMap;
+
 use super::utils;
 use crate::{wasm_bootstrap, InvokeReceipt};
 use crate::{CtrFn, VMError, EXECUTE, INIT, MEMORY, QUERY};
 use log::{error, info};
 use sak_contract_std::{InvokeResult, Request, Storage, ERROR_PLACEHOLDER};
+use serde::{Deserialize, Serialize};
 use wasmtime::{Instance, Memory, Store, TypedFunc};
 
 pub struct VM {}
@@ -131,19 +134,17 @@ fn invoke_execute(
         { instance.get_typed_func(&mut store, EXECUTE)? };
 
     let (request_bytes, request_len) = {
-        let str = serde_json::to_value(request)?.to_string();
+        let vec = serde_json::to_vec(&request)?;
+        let vec_len = vec.len();
 
-        (str.as_bytes().to_vec(), str.len())
+        (vec, vec_len)
     };
 
     let request_ptr =
         wasm_bootstrap::copy_memory(&request_bytes, &instance, &mut store)?;
 
-    let (storage_bytes, storage_len) = {
-        let str = serde_json::to_value(storage)?.to_string();
-
-        (str.as_bytes().to_vec(), str.len())
-    };
+    let storage_len = storage.len();
+    let storage_bytes = storage.clone();
 
     let storage_ptr =
         wasm_bootstrap::copy_memory(&storage_bytes, &instance, &mut store)?;
@@ -213,13 +214,15 @@ fn init_module(
     Ok((instance, store, memory))
 }
 
-// fn require_valid_result(invoked: InvokeResult) -> String {
-//     if invoked.len() > 6 {
-//         if &invoked[..6] == &ERROR_PLACEHOLDER {
-//             let err_msg: &str = std::str::from_utf8(&invoked[6..])?;
+#[derive(Serialize, Deserialize, Debug)]
+pub struct EnvelopeStorage {
+    pub open_ch_reqs: HashMap<String, Vec<OpenCh>>,
+    pub chats: HashMap<String, Vec<String>>,
+}
 
-//             return Err(err_msg.into());
-//         }
-//     }
-//     e
-// }
+#[derive(Serialize, Deserialize, Debug)]
+pub struct OpenCh {
+    pub ch_id: String,
+    pub eph_key: String,
+    pub sig: String,
+}

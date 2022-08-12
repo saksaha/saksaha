@@ -13,7 +13,6 @@ impl WalletDBSchema {
 
     pub(crate) fn make_cf_descriptors() -> Vec<ColumnFamilyDescriptor> {
         vec![
-            // ColumnFamilyDescriptor::new(cfs::CM, Options::default()),
             ColumnFamilyDescriptor::new(cfs::RHO, Options::default()),
             ColumnFamilyDescriptor::new(cfs::R, Options::default()),
             ColumnFamilyDescriptor::new(cfs::S, Options::default()),
@@ -22,7 +21,7 @@ impl WalletDBSchema {
             ColumnFamilyDescriptor::new(cfs::A_PK, Options::default()),
             ColumnFamilyDescriptor::new(cfs::STATUS, Options::default()),
             ColumnFamilyDescriptor::new(cfs::USER_ID, Options::default()),
-            ColumnFamilyDescriptor::new(cfs::CM_IDX, Options::default()),
+            // ColumnFamilyDescriptor::new(cfs::CM_IDX, Options::default()),
             ColumnFamilyDescriptor::new(cfs::CM, Options::default()),
         ]
     }

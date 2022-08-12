@@ -19,8 +19,6 @@ impl DistLedgerApis {
             .await?
             .ok_or("ctr data (wasm) should exist")?;
 
-        println!("power00, ctr_addr: {}", ctr_addr);
-
         let ctr_state = self
             .ledger_db
             .schema
@@ -67,7 +65,7 @@ impl DistLedgerApis {
             );
             println!(
                 "[-] ctr_state: {:?}",
-                String::from_utf8(ctr_state.clone())
+                String::from_utf8(ctr_state.clone()).unwrap(),
             );
         }
 

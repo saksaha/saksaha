@@ -45,7 +45,7 @@ pub struct SendPourTxRequest {
     #[serde(with = "serde_bytes")]
     pi: Vec<u8>,
     sn_1: [u8; 32],
-    sn_2: [u8; 32],
+    // sn_2: [u8; 32],
     cm_1: [u8; 32],
     cm_2: [u8; 32],
     merkle_rt: [u8; 32],
@@ -59,7 +59,7 @@ impl SendPourTxRequest {
         ctr_addr: Option<String>,
         pi: Vec<u8>,
         sn_1: [u8; 32],
-        sn_2: [u8; 32],
+        // sn_2: [u8; 32],
         cm_1: [u8; 32],
         cm_2: [u8; 32],
         merkle_rt: [u8; 32],
@@ -71,7 +71,7 @@ impl SendPourTxRequest {
             ctr_addr,
             pi,
             sn_1,
-            sn_2,
+            // sn_2,
             cm_1,
             cm_2,
             merkle_rt,
@@ -117,6 +117,12 @@ impl SendMintTxRequest {
 }
 
 pub async fn send_tx_pour(
+    // pi: Proof<Bls12>,
+    // sn_1: U8Array,
+    // sn_2: U8Array,
+    // cm_1: Scalar,
+    // cm_2: Scalar,
+    // merkle_rt: Scalar,
     ctr_addr: String,
     req_type: String,
     args: RequestArgs,
@@ -133,7 +139,7 @@ pub async fn send_tx_pour(
             ctr_call_type: CtrCallType::Execute,
         };
 
-        // ***** Need to change dummy values to real values
+        // *** Need to change dummy values to real values
         let send_req = SendPourTxRequest::new(
             String::from(format!("created_at_{:?}", time::SystemTime::now())),
             serde_json::to_vec(&req)?,
@@ -142,7 +148,7 @@ pub async fn send_tx_pour(
             //
             vec![11, 11, 11],        // pi
             U8Array::new_empty_32(), // sn_1
-            U8Array::new_empty_32(), // sn_2 (will be deleted)
+            // U8Array::new_empty_32(), // sn_2 (will be deleted)
             U8Array::new_empty_32(), // cm_1
             U8Array::new_empty_32(), // cm_2
             U8Array::new_empty_32(), // merkle_rt
@@ -419,14 +425,3 @@ pub struct GenProofRequest {
 pub struct GenProofResponse {
     pub pi: Vec<Option<[u8; 32]>>,
 }
-
-// pub async fn gen_proof(
-//     coin_1_old: OldCoin,
-//     coin_1_new: NewCoin,
-//     coin_2_new: NewCoin,
-// ) -> Result<JsonResponse<GenProofRequest>, SaksahaSDKError> {
-//     let hasher = Hasher::new();
-//     let constants = hasher.get_mimc_constants().to_vec();
-
-//     let de_params = sak_proofs::get_mimc_params_1_to_2(&constants);
-// }

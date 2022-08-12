@@ -14,7 +14,8 @@ impl EnvelopeDB {
         app_prefix: &String,
     ) -> Result<EnvelopeDB, EnvelopeError> {
         let envelope_db_path = {
-            let app_path = sak_fs::create_or_get_app_path_evl(app_prefix)?;
+            let db_name = sak_fs::DBName::Envelope;
+            let app_path = sak_fs::create_or_get_app_path(db_name, app_prefix)?;
             let db_path = { app_path.join("db") };
 
             db_path

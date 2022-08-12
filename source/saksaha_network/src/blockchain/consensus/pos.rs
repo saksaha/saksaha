@@ -23,13 +23,9 @@ impl Consensus for Pos {
             ctr_call_type: CtrCallType::Query,
         };
 
-        println!("power11");
-
         let validator = dist_ledger_apis
             .query_ctr(&self.validator_ctr_addr, request)
             .await?;
-
-        println!("power22, validator: {:?}", validator);
 
         let validator_str: String = serde_json::from_slice(&validator)?;
 
