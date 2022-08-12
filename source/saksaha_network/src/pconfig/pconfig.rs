@@ -1,10 +1,9 @@
+use crate::{pconfig::fs, SaksahaError};
 use colored::Colorize;
 use log::info;
 use sak_crypto::{SakKey, ToEncodedPoint};
 use sak_p2p_addr::UnknownAddr;
 use serde::{Deserialize, Serialize};
-
-use crate::{pconfig::fs, SaksahaError};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct PConfig {

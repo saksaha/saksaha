@@ -142,8 +142,8 @@ impl Routine {
 
         let identity = {
             let i = Identity::new(
-                config.p2p.secret,
-                config.p2p.public_key_str,
+                &config.p2p.secret,
+                &config.p2p.public_key_str,
                 p2p_port,
                 disc_port,
             )?;

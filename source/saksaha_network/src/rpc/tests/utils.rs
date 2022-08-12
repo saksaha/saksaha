@@ -41,7 +41,7 @@ pub(crate) async fn make_test_context() -> (RPC, SocketAddr, Arc<Machine>) {
     );
 
     let identity = {
-        let id = Identity::new(secret, public_key_str, 1, disc_port)
+        let id = Identity::new(&secret, &public_key_str, 1, disc_port)
             .expect("identity should be initialized");
 
         Arc::new(id)
@@ -164,7 +164,7 @@ pub(crate) async fn make_blockchain() -> Blockchain {
     );
 
     let identity = {
-        let id = Identity::new(secret, public_key_str, 1, disc_port)
+        let id = Identity::new(&secret, &public_key_str, 1, disc_port)
             .expect("identity should be initialized");
 
         Arc::new(id)

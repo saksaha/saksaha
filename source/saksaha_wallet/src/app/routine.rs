@@ -1,10 +1,12 @@
-use crate::{
-    credential::Credential, rpc::RPC, wallet::Wallet, AppArgs, WalletError,
-};
+use crate::app::prompt;
+use crate::credential::WalletCredential;
+use crate::db::WalletDB;
+use crate::{rpc::RPC, wallet::Wallet, AppArgs, WalletError};
+use colored::Colorize;
 use log::{error, info};
+use std::io::BufRead;
 use std::sync::Arc;
-
-const APP_PREFIX: &'static str = "default";
+use std::time::Duration;
 
 pub(crate) struct Routine {}
 
@@ -15,25 +17,22 @@ impl Routine {
     ) -> Result<(), WalletError> {
         info!("Wallet main routine starts, app_args: {:?}", app_args);
 
-        let app_prefix = app_args.app_prefix.unwrap_or_else(|| {
-            info!("App prefix is not specified, defaults to '{}'", APP_PREFIX);
+        let credential =
+            create_or_get_credential(app_args.public_key, app_args.secret)?;
 
-            APP_PREFIX.to_string()
-        });
+        let db = WalletDB::init(&credential.public_key)?;
 
-        let credential = Credential::new(app_args.id, app_args.key);
+        // let wallet = {
+        //     let w = Wallet::init(app_prefix, credential).await?;
 
-        let wallet = {
-            let w = Wallet::init(app_prefix, credential).await?;
+        //     Arc::new(w)
+        // };
 
-            Arc::new(w)
-        };
+        // let rpc = RPC::init(app_args.rpc_port, wallet).await?;
 
-        let rpc = RPC::init(app_args.rpc_port, wallet).await?;
-
-        tokio::spawn(async move {
-            tokio::join!(rpc.run());
-        });
+        // tokio::spawn(async move {
+        //     tokio::join!(rpc.run());
+        // });
 
         let _ = tokio::signal::ctrl_c().await;
 
@@ -41,4 +40,43 @@ impl Routine {
 
         Ok(())
     }
+}
+
+fn create_or_get_credential(
+    public_key: Option<String>,
+    secret: Option<String>,
+) -> Result<WalletCredential, WalletError> {
+    let public_key = public_key;
+    let secret = secret;
+
+    let c = if public_key.is_none() || secret.is_none() {
+        let _ = prompt::run()?;
+
+        let c = WalletCredential::new_random()?;
+
+        println!(
+            "\n{} created! \nWe recommend that you write \n\
+            this down to a safe location only you may know. \n\
+            Once lost, this information cannot be retrieved, forever.",
+            "Credential".yellow(),
+        );
+
+        println!(
+            "\n{}: {} \n{}: {} \n{}: {}",
+            "Public key".cyan(),
+            c.public_key,
+            "Secret".cyan(),
+            c.secret,
+            "Account address".cyan(),
+            c.acc_addr,
+        );
+
+        c.persist()?;
+
+        c
+    } else {
+        WalletCredential::load(public_key, secret)?
+    };
+
+    Ok(c)
 }

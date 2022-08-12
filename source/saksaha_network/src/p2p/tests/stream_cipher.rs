@@ -47,7 +47,7 @@ async fn create_dummy_client(
 
     let identity = {
         let id =
-            Identity::new(secret, public_key_str, p2p_port.port(), disc_port)
+            Identity::new(&secret, &public_key_str, p2p_port.port(), disc_port)
                 .expect("identity should be initialized");
 
         Arc::new(id)
@@ -145,7 +145,7 @@ async fn create_client(
 
     let identity = {
         let id =
-            Identity::new(secret, public_key_str, p2p_port.port(), disc_port)
+            Identity::new(&secret, &public_key_str, p2p_port.port(), disc_port)
                 .expect("identity should be initialized");
 
         Arc::new(id)
