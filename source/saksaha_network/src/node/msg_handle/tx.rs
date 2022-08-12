@@ -18,24 +18,24 @@ use tokio::{net::TcpStream, sync::RwLockWriteGuard};
 pub(in crate::node) async fn send_tx_syn(
     tx_candidates: Vec<TxCandidate>,
     her_public_key: Option<String>,
-    peer_table: &Arc<PeerTable>,
+    // peer_table: &Arc<PeerTable>,
     // peer: &Arc<Peer>,
     // tx_candidates: Vec<TxCandidate>,
 ) -> Result<(), SaksahaNodeError> {
-    if let Some(ref her_pk) = her_public_key {
-        let peer = peer_table.get_mapped_peer(&her_pk).await.ok_or(format!(
-            "peer does not exist, key: {:?}",
-            &her_public_key
-        ))?;
+    // if let Some(ref her_pk) = her_public_key {
+    //     let peer = peer_table.get_mapped_peer(&her_pk).await.ok_or(format!(
+    //         "peer does not exist, key: {:?}",
+    //         &her_public_key
+    //     ))?;
 
-        send_tx_syn_each(&peer, tx_candidates).await?;
-    } else {
-        let peer_map_lock = peer_table.get_peer_map().read().await;
+    //     send_tx_syn_each(&peer, tx_candidates).await?;
+    // } else {
+    //     let peer_map_lock = peer_table.get_peer_map().read().await;
 
-        for (_pk, peer) in peer_map_lock.iter() {
-            send_tx_syn_each(peer, tx_candidates.clone()).await?;
-        }
-    }
+    //     for (_pk, peer) in peer_map_lock.iter() {
+    //         send_tx_syn_each(peer, tx_candidates.clone()).await?;
+    //     }
+    // }
 
     Ok(())
 }

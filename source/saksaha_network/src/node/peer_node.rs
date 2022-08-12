@@ -2,13 +2,16 @@ use super::msg_handle;
 use super::task::NodeTask;
 use crate::{
     machine::Machine,
-    node::event_handle::{self, LedgerEventRoutine},
+    node::{
+        event_handle::{self, LedgerEventRoutine},
+        task::NodeTaskHandler,
+    },
 };
 use log::{debug, error, warn};
 use sak_dist_ledger::DistLedgerEvent;
 use sak_p2p_peertable::{Peer, PeerStatus};
 use sak_p2p_transport::{BlockHashSynMsg, Msg};
-use sak_task_queue::TaskQueue;
+use sak_task_queue::{TaskQueue, TaskRuntime};
 use std::sync::Arc;
 use tokio::sync::broadcast::Receiver;
 
@@ -16,6 +19,7 @@ pub(in crate::node) struct PeerNode {
     pub peer: Arc<Peer>,
     pub machine: Arc<Machine>,
     // pub node_task_queue: Arc<TaskQueue<NodeTask>>,
+    pub node_task_min_interval: Option<u64>,
 }
 
 impl PeerNode {
@@ -30,8 +34,8 @@ impl PeerNode {
 
         let node_task_queue = Arc::new(TaskQueue::new(100));
         let node_task_min_interval = self.node_task_min_interval.clone();
-        let peer_register_min_interval =
-            Duration::from_millis(PEER_REGISTER_MIN_INTERVAL);
+        // let peer_register_min_interval =
+        //     Duration::from_millis(PEER_REGISTER_MIN_INTERVAL);
 
         {
             // Ledger event routine
@@ -60,22 +64,22 @@ impl PeerNode {
             });
         }
 
-        // {
-        //     // Node task routine
-        //     let node_task_handler = Box::new(NodeTaskHandler {
-        //         peer_table: self.peer_table.clone(),
-        //     });
+        {
+            // Node task routine
+            let node_task_handler = Box::new(NodeTaskHandler {
+                // peer_table: self.peer_table.clone(),
+            });
 
-        //     let task_runtime = TaskRuntime::new(
-        //         node_task_queue.clone(),
-        //         node_task_min_interval,
-        //         node_task_handler,
-        //     );
+            let task_runtime = TaskRuntime::new(
+                node_task_queue.clone(),
+                node_task_min_interval,
+                node_task_handler,
+            );
 
-        //     tokio::spawn(async move {
-        //         task_runtime.run().await;
-        //     });
-        // }
+            tokio::spawn(async move {
+                task_runtime.run().await;
+            });
+        }
 
         loop {
             let mut conn_lock = self.peer.get_transport().conn.write().await;
@@ -89,7 +93,7 @@ impl PeerNode {
                             msg,
                             &self.machine,
                             conn_lock,
-                            &self.node_task_queue,
+                            &node_task_queue,
                             &self.peer,
                         )
                         .await;
