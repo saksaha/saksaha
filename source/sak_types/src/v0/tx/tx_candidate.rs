@@ -1,6 +1,6 @@
 use super::utils;
 use crate::{
-    MintTx, PourTx, Tx, TxCtrOp, TxType, TypesError, WASM_MAGIC_NUMBER,
+    MintTx, PourTx, Tx, TxCtrOp, TxType, TypesError, U8Arr32, WASM_MAGIC_NUMBER,
 };
 use serde::{Deserialize, Serialize};
 
@@ -70,16 +70,16 @@ pub struct MintTxCandidate {
     pub ctr_addr: String,
 
     //
-    pub cm: [u8; 32],
+    pub cm: U8Arr32,
 
     //
-    pub v: [u8; 32],
+    pub v: U8Arr32,
 
     //
-    pub k: [u8; 32],
+    pub k: U8Arr32,
 
     //
-    pub s: [u8; 32],
+    pub s: U8Arr32,
 
     //
     tx_hash: String,
@@ -91,10 +91,10 @@ impl MintTxCandidate {
         data: Vec<u8>,
         author_sig: String,
         ctr_addr: Option<String>,
-        cm: [u8; 32],
-        v: [u8; 32],
-        k: [u8; 32],
-        s: [u8; 32],
+        cm: U8Arr32,
+        v: U8Arr32,
+        k: U8Arr32,
+        s: U8Arr32,
     ) -> MintTxCandidate {
         let ctr_addr = ctr_addr.unwrap_or(String::from(""));
 
@@ -156,19 +156,19 @@ pub struct PourTxCandidate {
     pub pi: Vec<u8>,
 
     //
-    pub sn_1: [u8; 32],
+    pub sn_1: U8Arr32,
 
     //
-    pub sn_2: [u8; 32],
+    pub sn_2: U8Arr32,
 
     //
-    pub cm_1: [u8; 32],
+    pub cm_1: U8Arr32,
 
     //
-    pub cm_2: [u8; 32],
+    pub cm_2: U8Arr32,
 
     //
-    pub merkle_rt: [u8; 32],
+    pub merkle_rt: U8Arr32,
 
     //
     tx_hash: String,
@@ -181,11 +181,11 @@ impl PourTxCandidate {
         author_sig: String,
         ctr_addr: Option<String>,
         pi: Vec<u8>,
-        sn_1: [u8; 32],
-        sn_2: [u8; 32],
-        cm_1: [u8; 32],
-        cm_2: [u8; 32],
-        merkle_rt: [u8; 32],
+        sn_1: U8Arr32,
+        sn_2: U8Arr32,
+        cm_1: U8Arr32,
+        cm_2: U8Arr32,
+        merkle_rt: U8Arr32,
     ) -> PourTxCandidate {
         let ctr_addr = ctr_addr.unwrap_or(String::from(""));
 
