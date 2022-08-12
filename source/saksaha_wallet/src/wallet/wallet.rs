@@ -1,15 +1,10 @@
 use super::apis::{self, WalletApis};
-use crate::{
-    credential::Credential,
-    db::WalletDB,
-    types::{Coin, Status},
-    WalletError,
-};
+use crate::{credential::Credential, db::WalletDB, WalletError};
 use futures::sink::Send;
 use log::debug;
-use sak_proofs::{MerkleTree, NewCoin, OldCoin, CM_TREE_DEPTH};
-
 use sak_crypto::{Hasher, ScalarExt};
+use sak_proofs::{MerkleTree, NewCoin, OldCoin, CM_TREE_DEPTH};
+use sak_types::{CoinRecord, CoinStatus};
 use type_extension::U8Array;
 
 pub(crate) struct Wallet {
@@ -51,7 +46,7 @@ fn gen_coin_with_params(
     addr_sk: u64,
     v: u64,
     user_id: String,
-) -> Result<Coin, WalletError> {
+) -> Result<CoinRecord, WalletError> {
     let hasher = Hasher::new();
 
     let (addr_sk, addr_pk) = {
@@ -87,9 +82,9 @@ fn gen_coin_with_params(
 
     let cm = hasher.comm2_scalar(s, v, k);
 
-    let status = Status::Unused;
+    let status = CoinStatus::Unused;
 
-    let coin = Coin {
+    let coin = CoinRecord {
         addr_pk,
         addr_sk,
         rho,

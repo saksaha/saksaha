@@ -1,14 +1,14 @@
-use super::Status;
-use crate::WalletError;
+use super::CoinStatus;
+use crate::Balance;
+use crate::TypesError;
 use sak_crypto::Hasher;
 use sak_crypto::Scalar;
 use sak_crypto::ScalarExt;
 use sak_proofs::NewCoin;
-use sak_types::Balance;
-use sak_types::U8Array;
+use type_extension::U8Array;
 
 #[derive(Debug)]
-pub(crate) struct Coin {
+pub struct CoinRecord {
     pub addr_pk: Scalar,
 
     pub addr_sk: Scalar,
@@ -25,14 +25,11 @@ pub(crate) struct Coin {
 
     pub user_id: String,
 
-    pub status: Status,
+    pub coin_status: CoinStatus,
 }
 
-impl Coin {
-    pub(crate) fn new(
-        value: u64,
-        user_id: &String,
-    ) -> Result<Coin, WalletError> {
+impl CoinRecord {
+    pub fn new(value: u64, user_id: &String) -> Result<CoinRecord, TypesError> {
         let hasher = Hasher::new();
 
         let addr_sk = { U8Array::from_int(10 as u64) };
@@ -67,7 +64,7 @@ impl Coin {
         let s = ScalarExt::parse_arr(&s)?;
         let v = ScalarExt::parse_arr(&v)?;
 
-        let coin = Coin {
+        let coin = CoinRecord {
             addr_pk,
             addr_sk,
             rho,
@@ -76,7 +73,7 @@ impl Coin {
             v,
             cm,
             user_id: user_id.clone(),
-            status: Status::Unused,
+            coin_status: CoinStatus::Unused,
         };
 
         Ok(coin)

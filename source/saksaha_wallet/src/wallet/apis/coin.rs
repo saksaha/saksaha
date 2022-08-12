@@ -1,32 +1,23 @@
 use super::WalletApis;
 use crate::rpc::routes::v0::WalletSendTxRequest;
-use crate::types::Coin;
+use crate::wallet::apis::decode_hex_string_to_u64;
 use crate::WalletError;
-use crate::{types::Status, wallet::apis::decode_hex_string_to_u64};
 use sak_crypto::Hasher;
 use sak_crypto::Scalar;
 use sak_proofs::OldCoin;
 use sak_types::Balance;
+use sak_types::CoinRecord;
+use sak_types::CoinStatus;
 use saksaha::{generate_proof_1_to_2, get_auth_path};
 pub const GAS: u64 = 10;
 
 impl WalletApis {
     pub async fn get_balance(
         &self,
-        id: &String,
+        user_id: &String,
         _key: &String,
     ) -> Result<Balance, WalletError> {
         println!("wallet apis, get_balance, id: {}", id);
-
-        let latest_cm_idx = match self.db.schema.get_latest_cm_idx()? {
-            Some(i) => i,
-            None => {
-                return Err(format!(
-                    "Wallet is empty, the balance must be zero"
-                )
-                .into())
-            }
-        };
 
         let mut balance: u64 = 0;
 
@@ -56,16 +47,17 @@ impl WalletApis {
                 None => return Err(format!("Failed to get user_id").into()),
             };
 
-            let _status = match self.db.schema.get_status(&cm).await? {
+            let _coin_status = match self.db.schema.get_coin_status(&cm).await?
+            {
                 Some(s) => {
-                    if s == Status::Used {
+                    if s == CoinStatus::Used {
                         continue;
                     }
                 }
                 None => return Err(format!("Failed to get status").into()),
             };
 
-            if user == *id {
+            if user == *user_id {
                 let v = match self.db.schema.get_v(&cm)? {
                     Some(v) => {
                         let v = decode_hex_string_to_u64(&v).await?;
@@ -148,9 +140,9 @@ impl WalletApis {
 
             let sn_1_old = hasher.mimc_scalar(addr_sk, rho);
 
-            let new_coin_1 = Coin::new(old_coin_v - GAS, &id);
+            let new_coin_1 = CoinRecord::new(old_coin_v - GAS, &id);
 
-            let new_coin_2 = Coin::new(0, &id);
+            let new_coin_2 = CoinRecord::new(0, &id);
 
             let pi = generate_proof_1_to_2(
                 old_coin,
@@ -169,7 +161,7 @@ impl WalletApis {
             )
             .await?;
 
-            self.set_status_used(&cm, &Status::Used).await?;
+            self.set_status_used(&cm, &CoinStatus::Used).await?;
         }
 
         Ok(())
@@ -190,7 +182,7 @@ impl WalletApis {
 
     pub(crate) async fn get_old_coin(
         &self,
-        cm_idx: u128,
+        // cm_idx: u128,
         auth_path: Vec<([u8; 32], bool)>,
     ) -> Result<OldCoin, WalletError> {
         let cm: String = match self.db.schema.get_cm(&cm_idx) {
@@ -225,9 +217,10 @@ impl WalletApis {
     pub(crate) async fn set_status_used(
         &self,
         cm: &String,
-        status: &Status,
+        status: &CoinStatus,
     ) -> Result<(), WalletError> {
-        self.db.schema.put_status(cm, status).await?;
+        self.db.schema.put_coin_status(cm, status).await?;
+
         Ok(())
     }
 }

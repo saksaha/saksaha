@@ -21,7 +21,6 @@ impl WalletDBSchema {
             ColumnFamilyDescriptor::new(cfs::A_PK, Options::default()),
             ColumnFamilyDescriptor::new(cfs::STATUS, Options::default()),
             ColumnFamilyDescriptor::new(cfs::USER_ID, Options::default()),
-            // ColumnFamilyDescriptor::new(cfs::CM_IDX, Options::default()),
             ColumnFamilyDescriptor::new(cfs::CM, Options::default()),
         ]
     }
