@@ -6,21 +6,14 @@ use hyper_rpc_router::{
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
-#[derive(Serialize, Deserialize, Debug)]
-pub(in crate::rpc) struct SendTxRequest {
-    created_at: String,
-    #[serde(with = "serde_bytes")]
-    data: Vec<u8>,
-    author_sig: String,
-    ctr_addr: Option<String>,
-    val: [u8; 32],
-}
+pub type RequestArgs = Vec<u8>;
 
-// TODO maybe delete
-impl SendTxRequest {
-    pub(crate) fn get_value(&self) -> [u8; 32] {
-        self.val
-    }
+#[derive(Serialize, Deserialize, Debug)]
+pub(crate) struct WalletSendTxRequest {
+    pub val: usize,
+    pub ctr_addr: String,
+    pub req_type: String,
+    pub args: RequestArgs,
 }
 
 pub(in crate::rpc) async fn send_tx(
@@ -34,7 +27,9 @@ pub(in crate::rpc) async fn send_tx(
         "send_tx should contain params",
     );
 
-    let rb: SendTxRequest = require_params_parsed!(route_state, &params);
+    let rb: WalletSendTxRequest = require_params_parsed!(route_state, &params);
+    println!(" rb: {:?}", rb);
+    let _ = ctx.wallet.apis.send_tx(rb).await;
 
     let is_success = true;
 

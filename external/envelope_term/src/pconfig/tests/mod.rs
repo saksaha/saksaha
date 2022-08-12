@@ -48,8 +48,6 @@
 //     // insert ch key store
 //     user1.insert_ch_key(ch_id.clone(), aes_key_from_a);
 
-//     println!(" ********************** open_channel ********************** ");
-
 //     let open_ch_input = {
 //         let open_ch_input: Vec<String> = vec![
 //             eph_pk_str,
@@ -75,7 +73,6 @@
 
 // #[tokio::test(flavor = "multi_thread")]
 // async fn test_sak_ecies_get_msgs_and_send_msg() {
-//     println!(" ********************** get_msgs start ********************** ");
 
 //     let user1 = PConfig::load(&USER_1.to_string()).unwrap();
 
@@ -116,8 +113,6 @@
 
 //     tokio::time::sleep(Duration::from_millis(6000)).await;
 
-//     println!(" ********************** send msg start ********************** ");
-
 //     // let msg_u1_to_u2 = format!("Hello, {}", USER_2);
 //     let msg_u1_to_u2 = format!("Good morning!");
 //     let (_, u1_pk) = user1.get_sk_pk();
@@ -148,8 +143,6 @@
 //     println!(" Send_msg result: {:?}", result);
 
 //     tokio::time::sleep(Duration::from_millis(6000)).await;
-
-//     println!(" ********************** get_msgs start ********************** ");
 
 //     {
 //         let req = {

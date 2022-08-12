@@ -62,7 +62,7 @@ impl DistLedgerApis {
             );
             println!(
                 "[-] ctr_state: {:?}",
-                String::from_utf8(ctr_state.clone())
+                String::from_utf8(ctr_state.clone()).unwrap(),
             );
         }
 

@@ -37,8 +37,6 @@ impl Consensus for Pos {
             }
         };
 
-        println!("power22, validator: {:?}", validator);
-
         let validator_str: String = serde_json::from_slice(&validator)?;
 
         if self.identity.credential.public_key_str == validator_str {
