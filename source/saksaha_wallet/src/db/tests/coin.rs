@@ -121,15 +121,16 @@ async fn test_wallet_db_store_coin_record() {
 
     db.schema
         .put_coin(
-            &coin.cm.to_string(),
-            &rho.to_string(),
-            &r.to_string(),
-            &s.to_string(),
-            &v.to_string(),
-            &addr_pk.to_string(),
-            &addr_sk.to_string(),
-            &USER_1.to_string(),
-            &status,
+            coin,
+            // &cm.to_string(),
+            // &rho.to_string(),
+            // &r.to_string(),
+            // &s.to_string(),
+            // &v.to_string(),
+            // &addr_pk.to_string(),
+            // &addr_sk.to_string(),
+            // &USER_1.to_string(),
+            // &status,
             // &idx,
         )
         .await
