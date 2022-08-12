@@ -14,7 +14,6 @@ use envelope_contract::{
 use log::{debug, error, warn};
 use sak_contract_std::{CtrCallType, Request as CtrRequest};
 use sak_crypto::{PublicKey, SakKey, SecretKey, SigningKey, ToEncodedPoint};
-use std::collections::HashMap;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum AppReturn {
@@ -61,7 +60,6 @@ impl App {
 
             match action {
                 Action::Quit => AppReturn::Exit,
-                Action::Sleep => AppReturn::Continue,
                 Action::SwitchEditMode => {
                     self.state.input_mode = InputMode::Editing;
                     AppReturn::Continue
@@ -240,7 +238,6 @@ impl App {
     pub fn initialized(&mut self) {
         self.actions = vec![
             Action::Quit,
-            Action::Sleep,
             Action::SwitchEditMode,
             Action::SwitchNormalMode,
             Action::ShowOpenCh,
