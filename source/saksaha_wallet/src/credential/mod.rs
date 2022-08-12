@@ -1,6 +1,7 @@
 use crate::WalletError;
 use colored::Colorize;
 use sak_crypto::{SakKey, ToEncodedPoint};
+use sak_p2p_id::Credential;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Debug)]
@@ -13,40 +14,33 @@ pub(crate) struct WalletCredential {
 const SAKSAHA_WALLET: &'static str = "saksaha-wallet";
 
 impl WalletCredential {
-    pub fn new_random() -> WalletCredential {
+    pub fn new_random() -> Result<WalletCredential, WalletError> {
         let (sk, pk) = SakKey::generate();
-
         let secret = sak_crypto::encode_hex(&sk.to_bytes());
-
         let public_key =
             sak_crypto::encode_hex(&pk.to_encoded_point(false).to_bytes());
 
         let acc_addr = SakKey::create_acc_addr(&pk);
+        let credential = Credential::new(&secret, &public_key)?;
 
         let c = WalletCredential {
-            public_key,
-            secret,
+            public_key: credential.public_key_str,
+            secret: credential.secret,
             acc_addr,
         };
 
-        c
+        Ok(c)
     }
 
     pub fn load(
         public_key: Option<String>,
         secret: Option<String>,
     ) -> Result<WalletCredential, WalletError> {
-        let (sk, pk) = SakKey::generate();
+        let public_key = public_key.ok_or("Public key should be provided")?;
+        let secret = secret.ok_or("Secret should be provided")?;
 
-        // let public_key = public_key.ok_or("Public key should be provided")?;
-        // let secret = secret.ok_or("Secret should be provided")?;
-
-        let secret = sak_crypto::encode_hex(&sk.to_bytes());
-
-        let public_key =
-            sak_crypto::encode_hex(&pk.to_encoded_point(false).to_bytes());
-
-        let acc_addr = SakKey::create_acc_addr(&pk);
+        let credential = Credential::new(&secret, &public_key)?;
+        let acc_addr = SakKey::create_acc_addr(&credential.public_key);
 
         let c = WalletCredential {
             public_key,

@@ -10,12 +10,10 @@ pub(crate) struct WalletDB {
 }
 
 impl WalletDB {
-    pub(crate) async fn init(
-        app_prefix: &String,
-    ) -> Result<WalletDB, WalletError> {
+    pub(crate) fn init(public_key: &String) -> Result<WalletDB, WalletError> {
         let wallet_db_path = {
             let app_path =
-                sak_fs::create_or_get_app_path(APP_NAME, app_prefix)?;
+                sak_fs::create_or_get_app_path(APP_NAME, public_key)?;
 
             let db_path = { app_path.join("db") };
 

@@ -17,7 +17,7 @@ impl Wallet {
         app_prefix: String,
         credential: WalletCredential,
     ) -> Result<Wallet, WalletError> {
-        let wallet_db = WalletDB::init(&app_prefix).await?;
+        let wallet_db = WalletDB::init(&app_prefix)?;
 
         let apis = WalletApis { db: wallet_db };
 
