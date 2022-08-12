@@ -91,13 +91,30 @@ pub(crate) async fn make_dummy_valid_pour_tx() -> Tx {
         v: Some(proof_context.v_2),
     };
 
+    let now = std::time::Instant::now();
     let pi = generate_proof_1_to_2(coin_1_old, coin_1_new, coin_2_new)
         .await
         .unwrap();
+    let elapsed = now.elapsed();
+    println!("[+] time elapsed (gen proof): {:?}", elapsed);
 
     let mut pi_ser = Vec::new();
     pi.write(&mut pi_ser).unwrap();
 
+    {
+        println!("[+] dummy pour tx ");
+        println!("[Debug] tx.pi: {:#?}", pi);
+        println!(
+            "[Debug] tx.sn_1: \x1b[93m{:?}\x1b[0m",
+            proof_context.sn_1.clone(),
+        );
+        println!("[Debug] tx.cm_1: {:?}", proof_context.cm_1.clone(),);
+        println!("[Debug] tx.cm_2: {:?}", proof_context.cm_2.clone(),);
+        println!(
+            "[Debug] tx.merkle_rt: {:?}",
+            proof_context.merkle_rt.clone(),
+        );
+    }
     Tx::new_dummy_valid_pour(
         pi_ser,
         proof_context.sn_1.to_bytes(),

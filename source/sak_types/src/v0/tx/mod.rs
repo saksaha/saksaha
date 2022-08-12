@@ -13,3 +13,5 @@ pub type TxHash = String;
 pub type BlockHash = String;
 
 pub type CtrAddr = String;
+
+pub type SN = String;

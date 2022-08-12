@@ -334,62 +334,14 @@ pub fn get_test_params(constants: &[Scalar]) -> Parameters<Bls12> {
 
 fn make_proof(
     // old coins
-    addr_pk_1_old: Scalar,
-    addr_sk_1_old: Scalar,
-    rho_1_old: Scalar,
-    r_1_old: Scalar,
-    s_1_old: Scalar,
-    v_1_old: Scalar,
-    cm_1_old: Scalar,
-    auth_path_1: [(Scalar, bool); CM_TREE_DEPTH as usize],
-
-    // new coin 1
-    addr_pk_1_new: Scalar,
-    rho_1_new: Scalar,
-    r_1_new: Scalar,
-    s_1_new: Scalar,
-    v_1_new: Scalar,
-
-    // new coin 1
-    addr_pk_2_new: Scalar,
-    rho_2_new: Scalar,
-    r_2_new: Scalar,
-    s_2_new: Scalar,
-    v_2_new: Scalar,
+    coin_1_old: OldCoin,
+    coin_1_new: NewCoin,
+    coin_2_new: NewCoin,
 ) -> Result<Proof<Bls12>, ProofError> {
-    println!("power!!! auth path: {:#?}", auth_path_1);
-
     let hasher = Hasher::new();
 
     let constants = hasher.get_mimc_constants().to_vec();
     let de_params = get_test_params(&constants);
-
-    let coin_1_old = OldCoin {
-        addr_pk: Some(addr_pk_1_old),
-        addr_sk: Some(addr_sk_1_old),
-        rho: Some(rho_1_old),
-        r: Some(r_1_old),
-        s: Some(s_1_old),
-        v: Some(v_1_old),
-        cm: Some(cm_1_old),
-        auth_path: auth_path_1.map(|p| Some(p)),
-    };
-
-    let coin_1_new = NewCoin {
-        addr_pk: Some(addr_pk_1_new),
-        rho: Some(rho_1_new),
-        r: Some(r_1_new),
-        s: Some(s_1_new),
-        v: Some(v_1_new),
-    };
-
-    let coin_2_new = NewCoin {
-        addr_pk: Some(addr_pk_2_new),
-        rho: Some(rho_2_new),
-        r: Some(r_2_new),
-        s: Some(s_2_new),
-        v: Some(v_2_new),
-    };
 
     let c = CoinProofCircuit1to2 {
         hasher,
@@ -445,33 +397,33 @@ pub async fn test_coin_ownership_default() {
 
     let test_context = make_test_context();
 
-    let proof = make_proof(
-        test_context.addr_pk_1_old,
-        test_context.addr_sk_1_old,
-        test_context.rho_1_old,
-        test_context.r_1_old,
-        test_context.s_1_old,
-        test_context.v_1_old,
-        test_context.cm_1_old,
-        test_context.auth_path_1,
-        //
-        // test_context.addr_sk_1,
-        test_context.addr_pk_1,
-        test_context.rho_1,
-        test_context.r_1,
-        test_context.s_1,
-        test_context.v_1,
-        //
-        // test_context.addr_sk_2,
-        test_context.addr_pk_2,
-        test_context.rho_2,
-        test_context.r_2,
-        test_context.s_2,
-        test_context.v_2,
-    )
-    .unwrap();
+    let coin_1_old = OldCoin {
+        addr_pk: Some(test_context.addr_pk_1_old),
+        addr_sk: Some(test_context.addr_sk_1_old),
+        rho: Some(test_context.rho_1_old),
+        r: Some(test_context.r_1_old),
+        s: Some(test_context.s_1_old),
+        v: Some(test_context.v_1_old),
+        cm: Some(test_context.cm_1_old),
+        auth_path: test_context.auth_path_1.map(|e| Some(e)),
+    };
 
-    println!("proof generated!!");
+    let coin_1_new = NewCoin {
+        addr_pk: Some(test_context.addr_pk_1),
+        rho: Some(test_context.rho_1),
+        r: Some(test_context.r_1),
+        s: Some(test_context.s_1),
+        v: Some(test_context.v_1),
+    };
+
+    let coin_2_new = NewCoin {
+        addr_pk: Some(test_context.addr_pk_2),
+        rho: Some(test_context.rho_2),
+        r: Some(test_context.r_2),
+        s: Some(test_context.s_2),
+        v: Some(test_context.v_2),
+    };
+    let proof = make_proof(coin_1_old, coin_1_new, coin_2_new).unwrap();
 
     let public_inputs: Vec<Scalar> = vec![
         test_context.merkle_rt,
@@ -480,5 +432,8 @@ pub async fn test_coin_ownership_default() {
         test_context.cm_2,
     ];
 
-    let result = verify_proof(proof, &public_inputs, &test_context.hasher);
+    assert_eq!(
+        verify_proof(proof, &public_inputs, &test_context.hasher),
+        true
+    );
 }

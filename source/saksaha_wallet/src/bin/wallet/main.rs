@@ -27,7 +27,7 @@ fn main() -> Result<(), WalletError> {
 
     let app = App::init();
 
-    app.run(app_args)?;
+    // app.run(app_args)?;
 
     Ok(())
 }

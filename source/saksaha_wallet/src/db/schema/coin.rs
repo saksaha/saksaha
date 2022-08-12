@@ -8,71 +8,71 @@ use sak_proofs::{OldCoin, CM_TREE_DEPTH};
 use sak_types::U8Arr32;
 
 impl WalletDBSchema {
-    pub fn get_coin(&self, cm: &U8Arr32) -> Result<OldCoin, WalletError> {
-        let addr_pk = match self.get_a_pk(&cm)? {
-            Some(p) => p,
-            None => return Err(format!("Failed to get a_pk").into()),
-        };
+    // pub fn get_coin(&self, cm: &U8Arr32) -> Result<OldCoin, WalletError> {
+    //     let addr_pk = match self.get_a_pk(&cm)? {
+    //         Some(p) => p,
+    //         None => return Err(format!("Failed to get a_pk").into()),
+    //     };
 
-        let addr_sk = match self.get_a_sk(&cm)? {
-            Some(s) => s,
-            None => return Err(format!("Failed to get a_sk").into()),
-        };
+    //     let addr_sk = match self.get_a_sk(&cm)? {
+    //         Some(s) => s,
+    //         None => return Err(format!("Failed to get a_sk").into()),
+    //     };
 
-        let rho = match self.get_rho(&cm)? {
-            Some(r) => r,
-            None => return Err(format!("Failed to get rho").into()),
-        };
+    //     let rho = match self.get_rho(&cm)? {
+    //         Some(r) => r,
+    //         None => return Err(format!("Failed to get rho").into()),
+    //     };
 
-        let r = match self.get_r(&cm)? {
-            Some(r) => r,
-            None => return Err(format!("Failed to get r").into()),
-        };
+    //     let r = match self.get_r(&cm)? {
+    //         Some(r) => r,
+    //         None => return Err(format!("Failed to get r").into()),
+    //     };
 
-        let s = match self.get_s(&cm)? {
-            Some(s) => s,
-            None => return Err(format!("Failed to get s").into()),
-        };
+    //     let s = match self.get_s(&cm)? {
+    //         Some(s) => s,
+    //         None => return Err(format!("Failed to get s").into()),
+    //     };
 
-        let v = match self.get_v(&cm)? {
-            Some(v) => v,
-            None => return Err(format!("Failed to get v").into()),
-        };
+    //     let v = match self.get_v(&cm)? {
+    //         Some(v) => v,
+    //         None => return Err(format!("Failed to get v").into()),
+    //     };
 
-        // let addr_pk = Scalar::from(addr_pk.parse::<u64>()?);
-        let addr_pk = ScalarExt::parse_arr(&addr_pk)?;
+    //     // let addr_pk = Scalar::from(addr_pk.parse::<u64>()?);
+    //     let addr_pk = ScalarExt::parse_arr(&addr_pk)?;
 
-        // let addr_sk = Scalar::from(addr_sk.parse::<u64>()?);
-        let addr_sk = ScalarExt::parse_arr(&addr_sk)?;
+    //     // let addr_sk = Scalar::from(addr_sk.parse::<u64>()?);
+    //     let addr_sk = ScalarExt::parse_arr(&addr_sk)?;
 
-        // let rho = Scalar::from(rho.parse::<u64>()?);
-        let rho = ScalarExt::parse_arr(&rho)?;
+    //     // let rho = Scalar::from(rho.parse::<u64>()?);
+    //     let rho = ScalarExt::parse_arr(&rho)?;
 
-        // let r = Scalar::from(r.parse::<u64>()?);
-        let r = ScalarExt::parse_arr(&r)?;
+    //     // let r = Scalar::from(r.parse::<u64>()?);
+    //     let r = ScalarExt::parse_arr(&r)?;
 
-        // let s = Scalar::from(s.parse::<u64>()?);
-        let s = ScalarExt::parse_arr(&s)?;
+    //     // let s = Scalar::from(s.parse::<u64>()?);
+    //     let s = ScalarExt::parse_arr(&s)?;
 
-        // let v = Scalar::from(v.parse::<u64>()?);
-        let v = ScalarExt::parse_arr(&v)?;
+    //     // let v = Scalar::from(v.parse::<u64>()?);
+    //     let v = ScalarExt::parse_arr(&v)?;
 
-        // let cm = Scalar::from(cm.parse::<u64>()?);
-        let cm = ScalarExt::parse_arr(&cm)?;
+    //     // let cm = Scalar::from(cm.parse::<u64>()?);
+    //     let cm = ScalarExt::parse_arr(&cm)?;
 
-        let old_coin = OldCoin {
-            addr_pk: Some(addr_pk),
-            addr_sk: Some(addr_sk),
-            rho: Some(rho),
-            r: Some(r),
-            s: Some(s),
-            v: Some(v),
-            cm: Some(cm),
-            auth_path: [None; CM_TREE_DEPTH as usize],
-        };
+    //     let old_coin = OldCoin {
+    //         addr_pk: Some(addr_pk),
+    //         addr_sk: Some(addr_sk),
+    //         rho: Some(rho),
+    //         r: Some(r),
+    //         s: Some(s),
+    //         v: Some(v),
+    //         cm: Some(cm),
+    //         auth_path: [None; CM_TREE_DEPTH as usize],
+    //     };
 
-        Ok(old_coin)
-    }
+    //     Ok(old_coin)
+    // }
 
     pub async fn get_status(
         &self,
@@ -109,98 +109,86 @@ impl WalletDBSchema {
         };
     }
 
-    pub fn get_rho(
-        &self,
-        cm: &U8Arr32,
-    ) -> Result<Option<U8Arr32>, WalletError> {
-        let cf = self.make_cf_handle(&self.db, cfs::RHO)?;
-        match self.db.get_cf(&cf, cm)? {
-            Some(v) => {
-                let str = String::from_utf8(v)?;
+    // pub fn get_rho(
+    //     &self,
+    //     cm: &U8Arr32,
+    // ) -> Result<Option<U8Arr32>, WalletError> {
+    //     let cf = self.make_cf_handle(&self.db, cfs::RHO)?;
+    //     match self.db.get_cf(&cf, cm)? {
+    //         Some(v) => {
+    //             return Ok(Some(&v));
+    //         }
+    //         None => {
+    //             return Ok(None);
+    //         }
+    //     };
+    // }
 
-                return Ok(Some(str));
-            }
-            None => {
-                return Ok(None);
-            }
-        };
-    }
+    // pub fn get_r(&self, cm: &U8Arr32) -> Result<Option<U8Arr32>, WalletError> {
+    //     let cf = self.make_cf_handle(&self.db, cfs::R)?;
+    //     match self.db.get_cf(&cf, cm)? {
+    //         Some(v) => {
+    //             return Ok(Some(&v));
+    //         }
+    //         None => {
+    //             return Ok(None);
+    //         }
+    //     };
+    // }
 
-    pub fn get_r(&self, cm: &U8Arr32) -> Result<Option<U8Arr32>, WalletError> {
-        let cf = self.make_cf_handle(&self.db, cfs::R)?;
-        match self.db.get_cf(&cf, cm)? {
-            Some(v) => {
-                let str = String::from_utf8(v)?;
+    // pub fn get_s(&self, cm: &U8Arr32) -> Result<Option<U8Arr32>, WalletError> {
+    //     let cf = self.make_cf_handle(&self.db, cfs::S)?;
+    //     match self.db.get_cf(&cf, cm)? {
+    //         Some(v) => {
+    //             return Ok(Some(&v));
+    //         }
+    //         None => {
+    //             return Ok(None);
+    //         }
+    //     };
+    // }
 
-                return Ok(Some(str));
-            }
-            None => {
-                return Ok(None);
-            }
-        };
-    }
+    // pub fn get_v(&self, cm: &U8Arr32) -> Result<Option<U8Arr32>, WalletError> {
+    //     let cf = self.make_cf_handle(&self.db, cfs::V)?;
+    //     match self.db.get_cf(&cf, cm)? {
+    //         Some(v) => {
+    //             return Ok(Some(&v));
+    //         }
+    //         None => {
+    //             return Ok(None);
+    //         }
+    //     };
+    // }
 
-    pub fn get_s(&self, cm: &U8Arr32) -> Result<Option<U8Arr32>, WalletError> {
-        let cf = self.make_cf_handle(&self.db, cfs::S)?;
-        match self.db.get_cf(&cf, cm)? {
-            Some(v) => {
-                let str = String::from_utf8(v)?;
+    // pub fn get_a_pk(
+    //     &self,
+    //     cm: &U8Arr32,
+    // ) -> Result<Option<U8Arr32>, WalletError> {
+    //     let cf = self.make_cf_handle(&self.db, cfs::A_PK)?;
+    //     match self.db.get_cf(&cf, cm)? {
+    //         Some(v) => {
+    //             return Ok(Some(&v));
+    //         }
+    //         None => {
+    //             return Ok(None);
+    //         }
+    //     };
+    // }
 
-                return Ok(Some(str));
-            }
-            None => {
-                return Ok(None);
-            }
-        };
-    }
-
-    pub fn get_v(&self, cm: &U8Arr32) -> Result<Option<U8Arr32>, WalletError> {
-        let cf = self.make_cf_handle(&self.db, cfs::V)?;
-        match self.db.get_cf(&cf, cm)? {
-            Some(v) => {
-                let str = String::from_utf8(v)?;
-
-                return Ok(Some(str));
-            }
-            None => {
-                return Ok(None);
-            }
-        };
-    }
-
-    pub fn get_a_pk(
-        &self,
-        cm: &U8Arr32,
-    ) -> Result<Option<U8Arr32>, WalletError> {
-        let cf = self.make_cf_handle(&self.db, cfs::A_PK)?;
-        match self.db.get_cf(&cf, cm)? {
-            Some(v) => {
-                let str = String::from_utf8(v)?;
-
-                return Ok(Some(str));
-            }
-            None => {
-                return Ok(None);
-            }
-        };
-    }
-
-    pub fn get_a_sk(
-        &self,
-        cm: &U8Arr32,
-    ) -> Result<Option<U8Arr32>, WalletError> {
-        let cf = self.make_cf_handle(&self.db, cfs::A_SK)?;
-        match self.db.get_cf(&cf, cm)? {
-            Some(v) => {
-                let str = String::from_utf8(v)?;
-
-                return Ok(Some(str));
-            }
-            None => {
-                return Ok(None);
-            }
-        };
-    }
+    // pub fn get_a_sk(
+    //     &self,
+    //     cm: &U8Arr32,
+    // ) -> Result<Option<U8Arr32>, WalletError> {
+    //     let cf = self.make_cf_handle(&self.db, cfs::A_SK)?;
+    //     match self.db.get_cf(&cf, cm)? {
+    //         Some(v) => {
+    //             return Ok(Some(v));
+    //         }
+    //         None => {
+    //             return Ok(None);
+    //         }
+    //     };
+    // }
 
     // pub fn get_cm(
     //     &self,

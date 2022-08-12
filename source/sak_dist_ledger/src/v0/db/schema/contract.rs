@@ -88,7 +88,7 @@ impl LedgerDBSchema {
         Ok(())
     }
 
-    pub(crate) fn batch_put_tx_hash(
+    pub(crate) fn batch_put_tx_hash_by_contract_addr(
         &self,
         // db: &DB,
         batch: &mut WriteBatch,

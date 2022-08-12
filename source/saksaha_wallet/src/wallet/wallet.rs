@@ -109,7 +109,15 @@ async fn init_for_demo(wallet: &Wallet) -> Result<(), WalletError> {
             .db
             .schema
             .put_coin(
-                cm, rho, r, s, v, addr_pk, addr_sk, user_id, status,
+                &cm.to_bytes(),
+                &rho.to_bytes(),
+                &r.to_bytes(),
+                &s.to_bytes(),
+                &v.to_bytes(),
+                &addr_pk.to_bytes(),
+                &addr_sk.to_bytes(),
+                user_id,
+                status,
                 // &coin.cm.unwrap().to_string(),
                 // &coin.rho.unwrap().to_string(),
                 // &coin.r.unwrap().to_string(),
@@ -136,13 +144,13 @@ async fn init_for_demo(wallet: &Wallet) -> Result<(), WalletError> {
             .db
             .schema
             .put_coin(
-                &coin.cm.unwrap().to_string(),
-                &coin.rho.unwrap().to_string(),
-                &coin.r.unwrap().to_string(),
-                &coin.s.unwrap().to_string(),
-                &coin.v.unwrap().to_string(),
-                &coin.addr_pk.unwrap().to_string(),
-                &coin.addr_sk.unwrap().to_string(),
+                &coin.cm.unwrap().to_bytes(),
+                &coin.rho.unwrap().to_bytes(),
+                &coin.r.unwrap().to_bytes(),
+                &coin.s.unwrap().to_bytes(),
+                &coin.v.unwrap().to_bytes(),
+                &coin.addr_pk.unwrap().to_bytes(),
+                &coin.addr_sk.unwrap().to_bytes(),
                 &coin.user_id.unwrap().to_string(),
                 &coin.status.unwrap(),
                 &1,
