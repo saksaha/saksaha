@@ -28,8 +28,10 @@ pub(in crate::rpc) async fn send_tx(
     );
 
     let rb: WalletSendTxRequest = require_params_parsed!(route_state, &params);
+
     println!(" rb: {:?}", rb);
-    let _ = ctx.wallet.apis.send_tx(rb).await;
+
+    // let _ = ctx.wallet.apis.send_tx(rb).await;
 
     let is_success = true;
 
