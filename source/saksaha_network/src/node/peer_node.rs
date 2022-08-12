@@ -15,7 +15,7 @@ use tokio::sync::broadcast::Receiver;
 pub(in crate::node) struct PeerNode {
     pub peer: Arc<Peer>,
     pub machine: Arc<Machine>,
-    pub node_task_queue: Arc<TaskQueue<NodeTask>>,
+    // pub node_task_queue: Arc<TaskQueue<NodeTask>>,
 }
 
 impl PeerNode {
@@ -27,7 +27,11 @@ impl PeerNode {
         );
 
         let public_key = self.peer.get_public_key_short();
-        let node_task_queue = self.node_task_queue.clone();
+
+        let node_task_queue = Arc::new(TaskQueue::new(100));
+        let node_task_min_interval = self.node_task_min_interval.clone();
+        let peer_register_min_interval =
+            Duration::from_millis(PEER_REGISTER_MIN_INTERVAL);
 
         {
             // Ledger event routine
@@ -55,6 +59,23 @@ impl PeerNode {
                 ledger_event_routine.run().await;
             });
         }
+
+        // {
+        //     // Node task routine
+        //     let node_task_handler = Box::new(NodeTaskHandler {
+        //         peer_table: self.peer_table.clone(),
+        //     });
+
+        //     let task_runtime = TaskRuntime::new(
+        //         node_task_queue.clone(),
+        //         node_task_min_interval,
+        //         node_task_handler,
+        //     );
+
+        //     tokio::spawn(async move {
+        //         task_runtime.run().await;
+        //     });
+        // }
 
         loop {
             let mut conn_lock = self.peer.get_transport().conn.write().await;
