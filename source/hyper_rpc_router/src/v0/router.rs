@@ -55,13 +55,19 @@ where
                 }
             };
 
+            println!("123123, json req: {:?}", json_request);
+
             let route_state = RouteState {
                 id: json_request.id,
                 resp,
             };
 
             if let Some(handler) = route_map.get(json_request.method.as_str()) {
+                println!("333 found handler,");
+
                 let resp = handler(route_state, json_request.params, ctx).await;
+
+                println!("444 resp: {:?}", resp);
 
                 Ok(resp)
             } else {

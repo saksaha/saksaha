@@ -16,6 +16,7 @@ pub(in crate::rpc) fn get_routes(
         Path {
             method: "send_pour_tx",
             handler: Box::new(|route_state, params, sys_handle| {
+                println!("444");
                 Box::pin(v0::send_pour_tx(route_state, params, sys_handle))
             }),
         },

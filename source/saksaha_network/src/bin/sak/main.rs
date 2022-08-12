@@ -7,7 +7,8 @@ use saksaha_network::{System, SystemRunArgs};
 
 const RUST_LOG_ENV: &str = "
     sak_,
-    saksaha
+    saksaha,
+    hyper_
 ";
 
 fn main() {

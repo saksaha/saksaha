@@ -6,7 +6,7 @@ use hyper_rpc_router::{
 };
 use log::warn;
 use sak_contract_std::Request as CtrRequest;
-use sak_types::{MintTxCandidate, PourTxCandidate, Tx, TxCandidate};
+use sak_types::{MintTxCandidate, PourTxCandidate, Tx, TxCandidate, U8Arr32};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
@@ -57,7 +57,7 @@ pub(in crate::rpc) struct SendPourTxRequest {
     #[serde(with = "serde_bytes")]
     pi: Vec<u8>,
     sn_1: [u8; 32],
-    sn_2: [u8; 32],
+    // sn_2: [u8; 32],
     cm_1: [u8; 32],
     cm_2: [u8; 32],
     merkle_rt: [u8; 32],
@@ -70,8 +70,8 @@ impl SendPourTxRequest {
         author_sig: String,
         ctr_addr: Option<String>,
         pi: Vec<u8>,
-        sn_1: [u8; 32],
-        sn_2: [u8; 32],
+        sn_1: U8Arr32,
+        // sn_2: [u8; 32],
         cm_1: [u8; 32],
         cm_2: [u8; 32],
         merkle_rt: [u8; 32],
@@ -83,7 +83,7 @@ impl SendPourTxRequest {
             ctr_addr,
             pi,
             sn_1,
-            sn_2,
+            // sn_2,
             cm_1,
             cm_2,
             merkle_rt,
@@ -141,11 +141,15 @@ pub(in crate::rpc) async fn send_pour_tx(
     params: Params,
     sys_handle: Arc<SystemHandle>,
 ) -> Response<Body> {
+    println!("1113");
+
     let params = require_some_params!(
         route_state,
         params,
         "send_pour_tx should contain params",
     );
+
+    println!("1114");
 
     let rb: SendPourTxRequest = require_params_parsed!(route_state, &params);
 
