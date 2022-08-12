@@ -17,6 +17,7 @@ pub(crate) fn run(args: Args) -> Result<(), CIError> {
     let args = [args_1, cli_args].concat();
 
     Kommand::new(program, args, None)?
+        .stdin(Stdio::inherit())
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
         .output()

@@ -64,7 +64,7 @@ pub(crate) async fn create_client(
     };
 
     let identity = {
-        let id = Identity::new(secret, public_key_str, p2p_port, disc_port)
+        let id = Identity::new(&secret, &public_key_str, p2p_port, disc_port)
             .expect("identity should be initialized");
 
         Arc::new(id)

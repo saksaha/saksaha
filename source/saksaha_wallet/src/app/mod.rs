@@ -1,6 +1,5 @@
 mod app;
-mod error;
+mod prompt;
 mod routine;
 
 pub use app::*;
-pub use error::*;

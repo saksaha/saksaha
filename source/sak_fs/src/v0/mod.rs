@@ -4,25 +4,14 @@ use log::info;
 use std::fs;
 use std::path::PathBuf;
 
-pub enum DBName {
-    Saksaha,
-    Envelope,
-    Wallet,
-}
-
 pub type FSError = Box<dyn std::error::Error + Send + Sync>;
 
+// {home}/{config}/{app_name}/{app_prefix}/...
 pub fn create_or_get_app_path(
-    db_name: DBName,
+    app_name: &str,
     app_prefix: &String,
 ) -> Result<PathBuf, FSError> {
-    let db_name = match db_name {
-        DBName::Saksaha => ("Saksaha"),
-        DBName::Envelope => ("Envelope"),
-        DBName::Wallet => ("Wallet"),
-    };
-
-    if let Some(dir) = ProjectDirs::from("com", "Saksaha", db_name) {
+    if let Some(dir) = ProjectDirs::from("com", "Saksaha", app_name) {
         let app_root_path = dir.config_dir();
 
         if !app_root_path.exists() {
@@ -78,14 +67,6 @@ pub fn create_or_get_app_path(
 // }
 
 pub fn persist(data: String, target_path: PathBuf) -> Result<(), FSError> {
-    // if target_path.exists() {
-    //     return Err(format!(
-    //         "Path already exists, path: {}",
-    //         target_path.to_string_lossy()
-    //     )
-    //     .into());
-    // }
-
     let target_path_str = target_path.to_string_lossy().yellow();
 
     info!("Writing a config, target_path: {}", target_path_str,);

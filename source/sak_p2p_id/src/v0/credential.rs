@@ -1,4 +1,6 @@
-use sak_crypto::{SecretKey, Signature, SigningKey, ToEncodedPoint};
+use sak_crypto::{
+    PublicKey, SakKey, SecretKey, Signature, SigningKey, ToEncodedPoint,
+};
 
 // 64 + 1 (flag for whether the key is compressed or not)
 pub const PUBLIC_KEY_LEN: usize = 64 + 1;
@@ -7,15 +9,17 @@ pub const SAKSAHA: &[u8; 7] = b"saksaha";
 pub struct Credential {
     pub secret: String,
     pub public_key_str: String,
+    pub public_key: PublicKey,
     pub secret_key: SecretKey,
     pub public_key_bytes: [u8; PUBLIC_KEY_LEN],
     pub sig: Signature,
+    pub acc_addr: String,
 }
 
 impl Credential {
     pub fn new(
-        secret: String,
-        public_key_str: String,
+        secret: &String,
+        public_key_str: &String,
     ) -> Result<Credential, String> {
         let secret_bytes = match sak_crypto::decode_hex(&secret) {
             Ok(v) => v,
@@ -46,7 +50,7 @@ impl Credential {
             let mut buf = [0; 65];
             buf.clone_from_slice(&b);
             let pk_encoded = sak_crypto::encode_hex(&b);
-            if pk_encoded != public_key_str {
+            if &pk_encoded != public_key_str {
                 return Err(format!(
                     "Encoded public key is different from the restored one",
                 ));
@@ -61,12 +65,18 @@ impl Credential {
             sig
         };
 
+        let public_key = secret_key.public_key();
+
+        let acc_addr = SakKey::create_acc_addr(&public_key);
+
         let credential = Credential {
-            secret,
+            secret: secret.to_owned(),
             secret_key,
-            public_key_str,
+            public_key_str: public_key_str.to_owned(),
+            public_key,
             public_key_bytes,
             sig,
+            acc_addr,
         };
 
         Ok(credential)

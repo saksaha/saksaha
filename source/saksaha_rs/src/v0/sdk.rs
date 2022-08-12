@@ -10,9 +10,9 @@ use sak_proofs::{
     NewCoin, OldCoin, Path, ProofError, CM_TREE_DEPTH,
 };
 use sak_rpc_interface::{JsonRequest, JsonResponse};
-use sak_types::U8Array;
 use serde::{Deserialize, Serialize};
 use std::{char::from_u32_unchecked, collections::HashMap, time};
+use type_extension::U8Array;
 
 pub const A: usize = 1;
 pub const TREE_DEPTH: usize = 3;

@@ -5,6 +5,8 @@ use sak_crypto::{
 };
 use sak_kv_db::{KeyValueDatabase, Options};
 
+pub(crate) const APP_NAME: &str = "envelope";
+
 pub(crate) struct EnvelopeDB {
     pub(crate) schema: EnvelopeDBSchema,
 }
@@ -14,8 +16,8 @@ impl EnvelopeDB {
         app_prefix: &String,
     ) -> Result<EnvelopeDB, EnvelopeError> {
         let envelope_db_path = {
-            let db_name = sak_fs::DBName::Envelope;
-            let app_path = sak_fs::create_or_get_app_path(db_name, app_prefix)?;
+            let app_path =
+                sak_fs::create_or_get_app_path(APP_NAME, app_prefix)?;
             let db_path = { app_path.join("db") };
 
             db_path

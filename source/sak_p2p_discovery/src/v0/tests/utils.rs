@@ -339,8 +339,8 @@ async fn make_disc_args(test_disc_args: &TestDiscArgs) -> DiscoveryArgs {
 
     let identity = {
         let i = Identity::new(
-            test_disc_args.secret.clone(),
-            test_disc_args.public_key_str.clone(),
+            &test_disc_args.secret,
+            &test_disc_args.public_key_str,
             test_disc_args.p2p_port,
             disc_port,
         )
