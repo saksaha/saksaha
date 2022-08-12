@@ -1,3 +1,5 @@
+use crate::WalletError;
+
 use super::Status;
 use sak_crypto::Hasher;
 use sak_crypto::Scalar;
@@ -8,78 +10,92 @@ use sak_types::U8Array;
 
 #[derive(Debug)]
 pub(crate) struct Coin {
-    pub addr_pk: Option<Scalar>,
+    pub addr_pk: Scalar,
 
-    pub addr_sk: Option<Scalar>,
+    pub addr_sk: Scalar,
 
-    pub rho: Option<Scalar>,
+    pub rho: Scalar,
 
-    pub r: Option<Scalar>,
+    pub r: Scalar,
 
-    pub s: Option<Scalar>,
+    pub s: Scalar,
 
-    pub v: Option<Scalar>,
+    pub v: Scalar,
 
-    pub cm: Option<Scalar>,
+    pub cm: Scalar,
 
-    pub user_id: Option<String>,
+    pub user_id: String,
 
-    pub status: Option<Status>,
+    pub status: Status,
 }
 
 impl Coin {
-    pub(crate) fn new(value: u64, user_id: &String) -> Coin {
+    pub(crate) fn new(
+        value: u64,
+        user_id: &String,
+    ) -> Result<Coin, WalletError> {
         let hasher = Hasher::new();
 
-        let addr_sk = U8Array::from_int(sak_crypto::rand() as u64).to_owned();
-        let addr_pk = hasher.mimc_single(&addr_sk).unwrap();
-        let rho = U8Array::from_int(sak_crypto::rand() as u64);
-        let r = U8Array::from_int(sak_crypto::rand() as u64);
-        let s = U8Array::from_int(sak_crypto::rand() as u64);
-        let v = U8Array::from_int(value);
+        let addr_sk = { U8Array::from_int(10 as u64) };
 
-        let k = hasher.comm2_scalar(
-            ScalarExt::parse_arr(&r).unwrap(),
-            addr_pk,
-            ScalarExt::parse_arr(&rho).unwrap(),
-        );
+        let addr_pk = { hasher.mimc_single(&addr_sk)? };
+
+        let rho = { U8Array::from_int(11 as u64) };
+
+        let r = { U8Array::from_int(12 as u64) };
+
+        let s = { U8Array::from_int(13 as u64) };
+
+        let v = { U8Array::from_int(value) };
+
+        let k = {
+            hasher.comm2_scalar(
+                ScalarExt::parse_arr(&r)?,
+                addr_pk,
+                ScalarExt::parse_arr(&rho)?,
+            )
+        };
+
         let cm = hasher.comm2_scalar(
-            ScalarExt::parse_arr(&s).unwrap(),
-            ScalarExt::parse_arr(&v).unwrap(),
+            ScalarExt::parse_arr(&s)?,
+            ScalarExt::parse_arr(&v)?,
             k,
         );
 
-        let addr_sk = ScalarExt::parse_arr(&addr_sk).unwrap();
-        let rho = ScalarExt::parse_arr(&rho).unwrap();
-        let r = ScalarExt::parse_arr(&r).unwrap();
-        let s = ScalarExt::parse_arr(&s).unwrap();
-        let v = ScalarExt::parse_arr(&v).unwrap();
+        let addr_sk = ScalarExt::parse_arr(&addr_sk)?;
+        let rho = ScalarExt::parse_arr(&rho)?;
+        let r = ScalarExt::parse_arr(&r)?;
+        let s = ScalarExt::parse_arr(&s)?;
+        let v = ScalarExt::parse_arr(&v)?;
 
-        Coin {
-            addr_pk: Some(addr_pk),
-            addr_sk: Some(addr_sk),
-            rho: Some(rho),
-            r: Some(r),
-            s: Some(s),
-            v: Some(v),
-            cm: Some(cm),
-            user_id: Some(user_id.clone()),
-            status: Some(Status::Unused),
-        }
-    }
-
-    pub(crate) fn extract(&self) -> NewCoin {
-        let addr_pk = self.addr_pk;
-        let rho = self.rho;
-        let r = self.r;
-        let s = self.s;
-        let v = self.v;
-        NewCoin {
+        let coin = Coin {
             addr_pk,
+            addr_sk,
             rho,
             r,
             s,
             v,
-        }
+            cm,
+            user_id: user_id.clone(),
+            status: Status::Unused,
+        };
+
+        Ok(coin)
     }
+
+    // pub(crate) fn extract(&self) -> NewCoin {
+    //     let addr_pk = self.addr_pk;
+    //     let rho = self.rho;
+    //     let r = self.r;
+    //     let s = self.s;
+    //     let v = self.v;
+
+    //     NewCoin {
+    //         addr_pk,
+    //         rho,
+    //         r,
+    //         s,
+    //         v,
+    //     }
+    // }
 }
