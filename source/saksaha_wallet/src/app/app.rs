@@ -7,10 +7,9 @@ pub struct App {}
 
 #[derive(Debug)]
 pub struct AppArgs {
-    pub app_prefix: Option<String>,
     pub rpc_port: Option<u16>,
-    pub id: Option<String>,
-    pub key: Option<String>,
+    pub public_key: Option<String>,
+    pub secret: Option<String>,
 }
 
 impl App {

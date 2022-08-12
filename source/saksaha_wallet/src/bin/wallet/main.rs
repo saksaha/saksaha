@@ -1,5 +1,7 @@
 mod cli;
 
+use std::{thread, time::Duration};
+
 use saksaha_wallet::{App, AppArgs, WalletError};
 
 const RUST_LOG_ENV: &str = "
@@ -20,14 +22,23 @@ fn main() -> Result<(), WalletError> {
 
     let app_args = AppArgs {
         rpc_port: cli_args.rpc_port,
-        app_prefix: cli_args.app_prefix,
-        id: cli_args.id,
-        key: cli_args.key,
+        public_key: cli_args.public_key,
+        secret: cli_args.secret,
     };
 
     let app = App::init();
 
-    app.run(app_args)?;
+    use std::io::BufRead;
+    let stdin = std::io::stdin();
+    for line in stdin.lock().lines() {
+        println!("{}", line.unwrap());
+    }
+
+    println!("123123");
+
+    thread::sleep(Duration::from_secs(50));
+
+    // app.run(app_args)?;
 
     Ok(())
 }

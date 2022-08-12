@@ -2,6 +2,7 @@ use crate::{
     credential::Credential, rpc::RPC, wallet::Wallet, AppArgs, WalletError,
 };
 use log::{error, info};
+use std::io::BufRead;
 use std::sync::Arc;
 
 const APP_PREFIX: &'static str = "default";
@@ -15,25 +16,46 @@ impl Routine {
     ) -> Result<(), WalletError> {
         info!("Wallet main routine starts, app_args: {:?}", app_args);
 
-        let app_prefix = app_args.app_prefix.unwrap_or_else(|| {
-            info!("App prefix is not specified, defaults to '{}'", APP_PREFIX);
+        {
+            let public_key = app_args.public_key;
+            let secret = app_args.secret;
 
-            APP_PREFIX.to_string()
-        });
+            if public_key.is_none() || secret.is_none() {
+                info!(
+                    "Either public_key or secret is empty. Would you want to\
+                    we proceed to create a new credential?",
+                );
 
-        let credential = Credential::new(app_args.id, app_args.key);
+                // let mut buffer = String::new();
+                let stdin = std::io::stdin();
 
-        let wallet = {
-            let w = Wallet::init(app_prefix, credential).await?;
+                for line in stdin.lock().lines() {
+                    println!("opwer: {:?}", line.unwrap());
+                }
 
-            Arc::new(w)
-        };
+                println!("123123");
+            }
+        }
 
-        let rpc = RPC::init(app_args.rpc_port, wallet).await?;
+        // let app_prefix = app_args.app_prefix.unwrap_or_else(|| {
+        //     info!("App prefix is not specified, defaults to '{}'", APP_PREFIX);
 
-        tokio::spawn(async move {
-            tokio::join!(rpc.run());
-        });
+        //     APP_PREFIX.to_string()
+        // });
+
+        // let credential = Credential::new(app_args.id, app_args.key);
+
+        // let wallet = {
+        //     let w = Wallet::init(app_prefix, credential).await?;
+
+        //     Arc::new(w)
+        // };
+
+        // let rpc = RPC::init(app_args.rpc_port, wallet).await?;
+
+        // tokio::spawn(async move {
+        //     tokio::join!(rpc.run());
+        // });
 
         let _ = tokio::signal::ctrl_c().await;
 
