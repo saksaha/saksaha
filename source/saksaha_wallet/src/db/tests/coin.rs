@@ -1,5 +1,5 @@
 use crate::{
-    db::{tests::make_dummy_db, WalletDB, USER_1, USER_2},
+    db::{tests::make_dummy_db, USER_1, USER_2},
     types::Status,
 };
 

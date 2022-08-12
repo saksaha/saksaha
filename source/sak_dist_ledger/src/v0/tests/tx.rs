@@ -1,4 +1,5 @@
 use super::utils;
+use std::time::Duration;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_put_and_get_transaction() {
@@ -36,3 +37,59 @@ async fn test_put_and_get_transaction() {
         );
     }
 }
+
+#[tokio::test(flavor = "multi_thread")]
+async fn test_dist_ledger_put_a_single_pour_tx() {
+    sak_test_utils::init_test_log();
+    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
+
+    let dist_ledger = utils::make_dist_ledger().await;
+
+    {
+        let dummy_pour_tx = utils::make_dummy_valid_pour_tx().await;
+
+        let dummy_tx_hash = dist_ledger
+            .apis
+            .ledger_db
+            .schema
+            .put_tx(&dummy_pour_tx)
+            .expect("pour_tx should be written");
+
+        println!("[+] dummy pour_tx hash: {:?}", dummy_tx_hash);
+    }
+
+    println!("[+] test success");
+}
+
+// #[tokio::test(flavor = "multi_thread")]
+// #[should_panic]
+// async fn test_dist_ledger_double_spending() {
+//     sak_test_utils::init_test_log();
+//     sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
+
+//     let dist_ledger = utils::make_dist_ledger().await;
+
+//     {
+//         let dummy_pour_tx = utils::make_dummy_valid_pour_tx().await;
+
+//         let dummy_tx_hash = dist_ledger
+//             .apis
+//             .ledger_db
+//             .schema
+//             .put_tx(&dummy_pour_tx)
+//             .expect("pour_tx should be written");
+
+//         println!("[+] dummy pour_tx hash: {:?}", dummy_tx_hash);
+//     }
+
+//     {
+//         let dummy_pour_tx = utils::make_dummy_valid_pour_tx().await;
+
+//         let _dummy_tx_hash = dist_ledger
+//             .apis
+//             .ledger_db
+//             .schema
+//             .put_tx(&dummy_pour_tx)
+//             .expect("pour_tx should be written");
+//     }
+// }

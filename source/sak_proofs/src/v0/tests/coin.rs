@@ -1,4 +1,7 @@
-use crate::{CoinProofCircuit1to2, MerkleTree, NewCoin, OldCoin, ProofError};
+use crate::{
+    CoinProofCircuit1to2, MerkleTree, NewCoin, OldCoin, ProofError,
+    CM_TREE_DEPTH,
+};
 use sak_crypto::{
     groth16, os_rng, Bls12, Hasher, Parameters, Proof, Scalar, ScalarExt,
 };
@@ -21,7 +24,7 @@ pub struct TestContext {
     pub rho_1_old: Scalar,
     pub v_1_old: Scalar,
     pub cm_1_old: Scalar,
-    pub auth_path_1: [(Scalar, bool); 4],
+    pub auth_path_1: [(Scalar, bool); CM_TREE_DEPTH as usize],
     pub merkle_rt: Scalar,
     pub sn_1: Scalar,
 
@@ -44,7 +47,7 @@ pub struct TestContext {
     pub cm_2: Scalar,
 }
 
-fn make_test_context() -> TestContext {
+pub fn make_test_context() -> TestContext {
     let hasher = Hasher::new();
 
     let (
@@ -169,7 +172,7 @@ fn make_test_context() -> TestContext {
         (addr_sk, addr_pk, r, s, rho, v, cm)
     };
 
-    let merkle_tree = MerkleTree::new(TEST_TREE_DEPTH as u32);
+    let merkle_tree = MerkleTree::new(CM_TREE_DEPTH as u32);
 
     let merkle_nodes = {
         let mut m = HashMap::new();
@@ -240,7 +243,7 @@ fn make_test_context() -> TestContext {
 
     let auth_path_1 = {
         let v = merkle_tree.generate_auth_paths(0);
-        let mut ret = [(Scalar::default(), false); TEST_TREE_DEPTH as usize];
+        let mut ret = [(Scalar::default(), false); CM_TREE_DEPTH as usize];
 
         v.iter().enumerate().for_each(|(idx, p)| {
             if idx >= ret.len() {
@@ -338,7 +341,7 @@ fn make_proof(
     s_1_old: Scalar,
     v_1_old: Scalar,
     cm_1_old: Scalar,
-    auth_path_1: [(Scalar, bool); 4],
+    auth_path_1: [(Scalar, bool); CM_TREE_DEPTH as usize],
 
     // new coin 1
     addr_pk_1_new: Scalar,

@@ -194,6 +194,7 @@ impl PourTxCandidate {
             data.as_slice(),
             author_sig.as_bytes(),
             ctr_addr.as_bytes(),
+            &pi,
         ];
 
         let tx_hash = sak_crypto::compute_hash(&hashable_items);

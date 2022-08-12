@@ -1,7 +1,9 @@
 use crate::LedgerError;
 use crate::{cfs, LedgerDBSchema};
+use sak_crypto::{Bls12, Hasher, Proof, ScalarExt};
 use sak_kv_db::WriteBatch;
 use sak_kv_db::DB;
+use sak_proofs::{get_mimc_params_1_to_2, verify_proof_1_to_2};
 use sak_types::{
     MintTx, MintTxCandidate, PourTx, PourTxCandidate, Tx, TxCtrOp, TxHash,
     TxType,
@@ -512,6 +514,29 @@ impl LedgerDBSchema {
 
         let tx_hash = tc.get_tx_hash();
 
+        {
+            // verify
+            let hasher = Hasher::new();
+
+            // TODO check double spending (sn_1 should not be used multiple time)
+
+            let public_inputs = [
+                ScalarExt::parse_arr(&tc.merkle_rt)?,
+                ScalarExt::parse_arr(&tc.sn_1)?,
+                ScalarExt::parse_arr(&tc.cm_1)?,
+                ScalarExt::parse_arr(&tc.cm_2)?,
+            ];
+
+            let pi_des: Proof<Bls12> = Proof::read(&*tc.pi).unwrap();
+
+            let verification_result =
+                verify_proof_1_to_2(pi_des, &public_inputs, &hasher);
+
+            if !verification_result {
+                return Err(format!("Wrong proof").into());
+            };
+        }
+
         self.batch_put_tx_type(batch, tx_hash, tc.get_tx_type())?;
 
         self.batch_put_tx_created_at(batch, tx_hash, &tc.created_at)?;
@@ -851,8 +876,6 @@ pub mod testing {
 
     impl LedgerDBSchema {
         pub(crate) fn put_tx(&self, tx: &Tx) -> Result<String, LedgerError> {
-            // let db = &self.kv_db.db_instance;
-
             let mut batch = WriteBatch::default();
 
             let tx_hash = match tx {
@@ -860,7 +883,7 @@ pub mod testing {
                 Tx::Pour(t) => self.batch_put_pour_tx(&mut batch, t)?,
             };
 
-            &self.db.write(batch)?;
+            self.db.write(batch)?;
 
             Ok(tx_hash)
         }

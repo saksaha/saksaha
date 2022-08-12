@@ -6,8 +6,8 @@ use sak_crypto::{
     groth16, mimc, os_rng, Bls12, Circuit, Hasher, Proof, Scalar, ScalarExt,
 };
 use sak_proofs::{
-    get_mimc_params_1_to_2, CoinProof, CoinProofCircuit1to2, MerkleTree,
-    NewCoin, OldCoin, Path, ProofError, CM_TREE_DEPTH,
+    get_mimc_params_1_to_2, CoinProofCircuit1to2, MerkleTree, NewCoin, OldCoin,
+    Path, ProofError, CM_TREE_DEPTH,
 };
 use sak_rpc_interface::{JsonRequest, JsonResponse};
 use sak_types::U8Array;

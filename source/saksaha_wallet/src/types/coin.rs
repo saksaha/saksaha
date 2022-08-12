@@ -21,19 +21,3 @@ pub(crate) struct Coin {
 
     pub status: Option<Status>,
 }
-
-pub(crate) struct OwnCoin {
-    pub addr_sk: Option<Scalar>,
-
-    pub rho: Option<Scalar>,
-
-    pub r: Option<Scalar>,
-
-    pub s: Option<Scalar>,
-
-    pub v: Option<Scalar>,
-
-    pub user_id: Option<String>,
-
-    pub status: Option<Status>,
-}

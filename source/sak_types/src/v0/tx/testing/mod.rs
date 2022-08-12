@@ -78,6 +78,19 @@ impl Tx {
 
         c.upgrade(3)
     }
+
+    pub fn new_dummy_valid_pour(
+        pi: Vec<u8>,
+        sn_1: [u8; 32],
+        cm_1: [u8; 32],
+        cm_2: [u8; 32],
+        merkle_rt: [u8; 32],
+    ) -> Tx {
+        let c =
+            TxCandidate::new_dummy_valid_pour(pi, sn_1, cm_1, cm_2, merkle_rt);
+
+        c.upgrade(0)
+    }
 }
 
 impl TxCandidate {
@@ -147,6 +160,19 @@ impl TxCandidate {
         TxCandidate::Pour(tx_candidate)
     }
 
+    pub fn new_dummy_valid_pour(
+        pi: Vec<u8>,
+        sn_1: [u8; 32],
+        cm_1: [u8; 32],
+        cm_2: [u8; 32],
+        merkle_rt: [u8; 32],
+    ) -> TxCandidate {
+        let tx_candidate =
+            PourTxCandidate::new_dummy_valid(pi, sn_1, cm_1, cm_2, merkle_rt);
+
+        TxCandidate::Pour(tx_candidate)
+    }
+
     pub fn new_dummy_pour_variant_cm(cm: [u8; 32]) -> TxCandidate {
         let tx_candidate = PourTxCandidate::new_dummy_5(cm);
 
@@ -180,7 +206,7 @@ impl MintTxCandidate {
 
         let hasher = Hasher::new();
 
-        let v = U8Array::from_int(1_000);
+        let v = U8Array::from_int(1000);
 
         let s = get_s_1();
 
@@ -211,7 +237,7 @@ impl MintTxCandidate {
     pub fn new_dummy_2() -> MintTxCandidate {
         let hasher = Hasher::new();
 
-        let v = U8Array::from_int(1_000);
+        let v = U8Array::from_int(1000);
 
         let s = U8Array::new_empty_32();
 
@@ -482,6 +508,27 @@ impl PourTxCandidate {
         )
     }
 
+    pub fn new_dummy_valid(
+        pi: Vec<u8>,
+        sn_1: [u8; 32],
+        cm_1: [u8; 32],
+        cm_2: [u8; 32],
+        merkle_rt: [u8; 32],
+    ) -> PourTxCandidate {
+        PourTxCandidate::new(
+            String::from("created_at_test"),
+            vec![44, 44, 44],
+            String::from("author_sig_test"),
+            Some(String::from("ctr_addr_test")),
+            pi,
+            sn_1,
+            U8Array::new_empty_32(), // TODO remove
+            cm_1,
+            cm_2,
+            merkle_rt,
+        )
+    }
+
     pub fn new_dummy_validator_ctrt() -> PourTxCandidate {
         PourTxCandidate::new(
             String::from("created_at_4"),
@@ -495,5 +542,51 @@ impl PourTxCandidate {
             U8Array::new_empty_32(),
             U8Array::new_empty_32(),
         )
+    }
+}
+
+pub struct Coin {
+    pub addr_sk: [u8; 32],
+    pub addr_pk: [u8; 32],
+    pub rho: [u8; 32],
+    pub r: [u8; 32],
+    pub s: [u8; 32],
+    pub v: [u8; 32],
+    pub k: [u8; 32],
+    pub cm: [u8; 32],
+}
+
+impl Coin {
+    pub fn generate_a_dummy_coin(value: u64) -> Coin {
+        let hasher = Hasher::new();
+
+        let addr_sk = U8Array::from_int(sak_crypto::rand() as u64).to_owned();
+        let addr_pk = hasher.mimc_single(&addr_sk).unwrap();
+        let rho = U8Array::from_int(sak_crypto::rand() as u64);
+        let r = U8Array::from_int(sak_crypto::rand() as u64);
+        let s = U8Array::from_int(sak_crypto::rand() as u64);
+        let v = U8Array::from_int(value);
+
+        let k = hasher.comm2_scalar(
+            ScalarExt::parse_arr(&r).unwrap(),
+            addr_pk,
+            ScalarExt::parse_arr(&rho).unwrap(),
+        );
+        let cm = hasher.comm2_scalar(
+            ScalarExt::parse_arr(&s).unwrap(),
+            ScalarExt::parse_arr(&v).unwrap(),
+            k,
+        );
+
+        Coin {
+            addr_sk,
+            addr_pk: addr_pk.to_bytes(),
+            rho,
+            r,
+            s,
+            v,
+            k: k.to_bytes(),
+            cm: cm.to_bytes(),
+        }
     }
 }

@@ -54,7 +54,12 @@ pub fn get_mimc_params_1_to_2(constants: &[Scalar]) -> Parameters<Bls12> {
 
         params.write(&mut v).unwrap();
         // write origin buf
-        file.write_all(&v);
+        match file.write_all(&v) {
+            Ok(_) => {}
+            Err(err) => {
+                log::error!("Err: {:?}", err);
+            }
+        };
     }
 
     let de_params = Parameters::<Bls12>::read(&v[..], false).unwrap();
