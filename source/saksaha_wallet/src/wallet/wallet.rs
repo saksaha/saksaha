@@ -82,7 +82,7 @@ fn gen_coin_with_params(
 
     let cm = hasher.comm2_scalar(s, v, k);
 
-    let status = CoinStatus::Unused;
+    let coin_status = CoinStatus::Unused;
 
     let coin = CoinRecord {
         addr_pk,
@@ -93,7 +93,7 @@ fn gen_coin_with_params(
         v,
         cm,
         user_id,
-        status,
+        coin_status,
     };
 
     Ok(coin)
@@ -119,32 +119,24 @@ async fn init_for_demo(wallet: &Wallet) -> Result<(), WalletError> {
         // let user_id = &coin.user_id.ok_or("user_id should exist")?;
         // let status = &coin.status.ok_or("status should exist")?;
 
-        wallet
-            .apis
-            .db
-            .schema
-            .put_coin(
-                &coin.cm,
-                &coin.rho,
-                &coin.r,
-                &coin.s,
-                &coin.v,
-                &coin.addr_pk,
-                &coin.addr_sk,
-                &coin.user_id,
-                &coin.status,
-                // &coin.cm.unwrap().to_string(),
-                // &coin.rho.unwrap().to_string(),
-                // &coin.r.unwrap().to_string(),
-                // &coin.s.unwrap().to_string(),
-                // &coin.v.unwrap().to_string(),
-                // &coin.addr_pk.unwrap().to_string(),
-                // &coin.addr_sk.unwrap().to_string(),
-                // &coin.user_id.unwrap().to_string(),
-                // &coin.status.unwrap(),
-            )
-            .await?;
+        // wallet
+        //     .apis
+        //     .db
+        //     .schema
+        //     .put_coin(
+        //         &coin.cm,
+        //         &coin.rho,
+        //         &coin.r,
+        //         &coin.s,
+        //         &coin.v,
+        //         &coin.addr_pk,
+        //         &coin.addr_sk,
+        //         &coin.user_id,
+        //         &coin.status,
+        //     )
+        //     .await?;
     }
+
     {
         let user_id = "user_2".to_string();
         let value = 100;
@@ -154,22 +146,22 @@ async fn init_for_demo(wallet: &Wallet) -> Result<(), WalletError> {
 
         debug!("[demo coin: user_2] {:#?}", coin);
 
-        wallet
-            .apis
-            .db
-            .schema
-            .put_coin(
-                &coin.cm,
-                &coin.rho,
-                &coin.r,
-                &coin.s,
-                &coin.v,
-                &coin.addr_pk,
-                &coin.addr_sk,
-                &coin.user_id,
-                &coin.status,
-            )
-            .await?;
+        // wallet
+        //     .apis
+        //     .db
+        //     .schema
+        //     .put_coin(
+        //         &coin.cm,
+        //         &coin.rho,
+        //         &coin.r,
+        //         &coin.s,
+        //         &coin.v,
+        //         &coin.addr_pk,
+        //         &coin.addr_sk,
+        //         &coin.user_id,
+        //         &coin.status,
+        //     )
+        //     .await?;
     }
 
     Ok(())

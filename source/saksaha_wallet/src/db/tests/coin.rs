@@ -119,22 +119,22 @@ async fn test_wallet_db_store_coin_record() {
 
     let coin = mock_coin_record_1().unwrap();
 
-    db.schema
-        .put_coin(
-            coin,
-            // &cm.to_string(),
-            // &rho.to_string(),
-            // &r.to_string(),
-            // &s.to_string(),
-            // &v.to_string(),
-            // &addr_pk.to_string(),
-            // &addr_sk.to_string(),
-            // &USER_1.to_string(),
-            // &status,
-            // &idx,
-        )
-        .await
-        .unwrap();
+    // db.schema
+    //     .put_coin(
+    //         coin,
+    //         // &cm.to_string(),
+    //         // &rho.to_string(),
+    //         // &r.to_string(),
+    //         // &s.to_string(),
+    //         // &v.to_string(),
+    //         // &addr_pk.to_string(),
+    //         // &addr_sk.to_string(),
+    //         // &USER_1.to_string(),
+    //         // &status,
+    //         // &idx,
+    //     )
+    //     .await
+    //     .unwrap();
 
     // let latest_cm_idx = db.schema.get_latest_cm_idx().unwrap().unwrap();
     // println!("latest_cm_idx: {:?}", latest_cm_idx);

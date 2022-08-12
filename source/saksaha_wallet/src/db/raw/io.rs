@@ -1,7 +1,7 @@
 use super::Raw;
 use super::WalletDBSchema;
-use crate::app::WalletError;
 use crate::db::cfs;
+use crate::WalletError;
 use sak_crypto::{Scalar, ScalarExt};
 use sak_kv_db::WriteBatch;
 use sak_kv_db::{BoundColumnFamily, ColumnFamilyDescriptor, Options, DB};

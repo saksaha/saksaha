@@ -1,4 +1,6 @@
-use super::{error::WalletError, routine::Routine};
+use crate::WalletError;
+
+use super::routine::Routine;
 use log::error;
 
 pub struct App {}

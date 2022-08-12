@@ -1,9 +1,7 @@
+use super::WalletDBSchema;
+use crate::WalletError;
 use log::info;
 use sak_kv_db::{KeyValueDatabase, Options};
-
-use crate::app::WalletError;
-
-use super::WalletDBSchema;
 
 pub(crate) struct WalletDB {
     pub(crate) schema: WalletDBSchema,

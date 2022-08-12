@@ -1,6 +1,6 @@
 use super::WalletDBSchema;
-use crate::app::WalletError;
 use crate::db::cfs;
+use crate::WalletError;
 use sak_crypto::{Scalar, ScalarExt};
 use sak_kv_db::WriteBatch;
 use sak_proofs::{OldCoin, CM_TREE_DEPTH};
@@ -8,50 +8,50 @@ use sak_types::{CoinRecord, CoinStatus};
 use type_extension::U8Arr32;
 
 impl WalletDBSchema {
-    pub fn get_coin(&self, cm: &Scalar) -> Result<CoinRecord, WalletError> {
-        let addr_pk = match self.raw.get_a_pk(&cm)? {
-            Some(p) => p,
-            None => return Err(format!("Failed to get a_pk").into()),
-        };
+    // pub fn get_coin(&self, cm: &Scalar) -> Result<CoinRecord, WalletError> {
+    //     let addr_pk = match self.raw.get_a_pk(&cm)? {
+    //         Some(p) => p,
+    //         None => return Err(format!("Failed to get a_pk").into()),
+    //     };
 
-        let addr_sk = match self.raw.get_a_sk(&cm)? {
-            Some(s) => s,
-            None => return Err(format!("Failed to get a_sk").into()),
-        };
+    //     let addr_sk = match self.raw.get_a_sk(&cm)? {
+    //         Some(s) => s,
+    //         None => return Err(format!("Failed to get a_sk").into()),
+    //     };
 
-        let rho = match self.raw.get_rho(&cm)? {
-            Some(r) => r,
-            None => return Err(format!("Failed to get rho").into()),
-        };
+    //     let rho = match self.raw.get_rho(&cm)? {
+    //         Some(r) => r,
+    //         None => return Err(format!("Failed to get rho").into()),
+    //     };
 
-        let r = match self.raw.get_r(&cm)? {
-            Some(r) => r,
-            None => return Err(format!("Failed to get r").into()),
-        };
+    //     let r = match self.raw.get_r(&cm)? {
+    //         Some(r) => r,
+    //         None => return Err(format!("Failed to get r").into()),
+    //     };
 
-        let s = match self.raw.get_s(&cm)? {
-            Some(s) => s,
-            None => return Err(format!("Failed to get s").into()),
-        };
+    //     let s = match self.raw.get_s(&cm)? {
+    //         Some(s) => s,
+    //         None => return Err(format!("Failed to get s").into()),
+    //     };
 
-        let v = match self.raw.get_v(&cm)? {
-            Some(v) => v,
-            None => return Err(format!("Failed to get v").into()),
-        };
+    //     let v = match self.raw.get_v(&cm)? {
+    //         Some(v) => v,
+    //         None => return Err(format!("Failed to get v").into()),
+    //     };
 
-        let old_coin = OldCoin {
-            addr_pk: Some(addr_pk),
-            addr_sk: Some(addr_sk),
-            rho: Some(rho),
-            r: Some(r),
-            s: Some(s),
-            v: Some(v),
-            cm: Some(*cm),
-            auth_path: [None; CM_TREE_DEPTH as usize],
-        };
+    //     let old_coin = OldCoin {
+    //         addr_pk: Some(addr_pk),
+    //         addr_sk: Some(addr_sk),
+    //         rho: Some(rho),
+    //         r: Some(r),
+    //         s: Some(s),
+    //         v: Some(v),
+    //         cm: Some(*cm),
+    //         auth_path: [None; CM_TREE_DEPTH as usize],
+    //     };
 
-        Ok(old_coin)
-    }
+    //     Ok(old_coin)
+    // }
 
     // pub fn get_cm(
     //     &self,
