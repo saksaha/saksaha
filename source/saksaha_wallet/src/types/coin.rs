@@ -1,6 +1,5 @@
-use crate::WalletError;
-
 use super::Status;
+use crate::WalletError;
 use sak_crypto::Hasher;
 use sak_crypto::Scalar;
 use sak_crypto::ScalarExt;
