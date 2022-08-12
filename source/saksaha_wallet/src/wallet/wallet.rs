@@ -94,20 +94,31 @@ async fn init_for_demo(wallet: &Wallet) -> Result<(), WalletError> {
 
         debug!("[demo coin: user_1] {:#?}", coin);
 
+        let cm = &coin.cm.ok_or("cm should exist")?;
+        let rho = &coin.rho.ok_or("rho should exist")?;
+        let r = &coin.r.ok_or("r should exist")?;
+        let s = &coin.s.ok_or("s should exist")?;
+        let v = &coin.v.ok_or("v should exist")?;
+        let addr_pk = &coin.addr_pk.ok_or("addr_pk should exist")?;
+        let addr_sk = &coin.addr_sk.ok_or("addr_sk should exist")?;
+        let user_id = &coin.user_id.ok_or("user_id should exist")?;
+        let status = &coin.status.ok_or("status should exist")?;
+
         wallet
             .apis
             .db
             .schema
             .put_coin(
-                &coin.cm.unwrap().to_string(),
-                &coin.rho.unwrap().to_string(),
-                &coin.r.unwrap().to_string(),
-                &coin.s.unwrap().to_string(),
-                &coin.v.unwrap().to_string(),
-                &coin.addr_pk.unwrap().to_string(),
-                &coin.addr_sk.unwrap().to_string(),
-                &coin.user_id.unwrap().to_string(),
-                &coin.status.unwrap(),
+                cm, rho, r, s, v, addr_pk, addr_sk, user_id, status,
+                // &coin.cm.unwrap().to_string(),
+                // &coin.rho.unwrap().to_string(),
+                // &coin.r.unwrap().to_string(),
+                // &coin.s.unwrap().to_string(),
+                // &coin.v.unwrap().to_string(),
+                // &coin.addr_pk.unwrap().to_string(),
+                // &coin.addr_sk.unwrap().to_string(),
+                // &coin.user_id.unwrap().to_string(),
+                // &coin.status.unwrap(),
                 &0,
             )
             .await?;

@@ -2,12 +2,13 @@ use super::WalletDBSchema;
 use crate::app::WalletError;
 use crate::db::cfs;
 use crate::types::Status;
-use sak_crypto::Scalar;
+use sak_crypto::{Scalar, ScalarExt};
 use sak_kv_db::WriteBatch;
 use sak_proofs::{OldCoin, CM_TREE_DEPTH};
+use sak_types::U8Arr32;
 
 impl WalletDBSchema {
-    pub fn get_coin(&self, cm: &String) -> Result<OldCoin, WalletError> {
+    pub fn get_coin(&self, cm: &U8Arr32) -> Result<OldCoin, WalletError> {
         let addr_pk = match self.get_a_pk(&cm)? {
             Some(p) => p,
             None => return Err(format!("Failed to get a_pk").into()),
@@ -38,13 +39,26 @@ impl WalletDBSchema {
             None => return Err(format!("Failed to get v").into()),
         };
 
-        let addr_pk = Scalar::from(addr_pk.parse::<u64>()?);
-        let addr_sk = Scalar::from(addr_sk.parse::<u64>()?);
-        let rho = Scalar::from(rho.parse::<u64>()?);
-        let r = Scalar::from(r.parse::<u64>()?);
-        let s = Scalar::from(s.parse::<u64>()?);
-        let v = Scalar::from(v.parse::<u64>()?);
-        let cm = Scalar::from(cm.parse::<u64>()?);
+        // let addr_pk = Scalar::from(addr_pk.parse::<u64>()?);
+        let addr_pk = ScalarExt::parse_arr(&addr_pk)?;
+
+        // let addr_sk = Scalar::from(addr_sk.parse::<u64>()?);
+        let addr_sk = ScalarExt::parse_arr(&addr_sk)?;
+
+        // let rho = Scalar::from(rho.parse::<u64>()?);
+        let rho = ScalarExt::parse_arr(&rho)?;
+
+        // let r = Scalar::from(r.parse::<u64>()?);
+        let r = ScalarExt::parse_arr(&r)?;
+
+        // let s = Scalar::from(s.parse::<u64>()?);
+        let s = ScalarExt::parse_arr(&s)?;
+
+        // let v = Scalar::from(v.parse::<u64>()?);
+        let v = ScalarExt::parse_arr(&v)?;
+
+        // let cm = Scalar::from(cm.parse::<u64>()?);
+        let cm = ScalarExt::parse_arr(&cm)?;
 
         let old_coin = OldCoin {
             addr_pk: Some(addr_pk),
@@ -62,7 +76,7 @@ impl WalletDBSchema {
 
     pub async fn get_status(
         &self,
-        cm: &String,
+        cm: &U8Arr32,
     ) -> Result<Option<Status>, WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::STATUS)?;
         match self.db.get_cf(&cf, cm)? {
@@ -80,7 +94,7 @@ impl WalletDBSchema {
 
     pub fn get_user_id(
         &self,
-        cm: &String,
+        cm: &U8Arr32,
     ) -> Result<Option<String>, WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::USER_ID)?;
         match self.db.get_cf(&cf, cm)? {
@@ -95,7 +109,10 @@ impl WalletDBSchema {
         };
     }
 
-    pub fn get_rho(&self, cm: &String) -> Result<Option<String>, WalletError> {
+    pub fn get_rho(
+        &self,
+        cm: &U8Arr32,
+    ) -> Result<Option<U8Arr32>, WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::RHO)?;
         match self.db.get_cf(&cf, cm)? {
             Some(v) => {
@@ -109,7 +126,7 @@ impl WalletDBSchema {
         };
     }
 
-    pub fn get_r(&self, cm: &String) -> Result<Option<String>, WalletError> {
+    pub fn get_r(&self, cm: &U8Arr32) -> Result<Option<U8Arr32>, WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::R)?;
         match self.db.get_cf(&cf, cm)? {
             Some(v) => {
@@ -123,7 +140,7 @@ impl WalletDBSchema {
         };
     }
 
-    pub fn get_s(&self, cm: &String) -> Result<Option<String>, WalletError> {
+    pub fn get_s(&self, cm: &U8Arr32) -> Result<Option<U8Arr32>, WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::S)?;
         match self.db.get_cf(&cf, cm)? {
             Some(v) => {
@@ -137,7 +154,7 @@ impl WalletDBSchema {
         };
     }
 
-    pub fn get_v(&self, cm: &String) -> Result<Option<String>, WalletError> {
+    pub fn get_v(&self, cm: &U8Arr32) -> Result<Option<U8Arr32>, WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::V)?;
         match self.db.get_cf(&cf, cm)? {
             Some(v) => {
@@ -151,7 +168,10 @@ impl WalletDBSchema {
         };
     }
 
-    pub fn get_a_pk(&self, cm: &String) -> Result<Option<String>, WalletError> {
+    pub fn get_a_pk(
+        &self,
+        cm: &U8Arr32,
+    ) -> Result<Option<U8Arr32>, WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::A_PK)?;
         match self.db.get_cf(&cf, cm)? {
             Some(v) => {
@@ -165,7 +185,10 @@ impl WalletDBSchema {
         };
     }
 
-    pub fn get_a_sk(&self, cm: &String) -> Result<Option<String>, WalletError> {
+    pub fn get_a_sk(
+        &self,
+        cm: &U8Arr32,
+    ) -> Result<Option<U8Arr32>, WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::A_SK)?;
         match self.db.get_cf(&cf, cm)? {
             Some(v) => {
@@ -179,39 +202,25 @@ impl WalletDBSchema {
         };
     }
 
-    pub fn get_cm_idx(
-        &self,
-        cm: &String,
-    ) -> Result<Option<String>, WalletError> {
-        let cf = self.make_cf_handle(&self.db, cfs::CM_IDX)?;
-        match self.db.get_cf(&cf, cm)? {
-            Some(v) => {
-                let str = String::from_utf8(v)?;
+    // pub fn get_cm(
+    //     &self,
+    //     cm_idx: &u128,
+    // ) -> Result<Option<U8Arr32>, WalletError> {
+    //     let cf = self.make_cf_handle(&self.db, cfs::CM)?;
 
-                return Ok(Some(str));
-            }
-            None => {
-                return Ok(None);
-            }
-        };
-    }
+    //     // let cm_idx = cm_idx.to_be_bytes();
 
-    pub fn get_cm(&self, cm_idx: &u128) -> Result<Option<String>, WalletError> {
-        let cf = self.make_cf_handle(&self.db, cfs::CM)?;
+    //     match self.db.get_cf(&cf, cm_idx)? {
+    //         Some(v) => {
+    //             let str = String::from_utf8(v)?;
 
-        let cm_idx = cm_idx.to_be_bytes();
-
-        match self.db.get_cf(&cf, cm_idx)? {
-            Some(v) => {
-                let str = String::from_utf8(v)?;
-
-                return Ok(Some(str));
-            }
-            None => {
-                return Ok(None);
-            }
-        };
-    }
+    //             return Ok(Some(str));
+    //         }
+    //         None => {
+    //             return Ok(None);
+    //         }
+    //     };
+    // }
 
     pub(crate) fn get_latest_cm_idx(
         &self,
@@ -234,13 +243,13 @@ impl WalletDBSchema {
     // setter
     pub(crate) async fn put_coin(
         &self,
-        cm: &String,
-        rho: &String,
-        r: &String,
-        s: &String,
-        v: &String,
-        a_pk: &String,
-        a_sk: &String,
+        cm: &U8Arr32,
+        rho: &U8Arr32,
+        r: &U8Arr32,
+        s: &U8Arr32,
+        v: &U8Arr32,
+        a_pk: &U8Arr32,
+        a_sk: &U8Arr32,
         user_id: &String,
         status: &Status,
         cm_idx: &u128,
@@ -255,9 +264,9 @@ impl WalletDBSchema {
         self.batch_put_a_sk(&mut batch, cm, a_sk)?;
         self.batch_put_user_id(&mut batch, cm, user_id)?;
         self.batch_put_status(&mut batch, cm, status)?;
-        self.batch_put_cm_idx(&mut batch, cm, cm_idx)?;
+        // self.batch_put_cm_idx(&mut batch, cm, cm_idx)?;
 
-        self.batch_put_cm_by_cm_idx(&mut batch, cm_idx, cm)?;
+        // self.batch_put_cm_by_cm_idx(&mut batch, cm_idx, cm)?;
 
         self.db.write(batch)?;
 
@@ -266,7 +275,7 @@ impl WalletDBSchema {
 
     pub(crate) async fn put_status(
         &self,
-        cm: &String,
+        cm: &U8Arr32,
         status: &Status,
     ) -> Result<(), WalletError> {
         let mut batch = WriteBatch::default();
@@ -281,8 +290,8 @@ impl WalletDBSchema {
     pub(crate) fn batch_put_rho(
         &self,
         batch: &mut WriteBatch,
-        cm: &String,
-        rho: &String,
+        cm: &U8Arr32,
+        rho: &U8Arr32,
     ) -> Result<(), WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::RHO)?;
 
@@ -294,8 +303,8 @@ impl WalletDBSchema {
     pub(crate) fn batch_put_r(
         &self,
         batch: &mut WriteBatch,
-        cm: &String,
-        r: &String,
+        cm: &U8Arr32,
+        r: &U8Arr32,
     ) -> Result<(), WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::R)?;
 
@@ -307,8 +316,8 @@ impl WalletDBSchema {
     pub(crate) fn batch_put_s(
         &self,
         batch: &mut WriteBatch,
-        cm: &String,
-        s: &String,
+        cm: &U8Arr32,
+        s: &U8Arr32,
     ) -> Result<(), WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::S)?;
 
@@ -320,8 +329,8 @@ impl WalletDBSchema {
     pub(crate) fn batch_put_v(
         &self,
         batch: &mut WriteBatch,
-        cm: &String,
-        v: &String,
+        cm: &U8Arr32,
+        v: &U8Arr32,
     ) -> Result<(), WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::V)?;
 
@@ -333,8 +342,8 @@ impl WalletDBSchema {
     pub(crate) fn batch_put_a_pk(
         &self,
         batch: &mut WriteBatch,
-        cm: &String,
-        a_pk: &String,
+        cm: &U8Arr32,
+        a_pk: &U8Arr32,
     ) -> Result<(), WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::A_PK)?;
 
@@ -346,8 +355,8 @@ impl WalletDBSchema {
     pub(crate) fn batch_put_a_sk(
         &self,
         batch: &mut WriteBatch,
-        cm: &String,
-        a_sk: &String,
+        cm: &U8Arr32,
+        a_sk: &U8Arr32,
     ) -> Result<(), WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::A_SK)?;
 
@@ -359,7 +368,7 @@ impl WalletDBSchema {
     pub(crate) fn batch_put_user_id(
         &self,
         batch: &mut WriteBatch,
-        cm: &String,
+        cm: &U8Arr32,
         user_id: &String,
     ) -> Result<(), WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::USER_ID)?;
@@ -372,42 +381,12 @@ impl WalletDBSchema {
     pub(crate) fn batch_put_status(
         &self,
         batch: &mut WriteBatch,
-        cm: &String,
+        cm: &U8Arr32,
         status: &Status,
     ) -> Result<(), WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::STATUS)?;
 
         batch.put_cf(&cf, cm, status);
-
-        Ok(())
-    }
-
-    pub(crate) fn batch_put_cm_idx(
-        &self,
-        batch: &mut WriteBatch,
-        cm: &String,
-        cm_idx: &u128,
-    ) -> Result<(), WalletError> {
-        let cf = self.make_cf_handle(&self.db, cfs::CM_IDX)?;
-
-        let cm_idx = cm_idx.to_be_bytes();
-
-        batch.put_cf(&cf, cm, cm_idx);
-
-        Ok(())
-    }
-
-    pub(crate) fn batch_put_cm_by_cm_idx(
-        &self,
-        batch: &mut WriteBatch,
-        cm_idx: &u128,
-        cm: &String,
-    ) -> Result<(), WalletError> {
-        let cf = self.make_cf_handle(&self.db, cfs::CM)?;
-
-        let cm_idx = cm_idx.to_be_bytes();
-
-        batch.put_cf(&cf, cm_idx, cm);
 
         Ok(())
     }

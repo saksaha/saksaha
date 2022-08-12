@@ -67,6 +67,7 @@ impl Coin {
             status: Some(Status::Unused),
         }
     }
+
     pub(crate) fn extract(&self) -> NewCoin {
         let addr_pk = self.addr_pk;
         let rho = self.rho;
