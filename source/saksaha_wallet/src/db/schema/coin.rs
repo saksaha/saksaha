@@ -76,12 +76,14 @@ impl WalletDBSchema {
 
     pub async fn get_status(
         &self,
-        cm: &U8Arr32,
+        cm: &Scalar,
     ) -> Result<Option<Status>, WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::STATUS)?;
+
+        let cm = cm.to_bytes();
+
         match self.db.get_cf(&cf, cm)? {
             Some(v) => {
-                // let str = String::from_utf8(v)?;
                 let status: Status = Status::from_u8(v)?;
 
                 return Ok(Some(status));
@@ -94,9 +96,12 @@ impl WalletDBSchema {
 
     pub fn get_user_id(
         &self,
-        cm: &U8Arr32,
+        cm: &Scalar,
     ) -> Result<Option<String>, WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::USER_ID)?;
+
+        let cm = cm.to_bytes();
+
         match self.db.get_cf(&cf, cm)? {
             Some(v) => {
                 let str = String::from_utf8(v)?;
@@ -109,16 +114,17 @@ impl WalletDBSchema {
         };
     }
 
-    pub fn get_rho(
-        &self,
-        cm: &U8Arr32,
-    ) -> Result<Option<U8Arr32>, WalletError> {
+    pub fn get_rho(&self, cm: &Scalar) -> Result<Option<Scalar>, WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::RHO)?;
-        match self.db.get_cf(&cf, cm)? {
-            Some(v) => {
-                let str = String::from_utf8(v)?;
 
-                return Ok(Some(str));
+        let cm = cm.to_bytes();
+
+        match self.db.get_cf(&cf, cm)? {
+            Some(rho) => {
+                let val = ScalarExt::parse_vec(rho)?;
+                // let str = String::from_utf8(v)?;
+
+                return Ok(Some(val));
             }
             None => {
                 return Ok(None);
@@ -126,13 +132,17 @@ impl WalletDBSchema {
         };
     }
 
-    pub fn get_r(&self, cm: &U8Arr32) -> Result<Option<U8Arr32>, WalletError> {
+    pub fn get_r(&self, cm: &Scalar) -> Result<Option<Scalar>, WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::R)?;
-        match self.db.get_cf(&cf, cm)? {
-            Some(v) => {
-                let str = String::from_utf8(v)?;
 
-                return Ok(Some(str));
+        let cm = cm.to_bytes();
+
+        match self.db.get_cf(&cf, cm)? {
+            Some(r) => {
+                // let str = String::from_utf8(v)?;
+                let val = ScalarExt::parse_vec(r)?;
+
+                return Ok(Some(val));
             }
             None => {
                 return Ok(None);
@@ -140,13 +150,16 @@ impl WalletDBSchema {
         };
     }
 
-    pub fn get_s(&self, cm: &U8Arr32) -> Result<Option<U8Arr32>, WalletError> {
+    pub fn get_s(&self, cm: &Scalar) -> Result<Option<Scalar>, WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::S)?;
-        match self.db.get_cf(&cf, cm)? {
-            Some(v) => {
-                let str = String::from_utf8(v)?;
 
-                return Ok(Some(str));
+        let cm = cm.to_bytes();
+
+        match self.db.get_cf(&cf, cm)? {
+            Some(s) => {
+                let val = ScalarExt::parse_vec(s)?;
+
+                return Ok(Some(val));
             }
             None => {
                 return Ok(None);
@@ -154,13 +167,16 @@ impl WalletDBSchema {
         };
     }
 
-    pub fn get_v(&self, cm: &U8Arr32) -> Result<Option<U8Arr32>, WalletError> {
+    pub fn get_v(&self, cm: &Scalar) -> Result<Option<Scalar>, WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::V)?;
+
+        let cm = cm.to_bytes();
+
         match self.db.get_cf(&cf, cm)? {
             Some(v) => {
-                let str = String::from_utf8(v)?;
+                let val = ScalarExt::parse_vec(v)?;
 
-                return Ok(Some(str));
+                return Ok(Some(val));
             }
             None => {
                 return Ok(None);
@@ -168,16 +184,16 @@ impl WalletDBSchema {
         };
     }
 
-    pub fn get_a_pk(
-        &self,
-        cm: &U8Arr32,
-    ) -> Result<Option<U8Arr32>, WalletError> {
+    pub fn get_a_pk(&self, cm: &Scalar) -> Result<Option<Scalar>, WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::A_PK)?;
+
+        let cm = cm.to_bytes();
+
         match self.db.get_cf(&cf, cm)? {
             Some(v) => {
-                let str = String::from_utf8(v)?;
+                let val = ScalarExt::parse_vec(v)?;
 
-                return Ok(Some(str));
+                return Ok(Some(val));
             }
             None => {
                 return Ok(None);
@@ -185,16 +201,16 @@ impl WalletDBSchema {
         };
     }
 
-    pub fn get_a_sk(
-        &self,
-        cm: &U8Arr32,
-    ) -> Result<Option<U8Arr32>, WalletError> {
+    pub fn get_a_sk(&self, cm: &Scalar) -> Result<Option<Scalar>, WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::A_SK)?;
+
+        let cm = cm.to_bytes();
+
         match self.db.get_cf(&cf, cm)? {
             Some(v) => {
-                let str = String::from_utf8(v)?;
+                let val = ScalarExt::parse_vec(v)?;
 
-                return Ok(Some(str));
+                return Ok(Some(val));
             }
             None => {
                 return Ok(None);
