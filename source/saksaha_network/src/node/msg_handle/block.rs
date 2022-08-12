@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::{machine::Machine, node::SaksahaNodeError, SaksahaError};
 use futures::{stream::SplitSink, SinkExt};
 use log::{debug, info, warn};
@@ -7,6 +5,7 @@ use sak_p2p_transport::{
     BlockAckMsg, BlockHashSynMsg, BlockSynMsg, Msg, SendReceipt, TxHashSynMsg,
     TxSynMsg, UpgradedConn, UpgradedP2PCodec,
 };
+use std::sync::Arc;
 use tokio::{net::TcpStream, sync::RwLockWriteGuard};
 
 pub(in crate::node) async fn send_block_syn() -> Result<(), SaksahaNodeError> {

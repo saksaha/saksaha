@@ -44,10 +44,10 @@ impl LocalNode {
     pub(crate) async fn run(self) {
         let machine = self.machine.clone();
         let mine_interval = self.mine_interval.clone();
-        let node_task_queue = Arc::new(TaskQueue::new(100));
+        // let node_task_queue = Arc::new(TaskQueue::new(100));
         let node_task_min_interval = self.node_task_min_interval.clone();
-        let peer_register_min_interval =
-            Duration::from_millis(PEER_REGISTER_MIN_INTERVAL);
+        // let peer_register_min_interval =
+        //     Duration::from_millis(PEER_REGISTER_MIN_INTERVAL);
 
         {
             // Miner routine
@@ -77,32 +77,32 @@ impl LocalNode {
         //     });
         // }
 
-        {
-            // Ledger event routine
-            let ledger_event_rx = {
-                let rx = self
-                    .machine
-                    .blockchain
-                    .dist_ledger
-                    .ledger_event_tx
-                    .clone()
-                    .read()
-                    .await
-                    .subscribe();
+        // {
+        //     // Ledger event routine
+        //     let ledger_event_rx = {
+        //         let rx = self
+        //             .machine
+        //             .blockchain
+        //             .dist_ledger
+        //             .ledger_event_tx
+        //             .clone()
+        //             .read()
+        //             .await
+        //             .subscribe();
 
-                rx
-            };
+        //         rx
+        //     };
 
-            let mut ledger_event_routine = LedgerEventRoutine {
-                ledger_event_rx,
-                machine: self.machine.clone(),
-                node_task_queue: node_task_queue.clone(),
-            };
+        //     let mut ledger_event_routine = LedgerEventRoutine {
+        //         ledger_event_rx,
+        //         machine: self.machine.clone(),
+        //         node_task_queue: node_task_queue.clone(),
+        //     };
 
-            tokio::spawn(async move {
-                ledger_event_routine.run().await;
-            });
-        }
+        //     tokio::spawn(async move {
+        //         ledger_event_routine.run().await;
+        //     });
+        // }
 
         {
             let peer_queue_iter = self.peer_table.peer_queue_iter();
