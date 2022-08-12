@@ -8,12 +8,8 @@ pub struct GetChListParams {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct OpenChParams {
-    // pub input_serialized: Vec<u8>,
     pub dst_pk: String,
     pub open_ch: OpenCh,
-    // pub ch_id: String,
-    // pub eph_pk: String,
-    // pub sig: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

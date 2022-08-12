@@ -150,16 +150,16 @@ async fn test_wallet_db_store_randomly_generated_coins() {
     println!("latest_cm_idx: {:?}", latest_cm_idx);
 
     for idx in 0..5 {
-        let cm = db.schema.get_cm(&idx).await.unwrap().unwrap();
-        let user_id = db.schema.get_user_id(&cm).await.unwrap().unwrap();
+        let cm = db.schema.get_cm(&idx).unwrap().unwrap();
+        let user_id = db.schema.get_user_id(&cm).unwrap().unwrap();
 
         println!("[+] user_id: {:?}, USER_1: {:?}", user_id, USER_1);
         assert_eq!(user_id, USER_1);
     }
 
     for idx in 5..10 {
-        let cm = db.schema.get_cm(&idx).await.unwrap().unwrap();
-        let user_id = db.schema.get_user_id(&cm).await.unwrap().unwrap();
+        let cm = db.schema.get_cm(&idx).unwrap().unwrap();
+        let user_id = db.schema.get_user_id(&cm).unwrap().unwrap();
 
         println!("[+] user_id: {:?}, USER_2: {:?}", user_id, USER_2);
         assert_eq!(user_id, USER_2);
@@ -200,13 +200,13 @@ async fn test_wallet_db_store_coins() {
     }
 
     for idx in 0..5 {
-        let cm = db.schema.get_cm(&idx).await.unwrap().unwrap();
-        let rho = db.schema.get_rho(&cm).await.unwrap().unwrap();
-        let r = db.schema.get_r(&cm).await.unwrap().unwrap();
-        let s = db.schema.get_s(&cm).await.unwrap().unwrap();
-        let v = db.schema.get_v(&cm).await.unwrap().unwrap();
-        let addr_sk = db.schema.get_a_sk(&cm).await.unwrap().unwrap();
-        let user_id = db.schema.get_user_id(&cm).await.unwrap().unwrap();
+        let cm = db.schema.get_cm(&idx).unwrap().unwrap();
+        let rho = db.schema.get_rho(&cm).unwrap().unwrap();
+        let r = db.schema.get_r(&cm).unwrap().unwrap();
+        let s = db.schema.get_s(&cm).unwrap().unwrap();
+        let v = db.schema.get_v(&cm).unwrap().unwrap();
+        let addr_sk = db.schema.get_a_sk(&cm).unwrap().unwrap();
+        let user_id = db.schema.get_user_id(&cm).unwrap().unwrap();
         let status = db.schema.get_status(&cm).await.unwrap().unwrap();
 
         assert_eq!(user_id, USER_1);

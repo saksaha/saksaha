@@ -34,7 +34,7 @@ macro_rules! return_err_2 {
         match $obj {
             Ok(r) => r,
             Err(err) => {
-                let mut err = sak_contract_std::make_error_vec(err.into());
+                let mut err = sak_contract_std::make_error_vec(err.into(), "");
 
                 let err_ptr = err.as_mut_ptr();
                 let err_len = err.len();
@@ -49,11 +49,12 @@ macro_rules! return_err_2 {
 
 #[macro_export]
 macro_rules! return_err_4 {
-    ($obj: expr) => {
+    ($obj: expr, $msg: expr) => {
         match $obj {
             Ok(r) => r,
             Err(err) => {
-                let mut err = sak_contract_std::make_error_vec(err.into());
+                let mut err =
+                    sak_contract_std::make_error_vec(err.into(), $msg);
 
                 let err_ptr = err.as_mut_ptr();
                 let err_len = err.len();
@@ -153,7 +154,7 @@ macro_rules! define_execute {
             request_ptr: *mut u8,
             request_len: usize,
         ) -> (*mut u8, i32, *mut u8, i32) {
-            let mut storage = Vec::from_raw_parts(
+            let mut storage: sak_contract_std::Storage = Vec::from_raw_parts(
                 storage_ptr, //
                 storage_len,
                 storage_len,
@@ -167,7 +168,11 @@ macro_rules! define_execute {
 
             let request = serde_json::from_slice(&request);
 
-            let request: Request = sak_contract_std::return_err_4!(request);
+            let request: sak_contract_std::Request =
+                sak_contract_std::return_err_4!(
+                    request,
+                    "serde request parsing fail"
+                );
 
             let result: Result<
                 sak_contract_std::InvokeResult,
@@ -176,7 +181,10 @@ macro_rules! define_execute {
 
             {
                 let mut result: sak_contract_std::InvokeResult =
-                    sak_contract_std::return_err_4!(result);
+                    sak_contract_std::return_err_4!(
+                        result,
+                        "serde result parsing fail"
+                    );
 
                 let result_ptr = result.as_mut_ptr();
                 let result_len = result.len();

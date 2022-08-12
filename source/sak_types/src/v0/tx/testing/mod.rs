@@ -1,13 +1,16 @@
 use super::TxCandidate;
-use crate::{MintTxCandidate, PourTxCandidate, Tx, U8Array, WASM_MAGIC_NUMBER};
-use sak_crypto::{Hasher, ScalarExt};
+use crate::{
+    MintTxCandidate, PourTxCandidate, Tx, U8Arr32, U8Array, WASM_MAGIC_NUMBER,
+};
+use sak_crypto::Hasher;
+use sak_crypto::ScalarExt;
 
 pub(crate) const VALIDATOR_CTR_ADDR: &'static str = "test_validator_1";
 
 pub(crate) const VALIDATOR: &[u8] =
     include_bytes!("../../../../../prebuild/sak_validator.postprocess.wasm");
 
-fn get_addr_sk_1() -> [u8; 32] {
+fn get_addr_sk_1() -> U8Arr32 {
     [
         213, 142, 186, 101, 114, 0, 81, 8, 38, 83, 254, 23, 201, 180, 239, 177,
         240, 61, 215, 11, 16, 98, 140, 106, 139, 184, 41, 201, 89, 70, 192,
@@ -15,7 +18,7 @@ fn get_addr_sk_1() -> [u8; 32] {
     ]
 }
 
-fn get_s_1() -> [u8; 32] {
+fn get_s_1() -> U8Arr32 {
     U8Array::new_empty_32()
 }
 
@@ -39,7 +42,7 @@ fn get_r_3() -> [u8; 32] {
     U8Array::new_empty_32()
 }
 
-fn get_rho_1() -> [u8; 32] {
+fn get_rho_1() -> U8Arr32 {
     U8Array::new_empty_32()
 }
 
@@ -82,10 +85,10 @@ impl Tx {
 
 impl TxCandidate {
     pub fn new_dummy_mint_custom(
-        cm: [u8; 32],
-        v: [u8; 32],
-        k: [u8; 32],
-        s: [u8; 32],
+        cm: U8Arr32,
+        v: U8Arr32,
+        k: U8Arr32,
+        s: U8Arr32,
     ) -> TxCandidate {
         let tx_candidate = MintTxCandidate::new_dummy_custom(cm, v, k, s);
 
@@ -360,7 +363,8 @@ impl PourTxCandidate {
         let sn_2 = {
             let addr_sk_1 = get_addr_sk_1();
 
-            let addr_pk_1 = hasher.mimc_single(&addr_sk_1).unwrap().to_bytes();
+            let addr_pk_1: U8Arr32 =
+                hasher.mimc_single(&addr_sk_1).unwrap().to_bytes();
 
             let rho_2 = get_rho_1();
 
