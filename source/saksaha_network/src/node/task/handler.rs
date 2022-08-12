@@ -14,7 +14,7 @@ use std::sync::Arc;
 use tokio::{net::TcpStream, sync::RwLock};
 
 pub(in crate::node) struct NodeTaskHandler {
-    pub peer_table: Arc<PeerTable>,
+    // pub peer_table: Arc<PeerTable>,
 }
 
 #[async_trait]
@@ -30,9 +30,9 @@ impl TaskHandler<NodeTask> for NodeTaskHandler {
                 msg_handle::send_tx_syn(
                     tx_candidates,
                     her_public_key,
-                    &self.peer_table,
+                    // &self.peer_table,
                 )
-                .await?
+                .await;
                 // handle_send_tx_syn(
                 //     tx_candidates,
                 //     her_public_key,
@@ -43,16 +43,16 @@ impl TaskHandler<NodeTask> for NodeTaskHandler {
             NodeTask::SendTxHashSyn {
                 tx_hashes,
                 her_public_key,
-            } => Ok(()),
+            } => {}
             NodeTask::SendBlockHashSyn {
                 new_blocks,
                 her_public_key,
-            } => Ok(()),
+            } => {}
         };
 
-        if let Err(err) = res {
-            warn!("Task handle failed, err: {}", err);
-        }
+        // if let Err(err) = res {
+        //     warn!("Task handle failed, err: {}", err);
+        // }
     }
 }
 

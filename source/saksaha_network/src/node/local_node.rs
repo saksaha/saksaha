@@ -121,18 +121,14 @@ impl LocalNode {
                 let peer_node = PeerNode {
                     peer: peer.clone(),
                     machine,
-                    node_task_queue: node_task_queue.clone(),
+                    node_task_min_interval: self.node_task_min_interval.clone(),
                 };
 
                 tokio::spawn(async move {
                     peer_node.run().await;
                 });
 
-                sak_utils_time::wait_until_min_interval(
-                    time_since,
-                    peer_register_min_interval,
-                )
-                .await;
+                tokio::time::sleep(Duration::from_secs(1)).await;
             }
         }
     }
