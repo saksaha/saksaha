@@ -51,38 +51,57 @@ fn gen_coin_with_params(
     addr_sk: u64,
     v: u64,
     user_id: String,
-) -> Coin {
+) -> Result<Coin, WalletError> {
     let hasher = Hasher::new();
 
-    let addr_sk = U8Array::from_int(addr_sk).to_owned();
-    let addr_pk = hasher.mimc_single(&addr_sk).unwrap();
-    let rho = U8Array::from_int(rho);
-    let r = U8Array::from_int(r);
-    let s = U8Array::from_int(s);
-    let v = U8Array::from_int(v);
-    let k = hasher.comm2_scalar(
-        ScalarExt::parse_arr(&r).unwrap(),
-        addr_pk,
-        ScalarExt::parse_arr(&rho).unwrap(),
-    );
-    let cm = hasher.comm2_scalar(
-        ScalarExt::parse_arr(&s).unwrap(),
-        ScalarExt::parse_arr(&v).unwrap(),
-        k,
-    );
+    let (addr_sk, addr_pk) = {
+        let addr_sk = U8Array::from_int(addr_sk);
+        let addr_pk = hasher.mimc_single(&addr_sk)?;
+
+        let addr_sk_scalar = ScalarExt::parse_arr(&addr_sk)?;
+
+        (addr_sk_scalar, addr_pk)
+    };
+
+    let rho = {
+        let arr = U8Array::from_int(rho);
+        ScalarExt::parse_arr(&arr)?
+    };
+
+    let r = {
+        let arr = U8Array::from_int(r);
+        ScalarExt::parse_arr(&arr)?
+    };
+
+    let s = {
+        let arr = U8Array::from_int(s);
+        ScalarExt::parse_arr(&arr)?
+    };
+
+    let v = {
+        let arr = U8Array::from_int(v);
+        ScalarExt::parse_arr(&arr)?
+    };
+
+    let k = hasher.comm2_scalar(r, addr_pk, rho);
+
+    let cm = hasher.comm2_scalar(s, v, k);
+
     let status = Status::Unused;
 
-    Coin {
-        addr_pk: Some(addr_pk),
-        addr_sk: Some(ScalarExt::parse_arr(&addr_sk).unwrap()),
-        rho: Some(ScalarExt::parse_arr(&rho).unwrap()),
-        r: Some(ScalarExt::parse_arr(&r).unwrap()),
-        s: Some(ScalarExt::parse_arr(&s).unwrap()),
-        v: Some(ScalarExt::parse_arr(&v).unwrap()),
-        cm: Some(cm),
-        user_id: Some(user_id),
-        status: Some(status),
-    }
+    let coin = Coin {
+        addr_pk,
+        addr_sk,
+        rho,
+        r,
+        s,
+        v,
+        cm,
+        user_id,
+        status,
+    };
+
+    Ok(coin)
 }
 
 async fn init_for_demo(wallet: &Wallet) -> Result<(), WalletError> {
@@ -90,26 +109,35 @@ async fn init_for_demo(wallet: &Wallet) -> Result<(), WalletError> {
         let user_id = "user_1".to_string();
         let value = 100;
 
-        let coin = gen_coin_with_params(0x11, 0x12, 0x13, 0x14, value, user_id);
+        let coin =
+            gen_coin_with_params(0x11, 0x12, 0x13, 0x14, value, user_id)?;
 
         debug!("[demo coin: user_1] {:#?}", coin);
 
-        let cm = &coin.cm.ok_or("cm should exist")?;
-        let rho = &coin.rho.ok_or("rho should exist")?;
-        let r = &coin.r.ok_or("r should exist")?;
-        let s = &coin.s.ok_or("s should exist")?;
-        let v = &coin.v.ok_or("v should exist")?;
-        let addr_pk = &coin.addr_pk.ok_or("addr_pk should exist")?;
-        let addr_sk = &coin.addr_sk.ok_or("addr_sk should exist")?;
-        let user_id = &coin.user_id.ok_or("user_id should exist")?;
-        let status = &coin.status.ok_or("status should exist")?;
+        // let cm = &coin.cm;
+        // let rho = &coin.rho.ok_or("rho should exist")?;
+        // let r = &coin.r.ok_or("r should exist")?;
+        // let s = &coin.s.ok_or("s should exist")?;
+        // let v = &coin.v.ok_or("v should exist")?;
+        // let addr_pk = &coin.addr_pk.ok_or("addr_pk should exist")?;
+        // let addr_sk = &coin.addr_sk.ok_or("addr_sk should exist")?;
+        // let user_id = &coin.user_id.ok_or("user_id should exist")?;
+        // let status = &coin.status.ok_or("status should exist")?;
 
         wallet
             .apis
             .db
             .schema
             .put_coin(
-                cm, rho, r, s, v, addr_pk, addr_sk, user_id, status,
+                &coin.cm,
+                &coin.rho,
+                &coin.r,
+                &coin.s,
+                &coin.v,
+                &coin.addr_pk,
+                &coin.addr_sk,
+                &coin.user_id,
+                &coin.status,
                 // &coin.cm.unwrap().to_string(),
                 // &coin.rho.unwrap().to_string(),
                 // &coin.r.unwrap().to_string(),

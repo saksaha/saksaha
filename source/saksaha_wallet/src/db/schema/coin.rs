@@ -240,19 +240,17 @@ impl WalletDBSchema {
         Ok(Some(cm_idx))
     }
 
-    // setter
     pub(crate) async fn put_coin(
         &self,
-        cm: &U8Arr32,
-        rho: &U8Arr32,
-        r: &U8Arr32,
-        s: &U8Arr32,
-        v: &U8Arr32,
-        a_pk: &U8Arr32,
-        a_sk: &U8Arr32,
+        cm: &Scalar,
+        rho: &Scalar,
+        r: &Scalar,
+        s: &Scalar,
+        v: &Scalar,
+        a_pk: &Scalar,
+        a_sk: &Scalar,
         user_id: &String,
         status: &Status,
-        cm_idx: &u128,
     ) -> Result<(), WalletError> {
         let mut batch = WriteBatch::default();
 
@@ -275,7 +273,7 @@ impl WalletDBSchema {
 
     pub(crate) async fn put_status(
         &self,
-        cm: &U8Arr32,
+        cm: &Scalar,
         status: &Status,
     ) -> Result<(), WalletError> {
         let mut batch = WriteBatch::default();
@@ -290,10 +288,13 @@ impl WalletDBSchema {
     pub(crate) fn batch_put_rho(
         &self,
         batch: &mut WriteBatch,
-        cm: &U8Arr32,
-        rho: &U8Arr32,
+        cm: &Scalar,
+        rho: &Scalar,
     ) -> Result<(), WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::RHO)?;
+
+        let cm = cm.to_bytes();
+        let rho = rho.to_bytes();
 
         batch.put_cf(&cf, cm, rho);
 
@@ -303,10 +304,13 @@ impl WalletDBSchema {
     pub(crate) fn batch_put_r(
         &self,
         batch: &mut WriteBatch,
-        cm: &U8Arr32,
-        r: &U8Arr32,
+        cm: &Scalar,
+        r: &Scalar,
     ) -> Result<(), WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::R)?;
+
+        let cm = cm.to_bytes();
+        let r = r.to_bytes();
 
         batch.put_cf(&cf, cm, r);
 
@@ -316,10 +320,13 @@ impl WalletDBSchema {
     pub(crate) fn batch_put_s(
         &self,
         batch: &mut WriteBatch,
-        cm: &U8Arr32,
-        s: &U8Arr32,
+        cm: &Scalar,
+        s: &Scalar,
     ) -> Result<(), WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::S)?;
+
+        let cm = cm.to_bytes();
+        let s = s.to_bytes();
 
         batch.put_cf(&cf, cm, s);
 
@@ -329,10 +336,13 @@ impl WalletDBSchema {
     pub(crate) fn batch_put_v(
         &self,
         batch: &mut WriteBatch,
-        cm: &U8Arr32,
-        v: &U8Arr32,
+        cm: &Scalar,
+        v: &Scalar,
     ) -> Result<(), WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::V)?;
+
+        let cm = cm.to_bytes();
+        let v = v.to_bytes();
 
         batch.put_cf(&cf, cm, v);
 
@@ -342,10 +352,13 @@ impl WalletDBSchema {
     pub(crate) fn batch_put_a_pk(
         &self,
         batch: &mut WriteBatch,
-        cm: &U8Arr32,
-        a_pk: &U8Arr32,
+        cm: &Scalar,
+        a_pk: &Scalar,
     ) -> Result<(), WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::A_PK)?;
+
+        let cm = cm.to_bytes();
+        let a_pk = a_pk.to_bytes();
 
         batch.put_cf(&cf, cm, a_pk);
 
@@ -355,10 +368,13 @@ impl WalletDBSchema {
     pub(crate) fn batch_put_a_sk(
         &self,
         batch: &mut WriteBatch,
-        cm: &U8Arr32,
-        a_sk: &U8Arr32,
+        cm: &Scalar,
+        a_sk: &Scalar,
     ) -> Result<(), WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::A_SK)?;
+
+        let cm = cm.to_bytes();
+        let a_sk = a_sk.to_bytes();
 
         batch.put_cf(&cf, cm, a_sk);
 
@@ -368,10 +384,12 @@ impl WalletDBSchema {
     pub(crate) fn batch_put_user_id(
         &self,
         batch: &mut WriteBatch,
-        cm: &U8Arr32,
+        cm: &Scalar,
         user_id: &String,
     ) -> Result<(), WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::USER_ID)?;
+
+        let cm = cm.to_bytes();
 
         batch.put_cf(&cf, cm, user_id);
 
@@ -381,10 +399,12 @@ impl WalletDBSchema {
     pub(crate) fn batch_put_status(
         &self,
         batch: &mut WriteBatch,
-        cm: &U8Arr32,
+        cm: &Scalar,
         status: &Status,
     ) -> Result<(), WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::STATUS)?;
+
+        let cm = cm.to_bytes();
 
         batch.put_cf(&cf, cm, status);
 
