@@ -1,5 +1,5 @@
 use super::apis::{self, WalletApis};
-use crate::{credential::Credential, db::WalletDB, WalletError};
+use crate::{credential::WalletCredential, db::WalletDB, WalletError};
 use futures::sink::Send;
 use log::debug;
 use sak_crypto::{Hasher, ScalarExt};
@@ -9,13 +9,13 @@ use type_extension::U8Array;
 
 pub(crate) struct Wallet {
     pub apis: WalletApis,
-    credential: Credential,
+    credential: WalletCredential,
 }
 
 impl Wallet {
     pub async fn init(
         app_prefix: String,
-        credential: Credential,
+        credential: WalletCredential,
     ) -> Result<Wallet, WalletError> {
         let wallet_db = WalletDB::init(&app_prefix).await?;
 

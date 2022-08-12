@@ -3,6 +3,8 @@ use crate::WalletError;
 use log::info;
 use sak_kv_db::{KeyValueDatabase, Options};
 
+pub(crate) const APP_NAME: &str = "saksaha_wallet";
+
 pub(crate) struct WalletDB {
     pub(crate) schema: WalletDBSchema,
 }
@@ -11,9 +13,9 @@ impl WalletDB {
     pub(crate) async fn init(
         app_prefix: &String,
     ) -> Result<WalletDB, WalletError> {
-        let db_name = sak_fs::DBName::Wallet;
         let wallet_db_path = {
-            let app_path = sak_fs::create_or_get_app_path(db_name, app_prefix)?;
+            let app_path =
+                sak_fs::create_or_get_app_path(APP_NAME, app_prefix)?;
 
             let db_path = { app_path.join("db") };
 
