@@ -4,6 +4,7 @@ use crate::{
 use log::{error, info};
 use std::io::BufRead;
 use std::sync::Arc;
+use std::time::Duration;
 
 const APP_PREFIX: &'static str = "default";
 
@@ -15,6 +16,21 @@ impl Routine {
         app_args: AppArgs,
     ) -> Result<(), WalletError> {
         info!("Wallet main routine starts, app_args: {:?}", app_args);
+
+        use std::io::BufRead;
+        let stdin = std::io::stdin();
+
+        loop {
+            println!("11l");
+
+            for line in stdin.lock().lines() {
+                println!("44, {}", line.unwrap());
+            }
+
+            tokio::time::sleep(Duration::from_secs(1)).await;
+        }
+
+        println!("should be waiting!!! 123123");
 
         {
             let public_key = app_args.public_key;
