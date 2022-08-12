@@ -4,44 +4,30 @@ use log::info;
 use std::fs;
 use std::path::PathBuf;
 
+pub enum DBName {
+    Saksaha,
+    Envelope,
+    Wallet,
+}
+
 pub type FSError = Box<dyn std::error::Error + Send + Sync>;
 
-pub fn create_or_get_app_path(app_prefix: &String) -> Result<PathBuf, FSError> {
-    if let Some(dir) = ProjectDirs::from("com", "Saksaha", "Saksaha") {
-        let app_root_path = dir.config_dir();
-
-        if !app_root_path.exists() {
-            if let Err(err) = fs::create_dir(app_root_path) {
-                return Err(format!("Cannot create dir, err: {}", err).into());
-            }
-        }
-
-        let prefixed_app_path = app_root_path.join(app_prefix);
-
-        if !prefixed_app_path.exists() {
-            if let Err(err) = fs::create_dir(prefixed_app_path.clone()) {
-                return Err(format!("Cannot create dir, err: {}", err).into());
-            }
-        }
-
-        return Ok(prefixed_app_path);
-    } else {
-        return Err(format!(
-            "No valid app (config) path provided by the operating system"
-        )
-        .into());
-    }
-}
-
-pub fn create_or_get_app_path_evl(
+pub fn create_or_get_app_path(
+    db_name: DBName,
     app_prefix: &String,
 ) -> Result<PathBuf, FSError> {
-    if let Some(dir) = ProjectDirs::from("com", "Envelope", "Envelope") {
+    let db_name = match db_name {
+        DBName::Saksaha => ("Saksaha"),
+        DBName::Envelope => ("Envelope"),
+        DBName::Wallet => ("Wallet"),
+    };
+
+    if let Some(dir) = ProjectDirs::from("com", "Saksaha", db_name) {
         let app_root_path = dir.config_dir();
 
         if !app_root_path.exists() {
             if let Err(err) = fs::create_dir(app_root_path) {
-                return Err(format!("app_root create dir, err: {}", err).into());
+                return Err(format!("Cannot create dir, err: {}", err).into());
             }
         }
 
@@ -62,34 +48,34 @@ pub fn create_or_get_app_path_evl(
     }
 }
 
-pub fn create_or_get_app_path_wallet(
-    app_prefix: &String,
-) -> Result<PathBuf, FSError> {
-    if let Some(dir) = ProjectDirs::from("com", "Sak_Wallet", "Sak_Wallet") {
-        let app_root_path = dir.config_dir();
+// pub fn create_or_get_app_path_evl(
+//     app_prefix: &String,
+// ) -> Result<PathBuf, FSError> {
+//     if let Some(dir) = ProjectDirs::from("com", "Envelope", "Envelope") {
+//         let app_root_path = dir.config_dir();
 
-        if !app_root_path.exists() {
-            if let Err(err) = fs::create_dir(app_root_path) {
-                return Err(format!("app_root create dir, err: {}", err).into());
-            }
-        }
+//         if !app_root_path.exists() {
+//             if let Err(err) = fs::create_dir(app_root_path) {
+//                 return Err(format!("app_root create dir, err: {}", err).into());
+//             }
+//         }
 
-        let prefixed_app_path = app_root_path.join(app_prefix);
+//         let prefixed_app_path = app_root_path.join(app_prefix);
 
-        if !prefixed_app_path.exists() {
-            if let Err(err) = fs::create_dir(prefixed_app_path.clone()) {
-                return Err(format!("Cannot create dir, err: {}", err).into());
-            }
-        }
+//         if !prefixed_app_path.exists() {
+//             if let Err(err) = fs::create_dir(prefixed_app_path.clone()) {
+//                 return Err(format!("Cannot create dir, err: {}", err).into());
+//             }
+//         }
 
-        return Ok(prefixed_app_path);
-    } else {
-        return Err(format!(
-            "No valid app (config) path provided by the operating system"
-        )
-        .into());
-    }
-}
+//         return Ok(prefixed_app_path);
+//     } else {
+//         return Err(format!(
+//             "No valid app (config) path provided by the operating system"
+//         )
+//         .into());
+//     }
+// }
 
 pub fn persist(data: String, target_path: PathBuf) -> Result<(), FSError> {
     // if target_path.exists() {

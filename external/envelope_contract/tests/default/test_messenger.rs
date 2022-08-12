@@ -3,6 +3,7 @@ use super::{
     DUMMY_CHANNEL_ID_2, DUMMY_CHANNEL_ID_3, ENVELOPE_CONTRACT,
     INIT_CHANNEL_ID_1, STORAGE_CAP,
 };
+
 use envelope_contract::{
     EnvelopeStorage, GetChListParams, GetMsgParams, OpenCh, OpenChParams,
     SendMsgParams,

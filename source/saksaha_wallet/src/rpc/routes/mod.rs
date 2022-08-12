@@ -1,4 +1,4 @@
-mod v0;
+pub(crate) mod v0;
 
 use super::ctx::RouteCtx;
 use hyper_rpc_router::{Handler, Path};
