@@ -30,13 +30,18 @@ fn main() -> Result<(), WalletError> {
 
     use std::io::BufRead;
     let stdin = std::io::stdin();
-    for line in stdin.lock().lines() {
-        println!("{}", line.unwrap());
+
+    loop {
+        println!("11l");
+
+        for line in stdin.lock().lines() {
+            println!("{}", line.unwrap());
+        }
+
+        thread::sleep(Duration::from_secs(1));
     }
 
-    println!("123123");
-
-    thread::sleep(Duration::from_secs(50));
+    println!("should be waiting!!! 123123");
 
     // app.run(app_args)?;
 

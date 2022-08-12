@@ -3,6 +3,7 @@ use crate::CIError;
 use colored::Colorize;
 use std::env::Args;
 use std::process::{Command as Cmd, Stdio};
+use std::result;
 
 pub(crate) fn run(args: Args) -> Result<(), CIError> {
     let program = "cargo";
@@ -19,12 +20,12 @@ pub(crate) fn run(args: Args) -> Result<(), CIError> {
     use std::io::{BufRead, BufReader, BufWriter, Write};
     let stdin = std::io::stdin();
     for line in stdin.lock().lines() {
-        println!("{}", line.unwrap());
+        println!("you typed: {}", line.unwrap());
     }
 
     let proc = Kommand::new(program, args, None)?
         .stdin(Stdio::piped())
-        // .stdout(Stdio::piped())
+        .stdout(Stdio::inherit())
         // .stderr(Stdio::inherit())
         .spawn()
         .expect("failed to run");
@@ -33,7 +34,9 @@ pub(crate) fn run(args: Args) -> Result<(), CIError> {
 
     proc.stdin.as_ref().unwrap().write(b"alwkej").unwrap();
 
-    let _ = proc.wait_with_output();
+    let res = proc.wait_with_output()?;
+
+    println!("res: {:?}", res);
 
     Ok(())
 }
