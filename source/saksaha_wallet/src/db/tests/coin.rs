@@ -2,8 +2,8 @@ use crate::{
     db::{tests::make_dummy_db, WalletDB, USER_1, USER_2},
     types::Status,
 };
-
 use sak_crypto::{Hasher, Scalar, ScalarExt};
+use sak_proofs::OldCoin;
 use sak_types::U8Array;
 
 async fn get_dummy_random_gen_coin() -> (
@@ -119,7 +119,7 @@ async fn test_wallet_db_store_randomly_generated_coins() {
                 &addr_sk.to_string(),
                 &USER_1.to_string(),
                 &status,
-                &idx,
+                // &idx,
             )
             .await
             .unwrap();
@@ -140,7 +140,7 @@ async fn test_wallet_db_store_randomly_generated_coins() {
                 &addr_sk.to_string(),
                 &USER_2.to_string(),
                 &status,
-                &idx,
+                // &idx,
             )
             .await
             .unwrap();
@@ -193,7 +193,6 @@ async fn test_wallet_db_store_coins() {
                 &addr_sk.to_string(),
                 &USER_1.to_string(),
                 &status,
-                &(idx as u128),
             )
             .await
             .unwrap();
@@ -219,24 +218,28 @@ async fn test_wallet_db_store_coins() {
                 .unwrap()
                 .to_string()
         );
+
         assert_eq!(
             r,
             ScalarExt::parse_arr(&U8Array::from_int(&(idx as u64) + 10))
                 .unwrap()
                 .to_string()
         );
+
         assert_eq!(
             s,
             ScalarExt::parse_arr(&U8Array::from_int(&(idx as u64) + 10))
                 .unwrap()
                 .to_string()
         );
+
         assert_eq!(
             addr_sk,
             ScalarExt::parse_arr(&U8Array::from_int(&(idx as u64) + 10))
                 .unwrap()
                 .to_string()
         );
+
         assert_eq!(
             v,
             ScalarExt::parse_arr(&U8Array::from_int(&(idx as u64) * 100 + 100))

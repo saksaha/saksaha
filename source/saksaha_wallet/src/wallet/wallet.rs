@@ -10,7 +10,7 @@ use log::debug;
 use sak_proofs::{MerkleTree, NewCoin, OldCoin, CM_TREE_DEPTH};
 
 use sak_crypto::{Hasher, ScalarExt};
-use sak_types::U8Array;
+use type_extension::U8Array;
 
 pub(crate) struct Wallet {
     pub apis: WalletApis,
@@ -147,7 +147,6 @@ async fn init_for_demo(wallet: &Wallet) -> Result<(), WalletError> {
                 // &coin.addr_sk.unwrap().to_string(),
                 // &coin.user_id.unwrap().to_string(),
                 // &coin.status.unwrap(),
-                &0,
             )
             .await?;
     }
@@ -155,7 +154,8 @@ async fn init_for_demo(wallet: &Wallet) -> Result<(), WalletError> {
         let user_id = "user_2".to_string();
         let value = 100;
 
-        let coin = gen_coin_with_params(0x21, 0x22, 0x23, 0x24, value, user_id);
+        let coin =
+            gen_coin_with_params(0x21, 0x22, 0x23, 0x24, value, user_id)?;
 
         debug!("[demo coin: user_2] {:#?}", coin);
 
@@ -164,16 +164,15 @@ async fn init_for_demo(wallet: &Wallet) -> Result<(), WalletError> {
             .db
             .schema
             .put_coin(
-                &coin.cm.unwrap().to_string(),
-                &coin.rho.unwrap().to_string(),
-                &coin.r.unwrap().to_string(),
-                &coin.s.unwrap().to_string(),
-                &coin.v.unwrap().to_string(),
-                &coin.addr_pk.unwrap().to_string(),
-                &coin.addr_sk.unwrap().to_string(),
-                &coin.user_id.unwrap().to_string(),
-                &coin.status.unwrap(),
-                &1,
+                &coin.cm,
+                &coin.rho,
+                &coin.r,
+                &coin.s,
+                &coin.v,
+                &coin.addr_pk,
+                &coin.addr_sk,
+                &coin.user_id,
+                &coin.status,
             )
             .await?;
     }

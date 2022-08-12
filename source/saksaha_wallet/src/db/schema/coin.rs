@@ -5,10 +5,10 @@ use crate::types::Status;
 use sak_crypto::{Scalar, ScalarExt};
 use sak_kv_db::WriteBatch;
 use sak_proofs::{OldCoin, CM_TREE_DEPTH};
-use sak_types::U8Arr32;
+use type_extension::U8Arr32;
 
 impl WalletDBSchema {
-    pub fn get_coin(&self, cm: &U8Arr32) -> Result<OldCoin, WalletError> {
+    pub fn get_coin(&self, cm: &Scalar) -> Result<OldCoin, WalletError> {
         let addr_pk = match self.get_a_pk(&cm)? {
             Some(p) => p,
             None => return Err(format!("Failed to get a_pk").into()),
@@ -39,27 +39,6 @@ impl WalletDBSchema {
             None => return Err(format!("Failed to get v").into()),
         };
 
-        // let addr_pk = Scalar::from(addr_pk.parse::<u64>()?);
-        let addr_pk = ScalarExt::parse_arr(&addr_pk)?;
-
-        // let addr_sk = Scalar::from(addr_sk.parse::<u64>()?);
-        let addr_sk = ScalarExt::parse_arr(&addr_sk)?;
-
-        // let rho = Scalar::from(rho.parse::<u64>()?);
-        let rho = ScalarExt::parse_arr(&rho)?;
-
-        // let r = Scalar::from(r.parse::<u64>()?);
-        let r = ScalarExt::parse_arr(&r)?;
-
-        // let s = Scalar::from(s.parse::<u64>()?);
-        let s = ScalarExt::parse_arr(&s)?;
-
-        // let v = Scalar::from(v.parse::<u64>()?);
-        let v = ScalarExt::parse_arr(&v)?;
-
-        // let cm = Scalar::from(cm.parse::<u64>()?);
-        let cm = ScalarExt::parse_arr(&cm)?;
-
         let old_coin = OldCoin {
             addr_pk: Some(addr_pk),
             addr_sk: Some(addr_sk),
@@ -67,7 +46,7 @@ impl WalletDBSchema {
             r: Some(r),
             s: Some(s),
             v: Some(v),
-            cm: Some(cm),
+            cm: Some(*cm),
             auth_path: [None; CM_TREE_DEPTH as usize],
         };
 
@@ -238,23 +217,23 @@ impl WalletDBSchema {
     //     };
     // }
 
-    pub(crate) fn get_latest_cm_idx(
-        &self,
-        // db: &DB,
-    ) -> Result<Option<u128>, WalletError> {
-        let cf = self.make_cf_handle(&self.db, cfs::CM)?;
+    // pub(crate) fn get_latest_cm_idx(
+    //     &self,
+    //     // db: &DB,
+    // ) -> Result<Option<u128>, WalletError> {
+    //     let cf = self.make_cf_handle(&self.db, cfs::CM)?;
 
-        let mut iter = self.db.iterator_cf(&cf, sak_kv_db::IteratorMode::End);
+    //     let mut iter = self.db.iterator_cf(&cf, sak_kv_db::IteratorMode::End);
 
-        let (cm_idx_bytes, _hash) = match iter.next() {
-            Some(a) => a,
-            None => return Ok(None),
-        };
+    //     let (cm_idx_bytes, _hash) = match iter.next() {
+    //         Some(a) => a,
+    //         None => return Ok(None),
+    //     };
 
-        let cm_idx = sak_kv_db::convert_u8_slice_into_u128(&cm_idx_bytes)?;
+    //     let cm_idx = sak_kv_db::convert_u8_slice_into_u128(&cm_idx_bytes)?;
 
-        Ok(Some(cm_idx))
-    }
+    //     Ok(Some(cm_idx))
+    // }
 
     pub(crate) async fn put_coin(
         &self,

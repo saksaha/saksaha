@@ -14,19 +14,20 @@ clap = { version = "3.2.14", features = ["cargo"] }
 futures = "0.3.21"
 serde = { version = "1.0.130", features = ["derive"] }
 serde_json = "1.0.59"
-saksaha = { path = "../../source/saksaha_rs" }
-saksaha_network = { path = "../../source/saksaha_network" }
+saksaha = { path = "../saksaha_rs" }
+saksaha_network = { path = "../saksaha_network" }
 serde_bytes = "0.11.6"
-sak_fs = { path = "../../source/sak_fs" }
-sak_logger = { path = "../../source/sak_logger" }
-sak_contract_std = { path = "../../source/sak_contract_std" }
+sak_fs = { path = "../sak_fs" }
+sak_logger = { path = "../sak_logger" }
+sak_contract_std = { path = "../sak_contract_std" }
 hyper = { version = "0.14", features = ["full"] }
-hyper_server = { path = "../../source/hyper_server" }
-hyper_rpc_router = { path = "../../source/hyper_rpc_router" }
-sak_crypto = { path = "../../source/sak_crypto" }
-sak_types = { path = "../../source/sak_types" }
-sak_kv_db = { path = "../../source/sak_kv_db" }
-sak_proofs = { path = "../../source/sak_proofs" }
+hyper_server = { path = "../hyper_server" }
+hyper_rpc_router = { path = "../hyper_rpc_router" }
+sak_crypto = { path = "../sak_crypto" }
+sak_types = { path = "../sak_types" }
+type_extension = { path = "../type_extension" }
+sak_kv_db = { path = "../sak_kv_db" }
+sak_proofs = { path = "../sak_proofs" }
 sak_utils_net = { path = "../sak_utils_net" }
 
 [dev-dependencies]
