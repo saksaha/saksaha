@@ -11,10 +11,38 @@ use sak_p2p_transport::{
     UpgradedConn, UpgradedP2PCodec,
 };
 use sak_task_queue::TaskQueue;
+use sak_types::TxHash;
 use std::sync::Arc;
 use tokio::{net::TcpStream, sync::RwLockWriteGuard};
 
-pub(in crate::node) async fn send_tx_hash_syn() {}
+pub(in crate::node) async fn send_tx_hash_syn(
+    peer: &Arc<Peer>,
+    tx_hashes: Vec<TxHash>,
+) -> Result<(), SaksahaNodeError> {
+    let mut conn_lock = peer.get_transport().conn.write().await;
+
+    let receipt = conn_lock
+        .send(Msg::TxHashSyn(TxHashSynMsg { tx_hashes }))
+        .await?;
+
+    let msg = conn_lock
+        .next_msg()
+        .await
+        .ok_or("tx hash ack should arrive as reply")??;
+
+    match msg {
+        Msg::TxHashAck(m) => {}
+        _ => {
+            return Err(format!(
+                "Only tx hash ack should arrive at this point, msg: {}",
+                msg,
+            )
+            .into());
+        }
+    }
+
+    Ok(())
+}
 
 pub(in crate::node) async fn recv_tx_hash_syn(
     tx_hash_syn_msg: TxHashSynMsg,
@@ -89,10 +117,7 @@ pub(super) async fn handle_tx_hash_syn<'a>(
         .await;
 
     task_queue
-        .push_back(NodeTask::SendTxSyn {
-            tx_candidates,
-            her_public_key: Some(peer.get_public_key().to_string()),
-        })
+        .push_back(NodeTask::SendTxSyn { tx_candidates })
         .await?;
 
     // if !tx_candidates.is_empty() {

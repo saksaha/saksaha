@@ -8,15 +8,12 @@ use std::sync::Arc;
 pub(in crate::node) enum NodeTask {
     SendTxHashSyn {
         tx_hashes: Vec<TxHash>,
-        her_public_key: Option<String>,
     },
     SendTxSyn {
         tx_candidates: Vec<TxCandidate>,
-        her_public_key: Option<String>,
     },
     SendBlockHashSyn {
         new_blocks: Vec<(BlockHeight, BlockHash)>,
-        her_public_key: Option<String>,
     },
 }
 

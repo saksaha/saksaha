@@ -21,7 +21,6 @@ pub(super) async fn handle_tx_pool_stat<'a>(
     node_task_queue
         .push_back(NodeTask::SendTxHashSyn {
             tx_hashes: new_tx_hashes,
-            her_public_key: None,
         })
         .await
 
@@ -51,7 +50,6 @@ pub(super) async fn handle_new_blocks_ev<'a>(
     node_task_queue
         .push_back(NodeTask::SendBlockHashSyn {
             new_blocks: new_blocks.clone(),
-            her_public_key: None,
         })
         .await
 

@@ -68,6 +68,7 @@ impl PeerNode {
             // Node task routine
             let node_task_handler = Box::new(NodeTaskHandler {
                 // peer_table: self.peer_table.clone(),
+                peer: self.peer.clone(),
             });
 
             let task_runtime = TaskRuntime::new(
@@ -82,6 +83,7 @@ impl PeerNode {
         }
 
         loop {
+            // let mut conn_lock = self.peer.get_transport().conn.write().await;
             let mut conn_lock = self.peer.get_transport().conn.write().await;
 
             let maybe_msg = conn_lock.next_msg().await;
