@@ -19,7 +19,7 @@ impl Encoder<Msg> for UpgradedP2PCodec {
     ) -> Result<(), TrptError> {
         enc::encode_into_frame(item, dst)?;
 
-        let t = dst.to_vec();
+        // let t = dst.to_vec();
 
         self.cipher.apply_keystream(dst);
 

@@ -15,6 +15,7 @@ use tokio::{net::TcpStream, sync::RwLock};
 
 pub(in crate::node) struct NodeTaskHandler {
     // pub peer_table: Arc<PeerTable>,
+    pub peer: Arc<Peer>,
 }
 
 #[async_trait]
@@ -23,16 +24,8 @@ impl TaskHandler<NodeTask> for NodeTaskHandler {
         println!("handle new task: {}", task);
 
         let res = match task {
-            NodeTask::SendTxSyn {
-                tx_candidates,
-                her_public_key,
-            } => {
-                msg_handle::send_tx_syn(
-                    tx_candidates,
-                    her_public_key,
-                    // &self.peer_table,
-                )
-                .await;
+            NodeTask::SendTxSyn { tx_candidates } => {
+                msg_handle::send_tx_syn(&self.peer, tx_candidates).await;
                 // handle_send_tx_syn(
                 //     tx_candidates,
                 //     her_public_key,
@@ -40,14 +33,10 @@ impl TaskHandler<NodeTask> for NodeTaskHandler {
                 // )
                 // .await
             }
-            NodeTask::SendTxHashSyn {
-                tx_hashes,
-                her_public_key,
-            } => {}
-            NodeTask::SendBlockHashSyn {
-                new_blocks,
-                her_public_key,
-            } => {}
+            NodeTask::SendTxHashSyn { tx_hashes } => {
+                msg_handle::send_tx_hash_syn(&self.peer, tx_hashes).await;
+            }
+            NodeTask::SendBlockHashSyn { new_blocks } => {}
         };
 
         // if let Err(err) = res {

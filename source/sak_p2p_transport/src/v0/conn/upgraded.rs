@@ -5,7 +5,11 @@ use tokio::net::TcpStream;
 use tokio_util::codec::Framed;
 
 pub struct SendReceipt {
-    __created_by_sending: bool,
+    __created_by_conn: bool,
+}
+
+pub struct RecvReceipt {
+    __created_by_conn: bool,
 }
 
 pub struct UpgradedConn {
@@ -36,7 +40,7 @@ impl UpgradedConn {
         self.socket.send(msg).await?;
 
         let receipt = SendReceipt {
-            __created_by_sending: true,
+            __created_by_conn: true,
         };
 
         Ok(receipt)
