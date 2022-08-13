@@ -15,13 +15,14 @@ use sak_types::{TxCandidate, TxHash};
 use std::sync::Arc;
 use tokio::{net::TcpStream, sync::RwLockWriteGuard};
 
-pub(in crate::node) async fn send_tx_syn(
-    peer: &Arc<Peer>,
+pub(in crate::node) async fn send_tx_syn<'a>(
+    // peer: &Arc<Peer>,
     // tx_candidates: Vec<TxCandidate>,
+    mut conn_lock: RwLockWriteGuard<'a, UpgradedConn>,
     tx_hashes: Vec<TxHash>,
     machine: &Arc<Machine>,
 ) -> Result<(), SaksahaNodeError> {
-    let mut conn = peer.get_transport().conn.write().await;
+    // let mut conn = peer.get_transport().conn.write().await;
 
     let tx_candidates = machine
         .blockchain
@@ -32,9 +33,9 @@ pub(in crate::node) async fn send_tx_syn(
 
     let tx_syn_msg = Msg::TxSyn(TxSynMsg { tx_candidates });
 
-    conn.send(tx_syn_msg).await?;
+    conn_lock.send(tx_syn_msg).await?;
 
-    let msg = conn
+    let msg = conn_lock
         .next_msg()
         .await
         .ok_or(format!("tx syn needs to be followed by tx syn ack"))??;

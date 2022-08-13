@@ -1,11 +1,9 @@
+use super::task;
 use super::task::NodeTask;
 use super::{msg_handle, SaksahaNodeError};
 use crate::{
     machine::Machine,
-    node::{
-        event_handle::{self, LedgerEventRoutine},
-        task::NodeTaskHandler,
-    },
+    node::event_handle::{self, LedgerEventRoutine},
 };
 use log::{debug, error, warn};
 use sak_dist_ledger::DistLedgerEvent;
@@ -64,10 +62,10 @@ impl PeerNode {
             });
         }
 
-        let node_task_handler = Box::new(NodeTaskHandler {
-            peer: self.peer.clone(),
-            machine: self.machine.clone(),
-        });
+        // let node_task_handler = Box::new(NodeTaskHandler {
+        //     peer: self.peer.clone(),
+        //     machine: self.machine.clone(),
+        // });
 
         {
             // Node task routine
@@ -96,6 +94,8 @@ impl PeerNode {
                 task = node_task_queue.pop_front() => {
                     let task = task?;
                     println!("task: {}", task);
+
+                    task::handle_task(task, &node_task_queue, conn_lock, &self.machine).await;
                 },
                 maybe_msg = conn_lock.next_msg() => {
                     match maybe_msg {

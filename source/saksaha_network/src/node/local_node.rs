@@ -1,8 +1,6 @@
 use super::{
-    event_handle::LedgerEventRoutine,
-    miner::Miner,
-    peer_node::PeerNode,
-    task::{NodeTask, NodeTaskHandler},
+    event_handle::LedgerEventRoutine, miner::Miner, peer_node::PeerNode,
+    task::NodeTask,
 };
 use crate::machine::Machine;
 use sak_p2p_peertable::{Peer, PeerTable};

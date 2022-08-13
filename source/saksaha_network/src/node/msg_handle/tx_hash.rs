@@ -16,13 +16,14 @@ use std::sync::Arc;
 use tokio::{net::TcpStream, sync::RwLockWriteGuard};
 
 pub(in crate::node) async fn send_tx_hash_syn(
-    peer: &Arc<Peer>,
+    // peer: &Arc<Peer>,
+    mut conn_lock: RwLockWriteGuard<'_, UpgradedConn>,
     tx_hashes: Vec<TxHash>,
     task_queue: &Arc<TaskQueue<NodeTask>>,
 ) -> Result<(), SaksahaNodeError> {
     println!("sending tx hash syn");
 
-    let mut conn_lock = peer.get_transport().conn.write().await;
+    // let mut conn_lock = peer.get_transport().conn.write().await;
 
     println!("111");
 
