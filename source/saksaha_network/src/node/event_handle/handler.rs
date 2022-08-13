@@ -18,11 +18,11 @@ pub(super) async fn handle_tx_pool_stat<'a>(
     new_tx_hashes: Vec<TxHash>,
     node_task_queue: &Arc<TaskQueue<NodeTask>>,
 ) -> Result<(), SaksahaNodeError> {
-    node_task_queue
-        .push_back(NodeTask::SendTxHashSyn {
-            tx_hashes: new_tx_hashes,
-        })
-        .await
+    // node_task_queue
+    //     .push_back(NodeTask::SendTxHashSyn {
+    //         tx_hashes: new_tx_hashes,
+    //     })
+    //     .await
 
     // match conn
     //     .send(Msg::TxHashSyn(TxHashSynMsg {
@@ -40,6 +40,7 @@ pub(super) async fn handle_tx_pool_stat<'a>(
     //         );
     //     }
     // };
+    Ok(())
 }
 
 pub(super) async fn handle_new_blocks_ev<'a>(
@@ -51,7 +52,7 @@ pub(super) async fn handle_new_blocks_ev<'a>(
         .push_back(NodeTask::SendBlockHashSyn {
             new_blocks: new_blocks.clone(),
         })
-        .await
+        .await?;
 
     // match conn
     //     // .socket
@@ -70,6 +71,7 @@ pub(super) async fn handle_new_blocks_ev<'a>(
     //         );
     //     }
     // };
+    Ok(())
 }
 
 // pub(super) async fn handle_new_peers_ev<'a>(

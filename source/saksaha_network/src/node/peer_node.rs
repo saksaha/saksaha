@@ -69,6 +69,7 @@ impl PeerNode {
             let node_task_handler = Box::new(NodeTaskHandler {
                 // peer_table: self.peer_table.clone(),
                 peer: self.peer.clone(),
+                machine: self.machine.clone(),
             });
 
             let task_runtime = TaskRuntime::new(

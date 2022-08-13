@@ -11,15 +11,24 @@ use sak_p2p_transport::{
     TxHashSyncMsg, TxSynMsg, UpgradedConn, UpgradedP2PCodec,
 };
 use sak_task_queue::TaskQueue;
-use sak_types::TxCandidate;
+use sak_types::{TxCandidate, TxHash};
 use std::sync::Arc;
 use tokio::{net::TcpStream, sync::RwLockWriteGuard};
 
 pub(in crate::node) async fn send_tx_syn(
     peer: &Arc<Peer>,
-    tx_candidates: Vec<TxCandidate>,
+    // tx_candidates: Vec<TxCandidate>,
+    tx_hashes: Vec<TxHash>,
+    machine: &Arc<Machine>,
 ) -> Result<(), SaksahaNodeError> {
     let mut conn = peer.get_transport().conn.write().await;
+
+    let tx_candidates = machine
+        .blockchain
+        .dist_ledger
+        .apis
+        .get_txs_from_pool(tx_hashes)
+        .await;
 
     let tx_syn_msg = Msg::TxSyn(TxSynMsg { tx_candidates });
 
@@ -30,8 +39,8 @@ pub(in crate::node) async fn send_tx_syn(
         .await
         .ok_or(format!("tx syn needs to be followed by tx syn ack"))??;
 
-    let msg = match msg {
-        Msg::TxAck(m) => (),
+    let _tx_ack = match msg {
+        Msg::TxAck(m) => m,
         _ => {
             return Err(
                 format!("Only tx ack should arrive at this point").into()
