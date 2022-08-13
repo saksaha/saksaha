@@ -20,7 +20,11 @@ pub(in crate::node) async fn send_tx_hash_syn(
     tx_hashes: Vec<TxHash>,
     task_queue: &Arc<TaskQueue<NodeTask>>,
 ) -> Result<(), SaksahaNodeError> {
+    println!("sending tx hash syn");
+
     let mut conn_lock = peer.get_transport().conn.write().await;
+
+    println!("111");
 
     let receipt = conn_lock
         .send(Msg::TxHashSyn(TxHashSyncMsg { tx_hashes }))
@@ -58,6 +62,8 @@ pub(in crate::node) async fn recv_tx_hash_syn(
     task_queue: &Arc<TaskQueue<NodeTask>>,
     peer: &Arc<Peer>,
 ) -> Result<SendReceipt, SaksahaNodeError> {
+    println!("receiving tx hash syn");
+
     let txs_to_request = machine
         .blockchain
         .dist_ledger

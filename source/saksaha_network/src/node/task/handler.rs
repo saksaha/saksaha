@@ -30,11 +30,11 @@ impl TaskHandler<NodeTask> for NodeTaskHandler {
         let res = match task {
             NodeTask::SendTxHashSyn { tx_hashes } => {
                 msg_handle::send_tx_hash_syn(&self.peer, tx_hashes, task_queue)
-                    .await;
+                    .await
             }
             NodeTask::SendTxSyn { tx_hashes } => {
                 msg_handle::send_tx_syn(&self.peer, tx_hashes, &self.machine)
-                    .await;
+                    .await
                 // handle_send_tx_syn(
                 //     tx_candidates,
                 //     her_public_key,
@@ -42,7 +42,7 @@ impl TaskHandler<NodeTask> for NodeTaskHandler {
                 // )
                 // .await
             }
-            NodeTask::SendBlockHashSyn { new_blocks } => {}
+            NodeTask::SendBlockHashSyn { new_blocks } => Ok(()),
         };
 
         // if let Err(err) = res {

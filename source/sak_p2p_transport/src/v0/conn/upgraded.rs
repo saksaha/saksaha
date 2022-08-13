@@ -1,14 +1,10 @@
 use crate::{Msg, TrptError, UpgradedP2PCodec};
-use futures::{SinkExt, StreamExt};
+use futures::{stream::Next, SinkExt, StreamExt};
 use std::net::SocketAddr;
 use tokio::net::TcpStream;
 use tokio_util::codec::Framed;
 
 pub struct SendReceipt {
-    __created_by_conn: bool,
-}
-
-pub struct RecvReceipt {
     __created_by_conn: bool,
 }
 
@@ -46,11 +42,14 @@ impl UpgradedConn {
         Ok(receipt)
     }
 
-    pub async fn next_msg(&mut self) -> Option<Result<Msg, TrptError>> {
-        println!("recv msg!, conn id: {}", self.conn_id);
+    pub fn next_msg(&mut self) -> Next<Framed<TcpStream, UpgradedP2PCodec>>
+// -> Option<Result<Msg, TrptError>>
+    {
+        // println!("recv msg!, conn id: {}", self.conn_id);
 
-        let msg = self.socket.next().await;
+        let msg = self.socket.next();
 
+        // println!("|--- recvd msg: conn id: {}, msg: {:?}", self.conn_id, msg);
         msg
     }
 }

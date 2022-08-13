@@ -14,15 +14,14 @@ use tokio::{net::TcpStream, sync::RwLockWriteGuard};
 use tokio_util::codec::Framed;
 
 pub(super) async fn handle_tx_pool_stat<'a>(
-    _machine: &Machine,
     new_tx_hashes: Vec<TxHash>,
     node_task_queue: &Arc<TaskQueue<NodeTask>>,
 ) -> Result<(), SaksahaNodeError> {
-    // node_task_queue
-    //     .push_back(NodeTask::SendTxHashSyn {
-    //         tx_hashes: new_tx_hashes,
-    //     })
-    //     .await
+    node_task_queue
+        .push_back(NodeTask::SendTxHashSyn {
+            tx_hashes: new_tx_hashes,
+        })
+        .await?;
 
     // match conn
     //     .send(Msg::TxHashSyn(TxHashSynMsg {
@@ -44,7 +43,7 @@ pub(super) async fn handle_tx_pool_stat<'a>(
 }
 
 pub(super) async fn handle_new_blocks_ev<'a>(
-    _machine: &Machine,
+    // _machine: &Machine,
     new_blocks: Vec<(BlockHeight, BlockHash)>,
     node_task_queue: &Arc<TaskQueue<NodeTask>>,
 ) -> Result<(), SaksahaNodeError> {
