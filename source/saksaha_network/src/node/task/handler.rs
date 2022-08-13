@@ -1,12 +1,11 @@
-use crate::node::msg_handle;
-
 use super::NodeTask;
+use crate::node::msg_handle;
 use async_trait::async_trait;
 use log::{debug, error, warn};
 use sak_p2p_peertable::{Peer, PeerStatus, PeerTable};
 use sak_p2p_transport::{
     handshake::{self, HandshakeInitArgs},
-    Conn, Msg, TxHashSynMsg, TxSynMsg,
+    Conn, Msg, TxHashSyncMsg, TxSynMsg,
 };
 use sak_task_queue::{TaskHandler, TaskQueueError};
 use sak_types::TxCandidate;
@@ -24,6 +23,9 @@ impl TaskHandler<NodeTask> for NodeTaskHandler {
         println!("handle new task: {}", task);
 
         let res = match task {
+            NodeTask::SendTxHashSyn { tx_hashes } => {
+                msg_handle::send_tx_hash_syn(&self.peer, tx_hashes).await;
+            }
             NodeTask::SendTxSyn { tx_candidates } => {
                 msg_handle::send_tx_syn(&self.peer, tx_candidates).await;
                 // handle_send_tx_syn(
@@ -32,9 +34,6 @@ impl TaskHandler<NodeTask> for NodeTaskHandler {
                 //     &self.peer_table,
                 // )
                 // .await
-            }
-            NodeTask::SendTxHashSyn { tx_hashes } => {
-                msg_handle::send_tx_hash_syn(&self.peer, tx_hashes).await;
             }
             NodeTask::SendBlockHashSyn { new_blocks } => {}
         };

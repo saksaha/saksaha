@@ -2,7 +2,7 @@ use crate::{machine::Machine, node::SaksahaNodeError, SaksahaError};
 use futures::{stream::SplitSink, SinkExt};
 use log::{debug, info, warn};
 use sak_p2p_transport::{
-    BlockHashSynMsg, BlockSynMsg, Msg, SendReceipt, TxHashSynMsg, TxSynMsg,
+    BlockHashSynMsg, BlockSynMsg, Msg, SendReceipt, TxHashSyncMsg, TxSynMsg,
     UpgradedConn, UpgradedP2PCodec,
 };
 use std::sync::Arc;
