@@ -10,9 +10,6 @@ use std::{
 
 const TASK_MIN_INTERVAL: u64 = 1000;
 
-// pub type HandlerFn<T> =
-//     Box<dyn Fn(T) -> Pin<Box<dyn Future<Output = ()> + Send + Sync>>>;
-
 pub type TaskHandlerType<T> = Box<dyn TaskHandler<T> + Send + Sync>;
 
 pub struct TaskRuntime<T>
@@ -68,7 +65,7 @@ where
                 }
             };
 
-            self.task_handler.handle_task(task).await;
+            self.task_handler.handle_task(task, &task_queue).await;
 
             sak_utils_time::wait_until_min_interval(
                 time_since,
@@ -84,5 +81,5 @@ pub trait TaskHandler<T>
 where
     T: std::fmt::Display + Send + Sync + 'static,
 {
-    async fn handle_task(&self, task: T);
+    async fn handle_task(&self, task: T, task_queue: &Arc<TaskQueue<T>>);
 }

@@ -10,7 +10,8 @@ pub(in crate::node) enum NodeTask {
         tx_hashes: Vec<TxHash>,
     },
     SendTxSyn {
-        tx_candidates: Vec<TxCandidate>,
+        tx_hashes: Vec<TxHash>,
+        // tx_candidates: Vec<TxCandidate>,
     },
     SendBlockHashSyn {
         new_blocks: Vec<(BlockHeight, BlockHash)>,
