@@ -7,7 +7,7 @@ use futures::{stream::SplitSink, SinkExt};
 use log::{debug, info, warn};
 use sak_p2p_peertable::Peer;
 use sak_p2p_transport::{
-    BlockHashSynMsg, BlockSynMsg, Msg, SendReceipt, TxHashSynMsg, TxSynMsg,
+    BlockHashSynMsg, BlockSynMsg, Msg, SendReceipt, TxHashSyncMsg, TxSynMsg,
     UpgradedConn, UpgradedP2PCodec,
 };
 use sak_task_queue::TaskQueue;
@@ -22,7 +22,7 @@ pub(in crate::node) async fn send_tx_hash_syn(
     let mut conn_lock = peer.get_transport().conn.write().await;
 
     let receipt = conn_lock
-        .send(Msg::TxHashSyn(TxHashSynMsg { tx_hashes }))
+        .send(Msg::TxHashSyn(TxHashSyncMsg { tx_hashes }))
         .await?;
 
     let msg = conn_lock
@@ -31,7 +31,9 @@ pub(in crate::node) async fn send_tx_hash_syn(
         .ok_or("tx hash ack should arrive as reply")??;
 
     match msg {
-        Msg::TxHashAck(m) => {}
+        Msg::TxHashAck(m) => {
+            println!("tx hash ack received");
+        }
         _ => {
             return Err(format!(
                 "Only tx hash ack should arrive at this point, msg: {}",
@@ -45,7 +47,7 @@ pub(in crate::node) async fn send_tx_hash_syn(
 }
 
 pub(in crate::node) async fn recv_tx_hash_syn(
-    tx_hash_syn_msg: TxHashSynMsg,
+    tx_hash_syn_msg: TxHashSyncMsg,
     machine: &Arc<Machine>,
     mut conn: RwLockWriteGuard<'_, UpgradedConn>,
     task_queue: &Arc<TaskQueue<NodeTask>>,
@@ -59,7 +61,7 @@ pub(in crate::node) async fn recv_tx_hash_syn(
         .await;
 
     let receipt = conn
-        .send(Msg::TxHashAck(TxHashSynMsg {
+        .send(Msg::TxHashAck(TxHashSyncMsg {
             tx_hashes: txs_to_request,
         }))
         .await?;
@@ -68,7 +70,7 @@ pub(in crate::node) async fn recv_tx_hash_syn(
 }
 
 pub(super) async fn handle_tx_hash_syn<'a>(
-    tx_hash_syn_msg: TxHashSynMsg,
+    tx_hash_syn_msg: TxHashSyncMsg,
     machine: &Machine,
     conn: &'a mut RwLockWriteGuard<'_, UpgradedConn>,
     task_queue: &Arc<TaskQueue<NodeTask>>,
@@ -82,7 +84,7 @@ pub(super) async fn handle_tx_hash_syn<'a>(
         .await;
 
     match conn
-        .send(Msg::TxHashAck(TxHashSynMsg {
+        .send(Msg::TxHashAck(TxHashSyncMsg {
             tx_hashes: txs_to_request,
         }))
         .await
