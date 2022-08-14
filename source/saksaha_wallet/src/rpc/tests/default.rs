@@ -10,8 +10,6 @@ use super::utils;
 async fn test_call_get_block_with_good_params() {
     sak_test_utils::init_test_log();
 
-    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
-
     let test_context = utils::make_test_context().await;
 
     let rpc = test_context.rpc;

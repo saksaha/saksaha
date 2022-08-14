@@ -17,26 +17,3 @@ pub fn init_test_log() {
 
     sak_logger::init(false).unwrap();
 }
-
-pub fn init_test_config(
-    app_prefixes: &Vec<String>,
-) -> Result<(), TestUtilsError> {
-    for app_prefix in app_prefixes {
-        let db_path = sak_fs::get_app_root_path(APP_NAME)?.join(app_prefix);
-
-        let ledger_path = db_path.join("db").join("ledger");
-
-        if !ledger_path.is_dir() {
-            continue;
-        }
-
-        let _ = match DB::destroy(&Options::default(), ledger_path.clone()) {
-            Ok(_) => (),
-            Err(err) => return Err(err.into()),
-        };
-    }
-
-    info!("Initialized test configurations");
-
-    Ok(())
-}

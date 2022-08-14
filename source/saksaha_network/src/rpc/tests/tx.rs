@@ -203,7 +203,7 @@ async fn test_rpc_client_request_wrong_get_tx() {
 #[tokio::test(flavor = "multi_thread")]
 async fn test_rpc_reqeust_correct_send_pour_tx() {
     sak_test_utils::init_test_log();
-    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
+    TestUtil::init_test(vec!["test"]);
 
     let tc_dummy = PourTxCandidate::new_dummy_m1_to_p3_p4();
     let expected_tc_hash = tc_dummy.get_tx_hash().clone();
@@ -283,7 +283,7 @@ async fn test_rpc_reqeust_correct_send_pour_tx() {
 #[tokio::test(flavor = "multi_thread")]
 async fn test_rpc_reqeust_wrong_send_pour_tx() {
     sak_test_utils::init_test_log();
-    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
+    TestUtil::init_test(vec!["test"]);
 
     let (rpc, rpc_socket_addr, _machine) = utils::make_test_context().await;
 
@@ -338,7 +338,7 @@ async fn test_rpc_reqeust_wrong_send_pour_tx() {
 #[tokio::test(flavor = "multi_thread")]
 async fn test_rpc_reqeust_correct_send_mint_tx() {
     sak_test_utils::init_test_log();
-    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
+    TestUtil::init_test(vec!["test"]);
 
     let tc_dummy = MintTxCandidate::new_dummy_2();
     let expected_tc_hash = tc_dummy.get_tx_hash().clone();
@@ -416,7 +416,7 @@ async fn test_rpc_reqeust_correct_send_mint_tx() {
 #[tokio::test(flavor = "multi_thread")]
 async fn test_rpc_reqeust_wrong_send_mint_tx() {
     sak_test_utils::init_test_log();
-    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
+    TestUtil::init_test(vec!["test"]);
 
     let (rpc, rpc_socket_addr, _machine) = utils::make_test_context().await;
 
