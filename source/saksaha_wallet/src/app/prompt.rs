@@ -5,7 +5,7 @@ use std::io::BufRead;
 pub(crate) fn run() -> Result<bool, WalletError> {
     println!(
         "\nEither public_key or secret is empty. Would you want to\
-        we proceed to create a new credential? (y)es, (n)o:",
+        proceed to create a new credential? (y)es, (n)o:",
     );
 
     let stdin = std::io::stdin();
@@ -38,4 +38,3 @@ pub(crate) fn run() -> Result<bool, WalletError> {
 
     Ok(make_credential)
 }
-

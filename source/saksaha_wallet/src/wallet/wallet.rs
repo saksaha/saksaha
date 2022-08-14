@@ -14,11 +14,9 @@ pub(crate) struct Wallet {
 
 impl Wallet {
     pub async fn init(
-        app_prefix: String,
         credential: WalletCredential,
+        wallet_db: WalletDB,
     ) -> Result<Wallet, WalletError> {
-        let wallet_db = WalletDB::init(&app_prefix)?;
-
         let apis = WalletApis { db: wallet_db };
 
         let w = Wallet { credential, apis };

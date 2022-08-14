@@ -1,4 +1,4 @@
-use crate::WalletError;
+use crate::{WalletError, APP_NAME};
 use colored::Colorize;
 use sak_crypto::{SakKey, ToEncodedPoint};
 use sak_p2p_id::Credential;
@@ -10,8 +10,6 @@ pub(crate) struct WalletCredential {
     pub secret: String,
     pub acc_addr: String,
 }
-
-const SAKSAHA_WALLET: &'static str = "saksaha-wallet";
 
 impl WalletCredential {
     pub fn new_random() -> Result<WalletCredential, WalletError> {
@@ -33,12 +31,9 @@ impl WalletCredential {
     }
 
     pub fn load(
-        public_key: Option<String>,
-        secret: Option<String>,
+        public_key: String,
+        secret: String,
     ) -> Result<WalletCredential, WalletError> {
-        let public_key = public_key.ok_or("Public key should be provided")?;
-        let secret = secret.ok_or("Secret should be provided")?;
-
         let credential = Credential::new(&secret, &public_key)?;
         let acc_addr = SakKey::create_acc_addr(&credential.public_key);
 
@@ -53,7 +48,7 @@ impl WalletCredential {
 
     pub fn persist(&self) -> Result<(), WalletError> {
         let app_path =
-            sak_fs::create_or_get_app_path(SAKSAHA_WALLET, &self.acc_addr)?;
+            sak_fs::create_or_get_app_path(APP_NAME, &self.acc_addr)?;
 
         let target_path = app_path.join("CREATED_AT");
         let since_the_epoch = SystemTime::now().duration_since(UNIX_EPOCH)?;

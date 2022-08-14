@@ -10,7 +10,7 @@ use sak_types::CoinStatus;
 use type_extension::U8Arr32;
 
 impl Raw {
-    pub(crate) async fn get_coin_status(
+    pub(crate) fn get_coin_status(
         &self,
         cm: &Scalar,
     ) -> Result<Option<CoinStatus>, WalletError> {

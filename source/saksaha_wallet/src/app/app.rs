@@ -1,9 +1,10 @@
-use crate::WalletError;
-
 use super::routine::Routine;
+use crate::WalletError;
 use log::error;
 
 pub struct App {}
+
+pub const APP_NAME: &'static str = "saksaha-wallet";
 
 #[derive(Debug)]
 pub struct AppArgs {

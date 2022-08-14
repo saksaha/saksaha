@@ -20,19 +20,19 @@ impl Routine {
         let credential =
             create_or_get_credential(app_args.public_key, app_args.secret)?;
 
-        let db = WalletDB::init(&credential.public_key)?;
+        let wallet_db = WalletDB::init(&credential)?;
 
-        // let wallet = {
-        //     let w = Wallet::init(app_prefix, credential).await?;
+        let wallet = {
+            let w = Wallet::init(credential, wallet_db).await?;
 
-        //     Arc::new(w)
-        // };
+            Arc::new(w)
+        };
 
-        // let rpc = RPC::init(app_args.rpc_port, wallet).await?;
+        let rpc = RPC::init(app_args.rpc_port, wallet).await?;
 
-        // tokio::spawn(async move {
-        //     tokio::join!(rpc.run());
-        // });
+        tokio::spawn(async move {
+            tokio::join!(rpc.run());
+        });
 
         let _ = tokio::signal::ctrl_c().await;
 
@@ -75,6 +75,9 @@ fn create_or_get_credential(
 
         c
     } else {
+        let public_key = public_key.ok_or("Public key should be provided")?;
+        let secret = secret.ok_or("Secret should be provided")?;
+
         WalletCredential::load(public_key, secret)?
     };
 

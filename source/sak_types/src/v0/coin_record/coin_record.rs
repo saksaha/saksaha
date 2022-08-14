@@ -23,13 +23,11 @@ pub struct CoinRecord {
 
     pub cm: Scalar,
 
-    pub user_id: String,
-
     pub coin_status: CoinStatus,
 }
 
 impl CoinRecord {
-    pub fn new(value: u64, user_id: &String) -> Result<CoinRecord, TypesError> {
+    pub fn new(value: u64) -> Result<CoinRecord, TypesError> {
         let hasher = Hasher::new();
 
         let addr_sk = { U8Array::from_int(10 as u64) };
@@ -72,7 +70,6 @@ impl CoinRecord {
             s,
             v,
             cm,
-            user_id: user_id.clone(),
             coin_status: CoinStatus::Unused,
         };
 
