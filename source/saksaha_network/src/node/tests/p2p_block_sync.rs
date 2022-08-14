@@ -1,26 +1,16 @@
 use super::utils::create_client;
-use crate::{machine::Machine, node::LocalNode, p2p::P2PHost};
+use crate::{machine::Machine, node::LocalNode, p2p::P2PHost, tests::TestUtil};
 use sak_p2p_id::Identity;
 use sak_p2p_peertable::PeerTable;
 use sak_types::TxCandidate;
 use std::{sync::Arc, time::Duration};
 
 #[tokio::test(flavor = "multi_thread")]
-async fn test_check_true_init_config() {
-    sak_test_utils::init_test_config(&vec![
-        String::from("test_1"),
-        String::from("test_2"),
-    ])
-    .expect("DB should be initialized");
-}
-
-#[tokio::test(flavor = "multi_thread")]
 async fn test_block_sync_true() {
     sak_test_utils::init_test_log();
 
-    let app_prefix_vec = vec![String::from("test_1"), String::from("test_2")];
-    sak_test_utils::init_test_config(&app_prefix_vec)
-        .expect("DB should be initialized");
+    let app_prefix_vec = vec!["test_1", "test_2"];
+    TestUtil::init_test(app_prefix_vec.clone());
 
     let (p2p_host_1, local_node_1, machine_1, _, _): (
         P2PHost,

@@ -1,6 +1,7 @@
 use super::utils;
 use crate::blockchain::GenesisBlock;
 use crate::rpc::routes::v0::{QueryCtrRequest, QueryCtrResponse};
+use crate::tests::TestUtil;
 use crate::{
     blockchain::ENVELOPE_CTR_ADDR, rpc::routes::v0::SendPourTxRequest,
 };
@@ -13,7 +14,7 @@ use std::collections::HashMap;
 #[tokio::test(flavor = "multi_thread")]
 async fn test_call_contract() {
     sak_test_utils::init_test_log();
-    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
+    TestUtil::init_test(vec!["test"]);
 
     let (rpc, rpc_socket_addr, _machine) = utils::make_test_context().await;
 

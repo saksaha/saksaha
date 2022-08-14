@@ -12,7 +12,7 @@ mod tests;
 
 pub use apis::*;
 pub use consensus::*;
-pub(crate) use db::*;
+pub use db::*;
 pub use dist_ledger::*;
 pub use events::*;
 pub(crate) use runtime::*;
