@@ -43,7 +43,6 @@ fn gen_coin_with_params(
     s: u64,
     addr_sk: u64,
     v: u64,
-    user_id: String,
 ) -> Result<CoinRecord, WalletError> {
     let hasher = Hasher::new();
 
@@ -90,7 +89,6 @@ fn gen_coin_with_params(
         s,
         v,
         cm,
-        user_id,
         coin_status,
     };
 
@@ -99,11 +97,9 @@ fn gen_coin_with_params(
 
 async fn init_for_demo(wallet: &Wallet) -> Result<(), WalletError> {
     {
-        let user_id = "user_1".to_string();
         let value = 100;
 
-        let coin =
-            gen_coin_with_params(0x11, 0x12, 0x13, 0x14, value, user_id)?;
+        let coin = gen_coin_with_params(0x11, 0x12, 0x13, 0x14, value)?;
 
         debug!("[demo coin: user_1] {:#?}", coin);
 
@@ -136,11 +132,9 @@ async fn init_for_demo(wallet: &Wallet) -> Result<(), WalletError> {
     }
 
     {
-        let user_id = "user_2".to_string();
         let value = 100;
 
-        let coin =
-            gen_coin_with_params(0x21, 0x22, 0x23, 0x24, value, user_id)?;
+        let coin = gen_coin_with_params(0x21, 0x22, 0x23, 0x24, value)?;
 
         debug!("[demo coin: user_2] {:#?}", coin);
 

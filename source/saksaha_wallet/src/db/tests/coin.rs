@@ -45,8 +45,6 @@ fn mock_coin_record_1() -> Result<CoinRecord, WalletError> {
 
     let coin_status = CoinStatus::Unused;
 
-    let user_id = USER_1.to_string();
-
     let coin = CoinRecord {
         addr_pk,
         addr_sk,
@@ -55,7 +53,6 @@ fn mock_coin_record_1() -> Result<CoinRecord, WalletError> {
         s,
         v,
         cm,
-        user_id,
         coin_status,
     };
 
