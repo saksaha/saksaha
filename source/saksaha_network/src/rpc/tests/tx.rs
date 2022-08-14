@@ -1,6 +1,7 @@
 use super::utils;
-use crate::rpc::routes::v0::{
-    GetTxRequest, SendMintTxRequest, SendPourTxRequest,
+use crate::{
+    rpc::routes::v0::{GetTxRequest, SendMintTxRequest, SendPourTxRequest},
+    tests::TestUtil,
 };
 use hyper::{Body, Client, Method, Request, Uri};
 use sak_rpc_interface::{JsonRequest, JsonResponse};
@@ -11,7 +12,7 @@ use sak_types::{
 #[tokio::test(flavor = "multi_thread")]
 async fn test_rpc_client_request_correct_get_tx() {
     sak_test_utils::init_test_log();
-    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
+    TestUtil::init_test(vec!["test"]);
 
     let expected_tx_hash = {
         let blockchain = utils::make_blockchain().await;
@@ -107,7 +108,7 @@ async fn test_rpc_client_request_correct_get_tx() {
 #[tokio::test(flavor = "multi_thread")]
 async fn test_rpc_client_request_wrong_get_tx() {
     sak_test_utils::init_test_log();
-    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
+    TestUtil::init_test(vec!["test"]);
 
     let _expected_tx_hash = {
         let blockchain = utils::make_blockchain().await;
