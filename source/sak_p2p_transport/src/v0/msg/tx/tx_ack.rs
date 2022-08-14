@@ -16,7 +16,7 @@ impl TxAckMsg {
     pub(crate) fn into_frame(self) -> Frame {
         let mut frame = Frame::array();
 
-        frame.push_bulk(Bytes::from(MsgType::TX_SYN));
+        frame.push_bulk(Bytes::from(MsgType::TX_ACK));
 
         frame
     }
