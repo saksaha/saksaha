@@ -9,6 +9,7 @@ use crate::{app::actions::Action, ENVELOPE_CTR_ADDR};
 use crate::{inputs::key::Key, EnvelopeError};
 use chrono::Local;
 use envelope_contract::{
+    request_type::{GET_CH_LIST, OPEN_CH},
     Channel, GetChListParams, GetMsgParams, OpenChParams, SendMsgParams,
 };
 use log::{debug, error, warn};
@@ -286,7 +287,7 @@ impl App {
                 open_ch,
             };
 
-            let req_type = String::from("open_ch");
+            let req_type = OPEN_CH.to_string();
 
             let args = serde_json::to_vec(&open_ch_params)?;
 
@@ -308,7 +309,7 @@ impl App {
 
         if let Some(d) = saksaha::query_ctr(
             ENVELOPE_CTR_ADDR.to_string(),
-            "get_ch_list".to_string(),
+            GET_CH_LIST.to_string(),
             args,
         )
         .await?
@@ -440,7 +441,7 @@ impl App {
         };
 
         // ch_id should be encrypted by aes_key
-        let ch_id = her_pk.clone();
+        let ch_id = sak_crypto::rand().to_string();
 
         self.db
             .schema
