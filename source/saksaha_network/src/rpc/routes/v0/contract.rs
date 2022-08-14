@@ -19,13 +19,6 @@ pub(crate) struct QueryCtrResponse {
     pub result: Vec<u8>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct OpenChBody {
-    pub ch_id: String,
-    pub eph_key: String,
-    pub sig: String,
-}
-
 pub(in crate::rpc) async fn query_ctr(
     route_state: RouteState,
     params: Params,
