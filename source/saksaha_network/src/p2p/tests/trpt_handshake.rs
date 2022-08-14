@@ -1,13 +1,11 @@
-use crate::p2p::{P2PHost, P2PHostArgs};
+use crate::{
+    p2p::{P2PHost, P2PHostArgs},
+    tests::TestUtil,
+};
 use sak_p2p_addr::{AddrStatus, UnknownAddr};
 use sak_p2p_id::Identity;
 use sak_p2p_peertable::PeerTable;
 use std::{sync::Arc, time::Duration};
-
-fn init_test() {
-    sak_test_utils::init_test_log();
-    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
-}
 
 async fn create_dummy_client(
     p2p_port: Option<u16>,
@@ -86,7 +84,8 @@ async fn create_dummy_client(
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_is_handshake_successful() {
-    init_test();
+    sak_test_utils::init_test_log();
+    TestUtil::init_test(vec!["test"]);
 
     let (peer_table_1, _, p2p_host_1) = create_dummy_client(
         //

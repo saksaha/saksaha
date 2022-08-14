@@ -15,10 +15,13 @@ pub const GAS: u64 = 10;
 impl WalletApis {
     pub async fn get_balance(
         &self,
-        user_id: &String,
-        _key: &String,
+        acc_addr: &String,
+        // user_id: &String,
+        // _key: &String,
     ) -> Result<Balance, WalletError> {
-        println!("wallet apis, get_balance, id: {}", user_id);
+        println!("wallet apis, get_balance, acc_addr: {}", acc_addr);
+
+        // self.crede
 
         let mut balance: u64 = 0;
 

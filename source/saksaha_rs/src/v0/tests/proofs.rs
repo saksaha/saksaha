@@ -329,7 +329,6 @@ fn make_test_context() -> (OldCoin, NewCoin, NewCoin, Scalar) {
 #[tokio::test(flavor = "multi_thread")]
 pub async fn test_make_a_proof_and_verify_it() {
     sak_test_utils::init_test_log();
-    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
 
     let (coin_1_old, coin_1_new, coin_2_new, merkle_rt) = make_test_context();
 
@@ -347,7 +346,6 @@ pub async fn test_make_a_proof_and_verify_it() {
 #[tokio::test(flavor = "multi_thread")]
 pub async fn test_get_auth_path() {
     sak_test_utils::init_test_log();
-    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
 
     let idx: u128 = 0;
     let resp = get_auth_path(idx).await.unwrap();

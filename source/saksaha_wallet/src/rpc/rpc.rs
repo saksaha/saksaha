@@ -56,6 +56,8 @@ impl RPC {
     }
 
     pub async fn run(self) -> Result<(), WalletError> {
+        info!("RPC server runs");
+
         let router = {
             let routes = routes::get_routes();
             let router = Router::new(routes);
@@ -85,10 +87,12 @@ impl RPC {
             Arc::new(c)
         };
 
-        info!("RPC server runs");
-
         rpc_server.run(self.rpc_socket, ctx, middlewares).await?;
 
         Ok(())
+    }
+
+    pub fn get_rpc_port(&self) -> u16 {
+        self.rpc_port
     }
 }
