@@ -37,69 +37,70 @@ impl Wallet {
 //     cm_2: U8Array,
 //     merkle_rt: U8Array,
 // }
-fn gen_coin_with_params(
-    rho: u64,
-    r: u64,
-    s: u64,
-    addr_sk: u64,
-    v: u64,
-) -> Result<CoinRecord, WalletError> {
-    let hasher = Hasher::new();
+// fn gen_coin_with_params(
+//     rho: u64,
+//     r: u64,
+//     s: u64,
+//     addr_sk: u64,
+//     v: u64,
+// ) -> Result<CoinRecord, WalletError> {
+//     let hasher = Hasher::new();
 
-    let (addr_sk, addr_pk) = {
-        let addr_sk = U8Array::from_int(addr_sk);
-        let addr_pk = hasher.mimc_single(&addr_sk)?;
+//     let (addr_sk, addr_pk) = {
+//         let addr_sk = U8Array::from_int(addr_sk);
+//         let addr_pk = hasher.mimc_single(&addr_sk)?;
 
-        let addr_sk_scalar = ScalarExt::parse_arr(&addr_sk)?;
+//         let addr_sk_scalar = ScalarExt::parse_arr(&addr_sk)?;
 
-        (addr_sk_scalar, addr_pk)
-    };
+//         (addr_sk_scalar, addr_pk)
+//     };
 
-    let rho = {
-        let arr = U8Array::from_int(rho);
-        ScalarExt::parse_arr(&arr)?
-    };
+//     let rho = {
+//         let arr = U8Array::from_int(rho);
+//         ScalarExt::parse_arr(&arr)?
+//     };
 
-    let r = {
-        let arr = U8Array::from_int(r);
-        ScalarExt::parse_arr(&arr)?
-    };
+//     let r = {
+//         let arr = U8Array::from_int(r);
+//         ScalarExt::parse_arr(&arr)?
+//     };
 
-    let s = {
-        let arr = U8Array::from_int(s);
-        ScalarExt::parse_arr(&arr)?
-    };
+//     let s = {
+//         let arr = U8Array::from_int(s);
+//         ScalarExt::parse_arr(&arr)?
+//     };
 
-    let v = {
-        let arr = U8Array::from_int(v);
-        ScalarExt::parse_arr(&arr)?
-    };
+//     let v = {
+//         let arr = U8Array::from_int(v);
+//         ScalarExt::parse_arr(&arr)?
+//     };
 
-    let k = hasher.comm2_scalar(r, addr_pk, rho);
+//     let k = hasher.comm2_scalar(r, addr_pk, rho);
 
-    let cm = hasher.comm2_scalar(s, v, k);
+//     let cm = hasher.comm2_scalar(s, v, k);
 
-    let coin_status = CoinStatus::Unused;
+//     let coin_status = CoinStatus::Unused;
 
-    let coin = CoinRecord {
-        addr_pk,
-        addr_sk,
-        rho,
-        r,
-        s,
-        v,
-        cm,
-        coin_status,
-    };
+//     let coin = CoinRecord {
+//         addr_pk,
+//         addr_sk,
+//         rho,
+//         r,
+//         s,
+//         v,
+//         cm,
+//         coin_status,
+//     };
 
-    Ok(coin)
-}
+//     Ok(coin)
+// }
 
 async fn init_for_demo(wallet: &Wallet) -> Result<(), WalletError> {
     {
         let value = 100;
 
-        let coin = gen_coin_with_params(0x11, 0x12, 0x13, 0x14, value)?;
+        // let coin = gen_coin_with_params(0x11, 0x12, 0x13, 0x14, value)?;
+        let coin = CoinRecord::new(0x11, 0x12, 0x13, 0x14, value)?;
 
         debug!("[demo coin: user_1] {:#?}", coin);
 
@@ -134,7 +135,7 @@ async fn init_for_demo(wallet: &Wallet) -> Result<(), WalletError> {
     {
         let value = 100;
 
-        let coin = gen_coin_with_params(0x21, 0x22, 0x23, 0x24, value)?;
+        let coin = CoinRecord::new(0x21, 0x22, 0x23, 0x24, value)?;
 
         debug!("[demo coin: user_2] {:#?}", coin);
 

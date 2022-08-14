@@ -27,40 +27,51 @@ pub struct CoinRecord {
 }
 
 impl CoinRecord {
-    pub fn new(value: u64) -> Result<CoinRecord, TypesError> {
+    pub fn new(
+        rho: u64,
+        r: u64,
+        s: u64,
+        addr_sk: u64,
+        v: u64,
+    ) -> Result<CoinRecord, TypesError> {
         let hasher = Hasher::new();
 
-        let addr_sk = { U8Array::from_int(10 as u64) };
+        let (addr_pk, addr_sk) = {
+            let pk = U8Array::from_int(addr_sk);
 
-        let addr_pk = { hasher.mimc_single(&addr_sk)? };
+            let addr_pk = hasher.mimc_single(&pk)?;
+            let addr_sk = ScalarExt::parse_arr(&pk)?;
 
-        let rho = { U8Array::from_int(11 as u64) };
-
-        let r = { U8Array::from_int(12 as u64) };
-
-        let s = { U8Array::from_int(13 as u64) };
-
-        let v = { U8Array::from_int(value) };
-
-        let k = {
-            hasher.comm2_scalar(
-                ScalarExt::parse_arr(&r)?,
-                addr_pk,
-                ScalarExt::parse_arr(&rho)?,
-            )
+            (addr_pk, addr_sk)
         };
 
-        let cm = hasher.comm2_scalar(
-            ScalarExt::parse_arr(&s)?,
-            ScalarExt::parse_arr(&v)?,
-            k,
-        );
+        let rho = {
+            let arr = U8Array::from_int(rho as u64);
 
-        let addr_sk = ScalarExt::parse_arr(&addr_sk)?;
-        let rho = ScalarExt::parse_arr(&rho)?;
-        let r = ScalarExt::parse_arr(&r)?;
-        let s = ScalarExt::parse_arr(&s)?;
-        let v = ScalarExt::parse_arr(&v)?;
+            ScalarExt::parse_arr(&arr)?
+        };
+
+        let r = {
+            let arr = U8Array::from_int(r as u64);
+
+            ScalarExt::parse_arr(&arr)?
+        };
+
+        let s = {
+            let arr = U8Array::from_int(s as u64);
+
+            ScalarExt::parse_arr(&arr)?
+        };
+
+        let v = {
+            let arr = U8Array::from_int(v);
+
+            ScalarExt::parse_arr(&arr)?
+        };
+
+        let k = hasher.comm2_scalar(r, addr_pk, rho);
+
+        let cm = hasher.comm2_scalar(s, v, k);
 
         let coin = CoinRecord {
             addr_pk,
