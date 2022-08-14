@@ -9,26 +9,24 @@ pub type FSError = Box<dyn std::error::Error + Send + Sync>;
 // {home}/{config}/{app_name}/{app_prefix}/...
 pub fn create_or_get_app_path(
     app_name: &str,
-    app_prefix: &String,
+    // app_prefix: &String,
 ) -> Result<PathBuf, FSError> {
     if let Some(dir) = ProjectDirs::from("com", "Saksaha", app_name) {
         let app_root_path = dir.config_dir();
 
         if !app_root_path.exists() {
-            if let Err(err) = fs::create_dir(app_root_path) {
-                return Err(format!("Cannot create dir, err: {}", err).into());
-            }
+            fs::create_dir(app_root_path)?;
         }
 
-        let prefixed_app_path = app_root_path.join(app_prefix);
+        // let prefixed_app_path = app_root_path.join(app_prefix);
 
-        if !prefixed_app_path.exists() {
-            if let Err(err) = fs::create_dir(prefixed_app_path.clone()) {
-                return Err(format!("Cannot create dir, err: {}", err).into());
-            }
-        }
+        // if !prefixed_app_path.exists() {
+        //     if let Err(err) = fs::create_dir(prefixed_app_path.clone()) {
+        //         return Err(format!("Cannot create dir, err: {}", err).into());
+        //     }
+        // }
 
-        return Ok(prefixed_app_path);
+        return Ok(app_root_path.to_path_buf());
     } else {
         return Err(format!(
             "No valid app (config) path provided by the operating system"
@@ -36,35 +34,6 @@ pub fn create_or_get_app_path(
         .into());
     }
 }
-
-// pub fn create_or_get_app_path_evl(
-//     app_prefix: &String,
-// ) -> Result<PathBuf, FSError> {
-//     if let Some(dir) = ProjectDirs::from("com", "Envelope", "Envelope") {
-//         let app_root_path = dir.config_dir();
-
-//         if !app_root_path.exists() {
-//             if let Err(err) = fs::create_dir(app_root_path) {
-//                 return Err(format!("app_root create dir, err: {}", err).into());
-//             }
-//         }
-
-//         let prefixed_app_path = app_root_path.join(app_prefix);
-
-//         if !prefixed_app_path.exists() {
-//             if let Err(err) = fs::create_dir(prefixed_app_path.clone()) {
-//                 return Err(format!("Cannot create dir, err: {}", err).into());
-//             }
-//         }
-
-//         return Ok(prefixed_app_path);
-//     } else {
-//         return Err(format!(
-//             "No valid app (config) path provided by the operating system"
-//         )
-//         .into());
-//     }
-// }
 
 pub fn persist(data: String, target_path: PathBuf) -> Result<(), FSError> {
     let target_path_str = target_path.to_string_lossy().yellow();
@@ -101,11 +70,4 @@ pub fn load(path: PathBuf) -> Result<Vec<u8>, FSError> {
     };
 
     Ok(file)
-
-    // match serde_yaml::from_str(file.as_str()) {
-    //     Ok(pconf) => return Ok(pconf),
-    //     Err(err) => {
-    //         return Err(format!("Could not deserialize pconfig, err: {}", err));
-    //     }
-    // }
 }

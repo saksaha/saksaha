@@ -13,8 +13,8 @@ impl WalletDB {
         credential: &WalletCredential,
     ) -> Result<WalletDB, WalletError> {
         let wallet_db_path = {
-            let app_path =
-                sak_fs::create_or_get_app_path(APP_NAME, &credential.acc_addr)?;
+            let app_path = sak_fs::create_or_get_app_path(APP_NAME)?
+                .join(&credential.acc_addr);
 
             let db_path = { app_path.join("db") };
 

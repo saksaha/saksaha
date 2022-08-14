@@ -30,7 +30,7 @@ pub(in crate::rpc) async fn get_balance(
 
     let rb: GetBalanceRequest = require_params_parsed!(route_state, &params);
 
-    debug!("rb:     {:#?}", rb);
+    debug!("rb: {:#?}", rb);
 
     match ctx.wallet.apis.get_balance(&rb.id, &rb.key).await {
         Ok(b) => hyper_rpc_router::make_success_response(

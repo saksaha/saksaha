@@ -3,7 +3,6 @@ use log::info;
 use sak_kv_db::{KeyValueDatabase, Options};
 
 pub(crate) struct LedgerDB {
-    // pub(crate) kv_db: KeyValueDatabase,
     pub(crate) schema: LedgerDBSchema,
 }
 
@@ -13,7 +12,8 @@ impl LedgerDB {
     ) -> Result<LedgerDB, LedgerError> {
         let ledger_db_path = {
             let app_path =
-                sak_fs::create_or_get_app_path("saksaha", app_prefix)?;
+                sak_fs::create_or_get_app_path("saksaha")?.join(app_prefix);
+
             let db_path = { app_path.join("db").join("ledger") };
 
             db_path

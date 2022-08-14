@@ -48,7 +48,7 @@ impl WalletCredential {
 
     pub fn persist(&self) -> Result<(), WalletError> {
         let app_path =
-            sak_fs::create_or_get_app_path(APP_NAME, &self.acc_addr)?;
+            sak_fs::create_or_get_app_path(APP_NAME)?.join(&self.acc_addr);
 
         let target_path = app_path.join("CREATED_AT");
         let since_the_epoch = SystemTime::now().duration_since(UNIX_EPOCH)?;
