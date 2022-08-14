@@ -47,7 +47,6 @@ impl ScalarExt {
 
             ret
         };
-        println!("powe4444");
 
         ScalarExt::parse_arr(&arr)
     }

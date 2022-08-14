@@ -9,6 +9,7 @@ use sak_types::Balance;
 use sak_types::CoinRecord;
 use sak_types::CoinStatus;
 use saksaha::{generate_proof_1_to_2, get_auth_path};
+use std::convert::TryInto;
 
 pub const GAS: u64 = 10;
 
@@ -16,8 +17,6 @@ impl WalletApis {
     pub async fn get_balance(
         &self,
         acc_addr: &String,
-        // user_id: &String,
-        // _key: &String,
     ) -> Result<Balance, WalletError> {
         println!("wallet apis, get_balance, acc_addr: {}", acc_addr);
 
@@ -34,56 +33,15 @@ impl WalletApis {
 
         let mut balance: u64 = 0;
 
-        self.db.schema.get_all_coins();
-        // debug!("latest cm idx: {:?}", latest_cm_idx);
+        for coin in self.db.schema.get_all_coins()? {
+            let bytes = coin.v.to_bytes();
+            println!("bytes: {:?}", bytes);
+            let arr: [u8; 8] = bytes[24..].try_into()?;
+            let val = u64::from_be_bytes(arr);
 
-        // for cm_idx in 0..=latest_cm_idx {
-        //     let cm: String = match self.db.schema.get_cm(&cm_idx) {
-        //         Ok(c) => match c {
-        //             Some(c) => c,
-        //             None => {
-        //                 return Err(format!(
-        //                     "No cm has been found at idx: {:?}",
-        //                     cm_idx
-        //                 )
-        //                 .into())
-        //             }
-        //         },
-        //         Err(err) => {
-        //             return Err(
-        //                 format!("Failed to get cm, err: {:?}", err).into()
-        //             )
-        //         }
-        //     };
-
-        //     let user = match self.db.schema.get_user_id(&cm)? {
-        //         Some(u) => u,
-        //         None => return Err(format!("Failed to get user_id").into()),
-        //     };
-
-        //     let _coin_status = match self.db.schema.get_coin_status(&cm).await?
-        //     {
-        //         Some(s) => {
-        //             if s == CoinStatus::Used {
-        //                 continue;
-        //             }
-        //         }
-        //         None => return Err(format!("Failed to get status").into()),
-        //     };
-
-        //     if user == *user_id {
-        //         let v = match self.db.schema.get_v(&cm)? {
-        //             Some(v) => {
-        //                 let v = decode_hex_string_to_u64(&v).await?;
-
-        //                 v
-        //             }
-        //             None => return Err(format!("Failed to get value").into()),
-        //         };
-
-        //         balance += v;
-        //     }
-        // }
+            println!("val: {}", val);
+            balance += val;
+        }
 
         let b = Balance { val: balance };
 

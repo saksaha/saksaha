@@ -9,8 +9,6 @@ use std::sync::Arc;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub(in crate::rpc) struct GetBalanceRequest {
-    // pub id: String,
-    // pub key: String,
     pub acc_addr: String,
 }
 

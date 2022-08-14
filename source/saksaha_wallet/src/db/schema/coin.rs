@@ -4,22 +4,23 @@ use crate::WalletError;
 use sak_crypto::{Scalar, ScalarExt};
 use sak_kv_db::WriteBatch;
 use sak_proofs::{OldCoin, CM_TREE_DEPTH};
-use sak_types::{CoinRecord, CoinStatus};
+use sak_types::{CoinRecord, CoinStatus, CM};
 use type_extension::U8Arr32;
 
 impl WalletDBSchema {
-    pub fn get_all_coins(&self) -> Result<(), WalletError> {
+    pub fn get_all_coins(&self) -> Result<Vec<CoinRecord>, WalletError> {
         let iter = self.raw.get_coin_iter()?;
 
-        for a in iter {
-            println!("power: {:?}", a);
+        let mut v = vec![];
+        for (_coin_idx, cm) in iter {
+            let arr = type_extension::convert_vec_into_u8_32(cm.to_vec())?;
+            let cm = ScalarExt::parse_arr(&arr)?;
+            let coin = self.get_coin(&cm)?;
+
+            v.push(coin);
         }
 
-        // let idx = self.raw.get_latest_coin_idx()?;
-
-        // println!("!!! idx: {:?}", idx);
-
-        Ok(())
+        Ok(v)
     }
 
     pub fn get_coin(&self, cm: &Scalar) -> Result<CoinRecord, WalletError> {
@@ -60,7 +61,7 @@ impl WalletDBSchema {
 
         let coin_idx = match self.raw.get_coin_idx(&cm)? {
             Some(v) => v,
-            None => return Err(format!("Failed to get cm_idx").into()),
+            None => return Err(format!("Failed to get coin_idx").into()),
         };
 
         let coin_record = CoinRecord {
@@ -107,6 +108,8 @@ impl WalletDBSchema {
 
         self.raw
             .batch_put_coin_idx(&mut batch, &coin.cm, &coin_idx)?;
+
+        self.raw.batch_put_cm(&mut batch, &coin_idx, &coin.cm)?;
 
         self.raw.db.write(batch)?;
 
