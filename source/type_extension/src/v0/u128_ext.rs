@@ -32,5 +32,5 @@ pub fn convert_u8_slice_into_u128(arr: &[u8]) -> Result<u128, TypeExtError> {
         }
     };
 
-    Ok(u128::from_le_bytes(padded_u8_bytes))
+    Ok(u128::from_be_bytes(padded_u8_bytes))
 }
