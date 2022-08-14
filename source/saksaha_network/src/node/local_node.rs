@@ -5,7 +5,7 @@ use super::{
 use crate::machine::Machine;
 use log::warn;
 use sak_p2p_peertable::{Peer, PeerTable};
-use sak_task_queue::{TaskQueue, TaskRuntime};
+use sak_task_queue::TaskQueue;
 use std::{
     pin::Pin,
     sync::Arc,

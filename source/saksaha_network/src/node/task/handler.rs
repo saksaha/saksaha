@@ -7,7 +7,7 @@ use sak_p2p_transport::{
     handshake::{self, HandshakeInitArgs},
     Conn, Msg, TxHashSyncMsg, TxSynMsg, UpgradedConn,
 };
-use sak_task_queue::{TaskHandler, TaskQueue, TaskQueueError};
+use sak_task_queue::{TaskQueue, TaskQueueError};
 use sak_types::TxCandidate;
 use std::sync::Arc;
 use tokio::{
