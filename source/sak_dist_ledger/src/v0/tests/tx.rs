@@ -1,9 +1,9 @@
-use super::utils;
+use super::{test_util::TestUtil, utils};
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_put_and_get_transaction() {
     sak_test_utils::init_test_log();
-    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
+    TestUtil::init_test(vec!["test"]);
 
     let dist_ledger = utils::make_dist_ledger().await;
 
