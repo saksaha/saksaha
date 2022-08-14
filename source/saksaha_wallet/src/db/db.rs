@@ -16,7 +16,7 @@ impl WalletDB {
             let app_path = sak_fs::create_or_get_app_path(APP_NAME)?
                 .join(&credential.acc_addr);
 
-            let db_path = { app_path.join("db") };
+            let db_path = app_path.join("db");
 
             fs::create_dir(db_path.clone())?;
 

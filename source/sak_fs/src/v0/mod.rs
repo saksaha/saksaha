@@ -6,9 +6,27 @@ use std::path::PathBuf;
 
 pub type FSError = Box<dyn std::error::Error + Send + Sync>;
 
+pub fn get_app_root_path(app_name: &str) -> Result<PathBuf, FSError> {
+    if let Some(dir) = ProjectDirs::from("com", "Saksaha", app_name) {
+        let app_root_path = dir.config_dir();
+
+        if !app_root_path.exists() {
+            fs::create_dir(app_root_path)?;
+        }
+
+        return Ok(app_root_path.to_path_buf());
+    } else {
+        return Err(format!(
+            "No valid app (config) path provided by the operating system"
+        )
+        .into());
+    }
+}
+
 // {home}/{config}/{app_name}/{app_prefix}/...
 pub fn create_or_get_app_path(
     app_name: &str,
+    p: usize,
     // app_prefix: &String,
 ) -> Result<PathBuf, FSError> {
     if let Some(dir) = ProjectDirs::from("com", "Saksaha", app_name) {
