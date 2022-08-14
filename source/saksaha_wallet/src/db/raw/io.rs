@@ -3,6 +3,11 @@ use super::WalletDBSchema;
 use crate::db::cfs;
 use crate::WalletError;
 use sak_crypto::{Scalar, ScalarExt};
+use sak_kv_db::DBIteratorWithThreadMode;
+use sak_kv_db::DBRawIteratorWithThreadMode;
+use sak_kv_db::DBWithThreadMode;
+use sak_kv_db::MultiThreaded;
+use sak_kv_db::ThreadMode;
 use sak_kv_db::WriteBatch;
 use sak_kv_db::{BoundColumnFamily, ColumnFamilyDescriptor, Options, DB};
 use sak_proofs::{OldCoin, CM_TREE_DEPTH};
@@ -10,6 +15,22 @@ use sak_types::CoinStatus;
 use type_extension::U8Arr32;
 
 impl Raw {
+    pub(crate) fn get_cm_iter<T>(
+        &self,
+    ) -> Result<
+        DBIteratorWithThreadMode<DBWithThreadMode<MultiThreaded>>,
+        WalletError,
+    >
+    where
+        T: ThreadMode,
+    {
+        let cf = self.make_cf_handle(&self.db, cfs::CM)?;
+
+        let mut iter = self.db.iterator_cf(&cf, sak_kv_db::IteratorMode::Start);
+
+        Ok(iter)
+    }
+
     pub(crate) fn get_coin_status(
         &self,
         cm: &Scalar,

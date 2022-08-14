@@ -21,10 +21,20 @@ impl WalletApis {
     ) -> Result<Balance, WalletError> {
         println!("wallet apis, get_balance, acc_addr: {}", acc_addr);
 
-        // self.crede
+        let cmanager = &self.credential_manager;
+        let credential = cmanager.get_curr_credential();
+
+        if &credential.acc_addr != acc_addr {
+            return Err(format!(
+                "acc addr is not correct. Candidates are: {:?}",
+                cmanager.get_candidates(),
+            )
+            .into());
+        }
 
         let mut balance: u64 = 0;
 
+        self.db.schema.get_all_coins();
         // debug!("latest cm idx: {:?}", latest_cm_idx);
 
         // for cm_idx in 0..=latest_cm_idx {

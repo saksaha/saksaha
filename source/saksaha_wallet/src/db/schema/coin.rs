@@ -8,6 +8,15 @@ use sak_types::{CoinRecord, CoinStatus};
 use type_extension::U8Arr32;
 
 impl WalletDBSchema {
+    pub fn get_all_coins(&self) {
+        let mut iter = self.db.iterator_cf(&cf, sak_kv_db::IteratorMode::Start);
+
+        let (cm_idx_bytes, _hash) = match iter.next() {
+            Some(a) => a,
+            None => return Ok(None),
+        };
+    }
+
     pub fn get_coin(&self, cm: &Scalar) -> Result<CoinRecord, WalletError> {
         let addr_pk = match self.raw.get_a_pk(&cm)? {
             Some(p) => p,
