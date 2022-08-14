@@ -1,9 +1,12 @@
 use crate::{LedgerDBSchema, LedgerError};
 use log::info;
 use sak_kv_db::{KeyValueDatabase, Options};
+use std::path::PathBuf;
 
-pub(crate) struct LedgerDB {
-    // pub(crate) kv_db: KeyValueDatabase,
+// TODO This has to be dynamically decided
+const APP_NAME: &'static str = "saksaha";
+
+pub struct LedgerDB {
     pub(crate) schema: LedgerDBSchema,
 }
 
@@ -12,9 +15,11 @@ impl LedgerDB {
         app_prefix: &String,
     ) -> Result<LedgerDB, LedgerError> {
         let ledger_db_path = {
-            let app_path =
-                sak_fs::create_or_get_app_path("saksaha", app_prefix)?;
-            let db_path = { app_path.join("db").join("ledger") };
+            let db_path = Self::get_db_path(app_prefix)?;
+
+            if !db_path.exists() {
+                std::fs::create_dir_all(db_path.clone())?;
+            }
 
             db_path
         };
@@ -49,5 +54,13 @@ impl LedgerDB {
         info!("Initialized Database");
 
         Ok(database)
+    }
+
+    pub fn get_db_path(app_prefix: &str) -> Result<PathBuf, LedgerError> {
+        let app_path = sak_fs::get_app_root_path(APP_NAME)?.join(app_prefix);
+
+        let db_path = app_path.join("db").join("ledger");
+
+        Ok(db_path)
     }
 }

@@ -7,6 +7,7 @@ use sak_proofs::{MerkleTree, NewCoin, OldCoin, CM_TREE_DEPTH};
 use sak_types::{BlockCandidate, TxCandidate};
 use type_extension::U8Array;
 
+use super::TestUtil;
 use saksaha::{
     generate_proof_1_to_2, get_auth_path, send_tx_mint, verify_proof_1_to_2,
 };
@@ -115,7 +116,8 @@ fn generate_a_dummy_coin(value: u64) -> Coin {
 #[tokio::test(flavor = "multi_thread")]
 async fn test_generate_a_proof() {
     sak_test_utils::init_test_log();
-    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
+
+    TestUtil::init_test(vec!["test"]);
 
     let coin_1_old = generate_a_dummy_coin(100);
 

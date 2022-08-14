@@ -1,5 +1,4 @@
 use super::WalletApis;
-use crate::{Wallet, WalletError};
 use log::warn;
 use sak_crypto::{
     PublicKey, SakKey, SecretKey, SigningKey, ToEncodedPoint, VerifyingKey,

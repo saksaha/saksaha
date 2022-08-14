@@ -1,5 +1,8 @@
 use super::utils;
-use crate::rpc::routes::v0::{GetBlockListResponse, GetBlockResponse};
+use crate::{
+    rpc::routes::v0::{GetBlockListResponse, GetBlockResponse},
+    tests::TestUtil,
+};
 use hyper::{Body, Client, Method, Request, Uri};
 use sak_rpc_interface::{JsonRequest, JsonResponse};
 use sak_types::BlockHash;
@@ -7,7 +10,7 @@ use sak_types::BlockHash;
 #[tokio::test(flavor = "multi_thread")]
 async fn test_call_get_block_with_good_params() {
     sak_test_utils::init_test_log();
-    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
+    TestUtil::init_test(vec!["test"]);
 
     let (rpc, rpc_socket_addr, machine) = utils::make_test_context().await;
 
@@ -84,7 +87,7 @@ async fn test_call_get_block_with_good_params() {
 #[should_panic]
 async fn test_call_get_block_with_wrong_params() {
     sak_test_utils::init_test_log();
-    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
+    TestUtil::init_test(vec!["test"]);
 
     let (rpc, rpc_socket_addr, machine) = utils::make_test_context().await;
 
@@ -172,7 +175,7 @@ async fn test_call_get_block_with_wrong_params() {
 #[tokio::test(flavor = "multi_thread")]
 async fn test_call_get_block_list() {
     sak_test_utils::init_test_log();
-    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
+    TestUtil::init_test(vec!["test"]);
 
     let (rpc, rpc_socket_addr, machine) = utils::make_test_context().await;
 

@@ -9,8 +9,9 @@ use std::sync::Arc;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub(in crate::rpc) struct GetBalanceRequest {
-    pub id: String,
-    pub key: String,
+    // pub id: String,
+    // pub key: String,
+    pub acc_addr: String,
 }
 
 pub(in crate::rpc) async fn get_balance(
@@ -30,9 +31,9 @@ pub(in crate::rpc) async fn get_balance(
 
     let rb: GetBalanceRequest = require_params_parsed!(route_state, &params);
 
-    debug!("rb:     {:#?}", rb);
+    debug!("rb: {:#?}", rb);
 
-    match ctx.wallet.apis.get_balance(&rb.id, &rb.key).await {
+    match ctx.wallet.get_apis().get_balance(&rb.acc_addr).await {
         Ok(b) => hyper_rpc_router::make_success_response(
             route_state,
             // format!("get balance success, {:?}", b.val),

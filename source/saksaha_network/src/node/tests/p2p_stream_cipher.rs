@@ -1,5 +1,5 @@
 use super::utils;
-use crate::{machine::Machine, node::LocalNode, p2p::P2PHost};
+use crate::{machine::Machine, node::LocalNode, p2p::P2PHost, tests::TestUtil};
 use sak_p2p_id::Identity;
 use sak_p2p_peertable::PeerTable;
 use std::{sync::Arc, time::Duration};
@@ -7,7 +7,7 @@ use std::{sync::Arc, time::Duration};
 #[tokio::test(flavor = "multi_thread")]
 async fn test_two_nodes_talk_on_stream_cipher() {
     sak_test_utils::init_test_log();
-    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
+    TestUtil::init_test(vec!["test_1", "test_2"]);
 
     let app_prefix_vec = vec![String::from("test_1"), String::from("test_2")];
 

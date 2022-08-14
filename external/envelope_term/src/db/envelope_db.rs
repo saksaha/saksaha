@@ -4,6 +4,7 @@ use sak_crypto::{
     PublicKey, SakKey, SecretKey, SigningKey, ToEncodedPoint, VerifyingKey,
 };
 use sak_kv_db::{KeyValueDatabase, Options};
+use std::path::PathBuf;
 
 pub(crate) const APP_NAME: &str = "envelope";
 
@@ -16,9 +17,11 @@ impl EnvelopeDB {
         app_prefix: &String,
     ) -> Result<EnvelopeDB, EnvelopeError> {
         let envelope_db_path = {
-            let app_path =
-                sak_fs::create_or_get_app_path(APP_NAME, app_prefix)?;
-            let db_path = { app_path.join("db") };
+            let db_path = Self::get_db_path(app_prefix)?;
+
+            if !db_path.exists() {
+                std::fs::create_dir_all(db_path.clone())?;
+            }
 
             db_path
         };
@@ -95,5 +98,13 @@ impl EnvelopeDB {
             .put_user_data(user_id, &secret_str, &public_key_str, &sig_str)
             .await?;
         Ok(())
+    }
+
+    pub fn get_db_path(app_prefix: &str) -> Result<PathBuf, EnvelopeError> {
+        let app_path = sak_fs::get_app_root_path(APP_NAME)?.join(app_prefix);
+
+        let db_path = app_path.join("db");
+
+        Ok(db_path)
     }
 }

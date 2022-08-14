@@ -1,12 +1,12 @@
 use super::utils;
-use crate::rpc::routes::v0::GetNodeStatusResponse;
+use crate::{rpc::routes::v0::GetNodeStatusResponse, tests::TestUtil};
 use hyper::{Body, Client, Method, Request, Uri};
 use sak_rpc_interface::{JsonRequest, JsonResponse};
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_rpc_client_request_correct_status() {
     sak_test_utils::init_test_log();
-    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
+    TestUtil::init_test(vec!["test"]);
 
     let (rpc, rpc_socket_addr, _machine) = utils::make_test_context().await;
 

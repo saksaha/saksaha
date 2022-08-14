@@ -1,5 +1,6 @@
 use super::utils;
 use crate::p2p::P2PHost;
+use crate::tests::TestUtil;
 use crate::{machine::Machine, node::LocalNode};
 use sak_p2p_id::Identity;
 use sak_p2p_peertable::PeerTable;
@@ -10,11 +11,7 @@ use std::time::Duration;
 #[tokio::test(flavor = "multi_thread")]
 async fn test_two_nodes_tx_pool_marshal_check_true() {
     sak_test_utils::init_test_log();
-    sak_test_utils::init_test_config(&vec![
-        String::from("test_1"),
-        String::from("test_2"),
-    ])
-    .unwrap();
+    TestUtil::init_test(vec!["test_1", "test_2"]);
 
     let (p2p_host_1, local_node_1, machine_1, _, _): (
         P2PHost,

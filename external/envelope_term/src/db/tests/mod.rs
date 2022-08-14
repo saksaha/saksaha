@@ -10,6 +10,7 @@ use std::{collections::HashMap, thread::sleep};
 #[tokio::test(flavor = "multi_thread")]
 async fn test_envelope_db_user_register() {
     let test_string = String::from("test");
+
     let db = EnvelopeDB::init(&test_string).await.unwrap();
 
     db.register_user(&USER_1.to_string()).await.unwrap();

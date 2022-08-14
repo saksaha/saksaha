@@ -81,9 +81,7 @@ mod test {
 
     #[test]
     fn test_ecies_variant() {
-        init();
-
-        sak_test_utils::init_test_config(&vec!["test".to_string()]).unwrap();
+        sak_test_utils::init_test_log();
 
         let (bob_pk, bob_sk) = {
             let (sk, pk) = SakKey::generate();

@@ -1,9 +1,25 @@
-use crate::db::WalletDB;
+use crate::{credential::WalletCredential, db::WalletDB};
+
+fn mock_wallet_credential() -> WalletCredential {
+    let public_key = String::from(
+        "046f737a049d48f626534328a6aa9507ae6a989750\
+        59a9892cab16b8ce748dd265e3abfd928b8bc040683\
+        0c10a8e8d2d1159b8c0eed26e2a2d522ad0d44efb6649",
+    );
+
+    let secret = String::from(
+        "c151588543dc41774d85fee0d4d73dee3c8071d\
+        8ebef9b3850be3f66cf0d83b9",
+    );
+
+    let c = WalletCredential::load(public_key, secret).unwrap();
+    c
+}
 
 pub(crate) async fn make_dummy_db() -> WalletDB {
-    let test_string: String = "test_wallet".to_string();
+    let wallet_credential = mock_wallet_credential();
 
-    let db = WalletDB::init(&test_string).unwrap();
+    let db = WalletDB::init(&wallet_credential).unwrap();
 
     db
 }

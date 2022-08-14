@@ -1,3 +1,4 @@
+use super::test_util::TestUtil;
 use super::utils;
 use sak_vm::CtrFn;
 use sak_vm::VM;
@@ -6,7 +7,7 @@ use sak_vm::VM;
 #[should_panic]
 async fn test_insert_invalid_contract_to_tx_pool() {
     sak_test_utils::init_test_log();
-    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
+    TestUtil::init_test(vec!["test"]);
 
     let test_wasm = include_bytes!("./test_invalid_contract.wasm").to_vec();
 

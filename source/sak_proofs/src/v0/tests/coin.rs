@@ -437,7 +437,6 @@ fn verify_proof(
 
 #[tokio::test(flavor = "multi_thread")]
 pub async fn test_coin_ownership_default() {
-    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
     sak_test_utils::init_test_log();
 
     let test_context = make_test_context();
