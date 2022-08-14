@@ -1,5 +1,7 @@
 use super::apis::{self, WalletApis};
-use crate::{credential::WalletCredential, db::WalletDB, WalletError};
+use crate::{
+    credential::WalletCredential, db::WalletDB, CredentialManager, WalletError,
+};
 use futures::sink::Send;
 use log::debug;
 use sak_crypto::{Hasher, ScalarExt};
@@ -8,23 +10,32 @@ use sak_types::{CoinRecord, CoinStatus};
 use type_extension::U8Array;
 
 pub(crate) struct Wallet {
-    pub apis: WalletApis,
-    credential: WalletCredential,
+    apis: WalletApis,
+    // credential: WalletCredential,
 }
 
 impl Wallet {
     pub async fn init(
-        credential: WalletCredential,
+        // credential: WalletCredential,
+        credential_manager: CredentialManager,
         wallet_db: WalletDB,
     ) -> Result<Wallet, WalletError> {
-        let apis = WalletApis { db: wallet_db };
+        let apis = WalletApis {
+            db: wallet_db,
+            credential_manager,
+        };
 
-        let w = Wallet { credential, apis };
+        let w = Wallet { apis };
 
         // for development
         init_for_demo(&w).await?;
 
         Ok(w)
+    }
+
+    #[inline]
+    pub fn get_apis(&self) -> &WalletApis {
+        &self.apis
     }
 }
 
