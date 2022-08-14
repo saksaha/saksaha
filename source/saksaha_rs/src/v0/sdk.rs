@@ -127,7 +127,6 @@ pub async fn send_tx_pour(
     req_type: String,
     args: RequestArgs,
 ) -> Result<JsonResponse<String>, SaksahaSDKError> {
-    println!("34418");
     let endpoint_test = "http://localhost:34418/rpc/v0";
 
     let client = Client::new();

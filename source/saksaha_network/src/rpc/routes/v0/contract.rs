@@ -20,6 +20,13 @@ pub(crate) struct QueryCtrResponse {
     pub result: String,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct OpenChBody {
+    pub ch_id: String,
+    pub eph_key: String,
+    pub sig: String,
+}
+
 pub(in crate::rpc) async fn query_ctr(
     route_state: RouteState,
     params: Params,
@@ -32,6 +39,7 @@ pub(in crate::rpc) async fn query_ctr(
     );
 
     let rb: QueryCtrRequest = require_params_parsed!(route_state, &params);
+    println!("in query_ctr, {:?}", rb);
 
     match sys_handle
         .machine
@@ -42,14 +50,28 @@ pub(in crate::rpc) async fn query_ctr(
         .await
     {
         Ok(t) => {
-            let result: String = require_params_parsed!(route_state, &t);
+            println!("t: {:?}", t);
+
+            let result: OpenChBody = serde_json::from_slice(&t).unwrap();
+            // println!("{:?}", result);
+            // let result: OpenChBody = require_params_parsed!(route_state, &t);
+            // let result: String = require_params_parsed!(route_state, &t);
+            // let result = std::str::from_utf8(&t).unwrap_or("");
+            // println!("{:?}", result);
+            // let result: String =
+            //     serde_json::from_str(result).unwrap_or(String::default());
+            println!("1111 {:?}", result);
 
             return make_success_response(
                 route_state,
-                QueryCtrResponse { result },
+                QueryCtrResponse {
+                    result: serde_json::to_string(&result).unwrap(),
+                },
             );
         }
         Err(err) => {
+            println!("fail");
+
             return make_error_response(
                 route_state.resp,
                 Some(route_state.id),

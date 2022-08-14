@@ -4,7 +4,7 @@ use saksaha_wallet::{App, AppArgs, WalletError};
 
 const RUST_LOG_ENV: &str = "
     sak_,
-    saksaha
+    saksaha_
 ";
 
 fn main() -> Result<(), WalletError> {

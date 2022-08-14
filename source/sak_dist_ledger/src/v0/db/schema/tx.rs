@@ -106,7 +106,7 @@ impl LedgerDBSchema {
 
         let sn_1 = self.get_sn_1(tx_hash)?.ok_or("sn_1 should exist")?;
 
-        let sn_2 = self.get_cm_2(tx_hash)?.ok_or("sn_2 should exist")?;
+        // let sn_2 = self.get_cm_2(tx_hash)?.ok_or("sn_2 should exist")?;
 
         let cm_1 = self.get_cm_1(tx_hash)?.ok_or("cm_1 should exist")?;
 
@@ -117,7 +117,7 @@ impl LedgerDBSchema {
             .ok_or("merkle_root should exist")?;
 
         let tx_candidate = PourTxCandidate::new(
-            created_at, data, author_sig, ctr_addr, pi, sn_1, sn_2, cm_1, cm_2,
+            created_at, data, author_sig, ctr_addr, pi, sn_1, cm_1, cm_2,
             merkle_rt,
         );
 
@@ -530,7 +530,7 @@ impl LedgerDBSchema {
 
         self.batch_put_sn_1(batch, tx_hash, &tc.sn_1)?;
 
-        self.batch_put_sn_2(batch, tx_hash, &tc.sn_2)?;
+        // self.batch_put_sn_2(batch, tx_hash, &tc.sn_2)?;
 
         self.batch_put_cm_1(batch, tx_hash, &tc.cm_1)?;
 

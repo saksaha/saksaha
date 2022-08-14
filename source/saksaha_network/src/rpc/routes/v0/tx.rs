@@ -141,19 +141,13 @@ pub(in crate::rpc) async fn send_pour_tx(
     params: Params,
     sys_handle: Arc<SystemHandle>,
 ) -> Response<Body> {
-    println!("1113");
-
     let params = require_some_params!(
         route_state,
         params,
         "send_pour_tx should contain params",
     );
 
-    println!("1114");
-
     let rb: SendPourTxRequest = require_params_parsed!(route_state, &params);
-
-    println!(" saksaha_network rb : {:?}", rb);
 
     let tx_candidate = TxCandidate::Pour(PourTxCandidate::new(
         rb.created_at,
@@ -162,7 +156,7 @@ pub(in crate::rpc) async fn send_pour_tx(
         rb.ctr_addr,
         rb.pi,
         rb.sn_1,
-        rb.sn_2,
+        // rb.sn_2,
         rb.cm_1,
         rb.cm_2,
         rb.merkle_rt,

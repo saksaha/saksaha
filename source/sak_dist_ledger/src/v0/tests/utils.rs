@@ -7,7 +7,6 @@ use sak_types::{
     BlockCandidate, PourTxCandidate, Tx, TxCandidate, U8Array,
     WASM_MAGIC_NUMBER,
 };
-use std::collections::HashMap;
 
 pub struct DummyPos {}
 
@@ -101,7 +100,6 @@ pub(crate) fn make_dummy_block_candidate_with_query_tx(
                 String::from("author_sig_1"),
                 Some(String::from("ctr_addr_1")),
                 vec![0],
-                U8Array::new_empty_32(),
                 U8Array::new_empty_32(),
                 U8Array::new_empty_32(),
                 U8Array::new_empty_32(),

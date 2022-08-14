@@ -4,7 +4,7 @@ use sak_kv_db::{Options, DB};
 pub fn init_test_log() {
     const RUST_LOG_ENV: &str = "
             sak_,
-            saksaha
+            saksaha_,
         ";
 
     if std::env::var("RUST_LOG").is_err() {
