@@ -12,6 +12,8 @@ use saksaha::{
 };
 use std::{collections::HashMap, sync::Arc, time::Duration};
 
+use super::TestUtils;
+
 pub struct DummyPos {}
 
 #[async_trait]
@@ -115,7 +117,9 @@ fn generate_a_dummy_coin(value: u64) -> Coin {
 #[tokio::test(flavor = "multi_thread")]
 async fn test_generate_a_proof() {
     sak_test_utils::init_test_log();
-    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
+
+    // sak_test_utils::init_test_config(vec!["test"]).unwrap();
+    TestUtils::init_test(vec!["test"]);
 
     let coin_1_old = generate_a_dummy_coin(100);
 
