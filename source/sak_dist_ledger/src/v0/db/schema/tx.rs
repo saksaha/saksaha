@@ -4,7 +4,7 @@ use sak_kv_db::WriteBatch;
 use sak_kv_db::DB;
 use sak_types::{
     MintTx, MintTxCandidate, PourTx, PourTxCandidate, Tx, TxCtrOp, TxHash,
-    TxType,
+    TxHeight, TxType,
 };
 
 // getter
@@ -270,12 +270,12 @@ impl LedgerDBSchema {
         &self,
         // db: &DB,
         key: &TxHash,
-    ) -> Result<Option<u128>, LedgerError> {
+    ) -> Result<Option<TxHeight>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::TX_HEIGHT)?;
 
         match self.db.get_cf(&cf, key)? {
             Some(v) => {
-                let height = sak_kv_db::convert_u8_slice_into_u128(&v)?;
+                let height = type_extension::convert_u8_slice_into_u128(&v)?;
 
                 return Ok(Some(height));
             }

@@ -8,13 +8,12 @@ use sak_types::{CoinRecord, CoinStatus};
 use type_extension::U8Arr32;
 
 impl WalletDBSchema {
-    pub fn get_all_coins(&self) {
-        let mut iter = self.db.iterator_cf(&cf, sak_kv_db::IteratorMode::Start);
+    pub fn get_all_coins(&self) -> Result<(), WalletError> {
+        let iter = self.raw.get_cm_iter()?;
 
-        let (cm_idx_bytes, _hash) = match iter.next() {
-            Some(a) => a,
-            None => return Ok(None),
-        };
+        // for (key, value)
+
+        Ok(())
     }
 
     pub fn get_coin(&self, cm: &Scalar) -> Result<CoinRecord, WalletError> {
@@ -71,13 +70,19 @@ impl WalletDBSchema {
         let mut batch = WriteBatch::default();
 
         self.raw.batch_put_rho(&mut batch, &coin.cm, &coin.rho)?;
+
         self.raw.batch_put_r(&mut batch, &coin.cm, &coin.r)?;
+
         self.raw.batch_put_s(&mut batch, &coin.cm, &coin.s)?;
+
         self.raw.batch_put_v(&mut batch, &coin.cm, &coin.v)?;
+
         self.raw
             .batch_put_a_pk(&mut batch, &coin.cm, &coin.addr_pk)?;
+
         self.raw
             .batch_put_a_sk(&mut batch, &coin.cm, &coin.addr_sk)?;
+
         self.raw.batch_put_coin_status(
             &mut batch,
             &coin.cm,

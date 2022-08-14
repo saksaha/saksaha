@@ -15,20 +15,37 @@ use sak_types::CoinStatus;
 use type_extension::U8Arr32;
 
 impl Raw {
-    pub(crate) fn get_cm_iter<T>(
+    pub(crate) fn get_cm_iter(
         &self,
     ) -> Result<
         DBIteratorWithThreadMode<DBWithThreadMode<MultiThreaded>>,
         WalletError,
-    >
-    where
-        T: ThreadMode,
-    {
+    > {
         let cf = self.make_cf_handle(&self.db, cfs::CM)?;
 
-        let mut iter = self.db.iterator_cf(&cf, sak_kv_db::IteratorMode::Start);
+        let iter = self.db.iterator_cf(&cf, sak_kv_db::IteratorMode::Start);
 
         Ok(iter)
+    }
+
+    pub(crate) fn get_cm_idx(
+        &self,
+        cm: &Scalar,
+    ) -> Result<Option<CoinStatus>, WalletError> {
+        let cf = self.make_cf_handle(&self.db, cfs::CM_IDX)?;
+
+        let cm = cm.to_bytes();
+
+        match self.db.get_cf(&cf, cm)? {
+            Some(v) => {
+                let idx: u128 = u128::from_le_bytes(&v);
+
+                return Ok(Some(status));
+            }
+            None => {
+                return Ok(None);
+            }
+        };
     }
 
     pub(crate) fn get_coin_status(

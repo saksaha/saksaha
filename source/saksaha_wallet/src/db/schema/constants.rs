@@ -20,5 +20,5 @@ pub(crate) mod cfs {
 
     pub const USER_ID: &str = "user_id";
 
-    // pub const CM_IDX: &str = "cm_idx";
+    pub const CM_IDX: &str = "cm_idx";
 }
