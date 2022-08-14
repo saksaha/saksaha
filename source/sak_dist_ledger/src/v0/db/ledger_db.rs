@@ -12,9 +12,13 @@ impl LedgerDB {
     ) -> Result<LedgerDB, LedgerError> {
         let ledger_db_path = {
             let app_path =
-                sak_fs::create_or_get_app_path("saksaha")?.join(app_prefix);
+                sak_fs::get_app_root_path("saksaha")?.join(app_prefix);
 
-            let db_path = { app_path.join("db").join("ledger") };
+            let db_path = app_path.join("db").join("ledger");
+
+            if !db_path.exists() {
+                std::fs::create_dir_all(db_path.clone())?;
+            }
 
             db_path
         };

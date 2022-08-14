@@ -47,19 +47,18 @@ impl WalletCredential {
     }
 
     pub fn persist(&self) -> Result<(), WalletError> {
-        println!("0");
-
         let app_path =
-            sak_fs::create_or_get_app_path(APP_NAME)?.join(&self.acc_addr);
-
-        println!("1");
+            sak_fs::get_app_root_path(APP_NAME)?.join(&self.acc_addr);
 
         let target_path = app_path.join("CREATED_AT");
+
+        if !target_path.exists() {
+            std::fs::create_dir_all(target_path.clone())?;
+        }
+
         let since_the_epoch = SystemTime::now().duration_since(UNIX_EPOCH)?;
 
         std::fs::write(target_path, since_the_epoch.as_millis().to_string())?;
-
-        println!("2");
 
         println!(
             "\nWallet app path is successfully created under {}",

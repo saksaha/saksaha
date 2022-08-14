@@ -17,8 +17,13 @@ impl EnvelopeDB {
     ) -> Result<EnvelopeDB, EnvelopeError> {
         let envelope_db_path = {
             let app_path =
-                sak_fs::create_or_get_app_path(APP_NAME)?.join(app_prefix);
-            let db_path = { app_path.join("db") };
+                sak_fs::get_app_root_path(APP_NAME)?.join(app_prefix);
+
+            let db_path = app_path.join("db");
+
+            if !db_path.exists() {
+                std::fs::create_dir_all(db_path.clone())?;
+            }
 
             db_path
         };

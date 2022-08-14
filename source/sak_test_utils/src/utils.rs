@@ -22,8 +22,7 @@ pub fn init_test_config(
     app_prefixes: &Vec<String>,
 ) -> Result<(), TestUtilsError> {
     for app_prefix in app_prefixes {
-        let db_path =
-            sak_fs::create_or_get_app_path(APP_NAME)?.join(app_prefix);
+        let db_path = sak_fs::get_app_root_path(APP_NAME)?.join(app_prefix);
 
         let ledger_path = db_path.join("db").join("ledger");
 

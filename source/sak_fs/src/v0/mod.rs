@@ -26,7 +26,6 @@ pub fn get_app_root_path(app_name: &str) -> Result<PathBuf, FSError> {
 // {home}/{config}/{app_name}/{app_prefix}/...
 pub fn create_or_get_app_path(
     app_name: &str,
-    p: usize,
     // app_prefix: &String,
 ) -> Result<PathBuf, FSError> {
     if let Some(dir) = ProjectDirs::from("com", "Saksaha", app_name) {

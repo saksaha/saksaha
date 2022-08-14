@@ -18,7 +18,9 @@ impl WalletDB {
 
             let db_path = app_path.join("db");
 
-            fs::create_dir(db_path.clone())?;
+            if !db_path.exists() {
+                fs::create_dir_all(db_path.clone())?;
+            }
 
             db_path
         };
