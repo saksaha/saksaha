@@ -121,7 +121,11 @@ impl PeerNode {
                                 PeerStatus::Disconnected,
                             ).await;
 
-                            return Err(format!("Peer has ended the connection")
+                            return Err(
+                                format!("Peer has ended the connection, \
+                                    her_public_key: {}",
+                                    self.peer.get_public_key_short()
+                                )
                                 .into());
                         }
                     };

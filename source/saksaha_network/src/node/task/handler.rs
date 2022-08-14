@@ -23,6 +23,8 @@ pub(in crate::node) async fn handle_task<'a>(
 ) {
     println!("handle new task: {}", task);
 
+    let task_type = task.to_string();
+
     let res = match task {
         NodeTask::SendTxHashSyn { tx_hashes } => {
             msg_handle::send_tx_hash_syn(conn_lock, tx_hashes, task_queue).await
@@ -36,9 +38,9 @@ pub(in crate::node) async fn handle_task<'a>(
         }
     };
 
-    // if let Err(err) = res {
-    //     warn!("Task handle failed, err: {}", err);
-    // }
+    if let Err(err) = res {
+        warn!("Task handle failed, task: {}, err: {}", task_type, err);
+    }
 }
 
 // pub(in crate::node) struct NodeTaskHandler {

@@ -22,6 +22,7 @@ pub(in crate::node) async fn send_tx_syn<'a>(
     tx_hashes: Vec<TxHash>,
     machine: &Arc<Machine>,
 ) -> Result<(), SaksahaNodeError> {
+    println!("send tx syn");
     // let mut conn = peer.get_transport().conn.write().await;
 
     let tx_candidates = machine
@@ -57,6 +58,8 @@ pub(in crate::node) async fn recv_tx_syn(
     machine: &Machine,
     mut conn: RwLockWriteGuard<'_, UpgradedConn>,
 ) -> Result<SendReceipt, SaksahaNodeError> {
+    println!("recv tx syn");
+
     machine
         .blockchain
         .dist_ledger

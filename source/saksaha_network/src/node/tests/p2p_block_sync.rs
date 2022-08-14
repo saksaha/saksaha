@@ -105,7 +105,7 @@ async fn test_block_sync_true() {
         .expect("Node should be able to send a transaction");
 
     tokio::time::sleep(Duration::from_secs(2)).await;
-    tokio::time::sleep(Duration::from_secs(50)).await;
+    // tokio::time::sleep(Duration::from_secs(50)).await;
 
     {
         println!("check if node2 has tx: {}", dummy_tx1.get_tx_hash());
@@ -122,7 +122,7 @@ async fn test_block_sync_true() {
         println!("[success] node_2 has tx_1 (shared from node_1)");
     }
 
-    tokio::time::sleep(Duration::from_secs(3)).await;
+    // tokio::time::sleep(Duration::from_secs(3)).await;
     tokio::time::sleep(Duration::from_secs(40)).await;
 
     // {
