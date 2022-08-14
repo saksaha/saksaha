@@ -14,7 +14,7 @@ impl Raw {
         &self,
         cm: &Scalar,
     ) -> Result<Option<CoinStatus>, WalletError> {
-        let cf = self.make_cf_handle(&self.db, cfs::STATUS)?;
+        let cf = self.make_cf_handle(&self.db, cfs::COIN_STATUS)?;
 
         let cm = cm.to_bytes();
 
@@ -153,50 +153,6 @@ impl Raw {
             }
         };
     }
-    pub(crate) async fn put_coin(
-        &self,
-        cm: &Scalar,
-        rho: &Scalar,
-        r: &Scalar,
-        s: &Scalar,
-        v: &Scalar,
-        a_pk: &Scalar,
-        a_sk: &Scalar,
-        user_id: &String,
-        status: &CoinStatus,
-    ) -> Result<(), WalletError> {
-        let mut batch = WriteBatch::default();
-
-        self.batch_put_rho(&mut batch, cm, rho)?;
-        self.batch_put_r(&mut batch, cm, r)?;
-        self.batch_put_s(&mut batch, cm, s)?;
-        self.batch_put_v(&mut batch, cm, v)?;
-        self.batch_put_a_pk(&mut batch, cm, a_pk)?;
-        self.batch_put_a_sk(&mut batch, cm, a_sk)?;
-        self.batch_put_user_id(&mut batch, cm, user_id)?;
-        self.batch_put_status(&mut batch, cm, status)?;
-        // self.batch_put_cm_idx(&mut batch, cm, cm_idx)?;
-
-        // self.batch_put_cm_by_cm_idx(&mut batch, cm_idx, cm)?;
-
-        self.db.write(batch)?;
-
-        Ok(())
-    }
-
-    pub(crate) async fn put_coin_status(
-        &self,
-        cm: &Scalar,
-        status: &CoinStatus,
-    ) -> Result<(), WalletError> {
-        let mut batch = WriteBatch::default();
-
-        self.batch_put_status(&mut batch, cm, status)?;
-
-        self.db.write(batch)?;
-
-        Ok(())
-    }
 
     pub(crate) fn batch_put_rho(
         &self,
@@ -294,28 +250,13 @@ impl Raw {
         Ok(())
     }
 
-    pub(crate) fn batch_put_user_id(
-        &self,
-        batch: &mut WriteBatch,
-        cm: &Scalar,
-        user_id: &String,
-    ) -> Result<(), WalletError> {
-        let cf = self.make_cf_handle(&self.db, cfs::USER_ID)?;
-
-        let cm = cm.to_bytes();
-
-        batch.put_cf(&cf, cm, user_id);
-
-        Ok(())
-    }
-
-    pub(crate) fn batch_put_status(
+    pub(crate) fn batch_put_coin_status(
         &self,
         batch: &mut WriteBatch,
         cm: &Scalar,
         status: &CoinStatus,
     ) -> Result<(), WalletError> {
-        let cf = self.make_cf_handle(&self.db, cfs::STATUS)?;
+        let cf = self.make_cf_handle(&self.db, cfs::COIN_STATUS)?;
 
         let cm = cm.to_bytes();
 
