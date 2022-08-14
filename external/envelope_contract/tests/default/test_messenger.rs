@@ -418,11 +418,16 @@ async fn test_messenger_open_channel_me_and_you() {
 
         println!("updated channel_1 id: {:?}", storage_1);
         println!("updated channel_2 id: {:?}", storage_2);
-        let open_ch_reqs_1 = storage_1.open_ch_reqs.get(&my_pk).unwrap().len();
-        let open_ch_reqs_2 =
-            storage_2.open_ch_reqs.get(&your_pk).unwrap().len();
+        let open_ch_reqs_1 =
+            storage_1.open_ch_reqs.get(&my_pk).unwrap().get(0).unwrap();
 
-        assert_eq!(open_ch_reqs_1, 1);
-        assert_eq!(open_ch_reqs_2, 1);
+        let open_ch_reqs_2 = storage_2
+            .open_ch_reqs
+            .get(&your_pk)
+            .unwrap()
+            .get(0)
+            .unwrap();
+
+        assert_eq!(open_ch_reqs_1.ch_id, open_ch_reqs_2.ch_id);
     }
 }
