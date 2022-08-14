@@ -2,6 +2,7 @@ mod app;
 mod credential;
 mod db;
 mod rpc;
+mod tests;
 mod wallet;
 
 pub use app::*;

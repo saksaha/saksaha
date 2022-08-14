@@ -11,12 +11,10 @@ use type_extension::U8Array;
 
 pub(crate) struct Wallet {
     apis: WalletApis,
-    // credential: WalletCredential,
 }
 
 impl Wallet {
     pub async fn init(
-        // credential: WalletCredential,
         credential_manager: CredentialManager,
         wallet_db: WalletDB,
     ) -> Result<Wallet, WalletError> {
@@ -52,7 +50,7 @@ async fn init_for_demo(wallet: &Wallet) -> Result<(), WalletError> {
     {
         let value = 100;
 
-        let coin = CoinRecord::new(0x11, 0x12, 0x13, 0x14, value)?;
+        let coin = CoinRecord::new(0x11, 0x12, 0x13, 0x14, value, None)?;
 
         debug!("[demo coin: user_1] {:#?}", coin);
 
@@ -62,7 +60,7 @@ async fn init_for_demo(wallet: &Wallet) -> Result<(), WalletError> {
     {
         let value = 100;
 
-        let coin = CoinRecord::new(0x21, 0x22, 0x23, 0x24, value)?;
+        let coin = CoinRecord::new(0x21, 0x22, 0x23, 0x24, value, None)?;
 
         debug!("[demo coin: user_2] {:#?}", coin);
 

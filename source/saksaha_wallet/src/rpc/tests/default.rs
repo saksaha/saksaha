@@ -1,10 +1,8 @@
+use super::utils;
+use crate::rpc::routes::v0::GetBalanceRequest;
 use hyper::{Body, Client, Method, Request, Uri};
 use sak_rpc_interface::{JsonRequest, JsonResponse};
 use sak_types::BlockHash;
-
-use crate::rpc::routes::v0::GetBalanceRequest;
-
-use super::utils;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_call_get_block_with_good_params() {
@@ -20,25 +18,6 @@ async fn test_call_get_block_with_good_params() {
 
     let client = Client::new();
 
-    // let block_candidate_same = utils::make_dummy_tx_pour_block();
-
-    // let original_block_hash = {
-    //     let block_hash = match machine
-    //         .blockchain
-    //         .dist_ledger
-    //         .apis
-    //         .write_block(Some(block_candidate_same))
-    //         .await
-    //     {
-    //         Ok(v) => v,
-    //         Err(err) => panic!("Failed to write dummy block, err: {}", err),
-    //     };
-
-    //     block_hash.unwrap()
-    // };
-
-    // println!("original_block_hash: {:?}", original_block_hash);
-
     let uri: Uri = {
         let u = format!("http://localhost:{}", rpc_port);
 
@@ -46,16 +25,16 @@ async fn test_call_get_block_with_good_params() {
     };
 
     let body = {
-        // let params = format!("{{\"block_hash\":\"{}\"}}", original_block_hash)
-        //     .as_bytes()
-        let params = GetBalanceRequest {
-            acc_addr: "".to_string(),
+        let get_balance_req = GetBalanceRequest {
+            acc_addr: test_context.acc_addr.clone(),
         };
+
+        let params = serde_json::to_vec(&get_balance_req).unwrap();
 
         let json_request = JsonRequest {
             jsonrpc: "2.0".to_string(),
             method: "get_balance".to_string(),
-            params: Some(vec![]),
+            params: Some(params),
             id: "test_1".to_string(),
         };
 

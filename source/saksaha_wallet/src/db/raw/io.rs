@@ -11,36 +11,55 @@ use sak_kv_db::ThreadMode;
 use sak_kv_db::WriteBatch;
 use sak_kv_db::{BoundColumnFamily, ColumnFamilyDescriptor, Options, DB};
 use sak_proofs::{OldCoin, CM_TREE_DEPTH};
+use sak_types::CoinIdx;
 use sak_types::CoinStatus;
 use type_extension::U8Arr32;
 
 impl Raw {
-    pub(crate) fn get_cm_iter(
+    pub(crate) fn get_coin_iter(
         &self,
     ) -> Result<
         DBIteratorWithThreadMode<DBWithThreadMode<MultiThreaded>>,
         WalletError,
     > {
-        let cf = self.make_cf_handle(&self.db, cfs::CM)?;
+        let cf = self.make_cf_handle(&self.db, cfs::COIN_IDX)?;
 
         let iter = self.db.iterator_cf(&cf, sak_kv_db::IteratorMode::Start);
 
         Ok(iter)
     }
 
-    pub(crate) fn get_cm_idx(
+    pub(crate) fn get_latest_coin_idx(
+        &self,
+    ) -> Result<Option<CoinIdx>, WalletError> {
+        let cf = self.make_cf_handle(&self.db, cfs::COIN_IDX)?;
+
+        let mut iter = self.db.iterator_cf(&cf, sak_kv_db::IteratorMode::End);
+
+        match iter.next() {
+            Some((_cm, c_idx)) => {
+                let coin_idx =
+                    type_extension::convert_u8_slice_into_u128(&c_idx)?;
+
+                return Ok(Some(coin_idx));
+            }
+            None => return Ok(None),
+        }
+    }
+
+    pub(crate) fn get_coin_idx(
         &self,
         cm: &Scalar,
-    ) -> Result<Option<CoinStatus>, WalletError> {
-        let cf = self.make_cf_handle(&self.db, cfs::CM_IDX)?;
+    ) -> Result<Option<CoinIdx>, WalletError> {
+        let cf = self.make_cf_handle(&self.db, cfs::COIN_IDX)?;
 
         let cm = cm.to_bytes();
 
         match self.db.get_cf(&cf, cm)? {
             Some(v) => {
-                let idx: u128 = u128::from_le_bytes(&v);
+                let coin_idx = type_extension::convert_u8_slice_into_u128(&v)?;
 
-                return Ok(Some(status));
+                return Ok(Some(coin_idx));
             }
             None => {
                 return Ok(None);
@@ -299,6 +318,23 @@ impl Raw {
         let cm = cm.to_bytes();
 
         batch.put_cf(&cf, cm, status);
+
+        Ok(())
+    }
+
+    pub(crate) fn batch_put_coin_idx(
+        &self,
+        batch: &mut WriteBatch,
+        cm: &Scalar,
+        coin_idx: &CoinIdx,
+    ) -> Result<(), WalletError> {
+        let cf = self.make_cf_handle(&self.db, cfs::COIN_IDX)?;
+
+        let cm = cm.to_bytes();
+
+        let coin_idx = coin_idx.to_be_bytes();
+
+        batch.put_cf(&cf, cm, coin_idx);
 
         Ok(())
     }

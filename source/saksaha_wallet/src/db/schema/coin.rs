@@ -9,9 +9,15 @@ use type_extension::U8Arr32;
 
 impl WalletDBSchema {
     pub fn get_all_coins(&self) -> Result<(), WalletError> {
-        let iter = self.raw.get_cm_iter()?;
+        let iter = self.raw.get_coin_iter()?;
 
-        // for (key, value)
+        for a in iter {
+            println!("power: {:?}", a);
+        }
+
+        // let idx = self.raw.get_latest_coin_idx()?;
+
+        // println!("!!! idx: {:?}", idx);
 
         Ok(())
     }
@@ -52,6 +58,11 @@ impl WalletDBSchema {
             None => return Err(format!("Failed to get coin_status").into()),
         };
 
+        let coin_idx = match self.raw.get_coin_idx(&cm)? {
+            Some(v) => v,
+            None => return Err(format!("Failed to get cm_idx").into()),
+        };
+
         let coin_record = CoinRecord {
             addr_pk,
             addr_sk,
@@ -61,12 +72,17 @@ impl WalletDBSchema {
             v,
             cm: *cm,
             coin_status,
+            coin_idx: Some(coin_idx),
         };
 
         Ok(coin_record)
     }
 
     pub fn put_coin(&self, coin: &CoinRecord) -> Result<(), WalletError> {
+        let coin_idx = coin.coin_idx.unwrap_or(
+            self.raw.get_latest_coin_idx()?.map(|v| v + 1).unwrap_or(0),
+        );
+
         let mut batch = WriteBatch::default();
 
         self.raw.batch_put_rho(&mut batch, &coin.cm, &coin.rho)?;
@@ -88,6 +104,9 @@ impl WalletDBSchema {
             &coin.cm,
             &coin.coin_status,
         )?;
+
+        self.raw
+            .batch_put_coin_idx(&mut batch, &coin.cm, &coin_idx)?;
 
         self.raw.db.write(batch)?;
 

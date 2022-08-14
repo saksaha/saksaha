@@ -2,7 +2,7 @@ use super::WalletDBSchema;
 use crate::{credential::WalletCredential, WalletError, APP_NAME};
 use log::info;
 use sak_kv_db::{KeyValueDatabase, Options};
-use std::fs;
+use std::{fs, path::PathBuf};
 
 pub(crate) struct WalletDB {
     pub(crate) schema: WalletDBSchema,
@@ -11,12 +11,24 @@ pub(crate) struct WalletDB {
 impl WalletDB {
     pub(crate) fn init(
         credential: &WalletCredential,
+        force_reset: bool,
     ) -> Result<WalletDB, WalletError> {
-        let wallet_db_path = {
-            let app_path = sak_fs::create_or_get_app_path(APP_NAME)?
-                .join(&credential.acc_addr);
+        if force_reset {
+            let db_path = Self::get_db_path(&credential.acc_addr)?;
 
-            let db_path = app_path.join("db");
+            info!(
+                "'Force reset' is on. Removing db path if exists, \
+                db_path: {:?}",
+                db_path,
+            );
+
+            if db_path.exists() {
+                std::fs::remove_dir_all(db_path)?;
+            }
+        }
+
+        let wallet_db_path = {
+            let db_path = Self::get_db_path(&credential.acc_addr)?;
 
             if !db_path.exists() {
                 fs::create_dir_all(db_path.clone())?;
@@ -59,5 +71,14 @@ impl WalletDB {
         let wallet_db = WalletDB { schema };
 
         Ok(wallet_db)
+    }
+
+    pub fn get_db_path(acc_addr: &String) -> Result<PathBuf, WalletError> {
+        let app_path =
+            sak_fs::create_or_get_app_path(APP_NAME)?.join(&acc_addr);
+
+        let db_path = app_path.join("db");
+
+        Ok(db_path)
     }
 }
