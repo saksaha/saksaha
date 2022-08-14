@@ -9,7 +9,7 @@ use crate::{app::actions::Action, ENVELOPE_CTR_ADDR};
 use crate::{inputs::key::Key, EnvelopeError};
 use chrono::Local;
 use envelope_contract::{
-    GetChListParams, GetMsgParams, OpenCh, OpenChParams, SendMsgParams,
+    Channel, GetChListParams, GetMsgParams, OpenChParams, SendMsgParams,
 };
 use log::{debug, error, warn};
 use sak_contract_std::{CtrCallType, Request as CtrRequest};
@@ -262,12 +262,12 @@ impl App {
         self.state.incr_sleep();
     }
 
-    pub fn set_ch_list(&mut self, data: String) -> Result<(), EnvelopeError> {
+    pub fn set_ch_list(&mut self, data: Vec<u8>) -> Result<(), EnvelopeError> {
         self.state.set_ch_list(data)?;
         Ok(())
     }
 
-    pub fn set_chats(&mut self, data: String) {
+    pub fn set_chats(&mut self, data: Vec<u8>) {
         self.state.set_chats(data);
     }
 
@@ -275,8 +275,6 @@ impl App {
         &mut self,
         her_pk: &String,
     ) -> Result<(), EnvelopeError> {
-        let channel_name = format!("({}){}", Local::now(), her_pk.clone());
-
         let my_pk = self.get_pk(&USER_1.to_string()).await?;
 
         for i in [her_pk, &my_pk] {
@@ -296,16 +294,6 @@ impl App {
                 saksaha::send_tx_pour(ctr_addr, req_type, args).await?;
         }
 
-        // if !self
-        //     .state
-        //     .ch_list
-        //     .contains(&ChannelState::new(channel_name.clone(), her_pk.clone()))
-        // {
-        //     self.state
-        //         .ch_list
-        //         .push(ChannelState::new(channel_name, her_pk.clone()));
-        // }
-
         Ok(())
     }
 
@@ -318,22 +306,16 @@ impl App {
 
         let args = serde_json::to_vec(&get_ch_list_params)?;
 
-        if my_pk.len() > 0 {
-            if let Ok(r) = saksaha::query_ctr(
-                ENVELOPE_CTR_ADDR.to_string(),
-                "get_ch_list".to_string(),
-                args,
-            )
-            .await
-            {
-                if let Some(d) = r.result {
-                    self.dispatch(IoEvent::Receive(d.result)).await;
-                }
-            }
-        } else {
-            let empty_vec: String = String::from("[]");
-            self.dispatch(IoEvent::Receive(empty_vec)).await;
-        }
+        if let Some(d) = saksaha::query_ctr(
+            ENVELOPE_CTR_ADDR.to_string(),
+            "get_ch_list".to_string(),
+            args,
+        )
+        .await?
+        .result
+        {
+            self.dispatch(IoEvent::Receive(d.result)).await
+        };
 
         Ok(())
     }
@@ -344,9 +326,6 @@ impl App {
         };
 
         let args = serde_json::to_vec(&get_msg_params)?;
-
-        // let mut args = HashMap::with_capacity(2);
-        // args.insert(String::from("dst_pk"), "her_pk".to_string());
 
         if let Ok(r) = saksaha::query_ctr(
             ENVELOPE_CTR_ADDR.into(),
@@ -406,7 +385,7 @@ impl App {
     async fn encrypt_open_ch(
         &mut self,
         her_pk: &String,
-    ) -> Result<OpenCh, EnvelopeError> {
+    ) -> Result<Channel, EnvelopeError> {
         let my_sk = match self
             .db
             .schema
@@ -473,7 +452,7 @@ impl App {
 
         // serde_json::to_string(&open_ch_input)?
 
-        let open_ch = OpenCh {
+        let open_ch = Channel {
             ch_id,
             eph_key: eph_pk_str,
             sig: a_pk_sig_encrypted,
@@ -489,7 +468,7 @@ impl App {
         if let Some(c) = self.db.schema.get_her_pk_by_ch_id(&her_pk).await? {
             self.state
                 .ch_list
-                .push(ChannelState::new(her_pk.clone(), c));
+                .push(ChannelState::new(Channel::default(), c));
         };
 
         Ok(())

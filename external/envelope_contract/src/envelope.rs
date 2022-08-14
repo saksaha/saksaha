@@ -20,15 +20,28 @@ pub const STORAGE_CAP: usize = 100;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct EnvelopeStorage {
-    pub open_ch_reqs: HashMap<PublicKey, Vec<OpenCh>>,
+    pub open_ch_reqs: HashMap<PublicKey, Vec<Channel>>,
     pub chats: HashMap<ChannelId, Vec<String>>,
 }
-
 #[derive(Serialize, Deserialize, Debug)]
-pub struct OpenCh {
+pub struct ChannelList {
+    pub channels: Vec<Channel>,
+}
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
+pub struct Channel {
     pub ch_id: String,
     pub eph_key: String,
     pub sig: String,
+}
+
+impl Channel {
+    pub fn default() -> Channel {
+        Channel {
+            ch_id: String::default(),
+            eph_key: String::default(),
+            sig: String::default(),
+        }
+    }
 }
 
 contract_bootstrap!();

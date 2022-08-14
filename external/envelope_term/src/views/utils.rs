@@ -8,7 +8,7 @@ use tui::widgets::{
     Block, BorderType, Borders, LineGauge, List, ListItem, Paragraph, Tabs,
 };
 use tui::Frame;
-use tui_logger::TuiLoggerWidget;
+use tui_logger::{TuiLoggerLevelOutput, TuiLoggerWidget};
 use unicode_width::UnicodeWidthStr;
 
 pub(crate) fn check_size(rect: &Rect) {
@@ -194,7 +194,7 @@ pub(crate) fn draw_ch_list<'a>(state: &AppState) -> List<'a> {
         .ch_list
         .iter()
         .map(|i| {
-            ListItem::new(i.channel_name.clone())
+            ListItem::new(i.channel.ch_id.clone())
                 .style(Style::default().fg(Color::White).bg(Color::Black))
         })
         .collect();
@@ -250,6 +250,7 @@ pub(crate) fn draw_logs<'a>() -> TuiLoggerWidget<'a> {
         .style_warn(Style::default().fg(Color::Yellow))
         .style_trace(Style::default().fg(Color::Gray))
         .style_info(Style::default().fg(Color::Blue))
+        .output_level(Some(TuiLoggerLevelOutput::Abbreviated))
         .block(
             Block::default()
                 .title("Logs")

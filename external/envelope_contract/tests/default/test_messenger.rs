@@ -5,7 +5,7 @@ use super::{
 };
 
 use envelope_contract::{
-    EnvelopeStorage, GetChListParams, GetMsgParams, OpenCh, OpenChParams,
+    Channel, EnvelopeStorage, GetChListParams, GetMsgParams, OpenChParams,
     SendMsgParams,
 };
 use sak_contract_std::{CtrCallType, Request, Storage};
@@ -39,12 +39,12 @@ fn make_mock_storage(msgs: &Vec<String>) -> Storage {
     open_ch_reqs.insert(
         get_her_pk(),
         vec![
-            OpenCh {
+            Channel {
                 ch_id: "ch_id_1".to_string(),
                 eph_key: "eph_key_1".to_string(),
                 sig: "sig_1".to_string(),
             },
-            OpenCh {
+            Channel {
                 ch_id: DUMMY_CHANNEL_ID_1.to_string(),
                 eph_key: "eph_key_1".to_string(),
                 sig: "sig_1".to_string(),
@@ -88,8 +88,8 @@ fn make_mock_storage(msgs: &Vec<String>) -> Storage {
     serde_json::to_vec(&envelope_storage).unwrap()
 }
 
-fn make_mock_open_ch() -> OpenCh {
-    OpenCh {
+fn make_mock_open_ch() -> Channel {
+    Channel {
         eph_key: String::default(),
         ch_id: DUMMY_CHANNEL_ID_2.to_string(),
         sig: String::default(),
@@ -195,7 +195,7 @@ async fn test_messenger_open_channel() {
 
     let dummy_messeges = get_multi_messages();
 
-    let OpenCh {
+    let Channel {
         eph_key,
         ch_id,
         sig,
@@ -204,7 +204,7 @@ async fn test_messenger_open_channel() {
     let (request, storage) = {
         let open_ch_params = OpenChParams {
             dst_pk: new_pk.clone(),
-            open_ch: OpenCh {
+            open_ch: Channel {
                 ch_id,
                 eph_key,
                 sig,

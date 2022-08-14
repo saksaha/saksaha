@@ -63,8 +63,6 @@ where
             if let Some(handler) = route_map.get(json_request.method.as_str()) {
                 let resp = handler(route_state, json_request.params, ctx).await;
 
-                println!("444 resp: {:?}", resp.body());
-
                 Ok(resp)
             } else {
                 return Ok(response::make_not_found_response(route_state));

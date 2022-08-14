@@ -1,3 +1,4 @@
+use envelope_contract::Channel;
 use tui::widgets::ListState;
 
 use crate::db::USER_1;
@@ -91,11 +92,14 @@ impl AppState {
         }
     }
 
-    pub fn set_ch_list(&mut self, data: String) -> Result<(), EnvelopeError> {
-        match serde_json::from_str::<Vec<String>>(&data) {
+    pub fn set_ch_list(&mut self, data: Vec<u8>) -> Result<(), EnvelopeError> {
+        match serde_json::from_slice::<Vec<Channel>>(&data) {
             Ok(c) => {
                 for i in c.into_iter() {
-                    self.ch_list.push(ChannelState::new(i, String::from("")));
+                    let new_ch = ChannelState::new(i, String::default());
+                    if !self.ch_list.contains(&new_ch) {
+                        self.ch_list.push(new_ch);
+                    }
                 }
             }
             Err(err) => {
@@ -109,8 +113,8 @@ impl AppState {
         Ok(())
     }
 
-    pub fn set_chats(&mut self, data: String) {
-        self.chats = match serde_json::from_str::<Vec<String>>(&data) {
+    pub fn set_chats(&mut self, data: Vec<u8>) {
+        self.chats = match serde_json::from_slice::<Vec<String>>(&data) {
             Ok(c) => c
                 .into_iter()
                 .map(|m| ChatMessage::new(m, "undefined".to_string()))
@@ -249,18 +253,15 @@ impl ChatMessage {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct ChannelState {
-    pub channel_name: String,
+    pub channel: Channel,
     pub her_pk: String,
 }
 
 impl ChannelState {
-    pub fn new(channel_name: String, her_pk: String) -> ChannelState {
-        ChannelState {
-            channel_name,
-            her_pk,
-        }
+    pub fn new(channel: Channel, her_pk: String) -> ChannelState {
+        ChannelState { channel, her_pk }
     }
 }
 

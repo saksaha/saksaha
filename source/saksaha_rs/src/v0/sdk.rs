@@ -25,7 +25,8 @@ pub struct QueryCtrRequest {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct QueryCtrResponse {
-    pub result: String,
+    pub result: Vec<u8>,
+    // pub result: String,
 }
 
 pub fn new_empty_32_temp() -> [u8; 32] {
