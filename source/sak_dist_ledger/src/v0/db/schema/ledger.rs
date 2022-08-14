@@ -6,9 +6,10 @@ use sak_kv_db::{
     BoundColumnFamily, ColumnFamilyDescriptor, IteratorMode, Options,
     WriteBatch,
 };
-use sak_types::{BlockHash, CtrAddr, TxHash, TxType, U8Array};
+use sak_types::{BlockHash, CtrAddr, TxHash, TxType};
 use std::convert::TryInto;
 use std::sync::Arc;
+use type_extension::U8Array;
 
 // getter
 impl LedgerDBSchema {

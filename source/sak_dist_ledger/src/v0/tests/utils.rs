@@ -4,9 +4,9 @@ use crate::{
 use async_trait::async_trait;
 use sak_contract_std::{CtrCallType, Request};
 use sak_types::{
-    BlockCandidate, PourTxCandidate, Tx, TxCandidate, U8Array,
-    WASM_MAGIC_NUMBER,
+    BlockCandidate, PourTxCandidate, Tx, TxCandidate, WASM_MAGIC_NUMBER,
 };
+use type_extension::U8Array;
 
 pub struct DummyPos {}
 

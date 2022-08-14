@@ -11,9 +11,9 @@ impl LedgerDB {
     pub(crate) async fn init(
         app_prefix: &String,
     ) -> Result<LedgerDB, LedgerError> {
-        let db_name = sak_fs::DBName::Saksaha;
         let ledger_db_path = {
-            let app_path = sak_fs::create_or_get_app_path(db_name, app_prefix)?;
+            let app_path =
+                sak_fs::create_or_get_app_path("saksaha", app_prefix)?;
             let db_path = { app_path.join("db").join("ledger") };
 
             db_path

@@ -4,7 +4,7 @@ use log::{debug, error, info, warn};
 use sak_contract_std::{CtrCallType, Request, Storage};
 use sak_types::{
     Block, BlockCandidate, MintTxCandidate, PourTxCandidate, Tx, TxCandidate,
-    TxCtrOp, U8Array,
+    TxCtrOp,
 };
 use sak_vm::CtrFn;
 
