@@ -35,9 +35,12 @@ impl WalletApis {
 
         for coin in self.db.schema.get_all_coins()? {
             let bytes = coin.v.to_bytes();
+
             println!("bytes: {:?}", bytes);
+
             let arr: [u8; 8] = bytes[24..].try_into()?;
-            let val = u64::from_be_bytes(arr);
+
+            let val = u64::from_le_bytes(arr);
 
             println!("val: {}", val);
             balance += val;
