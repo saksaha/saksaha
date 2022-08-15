@@ -172,9 +172,10 @@ async fn test_block_sync_true() {
 async fn test_late_block_sync_true() {
     sak_test_utils::init_test_log();
 
-    let app_prefix_vec = vec![String::from("test_1"), String::from("test_2")];
-    sak_test_utils::init_test_config(&app_prefix_vec)
-        .expect("DB should be initialized");
+    let app_prefix_vec = vec!["test_1", "test_2"];
+
+    TestUtil::init_test(app_prefix_vec.clone());
+    // sak_test_utils::init_test_config(&app_prefix_vec)
 
     let (p2p_host_1, local_node_1, machine_1, _, _): (
         P2PHost,

@@ -160,7 +160,7 @@ pub struct PourTxCandidate {
     pub sn_1: U8Arr32,
 
     //
-    pub sn_2: U8Arr32,
+    // pub sn_2: U8Arr32,
 
     //
     pub cm_1: U8Arr32,
@@ -183,7 +183,7 @@ impl PourTxCandidate {
         ctr_addr: Option<String>,
         pi: Vec<u8>,
         sn_1: U8Arr32,
-        sn_2: U8Arr32,
+        // sn_2: U8Arr32,
         cm_1: U8Arr32,
         cm_2: U8Arr32,
         merkle_rt: U8Arr32,
@@ -206,7 +206,7 @@ impl PourTxCandidate {
             ctr_addr,
             pi,
             sn_1,
-            sn_2,
+            // sn_2,
             cm_1,
             cm_2,
             merkle_rt,

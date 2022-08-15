@@ -25,7 +25,8 @@ sak_utils_net = { path = "../sak_utils_net" }
 sak_rpc_interface = { path = "../sak_rpc_interface" }
 sak_task_queue = { path = "../sak_task_queue" }
 sak_types = { path = "../sak_types" }
-async-trait = "0.1.57"
+type_extension = { path = "../type_extension" }
+async-trait = "0.1.56"
 sak_contract_std = { path = "../sak_contract_std" }
 clap = { version = "3.1.6", features = ["cargo"] }
 directories = "3.0"

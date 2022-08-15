@@ -7,7 +7,7 @@ use std::{thread, time::Duration};
 
 const RUST_LOG_ENV: &str = "
     sak_,
-    saksaha
+    saksaha_
 ";
 
 fn main() -> Result<(), WalletError> {

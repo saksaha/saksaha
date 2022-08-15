@@ -8,7 +8,7 @@ const APP_NAME: &str = "saksaha";
 pub fn init_test_log() {
     const RUST_LOG_ENV: &str = "
             sak_,
-            saksaha
+            saksaha_,
         ";
 
     if std::env::var("RUST_LOG").is_err() {

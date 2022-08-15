@@ -1,7 +1,6 @@
 use crate::DistLedgerApis;
 use crate::LedgerError;
 use log::info;
-use log::warn;
 use sak_contract_std::Request;
 use sak_types::CtrAddr;
 use sak_vm::CtrFn;
@@ -26,6 +25,9 @@ impl DistLedgerApis {
             .ok_or("ctr state should exist")?;
 
         let ctr_fn = CtrFn::Query(request, ctr_state);
+
+        // println!("ctr_fn : {:?}", ctr_fn);
+        // println!("ctr_fn, ctr_addr : {:?}", ctr_addr);
 
         let receipt = self.vm.invoke(ctr_wasm, ctr_fn)?;
 

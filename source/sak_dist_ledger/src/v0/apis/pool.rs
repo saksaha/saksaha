@@ -41,8 +41,6 @@ impl DistLedgerApis {
 
         let bc = self.consensus.do_consensus(self, tx_candidates).await?;
 
-        println!("22");
-
         self.sync_pool.remove_tcs(&bc.tx_candidates).await?;
 
         Ok(Some(bc))

@@ -111,11 +111,11 @@ pub(crate) fn parse_pour_tx_candidate(
         utils::convert_bytes_into_u8_32(b)?
     };
 
-    let sn_2 = {
-        let b = parse.next_bytes()?;
+    // let sn_2 = {
+    //     let b = parse.next_bytes()?;
 
-        utils::convert_bytes_into_u8_32(b)?
-    };
+    //     utils::convert_bytes_into_u8_32(b)?
+    // };
 
     let cm_1 = {
         let b = parse.next_bytes()?;
@@ -147,7 +147,7 @@ pub(crate) fn parse_pour_tx_candidate(
         Some(ctr_addr),
         pi,
         sn_1,
-        sn_2,
+        // sn_2,
         cm_1,
         cm_2,
         merkle_rt,
@@ -205,7 +205,7 @@ pub(crate) fn put_pour_tx_candidate_into_frame(
     frame.push_bulk(Bytes::from(tc.ctr_addr));
     frame.push_bulk(Bytes::from(tc.pi));
     frame.push_bulk(Bytes::copy_from_slice(&tc.sn_1));
-    frame.push_bulk(Bytes::copy_from_slice(&tc.sn_2));
+    // frame.push_bulk(Bytes::copy_from_slice(&tc.sn_2));
     frame.push_bulk(Bytes::copy_from_slice(&tc.cm_1));
     frame.push_bulk(Bytes::copy_from_slice(&tc.cm_2));
     frame.push_bulk(Bytes::copy_from_slice(&tc.merkle_rt));
