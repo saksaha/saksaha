@@ -152,7 +152,6 @@ pub(super) async fn handle_block_hash_ack<'a>(
 
     if !blocks_to_send.is_empty() {
         match conn
-            // .socket
             .send(Msg::BlockSyn(BlockSynMsg {
                 blocks: blocks_to_send,
             }))

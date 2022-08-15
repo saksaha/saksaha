@@ -7,8 +7,8 @@ use futures::{stream::SplitSink, SinkExt};
 use log::{debug, info, warn};
 use sak_p2p_peertable::Peer;
 use sak_p2p_transport::{
-    BlockHashSynMsg, BlockSynMsg, Msg, SendReceipt, TxHashSyncMsg, TxSynMsg,
-    UpgradedConn, UpgradedP2PCodec,
+    BlockHashSynMsg, BlockSynMsg, Msg, RecvReceipt, SendReceipt, TxHashSyncMsg,
+    TxSynMsg, UpgradedConn, UpgradedP2PCodec,
 };
 use sak_task_queue::TaskQueue;
 use sak_types::TxHash;
@@ -19,17 +19,16 @@ pub(in crate::node) async fn send_tx_hash_syn(
     mut conn_lock: RwLockWriteGuard<'_, UpgradedConn>,
     tx_hashes: Vec<TxHash>,
     task_queue: &Arc<TaskQueue<NodeTask>>,
-) -> Result<(), SaksahaNodeError> {
+) -> Result<RecvReceipt, SaksahaNodeError> {
     println!("sending tx hash syn");
 
     let _receipt = conn_lock
         .send(Msg::TxHashSyn(TxHashSyncMsg { tx_hashes }))
         .await?;
 
-    let msg = conn_lock
-        .next_msg()
-        .await
-        .ok_or("tx hash ack should arrive as reply")??;
+    let (msg, receipt) = conn_lock.next_msg().await;
+
+    let msg = msg.ok_or("tx hash ack should arrive as reply")??;
 
     let tx_hash_ack = match msg {
         Msg::TxHashAck(m) => m,
@@ -48,7 +47,7 @@ pub(in crate::node) async fn send_tx_hash_syn(
         })
         .await?;
 
-    Ok(())
+    Ok(receipt)
 }
 
 pub(in crate::node) async fn recv_tx_hash_syn(

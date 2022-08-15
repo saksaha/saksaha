@@ -43,7 +43,6 @@ pub(super) async fn handle_tx_pool_stat<'a>(
 }
 
 pub(super) async fn handle_new_blocks_ev<'a>(
-    // _machine: &Machine,
     new_blocks: Vec<(BlockHeight, BlockHash)>,
     node_task_queue: &Arc<TaskQueue<NodeTask>>,
 ) -> Result<(), SaksahaNodeError> {

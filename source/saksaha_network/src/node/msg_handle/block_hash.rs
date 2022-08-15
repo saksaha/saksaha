@@ -2,13 +2,51 @@ use crate::{machine::Machine, node::SaksahaNodeError, SaksahaError};
 use futures::{stream::SplitSink, SinkExt};
 use log::{debug, info, warn};
 use sak_p2p_transport::{
-    BlockHashSynMsg, BlockSynMsg, Msg, SendReceipt, TxHashSyncMsg, TxSynMsg,
-    UpgradedConn, UpgradedP2PCodec,
+    BlockHashSynMsg, BlockSynMsg, Msg, RecvReceipt, SendReceipt, TxHashSyncMsg,
+    TxSynMsg, UpgradedConn, UpgradedP2PCodec,
 };
+use sak_types::{BlockHash, BlockHeight};
 use std::sync::Arc;
 use tokio::{net::TcpStream, sync::RwLockWriteGuard};
 
-pub(in crate::node) async fn send_block_hash_syn() {}
+pub(in crate::node) async fn send_block_hash_syn(
+    mut conn_lock: RwLockWriteGuard<'_, UpgradedConn>,
+    new_blocks: Vec<(BlockHeight, BlockHash)>,
+) -> Result<RecvReceipt, SaksahaNodeError> {
+    match conn_lock
+        .send(Msg::BlockHashSyn(BlockHashSynMsg {
+            new_blocks: new_blocks.clone(),
+        }))
+        .await
+    {
+        Ok(_) => {
+            // info!("Sending block hash syn, dst public_key: {}", public_key);
+        }
+        Err(err) => {
+            warn!(
+                "Failed to request to synchronize with peer node, err: {}",
+                err,
+            );
+        }
+    };
+
+    let (msg, receipt) = conn_lock.next_msg().await;
+
+    let msg =
+        msg.ok_or(format!("block hash syn needs to be followed by ack"))??;
+
+    let _block_hash_ack = match msg {
+        Msg::BlockHashAck(m) => m,
+        _ => {
+            return Err(format!(
+                "Only block hash ack should arrive at this point"
+            )
+            .into());
+        }
+    };
+
+    Ok(receipt)
+}
 
 pub(in crate::node) async fn recv_block_hash_syn(
     block_hash_syn_msg: BlockHashSynMsg,
@@ -26,9 +64,9 @@ pub(in crate::node) async fn recv_block_hash_syn(
         .ok_or("height does not exist")?;
 
     debug!(
-        "handle block hash syn, latest_block_hash: {}, received_new_blocks: {:?}",
-        latest_block_hash,
-        new_blocks,
+        "handle block hash syn, latest_block_hash: {}, \
+            received_new_blocks: {:?}",
+        latest_block_hash, new_blocks,
     );
 
     let mut blocks_to_req = vec![];
@@ -63,9 +101,9 @@ pub(super) async fn handle_block_hash_syn<'a>(
         .ok_or("height does not exist")?;
 
     debug!(
-        "handle block hash syn, latest_block_hash: {}, received_new_blocks: {:?}",
-        latest_block_hash,
-        new_blocks,
+        "handle block hash syn, latest_block_hash: {}, \
+            received_new_blocks: {:?}",
+        latest_block_hash, new_blocks,
     );
 
     let mut blocks_to_req = vec![];

@@ -258,7 +258,7 @@ async fn test_handshake_works() {
 
         let mut conn_2_lock = transport_2.conn.write().await;
 
-        let maybe_msg = conn_2_lock.next_msg().await;
+        let (maybe_msg, _) = conn_2_lock.next_msg().await;
 
         let ping = match maybe_msg {
             Some(maybe_msg) => match maybe_msg {

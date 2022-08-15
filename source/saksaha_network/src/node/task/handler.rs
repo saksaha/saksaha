@@ -5,7 +5,7 @@ use log::{debug, error, warn};
 use sak_p2p_peertable::{Peer, PeerStatus, PeerTable};
 use sak_p2p_transport::{
     handshake::{self, HandshakeInitArgs},
-    Conn, Msg, TxHashSyncMsg, TxSynMsg, UpgradedConn,
+    Conn, Msg, RecvReceipt, TxHashSyncMsg, TxSynMsg, UpgradedConn,
 };
 use sak_task_queue::{TaskQueue, TaskQueueError};
 use sak_types::TxCandidate;
@@ -33,13 +33,8 @@ pub(in crate::node) async fn handle_task<'a>(
             msg_handle::send_tx_syn(conn_lock, tx_hashes, &machine).await
         }
         NodeTask::SendBlockHashSyn { new_blocks } => {
-            // Ok(())
-            Ok(())
-        }
-        NodeTask::SendBlockSyn {} => {
-            // Ok(())
-            Ok(())
-        }
+            msg_handle::send_block_hash_syn(conn_lock, new_blocks).await
+        } // NodeTask::SendBlockSyn {} => Ok(()),
     };
 
     if let Err(err) = res {

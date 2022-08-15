@@ -16,7 +16,6 @@ use tokio::sync::broadcast::Receiver;
 pub(in crate::node) struct PeerNode {
     pub peer: Arc<Peer>,
     pub machine: Arc<Machine>,
-    // pub node_task_queue: Arc<TaskQueue<NodeTask>>,
     pub node_task_min_interval: Option<u64>,
 }
 
@@ -70,7 +69,7 @@ impl PeerNode {
                     task::handle_task(task,
                         &node_task_queue, conn_lock, &self.machine).await;
                 },
-                maybe_msg = conn_lock.next_msg() => {
+                (maybe_msg, _) = conn_lock.next_msg() => {
                     match maybe_msg {
                         Some(maybe_msg) => match maybe_msg {
                             Ok(msg) => {

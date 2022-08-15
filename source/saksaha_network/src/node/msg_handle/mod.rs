@@ -17,7 +17,6 @@ use sak_p2p_transport::{
 use sak_task_queue::TaskQueue;
 use std::sync::Arc;
 use tokio::{net::TcpStream, sync::RwLockWriteGuard};
-use tokio_util::codec::Framed;
 pub(in crate::node) use tx::*;
 pub(in crate::node) use tx_hash::*;
 

@@ -8,6 +8,10 @@ pub struct SendReceipt {
     __created_by_conn: bool,
 }
 
+pub struct RecvReceipt {
+    __created_by_conn: bool,
+}
+
 pub struct UpgradedConn {
     socket_addr: SocketAddr,
     conn_id: String,
@@ -53,14 +57,15 @@ impl UpgradedConn {
         Ok(receipt)
     }
 
-    pub fn next_msg(&mut self) -> Next<Framed<TcpStream, UpgradedP2PCodec>>
-// -> Option<Result<Msg, TrptError>>
-    {
-        // println!("recv msg!, conn id: {}", self.conn_id);
+    pub async fn next_msg(
+        &mut self,
+    ) -> (Option<Result<Msg, TrptError>>, RecvReceipt) {
+        let msg = self.socket.next().await;
 
-        let msg = self.socket.next();
+        let receipt = RecvReceipt {
+            __created_by_conn: true,
+        };
 
-        // println!("|--- recvd msg: conn id: {}, msg: {:?}", self.conn_id, msg);
-        msg
+        (msg, receipt)
     }
 }
