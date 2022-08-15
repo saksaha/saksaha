@@ -1,3 +1,5 @@
+use crate::io::InputMode;
+
 use super::key::Key;
 use super::InputEvent;
 use log::error;

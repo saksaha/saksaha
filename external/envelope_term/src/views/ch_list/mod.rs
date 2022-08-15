@@ -1,8 +1,8 @@
 use super::utils;
-use crate::app::{Actions, App, AppState, View};
+use crate::app::App;
 use tui::backend::Backend;
-use tui::layout::{Alignment, Constraint, Direction, Layout, Rect};
-use tui::{symbols, Frame};
+use tui::layout::{Constraint, Direction, Layout};
+use tui::Frame;
 
 pub(crate) fn draw_ch_list<B>(rect: &mut Frame<B>, app: &mut App)
 where

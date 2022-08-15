@@ -114,7 +114,6 @@ pub async fn start_app(app: Arc<Mutex<App>>) -> Result<(), EnvelopeError> {
                 InputMode::Normal => app.handle_normal_key(key).await,
                 InputMode::Editing => app.handle_edit_key(key).await,
             },
-
             InputEvent::Tick => app.update_on_tick().await,
         };
 

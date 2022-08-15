@@ -1,4 +1,4 @@
-use crate::OpenCh;
+use crate::Channel;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -9,7 +9,7 @@ pub struct GetChListParams {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct OpenChParams {
     pub dst_pk: String,
-    pub open_ch: OpenCh,
+    pub open_ch: Channel,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

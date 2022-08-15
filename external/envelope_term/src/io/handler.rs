@@ -61,9 +61,9 @@ impl IoAsyncHandler {
 
     async fn handle_receive_data(
         &mut self,
-        data: String,
+        data: Vec<u8>,
     ) -> Result<(), EnvelopeError> {
-        info!("😴 Receive data!! Set some state with data {:?}...", data);
+        info!("😴 Receive data!! Set some state with data");
         // Notify the app for having slept
         let mut app = self.app.lock().await;
         app.set_ch_list(data)?;
@@ -73,7 +73,7 @@ impl IoAsyncHandler {
 
     async fn handle_get_msgs(
         &mut self,
-        data: String,
+        data: Vec<u8>,
     ) -> Result<(), EnvelopeError> {
         info!("😴 Receive data!! Set some state with data {:?}...", data);
         // Notify the app for having slept

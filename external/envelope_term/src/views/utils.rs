@@ -8,7 +8,7 @@ use tui::widgets::{
     Block, BorderType, Borders, LineGauge, List, ListItem, Paragraph, Tabs,
 };
 use tui::Frame;
-use tui_logger::TuiLoggerWidget;
+use tui_logger::{TuiLoggerLevelOutput, TuiLoggerWidget};
 use unicode_width::UnicodeWidthStr;
 
 pub(crate) fn check_size(rect: &Rect) {
@@ -193,8 +193,10 @@ pub(crate) fn draw_ch_list<'a>(state: &AppState) -> List<'a> {
     let items: Vec<ListItem> = state
         .ch_list
         .iter()
-        .map(|i| {
-            ListItem::new(i.channel_name.clone())
+        .enumerate()
+        .map(|(idx, i)| {
+            let ch = format!("{}. {}", idx, i.channel.ch_id.to_owned());
+            ListItem::new(ch)
                 .style(Style::default().fg(Color::White).bg(Color::Black))
         })
         .collect();
@@ -222,7 +224,6 @@ pub(crate) fn draw_help(actions: &Actions) -> Paragraph {
                 action.to_string()
             } else {
                 action.to_string()
-                // String::from("")
             };
 
             v.push(Span::styled(key.to_string() + " ", key_style));
@@ -250,6 +251,7 @@ pub(crate) fn draw_logs<'a>() -> TuiLoggerWidget<'a> {
         .style_warn(Style::default().fg(Color::Yellow))
         .style_trace(Style::default().fg(Color::Gray))
         .style_info(Style::default().fg(Color::Blue))
+        .output_level(Some(TuiLoggerLevelOutput::Abbreviated))
         .block(
             Block::default()
                 .title("Logs")
@@ -361,7 +363,7 @@ where
                 // Put cursor past the end of the input text
                 chunks.x + state.input_text.width() as u16 + 1,
                 // Move one line down, from the border to the input line
-                chunks.height - 3,
+                chunks.height,
             )
         }
     }

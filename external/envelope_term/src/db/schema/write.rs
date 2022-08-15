@@ -108,4 +108,19 @@ impl EnvelopeDBSchema {
 
         Ok(())
     }
+
+    pub(crate) fn batch_put_ch_id(
+        &self,
+        batch: &mut WriteBatch,
+        ch_idx: &u128,
+        ch_id: &String,
+    ) -> Result<(), EnvelopeError> {
+        let cf = self.make_cf_handle(&self.db, cfs::CH_ID)?;
+
+        let v = ch_idx.to_be_bytes();
+
+        batch.put_cf(&cf, &v, ch_id);
+
+        Ok(())
+    }
 }

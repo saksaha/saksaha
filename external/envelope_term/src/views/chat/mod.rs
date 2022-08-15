@@ -65,9 +65,9 @@ where
     let (help_message, input, messages) =
         utils::draw_chat(app, rect, &chunks[1]);
 
+    rect.render_widget(messages, open_ch_chunks[0]);
     rect.render_widget(help_message, open_ch_chunks[1]);
     rect.render_widget(input, open_ch_chunks[2]);
-    rect.render_widget(messages, open_ch_chunks[0]);
 
     let help = utils::draw_help(app.actions());
     rect.render_widget(help, body_chunks[1]);

@@ -4,7 +4,7 @@ use std::process::ExitCode;
 
 const RUST_LOG_ENV: &str = "
     sak_,
-    saksaha
+    saksaha_
 ";
 
 fn main() -> ExitCode {

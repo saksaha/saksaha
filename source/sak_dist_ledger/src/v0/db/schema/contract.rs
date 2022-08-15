@@ -9,8 +9,6 @@ impl LedgerDBSchema {
         &self,
         ctr_addr: &String,
     ) -> Result<Option<Vec<u8>>, LedgerError> {
-        // let db = &self.kv_db.db_instance;
-
         let tx_hash = self
             .get_tx_hash_by_ctr_addr(ctr_addr)?
             .ok_or("ctr data does not exist")?;

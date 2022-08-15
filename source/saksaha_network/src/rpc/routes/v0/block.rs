@@ -1,10 +1,9 @@
-use crate::{rpc::RPCError, system::SystemHandle};
-use hyper::{Body, Request, Response};
+use crate::system::SystemHandle;
+use hyper::{Body, Response};
 use hyper_rpc_router::{
     make_error_response, make_success_response, require_params_parsed,
     require_some_params, Params, RouteState,
 };
-use log::warn;
 use sak_types::Block;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;

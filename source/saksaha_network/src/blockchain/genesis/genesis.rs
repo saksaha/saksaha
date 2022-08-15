@@ -27,10 +27,14 @@ impl GenesisBlock {
 
         let tx_mint_1 = TxCandidate::new_dummy_mint_3();
         let tx_mint_2 = TxCandidate::new_dummy_mint_4();
-        let tx_deploy_validator =
-            TxCandidate::new_dummy_deploying_contract(validator_wasm);
-        let tx_deploy_envelope =
-            TxCandidate::new_dummy_deploying_contract(envelope_wasm);
+        let tx_deploy_validator = TxCandidate::new_dummy_deploying_contract(
+            validator_wasm,
+            VALIDATOR_CTR_ADDR.to_string(),
+        );
+        let tx_deploy_envelope = TxCandidate::new_dummy_deploying_contract(
+            envelope_wasm,
+            ENVELOPE_CTR_ADDR.to_string(),
+        );
 
         let block_candidate = BlockCandidate {
             validator_sig: VALIDATOR_SIG.to_string(),
