@@ -34,8 +34,8 @@ async fn test_block_sync_true() {
                 f6083b729baef9e9545c4e95590616fd3\
                 82662a09653f2a966ff524989ae8c0f",
         ),
-        // true,
-        false,
+        true,
+        // false,
     )
     .await;
 

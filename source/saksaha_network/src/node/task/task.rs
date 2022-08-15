@@ -16,6 +16,7 @@ pub(in crate::node) enum NodeTask {
     SendBlockHashSyn {
         new_blocks: Vec<(BlockHeight, BlockHash)>,
     },
+    SendBlockSyn {},
 }
 
 impl std::fmt::Display for NodeTask {

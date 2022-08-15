@@ -28,12 +28,7 @@ impl PeerNode {
             self.peer.get_public_key_short()
         );
 
-        let public_key = self.peer.get_public_key_short();
-
         let node_task_queue = Arc::new(TaskQueue::new(100));
-        let node_task_min_interval = self.node_task_min_interval.clone();
-        // let peer_register_min_interval =
-        //     Duration::from_millis(PEER_REGISTER_MIN_INTERVAL);
 
         {
             // Ledger event routine
@@ -62,29 +57,6 @@ impl PeerNode {
             });
         }
 
-        // let node_task_handler = Box::new(NodeTaskHandler {
-        //     peer: self.peer.clone(),
-        //     machine: self.machine.clone(),
-        // });
-
-        {
-            // Node task routine
-            // let node_task_handler = Box::new(NodeTaskHandler {
-            //     peer: self.peer.clone(),
-            //     machine: self.machine.clone(),
-            // });
-
-            // let task_runtime = TaskRuntime::new(
-            //     node_task_queue.clone(),
-            //     node_task_min_interval,
-            //     node_task_handler,
-            // );
-
-            // tokio::spawn(async move {
-            //     task_runtime.run().await;
-            // });
-        }
-
         loop {
             println!("loop start");
 
@@ -95,7 +67,8 @@ impl PeerNode {
                     let task = task?;
                     println!("task: {}", task);
 
-                    task::handle_task(task, &node_task_queue, conn_lock, &self.machine).await;
+                    task::handle_task(task,
+                        &node_task_queue, conn_lock, &self.machine).await;
                 },
                 maybe_msg = conn_lock.next_msg() => {
                     match maybe_msg {
@@ -132,35 +105,6 @@ impl PeerNode {
 
                 }
             }
-
-            // let maybe_msg = conn_lock.next_msg().await;
-
-            // println!("msg arrived!");
-
-            // match maybe_msg {
-            //     Some(maybe_msg) => match maybe_msg {
-            //         Ok(msg) => {
-            //             let _ = msg_handle::handle_msg(
-            //                 msg,
-            //                 &self.machine,
-            //                 conn_lock,
-            //                 &node_task_queue,
-            //                 &self.peer,
-            //             )
-            //             .await;
-            //         }
-            //         Err(err) => {
-            //             warn!("Failed to parse the msg, err: {}", err);
-            //         }
-            //     },
-            //     None => {
-            //         warn!("Peer has ended the connection");
-
-            //         self.peer.set_peer_status(PeerStatus::Disconnected).await;
-
-            //         return;
-            //     }
-            // };
         }
     }
 

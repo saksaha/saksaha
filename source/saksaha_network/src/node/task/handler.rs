@@ -36,6 +36,10 @@ pub(in crate::node) async fn handle_task<'a>(
             // Ok(())
             Ok(())
         }
+        NodeTask::SendBlockSyn {} => {
+            // Ok(())
+            Ok(())
+        }
     };
 
     if let Err(err) = res {
