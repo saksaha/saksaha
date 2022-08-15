@@ -25,7 +25,8 @@ pub struct QueryCtrRequest {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct QueryCtrResponse {
-    pub result: String,
+    pub result: Vec<u8>,
+    // pub result: String,
 }
 
 pub fn new_empty_32_temp() -> [u8; 32] {
@@ -247,7 +248,8 @@ pub async fn send_tx_mint(
 
 pub async fn query_ctr(
     ctr_addr: String,
-    req: CtrRequest,
+    req_type: String,
+    args: RequestArgs,
 ) -> Result<JsonResponse<QueryCtrResponse>, SaksahaSDKError> {
     let endpoint_test = "http://localhost:34418/rpc/v0";
 
@@ -255,8 +257,14 @@ pub async fn query_ctr(
     let uri: Uri = { endpoint_test.parse().expect("URI should be made") };
 
     let body = {
+        let req = CtrRequest {
+            req_type: req_type.clone(),
+            args,
+            ctr_call_type: CtrCallType::Query,
+        };
+
         let send_req = QueryCtrRequest { ctr_addr, req };
-        let params = serde_json::to_string(&send_req)?.as_bytes().to_vec();
+        let params = serde_json::to_vec(&send_req)?;
 
         let json_request = JsonRequest {
             jsonrpc: "2.0".to_string(),
@@ -283,6 +291,7 @@ pub async fn query_ctr(
     let json_response =
         serde_json::from_slice::<JsonResponse<QueryCtrResponse>>(&b)?;
 
+    // println!("json_response: {:?}", json_response);
     Ok(json_response)
 }
 
