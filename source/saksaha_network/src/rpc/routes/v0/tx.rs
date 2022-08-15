@@ -1,14 +1,13 @@
-use crate::{rpc::RPCError, system::SystemHandle};
-use hyper::{Body, Request, Response, StatusCode};
+use crate::system::SystemHandle;
+use hyper::{Body, Response};
 use hyper_rpc_router::{
     make_error_response, make_success_response, require_params_parsed,
     require_some_params, Params, RouteState,
 };
-use log::warn;
-use sak_contract_std::Request as CtrRequest;
-use sak_types::{MintTxCandidate, PourTxCandidate, Tx, TxCandidate};
+use sak_types::{MintTxCandidate, PourTxCandidate, TxCandidate};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+use type_extension::U8Arr32;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SendMintTxRequest {
@@ -57,7 +56,7 @@ pub(in crate::rpc) struct SendPourTxRequest {
     #[serde(with = "serde_bytes")]
     pi: Vec<u8>,
     sn_1: [u8; 32],
-    sn_2: [u8; 32],
+    // sn_2: [u8; 32],
     cm_1: [u8; 32],
     cm_2: [u8; 32],
     merkle_rt: [u8; 32],
@@ -70,8 +69,8 @@ impl SendPourTxRequest {
         author_sig: String,
         ctr_addr: Option<String>,
         pi: Vec<u8>,
-        sn_1: [u8; 32],
-        sn_2: [u8; 32],
+        sn_1: U8Arr32,
+        // sn_2: [u8; 32],
         cm_1: [u8; 32],
         cm_2: [u8; 32],
         merkle_rt: [u8; 32],
@@ -83,7 +82,7 @@ impl SendPourTxRequest {
             ctr_addr,
             pi,
             sn_1,
-            sn_2,
+            // sn_2,
             cm_1,
             cm_2,
             merkle_rt,
@@ -149,8 +148,6 @@ pub(in crate::rpc) async fn send_pour_tx(
 
     let rb: SendPourTxRequest = require_params_parsed!(route_state, &params);
 
-    println!(" saksaha_network rb : {:?}", rb);
-
     let tx_candidate = TxCandidate::Pour(PourTxCandidate::new(
         rb.created_at,
         rb.data,
@@ -158,7 +155,7 @@ pub(in crate::rpc) async fn send_pour_tx(
         rb.ctr_addr,
         rb.pi,
         rb.sn_1,
-        rb.sn_2,
+        // rb.sn_2,
         rb.cm_1,
         rb.cm_2,
         rb.merkle_rt,

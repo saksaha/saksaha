@@ -216,12 +216,12 @@ fn init_module(
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct EnvelopeStorage {
-    pub open_ch_reqs: HashMap<String, Vec<OpenCh>>,
+    pub open_ch_reqs: HashMap<String, Vec<Channel>>,
     pub chats: HashMap<String, Vec<String>>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct OpenCh {
+pub struct Channel {
     pub ch_id: String,
     pub eph_key: String,
     pub sig: String,

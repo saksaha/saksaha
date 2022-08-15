@@ -230,7 +230,6 @@ async fn test_rpc_reqeust_correct_send_pour_tx() {
             Some(tc_dummy.ctr_addr),
             tc_dummy.pi,
             tc_dummy.sn_1,
-            tc_dummy.sn_2,
             tc_dummy.cm_1,
             tc_dummy.cm_2,
             tc_dummy.merkle_rt,
