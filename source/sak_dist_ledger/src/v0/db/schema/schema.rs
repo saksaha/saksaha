@@ -24,6 +24,7 @@ impl LedgerDBSchema {
                 cfs::TX_HASH_BY_CTR_ADDR,
                 Options::default(),
             ),
+            ColumnFamilyDescriptor::new(cfs::TX_HASH_BY_SN, Options::default()),
             ColumnFamilyDescriptor::new(cfs::PI, Options::default()),
             ColumnFamilyDescriptor::new(cfs::AUTHOR_SIG, Options::default()),
             ColumnFamilyDescriptor::new(cfs::TX_CREATED_AT, Options::default()),

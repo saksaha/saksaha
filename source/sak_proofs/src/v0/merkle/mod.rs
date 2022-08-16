@@ -1,7 +1,7 @@
 use log::debug;
 use sak_crypto::{mimc, Hasher, Scalar, ScalarExt};
 
-pub const TREE_DEPTH: u32 = 5;
+pub const TREE_DEPTH: u32 = 4;
 pub const TREE_CAPACITY: u32 = 2_u32.pow(TREE_DEPTH);
 
 #[derive(Debug)]

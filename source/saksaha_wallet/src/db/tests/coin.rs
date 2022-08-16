@@ -7,6 +7,17 @@ use sak_proofs::OldCoin;
 use sak_types::{CoinRecord, CoinStatus};
 use type_extension::U8Array;
 
+struct TestWalletCoin {
+    addr_pk: Scalar,
+    addr_sk: Scalar,
+    rho: Scalar,
+    r: Scalar,
+    s: Scalar,
+    v: Scalar,
+    cm: Scalar,
+    status: CoinStatus,
+}
+
 fn mock_coin_record_1() -> Result<CoinRecord, WalletError> {
     let hasher = Hasher::new();
 
@@ -66,16 +77,7 @@ async fn make_coin_record(
     s: u64,
     v: u64,
     addr_sk: u64,
-) -> (
-    Scalar,
-    Scalar,
-    Scalar,
-    Scalar,
-    Scalar,
-    Scalar,
-    Scalar,
-    CoinStatus,
-) {
+) -> TestWalletCoin {
     let hasher = Hasher::new();
 
     let addr_sk = U8Array::from_int(addr_sk).to_owned();
@@ -97,16 +99,16 @@ async fn make_coin_record(
 
     let status = CoinStatus::Unused;
 
-    (
+    TestWalletCoin {
         addr_pk,
-        ScalarExt::parse_arr(&addr_sk).unwrap(),
-        ScalarExt::parse_arr(&rho).unwrap(),
-        ScalarExt::parse_arr(&r).unwrap(),
-        ScalarExt::parse_arr(&s).unwrap(),
-        ScalarExt::parse_arr(&v).unwrap(),
+        addr_sk: ScalarExt::parse_arr(&addr_sk).unwrap(),
+        rho: ScalarExt::parse_arr(&rho).unwrap(),
+        r: ScalarExt::parse_arr(&r).unwrap(),
+        s: ScalarExt::parse_arr(&s).unwrap(),
+        v: ScalarExt::parse_arr(&v).unwrap(),
         cm,
         status,
-    )
+    }
 }
 
 #[tokio::test(flavor = "multi_thread")]

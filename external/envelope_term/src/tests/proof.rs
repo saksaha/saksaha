@@ -139,11 +139,14 @@ async fn test_generate_a_proof() {
     let mut auth_path =
         [Some((Scalar::default(), false)); CM_TREE_DEPTH as usize];
 
+    println!("[*] initial auth_path: {:#?}", auth_path);
+
     for (idx, p) in auth_path_idx.iter().enumerate() {
         if idx >= auth_path.len() {
             panic!("Invalid assignment to a fixed sized array, idx: {}", idx);
         }
 
+        println!("auth_path: {}_{}", idx, p.idx);
         let key = format!("{}_{}", idx, p.idx);
 
         let merkle_node = dist_ledger.apis.get_merkle_node(&key).await.unwrap();
@@ -152,6 +155,8 @@ async fn test_generate_a_proof() {
 
         auth_path[idx] = Some((merkle_node, p.direction));
     }
+
+    println!("[*] updated auth_path: {:#?}", auth_path);
 
     let coin_1_new = generate_a_dummy_coin(60);
     let coin_2_new = generate_a_dummy_coin(40);

@@ -90,7 +90,20 @@ impl DistLedgerApis {
         &self,
         tx_candidate: TxCandidate,
     ) -> Result<(), String> {
-        self.sync_pool.insert_tx(tx_candidate).await
+        match tx_candidate {
+            TxCandidate::Mint(_) => {
+                let r = self.sync_pool.insert_tx(tx_candidate).await?;
+
+                Ok(r)
+            }
+            TxCandidate::Pour(_) => {
+                //verify
+
+                let r = self.sync_pool.insert_tx(tx_candidate).await?;
+
+                Ok(r)
+            }
+        }
     }
 
     pub async fn get_tx(

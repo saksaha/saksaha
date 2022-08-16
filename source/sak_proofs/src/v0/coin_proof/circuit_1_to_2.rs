@@ -54,7 +54,12 @@ pub fn get_mimc_params_1_to_2(constants: &[Scalar]) -> Parameters<Bls12> {
 
         params.write(&mut v).unwrap();
         // write origin buf
-        file.write_all(&v);
+        match file.write_all(&v) {
+            Ok(_) => {}
+            Err(err) => {
+                log::error!("Err: {:?}", err);
+            }
+        };
     }
 
     let de_params = Parameters::<Bls12>::read(&v[..], false).unwrap();
@@ -157,12 +162,12 @@ impl Circuit<Scalar> for CoinProofCircuit1to2 {
             )?;
 
             cs.alloc_input(
-                || "sn_old_1",
+                || "sn_1_old",
                 || sn_1.ok_or(SynthesisError::AssignmentMissing),
             )?;
 
             cs.alloc_input(
-                || "cm_new_1",
+                || "cm_1_new",
                 || cm_1_new.ok_or(SynthesisError::AssignmentMissing),
             )?;
 
