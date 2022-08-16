@@ -17,13 +17,15 @@ impl Routine {
         info!("Wallet main routine starts, app_args: {:?}", app_args);
 
         let credential_manager =
-            CredentialManager::init(app_args.public_key, app_args.secret)?;
+            CredentialManager::init(app_args.wallet_credential)?;
 
         let wallet_db =
-            WalletDB::init(&credential_manager.get_curr_credential(), false)?;
+            WalletDB::init(&credential_manager.get_credential(), false)?;
 
         let wallet = {
-            let w = Wallet::init(credential_manager, wallet_db).await?;
+            let w =
+                Wallet::init(credential_manager, wallet_db, app_args.config)
+                    .await?;
 
             Arc::new(w)
         };

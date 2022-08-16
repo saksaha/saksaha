@@ -1,6 +1,6 @@
 use crate::{
     credential::WalletCredential, db::WalletDB, rpc::RPC, wallet::Wallet,
-    CredentialManager,
+    Config, CredentialManager,
 };
 use std::sync::Arc;
 
@@ -22,19 +22,25 @@ pub(crate) async fn make_test_context() -> TestContext {
             160cf9db3a22c04ca6cea627a37f1",
         );
 
-        let m = CredentialManager::init(public_key, secret).unwrap();
+        let wallet_credential =
+            WalletCredential::load(&public_key, &secret).unwrap();
+
+        let m = CredentialManager::init(wallet_credential).unwrap();
 
         m
     };
 
-    let acc_addr = credential_manager.get_curr_credential().acc_addr.clone();
+    let acc_addr = credential_manager.get_credential().acc_addr.clone();
 
     let wallet_db =
-        WalletDB::init(&credential_manager.get_curr_credential(), true)
-            .unwrap();
+        WalletDB::init(&credential_manager.get_credential(), true).unwrap();
+
+    let config = Config::empty();
 
     let wallet = {
-        let w = Wallet::init(credential_manager, wallet_db).await.unwrap();
+        let w = Wallet::init(credential_manager, wallet_db, config)
+            .await
+            .unwrap();
 
         Arc::new(w)
     };
