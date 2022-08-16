@@ -1,7 +1,7 @@
 use crate::{DistLedgerApis, LedgerError};
 use sak_contract_std::Storage;
 use sak_proofs::{MerkleTree, CM_TREE_DEPTH};
-use sak_types::{Block, BlockHash, CtrAddr, Tx, TxCandidate};
+use sak_types::{Block, BlockHash, BlockHeight, CtrAddr, Tx, TxCandidate};
 
 const GET_BLOCK_HASH_LIST_DEFAULT_SIZE: u128 = 10;
 
@@ -66,8 +66,8 @@ impl DistLedgerApis {
 
     pub async fn get_latest_block_hash(
         &self,
-    ) -> Result<Option<(u128, String)>, LedgerError> {
-        let last_block_height =
+    ) -> Result<Option<(BlockHeight, BlockHash)>, LedgerError> {
+        let latest_block_height =
             match self.ledger_db.schema.get_latest_block_height()? {
                 Some(h) => h,
                 None => return Ok(None),
@@ -76,13 +76,13 @@ impl DistLedgerApis {
         let latest_block_hash = match self
             .ledger_db
             .schema
-            .get_block_hash_by_block_height(&last_block_height)?
+            .get_block_hash_by_block_height(&latest_block_height)?
         {
             Some(block_hash) => block_hash.to_string(),
             None => return Ok(None),
         };
 
-        Ok(Some((last_block_height, latest_block_hash)))
+        Ok(Some((latest_block_height, latest_block_hash)))
     }
 
     // rpc

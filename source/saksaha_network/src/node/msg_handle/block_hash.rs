@@ -92,7 +92,7 @@ pub(super) async fn handle_block_hash_syn<'a>(
 ) -> Result<(), SaksahaError> {
     let new_blocks = block_hash_syn_msg.new_blocks;
 
-    let (_, latest_block_hash) = machine
+    let (latest_height, latest_block_hash) = machine
         .blockchain
         .dist_ledger
         .apis
