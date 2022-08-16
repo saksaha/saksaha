@@ -1,11 +1,14 @@
 use crate::LedgerError;
 use crate::{cfs, LedgerDBSchema};
+use sak_crypto::{Bls12, Hasher, Proof, ScalarExt};
 use sak_kv_db::WriteBatch;
 use sak_kv_db::DB;
+use sak_proofs::{get_mimc_params_1_to_2, verify_proof_1_to_2};
 use sak_types::{
     MintTx, MintTxCandidate, PourTx, PourTxCandidate, Tx, TxCtrOp, TxHash,
-    TxHeight, TxType,
+    TxHeight, TxType, SN,
 };
+use type_extension::U8Arr32;
 
 // getter
 impl LedgerDBSchema {
@@ -399,6 +402,25 @@ impl LedgerDBSchema {
         }
     }
 
+    pub(crate) fn get_tx_hash_by_sn(
+        &self,
+        db: &DB,
+        key: &SN,
+    ) -> Result<Option<String>, LedgerError> {
+        let cf = self.make_cf_handle(db, cfs::TX_HASH_BY_SN)?;
+
+        match db.get_cf(&cf, key)? {
+            Some(v) => {
+                let str = String::from_utf8(v)?;
+
+                return Ok(Some(str));
+            }
+            None => {
+                return Ok(None);
+            }
+        }
+    }
+
     pub(crate) fn get_cm_1(
         &self,
         // db: &DB,
@@ -492,13 +514,68 @@ impl LedgerDBSchema {
 
         match tx_ctr_op {
             TxCtrOp::ContractDeploy => {
-                self.batch_put_tx_hash(batch, &tc.ctr_addr, tx_hash)?;
+                self.batch_put_tx_hash_by_contract_addr(
+                    batch,
+                    &tc.ctr_addr,
+                    tx_hash,
+                )?;
             }
             TxCtrOp::ContractCall => {}
             TxCtrOp::None => {}
         }
 
         Ok(tx_hash.clone())
+    }
+
+    pub(crate) fn check_double_spending(
+        &self,
+        sn: &[u8; 32],
+    ) -> Result<(), LedgerError> {
+        if let Some(t) = self.get_tx_hash_by_sn(&self.db, sn)? {
+            // return Err(format!(
+            //     "Detect double spend, `sn` has been spent before with tx_hash: {}",
+            //     t
+            // )
+            // .into());
+            log::error!("Double spending has been detected")
+        };
+
+        Ok(())
+    }
+
+    pub(crate) fn verify_tx(
+        &self,
+        tc: &PourTxCandidate,
+    ) -> Result<(), LedgerError> {
+        let hasher = Hasher::new();
+
+        let public_inputs = [
+            ScalarExt::parse_arr(&tc.merkle_rt)?,
+            ScalarExt::parse_arr(&tc.sn_1)?,
+            ScalarExt::parse_arr(&tc.cm_1)?,
+            ScalarExt::parse_arr(&tc.cm_2)?,
+        ];
+
+        let pi_des: Proof<Bls12> = match Proof::read(&*tc.pi) {
+            Ok(p) => p,
+            Err(err) => {
+                return Err(format!(
+                    "Cannot deserialize the pi, err: {:?}",
+                    err
+                )
+                .into());
+            }
+        };
+
+        let verification_result =
+            verify_proof_1_to_2(pi_des, &public_inputs, &hasher);
+
+        if !verification_result {
+            // return Err(format!("Wrong proof").into());
+            log::error!("Failed to verify")
+        };
+
+        Ok(())
     }
 
     pub(crate) fn batch_put_pour_tx(
@@ -510,7 +587,15 @@ impl LedgerDBSchema {
     ) -> Result<String, LedgerError> {
         let tc = &tx.tx_candidate;
 
+        {
+            self.check_double_spending(&tc.sn_1)?;
+
+            self.verify_tx(&tc)?;
+        }
+
         let tx_hash = tc.get_tx_hash();
+
+        self.batch_put_tx_hash_by_sn(batch, &tc.sn_1, tx_hash)?;
 
         self.batch_put_tx_type(batch, tx_hash, tc.get_tx_type())?;
 
@@ -542,7 +627,11 @@ impl LedgerDBSchema {
 
         match tx_ctr_op {
             TxCtrOp::ContractDeploy => {
-                self.batch_put_tx_hash(batch, &tc.ctr_addr, tx_hash)?;
+                self.batch_put_tx_hash_by_contract_addr(
+                    batch,
+                    &tc.ctr_addr,
+                    tx_hash,
+                )?;
             }
             TxCtrOp::ContractCall => {}
             TxCtrOp::None => {}
@@ -719,6 +808,20 @@ impl LedgerDBSchema {
         Ok(())
     }
 
+    pub(crate) fn batch_put_tx_hash_by_sn(
+        &self,
+        // db: &DB,
+        batch: &mut WriteBatch,
+        key: &[u8; 32],
+        value: &String,
+    ) -> Result<(), LedgerError> {
+        let cf = self.make_cf_handle(&self.db, cfs::TX_HASH_BY_SN)?;
+
+        batch.put_cf(&cf, key, value);
+
+        Ok(())
+    }
+
     pub(crate) fn batch_put_cm(
         &self,
         // db: &DB,
@@ -780,7 +883,7 @@ impl LedgerDBSchema {
         // db: &DB,
         batch: &mut WriteBatch,
         key: &TxHash,
-        value: &[u8; 32],
+        value: &U8Arr32,
     ) -> Result<(), LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::SN_1)?;
 
@@ -851,8 +954,6 @@ pub mod testing {
 
     impl LedgerDBSchema {
         pub(crate) fn put_tx(&self, tx: &Tx) -> Result<String, LedgerError> {
-            // let db = &self.kv_db.db_instance;
-
             let mut batch = WriteBatch::default();
 
             let tx_hash = match tx {
@@ -860,7 +961,7 @@ pub mod testing {
                 Tx::Pour(t) => self.batch_put_pour_tx(&mut batch, t)?,
             };
 
-            &self.db.write(batch)?;
+            self.db.write(batch)?;
 
             Ok(tx_hash)
         }

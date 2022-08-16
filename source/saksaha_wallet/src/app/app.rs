@@ -1,5 +1,5 @@
 use super::routine::Routine;
-use crate::WalletError;
+use crate::{Config, WalletCredential, WalletError};
 use log::error;
 
 pub struct App {}
@@ -9,8 +9,8 @@ pub const APP_NAME: &'static str = "saksaha-wallet";
 #[derive(Debug)]
 pub struct AppArgs {
     pub rpc_port: Option<u16>,
-    pub public_key: String,
-    pub secret: String,
+    pub wallet_credential: WalletCredential,
+    pub config: Config,
 }
 
 impl App {

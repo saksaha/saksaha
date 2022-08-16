@@ -56,18 +56,6 @@ impl DistLedgerApis {
             .get_ctr_state(ctr_addr)?
             .ok_or("ctr state should exist")?;
 
-        {
-            println!("[+] Execute Contract");
-            println!(
-                "[-] request.args: {:?}",
-                String::from_utf8(request.args.clone()).unwrap()
-            );
-            println!(
-                "[-] ctr_state: {:?}",
-                String::from_utf8(ctr_state.clone()).unwrap(),
-            );
-        }
-
         let ctr_fn = CtrFn::Execute(request, ctr_state);
 
         let receipt = self.vm.invoke(ctr_wasm, ctr_fn)?;

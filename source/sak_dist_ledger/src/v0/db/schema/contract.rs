@@ -9,11 +9,13 @@ impl LedgerDBSchema {
         &self,
         ctr_addr: &String,
     ) -> Result<Option<Vec<u8>>, LedgerError> {
-        let tx_hash = self
-            .get_tx_hash_by_ctr_addr(ctr_addr)?
-            .ok_or("ctr data does not exist")?;
+        let tx_hash = self.get_tx_hash_by_ctr_addr(ctr_addr)?.ok_or(
+            format!("ctr data does not exist, ctr_addr: {}", ctr_addr),
+        )?;
 
-        let ctr_data = self.get_data(&tx_hash)?.ok_or("data does not exist")?;
+        let ctr_data = self
+            .get_data(&tx_hash)?
+            .ok_or(format!("data does not exist, ctr_addr: {}", ctr_addr))?;
 
         Ok(Some(ctr_data))
     }
@@ -86,7 +88,7 @@ impl LedgerDBSchema {
         Ok(())
     }
 
-    pub(crate) fn batch_put_tx_hash(
+    pub(crate) fn batch_put_tx_hash_by_contract_addr(
         &self,
         // db: &DB,
         batch: &mut WriteBatch,

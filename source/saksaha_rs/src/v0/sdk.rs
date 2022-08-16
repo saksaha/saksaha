@@ -6,16 +6,15 @@ use sak_crypto::{
     groth16, mimc, os_rng, Bls12, Circuit, Hasher, Proof, Scalar, ScalarExt,
 };
 use sak_proofs::{
-    get_mimc_params_1_to_2, CoinProof, CoinProofCircuit1to2, MerkleTree,
-    NewCoin, OldCoin, Path, ProofError, CM_TREE_DEPTH,
+    get_mimc_params_1_to_2, CoinProofCircuit1to2, MerkleTree, NewCoin, OldCoin,
+    Path, ProofError, CM_TREE_DEPTH,
 };
 use sak_rpc_interface::{JsonRequest, JsonResponse};
 use serde::{Deserialize, Serialize};
 use std::{char::from_u32_unchecked, collections::HashMap, time};
-use type_extension::U8Array;
+use type_extension::{U8Arr32, U8Array};
 
 pub const A: usize = 1;
-pub const TREE_DEPTH: usize = 3;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct QueryCtrRequest {
@@ -46,7 +45,6 @@ pub struct SendPourTxRequest {
     #[serde(with = "serde_bytes")]
     pi: Vec<u8>,
     sn_1: [u8; 32],
-    // sn_2: [u8; 32],
     cm_1: [u8; 32],
     cm_2: [u8; 32],
     merkle_rt: [u8; 32],
@@ -118,15 +116,12 @@ impl SendMintTxRequest {
 }
 
 pub async fn send_tx_pour(
-    // pi: Proof<Bls12>,
-    // sn_1: U8Array,
-    // sn_2: U8Array,
-    // cm_1: Scalar,
-    // cm_2: Scalar,
-    // merkle_rt: Scalar,
+    sn_1: U8Arr32,
+    cm_1: U8Arr32,
+    cm_2: U8Arr32,
+    merkle_rt: U8Arr32,
+    pi: Vec<u8>,
     ctr_addr: String,
-    // req_type: String,
-    // args: RequestArgs,
     ctr_request: CtrRequest,
 ) -> Result<JsonResponse<String>, SaksahaSDKError> {
     let endpoint_test = "http://localhost:34418/rpc/v0";
@@ -135,25 +130,22 @@ pub async fn send_tx_pour(
     let uri: Uri = { endpoint_test.parse().expect("URI should be made") };
 
     let body = {
-        // let req = CtrRequest {
-        //     req_type: req_type.clone(),
-        //     args,
-        //     ctr_call_type: CtrCallType::Execute,
-        // };
+        let ctr_request = serde_json::to_vec(&ctr_request)?;
+        let sig = String::from("author_sig_1");
+        let created_at =
+            String::from(format!("created_at_{:?}", time::SystemTime::now()));
 
         // *** Need to change dummy values to real values
         let send_req = SendPourTxRequest::new(
-            String::from(format!("created_at_{:?}", time::SystemTime::now())),
-            serde_json::to_vec(&ctr_request)?,
-            String::from("author_sig_1"),
+            created_at,
+            ctr_request,
+            sig,
             Some(ctr_addr),
-            //
-            vec![11, 11, 11],        // pi
-            U8Array::new_empty_32(), // sn_1
-            // U8Array::new_empty_32(), // sn_2 (will be deleted)
-            U8Array::new_empty_32(), // cm_1
-            U8Array::new_empty_32(), // cm_2
-            U8Array::new_empty_32(), // merkle_rt
+            pi,
+            sn_1,
+            cm_1,
+            cm_2,
+            merkle_rt,
         );
 
         let params = serde_json::to_string(&send_req)?.as_bytes().to_vec();

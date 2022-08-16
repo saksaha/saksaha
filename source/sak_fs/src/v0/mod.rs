@@ -32,7 +32,7 @@ pub fn create_or_get_app_path(
         let app_root_path = dir.config_dir();
 
         if !app_root_path.exists() {
-            fs::create_dir(app_root_path)?;
+            fs::create_dir_all(app_root_path)?;
         }
 
         // let prefixed_app_path = app_root_path.join(app_prefix);
