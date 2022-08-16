@@ -53,7 +53,7 @@ impl Wallet {
         _acc_addr: String,
         ctr_addr: String,
         ctr_request: CtrRequest,
-    ) -> Result<(), WalletError> {
+    ) -> Result<String, WalletError> {
         // self.check_enough_balance(&id, &key).await?;
 
         // let cm_idx = match self.db.schema.get_latest_cm_idx()? {
@@ -114,7 +114,7 @@ impl Wallet {
         //     )
         //     .await?;
 
-        saksaha::send_tx_pour(
+        let json_response = saksaha::send_tx_pour(
             U8Array::new_empty_32(),
             U8Array::new_empty_32(),
             U8Array::new_empty_32(),
@@ -125,10 +125,9 @@ impl Wallet {
         )
         .await?;
 
-        //     // self.set_status_used(&cm, &CoinStatus::Used).await?;
-        // }
+        let res = json_response.result.ok_or("Value needs to be returned")?;
 
-        Ok(())
+        Ok(res)
     }
 }
 
