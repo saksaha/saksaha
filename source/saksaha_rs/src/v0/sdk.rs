@@ -45,7 +45,6 @@ pub struct SendPourTxRequest {
     #[serde(with = "serde_bytes")]
     pi: Vec<u8>,
     sn_1: [u8; 32],
-    // sn_2: [u8; 32],
     cm_1: [u8; 32],
     cm_2: [u8; 32],
     merkle_rt: [u8; 32],

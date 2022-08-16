@@ -115,16 +115,11 @@ impl Wallet {
         //     .await?;
 
         saksaha::send_tx_pour(
-            // pi,
-            // sn_1_old.to_bytes().into(),
-            // new_coin_1.cm,
-            // new_coin_2.cm,
-            // merkle_rt,
             U8Array::new_empty_32(),
             U8Array::new_empty_32(),
             U8Array::new_empty_32(),
             U8Array::new_empty_32(),
-            U8Array::new_empty_32(),
+            vec![],
             ctr_addr,
             ctr_request,
         )
