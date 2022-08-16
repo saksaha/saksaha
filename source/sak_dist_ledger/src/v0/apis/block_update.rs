@@ -318,6 +318,11 @@ async fn process_ctr_state_update(
                         None => apis.execute_ctr(&ctr_addr, req).await?,
                     };
 
+                    println!(
+                        "[+] new_state: {:?}",
+                        String::from_utf8(new_state.clone())
+                    );
+
                     ctr_state_update
                         .insert(ctr_addr.clone(), new_state.clone());
                 }

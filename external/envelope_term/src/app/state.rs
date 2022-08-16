@@ -1,4 +1,4 @@
-use envelope_contract::Channel;
+use envelope_contract::{Channel, ChatMessage};
 use tui::widgets::ListState;
 
 use crate::db::USER_1;
@@ -32,6 +32,7 @@ pub struct AppState {
     pub chats: Vec<ChatMessage>,
     pub view: View,
     pub balance: String,
+    pub selected_ch_id: String,
 }
 
 impl AppState {
@@ -54,6 +55,7 @@ impl AppState {
             chats: vec![],
             view: View::Landing,
             balance: String::from("0"),
+            selected_ch_id: String::default(),
         }
     }
     pub fn scroll_messages_view(&self) -> usize {
@@ -114,22 +116,27 @@ impl AppState {
     }
 
     pub fn set_chats(&mut self, data: Vec<u8>) {
-        self.chats = match serde_json::from_slice::<Vec<String>>(&data) {
+        self.chats = match serde_json::from_slice::<Vec<ChatMessage>>(&data) {
             Ok(c) => c
                 .into_iter()
-                .map(|m| ChatMessage::new(m, "undefined".to_string()))
+                .map(|mut m| {
+                    if m.user == USER_1 {
+                        m.user = "me".to_string();
+                    }
+                    m
+                })
                 .collect(),
             Err(err) => {
-                panic!("Cannot Deserialize `msg`:, err: {}", err);
+                panic!("Cannot Deserialize `ChatMessage`:, err: {}", err);
             }
         };
     }
 
-    pub fn set_input_messages(&mut self, msg: String) {
-        let user = String::from("me");
+    // pub fn set_input_messages(&mut self, msg: String) {
+    //     let user = String::from("me");
 
-        self.chats.push(ChatMessage::new(msg, user));
-    }
+    //     self.chats.push(ChatMessage::new(msg, user));
+    // }
 
     pub fn set_view_landing(&mut self) {
         if self.initialized {
@@ -232,26 +239,27 @@ impl Default for AppState {
             chats: vec![],
             view: View::Landing,
             balance: String::from("0"),
+            selected_ch_id: String::default(),
         }
     }
 }
 
-#[derive(Debug)]
-pub struct ChatMessage {
-    pub date: DateTime<Local>,
-    pub msg: String,
-    pub user: String,
-}
+// #[derive(Debug)]
+// pub struct ChatMessage {
+// pub date: DateTime<Local>,
+//     pub msg: String,
+//     pub user: String,
+// }
 
-impl ChatMessage {
-    pub fn new(msg: String, user: String) -> ChatMessage {
-        ChatMessage {
-            date: Local::now(),
-            msg,
-            user,
-        }
-    }
-}
+// impl ChatMessage {
+//     pub fn new(msg: String, user: String) -> ChatMessage {
+//         ChatMessage {
+//             date: Local::now(),
+//             msg,
+//             user,
+//         }
+//     }
+// }
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct ChannelState {
