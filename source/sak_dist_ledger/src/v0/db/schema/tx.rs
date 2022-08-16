@@ -6,7 +6,7 @@ use sak_kv_db::DB;
 use sak_proofs::{get_mimc_params_1_to_2, verify_proof_1_to_2};
 use sak_types::{
     MintTx, MintTxCandidate, PourTx, PourTxCandidate, Tx, TxCtrOp, TxHash,
-    TxHeight, TxType,
+    TxHeight, TxType, SN,
 };
 use type_extension::U8Arr32;
 
@@ -405,7 +405,7 @@ impl LedgerDBSchema {
     pub(crate) fn get_tx_hash_by_sn(
         &self,
         db: &DB,
-        key: &[u8; 32],
+        key: &SN,
     ) -> Result<Option<String>, LedgerError> {
         let cf = self.make_cf_handle(db, cfs::TX_HASH_BY_SN)?;
 
@@ -563,7 +563,7 @@ impl LedgerDBSchema {
 
         if !verification_result {
             // return Err(format!("Wrong proof").into());
-            log::error!("pour_tx has been failed to verify");
+            log::error!("Failed to verify")
         };
 
         Ok(())
