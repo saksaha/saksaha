@@ -34,16 +34,13 @@ fn main() -> Result<(), WalletError> {
 
     let app_args = AppArgs {
         rpc_port: cli_args.rpc_port,
-        // public_key: wallet_credential.public_key,
-        // secret: wallet_credential.secret,
         wallet_credential,
         config,
-        // cfg_profile: cli_args.cfg_profile,
     };
 
     let app = App::init();
 
-    // app.run(app_args)?;
+    app.run(app_args)?;
 
     Ok(())
 }

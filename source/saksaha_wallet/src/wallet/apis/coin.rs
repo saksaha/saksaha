@@ -9,6 +9,7 @@ use sak_types::CoinRecord;
 use sak_types::CoinStatus;
 use saksaha::{generate_proof_1_to_2, get_auth_path};
 use std::convert::TryInto;
+use type_extension::U8Array;
 
 pub const GAS: u64 = 10;
 
@@ -49,13 +50,10 @@ impl Wallet {
 
     pub async fn send_tx(
         &self,
-        acc_addr: String,
+        _acc_addr: String,
         ctr_addr: String,
         ctr_request: CtrRequest,
     ) -> Result<(), WalletError> {
-        // let id = String::from("user_1");
-        // let key = String::from("user1pw");
-
         // self.check_enough_balance(&id, &key).await?;
 
         // let cm_idx = match self.db.schema.get_latest_cm_idx()? {
@@ -122,6 +120,11 @@ impl Wallet {
             // new_coin_1.cm,
             // new_coin_2.cm,
             // merkle_rt,
+            U8Array::new_empty_32(),
+            U8Array::new_empty_32(),
+            U8Array::new_empty_32(),
+            U8Array::new_empty_32(),
+            U8Array::new_empty_32(),
             ctr_addr,
             ctr_request,
         )

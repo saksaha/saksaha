@@ -17,8 +17,6 @@ impl U8Array {
 
         let _ = &ret[24..].copy_from_slice(&arr);
 
-        println!("from_int(), v: {}, arr: {:?}", v, ret);
-
         ret
     }
 }

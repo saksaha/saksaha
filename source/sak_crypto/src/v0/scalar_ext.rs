@@ -56,4 +56,29 @@ impl ScalarExt {
 
         ScalarExt::parse_vec(sb)
     }
+
+    pub fn parse_u64(v: u64) -> Result<Scalar, CryptoError> {
+        let bytes: [u8; 8] = v.to_le_bytes();
+        let mut arr = [0u8; 32];
+        let _ = &arr[24..].copy_from_slice(&bytes);
+
+        let s = Scalar::from_bytes(&arr);
+
+        if s.is_some().into() {
+            let ret = s.unwrap();
+            return Ok(ret);
+        } else {
+            return Err(format!("Fail to parse byte array into scalar").into());
+        }
+    }
+
+    pub fn into_u64(s: Scalar) -> Result<u64, CryptoError> {
+        let bytes = s.to_bytes();
+
+        let arr: [u8; 8] = bytes[24..32].try_into()?;
+
+        let v = u64::from_le_bytes(arr);
+
+        Ok(v)
+    }
 }

@@ -1,5 +1,6 @@
 use super::Wallet;
 use crate::{db::WalletDB, WalletCredential, WalletError};
+use colored::Colorize;
 use sak_types::CoinRecord;
 
 pub(crate) struct CoinManager {
@@ -19,8 +20,14 @@ impl CoinManager {
         );
 
         for (idx, coin) in coins.iter().enumerate() {
-            println!("\t- [{}/{}] {}", idx + 1, coin_count, coin);
+            println!(
+                "\t- {} {}",
+                format!("[{}/{}]", (idx + 1), coin_count).dimmed(),
+                coin
+            );
         }
+
+        println!("");
 
         let m = CoinManager { coins };
 

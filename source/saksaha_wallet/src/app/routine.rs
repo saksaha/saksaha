@@ -23,13 +23,9 @@ impl Routine {
             WalletDB::init(&credential_manager.get_credential(), false)?;
 
         let wallet = {
-            let w = Wallet::init(
-                credential_manager,
-                wallet_db,
-                app_args.config,
-                // app_args.cfg_profile,
-            )
-            .await?;
+            let w =
+                Wallet::init(credential_manager, wallet_db, app_args.config)
+                    .await?;
 
             Arc::new(w)
         };
