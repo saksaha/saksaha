@@ -39,15 +39,15 @@ impl WalletCredential {
     }
 
     pub fn load(
-        public_key: String,
-        secret: String,
+        public_key: &String,
+        secret: &String,
     ) -> Result<WalletCredential, WalletError> {
         let credential = Credential::new(&secret, &public_key)?;
         let acc_addr = SakKey::create_acc_addr(&credential.public_key);
 
         let c = WalletCredential {
-            public_key,
-            secret,
+            public_key: public_key.to_string(),
+            secret: secret.to_string(),
             acc_addr,
         };
 

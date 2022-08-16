@@ -15,6 +15,7 @@ use envelope_contract::{
 use log::{debug, error, warn};
 use sak_contract_std::{CtrCallType, CtrRequest};
 use sak_crypto::{PublicKey, SakKey, SecretKey, SigningKey, ToEncodedPoint};
+use type_extension::U8Array;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum AppReturn {
@@ -297,8 +298,16 @@ impl App {
                 ctr_call_type: CtrCallType::Execute,
             };
 
-            let _json_response =
-                saksaha::send_tx_pour(ctr_addr, ctr_request).await?;
+            let _json_response = saksaha::send_tx_pour(
+                U8Array::new_empty_32(),
+                U8Array::new_empty_32(),
+                U8Array::new_empty_32(),
+                U8Array::new_empty_32(),
+                vec![],
+                ctr_addr,
+                ctr_request,
+            )
+            .await?;
         }
 
         Ok(())
@@ -386,8 +395,16 @@ impl App {
             ctr_call_type: CtrCallType::Execute,
         };
 
-        let json_response =
-            saksaha::send_tx_pour(ctr_addr, ctr_request).await?;
+        let json_response = saksaha::send_tx_pour(
+            U8Array::new_empty_32(),
+            U8Array::new_empty_32(),
+            U8Array::new_empty_32(),
+            U8Array::new_empty_32(),
+            vec![],
+            ctr_addr,
+            ctr_request,
+        )
+        .await?;
 
         let result = json_response.result.unwrap_or("None".to_string());
 

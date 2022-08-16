@@ -1,4 +1,4 @@
-use super::WalletApis;
+use crate::wallet::Wallet;
 use crate::WalletError;
 use sak_contract_std::CtrRequest;
 use sak_crypto::Hasher;
@@ -7,20 +7,20 @@ use sak_proofs::OldCoin;
 use sak_types::AccountBalance;
 use sak_types::CoinRecord;
 use sak_types::CoinStatus;
-use saksaha::{generate_proof_1_to_2, get_auth_path};
 use std::convert::TryInto;
+use type_extension::U8Array;
 
 pub const GAS: u64 = 10;
 
-impl WalletApis {
+impl Wallet {
     pub async fn get_balance(
         &self,
         acc_addr: &String,
     ) -> Result<AccountBalance, WalletError> {
         println!("wallet apis, get_balance, acc_addr: {}", acc_addr);
 
-        let cmanager = &self.credential_manager;
-        let credential = cmanager.get_curr_credential();
+        let cmanager = self.get_credential_manager();
+        let credential = cmanager.get_credential();
 
         if &credential.acc_addr != acc_addr {
             return Err(format!(
@@ -32,7 +32,7 @@ impl WalletApis {
 
         let mut balance: u64 = 0;
 
-        for coin in self.db.schema.get_all_coins()? {
+        for coin in self.get_db().schema.get_all_coins()? {
             let bytes = coin.v.to_bytes();
 
             let arr: [u8; 8] = bytes[24..].try_into()?;
@@ -49,12 +49,44 @@ impl WalletApis {
 
     pub async fn send_tx(
         &self,
-        acc_addr: String,
+        _acc_addr: String,
         ctr_addr: String,
         ctr_request: CtrRequest,
-    ) -> Result<(), WalletError> {
-        // let id = String::from("user_1");
-        // let key = String::from("user1pw");
+    ) -> Result<String, WalletError> {
+        let coin_manager = self.get_coin_manager();
+
+        // let coin: CoinRecord = coin_manager.get_next_available_coin()?;
+
+        // let sn_1 = {
+        //     let some_hashed_result = 0;
+        // };
+
+        // let new_coin_1 = CoinRecord::new()?;
+        // let new_coin_2 = CoinRecord::new()?;
+
+        // let cm_1 = new_coin_1.cm;
+        // let cm_2 = new_coin_2.cm;
+
+        // let pi =
+        //     saksaha::generate_proof_1_to_2(coin_1_old, coin_1_new, coin_2_new)
+        //         .await?;
+
+        // // send
+        // let json_response = saksaha::send_tx_pour(
+        //     U8Array::new_empty_32(),
+        //     U8Array::new_empty_32(),
+        //     U8Array::new_empty_32(),
+        //     U8Array::new_empty_32(),
+        //     vec![],
+        //     ctr_addr,
+        //     ctr_request,
+        // )
+        // .await?;
+
+        // let res = json_response.result.ok_or("Value needs to be returned")?;
+
+        // coin_manager.add_coin()?;
+        ////////////////////////////////////////////////
 
         // self.check_enough_balance(&id, &key).await?;
 
@@ -116,21 +148,7 @@ impl WalletApis {
         //     )
         //     .await?;
 
-        saksaha::send_tx_pour(
-            // pi,
-            // sn_1_old.to_bytes().into(),
-            // new_coin_1.cm,
-            // new_coin_2.cm,
-            // merkle_rt,
-            ctr_addr,
-            ctr_request,
-        )
-        .await?;
-
-        //     // self.set_status_used(&cm, &CoinStatus::Used).await?;
-        // }
-
-        Ok(())
+        Ok("power".to_string())
     }
 }
 

@@ -1,2 +1,3 @@
-mod default;
+mod balance;
+mod coin;
 mod utils;

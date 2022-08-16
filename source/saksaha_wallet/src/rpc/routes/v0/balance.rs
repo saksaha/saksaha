@@ -37,7 +37,7 @@ pub(in crate::rpc) async fn get_balance(
 
     debug!("rb: {:#?}", rb);
 
-    match ctx.wallet.get_apis().get_balance(&rb.acc_addr).await {
+    match ctx.wallet.get_balance(&rb.acc_addr).await {
         Ok(b) => {
             let balance = GetBalanceResponse { balance: b };
 

@@ -1,70 +1,92 @@
-use super::apis::{self, WalletApis};
-use crate::{
-    credential::WalletCredential, db::WalletDB, CredentialManager, WalletError,
-};
-use futures::sink::Send;
+use std::sync::Arc;
+
+use super::CoinManager;
+use crate::{db::WalletDB, Config, CredentialManager, WalletError};
+use colored::Colorize;
 use log::debug;
-use sak_crypto::{Hasher, ScalarExt};
-use sak_proofs::{MerkleTree, NewCoin, OldCoin, CM_TREE_DEPTH};
-use sak_types::{CoinRecord, CoinStatus};
-use type_extension::U8Array;
+use sak_types::CoinRecord;
 
 pub(crate) struct Wallet {
-    apis: WalletApis,
+    wallet_db: Arc<WalletDB>,
+    credential_manager: CredentialManager,
+    coin_manager: CoinManager,
 }
 
 impl Wallet {
     pub async fn init(
         credential_manager: CredentialManager,
         wallet_db: WalletDB,
+        config: Config,
     ) -> Result<Wallet, WalletError> {
-        let apis = WalletApis {
-            db: wallet_db,
+        let wallet_db = Arc::new(wallet_db);
+
+        let coin_manager = CoinManager::init(wallet_db.clone()).await?;
+
+        let wallet = Wallet {
+            wallet_db,
             credential_manager,
+            coin_manager,
         };
 
-        let wallet = Wallet { apis };
-
-        // for development
-        init_for_dev(&wallet).await?;
+        bootstrap_wallet(&wallet, config).await?;
 
         Ok(wallet)
     }
 
     #[inline]
-    pub fn get_apis(&self) -> &WalletApis {
-        &self.apis
+    pub fn get_db(&self) -> &WalletDB {
+        &self.wallet_db
+    }
+
+    #[inline]
+    pub fn get_coin_manager(&self) -> &CoinManager {
+        &self.coin_manager
+    }
+
+    #[inline]
+    pub fn get_credential_manager(&self) -> &CredentialManager {
+        &self.credential_manager
     }
 }
 
-// pub struct SendTxPourRequest {
-//     pi: U8Array,
-//     sn_1: U8Array,
-//     sn_2: U8Array,
-//     cm_1: U8Array,
-//     cm_2: U8Array,
-//     merkle_rt: U8Array,
-// }
-async fn init_for_dev(wallet: &Wallet) -> Result<(), WalletError> {
-    {
-        let value = 100;
+async fn bootstrap_wallet(
+    wallet: &Wallet,
+    config: Config,
+) -> Result<(), WalletError> {
+    println!(
+        "\n{} wallet\nConfig: {:#?}\n",
+        "Bootstrapping".green(),
+        config
+    );
 
-        let coin = CoinRecord::new(0x11, 0x12, 0x13, 0x14, value, None)?;
+    if let Some(coin_records) = config.coin_records {
+        let coin_count = coin_records.len();
 
-        debug!("[demo coin: user_1] {:#?}", coin);
+        println!(
+            "\nTotal {} coins to bootstrap",
+            coin_count.to_string().green()
+        );
 
-        wallet.apis.db.schema.put_coin(&coin)?;
+        for (idx, coin) in coin_records.iter().enumerate() {
+            let res = wallet.get_db().schema.put_coin(&coin);
+
+            match res {
+                Ok(r) => {
+                    println!(
+                        "\t[{}/{}] Bootstrapped a coin, cm: {}, val: {}",
+                        idx, coin_count, coin.cm, coin.v
+                    );
+                }
+                Err(err) => {
+                    println!(
+                        "\t- [{}/{}] Error bootstrapping coin, cm: {}, \n\
+                        \terr: {}",
+                        idx, coin_count, coin.cm, err,
+                    );
+                }
+            };
+        }
     }
-
-    // {
-    //     let value = 100;
-
-    //     let coin = CoinRecord::new(0x21, 0x22, 0x23, 0x24, value, None)?;
-
-    //     debug!("[demo coin: user_2] {:#?}", coin);
-
-    //     wallet.apis.db.schema.put_coin(&coin)?;
-    // }
 
     Ok(())
 }

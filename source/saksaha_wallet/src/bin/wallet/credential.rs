@@ -4,8 +4,8 @@ use log::info;
 use saksaha_wallet::{WalletCredential, WalletError};
 
 pub fn create_or_get_credential(
-    public_key: Option<String>,
-    secret: Option<String>,
+    public_key: &Option<String>,
+    secret: &Option<String>,
 ) -> Result<WalletCredential, WalletError> {
     let c = if public_key.is_none() || secret.is_none() {
         let _ = prompt::run()?;
@@ -33,8 +33,9 @@ pub fn create_or_get_credential(
 
         c
     } else {
-        let public_key = public_key.ok_or("Public key should be provided")?;
-        let secret = secret.ok_or("Secret should be provided")?;
+        let public_key =
+            public_key.as_ref().ok_or("Public key should be provided")?;
+        let secret = secret.as_ref().ok_or("Secret should be provided")?;
 
         let w = WalletCredential::load(public_key, secret)?;
 

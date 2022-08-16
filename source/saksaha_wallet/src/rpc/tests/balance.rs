@@ -4,7 +4,7 @@ use hyper::{Body, Client, Method, Request, Uri};
 use sak_rpc_interface::{JsonRequest, JsonResponse};
 
 #[tokio::test(flavor = "multi_thread")]
-async fn test_call_get_block_with_good_params() {
+async fn test_get_balance_default() {
     sak_test_utils::init_test_log();
 
     let test_context = utils::make_test_context().await;

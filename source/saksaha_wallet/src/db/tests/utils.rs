@@ -12,7 +12,7 @@ fn mock_wallet_credential() -> WalletCredential {
         8ebef9b3850be3f66cf0d83b9",
     );
 
-    let c = WalletCredential::load(public_key, secret).unwrap();
+    let c = WalletCredential::load(&public_key, &secret).unwrap();
     c
 }
 

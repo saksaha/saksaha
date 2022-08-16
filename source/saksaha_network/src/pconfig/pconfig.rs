@@ -54,6 +54,10 @@ impl PConfig {
 
             let data = serde_yaml::to_string(&pconfig)?;
 
+            let config_path = fs::get_config_path(app_prefix)?;
+
+            let _ = std::fs::create_dir_all(config_path);
+
             sak_fs::persist(data, config_file_path)?;
 
             Ok(pconfig)

@@ -1,10 +1,10 @@
 use super::CoinStatus;
 use crate::AccountBalance;
 use crate::TypesError;
+use colored::Colorize;
 use sak_crypto::Hasher;
 use sak_crypto::Scalar;
 use sak_crypto::ScalarExt;
-use sak_proofs::NewCoin;
 use type_extension::U8Array;
 
 pub type CoinIdx = u128;
@@ -69,11 +69,7 @@ impl CoinRecord {
             ScalarExt::parse_arr(&arr)?
         };
 
-        let v = {
-            let arr = U8Array::from_int(v);
-
-            ScalarExt::parse_arr(&arr)?
-        };
+        let v = ScalarExt::parse_u64(v)?;
 
         let k = hasher.comm2_scalar(r, addr_pk, rho);
 
@@ -109,4 +105,21 @@ impl CoinRecord {
     //         v,
     //     }
     // }
+}
+
+impl std::fmt::Display for CoinRecord {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let val = match ScalarExt::into_u64(self.v) {
+            Ok(v) => v.to_string(),
+            Err(err) => format!("Invalid value, err: {:10}", err),
+        };
+
+        write!(
+            f,
+            "Coin [cm: {}, val: {}, status: {}]",
+            &self.cm.to_string().green(),
+            val,
+            &self.coin_status
+        )
+    }
 }
