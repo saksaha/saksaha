@@ -1,7 +1,7 @@
-use colored::Colorize;
-use saksaha_wallet::{WalletCredential, WalletError};
-
 use crate::prompt;
+use colored::Colorize;
+use log::info;
+use saksaha_wallet::{WalletCredential, WalletError};
 
 pub fn create_or_get_credential(
     public_key: Option<String>,
@@ -36,7 +36,14 @@ pub fn create_or_get_credential(
         let public_key = public_key.ok_or("Public key should be provided")?;
         let secret = secret.ok_or("Secret should be provided")?;
 
-        WalletCredential::load(public_key, secret)?
+        let w = WalletCredential::load(public_key, secret)?;
+
+        info!(
+            "Wallet credential has been successfully loaded, acc_addr: {}",
+            w.acc_addr.yellow(),
+        );
+
+        w
     };
 
     Ok(c)

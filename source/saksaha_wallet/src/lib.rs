@@ -1,4 +1,5 @@
 mod app;
+mod config;
 mod credential;
 mod db;
 mod pconfig;
@@ -7,6 +8,7 @@ mod tests;
 mod wallet;
 
 pub use app::*;
+pub use config::*;
 pub use credential::*;
 pub use pconfig::*;
 
