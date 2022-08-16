@@ -7,7 +7,6 @@ use sak_proofs::OldCoin;
 use sak_types::AccountBalance;
 use sak_types::CoinRecord;
 use sak_types::CoinStatus;
-use saksaha::{generate_proof_1_to_2, get_auth_path};
 use std::convert::TryInto;
 use type_extension::U8Array;
 
@@ -54,6 +53,41 @@ impl Wallet {
         ctr_addr: String,
         ctr_request: CtrRequest,
     ) -> Result<String, WalletError> {
+        let coin_manager = self.get_coin_manager();
+
+        // let coin: CoinRecord = coin_manager.get_next_available_coin()?;
+
+        // let sn_1 = {
+        //     let some_hashed_result = 0;
+        // };
+
+        // let new_coin_1 = CoinRecord::new()?;
+        // let new_coin_2 = CoinRecord::new()?;
+
+        // let cm_1 = new_coin_1.cm;
+        // let cm_2 = new_coin_2.cm;
+
+        // let pi =
+        //     saksaha::generate_proof_1_to_2(coin_1_old, coin_1_new, coin_2_new)
+        //         .await?;
+
+        // // send
+        // let json_response = saksaha::send_tx_pour(
+        //     U8Array::new_empty_32(),
+        //     U8Array::new_empty_32(),
+        //     U8Array::new_empty_32(),
+        //     U8Array::new_empty_32(),
+        //     vec![],
+        //     ctr_addr,
+        //     ctr_request,
+        // )
+        // .await?;
+
+        // let res = json_response.result.ok_or("Value needs to be returned")?;
+
+        // coin_manager.add_coin()?;
+        ////////////////////////////////////////////////
+
         // self.check_enough_balance(&id, &key).await?;
 
         // let cm_idx = match self.db.schema.get_latest_cm_idx()? {
@@ -114,20 +148,7 @@ impl Wallet {
         //     )
         //     .await?;
 
-        let json_response = saksaha::send_tx_pour(
-            U8Array::new_empty_32(),
-            U8Array::new_empty_32(),
-            U8Array::new_empty_32(),
-            U8Array::new_empty_32(),
-            vec![],
-            ctr_addr,
-            ctr_request,
-        )
-        .await?;
-
-        let res = json_response.result.ok_or("Value needs to be returned")?;
-
-        Ok(res)
+        Ok("power".to_string())
     }
 }
 

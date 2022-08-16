@@ -36,4 +36,11 @@ impl CoinManager {
 
         Ok(m)
     }
+
+    // pub fn make_coin(&self) {
+    //     // for loop
+    //     // select the first coin that is not used before.
+
+    //     //
+    // }
 }

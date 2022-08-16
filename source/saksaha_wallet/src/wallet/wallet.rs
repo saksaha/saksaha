@@ -39,6 +39,11 @@ impl Wallet {
     }
 
     #[inline]
+    pub fn get_coin_manager(&self) -> &CoinManager {
+        &self.coin_manager
+    }
+
+    #[inline]
     pub fn get_credential_manager(&self) -> &CredentialManager {
         &self.credential_manager
     }
