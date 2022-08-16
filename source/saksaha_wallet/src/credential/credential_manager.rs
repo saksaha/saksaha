@@ -8,11 +8,8 @@ pub struct CredentialManager {
 
 impl CredentialManager {
     pub fn init(
-        public_key: String,
-        secret: String,
+        wallet_credential: WalletCredential,
     ) -> Result<CredentialManager, WalletError> {
-        let wallet_credential = WalletCredential::load(public_key, secret)?;
-
         let m = CredentialManager {
             candidates: vec![],
             credential: wallet_credential,

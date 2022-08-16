@@ -17,24 +17,24 @@ impl Routine {
         info!("Wallet main routine starts, app_args: {:?}", app_args);
 
         let credential_manager =
-            CredentialManager::init(app_args.public_key, app_args.secret)?;
+            CredentialManager::init(app_args.wallet_credential)?;
 
         let wallet_db =
             WalletDB::init(&credential_manager.get_credential(), false)?;
 
         let wallet = {
-            let w = Wallet::init(credential_manager, wallet_db).await?;
+            let w = Wallet::init(
+                credential_manager,
+                wallet_db,
+                app_args.config,
+                // app_args.cfg_profile,
+            )
+            .await?;
 
             Arc::new(w)
         };
 
         let rpc = RPC::init(app_args.rpc_port, wallet).await?;
-
-        {
-            // Initilize state based on cfg_profile
-
-            // wallet.get_db().schema.put_coin;
-        }
 
         tokio::spawn(async move {
             tokio::join!(rpc.run());

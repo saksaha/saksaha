@@ -1,5 +1,6 @@
 use super::CoinManager;
-use crate::{db::WalletDB, CredentialManager, WalletError};
+use crate::{db::WalletDB, Config, CredentialManager, WalletError};
+use colored::Colorize;
 use log::debug;
 use sak_types::CoinRecord;
 
@@ -12,6 +13,7 @@ impl Wallet {
     pub async fn init(
         credential_manager: CredentialManager,
         wallet_db: WalletDB,
+        config: Config,
     ) -> Result<Wallet, WalletError> {
         let coin_manager = CoinManager::init(&wallet_db).await?;
 
@@ -20,8 +22,10 @@ impl Wallet {
             credential_manager,
         };
 
+        bootstrap_wallet(&wallet, config).await?;
+
         // for development
-        init_for_dev(&wallet).await?;
+        // init_for_dev(&wallet).await?;
 
         Ok(wallet)
     }
@@ -35,6 +39,21 @@ impl Wallet {
     pub fn get_credential_manager(&self) -> &CredentialManager {
         &self.credential_manager
     }
+}
+
+async fn bootstrap_wallet(
+    wallet: &Wallet,
+    config: Config,
+) -> Result<(), WalletError> {
+    println!("\nBootstraping wallet\nConfig: {:#?}", config);
+
+    if let Some(coin_records) = config.coin_records {
+        for record in coin_records {
+            wallet.get_db().schema.put_coin(&record)?;
+        }
+    }
+
+    Ok(())
 }
 
 async fn init_for_dev(wallet: &Wallet) -> Result<(), WalletError> {
