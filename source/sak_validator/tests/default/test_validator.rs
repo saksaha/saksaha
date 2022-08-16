@@ -194,7 +194,7 @@ async fn test_call_ctr_validator_fn_execute_add_validator() {
 // async fn test_deploy_ctr_and_invoke_execute_and_query_when_dist_ledger_writes_new_blocks(
 // ) {
 //     sak_test_utils::init_test_log();
-//     sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
+// sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
 
 //     let dist_ledger = utils::make_dist_ledger().await;
 
