@@ -110,3 +110,23 @@ impl CoinRecord {
     //     }
     // }
 }
+
+impl std::fmt::Display for CoinRecord {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let val = {
+            let v = &self.v.to_bytes()[24..];
+            let v = match type_extension::convert_u8_slice_into_u128(v) {
+                Ok(v) => v.to_string(),
+                Err(err) => format!("Invalid value ({})", err),
+            };
+
+            v
+        };
+
+        write!(
+            f,
+            "Coin [cm: {}, val: {}, status: {}]",
+            &self.cm, val, &self.coin_status
+        )
+    }
+}

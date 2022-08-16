@@ -15,14 +15,14 @@ impl Wallet {
         wallet_db: WalletDB,
         config: Config,
     ) -> Result<Wallet, WalletError> {
-        let coin_manager = CoinManager::init(&wallet_db).await?;
-
         let wallet = Wallet {
             wallet_db,
             credential_manager,
         };
 
         bootstrap_wallet(&wallet, config).await?;
+
+        let coin_manager = CoinManager::init(&wallet).await?;
 
         // for development
         // init_for_dev(&wallet).await?;

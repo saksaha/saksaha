@@ -20,6 +20,8 @@ pub fn convert_u8_slice_into_u128(arr: &[u8]) -> Result<u128, TypeExtError> {
         let mut v = vec![0u8; diff];
         v.extend(arr);
 
+        println!("power!!!: {:?}", v);
+
         match v.try_into() {
             Ok(a) => a,
             Err(err) => {
