@@ -1,7 +1,7 @@
 use crate::SaksahaSDKError;
 use hyper::{Body, Client, Method, Request, Uri};
 use log::warn;
-use sak_contract_std::{CtrCallType, Request as CtrRequest, RequestArgs};
+use sak_contract_std::{CtrCallType, CtrRequest, RequestArgs};
 use sak_crypto::{
     groth16, mimc, os_rng, Bls12, Circuit, Hasher, Proof, Scalar, ScalarExt,
 };

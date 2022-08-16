@@ -6,7 +6,7 @@ use crate::{
     blockchain::ENVELOPE_CTR_ADDR, rpc::routes::v0::SendPourTxRequest,
 };
 use hyper::{Body, Client, Method, Request, Uri};
-use sak_contract_std::{CtrCallType, Request as CtrRequest};
+use sak_contract_std::{CtrCallType, CtrRequest};
 use sak_rpc_interface::{JsonRequest, JsonResponse};
 use sak_types::PourTxCandidate;
 use std::collections::HashMap;

@@ -3,13 +3,13 @@ use hyper::{Body, Response};
 use hyper_rpc_router::{
     require_params_parsed, require_some_params, Params, RouteState,
 };
+use sak_contract_std::RequestArgs;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
-pub type RequestArgs = Vec<u8>;
-
 #[derive(Serialize, Deserialize, Debug)]
 pub(crate) struct WalletSendTxRequest {
+    pub acc_addr: String,
     pub val: usize,
     pub ctr_addr: String,
     pub req_type: String,

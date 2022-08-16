@@ -4,7 +4,7 @@ use hyper_rpc_router::{
     make_error_response, make_success_response, require_params_parsed,
     require_some_params, Params, RouteState,
 };
-use sak_contract_std::Request as CtrRequest;
+use sak_contract_std::CtrRequest;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 

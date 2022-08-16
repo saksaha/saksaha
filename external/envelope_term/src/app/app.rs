@@ -13,7 +13,7 @@ use envelope_contract::{
     Channel, GetChListParams, GetMsgParams, OpenChParams, SendMsgParams,
 };
 use log::{debug, error, warn};
-use sak_contract_std::{CtrCallType, Request as CtrRequest};
+use sak_contract_std::{CtrCallType, CtrRequest};
 use sak_crypto::{PublicKey, SakKey, SecretKey, SigningKey, ToEncodedPoint};
 
 #[derive(Debug, PartialEq, Eq)]
