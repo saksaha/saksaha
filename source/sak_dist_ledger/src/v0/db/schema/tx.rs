@@ -531,11 +531,12 @@ impl LedgerDBSchema {
         sn: &[u8; 32],
     ) -> Result<(), LedgerError> {
         if let Some(t) = self.get_tx_hash_by_sn(&self.db, sn)? {
-            return Err(format!(
-                "Detect double spend, `sn` has been spent before with tx_hash: {}",
-                t
-            )
-            .into());
+            // return Err(format!(
+            //     "Detect double spend, `sn` has been spent before with tx_hash: {}",
+            //     t
+            // )
+            // .into());
+            log::error!("Double spending has been detected")
         };
 
         Ok(())
@@ -545,10 +546,7 @@ impl LedgerDBSchema {
         &self,
         tc: &PourTxCandidate,
     ) -> Result<(), LedgerError> {
-        // verify
         let hasher = Hasher::new();
-
-        // TODO check double spending (sn_1 should not be used multiple time)
 
         let public_inputs = [
             ScalarExt::parse_arr(&tc.merkle_rt)?,
@@ -563,7 +561,8 @@ impl LedgerDBSchema {
             verify_proof_1_to_2(pi_des, &public_inputs, &hasher);
 
         if !verification_result {
-            return Err(format!("Wrong proof").into());
+            // return Err(format!("Wrong proof").into());
+            log::error!("Failed to verify")
         };
 
         Ok(())

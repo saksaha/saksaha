@@ -62,7 +62,6 @@ async fn test_dist_ledger_put_a_single_pour_tx() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
-#[should_panic]
 async fn test_dist_ledger_double_spending() {
     sak_test_utils::init_test_log();
     sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
@@ -94,4 +93,6 @@ async fn test_dist_ledger_double_spending() {
 
         println!("[+] dummy pour_tx hash: {:?}", dummy_tx_hash);
     }
+
+    tokio::time::sleep(Duration::from_secs(5)).await;
 }
