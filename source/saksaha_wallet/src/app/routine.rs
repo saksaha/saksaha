@@ -20,7 +20,7 @@ impl Routine {
             CredentialManager::init(app_args.public_key, app_args.secret)?;
 
         let wallet_db =
-            WalletDB::init(&credential_manager.get_curr_credential(), false)?;
+            WalletDB::init(&credential_manager.get_credential(), false)?;
 
         let wallet = {
             let w = Wallet::init(credential_manager, wallet_db).await?;

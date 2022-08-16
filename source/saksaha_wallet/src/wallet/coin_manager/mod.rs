@@ -1,5 +1,7 @@
 pub(crate) struct CoinManager {}
 
 impl CoinManager {
-    pub fn new() {}
+    pub fn new() -> CoinManager {
+        CoinManager {}
+    }
 }

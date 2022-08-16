@@ -27,11 +27,10 @@ pub(crate) async fn make_test_context() -> TestContext {
         m
     };
 
-    let acc_addr = credential_manager.get_curr_credential().acc_addr.clone();
+    let acc_addr = credential_manager.get_credential().acc_addr.clone();
 
     let wallet_db =
-        WalletDB::init(&credential_manager.get_curr_credential(), true)
-            .unwrap();
+        WalletDB::init(&credential_manager.get_credential(), true).unwrap();
 
     let wallet = {
         let w = Wallet::init(credential_manager, wallet_db).await.unwrap();

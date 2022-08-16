@@ -2,8 +2,9 @@ use crate::{db::WalletDB, CredentialManager, WalletError};
 use log::debug;
 use sak_types::CoinRecord;
 
+use super::CoinManager;
+
 pub(crate) struct Wallet {
-    // apis: WalletApis,
     wallet_db: WalletDB,
     credential_manager: CredentialManager,
 }
@@ -13,10 +14,7 @@ impl Wallet {
         credential_manager: CredentialManager,
         wallet_db: WalletDB,
     ) -> Result<Wallet, WalletError> {
-        // let apis = WalletApis {
-        //     db: wallet_db,
-        //     credential_manager,
-        // };
+        let coin_manager = CoinManager::new();
 
         let wallet = Wallet {
             wallet_db,
@@ -34,14 +32,10 @@ impl Wallet {
         &self.wallet_db
     }
 
+    #[inline]
     pub fn get_credential_manager(&self) -> &CredentialManager {
         &self.credential_manager
     }
-
-    // #[inline]
-    // pub fn get_apis(&self) -> &WalletApis {
-    //     &self.apis
-    // }
 }
 
 // pub struct SendTxPourRequest {

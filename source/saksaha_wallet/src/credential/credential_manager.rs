@@ -3,7 +3,7 @@ use crate::WalletError;
 
 pub struct CredentialManager {
     candidates: Vec<String>,
-    curr_credential: WalletCredential,
+    credential: WalletCredential,
 }
 
 impl CredentialManager {
@@ -15,15 +15,20 @@ impl CredentialManager {
 
         let m = CredentialManager {
             candidates: vec![],
-            curr_credential: wallet_credential,
+            credential: wallet_credential,
         };
 
         Ok(m)
     }
 
     #[inline]
-    pub fn get_curr_credential(&self) -> &WalletCredential {
-        &self.curr_credential
+    pub fn get_credential(&self) -> &WalletCredential {
+        &self.credential
+    }
+
+    #[inline]
+    pub fn get_acc_addr(&self) -> &String {
+        &self.credential.acc_addr
     }
 
     pub fn get_candidates(&self) -> &Vec<String> {

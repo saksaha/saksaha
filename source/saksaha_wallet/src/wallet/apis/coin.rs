@@ -20,7 +20,7 @@ impl Wallet {
         println!("wallet apis, get_balance, acc_addr: {}", acc_addr);
 
         let cmanager = self.get_credential_manager();
-        let credential = cmanager.get_curr_credential();
+        let credential = cmanager.get_credential();
 
         if &credential.acc_addr != acc_addr {
             return Err(format!(
