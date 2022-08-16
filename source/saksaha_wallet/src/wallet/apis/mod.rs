@@ -1,5 +1,4 @@
-mod apis;
+// mod apis;
 mod coin;
 
-use crate::WalletError;
-pub(crate) use apis::*;
+// pub(crate) use apis::*;

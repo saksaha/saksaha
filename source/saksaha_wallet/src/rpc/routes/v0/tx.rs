@@ -29,9 +29,9 @@ pub(in crate::rpc) async fn send_tx(
 
     println!(" rb: {:?}", rb);
 
-    let wallet_apis = ctx.wallet.get_apis();
+    let wallet = &ctx.wallet;
 
-    let _ = wallet_apis
+    let _ = wallet
         .send_tx(rb.acc_addr, rb.ctr_addr, rb.ctr_request)
         .await;
 

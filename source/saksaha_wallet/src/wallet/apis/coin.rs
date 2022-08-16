@@ -1,4 +1,4 @@
-use super::WalletApis;
+use crate::wallet::Wallet;
 use crate::WalletError;
 use sak_contract_std::CtrRequest;
 use sak_crypto::Hasher;
@@ -12,14 +12,14 @@ use std::convert::TryInto;
 
 pub const GAS: u64 = 10;
 
-impl WalletApis {
+impl Wallet {
     pub async fn get_balance(
         &self,
         acc_addr: &String,
     ) -> Result<AccountBalance, WalletError> {
         println!("wallet apis, get_balance, acc_addr: {}", acc_addr);
 
-        let cmanager = &self.credential_manager;
+        let cmanager = self.get_credential_manager();
         let credential = cmanager.get_curr_credential();
 
         if &credential.acc_addr != acc_addr {
@@ -32,7 +32,7 @@ impl WalletApis {
 
         let mut balance: u64 = 0;
 
-        for coin in self.db.schema.get_all_coins()? {
+        for coin in self.get_db().schema.get_all_coins()? {
             let bytes = coin.v.to_bytes();
 
             let arr: [u8; 8] = bytes[24..].try_into()?;

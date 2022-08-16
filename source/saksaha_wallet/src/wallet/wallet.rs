@@ -1,16 +1,11 @@
-use super::apis::{self, WalletApis};
-use crate::{
-    credential::WalletCredential, db::WalletDB, CredentialManager, WalletError,
-};
-use futures::sink::Send;
+use crate::{db::WalletDB, CredentialManager, WalletError};
 use log::debug;
-use sak_crypto::{Hasher, ScalarExt};
-use sak_proofs::{MerkleTree, NewCoin, OldCoin, CM_TREE_DEPTH};
-use sak_types::{CoinRecord, CoinStatus};
-use type_extension::U8Array;
+use sak_types::CoinRecord;
 
 pub(crate) struct Wallet {
-    apis: WalletApis,
+    // apis: WalletApis,
+    wallet_db: WalletDB,
+    credential_manager: CredentialManager,
 }
 
 impl Wallet {
@@ -18,12 +13,15 @@ impl Wallet {
         credential_manager: CredentialManager,
         wallet_db: WalletDB,
     ) -> Result<Wallet, WalletError> {
-        let apis = WalletApis {
-            db: wallet_db,
+        // let apis = WalletApis {
+        //     db: wallet_db,
+        //     credential_manager,
+        // };
+
+        let wallet = Wallet {
+            wallet_db,
             credential_manager,
         };
-
-        let wallet = Wallet { apis };
 
         // for development
         init_for_dev(&wallet).await?;
@@ -32,9 +30,18 @@ impl Wallet {
     }
 
     #[inline]
-    pub fn get_apis(&self) -> &WalletApis {
-        &self.apis
+    pub fn get_db(&self) -> &WalletDB {
+        &self.wallet_db
     }
+
+    pub fn get_credential_manager(&self) -> &CredentialManager {
+        &self.credential_manager
+    }
+
+    // #[inline]
+    // pub fn get_apis(&self) -> &WalletApis {
+    //     &self.apis
+    // }
 }
 
 // pub struct SendTxPourRequest {
@@ -53,7 +60,7 @@ async fn init_for_dev(wallet: &Wallet) -> Result<(), WalletError> {
 
         debug!("[demo coin: user_1] {:#?}", coin);
 
-        wallet.apis.db.schema.put_coin(&coin)?;
+        wallet.get_db().schema.put_coin(&coin)?;
     }
 
     // {

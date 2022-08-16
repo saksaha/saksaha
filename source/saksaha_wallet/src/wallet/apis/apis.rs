@@ -1,6 +1,6 @@
-use crate::{db::WalletDB, CredentialManager};
+// use crate::{db::WalletDB, CredentialManager};
 
-pub(crate) struct WalletApis {
-    pub db: WalletDB,
-    pub credential_manager: CredentialManager,
-}
+// pub(crate) struct WalletApis {
+//     pub db: WalletDB,
+//     pub credential_manager: CredentialManager,
+// }
