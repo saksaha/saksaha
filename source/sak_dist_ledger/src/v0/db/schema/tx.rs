@@ -556,7 +556,16 @@ impl LedgerDBSchema {
             ScalarExt::parse_arr(&tc.cm_2)?,
         ];
 
-        let pi_des: Proof<Bls12> = Proof::read(&*tc.pi).unwrap();
+        let pi_des: Proof<Bls12> = match Proof::read(&*tc.pi) {
+            Ok(p) => p,
+            Err(err) => {
+                return Err(format!(
+                    "Cannot deserialize the pi, err: {:?}",
+                    err
+                )
+                .into());
+            }
+        };
 
         let verification_result =
             verify_proof_1_to_2(pi_des, &public_inputs, &hasher);

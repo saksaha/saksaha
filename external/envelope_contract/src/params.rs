@@ -1,4 +1,4 @@
-use crate::Channel;
+use crate::{Channel, ChatMessage};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -20,5 +20,5 @@ pub struct GetMsgParams {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SendMsgParams {
     pub ch_id: String,
-    pub msg: String,
+    pub chat: ChatMessage,
 }

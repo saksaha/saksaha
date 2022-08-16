@@ -331,7 +331,7 @@ where
             .iter()
             .rev()
             .map(|m| {
-                let date = m.date.format("%H:%M:%S ").to_string();
+                let date = m.date.to_string();
 
                 Spans::from(vec![
                     Span::styled(date, Style::default().fg(Color::DarkGray)),
