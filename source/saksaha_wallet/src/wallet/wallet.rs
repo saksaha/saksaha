@@ -45,11 +45,38 @@ async fn bootstrap_wallet(
     wallet: &Wallet,
     config: Config,
 ) -> Result<(), WalletError> {
-    println!("\nBootstraping wallet\nConfig: {:#?}", config);
+    println!(
+        "\n{} wallet\nConfig: {:#?}\n",
+        "Bootstrapping".green(),
+        config
+    );
 
     if let Some(coin_records) = config.coin_records {
-        for record in coin_records {
-            wallet.get_db().schema.put_coin(&record)?;
+        let coin_count = coin_records.len();
+
+        println!(
+            "\nTotal {} coins to bootstrap",
+            coin_count.to_string().green()
+        );
+
+        for (idx, coin) in coin_records.iter().enumerate() {
+            let res = wallet.get_db().schema.put_coin(&coin);
+
+            match res {
+                Ok(r) => {
+                    println!(
+                        "\t[{}/{}] Bootstrapped a coin, cm: {}, val: {}",
+                        idx, coin_count, coin.cm, coin.v
+                    );
+                }
+                Err(err) => {
+                    println!(
+                        "\t- [{}/{}] Error bootstrapping coin, cm: {}, \n\
+                        \terr: {}",
+                        idx, coin_count, coin.cm, err,
+                    );
+                }
+            };
         }
     }
 

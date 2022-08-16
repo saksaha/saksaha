@@ -8,7 +8,7 @@ impl CoinManager {
     ) -> Result<CoinManager, WalletError> {
         let coins = wallet_db.schema.get_all_coins()?;
 
-        println!("power: [{}] {:?}", coins.len(), coins);
+        println!("all coins: [{}] {:?}", coins.len(), coins);
 
         let m = CoinManager {};
 
