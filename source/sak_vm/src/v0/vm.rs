@@ -1,11 +1,10 @@
-use std::collections::HashMap;
-
 use super::utils;
 use crate::{wasm_bootstrap, InvokeReceipt};
 use crate::{CtrFn, VMError, EXECUTE, INIT, MEMORY, QUERY};
 use log::{error, info};
-use sak_contract_std::{InvokeResult, Request, Storage, ERROR_PLACEHOLDER};
+use sak_contract_std::{CtrRequest, InvokeResult, Storage, ERROR_PLACEHOLDER};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use wasmtime::{Instance, Memory, Store, TypedFunc};
 
 pub struct VM {}
@@ -68,7 +67,7 @@ fn invoke_query(
     instance: Instance,
     mut store: Store<i32>,
     memory: Memory,
-    request: Request,
+    request: CtrRequest,
     storage: Storage,
 ) -> Result<InvokeReceipt, VMError> {
     let contract_fn: TypedFunc<(i32, i32, i32, i32), (i32, i32)> =
@@ -127,7 +126,7 @@ fn invoke_execute(
     instance: Instance,
     mut store: Store<i32>,
     memory: Memory,
-    request: Request,
+    request: CtrRequest,
     storage: Storage,
 ) -> Result<InvokeReceipt, VMError> {
     let contract_fn: TypedFunc<(i32, i32, i32, i32), (i32, i32, i32, i32)> =
@@ -216,12 +215,12 @@ fn init_module(
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct EnvelopeStorage {
-    pub open_ch_reqs: HashMap<String, Vec<OpenCh>>,
+    pub open_ch_reqs: HashMap<String, Vec<Channel>>,
     pub chats: HashMap<String, Vec<String>>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct OpenCh {
+pub struct Channel {
     pub ch_id: String,
     pub eph_key: String,
     pub sig: String,

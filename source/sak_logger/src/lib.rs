@@ -40,6 +40,8 @@ pub fn init(is_test: bool) -> Result<(), String> {
                 IS_INITIALIZED
                     .store(true, std::sync::atomic::Ordering::Relaxed);
 
+                log::info!("Logger initialized");
+
                 return Ok(());
             }
             Err(err) => {

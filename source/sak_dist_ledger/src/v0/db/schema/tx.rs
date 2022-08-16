@@ -6,8 +6,9 @@ use sak_kv_db::DB;
 use sak_proofs::{get_mimc_params_1_to_2, verify_proof_1_to_2};
 use sak_types::{
     MintTx, MintTxCandidate, PourTx, PourTxCandidate, Tx, TxCtrOp, TxHash,
-    TxType, U8Arr32, U8Array, SN,
+    TxHeight, TxType,
 };
+use type_extension::U8Arr32;
 
 // getter
 impl LedgerDBSchema {
@@ -108,7 +109,7 @@ impl LedgerDBSchema {
 
         let sn_1 = self.get_sn_1(tx_hash)?.ok_or("sn_1 should exist")?;
 
-        let sn_2 = self.get_cm_2(tx_hash)?.ok_or("sn_2 should exist")?;
+        // let sn_2 = self.get_cm_2(tx_hash)?.ok_or("sn_2 should exist")?;
 
         let cm_1 = self.get_cm_1(tx_hash)?.ok_or("cm_1 should exist")?;
 
@@ -119,7 +120,7 @@ impl LedgerDBSchema {
             .ok_or("merkle_root should exist")?;
 
         let tx_candidate = PourTxCandidate::new(
-            created_at, data, author_sig, ctr_addr, pi, sn_1, sn_2, cm_1, cm_2,
+            created_at, data, author_sig, ctr_addr, pi, sn_1, cm_1, cm_2,
             merkle_rt,
         );
 
@@ -272,12 +273,12 @@ impl LedgerDBSchema {
         &self,
         // db: &DB,
         key: &TxHash,
-    ) -> Result<Option<u128>, LedgerError> {
+    ) -> Result<Option<TxHeight>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::TX_HEIGHT)?;
 
         match self.db.get_cf(&cf, key)? {
             Some(v) => {
-                let height = sak_kv_db::convert_u8_slice_into_u128(&v)?;
+                let height = type_extension::convert_u8_slice_into_u128(&v)?;
 
                 return Ok(Some(height));
             }
@@ -605,7 +606,7 @@ impl LedgerDBSchema {
 
         self.batch_put_sn_1(batch, tx_hash, &tc.sn_1)?;
 
-        self.batch_put_sn_2(batch, tx_hash, &tc.sn_2)?;
+        // self.batch_put_sn_2(batch, tx_hash, &tc.sn_2)?;
 
         self.batch_put_cm_1(batch, tx_hash, &tc.cm_1)?;
 

@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum CtrCallType {
@@ -7,18 +6,17 @@ pub enum CtrCallType {
     Execute,
 }
 
-// pub type RequestArgs = HashMap<String, String>;
 pub type RequestArgs = Vec<u8>;
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Request {
+pub struct CtrRequest {
     pub req_type: String,
     pub args: RequestArgs,
     pub ctr_call_type: CtrCallType,
 }
 
-impl Request {
-    pub fn parse(data: &[u8]) -> Result<Request, String> {
+impl CtrRequest {
+    pub fn parse(data: &[u8]) -> Result<CtrRequest, String> {
         match serde_json::from_slice(data) {
             Ok(o) => Ok(o),
             Err(err) => {

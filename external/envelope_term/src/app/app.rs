@@ -7,13 +7,14 @@ use crate::io::IoEvent;
 use crate::term::get_balance_from_wallet;
 use crate::{app::actions::Action, ENVELOPE_CTR_ADDR};
 use crate::{inputs::key::Key, EnvelopeError};
+use chrono::Local;
 use envelope_contract::{
-    GetChListParams, GetMsgParams, OpenCh, OpenChParams, SendMsgParams,
+    request_type::{GET_CH_LIST, OPEN_CH},
+    Channel, GetChListParams, GetMsgParams, OpenChParams, SendMsgParams,
 };
 use log::{debug, error, warn};
-use sak_contract_std::{CtrCallType, Request as CtrRequest};
+use sak_contract_std::{CtrCallType, CtrRequest};
 use sak_crypto::{PublicKey, SakKey, SecretKey, SigningKey, ToEncodedPoint};
-use std::collections::HashMap;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum AppReturn {
@@ -60,7 +61,6 @@ impl App {
 
             match action {
                 Action::Quit => AppReturn::Exit,
-                Action::Sleep => AppReturn::Continue,
                 Action::SwitchEditMode => {
                     self.state.input_mode = InputMode::Editing;
                     AppReturn::Continue
@@ -70,7 +70,8 @@ impl App {
                     AppReturn::Continue
                 }
                 Action::ShowChList => {
-                    self.get_ch_list().await;
+                    let _ = self.get_ch_list().await;
+                    // let _ = self.get_ch_list_from_local().await;
                     self.state.set_view_ch_list();
                     AppReturn::Continue
                 }
@@ -238,7 +239,6 @@ impl App {
     pub fn initialized(&mut self) {
         self.actions = vec![
             Action::Quit,
-            Action::Sleep,
             Action::SwitchEditMode,
             Action::SwitchNormalMode,
             Action::ShowOpenCh,
@@ -263,12 +263,12 @@ impl App {
         self.state.incr_sleep();
     }
 
-    pub fn set_ch_list(&mut self, data: String) -> Result<(), EnvelopeError> {
+    pub fn set_ch_list(&mut self, data: Vec<u8>) -> Result<(), EnvelopeError> {
         self.state.set_ch_list(data)?;
         Ok(())
     }
 
-    pub fn set_chats(&mut self, data: String) {
+    pub fn set_chats(&mut self, data: Vec<u8>) {
         self.state.set_chats(data);
     }
 
@@ -276,77 +276,53 @@ impl App {
         &mut self,
         her_pk: &String,
     ) -> Result<(), EnvelopeError> {
-        let open_ch = self.encrypt_open_ch(her_pk).await?;
+        let my_pk = self.get_pk(&USER_1.to_string()).await?;
 
-        let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
+        for i in [her_pk, &my_pk] {
+            let open_ch = self.encrypt_open_ch(her_pk).await?;
+            let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
 
-        let channel_name = her_pk.clone();
+            let open_ch_params = OpenChParams {
+                dst_pk: i.clone(),
+                open_ch,
+            };
 
-        // let mut arg = HashMap::with_capacity(2);
-        // let my_pk = self.pconfig.get_sk_pk().1;
-        // arg.insert(String::from("dst_pk"), her_pk.clone());
-        // arg.insert(String::from("serialized_input"), open_ch_input);
+            let req_type = OPEN_CH.to_string();
 
-        let open_ch_params = OpenChParams {
-            dst_pk: her_pk.clone(),
-            open_ch,
-        };
+            let args = serde_json::to_vec(&open_ch_params)?;
 
-        let req_type = String::from("open_channel");
+            let ctr_request = CtrRequest {
+                req_type,
+                args,
+                ctr_call_type: CtrCallType::Execute,
+            };
 
-        let args = serde_json::to_vec(&open_ch_params)?;
-
-        let _json_response =
-            saksaha::send_tx_pour(ctr_addr, req_type, args).await?;
-
-        if !self
-            .state
-            .ch_list
-            .contains(&ChannelState::new(channel_name.clone(), her_pk.clone()))
-        {
-            self.state
-                .ch_list
-                .push(ChannelState::new(channel_name, her_pk.clone()));
+            let _json_response =
+                saksaha::send_tx_pour(ctr_addr, ctr_request).await?;
         }
 
         Ok(())
     }
 
     pub async fn get_ch_list(&mut self) -> Result<(), EnvelopeError> {
-        // let mut args = HashMap::with_capacity(2);
-
-        let her_pk =
-            match self.db.schema.get_my_pk_by_sk(&USER_1.to_string()).await? {
-                Some(v) => v,
-                None => String::default(),
-            };
+        let my_pk = self.get_pk(&USER_1.to_string()).await?;
 
         let get_ch_list_params = GetChListParams {
-            dst_pk: her_pk.to_string(),
+            dst_pk: my_pk.clone(),
         };
 
         let args = serde_json::to_vec(&get_ch_list_params)?;
 
-        if her_pk.len() > 0 {
-            // args.insert(String::from("dst_pk"), her_pk.to_string());
-
-            let req = CtrRequest {
-                req_type: "get_ch_list".to_string(),
-                args,
-                ctr_call_type: CtrCallType::Query,
-            };
-
-            if let Ok(r) =
-                saksaha::query_ctr(ENVELOPE_CTR_ADDR.into(), req).await
-            {
-                if let Some(d) = r.result {
-                    self.dispatch(IoEvent::Receive(d.result)).await;
-                }
-            }
-        } else {
-            let empty_vec: String = String::from("[]");
-            self.dispatch(IoEvent::Receive(empty_vec)).await;
-        }
+        if let Some(d) = saksaha::query_ctr(
+            ENVELOPE_CTR_ADDR.to_string(),
+            GET_CH_LIST.to_string(),
+            args,
+        )
+        .await?
+        .result
+        {
+            self.dispatch(IoEvent::Receive(d.result)).await
+        };
 
         Ok(())
     }
@@ -358,16 +334,13 @@ impl App {
 
         let args = serde_json::to_vec(&get_msg_params)?;
 
-        // let mut args = HashMap::with_capacity(2);
-        // args.insert(String::from("dst_pk"), "her_pk".to_string());
-
-        let req = CtrRequest {
-            req_type: "get_msgs".to_string(),
+        if let Ok(r) = saksaha::query_ctr(
+            ENVELOPE_CTR_ADDR.into(),
+            "get_msgs".to_string(),
             args,
-            ctr_call_type: CtrCallType::Query,
-        };
-
-        if let Ok(r) = saksaha::query_ctr(ENVELOPE_CTR_ADDR.into(), req).await {
+        )
+        .await
+        {
             if let Some(d) = r.result {
                 self.dispatch(IoEvent::GetMessages(d.result)).await;
             }
@@ -407,8 +380,14 @@ impl App {
 
         let req_type = envelope_contract::request_type::SEND_MSG.to_string();
 
+        let ctr_request = CtrRequest {
+            req_type,
+            args,
+            ctr_call_type: CtrCallType::Execute,
+        };
+
         let json_response =
-            saksaha::send_tx_pour(ctr_addr, req_type, args).await?;
+            saksaha::send_tx_pour(ctr_addr, ctr_request).await?;
 
         let result = json_response.result.unwrap_or("None".to_string());
 
@@ -419,7 +398,7 @@ impl App {
     async fn encrypt_open_ch(
         &mut self,
         her_pk: &String,
-    ) -> Result<OpenCh, EnvelopeError> {
+    ) -> Result<Channel, EnvelopeError> {
         let my_sk = match self
             .db
             .schema
@@ -474,7 +453,7 @@ impl App {
         };
 
         // ch_id should be encrypted by aes_key
-        let ch_id = her_pk.clone();
+        let ch_id = sak_crypto::rand().to_string();
 
         self.db
             .schema
@@ -486,12 +465,39 @@ impl App {
 
         // serde_json::to_string(&open_ch_input)?
 
-        let open_ch = OpenCh {
+        let open_ch = Channel {
             ch_id,
             eph_key: eph_pk_str,
             sig: a_pk_sig_encrypted,
         };
 
         Ok(open_ch)
+    }
+
+    pub async fn get_ch_list_from_local(
+        &mut self,
+        her_pk: &String,
+    ) -> Result<(), EnvelopeError> {
+        if let Some(c) = self.db.schema.get_her_pk_by_ch_id(&her_pk).await? {
+            self.state
+                .ch_list
+                .push(ChannelState::new(Channel::default(), c));
+        };
+
+        Ok(())
+    }
+
+    async fn get_pk(&self, user: &String) -> Result<String, EnvelopeError> {
+        let user_2_sk =
+            self.db.schema.get_my_sk_by_user_id(user).await?.ok_or("")?;
+
+        let user_2_pk = self
+            .db
+            .schema
+            .get_my_pk_by_sk(&user_2_sk)
+            .await?
+            .ok_or("")?;
+
+        Ok(user_2_pk)
     }
 }

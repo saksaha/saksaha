@@ -5,10 +5,10 @@ use crate::{
 use sak_crypto::{
     groth16, os_rng, Bls12, Hasher, Parameters, Proof, Scalar, ScalarExt,
 };
-use sak_types::U8Array;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::Write;
+use type_extension::U8Array;
 
 const TEST_TREE_DEPTH: u32 = 4;
 const PARAM_FILE_NAME: &str = "mimc_params";
@@ -392,7 +392,6 @@ fn verify_proof(
 
 #[tokio::test(flavor = "multi_thread")]
 pub async fn test_coin_ownership_default() {
-    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
     sak_test_utils::init_test_log();
 
     let test_context = make_test_context();

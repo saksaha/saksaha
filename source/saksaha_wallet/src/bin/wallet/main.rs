@@ -1,10 +1,15 @@
 mod cli;
+mod credential;
+mod prompt;
 
-use saksaha_wallet::{App, AppArgs, WalletError};
+use log::info;
+use saksaha_wallet::{App, AppArgs, Config, WalletError};
+use std::{thread, time::Duration};
 
 const RUST_LOG_ENV: &str = "
     sak_,
-    saksaha
+    saksaha_,
+    wallet,
 ";
 
 fn main() -> Result<(), WalletError> {
@@ -18,11 +23,17 @@ fn main() -> Result<(), WalletError> {
 
     let cli_args = cli::get_args()?;
 
+    let config = Config::new(cli_args.cfg_profile)?;
+
+    info!("Config created, config: {:?}", config);
+
+    let wallet_credential =
+        credential::create_or_get_credential(config.public_key, config.secret)?;
+
     let app_args = AppArgs {
         rpc_port: cli_args.rpc_port,
-        app_prefix: cli_args.app_prefix,
-        id: cli_args.id,
-        key: cli_args.key,
+        public_key: wallet_credential.public_key,
+        secret: wallet_credential.secret,
     };
 
     let app = App::init();

@@ -1,11 +1,11 @@
 use super::utils::*;
 use crate::v0::sdk::*;
-use sak_contract_std::{CtrCallType, Request as CtrRequest};
+use sak_contract_std::{CtrCallType, CtrRequest};
 use sak_crypto::{
     PublicKey, SakKey, SecretKey, SigningKey, ToEncodedPoint, VerifyingKey,
 };
-use sak_types::U8Array;
 use std::collections::HashMap;
+use type_extension::U8Array;
 
 // #[tokio::test(flavor = "multi_thread")]
 // async fn test_sak_sdk_get_ch_list() {

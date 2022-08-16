@@ -1,11 +1,10 @@
-use crate::{rpc::RPCError, system::SystemHandle};
-use hyper::{Body, Request, Response, StatusCode};
+use crate::system::SystemHandle;
+use hyper::{Body, Response};
 use hyper_rpc_router::{
     make_error_response, make_success_response, require_params_parsed,
     require_some_params, Params, RouteState,
 };
-use log::warn;
-use sak_contract_std::Request as CtrRequest;
+use sak_contract_std::CtrRequest;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
@@ -17,7 +16,7 @@ pub(crate) struct QueryCtrRequest {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub(crate) struct QueryCtrResponse {
-    pub result: String,
+    pub result: Vec<u8>,
 }
 
 pub(in crate::rpc) async fn query_ctr(
@@ -41,9 +40,7 @@ pub(in crate::rpc) async fn query_ctr(
         .query_ctr(&rb.ctr_addr, rb.req)
         .await
     {
-        Ok(t) => {
-            let result: String = require_params_parsed!(route_state, &t);
-
+        Ok(result) => {
             return make_success_response(
                 route_state,
                 QueryCtrResponse { result },

@@ -6,6 +6,8 @@ edition = "2018"
 
 [dependencies]
 sak_crypto = { path = "../sak_crypto" }
+sak_proofs = { path = "../sak_proofs" }
+type_extension = { path = "../type_extension" }
 log = "0.4.0"
 env_logger = "0.9.0"
 chrono = "0.4"

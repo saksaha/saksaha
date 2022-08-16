@@ -1,27 +1,6 @@
-use log::{info, warn};
+mod credential_manager;
+mod wallet_credential;
 
-pub(crate) struct Credential {
-    pub id: String,
-    pub key: String,
-}
+pub use credential_manager::*;
+pub use wallet_credential::*;
 
-const DEFAULT_ID: &'static str = "default_user";
-const DEFAULT_KEY: &'static str = "default_key";
-
-impl Credential {
-    pub fn new(id: Option<String>, key: Option<String>) -> Credential {
-        let id = id.unwrap_or_else(|| {
-            warn!("Id is not specified, defaults to '{}'", DEFAULT_ID);
-
-            return DEFAULT_ID.to_string();
-        });
-
-        let key = key.unwrap_or_else(|| {
-            warn!("Key is not specified, defaults to '{}'", DEFAULT_KEY);
-
-            return DEFAULT_KEY.to_string();
-        });
-
-        Credential { id, key }
-    }
-}

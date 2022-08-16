@@ -7,7 +7,6 @@ use std::slice::Iter;
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum Action {
     Quit,
-    Sleep,
     SwitchEditMode,
     SwitchNormalMode,
     ShowChList,
@@ -23,9 +22,8 @@ pub enum Action {
 impl Action {
     /// All available actions
     pub fn iterator() -> Iter<'static, Action> {
-        static ACTIONS: [Action; 11] = [
+        static ACTIONS: [Action; 10] = [
             Action::Quit,
-            Action::Sleep,
             Action::SwitchEditMode,
             Action::SwitchNormalMode,
             Action::ShowChList,
@@ -44,7 +42,6 @@ impl Action {
     pub fn keys(&self) -> &[Key] {
         match self {
             Action::Quit => &[Key::Ctrl('c'), Key::Char('q')],
-            Action::Sleep => &[Key::Char('s')],
             Action::SwitchEditMode => &[Key::Char('i')],
             Action::SwitchNormalMode => &[Key::Esc],
             Action::ShowChList => &[Key::Char('1')],
@@ -64,7 +61,6 @@ impl Display for Action {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let str = match self {
             Action::Quit => "Quit",
-            Action::Sleep => "Sleep",
             Action::SwitchEditMode => "Switch to Edit Mode",
             Action::SwitchNormalMode => "Switch to Normal Mode",
             Action::ShowChList => "Show channel list",
@@ -145,14 +141,14 @@ mod tests {
 
     #[test]
     fn should_find_action_by_key() {
-        let actions: Actions = vec![Action::Quit, Action::Sleep].into();
+        let actions: Actions = vec![Action::Quit].into();
         let result = actions.find(Key::Ctrl('c'));
         assert_eq!(result, Some(&Action::Quit));
     }
 
     #[test]
     fn should_find_action_by_key_not_found() {
-        let actions: Actions = vec![Action::Quit, Action::Sleep].into();
+        let actions: Actions = vec![Action::Quit].into();
         let result = actions.find(Key::Alt('w'));
         assert_eq!(result, None);
     }
@@ -161,7 +157,6 @@ mod tests {
     fn should_create_actions_from_vec() {
         let _actions: Actions = vec![
             Action::Quit,
-            Action::Sleep,
             Action::SwitchEditMode,
             Action::SwitchNormalMode,
         ]
@@ -174,7 +169,6 @@ mod tests {
         let _actions: Actions = vec![
             Action::Quit,
             Action::SwitchNormalMode,
-            Action::Sleep,
             Action::SwitchEditMode,
             Action::SwitchEditMode,
             Action::Quit,

@@ -1,44 +1,43 @@
-use crate::{
-    credential::Credential, rpc::RPC, wallet::Wallet, AppArgs, WalletError,
-};
+use crate::credential::{CredentialManager, WalletCredential};
+use crate::db::WalletDB;
+use crate::{rpc::RPC, wallet::Wallet, AppArgs, WalletError};
+use colored::Colorize;
 use log::{error, info};
+use std::io::BufRead;
 use std::sync::Arc;
-
-const APP_PREFIX: &'static str = "default";
+use std::time::Duration;
 
 pub(crate) struct Routine {}
 
 impl Routine {
-    // pub(crate) async fn run(
-    //     self,
-    //     app_args: AppArgs,
-    // ) -> Result<(), WalletError> {
-    //     info!("Wallet main routine starts, app_args: {:?}", app_args);
+    pub(crate) async fn run(
+        self,
+        app_args: AppArgs,
+    ) -> Result<(), WalletError> {
+        info!("Wallet main routine starts, app_args: {:?}", app_args);
 
-    //     let app_prefix = app_args.app_prefix.unwrap_or_else(|| {
-    //         info!("App prefix is not specified, defaults to '{}'", APP_PREFIX);
+        let credential_manager =
+            CredentialManager::init(app_args.public_key, app_args.secret)?;
 
-    //         APP_PREFIX.to_string()
-    //     });
+        let wallet_db =
+            WalletDB::init(&credential_manager.get_curr_credential(), false)?;
 
-    //     let credential = Credential::new(app_args.id, app_args.key);
+        let wallet = {
+            let w = Wallet::init(credential_manager, wallet_db).await?;
 
-    //     let wallet = {
-    //         let w = Wallet::init(app_prefix, credential).await?;
+            Arc::new(w)
+        };
 
-    //         Arc::new(w)
-    //     };
+        let rpc = RPC::init(app_args.rpc_port, wallet).await?;
 
-    //     let rpc = RPC::init(app_args.rpc_port, wallet).await?;
+        tokio::spawn(async move {
+            tokio::join!(rpc.run());
+        });
 
-    //     tokio::spawn(async move {
-    //         tokio::join!(rpc.run());
-    //     });
+        let _ = tokio::signal::ctrl_c().await;
 
-    //     let _ = tokio::signal::ctrl_c().await;
+        info!("ctrl-c has typed. Terminating process.");
 
-    //     info!("ctrl-c has typed. Terminating process.");
-
-    //     Ok(())
-    // }
+        Ok(())
+    }
 }

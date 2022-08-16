@@ -3,10 +3,10 @@ use saksaha_wallet::WalletError;
 
 #[derive(Debug)]
 pub(crate) struct CLIArgs {
-    pub(crate) app_prefix: Option<String>,
     pub(crate) rpc_port: Option<u16>,
-    pub(crate) id: Option<String>,
-    pub(crate) key: Option<String>,
+    pub(crate) public_key: Option<String>,
+    pub(crate) secret: Option<String>,
+    pub(crate) cfg_profile: Option<String>,
 }
 
 pub(crate) fn get_args() -> Result<CLIArgs, WalletError> {
@@ -28,26 +28,26 @@ pub(crate) fn get_args() -> Result<CLIArgs, WalletError> {
         None => None,
     };
 
-    let app_prefix = match matches.value_of("app-prefix") {
+    let public_key = match matches.value_of("public-key") {
         Some(m) => Some(String::from(m)),
         None => None,
     };
 
-    let id = match matches.value_of("id") {
+    let secret = match matches.value_of("secret") {
         Some(m) => Some(String::from(m)),
         None => None,
     };
 
-    let key = match matches.value_of("key") {
+    let cfg_profile = match matches.value_of("cfg-profile") {
         Some(m) => Some(String::from(m)),
         None => None,
     };
 
     Ok(CLIArgs {
         rpc_port,
-        app_prefix,
-        id,
-        key,
+        public_key,
+        secret,
+        cfg_profile,
     })
 }
 
@@ -58,14 +58,13 @@ fn create_app<'a>() -> Command<'a> {
         .about("Sakaha network reference implementation")
         .allow_hyphen_values(true)
         .arg(
-            Arg::new("app-prefix") //
-                .long("app-prefix")
+            Arg::new("cfg-profile") //
+                .long("cfg-profile")
                 .takes_value(true)
                 .long_help(
-                    "Saksaha app prefix. This makes all the member paths
-                    including db directories created under \n\
-                    APP_PATH/{app_prefix}/{db_dirs}, as in \n\
-                    APP_PATH/app_path/ledger.",
+                    "Config profile. This dictates which 'config (credential)' \
+                    to load, \n
+                    e.g. 'dev_local_1'",
                 ),
         )
         .arg(
@@ -78,21 +77,24 @@ fn create_app<'a>() -> Command<'a> {
                 ),
         )
         .arg(
-            Arg::new("id") //
-                .long("id")
+            Arg::new("public-key") //
+                .long("public-key")
                 .takes_value(true)
                 .long_help(
-                    "User identifier \n\
-                    e.g. User_1234",
+                    "Public Key \n\
+                    e.g. 040c525ef532e1b9dfcbd2cb2566cdb8f2b0f324970e700d\
+650d0190ded8c7b8519ef53afb9055d0c10d67d8fa55cf0f68ae153e356e3ca47545c2a00\
+5154acdea",
                 ),
         )
         .arg(
-            Arg::new("key") //
-                .long("cipher key")
+            Arg::new("secret") //
+                .long("secret")
                 .takes_value(true)
                 .long_help(
-                    "Key by which encrypt and decrypt data \n\
-                    e.g. LKJ3jfkwala11fass",
+                    "Secret (paired with public key) \n\
+                    e.g. 4521ef8368476bf5bcc4e8784cb983ccaf42707abc2e2735\
+8827a1f2f66d56d3",
                 ),
         )
 }

@@ -55,40 +55,44 @@ impl RPC {
         Ok(rpc)
     }
 
-    //     pub async fn run(self) -> Result<(), WalletError> {
-    //         let router = {
-    //             let routes = routes::get_routes();
-    //             let router = Router::new(routes);
+    pub async fn run(self) -> Result<(), WalletError> {
+        info!("RPC server runs");
 
-    //             router
-    //         };
+        let router = {
+            let routes = routes::get_routes();
+            let router = Router::new(routes);
 
-    //         let cors = Middleware::new(Box::new(cors));
+            router
+        };
 
-    //         let route = {
-    //             let m = Middleware::new(Box::new(move |req, res, ctx| {
-    //                 router.route(req, res, ctx)
-    //             }));
+        let cors = Middleware::new(Box::new(cors));
 
-    //             m
-    //         };
+        let route = {
+            let m = Middleware::new(Box::new(move |req, res, ctx| {
+                router.route(req, res, ctx)
+            }));
 
-    //         let middlewares = vec![cors, route];
+            m
+        };
 
-    //         let rpc_server = RPCServer {};
+        let middlewares = vec![cors, route];
 
-    //         let ctx = {
-    //             let c = RouteCtx {
-    //                 wallet: self.wallet,
-    //             };
+        let rpc_server = RPCServer {};
 
-    //             Arc::new(c)
-    //         };
+        let ctx = {
+            let c = RouteCtx {
+                wallet: self.wallet,
+            };
 
-    //         info!("RPC server runs");
+            Arc::new(c)
+        };
 
-    //         rpc_server.run(self.rpc_socket, ctx, middlewares).await?;
+        rpc_server.run(self.rpc_socket, ctx, middlewares).await?;
 
-    //         Ok(())
-    //     }
+        Ok(())
+    }
+
+    pub fn get_rpc_port(&self) -> u16 {
+        self.rpc_port
+    }
 }

@@ -1,11 +1,12 @@
 use super::utils;
 use crate::blockchain::GenesisBlock;
 use crate::rpc::routes::v0::{QueryCtrRequest, QueryCtrResponse};
+use crate::tests::TestUtil;
 use crate::{
     blockchain::ENVELOPE_CTR_ADDR, rpc::routes::v0::SendPourTxRequest,
 };
 use hyper::{Body, Client, Method, Request, Uri};
-use sak_contract_std::{CtrCallType, Request as CtrRequest};
+use sak_contract_std::{CtrCallType, CtrRequest};
 use sak_rpc_interface::{JsonRequest, JsonResponse};
 use sak_types::PourTxCandidate;
 use std::collections::HashMap;
@@ -13,7 +14,7 @@ use std::collections::HashMap;
 #[tokio::test(flavor = "multi_thread")]
 async fn test_call_contract() {
     sak_test_utils::init_test_log();
-    sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
+    TestUtil::init_test(vec!["test"]);
 
     let (rpc, rpc_socket_addr, _machine) = utils::make_test_context().await;
 
@@ -82,9 +83,9 @@ async fn test_call_contract() {
     let query_ctr_response = json_response.result.unwrap();
     let query_result = query_ctr_response.result;
 
-    println!("query_result (from rpc response) : {:?}", query_result,);
+    println!("query_result (from rpc response) : {:?}", query_result);
 
-    assert_eq!(expected_validator, query_result);
+    assert_eq!(expected_validator.as_bytes(), query_result);
 }
 
 // #[tokio::test(flavor = "multi_thread")]

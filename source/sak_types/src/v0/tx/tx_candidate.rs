@@ -1,8 +1,9 @@
 use super::utils;
 use crate::{
-    MintTx, PourTx, Tx, TxCtrOp, TxType, TypesError, U8Arr32, WASM_MAGIC_NUMBER,
+    MintTx, PourTx, Tx, TxCtrOp, TxType, TypesError, WASM_MAGIC_NUMBER,
 };
 use serde::{Deserialize, Serialize};
+use type_extension::U8Arr32;
 
 #[derive(Deserialize, Serialize, Debug, PartialEq, Eq, Clone)]
 pub enum TxCandidate {
@@ -159,7 +160,7 @@ pub struct PourTxCandidate {
     pub sn_1: U8Arr32,
 
     //
-    pub sn_2: U8Arr32,
+    // pub sn_2: U8Arr32,
 
     //
     pub cm_1: U8Arr32,
@@ -182,7 +183,7 @@ impl PourTxCandidate {
         ctr_addr: Option<String>,
         pi: Vec<u8>,
         sn_1: U8Arr32,
-        sn_2: U8Arr32,
+        // sn_2: U8Arr32,
         cm_1: U8Arr32,
         cm_2: U8Arr32,
         merkle_rt: U8Arr32,
@@ -206,7 +207,7 @@ impl PourTxCandidate {
             ctr_addr,
             pi,
             sn_1,
-            sn_2,
+            // sn_2,
             cm_1,
             cm_2,
             merkle_rt,

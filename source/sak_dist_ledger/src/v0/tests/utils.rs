@@ -2,15 +2,11 @@ use crate::{
     Consensus, ConsensusError, DistLedger, DistLedgerApis, DistLedgerArgs,
 };
 use async_trait::async_trait;
-use sak_contract_std::{CtrCallType, Request};
-use sak_crypto::{rand, Hasher, Scalar, ScalarExt};
-use sak_proofs::{MerkleTree, NewCoin, OldCoin, CM_TREE_DEPTH};
+use sak_contract_std::{CtrCallType, CtrRequest};
 use sak_types::{
-    BlockCandidate, PourTxCandidate, Tx, TxCandidate, U8Array,
-    WASM_MAGIC_NUMBER,
+    BlockCandidate, PourTxCandidate, Tx, TxCandidate, WASM_MAGIC_NUMBER,
 };
-use saksaha::generate_proof_1_to_2;
-use std::collections::HashMap;
+use type_extension::U8Array;
 
 pub struct DummyPos {}
 
@@ -361,8 +357,8 @@ pub(crate) fn make_dummy_block_candidate_with_query_tx(
 ) -> Option<BlockCandidate> {
     let block_candidate: BlockCandidate = {
         let dummy_ctr_calling_query_tc: TxCandidate = {
-            let request_query_get_validator: Request = {
-                Request {
+            let request_query_get_validator: CtrRequest = {
+                CtrRequest {
                     req_type: "get_validator".to_string(),
                     args: vec![],
                     ctr_call_type: CtrCallType::Query,
@@ -375,7 +371,6 @@ pub(crate) fn make_dummy_block_candidate_with_query_tx(
                 String::from("author_sig_1"),
                 Some(String::from("ctr_addr_1")),
                 vec![0],
-                U8Array::new_empty_32(),
                 U8Array::new_empty_32(),
                 U8Array::new_empty_32(),
                 U8Array::new_empty_32(),

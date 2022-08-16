@@ -8,8 +8,8 @@ pub struct Identity {
 
 impl Identity {
     pub fn new(
-        secret: String,
-        public_key_str: String,
+        secret: &String,
+        public_key_str: &String,
         p2p_port: u16,
         disc_port: u16,
     ) -> Result<Identity, String> {

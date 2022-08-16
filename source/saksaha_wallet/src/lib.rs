@@ -1,9 +1,15 @@
 mod app;
+mod config;
 mod credential;
 mod db;
+mod pconfig;
 mod rpc;
-mod types;
+mod tests;
 mod wallet;
 
 pub use app::*;
-pub use wallet::*;
+pub use config::*;
+pub use credential::*;
+pub use pconfig::*;
+
+pub type WalletError = Box<dyn std::error::Error + Send + Sync>;

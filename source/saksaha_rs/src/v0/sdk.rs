@@ -1,7 +1,7 @@
 use crate::SaksahaSDKError;
 use hyper::{Body, Client, Method, Request, Uri};
 use log::warn;
-use sak_contract_std::{CtrCallType, Request as CtrRequest, RequestArgs};
+use sak_contract_std::{CtrCallType, CtrRequest, RequestArgs};
 use sak_crypto::{
     groth16, mimc, os_rng, Bls12, Circuit, Hasher, Proof, Scalar, ScalarExt,
 };
@@ -10,9 +10,9 @@ use sak_proofs::{
     Path, ProofError, CM_TREE_DEPTH,
 };
 use sak_rpc_interface::{JsonRequest, JsonResponse};
-use sak_types::U8Array;
 use serde::{Deserialize, Serialize};
 use std::{char::from_u32_unchecked, collections::HashMap, time};
+use type_extension::U8Array;
 
 pub const A: usize = 1;
 pub const TREE_DEPTH: usize = 3;
@@ -25,7 +25,8 @@ pub struct QueryCtrRequest {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct QueryCtrResponse {
-    pub result: String,
+    pub result: Vec<u8>,
+    // pub result: String,
 }
 
 pub fn new_empty_32_temp() -> [u8; 32] {
@@ -124,8 +125,9 @@ pub async fn send_tx_pour(
     // cm_2: Scalar,
     // merkle_rt: Scalar,
     ctr_addr: String,
-    req_type: String,
-    args: RequestArgs,
+    // req_type: String,
+    // args: RequestArgs,
+    ctr_request: CtrRequest,
 ) -> Result<JsonResponse<String>, SaksahaSDKError> {
     let endpoint_test = "http://localhost:34418/rpc/v0";
 
@@ -133,16 +135,16 @@ pub async fn send_tx_pour(
     let uri: Uri = { endpoint_test.parse().expect("URI should be made") };
 
     let body = {
-        let req = CtrRequest {
-            req_type: req_type.clone(),
-            args,
-            ctr_call_type: CtrCallType::Execute,
-        };
+        // let req = CtrRequest {
+        //     req_type: req_type.clone(),
+        //     args,
+        //     ctr_call_type: CtrCallType::Execute,
+        // };
 
         // *** Need to change dummy values to real values
         let send_req = SendPourTxRequest::new(
             String::from(format!("created_at_{:?}", time::SystemTime::now())),
-            serde_json::to_vec(&req)?,
+            serde_json::to_vec(&ctr_request)?,
             String::from("author_sig_1"),
             Some(ctr_addr),
             //
@@ -247,7 +249,8 @@ pub async fn send_tx_mint(
 
 pub async fn query_ctr(
     ctr_addr: String,
-    req: CtrRequest,
+    req_type: String,
+    args: RequestArgs,
 ) -> Result<JsonResponse<QueryCtrResponse>, SaksahaSDKError> {
     let endpoint_test = "http://localhost:34418/rpc/v0";
 
@@ -255,8 +258,14 @@ pub async fn query_ctr(
     let uri: Uri = { endpoint_test.parse().expect("URI should be made") };
 
     let body = {
+        let req = CtrRequest {
+            req_type: req_type.clone(),
+            args,
+            ctr_call_type: CtrCallType::Query,
+        };
+
         let send_req = QueryCtrRequest { ctr_addr, req };
-        let params = serde_json::to_string(&send_req)?.as_bytes().to_vec();
+        let params = serde_json::to_vec(&send_req)?;
 
         let json_request = JsonRequest {
             jsonrpc: "2.0".to_string(),
@@ -283,6 +292,7 @@ pub async fn query_ctr(
     let json_response =
         serde_json::from_slice::<JsonResponse<QueryCtrResponse>>(&b)?;
 
+    // println!("json_response: {:?}", json_response);
     Ok(json_response)
 }
 

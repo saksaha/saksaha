@@ -6,6 +6,7 @@ mod p2p;
 mod pconfig;
 mod rpc;
 mod system;
+mod tests;
 
 pub use pconfig::*;
 pub use system::*;
