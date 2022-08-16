@@ -1,5 +1,5 @@
 use super::CoinStatus;
-use crate::Balance;
+use crate::AccountBalance;
 use crate::TypesError;
 use sak_crypto::Hasher;
 use sak_crypto::Scalar;

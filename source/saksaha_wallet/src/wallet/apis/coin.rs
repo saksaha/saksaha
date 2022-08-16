@@ -5,7 +5,7 @@ use crate::WalletError;
 use sak_crypto::Hasher;
 use sak_crypto::Scalar;
 use sak_proofs::OldCoin;
-use sak_types::Balance;
+use sak_types::AccountBalance;
 use sak_types::CoinRecord;
 use sak_types::CoinStatus;
 use saksaha::{generate_proof_1_to_2, get_auth_path};
@@ -17,7 +17,7 @@ impl WalletApis {
     pub async fn get_balance(
         &self,
         acc_addr: &String,
-    ) -> Result<Balance, WalletError> {
+    ) -> Result<AccountBalance, WalletError> {
         println!("wallet apis, get_balance, acc_addr: {}", acc_addr);
 
         let cmanager = &self.credential_manager;
@@ -36,17 +36,14 @@ impl WalletApis {
         for coin in self.db.schema.get_all_coins()? {
             let bytes = coin.v.to_bytes();
 
-            println!("bytes: {:?}", bytes);
-
             let arr: [u8; 8] = bytes[24..].try_into()?;
 
             let val = u64::from_le_bytes(arr);
 
-            println!("val: {}", val);
             balance += val;
         }
 
-        let b = Balance { val: balance };
+        let b = AccountBalance { val: balance };
 
         Ok(b)
     }

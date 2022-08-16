@@ -4,12 +4,18 @@ use hyper_rpc_router::{
     require_params_parsed, require_some_params, Params, RouteState,
 };
 use log::debug;
+use sak_types::AccountBalance;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub(in crate::rpc) struct GetBalanceRequest {
     pub acc_addr: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub(in crate::rpc) struct GetBalanceResponse {
+    pub balance: AccountBalance,
 }
 
 pub(in crate::rpc) async fn get_balance(
@@ -32,11 +38,11 @@ pub(in crate::rpc) async fn get_balance(
     debug!("rb: {:#?}", rb);
 
     match ctx.wallet.get_apis().get_balance(&rb.acc_addr).await {
-        Ok(b) => hyper_rpc_router::make_success_response(
-            route_state,
-            // format!("get balance success, {:?}", b.val),
-            format!("{}", b.val),
-        ),
+        Ok(b) => {
+            let balance = GetBalanceResponse { balance: b };
+
+            hyper_rpc_router::make_success_response(route_state, balance)
+        }
         Err(err) => {
             return hyper_rpc_router::make_error_response(
                 route_state.resp,

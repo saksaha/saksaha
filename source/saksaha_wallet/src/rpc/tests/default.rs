@@ -1,8 +1,7 @@
 use super::utils;
-use crate::rpc::routes::v0::GetBalanceRequest;
+use crate::rpc::routes::v0::{GetBalanceRequest, GetBalanceResponse};
 use hyper::{Body, Client, Method, Request, Uri};
 use sak_rpc_interface::{JsonRequest, JsonResponse};
-use sak_types::BlockHash;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_call_get_block_with_good_params() {
@@ -57,13 +56,10 @@ async fn test_call_get_block_with_good_params() {
 
     println!("power: {:?}", b);
 
-    // let json_response =
-    //     serde_json::from_slice::<JsonResponse<GetBlockResponse>>(&b).unwrap();
+    let json_response =
+        serde_json::from_slice::<JsonResponse<GetBalanceResponse>>(&b).unwrap();
 
-    // let result = json_response.result.unwrap();
-    // println!("[+] result: {:?}", result);
+    let result = json_response.result.unwrap();
 
-    // let block_acquired = result.block.unwrap();
-
-    // assert_eq!(block_acquired.get_block_hash(), &original_block_hash);
+    println!("[+] result: {:?}", result);
 }
