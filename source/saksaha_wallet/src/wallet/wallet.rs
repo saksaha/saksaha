@@ -11,12 +11,10 @@ use type_extension::U8Array;
 
 pub(crate) struct Wallet {
     apis: WalletApis,
-    // credential: WalletCredential,
 }
 
 impl Wallet {
     pub async fn init(
-        // credential: WalletCredential,
         credential_manager: CredentialManager,
         wallet_db: WalletDB,
     ) -> Result<Wallet, WalletError> {
@@ -25,12 +23,12 @@ impl Wallet {
             credential_manager,
         };
 
-        let w = Wallet { apis };
+        let wallet = Wallet { apis };
 
         // for development
-        init_for_demo(&w).await?;
+        init_for_dev(&wallet).await?;
 
-        Ok(w)
+        Ok(wallet)
     }
 
     #[inline]
@@ -47,27 +45,26 @@ impl Wallet {
 //     cm_2: U8Array,
 //     merkle_rt: U8Array,
 // }
-
-async fn init_for_demo(wallet: &Wallet) -> Result<(), WalletError> {
+async fn init_for_dev(wallet: &Wallet) -> Result<(), WalletError> {
     {
         let value = 100;
 
-        let coin = CoinRecord::new(0x11, 0x12, 0x13, 0x14, value)?;
+        let coin = CoinRecord::new(0x11, 0x12, 0x13, 0x14, value, None)?;
 
         debug!("[demo coin: user_1] {:#?}", coin);
 
         wallet.apis.db.schema.put_coin(&coin)?;
     }
 
-    {
-        let value = 100;
+    // {
+    //     let value = 100;
 
-        let coin = CoinRecord::new(0x21, 0x22, 0x23, 0x24, value)?;
+    //     let coin = CoinRecord::new(0x21, 0x22, 0x23, 0x24, value, None)?;
 
-        debug!("[demo coin: user_2] {:#?}", coin);
+    //     debug!("[demo coin: user_2] {:#?}", coin);
 
-        wallet.apis.db.schema.put_coin(&coin)?;
-    }
+    //     wallet.apis.db.schema.put_coin(&coin)?;
+    // }
 
     Ok(())
 }

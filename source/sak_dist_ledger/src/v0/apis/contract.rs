@@ -1,7 +1,7 @@
 use crate::DistLedgerApis;
 use crate::LedgerError;
 use log::info;
-use sak_contract_std::Request;
+use sak_contract_std::CtrRequest;
 use sak_types::CtrAddr;
 use sak_vm::CtrFn;
 
@@ -9,7 +9,7 @@ impl DistLedgerApis {
     pub async fn query_ctr(
         &self,
         ctr_addr: &CtrAddr,
-        request: Request,
+        request: CtrRequest,
     ) -> Result<Vec<u8>, LedgerError> {
         let ctr_wasm = self
             .ledger_db
@@ -41,7 +41,7 @@ impl DistLedgerApis {
     pub async fn execute_ctr(
         &self,
         ctr_addr: &CtrAddr,
-        request: Request,
+        request: CtrRequest,
     ) -> Result<Vec<u8>, LedgerError> {
         let ctr_wasm = self
             .ledger_db

@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use sak_contract_std::{CtrCallType, Request};
+use sak_contract_std::{CtrCallType, CtrRequest};
 use sak_dist_ledger::{Consensus, ConsensusError, DistLedgerApis};
 use sak_p2p_id::Identity;
 use sak_types::{BlockCandidate, TxCandidate};
@@ -17,7 +17,7 @@ impl Consensus for Pos {
         dist_ledger_apis: &DistLedgerApis,
         tx_candidates: Vec<TxCandidate>,
     ) -> Result<BlockCandidate, ConsensusError> {
-        let request = Request {
+        let request = CtrRequest {
             req_type: "get_validator".to_string(),
             args: vec![],
             ctr_call_type: CtrCallType::Query,

@@ -54,6 +54,7 @@ fn mock_coin_record_1() -> Result<CoinRecord, WalletError> {
         v,
         cm,
         coin_status,
+        coin_idx: None,
     };
 
     Ok(coin)

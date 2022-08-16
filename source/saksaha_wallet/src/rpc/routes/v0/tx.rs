@@ -3,17 +3,15 @@ use hyper::{Body, Response};
 use hyper_rpc_router::{
     require_params_parsed, require_some_params, Params, RouteState,
 };
+use sak_contract_std::{CtrRequest, RequestArgs};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
-pub type RequestArgs = Vec<u8>;
-
 #[derive(Serialize, Deserialize, Debug)]
-pub(crate) struct WalletSendTxRequest {
-    pub val: usize,
+pub(in crate::rpc) struct WalletSendTxRequest {
+    pub acc_addr: String,
     pub ctr_addr: String,
-    pub req_type: String,
-    pub args: RequestArgs,
+    pub ctr_request: CtrRequest,
 }
 
 pub(in crate::rpc) async fn send_tx(
@@ -31,7 +29,11 @@ pub(in crate::rpc) async fn send_tx(
 
     println!(" rb: {:?}", rb);
 
-    // let _ = ctx.wallet.apis.send_tx(rb).await;
+    let wallet_apis = ctx.wallet.get_apis();
+
+    let _ = wallet_apis
+        .send_tx(rb.acc_addr, rb.ctr_addr, rb.ctr_request)
+        .await;
 
     let is_success = true;
 

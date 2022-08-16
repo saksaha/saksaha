@@ -25,4 +25,8 @@ impl CredentialManager {
     pub fn get_curr_credential(&self) -> &WalletCredential {
         &self.curr_credential
     }
+
+    pub fn get_candidates(&self) -> &Vec<String> {
+        &self.candidates
+    }
 }

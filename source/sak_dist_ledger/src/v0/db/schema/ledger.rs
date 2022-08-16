@@ -65,7 +65,7 @@ impl LedgerDBSchema {
 
         match self.db.get_cf(&cf, keys::SINGLETON)? {
             Some(v) => {
-                let val = sak_kv_db::convert_u8_slice_into_u128(&v)?;
+                let val = type_extension::convert_u8_slice_into_u128(&v)?;
 
                 return Ok(Some(val));
             }
@@ -88,7 +88,7 @@ impl LedgerDBSchema {
             None => return Ok(None),
         };
 
-        let height = sak_kv_db::convert_u8_slice_into_u128(&height_bytes)?;
+        let height = type_extension::convert_u8_slice_into_u128(&height_bytes)?;
 
         Ok(Some(height))
     }
@@ -106,7 +106,7 @@ impl LedgerDBSchema {
             None => return Ok(None),
         };
 
-        let height = sak_kv_db::convert_u8_slice_into_u128(&height_bytes)?;
+        let height = type_extension::convert_u8_slice_into_u128(&height_bytes)?;
 
         Ok(Some(height))
     }

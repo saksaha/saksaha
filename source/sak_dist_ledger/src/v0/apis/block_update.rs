@@ -1,7 +1,7 @@
 use crate::{CtrStateUpdate, DistLedgerApis, LedgerError, MerkleUpdate};
 use colored::Colorize;
 use log::{debug, error, info, warn};
-use sak_contract_std::{CtrCallType, Request, Storage};
+use sak_contract_std::{CtrCallType, CtrRequest, Storage};
 use sak_types::{
     Block, BlockCandidate, MintTxCandidate, PourTxCandidate, Tx, TxCandidate,
     TxCtrOp,
@@ -287,7 +287,7 @@ async fn process_ctr_state_update(
         }
 
         TxCtrOp::ContractCall => {
-            let req = Request::parse(&data)?;
+            let req = CtrRequest::parse(&data)?;
 
             match req.ctr_call_type {
                 CtrCallType::Query => {

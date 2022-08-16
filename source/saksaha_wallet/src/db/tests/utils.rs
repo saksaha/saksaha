@@ -19,7 +19,7 @@ fn mock_wallet_credential() -> WalletCredential {
 pub(crate) async fn make_dummy_db() -> WalletDB {
     let wallet_credential = mock_wallet_credential();
 
-    let db = WalletDB::init(&wallet_credential).unwrap();
+    let db = WalletDB::init(&wallet_credential, true).unwrap();
 
     db
 }
