@@ -23,7 +23,7 @@ fn main() -> Result<(), WalletError> {
 
     let cli_args = cli::get_args()?;
 
-    let config = Config::new(cli_args.cfg_profile)?;
+    let config = Config::new(&cli_args.cfg_profile)?;
 
     info!("Config created, config: {:?}", config);
 
@@ -34,6 +34,7 @@ fn main() -> Result<(), WalletError> {
         rpc_port: cli_args.rpc_port,
         public_key: wallet_credential.public_key,
         secret: wallet_credential.secret,
+        cfg_profile: cli_args.cfg_profile,
     };
 
     let app = App::init();

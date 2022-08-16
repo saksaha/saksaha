@@ -30,6 +30,12 @@ impl Routine {
 
         let rpc = RPC::init(app_args.rpc_port, wallet).await?;
 
+        {
+            // Initilize state based on cfg_profile
+
+            // wallet.get_db().schema.put_coin;
+        }
+
         tokio::spawn(async move {
             tokio::join!(rpc.run());
         });

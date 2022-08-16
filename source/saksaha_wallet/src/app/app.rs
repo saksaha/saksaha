@@ -11,6 +11,7 @@ pub struct AppArgs {
     pub rpc_port: Option<u16>,
     pub public_key: String,
     pub secret: String,
+    pub cfg_profile: Option<String>,
 }
 
 impl App {
