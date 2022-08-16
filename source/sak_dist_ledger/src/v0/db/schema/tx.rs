@@ -563,7 +563,7 @@ impl LedgerDBSchema {
 
         if !verification_result {
             // return Err(format!("Wrong proof").into());
-            log::error!("Failed to verify")
+            log::error!("pour_tx has been failed to verify");
         };
 
         Ok(())

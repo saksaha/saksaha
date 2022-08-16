@@ -3,9 +3,13 @@ use crate::{
 };
 use async_trait::async_trait;
 use sak_contract_std::{CtrCallType, CtrRequest};
+use sak_crypto::{rand, Hasher, Scalar, ScalarExt};
+use sak_proofs::{MerkleTree, NewCoin, OldCoin, CM_TREE_DEPTH};
 use sak_types::{
     BlockCandidate, PourTxCandidate, Tx, TxCandidate, WASM_MAGIC_NUMBER,
 };
+use saksaha::generate_proof_1_to_2;
+use std::collections::HashMap;
 use type_extension::U8Array;
 
 pub struct DummyPos {}
@@ -249,30 +253,30 @@ pub(crate) fn make_proof_context() -> ProofContext {
         let node_1_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
         let node_2_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
         let node_3_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
-        let node_4_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
+        // let node_4_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
 
         m.insert("0_1", node_0_1);
         m.insert("1_1", node_1_1);
         m.insert("2_1", node_2_1);
         m.insert("3_1", node_3_1);
-        m.insert("4_1", node_4_1);
+        // m.insert("4_1", node_4_1);
 
         let node_1_0 = hasher.mimc_scalar(cm_1_old, node_0_1);
         let node_2_0 = hasher.mimc_scalar(node_1_0, node_1_1);
         let node_3_0 = hasher.mimc_scalar(node_2_0, node_2_1);
         let node_4_0 = hasher.mimc_scalar(node_3_0, node_3_1);
-        let node_5_0 = hasher.mimc_scalar(node_4_0, node_4_1);
+        // let node_5_0 = hasher.mimc_scalar(node_4_0, node_4_1);
 
         m.insert("1_0", node_1_0);
         m.insert("2_0", node_2_0);
         m.insert("3_0", node_3_0);
         m.insert("4_0", node_4_0);
-        m.insert("5_0", node_5_0);
+        // m.insert("5_0", node_5_0);
 
         m
     };
 
-    let merkle_rt = *merkle_nodes.get("5_0").unwrap();
+    let merkle_rt = *merkle_nodes.get("4_0").unwrap();
 
     let auth_path_1 = {
         let v = merkle_tree.generate_auth_paths(0);

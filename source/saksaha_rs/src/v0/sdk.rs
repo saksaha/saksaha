@@ -15,7 +15,6 @@ use std::{char::from_u32_unchecked, collections::HashMap, time};
 use type_extension::U8Array;
 
 pub const A: usize = 1;
-pub const TREE_DEPTH: usize = 3;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct QueryCtrRequest {

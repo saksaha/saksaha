@@ -162,12 +162,12 @@ impl Circuit<Scalar> for CoinProofCircuit1to2 {
             )?;
 
             cs.alloc_input(
-                || "sn_old_1",
+                || "sn_1_old",
                 || sn_1.ok_or(SynthesisError::AssignmentMissing),
             )?;
 
             cs.alloc_input(
-                || "cm_new_1",
+                || "cm_1_new",
                 || cm_1_new.ok_or(SynthesisError::AssignmentMissing),
             )?;
 
