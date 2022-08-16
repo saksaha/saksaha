@@ -5,7 +5,7 @@ use crate::{
 use futures::{stream::SplitSink, SinkExt};
 use log::{info, warn};
 use sak_p2p_transport::{
-    BlockHashSynMsg, Msg, TxHashSyncMsg, UpgradedConn, UpgradedP2PCodec,
+    BlockHashSyncMsg, Msg, TxHashSyncMsg, UpgradedConn, UpgradedP2PCodec,
 };
 use sak_task_queue::TaskQueue;
 use sak_types::{BlockHash, BlockHeight, TxHash};

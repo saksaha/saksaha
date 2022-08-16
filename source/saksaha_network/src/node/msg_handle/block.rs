@@ -2,14 +2,19 @@ use crate::{machine::Machine, node::SaksahaNodeError, SaksahaError};
 use futures::{stream::SplitSink, SinkExt};
 use log::{debug, info, warn};
 use sak_p2p_transport::{
-    BlockAckMsg, BlockHashSynMsg, BlockSynMsg, Msg, SendReceipt, TxHashSyncMsg,
-    TxSynMsg, UpgradedConn, UpgradedP2PCodec,
+    BlockAckMsg, BlockHashSyncMsg, BlockSynMsg, Msg, RecvReceipt, SendReceipt,
+    TxHashSyncMsg, TxSynMsg, UpgradedConn, UpgradedP2PCodec,
 };
+use sak_types::{BlockHash, BlockHeight};
 use std::sync::Arc;
 use tokio::{net::TcpStream, sync::RwLockWriteGuard};
 
-pub(in crate::node) async fn send_block_syn() -> Result<(), SaksahaNodeError> {
-    Ok(())
+pub(in crate::node) async fn send_block_syn(
+    mut conn: RwLockWriteGuard<'_, UpgradedConn>,
+    new_blocks: Vec<(BlockHeight, BlockHash)>,
+) -> Result<RecvReceipt, SaksahaNodeError> {
+    return Err(format!("power").into());
+    // Ok(())
 }
 
 pub(in crate::node) async fn recv_block_syn(
@@ -47,7 +52,7 @@ pub(in crate::node) async fn recv_block_syn(
 }
 
 pub(super) async fn handle_block_hash_syn<'a>(
-    block_hash_syn_msg: BlockHashSynMsg,
+    block_hash_syn_msg: BlockHashSyncMsg,
     machine: &Machine,
     conn: &'a mut RwLockWriteGuard<'_, UpgradedConn>,
 ) -> Result<(), SaksahaError> {
@@ -75,7 +80,7 @@ pub(super) async fn handle_block_hash_syn<'a>(
     }
 
     match conn
-        .send(Msg::BlockHashAck(BlockHashSynMsg {
+        .send(Msg::BlockHashAck(BlockHashSyncMsg {
             new_blocks: blocks_to_req,
         }))
         .await
@@ -119,7 +124,7 @@ pub(super) async fn handle_block_syn(
 }
 
 pub(super) async fn handle_block_hash_ack<'a>(
-    block_hash_syn_msg: BlockHashSynMsg,
+    block_hash_syn_msg: BlockHashSyncMsg,
     machine: &Machine,
     conn: &'a mut RwLockWriteGuard<'_, UpgradedConn>,
 ) -> Result<(), SaksahaError> {

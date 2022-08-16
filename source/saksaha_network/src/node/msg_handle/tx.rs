@@ -7,7 +7,7 @@ use futures::{stream::SplitSink, SinkExt};
 use log::{debug, info, warn};
 use sak_p2p_peertable::{Peer, PeerTable};
 use sak_p2p_transport::{
-    BlockHashSynMsg, BlockSynMsg, Msg, MsgType, RecvReceipt, SendReceipt,
+    BlockHashSyncMsg, BlockSynMsg, Msg, MsgType, RecvReceipt, SendReceipt,
     TxAckMsg, TxHashSyncMsg, TxSynMsg, UpgradedConn, UpgradedP2PCodec,
 };
 use sak_task_queue::TaskQueue;

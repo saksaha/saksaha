@@ -11,12 +11,13 @@ pub(in crate::node) enum NodeTask {
     },
     SendTxSyn {
         tx_hashes: Vec<TxHash>,
-        // tx_candidates: Vec<TxCandidate>,
     },
     SendBlockHashSyn {
         new_blocks: Vec<(BlockHeight, BlockHash)>,
     },
-    // SendBlockSyn {},
+    SendBlockSyn {
+        new_blocks: Vec<(BlockHeight, BlockHash)>,
+    },
 }
 
 impl std::fmt::Display for NodeTask {
@@ -30,9 +31,10 @@ impl std::fmt::Display for NodeTask {
             }
             Self::SendBlockHashSyn { .. } => {
                 write!(f, "SendBlockHashSyn",)
-            } // Self::SendBlockSyn { .. } => {
-              //     write!(f, "SendBlockSyn",)
-              // }
+            }
+            Self::SendBlockSyn { .. } => {
+                write!(f, "SendBlockSyn",)
+            }
         }
     }
 }

@@ -1,10 +1,15 @@
-use crate::{machine::Machine, node::SaksahaNodeError, SaksahaError};
+use crate::{
+    machine::Machine,
+    node::{task::NodeTask, SaksahaNodeError},
+    SaksahaError,
+};
 use futures::{stream::SplitSink, SinkExt};
 use log::{debug, info, warn};
 use sak_p2p_transport::{
-    BlockHashSynMsg, BlockSynMsg, Msg, RecvReceipt, SendReceipt, TxHashSyncMsg,
-    TxSynMsg, UpgradedConn, UpgradedP2PCodec,
+    BlockHashSyncMsg, BlockSynMsg, Msg, RecvReceipt, SendReceipt,
+    TxHashSyncMsg, TxSynMsg, UpgradedConn, UpgradedP2PCodec,
 };
+use sak_task_queue::TaskQueue;
 use sak_types::{BlockHash, BlockHeight};
 use std::sync::Arc;
 use tokio::{net::TcpStream, sync::RwLockWriteGuard};
@@ -12,9 +17,10 @@ use tokio::{net::TcpStream, sync::RwLockWriteGuard};
 pub(in crate::node) async fn send_block_hash_syn(
     mut conn_lock: RwLockWriteGuard<'_, UpgradedConn>,
     new_blocks: Vec<(BlockHeight, BlockHash)>,
+    task_queue: &Arc<TaskQueue<NodeTask>>,
 ) -> Result<RecvReceipt, SaksahaNodeError> {
     match conn_lock
-        .send(Msg::BlockHashSyn(BlockHashSynMsg {
+        .send(Msg::BlockHashSyn(BlockHashSyncMsg {
             new_blocks: new_blocks.clone(),
         }))
         .await
@@ -35,7 +41,7 @@ pub(in crate::node) async fn send_block_hash_syn(
     let msg =
         msg.ok_or(format!("block hash syn needs to be followed by ack"))??;
 
-    let _block_hash_ack = match msg {
+    let block_hash_ack_msg = match msg {
         Msg::BlockHashAck(m) => m,
         _ => {
             return Err(format!(
@@ -45,14 +51,47 @@ pub(in crate::node) async fn send_block_hash_syn(
         }
     };
 
+    let new_blocks = block_hash_ack_msg.new_blocks;
+
+    // let block_hashes: Vec<&String> = new_blocks
+    //     .iter()
+    //     .map(|(_, block_hash)| block_hash)
+    //     .collect();
+
+    // let blocks = machine
+    //     .blockchain
+    //     .dist_ledger
+    //     .apis
+    //     .get_blocks(block_hashes)
+    //     .await?;
+
+    // let mut blocks_to_send = Vec::with_capacity(blocks.len());
+
+    // for block in blocks {
+    //     let txs = machine
+    //         .blockchain
+    //         .dist_ledger
+    //         .apis
+    //         .get_txs(&block.tx_hashes)
+    //         .await?;
+
+    //     blocks_to_send.push((block, txs));
+    // }
+
+    task_queue
+        .push_back(NodeTask::SendBlockSyn { new_blocks })
+        .await;
+
     Ok(receipt)
 }
 
 pub(in crate::node) async fn recv_block_hash_syn(
-    block_hash_syn_msg: BlockHashSynMsg,
+    block_hash_syn_msg: BlockHashSyncMsg,
     machine: &Arc<Machine>,
     mut conn: RwLockWriteGuard<'_, UpgradedConn>,
 ) -> Result<SendReceipt, SaksahaNodeError> {
+    println!("recv block hash syn");
+
     let new_blocks = block_hash_syn_msg.new_blocks;
 
     let (_, latest_block_hash) = machine
@@ -77,7 +116,7 @@ pub(in crate::node) async fn recv_block_hash_syn(
     }
 
     let receipt = conn
-        .send(Msg::BlockHashAck(BlockHashSynMsg {
+        .send(Msg::BlockHashAck(BlockHashSyncMsg {
             new_blocks: blocks_to_req,
         }))
         .await?;
@@ -86,7 +125,7 @@ pub(in crate::node) async fn recv_block_hash_syn(
 }
 
 pub(super) async fn handle_block_hash_syn<'a>(
-    block_hash_syn_msg: BlockHashSynMsg,
+    block_hash_syn_msg: BlockHashSyncMsg,
     machine: &Machine,
     conn: &'a mut RwLockWriteGuard<'_, UpgradedConn>,
 ) -> Result<(), SaksahaError> {
@@ -114,7 +153,7 @@ pub(super) async fn handle_block_hash_syn<'a>(
     }
 
     match conn
-        .send(Msg::BlockHashAck(BlockHashSynMsg {
+        .send(Msg::BlockHashAck(BlockHashSyncMsg {
             new_blocks: blocks_to_req,
         }))
         .await
@@ -158,7 +197,7 @@ pub(super) async fn handle_block_syn(
 }
 
 pub(super) async fn handle_block_hash_ack<'a>(
-    block_hash_syn_msg: BlockHashSynMsg,
+    block_hash_syn_msg: BlockHashSyncMsg,
     machine: &Machine,
     conn: &'a mut RwLockWriteGuard<'_, UpgradedConn>,
 ) -> Result<(), SaksahaError> {

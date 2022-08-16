@@ -33,8 +33,12 @@ pub(in crate::node) async fn handle_task<'a>(
             msg_handle::send_tx_syn(conn_lock, tx_hashes, &machine).await
         }
         NodeTask::SendBlockHashSyn { new_blocks } => {
-            msg_handle::send_block_hash_syn(conn_lock, new_blocks).await
-        } // NodeTask::SendBlockSyn {} => Ok(()),
+            msg_handle::send_block_hash_syn(conn_lock, new_blocks, task_queue)
+                .await
+        }
+        NodeTask::SendBlockSyn { new_blocks } => {
+            msg_handle::send_block_syn(conn_lock, new_blocks).await
+        }
     };
 
     if let Err(err) = res {

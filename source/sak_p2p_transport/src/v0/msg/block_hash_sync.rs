@@ -1,18 +1,18 @@
 use crate::{MsgType, TrptError};
 use bytes::{BufMut, Bytes, BytesMut};
 use sak_p2p_frame::{Frame, Parse};
-use sak_types::BlockHeight;
+use sak_types::{BlockHash, BlockHeight};
 use std::str;
 
 #[derive(Debug)]
-pub struct BlockHashSynMsg {
-    pub new_blocks: Vec<(BlockHeight, String)>,
+pub struct BlockHashSyncMsg {
+    pub new_blocks: Vec<(BlockHeight, BlockHash)>,
 }
 
-impl BlockHashSynMsg {
+impl BlockHashSyncMsg {
     pub(crate) fn from_parse(
         parse: &mut Parse,
-    ) -> Result<BlockHashSynMsg, TrptError> {
+    ) -> Result<BlockHashSyncMsg, TrptError> {
         let block_count = parse.next_int()?;
 
         let mut new_blocks = Vec::with_capacity(block_count as usize);
@@ -29,7 +29,7 @@ impl BlockHashSynMsg {
             println!("new blocks: {:?}", new_blocks);
         }
 
-        let m = BlockHashSynMsg { new_blocks };
+        let m = BlockHashSyncMsg { new_blocks };
 
         Ok(m)
     }
