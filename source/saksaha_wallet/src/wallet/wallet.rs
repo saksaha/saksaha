@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use super::CoinManager;
 use crate::{db::WalletDB, Config, CredentialManager, WalletError};
 use colored::Colorize;
@@ -5,8 +7,9 @@ use log::debug;
 use sak_types::CoinRecord;
 
 pub(crate) struct Wallet {
-    wallet_db: WalletDB,
+    wallet_db: Arc<WalletDB>,
     credential_manager: CredentialManager,
+    coin_manager: CoinManager,
 }
 
 impl Wallet {
@@ -15,17 +18,17 @@ impl Wallet {
         wallet_db: WalletDB,
         config: Config,
     ) -> Result<Wallet, WalletError> {
+        let wallet_db = Arc::new(wallet_db);
+
+        let coin_manager = CoinManager::init(wallet_db.clone()).await?;
+
         let wallet = Wallet {
             wallet_db,
             credential_manager,
+            coin_manager,
         };
 
         bootstrap_wallet(&wallet, config).await?;
-
-        let coin_manager = CoinManager::init(&wallet).await?;
-
-        // for development
-        // init_for_dev(&wallet).await?;
 
         Ok(wallet)
     }
@@ -79,32 +82,6 @@ async fn bootstrap_wallet(
             };
         }
     }
-
-    Ok(())
-}
-
-async fn init_for_dev(wallet: &Wallet) -> Result<(), WalletError> {
-    // {
-    //     let value = 100;
-
-    //     let coin = CoinRecord::new(0x11, 0x12, 0x13, 0x14, value, None)?;
-
-    //     coin.cm;
-
-    //     debug!("[demo coin: user_1] {:#?}", coin);
-
-    //     wallet.get_db().schema.put_coin(&coin)?;
-    // }
-
-    // {
-    //     let value = 100;
-
-    //     let coin = CoinRecord::new(0x21, 0x22, 0x23, 0x24, value, None)?;
-
-    //     debug!("[demo coin: user_2] {:#?}", coin);
-
-    //     wallet.apis.db.schema.put_coin(&coin)?;
-    // }
 
     Ok(())
 }
