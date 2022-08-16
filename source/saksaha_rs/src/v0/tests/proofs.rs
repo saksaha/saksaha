@@ -278,7 +278,7 @@ fn make_test_context() -> (OldCoin, NewCoin, NewCoin, Scalar) {
     let auth_path_1 = {
         let v = merkle_tree.generate_auth_paths(0);
 
-        let mut ret = [(Scalar::default(), false); 4 as usize];
+        let mut ret = [(Scalar::default(), false); CM_TREE_DEPTH as usize];
 
         v.iter().enumerate().for_each(|(idx, p)| {
             if idx >= ret.len() {

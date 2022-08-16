@@ -7,6 +7,8 @@ pub(crate) mod cfs {
 
     pub const TX_HASH_BY_CTR_ADDR: &str = "tx_hash_by_ctr_addr";
 
+    pub const TX_HASH_BY_SN: &str = "tx_hash_by_sn";
+
     pub const TX_TYPE: &str = "tx_type";
 
     pub const PI: &str = "pi";
