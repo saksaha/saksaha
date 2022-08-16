@@ -53,31 +53,6 @@ pub(in crate::node) async fn send_block_hash_syn(
 
     let new_blocks = block_hash_ack_msg.new_blocks;
 
-    // let block_hashes: Vec<&String> = new_blocks
-    //     .iter()
-    //     .map(|(_, block_hash)| block_hash)
-    //     .collect();
-
-    // let blocks = machine
-    //     .blockchain
-    //     .dist_ledger
-    //     .apis
-    //     .get_blocks(block_hashes)
-    //     .await?;
-
-    // let mut blocks_to_send = Vec::with_capacity(blocks.len());
-
-    // for block in blocks {
-    //     let txs = machine
-    //         .blockchain
-    //         .dist_ledger
-    //         .apis
-    //         .get_txs(&block.tx_hashes)
-    //         .await?;
-
-    //     blocks_to_send.push((block, txs));
-    // }
-
     task_queue
         .push_back(NodeTask::SendBlockSyn { new_blocks })
         .await;

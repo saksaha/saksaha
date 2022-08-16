@@ -37,7 +37,7 @@ pub(in crate::node) async fn handle_task<'a>(
                 .await
         }
         NodeTask::SendBlockSyn { new_blocks } => {
-            msg_handle::send_block_syn(conn_lock, new_blocks).await
+            msg_handle::send_block_syn(conn_lock, new_blocks, &machine).await
         }
     };
 
