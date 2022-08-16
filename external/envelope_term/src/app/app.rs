@@ -7,7 +7,8 @@ use crate::io::IoEvent;
 use crate::term::get_balance_from_wallet;
 use crate::{app::actions::Action, ENVELOPE_CTR_ADDR};
 use crate::{inputs::key::Key, EnvelopeError};
-use chrono::Local;
+use chrono::{Date, Local};
+use crossterm::style::Stylize;
 use envelope_contract::{
     request_type::{GET_CH_LIST, OPEN_CH},
     Channel, GetChListParams, GetMsgParams, OpenChParams, SendMsgParams,
@@ -62,52 +63,107 @@ impl App {
 
             match action {
                 Action::Quit => AppReturn::Exit,
+
                 Action::SwitchEditMode => {
                     self.state.input_mode = InputMode::Editing;
                     AppReturn::Continue
                 }
+
                 Action::SwitchNormalMode => {
                     self.state.input_mode = InputMode::Editing;
                     AppReturn::Continue
                 }
+
                 Action::ShowChList => {
                     let _ = self.get_ch_list().await;
                     // let _ = self.get_ch_list_from_local().await;
                     self.state.set_view_ch_list();
                     AppReturn::Continue
                 }
+
                 Action::ShowOpenCh => {
                     self.state.set_view_open_ch();
                     AppReturn::Continue
                 }
+
                 Action::ShowChat => {
                     self.state.set_view_chat();
                     AppReturn::Continue
                 }
+
                 Action::Down => {
                     self.state.next_ch();
                     AppReturn::Continue
                 }
+
                 Action::Up => {
                     self.state.previous_ch();
                     AppReturn::Continue
                 }
-                Action::Right => {
-                    match self.get_state().view {
-                        View::ChList => {
-                            let curr_ch = self
-                                .state
-                                .ch_list_state
-                                .selected()
-                                .unwrap_or(0);
-                            self.get_messages().await;
-                            self.state.set_view_chat();
-                        }
-                        _ => {}
-                    }
 
-                    AppReturn::Continue
-                }
+                Action::Right => AppReturn::Continue,
+                // Action::Right => match self.get_state().view {
+                //     View::Chat => {
+                //         self.state.selected_ch_id =
+                //             match self.state.ch_list_state.selected() {
+                //                 Some(i) => (self.state.ch_list[i])
+                //                     .channel
+                //                     .ch_id
+                //                     .clone(),
+                //                 None => String::default(),
+                //             };
+                //         log::info!("Ch_Id: {:?}", self.state.selected_ch_id);
+                //         // self.get_messages().await;
+                //         // self.state.set_view_chat();
+                //         // log::info!("ch_id: {:?}", curr_ch);
+
+                //         return AppReturn::Continue;
+                //     }
+                //     _ => {
+                //         return AppReturn::Continue;
+                //     }
+                // },
+                Action::RestoreChat => match self.get_state().view {
+                    View::Chat => {
+                        let ch_id = self.state.selected_ch_id.clone();
+
+                        if !ch_id.is_empty() {
+                            self.get_messages(ch_id.clone()).await;
+
+                            log::info!(
+                                "Restore all the chats in ch_id: {:?}",
+                                ch_id
+                            );
+                        }
+
+                        return AppReturn::Continue;
+                    }
+                    _ => {
+                        return AppReturn::Continue;
+                    }
+                },
+                Action::Select => match self.get_state().view {
+                    View::ChList => {
+                        self.state.selected_ch_id =
+                            match self.state.ch_list_state.selected() {
+                                Some(i) => (self.state.ch_list[i])
+                                    .channel
+                                    .ch_id
+                                    .clone(),
+                                None => String::default(),
+                            };
+
+                        log::info!("Ch_Id: {:?}", self.state.selected_ch_id);
+                        // self.get_messages(self.state.selected_ch_id.clone())
+                        //     .await;
+                        self.state.set_view_chat();
+                        return AppReturn::Continue;
+                    }
+                    _ => {
+                        return AppReturn::Continue;
+                    }
+                },
+
                 Action::UpdateBalance => {
                     self.state.set_balance().await;
                     AppReturn::Continue
@@ -164,10 +220,10 @@ impl App {
                         self.state.chat_input =
                             self.state.input_text.drain(..).collect();
 
-                        // self.send_messages().await;
+                        self.send_messages(&self.state.chat_input).await;
 
-                        self.state
-                            .set_input_messages(self.state.chat_input.clone());
+                        // self.state
+                        //     .set_input_messages(self.state.chat_input.clone());
                     }
                     _ => {}
                 }
@@ -250,6 +306,8 @@ impl App {
             Action::Right,
             //
             Action::UpdateBalance,
+            Action::Select,
+            Action::RestoreChat,
         ]
         .into();
 
@@ -279,13 +337,14 @@ impl App {
     ) -> Result<(), EnvelopeError> {
         let my_pk = self.get_pk(&USER_1.to_string()).await?;
 
+        let open_ch = self.encrypt_open_ch(her_pk).await?;
+
         for i in [her_pk, &my_pk] {
-            let open_ch = self.encrypt_open_ch(her_pk).await?;
             let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
 
             let open_ch_params = OpenChParams {
                 dst_pk: i.clone(),
-                open_ch,
+                open_ch: open_ch.clone(),
             };
 
             let req_type = OPEN_CH.to_string();
@@ -336,10 +395,11 @@ impl App {
         Ok(())
     }
 
-    pub async fn get_messages(&mut self) -> Result<(), EnvelopeError> {
-        let get_msg_params = GetMsgParams {
-            ch_id: "ch_id".to_string(),
-        };
+    pub async fn get_messages(
+        &mut self,
+        ch_id: String,
+    ) -> Result<(), EnvelopeError> {
+        let get_msg_params = GetMsgParams { ch_id };
 
         let args = serde_json::to_vec(&get_msg_params)?;
 
@@ -360,13 +420,19 @@ impl App {
 
     pub async fn send_messages(
         &self,
-        her_pk: &String,
+        msg: &String,
     ) -> Result<String, EnvelopeError> {
         let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
 
+        let chat = envelope_contract::ChatMessage {
+            date: Local::now().format("%H:%M:%S ").to_string(),
+            user: USER_1.clone().to_string(),
+            msg: msg.clone(),
+        };
+
         let send_msg_params = SendMsgParams {
-            ch_id: "ch_id".to_string(),
-            msg: "msg 123".to_string(),
+            ch_id: self.state.selected_ch_id.clone(),
+            chat,
         };
 
         // let mut arg = HashMap::with_capacity(2);
@@ -457,14 +523,6 @@ impl App {
 
                 serde_json::to_string(&ciphertext)?
             };
-
-            // let empty_chat: Vec<String> = vec![];
-            // let empty_chat_str = serde_json::to_string(&empty_chat)?;
-            // let ciphertext_empty = sak_crypto::aes_encrypt(
-            //     &aes_key_from_a,
-            //     empty_chat_str.as_bytes(),
-            // )?;
-            // let open_ch_empty = serde_json::to_string(&ciphertext_empty)?;
 
             (a_credential_encrypted, aes_key_from_a)
         };

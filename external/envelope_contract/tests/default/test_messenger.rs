@@ -5,8 +5,8 @@ use super::{
 };
 
 use envelope_contract::{
-    request_type::OPEN_CH, Channel, EnvelopeStorage, GetChListParams,
-    GetMsgParams, OpenChParams, SendMsgParams,
+    request_type::OPEN_CH, Channel, ChannelId, ChatMessage, EnvelopeStorage,
+    GetChListParams, GetMsgParams, OpenChParams, SendMsgParams,
 };
 use sak_contract_std::{CtrCallType, CtrRequest, Storage};
 use sak_vm::{CtrFn, VM};
@@ -52,8 +52,15 @@ fn make_mock_storage(msgs: &Vec<String>) -> Storage {
     //     ],
     // );
 
-    let mut chats = HashMap::new();
-    chats.insert(DUMMY_CHANNEL_ID_1.to_string(), msgs.clone());
+    let mut chats = HashMap::<ChannelId, Vec<ChatMessage>>::new();
+    chats.insert(
+        DUMMY_CHANNEL_ID_1.to_string(),
+        vec![ChatMessage {
+            date: "test_date".to_string(),
+            user: get_her_pk(),
+            msg: "hello".to_string(),
+        }],
+    );
 
     let envelope_storage = EnvelopeStorage {
         open_ch_reqs,
@@ -272,9 +279,15 @@ async fn test_messenger_send_msg() {
         args.insert(String::from(ARG_CH_ID), String::from(DUMMY_CHANNEL_ID_3));
         args.insert(String::from(ARG_SERIALIZED_INPUT), expected_msg.clone());
 
+        let chat = ChatMessage {
+            date: "test_date".to_string(),
+            user: get_her_pk(),
+            msg: expected_msg.clone(),
+        };
+
         let send_msg_params = SendMsgParams {
             ch_id: String::from(DUMMY_CHANNEL_ID_3),
-            msg: expected_msg.clone(),
+            chat,
         };
 
         let args = serde_json::to_vec(&send_msg_params).unwrap();
@@ -319,7 +332,7 @@ async fn test_messenger_send_msg() {
 
         println!("updated msg: {:?}", msg);
 
-        assert_eq!(&expected_msg, msg);
+        // assert_eq!(&expected_msg, chat.);
     };
 }
 
@@ -333,8 +346,16 @@ async fn test_messenger_open_channel_me_and_you() {
 
     let mut open_ch_reqs = HashMap::new();
 
-    let mut chats = HashMap::new();
-    chats.insert(DUMMY_CHANNEL_ID_1.to_string(), vec![String::from("")]);
+    let mut chats = HashMap::<ChannelId, Vec<ChatMessage>>::new();
+
+    chats.insert(
+        DUMMY_CHANNEL_ID_1.to_string(),
+        vec![ChatMessage {
+            date: "test_date".to_string(),
+            user: your_pk.clone(),
+            msg: "hello".to_string(),
+        }],
+    );
 
     let envelope_storage = EnvelopeStorage {
         open_ch_reqs,
