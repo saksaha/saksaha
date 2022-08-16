@@ -8,7 +8,7 @@ use envelope_contract::{
     request_type::OPEN_CH, Channel, EnvelopeStorage, GetChListParams,
     GetMsgParams, OpenChParams, SendMsgParams,
 };
-use sak_contract_std::{CtrCallType, Request, Storage};
+use sak_contract_std::{CtrCallType, CtrRequest, Storage};
 use sak_vm::{CtrFn, VM};
 use std::collections::HashMap;
 
@@ -112,7 +112,7 @@ async fn test_messenger_get_msgs() {
 
         let args = serde_json::to_vec(&get_msg_params).unwrap();
 
-        Request {
+        CtrRequest {
             req_type: "get_msgs".to_string(),
             args,
             ctr_call_type: CtrCallType::Query,
@@ -158,7 +158,7 @@ async fn test_messenger_get_ch_list() {
 
         let args = serde_json::to_vec(&get_ch_list_params).unwrap();
 
-        let req = Request {
+        let req = CtrRequest {
             req_type: String::from("get_ch_list"),
             args,
             ctr_call_type: CtrCallType::Query,
@@ -216,7 +216,7 @@ async fn test_messenger_open_channel() {
 
         let args = serde_json::to_vec(&open_ch_params).unwrap();
 
-        let req = Request {
+        let req = CtrRequest {
             req_type: OPEN_CH.to_string(),
             args,
             ctr_call_type: CtrCallType::Execute,
@@ -279,7 +279,7 @@ async fn test_messenger_send_msg() {
 
         let args = serde_json::to_vec(&send_msg_params).unwrap();
 
-        let req = Request {
+        let req = CtrRequest {
             req_type: String::from("send_msg"),
             args,
             ctr_call_type: CtrCallType::Execute,
@@ -361,7 +361,7 @@ async fn test_messenger_open_channel_me_and_you() {
 
         let args = serde_json::to_vec(&open_ch_params).unwrap();
 
-        let request = Request {
+        let request = CtrRequest {
             req_type: OPEN_CH.to_string(),
             args,
             ctr_call_type: CtrCallType::Execute,
@@ -387,7 +387,7 @@ async fn test_messenger_open_channel_me_and_you() {
 
         let args = serde_json::to_vec(&open_ch_params).unwrap();
 
-        let request = Request {
+        let request = CtrRequest {
             req_type: OPEN_CH.to_string(),
             args,
             ctr_call_type: CtrCallType::Execute,

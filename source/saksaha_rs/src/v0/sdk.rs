@@ -1,7 +1,7 @@
 use crate::SaksahaSDKError;
 use hyper::{Body, Client, Method, Request, Uri};
 use log::warn;
-use sak_contract_std::{CtrCallType, Request as CtrRequest, RequestArgs};
+use sak_contract_std::{CtrCallType, CtrRequest, RequestArgs};
 use sak_crypto::{
     groth16, mimc, os_rng, Bls12, Circuit, Hasher, Proof, Scalar, ScalarExt,
 };
@@ -125,8 +125,9 @@ pub async fn send_tx_pour(
     // cm_2: Scalar,
     // merkle_rt: Scalar,
     ctr_addr: String,
-    req_type: String,
-    args: RequestArgs,
+    // req_type: String,
+    // args: RequestArgs,
+    ctr_request: CtrRequest,
 ) -> Result<JsonResponse<String>, SaksahaSDKError> {
     let endpoint_test = "http://localhost:34418/rpc/v0";
 
@@ -134,16 +135,16 @@ pub async fn send_tx_pour(
     let uri: Uri = { endpoint_test.parse().expect("URI should be made") };
 
     let body = {
-        let req = CtrRequest {
-            req_type: req_type.clone(),
-            args,
-            ctr_call_type: CtrCallType::Execute,
-        };
+        // let req = CtrRequest {
+        //     req_type: req_type.clone(),
+        //     args,
+        //     ctr_call_type: CtrCallType::Execute,
+        // };
 
         // *** Need to change dummy values to real values
         let send_req = SendPourTxRequest::new(
             String::from(format!("created_at_{:?}", time::SystemTime::now())),
-            serde_json::to_vec(&req)?,
+            serde_json::to_vec(&ctr_request)?,
             String::from("author_sig_1"),
             Some(ctr_addr),
             //

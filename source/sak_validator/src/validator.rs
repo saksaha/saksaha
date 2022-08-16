@@ -1,7 +1,7 @@
 use crate::AddValidatorParams;
 use sak_contract_std::{
     contract_bootstrap, define_execute, define_init, define_query,
-    ContractError, Request, RequestArgs, Storage,
+    ContractError, CtrRequest, RequestArgs, Storage,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -37,7 +37,7 @@ pub fn init2() -> Result<Vec<u8>, ContractError> {
 
 define_query!();
 pub fn query2(
-    request: Request,
+    request: CtrRequest,
     storage: Storage,
 ) -> Result<Vec<u8>, ContractError> {
     match request.req_type.as_ref() {
@@ -65,7 +65,7 @@ fn handle_get_validator(storage: Storage) -> Result<Vec<u8>, ContractError> {
 
 define_execute!();
 pub fn execute2(
-    request: Request,
+    request: CtrRequest,
     storage: &mut Storage,
 ) -> Result<Vec<u8>, ContractError> {
     match request.req_type.as_ref() {

@@ -2,7 +2,7 @@ use crate::{
     Consensus, ConsensusError, DistLedger, DistLedgerApis, DistLedgerArgs,
 };
 use async_trait::async_trait;
-use sak_contract_std::{CtrCallType, Request};
+use sak_contract_std::{CtrCallType, CtrRequest};
 use sak_types::{
     BlockCandidate, PourTxCandidate, Tx, TxCandidate, WASM_MAGIC_NUMBER,
 };
@@ -86,8 +86,8 @@ pub(crate) fn make_dummy_block_candidate_with_query_tx(
 ) -> Option<BlockCandidate> {
     let block_candidate: BlockCandidate = {
         let dummy_ctr_calling_query_tc: TxCandidate = {
-            let request_query_get_validator: Request = {
-                Request {
+            let request_query_get_validator: CtrRequest = {
+                CtrRequest {
                     req_type: "get_validator".to_string(),
                     args: vec![],
                     ctr_call_type: CtrCallType::Query,

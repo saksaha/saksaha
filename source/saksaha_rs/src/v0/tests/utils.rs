@@ -1,4 +1,4 @@
-use sak_contract_std::{CtrCallType, Request, Storage};
+use sak_contract_std::{CtrCallType, CtrRequest, Storage};
 use sak_crypto::{
     PublicKey, SakKey, SecretKey, SigningKey, ToEncodedPoint, VerifyingKey,
 };

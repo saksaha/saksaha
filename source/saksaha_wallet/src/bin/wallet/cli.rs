@@ -6,6 +6,7 @@ pub(crate) struct CLIArgs {
     pub(crate) rpc_port: Option<u16>,
     pub(crate) public_key: Option<String>,
     pub(crate) secret: Option<String>,
+    pub(crate) cfg_profile: Option<String>,
 }
 
 pub(crate) fn get_args() -> Result<CLIArgs, WalletError> {
@@ -37,10 +38,16 @@ pub(crate) fn get_args() -> Result<CLIArgs, WalletError> {
         None => None,
     };
 
+    let cfg_profile = match matches.value_of("cfg-profile") {
+        Some(m) => Some(String::from(m)),
+        None => None,
+    };
+
     Ok(CLIArgs {
         rpc_port,
         public_key,
         secret,
+        cfg_profile,
     })
 }
 
@@ -50,6 +57,16 @@ fn create_app<'a>() -> Command<'a> {
         .author("Saksaha <elden@saksaha.com>")
         .about("Sakaha network reference implementation")
         .allow_hyphen_values(true)
+        .arg(
+            Arg::new("cfg-profile") //
+                .long("cfg-profile")
+                .takes_value(true)
+                .long_help(
+                    "Config profile. This dictates which 'config (credential)' \
+                    to load, \n
+                    e.g. 'dev_local_1'",
+                ),
+        )
         .arg(
             Arg::new("rpc-port") //
                 .long("rpc-port")

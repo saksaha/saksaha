@@ -122,7 +122,8 @@ macro_rules! define_query {
 
             let request = serde_json::from_slice(&request);
 
-            let request: Request = sak_contract_std::return_err_2!(request);
+            let request: sak_contract_std::CtrRequest =
+                sak_contract_std::return_err_2!(request);
 
             let result: Result<
                 sak_contract_std::InvokeResult,
@@ -168,7 +169,7 @@ macro_rules! define_execute {
 
             let request = serde_json::from_slice(&request);
 
-            let request: sak_contract_std::Request =
+            let request: sak_contract_std::CtrRequest =
                 sak_contract_std::return_err_4!(
                     request,
                     "serde request parsing fail"

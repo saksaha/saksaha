@@ -24,6 +24,7 @@ impl WalletDBSchema {
             ColumnFamilyDescriptor::new(cfs::COIN_STATUS, Options::default()),
             ColumnFamilyDescriptor::new(cfs::USER_ID, Options::default()),
             ColumnFamilyDescriptor::new(cfs::CM, Options::default()),
+            ColumnFamilyDescriptor::new(cfs::COIN_IDX, Options::default()),
         ]
     }
 }

@@ -13,7 +13,7 @@ use envelope_contract::{
     Channel, GetChListParams, GetMsgParams, OpenChParams, SendMsgParams,
 };
 use log::{debug, error, warn};
-use sak_contract_std::{CtrCallType, Request as CtrRequest};
+use sak_contract_std::{CtrCallType, CtrRequest};
 use sak_crypto::{PublicKey, SakKey, SecretKey, SigningKey, ToEncodedPoint};
 
 #[derive(Debug, PartialEq, Eq)]
@@ -291,8 +291,14 @@ impl App {
 
             let args = serde_json::to_vec(&open_ch_params)?;
 
+            let ctr_request = CtrRequest {
+                req_type,
+                args,
+                ctr_call_type: CtrCallType::Execute,
+            };
+
             let _json_response =
-                saksaha::send_tx_pour(ctr_addr, req_type, args).await?;
+                saksaha::send_tx_pour(ctr_addr, ctr_request).await?;
         }
 
         Ok(())
@@ -374,8 +380,14 @@ impl App {
 
         let req_type = envelope_contract::request_type::SEND_MSG.to_string();
 
+        let ctr_request = CtrRequest {
+            req_type,
+            args,
+            ctr_call_type: CtrCallType::Execute,
+        };
+
         let json_response =
-            saksaha::send_tx_pour(ctr_addr, req_type, args).await?;
+            saksaha::send_tx_pour(ctr_addr, ctr_request).await?;
 
         let result = json_response.result.unwrap_or("None".to_string());
 
