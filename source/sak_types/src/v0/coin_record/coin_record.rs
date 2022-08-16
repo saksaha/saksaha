@@ -1,11 +1,14 @@
 use super::CoinStatus;
-use crate::Balance;
+use crate::AccountBalance;
 use crate::TypesError;
 use sak_crypto::Hasher;
 use sak_crypto::Scalar;
 use sak_crypto::ScalarExt;
 use sak_proofs::NewCoin;
 use type_extension::U8Array;
+
+pub type CoinIdx = u128;
+pub type CM = Scalar;
 
 #[derive(Debug)]
 pub struct CoinRecord {
@@ -24,6 +27,8 @@ pub struct CoinRecord {
     pub cm: Scalar,
 
     pub coin_status: CoinStatus,
+
+    pub coin_idx: Option<CoinIdx>,
 }
 
 impl CoinRecord {
@@ -33,6 +38,7 @@ impl CoinRecord {
         s: u64,
         addr_sk: u64,
         v: u64,
+        coin_idx: Option<CoinIdx>,
     ) -> Result<CoinRecord, TypesError> {
         let hasher = Hasher::new();
 
@@ -82,6 +88,7 @@ impl CoinRecord {
             v,
             cm,
             coin_status: CoinStatus::Unused,
+            coin_idx,
         };
 
         Ok(coin)

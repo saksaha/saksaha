@@ -1,7 +1,7 @@
 use crate::{GetChListParams, GetMsgParams, OpenChParams, SendMsgParams};
 use sak_contract_std::{
     contract_bootstrap, define_execute, define_init, define_query,
-    ContractError, InvokeResult, Request, RequestArgs, Storage,
+    ContractError, CtrRequest, InvokeResult, RequestArgs, Storage,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -60,7 +60,7 @@ pub fn init2() -> Result<Storage, ContractError> {
 
 define_query!();
 pub fn query2(
-    request: Request,
+    request: CtrRequest,
     storage: Storage,
 ) -> Result<Vec<u8>, ContractError> {
     match request.req_type.as_ref() {
@@ -80,7 +80,7 @@ pub fn query2(
 
 define_execute!();
 pub fn execute2(
-    request: Request,
+    request: CtrRequest,
     storage: &mut Storage,
 ) -> Result<InvokeResult, ContractError> {
     match request.req_type.as_ref() {

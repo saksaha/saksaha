@@ -1,4 +1,4 @@
-use sak_contract_std::{CtrCallType, Request, Storage};
+use sak_contract_std::{CtrCallType, CtrRequest, Storage};
 use sak_validator::{AddValidatorParams, ValidatorStorage};
 use sak_vm::{CtrFn, VM};
 use std::collections::HashMap;
@@ -108,7 +108,7 @@ async fn test_call_ctr_validator_fn_query() {
         get_dummy_validator_3(),
     ];
 
-    let request = Request {
+    let request = CtrRequest {
         req_type: "get_validator".to_string(),
         args: vec![],
         ctr_call_type: CtrCallType::Query,
@@ -158,7 +158,7 @@ async fn test_call_ctr_validator_fn_execute_add_validator() {
 
         let args = serde_json::to_vec(&add_validator_params).unwrap();
 
-        let request = Request {
+        let request = CtrRequest {
             req_type,
             args,
             ctr_call_type: CtrCallType::Execute,
