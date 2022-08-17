@@ -10,7 +10,6 @@ use sak_types::{
 };
 use type_extension::U8Arr32;
 
-// getter
 impl LedgerDBSchema {
     pub(crate) async fn get_txs(
         &self,
@@ -32,12 +31,9 @@ impl LedgerDBSchema {
         &self,
         tx_hash: &String,
     ) -> Result<Option<Tx>, LedgerError> {
-        // let db = &self.kv_db.db_instance;
-
         let tx_type = self
-            // .schema
             .get_tx_type(tx_hash)?
-            .ok_or("No tx matching the hash Or tx type should exist")?;
+            .ok_or(format!("Tx type does not exist, tx_hash: {}", tx_hash))?;
 
         let tx = match tx_type {
             TxType::Mint => self.get_mint_tx(tx_hash),
@@ -48,12 +44,7 @@ impl LedgerDBSchema {
         Ok(Some(tx))
     }
 
-    fn get_mint_tx(
-        &self,
-        // db: &DB,
-        // schema: &LedgerDBSchema,
-        tx_hash: &String,
-    ) -> Result<Tx, LedgerError> {
+    fn get_mint_tx(&self, tx_hash: &String) -> Result<Tx, LedgerError> {
         let created_at = self
             .get_tx_created_at(tx_hash)?
             .ok_or("created_at does not exist")?;
@@ -135,7 +126,6 @@ impl LedgerDBSchema {
 
     pub(crate) fn get_tx_type(
         &self,
-        // db: &DB,
         tx_hash: &TxHash,
     ) -> Result<Option<TxType>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::TX_TYPE)?;
@@ -460,15 +450,12 @@ impl LedgerDBSchema {
     }
 }
 
-// writer
 impl LedgerDBSchema {
     pub(crate) fn batch_put_tx(
         &self,
         batch: &mut WriteBatch,
         tx: &Tx,
     ) -> Result<(), LedgerError> {
-        // let db = &self.kv_db.db_instance;
-
         let _ = match tx {
             Tx::Mint(t) => self.batch_put_mint_tx(batch, t),
             Tx::Pour(t) => self.batch_put_pour_tx(batch, t),
@@ -479,8 +466,6 @@ impl LedgerDBSchema {
 
     pub(crate) fn batch_put_mint_tx(
         &self,
-        // db: &DB,
-        // schema: &LedgerDBSchema,
         batch: &mut WriteBatch,
         tx: &MintTx,
     ) -> Result<String, LedgerError> {
@@ -543,6 +528,7 @@ impl LedgerDBSchema {
         Ok(())
     }
 
+    // TODO Temporary commenting out. This has to be executed as desired later
     pub(crate) fn verify_tx(
         &self,
         tc: &PourTxCandidate,
@@ -556,32 +542,30 @@ impl LedgerDBSchema {
             ScalarExt::parse_arr(&tc.cm_2)?,
         ];
 
-        let pi_des: Proof<Bls12> = match Proof::read(&*tc.pi) {
-            Ok(p) => p,
-            Err(err) => {
-                return Err(format!(
-                    "Cannot deserialize the pi, err: {:?}",
-                    err
-                )
-                .into());
-            }
-        };
+        // let pi_des: Proof<Bls12> = match Proof::read(&*tc.pi) {
+        //     Ok(p) => ,
+        //     Err(err) => {
+        //         return Err(format!(
+        //             "Cannot deserialize the pi, err: {:?}",
+        //             err
+        //         )
+        //         .into());
+        //     }
+        // };
 
-        let verification_result =
-            verify_proof_1_to_2(pi_des, &public_inputs, &hasher);
+        // let verification_result =
+        //     verify_proof_1_to_2(pi_des, &public_inputs, &hasher);
 
-        if !verification_result {
-            // return Err(format!("Wrong proof").into());
-            log::error!("Failed to verify")
-        };
+        // if !verification_result {
+        //     // return Err(format!("Wrong proof").into());
+        //     log::error!("Failed to verify")
+        // };
 
         Ok(())
     }
 
     pub(crate) fn batch_put_pour_tx(
         &self,
-        // db: &DB,
-        // schema: &LedgerDBSchema,
         batch: &mut WriteBatch,
         tx: &PourTx,
     ) -> Result<String, LedgerError> {
@@ -642,7 +626,6 @@ impl LedgerDBSchema {
 
     pub(crate) fn batch_put_tx_type(
         &self,
-        // db: &DB,
         batch: &mut WriteBatch,
         tx_hash: &TxHash,
         tx_type: TxType,
@@ -656,7 +639,6 @@ impl LedgerDBSchema {
 
     pub(crate) fn batch_put_tx_created_at(
         &self,
-        // db: &DB,
         batch: &mut WriteBatch,
         block_hash: &TxHash,
         created_at: &String,
@@ -670,7 +652,6 @@ impl LedgerDBSchema {
 
     pub(crate) fn batch_delete_tx_created_at(
         &self,
-        // db: &DB,
         batch: &mut WriteBatch,
         key: &TxHash,
     ) -> Result<(), LedgerError> {
@@ -697,7 +678,6 @@ impl LedgerDBSchema {
 
     pub(crate) fn batch_delete_data(
         &self,
-        // db: &DB,
         batch: &mut WriteBatch,
         key: &TxHash,
     ) -> Result<(), LedgerError> {
@@ -946,43 +926,5 @@ impl LedgerDBSchema {
         batch.put_cf(&cf, key, value);
 
         Ok(())
-    }
-}
-
-pub mod testing {
-    use super::*;
-
-    impl LedgerDBSchema {
-        pub(crate) fn put_tx(&self, tx: &Tx) -> Result<String, LedgerError> {
-            let mut batch = WriteBatch::default();
-
-            let tx_hash = match tx {
-                Tx::Mint(t) => self.batch_put_mint_tx(&mut batch, t)?,
-                Tx::Pour(t) => self.batch_put_pour_tx(&mut batch, t)?,
-            };
-
-            self.db.write(batch)?;
-
-            Ok(tx_hash)
-        }
-
-        pub(crate) fn delete_tx(
-            &self,
-            tx_hash: &String,
-        ) -> Result<(), LedgerError> {
-            // let db = &self.kv_db.db_instance;
-
-            let mut batch = WriteBatch::default();
-
-            self.batch_delete_tx_created_at(&mut batch, tx_hash)?;
-
-            self.batch_delete_data(&mut batch, tx_hash)?;
-
-            self.batch_delete_pi(&mut batch, tx_hash)?;
-
-            self.batch_delete_author_sig(&mut batch, tx_hash)?;
-
-            Ok(())
-        }
     }
 }

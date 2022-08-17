@@ -1,6 +1,6 @@
-use super::tx;
+use crate::tx_utils;
+use crate::MsgType;
 use crate::TrptError;
-use crate::TX_SYN_TYPE;
 use bytes::Bytes;
 use sak_p2p_frame::{Frame, Parse};
 use sak_types::{TxCandidate, TxType};
@@ -34,12 +34,12 @@ impl TxSynMsg {
                 };
 
                 match tc_type {
-                    TxType::Mint => {
-                        TxCandidate::Mint(tx::parse_mint_tx_candidate(parse)?)
-                    }
-                    TxType::Pour => {
-                        TxCandidate::Pour(tx::parse_pour_tx_candidate(parse)?)
-                    }
+                    TxType::Mint => TxCandidate::Mint(
+                        tx_utils::parse_mint_tx_candidate(parse)?,
+                    ),
+                    TxType::Pour => TxCandidate::Pour(
+                        tx_utils::parse_pour_tx_candidate(parse)?,
+                    ),
                     _ => {
                         return Err(format!(
                             "tx candidate type is invalid, {:?}",
@@ -64,17 +64,17 @@ impl TxSynMsg {
         let tx_candidates = self.tx_candidates;
         let tc_count = tx_candidates.len();
 
-        frame.push_bulk(Bytes::from(TX_SYN_TYPE.as_bytes()));
+        frame.push_bulk(Bytes::from(MsgType::TX_SYN));
 
         frame.push_int(tc_count as u128);
 
         for tc in tx_candidates.into_iter() {
             match tc {
                 TxCandidate::Mint(tc) => {
-                    tx::put_mint_tx_candidate_into_frame(&mut frame, tc);
+                    tx_utils::put_mint_tx_candidate_into_frame(&mut frame, tc);
                 }
                 TxCandidate::Pour(tc) => {
-                    tx::put_pour_tx_candidate_into_frame(&mut frame, tc);
+                    tx_utils::put_pour_tx_candidate_into_frame(&mut frame, tc);
                 }
             }
         }

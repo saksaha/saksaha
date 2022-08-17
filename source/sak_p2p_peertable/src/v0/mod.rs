@@ -10,4 +10,4 @@ pub(crate) use runtime::*;
 pub use slot::*;
 pub use table::*;
 
-pub(crate) type PTableError = Box<dyn std::error::Error + Send + Sync>;
+pub type PeerTableError = Box<dyn std::error::Error + Send + Sync>;

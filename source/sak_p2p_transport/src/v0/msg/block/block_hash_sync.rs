@@ -1,17 +1,18 @@
-use crate::{TrptError, BLOCK_HASH_ACK, BLOCK_HASH_SYN};
+use crate::{MsgType, TrptError};
 use bytes::{BufMut, Bytes, BytesMut};
 use sak_p2p_frame::{Frame, Parse};
+use sak_types::{BlockHash, BlockHeight};
 use std::str;
 
 #[derive(Debug)]
-pub struct BlockHashSynMsg {
-    pub new_blocks: Vec<(u128, String)>,
+pub struct BlockHashSyncMsg {
+    pub new_blocks: Vec<(BlockHeight, BlockHash)>,
 }
 
-impl BlockHashSynMsg {
+impl BlockHashSyncMsg {
     pub(crate) fn from_parse(
         parse: &mut Parse,
-    ) -> Result<BlockHashSynMsg, TrptError> {
+    ) -> Result<BlockHashSyncMsg, TrptError> {
         let block_count = parse.next_int()?;
 
         let mut new_blocks = Vec::with_capacity(block_count as usize);
@@ -27,17 +28,17 @@ impl BlockHashSynMsg {
             new_blocks.push((height, block_hash));
         }
 
-        let m = BlockHashSynMsg { new_blocks };
+        let m = BlockHashSyncMsg { new_blocks };
 
         Ok(m)
     }
 
     pub fn into_syn_frame(&self) -> Frame {
-        self.into_frame(BLOCK_HASH_SYN)
+        self.into_frame(MsgType::BLOCK_HASH_SYN)
     }
 
     pub fn into_ack_frame(&self) -> Frame {
-        self.into_frame(BLOCK_HASH_ACK)
+        self.into_frame(MsgType::BLOCK_HASH_ACK)
     }
 
     fn into_frame(&self, msg_type: &'static str) -> Frame {

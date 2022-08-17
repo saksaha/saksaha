@@ -1,4 +1,4 @@
-use crate::net::Connection;
+use crate::Conn;
 use crate::Transport;
 use crate::{handshake::*, Msg, PingMsg};
 use futures::{SinkExt, StreamExt};
@@ -6,12 +6,10 @@ use sak_p2p_id::Identity;
 use std::sync::Arc;
 use tokio::net::{TcpListener, TcpStream};
 
-async fn connect_to_endpoint(endpoint: &String) -> Connection {
-    let conn_id = sak_crypto::rand();
-
+async fn connect_to_endpoint(endpoint: &String) -> Conn {
     match TcpStream::connect(&endpoint).await {
         Ok(s) => {
-            let c = match Connection::new(s, conn_id) {
+            let c = match Conn::new(s, true) {
                 Ok(c) => c,
                 Err(err) => {
                     log::warn!("Error creating a connection, err: {}", err);
@@ -21,9 +19,8 @@ async fn connect_to_endpoint(endpoint: &String) -> Connection {
 
             log::debug!(
                 "(caller) TCP connected to destination for test, \
-                        peer_addr: {:?}, conn_id: {}",
+                        peer_addr: {:?}",
                 c.socket_addr,
-                conn_id,
             );
 
             c
@@ -127,7 +124,7 @@ async fn accept(p2p_socket: TcpListener) -> Result<TcpStream, String> {
 }
 
 async fn handshake_init(
-    conn: Connection,
+    conn: Conn,
     my_identity: Arc<Identity>,
     her_identity: Arc<Identity>,
 ) -> Transport {
@@ -173,7 +170,7 @@ async fn handshake_recv(
 
     let tcp_stream = accept(p2p_socket).await.unwrap();
 
-    let conn = Connection::new(tcp_stream, conn_id).unwrap();
+    let conn = Conn::new(tcp_stream, false).unwrap();
 
     log::debug!(
         "[recv] receive handshake_syn, peer node: {:?}, conn_id: {}",
@@ -229,6 +226,8 @@ async fn test_handshake_works() {
         tcp_listener_2,
     ) = make_test_context().await;
 
+    // identity_1.credential.
+
     let conn_2 = connect_to_endpoint(&endpoint_2).await;
 
     let identity_1_clone = identity_1.clone();
@@ -247,7 +246,7 @@ async fn test_handshake_works() {
 
         let msg = PingMsg { nonce: rand };
 
-        conn_1_lock.socket.send(Msg::Ping(msg)).await.unwrap();
+        conn_1_lock.send(Msg::Ping(msg)).await.unwrap();
     });
 
     let identity_2_clone = identity_2.clone();
@@ -259,7 +258,7 @@ async fn test_handshake_works() {
 
         let mut conn_2_lock = transport_2.conn.write().await;
 
-        let maybe_msg = conn_2_lock.socket.next().await;
+        let (maybe_msg, _) = conn_2_lock.next_msg().await;
 
         let ping = match maybe_msg {
             Some(maybe_msg) => match maybe_msg {

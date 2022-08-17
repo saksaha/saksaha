@@ -3,6 +3,7 @@ mod constants;
 mod contract;
 mod ledger;
 mod schema;
+mod testing;
 mod tx;
 
 pub(crate) use constants::*;

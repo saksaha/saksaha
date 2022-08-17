@@ -1,7 +1,7 @@
 use crate::{DistLedgerApis, LedgerError};
 use sak_contract_std::Storage;
 use sak_proofs::{MerkleTree, CM_TREE_DEPTH};
-use sak_types::{tx::BlockHash, Block, CtrAddr, Tx, TxCandidate};
+use sak_types::{Block, BlockHash, BlockHeight, CtrAddr, Tx, TxCandidate};
 
 const GET_BLOCK_HASH_LIST_DEFAULT_SIZE: u128 = 10;
 
@@ -66,8 +66,8 @@ impl DistLedgerApis {
 
     pub async fn get_latest_block_hash(
         &self,
-    ) -> Result<Option<(u128, String)>, LedgerError> {
-        let last_block_height =
+    ) -> Result<Option<(BlockHeight, BlockHash)>, LedgerError> {
+        let latest_block_height =
             match self.ledger_db.schema.get_latest_block_height()? {
                 Some(h) => h,
                 None => return Ok(None),
@@ -76,13 +76,13 @@ impl DistLedgerApis {
         let latest_block_hash = match self
             .ledger_db
             .schema
-            .get_block_hash_by_block_height(&last_block_height)?
+            .get_block_hash_by_block_height(&latest_block_height)?
         {
             Some(block_hash) => block_hash.to_string(),
             None => return Ok(None),
         };
 
-        Ok(Some((last_block_height, latest_block_hash)))
+        Ok(Some((latest_block_height, latest_block_hash)))
     }
 
     // rpc
@@ -198,6 +198,42 @@ impl DistLedgerApis {
         };
 
         Ok(block_list)
+    }
+
+    pub async fn get_entire_block_info_list(
+        &self,
+    ) -> Result<Vec<(u128, BlockHash)>, LedgerError> {
+        let latest_bh = match self.get_latest_block_height()? {
+            Some(bh) => bh,
+            None => {
+                return Err(format!("Cannot find latest block height").into())
+            }
+        };
+
+        let mut block_hash_list: Vec<(u128, BlockHash)> = Vec::new();
+
+        for bh in (0..=latest_bh).rev().step_by(1) {
+            match self.get_block_by_height(&bh).await {
+                Ok(maybe_block) => match maybe_block {
+                    Some(block) => {
+                        block_hash_list
+                            .push((bh, block.get_block_hash().to_owned()));
+                    }
+                    None => {
+                        break;
+                    }
+                },
+                Err(err) => {
+                    return Err(format!(
+                        "Block hash at height ({}) does not exist",
+                        err
+                    )
+                    .into())
+                }
+            }
+        }
+
+        Ok(block_hash_list)
     }
 
     pub async fn get_block_by_height(

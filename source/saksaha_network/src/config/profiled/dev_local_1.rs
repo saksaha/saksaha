@@ -98,6 +98,8 @@ pub(super) fn get_config() -> ProfiledConfig {
         node: NodeConfig {
             miner: true,
             mine_interval: None,
+            node_task_min_interval: None,
+            peer_register_interval: None,
         },
         rpc: RPCConfig {
             rpc_port: Some(34418),
