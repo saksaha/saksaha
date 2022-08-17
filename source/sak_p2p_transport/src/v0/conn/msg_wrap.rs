@@ -1,5 +1,6 @@
 use crate::{Msg, TrptError};
 
+#[derive(Clone)]
 pub struct RecvReceipt {
     __created_by_conn: bool,
 }
@@ -21,7 +22,11 @@ impl MsgWrap {
         w
     }
 
-    pub fn get_msg(self) {
-        self.msg;
+    pub fn get_maybe_msg(self) -> Option<Result<Msg, TrptError>> {
+        self.msg
+    }
+
+    pub fn get_receipt(&self) -> RecvReceipt {
+        self.receipt.clone()
     }
 }

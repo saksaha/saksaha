@@ -23,10 +23,13 @@ pub(in crate::node) async fn send_tx_syn<'a>(
 
     conn_lock.send(tx_syn_msg).await?;
 
-    let (msg, receipt) = conn_lock.next_msg().await;
+    let msg_wrap = conn_lock.next_msg().await?;
 
-    let msg =
-        msg.ok_or(format!("tx syn needs to be followed by tx syn ack"))??;
+    let receipt = msg_wrap.get_receipt();
+
+    let msg = msg_wrap
+        .get_maybe_msg()
+        .ok_or(format!("tx syn needs to be followed by tx syn ack"))??;
 
     let _tx_ack = match msg {
         Msg::TxAck(m) => m,

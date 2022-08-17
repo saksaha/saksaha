@@ -21,9 +21,13 @@ pub(in crate::node) async fn send_tx_hash_syn(
         .send(Msg::TxHashSyn(TxHashSyncMsg { tx_hashes }))
         .await?;
 
-    let (msg, receipt) = conn_lock.next_msg().await;
+    let msg_wrap = conn_lock.next_msg().await?;
 
-    let msg = msg.ok_or("tx hash ack should arrive as reply")??;
+    let receipt = msg_wrap.get_receipt();
+
+    let msg = msg_wrap
+        .get_maybe_msg()
+        .ok_or("tx hash ack should arrive as reply")??;
 
     let tx_hash_ack = match msg {
         Msg::TxHashAck(m) => m,
