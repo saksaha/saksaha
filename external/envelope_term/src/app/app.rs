@@ -15,8 +15,10 @@ use envelope_contract::{
 };
 use log::{debug, error, warn};
 use sak_contract_std::{CtrCallType, CtrRequest};
-use sak_crypto::{PublicKey, SakKey, SecretKey, SigningKey, ToEncodedPoint};
-use type_extension::U8Array;
+use sak_crypto::{
+    PublicKey, SakKey, Scalar, ScalarExt, SecretKey, SigningKey, ToEncodedPoint,
+};
+use type_extension::{convert_vec_into_u8_32, U8Arr32, U8Array};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum AppReturn {
@@ -344,16 +346,83 @@ impl App {
         &mut self,
         her_pk: &String,
     ) -> Result<(), EnvelopeError> {
+        let ch_id = format!("ch_{}", sak_crypto::rand().to_string());
+
+        let (eph_sk, eph_pk) = SakKey::generate();
+
+        let eph_pk: String =
+            serde_json::to_string(eph_pk.to_encoded_point(false).as_bytes())?;
+
+        let my_sk = self.get_sk(&USER_1.to_string()).await?;
+
         let my_pk = self.get_pk(&USER_1.to_string()).await?;
 
-        let open_ch = self.encrypt_open_ch(her_pk).await?;
+        let my_sig = self.get_sig(&USER_1.to_string()).await?;
 
-        for i in [her_pk, &my_pk] {
+        // =-=-=-=-=-= user_1 tries to `open_ch` =-=-=-=-=-=-=-=
+        {
+            // let my_sk = ScalarExt::parse_string(my_sk)?.to_bytes();
+
+            let my_sk: U8Arr32 = U8Array::from_hex_string(my_sk)?;
+
+            let open_ch = Channel::new(
+                ch_id.clone(),
+                eph_pk.clone(),
+                my_sig.clone(),
+                my_sk,
+            )?;
+
+            // self.send_open_ch_req(my_pk, open_ch).await?;
             let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
 
             let open_ch_params = OpenChParams {
-                dst_pk: i.clone(),
-                open_ch: open_ch.clone(),
+                dst_pk: my_pk,
+                open_ch,
+            };
+
+            let req_type = OPEN_CH.to_string();
+
+            let args = serde_json::to_vec(&open_ch_params)?;
+
+            let ctr_request = CtrRequest {
+                req_type,
+                args,
+                ctr_call_type: CtrCallType::Execute,
+            };
+
+            let _json_response = saksaha::send_tx_pour(
+                U8Array::new_empty_32(),
+                U8Array::new_empty_32(),
+                U8Array::new_empty_32(),
+                U8Array::new_empty_32(),
+                vec![],
+                ctr_addr,
+                ctr_request,
+            )
+            .await?;
+        }
+
+        // =-=-=-=-=-= user_2 tries to `open_ch` =-=-=-=-=-=-=-=
+        {
+            let shared_secret = {
+                let her_pk: Vec<u8> = sak_crypto::decode_hex(her_pk)?;
+
+                let her_pk = PublicKey::from_sec1_bytes(&her_pk.as_slice())?;
+
+                let shared_secret = sak_crypto::derive_aes_key(eph_sk, her_pk);
+
+                shared_secret
+            };
+
+            let open_ch = Channel::new(ch_id, eph_pk, my_sig, shared_secret)?;
+
+            // self.send_open_ch_req(her_pk.to_owned(), open_ch).await?;
+
+            let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
+
+            let open_ch_params = OpenChParams {
+                dst_pk: her_pk.clone(),
+                open_ch,
             };
 
             let req_type = OPEN_CH.to_string();
@@ -398,7 +467,7 @@ impl App {
         .await?
         .result
         {
-            self.dispatch(IoEvent::Receive(d.result)).await
+            self.dispatch(IoEvent::GetChList(d.result)).await
         };
 
         Ok(())
@@ -489,76 +558,75 @@ impl App {
     }
 
     // Now we do not do encryption nonetheless
-    async fn encrypt_open_ch(
-        &mut self,
-        her_pk: &String,
-    ) -> Result<Channel, EnvelopeError> {
-        let my_sk = match self
-            .db
-            .schema
-            .get_my_sk_by_user_id(&USER_1.to_string())
-            .await?
-        {
-            Some(v) => v,
-            None => {
-                return Err(
-                    format!("failed to get secret key from user id",).into()
-                )
-            }
-        };
+    // async fn encrypt_open_ch(
+    //     &mut self,
+    //     her_pk: &String,
+    //     ch_id: &String,
+    // ) -> Result<Channel, EnvelopeError> {
+    //     let my_sk = match self
+    //         .db
+    //         .schema
+    //         .get_my_sk_by_user_id(&USER_1.to_string())
+    //         .await?
+    //     {
+    //         Some(v) => v,
+    //         None => {
+    //             return Err(
+    //                 format!("failed to get secret key from user id",).into()
+    //             )
+    //         }
+    //     };
 
-        let my_sig = match self.db.schema.get_my_sig_by_sk(&my_sk).await? {
-            Some(v) => v,
-            None => {
-                return Err(
-                    format!("failed to get my signature from sk",).into()
-                )
-            }
-        };
+    //     let my_sig = match self.db.schema.get_my_sig_by_sk(&my_sk).await? {
+    //         Some(v) => v,
+    //         None => {
+    //             return Err(
+    //                 format!("failed to get my signature from sk",).into()
+    //             )
+    //         }
+    //     };
 
-        let (eph_sk, eph_pk) = SakKey::generate();
-        let eph_pk_str =
-            serde_json::to_string(eph_pk.to_encoded_point(false).as_bytes())?;
+    //     let (eph_sk, eph_pk) = SakKey::generate();
 
-        let her_pk_vec: Vec<u8> = sak_crypto::decode_hex(her_pk)?;
-        let her_pk_pub = PublicKey::from_sec1_bytes(&her_pk_vec.as_slice())?;
+    //     let her_pk_vec: Vec<u8> = sak_crypto::decode_hex(her_pk)?;
+    //     let her_pk_pub = PublicKey::from_sec1_bytes(&her_pk_vec.as_slice())?;
 
-        let (a_pk_sig_encrypted, aes_key_from_a) = {
-            let aes_key_from_a = sak_crypto::derive_aes_key(eph_sk, her_pk_pub);
+    //     let (a_pk_sig_encrypted, aes_key_from_a) = {
+    //         let aes_key_from_a = sak_crypto::derive_aes_key(eph_sk, her_pk_pub);
 
-            let a_credential_encrypted = {
-                let ciphertext = sak_crypto::aes_encrypt(
-                    &aes_key_from_a,
-                    my_sig.as_bytes(),
-                )?;
+    //         let a_credential_encrypted = {
+    //             let ciphertext = sak_crypto::aes_encrypt(
+    //                 &aes_key_from_a,
+    //                 my_sig.as_bytes(),
+    //             )?;
 
-                serde_json::to_string(&ciphertext)?
-            };
+    //             serde_json::to_string(&ciphertext)?
+    //         };
 
-            (a_credential_encrypted, aes_key_from_a)
-        };
+    //         (a_credential_encrypted, aes_key_from_a)
+    //     };
 
-        // ch_id should be encrypted by aes_key
-        let ch_id = sak_crypto::rand().to_string();
+    //     self.db
+    //         .schema
+    //         .put_ch_data(&ch_id, her_pk, &aes_key_from_a)
+    //         .await?;
 
-        self.db
-            .schema
-            .put_ch_data(&ch_id, her_pk, &aes_key_from_a)
-            .await?;
+    //     // let open_ch_input: Vec<String> =
+    //     //     vec![eph_pk_str, ch_id, a_pk_sig_encrypted, ];
 
-        // let open_ch_input: Vec<String> =
-        //     vec![eph_pk_str, ch_id, a_pk_sig_encrypted, ];
+    //     // serde_json::to_string(&open_ch_input)?
 
-        // serde_json::to_string(&open_ch_input)?
+    //     let eph_pk_str =
+    //         serde_json::to_string(eph_pk.to_encoded_point(false).as_bytes())?;
 
-        let open_ch = Channel {
-            ch_id,
-            eph_key: eph_pk_str,
-            sig: a_pk_sig_encrypted,
-        };
+    //     let open_ch = Channel {
+    //         ch_id,
+    //         eph_key: eph_pk_str,
+    //         sig: a_pk_sig_encrypted,
+    //     };
 
-        Ok(open_ch)
-    }
+    //     Ok(open_ch)
+    // }
 
     pub async fn get_ch_list_from_local(
         &mut self,
@@ -573,13 +641,30 @@ impl App {
         Ok(())
     }
 
+    async fn get_sk(&self, user: &String) -> Result<String, EnvelopeError> {
+        let user_sk =
+            self.db.schema.get_my_sk_by_user_id(user).await?.ok_or("")?;
+
+        Ok(user_sk)
+    }
+
     async fn get_pk(&self, user: &String) -> Result<String, EnvelopeError> {
         let user_sk =
             self.db.schema.get_my_sk_by_user_id(user).await?.ok_or("")?;
 
-        let user_2_pk =
+        let user_pk =
             self.db.schema.get_my_pk_by_sk(&user_sk).await?.ok_or("")?;
 
-        Ok(user_2_pk)
+        Ok(user_pk)
+    }
+
+    async fn get_sig(&self, user: &String) -> Result<String, EnvelopeError> {
+        let user_sk =
+            self.db.schema.get_my_sk_by_user_id(user).await?.ok_or("")?;
+
+        let user_sig =
+            self.db.schema.get_my_sig_by_sk(&user_sk).await?.ok_or("")?;
+
+        Ok(user_sig)
     }
 }

@@ -5,6 +5,7 @@ use sak_contract_std::{
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use type_extension::U8Arr32;
 
 pub mod request_type {
     pub const OPEN_CH: &'static str = "open_ch";
@@ -42,15 +43,44 @@ pub struct ChannelList {
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
 pub struct Channel {
     pub ch_id: String,
-    pub eph_key: String,
+    pub eph_pk: String,
     pub sig: String,
 }
 
 impl Channel {
+    pub fn new(
+        ch_id: String,
+        eph_pk: String,
+        sig: String,
+        key: U8Arr32,
+    ) -> Result<Channel, ContractError> {
+        let ch_id_enc = {
+            let ch_id_enc = sak_crypto::aes_encrypt(&key, &ch_id.as_bytes())?;
+
+            serde_json::to_string(&ch_id_enc)?
+            // String::from_utf8(&ch_id_enc)
+        };
+
+        let sig_enc = {
+            let sig_enc = sak_crypto::aes_encrypt(&key, &sig.as_bytes())?;
+
+            serde_json::to_string(&ch_id_enc)?
+            // String::from_utf8(sig_enc)?
+        };
+
+        let open_ch = Channel {
+            ch_id: ch_id_enc,
+            eph_pk,
+            sig: sig_enc,
+        };
+
+        Ok(open_ch)
+    }
+
     pub fn default() -> Channel {
         Channel {
             ch_id: String::default(),
-            eph_key: String::default(),
+            eph_pk: String::default(),
             sig: String::default(),
         }
     }
