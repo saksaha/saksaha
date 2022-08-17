@@ -94,34 +94,25 @@ impl AppState {
         }
     }
 
-    pub fn set_ch_list(&mut self, data: Vec<u8>) -> Result<(), EnvelopeError> {
-        match serde_json::from_slice::<Vec<Channel>>(&data) {
-            Ok(c) => {
-                for i in c.into_iter() {
-                    let new_ch = ChannelState::new(i, String::default());
-                    if !self.ch_list.contains(&new_ch) {
-                        self.ch_list.push(new_ch);
-                    }
-                }
-            }
-            Err(err) => {
-                return Err(format!(
-                    "Cannot Deserialize `data`:, err: {}",
-                    err
-                )
-                .into());
-            }
-        };
+    pub fn set_ch_list(
+        &mut self,
+        new_ch: ChannelState,
+    ) -> Result<(), EnvelopeError> {
+        if !self.ch_list.contains(&new_ch) {
+            self.ch_list.push(new_ch);
+        }
         Ok(())
     }
 
-    pub fn set_chats(&mut self, data: Vec<u8>) {
+    pub fn set_chats(&mut self, data: Vec<u8>, my_pk: String) {
         self.chats = match serde_json::from_slice::<Vec<ChatMessage>>(&data) {
             Ok(c) => c
                 .into_iter()
                 .map(|mut m| {
-                    if m.user == USER_1 {
+                    if m.user == my_pk {
                         m.user = "me".to_string();
+                    } else {
+                        m.user = m.user[0..16].to_string();
                     }
                     m
                 })
