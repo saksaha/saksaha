@@ -100,6 +100,19 @@ async fn test_block_sync_true() {
     // tokio::time::sleep(Duration::from_secs(50)).await;
 
     {
+        println!("check if node1 has tx1: {}", dummy_tx1.get_tx_hash());
+
+        let tx_pool_1_contains_tx1 = machine_1
+            .blockchain
+            .dist_ledger
+            .apis
+            .tx_pool_contains(dummy_tx1.get_tx_hash())
+            .await;
+
+        assert_eq!(tx_pool_1_contains_tx1, true);
+
+        println!("[Success] node_1 has tx_1 (tx sent to node_1 directly)");
+
         println!("Checking if node2 has tx: {}", dummy_tx1.get_tx_hash());
 
         let tx_pool_2_contains_tx1 = machine_2
@@ -115,7 +128,7 @@ async fn test_block_sync_true() {
     }
 
     // tokio::time::sleep(Duration::from_secs(3)).await;
-    tokio::time::sleep(Duration::from_secs(40)).await;
+    tokio::time::sleep(Duration::from_secs(50)).await;
 
     // {
     //     local_node_1
@@ -261,7 +274,17 @@ async fn test_late_block_sync_true() {
     tokio::time::sleep(Duration::from_secs(2)).await;
 
     {
-        println!("check if node2 has tx: {}", dummy_tx1.get_tx_hash());
+        println!("check if node1 has tx1: {}", dummy_tx1.get_tx_hash());
+
+        let tx_pool_1_contains_tx1 = machine_1
+            .blockchain
+            .dist_ledger
+            .apis
+            .tx_pool_contains(dummy_tx1.get_tx_hash())
+            .await;
+        assert_eq!(tx_pool_1_contains_tx1, true);
+
+        println!("check if node2 has tx1: {}", dummy_tx1.get_tx_hash());
 
         let tx_pool_2_contains_tx1 = machine_2
             .blockchain

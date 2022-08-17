@@ -26,6 +26,8 @@ pub(in crate::node) async fn send_block_syn(
         .get_blocks(block_hashes)
         .await?;
 
+    println!("blocks: {:?}", blocks);
+
     let mut blocks_to_send = Vec::with_capacity(blocks.len());
 
     for block in blocks {

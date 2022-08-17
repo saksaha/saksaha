@@ -272,80 +272,58 @@ impl LedgerDBSchema {
         merkle_updates: &MerkleUpdate,
         updated_ledger_cm_count: u128,
     ) -> Result<String, LedgerError> {
-        // println!(
-        //     "data to write, block: {:?}, \ntxs: {:?},\n\
-        //     ctr_state_updates: {:?},\n merkle_updates: {:?}, \n\
-        //     updated_ledger_cm_count: {}",
-        //     block,
-        //     txs,
-        //     ctr_state_updates,
-        //     merkle_updates,
-        //     updated_ledger_cm_count,
-        // );
-
-        // let db = &self.kv_db.db_instance;
+        println!(
+            "block to write, block: {:?}, \ntxs: {:?},\n\
+            ctr_state_updates: {:?},\n merkle_updates: {:?}, \n\
+            updated_ledger_cm_count: {}",
+            block,
+            txs,
+            ctr_state_updates,
+            merkle_updates,
+            updated_ledger_cm_count,
+        );
 
         let mut batch = WriteBatch::default();
 
         let block_hash = block.get_block_hash();
 
         self.batch_put_validator_sig(
-            // db,
             &mut batch,
             block_hash,
             &block.validator_sig,
         )?;
 
         self.batch_put_witness_sigs(
-            // db,
             &mut batch,
             block_hash,
             &block.witness_sigs,
         )?;
 
-        self.batch_put_tx_hashes(
-            // db,
-            &mut batch,
-            block_hash,
-            &block.tx_hashes,
-        )?;
+        self.batch_put_tx_hashes(&mut batch, block_hash, &block.tx_hashes)?;
 
         self.batch_put_block_created_at(
-            // db,
             &mut batch,
             block_hash,
             &block.created_at,
         )?;
 
-        self.batch_put_block_hash(
-            // db,
-            &mut batch,
-            &block.block_height,
-            block_hash,
-        )?;
+        self.batch_put_block_hash(&mut batch, &block.block_height, block_hash)?;
 
         self.batch_put_block_cm_count(
-            // db,
             &mut batch,
             block_hash,
             block.block_cm_count,
         )?;
 
-        self.batch_put_ledger_cm_count(
-            // db,
-            &mut batch,
-            updated_ledger_cm_count,
-        )?;
+        self.batch_put_ledger_cm_count(&mut batch, updated_ledger_cm_count)?;
 
         self.batch_put_block_height(
-            // db,
             &mut batch,
             block_hash,
             &block.block_height,
         )?;
 
         self.batch_put_block_merkle_rt(
-            // db,
             &mut batch,
             block_hash,
             &block.merkle_rt,
@@ -360,10 +338,7 @@ impl LedgerDBSchema {
         }
 
         for (loc, node_val) in merkle_updates {
-            self.batch_put_merkle_node(
-                // db,
-                &mut batch, loc, node_val,
-            )?;
+            self.batch_put_merkle_node(&mut batch, loc, node_val)?;
         }
 
         self.db.write(batch)?;

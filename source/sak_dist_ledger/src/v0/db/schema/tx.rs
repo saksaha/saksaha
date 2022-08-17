@@ -32,9 +32,8 @@ impl LedgerDBSchema {
         tx_hash: &String,
     ) -> Result<Option<Tx>, LedgerError> {
         let tx_type = self
-            // .schema
             .get_tx_type(tx_hash)?
-            .ok_or("No tx matching the hash Or tx type should exist")?;
+            .ok_or(format!("Tx does not exist, tx_hash: {}", tx_hash))?;
 
         let tx = match tx_type {
             TxType::Mint => self.get_mint_tx(tx_hash),
