@@ -30,9 +30,10 @@ impl DistLedgerApis {
         // println!("ctr_fn, ctr_addr : {:?}", ctr_addr);
 
         let receipt = self.vm.invoke(ctr_wasm, ctr_fn)?;
+
         let result = receipt.result;
 
-        // info!("invoke query ctr result : {:?}", result);
+        info!("invoke query ctr result: {:?}", result);
 
         Ok(result)
     }
@@ -54,18 +55,6 @@ impl DistLedgerApis {
             .schema
             .get_ctr_state(ctr_addr)?
             .ok_or("ctr state should exist")?;
-
-        {
-            println!("[+] Execute Contract");
-            println!(
-                "[-] request.args: {:?}",
-                String::from_utf8(request.args.clone()).unwrap()
-            );
-            println!(
-                "[-] ctr_state: {:?}",
-                String::from_utf8(ctr_state.clone()).unwrap(),
-            );
-        }
 
         let ctr_fn = CtrFn::Execute(request, ctr_state);
 

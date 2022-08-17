@@ -1,7 +1,7 @@
-//! Provides a type representing a Redis protocol frame as well as utilities for
-//! parsing frames from a byte array.
+// This code is heavilty inspired by the one provided by tokio-rs in their
+// tutorial in making mini-redis
 
-use crate::BoxedError;
+use crate::FrameError;
 use bytes::{Buf, Bytes, BytesMut};
 use std::convert::TryInto;
 use std::fmt;
@@ -26,7 +26,7 @@ pub enum Error {
     Incomplete,
 
     /// Invalid message encoding
-    Other(BoxedError),
+    Other(FrameError),
 }
 
 impl Frame {
@@ -175,7 +175,7 @@ impl Frame {
     }
 
     /// Converts the frame to an "unexpected frame" error
-    pub fn to_error(&self) -> BoxedError {
+    pub fn to_error(&self) -> FrameError {
         format!("unexpected frame: {}", self).into()
     }
 }

@@ -7,8 +7,6 @@ pub struct Slot {
 }
 
 pub struct SlotGuard {
-    // pub slot: Arc<Slot>,
-    // pub slots_tx: Arc<UnboundedSender<Arc<Slot>>>,
     pub slot: Slot,
     pub slots_tx: Arc<UnboundedSender<Slot>>,
 }

@@ -1,5 +1,5 @@
 use super::frame::Frame;
-use crate::BoxedError;
+use crate::FrameError;
 use bytes::Bytes;
 use std::{fmt, str, vec};
 
@@ -26,7 +26,7 @@ pub enum ParseError {
     EndOfStream,
 
     /// All other errors
-    Other(BoxedError),
+    Other(FrameError),
 }
 
 impl Parse {

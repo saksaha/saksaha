@@ -149,7 +149,7 @@ impl DistLedgerApis {
 
         let updated_ledger_cm_count = ledger_cm_count + added_cm_count;
 
-        let block_hash = match self
+        let block_hash = self
             .ledger_db
             .schema
             .put_block(
@@ -159,13 +159,7 @@ impl DistLedgerApis {
                 &merkle_update,
                 updated_ledger_cm_count,
             )
-            .await
-        {
-            Ok(h) => h,
-            Err(err) => {
-                return Err(err);
-            }
-        };
+            .await?;
 
         if let Err(err) = self.sync_pool.insert_block(&block).await {
             warn!("Error inserting block into the sync pool, err: {}", err);
@@ -317,6 +311,11 @@ async fn process_ctr_state_update(
                         }
                         None => apis.execute_ctr(&ctr_addr, req).await?,
                     };
+
+                    println!(
+                        "[+] new_state: {:?}",
+                        String::from_utf8(new_state.clone())
+                    );
 
                     ctr_state_update
                         .insert(ctr_addr.clone(), new_state.clone());
