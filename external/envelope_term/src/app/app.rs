@@ -27,7 +27,7 @@ pub enum AppReturn {
 pub struct App {
     io_tx: tokio::sync::mpsc::Sender<IoEvent>,
     actions: Actions,
-    state: AppState,
+    pub state: AppState,
     db: EnvelopeDB,
 }
 
@@ -37,7 +37,7 @@ impl App {
         user_prefix: &String,
     ) -> Result<Self, EnvelopeError> {
         let actions = vec![Action::Quit].into();
-        let state = AppState::default();
+        let mut state = AppState::default();
 
         let db = EnvelopeDB::init(&user_prefix).await?;
 
@@ -327,8 +327,17 @@ impl App {
         Ok(())
     }
 
-    pub fn set_chats(&mut self, data: Vec<u8>) {
-        self.state.set_chats(data);
+    pub async fn set_chats(
+        &mut self,
+        data: Vec<u8>,
+    ) -> Result<(), EnvelopeError> {
+        let my_pk = self.get_pk(&USER_1.to_string()).await?;
+
+        self.state.set_chats(data, my_pk);
+
+        log::info!("set_chats done");
+
+        Ok(())
     }
 
     pub async fn open_ch(
@@ -424,9 +433,11 @@ impl App {
     ) -> Result<String, EnvelopeError> {
         let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
 
+        let user_1_public_key = self.get_pk(&USER_1.to_string()).await?;
+
         let chat = envelope_contract::ChatMessage {
             date: Local::now().format("%H:%M:%S ").to_string(),
-            user: USER_1.clone().to_string(),
+            user: user_1_public_key,
             msg: msg.clone(),
         };
 
@@ -563,15 +574,11 @@ impl App {
     }
 
     async fn get_pk(&self, user: &String) -> Result<String, EnvelopeError> {
-        let user_2_sk =
+        let user_sk =
             self.db.schema.get_my_sk_by_user_id(user).await?.ok_or("")?;
 
-        let user_2_pk = self
-            .db
-            .schema
-            .get_my_pk_by_sk(&user_2_sk)
-            .await?
-            .ok_or("")?;
+        let user_2_pk =
+            self.db.schema.get_my_pk_by_sk(&user_sk).await?.ok_or("")?;
 
         Ok(user_2_pk)
     }

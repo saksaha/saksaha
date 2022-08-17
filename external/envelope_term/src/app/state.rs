@@ -115,13 +115,15 @@ impl AppState {
         Ok(())
     }
 
-    pub fn set_chats(&mut self, data: Vec<u8>) {
+    pub fn set_chats(&mut self, data: Vec<u8>, my_pk: String) {
         self.chats = match serde_json::from_slice::<Vec<ChatMessage>>(&data) {
             Ok(c) => c
                 .into_iter()
                 .map(|mut m| {
-                    if m.user == USER_1 {
+                    if m.user == my_pk {
                         m.user = "me".to_string();
+                    } else {
+                        m.user = m.user[0..16].to_string();
                     }
                     m
                 })

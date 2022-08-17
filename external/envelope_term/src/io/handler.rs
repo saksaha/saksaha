@@ -75,10 +75,10 @@ impl IoAsyncHandler {
         &mut self,
         data: Vec<u8>,
     ) -> Result<(), EnvelopeError> {
-        info!("😴 Receive data!! Set some state with data {:?}...", data);
         // Notify the app for having slept
         let mut app = self.app.lock().await;
-        app.set_chats(data);
+
+        app.set_chats(data).await?;
 
         Ok(())
     }
