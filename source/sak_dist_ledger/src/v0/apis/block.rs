@@ -1,7 +1,9 @@
 use crate::{DistLedgerApis, LedgerError};
 use sak_contract_std::Storage;
 use sak_proofs::{MerkleTree, CM_TREE_DEPTH};
-use sak_types::{Block, BlockHash, BlockHeight, CtrAddr, Tx, TxCandidate};
+use sak_types::{
+    Block, BlockHash, BlockHeight, CtrAddr, Tx, TxCandidate, CM, CM_IDX,
+};
 
 const GET_BLOCK_HASH_LIST_DEFAULT_SIZE: u128 = 10;
 
@@ -59,15 +61,15 @@ impl DistLedgerApis {
 
     pub async fn get_cm_by_idx(
         &self,
-        cm_idx: &u128,
-    ) -> Result<Option<[u8; 32]>, LedgerError> {
+        cm_idx: &CM_IDX,
+    ) -> Result<Option<CM>, LedgerError> {
         self.ledger_db.schema.get_cm_by_cm_idx(cm_idx)
     }
 
     pub async fn get_cm_idx_by_cm(
         &self,
-        cm: &[u8; 32],
-    ) -> Result<Option<u128>, LedgerError> {
+        cm: &CM,
+    ) -> Result<Option<CM_IDX>, LedgerError> {
         self.ledger_db.schema.get_cm_idx_by_cm(cm)
     }
 

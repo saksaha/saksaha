@@ -10,7 +10,6 @@ use type_extension::U8Array;
 
 pub type CoinIdx = u128;
 pub type CmIdx = u128;
-pub type CM = Scalar;
 
 #[derive(Debug)]
 pub struct CoinRecord {
