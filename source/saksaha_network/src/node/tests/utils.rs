@@ -11,20 +11,22 @@ use sak_p2p_id::Identity;
 use sak_p2p_peertable::PeerTable;
 use std::sync::Arc;
 
-pub(crate) async fn create_client(
+pub(crate) struct TestContext {
+    pub p2p_host: P2PHost,
+    pub local_node: Arc<LocalNode>,
+    pub machine: Arc<Machine>,
+    pub peer_table: Arc<PeerTable>,
+    pub identity: Arc<Identity>,
+}
+
+pub(crate) async fn make_test_context(
     app_prefix: String,
     p2p_port: Option<u16>,
     disc_port: Option<u16>,
     secret: String,
     public_key_str: String,
     miner: bool,
-) -> (
-    P2PHost,
-    LocalNode,
-    Arc<Machine>,
-    Arc<PeerTable>,
-    Arc<Identity>,
-) {
+) -> TestContext {
     let (disc_socket, disc_port) = {
         let (socket, socket_addr) =
             sak_utils_net::setup_udp_socket(disc_port).await.unwrap();
@@ -127,10 +129,17 @@ pub(crate) async fn create_client(
             miner,
             None,
             None,
+            None,
         );
 
-        ln
+        Arc::new(ln)
     };
 
-    (p2p_host, local_node, machine, p2p_peer_table, identity)
+    TestContext {
+        p2p_host,
+        local_node,
+        machine,
+        peer_table: p2p_peer_table,
+        identity,
+    }
 }

@@ -24,6 +24,7 @@ pub struct SystemRunArgs {
     pub miner: bool,
     pub mine_interval: Option<u64>,
     pub node_task_min_interval: Option<u64>,
+    pub peer_register_interval: Option<u64>,
     pub tx_sync_interval: Option<u64>,
     pub block_sync_interval: Option<u64>,
     pub app_prefix: Option<String>,

@@ -200,6 +200,7 @@ impl Routine {
                 config.node.miner,
                 config.node.mine_interval,
                 config.node.node_task_min_interval,
+                config.node.peer_register_interval,
             );
 
             ln

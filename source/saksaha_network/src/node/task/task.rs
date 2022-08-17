@@ -1,8 +1,4 @@
-use sak_p2p_discovery::DiscAddr;
-use sak_p2p_id::Identity;
-use sak_p2p_peertable::{Peer, PeerTable};
-use sak_types::{BlockHash, BlockHeight, TxCandidate, TxHash};
-use std::sync::Arc;
+use sak_types::{BlockHash, BlockHeight, TxHash};
 
 #[derive(Debug)]
 pub(in crate::node) enum NodeTask {

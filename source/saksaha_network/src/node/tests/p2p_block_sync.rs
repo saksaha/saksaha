@@ -1,7 +1,5 @@
-use super::utils::create_client;
+use super::utils::{make_test_context, TestContext};
 use crate::{machine::Machine, node::LocalNode, p2p::P2PHost, tests::TestUtil};
-use sak_p2p_id::Identity;
-use sak_p2p_peertable::PeerTable;
 use sak_types::TxCandidate;
 use std::{sync::Arc, time::Duration};
 
@@ -12,13 +10,7 @@ async fn test_block_sync_true() {
     let app_prefix_vec = vec!["test_1", "test_2"];
     TestUtil::init_test(app_prefix_vec.clone());
 
-    let (p2p_host_1, local_node_1, machine_1, _, _): (
-        P2PHost,
-        LocalNode,
-        Arc<Machine>,
-        Arc<PeerTable>,
-        Arc<Identity>,
-    ) = create_client(
+    let test_context_1 = make_test_context(
         app_prefix_vec[0].to_string(),
         Some(35519),
         Some(35518),
@@ -39,13 +31,14 @@ async fn test_block_sync_true() {
     )
     .await;
 
-    let (p2p_host_2, local_node_2, machine_2, _, _): (
-        P2PHost,
-        LocalNode,
-        Arc<Machine>,
-        Arc<PeerTable>,
-        Arc<Identity>,
-    ) = create_client(
+    let TestContext {
+        p2p_host: p2p_host_1,
+        local_node: local_node_1,
+        machine: machine_1,
+        ..
+    } = test_context_1;
+
+    let test_context_2 = make_test_context(
         app_prefix_vec[1].to_string(),
         Some(35521),
         Some(35520),
@@ -65,6 +58,13 @@ async fn test_block_sync_true() {
     )
     .await;
 
+    let TestContext {
+        p2p_host: p2p_host_2,
+        local_node: local_node_2,
+        machine: machine_2,
+        ..
+    } = test_context_2;
+
     let dummy_tx1 = TxCandidate::new_dummy_pour_m1_to_p3_p4();
 
     let dummy_tx2 = TxCandidate::new_dummy_pour_2();
@@ -73,18 +73,19 @@ async fn test_block_sync_true() {
 
     {
         let machine_1 = machine_1.clone();
+        let local_node_1 = local_node_1.clone();
         tokio::spawn(async move {
             tokio::join!(p2p_host_1.run(), local_node_1.run(), machine_1.run());
         });
 
         let machine_2 = machine_2.clone();
+        let local_node_2 = local_node_2.clone();
         tokio::spawn(async move {
             tokio::join!(p2p_host_2.run(), local_node_2.run(), machine_2.run());
         });
     }
 
     tokio::time::sleep(Duration::from_secs(2)).await;
-    // tokio::time::sleep(Duration::from_secs(50)).await;
 
     println!("Sending a tx1 to a node_1");
 
@@ -97,7 +98,6 @@ async fn test_block_sync_true() {
         .expect("Node should be able to send a transaction");
 
     tokio::time::sleep(Duration::from_secs(2)).await;
-    // tokio::time::sleep(Duration::from_secs(50)).await;
 
     {
         println!("check if node1 has tx1: {}", dummy_tx1.get_tx_hash());
@@ -127,60 +127,48 @@ async fn test_block_sync_true() {
         println!("[Success] node_2 has tx_1 (shared from node_1)");
     }
 
-    // tokio::time::sleep(Duration::from_secs(3)).await;
-    tokio::time::sleep(Duration::from_secs(50)).await;
+    tokio::time::sleep(Duration::from_secs(2)).await;
 
-    // {
-    //     local_node_1
-    //         .machine
-    //         .blockchain
-    //         .dist_ledger
-    //         .apis
-    //         .write_block(None)
-    //         .await
-    //         .expect("Block should be written");
+    {
+        local_node_1
+            .machine
+            .blockchain
+            .dist_ledger
+            .apis
+            .write_block(None)
+            .await
+            .expect("Block should be written");
 
-    //     let last_height_1 = local_node_1
-    //         .machine
-    //         .blockchain
-    //         .dist_ledger
-    //         .apis
-    //         .get_latest_block_height()
-    //         .unwrap()
-    //         .unwrap();
+        let last_height_1 = local_node_1
+            .machine
+            .blockchain
+            .dist_ledger
+            .apis
+            .get_latest_block_height()
+            .unwrap()
+            .unwrap();
 
-    //     assert_eq!(1, last_height_1);
+        assert_eq!(1, last_height_1);
 
-    //     println!("test 2 passed");
+        println!("test 2 passed");
 
-    //     tokio::time::sleep(Duration::from_secs(40)).await;
+        tokio::time::sleep(Duration::from_secs(2)).await;
 
-    //     let last_height_2 = local_node_2
-    //         .machine
-    //         .blockchain
-    //         .dist_ledger
-    //         .apis
-    //         .get_latest_block_height()
-    //         .unwrap()
-    //         .unwrap();
+        let last_height_2 = local_node_2
+            .machine
+            .blockchain
+            .dist_ledger
+            .apis
+            .get_latest_block_height()
+            .unwrap()
+            .unwrap();
 
-    //     assert_eq!(last_height_1, last_height_2);
-    //     println!("test 3 passed");
-    // }
+        assert_eq!(last_height_1, last_height_2);
 
-    // tokio::time::sleep(Duration::from_secs(2)).await;
+        println!("test 3 passed");
+    }
 
-    // {
-    //     let tx_pool_2_contains_tx1 = local_node_2
-    //         .machine
-    //         .blockchain
-    //         .dist_ledger
-    //         .apis
-    //         .tx_pool_contains(dummy_tx2.get_tx_hash())
-    //         .await;
-
-    //     assert_eq!(tx_pool_2_contains_tx1, false);
-    // }
+    tokio::time::sleep(Duration::from_secs(2)).await;
 }
 
 #[tokio::test(flavor = "multi_thread")]
@@ -190,16 +178,8 @@ async fn test_late_block_sync_true() {
     let app_prefix_vec = vec!["test_1", "test_2"];
 
     TestUtil::init_test(app_prefix_vec.clone());
-    // sak_test_utils::init_test_config(&app_prefix_vec)
 
-    let (p2p_host_1, local_node_1, machine_1, _, _): (
-        P2PHost,
-        // Arc<LocalNode>,
-        LocalNode,
-        Arc<Machine>,
-        Arc<PeerTable>,
-        Arc<Identity>,
-    ) = create_client(
+    let test_context_1 = make_test_context(
         app_prefix_vec[0].to_string(),
         Some(35519),
         Some(35518),
@@ -219,14 +199,14 @@ async fn test_late_block_sync_true() {
     )
     .await;
 
-    let (p2p_host_2, local_node_2, machine_2, _, _): (
-        P2PHost,
-        // Arc<LocalNode>,
-        LocalNode,
-        Arc<Machine>,
-        Arc<PeerTable>,
-        Arc<Identity>,
-    ) = create_client(
+    let TestContext {
+        p2p_host: p2p_host_1,
+        local_node: local_node_1,
+        machine: machine_1,
+        ..
+    } = test_context_1;
+
+    let test_context_2 = make_test_context(
         app_prefix_vec[1].to_string(),
         Some(35521),
         Some(35520),
@@ -245,6 +225,13 @@ async fn test_late_block_sync_true() {
         false,
     )
     .await;
+
+    let TestContext {
+        p2p_host: p2p_host_2,
+        local_node: local_node_2,
+        machine: machine_2,
+        ..
+    } = test_context_2;
 
     let dummy_tx1 = TxCandidate::new_dummy_pour_m1_to_p3_p4();
     let dummy_tx2 = TxCandidate::new_dummy_pour_2();

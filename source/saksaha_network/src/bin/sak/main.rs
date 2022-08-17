@@ -62,6 +62,7 @@ fn main() {
         miner: cli_args.miner,
         mine_interval: cli_args.mine_interval,
         node_task_min_interval: cli_args.node_task_min_interval,
+        peer_register_interval: cli_args.peer_register_interval,
         tx_sync_interval: cli_args.tx_sync_interval,
         block_sync_interval: cli_args.block_sync_interval,
         app_prefix: cli_args.app_prefix,

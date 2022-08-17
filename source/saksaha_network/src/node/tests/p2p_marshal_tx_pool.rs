@@ -1,11 +1,6 @@
-use super::utils;
-use crate::p2p::P2PHost;
+use super::utils::{self, TestContext};
 use crate::tests::TestUtil;
-use crate::{machine::Machine, node::LocalNode};
-use sak_p2p_id::Identity;
-use sak_p2p_peertable::PeerTable;
 use sak_types::{BlockCandidate, TxCandidate};
-use std::sync::Arc;
 use std::time::Duration;
 
 #[tokio::test(flavor = "multi_thread")]
@@ -13,13 +8,7 @@ async fn test_two_nodes_tx_pool_marshal_check_true() {
     sak_test_utils::init_test_log();
     TestUtil::init_test(vec!["test_1", "test_2"]);
 
-    let (p2p_host_1, local_node_1, machine_1, _, _): (
-        P2PHost,
-        LocalNode,
-        Arc<Machine>,
-        Arc<PeerTable>,
-        Arc<Identity>,
-    ) = utils::create_client(
+    let test_context_1 = utils::make_test_context(
         "test_1".to_string(),
         Some(35519),
         Some(35518),
@@ -39,13 +28,14 @@ async fn test_two_nodes_tx_pool_marshal_check_true() {
     )
     .await;
 
-    let (p2p_host_2, local_node_2, machine_2, _, _): (
-        P2PHost,
-        LocalNode,
-        Arc<Machine>,
-        Arc<PeerTable>,
-        Arc<Identity>,
-    ) = utils::create_client(
+    let TestContext {
+        p2p_host: p2p_host_1,
+        local_node: local_node_1,
+        machine: machine_1,
+        ..
+    } = test_context_1;
+
+    let test_context_2 = utils::make_test_context(
         "test_2".to_string(),
         Some(35521),
         Some(35520),
@@ -65,7 +55,15 @@ async fn test_two_nodes_tx_pool_marshal_check_true() {
     )
     .await;
 
+    let TestContext {
+        p2p_host: p2p_host_2,
+        local_node: local_node_2,
+        machine: machine_2,
+        ..
+    } = test_context_2;
+
     let dummy_tx1 = TxCandidate::new_dummy_pour_m1_to_p3_p4();
+
     let dummy_tx2 = TxCandidate::new_dummy_pour_2();
 
     let block = {

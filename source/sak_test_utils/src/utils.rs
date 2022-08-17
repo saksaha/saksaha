@@ -1,7 +1,6 @@
+use crate::TestUtilsError;
 use log::info;
 use sak_kv_db::{Options, DB};
-
-use crate::TestUtilsError;
 
 const APP_NAME: &str = "saksaha";
 
@@ -15,5 +14,5 @@ pub fn init_test_log() {
         std::env::set_var("RUST_LOG", RUST_LOG_ENV);
     }
 
-    sak_logger::init(false).unwrap();
+    let _ = sak_logger::init(false);
 }

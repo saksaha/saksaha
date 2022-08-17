@@ -262,7 +262,6 @@ impl LedgerDBSchema {
     }
 }
 
-// writer
 impl LedgerDBSchema {
     pub(crate) async fn put_block(
         &self,

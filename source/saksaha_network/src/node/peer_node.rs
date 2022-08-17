@@ -1,17 +1,14 @@
 use super::task;
-use super::task::NodeTask;
 use super::{msg_handle, SaksahaNodeError};
 use crate::{
     machine::Machine,
     node::event_handle::{self, LedgerEventRoutine},
 };
 use log::{debug, error, warn};
-use sak_dist_ledger::DistLedgerEvent;
 use sak_p2p_peertable::{Peer, PeerStatus};
-use sak_p2p_transport::{BlockHashSyncMsg, Msg};
 use sak_task_queue::TaskQueue;
 use std::sync::Arc;
-use tokio::sync::broadcast::Receiver;
+use std::time::Duration;
 
 pub(in crate::node) struct PeerNode {
     pub peer: Arc<Peer>,
@@ -62,7 +59,6 @@ impl PeerNode {
             tokio::select! {
                 task = node_task_queue.pop_front() => {
                     let task = task?;
-                    println!("task: {}", task);
 
                     task::handle_task(task,
                         &node_task_queue, conn_lock, &self.machine).await;

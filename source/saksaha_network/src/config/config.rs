@@ -46,6 +46,7 @@ pub(crate) struct NodeConfig {
     pub(crate) miner: bool,
     pub(crate) mine_interval: Option<u64>,
     pub(crate) node_task_min_interval: Option<u64>,
+    pub(crate) peer_register_interval: Option<u64>,
 }
 
 #[derive(Debug)]
@@ -126,6 +127,7 @@ impl Config {
                 miner,
                 mine_interval: sys_run_args.mine_interval,
                 node_task_min_interval: sys_run_args.node_task_min_interval,
+                peer_register_interval: sys_run_args.peer_register_interval,
             },
             db: DBConfig {},
             rpc: RPCConfig { rpc_port },

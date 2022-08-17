@@ -1,5 +1,5 @@
 use crate::{Msg, TrptError, UpgradedP2PCodec};
-use futures::{stream::Next, SinkExt, StreamExt};
+use futures::{SinkExt, StreamExt};
 use std::net::SocketAddr;
 use tokio::net::TcpStream;
 use tokio_util::codec::Framed;
@@ -35,16 +35,14 @@ impl UpgradedConn {
     }
 
     pub async fn send(&mut self, msg: Msg) -> Result<SendReceipt, TrptError> {
-        println!("send msg!, msg: {}, conn id: {}", msg, self.conn_id);
-
         let msg_type = msg.to_string();
 
         match self.socket.send(msg).await {
             Ok(_) => (),
             Err(err) => {
                 return Err(format!(
-                    "Sending msg: {} failed, err: {}",
-                    msg_type, err
+                    "Sending msg: {} failed, conn_id: {}, err: {}",
+                    msg_type, self.conn_id, err
                 )
                 .into());
             }

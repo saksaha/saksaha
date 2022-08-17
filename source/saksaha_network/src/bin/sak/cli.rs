@@ -21,6 +21,7 @@ pub(crate) struct CLIArgs {
     pub(crate) miner: bool,
     pub(crate) mine_interval: Option<u64>,
     pub(crate) node_task_min_interval: Option<u64>,
+    pub(crate) peer_register_interval: Option<u64>,
     pub(crate) tx_sync_interval: Option<u64>,
     pub(crate) block_sync_interval: Option<u64>,
     pub(crate) bootstrap_urls: Option<Vec<String>>,
@@ -257,6 +258,20 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
             None => None,
         };
 
+    let peer_register_interval =
+        match matches.value_of("peer-register-interval") {
+            Some(d) => match d.parse::<u64>() {
+                Ok(d) => Some(d),
+                Err(err) => {
+                    return Err(format!(
+                        "Cannot parse peer register interval (u64), err: {}",
+                        err,
+                    ));
+                }
+            },
+            None => None,
+        };
+
     let tx_sync_interval = match matches.value_of("tx-sync-interval") {
         Some(d) => match d.parse::<u64>() {
             Ok(d) => Some(d),
@@ -308,6 +323,7 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
         miner,
         mine_interval,
         node_task_min_interval,
+        peer_register_interval,
         tx_sync_interval,
         block_sync_interval,
         app_prefix,

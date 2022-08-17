@@ -1,8 +1,6 @@
-use super::utils;
-use crate::{machine::Machine, node::LocalNode, p2p::P2PHost, tests::TestUtil};
-use sak_p2p_id::Identity;
-use sak_p2p_peertable::PeerTable;
-use std::{sync::Arc, time::Duration};
+use super::utils::{self, TestContext};
+use crate::tests::TestUtil;
+use std::time::Duration;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_two_nodes_talk_on_stream_cipher() {
@@ -11,13 +9,7 @@ async fn test_two_nodes_talk_on_stream_cipher() {
 
     let app_prefix_vec = vec![String::from("test_1"), String::from("test_2")];
 
-    let (p2p_host_1, _local_node_1, _machine_1, _peer_table_1, identity_1): (
-        P2PHost,
-        LocalNode,
-        Arc<Machine>,
-        Arc<PeerTable>,
-        Arc<Identity>,
-    ) = utils::create_client(
+    let test_context_1 = utils::make_test_context(
         app_prefix_vec[0].to_string(),
         Some(35519),
         Some(35518),
@@ -34,14 +26,15 @@ async fn test_two_nodes_talk_on_stream_cipher() {
     )
     .await;
 
-    // let (.., p2p_host_2) = create_client(Some(35521), Some(35520)).await;
-    let (p2p_host_2, _local_node_2, _machine_2, peer_table_2, _): (
-        P2PHost,
-        LocalNode,
-        Arc<Machine>,
-        Arc<PeerTable>,
-        Arc<Identity>,
-    ) = utils::create_client(
+    let TestContext {
+        p2p_host: p2p_host_1,
+        local_node: local_node_1,
+        machine: machine_1,
+        peer_table: peer_table_1,
+        identity: identity_1,
+    } = test_context_1;
+
+    let test_context_2 = utils::make_test_context(
         app_prefix_vec[1].to_string(),
         Some(35521),
         Some(35520),
@@ -59,6 +52,14 @@ async fn test_two_nodes_talk_on_stream_cipher() {
         false,
     )
     .await;
+
+    let TestContext {
+        p2p_host: p2p_host_2,
+        local_node: local_node_2,
+        machine: machine_2,
+        peer_table: peer_table_2,
+        ..
+    } = test_context_2;
 
     tokio::spawn(async move {
         p2p_host_1.run().await;

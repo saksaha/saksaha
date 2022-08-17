@@ -46,6 +46,7 @@ impl ProfiledConfig {
                 miner: false,
                 mine_interval: None,
                 node_task_min_interval: None,
+                peer_register_interval: None,
             },
             rpc: RPCConfig { rpc_port: None },
         }
