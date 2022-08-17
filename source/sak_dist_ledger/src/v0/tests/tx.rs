@@ -72,7 +72,9 @@ async fn test_dist_ledger_put_and_get_cm_idx() {
     {
         let dummy_pour_tx = utils::make_dummy_valid_pour_tx().await;
 
-        let mut cm_idx_count = 2;
+        let init_cm_idx = 2;
+
+        let mut cm_idx_count = init_cm_idx;
 
         let dummy_tx_hash = dist_ledger
             .apis
@@ -90,14 +92,13 @@ async fn test_dist_ledger_put_and_get_cm_idx() {
                 .unwrap()
                 .expect("cm_1 should be obtained");
 
-            println!("cm_1 :{:?}", cm_1);
-
             let cm_1_idx = dist_ledger
                 .apis
                 .ledger_db
                 .schema
                 .get_cm_idx_by_cm(&cm_1)
-                .expect("cm_1_idx should be obtained");
+                .expect("cm_1_idx should be obtained")
+                .unwrap();
             cm_1_idx
         };
 
@@ -110,18 +111,19 @@ async fn test_dist_ledger_put_and_get_cm_idx() {
                 .unwrap()
                 .expect("cm_2 should be obtained");
 
-            println!("cm_2 :{:?}", cm_2);
-
             let cm_2_idx = dist_ledger
                 .apis
                 .ledger_db
                 .schema
                 .get_cm_idx_by_cm(&cm_2)
-                .expect("cm_2_idx should be obtained");
+                .expect("cm_2_idx should be obtained")
+                .unwrap();
             cm_2_idx
         };
 
         println!("cm_1_idx : {:?}, cm_2_idx : {:?}", cm_1_idx, cm_2_idx);
+        assert_eq!(init_cm_idx, cm_1_idx);
+        assert_eq!(init_cm_idx + 1, cm_2_idx);
     }
 
     println!("[+] test pass");

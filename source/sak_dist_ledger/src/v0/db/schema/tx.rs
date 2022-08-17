@@ -838,15 +838,15 @@ impl LedgerDBSchema {
         cm_idx: &u128,
         cm: &[u8; 32],
     ) -> Result<(), LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::CM_IDX)?;
-
         let cm_idx = cm_idx.to_be_bytes();
 
-        batch.put_cf(&cf, cm_idx, cm);
+        let cf = self.make_cf_handle(&self.db, cfs::CM_IDX)?;
+
+        batch.put_cf(&cf, cm, cm_idx);
 
         let cf = self.make_cf_handle(&self.db, cfs::CM)?;
 
-        batch.put_cf(&cf, cm, cm_idx);
+        batch.put_cf(&cf, cm_idx, cm);
 
         Ok(())
     }
