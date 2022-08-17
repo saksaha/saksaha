@@ -1,25 +1,21 @@
-use super::{actions::Actions, View};
+use super::actions::Actions;
 use super::{state::AppState, ChannelState};
 use crate::db::EnvelopeDB;
 use crate::db::{USER_1, USER_2};
-use crate::io::InputMode;
 use crate::io::IoEvent;
-use crate::term::get_balance_from_wallet;
+use crate::EnvelopeError;
 use crate::{app::actions::Action, ENVELOPE_CTR_ADDR};
-use crate::{inputs::key::Key, EnvelopeError};
-use chrono::{Date, Local};
-use crossterm::style::Stylize;
+use chrono::Local;
 use envelope_contract::{
     request_type::{GET_CH_LIST, OPEN_CH},
     Channel, GetChListParams, GetMsgParams, OpenChParams, SendMsgParams,
 };
-use log::{debug, error, warn};
+use log::error;
 use sak_contract_std::{CtrCallType, CtrRequest};
 use sak_crypto::{
-    aes_decrypt, derive_aes_key, PublicKey, SakKey, Scalar, ScalarExt,
-    SecretKey, SigningKey, ToEncodedPoint,
+    aes_decrypt, derive_aes_key, PublicKey, SakKey, SecretKey, ToEncodedPoint,
 };
-use type_extension::{convert_vec_into_u8_32, U8Arr32, U8Array};
+use type_extension::{U8Arr32, U8Array};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum AppReturn {
@@ -30,7 +26,7 @@ pub enum AppReturn {
 pub struct App {
     io_tx: tokio::sync::mpsc::Sender<IoEvent>,
     actions: Actions,
-    pub state: AppState,
+    state: AppState,
     db: EnvelopeDB,
 }
 
@@ -40,7 +36,7 @@ impl App {
         user_prefix: &String,
     ) -> Result<Self, EnvelopeError> {
         let actions = vec![Action::Quit].into();
-        let mut state = AppState::default();
+        let state = AppState::default();
 
         let db = EnvelopeDB::init(&user_prefix).await?;
 
@@ -57,208 +53,6 @@ impl App {
             state,
             db,
         })
-    }
-
-    pub async fn handle_normal_key(&mut self, key: Key) -> AppReturn {
-        if let Some(action) = self.actions.find(key) {
-            debug!("Run action [{:?}]", action);
-            self.state.input_text.clear();
-
-            match action {
-                Action::Quit => AppReturn::Exit,
-
-                Action::SwitchEditMode => {
-                    self.state.input_mode = InputMode::Editing;
-                    AppReturn::Continue
-                }
-
-                Action::SwitchNormalMode => {
-                    self.state.input_mode = InputMode::Editing;
-                    AppReturn::Continue
-                }
-
-                Action::ShowChList => {
-                    let _ = self.get_ch_list().await;
-                    // let _ = self.get_ch_list_from_local().await;
-                    self.state.set_view_ch_list();
-                    AppReturn::Continue
-                }
-
-                Action::ShowOpenCh => {
-                    self.state.set_view_open_ch();
-                    AppReturn::Continue
-                }
-
-                Action::ShowChat => {
-                    self.state.set_view_chat();
-                    AppReturn::Continue
-                }
-
-                Action::Down => {
-                    self.state.next_ch();
-                    AppReturn::Continue
-                }
-
-                Action::Up => {
-                    self.state.previous_ch();
-                    AppReturn::Continue
-                }
-
-                Action::Right => AppReturn::Continue,
-                // Action::Right => match self.get_state().view {
-                //     View::Chat => {
-                //         self.state.selected_ch_id =
-                //             match self.state.ch_list_state.selected() {
-                //                 Some(i) => (self.state.ch_list[i])
-                //                     .channel
-                //                     .ch_id
-                //                     .clone(),
-                //                 None => String::default(),
-                //             };
-                //         log::info!("Ch_Id: {:?}", self.state.selected_ch_id);
-                //         // self.get_messages().await;
-                //         // self.state.set_view_chat();
-                //         // log::info!("ch_id: {:?}", curr_ch);
-
-                //         return AppReturn::Continue;
-                //     }
-                //     _ => {
-                //         return AppReturn::Continue;
-                //     }
-                // },
-                Action::RestoreChat => match self.get_state().view {
-                    View::Chat => {
-                        let ch_id = self.state.selected_ch_id.clone();
-
-                        if !ch_id.is_empty() {
-                            self.get_messages(ch_id.clone()).await;
-
-                            log::info!(
-                                "Restore all the chats in ch_id: {:?}",
-                                ch_id
-                            );
-                        }
-
-                        return AppReturn::Continue;
-                    }
-                    _ => {
-                        return AppReturn::Continue;
-                    }
-                },
-                Action::Select => match self.get_state().view {
-                    View::ChList => {
-                        self.state.selected_ch_id =
-                            match self.state.ch_list_state.selected() {
-                                Some(i) => (self.state.ch_list[i])
-                                    .channel
-                                    .ch_id
-                                    .clone(),
-                                None => String::default(),
-                            };
-
-                        log::info!("Ch_Id: {:?}", self.state.selected_ch_id);
-                        // self.get_messages(self.state.selected_ch_id.clone())
-                        //     .await;
-                        self.state.set_view_chat();
-                        return AppReturn::Continue;
-                    }
-                    _ => {
-                        return AppReturn::Continue;
-                    }
-                },
-
-                Action::UpdateBalance => {
-                    self.state.set_balance().await;
-                    AppReturn::Continue
-                }
-            }
-        } else {
-            warn!("No action accociated to {}", key);
-
-            AppReturn::Continue
-        }
-    }
-
-    pub async fn handle_edit_key(&mut self, key: Key) -> AppReturn {
-        match key {
-            Key::Enter => {
-                match self.get_state().view {
-                    View::OpenCh => {
-                        self.state.input_returned =
-                            self.state.input_text.drain(..).collect();
-
-                        // need to check validity of `self.state.input_returned`
-                        // let pk = self.state.input_returned.clone();
-
-                        // for dev
-                        {
-                            let user_2_sk = self
-                                .db
-                                .schema
-                                .get_my_sk_by_user_id(&USER_2.to_string())
-                                .await
-                                .unwrap()
-                                .unwrap();
-
-                            let user_2_pk = self
-                                .db
-                                .schema
-                                .get_my_pk_by_sk(&user_2_sk)
-                                .await
-                                .unwrap()
-                                .unwrap();
-
-                            // let (_sk, dummy_pk) = SakKey::generate();
-
-                            // let dummy_pk_string = sak_crypto::encode_hex(
-                            //     &dummy_pk.to_encoded_point(false).to_bytes(),
-                            // );
-
-                            if let Err(_) = self.open_ch(&user_2_pk).await {
-                                return AppReturn::Continue;
-                            }
-                        };
-                    }
-                    View::Chat => {
-                        self.state.chat_input =
-                            self.state.input_text.drain(..).collect();
-
-                        self.send_messages(&self.state.chat_input).await;
-
-                        // self.state
-                        //     .set_input_messages(self.state.chat_input.clone());
-                    }
-                    _ => {}
-                }
-
-                AppReturn::Continue
-            }
-            Key::Char(c) => {
-                self.state.input_text.push(c);
-                AppReturn::Continue
-            }
-            Key::Backspace => {
-                self.state.input_text.pop();
-                AppReturn::Continue
-            }
-            Key::Esc => {
-                self.state.input_mode = InputMode::Normal;
-
-                AppReturn::Continue
-            }
-            _ => AppReturn::Continue,
-        }
-    }
-
-    pub async fn handle_others(&mut self, key: Key) -> AppReturn {
-        match key {
-            Key::Esc => {
-                self.state.input_mode = InputMode::Normal;
-
-                AppReturn::Continue
-            }
-            _ => AppReturn::Continue,
-        }
     }
 
     /// We could update the app or dispatch event on tick
@@ -280,8 +74,12 @@ impl App {
         };
     }
 
-    pub fn actions(&self) -> &Actions {
+    pub fn get_actions(&self) -> &Actions {
         &self.actions
+    }
+
+    pub(crate) fn get_db(&self) -> &EnvelopeDB {
+        &self.db
     }
 
     pub(crate) fn get_state(&self) -> &AppState {
@@ -475,9 +273,11 @@ impl App {
         let ch_id = format!("{}_{}", my_pk, sak_crypto::rand().to_string());
 
         {
-            // =-=-=-=-=-= user_1 `open_ch` =-=-=-=-=-=-=-=
+            // =-=-=-=-=-= initiator `open_ch` =-=-=-=-=-=-=-=
 
             let my_sk: U8Arr32 = U8Array::from_hex_string(my_sk)?;
+
+            // let eph_sk: String = serde_json::to_string(&eph_sk.to_bytes())?;
 
             let open_ch = Channel::new(
                 ch_id.clone(),
@@ -516,7 +316,7 @@ impl App {
         }
 
         {
-            // =-=-=-=-=-= user_2 `open_ch` =-=-=-=-=-=-=-=
+            // =-=-=-=-=-= receiver `open_ch` =-=-=-=-=-=-=-=
 
             let shared_secret = {
                 let her_pk: Vec<u8> = sak_crypto::decode_hex(her_pk)?;
