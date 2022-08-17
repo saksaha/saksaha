@@ -1,7 +1,7 @@
 use super::{dec, enc};
 use crate::{Msg, TrptError};
 use bytes::BytesMut;
-use chacha20::cipher::StreamCipher;
+use chacha20::cipher::{StreamCipher, StreamCipherSeek};
 use chacha20::ChaCha20;
 use tokio_util::codec::{Decoder, Encoder};
 
@@ -23,6 +23,11 @@ impl Encoder<Msg> for UpgradedP2PCodec {
 
         // self.cipher.try_apply_keystream(dst).unwrap();
         // self.cipher.apply_keystream(dst);
+        let a: u64 = self.cipher.current_pos();
+        println!("encode, a: {}", a);
+        self.cipher.apply_keystream(dst);
+        let a: u64 = self.cipher.current_pos();
+        println!("encode after, a: {}", a);
 
         // println!(
         //     "\n666 upgraded encoded!!, id: {}, r: {}, \noriginal buf: {:?}\nbuf: {:?}",
@@ -46,7 +51,7 @@ impl Decoder for UpgradedP2PCodec {
     ) -> Result<Option<Self::Item>, TrptError> {
         // let t = src.to_vec();
 
-        // self.cipher.apply_keystream(src);
+        self.cipher.apply_keystream(src);
         // self.cipher.;
 
         // println!(

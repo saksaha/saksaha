@@ -37,6 +37,8 @@ impl UpgradedConn {
     pub async fn send(&mut self, msg: Msg) -> Result<SendReceipt, TrptError> {
         let msg_type = msg.to_string();
 
+        println!("sending msg: conn_id: {}, {}", self.conn_id, msg_type);
+
         match self.socket.send(msg).await {
             Ok(_) => (),
             Err(err) => {
@@ -59,6 +61,7 @@ impl UpgradedConn {
         &mut self,
     ) -> (Option<Result<Msg, TrptError>>, RecvReceipt) {
         let msg = self.socket.next().await;
+        println!("next_msg, conn_id: {}, msg: {:?}, ", self.conn_id, msg);
 
         let receipt = RecvReceipt {
             __created_by_conn: true,

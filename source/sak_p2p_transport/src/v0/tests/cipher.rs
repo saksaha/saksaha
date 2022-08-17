@@ -162,6 +162,60 @@ async fn test_chacha20_two_parties_async() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
+async fn test_chacha20_two_parties_async_2() {
+    let key = [0x42; 32];
+    let nonce = [0x24; 12];
+    let plaintext = hex!("11");
+    let plaintext2 = hex!("22");
+
+    let mut cipher1 = ChaCha20::new(&key.into(), &nonce.into());
+    let mut cipher2 = ChaCha20::new(&key.into(), &nonce.into());
+    let mut buffer1 = plaintext.clone();
+    let mut buffer2 = plaintext2.clone();
+
+    println!("\nbuffer: {:?}", buffer1);
+    println!("buffer2: {:?}", buffer2);
+
+    {
+        cipher1.apply_keystream(&mut buffer1);
+        println!("cipher1 encrypts, buf1: {:?}", buffer1);
+    }
+
+    {
+        cipher1.seek(0u32);
+        cipher1.apply_keystream(&mut buffer1);
+        println!("cipher1 encrypts, buf1: {:?}", buffer1);
+    }
+
+    {
+        cipher1.seek(0u32);
+        cipher1.apply_keystream(&mut buffer1);
+        println!("cipher1 encrypts, buf1: {:?}", buffer1);
+    }
+
+    {
+        cipher1.seek(0u32);
+        cipher1.apply_keystream(&mut buffer1);
+        println!("cipher1 encrypts, buf1: {:?}", buffer1);
+    }
+
+    // {
+    //     let mut buffer3 = buffer2.clone();
+    //     cipher1.apply_keystream(&mut buffer3);
+    //     println!(
+    //         "cipher1 deciphers, buf2: {:?}, buf3: {:?}",
+    //         buffer2, buffer3
+    //     );
+    // }
+
+    // {
+    //     let mut buffer4 = buffer1.clone();
+    //     cipher2.apply_keystream(&mut buffer4);
+    //     println!("cipher2 deciphers, buf4: {:?}", buffer4);
+    // }
+}
+
+#[tokio::test(flavor = "multi_thread")]
 async fn test_chacha20_two_parties_async_fail() {
     let key = [0x42; 32];
     let nonce = [0x24; 12];
