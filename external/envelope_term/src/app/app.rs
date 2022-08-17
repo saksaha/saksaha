@@ -395,7 +395,7 @@ impl App {
                                 new_ch.channel.eph_key.as_bytes(),
                             )?;
 
-                            derive_aes_key(my_sk, eph_pub_key)
+                            derive_aes_key(my_sk, eph_pub_key)?
                         };
 
                         let ch_id_decrypted = {
@@ -523,9 +523,7 @@ impl App {
 
                 let her_pk = PublicKey::from_sec1_bytes(&her_pk.as_slice())?;
 
-                let shared_secret = sak_crypto::derive_aes_key(eph_sk, her_pk);
-
-                shared_secret
+                sak_crypto::derive_aes_key(eph_sk, her_pk)?
             };
 
             let open_ch = Channel::new(

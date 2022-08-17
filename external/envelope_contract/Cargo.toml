@@ -14,7 +14,6 @@ serde_json = "1.0.59"
 type_extension = { path = "../../source/type_extension" }
 sak_crypto = { path = "../../source/sak_crypto" }
 
-
 [dev-dependencies]
 sak_test_utils = { path = "../../source/sak_test_utils" }
 sak_vm = { path = "../../source/sak_vm" }
