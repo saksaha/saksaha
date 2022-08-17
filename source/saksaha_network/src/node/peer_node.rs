@@ -81,7 +81,16 @@ impl PeerNode {
                     task::handle_task(task,
                         &node_task_queue, conn_lock, &self.machine).await;
                 },
-                (maybe_msg, _) = conn_lock.next_msg() => {
+                maybe_msg = conn_lock.next_msg() => {
+                    let maybe_msg = match maybe_msg {
+                        Ok(m) => m,
+                        Err(err) => {
+                            warn!("Error retrieving msg, err: {}", err);
+
+                            continue;
+                        }
+                    };
+
                     match maybe_msg {
                         Some(maybe_msg) => match maybe_msg {
                             Ok(msg) => {
