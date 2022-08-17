@@ -3,7 +3,7 @@ use log::{debug, error, warn};
 use sak_p2p_peertable::{Peer, PeerStatus};
 use sak_p2p_transport::{
     handshake::{self, HandshakeInitArgs},
-    Connection,
+    Conn,
 };
 use std::sync::Arc;
 use tokio::{net::TcpStream, sync::RwLock};
@@ -52,12 +52,17 @@ pub(crate) async fn run(task: P2PTask) {
                 return;
             }
 
-            let conn_id = sak_crypto::rand();
-
             let conn = match TcpStream::connect(&endpoint).await {
                 Ok(s) => {
-                    let c = match Connection::new(s, conn_id) {
-                        Ok(c) => c,
+                    let c = match Conn::new(s, true) {
+                        Ok(c) => {
+                            debug!(
+                                "Successfully connected to endpoint: {}",
+                                &endpoint,
+                            );
+
+                            c
+                        }
                         Err(err) => {
                             warn!("Error creating a connection, err: {}", err);
                             return;
@@ -105,14 +110,12 @@ pub(crate) async fn run(task: P2PTask) {
             };
 
             let peer = {
-                let p = Peer {
-                    p2p_port: known_addr.p2p_port,
-                    public_key_str: known_addr.public_key_str.clone(),
-                    addr,
+                let p = Peer::new(
                     transport,
-                    status: RwLock::new(PeerStatus::HandshakeInit),
+                    RwLock::new(PeerStatus::HandshakeInit),
+                    addr,
                     peer_slot_guard,
-                };
+                );
 
                 Arc::new(p)
             };

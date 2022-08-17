@@ -2,6 +2,7 @@ mod addr;
 mod iter;
 mod slot;
 mod table;
+pub mod testing;
 
 pub use addr::DiscAddr;
 pub use iter::AddrsIterator;

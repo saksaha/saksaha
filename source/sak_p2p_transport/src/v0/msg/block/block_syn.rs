@@ -1,5 +1,4 @@
-use super::tx;
-use crate::{utils, TrptError, BLOCK_SYN_TYPE};
+use crate::{tx_utils, utils, MsgType, TrptError};
 use bytes::Bytes;
 use sak_p2p_frame::{Frame, Parse};
 use sak_types::{Block, Tx, TxType};
@@ -71,8 +70,8 @@ impl BlockSynMsg {
                     };
 
                     match tx_type {
-                        TxType::Mint => tx::parse_mint_tx(parse)?,
-                        TxType::Pour => tx::parse_pour_tx(parse)?,
+                        TxType::Mint => tx_utils::parse_mint_tx(parse)?,
+                        TxType::Pour => tx_utils::parse_pour_tx(parse)?,
                         _ => {
                             return Err(format!(
                                 "Invalid tx type to parse, tx_type: {:?}",
@@ -113,7 +112,7 @@ impl BlockSynMsg {
 
         let block_count = self.blocks.len();
 
-        frame.push_bulk(Bytes::from(BLOCK_SYN_TYPE.as_bytes()));
+        frame.push_bulk(Bytes::from(MsgType::BLOCK_SYN));
         frame.push_int(block_count as u128);
 
         for (block, txs) in self.blocks {
@@ -123,7 +122,7 @@ impl BlockSynMsg {
             frame.push_int(block.block_height as u128);
 
             {
-                let witness_sigs = block.witness_sigs;
+                let witness_sigs = &block.witness_sigs;
                 let witness_sig_count = witness_sigs.len();
 
                 frame.push_int(witness_sig_count as u128);
@@ -141,10 +140,10 @@ impl BlockSynMsg {
             for tx in txs.into_iter() {
                 match tx {
                     Tx::Mint(t) => {
-                        tx::put_mint_tx_into_frame(&mut frame, t);
+                        tx_utils::put_mint_tx_into_frame(&mut frame, t);
                     }
                     Tx::Pour(t) => {
-                        tx::put_pour_tx_into_frame(&mut frame, t);
+                        tx_utils::put_pour_tx_into_frame(&mut frame, t);
                     }
                 }
             }

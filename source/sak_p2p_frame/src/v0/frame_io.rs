@@ -2,7 +2,7 @@
 ///
 ///
 use super::frame::Frame;
-use crate::BoxedError;
+use crate::FrameError;
 use bytes::{Buf, BufMut, Bytes, BytesMut};
 use std::convert::TryInto;
 use std::error::Error;
@@ -100,7 +100,7 @@ pub fn write_decimal(dst: &mut BytesMut, val: u128) -> Result<(), String> {
     Ok(())
 }
 
-pub fn parse_frame(src: &mut BytesMut) -> Result<Option<Frame>, BoxedError> {
+pub fn parse_frame(src: &mut BytesMut) -> Result<Option<Frame>, FrameError> {
     use super::frame::Error::Incomplete;
 
     // Cursor is used to track the "current" location in the

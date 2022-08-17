@@ -11,20 +11,22 @@ use sak_p2p_id::Identity;
 use sak_p2p_peertable::PeerTable;
 use std::sync::Arc;
 
-pub(crate) async fn create_client(
+pub(crate) struct TestContext {
+    pub p2p_host: P2PHost,
+    pub local_node: Arc<LocalNode>,
+    pub machine: Arc<Machine>,
+    pub peer_table: Arc<PeerTable>,
+    pub identity: Arc<Identity>,
+}
+
+pub(crate) async fn make_test_context(
     app_prefix: String,
     p2p_port: Option<u16>,
     disc_port: Option<u16>,
     secret: String,
     public_key_str: String,
     miner: bool,
-) -> (
-    P2PHost,
-    Arc<LocalNode>,
-    Arc<Machine>,
-    Arc<PeerTable>,
-    Arc<Identity>,
-) {
+) -> TestContext {
     let (disc_socket, disc_port) = {
         let (socket, socket_addr) =
             sak_utils_net::setup_udp_socket(disc_port).await.unwrap();
@@ -90,7 +92,6 @@ pub(crate) async fn create_client(
         addr_expire_duration: None,
         addr_monitor_interval: None,
         disc_socket,
-        // disc_port,
         disc_dial_interval: None,
         disc_table_capacity: None,
         disc_task_interval: None,
@@ -103,7 +104,6 @@ pub(crate) async fn create_client(
         p2p_max_conn_count: None,
         bootstrap_addrs,
         identity: identity.clone(),
-        // credential: credential.clone(),
         peer_table: p2p_peer_table.clone(),
     };
 
@@ -123,15 +123,23 @@ pub(crate) async fn create_client(
     };
 
     let local_node = {
-        let ln = LocalNode {
-            peer_table: p2p_peer_table.clone(),
-            machine: machine.clone(),
+        let ln = LocalNode::new(
+            p2p_peer_table.clone(),
+            machine.clone(),
             miner,
-            mine_interval: None,
-        };
+            None,
+            None,
+            None,
+        );
 
         Arc::new(ln)
     };
 
-    (p2p_host, local_node, machine, p2p_peer_table, identity)
+    TestContext {
+        p2p_host,
+        local_node,
+        machine,
+        peer_table: p2p_peer_table,
+        identity,
+    }
 }

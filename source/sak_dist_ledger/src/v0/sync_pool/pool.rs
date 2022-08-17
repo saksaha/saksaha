@@ -1,14 +1,16 @@
 use log::warn;
-use sak_types::{Block, Tx, TxCandidate, TxCtrOp};
+use sak_types::{
+    Block, BlockHash, BlockHeight, Tx, TxCandidate, TxCtrOp, TxHash,
+};
 use std::collections::{HashMap, HashSet};
 use tokio::sync::RwLock;
 
 const SYNC_POOL_CAPACITY: usize = 100;
 
 pub(crate) struct SyncPool {
-    new_blocks: RwLock<HashSet<(u128, String)>>,
-    new_tx_hashes: RwLock<HashSet<String>>,
-    tx_map: RwLock<HashMap<String, TxCandidate>>,
+    new_blocks: RwLock<HashSet<(BlockHeight, BlockHash)>>,
+    new_tx_hashes: RwLock<HashSet<TxHash>>,
+    tx_map: RwLock<HashMap<TxHash, TxCandidate>>,
 }
 
 impl SyncPool {

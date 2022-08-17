@@ -1,78 +1,141 @@
-use super::msg_handle;
-use crate::{machine::Machine, node::event_handle};
-use futures::{SinkExt, StreamExt};
-use log::{debug, error, info, warn};
-use sak_dist_ledger::DistLedgerEvent;
-use sak_p2p_peertable::{Peer, PeerStatus, PeerTable};
+use super::task;
+use super::{msg_handle, SaksahaNodeError};
+use crate::{
+    machine::Machine,
+    node::event_handle::{self, LedgerEventRoutine},
+};
+use log::{debug, error, warn};
+use sak_p2p_peertable::{Peer, PeerStatus};
+use sak_task_queue::TaskQueue;
 use std::sync::Arc;
-use tokio::sync::broadcast::Receiver;
+use std::time::Duration;
 
 pub(in crate::node) struct PeerNode {
-    pub(crate) peer: Arc<Peer>,
-    pub(crate) bc_event_rx: Receiver<DistLedgerEvent>,
-    pub(crate) machine: Arc<Machine>,
+    pub peer: Arc<Peer>,
+    pub machine: Arc<Machine>,
+    pub node_task_min_interval: Duration,
 }
 
 impl PeerNode {
-    pub(crate) async fn run(&mut self) {
+    pub(crate) async fn run(self) -> Result<(), SaksahaNodeError> {
         debug!(
             "Peer is registered as a peer node. Starting the routine, \
             public_key : {}",
             self.peer.get_public_key_short()
         );
 
+        let node_task_queue = Arc::new(TaskQueue::new(100));
+
+        {
+            // Ledger event routine
+            let ledger_event_rx = {
+                let rx = self
+                    .machine
+                    .blockchain
+                    .dist_ledger
+                    .ledger_event_tx
+                    .clone()
+                    .read()
+                    .await
+                    .subscribe();
+
+                rx
+            };
+
+            let mut ledger_event_routine = LedgerEventRoutine {
+                ledger_event_rx,
+                machine: self.machine.clone(),
+                node_task_queue: node_task_queue.clone(),
+            };
+
+            tokio::spawn(async move {
+                ledger_event_routine.run().await;
+            });
+        }
+
         loop {
-            let mut conn = &mut self.peer.transport.conn.write().await;
-            let public_key = self.peer.get_public_key_short();
+            let mut conn_lock = self.peer.get_transport().conn.write().await;
 
             tokio::select! {
-                Ok(ev) = self.bc_event_rx.recv() => {
-                    match ev {
-                        DistLedgerEvent::NewBlocks(new_blocks) => {
-                            event_handle::handle_new_blocks_ev(
-                                public_key,
-                                &mut conn,
-                                &self.machine,
-                                // height,
-                                new_blocks,
-                            ).await;
-                        },
-                        DistLedgerEvent::TxPoolStat(new_tx_hashes) => {
-                            event_handle::handle_tx_pool_stat(
-                                public_key,
-                                &mut conn,
-                                &self.machine,
-                                new_tx_hashes,
-                            ).await;
-                        },
-                    };
+                task = node_task_queue.pop_front() => {
+                    let task = task?;
+
+                    task::handle_task(task,
+                        &node_task_queue, conn_lock, &self.machine).await;
                 },
-                maybe_msg = conn.socket.next() => {
+                (maybe_msg, _) = conn_lock.next_msg() => {
                     match maybe_msg {
                         Some(maybe_msg) => match maybe_msg {
                             Ok(msg) => {
                                 let _ = msg_handle::handle_msg(
                                     msg,
-                                    public_key,
                                     &self.machine,
-                                    &mut conn,
-
-                                ).await;
+                                    conn_lock,
+                                    &node_task_queue,
+                                    &self.peer,
+                                )
+                                .await;
                             }
                             Err(err) => {
                                 warn!("Failed to parse the msg, err: {}", err);
                             }
-                        }
+                        },
                         None => {
                             warn!("Peer has ended the connection");
 
-                            self.peer.set_status(PeerStatus::Disconnected).await;
+                            self.peer.set_peer_status(
+                                PeerStatus::Disconnected,
+                            ).await;
 
-                            return;
+                            return Err(
+                                format!("Peer has ended the connection, \
+                                    her_public_key: {}",
+                                    self.peer.get_public_key_short()
+                                )
+                                .into());
                         }
                     };
+
                 }
-            };
+            }
         }
     }
+
+    // pub(crate) async fn run_hello(&mut self) {
+    //     debug!(
+    //         "Peer is registered as a peer node. Say hello, \
+    //         public_key : {}",
+    //         self.peer.get_public_key_short()
+    //     );
+
+    //     let peer_clone = self.peer.clone();
+    //     let machine_clone = self.machine.clone();
+
+    //     let _ = tokio::spawn(async move {
+    //         tokio::time::sleep(Duration::from_secs(2)).await;
+
+    //         let mut conn = peer_clone.get_transport().conn.write().await;
+
+    //         let blocks = machine_clone
+    //             .blockchain
+    //             .dist_ledger
+    //             .apis
+    //             .get_entire_block_info_list()
+    //             .await
+    //             .unwrap_or(vec![]);
+
+    //         match conn
+    //             .send(Msg::BlockHashSyn(BlockHashSynMsg { new_blocks: blocks }))
+    //             .await
+    //         {
+    //             Ok(_) => {
+    //                 debug!("Sending BlockHashSyn",);
+    //             }
+    //             Err(err) => {
+    //                 warn!("Failed to BlockHashSyn, err: {}", err,);
+    //             }
+    //         };
+    //     })
+    //     .await;
+    // }
 }

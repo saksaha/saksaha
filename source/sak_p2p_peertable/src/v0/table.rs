@@ -1,14 +1,16 @@
-use crate::{Peer, PeerIterator, Runtime, Slot, SlotGuard};
+use crate::{Peer, PeerIterator, PeerTableError, Runtime, Slot, SlotGuard};
 use colored::Colorize;
 use log::{debug, error, info};
-use std::{collections::HashMap, sync::Arc};
+use std::{
+    collections::{hash_map::Values, HashMap},
+    sync::Arc,
+};
 use tokio::sync::{
     mpsc::{self, UnboundedReceiver, UnboundedSender},
     RwLock,
 };
 
-// const PEER_TABLE_CAPACITY: usize = 50;
-const PEER_TABLE_CAPACITY: isize = 5;
+const PEER_TABLE_CAPACITY: isize = 30;
 
 pub type PublicKey = String;
 pub type PeerMap = HashMap<PublicKey, Arc<Peer>>;
@@ -17,14 +19,14 @@ pub struct PeerTable {
     peer_map: Arc<RwLock<PeerMap>>,
     slots_rx: RwLock<UnboundedReceiver<Slot>>,
     slots_tx: Arc<UnboundedSender<Slot>>,
-    peers_tx: Arc<UnboundedSender<Arc<Peer>>>,
-    peer_it: Arc<RwLock<PeerIterator>>,
+    peer_queue_tx: Arc<UnboundedSender<Arc<Peer>>>,
+    peer_queue_iter: Arc<RwLock<PeerIterator>>,
 }
 
 impl PeerTable {
     pub async fn init(
         peer_table_capacity: Option<i16>,
-    ) -> Result<PeerTable, String> {
+    ) -> Result<PeerTable, PeerTableError> {
         let capacity = match peer_table_capacity {
             Some(c) => c.into(),
             None => PEER_TABLE_CAPACITY,
@@ -49,7 +51,7 @@ impl PeerTable {
             (slots_tx, slots_rx)
         };
 
-        let (peers_tx, peer_it) = {
+        let (peer_queue_tx, peer_queue_iter) = {
             let (tx, rx) = mpsc::unbounded_channel();
             let peers_tx = Arc::new(tx);
 
@@ -76,8 +78,8 @@ impl PeerTable {
             peer_map,
             slots_rx,
             slots_tx,
-            peers_tx,
-            peer_it,
+            peer_queue_tx,
+            peer_queue_iter,
         };
 
         info!("Initializing peer table, capacity: {}", capacity);
@@ -89,7 +91,7 @@ impl PeerTable {
         &self,
         public_key: &PublicKey,
     ) -> Option<Arc<Peer>> {
-        let peers_map_lock = self.peer_map.write().await;
+        let peers_map_lock = self.peer_map.read().await;
 
         match peers_map_lock.get(public_key) {
             Some(n) => {
@@ -101,7 +103,11 @@ impl PeerTable {
         };
     }
 
-    pub async fn get_empty_slot(&self) -> Result<SlotGuard, String> {
+    pub fn get_peer_map(&self) -> &Arc<RwLock<PeerMap>> {
+        &self.peer_map
+    }
+
+    pub async fn get_empty_slot(&self) -> Result<SlotGuard, PeerTableError> {
         let mut slots_rx = self.slots_rx.write().await;
 
         match slots_rx.recv().await {
@@ -115,8 +121,9 @@ impl PeerTable {
             }
             None => {
                 return Err(format!(
-                    "Unusual circumstance. Peer slots have been closed"
-                ));
+                    "Peer slots have beeen closed. Critical error"
+                )
+                .into());
             }
         }
     }
@@ -124,22 +131,24 @@ impl PeerTable {
     pub async fn insert_mapping(
         &self,
         peer: Arc<Peer>,
-    ) -> Result<Option<Arc<Peer>>, String> {
-        let public_key_str = peer.public_key_str.clone();
+    ) -> Result<Option<Arc<Peer>>, PeerTableError> {
+        let public_key_str = peer.get_public_key().to_string();
 
         debug!(
             "Peer table insert mapping, her_public_key: {},",
             peer.get_public_key_short().green(),
         );
 
-        if let Err(err) = self.peers_tx.send(peer.clone()) {
+        let mut peer_map = self.peer_map.write().await;
+
+        if let Err(err) = self.peer_queue_tx.send(peer.clone()) {
             return Err(format!(
                 "Cannot send to peer queue, rx might have been closed, err: {}",
                 err,
-            ));
+            )
+            .into());
         }
 
-        let mut peer_map = self.peer_map.write().await;
         Ok(peer_map.insert(public_key_str, peer))
     }
 
@@ -148,13 +157,14 @@ impl PeerTable {
         let peer_map = self.peer_map.read().await;
 
         for (_, peer) in peer_map.values().enumerate() {
-            peer_vec.push(peer.addr.known_addr.get_p2p_endpoint().clone());
+            peer_vec
+                .push(peer.get_addr().known_addr.get_p2p_endpoint().clone());
         }
 
         peer_vec
     }
 
-    pub fn new_iter(&self) -> Arc<RwLock<PeerIterator>> {
-        self.peer_it.clone()
+    pub fn peer_queue_iter(&self) -> Arc<RwLock<PeerIterator>> {
+        self.peer_queue_iter.clone()
     }
 }

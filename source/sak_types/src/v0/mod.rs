@@ -2,7 +2,7 @@ mod balance;
 mod block;
 mod block_candidate;
 mod coin_record;
-pub mod tx;
+mod tx;
 
 pub use balance::*;
 pub use block::*;

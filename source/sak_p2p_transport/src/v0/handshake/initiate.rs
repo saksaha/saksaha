@@ -1,4 +1,5 @@
-use crate::{Connection, Handshake, Msg, Transport};
+use crate::HandshakeMsg;
+use crate::{Conn, Msg, Transport};
 use futures::SinkExt;
 use futures::StreamExt;
 use sak_p2p_id::Identity;
@@ -61,11 +62,14 @@ pub enum HandshakeInitError {
 
     #[error("PeerNode has an unknown addr")]
     NotKnownAddr,
+
+    #[error("Could not connect connection, err: {err}")]
+    ConnectionCreateFail { err: String },
 }
 
 pub struct HandshakeInitArgs {
     pub identity: Arc<Identity>,
-    pub conn: Connection,
+    pub conn: Conn,
     pub public_key_str: String,
 }
 
@@ -78,7 +82,7 @@ pub async fn initiate_handshake(
         public_key_str,
     } = handshake_init_args;
 
-    let handshake = match Handshake::new(
+    let handshake_msg = match HandshakeMsg::new(
         identity.p2p_port,
         identity.credential.public_key_str.clone(),
         public_key_str,
@@ -89,7 +93,7 @@ pub async fn initiate_handshake(
         }
     };
 
-    match conn.socket.send(Msg::HandshakeSyn(handshake)).await {
+    match conn.socket.send(Msg::HandshakeSyn(handshake_msg)).await {
         Ok(_) => (),
         Err(err) => {
             return Err(HandshakeInitError::FrameWriteFail {
@@ -136,7 +140,17 @@ pub async fn initiate_handshake(
     let shared_secret =
         sak_crypto::make_shared_secret(my_secret_key, her_public_key);
 
-    let upgraded_conn = conn.upgrade(shared_secret, &[0; 12]);
+    let upgraded_conn = match conn
+        .upgrade(shared_secret, &[0; 12], &her_public_key_str)
+        .await
+    {
+        Ok(c) => c,
+        Err(err) => {
+            return Err(HandshakeInitError::ConnectionCreateFail {
+                err: err.to_string(),
+            });
+        }
+    };
 
     let transport = Transport {
         conn: RwLock::new(upgraded_conn),
