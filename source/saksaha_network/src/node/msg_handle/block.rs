@@ -43,9 +43,11 @@ pub(in crate::node) async fn send_block_syn(
         }))
         .await?;
 
-    let (msg, receipt) = conn_lock.next_msg().await;
+    let msg_wrap = conn_lock.next_msg().await?;
 
-    let msg = msg.ok_or(format!("block syn needs to be followed by ack"))??;
+    let msg = msg_wrap
+        .get_msg()
+        .ok_or(format!("block syn needs to be followed by ack"))??;
 
     let _block_ack_msg = match msg {
         Msg::BlockAck(m) => m,
@@ -56,7 +58,7 @@ pub(in crate::node) async fn send_block_syn(
         }
     };
 
-    Ok(receipt)
+    Ok(msg_wrap.receipt)
 }
 
 pub(in crate::node) async fn recv_block_syn(

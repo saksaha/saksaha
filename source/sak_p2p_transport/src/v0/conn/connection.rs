@@ -51,13 +51,8 @@ impl Conn {
             sak_p2p_id::make_public_key_short(&her_public_key)?
         );
 
-        let upgraded_conn = UpgradedConn::init(
-            self.socket_addr.clone(),
-            socket,
-            conn_id,
-            self.is_initiator,
-        )
-        .await;
+        let upgraded_conn =
+            UpgradedConn::init(socket, conn_id, self.is_initiator).await;
 
         Ok(upgraded_conn)
     }
