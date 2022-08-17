@@ -38,7 +38,6 @@ impl LedgerDBSchema {
 
     pub(crate) fn get_cm_by_cm_idx(
         &self,
-        // db: &DB,
         cm_idx: &u128,
     ) -> Result<Option<[u8; 32]>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::CM)?;
@@ -58,7 +57,6 @@ impl LedgerDBSchema {
 
     pub(crate) fn get_cm_idx_by_cm(
         &self,
-        // db: &DB,
         cm: &[u8; 32],
     ) -> Result<Option<u128>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::CM_IDX)?;

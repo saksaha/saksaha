@@ -6,7 +6,7 @@ use sak_kv_db::DB;
 use sak_proofs::{get_mimc_params_1_to_2, verify_proof_1_to_2};
 use sak_types::{
     MintTx, MintTxCandidate, PourTx, PourTxCandidate, Tx, TxCtrOp, TxHash,
-    TxHeight, TxType, SN,
+    TxHeight, TxType, CM, CM_IDX, SN,
 };
 use type_extension::U8Arr32;
 
@@ -481,7 +481,9 @@ impl LedgerDBSchema {
 
         self.batch_put_cm(batch, tx_hash, &tc.cm)?;
 
-        self.batch_put_cm_idx_and_cm(batch, cm_idx_count, &tc.cm)?;
+        self.batch_put_cm_cm_idx(batch, &tc.cm, cm_idx_count)?;
+
+        self.batch_put_cm_idx_cm(batch, cm_idx_count, &tc.cm)?;
 
         self.batch_put_tx_created_at(batch, tx_hash, &tc.created_at)?;
 
@@ -614,9 +616,13 @@ impl LedgerDBSchema {
 
         self.batch_put_cm_2(batch, tx_hash, &tc.cm_2)?;
 
-        self.batch_put_cm_idx_and_cm(batch, cm_idx_count, &tc.cm_1)?;
+        self.batch_put_cm_cm_idx(batch, &tc.cm_1, cm_idx_count)?;
 
-        self.batch_put_cm_idx_and_cm(batch, &(*cm_idx_count + 1), &tc.cm_2)?;
+        self.batch_put_cm_cm_idx(batch, &tc.cm_2, &(*cm_idx_count + 1))?;
+
+        self.batch_put_cm_idx_cm(batch, cm_idx_count, &tc.cm_1)?;
+
+        self.batch_put_cm_idx_cm(batch, &(*cm_idx_count + 1), &tc.cm_2)?;
 
         self.batch_put_prf_merkle_rt(batch, tx_hash, &tc.merkle_rt)?;
 
@@ -831,22 +837,32 @@ impl LedgerDBSchema {
         Ok(())
     }
 
-    pub(crate) fn batch_put_cm_idx_and_cm(
+    pub(crate) fn batch_put_cm_idx_cm(
         &self,
-        // db: &DB,
         batch: &mut WriteBatch,
-        cm_idx: &u128,
-        cm: &[u8; 32],
+        cm_idx: &CM_IDX,
+        cm: &CM,
+    ) -> Result<(), LedgerError> {
+        let cm_idx = cm_idx.to_be_bytes();
+
+        let cf = self.make_cf_handle(&self.db, cfs::CM)?;
+
+        batch.put_cf(&cf, cm_idx, cm);
+
+        Ok(())
+    }
+
+    pub(crate) fn batch_put_cm_cm_idx(
+        &self,
+        batch: &mut WriteBatch,
+        cm: &CM,
+        cm_idx: &CM_IDX,
     ) -> Result<(), LedgerError> {
         let cm_idx = cm_idx.to_be_bytes();
 
         let cf = self.make_cf_handle(&self.db, cfs::CM_IDX)?;
 
         batch.put_cf(&cf, cm, cm_idx);
-
-        let cf = self.make_cf_handle(&self.db, cfs::CM)?;
-
-        batch.put_cf(&cf, cm_idx, cm);
 
         Ok(())
     }

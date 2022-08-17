@@ -101,10 +101,7 @@ pub(crate) async fn make_dummy_valid_pour_tx() -> Tx {
     {
         println!("\n[+] dummy pour_tx ");
         println!("[Debug] tx.pi: {:?}", pi);
-        println!(
-            "[Debug] tx.sn_1: \x1b[93m{:?}\x1b[0m",
-            proof_context.sn_1.clone(),
-        );
+        println!("[Debug] tx.sn_1: {:?}", proof_context.sn_1.clone(),);
         println!("[Debug] tx.cm_1: {:?}", proof_context.cm_1.clone(),);
         println!("[Debug] tx.cm_2: {:?}", proof_context.cm_2.clone(),);
         println!(
