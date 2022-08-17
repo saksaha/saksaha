@@ -11,12 +11,20 @@ use sak_types::{
 use type_extension::U8Arr32;
 
 impl LedgerDBSchema {
-    pub(crate) fn put_tx(&self, tx: &Tx) -> Result<String, LedgerError> {
+    pub(crate) fn put_tx(
+        &self,
+        tx: &Tx,
+        cm_idx_count: &mut u128,
+    ) -> Result<String, LedgerError> {
         let mut batch = WriteBatch::default();
 
         let tx_hash = match tx {
-            Tx::Mint(t) => self.batch_put_mint_tx(&mut batch, t)?,
-            Tx::Pour(t) => self.batch_put_pour_tx(&mut batch, t)?,
+            Tx::Mint(t) => {
+                self.batch_put_mint_tx(&mut batch, t, cm_idx_count)?
+            }
+            Tx::Pour(t) => {
+                self.batch_put_pour_tx(&mut batch, t, cm_idx_count)?
+            }
         };
 
         self.db.write(batch)?;

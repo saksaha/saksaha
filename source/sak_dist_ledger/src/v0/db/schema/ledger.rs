@@ -57,6 +57,25 @@ impl LedgerDBSchema {
         }
     }
 
+    pub(crate) fn get_cm_idx_by_cm(
+        &self,
+        // db: &DB,
+        cm: &String,
+    ) -> Result<Option<u128>, LedgerError> {
+        let cf = self.make_cf_handle(&self.db, cfs::CM_IDX)?;
+
+        match self.db.get_cf(&cf, cm)? {
+            Some(v) => {
+                let val = sak_kv_db::convert_u8_slice_into_u128(&v)?;
+
+                return Ok(Some(val));
+            }
+            None => {
+                return Ok(None);
+            }
+        }
+    }
+
     pub(crate) fn get_ledger_cm_count(
         &self,
         // db: &DB,
@@ -155,6 +174,22 @@ impl LedgerDBSchema {
         let v = cm_idx.to_be_bytes();
 
         batch.put_cf(&cf, v, cm);
+
+        Ok(())
+    }
+
+    pub(crate) fn batch_put_cm_idx_by_cm(
+        &self,
+        // db: &DB,
+        batch: &mut WriteBatch,
+        cm_idx: &u128,
+        cm: &[u8; 32],
+    ) -> Result<(), LedgerError> {
+        let cf = self.make_cf_handle(&self.db, cfs::CM_IDX)?;
+
+        let v = cm_idx.to_be_bytes();
+
+        batch.put_cf(&cf, cm, v);
 
         Ok(())
     }

@@ -33,6 +33,14 @@ pub fn convert_u8_slice_into_u128(arr: &[u8]) -> Result<u128, String> {
     Ok(u128::from_be_bytes(padded_u8_bytes))
 }
 
+pub fn convert_u128_into_u8_32(v: &u128) -> Result<[u8; 32], KvDBError> {
+    let bytes = v.to_be_bytes();
+    let mut arr = [0u8; 32];
+    let _ = &arr[16..].copy_from_slice(&bytes);
+
+    Ok(arr)
+}
+
 pub fn convert_vec_into_u8_32(v: Vec<u8>) -> Result<[u8; 32], KvDBError> {
     let arr: [u8; 32] = match v.try_into() {
         Ok(a) => a,

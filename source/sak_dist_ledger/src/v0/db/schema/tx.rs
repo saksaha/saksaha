@@ -455,11 +455,14 @@ impl LedgerDBSchema {
         &self,
         batch: &mut WriteBatch,
         tx: &Tx,
+        cm_idx_count: &mut u128,
     ) -> Result<(), LedgerError> {
         let _ = match tx {
-            Tx::Mint(t) => self.batch_put_mint_tx(batch, t),
-            Tx::Pour(t) => self.batch_put_pour_tx(batch, t),
+            Tx::Mint(t) => self.batch_put_mint_tx(batch, t, cm_idx_count),
+            Tx::Pour(t) => self.batch_put_pour_tx(batch, t, cm_idx_count),
         };
+
+        println!("cm_idx_count :{:?}", cm_idx_count);
 
         Ok(())
     }
@@ -468,6 +471,7 @@ impl LedgerDBSchema {
         &self,
         batch: &mut WriteBatch,
         tx: &MintTx,
+        cm_idx_count: &mut u128,
     ) -> Result<String, LedgerError> {
         let tc = &tx.tx_candidate;
 
@@ -476,6 +480,8 @@ impl LedgerDBSchema {
         self.batch_put_tx_type(batch, tx_hash, tc.get_tx_type())?;
 
         self.batch_put_cm(batch, tx_hash, &tc.cm)?;
+
+        self.batch_put_cm_idx_and_cm(batch, cm_idx_count, &tc.cm)?;
 
         self.batch_put_tx_created_at(batch, tx_hash, &tc.created_at)?;
 
@@ -496,6 +502,8 @@ impl LedgerDBSchema {
         self.batch_put_tx_hash_by_height(batch, &tx.tx_height, tx_hash)?;
 
         let tx_ctr_op = tc.get_ctr_op();
+
+        *cm_idx_count = *cm_idx_count + 1;
 
         match tx_ctr_op {
             TxCtrOp::ContractDeploy => {
@@ -568,6 +576,7 @@ impl LedgerDBSchema {
         &self,
         batch: &mut WriteBatch,
         tx: &PourTx,
+        cm_idx_count: &mut u128,
     ) -> Result<String, LedgerError> {
         let tc = &tx.tx_candidate;
 
@@ -605,9 +614,15 @@ impl LedgerDBSchema {
 
         self.batch_put_cm_2(batch, tx_hash, &tc.cm_2)?;
 
+        self.batch_put_cm_idx_and_cm(batch, cm_idx_count, &tc.cm_1)?;
+
+        self.batch_put_cm_idx_and_cm(batch, &(*cm_idx_count + 1), &tc.cm_2)?;
+
         self.batch_put_prf_merkle_rt(batch, tx_hash, &tc.merkle_rt)?;
 
         let tx_ctr_op = tc.get_ctr_op();
+
+        *cm_idx_count = *cm_idx_count + 2;
 
         match tx_ctr_op {
             TxCtrOp::ContractDeploy => {
@@ -812,6 +827,29 @@ impl LedgerDBSchema {
         let cf = self.make_cf_handle(&self.db, cfs::CM)?;
 
         batch.put_cf(&cf, key, value);
+
+        Ok(())
+    }
+
+    pub(crate) fn batch_put_cm_idx_and_cm(
+        &self,
+        // db: &DB,
+        batch: &mut WriteBatch,
+        cm_idx: &u128,
+        cm: &[u8; 32],
+    ) -> Result<(), LedgerError> {
+        let cf = self.make_cf_handle(&self.db, cfs::CM_IDX)?;
+
+        let cm_idx = {
+            let cm_idx = sak_kv_db::convert_u128_into_u8_32(cm_idx)?;
+            cm_idx
+        };
+
+        batch.put_cf(&cf, cm_idx, cm);
+
+        let cf = self.make_cf_handle(&self.db, cfs::CM)?;
+
+        batch.put_cf(&cf, cm, cm_idx);
 
         Ok(())
     }

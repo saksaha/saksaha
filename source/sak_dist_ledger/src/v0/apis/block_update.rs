@@ -157,6 +157,7 @@ impl DistLedgerApis {
                 &txs,
                 &ctr_state_update,
                 &merkle_update,
+                ledger_cm_count,
                 updated_ledger_cm_count,
             )
             .await?;
@@ -239,6 +240,7 @@ impl DistLedgerApis {
                 &txs,
                 &ctr_state_update,
                 &merkle_update,
+                ledger_cm_count,
                 updated_ledger_cm_count,
             )
             .await?;

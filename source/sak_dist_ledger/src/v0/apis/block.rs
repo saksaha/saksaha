@@ -64,6 +64,13 @@ impl DistLedgerApis {
         self.ledger_db.schema.get_cm_by_idx(cm_idx)
     }
 
+    pub async fn get_cm_idx_by_cm(
+        &self,
+        cm: &String,
+    ) -> Result<Option<u128>, LedgerError> {
+        self.ledger_db.schema.get_cm_idx_by_cm(cm)
+    }
+
     pub async fn get_latest_block_hash(
         &self,
     ) -> Result<Option<(BlockHeight, BlockHash)>, LedgerError> {

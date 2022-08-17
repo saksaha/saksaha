@@ -72,6 +72,7 @@ impl WalletDBSchema {
             v,
             cm: *cm,
             coin_status,
+            cm_idx: Some(0),
             coin_idx: Some(coin_idx),
         };
 

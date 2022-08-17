@@ -30,7 +30,7 @@ pub struct CoinRecord {
 
     pub coin_status: CoinStatus,
 
-    pub cm_idx: CmIdx,
+    pub cm_idx: Option<CmIdx>,
 
     pub coin_idx: Option<CoinIdx>,
 }
@@ -79,6 +79,8 @@ impl CoinRecord {
 
         let cm = hasher.comm2_scalar(s, v, k);
 
+        let cm_idx = None;
+
         let coin = CoinRecord {
             addr_pk,
             addr_sk,
@@ -88,6 +90,7 @@ impl CoinRecord {
             v,
             cm,
             coin_status: CoinStatus::Unused,
+            cm_idx,
             coin_idx,
         };
 

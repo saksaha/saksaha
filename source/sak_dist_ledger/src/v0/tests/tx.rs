@@ -11,12 +11,14 @@ async fn test_put_and_get_transaction() {
 
     let mut tx_hashes = vec![];
 
+    let mut cm_idx_count = 0;
+
     for tx_val in dummy_tx_values.iter() {
         let h = dist_ledger
             .apis
             .ledger_db
             .schema
-            .put_tx(&tx_val)
+            .put_tx(&tx_val, &mut cm_idx_count)
             .expect("Tx should be written");
 
         tx_hashes.push(h);
@@ -47,11 +49,13 @@ async fn test_dist_ledger_put_a_single_pour_tx() {
     {
         let dummy_pour_tx = utils::make_dummy_valid_pour_tx().await;
 
+        let mut cm_idx_count = 0;
+
         let _dummy_tx_hash = dist_ledger
             .apis
             .ledger_db
             .schema
-            .put_tx(&dummy_pour_tx)
+            .put_tx(&dummy_pour_tx, &mut cm_idx_count)
             .expect("pour_tx should be written");
     }
 
@@ -65,6 +69,8 @@ async fn test_dist_ledger_double_spending() {
 
     let dist_ledger = utils::make_dist_ledger().await;
 
+    let mut cm_idx_count = 0;
+
     {
         let dummy_pour_tx = utils::make_dummy_valid_pour_tx().await;
 
@@ -72,7 +78,7 @@ async fn test_dist_ledger_double_spending() {
             .apis
             .ledger_db
             .schema
-            .put_tx(&dummy_pour_tx)
+            .put_tx(&dummy_pour_tx, &mut cm_idx_count)
             .expect("pour_tx should be written");
 
         println!("[+] dummy pour_tx hash: {:?}", dummy_tx_hash);
@@ -85,7 +91,7 @@ async fn test_dist_ledger_double_spending() {
             .apis
             .ledger_db
             .schema
-            .put_tx(&dummy_pour_tx)
+            .put_tx(&dummy_pour_tx, &mut cm_idx_count)
             .expect("pour_tx should be written");
 
         println!("[+] dummy pour_tx hash: {:?}", dummy_tx_hash);

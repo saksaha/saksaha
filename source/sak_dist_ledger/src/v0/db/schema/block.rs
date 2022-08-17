@@ -269,6 +269,7 @@ impl LedgerDBSchema {
         txs: &Vec<Tx>,
         ctr_state_updates: &CtrStateUpdate,
         merkle_updates: &MerkleUpdate,
+        ledger_cm_count: u128,
         updated_ledger_cm_count: u128,
     ) -> Result<String, LedgerError> {
         // println!(
@@ -328,8 +329,9 @@ impl LedgerDBSchema {
             &block.merkle_rt,
         )?;
 
+        let mut cm_idx_count: u128 = ledger_cm_count;
         for tx in txs {
-            self.batch_put_tx(&mut batch, tx)?;
+            self.batch_put_tx(&mut batch, tx, &mut cm_idx_count)?;
         }
 
         for (ctr_addr, ctr_state) in ctr_state_updates {
