@@ -65,7 +65,7 @@ impl IoAsyncHandler {
     ) -> Result<(), EnvelopeError> {
         let mut app = self.app.lock().await;
 
-        app.set_ch_list(data)?;
+        app.set_ch_list(data).await?;
 
         Ok(())
     }

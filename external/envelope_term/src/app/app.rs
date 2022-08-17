@@ -16,7 +16,8 @@ use envelope_contract::{
 use log::{debug, error, warn};
 use sak_contract_std::{CtrCallType, CtrRequest};
 use sak_crypto::{
-    PublicKey, SakKey, Scalar, ScalarExt, SecretKey, SigningKey, ToEncodedPoint,
+    aes_decrypt, derive_aes_key, PublicKey, SakKey, Scalar, ScalarExt,
+    SecretKey, SigningKey, ToEncodedPoint,
 };
 use type_extension::{convert_vec_into_u8_32, U8Arr32, U8Array};
 
@@ -324,8 +325,122 @@ impl App {
         self.state.incr_sleep();
     }
 
-    pub fn set_ch_list(&mut self, data: Vec<u8>) -> Result<(), EnvelopeError> {
-        self.state.set_ch_list(data)?;
+    pub async fn set_ch_list(
+        &mut self,
+        data: Vec<u8>,
+    ) -> Result<(), EnvelopeError> {
+        match serde_json::from_slice::<Vec<Channel>>(&data) {
+            Ok(c) => {
+                for i in c.into_iter() {
+                    let mut new_ch = ChannelState::new(i, String::default());
+
+                    // First, try to decrypt the `ch_id` with `my_sk`
+                    let my_sk = {
+                        let s = self.get_sk(&USER_1.to_string()).await?;
+
+                        U8Array::from_hex_string(s)?
+                    };
+
+                    let ch_id_decrypted = {
+                        let ch_id: Vec<u8> = serde_json::from_str(
+                            &new_ch.channel.ch_id.clone().as_str(),
+                        )?;
+
+                        aes_decrypt(&my_sk, &ch_id)?
+                    };
+
+                    // Prefix of the encrypted `ch_id` is `MY_PK` rn
+                    let my_pk = self.get_pk(&USER_1.to_string()).await?;
+
+                    if &ch_id_decrypted[0..my_pk.len()] == my_pk.as_str() {
+                        let ch_id: String =
+                            match ch_id_decrypted.split('_').nth(1) {
+                                Some(ci) => ci.to_string(),
+                                None => {
+                                    return Err(format!(
+                                        "\
+                                        Error occured while \
+                                        parsing encrypted `ch_id`\
+                                    "
+                                    )
+                                    .into());
+                                }
+                            };
+
+                        let sig_decrypted: String = {
+                            let sig: Vec<u8> = serde_json::from_str(
+                                &new_ch.channel.sig.clone().as_str(),
+                            )?;
+
+                            aes_decrypt(&my_sk, &sig)?
+                        };
+
+                        new_ch.channel.ch_id = ch_id;
+
+                        new_ch.channel.sig = sig_decrypted;
+
+                        self.state.set_ch_list(new_ch)?;
+                    } else {
+                        // If the decryption with `MY_SK` has failed,
+                        // it should be decrypted with ECIES-scheme aes key
+                        let aes_key = {
+                            let my_sk = {
+                                let s =
+                                    self.get_sk(&USER_1.to_string()).await?;
+
+                                SecretKey::from_bytes(s.as_bytes())?
+                            };
+
+                            let eph_pub_key = PublicKey::from_sec1_bytes(
+                                new_ch.channel.eph_key.as_bytes(),
+                            )?;
+
+                            derive_aes_key(my_sk, eph_pub_key)
+                        };
+
+                        let ch_id_decrypted = {
+                            let ch_id: Vec<u8> = serde_json::from_str(
+                                &new_ch.channel.ch_id.clone().as_str(),
+                            )?;
+
+                            aes_decrypt(&aes_key, &ch_id)?
+                        };
+
+                        let ch_id: String =
+                            match ch_id_decrypted.split('_').nth(1) {
+                                Some(ci) => ci.to_string(),
+                                None => {
+                                    return Err(format!(
+                                        "\
+                                        Error occured while \
+                                        parsing encrypted `ch_id`\
+                                    "
+                                    )
+                                    .into());
+                                }
+                            };
+
+                        let sig_decrypted: String = {
+                            let sig: Vec<u8> = serde_json::from_str(
+                                &new_ch.channel.sig.clone().as_str(),
+                            )?;
+
+                            aes_decrypt(&aes_key, &sig)?
+                        };
+
+                        new_ch.channel.ch_id = ch_id;
+
+                        new_ch.channel.sig = sig_decrypted;
+
+                        self.state.set_ch_list(new_ch)?;
+                    }
+                }
+            }
+            Err(_) => {}
+        }
+
+        // self.state.set_ch_list(data)?;
+
         Ok(())
     }
 
@@ -346,8 +461,6 @@ impl App {
         &mut self,
         her_pk: &String,
     ) -> Result<(), EnvelopeError> {
-        let ch_id = format!("ch_{}", sak_crypto::rand().to_string());
-
         let (eph_sk, eph_pk) = SakKey::generate();
 
         let eph_pk: String =
@@ -359,9 +472,10 @@ impl App {
 
         let my_sig = self.get_sig(&USER_1.to_string()).await?;
 
-        // =-=-=-=-=-= user_1 tries to `open_ch` =-=-=-=-=-=-=-=
+        let ch_id = format!("{}_{}", my_pk, sak_crypto::rand().to_string());
+
         {
-            // let my_sk = ScalarExt::parse_string(my_sk)?.to_bytes();
+            // =-=-=-=-=-= user_1 `open_ch` =-=-=-=-=-=-=-=
 
             let my_sk: U8Arr32 = U8Array::from_hex_string(my_sk)?;
 
@@ -372,7 +486,6 @@ impl App {
                 my_sk,
             )?;
 
-            // self.send_open_ch_req(my_pk, open_ch).await?;
             let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
 
             let open_ch_params = OpenChParams {
@@ -402,8 +515,9 @@ impl App {
             .await?;
         }
 
-        // =-=-=-=-=-= user_2 tries to `open_ch` =-=-=-=-=-=-=-=
         {
+            // =-=-=-=-=-= user_2 `open_ch` =-=-=-=-=-=-=-=
+
             let shared_secret = {
                 let her_pk: Vec<u8> = sak_crypto::decode_hex(her_pk)?;
 
@@ -414,9 +528,12 @@ impl App {
                 shared_secret
             };
 
-            let open_ch = Channel::new(ch_id, eph_pk, my_sig, shared_secret)?;
-
-            // self.send_open_ch_req(her_pk.to_owned(), open_ch).await?;
+            let open_ch = Channel::new(
+                ch_id, //
+                eph_pk,
+                my_sig,
+                shared_secret,
+            )?;
 
             let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
 

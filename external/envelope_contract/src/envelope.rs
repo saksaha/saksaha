@@ -43,14 +43,14 @@ pub struct ChannelList {
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
 pub struct Channel {
     pub ch_id: String,
-    pub eph_pk: String,
+    pub eph_key: String,
     pub sig: String,
 }
 
 impl Channel {
     pub fn new(
         ch_id: String,
-        eph_pk: String,
+        eph_key: String,
         sig: String,
         key: U8Arr32,
     ) -> Result<Channel, ContractError> {
@@ -58,19 +58,17 @@ impl Channel {
             let ch_id_enc = sak_crypto::aes_encrypt(&key, &ch_id.as_bytes())?;
 
             serde_json::to_string(&ch_id_enc)?
-            // String::from_utf8(&ch_id_enc)
         };
 
         let sig_enc = {
             let sig_enc = sak_crypto::aes_encrypt(&key, &sig.as_bytes())?;
 
-            serde_json::to_string(&ch_id_enc)?
-            // String::from_utf8(sig_enc)?
+            serde_json::to_string(&sig_enc)?
         };
 
         let open_ch = Channel {
             ch_id: ch_id_enc,
-            eph_pk,
+            eph_key,
             sig: sig_enc,
         };
 
@@ -80,7 +78,7 @@ impl Channel {
     pub fn default() -> Channel {
         Channel {
             ch_id: String::default(),
-            eph_pk: String::default(),
+            eph_key: String::default(),
             sig: String::default(),
         }
     }

@@ -94,24 +94,13 @@ impl AppState {
         }
     }
 
-    pub fn set_ch_list(&mut self, data: Vec<u8>) -> Result<(), EnvelopeError> {
-        match serde_json::from_slice::<Vec<Channel>>(&data) {
-            Ok(c) => {
-                for i in c.into_iter() {
-                    let new_ch = ChannelState::new(i, String::default());
-                    if !self.ch_list.contains(&new_ch) {
-                        self.ch_list.push(new_ch);
-                    }
-                }
-            }
-            Err(err) => {
-                return Err(format!(
-                    "Cannot Deserialize `data`:, err: {}",
-                    err
-                )
-                .into());
-            }
-        };
+    pub fn set_ch_list(
+        &mut self,
+        new_ch: ChannelState,
+    ) -> Result<(), EnvelopeError> {
+        if !self.ch_list.contains(&new_ch) {
+            self.ch_list.push(new_ch);
+        }
         Ok(())
     }
 
