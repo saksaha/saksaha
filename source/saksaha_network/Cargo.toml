@@ -50,6 +50,8 @@ aes = "0.8.1"
 hex-literal = "0.3.4"
 ctr = "0.9.1"
 wasmtime = "0.37.0"
+tracing = "0.1"
+tracing-subscriber = "0.3"
 
 [dev-dependencies]
 sak_test_utils = { path = "../sak_test_utils" }

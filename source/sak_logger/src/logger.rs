@@ -1,5 +1,3 @@
-use chrono::Local;
-use colored::Colorize;
 use env_logger::Logger;
 use env_logger::{Builder, Env};
 use std::cmp::min;
@@ -13,41 +11,45 @@ pub fn init(is_test: bool) -> Result<(), String> {
         return Err(format!("Logger is already initialized"));
     }
 
-    {
-        let rust_log = match std::env::var("RUST_LOG") {
-            Ok(l) => l,
-            Err(_) => {
-                println!(
-                    "RUST_LOG is not given. This is probably not what you \
+    let rust_log = match std::env::var("RUST_LOG") {
+        Ok(l) => l,
+        Err(_) => {
+            println!(
+                "RUST_LOG is not given. This is probably not what you \
                 have wanted. Some logs might be dismissed"
-                );
+            );
 
-                "RUST_LOG_NOT_GIVEN".to_string()
-            }
-        };
+            "RUST_LOG_NOT_GIVEN".to_string()
+        }
+    };
 
-        println!("[logger] Initializing logger, RUST_LOG: {}", rust_log);
+    println!("Initializing logger, RUST_LOG: {}", rust_log);
 
-        let logger = build_logger(is_test);
+    let logger = build_logger(is_test);
 
-        let max_level = logger.filter();
-        let res = log::set_boxed_logger(Box::new(logger));
+    let max_level = logger.filter();
+    let res = log::set_boxed_logger(Box::new(logger));
 
-        match res {
-            Ok(_) => {
-                log::set_max_level(max_level);
+    match res {
+        Ok(_) => {
+            log::set_max_level(max_level);
 
-                IS_INITIALIZED
-                    .store(true, std::sync::atomic::Ordering::Relaxed);
+            IS_INITIALIZED.store(true, std::sync::atomic::Ordering::Relaxed);
 
-                return Ok(());
-            }
-            Err(err) => {
-                return Err(format!(
-                    "Logger might have been initialized, err: {}",
-                    err
-                ));
-            }
+            log::info!("Logger initialized");
+
+            return Ok(());
+        }
+        Err(err) => {
+            println!(
+                "Logger might have been already initialized, err: {}",
+                err
+            );
+
+            return Err(format!(
+                "Logger might have been initialized, err: {}",
+                err
+            ));
         }
     }
 }
@@ -58,14 +60,9 @@ fn build_logger(is_test: bool) -> Logger {
     Builder::from_env(env)
         .is_test(is_test)
         .format(|buf, record| {
-            let timestamp = {
-                Local::now()
-                    .format("%y-%m-%d %H:%M:%S")
-                    .to_string()
-                    .dimmed()
-            };
+            let timestamp = buf.timestamp_millis();
             let style = buf.default_level_style(record.level());
-            let level = format!("{:<width$}", record.level(), width = 5);
+            let level = format!("{:>width$}", record.level(), width = 5);
 
             let target = {
                 let target = record.metadata().target();
@@ -77,8 +74,8 @@ fn build_logger(is_test: bool) -> Logger {
                     let seg2 = split[len - 2];
                     format!(
                         "{}/{}",
-                        &seg2[0..min(seg2.len(), 6)],
-                        &seg1[0..min(seg1.len(), 12)]
+                        &seg2[0..min(seg2.len(), 10)],
+                        &seg1[0..min(seg1.len(), 10)]
                     )
                 } else {
                     format!("{}", split[0])
@@ -87,7 +84,7 @@ fn build_logger(is_test: bool) -> Logger {
 
             writeln!(
                 buf,
-                "{} {} {:19} {}",
+                "{} {} {:21} {}",
                 timestamp,
                 style.value(level),
                 target,
