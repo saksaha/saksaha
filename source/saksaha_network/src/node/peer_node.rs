@@ -57,8 +57,6 @@ impl PeerNode {
         }
 
         loop {
-            println!("loop start");
-
             let mut conn_lock = self.peer.get_transport().conn.write().await;
 
             tokio::select! {

@@ -26,7 +26,6 @@ impl BlockHashSyncMsg {
             };
 
             new_blocks.push((height, block_hash));
-            println!("new blocks: {:?}", new_blocks);
         }
 
         let m = BlockHashSyncMsg { new_blocks };

@@ -30,6 +30,8 @@ pub(in crate::node) async fn send_tx_hash_syn(
 
     let msg = msg.ok_or("tx hash ack should arrive as reply")??;
 
+    println!("receiving tx hash ack");
+
     let tx_hash_ack = match msg {
         Msg::TxHashAck(m) => m,
         _ => {

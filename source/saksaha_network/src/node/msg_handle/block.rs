@@ -49,6 +49,8 @@ pub(in crate::node) async fn send_block_syn(
 
     let msg = msg.ok_or(format!("block syn needs to be followed by ack"))??;
 
+    println!("recv block ack");
+
     let block_ack_msg = match msg {
         Msg::BlockAck(m) => m,
         _ => {
@@ -66,6 +68,8 @@ pub(in crate::node) async fn recv_block_syn(
     machine: &Arc<Machine>,
     mut conn: RwLockWriteGuard<'_, UpgradedConn>,
 ) -> Result<SendReceipt, SaksahaNodeError> {
+    println!("recv block syn");
+
     let blocks = block_syn_msg.blocks;
 
     let latest_block_height = machine

@@ -10,7 +10,6 @@ use sak_types::{
 };
 use type_extension::U8Arr32;
 
-// getter
 impl LedgerDBSchema {
     pub(crate) async fn get_txs(
         &self,
@@ -32,8 +31,6 @@ impl LedgerDBSchema {
         &self,
         tx_hash: &String,
     ) -> Result<Option<Tx>, LedgerError> {
-        // let db = &self.kv_db.db_instance;
-
         let tx_type = self
             // .schema
             .get_tx_type(tx_hash)?
@@ -946,43 +943,5 @@ impl LedgerDBSchema {
         batch.put_cf(&cf, key, value);
 
         Ok(())
-    }
-}
-
-pub mod testing {
-    use super::*;
-
-    impl LedgerDBSchema {
-        pub(crate) fn put_tx(&self, tx: &Tx) -> Result<String, LedgerError> {
-            let mut batch = WriteBatch::default();
-
-            let tx_hash = match tx {
-                Tx::Mint(t) => self.batch_put_mint_tx(&mut batch, t)?,
-                Tx::Pour(t) => self.batch_put_pour_tx(&mut batch, t)?,
-            };
-
-            self.db.write(batch)?;
-
-            Ok(tx_hash)
-        }
-
-        pub(crate) fn delete_tx(
-            &self,
-            tx_hash: &String,
-        ) -> Result<(), LedgerError> {
-            // let db = &self.kv_db.db_instance;
-
-            let mut batch = WriteBatch::default();
-
-            self.batch_delete_tx_created_at(&mut batch, tx_hash)?;
-
-            self.batch_delete_data(&mut batch, tx_hash)?;
-
-            self.batch_delete_pi(&mut batch, tx_hash)?;
-
-            self.batch_delete_author_sig(&mut batch, tx_hash)?;
-
-            Ok(())
-        }
     }
 }

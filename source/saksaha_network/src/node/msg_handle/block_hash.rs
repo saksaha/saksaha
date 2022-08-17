@@ -19,27 +19,18 @@ pub(in crate::node) async fn send_block_hash_syn(
     new_blocks: Vec<(BlockHeight, BlockHash)>,
     task_queue: &Arc<TaskQueue<NodeTask>>,
 ) -> Result<RecvReceipt, SaksahaNodeError> {
-    match conn_lock
+    conn_lock
         .send(Msg::BlockHashSyn(BlockHashSyncMsg {
             new_blocks: new_blocks.clone(),
         }))
-        .await
-    {
-        Ok(_) => {
-            // info!("Sending block hash syn, dst public_key: {}", public_key);
-        }
-        Err(err) => {
-            warn!(
-                "Failed to request to synchronize with peer node, err: {}",
-                err,
-            );
-        }
-    };
+        .await?;
 
     let (msg, receipt) = conn_lock.next_msg().await;
 
     let msg =
         msg.ok_or(format!("block hash syn needs to be followed by ack"))??;
+
+    println!("recv block hash ack");
 
     let block_hash_ack_msg = match msg {
         Msg::BlockHashAck(m) => m,
@@ -53,9 +44,11 @@ pub(in crate::node) async fn send_block_hash_syn(
 
     let new_blocks = block_hash_ack_msg.new_blocks;
 
+    println!("block hash ack new blocks requested: {:?}", new_blocks);
+
     task_queue
         .push_back(NodeTask::SendBlockSyn { new_blocks })
-        .await;
+        .await?;
 
     Ok(receipt)
 }

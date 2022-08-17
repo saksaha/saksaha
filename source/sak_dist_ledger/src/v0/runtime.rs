@@ -1,5 +1,5 @@
 use crate::{DistLedgerEvent, SyncPool};
-use log::warn;
+use log::{debug, error, warn};
 use std::{
     sync::Arc,
     time::{Duration, SystemTime},
@@ -120,24 +120,20 @@ impl BlockSyncRoutine {
             let new_blocks = self.sync_pool.drain_new_blocks().await;
 
             if new_blocks.len() > 0 {
-                match self
-                    .bc_event_tx
-                    .clone()
-                    .write()
-                    .await
-                    .send(DistLedgerEvent::NewBlocks(new_blocks))
-                {
+                let ev = DistLedgerEvent::NewBlocks(new_blocks);
+                let ev_str = ev.to_string();
+
+                match self.bc_event_tx.clone().write().await.send(ev) {
                     Ok(_) => {
-                        println!("ledger event queued!");
+                        debug!("Ledger event queued, ev: {}", ev_str);
                     }
                     Err(err) => {
-                        warn!(
-                            "No active receiver handle to sync tx event, \
-                            err: {}",
+                        error!(
+                            "Could not queue a new ledger event, err: {}",
                             err
                         );
                     }
-                };
+                }
             }
 
             sak_utils_time::wait_until_min_interval(

@@ -9,7 +9,6 @@ use sak_types::{Block, BlockHash, BlockHeight, CtrAddr, Tx, TxHash, TxType};
 use std::convert::TryInto;
 use std::sync::Arc;
 
-// getter
 impl LedgerDBSchema {
     pub async fn get_blocks(
         &self,
@@ -17,11 +16,7 @@ impl LedgerDBSchema {
     ) -> Result<Vec<Block>, LedgerError> {
         let mut ret = vec![];
         for block_hash in block_hashes {
-            match self.get_block(
-                // &self.kv_db.db_instance,
-                // &self.schema,
-                block_hash,
-            )? {
+            match self.get_block(block_hash)? {
                 Some(b) => ret.push(b),
                 None => (),
             }
@@ -31,9 +26,7 @@ impl LedgerDBSchema {
     }
 
     pub fn get_block(
-        // schema: &LedgerDBSchema,
         &self,
-        // db: &DB,
         block_hash: &String,
     ) -> Result<Option<Block>, LedgerError> {
         let validator_sig = self.get_validator_sig(&block_hash)?;

@@ -38,6 +38,8 @@ pub(in crate::node) async fn send_tx_syn<'a>(
     let msg =
         msg.ok_or(format!("tx syn needs to be followed by tx syn ack"))??;
 
+    println!("receiving tx ack");
+
     let _tx_ack = match msg {
         Msg::TxAck(m) => m,
         _ => {
