@@ -6,7 +6,7 @@ use sak_p2p_id::Identity;
 use sak_p2p_peertable::{Peer, PeerStatus, PeerTable};
 use sak_p2p_transport::{
     handshake::{self, HandshakeRecvArgs},
-    Connection, Handshake, Msg,
+    Conn, Msg,
 };
 use std::sync::Arc;
 use tokio::sync::{RwLock, Semaphore};
@@ -18,7 +18,7 @@ pub(super) struct Handler {
 impl Handler {
     pub(super) async fn run(
         &mut self,
-        mut conn: Connection,
+        conn: Conn,
         identity: Arc<Identity>,
         peer_table: Arc<PeerTable>,
         addr_table: Arc<AddrTable>,
@@ -59,16 +59,12 @@ impl Handler {
         };
 
         let peer = {
-            let p = Peer {
+            let p = Peer::new(
                 transport,
-                p2p_port: addr.known_addr.p2p_port,
-                public_key_str: addr.known_addr.public_key_str.clone(),
+                RwLock::new(PeerStatus::HandshakeSuccess { at: Utc::now() }),
                 addr,
-                status: RwLock::new(PeerStatus::HandshakeSuccess {
-                    at: Utc::now(),
-                }),
                 peer_slot_guard,
-            };
+            );
 
             Arc::new(p)
         };

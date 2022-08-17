@@ -1,6 +1,6 @@
-use crate::UpgradedConnection;
+use crate::UpgradedConn;
 use tokio::sync::RwLock;
 
 pub struct Transport {
-    pub conn: RwLock<UpgradedConnection>,
+    pub conn: RwLock<UpgradedConn>,
 }

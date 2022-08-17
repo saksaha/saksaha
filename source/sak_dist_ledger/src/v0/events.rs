@@ -1,7 +1,9 @@
+use sak_types::{BlockHash, BlockHeight, TxHash};
+
 #[derive(Clone, Debug)]
 pub enum DistLedgerEvent {
-    TxPoolStat(Vec<String>),
-    NewBlocks(Vec<(u128, String)>),
+    TxPoolStat(Vec<TxHash>),
+    NewBlocks(Vec<(BlockHeight, BlockHash)>),
 }
 
 impl std::fmt::Display for DistLedgerEvent {

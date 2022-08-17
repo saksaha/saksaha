@@ -14,6 +14,8 @@ futures = "0.3.17"
 k256 = { version = "0.9.6", features = ["ecdh"] }
 log = "0.4.0"
 thiserror = "1.0"
+sak_utils_time = { path = "../sak_utils_time" }
+async-trait = "0.1.57"
 
 [lib]
 doctest = false # until stable beta is released

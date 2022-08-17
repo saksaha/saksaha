@@ -1,7 +1,9 @@
+mod logger;
 mod macros;
 
 use env_logger::Logger;
 use env_logger::{Builder, Env};
+pub use logger::*;
 use std::cmp::min;
 use std::io::Write;
 use std::sync::atomic::AtomicBool;
