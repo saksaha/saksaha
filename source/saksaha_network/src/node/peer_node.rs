@@ -81,9 +81,9 @@ impl PeerNode {
                     task::handle_task(task,
                         &node_task_queue, conn_lock, &self.machine).await;
                 },
-                maybe_msg = conn_lock.next_msg() => {
-                    let maybe_msg = match maybe_msg {
-                        Ok(m) => m,
+                msg_wrap = conn_lock.next_msg() => {
+                    let msg_wrap = match msg_wrap {
+                        Ok(w) => w,
                         Err(err) => {
                             warn!("Error retrieving msg, err: {}", err);
 
@@ -91,7 +91,7 @@ impl PeerNode {
                         }
                     };
 
-                    match maybe_msg {
+                    match msg_wrap.get_maybe_msg() {
                         Some(maybe_msg) => match maybe_msg {
                             Ok(msg) => {
                                 let _ = msg_handle::handle_msg(

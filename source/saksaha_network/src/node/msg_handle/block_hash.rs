@@ -26,10 +26,13 @@ pub(in crate::node) async fn send_block_hash_syn(
 
     println!("msg_handle: sent block hash syn");
 
-    let (msg, receipt) = conn_lock.next_msg().await;
+    let msg_wrap = conn_lock.next_msg().await?;
 
-    let msg =
-        msg.ok_or(format!("block hash syn needs to be followed by ack"))??;
+    let receipt = msg_wrap.get_receipt();
+
+    let msg = msg_wrap
+        .get_maybe_msg()
+        .ok_or(format!("block hash syn needs to be followed by ack"))??;
 
     let block_hash_ack_msg = match msg {
         Msg::BlockHashAck(m) => m,
