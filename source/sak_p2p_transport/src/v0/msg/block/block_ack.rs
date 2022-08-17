@@ -1,4 +1,4 @@
-use super::tx_utils;
+use crate::tx_utils;
 use crate::{utils, MsgType, TrptError};
 use bytes::Bytes;
 use sak_p2p_frame::{Frame, Parse};

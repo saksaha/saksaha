@@ -13,7 +13,7 @@ use std::time::Duration;
 pub(in crate::node) struct PeerNode {
     pub peer: Arc<Peer>,
     pub machine: Arc<Machine>,
-    pub node_task_min_interval: Option<u64>,
+    pub node_task_min_interval: Duration,
 }
 
 impl PeerNode {

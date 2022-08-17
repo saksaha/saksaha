@@ -271,16 +271,16 @@ impl LedgerDBSchema {
         merkle_updates: &MerkleUpdate,
         updated_ledger_cm_count: u128,
     ) -> Result<String, LedgerError> {
-        println!(
-            "block to write, block: {:?}, \ntxs: {:?},\n\
-            ctr_state_updates: {:?},\n merkle_updates: {:?}, \n\
-            updated_ledger_cm_count: {}",
-            block,
-            txs,
-            ctr_state_updates,
-            merkle_updates,
-            updated_ledger_cm_count,
-        );
+        // println!(
+        //     "block to write, block: {:?}, \ntxs: {:?},\n\
+        //     ctr_state_updates: {:?},\n merkle_updates: {:?}, \n\
+        //     updated_ledger_cm_count: {}",
+        //     block,
+        //     txs,
+        //     ctr_state_updates,
+        //     merkle_updates,
+        //     updated_ledger_cm_count,
+        // );
 
         let mut batch = WriteBatch::default();
 

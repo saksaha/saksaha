@@ -26,8 +26,16 @@ This mono repository contains multiple components that can be developed independ
 ```
 
 ## Test
+
+#### Run all tests
 Run all tests. In the project root, execute the following. 
 ```bash
 ./ci test
 ```
 
+#### Run specific tests
+Run tests in a specific module or run a single test.
+```bash
+./ci test --package [package_name] test_name
+./ci test [module_name]::
+```
