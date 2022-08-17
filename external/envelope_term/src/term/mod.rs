@@ -29,39 +29,45 @@ pub fn run(term_args: TermArgs) -> Result<(), EnvelopeError> {
         .build();
 
     match runtime {
-        Ok(r) => r.block_on(async {
-            let (sync_io_tx, mut sync_io_rx) =
-                tokio::sync::mpsc::channel::<IoEvent>(100);
+        Ok(r) =>
+        //
+        {
+            r.block_on(async {
+                let (sync_io_tx, mut sync_io_rx) =
+                    tokio::sync::mpsc::channel::<IoEvent>(100);
 
-            // We need to share the App between thread
-            let app = {
-                let a = App::init(sync_io_tx.clone(), &term_args.user_prefix)
-                    .await
-                    .expect("App should be initialized");
+                // Configure log
+                tui_logger::init_logger(LevelFilter::Debug).unwrap();
+                tui_logger::set_default_level(log::LevelFilter::Debug);
 
-                Arc::new(Mutex::new(a))
-            };
+                // We need to share the App between thread
+                let app = {
+                    let a =
+                        App::init(sync_io_tx.clone(), &term_args.user_prefix)
+                            .await
+                            .expect("App should be initialized");
 
-            // Configure log
-            tui_logger::init_logger(LevelFilter::Debug).unwrap();
-            tui_logger::set_default_level(log::LevelFilter::Debug);
+                    Arc::new(Mutex::new(a))
+                };
 
-            let app_clone = app.clone();
-            tokio::spawn(async move {
-                let mut handler = IoAsyncHandler::new(app_clone);
+                let app_clone = app.clone();
 
-                while let Some(io_event) = sync_io_rx.recv().await {
-                    handler.handle_io_event(io_event).await;
-                }
-            });
+                tokio::spawn(async move {
+                    let mut handler = IoAsyncHandler::new(app_clone.clone());
 
-            match start_app(app).await {
-                Ok(_) => (),
-                Err(err) => {
-                    error!("Error starting the ui, err: {}", err);
-                }
-            };
-        }),
+                    while let Some(io_event) = sync_io_rx.recv().await {
+                        handler.handle_io_event(io_event).await;
+                    }
+                });
+
+                match start_app(app).await {
+                    Ok(_) => (),
+                    Err(err) => {
+                        error!("Error starting the ui, err: {}", err);
+                    }
+                };
+            })
+        }
         Err(err) => {
             return Err(format!("runtime fail, err: {:?}", err).into());
         }

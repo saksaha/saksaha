@@ -21,7 +21,7 @@ impl IoAsyncHandler {
         let result = match io_event {
             IoEvent::Initialize => self.do_initialize().await,
             IoEvent::Sleep(duration) => self.do_sleep(duration).await,
-            IoEvent::Receive(data) => self.handle_receive_data(data).await,
+            IoEvent::GetChList(data) => self.handle_get_ch_list(data).await,
             IoEvent::GetMessages(data) => self.handle_get_msgs(data).await,
         };
 
@@ -59,14 +59,13 @@ impl IoAsyncHandler {
         Ok(())
     }
 
-    async fn handle_receive_data(
+    async fn handle_get_ch_list(
         &mut self,
         data: Vec<u8>,
     ) -> Result<(), EnvelopeError> {
-        info!("😴 Receive data!! Set some state with data");
-        // Notify the app for having slept
         let mut app = self.app.lock().await;
-        app.set_ch_list(data)?;
+
+        app.set_ch_list(data).await?;
 
         Ok(())
     }
@@ -75,10 +74,9 @@ impl IoAsyncHandler {
         &mut self,
         data: Vec<u8>,
     ) -> Result<(), EnvelopeError> {
-        info!("😴 Receive data!! Set some state with data {:?}...", data);
-        // Notify the app for having slept
         let mut app = self.app.lock().await;
-        app.set_chats(data);
+
+        app.set_chats(data).await?;
 
         Ok(())
     }

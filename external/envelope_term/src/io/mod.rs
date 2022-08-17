@@ -7,7 +7,7 @@ use std::time::Duration;
 pub enum IoEvent {
     Initialize,           // Launch to initialize the application
     Sleep(Duration),      // Just take a little break
-    Receive(Vec<u8>),     // receive data from network
+    GetChList(Vec<u8>),   // receive data from network
     GetMessages(Vec<u8>), // receive data from network
 }
 

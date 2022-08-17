@@ -6,7 +6,7 @@ pub fn convert_vec_into_u8_32(v: Vec<u8>) -> Result<[u8; 32], TypeExtError> {
         Ok(a) => a,
         Err(err) => {
             return Err(format!(
-                "Cannot convert cm into an array, vec: {:?}",
+                "Cannot convert Vec<u8> into an array [u8; 32], err: {:?}",
                 err,
             )
             .into())
