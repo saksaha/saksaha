@@ -62,6 +62,8 @@ impl EnvelopeDB {
         &self,
         user_id: &String,
     ) -> Result<(), EnvelopeError> {
+        log::info!("Register User: {:?}", user_id);
+
         match self.schema.get_my_sk_by_user_id(user_id).await? {
             Some(_) => {
                 warn!("user_id already exists");

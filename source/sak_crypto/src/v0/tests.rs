@@ -125,7 +125,10 @@ mod test {
 
             let aes_key = derive_aes_key(bob_sk, e_pk);
 
-            let _plaintext = aes_decrypt(&aes_key, cipher_text.as_slice());
+            let plaintext2 =
+                aes_decrypt(&aes_key, cipher_text.as_slice()).unwrap();
+
+            assert_eq!(plaintext.to_string(), plaintext2);
         };
     }
 }
