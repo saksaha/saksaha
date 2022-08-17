@@ -36,7 +36,7 @@ impl LedgerDBSchema {
         }
     }
 
-    pub(crate) fn get_cm_by_idx(
+    pub(crate) fn get_cm_by_cm_idx(
         &self,
         // db: &DB,
         cm_idx: &u128,
@@ -60,7 +60,7 @@ impl LedgerDBSchema {
     pub(crate) fn get_cm_idx_by_cm(
         &self,
         // db: &DB,
-        cm: &String,
+        cm: &[u8; 32],
     ) -> Result<Option<u128>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::CM_IDX)?;
 
@@ -158,38 +158,6 @@ impl LedgerDBSchema {
         let cf = self.make_cf_handle(&self.db, cfs::MERKLE_NODE)?;
 
         batch.put_cf(&cf, merkle_node_loc, node_val);
-
-        Ok(())
-    }
-
-    pub(crate) fn batch_put_cm_by_idx(
-        &self,
-        // db: &DB,
-        batch: &mut WriteBatch,
-        cm_idx: &u128,
-        cm: &[u8; 32],
-    ) -> Result<(), LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::CM)?;
-
-        let v = cm_idx.to_be_bytes();
-
-        batch.put_cf(&cf, v, cm);
-
-        Ok(())
-    }
-
-    pub(crate) fn batch_put_cm_idx_by_cm(
-        &self,
-        // db: &DB,
-        batch: &mut WriteBatch,
-        cm_idx: &u128,
-        cm: &[u8; 32],
-    ) -> Result<(), LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::CM_IDX)?;
-
-        let v = cm_idx.to_be_bytes();
-
-        batch.put_cf(&cf, cm, v);
 
         Ok(())
     }

@@ -330,6 +330,7 @@ impl LedgerDBSchema {
         )?;
 
         let mut cm_idx_count: u128 = ledger_cm_count;
+
         for tx in txs {
             self.batch_put_tx(&mut batch, tx, &mut cm_idx_count)?;
         }

@@ -61,12 +61,12 @@ impl DistLedgerApis {
         &self,
         cm_idx: &u128,
     ) -> Result<Option<String>, LedgerError> {
-        self.ledger_db.schema.get_cm_by_idx(cm_idx)
+        self.ledger_db.schema.get_cm_by_cm_idx(cm_idx)
     }
 
     pub async fn get_cm_idx_by_cm(
         &self,
-        cm: &String,
+        cm: &[u8; 32],
     ) -> Result<Option<u128>, LedgerError> {
         self.ledger_db.schema.get_cm_idx_by_cm(cm)
     }

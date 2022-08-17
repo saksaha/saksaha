@@ -840,10 +840,7 @@ impl LedgerDBSchema {
     ) -> Result<(), LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::CM_IDX)?;
 
-        let cm_idx = {
-            let cm_idx = sak_kv_db::convert_u128_into_u8_32(cm_idx)?;
-            cm_idx
-        };
+        let cm_idx = cm_idx.to_be_bytes();
 
         batch.put_cf(&cf, cm_idx, cm);
 
