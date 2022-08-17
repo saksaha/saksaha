@@ -167,7 +167,7 @@ impl LedgerDBSchema {
 
         match self.db.get_cf(&cf, block_hash)? {
             Some(h) => {
-                let height = type_extension::convert_u8_slice_into_u128(&h)?;
+                let height = sak_kv_db::convert_u8_slice_into_u128(&h)?;
 
                 return Ok(Some(height));
             }
@@ -206,7 +206,7 @@ impl LedgerDBSchema {
 
         match self.db.get_cf(&cf, key)? {
             Some(v) => {
-                let val = type_extension::convert_u8_slice_into_u128(&v)?;
+                let val = sak_kv_db::convert_u8_slice_into_u128(&v)?;
 
                 return Ok(Some(val));
             }

@@ -10,7 +10,7 @@ use log::{error, info, warn};
 use std::{sync::Arc, time::Duration};
 use tokio::net::TcpListener;
 
-const RPC_PORT: u16 = 36612;
+pub(crate) const RPC_PORT: u16 = 36612;
 
 pub(crate) struct RPC {
     rpc_port: u16,

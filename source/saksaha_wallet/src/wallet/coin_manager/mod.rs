@@ -2,10 +2,11 @@ use super::Wallet;
 use crate::{db::WalletDB, WalletCredential, WalletError};
 use colored::Colorize;
 use sak_types::CoinRecord;
+use sak_types::CoinStatus;
 use std::sync::Arc;
 
 pub(crate) struct CoinManager {
-    coins: Vec<CoinRecord>,
+    pub(crate) coins: Vec<CoinRecord>,
 }
 
 impl CoinManager {
@@ -35,6 +36,22 @@ impl CoinManager {
         let m = CoinManager { coins };
 
         Ok(m)
+    }
+
+    // pub fn set_coins(&self, coins: &Vec<CoinRecord>) -> Self {
+    //     let coins = *coins;
+    //     CoinManager { coins }
+    // }
+
+    pub fn get_next_available_coin(&self) -> Option<&CoinRecord> {
+        let vec_coins = &self.coins;
+        for coin in vec_coins {
+            if coin.coin_status == CoinStatus::Unused {
+                return Some(&coin);
+            }
+        }
+
+        return None;
     }
 
     // pub fn make_coin(&self) {

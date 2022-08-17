@@ -5,9 +5,11 @@ use colored::Colorize;
 use sak_crypto::Hasher;
 use sak_crypto::Scalar;
 use sak_crypto::ScalarExt;
+use sak_proofs::{NewCoin, OldCoin};
 use type_extension::U8Array;
 
 pub type CoinIdx = u128;
+pub type CmIdx = u128;
 pub type CM = Scalar;
 
 #[derive(Debug)]
@@ -27,6 +29,8 @@ pub struct CoinRecord {
     pub cm: Scalar,
 
     pub coin_status: CoinStatus,
+
+    pub cm_idx: CmIdx,
 
     pub coin_idx: Option<CoinIdx>,
 }
@@ -90,21 +94,21 @@ impl CoinRecord {
         Ok(coin)
     }
 
-    // pub(crate) fn extract(&self) -> NewCoin {
-    //     let addr_pk = self.addr_pk;
-    //     let rho = self.rho;
-    //     let r = self.r;
-    //     let s = self.s;
-    //     let v = self.v;
+    pub fn extract(&self) -> NewCoin {
+        let addr_pk = self.addr_pk;
+        let rho = self.rho;
+        let r = self.r;
+        let s = self.s;
+        let v = self.v;
 
-    //     NewCoin {
-    //         addr_pk,
-    //         rho,
-    //         r,
-    //         s,
-    //         v,
-    //     }
-    // }
+        NewCoin {
+            addr_pk: Some(addr_pk),
+            rho: Some(rho),
+            r: Some(r),
+            s: Some(s),
+            v: Some(v),
+        }
+    }
 }
 
 impl std::fmt::Display for CoinRecord {

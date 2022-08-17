@@ -1,16 +1,16 @@
 use crate::wallet::Wallet;
+use crate::wallet::GAS;
 use crate::WalletError;
 use sak_contract_std::CtrRequest;
 use sak_crypto::Hasher;
 use sak_crypto::Scalar;
+use sak_crypto::ScalarExt;
 use sak_proofs::OldCoin;
 use sak_types::AccountBalance;
 use sak_types::CoinRecord;
 use sak_types::CoinStatus;
 use std::convert::TryInto;
 use type_extension::U8Array;
-
-pub const GAS: u64 = 10;
 
 impl Wallet {
     pub async fn get_balance(
@@ -53,31 +53,63 @@ impl Wallet {
         ctr_addr: String,
         ctr_request: CtrRequest,
     ) -> Result<String, WalletError> {
-        let coin_manager = self.get_coin_manager();
+        let coin_manager_lock = self.get_coin_manager().write().await;
 
-        // let coin: CoinRecord = coin_manager.get_next_available_coin()?;
+        let coin: &CoinRecord = coin_manager_lock
+            .get_next_available_coin()
+            .ok_or("No usable coins")?;
 
-        // let sn_1 = {
-        //     let some_hashed_result = 0;
+        println!("coin: {:?}", coin);
+
+        let sn_1 = {
+            let addr_sk = coin.addr_sk;
+            let rho = coin.rho;
+            let hasher = Hasher::new();
+            let sn_1 = hasher.mimc_scalar(addr_sk, rho);
+            sn_1.to_bytes()
+        };
+
+        let v = ScalarExt::into_u64(coin.v)?;
+
+        let new_coin_1 =
+            CoinRecord::new(0x101, 0x102, 0x103, 0x104, v - GAS, None)?;
+
+        let new_coin_2 = CoinRecord::new(0x201, 0x202, 0x203, 0x204, 0, None)?;
+
+        let cm_1 = new_coin_1.cm.to_bytes();
+        let cm_2 = new_coin_2.cm.to_bytes();
+
+        // make old coin using "coin" and new coins
+
+        // let old_coin = {
+        //     let auth_path = {
+        //         let response = saksaha::get_auth_path(cm_idx).await?;
+
+        //         let result =
+        //             response.result.ok_or(format!("cannot get auth path"))?;
+
+        //         result.auth_path
+        //     };
+
+        //     let old_coin = self.get_old_coin(cm_idx, auth_path).await?;
+
+        //     old_coin
         // };
 
-        // let new_coin_1 = CoinRecord::new()?;
-        // let new_coin_2 = CoinRecord::new()?;
-
-        // let cm_1 = new_coin_1.cm;
-        // let cm_2 = new_coin_2.cm;
-
-        // let pi =
-        //     saksaha::generate_proof_1_to_2(coin_1_old, coin_1_new, coin_2_new)
-        //         .await?;
+        // let pi = saksaha::generate_proof_1_to_2(
+        //     coin,
+        //     new_coin_1.extract(),
+        //     new_coin_2.extract(),
+        // )
+        // .await?;
 
         // // send
         // let json_response = saksaha::send_tx_pour(
-        //     U8Array::new_empty_32(),
-        //     U8Array::new_empty_32(),
-        //     U8Array::new_empty_32(),
-        //     U8Array::new_empty_32(),
-        //     vec![],
+        //     sn_1,
+        //     cm_1,
+        //     cm_2,
+        //     U8Array::new_empty_32(), // merkle_rt
+        //     vec![],                  // pi
         //     ctr_addr,
         //     ctr_request,
         // )
@@ -122,33 +154,7 @@ impl Wallet {
         //     (old_coin, old_coin_v)
         // };
 
-        // {
-        //     let addr_sk = match old_coin.addr_sk {
-        //         Some(s) => s,
-        //         None => return Err(format!("cannot get addr_sk").into()),
-        //     };
-
-        //     let rho = match old_coin.rho {
-        //         Some(r) => r,
-        //         None => return Err(format!("cannot get rho").into()),
-        //     };
-
-        //     let hasher = Hasher::new();
-
-        //     let sn_1_old = hasher.mimc_scalar(addr_sk, rho);
-
-        //     let new_coin_1 = CoinRecord::new(old_coin_v - GAS, &id);
-
-        //     let new_coin_2 = CoinRecord::new(0, &id);
-
-        //     let pi = generate_proof_1_to_2(
-        //         old_coin,
-        //         new_coin_1.extract(),
-        //         new_coin_2.extract(),
-        //     )
-        //     .await?;
-
-        Ok("power".to_string())
+        Ok("success_power".to_string())
     }
 }
 
