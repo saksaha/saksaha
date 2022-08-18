@@ -6,10 +6,12 @@ use crate::io::IoEvent;
 use crate::EnvelopeError;
 use crate::{app::actions::Action, ENVELOPE_CTR_ADDR};
 use chrono::Local;
-use envelope_contract::{
+use envelope_types::request_type::SEND_MSG;
+use envelope_types::{
     request_type::{GET_CH_LIST, OPEN_CH},
-    Channel, GetChListParams, GetMsgParams, OpenChParams, SendMsgParams,
+    GetChListParams, GetMsgParams, OpenChParams, SendMsgParams,
 };
+use envelope_types::{Channel, ChatMessage};
 use log::error;
 use sak_contract_std::{CtrCallType, CtrRequest};
 use sak_crypto::{
@@ -419,15 +421,17 @@ impl App {
 
         let user_1_public_key = self.get_pk(&USER_1.to_string()).await?;
 
-        let chat = envelope_contract::ChatMessage {
+        let chat = ChatMessage {
             date: Local::now().format("%H:%M:%S ").to_string(),
             user: user_1_public_key,
             msg: msg.clone(),
         };
 
+        let msg: String = serde_json::to_string(&chat)?;
+
         let send_msg_params = SendMsgParams {
             ch_id: self.state.selected_ch_id.clone(),
-            chat,
+            msg,
         };
 
         // let mut arg = HashMap::with_capacity(2);
@@ -448,7 +452,7 @@ impl App {
 
         let args = serde_json::to_vec(&send_msg_params)?;
 
-        let req_type = envelope_contract::request_type::SEND_MSG.to_string();
+        let req_type = SEND_MSG.to_string();
 
         let ctr_request = CtrRequest {
             req_type,

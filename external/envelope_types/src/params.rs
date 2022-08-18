@@ -1,5 +1,6 @@
-use crate::Channel;
 use serde::{Deserialize, Serialize};
+
+use crate::Channel;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GetChListParams {
