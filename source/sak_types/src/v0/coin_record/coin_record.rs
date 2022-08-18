@@ -1,5 +1,6 @@
 use super::CoinStatus;
 use crate::AccountBalance;
+use crate::CmIdx;
 use crate::TypesError;
 use colored::Colorize;
 use sak_crypto::Hasher;
@@ -9,7 +10,6 @@ use sak_proofs::{NewCoin, OldCoin};
 use type_extension::U8Array;
 
 pub type CoinIdx = u128;
-pub type CmIdx = u128;
 
 #[derive(Debug)]
 pub struct CoinRecord {

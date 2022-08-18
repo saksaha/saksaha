@@ -1,6 +1,7 @@
 use super::utils;
 use crate::{
-    MintTx, PourTx, Tx, TxCtrOp, TxType, TypesError, CM, WASM_MAGIC_NUMBER,
+    Cm, CmIdx, MintTx, PourTx, Tx, TxCtrOp, TxType, TypesError,
+    WASM_MAGIC_NUMBER,
 };
 use serde::{Deserialize, Serialize};
 use type_extension::U8Arr32;
@@ -12,10 +13,10 @@ pub enum TxCandidate {
 }
 
 impl TxCandidate {
-    pub fn upgrade(self, tx_height: u128) -> Tx {
+    pub fn upgrade(self, cm_idx: CmIdx) -> Tx {
         match self {
-            TxCandidate::Mint(c) => c.upgrade(tx_height),
-            TxCandidate::Pour(c) => c.upgrade(tx_height),
+            TxCandidate::Mint(c) => c.upgrade(cm_idx),
+            TxCandidate::Pour(c) => c.upgrade(cm_idx),
         }
     }
 
@@ -54,7 +55,7 @@ impl TxCandidate {
         }
     }
 
-    pub fn get_cms(&self) -> Vec<CM> {
+    pub fn get_cms(&self) -> Vec<Cm> {
         match &self {
             TxCandidate::Mint(c) => c.get_cms(),
             TxCandidate::Pour(c) => c.get_cms(),
@@ -140,12 +141,19 @@ impl MintTxCandidate {
         utils::get_ctr_op(&self.ctr_addr, &self.data)
     }
 
-    pub fn get_cms(&self) -> Vec<CM> {
+    pub fn get_cms(&self) -> Vec<Cm> {
         vec![self.cm]
     }
 
-    pub fn upgrade(self, tx_height: u128) -> Tx {
-        Tx::Mint(MintTx::new(self, tx_height))
+    pub fn upgrade(
+        self,
+        // tx_height: u128,
+        cm_idx_1: CmIdx,
+    ) -> Tx {
+        Tx::Mint(MintTx::new(
+            self, // tx_height,
+            cm_idx_1,
+        ))
     }
 }
 
@@ -226,8 +234,20 @@ impl PourTxCandidate {
         }
     }
 
-    pub fn upgrade(self, tx_height: u128) -> Tx {
-        Tx::Pour(PourTx::new(self, tx_height))
+    pub fn upgrade(
+        self,
+        // tx_height: u128
+        cm_idx: CmIdx,
+        // cm_idx_2: CmIdx,
+    ) -> Tx {
+        let later_dynamically_determined_cm_idx_2 = cm_idx + 1;
+
+        Tx::Pour(PourTx::new(
+            self,
+            cm_idx,
+            later_dynamically_determined_cm_idx_2,
+            // tx_height
+        ))
     }
 
     pub fn get_tx_type(&self) -> TxType {
@@ -242,7 +262,7 @@ impl PourTxCandidate {
         utils::get_ctr_op(&self.ctr_addr, &self.data)
     }
 
-    pub fn get_cms(&self) -> Vec<CM> {
+    pub fn get_cms(&self) -> Vec<Cm> {
         vec![self.cm_1, self.cm_2]
     }
 }

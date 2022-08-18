@@ -54,24 +54,6 @@ impl LedgerDB {
         }
     }
 
-    pub(crate) fn get_cm_idx_by_cm(
-        &self,
-        cm: &[u8; 32],
-    ) -> Result<Option<u128>, LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::CM_IDX)?;
-
-        match self.db.get_cf(&cf, cm)? {
-            Some(v) => {
-                let val = type_extension::convert_u8_slice_into_u128(&v)?;
-
-                return Ok(Some(val));
-            }
-            None => {
-                return Ok(None);
-            }
-        }
-    }
-
     pub(crate) fn get_ledger_cm_count(
         &self,
         // db: &DB,

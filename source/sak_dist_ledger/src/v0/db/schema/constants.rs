@@ -23,7 +23,11 @@ pub(crate) mod cfs {
 
     pub const CTR_ADDR: &str = "ctr_addr";
 
-    pub const TX_HEIGHT: &str = "tx_height";
+    // pub const TX_HEIGHT: &str = "tx_height";
+
+    // pub const CM_IDX_1: &str = "cm_idx_1";
+
+    // pub const CM_IDX_2: &str = "cm_idx_2";
 
     pub const CM: &str = "cm";
 

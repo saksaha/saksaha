@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use super::{test_util::TestUtil, utils};
 use sak_kv_db::WriteBatch;
-use sak_types::TxCandidate;
+use sak_types::{BlockCandidate, TxCandidate};
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_put_and_get_transaction() {
@@ -85,61 +85,64 @@ async fn test_dist_ledger_put_and_get_cm_idx() {
 
     let dist_ledger = utils::make_dist_ledger().await;
 
-    {
-        let dummy_pour_tx = utils::make_dummy_valid_pour_tx().await;
+    let pour_tc = sak_types::mock_pour_tc_1().unwrap();
 
-        let init_cm_idx = 2;
+    let mock_tx_hash = pour_tc.get_tx_hash().to_string();
 
-        // let mut cm_idx_count = init_cm_idx;
+    let block_candidate = BlockCandidate {
+        validator_sig: "validator_sig".to_string(),
+        tx_candidates: vec![pour_tc],
+        witness_sigs: vec![],
+        created_at: "created_at".to_string(),
+    };
 
-        let mut write_batch = WriteBatch::default();
+    println!("11");
 
-        let pour_tc = sak_types::mock_pour_tc_1().unwrap();
+    dist_ledger
+        .apis
+        .write_block(Some(block_candidate))
+        .await
+        .unwrap();
 
-        let dummy_tx_hash = dist_ledger.apis.send_tx(pour_tc).await.unwrap();
+    // let cm_1_idx = {
+    //     let cm_1 = dist_ledger
+    //         .apis
+    //         .ledger_db
+    //         .get_cm_1(&mock_tx_hash)
+    //         .unwrap()
+    //         .expect("cm_1 should be obtained");
 
-        tokio::time::sleep(Duration::from_secs(3)).await;
+    //     let cm_1_idx = dist_ledger
+    //         .apis
+    //         .ledger_db
+    //         .get_cm_idx_by_cm(&cm_1)
+    //         .expect("cm_1_idx should be obtained")
+    //         .unwrap();
+    //     cm_1_idx
+    // };
 
-        let cm_1_idx = {
-            let cm_1 = dist_ledger
-                .apis
-                .ledger_db
-                .get_cm_1(&dummy_tx_hash)
-                .unwrap()
-                .expect("cm_1 should be obtained");
+    // let cm_2_idx = {
+    //     let cm_2 = dist_ledger
+    //         .apis
+    //         .ledger_db
+    //         .get_cm_2(&mock_tx_hash)
+    //         .unwrap()
+    //         .expect("cm_2 should be obtained");
 
-            let cm_1_idx = dist_ledger
-                .apis
-                .ledger_db
-                .get_cm_idx_by_cm(&cm_1)
-                .expect("cm_1_idx should be obtained")
-                .unwrap();
-            cm_1_idx
-        };
+    //     let cm_2_idx = dist_ledger
+    //         .apis
+    //         .ledger_db
+    //         .get_cm_idx_by_cm(&cm_2)
+    //         .expect("cm_2_idx should be obtained")
+    //         .unwrap();
+    //     cm_2_idx
+    // };
 
-        let cm_2_idx = {
-            let cm_2 = dist_ledger
-                .apis
-                .ledger_db
-                .get_cm_2(&dummy_tx_hash)
-                .unwrap()
-                .expect("cm_2 should be obtained");
+    // println!("cm_1_idx : {:?}, cm_2_idx : {:?}", cm_1_idx, cm_2_idx);
+    // assert_eq!(init_cm_idx, cm_1_idx);
+    // assert_eq!(init_cm_idx + 1, cm_2_idx);
 
-            let cm_2_idx = dist_ledger
-                .apis
-                .ledger_db
-                .get_cm_idx_by_cm(&cm_2)
-                .expect("cm_2_idx should be obtained")
-                .unwrap();
-            cm_2_idx
-        };
-
-        println!("cm_1_idx : {:?}, cm_2_idx : {:?}", cm_1_idx, cm_2_idx);
-        assert_eq!(init_cm_idx, cm_1_idx);
-        assert_eq!(init_cm_idx + 1, cm_2_idx);
-    }
-
-    println!("[+] test pass");
+    // println!("[+] test pass");
 }
 
 #[tokio::test(flavor = "multi_thread")]

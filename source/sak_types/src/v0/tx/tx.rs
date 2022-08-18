@@ -1,3 +1,4 @@
+use super::CmIdx;
 use crate::{MintTxCandidate, PourTxCandidate};
 use serde::{Deserialize, Serialize};
 
@@ -38,14 +39,20 @@ pub struct MintTx {
     pub tx_candidate: MintTxCandidate,
 
     //
-    pub tx_height: u128,
+    // pub tx_height: u128,
+    pub cm_idx_1: CmIdx,
 }
 
 impl MintTx {
-    pub fn new(tx_candidate: MintTxCandidate, tx_height: u128) -> MintTx {
+    pub fn new(
+        tx_candidate: MintTxCandidate,
+        // tx_height: u128,
+        cm_idx_1: CmIdx,
+    ) -> MintTx {
         MintTx {
             tx_candidate,
-            tx_height,
+            // tx_height,
+            cm_idx_1,
         }
     }
 }
@@ -54,16 +61,23 @@ impl MintTx {
 pub struct PourTx {
     //
     pub tx_candidate: PourTxCandidate,
-
-    //
-    pub tx_height: u128,
+    pub cm_idx_1: CmIdx,
+    pub cm_idx_2: CmIdx,
+    // pub tx_height: u128,
 }
 
 impl PourTx {
-    pub fn new(tx_candidate: PourTxCandidate, tx_height: u128) -> PourTx {
+    pub fn new(
+        tx_candidate: PourTxCandidate,
+        // tx_height: u128
+        cm_idx_1: CmIdx,
+        cm_idx_2: CmIdx,
+    ) -> PourTx {
         PourTx {
             tx_candidate,
-            tx_height,
+            cm_idx_1,
+            cm_idx_2,
+            // tx_height,
         }
     }
 }

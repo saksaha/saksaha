@@ -47,6 +47,7 @@ impl DistLedgerApis {
         &self,
         bc: Option<BlockCandidate>,
     ) -> Result<Option<String>, LedgerError> {
+        println!("22");
         // lock
 
         let bc = match bc {
@@ -60,6 +61,8 @@ impl DistLedgerApis {
                 }
             },
         };
+
+        println!("33");
 
         let next_block_height = match self.get_latest_block_height()? {
             Some(h) => h + 1,
@@ -88,6 +91,8 @@ impl DistLedgerApis {
         let tcs = &bc.tx_candidates;
         let mut ctr_state_update = CtrStateUpdate::new();
         let mut merkle_update = MerkleUpdate::new();
+
+        println!("44");
 
         debug!(
             "write_block, tc count: {}, next_block_height: {}, \

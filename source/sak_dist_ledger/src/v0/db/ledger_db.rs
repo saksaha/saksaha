@@ -91,7 +91,7 @@ impl LedgerDB {
             ),
             ColumnFamilyDescriptor::new(cfs::DATA, Options::default()),
             ColumnFamilyDescriptor::new(cfs::CTR_ADDR, Options::default()),
-            ColumnFamilyDescriptor::new(cfs::TX_HEIGHT, Options::default()),
+            // ColumnFamilyDescriptor::new(cfs::TX_HEIGHT, Options::default()),
             ColumnFamilyDescriptor::new(cfs::TX_TYPE, Options::default()),
             ColumnFamilyDescriptor::new(cfs::CM, Options::default()),
             ColumnFamilyDescriptor::new(cfs::CM_IDX, Options::default()),

@@ -21,8 +21,8 @@ pub type CtrAddr = String;
 
 pub type TxHeight = u128;
 
-pub type SN = U8Arr32;
+pub type Sn = U8Arr32;
 
-pub type CM = U8Arr32;
+pub type Cm = U8Arr32;
 
-pub type CM_IDX = u128;
+pub type CmIdx = u128;

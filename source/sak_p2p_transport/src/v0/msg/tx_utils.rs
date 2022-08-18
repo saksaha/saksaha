@@ -72,9 +72,17 @@ pub(crate) fn parse_mint_tx_candidate(
 pub(crate) fn parse_mint_tx(parse: &mut Parse) -> Result<Tx, TrptError> {
     let mint_tx_candidate = parse_mint_tx_candidate(parse)?;
 
-    let tx_height = parse.next_int()? as u128;
+    // let tx_height = parse.next_int()? as u128;
+    let cm_idx_1 = parse.next_int()? as u128;
 
-    Ok(mint_tx_candidate.upgrade(tx_height))
+    let mint_tx = MintTx {
+        tx_candidate: mint_tx_candidate,
+        cm_idx_1,
+    };
+
+    let tx = Tx::Mint(mint_tx);
+
+    Ok(tx)
 }
 
 pub(crate) fn parse_pour_tx_candidate(
@@ -159,9 +167,19 @@ pub(crate) fn parse_pour_tx_candidate(
 pub(crate) fn parse_pour_tx(parse: &mut Parse) -> Result<Tx, TrptError> {
     let pour_tx_candidate = parse_pour_tx_candidate(parse)?;
 
-    let tx_height = parse.next_int()? as u128;
+    // let tx_height = parse.next_int()? as u128;
+    let cm_idx_1 = parse.next_int()? as u128;
+    let cm_idx_2 = parse.next_int()? as u128;
 
-    Ok(pour_tx_candidate.upgrade(tx_height))
+    let pour_tx = PourTx {
+        tx_candidate: pour_tx_candidate,
+        cm_idx_1,
+        cm_idx_2,
+    };
+
+    let tx = Tx::Pour(pour_tx);
+
+    Ok(tx)
 }
 
 pub(crate) fn put_mint_tx_candidate_into_frame(
@@ -188,7 +206,7 @@ pub(crate) fn put_mint_tx_into_frame(frame: &mut Frame, tx: MintTx) {
 
     put_mint_tx_candidate_into_frame(frame, tc);
 
-    frame.push_int(tx.tx_height as u128);
+    // frame.push_int(tx.tx_height as u128);
 }
 
 pub(crate) fn put_pour_tx_candidate_into_frame(
@@ -217,5 +235,6 @@ pub(crate) fn put_pour_tx_into_frame(frame: &mut Frame, tx: PourTx) {
 
     put_pour_tx_candidate_into_frame(frame, tc);
 
-    frame.push_int(tx.tx_height as u128);
+    frame.push_int(tx.cm_idx_1);
+    frame.push_int(tx.cm_idx_2);
 }
