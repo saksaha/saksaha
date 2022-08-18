@@ -176,7 +176,6 @@ async fn test_late_block_sync_true() {
     sak_test_utils::init_test_log();
 
     let app_prefix_vec = vec!["test_1", "test_2"];
-
     TestUtil::init_test(app_prefix_vec.clone());
 
     let test_context_1 = make_test_context(
@@ -235,59 +234,37 @@ async fn test_late_block_sync_true() {
 
     let dummy_tx1 = sak_types::mock_pour_tc_m1_to_p3_p4();
     let dummy_tx2 = sak_types::mock_pour_tc_2();
+    // let dummy_tx1 = TxCandidate::new_dummy_pour_m1_to_p3_p4();
+
+    // let dummy_tx2 = TxCandidate::new_dummy_pour_2();
+
+    tokio::time::sleep(Duration::from_secs(5)).await;
 
     {
         let machine_1 = machine_1.clone();
+        let local_node_1 = local_node_1.clone();
         tokio::spawn(async move {
             tokio::join!(p2p_host_1.run(), local_node_1.run(), machine_1.run());
         });
-
-        let machine_2 = machine_2.clone();
-        tokio::spawn(async move {
-            tokio::join!(p2p_host_2.run(), local_node_2.run(), machine_2.run());
-        });
     }
 
-    tokio::time::sleep(Duration::from_secs(2)).await;
-
-    machine_1
-        .blockchain
-        .dist_ledger
-        .apis
-        .send_tx(dummy_tx1.clone())
-        .await
-        .expect("Node should be able to send a transaction");
-
-    tokio::time::sleep(Duration::from_secs(2)).await;
-
     {
-        println!("check if node1 has tx1: {}", dummy_tx1.get_tx_hash());
+        tokio::time::sleep(Duration::from_secs(2)).await;
 
-        let tx_pool_1_contains_tx1 = machine_1
+        println!("Sending a tx1 to a node_1 at a first time");
+
+        machine_1
             .blockchain
             .dist_ledger
             .apis
-            .tx_pool_contains(dummy_tx1.get_tx_hash())
-            .await;
-        assert_eq!(tx_pool_1_contains_tx1, true);
-
-        println!("check if node2 has tx1: {}", dummy_tx1.get_tx_hash());
-
-        let tx_pool_2_contains_tx1 = machine_2
-            .blockchain
-            .dist_ledger
-            .apis
-            .tx_pool_contains(dummy_tx1.get_tx_hash())
-            .await;
-
-        assert_eq!(tx_pool_2_contains_tx1, true);
-        println!("test 1 passed");
+            .send_tx(dummy_tx1.clone())
+            .await
+            .expect("Node should be able to send a transaction");
 
         tokio::time::sleep(Duration::from_secs(2)).await;
-    }
 
-    {
-        machine_1
+        local_node_1
+            .machine
             .blockchain
             .dist_ledger
             .apis
@@ -295,7 +272,8 @@ async fn test_late_block_sync_true() {
             .await
             .expect("Block should be written");
 
-        let last_height_1 = machine_1
+        let last_height_1 = local_node_1
+            .machine
             .blockchain
             .dist_ledger
             .apis
@@ -304,11 +282,36 @@ async fn test_late_block_sync_true() {
             .unwrap();
 
         assert_eq!(1, last_height_1);
-        println!("test 2 passed");
 
-        tokio::time::sleep(Duration::from_secs(4)).await;
+        println!("last height is confirmed on 1");
+    }
 
-        let last_height_2 = machine_2
+    {
+        tokio::time::sleep(Duration::from_secs(2)).await;
+
+        println!("Sending a tx1 to a node_1 at a second time");
+
+        machine_1
+            .blockchain
+            .dist_ledger
+            .apis
+            .send_tx(dummy_tx2.clone())
+            .await
+            .expect("Node should be able to send a transaction");
+
+        tokio::time::sleep(Duration::from_secs(2)).await;
+
+        local_node_1
+            .machine
+            .blockchain
+            .dist_ledger
+            .apis
+            .write_block(None)
+            .await
+            .expect("Block should be written");
+
+        let last_height_1 = local_node_1
+            .machine
             .blockchain
             .dist_ledger
             .apis
@@ -316,20 +319,37 @@ async fn test_late_block_sync_true() {
             .unwrap()
             .unwrap();
 
-        assert_eq!(last_height_1, last_height_2);
-        println!("test 3 passed");
+        assert_eq!(2, last_height_1);
+
+        println!("last height is confirmed on 2");
     }
 
     tokio::time::sleep(Duration::from_secs(2)).await;
 
     {
-        let tx_pool_2_contains_tx1 = machine_2
-            .blockchain
-            .dist_ledger
-            .apis
-            .tx_pool_contains(dummy_tx2.get_tx_hash())
-            .await;
+        let machine_2 = machine_2.clone();
+        let local_node_2 = local_node_2.clone();
+        tokio::spawn(async move {
+            tokio::join!(p2p_host_2.run());
+        });
 
-        assert_eq!(tx_pool_2_contains_tx1, false);
+        tokio::spawn(async move {
+            tokio::join!(local_node_2.run(), machine_2.run());
+        });
     }
+
+    tokio::time::sleep(Duration::from_secs(10)).await;
+
+    let last_height_2 = local_node_2
+        .machine
+        .blockchain
+        .dist_ledger
+        .apis
+        .get_latest_block_height()
+        .unwrap()
+        .unwrap();
+
+    assert_eq!(2, last_height_2);
+
+    println!("last height of local_node_2 is confirmed on 2");
 }
