@@ -99,7 +99,8 @@ mod test {
         let plaintext = "hello";
         println!("plaintext: {}", plaintext);
 
-        let aes_key = derive_aes_key(e_sk, bob_pk);
+        let aes_key =
+            derive_aes_key(e_sk, bob_pk).expect("aes_key should be derived");
         println!("aes_key: {:?}", aes_key);
 
         let cipher_text = aes_encrypt(&aes_key, plaintext.as_bytes()).unwrap();
@@ -123,7 +124,8 @@ mod test {
             // let e_pk_bytes = &msg[..65];
             // let e_pk = PublicKey::from_sec1_bytes(e_pk_bytes).unwrap();
 
-            let aes_key = derive_aes_key(bob_sk, e_pk);
+            let aes_key = derive_aes_key(bob_sk, e_pk)
+                .expect("aes_key should be derived");
 
             let plaintext2 =
                 aes_decrypt(&aes_key, cipher_text.as_slice()).unwrap();

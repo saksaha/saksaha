@@ -2,13 +2,13 @@ use super::utils;
 use crate::rpc::routes::v0::{
     GetBalanceRequest, GetBalanceResponse, SendTxRequest, SendTxResponse,
 };
-use crate::rpc::RPC_PORT;
 use crate::Config;
 use envelope_contract::request_type;
 use envelope_term::ENVELOPE_CTR_ADDR;
 use hyper::{Body, Client, Method, Request, Uri};
 use sak_contract_std::{CtrRequest, RequestArgs};
 use sak_rpc_interface::{JsonRequest, JsonResponse};
+pub(crate) const RPC_PORT: u16 = 36612;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_send_tx() {
@@ -67,7 +67,7 @@ async fn test_send_tx() {
     let json_response =
         serde_json::from_slice::<JsonResponse<SendTxResponse>>(&b).unwrap();
 
-    // println!("json_response: {:?}", json_response);
+    println!("json_response: {:?}", json_response);
     let result = json_response.result.unwrap();
 
     println!("[+] result: {:?}", result);

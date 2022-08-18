@@ -41,6 +41,7 @@ impl CoinRecord {
         s: u64,
         addr_sk: u64,
         v: u64,
+        cm_idx: u128,
         coin_idx: Option<CoinIdx>,
     ) -> Result<CoinRecord, TypesError> {
         let hasher = Hasher::new();

@@ -81,6 +81,11 @@ impl Wallet {
 
         // make old coin using "coin" and new coins
 
+        let cm_idx = {
+            println!("coin.cm_idx: {:?}", coin.cm_idx);
+            coin.cm_idx
+        };
+
         // let old_coin = {
         //     let auth_path = {
         //         let response = saksaha::get_auth_path(cm_idx).await?;
