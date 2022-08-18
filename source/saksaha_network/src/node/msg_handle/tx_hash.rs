@@ -31,6 +31,11 @@ pub(in crate::node) async fn send_tx_hash_syn(
 
     let tx_hash_ack = match msg {
         Msg::TxHashAck(m) => m,
+        Msg::Error(m) => {
+            return Err(
+                format!("Receiver returned error msg, msg: {:?}", m).into()
+            )
+        }
         _ => {
             return Err(format!(
                 "Only tx hash ack should arrive at this point, msg: {}",
@@ -55,7 +60,7 @@ pub(in crate::node) async fn recv_tx_hash_syn(
     mut conn: RwLockWriteGuard<'_, UpgradedConn>,
     task_queue: &Arc<TaskQueue<NodeTask>>,
     peer: &Arc<Peer>,
-) -> Result<SendReceipt, SaksahaNodeError> {
+) -> SendReceipt {
     let txs_to_request = machine
         .blockchain
         .dist_ledger
@@ -69,5 +74,5 @@ pub(in crate::node) async fn recv_tx_hash_syn(
         }))
         .await;
 
-    Ok(receipt)
+    receipt
 }

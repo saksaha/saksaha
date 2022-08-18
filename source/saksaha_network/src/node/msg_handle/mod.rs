@@ -27,7 +27,7 @@ pub(in crate::node) async fn handle_msg<'a>(
     task_queue: &Arc<TaskQueue<NodeTask>>,
     peer: &Arc<Peer>,
 ) -> Result<(), SaksahaError> {
-    let res = match msg {
+    let receipt: SendReceipt = match msg {
         Msg::TxHashSyn(tx_hash_syn) => {
             tx_hash::recv_tx_hash_syn(
                 tx_hash_syn,
@@ -54,17 +54,6 @@ pub(in crate::node) async fn handle_msg<'a>(
             .into());
         }
     };
-
-    if let Err(err) = res {
-        warn!(
-            "Handling msg failed, err: {}, sending the peer the ack msg",
-            err
-        );
-
-        conn_lock.send(Msg::Error(ErrorMsg {
-            error: err.to_string(),
-        }));
-    }
 
     Ok(())
 }
