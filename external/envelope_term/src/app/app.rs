@@ -1,25 +1,22 @@
-use super::{actions::Actions, View};
+use super::actions::Actions;
 use super::{state::AppState, ChannelState};
 use crate::db::EnvelopeDB;
 use crate::db::{USER_1, USER_2};
-use crate::io::InputMode;
 use crate::io::IoEvent;
-use crate::term::get_balance_from_wallet;
+use crate::EnvelopeError;
 use crate::{app::actions::Action, ENVELOPE_CTR_ADDR};
-use crate::{inputs::key::Key, EnvelopeError};
-use chrono::{Date, Local};
-use crossterm::style::Stylize;
+use chrono::Local;
 use envelope_contract::{
-    request_type::{GET_CH_LIST, OPEN_CH},
-    Channel, GetChListParams, GetMsgParams, OpenChParams, SendMsgParams,
+    request_type::{GET_CH_LIST, OPEN_CH, SEND_MSG},
+    Channel, ChatMessage, EncryptedChatMessage, GetChListParams, GetMsgParams,
+    OpenChParams, SendMsgParams,
 };
-use log::{debug, error, warn};
+use log::error;
 use sak_contract_std::{CtrCallType, CtrRequest};
 use sak_crypto::{
-    aes_decrypt, derive_aes_key, PublicKey, SakKey, Scalar, ScalarExt,
-    SecretKey, SigningKey, ToEncodedPoint,
+    aes_decrypt, derive_aes_key, PublicKey, SakKey, SecretKey, ToEncodedPoint,
 };
-use type_extension::{convert_vec_into_u8_32, U8Arr32, U8Array};
+use type_extension::{U8Arr32, U8Array};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum AppReturn {
@@ -30,7 +27,7 @@ pub enum AppReturn {
 pub struct App {
     io_tx: tokio::sync::mpsc::Sender<IoEvent>,
     actions: Actions,
-    pub state: AppState,
+    state: AppState,
     db: EnvelopeDB,
 }
 
@@ -40,7 +37,7 @@ impl App {
         user_prefix: &String,
     ) -> Result<Self, EnvelopeError> {
         let actions = vec![Action::Quit].into();
-        let mut state = AppState::default();
+        let state = AppState::default();
 
         let db = EnvelopeDB::init(&user_prefix).await?;
 
@@ -57,208 +54,6 @@ impl App {
             state,
             db,
         })
-    }
-
-    pub async fn handle_normal_key(&mut self, key: Key) -> AppReturn {
-        if let Some(action) = self.actions.find(key) {
-            debug!("Run action [{:?}]", action);
-            self.state.input_text.clear();
-
-            match action {
-                Action::Quit => AppReturn::Exit,
-
-                Action::SwitchEditMode => {
-                    self.state.input_mode = InputMode::Editing;
-                    AppReturn::Continue
-                }
-
-                Action::SwitchNormalMode => {
-                    self.state.input_mode = InputMode::Editing;
-                    AppReturn::Continue
-                }
-
-                Action::ShowChList => {
-                    let _ = self.get_ch_list().await;
-                    // let _ = self.get_ch_list_from_local().await;
-                    self.state.set_view_ch_list();
-                    AppReturn::Continue
-                }
-
-                Action::ShowOpenCh => {
-                    self.state.set_view_open_ch();
-                    AppReturn::Continue
-                }
-
-                Action::ShowChat => {
-                    self.state.set_view_chat();
-                    AppReturn::Continue
-                }
-
-                Action::Down => {
-                    self.state.next_ch();
-                    AppReturn::Continue
-                }
-
-                Action::Up => {
-                    self.state.previous_ch();
-                    AppReturn::Continue
-                }
-
-                Action::Right => AppReturn::Continue,
-                // Action::Right => match self.get_state().view {
-                //     View::Chat => {
-                //         self.state.selected_ch_id =
-                //             match self.state.ch_list_state.selected() {
-                //                 Some(i) => (self.state.ch_list[i])
-                //                     .channel
-                //                     .ch_id
-                //                     .clone(),
-                //                 None => String::default(),
-                //             };
-                //         log::info!("Ch_Id: {:?}", self.state.selected_ch_id);
-                //         // self.get_messages().await;
-                //         // self.state.set_view_chat();
-                //         // log::info!("ch_id: {:?}", curr_ch);
-
-                //         return AppReturn::Continue;
-                //     }
-                //     _ => {
-                //         return AppReturn::Continue;
-                //     }
-                // },
-                Action::RestoreChat => match self.get_state().view {
-                    View::Chat => {
-                        let ch_id = self.state.selected_ch_id.clone();
-
-                        if !ch_id.is_empty() {
-                            self.get_messages(ch_id.clone()).await;
-
-                            log::info!(
-                                "Restore all the chats in ch_id: {:?}",
-                                ch_id
-                            );
-                        }
-
-                        return AppReturn::Continue;
-                    }
-                    _ => {
-                        return AppReturn::Continue;
-                    }
-                },
-                Action::Select => match self.get_state().view {
-                    View::ChList => {
-                        self.state.selected_ch_id =
-                            match self.state.ch_list_state.selected() {
-                                Some(i) => (self.state.ch_list[i])
-                                    .channel
-                                    .ch_id
-                                    .clone(),
-                                None => String::default(),
-                            };
-
-                        log::info!("Ch_Id: {:?}", self.state.selected_ch_id);
-                        // self.get_messages(self.state.selected_ch_id.clone())
-                        //     .await;
-                        self.state.set_view_chat();
-                        return AppReturn::Continue;
-                    }
-                    _ => {
-                        return AppReturn::Continue;
-                    }
-                },
-
-                Action::UpdateBalance => {
-                    self.state.set_balance().await;
-                    AppReturn::Continue
-                }
-            }
-        } else {
-            warn!("No action accociated to {}", key);
-
-            AppReturn::Continue
-        }
-    }
-
-    pub async fn handle_edit_key(&mut self, key: Key) -> AppReturn {
-        match key {
-            Key::Enter => {
-                match self.get_state().view {
-                    View::OpenCh => {
-                        self.state.input_returned =
-                            self.state.input_text.drain(..).collect();
-
-                        // need to check validity of `self.state.input_returned`
-                        // let pk = self.state.input_returned.clone();
-
-                        // for dev
-                        {
-                            let user_2_sk = self
-                                .db
-                                .schema
-                                .get_my_sk_by_user_id(&USER_2.to_string())
-                                .await
-                                .unwrap()
-                                .unwrap();
-
-                            let user_2_pk = self
-                                .db
-                                .schema
-                                .get_my_pk_by_sk(&user_2_sk)
-                                .await
-                                .unwrap()
-                                .unwrap();
-
-                            // let (_sk, dummy_pk) = SakKey::generate();
-
-                            // let dummy_pk_string = sak_crypto::encode_hex(
-                            //     &dummy_pk.to_encoded_point(false).to_bytes(),
-                            // );
-
-                            if let Err(_) = self.open_ch(&user_2_pk).await {
-                                return AppReturn::Continue;
-                            }
-                        };
-                    }
-                    View::Chat => {
-                        self.state.chat_input =
-                            self.state.input_text.drain(..).collect();
-
-                        self.send_messages(&self.state.chat_input).await;
-
-                        // self.state
-                        //     .set_input_messages(self.state.chat_input.clone());
-                    }
-                    _ => {}
-                }
-
-                AppReturn::Continue
-            }
-            Key::Char(c) => {
-                self.state.input_text.push(c);
-                AppReturn::Continue
-            }
-            Key::Backspace => {
-                self.state.input_text.pop();
-                AppReturn::Continue
-            }
-            Key::Esc => {
-                self.state.input_mode = InputMode::Normal;
-
-                AppReturn::Continue
-            }
-            _ => AppReturn::Continue,
-        }
-    }
-
-    pub async fn handle_others(&mut self, key: Key) -> AppReturn {
-        match key {
-            Key::Esc => {
-                self.state.input_mode = InputMode::Normal;
-
-                AppReturn::Continue
-            }
-            _ => AppReturn::Continue,
-        }
     }
 
     /// We could update the app or dispatch event on tick
@@ -280,8 +75,12 @@ impl App {
         };
     }
 
-    pub fn actions(&self) -> &Actions {
+    pub fn get_actions(&self) -> &Actions {
         &self.actions
+    }
+
+    pub(crate) fn get_db(&self) -> &EnvelopeDB {
+        &self.db
     }
 
     pub(crate) fn get_state(&self) -> &AppState {
@@ -346,7 +145,7 @@ impl App {
                             &new_ch.channel.ch_id.clone().as_str(),
                         )?;
 
-                        aes_decrypt(&my_sk, &ch_id)?
+                        String::from_utf8(aes_decrypt(&my_sk, &ch_id)?)?
                     };
 
                     // Prefix of the encrypted `ch_id` is `MY_PK` rn
@@ -372,7 +171,7 @@ impl App {
                                 &new_ch.channel.sig.clone().as_str(),
                             )?;
 
-                            aes_decrypt(&my_sk, &sig)?
+                            String::from_utf8(aes_decrypt(&my_sk, &sig)?)?
                         };
 
                         new_ch.channel.ch_id = ch_id;
@@ -403,7 +202,7 @@ impl App {
                                 &new_ch.channel.ch_id.clone().as_str(),
                             )?;
 
-                            aes_decrypt(&aes_key, &ch_id)?
+                            String::from_utf8(aes_decrypt(&aes_key, &ch_id)?)?
                         };
 
                         let ch_id: String =
@@ -425,7 +224,7 @@ impl App {
                                 &new_ch.channel.sig.clone().as_str(),
                             )?;
 
-                            aes_decrypt(&aes_key, &sig)?
+                            String::from_utf8(aes_decrypt(&aes_key, &sig)?)?
                         };
 
                         new_ch.channel.ch_id = ch_id;
@@ -449,8 +248,97 @@ impl App {
         data: Vec<u8>,
     ) -> Result<(), EnvelopeError> {
         let my_pk = self.get_pk(&USER_1.to_string()).await?;
+        let my_sk = self.get_sk(&USER_1.to_string()).await?;
 
-        self.state.set_chats(data, my_pk);
+        let encrypted_chat_msg_vec: Vec<EncryptedChatMessage> =
+            match serde_json::from_slice::<Vec<EncryptedChatMessage>>(&data) {
+                Ok(c) => c.into_iter().map(|m| m).collect(),
+                Err(err) => {
+                    return Err(format!(
+                        "failed to deserialize vec<string>, err: {:?}",
+                        err
+                    )
+                    .into());
+                }
+            };
+
+        let eph_key: String = {
+            let mut res: String = String::default();
+
+            for ch_state in self.get_state().ch_list.iter() {
+                if ch_state.channel.ch_id == self.get_state().selected_ch_id {
+                    res = ch_state.channel.eph_key.clone();
+                }
+            }
+
+            res
+        };
+
+        let aes_key = {
+            if &eph_key[0..5] == "init_" {
+                let eph_sk = &eph_key[5..];
+
+                let eph_sk_encrypted: Vec<u8> = serde_json::from_str(eph_sk)?;
+
+                let sk = {
+                    let my_sk: U8Arr32 = U8Array::from_hex_string(my_sk)?;
+
+                    let eph_sk =
+                        sak_crypto::aes_decrypt(&my_sk, &eph_sk_encrypted)?;
+
+                    SecretKey::from_bytes(&eph_sk)?
+                };
+
+                let pk = {
+                    // for dev, her_pk == `user_2_pk`
+                    let her_pk = self.get_pk(&USER_2.to_string()).await?;
+
+                    let her_pk_vec: Vec<u8> = sak_crypto::decode_hex(&her_pk)?;
+
+                    PublicKey::from_sec1_bytes(&her_pk_vec)?
+                };
+
+                derive_aes_key(sk, pk)?
+            } else {
+                let eph_pk = eph_key;
+
+                let sk = SecretKey::from_bytes(&my_sk.as_bytes())?;
+
+                let pk = {
+                    let eph_pk_vec: Vec<u8> = sak_crypto::decode_hex(&eph_pk)?;
+
+                    PublicKey::from_sec1_bytes(&eph_pk_vec)?
+                };
+
+                derive_aes_key(sk, pk)?
+            }
+        };
+
+        let mut chat_msg: Vec<ChatMessage> = vec![];
+
+        for encrypted_chat_msg in encrypted_chat_msg_vec.into_iter() {
+            let encrypted_chat_msg: Vec<u8> =
+                serde_json::from_str(&encrypted_chat_msg)?;
+
+            let chat_msg_ser: String = {
+                let chat_msg: Vec<u8> =
+                    sak_crypto::aes_decrypt(&aes_key, &encrypted_chat_msg)?;
+
+                String::from_utf8(chat_msg)?
+            };
+
+            let mut res: ChatMessage = serde_json::from_str(&chat_msg_ser)?;
+
+            if res.user == my_pk {
+                res.user = "me".to_string();
+            } else {
+                res.user = res.user[0..16].to_string();
+            }
+
+            chat_msg.push(res);
+        }
+
+        self.get_state_mut().set_chats(chat_msg, my_pk);
 
         log::info!("set_chats done");
 
@@ -472,19 +360,40 @@ impl App {
 
         let my_sig = self.get_sig(&USER_1.to_string()).await?;
 
-        let ch_id = format!("{}_{}", my_pk, sak_crypto::rand().to_string());
+        let ch_id_num = sak_crypto::rand();
+
+        let ch_id = format!("{}_{}", my_pk, ch_id_num.to_string());
 
         {
-            // =-=-=-=-=-= user_1 `open_ch` =-=-=-=-=-=-=-=
+            // =-=-=-=-=-= initiator `open_ch` =-=-=-=-=-=-=-=
 
             let my_sk: U8Arr32 = U8Array::from_hex_string(my_sk)?;
 
-            let open_ch = Channel::new(
-                ch_id.clone(),
-                eph_pk.clone(),
-                my_sig.clone(),
-                my_sk,
-            )?;
+            let open_ch = {
+                let ch_id_enc = {
+                    let ch_id_enc =
+                        sak_crypto::aes_encrypt(&my_sk, &ch_id.as_bytes())?;
+
+                    serde_json::to_string(&ch_id_enc)?
+                };
+
+                let sig_enc = {
+                    let sig_enc =
+                        sak_crypto::aes_encrypt(&my_sk, &my_sig.as_bytes())?;
+
+                    serde_json::to_string(&sig_enc)?
+                };
+
+                let eph_sk_enc = {
+                    let eph_sk_enc: Vec<u8> =
+                        sak_crypto::aes_encrypt(&my_sk, &eph_sk.to_bytes())?;
+
+                    // for dev
+                    format!("init_{}", serde_json::to_string(&eph_sk_enc)?)
+                };
+
+                Channel::new(ch_id_enc, eph_sk_enc, sig_enc)?
+            };
 
             let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
 
@@ -516,9 +425,9 @@ impl App {
         }
 
         {
-            // =-=-=-=-=-= user_2 `open_ch` =-=-=-=-=-=-=-=
+            // =-=-=-=-=-= receiver `open_ch` =-=-=-=-=-=-=-=
 
-            let shared_secret = {
+            let aes_key = {
                 let her_pk: Vec<u8> = sak_crypto::decode_hex(her_pk)?;
 
                 let her_pk = PublicKey::from_sec1_bytes(&her_pk.as_slice())?;
@@ -526,12 +435,23 @@ impl App {
                 sak_crypto::derive_aes_key(eph_sk, her_pk)?
             };
 
-            let open_ch = Channel::new(
-                ch_id, //
-                eph_pk,
-                my_sig,
-                shared_secret,
-            )?;
+            let open_ch = {
+                let ch_id_enc = {
+                    let ch_id_enc =
+                        sak_crypto::aes_encrypt(&aes_key, &ch_id.as_bytes())?;
+
+                    serde_json::to_string(&ch_id_enc)?
+                };
+
+                let sig_enc = {
+                    let sig_enc =
+                        sak_crypto::aes_encrypt(&aes_key, &my_sig.as_bytes())?;
+
+                    serde_json::to_string(&sig_enc)?
+                };
+
+                Channel::new(ch_id_enc, eph_pk, sig_enc)?
+            };
 
             let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
 
@@ -617,17 +537,92 @@ impl App {
     ) -> Result<String, EnvelopeError> {
         let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
 
-        let user_1_public_key = self.get_pk(&USER_1.to_string()).await?;
+        let user_1_pk = self.get_pk(&USER_1.to_string()).await?;
+        let user_1_sk = self.get_sk(&USER_1.to_string()).await?;
 
-        let chat = envelope_contract::ChatMessage {
+        let user_1_sk: U8Arr32 = U8Array::from_hex_string(user_1_sk)?;
+
+        let selected_ch_id = self.state.selected_ch_id.clone();
+
+        let eph_key: String = {
+            let mut res: String = String::default();
+
+            for ch_state in self.get_state().ch_list.iter() {
+                if ch_state.channel.ch_id == selected_ch_id {
+                    res = ch_state.channel.eph_key.clone();
+                }
+            }
+
+            res
+        };
+
+        let aes_key = {
+            // In this channel, I am Initiator: `eph_key` == `eph_sk`
+            // the `aes_key` will be `kdf(eph_sk, my_pk)`
+            if &eph_key[0..5] == "init_" {
+                let eph_sk = &eph_key[5..];
+
+                let eph_sk_encrypted: Vec<u8> = serde_json::from_str(eph_sk)?;
+
+                let sk = {
+                    let eph_sk =
+                        sak_crypto::aes_decrypt(&user_1_sk, &eph_sk_encrypted)?;
+
+                    SecretKey::from_bytes(&eph_sk)?
+                };
+
+                let pk = {
+                    // for dev, her_pk == `user_2_pk`
+                    let her_pk = self.get_pk(&USER_2.to_string()).await?;
+
+                    let her_pk_vec: Vec<u8> = sak_crypto::decode_hex(&her_pk)?;
+
+                    PublicKey::from_sec1_bytes(&her_pk_vec)?
+                };
+
+                derive_aes_key(sk, pk)?
+            } else {
+                // In this channel, I am Receiver: `eph_key` == `eph_pk`
+                // The Initiator had opened channel with `my public key`,
+                // so the `aes_key` will be `kdf(my_sk, eph_pk)`
+                let eph_pk = eph_key;
+
+                let sk = {
+                    let my_sk = self.get_sk(&USER_1.to_string()).await?;
+
+                    SecretKey::from_bytes(&my_sk.as_bytes())?
+                };
+
+                let pk = {
+                    let eph_pk_vec: Vec<u8> = sak_crypto::decode_hex(&eph_pk)?;
+
+                    PublicKey::from_sec1_bytes(&eph_pk_vec)?
+                };
+
+                derive_aes_key(sk, pk)?
+            }
+        };
+
+        let chat_msg = ChatMessage {
             date: Local::now().format("%H:%M:%S ").to_string(),
-            user: user_1_public_key,
+            user: user_1_pk,
             msg: msg.clone(),
         };
 
+        let chat_msg_serialized: String = serde_json::to_string(&chat_msg)?;
+
+        let encrypted_msg: String = {
+            let encrypted_msg = &sak_crypto::aes_encrypt(
+                &aes_key,
+                chat_msg_serialized.as_bytes(),
+            )?;
+
+            serde_json::to_string(encrypted_msg)?
+        };
+
         let send_msg_params = SendMsgParams {
-            ch_id: self.state.selected_ch_id.clone(),
-            chat,
+            ch_id: selected_ch_id,
+            msg: encrypted_msg,
         };
 
         // let mut arg = HashMap::with_capacity(2);
@@ -648,7 +643,7 @@ impl App {
 
         let args = serde_json::to_vec(&send_msg_params)?;
 
-        let req_type = envelope_contract::request_type::SEND_MSG.to_string();
+        let req_type = SEND_MSG.to_string();
 
         let ctr_request = CtrRequest {
             req_type,
@@ -782,4 +777,18 @@ impl App {
 
         Ok(user_sig)
     }
+
+    // async fn get_shared_secret(
+    //     &self,
+    //     ch_id: &String,
+    // ) -> Result<String, EnvelopeError> {
+    //     let shared_secret = self
+    //         .db
+    //         .schema
+    //         .get_ch_shared_secret(ch_id)
+    //         .await?
+    //         .ok_or("")?;
+
+    //     Ok(shared_secret)
+    // }
 }

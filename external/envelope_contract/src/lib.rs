@@ -1,5 +1,5 @@
 mod envelope;
-mod params;
+mod types;
 
 pub use envelope::*;
-pub use params::*;
+pub use types::*;

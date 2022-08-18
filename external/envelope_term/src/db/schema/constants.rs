@@ -15,4 +15,6 @@ pub(crate) mod cfs {
     pub const AES_KEY: &str = "aes_key";
 
     pub const USER_ID: &str = "user_id";
+
+    pub const SHARED_SECRET_KEY: &str = "shared_secret_key";
 }

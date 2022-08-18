@@ -1,5 +1,7 @@
 use super::utils;
-use crate::rpc::routes::v0::{SendTxRequest, SendTxResponse};
+use crate::rpc::routes::v0::{
+    GetBalanceRequest, GetBalanceResponse, SendTxRequest, SendTxResponse,
+};
 use envelope_contract::request_type;
 use envelope_term::ENVELOPE_CTR_ADDR;
 use hyper::{Body, Client, Method, Request, Uri};

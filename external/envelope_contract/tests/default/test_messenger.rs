@@ -3,21 +3,14 @@ use super::{
     DUMMY_CHANNEL_ID_2, DUMMY_CHANNEL_ID_3, ENVELOPE_CONTRACT,
     INIT_CHANNEL_ID_1, STORAGE_CAP,
 };
-
 use envelope_contract::{
-    request_type::OPEN_CH, Channel, ChannelId, ChatMessage, EnvelopeStorage,
-    GetChListParams, GetMsgParams, OpenChParams, SendMsgParams,
+    request_type::OPEN_CH, Channel, ChannelId, ChatMessage,
+    EncryptedChatMessage, EnvelopeStorage, GetChListParams, GetMsgParams,
+    OpenChParams, SendMsgParams,
 };
 use sak_contract_std::{CtrCallType, CtrRequest, Storage};
 use sak_vm::{CtrFn, VM};
 use std::collections::HashMap;
-
-// pub(crate) struct OpenChInput {
-//     eph_pk: String,
-//     ch_id: String,
-//     sign: String,
-//     chat: String,
-// }
 
 fn get_single_message() -> String {
     String::from("Hello! I belong to saksaha")
@@ -34,8 +27,9 @@ fn get_her_pk() -> String {
     String::from("her_pk12345")
 }
 
-fn make_mock_storage(msgs: &Vec<String>) -> Storage {
+fn mock_storage(msgs: &Vec<String>) -> Storage {
     let mut open_ch_reqs = HashMap::new();
+
     // open_ch_reqs.insert(
     //     get_her_pk(),
     //     vec![
@@ -52,14 +46,17 @@ fn make_mock_storage(msgs: &Vec<String>) -> Storage {
     //     ],
     // );
 
-    let mut chats = HashMap::<ChannelId, Vec<ChatMessage>>::new();
+    let mut chats = HashMap::<ChannelId, Vec<String>>::new();
+
+    let chat_msg = ChatMessage {
+        date: "test_date".to_string(),
+        user: get_her_pk(),
+        msg: "hello".to_string(),
+    };
+
     chats.insert(
         DUMMY_CHANNEL_ID_1.to_string(),
-        vec![ChatMessage {
-            date: "test_date".to_string(),
-            user: get_her_pk(),
-            msg: "hello".to_string(),
-        }],
+        vec![serde_json::to_string(&chat_msg).unwrap()],
     );
 
     let envelope_storage = EnvelopeStorage {
@@ -110,7 +107,7 @@ async fn test_messenger_get_msgs() {
 
     let test_dummy_messege = get_multi_messages();
 
-    let messages_state = make_mock_storage(&test_dummy_messege);
+    let messages_state = mock_storage(&test_dummy_messege);
 
     let request = {
         let get_msg_params = GetMsgParams {
@@ -171,7 +168,7 @@ async fn test_messenger_get_ch_list() {
             ctr_call_type: CtrCallType::Query,
         };
 
-        let storage = make_mock_storage(&dummy_messeges);
+        let storage = mock_storage(&dummy_messeges);
 
         (req, storage)
     };
@@ -229,7 +226,7 @@ async fn test_messenger_open_channel() {
             ctr_call_type: CtrCallType::Execute,
         };
 
-        let storage = make_mock_storage(&dummy_messeges);
+        let storage = mock_storage(&dummy_messeges);
 
         (req, storage)
     };
@@ -287,7 +284,7 @@ async fn test_messenger_send_msg() {
 
         let send_msg_params = SendMsgParams {
             ch_id: String::from(DUMMY_CHANNEL_ID_3),
-            chat,
+            msg: serde_json::to_string(&chat).unwrap(),
         };
 
         let args = serde_json::to_vec(&send_msg_params).unwrap();
@@ -298,7 +295,7 @@ async fn test_messenger_send_msg() {
             ctr_call_type: CtrCallType::Execute,
         };
 
-        let storage = make_mock_storage(&dummy_messeges);
+        let storage = mock_storage(&dummy_messeges);
 
         (req, storage)
     };
@@ -346,15 +343,17 @@ async fn test_messenger_open_channel_me_and_you() {
 
     let mut open_ch_reqs = HashMap::new();
 
-    let mut chats = HashMap::<ChannelId, Vec<ChatMessage>>::new();
+    let mut chats = HashMap::<ChannelId, Vec<EncryptedChatMessage>>::new();
+
+    let chat_msg = ChatMessage {
+        date: "test_date".to_string(),
+        user: your_pk.clone(),
+        msg: "hello".to_string(),
+    };
 
     chats.insert(
         DUMMY_CHANNEL_ID_1.to_string(),
-        vec![ChatMessage {
-            date: "test_date".to_string(),
-            user: your_pk.clone(),
-            msg: "hello".to_string(),
-        }],
+        vec![serde_json::to_string(&chat_msg).unwrap()],
     );
 
     let envelope_storage = EnvelopeStorage {
