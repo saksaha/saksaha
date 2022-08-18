@@ -66,23 +66,9 @@ impl PeerNode {
                 .await
                 .unwrap_or(vec![]);
 
-            // tokio::spawn(async move {
             node_task_queue
                 .push_back(NodeTask::SendBlockHashSyn { new_blocks })
                 .await?;
-
-            // let conn_lock = self.peer.get_transport().conn.write().await;
-
-            // let task = node_task_queue.pop_front().await?;
-
-            // task::handle_task(
-            //     task,
-            //     &node_task_queue,
-            //     conn_lock,
-            //     &self.machine,
-            // )
-            // .await;
-            // });
         }
 
         loop {
