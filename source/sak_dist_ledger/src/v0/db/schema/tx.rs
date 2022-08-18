@@ -176,6 +176,8 @@ impl LedgerDB {
 
         let tx_hash = tc.get_tx_hash();
 
+        println!("put mint tx: {:?}", tx);
+
         // let cm_idx = self.batch_increment_cm_idx(batch, &tc.cm)?;
 
         self.batch_put_tx_type(batch, tx_hash, tc.get_tx_type())?;
@@ -275,11 +277,6 @@ impl LedgerDB {
         Ok(())
     }
 
-    // ledger
-    // | b_1
-    // | b_2
-    // | b_*  <= b_3_a, b_3_a
-
     pub(crate) fn batch_put_pour_tx(
         &self,
         batch: &mut WriteBatch,
@@ -296,6 +293,8 @@ impl LedgerDB {
         }
 
         let tx_hash = tc.get_tx_hash();
+
+        println!("put pour tx: {:?}", tx);
 
         self.batch_put_tx_hash_by_sn(batch, &tc.sn_1, tx_hash)?;
 

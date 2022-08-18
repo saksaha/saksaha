@@ -2,7 +2,6 @@ use crate::LedgerError;
 use crate::{cfs, CtrStateUpdate, LedgerDB, MerkleUpdate};
 use sak_kv_db::WriteBatch;
 use sak_types::{Block, BlockHash, BlockHeight, Tx};
-use std::convert::TryInto;
 
 impl LedgerDB {
     pub async fn get_blocks(
@@ -82,9 +81,7 @@ impl LedgerDB {
             }
         }
     }
-}
 
-impl LedgerDB {
     pub(crate) async fn put_block(
         &self,
         block: &Block,
