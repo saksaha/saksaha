@@ -1,3 +1,5 @@
+use envelope_types::EncryptedEphSecret;
+
 use super::EnvelopeDBSchema;
 use crate::db::cfs;
 use crate::EnvelopeError;
@@ -74,14 +76,13 @@ impl EnvelopeDBSchema {
     pub async fn get_aes_key_by_ch_id(
         &self,
         ch_id: &String,
-    ) -> Result<Option<[u8; 32]>, EnvelopeError> {
-        let cf = self.make_cf_handle(&self.db, cfs::AES_KEY)?;
+    ) -> Result<Option<EncryptedEphSecret>, EnvelopeError> {
+        let cf = self.make_cf_handle(&self.db, cfs::SHARED_SECRET_KEY)?;
         match self.db.get_cf(&cf, ch_id)? {
             Some(v) => {
                 let str = String::from_utf8(v)?;
-                let u8_arr = serde_json::from_str(&str)?;
 
-                return Ok(Some(u8_arr));
+                return Ok(Some(str));
             }
             None => {
                 return Ok(None);

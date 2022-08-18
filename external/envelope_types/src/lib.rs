@@ -14,6 +14,7 @@ pub type PublicKey = String;
 pub type ChannelId = String;
 pub type Date = String;
 pub type EncryptedChatMessage = String;
+pub type EncryptedEphSecret = String;
 
 pub type EnvelopeTypeError = Box<dyn std::error::Error + Send + Sync>;
 

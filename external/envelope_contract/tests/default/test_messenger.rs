@@ -4,9 +4,10 @@ use super::{
     INIT_CHANNEL_ID_1, STORAGE_CAP,
 };
 
-use envelope_contract::{
-    request_type::OPEN_CH, Channel, ChannelId, ChatMessage, EnvelopeStorage,
-    GetChListParams, GetMsgParams, OpenChParams, SendMsgParams,
+use envelope_types::{
+    request_type::OPEN_CH, Channel, ChannelId, ChatMessage,
+    EncryptedChatMessage, EnvelopeStorage, GetChListParams, GetMsgParams,
+    OpenChParams, SendMsgParams,
 };
 use sak_contract_std::{CtrCallType, CtrRequest, Storage};
 use sak_vm::{CtrFn, VM};
@@ -52,14 +53,17 @@ fn make_mock_storage(msgs: &Vec<String>) -> Storage {
     //     ],
     // );
 
-    let mut chats = HashMap::<ChannelId, Vec<ChatMessage>>::new();
+    let mut chats = HashMap::<ChannelId, Vec<String>>::new();
+
+    let chat_msg = ChatMessage {
+        date: "test_date".to_string(),
+        user: get_her_pk(),
+        msg: "hello".to_string(),
+    };
+
     chats.insert(
         DUMMY_CHANNEL_ID_1.to_string(),
-        vec![ChatMessage {
-            date: "test_date".to_string(),
-            user: get_her_pk(),
-            msg: "hello".to_string(),
-        }],
+        vec![serde_json::to_string(&chat_msg).unwrap()],
     );
 
     let envelope_storage = EnvelopeStorage {
@@ -287,7 +291,7 @@ async fn test_messenger_send_msg() {
 
         let send_msg_params = SendMsgParams {
             ch_id: String::from(DUMMY_CHANNEL_ID_3),
-            chat,
+            msg: serde_json::to_string(&chat).unwrap(),
         };
 
         let args = serde_json::to_vec(&send_msg_params).unwrap();
@@ -346,15 +350,17 @@ async fn test_messenger_open_channel_me_and_you() {
 
     let mut open_ch_reqs = HashMap::new();
 
-    let mut chats = HashMap::<ChannelId, Vec<ChatMessage>>::new();
+    let mut chats = HashMap::<ChannelId, Vec<EncryptedChatMessage>>::new();
+
+    let chat_msg = ChatMessage {
+        date: "test_date".to_string(),
+        user: your_pk.clone(),
+        msg: "hello".to_string(),
+    };
 
     chats.insert(
         DUMMY_CHANNEL_ID_1.to_string(),
-        vec![ChatMessage {
-            date: "test_date".to_string(),
-            user: your_pk.clone(),
-            msg: "hello".to_string(),
-        }],
+        vec![serde_json::to_string(&chat_msg).unwrap()],
     );
 
     let envelope_storage = EnvelopeStorage {

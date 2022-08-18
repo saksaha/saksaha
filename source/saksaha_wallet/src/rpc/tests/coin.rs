@@ -2,7 +2,6 @@ use super::utils;
 use crate::rpc::routes::v0::{
     GetBalanceRequest, GetBalanceResponse, SendTxRequest, SendTxResponse,
 };
-use envelope_contract::request_type;
 use envelope_term::ENVELOPE_CTR_ADDR;
 use hyper::{Body, Client, Method, Request, Uri};
 use sak_contract_std::{CtrRequest, RequestArgs};
@@ -30,7 +29,7 @@ async fn test_send_tx() {
 
     let body = {
         let ctr_request = CtrRequest {
-            req_type: request_type::SEND_MSG.to_string(),
+            req_type: envelope_types::request_type::SEND_MSG.to_string(),
             args: vec![],
             ctr_call_type: sak_contract_std::CtrCallType::Execute,
         };

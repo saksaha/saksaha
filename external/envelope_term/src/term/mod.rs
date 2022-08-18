@@ -38,7 +38,7 @@ pub fn run(term_args: TermArgs) -> Result<(), EnvelopeError> {
 
                 // Configure log
                 tui_logger::init_logger(LevelFilter::Debug).unwrap();
-                tui_logger::set_default_level(log::LevelFilter::Debug);
+                tui_logger::set_default_level(log::LevelFilter::Info);
 
                 // We need to share the App between thread
                 let app = {

@@ -27,7 +27,7 @@ sak_fs = { path = "../sak_fs" }
 sak_logger = { path = "../sak_logger" }
 sak_p2p_id = { path = "../sak_p2p_id" }
 sak_contract_std = { path = "../sak_contract_std" }
-sak_rpc_interface = { path  ="../sak_rpc_interface" }
+sak_rpc_interface = { path = "../sak_rpc_interface" }
 sak_kv_db = { path = "../sak_kv_db" }
 sak_proofs = { path = "../sak_proofs" }
 sak_utils_net = { path = "../sak_utils_net" }
@@ -35,6 +35,7 @@ sak_utils_net = { path = "../sak_utils_net" }
 [dev-dependencies]
 sak_test_utils = { path = "../sak_test_utils" }
 envelope_term = { path = "../../external/envelope_term" }
+envelope_types = { path = "../../external/envelope_types" }
 envelope_contract = { path = "../../external/envelope_contract" }
 
 [[bin]]

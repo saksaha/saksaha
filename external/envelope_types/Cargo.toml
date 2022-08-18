@@ -8,5 +8,3 @@ edition = "2021"
 [dependencies]
 serde_json = "1.0.59"
 serde = { version = "1.0.130", features = ["derive"] }
-type_extension = { path = "../../source/type_extension" }
-sak_crypto = { path = "../../source/sak_crypto" }
