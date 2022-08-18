@@ -78,6 +78,7 @@ async fn test_dist_ledger_put_a_single_pour_tx() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_dist_ledger_put_and_get_cm_idx() {
+    // TODO This fails at the moment
     sak_test_utils::init_test_log();
 
     TestUtil::init_test(vec!["test"]);
@@ -95,18 +96,7 @@ async fn test_dist_ledger_put_and_get_cm_idx() {
 
         let pour_tc = sak_types::mock_pour_tc_1().unwrap();
 
-        let dummy_tx_hash = dist_ledger
-            .apis
-            .send_tx(pour_tc)
-            // .ledger_db
-            // .batch_put_tx(
-            //     &mut write_batch,
-            //     &dummy_pour_tx,
-            //     // &mut cm_idx_count
-            // )
-            // .expect("pour_tx should be written");
-            .await
-            .unwrap();
+        let dummy_tx_hash = dist_ledger.apis.send_tx(pour_tc).await.unwrap();
 
         tokio::time::sleep(Duration::from_secs(3)).await;
 
