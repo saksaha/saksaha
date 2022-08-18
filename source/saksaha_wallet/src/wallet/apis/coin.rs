@@ -57,7 +57,7 @@ impl Wallet {
         ctr_addr: String,
         ctr_request: CtrRequest,
     ) -> Result<String, WalletError> {
-        self.check_enough_balance(&acc_addr).await?;
+        // self.check_enough_balance(&acc_addr).await?;
 
         let coin_manager_lock = self.get_coin_manager().write().await;
 
@@ -89,6 +89,8 @@ impl Wallet {
             c
         };
 
+        let mut merkle_rt = U8Arr32::default();
+
         let old_coin = {
             let auth_path = {
                 let response = saksaha::get_auth_path(cm_idx).await?;
@@ -96,8 +98,38 @@ impl Wallet {
                 let result =
                     response.result.ok_or(format!("cannot get auth path"))?;
 
-                result.auth_path
+                let auth_path = result.auth_path;
+
+                {
+                    let hasher = Hasher::new();
+
+                    let mut curr = coin.cm.to_bytes();
+
+                    for (idx, merkle_node) in auth_path.iter().enumerate() {
+                        println!("idx: {}, sibling: {:?}", idx, merkle_node);
+
+                        let xl_value;
+                        let xr_value;
+
+                        let is_left: bool = merkle_node.1;
+
+                        if is_left {
+                            xl_value = merkle_node.0;
+                            xr_value = curr;
+                        } else {
+                            xl_value = curr;
+                            xr_value = merkle_node.0;
+                        }
+
+                        curr = hasher.mimc(&xl_value, &xr_value)?.to_bytes();
+                    }
+
+                    merkle_rt = curr;
+                };
+
+                auth_path
             };
+
             self.get_old_coin(coin, auth_path).await?
         };
 
@@ -116,7 +148,7 @@ impl Wallet {
             sn_1,
             cm_1,
             cm_2,
-            U8Array::new_empty_32(), // merkle_rt
+            merkle_rt,
             pi_ser,
             ctr_addr,
             ctr_request,
