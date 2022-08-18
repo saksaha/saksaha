@@ -327,9 +327,9 @@ impl LedgerDB {
 
         // self.batch_put_cm_cm_idx(batch, &tc.cm_2, &(*cm_idx_count + 1))?;
 
-        self.batch_put_cm_idx_cm(batch, &tx.cm_idx_1, &tc.cm_1)?;
+        self.batch_put_cm_idx_1_cm(batch, &tx.cm_idx_1, &tc.cm_1)?;
 
-        self.batch_put_cm_idx_cm(batch, &tx.cm_idx_2, &tc.cm_2)?;
+        self.batch_put_cm_idx_2_cm(batch, &tx.cm_idx_2, &tc.cm_2)?;
 
         self.batch_put_prf_merkle_rt(batch, tx_hash, &tc.merkle_rt)?;
 

@@ -104,45 +104,47 @@ async fn test_dist_ledger_put_and_get_cm_idx() {
         .await
         .unwrap();
 
-    // let cm_1_idx = {
-    //     let cm_1 = dist_ledger
-    //         .apis
-    //         .ledger_db
-    //         .get_cm_1(&mock_tx_hash)
-    //         .unwrap()
-    //         .expect("cm_1 should be obtained");
+    let cm_1_idx = {
+        let cm_1 = dist_ledger
+            .apis
+            .ledger_db
+            .get_cm_1(&mock_tx_hash)
+            .unwrap()
+            .expect("cm_1 should be obtained");
 
-    //     let cm_1_idx = dist_ledger
-    //         .apis
-    //         .ledger_db
-    //         .get_cm_idx_by_cm(&cm_1)
-    //         .expect("cm_1_idx should be obtained")
-    //         .unwrap();
-    //     cm_1_idx
-    // };
+        println!("cm_1 :{:?}", cm_1);
 
-    // let cm_2_idx = {
-    //     let cm_2 = dist_ledger
-    //         .apis
-    //         .ledger_db
-    //         .get_cm_2(&mock_tx_hash)
-    //         .unwrap()
-    //         .expect("cm_2 should be obtained");
+        let cm_1_idx = dist_ledger
+            .apis
+            .ledger_db
+            .get_cm_idx_by_cm(&cm_1)
+            .expect("cm_1_idx should be obtained")
+            .unwrap();
+        cm_1_idx
+    };
 
-    //     let cm_2_idx = dist_ledger
-    //         .apis
-    //         .ledger_db
-    //         .get_cm_idx_by_cm(&cm_2)
-    //         .expect("cm_2_idx should be obtained")
-    //         .unwrap();
-    //     cm_2_idx
-    // };
+    let cm_2_idx = {
+        let cm_2 = dist_ledger
+            .apis
+            .ledger_db
+            .get_cm_2(&mock_tx_hash)
+            .unwrap()
+            .expect("cm_2 should be obtained");
 
-    // println!("cm_1_idx : {:?}, cm_2_idx : {:?}", cm_1_idx, cm_2_idx);
+        let cm_2_idx = dist_ledger
+            .apis
+            .ledger_db
+            .get_cm_idx_by_cm(&cm_2)
+            .expect("cm_2_idx should be obtained")
+            .unwrap();
+        cm_2_idx
+    };
+
+    println!("cm_1_idx : {:?}, cm_2_idx : {:?}", cm_1_idx, cm_2_idx);
     // assert_eq!(init_cm_idx, cm_1_idx);
     // assert_eq!(init_cm_idx + 1, cm_2_idx);
 
-    // println!("[+] test pass");
+    println!("[+] test pass");
 }
 
 #[tokio::test(flavor = "multi_thread")]

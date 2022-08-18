@@ -548,7 +548,7 @@ impl LedgerDB {
         Ok(())
     }
 
-    pub(crate) fn batch_put_cm_idx_cm(
+    pub(crate) fn batch_put_cm_idx_1_cm(
         &self,
         batch: &mut WriteBatch,
         cm_idx: &CmIdx,
@@ -556,7 +556,22 @@ impl LedgerDB {
     ) -> Result<(), LedgerError> {
         let cm_idx = cm_idx.to_be_bytes();
 
-        let cf = self.make_cf_handle(&self.db, cfs::CM)?;
+        let cf = self.make_cf_handle(&self.db, cfs::CM_1)?;
+
+        batch.put_cf(&cf, cm_idx, cm);
+
+        Ok(())
+    }
+
+    pub(crate) fn batch_put_cm_idx_2_cm(
+        &self,
+        batch: &mut WriteBatch,
+        cm_idx: &CmIdx,
+        cm: &Cm,
+    ) -> Result<(), LedgerError> {
+        let cm_idx = cm_idx.to_be_bytes();
+
+        let cf = self.make_cf_handle(&self.db, cfs::CM_2)?;
 
         batch.put_cf(&cf, cm_idx, cm);
 
