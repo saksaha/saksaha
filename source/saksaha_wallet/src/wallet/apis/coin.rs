@@ -83,30 +83,38 @@ impl Wallet {
 
         let cm_idx = {
             println!("coin.cm_idx: {:?}", coin.cm_idx);
-            coin.cm_idx
+
+            let c = coin.cm_idx.ok_or("cannot get cm_idx")?;
+
+            c
         };
 
         // let old_coin = {
         //     let auth_path = {
         //         let response = saksaha::get_auth_path(cm_idx).await?;
 
-        //         let result =
-        //             response.result.ok_or(format!("cannot get auth path"))?;
+        let old_coin = {
+            let auth_path = {
+                let response = saksaha::get_auth_path(cm_idx).await?;
 
-        //         result.auth_path
-        //     };
+                let result =
+                    response.result.ok_or(format!("cannot get auth path"))?;
+
+                result.auth_path
+            };
+        };
 
         //     let old_coin = self.get_old_coin(cm_idx, auth_path).await?;
 
         //     old_coin
         // };
 
-        // let pi = saksaha::generate_proof_1_to_2(
-        //     coin,
-        //     new_coin_1.extract(),
-        //     new_coin_2.extract(),
-        // )
-        // .await?;
+        let pi = saksaha::generate_proof_1_to_2(
+            coin,
+            new_coin_1.extract(),
+            new_coin_2.extract(),
+        )
+        .await?;
 
         // // send
         // let json_response = saksaha::send_tx_pour(

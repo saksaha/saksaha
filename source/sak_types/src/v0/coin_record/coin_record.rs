@@ -41,7 +41,7 @@ impl CoinRecord {
         s: u64,
         addr_sk: u64,
         v: u64,
-        cm_idx: u128,
+        cm_idx: Option<CoinIdx>,
         coin_idx: Option<CoinIdx>,
     ) -> Result<CoinRecord, TypesError> {
         let hasher = Hasher::new();
@@ -78,8 +78,6 @@ impl CoinRecord {
         let k = hasher.comm2_scalar(r, addr_pk, rho);
 
         let cm = hasher.comm2_scalar(s, v, k);
-
-        let cm_idx = None;
 
         let coin = CoinRecord {
             addr_pk,
