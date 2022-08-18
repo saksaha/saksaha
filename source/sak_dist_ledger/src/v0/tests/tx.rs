@@ -76,7 +76,60 @@ async fn test_dist_ledger_put_a_single_pour_tx() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
-async fn test_dist_ledger_put_and_get_cm_idx() {
+async fn test_dist_ledger_tx_mint_put_and_get_cm_idx() {
+    sak_test_utils::init_test_log();
+
+    TestUtil::init_test(vec!["test"]);
+
+    let dist_ledger = utils::make_dist_ledger().await;
+
+    let mint_tc = sak_types::mock_mint_tc_1();
+
+    let mock_tx_hash = mint_tc.get_tx_hash().to_string();
+
+    println!("mock_tx_hash :{:?}", mock_tx_hash);
+
+    let block_candidate = BlockCandidate {
+        validator_sig: "validator_sig".to_string(),
+        tx_candidates: vec![mint_tc],
+        witness_sigs: vec![],
+        created_at: "created_at".to_string(),
+    };
+
+    dist_ledger
+        .apis
+        .write_block(Some(block_candidate))
+        .await
+        .unwrap();
+
+    let cm_1_idx = {
+        let cm_1 = dist_ledger
+            .apis
+            .ledger_db
+            .get_cm_1(&mock_tx_hash)
+            .unwrap()
+            .expect("cm_1 should be obtained");
+
+        println!("cm_1 :{:?}", cm_1);
+
+        let cm_1_idx = dist_ledger
+            .apis
+            .ledger_db
+            .get_cm_idx_by_cm(&cm_1)
+            .unwrap()
+            .expect("cm_1_idx should be obtained");
+
+        cm_1_idx
+    };
+
+    println!("cm_1_idx : {:?}", cm_1_idx);
+    assert_eq!(2, cm_1_idx);
+
+    println!("[+] test pass");
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn test_dist_ledger_tx_pour_put_and_get_cm_idx() {
     sak_test_utils::init_test_log();
 
     TestUtil::init_test(vec!["test"]);
@@ -93,8 +146,6 @@ async fn test_dist_ledger_put_and_get_cm_idx() {
         witness_sigs: vec![],
         created_at: "created_at".to_string(),
     };
-
-    println!("11");
 
     dist_ledger
         .apis
@@ -140,8 +191,8 @@ async fn test_dist_ledger_put_and_get_cm_idx() {
     };
 
     println!("cm_1_idx : {:?}, cm_2_idx : {:?}", cm_1_idx, cm_2_idx);
-    // assert_eq!(init_cm_idx, cm_1_idx);
-    // assert_eq!(init_cm_idx + 1, cm_2_idx);
+    assert_eq!(2, cm_1_idx);
+    assert_eq!(3, cm_2_idx);
 
     println!("[+] test pass");
 }

@@ -534,19 +534,19 @@ impl LedgerDB {
         Ok(())
     }
 
-    pub(crate) fn batch_put_cm(
-        &self,
-        // db: &DB,
-        batch: &mut WriteBatch,
-        key: &TxHash,
-        value: &[u8; 32],
-    ) -> Result<(), LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::CM)?;
+    // pub(crate) fn batch_put_cm(
+    //     &self,
+    //     // db: &DB,
+    //     batch: &mut WriteBatch,
+    //     key: &TxHash,
+    //     value: &[u8; 32],
+    // ) -> Result<(), LedgerError> {
+    //     let cf = self.make_cf_handle(&self.db, cfs::CM)?;
 
-        batch.put_cf(&cf, key, value);
+    //     batch.put_cf(&cf, key, value);
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
     pub(crate) fn batch_put_cm_idx_cm(
         &self,
@@ -557,36 +557,6 @@ impl LedgerDB {
         let cm_idx = cm_idx.to_be_bytes();
 
         let cf = self.make_cf_handle(&self.db, cfs::CM)?;
-
-        batch.put_cf(&cf, cm_idx, cm);
-
-        Ok(())
-    }
-
-    pub(crate) fn batch_put_cm_idx_1_cm(
-        &self,
-        batch: &mut WriteBatch,
-        cm_idx: &CmIdx,
-        cm: &Cm,
-    ) -> Result<(), LedgerError> {
-        let cm_idx = cm_idx.to_be_bytes();
-
-        let cf = self.make_cf_handle(&self.db, cfs::CM_1)?;
-
-        batch.put_cf(&cf, cm_idx, cm);
-
-        Ok(())
-    }
-
-    pub(crate) fn batch_put_cm_idx_2_cm(
-        &self,
-        batch: &mut WriteBatch,
-        cm_idx: &CmIdx,
-        cm: &Cm,
-    ) -> Result<(), LedgerError> {
-        let cm_idx = cm_idx.to_be_bytes();
-
-        let cf = self.make_cf_handle(&self.db, cfs::CM_2)?;
 
         batch.put_cf(&cf, cm_idx, cm);
 
@@ -607,21 +577,6 @@ impl LedgerDB {
 
         Ok(())
     }
-
-    // pub(crate) fn batch_put_cm_cm_idx_2(
-    //     &self,
-    //     batch: &mut WriteBatch,
-    //     cm: &Cm,
-    //     cm_idx: CmIdx,
-    // ) -> Result<(), LedgerError> {
-    //     let cm_idx = cm_idx.to_be_bytes();
-
-    //     let cf = self.make_cf_handle(&self.db, cfs::CM_IDX_2)?;
-
-    //     batch.put_cf(&cf, cm, cm_idx);
-
-    //     Ok(())
-    // }
 
     pub(crate) fn batch_put_v(
         &self,
