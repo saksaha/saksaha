@@ -61,7 +61,7 @@ where
             &mut (app.get_state_mut()).ch_list_state,
         );
 
-        let help = utils::draw_help(app.actions());
+        let help = utils::draw_help(app.get_actions());
         rect.render_widget(help, body_chunks[1]);
     }
 
