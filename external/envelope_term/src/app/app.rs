@@ -6,12 +6,11 @@ use crate::io::IoEvent;
 use crate::EnvelopeError;
 use crate::{app::actions::Action, ENVELOPE_CTR_ADDR};
 use chrono::Local;
-use envelope_types::request_type::SEND_MSG;
-use envelope_types::{
-    request_type::{GET_CH_LIST, OPEN_CH},
-    GetChListParams, GetMsgParams, OpenChParams, SendMsgParams,
+use envelope_contract::{
+    request_type::{GET_CH_LIST, OPEN_CH, SEND_MSG},
+    Channel, ChatMessage, EncryptedChatMessage, GetChListParams, GetMsgParams,
+    OpenChParams, SendMsgParams,
 };
-use envelope_types::{Channel, ChatMessage, EncryptedChatMessage};
 use log::error;
 use sak_contract_std::{CtrCallType, CtrRequest};
 use sak_crypto::{

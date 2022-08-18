@@ -1,4 +1,4 @@
-use envelope_types::{
+use crate::{
     request_type::{GET_CH_LIST, GET_MSG, OPEN_CH, SEND_MSG},
     EnvelopeStorage, GetChListParams, GetMsgParams, OpenChParams,
     SendMsgParams,

@@ -3,8 +3,7 @@ use super::{
     DUMMY_CHANNEL_ID_2, DUMMY_CHANNEL_ID_3, ENVELOPE_CONTRACT,
     INIT_CHANNEL_ID_1, STORAGE_CAP,
 };
-
-use envelope_types::{
+use envelope_contract::{
     request_type::OPEN_CH, Channel, ChannelId, ChatMessage,
     EncryptedChatMessage, EnvelopeStorage, GetChListParams, GetMsgParams,
     OpenChParams, SendMsgParams,
@@ -12,13 +11,6 @@ use envelope_types::{
 use sak_contract_std::{CtrCallType, CtrRequest, Storage};
 use sak_vm::{CtrFn, VM};
 use std::collections::HashMap;
-
-// pub(crate) struct OpenChInput {
-//     eph_pk: String,
-//     ch_id: String,
-//     sign: String,
-//     chat: String,
-// }
 
 fn get_single_message() -> String {
     String::from("Hello! I belong to saksaha")
@@ -35,8 +27,9 @@ fn get_her_pk() -> String {
     String::from("her_pk12345")
 }
 
-fn make_mock_storage(msgs: &Vec<String>) -> Storage {
+fn mock_storage(msgs: &Vec<String>) -> Storage {
     let mut open_ch_reqs = HashMap::new();
+
     // open_ch_reqs.insert(
     //     get_her_pk(),
     //     vec![
@@ -114,7 +107,7 @@ async fn test_messenger_get_msgs() {
 
     let test_dummy_messege = get_multi_messages();
 
-    let messages_state = make_mock_storage(&test_dummy_messege);
+    let messages_state = mock_storage(&test_dummy_messege);
 
     let request = {
         let get_msg_params = GetMsgParams {
@@ -175,7 +168,7 @@ async fn test_messenger_get_ch_list() {
             ctr_call_type: CtrCallType::Query,
         };
 
-        let storage = make_mock_storage(&dummy_messeges);
+        let storage = mock_storage(&dummy_messeges);
 
         (req, storage)
     };
@@ -233,7 +226,7 @@ async fn test_messenger_open_channel() {
             ctr_call_type: CtrCallType::Execute,
         };
 
-        let storage = make_mock_storage(&dummy_messeges);
+        let storage = mock_storage(&dummy_messeges);
 
         (req, storage)
     };
@@ -302,7 +295,7 @@ async fn test_messenger_send_msg() {
             ctr_call_type: CtrCallType::Execute,
         };
 
-        let storage = make_mock_storage(&dummy_messeges);
+        let storage = mock_storage(&dummy_messeges);
 
         (req, storage)
     };

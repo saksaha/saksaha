@@ -1,8 +1,7 @@
-use envelope_types::EncryptedEphSecret;
-
 use super::EnvelopeDBSchema;
 use crate::db::cfs;
 use crate::EnvelopeError;
+use envelope_contract::EncryptedEphSecret;
 
 impl EnvelopeDBSchema {
     pub async fn get_my_sk_by_user_id(

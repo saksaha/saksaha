@@ -1,10 +1,9 @@
-use envelope_types::{Channel, ChatMessage};
-use tui::widgets::ListState;
-
 use crate::db::USER_1;
 use crate::EnvelopeError;
 use crate::{io::InputMode, term::get_balance_from_wallet};
+use envelope_contract::{Channel, ChatMessage};
 use log::{info, warn};
+use tui::widgets::ListState;
 
 #[repr(u8)]
 #[derive(Clone, Debug)]

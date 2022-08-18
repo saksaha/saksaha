@@ -34,8 +34,7 @@ members = [
   # internals
   "internals/ci",
 
-  # external
+  # externals
   "external/envelope_term",
   "external/envelope_contract",
-  "external/envelope_types",
 ]
