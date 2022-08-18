@@ -49,6 +49,15 @@ impl Tx {
     }
 }
 
+impl std::fmt::Display for Tx {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Tx::Pour(t) => write!(f, "{}", t),
+            Tx::Mint(t) => write!(f, "{}", t),
+        }
+    }
+}
+
 pub struct ContractCallData {
     pub fn_name: String,
     pub args: Vec<Vec<u8>>,

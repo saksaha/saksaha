@@ -39,6 +39,16 @@ impl MintTx {
     }
 }
 
+impl std::fmt::Display for MintTx {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // match self {
+        //     Tx::Pour(t) => write!(f, "{}", t),
+        //     Tx::Mint(t) => write!(f, "{}", t),
+        // }
+        write!(f, "")
+    }
+}
+
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct MintTxCandidate {
     //
