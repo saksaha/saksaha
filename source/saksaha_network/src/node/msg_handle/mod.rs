@@ -11,8 +11,8 @@ use futures::{stream::SplitSink, SinkExt};
 use log::{debug, info, warn};
 use sak_p2p_peertable::Peer;
 use sak_p2p_transport::{
-    BlockHashSyncMsg, BlockSynMsg, Msg, SendReceipt, TxHashSyncMsg, TxSynMsg,
-    UpgradedConn, UpgradedP2PCodec,
+    BlockHashSyncMsg, BlockSynMsg, ErrorMsg, Msg, SendReceipt, TxHashSyncMsg,
+    TxSynMsg, UpgradedConn, UpgradedP2PCodec,
 };
 use sak_task_queue::TaskQueue;
 use std::sync::Arc;
@@ -23,28 +23,28 @@ pub(in crate::node) use tx_hash::*;
 pub(in crate::node) async fn handle_msg<'a>(
     msg: Msg,
     machine: &Arc<Machine>,
-    conn: RwLockWriteGuard<'_, UpgradedConn>,
+    conn_lock: RwLockWriteGuard<'_, UpgradedConn>,
     task_queue: &Arc<TaskQueue<NodeTask>>,
     peer: &Arc<Peer>,
 ) -> Result<(), SaksahaError> {
-    let _: SendReceipt = match msg {
+    let res = match msg {
         Msg::TxHashSyn(tx_hash_syn) => {
             tx_hash::recv_tx_hash_syn(
                 tx_hash_syn,
                 machine,
-                conn,
+                conn_lock,
                 task_queue,
                 peer,
             )
-            .await?
+            .await
         }
-        Msg::TxSyn(tx_syn) => tx::recv_tx_syn(tx_syn, machine, conn).await?,
+        Msg::TxSyn(tx_syn) => tx::recv_tx_syn(tx_syn, machine, conn_lock).await,
         Msg::BlockHashSyn(block_hash_syn) => {
-            block_hash::recv_block_hash_syn(block_hash_syn, machine, conn)
-                .await?
+            block_hash::recv_block_hash_syn(block_hash_syn, machine, conn_lock)
+                .await
         }
         Msg::BlockSyn(block_syn_msg) => {
-            block::recv_block_syn(block_syn_msg, machine, conn).await?
+            block::recv_block_syn(block_syn_msg, machine, conn_lock).await
         }
         _ => {
             return Err(format!(
@@ -54,6 +54,17 @@ pub(in crate::node) async fn handle_msg<'a>(
             .into());
         }
     };
+
+    if let Err(err) = res {
+        warn!(
+            "Handling msg failed, err: {}, sending the peer the ack msg",
+            err
+        );
+
+        conn_lock.send(Msg::Error(ErrorMsg {
+            error: err.to_string(),
+        }));
+    }
 
     Ok(())
 }

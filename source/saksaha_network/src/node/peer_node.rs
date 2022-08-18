@@ -89,7 +89,8 @@ impl PeerNode {
                         Err(err) => {
                             warn!("Error retrieving msg, err: {}", err);
 
-                            continue;
+                            return Err(format!("Err: {}", err).into());
+                            // continue;
                         }
                     };
 
