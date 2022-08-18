@@ -10,8 +10,6 @@ use log::{error, info, warn};
 use std::{sync::Arc, time::Duration};
 use tokio::net::TcpListener;
 
-const RPC_PORT: u16 = 36612;
-
 pub(crate) struct RPC {
     rpc_port: u16,
     rpc_socket: TcpListener,
@@ -24,9 +22,9 @@ impl RPC {
         wallet: Arc<Wallet>,
     ) -> Result<RPC, WalletError> {
         let rpc_port = rpc_port.unwrap_or_else(|| {
-            warn!("rpc_port is not provided, defaults to {}", RPC_PORT);
+            warn!("rpc_port is not provided, defaults to {}", 36612);
 
-            RPC_PORT
+            36612
         });
 
         let (rpc_socket, socket_addr) =
