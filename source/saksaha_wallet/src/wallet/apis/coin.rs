@@ -112,7 +112,6 @@ impl Wallet {
 
         println!("[!] pi serialized, len: {}, {:?}", pi_ser.len(), pi_ser);
 
-        // // send
         let json_response = saksaha::send_tx_pour(
             sn_1,
             cm_1,
