@@ -76,23 +76,27 @@ pub(in crate::node) async fn recv_block_syn(
     machine: &Arc<Machine>,
     mut conn_lock: RwLockWriteGuard<'_, UpgradedConn>,
 ) -> SendReceipt {
+    println!("33");
     let wrapped = || async {
-        println!("33");
-        let blocks = block_syn_msg.blocks;
-
-        let latest_block_height = machine
-            .blockchain
-            .dist_ledger
-            .apis
-            .get_latest_block_height()?
-            .unwrap_or(0);
+        let mut blocks = block_syn_msg.blocks;
+        blocks.sort_by(|a, b| a.0.block_height.cmp(&b.0.block_height));
 
         for (block, txs) in blocks {
+            let latest_block_height = machine
+                .blockchain
+                .dist_ledger
+                .apis
+                .get_latest_block_height()?
+                .unwrap_or(0);
+
             if block.block_height != (latest_block_height + 1) {
                 warn!(
-                    "received not continuous block height, block_height: {}",
+                    "received not continuous block height, block_height: {}, received : {}",
+                    latest_block_height,
                     block.block_height
                 );
+
+                continue;
             }
 
             machine
