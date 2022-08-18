@@ -91,11 +91,13 @@ impl LedgerDB {
         // ledger_cm_count: u128,
         // updated_ledger_cm_count: u128,
     ) -> Result<String, LedgerError> {
+        let txs_string: String = txs.iter().map(|t| t.to_string()).collect();
+
         println!(
-            "block to write, block: {:?}, \ntxs: {:?},\n\
+            "block to write, block: {:?}, \ntxs: {},\n\
             ctr_state_updates: {:?},\n merkle_updates: {:?}",
             block,
-            txs,
+            txs_string,
             ctr_state_updates,
             merkle_updates,
             // updated_ledger_cm_count,

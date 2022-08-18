@@ -42,11 +42,11 @@ impl PourTx {
 
 impl std::fmt::Display for PourTx {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        // match self {
-        //     Tx::Pour(t) => write!(f, "{}", t),
-        //     Tx::Mint(t) => write!(f, "{}", t),
-        // }
-        write!(f, "")
+        write!(
+            f,
+            "PourTx [cm_idx_1: {}, cm_idx_2: {}, tx_candidate: {}]",
+            self.cm_idx_1, self.cm_idx_2, self.tx_candidate,
+        )
     }
 }
 
@@ -157,5 +157,29 @@ impl PourTxCandidate {
 
     pub fn get_cms(&self) -> Vec<Cm> {
         vec![self.cm_1, self.cm_2]
+    }
+}
+
+impl std::fmt::Display for PourTxCandidate {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let data = if self.data.len() > 12 {
+            &self.data[..12]
+        } else {
+            &self.data[..]
+        };
+
+        write!(
+            f,
+            "PourTx [created_at: {}, data: {:?}, author_sig: {}, ctr_addr: {},\
+            cm_1: {:?}, cm_2: {:?}, sn_1: {:?}, merkle_rt: {:?}]",
+            self.created_at,
+            data,
+            self.author_sig,
+            self.ctr_addr,
+            self.cm_1,
+            self.cm_2,
+            self.sn_1,
+            self.merkle_rt,
+        )
     }
 }

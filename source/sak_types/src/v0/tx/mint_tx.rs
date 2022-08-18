@@ -41,11 +41,11 @@ impl MintTx {
 
 impl std::fmt::Display for MintTx {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        // match self {
-        //     Tx::Pour(t) => write!(f, "{}", t),
-        //     Tx::Mint(t) => write!(f, "{}", t),
-        // }
-        write!(f, "")
+        write!(
+            f,
+            "MintTx[cm_idx_1: {}, tx_candidate:{}]",
+            self.cm_idx_1, self.tx_candidate,
+        )
     }
 }
 
@@ -140,5 +140,29 @@ impl MintTxCandidate {
             self, // tx_height,
             cm_idx_1,
         ))
+    }
+}
+
+impl std::fmt::Display for MintTxCandidate {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let data = if self.data.len() > 12 {
+            &self.data[..12]
+        } else {
+            &self.data[..]
+        };
+
+        write!(
+            f,
+            "MintTx[created_at: {}, data: {:?}, author_sig: {}, ctr_addr: {},\
+            cm: {:?}, v: {:?}, k: {:?}, s: {:?}]",
+            self.created_at,
+            data,
+            self.author_sig,
+            self.ctr_addr,
+            self.cm,
+            self.v,
+            self.k,
+            self.s,
+        )
     }
 }

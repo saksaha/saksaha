@@ -77,7 +77,6 @@ async fn test_dist_ledger_put_a_single_pour_tx() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_dist_ledger_put_and_get_cm_idx() {
-    // TODO This fails at the moment
     sak_test_utils::init_test_log();
 
     TestUtil::init_test(vec!["test"]);
