@@ -18,16 +18,19 @@ impl Encoder<Msg> for UpgradedP2PCodec {
         item: Msg,
         dst: &mut BytesMut,
     ) -> Result<(), TrptError> {
-        println!("dst: {:?}", dst);
+        let msg = item.to_string();
+
         enc::encode_into_frame(item, dst)?;
 
-        // let t = dst.to_vec();
-        println!("after dst: {:?}", dst);
+        println!(
+            "\nencode(): before enc, msg: {}, dst: {:?}",
+            msg,
+            dst.to_vec()
+        );
 
-        // self.cipher.try_apply_keystream(dst).unwrap();
-        // self.cipher.apply_keystream(dst);
         self.enc_cipher.apply_keystream(dst);
-        println!("cipher dst: {:?}", dst);
+
+        println!("\nencode(): _after enc ({}): {:?}", dst.len(), dst.to_vec());
 
         // println!(
         //     "\n666 upgraded encoded!!, \noriginal buf: {:?}\nbuf: {:?}",
@@ -48,9 +51,28 @@ impl Decoder for UpgradedP2PCodec {
         &mut self,
         src: &mut BytesMut,
     ) -> Result<Option<Self::Item>, TrptError> {
-        // let t = src.to_vec();
+        println!("\ndecode(): before dec: {:?}", src.to_vec());
+
+        if src.len() == 0 {
+            return Ok(None);
+        }
+
+        let curr_pos: u128 = match self.dec_cipher.try_current_pos() {
+            Ok(p) => p,
+            Err(err) => {
+                return Err(format!(
+                    "Failed to get position of cipher, err: {}",
+                    err
+                )
+                .into())
+            }
+        };
+
+        println!("\ncurr_pos: {}", curr_pos);
 
         self.dec_cipher.apply_keystream(src);
+
+        println!("\ndecode(): _after dec ({}): {:?}", src.len(), src.to_vec());
 
         // println!(
         //     "\n1313 upgraded decoded, id: {}\noriginal buf: {:?}\nsrc: {:?}",

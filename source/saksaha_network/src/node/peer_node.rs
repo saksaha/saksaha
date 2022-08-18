@@ -62,7 +62,7 @@ impl PeerNode {
                 .blockchain
                 .dist_ledger
                 .apis
-                .get_entire_block_info_list()
+                .get_all_blocks()
                 .await
             {
                 if new_blocks.len() > 1 {
