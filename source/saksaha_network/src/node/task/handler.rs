@@ -13,6 +13,7 @@ pub(in crate::node) async fn handle_task<'a>(
     machine: &Arc<Machine>,
 ) {
     let task_type = task.to_string();
+    println!("task_type: {}", task_type);
 
     let res = match task {
         NodeTask::SendTxHashSyn { tx_hashes } => {
