@@ -15,7 +15,7 @@ impl BlockSynMsg {
         let block_count = parse.next_int()?;
 
         let mut blocks = Vec::with_capacity(block_count as usize);
-        let mut block_cm_count = 0;
+        // let mut block_cm_count = 0;
 
         for _ in 0..block_count {
             let validator_sig = {
@@ -81,7 +81,8 @@ impl BlockSynMsg {
                         }
                     }
                 };
-                block_cm_count += tx.get_cm_count();
+
+                // block_cm_count += tx.get_cm_count();
 
                 tx_hashes.push(tx.get_tx_hash().to_owned());
                 txs.push(tx);
@@ -96,7 +97,7 @@ impl BlockSynMsg {
                 created_at,
                 block_height,
                 merkle_rt,
-                block_cm_count as u128,
+                // block_cm_count as u128,
             );
 
             blocks.push((block, txs));

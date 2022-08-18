@@ -1,8 +1,7 @@
-use std::time::Duration;
-
 use super::{test_util::TestUtil, utils};
 use sak_kv_db::WriteBatch;
 use sak_types::{BlockCandidate, TxCandidate};
+use std::time::Duration;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_put_and_get_transaction() {
@@ -118,8 +117,9 @@ async fn test_dist_ledger_put_and_get_cm_idx() {
             .apis
             .ledger_db
             .get_cm_idx_by_cm(&cm_1)
-            .expect("cm_1_idx should be obtained")
-            .unwrap();
+            .unwrap()
+            .expect("cm_1_idx should be obtained");
+
         cm_1_idx
     };
 

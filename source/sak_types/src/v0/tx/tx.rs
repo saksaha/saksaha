@@ -1,5 +1,5 @@
 use super::CmIdx;
-use crate::{MintTxCandidate, PourTxCandidate};
+use crate::{MintTxCandidate, PourTxCandidate, TxCandidate};
 use serde::{Deserialize, Serialize};
 
 pub const WASM_MAGIC_NUMBER: [u8; 4] = [0x00, 0x61, 0x73, 0x6d];
@@ -31,6 +31,13 @@ impl Tx {
             Tx::Pour(t) => [&t.tx_candidate.cm_1, &t.tx_candidate.cm_2].len(),
         }
     }
+
+    pub fn downgrade(self) -> TxCandidate {
+        match self {
+            Tx::Mint(t) => TxCandidate::Mint(t.downgrade()),
+            Tx::Pour(t) => TxCandidate::Pour(t.downgrade()),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -54,6 +61,10 @@ impl MintTx {
             // tx_height,
             cm_idx_1,
         }
+    }
+
+    pub fn downgrade(self) -> MintTxCandidate {
+        self.tx_candidate
     }
 }
 
@@ -79,6 +90,10 @@ impl PourTx {
             cm_idx_2,
             // tx_height,
         }
+    }
+
+    pub fn downgrade(self) -> PourTxCandidate {
+        self.tx_candidate
     }
 }
 

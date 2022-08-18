@@ -192,7 +192,7 @@ async fn test_sequential_sync_block_if_block_is_correct() {
             format!("{}", i),
             i as u128,
             [0; 32],
-            i as u128,
+            // i as u128,
         );
 
         match dist_ledger.apis.sync_block(block, txs).await {

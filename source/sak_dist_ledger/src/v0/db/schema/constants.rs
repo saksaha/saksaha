@@ -47,9 +47,9 @@ pub(crate) mod cfs {
 
     pub const CM_2: &str = "cm_2";
 
-    pub const BLOCK_CM_COUNT: &str = "block_cm_count";
+    // pub const BLOCK_CM_COUNT: &str = "block_cm_count";
 
-    pub const LEDGER_CM_COUNT: &str = "ledger_cm_count";
+    // pub const LEDGER_CM_COUNT: &str = "ledger_cm_count";
 
     pub const BLOCK_MERKLE_RT: &str = "block_merkle_rt";
 

@@ -54,23 +54,23 @@ impl LedgerDB {
         }
     }
 
-    pub(crate) fn get_ledger_cm_count(
-        &self,
-        // db: &DB,
-    ) -> Result<Option<u128>, LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::LEDGER_CM_COUNT)?;
+    // pub(crate) fn get_ledger_cm_count(
+    //     &self,
+    //     // db: &DB,
+    // ) -> Result<Option<u128>, LedgerError> {
+    //     let cf = self.make_cf_handle(&self.db, cfs::LEDGER_CM_COUNT)?;
 
-        match self.db.get_cf(&cf, keys::SINGLETON)? {
-            Some(v) => {
-                let val = type_extension::convert_u8_slice_into_u128(&v)?;
+    //     match self.db.get_cf(&cf, keys::SINGLETON)? {
+    //         Some(v) => {
+    //             let val = type_extension::convert_u8_slice_into_u128(&v)?;
 
-                return Ok(Some(val));
-            }
-            None => {
-                return Ok(None);
-            }
-        }
-    }
+    //             return Ok(Some(val));
+    //         }
+    //         None => {
+    //             return Ok(None);
+    //         }
+    //     }
+    // }
 
     pub(crate) fn get_latest_block_height(
         &self,
@@ -106,37 +106,5 @@ impl LedgerDB {
         let height = type_extension::convert_u8_slice_into_u128(&height_bytes)?;
 
         Ok(Some(height))
-    }
-}
-
-// writer
-impl LedgerDB {
-    pub(crate) fn batch_put_ledger_cm_count(
-        &self,
-        // db: &DB,
-        batch: &mut WriteBatch,
-        cm_count: u128,
-    ) -> Result<(), LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::LEDGER_CM_COUNT)?;
-
-        let v = cm_count.to_be_bytes();
-
-        batch.put_cf(&cf, keys::SINGLETON, &v);
-
-        Ok(())
-    }
-
-    pub(crate) fn batch_put_merkle_node(
-        &self,
-        // db: &DB,
-        batch: &mut WriteBatch,
-        merkle_node_loc: &MerkleNodeLoc,
-        node_val: &[u8; 32],
-    ) -> Result<(), LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::MERKLE_NODE)?;
-
-        batch.put_cf(&cf, merkle_node_loc, node_val);
-
-        Ok(())
     }
 }

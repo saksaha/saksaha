@@ -36,7 +36,7 @@ impl LedgerDB {
 
         let block_merkle_rt = self.get_block_merkle_rt(&block_hash)?;
 
-        let block_cm_count = self.get_block_cm_count(&block_hash)?;
+        // let block_cm_count = self.get_block_cm_count(&block_hash)?;
 
         match (
             validator_sig,
@@ -45,7 +45,7 @@ impl LedgerDB {
             created_at,
             block_height,
             block_merkle_rt,
-            block_cm_count,
+            // block_cm_count,
         ) {
             (
                 Some(vs),
@@ -54,12 +54,23 @@ impl LedgerDB {
                 Some(ca),
                 Some(bh),
                 Some(mr),
-                Some(bcc),
+                // Some(bcc),
             ) => {
-                let b = Block::new(vs, th, ws, ca, bh, mr, bcc);
+                let b = Block::new(
+                    vs, th, ws, ca, bh, mr,
+                    // bcc
+                );
                 return Ok(Some(b));
             }
-            (None, None, None, None, None, None, None) => {
+            (
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                // None
+            ) => {
                 return Ok(None);
             }
             _ => {
@@ -185,24 +196,24 @@ impl LedgerDB {
         }
     }
 
-    pub(crate) fn get_block_cm_count(
-        &self,
-        // db: &DB,
-        key: &BlockHash,
-    ) -> Result<Option<u128>, LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::BLOCK_CM_COUNT)?;
+    // pub(crate) fn get_block_cm_count(
+    //     &self,
+    //     // db: &DB,
+    //     key: &BlockHash,
+    // ) -> Result<Option<u128>, LedgerError> {
+    //     let cf = self.make_cf_handle(&self.db, cfs::BLOCK_CM_COUNT)?;
 
-        match self.db.get_cf(&cf, key)? {
-            Some(v) => {
-                let val = type_extension::convert_u8_slice_into_u128(&v)?;
+    //     match self.db.get_cf(&cf, key)? {
+    //         Some(v) => {
+    //             let val = type_extension::convert_u8_slice_into_u128(&v)?;
 
-                return Ok(Some(val));
-            }
-            None => {
-                return Ok(None);
-            }
-        }
-    }
+    //             return Ok(Some(val));
+    //         }
+    //         None => {
+    //             return Ok(None);
+    //         }
+    //     }
+    // }
 
     pub(crate) fn get_block_merkle_rt(
         &self,
@@ -264,8 +275,8 @@ impl LedgerDB {
         txs: &Vec<Tx>,
         ctr_state_updates: &CtrStateUpdate,
         merkle_updates: &MerkleUpdate,
-        ledger_cm_count: u128,
-        updated_ledger_cm_count: u128,
+        // ledger_cm_count: u128,
+        // updated_ledger_cm_count: u128,
     ) -> Result<String, LedgerError> {
         // println!(
         //     "block to write, block: {:?}, \ntxs: {:?},\n\
@@ -304,13 +315,13 @@ impl LedgerDB {
 
         self.batch_put_block_hash(&mut batch, &block.block_height, block_hash)?;
 
-        self.batch_put_block_cm_count(
-            &mut batch,
-            block_hash,
-            block.block_cm_count,
-        )?;
+        // self.batch_put_block_cm_count(
+        //     &mut batch,
+        //     block_hash,
+        //     block.block_cm_count,
+        // )?;
 
-        self.batch_put_ledger_cm_count(&mut batch, updated_ledger_cm_count)?;
+        // self.batch_put_ledger_cm_count(&mut batch, updated_ledger_cm_count)?;
 
         self.batch_put_block_height(
             &mut batch,
@@ -324,7 +335,7 @@ impl LedgerDB {
             &block.merkle_rt,
         )?;
 
-        let mut cm_idx_count: u128 = ledger_cm_count;
+        // let mut cm_idx_count: u128 = ledger_cm_count;
 
         for tx in txs {
             self.batch_put_tx(
@@ -405,21 +416,21 @@ impl LedgerDB {
         Ok(())
     }
 
-    pub(crate) fn batch_put_block_cm_count(
-        &self,
-        // db: &DB,
-        batch: &mut WriteBatch,
-        block_hash: &BlockHash,
-        cm_count: u128,
-    ) -> Result<(), LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::BLOCK_CM_COUNT)?;
+    // pub(crate) fn batch_put_block_cm_count(
+    //     &self,
+    //     // db: &DB,
+    //     batch: &mut WriteBatch,
+    //     block_hash: &BlockHash,
+    //     cm_count: u128,
+    // ) -> Result<(), LedgerError> {
+    //     let cf = self.make_cf_handle(&self.db, cfs::BLOCK_CM_COUNT)?;
 
-        let v = cm_count.to_be_bytes();
+    //     let v = cm_count.to_be_bytes();
 
-        batch.put_cf(&cf, block_hash, &v);
+    //     batch.put_cf(&cf, block_hash, &v);
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
     pub(crate) fn batch_put_block_hash(
         &self,

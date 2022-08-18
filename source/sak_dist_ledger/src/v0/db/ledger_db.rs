@@ -114,14 +114,14 @@ impl LedgerDB {
             ColumnFamilyDescriptor::new(cfs::BLOCK_HEIGHT, Options::default()),
             ColumnFamilyDescriptor::new(cfs::BLOCK_HASH, Options::default()),
             ColumnFamilyDescriptor::new(cfs::CTR_STATE, Options::default()),
-            ColumnFamilyDescriptor::new(
-                cfs::BLOCK_CM_COUNT,
-                Options::default(),
-            ),
-            ColumnFamilyDescriptor::new(
-                cfs::LEDGER_CM_COUNT,
-                Options::default(),
-            ),
+            // ColumnFamilyDescriptor::new(
+            //     cfs::BLOCK_CM_COUNT,
+            //     Options::default(),
+            // ),
+            // ColumnFamilyDescriptor::new(
+            //     cfs::LEDGER_CM_COUNT,
+            //     Options::default(),
+            // ),
         ]
     }
 
