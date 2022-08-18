@@ -11,7 +11,12 @@ pub struct ErrorMsg {
 
 impl ErrorMsg {
     pub(crate) fn from_parse(parse: &mut Parse) -> Result<ErrorMsg, TrptError> {
-        let msg = ErrorMsg {};
+        let error = {
+            let b = parse.next_bytes()?;
+            std::str::from_utf8(&b)?.to_string()
+        };
+
+        let msg = ErrorMsg { error };
 
         Ok(msg)
     }
@@ -20,6 +25,8 @@ impl ErrorMsg {
         let mut frame = Frame::array();
 
         frame.push_bulk(Bytes::from(MsgType::BLOCK_ACK));
+
+        frame.push_bulk(Bytes::from(self.error));
 
         frame
     }

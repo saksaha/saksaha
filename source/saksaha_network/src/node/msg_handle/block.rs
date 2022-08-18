@@ -1,7 +1,8 @@
 use crate::{machine::Machine, node::SaksahaNodeError};
 use log::{debug, info, warn};
 use sak_p2p_transport::{
-    BlockAckMsg, BlockSynMsg, Msg, RecvReceipt, SendReceipt, UpgradedConn,
+    BlockAckMsg, BlockSynMsg, ErrorMsg, Msg, RecvReceipt, SendReceipt,
+    UpgradedConn,
 };
 use sak_types::{BlockHash, BlockHeight};
 use std::sync::Arc;
@@ -55,6 +56,11 @@ pub(in crate::node) async fn send_block_syn(
 
     let _block_ack_msg = match msg {
         Msg::BlockAck(m) => m,
+        Msg::Error(m) => {
+            return Err(
+                format!("Receiver returned error msg, msg: {:?}", m).into()
+            )
+        }
         _ => {
             return Err(
                 format!("Only block ack should arrive at this point").into()
@@ -68,38 +74,53 @@ pub(in crate::node) async fn send_block_syn(
 pub(in crate::node) async fn recv_block_syn(
     block_syn_msg: BlockSynMsg,
     machine: &Arc<Machine>,
-    mut conn: RwLockWriteGuard<'_, UpgradedConn>,
-) -> Result<SendReceipt, SaksahaNodeError> {
-    println!("33");
-    let blocks = block_syn_msg.blocks;
+    mut conn_lock: RwLockWriteGuard<'_, UpgradedConn>,
+) -> SendReceipt {
+    let wrapped = || async {
+        println!("33");
+        let blocks = block_syn_msg.blocks;
 
-    let latest_block_height = machine
-        .blockchain
-        .dist_ledger
-        .apis
-        .get_latest_block_height()?
-        .unwrap_or(0);
-
-    for (block, txs) in blocks {
-        if block.block_height != (latest_block_height + 1) {
-            warn!(
-                "received not continuous block height, block_height: {}",
-                block.block_height
-            );
-        }
-
-        machine
+        let latest_block_height = machine
             .blockchain
             .dist_ledger
             .apis
-            .sync_block(block, txs)
-            .await?;
-    }
-    println!("44");
+            .get_latest_block_height()?
+            .unwrap_or(0);
 
-    let block_ack_msg = Msg::BlockAck(BlockAckMsg {});
+        for (block, txs) in blocks {
+            if block.block_height != (latest_block_height + 1) {
+                warn!(
+                    "received not continuous block height, block_height: {}",
+                    block.block_height
+                );
+            }
 
-    let receipt = conn.send(block_ack_msg).await;
+            machine
+                .blockchain
+                .dist_ledger
+                .apis
+                .sync_block(block, txs)
+                .await?;
+        }
+        println!("44");
 
-    Ok(receipt)
+        let block_ack_msg = Msg::BlockAck(BlockAckMsg {});
+
+        let receipt = conn_lock.send(block_ack_msg).await;
+
+        Ok::<_, SaksahaNodeError>(receipt)
+    };
+
+    let receipt = match wrapped().await {
+        Ok(r) => r,
+        Err(err) => {
+            conn_lock
+                .send(Msg::Error(ErrorMsg {
+                    error: err.to_string(),
+                }))
+                .await
+        }
+    };
+
+    receipt
 }
