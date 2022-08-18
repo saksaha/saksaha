@@ -21,7 +21,7 @@ pub(in crate::node) async fn send_tx_syn<'a>(
 
     let tx_syn_msg = Msg::TxSyn(TxSynMsg { tx_candidates });
 
-    conn_lock.send(tx_syn_msg).await?;
+    conn_lock.send(tx_syn_msg).await;
 
     let msg_wrap = conn_lock.next_msg().await?;
 
@@ -57,7 +57,7 @@ pub(in crate::node) async fn recv_tx_syn(
 
     let tx_ack_msg = Msg::TxAck(TxAckMsg {});
 
-    let receipt = conn.send(tx_ack_msg).await?;
+    let receipt = conn.send(tx_ack_msg).await;
 
     Ok(receipt)
 }

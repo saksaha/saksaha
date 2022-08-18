@@ -19,7 +19,7 @@ pub(in crate::node) async fn send_tx_hash_syn(
 ) -> Result<RecvReceipt, SaksahaNodeError> {
     let _receipt = conn_lock
         .send(Msg::TxHashSyn(TxHashSyncMsg { tx_hashes }))
-        .await?;
+        .await;
 
     let msg_wrap = conn_lock.next_msg().await?;
 
@@ -67,7 +67,7 @@ pub(in crate::node) async fn recv_tx_hash_syn(
         .send(Msg::TxHashAck(TxHashSyncMsg {
             tx_hashes: txs_to_request,
         }))
-        .await?;
+        .await;
 
     Ok(receipt)
 }

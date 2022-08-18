@@ -32,6 +32,7 @@ pub(super) fn encode_into_frame(
             (sync_block.into_frame(), MsgType::BLOCK_SYN)
         }
         Msg::BlockAck(m) => (m.into_frame(), MsgType::BLOCK_ACK),
+        Msg::Error(error) => (error.into_frame(), MsgType::ERROR),
     };
 
     match frame_io::write_frame(dst, &frame) {

@@ -3,10 +3,6 @@ use futures::{SinkExt, StreamExt};
 use tokio::net::TcpStream;
 use tokio_util::codec::Framed;
 
-pub struct SendReceipt {
-    __created_by_conn: bool,
-}
-
 pub enum ConnState {
     Sent,
     Neutral,
@@ -36,11 +32,13 @@ impl UpgradedConn {
         upgraded_conn
     }
 
-    pub async fn send(&mut self, msg: Msg) -> Result<SendReceipt, TrptError> {
+    pub async fn send(&mut self, msg: Msg) -> SendReceipt {
         if let ConnState::Sent = self.conn_state {
-            return Err(
-                format!("This is not a turn for sending message").into()
-            );
+            return SendReceipt {
+                error: Some(
+                    format!("This is not a turn for sending message").into(),
+                ),
+            };
         }
 
         let msg_type = msg.to_string();
@@ -50,16 +48,16 @@ impl UpgradedConn {
         match self.socket.send(msg).await {
             Ok(_) => (),
             Err(err) => {
-                return Err(format!(
-                    "Sending msg: {} failed, conn_id: {}, err: {}",
-                    msg_type, self.conn_id, err
-                )
-                .into());
+                return SendReceipt {
+                    error: Some(
+                        format!(
+                            "Sending msg: {} failed, conn_id: {}, err: {}",
+                            msg_type, self.conn_id, err
+                        )
+                        .into(),
+                    ),
+                };
             }
-        };
-
-        let receipt = SendReceipt {
-            __created_by_conn: true,
         };
 
         match self.conn_state {
@@ -77,7 +75,7 @@ impl UpgradedConn {
             }
         }
 
-        Ok(receipt)
+        SendReceipt { error: None }
     }
 
     pub async fn next_msg(&mut self) -> Result<MsgWrap, TrptError> {
@@ -109,5 +107,18 @@ impl UpgradedConn {
         let msg_wrap = MsgWrap::new(msg);
 
         Ok(msg_wrap)
+    }
+}
+
+pub struct SendReceipt {
+    error: Option<TrptError>,
+}
+
+impl SendReceipt {
+    pub fn ok_or(self) -> Result<(), TrptError> {
+        match self.error {
+            Some(err) => Err(err),
+            None => Ok(()),
+        }
     }
 }

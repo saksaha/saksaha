@@ -20,7 +20,7 @@ pub(in crate::node) async fn send_block_hash_syn(
         .send(Msg::BlockHashSyn(BlockHashSyncMsg {
             new_blocks: new_blocks.clone(),
         }))
-        .await?;
+        .await;
 
     let msg_wrap = conn_lock.next_msg().await?;
 
@@ -83,7 +83,7 @@ pub(in crate::node) async fn recv_block_hash_syn(
         .send(Msg::BlockHashAck(BlockHashSyncMsg {
             new_blocks: blocks_to_req,
         }))
-        .await?;
+        .await;
 
     Ok(receipt)
 }

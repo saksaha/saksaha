@@ -41,9 +41,11 @@ pub(in crate::node) async fn send_block_syn(
         .send(Msg::BlockSyn(BlockSynMsg {
             blocks: blocks_to_send,
         }))
-        .await?;
+        .await;
 
+    println!("11");
     let msg_wrap = conn_lock.next_msg().await?;
+    println!("22");
 
     let receipt = msg_wrap.get_receipt();
 
@@ -68,6 +70,7 @@ pub(in crate::node) async fn recv_block_syn(
     machine: &Arc<Machine>,
     mut conn: RwLockWriteGuard<'_, UpgradedConn>,
 ) -> Result<SendReceipt, SaksahaNodeError> {
+    println!("33");
     let blocks = block_syn_msg.blocks;
 
     let latest_block_height = machine
@@ -79,7 +82,10 @@ pub(in crate::node) async fn recv_block_syn(
 
     for (block, txs) in blocks {
         if block.block_height != (latest_block_height + 1) {
-            return Err("received not continuous block height".into());
+            warn!(
+                "received not continuous block height, block_height: {}",
+                block.block_height
+            );
         }
 
         machine
@@ -89,10 +95,11 @@ pub(in crate::node) async fn recv_block_syn(
             .sync_block(block, txs)
             .await?;
     }
+    println!("44");
 
     let block_ack_msg = Msg::BlockAck(BlockAckMsg {});
 
-    let receipt = conn.send(block_ack_msg).await?;
+    let receipt = conn.send(block_ack_msg).await;
 
     Ok(receipt)
 }
