@@ -88,7 +88,7 @@ impl SyncPool {
     pub(crate) async fn insert_tx(
         &self,
         tc: TxCandidate,
-    ) -> Result<(), String> {
+    ) -> Result<TxHash, String> {
         {
             // Check if tx is valid ctr deploying type
             // let (tx_ctr_op, tx_coin_op) = tc.get_tx_op();
@@ -122,7 +122,7 @@ impl SyncPool {
         let mut new_tx_hashes_lock = self.new_tx_hashes.write().await;
         new_tx_hashes_lock.insert(tx_hash.to_string());
 
-        Ok(())
+        Ok(tx_hash)
     }
 
     pub(crate) async fn get_all_txs(&self) -> Result<Vec<TxCandidate>, String> {

@@ -25,13 +25,13 @@ impl GenesisBlock {
 
         let hasher = Hasher::new();
 
-        let tx_mint_1 = TxCandidate::new_dummy_mint_3();
-        let tx_mint_2 = TxCandidate::new_dummy_mint_4();
-        let tx_deploy_validator = TxCandidate::new_dummy_deploying_contract(
+        let tx_mint_1 = sak_types::mock_mint_tc_3();
+        let tx_mint_2 = sak_types::mock_mint_tc_4();
+        let tx_deploy_validator = sak_types::mock_mint_tc_deploying_contract(
             validator_wasm,
             VALIDATOR_CTR_ADDR.to_string(),
         );
-        let tx_deploy_envelope = TxCandidate::new_dummy_deploying_contract(
+        let tx_deploy_envelope = sak_types::mock_mint_tc_deploying_contract(
             envelope_wasm,
             ENVELOPE_CTR_ADDR.to_string(),
         );

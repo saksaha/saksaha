@@ -30,6 +30,7 @@ pub use crypto::*;
 pub use ecies::*;
 pub use hasher::*;
 pub use key::*;
+pub use rand_core::OsRng;
 pub use random::*;
 pub use scalar_ext::*;
 

@@ -31,7 +31,14 @@ pub fn derive_aes_key(
     let aes_key = {
         let h = Hkdf::<Sha256>::new(None, material.as_slice());
         let mut out = [0u8; 32];
-        h.expand(&[], &mut out);
+        match h.expand(&[], &mut out) {
+            Ok(_) => (),
+            Err(err) => {
+                return Err(
+                    format!("Could not derive aes key, err: {}", err).into()
+                )
+            }
+        };
 
         out
     };
