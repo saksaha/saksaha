@@ -257,6 +257,11 @@ impl LedgerDB {
         Ok(())
     }
 
+    // ledger
+    // | b_1
+    // | b_2
+    // | b_*  <= b_3_a, b_3_a
+
     pub(crate) fn batch_put_pour_tx(
         &self,
         batch: &mut WriteBatch,
@@ -273,6 +278,7 @@ impl LedgerDB {
         }
 
         let cm_idx_1 = self.batch_increment_cm_idx(batch, &tc.cm_1)?;
+        //
 
         let cm_idx_2 = self.batch_increment_cm_idx(batch, &tc.cm_2)?;
 
