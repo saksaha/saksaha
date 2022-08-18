@@ -158,13 +158,15 @@ impl LedgerDB {
 
         let tx_hash = tc.get_tx_hash();
 
+        let cm_idx = self.batch_increment_cm_idx(batch, &tc.cm)?;
+
         self.batch_put_tx_type(batch, tx_hash, tc.get_tx_type())?;
 
         self.batch_put_cm(batch, tx_hash, &tc.cm)?;
 
-        self.batch_put_cm_cm_idx(batch, &tc.cm, cm_idx_count)?;
+        // self.batch_put_cm_cm_idx(batch, &tc.cm, cm_idx)?;
 
-        self.batch_put_cm_idx_cm(batch, cm_idx_count, &tc.cm)?;
+        self.batch_put_cm_idx_cm(batch, cm_idx, &tc.cm)?;
 
         self.batch_put_tx_created_at(batch, tx_hash, &tc.created_at)?;
 
@@ -186,7 +188,7 @@ impl LedgerDB {
 
         let tx_ctr_op = tc.get_ctr_op();
 
-        *cm_idx_count = *cm_idx_count + 1;
+        // *cm_idx_count = *cm_idx_count + 1;
 
         match tx_ctr_op {
             TxCtrOp::ContractDeploy => {
@@ -264,10 +266,15 @@ impl LedgerDB {
         let tc = &tx.tx_candidate;
 
         {
+            // TODO This has to be done outside "db" layer
             self.check_double_spending(&tc.sn_1)?;
 
             self.verify_tx(&tc)?;
         }
+
+        let cm_idx_1 = self.batch_increment_cm_idx(batch, &tc.cm_1)?;
+
+        let cm_idx_2 = self.batch_increment_cm_idx(batch, &tc.cm_2)?;
 
         let tx_hash = tc.get_tx_hash();
 
@@ -297,9 +304,9 @@ impl LedgerDB {
 
         self.batch_put_cm_2(batch, tx_hash, &tc.cm_2)?;
 
-        self.batch_put_cm_cm_idx(batch, &tc.cm_1, cm_idx_count)?;
+        // self.batch_put_cm_cm_idx(batch, &tc.cm_1, cm_idx_count)?;
 
-        self.batch_put_cm_cm_idx(batch, &tc.cm_2, &(*cm_idx_count + 1))?;
+        // self.batch_put_cm_cm_idx(batch, &tc.cm_2, &(*cm_idx_count + 1))?;
 
         self.batch_put_cm_idx_cm(batch, cm_idx_count, &tc.cm_1)?;
 

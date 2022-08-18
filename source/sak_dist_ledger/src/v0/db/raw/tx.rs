@@ -517,7 +517,7 @@ impl LedgerDB {
     pub(crate) fn batch_put_cm_idx_cm(
         &self,
         batch: &mut WriteBatch,
-        cm_idx: &CM_IDX,
+        cm_idx: CM_IDX,
         cm: &CM,
     ) -> Result<(), LedgerError> {
         let cm_idx = cm_idx.to_be_bytes();
@@ -533,7 +533,7 @@ impl LedgerDB {
         &self,
         batch: &mut WriteBatch,
         cm: &CM,
-        cm_idx: &CM_IDX,
+        cm_idx: CM_IDX,
     ) -> Result<(), LedgerError> {
         let cm_idx = cm_idx.to_be_bytes();
 
@@ -646,5 +646,29 @@ impl LedgerDB {
         batch.put_cf(&cf, key, value);
 
         Ok(())
+    }
+
+    pub(crate) fn batch_increment_cm_idx(
+        &self,
+        batch: &mut WriteBatch,
+        cm: &CM,
+    ) -> Result<CM_IDX, LedgerError> {
+        let cf = self.make_cf_handle(&self.db, cfs::CM_IDX)?;
+
+        let mut iter = self.db.iterator_cf(&cf, sak_kv_db::IteratorMode::End);
+
+        let next_cm_idx = match iter.next() {
+            Some((cm, cm_idx)) => {
+                type_extension::convert_u8_slice_into_u128(&cm_idx)? + 1
+            }
+            None => 0,
+        };
+
+        let next_cm_idx_bytes =
+            type_extension::convert_u128_into_u8_slice(next_cm_idx)?;
+
+        batch.put_cf(&cf, cm, next_cm_idx_bytes);
+
+        Ok(next_cm_idx)
     }
 }
