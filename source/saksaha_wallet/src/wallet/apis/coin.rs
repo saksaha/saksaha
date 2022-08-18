@@ -9,6 +9,7 @@ use sak_proofs::OldCoin;
 use sak_types::AccountBalance;
 use sak_types::CoinRecord;
 use std::convert::TryInto;
+use type_extension::U8Arr32;
 use type_extension::U8Array;
 
 impl Wallet {
@@ -20,6 +21,9 @@ impl Wallet {
 
         let cmanager = self.get_credential_manager();
         let credential = cmanager.get_credential();
+
+        println!("credential.acc_addr : {:?}", credential.acc_addr);
+        println!("acc_addr : {:?}", acc_addr);
 
         if &credential.acc_addr != acc_addr {
             return Err(format!(
@@ -48,11 +52,11 @@ impl Wallet {
 
     pub async fn send_tx(
         &self,
-        _acc_addr: String,
+        acc_addr: String,
         ctr_addr: String,
         ctr_request: CtrRequest,
     ) -> Result<String, WalletError> {
-        // self.check_enough_balance(&acc_addr).await?;
+        self.check_enough_balance(&acc_addr).await?;
 
         let coin_manager_lock = self.get_coin_manager().write().await;
 
@@ -60,33 +64,14 @@ impl Wallet {
             .get_next_available_coin()
             .ok_or("No usable coins")?;
 
-        let sn_1 = {
-            let addr_sk = coin.addr_sk;
-
-            let rho = coin.rho;
-
-            let hasher = Hasher::new();
-
-            let sn_1 = hasher.mimc_scalar(addr_sk, rho);
-
-            sn_1.to_bytes()
-        };
+        let sn_1 = self.compute_sn(coin);
 
         let (new_coin_1, new_coin_2, cm_1, cm_2) = {
             let v = ScalarExt::into_u64(coin.v)?;
 
-            let new_coin_1 = CoinRecord::new(
-                0x101,
-                0x102,
-                0x103,
-                0x104,
-                v - GAS,
-                None,
-                None,
-            )?;
+            let new_coin_1 = CoinRecord::new(v - GAS, None, None)?;
 
-            let new_coin_2 =
-                CoinRecord::new(0x201, 0x202, 0x203, 0x204, 0, None, None)?;
+            let new_coin_2 = CoinRecord::new(0, None, None)?;
 
             let cm_1 = new_coin_1.cm.to_bytes();
 
@@ -145,6 +130,19 @@ impl Wallet {
 
         Ok("success_power".to_string())
     }
+
+    pub(crate) async fn check_enough_balance(
+        &self,
+        acc_addr: &String,
+    ) -> Result<(), WalletError> {
+        let my_balance = self.get_balance(acc_addr).await?;
+        let check_enough_balalnce = my_balance.val > GAS;
+        if !check_enough_balalnce {
+            return Err(format!("don't have enough coin").into());
+        }
+        Ok(())
+    }
+
     pub(crate) async fn get_old_coin(
         &self,
         coin: &CoinRecord,
@@ -178,16 +176,20 @@ impl Wallet {
         Ok(o)
     }
 
-    pub(crate) async fn _check_enough_balance(
-        &self,
-        acc_addr: &String,
-    ) -> Result<(), WalletError> {
-        let my_balance = self.get_balance(acc_addr).await?;
-        let check_enough_balalnce = my_balance.val > GAS;
-        if !check_enough_balalnce {
-            return Err(format!("don't have enough coin").into());
-        }
-        Ok(())
+    pub(crate) fn compute_sn(&self, coin: &CoinRecord) -> U8Arr32 {
+        let sn = {
+            let addr_sk = coin.addr_sk;
+
+            let rho = coin.rho;
+
+            let hasher = Hasher::new();
+
+            let s = hasher.mimc_scalar(addr_sk, rho);
+
+            s.to_bytes()
+        };
+
+        sn
     }
 
     // pub(crate) async fn set_status_used(
