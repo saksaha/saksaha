@@ -1,6 +1,6 @@
-use crate::{NewCoin, OldCoin, CM_TREE_DEPTH};
+use crate::{NewCoin, OldCoin, ProofError, CM_TREE_DEPTH};
 use sak_crypto::{
-    groth16, os_rng, AllocatedBit, Bls12, Circuit, ConstraintSystem, Hasher,
+    groth16, AllocatedBit, Bls12, Circuit, ConstraintSystem, Hasher, OsRng,
     Parameters, Scalar, SynthesisError,
 };
 use std::fs::File;
@@ -20,7 +20,9 @@ pub struct CoinProofCircuit1to2 {
     pub constants: Vec<Scalar>,
 }
 
-pub fn get_mimc_params_1_to_2(constants: &[Scalar]) -> Parameters<Bls12> {
+pub(crate) fn get_mimc_params_1_to_2(
+    constants: &[Scalar],
+) -> Result<Parameters<Bls12>, ProofError> {
     let param_path = std::path::Path::new(PARAM_FILE_NAME);
     let is_file_exist = param_path.exists();
 
@@ -46,13 +48,14 @@ pub fn get_mimc_params_1_to_2(constants: &[Scalar]) -> Parameters<Bls12> {
                 constants: constants.to_vec(),
             };
 
-            groth16::generate_random_parameters::<Bls12, _, _>(c, &mut os_rng())
+            groth16::generate_random_parameters::<Bls12, _, _>(c, &mut OsRng)
                 .unwrap()
         };
         // write param to file
-        let mut file = File::create(PARAM_FILE_NAME).unwrap();
+        let mut file = File::create(PARAM_FILE_NAME)?;
 
-        params.write(&mut v).unwrap();
+        params.write(&mut v)?;
+
         // write origin buf
         match file.write_all(&v) {
             Ok(_) => {}
@@ -62,8 +65,9 @@ pub fn get_mimc_params_1_to_2(constants: &[Scalar]) -> Parameters<Bls12> {
         };
     }
 
-    let de_params = Parameters::<Bls12>::read(&v[..], false).unwrap();
-    de_params
+    let p = Parameters::<Bls12>::read(&v[..], false).unwrap();
+
+    Ok(p)
 }
 
 impl Circuit<Scalar> for CoinProofCircuit1to2 {

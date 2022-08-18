@@ -422,6 +422,7 @@ pub async fn test_coin_ownership_default() {
         s: Some(test_context.s_2),
         v: Some(test_context.v_2),
     };
+
     let proof = make_proof(coin_1_old, coin_1_new, coin_2_new).unwrap();
 
     let public_inputs: Vec<Scalar> = vec![

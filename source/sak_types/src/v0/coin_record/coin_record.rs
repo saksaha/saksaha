@@ -36,6 +36,66 @@ pub struct CoinRecord {
 
 impl CoinRecord {
     pub fn new(
+        rho: u64,
+        r: u64,
+        s: u64,
+        addr_sk: u64,
+        v: u64,
+        cm_idx: Option<CoinIdx>,
+        coin_idx: Option<CoinIdx>,
+    ) -> Result<CoinRecord, TypesError> {
+        let hasher = Hasher::new();
+
+        let (addr_pk, addr_sk) = {
+            let pk = U8Array::from_int(sak_crypto::rand() as u64);
+
+            let addr_pk = hasher.mimc_single(&pk)?;
+            let addr_sk = ScalarExt::parse_arr(&pk)?;
+
+            (addr_pk, addr_sk)
+        };
+
+        let rho = {
+            let arr = U8Array::from_int(sak_crypto::rand() as u64);
+
+            ScalarExt::parse_arr(&arr)?
+        };
+
+        let r = {
+            let arr = U8Array::from_int(sak_crypto::rand() as u64);
+
+            ScalarExt::parse_arr(&arr)?
+        };
+
+        let s = {
+            let arr = U8Array::from_int(sak_crypto::rand() as u64);
+
+            ScalarExt::parse_arr(&arr)?
+        };
+
+        let v = ScalarExt::parse_u64(v)?;
+
+        let k = hasher.comm2_scalar(r, addr_pk, rho);
+
+        let cm = hasher.comm2_scalar(s, v, k);
+
+        let coin = CoinRecord {
+            addr_pk,
+            addr_sk,
+            rho,
+            r,
+            s,
+            v,
+            cm,
+            coin_status: CoinStatus::Unused,
+            cm_idx,
+            coin_idx,
+        };
+
+        Ok(coin)
+    }
+
+    pub fn new_random(
         // rho: u64,
         // r: u64,
         // s: u64,

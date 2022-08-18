@@ -1,3 +1,5 @@
+mod mock;
+
 use super::TxCandidate;
 use crate::{MintTxCandidate, PourTxCandidate, Tx, WASM_MAGIC_NUMBER};
 use sak_crypto::Hasher;

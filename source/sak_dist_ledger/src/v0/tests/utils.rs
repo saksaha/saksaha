@@ -152,6 +152,7 @@ pub struct ProofContext {
     pub v_2: Scalar,
     pub cm_2: Scalar,
 }
+
 pub(crate) fn make_proof_context() -> ProofContext {
     let hasher = Hasher::new();
 

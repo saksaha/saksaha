@@ -69,9 +69,9 @@ impl Wallet {
         let (new_coin_1, new_coin_2, cm_1, cm_2) = {
             let v = ScalarExt::into_u64(coin.v)?;
 
-            let new_coin_1 = CoinRecord::new(v - GAS, None, None)?;
+            let new_coin_1 = CoinRecord::new_random(v - GAS, None, None)?;
 
-            let new_coin_2 = CoinRecord::new(0, None, None)?;
+            let new_coin_2 = CoinRecord::new_random(0, None, None)?;
 
             let cm_1 = new_coin_1.cm.to_bytes();
 

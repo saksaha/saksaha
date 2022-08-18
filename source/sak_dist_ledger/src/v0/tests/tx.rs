@@ -1,5 +1,6 @@
 use super::{test_util::TestUtil, utils};
 use sak_kv_db::WriteBatch;
+use sak_types::TxCandidate;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_put_and_get_transaction() {
@@ -86,12 +87,15 @@ async fn test_dist_ledger_put_and_get_cm_idx() {
 
         let init_cm_idx = 2;
 
-        let mut cm_idx_count = init_cm_idx;
+        // let mut cm_idx_count = init_cm_idx;
 
         let mut write_batch = WriteBatch::default();
 
+        let pour_tc = sak_types::mock_pour_tc();
+
         let dummy_tx_hash = dist_ledger
             .apis
+            .send_tx(pour_tc)
             .ledger_db
             .batch_put_tx(
                 &mut write_batch,
