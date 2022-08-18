@@ -5,7 +5,6 @@ use sak_contract_std::{
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use type_extension::U8Arr32;
 
 pub mod request_type {
     pub const OPEN_CH: &'static str = "open_ch";
@@ -16,31 +15,19 @@ pub mod request_type {
 
 pub type PublicKey = String;
 pub type ChannelId = String;
-pub type Date = String;
 
 pub const STORAGE_CAP: usize = 100;
-
-pub struct OpenChReq {}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct EnvelopeStorage {
     pub open_ch_reqs: HashMap<PublicKey, Vec<Channel>>,
-    pub chats: HashMap<ChannelId, Vec<ChatMessage>>,
+    pub chats: HashMap<ChannelId, Vec<String>>,
 }
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct ChatMessage {
-    pub date: Date,
-    pub user: PublicKey,
-    pub msg: String,
-}
-
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ChannelList {
     pub channels: Vec<Channel>,
 }
-
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
 pub struct Channel {
     pub ch_id: String,
     pub eph_key: String,
@@ -48,33 +35,6 @@ pub struct Channel {
 }
 
 impl Channel {
-    pub fn new(
-        ch_id: String,
-        eph_key: String,
-        sig: String,
-        key: U8Arr32,
-    ) -> Result<Channel, ContractError> {
-        let ch_id_enc = {
-            let ch_id_enc = sak_crypto::aes_encrypt(&key, &ch_id.as_bytes())?;
-
-            serde_json::to_string(&ch_id_enc)?
-        };
-
-        let sig_enc = {
-            let sig_enc = sak_crypto::aes_encrypt(&key, &sig.as_bytes())?;
-
-            serde_json::to_string(&sig_enc)?
-        };
-
-        let open_ch = Channel {
-            ch_id: ch_id_enc,
-            eph_key,
-            sig: sig_enc,
-        };
-
-        Ok(open_ch)
-    }
-
     pub fn default() -> Channel {
         Channel {
             ch_id: String::default(),
@@ -356,16 +316,12 @@ fn handle_send_msg(
 
     let ch_id = send_msg_params.ch_id;
 
-    if !evl_storage.chats.contains_key(&ch_id) {
-        evl_storage.chats.insert(ch_id.clone(), vec![]);
-    }
-
     let chats = evl_storage
         .chats
         .get_mut(&ch_id)
         .ok_or(format!("Channel is not initialied, ch_id: {}", ch_id))?;
 
-    chats.push(send_msg_params.chat);
+    chats.push(send_msg_params.msg);
 
     *storage = serde_json::to_vec(&evl_storage)?;
 
