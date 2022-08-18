@@ -83,7 +83,7 @@ mod test {
             (pk, sk)
         };
 
-        let plaintext = "hello";
+        let plaintext = String::from("hello");
         println!("plaintext: {}", plaintext);
 
         let aes_key = derive_aes_key(e_sk, bob_pk).unwrap();
@@ -115,7 +115,7 @@ mod test {
             let plaintext2 =
                 aes_decrypt(&aes_key, cipher_text.as_slice()).unwrap();
 
-            assert_eq!(plaintext.to_string(), plaintext2);
+            assert_eq!(plaintext.as_bytes(), plaintext2);
         };
     }
 }

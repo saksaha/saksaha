@@ -38,7 +38,7 @@ pub fn run(term_args: TermArgs) -> Result<(), EnvelopeError> {
 
                 // Configure log
                 tui_logger::init_logger(LevelFilter::Debug).unwrap();
-                tui_logger::set_default_level(log::LevelFilter::Debug);
+                tui_logger::set_default_level(log::LevelFilter::Info);
 
                 // We need to share the App between thread
                 let app = {
@@ -98,12 +98,13 @@ pub async fn start_app(app: Arc<Mutex<App>>) -> Result<(), EnvelopeError> {
     }
 
     let app_clone = app.clone();
-    tokio::spawn(async move {
-        tokio::time::sleep(Duration::from_secs(5)).await;
 
-        let mut app = app_clone.lock().await;
-        app.get_ch_list().await;
-    });
+    // tokio::spawn(async move {
+    //     tokio::time::sleep(Duration::from_secs(5)).await;
+
+    //     let mut app = app_clone.lock().await;
+    //     app.get_ch_list().await;
+    // });
 
     loop {
         let mut app = app.lock().await;

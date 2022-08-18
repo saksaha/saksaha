@@ -1,11 +1,9 @@
-use envelope_contract::{Channel, ChatMessage};
-use tui::widgets::ListState;
-
 use crate::db::USER_1;
 use crate::EnvelopeError;
 use crate::{io::InputMode, term::get_balance_from_wallet};
-use chrono::{DateTime, Local};
+use envelope_contract::{Channel, ChatMessage};
 use log::{info, warn};
+use tui::widgets::ListState;
 
 #[repr(u8)]
 #[derive(Clone, Debug)]
@@ -104,23 +102,8 @@ impl AppState {
         Ok(())
     }
 
-    pub fn set_chats(&mut self, data: Vec<u8>, my_pk: String) {
-        self.chats = match serde_json::from_slice::<Vec<ChatMessage>>(&data) {
-            Ok(c) => c
-                .into_iter()
-                .map(|mut m| {
-                    if m.user == my_pk {
-                        m.user = "me".to_string();
-                    } else {
-                        m.user = m.user[0..16].to_string();
-                    }
-                    m
-                })
-                .collect(),
-            Err(err) => {
-                panic!("Cannot Deserialize `ChatMessage`:, err: {}", err);
-            }
-        };
+    pub fn set_chats(&mut self, data: Vec<ChatMessage>, my_pk: String) {
+        self.chats = data;
     }
 
     // pub fn set_input_messages(&mut self, msg: String) {

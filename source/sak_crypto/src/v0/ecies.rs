@@ -70,7 +70,7 @@ pub fn aes_encrypt(
 pub fn aes_decrypt(
     aes_key: &[u8; 32],
     ciphertext: &[u8],
-) -> Result<String, CryptoError> {
+) -> Result<Vec<u8>, CryptoError> {
     let key = Key::from_slice(aes_key);
     let cipher = Aes256GcmSiv::new(key);
 
@@ -84,6 +84,5 @@ pub fn aes_decrypt(
         }
     };
 
-    let a = String::from_utf8(plaintext)?;
-    Ok(a)
+    Ok(plaintext)
 }

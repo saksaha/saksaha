@@ -22,18 +22,18 @@ impl EnvelopeDBSchema {
         Ok(sk.to_string())
     }
 
-    pub(crate) async fn put_ch_data(
+    pub(crate) async fn put_ch_shared_secret_key(
         &self,
         ch_id: &String,
-        her_pk: &String,
-        aes_key: &[u8; 32],
+        // her_pk: &String,
+        aes_key: &String,
     ) -> Result<(), EnvelopeError> {
         let mut batch = WriteBatch::default();
 
-        let aes_key_str = serde_json::to_string(&aes_key)?;
+        // let aes_key_str = serde_json::to_string(&aes_key)?;
 
-        self.batch_put_her_pk(&mut batch, ch_id, her_pk)?;
-        self.batch_put_aes_key(&mut batch, ch_id, &aes_key_str)?;
+        // self.batch_put_her_pk(&mut batch, ch_id, her_pk)?;
+        self.batch_put_aes_key(&mut batch, ch_id, &aes_key)?;
 
         self.db.write(batch)?;
 
