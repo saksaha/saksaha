@@ -73,4 +73,12 @@ impl CoinProof {
 
         Ok(proof)
     }
+
+    pub fn serialize_pi(pi: &Proof<Bls12>) -> Result<Vec<u8>, ProofError> {
+        let mut v = Vec::new();
+
+        pi.write(&mut v)?;
+
+        Ok(v)
+    }
 }

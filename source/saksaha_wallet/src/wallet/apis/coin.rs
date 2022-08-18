@@ -5,6 +5,7 @@ use sak_contract_std::CtrRequest;
 use sak_crypto::Hasher;
 use sak_crypto::Scalar;
 use sak_crypto::ScalarExt;
+use sak_proofs::CoinProof;
 use sak_proofs::OldCoin;
 use sak_types::AccountBalance;
 use sak_types::CoinRecord;
@@ -100,12 +101,11 @@ impl Wallet {
             self.get_old_coin(coin, auth_path).await?
         };
 
-        let pi = saksaha::generate_proof_1_to_2(
+        let pi = CoinProof::generate_proof_1_to_2(
             old_coin,
             new_coin_1.extract(),
             new_coin_2.extract(),
-        )
-        .await?;
+        )?;
 
         let mut pi_ser = Vec::new();
         pi.write(&mut pi_ser).unwrap();

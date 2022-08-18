@@ -238,40 +238,109 @@ pub fn mock_pour_tc_1() -> Result<TxCandidate, TypesError> {
         CoinProof::generate_proof_1_to_2(coin_1_old, coin_1_new, coin_2_new)
             .unwrap();
 
-    let mut pi_ser = Vec::new();
-
-    pi.write(&mut pi_ser)?;
+    let pi_serialized = CoinProof::serialize_pi(&pi)?;
 
     let pour_tc = PourTxCandidate::new(
         "created_at".to_string(),
         vec![],
         "author_sig".to_string(),
         None,
-        pi.to_bytes(),
-        sn_1,
-        cm_1,
-        cm_2,
-        merkle_rt,
+        pi_serialized,
+        sn_1.to_bytes(),
+        cm_1.to_bytes(),
+        cm_2.to_bytes(),
+        merkle_rt.to_bytes(),
     );
 
     let c = TxCandidate::Pour(pour_tc);
 
     Ok(c)
+}
 
-    // {
-    //     println!("\n[+] dummy pour_tx ");
-    //     println!("[Debug] tx.pi: {:?}", pi);
-    //     println!("[Debug] tx.sn_1: {:?}", sn_1.clone());
-    //     println!("[Debug] tx.cm_1: {:?}", cm_1.clone());
-    //     println!("[Debug] tx.cm_2: {:?}", cm_2.clone());
-    //     println!("[Debug] tx.merkle_rt: {:?}", merkle_rt.clone());
-    // }
+pub fn mock_mint_tc_custom(
+    cm: U8Arr32,
+    v: U8Arr32,
+    k: U8Arr32,
+    s: U8Arr32,
+) -> TxCandidate {
+    let tx_candidate = MintTxCandidate::new_dummy_custom(cm, v, k, s);
 
-    // Tx::new_dummy_valid_pour(
-    //     pi_ser,
-    //     sn_1.to_bytes(),
-    //     cm_1.to_bytes(),
-    //     cm_2.to_bytes(),
-    //     merkle_rt.to_bytes(),
-    // )
+    TxCandidate::Mint(tx_candidate)
+}
+
+pub fn mock_mint_tc_1() -> TxCandidate {
+    let tx_candidate = MintTxCandidate::new_dummy_1();
+
+    TxCandidate::Mint(tx_candidate)
+}
+
+pub fn mock_mint_tc_2() -> TxCandidate {
+    let tx_candidate = MintTxCandidate::new_dummy_2();
+
+    TxCandidate::Mint(tx_candidate)
+}
+
+pub fn mock_mint_tc_3() -> TxCandidate {
+    let tx_candidate = MintTxCandidate::new_dummy_3();
+
+    TxCandidate::Mint(tx_candidate)
+}
+
+pub fn mock_mint_tc_4() -> TxCandidate {
+    let tx_candidate = MintTxCandidate::new_dummy_4();
+
+    TxCandidate::Mint(tx_candidate)
+}
+
+pub fn mock_mint_tc_deploying_contract(
+    contract_data: Vec<u8>,
+    ctrt_addr: String,
+) -> TxCandidate {
+    let tx_candidate =
+        MintTxCandidate::new_dummy_deploying_contract(contract_data, ctrt_addr);
+
+    TxCandidate::Mint(tx_candidate)
+}
+
+pub fn mock_pour_tc_m1_to_p3_p4() -> TxCandidate {
+    let tx_candidate = PourTxCandidate::new_dummy_m1_to_p3_p4();
+
+    TxCandidate::Pour(tx_candidate)
+}
+
+pub fn mock_pour_tc_2() -> TxCandidate {
+    let tx_candidate = PourTxCandidate::new_dummy_2();
+
+    TxCandidate::Pour(tx_candidate)
+}
+
+pub fn mock_pour_tc_3() -> TxCandidate {
+    let tx_candidate = PourTxCandidate::new_dummy_3();
+
+    TxCandidate::Pour(tx_candidate)
+}
+
+pub fn mock_pour_tc_4() -> TxCandidate {
+    let tx_candidate = PourTxCandidate::new_dummy_4();
+
+    TxCandidate::Pour(tx_candidate)
+}
+
+pub fn new_dummy_valid_pour(
+    pi: Vec<u8>,
+    sn_1: [u8; 32],
+    cm_1: [u8; 32],
+    cm_2: [u8; 32],
+    merkle_rt: [u8; 32],
+) -> TxCandidate {
+    let tx_candidate =
+        PourTxCandidate::new_dummy_valid(pi, sn_1, cm_1, cm_2, merkle_rt);
+
+    TxCandidate::Pour(tx_candidate)
+}
+
+pub fn mock_pour_tc_variant_cm(cm: [u8; 32]) -> TxCandidate {
+    let tx_candidate = PourTxCandidate::new_dummy_5(cm);
+
+    TxCandidate::Pour(tx_candidate)
 }

@@ -21,7 +21,7 @@ async fn test_rpc_client_handle_get_cm_idx() {
     let (expected_tx_hash, cms) = {
         let blockchain = utils::make_blockchain().await;
 
-        let dummy_tx = TxCandidate::new_dummy_pour_m1_to_p3_p4();
+        let dummy_tx = sak_types::mock_pour_tc_m1_to_p3_p4();
 
         let cms = dummy_tx.get_cms();
 

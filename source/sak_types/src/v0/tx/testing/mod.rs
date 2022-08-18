@@ -2,6 +2,7 @@ mod mock;
 
 use super::TxCandidate;
 use crate::{MintTxCandidate, PourTxCandidate, Tx, WASM_MAGIC_NUMBER};
+pub use mock::*;
 use sak_crypto::Hasher;
 use sak_crypto::ScalarExt;
 use type_extension::U8Arr32;
@@ -62,24 +63,24 @@ fn get_rho_4() -> [u8; 32] {
 
 impl Tx {
     pub fn new_dummy_pour_m1_to_p3_p4() -> Tx {
-        let c = TxCandidate::new_dummy_pour_m1_to_p3_p4();
+        let c = mock_pour_tc_m1_to_p3_p4();
         c.upgrade(0)
     }
 
     pub fn new_dummy_pour_2() -> Tx {
-        let c = TxCandidate::new_dummy_pour_2();
+        let c = mock_pour_tc_2();
 
         c.upgrade(1)
     }
 
     pub fn new_dummy_pour_3() -> Tx {
-        let c = TxCandidate::new_dummy_pour_3();
+        let c = mock_pour_tc_3();
 
         c.upgrade(2)
     }
 
     pub fn new_dummy_pour_4() -> Tx {
-        let c = TxCandidate::new_dummy_pour_4();
+        let c = mock_pour_tc_4();
 
         c.upgrade(3)
     }
@@ -91,102 +92,9 @@ impl Tx {
         cm_2: [u8; 32],
         merkle_rt: [u8; 32],
     ) -> Tx {
-        let c =
-            TxCandidate::new_dummy_valid_pour(pi, sn_1, cm_1, cm_2, merkle_rt);
+        let c = new_dummy_valid_pour(pi, sn_1, cm_1, cm_2, merkle_rt);
 
         c.upgrade(0)
-    }
-}
-
-impl TxCandidate {
-    pub fn new_dummy_mint_custom(
-        cm: U8Arr32,
-        v: U8Arr32,
-        k: U8Arr32,
-        s: U8Arr32,
-    ) -> TxCandidate {
-        let tx_candidate = MintTxCandidate::new_dummy_custom(cm, v, k, s);
-
-        TxCandidate::Mint(tx_candidate)
-    }
-
-    pub fn new_dummy_mint_1() -> TxCandidate {
-        let tx_candidate = MintTxCandidate::new_dummy_1();
-
-        TxCandidate::Mint(tx_candidate)
-    }
-
-    pub fn new_dummy_mint_2() -> TxCandidate {
-        let tx_candidate = MintTxCandidate::new_dummy_2();
-
-        TxCandidate::Mint(tx_candidate)
-    }
-
-    pub fn new_dummy_mint_3() -> TxCandidate {
-        let tx_candidate = MintTxCandidate::new_dummy_3();
-
-        TxCandidate::Mint(tx_candidate)
-    }
-
-    pub fn new_dummy_mint_4() -> TxCandidate {
-        let tx_candidate = MintTxCandidate::new_dummy_4();
-
-        TxCandidate::Mint(tx_candidate)
-    }
-
-    pub fn new_dummy_deploying_contract(
-        contract_data: Vec<u8>,
-        ctrt_addr: String,
-    ) -> TxCandidate {
-        let tx_candidate = MintTxCandidate::new_dummy_deploying_contract(
-            contract_data,
-            ctrt_addr,
-        );
-
-        TxCandidate::Mint(tx_candidate)
-    }
-
-    pub fn new_dummy_pour_m1_to_p3_p4() -> TxCandidate {
-        let tx_candidate = PourTxCandidate::new_dummy_m1_to_p3_p4();
-
-        TxCandidate::Pour(tx_candidate)
-    }
-
-    pub fn new_dummy_pour_2() -> TxCandidate {
-        let tx_candidate = PourTxCandidate::new_dummy_2();
-
-        TxCandidate::Pour(tx_candidate)
-    }
-
-    pub fn new_dummy_pour_3() -> TxCandidate {
-        let tx_candidate = PourTxCandidate::new_dummy_3();
-
-        TxCandidate::Pour(tx_candidate)
-    }
-
-    pub fn new_dummy_pour_4() -> TxCandidate {
-        let tx_candidate = PourTxCandidate::new_dummy_4();
-
-        TxCandidate::Pour(tx_candidate)
-    }
-
-    pub fn new_dummy_valid_pour(
-        pi: Vec<u8>,
-        sn_1: [u8; 32],
-        cm_1: [u8; 32],
-        cm_2: [u8; 32],
-        merkle_rt: [u8; 32],
-    ) -> TxCandidate {
-        let tx_candidate =
-            PourTxCandidate::new_dummy_valid(pi, sn_1, cm_1, cm_2, merkle_rt);
-
-        TxCandidate::Pour(tx_candidate)
-    }
-
-    pub fn new_dummy_pour_variant_cm(cm: [u8; 32]) -> TxCandidate {
-        let tx_candidate = PourTxCandidate::new_dummy_5(cm);
-
-        TxCandidate::Pour(tx_candidate)
     }
 }
 

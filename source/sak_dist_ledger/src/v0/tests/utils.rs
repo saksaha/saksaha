@@ -4,11 +4,10 @@ use crate::{
 use async_trait::async_trait;
 use sak_contract_std::{CtrCallType, CtrRequest};
 use sak_crypto::{rand, Hasher, Scalar, ScalarExt};
-use sak_proofs::{MerkleTree, NewCoin, OldCoin, CM_TREE_DEPTH};
+use sak_proofs::{CoinProof, MerkleTree, NewCoin, OldCoin, CM_TREE_DEPTH};
 use sak_types::{
     BlockCandidate, PourTxCandidate, Tx, TxCandidate, WASM_MAGIC_NUMBER,
 };
-use saksaha::generate_proof_1_to_2;
 use std::collections::HashMap;
 use type_extension::U8Array;
 
@@ -25,12 +24,13 @@ impl Consensus for DummyPos {
     }
 }
 
+#[cfg(test)]
 pub(crate) fn make_dummy_genesis_block_1() -> BlockCandidate {
     let genesis_block = BlockCandidate {
         validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
         tx_candidates: vec![
-            TxCandidate::new_dummy_mint_1(),
-            TxCandidate::new_dummy_mint_2(),
+            sak_types::mock_mint_tc_1(),
+            sak_types::mock_mint_tc_2(),
         ],
         witness_sigs: vec![String::from("1"), String::from("2")],
         created_at: String::from("2022061515340000"),
@@ -91,12 +91,11 @@ pub(crate) async fn make_dummy_valid_pour_tx() -> Tx {
         v: Some(proof_context.v_2),
     };
 
-    let pi = generate_proof_1_to_2(coin_1_old, coin_1_new, coin_2_new)
-        .await
-        .unwrap();
+    let pi =
+        CoinProof::generate_proof_1_to_2(coin_1_old, coin_1_new, coin_2_new)
+            .unwrap();
 
-    let mut pi_ser = Vec::new();
-    pi.write(&mut pi_ser).unwrap();
+    let pi_ser = CoinProof::serialize_pi(&pi).unwrap();
 
     {
         println!("\n[+] dummy pour_tx ");
@@ -346,7 +345,7 @@ pub(crate) fn make_dummy_block_candidate_1() -> Option<BlockCandidate> {
     let block_candidate: BlockCandidate = {
         BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
-            tx_candidates: vec![TxCandidate::new_dummy_pour_m1_to_p3_p4()],
+            tx_candidates: vec![sak_types::mock_pour_tc_m1_to_p3_p4()],
             witness_sigs: vec![String::from("1"), String::from("2")],
             created_at: String::from("2022061515340000"),
         }

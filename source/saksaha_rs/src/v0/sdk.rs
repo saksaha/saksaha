@@ -2,16 +2,13 @@ use crate::SaksahaSDKError;
 use hyper::{Body, Client, Method, Request, Uri};
 use log::warn;
 use sak_contract_std::{CtrCallType, CtrRequest, RequestArgs};
-use sak_crypto::{
-    groth16, mimc, os_rng, Bls12, Circuit, Hasher, Proof, Scalar, ScalarExt,
-};
+use sak_crypto::{Bls12, Circuit, Hasher, Proof, Scalar, ScalarExt};
 use sak_proofs::{
-    get_mimc_params_1_to_2, CoinProofCircuit1to2, MerkleTree, NewCoin, OldCoin,
-    Path, ProofError, CM_TREE_DEPTH,
+    MerkleTree, NewCoin, OldCoin, Path, ProofError, CM_TREE_DEPTH,
 };
 use sak_rpc_interface::{JsonRequest, JsonResponse};
 use serde::{Deserialize, Serialize};
-use std::{char::from_u32_unchecked, collections::HashMap, time};
+use std::time;
 use type_extension::{U8Arr32, U8Array};
 
 pub const A: usize = 1;
@@ -322,26 +319,26 @@ pub async fn query_ctr(
 //     Ok(proof)
 // }
 
-pub async fn verify_proof_1_to_2(
-    proof: Proof<Bls12>,
-    public_inputs: &[Scalar],
-    hasher: &Hasher,
-) -> bool {
-    let constants = hasher.get_mimc_constants();
-    let de_params = get_mimc_params_1_to_2(&constants);
-    let pvk = groth16::prepare_verifying_key(&de_params.vk);
+// pub async fn verify_proof_1_to_2(
+//     proof: Proof<Bls12>,
+//     public_inputs: &[Scalar],
+//     hasher: &Hasher,
+// ) -> bool {
+//     let constants = hasher.get_mimc_constants();
+//     let de_params = get_mimc_params_1_to_2(&constants);
+//     let pvk = groth16::prepare_verifying_key(&de_params.vk);
 
-    match groth16::verify_proof(&pvk, &proof, public_inputs) {
-        Ok(_) => {
-            println!("verify success!");
-            true
-        }
-        Err(err) => {
-            println!("verify_proof(), err: {}", err);
-            false
-        }
-    }
-}
+//     match groth16::verify_proof(&pvk, &proof, public_inputs) {
+//         Ok(_) => {
+//             println!("verify success!");
+//             true
+//         }
+//         Err(err) => {
+//             println!("verify_proof(), err: {}", err);
+//             false
+//         }
+//     }
+// }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GetAuthPathRequest {

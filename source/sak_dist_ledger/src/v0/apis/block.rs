@@ -2,7 +2,7 @@ use crate::{DistLedgerApis, LedgerError};
 use sak_contract_std::Storage;
 use sak_proofs::{MerkleTree, CM_TREE_DEPTH};
 use sak_types::{
-    Block, BlockHash, BlockHeight, CtrAddr, Tx, TxCandidate, CM, CM_IDX,
+    Block, BlockHash, BlockHeight, CtrAddr, Tx, TxCandidate, TxHash, CM, CM_IDX,
 };
 
 const GET_BLOCK_HASH_LIST_DEFAULT_SIZE: u128 = 10;
@@ -93,25 +93,20 @@ impl DistLedgerApis {
         Ok(Some((latest_block_height, latest_block_hash)))
     }
 
-    // rpc
     pub async fn send_tx(
         &self,
         tx_candidate: TxCandidate,
-    ) -> Result<(), String> {
-        match tx_candidate {
+    ) -> Result<TxHash, String> {
+        let tx_hash = match tx_candidate {
             TxCandidate::Mint(_) => {
-                let r = self.sync_pool.insert_tx(tx_candidate).await?;
-
-                Ok(r)
+                self.sync_pool.insert_tx(tx_candidate).await?
             }
             TxCandidate::Pour(_) => {
-                //verify
-
-                let r = self.sync_pool.insert_tx(tx_candidate).await?;
-
-                Ok(r)
+                self.sync_pool.insert_tx(tx_candidate).await?
             }
-        }
+        };
+
+        Ok(tx_hash)
     }
 
     pub async fn get_tx(

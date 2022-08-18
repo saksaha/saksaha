@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use super::{test_util::TestUtil, utils};
 use sak_kv_db::WriteBatch;
 use sak_types::TxCandidate;
@@ -91,18 +93,22 @@ async fn test_dist_ledger_put_and_get_cm_idx() {
 
         let mut write_batch = WriteBatch::default();
 
-        let pour_tc = sak_types::mock_pour_tc();
+        let pour_tc = sak_types::mock_pour_tc_1().unwrap();
 
         let dummy_tx_hash = dist_ledger
             .apis
             .send_tx(pour_tc)
-            .ledger_db
-            .batch_put_tx(
-                &mut write_batch,
-                &dummy_pour_tx,
-                // &mut cm_idx_count
-            )
-            .expect("pour_tx should be written");
+            // .ledger_db
+            // .batch_put_tx(
+            //     &mut write_batch,
+            //     &dummy_pour_tx,
+            //     // &mut cm_idx_count
+            // )
+            // .expect("pour_tx should be written");
+            .await
+            .unwrap();
+
+        tokio::time::sleep(Duration::from_secs(3)).await;
 
         let cm_1_idx = {
             let cm_1 = dist_ledger
