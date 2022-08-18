@@ -83,7 +83,7 @@ impl UpgradedConn {
     pub async fn next_msg(&mut self) -> Result<MsgWrap, TrptError> {
         if let ConnState::Recvd = self.conn_state {
             return Err(
-                format!("This is not a turn for sending message").into()
+                format!("This is not a turn for receiving message").into()
             );
         }
 

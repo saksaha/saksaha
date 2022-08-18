@@ -16,15 +16,11 @@ pub(in crate::node) async fn send_block_hash_syn(
     new_blocks: Vec<(BlockHeight, BlockHash)>,
     task_queue: &Arc<TaskQueue<NodeTask>>,
 ) -> Result<RecvReceipt, SaksahaNodeError> {
-    println!("msg_handle: send block hash syn");
-
     conn_lock
         .send(Msg::BlockHashSyn(BlockHashSyncMsg {
             new_blocks: new_blocks.clone(),
         }))
         .await?;
-
-    println!("msg_handle: sent block hash syn");
 
     let msg_wrap = conn_lock.next_msg().await?;
 

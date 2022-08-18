@@ -58,17 +58,19 @@ impl PeerNode {
             // Late sync routine
             let machine_clone = self.machine.clone();
 
-            let new_blocks = machine_clone
+            if let Ok(new_blocks) = machine_clone
                 .blockchain
                 .dist_ledger
                 .apis
                 .get_entire_block_info_list()
                 .await
-                .unwrap_or(vec![]);
-
-            node_task_queue
-                .push_back(NodeTask::SendBlockHashSyn { new_blocks })
-                .await?;
+            {
+                if new_blocks.len() > 1 {
+                    node_task_queue
+                        .push_back(NodeTask::SendBlockHashSyn { new_blocks })
+                        .await?
+                }
+            }
         }
 
         loop {
@@ -128,41 +130,3 @@ impl PeerNode {
         }
     }
 }
-//     pub(crate) async fn run_hello(&mut self) {
-//         debug!(
-//             "Peer is registered as a peer node. Say hello, \
-//             public_key : {}",
-//             self.peer.get_public_key_short()
-//         );
-
-//         let peer_clone = self.peer.clone();
-//         let machine_clone = self.machine.clone();
-
-//         let _ = tokio::spawn(async move {
-//             tokio::time::sleep(Duration::from_secs(2)).await;
-
-//             let mut conn = peer_clone.get_transport().conn.write().await;
-
-//             let blocks = machine_clone
-//                 .blockchain
-//                 .dist_ledger
-//                 .apis
-//                 .get_entire_block_info_list()
-//                 .await
-//                 .unwrap_or(vec![]);
-
-//             match conn
-//                 .send(Msg::BlockHashSyn(BlockHashSynMsg { new_blocks: blocks }))
-//                 .await
-//             {
-//                 Ok(_) => {
-//                     debug!("Sending BlockHashSyn",);
-//                 }
-//                 Err(err) => {
-//                     warn!("Failed to BlockHashSyn, err: {}", err,);
-//                 }
-//             };
-//         })
-//         .await;
-//     }
-// }
