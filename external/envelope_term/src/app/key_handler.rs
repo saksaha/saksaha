@@ -170,10 +170,45 @@ impl App {
                         };
                     }
                     View::Chat => {
-                        self.get_state_mut().chat_input =
-                            self.get_state_mut().input_text.drain(..).collect();
+                        if self.get_state().selected_ch_id != String::default()
+                        {
+                            self.get_state_mut().chat_input = self
+                                .get_state_mut()
+                                .input_text
+                                .drain(..)
+                                .collect();
 
-                        self.send_messages(&self.get_state().chat_input).await;
+                            match self
+                                .send_messages(&self.get_state().chat_input)
+                                .await
+                            {
+                                Ok(res) => {
+                                    log::info!(
+                                        "[send_message] Result: {:?}",
+                                        res
+                                    );
+                                    AppReturn::Continue
+                                }
+                                Err(err) => {
+                                    log::warn!(
+                                        "[send_message] Error: {:?}",
+                                        err
+                                    );
+                                    AppReturn::Continue
+                                }
+                            };
+                        } else {
+                            let _trash_bin: String = self
+                                .get_state_mut()
+                                .input_text
+                                .drain(..)
+                                .collect();
+
+                            log::error!(
+                                "[send_message] You should get the \
+                                `ch_id` first!"
+                            );
+                        }
 
                         // self.get_state_mut()
                         //     .set_input_messages(self.get_state_mut().chat_input.clone());

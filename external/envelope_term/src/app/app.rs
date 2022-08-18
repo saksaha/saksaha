@@ -11,7 +11,7 @@ use envelope_types::{
     request_type::{GET_CH_LIST, OPEN_CH},
     GetChListParams, GetMsgParams, OpenChParams, SendMsgParams,
 };
-use envelope_types::{Channel, ChatMessage};
+use envelope_types::{Channel, ChatMessage, EncryptedChatMessage};
 use log::error;
 use sak_contract_std::{CtrCallType, CtrRequest};
 use sak_crypto::{
@@ -249,48 +249,102 @@ impl App {
         data: Vec<u8>,
     ) -> Result<(), EnvelopeError> {
         let my_pk = self.get_pk(&USER_1.to_string()).await?;
+        let my_sk = self.get_sk(&USER_1.to_string()).await?;
 
-        // let chat_msg: Vec<ChatMessage> =
-        //     match serde_json::from_slice::<Vec<ChatMessage>>(&data) {
-        //         Ok(c) => c
-        //             .into_iter()
-        //             .map(|mut m| {
-        //                 if m.user == my_pk {
-        //                     m.user = "me".to_string();
-        //                 } else {
-        //                     m.user = m.user[0..16].to_string();
-        //                 }
-        //                 m
-        //             })
-        //             .collect(),
-        //         Err(err) => {
-        //             panic!("Cannot Deserialize `ChatMessage`:, err: {}", err);
-        //         }
-        //     };
+        let encrypted_chat_msg_vec: Vec<EncryptedChatMessage> =
+            match serde_json::from_slice::<Vec<EncryptedChatMessage>>(&data) {
+                Ok(c) => c.into_iter().map(|m| m).collect(),
+                Err(err) => {
+                    return Err(format!(
+                        "failed to deserialize vec<string>, err: {:?}",
+                        err
+                    )
+                    .into());
+                }
+            };
 
-        // self.get_state_mut().set_chats(chat_msg, my_pk);
+        let eph_key: String = {
+            let mut res: String = String::default();
 
-        log::info!("data: {:?}", data);
+            for ch_state in self.get_state().ch_list.iter() {
+                if ch_state.channel.ch_id == self.get_state().selected_ch_id {
+                    res = ch_state.channel.eph_key.clone();
+                }
+            }
+
+            res
+        };
+
+        let aes_key = {
+            if &eph_key[0..5] == "init_" {
+                let eph_sk = &eph_key[5..];
+
+                let eph_sk_encrypted: Vec<u8> = serde_json::from_str(eph_sk)?;
+
+                let sk = {
+                    let my_sk: U8Arr32 = U8Array::from_hex_string(my_sk)?;
+
+                    let eph_sk =
+                        sak_crypto::aes_decrypt(&my_sk, &eph_sk_encrypted)?;
+
+                    SecretKey::from_bytes(&eph_sk)?
+                };
+
+                let pk = {
+                    // for dev, her_pk == `user_2_pk`
+                    let her_pk = self.get_pk(&USER_2.to_string()).await?;
+
+                    let her_pk_vec: Vec<u8> = sak_crypto::decode_hex(&her_pk)?;
+
+                    PublicKey::from_sec1_bytes(&her_pk_vec)?
+                };
+
+                derive_aes_key(sk, pk)?
+            } else {
+                let eph_pk = eph_key;
+
+                let sk = SecretKey::from_bytes(&my_sk.as_bytes())?;
+
+                let pk = {
+                    let eph_pk_vec: Vec<u8> = sak_crypto::decode_hex(&eph_pk)?;
+
+                    PublicKey::from_sec1_bytes(&eph_pk_vec)?
+                };
+
+                derive_aes_key(sk, pk)?
+            }
+        };
+
+        let mut chat_msg: Vec<ChatMessage> = vec![];
+
+        for encrypted_chat_msg in encrypted_chat_msg_vec.into_iter() {
+            let encrypted_chat_msg: Vec<u8> =
+                serde_json::from_str(&encrypted_chat_msg)?;
+
+            let chat_msg_ser: String = {
+                let chat_msg: Vec<u8> =
+                    sak_crypto::aes_decrypt(&aes_key, &encrypted_chat_msg)?;
+
+                String::from_utf8(chat_msg)?
+            };
+
+            let mut res: ChatMessage = serde_json::from_str(&chat_msg_ser)?;
+
+            if res.user == my_pk {
+                res.user = "me".to_string();
+            } else {
+                res.user = res.user[0..16].to_string();
+            }
+
+            chat_msg.push(res);
+        }
+
+        self.get_state_mut().set_chats(chat_msg, my_pk);
+
         log::info!("set_chats done");
 
         Ok(())
     }
-
-    // pub async fn open_ch_initiator(
-    //     &mut self,
-    //     ) -> Result<(), EnvelopeError> {
-
-    //     Ok(())
-
-    // }
-
-    // pub async fn open_ch_receiver(
-    //     &mut self,
-    //     ) -> Result<(), EnvelopeError> {
-
-    //     Ok(())
-
-    // }
 
     pub async fn open_ch(
         &mut self,
@@ -335,9 +389,6 @@ impl App {
                     let eph_sk_enc: Vec<u8> =
                         sak_crypto::aes_encrypt(&my_sk, &eph_sk.to_bytes())?;
 
-                    log::info!("[11] my_sk: {:?}", my_sk);
-                    log::info!("[11] eph_sk_enc: {:?}", eph_sk_enc);
-
                     // for dev
                     format!("init_{}", serde_json::to_string(&eph_sk_enc)?)
                 };
@@ -377,7 +428,7 @@ impl App {
         {
             // =-=-=-=-=-= receiver `open_ch` =-=-=-=-=-=-=-=
 
-            let shared_secret = {
+            let aes_key = {
                 let her_pk: Vec<u8> = sak_crypto::decode_hex(her_pk)?;
 
                 let her_pk = PublicKey::from_sec1_bytes(&her_pk.as_slice())?;
@@ -387,19 +438,15 @@ impl App {
 
             let open_ch = {
                 let ch_id_enc = {
-                    let ch_id_enc = sak_crypto::aes_encrypt(
-                        &shared_secret,
-                        &ch_id.as_bytes(),
-                    )?;
+                    let ch_id_enc =
+                        sak_crypto::aes_encrypt(&aes_key, &ch_id.as_bytes())?;
 
                     serde_json::to_string(&ch_id_enc)?
                 };
 
                 let sig_enc = {
-                    let sig_enc = sak_crypto::aes_encrypt(
-                        &shared_secret,
-                        &my_sig.as_bytes(),
-                    )?;
+                    let sig_enc =
+                        sak_crypto::aes_encrypt(&aes_key, &my_sig.as_bytes())?;
 
                     serde_json::to_string(&sig_enc)?
                 };
@@ -556,8 +603,6 @@ impl App {
                 derive_aes_key(sk, pk)?
             }
         };
-
-        log::info!("[for dev] AES KEY: {:?}", aes_key);
 
         let chat_msg = ChatMessage {
             date: Local::now().format("%H:%M:%S ").to_string(),
