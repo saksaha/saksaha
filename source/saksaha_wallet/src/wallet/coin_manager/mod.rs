@@ -1,5 +1,4 @@
-use super::Wallet;
-use crate::{db::WalletDB, WalletCredential, WalletError};
+use crate::{db::WalletDB, WalletError};
 use colored::Colorize;
 use sak_types::CoinRecord;
 use sak_types::CoinStatus;

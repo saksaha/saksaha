@@ -314,15 +314,15 @@ impl LedgerDB {
 
         // self.batch_put_cm_cm_idx(batch, &tc.cm_2, &(*cm_idx_count + 1))?;
 
-        self.batch_put_cm_idx_cm(batch, cm_idx_count, &tc.cm_1)?;
+        // self.batch_put_cm_idx_cm(batch, cm_idx_count, &tc.cm_1)?;
 
-        self.batch_put_cm_idx_cm(batch, &(*cm_idx_count + 1), &tc.cm_2)?;
+        // self.batch_put_cm_idx_cm(batch, &(*cm_idx_count + 1), &tc.cm_2)?;
 
         self.batch_put_prf_merkle_rt(batch, tx_hash, &tc.merkle_rt)?;
 
         let tx_ctr_op = tc.get_ctr_op();
 
-        *cm_idx_count = *cm_idx_count + 2;
+        // *cm_idx_count = *cm_idx_count + 2;
 
         match tx_ctr_op {
             TxCtrOp::ContractDeploy => {

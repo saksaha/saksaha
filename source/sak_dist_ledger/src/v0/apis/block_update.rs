@@ -153,7 +153,6 @@ impl DistLedgerApis {
 
         let block_hash = self
             .ledger_db
-            .schema
             .put_block(
                 &block,
                 &txs,
@@ -236,7 +235,6 @@ impl DistLedgerApis {
 
         let block_hash = self
             .ledger_db
-            .schema
             .put_block(
                 &block,
                 &txs,
@@ -261,7 +259,7 @@ impl DistLedgerApis {
     }
 
     pub fn delete_tx(&self, key: &String) -> Result<(), LedgerError> {
-        self.ledger_db.schema.delete_tx(key)
+        self.ledger_db.delete_tx(key)
     }
 }
 
@@ -299,7 +297,6 @@ async fn process_ctr_state_update(
                         Some(previous_state) => {
                             let ctr_wasm = apis
                                 .ledger_db
-                                .schema
                                 .get_ctr_data_by_ctr_addr(&ctr_addr)
                                 .await?
                                 .ok_or("ctr data (wasm) should exist")?;

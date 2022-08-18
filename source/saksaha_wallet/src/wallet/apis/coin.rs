@@ -8,7 +8,6 @@ use sak_crypto::ScalarExt;
 use sak_proofs::OldCoin;
 use sak_types::AccountBalance;
 use sak_types::CoinRecord;
-use sak_types::CoinStatus;
 use std::convert::TryInto;
 use type_extension::U8Array;
 
@@ -53,34 +52,48 @@ impl Wallet {
         ctr_addr: String,
         ctr_request: CtrRequest,
     ) -> Result<String, WalletError> {
+        // self.check_enough_balance(&acc_addr).await?;
+
         let coin_manager_lock = self.get_coin_manager().write().await;
 
         let coin: &CoinRecord = coin_manager_lock
             .get_next_available_coin()
             .ok_or("No usable coins")?;
 
-        println!("coin: {:?}", coin);
-
         let sn_1 = {
             let addr_sk = coin.addr_sk;
+
             let rho = coin.rho;
+
             let hasher = Hasher::new();
+
             let sn_1 = hasher.mimc_scalar(addr_sk, rho);
+
             sn_1.to_bytes()
         };
 
-        let v = ScalarExt::into_u64(coin.v)?;
+        let (new_coin_1, new_coin_2, cm_1, cm_2) = {
+            let v = ScalarExt::into_u64(coin.v)?;
 
-        let new_coin_1 =
-            CoinRecord::new(0x101, 0x102, 0x103, 0x104, v - GAS, None, None)?;
+            let new_coin_1 = CoinRecord::new(
+                0x101,
+                0x102,
+                0x103,
+                0x104,
+                v - GAS,
+                None,
+                None,
+            )?;
 
-        let new_coin_2 =
-            CoinRecord::new(0x201, 0x202, 0x203, 0x204, 0, None, None)?;
+            let new_coin_2 =
+                CoinRecord::new(0x201, 0x202, 0x203, 0x204, 0, None, None)?;
 
-        let cm_1 = new_coin_1.cm.to_bytes();
-        let cm_2 = new_coin_2.cm.to_bytes();
+            let cm_1 = new_coin_1.cm.to_bytes();
 
-        // make old coin using "coin" and new coins
+            let cm_2 = new_coin_2.cm.to_bytes();
+
+            (new_coin_1, new_coin_2, cm_1, cm_2)
+        };
 
         let cm_idx = {
             println!("coin.cm_idx: {:?}", coin.cm_idx);
@@ -89,10 +102,6 @@ impl Wallet {
 
             c
         };
-
-        // let old_coin = {
-        //     let auth_path = {
-        //         let response = saksaha::get_auth_path(cm_idx).await?;
 
         let old_coin = {
             let auth_path = {
@@ -103,85 +112,51 @@ impl Wallet {
 
                 result.auth_path
             };
-            let old_coin = self.get_old_coin(cm_idx, auth_path).await?;
+            self.get_old_coin(coin, auth_path).await?
         };
 
-        //     old_coin
-        // };
+        let pi = saksaha::generate_proof_1_to_2(
+            old_coin,
+            new_coin_1.extract(),
+            new_coin_2.extract(),
+        )
+        .await?;
 
-        // let pi = saksaha::generate_proof_1_to_2(
-        //     coin,
-        //     new_coin_1.extract(),
-        //     new_coin_2.extract(),
-        // )
-        // .await?;
+        let mut pi_ser = Vec::new();
+        pi.write(&mut pi_ser).unwrap();
+
+        println!("[!] pi serialized, len: {}, {:?}", pi_ser.len(), pi_ser);
 
         // // send
-        // let json_response = saksaha::send_tx_pour(
-        //     sn_1,
-        //     cm_1,
-        //     cm_2,
-        //     U8Array::new_empty_32(), // merkle_rt
-        //     vec![],                  // pi
-        //     ctr_addr,
-        //     ctr_request,
-        // )
-        // .await?;
+        let json_response = saksaha::send_tx_pour(
+            sn_1,
+            cm_1,
+            cm_2,
+            U8Array::new_empty_32(), // merkle_rt
+            pi_ser,
+            ctr_addr,
+            ctr_request,
+        )
+        .await?;
 
-        // let res = json_response.result.ok_or("Value needs to be returned")?;
+        let res = json_response.result.ok_or("Value needs to be returned")?;
 
-        // coin_manager.add_coin()?;
-        ////////////////////////////////////////////////
-
-        // self.check_enough_balance(&id, &key).await?;
-
-        // let cm_idx = match self.db.schema.get_latest_cm_idx()? {
-        //     Some(i) => i,
-        //     None => {
-        //         return Err(format!("Wallet is empty, cannot get any cm").into())
-        //     }
-        // };
-
-        // let cm = match self.db.schema.get_cm(&cm_idx)? {
-        //     Some(c) => c,
-        //     None => return Err(format!("cannot get cm").into()),
-        // };
-
-        // let (old_coin, old_coin_v) = {
-        //     let auth_path = {
-        //         let response = saksaha::get_auth_path(cm_idx).await?;
-
-        //         let result =
-        //             response.result.ok_or(format!("cannot get auth path"))?;
-
-        //         result.auth_path
-        //     };
-
-        //     let old_coin = self.get_old_coin(cm_idx, auth_path).await?;
-
-        //     let old_coin_v = match old_coin.v {
-        //         Some(v) => decode_hex_string_to_u64(&v.to_string()).await?,
-        //         None => return Err(format!("coin has no value").into()),
-        //     };
-
-        //     (old_coin, old_coin_v)
-        // };
+        println!("res : {:?}", res);
 
         Ok("success_power".to_string())
     }
     pub(crate) async fn get_old_coin(
         &self,
-        coin: CoinRecord,
+        coin: &CoinRecord,
         auth_path: Vec<([u8; 32], bool)>,
     ) -> Result<OldCoin, WalletError> {
-        let a: Vec<Option<(Scalar, bool)>> = vec![];
+        let mut v: Vec<Option<(Scalar, bool)>> = vec![];
         for (merkle_node, dir) in auth_path {
             let s = ScalarExt::parse_arr(&merkle_node)?;
-            a.push(Some((s, dir)));
+            v.push(Some((s, dir)));
         }
 
-        let a =
-            a.iter().map(|x| x).collect::<[Option<(Scalar, bool)>; 4]>().try_into();
+        let a = v.as_slice();
 
         let o = OldCoin {
             addr_pk: Some(coin.addr_pk),
@@ -198,41 +173,27 @@ impl Wallet {
 
             cm: Some(coin.cm),
 
-            auth_path: ,
+            auth_path: a.try_into()?,
         };
         Ok(o)
     }
+
+    pub(crate) async fn _check_enough_balance(
+        &self,
+        acc_addr: &String,
+    ) -> Result<(), WalletError> {
+        let my_balance = self.get_balance(acc_addr).await?;
+        let check_enough_balalnce = my_balance.val > GAS;
+        if !check_enough_balalnce {
+            return Err(format!("don't have enough coin").into());
+        }
+        Ok(())
+    }
+
+    // pub(crate) async fn set_status_used(
+    //     &self,
+    //     cm: &String,
+    //     status: &CoinStatus,
+    // ) -> Result<(), WalletError> {
+    //     self.db.schema.put_coin_status(cm, status).await?;
 }
-
-// pub(crate) async fn check_enough_balance(
-//     &self,
-//     id: &String,
-//     key: &String,
-// ) -> Result<(), WalletError> {
-//     let my_balance = self.get_balance(id, key).await?;
-//     let check_enough_balalnce = my_balance.val > GAS;
-//     if !check_enough_balalnce {
-//         return Err(format!("don't have enough coin").into());
-//     }
-//     Ok(())
-// }
-
-//     let mut old_coin = self.db.schema.get_coin(&cm)?;
-
-//     // unwrap should be resolved
-//     let mut auth_path_vec = vec![];
-//     for (arr, dir) in auth_path {
-//         let node = Scalar::from_bytes(&arr).unwrap();
-//         auth_path_vec.push(Some((node, dir)));
-//     }
-//     old_coin.update_auth_path(auth_path_vec.try_into().unwrap());
-
-//     Ok(old_coin)
-// }
-
-// pub(crate) async fn set_status_used(
-//     &self,
-//     cm: &String,
-//     status: &CoinStatus,
-// ) -> Result<(), WalletError> {
-//     self.db.schema.put_coin_status(cm, status).await?;

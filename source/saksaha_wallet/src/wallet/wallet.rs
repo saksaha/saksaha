@@ -1,8 +1,6 @@
 use super::CoinManager;
 use crate::{db::WalletDB, Config, CredentialManager, WalletError};
 use colored::Colorize;
-use log::debug;
-use sak_types::CoinRecord;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 pub const GAS: u64 = 10;
@@ -73,7 +71,7 @@ async fn bootstrap_wallet(
             let res = wallet.get_db().schema.put_coin(&coin);
 
             match res {
-                Ok(r) => {
+                Ok(_r) => {
                     println!(
                         "\t[{}/{}] Bootstrapped a coin, cm: {}, val: {}",
                         idx, coin_count, coin.cm, coin.v

@@ -148,7 +148,7 @@ impl LedgerDB {
 
         match self.db.get_cf(&cf, key)? {
             Some(v) => {
-                let height = sak_kv_db::convert_u8_slice_into_u128(&v)?;
+                let height = type_extension::convert_u8_slice_into_u128(&v)?;
 
                 return Ok(Some(height));
             }
@@ -166,7 +166,7 @@ impl LedgerDB {
 
         match self.db.get_cf(&cf, key)? {
             Some(v) => {
-                let arr = sak_kv_db::convert_vec_into_u8_32(v)?;
+                let arr = type_extension::convert_vec_into_u8_32(v)?;
 
                 return Ok(Some(arr));
             }
@@ -184,7 +184,7 @@ impl LedgerDB {
 
         match self.db.get_cf(&cf, key)? {
             Some(v) => {
-                let arr = sak_kv_db::convert_vec_into_u8_32(v)?;
+                let arr = type_extension::convert_vec_into_u8_32(v)?;
 
                 return Ok(Some(arr));
             }
@@ -202,7 +202,7 @@ impl LedgerDB {
 
         match self.db.get_cf(&cf, key)? {
             Some(v) => {
-                let arr = sak_kv_db::convert_vec_into_u8_32(v)?;
+                let arr = type_extension::convert_vec_into_u8_32(v)?;
 
                 return Ok(Some(arr));
             }
@@ -220,7 +220,7 @@ impl LedgerDB {
 
         match self.db.get_cf(&cf, key)? {
             Some(v) => {
-                let arr = sak_kv_db::convert_vec_into_u8_32(v)?;
+                let arr = type_extension::convert_vec_into_u8_32(v)?;
 
                 return Ok(Some(arr));
             }
@@ -238,7 +238,7 @@ impl LedgerDB {
 
         match self.db.get_cf(&cf, key)? {
             Some(v) => {
-                let arr = sak_kv_db::convert_vec_into_u8_32(v)?;
+                let arr = type_extension::convert_vec_into_u8_32(v)?;
 
                 return Ok(Some(arr));
             }
@@ -257,7 +257,7 @@ impl LedgerDB {
 
         match db.get_cf(&cf, key)? {
             Some(v) => {
-                let arr = sak_kv_db::convert_vec_into_u8_32(v)?;
+                let arr = type_extension::convert_vec_into_u8_32(v)?;
 
                 return Ok(Some(arr));
             }
@@ -294,7 +294,7 @@ impl LedgerDB {
 
         match self.db.get_cf(&cf, key)? {
             Some(v) => {
-                let arr = sak_kv_db::convert_vec_into_u8_32(v)?;
+                let arr = type_extension::convert_vec_into_u8_32(v)?;
 
                 return Ok(Some(arr));
             }
@@ -312,7 +312,7 @@ impl LedgerDB {
 
         match self.db.get_cf(&cf, key)? {
             Some(v) => {
-                let arr = sak_kv_db::convert_vec_into_u8_32(v)?;
+                let arr = type_extension::convert_vec_into_u8_32(v)?;
 
                 return Ok(Some(arr));
             }

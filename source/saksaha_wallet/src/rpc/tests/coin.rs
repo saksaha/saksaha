@@ -1,12 +1,9 @@
 use super::utils;
-use crate::rpc::routes::v0::{
-    GetBalanceRequest, GetBalanceResponse, SendTxRequest, SendTxResponse,
-};
-use crate::Config;
+use crate::rpc::routes::v0::{SendTxRequest, SendTxResponse};
 use envelope_contract::request_type;
 use envelope_term::ENVELOPE_CTR_ADDR;
 use hyper::{Body, Client, Method, Request, Uri};
-use sak_contract_std::{CtrRequest, RequestArgs};
+use sak_contract_std::CtrRequest;
 use sak_rpc_interface::{JsonRequest, JsonResponse};
 pub(crate) const RPC_PORT: u16 = 36612;
 
