@@ -1,6 +1,5 @@
-use crate::{Msg, TrptError, UpgradedP2PCodec};
+use crate::{Msg, MsgWrap, TrptError, UpgradedP2PCodec};
 use futures::{SinkExt, StreamExt};
-use std::net::SocketAddr;
 use tokio::net::TcpStream;
 use tokio_util::codec::Framed;
 
@@ -8,34 +7,45 @@ pub struct SendReceipt {
     __created_by_conn: bool,
 }
 
-pub struct RecvReceipt {
-    __created_by_conn: bool,
+pub enum ConnState {
+    Sent,
+    Neutral,
+    Recvd,
 }
 
 pub struct UpgradedConn {
-    socket_addr: SocketAddr,
     conn_id: String,
     socket: Framed<TcpStream, UpgradedP2PCodec>,
+    conn_state: ConnState,
 }
 
 impl UpgradedConn {
     pub async fn init(
-        socket_addr: SocketAddr,
         socket: Framed<TcpStream, UpgradedP2PCodec>,
         conn_id: String,
         _is_initiator: bool,
     ) -> UpgradedConn {
+        let conn_state = ConnState::Neutral;
+
         let upgraded_conn = UpgradedConn {
-            socket_addr,
             socket,
             conn_id,
+            conn_state,
         };
 
         upgraded_conn
     }
 
     pub async fn send(&mut self, msg: Msg) -> Result<SendReceipt, TrptError> {
+        if let ConnState::Sent = self.conn_state {
+            return Err(
+                format!("This is not a turn for sending message").into()
+            );
+        }
+
         let msg_type = msg.to_string();
+
+        println!("sending msg: conn_id: {}, {}", self.conn_id, msg_type);
 
         match self.socket.send(msg).await {
             Ok(_) => (),
@@ -52,18 +62,52 @@ impl UpgradedConn {
             __created_by_conn: true,
         };
 
+        match self.conn_state {
+            ConnState::Neutral => {
+                self.conn_state = ConnState::Sent;
+            }
+            ConnState::Recvd => {
+                self.conn_state = ConnState::Neutral;
+            }
+            _ => {
+                unreachable!(
+                    "Conn state at this stage cannot be 'Sent' \
+                    because it has been already checked"
+                );
+            }
+        }
+
         Ok(receipt)
     }
 
-    pub async fn next_msg(
-        &mut self,
-    ) -> (Option<Result<Msg, TrptError>>, RecvReceipt) {
+    pub async fn next_msg(&mut self) -> Result<MsgWrap, TrptError> {
+        if let ConnState::Recvd = self.conn_state {
+            return Err(
+                format!("This is not a turn for sending message").into()
+            );
+        }
+
         let msg = self.socket.next().await;
 
-        let receipt = RecvReceipt {
-            __created_by_conn: true,
-        };
+        println!("next_msg, conn_id: {}, msg: {:?}, ", self.conn_id, msg);
 
-        (msg, receipt)
+        match self.conn_state {
+            ConnState::Neutral => {
+                self.conn_state = ConnState::Recvd;
+            }
+            ConnState::Sent => {
+                self.conn_state = ConnState::Neutral;
+            }
+            _ => {
+                unreachable!(
+                    "Conn state at this stage cannot be 'Recvd' \
+                    because it has been already checked"
+                );
+            }
+        }
+
+        let msg_wrap = MsgWrap::new(msg);
+
+        Ok(msg_wrap)
     }
 }

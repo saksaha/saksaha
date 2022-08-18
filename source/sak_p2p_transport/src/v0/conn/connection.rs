@@ -38,12 +38,20 @@ impl Conn {
         nonce: &[u8],
         her_public_key: &String,
     ) -> Result<UpgradedConn, TrptError> {
-        let cipher = ChaCha20::new(
+        let enc_cipher = ChaCha20::new(
             shared_secret.as_bytes().as_slice().into(),
             nonce.into(),
         );
 
-        let socket = self.socket.map_codec(|_| UpgradedP2PCodec { cipher });
+        let dec_cipher = ChaCha20::new(
+            shared_secret.as_bytes().as_slice().into(),
+            nonce.into(),
+        );
+
+        let socket = self.socket.map_codec(|_| UpgradedP2PCodec {
+            enc_cipher,
+            dec_cipher,
+        });
 
         let conn_id = format!(
             "{}-{}",
@@ -51,13 +59,8 @@ impl Conn {
             sak_p2p_id::make_public_key_short(&her_public_key)?
         );
 
-        let upgraded_conn = UpgradedConn::init(
-            self.socket_addr.clone(),
-            socket,
-            conn_id,
-            self.is_initiator,
-        )
-        .await;
+        let upgraded_conn =
+            UpgradedConn::init(socket, conn_id, self.is_initiator).await;
 
         Ok(upgraded_conn)
     }

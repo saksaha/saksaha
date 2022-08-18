@@ -16,16 +16,23 @@ pub(in crate::node) async fn send_block_hash_syn(
     new_blocks: Vec<(BlockHeight, BlockHash)>,
     task_queue: &Arc<TaskQueue<NodeTask>>,
 ) -> Result<RecvReceipt, SaksahaNodeError> {
+    println!("msg_handle: send block hash syn");
+
     conn_lock
         .send(Msg::BlockHashSyn(BlockHashSyncMsg {
             new_blocks: new_blocks.clone(),
         }))
         .await?;
 
-    let (msg, receipt) = conn_lock.next_msg().await;
+    println!("msg_handle: sent block hash syn");
 
-    let msg =
-        msg.ok_or(format!("block hash syn needs to be followed by ack"))??;
+    let msg_wrap = conn_lock.next_msg().await?;
+
+    let receipt = msg_wrap.get_receipt();
+
+    let msg = msg_wrap
+        .get_maybe_msg()
+        .ok_or(format!("block hash syn needs to be followed by ack"))??;
 
     let block_hash_ack_msg = match msg {
         Msg::BlockHashAck(m) => m,
@@ -51,6 +58,8 @@ pub(in crate::node) async fn recv_block_hash_syn(
     machine: &Arc<Machine>,
     mut conn: RwLockWriteGuard<'_, UpgradedConn>,
 ) -> Result<SendReceipt, SaksahaNodeError> {
+    println!("recv block hash syn");
+
     let new_blocks = block_hash_syn_msg.new_blocks;
 
     let (_, latest_block_hash) = machine
