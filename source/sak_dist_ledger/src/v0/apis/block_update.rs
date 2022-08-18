@@ -47,6 +47,8 @@ impl DistLedgerApis {
         &self,
         bc: Option<BlockCandidate>,
     ) -> Result<Option<String>, LedgerError> {
+        println!("write block");
+
         let bc = match bc {
             Some(bc) => bc,
             None => match self.make_block_candidate().await? {
@@ -86,24 +88,23 @@ impl DistLedgerApis {
         //     }
         // };
 
-        let next_tx_height = match self.get_latest_tx_height().await? {
-            Some(th) => th + 1,
-            None => 0,
-        };
+        // let next_tx_height = match self.get_latest_tx_height().await? {
+        //     Some(th) => th + 1,
+        //     None => 0,
+        // };
 
         let tcs = &bc.tx_candidates;
         let mut ctr_state_update = CtrStateUpdate::new();
         let mut merkle_update = MerkleUpdate::new();
 
-        println!("44");
-
         debug!(
             "write_block, tc count: {}, next_block_height: {}, \
-            next_tx_height: {}",
+            next_cm_idx: {}",
             tcs.len(),
             next_block_height,
-            next_tx_height,
+            // next_tx_height,
             // ledger_cm_count,
+            next_cm_idx,
         );
 
         let mut added_cm_count: u128 = 0;
@@ -145,7 +146,8 @@ impl DistLedgerApis {
 
         let (block, txs) = bc.upgrade(
             next_block_height,
-            next_tx_height,
+            // next_tx_height,
+            next_cm_idx,
             next_merkle_rt.to_owned(),
         );
 

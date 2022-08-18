@@ -90,21 +90,21 @@ impl LedgerDB {
         Ok(Some(height))
     }
 
-    pub(crate) fn get_latest_tx_height(
-        &self,
-        // db: &DB,
-    ) -> Result<Option<u128>, LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::TX_HASH_BY_HEIGHT)?;
+    // pub(crate) fn get_latest_tx_height(
+    //     &self,
+    //     // db: &DB,
+    // ) -> Result<Option<u128>, LedgerError> {
+    //     let cf = self.make_cf_handle(&self.db, cfs::TX_HASH_BY_HEIGHT)?;
 
-        let mut iter = self.db.iterator_cf(&cf, IteratorMode::End);
+    //     let mut iter = self.db.iterator_cf(&cf, IteratorMode::End);
 
-        let (height_bytes, _hash) = match iter.next() {
-            Some(a) => a,
-            None => return Ok(None),
-        };
+    //     let (height_bytes, _hash) = match iter.next() {
+    //         Some(a) => a,
+    //         None => return Ok(None),
+    //     };
 
-        let height = type_extension::convert_u8_slice_into_u128(&height_bytes)?;
+    //     let height = type_extension::convert_u8_slice_into_u128(&height_bytes)?;
 
-        Ok(Some(height))
-    }
+    //     Ok(Some(height))
+    // }
 }

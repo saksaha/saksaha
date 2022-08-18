@@ -263,11 +263,11 @@ impl DistLedgerApis {
     //     self.ledger_db.get_ledger_cm_count()
     // }
 
-    pub async fn get_latest_tx_height(
-        &self,
-    ) -> Result<Option<u128>, LedgerError> {
-        self.ledger_db.get_latest_tx_height()
-    }
+    // pub async fn get_latest_tx_height(
+    //     &self,
+    // ) -> Result<Option<u128>, LedgerError> {
+    //     self.ledger_db.get_latest_tx_height()
+    // }
 
     pub async fn get_latest_block_merkle_rt(
         &self,

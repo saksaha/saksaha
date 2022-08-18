@@ -73,10 +73,10 @@ impl LedgerDB {
 
     pub(crate) fn make_cf_descriptors() -> Vec<ColumnFamilyDescriptor> {
         vec![
-            ColumnFamilyDescriptor::new(
-                cfs::TX_HASH_BY_HEIGHT,
-                Options::default(),
-            ),
+            // ColumnFamilyDescriptor::new(
+            //     cfs::TX_HASH_BY_HEIGHT,
+            //     Options::default(),
+            // ),
             ColumnFamilyDescriptor::new(
                 cfs::TX_HASH_BY_CTR_ADDR,
                 Options::default(),

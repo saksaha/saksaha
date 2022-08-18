@@ -33,25 +33,25 @@ impl LedgerDB {
         };
     }
 
-    pub(crate) fn get_tx_hash_by_height(
-        &self,
-        tx_height: &u128,
-    ) -> Result<Option<String>, LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::TX_HASH_BY_HEIGHT)?;
+    // pub(crate) fn get_tx_hash_by_height(
+    //     &self,
+    //     tx_height: &u128,
+    // ) -> Result<Option<String>, LedgerError> {
+    //     let cf = self.make_cf_handle(&self.db, cfs::TX_HASH_BY_HEIGHT)?;
 
-        let key = tx_height.to_be_bytes();
+    //     let key = tx_height.to_be_bytes();
 
-        match self.db.get_cf(&cf, key)? {
-            Some(v) => {
-                let str = String::from_utf8(v)?;
+    //     match self.db.get_cf(&cf, key)? {
+    //         Some(v) => {
+    //             let str = String::from_utf8(v)?;
 
-                return Ok(Some(str));
-            }
-            None => {
-                return Ok(None);
-            }
-        }
-    }
+    //             return Ok(Some(str));
+    //         }
+    //         None => {
+    //             return Ok(None);
+    //         }
+    //     }
+    // }
 
     pub(crate) fn get_tx_created_at(
         &self,
@@ -504,21 +504,21 @@ impl LedgerDB {
     //     Ok(())
     // }
 
-    pub(crate) fn batch_put_tx_hash_by_height(
-        &self,
-        // db: &DB,
-        batch: &mut WriteBatch,
-        tx_height: &u128,
-        tx_hash: &String,
-    ) -> Result<(), LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::TX_HASH_BY_HEIGHT)?;
+    // pub(crate) fn batch_put_tx_hash_by_height(
+    //     &self,
+    //     // db: &DB,
+    //     batch: &mut WriteBatch,
+    //     tx_height: &u128,
+    //     tx_hash: &String,
+    // ) -> Result<(), LedgerError> {
+    //     let cf = self.make_cf_handle(&self.db, cfs::TX_HASH_BY_HEIGHT)?;
 
-        let v = tx_height.to_be_bytes();
+    //     let v = tx_height.to_be_bytes();
 
-        batch.put_cf(&cf, v, tx_hash);
+    //     batch.put_cf(&cf, v, tx_hash);
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
     pub(crate) fn batch_put_tx_hash_by_sn(
         &self,
