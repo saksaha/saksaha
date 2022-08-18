@@ -72,9 +72,10 @@ impl Wallet {
         let v = ScalarExt::into_u64(coin.v)?;
 
         let new_coin_1 =
-            CoinRecord::new(0x101, 0x102, 0x103, 0x104, v - GAS, None)?;
+            CoinRecord::new(0x101, 0x102, 0x103, 0x104, v - GAS, None, None)?;
 
-        let new_coin_2 = CoinRecord::new(0x201, 0x202, 0x203, 0x204, 0, None)?;
+        let new_coin_2 =
+            CoinRecord::new(0x201, 0x202, 0x203, 0x204, 0, None, None)?;
 
         let cm_1 = new_coin_1.cm.to_bytes();
         let cm_2 = new_coin_2.cm.to_bytes();
@@ -102,19 +103,18 @@ impl Wallet {
 
                 result.auth_path
             };
+            let old_coin = self.get_old_coin(cm_idx, auth_path).await?;
         };
-
-        //     let old_coin = self.get_old_coin(cm_idx, auth_path).await?;
 
         //     old_coin
         // };
 
-        let pi = saksaha::generate_proof_1_to_2(
-            coin,
-            new_coin_1.extract(),
-            new_coin_2.extract(),
-        )
-        .await?;
+        // let pi = saksaha::generate_proof_1_to_2(
+        //     coin,
+        //     new_coin_1.extract(),
+        //     new_coin_2.extract(),
+        // )
+        // .await?;
 
         // // send
         // let json_response = saksaha::send_tx_pour(
@@ -169,6 +169,39 @@ impl Wallet {
 
         Ok("success_power".to_string())
     }
+    pub(crate) async fn get_old_coin(
+        &self,
+        coin: CoinRecord,
+        auth_path: Vec<([u8; 32], bool)>,
+    ) -> Result<OldCoin, WalletError> {
+        let a: Vec<Option<(Scalar, bool)>> = vec![];
+        for (merkle_node, dir) in auth_path {
+            let s = ScalarExt::parse_arr(&merkle_node)?;
+            a.push(Some((s, dir)));
+        }
+
+        let a =
+            a.iter().map(|x| x).collect::<[Option<(Scalar, bool)>; 4]>().try_into();
+
+        let o = OldCoin {
+            addr_pk: Some(coin.addr_pk),
+
+            addr_sk: Some(coin.addr_sk),
+
+            rho: Some(coin.rho),
+
+            r: Some(coin.r),
+
+            s: Some(coin.s),
+
+            v: Some(coin.v),
+
+            cm: Some(coin.cm),
+
+            auth_path: ,
+        };
+        Ok(o)
+    }
 }
 
 // pub(crate) async fn check_enough_balance(
@@ -183,27 +216,6 @@ impl Wallet {
 //     }
 //     Ok(())
 // }
-
-// pub(crate) async fn get_old_coin(
-//     &self,
-//     // cm_idx: u128,
-//     auth_path: Vec<([u8; 32], bool)>,
-// ) -> Result<OldCoin, WalletError> {
-//     let cm: String = match self.db.schema.get_cm(&cm_idx) {
-//         Ok(c) => match c {
-//             Some(c) => c,
-//             None => {
-//                 return Err(format!(
-//                     "No cm has been found at idx: {:?}",
-//                     cm_idx
-//                 )
-//                 .into())
-//             }
-//         },
-//         Err(err) => {
-//             return Err(format!("Failed to get cm, err: {:?}", err).into())
-//         }
-//     };
 
 //     let mut old_coin = self.db.schema.get_coin(&cm)?;
 

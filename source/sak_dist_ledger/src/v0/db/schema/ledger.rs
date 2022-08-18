@@ -1,4 +1,4 @@
-use crate::{cfs, keys, LedgerDBSchema};
+use crate::{cfs, keys, LedgerDB};
 use crate::{LedgerError, MerkleNodeLoc};
 use sak_crypto::ScalarExt;
 use sak_kv_db::DB;
@@ -11,8 +11,7 @@ use std::convert::TryInto;
 use std::sync::Arc;
 use type_extension::U8Array;
 
-// getter
-impl LedgerDBSchema {
+impl LedgerDB {
     pub(crate) fn get_merkle_node(
         &self,
         // db: &DB,
@@ -129,7 +128,7 @@ impl LedgerDBSchema {
 }
 
 // writer
-impl LedgerDBSchema {
+impl LedgerDB {
     pub(crate) fn batch_put_ledger_cm_count(
         &self,
         // db: &DB,

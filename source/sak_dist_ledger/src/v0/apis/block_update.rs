@@ -47,6 +47,8 @@ impl DistLedgerApis {
         &self,
         bc: Option<BlockCandidate>,
     ) -> Result<Option<String>, LedgerError> {
+        // lock
+
         let bc = match bc {
             Some(bc) => bc,
             None => match self.make_block_candidate().await? {
