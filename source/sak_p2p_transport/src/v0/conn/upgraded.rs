@@ -85,7 +85,6 @@ impl UpgradedConn {
             );
         }
 
-        println!("got next ");
         let msg = self.socket.next().await;
 
         println!("next_msg, conn_id: {}, msg: {:?}, ", self.conn_id, msg);

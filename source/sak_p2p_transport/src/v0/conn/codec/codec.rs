@@ -18,19 +18,20 @@ impl Encoder<Msg> for UpgradedP2PCodec {
         item: Msg,
         dst: &mut BytesMut,
     ) -> Result<(), TrptError> {
+        println!("dst: {:?}", dst);
         enc::encode_into_frame(item, dst)?;
 
-        println!("enc");
         // let t = dst.to_vec();
+        println!("after dst: {:?}", dst);
 
         // self.cipher.try_apply_keystream(dst).unwrap();
         // self.cipher.apply_keystream(dst);
         self.enc_cipher.apply_keystream(dst);
+        println!("cipher dst: {:?}", dst);
 
         // println!(
-        //     "\n666 upgraded encoded!!, id: {}, r: {}, \noriginal buf: {:?}\nbuf: {:?}",
-        //     self.id,
-        //     rand,
+        //     "\n666 upgraded encoded!!, \noriginal buf: {:?}\nbuf: {:?}",
+        //     // rand,
         //     t,
         //     dst.to_vec()
         // );
@@ -50,7 +51,6 @@ impl Decoder for UpgradedP2PCodec {
         // let t = src.to_vec();
 
         self.dec_cipher.apply_keystream(src);
-        println!("dec {:?}", src);
 
         // println!(
         //     "\n1313 upgraded decoded, id: {}\noriginal buf: {:?}\nsrc: {:?}",

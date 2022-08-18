@@ -368,11 +368,7 @@ async fn test_late_block_sync_true() {
         let machine_2 = machine_2.clone();
         let local_node_2 = local_node_2.clone();
         tokio::spawn(async move {
-            tokio::join!(p2p_host_2.run());
-        });
-
-        tokio::spawn(async move {
-            tokio::join!(local_node_2.run(), machine_2.run());
+            tokio::join!(p2p_host_2.run(), local_node_2.run(), machine_2.run());
         });
     }
 
@@ -389,5 +385,5 @@ async fn test_late_block_sync_true() {
 
     assert_eq!(3, last_height_2);
 
-    println!("last height of local_node_2 is confirmed on 2");
+    println!("last height of local_node_2 is confirmed on 3");
 }
