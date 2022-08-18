@@ -92,7 +92,7 @@ async fn test_sequential_write_block() {
     for i in 0..100 as u64 {
         let block = BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
-            tx_candidates: vec![TxCandidate::new_dummy_pour_m1_to_p3_p4()],
+            tx_candidates: vec![sak_types::mock_pour_tc_m1_to_p3_p4()],
             witness_sigs: vec![String::from("1"), String::from("2")],
             created_at: format!("{}", i),
         };
@@ -117,8 +117,8 @@ async fn test_sequential_write_block_and_get_tx_height() {
         let block = BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
             tx_candidates: vec![
-                TxCandidate::new_dummy_pour_m1_to_p3_p4(),
-                TxCandidate::new_dummy_pour_2(),
+                sak_types::mock_pour_tc_m1_to_p3_p4(),
+                sak_types::mock_pour_tc_2(),
             ],
             witness_sigs: vec![String::from("1"), String::from("2")],
             created_at: format!("{}", i),
@@ -152,7 +152,7 @@ async fn test_write_block_and_check_merkle_rt_changed() {
 
         let bc = BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
-            tx_candidates: vec![TxCandidate::new_dummy_pour_variant_cm(cm)],
+            tx_candidates: vec![sak_types::mock_pour_tc_variant_cm(cm)],
             witness_sigs: vec![String::from("1")],
             created_at: format!("{}", i),
         };

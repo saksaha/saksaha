@@ -3,7 +3,7 @@ use crate::{
     CM_TREE_DEPTH,
 };
 use sak_crypto::{
-    groth16, os_rng, Bls12, Hasher, Parameters, Proof, Scalar, ScalarExt,
+    groth16, Bls12, Hasher, OsRng, Parameters, Proof, Scalar, ScalarExt,
 };
 use std::collections::HashMap;
 use std::fs::File;
@@ -317,7 +317,7 @@ pub fn get_test_params(constants: &[Scalar]) -> Parameters<Bls12> {
                 constants: constants.to_vec(),
             };
 
-            groth16::generate_random_parameters::<Bls12, _, _>(c, &mut os_rng())
+            groth16::generate_random_parameters::<Bls12, _, _>(c, &mut OsRng)
                 .unwrap()
         };
         // write param to file
@@ -325,7 +325,7 @@ pub fn get_test_params(constants: &[Scalar]) -> Parameters<Bls12> {
 
         params.write(&mut v).unwrap();
         // write origin buf
-        file.write_all(&v);
+        file.write_all(&v).unwrap();
     }
 
     let de_params = Parameters::<Bls12>::read(&v[..], false).unwrap();
@@ -351,8 +351,7 @@ fn make_proof(
         constants,
     };
 
-    let proof = match groth16::create_random_proof(c, &de_params, &mut os_rng())
-    {
+    let proof = match groth16::create_random_proof(c, &de_params, &mut OsRng) {
         Ok(p) => p,
         Err(err) => {
             return Err(format!(
@@ -422,6 +421,7 @@ pub async fn test_coin_ownership_default() {
         s: Some(test_context.s_2),
         v: Some(test_context.v_2),
     };
+
     let proof = make_proof(coin_1_old, coin_1_new, coin_2_new).unwrap();
 
     let public_inputs: Vec<Scalar> = vec![

@@ -34,3 +34,10 @@ pub fn convert_u8_slice_into_u128(arr: &[u8]) -> Result<u128, TypeExtError> {
 
     Ok(u128::from_be_bytes(padded_u8_bytes))
 }
+
+pub fn convert_u128_into_u8_slice(v: u128) -> Result<Box<[u8]>, TypeExtError> {
+    let arr = v.to_be_bytes();
+    let arr = Box::new(arr);
+
+    Ok(arr)
+}

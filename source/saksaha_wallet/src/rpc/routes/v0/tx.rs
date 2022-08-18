@@ -3,7 +3,7 @@ use hyper::{Body, Response};
 use hyper_rpc_router::{
     require_params_parsed, require_some_params, Params, RouteState,
 };
-use sak_contract_std::{CtrRequest, RequestArgs};
+use sak_contract_std::CtrRequest;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 

@@ -1,4 +1,4 @@
-use crate::{cfs, keys, LedgerDBSchema};
+use crate::{cfs, keys, LedgerDB};
 use crate::{LedgerError, MerkleNodeLoc};
 use sak_crypto::ScalarExt;
 use sak_kv_db::DB;
@@ -11,8 +11,7 @@ use std::convert::TryInto;
 use std::sync::Arc;
 use type_extension::U8Array;
 
-// getter
-impl LedgerDBSchema {
+impl LedgerDB {
     pub(crate) fn get_merkle_node(
         &self,
         // db: &DB,
@@ -22,7 +21,7 @@ impl LedgerDBSchema {
 
         match self.db.get_cf(&cf, key)? {
             Some(v) => {
-                let arr = sak_kv_db::convert_vec_into_u8_32(v)?;
+                let arr = type_extension::convert_vec_into_u8_32(v)?;
 
                 return Ok(arr);
             }
@@ -36,20 +35,36 @@ impl LedgerDBSchema {
         }
     }
 
-    pub(crate) fn get_cm_by_idx(
+    pub(crate) fn get_cm_by_cm_idx(
         &self,
-        // db: &DB,
         cm_idx: &u128,
-    ) -> Result<Option<String>, LedgerError> {
+    ) -> Result<Option<[u8; 32]>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::CM)?;
 
         let key = cm_idx.to_be_bytes();
 
         match self.db.get_cf(&cf, key)? {
             Some(v) => {
-                let str = String::from_utf8(v)?;
+                let arr = type_extension::convert_vec_into_u8_32(v)?;
+                return Ok(Some(arr));
+            }
+            None => {
+                return Ok(None);
+            }
+        }
+    }
 
-                return Ok(Some(str));
+    pub(crate) fn get_cm_idx_by_cm(
+        &self,
+        cm: &[u8; 32],
+    ) -> Result<Option<u128>, LedgerError> {
+        let cf = self.make_cf_handle(&self.db, cfs::CM_IDX)?;
+
+        match self.db.get_cf(&cf, cm)? {
+            Some(v) => {
+                let val = type_extension::convert_u8_slice_into_u128(&v)?;
+
+                return Ok(Some(val));
             }
             None => {
                 return Ok(None);
@@ -113,7 +128,7 @@ impl LedgerDBSchema {
 }
 
 // writer
-impl LedgerDBSchema {
+impl LedgerDB {
     pub(crate) fn batch_put_ledger_cm_count(
         &self,
         // db: &DB,
@@ -139,22 +154,6 @@ impl LedgerDBSchema {
         let cf = self.make_cf_handle(&self.db, cfs::MERKLE_NODE)?;
 
         batch.put_cf(&cf, merkle_node_loc, node_val);
-
-        Ok(())
-    }
-
-    pub(crate) fn batch_put_cm_by_idx(
-        &self,
-        // db: &DB,
-        batch: &mut WriteBatch,
-        cm_idx: &u128,
-        cm: &[u8; 32],
-    ) -> Result<(), LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::CM)?;
-
-        let v = cm_idx.to_be_bytes();
-
-        batch.put_cf(&cf, v, cm);
 
         Ok(())
     }

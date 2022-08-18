@@ -1,6 +1,6 @@
 use super::utils;
 use crate::{
-    MintTx, PourTx, Tx, TxCtrOp, TxType, TypesError, WASM_MAGIC_NUMBER,
+    MintTx, PourTx, Tx, TxCtrOp, TxType, TypesError, CM, WASM_MAGIC_NUMBER,
 };
 use serde::{Deserialize, Serialize};
 use type_extension::U8Arr32;
@@ -51,6 +51,13 @@ impl TxCandidate {
         match &self {
             TxCandidate::Mint(c) => c.get_tx_hash(),
             TxCandidate::Pour(c) => c.get_tx_hash(),
+        }
+    }
+
+    pub fn get_cms(&self) -> Vec<CM> {
+        match &self {
+            TxCandidate::Mint(c) => c.get_cms(),
+            TxCandidate::Pour(c) => c.get_cms(),
         }
     }
 }
@@ -131,6 +138,10 @@ impl MintTxCandidate {
 
     pub fn get_ctr_op(&self) -> TxCtrOp {
         utils::get_ctr_op(&self.ctr_addr, &self.data)
+    }
+
+    pub fn get_cms(&self) -> Vec<CM> {
+        vec![self.cm]
     }
 
     pub fn upgrade(self, tx_height: u128) -> Tx {
@@ -229,5 +240,9 @@ impl PourTxCandidate {
 
     pub fn get_ctr_op(&self) -> TxCtrOp {
         utils::get_ctr_op(&self.ctr_addr, &self.data)
+    }
+
+    pub fn get_cms(&self) -> Vec<CM> {
+        vec![self.cm_1, self.cm_2]
     }
 }

@@ -1,15 +1,14 @@
-use std::sync::Arc;
-
 use super::CoinManager;
 use crate::{db::WalletDB, Config, CredentialManager, WalletError};
 use colored::Colorize;
-use log::debug;
-use sak_types::CoinRecord;
+use std::sync::Arc;
+use tokio::sync::RwLock;
+pub const GAS: u64 = 10;
 
 pub(crate) struct Wallet {
     wallet_db: Arc<WalletDB>,
     credential_manager: CredentialManager,
-    coin_manager: CoinManager,
+    coin_manager: RwLock<CoinManager>,
 }
 
 impl Wallet {
@@ -20,7 +19,8 @@ impl Wallet {
     ) -> Result<Wallet, WalletError> {
         let wallet_db = Arc::new(wallet_db);
 
-        let coin_manager = CoinManager::init(wallet_db.clone()).await?;
+        let coin_manager =
+            RwLock::new(CoinManager::init(wallet_db.clone()).await?);
 
         let wallet = Wallet {
             wallet_db,
@@ -39,7 +39,7 @@ impl Wallet {
     }
 
     #[inline]
-    pub fn get_coin_manager(&self) -> &CoinManager {
+    pub fn get_coin_manager(&self) -> &RwLock<CoinManager> {
         &self.coin_manager
     }
 
@@ -71,7 +71,7 @@ async fn bootstrap_wallet(
             let res = wallet.get_db().schema.put_coin(&coin);
 
             match res {
-                Ok(r) => {
+                Ok(_r) => {
                     println!(
                         "\t[{}/{}] Bootstrapped a coin, cm: {}, val: {}",
                         idx, coin_count, coin.cm, coin.v

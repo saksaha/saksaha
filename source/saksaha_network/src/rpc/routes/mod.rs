@@ -55,6 +55,12 @@ pub(in crate::rpc) fn get_routes(
                 Box::pin(v0::get_auth_path(route_state, params, sys_handle))
             }),
         },
+        Path {
+            method: "get_cm_idx",
+            handler: Box::new(|route_state, params, sys_handle| {
+                Box::pin(v0::get_cm_idx(route_state, params, sys_handle))
+            }),
+        },
     ];
 
     let mut map = HashMap::new();

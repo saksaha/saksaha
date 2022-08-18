@@ -3,14 +3,11 @@ use sak_crypto::{Bls12, Hasher, Proof, Scalar, ScalarExt};
 use sak_dist_ledger::{
     Consensus, ConsensusError, DistLedger, DistLedgerApis, DistLedgerArgs,
 };
-use sak_proofs::{MerkleTree, NewCoin, OldCoin, CM_TREE_DEPTH};
+use sak_proofs::{CoinProof, MerkleTree, NewCoin, OldCoin, CM_TREE_DEPTH};
 use sak_types::{BlockCandidate, TxCandidate};
 use type_extension::U8Array;
 
 use super::TestUtil;
-use saksaha::{
-    generate_proof_1_to_2, get_auth_path, send_tx_mint, verify_proof_1_to_2,
-};
 use std::{collections::HashMap, sync::Arc, time::Duration};
 
 pub struct DummyPos {}
@@ -121,13 +118,15 @@ async fn test_generate_a_proof() {
 
     let coin_1_old = generate_a_dummy_coin(100);
 
-    let tx = TxCandidate::new_dummy_mint_custom(
+    let tx = sak_types::mock_mint_tc_custom(
         coin_1_old.cm,
         coin_1_old.v,
         coin_1_old.k,
         coin_1_old.s,
     );
+
     let genesis_block = make_dummy_genesis_block(tx);
+
     let dist_ledger = make_dist_ledger(genesis_block).await;
 
     // 4. generate a proof for tx_pour
@@ -189,9 +188,10 @@ async fn test_generate_a_proof() {
     };
 
     println!("\n[+] Waiting for generating pi...");
-    let pi = generate_proof_1_to_2(coin_1_old, coin_1_new, coin_2_new)
-        .await
-        .unwrap();
+
+    let pi =
+        CoinProof::generate_proof_1_to_2(coin_1_old, coin_1_new, coin_2_new)
+            .unwrap();
 
     println!("[!] pi: {:#?}", pi);
 
@@ -263,7 +263,8 @@ async fn test_generate_a_proof() {
         let public_inputs = [merkle_rt, sn_1_old, cm_1_new, cm_2_new];
 
         assert_eq!(
-            verify_proof_1_to_2(pi, &public_inputs, &hasher).await,
+            CoinProof::verify_proof_1_to_2(pi, &public_inputs, &hasher)
+                .unwrap(),
             true
         );
     }
