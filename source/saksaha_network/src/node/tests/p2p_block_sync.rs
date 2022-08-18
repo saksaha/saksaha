@@ -234,6 +234,7 @@ async fn test_late_block_sync_true() {
 
     let dummy_tx1 = sak_types::mock_pour_tc_m1_to_p3_p4();
     let dummy_tx2 = sak_types::mock_pour_tc_2();
+    let dummy_tx3 = sak_types::mock_pour_tc_3();
 
     tokio::time::sleep(Duration::from_secs(5)).await;
 
@@ -324,6 +325,46 @@ async fn test_late_block_sync_true() {
     tokio::time::sleep(Duration::from_secs(2)).await;
 
     {
+        tokio::time::sleep(Duration::from_secs(2)).await;
+
+        println!("Sending a tx1 to a node_1 at a third time");
+
+        machine_1
+            .blockchain
+            .dist_ledger
+            .apis
+            .send_tx(dummy_tx3.clone())
+            .await
+            .expect("Node should be able to send a transaction");
+
+        tokio::time::sleep(Duration::from_secs(2)).await;
+
+        local_node_1
+            .machine
+            .blockchain
+            .dist_ledger
+            .apis
+            .write_block(None)
+            .await
+            .expect("Block should be written");
+
+        let last_height_1 = local_node_1
+            .machine
+            .blockchain
+            .dist_ledger
+            .apis
+            .get_latest_block_height()
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(3, last_height_1);
+
+        println!("last height is confirmed on 3");
+    }
+
+    tokio::time::sleep(Duration::from_secs(2)).await;
+
+    {
         let machine_2 = machine_2.clone();
         let local_node_2 = local_node_2.clone();
         tokio::spawn(async move {
@@ -335,7 +376,7 @@ async fn test_late_block_sync_true() {
         });
     }
 
-    tokio::time::sleep(Duration::from_secs(10)).await;
+    tokio::time::sleep(Duration::from_secs(3)).await;
 
     let last_height_2 = local_node_2
         .machine
@@ -346,7 +387,7 @@ async fn test_late_block_sync_true() {
         .unwrap()
         .unwrap();
 
-    assert_eq!(2, last_height_2);
+    assert_eq!(3, last_height_2);
 
     println!("last height of local_node_2 is confirmed on 2");
 }
