@@ -1,15 +1,10 @@
-use crate::{cfs, CtrStateUpdate, LedgerDBSchema, MerkleUpdate};
-use crate::{LedgerError, MerkleNodeLoc};
-use sak_kv_db::DB;
-use sak_kv_db::{
-    BoundColumnFamily, ColumnFamilyDescriptor, IteratorMode, Options,
-    WriteBatch,
-};
-use sak_types::{Block, BlockHash, BlockHeight, CtrAddr, Tx, TxHash, TxType};
+use crate::LedgerError;
+use crate::{cfs, CtrStateUpdate, LedgerDB, MerkleUpdate};
+use sak_kv_db::WriteBatch;
+use sak_types::{Block, BlockHash, BlockHeight, Tx};
 use std::convert::TryInto;
-use std::sync::Arc;
 
-impl LedgerDBSchema {
+impl LedgerDB {
     pub async fn get_blocks(
         &self,
         block_hashes: Vec<&String>,
@@ -262,7 +257,7 @@ impl LedgerDBSchema {
     }
 }
 
-impl LedgerDBSchema {
+impl LedgerDB {
     pub(crate) async fn put_block(
         &self,
         block: &Block,
@@ -332,7 +327,10 @@ impl LedgerDBSchema {
         let mut cm_idx_count: u128 = ledger_cm_count;
 
         for tx in txs {
-            self.batch_put_tx(&mut batch, tx, &mut cm_idx_count)?;
+            self.batch_put_tx(
+                &mut batch, tx,
+                // &mut cm_idx_count
+            )?;
         }
 
         for (ctr_addr, ctr_state) in ctr_state_updates {
