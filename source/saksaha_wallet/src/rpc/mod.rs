@@ -5,4 +5,4 @@ mod rpc;
 #[cfg(test)]
 mod tests;
 
-pub(crate) use rpc::*;
+pub use rpc::*;

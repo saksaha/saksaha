@@ -24,6 +24,7 @@ impl EnvelopeDBSchema {
             ColumnFamilyDescriptor::new(cfs::HER_PK, Options::default()),
             ColumnFamilyDescriptor::new(cfs::AES_KEY, Options::default()),
             ColumnFamilyDescriptor::new(cfs::USER_ID, Options::default()),
+            ColumnFamilyDescriptor::new(cfs::ACC_ADDR, Options::default()),
         ]
     }
 

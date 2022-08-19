@@ -10,12 +10,14 @@ impl EnvelopeDBSchema {
         sk: &String,
         pk: &String,
         sig: &String,
+        acc_addr: &String,
     ) -> Result<String, EnvelopeError> {
         let mut batch = WriteBatch::default();
 
         self.batch_put_my_sk(&mut batch, my_id, sk)?;
         self.batch_put_my_pk(&mut batch, sk, pk)?;
         self.batch_put_my_sig(&mut batch, sk, sig)?;
+        self.batch_put_my_acc_addr(&mut batch, my_id, acc_addr)?;
 
         self.db.write(batch)?;
 
@@ -120,6 +122,18 @@ impl EnvelopeDBSchema {
         let v = ch_idx.to_be_bytes();
 
         batch.put_cf(&cf, &v, ch_id);
+
+        Ok(())
+    }
+
+    pub(crate) fn batch_put_my_acc_addr(
+        &self,
+        batch: &mut WriteBatch,
+        user_id: &String,
+        acc_addr: &String,
+    ) -> Result<(), EnvelopeError> {
+        let cf = self.make_cf_handle(&self.db, cfs::ACC_ADDR)?;
+        batch.put_cf(&cf, user_id, acc_addr);
 
         Ok(())
     }
