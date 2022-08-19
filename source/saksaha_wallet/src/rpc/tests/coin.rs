@@ -1,8 +1,11 @@
 use std::time::Duration;
 
 use super::utils;
-use crate::rpc::routes::v0::{
-    GetBalanceRequest, GetBalanceResponse, SendTxRequest, SendTxResponse,
+use crate::{
+    routes::v0::update_coin_status,
+    rpc::routes::v0::{
+        GetBalanceRequest, GetBalanceResponse, SendTxRequest, SendTxResponse,
+    },
 };
 use envelope_contract::request_type;
 use envelope_term::ENVELOPE_CTR_ADDR;
@@ -43,7 +46,7 @@ async fn test_send_tx() {
 
         let json_request = JsonRequest {
             jsonrpc: "2.0".to_string(),
-            method: "send_tx".to_string(),
+            method: "send_pour_tx".to_string(),
             params: Some(params),
             id: "test_1".to_string(),
         };
@@ -66,7 +69,7 @@ async fn test_send_tx() {
     let json_response =
         serde_json::from_slice::<JsonResponse<SendTxResponse>>(&b).unwrap();
 
-    let _result = json_response.result.unwrap();
+    let _result = json_response.result.ok_or("empty").unwrap();
 }
 
 #[tokio::test(flavor = "multi_thread")]
@@ -78,9 +81,11 @@ async fn test_send_tx_twice() {
 
     {
         utils::send_msg_for_test(acc_addr).await;
+        utils::update_coin_status(acc_addr).await;
     }
 
     {
-        utils::send_msg_for_test(acc_addr).await;
+        // utils::send_msg_for_test(acc_addr).await;
+        // utils::update_coin_status(acc_addr).await;
     }
 }

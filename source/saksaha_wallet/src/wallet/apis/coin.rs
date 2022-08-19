@@ -261,14 +261,14 @@ impl Wallet {
 
         let coin_manager_lock = &mut self.get_coin_manager().write().await;
 
+        let coins_vec = coin_manager_lock.coins.clone();
+
+        // println!("CoinManager Status: {:#?}", coin_manager_lock.coins);
+
         // Unconfirmed -> Unused
         for mut coin in coin_manager_lock.coins.clone().into_iter() {
             let a = coin.coin_status.clone();
             match a {
-                CoinStatus::Unused => {}
-
-                CoinStatus::Used => {}
-
                 CoinStatus::Unconfirmed(th) => match th {
                     Some(tx_hash) => {
                         let resp = saksaha::get_tx(tx_hash.clone())
@@ -289,6 +289,7 @@ impl Wallet {
                     }
                     None => {}
                 },
+                _ => {}
             }
         }
 
@@ -313,6 +314,8 @@ impl Wallet {
                 CoinStatus::Unconfirmed(_) => {}
             }
         }
+
+        println!("CoinManager Status: {:#?}", coin_manager_lock.coins);
 
         // =-=-= coin coin_status update (unused -> used)
         // =-=-= update new coins to be Unused, not Unconfirmed(tx_hash)
