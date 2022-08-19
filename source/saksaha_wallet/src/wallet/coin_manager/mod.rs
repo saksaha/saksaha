@@ -32,8 +32,6 @@ impl CoinManager {
             );
         }
 
-        let tx_hashes = vec![];
-
         let m = CoinManager { coins };
 
         Ok(m)
@@ -56,7 +54,7 @@ impl CoinManager {
         return None;
     }
 
-    pub fn update_coin(
+    pub fn insert_coin(
         &mut self,
         coin_record: CoinRecord,
     ) -> Result<(), WalletError> {

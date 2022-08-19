@@ -173,6 +173,12 @@ impl CoinRecord {
             v: Some(v),
         }
     }
+
+    pub fn make_status_used(&mut self) {
+        if self.coin_status == CoinStatus::Unused {
+            self.coin_status = CoinStatus::Used;
+        }
+    }
 }
 
 impl std::fmt::Display for CoinRecord {

@@ -77,7 +77,7 @@ async fn bootstrap_wallet(
                         idx, coin_count, coin.cm, coin.v
                     );
 
-                    wallet.coin_manager.write().await.update_coin(coin)?;
+                    wallet.coin_manager.write().await.insert_coin(coin)?;
                 }
                 Err(err) => {
                     println!(

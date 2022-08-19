@@ -79,6 +79,7 @@ async fn test_send_tx_twice() {
     {
         utils::send_msg_for_test(acc_addr).await;
     }
+
     {
         utils::send_msg_for_test(acc_addr).await;
     }

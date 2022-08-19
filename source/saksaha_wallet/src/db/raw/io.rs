@@ -337,6 +337,22 @@ impl Raw {
         Ok(())
     }
 
+    pub(crate) fn single_put_coin_status(
+        &self,
+        cm: &Scalar,
+        status: &CoinStatus,
+    ) -> Result<(), WalletError> {
+        let mut batch = WriteBatch::default();
+
+        let cf = self.make_cf_handle(&self.db, cfs::COIN_STATUS)?;
+
+        let cm = cm.to_bytes();
+
+        batch.put_cf(&cf, cm, status);
+
+        Ok(())
+    }
+
     pub(crate) fn batch_put_coin_idx(
         &self,
         batch: &mut WriteBatch,

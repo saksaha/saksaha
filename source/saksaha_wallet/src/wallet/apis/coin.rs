@@ -11,6 +11,7 @@ use sak_proofs::OldCoin;
 use sak_types::AccountBalance;
 use sak_types::CoinRecord;
 use sak_types::CoinStatus;
+use sak_types::Sn;
 use std::convert::TryInto;
 use type_extension::U8Arr32;
 
@@ -68,7 +69,7 @@ impl Wallet {
 
         let sn_1 = self.compute_sn(coin);
 
-        let (new_coin_1, new_coin_2, cm_1, cm_2) = {
+        let (mut new_coin_1, mut new_coin_2, cm_1, cm_2) = {
             let v = ScalarExt::into_u64(coin.v)?;
 
             let new_coin_1 = CoinRecord::new_random(v - GAS, None, None)?;
@@ -155,16 +156,15 @@ impl Wallet {
         let tx_hash =
             json_response.result.ok_or("Value needs to be returned")?;
 
-        coin_manager_lock.put_tx_hash(tx_hash);
-
         tokio::time::sleep(Duration::from_secs(10)).await;
 
-        new_coin_1.coin_status = CoinStatus::Unconfirmed(Some(tx_hash));
+        new_coin_1.coin_status = CoinStatus::Unconfirmed(Some(tx_hash.clone()));
+        new_coin_2.coin_status = CoinStatus::Unconfirmed(Some(tx_hash.clone()));
 
-        new_coin_2.coin_status = CoinStatus::Unconfirmed(Some(tx_hash));
+        coin_manager_lock.insert_coin(new_coin_1.clone())?;
+        coin_manager_lock.insert_coin(new_coin_2.clone())?;
 
         self.get_db().schema.put_coin(&new_coin_1)?;
-
         self.get_db().schema.put_coin(&new_coin_2)?;
 
         Ok("success_power".to_string())
@@ -239,10 +239,111 @@ impl Wallet {
         sn
     }
 
-    // pub(crate) async fn set_status_used(
-    //     &self,
-    //     cm: &String,
-    //     status: &CoinStatus,
-    // ) -> Result<(), WalletError> {
-    //     self.db.schema.put_coin_status(cm, status).await?;
+    pub async fn update_coin_status(
+        &self,
+        acc_addr: &String,
+    ) -> Result<(), WalletError> {
+        let cmanager = self.get_credential_manager();
+        let credential = cmanager.get_credential();
+
+        println!("credential.acc_addr: {:?}", credential.acc_addr);
+        println!("acc_addr:            {:?}", acc_addr);
+
+        if &credential.acc_addr != acc_addr {
+            return Err(format!(
+                "acc addr is not correct. Candidates are: {:?}",
+                cmanager.get_candidates(),
+            )
+            .into());
+        }
+
+        let mut old_coin_sn_vec: Vec<Sn> = Vec::new();
+
+        let coin_manager_lock = &mut self.get_coin_manager().write().await;
+
+        // Unconfirmed -> Unused
+        // for coin in coin_manager_lock.coins.iter() {
+        //     match coin.coin_status {
+        //         CoinStatus::Unused => {}
+
+        //         CoinStatus::Used => {}
+
+        //         CoinStatus::Unconfirmed(th) => match th {
+        //             Some(tx_hash) => {
+        //                 let resp = saksaha::get_tx(tx_hash)
+        //                     .await?
+        //                     .result
+        //                     .ok_or("json_response error")?;
+
+        //                 if let Some(tx) = resp.tx {
+        //                     old_coin_sn_vec.push(tx.get_sn());
+
+        //                     self.get_db().schema.raw.single_put_coin_status(
+        //                         &coin.cm,
+        //                         &CoinStatus::Unused,
+        //                     )?;
+        //                 };
+        //             }
+        //             None => {}
+        //         },
+        //     }
+        // }
+
+        // Unused -> Used
+        for mut coin in coin_manager_lock.coins.clone().into_iter() {
+            match coin.coin_status {
+                CoinStatus::Unused => {
+                    let sn = self.compute_sn(&coin);
+
+                    if old_coin_sn_vec.contains(&sn) {
+                        coin.coin_status = CoinStatus::Used;
+                    }
+
+                    self.get_db()
+                        .schema
+                        .raw
+                        .single_put_coin_status(&coin.cm, &coin.coin_status)?;
+                }
+
+                CoinStatus::Used => {}
+
+                CoinStatus::Unconfirmed(_) => {}
+            }
+        }
+
+        // =-=-= coin coin_status update (unused -> used)
+        // =-=-= update new coins to be Unused, not Unconfirmed(tx_hash)
+
+        // new_coin_1.coin_status = CoinStatus::Unused;
+        // new_coin_2.coin_status = CoinStatus::Unused;
+
+        // println!("credential.acc_addr: {:?}", credential.acc_addr);
+        // println!("acc_addr:            {:?}", acc_addr);
+
+        // if &credential.acc_addr != acc_addr {
+        //     return Err(format!(
+        //         "acc addr is not correct. Candidates are: {:?}",
+        //         cmanager.get_candidates(),
+        //     )
+        //     .into());
+        // }
+
+        // let mut balance: u64 = 0;
+
+        // for coin in self.get_db().schema.get_all_coins()? {
+        //     let bytes = coin.v.to_bytes();
+
+        //     let arr: [u8; 8] = bytes[24..].try_into()?;
+
+        //     let val = u64::from_le_bytes(arr);
+
+        //     balance += val;
+        // }
+
+        // let b = AccountBalance { val: balance };
+
+        // Ok(b)
+
+        Ok(())
+    }
 }

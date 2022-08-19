@@ -140,6 +140,8 @@ impl AppState {
         //TODO get user_id via params
         let tmp_user_id = USER_1.to_owned();
 
+        // 1. coin status update
+
         let balance = match get_balance_from_wallet(&tmp_user_id).await {
             Ok(resp) => {
                 info!("Success to get response from wallet");
