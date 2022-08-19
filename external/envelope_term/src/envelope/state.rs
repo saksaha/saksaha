@@ -1,6 +1,6 @@
 use crate::db::USER_1;
 use crate::EnvelopeError;
-use crate::{io::InputMode, term::get_balance_from_wallet};
+use crate::{app::get_balance_from_wallet, io::InputMode};
 use envelope_contract::{Channel, ChatMessage};
 use log::{info, warn};
 use tui::widgets::ListState;

@@ -5,7 +5,6 @@ pub(crate) use utils::*;
 
 use crate::db::tests::utils::*;
 use crate::db::WalletDB;
-use crate::db::{USER_1, USER_2};
 use std::time::Duration;
 use std::{collections::HashMap, thread::sleep};
 

@@ -1,11 +1,11 @@
-use crate::app::{Actions, App, AppState, View};
+use crate::envelope::{Actions, AppState, Envelope, View};
 use tui::backend::Backend;
 use tui::layout::{Alignment, Constraint, Direction, Layout, Rect};
 use tui::{symbols, Frame};
 
 use super::utils;
 
-pub(crate) fn draw_landing<B>(rect: &mut Frame<B>, app: &App)
+pub(crate) fn draw_landing<B>(rect: &mut Frame<B>, app: &Envelope)
 where
     B: Backend,
 {

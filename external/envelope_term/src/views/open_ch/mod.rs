@@ -1,10 +1,10 @@
 use super::utils;
-use crate::app::App;
+use crate::envelope::Envelope;
 use tui::backend::Backend;
 use tui::layout::{Constraint, Direction, Layout};
 use tui::Frame;
 
-pub(crate) fn draw_open_ch<B>(rect: &mut Frame<B>, app: &App)
+pub(crate) fn draw_open_ch<B>(rect: &mut Frame<B>, app: &Envelope)
 where
     B: Backend,
 {

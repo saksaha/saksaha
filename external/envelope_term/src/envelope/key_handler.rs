@@ -1,11 +1,11 @@
-use super::{App, AppReturn, View};
-use crate::app::actions::Action;
+use super::{AppReturn, Envelope, View};
 use crate::db::USER_2;
+use crate::envelope::actions::Action;
 use crate::inputs::key::Key;
 use crate::io::InputMode;
 use log::{debug, warn};
 
-impl App {
+impl Envelope {
     pub async fn handle_normal_key(&mut self, key: Key) -> AppReturn {
         if let Some(&action) = self.get_actions().find(key) {
             debug!("Run action [{:?}]", action);

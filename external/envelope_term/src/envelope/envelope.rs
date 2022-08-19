@@ -1,11 +1,11 @@
 use super::actions::Actions;
 use super::{state::AppState, ChannelState};
+use crate::credential::Credential;
 use crate::db::EnvelopeDB;
 use crate::db::{USER_1, USER_2};
 use crate::io::IoEvent;
-use crate::term;
-use crate::EnvelopeError;
-use crate::{app::actions::Action, ENVELOPE_CTR_ADDR};
+use crate::{app, EnvelopeError};
+use crate::{envelope::actions::Action, ENVELOPE_CTR_ADDR};
 use chrono::Local;
 use envelope_contract::{
     request_type::{GET_CH_LIST, OPEN_CH, SEND_MSG},
@@ -25,27 +25,28 @@ pub enum AppReturn {
     Continue,
 }
 
-pub struct App {
+pub struct Envelope {
     io_tx: tokio::sync::mpsc::Sender<IoEvent>,
     actions: Actions,
     state: AppState,
     db: EnvelopeDB,
 }
 
-impl App {
-    pub async fn init(
+impl Envelope {
+    pub(crate) async fn init(
         io_tx: tokio::sync::mpsc::Sender<IoEvent>,
-        user_prefix: &String,
+        // user_prefix: &String,
+        credential: Credential,
     ) -> Result<Self, EnvelopeError> {
         let actions = vec![Action::Quit].into();
         let state = AppState::default();
 
-        let db = EnvelopeDB::init(&user_prefix).await?;
+        let db = EnvelopeDB::init(&credential).await?;
 
         // for test, dummy
         {
             let partner_prefix = USER_2.to_string();
-            db.register_user(&user_prefix).await?;
+            db.register_user(&credential.acc_addr).await?;
             db.register_user(&partner_prefix).await?;
         }
 
@@ -417,7 +418,7 @@ impl App {
                 ctr_call_type: CtrCallType::Execute,
             };
 
-            term::send_tx_pour(user_1_acc_addr, ctr_addr, ctr_request).await?;
+            app::send_tx_pour(user_1_acc_addr, ctr_addr, ctr_request).await?;
         }
 
         {
@@ -466,7 +467,7 @@ impl App {
                 ctr_call_type: CtrCallType::Execute,
             };
 
-            term::send_tx_pour(her_pk.to_string(), ctr_addr, ctr_request)
+            app::send_tx_pour(her_pk.to_string(), ctr_addr, ctr_request)
                 .await?;
         }
 
@@ -625,7 +626,7 @@ impl App {
         };
 
         let json_response =
-            term::send_tx_pour(user_1_acc_addr, ctr_addr, ctr_request).await?;
+            app::send_tx_pour(user_1_acc_addr, ctr_addr, ctr_request).await?;
 
         let result = json_response.result.unwrap_or("None".to_string());
 

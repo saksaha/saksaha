@@ -1,5 +1,5 @@
-pub const USER_1: &str = "user_1";
-pub const USER_2: &str = "user_2";
+pub const USER_1: &str = "dev_local_1";
+pub const USER_2: &str = "dev_local_2";
 
 pub(crate) mod cfs {
     pub const MY_SK: &str = "my_sk";

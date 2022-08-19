@@ -1,5 +1,5 @@
 use super::IoEvent;
-use crate::app::App;
+use crate::envelope::Envelope;
 use crate::EnvelopeError;
 use log::{error, info};
 use std::sync::Arc;
@@ -8,11 +8,11 @@ use tokio::sync::Mutex;
 
 /// In the IO thread, we handle IO event without blocking the UI thread
 pub struct IoAsyncHandler {
-    app: Arc<Mutex<App>>,
+    app: Arc<Mutex<Envelope>>,
 }
 
 impl IoAsyncHandler {
-    pub fn new(app: Arc<Mutex<App>>) -> Self {
+    pub fn new(app: Arc<Mutex<Envelope>>) -> Self {
         Self { app }
     }
 
