@@ -1,17 +1,16 @@
 use super::CoinStatus;
-use crate::AccountBalance;
 use crate::CmIdx;
 use crate::TypesError;
 use colored::Colorize;
 use sak_crypto::Hasher;
 use sak_crypto::Scalar;
 use sak_crypto::ScalarExt;
-use sak_proofs::{NewCoin, OldCoin};
+use sak_proofs::NewCoin;
 use type_extension::U8Array;
 
 pub type CoinIdx = u128;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CoinRecord {
     pub addr_pk: Scalar,
 

@@ -23,8 +23,8 @@ impl Wallet {
         let cmanager = self.get_credential_manager();
         let credential = cmanager.get_credential();
 
-        println!("credential.acc_addr : {:?}", credential.acc_addr);
-        println!("acc_addr : {:?}", acc_addr);
+        println!("credential.acc_addr: {:?}", credential.acc_addr);
+        println!("acc_addr:            {:?}", acc_addr);
 
         if &credential.acc_addr != acc_addr {
             return Err(format!(
@@ -57,7 +57,7 @@ impl Wallet {
         ctr_addr: String,
         ctr_request: CtrRequest,
     ) -> Result<String, WalletError> {
-        // self.check_enough_balance(&acc_addr).await?;
+        self.check_balance(&acc_addr).await?;
 
         let coin_manager_lock = self.get_coin_manager().write().await;
 
@@ -159,14 +159,16 @@ impl Wallet {
         Ok("success_power".to_string())
     }
 
-    pub(crate) async fn check_enough_balance(
+    pub(crate) async fn check_balance(
         &self,
         acc_addr: &String,
     ) -> Result<(), WalletError> {
         let my_balance = self.get_balance(acc_addr).await?;
-        let check_enough_balalnce = my_balance.val > GAS;
-        if !check_enough_balalnce {
-            return Err(format!("don't have enough coin").into());
+
+        let is_enough_balalnce = my_balance.val > GAS;
+
+        if !is_enough_balalnce {
+            return Err(format!("you don't have enough coin").into());
         }
         Ok(())
     }

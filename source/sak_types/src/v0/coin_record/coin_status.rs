@@ -1,6 +1,6 @@
 use crate::TypesError;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum CoinStatus {
     Unused,
     Used,

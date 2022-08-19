@@ -30,8 +30,6 @@ impl CoinManager {
             );
         }
 
-        println!("");
-
         let m = CoinManager { coins };
 
         Ok(m)
@@ -44,6 +42,9 @@ impl CoinManager {
 
     pub fn get_next_available_coin(&self) -> Option<&CoinRecord> {
         let vec_coins = &self.coins;
+
+        println!("\t[+] Available coin count: {:?}", vec_coins.len());
+
         for coin in vec_coins {
             if coin.coin_status == CoinStatus::Unused {
                 return Some(&coin);
@@ -59,4 +60,14 @@ impl CoinManager {
 
     //     //
     // }
+
+    pub fn update_coin(
+        &mut self,
+        coin_record: CoinRecord,
+    ) -> Result<(), WalletError> {
+        println!("coin manager has been updated");
+        self.coins.push(coin_record);
+
+        Ok(())
+    }
 }

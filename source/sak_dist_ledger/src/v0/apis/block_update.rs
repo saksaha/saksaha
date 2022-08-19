@@ -1,7 +1,7 @@
 use crate::{CtrStateUpdate, DistLedgerApis, LedgerError, MerkleUpdate};
 use colored::Colorize;
 use log::{debug, error, info, warn};
-use sak_contract_std::{CtrCallType, CtrRequest, Storage};
+use sak_contract_std::{CtrCallType, CtrRequest, Storage, ERROR_PLACEHOLDER};
 use sak_types::{
     Block, BlockCandidate, CmIdx, MintTxCandidate, PourTxCandidate, Tx,
     TxCandidate, TxCtrOp,
@@ -269,8 +269,20 @@ async fn process_ctr_state_update(
                         String::from_utf8(new_state.clone())
                     );
 
-                    ctr_state_update
-                        .insert(ctr_addr.clone(), new_state.clone());
+                    let maybe_error_placehorder = match &new_state.get(0..6) {
+                        Some(ep) => ep.to_owned(),
+                        None => {
+                            return Err(format!(
+                                "new_state should be bigger than 6-byte"
+                            )
+                            .into());
+                        }
+                    };
+
+                    if maybe_error_placehorder != &ERROR_PLACEHOLDER {
+                        ctr_state_update
+                            .insert(ctr_addr.clone(), new_state.clone());
+                    }
                 }
             };
         }
