@@ -1,7 +1,8 @@
-use crate::TypesError;
+use crate::{TxHash, TypesError};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum CoinStatus {
+    Unconfirmed(Option<TxHash>),
     Unused,
     Used,
 }
@@ -9,6 +10,10 @@ pub enum CoinStatus {
 impl std::fmt::Display for CoinStatus {
     fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
+            Self::Unconfirmed(Some(TxHash)) => {
+                "Unconfirmed, tx_hash: Some".fmt(fmt)
+            }
+            Self::Unconfirmed(None) => "Unconfirmed, tx_hash: None".fmt(fmt),
             Self::Unused => "Unused".fmt(fmt),
             Self::Used => "Used".fmt(fmt),
         }
@@ -18,6 +23,7 @@ impl std::fmt::Display for CoinStatus {
 impl AsRef<[u8]> for CoinStatus {
     fn as_ref(&self) -> &[u8] {
         match self {
+            Self::Unconfirmed => "Unconfirmed".fmt(fmt),
             Self::Unused => "Unused".as_ref(),
             Self::Used => "Used".as_ref(),
         }

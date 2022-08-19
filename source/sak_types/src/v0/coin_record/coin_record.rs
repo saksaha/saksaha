@@ -1,5 +1,6 @@
 use super::CoinStatus;
 use crate::CmIdx;
+use crate::TxHash;
 use crate::TypesError;
 use colored::Colorize;
 use sak_crypto::Hasher;
@@ -87,7 +88,7 @@ impl CoinRecord {
             s,
             v,
             cm,
-            coin_status: CoinStatus::Unused,
+            coin_status: CoinStatus::Unconfirmed(None),
             cm_idx,
             coin_idx,
         };
@@ -149,7 +150,7 @@ impl CoinRecord {
             s,
             v,
             cm,
-            coin_status: CoinStatus::Unused,
+            coin_status: CoinStatus::Unconfirmed(None),
             cm_idx,
             coin_idx,
         };

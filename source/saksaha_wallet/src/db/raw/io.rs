@@ -102,25 +102,25 @@ impl Raw {
         };
     }
 
-    pub fn get_user_id(
-        &self,
-        cm: &Scalar,
-    ) -> Result<Option<String>, WalletError> {
-        let cf = self.make_cf_handle(&self.db, cfs::USER_ID)?;
+    // pub fn get_user_id(
+    //     &self,
+    //     cm: &Scalar,
+    // ) -> Result<Option<String>, WalletError> {
+    //     let cf = self.make_cf_handle(&self.db, cfs::USER_ID)?;
 
-        let cm = cm.to_bytes();
+    //     let cm = cm.to_bytes();
 
-        match self.db.get_cf(&cf, cm)? {
-            Some(v) => {
-                let str = String::from_utf8(v)?;
+    //     match self.db.get_cf(&cf, cm)? {
+    //         Some(v) => {
+    //             let str = String::from_utf8(v)?;
 
-                return Ok(Some(str));
-            }
-            None => {
-                return Ok(None);
-            }
-        };
-    }
+    //             return Ok(Some(str));
+    //         }
+    //         None => {
+    //             return Ok(None);
+    //         }
+    //     };
+    // }
 
     pub fn get_rho(&self, cm: &Scalar) -> Result<Option<Scalar>, WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::RHO)?;

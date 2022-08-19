@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use super::utils;
 use crate::rpc::routes::v0::{
     GetBalanceRequest, GetBalanceResponse, SendTxRequest, SendTxResponse,
@@ -65,4 +67,19 @@ async fn test_send_tx() {
         serde_json::from_slice::<JsonResponse<SendTxResponse>>(&b).unwrap();
 
     let _result = json_response.result.unwrap();
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn test_send_tx_twice() {
+    sak_test_utils::init_test_log();
+
+    let test_credential = utils::make_test_credential().await;
+    let acc_addr = &test_credential.get_credential().acc_addr;
+
+    {
+        utils::send_msg_for_test(acc_addr).await;
+    }
+    {
+        utils::send_msg_for_test(acc_addr).await;
+    }
 }

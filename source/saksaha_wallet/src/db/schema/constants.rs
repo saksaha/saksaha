@@ -21,4 +21,8 @@ pub(crate) mod cfs {
     pub const USER_ID: &str = "user_id";
 
     pub const COIN_IDX: &str = "coin_idx";
+
+    pub const TX_HASH: &str = "tx_hash";
+
+    pub const TX_HASH_STATUS: &str = "tx_hash_status";
 }

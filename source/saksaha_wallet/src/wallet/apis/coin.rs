@@ -1,6 +1,7 @@
 use crate::wallet::Wallet;
 use crate::wallet::GAS;
 use crate::WalletError;
+use core::time::Duration;
 use sak_contract_std::CtrRequest;
 use sak_crypto::Hasher;
 use sak_crypto::Scalar;
@@ -9,6 +10,7 @@ use sak_proofs::CoinProof;
 use sak_proofs::OldCoin;
 use sak_types::AccountBalance;
 use sak_types::CoinRecord;
+use sak_types::CoinStatus;
 use std::convert::TryInto;
 use type_extension::U8Arr32;
 
@@ -58,7 +60,7 @@ impl Wallet {
     ) -> Result<String, WalletError> {
         self.check_balance(&acc_addr).await?;
 
-        let coin_manager_lock = self.get_coin_manager().write().await;
+        let mut coin_manager_lock = self.get_coin_manager().write().await;
 
         let coin: &CoinRecord = coin_manager_lock
             .get_next_available_coin()
@@ -102,7 +104,7 @@ impl Wallet {
 
                     let mut curr = coin.cm.to_bytes();
 
-                    for (idx, merkle_node) in auth_path.iter().enumerate() {
+                    for (_, merkle_node) in auth_path.iter().enumerate() {
                         let xl_value;
                         let xr_value;
 
@@ -153,8 +155,26 @@ impl Wallet {
         let tx_hash =
             json_response.result.ok_or("Value needs to be returned")?;
 
+        coin_manager_lock.put_tx_hash(tx_hash);
+
+        tokio::time::sleep(Duration::from_secs(10)).await;
+
+        new_coin_1.coin_status = CoinStatus::Unconfirmed(Some(tx_hash));
+
+        new_coin_2.coin_status = CoinStatus::Unconfirmed(Some(tx_hash));
+
+        self.get_db().schema.put_coin(&new_coin_1)?;
+
+        self.get_db().schema.put_coin(&new_coin_2)?;
+
         Ok("success_power".to_string())
     }
+
+    // pub(crate) async fn update_cm(&self) {
+    //     let coin_manager_lock = self.get_coin_manager().write().await;
+
+    //     let tx_hashes = coin_manager_lock.tx_hashes.clone();
+    // }
 
     pub(crate) async fn check_balance(
         &self,
