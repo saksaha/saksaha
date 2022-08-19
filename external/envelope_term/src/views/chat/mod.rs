@@ -1,11 +1,10 @@
-use crate::app::App;
+use super::utils;
+use crate::envelope::Envelope;
 use tui::backend::Backend;
 use tui::layout::{Constraint, Direction, Layout};
 use tui::Frame;
 
-use super::utils;
-
-pub(crate) fn draw_chat<B>(rect: &mut Frame<B>, app: &App)
+pub(crate) fn draw_chat<B>(rect: &mut Frame<B>, app: &Envelope)
 where
     B: Backend,
 {

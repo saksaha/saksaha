@@ -39,4 +39,4 @@ async-trait = "0.1.57"
 
 [[bin]]
 name = "envelope_term"
-path = "src/bin/main.rs"
+path = "src/bin/envelope/main.rs"

@@ -1,9 +1,8 @@
+use crate::EnvelopeError;
 use hyper::{Body, Client, Method, Request, Uri};
 use sak_contract_std::CtrRequest;
 use sak_rpc_interface::{JsonRequest, JsonResponse};
 use saksaha_wallet::routes::v0::SendTxRequest;
-
-use crate::EnvelopeError;
 
 pub async fn get_balance_from_wallet(
     user_id: &String,

@@ -1,9 +1,8 @@
+use super::Config;
 use crate::EnvelopeError;
 
-use super::PConfig;
-
-pub fn dev_local_1() -> Result<PConfig, EnvelopeError> {
-    let c = PConfig {
+pub fn dev_local_1() -> Result<Config, EnvelopeError> {
+    let c = Config {
         user_id: Some(String::from("dev_local_1")),
         public_key: Some(String::from(
             "045739d074b8722891c307e8e75c9607e0b55a80778\
@@ -19,8 +18,8 @@ pub fn dev_local_1() -> Result<PConfig, EnvelopeError> {
     Ok(c)
 }
 
-pub fn dev_local_2() -> Result<PConfig, EnvelopeError> {
-    let c = PConfig {
+pub fn dev_local_2() -> Result<Config, EnvelopeError> {
+    let c = Config {
         user_id: Some(String::from("dev_local_2")),
         public_key: Some(String::from(
             "042c8d005bd935597117181d8ceceaef6d1162de78c32856\
