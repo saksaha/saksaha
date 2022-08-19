@@ -10,6 +10,13 @@ use std::sync::atomic::AtomicBool;
 
 static IS_INITIALIZED: AtomicBool = AtomicBool::new(false);
 
+pub const RUST_LOG_ENV: &str = "
+    sak_,
+    saksaha_,
+    hyper_,
+    wallet_,
+";
+
 pub fn init(is_test: bool) -> Result<(), String> {
     if IS_INITIALIZED.load(std::sync::atomic::Ordering::Relaxed) {
         return Err(format!("Logger is already initialized"));

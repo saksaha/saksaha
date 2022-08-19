@@ -4,18 +4,18 @@ use hyper_rpc_router::{
     make_error_response, make_success_response, require_params_parsed,
     require_some_params, Params, RouteState,
 };
-use sak_types::{CM, CM_IDX};
+use sak_types::{Cm, CmIdx};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub(in crate::rpc) struct GetAuthPathRequest {
-    pub cm_idx: CM_IDX,
+    pub cm_idx: CmIdx,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub(in crate::rpc) struct GetAuthPathResponse {
-    pub auth_path: Vec<(CM, bool)>,
+    pub auth_path: Vec<(Cm, bool)>,
 }
 
 pub(in crate::rpc) async fn get_auth_path(
@@ -56,12 +56,12 @@ pub(in crate::rpc) async fn get_auth_path(
 
 #[derive(Serialize, Deserialize, Debug)]
 pub(in crate::rpc) struct GetCmIdxRequest {
-    pub cm: CM,
+    pub cm: Cm,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub(in crate::rpc) struct GetCmIdxResponse {
-    pub cm_idx: Option<CM_IDX>,
+    pub cm_idx: Option<CmIdx>,
 }
 
 pub(in crate::rpc) async fn get_cm_idx(

@@ -11,7 +11,6 @@ use sak_types::AccountBalance;
 use sak_types::CoinRecord;
 use std::convert::TryInto;
 use type_extension::U8Arr32;
-use type_extension::U8Array;
 
 impl Wallet {
     pub async fn get_balance(
@@ -23,8 +22,8 @@ impl Wallet {
         let cmanager = self.get_credential_manager();
         let credential = cmanager.get_credential();
 
-        println!("credential.acc_addr : {:?}", credential.acc_addr);
-        println!("acc_addr : {:?}", acc_addr);
+        println!("credential.acc_addr: {:?}", credential.acc_addr);
+        println!("acc_addr:            {:?}", acc_addr);
 
         if &credential.acc_addr != acc_addr {
             return Err(format!(
@@ -51,13 +50,13 @@ impl Wallet {
         Ok(b)
     }
 
-    pub async fn send_tx(
+    pub async fn send_pour_tx(
         &self,
         acc_addr: String,
         ctr_addr: String,
         ctr_request: CtrRequest,
     ) -> Result<String, WalletError> {
-        self.check_enough_balance(&acc_addr).await?;
+        self.check_balance(&acc_addr).await?;
 
         let coin_manager_lock = self.get_coin_manager().write().await;
 
@@ -82,12 +81,12 @@ impl Wallet {
         };
 
         let cm_idx = {
-            println!("coin.cm_idx: {:?}", coin.cm_idx);
+            let resp = saksaha::get_cm_idx(coin.cm.to_bytes()).await?;
 
-            let c = coin.cm_idx.ok_or("cannot get cm_idx")?;
-
-            c
+            resp.result.ok_or("")?.cm_idx.ok_or("")?
         };
+
+        let merkle_rt;
 
         let old_coin = {
             let auth_path = {
@@ -96,8 +95,36 @@ impl Wallet {
                 let result =
                     response.result.ok_or(format!("cannot get auth path"))?;
 
-                result.auth_path
+                let auth_path = result.auth_path;
+
+                {
+                    let hasher = Hasher::new();
+
+                    let mut curr = coin.cm.to_bytes();
+
+                    for (idx, merkle_node) in auth_path.iter().enumerate() {
+                        let xl_value;
+                        let xr_value;
+
+                        let is_left: bool = merkle_node.1;
+
+                        if is_left {
+                            xl_value = merkle_node.0;
+                            xr_value = curr;
+                        } else {
+                            xl_value = curr;
+                            xr_value = merkle_node.0;
+                        }
+
+                        curr = hasher.mimc(&xl_value, &xr_value)?.to_bytes();
+                    }
+
+                    merkle_rt = curr;
+                };
+
+                auth_path
             };
+
             self.get_old_coin(coin, auth_path).await?
         };
 
@@ -112,33 +139,33 @@ impl Wallet {
 
         println!("[!] pi serialized, len: {}, {:?}", pi_ser.len(), pi_ser);
 
-        // // send
         let json_response = saksaha::send_tx_pour(
             sn_1,
             cm_1,
             cm_2,
-            U8Array::new_empty_32(), // merkle_rt
+            merkle_rt,
             pi_ser,
             ctr_addr,
             ctr_request,
         )
         .await?;
 
-        let res = json_response.result.ok_or("Value needs to be returned")?;
-
-        println!("res : {:?}", res);
+        let tx_hash =
+            json_response.result.ok_or("Value needs to be returned")?;
 
         Ok("success_power".to_string())
     }
 
-    pub(crate) async fn check_enough_balance(
+    pub(crate) async fn check_balance(
         &self,
         acc_addr: &String,
     ) -> Result<(), WalletError> {
         let my_balance = self.get_balance(acc_addr).await?;
-        let check_enough_balalnce = my_balance.val > GAS;
-        if !check_enough_balalnce {
-            return Err(format!("don't have enough coin").into());
+
+        let is_enough_balalnce = my_balance.val > GAS;
+
+        if !is_enough_balalnce {
+            return Err(format!("you don't have enough coin").into());
         }
         Ok(())
     }

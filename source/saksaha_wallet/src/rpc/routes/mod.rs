@@ -9,7 +9,7 @@ pub(crate) fn get_routes() -> HashMap<&'static str, Handler<Arc<RouteCtx>>> {
         Path {
             method: "send_tx",
             handler: Box::new(|route_state, params, ctx| {
-                Box::pin(v0::send_tx(route_state, params, ctx))
+                Box::pin(v0::send_pour_tx(route_state, params, ctx))
             }),
         },
         Path {

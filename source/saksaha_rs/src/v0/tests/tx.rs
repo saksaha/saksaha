@@ -1,11 +1,20 @@
-use super::utils::*;
-use crate::v0::sdk::*;
-use sak_contract_std::{CtrCallType, CtrRequest};
-use sak_crypto::{
-    PublicKey, SakKey, SecretKey, SigningKey, ToEncodedPoint, VerifyingKey,
-};
+use sak_crypto::{rand, ScalarExt};
+use sak_crypto::{Hasher, Scalar};
+use sak_proofs::{CoinProof, MerkleTree, NewCoin, OldCoin, CM_TREE_DEPTH};
 use std::collections::HashMap;
 use type_extension::U8Array;
+
+#[tokio::test(flavor = "multi_thread")]
+pub async fn test_sdk_get_tx() {
+    sak_test_utils::init_test_log();
+
+    // hash is hard-coded
+    let hash = String::from(
+        "21f25438129d314242f3b919d0beb3ab0c219c765d260467eac3e91bf1031683",
+    );
+    let resp = crate::get_tx(hash).await.unwrap().result.unwrap();
+    println!("resp : {:?}", resp);
+}
 
 // #[tokio::test(flavor = "multi_thread")]
 // async fn test_sak_sdk_get_ch_list() {

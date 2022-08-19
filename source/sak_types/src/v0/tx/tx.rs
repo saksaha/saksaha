@@ -1,4 +1,7 @@
-use crate::{MintTxCandidate, PourTxCandidate};
+use super::CmIdx;
+use crate::{
+    Cm, MintTx, MintTxCandidate, PourTx, PourTxCandidate, TxCandidate,
+};
 use serde::{Deserialize, Serialize};
 
 pub const WASM_MAGIC_NUMBER: [u8; 4] = [0x00, 0x61, 0x73, 0x6d];
@@ -26,44 +29,31 @@ impl Tx {
 
     pub fn get_cm_count(&self) -> usize {
         match &self {
-            Tx::Mint(t) => [&t.tx_candidate.cm].len(),
+            Tx::Mint(t) => [&t.tx_candidate.cm_1].len(),
             Tx::Pour(t) => [&t.tx_candidate.cm_1, &t.tx_candidate.cm_2].len(),
         }
     }
-}
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct MintTx {
-    //
-    pub tx_candidate: MintTxCandidate,
+    pub fn downgrade(self) -> TxCandidate {
+        match self {
+            Tx::Mint(t) => TxCandidate::Mint(t.downgrade()),
+            Tx::Pour(t) => TxCandidate::Pour(t.downgrade()),
+        }
+    }
 
-    //
-    pub tx_height: u128,
-}
-
-impl MintTx {
-    pub fn new(tx_candidate: MintTxCandidate, tx_height: u128) -> MintTx {
-        MintTx {
-            tx_candidate,
-            tx_height,
+    pub fn get_cm_pairs(&self) -> Vec<(CmIdx, Cm)> {
+        match self {
+            Tx::Mint(t) => t.get_cm_pairs(),
+            Tx::Pour(t) => t.get_cm_pairs(),
         }
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct PourTx {
-    //
-    pub tx_candidate: PourTxCandidate,
-
-    //
-    pub tx_height: u128,
-}
-
-impl PourTx {
-    pub fn new(tx_candidate: PourTxCandidate, tx_height: u128) -> PourTx {
-        PourTx {
-            tx_candidate,
-            tx_height,
+impl std::fmt::Display for Tx {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Tx::Pour(t) => write!(f, "{}", t),
+            Tx::Mint(t) => write!(f, "{}", t),
         }
     }
 }

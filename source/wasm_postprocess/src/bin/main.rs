@@ -1,11 +1,7 @@
 use clap::{Arg, Command};
+use sak_logger::RUST_LOG_ENV;
 use std::path::PathBuf;
 use std::process::ExitCode;
-
-const RUST_LOG_ENV: &str = "
-    sak_,
-    saksaha_
-";
 
 fn main() -> ExitCode {
     println!("Starting sak_wasm_postprocess");

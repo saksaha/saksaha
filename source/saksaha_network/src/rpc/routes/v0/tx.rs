@@ -4,7 +4,7 @@ use hyper_rpc_router::{
     make_error_response, make_success_response, require_params_parsed,
     require_some_params, Params, RouteState,
 };
-use sak_types::{MintTxCandidate, PourTxCandidate, TxCandidate};
+use sak_types::{MintTxCandidate, PourTxCandidate, Tx, TxCandidate};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use type_extension::U8Arr32;
@@ -169,8 +169,8 @@ pub(in crate::rpc) async fn send_pour_tx(
         .send_tx(tx_candidate)
         .await
     {
-        Ok(bool) => {
-            return make_success_response(route_state, "success");
+        Ok(tx_hash) => {
+            return make_success_response(route_state, tx_hash);
         }
         Err(err) => {
             return make_error_response(
@@ -185,6 +185,12 @@ pub(in crate::rpc) async fn send_pour_tx(
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GetTxRequest {
     pub hash: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GetTxResponse {
+    //
+    pub tx: Option<Tx>,
 }
 
 pub(in crate::rpc) async fn get_tx(
@@ -208,8 +214,10 @@ pub(in crate::rpc) async fn get_tx(
         .get_tx(&rb.hash)
         .await
     {
-        Ok(t) => {
-            return make_success_response(route_state, t);
+        Ok(tx) => {
+            let get_tx_resp = GetTxResponse { tx };
+
+            return make_success_response(route_state, get_tx_resp);
         }
         Err(err) => {
             return make_error_response(

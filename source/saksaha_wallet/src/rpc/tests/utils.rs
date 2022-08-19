@@ -52,14 +52,14 @@ pub(crate) async fn make_test_context() -> TestContext {
 
 pub(crate) async fn make_test_credential() -> CredentialManager {
     let public_key = String::from(
-        "043fd721eba5004dad3733ddf54638e8d9a5b4d6ad05dcf9860b95bfb\
-            8faf5e341e6c4c492d6eb649a83e9c4766252697da85c601136e9bfe65\
-            fa6531eb136bfb3",
+        "045739d074b8722891c307e8e75c9607e0b55a80778\
+                b42ef5f4640d4949dbf3992f6083b729baef9e9545c4\
+                e95590616fd382662a09653f2a966ff524989ae8c0f",
     );
 
     let secret = String::from(
-        "3755bfcd0c954a4c53d6a0878806140c865\
-            160cf9db3a22c04ca6cea627a37f1",
+        "7297b903877a957748b74068d63d6d5661481975240\
+                99fc1df5cd9e8814c66c7",
     );
 
     let wallet_credential =

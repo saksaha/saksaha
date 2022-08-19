@@ -3,14 +3,9 @@ mod credential;
 mod prompt;
 
 use log::info;
+use sak_logger::RUST_LOG_ENV;
 use saksaha_wallet::{App, AppArgs, Config, WalletError};
 use std::{thread, time::Duration};
-
-const RUST_LOG_ENV: &str = "
-    sak_,
-    saksaha_,
-    wallet,
-";
 
 fn main() -> Result<(), WalletError> {
     {

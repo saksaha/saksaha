@@ -11,7 +11,7 @@ impl CredentialManager {
         wallet_credential: WalletCredential,
     ) -> Result<CredentialManager, WalletError> {
         let m = CredentialManager {
-            candidates: vec![],
+            candidates: vec![wallet_credential.acc_addr.clone()],
             credential: wallet_credential,
         };
 
@@ -30,5 +30,11 @@ impl CredentialManager {
 
     pub fn get_candidates(&self) -> &Vec<String> {
         &self.candidates
+    }
+
+    pub fn put_candidates(&mut self, candidate: String) {
+        let candidates_list = &mut self.candidates;
+
+        candidates_list.push(candidate);
     }
 }
