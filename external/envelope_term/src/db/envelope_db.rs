@@ -1,4 +1,4 @@
-use crate::{db::EnvelopeDBSchema, EnvelopeError};
+use crate::{credential::Credential, db::EnvelopeDBSchema, EnvelopeError};
 use log::{info, warn};
 use sak_crypto::{
     PublicKey, SakKey, SecretKey, SigningKey, ToEncodedPoint, VerifyingKey,
@@ -14,10 +14,11 @@ pub(crate) struct EnvelopeDB {
 
 impl EnvelopeDB {
     pub(crate) async fn init(
-        app_prefix: &String,
+        // app_prefix: &String,
+        credential: &Credential,
     ) -> Result<EnvelopeDB, EnvelopeError> {
         let envelope_db_path = {
-            let db_path = Self::get_db_path(app_prefix)?;
+            let db_path = Self::get_db_path(&credential.acc_addr)?;
 
             if !db_path.exists() {
                 std::fs::create_dir_all(db_path.clone())?;

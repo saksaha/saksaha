@@ -1,5 +1,5 @@
-// use super::fs;
 mod utils;
+use crate::credential::Credential;
 use crate::db::tests::utils::*;
 use crate::db::EnvelopeDB;
 use crate::db::{USER_1, USER_2};
@@ -9,9 +9,10 @@ use std::{collections::HashMap, thread::sleep};
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_envelope_db_user_register() {
-    let test_string = String::from("test");
+    // let test_string = String::from("test");
+    let credential = Credential::new(None, None);
 
-    let db = EnvelopeDB::init(&test_string).await.unwrap();
+    let db = EnvelopeDB::init(&credential).await.unwrap();
 
     db.register_user(&USER_1.to_string()).await.unwrap();
 
