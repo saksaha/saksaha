@@ -47,28 +47,29 @@ impl CoinRecord {
         let hasher = Hasher::new();
 
         let (addr_pk, addr_sk) = {
-            let pk = U8Array::from_int(sak_crypto::rand() as u64);
+            let a_sk = U8Array::from_int(addr_sk);
 
-            let addr_pk = hasher.mimc_single(&pk)?;
-            let addr_sk = ScalarExt::parse_arr(&pk)?;
+            let addr_sk = ScalarExt::parse_arr(&a_sk)?;
+
+            let addr_pk = hasher.mimc_single(&a_sk)?;
 
             (addr_pk, addr_sk)
         };
 
         let rho = {
-            let arr = U8Array::from_int(sak_crypto::rand() as u64);
+            let arr = U8Array::from_int(rho);
 
             ScalarExt::parse_arr(&arr)?
         };
 
         let r = {
-            let arr = U8Array::from_int(sak_crypto::rand() as u64);
+            let arr = U8Array::from_int(r);
 
             ScalarExt::parse_arr(&arr)?
         };
 
         let s = {
-            let arr = U8Array::from_int(sak_crypto::rand() as u64);
+            let arr = U8Array::from_int(s);
 
             ScalarExt::parse_arr(&arr)?
         };

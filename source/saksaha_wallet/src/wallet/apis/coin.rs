@@ -82,14 +82,15 @@ impl Wallet {
         };
 
         let cm_idx = {
-            println!("coin.cm_idx: {:?}", coin.cm_idx);
+            let resp = saksaha::get_cm_idx(coin.cm.to_bytes()).await?;
 
-            let c = coin.cm_idx.ok_or("cannot get cm_idx")?;
-
-            c
+            resp.result
+                .ok_or("")? //
+                .cm_idx
+                .ok_or("")?
         };
 
-        let mut merkle_rt = U8Arr32::default();
+        let merkle_rt;
 
         let old_coin = {
             let auth_path = {
@@ -106,8 +107,6 @@ impl Wallet {
                     let mut curr = coin.cm.to_bytes();
 
                     for (idx, merkle_node) in auth_path.iter().enumerate() {
-                        println!("idx: {}, sibling: {:?}", idx, merkle_node);
-
                         let xl_value;
                         let xr_value;
 
@@ -155,9 +154,7 @@ impl Wallet {
         )
         .await?;
 
-        let res = json_response.result.ok_or("Value needs to be returned")?;
-
-        println!("res : {:?}", res);
+        let _res = json_response.result.ok_or("Value needs to be returned")?;
 
         Ok("success_power".to_string())
     }

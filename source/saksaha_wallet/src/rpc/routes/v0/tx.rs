@@ -32,7 +32,7 @@ pub(in crate::rpc) async fn send_tx(
 
     let rb: SendTxRequest = require_params_parsed!(route_state, &params);
 
-    println!(" rb: {:?}", rb);
+    println!("rb: {:?}", rb);
 
     let wallet = &ctx.wallet;
 

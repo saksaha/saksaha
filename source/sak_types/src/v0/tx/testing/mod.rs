@@ -4,6 +4,7 @@ use super::TxCandidate;
 use crate::{MintTxCandidate, PourTxCandidate, Tx, WASM_MAGIC_NUMBER};
 pub use mock::*;
 use sak_crypto::Hasher;
+use sak_crypto::Scalar;
 use sak_crypto::ScalarExt;
 use type_extension::U8Arr32;
 use type_extension::U8Array;
