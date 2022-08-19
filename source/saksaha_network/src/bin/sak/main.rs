@@ -2,18 +2,11 @@ mod app;
 mod cli;
 
 use crate::cli::CLIArgs;
-use sak_logger::{terr, tinfo};
+use sak_logger::{terr, tinfo, RUST_LOG_ENV};
 use saksaha_network::{System, SystemRunArgs};
 
 use tracing::info;
 use tracing_subscriber;
-
-const RUST_LOG_ENV: &str = "
-    sak,
-    sak_,
-    saksaha_,
-    hyper_,
-";
 
 fn main() {
     println!("Saksaha is launching...");

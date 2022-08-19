@@ -1,4 +1,4 @@
-use crate::{db::EnvelopeDBSchema, EnvelopeError};
+use crate::{credential::Credential, db::EnvelopeDBSchema, EnvelopeError};
 use log::{info, warn};
 use sak_crypto::{
     PublicKey, SakKey, SecretKey, SigningKey, ToEncodedPoint, VerifyingKey,
@@ -14,10 +14,11 @@ pub(crate) struct EnvelopeDB {
 
 impl EnvelopeDB {
     pub(crate) async fn init(
-        app_prefix: &String,
+        // app_prefix: &String,
+        credential: &Credential,
     ) -> Result<EnvelopeDB, EnvelopeError> {
         let envelope_db_path = {
-            let db_path = Self::get_db_path(app_prefix)?;
+            let db_path = Self::get_db_path(&credential.acc_addr)?;
 
             if !db_path.exists() {
                 std::fs::create_dir_all(db_path.clone())?;
@@ -62,6 +63,8 @@ impl EnvelopeDB {
         &self,
         user_id: &String,
     ) -> Result<(), EnvelopeError> {
+        log::info!("Register User: {:?}", user_id);
+
         match self.schema.get_my_sk_by_user_id(user_id).await? {
             Some(_) => {
                 warn!("user_id already exists");
@@ -70,8 +73,10 @@ impl EnvelopeDB {
             None => (),
         };
 
-        let (secret_str, public_key_str, sig_str) = {
+        let (secret_str, public_key_str, sig_str, acc_addr) = {
             let (sk, pk) = SakKey::generate();
+            let acc_addr = SakKey::create_acc_addr(&pk);
+
             let secret_str = sak_crypto::encode_hex(&sk.to_bytes());
 
             let public_key_str =
@@ -91,11 +96,17 @@ impl EnvelopeDB {
                     }
                 }
             };
-            (secret_str, public_key_str, sig_str)
+            (secret_str, public_key_str, sig_str, acc_addr)
         };
 
         self.schema
-            .put_user_data(user_id, &secret_str, &public_key_str, &sig_str)
+            .put_user_data(
+                user_id,
+                &secret_str,
+                &public_key_str,
+                &sig_str,
+                &acc_addr,
+            )
             .await?;
         Ok(())
     }

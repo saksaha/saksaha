@@ -1,10 +1,10 @@
 use super::utils;
-use crate::app::App;
+use crate::envelope::Envelope;
 use tui::backend::Backend;
 use tui::layout::{Constraint, Direction, Layout};
 use tui::Frame;
 
-pub(crate) fn draw_ch_list<B>(rect: &mut Frame<B>, app: &mut App)
+pub(crate) fn draw_ch_list<B>(rect: &mut Frame<B>, app: &mut Envelope)
 where
     B: Backend,
 {
@@ -61,7 +61,7 @@ where
             &mut (app.get_state_mut()).ch_list_state,
         );
 
-        let help = utils::draw_help(app.actions());
+        let help = utils::draw_help(app.get_actions());
         rect.render_widget(help, body_chunks[1]);
     }
 

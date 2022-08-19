@@ -1,7 +1,9 @@
 use crate::{DistLedgerApis, LedgerError};
 use sak_contract_std::Storage;
 use sak_proofs::{MerkleTree, CM_TREE_DEPTH};
-use sak_types::{Block, BlockHash, BlockHeight, CtrAddr, Tx, TxCandidate};
+use sak_types::{
+    Block, BlockHash, BlockHeight, Cm, CmIdx, CtrAddr, Tx, TxCandidate, TxHash,
+};
 
 const GET_BLOCK_HASH_LIST_DEFAULT_SIZE: u128 = 10;
 
@@ -10,21 +12,21 @@ impl DistLedgerApis {
         &self,
         block_hashes: Vec<&String>,
     ) -> Result<Vec<Block>, LedgerError> {
-        self.ledger_db.schema.get_blocks(block_hashes).await
+        self.ledger_db.get_blocks(block_hashes).await
     }
 
     pub async fn get_txs(
         &self,
         tx_hashes: &Vec<String>,
     ) -> Result<Vec<Tx>, LedgerError> {
-        self.ledger_db.schema.get_txs(tx_hashes).await
+        self.ledger_db.get_txs(tx_hashes).await
     }
 
     pub async fn get_merkle_node(
         &self,
         location: &String,
     ) -> Result<[u8; 32], LedgerError> {
-        self.ledger_db.schema.get_merkle_node(location)
+        self.ledger_db.get_merkle_node(location)
     }
 
     pub async fn get_auth_path(
@@ -57,25 +59,31 @@ impl DistLedgerApis {
         Ok(ret)
     }
 
-    pub async fn get_cm_by_idx(
+    // pub async fn get_cm_by_idx(
+    //     &self,
+    //     cm_idx: &CmIdx,
+    // ) -> Result<Option<Cm>, LedgerError> {
+    //     self.ledger_db.get_cm_by_cm_idx(cm_idx)
+    // }
+
+    pub async fn get_cm_idx_by_cm(
         &self,
-        cm_idx: &u128,
-    ) -> Result<Option<String>, LedgerError> {
-        self.ledger_db.schema.get_cm_by_idx(cm_idx)
+        cm: &Cm,
+    ) -> Result<Option<CmIdx>, LedgerError> {
+        self.ledger_db.get_cm_idx_by_cm(cm)
     }
 
     pub async fn get_latest_block_hash(
         &self,
     ) -> Result<Option<(BlockHeight, BlockHash)>, LedgerError> {
         let latest_block_height =
-            match self.ledger_db.schema.get_latest_block_height()? {
+            match self.ledger_db.get_latest_block_height()? {
                 Some(h) => h,
                 None => return Ok(None),
             };
 
         let latest_block_hash = match self
             .ledger_db
-            .schema
             .get_block_hash_by_block_height(&latest_block_height)?
         {
             Some(block_hash) => block_hash.to_string(),
@@ -85,39 +93,34 @@ impl DistLedgerApis {
         Ok(Some((latest_block_height, latest_block_hash)))
     }
 
-    // rpc
     pub async fn send_tx(
         &self,
         tx_candidate: TxCandidate,
-    ) -> Result<(), String> {
-        match tx_candidate {
+    ) -> Result<TxHash, String> {
+        let tx_hash = match tx_candidate {
             TxCandidate::Mint(_) => {
-                let r = self.sync_pool.insert_tx(tx_candidate).await?;
-
-                Ok(r)
+                self.sync_pool.insert_tx(tx_candidate).await?
             }
             TxCandidate::Pour(_) => {
-                //verify
-
-                let r = self.sync_pool.insert_tx(tx_candidate).await?;
-
-                Ok(r)
+                self.sync_pool.insert_tx(tx_candidate).await?
             }
-        }
+        };
+
+        Ok(tx_hash)
     }
 
     pub async fn get_tx(
         &self,
         tx_hash: &String,
     ) -> Result<Option<Tx>, LedgerError> {
-        self.ledger_db.schema.get_tx(tx_hash).await
+        self.ledger_db.get_tx(tx_hash).await
     }
 
     pub fn get_block(
         &self,
         block_hash: &String,
     ) -> Result<Option<Block>, LedgerError> {
-        self.ledger_db.schema.get_block(block_hash)
+        self.ledger_db.get_block(block_hash)
         // self.get_block(&self.kv_db.db_instance, &self.schema, block_hash)
     }
 
@@ -242,43 +245,41 @@ impl DistLedgerApis {
     ) -> Result<Option<Block>, LedgerError> {
         if let Some(block_hash) = self
             .ledger_db
-            .schema
             .get_block_hash_by_block_height(block_height)?
         {
-            return self.ledger_db.schema.get_block(&block_hash);
+            return self.ledger_db.get_block(&block_hash);
         } else {
             return Ok(None);
         }
     }
 
     pub fn get_latest_block_height(&self) -> Result<Option<u128>, LedgerError> {
-        self.ledger_db.schema.get_latest_block_height()
+        self.ledger_db.get_latest_block_height()
     }
 
-    pub async fn get_ledger_cm_count(
-        &self,
-    ) -> Result<Option<u128>, LedgerError> {
-        self.ledger_db.schema.get_ledger_cm_count()
-    }
+    // pub async fn get_ledger_cm_count(
+    //     &self,
+    // ) -> Result<Option<u128>, LedgerError> {
+    //     self.ledger_db.get_ledger_cm_count()
+    // }
 
-    pub async fn get_latest_tx_height(
-        &self,
-    ) -> Result<Option<u128>, LedgerError> {
-        self.ledger_db.schema.get_latest_tx_height()
-    }
+    // pub async fn get_latest_tx_height(
+    //     &self,
+    // ) -> Result<Option<u128>, LedgerError> {
+    //     self.ledger_db.get_latest_tx_height()
+    // }
 
     pub async fn get_latest_block_merkle_rt(
         &self,
     ) -> Result<Option<[u8; 32]>, LedgerError> {
         let latest_block_height =
-            match self.ledger_db.schema.get_latest_block_height()? {
+            match self.ledger_db.get_latest_block_height()? {
                 Some(h) => h,
                 None => return Ok(None),
             };
 
         let latest_block_hash = match self
             .ledger_db
-            .schema
             .get_block_hash_by_block_height(&latest_block_height)?
         {
             Some(h) => h,
@@ -291,10 +292,8 @@ impl DistLedgerApis {
             }
         };
 
-        let latest_merkle_rt = self
-            .ledger_db
-            .schema
-            .get_block_merkle_rt(&latest_block_hash)?;
+        let latest_merkle_rt =
+            self.ledger_db.get_block_merkle_rt(&latest_block_hash)?;
 
         Ok(latest_merkle_rt)
     }
@@ -303,6 +302,6 @@ impl DistLedgerApis {
         &self,
         contract_addr: &CtrAddr,
     ) -> Result<Option<Storage>, LedgerError> {
-        self.ledger_db.schema.get_ctr_state(contract_addr)
+        self.ledger_db.get_ctr_state(contract_addr)
     }
 }

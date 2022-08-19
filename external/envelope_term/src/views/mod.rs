@@ -4,32 +4,32 @@ mod landing;
 mod open_ch;
 mod utils;
 
-use crate::app::{App, View};
+use crate::envelope::{Envelope, View};
 use tui::backend::Backend;
 use tui::Frame;
 
-pub fn draw<B>(rect: &mut Frame<B>, app: &mut App)
+pub fn draw<B>(rect: &mut Frame<B>, envelope: &mut Envelope)
 where
     B: Backend,
 {
-    let state = app.get_state();
+    let state = envelope.get_state();
 
     if !state.is_initialized() {
-        landing::draw_landing(rect, app);
+        landing::draw_landing(rect, envelope);
     }
 
     match state.view {
         View::ChList => {
-            ch_list::draw_ch_list(rect, app);
+            ch_list::draw_ch_list(rect, envelope);
         }
         View::OpenCh => {
-            open_ch::draw_open_ch(rect, app);
+            open_ch::draw_open_ch(rect, envelope);
         }
         View::Landing => {
-            landing::draw_landing(rect, app);
+            landing::draw_landing(rect, envelope);
         }
         View::Chat => {
-            chat::draw_chat(rect, app);
+            chat::draw_chat(rect, envelope);
         }
     }
 }

@@ -1,11 +1,10 @@
-use crate::app::App;
+use super::utils;
+use crate::envelope::Envelope;
 use tui::backend::Backend;
 use tui::layout::{Constraint, Direction, Layout};
 use tui::Frame;
 
-use super::utils;
-
-pub(crate) fn draw_chat<B>(rect: &mut Frame<B>, app: &App)
+pub(crate) fn draw_chat<B>(rect: &mut Frame<B>, app: &Envelope)
 where
     B: Backend,
 {
@@ -69,7 +68,7 @@ where
     rect.render_widget(help_message, open_ch_chunks[1]);
     rect.render_widget(input, open_ch_chunks[2]);
 
-    let help = utils::draw_help(app.actions());
+    let help = utils::draw_help(app.get_actions());
     rect.render_widget(help, body_chunks[1]);
 
     let logs = utils::draw_logs();

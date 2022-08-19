@@ -10,30 +10,32 @@ impl EnvelopeDBSchema {
         sk: &String,
         pk: &String,
         sig: &String,
+        acc_addr: &String,
     ) -> Result<String, EnvelopeError> {
         let mut batch = WriteBatch::default();
 
         self.batch_put_my_sk(&mut batch, my_id, sk)?;
         self.batch_put_my_pk(&mut batch, sk, pk)?;
         self.batch_put_my_sig(&mut batch, sk, sig)?;
+        self.batch_put_my_acc_addr(&mut batch, my_id, acc_addr)?;
 
         self.db.write(batch)?;
 
         Ok(sk.to_string())
     }
 
-    pub(crate) async fn put_ch_data(
+    pub(crate) async fn put_ch_shared_secret_key(
         &self,
         ch_id: &String,
-        her_pk: &String,
-        aes_key: &[u8; 32],
+        // her_pk: &String,
+        aes_key: &String,
     ) -> Result<(), EnvelopeError> {
         let mut batch = WriteBatch::default();
 
-        let aes_key_str = serde_json::to_string(&aes_key)?;
+        // let aes_key_str = serde_json::to_string(&aes_key)?;
 
-        self.batch_put_her_pk(&mut batch, ch_id, her_pk)?;
-        self.batch_put_aes_key(&mut batch, ch_id, &aes_key_str)?;
+        // self.batch_put_her_pk(&mut batch, ch_id, her_pk)?;
+        self.batch_put_aes_key(&mut batch, ch_id, &aes_key)?;
 
         self.db.write(batch)?;
 
@@ -120,6 +122,18 @@ impl EnvelopeDBSchema {
         let v = ch_idx.to_be_bytes();
 
         batch.put_cf(&cf, &v, ch_id);
+
+        Ok(())
+    }
+
+    pub(crate) fn batch_put_my_acc_addr(
+        &self,
+        batch: &mut WriteBatch,
+        user_id: &String,
+        acc_addr: &String,
+    ) -> Result<(), EnvelopeError> {
+        let cf = self.make_cf_handle(&self.db, cfs::ACC_ADDR)?;
+        batch.put_cf(&cf, user_id, acc_addr);
 
         Ok(())
     }

@@ -1,10 +1,10 @@
 use crate::LedgerError;
-use crate::{cfs, LedgerDBSchema};
+use crate::{cfs, LedgerDB};
 use sak_contract_std::Storage;
 use sak_kv_db::WriteBatch;
 use sak_types::CtrAddr;
 
-impl LedgerDBSchema {
+impl LedgerDB {
     pub(crate) async fn get_ctr_data_by_ctr_addr(
         &self,
         ctr_addr: &String,
@@ -73,7 +73,7 @@ impl LedgerDBSchema {
 }
 
 // writer
-impl LedgerDBSchema {
+impl LedgerDB {
     pub(crate) fn batch_put_ctr_state(
         &self,
         // db: &DB,

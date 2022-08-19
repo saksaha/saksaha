@@ -2,16 +2,14 @@ use crate::SaksahaSDKError;
 use hyper::{Body, Client, Method, Request, Uri};
 use log::warn;
 use sak_contract_std::{CtrCallType, CtrRequest, RequestArgs};
-use sak_crypto::{
-    groth16, mimc, os_rng, Bls12, Circuit, Hasher, Proof, Scalar, ScalarExt,
-};
+use sak_crypto::{Bls12, Circuit, Hasher, Proof, Scalar, ScalarExt};
 use sak_proofs::{
-    get_mimc_params_1_to_2, CoinProofCircuit1to2, MerkleTree, NewCoin, OldCoin,
-    Path, ProofError, CM_TREE_DEPTH,
+    MerkleTree, NewCoin, OldCoin, Path, ProofError, CM_TREE_DEPTH,
 };
 use sak_rpc_interface::{JsonRequest, JsonResponse};
+use sak_types::{Cm, CmIdx, Tx};
 use serde::{Deserialize, Serialize};
-use std::{char::from_u32_unchecked, collections::HashMap, time};
+use std::time;
 use type_extension::{U8Arr32, U8Array};
 
 pub const A: usize = 1;
@@ -288,60 +286,177 @@ pub async fn query_ctr(
     Ok(json_response)
 }
 
-pub async fn generate_proof_1_to_2(
-    // coin_1_old: OldCoin,
-    coin_1_old: OldCoin,
-    coin_1_new: NewCoin,
-    coin_2_new: NewCoin,
-) -> Result<Proof<Bls12>, ProofError> {
-    let hasher = Hasher::new();
-    let constants = hasher.get_mimc_constants().to_vec();
-
-    let de_params = sak_proofs::get_mimc_params_1_to_2(&constants);
-
-    let c = CoinProofCircuit1to2 {
-        hasher,
-        coin_1_old,
-        coin_1_new,
-        coin_2_new,
-        constants,
-    };
-
-    let proof = match groth16::create_random_proof(c, &de_params, &mut os_rng())
-    {
-        Ok(p) => p,
-        Err(err) => {
-            return Err(format!(
-                "Failed to generate groth16 proof, err: {}",
-                err
-            )
-            .into());
-        }
-    };
-
-    Ok(proof)
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GetCmIdxRequest {
+    pub cm: Cm,
 }
 
-pub async fn verify_proof_1_to_2(
-    proof: Proof<Bls12>,
-    public_inputs: &[Scalar],
-    hasher: &Hasher,
-) -> bool {
-    let constants = hasher.get_mimc_constants();
-    let de_params = get_mimc_params_1_to_2(&constants);
-    let pvk = groth16::prepare_verifying_key(&de_params.vk);
-
-    match groth16::verify_proof(&pvk, &proof, public_inputs) {
-        Ok(_) => {
-            println!("verify success!");
-            true
-        }
-        Err(err) => {
-            println!("verify_proof(), err: {}", err);
-            false
-        }
-    }
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GetCmIdxResponse {
+    pub cm_idx: Option<CmIdx>,
 }
+
+pub async fn get_cm_idx(
+    cm: U8Arr32,
+) -> Result<JsonResponse<GetCmIdxResponse>, SaksahaSDKError> {
+    let endpoint_test = "http://localhost:34418/rpc/v0";
+
+    let client = Client::new();
+    let uri: Uri = { endpoint_test.parse().expect("URI should be made") };
+
+    let body = {
+        let req = GetCmIdxRequest { cm };
+
+        let params = serde_json::to_string(&req)?.as_bytes().to_vec();
+
+        let json_request = JsonRequest {
+            jsonrpc: "2.0".to_string(),
+            method: "get_cm_idx".to_string(),
+            params: Some(params),
+            id: "test_1".to_string(),
+        };
+
+        let str = serde_json::to_string(&json_request)?;
+
+        Body::from(str)
+    };
+
+    let req = Request::builder()
+        .method(Method::POST)
+        .uri(uri)
+        .body(body)
+        .expect("request builder should be made");
+
+    let resp = client.request(req).await?;
+
+    let b = hyper::body::to_bytes(resp.into_body()).await?;
+
+    let json_response =
+        serde_json::from_slice::<JsonResponse<GetCmIdxResponse>>(&b)?;
+
+    Ok(json_response)
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GetTxRequest {
+    pub hash: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GetTxResponse {
+    pub tx: Option<Tx>,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq, Hash)]
+pub struct PourTxCandidate {
+    pub created_at: String,
+    #[serde(with = "serde_bytes")]
+    pub data: Vec<u8>,
+    pub author_sig: String,
+    pub ctr_addr: String,
+    pub pi: Vec<u8>,
+    pub sn_1: U8Arr32,
+    pub cm_1: U8Arr32,
+    pub cm_2: U8Arr32,
+    pub merkle_rt: U8Arr32,
+    tx_hash: String,
+}
+
+pub async fn get_tx(
+    hash: String,
+) -> Result<JsonResponse<GetTxResponse>, SaksahaSDKError> {
+    let endpoint_test = "http://localhost:34418/rpc/v0";
+
+    let client = Client::new();
+    let uri: Uri = { endpoint_test.parse().expect("URI should be made") };
+
+    let body = {
+        let req = GetTxRequest { hash };
+
+        let params = serde_json::to_string(&req)?.as_bytes().to_vec();
+
+        let json_request = JsonRequest {
+            jsonrpc: "2.0".to_string(),
+            method: "get_tx".to_string(),
+            params: Some(params),
+            id: "test_1".to_string(),
+        };
+
+        let str = serde_json::to_string(&json_request)?;
+
+        Body::from(str)
+    };
+
+    let req = Request::builder()
+        .method(Method::POST)
+        .uri(uri)
+        .body(body)
+        .expect("request builder should be made");
+
+    let resp = client.request(req).await?;
+
+    let b = hyper::body::to_bytes(resp.into_body()).await?;
+
+    let json_response =
+        serde_json::from_slice::<JsonResponse<GetTxResponse>>(&b)?;
+
+    Ok(json_response)
+}
+
+// pub fn generate_proof_1_to_2(
+//     // coin_1_old: OldCoin,
+//     coin_1_old: OldCoin,
+//     coin_1_new: NewCoin,
+//     coin_2_new: NewCoin,
+// ) -> Result<Proof<Bls12>, ProofError> {
+//     let hasher = Hasher::new();
+//     let constants = hasher.get_mimc_constants().to_vec();
+
+//     let de_params = sak_proofs::get_mimc_params_1_to_2(&constants);
+
+//     let c = CoinProofCircuit1to2 {
+//         hasher,
+//         coin_1_old,
+//         coin_1_new,
+//         coin_2_new,
+//         constants,
+//     };
+
+//     let proof = match groth16::create_random_proof(c, &de_params, &mut os_rng())
+//     {
+//         Ok(p) => p,
+//         Err(err) => {
+//             return Err(format!(
+//                 "Failed to generate groth16 proof, err: {}",
+//                 err
+//             )
+//             .into());
+//         }
+//     };
+
+//     Ok(proof)
+// }
+
+// pub async fn verify_proof_1_to_2(
+//     proof: Proof<Bls12>,
+//     public_inputs: &[Scalar],
+//     hasher: &Hasher,
+// ) -> bool {
+//     let constants = hasher.get_mimc_constants();
+//     let de_params = get_mimc_params_1_to_2(&constants);
+//     let pvk = groth16::prepare_verifying_key(&de_params.vk);
+
+//     match groth16::verify_proof(&pvk, &proof, public_inputs) {
+//         Ok(_) => {
+//             println!("verify success!");
+//             true
+//         }
+//         Err(err) => {
+//             println!("verify_proof(), err: {}", err);
+//             false
+//         }
+//     }
+// }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GetAuthPathRequest {
@@ -387,11 +502,8 @@ pub async fn get_auth_path(
 
     let b = hyper::body::to_bytes(resp.into_body()).await?;
 
-    println!("b: {:#?}", b);
-
     let json_response =
         serde_json::from_slice::<JsonResponse<GetAuthPathResponse>>(&b)?;
-    println!("[+] idx: {:?}", idx);
 
     Ok(json_response)
 }

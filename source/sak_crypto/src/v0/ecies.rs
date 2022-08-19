@@ -15,7 +15,10 @@ pub const AES_TAG_LENGTH: usize = 16;
 // /// Empty bytes array
 // pub const EMPTY_BYTES: [u8; 0] = [];
 
-pub fn derive_aes_key(my_secret: SecretKey, her_public: PublicKey) -> [u8; 32] {
+pub fn derive_aes_key(
+    my_secret: SecretKey,
+    her_public: PublicKey,
+) -> Result<[u8; 32], CryptoError> {
     let shared_secret = k256::elliptic_curve::ecdh::diffie_hellman(
         my_secret.to_secret_scalar(),
         her_public.as_affine(),
@@ -28,11 +31,19 @@ pub fn derive_aes_key(my_secret: SecretKey, her_public: PublicKey) -> [u8; 32] {
     let aes_key = {
         let h = Hkdf::<Sha256>::new(None, material.as_slice());
         let mut out = [0u8; 32];
-        h.expand(&[], &mut out).unwrap();
+        match h.expand(&[], &mut out) {
+            Ok(_) => (),
+            Err(err) => {
+                return Err(
+                    format!("Could not derive aes key, err: {}", err).into()
+                )
+            }
+        };
+
         out
     };
 
-    aes_key
+    Ok(aes_key)
 }
 
 pub fn aes_encrypt(
@@ -59,7 +70,7 @@ pub fn aes_encrypt(
 pub fn aes_decrypt(
     aes_key: &[u8; 32],
     ciphertext: &[u8],
-) -> Result<String, CryptoError> {
+) -> Result<Vec<u8>, CryptoError> {
     let key = Key::from_slice(aes_key);
     let cipher = Aes256GcmSiv::new(key);
 
@@ -73,6 +84,5 @@ pub fn aes_decrypt(
         }
     };
 
-    let a = String::from_utf8(plaintext).unwrap();
-    Ok(a)
+    Ok(plaintext)
 }

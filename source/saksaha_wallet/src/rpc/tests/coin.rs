@@ -5,25 +5,21 @@ use crate::rpc::routes::v0::{
 use envelope_contract::request_type;
 use envelope_term::ENVELOPE_CTR_ADDR;
 use hyper::{Body, Client, Method, Request, Uri};
-use sak_contract_std::{CtrRequest, RequestArgs};
+use sak_contract_std::CtrRequest;
 use sak_rpc_interface::{JsonRequest, JsonResponse};
+pub(crate) const RPC_PORT: u16 = 36612;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_send_tx() {
     sak_test_utils::init_test_log();
 
-    let test_context = utils::make_test_context().await;
-
-    let rpc = test_context.rpc;
-
-    let rpc_port = rpc.get_rpc_port();
-
-    tokio::spawn(async move { rpc.run().await });
+    let test_credential = utils::make_test_credential().await;
+    let acc_addr = &test_credential.get_credential().acc_addr;
 
     let client = Client::new();
 
     let uri: Uri = {
-        let u = format!("http://localhost:{}", rpc_port);
+        let u = format!("http://localhost:{}", RPC_PORT);
 
         u.parse().expect("URI should be made")
     };
@@ -36,7 +32,7 @@ async fn test_send_tx() {
         };
 
         let send_tx_req = SendTxRequest {
-            acc_addr: test_context.acc_addr.clone(),
+            acc_addr: acc_addr.clone(),
             ctr_addr: ENVELOPE_CTR_ADDR.to_string(),
             ctr_request,
         };
@@ -52,8 +48,6 @@ async fn test_send_tx() {
 
         let str = serde_json::to_string(&json_request).unwrap();
 
-        println!("[+] request body str (for debugging): {:#?}", str);
-
         Body::from(str)
     };
 
@@ -67,12 +61,8 @@ async fn test_send_tx() {
 
     let b = hyper::body::to_bytes(resp.into_body()).await.unwrap();
 
-    println!("power: {:?}", b);
-
     let json_response =
         serde_json::from_slice::<JsonResponse<SendTxResponse>>(&b).unwrap();
 
-    let result = json_response.result.unwrap();
-
-    println!("[+] result: {:?}", result);
+    let _result = json_response.result.unwrap();
 }

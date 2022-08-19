@@ -1,11 +1,8 @@
-use crate::credential::{CredentialManager, WalletCredential};
+use crate::credential::CredentialManager;
 use crate::db::WalletDB;
 use crate::{rpc::RPC, wallet::Wallet, AppArgs, WalletError};
-use colored::Colorize;
 use log::{error, info};
-use std::io::BufRead;
 use std::sync::Arc;
-use std::time::Duration;
 
 pub(crate) struct Routine {}
 

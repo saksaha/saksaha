@@ -1,10 +1,8 @@
 use sak_crypto::{rand, ScalarExt};
 use sak_crypto::{Hasher, Scalar};
-use sak_proofs::{MerkleTree, NewCoin, OldCoin, CM_TREE_DEPTH};
+use sak_proofs::{CoinProof, MerkleTree, NewCoin, OldCoin, CM_TREE_DEPTH};
 use std::collections::HashMap;
 use type_extension::U8Array;
-
-use crate::{generate_proof_1_to_2, get_auth_path};
 
 fn make_test_context() -> (OldCoin, NewCoin, NewCoin, Scalar) {
     let hasher = Hasher::new();
@@ -332,13 +330,13 @@ pub async fn test_make_a_proof_and_verify_it() {
 
     let (coin_1_old, coin_1_new, coin_2_new, merkle_rt) = make_test_context();
 
-    let proof = generate_proof_1_to_2(
+    let proof = CoinProof::generate_proof_1_to_2(
         //
         coin_1_old, //
         coin_1_new, //
         coin_2_new,
     )
-    .await;
+    .unwrap();
 
     println!("proof: {:#?}", proof);
 }
@@ -348,7 +346,7 @@ pub async fn test_get_auth_path() {
     sak_test_utils::init_test_log();
 
     let idx: u128 = 0;
-    let resp = get_auth_path(idx).await.unwrap();
+    let resp = crate::get_auth_path(idx).await.unwrap();
 
     let auth_path = resp.result.unwrap();
     println!("[+] auth_path: {:?}", auth_path);

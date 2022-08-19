@@ -17,19 +17,6 @@ mod test {
     use sha3::{Digest, Sha3_256};
     use std::{fmt::Write, num::ParseIntError};
 
-    pub fn init() {
-        const RUST_LOG_ENV: &str = "
-            sak_,
-            saksaha
-        ";
-
-        if std::env::var("RUST_LOG").is_err() {
-            std::env::set_var("RUST_LOG", RUST_LOG_ENV);
-        }
-
-        sak_logger::init(false);
-    }
-
     #[test]
     fn it_creates_signature() {
         let signing_key = SigningKey::random(&mut OsRng); // Serialize with `::to_bytes()`
@@ -96,10 +83,10 @@ mod test {
             (pk, sk)
         };
 
-        let plaintext = "hello";
+        let plaintext = String::from("hello");
         println!("plaintext: {}", plaintext);
 
-        let aes_key = derive_aes_key(e_sk, bob_pk);
+        let aes_key = derive_aes_key(e_sk, bob_pk).unwrap();
         println!("aes_key: {:?}", aes_key);
 
         let cipher_text = aes_encrypt(&aes_key, plaintext.as_bytes()).unwrap();
@@ -123,9 +110,12 @@ mod test {
             // let e_pk_bytes = &msg[..65];
             // let e_pk = PublicKey::from_sec1_bytes(e_pk_bytes).unwrap();
 
-            let aes_key = derive_aes_key(bob_sk, e_pk);
+            let aes_key = derive_aes_key(bob_sk, e_pk).unwrap();
 
-            let _plaintext = aes_decrypt(&aes_key, cipher_text.as_slice());
+            let plaintext2 =
+                aes_decrypt(&aes_key, cipher_text.as_slice()).unwrap();
+
+            assert_eq!(plaintext.as_bytes(), plaintext2);
         };
     }
 }

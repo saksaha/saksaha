@@ -1,11 +1,9 @@
-use crate::{
-    db::{tests::make_dummy_db, WalletDB, USER_1, USER_2},
-    WalletError,
-};
+use crate::WalletError;
 use sak_crypto::{Hasher, Scalar, ScalarExt};
-use sak_proofs::OldCoin;
 use sak_types::{CoinRecord, CoinStatus};
 use type_extension::U8Array;
+
+use super::make_dummy_db;
 
 struct TestWalletCoin {
     addr_pk: Scalar,
@@ -56,6 +54,8 @@ fn mock_coin_record_1() -> Result<CoinRecord, WalletError> {
 
     let coin_status = CoinStatus::Unused;
 
+    let cm_idx = 0;
+
     let coin = CoinRecord {
         addr_pk,
         addr_sk,
@@ -65,6 +65,7 @@ fn mock_coin_record_1() -> Result<CoinRecord, WalletError> {
         v,
         cm,
         coin_status,
+        cm_idx: Some(cm_idx),
         coin_idx: None,
     };
 

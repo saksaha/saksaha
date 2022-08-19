@@ -1,60 +1,17 @@
-use crate::{GetChListParams, GetMsgParams, OpenChParams, SendMsgParams};
+use crate::{
+    request_type::{GET_CH_LIST, GET_MSG, OPEN_CH, SEND_MSG},
+    EnvelopeStorage, GetChListParams, GetMsgParams, OpenChParams,
+    SendMsgParams,
+};
 use sak_contract_std::{
     contract_bootstrap, define_execute, define_init, define_query,
     ContractError, CtrRequest, InvokeResult, RequestArgs, Storage,
 };
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-
-pub mod request_type {
-    pub const OPEN_CH: &'static str = "open_ch";
-    pub const SEND_MSG: &'static str = "send_msg";
-    pub const GET_CH_LIST: &'static str = "get_ch_list";
-    pub const GET_MSG: &'static str = "get_msgs";
-}
-
-pub type PublicKey = String;
-pub type ChannelId = String;
-pub type Date = String;
 
 pub const STORAGE_CAP: usize = 100;
 
 pub struct OpenChReq {}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct EnvelopeStorage {
-    pub open_ch_reqs: HashMap<PublicKey, Vec<Channel>>,
-    pub chats: HashMap<ChannelId, Vec<ChatMessage>>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct ChatMessage {
-    pub date: Date,
-    pub user: PublicKey,
-    pub msg: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct ChannelList {
-    pub channels: Vec<Channel>,
-}
-
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
-pub struct Channel {
-    pub ch_id: String,
-    pub eph_key: String,
-    pub sig: String,
-}
-
-impl Channel {
-    pub fn default() -> Channel {
-        Channel {
-            ch_id: String::default(),
-            eph_key: String::default(),
-            sig: String::default(),
-        }
-    }
-}
 
 contract_bootstrap!();
 
@@ -76,10 +33,10 @@ pub fn query2(
     storage: Storage,
 ) -> Result<Vec<u8>, ContractError> {
     match request.req_type.as_ref() {
-        request_type::GET_MSG => {
+        GET_MSG => {
             return handle_get_msgs(storage, request.args);
         }
-        request_type::GET_CH_LIST => {
+        GET_CH_LIST => {
             return handle_get_ch_list(storage, request.args);
         }
         _ => {
@@ -96,10 +53,10 @@ pub fn execute2(
     storage: &mut Storage,
 ) -> Result<InvokeResult, ContractError> {
     match request.req_type.as_ref() {
-        request_type::OPEN_CH => {
+        OPEN_CH => {
             return handle_open_channel(storage, request.args);
         }
-        request_type::SEND_MSG => {
+        SEND_MSG => {
             return handle_send_msg(storage, request.args);
         }
         _ => {
@@ -306,26 +263,6 @@ fn handle_send_msg(
 
     let send_msg_params: SendMsgParams = serde_json::from_slice(&args)?;
 
-    // let channel_id = match args.get(ARG_CH_ID) {
-    //     Some(v) => v,
-    //     None => {
-    //         return Err(ContractError::new(
-    //             format!("args should contain the channel_id").into(),
-    //         ));
-    //     }
-    // };
-
-    // let input_serialized = match args.get(ARG_SERIALIZED_INPUT) {
-    //     Some(v) => v,
-    //     None => {
-    //         return Err(ContractError::new(
-    //             format!("args should contain the msg").into(),
-    //         ));
-    //     }
-    // };
-
-    // storage.insert(channel_id.clone(), input_serialized.clone());
-
     let ch_id = send_msg_params.ch_id;
 
     if !evl_storage.chats.contains_key(&ch_id) {
@@ -335,9 +272,9 @@ fn handle_send_msg(
     let chats = evl_storage
         .chats
         .get_mut(&ch_id)
-        .ok_or(format!("Channel is not initialied, ch_id: {}", ch_id))?;
+        .ok_or(format!("Channel is not initialized, ch_id: {}", ch_id))?;
 
-    chats.push(send_msg_params.chat);
+    chats.push(send_msg_params.msg);
 
     *storage = serde_json::to_vec(&evl_storage)?;
 
