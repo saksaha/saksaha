@@ -1,4 +1,4 @@
-use crate::app::{Actions, App, AppState};
+use crate::envelope::{Actions, AppState, Envelope};
 use crate::io::InputMode;
 use tui::backend::Backend;
 use tui::layout::{Alignment, Rect};
@@ -21,7 +21,7 @@ pub(crate) fn check_size(rect: &Rect) {
 }
 
 pub(crate) fn draw_open_ch<'a, B>(
-    app: &'a App,
+    app: &'a Envelope,
     rect: &mut Frame<B>,
     chunks: &Vec<Rect>,
 ) -> (Paragraph<'a>, Paragraph<'a>, List<'a>)
@@ -264,7 +264,7 @@ pub(crate) fn draw_logs<'a>() -> TuiLoggerWidget<'a> {
 }
 
 pub(crate) fn draw_chat<'a, B>(
-    app: &'a App,
+    app: &'a Envelope,
     rect: &mut Frame<B>,
     chunks: &Rect,
 ) -> (Paragraph<'a>, Paragraph<'a>, Paragraph<'a>)
