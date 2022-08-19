@@ -66,6 +66,7 @@ impl CoinManager {
         coin_record: CoinRecord,
     ) -> Result<(), WalletError> {
         println!("coin manager has been updated");
+
         self.coins.push(coin_record);
 
         Ok(())

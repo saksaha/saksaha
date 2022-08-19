@@ -169,8 +169,8 @@ pub(in crate::rpc) async fn send_pour_tx(
         .send_tx(tx_candidate)
         .await
     {
-        Ok(bool) => {
-            return make_success_response(route_state, "success");
+        Ok(tx_hash) => {
+            return make_success_response(route_state, tx_hash);
         }
         Err(err) => {
             return make_error_response(

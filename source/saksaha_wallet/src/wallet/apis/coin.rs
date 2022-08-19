@@ -51,7 +51,7 @@ impl Wallet {
         Ok(b)
     }
 
-    pub async fn send_tx(
+    pub async fn send_pour_tx(
         &self,
         acc_addr: String,
         ctr_addr: String,
@@ -154,7 +154,17 @@ impl Wallet {
         )
         .await?;
 
-        let _res = json_response.result.ok_or("Value needs to be returned")?;
+        let resp = json_response.result.ok_or("Value needs to be returned")?;
+
+        println!("\t[+] resp: {:?}", resp);
+
+        // send `get_tx()` rpc call
+
+        // get `cm_1` and `cm_2` from rpc response
+
+        // store `cm_1` and `cm_2` in the `CoinManager`
+
+        // update coin status of `old_coin` from `Unused` to `Used`
 
         Ok("success_power".to_string())
     }

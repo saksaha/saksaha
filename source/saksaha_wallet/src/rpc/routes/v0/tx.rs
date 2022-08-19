@@ -19,7 +19,7 @@ pub(in crate::rpc) struct SendTxResponse {
     pub result: String,
 }
 
-pub(in crate::rpc) async fn send_tx(
+pub(in crate::rpc) async fn send_pour_tx(
     route_state: RouteState,
     params: Params,
     ctx: Arc<RouteCtx>,
@@ -37,7 +37,7 @@ pub(in crate::rpc) async fn send_tx(
     let wallet = &ctx.wallet;
 
     let res = wallet
-        .send_tx(rb.acc_addr, rb.ctr_addr, rb.ctr_request)
+        .send_pour_tx(rb.acc_addr, rb.ctr_addr, rb.ctr_request)
         .await;
 
     match res {
