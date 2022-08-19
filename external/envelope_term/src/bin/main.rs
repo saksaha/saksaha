@@ -47,12 +47,6 @@ fn main() -> Result<(), EnvelopeError> {
 
     let config = PConfig::new(&term_args.cfg_profile)?;
 
-    // let user_prefix = String::from("user_1");
-    // let term_args = TermArgs {
-    //     pconfig,
-    //     user_prefix,
-    // };
-
     term::run(term_args)?;
 
     Ok(())

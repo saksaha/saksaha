@@ -31,9 +31,7 @@ pub fn run(pconfig: PConfig) -> Result<(), EnvelopeError> {
         .build();
 
     match runtime {
-        Ok(r) =>
-        //
-        {
+        Ok(r) => {
             r.block_on(async {
                 let (sync_io_tx, mut sync_io_rx) =
                     tokio::sync::mpsc::channel::<IoEvent>(100);
