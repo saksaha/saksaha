@@ -67,15 +67,17 @@ async fn bootstrap_wallet(
             coin_count.to_string().green()
         );
 
-        for (idx, coin) in coin_records.iter().enumerate() {
+        for (idx, coin) in coin_records.into_iter().enumerate() {
             let res = wallet.get_db().schema.put_coin(&coin);
 
             match res {
                 Ok(_r) => {
                     println!(
-                        "\t[{}/{}] Bootstrapped a coin, cm: {}, val: {}",
+                        "\t[{}/{}] Bootstrapped a coin\n\t\tcm: {}\n\t\tval: {}",
                         idx, coin_count, coin.cm, coin.v
                     );
+
+                    wallet.coin_manager.write().await.update_coin(coin)?;
                 }
                 Err(err) => {
                     println!(

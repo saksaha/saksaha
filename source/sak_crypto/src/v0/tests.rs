@@ -17,19 +17,6 @@ mod test {
     use sha3::{Digest, Sha3_256};
     use std::{fmt::Write, num::ParseIntError};
 
-    pub fn init() {
-        const RUST_LOG_ENV: &str = "
-            sak_,
-            saksaha
-        ";
-
-        if std::env::var("RUST_LOG").is_err() {
-            std::env::set_var("RUST_LOG", RUST_LOG_ENV);
-        }
-
-        sak_logger::init(false);
-    }
-
     #[test]
     fn it_creates_signature() {
         let signing_key = SigningKey::random(&mut OsRng); // Serialize with `::to_bytes()`

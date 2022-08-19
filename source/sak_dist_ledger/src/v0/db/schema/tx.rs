@@ -3,8 +3,8 @@ use crate::{cfs, LedgerDB};
 use sak_crypto::{Bls12, Hasher, Proof, ScalarExt};
 use sak_kv_db::WriteBatch;
 use sak_types::{
-    MintTx, MintTxCandidate, PourTx, PourTxCandidate, Tx, TxCtrOp, TxHash,
-    TxHeight, TxType, CM, CM_IDX, SN,
+    Cm, CmIdx, MintTx, MintTxCandidate, PourTx, PourTxCandidate, Sn, Tx,
+    TxCtrOp, TxHash, TxHeight, TxType,
 };
 
 impl LedgerDB {
@@ -54,7 +54,7 @@ impl LedgerDB {
 
         let ctr_addr = self.get_ctr_addr(tx_hash)?;
 
-        let cm = self.get_cm(tx_hash)?.ok_or("cm should exist")?;
+        let cm_1 = self.get_cm_1(tx_hash)?.ok_or("cm should exist")?;
 
         let v = self.get_v(tx_hash)?.ok_or("v should exist")?;
 
@@ -62,15 +62,23 @@ impl LedgerDB {
 
         let s = self.get_s(tx_hash)?.ok_or("s shoudl exist")?;
 
-        let tx_height = self
-            .get_tx_height(tx_hash)?
-            .ok_or("tx_height does not exist")?;
+        // let tx_height = self
+        //     .get_tx_height(tx_hash)?
+        //     .ok_or("tx_height does not exist")?;
+
+        let cm_idx_1 = self
+            .get_cm_idx_by_cm(&cm_1)?
+            .ok_or("cm_idx_1 does not exist")?;
 
         let tx_candidate = MintTxCandidate::new(
-            created_at, data, author_sig, ctr_addr, cm, v, k, s,
+            created_at, data, author_sig, ctr_addr, cm_1, v, k, s,
         );
 
-        let tx = Tx::Mint(MintTx::new(tx_candidate, tx_height));
+        let tx = Tx::Mint(MintTx::new(
+            tx_candidate,
+            // tx_height,
+            cm_idx_1,
+        ));
 
         Ok(tx)
     }
@@ -112,11 +120,24 @@ impl LedgerDB {
             merkle_rt,
         );
 
-        let tx_height = self
-            .get_tx_height(tx_hash)?
-            .ok_or("tx_height does not exist")?;
+        // let tx_height = self
+        //     .get_tx_height(tx_hash)?
+        //     .ok_or("tx_height does not exist")?;
 
-        let tx = Tx::Pour(PourTx::new(tx_candidate, tx_height));
+        let cm_idx_1 = self
+            .get_cm_idx_by_cm(&cm_1)?
+            .ok_or("cm_idx_1 does not exist")?;
+
+        let cm_idx_2 = self
+            .get_cm_idx_by_cm(&cm_2)?
+            .ok_or("cm_idx_2 does not exist")?;
+
+        let tx = Tx::Pour(PourTx::new(
+            tx_candidate,
+            // tx_height,
+            cm_idx_1,
+            cm_idx_2,
+        ));
 
         Ok(tx)
     }
@@ -155,15 +176,17 @@ impl LedgerDB {
 
         let tx_hash = tc.get_tx_hash();
 
-        let cm_idx = self.batch_increment_cm_idx(batch, &tc.cm)?;
+        println!("put mint tx: {}", tx);
+
+        // let cm_idx = self.batch_increment_cm_idx(batch, &tc.cm)?;
 
         self.batch_put_tx_type(batch, tx_hash, tc.get_tx_type())?;
 
-        self.batch_put_cm(batch, tx_hash, &tc.cm)?;
+        self.batch_put_cm_1(batch, tx_hash, &tc.cm_1)?;
 
-        // self.batch_put_cm_cm_idx(batch, &tc.cm, cm_idx)?;
+        self.batch_put_cm_cm_idx(batch, &tc.cm_1, &tx.cm_idx_1)?;
 
-        self.batch_put_cm_idx_cm(batch, cm_idx, &tc.cm)?;
+        // self.batch_put_cm_idx_cm(batch, &tx.cm_idx_1, &tc.cm)?;
 
         self.batch_put_tx_created_at(batch, tx_hash, &tc.created_at)?;
 
@@ -179,9 +202,9 @@ impl LedgerDB {
 
         self.batch_put_s(batch, tx_hash, &tc.s)?;
 
-        self.batch_put_tx_height(batch, tx_hash, &tx.tx_height)?;
+        // self.batch_put_tx_height(batch, tx_hash, &tx.tx_height)?;
 
-        self.batch_put_tx_hash_by_height(batch, &tx.tx_height, tx_hash)?;
+        // self.batch_put_tx_hash_by_height(batch, &tx.tx_height, tx_hash)?;
 
         let tx_ctr_op = tc.get_ctr_op();
 
@@ -254,11 +277,6 @@ impl LedgerDB {
         Ok(())
     }
 
-    // ledger
-    // | b_1
-    // | b_2
-    // | b_*  <= b_3_a, b_3_a
-
     pub(crate) fn batch_put_pour_tx(
         &self,
         batch: &mut WriteBatch,
@@ -274,11 +292,6 @@ impl LedgerDB {
             self.verify_tx(&tc)?;
         }
 
-        let cm_idx_1 = self.batch_increment_cm_idx(batch, &tc.cm_1)?;
-        //
-
-        let cm_idx_2 = self.batch_increment_cm_idx(batch, &tc.cm_2)?;
-
         let tx_hash = tc.get_tx_hash();
 
         self.batch_put_tx_hash_by_sn(batch, &tc.sn_1, tx_hash)?;
@@ -293,11 +306,11 @@ impl LedgerDB {
 
         self.batch_put_ctr_addr(batch, tx_hash, &tc.ctr_addr)?;
 
-        self.batch_put_tx_height(batch, tx_hash, &tx.tx_height)?;
+        // self.batch_put_tx_height(batch, tx_hash, &tx.tx_height)?;
+
+        // self.batch_put_tx_hash_by_height(batch, &tx.tx_height, tx_hash)?;
 
         self.batch_put_pi(batch, tx_hash, &tc.pi)?;
-
-        self.batch_put_tx_hash_by_height(batch, &tx.tx_height, tx_hash)?;
 
         self.batch_put_sn_1(batch, tx_hash, &tc.sn_1)?;
 
@@ -311,9 +324,9 @@ impl LedgerDB {
 
         // self.batch_put_cm_cm_idx(batch, &tc.cm_2, &(*cm_idx_count + 1))?;
 
-        // self.batch_put_cm_idx_cm(batch, cm_idx_count, &tc.cm_1)?;
+        self.batch_put_cm_cm_idx(batch, &tc.cm_1, &tx.cm_idx_1)?;
 
-        // self.batch_put_cm_idx_cm(batch, &(*cm_idx_count + 1), &tc.cm_2)?;
+        self.batch_put_cm_cm_idx(batch, &tc.cm_2, &tx.cm_idx_2)?;
 
         self.batch_put_prf_merkle_rt(batch, tx_hash, &tc.merkle_rt)?;
 
