@@ -58,18 +58,19 @@ impl Conn {
         let in_cipher =
             ChaCha20::new(shared_secret.as_bytes().into(), nonce.into());
 
-        let socket = self.socket.map_codec(|_| UpgradedP2PCodec {
-            out_cipher,
-            in_cipher,
-            out_mac,
-            in_mac,
-        });
-
         let conn_id = format!(
             "{}-{}",
             "me",
             sak_p2p_id::make_public_key_short(&her_public_key)?
         );
+
+        let socket = self.socket.map_codec(|_| UpgradedP2PCodec {
+            out_cipher,
+            in_cipher,
+            out_mac,
+            in_mac,
+            conn_id: conn_id.to_string(),
+        });
 
         let upgraded_conn =
             UpgradedConn::init(socket, conn_id, self.is_initiator).await;

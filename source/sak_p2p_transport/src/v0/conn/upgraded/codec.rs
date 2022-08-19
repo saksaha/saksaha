@@ -1,10 +1,9 @@
 use crate::{dec, enc, Msg, TrptError};
 use bytes::{Buf, BytesMut};
-use chacha20::cipher::{StreamCipher, StreamCipherSeek};
+use chacha20::cipher::StreamCipher;
 use chacha20::ChaCha20;
 use sak_crypto::sha3::digest::core_api::CoreWrapper;
 use sak_crypto::sha3::{Digest, Keccak256Core};
-use std::convert::TryInto;
 use tokio_util::codec::{Decoder, Encoder};
 
 pub(crate) const FRAME_LEN_MAX: usize = 2_usize.pow(16);
@@ -17,6 +16,7 @@ pub struct UpgradedP2PCodec {
     pub(crate) in_cipher: ChaCha20,
     pub(crate) out_mac: CoreWrapper<Keccak256Core>,
     pub(crate) in_mac: CoreWrapper<Keccak256Core>,
+    pub(crate) conn_id: String,
 }
 
 impl Encoder<Msg> for UpgradedP2PCodec {
@@ -29,17 +29,12 @@ impl Encoder<Msg> for UpgradedP2PCodec {
     ) -> Result<(), TrptError> {
         let msg = item.to_string();
 
-        println!("encdoing, item: {}", &item);
+        println!("encoding, item: {}", &item);
 
         let header_buf = [0u8; HEADER_TOTAL_LEN];
         dst.extend_from_slice(&header_buf);
 
         let mut msg_part = dst.split_off(HEADER_TOTAL_LEN);
-        // println!(
-        //     "123, dst: {:?}, msg_part: {:?}",
-        //     dst.to_vec(),
-        //     msg_part.to_vec()
-        // );
 
         // Put the encoded msg starting from 20th slot
         enc::encode_into_frame(item, &mut msg_part)?;
@@ -48,10 +43,12 @@ impl Encoder<Msg> for UpgradedP2PCodec {
         write_total_frame_len(dst, msg_part.len() + dst.len())?;
 
         println!(
-            "\nencode(): before enc, msg({}): {}, dst: {:?}",
+            "\nencode(): before enc, conn_id: {}, msg({}): {}, dst: {:?}, msg_part: {:?}",
+            self.conn_id,
             dst.len(),
             msg,
-            dst.to_vec()
+            dst.to_vec(),
+            msg_part.to_vec(),
         );
 
         let mac = {
@@ -72,7 +69,12 @@ impl Encoder<Msg> for UpgradedP2PCodec {
 
         dst.unsplit(msg_part);
 
-        println!("\nencode(): _after enc ({}): {:?}", dst.len(), dst.to_vec());
+        println!(
+            "\nencode(): conn_id: {}, _after enc ({}): {:?}",
+            self.conn_id,
+            dst.len(),
+            dst.to_vec()
+        );
 
         return Ok(());
     }
@@ -86,7 +88,12 @@ impl Decoder for UpgradedP2PCodec {
         &mut self,
         src: &mut BytesMut,
     ) -> Result<Option<Self::Item>, TrptError> {
-        println!("\ndecode(): before dec: {:?}", src.to_vec());
+        println!(
+            "\ndecoding!! conn_id: {}, src({}): {:?}",
+            self.conn_id,
+            src.len(),
+            src.to_vec()
+        );
 
         if src.len() <= HEADER_TOTAL_LEN {
             return Ok(None);
@@ -94,18 +101,27 @@ impl Decoder for UpgradedP2PCodec {
 
         let mut msg_part = src.split_off(HEADER_TOTAL_LEN);
 
-        let header = &src[..5];
-        let header_mac = &src[5..];
+        let src_header = src.to_vec();
+        let header = &src_header[..5];
+        let header_mac = &src_header[5..];
+
+        // Buffer needs to be **depleted**
+        src.advance(HEADER_TOTAL_LEN);
 
         println!(
-            "\nheader: {:?}, header_mac: {:?}, msg_part: {:?}",
-            header, header_mac, msg_part
+            "\nbefore dec: header: {:?}, header_mac: {:?}, msg_part: {:?}",
+            header,
+            header_mac,
+            msg_part.to_vec(),
         );
 
         self.in_cipher.apply_keystream(&mut msg_part);
 
         println!(
-            "\ndecode(): _after dec ({}): {:?}",
+            "\ndecode(): _after dec, conn_id: {}, header: {:?}, \
+            msg_part({}): {:?}",
+            self.conn_id,
+            src.to_vec(),
             msg_part.len(),
             msg_part.to_vec()
         );
