@@ -32,11 +32,15 @@ impl LedgerDB {
             .get_tx_type(tx_hash)?
             .ok_or(format!("Tx type does not exist, tx_hash: {}", tx_hash))?;
 
+        println!("[+] tx_type :{:?}", tx_type);
+
         let tx = match tx_type {
             TxType::Mint => self.get_mint_tx(tx_hash),
             TxType::Pour => self.get_pour_tx(tx_hash),
             _ => Err(format!("Invalid tx type, {:?}", tx_type).into()),
         }?;
+
+        println!("[+] tx :{:?}", tx);
 
         Ok(Some(tx))
     }
