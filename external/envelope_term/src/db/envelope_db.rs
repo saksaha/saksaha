@@ -72,8 +72,10 @@ impl EnvelopeDB {
             None => (),
         };
 
-        let (secret_str, public_key_str, sig_str) = {
+        let (secret_str, public_key_str, sig_str, acc_addr) = {
             let (sk, pk) = SakKey::generate();
+            let acc_addr = SakKey::create_acc_addr(&pk);
+
             let secret_str = sak_crypto::encode_hex(&sk.to_bytes());
 
             let public_key_str =
@@ -93,11 +95,17 @@ impl EnvelopeDB {
                     }
                 }
             };
-            (secret_str, public_key_str, sig_str)
+            (secret_str, public_key_str, sig_str, acc_addr)
         };
 
         self.schema
-            .put_user_data(user_id, &secret_str, &public_key_str, &sig_str)
+            .put_user_data(
+                user_id,
+                &secret_str,
+                &public_key_str,
+                &sig_str,
+                &acc_addr,
+            )
             .await?;
         Ok(())
     }

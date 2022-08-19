@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
 #[derive(Serialize, Deserialize, Debug)]
-pub(in crate::rpc) struct SendTxRequest {
+pub struct SendTxRequest {
     pub acc_addr: String,
     pub ctr_addr: String,
     pub ctr_request: CtrRequest,

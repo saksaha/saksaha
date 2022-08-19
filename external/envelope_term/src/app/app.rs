@@ -360,6 +360,10 @@ impl App {
 
         let my_sig = self.get_sig(&USER_1.to_string()).await?;
 
+        // let user_1_acc_addr = self.get_acc_addr(&USER_1.to_string()).await?;
+        let user_1_acc_addr =
+            String::from("67892d6d5a5acc26790d649fc4478df431741846");
+
         let ch_id_num = sak_crypto::rand();
 
         let ch_id = format!("{}_{}", my_pk, ch_id_num.to_string());
@@ -412,16 +416,18 @@ impl App {
                 ctr_call_type: CtrCallType::Execute,
             };
 
-            let _json_response = saksaha::send_tx_pour(
-                U8Array::new_empty_32(),
-                U8Array::new_empty_32(),
-                U8Array::new_empty_32(),
-                U8Array::new_empty_32(),
-                vec![],
-                ctr_addr,
-                ctr_request,
-            )
-            .await?;
+            crate::term::send_tx_pour(user_1_acc_addr, ctr_addr, ctr_request)
+                .await?;
+            // let _json_response = saksaha::send_tx_pour(
+            //     U8Array::new_empty_32(),
+            //     U8Array::new_empty_32(),
+            //     U8Array::new_empty_32(),
+            //     U8Array::new_empty_32(),
+            //     vec![],
+            //     ctr_addr,
+            //     ctr_request,
+            // )
+            // .await?;
         }
 
         {
@@ -470,12 +476,8 @@ impl App {
                 ctr_call_type: CtrCallType::Execute,
             };
 
-            let _json_response = saksaha::send_tx_pour(
-                U8Array::new_empty_32(),
-                U8Array::new_empty_32(),
-                U8Array::new_empty_32(),
-                U8Array::new_empty_32(),
-                vec![],
+            crate::term::send_tx_pour(
+                her_pk.to_string(),
                 ctr_addr,
                 ctr_request,
             )
@@ -539,6 +541,7 @@ impl App {
 
         let user_1_pk = self.get_pk(&USER_1.to_string()).await?;
         let user_1_sk = self.get_sk(&USER_1.to_string()).await?;
+        let user_1_acc_addr = self.get_acc_addr(&USER_1.to_string()).await?;
 
         let user_1_sk: U8Arr32 = U8Array::from_hex_string(user_1_sk)?;
 
@@ -625,22 +628,6 @@ impl App {
             msg: encrypted_msg,
         };
 
-        // let mut arg = HashMap::with_capacity(2);
-        // let open_ch_input = {
-        //     let open_ch_input: Vec<String> = vec![
-        //         her_pk.to_string(),
-        //         format!("Channel_{}", self.state.ch_list.len()),
-        //         "a_pk_sig_encrypted".to_string(),
-        //         "open_ch_empty".to_string(),
-        //     ];
-
-        //     serde_json::to_string(&open_ch_input)?
-        // };
-
-        // arg.insert(String::from("dst_pk"), "her_pk".to_string());
-
-        // arg.insert(String::from("serialized_input"), open_ch_input);
-
         let args = serde_json::to_vec(&send_msg_params)?;
 
         let req_type = SEND_MSG.to_string();
@@ -651,16 +638,9 @@ impl App {
             ctr_call_type: CtrCallType::Execute,
         };
 
-        let json_response = saksaha::send_tx_pour(
-            U8Array::new_empty_32(),
-            U8Array::new_empty_32(),
-            U8Array::new_empty_32(),
-            U8Array::new_empty_32(),
-            vec![],
-            ctr_addr,
-            ctr_request,
-        )
-        .await?;
+        let json_response =
+            crate::term::send_tx_pour(user_1_acc_addr, ctr_addr, ctr_request)
+                .await?;
 
         let result = json_response.result.unwrap_or("None".to_string());
 
@@ -766,6 +746,20 @@ impl App {
             self.db.schema.get_my_pk_by_sk(&user_sk).await?.ok_or("")?;
 
         Ok(user_pk)
+    }
+
+    async fn get_acc_addr(
+        &self,
+        user: &String,
+    ) -> Result<String, EnvelopeError> {
+        let acc_addr = self
+            .db
+            .schema
+            .get_my_acc_addr_by_user_id(user)
+            .await?
+            .ok_or("")?;
+
+        Ok(acc_addr)
     }
 
     async fn get_sig(&self, user: &String) -> Result<String, EnvelopeError> {

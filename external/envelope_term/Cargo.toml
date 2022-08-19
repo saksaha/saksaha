@@ -16,6 +16,7 @@ sak_types = { path = "../../source/sak_types" }
 sak_kv_db = { path = "../../source/sak_kv_db" }
 sak_proofs = { path = "../../source/sak_proofs" }
 saksaha = { path = "../../source/saksaha_rs" }
+saksaha_wallet = { path = "../../source/saksaha_wallet" }
 log = "0.4"
 tui = "0.18.0"
 tui-logger = "0.8"
