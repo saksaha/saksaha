@@ -4,4 +4,4 @@ mod tx;
 
 pub(crate) use balance::*;
 pub(crate) use coin_status::*;
-pub(crate) use tx::*;
+pub use tx::*;

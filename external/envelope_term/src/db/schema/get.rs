@@ -88,4 +88,21 @@ impl EnvelopeDBSchema {
             }
         };
     }
+
+    pub async fn get_my_acc_addr_by_user_id(
+        &self,
+        user_id: &String,
+    ) -> Result<Option<String>, EnvelopeError> {
+        let cf = self.make_cf_handle(&self.db, cfs::ACC_ADDR)?;
+        match self.db.get_cf(&cf, user_id)? {
+            Some(v) => {
+                let str = String::from_utf8(v)?;
+
+                return Ok(Some(str));
+            }
+            None => {
+                return Ok(None);
+            }
+        };
+    }
 }
