@@ -32,8 +32,6 @@ pub(in crate::rpc) async fn send_pour_tx(
 
     let rb: SendTxRequest = require_params_parsed!(route_state, &params);
 
-    println!("rb: {:?}", rb);
-
     let wallet = &ctx.wallet;
 
     let res = wallet

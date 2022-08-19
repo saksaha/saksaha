@@ -344,7 +344,6 @@ pub struct GetTxRequest {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GetTxResponse {
-    //
     pub tx: Option<Tx>,
 }
 
@@ -357,7 +356,6 @@ pub struct PourTxCandidate {
     pub ctr_addr: String,
     pub pi: Vec<u8>,
     pub sn_1: U8Arr32,
-    // pub sn_2: U8Arr32,
     pub cm_1: U8Arr32,
     pub cm_2: U8Arr32,
     pub merkle_rt: U8Arr32,
@@ -397,13 +395,10 @@ pub async fn get_tx(
 
     let resp = client.request(req).await?;
 
-    println!("resp: {:#?}", resp);
-
     let b = hyper::body::to_bytes(resp.into_body()).await?;
 
     let json_response =
         serde_json::from_slice::<JsonResponse<GetTxResponse>>(&b)?;
-    println!("[+aaron] json_response : {:?}", json_response);
 
     Ok(json_response)
 }

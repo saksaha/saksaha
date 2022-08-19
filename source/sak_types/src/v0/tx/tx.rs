@@ -29,7 +29,7 @@ impl Tx {
 
     pub fn get_cm_count(&self) -> usize {
         match &self {
-            Tx::Mint(t) => [&t.tx_candidate.cm].len(),
+            Tx::Mint(t) => [&t.tx_candidate.cm_1].len(),
             Tx::Pour(t) => [&t.tx_candidate.cm_1, &t.tx_candidate.cm_2].len(),
         }
     }

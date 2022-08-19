@@ -362,7 +362,7 @@ async fn test_rpc_reqeust_correct_send_mint_tx() {
             tc_dummy.data,
             tc_dummy.author_sig,
             Some(tc_dummy.ctr_addr),
-            tc_dummy.cm,
+            tc_dummy.cm_1,
             tc_dummy.v,
             tc_dummy.k,
             tc_dummy.s,

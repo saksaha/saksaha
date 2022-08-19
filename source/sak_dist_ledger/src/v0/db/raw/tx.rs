@@ -193,23 +193,23 @@ impl LedgerDB {
         }
     }
 
-    pub(crate) fn get_cm(
-        &self,
-        key: &TxHash,
-    ) -> Result<Option<[u8; 32]>, LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::CM)?;
+    // pub(crate) fn get_cm(
+    //     &self,
+    //     key: &TxHash,
+    // ) -> Result<Option<[u8; 32]>, LedgerError> {
+    //     let cf = self.make_cf_handle(&self.db, cfs::CM)?;
 
-        match self.db.get_cf(&cf, key)? {
-            Some(v) => {
-                let arr = type_extension::convert_vec_into_u8_32(v)?;
+    //     match self.db.get_cf(&cf, key)? {
+    //         Some(v) => {
+    //             let arr = type_extension::convert_vec_into_u8_32(v)?;
 
-                return Ok(Some(arr));
-            }
-            None => {
-                return Ok(None);
-            }
-        }
-    }
+    //             return Ok(Some(arr));
+    //         }
+    //         None => {
+    //             return Ok(None);
+    //         }
+    //     }
+    // }
 
     pub(crate) fn get_v(
         &self,
@@ -548,20 +548,20 @@ impl LedgerDB {
     //     Ok(())
     // }
 
-    pub(crate) fn batch_put_cm_idx_cm(
-        &self,
-        batch: &mut WriteBatch,
-        cm_idx: &CmIdx,
-        cm: &Cm,
-    ) -> Result<(), LedgerError> {
-        let cm_idx = cm_idx.to_be_bytes();
+    // pub(crate) fn batch_put_cm_idx_cm(
+    //     &self,
+    //     batch: &mut WriteBatch,
+    //     cm_idx: &CmIdx,
+    //     cm: &Cm,
+    // ) -> Result<(), LedgerError> {
+    //     let cm_idx = cm_idx.to_be_bytes();
 
-        let cf = self.make_cf_handle(&self.db, cfs::CM)?;
+    //     let cf = self.make_cf_handle(&self.db, cfs::CM)?;
 
-        batch.put_cf(&cf, cm_idx, cm);
+    //     batch.put_cf(&cf, cm_idx, cm);
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
     pub(crate) fn batch_put_cm_cm_idx(
         &self,

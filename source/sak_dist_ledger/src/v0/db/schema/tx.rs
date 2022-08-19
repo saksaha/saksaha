@@ -54,7 +54,7 @@ impl LedgerDB {
 
         let ctr_addr = self.get_ctr_addr(tx_hash)?;
 
-        let cm_1 = self.get_cm(tx_hash)?.ok_or("cm should exist")?;
+        let cm_1 = self.get_cm_1(tx_hash)?.ok_or("cm should exist")?;
 
         let v = self.get_v(tx_hash)?.ok_or("v should exist")?;
 
@@ -182,11 +182,11 @@ impl LedgerDB {
 
         self.batch_put_tx_type(batch, tx_hash, tc.get_tx_type())?;
 
-        self.batch_put_cm_1(batch, tx_hash, &tc.cm)?;
+        self.batch_put_cm_1(batch, tx_hash, &tc.cm_1)?;
 
-        self.batch_put_cm_cm_idx(batch, &tc.cm, &tx.cm_idx_1)?;
+        self.batch_put_cm_cm_idx(batch, &tc.cm_1, &tx.cm_idx_1)?;
 
-        self.batch_put_cm_idx_cm(batch, &tx.cm_idx_1, &tc.cm)?;
+        // self.batch_put_cm_idx_cm(batch, &tx.cm_idx_1, &tc.cm)?;
 
         self.batch_put_tx_created_at(batch, tx_hash, &tc.created_at)?;
 
@@ -293,8 +293,6 @@ impl LedgerDB {
         }
 
         let tx_hash = tc.get_tx_hash();
-
-        println!("put pour tx: {}", tx);
 
         self.batch_put_tx_hash_by_sn(batch, &tc.sn_1, tx_hash)?;
 

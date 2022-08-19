@@ -194,7 +194,7 @@ pub(crate) fn put_mint_tx_candidate_into_frame(
     frame.push_bulk(Bytes::from(tc.created_at));
     frame.push_bulk(Bytes::from(tc.author_sig));
     frame.push_bulk(Bytes::from(tc.ctr_addr));
-    frame.push_bulk(Bytes::copy_from_slice(&tc.cm));
+    frame.push_bulk(Bytes::copy_from_slice(&tc.cm_1));
     frame.push_bulk(Bytes::copy_from_slice(&tc.v));
     frame.push_bulk(Bytes::copy_from_slice(&tc.k));
     frame.push_bulk(Bytes::copy_from_slice(&tc.s));

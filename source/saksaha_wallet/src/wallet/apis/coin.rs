@@ -11,7 +11,6 @@ use sak_types::AccountBalance;
 use sak_types::CoinRecord;
 use std::convert::TryInto;
 use type_extension::U8Arr32;
-use type_extension::U8Array;
 
 impl Wallet {
     pub async fn get_balance(
@@ -84,10 +83,7 @@ impl Wallet {
         let cm_idx = {
             let resp = saksaha::get_cm_idx(coin.cm.to_bytes()).await?;
 
-            resp.result
-                .ok_or("")? //
-                .cm_idx
-                .ok_or("")?
+            resp.result.ok_or("")?.cm_idx.ok_or("")?
         };
 
         let merkle_rt;
@@ -154,17 +150,8 @@ impl Wallet {
         )
         .await?;
 
-        let resp = json_response.result.ok_or("Value needs to be returned")?;
-
-        println!("\t[+] resp: {:?}", resp);
-
-        // send `get_tx()` rpc call
-
-        // get `cm_1` and `cm_2` from rpc response
-
-        // store `cm_1` and `cm_2` in the `CoinManager`
-
-        // update coin status of `old_coin` from `Unused` to `Used`
+        let tx_hash =
+            json_response.result.ok_or("Value needs to be returned")?;
 
         Ok("success_power".to_string())
     }

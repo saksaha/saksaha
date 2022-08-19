@@ -312,7 +312,7 @@ async fn handle_mint_tx_candidate(
     let cm_count = process_merkle_update(
         apis,
         merkle_update,
-        vec![&tc.cm],
+        vec![&tc.cm_1],
         // ledger_cm_count,
         next_cm_idx,
     )

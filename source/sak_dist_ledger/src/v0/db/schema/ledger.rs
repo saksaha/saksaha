@@ -35,24 +35,24 @@ impl LedgerDB {
         }
     }
 
-    pub(crate) fn get_cm_by_cm_idx(
-        &self,
-        cm_idx: &u128,
-    ) -> Result<Option<[u8; 32]>, LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::CM)?;
+    // pub(crate) fn get_cm_by_cm_idx(
+    //     &self,
+    //     cm_idx: &u128,
+    // ) -> Result<Option<[u8; 32]>, LedgerError> {
+    //     let cf = self.make_cf_handle(&self.db, cfs::CM)?;
 
-        let key = cm_idx.to_be_bytes();
+    //     let key = cm_idx.to_be_bytes();
 
-        match self.db.get_cf(&cf, key)? {
-            Some(v) => {
-                let arr = type_extension::convert_vec_into_u8_32(v)?;
-                return Ok(Some(arr));
-            }
-            None => {
-                return Ok(None);
-            }
-        }
-    }
+    //     match self.db.get_cf(&cf, key)? {
+    //         Some(v) => {
+    //             let arr = type_extension::convert_vec_into_u8_32(v)?;
+    //             return Ok(Some(arr));
+    //         }
+    //         None => {
+    //             return Ok(None);
+    //         }
+    //     }
+    // }
 
     // pub(crate) fn get_ledger_cm_count(
     //     &self,

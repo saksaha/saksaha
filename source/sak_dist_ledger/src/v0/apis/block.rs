@@ -59,12 +59,12 @@ impl DistLedgerApis {
         Ok(ret)
     }
 
-    pub async fn get_cm_by_idx(
-        &self,
-        cm_idx: &CmIdx,
-    ) -> Result<Option<Cm>, LedgerError> {
-        self.ledger_db.get_cm_by_cm_idx(cm_idx)
-    }
+    // pub async fn get_cm_by_idx(
+    //     &self,
+    //     cm_idx: &CmIdx,
+    // ) -> Result<Option<Cm>, LedgerError> {
+    //     self.ledger_db.get_cm_by_cm_idx(cm_idx)
+    // }
 
     pub async fn get_cm_idx_by_cm(
         &self,

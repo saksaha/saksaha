@@ -65,7 +65,7 @@ pub struct MintTxCandidate {
     pub ctr_addr: String,
 
     //
-    pub cm: U8Arr32,
+    pub cm_1: U8Arr32,
 
     //
     pub v: U8Arr32,
@@ -86,7 +86,7 @@ impl MintTxCandidate {
         data: Vec<u8>,
         author_sig: String,
         ctr_addr: Option<String>,
-        cm: U8Arr32,
+        cm_1: U8Arr32,
         v: U8Arr32,
         k: U8Arr32,
         s: U8Arr32,
@@ -107,7 +107,7 @@ impl MintTxCandidate {
             data,
             author_sig,
             ctr_addr,
-            cm,
+            cm_1,
             v,
             k,
             s,
@@ -128,7 +128,7 @@ impl MintTxCandidate {
     }
 
     pub fn get_cms(&self) -> Vec<Cm> {
-        vec![self.cm]
+        vec![self.cm_1]
     }
 
     pub fn upgrade(
@@ -159,7 +159,7 @@ impl std::fmt::Display for MintTxCandidate {
             data,
             self.author_sig,
             self.ctr_addr,
-            self.cm,
+            self.cm_1,
             self.v,
             self.k,
             self.s,

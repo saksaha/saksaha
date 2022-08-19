@@ -35,15 +35,8 @@ impl CoinManager {
         Ok(m)
     }
 
-    // pub fn set_coins(&self, coins: &Vec<CoinRecord>) -> Self {
-    //     let coins = *coins;
-    //     CoinManager { coins }
-    // }
-
     pub fn get_next_available_coin(&self) -> Option<&CoinRecord> {
         let vec_coins = &self.coins;
-
-        println!("\t[+] Available coin count: {:?}", vec_coins.len());
 
         for coin in vec_coins {
             if coin.coin_status == CoinStatus::Unused {
@@ -53,13 +46,6 @@ impl CoinManager {
 
         return None;
     }
-
-    // pub fn make_coin(&self) {
-    //     // for loop
-    //     // select the first coin that is not used before.
-
-    //     //
-    // }
 
     pub fn update_coin(
         &mut self,
