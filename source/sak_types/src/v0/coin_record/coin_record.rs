@@ -175,9 +175,7 @@ impl CoinRecord {
     }
 
     pub fn make_status_used(&mut self) {
-        if self.coin_status == CoinStatus::Unused {
-            self.coin_status = CoinStatus::Used;
-        }
+        self.coin_status = CoinStatus::Used;
     }
 }
 

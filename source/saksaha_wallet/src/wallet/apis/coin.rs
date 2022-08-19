@@ -262,32 +262,35 @@ impl Wallet {
         let coin_manager_lock = &mut self.get_coin_manager().write().await;
 
         // Unconfirmed -> Unused
-        // for coin in coin_manager_lock.coins.iter() {
-        //     match coin.coin_status {
-        //         CoinStatus::Unused => {}
+        for mut coin in coin_manager_lock.coins.clone().into_iter() {
+            let a = coin.coin_status.clone();
+            match a {
+                CoinStatus::Unused => {}
 
-        //         CoinStatus::Used => {}
+                CoinStatus::Used => {}
 
-        //         CoinStatus::Unconfirmed(th) => match th {
-        //             Some(tx_hash) => {
-        //                 let resp = saksaha::get_tx(tx_hash)
-        //                     .await?
-        //                     .result
-        //                     .ok_or("json_response error")?;
+                CoinStatus::Unconfirmed(th) => match th {
+                    Some(tx_hash) => {
+                        let resp = saksaha::get_tx(tx_hash.clone())
+                            .await?
+                            .result
+                            .ok_or("json_response error")?;
 
-        //                 if let Some(tx) = resp.tx {
-        //                     old_coin_sn_vec.push(tx.get_sn());
+                        if let Some(tx) = resp.tx {
+                            old_coin_sn_vec.push(tx.get_sn());
 
-        //                     self.get_db().schema.raw.single_put_coin_status(
-        //                         &coin.cm,
-        //                         &CoinStatus::Unused,
-        //                     )?;
-        //                 };
-        //             }
-        //             None => {}
-        //         },
-        //     }
-        // }
+                            coin.make_status_used();
+
+                            self.get_db().schema.raw.single_put_coin_status(
+                                &coin.cm,
+                                &CoinStatus::Unused,
+                            )?;
+                        };
+                    }
+                    None => {}
+                },
+            }
+        }
 
         // Unused -> Used
         for mut coin in coin_manager_lock.coins.clone().into_iter() {
