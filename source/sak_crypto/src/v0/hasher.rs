@@ -108,13 +108,14 @@ impl Hasher {
         b: &[u8; 32],
         c: &[u8; 32],
     ) -> Result<Scalar, CryptoError> {
-        let s1 = ScalarExt::parse_arr(a)?;
+        let a = ScalarExt::parse_arr(a)?;
+        let b = ScalarExt::parse_arr(b)?;
+        let c = ScalarExt::parse_arr(c)?;
 
-        let s2 = ScalarExt::parse_arr_wide(b, c)?;
+        let r1 = mimc::mimc(b, c, &self.constants);
+        let r2 = mimc::mimc(a, r1, &self.constants);
 
-        let ret = mimc::mimc(s1, s2, &self.constants);
-
-        Ok(ret)
+        Ok(r2)
     }
 
     pub fn comm2_scalar(&self, a: Scalar, b: Scalar, c: Scalar) -> Scalar {

@@ -7,6 +7,7 @@ use sak_proofs::{
     MerkleTree, NewCoin, OldCoin, Path, ProofError, CM_TREE_DEPTH,
 };
 use sak_rpc_interface::{JsonRequest, JsonResponse};
+use sak_types::{Cm, CmIdx, Tx};
 use serde::{Deserialize, Serialize};
 use std::time;
 use type_extension::{U8Arr32, U8Array};
@@ -285,6 +286,123 @@ pub async fn query_ctr(
     Ok(json_response)
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GetCmIdxRequest {
+    pub cm: Cm,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GetCmIdxResponse {
+    pub cm_idx: Option<CmIdx>,
+}
+
+pub async fn get_cm_idx(
+    cm: U8Arr32,
+) -> Result<JsonResponse<GetCmIdxResponse>, SaksahaSDKError> {
+    let endpoint_test = "http://localhost:34418/rpc/v0";
+
+    let client = Client::new();
+    let uri: Uri = { endpoint_test.parse().expect("URI should be made") };
+
+    let body = {
+        let req = GetCmIdxRequest { cm };
+
+        let params = serde_json::to_string(&req)?.as_bytes().to_vec();
+
+        let json_request = JsonRequest {
+            jsonrpc: "2.0".to_string(),
+            method: "get_cm_idx".to_string(),
+            params: Some(params),
+            id: "test_1".to_string(),
+        };
+
+        let str = serde_json::to_string(&json_request)?;
+
+        Body::from(str)
+    };
+
+    let req = Request::builder()
+        .method(Method::POST)
+        .uri(uri)
+        .body(body)
+        .expect("request builder should be made");
+
+    let resp = client.request(req).await?;
+
+    let b = hyper::body::to_bytes(resp.into_body()).await?;
+
+    let json_response =
+        serde_json::from_slice::<JsonResponse<GetCmIdxResponse>>(&b)?;
+
+    Ok(json_response)
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GetTxRequest {
+    pub hash: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GetTxResponse {
+    pub tx: Option<Tx>,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq, Hash)]
+pub struct PourTxCandidate {
+    pub created_at: String,
+    #[serde(with = "serde_bytes")]
+    pub data: Vec<u8>,
+    pub author_sig: String,
+    pub ctr_addr: String,
+    pub pi: Vec<u8>,
+    pub sn_1: U8Arr32,
+    pub cm_1: U8Arr32,
+    pub cm_2: U8Arr32,
+    pub merkle_rt: U8Arr32,
+    tx_hash: String,
+}
+
+pub async fn get_tx(
+    hash: String,
+) -> Result<JsonResponse<GetTxResponse>, SaksahaSDKError> {
+    let endpoint_test = "http://localhost:34418/rpc/v0";
+
+    let client = Client::new();
+    let uri: Uri = { endpoint_test.parse().expect("URI should be made") };
+
+    let body = {
+        let req = GetTxRequest { hash };
+
+        let params = serde_json::to_string(&req)?.as_bytes().to_vec();
+
+        let json_request = JsonRequest {
+            jsonrpc: "2.0".to_string(),
+            method: "get_tx".to_string(),
+            params: Some(params),
+            id: "test_1".to_string(),
+        };
+
+        let str = serde_json::to_string(&json_request)?;
+
+        Body::from(str)
+    };
+
+    let req = Request::builder()
+        .method(Method::POST)
+        .uri(uri)
+        .body(body)
+        .expect("request builder should be made");
+
+    let resp = client.request(req).await?;
+
+    let b = hyper::body::to_bytes(resp.into_body()).await?;
+
+    let json_response =
+        serde_json::from_slice::<JsonResponse<GetTxResponse>>(&b)?;
+
+    Ok(json_response)
+}
+
 // pub fn generate_proof_1_to_2(
 //     // coin_1_old: OldCoin,
 //     coin_1_old: OldCoin,
@@ -384,11 +502,8 @@ pub async fn get_auth_path(
 
     let b = hyper::body::to_bytes(resp.into_body()).await?;
 
-    println!("b: {:#?}", b);
-
     let json_response =
         serde_json::from_slice::<JsonResponse<GetAuthPathResponse>>(&b)?;
-    println!("[+] idx: {:?}", idx);
 
     Ok(json_response)
 }

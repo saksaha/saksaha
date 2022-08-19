@@ -48,8 +48,6 @@ async fn test_send_tx() {
 
         let str = serde_json::to_string(&json_request).unwrap();
 
-        println!("[+] request body str (for debugging): {:#?}", str);
-
         Body::from(str)
     };
 
@@ -66,8 +64,5 @@ async fn test_send_tx() {
     let json_response =
         serde_json::from_slice::<JsonResponse<SendTxResponse>>(&b).unwrap();
 
-    println!("json_response: {:?}", json_response);
-    let result = json_response.result.unwrap();
-
-    println!("[+] result: {:?}", result);
+    let _result = json_response.result.unwrap();
 }

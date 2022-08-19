@@ -1,4 +1,4 @@
-use crate::credential::{CredentialManager, WalletCredential};
+use crate::credential::CredentialManager;
 use crate::db::WalletDB;
 use crate::{rpc::RPC, wallet::Wallet, AppArgs, WalletError};
 use colored::Colorize;

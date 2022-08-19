@@ -15,7 +15,7 @@ pub fn dev_local_1() -> Result<Config, WalletError> {
         )),
         coin_records: Some(vec![
             //
-            CoinRecord::new(0x11, 0x12, 0x13, 0x14, 100, Some(2), None)?,
+            CoinRecord::new(0x11, 0x12, 0x13, 0x14, 100, Some(0), None)?,
         ]),
     };
 
@@ -35,7 +35,7 @@ pub fn dev_local_2() -> Result<Config, WalletError> {
         )),
         coin_records: Some(vec![
             //
-            CoinRecord::new(0x21, 0x22, 0x23, 0x24, 100, Some(3), None)?,
+            CoinRecord::new(0x21, 0x22, 0x23, 0x24, 100, Some(1), None)?,
         ]),
     };
 

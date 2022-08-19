@@ -1,10 +1,10 @@
 use crate::{CtrStateUpdate, DistLedgerApis, LedgerError, MerkleUpdate};
 use colored::Colorize;
 use log::{debug, error, info, warn};
-use sak_contract_std::{CtrCallType, CtrRequest, Storage};
+use sak_contract_std::{CtrCallType, CtrRequest, Storage, ERROR_PLACEHOLDER};
 use sak_types::{
-    Block, BlockCandidate, MintTxCandidate, PourTxCandidate, Tx, TxCandidate,
-    TxCtrOp,
+    Block, BlockCandidate, CmIdx, MintTxCandidate, PourTxCandidate, Tx,
+    TxCandidate, TxCtrOp,
 };
 use sak_vm::CtrFn;
 
@@ -47,7 +47,7 @@ impl DistLedgerApis {
         &self,
         bc: Option<BlockCandidate>,
     ) -> Result<Option<String>, LedgerError> {
-        // lock
+        // println!("write block");
 
         let bc = match bc {
             Some(bc) => bc,
@@ -69,21 +69,29 @@ impl DistLedgerApis {
             }
         };
 
-        let ledger_cm_count = match self.get_ledger_cm_count().await? {
-            Some(h) => h,
+        let next_cm_idx = match self.ledger_db.get_latest_cm_idx()? {
+            Some(i) => i + 1,
             None => {
-                warn!(
-                    "Total cm count does not exist. Possibly the first block"
-                );
-
+                warn!("Cm idx does not exist. Possibly the first block");
                 0
             }
         };
 
-        let next_tx_height = match self.get_latest_tx_height().await? {
-            Some(th) => th + 1,
-            None => 0,
-        };
+        // let ledger_cm_count = match self.get_ledger_cm_count().await? {
+        //     Some(h) => h,
+        //     None => {
+        //         warn!(
+        //             "Total cm count does not exist. Possibly the first block"
+        //         );
+
+        //         0
+        //     }
+        // };
+
+        // let next_tx_height = match self.get_latest_tx_height().await? {
+        //     Some(th) => th + 1,
+        //     None => 0,
+        // };
 
         let tcs = &bc.tx_candidates;
         let mut ctr_state_update = CtrStateUpdate::new();
@@ -91,11 +99,12 @@ impl DistLedgerApis {
 
         debug!(
             "write_block, tc count: {}, next_block_height: {}, \
-            next_tx_height: {}, ledger_cm_count: {}",
+            next_cm_idx: {}",
             tcs.len(),
             next_block_height,
-            next_tx_height,
-            ledger_cm_count,
+            // next_tx_height,
+            // ledger_cm_count,
+            next_cm_idx,
         );
 
         let mut added_cm_count: u128 = 0;
@@ -107,7 +116,7 @@ impl DistLedgerApis {
                         tc,
                         &mut ctr_state_update,
                         &mut merkle_update,
-                        added_cm_count + ledger_cm_count,
+                        next_cm_idx + added_cm_count,
                     )
                     .await?
                 }
@@ -117,7 +126,7 @@ impl DistLedgerApis {
                         tc,
                         &mut ctr_state_update,
                         &mut merkle_update,
-                        added_cm_count + ledger_cm_count,
+                        next_cm_idx + added_cm_count,
                     )
                     .await?
                 }
@@ -137,7 +146,8 @@ impl DistLedgerApis {
 
         let (block, txs) = bc.upgrade(
             next_block_height,
-            next_tx_height,
+            // next_tx_height,
+            next_cm_idx,
             next_merkle_rt.to_owned(),
         );
 
@@ -149,7 +159,8 @@ impl DistLedgerApis {
             .into());
         };
 
-        let updated_ledger_cm_count = ledger_cm_count + added_cm_count;
+        // let updated_ledger_cm_count = ledger_cm_count + added_cm_count;
+        // let updated_cm_count = ledger_cm_count + added_cm_count;
 
         let block_hash = self
             .ledger_db
@@ -158,8 +169,8 @@ impl DistLedgerApis {
                 &txs,
                 &ctr_state_update,
                 &merkle_update,
-                ledger_cm_count,
-                updated_ledger_cm_count,
+                // ledger_cm_count,
+                // updated_ledger_cm_count,
             )
             .await?;
 
@@ -181,81 +192,21 @@ impl DistLedgerApis {
         block: Block,
         txs: Vec<Tx>,
     ) -> Result<Option<String>, LedgerError> {
-        let ledger_cm_count = match self.get_ledger_cm_count().await? {
-            Some(h) => h,
-            None => {
-                warn!(
-                    "Total cm count does not exist. Possibly the first block"
-                );
+        let tx_candidates = txs.into_iter().map(|tx| tx.downgrade()).collect();
 
-                0
+        let bc_candidate = BlockCandidate {
+            validator_sig: block.validator_sig,
+            tx_candidates,
+            witness_sigs: block.witness_sigs,
+            created_at: block.created_at,
+        };
+
+        match self.write_block(Some(bc_candidate)).await {
+            Ok(res) => return Ok(res),
+            Err(err) => {
+                return Err(format!("Block sync failed, err: {}", err).into());
             }
-        };
-
-        let mut ctr_state_update = CtrStateUpdate::new();
-        let mut merkle_update = MerkleUpdate::new();
-
-        let mut added_cm_count: u128 = 0;
-        for tx in &txs {
-            let cm_count = match tx {
-                Tx::Mint(tx) => {
-                    handle_mint_tx_candidate(
-                        self,
-                        &tx.tx_candidate,
-                        &mut ctr_state_update,
-                        &mut merkle_update,
-                        ledger_cm_count,
-                    )
-                    .await?
-                }
-                Tx::Pour(tx) => {
-                    handle_pour_tx_candidate(
-                        self,
-                        &tx.tx_candidate,
-                        &mut ctr_state_update,
-                        &mut merkle_update,
-                        ledger_cm_count,
-                    )
-                    .await?
-                }
-            };
-
-            added_cm_count += cm_count;
         }
-
-        if let Some(_b) = self.get_block(block.get_block_hash())? {
-            return Err(format!(
-                "This block is already persisted: block_hash: {}",
-                block.get_block_hash()
-            )
-            .into());
-        };
-
-        let updated_ledger_cm_count = ledger_cm_count + added_cm_count;
-
-        let block_hash = self
-            .ledger_db
-            .put_block(
-                &block,
-                &txs,
-                &ctr_state_update,
-                &merkle_update,
-                ledger_cm_count,
-                updated_ledger_cm_count,
-            )
-            .await?;
-
-        if let Err(err) = self.sync_pool.insert_block(&block).await {
-            warn!("Error inserting block into the sync pool, err: {}", err);
-        }
-
-        debug!(
-            "Successfully sync block, hash: {}, block_height: {}",
-            block_hash.green(),
-            block.block_height,
-        );
-
-        Ok(Some(block_hash))
     }
 
     pub fn delete_tx(&self, key: &String) -> Result<(), LedgerError> {
@@ -318,8 +269,20 @@ async fn process_ctr_state_update(
                         String::from_utf8(new_state.clone())
                     );
 
-                    ctr_state_update
-                        .insert(ctr_addr.clone(), new_state.clone());
+                    let maybe_error_placehorder = match &new_state.get(0..6) {
+                        Some(ep) => ep.to_owned(),
+                        None => {
+                            return Err(format!(
+                                "new_state should be bigger than 6-byte"
+                            )
+                            .into());
+                        }
+                    };
+
+                    if maybe_error_placehorder != &ERROR_PLACEHOLDER {
+                        ctr_state_update
+                            .insert(ctr_addr.clone(), new_state.clone());
+                    }
                 }
             };
         }
@@ -336,7 +299,8 @@ async fn handle_mint_tx_candidate(
     tc: &MintTxCandidate,
     ctr_state_update: &mut CtrStateUpdate,
     merkle_update: &mut MerkleUpdate,
-    ledger_cm_count: u128,
+    next_cm_idx: CmIdx,
+    // ledger_cm_count: u128,
 ) -> Result<u128, LedgerError> {
     let ctr_addr = &tc.ctr_addr;
     let data = &tc.data;
@@ -348,8 +312,9 @@ async fn handle_mint_tx_candidate(
     let cm_count = process_merkle_update(
         apis,
         merkle_update,
-        vec![&tc.cm],
-        ledger_cm_count,
+        vec![&tc.cm_1],
+        // ledger_cm_count,
+        next_cm_idx,
     )
     .await?;
 
@@ -361,7 +326,7 @@ async fn handle_pour_tx_candidate(
     tc: &PourTxCandidate,
     ctr_state_update: &mut CtrStateUpdate,
     merkle_update: &mut MerkleUpdate,
-    ledger_cm_count: u128,
+    next_cm_idx: CmIdx,
 ) -> Result<u128, LedgerError> {
     let ctr_addr = &tc.ctr_addr;
     let data = &tc.data;
@@ -374,7 +339,8 @@ async fn handle_pour_tx_candidate(
         apis,
         merkle_update,
         vec![&tc.cm_1, &tc.cm_2],
-        ledger_cm_count,
+        next_cm_idx,
+        // ledger_cm_count,
     )
     .await?;
 
@@ -385,15 +351,17 @@ async fn process_merkle_update(
     apis: &DistLedgerApis,
     merkle_update: &mut MerkleUpdate,
     cms: Vec<&[u8; 32]>,
-    ledger_cm_count: u128,
+    // ledger_cm_count: u128,
+    next_cm_idx: CmIdx,
 ) -> Result<u128, LedgerError> {
     let cm_count = cms.len() as u128;
 
     for (idx, cm) in cms.iter().enumerate() {
-        let leaf_idx = ledger_cm_count + idx as u128;
-        let auth_path = apis.merkle_tree.generate_auth_paths(leaf_idx);
+        // let leaf_idx = ledger_cm_count + idx as u128;
+        let cm_idx = next_cm_idx + idx as u128;
+        let auth_path = apis.merkle_tree.generate_auth_paths(cm_idx);
 
-        let leaf_loc = format!("{}_{}", 0, leaf_idx);
+        let leaf_loc = format!("{}_{}", 0, cm_idx);
 
         merkle_update.insert(leaf_loc, **cm);
 

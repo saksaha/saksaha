@@ -2,7 +2,7 @@ use crate::{DistLedgerApis, LedgerError};
 use sak_contract_std::Storage;
 use sak_proofs::{MerkleTree, CM_TREE_DEPTH};
 use sak_types::{
-    Block, BlockHash, BlockHeight, CtrAddr, Tx, TxCandidate, TxHash, CM, CM_IDX,
+    Block, BlockHash, BlockHeight, Cm, CmIdx, CtrAddr, Tx, TxCandidate, TxHash,
 };
 
 const GET_BLOCK_HASH_LIST_DEFAULT_SIZE: u128 = 10;
@@ -59,17 +59,17 @@ impl DistLedgerApis {
         Ok(ret)
     }
 
-    pub async fn get_cm_by_idx(
-        &self,
-        cm_idx: &CM_IDX,
-    ) -> Result<Option<CM>, LedgerError> {
-        self.ledger_db.get_cm_by_cm_idx(cm_idx)
-    }
+    // pub async fn get_cm_by_idx(
+    //     &self,
+    //     cm_idx: &CmIdx,
+    // ) -> Result<Option<Cm>, LedgerError> {
+    //     self.ledger_db.get_cm_by_cm_idx(cm_idx)
+    // }
 
     pub async fn get_cm_idx_by_cm(
         &self,
-        cm: &CM,
-    ) -> Result<Option<CM_IDX>, LedgerError> {
+        cm: &Cm,
+    ) -> Result<Option<CmIdx>, LedgerError> {
         self.ledger_db.get_cm_idx_by_cm(cm)
     }
 
@@ -259,17 +259,17 @@ impl DistLedgerApis {
         self.ledger_db.get_latest_block_height()
     }
 
-    pub async fn get_ledger_cm_count(
-        &self,
-    ) -> Result<Option<u128>, LedgerError> {
-        self.ledger_db.get_ledger_cm_count()
-    }
+    // pub async fn get_ledger_cm_count(
+    //     &self,
+    // ) -> Result<Option<u128>, LedgerError> {
+    //     self.ledger_db.get_ledger_cm_count()
+    // }
 
-    pub async fn get_latest_tx_height(
-        &self,
-    ) -> Result<Option<u128>, LedgerError> {
-        self.ledger_db.get_latest_tx_height()
-    }
+    // pub async fn get_latest_tx_height(
+    //     &self,
+    // ) -> Result<Option<u128>, LedgerError> {
+    //     self.ledger_db.get_latest_tx_height()
+    // }
 
     pub async fn get_latest_block_merkle_rt(
         &self,
