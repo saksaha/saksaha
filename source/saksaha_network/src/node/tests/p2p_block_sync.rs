@@ -97,7 +97,7 @@ async fn test_block_sync_true() {
         .await
         .expect("Node should be able to send a transaction");
 
-    tokio::time::sleep(Duration::from_secs(2)).await;
+    tokio::time::sleep(Duration::from_secs(3)).await;
 
     {
         println!("check if node1 has tx1: {}", dummy_tx1.get_tx_hash());
@@ -122,7 +122,10 @@ async fn test_block_sync_true() {
             .tx_pool_contains(dummy_tx1.get_tx_hash())
             .await;
 
-        assert_eq!(tx_pool_2_contains_tx1, true);
+        assert_eq!(
+            tx_pool_2_contains_tx1, true,
+            "tx pool 2 should contain tx 1"
+        );
 
         println!("[Success] node_2 has tx_1 (shared from node_1)");
     }

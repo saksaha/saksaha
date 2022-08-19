@@ -35,8 +35,6 @@ pub(crate) fn encode_into_frame(
         Msg::Error(error) => (error.into_frame(), MsgType::ERROR),
     };
 
-    println!("dst.len(): {}", dst.len());
-
     match frame_io::write_frame(dst, &frame) {
         Ok(_) => (),
         Err(err) => {
@@ -47,8 +45,6 @@ pub(crate) fn encode_into_frame(
             .into());
         }
     };
-
-    println!("dst.len 222 (): {}", dst.len());
 
     Ok(msg_type)
 }

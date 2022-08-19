@@ -3,9 +3,14 @@ use bytes::{Buf, BytesMut};
 use chacha20::cipher::{StreamCipher, StreamCipherSeek};
 use chacha20::ChaCha20;
 use sak_crypto::sha3::digest::core_api::CoreWrapper;
-use sak_crypto::sha3::Keccak256Core;
+use sak_crypto::sha3::{Digest, Keccak256Core};
 use std::convert::TryInto;
 use tokio_util::codec::{Decoder, Encoder};
+
+pub(crate) const FRAME_LEN_MAX: usize = 2_usize.pow(16);
+pub(crate) const HEADER_TOTAL_LEN: usize = 20;
+pub(crate) const HEADER_LEN: usize = 5;
+pub(crate) const MAC_LEN: usize = 15;
 
 pub struct UpgradedP2PCodec {
     pub(crate) out_cipher: ChaCha20,
@@ -23,30 +28,24 @@ impl Encoder<Msg> for UpgradedP2PCodec {
         dst: &mut BytesMut,
     ) -> Result<(), TrptError> {
         let msg = item.to_string();
+
         println!("encdoing, item: {}", &item);
 
-        let header_buf = [0u8; 20];
+        let header_buf = [0u8; HEADER_TOTAL_LEN];
         dst.extend_from_slice(&header_buf);
 
-        dst.advance(20);
-        enc::encode_into_frame(item, dst)?;
+        let mut msg_part = dst.split_off(HEADER_TOTAL_LEN);
+        // println!(
+        //     "123, dst: {:?}, msg_part: {:?}",
+        //     dst.to_vec(),
+        //     msg_part.to_vec()
+        // );
 
-        {
-            // Update frame length bytes
-            let len_bytes = dst.len().to_be_bytes();
-            println!("power: {:?}", len_bytes);
-            if len_bytes.len() > 2 {
-                return Err(format!(
-                    "frame length is too large, >2^64 not permitted"
-                )
-                .into());
-            }
-            dst[0..2].clone_from_slice(&len_bytes);
-        };
+        // Put the encoded msg starting from 20th slot
+        enc::encode_into_frame(item, &mut msg_part)?;
 
-        // {
-        //     self.out_mac.update()
-        // }
+        // Write frame's total length at first two slots of the buffer
+        write_total_frame_len(dst, msg_part.len() + dst.len())?;
 
         println!(
             "\nencode(): before enc, msg({}): {}, dst: {:?}",
@@ -55,7 +54,23 @@ impl Encoder<Msg> for UpgradedP2PCodec {
             dst.to_vec()
         );
 
-        self.out_cipher.apply_keystream(dst);
+        let mac = {
+            let digest = &self.out_mac.finalize_reset()[..MAC_LEN];
+
+            // XORing digest with the header
+            let mac: Vec<u8> = digest
+                .iter()
+                .zip(dst.iter())
+                .map(|(&v1, &v2)| v1 ^ v2)
+                .collect();
+            mac
+        };
+
+        write_mac(dst, &mac)?;
+
+        self.out_cipher.apply_keystream(&mut msg_part);
+
+        dst.unsplit(msg_part);
 
         println!("\nencode(): _after enc ({}): {:?}", dst.len(), dst.to_vec());
 
@@ -73,29 +88,95 @@ impl Decoder for UpgradedP2PCodec {
     ) -> Result<Option<Self::Item>, TrptError> {
         println!("\ndecode(): before dec: {:?}", src.to_vec());
 
-        if src.len() == 0 {
+        if src.len() <= HEADER_TOTAL_LEN {
             return Ok(None);
         }
 
-        // let curr_pos: u128 = match self.in_cipher.try_current_pos() {
-        //     Ok(p) => p,
-        //     Err(err) => {
-        //         return Err(format!(
-        //             "Failed to get position of cipher, err: {}",
-        //             err
-        //         )
-        //         .into())
-        //     }
-        // };
+        let mut msg_part = src.split_off(HEADER_TOTAL_LEN);
 
-        // println!("\ncurr_pos: {}", curr_pos);
+        let header = &src[..5];
+        let header_mac = &src[5..];
 
-        self.in_cipher.apply_keystream(src);
+        println!(
+            "\nheader: {:?}, header_mac: {:?}, msg_part: {:?}",
+            header, header_mac, msg_part
+        );
 
-        println!("\ndecode(): _after dec ({}): {:?}", src.len(), src.to_vec());
+        self.in_cipher.apply_keystream(&mut msg_part);
 
-        let msg = dec::decode_into_msg(src);
+        println!(
+            "\ndecode(): _after dec ({}): {:?}",
+            msg_part.len(),
+            msg_part.to_vec()
+        );
 
-        msg
+        let msg = dec::decode_into_msg(&mut msg_part)?;
+
+        Ok(msg)
     }
 }
+
+fn write_total_frame_len(
+    dst: &mut BytesMut,
+    total_len: usize,
+) -> Result<(), TrptError> {
+    let dst_len = dst.len();
+
+    if total_len > FRAME_LEN_MAX {
+        return Err(format!(
+            "Frame length is too large, >2^64 not permitted, len: {}",
+            total_len,
+        )
+        .into());
+    }
+
+    let len_bytes = total_len.to_be_bytes();
+    let len_bytes = len_bytes
+        .get(len_bytes.len() - 2..)
+        .ok_or("Frame length is invalid")?;
+
+    let dest = dst.get_mut(0..2).ok_or(format!(
+        "Buffer is too short tow write the frame length, len: {}",
+        dst_len,
+    ))?;
+
+    dest.clone_from_slice(&len_bytes);
+
+    Ok(())
+}
+
+fn write_mac(dst: &mut BytesMut, mac: &[u8]) -> Result<(), TrptError> {
+    let dst_len = dst.len();
+
+    let dest = dst
+        .get_mut(HEADER_LEN..)
+        .ok_or(format!("Header buffer is too short, len: {}", dst_len))?;
+
+    if mac.len() != dest.len() {
+        return Err(format!(
+            "Either mac or destination is of wrong length, mac_len: {}, \
+            dest_len: {}, expected: {}",
+            mac.len(),
+            dest.len(),
+            MAC_LEN,
+        )
+        .into());
+    }
+
+    dest.clone_from_slice(mac);
+
+    Ok(())
+}
+
+// let curr_pos: u128 = match self.in_cipher.try_current_pos() {
+//     Ok(p) => p,
+//     Err(err) => {
+//         return Err(format!(
+//             "Failed to get position of cipher, err: {}",
+//             err
+//         )
+//         .into())
+//     }
+// };
+
+// println!("\ncurr_pos: {}", curr_pos);
