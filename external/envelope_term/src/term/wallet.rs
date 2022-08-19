@@ -87,6 +87,5 @@ pub async fn send_tx_pour(
 
     let json_response = serde_json::from_slice::<JsonResponse<String>>(&b)?;
 
-    println!("{:?}", json_response);
     Ok(json_response)
 }

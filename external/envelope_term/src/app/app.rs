@@ -3,6 +3,7 @@ use super::{state::AppState, ChannelState};
 use crate::db::EnvelopeDB;
 use crate::db::{USER_1, USER_2};
 use crate::io::IoEvent;
+use crate::term;
 use crate::EnvelopeError;
 use crate::{app::actions::Action, ENVELOPE_CTR_ADDR};
 use chrono::Local;
@@ -416,18 +417,7 @@ impl App {
                 ctr_call_type: CtrCallType::Execute,
             };
 
-            crate::term::send_tx_pour(user_1_acc_addr, ctr_addr, ctr_request)
-                .await?;
-            // let _json_response = saksaha::send_tx_pour(
-            //     U8Array::new_empty_32(),
-            //     U8Array::new_empty_32(),
-            //     U8Array::new_empty_32(),
-            //     U8Array::new_empty_32(),
-            //     vec![],
-            //     ctr_addr,
-            //     ctr_request,
-            // )
-            // .await?;
+            term::send_tx_pour(user_1_acc_addr, ctr_addr, ctr_request).await?;
         }
 
         {
@@ -476,12 +466,8 @@ impl App {
                 ctr_call_type: CtrCallType::Execute,
             };
 
-            crate::term::send_tx_pour(
-                her_pk.to_string(),
-                ctr_addr,
-                ctr_request,
-            )
-            .await?;
+            term::send_tx_pour(her_pk.to_string(), ctr_addr, ctr_request)
+                .await?;
         }
 
         Ok(())
@@ -639,8 +625,7 @@ impl App {
         };
 
         let json_response =
-            crate::term::send_tx_pour(user_1_acc_addr, ctr_addr, ctr_request)
-                .await?;
+            term::send_tx_pour(user_1_acc_addr, ctr_addr, ctr_request).await?;
 
         let result = json_response.result.unwrap_or("None".to_string());
 
