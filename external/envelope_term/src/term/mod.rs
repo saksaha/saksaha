@@ -1,9 +1,12 @@
-use crate::app::{App, AppReturn};
-use crate::inputs::events::Events;
 use crate::inputs::InputEvent;
 use crate::io::handler::IoAsyncHandler;
 use crate::io::InputMode;
 use crate::io::IoEvent;
+use crate::{
+    app::{App, AppReturn},
+    db::USER_1,
+};
+use crate::{inputs::events::Events, pconfig::PConfig};
 use crate::{views, EnvelopeError};
 use log::error;
 use log::LevelFilter;
@@ -17,11 +20,10 @@ mod wallet;
 pub(crate) use wallet::*;
 
 pub struct TermArgs {
-    pub pconfig_path: Option<String>,
-    pub user_prefix: String,
+    pub cfg_profile: Option<String>,
 }
 
-pub fn run(term_args: TermArgs) -> Result<(), EnvelopeError> {
+pub fn run(pconfig: PConfig) -> Result<(), EnvelopeError> {
     // let TermArgs { pconfig_path } = term_args;
 
     let runtime = tokio::runtime::Builder::new_multi_thread()
@@ -42,10 +44,9 @@ pub fn run(term_args: TermArgs) -> Result<(), EnvelopeError> {
 
                 // We need to share the App between thread
                 let app = {
-                    let a =
-                        App::init(sync_io_tx.clone(), &term_args.user_prefix)
-                            .await
-                            .expect("App should be initialized");
+                    let a = App::init(sync_io_tx.clone(), &pconfig.user_id)
+                        .await
+                        .expect("App should be initialized");
 
                     Arc::new(Mutex::new(a))
                 };

@@ -1,8 +1,8 @@
-use clap::ArgMatches;
 use clap::{arg, command, value_parser, ArgAction, Command};
-use envelope_term::term;
+use clap::{Arg, ArgMatches};
 use envelope_term::term::TermArgs;
 use envelope_term::EnvelopeError;
+use envelope_term::{pconfig::PConfig, term};
 use std::path::PathBuf;
 
 fn get_cli_args() -> ArgMatches {
@@ -22,6 +22,16 @@ fn get_cli_args() -> ArgMatches {
             )
             .action(ArgAction::Count),
         )
+        .arg(
+            Arg::new("cfg-profile") //
+                .long("cfg-profile")
+                .takes_value(true)
+                .long_help(
+                    "Config profile. This dictates which 'config (credential)' \
+                    to load, \n
+                    e.g. 'dev_local_1'",
+                ),
+        )
         .subcommand(Command::new("test").about("does testing things").arg(
             arg!(-l --list "lists test values").action(ArgAction::SetTrue),
         ))
@@ -33,19 +43,26 @@ fn get_cli_args() -> ArgMatches {
 fn main() -> Result<(), EnvelopeError> {
     let cli_args = get_cli_args();
 
-    let pconfig_path = resolve_pconfig_path();
+    let term_args = resolve_pconfig_path(cli_args);
 
-    let user_prefix = String::from("user_1");
-    let term_args = TermArgs {
-        pconfig_path,
-        user_prefix,
-    };
+    let config = PConfig::new(&term_args.cfg_profile)?;
+
+    // let user_prefix = String::from("user_1");
+    // let term_args = TermArgs {
+    //     pconfig,
+    //     user_prefix,
+    // };
 
     term::run(term_args)?;
 
     Ok(())
 }
 
-fn resolve_pconfig_path() -> Option<String> {
-    Some("power".into())
+fn resolve_pconfig_path(matches: ArgMatches) -> TermArgs {
+    let cfg_profile = match matches.value_of("cfg-profile") {
+        Some(m) => Some(String::from(m)),
+        None => None,
+    };
+
+    TermArgs { cfg_profile }
 }

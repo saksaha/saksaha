@@ -1,6 +1,3 @@
-pub(crate) const USER_1: &str = "user_1";
-pub(crate) const USER_2: &str = "user_2";
-
 pub(crate) mod cfs {
     pub const CM: &str = "cm";
 

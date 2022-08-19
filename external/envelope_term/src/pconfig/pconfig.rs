@@ -1,18 +1,44 @@
-// use super::fs;
-// use crate::EnvelopeError;
-// use directories::ProjectDirs;
-// use log::{info, warn};
-// use sak_crypto::{SakKey, ToEncodedPoint};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+
+use crate::EnvelopeError;
+
+use super::profiled;
 // use std::path::PathBuf;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct PConfig {
-    user_name: String,
-    public_key: String,
-    secret: String,
-    key_storage: HashMap<String, [u8; 32]>,
+    pub user_id: Option<String>,
+    pub public_key: Option<String>,
+    pub secret: Option<String>,
+}
+
+impl PConfig {
+    pub fn new(cfg_profile: &Option<String>) -> Result<PConfig, EnvelopeError> {
+        let config = if let Some(c) = cfg_profile {
+            match c.as_str() {
+                "dev_local_1" => profiled::dev_local_1()?,
+                "dev_local_2" => profiled::dev_local_2()?,
+                _ => {
+                    return Err(format!(
+                        "Corresponding profiled config does not exist"
+                    )
+                    .into());
+                }
+            }
+        } else {
+            PConfig::empty()
+        };
+
+        Ok(config)
+    }
+
+    pub fn empty() -> PConfig {
+        PConfig {
+            user_id: None,
+            public_key: None,
+            secret: None,
+        }
+    }
 }
 
 // impl PConfig {

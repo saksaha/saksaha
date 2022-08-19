@@ -1,11 +1,11 @@
 use super::actions::Actions;
 use super::{state::AppState, ChannelState};
-use crate::db::EnvelopeDB;
 use crate::db::{USER_1, USER_2};
 use crate::io::IoEvent;
 use crate::term;
 use crate::EnvelopeError;
 use crate::{app::actions::Action, ENVELOPE_CTR_ADDR};
+use crate::{db::EnvelopeDB, term::TermArgs};
 use chrono::Local;
 use envelope_contract::{
     request_type::{GET_CH_LIST, OPEN_CH, SEND_MSG},
@@ -17,6 +17,7 @@ use sak_contract_std::{CtrCallType, CtrRequest};
 use sak_crypto::{
     aes_decrypt, derive_aes_key, PublicKey, SakKey, SecretKey, ToEncodedPoint,
 };
+use saksaha_wallet::Config;
 use type_extension::{U8Arr32, U8Array};
 
 #[derive(Debug, PartialEq, Eq)]

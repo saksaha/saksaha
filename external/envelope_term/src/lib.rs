@@ -2,7 +2,7 @@ mod app;
 mod db;
 mod inputs;
 mod io;
-mod pconfig;
+pub mod pconfig;
 pub mod term;
 mod views;
 
