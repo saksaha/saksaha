@@ -1,5 +1,5 @@
 mod codec;
-mod dec;
-mod enc;
+mod conn;
 
 pub use codec::*;
+pub use conn::*;

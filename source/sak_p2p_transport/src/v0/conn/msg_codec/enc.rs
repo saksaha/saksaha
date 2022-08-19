@@ -2,7 +2,7 @@ use crate::{Msg, MsgType, TrptError};
 use bytes::BytesMut;
 use sak_p2p_frame::frame_io;
 
-pub(super) fn encode_into_frame(
+pub(crate) fn encode_into_frame(
     item: Msg,
     dst: &mut BytesMut,
 ) -> Result<&'static str, TrptError> {
@@ -35,6 +35,8 @@ pub(super) fn encode_into_frame(
         Msg::Error(error) => (error.into_frame(), MsgType::ERROR),
     };
 
+    println!("dst.len(): {}", dst.len());
+
     match frame_io::write_frame(dst, &frame) {
         Ok(_) => (),
         Err(err) => {
@@ -45,6 +47,8 @@ pub(super) fn encode_into_frame(
             .into());
         }
     };
+
+    println!("dst.len 222 (): {}", dst.len());
 
     Ok(msg_type)
 }

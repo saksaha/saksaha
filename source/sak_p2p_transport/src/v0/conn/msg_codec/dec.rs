@@ -5,7 +5,7 @@ use crate::{
 use bytes::BytesMut;
 use sak_p2p_frame::{frame_io, Parse};
 
-pub(super) fn decode_into_msg(
+pub(crate) fn decode_into_msg(
     src: &mut BytesMut,
 ) -> Result<Option<Msg>, TrptError> {
     let maybe_frame = match frame_io::parse_frame(src) {

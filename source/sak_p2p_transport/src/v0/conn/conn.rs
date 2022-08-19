@@ -1,7 +1,10 @@
 use super::codec::P2PCodec;
 use crate::{TrptError, UpgradedConn, UpgradedP2PCodec};
 use chacha20::{cipher::KeyIvInit, ChaCha20};
-use sak_crypto::{PublicKey, SharedSecret};
+use sak_crypto::{
+    sha3::{Digest, Keccak256},
+    SharedSecret,
+};
 use std::net::SocketAddr;
 use tokio::net::TcpStream;
 use tokio_util::codec::Framed;
@@ -38,19 +41,28 @@ impl Conn {
         nonce: &[u8],
         her_public_key: &String,
     ) -> Result<UpgradedConn, TrptError> {
-        let enc_cipher = ChaCha20::new(
-            shared_secret.as_bytes().as_slice().into(),
-            nonce.into(),
-        );
+        // Initialize message authentication code (MAC)
+        let (out_mac, in_mac) = {
+            let mut out_mac = Keccak256::default();
+            out_mac.update(shared_secret.as_bytes());
 
-        let dec_cipher = ChaCha20::new(
-            shared_secret.as_bytes().as_slice().into(),
-            nonce.into(),
-        );
+            let mut in_mac = Keccak256::default();
+            in_mac.update(shared_secret.as_bytes());
+
+            (out_mac, in_mac)
+        };
+
+        let out_cipher =
+            ChaCha20::new(shared_secret.as_bytes().into(), nonce.into());
+
+        let in_cipher =
+            ChaCha20::new(shared_secret.as_bytes().into(), nonce.into());
 
         let socket = self.socket.map_codec(|_| UpgradedP2PCodec {
-            enc_cipher,
-            dec_cipher,
+            out_cipher,
+            in_cipher,
+            out_mac,
+            in_mac,
         });
 
         let conn_id = format!(
