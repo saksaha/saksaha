@@ -10,7 +10,9 @@ pub async fn test_sdk_get_tx() {
 
     // hash is hard-coded
     let hash = String::from(
-        "2bb9de0b5b3e60f905412928e329e6e5c28d1c2de345827ad238828dbadab7e6",
+        // "2bb9de0b5b3e60f905412928e329e6e5c28d1c2de345827ad238828dbadab7e6",
+        // "9b87970b08628f5e74fa506befa74ba4e365d79f3a9c859f1df5a1fc8ac2be92",
+        "2abc2d5506ef49c0dd5e2d17f6f8948c8ca096afc50acf4f7384aa52bbbd1434",
     );
     let resp = crate::get_tx(hash).await.unwrap().result.unwrap();
     println!(" rsep : {:?}", resp);

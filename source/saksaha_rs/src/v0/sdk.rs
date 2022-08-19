@@ -345,7 +345,7 @@ pub struct GetTxRequest {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GetTxResponse {
     //
-    pub tx: Tx,
+    pub tx: Option<Tx>,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq, Hash)]
@@ -397,12 +397,13 @@ pub async fn get_tx(
 
     let resp = client.request(req).await?;
 
+    println!("resp: {:#?}", resp);
+
     let b = hyper::body::to_bytes(resp.into_body()).await?;
 
     let json_response =
         serde_json::from_slice::<JsonResponse<GetTxResponse>>(&b)?;
-
-    println!(" json_response : {:?}", json_response);
+    println!("[+aaron] json_response : {:?}", json_response);
 
     Ok(json_response)
 }

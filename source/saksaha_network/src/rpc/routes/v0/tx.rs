@@ -209,7 +209,9 @@ pub(in crate::rpc) async fn get_tx(
         .await
     {
         Ok(t) => {
-            return make_success_response(route_state, t);
+            let body = make_success_response(route_state, t);
+
+            body
         }
         Err(err) => {
             return make_error_response(
