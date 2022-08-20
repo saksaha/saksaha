@@ -1,15 +1,15 @@
+use crate::rpc::routes::v0::{SendTxRequest, SendTxResponse};
 use crate::{
     credential::WalletCredential, db::WalletDB, rpc::RPC, wallet::Wallet,
     Config, CredentialManager,
 };
-use std::sync::Arc;
-
-use crate::rpc::routes::v0::{SendTxRequest, SendTxResponse};
 use envelope_contract::request_type;
 use envelope_term::ENVELOPE_CTR_ADDR;
 use hyper::{Body, Client, Method, Request, Uri};
 use sak_contract_std::CtrRequest;
 use sak_rpc_interface::{JsonRequest, JsonResponse};
+use std::sync::Arc;
+
 pub(crate) const RPC_PORT: u16 = 36612;
 
 pub(crate) struct TestContext {
@@ -17,33 +17,22 @@ pub(crate) struct TestContext {
     pub acc_addr: String,
 }
 
-pub(crate) async fn make_test_context() -> TestContext {
-    let credential_manager = {
-        let public_key = String::from(
-            "043fd721eba5004dad3733ddf54638e8d9a5b4d6ad05dcf9860b95bfb\
-            8faf5e341e6c4c492d6eb649a83e9c4766252697da85c601136e9bfe65\
-            fa6531eb136bfb3",
-        );
+pub(crate) async fn mock_test_context() -> TestContext {
+    let config = Config::new(&Some("dev_local_1".to_string())).unwrap();
 
-        let secret = String::from(
-            "3755bfcd0c954a4c53d6a0878806140c865\
-            160cf9db3a22c04ca6cea627a37f1",
-        );
+    let public_key = config.public_key.clone().unwrap();
+    let secret = config.secret.clone().unwrap();
 
-        let wallet_credential =
-            WalletCredential::load(&public_key, &secret).unwrap();
+    let wallet_credential =
+        WalletCredential::load(&public_key, &secret).unwrap();
 
-        let m = CredentialManager::init(wallet_credential).unwrap();
-
-        m
-    };
+    let credential_manager =
+        CredentialManager::init(wallet_credential).unwrap();
 
     let acc_addr = credential_manager.get_credential().acc_addr.clone();
 
     let wallet_db =
         WalletDB::init(&credential_manager.get_credential(), true).unwrap();
-
-    let config = Config::empty();
 
     let wallet = {
         let w = Wallet::init(credential_manager, wallet_db, config)

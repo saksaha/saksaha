@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use super::utils;
+use super::utils::{self, TestContext};
 use crate::{
     routes::v0::update_coin_status,
     rpc::routes::v0::{
@@ -76,12 +76,20 @@ async fn test_send_tx() {
 async fn test_send_tx_twice() {
     sak_test_utils::init_test_log();
 
-    let test_credential = utils::make_test_credential().await;
-    let acc_addr = &test_credential.get_credential().acc_addr;
+    // let test_credential = utils::make_test_credential().await;
+
+    let test_context = utils::mock_test_context().await;
+
+    let TestContext { rpc, acc_addr } = test_context;
+
+    tokio::spawn(async move { rpc.run().await });
+
+    // let acc_addr = &test_credential.get_credential().acc_addr;
 
     {
-        utils::send_msg_for_test(acc_addr).await;
-        utils::update_coin_status(acc_addr).await;
+        utils::send_msg_for_test(&acc_addr).await;
+
+        utils::update_coin_status(&acc_addr).await;
     }
 
     {
