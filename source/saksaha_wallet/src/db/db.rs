@@ -40,10 +40,6 @@ impl WalletDB {
             db_path
         };
 
-        let a = wallet_db_path.join("p");
-
-        fs::write(a, "power")?;
-
         info!("Wallet db path: {:?}", wallet_db_path);
 
         let options = {

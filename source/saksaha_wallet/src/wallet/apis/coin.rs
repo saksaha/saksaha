@@ -56,6 +56,13 @@ impl Wallet {
         Ok(b)
     }
 
+    // a) Take ctr state manipulation meta from user
+    // b) Grab from the wallet an "old" available (unused) coin with the least
+    //    value (to write tx)
+    // c) Create N number of new coins (with random values associated)
+    // d) Generate proof using new coins and an old coin
+    // e) Request to send tx to the network and get tx_hash associated with it
+    // f) Store new coins into the wallet (with tx hash)
     pub async fn send_pour_tx(
         &self,
         acc_addr: String,
@@ -170,11 +177,15 @@ impl Wallet {
         new_coin_1.coin_status = CoinStatus::Unconfirmed;
         new_coin_2.coin_status = CoinStatus::Unconfirmed;
 
-        coin_manager_lock.insert_coin(new_coin_1.clone())?;
-        coin_manager_lock.insert_coin(new_coin_2.clone())?;
+        // ////////////// !!!!!!!!!!!!!!!
+        // new_coin_1.tx_hash = tx_hash;
+        // new_coin_2.tx_hash = tx_hash;
 
         self.get_db().schema.put_coin(&new_coin_1)?;
         self.get_db().schema.put_coin(&new_coin_2)?;
+
+        coin_manager_lock.insert_coin(new_coin_1)?;
+        coin_manager_lock.insert_coin(new_coin_2)?;
 
         Ok("success_power".to_string())
     }

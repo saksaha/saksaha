@@ -126,6 +126,9 @@ impl WalletDBSchema {
         self.raw
             .batch_put_cm(&mut batch, &next_coin_idx, &coin.cm)?;
 
+        // /////////////////////////////////// !!!!!!!!!!!!!!!!!
+        // self.raw.batch_put_tx_hash(&mut batch, &coin.cm, &coin.tx_hash)?;
+
         self.raw.db.write(batch)?;
 
         {
