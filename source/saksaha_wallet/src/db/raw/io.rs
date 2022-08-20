@@ -8,6 +8,7 @@ use sak_kv_db::MultiThreaded;
 use sak_kv_db::WriteBatch;
 use sak_types::CoinIdx;
 use sak_types::CoinStatus;
+use sak_types::TxHash;
 
 impl Raw {
     pub(crate) fn get_coin_iter(
@@ -61,6 +62,26 @@ impl Raw {
         };
     }
 
+    pub(crate) fn get_tx_hash(
+        &self,
+        cm: &Scalar,
+    ) -> Result<Option<TxHash>, WalletError> {
+        let cf = self.make_cf_handle(&self.db, cfs::TX_HASH)?;
+
+        let cm = cm.to_bytes();
+
+        match self.db.get_cf(&cf, cm)? {
+            Some(v) => {
+                let tx_hash = String::from_utf8(v)?;
+
+                return Ok(Some(tx_hash));
+            }
+            None => {
+                return Ok(None);
+            }
+        };
+    }
+
     pub(crate) fn get_coin_status(
         &self,
         cm: &Scalar,
@@ -71,10 +92,7 @@ impl Raw {
 
         match self.db.get_cf(&cf, cm)? {
             Some(v) => {
-                println!("1233");
-                println!("v: {:?}", v);
                 let status: CoinStatus = CoinStatus::from_u8(v)?;
-                println!("1244");
 
                 return Ok(Some(status));
             }
@@ -386,6 +404,28 @@ impl Raw {
         let coin_idx = coin_idx.to_be_bytes();
 
         batch.put_cf(&cf, coin_idx, cm);
+
+        Ok(())
+    }
+
+    pub(crate) fn batch_put_tx_hash(
+        &self,
+        batch: &mut WriteBatch,
+        cm: &Scalar,
+        tx_hash: &Option<TxHash>,
+    ) -> Result<(), WalletError> {
+        let cf = self.make_cf_handle(&self.db, cfs::TX_HASH)?;
+
+        let cm = cm.to_bytes();
+
+        let tx_hash = match tx_hash {
+            Some(v) => v.clone(),
+            None => String::from("None"),
+        };
+
+        let tx_hash = tx_hash.as_bytes();
+
+        batch.put_cf(&cf, cm, tx_hash);
 
         Ok(())
     }

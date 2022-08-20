@@ -80,20 +80,29 @@ async fn test_send_tx_twice() {
 
     let test_context = utils::mock_test_context().await;
 
-    let TestContext { rpc, acc_addr } = test_context;
+    let TestContext {
+        wallet,
+        rpc,
+        acc_addr,
+    } = test_context;
 
     tokio::spawn(async move { rpc.run().await });
 
     // let acc_addr = &test_credential.get_credential().acc_addr;
 
     {
-        utils::send_msg_for_test(&acc_addr).await;
+        let balance = wallet.get_balance(&acc_addr).await.unwrap();
+        println!("\t111111111 {:?}", balance);
 
+        utils::send_msg_for_test(&acc_addr).await;
         utils::update_coin_status(&acc_addr).await;
     }
 
     {
-        // utils::send_msg_for_test(acc_addr).await;
-        // utils::update_coin_status(acc_addr).await;
+        let balance = wallet.get_balance(&acc_addr).await.unwrap();
+        println!("222222222 {:?}", balance);
+
+        utils::send_msg_for_test(&acc_addr).await;
+        utils::update_coin_status(&acc_addr).await;
     }
 }

@@ -13,6 +13,7 @@ use std::sync::Arc;
 pub(crate) const RPC_PORT: u16 = 36612;
 
 pub(crate) struct TestContext {
+    pub wallet: Arc<Wallet>,
     pub rpc: RPC,
     pub acc_addr: String,
 }
@@ -42,9 +43,13 @@ pub(crate) async fn mock_test_context() -> TestContext {
         Arc::new(w)
     };
 
-    let rpc = RPC::init(None, wallet).await.unwrap();
+    let rpc = RPC::init(None, wallet.clone()).await.unwrap();
 
-    TestContext { rpc, acc_addr }
+    TestContext {
+        wallet,
+        rpc,
+        acc_addr,
+    }
 }
 
 pub(crate) async fn make_test_credential() -> CredentialManager {
@@ -159,13 +164,13 @@ pub(crate) async fn update_coin_status(acc_addr: &String) -> String {
         .body(body)
         .expect("request builder should be made");
 
-    println!("[+] [update_coin_status] request: {:?}", req);
+    println!("\t[+] [update_coin_status] request: {:?}", req);
 
     let resp = client.request(req).await.unwrap();
 
     let b = hyper::body::to_bytes(resp.into_body()).await.unwrap();
 
-    println!("[+] [update_coin_status] response/body: {:?}", b);
+    println!("\t[+] [update_coin_status] response/body: {:?}", b);
 
     let _json_response =
         serde_json::from_slice::<JsonResponse<String>>(&b).unwrap();

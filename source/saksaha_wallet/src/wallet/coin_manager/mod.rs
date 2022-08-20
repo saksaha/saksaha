@@ -54,11 +54,12 @@ impl CoinManager {
         return None;
     }
 
-    pub fn insert_coin(
+    pub fn put_coin(
         &mut self,
         coin_record: CoinRecord,
     ) -> Result<(), WalletError> {
-        println!("[+] inserting coin, cm: {:?}", coin_record.cm);
+        println!("[+] [coin_manager] put new coin, cm: {:?}", coin_record.cm);
+
         self.coins.push(coin_record);
 
         Ok(())

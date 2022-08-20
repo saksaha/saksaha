@@ -11,14 +11,16 @@ impl WalletDBSchema {
         let mut v = vec![];
 
         for (_coin_idx, cm) in iter {
+            println!("cm: {:?}", cm);
+
+            if cm.to_vec() == "None".as_bytes() {
+                break;
+            }
             let arr = type_extension::convert_vec_into_u8_32(cm.to_vec())?;
 
             let cm = ScalarExt::parse_arr(&arr)?;
 
-            println!(":)   cm: {:?}", cm);
-
             let coin = self.get_coin(&cm)?;
-            println!(":)55");
 
             v.push(coin);
         }
@@ -67,6 +69,21 @@ impl WalletDBSchema {
             None => return Err(format!("Failed to get coin_idx").into()),
         };
 
+        let tx_hash = match self.raw.get_tx_hash(&cm)? {
+            Some(v) => {
+                if v == "None" {
+                    None
+                } else {
+                    Some(v)
+                }
+            }
+            None => {
+                println!("why?");
+
+                return Err(format!("Failed to get tx_hash").into());
+            }
+        };
+
         let coin_record = CoinRecord {
             addr_pk,
             addr_sk,
@@ -78,14 +95,14 @@ impl WalletDBSchema {
             coin_status,
             cm_idx: Some(0),
             coin_idx: Some(coin_idx),
-            // for compile
-            tx_hash: None,
+            tx_hash,
         };
 
         Ok(coin_record)
     }
 
     pub fn put_coin(&self, coin: &CoinRecord) -> Result<(), WalletError> {
+        println!("\tput coin starts");
         let next_coin_idx = coin.coin_idx.unwrap_or(
             self.raw.get_latest_coin_idx()?.map(|v| v + 1).unwrap_or(0),
         );
@@ -126,16 +143,22 @@ impl WalletDBSchema {
         self.raw
             .batch_put_cm(&mut batch, &next_coin_idx, &coin.cm)?;
 
-        // /////////////////////////////////// !!!!!!!!!!!!!!!!!
-        // self.raw.batch_put_tx_hash(&mut batch, &coin.cm, &coin.tx_hash)?;
+        self.raw
+            .batch_put_tx_hash(&mut batch, &coin.cm, &coin.tx_hash)?;
 
         self.raw.db.write(batch)?;
 
         {
-            println!("[put_coin] coin status: {:?}", coin.coin_status);
+            println!("\n[put_coin] coin status: {:?}", coin.coin_status);
             println!(
-                "[put_coin] coin status: {:?}",
+                "[get_coin] coin status: {:?}",
                 self.raw.get_coin_status(&coin.cm)
+            );
+
+            println!("\n[put_coin] coin tx_hash: {:?}", coin.tx_hash);
+            println!(
+                "[get_coin] coin tx_hash: {:?}",
+                self.raw.get_tx_hash(&coin.cm)
             );
         }
 

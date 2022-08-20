@@ -23,11 +23,12 @@ pub fn dev_local_1() -> Result<Config, WalletError> {
                 100,
                 Some(0),
                 None,
-                Some(String::from(
+                Some(
                     "\
-                    ed763fdfcdb6146d0a172363f08b6a113\
-                    05cad7d78abe0c07aff9ea6369b08a8",
-                )),
+                ed763fdfcdb6146d0a172363f08b6a113\
+                05cad7d78abe0c07aff9ea6369b08a8"
+                        .to_string(),
+                ),
             )?,
         ]),
     };
@@ -48,20 +49,7 @@ pub fn dev_local_2() -> Result<Config, WalletError> {
         )),
         coin_records: Some(vec![
             //
-            CoinRecord::new(
-                0x21,
-                0x22,
-                0x23,
-                0x24,
-                100,
-                Some(1),
-                None,
-                Some(String::from(
-                    "\
-                    8d526423d7f7e2c1d419c3096ecee5a8f\
-                    24c9269f018bfae35216858c19bbae1",
-                )),
-            )?,
+            CoinRecord::new(0x21, 0x22, 0x23, 0x24, 100, Some(1), None, None)?,
         ]),
     };
 

@@ -33,7 +33,8 @@ impl CoinStatus {
             return Ok(Self::Unused);
         } else if v == "Used".as_bytes().to_vec() {
             return Ok(Self::Used);
-        // } else if v == "Unconfirmed, tx_hash: some"
+        } else if v == "Unconfirmed".as_bytes().to_vec() {
+            return Ok(Self::Unconfirmed);
         } else {
             return Err(
                 format!("Invalid Vec<u8> to convert into Status").into()

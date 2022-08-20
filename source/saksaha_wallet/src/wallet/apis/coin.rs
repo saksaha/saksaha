@@ -38,14 +38,10 @@ impl Wallet {
         let mut balance: u64 = 0;
 
         for coin in self.get_db().schema.get_all_coins()? {
-            println!(":)");
-
             let bytes = coin.v.to_bytes();
 
-            println!(":)22");
             let arr: [u8; 8] = bytes[24..].try_into()?;
 
-            println!(":)33");
             let val = u64::from_le_bytes(arr);
 
             balance += val;
@@ -69,6 +65,8 @@ impl Wallet {
         ctr_addr: String,
         ctr_request: CtrRequest,
     ) -> Result<String, WalletError> {
+        println!("\tstart send pour tx");
+
         self.check_balance(&acc_addr).await?;
 
         println!("check_Balance good");
@@ -81,22 +79,19 @@ impl Wallet {
 
         let sn_1 = self.compute_sn(coin);
 
-        let (mut new_coin_1, mut new_coin_2, cm_1, cm_2) = {
+        let (mut new_coin_1, mut new_coin_2) = {
             let v = ScalarExt::into_u64(coin.v)?;
 
             let new_coin_1 = CoinRecord::new_random(v - GAS, None, None, None)?;
 
             let new_coin_2 = CoinRecord::new_random(0, None, None, None)?;
 
-            let cm_1 = new_coin_1.cm.to_bytes();
-
-            let cm_2 = new_coin_2.cm.to_bytes();
-
-            (new_coin_1, new_coin_2, cm_1, cm_2)
+            (new_coin_1, new_coin_2)
         };
 
         let cm_idx = {
             let resp = saksaha::get_cm_idx(coin.cm.to_bytes()).await?;
+            println!("\t[+] resp: {:?}", resp);
 
             resp.result.ok_or("")?.cm_idx.ok_or("")?
         };
@@ -160,8 +155,8 @@ impl Wallet {
 
         let json_response = saksaha::send_tx_pour(
             sn_1,
-            cm_1,
-            cm_2,
+            new_coin_1.cm.to_bytes(),
+            new_coin_2.cm.to_bytes(),
             merkle_rt,
             pi_ser,
             ctr_addr,
@@ -172,20 +167,37 @@ impl Wallet {
         let tx_hash =
             json_response.result.ok_or("Value needs to be returned")?;
 
+        println!("[check] tx_hash: {:?}", tx_hash);
+
+        // tokio::time::sleep(Duration::from_secs(10)).await;
+        {
+            println!("bf new_coin_1.tx_hash: {:?}", new_coin_1.tx_hash);
+            println!("bf new_coin_2.tx_hash: {:?}", new_coin_2.tx_hash);
+
+            new_coin_1.tx_hash = Some(tx_hash.clone());
+            new_coin_2.tx_hash = Some(tx_hash);
+
+            println!("af new_coin_1.tx_hash: {:?}", new_coin_1.tx_hash);
+            println!("af new_coin_2.tx_hash: {:?}", new_coin_2.tx_hash);
+        }
+
+        {
+            self.get_db().schema.put_coin(&new_coin_1)?;
+
+            self.get_db().schema.put_coin(&new_coin_2)?;
+
+            println!("[check] new coins have been stored in db");
+        }
+
+        {
+            coin_manager_lock.put_coin(new_coin_1)?;
+
+            coin_manager_lock.put_coin(new_coin_2)?;
+
+            println!("[check] new coins have been stored in coin_manager");
+        }
+
         tokio::time::sleep(Duration::from_secs(10)).await;
-
-        new_coin_1.coin_status = CoinStatus::Unconfirmed;
-        new_coin_2.coin_status = CoinStatus::Unconfirmed;
-
-        // ////////////// !!!!!!!!!!!!!!!
-        // new_coin_1.tx_hash = tx_hash;
-        // new_coin_2.tx_hash = tx_hash;
-
-        self.get_db().schema.put_coin(&new_coin_1)?;
-        self.get_db().schema.put_coin(&new_coin_2)?;
-
-        coin_manager_lock.insert_coin(new_coin_1)?;
-        coin_manager_lock.insert_coin(new_coin_2)?;
 
         Ok("success_power".to_string())
     }
@@ -263,6 +275,7 @@ impl Wallet {
         &self,
         acc_addr: &String,
     ) -> Result<(), WalletError> {
+        println!("\t[update]");
         {
             // check credential
             let cmanager = self.get_credential_manager();
@@ -286,11 +299,6 @@ impl Wallet {
 
         let wallet_db = self.get_db();
 
-        // println!(
-        //     "\t[before]CoinManager Status: {:#?}",
-        //     coin_manager_lock.coins
-        // );
-
         {
             let old_coin_sn_vec = wallet_db
                 .update_coin_status_unconfirmed_to_unused(&coins)
@@ -301,98 +309,9 @@ impl Wallet {
                 .await?;
         }
 
-        // match coin.coin_status.clone() {
-        //     CoinStatus::Unconfirmed(h) => match h {
-        //         Some(tx_hash) => {
-        //             let resp = saksaha::get_tx(tx_hash.clone())
-        //                 .await?
-        //                 .result
-        //                 .ok_or("json_response error")?;
+        println!("\t[+] Coin Status has been updated.");
 
-        //             if let Some(tx) = resp.tx {
-        //                 // Vec<Sn> for updating old_coin status later
-        //                 old_coin_sn_vec.push(tx.get_sn());
-
-        //                 wallet_db.schema.raw.single_put_coin_status(
-        //                     &coin.cm,
-        //                     &CoinStatus::Unused,
-        //                 )?;
-
-        //                 // coin_manager_lock.make_coin_status_unused(coin)?;
-
-        //                 // coin.make_status_used();
-
-        //                 // wallet_db.schema.raw.single_put_coin_status(
-        //                 //     &coin.cm,
-        //                 //     &CoinStatus::Unused,
-        //                 // )?;
-        //             };
-        //         }
-        //         None => {}
-        //     },
-
-        //     CoinStatus::Used => {}
-
-        //     CoinStatus::Unused => {}
-        // }
-
-        // Unused -> Used
-        // for coin in coins.iter() {
-        //     match coin.coin_status.clone() {
-        //         CoinStatus::Unconfirmed(_h) => {}
-
-        //         CoinStatus::Used => {}
-
-        //         CoinStatus::Unused => {
-        //             let sn = self.compute_sn(&coin);
-
-        //             if old_coin_sn_vec.contains(&sn) {
-        //                 self.get_db().schema.raw.single_put_coin_status(
-        //                     &coin.cm,
-        //                     &coin.coin_status,
-        //                 )?;
-        //             }
-        //         }
-        //     }
-        // }
-
-        // println!(
-        //     "\t[after]CoinManager Status: {:#?}",
-        //     coin_manager_lock.coins
-        // );
-
-        // =-=-= coin coin_status update (unused -> used)
-        // =-=-= update new coins to be Unused, not Unconfirmed(tx_hash)
-
-        // new_coin_1.coin_status = CoinStatus::Unused;
-        // new_coin_2.coin_status = CoinStatus::Unused;
-
-        // println!("credential.acc_addr: {:?}", credential.acc_addr);
-        // println!("acc_addr:            {:?}", acc_addr);
-
-        // if &credential.acc_addr != acc_addr {
-        //     return Err(format!(
-        //         "acc addr is not correct. Candidates are: {:?}",
-        //         cmanager.get_candidates(),
-        //     )
-        //     .into());
-        // }
-
-        // let mut balance: u64 = 0;
-
-        // for coin in self.get_db().schema.get_all_coins()? {
-        //     let bytes = coin.v.to_bytes();
-
-        //     let arr: [u8; 8] = bytes[24..].try_into()?;
-
-        //     let val = u64::from_le_bytes(arr);
-
-        //     balance += val;
-        // }
-
-        // let b = AccountBalance { val: balance };
-
-        // Ok(b)
+        tokio::time::sleep(Duration::from_secs(10)).await;
 
         Ok(())
     }

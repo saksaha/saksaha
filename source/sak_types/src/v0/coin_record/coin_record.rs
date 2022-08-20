@@ -92,7 +92,9 @@ impl CoinRecord {
             s,
             v,
             cm,
+            // change it!
             coin_status: CoinStatus::Unused,
+            // coin_status: CoinStatus::Unused,
             cm_idx,
             coin_idx,
             tx_hash,

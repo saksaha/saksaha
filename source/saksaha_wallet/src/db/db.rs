@@ -120,6 +120,7 @@ impl WalletDB {
                         //     &CoinStatus::Unused,
                         // )?;
                     };
+                    println!("\t[+] CoinStatus update! coin_idx: {:?} [Unconfirmed] -> [Unused]", coin.coin_idx);
                 }
 
                 CoinStatus::Used => {}
@@ -143,8 +144,6 @@ impl WalletDB {
                 CoinStatus::Used => {}
 
                 CoinStatus::Unused => {
-                    println!("\t[+] CoinStatus update! [Unused] -> [Used]");
-
                     let sn = coin.compute_sn();
 
                     if old_coin_sn_vec.contains(&sn) {
@@ -153,6 +152,8 @@ impl WalletDB {
                             &CoinStatus::Used,
                         )?;
                     }
+
+                    println!("\t[+] CoinStatus update! coin_idx: {:?} [Unused] -> [Used]", coin.coin_idx);
                 }
             }
         }
