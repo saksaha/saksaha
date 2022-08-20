@@ -78,6 +78,8 @@ impl WalletDBSchema {
             coin_status,
             cm_idx: Some(0),
             coin_idx: Some(coin_idx),
+            // for compile
+            tx_hash: None,
         };
 
         Ok(coin_record)

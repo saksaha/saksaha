@@ -98,7 +98,8 @@ impl WalletDB {
                 CoinStatus::Unconfirmed => {
                     // get tx_hash related with coin from db or itself
 
-                    // send req to Node
+                    // for
+                    let tx_hash = String::default();
                     let resp = saksaha::get_tx(tx_hash.clone())
                         .await?
                         .result
