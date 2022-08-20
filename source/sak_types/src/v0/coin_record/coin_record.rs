@@ -1,5 +1,6 @@
 use super::CoinStatus;
 use crate::CmIdx;
+use crate::Sn;
 use crate::TxHash;
 use crate::TypesError;
 use colored::Colorize;
@@ -32,6 +33,8 @@ pub struct CoinRecord {
     pub cm_idx: Option<CmIdx>,
 
     pub coin_idx: Option<CoinIdx>,
+
+    pub tx_hash: Option<TxHash>,
 }
 
 impl CoinRecord {
@@ -43,6 +46,7 @@ impl CoinRecord {
         v: u64,
         cm_idx: Option<CoinIdx>,
         coin_idx: Option<CoinIdx>,
+        tx_hash: Option<TxHash>,
     ) -> Result<CoinRecord, TypesError> {
         let hasher = Hasher::new();
 
@@ -88,9 +92,10 @@ impl CoinRecord {
             s,
             v,
             cm,
-            coin_status: CoinStatus::Unconfirmed(None),
+            coin_status: CoinStatus::Unused,
             cm_idx,
             coin_idx,
+            tx_hash,
         };
 
         Ok(coin)
@@ -104,6 +109,7 @@ impl CoinRecord {
         v: u64,
         cm_idx: Option<CoinIdx>,
         coin_idx: Option<CoinIdx>,
+        tx_hash: Option<TxHash>,
     ) -> Result<CoinRecord, TypesError> {
         let hasher = Hasher::new();
 
@@ -150,9 +156,10 @@ impl CoinRecord {
             s,
             v,
             cm,
-            coin_status: CoinStatus::Unconfirmed(None),
+            coin_status: CoinStatus::Unconfirmed,
             cm_idx,
             coin_idx,
+            tx_hash,
         };
 
         Ok(coin)
@@ -174,8 +181,20 @@ impl CoinRecord {
         }
     }
 
-    pub fn make_status_used(&mut self) {
-        self.coin_status = CoinStatus::Used;
+    pub fn compute_sn(&self) -> Sn {
+        let sn = {
+            let addr_sk = self.addr_sk;
+
+            let rho = self.rho;
+
+            let hasher = Hasher::new();
+
+            let s = hasher.mimc_scalar(addr_sk, rho);
+
+            s.to_bytes()
+        };
+
+        sn
     }
 }
 

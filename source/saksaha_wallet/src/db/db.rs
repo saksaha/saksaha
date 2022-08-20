@@ -2,6 +2,9 @@ use super::WalletDBSchema;
 use crate::{credential::WalletCredential, WalletError, APP_NAME};
 use log::info;
 use sak_kv_db::{KeyValueDatabase, Options};
+use sak_types::CoinRecord;
+use sak_types::CoinStatus;
+use sak_types::Sn;
 use std::{fs, path::PathBuf};
 
 pub(crate) struct WalletDB {
@@ -80,5 +83,83 @@ impl WalletDB {
         let db_path = app_path.join("db");
 
         Ok(db_path)
+    }
+
+    pub async fn update_coin_status_unconfirmed_to_unused(
+        &self,
+        coins: &Vec<CoinRecord>,
+    ) -> Result<Vec<Sn>, WalletError> {
+        let mut old_coin_sn_vec = Vec::<Sn>::new();
+
+        println!("update");
+
+        for coin in coins {
+            match coin.coin_status.clone() {
+                CoinStatus::Unconfirmed => {
+                    // get tx_hash related with coin from db or itself
+
+                    // send req to Node
+                    let resp = saksaha::get_tx(tx_hash.clone())
+                        .await?
+                        .result
+                        .ok_or("json_response error")?;
+
+                    if let Some(tx) = resp.tx {
+                        // insert `sn` to Vec<Sn> for
+                        // updating status of old_coin status later
+                        old_coin_sn_vec.push(tx.get_sn());
+
+                        self.schema.raw.single_put_coin_status(
+                            &coin.cm,
+                            &CoinStatus::Unused,
+                        )?;
+
+                        // coin_manager_lock.make_coin_status_unused(coin)?;
+
+                        // coin.make_status_used();
+
+                        // wallet_db.schema.raw.single_put_coin_status(
+                        //     &coin.cm,
+                        //     &CoinStatus::Unused,
+                        // )?;
+                    };
+                }
+
+                CoinStatus::Used => {}
+
+                CoinStatus::Unused => {}
+            }
+        }
+
+        Ok(old_coin_sn_vec)
+    }
+
+    pub async fn update_coin_status_unused_to_used(
+        &self,
+        old_coin_sn_vec: Vec<Sn>,
+        coins: &Vec<CoinRecord>,
+    ) -> Result<(), WalletError> {
+        for coin in coins {
+            match coin.coin_status.clone() {
+                CoinStatus::Unconfirmed => {}
+
+                CoinStatus::Used => {}
+
+                CoinStatus::Unused => {
+                    println!("\t[+] CoinStatus update! [Unused] -> [Used]");
+
+                    let sn = coin.compute_sn();
+
+                    if old_coin_sn_vec.contains(&sn) {
+                        self.schema.raw.single_put_coin_status(
+                            &coin.cm,
+                            &CoinStatus::Used,
+                        )?;
+                    }
+                }
+            }
+        }
+
+        Ok(())
     }
 }

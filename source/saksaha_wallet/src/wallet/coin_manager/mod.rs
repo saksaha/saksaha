@@ -58,12 +58,15 @@ impl CoinManager {
         &mut self,
         coin_record: CoinRecord,
     ) -> Result<(), WalletError> {
-        println!("coin manager has been updated");
-
+        println!("[+] inserting coin, cm: {:?}", coin_record.cm);
         self.coins.push(coin_record);
 
         Ok(())
     }
+
+    // pub fn get_coins_mut(&mut self) -> &mut Vec<CoinRecord> {
+    //     &mut self.coins
+    // }
 
     // pub fn put_tx_hash(&mut self, tx_hash: TxHash) {
     //     self.tx_hashes.push(tx_hash);

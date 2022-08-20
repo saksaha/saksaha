@@ -170,12 +170,17 @@ pub(crate) async fn update_coin_status(acc_addr: &String) -> String {
         .body(body)
         .expect("request builder should be made");
 
+    println!("[+] [update_coin_status] request: {:?}", req);
+
     let resp = client.request(req).await.unwrap();
 
     let b = hyper::body::to_bytes(resp.into_body()).await.unwrap();
 
-    let json_response =
+    println!("[+] [update_coin_status] response/body: {:?}", b);
+
+    let _json_response =
         serde_json::from_slice::<JsonResponse<String>>(&b).unwrap();
 
-    json_response.result.unwrap()
+    "power".to_string()
+    // json_response.result.unwrap()
 }

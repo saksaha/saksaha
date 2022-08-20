@@ -71,7 +71,10 @@ impl Raw {
 
         match self.db.get_cf(&cf, cm)? {
             Some(v) => {
+                println!("1233");
+                println!("v: {:?}", v);
                 let status: CoinStatus = CoinStatus::from_u8(v)?;
+                println!("1244");
 
                 return Ok(Some(status));
             }

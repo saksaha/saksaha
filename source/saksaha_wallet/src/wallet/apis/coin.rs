@@ -11,7 +11,6 @@ use sak_proofs::OldCoin;
 use sak_types::AccountBalance;
 use sak_types::CoinRecord;
 use sak_types::CoinStatus;
-use sak_types::Sn;
 use std::convert::TryInto;
 use type_extension::U8Arr32;
 
@@ -39,10 +38,14 @@ impl Wallet {
         let mut balance: u64 = 0;
 
         for coin in self.get_db().schema.get_all_coins()? {
+            println!(":)");
+
             let bytes = coin.v.to_bytes();
 
+            println!(":)22");
             let arr: [u8; 8] = bytes[24..].try_into()?;
 
+            println!(":)33");
             let val = u64::from_le_bytes(arr);
 
             balance += val;
@@ -61,6 +64,8 @@ impl Wallet {
     ) -> Result<String, WalletError> {
         self.check_balance(&acc_addr).await?;
 
+        println!("check_Balance good");
+
         let mut coin_manager_lock = self.get_coin_manager().write().await;
 
         let coin: &CoinRecord = coin_manager_lock
@@ -72,9 +77,9 @@ impl Wallet {
         let (mut new_coin_1, mut new_coin_2, cm_1, cm_2) = {
             let v = ScalarExt::into_u64(coin.v)?;
 
-            let new_coin_1 = CoinRecord::new_random(v - GAS, None, None)?;
+            let new_coin_1 = CoinRecord::new_random(v - GAS, None, None, None)?;
 
-            let new_coin_2 = CoinRecord::new_random(0, None, None)?;
+            let new_coin_2 = CoinRecord::new_random(0, None, None, None)?;
 
             let cm_1 = new_coin_1.cm.to_bytes();
 
@@ -88,6 +93,8 @@ impl Wallet {
 
             resp.result.ok_or("")?.cm_idx.ok_or("")?
         };
+
+        println!("cm_idx good");
 
         let merkle_rt;
 
@@ -131,6 +138,8 @@ impl Wallet {
             self.get_old_coin(coin, auth_path).await?
         };
 
+        println!("before making proof");
+
         let pi = CoinProof::generate_proof_1_to_2(
             old_coin,
             new_coin_1.extract(),
@@ -158,8 +167,8 @@ impl Wallet {
 
         tokio::time::sleep(Duration::from_secs(10)).await;
 
-        new_coin_1.coin_status = CoinStatus::Unconfirmed(Some(tx_hash.clone()));
-        new_coin_2.coin_status = CoinStatus::Unconfirmed(Some(tx_hash.clone()));
+        new_coin_1.coin_status = CoinStatus::Unconfirmed;
+        new_coin_2.coin_status = CoinStatus::Unconfirmed;
 
         coin_manager_lock.insert_coin(new_coin_1.clone())?;
         coin_manager_lock.insert_coin(new_coin_2.clone())?;
@@ -243,79 +252,103 @@ impl Wallet {
         &self,
         acc_addr: &String,
     ) -> Result<(), WalletError> {
-        let cmanager = self.get_credential_manager();
-        let credential = cmanager.get_credential();
+        {
+            // check credential
+            let cmanager = self.get_credential_manager();
+            let credential = cmanager.get_credential();
 
-        println!("credential.acc_addr: {:?}", credential.acc_addr);
-        println!("acc_addr:            {:?}", acc_addr);
+            println!("credential.acc_addr: {:?}", credential.acc_addr);
+            println!("acc_addr:            {:?}", acc_addr);
 
-        if &credential.acc_addr != acc_addr {
-            return Err(format!(
-                "acc addr is not correct. Candidates are: {:?}",
-                cmanager.get_candidates(),
-            )
-            .into());
-        }
-
-        let mut old_coin_sn_vec: Vec<Sn> = Vec::new();
-
-        let coin_manager_lock = &mut self.get_coin_manager().write().await;
-
-        let coins_vec = coin_manager_lock.coins.clone();
-
-        // println!("CoinManager Status: {:#?}", coin_manager_lock.coins);
-
-        // Unconfirmed -> Unused
-        for mut coin in coin_manager_lock.coins.clone().into_iter() {
-            let a = coin.coin_status.clone();
-            match a {
-                CoinStatus::Unconfirmed(th) => match th {
-                    Some(tx_hash) => {
-                        let resp = saksaha::get_tx(tx_hash.clone())
-                            .await?
-                            .result
-                            .ok_or("json_response error")?;
-
-                        if let Some(tx) = resp.tx {
-                            old_coin_sn_vec.push(tx.get_sn());
-
-                            coin.make_status_used();
-
-                            self.get_db().schema.raw.single_put_coin_status(
-                                &coin.cm,
-                                &CoinStatus::Unused,
-                            )?;
-                        };
-                    }
-                    None => {}
-                },
-                _ => {}
+            if &credential.acc_addr != acc_addr {
+                return Err(format!(
+                    "acc addr is not correct. Candidates are: {:?}",
+                    cmanager.get_candidates(),
+                )
+                .into());
             }
         }
+
+        let coin_manager_lock = self.get_coin_manager().write().await;
+
+        let coins = coin_manager_lock.coins.clone();
+
+        let wallet_db = self.get_db();
+
+        // println!(
+        //     "\t[before]CoinManager Status: {:#?}",
+        //     coin_manager_lock.coins
+        // );
+
+        {
+            let old_coin_sn_vec = wallet_db
+                .update_coin_status_unconfirmed_to_unused(&coins)
+                .await?;
+
+            wallet_db
+                .update_coin_status_unused_to_used(old_coin_sn_vec, &coins)
+                .await?;
+        }
+
+        // match coin.coin_status.clone() {
+        //     CoinStatus::Unconfirmed(h) => match h {
+        //         Some(tx_hash) => {
+        //             let resp = saksaha::get_tx(tx_hash.clone())
+        //                 .await?
+        //                 .result
+        //                 .ok_or("json_response error")?;
+
+        //             if let Some(tx) = resp.tx {
+        //                 // Vec<Sn> for updating old_coin status later
+        //                 old_coin_sn_vec.push(tx.get_sn());
+
+        //                 wallet_db.schema.raw.single_put_coin_status(
+        //                     &coin.cm,
+        //                     &CoinStatus::Unused,
+        //                 )?;
+
+        //                 // coin_manager_lock.make_coin_status_unused(coin)?;
+
+        //                 // coin.make_status_used();
+
+        //                 // wallet_db.schema.raw.single_put_coin_status(
+        //                 //     &coin.cm,
+        //                 //     &CoinStatus::Unused,
+        //                 // )?;
+        //             };
+        //         }
+        //         None => {}
+        //     },
+
+        //     CoinStatus::Used => {}
+
+        //     CoinStatus::Unused => {}
+        // }
 
         // Unused -> Used
-        for mut coin in coin_manager_lock.coins.clone().into_iter() {
-            match coin.coin_status {
-                CoinStatus::Unused => {
-                    let sn = self.compute_sn(&coin);
+        // for coin in coins.iter() {
+        //     match coin.coin_status.clone() {
+        //         CoinStatus::Unconfirmed(_h) => {}
 
-                    if old_coin_sn_vec.contains(&sn) {
-                        coin.coin_status = CoinStatus::Used;
-                    }
+        //         CoinStatus::Used => {}
 
-                    self.get_db()
-                        .schema
-                        .raw
-                        .single_put_coin_status(&coin.cm, &coin.coin_status)?;
-                }
+        //         CoinStatus::Unused => {
+        //             let sn = self.compute_sn(&coin);
 
-                CoinStatus::Used => {}
+        //             if old_coin_sn_vec.contains(&sn) {
+        //                 self.get_db().schema.raw.single_put_coin_status(
+        //                     &coin.cm,
+        //                     &coin.coin_status,
+        //                 )?;
+        //             }
+        //         }
+        //     }
+        // }
 
-                CoinStatus::Unconfirmed(_) => {}
-            }
-        }
-
-        println!("CoinManager Status: {:#?}", coin_manager_lock.coins);
+        // println!(
+        //     "\t[after]CoinManager Status: {:#?}",
+        //     coin_manager_lock.coins
+        // );
 
         // =-=-= coin coin_status update (unused -> used)
         // =-=-= update new coins to be Unused, not Unconfirmed(tx_hash)

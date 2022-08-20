@@ -30,12 +30,12 @@ pub(in crate::rpc) async fn update_coin_status(
         "update_coin_status should contain params",
     );
 
-    debug!("\tparams: {:?}", String::from_utf8(params.clone()));
+    // debug!("\tparams: {:?}", String::from_utf8(params.clone()));
 
     let rb: UpdateCoinStatusRequest =
         require_params_parsed!(route_state, &params);
 
-    debug!("\trb: {:#?}", rb);
+    // debug!("\trb: {:#?}", rb);
 
     match ctx.wallet.update_coin_status(&rb.acc_addr).await {
         Ok(_) => {

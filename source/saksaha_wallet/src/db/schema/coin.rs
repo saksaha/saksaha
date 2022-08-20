@@ -1,20 +1,24 @@
 use super::WalletDBSchema;
-use crate::db::cfs;
 use crate::WalletError;
 use sak_crypto::{Scalar, ScalarExt};
 use sak_kv_db::WriteBatch;
-use sak_proofs::{OldCoin, CM_TREE_DEPTH};
-use sak_types::{Cm, CoinRecord, CoinStatus};
-use type_extension::U8Arr32;
+use sak_types::CoinRecord;
 
 impl WalletDBSchema {
     pub fn get_all_coins(&self) -> Result<Vec<CoinRecord>, WalletError> {
         let iter = self.raw.get_coin_iter()?;
+
         let mut v = vec![];
+
         for (_coin_idx, cm) in iter {
             let arr = type_extension::convert_vec_into_u8_32(cm.to_vec())?;
+
             let cm = ScalarExt::parse_arr(&arr)?;
+
+            println!(":)   cm: {:?}", cm);
+
             let coin = self.get_coin(&cm)?;
+            println!(":)55");
 
             v.push(coin);
         }
@@ -121,6 +125,14 @@ impl WalletDBSchema {
             .batch_put_cm(&mut batch, &next_coin_idx, &coin.cm)?;
 
         self.raw.db.write(batch)?;
+
+        {
+            println!("[put_coin] coin status: {:?}", coin.coin_status);
+            println!(
+                "[put_coin] coin status: {:?}",
+                self.raw.get_coin_status(&coin.cm)
+            );
+        }
 
         Ok(())
     }
