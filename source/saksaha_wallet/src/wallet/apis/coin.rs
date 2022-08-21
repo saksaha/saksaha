@@ -24,8 +24,9 @@ impl Wallet {
         let cmanager = self.get_credential_manager();
         let credential = cmanager.get_credential();
 
-        println!("credential.acc_addr: {:?}", credential.acc_addr);
-        println!("acc_addr:            {:?}", acc_addr);
+        println!("[+] check account address..");
+        println!("\tcredential.acc_addr: {:?}", credential.acc_addr);
+        println!("\tacc_addr:            {:?}", acc_addr);
 
         if &credential.acc_addr != acc_addr {
             return Err(format!(
@@ -38,13 +39,17 @@ impl Wallet {
         let mut balance: u64 = 0;
 
         for coin in self.get_db().schema.get_all_coins()? {
-            let bytes = coin.v.to_bytes();
+            println!("[get_balance] coin.coin_status: {:?}", coin.coin_status);
 
-            let arr: [u8; 8] = bytes[24..].try_into()?;
+            if coin.coin_status == CoinStatus::Unused {
+                let bytes = coin.v.to_bytes();
 
-            let val = u64::from_le_bytes(arr);
+                let arr: [u8; 8] = bytes[24..].try_into()?;
 
-            balance += val;
+                let val = u64::from_le_bytes(arr);
+
+                balance += val;
+            }
         }
 
         let b = AccountBalance { val: balance };
@@ -169,17 +174,9 @@ impl Wallet {
 
         println!("[check] tx_hash: {:?}", tx_hash);
 
-        // tokio::time::sleep(Duration::from_secs(10)).await;
-        {
-            println!("bf new_coin_1.tx_hash: {:?}", new_coin_1.tx_hash);
-            println!("bf new_coin_2.tx_hash: {:?}", new_coin_2.tx_hash);
-
-            new_coin_1.tx_hash = Some(tx_hash.clone());
-            new_coin_2.tx_hash = Some(tx_hash);
-
-            println!("af new_coin_1.tx_hash: {:?}", new_coin_1.tx_hash);
-            println!("af new_coin_2.tx_hash: {:?}", new_coin_2.tx_hash);
-        }
+        tokio::time::sleep(Duration::from_secs(10)).await;
+        new_coin_1.tx_hash = Some(tx_hash.clone());
+        new_coin_2.tx_hash = Some(tx_hash);
 
         {
             self.get_db().schema.put_coin(&new_coin_1)?;
@@ -300,6 +297,7 @@ impl Wallet {
         let wallet_db = self.get_db();
 
         {
+            // update DB first
             let old_coin_sn_vec = wallet_db
                 .update_coin_status_unconfirmed_to_unused(&coins)
                 .await?;
@@ -309,9 +307,19 @@ impl Wallet {
                 .await?;
         }
 
-        println!("\t[+] Coin Status has been updated.");
+        {
+            // update coin_manager second
+            //
+            //
+        }
+
+        println!("\t[+] Coin Status has been updated in DB.");
 
         tokio::time::sleep(Duration::from_secs(10)).await;
+
+        // coin_manager should update `coin_status` from `DB`
+
+        // println!("\t[+] Coin Status has been updated in Coin Manager.");
 
         Ok(())
     }

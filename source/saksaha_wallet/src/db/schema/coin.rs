@@ -148,20 +148,6 @@ impl WalletDBSchema {
 
         self.raw.db.write(batch)?;
 
-        {
-            println!("\n[put_coin] coin status: {:?}", coin.coin_status);
-            println!(
-                "[get_coin] coin status: {:?}",
-                self.raw.get_coin_status(&coin.cm)
-            );
-
-            println!("\n[put_coin] coin tx_hash: {:?}", coin.tx_hash);
-            println!(
-                "[get_coin] coin tx_hash: {:?}",
-                self.raw.get_tx_hash(&coin.cm)
-            );
-        }
-
         Ok(())
     }
 

@@ -1,4 +1,5 @@
 use super::WalletDBSchema;
+use crate::wallet::CoinManager;
 use crate::{credential::WalletCredential, WalletError, APP_NAME};
 use log::info;
 use sak_kv_db::{KeyValueDatabase, Options};
@@ -87,19 +88,25 @@ impl WalletDB {
     ) -> Result<Vec<Sn>, WalletError> {
         let mut old_coin_sn_vec = Vec::<Sn>::new();
 
-        println!("update");
-
         for coin in coins {
             match coin.coin_status.clone() {
                 CoinStatus::Unconfirmed => {
                     // get tx_hash related with coin from db or itself
 
-                    // for
-                    let tx_hash = String::default();
-                    let resp = saksaha::get_tx(tx_hash.clone())
-                        .await?
-                        .result
-                        .ok_or("json_response error")?;
+                    // let tx_hash = String::default();
+                    let resp = match coin.tx_hash.clone() {
+                        Some(tx_hash) => saksaha::get_tx(tx_hash.clone())
+                            .await?
+                            .result
+                            .ok_or("json_response error")?,
+                        None => {
+                            return Err(format!(
+                                "No tx_hash has been found in cm: {:?}",
+                                coin.cm
+                            )
+                            .into());
+                        }
+                    };
 
                     if let Some(tx) = resp.tx {
                         // insert `sn` to Vec<Sn> for
@@ -120,7 +127,7 @@ impl WalletDB {
                         //     &CoinStatus::Unused,
                         // )?;
                     };
-                    println!("\t[+] CoinStatus update! coin_idx: {:?} [Unconfirmed] -> [Unused]", coin.coin_idx);
+                    println!("\t[+] CoinStatus update in DB! coin_idx: {:?}, coin_cm: {:?},  [Unconfirmed] -> [Unused]", coin.coin_idx, coin.cm);
                 }
 
                 CoinStatus::Used => {}
@@ -153,7 +160,7 @@ impl WalletDB {
                         )?;
                     }
 
-                    println!("\t[+] CoinStatus update! coin_idx: {:?} [Unused] -> [Used]", coin.coin_idx);
+                    println!("\t[+] CoinStatus update in DB! coin_idx: {:?}, coin_cm: {:?}, [Unused] -> [Used]", coin.coin_idx, coin.cm);
                 }
             }
         }
