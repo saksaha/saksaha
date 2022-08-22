@@ -56,6 +56,8 @@ fn mock_coin_record_1() -> Result<CoinRecord, WalletError> {
 
     let cm_idx = 0;
 
+    let tx_hash = Some(String::default());
+
     let coin = CoinRecord {
         addr_pk,
         addr_sk,
@@ -67,6 +69,7 @@ fn mock_coin_record_1() -> Result<CoinRecord, WalletError> {
         coin_status,
         cm_idx: Some(cm_idx),
         coin_idx: None,
+        tx_hash,
     };
 
     Ok(coin)

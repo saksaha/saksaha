@@ -1,7 +1,6 @@
 use super::utils;
 use super::CmIdx;
-use crate::{Cm, TxCandidate};
-use crate::{Tx, TxCtrOp, TxType, WASM_MAGIC_NUMBER};
+use crate::{Cm, Sn, Tx, TxCtrOp, TxType};
 use serde::{Deserialize, Serialize};
 use type_extension::U8Arr32;
 
@@ -37,6 +36,10 @@ impl PourTx {
         let cms = self.tx_candidate.get_cms();
 
         vec![(self.cm_idx_1, cms[0]), (self.cm_idx_2, cms[1])]
+    }
+
+    pub fn get_sn(&self) -> Sn {
+        self.tx_candidate.sn_1
     }
 }
 

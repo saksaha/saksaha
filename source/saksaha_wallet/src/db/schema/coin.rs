@@ -1,19 +1,24 @@
 use super::WalletDBSchema;
-use crate::db::cfs;
 use crate::WalletError;
 use sak_crypto::{Scalar, ScalarExt};
 use sak_kv_db::WriteBatch;
-use sak_proofs::{OldCoin, CM_TREE_DEPTH};
-use sak_types::{Cm, CoinRecord, CoinStatus};
-use type_extension::U8Arr32;
+use sak_types::CoinRecord;
 
 impl WalletDBSchema {
     pub fn get_all_coins(&self) -> Result<Vec<CoinRecord>, WalletError> {
         let iter = self.raw.get_coin_iter()?;
+
         let mut v = vec![];
+
         for (_coin_idx, cm) in iter {
+            if cm.to_vec() == "None".as_bytes() {
+                break;
+            }
+
             let arr = type_extension::convert_vec_into_u8_32(cm.to_vec())?;
+
             let cm = ScalarExt::parse_arr(&arr)?;
+
             let coin = self.get_coin(&cm)?;
 
             v.push(coin);
@@ -63,6 +68,24 @@ impl WalletDBSchema {
             None => return Err(format!("Failed to get coin_idx").into()),
         };
 
+        let cm_idx = match self.raw.get_cm_idx(&cm)? {
+            Some(v) => Some(v),
+            None => return Err(format!("Failed to get cm_idx").into()),
+        };
+
+        let tx_hash = match self.raw.get_tx_hash(&cm)? {
+            Some(v) => {
+                if v == "None" {
+                    None
+                } else {
+                    Some(v)
+                }
+            }
+            None => {
+                return Err(format!("Failed to get tx_hash").into());
+            }
+        };
+
         let coin_record = CoinRecord {
             addr_pk,
             addr_sk,
@@ -72,8 +95,9 @@ impl WalletDBSchema {
             v,
             cm: *cm,
             coin_status,
-            cm_idx: Some(0),
+            cm_idx,
             coin_idx: Some(coin_idx),
+            tx_hash,
         };
 
         Ok(coin_record)
@@ -119,6 +143,16 @@ impl WalletDBSchema {
 
         self.raw
             .batch_put_cm(&mut batch, &next_coin_idx, &coin.cm)?;
+
+        let cm_idx = match coin.cm_idx {
+            Some(i) => i,
+            None => 0,
+        };
+
+        self.raw.batch_put_cm_idx(&mut batch, &coin.cm, &cm_idx)?;
+
+        self.raw
+            .batch_put_tx_hash(&mut batch, &coin.cm, &coin.tx_hash)?;
 
         self.raw.db.write(batch)?;
 

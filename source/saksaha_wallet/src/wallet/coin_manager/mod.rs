@@ -2,10 +2,12 @@ use crate::{db::WalletDB, WalletError};
 use colored::Colorize;
 use sak_types::CoinRecord;
 use sak_types::CoinStatus;
+use sak_types::TxHash;
 use std::sync::Arc;
 
 pub(crate) struct CoinManager {
     pub(crate) coins: Vec<CoinRecord>,
+    // pub(crate) tx_hashes: Vec<TxHash>,
 }
 
 impl CoinManager {
@@ -39,6 +41,10 @@ impl CoinManager {
         let vec_coins = &self.coins;
 
         for coin in vec_coins {
+            if coin.v == sak_crypto::Scalar::zero() {
+                continue;
+            }
+
             if coin.coin_status == CoinStatus::Unused {
                 return Some(&coin);
             }
@@ -47,11 +53,14 @@ impl CoinManager {
         return None;
     }
 
-    pub fn update_coin(
+    pub fn put_coin(
         &mut self,
         coin_record: CoinRecord,
     ) -> Result<(), WalletError> {
-        println!("coin manager has been updated");
+        println!(
+            "[+] [coin_manager] put new coin, cm_idx: {:?}, cm: {:?}",
+            coin_record.coin_idx, coin_record.cm
+        );
 
         self.coins.push(coin_record);
 
