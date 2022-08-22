@@ -50,28 +50,6 @@ impl Envelope {
                     AppReturn::Continue
                 }
 
-                Action::Right => AppReturn::Continue,
-                // Action::Right => match self.get_state().view {
-                //     View::Chat => {
-                //         self.state.selected_ch_id =
-                //             match self.state.ch_list_state.selected() {
-                //                 Some(i) => (self.state.ch_list[i])
-                //                     .channel
-                //                     .ch_id
-                //                     .clone(),
-                //                 None => String::default(),
-                //             };
-                //         log::info!("Ch_Id: {:?}", self.state.selected_ch_id);
-                //         // self.get_messages().await;
-                //         // self.state.set_view_chat();
-                //         // log::info!("ch_id: {:?}", curr_ch);
-
-                //         return AppReturn::Continue;
-                //     }
-                //     _ => {
-                //         return AppReturn::Continue;
-                //     }
-                // },
                 Action::RestoreChat => match self.get_state().view {
                     View::Chat => {
                         let ch_id = self.get_state().selected_ch_id.clone();

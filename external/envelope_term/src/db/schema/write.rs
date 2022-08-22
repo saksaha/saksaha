@@ -1,6 +1,7 @@
 use super::EnvelopeDBSchema;
 use crate::db::cfs;
 use crate::EnvelopeError;
+use log::warn;
 use sak_kv_db::WriteBatch;
 
 impl EnvelopeDBSchema {
@@ -10,7 +11,7 @@ impl EnvelopeDBSchema {
         pk: &String,
         sig: &String,
         acc_addr: &String,
-    ) -> Result<String, EnvelopeError> {
+    ) -> Result<(), EnvelopeError> {
         let mut batch = WriteBatch::default();
 
         self.batch_put_my_sk(&mut batch, acc_addr, sk)?;
@@ -19,7 +20,7 @@ impl EnvelopeDBSchema {
 
         self.db.write(batch)?;
 
-        Ok(sk.to_string())
+        Ok(())
     }
 
     pub(crate) async fn put_ch_shared_secret_key(

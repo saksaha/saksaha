@@ -73,11 +73,6 @@ impl Credential {
                 }
             };
 
-        warn!(
-            "public_key: {}, secret_str: {}, acc_addr: {}, sig_str: {}",
-            public_key, secret, acc_addr, signature
-        );
-
         Ok(Credential {
             public_key,
             secret,

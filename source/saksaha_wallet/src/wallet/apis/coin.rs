@@ -153,7 +153,7 @@ impl Wallet {
         let tx_hash =
             json_response.result.ok_or("Value needs to be returned")?;
 
-        Ok("success_power".to_string())
+        Ok(tx_hash)
     }
 
     pub(crate) async fn check_balance(
