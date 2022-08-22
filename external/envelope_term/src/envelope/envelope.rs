@@ -99,10 +99,6 @@ impl Envelope {
         &mut self.state
     }
 
-    pub fn is_loading(&self) -> bool {
-        self.state.is_loading
-    }
-
     pub fn initialized(&mut self) {
         self.actions = vec![
             Action::Quit,
@@ -328,7 +324,7 @@ impl Envelope {
                 serde_json::from_str(&encrypted_chat_msg)?;
 
             let chat_msg_ser: String = {
-                let chat_msg: Vec<u8> =
+                let chat_msg =
                     sak_crypto::aes_decrypt(&aes_key, &encrypted_chat_msg)?;
 
                 String::from_utf8(chat_msg)?
