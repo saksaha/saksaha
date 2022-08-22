@@ -92,8 +92,6 @@ impl WalletDB {
         for coin in coins {
             match coin.coin_status.clone() {
                 CoinStatus::Unconfirmed => {
-                    // get tx_hash related with coin from db or itself
-
                     let resp = match coin.tx_hash.clone() {
                         Some(tx_hash) => saksaha::get_tx(tx_hash.clone())
                             .await?
@@ -112,10 +110,9 @@ impl WalletDB {
                     if let Some(tx) = resp.tx {
                         old_coin_sn_vec.push(tx.get_sn());
 
-                        self.schema.raw.single_put_coin_status(
-                            &coin.cm,
-                            &CoinStatus::Unused,
-                        )?;
+                        self.schema
+                            .raw
+                            .put_coin_status(&coin.cm, &CoinStatus::Unused)?;
 
                         {
                             let cm_idx_base = tx
@@ -129,9 +126,7 @@ impl WalletDB {
 
                             let cm_idx = cm_idx_base + cm_idx_offset;
 
-                            self.schema
-                                .raw
-                                .single_put_cm_idx(&coin.cm, &cm_idx)?;
+                            self.schema.raw.put_cm_idx(&coin.cm, &cm_idx)?;
                         }
                     };
                 }
@@ -160,10 +155,9 @@ impl WalletDB {
                     let sn = coin.compute_sn();
 
                     if old_coin_sn_vec.contains(&sn) {
-                        self.schema.raw.single_put_coin_status(
-                            &coin.cm,
-                            &CoinStatus::Used,
-                        )?;
+                        self.schema
+                            .raw
+                            .put_coin_status(&coin.cm, &CoinStatus::Used)?;
                     }
                 }
             }

@@ -143,26 +143,6 @@ impl Raw {
         };
     }
 
-    // pub fn get_user_id(
-    //     &self,
-    //     cm: &Scalar,
-    // ) -> Result<Option<String>, WalletError> {
-    //     let cf = self.make_cf_handle(&self.db, cfs::USER_ID)?;
-
-    //     let cm = cm.to_bytes();
-
-    //     match self.db.get_cf(&cf, cm)? {
-    //         Some(v) => {
-    //             let str = String::from_utf8(v)?;
-
-    //             return Ok(Some(str));
-    //         }
-    //         None => {
-    //             return Ok(None);
-    //         }
-    //     };
-    // }
-
     pub fn get_rho(&self, cm: &Scalar) -> Result<Option<Scalar>, WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::RHO)?;
 
@@ -331,7 +311,7 @@ impl Raw {
         Ok(())
     }
 
-    pub(crate) fn single_put_cm_idx(
+    pub(crate) fn put_cm_idx(
         &self,
         cm: &Scalar,
         cm_idx: &u128,
@@ -413,7 +393,7 @@ impl Raw {
         Ok(())
     }
 
-    pub(crate) fn single_put_coin_status(
+    pub(crate) fn put_coin_status(
         &self,
         cm: &Scalar,
         status: &CoinStatus,

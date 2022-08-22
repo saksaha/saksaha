@@ -39,20 +39,10 @@ impl Wallet {
         &self.wallet_db
     }
 
-    // #[inline]
-    // pub fn get_db_mut(&mut self) -> &mut WalletDB {
-    //     &mut self.wallet_db
-    // }
-
     #[inline]
     pub fn get_coin_manager(&self) -> &RwLock<CoinManager> {
         &self.coin_manager
     }
-
-    // #[inline]
-    // pub fn get_coin_manager_mut(&mut self) -> &mut RwLock<CoinManager> {
-    //     &mut self.coin_manager
-    // }
 
     #[inline]
     pub fn get_credential_manager(&self) -> &CredentialManager {

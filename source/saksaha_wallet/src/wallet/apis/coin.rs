@@ -41,7 +41,7 @@ impl Wallet {
         for coin in self.get_db().schema.get_all_coins()? {
             println!(
                 "[get_balance] \
-                    cm: {:?}, value: {:03?}, cm_idx: {:?},  coin_idx: {:?}, coin_status: {:?}",
+                    cm: {:?}, value: {:.3?}, cm_idx: {:?},  coin_idx: {:?}, coin_status: {:?}",
                 coin.cm, ScalarExt::into_u64(coin.v)?, coin.cm_idx, coin.coin_idx, coin.coin_status
             );
 
@@ -346,8 +346,6 @@ impl Wallet {
 
         let wallet_db = self.get_db();
         {
-            // update DB first
-
             let coins = coin_manager_lock.coins.clone();
 
             let old_coin_sn_vec = wallet_db
@@ -358,7 +356,6 @@ impl Wallet {
                 .update_coin_status_unused_to_used(old_coin_sn_vec, &coins)
                 .await?;
         }
-        println!("[+] Coin Status has been updated in DB.");
 
         for coin in coin_manager_lock.coins.iter_mut() {
             let cm = coin.cm;
@@ -376,9 +373,6 @@ impl Wallet {
                 coin.cm_idx = db_coin_cm_idx;
             }
         }
-
-        // coin_manager should update `coin_status` from `DB`
-        println!("[+] Coin Status has been updated in Coin Manager.");
 
         Ok(())
     }

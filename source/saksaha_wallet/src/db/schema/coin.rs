@@ -82,8 +82,6 @@ impl WalletDBSchema {
                 }
             }
             None => {
-                println!("why?");
-
                 return Err(format!("Failed to get tx_hash").into());
             }
         };
