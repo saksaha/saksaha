@@ -92,7 +92,7 @@ async fn test_send_tx_twice() {
 
     {
         let balance = wallet.get_balance(&acc_addr).await.unwrap();
-        println!("\t11111111111111111111111111111111 initial {:?}", balance);
+        println!("[+] BALANCE {:?}", balance);
 
         utils::send_msg_for_test(&acc_addr).await;
         utils::update_coin_status(&acc_addr).await;
@@ -100,7 +100,7 @@ async fn test_send_tx_twice() {
 
     {
         let balance = wallet.get_balance(&acc_addr).await.unwrap();
-        println!("\t22222222222222222222222222222222 updated {:?}", balance);
+        println!("[+] BALANCE {:?}", balance);
 
         utils::send_msg_for_test(&acc_addr).await;
         utils::update_coin_status(&acc_addr).await;
@@ -108,7 +108,7 @@ async fn test_send_tx_twice() {
 
     {
         let balance = wallet.get_balance(&acc_addr).await.unwrap();
-        println!("\t33333333333333333333333333333333 updated {:?}", balance);
+        println!("[+] BALANCE {:?}", balance);
 
         utils::send_msg_for_test(&acc_addr).await;
         utils::update_coin_status(&acc_addr).await;
@@ -116,6 +116,6 @@ async fn test_send_tx_twice() {
 
     {
         let balance = wallet.get_balance(&acc_addr).await.unwrap();
-        println!("\t33333333333333333333333333333333 updated {:?}", balance);
+        println!("[+] BALANCE {:?}", balance);
     }
 }

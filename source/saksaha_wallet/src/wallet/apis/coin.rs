@@ -62,11 +62,16 @@ impl Wallet {
     }
 
     // a) Take ctr state manipulation meta from user
+
     // b) Grab from the wallet an "old" available (unused) coin with the least
     //    value (to write tx)
+
     // c) Create N number of new coins (with random values associated)
+
     // d) Generate proof using new coins and an old coin
+
     // e) Request to send tx to the network and get tx_hash associated with it
+
     // f) Store new coins into the wallet (with tx hash)
     pub async fn send_pour_tx(
         &self,
@@ -365,11 +370,11 @@ impl Wallet {
                 coin.coin_status = db_coin_status;
             }
 
-            // let db_coin_cm_idx = wallet_db.schema.raw.get_cm_idx(&cm)?;
+            let db_coin_cm_idx = wallet_db.schema.raw.get_cm_idx(&cm)?;
 
-            // if coin.cm_idx != db_coin_cm_idx {
-            //     coin.cm_idx = db_coin_cm_idx;
-            // }
+            if coin.cm_idx != db_coin_cm_idx {
+                coin.cm_idx = db_coin_cm_idx;
+            }
         }
 
         // coin_manager should update `coin_status` from `DB`

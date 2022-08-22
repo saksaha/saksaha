@@ -117,18 +117,22 @@ impl WalletDB {
                             &CoinStatus::Unused,
                         )?;
 
-                        // let cm_idx_base = tx
-                        //     .get_cm_pairs()
-                        //     .get(0)
-                        //     .ok_or("expect (CmIdx, Cm)")?
-                        //     .0;
+                        {
+                            let cm_idx_base = tx
+                                .get_cm_pairs()
+                                .get(0)
+                                .ok_or("expect (CmIdx, Cm)")?
+                                .0;
 
-                        // let cm_idx_offset =
-                        //     coin.cm_idx.ok_or("expect cm_idx_offset")?;
+                            let cm_idx_offset =
+                                coin.cm_idx.ok_or("expect cm_idx_offset")?;
 
-                        // let cm_idx = cm_idx_base + cm_idx_offset;
+                            let cm_idx = cm_idx_base + cm_idx_offset;
 
-                        // self.schema.raw.single_put_cm_idx(&coin.cm, &cm_idx)?;
+                            self.schema
+                                .raw
+                                .single_put_cm_idx(&coin.cm, &cm_idx)?;
+                        }
                     };
                 }
 

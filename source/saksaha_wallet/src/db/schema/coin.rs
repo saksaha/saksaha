@@ -68,6 +68,11 @@ impl WalletDBSchema {
             None => return Err(format!("Failed to get coin_idx").into()),
         };
 
+        let cm_idx = match self.raw.get_cm_idx(&cm)? {
+            Some(v) => Some(v),
+            None => return Err(format!("Failed to get cm_idx").into()),
+        };
+
         let tx_hash = match self.raw.get_tx_hash(&cm)? {
             Some(v) => {
                 if v == "None" {
@@ -92,7 +97,7 @@ impl WalletDBSchema {
             v,
             cm: *cm,
             coin_status,
-            cm_idx: Some(0),
+            cm_idx,
             coin_idx: Some(coin_idx),
             tx_hash,
         };
@@ -140,6 +145,13 @@ impl WalletDBSchema {
 
         self.raw
             .batch_put_cm(&mut batch, &next_coin_idx, &coin.cm)?;
+
+        let cm_idx = match coin.cm_idx {
+            Some(i) => i,
+            None => 0,
+        };
+
+        self.raw.batch_put_cm_idx(&mut batch, &coin.cm, &cm_idx)?;
 
         self.raw
             .batch_put_tx_hash(&mut batch, &coin.cm, &coin.tx_hash)?;
