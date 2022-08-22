@@ -16,7 +16,7 @@ impl Credential {
         public_key: Option<String>,
         secret: Option<String>,
     ) -> Result<Credential, EnvelopeError> {
-        let (public_key, secret, acc_addr, signature) =
+        let (public_key, secret, acc_addr, secret_key) =
             match (public_key, secret) {
                 (Some(public_key), Some(secret)) => {
                     let credential = P2PCredential::new(&secret, &public_key)?;
@@ -27,22 +27,7 @@ impl Credential {
 
                     let secret_key = SecretKey::from_bytes(secret_bytes)?;
 
-                    let sig_str = {
-                        let sign_key = SigningKey::from(&secret_key);
-                        let sign_key_vec = sign_key.to_bytes().to_vec();
-                        match serde_json::to_string(&sign_key_vec) {
-                            Ok(str) => str,
-                            Err(err) => {
-                                return Err(format!(
-                                    "Failed to change vec to string, err: {}",
-                                    err
-                                )
-                                .into());
-                            }
-                        }
-                    };
-
-                    (public_key, secret, acc_addr, sig_str)
+                    (public_key, secret, acc_addr, secret_key)
                 }
                 _ => {
                     let (sk, pk) = SakKey::generate();
@@ -54,24 +39,24 @@ impl Credential {
                         &pk.to_encoded_point(false).to_bytes(),
                     );
 
-                    let sig_str = {
-                        let sign_key = SigningKey::from(&sk);
-                        let sign_key_vec = sign_key.to_bytes().to_vec();
-                        match serde_json::to_string(&sign_key_vec) {
-                            Ok(str) => str,
-                            Err(err) => {
-                                return Err(format!(
-                                    "Failed to change vec to string, err: {}",
-                                    err
-                                )
-                                .into());
-                            }
-                        }
-                    };
-
-                    (public_key_str, secret_str, acc_addr, sig_str)
+                    (public_key_str, secret_str, acc_addr, sk)
                 }
             };
+
+        let signature = {
+            let sign_key = SigningKey::from(&secret_key);
+            let sign_key_vec = sign_key.to_bytes().to_vec();
+            match serde_json::to_string(&sign_key_vec) {
+                Ok(str) => str,
+                Err(err) => {
+                    return Err(format!(
+                        "Failed to change vec to string, err: {}",
+                        err
+                    )
+                    .into());
+                }
+            }
+        };
 
         Ok(Credential {
             public_key,

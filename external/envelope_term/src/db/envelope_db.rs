@@ -69,41 +69,6 @@ impl EnvelopeDB {
     ) -> Result<(), EnvelopeError> {
         log::info!("Register User: {:?}", credential.acc_addr);
 
-        // match self.schema.get_my_sk_by_acc_addr(acc_addr).await? {
-        //     Some(_) => {
-        //         warn!("user_id already exists");
-        //         return Ok(());
-        //     }
-        //     None => warn!("Generate new account"),
-        // };
-
-        // let (secret_str, public_key_str, sig_str, acc_addr) = {
-        //     let (sk, pk) = SakKey::generate();
-        //     let acc_addr = SakKey::create_acc_addr(&pk);
-
-        //     let secret_str = sak_crypto::encode_hex(&sk.to_bytes());
-
-        //     let public_key_str =
-        //         sak_crypto::encode_hex(&pk.to_encoded_point(false).to_bytes());
-
-        //     let sig_str = {
-        //         let sign_key = SigningKey::from(&sk);
-        //         let sign_key_vec = sign_key.to_bytes().to_vec();
-        //         match serde_json::to_string(&sign_key_vec) {
-        //             Ok(str) => str,
-        //             Err(err) => {
-        //                 return Err(format!(
-        //                     "Failed to change vec to string, err: {}",
-        //                     err
-        //                 )
-        //                 .into());
-        //             }
-        //         }
-        //     };
-
-        //     (secret_str, public_key_str, sig_str, acc_addr)
-        // };
-
         self.schema
             .put_user_data(
                 &credential.secret,
