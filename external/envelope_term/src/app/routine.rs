@@ -6,9 +6,8 @@ use crate::io::InputMode;
 use crate::io::IoEvent;
 use crate::views;
 use crate::AppArgs;
-use crate::Config;
 use crate::EnvelopeError;
-use crate::{db::USER_1, AppReturn, Envelope};
+use crate::{AppReturn, Envelope};
 use log::error;
 use log::LevelFilter;
 use std::sync::Arc;
@@ -21,20 +20,21 @@ pub(super) struct Routine;
 
 impl Routine {
     pub async fn run(&self, app_args: AppArgs) -> Result<(), EnvelopeError> {
-        let AppArgs { config } = app_args;
-
-        let credential = Credential::new(config.public_key, config.secret);
-
-        let (sync_io_tx, mut sync_io_rx) =
-            tokio::sync::mpsc::channel::<IoEvent>(100);
-
         // Configure log
         tui_logger::init_logger(LevelFilter::Debug).unwrap();
         tui_logger::set_default_level(log::LevelFilter::Info);
 
+        let AppArgs { config } = app_args;
+
+        let credential =
+            Arc::new(Credential::new(config.public_key, config.secret)?);
+
+        let (sync_io_tx, mut sync_io_rx) =
+            tokio::sync::mpsc::channel::<IoEvent>(100);
+
         // We need to share the App between thread
         let envelope = {
-            let evl = Envelope::init(sync_io_tx.clone(), credential)
+            let evl = Envelope::init(sync_io_tx.clone(), credential.clone())
                 .await
                 .expect("App should be initialized");
 

@@ -1,5 +1,4 @@
 use super::{AppReturn, Envelope, View};
-use crate::db::USER_2;
 use crate::envelope::actions::Action;
 use crate::inputs::key::Key;
 use crate::io::InputMode;
@@ -142,29 +141,10 @@ impl Envelope {
 
                         // for dev
                         {
-                            let user_2_sk = self
-                                .get_db()
-                                .schema
-                                .get_my_sk_by_user_id(&USER_2.to_string())
+                            if let Err(_) = self
+                                .open_ch(&self.get_partner_pk().to_owned())
                                 .await
-                                .unwrap()
-                                .unwrap();
-
-                            let user_2_pk = self
-                                .get_db()
-                                .schema
-                                .get_my_pk_by_sk(&user_2_sk)
-                                .await
-                                .unwrap()
-                                .unwrap();
-
-                            // let (_sk, dummy_pk) = SakKey::generate();
-
-                            // let dummy_pk_string = sak_crypto::encode_hex(
-                            //     &dummy_pk.to_encoded_point(false).to_bytes(),
-                            // );
-
-                            if let Err(_) = self.open_ch(&user_2_pk).await {
+                            {
                                 return AppReturn::Continue;
                             }
                         };

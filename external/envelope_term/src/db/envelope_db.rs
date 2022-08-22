@@ -1,4 +1,8 @@
-use crate::{credential::Credential, db::EnvelopeDBSchema, EnvelopeError};
+use crate::{
+    credential::{self, Credential},
+    db::EnvelopeDBSchema,
+    EnvelopeError,
+};
 use log::{info, warn};
 use sak_crypto::{
     PublicKey, SakKey, SecretKey, SigningKey, ToEncodedPoint, VerifyingKey,
@@ -15,10 +19,10 @@ pub(crate) struct EnvelopeDB {
 impl EnvelopeDB {
     pub(crate) async fn init(
         // app_prefix: &String,
-        credential: &Credential,
+        acc_addr: &String,
     ) -> Result<EnvelopeDB, EnvelopeError> {
         let envelope_db_path = {
-            let db_path = Self::get_db_path(&credential.acc_addr)?;
+            let db_path = Self::get_db_path(acc_addr)?;
 
             if !db_path.exists() {
                 std::fs::create_dir_all(db_path.clone())?;
@@ -61,53 +65,54 @@ impl EnvelopeDB {
 
     pub(crate) async fn register_user(
         &self,
-        user_id: &String,
+        credential: &Credential,
     ) -> Result<(), EnvelopeError> {
-        log::info!("Register User: {:?}", user_id);
+        log::info!("Register User: {:?}", credential.acc_addr);
 
-        match self.schema.get_my_sk_by_user_id(user_id).await? {
-            Some(_) => {
-                warn!("user_id already exists");
-                return Ok(());
-            }
-            None => (),
-        };
+        // match self.schema.get_my_sk_by_acc_addr(acc_addr).await? {
+        //     Some(_) => {
+        //         warn!("user_id already exists");
+        //         return Ok(());
+        //     }
+        //     None => warn!("Generate new account"),
+        // };
 
-        let (secret_str, public_key_str, sig_str, acc_addr) = {
-            let (sk, pk) = SakKey::generate();
-            let acc_addr = SakKey::create_acc_addr(&pk);
+        // let (secret_str, public_key_str, sig_str, acc_addr) = {
+        //     let (sk, pk) = SakKey::generate();
+        //     let acc_addr = SakKey::create_acc_addr(&pk);
 
-            let secret_str = sak_crypto::encode_hex(&sk.to_bytes());
+        //     let secret_str = sak_crypto::encode_hex(&sk.to_bytes());
 
-            let public_key_str =
-                sak_crypto::encode_hex(&pk.to_encoded_point(false).to_bytes());
+        //     let public_key_str =
+        //         sak_crypto::encode_hex(&pk.to_encoded_point(false).to_bytes());
 
-            let sig_str = {
-                let sign_key = SigningKey::from(&sk);
-                let sign_key_vec = sign_key.to_bytes().to_vec();
-                match serde_json::to_string(&sign_key_vec) {
-                    Ok(str) => str,
-                    Err(err) => {
-                        return Err(format!(
-                            "Failed to change vec to string, err: {}",
-                            err
-                        )
-                        .into());
-                    }
-                }
-            };
-            (secret_str, public_key_str, sig_str, acc_addr)
-        };
+        //     let sig_str = {
+        //         let sign_key = SigningKey::from(&sk);
+        //         let sign_key_vec = sign_key.to_bytes().to_vec();
+        //         match serde_json::to_string(&sign_key_vec) {
+        //             Ok(str) => str,
+        //             Err(err) => {
+        //                 return Err(format!(
+        //                     "Failed to change vec to string, err: {}",
+        //                     err
+        //                 )
+        //                 .into());
+        //             }
+        //         }
+        //     };
+
+        //     (secret_str, public_key_str, sig_str, acc_addr)
+        // };
 
         self.schema
             .put_user_data(
-                user_id,
-                &secret_str,
-                &public_key_str,
-                &sig_str,
-                &acc_addr,
+                &credential.secret,
+                &credential.public_key,
+                &credential.signature,
+                &credential.acc_addr,
             )
             .await?;
+
         Ok(())
     }
 

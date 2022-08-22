@@ -1,4 +1,3 @@
-use crate::db::USER_1;
 use crate::EnvelopeError;
 use crate::{app::get_balance_from_wallet, io::InputMode};
 use envelope_contract::{Channel, ChatMessage};
@@ -138,7 +137,8 @@ impl AppState {
 
     pub async fn set_balance(&mut self) {
         //TODO get user_id via params
-        let tmp_user_id = USER_1.to_owned();
+        // let tmp_user_id = USER_1.to_owned();
+        let tmp_user_id = "".to_owned();
 
         let balance = match get_balance_from_wallet(&tmp_user_id).await {
             Ok(resp) => {
