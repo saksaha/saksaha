@@ -8,6 +8,7 @@ use sak_kv_db::MultiThreaded;
 use sak_kv_db::WriteBatch;
 use sak_types::CoinIdx;
 use sak_types::CoinStatus;
+use sak_types::TxHash;
 
 impl Raw {
     pub(crate) fn get_coin_iter(
@@ -61,6 +62,26 @@ impl Raw {
         };
     }
 
+    pub(crate) fn get_tx_hash(
+        &self,
+        cm: &Scalar,
+    ) -> Result<Option<TxHash>, WalletError> {
+        let cf = self.make_cf_handle(&self.db, cfs::TX_HASH)?;
+
+        let cm = cm.to_bytes();
+
+        match self.db.get_cf(&cf, cm)? {
+            Some(v) => {
+                let tx_hash = String::from_utf8(v)?;
+
+                return Ok(Some(tx_hash));
+            }
+            None => {
+                return Ok(None);
+            }
+        };
+    }
+
     pub(crate) fn get_coin_status(
         &self,
         cm: &Scalar,
@@ -102,19 +123,19 @@ impl Raw {
         };
     }
 
-    pub fn get_user_id(
+    pub(crate) fn get_cm_idx(
         &self,
         cm: &Scalar,
-    ) -> Result<Option<String>, WalletError> {
-        let cf = self.make_cf_handle(&self.db, cfs::USER_ID)?;
+    ) -> Result<Option<u128>, WalletError> {
+        let cf = self.make_cf_handle(&self.db, cfs::CM_IDX)?;
 
         let cm = cm.to_bytes();
 
         match self.db.get_cf(&cf, cm)? {
             Some(v) => {
-                let str = String::from_utf8(v)?;
+                let cm_idx = type_extension::convert_u8_slice_into_u128(&v)?;
 
-                return Ok(Some(str));
+                return Ok(Some(cm_idx));
             }
             None => {
                 return Ok(None);
@@ -290,6 +311,41 @@ impl Raw {
         Ok(())
     }
 
+    pub(crate) fn put_cm_idx(
+        &self,
+        cm: &Scalar,
+        cm_idx: &u128,
+    ) -> Result<(), WalletError> {
+        let mut batch = WriteBatch::default();
+
+        let cf = self.make_cf_handle(&self.db, cfs::CM_IDX)?;
+
+        let cm = cm.to_bytes();
+        let cm_idx = cm_idx.to_be_bytes();
+
+        batch.put_cf(&cf, cm, cm_idx);
+
+        self.db.write(batch)?;
+
+        Ok(())
+    }
+
+    pub(crate) fn batch_put_cm_idx(
+        &self,
+        batch: &mut WriteBatch,
+        cm: &Scalar,
+        cm_idx: &u128,
+    ) -> Result<(), WalletError> {
+        let cf = self.make_cf_handle(&self.db, cfs::CM_IDX)?;
+
+        let cm = cm.to_bytes();
+        let cm_idx = cm_idx.to_be_bytes();
+
+        batch.put_cf(&cf, cm, cm_idx);
+
+        Ok(())
+    }
+
     pub(crate) fn batch_put_a_pk(
         &self,
         batch: &mut WriteBatch,
@@ -337,6 +393,24 @@ impl Raw {
         Ok(())
     }
 
+    pub(crate) fn put_coin_status(
+        &self,
+        cm: &Scalar,
+        status: &CoinStatus,
+    ) -> Result<(), WalletError> {
+        let mut batch = WriteBatch::default();
+
+        let cf = self.make_cf_handle(&self.db, cfs::COIN_STATUS)?;
+
+        let cm = cm.to_bytes();
+
+        batch.put_cf(&cf, cm, status);
+
+        self.db.write(batch)?;
+
+        Ok(())
+    }
+
     pub(crate) fn batch_put_coin_idx(
         &self,
         batch: &mut WriteBatch,
@@ -367,6 +441,28 @@ impl Raw {
         let coin_idx = coin_idx.to_be_bytes();
 
         batch.put_cf(&cf, coin_idx, cm);
+
+        Ok(())
+    }
+
+    pub(crate) fn batch_put_tx_hash(
+        &self,
+        batch: &mut WriteBatch,
+        cm: &Scalar,
+        tx_hash: &Option<TxHash>,
+    ) -> Result<(), WalletError> {
+        let cf = self.make_cf_handle(&self.db, cfs::TX_HASH)?;
+
+        let cm = cm.to_bytes();
+
+        let tx_hash = match tx_hash {
+            Some(v) => v.clone(),
+            None => String::from("None"),
+        };
+
+        let tx_hash = tx_hash.as_bytes();
+
+        batch.put_cf(&cf, cm, tx_hash);
 
         Ok(())
     }
