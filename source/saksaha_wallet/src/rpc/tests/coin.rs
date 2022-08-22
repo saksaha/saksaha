@@ -109,5 +109,13 @@ async fn test_send_tx_twice() {
     {
         let balance = wallet.get_balance(&acc_addr).await.unwrap();
         println!("\t33333333333333333333333333333333 updated {:?}", balance);
+
+        utils::send_msg_for_test(&acc_addr).await;
+        utils::update_coin_status(&acc_addr).await;
+    }
+
+    {
+        let balance = wallet.get_balance(&acc_addr).await.unwrap();
+        println!("\t33333333333333333333333333333333 updated {:?}", balance);
     }
 }

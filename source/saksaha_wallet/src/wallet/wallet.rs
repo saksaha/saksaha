@@ -1,6 +1,7 @@
 use super::CoinManager;
 use crate::{db::WalletDB, Config, CredentialManager, WalletError};
 use colored::Colorize;
+use sak_types::CoinRecord;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 pub const GAS: u64 = 10;
@@ -8,7 +9,7 @@ pub const GAS: u64 = 10;
 pub(crate) struct Wallet {
     wallet_db: Arc<WalletDB>,
     credential_manager: CredentialManager,
-    coin_manager: RwLock<CoinManager>,
+    pub coin_manager: RwLock<CoinManager>,
 }
 
 impl Wallet {
@@ -44,7 +45,6 @@ impl Wallet {
     // }
 
     #[inline]
-
     pub fn get_coin_manager(&self) -> &RwLock<CoinManager> {
         &self.coin_manager
     }

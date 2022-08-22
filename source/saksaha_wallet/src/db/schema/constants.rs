@@ -19,6 +19,8 @@ pub(crate) mod cfs {
 
     pub const COIN_IDX: &str = "coin_idx";
 
+    pub const CM_IDX: &str = "cm_idx";
+
     pub const TX_HASH: &str = "tx_hash";
 
     pub const TX_HASH_STATUS: &str = "tx_hash_status";

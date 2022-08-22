@@ -24,8 +24,6 @@ impl WalletDBSchema {
             v.push(coin);
         }
 
-        println!("[+] GET_ALL_COINS(): {:#?}", v);
-
         Ok(v)
     }
 
@@ -118,24 +116,18 @@ impl WalletDBSchema {
         let mut batch = WriteBatch::default();
 
         self.raw.batch_put_rho(&mut batch, &coin.cm, &coin.rho)?;
-        println!("rho");
 
         self.raw.batch_put_r(&mut batch, &coin.cm, &coin.r)?;
-        println!("r");
 
         self.raw.batch_put_s(&mut batch, &coin.cm, &coin.s)?;
-        println!("s");
 
         self.raw.batch_put_v(&mut batch, &coin.cm, &coin.v)?;
-        println!("v");
 
         self.raw
             .batch_put_a_pk(&mut batch, &coin.cm, &coin.addr_pk)?;
-        println!("pk");
 
         self.raw
             .batch_put_a_sk(&mut batch, &coin.cm, &coin.addr_sk)?;
-        println!("sk");
 
         self.raw.batch_put_coin_status(
             &mut batch,
@@ -143,19 +135,14 @@ impl WalletDBSchema {
             &coin.coin_status,
         )?;
 
-        println!("status");
-
         self.raw
             .batch_put_coin_idx(&mut batch, &coin.cm, &next_coin_idx)?;
-        println!("idx");
 
         self.raw
             .batch_put_cm(&mut batch, &next_coin_idx, &coin.cm)?;
-        println!("cm");
 
         self.raw
             .batch_put_tx_hash(&mut batch, &coin.cm, &coin.tx_hash)?;
-        println!("tx_hash\n");
 
         self.raw.db.write(batch)?;
 

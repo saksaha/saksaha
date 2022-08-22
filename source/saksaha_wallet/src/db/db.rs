@@ -95,16 +95,10 @@ impl WalletDB {
                     // get tx_hash related with coin from db or itself
 
                     let resp = match coin.tx_hash.clone() {
-                        Some(tx_hash) => {
-                            let for_debug = saksaha::get_tx(tx_hash.clone())
-                                .await?
-                                .result
-                                .ok_or("json_response error")?;
-
-                            println!("saksaha::get_tx result: {:?}", for_debug);
-
-                            for_debug
-                        }
+                        Some(tx_hash) => saksaha::get_tx(tx_hash.clone())
+                            .await?
+                            .result
+                            .ok_or("json_response error")?,
 
                         None => {
                             return Err(format!(
@@ -122,23 +116,20 @@ impl WalletDB {
                             &coin.cm,
                             &CoinStatus::Unused,
                         )?;
+
+                        // let cm_idx_base = tx
+                        //     .get_cm_pairs()
+                        //     .get(0)
+                        //     .ok_or("expect (CmIdx, Cm)")?
+                        //     .0;
+
+                        // let cm_idx_offset =
+                        //     coin.cm_idx.ok_or("expect cm_idx_offset")?;
+
+                        // let cm_idx = cm_idx_base + cm_idx_offset;
+
+                        // self.schema.raw.single_put_cm_idx(&coin.cm, &cm_idx)?;
                     };
-
-                    let coin_status_debug = self
-                        .schema
-                        .raw
-                        .get_coin_status(&coin.cm)?
-                        .ok_or("FFFF")?;
-
-                    println!(
-                        "\t[+] CoinStatus update in DB!\
-                        coin_idx: {:?}, coin_cm: {:?},\
-                        [{:?}] -> [{:?}]",
-                        coin.coin_idx,
-                        coin.cm,
-                        coin.coin_status,
-                        coin_status_debug
-                    );
                 }
 
                 CoinStatus::Used => {}
@@ -170,22 +161,6 @@ impl WalletDB {
                             &CoinStatus::Used,
                         )?;
                     }
-
-                    let coin_status_debug = self
-                        .schema
-                        .raw
-                        .get_coin_status(&coin.cm)?
-                        .ok_or("FFFF")?;
-
-                    println!(
-                        "\t[+] CoinStatus update in DB!\
-                        coin_idx: {:?}, coin_cm: {:?},\
-                        [{:?}] -> [{:?}]",
-                        coin.coin_idx,
-                        coin.cm,
-                        coin.coin_status,
-                        coin_status_debug
-                    );
                 }
             }
         }

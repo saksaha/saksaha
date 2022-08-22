@@ -36,7 +36,7 @@ pub(crate) async fn mock_test_context() -> TestContext {
         WalletDB::init(&credential_manager.get_credential(), true).unwrap();
 
     let wallet = {
-        let w = Wallet::init(credential_manager, wallet_db, config)
+        let mut w = Wallet::init(credential_manager, wallet_db, config)
             .await
             .unwrap();
 

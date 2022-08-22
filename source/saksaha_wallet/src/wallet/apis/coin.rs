@@ -41,8 +41,8 @@ impl Wallet {
         for coin in self.get_db().schema.get_all_coins()? {
             println!(
                 "[get_balance] \
-                    cm: {:?}, coin_idx: {:?}, coin_status: {:?}",
-                coin.cm, coin.coin_idx, coin.coin_status
+                    cm: {:?}, value: {:03?}, cm_idx: {:?},  coin_idx: {:?}, coin_status: {:?}",
+                coin.cm, ScalarExt::into_u64(coin.v)?, coin.cm_idx, coin.coin_idx, coin.coin_status
             );
 
             if coin.coin_status == CoinStatus::Unused {
@@ -87,9 +87,10 @@ impl Wallet {
         let (mut new_coin_1, mut new_coin_2) = {
             let v = ScalarExt::into_u64(coin.v)?;
 
-            let new_coin_1 = CoinRecord::new_random(v - GAS, None, None, None)?;
+            let new_coin_1 =
+                CoinRecord::new_random(v - GAS, Some(0), None, None)?;
 
-            let new_coin_2 = CoinRecord::new_random(0, None, None, None)?;
+            let new_coin_2 = CoinRecord::new_random(0, Some(1), None, None)?;
 
             (new_coin_1, new_coin_2)
         };
@@ -153,7 +154,7 @@ impl Wallet {
         let mut pi_ser = Vec::new();
         pi.write(&mut pi_ser).unwrap();
 
-        println!("[!] pi serialized, len: {}, {:?}", pi_ser.len(), pi_ser);
+        println!("[!] pi serialized, len: {}", pi_ser.len());
 
         let json_response = saksaha::send_tx_pour(
             sn_1,
@@ -169,10 +170,8 @@ impl Wallet {
         let tx_hash =
             json_response.result.ok_or("Value needs to be returned")?;
 
-        println!("[check] tx_hash: {:?}", tx_hash);
-
         // waiting for block is written
-        tokio::time::sleep(Duration::from_secs(10)).await;
+        tokio::time::sleep(Duration::from_secs(6)).await;
 
         new_coin_1.tx_hash = Some(tx_hash.clone());
         new_coin_2.tx_hash = Some(tx_hash);
@@ -182,7 +181,7 @@ impl Wallet {
 
             self.get_db().schema.put_coin(&new_coin_2)?;
 
-            println!("[check] new coins have been stored in db");
+            println!("\t[+] new coins have been stored in db");
         }
 
         {
@@ -190,7 +189,7 @@ impl Wallet {
 
             coin_manager_lock.put_coin(new_coin_2)?;
 
-            println!("[check] new coins have been stored in coin_manager");
+            println!("\t[+] new coins have been stored in coin_manager");
         }
 
         Ok("success_power".to_string())
@@ -265,34 +264,84 @@ impl Wallet {
         sn
     }
 
+    // pub async fn update_coin_status(
+    //     &self,
+    //     acc_addr: &String,
+    // ) -> Result<(), WalletError> {
+    //     println!("[update_coin_status] starts");
+
+    //     // {
+    //     //     // check credential
+    //     //     let cmanager = self.get_credential_manager();
+    //     //     let credential = cmanager.get_credential();
+
+    //     //     println!("credential.acc_addr: {:?}", credential.acc_addr);
+    //     //     println!("acc_addr:            {:?}", acc_addr);
+
+    //     //     if &credential.acc_addr != acc_addr {
+    //     //         return Err(format!(
+    //     //             "acc addr is not correct. Candidates are: {:?}",
+    //     //             cmanager.get_candidates(),
+    //     //         )
+    //     //         .into());
+    //     //     }
+    //     // }
+
+    //     let coin_manager_lock = self.get_coin_manager().write().await;
+
+    //     let coins = coin_manager_lock.coins.clone();
+
+    //     let wallet_db = self.get_db();
+
+    //     {
+    //         // update DB first
+    //         let old_coin_sn_vec = wallet_db
+    //             .update_coin_status_unconfirmed_to_unused(&coins)
+    //             .await?;
+
+    //         wallet_db
+    //             .update_coin_status_unused_to_used(old_coin_sn_vec, &coins)
+    //             .await?;
+    //     }
+
+    //     println!("\t[+] Coin Status has been updated in DB.");
+
+    //     tokio::time::sleep(Duration::from_secs(10)).await;
+
+    //     // coin_manager should update `coin_status` from `DB`
+    //     {
+    //         // let db_coins = self.get_db().schema.get_all_coins()?;
+
+    //         for mut coin in coins.iter() {
+    //             let cm = coin.cm;
+
+    //             let db_coin_status = self
+    //                 .get_db()
+    //                 .schema
+    //                 .raw
+    //                 .get_coin_status(&cm)?
+    //                 .ok_or("FFFF")?;
+
+    //             if coin.coin_status != db_coin_status {
+    //                 coin.coin_status = db_coin_status;
+    //             }
+    //         }
+    //     }
+
+    //     println!("\t[+] Coin Status has been updated in Coin Manager.");
+
+    //     Ok(())
+    // }
+
     pub async fn update_coin_status(
         &self,
         acc_addr: &String,
     ) -> Result<(), WalletError> {
-        println!("[update_coin_status] starts");
+        let mut coin_manager_lock = self.coin_manager.write().await;
 
-        // {
-        //     // check credential
-        //     let cmanager = self.get_credential_manager();
-        //     let credential = cmanager.get_credential();
-
-        //     println!("credential.acc_addr: {:?}", credential.acc_addr);
-        //     println!("acc_addr:            {:?}", acc_addr);
-
-        //     if &credential.acc_addr != acc_addr {
-        //         return Err(format!(
-        //             "acc addr is not correct. Candidates are: {:?}",
-        //             cmanager.get_candidates(),
-        //         )
-        //         .into());
-        //     }
-        // }
-
-        let coin_manager_lock = self.get_coin_manager().write().await;
-
+        let wallet_db = self.get_db();
         {
             // update DB first
-            let wallet_db = self.get_db();
 
             let coins = coin_manager_lock.coins.clone();
 
@@ -304,37 +353,27 @@ impl Wallet {
                 .update_coin_status_unused_to_used(old_coin_sn_vec, &coins)
                 .await?;
         }
+        println!("[+] Coin Status has been updated in DB.");
 
-        println!("\t[+] Coin Status has been updated in DB.");
+        for coin in coin_manager_lock.coins.iter_mut() {
+            let cm = coin.cm;
 
-        tokio::time::sleep(Duration::from_secs(10)).await;
+            let db_coin_status =
+                wallet_db.schema.raw.get_coin_status(&cm)?.ok_or("FFFF")?;
 
-        {
-            // coin_manager should update `coin_status` from `DB`
-
-            for coin in coins.iter_mut() {
-                let cm = coin.cm;
-
-                let db_coin_status = self
-                    .get_db()
-                    .schema
-                    .raw
-                    .get_coin_status(&cm)?
-                    .ok_or("FFFF")?;
-
-                if coin.coin_status != db_coin_status {
-                    println!(
-                        "coin_status in CoinManager: {:?}",
-                        coin.coin_status
-                    );
-
-                    // TODO actual value update
-                    coin.coin_status = db_coin_status;
-                }
+            if coin.coin_status != db_coin_status {
+                coin.coin_status = db_coin_status;
             }
+
+            // let db_coin_cm_idx = wallet_db.schema.raw.get_cm_idx(&cm)?;
+
+            // if coin.cm_idx != db_coin_cm_idx {
+            //     coin.cm_idx = db_coin_cm_idx;
+            // }
         }
 
-        println!("\t[+] Coin Status has been updated in Coin Manager.");
+        // coin_manager should update `coin_status` from `DB`
+        println!("[+] Coin Status has been updated in Coin Manager.");
 
         Ok(())
     }

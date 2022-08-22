@@ -123,6 +123,26 @@ impl Raw {
         };
     }
 
+    pub(crate) fn get_cm_idx(
+        &self,
+        cm: &Scalar,
+    ) -> Result<Option<u128>, WalletError> {
+        let cf = self.make_cf_handle(&self.db, cfs::CM_IDX)?;
+
+        let cm = cm.to_bytes();
+
+        match self.db.get_cf(&cf, cm)? {
+            Some(v) => {
+                let cm_idx = type_extension::convert_u8_slice_into_u128(&v)?;
+
+                return Ok(Some(cm_idx));
+            }
+            None => {
+                return Ok(None);
+            }
+        };
+    }
+
     // pub fn get_user_id(
     //     &self,
     //     cm: &Scalar,
@@ -307,6 +327,41 @@ impl Raw {
         let v = v.to_bytes();
 
         batch.put_cf(&cf, cm, v);
+
+        Ok(())
+    }
+
+    pub(crate) fn single_put_cm_idx(
+        &self,
+        cm: &Scalar,
+        cm_idx: &u128,
+    ) -> Result<(), WalletError> {
+        let mut batch = WriteBatch::default();
+
+        let cf = self.make_cf_handle(&self.db, cfs::CM_IDX)?;
+
+        let cm = cm.to_bytes();
+        let cm_idx = cm_idx.to_be_bytes();
+
+        batch.put_cf(&cf, cm, cm_idx);
+
+        self.db.write(batch)?;
+
+        Ok(())
+    }
+
+    pub(crate) fn batch_put_cm_idx(
+        &self,
+        batch: &mut WriteBatch,
+        cm: &Scalar,
+        cm_idx: &u128,
+    ) -> Result<(), WalletError> {
+        let cf = self.make_cf_handle(&self.db, cfs::CM_IDX)?;
+
+        let cm = cm.to_bytes();
+        let cm_idx = cm_idx.to_be_bytes();
+
+        batch.put_cf(&cf, cm, cm_idx);
 
         Ok(())
     }

@@ -41,10 +41,10 @@ impl CoinManager {
         let vec_coins = &self.coins;
 
         for coin in vec_coins {
-            // if coin.v == sak_crypto::Scalar::zero() {
-            //     println!("[get_next_available_coin] coin value: {:?}", coin.v);
-            //     continue;
-            // }
+            if coin.v == sak_crypto::Scalar::zero() {
+                println!("[get_next_available_coin] coin value: {:?}", coin.v);
+                continue;
+            }
 
             println!(
                 "[get_next_available_coin]\
@@ -74,9 +74,13 @@ impl CoinManager {
         Ok(())
     }
 
-    // pub fn get_coins_mut(&mut self) -> &mut Vec<CoinRecord> {
-    //     &mut self.coins
-    // }
+    pub fn get_coins(&self) -> &Vec<CoinRecord> {
+        &self.coins
+    }
+
+    pub fn get_coins_mut(&mut self) -> &mut Vec<CoinRecord> {
+        &mut self.coins
+    }
 
     // pub fn put_tx_hash(&mut self, tx_hash: TxHash) {
     //     self.tx_hashes.push(tx_hash);
