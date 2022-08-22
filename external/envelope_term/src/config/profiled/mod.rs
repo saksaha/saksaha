@@ -12,8 +12,6 @@ pub fn dev_local_1() -> Result<Config, EnvelopeError> {
             "7297b903877a957748b74068d63d6d5661481975240\
                 99fc1df5cd9e8814c66c7",
         )),
-        acc_addr: None,
-        signature: None,
     };
 
     Ok(c)
@@ -30,8 +28,6 @@ pub fn dev_local_2() -> Result<Config, EnvelopeError> {
             "224d0898389759f29ad5c9a6472b26fff86b6293889\
                 88eec457a88ce50e907a0",
         )),
-        acc_addr: None,
-        signature: None,
     };
 
     Ok(c)

@@ -6,8 +6,6 @@ use serde::{Deserialize, Serialize};
 pub struct Config {
     pub public_key: Option<String>,
     pub secret: Option<String>,
-    pub acc_addr: Option<String>,
-    pub signature: Option<String>,
 }
 
 impl Config {
@@ -34,8 +32,6 @@ impl Config {
         Config {
             public_key: None,
             secret: None,
-            acc_addr: None,
-            signature: None,
         }
     }
 }
