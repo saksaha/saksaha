@@ -7,7 +7,7 @@ use sak_rpc_interface::{JsonRequest, JsonResponse};
 async fn test_get_balance_default() {
     sak_test_utils::init_test_log();
 
-    let test_context = utils::make_test_context().await;
+    let test_context = utils::mock_test_context().await;
 
     let rpc = test_context.rpc;
 
