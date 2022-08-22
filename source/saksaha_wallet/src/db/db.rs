@@ -6,6 +6,7 @@ use sak_kv_db::{KeyValueDatabase, Options};
 use sak_types::CoinRecord;
 use sak_types::CoinStatus;
 use sak_types::Sn;
+use std::time::Duration;
 use std::{fs, path::PathBuf};
 
 pub(crate) struct WalletDB {
@@ -93,12 +94,18 @@ impl WalletDB {
                 CoinStatus::Unconfirmed => {
                     // get tx_hash related with coin from db or itself
 
-                    // let tx_hash = String::default();
                     let resp = match coin.tx_hash.clone() {
-                        Some(tx_hash) => saksaha::get_tx(tx_hash.clone())
-                            .await?
-                            .result
-                            .ok_or("json_response error")?,
+                        Some(tx_hash) => {
+                            let for_debug = saksaha::get_tx(tx_hash.clone())
+                                .await?
+                                .result
+                                .ok_or("json_response error")?;
+
+                            println!("saksaha::get_tx result: {:?}", for_debug);
+
+                            for_debug
+                        }
+
                         None => {
                             return Err(format!(
                                 "No tx_hash has been found in cm: {:?}",
@@ -109,25 +116,29 @@ impl WalletDB {
                     };
 
                     if let Some(tx) = resp.tx {
-                        // insert `sn` to Vec<Sn> for
-                        // updating status of old_coin status later
                         old_coin_sn_vec.push(tx.get_sn());
 
                         self.schema.raw.single_put_coin_status(
                             &coin.cm,
                             &CoinStatus::Unused,
                         )?;
-
-                        // coin_manager_lock.make_coin_status_unused(coin)?;
-
-                        // coin.make_status_used();
-
-                        // wallet_db.schema.raw.single_put_coin_status(
-                        //     &coin.cm,
-                        //     &CoinStatus::Unused,
-                        // )?;
                     };
-                    println!("\t[+] CoinStatus update in DB! coin_idx: {:?}, coin_cm: {:?},  [Unconfirmed] -> [Unused]", coin.coin_idx, coin.cm);
+
+                    let coin_status_debug = self
+                        .schema
+                        .raw
+                        .get_coin_status(&coin.cm)?
+                        .ok_or("FFFF")?;
+
+                    println!(
+                        "\t[+] CoinStatus update in DB!\
+                        coin_idx: {:?}, coin_cm: {:?},\
+                        [{:?}] -> [{:?}]",
+                        coin.coin_idx,
+                        coin.cm,
+                        coin.coin_status,
+                        coin_status_debug
+                    );
                 }
 
                 CoinStatus::Used => {}
@@ -160,7 +171,21 @@ impl WalletDB {
                         )?;
                     }
 
-                    println!("\t[+] CoinStatus update in DB! coin_idx: {:?}, coin_cm: {:?}, [Unused] -> [Used]", coin.coin_idx, coin.cm);
+                    let coin_status_debug = self
+                        .schema
+                        .raw
+                        .get_coin_status(&coin.cm)?
+                        .ok_or("FFFF")?;
+
+                    println!(
+                        "\t[+] CoinStatus update in DB!\
+                        coin_idx: {:?}, coin_cm: {:?},\
+                        [{:?}] -> [{:?}]",
+                        coin.coin_idx,
+                        coin.cm,
+                        coin.coin_status,
+                        coin_status_debug
+                    );
                 }
             }
         }

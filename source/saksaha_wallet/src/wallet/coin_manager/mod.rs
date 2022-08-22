@@ -41,12 +41,18 @@ impl CoinManager {
         let vec_coins = &self.coins;
 
         for coin in vec_coins {
-            if coin.v == sak_crypto::Scalar::zero() {
-                println!("coin value: {:?}", coin.v);
-                continue;
-            }
+            // if coin.v == sak_crypto::Scalar::zero() {
+            //     println!("[get_next_available_coin] coin value: {:?}", coin.v);
+            //     continue;
+            // }
 
+            println!(
+                "[get_next_available_coin]\
+                coin, cm: {:?}, status: {:?},  idx: {:?}",
+                coin.cm, coin.coin_status, coin.coin_idx
+            );
             if coin.coin_status == CoinStatus::Unused {
+                println!("[get_next_available_coin] coin value: {:?}", coin.v);
                 return Some(&coin);
             }
         }
@@ -58,7 +64,10 @@ impl CoinManager {
         &mut self,
         coin_record: CoinRecord,
     ) -> Result<(), WalletError> {
-        println!("[+] [coin_manager] put new coin, cm: {:?}", coin_record.cm);
+        println!(
+            "[+] [coin_manager] put new coin, cm_idx: {:?}, cm: {:?}",
+            coin_record.coin_idx, coin_record.cm
+        );
 
         self.coins.push(coin_record);
 

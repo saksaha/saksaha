@@ -42,6 +42,7 @@ impl Wallet {
     // pub fn get_db_mut(&mut self) -> &mut WalletDB {
     //     &mut self.wallet_db
     // }
+
     #[inline]
 
     pub fn get_coin_manager(&self) -> &RwLock<CoinManager> {

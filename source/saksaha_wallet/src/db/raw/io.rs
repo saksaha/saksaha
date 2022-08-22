@@ -371,6 +371,8 @@ impl Raw {
 
         batch.put_cf(&cf, cm, status);
 
+        self.db.write(batch)?;
+
         Ok(())
     }
 
