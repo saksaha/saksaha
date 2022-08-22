@@ -284,7 +284,7 @@ async fn test_late_block_sync_true() {
 
         assert_eq!(1, last_height_1);
 
-        println!("last height is confirmed on 1");
+        println!("last height is confirmed on node 1");
     }
 
     {
@@ -322,7 +322,7 @@ async fn test_late_block_sync_true() {
 
         assert_eq!(2, last_height_1);
 
-        println!("last height is confirmed on 2");
+        println!("last height is confirmed on node 2");
     }
 
     tokio::time::sleep(Duration::from_secs(2)).await;
