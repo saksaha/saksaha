@@ -82,7 +82,7 @@ impl Display for Action {
 
 /// The application should have some contextual actions.
 #[derive(Default, Debug, Clone)]
-pub struct Actions(Vec<Action>);
+pub struct Actions(pub Vec<Action>);
 
 impl Actions {
     /// Given a key, find the corresponding action

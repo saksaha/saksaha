@@ -15,8 +15,8 @@ pub enum View {
 
 #[derive(Debug)]
 pub struct AppState {
-    is_initialized: bool,
-    scroll_messages_view: usize,
+    pub is_initialized: bool,
+    pub scroll_messages_view: usize,
     pub is_loading: bool,
     pub ch_list_state: ListState,
     pub ch_list: Vec<ChannelState>,
@@ -73,8 +73,8 @@ impl AppState {
     }
 
     pub fn set_is_initialized(&mut self, is_initialized: bool) {
-        self.view = View::ChList;
         self.is_initialized = is_initialized;
+        self.view = View::ChList;
     }
 
     pub fn set_ch_list(

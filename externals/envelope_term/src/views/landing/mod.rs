@@ -1,12 +1,16 @@
 use crate::envelope::{Actions, AppState, Envelope, View};
+use tokio::sync::RwLockWriteGuard;
 use tui::backend::Backend;
 use tui::layout::{Alignment, Constraint, Direction, Layout, Rect};
 use tui::{symbols, Frame};
 
 use super::utils;
 
-pub(crate) fn draw_landing<B>(rect: &mut Frame<B>, app: &Envelope)
-where
+pub(crate) fn draw_landing<'b, B>(
+    rect: &mut Frame<B>,
+    // app: &Envelope,
+    // state: &mut RwLockWriteGuard<'b, AppState>,
+) where
     B: Backend,
 {
     let size = rect.size();

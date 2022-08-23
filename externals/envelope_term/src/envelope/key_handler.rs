@@ -1,14 +1,20 @@
-use super::{AppReturn, Envelope, View};
+use super::{AppReturn, AppState, Envelope, View};
 use crate::envelope::actions::Action;
 use crate::inputs::key::Key;
 use crate::io::InputMode;
 use log::{debug, warn};
+use tokio::sync::RwLockWriteGuard;
 
 impl Envelope {
-    pub async fn handle_normal_key(&self, key: Key) -> AppReturn {
+    pub async fn handle_normal_key<'a>(
+        &self,
+        key: Key,
+        //
+        mut state: RwLockWriteGuard<'a, AppState>,
+    ) -> AppReturn {
         if let Some(&action) = self.get_actions().find(key) {
             debug!("Run action [{:?}]", action);
-            let mut state = self.state.write().await;
+            // let mut state = self.state.write().await;
             state.input_text.clear();
 
             match action {
@@ -107,10 +113,16 @@ impl Envelope {
         }
     }
 
-    pub async fn handle_edit_key(&self, key: Key) -> AppReturn {
+    pub async fn handle_edit_key<'a>(
+        &self,
+        key: Key,
+        //
+        state: RwLockWriteGuard<'a, AppState>,
+    ) -> AppReturn {
         match key {
             Key::Enter => {
                 let mut state = self.state.write().await;
+
                 match state.view {
                     View::OpenCh => {
                         state.input_returned =

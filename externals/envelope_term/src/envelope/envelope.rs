@@ -40,7 +40,7 @@ impl Envelope {
         io_tx: mpsc::Sender<IoEvent>,
         credential: Arc<Credential>,
     ) -> Result<Self, EnvelopeError> {
-        let actions = vec![Action::Quit].into();
+        let actions = Actions(vec![Action::Quit]);
 
         let state = {
             let s = AppState::default();
@@ -68,7 +68,7 @@ impl Envelope {
         })
     }
 
-    pub async fn update_on_tick(&mut self) -> AppReturn {
+    pub async fn update_on_tick(&self) -> AppReturn {
         AppReturn::Continue
     }
 

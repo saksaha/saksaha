@@ -43,9 +43,9 @@ impl Events {
 
                 // info!("events!");
 
-                // if let Err(err) = event_tx.send(InputEvent::Tick).await {
-                //     error!("Oops!, {}", err);
-                // }
+                if let Err(err) = event_tx.send(InputEvent::Tick).await {
+                    error!("Oops!, {}", err);
+                }
 
                 if event_stop_capture.load(Ordering::Relaxed) {
                     break;
