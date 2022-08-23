@@ -15,7 +15,6 @@ impl IoAsyncHandler {
     }
 
     pub async fn handle_io_event(&mut self, io_event: IoEvent) {
-        println!("power!");
         log::info!("Handling io event, io_event: {:?}", io_event);
 
         let result = match io_event {
@@ -36,22 +35,13 @@ impl IoAsyncHandler {
     async fn do_initialize(&mut self) -> Result<(), EnvelopeError> {
         info!("🚀 Initializing the application, waiting for 1 second");
 
-        // let mut app = self.app.lock().await;
-
-        info!("lock free");
-
         tokio::time::sleep(Duration::from_secs(1)).await;
 
-        println!("pp1");
-        // app.initialized(); // we could update the app state
         let mut state = self.envelope.get_state().write().await;
-        println!("pp2");
 
         state.set_is_initialized(true);
 
         info!("👍 Application initialized");
-
-        println!("exiting do initailize()");
 
         Ok(())
     }

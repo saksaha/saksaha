@@ -15,26 +15,17 @@ pub(crate) fn draw<'a, 'b, B>(
 ) where
     B: Backend,
 {
-    // let state = envelope.get_state().read().await;
-
-    log::info!("draw(), state.view: {:?}", state.view);
-    log::info!("draw(), state.view: {:?}", state.view);
-
     match state.view {
         View::ChList => {
-            // ch_list::draw_ch_list(rect, envelope);
             ch_list::draw_ch_list(rect, state);
         }
         View::OpenCh => {
             open_ch::draw_open_ch(rect, state);
         }
         View::Landing => {
-            // landing::draw_landing(rect, envelope);
             landing::draw_landing(rect, state);
-            println!("222");
         }
         View::Chat => {
-            // chat::draw_chat(rect, envelope);
             chat::draw_chat(rect, state);
         }
     }

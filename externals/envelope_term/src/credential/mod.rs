@@ -34,30 +34,32 @@ impl Credential {
                 return Ok(c);
             }
             _ => {
-                let c = Credential::new_random();
+                let c = Credential::new_random()?;
+
                 return Ok(c);
             }
         }
     }
 
-    pub fn new_random() -> Credential {
+    pub fn new_random() -> Result<Credential, EnvelopeError> {
         let (secret_key, public_key) = SakKey::generate();
         let acc_addr = SakKey::create_acc_addr(&public_key);
-        let public_key_str = {
-            let b = public_key.to_encoded_point(false).as_bytes();
-            let pk_encoded = sak_crypto::encode_hex(&b);
-            pk_encoded
-        };
+
+        let public_key_str = sak_crypto::encode_hex(
+            &public_key.to_encoded_point(false).as_bytes(),
+        );
         let secret_key_str =
             sak_crypto::encode_hex(&secret_key.to_bytes() as &[u8]);
 
-        Credential {
+        let c = Credential {
             public_key,
             secret_key,
             public_key_str,
             secret_key_str,
             acc_addr,
-        }
+        };
+
+        Ok(c)
     }
 
     pub fn sign(&self) -> String {

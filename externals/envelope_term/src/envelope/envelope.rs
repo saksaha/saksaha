@@ -32,12 +32,14 @@ pub(crate) struct Envelope {
     pub(super) state: Arc<RwLock<AppState>>,
     pub(super) db: EnvelopeDB,
     pub(super) credential: Arc<Credential>,
+    pub(super) partner_credential: Arc<Credential>,
 }
 
 impl Envelope {
     pub(crate) async fn init(
         io_tx: mpsc::Sender<IoEvent>,
         credential: Arc<Credential>,
+        partner_credential: Arc<Credential>,
     ) -> Result<Self, EnvelopeError> {
         let actions = {
             Actions(vec![
@@ -69,6 +71,7 @@ impl Envelope {
             state,
             db,
             credential,
+            partner_credential,
         })
     }
 
@@ -213,7 +216,7 @@ impl Envelope {
     }
 
     pub async fn set_chats(&self, data: Vec<u8>) -> Result<(), EnvelopeError> {
-        let my_pk = self.credential.public_key_str;
+        let my_pk = &self.credential.public_key_str;
         let my_sk = self.credential.secret_key_str.to_string();
 
         let encrypted_chat_msg_vec: Vec<EncryptedChatMessage> =
@@ -298,7 +301,7 @@ impl Envelope {
 
             let mut res: ChatMessage = serde_json::from_str(&chat_msg_ser)?;
 
-            if res.user == my_pk {
+            if &res.user == my_pk {
                 res.user = "me".to_string();
             } else {
                 res.user = res.user[0..16].to_string();
@@ -308,7 +311,7 @@ impl Envelope {
         }
 
         let mut state = self.get_state().write().await;
-        state.set_chats(chat_msg, my_pk);
+        state.set_chats(chat_msg, my_pk.to_string());
 
         log::info!("set_chats done");
 

@@ -32,10 +32,19 @@ impl Routine {
 
         let (sync_io_tx, mut sync_io_rx) = mpsc::channel::<IoEvent>(100);
 
+        let partner_credential = {
+            let c = Credential::new_random()?;
+            Arc::new(c)
+        };
+
         let envelope = {
-            let evl = Envelope::init(sync_io_tx.clone(), credential.clone())
-                .await
-                .expect("App should be initialized");
+            let evl = Envelope::init(
+                sync_io_tx.clone(),
+                credential.clone(),
+                partner_credential.clone(),
+            )
+            .await
+            .expect("App should be initialized");
 
             Arc::new(evl)
         };
@@ -78,6 +87,7 @@ async fn start_envelope(envelope: Arc<Envelope>) -> Result<(), EnvelopeError> {
 
     loop {
         let mut state = envelope.get_state().write().await;
+
         log::info!(
             "is_initialized: {}, view: {:?},",
             state.is_initialized,

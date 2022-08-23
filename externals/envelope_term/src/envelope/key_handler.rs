@@ -118,11 +118,11 @@ impl Envelope {
         &self,
         key: Key,
         //
-        state: RwLockWriteGuard<'a, AppState>,
+        mut state: RwLockWriteGuard<'a, AppState>,
     ) -> AppReturn {
         match key {
             Key::Enter => {
-                let mut state = self.state.write().await;
+                // let mut state = self.state.write().await;
 
                 match state.view {
                     View::OpenCh => {
@@ -183,33 +183,16 @@ impl Envelope {
                 AppReturn::Continue
             }
             Key::Char(c) => {
-                let mut state = self.state.write().await;
-
                 state.input_text.push(c);
+
                 AppReturn::Continue
             }
             Key::Backspace => {
-                let mut state = self.state.write().await;
-
                 state.input_text.pop();
-                AppReturn::Continue
-            }
-            Key::Esc => {
-                let mut state = self.state.write().await;
-
-                state.input_mode = InputMode::Normal;
 
                 AppReturn::Continue
             }
-            _ => AppReturn::Continue,
-        }
-    }
-
-    pub async fn handle_others(&mut self, key: Key) -> AppReturn {
-        match key {
             Key::Esc => {
-                let mut state = self.state.write().await;
-
                 state.input_mode = InputMode::Normal;
 
                 AppReturn::Continue
