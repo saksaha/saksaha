@@ -95,7 +95,9 @@ impl Envelope {
                 },
 
                 Action::UpdateBalance => {
-                    self.get_state_mut().set_balance().await;
+                    let my_pk = self.get_credential().acc_addr.clone();
+
+                    self.get_state_mut().set_balance(my_pk).await;
                     AppReturn::Continue
                 }
             }
@@ -120,7 +122,10 @@ impl Envelope {
                         // for dev
                         {
                             if let Err(_) = self
-                                .open_ch(&self.get_partner_pk().to_owned())
+                                // .open_ch(&self.get_partner_pk().to_owned())
+                                .open_ch(
+                                    &self.get_state().input_returned.clone(),
+                                )
                                 .await
                             {
                                 return AppReturn::Continue;

@@ -1,5 +1,5 @@
-use crate::EnvelopeError;
 use crate::{app::get_balance_from_wallet, io::InputMode};
+use crate::{update_wallet, EnvelopeError};
 use envelope_contract::{Channel, ChatMessage};
 use log::{info, warn};
 use tui::widgets::ListState;
@@ -135,21 +135,29 @@ impl AppState {
         }
     }
 
-    pub async fn set_balance(&mut self) {
+    pub async fn set_balance(&mut self, user_pk: String) {
         //TODO get user_id via params
         // let tmp_user_id = USER_1.to_owned();
-        let tmp_user_id = "".to_owned();
+        // let tmp_user_id = "".to_owned();
+        // let balance = match get_balance_from_wallet(&tmp_user_id).await {
 
-        let balance = match get_balance_from_wallet(&tmp_user_id).await {
+        {
+            // update the coin_manager in wallet
+            let _ = update_wallet(&user_pk).await;
+        }
+
+        let balance = match get_balance_from_wallet(&user_pk).await {
             Ok(resp) => {
                 info!("Success to get response from wallet");
                 let result = match resp.result {
                     Some(b) => {
-                        info!("Updating balance, balance: {}", b);
-                        b
+                        info!("Updating balance, balance: {:?}", b.balance.val);
+
+                        b.balance.val.to_string()
                     }
                     None => {
                         warn!("Failed to get balance, Set balance as default value \'0\'");
+
                         String::from("0")
                     }
                 };
