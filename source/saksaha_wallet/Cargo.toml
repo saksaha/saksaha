@@ -34,8 +34,8 @@ sak_utils_net = { path = "../sak_utils_net" }
 
 [dev-dependencies]
 sak_test_utils = { path = "../sak_test_utils" }
-envelope_term = { path = "../../external/envelope_term" }
-envelope_contract = { path = "../../external/envelope_contract" }
+envelope_term = { path = "../../externals/envelope_term" }
+envelope_contract = { path = "../../externals/envelope_contract" }
 
 [[bin]]
 name = "wallet"
