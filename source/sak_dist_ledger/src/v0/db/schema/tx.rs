@@ -328,6 +328,7 @@ impl LedgerDB {
 
         self.batch_put_cm_cm_idx(batch, &tc.cm_2, &tx.cm_idx_2)?;
 
+        // println!("cm_idx: {}, {}", &tx.cm_idx_1, &tx.cm_idx_2);
         self.batch_put_prf_merkle_rt(batch, tx_hash, &tc.merkle_rt)?;
 
         let tx_ctr_op = tc.get_ctr_op();

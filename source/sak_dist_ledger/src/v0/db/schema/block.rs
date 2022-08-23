@@ -93,15 +93,15 @@ impl LedgerDB {
     ) -> Result<String, LedgerError> {
         let txs_string: String = txs.iter().map(|t| t.to_string()).collect();
 
-        // println!(
-        //     "block to write, block: {:?}, \ntxs: {},\n\
-        //     ctr_state_updates: {:?},\n merkle_updates: {:?}",
-        //     block,
-        //     txs_string,
-        //     ctr_state_updates,
-        //     merkle_updates,
-        //     // updated_ledger_cm_count,
-        // );
+        println!(
+            "block to write, block: {:?}, \ntxs: {},\n\
+            ctr_state_updates: {:?},\n merkle_updates",
+            block,
+            txs_string,
+            ctr_state_updates,
+            // merkle_updates,
+            // updated_ledger_cm_count,
+        );
 
         let mut batch = WriteBatch::default();
 
