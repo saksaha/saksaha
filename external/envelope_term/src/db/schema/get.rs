@@ -4,12 +4,12 @@ use crate::EnvelopeError;
 use envelope_contract::EncryptedEphSecret;
 
 impl EnvelopeDBSchema {
-    pub async fn get_my_sk_by_user_id(
+    pub async fn get_my_sk_by_acc_addr(
         &self,
-        user_id: &String,
+        acc_addr: &String,
     ) -> Result<Option<String>, EnvelopeError> {
         let cf = self.make_cf_handle(&self.db, cfs::MY_SK)?;
-        match self.db.get_cf(&cf, user_id)? {
+        match self.db.get_cf(&cf, acc_addr)? {
             Some(v) => {
                 let str = String::from_utf8(v)?;
 

@@ -1,27 +1,26 @@
 use super::EnvelopeDBSchema;
 use crate::db::cfs;
 use crate::EnvelopeError;
+use log::warn;
 use sak_kv_db::WriteBatch;
 
 impl EnvelopeDBSchema {
     pub(crate) async fn put_user_data(
         &self,
-        my_id: &String,
         sk: &String,
         pk: &String,
         sig: &String,
         acc_addr: &String,
-    ) -> Result<String, EnvelopeError> {
+    ) -> Result<(), EnvelopeError> {
         let mut batch = WriteBatch::default();
 
-        self.batch_put_my_sk(&mut batch, my_id, sk)?;
+        self.batch_put_my_sk(&mut batch, acc_addr, sk)?;
         self.batch_put_my_pk(&mut batch, sk, pk)?;
         self.batch_put_my_sig(&mut batch, sk, sig)?;
-        self.batch_put_my_acc_addr(&mut batch, my_id, acc_addr)?;
 
         self.db.write(batch)?;
 
-        Ok(sk.to_string())
+        Ok(())
     }
 
     pub(crate) async fn put_ch_shared_secret_key(
@@ -46,11 +45,11 @@ impl EnvelopeDBSchema {
         &self,
         // db: &DB,
         batch: &mut WriteBatch,
-        user_id: &String,
+        acc_addr: &String,
         sk: &String,
     ) -> Result<(), EnvelopeError> {
         let cf = self.make_cf_handle(&self.db, cfs::MY_SK)?;
-        batch.put_cf(&cf, user_id, sk);
+        batch.put_cf(&cf, acc_addr, sk);
 
         Ok(())
     }

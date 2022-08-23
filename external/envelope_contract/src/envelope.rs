@@ -34,10 +34,10 @@ pub fn query2(
 ) -> Result<Vec<u8>, ContractError> {
     match request.req_type.as_ref() {
         GET_MSG => {
-            return handle_get_msgs(storage, request.args);
+            return get_msgs(storage, request.args);
         }
         GET_CH_LIST => {
-            return handle_get_ch_list(storage, request.args);
+            return get_ch_list(storage, request.args);
         }
         _ => {
             return Err(
@@ -68,7 +68,7 @@ pub fn execute2(
     }
 }
 
-fn handle_get_msgs(
+fn get_msgs(
     storage: Storage,
     args: RequestArgs,
 ) -> Result<Vec<u8>, ContractError> {
@@ -106,7 +106,7 @@ fn handle_get_msgs(
     Ok(ret)
 }
 
-fn handle_get_ch_list(
+fn get_ch_list(
     storage: Storage,
     args: RequestArgs,
 ) -> Result<Vec<u8>, ContractError> {

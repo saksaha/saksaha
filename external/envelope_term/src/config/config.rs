@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Config {
-    pub user_id: Option<String>,
     pub public_key: Option<String>,
     pub secret: Option<String>,
 }
@@ -31,7 +30,6 @@ impl Config {
 
     pub fn empty() -> Config {
         Config {
-            user_id: None,
             public_key: None,
             secret: None,
         }
