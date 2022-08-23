@@ -3,7 +3,7 @@ use crate::{
     credential::WalletCredential, db::WalletDB, rpc::RPC, wallet::Wallet,
     Config, CredentialManager,
 };
-use envelope_contract::request_type;
+use envelope_contract::{request_type, SendMsgParams};
 use envelope_term::ENVELOPE_CTR_ADDR;
 use hyper::{Body, Client, Method, Request, Uri};
 use sak_contract_std::CtrRequest;
@@ -82,9 +82,16 @@ pub(crate) async fn send_msg_for_test(acc_addr: &String) {
     };
 
     let body = {
+        let send_msg_params = SendMsgParams {
+            ch_id: String::from("ch_0"),
+            msg: String::from("hi"),
+        };
+
+        let args = serde_json::to_vec(&send_msg_params).unwrap();
+
         let ctr_request = CtrRequest {
             req_type: request_type::SEND_MSG.to_string(),
-            args: vec![],
+            args,
             ctr_call_type: sak_contract_std::CtrCallType::Execute,
         };
 

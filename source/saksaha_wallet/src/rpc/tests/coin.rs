@@ -88,8 +88,6 @@ async fn test_send_tx_twice() {
 
     tokio::spawn(async move { rpc.run().await });
 
-    // let acc_addr = &test_credential.get_credential().acc_addr;
-
     {
         let balance = wallet.get_balance(&acc_addr).await.unwrap();
         println!("[+] BALANCE {:?}", balance);
