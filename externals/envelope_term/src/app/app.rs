@@ -1,6 +1,6 @@
 use super::routine::Routine;
 use crate::{Config, EnvelopeError};
-use log::{error, warn};
+use log::error;
 
 pub struct App;
 

@@ -63,10 +63,7 @@ impl Envelope {
         })
     }
 
-    /// We could update the app or dispatch event on tick
     pub async fn update_on_tick(&mut self) -> AppReturn {
-        // here we just increment a counter
-        self.state.incr_tick();
         AppReturn::Continue
     }
 

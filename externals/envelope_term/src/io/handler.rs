@@ -6,7 +6,6 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::Mutex;
 
-/// In the IO thread, we handle IO event without blocking the UI thread
 pub struct IoAsyncHandler {
     app: Arc<Mutex<Envelope>>,
 }
@@ -16,11 +15,9 @@ impl IoAsyncHandler {
         Self { app }
     }
 
-    /// We could be async here
     pub async fn handle_io_event(&mut self, io_event: IoEvent) {
         let result = match io_event {
             IoEvent::Initialize => self.do_initialize().await,
-            IoEvent::Sleep(duration) => self.do_sleep(duration).await,
             IoEvent::GetChList(data) => self.get_ch_list(data).await,
             IoEvent::GetMessages(data) => self.get_msgs(data).await,
         };
@@ -40,21 +37,6 @@ impl IoAsyncHandler {
         tokio::time::sleep(Duration::from_secs(1)).await;
         app.initialized(); // we could update the app state
         info!("👍 Application initialized");
-
-        Ok(())
-    }
-
-    /// Just take a little break
-    async fn do_sleep(
-        &mut self,
-        duration: Duration,
-    ) -> Result<(), EnvelopeError> {
-        info!("😴 Go sleeping for {:?}...", duration);
-        tokio::time::sleep(duration).await;
-        info!("⏰ Wake up !");
-        // Notify the app for having slept
-        let mut app = self.app.lock().await;
-        app.slept();
 
         Ok(())
     }

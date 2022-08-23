@@ -12,6 +12,7 @@ use log::error;
 use log::LevelFilter;
 use std::sync::Arc;
 use std::time::Duration;
+use tokio::sync::mpsc;
 use tokio::sync::Mutex;
 use tui::backend::CrosstermBackend;
 use tui::Terminal;
@@ -26,11 +27,12 @@ impl Routine {
 
         let AppArgs { config } = app_args;
 
-        let credential =
-            Arc::new(Credential::new(config.public_key, config.secret)?);
+        let credential = {
+            let c = Credential::new(config.public_key, config.secret)?;
+            Arc::new(c)
+        };
 
-        let (sync_io_tx, mut sync_io_rx) =
-            tokio::sync::mpsc::channel::<IoEvent>(100);
+        let (sync_io_tx, mut sync_io_rx) = mpsc::channel::<IoEvent>(100);
 
         // We need to share the App between thread
         let envelope = {
@@ -51,7 +53,7 @@ impl Routine {
             }
         });
 
-        match start_app(envelope).await {
+        match start_envelope(envelope).await {
             Ok(_) => (),
             Err(err) => {
                 error!("Error starting the ui, err: {}", err);
@@ -62,7 +64,7 @@ impl Routine {
     }
 }
 
-pub async fn start_app(
+pub async fn start_envelope(
     envelope: Arc<Mutex<Envelope>>,
 ) -> Result<(), EnvelopeError> {
     // Configure Crossterm backend for tui
@@ -73,8 +75,7 @@ pub async fn start_app(
     terminal.clear()?;
     terminal.hide_cursor()?;
 
-    // User event handler
-    let tick_rate = Duration::from_millis(500);
+    let tick_rate = Duration::from_millis(1000);
     let mut events = Events::new(tick_rate);
 
     // Trigger state change from Init to Initialized
@@ -85,20 +86,9 @@ pub async fn start_app(
         envelope.dispatch(IoEvent::Initialize).await;
     }
 
-    let evl_clone = envelope.clone();
-
-    // tokio::spawn(async move {
-    //     tokio::time::sleep(Duration::from_secs(5)).await;
-
-    //     let mut app = app_clone.lock().await;
-    //     app.get_ch_list().await;
-    // });
-
     loop {
+        log::info!("power");
         let mut envelope = envelope.lock().await;
-
-        // get_balance
-        // let balance = get_balance_from_wallet(&"user_1".to_owned()).await;
 
         // Render
         terminal.draw(|rect| views::draw(rect, &mut envelope))?;
@@ -112,7 +102,6 @@ pub async fn start_app(
             InputEvent::Tick => envelope.update_on_tick().await,
         };
 
-        // Check if we should exit
         if result == AppReturn::Exit {
             events.close();
             break;

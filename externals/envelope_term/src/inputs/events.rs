@@ -1,25 +1,23 @@
-use crate::io::InputMode;
-
 use super::key::Key;
 use super::InputEvent;
-use log::error;
+use log::{error, info};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
+use tokio::sync::mpsc;
 
 /// A small event handler that wrap crossterm input and tick event. Each event
 /// type is handled in its own thread and returned to a common `Receiver`
 
 pub struct Events {
-    rx: tokio::sync::mpsc::Receiver<InputEvent>,
+    rx: mpsc::Receiver<InputEvent>,
     // Need to be kept around to prevent disposing the sender side.
-    _tx: tokio::sync::mpsc::Sender<InputEvent>,
+    _tx: mpsc::Sender<InputEvent>,
     // To stop the loop
     stop_capture: Arc<AtomicBool>,
 }
 
 impl Events {
-    /// Constructs an new instance of `Events` with the default config.
     pub fn new(tick_rate: Duration) -> Events {
         let (tx, rx) = tokio::sync::mpsc::channel(100);
         let stop_capture = Arc::new(AtomicBool::new(false));
@@ -60,12 +58,10 @@ impl Events {
         }
     }
 
-    /// Attempts to read an event.
     pub async fn next(&mut self) -> InputEvent {
         self.rx.recv().await.unwrap_or(InputEvent::Tick)
     }
 
-    /// Close
     pub fn close(&mut self) {
         self.stop_capture.store(true, Ordering::Relaxed)
     }
