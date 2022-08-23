@@ -8,7 +8,7 @@ use tui::Frame;
 pub(crate) fn draw_open_ch<'a, B>(
     rect: &mut Frame<B>,
     // app: &Envelope
-    state: RwLockWriteGuard<'a, AppState>,
+    state: &mut RwLockWriteGuard<'a, AppState>,
 ) where
     B: Backend,
 {

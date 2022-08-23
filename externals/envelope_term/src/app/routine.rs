@@ -34,8 +34,6 @@ impl Routine {
 
         let (sync_io_tx, mut sync_io_rx) = mpsc::channel::<IoEvent>(100);
 
-        let (quit_tx, mut quit_rx) = mpsc::channel::<usize>(5);
-
         let envelope = {
             let evl = Envelope::init(sync_io_tx.clone(), credential.clone())
                 .await
@@ -53,10 +51,6 @@ impl Routine {
                 handler.handle_io_event(io_event).await;
             }
         });
-
-        println!("power");
-
-        tokio::time::sleep(Duration::from_secs(1)).await;
 
         match start_envelope(envelope).await {
             Ok(_) => (),
@@ -89,12 +83,7 @@ async fn start_envelope(envelope: Arc<Envelope>) -> Result<(), EnvelopeError> {
         envelope.dispatch(IoEvent::Initialize).await;
     }
 
-    let mut cnt = 0;
     loop {
-        log::info!("Loop, cnt: {}", cnt);
-        cnt += 1;
-
-        // Render
         let mut state = envelope.get_state().write().await;
         log::info!(
             "is_initialized: {}, view: {:?},",
@@ -104,7 +93,6 @@ async fn start_envelope(envelope: Arc<Envelope>) -> Result<(), EnvelopeError> {
 
         terminal.draw(|rect| views::draw(rect, &mut state))?;
 
-        // Handle inputs
         let result = match events.next().await {
             InputEvent::Input(key) => match state.input_mode {
                 InputMode::Normal => {

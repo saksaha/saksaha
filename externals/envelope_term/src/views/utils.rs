@@ -23,7 +23,7 @@ pub(crate) fn check_size(rect: &Rect) {
 
 pub(crate) fn draw_open_ch<'a, B>(
     // app: &'a Envelope,
-    state: RwLockWriteGuard<'a, AppState>,
+    state: &mut RwLockWriteGuard<'a, AppState>,
     rect: &mut Frame<B>,
     chunks: &Vec<Rect>,
 ) -> (Paragraph<'a>, Paragraph<'a>, List<'a>)
@@ -267,7 +267,7 @@ pub(crate) fn draw_logs<'a>() -> TuiLoggerWidget<'a> {
 
 pub(crate) fn draw_chat<'a, B>(
     // app: &'a Envelope,
-    state: RwLockWriteGuard<'a, AppState>,
+    state: &mut RwLockWriteGuard<'a, AppState>,
     rect: &mut Frame<B>,
     chunks: &Rect,
 ) -> (Paragraph<'a>, Paragraph<'a>, Paragraph<'a>)

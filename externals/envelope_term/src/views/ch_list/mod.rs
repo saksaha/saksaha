@@ -5,10 +5,10 @@ use tui::backend::Backend;
 use tui::layout::{Constraint, Direction, Layout};
 use tui::Frame;
 
-pub(crate) fn draw_ch_list<'a, 'b, B>(
-    rect: &mut Frame<'a, B>,
+pub(crate) fn draw_ch_list<'a, B>(
+    rect: &mut Frame<B>,
     // envelope: &Envelope,
-    state: &mut RwLockWriteGuard<'b, AppState>,
+    state: &mut RwLockWriteGuard<'a, AppState>,
 ) where
     B: Backend,
 {
