@@ -6,6 +6,7 @@ mod envelope;
 mod inputs;
 mod io;
 mod views;
+mod wallet_sdk;
 
 #[cfg(test)]
 mod tests;

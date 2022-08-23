@@ -1,6 +1,6 @@
 mod cli;
 
-use envelope_term::{AppArgs, Config, EnvelopeError};
+use envelope_term::{App, AppArgs, Config, EnvelopeError};
 
 fn main() -> Result<(), EnvelopeError> {
     let cli_args = cli::get_args()?;
@@ -9,7 +9,9 @@ fn main() -> Result<(), EnvelopeError> {
 
     let app_args = AppArgs { config };
 
-    envelope_term::run_app(app_args)?;
+    let app = App {};
+
+    app.run(app_args)?;
 
     Ok(())
 }

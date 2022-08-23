@@ -1,5 +1,5 @@
-use crate::{app::get_balance_from_wallet, io::InputMode};
-use crate::{update_wallet, EnvelopeError};
+use crate::EnvelopeError;
+use crate::{io::InputMode, wallet_sdk};
 use envelope_contract::{Channel, ChatMessage};
 use log::{info, warn};
 use tui::widgets::ListState;
@@ -143,10 +143,11 @@ impl AppState {
 
         {
             // update the coin_manager in wallet
-            let _ = update_wallet(&user_pk).await;
+            let _ = wallet_sdk::update_wallet(&user_pk).await;
         }
 
-        let balance = match get_balance_from_wallet(&user_pk).await {
+        let balance = match wallet_sdk::get_balance_from_wallet(&user_pk).await
+        {
             Ok(resp) => {
                 info!("Success to get response from wallet");
                 let result = match resp.result {

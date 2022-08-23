@@ -1,11 +1,9 @@
-use std::sync::Arc;
-
 use super::actions::Actions;
 use super::{state::AppState, ChannelState};
 use crate::credential::Credential;
 use crate::db::EnvelopeDB;
 use crate::io::IoEvent;
-use crate::{app, EnvelopeError};
+use crate::{app, wallet_sdk, EnvelopeError};
 use crate::{envelope::actions::Action, ENVELOPE_CTR_ADDR};
 use chrono::Local;
 use envelope_contract::{
@@ -18,6 +16,7 @@ use sak_contract_std::{CtrCallType, CtrRequest};
 use sak_crypto::{
     aes_decrypt, derive_aes_key, PublicKey, SakKey, SecretKey, ToEncodedPoint,
 };
+use std::sync::Arc;
 use type_extension::{U8Arr32, U8Array};
 
 #[derive(Debug, PartialEq, Eq)]
@@ -419,7 +418,8 @@ impl Envelope {
                 ctr_call_type: CtrCallType::Execute,
             };
 
-            app::send_tx_pour(user_1_acc_addr, ctr_addr, ctr_request).await?;
+            wallet_sdk::send_tx_pour(user_1_acc_addr, ctr_addr, ctr_request)
+                .await?;
         }
 
         {
@@ -470,7 +470,7 @@ impl Envelope {
                 ctr_call_type: CtrCallType::Execute,
             };
 
-            app::send_tx_pour(
+            wallet_sdk::send_tx_pour(
                 self.partner_credential.acc_addr.clone(),
                 ctr_addr,
                 ctr_request,
@@ -635,8 +635,12 @@ impl Envelope {
             ctr_call_type: CtrCallType::Execute,
         };
 
-        app::send_tx_pour(user_1_acc_addr.to_string(), ctr_addr, ctr_request)
-            .await?;
+        wallet_sdk::send_tx_pour(
+            user_1_acc_addr.to_string(),
+            ctr_addr,
+            ctr_request,
+        )
+        .await?;
 
         Ok(())
     }
