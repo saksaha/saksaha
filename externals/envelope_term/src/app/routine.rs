@@ -16,6 +16,8 @@ use tokio::sync::mpsc;
 use tui::backend::CrosstermBackend;
 use tui::Terminal;
 
+use super::ui_routine::UIRoutine;
+
 pub(super) struct Routine;
 
 impl Routine {
@@ -59,64 +61,11 @@ impl Routine {
             }
         });
 
-        match start_envelope(envelope).await {
-            Ok(_) => (),
-            Err(err) => {
-                error!("Error starting the ui, err: {}", err);
-            }
-        };
+        let ui_routine = UIRoutine;
+        if let Err(err) = ui_routine.run(envelope).await {
+            error!("Error running ui routine, err: {}", err);
+        }
 
         Ok(())
     }
-}
-
-async fn start_envelope(envelope: Arc<Envelope>) -> Result<(), EnvelopeError> {
-    // Configure Crossterm backend for tui
-    let stdout = std::io::stdout();
-    crossterm::terminal::enable_raw_mode()?;
-    let backend = CrosstermBackend::new(stdout);
-    let mut terminal = Terminal::new(backend)?;
-    terminal.clear()?;
-    terminal.hide_cursor()?;
-
-    let tick_rate = Duration::from_millis(1000);
-    let mut events = Events::new(tick_rate);
-
-    let envelope = envelope.clone();
-    envelope.dispatch(IoEvent::Initialize).await;
-
-    loop {
-        let mut state = envelope.get_state().write().await;
-
-        log::info!(
-            "is_initialized: {}, view: {:?},",
-            state.is_initialized,
-            state.view,
-        );
-
-        terminal.draw(|rect| views::draw(rect, &mut state))?;
-
-        let result = match events.next().await {
-            InputEvent::Input(key) => match state.input_mode {
-                InputMode::Normal => {
-                    envelope.handle_normal_key(key, state).await
-                }
-                InputMode::Editing => {
-                    envelope.handle_edit_key(key, state).await
-                }
-            },
-            InputEvent::Tick => envelope.update_on_tick().await,
-        };
-
-        if result == AppReturn::Exit {
-            events.close();
-            break;
-        }
-    }
-
-    terminal.clear()?;
-    terminal.show_cursor()?;
-    crossterm::terminal::disable_raw_mode()?;
-
-    Ok(())
 }

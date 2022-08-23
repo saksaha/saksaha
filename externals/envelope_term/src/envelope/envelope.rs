@@ -1,4 +1,5 @@
 use super::actions::Actions;
+use super::dispatcher::Dispatcher;
 use super::{state::AppState, ChannelState};
 use crate::credential::Credential;
 use crate::db::EnvelopeDB;
@@ -28,6 +29,7 @@ pub enum AppReturn {
 
 pub(crate) struct Envelope {
     pub(super) io_tx: mpsc::Sender<IoEvent>,
+    pub(super) dispatcher: Dispatcher,
     pub(super) actions: Actions,
     pub(super) state: Arc<RwLock<AppState>>,
     pub(super) db: EnvelopeDB,
@@ -65,8 +67,11 @@ impl Envelope {
 
         let db = EnvelopeDB::init(&credential.acc_addr).await?;
 
+        let dispatcher = Dispatcher::new(state.clone())?;
+
         Ok(Self {
             io_tx,
+            dispatcher,
             actions,
             state,
             db,
