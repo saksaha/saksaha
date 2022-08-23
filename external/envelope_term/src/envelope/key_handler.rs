@@ -1,5 +1,4 @@
 use super::{AppReturn, Envelope, View};
-use crate::db::USER_2;
 use crate::envelope::actions::Action;
 use crate::inputs::key::Key;
 use crate::io::InputMode;
@@ -51,28 +50,6 @@ impl Envelope {
                     AppReturn::Continue
                 }
 
-                Action::Right => AppReturn::Continue,
-                // Action::Right => match self.get_state().view {
-                //     View::Chat => {
-                //         self.state.selected_ch_id =
-                //             match self.state.ch_list_state.selected() {
-                //                 Some(i) => (self.state.ch_list[i])
-                //                     .channel
-                //                     .ch_id
-                //                     .clone(),
-                //                 None => String::default(),
-                //             };
-                //         log::info!("Ch_Id: {:?}", self.state.selected_ch_id);
-                //         // self.get_messages().await;
-                //         // self.state.set_view_chat();
-                //         // log::info!("ch_id: {:?}", curr_ch);
-
-                //         return AppReturn::Continue;
-                //     }
-                //     _ => {
-                //         return AppReturn::Continue;
-                //     }
-                // },
                 Action::RestoreChat => match self.get_state().view {
                     View::Chat => {
                         let ch_id = self.get_state().selected_ch_id.clone();
@@ -142,29 +119,10 @@ impl Envelope {
 
                         // for dev
                         {
-                            let user_2_sk = self
-                                .get_db()
-                                .schema
-                                .get_my_sk_by_user_id(&USER_2.to_string())
+                            if let Err(_) = self
+                                .open_ch(&self.get_partner_pk().to_owned())
                                 .await
-                                .unwrap()
-                                .unwrap();
-
-                            let user_2_pk = self
-                                .get_db()
-                                .schema
-                                .get_my_pk_by_sk(&user_2_sk)
-                                .await
-                                .unwrap()
-                                .unwrap();
-
-                            // let (_sk, dummy_pk) = SakKey::generate();
-
-                            // let dummy_pk_string = sak_crypto::encode_hex(
-                            //     &dummy_pk.to_encoded_point(false).to_bytes(),
-                            // );
-
-                            if let Err(_) = self.open_ch(&user_2_pk).await {
+                            {
                                 return AppReturn::Continue;
                             }
                         };

@@ -1,8 +1,9 @@
 use crate::EnvelopeError;
 use hyper::{Body, Client, Method, Request, Uri};
+use log::warn;
 use sak_contract_std::CtrRequest;
 use sak_rpc_interface::{JsonRequest, JsonResponse};
-use saksaha_wallet::routes::v0::SendTxRequest;
+use saksaha_wallet::routes::v0::{SendTxRequest, SendTxResponse};
 
 pub async fn get_balance_from_wallet(
     user_id: &String,
@@ -47,7 +48,7 @@ pub async fn send_tx_pour(
     acc_addr: String,
     ctr_addr: String,
     ctr_request: CtrRequest,
-) -> Result<JsonResponse<String>, EnvelopeError> {
+) -> Result<JsonResponse<SendTxResponse>, EnvelopeError> {
     let endpoint_test = "http://localhost:36612/rpc/v0";
 
     let client = Client::new();
@@ -84,7 +85,8 @@ pub async fn send_tx_pour(
 
     let b = hyper::body::to_bytes(resp.into_body()).await?;
 
-    let json_response = serde_json::from_slice::<JsonResponse<String>>(&b)?;
+    let json_response =
+        serde_json::from_slice::<JsonResponse<SendTxResponse>>(&b)?;
 
     Ok(json_response)
 }
