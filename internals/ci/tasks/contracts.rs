@@ -37,11 +37,11 @@ pub(crate) fn naively_check_if_prebuild_has_done() -> Result<bool, CIError> {
 pub(crate) fn build_3rd_party_contracts() -> Result<(), CIError> {
     log!("build 3rd party contracts");
 
-    let external_path = Paths::external()?;
+    let externals_path = Paths::externals()?;
 
     let contracts = vec![Contract {
         name: "envelope_contract",
-        path: external_path.join("envelope_contract"),
+        path: externals_path.join("envelope_contract"),
     }];
 
     let receipt = contracts

@@ -7,7 +7,7 @@ static PATHS: OnceCell<Paths> = OnceCell::new();
 #[derive(Debug)]
 pub struct Paths {
     prebuild: PathBuf,
-    external: PathBuf,
+    externals: PathBuf,
     source: PathBuf,
     curr: PathBuf,
 }
@@ -19,9 +19,9 @@ impl Paths {
             return Err(format!("prebuild path does not exist").into());
         }
 
-        let external = curr_dir.join("external");
-        if !external.exists() {
-            return Err(format!("external path does not exist").into());
+        let externals = curr_dir.join("externals");
+        if !externals.exists() {
+            return Err(format!("externals path does not exist").into());
         }
 
         let source = curr_dir.join("source");
@@ -31,7 +31,7 @@ impl Paths {
 
         let paths = Paths {
             prebuild,
-            external,
+            externals,
             source,
             curr: curr_dir,
         };
@@ -56,10 +56,10 @@ impl Paths {
         Ok(&paths.source)
     }
 
-    pub fn external() -> Result<&'static PathBuf, CIError> {
+    pub fn externals() -> Result<&'static PathBuf, CIError> {
         let paths = PATHS.get().ok_or("Paths should have been initialized")?;
 
-        Ok(&paths.external)
+        Ok(&paths.externals)
     }
 
     pub fn prebuild() -> Result<&'static PathBuf, CIError> {

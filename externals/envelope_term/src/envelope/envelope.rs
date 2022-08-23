@@ -95,6 +95,10 @@ impl Envelope {
         &self.state
     }
 
+    pub(crate) fn get_credential(&self) -> &Credential {
+        &self.credential
+    }
+
     pub(crate) fn get_state_mut(&mut self) -> &mut AppState {
         &mut self.state
     }
@@ -352,6 +356,8 @@ impl Envelope {
         &mut self,
         her_pk: &String,
     ) -> Result<(), EnvelopeError> {
+        log::info!("Trying to make a channel w/ partner: {:?}", her_pk);
+
         let (eph_sk, eph_pk) = SakKey::generate();
 
         let eph_pk: String =
@@ -366,7 +372,7 @@ impl Envelope {
         let ch_id = format!("{}_{}", my_pk, ch_id_num.to_string());
 
         {
-            // =-=-=-=-=-= initiator `open_ch` =-=-=-=-=-=-=-=
+            // =-=-=-=-=-= `open_ch` for initiator  =-=-=-=-=-=-=-=
 
             let my_sk: U8Arr32 = U8Array::from_hex_string(my_sk)?;
 
@@ -378,19 +384,19 @@ impl Envelope {
                     serde_json::to_string(&ch_id_enc)?
                 };
 
+                let eph_sk_enc = {
+                    let eph_sk_enc: Vec<u8> =
+                        sak_crypto::aes_encrypt(&my_sk, &eph_sk.to_bytes())?;
+
+                    // for dev, prefix is `init_`
+                    format!("init_{}", serde_json::to_string(&eph_sk_enc)?)
+                };
+
                 let sig_enc = {
                     let sig_enc =
                         sak_crypto::aes_encrypt(&my_sk, &my_sig.as_bytes())?;
 
                     serde_json::to_string(&sig_enc)?
-                };
-
-                let eph_sk_enc = {
-                    let eph_sk_enc: Vec<u8> =
-                        sak_crypto::aes_encrypt(&my_sk, &eph_sk.to_bytes())?;
-
-                    // for dev
-                    format!("init_{}", serde_json::to_string(&eph_sk_enc)?)
                 };
 
                 Channel::new(ch_id_enc, eph_sk_enc, sig_enc)?
@@ -417,7 +423,7 @@ impl Envelope {
         }
 
         {
-            // =-=-=-=-=-= receiver `open_ch` =-=-=-=-=-=-=-=
+            // =-=-=-=-=-=  `open_ch` for receiver =-=-=-=-=-=-=-=
 
             let aes_key = {
                 let her_pk: Vec<u8> = sak_crypto::decode_hex(her_pk)?;
@@ -434,6 +440,8 @@ impl Envelope {
 
                     serde_json::to_string(&ch_id_enc)?
                 };
+
+                let eph_pk = eph_pk;
 
                 let sig_enc = {
                     let sig_enc =
