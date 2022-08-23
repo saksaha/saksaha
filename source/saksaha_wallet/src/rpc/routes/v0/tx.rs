@@ -15,7 +15,7 @@ pub struct SendTxRequest {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub(in crate::rpc) struct SendTxResponse {
+pub struct SendTxResponse {
     pub result: String,
 }
 

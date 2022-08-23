@@ -14,7 +14,6 @@ pub enum Action {
     ShowChat,
     Down,
     Up,
-    Right,
     //
     UpdateBalance,
     Select,
@@ -24,7 +23,7 @@ pub enum Action {
 impl Action {
     /// All available actions
     pub fn iterator() -> Iter<'static, Action> {
-        static ACTIONS: [Action; 12] = [
+        static ACTIONS: [Action; 11] = [
             Action::Quit,
             Action::SwitchEditMode,
             Action::SwitchNormalMode,
@@ -33,7 +32,6 @@ impl Action {
             Action::ShowChat,
             Action::Down,
             Action::Up,
-            Action::Right,
             //
             Action::UpdateBalance,
             Action::Select,
@@ -53,7 +51,6 @@ impl Action {
             Action::ShowChat => &[Key::Char('3')],
             Action::Down => &[Key::Down],
             Action::Up => &[Key::Up],
-            Action::Right => &[Key::Right],
             //
             Action::UpdateBalance => &[Key::Char('$')],
             Action::Select => &[Key::Enter],
@@ -74,7 +71,6 @@ impl Display for Action {
             Action::ShowChat => "Show chatting",
             Action::Down => "Down",
             Action::Up => "Up",
-            Action::Right => "move to chat room",
             //
             Action::UpdateBalance => "Show my balance in wallet",
             Action::Select => "Select",

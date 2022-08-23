@@ -1,18 +1,19 @@
+use std::sync::Arc;
+
 use super::actions::Actions;
 use super::{state::AppState, ChannelState};
 use crate::credential::Credential;
 use crate::db::EnvelopeDB;
-use crate::db::{USER_1, USER_2};
 use crate::io::IoEvent;
 use crate::{app, EnvelopeError};
 use crate::{envelope::actions::Action, ENVELOPE_CTR_ADDR};
 use chrono::Local;
 use envelope_contract::{
-    request_type::{GET_CH_LIST, OPEN_CH, SEND_MSG},
+    request_type::{GET_CH_LIST, GET_MSG, OPEN_CH, SEND_MSG},
     Channel, ChatMessage, EncryptedChatMessage, GetChListParams, GetMsgParams,
     OpenChParams, SendMsgParams,
 };
-use log::error;
+use log::{error, warn};
 use sak_contract_std::{CtrCallType, CtrRequest};
 use sak_crypto::{
     aes_decrypt, derive_aes_key, PublicKey, SakKey, SecretKey, ToEncodedPoint,
@@ -30,24 +31,27 @@ pub struct Envelope {
     actions: Actions,
     state: AppState,
     db: EnvelopeDB,
+    credential: Arc<Credential>,
+    partner_credential: Credential,
 }
 
 impl Envelope {
     pub(crate) async fn init(
         io_tx: tokio::sync::mpsc::Sender<IoEvent>,
         // user_prefix: &String,
-        credential: Credential,
+        credential: Arc<Credential>,
     ) -> Result<Self, EnvelopeError> {
         let actions = vec![Action::Quit].into();
         let state = AppState::default();
 
-        let db = EnvelopeDB::init(&credential).await?;
+        let db = EnvelopeDB::init(&credential.acc_addr).await?;
 
         // for test, dummy
+        let partner_credential = Credential::new(None, None)?;
         {
-            let partner_prefix = USER_2.to_string();
-            db.register_user(&credential.acc_addr).await?;
-            db.register_user(&partner_prefix).await?;
+            db.register_user(&credential.clone()).await?;
+
+            db.register_user(&partner_credential).await?;
         }
 
         Ok(Self {
@@ -55,6 +59,8 @@ impl Envelope {
             actions,
             state,
             db,
+            credential,
+            partner_credential,
         })
     }
 
@@ -93,10 +99,6 @@ impl Envelope {
         &mut self.state
     }
 
-    pub fn is_loading(&self) -> bool {
-        self.state.is_loading
-    }
-
     pub fn initialized(&mut self) {
         self.actions = vec![
             Action::Quit,
@@ -107,8 +109,6 @@ impl Envelope {
             Action::ShowChat,
             Action::Down,
             Action::Up,
-            Action::Right,
-            //
             Action::UpdateBalance,
             Action::Select,
             Action::RestoreChat,
@@ -137,9 +137,9 @@ impl Envelope {
 
                     // First, try to decrypt the `ch_id` with `my_sk`
                     let my_sk = {
-                        let s = self.get_sk(&USER_1.to_string()).await?;
+                        let s = &self.credential.secret;
 
-                        U8Array::from_hex_string(s)?
+                        U8Array::from_hex_string(s.to_string())?
                     };
 
                     let ch_id_decrypted = {
@@ -151,7 +151,7 @@ impl Envelope {
                     };
 
                     // Prefix of the encrypted `ch_id` is `MY_PK` rn
-                    let my_pk = self.get_pk(&USER_1.to_string()).await?;
+                    let my_pk = &self.credential.public_key;
 
                     if &ch_id_decrypted[0..my_pk.len()] == my_pk.as_str() {
                         let ch_id: String =
@@ -186,8 +186,7 @@ impl Envelope {
                         // it should be decrypted with ECIES-scheme aes key
                         let aes_key = {
                             let my_sk = {
-                                let s =
-                                    self.get_sk(&USER_1.to_string()).await?;
+                                let s = &self.credential.secret;
 
                                 SecretKey::from_bytes(s.as_bytes())?
                             };
@@ -249,8 +248,8 @@ impl Envelope {
         &mut self,
         data: Vec<u8>,
     ) -> Result<(), EnvelopeError> {
-        let my_pk = self.get_pk(&USER_1.to_string()).await?;
-        let my_sk = self.get_sk(&USER_1.to_string()).await?;
+        let my_pk = self.credential.public_key.to_string();
+        let my_sk = self.credential.secret.to_string();
 
         let encrypted_chat_msg_vec: Vec<EncryptedChatMessage> =
             match serde_json::from_slice::<Vec<EncryptedChatMessage>>(&data) {
@@ -283,7 +282,8 @@ impl Envelope {
                 let eph_sk_encrypted: Vec<u8> = serde_json::from_str(eph_sk)?;
 
                 let sk = {
-                    let my_sk: U8Arr32 = U8Array::from_hex_string(my_sk)?;
+                    let my_sk: U8Arr32 =
+                        U8Array::from_hex_string(my_sk.to_string())?;
 
                     let eph_sk =
                         sak_crypto::aes_decrypt(&my_sk, &eph_sk_encrypted)?;
@@ -293,7 +293,8 @@ impl Envelope {
 
                 let pk = {
                     // for dev, her_pk == `user_2_pk`
-                    let her_pk = self.get_pk(&USER_2.to_string()).await?;
+                    let her_pk =
+                        self.get_pk(&self.partner_credential.acc_addr).await?;
 
                     let her_pk_vec: Vec<u8> = sak_crypto::decode_hex(&her_pk)?;
 
@@ -323,7 +324,7 @@ impl Envelope {
                 serde_json::from_str(&encrypted_chat_msg)?;
 
             let chat_msg_ser: String = {
-                let chat_msg: Vec<u8> =
+                let chat_msg =
                     sak_crypto::aes_decrypt(&aes_key, &encrypted_chat_msg)?;
 
                 String::from_utf8(chat_msg)?
@@ -355,16 +356,10 @@ impl Envelope {
 
         let eph_pk: String =
             serde_json::to_string(eph_pk.to_encoded_point(false).as_bytes())?;
-
-        let my_sk = self.get_sk(&USER_1.to_string()).await?;
-
-        let my_pk = self.get_pk(&USER_1.to_string()).await?;
-
-        let my_sig = self.get_sig(&USER_1.to_string()).await?;
-
-        // let user_1_acc_addr = self.get_acc_addr(&USER_1.to_string()).await?;
-        let user_1_acc_addr =
-            String::from("67892d6d5a5acc26790d649fc4478df431741846");
+        let my_sk = self.credential.secret.clone();
+        let my_pk = self.credential.public_key.clone();
+        let my_sig = self.credential.signature.clone();
+        let user_1_acc_addr = self.credential.acc_addr.clone();
 
         let ch_id_num = sak_crypto::rand();
 
@@ -467,15 +462,19 @@ impl Envelope {
                 ctr_call_type: CtrCallType::Execute,
             };
 
-            app::send_tx_pour(her_pk.to_string(), ctr_addr, ctr_request)
-                .await?;
+            app::send_tx_pour(
+                self.partner_credential.acc_addr.clone(),
+                ctr_addr,
+                ctr_request,
+            )
+            .await?;
         }
 
         Ok(())
     }
 
     pub async fn get_ch_list(&mut self) -> Result<(), EnvelopeError> {
-        let my_pk = self.get_pk(&USER_1.to_string()).await?;
+        let my_pk = &self.credential.public_key;
 
         let get_ch_list_params = GetChListParams {
             dst_pk: my_pk.clone(),
@@ -507,7 +506,7 @@ impl Envelope {
 
         if let Ok(r) = saksaha::query_ctr(
             ENVELOPE_CTR_ADDR.into(),
-            "get_msgs".to_string(),
+            GET_MSG.to_string(),
             args,
         )
         .await
@@ -523,14 +522,15 @@ impl Envelope {
     pub async fn send_messages(
         &self,
         msg: &String,
-    ) -> Result<String, EnvelopeError> {
+    ) -> Result<(), EnvelopeError> {
         let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
 
-        let user_1_pk = self.get_pk(&USER_1.to_string()).await?;
-        let user_1_sk = self.get_sk(&USER_1.to_string()).await?;
-        let user_1_acc_addr = self.get_acc_addr(&USER_1.to_string()).await?;
+        let user_1_pk = self.credential.public_key.to_string();
+        let user_1_sk = &self.credential.secret;
+        let user_1_acc_addr = &self.credential.acc_addr;
 
-        let user_1_sk: U8Arr32 = U8Array::from_hex_string(user_1_sk)?;
+        let user_1_sk: U8Arr32 =
+            U8Array::from_hex_string(user_1_sk.to_string())?;
 
         let selected_ch_id = self.state.selected_ch_id.clone();
 
@@ -563,7 +563,8 @@ impl Envelope {
 
                 let pk = {
                     // for dev, her_pk == `user_2_pk`
-                    let her_pk = self.get_pk(&USER_2.to_string()).await?;
+                    let her_pk =
+                        self.get_pk(&self.partner_credential.acc_addr).await?;
 
                     let her_pk_vec: Vec<u8> = sak_crypto::decode_hex(&her_pk)?;
 
@@ -578,7 +579,7 @@ impl Envelope {
                 let eph_pk = eph_key;
 
                 let sk = {
-                    let my_sk = self.get_sk(&USER_1.to_string()).await?;
+                    let my_sk = &self.credential.secret;
 
                     SecretKey::from_bytes(&my_sk.as_bytes())?
                 };
@@ -599,9 +600,10 @@ impl Envelope {
             msg: msg.clone(),
         };
 
-        let chat_msg_serialized: String = serde_json::to_string(&chat_msg)?;
+        let chat_msg_serialized = serde_json::to_string(&chat_msg)?;
+        // let chat_msg_serialized = serde_json::to_string(&msg)?;
 
-        let encrypted_msg: String = {
+        let encrypted_msg = {
             let encrypted_msg = &sak_crypto::aes_encrypt(
                 &aes_key,
                 chat_msg_serialized.as_bytes(),
@@ -625,12 +627,10 @@ impl Envelope {
             ctr_call_type: CtrCallType::Execute,
         };
 
-        let json_response =
-            app::send_tx_pour(user_1_acc_addr, ctr_addr, ctr_request).await?;
+        app::send_tx_pour(user_1_acc_addr.to_string(), ctr_addr, ctr_request)
+            .await?;
 
-        let result = json_response.result.unwrap_or("None".to_string());
-
-        Ok(result)
+        Ok(())
     }
 
     // Now we do not do encryption nonetheless
@@ -642,7 +642,7 @@ impl Envelope {
     //     let my_sk = match self
     //         .db
     //         .schema
-    //         .get_my_sk_by_user_id(&USER_1.to_string())
+    //         .get_my_sk_by_acc_addr(&USER_1.to_string())
     //         .await?
     //     {
     //         Some(v) => v,
@@ -704,29 +704,13 @@ impl Envelope {
     //     Ok(open_ch)
     // }
 
-    pub async fn get_ch_list_from_local(
-        &mut self,
-        her_pk: &String,
-    ) -> Result<(), EnvelopeError> {
-        if let Some(c) = self.db.schema.get_her_pk_by_ch_id(&her_pk).await? {
-            self.state
-                .ch_list
-                .push(ChannelState::new(Channel::default(), c));
-        };
-
-        Ok(())
-    }
-
-    async fn get_sk(&self, user: &String) -> Result<String, EnvelopeError> {
-        let user_sk =
-            self.db.schema.get_my_sk_by_user_id(user).await?.ok_or("")?;
-
-        Ok(user_sk)
-    }
-
-    async fn get_pk(&self, user: &String) -> Result<String, EnvelopeError> {
-        let user_sk =
-            self.db.schema.get_my_sk_by_user_id(user).await?.ok_or("")?;
+    async fn get_pk(&self, acc_addr: &String) -> Result<String, EnvelopeError> {
+        let user_sk = self
+            .db
+            .schema
+            .get_my_sk_by_acc_addr(acc_addr)
+            .await?
+            .ok_or("Cannot retrieve pk")?;
 
         let user_pk =
             self.db.schema.get_my_pk_by_sk(&user_sk).await?.ok_or("")?;
@@ -748,14 +732,15 @@ impl Envelope {
         Ok(acc_addr)
     }
 
-    async fn get_sig(&self, user: &String) -> Result<String, EnvelopeError> {
-        let user_sk =
-            self.db.schema.get_my_sk_by_user_id(user).await?.ok_or("")?;
-
+    async fn get_sig(&self, secret: &String) -> Result<String, EnvelopeError> {
         let user_sig =
-            self.db.schema.get_my_sig_by_sk(&user_sk).await?.ok_or("")?;
+            self.db.schema.get_my_sig_by_sk(secret).await?.ok_or("")?;
 
         Ok(user_sig)
+    }
+
+    pub fn get_partner_pk(&self) -> &String {
+        &self.partner_credential.public_key
     }
 
     // async fn get_shared_secret(

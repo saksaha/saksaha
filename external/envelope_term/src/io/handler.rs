@@ -21,8 +21,8 @@ impl IoAsyncHandler {
         let result = match io_event {
             IoEvent::Initialize => self.do_initialize().await,
             IoEvent::Sleep(duration) => self.do_sleep(duration).await,
-            IoEvent::GetChList(data) => self.handle_get_ch_list(data).await,
-            IoEvent::GetMessages(data) => self.handle_get_msgs(data).await,
+            IoEvent::GetChList(data) => self.get_ch_list(data).await,
+            IoEvent::GetMessages(data) => self.get_msgs(data).await,
         };
 
         if let Err(err) = result {
@@ -59,7 +59,7 @@ impl IoAsyncHandler {
         Ok(())
     }
 
-    async fn handle_get_ch_list(
+    async fn get_ch_list(
         &mut self,
         data: Vec<u8>,
     ) -> Result<(), EnvelopeError> {
@@ -70,10 +70,7 @@ impl IoAsyncHandler {
         Ok(())
     }
 
-    async fn handle_get_msgs(
-        &mut self,
-        data: Vec<u8>,
-    ) -> Result<(), EnvelopeError> {
+    async fn get_msgs(&mut self, data: Vec<u8>) -> Result<(), EnvelopeError> {
         let mut app = self.app.lock().await;
 
         app.set_chats(data).await?;

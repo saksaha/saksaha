@@ -4,7 +4,7 @@ mod wallet;
 use self::routine::Routine;
 use crate::Config;
 use crate::EnvelopeError;
-use log::error;
+use log::{error, warn};
 pub(crate) use wallet::*;
 
 pub struct AppArgs {
