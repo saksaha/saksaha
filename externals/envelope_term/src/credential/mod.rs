@@ -1,14 +1,15 @@
-use log::warn;
-use sak_crypto::{self, SakKey, SecretKey, SigningKey, ToEncodedPoint};
+use crate::EnvelopeError;
+use sak_crypto::{
+    self, PublicKey, SakKey, SecretKey, SigningKey, ToEncodedPoint,
+};
 use sak_p2p_id::Credential as P2PCredential;
 
-use crate::EnvelopeError;
-
 pub(crate) struct Credential {
-    pub public_key: String,
-    pub secret: String,
+    pub public_key: PublicKey,
+    pub secret_key: SecretKey,
+    pub public_key_str: String,
+    pub secret_key_str: String,
     pub acc_addr: String,
-    pub signature: String,
 }
 
 impl Credential {
@@ -16,53 +17,51 @@ impl Credential {
         public_key: Option<String>,
         secret: Option<String>,
     ) -> Result<Credential, EnvelopeError> {
-        let (public_key, secret, acc_addr, secret_key) =
-            match (public_key, secret) {
-                (Some(public_key), Some(secret)) => {
-                    let credential = P2PCredential::new(&secret, &public_key)?;
-                    let acc_addr =
-                        SakKey::create_acc_addr(&credential.public_key);
+        match (public_key, secret) {
+            (Some(public_key), Some(secret)) => {
+                let p2p_credential = P2PCredential::new(&secret, &public_key)?;
+                let acc_addr =
+                    SakKey::create_acc_addr(&p2p_credential.public_key);
 
-                    let secret_bytes = sak_crypto::decode_hex(&secret)?;
+                let c = Credential {
+                    public_key: p2p_credential.public_key,
+                    secret_key: p2p_credential.secret_key,
+                    public_key_str: p2p_credential.public_key_str,
+                    secret_key_str: p2p_credential.secret,
+                    acc_addr,
+                };
 
-                    let secret_key = SecretKey::from_bytes(secret_bytes)?;
-
-                    (public_key, secret, acc_addr, secret_key)
-                }
-                _ => {
-                    let (sk, pk) = SakKey::generate();
-                    let acc_addr = SakKey::create_acc_addr(&pk);
-
-                    let secret_str = sak_crypto::encode_hex(&sk.to_bytes());
-
-                    let public_key_str = sak_crypto::encode_hex(
-                        &pk.to_encoded_point(false).to_bytes(),
-                    );
-
-                    (public_key_str, secret_str, acc_addr, sk)
-                }
-            };
-
-        let signature = {
-            let sign_key = SigningKey::from(&secret_key);
-            let sign_key_vec = sign_key.to_bytes().to_vec();
-            match serde_json::to_string(&sign_key_vec) {
-                Ok(str) => str,
-                Err(err) => {
-                    return Err(format!(
-                        "Failed to change vec to string, err: {}",
-                        err
-                    )
-                    .into());
-                }
+                return Ok(c);
             }
-        };
+            _ => {
+                let c = Credential::new_random();
+                return Ok(c);
+            }
+        }
+    }
 
-        Ok(Credential {
+    pub fn new_random() -> Credential {
+        let (secret_key, public_key) = SakKey::generate();
+        let acc_addr = SakKey::create_acc_addr(&public_key);
+        let public_key_str = {
+            let b = public_key.to_encoded_point(false).as_bytes();
+            let pk_encoded = sak_crypto::encode_hex(&b);
+            pk_encoded
+        };
+        let secret_key_str =
+            sak_crypto::encode_hex(&secret_key.to_bytes() as &[u8]);
+
+        Credential {
             public_key,
-            secret,
+            secret_key,
+            public_key_str,
+            secret_key_str,
             acc_addr,
-            signature,
-        })
+        }
+    }
+
+    pub fn sign(&self) -> String {
+        let ret = format!("{}-sig", self.acc_addr);
+        ret
     }
 }

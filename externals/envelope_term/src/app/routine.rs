@@ -13,7 +13,6 @@ use log::LevelFilter;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::mpsc;
-use tokio::sync::Mutex;
 use tui::backend::CrosstermBackend;
 use tui::Terminal;
 
@@ -21,7 +20,6 @@ pub(super) struct Routine;
 
 impl Routine {
     pub async fn run(&self, app_args: AppArgs) -> Result<(), EnvelopeError> {
-        // Configure log
         tui_logger::init_logger(LevelFilter::Debug).unwrap();
         tui_logger::set_default_level(log::LevelFilter::Info);
 
@@ -76,12 +74,7 @@ async fn start_envelope(envelope: Arc<Envelope>) -> Result<(), EnvelopeError> {
     let mut events = Events::new(tick_rate);
 
     let envelope = envelope.clone();
-
-    // // Trigger state change from Init to Initialized
-    {
-        // Here we assume the the first load is a long task
-        envelope.dispatch(IoEvent::Initialize).await;
-    }
+    envelope.dispatch(IoEvent::Initialize).await;
 
     loop {
         let mut state = envelope.get_state().write().await;
@@ -111,8 +104,7 @@ async fn start_envelope(envelope: Arc<Envelope>) -> Result<(), EnvelopeError> {
         }
     }
 
-    // Restore the terminal and close application
-    // terminal.clear()?;
+    terminal.clear()?;
     terminal.show_cursor()?;
     crossterm::terminal::disable_raw_mode()?;
 

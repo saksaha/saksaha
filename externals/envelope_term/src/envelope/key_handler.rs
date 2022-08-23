@@ -2,7 +2,7 @@ use super::{AppReturn, AppState, Envelope, View};
 use crate::envelope::actions::Action;
 use crate::inputs::key::Key;
 use crate::io::InputMode;
-use log::{debug, warn};
+use log::{debug, info, warn};
 use tokio::sync::RwLockWriteGuard;
 
 impl Envelope {
@@ -12,8 +12,9 @@ impl Envelope {
         //
         mut state: RwLockWriteGuard<'a, AppState>,
     ) -> AppReturn {
+        info!("Run action [{:?}], actions: {:?}", key, self.get_actions());
+
         if let Some(&action) = self.get_actions().find(key) {
-            debug!("Run action [{:?}]", action);
             // let mut state = self.state.write().await;
             state.input_text.clear();
 
