@@ -1,15 +1,24 @@
-use crate::{envelope::Envelope, io::IoEvent};
+use crate::{
+    envelope::{Action, Envelope},
+    io::IoEvent,
+};
 use log::error;
 
 impl Envelope {
-    pub async fn dispatch(&self, action: IoEvent) {
-        let mut state = self.state.write().await;
-        state.is_loading = true;
+    pub async fn dispatch(
+        &self,
+        // action: IoEvent
+        action: Action,
+    ) {
+        // let mut state = self.state.write().await;
+        // state.is_loading = true;
 
-        if let Err(e) = self.io_tx.send(action).await {
-            state.is_loading = false;
+        // if let Err(e) = self.io_tx.send(action).await {
+        //     state.is_loading = false;
 
-            error!("Error from dispatch {}", e);
-        };
+        //     error!("Error from dispatch {}", e);
+        // };
+
+        self.dispatcher.dispatch(action);
     }
 }

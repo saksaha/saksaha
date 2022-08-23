@@ -3,9 +3,8 @@ use super::dispatcher::Dispatcher;
 use super::{state::AppState, ChannelState};
 use crate::credential::Credential;
 use crate::db::EnvelopeDB;
-use crate::io::IoEvent;
 use crate::{app, wallet_sdk, EnvelopeError};
-use crate::{envelope::actions::Action, ENVELOPE_CTR_ADDR};
+use crate::{envelope::actions::KeyedAction, ENVELOPE_CTR_ADDR};
 use chrono::Local;
 use envelope_contract::{
     request_type::{GET_CH_LIST, GET_MSG, OPEN_CH, SEND_MSG},
@@ -28,7 +27,7 @@ pub enum AppReturn {
 }
 
 pub(crate) struct Envelope {
-    pub(super) io_tx: mpsc::Sender<IoEvent>,
+    // pub(super) io_tx: mpsc::Sender<IoEvent>,
     pub(super) dispatcher: Dispatcher,
     pub(super) actions: Actions,
     pub(super) state: Arc<RwLock<AppState>>,
@@ -39,23 +38,23 @@ pub(crate) struct Envelope {
 
 impl Envelope {
     pub(crate) async fn init(
-        io_tx: mpsc::Sender<IoEvent>,
+        // io_tx: mpsc::Sender<IoEvent>,
         credential: Arc<Credential>,
         partner_credential: Arc<Credential>,
     ) -> Result<Self, EnvelopeError> {
         let actions = {
             Actions(vec![
-                Action::Quit,
-                Action::SwitchEditMode,
-                Action::SwitchNormalMode,
-                Action::ShowOpenCh,
-                Action::ShowChList,
-                Action::ShowChat,
-                Action::Down,
-                Action::Up,
-                Action::UpdateBalance,
-                Action::Select,
-                Action::RestoreChat,
+                KeyedAction::Quit,
+                KeyedAction::SwitchEditMode,
+                KeyedAction::SwitchNormalMode,
+                KeyedAction::ShowOpenCh,
+                KeyedAction::ShowChList,
+                KeyedAction::ShowChat,
+                KeyedAction::Down,
+                KeyedAction::Up,
+                KeyedAction::UpdateBalance,
+                KeyedAction::Select,
+                KeyedAction::RestoreChat,
             ])
         };
 
@@ -70,7 +69,7 @@ impl Envelope {
         let dispatcher = Dispatcher::new(state.clone())?;
 
         Ok(Self {
-            io_tx,
+            // io_tx,
             dispatcher,
             actions,
             state,

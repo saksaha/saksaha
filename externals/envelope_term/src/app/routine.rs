@@ -32,7 +32,7 @@ impl Routine {
             Arc::new(c)
         };
 
-        let (sync_io_tx, mut sync_io_rx) = mpsc::channel::<IoEvent>(100);
+        // let (sync_io_tx, mut sync_io_rx) = mpsc::channel::<IoEvent>(100);
 
         let partner_credential = {
             let c = Credential::new_random()?;
@@ -41,7 +41,7 @@ impl Routine {
 
         let envelope = {
             let evl = Envelope::init(
-                sync_io_tx.clone(),
+                // sync_io_tx.clone(),
                 credential.clone(),
                 partner_credential.clone(),
             )
@@ -53,13 +53,13 @@ impl Routine {
 
         let envelope_clone = envelope.clone();
 
-        tokio::spawn(async move {
-            let mut handler = IoAsyncHandler::new(envelope_clone);
+        // tokio::spawn(async move {
+        //     let mut handler = IoAsyncHandler::new(envelope_clone);
 
-            while let Some(io_event) = sync_io_rx.recv().await {
-                handler.handle_io_event(io_event).await;
-            }
-        });
+        //     while let Some(io_event) = sync_io_rx.recv().await {
+        //         handler.handle_io_event(io_event).await;
+        //     }
+        // });
 
         let ui_routine = UIRoutine;
         if let Err(err) = ui_routine.run(envelope).await {
