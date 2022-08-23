@@ -148,7 +148,6 @@ impl WalletDBSchema {
             Some(i) => i,
             None => 0,
         };
-        println!("batch cm_idx: {}", cm_idx);
 
         self.raw.batch_put_cm_idx(&mut batch, &coin.cm, &cm_idx)?;
 

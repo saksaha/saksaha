@@ -21,17 +21,12 @@ impl LedgerDB {
     pub(crate) fn get_latest_cm_idx(
         &self,
     ) -> Result<Option<u128>, LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::CM_IDX)?;
+        let cf = self.make_cf_handle(&self.db, cfs::CM_IDX_CM)?;
 
         let mut iter = self.db.iterator_cf(&cf, IteratorMode::End);
 
         match iter.next() {
-            Some((cm, cm_idx)) => {
-                println!(
-                    "cm: {:?}, cm_idx: {:?}",
-                    &cm,
-                    type_extension::convert_u8_slice_into_u128(&cm_idx)?
-                );
+            Some((cm_idx, cm)) => {
                 let val = type_extension::convert_u8_slice_into_u128(&cm_idx)?;
 
                 return Ok(Some(val));
