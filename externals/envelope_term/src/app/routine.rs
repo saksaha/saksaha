@@ -34,13 +34,12 @@ impl Routine {
 
         let (sync_io_tx, mut sync_io_rx) = mpsc::channel::<IoEvent>(100);
 
-        // We need to share the App between thread
         let envelope = {
             let evl = Envelope::init(sync_io_tx.clone(), credential.clone())
                 .await
                 .expect("App should be initialized");
 
-            Arc::new(Mutex::new(evl))
+            Arc::new(evl)
         };
 
         let envelope_clone = envelope.clone();
@@ -64,9 +63,7 @@ impl Routine {
     }
 }
 
-pub async fn start_envelope(
-    envelope: Arc<Mutex<Envelope>>,
-) -> Result<(), EnvelopeError> {
+async fn start_envelope(envelope: Arc<Envelope>) -> Result<(), EnvelopeError> {
     // Configure Crossterm backend for tui
     let stdout = std::io::stdout();
     crossterm::terminal::enable_raw_mode()?;
@@ -80,7 +77,7 @@ pub async fn start_envelope(
 
     // Trigger state change from Init to Initialized
     {
-        let mut envelope = envelope.lock().await;
+        // let mut envelope = envelope.lock().await;
 
         // Here we assume the the first load is a long task
         envelope.dispatch(IoEvent::Initialize).await;
@@ -88,14 +85,16 @@ pub async fn start_envelope(
 
     loop {
         log::info!("power");
-        let mut envelope = envelope.lock().await;
+        // let mut envelope = envelope.lock().await;
 
         // Render
-        terminal.draw(|rect| views::draw(rect, &mut envelope))?;
+        terminal.draw(|rect| views::draw(rect, &envelope))?;
 
         // Handle inputs
+        let state = envelope.get_state().read().await;
+
         let result = match events.next().await {
-            InputEvent::Input(key) => match envelope.get_state().input_mode {
+            InputEvent::Input(key) => match state.input_mode {
                 InputMode::Normal => envelope.handle_normal_key(key).await,
                 InputMode::Editing => envelope.handle_edit_key(key).await,
             },

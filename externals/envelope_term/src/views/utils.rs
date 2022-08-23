@@ -28,7 +28,7 @@ pub(crate) fn draw_open_ch<'a, B>(
 where
     B: Backend,
 {
-    let state = app.get_state();
+    let state = app.get_state().read().await;
 
     let (msg, style) = match app.get_state().input_mode {
         InputMode::Normal => (

@@ -1,4 +1,5 @@
 mod actions;
+mod dispatch;
 mod envelope;
 mod key_handler;
 mod state;

@@ -8,15 +8,13 @@ use crate::envelope::{Envelope, View};
 use tui::backend::Backend;
 use tui::Frame;
 
-pub fn draw<B>(rect: &mut Frame<B>, envelope: &mut Envelope)
+pub(crate) async fn draw<'a, B>(rect: &'a mut Frame<'a, B>, envelope: &Envelope)
 where
     B: Backend,
 {
-    let state = envelope.get_state();
+    let state = envelope.get_state().read().await;
 
-    if !state.is_initialized() {
-        landing::draw_landing(rect, envelope);
-    }
+    log::info!("draw(), state.view: {:?}", state.view);
 
     match state.view {
         View::ChList => {

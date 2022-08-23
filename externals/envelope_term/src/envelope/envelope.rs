@@ -17,6 +17,7 @@ use sak_crypto::{
     aes_decrypt, derive_aes_key, PublicKey, SakKey, SecretKey, ToEncodedPoint,
 };
 use std::sync::Arc;
+use tokio::sync::{mpsc, RwLock};
 use type_extension::{U8Arr32, U8Array};
 
 #[derive(Debug, PartialEq, Eq)]
@@ -25,23 +26,27 @@ pub enum AppReturn {
     Continue,
 }
 
-pub struct Envelope {
-    io_tx: tokio::sync::mpsc::Sender<IoEvent>,
-    actions: Actions,
-    state: AppState,
-    db: EnvelopeDB,
-    credential: Arc<Credential>,
-    partner_credential: Credential,
+pub(crate) struct Envelope {
+    pub(super) io_tx: mpsc::Sender<IoEvent>,
+    pub(super) actions: Actions,
+    pub(super) state: Arc<RwLock<AppState>>,
+    pub(super) db: EnvelopeDB,
+    pub(super) credential: Arc<Credential>,
+    pub(super) partner_credential: Credential,
 }
 
 impl Envelope {
     pub(crate) async fn init(
-        io_tx: tokio::sync::mpsc::Sender<IoEvent>,
-        // user_prefix: &String,
+        io_tx: mpsc::Sender<IoEvent>,
         credential: Arc<Credential>,
     ) -> Result<Self, EnvelopeError> {
         let actions = vec![Action::Quit].into();
-        let state = AppState::default();
+
+        let state = {
+            let s = AppState::default();
+
+            Arc::new(RwLock::new(s))
+        };
 
         let db = EnvelopeDB::init(&credential.acc_addr).await?;
 
@@ -67,18 +72,6 @@ impl Envelope {
         AppReturn::Continue
     }
 
-    /// Send a network event to the IO thread
-    pub async fn dispatch(&mut self, action: IoEvent) {
-        // `is_loading` will be set to false again after the async
-        // action has finished in io/handler.rs
-        self.state.is_loading = true;
-
-        if let Err(e) = self.io_tx.send(action).await {
-            self.state.is_loading = false;
-            error!("Error from dispatch {}", e);
-        };
-    }
-
     pub fn get_actions(&self) -> &Actions {
         &self.actions
     }
@@ -87,7 +80,7 @@ impl Envelope {
         &self.db
     }
 
-    pub(crate) fn get_state(&self) -> &AppState {
+    pub(crate) fn get_state(&self) -> &Arc<RwLock<AppState>> {
         &self.state
     }
 
@@ -95,9 +88,9 @@ impl Envelope {
         &self.credential
     }
 
-    pub(crate) fn get_state_mut(&mut self) -> &mut AppState {
-        &mut self.state
-    }
+    // pub(crate) fn get_state_mut(&mut self) -> &mut AppState {
+    //     &mut self.state
+    // }
 
     pub fn initialized(&mut self) {
         self.actions = vec![
@@ -115,19 +108,16 @@ impl Envelope {
         ]
         .into();
 
-        self.state = AppState::initialized()
+        // self.state = AppState::initialized()
     }
 
-    pub fn loaded(&mut self) {
-        self.state.is_loading = false;
-    }
-
-    pub fn slept(&mut self) {
-        self.state.incr_sleep();
+    pub async fn loaded(&self) {
+        let mut state = self.state.write().await;
+        state.is_loading = false;
     }
 
     pub async fn set_ch_list(
-        &mut self,
+        &self,
         data: Vec<u8>,
     ) -> Result<(), EnvelopeError> {
         match serde_json::from_slice::<Vec<Channel>>(&data) {
@@ -180,7 +170,8 @@ impl Envelope {
 
                         new_ch.channel.sig = sig_decrypted;
 
-                        self.state.set_ch_list(new_ch)?;
+                        let mut state = self.state.write().await;
+                        state.set_ch_list(new_ch)?;
                     } else {
                         // If the decryption with `MY_SK` has failed,
                         // it should be decrypted with ECIES-scheme aes key
@@ -232,7 +223,8 @@ impl Envelope {
 
                         new_ch.channel.sig = sig_decrypted;
 
-                        self.state.set_ch_list(new_ch)?;
+                        let mut state = self.state.write().await;
+                        state.set_ch_list(new_ch)?;
                     }
                 }
             }
@@ -244,10 +236,7 @@ impl Envelope {
         Ok(())
     }
 
-    pub async fn set_chats(
-        &mut self,
-        data: Vec<u8>,
-    ) -> Result<(), EnvelopeError> {
+    pub async fn set_chats(&self, data: Vec<u8>) -> Result<(), EnvelopeError> {
         let my_pk = self.credential.public_key.to_string();
         let my_sk = self.credential.secret.to_string();
 
@@ -266,8 +255,9 @@ impl Envelope {
         let eph_key: String = {
             let mut res: String = String::default();
 
-            for ch_state in self.get_state().ch_list.iter() {
-                if ch_state.channel.ch_id == self.get_state().selected_ch_id {
+            let mut state = self.get_state().write().await;
+            for ch_state in state.ch_list.iter() {
+                if ch_state.channel.ch_id == state.selected_ch_id {
                     res = ch_state.channel.eph_key.clone();
                 }
             }
@@ -341,17 +331,15 @@ impl Envelope {
             chat_msg.push(res);
         }
 
-        self.get_state_mut().set_chats(chat_msg, my_pk);
+        let mut state = self.get_state().write().await;
+        state.set_chats(chat_msg, my_pk);
 
         log::info!("set_chats done");
 
         Ok(())
     }
 
-    pub async fn open_ch(
-        &mut self,
-        her_pk: &String,
-    ) -> Result<(), EnvelopeError> {
+    pub async fn open_ch(&self, her_pk: &String) -> Result<(), EnvelopeError> {
         log::info!("Trying to make a channel w/ partner: {:?}", her_pk);
 
         let (eph_sk, eph_pk) = SakKey::generate();
@@ -478,7 +466,7 @@ impl Envelope {
         Ok(())
     }
 
-    pub async fn get_ch_list(&mut self) -> Result<(), EnvelopeError> {
+    pub async fn get_ch_list(&self) -> Result<(), EnvelopeError> {
         let my_pk = &self.credential.public_key;
 
         let get_ch_list_params = GetChListParams {
@@ -502,7 +490,7 @@ impl Envelope {
     }
 
     pub async fn get_messages(
-        &mut self,
+        &self,
         ch_id: String,
     ) -> Result<(), EnvelopeError> {
         let get_msg_params = GetMsgParams { ch_id };
@@ -537,12 +525,13 @@ impl Envelope {
         let user_1_sk: U8Arr32 =
             U8Array::from_hex_string(user_1_sk.to_string())?;
 
-        let selected_ch_id = self.state.selected_ch_id.clone();
+        let mut state = self.get_state().write().await;
+        let selected_ch_id = state.selected_ch_id.clone();
 
         let eph_key: String = {
             let mut res: String = String::default();
 
-            for ch_state in self.get_state().ch_list.iter() {
+            for ch_state in state.ch_list.iter() {
                 if ch_state.channel.ch_id == selected_ch_id {
                     res = ch_state.channel.eph_key.clone();
                 }
