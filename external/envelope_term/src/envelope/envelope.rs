@@ -13,7 +13,7 @@ use envelope_contract::{
     Channel, ChatMessage, EncryptedChatMessage, GetChListParams, GetMsgParams,
     OpenChParams, SendMsgParams,
 };
-use log::error;
+use log::{error, warn};
 use sak_contract_std::{CtrCallType, CtrRequest};
 use sak_crypto::{
     aes_decrypt, derive_aes_key, PublicKey, SakKey, SecretKey, ToEncodedPoint,
