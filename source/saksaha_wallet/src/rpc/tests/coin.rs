@@ -95,6 +95,9 @@ async fn test_send_tx_twice() {
         println!("[+] BALANCE {:?}", balance);
 
         utils::send_msg_for_test(&acc_addr).await;
+
+        tokio::time::sleep(Duration::from_secs(5)).await;
+
         utils::update_coin_status(&acc_addr).await;
     }
 
@@ -103,6 +106,9 @@ async fn test_send_tx_twice() {
         println!("[+] BALANCE {:?}", balance);
 
         utils::send_msg_for_test(&acc_addr).await;
+
+        tokio::time::sleep(Duration::from_secs(5)).await;
+
         utils::update_coin_status(&acc_addr).await;
     }
 
@@ -111,7 +117,12 @@ async fn test_send_tx_twice() {
         println!("[+] BALANCE {:?}", balance);
 
         utils::send_msg_for_test(&acc_addr).await;
+
+        tokio::time::sleep(Duration::from_secs(5)).await;
+
         utils::update_coin_status(&acc_addr).await;
+
+        tokio::time::sleep(Duration::from_secs(5)).await;
     }
 
     {

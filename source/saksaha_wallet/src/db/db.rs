@@ -107,6 +107,7 @@ impl WalletDB {
                         }
                     };
 
+                    println!("resptx: {:?}", resp.tx);
                     if let Some(tx) = resp.tx {
                         old_coin_sn_vec.push(tx.get_sn());
 

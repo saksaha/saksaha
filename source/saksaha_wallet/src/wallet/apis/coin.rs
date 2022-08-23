@@ -99,6 +99,7 @@ impl Wallet {
 
             (new_coin_1, new_coin_2)
         };
+        println!("cm idx: {:?}", &new_coin_1.cm_idx);
 
         let cm_idx = {
             let resp = saksaha::get_cm_idx(coin.cm.to_bytes()).await?;
@@ -180,6 +181,7 @@ impl Wallet {
 
         new_coin_1.tx_hash = Some(tx_hash.clone());
         new_coin_2.tx_hash = Some(tx_hash);
+        println!("cm idx: {:?}", &new_coin_1.cm_idx);
 
         {
             self.get_db().schema.put_coin(&new_coin_1)?;
@@ -369,6 +371,7 @@ impl Wallet {
 
             let db_coin_cm_idx = wallet_db.schema.raw.get_cm_idx(&cm)?;
 
+            println!("db: {:?}, coin: {:?}", db_coin_cm_idx, coin.cm_idx);
             if coin.cm_idx != db_coin_cm_idx {
                 coin.cm_idx = db_coin_cm_idx;
             }
