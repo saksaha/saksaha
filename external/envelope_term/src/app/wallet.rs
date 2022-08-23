@@ -3,16 +3,23 @@ use hyper::{Body, Client, Method, Request, Uri};
 use log::warn;
 use sak_contract_std::CtrRequest;
 use sak_rpc_interface::{JsonRequest, JsonResponse};
+use sak_types::AccountBalance;
 use saksaha_wallet::routes::v0::{SendTxRequest, SendTxResponse};
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GetBalanceResponse {
+    pub balance: AccountBalance,
+}
 
 pub async fn get_balance_from_wallet(
-    user_id: &String,
-) -> Result<JsonResponse<String>, EnvelopeError> {
+    acc_addr: &String,
+) -> Result<JsonResponse<GetBalanceResponse>, EnvelopeError> {
     let endpoint = "http://localhost:36612/rpc/v0";
 
     let client = Client::new();
     let uri: Uri = { endpoint.parse().expect("URI should be made") };
-    let params = format!(r#"{{"id": "{}","key": "user_1_key"}}"#, user_id)
+    let params = format!(r#"{{"acc_addr": "{}"}}"#, acc_addr)
         .as_bytes()
         .to_vec();
 
@@ -39,7 +46,12 @@ pub async fn get_balance_from_wallet(
 
     let b = hyper::body::to_bytes(resp.into_body()).await?;
 
-    let json_response = serde_json::from_slice::<JsonResponse<String>>(&b)?;
+    log::info!("body: {:?}", b);
+
+    let json_response =
+        serde_json::from_slice::<JsonResponse<GetBalanceResponse>>(&b)?;
+
+    log::info!(":)");
 
     Ok(json_response)
 }
@@ -87,6 +99,47 @@ pub async fn send_tx_pour(
 
     let json_response =
         serde_json::from_slice::<JsonResponse<SendTxResponse>>(&b)?;
+
+    Ok(json_response)
+}
+
+pub async fn update_wallet(
+    acc_addr: &String,
+) -> Result<JsonResponse<String>, EnvelopeError> {
+    let endpoint = "http://localhost:36612/rpc/v0";
+
+    let client = Client::new();
+
+    let uri: Uri = { endpoint.parse().expect("URI should be made") };
+    let params = format!(r#"{{"acc_addr": "{}"}}"#, acc_addr)
+        .as_bytes()
+        .to_vec();
+
+    let body = {
+        let json_request = JsonRequest {
+            jsonrpc: "2.0".to_string(),
+            method: "update_coin_status".to_string(),
+            params: Some(params),
+            id: "evl_id".to_string(),
+        };
+
+        let str = serde_json::to_string(&json_request)?;
+
+        Body::from(str)
+    };
+
+    let req = Request::builder()
+        .method(Method::POST)
+        .uri(uri)
+        .body(body)
+        .expect("request builder should be made");
+
+    let resp = client.request(req).await.unwrap();
+
+    let b = hyper::body::to_bytes(resp.into_body()).await.unwrap();
+
+    let json_response =
+        serde_json::from_slice::<JsonResponse<String>>(&b).unwrap();
 
     Ok(json_response)
 }
