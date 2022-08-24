@@ -1,6 +1,6 @@
 use super::{AppReturn, AppState, Envelope, View};
 use crate::io::InputMode;
-use crate::{envelope::KeyedAction, inputs::key::Key};
+use crate::{envelope::Action, inputs::key::Key};
 use log::{debug, info, warn};
 use tokio::sync::RwLockWriteGuard;
 
@@ -18,46 +18,46 @@ impl Envelope {
             state.input_text.clear();
 
             match action {
-                KeyedAction::Quit => AppReturn::Exit,
+                Action::Quit => AppReturn::Exit,
 
-                KeyedAction::SwitchEditMode => {
+                Action::SwitchEditMode => {
                     state.input_mode = InputMode::Editing;
                     AppReturn::Continue
                 }
 
-                KeyedAction::SwitchNormalMode => {
+                Action::SwitchNormalMode => {
                     state.input_mode = InputMode::Editing;
                     AppReturn::Continue
                 }
 
-                KeyedAction::ShowChList => {
+                Action::ShowChList => {
                     let _ = self.get_ch_list().await;
                     // let _ = self.get_ch_list_from_local().await;
                     state.set_view_ch_list();
                     AppReturn::Continue
                 }
 
-                KeyedAction::ShowOpenCh => {
+                Action::ShowOpenCh => {
                     state.set_view_open_ch();
                     AppReturn::Continue
                 }
 
-                KeyedAction::ShowChat => {
+                Action::ShowChat => {
                     state.set_view_chat();
                     AppReturn::Continue
                 }
 
-                KeyedAction::Down => {
+                Action::Down => {
                     state.next_ch();
                     AppReturn::Continue
                 }
 
-                KeyedAction::Up => {
+                Action::Up => {
                     state.previous_ch();
                     AppReturn::Continue
                 }
 
-                KeyedAction::RestoreChat => match state.view {
+                Action::RestoreChat => match state.view {
                     View::Chat => {
                         let ch_id = state.selected_ch_id.clone();
 
@@ -76,7 +76,7 @@ impl Envelope {
                         return AppReturn::Continue;
                     }
                 },
-                KeyedAction::Select => match state.view {
+                Action::Select => match state.view {
                     View::ChList => {
                         state.selected_ch_id = match state
                             .ch_list_state
@@ -99,10 +99,14 @@ impl Envelope {
                     }
                 },
 
-                KeyedAction::UpdateBalance => {
+                Action::UpdateBalance => {
                     let my_pk = self.get_credential().acc_addr.clone();
 
                     state.set_balance(my_pk).await;
+                    AppReturn::Continue
+                }
+                _ => {
+                    // Some actions are not mapped with key inputs
                     AppReturn::Continue
                 }
             }

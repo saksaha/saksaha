@@ -1,9 +1,9 @@
 use crate::credential::Credential;
 use crate::inputs::events::Events;
 use crate::inputs::InputEvent;
-use crate::io::handler::IoAsyncHandler;
+// use crate::io::handler::IoAsyncHandler;
 use crate::io::InputMode;
-use crate::io::IoEvent;
+// use crate::io::IoEvent;
 use crate::views;
 use crate::AppArgs;
 use crate::EnvelopeError;

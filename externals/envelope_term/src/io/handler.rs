@@ -1,67 +1,67 @@
-use super::IoEvent;
-use crate::envelope::Envelope;
-use crate::EnvelopeError;
-use log::{error, info};
-use std::sync::Arc;
-use std::time::Duration;
+// use super::IoEvent;
+// use crate::envelope::Envelope;
+// use crate::EnvelopeError;
+// use log::{error, info};
+// use std::sync::Arc;
+// use std::time::Duration;
 
-pub(crate) struct IoAsyncHandler {
-    envelope: Arc<Envelope>,
-}
+// pub(crate) struct IoAsyncHandler {
+//     envelope: Arc<Envelope>,
+// }
 
-impl IoAsyncHandler {
-    pub fn new(envelope: Arc<Envelope>) -> Self {
-        Self { envelope }
-    }
+// impl IoAsyncHandler {
+//     pub fn new(envelope: Arc<Envelope>) -> Self {
+//         Self { envelope }
+//     }
 
-    pub async fn handle_io_event(&mut self, io_event: IoEvent) {
-        log::info!("Handling io event, io_event: {:?}", io_event);
+//     pub async fn handle_io_event(&mut self, io_event: IoEvent) {
+//         log::info!("Handling io event, io_event: {:?}", io_event);
 
-        let result = match io_event {
-            IoEvent::Initialize => self.do_initialize().await,
-            IoEvent::GetChList(data) => self.get_ch_list(data).await,
-            IoEvent::GetMessages(data) => self.get_msgs(data).await,
-        };
+//         let result = match io_event {
+//             IoEvent::Initialize => self.do_initialize().await,
+//             IoEvent::GetChList(data) => self.get_ch_list(data).await,
+//             IoEvent::GetMessages(data) => self.get_msgs(data).await,
+//         };
 
-        if let Err(err) = result {
-            error!("Oops, something wrong happen: {:?}", err);
-        }
+//         if let Err(err) = result {
+//             error!("Oops, something wrong happen: {:?}", err);
+//         }
 
-        // let mut app = self.app.lock().await;
-        // self.envelope.loaded();
-    }
+//         // let mut app = self.app.lock().await;
+//         // self.envelope.loaded();
+//     }
 
-    /// We use dummy implementation here, just wait 1s
-    async fn do_initialize(&mut self) -> Result<(), EnvelopeError> {
-        info!("🚀 Initializing the application, waiting for 1 second");
+//     /// We use dummy implementation here, just wait 1s
+//     async fn do_initialize(&mut self) -> Result<(), EnvelopeError> {
+//         info!("🚀 Initializing the application, waiting for 1 second");
 
-        tokio::time::sleep(Duration::from_secs(1)).await;
+//         tokio::time::sleep(Duration::from_secs(1)).await;
 
-        let mut state = self.envelope.get_state().write().await;
+//         let mut state = self.envelope.get_state().write().await;
 
-        state.set_is_initialized(true);
+//         state.set_is_initialized(true);
 
-        info!("👍 Application initialized");
+//         info!("👍 Application initialized");
 
-        Ok(())
-    }
+//         Ok(())
+//     }
 
-    async fn get_ch_list(
-        &mut self,
-        data: Vec<u8>,
-    ) -> Result<(), EnvelopeError> {
-        // let mut app = self.app.lock().await;
+//     async fn get_ch_list(
+//         &mut self,
+//         data: Vec<u8>,
+//     ) -> Result<(), EnvelopeError> {
+//         // let mut app = self.app.lock().await;
 
-        self.envelope.set_ch_list(data).await?;
+//         self.envelope.set_ch_list(data).await?;
 
-        Ok(())
-    }
+//         Ok(())
+//     }
 
-    async fn get_msgs(&mut self, data: Vec<u8>) -> Result<(), EnvelopeError> {
-        // let mut app = self.app.lock().await;
+//     async fn get_msgs(&mut self, data: Vec<u8>) -> Result<(), EnvelopeError> {
+//         // let mut app = self.app.lock().await;
 
-        self.envelope.set_chats(data).await?;
+//         self.envelope.set_chats(data).await?;
 
-        Ok(())
-    }
-}
+//         Ok(())
+//     }
+// }

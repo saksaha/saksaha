@@ -1,10 +1,10 @@
-use super::actions::Actions;
 use super::dispatcher::Dispatcher;
+use super::Actions;
 use super::{state::AppState, ChannelState};
 use crate::credential::Credential;
 use crate::db::EnvelopeDB;
 use crate::{app, wallet_sdk, EnvelopeError};
-use crate::{envelope::actions::KeyedAction, ENVELOPE_CTR_ADDR};
+use crate::{envelope::actions::Action, ENVELOPE_CTR_ADDR};
 use chrono::Local;
 use envelope_contract::{
     request_type::{GET_CH_LIST, GET_MSG, OPEN_CH, SEND_MSG},
@@ -28,7 +28,7 @@ pub enum AppReturn {
 
 pub(crate) struct Envelope {
     // pub(super) io_tx: mpsc::Sender<IoEvent>,
-    pub(super) dispatcher: Dispatcher,
+    pub(super) dispatcher: Arc<Dispatcher>,
     pub(super) actions: Actions,
     pub(super) state: Arc<RwLock<AppState>>,
     pub(super) db: EnvelopeDB,
@@ -44,17 +44,17 @@ impl Envelope {
     ) -> Result<Self, EnvelopeError> {
         let actions = {
             Actions(vec![
-                KeyedAction::Quit,
-                KeyedAction::SwitchEditMode,
-                KeyedAction::SwitchNormalMode,
-                KeyedAction::ShowOpenCh,
-                KeyedAction::ShowChList,
-                KeyedAction::ShowChat,
-                KeyedAction::Down,
-                KeyedAction::Up,
-                KeyedAction::UpdateBalance,
-                KeyedAction::Select,
-                KeyedAction::RestoreChat,
+                Action::Quit,
+                Action::SwitchEditMode,
+                Action::SwitchNormalMode,
+                Action::ShowOpenCh,
+                Action::ShowChList,
+                Action::ShowChat,
+                Action::Down,
+                Action::Up,
+                Action::UpdateBalance,
+                Action::Select,
+                Action::RestoreChat,
             ])
         };
 
@@ -66,7 +66,15 @@ impl Envelope {
 
         let db = EnvelopeDB::init(&credential.acc_addr).await?;
 
-        let dispatcher = Dispatcher::new(state.clone())?;
+        let dispatcher = {
+            let d = Dispatcher::new(state.clone())?;
+            Arc::new(d)
+        };
+
+        let dispatcher_clone = dispatcher.clone();
+        tokio::spawn(async move {
+            dispatcher_clone.run().await;
+        });
 
         Ok(Self {
             // io_tx,
@@ -87,16 +95,21 @@ impl Envelope {
         &self.actions
     }
 
-    pub(crate) fn get_db(&self) -> &EnvelopeDB {
+    pub fn get_db(&self) -> &EnvelopeDB {
         &self.db
     }
 
-    pub(crate) fn get_state(&self) -> &Arc<RwLock<AppState>> {
+    pub fn get_state(&self) -> &Arc<RwLock<AppState>> {
         &self.state
     }
 
-    pub(crate) fn get_credential(&self) -> &Credential {
+    pub fn get_credential(&self) -> &Credential {
         &self.credential
+    }
+
+    pub async fn dispatch(&self, action: Action) -> Result<(), EnvelopeError> {
+        self.dispatcher.dispatch(action).await?;
+        Ok(())
     }
 
     pub async fn set_ch_list(
@@ -466,31 +479,8 @@ impl Envelope {
         .await?
         .result
         {
-            self.dispatch(IoEvent::GetChList(d.result)).await
+            self.dispatch(Action::GetChList(d.result)).await?
         };
-
-        Ok(())
-    }
-
-    pub async fn get_messages(
-        &self,
-        ch_id: String,
-    ) -> Result<(), EnvelopeError> {
-        let get_msg_params = GetMsgParams { ch_id };
-
-        let args = serde_json::to_vec(&get_msg_params)?;
-
-        if let Ok(r) = saksaha::query_ctr(
-            ENVELOPE_CTR_ADDR.into(),
-            GET_MSG.to_string(),
-            args,
-        )
-        .await
-        {
-            if let Some(d) = r.result {
-                self.dispatch(IoEvent::GetMessages(d.result)).await;
-            }
-        }
 
         Ok(())
     }

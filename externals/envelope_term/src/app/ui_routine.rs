@@ -1,9 +1,9 @@
 use crate::credential::Credential;
 use crate::inputs::events::Events;
 use crate::inputs::InputEvent;
-use crate::io::handler::IoAsyncHandler;
+// use crate::io::handler::IoAsyncHandler;
 use crate::io::InputMode;
-use crate::io::IoEvent;
+// use crate::io::IoEvent;
 use crate::views;
 use crate::AppArgs;
 use crate::EnvelopeError;
@@ -30,7 +30,10 @@ impl UIRoutine {
         let mut events = Events::new(tick_rate);
 
         let envelope = envelope.clone();
-        envelope.dispatch(IoEvent::Initialize).await;
+        // envelope.dispatch(IoEvent::Initialize).await;
+        envelope
+            .dispatch(crate::envelope::Action::Initialize)
+            .await?;
 
         loop {
             let mut state = envelope.get_state().write().await;
