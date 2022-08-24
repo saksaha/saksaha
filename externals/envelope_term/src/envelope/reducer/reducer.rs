@@ -1,6 +1,7 @@
 use super::context::DispatcherContext;
 use crate::{
     envelope::{Action, AppState, ChannelState, View},
+    io::InputMode,
     EnvelopeError,
 };
 use envelope_contract::{Channel, ChatMessage, EncryptedChatMessage};
@@ -13,7 +14,7 @@ use type_extension::{U8Arr32, U8Array};
 pub(crate) struct Reducer;
 
 impl Reducer {
-    pub async fn reduce<'a>(
+    pub fn reduce<'a>(
         &self,
         state: RwLockWriteGuard<'a, AppState>,
         action: Action,
@@ -22,9 +23,16 @@ impl Reducer {
         log::info!("reduce!!, action: {}", action);
 
         match action {
-            Action::Initialize => do_initialize(state).await?,
-            Action::GetChList(data) => get_ch_list(state, data, ctx).await?,
-            Action::GetMessages(data) => get_messages(state, data, ctx).await?,
+            Action::Initialize => do_initialize(state)?,
+            Action::SwitchEditMode => switch_edit_mode(state),
+            Action::SwitchNormalMode => switch_normal_mode(state),
+            Action::ShowOpenCh => show_open_ch(state),
+            Action::ShowChat => show_chat(state),
+            Action::Down => down(state),
+            Action::Up => up(state),
+            Action::RestoreChat => restore_chat(state),
+            Action::GetChList(data) => get_ch_list(state, data, ctx)?,
+            Action::GetMessages(data) => get_messages(state, data, ctx)?,
             _ => info!("Currently not handled!!"),
         };
 
@@ -33,12 +41,12 @@ impl Reducer {
 }
 
 /// We use dummy implementation here, just wait 1s
-async fn do_initialize<'a>(
+fn do_initialize<'a>(
     mut state: RwLockWriteGuard<'a, AppState>,
 ) -> Result<(), EnvelopeError> {
-    info!("🚀 Initializing the application, waiting for 1 second");
+    info!("🚀 Initializing the application");
 
-    tokio::time::sleep(Duration::from_secs(1)).await;
+    // tokio::time::sleep(Duration::from_secs(1)).await;
 
     // let mut state = self.envelope.get_state().write().await;
 
@@ -51,7 +59,77 @@ async fn do_initialize<'a>(
     Ok(())
 }
 
-async fn get_ch_list<'a>(
+fn switch_edit_mode<'a>(mut state: RwLockWriteGuard<'a, AppState>) {
+    state.input_mode = InputMode::Editing;
+}
+
+fn switch_normal_mode<'a>(mut state: RwLockWriteGuard<'a, AppState>) {
+    state.input_text.clear();
+
+    state.input_mode = InputMode::Normal;
+}
+
+fn show_open_ch<'a>(mut state: RwLockWriteGuard<'a, AppState>) {
+    if state.is_initialized {
+        state.view = View::OpenCh;
+    }
+}
+
+fn show_chat<'a>(mut state: RwLockWriteGuard<'a, AppState>) {
+    if state.is_initialized {
+        state.view = View::Chat;
+    }
+}
+
+fn down<'a>(mut state: RwLockWriteGuard<'a, AppState>) {
+    let i = match state.ch_list_state.selected() {
+        Some(i) => {
+            if i >= state.ch_list.len() - 1 {
+                0
+            } else {
+                i + 1
+            }
+        }
+        None => 0,
+    };
+
+    state.ch_list_state.select(Some(i));
+}
+
+fn up<'a>(mut state: RwLockWriteGuard<'a, AppState>) {
+    let i = match state.ch_list_state.selected() {
+        Some(i) => {
+            if i == 0 {
+                state.ch_list.len() - 1
+            } else {
+                i - 1
+            }
+        }
+        None => 0,
+    };
+    state.ch_list_state.select(Some(i));
+}
+
+fn restore_chat<'a>(mut state: RwLockWriteGuard<'a, AppState>) {
+    // match state.view {
+    //     View::Chat => {
+    //         let ch_id = state.selected_ch_id.clone();
+
+    //         if !ch_id.is_empty() {
+    //             self.get_messages(ch_id.clone()).await;
+
+    //             log::info!("Restore all the chats in ch_id: {:?}", ch_id);
+    //         }
+
+    //         return AppReturn::Continue;
+    //     }
+    //     _ => {
+    //         return AppReturn::Continue;
+    //     }
+    // }
+}
+
+fn get_ch_list<'a>(
     mut state: RwLockWriteGuard<'a, AppState>,
     data: Vec<u8>,
     ctx: &DispatcherContext,
@@ -172,7 +250,7 @@ async fn get_ch_list<'a>(
     Ok(())
 }
 
-async fn get_messages<'a>(
+fn get_messages<'a>(
     mut state: RwLockWriteGuard<'a, AppState>,
     data: Vec<u8>,
     ctx: &DispatcherContext,

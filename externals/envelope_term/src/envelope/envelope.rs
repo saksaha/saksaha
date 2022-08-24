@@ -29,7 +29,7 @@ pub enum AppReturn {
 
 pub(crate) struct Envelope {
     // pub(super) io_tx: mpsc::Sender<IoEvent>,
-    pub(super) dispatcher: Arc<Dispatcher>,
+    dispatcher: Arc<Dispatcher>,
     pub(super) actions: Actions,
     pub(super) state: Arc<RwLock<AppState>>,
     pub(super) db: EnvelopeDB,
@@ -117,125 +117,125 @@ impl Envelope {
         Ok(())
     }
 
-    pub async fn set_ch_list(
-        &self,
-        data: Vec<u8>,
-    ) -> Result<(), EnvelopeError> {
-        match serde_json::from_slice::<Vec<Channel>>(&data) {
-            Ok(c) => {
-                for i in c.into_iter() {
-                    let mut new_ch = ChannelState::new(i, String::default());
+    // pub async fn set_ch_list(
+    //     &self,
+    //     data: Vec<u8>,
+    // ) -> Result<(), EnvelopeError> {
+    //     match serde_json::from_slice::<Vec<Channel>>(&data) {
+    //         Ok(c) => {
+    //             for i in c.into_iter() {
+    //                 let mut new_ch = ChannelState::new(i, String::default());
 
-                    // First, try to decrypt the `ch_id` with `my_sk`
-                    let my_sk = {
-                        let s = self.credential.secret_key_str.to_string();
+    //                 // First, try to decrypt the `ch_id` with `my_sk`
+    //                 let my_sk = {
+    //                     let s = self.credential.secret_key_str.to_string();
 
-                        U8Array::from_hex_string(s)?
-                    };
+    //                     U8Array::from_hex_string(s)?
+    //                 };
 
-                    let ch_id_decrypted = {
-                        let ch_id: Vec<u8> = serde_json::from_str(
-                            &new_ch.channel.ch_id.clone().as_str(),
-                        )?;
+    //                 let ch_id_decrypted = {
+    //                     let ch_id: Vec<u8> = serde_json::from_str(
+    //                         &new_ch.channel.ch_id.clone().as_str(),
+    //                     )?;
 
-                        String::from_utf8(aes_decrypt(&my_sk, &ch_id)?)?
-                    };
+    //                     String::from_utf8(aes_decrypt(&my_sk, &ch_id)?)?
+    //                 };
 
-                    // Prefix of the encrypted `ch_id` is `MY_PK` rn
-                    let my_pk = &self.credential.public_key_str;
+    //                 // Prefix of the encrypted `ch_id` is `MY_PK` rn
+    //                 let my_pk = &self.credential.public_key_str;
 
-                    if &ch_id_decrypted[0..my_pk.len()] == my_pk.as_str() {
-                        let ch_id: String =
-                            match ch_id_decrypted.split('_').nth(1) {
-                                Some(ci) => ci.to_string(),
-                                None => {
-                                    return Err(format!(
-                                        "\
-                                        Error occured while \
-                                        parsing encrypted `ch_id`\
-                                    "
-                                    )
-                                    .into());
-                                }
-                            };
+    //                 if &ch_id_decrypted[0..my_pk.len()] == my_pk.as_str() {
+    //                     let ch_id: String =
+    //                         match ch_id_decrypted.split('_').nth(1) {
+    //                             Some(ci) => ci.to_string(),
+    //                             None => {
+    //                                 return Err(format!(
+    //                                     "\
+    //                                     Error occured while \
+    //                                     parsing encrypted `ch_id`\
+    //                                 "
+    //                                 )
+    //                                 .into());
+    //                             }
+    //                         };
 
-                        let sig_decrypted: String = {
-                            let sig: Vec<u8> = serde_json::from_str(
-                                &new_ch.channel.sig.clone().as_str(),
-                            )?;
+    //                     let sig_decrypted: String = {
+    //                         let sig: Vec<u8> = serde_json::from_str(
+    //                             &new_ch.channel.sig.clone().as_str(),
+    //                         )?;
 
-                            String::from_utf8(aes_decrypt(&my_sk, &sig)?)?
-                        };
+    //                         String::from_utf8(aes_decrypt(&my_sk, &sig)?)?
+    //                     };
 
-                        new_ch.channel.ch_id = ch_id;
+    //                     new_ch.channel.ch_id = ch_id;
 
-                        new_ch.channel.sig = sig_decrypted;
+    //                     new_ch.channel.sig = sig_decrypted;
 
-                        let mut state = self.state.write().await;
-                        state.set_ch_list(new_ch)?;
-                    } else {
-                        // If the decryption with `MY_SK` has failed,
-                        // it should be decrypted with ECIES-scheme aes key
-                        let aes_key = {
-                            let my_sk = {
-                                let s = &self.credential.secret_key_str;
+    //                     let mut state = self.state.write().await;
+    //                     state.set_ch_list(new_ch)?;
+    //                 } else {
+    //                     // If the decryption with `MY_SK` has failed,
+    //                     // it should be decrypted with ECIES-scheme aes key
+    //                     let aes_key = {
+    //                         let my_sk = {
+    //                             let s = &self.credential.secret_key_str;
 
-                                SecretKey::from_bytes(s.as_bytes())?
-                            };
+    //                             SecretKey::from_bytes(s.as_bytes())?
+    //                         };
 
-                            let eph_pub_key = PublicKey::from_sec1_bytes(
-                                new_ch.channel.eph_key.as_bytes(),
-                            )?;
+    //                         let eph_pub_key = PublicKey::from_sec1_bytes(
+    //                             new_ch.channel.eph_key.as_bytes(),
+    //                         )?;
 
-                            derive_aes_key(my_sk, eph_pub_key)?
-                        };
+    //                         derive_aes_key(my_sk, eph_pub_key)?
+    //                     };
 
-                        let ch_id_decrypted = {
-                            let ch_id: Vec<u8> = serde_json::from_str(
-                                &new_ch.channel.ch_id.clone().as_str(),
-                            )?;
+    //                     let ch_id_decrypted = {
+    //                         let ch_id: Vec<u8> = serde_json::from_str(
+    //                             &new_ch.channel.ch_id.clone().as_str(),
+    //                         )?;
 
-                            String::from_utf8(aes_decrypt(&aes_key, &ch_id)?)?
-                        };
+    //                         String::from_utf8(aes_decrypt(&aes_key, &ch_id)?)?
+    //                     };
 
-                        let ch_id: String =
-                            match ch_id_decrypted.split('_').nth(1) {
-                                Some(ci) => ci.to_string(),
-                                None => {
-                                    return Err(format!(
-                                        "\
-                                        Error occured while \
-                                        parsing encrypted `ch_id`\
-                                    "
-                                    )
-                                    .into());
-                                }
-                            };
+    //                     let ch_id: String =
+    //                         match ch_id_decrypted.split('_').nth(1) {
+    //                             Some(ci) => ci.to_string(),
+    //                             None => {
+    //                                 return Err(format!(
+    //                                     "\
+    //                                     Error occured while \
+    //                                     parsing encrypted `ch_id`\
+    //                                 "
+    //                                 )
+    //                                 .into());
+    //                             }
+    //                         };
 
-                        let sig_decrypted: String = {
-                            let sig: Vec<u8> = serde_json::from_str(
-                                &new_ch.channel.sig.clone().as_str(),
-                            )?;
+    //                     let sig_decrypted: String = {
+    //                         let sig: Vec<u8> = serde_json::from_str(
+    //                             &new_ch.channel.sig.clone().as_str(),
+    //                         )?;
 
-                            String::from_utf8(aes_decrypt(&aes_key, &sig)?)?
-                        };
+    //                         String::from_utf8(aes_decrypt(&aes_key, &sig)?)?
+    //                     };
 
-                        new_ch.channel.ch_id = ch_id;
+    //                     new_ch.channel.ch_id = ch_id;
 
-                        new_ch.channel.sig = sig_decrypted;
+    //                     new_ch.channel.sig = sig_decrypted;
 
-                        let mut state = self.state.write().await;
-                        state.set_ch_list(new_ch)?;
-                    }
-                }
-            }
-            Err(_) => {}
-        }
+    //                     let mut state = self.state.write().await;
+    //                     state.set_ch_list(new_ch)?;
+    //                 }
+    //             }
+    //         }
+    //         Err(_) => {}
+    //     }
 
-        // self.state.set_ch_list(data)?;
+    //     // self.state.set_ch_list(data)?;
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
     // pub async fn set_chats(&self, data: Vec<u8>) -> Result<(), EnvelopeError> {
     //     let my_pk = &self.credential.public_key_str;
@@ -467,28 +467,28 @@ impl Envelope {
         Ok(())
     }
 
-    pub async fn get_ch_list(&self) -> Result<(), EnvelopeError> {
-        let my_pk = &self.credential.public_key_str;
+    // pub async fn get_ch_list(&self) -> Result<(), EnvelopeError> {
+    //     let my_pk = &self.credential.public_key_str;
 
-        let get_ch_list_params = GetChListParams {
-            dst_pk: my_pk.clone(),
-        };
+    //     let get_ch_list_params = GetChListParams {
+    //         dst_pk: my_pk.clone(),
+    //     };
 
-        let args = serde_json::to_vec(&get_ch_list_params)?;
+    //     let args = serde_json::to_vec(&get_ch_list_params)?;
 
-        if let Some(d) = saksaha::query_ctr(
-            ENVELOPE_CTR_ADDR.to_string(),
-            GET_CH_LIST.to_string(),
-            args,
-        )
-        .await?
-        .result
-        {
-            self.dispatch(Action::GetChList(d.result)).await?
-        };
+    //     if let Some(d) = saksaha::query_ctr(
+    //         ENVELOPE_CTR_ADDR.to_string(),
+    //         GET_CH_LIST.to_string(),
+    //         args,
+    //     )
+    //     .await?
+    //     .result
+    //     {
+    //         self.dispatch(Action::GetChList(d.result)).await?
+    //     };
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
     pub async fn send_messages(
         &self,

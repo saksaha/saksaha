@@ -9,73 +9,94 @@ impl Envelope {
         &self,
         key: Key,
         //
-        mut state: RwLockWriteGuard<'a, AppState>,
+        // mut state: RwLockWriteGuard<'a, AppState>,
     ) -> AppReturn {
         info!("Run action [{:?}], actions: {:?}", key, self.get_actions());
 
         if let Some(ref action) = self.get_actions().find(key) {
             // let mut state = self.state.write().await;
-            state.input_text.clear();
+
+            // state.input_text.clear();
 
             match action {
                 Action::Quit => AppReturn::Exit,
 
                 Action::SwitchEditMode => {
-                    state.input_mode = InputMode::Editing;
+                    // state.input_mode = InputMode::Editing;
+                    self.dispatch(Action::SwitchEditMode).await;
+
                     AppReturn::Continue
                 }
 
                 Action::SwitchNormalMode => {
-                    state.input_mode = InputMode::Editing;
+                    // state.input_mode = InputMode::Editing;
+                    self.dispatch(Action::SwitchNormalMode).await;
+
                     AppReturn::Continue
                 }
 
                 Action::ShowChList => {
-                    let _ = self.get_ch_list().await;
+                    // let _ = self.get_ch_list().await;
                     // let _ = self.get_ch_list_from_local().await;
-                    state.set_view_ch_list();
+                    // state.set_view_ch_list();
+                    self.dispatch(Action::ShowChList).await;
+
                     AppReturn::Continue
                 }
 
                 Action::ShowOpenCh => {
-                    state.set_view_open_ch();
+                    // state.set_view_open_ch();
+                    self.dispatch(Action::ShowOpenCh).await;
+
                     AppReturn::Continue
                 }
 
                 Action::ShowChat => {
-                    state.set_view_chat();
+                    // state.set_view_chat();
+                    self.dispatch(Action::ShowChat).await;
+
                     AppReturn::Continue
                 }
 
                 Action::Down => {
-                    state.next_ch();
+                    // state.next_ch();
+                    self.dispatch(Action::Down).await;
+
                     AppReturn::Continue
                 }
 
                 Action::Up => {
-                    state.previous_ch();
+                    // state.previous_ch();
+                    self.dispatch(Action::Up).await;
+
                     AppReturn::Continue
                 }
 
-                Action::RestoreChat => match state.view {
-                    View::Chat => {
-                        let ch_id = state.selected_ch_id.clone();
+                Action::RestoreChat => {
+                    self.dispatch(Action::RestoreChat).await;
 
-                        if !ch_id.is_empty() {
-                            self.get_messages(ch_id.clone()).await;
+                    // match state.view {
+                    //     View::Chat => {
+                    //         let ch_id = state.selected_ch_id.clone();
 
-                            log::info!(
-                                "Restore all the chats in ch_id: {:?}",
-                                ch_id
-                            );
-                        }
+                    //         if !ch_id.is_empty() {
+                    //             self.get_messages(ch_id.clone()).await;
 
-                        return AppReturn::Continue;
-                    }
-                    _ => {
-                        return AppReturn::Continue;
-                    }
-                },
+                    //             log::info!(
+                    //                 "Restore all the chats in ch_id: {:?}",
+                    //                 ch_id
+                    //             );
+                    //         }
+
+                    //         return AppReturn::Continue;
+                    //     }
+                    //     _ => {
+                    //         return AppReturn::Continue;
+                    //     }
+                    // }
+                    AppReturn::Continue
+                }
+
                 Action::Select => match state.view {
                     View::ChList => {
                         state.selected_ch_id = match state

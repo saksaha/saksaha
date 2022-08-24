@@ -1,10 +1,19 @@
+use std::{future::Future, pin::Pin};
+
 use super::Action;
 use crate::{envelope::Envelope, EnvelopeError, ENVELOPE_CTR_ADDR};
 use envelope_contract::{request_type::GET_MSG, GetMsgParams};
 
+pub type Dispatch = Box<
+    dyn Fn(Action) -> Pin<Box<dyn Future<Output = ()> + Send + Sync>>
+        + Send
+        + Sync,
+>;
+
 impl Envelope {
     pub async fn get_messages(
-        &self,
+        // &self,
+        dispatch: Dispatch,
         ch_id: String,
     ) -> Result<(), EnvelopeError> {
         let get_msg_params = GetMsgParams { ch_id };
@@ -20,7 +29,8 @@ impl Envelope {
         {
             if let Some(d) = r.result {
                 // self.dispatch(IoEvent::GetMessages(d.result)).await;
-                self.dispatch(Action::GetMessages(d.result)).await?;
+                // self.dispatch(Action::GetMessages(d.result)).await?;
+                dispatch(Action::GetMessages(d.result)).await;
             }
         }
 

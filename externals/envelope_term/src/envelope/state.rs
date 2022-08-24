@@ -53,7 +53,7 @@ impl AppState {
         self.scroll_messages_view
     }
 
-    pub fn messages_scroll(&mut self, movement: ScrollMovement) {
+    pub fn _messages_scroll(&mut self, movement: ScrollMovement) {
         match movement {
             ScrollMovement::Up => {
                 if self.scroll_messages_view > 0 {
@@ -78,15 +78,15 @@ impl AppState {
     //     self.view = View::ChList;
     // }
 
-    pub fn set_ch_list(
-        &mut self,
-        new_ch: ChannelState,
-    ) -> Result<(), EnvelopeError> {
-        if !self.ch_list.contains(&new_ch) {
-            self.ch_list.push(new_ch);
-        }
-        Ok(())
-    }
+    // pub fn set_ch_list(
+    //     &mut self,
+    //     new_ch: ChannelState,
+    // ) -> Result<(), EnvelopeError> {
+    //     if !self.ch_list.contains(&new_ch) {
+    //         self.ch_list.push(new_ch);
+    //     }
+    //     Ok(())
+    // }
 
     // pub fn set_chats(&mut self, data: Vec<ChatMessage>, my_pk: String) {
     //     self.chats = data;
@@ -98,17 +98,17 @@ impl AppState {
     //     self.chats.push(ChatMessage::new(msg, user));
     // }
 
-    pub fn set_view_landing(&mut self) {
-        if self.is_initialized {
-            self.view = View::Landing;
-        }
-    }
+    // pub fn set_view_landing(&mut self) {
+    //     if self.is_initialized {
+    //         self.view = View::Landing;
+    //     }
+    // }
 
-    pub fn set_view_open_ch(&mut self) {
-        if self.is_initialized {
-            self.view = View::OpenCh;
-        }
-    }
+    // pub fn set_view_open_ch(&mut self) {
+    //     if self.is_initialized {
+    //         self.view = View::OpenCh;
+    //     }
+    // }
 
     pub fn set_view_chat(&mut self) {
         if self.is_initialized {
@@ -116,11 +116,11 @@ impl AppState {
         }
     }
 
-    pub fn set_view_ch_list(&mut self) {
-        if self.is_initialized {
-            self.view = View::ChList;
-        }
-    }
+    // pub fn set_view_ch_list(&mut self) {
+    //     if self.is_initialized {
+    //         self.view = View::ChList;
+    //     }
+    // }
 
     pub async fn set_balance(&mut self, user_pk: String) {
         // TODO get user_id via params
@@ -163,33 +163,33 @@ impl AppState {
         self.balance = balance;
     }
 
-    pub fn next_ch(&mut self) {
-        let i = match self.ch_list_state.selected() {
-            Some(i) => {
-                if i >= self.ch_list.len() - 1 {
-                    0
-                } else {
-                    i + 1
-                }
-            }
-            None => 0,
-        };
-        self.ch_list_state.select(Some(i));
-    }
+    // pub fn next_ch(&mut self) {
+    //     let i = match self.ch_list_state.selected() {
+    //         Some(i) => {
+    //             if i >= self.ch_list.len() - 1 {
+    //                 0
+    //             } else {
+    //                 i + 1
+    //             }
+    //         }
+    //         None => 0,
+    //     };
+    //     self.ch_list_state.select(Some(i));
+    // }
 
-    pub fn previous_ch(&mut self) {
-        let i = match self.ch_list_state.selected() {
-            Some(i) => {
-                if i == 0 {
-                    self.ch_list.len() - 1
-                } else {
-                    i - 1
-                }
-            }
-            None => 0,
-        };
-        self.ch_list_state.select(Some(i));
-    }
+    // pub fn previous_ch(&mut self) {
+    //     let i = match self.ch_list_state.selected() {
+    //         Some(i) => {
+    //             if i == 0 {
+    //                 self.ch_list.len() - 1
+    //             } else {
+    //                 i - 1
+    //             }
+    //         }
+    //         None => 0,
+    //     };
+    //     self.ch_list_state.select(Some(i));
+    // }
 }
 
 impl Default for AppState {
