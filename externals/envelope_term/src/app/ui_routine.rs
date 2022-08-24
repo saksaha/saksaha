@@ -38,11 +38,11 @@ impl UIRoutine {
         loop {
             let mut state = envelope.get_state().write().await;
 
-            log::info!(
-                "is_initialized: {}, view: {:?},",
-                state.is_initialized,
-                state.view,
-            );
+            // log::info!(
+            //     "is_initialized: {}, view: {:?},",
+            //     state.is_initialized,
+            //     state.view,
+            // );
 
             terminal.draw(|rect| views::draw(rect, &mut state))?;
 

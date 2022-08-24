@@ -84,7 +84,7 @@ pub(crate) async fn enter_in_open_ch(
     // let pk = self.state.input_returned.clone();
 
     // for dev
-    request_open_ch(&state.input_returned, ctx).await?;
+    let open_ch_result = request_open_ch(&state.input_returned, ctx).await?;
 
     Ok(())
 }
@@ -314,15 +314,24 @@ async fn request_open_ch(
             ctr_call_type: CtrCallType::Execute,
         };
 
-        wallet_sdk::send_tx_pour(user_1_acc_addr, ctr_addr, ctr_request)
-            .await?;
+        wallet_sdk::send_tx_pour(
+            user_1_acc_addr.clone(),
+            ctr_addr,
+            ctr_request,
+        )
+        .await?;
     }
 
     {
         // =-=-=-=-=-=  `open_ch` for receiver =-=-=-=-=-=-=-=
 
+        let her_pk = "042c8d005bd935597117181d8ceceaef6d1162de78c32856\
+                89d0c36c6170634c124f7b9b911553a1f483ec565c199ea29ff1\
+                cd641f10c9a5f8c7c4d4a026db6f7b"
+            .to_string();
+
         let aes_key = {
-            let her_pk: Vec<u8> = sak_crypto::decode_hex(her_pk)?;
+            let her_pk: Vec<u8> = sak_crypto::decode_hex(&her_pk)?;
 
             let her_pk = PublicKey::from_sec1_bytes(&her_pk.as_slice())?;
 
@@ -366,12 +375,8 @@ async fn request_open_ch(
             ctr_call_type: CtrCallType::Execute,
         };
 
-        wallet_sdk::send_tx_pour(
-            "PARTNER_ACC_ADDR".to_string(),
-            ctr_addr,
-            ctr_request,
-        )
-        .await?;
+        wallet_sdk::send_tx_pour(user_1_acc_addr, ctr_addr, ctr_request)
+            .await?;
     }
 
     Ok(())
