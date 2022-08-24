@@ -1,5 +1,4 @@
-use crate::{app::get_balance_from_wallet, io::InputMode};
-use crate::{update_wallet, EnvelopeError};
+use crate::{io::InputMode, wallet_sdk, EnvelopeError};
 use envelope_contract::{Channel, ChatMessage};
 use log::{info, warn};
 use tui::widgets::ListState;
@@ -15,10 +14,8 @@ pub enum View {
 
 #[derive(Debug)]
 pub struct AppState {
-    initialized: bool,
-    counter_sleep: u32,
-    counter_tick: u64,
-    scroll_messages_view: usize,
+    pub is_initialized: bool,
+    pub scroll_messages_view: usize,
     pub is_loading: bool,
     pub ch_list_state: ListState,
     pub ch_list: Vec<ChannelState>,
@@ -34,13 +31,8 @@ pub struct AppState {
 
 impl AppState {
     pub fn initialized() -> Self {
-        let counter_sleep = 0;
-        let counter_tick = 0;
-
         AppState {
-            initialized: true,
-            counter_sleep,
-            counter_tick,
+            is_initialized: false,
             scroll_messages_view: 0,
             ch_list_state: ListState::default(),
             ch_list: vec![],
@@ -55,11 +47,12 @@ impl AppState {
             selected_ch_id: String::default(),
         }
     }
+
     pub fn scroll_messages_view(&self) -> usize {
         self.scroll_messages_view
     }
 
-    pub fn messages_scroll(&mut self, movement: ScrollMovement) {
+    pub fn _messages_scroll(&mut self, movement: ScrollMovement) {
         match movement {
             ScrollMovement::Up => {
                 if self.scroll_messages_view > 0 {
@@ -75,35 +68,28 @@ impl AppState {
         }
     }
 
-    pub fn is_initialized(&self) -> bool {
-        self.initialized
-    }
+    // pub fn get_is_initialized(&self) -> bool {
+    //     self.is_initialized
+    // }
 
-    pub fn incr_sleep(&mut self) {
-        if self.initialized {
-            self.counter_sleep += 1;
-        }
-    }
+    // pub fn set_is_initialized(&mut self, is_initialized: bool) {
+    //     self.is_initialized = is_initialized;
+    //     self.view = View::ChList;
+    // }
 
-    pub fn incr_tick(&mut self) {
-        if self.initialized {
-            self.counter_tick += 1;
-        }
-    }
+    // pub fn set_ch_list(
+    //     &mut self,
+    //     new_ch: ChannelState,
+    // ) -> Result<(), EnvelopeError> {
+    //     if !self.ch_list.contains(&new_ch) {
+    //         self.ch_list.push(new_ch);
+    //     }
+    //     Ok(())
+    // }
 
-    pub fn set_ch_list(
-        &mut self,
-        new_ch: ChannelState,
-    ) -> Result<(), EnvelopeError> {
-        if !self.ch_list.contains(&new_ch) {
-            self.ch_list.push(new_ch);
-        }
-        Ok(())
-    }
-
-    pub fn set_chats(&mut self, data: Vec<ChatMessage>, my_pk: String) {
-        self.chats = data;
-    }
+    // pub fn set_chats(&mut self, data: Vec<ChatMessage>, my_pk: String) {
+    //     self.chats = data;
+    // }
 
     // pub fn set_input_messages(&mut self, msg: String) {
     //     let user = String::from("me");
@@ -111,42 +97,43 @@ impl AppState {
     //     self.chats.push(ChatMessage::new(msg, user));
     // }
 
-    pub fn set_view_landing(&mut self) {
-        if self.initialized {
-            self.view = View::Landing;
-        }
-    }
+    // pub fn set_view_landing(&mut self) {
+    //     if self.is_initialized {
+    //         self.view = View::Landing;
+    //     }
+    // }
 
-    pub fn set_view_open_ch(&mut self) {
-        if self.initialized {
-            self.view = View::OpenCh;
-        }
-    }
+    // pub fn set_view_open_ch(&mut self) {
+    //     if self.is_initialized {
+    //         self.view = View::OpenCh;
+    //     }
+    // }
 
     pub fn set_view_chat(&mut self) {
-        if self.initialized {
+        if self.is_initialized {
             self.view = View::Chat;
         }
     }
 
-    pub fn set_view_ch_list(&mut self) {
-        if self.initialized {
-            self.view = View::ChList;
-        }
-    }
+    // pub fn set_view_ch_list(&mut self) {
+    //     if self.is_initialized {
+    //         self.view = View::ChList;
+    //     }
+    // }
 
     pub async fn set_balance(&mut self, user_pk: String) {
-        //TODO get user_id via params
+        // TODO get user_id via params
         // let tmp_user_id = USER_1.to_owned();
         // let tmp_user_id = "".to_owned();
         // let balance = match get_balance_from_wallet(&tmp_user_id).await {
 
         {
             // update the coin_manager in wallet
-            let _ = update_wallet(&user_pk).await;
+            let _ = wallet_sdk::update_wallet(&user_pk).await;
         }
 
-        let balance = match get_balance_from_wallet(&user_pk).await {
+        let balance = match wallet_sdk::get_balance_from_wallet(&user_pk).await
+        {
             Ok(resp) => {
                 info!("Success to get response from wallet");
                 let result = match resp.result {
@@ -175,41 +162,39 @@ impl AppState {
         self.balance = balance;
     }
 
-    pub fn next_ch(&mut self) {
-        let i = match self.ch_list_state.selected() {
-            Some(i) => {
-                if i >= self.ch_list.len() - 1 {
-                    0
-                } else {
-                    i + 1
-                }
-            }
-            None => 0,
-        };
-        self.ch_list_state.select(Some(i));
-    }
+    // pub fn next_ch(&mut self) {
+    //     let i = match self.ch_list_state.selected() {
+    //         Some(i) => {
+    //             if i >= self.ch_list.len() - 1 {
+    //                 0
+    //             } else {
+    //                 i + 1
+    //             }
+    //         }
+    //         None => 0,
+    //     };
+    //     self.ch_list_state.select(Some(i));
+    // }
 
-    pub fn previous_ch(&mut self) {
-        let i = match self.ch_list_state.selected() {
-            Some(i) => {
-                if i == 0 {
-                    self.ch_list.len() - 1
-                } else {
-                    i - 1
-                }
-            }
-            None => 0,
-        };
-        self.ch_list_state.select(Some(i));
-    }
+    // pub fn previous_ch(&mut self) {
+    //     let i = match self.ch_list_state.selected() {
+    //         Some(i) => {
+    //             if i == 0 {
+    //                 self.ch_list.len() - 1
+    //             } else {
+    //                 i - 1
+    //             }
+    //         }
+    //         None => 0,
+    //     };
+    //     self.ch_list_state.select(Some(i));
+    // }
 }
 
 impl Default for AppState {
     fn default() -> Self {
         AppState {
-            initialized: false,
-            counter_sleep: 0,
-            counter_tick: 0,
+            is_initialized: false,
             scroll_messages_view: 0,
             ch_list_state: ListState::default(),
             ch_list: vec![],
@@ -225,23 +210,6 @@ impl Default for AppState {
         }
     }
 }
-
-// #[derive(Debug)]
-// pub struct ChatMessage {
-// pub date: DateTime<Local>,
-//     pub msg: String,
-//     pub user: String,
-// }
-
-// impl ChatMessage {
-//     pub fn new(msg: String, user: String) -> ChatMessage {
-//         ChatMessage {
-//             date: Local::now(),
-//             msg,
-//             user,
-//         }
-//     }
-// }
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct ChannelState {

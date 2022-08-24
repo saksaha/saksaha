@@ -1,11 +1,15 @@
 use super::utils;
-use crate::envelope::Envelope;
+use crate::envelope::{AppState, Envelope};
+use tokio::sync::{OwnedRwLockWriteGuard, RwLockReadGuard, RwLockWriteGuard};
 use tui::backend::Backend;
 use tui::layout::{Constraint, Direction, Layout};
 use tui::Frame;
 
-pub(crate) fn draw_ch_list<B>(rect: &mut Frame<B>, app: &mut Envelope)
-where
+pub(crate) fn draw_ch_list<'a, B>(
+    rect: &mut Frame<B>,
+    // envelope: &Envelope,
+    state: &mut RwLockWriteGuard<'a, AppState>,
+) where
     B: Backend,
 {
     let size = rect.size();
@@ -35,10 +39,11 @@ where
             )
             .split(chunks[0]);
 
-        let tabs = utils::draw_tabs(app.get_state());
+        // let state = envelope.get_state().read().await;
+        let tabs = utils::draw_tabs(&state);
         rect.render_widget(tabs, head_chunks[0]);
 
-        let balance = utils::draw_balance(app.get_state());
+        let balance = utils::draw_balance(&state);
         rect.render_widget(balance, head_chunks[1]);
     }
 
@@ -54,15 +59,15 @@ where
             )
             .split(chunks[1]);
 
-        let ch_list = utils::draw_ch_list(app.get_state());
+        let ch_list = utils::draw_ch_list(&state);
         rect.render_stateful_widget(
             ch_list,
             body_chunks[0],
-            &mut (app.get_state_mut()).ch_list_state,
+            &mut state.ch_list_state,
         );
 
-        let help = utils::draw_help(app.get_actions());
-        rect.render_widget(help, body_chunks[1]);
+        // let help = utils::draw_help(envelope.get_actions());
+        // rect.render_widget(help, body_chunks[1]);
     }
 
     let logs = utils::draw_logs();
