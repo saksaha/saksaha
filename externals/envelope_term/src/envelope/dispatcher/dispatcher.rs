@@ -1,6 +1,9 @@
-use super::reducer::Reducer;
 use crate::{
-    envelope::{Action, AppState},
+    credential::Credential,
+    envelope::{
+        reducer::{DispatcherContext, Reducer},
+        Action, AppState,
+    },
     EnvelopeError,
 };
 use std::sync::Arc;
@@ -14,11 +17,13 @@ pub(crate) struct Dispatcher {
     action_bus_rx: Mutex<Receiver<Action>>,
     action_bus_tx: Sender<Action>,
     reducer: Reducer,
+    ctx: DispatcherContext,
 }
 
 impl Dispatcher {
     pub fn new(
         state: Arc<RwLock<AppState>>,
+        ctx: DispatcherContext,
     ) -> Result<Dispatcher, EnvelopeError> {
         let (action_bus_tx, action_bus_rx) = {
             let (tx, rx) = mpsc::channel::<Action>(100);
@@ -32,6 +37,7 @@ impl Dispatcher {
             action_bus_rx,
             action_bus_tx,
             reducer,
+            ctx,
         };
 
         Ok(d)
@@ -43,7 +49,7 @@ impl Dispatcher {
         while let Some(action) = action_bus_rx_lock.recv().await {
             // handler.handle_io_event(io_event).await;
             let state = self.state.write().await;
-            self.reduce(state, action);
+            self.reducer.reduce(state, action, &self.ctx);
         }
     }
 
@@ -52,13 +58,5 @@ impl Dispatcher {
         action: Action,
     ) -> Result<(), SendError<Action>> {
         self.action_bus_tx.send(action).await
-    }
-
-    pub fn reduce<'a>(
-        &self,
-        mut state: RwLockWriteGuard<'a, AppState>,
-        action: Action,
-    ) {
-        self.reducer.reduce(state, action);
     }
 }

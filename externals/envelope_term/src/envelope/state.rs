@@ -48,6 +48,7 @@ impl AppState {
             selected_ch_id: String::default(),
         }
     }
+
     pub fn scroll_messages_view(&self) -> usize {
         self.scroll_messages_view
     }
@@ -68,14 +69,14 @@ impl AppState {
         }
     }
 
-    pub fn get_is_initialized(&self) -> bool {
-        self.is_initialized
-    }
+    // pub fn get_is_initialized(&self) -> bool {
+    //     self.is_initialized
+    // }
 
-    pub fn set_is_initialized(&mut self, is_initialized: bool) {
-        self.is_initialized = is_initialized;
-        self.view = View::ChList;
-    }
+    // pub fn set_is_initialized(&mut self, is_initialized: bool) {
+    //     self.is_initialized = is_initialized;
+    //     self.view = View::ChList;
+    // }
 
     pub fn set_ch_list(
         &mut self,
@@ -87,9 +88,9 @@ impl AppState {
         Ok(())
     }
 
-    pub fn set_chats(&mut self, data: Vec<ChatMessage>, my_pk: String) {
-        self.chats = data;
-    }
+    // pub fn set_chats(&mut self, data: Vec<ChatMessage>, my_pk: String) {
+    //     self.chats = data;
+    // }
 
     // pub fn set_input_messages(&mut self, msg: String) {
     //     let user = String::from("me");
