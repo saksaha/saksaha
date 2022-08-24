@@ -66,7 +66,7 @@ impl Envelope {
                 Action::ShowChat,
                 Action::Down,
                 Action::Up,
-                Action::UpdateBalance,
+                Action::UpdateBalanceInput,
                 Action::Select,
                 Action::RestoreChat,
             ])

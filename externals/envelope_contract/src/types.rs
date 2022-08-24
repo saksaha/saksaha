@@ -16,6 +16,8 @@ pub mod request_type {
     pub const GET_CH_LIST: &'static str = "get_ch_list";
 
     pub const GET_MSG: &'static str = "get_msgs";
+
+    pub const GET_BALANCE: &'static str = "get_balance";
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
