@@ -28,6 +28,7 @@ impl Reducer {
             Action::SwitchNormalMode => switch_normal_mode(state),
             Action::ShowOpenCh => show_open_ch(state),
             Action::ShowChat => show_chat(state),
+            Action::ShowChList => show_ch_list(state),
             Action::Down => down(state),
             Action::Up => up(state),
             Action::RestoreChat => restore_chat(state),
@@ -78,6 +79,12 @@ fn show_open_ch<'a>(mut state: RwLockWriteGuard<'a, AppState>) {
 fn show_chat<'a>(mut state: RwLockWriteGuard<'a, AppState>) {
     if state.is_initialized {
         state.view = View::Chat;
+    }
+}
+
+fn show_ch_list<'a>(mut state: RwLockWriteGuard<'a, AppState>) {
+    if state.is_initialized {
+        state.view = View::ChList;
     }
 }
 

@@ -81,8 +81,11 @@ impl Envelope {
         let db = EnvelopeDB::init(&credential.acc_addr).await?;
 
         let dispatcher = {
-            let ctx = DispatcherContext {
-                credential: credential.clone(),
+            let ctx = {
+                let c = DispatcherContext {
+                    credential: credential.clone(),
+                };
+                Arc::new(c)
             };
 
             let d = Dispatcher::new(state.clone(), ctx)?;
@@ -504,159 +507,159 @@ impl Envelope {
     //     Ok(())
     // }
 
-    pub async fn send_messages(
-        &self,
-        msg: &String,
-    ) -> Result<(), EnvelopeError> {
-        let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
+    // pub async fn send_messages(
+    //     &self,
+    //     msg: &String,
+    // ) -> Result<(), EnvelopeError> {
+    //     let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
 
-        let user_1_pk = self.credential.public_key_str.to_string();
-        let user_1_sk = &self.credential.secret_key_str;
-        let user_1_acc_addr = &self.credential.acc_addr;
+    //     let user_1_pk = self.credential.public_key_str.to_string();
+    //     let user_1_sk = &self.credential.secret_key_str;
+    //     let user_1_acc_addr = &self.credential.acc_addr;
 
-        let user_1_sk: U8Arr32 =
-            U8Array::from_hex_string(user_1_sk.to_string())?;
+    //     let user_1_sk: U8Arr32 =
+    //         U8Array::from_hex_string(user_1_sk.to_string())?;
 
-        let mut state = self.get_state().write().await;
-        let selected_ch_id = state.selected_ch_id.clone();
+    //     let mut state = self.get_state().write().await;
+    //     let selected_ch_id = state.selected_ch_id.clone();
 
-        let eph_key: String = {
-            let mut res: String = String::default();
+    //     let eph_key: String = {
+    //         let mut res: String = String::default();
 
-            for ch_state in state.ch_list.iter() {
-                if ch_state.channel.ch_id == selected_ch_id {
-                    res = ch_state.channel.eph_key.clone();
-                }
-            }
+    //         for ch_state in state.ch_list.iter() {
+    //             if ch_state.channel.ch_id == selected_ch_id {
+    //                 res = ch_state.channel.eph_key.clone();
+    //             }
+    //         }
 
-            res
-        };
+    //         res
+    //     };
 
-        let aes_key = {
-            // In this channel, I am Initiator: `eph_key` == `eph_sk`
-            // the `aes_key` will be `kdf(eph_sk, my_pk)`
-            if &eph_key[0..5] == "init_" {
-                let eph_sk = &eph_key[5..];
+    //     let aes_key = {
+    //         // In this channel, I am Initiator: `eph_key` == `eph_sk`
+    //         // the `aes_key` will be `kdf(eph_sk, my_pk)`
+    //         if &eph_key[0..5] == "init_" {
+    //             let eph_sk = &eph_key[5..];
 
-                let eph_sk_encrypted: Vec<u8> = serde_json::from_str(eph_sk)?;
+    //             let eph_sk_encrypted: Vec<u8> = serde_json::from_str(eph_sk)?;
 
-                let sk = {
-                    let eph_sk =
-                        sak_crypto::aes_decrypt(&user_1_sk, &eph_sk_encrypted)?;
+    //             let sk = {
+    //                 let eph_sk =
+    //                     sak_crypto::aes_decrypt(&user_1_sk, &eph_sk_encrypted)?;
 
-                    SecretKey::from_bytes(&eph_sk)?
-                };
+    //                 SecretKey::from_bytes(&eph_sk)?
+    //             };
 
-                let pk = {
-                    // for dev, her_pk == `user_2_pk`
-                    let her_pk =
-                        self.get_pk(&self.partner_credential.acc_addr).await?;
+    //             let pk = {
+    //                 // for dev, her_pk == `user_2_pk`
+    //                 let her_pk =
+    //                     self.get_pk(&self.partner_credential.acc_addr).await?;
 
-                    let her_pk_vec: Vec<u8> = sak_crypto::decode_hex(&her_pk)?;
+    //                 let her_pk_vec: Vec<u8> = sak_crypto::decode_hex(&her_pk)?;
 
-                    PublicKey::from_sec1_bytes(&her_pk_vec)?
-                };
+    //                 PublicKey::from_sec1_bytes(&her_pk_vec)?
+    //             };
 
-                derive_aes_key(sk, pk)?
-            } else {
-                // In this channel, I am Receiver: `eph_key` == `eph_pk`
-                // The Initiator had opened channel with `my public key`,
-                // so the `aes_key` will be `kdf(my_sk, eph_pk)`
-                let eph_pk = eph_key;
+    //             derive_aes_key(sk, pk)?
+    //         } else {
+    //             // In this channel, I am Receiver: `eph_key` == `eph_pk`
+    //             // The Initiator had opened channel with `my public key`,
+    //             // so the `aes_key` will be `kdf(my_sk, eph_pk)`
+    //             let eph_pk = eph_key;
 
-                let sk = {
-                    let my_sk = &self.credential.secret_key_str;
+    //             let sk = {
+    //                 let my_sk = &self.credential.secret_key_str;
 
-                    SecretKey::from_bytes(&my_sk.as_bytes())?
-                };
+    //                 SecretKey::from_bytes(&my_sk.as_bytes())?
+    //             };
 
-                let pk = {
-                    let eph_pk_vec: Vec<u8> = sak_crypto::decode_hex(&eph_pk)?;
+    //             let pk = {
+    //                 let eph_pk_vec: Vec<u8> = sak_crypto::decode_hex(&eph_pk)?;
 
-                    PublicKey::from_sec1_bytes(&eph_pk_vec)?
-                };
+    //                 PublicKey::from_sec1_bytes(&eph_pk_vec)?
+    //             };
 
-                derive_aes_key(sk, pk)?
-            }
-        };
+    //             derive_aes_key(sk, pk)?
+    //         }
+    //     };
 
-        let chat_msg = ChatMessage {
-            date: Local::now().format("%H:%M:%S ").to_string(),
-            user: user_1_pk,
-            msg: msg.clone(),
-        };
+    //     let chat_msg = ChatMessage {
+    //         date: Local::now().format("%H:%M:%S ").to_string(),
+    //         user: user_1_pk,
+    //         msg: msg.clone(),
+    //     };
 
-        let chat_msg_serialized = serde_json::to_string(&chat_msg)?;
-        // let chat_msg_serialized = serde_json::to_string(&msg)?;
+    //     let chat_msg_serialized = serde_json::to_string(&chat_msg)?;
+    //     // let chat_msg_serialized = serde_json::to_string(&msg)?;
 
-        let encrypted_msg = {
-            let encrypted_msg = &sak_crypto::aes_encrypt(
-                &aes_key,
-                chat_msg_serialized.as_bytes(),
-            )?;
+    //     let encrypted_msg = {
+    //         let encrypted_msg = &sak_crypto::aes_encrypt(
+    //             &aes_key,
+    //             chat_msg_serialized.as_bytes(),
+    //         )?;
 
-            serde_json::to_string(encrypted_msg)?
-        };
+    //         serde_json::to_string(encrypted_msg)?
+    //     };
 
-        let send_msg_params = SendMsgParams {
-            ch_id: selected_ch_id,
-            msg: encrypted_msg,
-        };
+    //     let send_msg_params = SendMsgParams {
+    //         ch_id: selected_ch_id,
+    //         msg: encrypted_msg,
+    //     };
 
-        let args = serde_json::to_vec(&send_msg_params)?;
+    //     let args = serde_json::to_vec(&send_msg_params)?;
 
-        let req_type = SEND_MSG.to_string();
+    //     let req_type = SEND_MSG.to_string();
 
-        let ctr_request = CtrRequest {
-            req_type,
-            args,
-            ctr_call_type: CtrCallType::Execute,
-        };
+    //     let ctr_request = CtrRequest {
+    //         req_type,
+    //         args,
+    //         ctr_call_type: CtrCallType::Execute,
+    //     };
 
-        wallet_sdk::send_tx_pour(
-            user_1_acc_addr.to_string(),
-            ctr_addr,
-            ctr_request,
-        )
-        .await?;
+    //     wallet_sdk::send_tx_pour(
+    //         user_1_acc_addr.to_string(),
+    //         ctr_addr,
+    //         ctr_request,
+    //     )
+    //     .await?;
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
-    async fn get_pk(&self, acc_addr: &String) -> Result<String, EnvelopeError> {
-        let user_sk = self
-            .db
-            .schema
-            .get_my_sk_by_acc_addr(acc_addr)
-            .await?
-            .ok_or("Cannot retrieve pk")?;
+    // async fn get_pk(&self, acc_addr: &String) -> Result<String, EnvelopeError> {
+    //     let user_sk = self
+    //         .db
+    //         .schema
+    //         .get_my_sk_by_acc_addr(acc_addr)
+    //         .await?
+    //         .ok_or("Cannot retrieve pk")?;
 
-        let user_pk =
-            self.db.schema.get_my_pk_by_sk(&user_sk).await?.ok_or("")?;
+    //     let user_pk =
+    //         self.db.schema.get_my_pk_by_sk(&user_sk).await?.ok_or("")?;
 
-        Ok(user_pk)
-    }
+    //     Ok(user_pk)
+    // }
 
-    async fn get_acc_addr(
-        &self,
-        user: &String,
-    ) -> Result<String, EnvelopeError> {
-        let acc_addr = self
-            .db
-            .schema
-            .get_my_acc_addr_by_user_id(user)
-            .await?
-            .ok_or("")?;
+    // async fn get_acc_addr(
+    //     &self,
+    //     user: &String,
+    // ) -> Result<String, EnvelopeError> {
+    //     let acc_addr = self
+    //         .db
+    //         .schema
+    //         .get_my_acc_addr_by_user_id(user)
+    //         .await?
+    //         .ok_or("")?;
 
-        Ok(acc_addr)
-    }
+    //     Ok(acc_addr)
+    // }
 
-    async fn get_sig(&self, secret: &String) -> Result<String, EnvelopeError> {
-        let user_sig =
-            self.db.schema.get_my_sig_by_sk(secret).await?.ok_or("")?;
+    // async fn get_sig(&self, secret: &String) -> Result<String, EnvelopeError> {
+    //     let user_sig =
+    //         self.db.schema.get_my_sig_by_sk(secret).await?.ok_or("")?;
 
-        Ok(user_sig)
-    }
+    //     Ok(user_sig)
+    // }
 
     // pub fn get_partner_pk(&self) -> &String {
     //     &self.partner_credential.public_key

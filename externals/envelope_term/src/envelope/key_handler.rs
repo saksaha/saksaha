@@ -12,14 +12,12 @@ impl Envelope {
     pub async fn handle_normal_key<'a>(
         &self,
         key: Key,
-        //
         mut state: RwLockWriteGuard<'a, AppState>,
     ) -> AppReturn {
         info!("Run action [{:?}], actions: {:?}", key, self.get_actions());
 
         if let Some(ref action) = self.get_actions().find(key) {
             // let mut state = self.state.write().await;
-
             // state.input_text.clear();
 
             match action {
@@ -77,17 +75,16 @@ impl Envelope {
                 }
 
                 Action::RestoreChat => {
-                    // let dispatch: Dispatch = self.dispatch;
-                    let d = self.dispatcher.clone();
+                    let dispatcher = self.dispatcher.clone();
                     let dispatch: Dispatch = Box::new(move |action| {
-                        let d = d.clone();
+                        let d = dispatcher.clone();
                         Box::pin(async move {
-                            d.dispatch(action).await;
+                            d.dispatch(action).await?;
                             Ok::<_, SendError<Action>>(())
                         })
                     });
 
-                    actions::restore_chat(self.dispatcher.clone(), state).await;
+                    actions::restore_chat(dispatch, state).await;
 
                     // self.dispatch(Action::RestoreChat).await;
 
@@ -115,28 +112,43 @@ impl Envelope {
                     AppReturn::Continue
                 }
 
-                // Action::Select => match state.view {
-                //     View::ChList => {
-                //         state.selected_ch_id = match state
-                //             .ch_list_state
-                //             .selected()
-                //         {
-                //             Some(i) => (state.ch_list[i]).channel.ch_id.clone(),
-                //             None => String::default(),
-                //         };
+                Action::Select => {
+                    let dispatcher = self.dispatcher.clone();
+                    let dispatch: Dispatch = Box::new(move |action| {
+                        let d = dispatcher.clone();
+                        Box::pin(async move {
+                            d.dispatch(action).await?;
+                            Ok::<_, SendError<Action>>(())
+                        })
+                    });
 
-                //         log::info!("Ch_Id: {:?}", state.selected_ch_id);
+                    actions::select(dispatch, state).await;
 
-                //         // self.get_messages(self.state.selected_ch_id.clone())
-                //         //     .await;
+                    AppReturn::Continue
 
-                //         state.set_view_chat();
-                //         return AppReturn::Continue;
-                //     }
-                //     _ => {
-                //         return AppReturn::Continue;
-                //     }
-                // },
+                    // match state.view {
+                    //     View::ChList => {
+                    //         state.selected_ch_id = match state
+                    //             .ch_list_state
+                    //             .selected()
+                    //         {
+                    //             Some(i) => (state.ch_list[i]).channel.ch_id.clone(),
+                    //             None => String::default(),
+                    //         };
+
+                    //         log::info!("Ch_Id: {:?}", state.selected_ch_id);
+
+                    //         // self.get_messages(self.state.selected_ch_id.clone())
+                    //         //     .await;
+
+                    //         state.set_view_chat();
+                    //         return AppReturn::Continue;
+                    //     }
+                    //     _ => {
+                    //         return AppReturn::Continue;
+                    //     }
+                    // },
+                }
 
                 // Action::UpdateBalance => {
                 //     let my_pk = self.get_credential().acc_addr.clone();
@@ -168,53 +180,85 @@ impl Envelope {
 
                 match state.view {
                     View::OpenCh => {
-                        state.input_returned =
-                            state.input_text.drain(..).collect();
+                        let dispatcher = self.dispatcher.clone();
+                        let dispatch: Dispatch = Box::new(move |action| {
+                            let d = dispatcher.clone();
+                            Box::pin(async move {
+                                d.dispatch(action).await?;
+                                Ok::<_, SendError<Action>>(())
+                            })
+                        });
 
-                        // need to check validity of `self.state.input_returned`
-                        // let pk = self.state.input_returned.clone();
+                        actions::enter_in_open_ch(
+                            dispatch,
+                            state,
+                            self.dispatcher.get_context().clone(),
+                        )
+                        .await;
 
-                        // for dev
-                        {
-                            if let Err(_) = &self
-                                // .open_ch(&self.get_partner_pk().to_owned())
-                                .open_ch(&state.input_returned)
-                                .await
-                            {
-                                return AppReturn::Continue;
-                            }
-                        };
+                        // state.input_returned =
+                        //     state.input_text.drain(..).collect();
+
+                        // // need to check validity of `self.state.input_returned`
+                        // // let pk = self.state.input_returned.clone();
+
+                        // // for dev
+                        // {
+                        // if let Err(_) = &self
+                        //     // .open_ch(&self.get_partner_pk().to_owned())
+                        //     .open_ch(&state.input_returned)
+                        //     .await
+                        //     {
+                        //         return AppReturn::Continue;
+                        //     }
+                        // };
                     }
                     View::Chat => {
-                        if state.selected_ch_id != String::default() {
-                            state.chat_input =
-                                state.input_text.drain(..).collect();
+                        let dispatcher = self.dispatcher.clone();
+                        let dispatch: Dispatch = Box::new(move |action| {
+                            let d = dispatcher.clone();
+                            Box::pin(async move {
+                                d.dispatch(action).await?;
+                                Ok::<_, SendError<Action>>(())
+                            })
+                        });
 
-                            match self.send_messages(&state.chat_input).await {
-                                Ok(res) => {
-                                    log::info!(
-                                        "[send_message] Result: {:?}",
-                                        res
-                                    );
-                                    AppReturn::Continue
-                                }
-                                Err(err) => {
-                                    log::warn!(
-                                        "[send_message] Error: {:?}",
-                                        err
-                                    );
-                                    AppReturn::Continue
-                                }
-                            };
-                        } else {
-                            let _trash_bin: String =
-                                state.input_text.drain(..).collect();
+                        actions::enter_in_chat(
+                            dispatch,
+                            state,
+                            self.dispatcher.get_context().clone(),
+                        )
+                        .await;
 
-                            log::error!(
-                                "[send_message] You should get the \
-                                `ch_id` first!"
-                            );
-                        }
+                        // if state.selected_ch_id != String::default() {
+                        //     state.chat_input =
+                        //         state.input_text.drain(..).collect();
+
+                        // match self.send_messages(&state.chat_input).await {
+                        //         Ok(res) => {
+                        //             log::info!(
+                        //                 "[send_message] Result: {:?}",
+                        //                 res
+                        //             );
+                        //             AppReturn::Continue
+                        //         }
+                        //         Err(err) => {
+                        //             log::warn!(
+                        //                 "[send_message] Error: {:?}",
+                        //                 err
+                        //             );
+                        //             AppReturn::Continue
+                        //         }
+                        //     };
+                        // } else {
+                        //     let _trash_bin: String =
+                        //         state.input_text.drain(..).collect();
+
+                        //     log::error!(
+                        //         "[send_message] You should get the \
+                        //         `ch_id` first!"
+                        //     );
+                        // }
 
                         // self.get_state_mut()
                         //     .set_input_messages(self.get_state_mut().chat_input.clone());
