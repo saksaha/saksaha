@@ -1,4 +1,4 @@
-use super::dispatcher::Dispatcher;
+use super::dispatcher::{Dispatch, Dispatcher};
 use super::reducer::DispatcherContext;
 use super::Actions;
 use super::{state::AppState, ChannelState};
@@ -17,8 +17,10 @@ use sak_contract_std::{CtrCallType, CtrRequest};
 use sak_crypto::{
     aes_decrypt, derive_aes_key, PublicKey, SakKey, SecretKey, ToEncodedPoint,
 };
+use std::future::Future;
+use std::pin::Pin;
 use std::sync::Arc;
-use tokio::sync::{mpsc, RwLock};
+use tokio::sync::{mpsc, RwLock, RwLockWriteGuard};
 use type_extension::{U8Arr32, U8Array};
 
 #[derive(Debug, PartialEq, Eq)]
@@ -27,9 +29,20 @@ pub enum AppReturn {
     Continue,
 }
 
+// pub(crate) type ActionCreator = Box<
+//     dyn Fn(
+//             Dispatch,
+//             Arc<RwLock<AppState>>,
+//             // RwLockWriteGuard<AppState>,
+//         ) -> Pin<
+//             Box<dyn Future<Output = Result<(), EnvelopeError>> + Send + Sync>,
+//         > + Send
+//         + Sync,
+// >;
+
 pub(crate) struct Envelope {
     // pub(super) io_tx: mpsc::Sender<IoEvent>,
-    dispatcher: Arc<Dispatcher>,
+    pub(crate) dispatcher: Arc<Dispatcher>,
     pub(super) actions: Actions,
     pub(super) state: Arc<RwLock<AppState>>,
     pub(super) db: EnvelopeDB,
@@ -114,6 +127,7 @@ impl Envelope {
 
     pub async fn dispatch(&self, action: Action) -> Result<(), EnvelopeError> {
         self.dispatcher.dispatch(action).await?;
+
         Ok(())
     }
 

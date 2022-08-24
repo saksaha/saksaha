@@ -1,4 +1,4 @@
-mod actions;
+pub(crate) mod actions;
 mod dispatcher;
 mod envelope;
 mod key_handler;

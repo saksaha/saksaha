@@ -1,7 +1,11 @@
 use super::{AppReturn, AppState, Envelope, View};
+use crate::envelope::actions;
+use crate::envelope::dispatcher::Dispatch;
 use crate::io::InputMode;
+use crate::EnvelopeError;
 use crate::{envelope::Action, inputs::key::Key};
 use log::{debug, info, warn};
+use tokio::sync::mpsc::error::SendError;
 use tokio::sync::RwLockWriteGuard;
 
 impl Envelope {
@@ -9,7 +13,7 @@ impl Envelope {
         &self,
         key: Key,
         //
-        // mut state: RwLockWriteGuard<'a, AppState>,
+        mut state: RwLockWriteGuard<'a, AppState>,
     ) -> AppReturn {
         info!("Run action [{:?}], actions: {:?}", key, self.get_actions());
 
@@ -73,7 +77,21 @@ impl Envelope {
                 }
 
                 Action::RestoreChat => {
-                    self.dispatch(Action::RestoreChat).await;
+                    // let dispatch: Dispatch = self.dispatch;
+                    let d = self.dispatcher.clone();
+                    let dispatch: Dispatch = Box::new(move |action| {
+                        let d = d.clone();
+                        Box::pin(async move {
+                            d.dispatch(action).await;
+                            Ok::<_, SendError<Action>>(())
+                        })
+                    });
+
+                    actions::restore_chat(self.dispatcher.clone(), state).await;
+
+                    // self.dispatch(Action::RestoreChat).await;
+
+                    // self.dispatch(Action::RestoreChatSuccess).await;
 
                     // match state.view {
                     //     View::Chat => {
@@ -97,35 +115,35 @@ impl Envelope {
                     AppReturn::Continue
                 }
 
-                Action::Select => match state.view {
-                    View::ChList => {
-                        state.selected_ch_id = match state
-                            .ch_list_state
-                            .selected()
-                        {
-                            Some(i) => (state.ch_list[i]).channel.ch_id.clone(),
-                            None => String::default(),
-                        };
+                // Action::Select => match state.view {
+                //     View::ChList => {
+                //         state.selected_ch_id = match state
+                //             .ch_list_state
+                //             .selected()
+                //         {
+                //             Some(i) => (state.ch_list[i]).channel.ch_id.clone(),
+                //             None => String::default(),
+                //         };
 
-                        log::info!("Ch_Id: {:?}", state.selected_ch_id);
+                //         log::info!("Ch_Id: {:?}", state.selected_ch_id);
 
-                        // self.get_messages(self.state.selected_ch_id.clone())
-                        //     .await;
+                //         // self.get_messages(self.state.selected_ch_id.clone())
+                //         //     .await;
 
-                        state.set_view_chat();
-                        return AppReturn::Continue;
-                    }
-                    _ => {
-                        return AppReturn::Continue;
-                    }
-                },
+                //         state.set_view_chat();
+                //         return AppReturn::Continue;
+                //     }
+                //     _ => {
+                //         return AppReturn::Continue;
+                //     }
+                // },
 
-                Action::UpdateBalance => {
-                    let my_pk = self.get_credential().acc_addr.clone();
+                // Action::UpdateBalance => {
+                //     let my_pk = self.get_credential().acc_addr.clone();
 
-                    state.set_balance(my_pk).await;
-                    AppReturn::Continue
-                }
+                //     state.set_balance(my_pk).await;
+                //     AppReturn::Continue
+                // }
                 _ => {
                     // Some actions are not mapped with key inputs
                     AppReturn::Continue

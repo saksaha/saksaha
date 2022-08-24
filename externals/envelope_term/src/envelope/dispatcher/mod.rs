@@ -1,3 +1,3 @@
 mod dispatcher;
 
-pub(super) use dispatcher::*;
+pub(crate) use dispatcher::*;

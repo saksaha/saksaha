@@ -48,7 +48,9 @@ impl UIRoutine {
 
             let result = match events.next().await {
                 InputEvent::Input(key) => match state.input_mode {
-                    InputMode::Normal => envelope.handle_normal_key(key).await,
+                    InputMode::Normal => {
+                        envelope.handle_normal_key(key, state).await
+                    }
                     InputMode::Editing => {
                         envelope.handle_edit_key(key, state).await
                     }

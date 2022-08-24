@@ -6,11 +6,24 @@ use crate::{
     },
     EnvelopeError,
 };
-use std::sync::Arc;
+use std::{future::Future, pin::Pin, sync::Arc};
 use tokio::sync::{
     mpsc::{self, error::SendError, Receiver, Sender},
     Mutex, RwLock, RwLockWriteGuard,
 };
+
+pub(crate) type Dispatch = Box<
+    dyn Fn(
+            Action,
+        ) -> Pin<
+            Box<
+                dyn Future<Output = Result<(), SendError<Action>>>
+                    + Send
+                    + Sync,
+            >,
+        > + Send
+        + Sync,
+>;
 
 pub(crate) struct Dispatcher {
     state: Arc<RwLock<AppState>>,

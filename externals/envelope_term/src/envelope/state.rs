@@ -1,5 +1,4 @@
-use crate::EnvelopeError;
-use crate::{io::InputMode, wallet_sdk};
+use crate::{io::InputMode, wallet_sdk, EnvelopeError};
 use envelope_contract::{Channel, ChatMessage};
 use log::{info, warn};
 use tui::widgets::ListState;
