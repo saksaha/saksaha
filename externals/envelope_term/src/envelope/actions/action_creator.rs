@@ -9,8 +9,9 @@ use crate::{
 };
 use chrono::Local;
 use envelope_contract::{
-    request_type::{GET_MSG, OPEN_CH, SEND_MSG},
-    Channel, ChatMessage, GetMsgParams, OpenChParams, SendMsgParams,
+    request_type::{GET_CH_LIST, GET_MSG, OPEN_CH, SEND_MSG},
+    Channel, ChatMessage, GetChListParams, GetMsgParams, OpenChParams,
+    SendMsgParams,
 };
 use log::info;
 use sak_contract_std::{CtrCallType, CtrRequest};
@@ -83,10 +84,34 @@ pub(crate) async fn enter_in_open_ch(
     // need to check validity of `self.state.input_returned`
     // let pk = self.state.input_returned.clone();
 
-    // for dev
-    let open_ch_result = request_open_ch(&state.input_returned, ctx).await?;
+    request_open_ch(&state.input_returned, ctx.clone()).await?;
+
+    let dst_pk = ctx.credential.public_key_str.clone();
+
+    let resp = get_ch_list(dst_pk).await?;
+
+    if let Some(d) = resp.result {
+        dispatch(Action::GetChList(d.result)).await?;
+    }
 
     Ok(())
+}
+
+async fn get_ch_list(
+    dst_pk: String,
+) -> Result<JsonResponse<QueryCtrResponse>, EnvelopeError> {
+    let get_ch_list_params = GetChListParams { dst_pk };
+
+    let args = serde_json::to_vec(&get_ch_list_params)?;
+
+    let resp = saksaha::query_ctr(
+        ENVELOPE_CTR_ADDR.into(),
+        GET_CH_LIST.to_string(),
+        args,
+    )
+    .await?;
+
+    Ok(resp)
 }
 
 pub(crate) async fn enter_in_chat(
