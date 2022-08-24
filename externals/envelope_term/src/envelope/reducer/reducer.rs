@@ -181,7 +181,7 @@ async fn get_messages<'a>(
 
     // self.envelope.set_chats(data).await?;
 
-    let my_pk = ctx.credential.public_key_str;
+    let my_pk = &ctx.credential.public_key_str;
     let my_sk = ctx.credential.secret_key_str.to_string();
 
     let encrypted_chat_msg_vec: Vec<EncryptedChatMessage> =
@@ -227,8 +227,14 @@ async fn get_messages<'a>(
 
             let pk = {
                 // for dev, her_pk == `user_2_pk`
-                let her_pk =
-                    self.get_pk(&self.partner_credential.acc_addr).await?;
+                // let her_pk =
+                //     self.get_pk(&self.partner_credential.acc_addr).await?;
+
+                let her_pk = String::from(
+                    "042c8d005bd935597117181d8ceceaef6d1162de78c32856\
+                    89d0c36c6170634c124f7b9b911553a1f483ec565c199ea29ff1\
+                    cd641f10c9a5f8c7c4d4a026db6f7b",
+                );
 
                 let her_pk_vec: Vec<u8> = sak_crypto::decode_hex(&her_pk)?;
 
@@ -266,7 +272,7 @@ async fn get_messages<'a>(
 
         let mut res: ChatMessage = serde_json::from_str(&chat_msg_ser)?;
 
-        if &res.user == &my_pk {
+        if &res.user == my_pk {
             res.user = "me".to_string();
         } else {
             res.user = res.user[0..16].to_string();
