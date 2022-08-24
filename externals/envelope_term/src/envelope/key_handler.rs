@@ -1,103 +1,163 @@
-use super::{AppReturn, Envelope, View};
-use crate::envelope::actions::Action;
-use crate::inputs::key::Key;
+use super::{AppReturn, AppState, Envelope, View};
+use crate::envelope::actions;
+use crate::envelope::dispatcher::Dispatch;
 use crate::io::InputMode;
-use log::{debug, warn};
+use crate::EnvelopeError;
+use crate::{envelope::Action, inputs::key::Key};
+use log::{debug, info, warn};
+use tokio::sync::mpsc::error::SendError;
+use tokio::sync::RwLockWriteGuard;
 
 impl Envelope {
-    pub async fn handle_normal_key(&mut self, key: Key) -> AppReturn {
-        if let Some(&action) = self.get_actions().find(key) {
-            debug!("Run action [{:?}]", action);
-            self.get_state_mut().input_text.clear();
+    pub async fn handle_normal_key<'a>(
+        &self,
+        key: Key,
+        mut state: RwLockWriteGuard<'a, AppState>,
+    ) -> AppReturn {
+        info!("Run action [{:?}], actions: {:?}", key, self.get_actions());
+
+        if let Some(ref action) = self.get_actions().find(key) {
+            // let mut state = self.state.write().await;
+            // state.input_text.clear();
 
             match action {
                 Action::Quit => AppReturn::Exit,
 
                 Action::SwitchEditMode => {
-                    self.get_state_mut().input_mode = InputMode::Editing;
+                    // state.input_mode = InputMode::Editing;
+                    self.dispatch(Action::SwitchEditMode).await;
+
                     AppReturn::Continue
                 }
 
                 Action::SwitchNormalMode => {
-                    self.get_state_mut().input_mode = InputMode::Editing;
+                    // state.input_mode = InputMode::Editing;
+                    self.dispatch(Action::SwitchNormalMode).await;
+
                     AppReturn::Continue
                 }
 
                 Action::ShowChList => {
-                    let _ = self.get_ch_list().await;
+                    // let _ = self.get_ch_list().await;
                     // let _ = self.get_ch_list_from_local().await;
-                    self.get_state_mut().set_view_ch_list();
+                    // state.set_view_ch_list();
+                    self.dispatch(Action::ShowChList).await;
+
                     AppReturn::Continue
                 }
 
                 Action::ShowOpenCh => {
-                    self.get_state_mut().set_view_open_ch();
+                    // state.set_view_open_ch();
+                    self.dispatch(Action::ShowOpenCh).await;
+
                     AppReturn::Continue
                 }
 
                 Action::ShowChat => {
-                    self.get_state_mut().set_view_chat();
+                    // state.set_view_chat();
+                    self.dispatch(Action::ShowChat).await;
+
                     AppReturn::Continue
                 }
 
                 Action::Down => {
-                    self.get_state_mut().next_ch();
+                    // state.next_ch();
+                    self.dispatch(Action::Down).await;
+
                     AppReturn::Continue
                 }
 
                 Action::Up => {
-                    self.get_state_mut().previous_ch();
+                    // state.previous_ch();
+                    self.dispatch(Action::Up).await;
+
                     AppReturn::Continue
                 }
 
-                Action::RestoreChat => match self.get_state().view {
-                    View::Chat => {
-                        let ch_id = self.get_state().selected_ch_id.clone();
+                Action::RestoreChat => {
+                    let dispatcher = self.dispatcher.clone();
+                    let dispatch: Dispatch = Box::new(move |action| {
+                        let d = dispatcher.clone();
+                        Box::pin(async move {
+                            d.dispatch(action).await?;
+                            Ok::<_, SendError<Action>>(())
+                        })
+                    });
 
-                        if !ch_id.is_empty() {
-                            self.get_messages(ch_id.clone()).await;
+                    actions::restore_chat(dispatch, state).await;
 
-                            log::info!(
-                                "Restore all the chats in ch_id: {:?}",
-                                ch_id
-                            );
-                        }
+                    // self.dispatch(Action::RestoreChat).await;
 
-                        return AppReturn::Continue;
-                    }
-                    _ => {
-                        return AppReturn::Continue;
-                    }
-                },
-                Action::Select => match self.get_state().view {
-                    View::ChList => {
-                        self.get_state_mut().selected_ch_id =
-                            match self.get_state().ch_list_state.selected() {
-                                Some(i) => (self.get_state().ch_list[i])
-                                    .channel
-                                    .ch_id
-                                    .clone(),
-                                None => String::default(),
-                            };
+                    // self.dispatch(Action::RestoreChatSuccess).await;
 
-                        log::info!(
-                            "Ch_Id: {:?}",
-                            self.get_state().selected_ch_id
-                        );
-                        // self.get_messages(self.state.selected_ch_id.clone())
-                        //     .await;
-                        self.get_state_mut().set_view_chat();
-                        return AppReturn::Continue;
-                    }
-                    _ => {
-                        return AppReturn::Continue;
-                    }
-                },
+                    // match state.view {
+                    //     View::Chat => {
+                    //         let ch_id = state.selected_ch_id.clone();
 
-                Action::UpdateBalance => {
-                    let my_pk = self.get_credential().acc_addr.clone();
+                    //         if !ch_id.is_empty() {
+                    //             self.get_messages(ch_id.clone()).await;
 
-                    self.get_state_mut().set_balance(my_pk).await;
+                    //             log::info!(
+                    //                 "Restore all the chats in ch_id: {:?}",
+                    //                 ch_id
+                    //             );
+                    //         }
+
+                    //         return AppReturn::Continue;
+                    //     }
+                    //     _ => {
+                    //         return AppReturn::Continue;
+                    //     }
+                    // }
+                    AppReturn::Continue
+                }
+
+                Action::Select => {
+                    let dispatcher = self.dispatcher.clone();
+                    let dispatch: Dispatch = Box::new(move |action| {
+                        let d = dispatcher.clone();
+                        Box::pin(async move {
+                            d.dispatch(action).await?;
+                            Ok::<_, SendError<Action>>(())
+                        })
+                    });
+
+                    actions::select(dispatch, state).await;
+
+                    AppReturn::Continue
+
+                    // match state.view {
+                    //     View::ChList => {
+                    //         state.selected_ch_id = match state
+                    //             .ch_list_state
+                    //             .selected()
+                    //         {
+                    //             Some(i) => (state.ch_list[i]).channel.ch_id.clone(),
+                    //             None => String::default(),
+                    //         };
+
+                    //         log::info!("Ch_Id: {:?}", state.selected_ch_id);
+
+                    //         // self.get_messages(self.state.selected_ch_id.clone())
+                    //         //     .await;
+
+                    //         state.set_view_chat();
+                    //         return AppReturn::Continue;
+                    //     }
+                    //     _ => {
+                    //         return AppReturn::Continue;
+                    //     }
+                    // },
+                }
+
+                // Action::UpdateBalance => {
+                //     let my_pk = self.get_credential().acc_addr.clone();
+
+                //     state.set_balance(my_pk).await;
+                //     AppReturn::Continue
+                // }
+                _ => {
+                    // Some actions are not mapped with key inputs
                     AppReturn::Continue
                 }
             }
@@ -108,70 +168,97 @@ impl Envelope {
         }
     }
 
-    pub async fn handle_edit_key(&mut self, key: Key) -> AppReturn {
+    pub async fn handle_edit_key<'a>(
+        &self,
+        key: Key,
+        //
+        mut state: RwLockWriteGuard<'a, AppState>,
+    ) -> AppReturn {
         match key {
             Key::Enter => {
-                match self.get_state().view {
+                // let mut state = self.state.write().await;
+
+                match state.view {
                     View::OpenCh => {
-                        self.get_state_mut().input_returned =
-                            self.get_state_mut().input_text.drain(..).collect();
+                        let dispatcher = self.dispatcher.clone();
+                        let dispatch: Dispatch = Box::new(move |action| {
+                            let d = dispatcher.clone();
+                            Box::pin(async move {
+                                d.dispatch(action).await?;
+                                Ok::<_, SendError<Action>>(())
+                            })
+                        });
 
-                        // need to check validity of `self.state.input_returned`
-                        // let pk = self.state.input_returned.clone();
+                        actions::enter_in_open_ch(
+                            dispatch,
+                            state,
+                            self.dispatcher.get_context().clone(),
+                        )
+                        .await;
 
-                        // for dev
-                        {
-                            if let Err(_) = self
-                                // .open_ch(&self.get_partner_pk().to_owned())
-                                .open_ch(
-                                    &self.get_state().input_returned.clone(),
-                                )
-                                .await
-                            {
-                                return AppReturn::Continue;
-                            }
-                        };
+                        // state.input_returned =
+                        //     state.input_text.drain(..).collect();
+
+                        // // need to check validity of `self.state.input_returned`
+                        // // let pk = self.state.input_returned.clone();
+
+                        // // for dev
+                        // {
+                        // if let Err(_) = &self
+                        //     // .open_ch(&self.get_partner_pk().to_owned())
+                        //     .open_ch(&state.input_returned)
+                        //     .await
+                        //     {
+                        //         return AppReturn::Continue;
+                        //     }
+                        // };
                     }
                     View::Chat => {
-                        if self.get_state().selected_ch_id != String::default()
-                        {
-                            self.get_state_mut().chat_input = self
-                                .get_state_mut()
-                                .input_text
-                                .drain(..)
-                                .collect();
+                        let dispatcher = self.dispatcher.clone();
+                        let dispatch: Dispatch = Box::new(move |action| {
+                            let d = dispatcher.clone();
+                            Box::pin(async move {
+                                d.dispatch(action).await?;
+                                Ok::<_, SendError<Action>>(())
+                            })
+                        });
 
-                            match self
-                                .send_messages(&self.get_state().chat_input)
-                                .await
-                            {
-                                Ok(res) => {
-                                    log::info!(
-                                        "[send_message] Result: {:?}",
-                                        res
-                                    );
-                                    AppReturn::Continue
-                                }
-                                Err(err) => {
-                                    log::warn!(
-                                        "[send_message] Error: {:?}",
-                                        err
-                                    );
-                                    AppReturn::Continue
-                                }
-                            };
-                        } else {
-                            let _trash_bin: String = self
-                                .get_state_mut()
-                                .input_text
-                                .drain(..)
-                                .collect();
+                        actions::enter_in_chat(
+                            dispatch,
+                            state,
+                            self.dispatcher.get_context().clone(),
+                        )
+                        .await;
 
-                            log::error!(
-                                "[send_message] You should get the \
-                                `ch_id` first!"
-                            );
-                        }
+                        // if state.selected_ch_id != String::default() {
+                        //     state.chat_input =
+                        //         state.input_text.drain(..).collect();
+
+                        // match self.send_messages(&state.chat_input).await {
+                        //         Ok(res) => {
+                        //             log::info!(
+                        //                 "[send_message] Result: {:?}",
+                        //                 res
+                        //             );
+                        //             AppReturn::Continue
+                        //         }
+                        //         Err(err) => {
+                        //             log::warn!(
+                        //                 "[send_message] Error: {:?}",
+                        //                 err
+                        //             );
+                        //             AppReturn::Continue
+                        //         }
+                        //     };
+                        // } else {
+                        //     let _trash_bin: String =
+                        //         state.input_text.drain(..).collect();
+
+                        //     log::error!(
+                        //         "[send_message] You should get the \
+                        //         `ch_id` first!"
+                        //     );
+                        // }
 
                         // self.get_state_mut()
                         //     .set_input_messages(self.get_state_mut().chat_input.clone());
@@ -182,26 +269,17 @@ impl Envelope {
                 AppReturn::Continue
             }
             Key::Char(c) => {
-                self.get_state_mut().input_text.push(c);
+                state.input_text.push(c);
+
                 AppReturn::Continue
             }
             Key::Backspace => {
-                self.get_state_mut().input_text.pop();
-                AppReturn::Continue
-            }
-            Key::Esc => {
-                self.get_state_mut().input_mode = InputMode::Normal;
+                state.input_text.pop();
 
                 AppReturn::Continue
             }
-            _ => AppReturn::Continue,
-        }
-    }
-
-    pub async fn handle_others(&mut self, key: Key) -> AppReturn {
-        match key {
             Key::Esc => {
-                self.get_state_mut().input_mode = InputMode::Normal;
+                state.input_mode = InputMode::Normal;
 
                 AppReturn::Continue
             }

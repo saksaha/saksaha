@@ -18,7 +18,6 @@ pub(crate) struct EnvelopeDB {
 
 impl EnvelopeDB {
     pub(crate) async fn init(
-        // app_prefix: &String,
         acc_addr: &String,
     ) -> Result<EnvelopeDB, EnvelopeError> {
         let envelope_db_path = {
@@ -61,24 +60,6 @@ impl EnvelopeDB {
         info!("Initialized Database");
 
         Ok(database)
-    }
-
-    pub(crate) async fn register_user(
-        &self,
-        credential: &Credential,
-    ) -> Result<(), EnvelopeError> {
-        log::info!("Register User: {:?}", credential.acc_addr);
-
-        self.schema
-            .put_user_data(
-                &credential.secret,
-                &credential.public_key,
-                &credential.signature,
-                &credential.acc_addr,
-            )
-            .await?;
-
-        Ok(())
     }
 
     pub fn get_db_path(app_prefix: &str) -> Result<PathBuf, EnvelopeError> {

@@ -68,7 +68,7 @@ pub fn aes_encrypt(
 }
 
 pub fn aes_decrypt(
-    aes_key: &[u8; 32],
+    aes_key: &[u8],
     ciphertext: &[u8],
 ) -> Result<Vec<u8>, CryptoError> {
     let key = Key::from_slice(aes_key);

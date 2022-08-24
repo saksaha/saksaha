@@ -4,7 +4,7 @@ use std::fmt::{self, Display};
 use std::slice::Iter;
 
 /// We define all available action
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Action {
     Quit,
     SwitchEditMode,
@@ -18,6 +18,10 @@ pub enum Action {
     UpdateBalance,
     Select,
     RestoreChat,
+    //
+    Initialize,
+    GetChList(Vec<u8>),
+    GetMessages(Vec<u8>),
 }
 
 impl Action {
@@ -32,7 +36,6 @@ impl Action {
             Action::ShowChat,
             Action::Down,
             Action::Up,
-            //
             Action::UpdateBalance,
             Action::Select,
             Action::RestoreChat,
@@ -51,15 +54,16 @@ impl Action {
             Action::ShowChat => &[Key::Char('3')],
             Action::Down => &[Key::Down],
             Action::Up => &[Key::Up],
-            //
             Action::UpdateBalance => &[Key::Char('$')],
             Action::Select => &[Key::Enter],
             Action::RestoreChat => &[Key::Char('R')],
+            Action::Initialize => &[],
+            Action::GetChList(_) => &[],
+            Action::GetMessages(_) => &[],
         }
     }
 }
 
-/// Could display a user friendly short description of action
 impl Display for Action {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let str = match self {
@@ -71,10 +75,12 @@ impl Display for Action {
             Action::ShowChat => "Show chatting",
             Action::Down => "Down",
             Action::Up => "Up",
-            //
             Action::UpdateBalance => "Show my balance in wallet",
             Action::Select => "Select",
             Action::RestoreChat => "Restore the chats",
+            Action::Initialize => "Initialize",
+            Action::GetChList(_) => "Get channel list",
+            Action::GetMessages(_) => "Get messages in a channel",
         };
         write!(f, "{}", str)
     }
@@ -82,7 +88,7 @@ impl Display for Action {
 
 /// The application should have some contextual actions.
 #[derive(Default, Debug, Clone)]
-pub struct Actions(Vec<Action>);
+pub struct Actions(pub Vec<Action>);
 
 impl Actions {
     /// Given a key, find the corresponding action
@@ -111,13 +117,14 @@ impl From<Vec<Action>> for Actions {
         for action in actions.iter() {
             for key in action.keys().iter() {
                 match map.get_mut(key) {
-                    Some(vec) => vec.push(*action),
+                    Some(vec) => vec.push(action.clone()),
                     None => {
-                        map.insert(*key, vec![*action]);
+                        map.insert(*key, vec![action.clone()]);
                     }
                 }
             }
         }
+
         let errors = map
             .iter()
             .filter(|(_, actions)| actions.len() > 1) // at least two actions share same shortcut
@@ -130,6 +137,7 @@ impl From<Vec<Action>> for Actions {
                 format!("Conflict key {} with actions {}", key, actions)
             })
             .collect::<Vec<_>>();
+
         if !errors.is_empty() {
             panic!("{}", errors.join("; "))
         }

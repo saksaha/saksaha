@@ -1,5 +1,6 @@
 use crate::envelope::{Actions, AppState, Envelope};
 use crate::io::InputMode;
+use tokio::sync::RwLockWriteGuard;
 use tui::backend::Backend;
 use tui::layout::{Alignment, Rect};
 use tui::style::{Color, Modifier, Style};
@@ -21,16 +22,17 @@ pub(crate) fn check_size(rect: &Rect) {
 }
 
 pub(crate) fn draw_open_ch<'a, B>(
-    app: &'a Envelope,
+    // app: &'a Envelope,
+    state: &mut RwLockWriteGuard<'a, AppState>,
     rect: &mut Frame<B>,
     chunks: &Vec<Rect>,
 ) -> (Paragraph<'a>, Paragraph<'a>, List<'a>)
 where
     B: Backend,
 {
-    let state = app.get_state();
+    // let state = app.get_state().read().await;
 
-    let (msg, style) = match app.get_state().input_mode {
+    let (msg, style) = match state.input_mode {
         InputMode::Normal => (
             vec![
                 Span::raw("Press "),
@@ -71,7 +73,7 @@ where
         Paragraph::new(text)
     };
 
-    let input = Paragraph::new(state.input_text.as_ref())
+    let input = Paragraph::new(state.input_text.to_string())
         .style(match state.input_mode {
             InputMode::Normal => Style::default(),
             InputMode::Editing => Style::default().fg(Color::Yellow),
@@ -264,16 +266,17 @@ pub(crate) fn draw_logs<'a>() -> TuiLoggerWidget<'a> {
 }
 
 pub(crate) fn draw_chat<'a, B>(
-    app: &'a Envelope,
+    // app: &'a Envelope,
+    state: &mut RwLockWriteGuard<'a, AppState>,
     rect: &mut Frame<B>,
     chunks: &Rect,
 ) -> (Paragraph<'a>, Paragraph<'a>, Paragraph<'a>)
 where
     B: Backend,
 {
-    let state = app.get_state();
+    // let state = app.get_state();
 
-    let (msg, style) = match app.get_state().input_mode {
+    let (msg, style) = match state.input_mode {
         InputMode::Normal => (
             vec![
                 Span::raw("Press "),
@@ -314,7 +317,7 @@ where
         Paragraph::new(text)
     };
 
-    let input = Paragraph::new(state.input_text.as_ref())
+    let input = Paragraph::new(state.input_text.to_string())
         .style(match state.input_mode {
             InputMode::Normal => Style::default(),
             InputMode::Editing => Style::default().fg(Color::Yellow),
