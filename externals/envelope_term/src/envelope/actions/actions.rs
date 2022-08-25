@@ -15,8 +15,8 @@ pub enum Action {
     Down,
     Up,
     //
-    UpdateBalanceInput,
-    UpdateBalance(u64),
+    UpdateBalance,
+    UpdateBalanceSuccess(u64),
     Select,
     RestoreChat,
     //
@@ -39,7 +39,7 @@ impl Action {
             Action::Up,
             Action::Select,
             Action::RestoreChat,
-            Action::UpdateBalanceInput,
+            Action::UpdateBalance,
         ];
         ACTIONS.iter()
     }
@@ -55,10 +55,10 @@ impl Action {
             Action::ShowChat => &[Key::Char('3')],
             Action::Down => &[Key::Down],
             Action::Up => &[Key::Up],
-            Action::UpdateBalanceInput => &[Key::Char('$')],
-            Action::UpdateBalance(_) => &[],
-            Action::Select => &[Key::Enter],
             Action::RestoreChat => &[Key::Char('R')],
+            Action::UpdateBalance => &[Key::Char('$')],
+            Action::UpdateBalanceSuccess(_) => &[],
+            Action::Select => &[Key::Enter],
             Action::Initialize => &[],
             Action::GetChList(_) => &[],
             Action::GetMessages(_) => &[],
@@ -82,8 +82,8 @@ impl Display for Action {
             Action::Initialize => "Initialize",
             Action::GetChList(_) => "Get channel list",
             Action::GetMessages(_) => "Get messages in a channel",
-            Action::UpdateBalance(_) => "Show my balance in wallet",
-            Action::UpdateBalanceInput => "Show my balance in wallet",
+            Action::UpdateBalance => "Show my balance in wallet",
+            Action::UpdateBalanceSuccess(_) => "Show my balance in wallet",
         };
         write!(f, "{}", str)
     }

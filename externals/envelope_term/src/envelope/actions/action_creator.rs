@@ -97,9 +97,7 @@ pub(crate) async fn enter_in_open_ch(
         let resp = get_balance(ctx.credential.acc_addr.clone()).await?;
 
         if let Some(d) = resp.result {
-            // self.dispatch(IoEvent::GetMessages(d.result)).await;
-            // self.dispatch(Action::GetMessages(d.result)).await?;
-            dispatch(Action::UpdateBalance(d.balance.val)).await?;
+            dispatch(Action::UpdateBalanceSuccess(d.balance.val)).await?;
         }
     }
     Ok(())
@@ -160,7 +158,7 @@ pub(crate) async fn enter_in_chat(
         if let Some(d) = resp.result {
             // self.dispatch(IoEvent::GetMessages(d.result)).await;
             // self.dispatch(Action::GetMessages(d.result)).await?;
-            dispatch(Action::UpdateBalance(d.balance.val)).await?;
+            dispatch(Action::UpdateBalanceSuccess(d.balance.val)).await?;
         }
     }
 
@@ -476,7 +474,7 @@ pub(crate) async fn update_balance(
     let resp = get_balance(acc_addr).await?;
 
     if let Some(d) = resp.result {
-        dispatch(Action::UpdateBalance(d.balance.val)).await?;
+        dispatch(Action::UpdateBalanceSuccess(d.balance.val)).await?;
     }
 
     Ok(())

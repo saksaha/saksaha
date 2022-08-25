@@ -166,7 +166,7 @@ impl Envelope {
                     // },
                 }
 
-                Action::UpdateBalanceInput => {
+                Action::UpdateBalance => {
                     log::info!("UPDATE_BALANCE");
                     let dispatcher = self.dispatcher.clone();
                     let dispatch: Dispatch = Box::new(move |action| {

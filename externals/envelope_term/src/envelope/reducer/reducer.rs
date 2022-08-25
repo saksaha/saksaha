@@ -21,7 +21,7 @@ impl Reducer {
         action: Action,
         ctx: &DispatcherContext,
     ) -> Result<(), EnvelopeError> {
-        log::info!("reduce!!, action: {}", action);
+        // log::info!("reduce!!, action: {}", action);
 
         match action {
             Action::Initialize => do_initialize(state)?,
@@ -32,7 +32,7 @@ impl Reducer {
             Action::ShowChList => show_ch_list(state),
             Action::Down => down(state),
             Action::Up => up(state),
-            Action::UpdateBalance(data) => update_balance(state, data),
+            Action::UpdateBalanceSuccess(data) => update_balance(state, data),
             Action::GetChList(data) => get_ch_list(state, data, ctx)?,
             Action::GetMessages(data) => get_messages(state, data, ctx)?,
             _ => info!("Currently not handled!!"),
@@ -130,6 +130,9 @@ fn get_ch_list<'a>(
     ctx: &DispatcherContext,
 ) -> Result<(), EnvelopeError> {
     // self.envelope.set_ch_list(data).await?;
+
+    state.ch_list = vec![];
+
     let channels = serde_json::from_slice::<Vec<Channel>>(&data)?;
 
     let mut channel_states = vec![];
@@ -253,6 +256,9 @@ fn get_messages<'a>(
     // let mut app = self.app.lock().await;
 
     // self.envelope.set_chats(data).await?;
+
+    state.chats = Vec::<ChatMessage>::new();
+
     let my_pk = &ctx.credential.public_key_str;
     let my_sk = ctx.credential.secret_key_str.to_string();
 
