@@ -7,6 +7,7 @@ use crate::{
 use envelope_contract::{Channel, ChatMessage, EncryptedChatMessage};
 use log::info;
 use sak_crypto::{PublicKey, SecretKey};
+use sak_types::AccountBalance;
 use std::time::Duration;
 use tokio::sync::RwLockWriteGuard;
 use type_extension::{U8Arr32, U8Array};
@@ -20,7 +21,7 @@ impl Reducer {
         action: Action,
         ctx: &DispatcherContext,
     ) -> Result<(), EnvelopeError> {
-        log::info!("reduce!!, action: {}", action);
+        // log::info!("reduce!!, action: {}", action);
 
         match action {
             Action::Initialize => do_initialize(state)?,
@@ -31,7 +32,7 @@ impl Reducer {
             Action::ShowChList => show_ch_list(state),
             Action::Down => down(state),
             Action::Up => up(state),
-            Action::RestoreChat => restore_chat(state),
+            Action::UpdateBalanceSuccess(data) => update_balance(state, data),
             Action::GetChList(data) => get_ch_list(state, data, ctx)?,
             Action::GetMessages(data) => get_messages(state, data, ctx)?,
             _ => info!("Currently not handled!!"),
@@ -88,6 +89,12 @@ fn show_ch_list<'a>(mut state: RwLockWriteGuard<'a, AppState>) {
     }
 }
 
+fn update_balance<'a>(mut state: RwLockWriteGuard<'a, AppState>, data: u64) {
+    if state.is_initialized {
+        state.balance = data.to_string();
+    }
+}
+
 fn down<'a>(mut state: RwLockWriteGuard<'a, AppState>) {
     let i = match state.ch_list_state.selected() {
         Some(i) => {
@@ -117,31 +124,15 @@ fn up<'a>(mut state: RwLockWriteGuard<'a, AppState>) {
     state.ch_list_state.select(Some(i));
 }
 
-fn restore_chat<'a>(mut state: RwLockWriteGuard<'a, AppState>) {
-    // match state.view {
-    //     View::Chat => {
-    //         let ch_id = state.selected_ch_id.clone();
-
-    //         if !ch_id.is_empty() {
-    //             self.get_messages(ch_id.clone()).await;
-
-    //             log::info!("Restore all the chats in ch_id: {:?}", ch_id);
-    //         }
-
-    //         return AppReturn::Continue;
-    //     }
-    //     _ => {
-    //         return AppReturn::Continue;
-    //     }
-    // }
-}
-
 fn get_ch_list<'a>(
     mut state: RwLockWriteGuard<'a, AppState>,
     data: Vec<u8>,
     ctx: &DispatcherContext,
 ) -> Result<(), EnvelopeError> {
     // self.envelope.set_ch_list(data).await?;
+
+    state.ch_list = vec![];
+
     let channels = serde_json::from_slice::<Vec<Channel>>(&data)?;
 
     let mut channel_states = vec![];
@@ -265,6 +256,8 @@ fn get_messages<'a>(
     // let mut app = self.app.lock().await;
 
     // self.envelope.set_chats(data).await?;
+
+    state.chats = Vec::<ChatMessage>::new();
 
     let my_pk = &ctx.credential.public_key_str;
     let my_sk = ctx.credential.secret_key_str.to_string();

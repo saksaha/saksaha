@@ -36,13 +36,22 @@ impl Wallet {
             .into());
         }
 
+        self.update_coin_status(acc_addr).await?;
+
         let mut balance: u64 = 0;
 
+        println!("[coin info (w/o cm)]");
         for coin in self.get_db().schema.get_all_coins()? {
             println!(
-                "[get_balance] \
-                    cm: {:?}, value: {:.3?}, cm_idx: {:?},  coin_idx: {:?}, coin_status: {:?}",
-                coin.cm, ScalarExt::into_u64(coin.v)?, coin.cm_idx, coin.coin_idx, coin.coin_status
+                // cm: {:?}\n \
+                "\
+                \tcoin_status: {:?}\tvalue: {:?}\t\
+                coin_idx: {:?}\tcm_idx: {:?}\t",
+                // coin.cm,
+                coin.coin_status,
+                ScalarExt::into_u64(coin.v)?,
+                coin.coin_idx,
+                coin.cm_idx,
             );
 
             if coin.coin_status == CoinStatus::Unused {
@@ -176,7 +185,7 @@ impl Wallet {
             json_response.result.ok_or("Value needs to be returned")?;
 
         // waiting for block is written
-        tokio::time::sleep(Duration::from_secs(6)).await;
+        tokio::time::sleep(Duration::from_millis(6000)).await;
 
         new_coin_1.tx_hash = Some(tx_hash.clone());
         new_coin_2.tx_hash = Some(tx_hash);

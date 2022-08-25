@@ -1,11 +1,10 @@
 use super::Action;
 use crate::{
     envelope::{
-        dispatcher::{Dispatch, Dispatcher},
-        reducer::DispatcherContext,
-        AppState, Envelope, View,
+        dispatcher::Dispatch, reducer::DispatcherContext, AppState, View,
     },
-    wallet_sdk, EnvelopeError, ENVELOPE_CTR_ADDR,
+    wallet_sdk::{self, get_balance_from_wallet, GetBalanceResponse},
+    EnvelopeError, ENVELOPE_CTR_ADDR,
 };
 use chrono::Local;
 use envelope_contract::{
@@ -16,13 +15,11 @@ use envelope_contract::{
 use log::info;
 use sak_contract_std::{CtrCallType, CtrRequest};
 use sak_crypto::SakKey;
-use sak_crypto::{
-    aes_decrypt, derive_aes_key, PublicKey, SecretKey, ToEncodedPoint,
-};
+use sak_crypto::{derive_aes_key, PublicKey, SecretKey, ToEncodedPoint};
 use sak_rpc_interface::JsonResponse;
 use saksaha::QueryCtrResponse;
 use std::sync::Arc;
-use tokio::sync::{RwLock, RwLockWriteGuard};
+use tokio::sync::RwLockWriteGuard;
 use type_extension::{U8Arr32, U8Array};
 
 pub(crate) async fn restore_chat(
@@ -66,6 +63,8 @@ pub(crate) async fn select(
 
         if let Some(d) = resp.result {
             dispatch(Action::GetMessages(d.result)).await?;
+        } else {
+            dispatch(Action::GetMessages(Vec::<u8>::new())).await?;
         }
 
         state.view = View::Chat;
@@ -88,16 +87,89 @@ pub(crate) async fn enter_in_open_ch(
 
     let dst_pk = ctx.credential.public_key_str.clone();
 
-    let resp = get_ch_list(dst_pk).await?;
+    let resp = request_ch_list(dst_pk).await?;
 
     if let Some(d) = resp.result {
         dispatch(Action::GetChList(d.result)).await?;
     }
 
+    {
+        let resp = get_balance(ctx.credential.acc_addr.clone()).await?;
+
+        if let Some(d) = resp.result {
+            dispatch(Action::UpdateBalanceSuccess(d.balance.val)).await?;
+        }
+    }
     Ok(())
 }
 
-async fn get_ch_list(
+pub(crate) async fn show_ch_list(
+    dispatch: Dispatch,
+    mut state: RwLockWriteGuard<'_, AppState>,
+    ctx: Arc<DispatcherContext>,
+) -> Result<(), EnvelopeError> {
+    let dst_pk = ctx.credential.public_key_str.clone();
+
+    let resp = request_ch_list(dst_pk).await?;
+
+    if let Some(d) = resp.result {
+        dispatch(Action::GetChList(d.result)).await?;
+    }
+
+    dispatch(Action::ShowChList).await?;
+
+    Ok(())
+}
+
+pub(crate) async fn enter_in_chat(
+    dispatch: Dispatch,
+    mut state: RwLockWriteGuard<'_, AppState>,
+    ctx: Arc<DispatcherContext>,
+) -> Result<(), EnvelopeError> {
+    let selected_ch_id = state.selected_ch_id.clone();
+    let acc_addr = ctx.credential.acc_addr.clone();
+
+    if selected_ch_id != String::default() {
+        state.chat_input = state.input_text.drain(..).collect();
+
+        send_messages(state, ctx).await?;
+    } else {
+        let _trash_bin: String = state.input_text.drain(..).collect();
+
+        log::error!(
+            "[send_message] You should get the \
+                                `ch_id` first!"
+        );
+    }
+
+    {
+        let resp = get_messages(selected_ch_id.clone()).await?;
+
+        if let Some(d) = resp.result {
+            dispatch(Action::GetMessages(d.result)).await?;
+        }
+    }
+
+    {
+        let resp = get_balance(acc_addr).await?;
+
+        if let Some(d) = resp.result {
+            dispatch(Action::UpdateBalanceSuccess(d.balance.val)).await?;
+        }
+    }
+
+    Ok(())
+}
+
+async fn get_balance(
+    acc_addr: String,
+) -> Result<JsonResponse<GetBalanceResponse>, EnvelopeError> {
+    let resp = get_balance_from_wallet(&acc_addr).await?;
+
+    Ok(resp)
+}
+
+async fn request_ch_list(
     dst_pk: String,
 ) -> Result<JsonResponse<QueryCtrResponse>, EnvelopeError> {
     let get_ch_list_params = GetChListParams { dst_pk };
@@ -112,27 +184,6 @@ async fn get_ch_list(
     .await?;
 
     Ok(resp)
-}
-
-pub(crate) async fn enter_in_chat(
-    dispatch: Dispatch,
-    mut state: RwLockWriteGuard<'_, AppState>,
-    ctx: Arc<DispatcherContext>,
-) -> Result<(), EnvelopeError> {
-    if state.selected_ch_id != String::default() {
-        state.chat_input = state.input_text.drain(..).collect();
-
-        send_messages(state, ctx).await?;
-    } else {
-        let _trash_bin: String = state.input_text.drain(..).collect();
-
-        log::error!(
-            "[send_message] You should get the \
-                                `ch_id` first!"
-        );
-    }
-
-    Ok(())
 }
 
 async fn get_messages(
@@ -402,6 +453,24 @@ async fn request_open_ch(
 
         wallet_sdk::send_tx_pour(user_1_acc_addr, ctr_addr, ctr_request)
             .await?;
+    }
+
+    Ok(())
+}
+
+pub(crate) async fn update_balance(
+    dispatch: Dispatch,
+    _state: RwLockWriteGuard<'_, AppState>,
+    ctx: Arc<DispatcherContext>,
+) -> Result<(), EnvelopeError> {
+    let acc_addr = ctx.credential.acc_addr.to_string();
+
+    log::info!("Trying to get balance in wallet account: {:?}", acc_addr);
+
+    let resp = get_balance(acc_addr).await?;
+
+    if let Some(d) = resp.result {
+        dispatch(Action::UpdateBalanceSuccess(d.balance.val)).await?;
     }
 
     Ok(())
