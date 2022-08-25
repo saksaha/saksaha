@@ -9,6 +9,13 @@ pub struct Config {
     pub public_key: Option<String>,
     pub secret: Option<String>,
     pub coin_records: Option<Vec<CoinRecord>>,
+    pub rpc: RPCConfig,
+}
+
+#[derive(Debug)]
+pub struct RPCConfig {
+    pub(crate) rpc_port: Option<u16>,
+    pub(crate) node_port: Option<u16>,
 }
 
 impl Config {
@@ -38,6 +45,10 @@ impl Config {
             public_key: None,
             secret: None,
             coin_records: None,
+            rpc: RPCConfig {
+                rpc_port: None,
+                node_port: None,
+            },
         }
     }
 }

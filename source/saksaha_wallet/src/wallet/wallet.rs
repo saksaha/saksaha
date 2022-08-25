@@ -10,6 +10,7 @@ pub(crate) struct Wallet {
     wallet_db: Arc<WalletDB>,
     credential_manager: CredentialManager,
     pub coin_manager: RwLock<CoinManager>,
+    pub connected_node_port: Option<u16>,
 }
 
 impl Wallet {
@@ -27,6 +28,7 @@ impl Wallet {
             wallet_db,
             credential_manager,
             coin_manager,
+            connected_node_port: config.rpc.node_port,
         };
 
         bootstrap_wallet(&wallet, config).await?;

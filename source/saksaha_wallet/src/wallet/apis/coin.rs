@@ -88,6 +88,8 @@ impl Wallet {
         ctr_addr: String,
         ctr_request: CtrRequest,
     ) -> Result<String, WalletError> {
+        let target_node_port = self.connected_node_port.unwrap();
+
         self.check_balance(&acc_addr).await?;
 
         let mut coin_manager_lock = self.get_coin_manager().write().await;
@@ -110,7 +112,9 @@ impl Wallet {
         };
 
         let cm_idx = {
-            let resp = saksaha::get_cm_idx(coin.cm.to_bytes()).await?;
+            let resp =
+                saksaha::get_cm_idx(target_node_port, coin.cm.to_bytes())
+                    .await?;
 
             resp.result.ok_or("")?.cm_idx.ok_or("")?
         };
@@ -119,7 +123,8 @@ impl Wallet {
 
         let old_coin = {
             let auth_path = {
-                let response = saksaha::get_auth_path(cm_idx).await?;
+                let response =
+                    saksaha::get_auth_path(target_node_port, cm_idx).await?;
 
                 let result =
                     response.result.ok_or(format!("cannot get auth path"))?;
@@ -171,6 +176,7 @@ impl Wallet {
         println!("[!] pi serialized, len: {}", pi_ser.len());
 
         let json_response = saksaha::send_tx_pour(
+            target_node_port,
             sn_1,
             new_coin_1.cm.to_bytes(),
             new_coin_2.cm.to_bytes(),

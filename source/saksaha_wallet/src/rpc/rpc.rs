@@ -18,15 +18,9 @@ pub(crate) struct RPC {
 
 impl RPC {
     pub async fn init(
-        rpc_port: Option<u16>,
+        rpc_port: u16,
         wallet: Arc<Wallet>,
     ) -> Result<RPC, WalletError> {
-        let rpc_port = rpc_port.unwrap_or_else(|| {
-            warn!("rpc_port is not provided, defaults to {}", 36612);
-
-            36612
-        });
-
         let (rpc_socket, socket_addr) =
             match sak_utils_net::bind_tcp_socket(Some(rpc_port)).await {
                 Ok((socket, socket_addr)) => {

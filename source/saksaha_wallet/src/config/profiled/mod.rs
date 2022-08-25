@@ -1,6 +1,6 @@
 use sak_types::CoinRecord;
 
-use crate::{Config, WalletError};
+use crate::{Config, RPCConfig, WalletError};
 
 pub fn dev_local_1() -> Result<Config, WalletError> {
     let c = Config {
@@ -31,6 +31,10 @@ pub fn dev_local_1() -> Result<Config, WalletError> {
                 ),
             )?,
         ]),
+        rpc: RPCConfig {
+            rpc_port: Some(36612),
+            node_port: Some(34418),
+        },
     };
 
     Ok(c)
@@ -49,8 +53,26 @@ pub fn dev_local_2() -> Result<Config, WalletError> {
         )),
         coin_records: Some(vec![
             //
-            CoinRecord::new(0x21, 0x22, 0x23, 0x24, 100, Some(1), None, None)?,
+            CoinRecord::new(
+                0x21,
+                0x22,
+                0x23,
+                0x24,
+                100,
+                Some(1),
+                None,
+                Some(
+                    "\
+                8d526423d7f7e2c1d419c3096ecee5a8\
+                f24c9269f018bfae35216858c19bbae1"
+                        .to_string(),
+                ),
+            )?,
         ]),
+        rpc: RPCConfig {
+            rpc_port: Some(36613),
+            node_port: Some(34419),
+        },
     };
 
     Ok(c)

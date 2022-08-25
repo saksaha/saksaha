@@ -1,7 +1,7 @@
 use crate::credential::CredentialManager;
 use crate::db::WalletDB;
 use crate::{rpc::RPC, wallet::Wallet, AppArgs, WalletError};
-use log::{error, info};
+use log::info;
 use std::sync::Arc;
 
 pub(crate) struct Routine {}
@@ -13,13 +13,22 @@ impl Routine {
     ) -> Result<(), WalletError> {
         info!("Wallet main routine starts, app_args: {:?}", app_args);
 
-        let credential_manager =
-            CredentialManager::init(app_args.wallet_credential)?;
+        let rpc_port = match app_args.config.rpc.rpc_port {
+            Some(p) => p,
+            None => {
+                log::warn!("rpc_port is not provided, defaults to {}", 36612);
 
-        let wallet_db =
-            WalletDB::init(&credential_manager.get_credential(), false)?;
+                36612
+            }
+        };
 
         let wallet = {
+            let credential_manager =
+                CredentialManager::init(app_args.wallet_credential)?;
+
+            let wallet_db =
+                WalletDB::init(&credential_manager.get_credential(), false)?;
+
             let w =
                 Wallet::init(credential_manager, wallet_db, app_args.config)
                     .await?;
@@ -27,7 +36,8 @@ impl Routine {
             Arc::new(w)
         };
 
-        let rpc = RPC::init(app_args.rpc_port, wallet).await?;
+        let rpc = RPC::init(rpc_port, wallet).await?;
+        // let rpc = RPC::init(app_args.rpc_port, wallet).await?;
 
         tokio::spawn(async move {
             tokio::join!(rpc.run());
