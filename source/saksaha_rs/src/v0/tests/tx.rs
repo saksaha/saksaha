@@ -8,11 +8,17 @@ use type_extension::U8Array;
 pub async fn test_sdk_get_tx() {
     sak_test_utils::init_test_log();
 
+    let conn_node_port: u16 = 34418;
+
     // hash is hard-coded
     let hash = String::from(
         "21f25438129d314242f3b919d0beb3ab0c219c765d260467eac3e91bf1031683",
     );
-    let resp = crate::get_tx(hash).await.unwrap().result.unwrap();
+    let resp = crate::get_tx(conn_node_port, hash)
+        .await
+        .unwrap()
+        .result
+        .unwrap();
     println!("resp : {:?}", resp);
 }
 

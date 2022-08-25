@@ -1,26 +1,17 @@
-use super::dispatcher::{Dispatch, Dispatcher};
+use super::dispatcher::Dispatcher;
 use super::reducer::DispatcherContext;
+use super::state::AppState;
 use super::Actions;
-use super::{state::AppState, ChannelState};
 use crate::credential::Credential;
 use crate::db::EnvelopeDB;
-use crate::{app, wallet_sdk, EnvelopeError};
 use crate::{envelope::actions::Action, ENVELOPE_CTR_ADDR};
-use chrono::Local;
-use envelope_contract::{
-    request_type::{GET_CH_LIST, GET_MSG, OPEN_CH, SEND_MSG},
-    Channel, ChatMessage, EncryptedChatMessage, GetChListParams, GetMsgParams,
-    OpenChParams, SendMsgParams,
-};
-use log::{error, warn};
+use crate::{wallet_sdk, EnvelopeError, RPCConfig};
+use envelope_contract::request_type::OPEN_CH;
+use envelope_contract::{Channel, OpenChParams};
 use sak_contract_std::{CtrCallType, CtrRequest};
-use sak_crypto::{
-    aes_decrypt, derive_aes_key, PublicKey, SakKey, SecretKey, ToEncodedPoint,
-};
-use std::future::Future;
-use std::pin::Pin;
+use sak_crypto::{PublicKey, SakKey, ToEncodedPoint};
 use std::sync::Arc;
-use tokio::sync::{mpsc, RwLock, RwLockWriteGuard};
+use tokio::sync::RwLock;
 use type_extension::{U8Arr32, U8Array};
 
 #[derive(Debug, PartialEq, Eq)]
@@ -48,11 +39,13 @@ pub(crate) struct Envelope {
     pub(super) db: EnvelopeDB,
     pub(super) credential: Arc<Credential>,
     pub(super) partner_credential: Arc<Credential>,
+    pub(super) rpc: RPCConfig,
 }
 
 impl Envelope {
     pub(crate) async fn init(
         // io_tx: mpsc::Sender<IoEvent>,
+        rpc: RPCConfig,
         credential: Arc<Credential>,
         partner_credential: Arc<Credential>,
     ) -> Result<Self, EnvelopeError> {
@@ -97,6 +90,11 @@ impl Envelope {
             dispatcher_clone.run().await;
         });
 
+        let rpc = RPCConfig {
+            wallet_port: rpc.wallet_port.clone(),
+            node_port: rpc.wallet_port.clone(),
+        };
+
         Ok(Self {
             // io_tx,
             dispatcher,
@@ -105,6 +103,7 @@ impl Envelope {
             db,
             credential,
             partner_credential,
+            rpc,
         })
     }
 
@@ -373,6 +372,11 @@ impl Envelope {
 
         let ch_id = format!("{}_{}", my_pk, ch_id_num.to_string());
 
+        let conn_wallet_port = self
+            .rpc
+            .wallet_port
+            .ok_or("Failed to get wallet port from Envelope")?;
+
         {
             // =-=-=-=-=-= `open_ch` for initiator  =-=-=-=-=-=-=-=
 
@@ -421,8 +425,13 @@ impl Envelope {
                 ctr_call_type: CtrCallType::Execute,
             };
 
-            wallet_sdk::send_tx_pour(user_1_acc_addr, ctr_addr, ctr_request)
-                .await?;
+            wallet_sdk::send_tx_pour(
+                conn_wallet_port,
+                user_1_acc_addr,
+                ctr_addr,
+                ctr_request,
+            )
+            .await?;
         }
 
         {
@@ -474,6 +483,7 @@ impl Envelope {
             };
 
             wallet_sdk::send_tx_pour(
+                conn_wallet_port,
                 self.partner_credential.acc_addr.clone(),
                 ctr_addr,
                 ctr_request,

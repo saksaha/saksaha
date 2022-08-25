@@ -2,9 +2,8 @@ use super::{AppReturn, AppState, Envelope, View};
 use crate::envelope::actions;
 use crate::envelope::dispatcher::Dispatch;
 use crate::io::InputMode;
-use crate::EnvelopeError;
 use crate::{envelope::Action, inputs::key::Key};
-use log::{debug, info, warn};
+use log::{info, warn};
 use tokio::sync::mpsc::error::SendError;
 use tokio::sync::RwLockWriteGuard;
 
@@ -12,8 +11,18 @@ impl Envelope {
     pub async fn handle_normal_key<'a>(
         &self,
         key: Key,
-        mut state: RwLockWriteGuard<'a, AppState>,
+        state: RwLockWriteGuard<'a, AppState>,
     ) -> AppReturn {
+        let conn_node_port = match self.rpc.node_port {
+            Some(p) => p,
+            None => 0,
+        };
+
+        let conn_wallet_port = match self.rpc.wallet_port {
+            Some(p) => p,
+            None => 0,
+        };
+
         info!("Run action [{:?}], actions: {:?}", key, self.get_actions());
 
         if let Some(ref action) = self.get_actions().find(key) {
@@ -52,6 +61,7 @@ impl Envelope {
                     });
 
                     actions::show_ch_list(
+                        conn_node_port,
                         dispatch,
                         state,
                         self.dispatcher.get_context().clone(),
@@ -100,7 +110,8 @@ impl Envelope {
                         })
                     });
 
-                    actions::restore_chat(dispatch, state).await;
+                    actions::restore_chat(conn_node_port, dispatch, state)
+                        .await;
 
                     // self.dispatch(Action::RestoreChat).await;
 
@@ -138,7 +149,7 @@ impl Envelope {
                         })
                     });
 
-                    actions::select(dispatch, state).await;
+                    actions::select(conn_node_port, dispatch, state).await;
 
                     AppReturn::Continue
 
@@ -178,6 +189,7 @@ impl Envelope {
                     });
 
                     actions::update_balance(
+                        conn_wallet_port,
                         dispatch,
                         state,
                         self.dispatcher.get_context().clone(),
@@ -211,6 +223,16 @@ impl Envelope {
         //
         mut state: RwLockWriteGuard<'a, AppState>,
     ) -> AppReturn {
+        let conn_node_port = match self.rpc.node_port {
+            Some(p) => p,
+            None => 0,
+        };
+
+        let conn_wallet_port = match self.rpc.wallet_port {
+            Some(p) => p,
+            None => 0,
+        };
+
         match key {
             Key::Enter => {
                 // let mut state = self.state.write().await;
@@ -227,6 +249,7 @@ impl Envelope {
                         });
 
                         actions::enter_in_open_ch(
+                            conn_wallet_port,
                             dispatch,
                             state,
                             self.dispatcher.get_context().clone(),
@@ -261,6 +284,8 @@ impl Envelope {
                         });
 
                         actions::enter_in_chat(
+                            conn_node_port,
+                            conn_wallet_port,
                             dispatch,
                             state,
                             self.dispatcher.get_context().clone(),

@@ -259,13 +259,13 @@ pub async fn query_ctr(
     req_type: String,
     args: RequestArgs,
 ) -> Result<JsonResponse<QueryCtrResponse>, SaksahaSDKError> {
-    // let endpoint_test = "http://localhost:34418/rpc/v0";
-    let endpoint = format!(
-        "{}{}{}",
-        "http://localhost:",
-        rpc_port.to_string(),
-        "/rpc/v0"
-    );
+    let endpoint = "http://localhost:34418/rpc/v0";
+    // let endpoint = format!(
+    //     "{}{}{}",
+    //     "http://localhost:",
+    //     rpc_port.to_string(),
+    //     "/rpc/v0"
+    // );
 
     let client = Client::new();
     let uri: Uri = { endpoint.parse().expect("URI should be made") };

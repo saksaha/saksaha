@@ -42,6 +42,7 @@ impl Routine {
         let envelope = {
             let evl = Envelope::init(
                 // sync_io_tx.clone(),
+                config.rpc,
                 credential.clone(),
                 partner_credential.clone(),
             )

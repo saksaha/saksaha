@@ -345,8 +345,9 @@ pub async fn test_make_a_proof_and_verify_it() {
 pub async fn test_get_auth_path() {
     sak_test_utils::init_test_log();
 
+    let conn_node_port: u16 = 34418;
     let idx: u128 = 0;
-    let resp = crate::get_auth_path(idx).await.unwrap();
+    let resp = crate::get_auth_path(conn_node_port, idx).await.unwrap();
 
     let auth_path = resp.result.unwrap();
     println!("[+] auth_path: {:?}", auth_path);

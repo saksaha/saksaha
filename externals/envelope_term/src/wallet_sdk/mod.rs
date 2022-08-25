@@ -12,9 +12,16 @@ pub struct GetBalanceResponse {
 }
 
 pub async fn get_balance_from_wallet(
+    conn_wallet_port: u16,
     acc_addr: &String,
 ) -> Result<JsonResponse<GetBalanceResponse>, EnvelopeError> {
-    let endpoint = "http://localhost:36612/rpc/v0";
+    // let endpoint = "http://localhost:36612/rpc/v0";
+    let endpoint = format!(
+        "{}{}{}",
+        "http://localhost:",
+        conn_wallet_port.to_string(),
+        "/rpc/v0"
+    );
 
     let client = Client::new();
     let uri: Uri = { endpoint.parse().expect("URI should be made") };
@@ -56,14 +63,21 @@ pub async fn get_balance_from_wallet(
 }
 
 pub async fn send_tx_pour(
+    conn_wallet_port: u16,
     acc_addr: String,
     ctr_addr: String,
     ctr_request: CtrRequest,
 ) -> Result<JsonResponse<SendTxResponse>, EnvelopeError> {
-    let endpoint_test = "http://localhost:36612/rpc/v0";
+    // let endpoint_test = "http://localhost:36612/rpc/v0";
+    let endpoint = format!(
+        "{}{}{}",
+        "http://localhost:",
+        conn_wallet_port.to_string(),
+        "/rpc/v0"
+    );
 
     let client = Client::new();
-    let uri: Uri = { endpoint_test.parse().expect("URI should be made") };
+    let uri: Uri = { endpoint.parse().expect("URI should be made") };
 
     let body = {
         let send_req = SendTxRequest {
@@ -103,9 +117,16 @@ pub async fn send_tx_pour(
 }
 
 pub async fn update_wallet(
+    conn_wallet_port: u16,
     acc_addr: &String,
 ) -> Result<JsonResponse<String>, EnvelopeError> {
-    let endpoint = "http://localhost:36612/rpc/v0";
+    // let endpoint = "http://localhost:36612/rpc/v0";
+    let endpoint = format!(
+        "{}{}{}",
+        "http://localhost:",
+        conn_wallet_port.to_string(),
+        "/rpc/v0"
+    );
 
     let client = Client::new();
 

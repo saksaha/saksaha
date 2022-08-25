@@ -32,8 +32,8 @@ pub fn dev_local_1() -> Result<Config, WalletError> {
             )?,
         ]),
         rpc: RPCConfig {
-            rpc_port: Some(36612),
-            node_port: Some(34418),
+            rpc_port: Some(36612),  // receive
+            node_port: Some(34418), // transmit
         },
     };
 
@@ -70,8 +70,8 @@ pub fn dev_local_2() -> Result<Config, WalletError> {
             )?,
         ]),
         rpc: RPCConfig {
-            rpc_port: Some(36613),
-            node_port: Some(34419),
+            rpc_port: Some(36613),  // receive
+            node_port: Some(34419), // transmit
         },
     };
 
