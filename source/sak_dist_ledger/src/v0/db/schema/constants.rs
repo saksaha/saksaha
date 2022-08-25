@@ -33,6 +33,8 @@ pub(crate) mod cfs {
 
     pub const CM_IDX: &str = "cm_idx";
 
+    pub const CM_IDX_CM: &str = "cm_idx_cm";
+
     pub const V: &str = "v";
 
     pub const K: &str = "k";

@@ -95,6 +95,7 @@ impl LedgerDB {
             ColumnFamilyDescriptor::new(cfs::TX_TYPE, Options::default()),
             // ColumnFamilyDescriptor::new(cfs::CM, Options::default()),
             ColumnFamilyDescriptor::new(cfs::CM_IDX, Options::default()),
+            ColumnFamilyDescriptor::new(cfs::CM_IDX_CM, Options::default()),
             ColumnFamilyDescriptor::new(cfs::V, Options::default()),
             ColumnFamilyDescriptor::new(cfs::K, Options::default()),
             ColumnFamilyDescriptor::new(cfs::S, Options::default()),
