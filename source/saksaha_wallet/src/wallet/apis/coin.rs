@@ -36,6 +36,8 @@ impl Wallet {
             .into());
         }
 
+        self.update_coin_status(acc_addr).await?;
+
         let mut balance: u64 = 0;
 
         for coin in self.get_db().schema.get_all_coins()? {
