@@ -130,9 +130,6 @@ fn get_ch_list<'a>(
     ctx: &DispatcherContext,
 ) -> Result<(), EnvelopeError> {
     // self.envelope.set_ch_list(data).await?;
-
-    state.ch_list = vec![];
-
     let channels = serde_json::from_slice::<Vec<Channel>>(&data)?;
 
     let mut channel_states = vec![];
@@ -256,9 +253,6 @@ fn get_messages<'a>(
     // let mut app = self.app.lock().await;
 
     // self.envelope.set_chats(data).await?;
-
-    state.chats = Vec::<ChatMessage>::new();
-
     let my_pk = &ctx.credential.public_key_str;
     let my_sk = ctx.credential.secret_key_str.to_string();
 
