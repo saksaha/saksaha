@@ -41,7 +41,24 @@ impl Envelope {
                     // let _ = self.get_ch_list().await;
                     // let _ = self.get_ch_list_from_local().await;
                     // state.set_view_ch_list();
-                    self.dispatch(Action::ShowChList).await;
+
+                    let dispatcher = self.dispatcher.clone();
+                    let dispatch: Dispatch = Box::new(move |action| {
+                        let d = dispatcher.clone();
+                        Box::pin(async move {
+                            d.dispatch(action).await?;
+                            Ok::<_, SendError<Action>>(())
+                        })
+                    });
+
+                    actions::show_ch_list(
+                        dispatch,
+                        state,
+                        self.dispatcher.get_context().clone(),
+                    )
+                    .await;
+
+                    // self.dispatch(Action::ShowChList).await;
 
                     AppReturn::Continue
                 }
@@ -54,8 +71,8 @@ impl Envelope {
                 }
 
                 Action::ShowChat => {
-                    // state.set_view_chat();
                     self.dispatch(Action::ShowChat).await;
+                    // state.set_view_chat();
 
                     AppReturn::Continue
                 }
@@ -66,7 +83,6 @@ impl Envelope {
 
                     AppReturn::Continue
                 }
-
                 Action::Up => {
                     // state.previous_ch();
                     self.dispatch(Action::Up).await;
@@ -148,6 +164,27 @@ impl Envelope {
                     //         return AppReturn::Continue;
                     //     }
                     // },
+                }
+
+                Action::UpdateBalance => {
+                    log::info!("UPDATE_BALANCE");
+                    let dispatcher = self.dispatcher.clone();
+                    let dispatch: Dispatch = Box::new(move |action| {
+                        let d = dispatcher.clone();
+                        Box::pin(async move {
+                            d.dispatch(action).await?;
+                            Ok::<_, SendError<Action>>(())
+                        })
+                    });
+
+                    actions::update_balance(
+                        dispatch,
+                        state,
+                        self.dispatcher.get_context().clone(),
+                    )
+                    .await;
+
+                    AppReturn::Continue
                 }
 
                 // Action::UpdateBalance => {
