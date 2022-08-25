@@ -146,8 +146,6 @@ pub(crate) async fn enter_in_chat(
         let resp = get_messages(selected_ch_id.clone()).await?;
 
         if let Some(d) = resp.result {
-            // self.dispatch(IoEvent::GetMessages(d.result)).await;
-            // self.dispatch(Action::GetMessages(d.result)).await?;
             dispatch(Action::GetMessages(d.result)).await?;
         }
     }
@@ -156,8 +154,6 @@ pub(crate) async fn enter_in_chat(
         let resp = get_balance(acc_addr).await?;
 
         if let Some(d) = resp.result {
-            // self.dispatch(IoEvent::GetMessages(d.result)).await;
-            // self.dispatch(Action::GetMessages(d.result)).await?;
             dispatch(Action::UpdateBalanceSuccess(d.balance.val)).await?;
         }
     }
