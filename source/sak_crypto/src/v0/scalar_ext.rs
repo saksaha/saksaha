@@ -68,7 +68,6 @@ impl ScalarExt {
             let ret = s.unwrap();
             return Ok(ret);
         } else {
-            println!("????????????????");
             return Err(format!("Fail to parse byte array into scalar").into());
         }
     }
