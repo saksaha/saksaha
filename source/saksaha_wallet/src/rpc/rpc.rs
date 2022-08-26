@@ -22,7 +22,7 @@ impl RPC {
         wallet: Arc<Wallet>,
     ) -> Result<RPC, WalletError> {
         let rpc_port = rpc_port.unwrap_or_else(|| {
-            warn!("rpc_port is not provided, defaults to {}", 36612);
+            warn!("rpc_port is not provided, default to {}", 36612);
 
             36612
         });

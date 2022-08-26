@@ -27,9 +27,10 @@ impl Wallet {
         let saksaha_endpoint =
             config.saksaha_endpoint.clone().unwrap_or_else(|| {
                 log::warn!(
-                "saksah_endpoint is not provided, defaults to port number: {}",
-                34418
-            );
+                    "saksah_endpoint is not provided, set default \
+                        with port number: {}",
+                    34418
+                );
 
                 "http://localhost:34418/rpc/v0".to_string()
             });
