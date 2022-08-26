@@ -1,5 +1,4 @@
 use crate::{
-    credential::Credential,
     envelope::{
         reducer::{DispatcherContext, Reducer},
         Action, AppState,
@@ -9,7 +8,7 @@ use crate::{
 use std::{future::Future, pin::Pin, sync::Arc};
 use tokio::sync::{
     mpsc::{self, error::SendError, Receiver, Sender},
-    Mutex, RwLock, RwLockWriteGuard,
+    Mutex, RwLock,
 };
 
 pub(crate) type Dispatch = Box<

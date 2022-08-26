@@ -110,7 +110,11 @@ impl Wallet {
         };
 
         let cm_idx = {
-            let resp = saksaha::get_cm_idx(coin.cm.to_bytes()).await?;
+            let resp = saksaha::get_cm_idx(
+                self.saksaha_endpoint.clone(),
+                coin.cm.to_bytes(),
+            )
+            .await?;
 
             resp.result.ok_or("")?.cm_idx.ok_or("")?
         };
@@ -119,7 +123,11 @@ impl Wallet {
 
         let old_coin = {
             let auth_path = {
-                let response = saksaha::get_auth_path(cm_idx).await?;
+                let response = saksaha::get_auth_path(
+                    self.saksaha_endpoint.clone(),
+                    cm_idx,
+                )
+                .await?;
 
                 let result =
                     response.result.ok_or(format!("cannot get auth path"))?;
@@ -171,6 +179,7 @@ impl Wallet {
         println!("[!] pi serialized, len: {}", pi_ser.len());
 
         let json_response = saksaha::send_tx_pour(
+            self.saksaha_endpoint.clone(),
             sn_1,
             new_coin_1.cm.to_bytes(),
             new_coin_2.cm.to_bytes(),
@@ -349,7 +358,7 @@ impl Wallet {
 
     pub async fn update_coin_status(
         &self,
-        acc_addr: &String,
+        _acc_addr: &String,
     ) -> Result<(), WalletError> {
         let mut coin_manager_lock = self.coin_manager.write().await;
 
@@ -358,7 +367,10 @@ impl Wallet {
             let coins = coin_manager_lock.coins.clone();
 
             let old_coin_sn_vec = wallet_db
-                .update_coin_status_unconfirmed_to_unused(&coins)
+                .update_coin_status_unconfirmed_to_unused(
+                    self.saksaha_endpoint.clone(),
+                    &coins,
+                )
                 .await?;
 
             wallet_db

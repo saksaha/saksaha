@@ -256,19 +256,19 @@ impl LedgerDB {
             ScalarExt::parse_arr(&tc.cm_2)?,
         ];
 
-        // let pi_des: Proof<Bls12> = match Proof::read(&*tc.pi) {
-        //     Ok(p) => ,
-        //     Err(err) => {
-        //         return Err(format!(
-        //             "Cannot deserialize the pi, err: {:?}",
-        //             err
-        //         )
-        //         .into());
-        //     }
-        // };
+        let pi_des: Proof<Bls12> = match Proof::read(&*tc.pi) {
+            Ok(p) => p,
+            Err(err) => {
+                return Err(format!(
+                    "Cannot deserialize the pi, err: {:?}",
+                    err
+                )
+                .into());
+            }
+        };
 
         // let verification_result =
-        //     verify_proof_1_to_2(pi_des, &public_inputs, &hasher);
+        //     sak_proofs::verify_proof_1_to_2(pi_des, &public_inputs, &hasher);
 
         // if !verification_result {
         //     // return Err(format!("Wrong proof").into());

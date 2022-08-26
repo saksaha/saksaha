@@ -1,3 +1,4 @@
+mod key;
 mod proof;
 mod test_util;
 

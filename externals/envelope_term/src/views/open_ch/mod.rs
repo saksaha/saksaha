@@ -21,7 +21,7 @@ pub(crate) fn draw_open_ch<'a, B>(
             [
                 Constraint::Length(6),
                 Constraint::Min(10),
-                Constraint::Length(10),
+                Constraint::Length(50),
             ]
             .as_ref(),
         )
@@ -47,7 +47,7 @@ pub(crate) fn draw_open_ch<'a, B>(
 
     let body_chunks = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Min(10), Constraint::Length(4)].as_ref())
+        .constraints([Constraint::Min(10), Constraint::Length(1)].as_ref())
         .split(chunks[1]);
 
     let open_ch_chunks = Layout::default()

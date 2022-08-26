@@ -121,7 +121,11 @@ impl AppState {
     //     }
     // }
 
-    pub async fn set_balance(&mut self, user_pk: String) {
+    pub async fn set_balance(
+        &mut self,
+        wallet_endpoint: String,
+        user_pk: String,
+    ) {
         // TODO get user_id via params
         // let tmp_user_id = USER_1.to_owned();
         // let tmp_user_id = "".to_owned();
@@ -129,10 +133,16 @@ impl AppState {
 
         {
             // update the coin_manager in wallet
-            let _ = wallet_sdk::update_wallet(&user_pk).await;
+            let _ =
+                wallet_sdk::update_wallet(wallet_endpoint.clone(), &user_pk)
+                    .await;
         }
 
-        let balance = match wallet_sdk::get_balance_from_wallet(&user_pk).await
+        let balance = match wallet_sdk::get_balance_from_wallet(
+            wallet_endpoint,
+            &user_pk,
+        )
+        .await
         {
             Ok(resp) => {
                 info!("Success to get response from wallet");

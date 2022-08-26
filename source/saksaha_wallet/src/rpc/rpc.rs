@@ -7,7 +7,7 @@ use colored::Colorize;
 use hyper_rpc_router::Router;
 use hyper_server::{cors, Middleware, RPCServer};
 use log::{error, info, warn};
-use std::{sync::Arc, time::Duration};
+use std::sync::Arc;
 use tokio::net::TcpListener;
 
 pub(crate) struct RPC {
@@ -22,7 +22,7 @@ impl RPC {
         wallet: Arc<Wallet>,
     ) -> Result<RPC, WalletError> {
         let rpc_port = rpc_port.unwrap_or_else(|| {
-            warn!("rpc_port is not provided, defaults to {}", 36612);
+            warn!("rpc_port is not provided, default to {}", 36612);
 
             36612
         });
