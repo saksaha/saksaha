@@ -364,7 +364,7 @@ async fn request_open_ch(
         serde_json::to_string(eph_pk.to_encoded_point(false).as_bytes())?;
     let my_sk = ctx.credential.secret_key_str.clone();
     let my_pk = ctx.credential.public_key_str.clone();
-    let my_sig = ctx.credential.sign();
+    // let my_sig = ctx.credential.sign();
     let user_1_acc_addr = ctx.credential.acc_addr.clone();
 
     let ch_id = sak_crypto::rand().to_string();
@@ -389,14 +389,14 @@ async fn request_open_ch(
                 format!("init_{}", serde_json::to_string(&eph_sk_enc)?)
             };
 
-            let sig_enc = {
-                let sig_enc =
-                    sak_crypto::aes_encrypt(&my_sk, &my_sig.as_bytes())?;
+            let initiator_pk_enc = {
+                let initiator_pk_enc =
+                    sak_crypto::aes_encrypt(&my_sk, &my_pk.as_bytes())?;
 
-                serde_json::to_string(&sig_enc)?
+                serde_json::to_string(&initiator_pk_enc)?
             };
 
-            Channel::new(ch_id_enc, eph_sk_enc, sig_enc)?
+            Channel::new(ch_id_enc, eph_sk_enc, initiator_pk_enc)?
         };
 
         let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
@@ -448,14 +448,14 @@ async fn request_open_ch(
 
             let eph_pk = eph_pk;
 
-            let sig_enc = {
-                let sig_enc =
-                    sak_crypto::aes_encrypt(&aes_key, &my_sig.as_bytes())?;
+            let initiator_pk_enc = {
+                let initiator_pk_enc =
+                    sak_crypto::aes_encrypt(&aes_key, &my_pk.as_bytes())?;
 
-                serde_json::to_string(&sig_enc)?
+                serde_json::to_string(&initiator_pk_enc)?
             };
 
-            Channel::new(ch_id_enc, eph_pk, sig_enc)?
+            Channel::new(ch_id_enc, eph_pk, initiator_pk_enc)?
         };
 
         let ctr_addr = ENVELOPE_CTR_ADDR.to_string();

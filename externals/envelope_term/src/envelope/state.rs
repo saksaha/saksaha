@@ -224,12 +224,11 @@ impl Default for AppState {
 #[derive(Debug, PartialEq, Eq)]
 pub struct ChannelState {
     pub channel: Channel,
-    pub her_pk: String,
 }
 
 impl ChannelState {
-    pub fn new(channel: Channel, her_pk: String) -> ChannelState {
-        ChannelState { channel, her_pk }
+    pub fn new(channel: Channel) -> ChannelState {
+        ChannelState { channel }
     }
 }
 

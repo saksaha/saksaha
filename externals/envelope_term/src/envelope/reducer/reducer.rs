@@ -137,7 +137,7 @@ fn get_ch_list<'a>(
     for ch in channels.into_iter() {
         log::info!("channel info\n{:?}", ch);
 
-        let mut new_ch = ChannelState::new(ch, String::default());
+        let mut new_ch = ChannelState::new(ch);
 
         // First, try to decrypt the `ch_id` with `my_sk`
         let my_sk = {
@@ -146,39 +146,45 @@ fn get_ch_list<'a>(
             U8Array::from_hex_string(s)?
         };
 
-        let ch_id_decrypted = {
-            let ch_id: Vec<u8> =
-                serde_json::from_str(&new_ch.channel.ch_id.clone().as_str())?;
+        let initiator_pk_decrypted: String = {
+            let initiator_pk_decrypted: Vec<u8> = serde_json::from_str(
+                &new_ch.channel.initiator_pk.clone().as_str(),
+            )?;
 
             match String::from_utf8(
-                match sak_crypto::aes_decrypt(&my_sk, &ch_id) {
+                match sak_crypto::aes_decrypt(&my_sk, &initiator_pk_decrypted) {
                     Ok(v) => v,
                     Err(_) => vec![],
                 },
             ) {
-                Ok(ch_id_decrypted) => ch_id_decrypted,
+                Ok(init_pk_decrypted) => init_pk_decrypted,
                 Err(_) => String::default(),
             }
         };
 
-        // need a way to check the initiator of the channer
-        // rn it is checked by utf8 decoding
-        if !ch_id_decrypted.is_empty() {
-            log::info!("[+] ch_id: {:?} was made by me", ch_id_decrypted);
+        if ctx.credential.public_key_str == initiator_pk_decrypted {
+            let ch_id_decrypted = {
+                let ch_id: Vec<u8> = serde_json::from_str(
+                    &new_ch.channel.ch_id.clone().as_str(),
+                )?;
 
-            let sig_decrypted: String = {
-                let sig: Vec<u8> =
-                    serde_json::from_str(&new_ch.channel.sig.clone().as_str())?;
-
-                String::from_utf8(sak_crypto::aes_decrypt(&my_sk, &sig)?)?
+                match String::from_utf8(
+                    match sak_crypto::aes_decrypt(&my_sk, &ch_id) {
+                        Ok(v) => v,
+                        Err(_) => vec![],
+                    },
+                ) {
+                    Ok(ch_id_decrypted) => ch_id_decrypted,
+                    Err(_) => String::default(),
+                }
             };
+
+            log::info!("[+] ch_id: {:?} was made by me", ch_id_decrypted);
 
             new_ch.channel.ch_id = ch_id_decrypted;
 
-            new_ch.channel.sig = sig_decrypted;
+            new_ch.channel.initiator_pk = initiator_pk_decrypted;
 
-            // let mut state = self.state.write().await;
-            // state.set_ch_list(new_ch)?;
             channel_states.push(new_ch);
         } else {
             // If the decryption with `MY_SK` has failed,
@@ -210,19 +216,20 @@ fn get_ch_list<'a>(
             log::info!("[+] ch_id_decrypted: {:?}", ch_id_decrypted);
 
             let sig_decrypted: String = {
-                let sig: Vec<u8> =
-                    serde_json::from_str(&new_ch.channel.sig.clone().as_str())?;
+                let sig: Vec<u8> = serde_json::from_str(
+                    &new_ch.channel.initiator_pk.clone().as_str(),
+                )?;
 
                 String::from_utf8(sak_crypto::aes_decrypt(&aes_key, &sig)?)?
             };
 
             new_ch.channel.ch_id = ch_id_decrypted;
 
-            new_ch.channel.sig = sig_decrypted;
+            new_ch.channel.initiator_pk = sig_decrypted;
 
             log::info!(
-                "[+] her_pk: {:?}, the user made this channel",
-                new_ch.her_pk
+                "[+] pub_key: {:?}, made this channel",
+                new_ch.channel.initiator_pk
             );
 
             // let mut state = self.state.write().await;
