@@ -95,11 +95,11 @@ impl LedgerDB {
 
         println!(
             "block to write, block: {:?}, \ntxs: {},\n\
-            ctr_state_updates: {:?},\n merkle_updates: {:?}",
+            ctr_state_updates: {:?},\n merkle_updates",
             block,
             txs_string,
             ctr_state_updates,
-            merkle_updates,
+            // merkle_updates,
             // updated_ledger_cm_count,
         );
 

@@ -185,6 +185,7 @@ impl LedgerDB {
         self.batch_put_cm_1(batch, tx_hash, &tc.cm_1)?;
 
         self.batch_put_cm_cm_idx(batch, &tc.cm_1, &tx.cm_idx_1)?;
+        self.batch_put_cm_idx_cm(batch, &tx.cm_idx_1, &tc.cm_1)?;
 
         // self.batch_put_cm_idx_cm(batch, &tx.cm_idx_1, &tc.cm)?;
 
@@ -255,19 +256,19 @@ impl LedgerDB {
             ScalarExt::parse_arr(&tc.cm_2)?,
         ];
 
-        // let pi_des: Proof<Bls12> = match Proof::read(&*tc.pi) {
-        //     Ok(p) => ,
-        //     Err(err) => {
-        //         return Err(format!(
-        //             "Cannot deserialize the pi, err: {:?}",
-        //             err
-        //         )
-        //         .into());
-        //     }
-        // };
+        let pi_des: Proof<Bls12> = match Proof::read(&*tc.pi) {
+            Ok(p) => p,
+            Err(err) => {
+                return Err(format!(
+                    "Cannot deserialize the pi, err: {:?}",
+                    err
+                )
+                .into());
+            }
+        };
 
         // let verification_result =
-        //     verify_proof_1_to_2(pi_des, &public_inputs, &hasher);
+        //     sak_proofs::verify_proof_1_to_2(pi_des, &public_inputs, &hasher);
 
         // if !verification_result {
         //     // return Err(format!("Wrong proof").into());
@@ -325,8 +326,10 @@ impl LedgerDB {
         // self.batch_put_cm_cm_idx(batch, &tc.cm_2, &(*cm_idx_count + 1))?;
 
         self.batch_put_cm_cm_idx(batch, &tc.cm_1, &tx.cm_idx_1)?;
+        self.batch_put_cm_idx_cm(batch, &tx.cm_idx_1, &tc.cm_1)?;
 
         self.batch_put_cm_cm_idx(batch, &tc.cm_2, &tx.cm_idx_2)?;
+        self.batch_put_cm_idx_cm(batch, &tx.cm_idx_2, &tc.cm_2)?;
 
         self.batch_put_prf_merkle_rt(batch, tx_hash, &tc.merkle_rt)?;
 

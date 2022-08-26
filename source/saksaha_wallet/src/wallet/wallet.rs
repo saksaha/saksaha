@@ -1,6 +1,7 @@
 use super::CoinManager;
 use crate::{db::WalletDB, Config, CredentialManager, WalletError};
 use colored::Colorize;
+use sak_types::CoinRecord;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 pub const GAS: u64 = 10;
@@ -8,7 +9,8 @@ pub const GAS: u64 = 10;
 pub(crate) struct Wallet {
     wallet_db: Arc<WalletDB>,
     credential_manager: CredentialManager,
-    coin_manager: RwLock<CoinManager>,
+    pub coin_manager: RwLock<CoinManager>,
+    pub saksaha_endpoint: String,
 }
 
 impl Wallet {
@@ -22,10 +24,22 @@ impl Wallet {
         let coin_manager =
             RwLock::new(CoinManager::init(wallet_db.clone()).await?);
 
+        let saksaha_endpoint =
+            config.saksaha_endpoint.clone().unwrap_or_else(|| {
+                log::warn!(
+                    "saksah_endpoint is not provided, set default \
+                        with port number: {}",
+                    34418
+                );
+
+                "http://localhost:34418/rpc/v0".to_string()
+            });
+
         let wallet = Wallet {
             wallet_db,
             credential_manager,
             coin_manager,
+            saksaha_endpoint,
         };
 
         bootstrap_wallet(&wallet, config).await?;
@@ -77,7 +91,7 @@ async fn bootstrap_wallet(
                         idx, coin_count, coin.cm, coin.v
                     );
 
-                    wallet.coin_manager.write().await.update_coin(coin)?;
+                    wallet.coin_manager.write().await.put_coin(coin)?;
                 }
                 Err(err) => {
                     println!(
