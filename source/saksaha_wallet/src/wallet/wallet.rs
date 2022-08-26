@@ -10,6 +10,7 @@ pub(crate) struct Wallet {
     wallet_db: Arc<WalletDB>,
     credential_manager: CredentialManager,
     pub coin_manager: RwLock<CoinManager>,
+    pub saksaha_endpoint: String,
 }
 
 impl Wallet {
@@ -23,10 +24,22 @@ impl Wallet {
         let coin_manager =
             RwLock::new(CoinManager::init(wallet_db.clone()).await?);
 
+        let saksaha_endpoint =
+            config.saksaha_endpoint.clone().unwrap_or_else(|| {
+                log::warn!(
+                    "saksah_endpoint is not provided, set default \
+                        with port number: {}",
+                    34418
+                );
+
+                "http://localhost:34418/rpc/v0".to_string()
+            });
+
         let wallet = Wallet {
             wallet_db,
             credential_manager,
             coin_manager,
+            saksaha_endpoint,
         };
 
         bootstrap_wallet(&wallet, config).await?;

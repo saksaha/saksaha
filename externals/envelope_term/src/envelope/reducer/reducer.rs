@@ -6,9 +6,7 @@ use crate::{
 };
 use envelope_contract::{Channel, ChatMessage, EncryptedChatMessage};
 use log::info;
-use sak_crypto::{PublicKey, SecretKey};
-use sak_types::AccountBalance;
-use std::time::Duration;
+use sak_crypto::{decode_hex, PublicKey, SecretKey};
 use tokio::sync::RwLockWriteGuard;
 use type_extension::{U8Arr32, U8Array};
 
@@ -150,21 +148,31 @@ fn get_ch_list<'a>(
             let ch_id: Vec<u8> =
                 serde_json::from_str(&new_ch.channel.ch_id.clone().as_str())?;
 
-            String::from_utf8(sak_crypto::aes_decrypt(&my_sk, &ch_id)?)?
+            match String::from_utf8(
+                match sak_crypto::aes_decrypt(&my_sk, &ch_id) {
+                    Ok(v) => v,
+                    Err(_) => vec![],
+                },
+            ) {
+                Ok(ch_id_decrypted) => ch_id_decrypted,
+                Err(_) => String::default(),
+            }
         };
 
         // Prefix of the encrypted `ch_id` is `MY_PK` rn
         let my_pk = &ctx.credential.public_key_str;
 
-        if &ch_id_decrypted[0..my_pk.len()] == my_pk.as_str() {
+        if !ch_id_decrypted.is_empty()
+            && &ch_id_decrypted[0..my_pk.len()] == my_pk.as_str()
+        {
             let ch_id: String = match ch_id_decrypted.split('_').nth(1) {
                 Some(ci) => ci.to_string(),
                 None => {
                     return Err(format!(
                         "\
-                                        Error occured while \
-                                        parsing encrypted `ch_id`\
-                                    "
+                            Error occured while \
+                            parsing encrypted `ch_id`\
+                        "
                     )
                     .into());
                 }
@@ -191,15 +199,21 @@ fn get_ch_list<'a>(
                 let my_sk = {
                     let s = &ctx.credential.secret_key_str;
 
-                    SecretKey::from_bytes(s.as_bytes())?
+                    SecretKey::from_bytes(decode_hex(&s)?)?
                 };
 
-                let eph_pub_key = PublicKey::from_sec1_bytes(
-                    new_ch.channel.eph_key.as_bytes(),
-                )?;
+                let e = &new_ch.channel.eph_key;
+
+                let e: Vec<u8> = serde_json::from_str(e.as_str())?;
+
+                let e = PublicKey::from_sec1_bytes(&e)?;
+
+                let eph_pub_key = e;
 
                 sak_crypto::derive_aes_key(my_sk, eph_pub_key)?
             };
+
+            log::info!("AES_KEY: {:?}", aes_key);
 
             let ch_id_decrypted = {
                 let ch_id: Vec<u8> = serde_json::from_str(

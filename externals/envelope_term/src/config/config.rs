@@ -6,6 +6,14 @@ use serde::{Deserialize, Serialize};
 pub struct Config {
     pub public_key: Option<String>,
     pub secret: Option<String>,
+    pub wallet_endpoint: Option<String>,
+    pub saksaha_endpoint: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RPCConfig {
+    pub(crate) wallet_port: Option<u16>,
+    pub(crate) node_port: Option<u16>,
 }
 
 impl Config {
@@ -32,6 +40,8 @@ impl Config {
         Config {
             public_key: None,
             secret: None,
+            wallet_endpoint: None,
+            saksaha_endpoint: None,
         }
     }
 }

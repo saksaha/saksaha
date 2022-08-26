@@ -9,6 +9,8 @@ pub struct Config {
     pub public_key: Option<String>,
     pub secret: Option<String>,
     pub coin_records: Option<Vec<CoinRecord>>,
+    pub rpc_port: Option<u16>,
+    pub saksaha_endpoint: Option<String>,
 }
 
 impl Config {
@@ -38,6 +40,8 @@ impl Config {
             public_key: None,
             secret: None,
             coin_records: None,
+            rpc_port: None,
+            saksaha_endpoint: None,
         }
     }
 }

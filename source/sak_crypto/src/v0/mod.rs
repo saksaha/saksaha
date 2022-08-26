@@ -21,7 +21,7 @@ pub use k256::{
         Signature, SigningKey, VerifyingKey,
     },
     elliptic_curve::sec1::ToEncodedPoint,
-    SecretKey,
+    ScalarBytes, SecretKey,
 };
 use k256::{elliptic_curve::ecdh::SharedSecret as SSecret, Secp256k1};
 pub use sha3;

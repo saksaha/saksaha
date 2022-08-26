@@ -21,7 +21,7 @@ pub(crate) fn draw_ch_list<'a, B>(
             [
                 Constraint::Length(6),
                 Constraint::Min(10),
-                Constraint::Length(10),
+                Constraint::Length(50),
             ]
             .as_ref(),
         )
@@ -53,7 +53,7 @@ pub(crate) fn draw_ch_list<'a, B>(
             .constraints(
                 [
                     Constraint::Min(10), //
-                    Constraint::Length(4),
+                    Constraint::Length(1),
                 ]
                 .as_ref(),
             )
