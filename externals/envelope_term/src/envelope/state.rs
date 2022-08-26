@@ -27,6 +27,7 @@ pub struct AppState {
     pub view: View,
     pub balance: String,
     pub selected_ch_id: String,
+    // pub selected_ch: Channel,
 }
 
 impl AppState {
