@@ -396,7 +396,7 @@ async fn request_open_ch(
         let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
 
         let open_ch_params = OpenChParams {
-            dst_pk: my_pk,
+            dst_pk: my_pk.clone(),
             open_ch,
         };
 
@@ -422,10 +422,10 @@ async fn request_open_ch(
     {
         // =-=-=-=-=-=  `open_ch` for receiver =-=-=-=-=-=-=-=
 
-        let her_pk = "042c8d005bd935597117181d8ceceaef6d1162de78c32856\
-                89d0c36c6170634c124f7b9b911553a1f483ec565c199ea29ff1\
-                cd641f10c9a5f8c7c4d4a026db6f7b"
-            .to_string();
+        // let her_pk = "042c8d005bd935597117181d8ceceaef6d1162de78c32856\
+        //         89d0c36c6170634c124f7b9b911553a1f483ec565c199ea29ff1\
+        //         cd641f10c9a5f8c7c4d4a026db6f7b"
+        //     .to_string();
 
         let aes_key = {
             let her_pk: Vec<u8> = sak_crypto::decode_hex(&her_pk)?;

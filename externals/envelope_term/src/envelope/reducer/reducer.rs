@@ -6,7 +6,7 @@ use crate::{
 };
 use envelope_contract::{Channel, ChatMessage, EncryptedChatMessage};
 use log::info;
-use sak_crypto::{PublicKey, SecretKey};
+use sak_crypto::{decode_hex, PublicKey, SecretKey};
 use tokio::sync::RwLockWriteGuard;
 use type_extension::{U8Arr32, U8Array};
 
@@ -195,43 +195,25 @@ fn get_ch_list<'a>(
         } else {
             // If the decryption with `MY_SK` has failed,
             // it should be decrypted with ECIES-scheme aes key
-            log::info!("Found a channel created by someone else");
-
             let aes_key = {
                 let my_sk = {
                     let s = &ctx.credential.secret_key_str;
-                    log::info!("my secret_key: {:?}", s);
-                    log::info!("my secret_key len: {:?}", s.len());
 
-                    let s = s.as_bytes().to_vec();
-                    // let mut s = s.as_bytes().to_vec();
-
-                    // let mut pad: Vec<u8> = vec![0; 192];
-
-                    // pad.append(&mut s);
-
-                    // log::info!("pad: {:?}", pad);
-                    // log::info!("pad len: {:?}", pad.len());
-
-                    // match SecretKey::from_bytes(pad) {
-                    match SecretKey::from_bytes(s) {
-                        Ok(s) => s,
-                        Err(err) => {
-                            log::error!("err: {:?}", err);
-                            SecretKey::random(sak_crypto::OsRng)
-                        }
-                    }
+                    SecretKey::from_bytes(decode_hex(&s)?)?
                 };
-                info!("secret_key is ready");
 
-                let eph_pub_key = PublicKey::from_sec1_bytes(
-                    new_ch.channel.eph_key.as_bytes(),
-                )?;
-                info!("eph_key has been re-constructed");
+                let e = &new_ch.channel.eph_key;
+
+                let e: Vec<u8> = serde_json::from_str(e.as_str())?;
+
+                let e = PublicKey::from_sec1_bytes(&e)?;
+
+                let eph_pub_key = e;
 
                 sak_crypto::derive_aes_key(my_sk, eph_pub_key)?
             };
-            log::info!("AES_KEY has been generated");
+
+            log::info!("AES_KEY: {:?}", aes_key);
 
             let ch_id_decrypted = {
                 let ch_id: Vec<u8> = serde_json::from_str(
@@ -240,7 +222,6 @@ fn get_ch_list<'a>(
 
                 String::from_utf8(sak_crypto::aes_decrypt(&aes_key, &ch_id)?)?
             };
-            log::info!("Channel ID has been decrypted");
 
             let ch_id: String = match ch_id_decrypted.split('_').nth(1) {
                 Some(ci) => ci.to_string(),
@@ -254,7 +235,6 @@ fn get_ch_list<'a>(
                     .into());
                 }
             };
-            log::info!("Channel ID: {:?}", ch_id);
 
             let sig_decrypted: String = {
                 let sig: Vec<u8> =
@@ -262,8 +242,6 @@ fn get_ch_list<'a>(
 
                 String::from_utf8(sak_crypto::aes_decrypt(&aes_key, &sig)?)?
             };
-
-            log::info!("SIGN has been decrypted");
 
             new_ch.channel.ch_id = ch_id;
 

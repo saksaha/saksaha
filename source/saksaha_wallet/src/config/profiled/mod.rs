@@ -71,7 +71,7 @@ pub fn dev_local_2() -> Result<Config, WalletError> {
         ]),
         rpc: RPCConfig {
             rpc_port: Some(36613),  // receive
-            node_port: Some(34419), // transmit
+            node_port: Some(34418), // transmit (temp)
         },
     };
 

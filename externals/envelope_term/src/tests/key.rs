@@ -1,36 +1,48 @@
-use sak_crypto::SecretKey;
+use sak_crypto::{decode_hex, SakKey, ScalarBytes, SecretKey, ToEncodedPoint};
 use sak_test_utils::init_test_log;
 
 #[test]
 fn test_recover_secret_key_from_the_credential() {
     init_test_log();
 
-    let secret_key: String = String::from(
-        "\
-        224d0898389759f29ad5c9a6472b26fff86b629388988eec457a88ce50e907a0",
-    );
+    let (secret_key, _public_key) = SakKey::generate();
 
-    let mut secret_key = secret_key.as_bytes().to_vec();
+    println!("secret_key: {:?}", secret_key.to_bytes());
 
-    println!("[+] secret_key: {:?}", secret_key);
-    println!("[+] secret_key (len): {:?}", secret_key.len());
+    let secret_key_str: String =
+        sak_crypto::encode_hex(&secret_key.to_bytes() as &[u8]);
 
-    let mut pad = vec![0x0u8; 192];
-    secret_key.append(&mut pad);
+    println!("secret_key: {:?}", secret_key_str);
 
-    let tmp: &[u8] = secret_key.as_ref();
+    let secret_key_array = decode_hex(&secret_key_str).unwrap();
 
-    println!("\n[!] after padding\n");
-    println!("[+] secret_key (len): {:?}", tmp.len());
+    let recovered_secret_key = SecretKey::from_bytes(secret_key_array).unwrap();
 
-    let a = match SecretKey::from_bytes(secret_key) {
-        Ok(a) => a,
-        Err(err) => {
-            println!("Error msg: {:?}", err);
+    assert_eq!(secret_key.to_bytes(), recovered_secret_key.to_bytes());
+}
 
-            panic!();
-        }
-    };
+#[test]
+fn test_recover_public_key_from_the_credential() {
+    init_test_log();
 
-    println!("res: {:?}", a);
+    let (_secret_key, public_key) = SakKey::generate();
+
+    let public_key_array =
+        public_key.to_encoded_point(false).as_bytes().to_owned();
+
+    println!("public_key: {:?}", public_key_array);
+    println!("public_key (len): {:?}", public_key_array.len());
+
+    // let public_key_array =
+
+    // let secret_key_str: String =
+    //     sak_crypto::encode_hex(&secret_key.to_bytes() as &[u8]);
+
+    // println!("secret_key: {:?}", secret_key_str);
+
+    // let secret_key_array = decode_hex(&secret_key_str).unwrap();
+
+    // let recovered_secret_key = SecretKey::from_bytes(secret_key_array).unwrap();
+
+    // assert_eq!(secret_key.to_bytes(), recovered_secret_key.to_bytes());
 }
