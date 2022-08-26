@@ -25,10 +25,26 @@ pub fn keccak256(data: &[u8]) -> String {
 }
 
 pub fn decode_hex(s: &String) -> std::result::Result<Vec<u8>, ParseIntError> {
-    (0..s.len())
-        .step_by(2)
-        .map(|i| u8::from_str_radix(&s[i..i + 2], 16))
-        .collect()
+    let is_odd: bool = s.len() % 2 == 1;
+
+    if is_odd {
+        let byte = u8::from_str_radix(&s[0..1], 16)?;
+
+        let mut result = vec![0u8, byte];
+
+        for idx in (1..s.len()).step_by(2) {
+            let tmp_byte = u8::from_str_radix(&s[idx..idx + 2], 16)?;
+
+            result.push(tmp_byte);
+        }
+
+        Ok(result)
+    } else {
+        (0..s.len())
+            .step_by(2)
+            .map(|i| u8::from_str_radix(&s[i..i + 2], 16))
+            .collect()
+    }
 }
 
 pub fn encode_hex(bytes: &[u8]) -> String {

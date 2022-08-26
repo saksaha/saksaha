@@ -1,7 +1,12 @@
 use super::WalletDBSchema;
+use crate::wallet::CoinManager;
 use crate::{credential::WalletCredential, WalletError, APP_NAME};
 use log::info;
 use sak_kv_db::{KeyValueDatabase, Options};
+use sak_types::CoinRecord;
+use sak_types::CoinStatus;
+use sak_types::Sn;
+use std::time::Duration;
 use std::{fs, path::PathBuf};
 
 pub(crate) struct WalletDB {
@@ -36,10 +41,6 @@ impl WalletDB {
 
             db_path
         };
-
-        let a = wallet_db_path.join("p");
-
-        fs::write(a, "power")?;
 
         info!("Wallet db path: {:?}", wallet_db_path);
 
@@ -80,5 +81,92 @@ impl WalletDB {
         let db_path = app_path.join("db");
 
         Ok(db_path)
+    }
+
+    pub async fn update_coin_status_unconfirmed_to_unused(
+        &self,
+        saksaha_endpoint: String,
+        coins: &Vec<CoinRecord>,
+    ) -> Result<Vec<Sn>, WalletError> {
+        let mut old_coin_sn_vec = Vec::<Sn>::new();
+
+        for coin in coins {
+            match coin.coin_status.clone() {
+                CoinStatus::Unconfirmed => {
+                    let resp = match coin.tx_hash.clone() {
+                        Some(tx_hash) => saksaha::get_tx(
+                            saksaha_endpoint.clone(),
+                            tx_hash.clone(),
+                        )
+                        .await?
+                        .result
+                        .ok_or("json_response error")?,
+
+                        None => {
+                            return Err(format!(
+                                "No tx_hash has been found in cm: {:?}",
+                                coin.cm
+                            )
+                            .into());
+                        }
+                    };
+
+                    if let Some(tx) = resp.tx {
+                        old_coin_sn_vec.push(tx.get_sn());
+
+                        self.schema
+                            .raw
+                            .put_coin_status(&coin.cm, &CoinStatus::Unused)?;
+
+                        {
+                            let cm_idx_base = tx
+                                .get_cm_pairs()
+                                .get(0)
+                                .ok_or("expect (CmIdx, Cm)")?
+                                .0;
+
+                            let cm_idx_offset =
+                                coin.cm_idx.ok_or("expect cm_idx_offset")?;
+
+                            let cm_idx = cm_idx_base + cm_idx_offset;
+
+                            self.schema.raw.put_cm_idx(&coin.cm, &cm_idx)?;
+                        }
+                    };
+                }
+
+                CoinStatus::Used => {}
+
+                CoinStatus::Unused => {}
+            }
+        }
+
+        Ok(old_coin_sn_vec)
+    }
+
+    pub async fn update_coin_status_unused_to_used(
+        &self,
+        old_coin_sn_vec: Vec<Sn>,
+        coins: &Vec<CoinRecord>,
+    ) -> Result<(), WalletError> {
+        for coin in coins {
+            match coin.coin_status.clone() {
+                CoinStatus::Unconfirmed => {}
+
+                CoinStatus::Used => {}
+
+                CoinStatus::Unused => {
+                    let sn = coin.compute_sn();
+
+                    if old_coin_sn_vec.contains(&sn) {
+                        self.schema
+                            .raw
+                            .put_coin_status(&coin.cm, &CoinStatus::Used)?;
+                    }
+                }
+            }
+        }
+
+        Ok(())
     }
 }
