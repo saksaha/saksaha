@@ -23,7 +23,7 @@ use tokio::sync::RwLockWriteGuard;
 use type_extension::{U8Arr32, U8Array};
 
 pub(crate) async fn restore_chat(
-    conn_node_port: u16,
+    saksaha_endpoint: String,
     dispatch: Dispatch,
     state: RwLockWriteGuard<'_, AppState>,
 ) -> Result<(), EnvelopeError> {
@@ -31,7 +31,7 @@ pub(crate) async fn restore_chat(
         let ch_id = &state.selected_ch_id;
 
         if !ch_id.is_empty() {
-            let resp = get_messages(conn_node_port, ch_id.clone()).await?;
+            let resp = get_messages(saksaha_endpoint, ch_id.clone()).await?;
 
             if let Some(d) = resp.result {
                 // self.dispatch(IoEvent::GetMessages(d.result)).await;
@@ -49,7 +49,7 @@ pub(crate) async fn restore_chat(
 }
 
 pub(crate) async fn select(
-    conn_node_port: u16,
+    saksaha_endpoint: String,
     dispatch: Dispatch,
     mut state: RwLockWriteGuard<'_, AppState>,
 ) -> Result<(), EnvelopeError> {
@@ -61,8 +61,8 @@ pub(crate) async fn select(
 
         log::info!("Ch_Id: {:?}", state.selected_ch_id);
 
-        let resp =
-            get_messages(conn_node_port, state.selected_ch_id.clone()).await?;
+        let resp = get_messages(saksaha_endpoint, state.selected_ch_id.clone())
+            .await?;
 
         if let Some(d) = resp.result {
             dispatch(Action::GetMessages(d.result)).await?;
@@ -77,48 +77,55 @@ pub(crate) async fn select(
 }
 
 pub(crate) async fn enter_in_open_ch(
-    conn_wallet_port: u16,
+    wallet_endpoint: String,
     dispatch: Dispatch,
     mut state: RwLockWriteGuard<'_, AppState>,
     ctx: Arc<DispatcherContext>,
 ) -> Result<(), EnvelopeError> {
     state.input_returned = state.input_text.drain(..).collect();
 
-    // need to check validity of `self.state.input_returned`
-    // let pk = self.state.input_returned.clone();
+    request_open_ch(
+        wallet_endpoint.clone(),
+        &state.input_returned,
+        ctx.clone(),
+    )
+    .await?;
 
-    request_open_ch(conn_wallet_port, &state.input_returned, ctx.clone())
-        .await?;
+    // get ch list
+    {
+        let dst_pk = ctx.credential.public_key_str.clone();
 
-    let dst_pk = ctx.credential.public_key_str.clone();
+        let resp = request_ch_list(wallet_endpoint.clone(), dst_pk).await?;
 
-    let resp = request_ch_list(conn_wallet_port, dst_pk).await?;
-
-    if let Some(d) = resp.result {
-        dispatch(Action::GetChList(d.result)).await?;
+        if let Some(d) = resp.result {
+            dispatch(Action::GetChList(d.result)).await?;
+        }
     }
 
+    // get balance
     {
         let resp =
-            get_balance(conn_wallet_port, ctx.credential.acc_addr.clone())
+            get_balance(wallet_endpoint, ctx.credential.acc_addr.clone())
                 .await?;
 
         if let Some(d) = resp.result {
             dispatch(Action::UpdateBalanceSuccess(d.balance.val)).await?;
         }
     }
+
     Ok(())
 }
 
 pub(crate) async fn show_ch_list(
-    conn_node_port: u16,
+    // conn_node_port: u16,
+    saksaha_endpoint: String,
     dispatch: Dispatch,
     state: RwLockWriteGuard<'_, AppState>,
     ctx: Arc<DispatcherContext>,
 ) -> Result<(), EnvelopeError> {
     let dst_pk = ctx.credential.public_key_str.clone();
 
-    let resp = request_ch_list(conn_node_port, dst_pk).await?;
+    let resp = request_ch_list(saksaha_endpoint, dst_pk).await?;
 
     if let Some(d) = resp.result {
         dispatch(Action::GetChList(d.result)).await?;
@@ -130,8 +137,8 @@ pub(crate) async fn show_ch_list(
 }
 
 pub(crate) async fn enter_in_chat(
-    conn_node_port: u16,
-    conn_wallet_port: u16,
+    saksaha_endpoint: String,
+    wallet_endpoint: String,
     dispatch: Dispatch,
     mut state: RwLockWriteGuard<'_, AppState>,
     ctx: Arc<DispatcherContext>,
@@ -142,7 +149,7 @@ pub(crate) async fn enter_in_chat(
     if selected_ch_id != String::default() {
         state.chat_input = state.input_text.drain(..).collect();
 
-        send_messages(conn_wallet_port, state, ctx).await?;
+        send_messages(wallet_endpoint, state, ctx).await?;
     } else {
         let _trash_bin: String = state.input_text.drain(..).collect();
 
@@ -153,7 +160,9 @@ pub(crate) async fn enter_in_chat(
     }
 
     {
-        let resp = get_messages(conn_node_port, selected_ch_id.clone()).await?;
+        let resp =
+            get_messages(saksaha_endpoint.clone(), selected_ch_id.clone())
+                .await?;
 
         if let Some(d) = resp.result {
             dispatch(Action::GetMessages(d.result)).await?;
@@ -161,7 +170,7 @@ pub(crate) async fn enter_in_chat(
     }
 
     {
-        let resp = get_balance(conn_wallet_port, acc_addr).await?;
+        let resp = get_balance(saksaha_endpoint, acc_addr).await?;
 
         if let Some(d) = resp.result {
             dispatch(Action::UpdateBalanceSuccess(d.balance.val)).await?;
@@ -172,16 +181,16 @@ pub(crate) async fn enter_in_chat(
 }
 
 async fn get_balance(
-    conn_wallet_port: u16,
+    wallet_endpoint: String,
     acc_addr: String,
 ) -> Result<JsonResponse<GetBalanceResponse>, EnvelopeError> {
-    let resp = get_balance_from_wallet(conn_wallet_port, &acc_addr).await?;
+    let resp = get_balance_from_wallet(wallet_endpoint, &acc_addr).await?;
 
     Ok(resp)
 }
 
 async fn request_ch_list(
-    conn_node_port: u16,
+    saksaha_endpoint: String,
     dst_pk: String,
 ) -> Result<JsonResponse<QueryCtrResponse>, EnvelopeError> {
     let get_ch_list_params = GetChListParams { dst_pk };
@@ -189,7 +198,7 @@ async fn request_ch_list(
     let args = serde_json::to_vec(&get_ch_list_params)?;
 
     let resp = saksaha::query_ctr(
-        conn_node_port,
+        saksaha_endpoint,
         ENVELOPE_CTR_ADDR.into(),
         GET_CH_LIST.to_string(),
         args,
@@ -200,7 +209,7 @@ async fn request_ch_list(
 }
 
 async fn get_messages(
-    conn_node_port: u16,
+    saksaha_endpoint: String,
     ch_id: String,
 ) -> Result<JsonResponse<QueryCtrResponse>, EnvelopeError> {
     let get_msg_params = GetMsgParams { ch_id };
@@ -208,7 +217,7 @@ async fn get_messages(
     let args = serde_json::to_vec(&get_msg_params)?;
 
     let resp = saksaha::query_ctr(
-        conn_node_port,
+        saksaha_endpoint,
         ENVELOPE_CTR_ADDR.into(),
         GET_MSG.to_string(),
         args,
@@ -219,7 +228,7 @@ async fn get_messages(
 }
 
 async fn send_messages(
-    conn_wallet_port: u16,
+    wallet_endpoint: String,
     mut state: RwLockWriteGuard<'_, AppState>,
     ctx: Arc<DispatcherContext>,
 ) -> Result<(), EnvelopeError> {
@@ -333,7 +342,7 @@ async fn send_messages(
     };
 
     wallet_sdk::send_tx_pour(
-        conn_wallet_port,
+        wallet_endpoint,
         user_1_acc_addr.to_string(),
         ctr_addr,
         ctr_request,
@@ -344,7 +353,7 @@ async fn send_messages(
 }
 
 async fn request_open_ch(
-    conn_wallet_port: u16,
+    wallet_endpoint: String,
     her_pk: &String,
     ctx: Arc<DispatcherContext>,
 ) -> Result<(), EnvelopeError> {
@@ -411,7 +420,7 @@ async fn request_open_ch(
         };
 
         wallet_sdk::send_tx_pour(
-            conn_wallet_port,
+            wallet_endpoint.clone(),
             user_1_acc_addr.clone(),
             ctr_addr,
             ctr_request,
@@ -473,7 +482,7 @@ async fn request_open_ch(
         };
 
         wallet_sdk::send_tx_pour(
-            conn_wallet_port,
+            wallet_endpoint,
             user_1_acc_addr,
             ctr_addr,
             ctr_request,
@@ -485,8 +494,7 @@ async fn request_open_ch(
 }
 
 pub(crate) async fn update_balance(
-    conn_wallet_port: u16,
-    //
+    wallet_endpoint: String,
     dispatch: Dispatch,
     _state: RwLockWriteGuard<'_, AppState>,
     ctx: Arc<DispatcherContext>,
@@ -495,7 +503,7 @@ pub(crate) async fn update_balance(
 
     log::info!("Trying to get balance in wallet account: {:?}", acc_addr);
 
-    let resp = get_balance(conn_wallet_port, acc_addr).await?;
+    let resp = get_balance(wallet_endpoint, acc_addr).await?;
 
     if let Some(d) = resp.result {
         dispatch(Action::UpdateBalanceSuccess(d.balance.val)).await?;

@@ -39,15 +39,18 @@ pub(crate) struct Envelope {
     pub(super) db: EnvelopeDB,
     pub(super) credential: Arc<Credential>,
     pub(super) partner_credential: Arc<Credential>,
-    pub(super) rpc: RPCConfig,
+    pub wallet_endpoint: String,
+    pub saksaha_endpoint: String,
 }
 
 impl Envelope {
     pub(crate) async fn init(
         // io_tx: mpsc::Sender<IoEvent>,
-        rpc: RPCConfig,
+        // rpc: RPCConfig,
         credential: Arc<Credential>,
         partner_credential: Arc<Credential>,
+        wallet_endpoint: String,
+        saksaha_endpoint: String,
     ) -> Result<Self, EnvelopeError> {
         let actions = {
             Actions(vec![
@@ -90,11 +93,6 @@ impl Envelope {
             dispatcher_clone.run().await;
         });
 
-        let rpc = RPCConfig {
-            wallet_port: rpc.wallet_port.clone(),
-            node_port: rpc.wallet_port.clone(),
-        };
-
         Ok(Self {
             // io_tx,
             dispatcher,
@@ -103,7 +101,8 @@ impl Envelope {
             db,
             credential,
             partner_credential,
-            rpc,
+            wallet_endpoint,
+            saksaha_endpoint,
         })
     }
 
@@ -372,11 +371,6 @@ impl Envelope {
 
         let ch_id = format!("{}_{}", my_pk, ch_id_num.to_string());
 
-        let conn_wallet_port = self
-            .rpc
-            .wallet_port
-            .ok_or("Failed to get wallet port from Envelope")?;
-
         {
             // =-=-=-=-=-= `open_ch` for initiator  =-=-=-=-=-=-=-=
 
@@ -426,7 +420,7 @@ impl Envelope {
             };
 
             wallet_sdk::send_tx_pour(
-                conn_wallet_port,
+                self.wallet_endpoint.clone(),
                 user_1_acc_addr,
                 ctr_addr,
                 ctr_request,
@@ -483,7 +477,7 @@ impl Envelope {
             };
 
             wallet_sdk::send_tx_pour(
-                conn_wallet_port,
+                self.wallet_endpoint.clone(),
                 self.partner_credential.acc_addr.clone(),
                 ctr_addr,
                 ctr_request,

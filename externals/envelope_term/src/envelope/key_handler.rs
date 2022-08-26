@@ -13,44 +13,25 @@ impl Envelope {
         key: Key,
         state: RwLockWriteGuard<'a, AppState>,
     ) -> AppReturn {
-        let conn_node_port = match self.rpc.node_port {
-            Some(p) => p,
-            None => 0,
-        };
-
-        let conn_wallet_port = match self.rpc.wallet_port {
-            Some(p) => p,
-            None => 0,
-        };
-
         info!("Run action [{:?}], actions: {:?}", key, self.get_actions());
 
         if let Some(ref action) = self.get_actions().find(key) {
-            // let mut state = self.state.write().await;
-            // state.input_text.clear();
-
             match action {
                 Action::Quit => AppReturn::Exit,
 
                 Action::SwitchEditMode => {
-                    // state.input_mode = InputMode::Editing;
                     self.dispatch(Action::SwitchEditMode).await;
 
                     AppReturn::Continue
                 }
 
                 Action::SwitchNormalMode => {
-                    // state.input_mode = InputMode::Editing;
                     self.dispatch(Action::SwitchNormalMode).await;
 
                     AppReturn::Continue
                 }
 
                 Action::ShowChList => {
-                    // let _ = self.get_ch_list().await;
-                    // let _ = self.get_ch_list_from_local().await;
-                    // state.set_view_ch_list();
-
                     let dispatcher = self.dispatcher.clone();
                     let dispatch: Dispatch = Box::new(move |action| {
                         let d = dispatcher.clone();
@@ -61,20 +42,17 @@ impl Envelope {
                     });
 
                     actions::show_ch_list(
-                        conn_node_port,
+                        self.saksaha_endpoint.clone(),
                         dispatch,
                         state,
                         self.dispatcher.get_context().clone(),
                     )
                     .await;
 
-                    // self.dispatch(Action::ShowChList).await;
-
                     AppReturn::Continue
                 }
 
                 Action::ShowOpenCh => {
-                    // state.set_view_open_ch();
                     self.dispatch(Action::ShowOpenCh).await;
 
                     AppReturn::Continue
@@ -82,19 +60,16 @@ impl Envelope {
 
                 Action::ShowChat => {
                     self.dispatch(Action::ShowChat).await;
-                    // state.set_view_chat();
 
                     AppReturn::Continue
                 }
 
                 Action::Down => {
-                    // state.next_ch();
                     self.dispatch(Action::Down).await;
 
                     AppReturn::Continue
                 }
                 Action::Up => {
-                    // state.previous_ch();
                     self.dispatch(Action::Up).await;
 
                     AppReturn::Continue
@@ -110,32 +85,13 @@ impl Envelope {
                         })
                     });
 
-                    actions::restore_chat(conn_node_port, dispatch, state)
-                        .await;
+                    actions::restore_chat(
+                        self.saksaha_endpoint.clone(),
+                        dispatch,
+                        state,
+                    )
+                    .await;
 
-                    // self.dispatch(Action::RestoreChat).await;
-
-                    // self.dispatch(Action::RestoreChatSuccess).await;
-
-                    // match state.view {
-                    //     View::Chat => {
-                    //         let ch_id = state.selected_ch_id.clone();
-
-                    //         if !ch_id.is_empty() {
-                    //             self.get_messages(ch_id.clone()).await;
-
-                    //             log::info!(
-                    //                 "Restore all the chats in ch_id: {:?}",
-                    //                 ch_id
-                    //             );
-                    //         }
-
-                    //         return AppReturn::Continue;
-                    //     }
-                    //     _ => {
-                    //         return AppReturn::Continue;
-                    //     }
-                    // }
                     AppReturn::Continue
                 }
 
@@ -149,32 +105,14 @@ impl Envelope {
                         })
                     });
 
-                    actions::select(conn_node_port, dispatch, state).await;
+                    actions::select(
+                        self.saksaha_endpoint.clone(),
+                        dispatch,
+                        state,
+                    )
+                    .await;
 
                     AppReturn::Continue
-
-                    // match state.view {
-                    //     View::ChList => {
-                    //         state.selected_ch_id = match state
-                    //             .ch_list_state
-                    //             .selected()
-                    //         {
-                    //             Some(i) => (state.ch_list[i]).channel.ch_id.clone(),
-                    //             None => String::default(),
-                    //         };
-
-                    //         log::info!("Ch_Id: {:?}", state.selected_ch_id);
-
-                    //         // self.get_messages(self.state.selected_ch_id.clone())
-                    //         //     .await;
-
-                    //         state.set_view_chat();
-                    //         return AppReturn::Continue;
-                    //     }
-                    //     _ => {
-                    //         return AppReturn::Continue;
-                    //     }
-                    // },
                 }
 
                 Action::UpdateBalance => {
@@ -189,7 +127,7 @@ impl Envelope {
                     });
 
                     actions::update_balance(
-                        conn_wallet_port,
+                        self.wallet_endpoint.clone(),
                         dispatch,
                         state,
                         self.dispatcher.get_context().clone(),
@@ -199,12 +137,6 @@ impl Envelope {
                     AppReturn::Continue
                 }
 
-                // Action::UpdateBalance => {
-                //     let my_pk = self.get_credential().acc_addr.clone();
-
-                //     state.set_balance(my_pk).await;
-                //     AppReturn::Continue
-                // }
                 _ => {
                     // Some actions are not mapped with key inputs
                     AppReturn::Continue
@@ -220,23 +152,10 @@ impl Envelope {
     pub async fn handle_edit_key<'a>(
         &self,
         key: Key,
-        //
         mut state: RwLockWriteGuard<'a, AppState>,
     ) -> AppReturn {
-        let conn_node_port = match self.rpc.node_port {
-            Some(p) => p,
-            None => 0,
-        };
-
-        let conn_wallet_port = match self.rpc.wallet_port {
-            Some(p) => p,
-            None => 0,
-        };
-
         match key {
             Key::Enter => {
-                // let mut state = self.state.write().await;
-
                 match state.view {
                     View::OpenCh => {
                         let dispatcher = self.dispatcher.clone();
@@ -249,7 +168,7 @@ impl Envelope {
                         });
 
                         actions::enter_in_open_ch(
-                            conn_wallet_port,
+                            self.wallet_endpoint.clone(),
                             dispatch,
                             state,
                             self.dispatcher.get_context().clone(),
@@ -284,8 +203,8 @@ impl Envelope {
                         });
 
                         actions::enter_in_chat(
-                            conn_node_port,
-                            conn_wallet_port,
+                            self.saksaha_endpoint.clone(),
+                            self.wallet_endpoint.clone(),
                             dispatch,
                             state,
                             self.dispatcher.get_context().clone(),

@@ -254,21 +254,13 @@ pub async fn send_tx_mint(
 }
 
 pub async fn query_ctr(
-    rpc_port: u16,
+    saksaha_endpoint: String,
     ctr_addr: String,
     req_type: String,
     args: RequestArgs,
 ) -> Result<JsonResponse<QueryCtrResponse>, SaksahaSDKError> {
-    let endpoint = "http://localhost:34418/rpc/v0";
-    // let endpoint = format!(
-    //     "{}{}{}",
-    //     "http://localhost:",
-    //     rpc_port.to_string(),
-    //     "/rpc/v0"
-    // );
-
     let client = Client::new();
-    let uri: Uri = { endpoint.parse().expect("URI should be made") };
+    let uri: Uri = { saksaha_endpoint.parse().expect("URI should be made") };
 
     let body = {
         let req = CtrRequest {

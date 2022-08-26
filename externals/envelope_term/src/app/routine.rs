@@ -39,12 +39,19 @@ impl Routine {
             Arc::new(c)
         };
 
+        let wallet_endpoint =
+            config.wallet_endpoint.ok_or("expect wallet endpoint")?;
+        let saksaha_endpoint = config
+            .saksaha_endpoint
+            .ok_or("expect saksaha network endpoint")?;
+
         let envelope = {
             let evl = Envelope::init(
                 // sync_io_tx.clone(),
-                config.rpc,
                 credential.clone(),
                 partner_credential.clone(),
+                wallet_endpoint,
+                saksaha_endpoint,
             )
             .await
             .expect("App should be initialized");

@@ -123,7 +123,7 @@ impl AppState {
 
     pub async fn set_balance(
         &mut self,
-        conn_wallet_port: u16,
+        wallet_endpoint: String,
         user_pk: String,
     ) {
         // TODO get user_id via params
@@ -133,11 +133,13 @@ impl AppState {
 
         {
             // update the coin_manager in wallet
-            let _ = wallet_sdk::update_wallet(conn_wallet_port, &user_pk).await;
+            let _ =
+                wallet_sdk::update_wallet(wallet_endpoint.clone(), &user_pk)
+                    .await;
         }
 
         let balance = match wallet_sdk::get_balance_from_wallet(
-            conn_wallet_port,
+            wallet_endpoint,
             &user_pk,
         )
         .await

@@ -12,10 +12,8 @@ pub fn dev_local_1() -> Result<Config, EnvelopeError> {
             "7297b903877a957748b74068d63d6d5661481975240\
                 99fc1df5cd9e8814c66c7",
         )),
-        rpc: RPCConfig {
-            wallet_port: Some(36612),
-            node_port: Some(34418),
-        },
+        wallet_endpoint: Some(String::from("http://localhost:36612/rpc/v0")),
+        saksaha_endpoint: Some(String::from("http://localhost:34418/rpc/v0")),
     };
 
     Ok(c)
@@ -32,10 +30,8 @@ pub fn dev_local_2() -> Result<Config, EnvelopeError> {
             "224d0898389759f29ad5c9a6472b26fff86b6293889\
                 88eec457a88ce50e907a0",
         )),
-        rpc: RPCConfig {
-            wallet_port: Some(36613),
-            node_port: Some(34419),
-        },
+        wallet_endpoint: Some(String::from("http://localhost:36613/rpc/v0")),
+        saksaha_endpoint: Some(String::from("http://localhost:34418/rpc/v0")),
     };
 
     Ok(c)
