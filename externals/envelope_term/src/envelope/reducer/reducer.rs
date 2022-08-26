@@ -135,6 +135,8 @@ fn get_ch_list<'a>(
 
     let mut channel_states = vec![];
     for ch in channels.into_iter() {
+        log::info!("channel info\n{:?}", ch);
+
         let mut new_ch = ChannelState::new(ch, String::default());
 
         // First, try to decrypt the `ch_id` with `my_sk`
@@ -159,24 +161,10 @@ fn get_ch_list<'a>(
             }
         };
 
-        // Prefix of the encrypted `ch_id` is `MY_PK` rn
-        let my_pk = &ctx.credential.public_key_str;
-
-        if !ch_id_decrypted.is_empty()
-            && &ch_id_decrypted[0..my_pk.len()] == my_pk.as_str()
-        {
-            let ch_id: String = match ch_id_decrypted.split('_').nth(1) {
-                Some(ci) => ci.to_string(),
-                None => {
-                    return Err(format!(
-                        "\
-                            Error occured while \
-                            parsing encrypted `ch_id`\
-                        "
-                    )
-                    .into());
-                }
-            };
+        // need a way to check the initiator of the channer
+        // rn it is checked by utf8 decoding
+        if !ch_id_decrypted.is_empty() {
+            log::info!("[+] ch_id: {:?} was made by me", ch_id_decrypted);
 
             let sig_decrypted: String = {
                 let sig: Vec<u8> =
@@ -185,7 +173,7 @@ fn get_ch_list<'a>(
                 String::from_utf8(sak_crypto::aes_decrypt(&my_sk, &sig)?)?
             };
 
-            new_ch.channel.ch_id = ch_id;
+            new_ch.channel.ch_id = ch_id_decrypted;
 
             new_ch.channel.sig = sig_decrypted;
 
@@ -202,18 +190,15 @@ fn get_ch_list<'a>(
                     SecretKey::from_bytes(decode_hex(&s)?)?
                 };
 
-                let e = &new_ch.channel.eph_key;
+                let eph_pub_key = {
+                    let eph_key: Vec<u8> =
+                        serde_json::from_str(&new_ch.channel.eph_key.as_str())?;
 
-                let e: Vec<u8> = serde_json::from_str(e.as_str())?;
-
-                let e = PublicKey::from_sec1_bytes(&e)?;
-
-                let eph_pub_key = e;
+                    PublicKey::from_sec1_bytes(&eph_key)?
+                };
 
                 sak_crypto::derive_aes_key(my_sk, eph_pub_key)?
             };
-
-            log::info!("AES_KEY: {:?}", aes_key);
 
             let ch_id_decrypted = {
                 let ch_id: Vec<u8> = serde_json::from_str(
@@ -222,19 +207,7 @@ fn get_ch_list<'a>(
 
                 String::from_utf8(sak_crypto::aes_decrypt(&aes_key, &ch_id)?)?
             };
-
-            let ch_id: String = match ch_id_decrypted.split('_').nth(1) {
-                Some(ci) => ci.to_string(),
-                None => {
-                    return Err(format!(
-                        "\
-                                        Error occured while \
-                                        parsing encrypted `ch_id`\
-                                    "
-                    )
-                    .into());
-                }
-            };
+            log::info!("[+] ch_id_decrypted: {:?}", ch_id_decrypted);
 
             let sig_decrypted: String = {
                 let sig: Vec<u8> =
@@ -243,9 +216,14 @@ fn get_ch_list<'a>(
                 String::from_utf8(sak_crypto::aes_decrypt(&aes_key, &sig)?)?
             };
 
-            new_ch.channel.ch_id = ch_id;
+            new_ch.channel.ch_id = ch_id_decrypted;
 
             new_ch.channel.sig = sig_decrypted;
+
+            log::info!(
+                "[+] her_pk: {:?}, the user made this channel",
+                new_ch.her_pk
+            );
 
             // let mut state = self.state.write().await;
             // state.set_ch_list(new_ch)?;
@@ -258,6 +236,8 @@ fn get_ch_list<'a>(
             state.ch_list.push(ch_state);
         }
     }
+
+    log::info!("ch_state: {:?}", state.ch_list);
 
     Ok(())
 }

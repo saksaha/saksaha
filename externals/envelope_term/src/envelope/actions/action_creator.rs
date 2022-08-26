@@ -229,7 +229,7 @@ async fn get_messages(
 
 async fn send_messages(
     wallet_endpoint: String,
-    mut state: RwLockWriteGuard<'_, AppState>,
+    state: RwLockWriteGuard<'_, AppState>,
     ctx: Arc<DispatcherContext>,
 ) -> Result<(), EnvelopeError> {
     let msg = &state.chat_input;
@@ -242,7 +242,6 @@ async fn send_messages(
 
     let user_1_sk: U8Arr32 = U8Array::from_hex_string(user_1_sk.to_string())?;
 
-    // let mut state = self.get_state().write().await;
     let selected_ch_id = state.selected_ch_id.clone();
 
     let eph_key: String = {
@@ -357,7 +356,7 @@ async fn request_open_ch(
     her_pk: &String,
     ctx: Arc<DispatcherContext>,
 ) -> Result<(), EnvelopeError> {
-    log::info!("Trying to make a channel w/ partner: {:?}", her_pk);
+    log::info!("[request_open_ch] her_pk (from input)\n {:?}", her_pk);
 
     let (eph_sk, eph_pk) = SakKey::generate();
 
@@ -368,9 +367,7 @@ async fn request_open_ch(
     let my_sig = ctx.credential.sign();
     let user_1_acc_addr = ctx.credential.acc_addr.clone();
 
-    let ch_id_num = sak_crypto::rand();
-
-    let ch_id = format!("{}_{}", my_pk, ch_id_num.to_string());
+    let ch_id = sak_crypto::rand().to_string();
 
     {
         // =-=-=-=-=-= `open_ch` for initiator  =-=-=-=-=-=-=-=
@@ -379,7 +376,7 @@ async fn request_open_ch(
         let open_ch = {
             let ch_id_enc = {
                 let ch_id_enc =
-                    sak_crypto::aes_encrypt(&my_sk, &ch_id.as_bytes())?;
+                    sak_crypto::aes_encrypt(&my_sk, &ch_id.clone().as_bytes())?;
 
                 serde_json::to_string(&ch_id_enc)?
             };
@@ -431,11 +428,6 @@ async fn request_open_ch(
     {
         // =-=-=-=-=-=  `open_ch` for receiver =-=-=-=-=-=-=-=
 
-        // let her_pk = "042c8d005bd935597117181d8ceceaef6d1162de78c32856\
-        //         89d0c36c6170634c124f7b9b911553a1f483ec565c199ea29ff1\
-        //         cd641f10c9a5f8c7c4d4a026db6f7b"
-        //     .to_string();
-
         let aes_key = {
             let her_pk: Vec<u8> = sak_crypto::decode_hex(&her_pk)?;
 
@@ -446,8 +438,10 @@ async fn request_open_ch(
 
         let open_ch = {
             let ch_id_enc = {
-                let ch_id_enc =
-                    sak_crypto::aes_encrypt(&aes_key, &ch_id.as_bytes())?;
+                let ch_id_enc = sak_crypto::aes_encrypt(
+                    &aes_key,
+                    &ch_id.clone().as_bytes(),
+                )?;
 
                 serde_json::to_string(&ch_id_enc)?
             };
