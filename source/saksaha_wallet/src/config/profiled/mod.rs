@@ -1,6 +1,6 @@
 use sak_types::CoinRecord;
 
-use crate::{Config, RPCConfig, WalletError};
+use crate::{Config, WalletError};
 
 pub fn dev_local_1() -> Result<Config, WalletError> {
     let c = Config {
@@ -31,10 +31,8 @@ pub fn dev_local_1() -> Result<Config, WalletError> {
                 ),
             )?,
         ]),
-        rpc: RPCConfig {
-            rpc_port: Some(36612),  // receive
-            node_port: Some(34418), // transmit
-        },
+        rpc_port: Some(36612),
+        saksaha_endpoint: Some(String::from("http://localhost:34418/rpc/v0")),
     };
 
     Ok(c)
@@ -69,10 +67,8 @@ pub fn dev_local_2() -> Result<Config, WalletError> {
                 ),
             )?,
         ]),
-        rpc: RPCConfig {
-            rpc_port: Some(36613),  // receive
-            node_port: Some(34418), // transmit (temp)
-        },
+        rpc_port: Some(36613),
+        saksaha_endpoint: Some(String::from("http://localhost:34418/rpc/v0")),
     };
 
     Ok(c)

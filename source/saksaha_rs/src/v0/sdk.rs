@@ -114,8 +114,7 @@ impl SendMintTxRequest {
 }
 
 pub async fn send_tx_pour(
-    rpc_port: u16,
-
+    saksaha_endpoint: String,
     sn_1: U8Arr32,
     cm_1: U8Arr32,
     cm_2: U8Arr32,
@@ -124,16 +123,8 @@ pub async fn send_tx_pour(
     ctr_addr: String,
     ctr_request: CtrRequest,
 ) -> Result<JsonResponse<String>, SaksahaSDKError> {
-    // let endpoint_test = "http://localhost:34418/rpc/v0";
-    let endpoint = format!(
-        "{}{}{}",
-        "http://localhost:",
-        rpc_port.to_string(),
-        "/rpc/v0"
-    );
-
     let client = Client::new();
-    let uri: Uri = { endpoint.parse().expect("URI should be made") };
+    let uri: Uri = { saksaha_endpoint.parse().expect("URI should be made") };
 
     let body = {
         let ctr_request = serde_json::to_vec(&ctr_request)?;
@@ -312,20 +303,11 @@ pub struct GetCmIdxResponse {
 }
 
 pub async fn get_cm_idx(
-    rpc_port: u16,
-
+    saksaha_endpoint: String,
     cm: U8Arr32,
 ) -> Result<JsonResponse<GetCmIdxResponse>, SaksahaSDKError> {
-    // let endpoint_test = "http://localhost:34418/rpc/v0";
-    let endpoint = format!(
-        "{}{}{}",
-        "http://localhost:",
-        rpc_port.to_string(),
-        "/rpc/v0"
-    );
-
     let client = Client::new();
-    let uri: Uri = { endpoint.parse().expect("URI should be made") };
+    let uri: Uri = { saksaha_endpoint.parse().expect("URI should be made") };
 
     let body = {
         let req = GetCmIdxRequest { cm };
@@ -386,20 +368,11 @@ pub struct PourTxCandidate {
 }
 
 pub async fn get_tx(
-    rpc_port: u16,
-
+    saksaha_endpoint: String,
     hash: String,
 ) -> Result<JsonResponse<GetTxResponse>, SaksahaSDKError> {
-    // let endpoint_test = "http://localhost:34418/rpc/v0";
-    let endpoint = format!(
-        "{}{}{}",
-        "http://localhost:",
-        rpc_port.to_string(),
-        "/rpc/v0"
-    );
-
     let client = Client::new();
-    let uri: Uri = { endpoint.parse().expect("URI should be made") };
+    let uri: Uri = { saksaha_endpoint.parse().expect("URI should be made") };
 
     let body = {
         let req = GetTxRequest { hash };
@@ -500,20 +473,11 @@ pub struct GetAuthPathResponse {
 }
 
 pub async fn get_auth_path(
-    rpc_port: u16,
-
+    saksaha_endpoint: String,
     idx: u128,
 ) -> Result<JsonResponse<GetAuthPathResponse>, SaksahaSDKError> {
-    // let endpoint_test = "http://localhost:34418/rpc/v0";
-    let endpoint = format!(
-        "{}{}{}",
-        "http://localhost:",
-        rpc_port.to_string(),
-        "/rpc/v0"
-    );
-
     let client = Client::new();
-    let uri: Uri = { endpoint.parse().expect("URI should be made") };
+    let uri: Uri = { saksaha_endpoint.parse().expect("URI should be made") };
 
     let body = {
         let send_req = GetAuthPathRequest { cm_idx: idx };

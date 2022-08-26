@@ -85,7 +85,7 @@ impl WalletDB {
 
     pub async fn update_coin_status_unconfirmed_to_unused(
         &self,
-        conn_node_port: u16,
+        saksaha_endpoint: String,
         coins: &Vec<CoinRecord>,
     ) -> Result<Vec<Sn>, WalletError> {
         let mut old_coin_sn_vec = Vec::<Sn>::new();
@@ -94,12 +94,13 @@ impl WalletDB {
             match coin.coin_status.clone() {
                 CoinStatus::Unconfirmed => {
                     let resp = match coin.tx_hash.clone() {
-                        Some(tx_hash) => {
-                            saksaha::get_tx(conn_node_port, tx_hash.clone())
-                                .await?
-                                .result
-                                .ok_or("json_response error")?
-                        }
+                        Some(tx_hash) => saksaha::get_tx(
+                            saksaha_endpoint.clone(),
+                            tx_hash.clone(),
+                        )
+                        .await?
+                        .result
+                        .ok_or("json_response error")?,
 
                         None => {
                             return Err(format!(

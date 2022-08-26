@@ -13,14 +13,7 @@ impl Routine {
     ) -> Result<(), WalletError> {
         info!("Wallet main routine starts, app_args: {:?}", app_args);
 
-        let rpc_port = match app_args.config.rpc.rpc_port {
-            Some(p) => p,
-            None => {
-                log::warn!("rpc_port is not provided, defaults to {}", 36612);
-
-                36612
-            }
-        };
+        let rpc_port = app_args.config.rpc_port;
 
         let wallet = {
             let credential_manager =

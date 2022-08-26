@@ -43,7 +43,7 @@ pub(crate) async fn mock_test_context() -> TestContext {
         Arc::new(w)
     };
 
-    let rpc = RPC::init(36612, wallet.clone()).await.unwrap();
+    let rpc = RPC::init(Some(36612), wallet.clone()).await.unwrap();
 
     TestContext {
         wallet,

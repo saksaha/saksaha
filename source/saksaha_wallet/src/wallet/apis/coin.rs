@@ -88,13 +88,6 @@ impl Wallet {
         ctr_addr: String,
         ctr_request: CtrRequest,
     ) -> Result<String, WalletError> {
-        let conn_node_port = match self.connected_node_port {
-            Some(p) => p,
-            None => {
-                return Err(format!("Failed to get connected node port").into());
-            }
-        };
-
         self.check_balance(&acc_addr).await?;
 
         let mut coin_manager_lock = self.get_coin_manager().write().await;
@@ -117,8 +110,11 @@ impl Wallet {
         };
 
         let cm_idx = {
-            let resp =
-                saksaha::get_cm_idx(conn_node_port, coin.cm.to_bytes()).await?;
+            let resp = saksaha::get_cm_idx(
+                self.saksaha_endpoint.clone(),
+                coin.cm.to_bytes(),
+            )
+            .await?;
 
             resp.result.ok_or("")?.cm_idx.ok_or("")?
         };
@@ -127,8 +123,11 @@ impl Wallet {
 
         let old_coin = {
             let auth_path = {
-                let response =
-                    saksaha::get_auth_path(conn_node_port, cm_idx).await?;
+                let response = saksaha::get_auth_path(
+                    self.saksaha_endpoint.clone(),
+                    cm_idx,
+                )
+                .await?;
 
                 let result =
                     response.result.ok_or(format!("cannot get auth path"))?;
@@ -180,7 +179,7 @@ impl Wallet {
         println!("[!] pi serialized, len: {}", pi_ser.len());
 
         let json_response = saksaha::send_tx_pour(
-            conn_node_port,
+            self.saksaha_endpoint.clone(),
             sn_1,
             new_coin_1.cm.to_bytes(),
             new_coin_2.cm.to_bytes(),
@@ -365,20 +364,11 @@ impl Wallet {
 
         let wallet_db = self.get_db();
         {
-            let conn_node_port = match self.connected_node_port {
-                Some(p) => p,
-                None => {
-                    return Err(
-                        format!("Failed to get connected node port").into()
-                    );
-                }
-            };
-
             let coins = coin_manager_lock.coins.clone();
 
             let old_coin_sn_vec = wallet_db
                 .update_coin_status_unconfirmed_to_unused(
-                    conn_node_port,
+                    self.saksaha_endpoint.clone(),
                     &coins,
                 )
                 .await?;
