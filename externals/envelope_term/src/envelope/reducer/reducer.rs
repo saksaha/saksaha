@@ -135,8 +135,6 @@ fn get_ch_list<'a>(
 
     let mut channel_states = vec![];
     for ch in channels.into_iter() {
-        log::info!("channel info\n{:?}", ch);
-
         let mut new_ch = ChannelState::new(ch);
 
         // First, try to decrypt the `ch_id` with `my_sk`
@@ -179,8 +177,6 @@ fn get_ch_list<'a>(
                 }
             };
 
-            log::info!("[+] ch_id: {:?} was made by me", ch_id_decrypted);
-
             new_ch.channel.ch_id = ch_id_decrypted;
 
             new_ch.channel.initiator_pk = initiator_pk_decrypted;
@@ -213,7 +209,6 @@ fn get_ch_list<'a>(
 
                 String::from_utf8(sak_crypto::aes_decrypt(&aes_key, &ch_id)?)?
             };
-            log::info!("[+] ch_id_decrypted: {:?}", ch_id_decrypted);
 
             let sig_decrypted: String = {
                 let sig: Vec<u8> = serde_json::from_str(
@@ -244,8 +239,6 @@ fn get_ch_list<'a>(
         }
     }
 
-    log::info!("ch_state: {:?}", state.ch_list);
-
     Ok(())
 }
 
@@ -254,10 +247,6 @@ fn get_messages<'a>(
     data: Vec<u8>,
     ctx: &DispatcherContext,
 ) -> Result<(), EnvelopeError> {
-    // let mut app = self.app.lock().await;
-
-    // self.envelope.set_chats(data).await?;
-
     state.chats = Vec::<ChatMessage>::new();
 
     let my_pk = &ctx.credential.public_key_str;
@@ -275,22 +264,28 @@ fn get_messages<'a>(
             }
         };
 
-    let eph_key: String = {
-        let mut res: String = String::default();
-
-        // let mut state = self.get_state().write().await;
+    let selected_ch = {
+        let mut res: Channel = Channel::default();
         for ch_state in state.ch_list.iter() {
             if ch_state.channel.ch_id == state.selected_ch_id {
-                res = ch_state.channel.eph_key.clone();
+                res = ch_state.channel.clone();
+
+                break;
             }
         }
 
         res
     };
 
+    let eph_key = selected_ch.eph_key;
+
+    let initiator_pk = selected_ch.initiator_pk;
+
+    let participants = selected_ch.participants;
+
     let aes_key = {
-        if &eph_key[0..5] == "init_" {
-            let eph_sk = &eph_key[5..];
+        if initiator_pk == my_pk.clone() {
+            let eph_sk = eph_key.as_str();
 
             let eph_sk_encrypted: Vec<u8> = serde_json::from_str(eph_sk)?;
 
@@ -309,27 +304,30 @@ fn get_messages<'a>(
                 // let her_pk =
                 //     self.get_pk(&self.partner_credential.acc_addr).await?;
 
-                let her_pk = String::from(
-                    "042c8d005bd935597117181d8ceceaef6d1162de78c32856\
-                    89d0c36c6170634c124f7b9b911553a1f483ec565c199ea29ff1\
-                    cd641f10c9a5f8c7c4d4a026db6f7b",
-                );
+                let her_pk: Vec<u8> = {
+                    let her_pk = participants
+                        .get(1)
+                        .ok_or("expect her_pk from channel.participants")?
+                        .to_owned();
 
-                let her_pk_vec: Vec<u8> = sak_crypto::decode_hex(&her_pk)?;
+                    sak_crypto::decode_hex(&her_pk)?
+                };
 
-                PublicKey::from_sec1_bytes(&her_pk_vec)?
+                PublicKey::from_sec1_bytes(&her_pk)?
             };
 
             sak_crypto::derive_aes_key(sk, pk)?
         } else {
             let eph_pk = eph_key;
 
-            let sk = SecretKey::from_bytes(&my_sk.as_bytes())?;
+            let my_sk = decode_hex(&my_sk)?;
+
+            let sk = SecretKey::from_bytes(my_sk)?;
 
             let pk = {
-                let eph_pk_vec: Vec<u8> = sak_crypto::decode_hex(&eph_pk)?;
+                let eph_pk: Vec<u8> = serde_json::from_str(&eph_pk)?;
 
-                PublicKey::from_sec1_bytes(&eph_pk_vec)?
+                PublicKey::from_sec1_bytes(&eph_pk)?
             };
 
             sak_crypto::derive_aes_key(sk, pk)?
@@ -364,8 +362,6 @@ fn get_messages<'a>(
     // state.set_chats(chat_msg, my_pk.to_string());
 
     state.chats = chat_msg;
-
-    log::info!("set_chats done");
 
     Ok(())
 }

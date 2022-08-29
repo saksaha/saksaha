@@ -14,7 +14,7 @@ use envelope_contract::{
 };
 use log::info;
 use sak_contract_std::{CtrCallType, CtrRequest};
-use sak_crypto::SakKey;
+use sak_crypto::{decode_hex, SakKey};
 use sak_crypto::{derive_aes_key, PublicKey, SecretKey, ToEncodedPoint};
 use sak_rpc_interface::JsonResponse;
 use saksaha::QueryCtrResponse;
@@ -59,7 +59,7 @@ pub(crate) async fn select(
             None => String::default(),
         };
 
-        log::info!("Ch_Id: {:?}", state.selected_ch_id);
+        log::info!("ch_id: {:?}", state.selected_ch_id);
 
         let resp = get_messages(saksaha_endpoint, state.selected_ch_id.clone())
             .await?;
@@ -92,26 +92,26 @@ pub(crate) async fn enter_in_open_ch(
     .await?;
 
     // get ch list
-    {
-        let dst_pk = ctx.credential.public_key_str.clone();
+    // {
+    //     let dst_pk = ctx.credential.public_key_str.clone();
 
-        let resp = request_ch_list(wallet_endpoint.clone(), dst_pk).await?;
+    //     let resp = request_ch_list(wallet_endpoint.clone(), dst_pk).await?;
 
-        if let Some(d) = resp.result {
-            dispatch(Action::GetChList(d.result)).await?;
-        }
-    }
+    //     if let Some(d) = resp.result {
+    //         dispatch(Action::GetChList(d.result)).await?;
+    //     }
+    // }
 
     // get balance
-    {
-        let resp =
-            get_balance(wallet_endpoint, ctx.credential.acc_addr.clone())
-                .await?;
+    // {
+    //     let resp =
+    //         get_balance(wallet_endpoint, ctx.credential.acc_addr.clone())
+    //             .await?;
 
-        if let Some(d) = resp.result {
-            dispatch(Action::UpdateBalanceSuccess(d.balance.val)).await?;
-        }
-    }
+    //     if let Some(d) = resp.result {
+    //         dispatch(Action::UpdateBalanceSuccess(d.balance.val)).await?;
+    //     }
+    // }
 
     Ok(())
 }
@@ -169,13 +169,13 @@ pub(crate) async fn enter_in_chat(
         }
     }
 
-    {
-        let resp = get_balance(saksaha_endpoint, acc_addr).await?;
+    // {
+    //     let resp = get_balance(saksaha_endpoint, acc_addr).await?;
 
-        if let Some(d) = resp.result {
-            dispatch(Action::UpdateBalanceSuccess(d.balance.val)).await?;
-        }
-    }
+    //     if let Some(d) = resp.result {
+    //         dispatch(Action::UpdateBalanceSuccess(d.balance.val)).await?;
+    //     }
+    // }
 
     Ok(())
 }
@@ -236,31 +236,36 @@ async fn send_messages(
 
     let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
 
-    let user_1_pk = ctx.credential.public_key_str.to_string();
-    let user_1_sk = &ctx.credential.secret_key_str;
-    let user_1_acc_addr = &ctx.credential.acc_addr;
+    let my_pk = ctx.credential.public_key_str.to_string();
+    let my_sk = &ctx.credential.secret_key_str;
+    let my_acc_addr = &ctx.credential.acc_addr;
 
-    let user_1_sk: U8Arr32 = U8Array::from_hex_string(user_1_sk.to_string())?;
+    let user_1_sk: U8Arr32 = U8Array::from_hex_string(my_sk.to_string())?;
 
     let selected_ch_id = state.selected_ch_id.clone();
 
-    let eph_key: String = {
-        let mut res: String = String::default();
-
+    let selected_ch = {
+        let mut res: Channel = Channel::default();
         for ch_state in state.ch_list.iter() {
             if ch_state.channel.ch_id == selected_ch_id {
-                res = ch_state.channel.eph_key.clone();
+                res = ch_state.channel.clone();
+
+                break;
             }
         }
 
         res
     };
 
+    let eph_key = selected_ch.eph_key;
+    let initiator_pk = selected_ch.initiator_pk;
+    let participants = selected_ch.participants;
+
     let aes_key = {
         // In this channel, I am Initiator: `eph_key` == `eph_sk`
         // the `aes_key` will be `kdf(eph_sk, my_pk)`
-        if &eph_key[0..5] == "init_" {
-            let eph_sk = &eph_key[5..];
+        if initiator_pk == my_pk {
+            let eph_sk = eph_key.as_str();
 
             let eph_sk_encrypted: Vec<u8> = serde_json::from_str(eph_sk)?;
 
@@ -273,17 +278,17 @@ async fn send_messages(
 
             let pk = {
                 // for dev, her_pk == `user_2_pk`
-                // let her_pk =
-                //     self.get_pk(&self.partner_credential.acc_addr).await?;
-                let her_pk = String::from(
-                    "042c8d005bd935597117181d8ceceaef6d1162de78c32856\
-                89d0c36c6170634c124f7b9b911553a1f483ec565c199ea29ff1\
-                cd641f10c9a5f8c7c4d4a026db6f7b",
-                );
+                // for dev, 1:1 chat
+                let her_pk: Vec<u8> = {
+                    let her_pk = participants
+                        .get(1)
+                        .ok_or("expect her_pk from channel.participants")?
+                        .to_owned();
 
-                let her_pk_vec: Vec<u8> = sak_crypto::decode_hex(&her_pk)?;
+                    sak_crypto::decode_hex(&her_pk)?
+                };
 
-                PublicKey::from_sec1_bytes(&her_pk_vec)?
+                PublicKey::from_sec1_bytes(&her_pk)?
             };
 
             derive_aes_key(sk, pk)?
@@ -296,13 +301,15 @@ async fn send_messages(
             let sk = {
                 let my_sk = &ctx.credential.secret_key_str;
 
-                SecretKey::from_bytes(&my_sk.as_bytes())?
+                let my_sk = decode_hex(my_sk)?;
+
+                SecretKey::from_bytes(my_sk)?
             };
 
             let pk = {
-                let eph_pk_vec: Vec<u8> = sak_crypto::decode_hex(&eph_pk)?;
+                let eph_pk: Vec<u8> = serde_json::from_str(&eph_pk)?;
 
-                PublicKey::from_sec1_bytes(&eph_pk_vec)?
+                PublicKey::from_sec1_bytes(&eph_pk)?
             };
 
             derive_aes_key(sk, pk)?
@@ -311,7 +318,7 @@ async fn send_messages(
 
     let chat_msg = ChatMessage {
         date: Local::now().format("%H:%M:%S ").to_string(),
-        user: user_1_pk,
+        user: my_pk,
         msg: msg.clone(),
     };
 
@@ -342,7 +349,7 @@ async fn send_messages(
 
     wallet_sdk::send_tx_pour(
         wallet_endpoint,
-        user_1_acc_addr.to_string(),
+        my_acc_addr.to_string(),
         ctr_addr,
         ctr_request,
     )
@@ -356,6 +363,10 @@ async fn request_open_ch(
     her_pk: &String,
     ctx: Arc<DispatcherContext>,
 ) -> Result<(), EnvelopeError> {
+    if her_pk.len() != 130 {
+        log::error!("Invalid address has been detected");
+        return Err(format!("Invalid address").into());
+    }
     log::info!("[request_open_ch] her_pk (from input)\n {:?}", her_pk);
 
     let (eph_sk, eph_pk) = SakKey::generate();
@@ -386,7 +397,7 @@ async fn request_open_ch(
                     sak_crypto::aes_encrypt(&my_sk, &eph_sk.to_bytes())?;
 
                 // for dev, prefix is `init_`
-                format!("init_{}", serde_json::to_string(&eph_sk_enc)?)
+                format!("{}", serde_json::to_string(&eph_sk_enc)?)
             };
 
             let initiator_pk_enc = {
@@ -396,7 +407,9 @@ async fn request_open_ch(
                 serde_json::to_string(&initiator_pk_enc)?
             };
 
-            Channel::new(ch_id_enc, eph_sk_enc, initiator_pk_enc)?
+            let participants: Vec<String> = vec![my_pk.clone(), her_pk.clone()];
+
+            Channel::new(ch_id_enc, eph_sk_enc, initiator_pk_enc, participants)?
         };
 
         let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
@@ -455,7 +468,9 @@ async fn request_open_ch(
                 serde_json::to_string(&initiator_pk_enc)?
             };
 
-            Channel::new(ch_id_enc, eph_pk, initiator_pk_enc)?
+            let participants: Vec<String> = vec![my_pk.clone(), her_pk.clone()];
+
+            Channel::new(ch_id_enc, eph_pk, initiator_pk_enc, participants)?
         };
 
         let ctr_addr = ENVELOPE_CTR_ADDR.to_string();

@@ -26,6 +26,7 @@ pub struct Channel {
     pub eph_key: String,
     // pub sig: String,
     pub initiator_pk: String,
+    pub participants: Vec<String>,
 }
 
 impl Channel {
@@ -33,11 +34,13 @@ impl Channel {
         ch_id: String,
         eph_key: String,
         initiator_pk: String,
+        participants: Vec<String>,
     ) -> Result<Channel, ContractError> {
         let open_ch = Channel {
             ch_id,
             eph_key,
             initiator_pk,
+            participants,
         };
 
         Ok(open_ch)
@@ -48,6 +51,7 @@ impl Channel {
             ch_id: String::default(),
             eph_key: String::default(),
             initiator_pk: String::default(),
+            participants: Vec::<String>::default(),
         }
     }
 }
