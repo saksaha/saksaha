@@ -20,11 +20,6 @@ pub(crate) const HEADER_LEN: usize = 5;
 pub(crate) const HEADER_MAC_LEN: usize = 15;
 pub(crate) const HEADER_TOTAL_LEN: usize = HEADER_LEN + HEADER_MAC_LEN;
 
-pub struct Header {
-    pub msg_len: u16,
-    pub not_used: [u8; 3],
-}
-
 pub struct UpgradedP2PCodec {
     pub(crate) out_cipher: ChaCha20,
     pub(crate) in_cipher: ChaCha20,
@@ -34,8 +29,7 @@ pub struct UpgradedP2PCodec {
 }
 
 impl UpgradedP2PCodec {
-    // fn write_header_and_header_mac(
-    //     &mut self,
+    // fn write_header_and_header_mac( &mut self,
     //     dst: &mut BytesMut,
     //     msg_part_len: usize,
     // ) -> Result<(), TrptError> {

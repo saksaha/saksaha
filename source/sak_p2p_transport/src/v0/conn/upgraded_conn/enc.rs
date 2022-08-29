@@ -2,7 +2,7 @@ use crate::{
     dec, enc, Msg, TrptError, UpgradedP2PCodec, HEADER_LEN, HEADER_MAC_LEN,
     HEADER_TOTAL_LEN, MSG_LEN,
 };
-use bytes::{Buf, BytesMut};
+use bytes::{Buf, BufMut, BytesMut};
 use chacha20::cipher::StreamCipher;
 use chacha20::ChaCha20;
 use sak_crypto::sha3::digest::core_api::CoreWrapper;
@@ -41,8 +41,8 @@ impl Encoder<Msg> for UpgradedP2PCodec {
         )?;
 
         println!(
-            "\nencode(): before enc, conn_id: {}, msg({}): {}, dst: {:?}, \
-                msg_part: {:?}",
+            "\nencode(): before enc (msg_part), conn_id: {}, msg({}): {}, \
+                dst: {:?}, msg_part: {:?}",
             self.conn_id,
             dst.len(),
             msg,
@@ -55,7 +55,7 @@ impl Encoder<Msg> for UpgradedP2PCodec {
         dst.unsplit(msg_part);
 
         println!(
-            "\nencode(): conn_id: {}, _after enc ({}): {:?}",
+            "\nencode(): dst, conn_id: {}, _after enc ({}): {:?}",
             self.conn_id,
             dst.len(),
             dst.to_vec()
@@ -81,12 +81,9 @@ fn write_header_and_header_mac(
         .into());
     }
 
-    let len_bytes = convert_msg_len_into_bytes(msg_len);
+    write_msg_len(dst, msg_len);
 
-    // Write message total length
-    dst.extend_from_slice(len_bytes);
-
-    // Write Empty header portion
+    // Write Empty header portion (reserve for future use)
     dst.extend_from_slice(&[0u8; 3]);
 
     println!("header: {:?}", dst.to_vec());
@@ -96,7 +93,28 @@ fn write_header_and_header_mac(
 
     println!("header after encryption: {:?}", dst.to_vec());
 
-    let digest: &mut [u8] = &mut out_mac.finalize_reset()[..HEADER_MAC_LEN];
+    write_header_mac(dst, out_mac);
+
+    println!("header portion: {:?}", dst.to_vec());
+
+    Ok(())
+}
+
+#[inline]
+fn write_msg_len<'a>(dst: &mut BytesMut, msg_len: usize) {
+    let len_be_bytes = msg_len.to_be_bytes();
+    let len = len_be_bytes.len();
+
+    dst.extend_from_slice(&[len_be_bytes[len - 2], len_be_bytes[len - 1]]);
+}
+
+#[inline]
+fn write_header_mac(
+    dst: &mut BytesMut,
+    out_mac: &mut CoreWrapper<Keccak256Core>,
+) {
+    // header_mac
+    let digest = &mut out_mac.finalize_reset()[..HEADER_MAC_LEN];
 
     println!("digest: {:?}", digest.to_vec());
 
@@ -110,14 +128,4 @@ fn write_header_and_header_mac(
     out_mac.update(&digest);
 
     dst.extend_from_slice(&digest);
-
-    Ok(())
-}
-
-#[inline]
-fn convert_msg_len_into_bytes<'a>(msg_len: usize) -> &'a [u8] {
-    let len_be_bytes = msg_len.to_be_bytes();
-    let len_bytes = &len_be_bytes[len_be_bytes.len() - 2..];
-
-    len_bytes
 }

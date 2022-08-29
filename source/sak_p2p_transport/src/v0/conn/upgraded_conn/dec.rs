@@ -27,9 +27,11 @@ impl Decoder for UpgradedP2PCodec {
             return Ok(None);
         }
 
-        let mut msg_part = src.split_off(HEADER_TOTAL_LEN);
+        let msg_len = parse_header(src, &mut self.in_cipher, &self.in_mac)?;
 
-        let (msg_len, header_mac) = parse_header(src)?;
+        println!("msg_len!!: {}, src len: {}", msg_len, src.len());
+
+        let mut msg_part = src.split_off(HEADER_TOTAL_LEN);
 
         // self.verify_header_mac(self.header_mac)?;
 
@@ -39,24 +41,24 @@ impl Decoder for UpgradedP2PCodec {
 
         // Buffer needs to be **forgotten**, otherwise, data will remain in
         // the next call of decode()
-        src.advance(HEADER_TOTAL_LEN);
+        // src.advance(HEADER_TOTAL_LEN);
 
-        println!(
-            "\nbefore dec: header: {:?}, msg_part: {:?}",
-            src.to_vec(),
-            msg_part.to_vec(),
-        );
+        // println!(
+        //     "\nbefore dec: header: {:?}, msg_part: {:?}",
+        //     src.to_vec(),
+        //     msg_part.to_vec(),
+        // );
 
-        self.in_cipher.apply_keystream(&mut msg_part);
+        // self.in_cipher.apply_keystream(&mut msg_part);
 
-        println!(
-            "\ndecode(): _after dec, conn_id: {}, header: {:?}, \
-            msg_part({}): {:?}",
-            self.conn_id,
-            src.to_vec(),
-            msg_part.len(),
-            msg_part.to_vec()
-        );
+        // println!(
+        //     "\ndecode(): _after dec, conn_id: {}, header: {:?}, \
+        //     msg_part({}): {:?}",
+        //     self.conn_id,
+        //     src.to_vec(),
+        //     msg_part.len(),
+        //     msg_part.to_vec()
+        // );
 
         let msg = dec::decode_into_msg(&mut msg_part)?;
 
@@ -64,7 +66,13 @@ impl Decoder for UpgradedP2PCodec {
     }
 }
 
-fn parse_header(header: &mut BytesMut) -> Result<(u16, &[u8; 15]), TrptError> {
+fn parse_header(
+    header: &mut BytesMut,
+    in_cipher: &mut ChaCha20,
+    in_mac: &CoreWrapper<Keccak256Core>,
+) -> Result<u16, TrptError> {
+    in_cipher.apply_keystream(header);
+
     let msg_len = {
         let b: &[u8; 2] = header[0..2].try_into()?;
         u16::from_be_bytes(*b)
@@ -72,5 +80,5 @@ fn parse_header(header: &mut BytesMut) -> Result<(u16, &[u8; 15]), TrptError> {
 
     let mac: &[u8; 15] = header[5..20].try_into()?;
 
-    Ok((msg_len, mac))
+    Ok(msg_len)
 }
