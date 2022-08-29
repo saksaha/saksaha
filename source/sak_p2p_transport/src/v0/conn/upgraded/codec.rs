@@ -34,7 +34,7 @@ pub struct UpgradedP2PCodec {
 }
 
 impl UpgradedP2PCodec {
-    fn write_header_and_mac(
+    fn write_header_and_header_mac(
         &mut self,
         dst: &mut BytesMut,
         msg_part_len: usize,
