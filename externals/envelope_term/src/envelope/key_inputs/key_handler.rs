@@ -41,56 +41,6 @@ impl Envelope {
         }
     }
 
-    pub async fn handle_key_input_in_chat<'a>(
-        &self,
-        key: Key,
-        state: RwLockWriteGuard<'a, AppState>,
-    ) -> AppReturn {
-        match state.input_mode {
-            InputMode::Normal => match key {
-                Key::Char('1') => (),
-                Key::Char('2') => (),
-                Key::Char('3') => (),
-            },
-            InputMode::Editing => {
-                // self.handle_normal_key(key, state).await;
-            }
-        }
-
-        AppReturn::Continue
-    }
-
-    pub async fn handle_key_input_in_ch_list<'a>(
-        &self,
-        key: Key,
-        state: RwLockWriteGuard<'a, AppState>,
-    ) -> AppReturn {
-        match key {
-            Key::Char('1') => (),
-            Key::Char('2') => (),
-            Key::Char('3') => (),
-        };
-
-        AppReturn::Continue
-    }
-
-    pub async fn handle_key_input_in_open_ch<'a>(
-        &self,
-        key: Key,
-        state: RwLockWriteGuard<'a, AppState>,
-    ) -> AppReturn {
-        match state.input_mode {
-            InputMode::Normal => match key {
-                Key::Char('1') => (),
-                Key::Char('2') => (),
-                Key::Char('3') => (),
-            },
-            InputMode::Editing => (),
-        }
-
-        AppReturn::Continue
-    }
-
     // pub async fn handle_normal_key<'a>(
     //     &self,
     //     key: Key,
