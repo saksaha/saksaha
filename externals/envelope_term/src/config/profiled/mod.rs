@@ -1,7 +1,7 @@
 use super::Config;
 use crate::{EnvelopeError, RPCConfig};
 
-pub fn dev_local_1() -> Result<Config, EnvelopeError> {
+pub fn dev_local_1(saksaha_endpoint: String) -> Result<Config, EnvelopeError> {
     let c = Config {
         public_key: Some(String::from(
             "045739d074b8722891c307e8e75c9607e0b55a80778\
@@ -13,13 +13,17 @@ pub fn dev_local_1() -> Result<Config, EnvelopeError> {
                 99fc1df5cd9e8814c66c7",
         )),
         wallet_endpoint: Some(String::from("http://localhost:36612/rpc/v0")),
-        saksaha_endpoint: Some(String::from("http://localhost:34418/rpc/v0")),
+        // saksaha_endpoint: Some(String::from("http://localhost:34418/rpc/v0")),
+        saksaha_endpoint: Some(format!(
+            "http://localhost:{}/rpc/v0",
+            saksaha_endpoint
+        )),
     };
 
     Ok(c)
 }
 
-pub fn dev_local_2() -> Result<Config, EnvelopeError> {
+pub fn dev_local_2(saksaha_endpoint: String) -> Result<Config, EnvelopeError> {
     let c = Config {
         public_key: Some(String::from(
             "042c8d005bd935597117181d8ceceaef6d1162de78c32856\
@@ -31,7 +35,11 @@ pub fn dev_local_2() -> Result<Config, EnvelopeError> {
                 88eec457a88ce50e907a0",
         )),
         wallet_endpoint: Some(String::from("http://localhost:36613/rpc/v0")),
-        saksaha_endpoint: Some(String::from("http://localhost:34418/rpc/v0")),
+        // saksaha_endpoint: Some(String::from("http://localhost:34418/rpc/v0")),
+        saksaha_endpoint: Some(format!(
+            "http://localhost:{}/rpc/v0",
+            saksaha_endpoint
+        )),
     };
 
     Ok(c)

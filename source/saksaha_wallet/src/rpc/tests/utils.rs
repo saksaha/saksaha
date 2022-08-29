@@ -19,7 +19,7 @@ pub(crate) struct TestContext {
 }
 
 pub(crate) async fn mock_test_context() -> TestContext {
-    let config = Config::new(&Some("dev_local_1".to_string())).unwrap();
+    let config = Config::new(&Some("dev_local_1".to_string()), &None).unwrap();
 
     let public_key = config.public_key.clone().unwrap();
     let secret = config.secret.clone().unwrap();

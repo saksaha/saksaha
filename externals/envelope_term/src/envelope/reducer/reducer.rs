@@ -291,7 +291,6 @@ fn get_messages<'a>(
     let eph_key: String = {
         let mut res: String = String::default();
 
-        // let mut state = self.get_state().write().await;
         for ch_state in state.ch_list.iter() {
             if ch_state.channel.ch_id == state.selected_ch_id {
                 res = ch_state.channel.eph_key.clone();

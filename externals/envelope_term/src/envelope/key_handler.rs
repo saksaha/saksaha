@@ -167,7 +167,7 @@ impl Envelope {
                             })
                         });
 
-                        actions::enter_in_open_ch(
+                        let _ = actions::enter_in_open_ch(
                             self.wallet_endpoint.clone(),
                             dispatch,
                             state,
@@ -202,7 +202,7 @@ impl Envelope {
                             })
                         });
 
-                        actions::enter_in_chat(
+                        let _ = actions::enter_in_chat(
                             self.saksaha_endpoint.clone(),
                             self.wallet_endpoint.clone(),
                             dispatch,

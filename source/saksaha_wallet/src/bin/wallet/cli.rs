@@ -7,6 +7,7 @@ pub(crate) struct CLIArgs {
     pub(crate) public_key: Option<String>,
     pub(crate) secret: Option<String>,
     pub(crate) cfg_profile: Option<String>,
+    pub(crate) saksaha_endpoint: Option<String>,
 }
 
 pub(crate) fn get_args() -> Result<CLIArgs, WalletError> {
@@ -43,8 +44,14 @@ pub(crate) fn get_args() -> Result<CLIArgs, WalletError> {
         None => None,
     };
 
+    let saksaha_endpoint = match matches.value_of("saksaha-endpoint") {
+        Some(m) => Some(String::from(m)),
+        None => None,
+    };
+
     Ok(CLIArgs {
         rpc_port,
+        saksaha_endpoint,
         public_key,
         secret,
         cfg_profile,
@@ -95,6 +102,14 @@ fn create_app<'a>() -> Command<'a> {
                     "Secret (paired with public key) \n\
                     e.g. 4521ef8368476bf5bcc4e8784cb983ccaf42707abc2e2735\
 8827a1f2f66d56d3",
+                ),
+        )
+        .arg(
+            Arg::new("saksaha-endpoint") //
+                .long("saksaha-endpoint")
+                .takes_value(true)
+                .long_help(
+                    "Endpoint to which bind saksaha node",
                 ),
         )
 }

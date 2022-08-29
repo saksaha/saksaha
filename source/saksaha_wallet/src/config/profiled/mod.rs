@@ -2,7 +2,7 @@ use sak_types::CoinRecord;
 
 use crate::{Config, WalletError};
 
-pub fn dev_local_1() -> Result<Config, WalletError> {
+pub fn dev_local_1(saksaha_endpoint: String) -> Result<Config, WalletError> {
     let c = Config {
         public_key: Some(String::from(
             "045739d074b8722891c307e8e75c9607e0b55a80778\
@@ -32,13 +32,17 @@ pub fn dev_local_1() -> Result<Config, WalletError> {
             )?,
         ]),
         rpc_port: Some(36612),
-        saksaha_endpoint: Some(String::from("http://localhost:34418/rpc/v0")),
+        saksaha_endpoint: Some(format!(
+            "http://localhost:{}/rpc/v0",
+            saksaha_endpoint
+        )),
+        // saksaha_endpoint: Some(String::from("http://localhost:34418/rpc/v0")),
     };
 
     Ok(c)
 }
 
-pub fn dev_local_2() -> Result<Config, WalletError> {
+pub fn dev_local_2(saksaha_endpoint: String) -> Result<Config, WalletError> {
     let c = Config {
         public_key: Some(String::from(
             "042c8d005bd935597117181d8ceceaef6d1162de78c32856\
@@ -68,7 +72,11 @@ pub fn dev_local_2() -> Result<Config, WalletError> {
             )?,
         ]),
         rpc_port: Some(36613),
-        saksaha_endpoint: Some(String::from("http://localhost:34418/rpc/v0")),
+        saksaha_endpoint: Some(format!(
+            "http://localhost:{}/rpc/v0",
+            saksaha_endpoint
+        )),
+        // saksaha_endpoint: Some(String::from("http://localhost:34418/rpc/v0")),
     };
 
     Ok(c)
