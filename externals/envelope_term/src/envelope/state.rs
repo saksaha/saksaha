@@ -1,3 +1,5 @@
+use core::fmt;
+
 use crate::{io::InputMode, wallet_sdk, EnvelopeError};
 use envelope_contract::{Channel, ChatMessage};
 use log::{info, warn};
@@ -10,6 +12,17 @@ pub enum View {
     ChList,
     OpenCh,
     Chat,
+}
+
+impl fmt::Display for View {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            View::Landing => write!(f, "landing"),
+            View::ChList => write!(f, "Channels"),
+            View::OpenCh => write!(f, "Open channel"),
+            View::Chat => write!(f, "Chat"),
+        }
+    }
 }
 
 #[derive(Debug)]
