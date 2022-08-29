@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 use crate::envelope::{actions::Action, AppState, Envelope};
-=======
-use crate::envelope::{AppState, Envelope};
->>>>>>> 8da4fc61233b60114da09d0cd937fd5e9c37009f
 use crate::io::InputMode;
 use tokio::sync::RwLockWriteGuard;
 use tui::backend::Backend;

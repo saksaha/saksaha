@@ -11,14 +11,12 @@ impl Envelope {
         key: Key,
         state: RwLockWriteGuard<'a, AppState>,
     ) -> AppReturn {
-        let key_input = match key {
+        let _ = match key {
+            Key::Ctrl('c') => return AppReturn::Exit,
+            Key::Char('q') => return AppReturn::Exit,
             Key::Char('1') => self.dispatch(Action::ShowChList).await,
             Key::Char('2') => self.dispatch(Action::ShowOpenCh).await,
-            Key::Char('3') => self.dispatch(Action::ShowChat).await,
-            Key::Char('q') => return AppReturn::Exit,
-            Key::Ctrl('c') => return AppReturn::Exit,
             Key::Char('$') => {
-                log::info!("UPDATE_BALANCE");
                 let dispatcher = self.dispatcher.clone();
                 let dispatch: Dispatch = Box::new(move |action| {
                     let d = dispatcher.clone();

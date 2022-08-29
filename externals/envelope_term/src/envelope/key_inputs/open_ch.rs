@@ -13,20 +13,12 @@ impl Envelope {
         key: Key,
         mut state: RwLockWriteGuard<'a, AppState>,
     ) -> AppReturn {
-        match state.input_mode {
+        let _ = match state.input_mode {
             InputMode::Normal => match key {
-                Key::Ctrl('c') => AppReturn::Exit,
-                Key::Char('q') => AppReturn::Exit,
-                Key::Char('i') => {
-                    self.dispatch(Action::SwitchEditMode).await;
-
-                    AppReturn::Continue
-                }
-                Key::Esc => {
-                    self.dispatch(Action::SwitchNormalMode).await;
-
-                    AppReturn::Continue
-                }
+                Key::Ctrl('c') => return AppReturn::Exit,
+                Key::Char('q') => return AppReturn::Exit,
+                Key::Char('i') => self.dispatch(Action::SwitchEditMode).await,
+                Key::Esc => self.dispatch(Action::SwitchNormalMode).await,
                 Key::Char('1') => {
                     let dispatcher = self.dispatcher.clone();
                     let dispatch: Dispatch = Box::new(move |action| {
@@ -43,15 +35,9 @@ impl Envelope {
                         state,
                         self.dispatcher.get_context().clone(),
                     )
-                    .await;
-
-                    AppReturn::Continue
+                    .await
                 }
-                Key::Char('2') => {
-                    self.dispatch(Action::ShowOpenCh).await;
-
-                    AppReturn::Continue
-                }
+                Key::Char('2') => self.dispatch(Action::ShowOpenCh).await,
                 Key::Char('$') => {
                     let dispatcher = self.dispatcher.clone();
                     let dispatch: Dispatch = Box::new(move |action| {
@@ -68,14 +54,12 @@ impl Envelope {
                         state,
                         self.dispatcher.get_context().clone(),
                     )
-                    .await;
-
-                    AppReturn::Continue
+                    .await
                 }
                 _ => {
                     warn!("No action accociated to {}", key);
 
-                    AppReturn::Continue
+                    return AppReturn::Continue;
                 }
             },
             InputMode::Editing => match key {
@@ -95,27 +79,27 @@ impl Envelope {
                         state,
                         self.dispatcher.get_context().clone(),
                     )
-                    .await;
-
-                    AppReturn::Continue
+                    .await
                 }
                 Key::Char(c) => {
                     state.input_text.push(c);
 
-                    AppReturn::Continue
+                    return AppReturn::Continue;
                 }
                 Key::Backspace => {
                     state.input_text.pop();
 
-                    AppReturn::Continue
+                    return AppReturn::Continue;
                 }
                 Key::Esc => {
                     state.input_mode = InputMode::Normal;
 
-                    AppReturn::Continue
+                    return AppReturn::Continue;
                 }
-                _ => AppReturn::Continue,
+                _ => return AppReturn::Continue,
             },
-        }
+        };
+
+        AppReturn::Continue
     }
 }
