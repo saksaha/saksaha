@@ -18,9 +18,9 @@ impl fmt::Display for View {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             View::Landing => write!(f, "landing"),
-            View::ChList => write!(f, "Channels"),
-            View::OpenCh => write!(f, "Open channel"),
-            View::Chat => write!(f, "Chat"),
+            View::ChList => write!(f, "Channels [1]"),
+            View::OpenCh => write!(f, "Open channel [2]"),
+            View::Chat => write!(f, "Chat [3]"),
         }
     }
 }

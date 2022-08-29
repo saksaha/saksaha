@@ -224,7 +224,7 @@ where
 }
 
 pub(crate) fn draw_tabs<'a>(state: &'a AppState) -> Tabs {
-    let labels = ["Channels", "Open channel", "Chat"]
+    let labels = ["Channels [1]", "Open channel [2]", "Chat [3]"]
         .iter()
         .map(|t| {
             let tab = t.clone();
