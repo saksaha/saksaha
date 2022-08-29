@@ -366,7 +366,7 @@ where
                 // Put cursor past the end of the input text
                 chunks.x + state.input_text.width() as u16 + 1,
                 // Move one line down, from the border to the input line
-                chunks.height,
+                chunks.bottom() - 2,
             )
         }
     }

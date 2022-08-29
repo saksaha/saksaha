@@ -64,13 +64,38 @@ impl Envelope {
                     AppReturn::Continue
                 }
 
-                Action::Down => {
-                    self.dispatch(Action::Down).await;
+                Action::DownCh => {
+                    if state.view == View::ChList {
+                        self.dispatch(Action::DownCh).await;
+                    } else if state.view == View::Chat {
+                        self.dispatch(Action::DownChat).await;
+                    }
 
                     AppReturn::Continue
                 }
-                Action::Up => {
-                    self.dispatch(Action::Up).await;
+                Action::UpCh => {
+                    if state.view == View::ChList {
+                        self.dispatch(Action::UpCh).await;
+                    } else if state.view == View::Chat {
+                        self.dispatch(Action::UpChat).await;
+                    }
+
+                    AppReturn::Continue
+                }
+
+                // Action::DownChat => {
+                //     self.dispatch(Action::DownChat).await;
+
+                //     AppReturn::Continue
+                // }
+
+                // Action::UpChat => {
+                //     self.dispatch(Action::UpChat).await;
+
+                //     AppReturn::Continue
+                // }
+                Action::PageUpChat => {
+                    self.dispatch(Action::PageUpChat).await;
 
                     AppReturn::Continue
                 }
