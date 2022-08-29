@@ -90,33 +90,6 @@ where
         );
 
     let input_returned = {
-        // let content = vec![
-        //     //
-        //     Spans::from(Span::raw(format!(
-        //         r#"               .---.          .-"-.         "#
-        //     ))),
-        //     Spans::from(Span::raw(format!(
-        //         r#"              /   0_0        / 0 0 \        "#
-        //     ))),
-        //     Spans::from(Span::raw(format!(
-        //         r#"              \_  (__\       \_ v _/        "#
-        //     ))),
-        //     Spans::from(Span::raw(format!(
-        //         r#"              //   \\        //   \\        "#
-        //     ))),
-        //     Spans::from(Span::raw(format!(
-        //         r#"             ((     ))      ((     ))       "#
-        //     ))),
-        //     Spans::from(Span::raw(format!(
-        //         r#"       =======""===""========""===""======= "#
-        //     ))),
-        //     Spans::from(Span::raw(format!(
-        //         r#"                |||            |||          "#
-        //     ))),
-        //     Spans::from(Span::raw(format!(
-        //         r#"                 |              |           "#
-        //     ))),
-        // ];
         let content: [Vec<Spans>; 4] = [
             vec![
                 //

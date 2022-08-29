@@ -144,7 +144,6 @@ pub(crate) async fn enter_in_chat(
     ctx: Arc<DispatcherContext>,
 ) -> Result<(), EnvelopeError> {
     let selected_ch_id = state.selected_ch_id.clone();
-    let acc_addr = ctx.credential.acc_addr.clone();
 
     if selected_ch_id != String::default() {
         state.chat_input = state.input_text.drain(..).collect();
