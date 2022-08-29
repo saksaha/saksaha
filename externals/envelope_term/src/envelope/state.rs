@@ -1,3 +1,5 @@
+use core::fmt;
+
 use crate::{io::InputMode, wallet_sdk, EnvelopeError};
 use envelope_contract::{Channel, ChatMessage};
 use log::{info, warn};
@@ -10,6 +12,17 @@ pub enum View {
     ChList,
     OpenCh,
     Chat,
+}
+
+impl fmt::Display for View {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            View::Landing => write!(f, "landing"),
+            View::ChList => write!(f, "Channels [1]"),
+            View::OpenCh => write!(f, "Open channel [2]"),
+            View::Chat => write!(f, "Chat [3]"),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -28,6 +41,7 @@ pub struct AppState {
     pub balance: String,
     pub selected_ch_id: String,
     pub selected_ch: Channel,
+    pub image_count: u16,
 }
 
 impl AppState {
@@ -47,6 +61,7 @@ impl AppState {
             balance: String::from("0"),
             selected_ch_id: String::default(),
             selected_ch: Channel::default(),
+            image_count: 0,
         }
     }
 
@@ -204,6 +219,7 @@ impl Default for AppState {
             balance: String::from("0"),
             selected_ch_id: String::default(),
             selected_ch: Channel::default(),
+            image_count: 0,
         }
     }
 }
