@@ -27,7 +27,17 @@ impl Decoder for UpgradedP2PCodec {
             return Ok(None);
         }
 
-        let msg_len = parse_header(src, &mut self.in_cipher, &self.in_mac)?;
+        let msg_len = if let Some(l) = self.incomplete_msg_len {
+            l
+        } else {
+            parse_header(src, &mut self.in_cipher, &self.in_mac)?
+        };
+
+        if src.len() < msg_len as usize {
+            return Ok(None);
+        } else {
+            self.incomplete_msg_len = None;
+        }
 
         println!("msg_len!!: {}, src len: {}", msg_len, src.len());
 
