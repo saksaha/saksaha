@@ -1,10 +1,9 @@
-mod codec;
-mod conn;
 mod msg_codec;
 mod msg_wrap;
-mod upgraded;
+mod plain_conn;
+mod upgraded_conn;
 
-pub use conn::*;
 pub(crate) use msg_codec::*;
 pub use msg_wrap::*;
-pub use upgraded::*;
+pub use plain_conn::*;
+pub use upgraded_conn::*;

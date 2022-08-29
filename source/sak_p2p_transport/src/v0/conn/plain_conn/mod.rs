@@ -1,6 +1,8 @@
-use super::codec::P2PCodec;
+mod codec;
+
 use crate::{TrptError, UpgradedConn, UpgradedP2PCodec};
 use chacha20::{cipher::KeyIvInit, ChaCha20};
+use codec::P2PCodec;
 use sak_crypto::{
     sha3::{Digest, Keccak256},
     SharedSecret,
