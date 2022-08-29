@@ -31,6 +31,11 @@ where
     B: Backend,
 {
     // let state = app.get_state().read().await;
+    if state.image_count < 3 {
+        state.image_count += 1;
+    } else {
+        state.image_count = 0;
+    }
 
     let (msg, style) = match state.input_mode {
         InputMode::Normal => (
@@ -85,18 +90,118 @@ where
         );
 
     let input_returned = {
-        let content = vec![Spans::from(Span::raw(format!(
-            "Her pk: {}",
-            state.input_returned
-        )))];
+        let content: [Vec<Spans>; 4] = [
+            vec![
+                //
+                Spans::from(Span::raw(format!(
+                    r#"               .---.          .-"-.         "#
+                ))),
+                Spans::from(Span::raw(format!(
+                    r#"              /   0_0        / 0 0 \        "#
+                ))),
+                Spans::from(Span::raw(format!(
+                    r#"              \_  (__\       \_ v _/        "#
+                ))),
+                Spans::from(Span::raw(format!(
+                    r#"              //   \\        //   \\        "#
+                ))),
+                Spans::from(Span::raw(format!(
+                    r#"             ((     ))      ((     ))       "#
+                ))),
+                Spans::from(Span::raw(format!(
+                    r#"       =======""===""========""===""======= "#
+                ))),
+                Spans::from(Span::raw(format!(
+                    r#"                |||            |||          "#
+                ))),
+                Spans::from(Span::raw(format!(
+                    r#"                 |              |           "#
+                ))),
+            ],
+            vec![
+                Spans::from(Span::raw(format!(
+                    r#"               .---.          .-"-.         "#
+                ))),
+                Spans::from(Span::raw(format!(
+                    r#"              / 0 0 \        / 0 0 \        "#
+                ))),
+                Spans::from(Span::raw(format!(
+                    r#"              \_ v _/        \_ v _/        "#
+                ))),
+                Spans::from(Span::raw(format!(
+                    r#"              //   \\        //   \\        "#
+                ))),
+                Spans::from(Span::raw(format!(
+                    r#"             ((     ))      ((     ))       "#
+                ))),
+                Spans::from(Span::raw(format!(
+                    r#"       =======""===""========""===""======= "#
+                ))),
+                Spans::from(Span::raw(format!(
+                    r#"                |||            |||          "#
+                ))),
+                Spans::from(Span::raw(format!(
+                    r#"                 |              |           "#
+                ))),
+            ],
+            vec![
+                Spans::from(Span::raw(format!(
+                    r#"               .---.          .-"-.         "#
+                ))),
+                Spans::from(Span::raw(format!(
+                    r#"              /0_0  \        / 0 0 \        "#
+                ))),
+                Spans::from(Span::raw(format!(
+                    r#"             /___) _/        \_ v _/        "#
+                ))),
+                Spans::from(Span::raw(format!(
+                    r#"              //   \\        //   \\        "#
+                ))),
+                Spans::from(Span::raw(format!(
+                    r#"             ((     ))      ((     ))       "#
+                ))),
+                Spans::from(Span::raw(format!(
+                    r#"       =======""===""========""===""======= "#
+                ))),
+                Spans::from(Span::raw(format!(
+                    r#"                |||            |||          "#
+                ))),
+                Spans::from(Span::raw(format!(
+                    r#"                 |              |           "#
+                ))),
+            ],
+            vec![
+                Spans::from(Span::raw(format!(
+                    r#"               .---.          .-"-.         "#
+                ))),
+                Spans::from(Span::raw(format!(
+                    r#"              / 0 0 \        / 0 0 \        "#
+                ))),
+                Spans::from(Span::raw(format!(
+                    r#"              \_ v _/        \_ v _/        "#
+                ))),
+                Spans::from(Span::raw(format!(
+                    r#"              //   \\        //   \\        "#
+                ))),
+                Spans::from(Span::raw(format!(
+                    r#"             ((     ))      ((     ))       "#
+                ))),
+                Spans::from(Span::raw(format!(
+                    r#"       =======""===""========""===""======= "#
+                ))),
+                Spans::from(Span::raw(format!(
+                    r#"                |||            |||          "#
+                ))),
+                Spans::from(Span::raw(format!(
+                    r#"                 |              |           "#
+                ))),
+            ],
+        ];
 
-        let v = vec![ListItem::new(content)];
+        let v =
+            vec![ListItem::new(content[state.image_count as usize].clone())];
 
-        List::new(v).block(
-            Block::default()
-                .borders(Borders::ALL)
-                .title("Open channel progress"),
-        )
+        List::new(v).block(Block::default().borders(Borders::ALL))
     };
 
     match state.input_mode {
@@ -119,26 +224,27 @@ where
 }
 
 pub(crate) fn draw_tabs<'a>(state: &'a AppState) -> Tabs {
-    let labels = ["Channels", "Open channel", "Chat (#)"]
+    let labels = ["Channels [1]", "Open channel [2]", "Chat [3]"]
         .iter()
         .map(|t| {
-            let (first, rest) = t.split_at(3);
-            Spans::from(vec![
-                Span::styled(first, Style::default().fg(Color::Yellow)),
-                Span::styled(rest, Style::default().fg(Color::Green)),
-            ])
+            let tab = t.clone();
+            if tab == format!("{}", state.view) {
+                Spans::from(vec![Span::styled(
+                    tab,
+                    Style::default().fg(Color::Yellow),
+                )])
+            } else {
+                Spans::from(vec![Span::styled(
+                    tab,
+                    Style::default().fg(Color::White),
+                )])
+            }
         })
         .collect();
 
     let tabs = Tabs::new(labels)
         .block(Block::default().borders(Borders::ALL).title("Tabs"))
-        .select(0)
-        .style(Style::default().fg(Color::Cyan))
-        .highlight_style(
-            Style::default()
-                .add_modifier(Modifier::BOLD)
-                .bg(Color::Black),
-        );
+        .style(Style::default().fg(Color::Cyan));
 
     tabs
 }
