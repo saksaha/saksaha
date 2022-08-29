@@ -32,7 +32,6 @@ impl Reducer {
             Action::UpCh => up_ch(state),
             Action::DownChat => messages_scroll(state, ScrollMovement::Down),
             Action::UpChat => messages_scroll(state, ScrollMovement::Up),
-            Action::PageUpChat => messages_scroll(state, ScrollMovement::Start),
             Action::UpdateBalanceSuccess(data) => update_balance(state, data),
             Action::GetChList(data) => get_ch_list(state, data, ctx)?,
             Action::GetMessages(data) => get_messages(state, data, ctx)?,

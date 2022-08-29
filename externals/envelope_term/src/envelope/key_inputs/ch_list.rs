@@ -13,11 +13,11 @@ impl Envelope {
         key: Key,
         state: RwLockWriteGuard<'a, AppState>,
     ) -> AppReturn {
-        match key {
-            Key::Char('1') => (),
-            Key::Char('2') => (),
-            Key::Char('3') => (),
-        };
+        // match key {
+        //     Key::Char('1') => (),
+        //     Key::Char('2') => (),
+        //     Key::Char('3') => (),
+        // };
 
         AppReturn::Continue
     }
