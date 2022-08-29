@@ -41,6 +41,7 @@ pub struct AppState {
     pub balance: String,
     pub selected_ch_id: String,
     pub selected_ch: Channel,
+    pub image_count: u16,
 }
 
 impl AppState {
@@ -60,6 +61,7 @@ impl AppState {
             balance: String::from("0"),
             selected_ch_id: String::default(),
             selected_ch: Channel::default(),
+            image_count: 0,
         }
     }
 
@@ -233,6 +235,7 @@ impl Default for AppState {
             balance: String::from("0"),
             selected_ch_id: String::default(),
             selected_ch: Channel::default(),
+            image_count: 0,
         }
     }
 }
