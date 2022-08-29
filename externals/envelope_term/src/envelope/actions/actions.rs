@@ -3,7 +3,6 @@ use std::collections::HashMap;
 use std::fmt::{self, Display};
 use std::slice::Iter;
 
-/// We define all available action
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Action {
     Quit,
@@ -51,29 +50,29 @@ impl Action {
         ACTIONS.iter()
     }
 
-    /// List of key associated to action
-    pub fn keys(&self) -> &[Key] {
-        match self {
-            Action::Quit => &[Key::Ctrl('c'), Key::Char('q')],
-            Action::SwitchEditMode => &[Key::Char('i')],
-            Action::SwitchNormalMode => &[Key::Esc],
-            Action::ShowChList => &[Key::Char('1')],
-            Action::ShowOpenCh => &[Key::Char('2')],
-            Action::ShowChat => &[Key::Char('3')],
-            Action::DownCh => &[Key::Down],
-            Action::UpCh => &[Key::Up],
-            Action::DownChat => &[Key::Down],
-            Action::UpChat => &[Key::Up],
-            Action::PageUpChat => &[Key::PageUp],
-            Action::RestoreChat => &[Key::Char('R')],
-            Action::UpdateBalance => &[Key::Char('$')],
-            Action::UpdateBalanceSuccess(_) => &[],
-            Action::Select => &[Key::Enter],
-            Action::Initialize => &[],
-            Action::GetChList(_) => &[],
-            Action::GetMessages(_) => &[],
-        }
-    }
+    // List of key associated to action
+    // pub fn keys(&self) -> &[Key] {
+    //     match self {
+    //         Action::Quit => &[Key::Ctrl('c'), Key::Char('q')],
+    //         Action::SwitchEditMode => &[Key::Char('i')],
+    //         Action::SwitchNormalMode => &[Key::Esc],
+    //         Action::ShowChList => &[Key::Char('1')],
+    //         Action::ShowOpenCh => &[Key::Char('2')],
+    //         Action::ShowChat => &[Key::Char('3')],
+    //         Action::DownCh => &[Key::Down],
+    //         Action::UpCh => &[Key::Up],
+    //         Action::DownChat => &[Key::Down],
+    //         Action::UpChat => &[Key::Up],
+    //         Action::PageUpChat => &[Key::PageUp],
+    //         Action::RestoreChat => &[Key::Char('R')],
+    //         Action::UpdateBalance => &[Key::Char('$')],
+    //         Action::UpdateBalanceSuccess(_) => &[],
+    //         Action::Select => &[Key::Enter],
+    //         Action::Initialize => &[],
+    //         Action::GetChList(_) => &[],
+    //         Action::GetMessages(_) => &[],
+    //     }
+    // }
 }
 
 impl Display for Action {
@@ -102,106 +101,63 @@ impl Display for Action {
     }
 }
 
-/// The application should have some contextual actions.
-#[derive(Default, Debug, Clone)]
-pub struct Actions(pub Vec<Action>);
+// The application should have some contextual actions.
+// #[derive(Default, Debug, Clone)]
+// pub struct Actions(pub Vec<Action>);
 
-impl Actions {
-    /// Given a key, find the corresponding action
-    pub fn find(&self, key: Key) -> Option<&Action> {
-        Action::iterator()
-            .filter(|action| self.0.contains(action))
-            .find(|action| action.keys().contains(&key))
-    }
+// impl Actions {
+//     /// Given a key, find the corresponding action
+//     pub fn find(&self, key: Key) -> Option<&Action> {
+//         Action::iterator()
+//             .filter(|action| self.0.contains(action))
+//             .find(|action| action.keys().contains(&key))
+//     }
 
-    /// Get contextual actions.
-    /// (just for building a help view)
-    pub fn actions(&self) -> &[Action] {
-        self.0.as_slice()
-    }
-}
+//     /// Get contextual actions.
+//     /// (just for building a help view)
+//     pub fn actions(&self) -> &[Action] {
+//         self.0.as_slice()
+//     }
+// }
 
-impl From<Vec<Action>> for Actions {
-    /// Build contextual action
-    ///
-    /// # Panics
-    ///
-    /// If two actions have same key
-    fn from(actions: Vec<Action>) -> Self {
-        // Check key unicity
-        let mut map: HashMap<Key, Vec<Action>> = HashMap::new();
-        for action in actions.iter() {
-            for key in action.keys().iter() {
-                match map.get_mut(key) {
-                    Some(vec) => vec.push(action.clone()),
-                    None => {
-                        map.insert(*key, vec![action.clone()]);
-                    }
-                }
-            }
-        }
+// impl From<Vec<Action>> for Actions {
+//     /// Build contextual action
+//     ///
+//     /// # Panics
+//     ///
+//     /// If two actions have same key
+//     fn from(actions: Vec<Action>) -> Self {
+//         // Check key unicity
+//         let mut map: HashMap<Key, Vec<Action>> = HashMap::new();
+//         for action in actions.iter() {
+//             for key in action.keys().iter() {
+//                 match map.get_mut(key) {
+//                     Some(vec) => vec.push(action.clone()),
+//                     None => {
+//                         map.insert(*key, vec![action.clone()]);
+//                     }
+//                 }
+//             }
+//         }
 
-        let errors = map
-            .iter()
-            .filter(|(_, actions)| actions.len() > 1) // at least two actions share same shortcut
-            .map(|(key, actions)| {
-                let actions = actions
-                    .iter()
-                    .map(Action::to_string)
-                    .collect::<Vec<_>>()
-                    .join(", ");
-                format!("Conflict key {} with actions {}", key, actions)
-            })
-            .collect::<Vec<_>>();
+//         let errors = map
+//             .iter()
+//             .filter(|(_, actions)| actions.len() > 1) // at least two actions share same shortcut
+//             .map(|(key, actions)| {
+//                 let actions = actions
+//                     .iter()
+//                     .map(Action::to_string)
+//                     .collect::<Vec<_>>()
+//                     .join(", ");
+//                 format!("Conflict key {} with actions {}", key, actions)
+//             })
+//             .collect::<Vec<_>>();
 
-        if !errors.is_empty() {
-            panic!("{}", errors.join("; "))
-        }
+//         if !errors.is_empty() {
+//             panic!("{}", errors.join("; "))
+//         }
 
-        // Ok, we can create contextual actions
-        Self(actions)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn should_find_action_by_key() {
-        let actions: Actions = vec![Action::Quit].into();
-        let result = actions.find(Key::Ctrl('c'));
-        assert_eq!(result, Some(&Action::Quit));
-    }
-
-    #[test]
-    fn should_find_action_by_key_not_found() {
-        let actions: Actions = vec![Action::Quit].into();
-        let result = actions.find(Key::Alt('w'));
-        assert_eq!(result, None);
-    }
-
-    #[test]
-    fn should_create_actions_from_vec() {
-        let _actions: Actions = vec![
-            Action::Quit,
-            Action::SwitchEditMode,
-            Action::SwitchNormalMode,
-        ]
-        .into();
-    }
-
-    #[test]
-    #[should_panic]
-    fn should_panic_when_create_actions_conflict_key() {
-        let _actions: Actions = vec![
-            Action::Quit,
-            Action::SwitchNormalMode,
-            Action::SwitchEditMode,
-            Action::SwitchEditMode,
-            Action::Quit,
-            Action::SwitchNormalMode,
-        ]
-        .into();
-    }
-}
+//         // Ok, we can create contextual actions
+//         Self(actions)
+//     }
+// }
