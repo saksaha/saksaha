@@ -355,138 +355,138 @@ impl Envelope {
     //     Ok(())
     // }
 
-    pub async fn open_ch(&self, her_pk: &String) -> Result<(), EnvelopeError> {
-        log::info!("Trying to make a channel w/ partner: {:?}", her_pk);
+    // pub async fn open_ch(&self, her_pk: &String) -> Result<(), EnvelopeError> {
+    //     log::info!("Trying to make a channel w/ partner: {:?}", her_pk);
 
-        let (eph_sk, eph_pk) = SakKey::generate();
+    //     let (eph_sk, eph_pk) = SakKey::generate();
 
-        let eph_pk: String =
-            serde_json::to_string(eph_pk.to_encoded_point(false).as_bytes())?;
-        let my_sk = self.credential.secret_key_str.clone();
-        let my_pk = self.credential.public_key_str.clone();
-        let my_sig = self.credential.sign();
-        let user_1_acc_addr = self.credential.acc_addr.clone();
+    //     let eph_pk: String =
+    //         serde_json::to_string(eph_pk.to_encoded_point(false).as_bytes())?;
+    //     let my_sk = self.credential.secret_key_str.clone();
+    //     let my_pk = self.credential.public_key_str.clone();
+    //     let my_sig = self.credential.sign();
+    //     let user_1_acc_addr = self.credential.acc_addr.clone();
 
-        let ch_id_num = sak_crypto::rand();
+    //     let ch_id_num = sak_crypto::rand();
 
-        let ch_id = format!("{}_{}", my_pk, ch_id_num.to_string());
+    //     let ch_id = format!("{}_{}", my_pk, ch_id_num.to_string());
 
-        {
-            // =-=-=-=-=-= `open_ch` for initiator  =-=-=-=-=-=-=-=
+    //     {
+    //         // =-=-=-=-=-= `open_ch` for initiator  =-=-=-=-=-=-=-=
 
-            let my_sk: U8Arr32 = U8Array::from_hex_string(my_sk)?;
+    //         let my_sk: U8Arr32 = U8Array::from_hex_string(my_sk)?;
 
-            let open_ch = {
-                let ch_id_enc = {
-                    let ch_id_enc =
-                        sak_crypto::aes_encrypt(&my_sk, &ch_id.as_bytes())?;
+    //         let open_ch = {
+    //             let ch_id_enc = {
+    //                 let ch_id_enc =
+    //                     sak_crypto::aes_encrypt(&my_sk, &ch_id.as_bytes())?;
 
-                    serde_json::to_string(&ch_id_enc)?
-                };
+    //                 serde_json::to_string(&ch_id_enc)?
+    //             };
 
-                let eph_sk_enc = {
-                    let eph_sk_enc: Vec<u8> =
-                        sak_crypto::aes_encrypt(&my_sk, &eph_sk.to_bytes())?;
+    //             let eph_sk_enc = {
+    //                 let eph_sk_enc: Vec<u8> =
+    //                     sak_crypto::aes_encrypt(&my_sk, &eph_sk.to_bytes())?;
 
-                    // for dev, prefix is `init_`
-                    format!("init_{}", serde_json::to_string(&eph_sk_enc)?)
-                };
+    //                 // for dev, prefix is `init_`
+    //                 format!("init_{}", serde_json::to_string(&eph_sk_enc)?)
+    //             };
 
-                let sig_enc = {
-                    let sig_enc =
-                        sak_crypto::aes_encrypt(&my_sk, &my_sig.as_bytes())?;
+    //             let sig_enc = {
+    //                 let sig_enc =
+    //                     sak_crypto::aes_encrypt(&my_sk, &my_sig.as_bytes())?;
 
-                    serde_json::to_string(&sig_enc)?
-                };
+    //                 serde_json::to_string(&sig_enc)?
+    //             };
 
-                Channel::new(ch_id_enc, eph_sk_enc, sig_enc)?
-            };
+    //             Channel::new(ch_id_enc, eph_sk_enc, sig_enc)?
+    //         };
 
-            let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
+    //         let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
 
-            let open_ch_params = OpenChParams {
-                dst_pk: my_pk,
-                open_ch,
-            };
+    //         let open_ch_params = OpenChParams {
+    //             dst_pk: my_pk,
+    //             open_ch,
+    //         };
 
-            let req_type = OPEN_CH.to_string();
+    //         let req_type = OPEN_CH.to_string();
 
-            let args = serde_json::to_vec(&open_ch_params)?;
+    //         let args = serde_json::to_vec(&open_ch_params)?;
 
-            let ctr_request = CtrRequest {
-                req_type,
-                args,
-                ctr_call_type: CtrCallType::Execute,
-            };
+    //         let ctr_request = CtrRequest {
+    //             req_type,
+    //             args,
+    //             ctr_call_type: CtrCallType::Execute,
+    //         };
 
-            wallet_sdk::send_tx_pour(
-                self.wallet_endpoint.clone(),
-                user_1_acc_addr,
-                ctr_addr,
-                ctr_request,
-            )
-            .await?;
-        }
+    //         wallet_sdk::send_tx_pour(
+    //             self.wallet_endpoint.clone(),
+    //             user_1_acc_addr,
+    //             ctr_addr,
+    //             ctr_request,
+    //         )
+    //         .await?;
+    //     }
 
-        {
-            // =-=-=-=-=-=  `open_ch` for receiver =-=-=-=-=-=-=-=
+    //     {
+    //         // =-=-=-=-=-=  `open_ch` for receiver =-=-=-=-=-=-=-=
 
-            let aes_key = {
-                let her_pk: Vec<u8> = sak_crypto::decode_hex(her_pk)?;
+    //         let aes_key = {
+    //             let her_pk: Vec<u8> = sak_crypto::decode_hex(her_pk)?;
 
-                let her_pk = PublicKey::from_sec1_bytes(&her_pk.as_slice())?;
+    //             let her_pk = PublicKey::from_sec1_bytes(&her_pk.as_slice())?;
 
-                sak_crypto::derive_aes_key(eph_sk, her_pk)?
-            };
+    //             sak_crypto::derive_aes_key(eph_sk, her_pk)?
+    //         };
 
-            let open_ch = {
-                let ch_id_enc = {
-                    let ch_id_enc =
-                        sak_crypto::aes_encrypt(&aes_key, &ch_id.as_bytes())?;
+    //         let open_ch = {
+    //             let ch_id_enc = {
+    //                 let ch_id_enc =
+    //                     sak_crypto::aes_encrypt(&aes_key, &ch_id.as_bytes())?;
 
-                    serde_json::to_string(&ch_id_enc)?
-                };
+    //                 serde_json::to_string(&ch_id_enc)?
+    //             };
 
-                let eph_pk = eph_pk;
+    //             let eph_pk = eph_pk;
 
-                let sig_enc = {
-                    let sig_enc =
-                        sak_crypto::aes_encrypt(&aes_key, &my_sig.as_bytes())?;
+    //             let sig_enc = {
+    //                 let sig_enc =
+    //                     sak_crypto::aes_encrypt(&aes_key, &my_sig.as_bytes())?;
 
-                    serde_json::to_string(&sig_enc)?
-                };
+    //                 serde_json::to_string(&sig_enc)?
+    //             };
 
-                Channel::new(ch_id_enc, eph_pk, sig_enc)?
-            };
+    //             Channel::new(ch_id_enc, eph_pk, sig_enc)?
+    //         };
 
-            let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
+    //         let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
 
-            let open_ch_params = OpenChParams {
-                dst_pk: her_pk.clone(),
-                open_ch,
-            };
+    //         let open_ch_params = OpenChParams {
+    //             dst_pk: her_pk.clone(),
+    //             open_ch,
+    //         };
 
-            let req_type = OPEN_CH.to_string();
+    //         let req_type = OPEN_CH.to_string();
 
-            let args = serde_json::to_vec(&open_ch_params)?;
+    //         let args = serde_json::to_vec(&open_ch_params)?;
 
-            let ctr_request = CtrRequest {
-                req_type,
-                args,
-                ctr_call_type: CtrCallType::Execute,
-            };
+    //         let ctr_request = CtrRequest {
+    //             req_type,
+    //             args,
+    //             ctr_call_type: CtrCallType::Execute,
+    //         };
 
-            wallet_sdk::send_tx_pour(
-                self.wallet_endpoint.clone(),
-                self.partner_credential.acc_addr.clone(),
-                ctr_addr,
-                ctr_request,
-            )
-            .await?;
-        }
+    //         wallet_sdk::send_tx_pour(
+    //             self.wallet_endpoint.clone(),
+    //             self.partner_credential.acc_addr.clone(),
+    //             ctr_addr,
+    //             ctr_request,
+    //         )
+    //         .await?;
+    //     }
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
     // pub async fn get_ch_list(&self) -> Result<(), EnvelopeError> {
     //     let my_pk = &self.credential.public_key_str;

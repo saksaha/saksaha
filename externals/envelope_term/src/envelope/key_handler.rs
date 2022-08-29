@@ -13,7 +13,7 @@ impl Envelope {
         key: Key,
         state: RwLockWriteGuard<'a, AppState>,
     ) -> AppReturn {
-        info!("Run action [{:?}], actions: {:?}", key, self.get_actions());
+        // info!("Run action [{:?}], actions: {:?}", key, self.get_actions());
 
         if let Some(ref action) = self.get_actions().find(key) {
             match action {

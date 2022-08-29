@@ -24,19 +24,23 @@ pub mod request_type {
 pub struct Channel {
     pub ch_id: String,
     pub eph_key: String,
-    pub sig: String,
+    // pub sig: String,
+    pub initiator_pk: String,
+    pub participants: Vec<String>,
 }
 
 impl Channel {
     pub fn new(
         ch_id: String,
         eph_key: String,
-        sig: String,
+        initiator_pk: String,
+        participants: Vec<String>,
     ) -> Result<Channel, ContractError> {
         let open_ch = Channel {
             ch_id,
             eph_key,
-            sig,
+            initiator_pk,
+            participants,
         };
 
         Ok(open_ch)
@@ -46,7 +50,8 @@ impl Channel {
         Channel {
             ch_id: String::default(),
             eph_key: String::default(),
-            sig: String::default(),
+            initiator_pk: String::default(),
+            participants: Vec::<String>::default(),
         }
     }
 }

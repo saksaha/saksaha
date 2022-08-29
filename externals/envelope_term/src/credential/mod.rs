@@ -63,7 +63,7 @@ impl Credential {
     }
 
     pub fn sign(&self) -> String {
-        let ret = format!("{}-sig", self.acc_addr);
+        let ret = format!("{}-sig", self.public_key_str);
         ret
     }
 }

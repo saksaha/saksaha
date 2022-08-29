@@ -204,7 +204,7 @@ impl Wallet {
 
             self.get_db().schema.put_coin(&new_coin_2)?;
 
-            println!("\t[+] new coins have been stored in db");
+            println!("[+] new coins have been stored in db");
         }
 
         {
@@ -212,7 +212,7 @@ impl Wallet {
 
             coin_manager_lock.put_coin(new_coin_2)?;
 
-            println!("\t[+] new coins have been stored in coin_manager");
+            println!("[+] new coins have been stored in coin_manager");
         }
 
         Ok("success_power".to_string())
