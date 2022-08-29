@@ -18,6 +18,7 @@ impl Envelope {
                 Key::Char('1') => (),
                 Key::Char('2') => (),
                 Key::Char('3') => (),
+                _ => {}
             },
             InputMode::Editing => (),
         }

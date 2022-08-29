@@ -1,4 +1,4 @@
-use crate::envelope::{Actions, AppState, Envelope};
+use crate::envelope::{AppState, Envelope};
 use crate::io::InputMode;
 use tokio::sync::RwLockWriteGuard;
 use tui::backend::Backend;
@@ -319,38 +319,38 @@ pub(crate) fn draw_ch_list<'a>(state: &AppState) -> List<'a> {
         .highlight_symbol(">> ")
 }
 
-pub(crate) fn draw_help(actions: &Actions) -> Paragraph {
-    let key_style = Style::default().fg(Color::LightCyan);
-    let help_style = Style::default().fg(Color::Gray);
+// pub(crate) fn draw_help(actions: &Actions) -> Paragraph {
+//     let key_style = Style::default().fg(Color::LightCyan);
+//     let help_style = Style::default().fg(Color::Gray);
 
-    let mut v = vec![];
-    for action in actions.actions().iter() {
-        let mut first = true;
-        for key in action.keys() {
-            let help = if first {
-                first = false;
-                action.to_string()
-            } else {
-                action.to_string()
-            };
+//     let mut v = vec![];
+//     for action in actions.actions().iter() {
+//         let mut first = true;
+//         for key in action.keys() {
+//             let help = if first {
+//                 first = false;
+//                 action.to_string()
+//             } else {
+//                 action.to_string()
+//             };
 
-            v.push(Span::styled(key.to_string() + " ", key_style));
-            v.push(Span::styled(help, help_style));
-            v.push(Span::from(" / "));
-        }
-    }
+//             v.push(Span::styled(key.to_string() + " ", key_style));
+//             v.push(Span::styled(help, help_style));
+//             v.push(Span::from(" / "));
+//         }
+//     }
 
-    Paragraph::new(Spans::from(v))
-        .style(Style::default())
-        .alignment(Alignment::Left)
-        .block(
-            Block::default()
-                .title("Shortcuts")
-                .borders(Borders::ALL)
-                .style(Style::default().fg(Color::White))
-                .border_type(BorderType::Plain),
-        )
-}
+//     Paragraph::new(Spans::from(v))
+//         .style(Style::default())
+//         .alignment(Alignment::Left)
+//         .block(
+//             Block::default()
+//                 .title("Shortcuts")
+//                 .borders(Borders::ALL)
+//                 .style(Style::default().fg(Color::White))
+//                 .border_type(BorderType::Plain),
+//         )
+// }
 
 pub(crate) fn draw_logs<'a>() -> TuiLoggerWidget<'a> {
     TuiLoggerWidget::default()
