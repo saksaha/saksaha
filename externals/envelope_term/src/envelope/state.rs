@@ -6,7 +6,7 @@ use log::{info, warn};
 use tui::widgets::ListState;
 
 #[repr(u8)]
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum View {
     Landing,
     ChList,
@@ -67,22 +67,6 @@ impl AppState {
 
     pub fn scroll_messages_view(&self) -> usize {
         self.scroll_messages_view
-    }
-
-    pub fn _messages_scroll(&mut self, movement: ScrollMovement) {
-        match movement {
-            ScrollMovement::Up => {
-                if self.scroll_messages_view > 0 {
-                    self.scroll_messages_view -= 1;
-                }
-            }
-            ScrollMovement::Down => {
-                self.scroll_messages_view += 1;
-            }
-            ScrollMovement::Start => {
-                self.scroll_messages_view += 0;
-            }
-        }
     }
 
     // pub fn get_is_initialized(&self) -> bool {
