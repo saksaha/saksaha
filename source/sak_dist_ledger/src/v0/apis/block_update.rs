@@ -2,6 +2,8 @@ use crate::{CtrStateUpdate, DistLedgerApis, LedgerError, MerkleUpdate};
 use colored::Colorize;
 use log::{debug, error, info, warn};
 use sak_contract_std::{CtrCallType, CtrRequest, Storage, ERROR_PLACEHOLDER};
+use sak_crypto::{Bls12, Hasher, Proof, ScalarExt};
+use sak_proofs::CoinProof;
 use sak_types::{
     Block, BlockCandidate, CmIdx, MintTxCandidate, PourTxCandidate, Tx,
     TxCandidate, TxCtrOp,
@@ -105,7 +107,24 @@ impl DistLedgerApis {
             next_cm_idx,
         );
 
+        // filtering tcs
+
+        let mut valid_tcs: Vec<TxCandidate> = vec![];
+
+        for tx_candidate in tcs {
+            match tx_candidate {
+                TxCandidate::Mint(tc) => {
+                    valid_tcs.push(tx_candidate.to_owned());
+                }
+                TxCandidate::Pour(tc) => {
+                    verify_tx(tc)?;
+                    valid_tcs.push(tx_candidate.to_owned());
+                }
+            };
+        }
+
         let mut added_cm_count: u128 = 0;
+
         for tx_candidate in tcs {
             let cm_count = match tx_candidate {
                 TxCandidate::Mint(tc) => {
@@ -393,4 +412,33 @@ async fn process_merkle_update(
     }
 
     Ok(cm_count)
+}
+
+pub(crate) fn verify_tx(tc: &PourTxCandidate) -> Result<(), LedgerError> {
+    let hasher = Hasher::new();
+
+    let public_inputs = [
+        ScalarExt::parse_arr(&tc.merkle_rt)?,
+        ScalarExt::parse_arr(&tc.sn_1)?,
+        ScalarExt::parse_arr(&tc.cm_1)?,
+        ScalarExt::parse_arr(&tc.cm_2)?,
+    ];
+
+    let pi_des: Proof<Bls12> = match Proof::read(&*tc.pi) {
+        Ok(p) => p,
+        Err(err) => {
+            return Err(
+                format!("Cannot deserialize the pi, err: {:?}", err).into()
+            );
+        }
+    };
+
+    let verification_result =
+        CoinProof::verify_proof_1_to_2(pi_des, &public_inputs, &hasher)?;
+
+    if !verification_result {
+        return Err(format!("Failed to verify proof").into());
+    };
+
+    Ok(())
 }

@@ -2,6 +2,7 @@ use crate::LedgerError;
 use crate::{cfs, LedgerDB};
 use sak_crypto::{Bls12, Hasher, Proof, ScalarExt};
 use sak_kv_db::WriteBatch;
+use sak_proofs::CoinProof;
 use sak_types::{
     Cm, CmIdx, MintTx, MintTxCandidate, PourTx, PourTxCandidate, Sn, Tx,
     TxCtrOp, TxHash, TxHeight, TxType,
@@ -209,8 +210,6 @@ impl LedgerDB {
 
         let tx_ctr_op = tc.get_ctr_op();
 
-        // *cm_idx_count = *cm_idx_count + 1;
-
         match tx_ctr_op {
             TxCtrOp::ContractDeploy => {
                 self.batch_put_tx_hash_by_contract_addr(
@@ -231,12 +230,11 @@ impl LedgerDB {
         sn: &[u8; 32],
     ) -> Result<(), LedgerError> {
         if let Some(t) = self.get_tx_hash_by_sn(&self.db, sn)? {
-            // return Err(format!(
-            //     "Detect double spend, `sn` has been spent before with tx_hash: {}",
-            //     t
-            // )
-            // .into());
-            log::error!("Double spending has been detected")
+            return Err(format!(
+                "Detect double spend, `sn` has been spent before with tx_hash: {}",
+                t
+            )
+            .into());
         };
 
         Ok(())
@@ -267,13 +265,12 @@ impl LedgerDB {
             }
         };
 
-        // let verification_result =
-        //     sak_proofs::verify_proof_1_to_2(pi_des, &public_inputs, &hasher);
+        let verification_result =
+            CoinProof::verify_proof_1_to_2(pi_des, &public_inputs, &hasher)?;
 
-        // if !verification_result {
-        //     // return Err(format!("Wrong proof").into());
-        //     log::error!("Failed to verify")
-        // };
+        if !verification_result {
+            return Err(format!("Failed to verify proof").into());
+        };
 
         Ok(())
     }
@@ -334,8 +331,6 @@ impl LedgerDB {
         self.batch_put_prf_merkle_rt(batch, tx_hash, &tc.merkle_rt)?;
 
         let tx_ctr_op = tc.get_ctr_op();
-
-        // *cm_idx_count = *cm_idx_count + 2;
 
         match tx_ctr_op {
             TxCtrOp::ContractDeploy => {

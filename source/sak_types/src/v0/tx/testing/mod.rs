@@ -97,6 +97,18 @@ impl Tx {
 
         c.upgrade(0)
     }
+
+    pub fn new_dummy_valid_pour_candidate(
+        pi: Vec<u8>,
+        sn_1: [u8; 32],
+        cm_1: [u8; 32],
+        cm_2: [u8; 32],
+        merkle_rt: [u8; 32],
+    ) -> TxCandidate {
+        let c = new_dummy_valid_pour(pi, sn_1, cm_1, cm_2, merkle_rt);
+
+        c
+    }
 }
 
 impl MintTxCandidate {
