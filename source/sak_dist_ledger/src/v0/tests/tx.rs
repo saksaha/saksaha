@@ -71,8 +71,6 @@ async fn test_dist_ledger_put_a_single_pour_tx() {
             )
             .expect("pour_tx should be written");
     }
-
-    println!("[+] test pass");
 }
 
 #[tokio::test(flavor = "multi_thread")]
@@ -239,4 +237,12 @@ async fn test_dist_ledger_double_spending() {
 
         println!("[+] dummy pour_tx hash: {:?}", dummy_tx_hash);
     }
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn test_sync_pool_tx_routine() {
+    sak_test_utils::init_test_log();
+    TestUtil::init_test(vec!["test"]);
+
+    let dist_ledger = utils::make_dist_ledger().await;
 }

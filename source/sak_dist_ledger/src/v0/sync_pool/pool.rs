@@ -1,24 +1,31 @@
-use log::warn;
-use sak_types::{
-    Block, BlockHash, BlockHeight, Tx, TxCandidate, TxCtrOp, TxHash,
+use log::{debug, warn};
+use sak_types::{Block, BlockHash, BlockHeight, TxCandidate, TxCtrOp, TxHash};
+use std::{
+    collections::{HashMap, HashSet},
+    sync::Arc,
+    time::Duration,
 };
-use std::collections::{HashMap, HashSet};
-use tokio::sync::RwLock;
+use tokio::sync::{broadcast::Sender, RwLock};
+
+use crate::{DistLedgerEvent, Runtime};
 
 const SYNC_POOL_CAPACITY: usize = 100;
 
 pub(crate) struct SyncPool {
     new_blocks: RwLock<HashSet<(BlockHeight, BlockHash)>>,
-    new_tx_hashes: RwLock<HashSet<TxHash>>,
+    new_tx_hashes: Arc<RwLock<HashSet<TxHash>>>,
     tx_map: RwLock<HashMap<TxHash, TxCandidate>>,
+    bc_event_tx: Arc<RwLock<Sender<DistLedgerEvent>>>,
 }
 
 impl SyncPool {
-    pub(crate) fn new() -> SyncPool {
+    pub(crate) fn new(
+        bc_event_tx: Arc<RwLock<Sender<DistLedgerEvent>>>,
+    ) -> SyncPool {
         let new_tx_hashes = {
             let s = HashSet::new();
 
-            RwLock::new(s)
+            Arc::new(RwLock::new(s))
         };
 
         let new_blocks = {
@@ -36,6 +43,7 @@ impl SyncPool {
             new_blocks,
             new_tx_hashes,
             tx_map,
+            bc_event_tx,
         }
     }
 
@@ -92,6 +100,7 @@ impl SyncPool {
         {
             // Check if tx is valid ctr deploying type
             // let (tx_ctr_op, tx_coin_op) = tc.get_tx_op();
+
             let tx_ctr_op = tc.get_ctr_op();
 
             match tx_ctr_op {
@@ -121,6 +130,34 @@ impl SyncPool {
 
         let mut new_tx_hashes_lock = self.new_tx_hashes.write().await;
         new_tx_hashes_lock.insert(tx_hash.to_string());
+
+        if new_tx_hashes_lock.len() == 1 {
+            let new_tx_hashes = self.new_tx_hashes.clone();
+
+            let bc_event_tx = self.bc_event_tx.clone();
+
+            tokio::spawn(async move {
+                tokio::time::sleep(Duration::from_secs(2000)).await;
+
+                let tx_hashes = new_tx_hashes.write().await.drain().collect();
+
+                let ev = DistLedgerEvent::TxPoolStat(tx_hashes);
+
+                match bc_event_tx.write().await.send(ev.clone()) {
+                    Ok(_) => {
+                        debug!("Ledger event queued, ev: {}", ev.to_string());
+                    }
+                    Err(err) => {
+                        warn!(
+                            "No active tx sync routine receiver handle to \
+                                        sync tx event, \
+                                    err: {}",
+                            err
+                        );
+                    }
+                };
+            });
+        }
 
         Ok(tx_hash)
     }

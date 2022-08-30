@@ -1,7 +1,6 @@
 use super::utils::{make_test_context, TestContext};
-use crate::{machine::Machine, node::LocalNode, p2p::P2PHost, tests::TestUtil};
-use sak_types::TxCandidate;
-use std::{sync::Arc, time::Duration};
+use crate::tests::TestUtil;
+use std::time::Duration;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_block_sync_true() {

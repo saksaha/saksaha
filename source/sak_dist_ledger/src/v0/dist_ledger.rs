@@ -53,16 +53,18 @@ impl DistLedger {
 
         let vm = VM::init()?;
 
-        let sync_pool = {
-            let p = SyncPool::new();
-
-            Arc::new(p)
-        };
-
         let ledger_event_tx = {
             let (tx, _rx) = broadcast::channel(BLOCKCHAIN_EVENT_QUEUE_CAPACITY);
 
             Arc::new(RwLock::new(tx))
+        };
+
+        let sync_pool = {
+            let tx = ledger_event_tx.clone();
+
+            let p = SyncPool::new(tx);
+
+            Arc::new(p)
         };
 
         let runtime = {

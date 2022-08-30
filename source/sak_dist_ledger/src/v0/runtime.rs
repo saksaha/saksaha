@@ -62,6 +62,13 @@ impl Runtime {
             block_sync_routine.run().await;
         });
     }
+
+    // pub(crate) async fn new(
+    //     sync_pool: &SyncPool,
+    //     bc_event_tx: Arc<RwLock<Sender<DistLedgerEvent>>>,
+    // ) -> {
+    //     //
+    // }
 }
 
 struct TxSyncRoutine {
