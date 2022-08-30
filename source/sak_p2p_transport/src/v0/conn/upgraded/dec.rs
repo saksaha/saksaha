@@ -29,12 +29,20 @@ impl Decoder for UpgradedP2PCodec {
             return Ok(None);
         }
 
-        let msg_len = if let Some(l) = self.incomplete_msg_len {
+        let msg_len = if let Some(l) = self.parsed_msg_len {
             l
         } else {
             println!("prasing header portion");
 
-            parse_header_portion(src, &mut self.in_cipher, &mut self.in_mac)?
+            let l = parse_header_portion(
+                src,
+                &mut self.in_cipher,
+                &mut self.in_mac,
+            )?;
+
+            self.parsed_msg_len = Some(l);
+
+            l
         };
 
         println!("11 msg_len: {}", msg_len);
@@ -49,7 +57,7 @@ impl Decoder for UpgradedP2PCodec {
             return Ok(None);
         } else {
             println!("resetting incomplete msg len to none");
-            self.incomplete_msg_len = None;
+            self.parsed_msg_len = None;
         }
 
         println!("msg_len!!: {}, src len: {}", msg_len, src.len());
