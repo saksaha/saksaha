@@ -1,7 +1,6 @@
 use crate::{Msg, MsgWrap, TrptError, UpgradedP2PCodec};
 use futures::{SinkExt, StreamExt};
 use log::warn;
-use sak_crypto::sha3::{digest::core_api::CoreWrapper, Keccak224Core};
 use tokio::net::TcpStream;
 use tokio_util::codec::Framed;
 

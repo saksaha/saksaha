@@ -136,7 +136,7 @@ async fn test_dist_ledger_tx_pour_put_and_get_cm_idx() {
 
     let dist_ledger = utils::make_dist_ledger().await;
 
-    let pour_tc = sak_types::mock_pour_tc_1().unwrap();
+    let pour_tc = sak_types::mock_pour_tc_1();
 
     let mock_tx_hash = pour_tc.get_tx_hash().to_string();
 

@@ -69,6 +69,8 @@ async fn test_block_sync_true() {
 
     let dummy_tx2 = sak_types::mock_pour_tc_2();
 
+    println!("dummy_tx1: {:?}", dummy_tx1);
+
     tokio::time::sleep(Duration::from_secs(5)).await;
 
     {

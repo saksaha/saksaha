@@ -1,6 +1,6 @@
-use super::TxCandidate;
-use crate::TypesError;
-use crate::{MintTxCandidate, PourTxCandidate, Tx, WASM_MAGIC_NUMBER};
+use super::values::{self, VALIDATOR, VALIDATOR_CTR_ADDR};
+use crate::{MintTxCandidate, PourTxCandidate};
+use crate::{TxCandidate, TypesError};
 use sak_crypto::Hasher;
 use sak_crypto::ScalarExt;
 use sak_crypto::{rand, Scalar};
@@ -13,54 +13,7 @@ use std::collections::HashMap;
 use type_extension::U8Arr32;
 use type_extension::U8Array;
 
-pub fn mock_pour_tc_1() -> Result<TxCandidate, TypesError> {
-    // let hasher = Hasher::new();
-
-    // let sn_1 = {
-    //     let addr_sk_1 = get_addr_sk_1();
-
-    //     let addr_pk_1 = hasher.mimc_single(&addr_sk_1).unwrap().to_bytes();
-
-    //     let rho_1 = get_rho_1();
-
-    //     let r_1 = get_r_1();
-
-    //     let sn = hasher.mimc(&addr_sk_1, &rho_1).unwrap().to_bytes();
-
-    //     sn
-    // };
-
-    // let sn_2 = {
-    //     let addr_sk_1 = get_addr_sk_1();
-
-    //     let addr_pk_1: U8Arr32 =
-    //         hasher.mimc_single(&addr_sk_1).unwrap().to_bytes();
-
-    //     let rho_2 = get_rho_1();
-
-    //     let r_2 = get_r_1();
-
-    //     let sn = hasher.mimc(&addr_sk_1, &rho_2).unwrap().to_bytes();
-
-    //     sn
-    // };
-
-    // let pi = vec![0];
-
-    // let pour_tc = PourTxCandidate::new(
-    //     String::from("created_at_1"),
-    //     WASM_MAGIC_NUMBER.to_vec(),
-    //     String::from("author_sig_1"),
-    //     Some(String::from("ctr_addr_1")),
-    //     vec![11, 11, 11],
-    //     U8Array::new_empty_32(),
-    //     U8Array::new_empty_32(),
-    //     U8Array::new_empty_32(),
-    //     U8Array::new_empty_32(),
-    // );
-
-    // TxCandidate::Pour(pour_tc)
-
+pub fn mock_pour_tc_1() -> TxCandidate {
     let hasher = Hasher::new();
 
     let (
@@ -238,7 +191,7 @@ pub fn mock_pour_tc_1() -> Result<TxCandidate, TypesError> {
         CoinProof::generate_proof_1_to_2(coin_1_old, coin_1_new, coin_2_new)
             .unwrap();
 
-    let pi_serialized = CoinProof::serialize_pi(&pi)?;
+    let pi_serialized = CoinProof::serialize_pi(&pi).unwrap();
 
     let pour_tc = PourTxCandidate::new(
         "created_at".to_string(),
@@ -254,7 +207,7 @@ pub fn mock_pour_tc_1() -> Result<TxCandidate, TypesError> {
 
     let c = TxCandidate::Pour(pour_tc);
 
-    Ok(c)
+    c
 }
 
 pub fn mock_mint_tc_custom(
@@ -263,31 +216,159 @@ pub fn mock_mint_tc_custom(
     k: U8Arr32,
     s: U8Arr32,
 ) -> TxCandidate {
-    let tx_candidate = MintTxCandidate::new_dummy_custom(cm, v, k, s);
+    // let tx_candidate = MintTxCandidate::new_dummy_custom(cm, v, k, s);
+    let validator_wasm = VALIDATOR.to_vec();
+
+    let tx_candidate = MintTxCandidate::new(
+        String::from("created_at_mint_custom_1"),
+        validator_wasm,
+        String::from("author_sig_mint_custom_1"),
+        Some(VALIDATOR_CTR_ADDR.to_string()),
+        cm,
+        v,
+        k,
+        s,
+    );
+    //     }
 
     TxCandidate::Mint(tx_candidate)
 }
 
 pub fn mock_mint_tc_1() -> TxCandidate {
-    let tx_candidate = MintTxCandidate::new_dummy_1();
+    let validator_wasm = VALIDATOR.to_vec();
+
+    let hasher = Hasher::new();
+
+    let v = U8Array::from_int(1000);
+
+    let s = values::get_s_1();
+
+    let r = values::get_r_1();
+
+    let rho = values::get_rho_1();
+
+    let addr_sk = values::get_addr_sk_1();
+
+    let addr_pk = hasher.mimc_single(&addr_sk).unwrap();
+
+    let k = hasher.comm2(&r, &addr_pk.to_bytes(), &rho).unwrap();
+
+    let cm = hasher.comm2(&s, &v, &k.to_bytes()).unwrap();
+
+    let tx_candidate = MintTxCandidate::new(
+        String::from("created_at_mint_1"),
+        validator_wasm,
+        String::from("author_sig_mint_1"),
+        Some(VALIDATOR_CTR_ADDR.to_string()),
+        cm.to_bytes(),
+        v,
+        k.to_bytes(),
+        s,
+    );
 
     TxCandidate::Mint(tx_candidate)
 }
 
 pub fn mock_mint_tc_2() -> TxCandidate {
-    let tx_candidate = MintTxCandidate::new_dummy_2();
+    // let tx_candidate = MintTxCandidate::new_dummy_2();
+    let hasher = Hasher::new();
+
+    let v = U8Array::from_int(1000);
+
+    let s = U8Array::new_empty_32();
+
+    let r = U8Array::new_empty_32();
+
+    let rho = U8Array::new_empty_32();
+
+    let a_pk = U8Array::new_empty_32();
+
+    let k = hasher.comm2(&r, &a_pk, &rho).unwrap();
+
+    let cm = hasher.comm2(&s, &v, &k.to_bytes()).unwrap();
+
+    let tx_candidate = MintTxCandidate::new(
+        String::from("created_at_mint_2"),
+        vec![2],
+        String::from("author_sig_mint_2"),
+        None,
+        cm.to_bytes(),
+        v,
+        k.to_bytes(),
+        s,
+    );
 
     TxCandidate::Mint(tx_candidate)
 }
 
 pub fn mock_mint_tc_3() -> TxCandidate {
-    let tx_candidate = MintTxCandidate::new_dummy_3();
+    // let tx_candidate = MintTxCandidate::new_dummy_3();
+    let hasher = Hasher::new();
+
+    let rho = U8Array::from_int(0x11);
+
+    let r = U8Array::from_int(0x12);
+
+    let s = U8Array::from_int(0x13);
+
+    let v = U8Array::from_int(100);
+
+    let a_sk = U8Array::from_int(0x14);
+
+    let a_pk = hasher
+        .mimc_single_scalar(ScalarExt::parse_arr(&a_sk).unwrap())
+        .unwrap();
+
+    let k = hasher.comm2(&r, &a_pk.to_bytes(), &rho).unwrap();
+
+    let cm = hasher.comm2(&s, &v, &k.to_bytes()).unwrap();
+
+    let tx_candidate = MintTxCandidate::new(
+        String::from("created_at_mint_3"),
+        vec![3],
+        String::from("author_sig_mint_3"),
+        None,
+        cm.to_bytes(),
+        v,
+        k.to_bytes(),
+        s,
+    );
 
     TxCandidate::Mint(tx_candidate)
 }
 
 pub fn mock_mint_tc_4() -> TxCandidate {
-    let tx_candidate = MintTxCandidate::new_dummy_4();
+    // let tx_candidate = MintTxCandidate::new_dummy_4();
+    let hasher = Hasher::new();
+
+    let rho = U8Array::from_int(0x21);
+
+    let r = U8Array::from_int(0x22);
+
+    let s = U8Array::from_int(0x23);
+
+    let v = U8Array::from_int(100);
+
+    let a_sk = U8Array::from_int(0x24);
+
+    let a_pk = hasher
+        .mimc_single_scalar(ScalarExt::parse_arr(&a_sk).unwrap())
+        .unwrap();
+
+    let k = hasher.comm2(&r, &a_pk.to_bytes(), &rho).unwrap();
+
+    let cm = hasher.comm2(&s, &v, &k.to_bytes()).unwrap();
+
+    let tx_candidate = MintTxCandidate::new(
+        String::from("created_at_mint_4"),
+        vec![4],
+        String::from("author_sig_mint_4"),
+        None,
+        cm.to_bytes(),
+        v,
+        k.to_bytes(),
+        s,
+    );
 
     TxCandidate::Mint(tx_candidate)
 }
@@ -296,51 +377,82 @@ pub fn mock_mint_tc_deploying_contract(
     contract_data: Vec<u8>,
     ctrt_addr: String,
 ) -> TxCandidate {
-    let tx_candidate =
-        MintTxCandidate::new_dummy_deploying_contract(contract_data, ctrt_addr);
+    // let tx_candidate =
+    //     MintTxCandidate::new_dummy_deploying_contract(contract_data, ctrt_addr);
+
+    let hasher = Hasher::new();
+
+    let rho = U8Array::new_empty_32();
+
+    let r = U8Array::new_empty_32();
+
+    let s = U8Array::new_empty_32();
+
+    let v = U8Array::new_empty_32();
+
+    let a_sk = U8Array::new_empty_32();
+
+    let a_pk = hasher
+        .mimc_single_scalar(ScalarExt::parse_arr(&a_sk).unwrap())
+        .unwrap();
+
+    let k = hasher.comm2(&r, &a_pk.to_bytes(), &rho).unwrap();
+
+    let cm = hasher.comm2(&s, &v, &k.to_bytes()).unwrap();
+
+    let tx_candidate = MintTxCandidate::new(
+        String::from("created_at_mint_3"),
+        contract_data,
+        String::from("author_sig_mint_3"),
+        Some(ctrt_addr),
+        cm.to_bytes(),
+        v,
+        k.to_bytes(),
+        s,
+    );
 
     TxCandidate::Mint(tx_candidate)
 }
 
-pub fn mock_pour_tc_m1_to_p3_p4() -> TxCandidate {
-    let tx_candidate = PourTxCandidate::new_dummy_m1_to_p3_p4();
+// pub fn mock_pour_tc_m1_to_p3_p4() -> TxCandidate {
+//     let tx_candidate = PourTxCandidate::new_dummy_m1_to_p3_p4();
 
-    TxCandidate::Pour(tx_candidate)
-}
+//     TxCandidate::Pour(tx_candidate)
+// }
 
-pub fn mock_pour_tc_2() -> TxCandidate {
-    let tx_candidate = PourTxCandidate::new_dummy_2();
+// pub fn mock_pour_tc_2() -> TxCandidate {
+//     let tx_candidate = PourTxCandidate::new_dummy_2();
 
-    TxCandidate::Pour(tx_candidate)
-}
+//     TxCandidate::Pour(tx_candidate)
+// }
 
-pub fn mock_pour_tc_3() -> TxCandidate {
-    let tx_candidate = PourTxCandidate::new_dummy_3();
+// pub fn mock_pour_tc_3() -> TxCandidate {
+//     let tx_candidate = PourTxCandidate::new_dummy_3();
 
-    TxCandidate::Pour(tx_candidate)
-}
+//     TxCandidate::Pour(tx_candidate)
+// }
 
-pub fn mock_pour_tc_4() -> TxCandidate {
-    let tx_candidate = PourTxCandidate::new_dummy_4();
+// pub fn mock_pour_tc_4() -> TxCandidate {
+//     let tx_candidate = PourTxCandidate::new_dummy_4();
 
-    TxCandidate::Pour(tx_candidate)
-}
+//     TxCandidate::Pour(tx_candidate)
+// }
 
-pub fn new_dummy_valid_pour(
-    pi: Vec<u8>,
-    sn_1: [u8; 32],
-    cm_1: [u8; 32],
-    cm_2: [u8; 32],
-    merkle_rt: [u8; 32],
-) -> TxCandidate {
-    let tx_candidate =
-        PourTxCandidate::new_dummy_valid(pi, sn_1, cm_1, cm_2, merkle_rt);
+// pub fn new_dummy_valid_pour(
+//     pi: Vec<u8>,
+//     sn_1: [u8; 32],
+//     cm_1: [u8; 32],
+//     cm_2: [u8; 32],
+//     merkle_rt: [u8; 32],
+// ) -> TxCandidate {
+//     let tx_candidate =
+//         PourTxCandidate::new_dummy_valid(pi, sn_1, cm_1, cm_2, merkle_rt);
 
-    TxCandidate::Pour(tx_candidate)
-}
+//     TxCandidate::Pour(tx_candidate)
+// }
 
-pub fn mock_pour_tc_variant_cm(cm: [u8; 32]) -> TxCandidate {
-    let tx_candidate = PourTxCandidate::new_dummy_5(cm);
+// pub fn mock_pour_tc_variant_cm(cm: [u8; 32]) -> TxCandidate {
+//     let tx_candidate = PourTxCandidate::new_dummy_5(cm);
 
-    TxCandidate::Pour(tx_candidate)
-}
+//     TxCandidate::Pour(tx_candidate)
+// }

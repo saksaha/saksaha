@@ -75,22 +75,6 @@ impl DistLedgerApis {
             }
         };
 
-        // let ledger_cm_count = match self.get_ledger_cm_count().await? {
-        //     Some(h) => h,
-        //     None => {
-        //         warn!(
-        //             "Total cm count does not exist. Possibly the first block"
-        //         );
-
-        //         0
-        //     }
-        // };
-
-        // let next_tx_height = match self.get_latest_tx_height().await? {
-        //     Some(th) => th + 1,
-        //     None => 0,
-        // };
-
         let tcs = &bc.tx_candidates;
         let mut ctr_state_update = CtrStateUpdate::new();
         let mut merkle_update = MerkleUpdate::new();
@@ -100,8 +84,6 @@ impl DistLedgerApis {
             next_cm_idx: {}",
             tcs.len(),
             next_block_height,
-            // next_tx_height,
-            // ledger_cm_count,
             next_cm_idx,
         );
 
@@ -157,19 +139,9 @@ impl DistLedgerApis {
             .into());
         };
 
-        // let updated_ledger_cm_count = ledger_cm_count + added_cm_count;
-        // let updated_cm_count = ledger_cm_count + added_cm_count;
-
         let block_hash = self
             .ledger_db
-            .put_block(
-                &block,
-                &txs,
-                &ctr_state_update,
-                &merkle_update,
-                // ledger_cm_count,
-                // updated_ledger_cm_count,
-            )
+            .put_block(&block, &txs, &ctr_state_update, &merkle_update)
             .await?;
 
         if let Err(err) = self.sync_pool.insert_block(&block).await {
