@@ -73,8 +73,8 @@ async fn test_deploy_ctr_and_invoke_query_when_dist_ledger_writes_new_blocks() {
     let block = BlockCandidate {
         validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
         tx_candidates: vec![sak_types::mock_mint_tc_deploying_contract(
-            sak_types::VALIDATOR,
-            sak_types::VALIDATOR_CTR_ADDR,
+            sak_types::VALIDATOR.to_vec(),
+            sak_types::VALIDATOR_CTR_ADDR.to_string(),
         )],
         witness_sigs: vec![String::from("1"), String::from("2")],
         created_at: String::from("2022061515340000"),
@@ -83,7 +83,7 @@ async fn test_deploy_ctr_and_invoke_query_when_dist_ledger_writes_new_blocks() {
     println!("\n[+] Block1: Deploying test validator contract");
     dist_ledger
         .apis
-        .write_block(utils::make_dummy_block_candidate_1())
+        .write_block(Some(sak_types::mock_block_2()))
         .await
         .expect("Block_1 must be written");
 
@@ -105,7 +105,10 @@ async fn test_sequential_write_block() {
     for i in 0..100 as u64 {
         let block = BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
-            tx_candidates: vec![sak_types::mock_pour_tc_m1_to_p3_p4()],
+            tx_candidates: vec![
+                // sak_types::mock_pour_tc_m1_to_p3_p4()
+                sak_types::mock_pour_tc_1(),
+            ],
             witness_sigs: vec![String::from("1"), String::from("2")],
             created_at: format!("{}", i),
         };
@@ -130,7 +133,8 @@ async fn test_sequential_write_block_and_get_tx_height() {
         let block = BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
             tx_candidates: vec![
-                sak_types::mock_pour_tc_m1_to_p3_p4(),
+                // sak_types::mock_pour_tc_m1_to_p3_p4(),
+                sak_types::mock_pour_tc_1(),
                 sak_types::mock_pour_tc_2(),
             ],
             witness_sigs: vec![String::from("1"), String::from("2")],
@@ -167,7 +171,10 @@ async fn test_write_block_and_check_merkle_rt_changed() {
 
         let bc = BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
-            tx_candidates: vec![sak_types::mock_pour_tc_variant_cm(cm)],
+            tx_candidates: vec![
+                // sak_types::mock_pour_tc_variant_cm(cm)
+                sak_types::mock_pour_tc_1(),
+            ],
             witness_sigs: vec![String::from("1")],
             created_at: format!("{}", i),
         };
@@ -198,7 +205,8 @@ async fn test_sequential_sync_block_if_block_is_correct() {
     let repeat = 5;
 
     for i in 1..repeat as u64 {
-        let txs = utils::make_dummy_txs();
+        // let txs = utils::make_dummy_txs();
+        let txs = vec![sak_types::mock_pour_tc_1().upgrade(1)];
 
         let block = Block::new(
             String::from("validator_sig"),

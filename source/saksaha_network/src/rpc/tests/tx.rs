@@ -114,7 +114,8 @@ async fn test_rpc_client_request_wrong_get_tx() {
     let _expected_tx_hash = {
         let blockchain = utils::make_blockchain().await;
 
-        let dummy_tx = sak_types::mock_pour_tc_m1_to_p3_p4();
+        // let dummy_tx = sak_types::mock_pour_tc_m1_to_p3_p4();
+        let dummy_tx = sak_types::mock_pour_tc_1();
 
         let old_tx_hash = (&dummy_tx).get_tx_hash();
 
@@ -346,7 +347,11 @@ async fn test_rpc_reqeust_correct_send_mint_tx() {
     sak_test_utils::init_test_log();
     TestUtil::init_test(vec!["test"]);
 
-    let tc_dummy = MintTxCandidate::new_dummy_2();
+    // let tc_dummy = MintTxCandidate::new_dummy_2();
+    let tc_dummy = sak_types::mock_mint_tc_1()
+        .into_mint_tx_candidate()
+        .unwrap();
+
     let expected_tc_hash = tc_dummy.get_tx_hash().clone();
 
     let (rpc, rpc_socket_addr, machine) = utils::make_test_context().await;

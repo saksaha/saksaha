@@ -1,4 +1,6 @@
-use crate::{Cm, CmIdx, MintTxCandidate, PourTxCandidate, Tx, TxCtrOp};
+use crate::{
+    Cm, CmIdx, MintTxCandidate, PourTxCandidate, Tx, TxCtrOp, TypesError,
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Debug, PartialEq, Eq, Clone)]
@@ -12,6 +14,24 @@ impl TxCandidate {
         match self {
             TxCandidate::Mint(c) => c.upgrade(cm_idx),
             TxCandidate::Pour(c) => c.upgrade(cm_idx),
+        }
+    }
+
+    pub fn into_mint_tx_candidate(self) -> Result<MintTxCandidate, TypesError> {
+        match self {
+            TxCandidate::Mint(c) => Ok(c),
+            TxCandidate::Pour(_) => {
+                Err(format!("tx candidate is not pour candidate").into())
+            }
+        }
+    }
+
+    pub fn into_pour_tx_candidate(self) -> Result<PourTxCandidate, TypesError> {
+        match self {
+            TxCandidate::Pour(c) => Ok(c),
+            TxCandidate::Mint(_) => {
+                Err(format!("tx candidate is not mint candidate").into())
+            }
         }
     }
 
