@@ -9,16 +9,18 @@ use std::convert::TryInto;
 use tokio_util::codec::{Decoder, Encoder};
 
 //
-//    header(5)   header-mac(15)    msg-payload(n)
-// |------------|----------------|-----------------|
-// ---------------- Message -----------------------
+//              header-portion                    msg-portion
+// |-----------------------------------------|--------------------|
+//    header-ciphertext(5)    header-mac(15)   msg-ciphertext(n)
+// |-----------------------|-----------------|--------------------|
 //
 pub(crate) const MSG_LEN: usize = 65_536; // 2^16
 
 // Header
-pub(crate) const HEADER_LEN: usize = 5;
+pub(crate) const HEADER_CIPHERTEXT_LEN: usize = 5;
 pub(crate) const HEADER_MAC_LEN: usize = 15;
-pub(crate) const HEADER_TOTAL_LEN: usize = HEADER_LEN + HEADER_MAC_LEN;
+pub(crate) const HEADER_TOTAL_LEN: usize =
+    HEADER_CIPHERTEXT_LEN + HEADER_MAC_LEN;
 
 pub struct UpgradedP2PCodec {
     pub(crate) out_cipher: ChaCha20,

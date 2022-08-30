@@ -1,6 +1,6 @@
 use crate::{
-    dec, enc, Msg, TrptError, UpgradedP2PCodec, HEADER_LEN, HEADER_MAC_LEN,
-    HEADER_TOTAL_LEN, MSG_LEN,
+    dec, enc, Msg, TrptError, UpgradedP2PCodec, HEADER_CIPHERTEXT_LEN,
+    HEADER_MAC_LEN, HEADER_TOTAL_LEN, MSG_LEN,
 };
 use bytes::{Buf, BufMut, BytesMut};
 use chacha20::cipher::StreamCipher;
@@ -101,7 +101,7 @@ fn write_header_and_header_mac(
 }
 
 #[inline]
-fn write_msg_len<'a>(dst: &mut BytesMut, msg_len: usize) {
+fn write_msg_len(dst: &mut BytesMut, msg_len: usize) {
     let len_be_bytes = msg_len.to_be_bytes();
     let len = len_be_bytes.len();
 
@@ -109,17 +109,18 @@ fn write_msg_len<'a>(dst: &mut BytesMut, msg_len: usize) {
 }
 
 #[inline]
-fn write_header_mac(
+fn write_header_mac<'a>(
     dst: &mut BytesMut,
     out_mac: &mut CoreWrapper<Keccak256Core>,
 ) {
-    // header_mac
     let digest = &mut out_mac.finalize_reset()[..HEADER_MAC_LEN];
 
     println!("digest: {:?}", digest.to_vec());
 
     // XORing
-    for idx in 0..HEADER_LEN {
+    for idx in 0..HEADER_CIPHERTEXT_LEN {
+        println!("encode xor: {} - {}", digest[idx], dst[idx]);
+
         digest[idx] = digest[idx] ^ dst[idx];
     }
 
