@@ -56,4 +56,18 @@ impl TxCandidate {
             TxCandidate::Pour(c) => c.get_cms(),
         }
     }
+
+    pub fn get_created_at(&self) -> &String {
+        match &self {
+            TxCandidate::Mint(c) => &c.created_at,
+            TxCandidate::Pour(c) => &c.created_at,
+        }
+    }
+
+    pub fn get_author_sig(&self) -> &String {
+        match &self {
+            TxCandidate::Mint(c) => &c.author_sig,
+            TxCandidate::Pour(c) => &c.author_sig,
+        }
+    }
 }

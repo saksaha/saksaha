@@ -1,10 +1,10 @@
 use type_extension::U8Arr32;
 use type_extension::U8Array;
 
-pub(crate) const VALIDATOR_CTR_ADDR: &'static str = "test_validator_1";
+pub const VALIDATOR_CTR_ADDR: &'static str = "test_validator_1";
 
-pub(crate) const VALIDATOR: &[u8] =
-    include_bytes!("../../../../../prebuild/sak_validator.postprocess.wasm");
+pub const VALIDATOR: &[u8] =
+    include_bytes!("../../../../prebuild/sak_validator.postprocess.wasm");
 
 pub(crate) fn get_addr_sk_1() -> U8Arr32 {
     [

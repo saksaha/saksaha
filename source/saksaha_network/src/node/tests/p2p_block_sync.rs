@@ -65,7 +65,11 @@ async fn test_block_sync_true() {
         ..
     } = test_context_2;
 
-    let dummy_tx1 = sak_types::mock_pour_tc_m1_to_p3_p4();
+    // let dummy_tx1 = sak_types::mock_pour_tc_m1_to_p3_p4();
+
+    // let dummy_tx2 = sak_types::mock_pour_tc_2();
+
+    let dummy_tx1 = sak_types::mock_pour_tc_1();
 
     let dummy_tx2 = sak_types::mock_pour_tc_2();
 
