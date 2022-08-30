@@ -19,7 +19,7 @@ impl Decoder for UpgradedP2PCodec {
         src: &mut BytesMut,
     ) -> Result<Option<Self::Item>, TrptError> {
         println!(
-            "\ndecoding!! conn_id: {}, src({}): {:?}",
+            "\n23 decoding!! conn_id: {}, src({}): {:?}",
             self.conn_id,
             src.len(),
             src.to_vec()
@@ -32,8 +32,12 @@ impl Decoder for UpgradedP2PCodec {
         let msg_len = if let Some(l) = self.incomplete_msg_len {
             l
         } else {
+            println!("prasing header portion");
+
             parse_header_portion(src, &mut self.in_cipher, &mut self.in_mac)?
         };
+
+        println!("11 msg_len: {}", msg_len);
 
         if src.len() < msg_len as usize {
             println!(
@@ -44,6 +48,7 @@ impl Decoder for UpgradedP2PCodec {
 
             return Ok(None);
         } else {
+            println!("resetting incomplete msg len to none");
             self.incomplete_msg_len = None;
         }
 
