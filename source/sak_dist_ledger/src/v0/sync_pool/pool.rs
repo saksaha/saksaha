@@ -12,8 +12,8 @@ use crate::{DistLedgerEvent, Runtime};
 const SYNC_POOL_CAPACITY: usize = 100;
 
 pub(crate) struct SyncPool {
-    new_blocks: RwLock<HashSet<(BlockHeight, BlockHash)>>,
-    new_tx_hashes: Arc<RwLock<HashSet<TxHash>>>,
+    new_blocks: Arc<RwLock<HashSet<(BlockHeight, BlockHash)>>>,
+    tx_hash_set: Arc<RwLock<HashSet<TxHash>>>,
     tx_map: RwLock<HashMap<TxHash, TxCandidate>>,
     bc_event_tx: Arc<RwLock<Sender<DistLedgerEvent>>>,
 }
@@ -22,7 +22,7 @@ impl SyncPool {
     pub(crate) fn new(
         bc_event_tx: Arc<RwLock<Sender<DistLedgerEvent>>>,
     ) -> SyncPool {
-        let new_tx_hashes = {
+        let tx_hash_set = {
             let s = HashSet::new();
 
             Arc::new(RwLock::new(s))
@@ -31,7 +31,7 @@ impl SyncPool {
         let new_blocks = {
             let s = HashSet::new();
 
-            RwLock::new(s)
+            Arc::new(RwLock::new(s))
         };
 
         let tx_map = {
@@ -41,7 +41,7 @@ impl SyncPool {
 
         SyncPool {
             new_blocks,
-            new_tx_hashes,
+            tx_hash_set,
             tx_map,
             bc_event_tx,
         }
@@ -55,7 +55,7 @@ impl SyncPool {
     }
 
     pub(crate) async fn drain_new_tx_hashes(&self) -> Vec<String> {
-        let mut new_tx_hashes_lock = self.new_tx_hashes.write().await;
+        let mut new_tx_hashes_lock = self.tx_hash_set.write().await;
 
         let v: Vec<_> = new_tx_hashes_lock.drain().collect();
         v
@@ -83,13 +83,44 @@ impl SyncPool {
         &self,
         block: &Block,
     ) -> Result<(), String> {
-        let mut new_blocks_lock = self.new_blocks.write().await;
-
         let height = block.block_height;
         let block_hash = block.get_block_hash();
 
-        new_blocks_lock.insert((height.to_owned(), block_hash.to_owned()));
+        {
+            let mut new_blocks_lock = self.new_blocks.write().await;
+            new_blocks_lock.insert((height.to_owned(), block_hash.to_owned()));
+        }
 
+        let new_blokcs_len_check = self.new_blocks.read().await.len();
+
+        if new_blokcs_len_check == 1 {
+            let new_blocks_set = self.new_blocks.clone();
+
+            let bc_event_tx = self.bc_event_tx.clone();
+
+            tokio::spawn(async move {
+                log::debug!("[! Block] Timer on! suspend 4 seconds");
+                tokio::time::sleep(Duration::from_secs(4)).await;
+
+                let tx_hashes = new_blocks_set.write().await.drain().collect();
+
+                let ev = DistLedgerEvent::NewBlocks(tx_hashes);
+
+                match bc_event_tx.write().await.send(ev.clone()) {
+                    Ok(_) => {
+                        debug!("Ledger event queued, ev: {}", ev.to_string());
+                    }
+                    Err(err) => {
+                        warn!(
+                            "No active tx sync routine receiver handle to \
+                                        sync tx event, \
+                                    err: {}",
+                            err
+                        );
+                    }
+                };
+            });
+        }
         Ok(())
     }
 
@@ -97,6 +128,12 @@ impl SyncPool {
         &self,
         tc: TxCandidate,
     ) -> Result<TxHash, String> {
+        // for test,
+        log::debug!(
+            "[! ] new tx_candidate has been inserted!, hash: {:?}",
+            tc.get_tx_hash()
+        );
+
         {
             // Check if tx is valid ctr deploying type
             // let (tx_ctr_op, tx_coin_op) = tc.get_tx_op();
@@ -128,16 +165,29 @@ impl SyncPool {
             tx_map_lock.insert(tx_hash.clone(), tc);
         };
 
-        let mut new_tx_hashes_lock = self.new_tx_hashes.write().await;
-        new_tx_hashes_lock.insert(tx_hash.to_string());
+        {
+            let mut tx_hashes_set_lock = self.tx_hash_set.write().await;
+            tx_hashes_set_lock.insert(tx_hash.to_string());
+        }
 
-        if new_tx_hashes_lock.len() == 1 {
-            let new_tx_hashes = self.new_tx_hashes.clone();
+        // ----------------------------------------------------------
+
+        // log::warn!("[!] new_tx_hashes length: {:?}", tx_hashes_set_lock.len());
+        // log::warn!("[!] new_tx_hashes: {:#?}", tx_hashes_set_lock);
+
+        let tx_hash_len_check = self.tx_hash_set.read().await.len();
+
+        if tx_hash_len_check == 1 {
+            let new_tx_hashes = self.tx_hash_set.clone();
 
             let bc_event_tx = self.bc_event_tx.clone();
 
             tokio::spawn(async move {
-                tokio::time::sleep(Duration::from_secs(2000)).await;
+                log::debug!(
+                    "[! Tx] Timer on! suspend 4 seconds, new_tx_hashes: {:?}",
+                    new_tx_hashes
+                );
+                tokio::time::sleep(Duration::from_secs(4)).await;
 
                 let tx_hashes = new_tx_hashes.write().await.drain().collect();
 

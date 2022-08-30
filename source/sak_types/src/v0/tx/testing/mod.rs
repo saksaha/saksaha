@@ -412,13 +412,27 @@ impl PourTxCandidate {
 
     pub fn new_dummy_5(cm: [u8; 32]) -> PourTxCandidate {
         PourTxCandidate::new(
-            String::from("created_at_4"),
-            vec![44, 44, 44],
-            String::from("author_sig_4"),
-            Some(String::from("ctr_addr_4")),
-            vec![44, 44, 44],
+            String::from("created_at_5"),
+            vec![55, 55, 55],
+            String::from("author_sig_5"),
+            Some(String::from("ctr_addr_5")),
+            vec![55, 55, 55],
             U8Array::new_empty_32(),
             cm,
+            U8Array::new_empty_32(),
+            U8Array::new_empty_32(),
+        )
+    }
+
+    pub fn new_dummy_6() -> PourTxCandidate {
+        PourTxCandidate::new(
+            format!("{:?}", std::time::Instant::now()),
+            vec![66, 66, 66],
+            String::from("author_sig_6"),
+            Some(String::from("ctr_addr_6")),
+            vec![66, 66, 66],
+            U8Array::new_empty_32(),
+            U8Array::new_empty_32(),
             U8Array::new_empty_32(),
             U8Array::new_empty_32(),
         )

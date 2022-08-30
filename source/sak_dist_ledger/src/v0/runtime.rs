@@ -79,37 +79,37 @@ struct TxSyncRoutine {
 
 impl TxSyncRoutine {
     pub(crate) async fn run(&self) {
-        loop {
-            let time_since = SystemTime::now();
+        // loop {
+        //     let time_since = SystemTime::now();
 
-            let new_tx_hashes = self.sync_pool.drain_new_tx_hashes().await;
+        //     let new_tx_hashes = self.sync_pool.drain_new_tx_hashes().await;
 
-            if new_tx_hashes.len() > 0 {
-                match self
-                    .bc_event_tx
-                    .clone()
-                    .write()
-                    .await
-                    .send(DistLedgerEvent::TxPoolStat(new_tx_hashes))
-                {
-                    Ok(_) => (),
-                    Err(err) => {
-                        warn!(
-                            "No active tx sync routine receiver handle to \
-                                sync tx event, \
-                            err: {}",
-                            err
-                        );
-                    }
-                };
-            }
+        //     if new_tx_hashes.len() > 0 {
+        //         match self
+        //             .bc_event_tx
+        //             .clone()
+        //             .write()
+        //             .await
+        //             .send(DistLedgerEvent::TxPoolStat(new_tx_hashes))
+        //         {
+        //             Ok(_) => (),
+        //             Err(err) => {
+        //                 warn!(
+        //                     "No active tx sync routine receiver handle to \
+        //                         sync tx event, \
+        //                     err: {}",
+        //                     err
+        //                 );
+        //             }
+        //         };
+        //     }
 
-            sak_utils_time::wait_until_min_interval(
-                time_since,
-                self.tx_sync_interval,
-            )
-            .await;
-        }
+        //     sak_utils_time::wait_until_min_interval(
+        //         time_since,
+        //         self.tx_sync_interval,
+        //     )
+        //     .await;
+        // }
     }
 }
 
@@ -121,33 +121,33 @@ struct BlockSyncRoutine {
 
 impl BlockSyncRoutine {
     pub(crate) async fn run(&self) {
-        loop {
-            let time_since = SystemTime::now();
+        // loop {
+        //     let time_since = SystemTime::now();
 
-            let new_blocks = self.sync_pool.drain_new_blocks().await;
+        //     let new_blocks = self.sync_pool.drain_new_blocks().await;
 
-            if new_blocks.len() > 0 {
-                let ev = DistLedgerEvent::NewBlocks(new_blocks);
-                let ev_str = ev.to_string();
+        //     if new_blocks.len() > 0 {
+        //         let ev = DistLedgerEvent::NewBlocks(new_blocks);
+        //         let ev_str = ev.to_string();
 
-                match self.bc_event_tx.clone().write().await.send(ev) {
-                    Ok(_) => {
-                        debug!("Ledger event queued, ev: {}", ev_str);
-                    }
-                    Err(err) => {
-                        error!(
-                            "Could not queue a new ledger event, err: {}",
-                            err
-                        );
-                    }
-                }
-            }
+        //         match self.bc_event_tx.clone().write().await.send(ev) {
+        //             Ok(_) => {
+        //                 debug!("Ledger event queued, ev: {}", ev_str);
+        //             }
+        //             Err(err) => {
+        //                 error!(
+        //                     "Could not queue a new ledger event, err: {}",
+        //                     err
+        //                 );
+        //             }
+        //         }
+        //     }
 
-            sak_utils_time::wait_until_min_interval(
-                time_since,
-                self.block_sync_interval,
-            )
-            .await;
-        }
+        //     sak_utils_time::wait_until_min_interval(
+        //         time_since,
+        //         self.block_sync_interval,
+        //     )
+        //     .await;
+        // }
     }
 }

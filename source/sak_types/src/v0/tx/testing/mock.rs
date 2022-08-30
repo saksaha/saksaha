@@ -344,3 +344,9 @@ pub fn mock_pour_tc_variant_cm(cm: [u8; 32]) -> TxCandidate {
 
     TxCandidate::Pour(tx_candidate)
 }
+
+pub fn mock_pour_tc_variant_created_at() -> TxCandidate {
+    let tx_candidate = PourTxCandidate::new_dummy_6();
+
+    TxCandidate::Pour(tx_candidate)
+}
