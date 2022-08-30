@@ -1,7 +1,7 @@
 use super::utils;
 use super::CmIdx;
-use crate::{Cm, PourTxCandidate, TxCandidate};
-use crate::{Tx, TxCtrOp, TxType, WASM_MAGIC_NUMBER};
+use crate::Cm;
+use crate::{Tx, TxCtrOp, TxType};
 use serde::{Deserialize, Serialize};
 use type_extension::U8Arr32;
 
@@ -11,20 +11,14 @@ pub struct MintTx {
     pub tx_candidate: MintTxCandidate,
 
     //
-    // pub tx_height: u128,
-    pub cm_idx_1: CmIdx,
+    pub cm_idxes: Vec<CmIdx>,
 }
 
 impl MintTx {
-    pub fn new(
-        tx_candidate: MintTxCandidate,
-        // tx_height: u128,
-        cm_idx_1: CmIdx,
-    ) -> MintTx {
+    pub fn new(tx_candidate: MintTxCandidate, cm_idxes: Vec<CmIdx>) -> MintTx {
         MintTx {
             tx_candidate,
-            // tx_height,
-            cm_idx_1,
+            cm_idxes,
         }
     }
 
@@ -32,10 +26,16 @@ impl MintTx {
         self.tx_candidate
     }
 
-    pub fn get_cm_pairs(&self) -> Vec<(CmIdx, Cm)> {
+    pub fn get_cm_pairs(&self) -> Vec<(&CmIdx, &Cm)> {
         let cms = self.tx_candidate.get_cms();
 
-        vec![(self.cm_idx_1, cms[0])]
+        let res = self
+            .cm_idxes
+            .iter()
+            .zip(cms.iter())
+            .collect::<Vec<(&CmIdx, &Cm)>>();
+
+        res
     }
 }
 
@@ -43,8 +43,8 @@ impl std::fmt::Display for MintTx {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "MintTx[cm_idx_1: {}, tx_candidate:{}]",
-            self.cm_idx_1, self.tx_candidate,
+            "MintTx[cm_idxes: {:?}, tx_candidate:{}]",
+            self.cm_idxes, self.tx_candidate,
         )
     }
 }
@@ -65,7 +65,10 @@ pub struct MintTxCandidate {
     pub ctr_addr: String,
 
     //
-    pub cm_1: U8Arr32,
+    pub cms: Vec<Cm>,
+
+    //
+    pub cm_count: u128,
 
     //
     pub v: U8Arr32,
@@ -86,7 +89,8 @@ impl MintTxCandidate {
         data: Vec<u8>,
         author_sig: String,
         ctr_addr: Option<String>,
-        cm_1: U8Arr32,
+        cms: Vec<Cm>,
+        cm_count: u128,
         v: U8Arr32,
         k: U8Arr32,
         s: U8Arr32,
@@ -107,7 +111,8 @@ impl MintTxCandidate {
             data,
             author_sig,
             ctr_addr,
-            cm_1,
+            cms,
+            cm_count,
             v,
             k,
             s,
@@ -128,18 +133,15 @@ impl MintTxCandidate {
     }
 
     pub fn get_cms(&self) -> Vec<Cm> {
-        vec![self.cm_1]
+        self.cms
     }
 
     pub fn upgrade(
         self,
         // tx_height: u128,
-        cm_idx_1: CmIdx,
+        cm_idx: CmIdx,
     ) -> Tx {
-        Tx::Mint(MintTx::new(
-            self, // tx_height,
-            cm_idx_1,
-        ))
+        Tx::Mint(MintTx::new(self, vec![cm_idx]))
     }
 }
 
@@ -154,12 +156,13 @@ impl std::fmt::Display for MintTxCandidate {
         write!(
             f,
             "MintTx[created_at: {}, data: {:?}, author_sig: {}, ctr_addr: {},\
-            cm: {:?}, v: {:?}, k: {:?}, s: {:?}]",
+            cms: {:?}, cm_count: {}, v: {:?}, k: {:?}, s: {:?}]",
             self.created_at,
             data,
             self.author_sig,
             self.ctr_addr,
-            self.cm_1,
+            self.cms,
+            self.cm_count,
             self.v,
             self.k,
             self.s,

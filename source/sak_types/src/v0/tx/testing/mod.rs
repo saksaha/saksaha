@@ -4,7 +4,6 @@ use super::TxCandidate;
 use crate::{MintTxCandidate, PourTxCandidate, Tx, WASM_MAGIC_NUMBER};
 pub use mock::*;
 use sak_crypto::Hasher;
-use sak_crypto::Scalar;
 use sak_crypto::ScalarExt;
 use type_extension::U8Arr32;
 use type_extension::U8Array;
@@ -89,11 +88,11 @@ impl Tx {
     pub fn new_dummy_valid_pour(
         pi: Vec<u8>,
         sn_1: [u8; 32],
-        cm_1: [u8; 32],
-        cm_2: [u8; 32],
+        cms: Vec<[u8; 32]>,
+        cm_count: u128,
         merkle_rt: [u8; 32],
     ) -> Tx {
-        let c = new_dummy_valid_pour(pi, sn_1, cm_1, cm_2, merkle_rt);
+        let c = new_dummy_valid_pour(pi, sn_1, cms, cm_count, merkle_rt);
 
         c.upgrade(0)
     }
@@ -101,7 +100,8 @@ impl Tx {
 
 impl MintTxCandidate {
     pub fn new_dummy_custom(
-        cm: [u8; 32],
+        cms: Vec<[u8; 32]>,
+        cm_count: u128,
         v: [u8; 32],
         k: [u8; 32],
         s: [u8; 32],
@@ -113,7 +113,8 @@ impl MintTxCandidate {
             validator_wasm,
             String::from("author_sig_mint_custom_1"),
             Some(VALIDATOR_CTR_ADDR.to_string()),
-            cm,
+            cms,
+            cm_count,
             v,
             k,
             s,
@@ -146,7 +147,8 @@ impl MintTxCandidate {
             validator_wasm,
             String::from("author_sig_mint_1"),
             Some(VALIDATOR_CTR_ADDR.to_string()),
-            cm.to_bytes(),
+            vec![cm.to_bytes()],
+            vec![cm.to_bytes()].len() as u128,
             v,
             k.to_bytes(),
             s,
@@ -175,7 +177,8 @@ impl MintTxCandidate {
             vec![2],
             String::from("author_sig_mint_2"),
             None,
-            cm.to_bytes(),
+            vec![cm.to_bytes()],
+            vec![cm.to_bytes()].len() as u128,
             v,
             k.to_bytes(),
             s,
@@ -208,7 +211,8 @@ impl MintTxCandidate {
             vec![3],
             String::from("author_sig_mint_3"),
             None,
-            cm.to_bytes(),
+            vec![cm.to_bytes()],
+            vec![cm.to_bytes()].len() as u128,
             v,
             k.to_bytes(),
             s,
@@ -241,7 +245,8 @@ impl MintTxCandidate {
             vec![4],
             String::from("author_sig_mint_4"),
             None,
-            cm.to_bytes(),
+            vec![cm.to_bytes()],
+            vec![cm.to_bytes()].len() as u128,
             v,
             k.to_bytes(),
             s,
@@ -277,7 +282,8 @@ impl MintTxCandidate {
             contract_data,
             String::from("author_sig_mint_3"),
             Some(ctrt_addr),
-            cm.to_bytes(),
+            vec![cm.to_bytes()],
+            vec![cm.to_bytes()].len() as u128,
             v,
             k.to_bytes(),
             s,
@@ -362,8 +368,8 @@ impl PourTxCandidate {
             Some(String::from("ctr_addr_1")),
             vec![11, 11, 11],
             U8Array::new_empty_32(),
-            U8Array::new_empty_32(),
-            U8Array::new_empty_32(),
+            vec![U8Array::new_empty_32(), U8Array::new_empty_32()],
+            2,
             U8Array::new_empty_32(),
         )
     }
@@ -376,8 +382,8 @@ impl PourTxCandidate {
             Some(String::from("ctr_addr_2")),
             vec![22, 22, 22],
             U8Array::new_empty_32(),
-            U8Array::new_empty_32(),
-            U8Array::new_empty_32(),
+            vec![U8Array::new_empty_32(), U8Array::new_empty_32()],
+            2,
             U8Array::new_empty_32(),
         )
     }
@@ -390,8 +396,8 @@ impl PourTxCandidate {
             Some(String::from("ctr_addr_3")),
             vec![22, 22, 22],
             U8Array::new_empty_32(),
-            U8Array::new_empty_32(),
-            U8Array::new_empty_32(),
+            vec![U8Array::new_empty_32(), U8Array::new_empty_32()],
+            2,
             U8Array::new_empty_32(),
         )
     }
@@ -404,8 +410,8 @@ impl PourTxCandidate {
             Some(String::from("ctr_addr_4")),
             vec![44, 44, 44],
             U8Array::new_empty_32(),
-            U8Array::new_empty_32(),
-            U8Array::new_empty_32(),
+            vec![U8Array::new_empty_32(), U8Array::new_empty_32()],
+            2,
             U8Array::new_empty_32(),
         )
     }
@@ -418,8 +424,8 @@ impl PourTxCandidate {
             Some(String::from("ctr_addr_4")),
             vec![44, 44, 44],
             U8Array::new_empty_32(),
-            cm,
-            U8Array::new_empty_32(),
+            vec![cm, U8Array::new_empty_32()],
+            2,
             U8Array::new_empty_32(),
         )
     }
@@ -427,8 +433,8 @@ impl PourTxCandidate {
     pub fn new_dummy_valid(
         pi: Vec<u8>,
         sn_1: [u8; 32],
-        cm_1: [u8; 32],
-        cm_2: [u8; 32],
+        cms: Vec<[u8; 32]>,
+        cm_count: u128,
         merkle_rt: [u8; 32],
     ) -> PourTxCandidate {
         PourTxCandidate::new(
@@ -438,8 +444,8 @@ impl PourTxCandidate {
             Some(String::from("ctr_addr_test")),
             pi,
             sn_1,
-            cm_1,
-            cm_2,
+            cms,
+            cm_count,
             merkle_rt,
         )
     }
@@ -452,8 +458,8 @@ impl PourTxCandidate {
             Some(String::from("ctr_addr_4")),
             vec![44, 44, 44],
             U8Array::new_empty_32(),
-            U8Array::new_empty_32(),
-            U8Array::new_empty_32(),
+            vec![U8Array::new_empty_32(), U8Array::new_empty_32()],
+            2,
             U8Array::new_empty_32(),
         )
     }

@@ -54,7 +54,9 @@ impl LedgerDB {
 
         let ctr_addr = self.get_ctr_addr(tx_hash)?;
 
-        let cm_1 = self.get_cm_1(tx_hash)?.ok_or("cm should exist")?;
+        let cms = self.get_cms(tx_hash)?.ok_or("cms should exist")?;
+
+        let cm_count = self.get_cm_count(tx_hash)?.ok_or("cms should exist")?;
 
         let v = self.get_v(tx_hash)?.ok_or("v should exist")?;
 
@@ -62,23 +64,20 @@ impl LedgerDB {
 
         let s = self.get_s(tx_hash)?.ok_or("s shoudl exist")?;
 
-        // let tx_height = self
-        //     .get_tx_height(tx_hash)?
-        //     .ok_or("tx_height does not exist")?;
+        let mut cm_idxes = vec![];
+        for cm in cms {
+            let cm_idx = self
+                .get_cm_idx_by_cm(&cm)?
+                .ok_or("cm_idx_1 does not exist")?;
 
-        let cm_idx_1 = self
-            .get_cm_idx_by_cm(&cm_1)?
-            .ok_or("cm_idx_1 does not exist")?;
+            cm_idxes.push(cm_idx);
+        }
 
         let tx_candidate = MintTxCandidate::new(
-            created_at, data, author_sig, ctr_addr, cm_1, v, k, s,
+            created_at, data, author_sig, ctr_addr, cms, cm_count, v, k, s,
         );
 
-        let tx = Tx::Mint(MintTx::new(
-            tx_candidate,
-            // tx_height,
-            cm_idx_1,
-        ));
+        let tx = Tx::Mint(MintTx::new(tx_candidate, cm_idxes));
 
         Ok(tx)
     }
@@ -105,39 +104,41 @@ impl LedgerDB {
 
         let sn_1 = self.get_sn_1(tx_hash)?.ok_or("sn_1 should exist")?;
 
-        // let sn_2 = self.get_cm_2(tx_hash)?.ok_or("sn_2 should exist")?;
+        // let cm_1 = self.get_cm_1(tx_hash)?.ok_or("cm_1 should exist")?;
 
-        let cm_1 = self.get_cm_1(tx_hash)?.ok_or("cm_1 should exist")?;
+        // let cm_2 = self.get_cm_2(tx_hash)?.ok_or("cm_2 should exist")?;
 
-        let cm_2 = self.get_cm_2(tx_hash)?.ok_or("cm_2 should exist")?;
+        let cms = self.get_cms(tx_hash)?.ok_or("cms should exist")?;
+
+        let cm_count = self.get_cm_count(tx_hash)?.ok_or("cms should exist")?;
 
         let merkle_rt = self
             .get_prf_merkle_rt(tx_hash)?
             .ok_or("merkle_root should exist")?;
 
         let tx_candidate = PourTxCandidate::new(
-            created_at, data, author_sig, ctr_addr, pi, sn_1, cm_1, cm_2,
+            created_at, data, author_sig, ctr_addr, pi, sn_1, cms, cm_count,
             merkle_rt,
         );
 
-        // let tx_height = self
-        //     .get_tx_height(tx_hash)?
-        //     .ok_or("tx_height does not exist")?;
+        // let cm_idx_1 = self
+        //     .get_cm_idx_by_cm(&cm_1)?
+        //     .ok_or("cm_idx_1 does not exist")?;
 
-        let cm_idx_1 = self
-            .get_cm_idx_by_cm(&cm_1)?
-            .ok_or("cm_idx_1 does not exist")?;
+        // let cm_idx_2 = self
+        //     .get_cm_idx_by_cm(&cm_2)?
+        //     .ok_or("cm_idx_2 does not exist")?;
 
-        let cm_idx_2 = self
-            .get_cm_idx_by_cm(&cm_2)?
-            .ok_or("cm_idx_2 does not exist")?;
+        let mut cm_idxes = vec![];
+        for cm in cms {
+            let cm_idx = self
+                .get_cm_idx_by_cm(&cm)?
+                .ok_or("cm_idx_1 does not exist")?;
 
-        let tx = Tx::Pour(PourTx::new(
-            tx_candidate,
-            // tx_height,
-            cm_idx_1,
-            cm_idx_2,
-        ));
+            cm_idxes.push(cm_idx);
+        }
+
+        let tx = Tx::Pour(PourTx::new(tx_candidate, cm_idxes));
 
         Ok(tx)
     }

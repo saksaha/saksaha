@@ -1,6 +1,6 @@
 use super::TxCandidate;
 use crate::TypesError;
-use crate::{MintTxCandidate, PourTxCandidate, Tx, WASM_MAGIC_NUMBER};
+use crate::{MintTxCandidate, PourTxCandidate};
 use sak_crypto::Hasher;
 use sak_crypto::ScalarExt;
 use sak_crypto::{rand, Scalar};
@@ -247,8 +247,8 @@ pub fn mock_pour_tc_1() -> Result<TxCandidate, TypesError> {
         None,
         pi_serialized,
         sn_1.to_bytes(),
-        cm_1.to_bytes(),
-        cm_2.to_bytes(),
+        vec![cm_1.to_bytes(), cm_2.to_bytes()],
+        2,
         merkle_rt.to_bytes(),
     );
 
@@ -258,12 +258,14 @@ pub fn mock_pour_tc_1() -> Result<TxCandidate, TypesError> {
 }
 
 pub fn mock_mint_tc_custom(
-    cm: U8Arr32,
+    cms: Vec<U8Arr32>,
+    cm_count: u128,
     v: U8Arr32,
     k: U8Arr32,
     s: U8Arr32,
 ) -> TxCandidate {
-    let tx_candidate = MintTxCandidate::new_dummy_custom(cm, v, k, s);
+    let tx_candidate =
+        MintTxCandidate::new_dummy_custom(cms, cm_count, v, k, s);
 
     TxCandidate::Mint(tx_candidate)
 }
@@ -329,12 +331,12 @@ pub fn mock_pour_tc_4() -> TxCandidate {
 pub fn new_dummy_valid_pour(
     pi: Vec<u8>,
     sn_1: [u8; 32],
-    cm_1: [u8; 32],
-    cm_2: [u8; 32],
+    cms: Vec<[u8; 32]>,
+    cm_count: u128,
     merkle_rt: [u8; 32],
 ) -> TxCandidate {
     let tx_candidate =
-        PourTxCandidate::new_dummy_valid(pi, sn_1, cm_1, cm_2, merkle_rt);
+        PourTxCandidate::new_dummy_valid(pi, sn_1, cms, cm_count, merkle_rt);
 
     TxCandidate::Pour(tx_candidate)
 }

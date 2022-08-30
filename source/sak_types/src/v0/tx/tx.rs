@@ -30,8 +30,8 @@ impl Tx {
 
     pub fn get_cm_count(&self) -> usize {
         match &self {
-            Tx::Mint(t) => [&t.tx_candidate.cm_1].len(),
-            Tx::Pour(t) => [&t.tx_candidate.cm_1, &t.tx_candidate.cm_2].len(),
+            Tx::Mint(t) => t.tx_candidate.cms.len(),
+            Tx::Pour(t) => t.tx_candidate.cms.len(),
         }
     }
 
@@ -42,7 +42,7 @@ impl Tx {
         }
     }
 
-    pub fn get_cm_pairs(&self) -> Vec<(CmIdx, Cm)> {
+    pub fn get_cm_pairs(&self) -> Vec<(&CmIdx, &Cm)> {
         match self {
             Tx::Mint(t) => t.get_cm_pairs(),
             Tx::Pour(t) => t.get_cm_pairs(),
