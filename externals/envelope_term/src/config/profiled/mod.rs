@@ -1,5 +1,5 @@
 use super::Config;
-use crate::{EnvelopeError, RPCConfig};
+use crate::EnvelopeError;
 
 pub fn dev_local_1(saksaha_endpoint: String) -> Result<Config, EnvelopeError> {
     let c = Config {

@@ -1,5 +1,5 @@
 use super::utils;
-use crate::envelope::{Actions, AppState, Envelope, View};
+use crate::envelope::{AppState, Envelope, View};
 use tokio::sync::RwLockWriteGuard;
 use tui::backend::Backend;
 use tui::layout::{Alignment, Constraint, Direction, Layout, Rect};

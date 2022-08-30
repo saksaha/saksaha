@@ -1,19 +1,14 @@
-use crate::credential::Credential;
 use crate::inputs::events::Events;
 use crate::inputs::InputEvent;
 // use crate::io::handler::IoAsyncHandler;
 use crate::io::InputMode;
 // use crate::io::IoEvent;
 use crate::views;
-use crate::AppArgs;
 use crate::EnvelopeError;
 use crate::{AppReturn, Envelope};
-use log::error;
-use log::LevelFilter;
 use std::io::Stdout;
 use std::sync::Arc;
 use std::time::Duration;
-use tokio::sync::mpsc;
 use tui::backend::CrosstermBackend;
 use tui::Terminal;
 
@@ -38,23 +33,20 @@ impl UIRoutine {
         loop {
             let mut state = envelope.get_state().write().await;
 
-            // log::info!(
-            //     "is_initialized: {}, view: {:?},",
-            //     state.is_initialized,
-            //     state.view,
-            // );
-
             terminal.draw(|rect| views::draw(rect, &mut state))?;
 
             let result = match events.next().await {
-                InputEvent::Input(key) => match state.input_mode {
-                    InputMode::Normal => {
-                        envelope.handle_normal_key(key, state).await
-                    }
-                    InputMode::Editing => {
-                        envelope.handle_edit_key(key, state).await
-                    }
-                },
+                InputEvent::Input(key) => {
+                    envelope.handle_key_input(key, state).await
+                }
+                // InputEvent::Input(key) => match state.input_mode {
+                //     InputMode::Normal => {
+                //         envelope.handle_normal_key(key, state).await
+                //     }
+                //     InputMode::Editing => {
+                //         envelope.handle_edit_key(key, state).await
+                //     }
+                // },
                 InputEvent::Tick => envelope.update_on_tick().await,
             };
 

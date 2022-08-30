@@ -1,4 +1,6 @@
-use crate::envelope::{Actions, AppState, Envelope};
+use std::borrow::Cow;
+
+use crate::envelope::{actions::Action, AppState, Envelope};
 use crate::io::InputMode;
 use tokio::sync::RwLockWriteGuard;
 use tui::backend::Backend;
@@ -30,7 +32,86 @@ pub(crate) fn draw_open_ch<'a, B>(
 where
     B: Backend,
 {
+    let two_birds: [String; 4] = [
+        //
+        String::from(
+            r#"
+               .---.          .-"-.        
+              /   0_0        / 0 0 \       
+              \_  (__\       \_ v _/       
+              //   \\        //   \\       
+             ((     ))      ((     ))      
+       =======""===""========""===""=======
+                |||            |||         
+                 |              |          
+"#,
+        ),
+        String::from(
+            r#"
+               .---.          .-"-.        
+              / 0 0 \        / 0 0 \       
+              \_ v _/        \_ v _/       
+              //   \\        //   \\       
+             ((     ))      ((     ))      
+       =======""===""========""===""=======
+                |||            |||         
+                 |              |          
+"#,
+        ),
+        String::from(
+            r#"
+               .---.          .-"-.        
+              /0_0  \        / 0 0 \       
+             /___) _/        \_ v _/       
+              //   \\        //   \\       
+             ((     ))      ((     ))      
+       =======""===""========""===""=======
+                |||            |||         
+                 |              |          
+"#,
+        ),
+        String::from(
+            r#"
+               .---.          .-"-.        
+              / 0 0 \        / 0 0 \       
+              \_ v _/        \_ v _/       
+              //   \\        //   \\       
+             ((     ))      ((     ))      
+       =======""===""========""===""=======
+                |||            |||         
+                 |              |           "#,
+        ),
+    ];
+
+    let content: [Vec<Spans>; 4] = [
+        two_birds[0]
+            .clone()
+            .lines()
+            .map(|l| Spans::from(Span::raw(l.to_owned())))
+            .collect(),
+        two_birds[1]
+            .clone()
+            .lines()
+            .map(|l| Spans::from(Span::raw(l.to_owned())))
+            .collect(),
+        two_birds[2]
+            .clone()
+            .lines()
+            .map(|l| Spans::from(Span::raw(l.to_owned())))
+            .collect(),
+        two_birds[3]
+            .clone()
+            .lines()
+            .map(|l| Spans::from(Span::raw(l.to_owned())))
+            .collect(),
+    ];
+
     // let state = app.get_state().read().await;
+    if state.image_count < 3 {
+        state.image_count += 1;
+    } else {
+        state.image_count = 0;
+    }
 
     let (msg, style) = match state.input_mode {
         InputMode::Normal => (
@@ -85,18 +166,10 @@ where
         );
 
     let input_returned = {
-        let content = vec![Spans::from(Span::raw(format!(
-            "Her pk: {}",
-            state.input_returned
-        )))];
+        let v =
+            vec![ListItem::new(content[state.image_count as usize].clone())];
 
-        let v = vec![ListItem::new(content)];
-
-        List::new(v).block(
-            Block::default()
-                .borders(Borders::ALL)
-                .title("Open channel progress"),
-        )
+        List::new(v).block(Block::default().borders(Borders::ALL))
     };
 
     match state.input_mode {
@@ -119,26 +192,33 @@ where
 }
 
 pub(crate) fn draw_tabs<'a>(state: &'a AppState) -> Tabs {
-    let labels = ["Channels", "Open channel", "Chat (#)"]
-        .iter()
-        .map(|t| {
-            let (first, rest) = t.split_at(3);
-            Spans::from(vec![
-                Span::styled(first, Style::default().fg(Color::Yellow)),
-                Span::styled(rest, Style::default().fg(Color::Green)),
-            ])
-        })
-        .collect();
+    let chat_tab_name = format!("Chat #{}", state.selected_ch_id);
+
+    let labels = [
+        String::from("Channels [1]"),
+        String::from("Open channel [2]"),
+        chat_tab_name,
+    ]
+    .iter()
+    .map(|t| {
+        let tab = t.clone();
+        if tab == format!("{}", state.view) {
+            Spans::from(vec![Span::styled(
+                tab,
+                Style::default().fg(Color::Yellow),
+            )])
+        } else {
+            Spans::from(vec![Span::styled(
+                tab,
+                Style::default().fg(Color::White),
+            )])
+        }
+    })
+    .collect();
 
     let tabs = Tabs::new(labels)
         .block(Block::default().borders(Borders::ALL).title("Tabs"))
-        .select(0)
-        .style(Style::default().fg(Color::Cyan))
-        .highlight_style(
-            Style::default()
-                .add_modifier(Modifier::BOLD)
-                .bg(Color::Black),
-        );
+        .style(Style::default().fg(Color::Cyan));
 
     tabs
 }
@@ -213,38 +293,38 @@ pub(crate) fn draw_ch_list<'a>(state: &AppState) -> List<'a> {
         .highlight_symbol(">> ")
 }
 
-pub(crate) fn draw_help(actions: &Actions) -> Paragraph {
-    let key_style = Style::default().fg(Color::LightCyan);
-    let help_style = Style::default().fg(Color::Gray);
+// pub(crate) fn draw_help(actions: &Actions) -> Paragraph {
+//     let key_style = Style::default().fg(Color::LightCyan);
+//     let help_style = Style::default().fg(Color::Gray);
 
-    let mut v = vec![];
-    for action in actions.actions().iter() {
-        let mut first = true;
-        for key in action.keys() {
-            let help = if first {
-                first = false;
-                action.to_string()
-            } else {
-                action.to_string()
-            };
+//     let mut v = vec![];
+//     for action in actions.actions().iter() {
+//         let mut first = true;
+//         for key in action.keys() {
+//             let help = if first {
+//                 first = false;
+//                 action.to_string()
+//             } else {
+//                 action.to_string()
+//             };
 
-            v.push(Span::styled(key.to_string() + " ", key_style));
-            v.push(Span::styled(help, help_style));
-            v.push(Span::from(" / "));
-        }
-    }
+//             v.push(Span::styled(key.to_string() + " ", key_style));
+//             v.push(Span::styled(help, help_style));
+//             v.push(Span::from(" / "));
+//         }
+//     }
 
-    Paragraph::new(Spans::from(v))
-        .style(Style::default())
-        .alignment(Alignment::Left)
-        .block(
-            Block::default()
-                .title("Shortcuts")
-                .borders(Borders::ALL)
-                .style(Style::default().fg(Color::White))
-                .border_type(BorderType::Plain),
-        )
-}
+//     Paragraph::new(Spans::from(v))
+//         .style(Style::default())
+//         .alignment(Alignment::Left)
+//         .block(
+//             Block::default()
+//                 .title("Shortcuts")
+//                 .borders(Borders::ALL)
+//                 .style(Style::default().fg(Color::White))
+//                 .border_type(BorderType::Plain),
+//         )
+// }
 
 pub(crate) fn draw_logs<'a>() -> TuiLoggerWidget<'a> {
     TuiLoggerWidget::default()
@@ -366,7 +446,7 @@ where
                 // Put cursor past the end of the input text
                 chunks.x + state.input_text.width() as u16 + 1,
                 // Move one line down, from the border to the input line
-                chunks.height,
+                chunks.bottom() - 2,
             )
         }
     }

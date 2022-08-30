@@ -144,7 +144,6 @@ pub(crate) async fn enter_in_chat(
     ctx: Arc<DispatcherContext>,
 ) -> Result<(), EnvelopeError> {
     let selected_ch_id = state.selected_ch_id.clone();
-    let acc_addr = ctx.credential.acc_addr.clone();
 
     if selected_ch_id != String::default() {
         state.chat_input = state.input_text.drain(..).collect();
@@ -180,7 +179,7 @@ pub(crate) async fn enter_in_chat(
     Ok(())
 }
 
-async fn get_balance(
+pub async fn get_balance(
     wallet_endpoint: String,
     acc_addr: String,
 ) -> Result<JsonResponse<GetBalanceResponse>, EnvelopeError> {
@@ -189,7 +188,7 @@ async fn get_balance(
     Ok(resp)
 }
 
-async fn request_ch_list(
+pub async fn request_ch_list(
     saksaha_endpoint: String,
     dst_pk: String,
 ) -> Result<JsonResponse<QueryCtrResponse>, EnvelopeError> {
@@ -208,7 +207,7 @@ async fn request_ch_list(
     Ok(resp)
 }
 
-async fn get_messages(
+pub async fn get_messages(
     saksaha_endpoint: String,
     ch_id: String,
 ) -> Result<JsonResponse<QueryCtrResponse>, EnvelopeError> {

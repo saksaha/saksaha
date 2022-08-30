@@ -1,6 +1,6 @@
 use super::context::DispatcherContext;
 use crate::{
-    envelope::{Action, AppState, ChannelState, View},
+    envelope::{Action, AppState, ChannelState, ScrollMovement, View},
     io::InputMode,
     EnvelopeError,
 };
@@ -28,8 +28,10 @@ impl Reducer {
             Action::ShowOpenCh => show_open_ch(state),
             Action::ShowChat => show_chat(state),
             Action::ShowChList => show_ch_list(state),
-            Action::Down => down(state),
-            Action::Up => up(state),
+            Action::DownCh => down_ch(state),
+            Action::UpCh => up_ch(state),
+            Action::DownChat => messages_scroll(state, ScrollMovement::Down),
+            Action::UpChat => messages_scroll(state, ScrollMovement::Up),
             Action::UpdateBalanceSuccess(data) => update_balance(state, data),
             Action::GetChList(data) => get_ch_list(state, data, ctx)?,
             Action::GetMessages(data) => get_messages(state, data, ctx)?,
@@ -93,7 +95,7 @@ fn update_balance<'a>(mut state: RwLockWriteGuard<'a, AppState>, data: u64) {
     }
 }
 
-fn down<'a>(mut state: RwLockWriteGuard<'a, AppState>) {
+fn down_ch<'a>(mut state: RwLockWriteGuard<'a, AppState>) {
     let i = match state.ch_list_state.selected() {
         Some(i) => {
             if i >= state.ch_list.len() - 1 {
@@ -108,7 +110,7 @@ fn down<'a>(mut state: RwLockWriteGuard<'a, AppState>) {
     state.ch_list_state.select(Some(i));
 }
 
-fn up<'a>(mut state: RwLockWriteGuard<'a, AppState>) {
+fn up_ch<'a>(mut state: RwLockWriteGuard<'a, AppState>) {
     let i = match state.ch_list_state.selected() {
         Some(i) => {
             if i == 0 {
@@ -120,6 +122,26 @@ fn up<'a>(mut state: RwLockWriteGuard<'a, AppState>) {
         None => 0,
     };
     state.ch_list_state.select(Some(i));
+}
+
+fn messages_scroll<'a>(
+    mut state: RwLockWriteGuard<'a, AppState>,
+    movement: ScrollMovement,
+) {
+    log::info!("{}", state.scroll_messages_view);
+    match movement {
+        ScrollMovement::Up => {
+            if state.scroll_messages_view > 0 {
+                state.scroll_messages_view -= 1;
+            }
+        }
+        ScrollMovement::Down => {
+            state.scroll_messages_view += 1;
+        }
+        ScrollMovement::Start => {
+            state.scroll_messages_view = 0;
+        }
+    }
 }
 
 fn get_ch_list<'a>(
