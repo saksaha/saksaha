@@ -2,7 +2,7 @@ use crate::SaksahaSDKError;
 use hyper::{Body, Client, Method, Request, Uri};
 use log::warn;
 use sak_contract_std::{CtrCallType, CtrRequest, RequestArgs};
-use sak_crypto::{Bls12, Circuit, Hasher, Proof, Scalar, ScalarExt};
+use sak_crypto::{Bls12, Scalar, ScalarExt};
 use sak_proofs::{
     MerkleTree, NewCoin, OldCoin, Path, ProofError, CM_TREE_DEPTH,
 };

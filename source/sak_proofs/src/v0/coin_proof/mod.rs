@@ -2,7 +2,7 @@ mod circuits;
 mod coin;
 mod proof;
 
-pub(crate) use circuits::*;
+pub use circuits::*;
 pub use coin::*;
 
 pub const CM_TREE_DEPTH: u32 = 4;

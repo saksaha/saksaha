@@ -2,8 +2,8 @@ use crate::{CtrStateUpdate, DistLedgerApis, LedgerError, MerkleUpdate};
 use colored::Colorize;
 use log::{debug, error, info, warn};
 use sak_contract_std::{CtrCallType, CtrRequest, Storage, ERROR_PLACEHOLDER};
-use sak_crypto::{Bls12, Hasher, Proof, ScalarExt};
-use sak_proofs::CoinProof;
+use sak_crypto::{Bls12, ScalarExt};
+use sak_proofs::{CoinProof, Hasher, Proof};
 use sak_types::{
     Block, BlockCandidate, CmIdx, MintTxCandidate, PourTxCandidate, Tx,
     TxCandidate, TxCtrOp,

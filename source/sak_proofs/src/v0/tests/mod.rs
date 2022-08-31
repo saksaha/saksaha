@@ -1,2 +1,1 @@
-mod benchmark;
 mod coin;

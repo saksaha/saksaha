@@ -4,9 +4,9 @@ use crate::Sn;
 use crate::TxHash;
 use crate::TypesError;
 use colored::Colorize;
-use sak_crypto::Hasher;
 use sak_crypto::Scalar;
 use sak_crypto::ScalarExt;
+use sak_proofs::Hasher;
 use sak_proofs::NewCoin;
 use type_extension::U8Array;
 
