@@ -88,12 +88,13 @@ impl MintTxCandidate {
         author_sig: String,
         ctr_addr: Option<String>,
         cms: Vec<Cm>,
-        cm_count: u128,
+        // cm_count: u128,
         v: U8Arr32,
         k: U8Arr32,
         s: U8Arr32,
     ) -> MintTxCandidate {
         let ctr_addr = ctr_addr.unwrap_or(String::from(""));
+        let cm_count = cms.len() as u128;
 
         let hashable_items = vec![
             created_at.as_bytes(),

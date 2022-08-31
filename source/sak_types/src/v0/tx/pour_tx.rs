@@ -101,10 +101,11 @@ impl PourTxCandidate {
         pi: Vec<u8>,
         sn_1: U8Arr32,
         cms: Vec<Cm>,
-        cm_count: u128,
+        // cm_count: u128,
         merkle_rt: U8Arr32,
     ) -> PourTxCandidate {
         let ctr_addr = ctr_addr.unwrap_or(String::from(""));
+        let cm_count = cms.len() as u128;
 
         let hashable_items = vec![
             created_at.as_bytes(),

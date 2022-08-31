@@ -1,12 +1,10 @@
 use crate::SaksahaSDKError;
 use hyper::{Body, Client, Method, Request, Uri};
-use log::warn;
 use sak_contract_std::{CtrCallType, CtrRequest, RequestArgs};
-use sak_crypto::{Bls12, Circuit, Hasher, Proof, Scalar, ScalarExt};
-use sak_proofs::{
-    MerkleTree, NewCoin, OldCoin, Path, ProofError, CM_TREE_DEPTH,
+use sak_proofs::CM_TREE_DEPTH;
+use sak_rpc_interface::{
+    JsonRequest, JsonResponse, SendMintTxRequest, SendPourTxRequest,
 };
-use sak_rpc_interface::{JsonRequest, JsonResponse};
 use sak_types::{Cm, CmIdx, Tx};
 use serde::{Deserialize, Serialize};
 use std::time;
@@ -33,91 +31,92 @@ pub fn new_empty_32_temp() -> [u8; 32] {
     ]
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct SendPourTxRequest {
-    created_at: String,
-    #[serde(with = "serde_bytes")]
-    data: Vec<u8>,
-    author_sig: String,
-    ctr_addr: Option<String>,
-    #[serde(with = "serde_bytes")]
-    pi: Vec<u8>,
-    sn_1: [u8; 32],
-    cm_1: [u8; 32],
-    cm_2: [u8; 32],
-    merkle_rt: [u8; 32],
-}
+// #[derive(Serialize, Deserialize, Debug)]
+// pub struct SendPourTxRequest {
+//     created_at: String,
+//     #[serde(with = "serde_bytes")]
+//     data: Vec<u8>,
+//     author_sig: String,
+//     ctr_addr: Option<String>,
+//     #[serde(with = "serde_bytes")]
+//     pi: Vec<u8>,
+//     sn_1: [u8; 32],
+//     cm_1: [u8; 32],
+//     cm_2: [u8; 32],
+//     merkle_rt: [u8; 32],
+// }
 
-impl SendPourTxRequest {
-    pub fn new(
-        created_at: String,
-        data: Vec<u8>,
-        author_sig: String,
-        ctr_addr: Option<String>,
-        pi: Vec<u8>,
-        sn_1: [u8; 32],
-        // sn_2: [u8; 32],
-        cm_1: [u8; 32],
-        cm_2: [u8; 32],
-        merkle_rt: [u8; 32],
-    ) -> SendPourTxRequest {
-        SendPourTxRequest {
-            created_at,
-            data,
-            author_sig,
-            ctr_addr,
-            pi,
-            sn_1,
-            // sn_2,
-            cm_1,
-            cm_2,
-            merkle_rt,
-        }
-    }
-}
+// impl SendPourTxRequest {
+//     pub fn new(
+//         created_at: String,
+//         data: Vec<u8>,
+//         author_sig: String,
+//         ctr_addr: Option<String>,
+//         pi: Vec<u8>,
+//         sn_1: [u8; 32],
+//         // sn_2: [u8; 32],
+//         cm_1: [u8; 32],
+//         cm_2: [u8; 32],
+//         merkle_rt: [u8; 32],
+//     ) -> SendPourTxRequest {
+//         SendPourTxRequest {
+//             created_at,
+//             data,
+//             author_sig,
+//             ctr_addr,
+//             pi,
+//             sn_1,
+//             // sn_2,
+//             cm_1,
+//             cm_2,
+//             merkle_rt,
+//         }
+//     }
+// }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct SendMintTxRequest {
-    created_at: String,
-    #[serde(with = "serde_bytes")]
-    data: Vec<u8>,
-    author_sig: String,
-    ctr_addr: Option<String>,
-    cm: [u8; 32],
-    v: [u8; 32],
-    k: [u8; 32],
-    s: [u8; 32],
-}
+// #[derive(Serialize, Deserialize, Debug)]
+// pub struct SendMintTxRequest {
+//     created_at: String,
+//     #[serde(with = "serde_bytes")]
+//     data: Vec<u8>,
+//     author_sig: String,
+//     ctr_addr: Option<String>,
+//     cm: [u8; 32],
+//     v: [u8; 32],
+//     k: [u8; 32],
+//     s: [u8; 32],
+// }
 
-impl SendMintTxRequest {
-    pub fn new(
-        created_at: String,
-        data: Vec<u8>,
-        author_sig: String,
-        ctr_addr: Option<String>,
-        cm: [u8; 32],
-        v: [u8; 32],
-        k: [u8; 32],
-        s: [u8; 32],
-    ) -> SendMintTxRequest {
-        SendMintTxRequest {
-            created_at,
-            data,
-            author_sig,
-            ctr_addr,
-            cm,
-            v,
-            k,
-            s,
-        }
-    }
-}
+// impl SendMintTxRequest {
+//     pub fn new(
+//         created_at: String,
+//         data: Vec<u8>,
+//         author_sig: String,
+//         ctr_addr: Option<String>,
+//         cm: [u8; 32],
+//         v: [u8; 32],
+//         k: [u8; 32],
+//         s: [u8; 32],
+//     ) -> SendMintTxRequest {
+//         SendMintTxRequest {
+//             created_at,
+//             data,
+//             author_sig,
+//             ctr_addr,
+//             cm,
+//             v,
+//             k,
+//             s,
+//         }
+//     }
+// }
 
 pub async fn send_tx_pour(
     saksaha_endpoint: String,
     sn_1: U8Arr32,
-    cm_1: U8Arr32,
-    cm_2: U8Arr32,
+    cms: Vec<U8Arr32>,
+    // cm_1: U8Arr32,
+    // cm_2: U8Arr32,
     merkle_rt: U8Arr32,
     pi: Vec<u8>,
     ctr_addr: String,
@@ -140,8 +139,7 @@ pub async fn send_tx_pour(
             Some(ctr_addr),
             pi,
             sn_1,
-            cm_1,
-            cm_2,
+            cms,
             merkle_rt,
         );
 
@@ -181,7 +179,7 @@ pub async fn send_tx_mint(
     req_type: String,
     args: RequestArgs,
 
-    cm: [u8; 32],
+    cms: Vec<[u8; 32]>,
     v: [u8; 32],
     k: [u8; 32],
     s: [u8; 32],
@@ -209,7 +207,7 @@ pub async fn send_tx_mint(
             serde_json::to_vec(&req)?,
             String::from("author_sig_1"),
             ctr_addr,
-            cm,
+            cms,
             v,
             k,
             s,

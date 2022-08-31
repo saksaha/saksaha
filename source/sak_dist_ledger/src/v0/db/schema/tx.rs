@@ -74,7 +74,7 @@ impl LedgerDB {
         }
 
         let tx_candidate = MintTxCandidate::new(
-            created_at, data, author_sig, ctr_addr, cms, cm_count, v, k, s,
+            created_at, data, author_sig, ctr_addr, cms, v, k, s,
         );
 
         let tx = Tx::Mint(MintTx::new(tx_candidate, cm_idxes));
@@ -126,8 +126,7 @@ impl LedgerDB {
         }
 
         let tx_candidate = PourTxCandidate::new(
-            created_at, data, author_sig, ctr_addr, pi, sn_1, cms, cm_count,
-            merkle_rt,
+            created_at, data, author_sig, ctr_addr, pi, sn_1, cms, merkle_rt,
         );
 
         // let cm_idx_1 = self

@@ -202,7 +202,6 @@ pub fn mock_pour_tc_1() -> TxCandidate {
         pi_serialized,
         sn_1.to_bytes(),
         vec![cm_1.to_bytes(), cm_2.to_bytes()],
-        2,
         merkle_rt.to_bytes(),
     );
 
@@ -398,7 +397,6 @@ pub fn mock_pour_tc_2() -> TxCandidate {
         pi_serialized,
         sn_1.to_bytes(),
         vec![cm_1.to_bytes(), cm_2.to_bytes()],
-        2,
         merkle_rt.to_bytes(),
     );
 
@@ -422,7 +420,6 @@ pub fn mock_mint_tc_custom(
         String::from("author_sig_mint_custom_1"),
         Some(VALIDATOR_CTR_ADDR.to_string()),
         vec![cm],
-        1,
         v,
         k,
         s,
@@ -459,7 +456,6 @@ pub fn mock_mint_tc_1() -> TxCandidate {
         String::from("author_sig_mint_1"),
         Some(VALIDATOR_CTR_ADDR.to_string()),
         vec![cm.to_bytes()],
-        1,
         v,
         k.to_bytes(),
         s,
@@ -492,7 +488,6 @@ pub fn mock_mint_tc_2() -> TxCandidate {
         String::from("author_sig_mint_2"),
         None,
         vec![cm.to_bytes()],
-        1,
         v,
         k.to_bytes(),
         s,
@@ -529,7 +524,6 @@ pub fn mock_mint_tc_3() -> TxCandidate {
         String::from("author_sig_mint_3"),
         None,
         vec![cm.to_bytes()],
-        1,
         v,
         k.to_bytes(),
         s,
@@ -566,7 +560,6 @@ pub fn mock_mint_tc_4() -> TxCandidate {
         String::from("author_sig_mint_4"),
         None,
         vec![cm.to_bytes()],
-        1,
         v,
         k.to_bytes(),
         s,
@@ -608,7 +601,6 @@ pub fn mock_mint_tc_deploying_contract(
         String::from("author_sig_mint_3"),
         Some(ctrt_addr),
         vec![cm.to_bytes()],
-        1,
         v,
         k.to_bytes(),
         s,
