@@ -1,6 +1,6 @@
 use crate::{CtrStateUpdate, DistLedgerApis, LedgerError, MerkleUpdate};
 use colored::Colorize;
-use log::{debug, error, info, warn};
+use log::{debug, info, warn};
 use sak_contract_std::{CtrCallType, CtrRequest, Storage, ERROR_PLACEHOLDER};
 use sak_types::{
     Block, BlockCandidate, CmIdx, MintTxCandidate, PourTxCandidate, Tx,
@@ -321,7 +321,8 @@ async fn handle_mint_tx_candidate(
     let cm_count = process_merkle_update(
         apis,
         merkle_update,
-        vec![&tc.cm_1],
+        &tc.cms,
+        // vec![&tc.cm_1],
         // ledger_cm_count,
         next_cm_idx,
     )
@@ -347,7 +348,8 @@ async fn handle_pour_tx_candidate(
     let cm_count = process_merkle_update(
         apis,
         merkle_update,
-        vec![&tc.cm_1, &tc.cm_2],
+        &tc.cms,
+        // vec![&tc.cm_1, &tc.cm_2],
         next_cm_idx,
         // ledger_cm_count,
     )
@@ -359,7 +361,7 @@ async fn handle_pour_tx_candidate(
 async fn process_merkle_update(
     apis: &DistLedgerApis,
     merkle_update: &mut MerkleUpdate,
-    cms: Vec<&[u8; 32]>,
+    cms: &Vec<[u8; 32]>,
     // ledger_cm_count: u128,
     next_cm_idx: CmIdx,
 ) -> Result<u128, LedgerError> {
@@ -372,7 +374,7 @@ async fn process_merkle_update(
 
         let leaf_loc = format!("{}_{}", 0, cm_idx);
 
-        merkle_update.insert(leaf_loc, **cm);
+        merkle_update.insert(leaf_loc, *cm);
 
         for (height, path) in auth_path.iter().enumerate() {
             let curr_idx = path.idx;

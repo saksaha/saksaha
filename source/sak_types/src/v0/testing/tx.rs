@@ -1,6 +1,6 @@
 use super::values::{self, VALIDATOR, VALIDATOR_CTR_ADDR};
+use crate::TxCandidate;
 use crate::{MintTxCandidate, PourTxCandidate};
-use crate::{TxCandidate, TypesError};
 use sak_crypto::Hasher;
 use sak_crypto::ScalarExt;
 use sak_crypto::{rand, Scalar};
@@ -201,8 +201,8 @@ pub fn mock_pour_tc_1() -> TxCandidate {
         None,
         pi_serialized,
         sn_1.to_bytes(),
-        cm_1.to_bytes(),
-        cm_2.to_bytes(),
+        vec![cm_1.to_bytes(), cm_2.to_bytes()],
+        2,
         merkle_rt.to_bytes(),
     );
 
@@ -397,8 +397,8 @@ pub fn mock_pour_tc_2() -> TxCandidate {
         None,
         pi_serialized,
         sn_1.to_bytes(),
-        cm_1.to_bytes(),
-        cm_2.to_bytes(),
+        vec![cm_1.to_bytes(), cm_2.to_bytes()],
+        2,
         merkle_rt.to_bytes(),
     );
 
@@ -421,7 +421,8 @@ pub fn mock_mint_tc_custom(
         validator_wasm,
         String::from("author_sig_mint_custom_1"),
         Some(VALIDATOR_CTR_ADDR.to_string()),
-        cm,
+        vec![cm],
+        1,
         v,
         k,
         s,
@@ -457,7 +458,8 @@ pub fn mock_mint_tc_1() -> TxCandidate {
         validator_wasm,
         String::from("author_sig_mint_1"),
         Some(VALIDATOR_CTR_ADDR.to_string()),
-        cm.to_bytes(),
+        vec![cm.to_bytes()],
+        1,
         v,
         k.to_bytes(),
         s,
@@ -489,7 +491,8 @@ pub fn mock_mint_tc_2() -> TxCandidate {
         vec![2],
         String::from("author_sig_mint_2"),
         None,
-        cm.to_bytes(),
+        vec![cm.to_bytes()],
+        1,
         v,
         k.to_bytes(),
         s,
@@ -525,7 +528,8 @@ pub fn mock_mint_tc_3() -> TxCandidate {
         vec![3],
         String::from("author_sig_mint_3"),
         None,
-        cm.to_bytes(),
+        vec![cm.to_bytes()],
+        1,
         v,
         k.to_bytes(),
         s,
@@ -561,7 +565,8 @@ pub fn mock_mint_tc_4() -> TxCandidate {
         vec![4],
         String::from("author_sig_mint_4"),
         None,
-        cm.to_bytes(),
+        vec![cm.to_bytes()],
+        1,
         v,
         k.to_bytes(),
         s,
@@ -602,7 +607,8 @@ pub fn mock_mint_tc_deploying_contract(
         contract_data,
         String::from("author_sig_mint_3"),
         Some(ctrt_addr),
-        cm.to_bytes(),
+        vec![cm.to_bytes()],
+        1,
         v,
         k.to_bytes(),
         s,

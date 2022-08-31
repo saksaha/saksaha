@@ -1,10 +1,10 @@
+use crate::LedgerDB;
 use crate::LedgerError;
-use crate::{cfs, LedgerDB};
-use sak_crypto::{Bls12, Hasher, Proof, ScalarExt};
+use sak_crypto::{Bls12, Hasher, Proof};
 use sak_kv_db::WriteBatch;
 use sak_types::{
-    Cm, CmIdx, MintTx, MintTxCandidate, PourTx, PourTxCandidate, Sn, Tx,
-    TxCtrOp, TxHash, TxHeight, TxType,
+    Cm, CmIdx, MintTx, MintTxCandidate, PourTx, PourTxCandidate, Tx, TxCtrOp,
+    TxHash, TxType,
 };
 
 impl LedgerDB {
@@ -65,9 +65,9 @@ impl LedgerDB {
         let s = self.get_s(tx_hash)?.ok_or("s shoudl exist")?;
 
         let mut cm_idxes = vec![];
-        for cm in cms {
+        for cm in &cms {
             let cm_idx = self
-                .get_cm_idx_by_cm(&cm)?
+                .get_cm_idx_by_cm(cm)?
                 .ok_or("cm_idx_1 does not exist")?;
 
             cm_idxes.push(cm_idx);
@@ -116,6 +116,15 @@ impl LedgerDB {
             .get_prf_merkle_rt(tx_hash)?
             .ok_or("merkle_root should exist")?;
 
+        let mut cm_idxes = vec![];
+        for cm in &cms {
+            let cm_idx = self
+                .get_cm_idx_by_cm(&cm)?
+                .ok_or("cm_idx_1 does not exist")?;
+
+            cm_idxes.push(cm_idx);
+        }
+
         let tx_candidate = PourTxCandidate::new(
             created_at, data, author_sig, ctr_addr, pi, sn_1, cms, cm_count,
             merkle_rt,
@@ -128,15 +137,6 @@ impl LedgerDB {
         // let cm_idx_2 = self
         //     .get_cm_idx_by_cm(&cm_2)?
         //     .ok_or("cm_idx_2 does not exist")?;
-
-        let mut cm_idxes = vec![];
-        for cm in cms {
-            let cm_idx = self
-                .get_cm_idx_by_cm(&cm)?
-                .ok_or("cm_idx_1 does not exist")?;
-
-            cm_idxes.push(cm_idx);
-        }
 
         let tx = Tx::Pour(PourTx::new(tx_candidate, cm_idxes));
 
@@ -252,12 +252,12 @@ impl LedgerDB {
     ) -> Result<(), LedgerError> {
         let hasher = Hasher::new();
 
-        let public_inputs = [
-            ScalarExt::parse_arr(&tc.merkle_rt)?,
-            ScalarExt::parse_arr(&tc.sn_1)?,
-            ScalarExt::parse_arr(&tc.cm_1)?,
-            ScalarExt::parse_arr(&tc.cm_2)?,
-        ];
+        // let public_inputs = [
+        //     ScalarExt::parse_arr(&tc.merkle_rt)?,
+        //     ScalarExt::parse_arr(&tc.sn_1)?,
+        //     ScalarExt::parse_arr(&tc.cm_1)?,
+        //     ScalarExt::parse_arr(&tc.cm_2)?,
+        // ];
 
         let pi_des: Proof<Bls12> = match Proof::read(&*tc.pi) {
             Ok(p) => p,
@@ -320,19 +320,27 @@ impl LedgerDB {
 
         // self.batch_put_sn_2(batch, tx_hash, &tc.sn_2)?;
 
-        self.batch_put_cm_1(batch, tx_hash, &tc.cm_1)?;
+        self.batch_put_cms(batch, tx_hash, &tc.cms);
+        // self.batch_put_cm_1(batch, tx_hash, &tc.cm_1)?;
 
-        self.batch_put_cm_2(batch, tx_hash, &tc.cm_2)?;
+        // self.batch_put_cm_2(batch, tx_hash, &tc.cm_2)?;
 
         // self.batch_put_cm_cm_idx(batch, &tc.cm_1, cm_idx_count)?;
 
         // self.batch_put_cm_cm_idx(batch, &tc.cm_2, &(*cm_idx_count + 1))?;
 
-        self.batch_put_cm_cm_idx(batch, &tc.cm_1, &tx.cm_idx_1)?;
-        self.batch_put_cm_idx_cm(batch, &tx.cm_idx_1, &tc.cm_1)?;
+        for (cm, cm_idx) in std::iter::zip(&tc.cms, &tx.cm_idxes) {
+            self.batch_put_cm_cm_idx(batch, cm, cm_idx)?;
+            self.batch_put_cm_idx_cm(batch, cm_idx, cm)?;
+        }
 
-        self.batch_put_cm_cm_idx(batch, &tc.cm_2, &tx.cm_idx_2)?;
-        self.batch_put_cm_idx_cm(batch, &tx.cm_idx_2, &tc.cm_2)?;
+        self.batch_put_cm_count(batch, tx_hash, &tc.cm_count);
+
+        // self.batch_put_cm_cm_idx(batch, &tc.cm_1, &tx.cm_idx_1)?;
+        // self.batch_put_cm_idx_cm(batch, &tx.cm_idx_1, &tc.cm_1)?;
+
+        // self.batch_put_cm_cm_idx(batch, &tc.cm_2, &tx.cm_idx_2)?;
+        // self.batch_put_cm_idx_cm(batch, &tx.cm_idx_2, &tc.cm_2)?;
 
         self.batch_put_prf_merkle_rt(batch, tx_hash, &tc.merkle_rt)?;
 
