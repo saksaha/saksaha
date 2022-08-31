@@ -20,4 +20,6 @@ pub mod MsgType {
     pub const BLOCK_ACK: &str = "block_ack";
 
     pub const PING: &str = "ping";
+
+    pub const ERROR: &str = "error";
 }

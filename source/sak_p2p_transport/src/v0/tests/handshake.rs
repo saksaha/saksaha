@@ -246,7 +246,7 @@ async fn test_handshake_works() {
 
         let msg = PingMsg { nonce: rand };
 
-        conn_1_lock.send(Msg::Ping(msg)).await.unwrap();
+        conn_1_lock.send(Msg::Ping(msg)).await.ok_or().unwrap();
     });
 
     let identity_2_clone = identity_2.clone();
@@ -258,7 +258,9 @@ async fn test_handshake_works() {
 
         let mut conn_2_lock = transport_2.conn.write().await;
 
-        let (maybe_msg, _) = conn_2_lock.next_msg().await;
+        let msg_wrap = conn_2_lock.next_msg().await.unwrap();
+
+        let maybe_msg = msg_wrap.get_maybe_msg();
 
         let ping = match maybe_msg {
             Some(maybe_msg) => match maybe_msg {

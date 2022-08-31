@@ -19,14 +19,23 @@ pub(in crate::node) async fn send_tx_hash_syn(
 ) -> Result<RecvReceipt, SaksahaNodeError> {
     let _receipt = conn_lock
         .send(Msg::TxHashSyn(TxHashSyncMsg { tx_hashes }))
-        .await?;
+        .await;
 
-    let (msg, receipt) = conn_lock.next_msg().await;
+    let msg_wrap = conn_lock.next_msg().await?;
 
-    let msg = msg.ok_or("tx hash ack should arrive as reply")??;
+    let receipt = msg_wrap.get_receipt();
+
+    let msg = msg_wrap
+        .get_maybe_msg()
+        .ok_or("tx hash ack should arrive as reply")??;
 
     let tx_hash_ack = match msg {
         Msg::TxHashAck(m) => m,
+        Msg::Error(m) => {
+            return Err(
+                format!("Receiver returned error msg, msg: {:?}", m).into()
+            )
+        }
         _ => {
             return Err(format!(
                 "Only tx hash ack should arrive at this point, msg: {}",
@@ -51,7 +60,7 @@ pub(in crate::node) async fn recv_tx_hash_syn(
     mut conn: RwLockWriteGuard<'_, UpgradedConn>,
     task_queue: &Arc<TaskQueue<NodeTask>>,
     peer: &Arc<Peer>,
-) -> Result<SendReceipt, SaksahaNodeError> {
+) -> SendReceipt {
     let txs_to_request = machine
         .blockchain
         .dist_ledger
@@ -63,7 +72,7 @@ pub(in crate::node) async fn recv_tx_hash_syn(
         .send(Msg::TxHashAck(TxHashSyncMsg {
             tx_hashes: txs_to_request,
         }))
-        .await?;
+        .await;
 
-    Ok(receipt)
+    receipt
 }

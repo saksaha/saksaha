@@ -1,6 +1,6 @@
 use crate::{
-    BlockAckMsg, BlockHashSyncMsg, BlockSynMsg, HandshakeMsg, PingMsg,
-    TxAckMsg, TxHashSyncMsg, TxSynMsg,
+    BlockAckMsg, BlockHashSyncMsg, BlockSynMsg, ErrorMsg, HandshakeMsg,
+    PingMsg, TxAckMsg, TxHashSyncMsg, TxSynMsg,
 };
 
 #[derive(Debug)]
@@ -25,6 +25,8 @@ pub enum Msg {
 
     BlockAck(BlockAckMsg),
 
+    Error(ErrorMsg),
+
     Ping(PingMsg),
 }
 
@@ -37,6 +39,7 @@ impl std::fmt::Display for Msg {
             Msg::TxHashAck(_) => write!(f, "tx_hash_ack"),
             Msg::TxSyn(_) => write!(f, "tx_syn"),
             Msg::TxAck(_) => write!(f, "tx_ack"),
+            Msg::Error(_) => write!(f, "error"),
             Msg::BlockHashSyn(_) => write!(f, "block_hash_syn"),
             Msg::BlockHashAck(_) => write!(f, "block_hash_ack"),
             Msg::BlockSyn(_) => write!(f, "block_syn"),

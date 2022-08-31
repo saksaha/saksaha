@@ -203,9 +203,9 @@ impl DistLedgerApis {
         Ok(block_list)
     }
 
-    pub async fn get_entire_block_info_list(
+    pub async fn get_all_blocks(
         &self,
-    ) -> Result<Vec<(u128, BlockHash)>, LedgerError> {
+    ) -> Result<Vec<(BlockHeight, BlockHash)>, LedgerError> {
         let latest_bh = match self.get_latest_block_height()? {
             Some(bh) => bh,
             None => {
@@ -213,14 +213,16 @@ impl DistLedgerApis {
             }
         };
 
-        let mut block_hash_list: Vec<(u128, BlockHash)> = Vec::new();
+        let mut block_hash_list: Vec<(BlockHeight, BlockHash)> = Vec::new();
 
-        for bh in (0..=latest_bh).rev().step_by(1) {
-            match self.get_block_by_height(&bh).await {
+        for block_height in (0..=latest_bh).rev().step_by(1) {
+            match self.get_block_by_height(&block_height).await {
                 Ok(maybe_block) => match maybe_block {
                     Some(block) => {
-                        block_hash_list
-                            .push((bh, block.get_block_hash().to_owned()));
+                        block_hash_list.push((
+                            block_height,
+                            block.get_block_hash().to_string(),
+                        ));
                     }
                     None => {
                         break;

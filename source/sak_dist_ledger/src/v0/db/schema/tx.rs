@@ -260,8 +260,8 @@ impl LedgerDB {
             Ok(p) => p,
             Err(err) => {
                 return Err(format!(
-                    "Cannot deserialize the pi, err: {:?}",
-                    err
+                    "Cannot deserialize the pi, err: {:?}, pi: {:?}",
+                    err, tc.pi,
                 )
                 .into());
             }

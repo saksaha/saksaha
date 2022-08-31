@@ -4,7 +4,7 @@ use crate::{
 };
 use log::{debug, info, warn};
 use sak_p2p_transport::{
-    BlockHashSyncMsg, Msg, RecvReceipt, SendReceipt, UpgradedConn,
+    BlockHashSyncMsg, ErrorMsg, Msg, RecvReceipt, SendReceipt, UpgradedConn,
 };
 use sak_task_queue::TaskQueue;
 use sak_types::{BlockHash, BlockHeight};
@@ -20,15 +20,23 @@ pub(in crate::node) async fn send_block_hash_syn(
         .send(Msg::BlockHashSyn(BlockHashSyncMsg {
             new_blocks: new_blocks.clone(),
         }))
-        .await?;
+        .await;
 
-    let (msg, receipt) = conn_lock.next_msg().await;
+    let msg_wrap = conn_lock.next_msg().await?;
 
-    let msg =
-        msg.ok_or(format!("block hash syn needs to be followed by ack"))??;
+    let receipt = msg_wrap.get_receipt();
+
+    let msg = msg_wrap
+        .get_maybe_msg()
+        .ok_or(format!("block hash syn needs to be followed by ack"))??;
 
     let block_hash_ack_msg = match msg {
         Msg::BlockHashAck(m) => m,
+        Msg::Error(m) => {
+            return Err(
+                format!("Receiver returned error msg, msg: {:?}", m).into()
+            )
+        }
         _ => {
             return Err(format!(
                 "Only block hash ack should arrive at this point"
@@ -49,36 +57,57 @@ pub(in crate::node) async fn send_block_hash_syn(
 pub(in crate::node) async fn recv_block_hash_syn(
     block_hash_syn_msg: BlockHashSyncMsg,
     machine: &Arc<Machine>,
-    mut conn: RwLockWriteGuard<'_, UpgradedConn>,
-) -> Result<SendReceipt, SaksahaNodeError> {
-    let new_blocks = block_hash_syn_msg.new_blocks;
+    mut conn_lock: RwLockWriteGuard<'_, UpgradedConn>,
+) -> SendReceipt {
+    let wrapped = || async {
+        let new_blocks = block_hash_syn_msg.new_blocks;
 
-    let (_, latest_block_hash) = machine
-        .blockchain
-        .dist_ledger
-        .apis
-        .get_latest_block_hash()
-        .await?
-        .ok_or("height does not exist")?;
+        let (_, latest_block_hash) = machine
+            .blockchain
+            .dist_ledger
+            .apis
+            .get_latest_block_hash()
+            .await?
+            .ok_or("height does not exist")?;
 
-    debug!(
-        "handle block hash syn, latest_block_hash: {}, \
+        debug!(
+            "handle block hash syn, latest_block_hash: {}, \
             received_new_blocks: {:?}",
-        latest_block_hash, new_blocks,
-    );
+            latest_block_hash, new_blocks,
+        );
 
-    let mut blocks_to_req = vec![];
-    for (height, block_hash) in new_blocks {
-        if block_hash != latest_block_hash {
-            blocks_to_req.push((height, block_hash));
+        let mut blocks_to_req = vec![];
+        for (height, block_hash) in new_blocks {
+            if machine
+                .blockchain
+                .dist_ledger
+                .apis
+                .get_block(&block_hash)?
+                .is_none()
+            {
+                blocks_to_req.push((height, block_hash));
+            }
         }
-    }
 
-    let receipt = conn
-        .send(Msg::BlockHashAck(BlockHashSyncMsg {
-            new_blocks: blocks_to_req,
-        }))
-        .await?;
+        let receipt = conn_lock
+            .send(Msg::BlockHashAck(BlockHashSyncMsg {
+                new_blocks: blocks_to_req,
+            }))
+            .await;
 
-    Ok(receipt)
+        Ok::<_, SaksahaNodeError>(receipt)
+    };
+
+    let receipt = match wrapped().await {
+        Ok(r) => r,
+        Err(err) => {
+            conn_lock
+                .send(Msg::Error(ErrorMsg {
+                    error: err.to_string(),
+                }))
+                .await
+        }
+    };
+
+    receipt
 }

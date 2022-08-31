@@ -120,6 +120,7 @@ impl SyncPool {
         };
 
         let mut new_tx_hashes_lock = self.new_tx_hashes.write().await;
+
         new_tx_hashes_lock.insert(tx_hash.to_string());
 
         Ok(tx_hash)

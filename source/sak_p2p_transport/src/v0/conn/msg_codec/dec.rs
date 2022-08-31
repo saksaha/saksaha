@@ -1,11 +1,11 @@
 use crate::{
-    BlockAckMsg, BlockHashSyncMsg, BlockSynMsg, HandshakeMsg, Msg, MsgType,
-    PingMsg, TrptError, TxAckMsg, TxHashSyncMsg, TxSynMsg,
+    BlockAckMsg, BlockHashSyncMsg, BlockSynMsg, ErrorMsg, HandshakeMsg, Msg,
+    MsgType, PingMsg, TrptError, TxAckMsg, TxHashSyncMsg, TxSynMsg,
 };
 use bytes::BytesMut;
 use sak_p2p_frame::{frame_io, Parse};
 
-pub(super) fn decode_into_msg(
+pub(crate) fn decode_into_msg(
     src: &mut BytesMut,
 ) -> Result<Option<Msg>, TrptError> {
     let maybe_frame = match frame_io::parse_frame(src) {
@@ -68,6 +68,10 @@ pub(super) fn decode_into_msg(
             MsgType::PING => {
                 let ping = PingMsg::from_parse(&mut parse)?;
                 Msg::Ping(ping)
+            }
+            MsgType::ERROR => {
+                let error = ErrorMsg::from_parse(&mut parse)?;
+                Msg::Error(error)
             }
             _ => {
                 return Err(format!(

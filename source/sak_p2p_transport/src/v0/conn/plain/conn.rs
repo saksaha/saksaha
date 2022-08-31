@@ -1,7 +1,10 @@
 use super::codec::P2PCodec;
 use crate::{TrptError, UpgradedConn, UpgradedP2PCodec};
 use chacha20::{cipher::KeyIvInit, ChaCha20};
-use sak_crypto::{PublicKey, SharedSecret};
+use sak_crypto::{
+    sha3::{Digest, Keccak256},
+    SharedSecret,
+};
 use std::net::SocketAddr;
 use tokio::net::TcpStream;
 use tokio_util::codec::Framed;
@@ -38,12 +41,22 @@ impl Conn {
         nonce: &[u8],
         her_public_key: &String,
     ) -> Result<UpgradedConn, TrptError> {
-        let cipher = ChaCha20::new(
-            shared_secret.as_bytes().as_slice().into(),
-            nonce.into(),
-        );
+        // Initialize message authentication code (MAC)
+        let (out_mac, in_mac) = {
+            let mut out_mac = Keccak256::default();
+            out_mac.update(shared_secret.as_bytes());
 
-        let socket = self.socket.map_codec(|_| UpgradedP2PCodec { cipher });
+            let mut in_mac = Keccak256::default();
+            in_mac.update(shared_secret.as_bytes());
+
+            (out_mac, in_mac)
+        };
+
+        let out_cipher =
+            ChaCha20::new(shared_secret.as_bytes().into(), nonce.into());
+
+        let in_cipher =
+            ChaCha20::new(shared_secret.as_bytes().into(), nonce.into());
 
         let conn_id = format!(
             "{}-{}",
@@ -51,13 +64,17 @@ impl Conn {
             sak_p2p_id::make_public_key_short(&her_public_key)?
         );
 
-        let upgraded_conn = UpgradedConn::init(
-            self.socket_addr.clone(),
-            socket,
-            conn_id,
-            self.is_initiator,
-        )
-        .await;
+        let socket = self.socket.map_codec(|_| UpgradedP2PCodec {
+            out_cipher,
+            in_cipher,
+            out_mac,
+            in_mac,
+            conn_id: conn_id.to_string(),
+            parsed_msg_len: None,
+        });
+
+        let upgraded_conn =
+            UpgradedConn::init(socket, conn_id, self.is_initiator).await;
 
         Ok(upgraded_conn)
     }

@@ -24,20 +24,20 @@ impl Consensus for DummyPos {
     }
 }
 
-#[cfg(test)]
-pub(crate) fn make_dummy_genesis_block_1() -> BlockCandidate {
-    let genesis_block = BlockCandidate {
-        validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
-        tx_candidates: vec![
-            sak_types::mock_mint_tc_1(),
-            sak_types::mock_mint_tc_2(),
-        ],
-        witness_sigs: vec![String::from("1"), String::from("2")],
-        created_at: String::from("2022061515340000"),
-    };
+// #[cfg(test)]
+// pub(crate) fn make_dummy_genesis_block_1() -> BlockCandidate {
+//     let genesis_block = BlockCandidate {
+//         validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
+//         tx_candidates: vec![
+//             sak_types::mock_mint_tc_1(),
+//             sak_types::mock_mint_tc_2(),
+//         ],
+//         witness_sigs: vec![String::from("1"), String::from("2")],
+//         created_at: String::from("2022061515340000"),
+//     };
 
-    genesis_block
-}
+//     genesis_block
+// }
 
 pub(crate) async fn make_dist_ledger() -> DistLedger {
     let pos = make_dummy_pos();
@@ -45,7 +45,7 @@ pub(crate) async fn make_dist_ledger() -> DistLedger {
     let dist_ledger_args = DistLedgerArgs {
         app_prefix: String::from("test"),
         tx_sync_interval: None,
-        genesis_block: Some(make_dummy_genesis_block_1()),
+        genesis_block: Some(sak_types::mock_block_1()),
         consensus: pos,
         block_sync_interval: None,
     };
@@ -57,9 +57,9 @@ pub(crate) async fn make_dist_ledger() -> DistLedger {
     dist_ledger
 }
 
-pub(crate) fn make_dummy_txs() -> Vec<Tx> {
-    vec![Tx::new_dummy_pour_m1_to_p3_p4()]
-}
+// pub(crate) fn make_dummy_txs() -> Vec<Tx> {
+//     vec![Tx::new_dummy_pour_m1_to_p3_p4()]
+// }
 
 pub(crate) async fn make_dummy_valid_pour_tx() -> Tx {
     let proof_context = make_proof_context();
@@ -109,13 +109,17 @@ pub(crate) async fn make_dummy_valid_pour_tx() -> Tx {
         );
     }
 
-    Tx::new_dummy_valid_pour(
-        pi_ser,
-        proof_context.sn_1.to_bytes(),
-        proof_context.cm_1.to_bytes(),
-        proof_context.cm_2.to_bytes(),
-        proof_context.merkle_rt.to_bytes(),
-    )
+    let tc = sak_types::mock_pour_tc_1();
+
+    tc.upgrade(0)
+
+    // Tx::new_dummy_valid_pour(
+    //     pi_ser,
+    //     proof_context.sn_1.to_bytes(),
+    //     proof_context.cm_1.to_bytes(),
+    //     proof_context.cm_2.to_bytes(),
+    //     proof_context.merkle_rt.to_bytes(),
+    // )
 }
 
 pub struct ProofContext {
@@ -340,19 +344,19 @@ pub(crate) fn make_dummy_pos() -> Box<DummyPos> {
     Box::new(DummyPos {})
 }
 
-#[cfg(test)]
-pub(crate) fn make_dummy_block_candidate_1() -> Option<BlockCandidate> {
-    let block_candidate: BlockCandidate = {
-        BlockCandidate {
-            validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
-            tx_candidates: vec![sak_types::mock_pour_tc_m1_to_p3_p4()],
-            witness_sigs: vec![String::from("1"), String::from("2")],
-            created_at: String::from("2022061515340000"),
-        }
-    };
+// #[cfg(test)]
+// pub(crate) fn make_dummy_block_candidate_1() -> Option<BlockCandidate> {
+//     let block_candidate: BlockCandidate = {
+//         BlockCandidate {
+//             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
+//             tx_candidates: vec![sak_types::mock_pour_tc_m1_to_p3_p4()],
+//             witness_sigs: vec![String::from("1"), String::from("2")],
+//             created_at: String::from("2022061515340000"),
+//         }
+//     };
 
-    Some(block_candidate)
-}
+//     Some(block_candidate)
+// }
 
 pub(crate) fn make_dummy_block_candidate_with_query_tx(
 ) -> Option<BlockCandidate> {
