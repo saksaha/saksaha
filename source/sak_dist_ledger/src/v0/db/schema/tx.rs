@@ -225,58 +225,6 @@ impl LedgerDB {
         Ok(tx_hash.clone())
     }
 
-    pub(crate) fn check_double_spending(
-        &self,
-        sn: &[u8; 32],
-    ) -> Result<(), LedgerError> {
-        if let Some(t) = self.get_tx_hash_by_sn(sn)? {
-            // return Err(format!(
-            //     "Detect double spend, `sn` has been spent before with tx_hash: {}",
-            //     t
-            // )
-            // .into());
-            log::error!("Double spending has been detected")
-        };
-
-        Ok(())
-    }
-
-    // TODO Temporary commenting out. This has to be executed as desired later
-    pub(crate) fn verify_tx(
-        &self,
-        tc: &PourTxCandidate,
-    ) -> Result<(), LedgerError> {
-        let hasher = Hasher::new();
-
-        let public_inputs = [
-            ScalarExt::parse_arr(&tc.merkle_rt)?,
-            ScalarExt::parse_arr(&tc.sn_1)?,
-            ScalarExt::parse_arr(&tc.cm_1)?,
-            ScalarExt::parse_arr(&tc.cm_2)?,
-        ];
-
-        // let pi_des: Proof<Bls12> = match Proof::read(&*tc.pi) {
-        //     Ok(p) => p,
-        //     Err(err) => {
-        //         return Err(format!(
-        //             "Cannot deserialize the pi, err: {:?}, pi: {:?}",
-        //             err, tc.pi,
-        //         )
-        //         .into());
-        //     }
-        // };
-
-        // let verification_result =
-        //     sak_proofs::verify_proof_1_to_2(pi_des, &public_inputs, &hasher);
-
-        // if !verification_result {
-        //     // return Err(format!("Wrong proof").into());
-        //     log::error!("Failed to verify")
-        // };
-
-        Ok(())
-    }
-
     pub(crate) fn batch_put_pour_tx(
         &self,
         batch: &mut WriteBatch,
