@@ -4,8 +4,6 @@ use crate::{
 };
 use log::{debug, error, warn};
 use sak_dist_ledger::DistLedgerEvent;
-use sak_p2p_peertable::{Peer, PeerStatus};
-use sak_p2p_transport::{BlockHashSyncMsg, Msg};
 use sak_task_queue::TaskQueue;
 use std::sync::Arc;
 use tokio::sync::broadcast::Receiver;
