@@ -1,4 +1,5 @@
 use crate::{Hasher, NewCoin, OldCoin, ProofError, CM_TREE_DEPTH};
+use bellman::groth16;
 use sak_crypto::{
     AllocatedBit, Bls12, Circuit, ConstraintSystem, OsRng, Parameters, Scalar,
     SynthesisError,

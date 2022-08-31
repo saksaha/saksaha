@@ -2,18 +2,18 @@ mod crypto;
 mod ecies;
 mod hasher;
 mod key;
-pub mod mimc;
+// pub mod mimc;
 mod random;
 mod scalar_ext;
 #[cfg(test)]
 mod tests;
 
-pub use bellman::gadgets::boolean::AllocatedBit;
-pub use bellman::groth16::{
-    Parameters, PreparedVerifyingKey, Proof,
-    VerifyingKey as Groth16VerifyingKey,
-};
-pub use bellman::{groth16, Circuit, ConstraintSystem, SynthesisError};
+// pub use bellman::gadgets::boolean::AllocatedBit;
+// pub use bellman::groth16::{
+//     Parameters, PreparedVerifyingKey, Proof,
+//     VerifyingKey as Groth16VerifyingKey,
+// };
+// pub use bellman::{groth16, Circuit, ConstraintSystem, SynthesisError};
 pub use bls12_381::{Bls12, Scalar};
 pub use k256::{
     ecdsa::{

@@ -10,8 +10,6 @@ pub use coin_proof::*;
 pub use hasher::*;
 pub use merkle::*;
 
-pub type ProofError = Box<dyn std::error::Error + Send + Sync>;
-
 pub use bellman::gadgets::boolean::AllocatedBit;
 pub use bellman::groth16::{
     Parameters, PreparedVerifyingKey, Proof,
@@ -19,3 +17,5 @@ pub use bellman::groth16::{
 };
 pub use bellman::{groth16, Circuit, ConstraintSystem, SynthesisError};
 pub use bls12_381::{Bls12, Scalar};
+
+pub type ProofError = Box<dyn std::error::Error + Send + Sync>;
