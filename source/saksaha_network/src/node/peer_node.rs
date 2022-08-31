@@ -78,7 +78,10 @@ impl PeerNode {
 
             tokio::select! {
                 task = node_task_queue.pop_front() => {
+
                     let task = task?;
+
+                    log::debug!("task detect: {:?}", task);
 
                     task::handle_task(task,
                         &node_task_queue, conn_lock, &self.machine).await;

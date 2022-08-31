@@ -99,8 +99,8 @@ impl SyncPool {
             let bc_event_tx = self.bc_event_tx.clone();
 
             tokio::spawn(async move {
-                log::debug!("[! Block] Timer on! suspend 4 seconds");
-                tokio::time::sleep(Duration::from_secs(4)).await;
+                log::debug!("[! Block] Timer on! suspend 2 seconds");
+                tokio::time::sleep(Duration::from_secs(2)).await;
 
                 let tx_hashes = new_blocks_set.write().await.drain().collect();
 
@@ -157,13 +157,15 @@ impl SyncPool {
 
         let tx_hash = tc.get_tx_hash().to_string();
 
-        let mut tx_map_lock = self.tx_map.write().await;
+        {
+            let mut tx_map_lock = self.tx_map.write().await;
 
-        if tx_map_lock.contains_key(&tx_hash) {
-            return Err(format!("tx already exist"));
-        } else {
-            tx_map_lock.insert(tx_hash.clone(), tc);
-        };
+            if tx_map_lock.contains_key(&tx_hash) {
+                return Err(format!("tx already exist"));
+            } else {
+                tx_map_lock.insert(tx_hash.clone(), tc.clone());
+            };
+        }
 
         {
             let mut tx_hashes_set_lock = self.tx_hash_set.write().await;
@@ -172,30 +174,31 @@ impl SyncPool {
 
         // ----------------------------------------------------------
 
-        // log::warn!("[!] new_tx_hashes length: {:?}", tx_hashes_set_lock.len());
-        // log::warn!("[!] new_tx_hashes: {:#?}", tx_hashes_set_lock);
-
-        let tx_hash_len_check = self.tx_hash_set.read().await.len();
-
-        if tx_hash_len_check == 1 {
+        if self.tx_hash_set.read().await.len() == 1 {
             let new_tx_hashes = self.tx_hash_set.clone();
 
             let bc_event_tx = self.bc_event_tx.clone();
 
             tokio::spawn(async move {
                 log::debug!(
-                    "[! Tx] Timer on! suspend 4 seconds, new_tx_hashes: {:?}",
-                    new_tx_hashes
+                    "[thread Tx 111] Timer on! suspend 2 seconds, new_tx_hashes: {:?}",
+                    new_tx_hashes.read().await
                 );
-                tokio::time::sleep(Duration::from_secs(4)).await;
+                tokio::time::sleep(Duration::from_secs(2)).await;
 
-                let tx_hashes = new_tx_hashes.write().await.drain().collect();
+                let tx_hashes: Vec<String> =
+                    new_tx_hashes.write().await.drain().collect();
 
-                let ev = DistLedgerEvent::TxPoolStat(tx_hashes);
+                let ev = DistLedgerEvent::TxPoolStat(tx_hashes.clone());
+
+                log::debug!("[thread Tx 222] Send event: {:?}", tx_hashes);
 
                 match bc_event_tx.write().await.send(ev.clone()) {
                     Ok(_) => {
-                        debug!("Ledger event queued, ev: {}", ev.to_string());
+                        debug!(
+                            "[thread] Ledger event queued, ev: {}",
+                            ev.to_string()
+                        );
                     }
                     Err(err) => {
                         warn!(
@@ -240,11 +243,14 @@ impl SyncPool {
         let tx_map_lock = self.tx_map.read().await;
         let mut tx_pool = vec![];
 
+        println!("[!] tx map: {:?}", tx_map_lock);
+        println!("[!] hash: {:?}", tx_hashes);
+
         for tx_hash in tx_hashes.iter() {
             let tx = match tx_map_lock.get(tx_hash) {
                 Some(tx) => tx.clone(),
                 None => {
-                    warn!("Requested tx does not exist");
+                    warn!("Requested tx does not exist\n");
                     continue;
                 }
             };
