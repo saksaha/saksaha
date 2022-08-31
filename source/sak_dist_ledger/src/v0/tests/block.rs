@@ -58,7 +58,8 @@ async fn test_write_a_new_block_after_genesis() {
         .expect("Block_1 must be written");
 }
 
-// deprecated => This TC should be included in validator contract
+/* deprecated => This TC should be included in validator contract */
+
 // #[tokio::test(flavor = "multi_thread")]
 // async fn test_deploy_ctr_and_invoke_query_when_dist_ledger_writes_new_blocks() {
 //     sak_test_utils::init_test_log();
@@ -110,10 +111,7 @@ async fn test_sequential_write_block() {
     for i in 0..repeat as u64 {
         let block = BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
-            tx_candidates: vec![
-                // sak_types::mock_pour_tc_m1_to_p3_p4()
-                sak_types::mock_pour_tc_1(),
-            ],
+            tx_candidates: vec![sak_types::mock_pour_tc_1()],
             witness_sigs: vec![String::from("1"), String::from("2")],
             created_at: format!("{}", i),
         };
