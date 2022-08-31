@@ -1,5 +1,5 @@
 use log::debug;
-use sak_crypto::{mimc, Scalar, ScalarExt};
+use sak_crypto::{Scalar, ScalarExt};
 
 pub const TREE_DEPTH: u32 = 4;
 pub const TREE_CAPACITY: u32 = 2_u32.pow(TREE_DEPTH);

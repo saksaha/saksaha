@@ -1,10 +1,9 @@
 use crate::{
-    CoinProofCircuit1to2, MerkleTree, NewCoin, OldCoin, ProofError,
+    CoinProofCircuit1to2, Hasher, MerkleTree, NewCoin, OldCoin, ProofError,
     CM_TREE_DEPTH,
 };
-use sak_crypto::{
-    groth16, Bls12, Hasher, OsRng, Parameters, Proof, Scalar, ScalarExt,
-};
+use bellman::groth16::{self, Parameters, Proof};
+use sak_crypto::{Bls12, OsRng, Scalar, ScalarExt};
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::Write;

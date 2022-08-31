@@ -2,17 +2,15 @@ use crate::{
     get_mimc_params_1_to_2, CoinProofCircuit1to2, Hasher, NewCoin, OldCoin,
     ProofError,
 };
-use bellman::groth16;
+use bellman::groth16::{self, PreparedVerifyingKey, Proof, VerifyingKey};
 use pairing::MultiMillerLoop;
-use sak_crypto::{
-    Bls12, Groth16VerifyingKey, OsRng, PreparedVerifyingKey, Proof, Scalar,
-};
+use sak_crypto::{Bls12, OsRng, Scalar};
 
 pub struct CoinProof;
 
 impl CoinProof {
     pub fn make_verifying_key<E: MultiMillerLoop>(
-        vk: &Groth16VerifyingKey<E>,
+        vk: &VerifyingKey<E>,
     ) -> PreparedVerifyingKey<E> {
         groth16::prepare_verifying_key(vk)
     }

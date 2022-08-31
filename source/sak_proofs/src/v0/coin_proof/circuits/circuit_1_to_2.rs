@@ -1,9 +1,8 @@
 use crate::{Hasher, NewCoin, OldCoin, ProofError, CM_TREE_DEPTH};
-use bellman::groth16;
-use sak_crypto::{
-    AllocatedBit, Bls12, Circuit, ConstraintSystem, OsRng, Parameters, Scalar,
-    SynthesisError,
-};
+use bellman::gadgets::boolean::AllocatedBit;
+use bellman::groth16::{self, Parameters};
+use bellman::{Circuit, ConstraintSystem, SynthesisError};
+use sak_crypto::{Bls12, OsRng, Scalar};
 use std::fs::File;
 use std::io::Write;
 
