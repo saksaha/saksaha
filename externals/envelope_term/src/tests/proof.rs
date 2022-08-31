@@ -1,14 +1,15 @@
+use super::TestUtil;
 use async_trait::async_trait;
-use sak_crypto::{Bls12, Hasher, Proof, Scalar, ScalarExt};
+use sak_crypto::{Bls12, Scalar, ScalarExt};
 use sak_dist_ledger::{
     Consensus, ConsensusError, DistLedger, DistLedgerApis, DistLedgerArgs,
 };
-use sak_proofs::{CoinProof, MerkleTree, NewCoin, OldCoin, CM_TREE_DEPTH};
+use sak_proofs::{
+    CoinProof, Hasher, MerkleTree, NewCoin, OldCoin, Proof, CM_TREE_DEPTH,
+};
 use sak_types::{BlockCandidate, TxCandidate};
-use type_extension::U8Array;
-
-use super::TestUtil;
 use std::{collections::HashMap, sync::Arc, time::Duration};
+use type_extension::U8Array;
 
 pub struct DummyPos {}
 
