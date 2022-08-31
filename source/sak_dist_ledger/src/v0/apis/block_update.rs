@@ -1,8 +1,8 @@
 use crate::{CtrStateUpdate, DistLedgerApis, LedgerError, MerkleUpdate};
 use colored::Colorize;
-use log::{debug, error, info, warn};
+use log::{debug, info, warn};
 use sak_contract_std::{CtrCallType, CtrRequest, Storage, ERROR_PLACEHOLDER};
-use sak_crypto::{Bls12, ScalarExt};
+use sak_crypto::{Bls12, Scalar, ScalarExt};
 use sak_proofs::{CoinProof, Hasher, Proof};
 use sak_types::{
     Block, BlockCandidate, CmIdx, MintTxCandidate, PourTxCandidate, Tx,
@@ -151,6 +151,10 @@ impl DistLedgerApis {
             .into());
         };
 
+        // for tx in &txs {
+        //     println!("cm: {}, rt: {:?}", tx, next_merkle_rt);
+        // }
+
         let block_hash = self
             .ledger_db
             .put_block(&block, &txs, &ctr_state_update, &merkle_update)
@@ -246,12 +250,14 @@ impl DistLedgerApis {
     ) -> Result<bool, LedgerError> {
         let hasher = Hasher::new();
 
-        let public_inputs = [
-            ScalarExt::parse_arr(&tc.merkle_rt)?,
-            ScalarExt::parse_arr(&tc.sn_1)?,
-            ScalarExt::parse_arr(&tc.cm_1)?,
-            ScalarExt::parse_arr(&tc.cm_2)?,
-        ];
+        let mut public_inputs = vec![];
+
+        public_inputs.push(ScalarExt::parse_arr(&tc.merkle_rt)?);
+        public_inputs.push(ScalarExt::parse_arr(&tc.sn_1)?);
+
+        for cm in &tc.cms {
+            public_inputs.push(ScalarExt::parse_arr(cm)?);
+        }
 
         let pi_des: Proof<Bls12> = match Proof::read(&*tc.pi) {
             Ok(p) => p,
@@ -402,7 +408,8 @@ async fn handle_mint_tx_candidate(
     let cm_count = process_merkle_update(
         apis,
         merkle_update,
-        vec![&tc.cm_1],
+        &tc.cms,
+        // vec![&tc.cm_1],
         // ledger_cm_count,
         next_cm_idx,
     )
@@ -428,7 +435,8 @@ async fn handle_pour_tx_candidate(
     let cm_count = process_merkle_update(
         apis,
         merkle_update,
-        vec![&tc.cm_1, &tc.cm_2],
+        &tc.cms,
+        // vec![&tc.cm_1, &tc.cm_2],
         next_cm_idx,
         // ledger_cm_count,
     )
@@ -440,7 +448,7 @@ async fn handle_pour_tx_candidate(
 async fn process_merkle_update(
     apis: &DistLedgerApis,
     merkle_update: &mut MerkleUpdate,
-    cms: Vec<&[u8; 32]>,
+    cms: &Vec<[u8; 32]>,
     // ledger_cm_count: u128,
     next_cm_idx: CmIdx,
 ) -> Result<u128, LedgerError> {
@@ -453,7 +461,7 @@ async fn process_merkle_update(
 
         let leaf_loc = format!("{}_{}", 0, cm_idx);
 
-        merkle_update.insert(leaf_loc, **cm);
+        merkle_update.insert(leaf_loc, *cm);
 
         for (height, path) in auth_path.iter().enumerate() {
             let curr_idx = path.idx;

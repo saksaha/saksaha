@@ -16,8 +16,7 @@ use type_extension::U8Array;
 pub fn mock_pour_tc_custom(
     pi: Vec<u8>,
     sn_1: U8Arr32,
-    cm_1: U8Arr32,
-    cm_2: U8Arr32,
+    cms: Vec<U8Arr32>,
     merkle_rt: U8Arr32,
 ) -> TxCandidate {
     let tc = PourTxCandidate::new(
@@ -27,8 +26,7 @@ pub fn mock_pour_tc_custom(
         Some(String::from("ctr_addr_test")),
         pi,
         sn_1,
-        cm_1,
-        cm_2,
+        cms,
         merkle_rt,
     );
 
@@ -38,11 +36,10 @@ pub fn mock_pour_tc_custom(
 pub fn mock_pour_tx_custom(
     pi: Vec<u8>,
     sn_1: U8Arr32,
-    cm_1: U8Arr32,
-    cm_2: U8Arr32,
+    cms: Vec<U8Arr32>,
     merkle_rt: U8Arr32,
 ) -> Tx {
-    let c = mock_pour_tc_custom(pi, sn_1, cm_1, cm_2, merkle_rt);
+    let c = mock_pour_tc_custom(pi, sn_1, cms, merkle_rt);
 
     c.upgrade(0)
 }
@@ -235,8 +232,7 @@ pub fn mock_pour_tc_1() -> TxCandidate {
         None,
         pi_serialized,
         sn_1.to_bytes(),
-        cm_1.to_bytes(),
-        cm_2.to_bytes(),
+        vec![cm_1.to_bytes(), cm_2.to_bytes()],
         merkle_rt.to_bytes(),
     );
 
@@ -431,8 +427,7 @@ pub fn mock_pour_tc_2() -> TxCandidate {
         None,
         pi_serialized,
         sn_1.to_bytes(),
-        cm_1.to_bytes(),
-        cm_2.to_bytes(),
+        vec![cm_1.to_bytes(), cm_2.to_bytes()],
         merkle_rt.to_bytes(),
     );
 
@@ -455,7 +450,7 @@ pub fn mock_mint_tc_custom(
         validator_wasm,
         String::from("author_sig_mint_custom_1"),
         Some(VALIDATOR_CTR_ADDR.to_string()),
-        cm,
+        vec![cm],
         v,
         k,
         s,
@@ -491,7 +486,7 @@ pub fn mock_mint_tc_1() -> TxCandidate {
         validator_wasm,
         String::from("author_sig_mint_1"),
         Some(VALIDATOR_CTR_ADDR.to_string()),
-        cm.to_bytes(),
+        vec![cm.to_bytes()],
         v,
         k.to_bytes(),
         s,
@@ -523,7 +518,7 @@ pub fn mock_mint_tc_2() -> TxCandidate {
         vec![2],
         String::from("author_sig_mint_2"),
         None,
-        cm.to_bytes(),
+        vec![cm.to_bytes()],
         v,
         k.to_bytes(),
         s,
@@ -559,7 +554,7 @@ pub fn mock_mint_tc_3() -> TxCandidate {
         vec![3],
         String::from("author_sig_mint_3"),
         None,
-        cm.to_bytes(),
+        vec![cm.to_bytes()],
         v,
         k.to_bytes(),
         s,
@@ -595,7 +590,7 @@ pub fn mock_mint_tc_4() -> TxCandidate {
         vec![4],
         String::from("author_sig_mint_4"),
         None,
-        cm.to_bytes(),
+        vec![cm.to_bytes()],
         v,
         k.to_bytes(),
         s,
@@ -636,7 +631,7 @@ pub fn mock_mint_tc_deploying_contract(
         contract_data,
         String::from("author_sig_mint_3"),
         Some(ctrt_addr),
-        cm.to_bytes(),
+        vec![cm.to_bytes()],
         v,
         k.to_bytes(),
         s,

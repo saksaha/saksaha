@@ -101,8 +101,10 @@ impl LedgerDB {
             ColumnFamilyDescriptor::new(cfs::S, Options::default()),
             ColumnFamilyDescriptor::new(cfs::SN_1, Options::default()),
             ColumnFamilyDescriptor::new(cfs::SN_2, Options::default()),
-            ColumnFamilyDescriptor::new(cfs::CM_1, Options::default()),
-            ColumnFamilyDescriptor::new(cfs::CM_2, Options::default()),
+            ColumnFamilyDescriptor::new(cfs::CMS, Options::default()),
+            ColumnFamilyDescriptor::new(cfs::CM_COUNT, Options::default()),
+            // ColumnFamilyDescriptor::new(cfs::CM_1, Options::default()),
+            // ColumnFamilyDescriptor::new(cfs::CM_2, Options::default()),
             ColumnFamilyDescriptor::new(
                 cfs::BLOCK_MERKLE_RT,
                 Options::default(),
