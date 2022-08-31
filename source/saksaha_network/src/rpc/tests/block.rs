@@ -32,7 +32,7 @@ async fn test_call_get_block_with_good_params() {
             Err(err) => panic!("Failed to write dummy block, err: {}", err),
         };
 
-        block_hash
+        block_hash.unwrap()
     };
 
     println!("original_block_hash: {:?}", original_block_hash);
@@ -80,7 +80,7 @@ async fn test_call_get_block_with_good_params() {
 
     let block_acquired = result.block.unwrap();
 
-    assert_eq!(block_acquired.get_block_hash(), &original_block_hash);
+    assert_eq!(block_acquired.get_block_hash(), &original_block_hash,);
 }
 
 #[tokio::test(flavor = "multi_thread")]
@@ -167,7 +167,10 @@ async fn test_call_get_block_with_wrong_params() {
         block_acquired.get_block_hash(),
     );
 
-    assert_eq!(block_acquired.get_block_hash(), &original_block_hash);
+    assert_eq!(
+        block_acquired.get_block_hash(),
+        &original_block_hash.unwrap()
+    );
 
     //
 }
@@ -201,7 +204,7 @@ async fn test_call_get_block_list() {
             block_hash
         };
 
-        block_hashes.push(block_hash)
+        block_hashes.push(block_hash.unwrap())
     }
 
     let uri: Uri = {

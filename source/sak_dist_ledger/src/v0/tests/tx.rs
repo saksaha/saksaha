@@ -1,6 +1,8 @@
+use crate::v0::dist_ledger;
+
 use super::{test_util::TestUtil, utils};
 use sak_kv_db::WriteBatch;
-use sak_types::{BlockCandidate, TxCandidate};
+use sak_types::{BlockCandidate, Tx, TxCandidate};
 use std::time::Duration;
 
 #[tokio::test(flavor = "multi_thread")]
@@ -201,45 +203,118 @@ async fn test_dist_ledger_tx_pour_put_and_get_cm_idx() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
-async fn test_dist_ledger_double_spending() {
+async fn test_dist_ledger_verify_proof_success() {
     sak_test_utils::init_test_log();
     TestUtil::init_test(vec!["test"]);
 
     let dist_ledger = utils::make_dist_ledger().await;
 
-    let mut cm_idx_count = 0;
+    let dummy_pour_tc_1 = utils::make_dummy_valid_pour_tx_candidate().await;
 
-    let mut write_batch = WriteBatch::default();
+    let bc_1 = utils::make_dummy_block_canidate_valid_pi(dummy_pour_tc_1);
 
     {
-        let dummy_pour_tx = utils::make_dummy_valid_pour_tx().await;
-
-        let dummy_tx_hash = dist_ledger
+        let block_hash = dist_ledger
             .apis
-            .ledger_db
-            .batch_put_tx(
-                &mut write_batch,
-                &dummy_pour_tx,
-                // &mut cm_idx_count
-            )
-            .expect("pour_tx should be written");
+            .write_block(Some(bc_1))
+            .await
+            .expect("block should be written");
 
-        println!("[+] dummy pour_tx hash: {:?}", dummy_tx_hash);
+        println!("[+] dummy pour_tx hash: {:?}", block_hash);
+    }
+}
+
+#[tokio::test(flavor = "multi_thread")]
+#[should_panic]
+async fn test_dist_ledger_verify_proof_fail() {
+    sak_test_utils::init_test_log();
+    TestUtil::init_test(vec!["test"]);
+
+    let dist_ledger = utils::make_dist_ledger().await;
+
+    let dummy_pour_tc_1 = utils::make_dummy_invalid_pour_tx_candidate().await;
+
+    let bc_1 = utils::make_dummy_block_canidate_valid_pi(dummy_pour_tc_1);
+
+    {
+        let block_hash = dist_ledger
+            .apis
+            .write_block(Some(bc_1))
+            .await
+            .expect("block should be written");
+
+        println!("[+] dummy pour_tx hash: {:?}", block_hash);
+    }
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn test_dist_ledger_double_spending_success() {
+    sak_test_utils::init_test_log();
+    TestUtil::init_test(vec!["test"]);
+
+    let dist_ledger = utils::make_dist_ledger().await;
+
+    let dummy_pour_tc_1 = utils::make_dummy_valid_pour_tx_candidate().await;
+
+    let dummy_pour_tc_2 =
+        utils::make_dummy_valid_pour_tx_candidate_random().await;
+
+    let bc_1 = utils::make_dummy_block_canidate_valid_pi(dummy_pour_tc_1);
+
+    let bc_2 = utils::make_dummy_block_canidate_valid_pi(dummy_pour_tc_2);
+
+    {
+        let block_hash = dist_ledger
+            .apis
+            .write_block(Some(bc_1))
+            .await
+            .expect("block should be written");
+
+        println!("[+] dummy pour_tx hash: {:?}", block_hash);
     }
 
     {
-        let dummy_pour_tx = utils::make_dummy_valid_pour_tx().await;
-
-        let dummy_tx_hash = dist_ledger
+        let block_hash = dist_ledger
             .apis
-            .ledger_db
-            .batch_put_tx(
-                &mut write_batch,
-                &dummy_pour_tx,
-                // &mut cm_idx_count
-            )
-            .expect("pour_tx should be written");
+            .write_block(Some(bc_2))
+            .await
+            .expect("block should be written");
 
-        println!("[+] dummy pour_tx hash: {:?}", dummy_tx_hash);
+        println!("[+] dummy pour_tx hash: {:?}", block_hash);
+    }
+}
+
+#[tokio::test(flavor = "multi_thread")]
+#[should_panic]
+async fn test_dist_ledger_double_spending_fail() {
+    sak_test_utils::init_test_log();
+    TestUtil::init_test(vec!["test"]);
+
+    let dist_ledger = utils::make_dist_ledger().await;
+
+    let dummy_pour_tc = utils::make_dummy_valid_pour_tx_candidate().await;
+
+    let bc_1 = utils::make_dummy_block_canidate_valid_pi(dummy_pour_tc.clone());
+
+    let bc_2 = utils::make_dummy_block_canidate_valid_pi(dummy_pour_tc);
+
+    {
+        let block_hash = dist_ledger
+            .apis
+            .write_block(Some(bc_1))
+            .await
+            .expect("block should be written");
+
+        println!("[+] dummy pour_tx hash: {:?}", block_hash);
+    }
+
+    {
+        let block_hash = dist_ledger
+            .apis
+            .write_block(Some(bc_2))
+            .await
+            .expect("block should be written");
+
+        println!("[+] dummy pour_tx hash: {:?}", block_hash);
     }
 }

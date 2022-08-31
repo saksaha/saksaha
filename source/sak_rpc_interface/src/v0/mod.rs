@@ -1,7 +1,8 @@
 mod tx;
 
+pub use tx::*;
+
 use serde::{Deserialize, Serialize};
-use type_extension::U8Arr32;
 
 pub const JSON_RPC_2: &'static str = "2.0";
 
