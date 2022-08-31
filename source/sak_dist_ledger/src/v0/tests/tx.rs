@@ -12,30 +12,44 @@ async fn test_put_and_get_transaction() {
 
     let dist_ledger = utils::make_dist_ledger().await;
 
-    let dummy_tx_values = [
-        sak_types::mock_pour_tc_1().upgrade(1),
-        sak_types::mock_mint_tc_2().upgrade(2),
-    ];
+    let bc = sak_types::mock_block_2();
 
-    let mut tx_hashes = vec![];
+    let block_hash = dist_ledger
+        .apis
+        .write_block(Some(bc))
+        .await
+        .expect("block should be written")
+        .unwrap();
 
-    let mut cm_idx_count = 0;
+    println!("[+] block hash: {:?}", block_hash);
 
-    let mut write_batch = WriteBatch::default();
+    let tx_hashes = dist_ledger
+        .apis
+        .ledger_db
+        .get_tx_hashes(&block_hash)
+        .expect("block should be written")
+        .unwrap();
 
-    for tx_val in dummy_tx_values.iter() {
-        let h = dist_ledger
-            .apis
-            .ledger_db
-            .batch_put_tx(
-                &mut write_batch,
-                &tx_val,
-                // &mut cm_idx_count
-            )
-            .expect("Tx should be written");
+    // let dummy_tx_values = [
+    //     sak_types::mock_pour_tc_1().upgrade(1),
+    //     sak_types::mock_mint_tc_2().upgrade(2),
+    // ];
 
-        tx_hashes.push(h);
-    }
+    // let mut write_batch = WriteBatch::default();
+
+    // for tx_val in dummy_tx_values.iter() {
+    //     let h = dist_ledger
+    //         .apis
+    //         .ledger_db
+    //         .batch_put_tx(
+    //             &mut write_batch,
+    //             &tx_val,
+    //             // &mut cm_idx_count
+    //         )
+    //         .expect("Tx should be written");
+
+    //     tx_hashes.push(h);
+    // }
 
     for (idx, tx_hash) in tx_hashes.iter().enumerate() {
         let tx_val_retrieved = dist_ledger
@@ -45,10 +59,9 @@ async fn test_put_and_get_transaction() {
             .expect("Tx should exist")
             .expect("tx should exist");
 
-        assert_eq!(
-            tx_val_retrieved.get_data(),
-            dummy_tx_values[idx].get_data()
-        );
+        assert_eq!(tx_val_retrieved.get_tx_hash(), &tx_hashes[idx]);
+
+        println!(" tx_hash : {:?}", &tx_hashes[idx]);
     }
 }
 
