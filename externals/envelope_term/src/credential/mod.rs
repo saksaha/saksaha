@@ -1,7 +1,5 @@
 use crate::EnvelopeError;
-use sak_crypto::{
-    self, PublicKey, SakKey, SecretKey, SigningKey, ToEncodedPoint,
-};
+use sak_crypto::{self, PublicKey, SakKey, SecretKey, ToEncodedPoint};
 use sak_p2p_id::Credential as P2PCredential;
 
 pub(crate) struct Credential {
@@ -63,7 +61,7 @@ impl Credential {
     }
 
     pub fn sign(&self) -> String {
-        let ret = format!("{}-sig", self.acc_addr);
+        let ret = format!("{}-sig", self.public_key_str);
         ret
     }
 }

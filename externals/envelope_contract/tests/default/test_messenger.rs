@@ -1,7 +1,6 @@
 use super::{
-    ARG_CH_ID, ARG_DST_PK, ARG_SERIALIZED_INPUT, DUMMY_CHANNEL_ID_1,
-    DUMMY_CHANNEL_ID_2, DUMMY_CHANNEL_ID_3, ENVELOPE_CONTRACT,
-    INIT_CHANNEL_ID_1, STORAGE_CAP,
+    ARG_CH_ID, ARG_SERIALIZED_INPUT, DUMMY_CHANNEL_ID_1, DUMMY_CHANNEL_ID_2,
+    DUMMY_CHANNEL_ID_3, ENVELOPE_CONTRACT,
 };
 use envelope_contract::{
     request_type::OPEN_CH, Channel, ChannelId, ChatMessage,
@@ -96,7 +95,9 @@ fn make_mock_open_ch() -> Channel {
     Channel {
         ch_id: DUMMY_CHANNEL_ID_2.to_string(),
         eph_key: String::default(),
-        sig: String::default(),
+        // sig: String::default(),
+        initiator_pk: String::default(),
+        participants: Vec::<String>::new(),
     }
 }
 
@@ -205,7 +206,9 @@ async fn test_messenger_open_channel() {
     let Channel {
         ch_id,
         eph_key,
-        sig,
+        // sig,
+        initiator_pk,
+        participants,
     } = make_mock_open_ch();
 
     let (request, storage) = {
@@ -214,7 +217,9 @@ async fn test_messenger_open_channel() {
             open_ch: Channel {
                 ch_id,
                 eph_key,
-                sig,
+                // sig,
+                initiator_pk,
+                participants,
             },
         };
 
@@ -366,7 +371,9 @@ async fn test_messenger_open_channel_me_and_you() {
     let Channel {
         ch_id,
         eph_key,
-        sig,
+        // sig,
+        initiator_pk,
+        participants,
     } = make_mock_open_ch();
 
     let receipt_1 = {
@@ -375,7 +382,9 @@ async fn test_messenger_open_channel_me_and_you() {
             open_ch: Channel {
                 ch_id: ch_id.clone(),
                 eph_key: eph_key.clone(),
-                sig: sig.clone(),
+                // sig: sig.clone(),
+                initiator_pk: initiator_pk.clone(),
+                participants: participants.clone(),
             },
         };
 
@@ -401,7 +410,9 @@ async fn test_messenger_open_channel_me_and_you() {
             open_ch: Channel {
                 ch_id,
                 eph_key,
-                sig,
+                // sig,
+                initiator_pk,
+                participants,
             },
         };
 

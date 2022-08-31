@@ -1,15 +1,28 @@
+use core::fmt;
+
 use crate::{io::InputMode, wallet_sdk, EnvelopeError};
 use envelope_contract::{Channel, ChatMessage};
 use log::{info, warn};
 use tui::widgets::ListState;
 
 #[repr(u8)]
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum View {
     Landing,
     ChList,
     OpenCh,
     Chat,
+}
+
+impl fmt::Display for View {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            View::Landing => write!(f, "landing"),
+            View::ChList => write!(f, "Channels [1]"),
+            View::OpenCh => write!(f, "Open channel [2]"),
+            View::Chat => write!(f, "Chat [3]"),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -27,6 +40,8 @@ pub struct AppState {
     pub view: View,
     pub balance: String,
     pub selected_ch_id: String,
+    pub selected_ch: Channel,
+    pub image_count: u16,
 }
 
 impl AppState {
@@ -45,27 +60,13 @@ impl AppState {
             view: View::Landing,
             balance: String::from("0"),
             selected_ch_id: String::default(),
+            selected_ch: Channel::default(),
+            image_count: 0,
         }
     }
 
     pub fn scroll_messages_view(&self) -> usize {
         self.scroll_messages_view
-    }
-
-    pub fn _messages_scroll(&mut self, movement: ScrollMovement) {
-        match movement {
-            ScrollMovement::Up => {
-                if self.scroll_messages_view > 0 {
-                    self.scroll_messages_view -= 1;
-                }
-            }
-            ScrollMovement::Down => {
-                self.scroll_messages_view += 1;
-            }
-            ScrollMovement::Start => {
-                self.scroll_messages_view += 0;
-            }
-        }
     }
 
     // pub fn get_is_initialized(&self) -> bool {
@@ -217,6 +218,8 @@ impl Default for AppState {
             view: View::Landing,
             balance: String::from("0"),
             selected_ch_id: String::default(),
+            selected_ch: Channel::default(),
+            image_count: 0,
         }
     }
 }
@@ -224,12 +227,11 @@ impl Default for AppState {
 #[derive(Debug, PartialEq, Eq)]
 pub struct ChannelState {
     pub channel: Channel,
-    pub her_pk: String,
 }
 
 impl ChannelState {
-    pub fn new(channel: Channel, her_pk: String) -> ChannelState {
-        ChannelState { channel, her_pk }
+    pub fn new(channel: Channel) -> ChannelState {
+        ChannelState { channel }
     }
 }
 
