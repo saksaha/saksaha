@@ -73,8 +73,6 @@ async fn test_dist_ledger_put_a_single_pour_tx() {
             )
             .expect("pour_tx should be written");
     }
-
-    println!("[+] test pass");
 }
 
 #[tokio::test(flavor = "multi_thread")]

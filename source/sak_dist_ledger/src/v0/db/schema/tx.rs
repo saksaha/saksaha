@@ -1,8 +1,9 @@
-use crate::LedgerDB;
 use crate::LedgerError;
-use sak_crypto::{Bls12, Hasher, Proof};
+use crate::{cfs, LedgerDB};
+use sak_crypto::{Bls12, ScalarExt};
 use sak_kv_db::WriteBatch;
 use sak_proofs::CoinProof;
+use sak_proofs::{Hasher, Proof};
 use sak_types::{
     Cm, CmIdx, MintTx, MintTxCandidate, PourTx, PourTxCandidate, Tx, TxCtrOp,
     TxHash, TxType,
