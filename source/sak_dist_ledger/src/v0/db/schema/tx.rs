@@ -256,14 +256,12 @@ impl LedgerDB {
             ScalarExt::parse_arr(&tc.cm_2)?,
         ];
 
-        // for test, it should be commented
-
         // let pi_des: Proof<Bls12> = match Proof::read(&*tc.pi) {
         //     Ok(p) => p,
         //     Err(err) => {
         //         return Err(format!(
-        //             "Cannot deserialize the pi, err: {:?}",
-        //             err
+        //             "Cannot deserialize the pi, err: {:?}, pi: {:?}",
+        //             err, tc.pi,
         //         )
         //         .into());
         //     }

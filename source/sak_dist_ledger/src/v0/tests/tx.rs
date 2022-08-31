@@ -10,7 +10,10 @@ async fn test_put_and_get_transaction() {
 
     let dist_ledger = utils::make_dist_ledger().await;
 
-    let dummy_tx_values = utils::make_dummy_txs();
+    let dummy_tx_values = [
+        sak_types::mock_pour_tc_1().upgrade(1),
+        sak_types::mock_mint_tc_2().upgrade(2),
+    ];
 
     let mut tx_hashes = vec![];
 
@@ -134,7 +137,7 @@ async fn test_dist_ledger_tx_pour_put_and_get_cm_idx() {
 
     let dist_ledger = utils::make_dist_ledger().await;
 
-    let pour_tc = sak_types::mock_pour_tc_1().unwrap();
+    let pour_tc = sak_types::mock_pour_tc_1();
 
     let mock_tx_hash = pour_tc.get_tx_hash().to_string();
 
