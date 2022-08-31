@@ -213,11 +213,11 @@ impl SyncPool {
         &self,
         txs: &Vec<TxCandidate>,
     ) -> Result<(), String> {
-        // let mut tx_map_lock = self.tx_map.write().await;
+        let mut tx_map_lock = self.tx_map.write().await;
 
-        // for tx in txs {
-        //     tx_map_lock.remove(tx.get_tx_hash());
-        // }
+        for tx in txs {
+            tx_map_lock.remove(tx.get_tx_hash());
+        }
 
         Ok(())
     }
