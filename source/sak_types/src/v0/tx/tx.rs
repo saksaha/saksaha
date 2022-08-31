@@ -42,7 +42,7 @@ impl Tx {
         }
     }
 
-    pub fn get_cm_pairs(&self) -> Vec<(&CmIdx, &Cm)> {
+    pub fn get_cm_pairs(&self) -> Vec<(CmIdx, Cm)> {
         match self {
             Tx::Mint(t) => t.get_cm_pairs(),
             Tx::Pour(t) => t.get_cm_pairs(),

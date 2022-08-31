@@ -1,12 +1,12 @@
 use crate::LedgerError;
 use crate::{cfs, LedgerDB};
-use sak_crypto::{Bls12, Hasher, Proof, ScalarExt};
 use sak_kv_db::WriteBatch;
 use sak_kv_db::DB;
 use sak_types::{
     Cm, CmIdx, MintTx, MintTxCandidate, PourTx, PourTxCandidate, Sn, Tx,
     TxCtrOp, TxHash, TxHeight, TxType,
 };
+use serde::Deserialize;
 use type_extension::U8Arr32;
 
 impl LedgerDB {
@@ -347,9 +347,12 @@ impl LedgerDB {
 
         match self.db.get_cf(&cf, key)? {
             Some(v) => {
-                let arr = type_extension::convert_vec_into_u8_32(v)?;
+                let str = String::from_utf8(v)?;
 
-                return Ok(Some(arr));
+                // let arr = type_extension::convert_vec_into_u8_32(v)?;
+                let de_arr: Vec<[u8; 32]> = serde_json::from_str(&str)?;
+
+                return Ok(Some(de_arr));
             }
             None => {
                 return Ok(None);
@@ -701,11 +704,12 @@ impl LedgerDB {
         &self,
         batch: &mut WriteBatch,
         key: &TxHash,
-        value: Vec<&[u8; 32]>,
+        value: &Vec<[u8; 32]>,
     ) -> Result<(), LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::CMS)?;
 
-        batch.put_cf(&cf, key, value);
+        let ser_val = serde_json::to_string(value)?;
+        batch.put_cf(&cf, key, ser_val);
 
         Ok(())
     }
@@ -720,7 +724,7 @@ impl LedgerDB {
 
         let cf = self.make_cf_handle(&self.db, cfs::CM_COUNT)?;
 
-        batch.put_cf(&cf, cm, cm_count);
+        batch.put_cf(&cf, key, cm_count);
 
         Ok(())
     }

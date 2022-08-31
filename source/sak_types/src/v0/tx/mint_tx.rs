@@ -26,16 +26,14 @@ impl MintTx {
         self.tx_candidate
     }
 
-    pub fn get_cm_pairs(&self) -> Vec<(&CmIdx, &Cm)> {
+    pub fn get_cm_pairs(&self) -> Vec<(CmIdx, Cm)> {
         let cms = self.tx_candidate.get_cms();
 
-        let res = self
-            .cm_idxes
+        self.cm_idxes
             .iter()
-            .zip(cms.iter())
-            .collect::<Vec<(&CmIdx, &Cm)>>();
-
-        res
+            .cloned()
+            .zip(cms.iter().cloned())
+            .collect::<Vec<(CmIdx, Cm)>>()
     }
 }
 
@@ -132,8 +130,8 @@ impl MintTxCandidate {
         utils::get_ctr_op(&self.ctr_addr, &self.data)
     }
 
-    pub fn get_cms(&self) -> Vec<Cm> {
-        self.cms
+    pub fn get_cms(&self) -> &Vec<Cm> {
+        &self.cms
     }
 
     pub fn upgrade(

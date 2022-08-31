@@ -183,12 +183,14 @@ impl LedgerDB {
 
         self.batch_put_tx_type(batch, tx_hash, tc.get_tx_type())?;
 
-        self.batch_put_cm_1(batch, tx_hash, &tc.cm_1)?;
+        self.batch_put_cms(batch, tx_hash, &tc.cms)?;
 
-        self.batch_put_cm_cm_idx(batch, &tc.cm_1, &tx.cm_idx_1)?;
-        self.batch_put_cm_idx_cm(batch, &tx.cm_idx_1, &tc.cm_1)?;
+        for (cm, cm_idx) in std::iter::zip(&tc.cms, &tx.cm_idxes) {
+            self.batch_put_cm_cm_idx(batch, cm, cm_idx)?;
+            self.batch_put_cm_idx_cm(batch, cm_idx, cm)?;
+        }
 
-        // self.batch_put_cm_idx_cm(batch, &tx.cm_idx_1, &tc.cm)?;
+        self.batch_put_cm_count(batch, tx_hash, &tc.cm_count);
 
         self.batch_put_tx_created_at(batch, tx_hash, &tc.created_at)?;
 
