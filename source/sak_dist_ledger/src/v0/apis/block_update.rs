@@ -32,11 +32,14 @@ impl DistLedgerApis {
             info!("Genesis block not found, writing");
 
             let b = match self.write_block(Some(genesis_block)).await {
-                Ok(b) => b.ok_or(
-                    "genesis block should have been written as it \
-                        does not exist at the moment",
-                )?,
-                Err(err) => return Err(err.to_string()),
+                Ok(b) => b,
+                Err(err) => {
+                    return Err(format!(
+                        "Genesis block failed to write, err: {}",
+                        err.to_string()
+                    )
+                    .into());
+                }
             };
 
             b
@@ -48,15 +51,16 @@ impl DistLedgerApis {
     pub async fn write_block(
         &self,
         bc: Option<BlockCandidate>,
-    ) -> Result<Option<String>, LedgerError> {
+    ) -> Result<String, LedgerError> {
         let mut bc = match bc {
             Some(bc) => bc,
             None => match self.make_block_candidate().await? {
                 Some(bc) => bc,
                 None => {
-                    // debug!("No txs to write as a block, aborting");
-
-                    return Ok(None);
+                    return Err(format!(
+                        "No txs to write as a block, aborting"
+                    )
+                    .into());
                 }
             },
         };
@@ -78,6 +82,7 @@ impl DistLedgerApis {
         };
 
         let tcs = &bc.tx_candidates.clone();
+
         let mut ctr_state_update = CtrStateUpdate::new();
         let mut merkle_update = MerkleUpdate::new();
 
@@ -145,19 +150,9 @@ impl DistLedgerApis {
             .into());
         };
 
-        // let updated_ledger_cm_count = ledger_cm_count + added_cm_count;
-        // let updated_cm_count = ledger_cm_count + added_cm_count;
-
         let block_hash = self
             .ledger_db
-            .put_block(
-                &block,
-                &txs,
-                &ctr_state_update,
-                &merkle_update,
-                // ledger_cm_count,
-                // updated_ledger_cm_count,
-            )
+            .put_block(&block, &txs, &ctr_state_update, &merkle_update)
             .await?;
 
         if let Err(err) = self.sync_pool.insert_block(&block).await {
@@ -170,29 +165,64 @@ impl DistLedgerApis {
             block.block_height,
         );
 
-        Ok(Some(block_hash))
+        Ok(block_hash)
     }
 
-    pub async fn sync_block(
+    pub async fn write_blocks(
         &self,
-        block: Block,
-        txs: Vec<Tx>,
-    ) -> Result<Option<String>, LedgerError> {
-        let tx_candidates = txs.into_iter().map(|tx| tx.downgrade()).collect();
+        mut blocks: Vec<(Block, Vec<Tx>)>,
+        // txs: Vec<Tx>,
+    ) -> Result<Vec<String>, LedgerError> {
+        // let tx_candidates = txs.into_iter().map(|tx| tx.downgrade()).collect();
 
-        let bc_candidate = BlockCandidate {
-            validator_sig: block.validator_sig,
-            tx_candidates,
-            witness_sigs: block.witness_sigs,
-            created_at: block.created_at,
-        };
+        // let bc_candidate = BlockCandidate {
+        //     validator_sig: block.validator_sig,
+        //     tx_candidates,
+        //     witness_sigs: block.witness_sigs,
+        //     created_at: block.created_at,
+        // };
 
-        match self.write_block(Some(bc_candidate)).await {
-            Ok(res) => return Ok(res),
-            Err(err) => {
-                return Err(format!("Block sync failed, err: {}", err).into());
+        // match self.write_block(Some(bc_candidate)).await {
+        //     Ok(res) => return Ok(res),
+        //     Err(err) => {
+        //         return Err(format!("Block sync failed, err: {}", err).into());
+        //     }
+        // }
+
+        let mut block_hashes = vec![];
+
+        blocks.sort_by(|a, b| a.0.block_height.cmp(&b.0.block_height));
+
+        for (block, txs) in blocks {
+            let latest_block_height =
+                self.get_latest_block_height()?.unwrap_or(0);
+
+            if block.block_height != (latest_block_height + 1) {
+                warn!(
+                "received not continuous block height, block_height: {}, received : {}",
+                latest_block_height,
+                block.block_height
+            );
+
+                continue;
             }
+
+            let tx_candidates =
+                txs.into_iter().map(|tx| tx.downgrade()).collect();
+
+            let bc_candidate = BlockCandidate {
+                validator_sig: block.validator_sig,
+                tx_candidates,
+                witness_sigs: block.witness_sigs,
+                created_at: block.created_at,
+            };
+
+            let block_hash = self.write_block(Some(bc_candidate)).await?;
+
+            block_hashes.push(block_hash);
         }
+
+        Ok(block_hashes)
     }
 
     pub fn delete_tx(&self, key: &String) -> Result<(), LedgerError> {

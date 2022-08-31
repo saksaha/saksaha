@@ -1,66 +1,58 @@
-// // mod mock;
+use type_extension::U8Arr32;
+use type_extension::U8Array;
 
-// use super::TxCandidate;
-// use crate::{MintTxCandidate, PourTxCandidate, Tx, WASM_MAGIC_NUMBER};
-// pub use mock::*;
-// use sak_crypto::Hasher;
-// use sak_crypto::Scalar;
-// use sak_crypto::ScalarExt;
-// use type_extension::U8Arr32;
-// use type_extension::U8Array;
+pub const VALIDATOR_CTR_ADDR: &'static str = "test_validator_1";
 
-// pub(crate) const VALIDATOR_CTR_ADDR: &'static str = "test_validator_1";
+pub const VALIDATOR: &[u8] =
+    include_bytes!("../../../../prebuild/sak_validator.postprocess.wasm");
 
-// pub(crate) const VALIDATOR: &[u8] =
-//     include_bytes!("../../../../../prebuild/sak_validator.postprocess.wasm");
+pub(crate) fn get_addr_sk_1() -> U8Arr32 {
+    [
+        213, 142, 186, 101, 114, 0, 81, 8, 38, 83, 254, 23, 201, 180, 239, 177,
+        240, 61, 215, 11, 16, 98, 140, 106, 139, 184, 41, 201, 89, 70, 192,
+        109,
+    ]
+}
 
-// fn get_addr_sk_1() -> U8Arr32 {
-//     [
-//         213, 142, 186, 101, 114, 0, 81, 8, 38, 83, 254, 23, 201, 180, 239, 177,
-//         240, 61, 215, 11, 16, 98, 140, 106, 139, 184, 41, 201, 89, 70, 192,
-//         109,
-//     ]
-// }
+pub(crate) fn get_s_1() -> U8Arr32 {
+    U8Array::new_empty_32()
+}
 
-// fn get_s_1() -> U8Arr32 {
-//     U8Array::new_empty_32()
-// }
+pub(crate) fn get_s_2() -> [u8; 32] {
+    U8Array::new_empty_32()
+}
 
-// fn get_s_2() -> [u8; 32] {
-//     U8Array::new_empty_32()
-// }
+pub(crate) fn get_s_3() -> [u8; 32] {
+    U8Array::new_empty_32()
+}
 
-// fn get_s_3() -> [u8; 32] {
-//     U8Array::new_empty_32()
-// }
+pub(crate) fn get_r_1() -> [u8; 32] {
+    U8Array::new_empty_32()
+}
 
-// fn get_r_1() -> [u8; 32] {
-//     U8Array::new_empty_32()
-// }
+pub(crate) fn get_r_2() -> [u8; 32] {
+    U8Array::new_empty_32()
+}
 
-// fn get_r_2() -> [u8; 32] {
-//     U8Array::new_empty_32()
-// }
+pub(crate) fn get_r_3() -> [u8; 32] {
+    U8Array::new_empty_32()
+}
 
-// fn get_r_3() -> [u8; 32] {
-//     U8Array::new_empty_32()
-// }
+pub(crate) fn get_rho_1() -> U8Arr32 {
+    U8Array::new_empty_32()
+}
 
-// fn get_rho_1() -> U8Arr32 {
-//     U8Array::new_empty_32()
-// }
+pub(crate) fn get_rho_2() -> [u8; 32] {
+    U8Array::new_empty_32()
+}
 
-// fn get_rho_2() -> [u8; 32] {
-//     U8Array::new_empty_32()
-// }
+pub(crate) fn get_rho_3() -> [u8; 32] {
+    U8Array::new_empty_32()
+}
 
-// fn get_rho_3() -> [u8; 32] {
-//     U8Array::new_empty_32()
-// }
-
-// fn get_rho_4() -> [u8; 32] {
-//     U8Array::new_empty_32()
-// }
+pub(crate) fn get_rho_4() -> [u8; 32] {
+    U8Array::new_empty_32()
+}
 
 // impl Tx {
 //     pub fn new_dummy_pour_m1_to_p3_p4() -> Tx {
@@ -96,18 +88,6 @@
 //         let c = new_dummy_valid_pour(pi, sn_1, cm_1, cm_2, merkle_rt);
 
 //         c.upgrade(0)
-//     }
-
-//     pub fn new_dummy_valid_pour_candidate(
-//         pi: Vec<u8>,
-//         sn_1: [u8; 32],
-//         cm_1: [u8; 32],
-//         cm_2: [u8; 32],
-//         merkle_rt: [u8; 32],
-//     ) -> TxCandidate {
-//         let c = new_dummy_valid_pour(pi, sn_1, cm_1, cm_2, merkle_rt);
-
-//         c
 //     }
 // }
 
@@ -468,51 +448,5 @@
 //             U8Array::new_empty_32(),
 //             U8Array::new_empty_32(),
 //         )
-//     }
-// }
-
-// pub struct Coin {
-//     pub addr_sk: [u8; 32],
-//     pub addr_pk: [u8; 32],
-//     pub rho: [u8; 32],
-//     pub r: [u8; 32],
-//     pub s: [u8; 32],
-//     pub v: [u8; 32],
-//     pub k: [u8; 32],
-//     pub cm: [u8; 32],
-// }
-
-// impl Coin {
-//     pub fn generate_a_dummy_coin(value: u64) -> Coin {
-//         let hasher = Hasher::new();
-
-//         let addr_sk = U8Array::from_int(sak_crypto::rand() as u64).to_owned();
-//         let addr_pk = hasher.mimc_single(&addr_sk).unwrap();
-//         let rho = U8Array::from_int(sak_crypto::rand() as u64);
-//         let r = U8Array::from_int(sak_crypto::rand() as u64);
-//         let s = U8Array::from_int(sak_crypto::rand() as u64);
-//         let v = U8Array::from_int(value);
-
-//         let k = hasher.comm2_scalar(
-//             ScalarExt::parse_arr(&r).unwrap(),
-//             addr_pk,
-//             ScalarExt::parse_arr(&rho).unwrap(),
-//         );
-//         let cm = hasher.comm2_scalar(
-//             ScalarExt::parse_arr(&s).unwrap(),
-//             ScalarExt::parse_arr(&v).unwrap(),
-//             k,
-//         );
-
-//         Coin {
-//             addr_sk,
-//             addr_pk: addr_pk.to_bytes(),
-//             rho,
-//             r,
-//             s,
-//             v,
-//             k: k.to_bytes(),
-//             cm: cm.to_bytes(),
-//         }
 //     }
 // }

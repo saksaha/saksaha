@@ -32,7 +32,7 @@ async fn test_call_get_block_with_good_params() {
             Err(err) => panic!("Failed to write dummy block, err: {}", err),
         };
 
-        block_hash.unwrap()
+        block_hash
     };
 
     println!("original_block_hash: {:?}", original_block_hash);
@@ -109,7 +109,7 @@ async fn test_call_get_block_with_wrong_params() {
             Err(err) => panic!("Failed to write dummy block, err: {}", err),
         };
 
-        block_hash.unwrap()
+        block_hash
     };
 
     let uri: Uri = {
@@ -198,7 +198,7 @@ async fn test_call_get_block_list() {
                 Err(err) => panic!("Failed to write dummy block, err: {}", err),
             };
 
-            block_hash.unwrap()
+            block_hash
         };
 
         block_hashes.push(block_hash)

@@ -104,7 +104,7 @@ impl DistLedger {
 
         info!(
             "Initialized Blockchain, latest height (none if genesis \
-                block has not be inserted): {:?}",
+                block has not been inserted): {:?}",
             latest_height,
         );
 

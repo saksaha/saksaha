@@ -55,6 +55,32 @@ impl Tx {
             Tx::Pour(t) => t.get_sn(),
         }
     }
+
+    pub fn new_dummy_valid_pour(
+        pi: Vec<u8>,
+        sn_1: [u8; 32],
+        cm_1: [u8; 32],
+        cm_2: [u8; 32],
+        merkle_rt: [u8; 32],
+    ) -> Tx {
+        let c =
+            Tx::new_dummy_valid_pour_candidate(pi, sn_1, cm_1, cm_2, merkle_rt);
+
+        c.upgrade(0)
+    }
+
+    pub fn new_dummy_valid_pour_candidate(
+        pi: Vec<u8>,
+        sn_1: [u8; 32],
+        cm_1: [u8; 32],
+        cm_2: [u8; 32],
+        merkle_rt: [u8; 32],
+    ) -> TxCandidate {
+        let tx_candidate =
+            PourTxCandidate::new_dummy_valid(pi, sn_1, cm_1, cm_2, merkle_rt);
+
+        TxCandidate::Pour(tx_candidate)
+    }
 }
 
 impl std::fmt::Display for Tx {

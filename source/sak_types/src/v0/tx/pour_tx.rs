@@ -161,6 +161,26 @@ impl PourTxCandidate {
     pub fn get_cms(&self) -> Vec<Cm> {
         vec![self.cm_1, self.cm_2]
     }
+
+    pub fn new_dummy_valid(
+        pi: Vec<u8>,
+        sn_1: [u8; 32],
+        cm_1: [u8; 32],
+        cm_2: [u8; 32],
+        merkle_rt: [u8; 32],
+    ) -> PourTxCandidate {
+        PourTxCandidate::new(
+            String::from("created_at_test"),
+            vec![44, 44, 44],
+            String::from("author_sig_test"),
+            Some(String::from("ctr_addr_test")),
+            pi,
+            sn_1,
+            cm_1,
+            cm_2,
+            merkle_rt,
+        )
+    }
 }
 
 impl std::fmt::Display for PourTxCandidate {
