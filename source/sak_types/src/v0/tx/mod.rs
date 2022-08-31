@@ -1,6 +1,5 @@
 mod mint_tx;
 mod pour_tx;
-// mod testing;
 mod tx;
 mod tx_candidate;
 mod tx_type;
@@ -13,7 +12,6 @@ pub use tx_candidate::*;
 pub use tx_type::*;
 use type_extension::U8Arr32;
 
-// type aliases
 pub type TxHash = String;
 
 pub type BlockHash = String;
