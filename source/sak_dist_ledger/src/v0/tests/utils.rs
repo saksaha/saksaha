@@ -229,8 +229,7 @@ pub(crate) async fn make_dummy_valid_pour_tx_candidate() -> TxCandidate {
     PourTxCandidate::mock_tx_candidate(
         pi_ser,
         proof_context.sn_1.to_bytes(),
-        proof_context.cm_1.to_bytes(),
-        proof_context.cm_2.to_bytes(),
+        vec![proof_context.cm_1.to_bytes(), proof_context.cm_2.to_bytes()],
         proof_context.merkle_rt.to_bytes(),
     )
 }
@@ -286,8 +285,7 @@ pub(crate) async fn make_dummy_valid_pour_tx_candidate_random() -> TxCandidate {
     PourTxCandidate::mock_tx_candidate(
         pi_ser,
         proof_context.sn_1.to_bytes(),
-        proof_context.cm_1.to_bytes(),
-        proof_context.cm_2.to_bytes(),
+        vec![proof_context.cm_1.to_bytes(), proof_context.cm_2.to_bytes()],
         proof_context.merkle_rt.to_bytes(),
     )
 }
@@ -343,8 +341,7 @@ pub(crate) async fn make_dummy_invalid_pour_tx_candidate() -> TxCandidate {
     PourTxCandidate::mock_tx_candidate(
         pi_ser,
         proof_context.sn_1.to_bytes(),
-        U8Array::from_int(0),
-        proof_context.cm_2.to_bytes(),
+        vec![U8Array::from_int(0), proof_context.cm_2.to_bytes()],
         proof_context.merkle_rt.to_bytes(),
     )
 }
@@ -785,8 +782,7 @@ pub(crate) fn make_dummy_block_candidate_with_query_tx(
                 Some(String::from("ctr_addr_1")),
                 vec![0],
                 U8Array::new_empty_32(),
-                U8Array::new_empty_32(),
-                U8Array::new_empty_32(),
+                vec![U8Array::new_empty_32()],
                 U8Array::new_empty_32(),
             ))
         };
