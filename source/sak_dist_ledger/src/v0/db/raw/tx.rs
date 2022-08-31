@@ -304,12 +304,12 @@ impl LedgerDB {
 
     pub(crate) fn get_tx_hash_by_sn(
         &self,
-        db: &DB,
+        // db: &DB,
         key: &Sn,
     ) -> Result<Option<String>, LedgerError> {
-        let cf = self.make_cf_handle(db, cfs::TX_HASH_BY_SN)?;
+        let cf = self.make_cf_handle(&self.db, cfs::TX_HASH_BY_SN)?;
 
-        match db.get_cf(&cf, key)? {
+        match self.db.get_cf(&cf, key)? {
             Some(v) => {
                 let str = String::from_utf8(v)?;
 

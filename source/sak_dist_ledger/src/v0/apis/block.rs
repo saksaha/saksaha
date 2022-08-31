@@ -96,13 +96,20 @@ impl DistLedgerApis {
     pub async fn send_tx(
         &self,
         tx_candidate: TxCandidate,
-    ) -> Result<TxHash, String> {
-        let tx_hash = match tx_candidate {
+    ) -> Result<TxHash, LedgerError> {
+        let tx_hash = match tx_candidate.clone() {
             TxCandidate::Mint(_) => {
                 self.sync_pool.insert_tx(tx_candidate).await?
             }
-            TxCandidate::Pour(_) => {
-                self.sync_pool.insert_tx(tx_candidate).await?
+            TxCandidate::Pour(tc) => {
+                let is_valid_sn = self.verify_sn(&tc.sn_1);
+                let is_verified_tx = self.verify_proof(&tc)?;
+
+                if is_valid_sn & is_verified_tx {
+                    self.sync_pool.insert_tx(tx_candidate).await?
+                } else {
+                    return Err(format!("tc is not valid").into());
+                }
             }
         };
 
