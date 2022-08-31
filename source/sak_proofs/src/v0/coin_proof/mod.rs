@@ -4,6 +4,7 @@ mod proof;
 
 // pub use circuits::*;
 pub use coin::*;
+pub use proof::*;
 
 pub const CM_TREE_DEPTH: u32 = 4;
 

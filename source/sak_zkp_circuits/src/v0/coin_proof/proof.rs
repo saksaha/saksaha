@@ -1,83 +1,88 @@
-use crate::{
-    get_mimc_params_1_to_2, CoinProofCircuit1to2, Hasher, NewCoin, OldCoin,
-    ProofError,
-};
-use bellman::groth16::{self, PreparedVerifyingKey, Proof, VerifyingKey};
-use pairing::MultiMillerLoop;
-use sak_crypto::{Bls12, OsRng, Scalar};
+// use crate::{
+//     get_mimc_params_1_to_2, CoinProofCircuit1to2, Hasher, NewCoin, OldCoin,
+//     ProofError,
+// };
+// use bellman::groth16::{self, PreparedVerifyingKey, Proof, VerifyingKey};
+// use pairing::MultiMillerLoop;
+// use sak_crypto::{Bls12, OsRng, Scalar};
 
-pub struct CoinProof;
+// pub struct CoinProof;
 
-impl CoinProof {
-    pub fn make_verifying_key<E: MultiMillerLoop>(
-        vk: &VerifyingKey<E>,
-    ) -> PreparedVerifyingKey<E> {
-        groth16::prepare_verifying_key(vk)
-    }
+// impl CoinProof {
+//     pub fn make_verifying_key<E: MultiMillerLoop>(
+//         vk: &VerifyingKey<E>,
+//     ) -> PreparedVerifyingKey<E> {
+//         groth16::prepare_verifying_key(vk)
+//     }
 
-    pub fn verify_proof_1_to_2(
-        proof: Proof<Bls12>,
-        public_inputs: &[Scalar],
-        hasher: &Hasher,
-    ) -> Result<bool, ProofError> {
-        let constants = hasher.get_mimc_constants();
-        let de_params = get_mimc_params_1_to_2(&constants)?;
-        let pvk = groth16::prepare_verifying_key(&de_params.vk);
+//     pub fn verify_proof_1_to_2(
+//         proof: Proof<Bls12>,
+//         public_inputs: &[Scalar],
+//         hasher: &Hasher,
+//         circuit_params: &[u8],
+//     ) -> Result<bool, ProofError> {
+//         let constants = hasher.get_mimc_constants();
 
-        let res = match groth16::verify_proof(&pvk, &proof, public_inputs) {
-            Ok(_) => {
-                println!("verify success!");
+//         let de_params = get_mimc_params_1_to_2(circuit_params)?;
 
-                true
-            }
-            Err(err) => {
-                println!("verify_proof(), err: {}", err);
+//         let pvk = groth16::prepare_verifying_key(&de_params.vk);
 
-                false
-            }
-        };
+//         let res = match groth16::verify_proof(&pvk, &proof, public_inputs) {
+//             Ok(_) => {
+//                 println!("verify success!");
 
-        Ok(res)
-    }
+//                 true
+//             }
+//             Err(err) => {
+//                 println!("verify_proof(), err: {}", err);
 
-    pub fn generate_proof_1_to_2(
-        coin_1_old: OldCoin,
-        coin_1_new: NewCoin,
-        coin_2_new: NewCoin,
-    ) -> Result<Proof<Bls12>, ProofError> {
-        let hasher = Hasher::new();
-        let constants = hasher.get_mimc_constants().to_vec();
+//                 false
+//             }
+//         };
 
-        let de_params = get_mimc_params_1_to_2(&constants)?;
+//         Ok(res)
+//     }
 
-        let c = CoinProofCircuit1to2 {
-            hasher,
-            coin_1_old,
-            coin_1_new,
-            coin_2_new,
-            constants,
-        };
+//     pub fn generate_proof_1_to_2(
+//         coin_1_old: OldCoin,
+//         coin_1_new: NewCoin,
+//         coin_2_new: NewCoin,
+//         circuit_params: &[u8],
+//     ) -> Result<Proof<Bls12>, ProofError> {
+//         let hasher = Hasher::new();
 
-        let proof =
-            match groth16::create_random_proof(c, &de_params, &mut OsRng) {
-                Ok(p) => p,
-                Err(err) => {
-                    return Err(format!(
-                        "Failed to generate groth16 proof, err: {}",
-                        err
-                    )
-                    .into());
-                }
-            };
+//         let constants = hasher.get_mimc_constants().to_vec();
 
-        Ok(proof)
-    }
+//         let de_params = get_mimc_params_1_to_2(circuit_params)?;
 
-    pub fn serialize_pi(pi: &Proof<Bls12>) -> Result<Vec<u8>, ProofError> {
-        let mut v = Vec::new();
+//         let c = CoinProofCircuit1to2 {
+//             hasher,
+//             coin_1_old,
+//             coin_1_new,
+//             coin_2_new,
+//             constants,
+//         };
 
-        pi.write(&mut v)?;
+//         let proof =
+//             match groth16::create_random_proof(c, &de_params, &mut OsRng) {
+//                 Ok(p) => p,
+//                 Err(err) => {
+//                     return Err(format!(
+//                         "Failed to generate groth16 proof, err: {}",
+//                         err
+//                     )
+//                     .into());
+//                 }
+//             };
 
-        Ok(v)
-    }
-}
+//         Ok(proof)
+//     }
+
+//     pub fn serialize_pi(pi: &Proof<Bls12>) -> Result<Vec<u8>, ProofError> {
+//         let mut v = Vec::new();
+
+//         pi.write(&mut v)?;
+
+//         Ok(v)
+//     }
+// }
