@@ -1,3 +1,4 @@
+use bytes::BytesMut;
 use chacha20::ChaCha20;
 // Import relevant traits
 use chacha20::cipher::{KeyIvInit, StreamCipher, StreamCipherSeek};
@@ -162,6 +163,60 @@ async fn test_chacha20_two_parties_async() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
+async fn test_chacha20_two_parties_async_2() {
+    let key = [0x42; 32];
+    let nonce = [0x24; 12];
+    let plaintext = hex!("11");
+    let plaintext2 = hex!("22");
+
+    let mut cipher1 = ChaCha20::new(&key.into(), &nonce.into());
+    let mut cipher2 = ChaCha20::new(&key.into(), &nonce.into());
+    let mut buffer1 = plaintext.clone();
+    let mut buffer2 = plaintext2.clone();
+
+    println!("\nbuffer: {:?}", buffer1);
+    println!("buffer2: {:?}", buffer2);
+
+    {
+        cipher1.apply_keystream(&mut buffer1);
+        println!("cipher1 encrypts, buf1: {:?}", buffer1);
+    }
+
+    {
+        cipher1.seek(0u32);
+        cipher1.apply_keystream(&mut buffer1);
+        println!("cipher1 encrypts, buf1: {:?}", buffer1);
+    }
+
+    {
+        cipher1.seek(0u32);
+        cipher1.apply_keystream(&mut buffer1);
+        println!("cipher1 encrypts, buf1: {:?}", buffer1);
+    }
+
+    {
+        cipher1.seek(0u32);
+        cipher1.apply_keystream(&mut buffer1);
+        println!("cipher1 encrypts, buf1: {:?}", buffer1);
+    }
+
+    // {
+    //     let mut buffer3 = buffer2.clone();
+    //     cipher1.apply_keystream(&mut buffer3);
+    //     println!(
+    //         "cipher1 deciphers, buf2: {:?}, buf3: {:?}",
+    //         buffer2, buffer3
+    //     );
+    // }
+
+    // {
+    //     let mut buffer4 = buffer1.clone();
+    //     cipher2.apply_keystream(&mut buffer4);
+    //     println!("cipher2 deciphers, buf4: {:?}", buffer4);
+    // }
+}
+
+#[tokio::test(flavor = "multi_thread")]
 async fn test_chacha20_two_parties_async_fail() {
     let key = [0x42; 32];
     let nonce = [0x24; 12];
@@ -205,4 +260,34 @@ async fn test_chacha20_two_parties_async_fail() {
         "Even though each cipher has applied keystream once, the results are\
         not going to be identical",
     );
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn test_chacha20_encrypt_part_of_buf() {
+    let key = [0x42; 32];
+    let nonce = [0x24; 12];
+    let plaintext = hex!("00010203 04050607 08090a0b 0c0d0e0f");
+
+    let mut cipher1 = ChaCha20::new(&key.into(), &nonce.into());
+
+    let mut buffer1 = plaintext.clone();
+
+    println!("\nbuffer 0 ({}): {:?}", buffer1.len(), buffer1);
+
+    cipher1.apply_keystream(&mut buffer1[2..]);
+
+    println!("\nbuffer 1 ({}): {:?}", buffer1.len(), buffer1);
+
+    let mut b = BytesMut::new();
+
+    let arr = &[0u8; 20];
+
+    b.extend_from_slice(arr);
+
+    println!("\nbuffer 3 ({}): {:?}", b.len(), b.to_vec());
+
+    let a = &mut b[2..4];
+    a.copy_from_slice(&[22, 33]);
+
+    println!("\nbuffer  ({}): {:?}", b.len(), b.to_vec());
 }

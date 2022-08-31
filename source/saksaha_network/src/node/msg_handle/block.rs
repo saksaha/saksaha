@@ -1,7 +1,8 @@
 use crate::{machine::Machine, node::SaksahaNodeError};
 use log::{debug, info, warn};
 use sak_p2p_transport::{
-    BlockAckMsg, BlockSynMsg, Msg, RecvReceipt, SendReceipt, UpgradedConn,
+    BlockAckMsg, BlockSynMsg, ErrorMsg, Msg, RecvReceipt, SendReceipt,
+    UpgradedConn,
 };
 use sak_types::{BlockHash, BlockHeight};
 use std::sync::Arc;
@@ -41,14 +42,23 @@ pub(in crate::node) async fn send_block_syn(
         .send(Msg::BlockSyn(BlockSynMsg {
             blocks: blocks_to_send,
         }))
-        .await?;
+        .await;
 
-    let (msg, receipt) = conn_lock.next_msg().await;
+    let msg_wrap = conn_lock.next_msg().await?;
 
-    let msg = msg.ok_or(format!("block syn needs to be followed by ack"))??;
+    let receipt = msg_wrap.get_receipt();
+
+    let msg = msg_wrap
+        .get_maybe_msg()
+        .ok_or(format!("block syn needs to be followed by ack"))??;
 
     let _block_ack_msg = match msg {
         Msg::BlockAck(m) => m,
+        Msg::Error(m) => {
+            return Err(
+                format!("Receiver returned error msg, msg: {:?}", m).into()
+            )
+        }
         _ => {
             return Err(
                 format!("Only block ack should arrive at this point").into()
@@ -62,33 +72,20 @@ pub(in crate::node) async fn send_block_syn(
 pub(in crate::node) async fn recv_block_syn(
     block_syn_msg: BlockSynMsg,
     machine: &Arc<Machine>,
-    mut conn: RwLockWriteGuard<'_, UpgradedConn>,
-) -> Result<SendReceipt, SaksahaNodeError> {
-    let blocks = block_syn_msg.blocks;
+    mut conn_lock: RwLockWriteGuard<'_, UpgradedConn>,
+) -> SendReceipt {
+    let mut blocks = block_syn_msg.blocks;
 
-    let latest_block_height = machine
+    machine
         .blockchain
         .dist_ledger
         .apis
-        .get_latest_block_height()?
-        .unwrap_or(0);
-
-    for (block, txs) in blocks {
-        if block.block_height != (latest_block_height + 1) {
-            return Err("received not continuous block height".into());
-        }
-
-        machine
-            .blockchain
-            .dist_ledger
-            .apis
-            .sync_block(block, txs)
-            .await?;
-    }
+        .write_blocks(blocks)
+        .await;
 
     let block_ack_msg = Msg::BlockAck(BlockAckMsg {});
 
-    let receipt = conn.send(block_ack_msg).await?;
+    let receipt = conn_lock.send(block_ack_msg).await;
 
-    Ok(receipt)
+    receipt
 }
