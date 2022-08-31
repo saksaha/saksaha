@@ -1,7 +1,7 @@
-use crate::{NewCoin, OldCoin, ProofError, CM_TREE_DEPTH};
+use crate::{Hasher, NewCoin, OldCoin, ProofError, CM_TREE_DEPTH};
 use sak_crypto::{
-    groth16, AllocatedBit, Bls12, Circuit, ConstraintSystem, Hasher, OsRng,
-    Parameters, Scalar, SynthesisError,
+    AllocatedBit, Bls12, Circuit, ConstraintSystem, OsRng, Parameters, Scalar,
+    SynthesisError,
 };
 use std::fs::File;
 use std::io::Write;
@@ -28,42 +28,42 @@ pub(crate) fn get_mimc_params_1_to_2(
 
     let mut v = vec![];
 
-    if is_file_exist {
-        // read
-        v = std::fs::read(PARAM_FILE_NAME).unwrap();
-    } else {
-        // generate and write
-        let hasher = Hasher::new();
+    // if is_file_exist {
+    //     // read
+    //     v = std::fs::read(PARAM_FILE_NAME).unwrap();
+    // } else {
+    //     // generate and write
+    //     let hasher = Hasher::new();
 
-        let coin_1_old = OldCoin::default();
-        let coin_1_new = NewCoin::default();
-        let coin_2_new = NewCoin::default();
+    //     let coin_1_old = OldCoin::default();
+    //     let coin_1_new = NewCoin::default();
+    //     let coin_2_new = NewCoin::default();
 
-        let params = {
-            let c = CoinProofCircuit1to2 {
-                hasher,
-                coin_1_old,
-                coin_1_new,
-                coin_2_new,
-                constants: constants.to_vec(),
-            };
+    //     let params = {
+    //         let c = CoinProofCircuit1to2 {
+    //             hasher,
+    //             coin_1_old,
+    //             coin_1_new,
+    //             coin_2_new,
+    //             constants: constants.to_vec(),
+    //         };
 
-            groth16::generate_random_parameters::<Bls12, _, _>(c, &mut OsRng)
-                .unwrap()
-        };
-        // write param to file
-        let mut file = File::create(PARAM_FILE_NAME)?;
+    //         groth16::generate_random_parameters::<Bls12, _, _>(c, &mut OsRng)
+    //             .unwrap()
+    //     };
+    //     // write param to file
+    //     let mut file = File::create(PARAM_FILE_NAME)?;
 
-        params.write(&mut v)?;
+    //     params.write(&mut v)?;
 
-        // write origin buf
-        match file.write_all(&v) {
-            Ok(_) => {}
-            Err(err) => {
-                log::error!("Err: {:?}", err);
-            }
-        };
-    }
+    //     // write origin buf
+    //     match file.write_all(&v) {
+    //         Ok(_) => {}
+    //         Err(err) => {
+    //             log::error!("Err: {:?}", err);
+    //         }
+    //     };
+    // }
 
     let p = Parameters::<Bls12>::read(&v[..], false).unwrap();
 

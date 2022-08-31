@@ -1,10 +1,11 @@
 use crate::{
-    get_mimc_params_1_to_2, CoinProofCircuit1to2, NewCoin, OldCoin, ProofError,
+    get_mimc_params_1_to_2, CoinProofCircuit1to2, Hasher, NewCoin, OldCoin,
+    ProofError,
 };
+use bellman::groth16;
 use pairing::MultiMillerLoop;
 use sak_crypto::{
-    groth16, Bls12, Groth16VerifyingKey, Hasher, OsRng, PreparedVerifyingKey,
-    Proof, Scalar,
+    Bls12, Groth16VerifyingKey, OsRng, PreparedVerifyingKey, Proof, Scalar,
 };
 
 pub struct CoinProof;
