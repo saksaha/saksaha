@@ -49,7 +49,7 @@ impl DistLedgerApis {
         &self,
         bc: Option<BlockCandidate>,
     ) -> Result<Option<String>, LedgerError> {
-        let bc = match bc {
+        let mut bc = match bc {
             Some(bc) => bc,
             None => match self.make_block_candidate().await? {
                 Some(bc) => bc,
@@ -77,23 +77,7 @@ impl DistLedgerApis {
             }
         };
 
-        // let ledger_cm_count = match self.get_ledger_cm_count().await? {
-        //     Some(h) => h,
-        //     None => {
-        //         warn!(
-        //             "Total cm count does not exist. Possibly the first block"
-        //         );
-
-        //         0
-        //     }
-        // };
-
-        // let next_tx_height = match self.get_latest_tx_height().await? {
-        //     Some(th) => th + 1,
-        //     None => 0,
-        // };
-
-        let tcs = &bc.tx_candidates;
+        let tcs = &bc.tx_candidates.clone();
         let mut ctr_state_update = CtrStateUpdate::new();
         let mut merkle_update = MerkleUpdate::new();
 
@@ -102,26 +86,11 @@ impl DistLedgerApis {
             next_cm_idx: {}",
             tcs.len(),
             next_block_height,
-            // next_tx_height,
-            // ledger_cm_count,
             next_cm_idx,
         );
 
-        // filtering tcs
-
-        let mut valid_tcs: Vec<TxCandidate> = vec![];
-
-        for tx_candidate in tcs {
-            match tx_candidate {
-                TxCandidate::Mint(tc) => {
-                    valid_tcs.push(tx_candidate.to_owned());
-                }
-                TxCandidate::Pour(tc) => {
-                    verify_tx(tc)?;
-                    valid_tcs.push(tx_candidate.to_owned());
-                }
-            };
-        }
+        self.filtering_tx_candidates(&mut bc, tcs)?;
+        let tcs = &bc.tx_candidates;
 
         let mut added_cm_count: u128 = 0;
 
@@ -228,6 +197,43 @@ impl DistLedgerApis {
 
     pub fn delete_tx(&self, key: &String) -> Result<(), LedgerError> {
         self.ledger_db.delete_tx(key)
+    }
+
+    pub(crate) fn verify_valid_sn(&self, sn: &[u8; 32]) -> bool {
+        match self.ledger_db.get_tx_hash_by_sn(sn) {
+            Ok(Some(_)) => return false,
+            Ok(None) => return true,
+            Err(_) => return false,
+        }
+    }
+
+    pub(crate) fn filtering_tx_candidates(
+        &self,
+        bc: &mut BlockCandidate,
+        tx_candidates: &Vec<TxCandidate>,
+    ) -> Result<(), LedgerError> {
+        let mut valid_tx_candidates: Vec<TxCandidate> = vec![];
+
+        for tx_candidate in tx_candidates {
+            match tx_candidate {
+                TxCandidate::Mint(_tc) => {
+                    valid_tx_candidates.push(tx_candidate.to_owned());
+                }
+                TxCandidate::Pour(tc) => {
+                    let is_valid_sn = self.verify_valid_sn(&tc.sn_1);
+                    let is_verified_tx = verify_tx(tc)?;
+
+                    if is_valid_sn & is_verified_tx {
+                        valid_tx_candidates.push(tx_candidate.to_owned());
+                    } else {
+                        continue;
+                    }
+                }
+            };
+        }
+
+        bc.update_tx_candidates(valid_tx_candidates);
+        Ok(())
     }
 }
 
@@ -414,7 +420,7 @@ async fn process_merkle_update(
     Ok(cm_count)
 }
 
-pub(crate) fn verify_tx(tc: &PourTxCandidate) -> Result<(), LedgerError> {
+pub(crate) fn verify_tx(tc: &PourTxCandidate) -> Result<bool, LedgerError> {
     let hasher = Hasher::new();
 
     let public_inputs = [
@@ -440,5 +446,5 @@ pub(crate) fn verify_tx(tc: &PourTxCandidate) -> Result<(), LedgerError> {
         return Err(format!("Failed to verify proof").into());
     };
 
-    Ok(())
+    Ok(verification_result)
 }

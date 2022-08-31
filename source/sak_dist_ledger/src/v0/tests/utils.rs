@@ -303,6 +303,63 @@ pub(crate) async fn make_dummy_valid_pour_tx_candidate_random() -> TxCandidate {
     )
 }
 
+pub(crate) async fn make_dummy_invalid_pour_tx_candidate() -> TxCandidate {
+    let proof_context = make_proof_context();
+
+    let coin_1_old = OldCoin {
+        addr_pk: Some(proof_context.addr_pk_1_old),
+        addr_sk: Some(proof_context.addr_sk_1_old),
+        rho: Some(proof_context.rho_1_old),
+        r: Some(proof_context.r_1_old),
+        s: Some(proof_context.s_1_old),
+        v: Some(proof_context.v_1_old),
+        cm: Some(proof_context.cm_1_old),
+        auth_path: proof_context.auth_path_1,
+    };
+
+    let coin_1_new = NewCoin {
+        addr_pk: Some(proof_context.addr_pk_1),
+        rho: Some(proof_context.rho_1),
+        r: Some(proof_context.r_1),
+        s: Some(proof_context.s_1),
+        v: Some(proof_context.v_1),
+    };
+
+    let coin_2_new = NewCoin {
+        addr_pk: Some(proof_context.addr_pk_2),
+        rho: Some(proof_context.rho_2),
+        r: Some(proof_context.r_2),
+        s: Some(proof_context.s_2),
+        v: Some(proof_context.v_2),
+    };
+
+    let pi =
+        CoinProof::generate_proof_1_to_2(coin_1_old, coin_1_new, coin_2_new)
+            .unwrap();
+
+    let pi_ser = CoinProof::serialize_pi(&pi).unwrap();
+
+    {
+        println!("\n[+] dummy pour_tx ");
+        println!("[Debug] tx.pi: {:?}", pi);
+        println!("[Debug] tx.sn_1: {:?}", proof_context.sn_1.clone(),);
+        println!("[Debug] tx.cm_1: {:?}", proof_context.cm_1.clone(),);
+        println!("[Debug] tx.cm_2: {:?}", proof_context.cm_2.clone(),);
+        println!(
+            "[Debug] tx.merkle_rt: {:?}",
+            proof_context.merkle_rt.clone(),
+        );
+    }
+
+    Tx::new_dummy_valid_pour_candidate(
+        pi_ser,
+        proof_context.sn_1.to_bytes(),
+        U8Array::from_int(0),
+        proof_context.cm_2.to_bytes(),
+        proof_context.merkle_rt.to_bytes(),
+    )
+}
+
 pub struct ProofContext {
     pub hasher: Hasher,
 

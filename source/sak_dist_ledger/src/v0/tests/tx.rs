@@ -206,18 +206,19 @@ async fn test_dist_ledger_verify_proof_success() {
 
     let dist_ledger = utils::make_dist_ledger().await;
 
-    let mut write_batch = WriteBatch::default();
+    let dummy_pour_tc_1 = utils::make_dummy_valid_pour_tx_candidate().await;
+
+    let bc_1 = utils::make_dummy_block_canidate_valid_pi(dummy_pour_tc_1);
 
     {
-        let dummy_pour_tx = utils::make_dummy_valid_pour_tx().await;
-
-        let dummy_tx_hash = dist_ledger
+        let block_hash = dist_ledger
             .apis
-            .ledger_db
-            .batch_put_tx(&mut write_batch, &dummy_pour_tx)
-            .expect("pour_tx should be written");
+            .write_block(Some(bc_1))
+            .await
+            .expect("block should be written")
+            .unwrap();
 
-        println!("[+] dummy pour_tx hash: {:?}", dummy_tx_hash);
+        println!("[+] dummy pour_tx hash: {:?}", block_hash);
     }
 }
 
@@ -229,18 +230,19 @@ async fn test_dist_ledger_verify_proof_fail() {
 
     let dist_ledger = utils::make_dist_ledger().await;
 
-    let mut write_batch = WriteBatch::default();
+    let dummy_pour_tc_1 = utils::make_dummy_invalid_pour_tx_candidate().await;
+
+    let bc_1 = utils::make_dummy_block_canidate_valid_pi(dummy_pour_tc_1);
 
     {
-        let dummy_pour_tx = utils::make_dummy_invalid_pour_tx().await;
-
-        let dummy_tx_hash = dist_ledger
+        let block_hash = dist_ledger
             .apis
-            .ledger_db
-            .batch_put_tx(&mut write_batch, &dummy_pour_tx)
-            .expect("pour_tx should be written");
+            .write_block(Some(bc_1))
+            .await
+            .expect("block should be written")
+            .unwrap();
 
-        println!("[+] dummy pour_tx hash: {:?}", dummy_tx_hash);
+        println!("[+] dummy pour_tx hash: {:?}", block_hash);
     }
 }
 
