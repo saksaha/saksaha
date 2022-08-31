@@ -534,5 +534,5 @@ $RECYCLE.BIN/
 build/**
 !build/.gitkeep
 
-source/prebuild/**.*
+source/prebuild/**
 !source/prebuild/.gitkeep

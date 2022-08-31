@@ -2,7 +2,7 @@ use crate::{log, paths::Paths, CIError};
 use chrono::Local;
 use colored::Colorize;
 use sak_crypto::OsRng;
-use sak_proofs::{
+use sak_zkp_circuits::{
     groth16, Bls12, CoinProofCircuit1to2, Hasher, NewCoin, OldCoin,
 };
 

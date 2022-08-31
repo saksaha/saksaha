@@ -1,9 +1,9 @@
-use crate::{ProofError, CM_TREE_DEPTH};
+use crate::{
+    CoinProofCircuit1to2, Hasher, MerkleTree, NewCoin, OldCoin, ProofError,
+    CM_TREE_DEPTH,
+};
 use bellman::groth16::{self, Parameters, Proof};
 use sak_crypto::{Bls12, OsRng, Scalar, ScalarExt};
-use sak_zkp_circuits::{
-    CoinProofCircuit1to2, Hasher, MerkleTree, NewCoin, OldCoin,
-};
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::Write;
