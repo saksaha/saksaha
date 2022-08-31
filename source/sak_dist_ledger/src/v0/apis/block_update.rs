@@ -14,7 +14,7 @@ impl DistLedgerApis {
     pub async fn insert_genesis_block(
         &self,
         genesis_block: BlockCandidate,
-    ) -> Result<String, String> {
+    ) -> Result<Option<String>, String> {
         let persisted_gen_block_hash = if let Some(b) =
             match self.get_block_by_height(&0).await {
                 Ok(b) => b,
@@ -27,7 +27,7 @@ impl DistLedgerApis {
                 block_hash.green(),
             );
 
-            block_hash
+            Some(block_hash)
         } else {
             info!("Genesis block not found, writing");
 
@@ -45,22 +45,23 @@ impl DistLedgerApis {
             b
         };
 
-        Ok(persisted_gen_block_hash.to_string())
+        Ok(persisted_gen_block_hash)
     }
 
     pub async fn write_block(
         &self,
         bc: Option<BlockCandidate>,
-    ) -> Result<String, LedgerError> {
+    ) -> Result<Option<String>, LedgerError> {
         let mut bc = match bc {
             Some(bc) => bc,
             None => match self.make_block_candidate().await? {
                 Some(bc) => bc,
                 None => {
-                    return Err(format!(
-                        "No txs to write as a block, aborting"
-                    )
-                    .into());
+                    debug!(
+                        "No txs to write as a block, aborting write_block()",
+                    );
+
+                    return Ok(None);
                 }
             },
         };
@@ -165,7 +166,7 @@ impl DistLedgerApis {
             block.block_height,
         );
 
-        Ok(block_hash)
+        Ok(Some(block_hash))
     }
 
     pub async fn write_blocks(
@@ -219,7 +220,9 @@ impl DistLedgerApis {
 
             let block_hash = self.write_block(Some(bc_candidate)).await?;
 
-            block_hashes.push(block_hash);
+            if let Some(h) = block_hash {
+                block_hashes.push(h);
+            }
         }
 
         Ok(block_hashes)
