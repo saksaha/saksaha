@@ -44,9 +44,7 @@ pub(in crate::node) async fn send_block_syn(
         }))
         .await;
 
-    println!("11");
     let msg_wrap = conn_lock.next_msg().await?;
-    println!("22");
 
     let receipt = msg_wrap.get_receipt();
 
@@ -76,55 +74,18 @@ pub(in crate::node) async fn recv_block_syn(
     machine: &Arc<Machine>,
     mut conn_lock: RwLockWriteGuard<'_, UpgradedConn>,
 ) -> SendReceipt {
-    println!("33");
-    let wrapped = || async {
-        let mut blocks = block_syn_msg.blocks;
-        blocks.sort_by(|a, b| a.0.block_height.cmp(&b.0.block_height));
+    let mut blocks = block_syn_msg.blocks;
 
-        for (block, txs) in blocks {
-            let latest_block_height = machine
-                .blockchain
-                .dist_ledger
-                .apis
-                .get_latest_block_height()?
-                .unwrap_or(0);
+    machine
+        .blockchain
+        .dist_ledger
+        .apis
+        .write_blocks(blocks)
+        .await;
 
-            if block.block_height != (latest_block_height + 1) {
-                warn!(
-                    "received not continuous block height, block_height: {}, received : {}",
-                    latest_block_height,
-                    block.block_height
-                );
+    let block_ack_msg = Msg::BlockAck(BlockAckMsg {});
 
-                continue;
-            }
-
-            machine
-                .blockchain
-                .dist_ledger
-                .apis
-                .sync_block(block, txs)
-                .await?;
-        }
-        println!("44");
-
-        let block_ack_msg = Msg::BlockAck(BlockAckMsg {});
-
-        let receipt = conn_lock.send(block_ack_msg).await;
-
-        Ok::<_, SaksahaNodeError>(receipt)
-    };
-
-    let receipt = match wrapped().await {
-        Ok(r) => r,
-        Err(err) => {
-            conn_lock
-                .send(Msg::Error(ErrorMsg {
-                    error: err.to_string(),
-                }))
-                .await
-        }
-    };
+    let receipt = conn_lock.send(block_ack_msg).await;
 
     receipt
 }

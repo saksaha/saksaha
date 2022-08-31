@@ -33,18 +33,22 @@ impl UpgradedConn {
         upgraded_conn
     }
 
+    pub fn get_conn_id(&self) -> &String {
+        &self.conn_id
+    }
+
     pub async fn send(&mut self, msg: Msg) -> SendReceipt {
-        if let ConnState::Sent = self.conn_state {
-            return SendReceipt {
-                error: Some(
-                    format!("This is not a turn for sending message").into(),
-                ),
-            };
-        }
+        // if let ConnState::Sent = self.conn_state {
+        //     return SendReceipt {
+        //         error: Some(
+        //             format!("This is not a turn for sending message").into(),
+        //         ),
+        //     };
+        // }
 
         let msg_type = msg.to_string();
 
-        println!("sending msg: conn_id: {}, {}", self.conn_id, msg_type);
+        // println!("sending msg: conn_id: {}, {}", self.conn_id, msg_type);
 
         match self.socket.send(msg).await {
             Ok(_) => (),
@@ -63,51 +67,51 @@ impl UpgradedConn {
             }
         };
 
-        match self.conn_state {
-            ConnState::Neutral => {
-                self.conn_state = ConnState::Sent;
-            }
-            ConnState::Recvd => {
-                self.conn_state = ConnState::Neutral;
-            }
-            _ => {
-                unreachable!(
-                    "Conn state at this stage cannot be 'Sent' \
-                    because it has been already checked"
-                );
-            }
-        }
+        // match self.conn_state {
+        //     ConnState::Neutral => {
+        //         self.conn_state = ConnState::Sent;
+        //     }
+        //     ConnState::Recvd => {
+        //         self.conn_state = ConnState::Neutral;
+        //     }
+        //     _ => {
+        //         unreachable!(
+        //             "Conn state at this stage cannot be 'Sent' \
+        //             because it has been already checked"
+        //         );
+        //     }
+        // }
 
         SendReceipt { error: None }
     }
 
     pub async fn next_msg(&mut self) -> Result<MsgWrap, TrptError> {
-        if let ConnState::Recvd = self.conn_state {
-            return Err(
-                format!("This is not a turn for receiving message").into()
-            );
-        }
+        // if let ConnState::Recvd = self.conn_state {
+        //     return Err(
+        //         format!("This is not a turn for receiving message").into()
+        //     );
+        // }
 
-        println!("waiting for next_msg, conn_id: {}", self.conn_id);
+        // println!("waiting for next_msg, conn_id: {}", self.conn_id);
 
         let msg = self.socket.next().await;
 
-        println!("next_msg, conn_id: {}, msg: {:?}, ", self.conn_id, msg);
+        // println!("next_msg, conn_id: {}, msg: {:?}, ", self.conn_id, msg);
 
-        match self.conn_state {
-            ConnState::Neutral => {
-                self.conn_state = ConnState::Recvd;
-            }
-            ConnState::Sent => {
-                self.conn_state = ConnState::Neutral;
-            }
-            _ => {
-                unreachable!(
-                    "Conn state at this stage cannot be 'Recvd' \
-                    because it has been already checked"
-                );
-            }
-        }
+        // match self.conn_state {
+        //     ConnState::Neutral => {
+        //         self.conn_state = ConnState::Recvd;
+        //     }
+        //     ConnState::Sent => {
+        //         self.conn_state = ConnState::Neutral;
+        //     }
+        //     _ => {
+        //         unreachable!(
+        //             "Conn state at this stage cannot be 'Recvd' \
+        //             because it has been already checked"
+        //         );
+        //     }
+        // }
 
         let msg_wrap = MsgWrap::new(msg);
 

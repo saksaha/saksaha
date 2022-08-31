@@ -11,12 +11,6 @@ use sak_crypto::sha3::{Digest, Keccak256, Keccak256Core};
 use std::convert::TryInto;
 use tokio_util::codec::{Decoder, Encoder};
 
-// pub(crate) out_cipher: ChaCha20,
-// pub(crate) in_cipher: ChaCha20,
-// pub(crate) out_mac: CoreWrapper<Keccak256Core>,
-// pub(crate) in_mac: CoreWrapper<Keccak256Core>,
-// pub(crate) conn_id: String,
-
 impl Encoder<Msg> for UpgradedP2PCodec {
     type Error = TrptError;
 
@@ -27,7 +21,7 @@ impl Encoder<Msg> for UpgradedP2PCodec {
     ) -> Result<(), TrptError> {
         let msg = item.to_string();
 
-        println!("encoding, item: {}", &item);
+        // println!("encoding, item: {}", &item);
 
         let mut msg_part = BytesMut::new();
 
@@ -40,26 +34,26 @@ impl Encoder<Msg> for UpgradedP2PCodec {
             &mut self.out_cipher,
         )?;
 
-        println!(
-            "\nencode(): before enc (msg_part), conn_id: {}, msg({}): {}, \
-                dst: {:?}, msg_part: {:?}",
-            self.conn_id,
-            dst.len(),
-            msg,
-            dst.to_vec(),
-            msg_part.to_vec(),
-        );
+        // println!(
+        //     "\nencode(): before enc (msg_part), conn_id: {}, msg({}): {}, \
+        //         dst: {:?}, msg_part: {:?}",
+        //     self.conn_id,
+        //     dst.len(),
+        //     msg,
+        //     dst.to_vec(),
+        //     msg_part.to_vec(),
+        // );
 
         self.out_cipher.apply_keystream(&mut msg_part);
 
         dst.unsplit(msg_part);
 
-        println!(
-            "\nencode(): dst, conn_id: {}, _after enc ({}): {:?}",
-            self.conn_id,
-            dst.len(),
-            dst.to_vec()
-        );
+        // println!(
+        //     "\nencode(): dst, conn_id: {}, _after enc ({}): {:?}",
+        //     self.conn_id,
+        //     dst.len(),
+        //     dst.to_vec()
+        // );
 
         return Ok(());
     }
@@ -86,16 +80,12 @@ fn write_header_and_header_mac(
     // Write Empty header portion (reserve for future use)
     dst.extend_from_slice(&[0u8; 3]);
 
-    println!("header: {:?}", dst.to_vec());
-
     // Encrypt header
     out_cipher.apply_keystream(&mut dst[0..5]);
 
-    println!("header after encryption: {:?}", dst.to_vec());
-
     write_header_mac(dst, out_mac);
 
-    println!("header portion: {:?}", dst.to_vec());
+    // println!("header portion: {:?}", dst.to_vec());
 
     Ok(())
 }
@@ -115,16 +105,14 @@ fn write_header_mac<'a>(
 ) {
     let digest = &mut out_mac.finalize_reset()[..HEADER_MAC_LEN];
 
-    println!("digest: {:?}", digest.to_vec());
+    // println!("digest: {:?}", digest.to_vec());
 
     // XORing
     for idx in 0..HEADER_CIPHERTEXT_LEN {
-        println!("encode xor: {} - {}", digest[idx], dst[idx]);
-
         digest[idx] = digest[idx] ^ dst[idx];
     }
 
-    println!("digest after: {:?}", digest.to_vec());
+    // println!("digest after: {:?}", digest.to_vec());
 
     out_mac.update(&digest);
 

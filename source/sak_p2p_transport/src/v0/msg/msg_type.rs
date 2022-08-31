@@ -23,4 +23,3 @@ pub mod MsgType {
 
     pub const ERROR: &str = "error";
 }
-

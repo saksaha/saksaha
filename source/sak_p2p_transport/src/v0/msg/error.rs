@@ -24,7 +24,7 @@ impl ErrorMsg {
     pub(crate) fn into_frame(self) -> Frame {
         let mut frame = Frame::array();
 
-        frame.push_bulk(Bytes::from(MsgType::BLOCK_ACK));
+        frame.push_bulk(Bytes::from(MsgType::ERROR));
 
         frame.push_bulk(Bytes::from(self.error));
 

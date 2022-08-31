@@ -218,7 +218,16 @@ async fn test_sequential_sync_block_if_block_is_correct() {
             // i as u128,
         );
 
-        match dist_ledger.apis.sync_block(block, txs).await {
+        let tx_candidates = txs.into_iter().map(|tx| tx.downgrade()).collect();
+
+        let bc_candidate = BlockCandidate {
+            validator_sig: block.validator_sig,
+            tx_candidates,
+            witness_sigs: block.witness_sigs,
+            created_at: block.created_at,
+        };
+
+        match dist_ledger.apis.write_block(Some(bc_candidate)).await {
             Ok(v) => v,
             Err(err) => panic!("Failed to write dummy block, err: {}", err),
         };
