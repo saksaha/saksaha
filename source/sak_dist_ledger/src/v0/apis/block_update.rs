@@ -151,6 +151,10 @@ impl DistLedgerApis {
             .into());
         };
 
+        // for tx in &txs {
+        //     println!("cm: {}, rt: {:?}", tx, next_merkle_rt);
+        // }
+
         let block_hash = self
             .ledger_db
             .put_block(&block, &txs, &ctr_state_update, &merkle_update)
