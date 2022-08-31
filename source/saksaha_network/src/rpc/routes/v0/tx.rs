@@ -122,7 +122,6 @@ pub(in crate::rpc) async fn send_mint_tx(
         rb.author_sig,
         rb.ctr_addr,
         rb.cms,
-        // rb.cm_count,
         rb.v,
         rb.k,
         rb.s,
@@ -136,7 +135,7 @@ pub(in crate::rpc) async fn send_mint_tx(
         .send_tx(tx_candidate)
         .await
     {
-        Ok(bool) => {
+        Ok(_) => {
             return make_success_response(route_state, "success");
         }
         Err(err) => {

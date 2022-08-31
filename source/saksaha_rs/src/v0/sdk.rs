@@ -350,20 +350,20 @@ pub struct GetTxResponse {
     pub tx: Option<Tx>,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq, Hash)]
-pub struct PourTxCandidate {
-    pub created_at: String,
-    #[serde(with = "serde_bytes")]
-    pub data: Vec<u8>,
-    pub author_sig: String,
-    pub ctr_addr: String,
-    pub pi: Vec<u8>,
-    pub sn_1: U8Arr32,
-    pub cm_1: U8Arr32,
-    pub cm_2: U8Arr32,
-    pub merkle_rt: U8Arr32,
-    tx_hash: String,
-}
+// #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq, Hash)]
+// pub struct PourTxCandidate {
+//     pub created_at: String,
+//     #[serde(with = "serde_bytes")]
+//     pub data: Vec<u8>,
+//     pub author_sig: String,
+//     pub ctr_addr: String,
+//     pub pi: Vec<u8>,
+//     pub sn_1: U8Arr32,
+//     pub cm_1: U8Arr32,
+//     pub cm_2: U8Arr32,
+//     pub merkle_rt: U8Arr32,
+//     tx_hash: String,
+// }
 
 pub async fn get_tx(
     saksaha_endpoint: String,

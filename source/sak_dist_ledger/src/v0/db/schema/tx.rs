@@ -295,7 +295,7 @@ impl LedgerDB {
 
         // self.batch_put_sn_2(batch, tx_hash, &tc.sn_2)?;
 
-        self.batch_put_cms(batch, tx_hash, &tc.cms);
+        self.batch_put_cms(batch, tx_hash, &tc.cms)?;
         // self.batch_put_cm_1(batch, tx_hash, &tc.cm_1)?;
 
         // self.batch_put_cm_2(batch, tx_hash, &tc.cm_2)?;
@@ -309,7 +309,7 @@ impl LedgerDB {
             self.batch_put_cm_idx_cm(batch, cm_idx, cm)?;
         }
 
-        self.batch_put_cm_count(batch, tx_hash, &tc.cm_count);
+        self.batch_put_cm_count(batch, tx_hash, &tc.cm_count)?;
 
         // self.batch_put_cm_cm_idx(batch, &tc.cm_1, &tx.cm_idx_1)?;
         // self.batch_put_cm_idx_cm(batch, &tx.cm_idx_1, &tc.cm_1)?;
