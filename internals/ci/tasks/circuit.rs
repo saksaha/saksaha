@@ -1,8 +1,4 @@
-use crate::{
-    log,
-    paths::{self, Paths},
-    CIError,
-};
+use crate::{log, paths::Paths, CIError};
 use chrono::Local;
 use colored::Colorize;
 use sak_crypto::OsRng;

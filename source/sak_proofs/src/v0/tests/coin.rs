@@ -253,7 +253,11 @@ pub fn make_test_context() -> TestContext {
             }
 
             let key = format!("{}_{}", idx, p.idx);
-            let merkle_node = merkle_nodes.get(key.as_str()).unwrap();
+
+            let merkle_node = merkle_nodes.get(key.as_str()).expect(&format!(
+                "value doesn't exist in the merkle node, key: {}",
+                key
+            ));
 
             ret[idx] = (merkle_node.clone(), p.direction);
         });

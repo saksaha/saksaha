@@ -4,7 +4,6 @@ use self::constants::ROUND_CONSTANTS;
 use crate::Scalar;
 use bellman::{ConstraintSystem, SynthesisError, Variable};
 use ff::PrimeField;
-// use sha2::digest::typenum::private::IsEqualPrivate;
 
 pub const MIMC_ROUNDS: usize = 322;
 

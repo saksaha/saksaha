@@ -6,7 +6,10 @@ use sak_crypto::{Bls12, OsRng, Scalar};
 use std::fs::File;
 use std::io::Write;
 
-const PARAM_FILE_NAME: &str = "mimc_params_1_to_2";
+// const PARAM_FILE_NAME: &str = "mimc_params_1_to_2";
+
+const CIRCUIT_PARAMS_1TO2: &[u8] =
+    include_bytes!("../../../../../prebuild/circuit_params_1to2");
 
 pub struct CoinProofCircuit1to2 {
     pub hasher: Hasher,
@@ -23,51 +26,14 @@ pub struct CoinProofCircuit1to2 {
 pub(crate) fn get_mimc_params_1_to_2(
     constants: &[Scalar],
 ) -> Result<Parameters<Bls12>, ProofError> {
-    let param_path = std::path::Path::new(PARAM_FILE_NAME);
-    let is_file_exist = param_path.exists();
-
-    let mut v = vec![];
-
-    // if is_file_exist {
-    //     // read
-    //     v = std::fs::read(PARAM_FILE_NAME).unwrap();
-    // } else {
-    //     // generate and write
-    //     let hasher = Hasher::new();
-
-    //     let coin_1_old = OldCoin::default();
-    //     let coin_1_new = NewCoin::default();
-    //     let coin_2_new = NewCoin::default();
-
-    //     let params = {
-    //         let c = CoinProofCircuit1to2 {
-    //             hasher,
-    //             coin_1_old,
-    //             coin_1_new,
-    //             coin_2_new,
-    //             constants: constants.to_vec(),
-    //         };
-
-    //         groth16::generate_random_parameters::<Bls12, _, _>(c, &mut OsRng)
-    //             .unwrap()
-    //     };
-    //     // write param to file
-    //     let mut file = File::create(PARAM_FILE_NAME)?;
-
-    //     params.write(&mut v)?;
-
-    //     // write origin buf
-    //     match file.write_all(&v) {
-    //         Ok(_) => {}
-    //         Err(err) => {
-    //             log::error!("Err: {:?}", err);
-    //         }
-    //     };
-    // }
-
-    let p = Parameters::<Bls12>::read(&v[..], false).unwrap();
-
-    Ok(p)
+    match Parameters::<Bls12>::read(&CIRCUIT_PARAMS_1TO2[..], false) {
+        Ok(p) => Ok(p),
+        Err(err) => {
+            return Err(
+                format!("Error getting circuit params, err: {}", err).into()
+            );
+        }
+    }
 }
 
 impl Circuit<Scalar> for CoinProofCircuit1to2 {
