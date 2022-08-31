@@ -1,6 +1,7 @@
 use super::utils;
 use super::CmIdx;
 use crate::{Cm, Sn, Tx, TxCtrOp, TxType};
+use sak_crypto::sha3::digest::typenum::U8;
 use serde::{Deserialize, Serialize};
 use type_extension::U8Arr32;
 

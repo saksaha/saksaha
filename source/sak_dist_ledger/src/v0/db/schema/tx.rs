@@ -2,6 +2,7 @@ use crate::LedgerError;
 use crate::{cfs, LedgerDB};
 use sak_crypto::{Bls12, Hasher, Proof, ScalarExt};
 use sak_kv_db::WriteBatch;
+use sak_proofs::CoinProof;
 use sak_types::{
     Cm, CmIdx, MintTx, MintTxCandidate, PourTx, PourTxCandidate, Sn, Tx,
     TxCtrOp, TxHash, TxHeight, TxType,
@@ -209,8 +210,6 @@ impl LedgerDB {
 
         let tx_ctr_op = tc.get_ctr_op();
 
-        // *cm_idx_count = *cm_idx_count + 1;
-
         match tx_ctr_op {
             TxCtrOp::ContractDeploy => {
                 self.batch_put_tx_hash_by_contract_addr(
@@ -226,58 +225,6 @@ impl LedgerDB {
         Ok(tx_hash.clone())
     }
 
-    pub(crate) fn check_double_spending(
-        &self,
-        sn: &[u8; 32],
-    ) -> Result<(), LedgerError> {
-        if let Some(t) = self.get_tx_hash_by_sn(&self.db, sn)? {
-            // return Err(format!(
-            //     "Detect double spend, `sn` has been spent before with tx_hash: {}",
-            //     t
-            // )
-            // .into());
-            log::error!("Double spending has been detected")
-        };
-
-        Ok(())
-    }
-
-    // TODO Temporary commenting out. This has to be executed as desired later
-    pub(crate) fn verify_tx(
-        &self,
-        tc: &PourTxCandidate,
-    ) -> Result<(), LedgerError> {
-        let hasher = Hasher::new();
-
-        let public_inputs = [
-            ScalarExt::parse_arr(&tc.merkle_rt)?,
-            ScalarExt::parse_arr(&tc.sn_1)?,
-            ScalarExt::parse_arr(&tc.cm_1)?,
-            ScalarExt::parse_arr(&tc.cm_2)?,
-        ];
-
-        let pi_des: Proof<Bls12> = match Proof::read(&*tc.pi) {
-            Ok(p) => p,
-            Err(err) => {
-                return Err(format!(
-                    "Cannot deserialize the pi, err: {:?}, pi: {:?}",
-                    err, tc.pi,
-                )
-                .into());
-            }
-        };
-
-        // let verification_result =
-        //     sak_proofs::verify_proof_1_to_2(pi_des, &public_inputs, &hasher);
-
-        // if !verification_result {
-        //     // return Err(format!("Wrong proof").into());
-        //     log::error!("Failed to verify")
-        // };
-
-        Ok(())
-    }
-
     pub(crate) fn batch_put_pour_tx(
         &self,
         batch: &mut WriteBatch,
@@ -285,13 +232,6 @@ impl LedgerDB {
         // cm_idx_count: &mut u128,
     ) -> Result<TxHash, LedgerError> {
         let tc = &tx.tx_candidate;
-
-        {
-            // TODO This has to be done outside "db" layer
-            self.check_double_spending(&tc.sn_1)?;
-
-            self.verify_tx(&tc)?;
-        }
 
         let tx_hash = tc.get_tx_hash();
 
@@ -334,8 +274,6 @@ impl LedgerDB {
         self.batch_put_prf_merkle_rt(batch, tx_hash, &tc.merkle_rt)?;
 
         let tx_ctr_op = tc.get_ctr_op();
-
-        // *cm_idx_count = *cm_idx_count + 2;
 
         match tx_ctr_op {
             TxCtrOp::ContractDeploy => {

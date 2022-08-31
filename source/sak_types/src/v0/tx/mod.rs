@@ -1,5 +1,6 @@
 mod mint_tx;
 mod pour_tx;
+mod testing;
 mod tx;
 mod tx_candidate;
 mod tx_type;

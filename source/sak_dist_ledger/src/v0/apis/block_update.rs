@@ -2,6 +2,8 @@ use crate::{CtrStateUpdate, DistLedgerApis, LedgerError, MerkleUpdate};
 use colored::Colorize;
 use log::{debug, error, info, warn};
 use sak_contract_std::{CtrCallType, CtrRequest, Storage, ERROR_PLACEHOLDER};
+use sak_crypto::{Bls12, Hasher, Proof, ScalarExt};
+use sak_proofs::CoinProof;
 use sak_types::{
     Block, BlockCandidate, CmIdx, MintTxCandidate, PourTxCandidate, Tx,
     TxCandidate, TxCtrOp,
@@ -50,7 +52,7 @@ impl DistLedgerApis {
         &self,
         bc: Option<BlockCandidate>,
     ) -> Result<Option<String>, LedgerError> {
-        let bc = match bc {
+        let mut bc = match bc {
             Some(bc) => bc,
             None => match self.make_block_candidate().await? {
                 Some(bc) => bc,
@@ -80,7 +82,8 @@ impl DistLedgerApis {
             }
         };
 
-        let tcs = &bc.tx_candidates;
+        let tcs = &bc.tx_candidates.clone();
+
         let mut ctr_state_update = CtrStateUpdate::new();
         let mut merkle_update = MerkleUpdate::new();
 
@@ -92,7 +95,11 @@ impl DistLedgerApis {
             next_cm_idx,
         );
 
+        self.filter_tx_candidates(&mut bc, tcs)?;
+        let tcs = &bc.tx_candidates;
+
         let mut added_cm_count: u128 = 0;
+
         for tx_candidate in tcs {
             let cm_count = match tx_candidate {
                 TxCandidate::Mint(tc) => {
@@ -223,6 +230,77 @@ impl DistLedgerApis {
 
     pub fn delete_tx(&self, key: &String) -> Result<(), LedgerError> {
         self.ledger_db.delete_tx(key)
+    }
+
+    pub(crate) fn verify_sn(&self, sn: &[u8; 32]) -> bool {
+        match self.ledger_db.get_tx_hash_by_sn(sn) {
+            Ok(Some(_)) => return false,
+            Ok(None) => return true,
+            Err(_) => return false,
+        }
+    }
+
+    pub(crate) fn verify_proof(
+        &self,
+        tc: &PourTxCandidate,
+    ) -> Result<bool, LedgerError> {
+        let hasher = Hasher::new();
+
+        let public_inputs = [
+            ScalarExt::parse_arr(&tc.merkle_rt)?,
+            ScalarExt::parse_arr(&tc.sn_1)?,
+            ScalarExt::parse_arr(&tc.cm_1)?,
+            ScalarExt::parse_arr(&tc.cm_2)?,
+        ];
+
+        let pi_des: Proof<Bls12> = match Proof::read(&*tc.pi) {
+            Ok(p) => p,
+            Err(err) => {
+                return Err(format!(
+                    "Cannot deserialize the pi, err: {:?}",
+                    err
+                )
+                .into());
+            }
+        };
+
+        let verification_result =
+            CoinProof::verify_proof_1_to_2(pi_des, &public_inputs, &hasher)?;
+
+        if !verification_result {
+            return Err(format!("Failed to verify proof").into());
+        };
+
+        Ok(verification_result)
+    }
+
+    pub(crate) fn filter_tx_candidates(
+        &self,
+        bc: &mut BlockCandidate,
+        tx_candidates: &Vec<TxCandidate>,
+    ) -> Result<(), LedgerError> {
+        let mut valid_tx_candidates: Vec<TxCandidate> = vec![];
+
+        for tx_candidate in tx_candidates {
+            match tx_candidate {
+                TxCandidate::Mint(_tc) => {
+                    valid_tx_candidates.push(tx_candidate.to_owned());
+                }
+                TxCandidate::Pour(tc) => {
+                    let is_valid_sn = self.verify_sn(&tc.sn_1);
+                    let is_verified_tx = self.verify_proof(tc)?;
+
+                    if is_valid_sn & is_verified_tx {
+                        valid_tx_candidates.push(tx_candidate.to_owned());
+                    } else {
+                        continue;
+                    }
+                }
+            };
+        }
+
+        bc.update_tx_candidates(valid_tx_candidates);
+        Ok(())
     }
 }
 
