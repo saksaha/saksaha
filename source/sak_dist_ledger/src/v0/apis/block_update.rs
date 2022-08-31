@@ -2,7 +2,7 @@ use crate::{CtrStateUpdate, DistLedgerApis, LedgerError, MerkleUpdate};
 use colored::Colorize;
 use log::{debug, info, warn};
 use sak_contract_std::{CtrCallType, CtrRequest, Storage, ERROR_PLACEHOLDER};
-use sak_crypto::{Bls12, Hasher, Proof, ScalarExt};
+use sak_crypto::{Bls12, Hasher, Proof, Scalar, ScalarExt};
 use sak_proofs::CoinProof;
 use sak_types::{
     Block, BlockCandidate, CmIdx, MintTxCandidate, PourTxCandidate, Tx,
@@ -246,12 +246,14 @@ impl DistLedgerApis {
     ) -> Result<bool, LedgerError> {
         let hasher = Hasher::new();
 
-        let public_inputs = [
-            ScalarExt::parse_arr(&tc.merkle_rt)?,
-            ScalarExt::parse_arr(&tc.sn_1)?,
-            ScalarExt::parse_arr(&tc.cm_1)?,
-            ScalarExt::parse_arr(&tc.cm_2)?,
-        ];
+        let mut public_inputs = vec![];
+
+        public_inputs.push(ScalarExt::parse_arr(&tc.merkle_rt)?);
+        public_inputs.push(ScalarExt::parse_arr(&tc.sn_1)?);
+
+        for cm in &tc.cms {
+            public_inputs.push(ScalarExt::parse_arr(cm)?);
+        }
 
         let pi_des: Proof<Bls12> = match Proof::read(&*tc.pi) {
             Ok(p) => p,

@@ -1,11 +1,9 @@
-// <<<<<<< HEAD
 // mod mock;
 
 // use super::TxCandidate;
 // use crate::{MintTxCandidate, PourTxCandidate, Tx, WASM_MAGIC_NUMBER};
 // pub use mock::*;
 // use sak_crypto::Hasher;
-// =======
 // // mod mock;
 
 // use super::TxCandidate;
