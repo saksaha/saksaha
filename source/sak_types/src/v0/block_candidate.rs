@@ -49,4 +49,11 @@ impl BlockCandidate {
 
         (block, txs)
     }
+
+    pub fn update_tx_candidates(
+        &mut self,
+        valid_tx_candidates: Vec<TxCandidate>,
+    ) {
+        self.tx_candidates = valid_tx_candidates;
+    }
 }
