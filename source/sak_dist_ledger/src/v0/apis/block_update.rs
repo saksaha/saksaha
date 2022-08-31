@@ -237,6 +237,40 @@ impl DistLedgerApis {
         }
     }
 
+    pub(crate) fn verify_proof(
+        &self,
+        tc: &PourTxCandidate,
+    ) -> Result<bool, LedgerError> {
+        let hasher = Hasher::new();
+
+        let public_inputs = [
+            ScalarExt::parse_arr(&tc.merkle_rt)?,
+            ScalarExt::parse_arr(&tc.sn_1)?,
+            ScalarExt::parse_arr(&tc.cm_1)?,
+            ScalarExt::parse_arr(&tc.cm_2)?,
+        ];
+
+        let pi_des: Proof<Bls12> = match Proof::read(&*tc.pi) {
+            Ok(p) => p,
+            Err(err) => {
+                return Err(format!(
+                    "Cannot deserialize the pi, err: {:?}",
+                    err
+                )
+                .into());
+            }
+        };
+
+        let verification_result =
+            CoinProof::verify_proof_1_to_2(pi_des, &public_inputs, &hasher)?;
+
+        if !verification_result {
+            return Err(format!("Failed to verify proof").into());
+        };
+
+        Ok(verification_result)
+    }
+
     pub(crate) fn filter_tx_candidates(
         &self,
         bc: &mut BlockCandidate,
@@ -251,7 +285,7 @@ impl DistLedgerApis {
                 }
                 TxCandidate::Pour(tc) => {
                     let is_valid_sn = self.verify_sn(&tc.sn_1);
-                    let is_verified_tx = verify_proof(tc)?;
+                    let is_verified_tx = self.verify_proof(tc)?;
 
                     if is_valid_sn & is_verified_tx {
                         valid_tx_candidates.push(tx_candidate.to_owned());
@@ -448,33 +482,4 @@ async fn process_merkle_update(
     }
 
     Ok(cm_count)
-}
-
-pub(crate) fn verify_proof(tc: &PourTxCandidate) -> Result<bool, LedgerError> {
-    let hasher = Hasher::new();
-
-    let public_inputs = [
-        ScalarExt::parse_arr(&tc.merkle_rt)?,
-        ScalarExt::parse_arr(&tc.sn_1)?,
-        ScalarExt::parse_arr(&tc.cm_1)?,
-        ScalarExt::parse_arr(&tc.cm_2)?,
-    ];
-
-    let pi_des: Proof<Bls12> = match Proof::read(&*tc.pi) {
-        Ok(p) => p,
-        Err(err) => {
-            return Err(
-                format!("Cannot deserialize the pi, err: {:?}", err).into()
-            );
-        }
-    };
-
-    let verification_result =
-        CoinProof::verify_proof_1_to_2(pi_des, &public_inputs, &hasher)?;
-
-    if !verification_result {
-        return Err(format!("Failed to verify proof").into());
-    };
-
-    Ok(verification_result)
 }

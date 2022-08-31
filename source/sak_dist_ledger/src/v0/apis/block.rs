@@ -97,11 +97,14 @@ impl DistLedgerApis {
         &self,
         tx_candidate: TxCandidate,
     ) -> Result<TxHash, String> {
-        let tx_hash = match tx_candidate {
+        let tx_hash = match tx_candidate.clone() {
             TxCandidate::Mint(_) => {
                 self.sync_pool.insert_tx(tx_candidate).await?
             }
-            TxCandidate::Pour(_) => {
+            TxCandidate::Pour(tc) => {
+                self.verify_sn(&tc.sn_1);
+                self.verify_proof(&tc);
+
                 self.sync_pool.insert_tx(tx_candidate).await?
             }
         };
