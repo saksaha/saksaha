@@ -3,8 +3,10 @@ use crate::{
 };
 use async_trait::async_trait;
 use sak_contract_std::{CtrCallType, CtrRequest};
-use sak_crypto::{rand, Hasher, Scalar, ScalarExt};
-use sak_proofs::{CoinProof, MerkleTree, NewCoin, OldCoin, CM_TREE_DEPTH};
+use sak_crypto::{rand, Scalar, ScalarExt};
+use sak_proofs::{
+    CoinProof, Hasher, MerkleTree, NewCoin, OldCoin, CM_TREE_DEPTH,
+};
 use sak_types::{
     BlockCandidate, PourTxCandidate, Tx, TxCandidate, WASM_MAGIC_NUMBER,
 };
@@ -184,7 +186,15 @@ pub(crate) async fn make_dummy_invalid_pour_tx() -> Tx {
         );
     }
 
-    PourTxCandidate::mock_tx(
+    // PourTxCandidate::mock_tx(
+    //     pi_ser,
+    //     proof_context.sn_1.to_bytes(),
+    //     U8Array::from_int(0),
+    //     proof_context.cm_2.to_bytes(),
+    //     proof_context.merkle_rt.to_bytes(),
+    // )
+
+    sak_types::mock_pour_tx_custom(
         pi_ser,
         proof_context.sn_1.to_bytes(),
         U8Array::from_int(0),
@@ -241,7 +251,15 @@ pub(crate) async fn make_dummy_valid_pour_tx_candidate() -> TxCandidate {
         );
     }
 
-    PourTxCandidate::mock_tx_candidate(
+    // PourTxCandidate::mock_tx_candidate(
+    //     pi_ser,
+    //     proof_context.sn_1.to_bytes(),
+    //     proof_context.cm_1.to_bytes(),
+    //     proof_context.cm_2.to_bytes(),
+    //     proof_context.merkle_rt.to_bytes(),
+    // )
+
+    sak_types::mock_pour_tc_custom(
         pi_ser,
         proof_context.sn_1.to_bytes(),
         proof_context.cm_1.to_bytes(),
@@ -298,7 +316,15 @@ pub(crate) async fn make_dummy_valid_pour_tx_candidate_random() -> TxCandidate {
         );
     }
 
-    PourTxCandidate::mock_tx_candidate(
+    // PourTxCandidate::mock_tx_candidate(
+    //     pi_ser,
+    //     proof_context.sn_1.to_bytes(),
+    //     proof_context.cm_1.to_bytes(),
+    //     proof_context.cm_2.to_bytes(),
+    //     proof_context.merkle_rt.to_bytes(),
+    // )
+
+    sak_types::mock_pour_tc_custom(
         pi_ser,
         proof_context.sn_1.to_bytes(),
         proof_context.cm_1.to_bytes(),
@@ -355,7 +381,15 @@ pub(crate) async fn make_dummy_invalid_pour_tx_candidate() -> TxCandidate {
         );
     }
 
-    PourTxCandidate::mock_tx_candidate(
+    // PourTxCandidate::mock_tx_candidate(
+    //     pi_ser,
+    //     proof_context.sn_1.to_bytes(),
+    //     U8Array::from_int(0),
+    //     proof_context.cm_2.to_bytes(),
+    //     proof_context.merkle_rt.to_bytes(),
+    // )
+
+    sak_types::mock_pour_tc_custom(
         pi_ser,
         proof_context.sn_1.to_bytes(),
         U8Array::from_int(0),

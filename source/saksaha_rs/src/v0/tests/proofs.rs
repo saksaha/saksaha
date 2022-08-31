@@ -1,6 +1,8 @@
+use sak_crypto::Scalar;
 use sak_crypto::{rand, ScalarExt};
-use sak_crypto::{Hasher, Scalar};
-use sak_proofs::{CoinProof, MerkleTree, NewCoin, OldCoin, CM_TREE_DEPTH};
+use sak_proofs::{
+    CoinProof, Hasher, MerkleTree, NewCoin, OldCoin, CM_TREE_DEPTH,
+};
 use std::collections::HashMap;
 use type_extension::U8Array;
 
