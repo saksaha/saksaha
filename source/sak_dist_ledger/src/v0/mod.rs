@@ -6,6 +6,7 @@ mod events;
 mod runtime;
 mod state_update;
 mod sync_pool;
+mod testing;
 
 #[cfg(test)]
 mod tests;
@@ -18,5 +19,6 @@ pub use events::*;
 pub(crate) use runtime::*;
 pub(crate) use state_update::*;
 pub(crate) use sync_pool::*;
+pub use testing::*;
 
 pub type LedgerError = Box<dyn std::error::Error + Send + Sync>;
