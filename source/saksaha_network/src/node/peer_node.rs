@@ -36,8 +36,6 @@ impl PeerNode {
                     .dist_ledger
                     .ledger_event_tx
                     .clone()
-                    .read()
-                    .await
                     .subscribe();
 
                 rx
@@ -78,6 +76,7 @@ impl PeerNode {
 
             tokio::select! {
                 task = node_task_queue.pop_front() => {
+
                     let task = task?;
 
                     task::handle_task(task,
