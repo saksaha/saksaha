@@ -184,7 +184,7 @@ pub(crate) async fn make_dummy_invalid_pour_tx() -> Tx {
         );
     }
 
-    Tx::new_dummy_valid_pour(
+    PourTxCandidate::mock_tx(
         pi_ser,
         proof_context.sn_1.to_bytes(),
         U8Array::from_int(0),
@@ -241,7 +241,7 @@ pub(crate) async fn make_dummy_valid_pour_tx_candidate() -> TxCandidate {
         );
     }
 
-    Tx::new_dummy_valid_pour_candidate(
+    PourTxCandidate::mock_tx_candidate(
         pi_ser,
         proof_context.sn_1.to_bytes(),
         proof_context.cm_1.to_bytes(),
@@ -298,7 +298,7 @@ pub(crate) async fn make_dummy_valid_pour_tx_candidate_random() -> TxCandidate {
         );
     }
 
-    Tx::new_dummy_valid_pour_candidate(
+    PourTxCandidate::mock_tx_candidate(
         pi_ser,
         proof_context.sn_1.to_bytes(),
         proof_context.cm_1.to_bytes(),
@@ -355,7 +355,7 @@ pub(crate) async fn make_dummy_invalid_pour_tx_candidate() -> TxCandidate {
         );
     }
 
-    Tx::new_dummy_valid_pour_candidate(
+    PourTxCandidate::mock_tx_candidate(
         pi_ser,
         proof_context.sn_1.to_bytes(),
         U8Array::from_int(0),

@@ -94,7 +94,7 @@ impl DistLedgerApis {
             next_cm_idx,
         );
 
-        self.filtering_tx_candidates(&mut bc, tcs)?;
+        self.filter_tx_candidates(&mut bc, tcs)?;
         let tcs = &bc.tx_candidates;
 
         let mut added_cm_count: u128 = 0;
@@ -229,7 +229,7 @@ impl DistLedgerApis {
         self.ledger_db.delete_tx(key)
     }
 
-    pub(crate) fn verify_valid_sn(&self, sn: &[u8; 32]) -> bool {
+    pub(crate) fn verify_sn(&self, sn: &[u8; 32]) -> bool {
         match self.ledger_db.get_tx_hash_by_sn(sn) {
             Ok(Some(_)) => return false,
             Ok(None) => return true,
@@ -237,7 +237,7 @@ impl DistLedgerApis {
         }
     }
 
-    pub(crate) fn filtering_tx_candidates(
+    pub(crate) fn filter_tx_candidates(
         &self,
         bc: &mut BlockCandidate,
         tx_candidates: &Vec<TxCandidate>,
@@ -250,8 +250,8 @@ impl DistLedgerApis {
                     valid_tx_candidates.push(tx_candidate.to_owned());
                 }
                 TxCandidate::Pour(tc) => {
-                    let is_valid_sn = self.verify_valid_sn(&tc.sn_1);
-                    let is_verified_tx = verify_tx(tc)?;
+                    let is_valid_sn = self.verify_sn(&tc.sn_1);
+                    let is_verified_tx = verify_proof(tc)?;
 
                     if is_valid_sn & is_verified_tx {
                         valid_tx_candidates.push(tx_candidate.to_owned());
@@ -450,7 +450,7 @@ async fn process_merkle_update(
     Ok(cm_count)
 }
 
-pub(crate) fn verify_tx(tc: &PourTxCandidate) -> Result<bool, LedgerError> {
+pub(crate) fn verify_proof(tc: &PourTxCandidate) -> Result<bool, LedgerError> {
     let hasher = Hasher::new();
 
     let public_inputs = [
