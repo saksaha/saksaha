@@ -73,8 +73,6 @@ async fn test_block_sync_true() {
 
     let dummy_tx2 = sak_types::mock_pour_tc_2();
 
-    println!("dummy_tx1: {:?}", dummy_tx1);
-
     tokio::time::sleep(Duration::from_secs(5)).await;
 
     {
@@ -105,38 +103,38 @@ async fn test_block_sync_true() {
 
     tokio::time::sleep(Duration::from_secs(3)).await;
 
-    // {
-    //     println!("check if node1 has tx1: {}", dummy_tx1.get_tx_hash());
+    {
+        println!("check if node1 has tx1: {}", dummy_tx1.get_tx_hash());
 
-    //     let tx_pool_1_contains_tx1 = machine_1
-    //         .blockchain
-    //         .dist_ledger
-    //         .apis
-    //         .tx_pool_contains(dummy_tx1.get_tx_hash())
-    //         .await;
+        let tx_pool_1_contains_tx1 = machine_1
+            .blockchain
+            .dist_ledger
+            .apis
+            .tx_pool_contains(dummy_tx1.get_tx_hash())
+            .await;
 
-    //     assert_eq!(tx_pool_1_contains_tx1, true, "node 1 should contain tx1");
+        assert_eq!(tx_pool_1_contains_tx1, true, "node 1 should contain tx1");
 
-    //     println!("[Success] node_1 has tx_1 (tx sent to node_1 directly)");
+        println!("[Success] node_1 has tx_1 (tx sent to node_1 directly)");
 
-    //     println!("Checking if node2 has tx: {}", dummy_tx1.get_tx_hash());
+        println!("Checking if node2 has tx: {}", dummy_tx1.get_tx_hash());
 
-    //     let tx_pool_2_contains_tx1 = machine_2
-    //         .blockchain
-    //         .dist_ledger
-    //         .apis
-    //         .tx_pool_contains(dummy_tx1.get_tx_hash())
-    //         .await;
+        let tx_pool_2_contains_tx1 = machine_2
+            .blockchain
+            .dist_ledger
+            .apis
+            .tx_pool_contains(dummy_tx1.get_tx_hash())
+            .await;
 
-    //     assert_eq!(
-    //         tx_pool_2_contains_tx1, true,
-    //         "tx pool 2 should contain tx 1"
-    //     );
+        assert_eq!(
+            tx_pool_2_contains_tx1, true,
+            "tx pool 2 should contain tx 1"
+        );
 
-    //     println!("[Success] node_2 has tx_1 (shared from node_1)");
-    // }
+        println!("[Success] node_2 has tx_1 (shared from node_1)");
+    }
 
-    // tokio::time::sleep(Duration::from_secs(2)).await;
+    tokio::time::sleep(Duration::from_secs(2)).await;
 
     {
         local_node_1
