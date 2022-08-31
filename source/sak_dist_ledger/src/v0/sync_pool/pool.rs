@@ -99,7 +99,6 @@ impl SyncPool {
             let bc_event_tx = self.bc_event_tx.clone();
 
             tokio::spawn(async move {
-                log::debug!("[! Block] Timer on! suspend 2 seconds");
                 tokio::time::sleep(Duration::from_secs(2)).await;
 
                 let tx_hashes = new_blocks_set.write().await.drain().collect();
@@ -129,10 +128,6 @@ impl SyncPool {
         tc: TxCandidate,
     ) -> Result<TxHash, String> {
         // for test,
-        log::debug!(
-            "[! ] new tx_candidate has been inserted!, hash: {:?}",
-            tc.get_tx_hash()
-        );
 
         {
             // Check if tx is valid ctr deploying type
@@ -180,10 +175,6 @@ impl SyncPool {
             let bc_event_tx = self.bc_event_tx.clone();
 
             tokio::spawn(async move {
-                log::debug!(
-                    "[thread Tx 111] Timer on! suspend 2 seconds, new_tx_hashes: {:?}",
-                    new_tx_hashes.read().await
-                );
                 tokio::time::sleep(Duration::from_secs(2)).await;
 
                 let tx_hashes: Vec<String> =
@@ -191,14 +182,9 @@ impl SyncPool {
 
                 let ev = DistLedgerEvent::TxPoolStat(tx_hashes.clone());
 
-                log::debug!("[thread Tx 222] Send event: {:?}", tx_hashes);
-
                 match bc_event_tx.write().await.send(ev.clone()) {
                     Ok(_) => {
-                        debug!(
-                            "[thread] Ledger event queued, ev: {}",
-                            ev.to_string()
-                        );
+                        debug!("Ledger event queued, ev: {}", ev.to_string());
                     }
                     Err(err) => {
                         warn!(
@@ -242,9 +228,6 @@ impl SyncPool {
     ) -> Vec<TxCandidate> {
         let tx_map_lock = self.tx_map.read().await;
         let mut tx_pool = vec![];
-
-        println!("[!] tx map: {:?}", tx_map_lock);
-        println!("[!] hash: {:?}", tx_hashes);
 
         for tx_hash in tx_hashes.iter() {
             let tx = match tx_map_lock.get(tx_hash) {

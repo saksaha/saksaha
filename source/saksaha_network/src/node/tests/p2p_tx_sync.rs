@@ -1,9 +1,10 @@
+use sak_dist_ledger::DistLedgerEvent;
 use sak_types::TxCandidate;
 use type_extension::U8Array;
 
 use super::utils::{get_two_dummy_nodes, make_test_context, TestContext};
 use crate::tests::TestUtil;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_tx_sync_true() {
@@ -42,12 +43,6 @@ async fn test_tx_sync_true() {
         });
     }
 
-    println!("[!] sleep 10 seconds..");
-    tokio::time::sleep(Duration::from_secs(10)).await;
-
-    // clear the display
-    // std::process::Command::new("clear").status().unwrap();
-
     println!("Sending a tx1 to a node_1");
 
     machine_1
@@ -57,37 +52,6 @@ async fn test_tx_sync_true() {
         .send_tx(dummy_tx1.clone())
         .await
         .expect("Node should be able to send a transaction");
-
-    // {
-    //     println!("check if node1 has tx1: {}", dummy_tx1.get_tx_hash());
-
-    //     let tx_pool_1_contains_tx1 = machine_1
-    //         .blockchain
-    //         .dist_ledger
-    //         .apis
-    //         .get_tx(dummy_tx1.get_tx_hash())
-    //         .await;
-
-    //     assert_eq!(tx_pool_1_contains_tx1.is_ok(), true);
-
-    //     println!("[Success] node_1 has tx_1 (tx sent to node_1 directly)");
-
-    //     println!("[!] sleep 10 seconds for waiting Tx Sync..");
-    //     tokio::time::sleep(Duration::from_secs(10)).await;
-
-    //     println!("Checking if node2 has tx: {}", dummy_tx1.get_tx_hash());
-
-    //     let tx_pool_2_contains_tx1 = machine_2
-    //         .blockchain
-    //         .dist_ledger
-    //         .apis
-    //         .get_tx(dummy_tx1.get_tx_hash())
-    //         .await;
-
-    //     assert_eq!(tx_pool_2_contains_tx1.is_ok(), true);
-
-    //     println!("[Success] node_2 has tx_1 (shared from node_1)");
-    // }
 
     {
         println!("check if node1 has tx1: {}", dummy_tx1.get_tx_hash());
@@ -103,29 +67,44 @@ async fn test_tx_sync_true() {
 
         println!("[Success] node_1 has tx_1 (tx sent to node_1 directly)");
 
-        println!("\n[!] sleep 9 seconds for waiting Tx Sync..");
-        tokio::time::sleep(Duration::from_secs(9)).await;
-
         println!("Checking if node2 has tx: {}", dummy_tx1.get_tx_hash());
 
-        println!(
-            "Node2 txs pool: {:?}",
-            machine_2
+        let mut ledger_event_rx = {
+            let rx = machine_2
                 .blockchain
                 .dist_ledger
-                .apis
-                .get_txs_from_pool(vec![dummy_tx1.get_tx_hash().clone()])
+                .ledger_event_tx
+                .read()
                 .await
-        );
+                .subscribe();
 
-        let tx_pool_2_contains_tx1 = machine_2
-            .blockchain
-            .dist_ledger
-            .apis
-            .tx_pool_contains(dummy_tx1.get_tx_hash())
-            .await;
+            rx
+        };
 
-        assert_eq!(tx_pool_2_contains_tx1, true);
+        let mut is_pass: bool = false;
+
+        let now = Instant::now();
+
+        while now.elapsed() < Duration::from_millis(5000) {
+            let ev = match ledger_event_rx.recv().await {
+                Ok(e) => e,
+                Err(err) => {
+                    log::error!("Error receiving ledger event, err: {}", err);
+
+                    continue;
+                }
+            };
+
+            let _event_handle_res = match ev {
+                DistLedgerEvent::TxPoolStat(_new_tx_hashes) => {
+                    log::info!("test done");
+                    is_pass = true;
+                }
+                _ => {}
+            };
+        }
+
+        assert_eq!(is_pass, true);
 
         println!("[Success] node_2 has tx_1 (shared from node_1)");
     }
