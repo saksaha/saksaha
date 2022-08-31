@@ -11,7 +11,7 @@ const BLOCK_SYNC_INTERVAL: u64 = 2000;
 
 pub struct Runtime {
     sync_pool: Arc<SyncPool>,
-    bc_event_tx: Arc<RwLock<Sender<DistLedgerEvent>>>,
+    ledger_event_tx: Arc<Sender<DistLedgerEvent>>,
     tx_sync_interval: Duration,
     block_sync_interval: Duration,
 }
@@ -19,7 +19,7 @@ pub struct Runtime {
 impl Runtime {
     pub(crate) fn init(
         sync_pool: Arc<SyncPool>,
-        bc_event_tx: Arc<RwLock<Sender<DistLedgerEvent>>>,
+        ledger_event_tx: Arc<Sender<DistLedgerEvent>>,
         tx_sync_interval: Option<u64>,
         block_sync_interval: Option<u64>,
     ) -> Runtime {
@@ -35,32 +35,32 @@ impl Runtime {
 
         Runtime {
             sync_pool,
-            bc_event_tx,
+            ledger_event_tx,
             tx_sync_interval,
             block_sync_interval,
         }
     }
 
     pub(crate) async fn run(&self) {
-        let tx_sync_routine = TxSyncRoutine {
-            sync_pool: self.sync_pool.clone(),
-            tx_sync_interval: self.tx_sync_interval,
-            bc_event_tx: self.bc_event_tx.clone(),
-        };
+        // let tx_sync_routine = TxSyncRoutine {
+        //     sync_pool: self.sync_pool.clone(),
+        //     tx_sync_interval: self.tx_sync_interval,
+        //     ledger_event_tx: self.ledger_event_tx.clone(),
+        // };
 
-        tokio::spawn(async move {
-            tx_sync_routine.run().await;
-        });
+        // tokio::spawn(async move {
+        //     tx_sync_routine.run().await;
+        // });
 
-        let block_sync_routine = BlockSyncRoutine {
-            sync_pool: self.sync_pool.clone(),
-            block_sync_interval: self.block_sync_interval,
-            bc_event_tx: self.bc_event_tx.clone(),
-        };
+        // let block_sync_routine = BlockSyncRoutine {
+        //     sync_pool: self.sync_pool.clone(),
+        //     block_sync_interval: self.block_sync_interval,
+        //     ledger_event_tx: self.ledger_event_tx.clone(),
+        // };
 
-        tokio::spawn(async move {
-            block_sync_routine.run().await;
-        });
+        // tokio::spawn(async move {
+        //     block_sync_routine.run().await;
+        // });
     }
 
     // pub(crate) async fn new(

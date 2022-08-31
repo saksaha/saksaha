@@ -36,8 +36,6 @@ impl PeerNode {
                     .dist_ledger
                     .ledger_event_tx
                     .clone()
-                    .read()
-                    .await
                     .subscribe();
 
                 rx

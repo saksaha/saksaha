@@ -15,12 +15,12 @@ pub(crate) struct SyncPool {
     new_blocks: Arc<RwLock<HashSet<(BlockHeight, BlockHash)>>>,
     tx_hash_set: Arc<RwLock<HashSet<TxHash>>>,
     tx_map: RwLock<HashMap<TxHash, TxCandidate>>,
-    bc_event_tx: Arc<RwLock<Sender<DistLedgerEvent>>>,
+    ledger_event_tx: Arc<Sender<DistLedgerEvent>>,
 }
 
 impl SyncPool {
     pub(crate) fn new(
-        bc_event_tx: Arc<RwLock<Sender<DistLedgerEvent>>>,
+        ledger_event_tx: Arc<Sender<DistLedgerEvent>>,
     ) -> SyncPool {
         let tx_hash_set = {
             let s = HashSet::new();
@@ -43,7 +43,7 @@ impl SyncPool {
             new_blocks,
             tx_hash_set,
             tx_map,
-            bc_event_tx,
+            ledger_event_tx,
         }
     }
 
@@ -96,7 +96,7 @@ impl SyncPool {
         if new_blokcs_len_check == 1 {
             let new_blocks_set = self.new_blocks.clone();
 
-            let bc_event_tx = self.bc_event_tx.clone();
+            let ledger_event_tx = self.ledger_event_tx.clone();
 
             tokio::spawn(async move {
                 tokio::time::sleep(Duration::from_secs(2)).await;
@@ -105,7 +105,7 @@ impl SyncPool {
 
                 let ev = DistLedgerEvent::NewBlocks(tx_hashes);
 
-                match bc_event_tx.write().await.send(ev.clone()) {
+                match ledger_event_tx.send(ev.clone()) {
                     Ok(_) => {
                         debug!("Ledger event queued, ev: {}", ev.to_string());
                     }
@@ -172,7 +172,7 @@ impl SyncPool {
         if self.tx_hash_set.read().await.len() == 1 {
             let new_tx_hashes = self.tx_hash_set.clone();
 
-            let bc_event_tx = self.bc_event_tx.clone();
+            let ledger_event_tx = self.ledger_event_tx.clone();
 
             tokio::spawn(async move {
                 tokio::time::sleep(Duration::from_secs(2)).await;
@@ -182,7 +182,7 @@ impl SyncPool {
 
                 let ev = DistLedgerEvent::TxPoolStat(tx_hashes.clone());
 
-                match bc_event_tx.write().await.send(ev.clone()) {
+                match ledger_event_tx.send(ev.clone()) {
                     Ok(_) => {
                         debug!("Ledger event queued, ev: {}", ev.to_string());
                     }
@@ -213,11 +213,11 @@ impl SyncPool {
         &self,
         txs: &Vec<TxCandidate>,
     ) -> Result<(), String> {
-        let mut tx_map_lock = self.tx_map.write().await;
+        // let mut tx_map_lock = self.tx_map.write().await;
 
-        for tx in txs {
-            tx_map_lock.remove(tx.get_tx_hash());
-        }
+        // for tx in txs {
+        //     tx_map_lock.remove(tx.get_tx_hash());
+        // }
 
         Ok(())
     }

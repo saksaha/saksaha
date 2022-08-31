@@ -19,6 +19,16 @@ pub(crate) struct TestContext {
     pub identity: Arc<Identity>,
 }
 
+pub(crate) struct DualNodeTestContext {
+    pub p2p_host_1: P2PHost,
+    pub local_node_1: Arc<LocalNode>,
+    pub machine_1: Arc<Machine>,
+    //
+    pub p2p_host_2: P2PHost,
+    pub local_node_2: Arc<LocalNode>,
+    pub machine_2: Arc<Machine>,
+}
+
 pub(crate) async fn make_test_context(
     app_prefix: String,
     p2p_port: Option<u16>,
@@ -144,14 +154,10 @@ pub(crate) async fn make_test_context(
     }
 }
 
-pub(super) async fn get_two_dummy_nodes() -> (
-    P2PHost,
-    Arc<LocalNode>,
-    Arc<Machine>,
-    P2PHost,
-    Arc<LocalNode>,
-    Arc<Machine>,
-) {
+pub(super) async fn make_dual_node_test_context(
+    miner_1: bool,
+    miner_2: bool,
+) -> DualNodeTestContext {
     let app_prefix_vec = vec!["test_1", "test_2"];
 
     let test_context_1 = make_test_context(
@@ -170,8 +176,7 @@ pub(super) async fn get_two_dummy_nodes() -> (
                 f6083b729baef9e9545c4e95590616fd3\
                 82662a09653f2a966ff524989ae8c0f",
         ),
-        true,
-        // false,
+        miner_1,
     )
     .await;
 
@@ -198,7 +203,7 @@ pub(super) async fn get_two_dummy_nodes() -> (
                 84d0dc478108629c0353f2876941f90d\
                 4b36346bcc19c6b625422adffb53b3a6af",
         ),
-        false,
+        miner_2,
     )
     .await;
 
@@ -209,12 +214,12 @@ pub(super) async fn get_two_dummy_nodes() -> (
         ..
     } = test_context_2;
 
-    (
+    DualNodeTestContext {
         p2p_host_1,
         local_node_1,
         machine_1,
         p2p_host_2,
         local_node_2,
         machine_2,
-    )
+    }
 }

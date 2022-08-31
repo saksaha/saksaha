@@ -21,7 +21,7 @@ pub struct DistLedger {
     pub apis: DistLedgerApis,
     // pub(crate) ledger_db: LedgerDB,
     // pub(crate) sync_pool: Arc<SyncPool>,
-    pub ledger_event_tx: Arc<RwLock<Sender<DistLedgerEvent>>>,
+    pub ledger_event_tx: Arc<Sender<DistLedgerEvent>>,
     // pub(crate) vm: VM,
     // pub(crate) consensus: Box<dyn Consensus + Send + Sync>,
     runtime: Arc<Runtime>,
@@ -56,7 +56,7 @@ impl DistLedger {
         let ledger_event_tx = {
             let (tx, _rx) = broadcast::channel(BLOCKCHAIN_EVENT_QUEUE_CAPACITY);
 
-            Arc::new(RwLock::new(tx))
+            Arc::new(tx)
         };
 
         let sync_pool = {
