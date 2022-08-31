@@ -26,8 +26,6 @@ impl LedgerEventRoutine {
                 }
             };
 
-            debug!("Handling ledger event: {:?}", ev);
-
             let event_handle_res = match ev {
                 DistLedgerEvent::TxPoolStat(new_tx_hashes) => {
                     self.node_task_queue

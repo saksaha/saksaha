@@ -1,30 +1,37 @@
-use log::warn;
-use sak_types::{
-    Block, BlockHash, BlockHeight, Tx, TxCandidate, TxCtrOp, TxHash,
+use log::{debug, warn};
+use sak_types::{Block, BlockHash, BlockHeight, TxCandidate, TxCtrOp, TxHash};
+use std::{
+    collections::{HashMap, HashSet},
+    sync::Arc,
+    time::Duration,
 };
-use std::collections::{HashMap, HashSet};
-use tokio::sync::RwLock;
+use tokio::sync::{broadcast::Sender, RwLock};
+
+use crate::{DistLedgerEvent, Runtime};
 
 const SYNC_POOL_CAPACITY: usize = 100;
 
 pub(crate) struct SyncPool {
-    new_blocks: RwLock<HashSet<(BlockHeight, BlockHash)>>,
-    new_tx_hashes: RwLock<HashSet<TxHash>>,
+    new_blocks: Arc<RwLock<HashSet<(BlockHeight, BlockHash)>>>,
+    tx_hash_set: Arc<RwLock<HashSet<TxHash>>>,
     tx_map: RwLock<HashMap<TxHash, TxCandidate>>,
+    ledger_event_tx: Arc<Sender<DistLedgerEvent>>,
 }
 
 impl SyncPool {
-    pub(crate) fn new() -> SyncPool {
-        let new_tx_hashes = {
+    pub(crate) fn new(
+        ledger_event_tx: Arc<Sender<DistLedgerEvent>>,
+    ) -> SyncPool {
+        let tx_hash_set = {
             let s = HashSet::new();
 
-            RwLock::new(s)
+            Arc::new(RwLock::new(s))
         };
 
         let new_blocks = {
             let s = HashSet::new();
 
-            RwLock::new(s)
+            Arc::new(RwLock::new(s))
         };
 
         let tx_map = {
@@ -34,8 +41,9 @@ impl SyncPool {
 
         SyncPool {
             new_blocks,
-            new_tx_hashes,
+            tx_hash_set,
             tx_map,
+            ledger_event_tx,
         }
     }
 
@@ -47,7 +55,7 @@ impl SyncPool {
     }
 
     pub(crate) async fn drain_new_tx_hashes(&self) -> Vec<String> {
-        let mut new_tx_hashes_lock = self.new_tx_hashes.write().await;
+        let mut new_tx_hashes_lock = self.tx_hash_set.write().await;
 
         let v: Vec<_> = new_tx_hashes_lock.drain().collect();
         v
@@ -75,13 +83,43 @@ impl SyncPool {
         &self,
         block: &Block,
     ) -> Result<(), String> {
-        let mut new_blocks_lock = self.new_blocks.write().await;
-
         let height = block.block_height;
         let block_hash = block.get_block_hash();
 
-        new_blocks_lock.insert((height.to_owned(), block_hash.to_owned()));
+        {
+            let mut new_blocks_lock = self.new_blocks.write().await;
+            new_blocks_lock.insert((height.to_owned(), block_hash.to_owned()));
+        }
 
+        let new_blokcs_len_check = self.new_blocks.read().await.len();
+
+        if new_blokcs_len_check == 1 {
+            let new_blocks_set = self.new_blocks.clone();
+
+            let ledger_event_tx = self.ledger_event_tx.clone();
+
+            tokio::spawn(async move {
+                tokio::time::sleep(Duration::from_secs(2)).await;
+
+                let tx_hashes = new_blocks_set.write().await.drain().collect();
+
+                let ev = DistLedgerEvent::NewBlocks(tx_hashes);
+
+                match ledger_event_tx.send(ev.clone()) {
+                    Ok(_) => {
+                        debug!("Ledger event queued, ev: {}", ev.to_string());
+                    }
+                    Err(err) => {
+                        warn!(
+                            "No active tx sync routine receiver handle to \
+                                        sync tx event, \
+                                    err: {}",
+                            err
+                        );
+                    }
+                };
+            });
+        }
         Ok(())
     }
 
@@ -89,9 +127,12 @@ impl SyncPool {
         &self,
         tc: TxCandidate,
     ) -> Result<TxHash, String> {
+        // for test,
+
         {
             // Check if tx is valid ctr deploying type
             // let (tx_ctr_op, tx_coin_op) = tc.get_tx_op();
+
             let tx_ctr_op = tc.get_ctr_op();
 
             match tx_ctr_op {
@@ -111,17 +152,51 @@ impl SyncPool {
 
         let tx_hash = tc.get_tx_hash().to_string();
 
-        let mut tx_map_lock = self.tx_map.write().await;
+        {
+            let mut tx_map_lock = self.tx_map.write().await;
 
-        if tx_map_lock.contains_key(&tx_hash) {
-            return Err(format!("tx already exist"));
-        } else {
-            tx_map_lock.insert(tx_hash.clone(), tc);
-        };
+            if tx_map_lock.contains_key(&tx_hash) {
+                return Err(format!("tx already exist"));
+            } else {
+                tx_map_lock.insert(tx_hash.clone(), tc.clone());
+            };
+        }
 
-        let mut new_tx_hashes_lock = self.new_tx_hashes.write().await;
+        {
+            let mut tx_hashes_set_lock = self.tx_hash_set.write().await;
+            tx_hashes_set_lock.insert(tx_hash.to_string());
+        }
 
-        new_tx_hashes_lock.insert(tx_hash.to_string());
+        // ----------------------------------------------------------
+
+        if self.tx_hash_set.read().await.len() == 1 {
+            let new_tx_hashes = self.tx_hash_set.clone();
+
+            let ledger_event_tx = self.ledger_event_tx.clone();
+
+            tokio::spawn(async move {
+                tokio::time::sleep(Duration::from_secs(2)).await;
+
+                let tx_hashes: Vec<String> =
+                    new_tx_hashes.write().await.drain().collect();
+
+                let ev = DistLedgerEvent::TxPoolStat(tx_hashes.clone());
+
+                match ledger_event_tx.send(ev.clone()) {
+                    Ok(_) => {
+                        debug!("Ledger event queued, ev: {}", ev.to_string());
+                    }
+                    Err(err) => {
+                        warn!(
+                            "No active tx sync routine receiver handle to \
+                                        sync tx event, \
+                                    err: {}",
+                            err
+                        );
+                    }
+                };
+            });
+        }
 
         Ok(tx_hash)
     }
@@ -158,7 +233,7 @@ impl SyncPool {
             let tx = match tx_map_lock.get(tx_hash) {
                 Some(tx) => tx.clone(),
                 None => {
-                    warn!("Requested tx does not exist");
+                    warn!("Requested tx does not exist\n");
                     continue;
                 }
             };
