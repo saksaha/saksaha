@@ -1,4 +1,6 @@
 // mod mock;
+mod block;
+mod proof;
 
 use super::TxCandidate;
 use crate::{MintTxCandidate, PourTxCandidate, Tx, WASM_MAGIC_NUMBER};
