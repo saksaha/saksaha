@@ -3,7 +3,7 @@ use colored::Colorize;
 use log::{debug, info, warn};
 use sak_contract_std::{CtrCallType, CtrRequest, Storage, ERROR_PLACEHOLDER};
 use sak_crypto::{Bls12, Scalar, ScalarExt};
-use sak_proofs::{CoinProof, Hasher, Proof};
+use sak_proofs::{CoinProof, Hasher, Proof, CM_TREE_DEPTH};
 use sak_types::{
     Block, BlockCandidate, CmIdx, MintTxCandidate, PourTxCandidate, Tx,
     TxCandidate, TxCtrOp,
@@ -131,7 +131,9 @@ impl DistLedgerApis {
             warn!("Error removing txs into the tx pool, err: {}", err);
         }
 
-        let next_merkle_rt = match merkle_update.get("16_0") {
+        let next_merkle_rt = match merkle_update
+            .get(format!("{}_0", CM_TREE_DEPTH).as_str())
+        {
             Some(r) => r,
             None => return Err(format!("next merkle root is missing").into()),
         };
@@ -253,16 +255,12 @@ impl DistLedgerApis {
         let mut public_inputs = vec![];
 
         public_inputs.push(ScalarExt::parse_arr(&tc.merkle_rt)?);
+
         public_inputs.push(ScalarExt::parse_arr(&tc.sn_1)?);
 
         for cm in &tc.cms {
             public_inputs.push(ScalarExt::parse_arr(cm)?);
         }
-
-        println!(
-            "public inputs: {:?}, {:?}, {:?}, ",
-            &tc.merkle_rt, &tc.sn_1, &tc.cms
-        );
 
         let pi_des: Proof<Bls12> = match Proof::read(&*tc.pi) {
             Ok(p) => p,
