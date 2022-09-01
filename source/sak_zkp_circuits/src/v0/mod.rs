@@ -15,4 +15,4 @@ pub use bellman::groth16::{
 pub use bellman::{groth16, Circuit, ConstraintSystem, SynthesisError};
 pub use bls12_381::{Bls12, Scalar};
 
-pub type ProofError = Box<dyn std::error::Error + Send + Sync>;
+pub type CircuitError = Box<dyn std::error::Error + Send + Sync>;
