@@ -1,8 +1,7 @@
 use crate::{CircuitError, Hasher, NewCoin, OldCoin, CM_TREE_DEPTH};
 use bellman::gadgets::boolean::AllocatedBit;
-use bellman::groth16::{self, Parameters};
 use bellman::{Circuit, ConstraintSystem, SynthesisError};
-use sak_crypto::{Bls12, OsRng, Scalar};
+use sak_crypto::Scalar;
 use type_extension::U8Array;
 
 pub const GAS: u64 = 10;
@@ -18,43 +17,6 @@ pub struct CoinProofCircuit1to2 {
 
     pub constants: Vec<Scalar>,
 }
-
-// pub(crate) fn generate_circuit_params(
-//     constants: &[Scalar],
-// ) -> Result<Parameters<Bls12>, CircuitError> {
-//     let hasher = Hasher::new();
-
-//     let coin_1_old = OldCoin::default();
-//     let coin_1_new = NewCoin::default();
-//     let coin_2_new = NewCoin::default();
-
-//     let params = {
-//         let c = CoinProofCircuit1to2 {
-//             hasher,
-//             coin_1_old,
-//             coin_1_new,
-//             coin_2_new,
-//             constants: constants.to_vec(),
-//         };
-
-//         groth16::generate_random_parameters::<Bls12, _, _>(c, &mut OsRng)?
-//     };
-
-//     Ok(params)
-// }
-
-// pub(crate) fn get_mimc_params_1_to_2(
-//     circuit_params: &[u8],
-// ) -> Result<Parameters<Bls12>, ProofError> {
-//     match Parameters::<Bls12>::read(circuit_params, false) {
-//         Ok(p) => Ok(p),
-//         Err(err) => {
-//             return Err(
-//                 format!("Error getting circuit params, err: {}", err).into()
-//             );
-//         }
-//     }
-// }
 
 impl Circuit<Scalar> for CoinProofCircuit1to2 {
     fn synthesize<CS: ConstraintSystem<Scalar>>(

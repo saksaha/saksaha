@@ -289,47 +289,6 @@ pub fn make_test_context() -> TestContext {
     }
 }
 
-// pub fn get_test_params(constants: &[Scalar]) -> Parameters<Bls12> {
-//     let param_path = std::path::Path::new(PARAM_FILE_NAME);
-//     let is_file_exist = param_path.exists();
-
-//     let mut v = vec![];
-
-//     if is_file_exist {
-//         // read
-//         v = std::fs::read(PARAM_FILE_NAME).unwrap();
-//     } else {
-//         // generate and write
-//         let hasher = Hasher::new();
-
-//         let coin_1_old = OldCoin::default();
-//         let coin_1_new = NewCoin::default();
-//         let coin_2_new = NewCoin::default();
-
-//         let params = {
-//             let c = CoinProofCircuit1to2 {
-//                 hasher,
-//                 coin_1_old,
-//                 coin_1_new,
-//                 coin_2_new,
-//                 constants: constants.to_vec(),
-//             };
-
-//             groth16::generate_random_parameters::<Bls12, _, _>(c, &mut OsRng)
-//                 .unwrap()
-//         };
-//         // write param to file
-//         let mut file = File::create(PARAM_FILE_NAME).unwrap();
-
-//         params.write(&mut v).unwrap();
-//         // write origin buf
-//         file.write_all(&v).unwrap();
-//     }
-
-//     let de_params = Parameters::<Bls12>::read(&v[..], false).unwrap();
-//     de_params
-// }
-
 fn make_proof(
     coin_1_old: OldCoin,
     coin_1_new: NewCoin,
