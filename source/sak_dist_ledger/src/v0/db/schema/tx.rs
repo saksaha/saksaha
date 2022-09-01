@@ -56,9 +56,9 @@ impl LedgerDB {
 
         let ctr_addr = self.get_ctr_addr(tx_hash)?;
 
-        let cms = self.get_cms(tx_hash)?.ok_or("cms should exist")?;
-
         let cm_count = self.get_cm_count(tx_hash)?.ok_or("cms should exist")?;
+
+        let cms = self.get_cms(tx_hash)?.ok_or("cms should exist")?;
 
         let v = self.get_v(tx_hash)?.ok_or("v should exist")?;
 
@@ -110,9 +110,9 @@ impl LedgerDB {
 
         // let cm_2 = self.get_cm_2(tx_hash)?.ok_or("cm_2 should exist")?;
 
-        let cms = self.get_cms(tx_hash)?.ok_or("cms should exist")?;
-
         let cm_count = self.get_cm_count(tx_hash)?.ok_or("cms should exist")?;
+
+        let cms = self.get_cms(tx_hash)?.ok_or("cms should exist")?;
 
         let merkle_rt = self
             .get_prf_merkle_rt(tx_hash)?

@@ -178,13 +178,6 @@ impl Wallet {
 
         println!("[!] pi serialized, len: {}", pi_ser.len());
 
-        println!(
-            "cm1: {:?}, cm2 {:?}, rt: {:?}",
-            new_coin_1.cm.to_bytes(),
-            new_coin_2.cm.to_bytes(),
-            merkle_rt
-        );
-
         let json_response = saksaha::send_tx_pour(
             self.saksaha_endpoint.clone(),
             sn_1,

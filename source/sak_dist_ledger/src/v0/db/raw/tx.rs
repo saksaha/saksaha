@@ -8,7 +8,9 @@ use sak_types::{
     Cm, CmIdx, MintTx, MintTxCandidate, PourTx, PourTxCandidate, Sn, Tx,
     TxCtrOp, TxHash, TxHeight, TxType,
 };
+
 use serde::Deserialize;
+use serde::Serialize;
 use type_extension::U8Arr32;
 
 impl LedgerDB {
@@ -344,17 +346,17 @@ impl LedgerDB {
     pub(crate) fn get_cms(
         &self,
         key: &TxHash,
-    ) -> Result<Option<Vec<[u8; 32]>>, LedgerError> {
+[]    ) -> Result<Option<Vec<U8Arr32>>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::CMS)?;
 
         match self.db.get_cf(&cf, key)? {
             Some(v) => {
-                let str = String::from_utf8(v)?;
+                let arr = v
+                    .chunks(32)
+                    .map(|v| type_extension::convert_vec_into_u8_32(v.to_vec()))
+                    .collect::<Result<Vec<U8Arr32>, LedgerError>>()?;
 
-                // let arr = type_extension::convert_vec_into_u8_32(v)?;
-                let de_arr: Vec<[u8; 32]> = serde_json::from_str(&str)?;
-
-                return Ok(Some(de_arr));
+                return Ok(Some(arr));
             }
             None => {
                 return Ok(None);
@@ -710,8 +712,9 @@ impl LedgerDB {
     ) -> Result<(), LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::CMS)?;
 
-        let ser_val = serde_json::to_string(value)?;
-        batch.put_cf(&cf, key, ser_val);
+        let serialized = value.iter().flatten().copied().collect::<Vec<u8>>();
+
+        batch.put_cf(&cf, key, serialized);
 
         Ok(())
     }
