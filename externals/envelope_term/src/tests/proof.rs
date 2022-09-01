@@ -11,6 +11,18 @@ use sak_types::{BlockCandidate, TxCandidate};
 use std::{collections::HashMap, sync::Arc, time::Duration};
 use type_extension::U8Array;
 
+const VALIDATOR_CTR_ADDR: &'static str = "validator_contract_addr";
+
+const VALIDATOR: &[u8] = include_bytes!(
+    "../../../../source/prebuild/sak_validator.postprocess.wasm"
+);
+
+const ENVELOPE_CTR_ADDR: &'static str = "envelope_contract_addr";
+
+const ENVELOPE: &[u8] = include_bytes!(
+    "../../../../source/prebuild/envelope_contract.postprocess.wasm"
+);
+
 pub struct DummyPos {}
 
 #[async_trait]
@@ -272,17 +284,6 @@ async fn test_generate_a_proof() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_real_generate_a_proof() {
-    const VALIDATOR_CTR_ADDR: &'static str = "validator_contract_addr";
-
-    const VALIDATOR: &[u8] = include_bytes!(
-        "../../../../source/prebuild/sak_validator.postprocess.wasm"
-    );
-
-    const ENVELOPE_CTR_ADDR: &'static str = "envelope_contract_addr";
-
-    const ENVELOPE: &[u8] = include_bytes!(
-        "../../../../source/prebuild/envelope_contract.postprocess.wasm"
-    );
     sak_test_utils::init_test_log();
 
     TestUtil::init_test(vec!["test"]);

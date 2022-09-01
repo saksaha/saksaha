@@ -933,8 +933,3 @@ pub(crate) fn make_dummy_block_candidate_with_query_tx(
 
 //     Some(block_candidate)
 // }
-=======
-pub(crate) fn make_dummy_pos() -> Box<DummyPos> {
-    Box::new(DummyPos {})
-}
->>>>>>> dev
