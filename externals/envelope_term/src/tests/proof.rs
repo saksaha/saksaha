@@ -1,115 +1,8 @@
 use super::TestUtil;
-use async_trait::async_trait;
 use sak_crypto::{Bls12, Scalar, ScalarExt};
-use sak_dist_ledger::{
-    Consensus, ConsensusError, DistLedger, DistLedgerApis, DistLedgerArgs,
-};
 use sak_proofs::{
     CoinProof, Hasher, MerkleTree, NewCoin, OldCoin, Proof, CM_TREE_DEPTH,
 };
-use sak_types::{BlockCandidate, TxCandidate};
-use std::{collections::HashMap, sync::Arc, time::Duration};
-use type_extension::U8Array;
-
-pub struct DummyPos {}
-
-#[async_trait]
-impl Consensus for DummyPos {
-    async fn do_consensus(
-        &self,
-        _dist_ledger_apis: &DistLedgerApis,
-        _txs: Vec<TxCandidate>,
-    ) -> Result<BlockCandidate, ConsensusError> {
-        return Err("awel".into());
-    }
-}
-
-pub(crate) fn make_dummy_genesis_block(tx: TxCandidate) -> BlockCandidate {
-    let genesis_block = BlockCandidate {
-        validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
-        tx_candidates: vec![tx],
-        witness_sigs: vec![String::from("1"), String::from("2")],
-        created_at: String::from("2022061515340000"),
-    };
-
-    genesis_block
-}
-
-pub(crate) fn make_dummy_pos() -> Box<DummyPos> {
-    Box::new(DummyPos {})
-}
-
-pub(crate) async fn make_dist_ledger(block: BlockCandidate) -> DistLedger {
-    let pos = make_dummy_pos();
-
-    let dist_ledger_args = DistLedgerArgs {
-        app_prefix: String::from("test"),
-        tx_sync_interval: None,
-        genesis_block: Some(block),
-        consensus: pos,
-        block_sync_interval: None,
-    };
-
-    let dist_ledger = DistLedger::init(dist_ledger_args)
-        .await
-        .expect("Blockchain should be initialized");
-
-    dist_ledger
-}
-
-pub struct Coin {
-    pub addr_sk: [u8; 32],
-    pub addr_pk: [u8; 32],
-    pub rho: [u8; 32],
-    pub r: [u8; 32],
-    pub s: [u8; 32],
-    pub v: [u8; 32],
-    pub k: [u8; 32],
-    pub cm: [u8; 32],
-}
-
-fn generate_a_dummy_coin(value: u64) -> Coin {
-    let hasher = Hasher::new();
-
-    let addr_sk = U8Array::from_int(sak_crypto::rand() as u64).to_owned();
-    let addr_pk = hasher.mimc_single(&addr_sk).unwrap();
-    let rho = U8Array::from_int(sak_crypto::rand() as u64);
-    let r = U8Array::from_int(sak_crypto::rand() as u64);
-    let s = U8Array::from_int(sak_crypto::rand() as u64);
-    let v = U8Array::from_int(value);
-
-    let k = hasher.comm2_scalar(
-        ScalarExt::parse_arr(&r).unwrap(),
-        addr_pk,
-        ScalarExt::parse_arr(&rho).unwrap(),
-    );
-    let cm = hasher.comm2_scalar(
-        ScalarExt::parse_arr(&s).unwrap(),
-        ScalarExt::parse_arr(&v).unwrap(),
-        k,
-    );
-
-    println!("\n[*] New Coin Info!");
-    println!("[-] addr_sk: {:?}", ScalarExt::parse_arr(&addr_sk));
-    println!("[-] addr_pk: {:?}", addr_pk);
-    println!("[-] rho: {:?}", ScalarExt::parse_arr(&rho));
-    println!("[-] r: {:?}", ScalarExt::parse_arr(&r));
-    println!("[-] s: {:?}", ScalarExt::parse_arr(&s));
-    println!("[-] v: {:?}", ScalarExt::parse_arr(&v));
-    println!("[-] k: {:?}", k);
-    println!("[-] cm: {:?}", cm);
-
-    Coin {
-        addr_sk,
-        addr_pk: addr_pk.to_bytes(),
-        rho,
-        r,
-        s,
-        v,
-        k: k.to_bytes(),
-        cm: cm.to_bytes(),
-    }
-}
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_generate_a_proof() {
@@ -117,20 +10,24 @@ async fn test_generate_a_proof() {
 
     TestUtil::init_test(vec!["test"]);
 
-    let coin_1_old = generate_a_dummy_coin(100);
+    let coin_1_old = sak_types::mock_coin(100);
 
-    let tx = sak_types::mock_mint_tc_custom(
-        coin_1_old.cm,
-        coin_1_old.v,
-        coin_1_old.k,
-        coin_1_old.s,
-    );
+    println!("coin: {}", coin_1_old);
 
-    let genesis_block = make_dummy_genesis_block(tx);
+    let tx_candidates = vec![
+        //
+        sak_types::mock_mint_tc_custom(
+            coin_1_old.cm,
+            coin_1_old.v,
+            coin_1_old.k,
+            coin_1_old.s,
+        ),
+    ];
 
-    let dist_ledger = make_dist_ledger(genesis_block).await;
+    let genesis_block = sak_types::mock_block(tx_candidates);
 
-    // 4. generate a proof for tx_pour
+    let dist_ledger = sak_dist_ledger::mock_dist_ledger(genesis_block).await;
+
     let cm_1_old_idx: u128 = 0;
 
     let merkle_tree = MerkleTree::new(CM_TREE_DEPTH as u32);
@@ -158,8 +55,11 @@ async fn test_generate_a_proof() {
 
     println!("[*] updated auth_path: {:#?}", auth_path);
 
-    let coin_1_new = generate_a_dummy_coin(60);
-    let coin_2_new = generate_a_dummy_coin(40);
+    let coin_1_new = sak_types::mock_coin(60);
+    println!("coin: {}", coin_1_new);
+
+    let coin_2_new = sak_types::mock_coin(40);
+    println!("coin: {}", coin_2_new);
 
     let coin_1_old = OldCoin {
         addr_pk: Some(ScalarExt::parse_arr(&coin_1_old.addr_pk).unwrap()),
