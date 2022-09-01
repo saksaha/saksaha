@@ -1,12 +1,12 @@
+use super::utils;
+
 #[tokio::test(flavor = "multi_thread")]
 async fn test_wallet_db_store_coin_record() {
-    use crate::db::tests::{mock_coin_record, mock_wallet_db};
-
     sak_test_utils::init_test_log();
 
-    let db = mock_wallet_db().await;
+    let db = utils::mock_wallet_db().await;
 
-    let coin = mock_coin_record(100);
+    let coin = utils::mock_coin_record(100);
 
     db.schema.put_coin(&coin).unwrap();
 

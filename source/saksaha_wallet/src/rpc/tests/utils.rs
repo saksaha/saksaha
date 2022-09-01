@@ -12,13 +12,13 @@ use std::sync::Arc;
 
 pub(crate) const RPC_PORT: u16 = 36612;
 
-pub(crate) struct TestContext {
+pub(crate) struct MockContext {
     pub wallet: Arc<Wallet>,
     pub rpc: RPC,
     pub acc_addr: String,
 }
 
-pub(crate) async fn mock_test_context() -> TestContext {
+pub(crate) async fn mock_wallet_context() -> MockContext {
     let config = Config::new(&Some("dev_local_1".to_string())).unwrap();
 
     let public_key = config.public_key.clone().unwrap();
@@ -36,7 +36,7 @@ pub(crate) async fn mock_test_context() -> TestContext {
         WalletDB::init(&credential_manager.get_credential(), true).unwrap();
 
     let wallet = {
-        let mut w = Wallet::init(credential_manager, wallet_db, config)
+        let w = Wallet::init(credential_manager, wallet_db, config)
             .await
             .unwrap();
 
@@ -45,14 +45,14 @@ pub(crate) async fn mock_test_context() -> TestContext {
 
     let rpc = RPC::init(Some(36612), wallet.clone()).await.unwrap();
 
-    TestContext {
+    MockContext {
         wallet,
         rpc,
         acc_addr,
     }
 }
 
-pub(crate) async fn make_test_credential() -> CredentialManager {
+pub(crate) async fn mock_credential_manager() -> CredentialManager {
     let public_key = String::from(
         "045739d074b8722891c307e8e75c9607e0b55a80778\
                 b42ef5f4640d4949dbf3992f6083b729baef9e9545c4\
@@ -180,4 +180,61 @@ pub(crate) async fn update_coin_status(acc_addr: &String) -> String {
 
     "power".to_string()
     // json_response.result.unwrap()
+}
+
+pub(crate) async fn mock_send_pour_tx(
+    rpc_port: u16,
+    acc_addr: &String,
+) -> SendTxResponse {
+    let client = Client::new();
+
+    let uri: Uri = {
+        let u = format!("http://localhost:{}", rpc_port);
+
+        u.parse().expect("URI should be made")
+    };
+
+    let body = {
+        let ctr_request = CtrRequest {
+            req_type: request_type::OPEN_CH.to_string(),
+            args: vec![],
+            ctr_call_type: sak_contract_std::CtrCallType::Execute,
+        };
+
+        let send_tx_req = SendTxRequest {
+            acc_addr: acc_addr.clone(),
+            ctr_addr: ENVELOPE_CTR_ADDR.to_string(),
+            ctr_request,
+        };
+
+        let params = serde_json::to_vec(&send_tx_req).unwrap();
+
+        let json_request = JsonRequest {
+            jsonrpc: "2.0".to_string(),
+            method: "send_pour_tx".to_string(),
+            params: Some(params),
+            id: "test_1".to_string(),
+        };
+
+        let str = serde_json::to_string(&json_request).unwrap();
+
+        Body::from(str)
+    };
+
+    let req = Request::builder()
+        .method(Method::POST)
+        .uri(uri)
+        .body(body)
+        .expect("request builder should be made");
+
+    let resp = client.request(req).await.unwrap();
+
+    let b = hyper::body::to_bytes(resp.into_body()).await.unwrap();
+
+    let json_response =
+        serde_json::from_slice::<JsonResponse<SendTxResponse>>(&b).unwrap();
+
+    let result = json_response.result.unwrap();
+
+    result
 }

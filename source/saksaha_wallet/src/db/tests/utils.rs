@@ -1,9 +1,8 @@
+use crate::{credential::WalletCredential, db::WalletDB};
 use sak_crypto::ScalarExt;
 use sak_proofs::Hasher;
 use sak_types::{CoinRecord, CoinStatus};
 use type_extension::U8Array;
-
-use crate::{credential::WalletCredential, db::WalletDB};
 
 pub(crate) fn mock_wallet_credential() -> WalletCredential {
     let public_key = String::from(
