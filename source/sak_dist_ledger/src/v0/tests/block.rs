@@ -1,6 +1,5 @@
 use super::{test_util::TestUtil, utils};
-use sak_types::{Block, BlockCandidate, TxCandidate};
-pub const REPEAT_NUM: u128 = 2;
+use sak_types::{Block, BlockCandidate};
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_insert_genesis_block_and_check_wrong_block_hash() {
@@ -106,7 +105,7 @@ async fn test_sequential_write_block() {
 
     let dist_ledger = utils::make_dist_ledger().await;
 
-    let repeat = REPEAT_NUM;
+    let repeat = 2;
 
     for i in 0..repeat as u64 {
         let block = BlockCandidate {
@@ -130,7 +129,7 @@ async fn test_sequential_write_block_and_get_tx_height() {
 
     let dist_ledger = utils::make_dist_ledger().await;
 
-    let repeat = REPEAT_NUM;
+    let repeat = 2;
 
     for i in 0..repeat as u64 {
         let block = BlockCandidate {
@@ -168,7 +167,7 @@ async fn test_write_block_and_check_merkle_rt_changed() {
 
     let dist_ledger = utils::make_dist_ledger().await;
 
-    let repeat = REPEAT_NUM;
+    let repeat = 2;
 
     for i in 0..repeat as u64 {
         let bc = BlockCandidate {
@@ -201,7 +200,7 @@ async fn test_sequential_sync_block_if_block_is_correct() {
 
     let dist_ledger = utils::make_dist_ledger().await;
 
-    let repeat = REPEAT_NUM;
+    let repeat = 2;
 
     for i in 1..repeat as u64 {
         // let txs = utils::make_dummy_txs();
