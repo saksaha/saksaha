@@ -57,47 +57,6 @@ async fn test_write_a_new_block_after_genesis() {
         .expect("Block_1 must be written");
 }
 
-/* deprecated => This TC should be included in validator contract */
-
-// #[tokio::test(flavor = "multi_thread")]
-// async fn test_deploy_ctr_and_invoke_query_when_dist_ledger_writes_new_blocks() {
-//     sak_test_utils::init_test_log();
-
-//     TestUtil::init_test(vec!["test"]);
-
-//     let dist_ledger = utils::make_dist_ledger().await;
-
-//     dist_ledger.run().await;
-
-//     // validator_wasm,
-//     // VALIDATOR_CTR_ADDR.to_string(),
-
-//     let block = BlockCandidate {
-//         validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
-//         tx_candidates: vec![sak_types::mock_mint_tc_deploying_contract(
-//             sak_types::VALIDATOR.to_vec(),
-//             sak_types::VALIDATOR_CTR_ADDR.to_string(),
-//         )],
-//         witness_sigs: vec![String::from("1"), String::from("2")],
-//         created_at: String::from("2022061515340000"),
-//     };
-
-//     println!("\n[+] Block1: Deploying test validator contract");
-//     dist_ledger
-//         .apis
-//         .write_block(Some(sak_types::mock_block_2()))
-//         .await
-//         .expect("Block_1 must be written");
-
-//     println!("\n[+] Block2: Query::get_validator");
-//     // utils::make_dummy_block_candidate_with_query_tx();
-//     dist_ledger
-//         .apis
-//         .write_block(Some(sak_types::mock_block_2()))
-//         .await
-//         .expect("Block_2 must be written");
-// }
-
 #[tokio::test(flavor = "multi_thread")]
 async fn test_sequential_write_block() {
     sak_test_utils::init_test_log();
