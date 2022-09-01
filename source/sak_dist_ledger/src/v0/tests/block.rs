@@ -1,5 +1,6 @@
 use super::{test_util::TestUtil, utils};
 use sak_types::{Block, BlockCandidate};
+pub const REPEAT_NUM: u128 = 2;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_insert_genesis_block_and_check_wrong_block_hash() {
@@ -64,9 +65,7 @@ async fn test_sequential_write_block() {
 
     let dist_ledger = utils::make_dist_ledger().await;
 
-    let repeat = 2;
-
-    for i in 0..repeat as u64 {
+    for i in 0..REPEAT_NUM as u64 {
         let block = BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
             tx_candidates: vec![sak_types::mock_pour_tc_random()],
@@ -88,9 +87,7 @@ async fn test_sequential_write_block_and_get_tx_height() {
 
     let dist_ledger = utils::make_dist_ledger().await;
 
-    let repeat = 2;
-
-    for i in 0..repeat as u64 {
+    for i in 0..REPEAT_NUM as u64 {
         let block = BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
             tx_candidates: vec![
@@ -126,9 +123,7 @@ async fn test_write_block_and_check_merkle_rt_changed() {
 
     let dist_ledger = utils::make_dist_ledger().await;
 
-    let repeat = 2;
-
-    for i in 0..repeat as u64 {
+    for i in 0..REPEAT_NUM as u64 {
         let bc = BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
             tx_candidates: vec![sak_types::mock_pour_tc_random()],
@@ -159,9 +154,7 @@ async fn test_sequential_sync_block_if_block_is_correct() {
 
     let dist_ledger = utils::make_dist_ledger().await;
 
-    let repeat = 2;
-
-    for i in 1..repeat as u64 {
+    for i in 1..REPEAT_NUM as u64 {
         // let txs = utils::make_dummy_txs();
         let txs = vec![sak_types::mock_pour_tc_random().upgrade(1)];
 
@@ -193,5 +186,5 @@ async fn test_sequential_sync_block_if_block_is_correct() {
     let latest_block_height =
         dist_ledger.apis.get_latest_block_height().unwrap().unwrap();
 
-    assert_eq!(latest_block_height, repeat - 1);
+    assert_eq!(latest_block_height, REPEAT_NUM - 1);
 }
