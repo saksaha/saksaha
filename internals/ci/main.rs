@@ -6,7 +6,8 @@ mod utils;
 use crate::{
     paths::Paths,
     scripts::{
-        build, build_contracts, clean, dev, dev_evl_term, dev_wallet, test,
+        build, build_circuit_params, build_contracts, clean, dev, dev_evl_term,
+        dev_wallet, test,
     },
 };
 
@@ -96,6 +97,9 @@ fn run_script() -> Result<(), CIError> {
         }
         "build_contracts" => {
             build_contracts::run(args)?;
+        }
+        "build_circuit_params" => {
+            build_circuit_params::run(args)?;
         }
         _ => {
             return Err(format!(

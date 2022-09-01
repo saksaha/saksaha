@@ -1,18 +1,18 @@
-mod mock;
+// mod mock;
 
 use super::TxCandidate;
 use crate::{MintTxCandidate, PourTxCandidate, Tx, WASM_MAGIC_NUMBER};
-pub use mock::*;
+// pub use mock::*;
 use sak_crypto::Hasher;
 use sak_crypto::Scalar;
 use sak_crypto::ScalarExt;
 use type_extension::U8Arr32;
 use type_extension::U8Array;
 
-pub(crate) const VALIDATOR_CTR_ADDR: &'static str = "test_validator_1";
+// pub(crate) const VALIDATOR_CTR_ADDR: &'static str = "test_validator_1";
 
-pub(crate) const VALIDATOR: &[u8] =
-    include_bytes!("../../../../../prebuild/sak_validator.postprocess.wasm");
+// pub(crate) const VALIDATOR: &[u8] =
+//     include_bytes!("../../../../../prebuild/sak_validator.postprocess.wasm");
 
 fn get_addr_sk_1() -> U8Arr32 {
     [
@@ -62,228 +62,240 @@ fn get_rho_4() -> [u8; 32] {
     U8Array::new_empty_32()
 }
 
-impl Tx {
-    pub fn new_dummy_pour_m1_to_p3_p4() -> Tx {
-        let c = mock_pour_tc_m1_to_p3_p4();
-        c.upgrade(0)
-    }
+// impl Tx {
+//     pub fn new_dummy_pour_m1_to_p3_p4() -> Tx {
+//         let c = mock_pour_tc_m1_to_p3_p4();
+//         c.upgrade(0)
+//     }
 
-    pub fn new_dummy_pour_2() -> Tx {
-        let c = mock_pour_tc_2();
+//     pub fn new_dummy_pour_2() -> Tx {
+//         let c = mock_pour_tc_2();
 
-        c.upgrade(1)
-    }
+//         c.upgrade(1)
+//     }
 
-    pub fn new_dummy_pour_3() -> Tx {
-        let c = mock_pour_tc_3();
+//     pub fn new_dummy_pour_3() -> Tx {
+//         let c = mock_pour_tc_3();
 
-        c.upgrade(2)
-    }
+//         c.upgrade(2)
+//     }
 
-    pub fn new_dummy_pour_4() -> Tx {
-        let c = mock_pour_tc_4();
+//     pub fn new_dummy_pour_4() -> Tx {
+//         let c = mock_pour_tc_4();
 
-        c.upgrade(3)
-    }
+//         c.upgrade(3)
+//     }
 
-    pub fn new_dummy_valid_pour(
-        pi: Vec<u8>,
-        sn_1: [u8; 32],
-        cm_1: [u8; 32],
-        cm_2: [u8; 32],
-        merkle_rt: [u8; 32],
-    ) -> Tx {
-        let c = new_dummy_valid_pour(pi, sn_1, cm_1, cm_2, merkle_rt);
+//     pub fn new_dummy_valid_pour(
+//         pi: Vec<u8>,
+//         sn_1: [u8; 32],
+//         cm_1: [u8; 32],
+//         cm_2: [u8; 32],
+//         merkle_rt: [u8; 32],
+//     ) -> Tx {
+//         let c = new_dummy_valid_pour(pi, sn_1, cm_1, cm_2, merkle_rt);
 
-        c.upgrade(0)
-    }
-}
+//         c.upgrade(0)
+//     }
 
-impl MintTxCandidate {
-    pub fn new_dummy_custom(
-        cm: [u8; 32],
-        v: [u8; 32],
-        k: [u8; 32],
-        s: [u8; 32],
-    ) -> MintTxCandidate {
-        let validator_wasm = VALIDATOR.to_vec();
+//     pub fn new_dummy_valid_pour_candidate(
+//         pi: Vec<u8>,
+//         sn_1: [u8; 32],
+//         cm_1: [u8; 32],
+//         cm_2: [u8; 32],
+//         merkle_rt: [u8; 32],
+//     ) -> TxCandidate {
+//         let c = new_dummy_valid_pour(pi, sn_1, cm_1, cm_2, merkle_rt);
 
-        MintTxCandidate::new(
-            String::from("created_at_mint_custom_1"),
-            validator_wasm,
-            String::from("author_sig_mint_custom_1"),
-            Some(VALIDATOR_CTR_ADDR.to_string()),
-            cm,
-            v,
-            k,
-            s,
-        )
-    }
+//         c
+//     }
+// }
 
-    pub fn new_dummy_1() -> MintTxCandidate {
-        let validator_wasm = VALIDATOR.to_vec();
+// impl MintTxCandidate {
+//     pub fn new_dummy_custom(
+//         cm: [u8; 32],
+//         v: [u8; 32],
+//         k: [u8; 32],
+//         s: [u8; 32],
+//     ) -> MintTxCandidate {
+//         let validator_wasm = VALIDATOR.to_vec();
 
-        let hasher = Hasher::new();
+//         MintTxCandidate::new(
+//             String::from("created_at_mint_custom_1"),
+//             validator_wasm,
+//             String::from("author_sig_mint_custom_1"),
+//             Some(VALIDATOR_CTR_ADDR.to_string()),
+//             cm,
+//             v,
+//             k,
+//             s,
+//         )
+//     }
 
-        let v = U8Array::from_int(1000);
+//     pub fn new_dummy_1() -> MintTxCandidate {
+//         let validator_wasm = VALIDATOR.to_vec();
 
-        let s = get_s_1();
+//         let hasher = Hasher::new();
 
-        let r = get_r_1();
+//         let v = U8Array::from_int(1000);
 
-        let rho = get_rho_1();
+//         let s = get_s_1();
 
-        let addr_sk = get_addr_sk_1();
+//         let r = get_r_1();
 
-        let addr_pk = hasher.mimc_single(&addr_sk).unwrap();
+//         let rho = get_rho_1();
 
-        let k = hasher.comm2(&r, &addr_pk.to_bytes(), &rho).unwrap();
+//         let addr_sk = get_addr_sk_1();
 
-        let cm = hasher.comm2(&s, &v, &k.to_bytes()).unwrap();
+//         let addr_pk = hasher.mimc_single(&addr_sk).unwrap();
 
-        MintTxCandidate::new(
-            String::from("created_at_mint_1"),
-            validator_wasm,
-            String::from("author_sig_mint_1"),
-            Some(VALIDATOR_CTR_ADDR.to_string()),
-            cm.to_bytes(),
-            v,
-            k.to_bytes(),
-            s,
-        )
-    }
+//         let k = hasher.comm2(&r, &addr_pk.to_bytes(), &rho).unwrap();
 
-    pub fn new_dummy_2() -> MintTxCandidate {
-        let hasher = Hasher::new();
+//         let cm = hasher.comm2(&s, &v, &k.to_bytes()).unwrap();
 
-        let v = U8Array::from_int(1000);
+//         MintTxCandidate::new(
+//             String::from("created_at_mint_1"),
+//             validator_wasm,
+//             String::from("author_sig_mint_1"),
+//             Some(VALIDATOR_CTR_ADDR.to_string()),
+//             cm.to_bytes(),
+//             v,
+//             k.to_bytes(),
+//             s,
+//         )
+//     }
 
-        let s = U8Array::new_empty_32();
+//     pub fn new_dummy_2() -> MintTxCandidate {
+//         let hasher = Hasher::new();
 
-        let r = U8Array::new_empty_32();
+//         let v = U8Array::from_int(1000);
 
-        let rho = U8Array::new_empty_32();
+//         let s = U8Array::new_empty_32();
 
-        let a_pk = U8Array::new_empty_32();
+//         let r = U8Array::new_empty_32();
 
-        let k = hasher.comm2(&r, &a_pk, &rho).unwrap();
+//         let rho = U8Array::new_empty_32();
 
-        let cm = hasher.comm2(&s, &v, &k.to_bytes()).unwrap();
+//         let a_pk = U8Array::new_empty_32();
 
-        MintTxCandidate::new(
-            String::from("created_at_mint_2"),
-            vec![2],
-            String::from("author_sig_mint_2"),
-            None,
-            cm.to_bytes(),
-            v,
-            k.to_bytes(),
-            s,
-        )
-    }
+//         let k = hasher.comm2(&r, &a_pk, &rho).unwrap();
 
-    pub fn new_dummy_3() -> MintTxCandidate {
-        let hasher = Hasher::new();
+//         let cm = hasher.comm2(&s, &v, &k.to_bytes()).unwrap();
 
-        let rho = U8Array::from_int(0x11);
+//         MintTxCandidate::new(
+//             String::from("created_at_mint_2"),
+//             vec![2],
+//             String::from("author_sig_mint_2"),
+//             None,
+//             cm.to_bytes(),
+//             v,
+//             k.to_bytes(),
+//             s,
+//         )
+//     }
 
-        let r = U8Array::from_int(0x12);
+//     pub fn new_dummy_3() -> MintTxCandidate {
+//         let hasher = Hasher::new();
 
-        let s = U8Array::from_int(0x13);
+//         let rho = U8Array::from_int(0x11);
 
-        let v = U8Array::from_int(100);
+//         let r = U8Array::from_int(0x12);
 
-        let a_sk = U8Array::from_int(0x14);
+//         let s = U8Array::from_int(0x13);
 
-        let a_pk = hasher
-            .mimc_single_scalar(ScalarExt::parse_arr(&a_sk).unwrap())
-            .unwrap();
+//         let v = U8Array::from_int(100);
 
-        let k = hasher.comm2(&r, &a_pk.to_bytes(), &rho).unwrap();
+//         let a_sk = U8Array::from_int(0x14);
 
-        let cm = hasher.comm2(&s, &v, &k.to_bytes()).unwrap();
+//         let a_pk = hasher
+//             .mimc_single_scalar(ScalarExt::parse_arr(&a_sk).unwrap())
+//             .unwrap();
 
-        MintTxCandidate::new(
-            String::from("created_at_mint_3"),
-            vec![3],
-            String::from("author_sig_mint_3"),
-            None,
-            cm.to_bytes(),
-            v,
-            k.to_bytes(),
-            s,
-        )
-    }
+//         let k = hasher.comm2(&r, &a_pk.to_bytes(), &rho).unwrap();
 
-    pub fn new_dummy_4() -> MintTxCandidate {
-        let hasher = Hasher::new();
+//         let cm = hasher.comm2(&s, &v, &k.to_bytes()).unwrap();
 
-        let rho = U8Array::from_int(0x21);
+//         MintTxCandidate::new(
+//             String::from("created_at_mint_3"),
+//             vec![3],
+//             String::from("author_sig_mint_3"),
+//             None,
+//             cm.to_bytes(),
+//             v,
+//             k.to_bytes(),
+//             s,
+//         )
+//     }
 
-        let r = U8Array::from_int(0x22);
+//     pub fn new_dummy_4() -> MintTxCandidate {
+//         let hasher = Hasher::new();
 
-        let s = U8Array::from_int(0x23);
+//         let rho = U8Array::from_int(0x21);
 
-        let v = U8Array::from_int(100);
+//         let r = U8Array::from_int(0x22);
 
-        let a_sk = U8Array::from_int(0x24);
+//         let s = U8Array::from_int(0x23);
 
-        let a_pk = hasher
-            .mimc_single_scalar(ScalarExt::parse_arr(&a_sk).unwrap())
-            .unwrap();
+//         let v = U8Array::from_int(100);
 
-        let k = hasher.comm2(&r, &a_pk.to_bytes(), &rho).unwrap();
+//         let a_sk = U8Array::from_int(0x24);
 
-        let cm = hasher.comm2(&s, &v, &k.to_bytes()).unwrap();
+//         let a_pk = hasher
+//             .mimc_single_scalar(ScalarExt::parse_arr(&a_sk).unwrap())
+//             .unwrap();
 
-        MintTxCandidate::new(
-            String::from("created_at_mint_4"),
-            vec![4],
-            String::from("author_sig_mint_4"),
-            None,
-            cm.to_bytes(),
-            v,
-            k.to_bytes(),
-            s,
-        )
-    }
+//         let k = hasher.comm2(&r, &a_pk.to_bytes(), &rho).unwrap();
 
-    pub fn new_dummy_deploying_contract(
-        contract_data: Vec<u8>,
-        ctrt_addr: String,
-    ) -> MintTxCandidate {
-        let hasher = Hasher::new();
+//         let cm = hasher.comm2(&s, &v, &k.to_bytes()).unwrap();
 
-        let rho = U8Array::new_empty_32();
+//         MintTxCandidate::new(
+//             String::from("created_at_mint_4"),
+//             vec![4],
+//             String::from("author_sig_mint_4"),
+//             None,
+//             cm.to_bytes(),
+//             v,
+//             k.to_bytes(),
+//             s,
+//         )
+//     }
 
-        let r = U8Array::new_empty_32();
+//     pub fn new_dummy_deploying_contract(
+//         contract_data: Vec<u8>,
+//         ctrt_addr: String,
+//     ) -> MintTxCandidate {
+//         let hasher = Hasher::new();
 
-        let s = U8Array::new_empty_32();
+//         let rho = U8Array::new_empty_32();
 
-        let v = U8Array::new_empty_32();
+//         let r = U8Array::new_empty_32();
 
-        let a_sk = U8Array::new_empty_32();
+//         let s = U8Array::new_empty_32();
 
-        let a_pk = hasher
-            .mimc_single_scalar(ScalarExt::parse_arr(&a_sk).unwrap())
-            .unwrap();
+//         let v = U8Array::new_empty_32();
 
-        let k = hasher.comm2(&r, &a_pk.to_bytes(), &rho).unwrap();
+//         let a_sk = U8Array::new_empty_32();
 
-        let cm = hasher.comm2(&s, &v, &k.to_bytes()).unwrap();
+//         let a_pk = hasher
+//             .mimc_single_scalar(ScalarExt::parse_arr(&a_sk).unwrap())
+//             .unwrap();
 
-        MintTxCandidate::new(
-            String::from("created_at_mint_3"),
-            contract_data,
-            String::from("author_sig_mint_3"),
-            Some(ctrt_addr),
-            cm.to_bytes(),
-            v,
-            k.to_bytes(),
-            s,
-        )
-    }
-}
+//         let k = hasher.comm2(&r, &a_pk.to_bytes(), &rho).unwrap();
+
+//         let cm = hasher.comm2(&s, &v, &k.to_bytes()).unwrap();
+
+//         MintTxCandidate::new(
+//             String::from("created_at_mint_3"),
+//             contract_data,
+//             String::from("author_sig_mint_3"),
+//             Some(ctrt_addr),
+//             cm.to_bytes(),
+//             v,
+//             k.to_bytes(),
+//             s,
+//         )
+//     }
+// }
 
 impl PourTxCandidate {
     pub fn new_dummy_m1_to_p3_p4() -> PourTxCandidate {
@@ -362,8 +374,7 @@ impl PourTxCandidate {
             Some(String::from("ctr_addr_1")),
             vec![11, 11, 11],
             U8Array::new_empty_32(),
-            U8Array::new_empty_32(),
-            U8Array::new_empty_32(),
+            vec![U8Array::new_empty_32()],
             U8Array::new_empty_32(),
         )
     }
@@ -376,8 +387,7 @@ impl PourTxCandidate {
             Some(String::from("ctr_addr_2")),
             vec![22, 22, 22],
             U8Array::new_empty_32(),
-            U8Array::new_empty_32(),
-            U8Array::new_empty_32(),
+            vec![U8Array::new_empty_32()],
             U8Array::new_empty_32(),
         )
     }
@@ -390,8 +400,7 @@ impl PourTxCandidate {
             Some(String::from("ctr_addr_3")),
             vec![22, 22, 22],
             U8Array::new_empty_32(),
-            U8Array::new_empty_32(),
-            U8Array::new_empty_32(),
+            vec![U8Array::new_empty_32()],
             U8Array::new_empty_32(),
         )
     }
@@ -404,8 +413,7 @@ impl PourTxCandidate {
             Some(String::from("ctr_addr_4")),
             vec![44, 44, 44],
             U8Array::new_empty_32(),
-            U8Array::new_empty_32(),
-            U8Array::new_empty_32(),
+            vec![U8Array::new_empty_32()],
             U8Array::new_empty_32(),
         )
     }
@@ -418,18 +426,39 @@ impl PourTxCandidate {
             Some(String::from("ctr_addr_4")),
             vec![44, 44, 44],
             U8Array::new_empty_32(),
-            cm,
-            U8Array::new_empty_32(),
+            vec![cm],
             U8Array::new_empty_32(),
         )
     }
 
-    pub fn new_dummy_valid(
+    pub fn mock_tx(
         pi: Vec<u8>,
-        sn_1: [u8; 32],
-        cm_1: [u8; 32],
-        cm_2: [u8; 32],
-        merkle_rt: [u8; 32],
+        sn_1: U8Arr32,
+        cms: Vec<U8Arr32>,
+        merkle_rt: U8Arr32,
+    ) -> Tx {
+        let c = PourTxCandidate::mock_tx_candidate(pi, sn_1, cms, merkle_rt);
+
+        c.upgrade(0)
+    }
+
+    pub fn mock_tx_candidate(
+        pi: Vec<u8>,
+        sn_1: U8Arr32,
+        cms: Vec<U8Arr32>,
+        merkle_rt: U8Arr32,
+    ) -> TxCandidate {
+        let tx_candidate =
+            PourTxCandidate::mock_pour_tx_candidate(pi, sn_1, cms, merkle_rt);
+
+        TxCandidate::Pour(tx_candidate)
+    }
+
+    pub fn mock_pour_tx_candidate(
+        pi: Vec<u8>,
+        sn_1: U8Arr32,
+        cms: Vec<U8Arr32>,
+        merkle_rt: U8Arr32,
     ) -> PourTxCandidate {
         PourTxCandidate::new(
             String::from("created_at_test"),
@@ -438,69 +467,68 @@ impl PourTxCandidate {
             Some(String::from("ctr_addr_test")),
             pi,
             sn_1,
-            cm_1,
-            cm_2,
+            cms,
             merkle_rt,
         )
     }
 
-    pub fn new_dummy_validator_ctrt() -> PourTxCandidate {
-        PourTxCandidate::new(
-            String::from("created_at_4"),
-            vec![44, 44, 44],
-            String::from("author_sig_4"),
-            Some(String::from("ctr_addr_4")),
-            vec![44, 44, 44],
-            U8Array::new_empty_32(),
-            U8Array::new_empty_32(),
-            U8Array::new_empty_32(),
-            U8Array::new_empty_32(),
-        )
-    }
+    // pub fn new_dummy_validator_ctrt() -> PourTxCandidate {
+    //     PourTxCandidate::new(
+    //         String::from("created_at_4"),
+    //         vec![44, 44, 44],
+    //         String::from("author_sig_4"),
+    //         Some(String::from("ctr_addr_4")),
+    //         vec![44, 44, 44],
+    //         U8Array::new_empty_32(),
+    //         U8Array::new_empty_32(),
+    //         U8Array::new_empty_32(),
+    //         U8Array::new_empty_32(),
+    //     )
+    // }
 }
 
-pub struct Coin {
-    pub addr_sk: [u8; 32],
-    pub addr_pk: [u8; 32],
-    pub rho: [u8; 32],
-    pub r: [u8; 32],
-    pub s: [u8; 32],
-    pub v: [u8; 32],
-    pub k: [u8; 32],
-    pub cm: [u8; 32],
-}
+// pub struct Coin {
+//     pub addr_sk: [u8; 32],
+//     pub addr_pk: [u8; 32],
+//     pub rho: [u8; 32],
+//     pub r: [u8; 32],
+//     pub s: [u8; 32],
+//     pub v: [u8; 32],
+//     pub k: [u8; 32],
+//     pub cm: [u8; 32],
+// }
 
-impl Coin {
-    pub fn generate_a_dummy_coin(value: u64) -> Coin {
-        let hasher = Hasher::new();
+// impl Coin {
+//     pub fn generate_a_dummy_coin(value: u64) -> Coin {
+//         let hasher = Hasher::new();
 
-        let addr_sk = U8Array::from_int(sak_crypto::rand() as u64).to_owned();
-        let addr_pk = hasher.mimc_single(&addr_sk).unwrap();
-        let rho = U8Array::from_int(sak_crypto::rand() as u64);
-        let r = U8Array::from_int(sak_crypto::rand() as u64);
-        let s = U8Array::from_int(sak_crypto::rand() as u64);
-        let v = U8Array::from_int(value);
+//         let addr_sk = U8Array::from_int(sak_crypto::rand() as u64).to_owned();
+//         let addr_pk = hasher.mimc_single(&addr_sk).unwrap();
+//         let rho = U8Array::from_int(sak_crypto::rand() as u64);
+//         let r = U8Array::from_int(sak_crypto::rand() as u64);
+//         let s = U8Array::from_int(sak_crypto::rand() as u64);
+//         let v = U8Array::from_int(value);
 
-        let k = hasher.comm2_scalar(
-            ScalarExt::parse_arr(&r).unwrap(),
-            addr_pk,
-            ScalarExt::parse_arr(&rho).unwrap(),
-        );
-        let cm = hasher.comm2_scalar(
-            ScalarExt::parse_arr(&s).unwrap(),
-            ScalarExt::parse_arr(&v).unwrap(),
-            k,
-        );
+//         let k = hasher.comm2_scalar(
+//             ScalarExt::parse_arr(&r).unwrap(),
+//             addr_pk,
+//             ScalarExt::parse_arr(&rho).unwrap(),
+//         );
+//         let cm = hasher.comm2_scalar(
+//             ScalarExt::parse_arr(&s).unwrap(),
+//             ScalarExt::parse_arr(&v).unwrap(),
+//             k,
+//         );
 
-        Coin {
-            addr_sk,
-            addr_pk: addr_pk.to_bytes(),
-            rho,
-            r,
-            s,
-            v,
-            k: k.to_bytes(),
-            cm: cm.to_bytes(),
-        }
-    }
-}
+//         Coin {
+//             addr_sk,
+//             addr_pk: addr_pk.to_bytes(),
+//             rho,
+//             r,
+//             s,
+//             v,
+//             k: k.to_bytes(),
+//             cm: cm.to_bytes(),
+//         }
+//     }
+// }

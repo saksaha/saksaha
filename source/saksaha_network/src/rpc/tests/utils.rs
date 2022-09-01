@@ -127,8 +127,9 @@ pub fn make_dummy_tx_pour_block() -> BlockCandidate {
     let tx_pour_block = BlockCandidate {
         validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
         tx_candidates: vec![
-            sak_types::mock_pour_tc_m1_to_p3_p4(),
-            sak_types::mock_pour_tc_2(),
+            // sak_types::mock_pour_tc_m1_to_p3_p4(),
+            sak_types::mock_pour_tc_random(),
+            sak_types::mock_pour_tc_random(),
         ],
         witness_sigs: vec![String::from("1"), String::from("2")],
         created_at: String::from("2022061515340000"),
@@ -181,13 +182,4 @@ pub(crate) async fn make_blockchain() -> Blockchain {
     .expect("Blockchain should be made");
 
     blockchain
-}
-
-pub(crate) fn make_dummy_txs() -> Vec<Tx> {
-    vec![
-        Tx::new_dummy_pour_m1_to_p3_p4(),
-        Tx::new_dummy_pour_2(),
-        Tx::new_dummy_pour_3(),
-        Tx::new_dummy_pour_4(),
-    ]
 }

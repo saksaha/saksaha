@@ -1,9 +1,8 @@
-use crate::{
-    CoinProofCircuit1to2, MerkleTree, NewCoin, OldCoin, ProofError,
-    CM_TREE_DEPTH,
-};
-use sak_crypto::{
-    groth16, Bls12, Hasher, OsRng, Parameters, Proof, Scalar, ScalarExt,
+use crate::{ProofError, CM_TREE_DEPTH};
+use bellman::groth16::{self, Parameters, Proof};
+use sak_crypto::{Bls12, OsRng, Scalar, ScalarExt};
+use sak_zkp_circuits::{
+    CoinProofCircuit1to2, Hasher, MerkleTree, NewCoin, OldCoin,
 };
 use std::collections::HashMap;
 use std::fs::File;
@@ -254,7 +253,11 @@ pub fn make_test_context() -> TestContext {
             }
 
             let key = format!("{}_{}", idx, p.idx);
-            let merkle_node = merkle_nodes.get(key.as_str()).unwrap();
+
+            let merkle_node = merkle_nodes.get(key.as_str()).expect(&format!(
+                "value doesn't exist in the merkle node, key: {}",
+                key
+            ));
 
             ret[idx] = (merkle_node.clone(), p.direction);
         });

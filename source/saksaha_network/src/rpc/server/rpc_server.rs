@@ -27,7 +27,6 @@ impl RPCServer {
             }
         };
 
-        println!("asdasd");
         let make_svc = service::make_service_fn(move |_conn| {
             let router = {
                 let routes = routes::get_routes();
@@ -41,7 +40,6 @@ impl RPCServer {
             let cors = Middleware::new(Box::new(cors));
 
             let route = {
-                println!("234234");
                 let router_clone = router.clone();
 
                 let m = Middleware::new(Box::new(move |req, res, ctx| {
@@ -83,7 +81,6 @@ impl RPCServer {
         });
 
         tokio::spawn(async move {
-            println!("123123");
             let server = Server::builder(addr_incoming).serve(make_svc);
 
             if let Err(err) = server.await {

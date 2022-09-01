@@ -6,8 +6,7 @@ use crate::LedgerError;
 use crate::Runtime;
 use crate::SyncPool;
 use log::info;
-use sak_crypto::Hasher;
-use sak_proofs::MerkleTree;
+use sak_proofs::{Hasher, MerkleTree};
 use sak_types::BlockCandidate;
 use sak_vm::VM;
 use std::sync::Arc;
@@ -21,7 +20,7 @@ pub struct DistLedger {
     pub apis: DistLedgerApis,
     // pub(crate) ledger_db: LedgerDB,
     // pub(crate) sync_pool: Arc<SyncPool>,
-    pub ledger_event_tx: Arc<RwLock<Sender<DistLedgerEvent>>>,
+    pub ledger_event_tx: Arc<Sender<DistLedgerEvent>>,
     // pub(crate) vm: VM,
     // pub(crate) consensus: Box<dyn Consensus + Send + Sync>,
     runtime: Arc<Runtime>,
@@ -53,16 +52,18 @@ impl DistLedger {
 
         let vm = VM::init()?;
 
-        let sync_pool = {
-            let p = SyncPool::new();
-
-            Arc::new(p)
-        };
-
         let ledger_event_tx = {
             let (tx, _rx) = broadcast::channel(BLOCKCHAIN_EVENT_QUEUE_CAPACITY);
 
-            Arc::new(RwLock::new(tx))
+            Arc::new(tx)
+        };
+
+        let sync_pool = {
+            let tx = ledger_event_tx.clone();
+
+            let p = SyncPool::new(tx);
+
+            Arc::new(p)
         };
 
         let runtime = {
@@ -104,7 +105,7 @@ impl DistLedger {
 
         info!(
             "Initialized Blockchain, latest height (none if genesis \
-                block has not be inserted): {:?}",
+                block has not been inserted): {:?}",
             latest_height,
         );
 

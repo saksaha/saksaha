@@ -1,10 +1,12 @@
 use crate::LedgerError;
 use crate::{cfs, LedgerDB};
-use sak_crypto::{Bls12, Hasher, Proof, ScalarExt};
+use sak_crypto::{Bls12, ScalarExt};
 use sak_kv_db::WriteBatch;
+use sak_proofs::CoinProof;
+use sak_proofs::{Hasher, Proof};
 use sak_types::{
-    Cm, CmIdx, MintTx, MintTxCandidate, PourTx, PourTxCandidate, Sn, Tx,
-    TxCtrOp, TxHash, TxHeight, TxType,
+    Cm, CmIdx, MintTx, MintTxCandidate, PourTx, PourTxCandidate, Tx, TxCtrOp,
+    TxHash, TxType,
 };
 
 impl LedgerDB {
@@ -54,7 +56,9 @@ impl LedgerDB {
 
         let ctr_addr = self.get_ctr_addr(tx_hash)?;
 
-        let cm_1 = self.get_cm_1(tx_hash)?.ok_or("cm should exist")?;
+        let cm_count = self.get_cm_count(tx_hash)?.ok_or("cms should exist")?;
+
+        let cms = self.get_cms(tx_hash)?.ok_or("cms should exist")?;
 
         let v = self.get_v(tx_hash)?.ok_or("v should exist")?;
 
@@ -62,23 +66,20 @@ impl LedgerDB {
 
         let s = self.get_s(tx_hash)?.ok_or("s shoudl exist")?;
 
-        // let tx_height = self
-        //     .get_tx_height(tx_hash)?
-        //     .ok_or("tx_height does not exist")?;
+        let mut cm_idxes = vec![];
+        for cm in &cms {
+            let cm_idx = self
+                .get_cm_idx_by_cm(cm)?
+                .ok_or("cm_idx_1 does not exist")?;
 
-        let cm_idx_1 = self
-            .get_cm_idx_by_cm(&cm_1)?
-            .ok_or("cm_idx_1 does not exist")?;
+            cm_idxes.push(cm_idx);
+        }
 
         let tx_candidate = MintTxCandidate::new(
-            created_at, data, author_sig, ctr_addr, cm_1, v, k, s,
+            created_at, data, author_sig, ctr_addr, cms, v, k, s,
         );
 
-        let tx = Tx::Mint(MintTx::new(
-            tx_candidate,
-            // tx_height,
-            cm_idx_1,
-        ));
+        let tx = Tx::Mint(MintTx::new(tx_candidate, cm_idxes));
 
         Ok(tx)
     }
@@ -105,39 +106,40 @@ impl LedgerDB {
 
         let sn_1 = self.get_sn_1(tx_hash)?.ok_or("sn_1 should exist")?;
 
-        // let sn_2 = self.get_cm_2(tx_hash)?.ok_or("sn_2 should exist")?;
+        // let cm_1 = self.get_cm_1(tx_hash)?.ok_or("cm_1 should exist")?;
 
-        let cm_1 = self.get_cm_1(tx_hash)?.ok_or("cm_1 should exist")?;
+        // let cm_2 = self.get_cm_2(tx_hash)?.ok_or("cm_2 should exist")?;
 
-        let cm_2 = self.get_cm_2(tx_hash)?.ok_or("cm_2 should exist")?;
+        let cm_count = self.get_cm_count(tx_hash)?.ok_or("cms should exist")?;
+
+        let cms = self.get_cms(tx_hash)?.ok_or("cms should exist")?;
 
         let merkle_rt = self
             .get_prf_merkle_rt(tx_hash)?
             .ok_or("merkle_root should exist")?;
 
+        let mut cm_idxes = vec![];
+        for cm in &cms {
+            let cm_idx = self
+                .get_cm_idx_by_cm(&cm)?
+                .ok_or("cm_idx_1 does not exist")?;
+
+            cm_idxes.push(cm_idx);
+        }
+
         let tx_candidate = PourTxCandidate::new(
-            created_at, data, author_sig, ctr_addr, pi, sn_1, cm_1, cm_2,
-            merkle_rt,
+            created_at, data, author_sig, ctr_addr, pi, sn_1, cms, merkle_rt,
         );
 
-        // let tx_height = self
-        //     .get_tx_height(tx_hash)?
-        //     .ok_or("tx_height does not exist")?;
+        // let cm_idx_1 = self
+        //     .get_cm_idx_by_cm(&cm_1)?
+        //     .ok_or("cm_idx_1 does not exist")?;
 
-        let cm_idx_1 = self
-            .get_cm_idx_by_cm(&cm_1)?
-            .ok_or("cm_idx_1 does not exist")?;
+        // let cm_idx_2 = self
+        //     .get_cm_idx_by_cm(&cm_2)?
+        //     .ok_or("cm_idx_2 does not exist")?;
 
-        let cm_idx_2 = self
-            .get_cm_idx_by_cm(&cm_2)?
-            .ok_or("cm_idx_2 does not exist")?;
-
-        let tx = Tx::Pour(PourTx::new(
-            tx_candidate,
-            // tx_height,
-            cm_idx_1,
-            cm_idx_2,
-        ));
+        let tx = Tx::Pour(PourTx::new(tx_candidate, cm_idxes));
 
         Ok(tx)
     }
@@ -182,12 +184,14 @@ impl LedgerDB {
 
         self.batch_put_tx_type(batch, tx_hash, tc.get_tx_type())?;
 
-        self.batch_put_cm_1(batch, tx_hash, &tc.cm_1)?;
+        self.batch_put_cms(batch, tx_hash, &tc.cms)?;
 
-        self.batch_put_cm_cm_idx(batch, &tc.cm_1, &tx.cm_idx_1)?;
-        self.batch_put_cm_idx_cm(batch, &tx.cm_idx_1, &tc.cm_1)?;
+        for (cm, cm_idx) in std::iter::zip(&tc.cms, &tx.cm_idxes) {
+            self.batch_put_cm_cm_idx(batch, cm, cm_idx)?;
+            self.batch_put_cm_idx_cm(batch, cm_idx, cm)?;
+        }
 
-        // self.batch_put_cm_idx_cm(batch, &tx.cm_idx_1, &tc.cm)?;
+        self.batch_put_cm_count(batch, tx_hash, &tc.cm_count);
 
         self.batch_put_tx_created_at(batch, tx_hash, &tc.created_at)?;
 
@@ -209,8 +213,6 @@ impl LedgerDB {
 
         let tx_ctr_op = tc.get_ctr_op();
 
-        // *cm_idx_count = *cm_idx_count + 1;
-
         match tx_ctr_op {
             TxCtrOp::ContractDeploy => {
                 self.batch_put_tx_hash_by_contract_addr(
@@ -226,58 +228,6 @@ impl LedgerDB {
         Ok(tx_hash.clone())
     }
 
-    pub(crate) fn check_double_spending(
-        &self,
-        sn: &[u8; 32],
-    ) -> Result<(), LedgerError> {
-        if let Some(t) = self.get_tx_hash_by_sn(&self.db, sn)? {
-            // return Err(format!(
-            //     "Detect double spend, `sn` has been spent before with tx_hash: {}",
-            //     t
-            // )
-            // .into());
-            log::error!("Double spending has been detected")
-        };
-
-        Ok(())
-    }
-
-    // TODO Temporary commenting out. This has to be executed as desired later
-    pub(crate) fn verify_tx(
-        &self,
-        tc: &PourTxCandidate,
-    ) -> Result<(), LedgerError> {
-        let hasher = Hasher::new();
-
-        let public_inputs = [
-            ScalarExt::parse_arr(&tc.merkle_rt)?,
-            ScalarExt::parse_arr(&tc.sn_1)?,
-            ScalarExt::parse_arr(&tc.cm_1)?,
-            ScalarExt::parse_arr(&tc.cm_2)?,
-        ];
-
-        let pi_des: Proof<Bls12> = match Proof::read(&*tc.pi) {
-            Ok(p) => p,
-            Err(err) => {
-                return Err(format!(
-                    "Cannot deserialize the pi, err: {:?}",
-                    err
-                )
-                .into());
-            }
-        };
-
-        // let verification_result =
-        //     sak_proofs::verify_proof_1_to_2(pi_des, &public_inputs, &hasher);
-
-        // if !verification_result {
-        //     // return Err(format!("Wrong proof").into());
-        //     log::error!("Failed to verify")
-        // };
-
-        Ok(())
-    }
-
     pub(crate) fn batch_put_pour_tx(
         &self,
         batch: &mut WriteBatch,
@@ -285,13 +235,6 @@ impl LedgerDB {
         // cm_idx_count: &mut u128,
     ) -> Result<TxHash, LedgerError> {
         let tc = &tx.tx_candidate;
-
-        {
-            // TODO This has to be done outside "db" layer
-            self.check_double_spending(&tc.sn_1)?;
-
-            self.verify_tx(&tc)?;
-        }
 
         let tx_hash = tc.get_tx_hash();
 
@@ -317,25 +260,31 @@ impl LedgerDB {
 
         // self.batch_put_sn_2(batch, tx_hash, &tc.sn_2)?;
 
-        self.batch_put_cm_1(batch, tx_hash, &tc.cm_1)?;
+        self.batch_put_cms(batch, tx_hash, &tc.cms)?;
+        // self.batch_put_cm_1(batch, tx_hash, &tc.cm_1)?;
 
-        self.batch_put_cm_2(batch, tx_hash, &tc.cm_2)?;
+        // self.batch_put_cm_2(batch, tx_hash, &tc.cm_2)?;
 
         // self.batch_put_cm_cm_idx(batch, &tc.cm_1, cm_idx_count)?;
 
         // self.batch_put_cm_cm_idx(batch, &tc.cm_2, &(*cm_idx_count + 1))?;
 
-        self.batch_put_cm_cm_idx(batch, &tc.cm_1, &tx.cm_idx_1)?;
-        self.batch_put_cm_idx_cm(batch, &tx.cm_idx_1, &tc.cm_1)?;
+        for (cm, cm_idx) in std::iter::zip(&tc.cms, &tx.cm_idxes) {
+            self.batch_put_cm_cm_idx(batch, cm, cm_idx)?;
+            self.batch_put_cm_idx_cm(batch, cm_idx, cm)?;
+        }
 
-        self.batch_put_cm_cm_idx(batch, &tc.cm_2, &tx.cm_idx_2)?;
-        self.batch_put_cm_idx_cm(batch, &tx.cm_idx_2, &tc.cm_2)?;
+        self.batch_put_cm_count(batch, tx_hash, &tc.cm_count)?;
+
+        // self.batch_put_cm_cm_idx(batch, &tc.cm_1, &tx.cm_idx_1)?;
+        // self.batch_put_cm_idx_cm(batch, &tx.cm_idx_1, &tc.cm_1)?;
+
+        // self.batch_put_cm_cm_idx(batch, &tc.cm_2, &tx.cm_idx_2)?;
+        // self.batch_put_cm_idx_cm(batch, &tx.cm_idx_2, &tc.cm_2)?;
 
         self.batch_put_prf_merkle_rt(batch, tx_hash, &tc.merkle_rt)?;
 
         let tx_ctr_op = tc.get_ctr_op();
-
-        // *cm_idx_count = *cm_idx_count + 2;
 
         match tx_ctr_op {
             TxCtrOp::ContractDeploy => {

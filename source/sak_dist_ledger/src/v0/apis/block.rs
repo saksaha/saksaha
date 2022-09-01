@@ -96,13 +96,20 @@ impl DistLedgerApis {
     pub async fn send_tx(
         &self,
         tx_candidate: TxCandidate,
-    ) -> Result<TxHash, String> {
-        let tx_hash = match tx_candidate {
+    ) -> Result<TxHash, LedgerError> {
+        let tx_hash = match tx_candidate.clone() {
             TxCandidate::Mint(_) => {
                 self.sync_pool.insert_tx(tx_candidate).await?
             }
-            TxCandidate::Pour(_) => {
-                self.sync_pool.insert_tx(tx_candidate).await?
+            TxCandidate::Pour(tc) => {
+                let is_valid_sn = self.verify_sn(&tc.sn_1);
+                let is_verified_tx = self.verify_proof(&tc)?;
+
+                if is_valid_sn & is_verified_tx {
+                    self.sync_pool.insert_tx(tx_candidate).await?
+                } else {
+                    return Err(format!("tc is not valid").into());
+                }
             }
         };
 
@@ -203,9 +210,9 @@ impl DistLedgerApis {
         Ok(block_list)
     }
 
-    pub async fn get_entire_block_info_list(
+    pub async fn get_all_blocks(
         &self,
-    ) -> Result<Vec<(u128, BlockHash)>, LedgerError> {
+    ) -> Result<Vec<(BlockHeight, BlockHash)>, LedgerError> {
         let latest_bh = match self.get_latest_block_height()? {
             Some(bh) => bh,
             None => {
@@ -213,14 +220,16 @@ impl DistLedgerApis {
             }
         };
 
-        let mut block_hash_list: Vec<(u128, BlockHash)> = Vec::new();
+        let mut block_hash_list: Vec<(BlockHeight, BlockHash)> = Vec::new();
 
-        for bh in (0..=latest_bh).rev().step_by(1) {
-            match self.get_block_by_height(&bh).await {
+        for block_height in (0..=latest_bh).rev().step_by(1) {
+            match self.get_block_by_height(&block_height).await {
                 Ok(maybe_block) => match maybe_block {
                     Some(block) => {
-                        block_hash_list
-                            .push((bh, block.get_block_hash().to_owned()));
+                        block_hash_list.push((
+                            block_height,
+                            block.get_block_hash().to_string(),
+                        ));
                     }
                     None => {
                         break;

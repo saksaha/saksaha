@@ -1,7 +1,9 @@
 use crate::{CtrStateUpdate, DistLedgerApis, LedgerError, MerkleUpdate};
 use colored::Colorize;
-use log::{debug, error, info, warn};
+use log::{debug, info, warn};
 use sak_contract_std::{CtrCallType, CtrRequest, Storage, ERROR_PLACEHOLDER};
+use sak_crypto::{Bls12, Scalar, ScalarExt};
+use sak_proofs::{CoinProof, Hasher, Proof, CM_TREE_DEPTH};
 use sak_types::{
     Block, BlockCandidate, CmIdx, MintTxCandidate, PourTxCandidate, Tx,
     TxCandidate, TxCtrOp,
@@ -12,7 +14,7 @@ impl DistLedgerApis {
     pub async fn insert_genesis_block(
         &self,
         genesis_block: BlockCandidate,
-    ) -> Result<String, String> {
+    ) -> Result<Option<String>, String> {
         let persisted_gen_block_hash = if let Some(b) =
             match self.get_block_by_height(&0).await {
                 Ok(b) => b,
@@ -25,34 +27,39 @@ impl DistLedgerApis {
                 block_hash.green(),
             );
 
-            block_hash
+            Some(block_hash)
         } else {
             info!("Genesis block not found, writing");
 
             let b = match self.write_block(Some(genesis_block)).await {
-                Ok(b) => b.ok_or(
-                    "genesis block should have been written as it \
-                        does not exist at the moment",
-                )?,
-                Err(err) => return Err(err.to_string()),
+                Ok(b) => b,
+                Err(err) => {
+                    return Err(format!(
+                        "Genesis block failed to write, err: {}",
+                        err.to_string()
+                    )
+                    .into());
+                }
             };
 
             b
         };
 
-        Ok(persisted_gen_block_hash.to_string())
+        Ok(persisted_gen_block_hash)
     }
 
     pub async fn write_block(
         &self,
         bc: Option<BlockCandidate>,
     ) -> Result<Option<String>, LedgerError> {
-        let bc = match bc {
+        let mut bc = match bc {
             Some(bc) => bc,
             None => match self.make_block_candidate().await? {
                 Some(bc) => bc,
                 None => {
-                    // debug!("No txs to write as a block, aborting");
+                    debug!(
+                        "No txs to write as a block, aborting write_block()",
+                    );
 
                     return Ok(None);
                 }
@@ -75,23 +82,8 @@ impl DistLedgerApis {
             }
         };
 
-        // let ledger_cm_count = match self.get_ledger_cm_count().await? {
-        //     Some(h) => h,
-        //     None => {
-        //         warn!(
-        //             "Total cm count does not exist. Possibly the first block"
-        //         );
+        let tcs = &bc.tx_candidates.clone();
 
-        //         0
-        //     }
-        // };
-
-        // let next_tx_height = match self.get_latest_tx_height().await? {
-        //     Some(th) => th + 1,
-        //     None => 0,
-        // };
-
-        let tcs = &bc.tx_candidates;
         let mut ctr_state_update = CtrStateUpdate::new();
         let mut merkle_update = MerkleUpdate::new();
 
@@ -100,12 +92,14 @@ impl DistLedgerApis {
             next_cm_idx: {}",
             tcs.len(),
             next_block_height,
-            // next_tx_height,
-            // ledger_cm_count,
             next_cm_idx,
         );
 
+        self.filter_tx_candidates(&mut bc, tcs)?;
+        let tcs = &bc.tx_candidates;
+
         let mut added_cm_count: u128 = 0;
+
         for tx_candidate in tcs {
             let cm_count = match tx_candidate {
                 TxCandidate::Mint(tc) => {
@@ -137,7 +131,9 @@ impl DistLedgerApis {
             warn!("Error removing txs into the tx pool, err: {}", err);
         }
 
-        let next_merkle_rt = match merkle_update.get("16_0") {
+        let next_merkle_rt = match merkle_update
+            .get(format!("{}_0", CM_TREE_DEPTH).as_str())
+        {
             Some(r) => r,
             None => return Err(format!("next merkle root is missing").into()),
         };
@@ -157,19 +153,9 @@ impl DistLedgerApis {
             .into());
         };
 
-        // let updated_ledger_cm_count = ledger_cm_count + added_cm_count;
-        // let updated_cm_count = ledger_cm_count + added_cm_count;
-
         let block_hash = self
             .ledger_db
-            .put_block(
-                &block,
-                &txs,
-                &ctr_state_update,
-                &merkle_update,
-                // ledger_cm_count,
-                // updated_ledger_cm_count,
-            )
+            .put_block(&block, &txs, &ctr_state_update, &merkle_update)
             .await?;
 
         if let Err(err) = self.sync_pool.insert_block(&block).await {
@@ -185,30 +171,141 @@ impl DistLedgerApis {
         Ok(Some(block_hash))
     }
 
-    pub async fn sync_block(
+    pub async fn write_blocks(
         &self,
-        block: Block,
-        txs: Vec<Tx>,
-    ) -> Result<Option<String>, LedgerError> {
-        let tx_candidates = txs.into_iter().map(|tx| tx.downgrade()).collect();
+        mut blocks: Vec<(Block, Vec<Tx>)>,
+        // txs: Vec<Tx>,
+    ) -> Result<Vec<String>, LedgerError> {
+        // let tx_candidates = txs.into_iter().map(|tx| tx.downgrade()).collect();
 
-        let bc_candidate = BlockCandidate {
-            validator_sig: block.validator_sig,
-            tx_candidates,
-            witness_sigs: block.witness_sigs,
-            created_at: block.created_at,
-        };
+        // let bc_candidate = BlockCandidate {
+        //     validator_sig: block.validator_sig,
+        //     tx_candidates,
+        //     witness_sigs: block.witness_sigs,
+        //     created_at: block.created_at,
+        // };
 
-        match self.write_block(Some(bc_candidate)).await {
-            Ok(res) => return Ok(res),
-            Err(err) => {
-                return Err(format!("Block sync failed, err: {}", err).into());
+        // match self.write_block(Some(bc_candidate)).await {
+        //     Ok(res) => return Ok(res),
+        //     Err(err) => {
+        //         return Err(format!("Block sync failed, err: {}", err).into());
+        //     }
+        // }
+
+        let mut block_hashes = vec![];
+
+        blocks.sort_by(|a, b| a.0.block_height.cmp(&b.0.block_height));
+
+        for (block, txs) in blocks {
+            let latest_block_height =
+                self.get_latest_block_height()?.unwrap_or(0);
+
+            if block.block_height != (latest_block_height + 1) {
+                warn!(
+                "received not continuous block height, block_height: {}, received : {}",
+                latest_block_height,
+                block.block_height
+            );
+
+                continue;
+            }
+
+            let tx_candidates =
+                txs.into_iter().map(|tx| tx.downgrade()).collect();
+
+            let bc_candidate = BlockCandidate {
+                validator_sig: block.validator_sig,
+                tx_candidates,
+                witness_sigs: block.witness_sigs,
+                created_at: block.created_at,
+            };
+
+            let block_hash = self.write_block(Some(bc_candidate)).await?;
+
+            if let Some(h) = block_hash {
+                block_hashes.push(h);
             }
         }
+
+        Ok(block_hashes)
     }
 
     pub fn delete_tx(&self, key: &String) -> Result<(), LedgerError> {
         self.ledger_db.delete_tx(key)
+    }
+
+    pub(crate) fn verify_sn(&self, sn: &[u8; 32]) -> bool {
+        match self.ledger_db.get_tx_hash_by_sn(sn) {
+            Ok(Some(_)) => return false,
+            Ok(None) => return true,
+            Err(_) => return false,
+        }
+    }
+
+    pub(crate) fn verify_proof(
+        &self,
+        tc: &PourTxCandidate,
+    ) -> Result<bool, LedgerError> {
+        let hasher = Hasher::new();
+
+        let mut public_inputs = vec![];
+
+        public_inputs.push(ScalarExt::parse_arr(&tc.merkle_rt)?);
+
+        public_inputs.push(ScalarExt::parse_arr(&tc.sn_1)?);
+
+        for cm in &tc.cms {
+            public_inputs.push(ScalarExt::parse_arr(cm)?);
+        }
+
+        let pi_des: Proof<Bls12> = match Proof::read(&*tc.pi) {
+            Ok(p) => p,
+            Err(err) => {
+                return Err(format!(
+                    "Cannot deserialize the pi, err: {:?}",
+                    err
+                )
+                .into());
+            }
+        };
+
+        let verification_result =
+            CoinProof::verify_proof_1_to_2(pi_des, &public_inputs, &hasher)?;
+
+        if !verification_result {
+            return Err(format!("Failed to verify proof").into());
+        };
+
+        Ok(verification_result)
+    }
+
+    pub(crate) fn filter_tx_candidates(
+        &self,
+        bc: &mut BlockCandidate,
+        tx_candidates: &Vec<TxCandidate>,
+    ) -> Result<(), LedgerError> {
+        let mut valid_tx_candidates: Vec<TxCandidate> = vec![];
+
+        for tx_candidate in tx_candidates {
+            match tx_candidate {
+                TxCandidate::Mint(_tc) => {
+                    valid_tx_candidates.push(tx_candidate.to_owned());
+                }
+                TxCandidate::Pour(tc) => {
+                    let is_valid_sn = self.verify_sn(&tc.sn_1);
+                    let is_verified_tx = self.verify_proof(tc)?;
+
+                    if is_valid_sn & is_verified_tx {
+                        valid_tx_candidates.push(tx_candidate.to_owned());
+                    } else {
+                        continue;
+                    }
+                }
+            };
+        }
+
+        bc.update_tx_candidates(valid_tx_candidates);
+        Ok(())
     }
 }
 
@@ -310,7 +407,8 @@ async fn handle_mint_tx_candidate(
     let cm_count = process_merkle_update(
         apis,
         merkle_update,
-        vec![&tc.cm_1],
+        &tc.cms,
+        // vec![&tc.cm_1],
         // ledger_cm_count,
         next_cm_idx,
     )
@@ -336,7 +434,8 @@ async fn handle_pour_tx_candidate(
     let cm_count = process_merkle_update(
         apis,
         merkle_update,
-        vec![&tc.cm_1, &tc.cm_2],
+        &tc.cms,
+        // vec![&tc.cm_1, &tc.cm_2],
         next_cm_idx,
         // ledger_cm_count,
     )
@@ -348,7 +447,7 @@ async fn handle_pour_tx_candidate(
 async fn process_merkle_update(
     apis: &DistLedgerApis,
     merkle_update: &mut MerkleUpdate,
-    cms: Vec<&[u8; 32]>,
+    cms: &Vec<[u8; 32]>,
     // ledger_cm_count: u128,
     next_cm_idx: CmIdx,
 ) -> Result<u128, LedgerError> {
@@ -361,7 +460,7 @@ async fn process_merkle_update(
 
         let leaf_loc = format!("{}_{}", 0, cm_idx);
 
-        merkle_update.insert(leaf_loc, **cm);
+        merkle_update.insert(leaf_loc, *cm);
 
         for (height, path) in auth_path.iter().enumerate() {
             let curr_idx = path.idx;

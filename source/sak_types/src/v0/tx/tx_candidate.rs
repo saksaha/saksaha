@@ -1,4 +1,6 @@
-use crate::{Cm, CmIdx, MintTxCandidate, PourTxCandidate, Tx, TxCtrOp};
+use crate::{
+    Cm, CmIdx, MintTxCandidate, PourTxCandidate, Tx, TxCtrOp, TypesError,
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Debug, PartialEq, Eq, Clone)]
@@ -12,6 +14,24 @@ impl TxCandidate {
         match self {
             TxCandidate::Mint(c) => c.upgrade(cm_idx),
             TxCandidate::Pour(c) => c.upgrade(cm_idx),
+        }
+    }
+
+    pub fn into_mint_tx_candidate(self) -> Result<MintTxCandidate, TypesError> {
+        match self {
+            TxCandidate::Mint(c) => Ok(c),
+            TxCandidate::Pour(_) => {
+                Err(format!("tx candidate is not pour candidate").into())
+            }
+        }
+    }
+
+    pub fn into_pour_tx_candidate(self) -> Result<PourTxCandidate, TypesError> {
+        match self {
+            TxCandidate::Pour(c) => Ok(c),
+            TxCandidate::Mint(_) => {
+                Err(format!("tx candidate is not mint candidate").into())
+            }
         }
     }
 
@@ -50,10 +70,24 @@ impl TxCandidate {
         }
     }
 
-    pub fn get_cms(&self) -> Vec<Cm> {
+    pub fn get_cms(&self) -> &Vec<Cm> {
         match &self {
             TxCandidate::Mint(c) => c.get_cms(),
             TxCandidate::Pour(c) => c.get_cms(),
+        }
+    }
+
+    pub fn get_created_at(&self) -> &String {
+        match &self {
+            TxCandidate::Mint(c) => &c.created_at,
+            TxCandidate::Pour(c) => &c.created_at,
+        }
+    }
+
+    pub fn get_author_sig(&self) -> &String {
+        match &self {
+            TxCandidate::Mint(c) => &c.author_sig,
+            TxCandidate::Pour(c) => &c.author_sig,
         }
     }
 }

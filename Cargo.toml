@@ -23,6 +23,7 @@ members = [
   "source/hyper_rpc_router",
   "source/sak_vm",
   "source/sak_test_utils",
+  "source/sak_zkp_circuits",
   "source/wasm_postprocess",
   "source/type_extension",
   "source/saksaha_rs",

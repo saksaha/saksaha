@@ -1,310 +1,276 @@
-use crate::{NewCoin, OldCoin, ProofError, CM_TREE_DEPTH};
-use sak_crypto::{
-    groth16, AllocatedBit, Bls12, Circuit, ConstraintSystem, Hasher, OsRng,
-    Parameters, Scalar, SynthesisError,
-};
-use std::fs::File;
-use std::io::Write;
+// use crate::{Hasher, NewCoin, OldCoin, ProofError, CM_TREE_DEPTH};
+// use bellman::gadgets::boolean::AllocatedBit;
+// use bellman::groth16::{self, Parameters};
+// use bellman::{Circuit, ConstraintSystem, SynthesisError};
+// use sak_crypto::{Bls12, OsRng, Scalar};
+// use std::fs::File;
+// use std::io::Write;
 
-const PARAM_FILE_NAME: &str = "mimc_params_1_to_2";
+// // const PARAM_FILE_NAME: &str = "mimc_params_1_to_2";
 
-pub struct CoinProofCircuit1to2 {
-    pub hasher: Hasher,
+// const CIRCUIT_PARAMS_1TO2: &[u8] =
+//     include_bytes!("../../../../../prebuild/circuit_params_1to2");
 
-    pub coin_1_old: OldCoin,
+// pub struct CoinProofCircuit1to2 {
+//     pub hasher: Hasher,
 
-    pub coin_1_new: NewCoin,
+//     pub coin_1_old: OldCoin,
 
-    pub coin_2_new: NewCoin,
+//     pub coin_1_new: NewCoin,
 
-    pub constants: Vec<Scalar>,
-}
+//     pub coin_2_new: NewCoin,
 
-pub(crate) fn get_mimc_params_1_to_2(
-    constants: &[Scalar],
-) -> Result<Parameters<Bls12>, ProofError> {
-    let param_path = std::path::Path::new(PARAM_FILE_NAME);
-    let is_file_exist = param_path.exists();
+//     pub constants: Vec<Scalar>,
+// }
 
-    let mut v = vec![];
+// pub(crate) fn get_mimc_params_1_to_2(
+//     constants: &[Scalar],
+// ) -> Result<Parameters<Bls12>, ProofError> {
+//     match Parameters::<Bls12>::read(&CIRCUIT_PARAMS_1TO2[..], false) {
+//         Ok(p) => Ok(p),
+//         Err(err) => {
+//             return Err(
+//                 format!("Error getting circuit params, err: {}", err).into()
+//             );
+//         }
+//     }
+// }
 
-    if is_file_exist {
-        // read
-        v = std::fs::read(PARAM_FILE_NAME).unwrap();
-    } else {
-        // generate and write
-        let hasher = Hasher::new();
+// impl Circuit<Scalar> for CoinProofCircuit1to2 {
+//     fn synthesize<CS: ConstraintSystem<Scalar>>(
+//         self,
+//         cs: &mut CS,
+//     ) -> Result<(), SynthesisError> {
+//         let rho_1_old = self.coin_1_old.rho.or(Some(Scalar::default()));
+//         let addr_pk_1_old = self.coin_1_old.addr_pk.or(Some(Scalar::default()));
+//         let addr_sk_1_old = self.coin_1_old.addr_sk.or(Some(Scalar::default()));
+//         let cm_1_old = self.coin_1_old.cm.or(Some(Scalar::default()));
+//         let r_1_old = self.coin_1_old.r.or(Some(Scalar::default()));
+//         let s_1_old = self.coin_1_old.s.or(Some(Scalar::default()));
+//         let v_1_old = self.coin_1_old.v.or(Some(Scalar::default()));
 
-        let coin_1_old = OldCoin::default();
-        let coin_1_new = NewCoin::default();
-        let coin_2_new = NewCoin::default();
+//         check_cm_commitments(
+//             cs,
+//             cm_1_old,
+//             addr_pk_1_old,
+//             rho_1_old,
+//             r_1_old,
+//             s_1_old,
+//             v_1_old,
+//             &self.hasher,
+//         );
 
-        let params = {
-            let c = CoinProofCircuit1to2 {
-                hasher,
-                coin_1_old,
-                coin_1_new,
-                coin_2_new,
-                constants: constants.to_vec(),
-            };
+//         let sn_1 = self.hasher.mimc_scalar_cs(cs, addr_sk_1_old, rho_1_old);
 
-            groth16::generate_random_parameters::<Bls12, _, _>(c, &mut OsRng)
-                .unwrap()
-        };
-        // write param to file
-        let mut file = File::create(PARAM_FILE_NAME)?;
+//         let merkle_rt = climb_up_tree(
+//             cs,
+//             cm_1_old,
+//             &self.coin_1_old.auth_path,
+//             &self.hasher,
+//         );
 
-        params.write(&mut v)?;
+//         let addr_pk_1_new = self.coin_1_new.addr_pk.or(Some(Scalar::default()));
+//         let rho_1_new = self.coin_1_new.rho.or(Some(Scalar::default()));
+//         let r_1_new = self.coin_1_new.r.or(Some(Scalar::default()));
+//         let s_1_new = self.coin_1_new.s.or(Some(Scalar::default()));
+//         let v_1_new = self.coin_1_new.v.or(Some(Scalar::default()));
 
-        // write origin buf
-        match file.write_all(&v) {
-            Ok(_) => {}
-            Err(err) => {
-                log::error!("Err: {:?}", err);
-            }
-        };
-    }
+//         let cm_1_new = {
+//             let k = self.hasher.comm2_scalar_cs(
+//                 cs,
+//                 r_1_new,
+//                 addr_pk_1_new,
+//                 rho_1_new,
+//             );
+//             self.hasher.comm2_scalar_cs(cs, s_1_new, v_1_new, k)
+//         };
 
-    let p = Parameters::<Bls12>::read(&v[..], false).unwrap();
+//         check_cm_commitments(
+//             cs,
+//             cm_1_new,
+//             addr_pk_1_new,
+//             rho_1_new,
+//             r_1_new,
+//             s_1_new,
+//             v_1_new,
+//             &self.hasher,
+//         );
 
-    Ok(p)
-}
+//         let addr_pk_2_new = self.coin_2_new.addr_pk.or(Some(Scalar::default()));
+//         let rho_2_new = self.coin_2_new.rho.or(Some(Scalar::default()));
+//         let r_2_new = self.coin_2_new.r.or(Some(Scalar::default()));
+//         let s_2_new = self.coin_2_new.s.or(Some(Scalar::default()));
+//         let v_2_new = self.coin_2_new.v.or(Some(Scalar::default()));
 
-impl Circuit<Scalar> for CoinProofCircuit1to2 {
-    fn synthesize<CS: ConstraintSystem<Scalar>>(
-        self,
-        cs: &mut CS,
-    ) -> Result<(), SynthesisError> {
-        let rho_1_old = self.coin_1_old.rho.or(Some(Scalar::default()));
-        let addr_pk_1_old = self.coin_1_old.addr_pk.or(Some(Scalar::default()));
-        let addr_sk_1_old = self.coin_1_old.addr_sk.or(Some(Scalar::default()));
-        let cm_1_old = self.coin_1_old.cm.or(Some(Scalar::default()));
-        let r_1_old = self.coin_1_old.r.or(Some(Scalar::default()));
-        let s_1_old = self.coin_1_old.s.or(Some(Scalar::default()));
-        let v_1_old = self.coin_1_old.v.or(Some(Scalar::default()));
+//         let cm_2_new = {
+//             let k = self.hasher.comm2_scalar_cs(
+//                 cs,
+//                 r_2_new,
+//                 addr_pk_2_new,
+//                 rho_2_new,
+//             );
+//             self.hasher.comm2_scalar_cs(cs, s_2_new, v_2_new, k)
+//         };
 
-        check_cm_commitments(
-            cs,
-            cm_1_old,
-            addr_pk_1_old,
-            rho_1_old,
-            r_1_old,
-            s_1_old,
-            v_1_old,
-            &self.hasher,
-        );
+//         check_cm_commitments(
+//             cs,
+//             cm_2_new,
+//             addr_pk_2_new,
+//             rho_2_new,
+//             r_2_new,
+//             s_2_new,
+//             v_2_new,
+//             &self.hasher,
+//         );
 
-        let sn_1 = self.hasher.mimc_scalar_cs(cs, addr_sk_1_old, rho_1_old);
+//         require_equal_val_summation(cs, v_1_old, v_1_new, v_2_new);
 
-        let merkle_rt = climb_up_tree(
-            cs,
-            cm_1_old,
-            &self.coin_1_old.auth_path,
-            &self.hasher,
-        );
+//         {
+//             cs.alloc_input(
+//                 || "merkle_rt",
+//                 || merkle_rt.ok_or(SynthesisError::AssignmentMissing),
+//             )?;
 
-        let addr_pk_1_new = self.coin_1_new.addr_pk.or(Some(Scalar::default()));
-        let rho_1_new = self.coin_1_new.rho.or(Some(Scalar::default()));
-        let r_1_new = self.coin_1_new.r.or(Some(Scalar::default()));
-        let s_1_new = self.coin_1_new.s.or(Some(Scalar::default()));
-        let v_1_new = self.coin_1_new.v.or(Some(Scalar::default()));
+//             cs.alloc_input(
+//                 || "sn_1_old",
+//                 || sn_1.ok_or(SynthesisError::AssignmentMissing),
+//             )?;
 
-        let cm_1_new = {
-            let k = self.hasher.comm2_scalar_cs(
-                cs,
-                r_1_new,
-                addr_pk_1_new,
-                rho_1_new,
-            );
-            self.hasher.comm2_scalar_cs(cs, s_1_new, v_1_new, k)
-        };
+//             cs.alloc_input(
+//                 || "cm_1_new",
+//                 || cm_1_new.ok_or(SynthesisError::AssignmentMissing),
+//             )?;
 
-        check_cm_commitments(
-            cs,
-            cm_1_new,
-            addr_pk_1_new,
-            rho_1_new,
-            r_1_new,
-            s_1_new,
-            v_1_new,
-            &self.hasher,
-        );
+//             cs.alloc_input(
+//                 || "cm_2_new",
+//                 || cm_2_new.ok_or(SynthesisError::AssignmentMissing),
+//             )?;
+//         }
 
-        let addr_pk_2_new = self.coin_2_new.addr_pk.or(Some(Scalar::default()));
-        let rho_2_new = self.coin_2_new.rho.or(Some(Scalar::default()));
-        let r_2_new = self.coin_2_new.r.or(Some(Scalar::default()));
-        let s_2_new = self.coin_2_new.s.or(Some(Scalar::default()));
-        let v_2_new = self.coin_2_new.v.or(Some(Scalar::default()));
+//         Ok(())
+//     }
+// }
 
-        let cm_2_new = {
-            let k = self.hasher.comm2_scalar_cs(
-                cs,
-                r_2_new,
-                addr_pk_2_new,
-                rho_2_new,
-            );
-            self.hasher.comm2_scalar_cs(cs, s_2_new, v_2_new, k)
-        };
+// pub fn climb_up_tree<CS: ConstraintSystem<Scalar>>(
+//     cs: &mut CS,
+//     leaf: Option<Scalar>,
+//     auth_path: &[Option<(Scalar, bool)>; CM_TREE_DEPTH as usize],
+//     hasher: &Hasher,
+// ) -> Option<Scalar> {
+//     let mut curr = leaf;
 
-        check_cm_commitments(
-            cs,
-            cm_2_new,
-            addr_pk_2_new,
-            rho_2_new,
-            r_2_new,
-            s_2_new,
-            v_2_new,
-            &self.hasher,
-        );
+//     for (idx, merkle_node) in auth_path.iter().enumerate() {
+//         // println!("idx: {}, sibling: {:?}", idx, merkle_node);
 
-        require_equal_val_summation(cs, v_1_old, v_1_new, v_2_new);
+//         let cs = &mut cs.namespace(|| format!("height {}", idx));
 
-        {
-            cs.alloc_input(
-                || "merkle_rt",
-                || merkle_rt.ok_or(SynthesisError::AssignmentMissing),
-            )?;
+//         let cur_is_right = AllocatedBit::alloc(
+//             cs.namespace(|| "cur is right"),
+//             merkle_node.as_ref().map(|&(_, d)| d),
+//         )
+//         .expect("cur_is_right");
 
-            cs.alloc_input(
-                || "sn_1_old",
-                || sn_1.ok_or(SynthesisError::AssignmentMissing),
-            )?;
+//         let xl_value;
+//         let xr_value;
 
-            cs.alloc_input(
-                || "cm_1_new",
-                || cm_1_new.ok_or(SynthesisError::AssignmentMissing),
-            )?;
+//         let is_right = cur_is_right.get_value().and_then(|v| {
+//             if v {
+//                 Some(true)
+//             } else {
+//                 Some(false)
+//             }
+//         });
 
-            cs.alloc_input(
-                || "cm_2_new",
-                || cm_2_new.ok_or(SynthesisError::AssignmentMissing),
-            )?;
-        }
+//         let temp = match *merkle_node {
+//             Some(a) => a,
+//             None => (Scalar::default(), false),
+//         };
 
-        Ok(())
-    }
-}
+//         if match is_right {
+//             Some(a) => a,
+//             None => false,
+//         } {
+//             xl_value = Some(temp.0);
+//             xr_value = curr;
+//         } else {
+//             xl_value = curr;
+//             xr_value = Some(temp.0);
+//         }
 
-pub fn climb_up_tree<CS: ConstraintSystem<Scalar>>(
-    cs: &mut CS,
-    leaf: Option<Scalar>,
-    auth_path: &[Option<(Scalar, bool)>; CM_TREE_DEPTH as usize],
-    hasher: &Hasher,
-) -> Option<Scalar> {
-    let mut curr = leaf;
+//         curr = hasher.mimc_scalar_cs(cs, xl_value, xr_value);
+//     }
 
-    for (idx, merkle_node) in auth_path.iter().enumerate() {
-        // println!("idx: {}, sibling: {:?}", idx, merkle_node);
+//     return curr;
+// }
 
-        let cs = &mut cs.namespace(|| format!("height {}", idx));
+// pub fn check_cm_commitments<CS: ConstraintSystem<Scalar>>(
+//     cs: &mut CS,
+//     cm_old: Option<Scalar>,
+//     addr_pk: Option<Scalar>,
+//     rho: Option<Scalar>,
+//     r: Option<Scalar>,
+//     s: Option<Scalar>,
+//     v: Option<Scalar>,
+//     hasher: &Hasher,
+// ) {
+//     {
+//         let k = hasher.comm2_scalar_cs(cs, r, addr_pk, rho);
 
-        let cur_is_right = AllocatedBit::alloc(
-            cs.namespace(|| "cur is right"),
-            merkle_node.as_ref().map(|&(_, d)| d),
-        )
-        .expect("cur_is_right");
+//         let cm_computed = hasher.comm2_scalar_cs(cs, s, v, k);
 
-        let xl_value;
-        let xr_value;
+//         let cm_1_old = cs
+//             .alloc(|| "cm", || cm_old.ok_or(SynthesisError::AssignmentMissing))
+//             .unwrap();
 
-        let is_right = cur_is_right.get_value().and_then(|v| {
-            if v {
-                Some(true)
-            } else {
-                Some(false)
-            }
-        });
+//         let cm = cs
+//             .alloc(
+//                 || "cm_computed",
+//                 || cm_computed.ok_or(SynthesisError::AssignmentMissing),
+//             )
+//             .unwrap();
 
-        let temp = match *merkle_node {
-            Some(a) => a,
-            None => (Scalar::default(), false),
-        };
+//         cs.enforce(
+//             || "cm = cm_computed",
+//             |lc| lc + cm_1_old,
+//             |lc| lc + CS::one(),
+//             |lc| lc + cm,
+//         );
+//     }
+// }
 
-        if match is_right {
-            Some(a) => a,
-            None => false,
-        } {
-            xl_value = Some(temp.0);
-            xr_value = curr;
-        } else {
-            xl_value = curr;
-            xr_value = Some(temp.0);
-        }
+// pub fn require_equal_val_summation<CS: ConstraintSystem<Scalar>>(
+//     cs: &mut CS,
+//     v_old: Option<Scalar>,
+//     v_1: Option<Scalar>,
+//     v_2: Option<Scalar>,
+// ) {
+//     let v_old = cs
+//         .alloc(
+//             || "v_old",
+//             || v_old.ok_or(SynthesisError::AssignmentMissing),
+//         )
+//         .unwrap();
 
-        curr = hasher.mimc_scalar_cs(cs, xl_value, xr_value);
-    }
+//     {
+//         let v_1_new = cs
+//             .alloc(
+//                 || "preimage v_1",
+//                 || v_1.ok_or(SynthesisError::AssignmentMissing),
+//             )
+//             .unwrap();
 
-    return curr;
-}
+//         let v_2_new = cs
+//             .alloc(
+//                 || "preimage v_2",
+//                 || v_2.ok_or(SynthesisError::AssignmentMissing),
+//             )
+//             .unwrap();
 
-pub fn check_cm_commitments<CS: ConstraintSystem<Scalar>>(
-    cs: &mut CS,
-    cm_old: Option<Scalar>,
-    addr_pk: Option<Scalar>,
-    rho: Option<Scalar>,
-    r: Option<Scalar>,
-    s: Option<Scalar>,
-    v: Option<Scalar>,
-    hasher: &Hasher,
-) {
-    {
-        let k = hasher.comm2_scalar_cs(cs, r, addr_pk, rho);
-
-        let cm_computed = hasher.comm2_scalar_cs(cs, s, v, k);
-
-        let cm_1_old = cs
-            .alloc(|| "cm", || cm_old.ok_or(SynthesisError::AssignmentMissing))
-            .unwrap();
-
-        let cm = cs
-            .alloc(
-                || "cm_computed",
-                || cm_computed.ok_or(SynthesisError::AssignmentMissing),
-            )
-            .unwrap();
-
-        cs.enforce(
-            || "cm = cm_computed",
-            |lc| lc + cm_1_old,
-            |lc| lc + CS::one(),
-            |lc| lc + cm,
-        );
-    }
-}
-
-pub fn require_equal_val_summation<CS: ConstraintSystem<Scalar>>(
-    cs: &mut CS,
-    v_old: Option<Scalar>,
-    v_1: Option<Scalar>,
-    v_2: Option<Scalar>,
-) {
-    let v_old = cs
-        .alloc(
-            || "v_old",
-            || v_old.ok_or(SynthesisError::AssignmentMissing),
-        )
-        .unwrap();
-
-    {
-        let v_1_new = cs
-            .alloc(
-                || "preimage v_1",
-                || v_1.ok_or(SynthesisError::AssignmentMissing),
-            )
-            .unwrap();
-
-        let v_2_new = cs
-            .alloc(
-                || "preimage v_2",
-                || v_2.ok_or(SynthesisError::AssignmentMissing),
-            )
-            .unwrap();
-
-        cs.enforce(
-            || "tmp = v_1 + v_2",
-            |lc| lc + v_1_new + v_2_new,
-            |lc| lc + CS::one(),
-            |lc| lc + v_old,
-        );
-    };
-}
+//         cs.enforce(
+//             || "tmp = v_1 + v_2",
+//             |lc| lc + v_1_new + v_2_new,
+//             |lc| lc + CS::one(),
+//             |lc| lc + v_old,
+//         );
+//     };
+// }

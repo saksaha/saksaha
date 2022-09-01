@@ -62,9 +62,10 @@ async fn test_two_nodes_tx_pool_marshal_check_true() {
         ..
     } = test_context_2;
 
-    let dummy_tx1 = sak_types::mock_pour_tc_m1_to_p3_p4();
+    // let dummy_tx1 = sak_types::mock_pour_tc_m1_to_p3_p4();
+    let dummy_tx1 = sak_types::mock_pour_tc_random();
 
-    let dummy_tx2 = sak_types::mock_pour_tc_2();
+    let dummy_tx2 = sak_types::mock_pour_tc_random();
 
     let block = {
         let c = BlockCandidate {
