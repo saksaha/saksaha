@@ -346,7 +346,7 @@ impl LedgerDB {
     pub(crate) fn get_cms(
         &self,
         key: &TxHash,
-[]    ) -> Result<Option<Vec<U8Arr32>>, LedgerError> {
+    ) -> Result<Option<Vec<U8Arr32>>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::CMS)?;
 
         match self.db.get_cf(&cf, key)? {
