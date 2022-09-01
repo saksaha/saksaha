@@ -93,6 +93,7 @@ impl WalletDB {
         for coin in coins {
             match coin.coin_status.clone() {
                 CoinStatus::Unconfirmed => {
+                    println!("getting tx, tx_hash: {:?}", coin.tx_hash);
                     let resp = match coin.tx_hash.clone() {
                         Some(tx_hash) => saksaha::get_tx(
                             saksaha_endpoint.clone(),
@@ -100,7 +101,10 @@ impl WalletDB {
                         )
                         .await?
                         .result
-                        .ok_or("json_response error")?,
+                        .ok_or(format!(
+                            "Tx doesn't exist, tx hash: {}",
+                            tx_hash
+                        ))?,
 
                         None => {
                             return Err(format!(

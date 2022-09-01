@@ -1,4 +1,4 @@
-use crate::{TxHash, TypesError};
+use crate::TypesError;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum CoinStatus {

@@ -1,3 +1,7 @@
+mod tx;
+
+pub use tx::*;
+
 use serde::{Deserialize, Serialize};
 
 pub const JSON_RPC_2: &'static str = "2.0";

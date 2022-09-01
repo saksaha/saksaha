@@ -5,27 +5,23 @@ use sak_crypto::sha3::digest::typenum::U8;
 use serde::{Deserialize, Serialize};
 use type_extension::U8Arr32;
 
+pub const GAS: u64 = 10;
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct PourTx {
     //
     pub tx_candidate: PourTxCandidate,
-    pub cm_idx_1: CmIdx,
-    pub cm_idx_2: CmIdx,
+    pub cm_idxes: Vec<CmIdx>,
+    // pub cm_idx_1: CmIdx,
+    // pub cm_idx_2: CmIdx,
     // pub tx_height: u128,
 }
 
 impl PourTx {
-    pub fn new(
-        tx_candidate: PourTxCandidate,
-        // tx_height: u128
-        cm_idx_1: CmIdx,
-        cm_idx_2: CmIdx,
-    ) -> PourTx {
+    pub fn new(tx_candidate: PourTxCandidate, cm_idxes: Vec<CmIdx>) -> PourTx {
         PourTx {
             tx_candidate,
-            cm_idx_1,
-            cm_idx_2,
-            // tx_height,
+            cm_idxes,
         }
     }
 
@@ -36,7 +32,11 @@ impl PourTx {
     pub fn get_cm_pairs(&self) -> Vec<(CmIdx, Cm)> {
         let cms = self.tx_candidate.get_cms();
 
-        vec![(self.cm_idx_1, cms[0]), (self.cm_idx_2, cms[1])]
+        self.cm_idxes
+            .iter()
+            .cloned()
+            .zip(cms.iter().cloned())
+            .collect::<Vec<(CmIdx, Cm)>>()
     }
 
     pub fn get_sn(&self) -> Sn {
@@ -48,8 +48,8 @@ impl std::fmt::Display for PourTx {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "PourTx [cm_idx_1: {}, cm_idx_2: {}, tx_candidate: {}]",
-            self.cm_idx_1, self.cm_idx_2, self.tx_candidate,
+            "PourTx [cm_idxes: {:?}, tx_candidate: {}]",
+            self.cm_idxes, self.tx_candidate,
         )
     }
 }
@@ -79,10 +79,14 @@ pub struct PourTxCandidate {
     // pub sn_2: U8Arr32,
 
     //
-    pub cm_1: U8Arr32,
+    // pub cm_1: U8Arr32,
+
+    // //
+    // pub cm_2: U8Arr32,
+    pub cms: Vec<Cm>,
 
     //
-    pub cm_2: U8Arr32,
+    pub cm_count: u128,
 
     //
     pub merkle_rt: U8Arr32,
@@ -99,12 +103,12 @@ impl PourTxCandidate {
         ctr_addr: Option<String>,
         pi: Vec<u8>,
         sn_1: U8Arr32,
-        // sn_2: U8Arr32,
-        cm_1: U8Arr32,
-        cm_2: U8Arr32,
+        cms: Vec<Cm>,
+        // cm_count: u128,
         merkle_rt: U8Arr32,
     ) -> PourTxCandidate {
         let ctr_addr = ctr_addr.unwrap_or(String::from(""));
+        let cm_count = cms.len() as u128;
 
         let hashable_items = vec![
             created_at.as_bytes(),
@@ -123,28 +127,15 @@ impl PourTxCandidate {
             ctr_addr,
             pi,
             sn_1,
-            // sn_2,
-            cm_1,
-            cm_2,
+            cms,
+            cm_count,
             merkle_rt,
             tx_hash,
         }
     }
 
-    pub fn upgrade(
-        self,
-        // tx_height: u128
-        cm_idx: CmIdx,
-        // cm_idx_2: CmIdx,
-    ) -> Tx {
-        let later_dynamically_determined_cm_idx_2 = cm_idx + 1;
-
-        Tx::Pour(PourTx::new(
-            self,
-            cm_idx,
-            later_dynamically_determined_cm_idx_2,
-            // tx_height
-        ))
+    pub fn upgrade(self, cm_idx: CmIdx) -> Tx {
+        Tx::Pour(PourTx::new(self, vec![cm_idx, cm_idx + 1]))
     }
 
     pub fn get_tx_type(&self) -> TxType {
@@ -159,8 +150,8 @@ impl PourTxCandidate {
         utils::get_ctr_op(&self.ctr_addr, &self.data)
     }
 
-    pub fn get_cms(&self) -> Vec<Cm> {
-        vec![self.cm_1, self.cm_2]
+    pub fn get_cms(&self) -> &Vec<Cm> {
+        &self.cms
     }
 }
 
@@ -175,13 +166,13 @@ impl std::fmt::Display for PourTxCandidate {
         write!(
             f,
             "PourTx [created_at: {}, data: {:?}, author_sig: {}, ctr_addr: {},\
-            cm_1: {:?}, cm_2: {:?}, sn_1: {:?}, merkle_rt: {:?}]",
+            cms: {:?}, cm_count: {}, sn_1: {:?}, merkle_rt: {:?}]",
             self.created_at,
             data,
             self.author_sig,
             self.ctr_addr,
-            self.cm_1,
-            self.cm_2,
+            self.cms,
+            self.cm_count,
             self.sn_1,
             self.merkle_rt,
         )

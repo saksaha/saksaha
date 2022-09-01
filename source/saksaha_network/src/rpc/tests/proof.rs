@@ -1,9 +1,6 @@
 use super::utils;
 use crate::{
-    rpc::routes::v0::{
-        GetCmIdxRequest, GetCmIdxResponse, GetTxRequest, SendMintTxRequest,
-        SendPourTxRequest,
-    },
+    rpc::routes::v0::{GetCmIdxRequest, GetCmIdxResponse},
     tests::TestUtil,
 };
 use hyper::{Body, Client, Method, Request, Uri};
@@ -24,7 +21,7 @@ async fn test_rpc_client_handle_get_cm_idx() {
         // let dummy_tx = sak_types::mock_pour_tc_m1_to_p3_p4();
         let dummy_tx = sak_types::mock_pour_tc_1();
 
-        let cms = dummy_tx.get_cms();
+        let cms = dummy_tx.get_cms().clone();
 
         println!("power: {:?}", cms);
 

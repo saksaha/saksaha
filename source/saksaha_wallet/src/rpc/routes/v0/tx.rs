@@ -34,6 +34,8 @@ pub(in crate::rpc) async fn send_pour_tx(
 
     let wallet = &ctx.wallet;
 
+    println!("send pour tx");
+
     let res = wallet
         .send_pour_tx(rb.acc_addr, rb.ctr_addr, rb.ctr_request)
         .await;
@@ -45,6 +47,7 @@ pub(in crate::rpc) async fn send_pour_tx(
             hyper_rpc_router::make_success_response(route_state, response)
         }
         Err(err) => {
+            println!("err: {}", err);
             return hyper_rpc_router::make_error_response(
                 route_state.resp,
                 Some(route_state.id),

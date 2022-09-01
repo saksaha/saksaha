@@ -153,7 +153,6 @@ impl LedgerDB {
 
         for tx in txs {
             // let tc = &tx.tx_candidate;
-            // let is_valid_tx = self.verify_tx(&tc)?;
             self.batch_put_tx(
                 &mut batch, tx,
                 // &mut cm_idx_count

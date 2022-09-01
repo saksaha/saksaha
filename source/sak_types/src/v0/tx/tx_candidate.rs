@@ -70,7 +70,7 @@ impl TxCandidate {
         }
     }
 
-    pub fn get_cms(&self) -> Vec<Cm> {
+    pub fn get_cms(&self) -> &Vec<Cm> {
         match &self {
             TxCandidate::Mint(c) => c.get_cms(),
             TxCandidate::Pour(c) => c.get_cms(),

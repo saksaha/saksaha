@@ -1,9 +1,6 @@
-use crate::v0::dist_ledger;
-
 use super::{test_util::TestUtil, utils};
 use sak_kv_db::WriteBatch;
 use sak_types::{BlockCandidate, Tx, TxCandidate};
-use std::time::Duration;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_put_and_get_transaction() {
@@ -96,19 +93,19 @@ async fn test_dist_ledger_tx_mint_put_and_get_cm_idx() {
         .unwrap();
 
     let cm_1_idx = {
-        let cm_1 = dist_ledger
+        let cms = dist_ledger
             .apis
             .ledger_db
-            .get_cm_1(&mock_tx_hash)
+            .get_cms(&mock_tx_hash)
             .unwrap()
-            .expect("cm_1 should be obtained");
+            .expect("cms should be obtained");
 
-        println!("cm_1 :{:?}", cm_1);
+        println!("cms :{:?}", cms);
 
         let cm_1_idx = dist_ledger
             .apis
             .ledger_db
-            .get_cm_idx_by_cm(&cm_1)
+            .get_cm_idx_by_cm(&cms[0])
             .unwrap()
             .expect("cm_1_idx should be obtained");
 
@@ -147,19 +144,19 @@ async fn test_dist_ledger_tx_pour_put_and_get_cm_idx() {
         .unwrap();
 
     let cm_1_idx = {
-        let cm_1 = dist_ledger
+        let cms = dist_ledger
             .apis
             .ledger_db
-            .get_cm_1(&mock_tx_hash)
+            .get_cms(&mock_tx_hash)
             .unwrap()
-            .expect("cm_1 should be obtained");
+            .expect("cms should be obtained");
 
-        println!("cm_1 :{:?}", cm_1);
+        println!("cms :{:?}", cms);
 
         let cm_1_idx = dist_ledger
             .apis
             .ledger_db
-            .get_cm_idx_by_cm(&cm_1)
+            .get_cm_idx_by_cm(&cms[0])
             .unwrap()
             .expect("cm_1_idx should be obtained");
 
@@ -167,17 +164,17 @@ async fn test_dist_ledger_tx_pour_put_and_get_cm_idx() {
     };
 
     let cm_2_idx = {
-        let cm_2 = dist_ledger
+        let cms = dist_ledger
             .apis
             .ledger_db
-            .get_cm_2(&mock_tx_hash)
+            .get_cms(&mock_tx_hash)
             .unwrap()
-            .expect("cm_2 should be obtained");
+            .expect("cms should be obtained");
 
         let cm_2_idx = dist_ledger
             .apis
             .ledger_db
-            .get_cm_idx_by_cm(&cm_2)
+            .get_cm_idx_by_cm(&cms[1])
             .expect("cm_2_idx should be obtained")
             .unwrap();
         cm_2_idx

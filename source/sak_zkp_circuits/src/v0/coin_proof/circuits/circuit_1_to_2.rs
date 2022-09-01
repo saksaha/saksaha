@@ -7,6 +7,9 @@ use bellman::{Circuit, ConstraintSystem, SynthesisError};
 use sak_crypto::{Bls12, OsRng, Scalar};
 use std::fs::File;
 use std::io::Write;
+use type_extension::U8Array;
+
+pub const GAS: u64 = 10;
 
 // const PARAM_FILE_NAME: &str = "mimc_params_1_to_2";
 
@@ -271,6 +274,12 @@ pub fn require_equal_val_summation<CS: ConstraintSystem<Scalar>>(
     v_1: Option<Scalar>,
     v_2: Option<Scalar>,
 ) {
+    let gas = Some(Scalar::from_bytes(&U8Array::from_int(GAS)).unwrap());
+
+    let v_gas = cs
+        .alloc(|| "v_gas", || gas.ok_or(SynthesisError::AssignmentMissing))
+        .unwrap();
+
     let v_old = cs
         .alloc(
             || "v_old",
@@ -295,7 +304,7 @@ pub fn require_equal_val_summation<CS: ConstraintSystem<Scalar>>(
 
         cs.enforce(
             || "tmp = v_1 + v_2",
-            |lc| lc + v_1_new + v_2_new,
+            |lc| lc + v_1_new + v_2_new + v_gas,
             |lc| lc + CS::one(),
             |lc| lc + v_old,
         );
