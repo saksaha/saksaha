@@ -148,10 +148,17 @@ pub fn mock_pour_tc_random() -> TxCandidate {
         let node_3_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
         // let node_4_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
 
-        m.insert("0_1", node_0_1);
-        m.insert("1_1", node_1_1);
-        m.insert("2_1", node_2_1);
-        m.insert("3_1", node_3_1);
+        let _cm_tree_depth_lock = [
+            ("0_1", node_0_1),
+            ("1_1", node_1_1),
+            ("2_1", node_2_1),
+            ("3_1", node_3_1),
+        ];
+
+        // m.insert("0_1", node_0_1);
+        // m.insert("1_1", node_1_1);
+        // m.insert("2_1", node_2_1);
+        // m.insert("3_1", node_3_1);
         // m.insert("4_1", node_4_1);
 
         let node_1_0 = hasher.mimc_scalar(cm_1_old, node_0_1);
@@ -837,46 +844,3 @@ pub fn mock_mint_tc_deploying_contract(
 
     TxCandidate::Mint(tx_candidate)
 }
-
-// pub fn mock_pour_tc_m1_to_p3_p4() -> TxCandidate {
-//     let tx_candidate = PourTxCandidate::new_dummy_m1_to_p3_p4();
-
-//     TxCandidate::Pour(tx_candidate)
-// }
-
-// pub fn mock_pour_tc_2() -> TxCandidate {
-//     let tx_candidate = PourTxCandidate::new_dummy_2();
-
-//     TxCandidate::Pour(tx_candidate)
-// }
-
-// pub fn mock_pour_tc_3() -> TxCandidate {
-//     let tx_candidate = PourTxCandidate::new_dummy_3();
-
-//     TxCandidate::Pour(tx_candidate)
-// }
-
-// pub fn mock_pour_tc_4() -> TxCandidate {
-//     let tx_candidate = PourTxCandidate::new_dummy_4();
-
-//     TxCandidate::Pour(tx_candidate)
-// }
-
-// pub fn new_dummy_valid_pour(
-//     pi: Vec<u8>,
-//     sn_1: [u8; 32],
-//     cm_1: [u8; 32],
-//     cm_2: [u8; 32],
-//     merkle_rt: [u8; 32],
-// ) -> TxCandidate {
-//     let tx_candidate =
-//         PourTxCandidate::new_dummy_valid(pi, sn_1, cm_1, cm_2, merkle_rt);
-
-//     TxCandidate::Pour(tx_candidate)
-// }
-
-// pub fn mock_pour_tc_variant_cm(cm: [u8; 32]) -> TxCandidate {
-//     let tx_candidate = PourTxCandidate::new_dummy_5(cm);
-
-//     TxCandidate::Pour(tx_candidate)
-// }
