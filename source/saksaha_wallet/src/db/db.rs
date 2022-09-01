@@ -6,7 +6,6 @@ use sak_kv_db::{KeyValueDatabase, Options};
 use sak_types::CoinRecord;
 use sak_types::CoinStatus;
 use sak_types::Sn;
-use std::time::Duration;
 use std::{fs, path::PathBuf};
 
 pub(crate) struct WalletDB {

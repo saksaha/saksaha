@@ -1,7 +1,6 @@
 use super::CoinManager;
 use crate::{db::WalletDB, Config, CredentialManager, WalletError};
 use colored::Colorize;
-use sak_types::CoinRecord;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 pub const GAS: u64 = 10;

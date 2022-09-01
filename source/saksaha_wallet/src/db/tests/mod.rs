@@ -1,12 +1,10 @@
 mod coin;
+
+#[cfg(test)]
 mod utils;
 
+#[cfg(test)]
 pub(crate) use utils::*;
-
-use crate::db::tests::utils::*;
-use crate::db::WalletDB;
-use std::time::Duration;
-use std::{collections::HashMap, thread::sleep};
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_envelope_db_user_register() {
