@@ -30,27 +30,6 @@ async fn test_put_and_get_transaction() {
         .expect("block should be written")
         .unwrap();
 
-    // let dummy_tx_values = [
-    //     sak_types::mock_pour_tc_1().upgrade(1),
-    //     sak_types::mock_mint_tc_2().upgrade(2),
-    // ];
-
-    // let mut write_batch = WriteBatch::default();
-
-    // for tx_val in dummy_tx_values.iter() {
-    //     let h = dist_ledger
-    //         .apis
-    //         .ledger_db
-    //         .batch_put_tx(
-    //             &mut write_batch,
-    //             &tx_val,
-    //             // &mut cm_idx_count
-    //         )
-    //         .expect("Tx should be written");
-
-    //     tx_hashes.push(h);
-    // }
-
     for (idx, tx_hash) in tx_hashes.iter().enumerate() {
         let tx_val_retrieved = dist_ledger
             .apis
@@ -75,9 +54,7 @@ async fn test_dist_ledger_put_a_single_pour_tx() {
     let mut write_batch = WriteBatch::default();
 
     {
-        let dummy_pour_tx = utils::make_dummy_valid_pour_tx().await;
-
-        let mut cm_idx_count = 0;
+        let dummy_pour_tx = sak_types::mock_pour_tc_random().upgrade(0);
 
         let _dummy_tx_hash = dist_ledger
             .apis
@@ -152,7 +129,7 @@ async fn test_dist_ledger_tx_pour_put_and_get_cm_idx() {
 
     let dist_ledger = utils::make_dist_ledger().await;
 
-    let pour_tc = sak_types::mock_pour_tc_1();
+    let pour_tc = sak_types::mock_pour_tc_random();
 
     let mock_tx_hash = pour_tc.get_tx_hash().to_string();
 
@@ -220,9 +197,7 @@ async fn test_dist_ledger_verify_proof_success() {
 
     let dist_ledger = utils::make_dist_ledger().await;
 
-    let dummy_pour_tc_1 = utils::make_dummy_valid_pour_tx_candidate().await;
-
-    let bc_1 = utils::make_dummy_block_canidate_valid_pi(dummy_pour_tc_1);
+    let bc_1 = sak_types::mock_block_pour_single();
 
     {
         let block_hash = dist_ledger
@@ -243,9 +218,7 @@ async fn test_dist_ledger_verify_proof_fail() {
 
     let dist_ledger = utils::make_dist_ledger().await;
 
-    let dummy_pour_tc_1 = utils::make_dummy_invalid_pour_tx_candidate().await;
-
-    let bc_1 = utils::make_dummy_block_canidate_valid_pi(dummy_pour_tc_1);
+    let bc_1 = sak_types::mock_block_invalid_pour();
 
     {
         let block_hash = dist_ledger
@@ -265,14 +238,9 @@ async fn test_dist_ledger_double_spending_success() {
 
     let dist_ledger = utils::make_dist_ledger().await;
 
-    let dummy_pour_tc_1 = utils::make_dummy_valid_pour_tx_candidate().await;
+    let bc_1 = sak_types::mock_block_pour_random();
 
-    let dummy_pour_tc_2 =
-        utils::make_dummy_valid_pour_tx_candidate_random().await;
-
-    let bc_1 = utils::make_dummy_block_canidate_valid_pi(dummy_pour_tc_1);
-
-    let bc_2 = utils::make_dummy_block_canidate_valid_pi(dummy_pour_tc_2);
+    let bc_2 = sak_types::mock_block_pour_random();
 
     {
         let block_hash = dist_ledger
@@ -303,11 +271,9 @@ async fn test_dist_ledger_double_spending_fail() {
 
     let dist_ledger = utils::make_dist_ledger().await;
 
-    let dummy_pour_tc = utils::make_dummy_valid_pour_tx_candidate().await;
+    let bc_1 = sak_types::mock_block_pour_single();
 
-    let bc_1 = utils::make_dummy_block_canidate_valid_pi(dummy_pour_tc.clone());
-
-    let bc_2 = utils::make_dummy_block_canidate_valid_pi(dummy_pour_tc);
+    let bc_2 = sak_types::mock_block_pour_single();
 
     {
         let block_hash = dist_ledger
