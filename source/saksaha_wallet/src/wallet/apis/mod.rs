@@ -1,1 +1,1 @@
-mod coin;
+pub(crate) mod coin;

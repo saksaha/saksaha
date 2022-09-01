@@ -14,6 +14,41 @@ use sak_types::CoinStatus;
 use std::convert::TryInto;
 use type_extension::U8Arr32;
 
+pub(crate) struct SendTxPourParams {
+    saksaha_endpoint: String,
+    sn_1: U8Arr32,
+    cm_1: U8Arr32,
+    cm_2: U8Arr32,
+    merkle_rt: U8Arr32,
+    pi: Vec<u8>,
+    ctr_addr: String,
+    ctr_request: CtrRequest,
+}
+
+impl SendTxPourParams {
+    pub(crate) fn new(
+        saksaha_endpoint: String,
+        sn_1: U8Arr32,
+        cm_1: U8Arr32,
+        cm_2: U8Arr32,
+        merkle_rt: U8Arr32,
+        pi: Vec<u8>,
+        ctr_addr: String,
+        ctr_request: CtrRequest,
+    ) -> Self {
+        SendTxPourParams {
+            saksaha_endpoint,
+            sn_1,
+            cm_1,
+            cm_2,
+            merkle_rt,
+            pi,
+            ctr_addr,
+            ctr_request,
+        }
+    }
+}
+
 impl Wallet {
     pub async fn get_balance(
         &self,
@@ -70,6 +105,170 @@ impl Wallet {
         Ok(b)
     }
 
+    // #[inline]
+    // pub(crate) async fn prepare_auth_path(
+    //     &self,
+    //     coin: &CoinRecord,
+    //     cm_idx: u128,
+    // ) -> Result<Vec<(U8Arr32, bool)>, WalletError> {
+    //     let auth_path = {
+    //         let response =
+    //             saksaha::get_auth_path(self.saksaha_endpoint.clone(), cm_idx)
+    //                 .await?;
+
+    //         let result =
+    //             response.result.ok_or(format!("cannot get auth path"))?;
+
+    //         let auth_path = result.auth_path;
+
+    //         {
+    //             let hasher = Hasher::new();
+
+    //             let mut curr = coin.cm.to_bytes();
+
+    //             for (_, merkle_node) in auth_path.iter().enumerate() {
+    //                 let xl_value;
+    //                 let xr_value;
+
+    //                 let is_left: bool = merkle_node.1;
+
+    //                 if is_left {
+    //                     xl_value = merkle_node.0;
+    //                     xr_value = curr;
+    //                 } else {
+    //                     xl_value = curr;
+    //                     xr_value = merkle_node.0;
+    //                 }
+
+    //                 curr = hasher.mimc(&xl_value, &xr_value)?.to_bytes();
+    //             }
+
+    //             merkle_rt = curr;
+    //         };
+
+    //         auth_path
+    //     };
+
+    //     Ok(auth_path)
+    // }
+
+    // #[inline]
+    // pub(crate) async fn prepare_merkle_rt(
+    //     &self,
+    //     coin: &CoinRecord,
+    //     auth_path: Vec<(U8Arr32, bool)>,
+    // ) -> Result<U8Arr32, WalletError> {
+    //     let merkle_rt;
+
+    //     let old_coin = self.get_old_coin(coin, auth_path).await?;
+
+    //     Ok(merkle_rt)
+    // }
+
+    // #[inline]
+    // pub(crate) async fn prepare_send_pour_tx(
+    //     &self,
+    //     ctr_addr: String,
+    //     ctr_request: CtrRequest,
+    // ) -> Result<SendTxPourParams, WalletError> {
+    //     let coin_manager_lock = self.get_coin_manager().write().await;
+
+    //     let coin: &CoinRecord = coin_manager_lock
+    //         .get_next_available_coin()
+    //         .ok_or("No usable coins")?;
+
+    //     let cm_idx = self.prepare_cm_idx(&coin).await?;
+
+    //     let auth_path = self.prepare_auth_path(&coin, cm_idx).await?;
+
+    //     let merkle_rt = self.prepare_merkle_rt(&coin, cm_idx);
+
+    // let merkle_rt;
+
+    // let old_coin = {
+    //     let auth_path = {
+    //         let response = saksaha::get_auth_path(
+    //             self.saksaha_endpoint.clone(),
+    //             cm_idx,
+    //         )
+    //         .await?;
+
+    //         let result =
+    //             response.result.ok_or(format!("cannot get auth path"))?;
+
+    //         let auth_path = result.auth_path;
+
+    //         {
+    //             let hasher = Hasher::new();
+
+    //             let mut curr = coin.cm.to_bytes();
+
+    //             for (_, merkle_node) in auth_path.iter().enumerate() {
+    //                 let xl_value;
+    //                 let xr_value;
+
+    //                 let is_left: bool = merkle_node.1;
+
+    //                 if is_left {
+    //                     xl_value = merkle_node.0;
+    //                     xr_value = curr;
+    //                 } else {
+    //                     xl_value = curr;
+    //                     xr_value = merkle_node.0;
+    //                 }
+
+    //                 curr = hasher.mimc(&xl_value, &xr_value)?.to_bytes();
+    //             }
+
+    //             merkle_rt = curr;
+    //         };
+
+    //         auth_path
+    //     };
+
+    //     self.get_old_coin(coin, auth_path).await?
+    // };
+
+    // println!("[+] making proof...");
+
+    // let sn_1 = self.compute_sn(coin);
+
+    // let (new_coin_1, new_coin_2) = {
+    //     let v = ScalarExt::into_u64(coin.v)?;
+
+    //     let new_coin_1 =
+    //         CoinRecord::new_random(v - GAS, Some(0), None, None)?;
+
+    //     let new_coin_2 = CoinRecord::new_random(0, Some(1), None, None)?;
+
+    //     (new_coin_1, new_coin_2)
+    // };
+
+    // let pi = CoinProof::generate_proof_1_to_2(
+    //     old_coin,
+    //     new_coin_1.extract(),
+    //     new_coin_2.extract(),
+    // )?;
+
+    // let mut pi_ser = Vec::new();
+    // pi.write(&mut pi_ser).unwrap();
+
+    // println!("[!] pi serialized, len: {}", pi_ser.len());
+
+    // let param = SendTxPourParams::new(
+    //     self.saksaha_endpoint.clone(),
+    //     sn_1,
+    //     new_coin_1.cm.to_bytes(),
+    //     new_coin_2.cm.to_bytes(),
+    //     merkle_rt,
+    //     pi_ser,
+    //     ctr_addr,
+    //     ctr_request,
+    // );
+
+    // Ok(param)
+    // }
+
     // a) Take ctr state manipulation meta from user
 
     // b) Grab from the wallet an "old" available (unused) coin with the least
@@ -82,6 +281,91 @@ impl Wallet {
     // e) Request to send tx to the network and get tx_hash associated with it
 
     // f) Store new coins into the wallet (with tx hash)
+
+    // #[inline]
+    // pub(crate) async fn prepare_available_coin(
+    //     &self,
+    // ) -> Result<&CoinRecord, WalletError> {
+    //     let coin_manager_lock = self.get_coin_manager().write().await;
+
+    //     let coin: &CoinRecord = coin_manager_lock
+    //         .get_next_available_coin()
+    //         .ok_or("No usable coins")?;
+
+    //     Ok(&coin)
+    // }
+
+    #[inline]
+    pub(crate) async fn prepare_cm_idx(
+        &self,
+        coin: &CoinRecord,
+    ) -> Result<u128, WalletError> {
+        let cm_idx = {
+            let resp = saksaha::get_cm_idx(
+                self.saksaha_endpoint.clone(),
+                coin.cm.to_bytes(),
+            )
+            .await?;
+
+            resp.result.ok_or("")?.cm_idx.ok_or("")?
+        };
+
+        Ok(cm_idx)
+    }
+
+    #[inline]
+    pub(crate) async fn prepare_auth_path(
+        &self,
+        cm_idx: u128,
+    ) -> Result<Vec<(U8Arr32, bool)>, WalletError> {
+        let auth_path = {
+            let response =
+                saksaha::get_auth_path(self.saksaha_endpoint.clone(), cm_idx)
+                    .await?;
+
+            let result =
+                response.result.ok_or(format!("cannot get auth path"))?;
+
+            result.auth_path
+        };
+
+        Ok(auth_path)
+    }
+
+    #[inline]
+    pub(crate) async fn prepare_merkle_rt(
+        &self,
+        coin: &CoinRecord,
+        auth_path: Vec<([u8; 32], bool)>,
+    ) -> Result<U8Arr32, WalletError> {
+        let merkle_rt = {
+            let hasher = Hasher::new();
+
+            let mut curr = coin.cm.to_bytes();
+
+            for (_, merkle_node) in auth_path.iter().enumerate() {
+                let xl_value;
+                let xr_value;
+
+                let is_left: bool = merkle_node.1;
+
+                if is_left {
+                    xl_value = merkle_node.0;
+                    xr_value = curr;
+                } else {
+                    xl_value = curr;
+                    xr_value = merkle_node.0;
+                }
+
+                curr = hasher.mimc(&xl_value, &xr_value)?.to_bytes();
+            }
+
+            curr
+        };
+
+        Ok(merkle_rt)
+    }
+
     pub async fn send_pour_tx(
         &self,
         acc_addr: String,
@@ -96,6 +380,16 @@ impl Wallet {
             .get_next_available_coin()
             .ok_or("No usable coins")?;
 
+        // ---------------------------
+        let cm_idx = self.prepare_cm_idx(coin).await?;
+
+        let auth_path = self.prepare_auth_path(cm_idx).await?;
+        // ---------------------------
+
+        let merkle_rt = self.prepare_merkle_rt(coin, auth_path.clone()).await?;
+
+        let old_coin = self.convert_to_old_coin(coin, auth_path).await?;
+
         let sn_1 = self.compute_sn(coin);
 
         let (mut new_coin_1, mut new_coin_2) = {
@@ -107,62 +401,6 @@ impl Wallet {
             let new_coin_2 = CoinRecord::new_random(0, Some(1), None, None)?;
 
             (new_coin_1, new_coin_2)
-        };
-
-        let cm_idx = {
-            let resp = saksaha::get_cm_idx(
-                self.saksaha_endpoint.clone(),
-                coin.cm.to_bytes(),
-            )
-            .await?;
-
-            resp.result.ok_or("")?.cm_idx.ok_or("")?
-        };
-
-        let merkle_rt;
-
-        let old_coin = {
-            let auth_path = {
-                let response = saksaha::get_auth_path(
-                    self.saksaha_endpoint.clone(),
-                    cm_idx,
-                )
-                .await?;
-
-                let result =
-                    response.result.ok_or(format!("cannot get auth path"))?;
-
-                let auth_path = result.auth_path;
-
-                {
-                    let hasher = Hasher::new();
-
-                    let mut curr = coin.cm.to_bytes();
-
-                    for (_, merkle_node) in auth_path.iter().enumerate() {
-                        let xl_value;
-                        let xr_value;
-
-                        let is_left: bool = merkle_node.1;
-
-                        if is_left {
-                            xl_value = merkle_node.0;
-                            xr_value = curr;
-                        } else {
-                            xl_value = curr;
-                            xr_value = merkle_node.0;
-                        }
-
-                        curr = hasher.mimc(&xl_value, &xr_value)?.to_bytes();
-                    }
-
-                    merkle_rt = curr;
-                };
-
-                auth_path
-            };
-
-            self.get_old_coin(coin, auth_path).await?
         };
 
         println!("[+] making proof...");
@@ -218,6 +456,144 @@ impl Wallet {
         Ok("success_power".to_string())
     }
 
+    // pub async fn send_pour_tx(
+    //     &self,
+    //     acc_addr: String,
+    //     ctr_addr: String,
+    //     ctr_request: CtrRequest,
+    // ) -> Result<String, WalletError> {
+    //     self.check_balance(&acc_addr).await?;
+
+    //     // ---------------------- inline-fn
+    //     let mut coin_manager_lock = self.get_coin_manager().write().await;
+
+    //     let coin: &CoinRecord = coin_manager_lock
+    //         .get_next_available_coin()
+    //         .ok_or("No usable coins")?;
+
+    //     let cm_idx = {
+    //         let resp = saksaha::get_cm_idx(
+    //             self.saksaha_endpoint.clone(),
+    //             coin.cm.to_bytes(),
+    //         )
+    //         .await?;
+
+    //         resp.result.ok_or("")?.cm_idx.ok_or("")?
+    //     };
+
+    //     let merkle_rt;
+
+    //     let old_coin = {
+    //         let auth_path = {
+    //             let response = saksaha::get_auth_path(
+    //                 self.saksaha_endpoint.clone(),
+    //                 cm_idx,
+    //             )
+    //             .await?;
+
+    //             let result =
+    //                 response.result.ok_or(format!("cannot get auth path"))?;
+
+    //             let auth_path = result.auth_path;
+
+    //             {
+    //                 let hasher = Hasher::new();
+
+    //                 let mut curr = coin.cm.to_bytes();
+
+    //                 for (_, merkle_node) in auth_path.iter().enumerate() {
+    //                     let xl_value;
+    //                     let xr_value;
+
+    //                     let is_left: bool = merkle_node.1;
+
+    //                     if is_left {
+    //                         xl_value = merkle_node.0;
+    //                         xr_value = curr;
+    //                     } else {
+    //                         xl_value = curr;
+    //                         xr_value = merkle_node.0;
+    //                     }
+
+    //                     curr = hasher.mimc(&xl_value, &xr_value)?.to_bytes();
+    //                 }
+
+    //                 merkle_rt = curr;
+    //             };
+
+    //             auth_path
+    //         };
+
+    //         self.get_old_coin(coin, auth_path).await?
+    //     };
+
+    //     let sn_1 = self.compute_sn(coin);
+
+    //     let (mut new_coin_1, mut new_coin_2) = {
+    //         let v = ScalarExt::into_u64(coin.v)?;
+
+    //         let new_coin_1 =
+    //             CoinRecord::new_random(v - GAS, Some(0), None, None)?;
+
+    //         let new_coin_2 = CoinRecord::new_random(0, Some(1), None, None)?;
+
+    //         (new_coin_1, new_coin_2)
+    //     };
+
+    //     println!("[+] making proof...");
+
+    //     let pi = CoinProof::generate_proof_1_to_2(
+    //         old_coin,
+    //         new_coin_1.extract(),
+    //         new_coin_2.extract(),
+    //     )?;
+
+    //     let mut pi_ser = Vec::new();
+    //     pi.write(&mut pi_ser).unwrap();
+
+    //     println!("[!] pi serialized, len: {}", pi_ser.len());
+    //     //--------------------------------
+
+    //     let json_response = saksaha::send_tx_pour(
+    //         self.saksaha_endpoint.clone(),
+    //         sn_1,
+    //         new_coin_1.cm.to_bytes(),
+    //         new_coin_2.cm.to_bytes(),
+    //         merkle_rt,
+    //         pi_ser,
+    //         ctr_addr,
+    //         ctr_request,
+    //     )
+    //     .await?;
+
+    //     let tx_hash =
+    //         json_response.result.ok_or("Value needs to be returned")?;
+
+    //     // waiting for block is written
+    //     tokio::time::sleep(Duration::from_millis(6000)).await;
+
+    //     new_coin_1.tx_hash = Some(tx_hash.clone());
+    //     new_coin_2.tx_hash = Some(tx_hash);
+
+    //     {
+    //         self.get_db().schema.put_coin(&new_coin_1)?;
+
+    //         self.get_db().schema.put_coin(&new_coin_2)?;
+
+    //         println!("[+] new coins have been stored in db");
+    //     }
+
+    //     {
+    //         coin_manager_lock.put_coin(new_coin_1)?;
+
+    //         coin_manager_lock.put_coin(new_coin_2)?;
+
+    //         println!("[+] new coins have been stored in coin_manager");
+    //     }
+
+    //     Ok("success_power".to_string())
+    // }
+
     // pub(crate) async fn update_cm(&self) {
     //     let coin_manager_lock = self.get_coin_manager().write().await;
 
@@ -238,7 +614,7 @@ impl Wallet {
         Ok(())
     }
 
-    pub(crate) async fn get_old_coin(
+    pub(crate) async fn convert_to_old_coin(
         &self,
         coin: &CoinRecord,
         auth_path: Vec<([u8; 32], bool)>,
