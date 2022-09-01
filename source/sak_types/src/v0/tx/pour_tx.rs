@@ -5,6 +5,8 @@ use sak_crypto::sha3::digest::typenum::U8;
 use serde::{Deserialize, Serialize};
 use type_extension::U8Arr32;
 
+pub const GAS: u64 = 10;
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct PourTx {
     //

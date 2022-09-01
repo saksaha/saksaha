@@ -1,8 +1,8 @@
 use crate::wallet::Wallet;
-use crate::wallet::GAS;
 use crate::WalletError;
 use core::time::Duration;
 use sak_contract_std::CtrRequest;
+use sak_crypto::encode_hex;
 use sak_crypto::Scalar;
 use sak_crypto::ScalarExt;
 use sak_proofs::CoinProof;
@@ -13,6 +13,8 @@ use sak_types::CoinRecord;
 use sak_types::CoinStatus;
 use std::convert::TryInto;
 use type_extension::U8Arr32;
+
+const GAS: u64 = 10;
 
 impl Wallet {
     pub async fn get_balance(
@@ -110,6 +112,7 @@ impl Wallet {
         };
 
         let cm_idx = {
+            log::debug!("get_cm_idx call");
             let resp = saksaha::get_cm_idx(
                 self.saksaha_endpoint.clone(),
                 coin.cm.to_bytes(),
@@ -123,6 +126,7 @@ impl Wallet {
 
         let old_coin = {
             let auth_path = {
+                log::debug!("get_auth_path call");
                 let response = saksaha::get_auth_path(
                     self.saksaha_endpoint.clone(),
                     cm_idx,
@@ -139,7 +143,7 @@ impl Wallet {
 
                     let mut curr = coin.cm.to_bytes();
 
-                    for (_, merkle_node) in auth_path.iter().enumerate() {
+                    for merkle_node in auth_path.iter() {
                         let xl_value;
                         let xr_value;
 
@@ -152,6 +156,16 @@ impl Wallet {
                             xl_value = curr;
                             xr_value = merkle_node.0;
                         }
+
+                        println!(
+                            "[+] xl: {:?}",
+                            ScalarExt::parse_arr(&xl_value)
+                        );
+                        println!(
+                            "[+] xr: {:?}",
+                            ScalarExt::parse_arr(&xr_value)
+                        );
+                        println!("");
 
                         curr = hasher.mimc(&xl_value, &xr_value)?.to_bytes();
                     }
@@ -176,13 +190,14 @@ impl Wallet {
         let mut pi_ser = Vec::new();
         pi.write(&mut pi_ser).unwrap();
 
-        println!("[!] pi serialized, len: {}", pi_ser.len());
+        // println!("[!] pi serialized, len: {}", pi_ser.len());
+        println!("[!] pi serialized: {}", encode_hex(&pi_ser));
 
         println!(
             "cm1: {:?}, cm2 {:?}, rt: {:?}",
-            new_coin_1.cm.to_bytes(),
-            new_coin_2.cm.to_bytes(),
-            merkle_rt
+            new_coin_1.cm,
+            new_coin_2.cm,
+            ScalarExt::parse_arr(&merkle_rt)?
         );
 
         let json_response = saksaha::send_tx_pour(
