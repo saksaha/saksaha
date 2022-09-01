@@ -3,9 +3,6 @@ mod hasher;
 mod merkle;
 mod mimc;
 
-#[cfg(test)]
-mod tests;
-
 pub use coin_proof::*;
 pub use hasher::*;
 pub use merkle::*;

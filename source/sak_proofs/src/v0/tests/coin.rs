@@ -1,15 +1,15 @@
-use crate::{ProofError, CM_TREE_DEPTH};
+use crate::ProofError;
 use bellman::groth16::{self, Parameters, Proof};
 use sak_crypto::{Bls12, OsRng, Scalar, ScalarExt};
 use sak_zkp_circuits::{
-    CoinProofCircuit1to2, Hasher, MerkleTree, NewCoin, OldCoin,
+    CoinProofCircuit1to2, Hasher, MerkleTree, NewCoin, OldCoin, CM_TREE_DEPTH,
 };
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::Write;
 use type_extension::U8Array;
 
-const TEST_TREE_DEPTH: u32 = 4;
+// const TEST_TREE_DEPTH: u32 = 4;
 const PARAM_FILE_NAME: &str = "mimc_params";
 
 pub struct TestContext {
