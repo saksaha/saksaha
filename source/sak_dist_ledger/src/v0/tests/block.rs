@@ -1,5 +1,6 @@
 use super::{test_util::TestUtil, utils};
 use sak_types::{Block, BlockCandidate};
+
 pub const REPEAT_NUM: u128 = 2;
 
 #[tokio::test(flavor = "multi_thread")]
