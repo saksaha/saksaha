@@ -2,14 +2,9 @@ use super::utils;
 use crate::blockchain::GenesisBlock;
 use crate::rpc::routes::v0::{QueryCtrRequest, QueryCtrResponse};
 use crate::tests::TestUtil;
-use crate::{
-    blockchain::ENVELOPE_CTR_ADDR, rpc::routes::v0::SendPourTxRequest,
-};
 use hyper::{Body, Client, Method, Request, Uri};
 use sak_contract_std::{CtrCallType, CtrRequest};
 use sak_rpc_interface::{JsonRequest, JsonResponse};
-use sak_types::PourTxCandidate;
-use std::collections::HashMap;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_call_contract() {
