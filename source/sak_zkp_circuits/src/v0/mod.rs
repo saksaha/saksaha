@@ -1,11 +1,9 @@
 mod coin_proof;
 mod hasher;
-mod merkle;
 mod mimc;
 
 pub use coin_proof::*;
 pub use hasher::*;
-pub use merkle::*;
 
 pub use bellman::gadgets::boolean::AllocatedBit;
 pub use bellman::groth16::{

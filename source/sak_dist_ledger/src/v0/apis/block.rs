@@ -1,6 +1,7 @@
 use crate::{DistLedgerApis, LedgerError};
 use sak_contract_std::Storage;
-use sak_proofs::{MerkleTree, CM_TREE_DEPTH};
+use sak_crypto::MerkleTree;
+use sak_dist_ledger_meta::CM_TREE_DEPTH;
 use sak_types::{
     Block, BlockHash, BlockHeight, Cm, CmIdx, CtrAddr, Tx, TxCandidate, TxHash,
 };
@@ -132,7 +133,6 @@ impl DistLedgerApis {
         block_hash: &String,
     ) -> Result<Option<Block>, LedgerError> {
         self.ledger_db.get_block(block_hash)
-        // self.get_block(&self.kv_db.db_instance, &self.schema, block_hash)
     }
 
     pub async fn get_block_list(

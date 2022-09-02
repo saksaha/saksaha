@@ -1,13 +1,18 @@
-use super::values::{self, VALIDATOR, VALIDATOR_CTR_ADDR};
-use crate::{Cm, MintTxCandidate, PourTxCandidate, Sn, Tx};
+// use super::values::{self, VALIDATOR, VALIDATOR_CTR_ADDR};
+use crate::v0::testing::values;
+use crate::{
+    Cm, MintTxCandidate, PourTxCandidate, Sn, Tx, VALIDATOR, VALIDATOR_CTR_ADDR,
+};
+// zz
 use crate::{TxCandidate, TypesError};
-use sak_crypto::ScalarExt;
+use sak_crypto::MerkleTree;
 use sak_crypto::{rand, Scalar};
+use sak_crypto::{MerkleTreeSim, ScalarExt};
+use sak_dist_ledger_meta::CM_TREE_DEPTH;
+use sak_proofs::CoinProof;
 use sak_proofs::Hasher;
-use sak_proofs::MerkleTree;
 use sak_proofs::NewCoin;
 use sak_proofs::OldCoin;
-use sak_proofs::{CoinProof, CM_TREE_DEPTH};
 use std::collections::HashMap;
 use type_extension::U8Arr32;
 use type_extension::U8Array;
@@ -139,6 +144,13 @@ pub fn mock_pour_tc_random() -> TxCandidate {
 
     let merkle_tree = MerkleTree::new(CM_TREE_DEPTH as u32);
 
+    let mut mt_sim = MerkleTreeSim::new(CM_TREE_DEPTH as u32);
+
+    {
+        let node_0_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
+        mt_sim.add_leaf_node(node_0_1);
+    };
+
     let merkle_nodes = {
         let mut m = HashMap::new();
 
@@ -148,17 +160,10 @@ pub fn mock_pour_tc_random() -> TxCandidate {
         let node_3_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
         // let node_4_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
 
-        let _cm_tree_depth_lock = [
-            ("0_1", node_0_1),
-            ("1_1", node_1_1),
-            ("2_1", node_2_1),
-            ("3_1", node_3_1),
-        ];
-
-        // m.insert("0_1", node_0_1);
-        // m.insert("1_1", node_1_1);
-        // m.insert("2_1", node_2_1);
-        // m.insert("3_1", node_3_1);
+        m.insert("0_1", node_0_1);
+        m.insert("1_1", node_1_1);
+        m.insert("2_1", node_2_1);
+        m.insert("3_1", node_3_1);
         // m.insert("4_1", node_4_1);
 
         let node_1_0 = hasher.mimc_scalar(cm_1_old, node_0_1);
@@ -199,8 +204,6 @@ pub fn mock_pour_tc_random() -> TxCandidate {
 
         ret
     };
-
-    // let proof_context = make_proof_context();
 
     let coin_1_old = OldCoin {
         addr_pk: Some(addr_pk_1_old),
@@ -808,9 +811,6 @@ pub fn mock_mint_tc_deploying_contract(
     contract_data: Vec<u8>,
     ctrt_addr: String,
 ) -> TxCandidate {
-    // let tx_candidate =
-    //     MintTxCandidate::new_dummy_deploying_contract(contract_data, ctrt_addr);
-
     let hasher = Hasher::new();
 
     let rho = U8Array::new_empty_32();
