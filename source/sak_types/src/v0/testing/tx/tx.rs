@@ -162,7 +162,6 @@ pub fn mock_pour_tc_random() -> TxCandidate {
         m.insert("1_1", node_1_1);
         m.insert("2_1", node_2_1);
         m.insert("3_1", node_3_1);
-
         // m.insert("4_1", node_4_1);
 
         let node_1_0 = hasher.mimc_scalar(cm_1_old, node_0_1);

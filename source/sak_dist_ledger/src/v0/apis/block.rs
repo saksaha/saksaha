@@ -133,7 +133,6 @@ impl DistLedgerApis {
         block_hash: &String,
     ) -> Result<Option<Block>, LedgerError> {
         self.ledger_db.get_block(block_hash)
-        // self.get_block(&self.kv_db.db_instance, &self.schema, block_hash)
     }
 
     pub async fn get_block_list(

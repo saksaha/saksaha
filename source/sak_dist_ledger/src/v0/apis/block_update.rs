@@ -140,7 +140,6 @@ impl DistLedgerApis {
 
         let (block, txs) = bc.upgrade(
             next_block_height,
-            // next_tx_height,
             next_cm_idx,
             next_merkle_rt.to_owned(),
         );
@@ -434,15 +433,9 @@ async fn handle_pour_tx_candidate(
     process_ctr_state_update(apis, ctr_addr, data, tx_ctr_op, ctr_state_update)
         .await?;
 
-    let cm_count = process_merkle_update(
-        apis,
-        merkle_update,
-        &tc.cms,
-        // vec![&tc.cm_1, &tc.cm_2],
-        next_cm_idx,
-        // ledger_cm_count,
-    )
-    .await?;
+    let cm_count =
+        process_merkle_update(apis, merkle_update, &tc.cms, next_cm_idx)
+            .await?;
 
     Ok(cm_count)
 }
@@ -451,28 +444,32 @@ async fn process_merkle_update(
     apis: &DistLedgerApis,
     merkle_update: &mut MerkleUpdate,
     cms: &Vec<[u8; 32]>,
-    // ledger_cm_count: u128,
     next_cm_idx: CmIdx,
 ) -> Result<u128, LedgerError> {
     let cm_count = cms.len() as u128;
 
     for (idx, cm) in cms.iter().enumerate() {
-        // let leaf_idx = ledger_cm_count + idx as u128;
         let cm_idx = next_cm_idx + idx as u128;
         let auth_path = apis.merkle_tree.generate_auth_paths(cm_idx);
+
+        // println!("auth_path: {:?}", auth_path);
 
         let leaf_loc = format!("{}_{}", 0, cm_idx);
 
         merkle_update.insert(leaf_loc, *cm);
 
+        // let mut curr_idx = cm_idx;
         for (height, path) in auth_path.iter().enumerate() {
             let curr_idx = path.idx;
             let sibling_idx = match path.direction {
                 true => path.idx + 1,
                 false => path.idx - 1,
             };
+            // let sibling_idx = path.idx;
 
             let sibling_loc = format!("{}_{}", height, sibling_idx);
+            // let sibling_loc = &path.idx_label;
+
             let sibling_node = match merkle_update.get(&sibling_loc) {
                 Some(n) => *n,
                 None => apis.get_merkle_node(&sibling_loc).await?,
@@ -484,6 +481,8 @@ async fn process_merkle_update(
                 None => apis.get_merkle_node(&curr_loc).await?,
             };
 
+            // println!("curr_loc: {}, sibling_loc: {}", curr_loc, sibling_loc,);
+
             let merkle_node =
                 apis.hasher.mimc(&curr_node, &sibling_node)?.to_bytes();
 
@@ -491,6 +490,7 @@ async fn process_merkle_update(
             let update_loc = format!("{}_{}", height + 1, parent_idx);
 
             merkle_update.insert(update_loc, merkle_node);
+            // curr_idx = parent_idx;
         }
     }
 

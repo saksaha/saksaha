@@ -9,6 +9,7 @@ pub struct MerkleTree {
 pub struct MerklePath {
     pub idx: u128,
     pub direction: bool,
+    pub idx_label: String,
 }
 
 impl MerkleTree {
@@ -25,7 +26,7 @@ impl MerkleTree {
         let mut auth_path = vec![];
         let mut curr_idx = idx;
 
-        for _ in 0..height {
+        for h in 0..height {
             let sibling_idx = Self::get_sibling_idx(curr_idx);
 
             let direction = if sibling_idx % 2 == 0 { true } else { false };
@@ -33,6 +34,7 @@ impl MerkleTree {
             let p = MerklePath {
                 idx: sibling_idx,
                 direction,
+                idx_label: format!("{}_{}", h, sibling_idx),
             };
 
             auth_path.push(p);
