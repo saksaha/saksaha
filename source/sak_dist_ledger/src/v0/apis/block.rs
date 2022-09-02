@@ -1,7 +1,7 @@
 use crate::{DistLedgerApis, LedgerError};
 use sak_contract_std::Storage;
+use sak_crypto::MerkleTree;
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
-use sak_proofs::MerkleTree;
 use sak_types::{
     Block, BlockHash, BlockHeight, Cm, CmIdx, CtrAddr, Tx, TxCandidate, TxHash,
 };

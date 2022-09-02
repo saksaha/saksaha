@@ -5,10 +5,10 @@ use crate::{
 use crate::{TxCandidate, TypesError};
 use sak_crypto::ScalarExt;
 use sak_crypto::{rand, Scalar};
+use sak_crypto::{MerkleNodes, MerkleTree};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
 use sak_proofs::CoinProof;
 use sak_proofs::Hasher;
-use sak_proofs::MerkleTree;
 use sak_proofs::NewCoin;
 use sak_proofs::OldCoin;
 use std::collections::HashMap;
@@ -141,6 +141,10 @@ pub fn mock_pour_tc_random() -> TxCandidate {
     };
 
     let merkle_tree = MerkleTree::new(CM_TREE_DEPTH as u32);
+
+    let merkle_nodes2 = {
+        MerkleNodes::new(CM_TREE_DEPTH as u32);
+    };
 
     let merkle_nodes = {
         let mut m = HashMap::new();

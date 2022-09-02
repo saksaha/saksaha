@@ -19,6 +19,7 @@ base64ct = { version = "1.5.0", features = ["alloc"] }
 hkdf = "0.12.3"
 sha2 = "0.10.1"
 aes-gcm-siv = "0.10.3"
+log = "0.4"
 
 [dev-dependencies]
 sak_test_utils = { path = "../sak_test_utils" }

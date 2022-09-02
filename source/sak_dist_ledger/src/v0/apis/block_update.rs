@@ -2,7 +2,7 @@ use crate::{CtrStateUpdate, DistLedgerApis, LedgerError, MerkleUpdate};
 use colored::Colorize;
 use log::{debug, info, warn};
 use sak_contract_std::{CtrCallType, CtrRequest, Storage, ERROR_PLACEHOLDER};
-use sak_crypto::{Bls12, Scalar, ScalarExt};
+use sak_crypto::{Bls12, MerkleTree, Scalar, ScalarExt};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
 use sak_proofs::{CoinProof, Hasher, Proof};
 use sak_types::{
@@ -485,7 +485,7 @@ async fn process_merkle_update(
             let merkle_node =
                 apis.hasher.mimc(&curr_node, &sibling_node)?.to_bytes();
 
-            let parent_idx = sak_proofs::get_parent_idx(curr_idx);
+            let parent_idx = MerkleTree::get_parent_idx(curr_idx);
             let update_loc = format!("{}_{}", height + 1, parent_idx);
 
             merkle_update.insert(update_loc, merkle_node);
