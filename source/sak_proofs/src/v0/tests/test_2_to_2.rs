@@ -1,3 +1,4 @@
+use crate::CoinProof;
 use crate::{ProofError, CM_TREE_DEPTH};
 use bellman::groth16::{self, Parameters, Proof};
 use sak_crypto::{Bls12, OsRng, Scalar, ScalarExt};
@@ -649,8 +650,7 @@ pub fn get_test_params_2_to_2(constants: &[Scalar]) -> Parameters<Bls12> {
     de_params
 }
 
-fn make_proof_2_to_2(
-    // old coins
+fn generate_proof_2_to_2(
     coin_1_old: OldCoin,
     coin_2_old: OldCoin,
     coin_1_new: NewCoin,
@@ -684,7 +684,7 @@ fn make_proof_2_to_2(
     Ok(proof)
 }
 
-fn verify_proof_2to2(
+fn verify_proof_2_to_2(
     proof: Proof<Bls12>,
     public_inputs: &[Scalar],
     hasher: &Hasher,
@@ -753,12 +753,11 @@ pub async fn test_coin_ownership_default_2_to_2() {
     };
 
     let proof =
-        make_proof_2_to_2(coin_1_old, coin_2_old, coin_1_new, coin_2_new)
-            .unwrap();
+        generate_proof_2_to_2(coin_1_old, coin_2_old, coin_1_new, coin_2_new)
+            .expect("proof should be created");
 
     let public_inputs: Vec<Scalar> = vec![
         test_context.merkle_rt_1,
-        // test_context.merkle_rt_2,
         test_context.sn_1,
         test_context.sn_2,
         test_context.cm_1,
@@ -766,7 +765,7 @@ pub async fn test_coin_ownership_default_2_to_2() {
     ];
 
     assert_eq!(
-        verify_proof_2to2(proof, &public_inputs, &test_context.hasher),
+        verify_proof_2_to_2(proof, &public_inputs, &test_context.hasher),
         true
     );
 }
