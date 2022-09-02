@@ -4,9 +4,8 @@ use sak_crypto::{encode_hex, Bls12, Scalar, ScalarExt};
 use sak_dist_ledger::{
     Consensus, ConsensusError, DistLedger, DistLedgerApis, DistLedgerArgs,
 };
-use sak_proofs::{
-    CoinProof, Hasher, MerkleTree, NewCoin, OldCoin, Proof, CM_TREE_DEPTH,
-};
+use sak_dist_ledger_meta::CM_TREE_DEPTH;
+use sak_proofs::{CoinProof, Hasher, MerkleTree, NewCoin, OldCoin, Proof};
 use sak_types::{BlockCandidate, TxCandidate};
 use std::{collections::HashMap, sync::Arc, time::Duration};
 use type_extension::U8Array;

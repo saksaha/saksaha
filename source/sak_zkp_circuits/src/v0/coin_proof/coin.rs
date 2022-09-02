@@ -1,5 +1,5 @@
-use crate::CM_TREE_DEPTH;
 use sak_crypto::Scalar;
+use sak_dist_ledger_meta::CM_TREE_DEPTH;
 
 #[derive(Debug, Copy, Clone)]
 pub struct OldCoin {

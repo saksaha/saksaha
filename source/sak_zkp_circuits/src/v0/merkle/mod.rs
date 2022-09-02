@@ -26,7 +26,6 @@ impl MerkleTree {
     }
 
     // Calculates which indices and directions are needed to calculate merkle
-    // root
     pub fn generate_auth_paths(&self, idx: u128) -> Vec<Path> {
         let height = self.height;
         let mut auth_path = vec![];

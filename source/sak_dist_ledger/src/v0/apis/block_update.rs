@@ -3,7 +3,8 @@ use colored::Colorize;
 use log::{debug, info, warn};
 use sak_contract_std::{CtrCallType, CtrRequest, Storage, ERROR_PLACEHOLDER};
 use sak_crypto::{Bls12, Scalar, ScalarExt};
-use sak_proofs::{CoinProof, Hasher, Proof, CM_TREE_DEPTH};
+use sak_dist_ledger_meta::CM_TREE_DEPTH;
+use sak_proofs::{CoinProof, Hasher, Proof};
 use sak_types::{
     Block, BlockCandidate, CmIdx, MintTxCandidate, PourTxCandidate, Tx,
     TxCandidate, TxCtrOp,
