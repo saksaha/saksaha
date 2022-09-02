@@ -126,8 +126,8 @@ impl P2PHost {
 
     pub(crate) async fn run(&self) {
         tokio::join!(
-            self.p2p_discovery.run(),
             self.p2p_task_runtime.run(),
+            self.p2p_discovery.run(),
             self.p2p_server.run(),
             self.p2p_dial_scheduler.run(),
         );
