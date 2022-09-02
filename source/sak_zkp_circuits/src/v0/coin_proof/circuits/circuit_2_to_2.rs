@@ -71,19 +71,21 @@ impl Circuit<Scalar> for CoinProofCircuit2to2 {
         let sn_1 = self.hasher.mimc_scalar_cs(cs, addr_sk_1_old, rho_1_old);
         let sn_2 = self.hasher.mimc_scalar_cs(cs, addr_sk_2_old, rho_2_old);
 
-        let merkle_rt = climb_up_tree(
+        let merkle_rt = climb_up_tree_2_to_2(
             cs,
             cm_1_old,
-            &self.coin_1_old.auth_path,
-            &self.hasher,
-        );
-
-        let merkle_rt_2 = climb_up_tree(
-            cs,
             cm_2_old,
+            &self.coin_1_old.auth_path,
             &self.coin_2_old.auth_path,
             &self.hasher,
         );
+
+        // let merkle_rt_2 = climb_up_tree(
+        //     cs,
+        //     cm_2_old,
+        //     &self.coin_2_old.auth_path,
+        //     &self.hasher,
+        // );
 
         let addr_pk_1_new = self.coin_1_new.addr_pk.or(Some(Scalar::default()));
         let rho_1_new = self.coin_1_new.rho.or(Some(Scalar::default()));
@@ -149,10 +151,10 @@ impl Circuit<Scalar> for CoinProofCircuit2to2 {
                 || merkle_rt.ok_or(SynthesisError::AssignmentMissing),
             )?;
 
-            cs.alloc_input(
-                || "merkle_rt_2",
-                || merkle_rt_2.ok_or(SynthesisError::AssignmentMissing),
-            )?;
+            // cs.alloc_input(
+            //     || "merkle_rt_2",
+            //     || merkle_rt_2.ok_or(SynthesisError::AssignmentMissing),
+            // )?;
 
             cs.alloc_input(
                 || "sn_1_old",
@@ -239,7 +241,7 @@ pub fn climb_up_tree_2_to_2<CS: ConstraintSystem<Scalar>>(
     auth_path_2: &[Option<(Scalar, bool)>; CM_TREE_DEPTH as usize],
     hasher: &Hasher,
 ) -> Option<Scalar> {
-    let mut curr = leaf_1;
+    let mut curr_1 = leaf_1;
 
     for (idx, merkle_node) in auth_path_1.iter().enumerate() {
         // println!("idx: {}, sibling: {:?}", idx, merkle_node);
@@ -273,16 +275,65 @@ pub fn climb_up_tree_2_to_2<CS: ConstraintSystem<Scalar>>(
             None => false,
         } {
             xl_value = Some(temp.0);
-            xr_value = curr;
+            xr_value = curr_1;
         } else {
-            xl_value = curr;
+            xl_value = curr_1;
             xr_value = Some(temp.0);
         }
 
-        curr = hasher.mimc_scalar_cs(cs, xl_value, xr_value);
+        curr_1 = hasher.mimc_scalar_cs(cs, xl_value, xr_value);
     }
 
-    return curr;
+    let mut curr_2 = leaf_2;
+
+    for (idx, merkle_node) in auth_path_2.iter().enumerate() {
+        // println!("idx: {}, sibling: {:?}", idx, merkle_node);
+
+        let cs = &mut cs.namespace(|| format!("height {}", idx));
+
+        let cur_is_right = AllocatedBit::alloc(
+            cs.namespace(|| "cur is right"),
+            merkle_node.as_ref().map(|&(_, d)| d),
+        )
+        .expect("cur_is_right");
+
+        let xl_value;
+        let xr_value;
+
+        let is_right = cur_is_right.get_value().and_then(|v| {
+            if v {
+                Some(true)
+            } else {
+                Some(false)
+            }
+        });
+
+        let temp = match *merkle_node {
+            Some(a) => a,
+            None => (Scalar::default(), false),
+        };
+
+        if match is_right {
+            Some(a) => a,
+            None => false,
+        } {
+            xl_value = Some(temp.0);
+            xr_value = curr_2;
+        } else {
+            xl_value = curr_2;
+            xr_value = Some(temp.0);
+        }
+
+        curr_2 = hasher.mimc_scalar_cs(cs, xl_value, xr_value);
+    }
+
+    match (&curr_1, &curr_2) {
+        (Some(a), Some(b)) => assert_eq!(a, b),
+        (None, None) => (),
+        _ => panic!("a and b not equal"),
+    }
+
+    return curr_1;
 }
 
 pub fn check_cm_commitments<CS: ConstraintSystem<Scalar>>(

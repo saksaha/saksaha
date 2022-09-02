@@ -35,7 +35,7 @@ pub struct TestContext {
     pub v_2_old: Scalar,
     pub cm_2_old: Scalar,
     pub auth_path_2: [(Scalar, bool); CM_TREE_DEPTH as usize],
-    pub merkle_rt_2: Scalar,
+    // pub merkle_rt_2: Scalar,
     pub sn_2: Scalar,
 
     // new coin 1
@@ -180,7 +180,7 @@ pub fn make_test_context_2_to_2() -> TestContext {
         };
 
         let v = {
-            let arr = U8Array::from_int(120);
+            let arr = U8Array::from_int(80);
             ScalarExt::parse_arr(&arr).unwrap()
         };
 
@@ -217,7 +217,7 @@ pub fn make_test_context_2_to_2() -> TestContext {
         };
 
         let v = {
-            let arr = U8Array::from_int(40);
+            let arr = U8Array::from_int(120);
             ScalarExt::parse_arr(&arr).unwrap()
         };
 
@@ -230,16 +230,16 @@ pub fn make_test_context_2_to_2() -> TestContext {
         (addr_sk, addr_pk, r, s, rho, v, cm)
     };
 
-    let merkle_tree_1 = MerkleTree::new(CM_TREE_DEPTH as u32);
+    let merkle_tree = MerkleTree::new(CM_TREE_DEPTH as u32);
 
-    let merkle_nodes_1 = mock_merkle_nodes(&hasher, cm_1_old);
+    let merkle_nodes_1 = mock_merkle_nodes_cm_1(&hasher, cm_1_old, cm_2_old);
 
     let merkle_rt_1 = *merkle_nodes_1
         .get(format!("{}_0", CM_TREE_DEPTH).as_str())
         .unwrap();
 
     let auth_path_1 = {
-        let v = merkle_tree_1.generate_auth_paths(0);
+        let v = merkle_tree.generate_auth_paths(0);
         let mut ret = [(Scalar::default(), false); CM_TREE_DEPTH as usize];
 
         v.iter().enumerate().for_each(|(idx, p)| {
@@ -264,16 +264,17 @@ pub fn make_test_context_2_to_2() -> TestContext {
         ret
     };
 
-    let merkle_tree_2 = MerkleTree::new(CM_TREE_DEPTH as u32);
-
-    let merkle_nodes_2 = mock_merkle_nodes(&hasher, cm_2_old);
+    let merkle_nodes_2 = mock_merkle_nodes_cm_2(&hasher, cm_1_old, cm_2_old);
 
     let merkle_rt_2 = *merkle_nodes_2
         .get(format!("{}_0", CM_TREE_DEPTH).as_str())
         .unwrap();
 
+    // println!("merkle_rt_1: {:?}", merkle_rt_1);
+    // println!("merkle_rt_2: {:?}", merkle_rt_2);
+
     let auth_path_2 = {
-        let v = merkle_tree_2.generate_auth_paths(0);
+        let v = merkle_tree.generate_auth_paths(1);
         let mut ret = [(Scalar::default(), false); CM_TREE_DEPTH as usize];
 
         v.iter().enumerate().for_each(|(idx, p)| {
@@ -298,6 +299,9 @@ pub fn make_test_context_2_to_2() -> TestContext {
         ret
     };
 
+    println!("auth_path_1: {:?}", auth_path_1);
+    println!("auth_path_2: {:?}", auth_path_2);
+
     TestContext {
         hasher,
         addr_pk_1_old,
@@ -318,7 +322,7 @@ pub fn make_test_context_2_to_2() -> TestContext {
         v_2_old,
         cm_2_old,
         auth_path_2,
-        merkle_rt_2,
+        // merkle_rt_2,
         sn_2,
         addr_sk_1,
         addr_pk_1,
@@ -337,17 +341,15 @@ pub fn make_test_context_2_to_2() -> TestContext {
     }
 }
 
-pub fn mock_merkle_nodes(
+pub fn mock_merkle_nodes_cm_1(
     hasher: &Hasher,
-    cm_old: Scalar,
+    cm_old_1: Scalar,
+    cm_old_2: Scalar,
 ) -> HashMap<&'static str, Scalar> {
     let merkle_nodes = {
         let mut m = HashMap::new();
 
-        let node_0_1 = {
-            let arr = U8Array::new_empty_32();
-            ScalarExt::parse_arr(&arr).unwrap()
-        };
+        let node_0_1 = cm_old_2;
 
         let node_1_1 = {
             let node_0_2 = {
@@ -450,7 +452,7 @@ pub fn mock_merkle_nodes(
             hasher.mimc_scalar(node_2_2, node_2_3)
         };
 
-        let node_1_0 = hasher.mimc_scalar(cm_old, node_0_1);
+        let node_1_0 = hasher.mimc_scalar(cm_old_1, node_0_1);
 
         let node_2_0 = hasher.mimc_scalar(node_1_0, node_1_1);
 
@@ -459,6 +461,140 @@ pub fn mock_merkle_nodes(
         let node_4_0 = hasher.mimc_scalar(node_3_0, node_3_1);
 
         m.insert("0_1", node_0_1);
+        m.insert("1_1", node_1_1);
+        m.insert("2_1", node_2_1);
+        m.insert("3_1", node_3_1);
+        m.insert("4_0", node_4_0);
+
+        m
+    };
+
+    merkle_nodes
+}
+
+pub fn mock_merkle_nodes_cm_2(
+    hasher: &Hasher,
+    cm_old_1: Scalar,
+    cm_old_2: Scalar,
+) -> HashMap<&'static str, Scalar> {
+    let merkle_nodes = {
+        let mut m = HashMap::new();
+
+        // let node_0_1 = {
+        //     let arr = U8Array::new_empty_32();
+        //     ScalarExt::parse_arr(&arr).unwrap()
+        // };
+
+        let node_1_1 = {
+            let node_0_2 = {
+                let arr = U8Array::new_empty_32();
+                ScalarExt::parse_arr(&arr).unwrap()
+            };
+
+            let node_0_3 = {
+                let arr = U8Array::new_empty_32();
+                ScalarExt::parse_arr(&arr).unwrap()
+            };
+
+            let h = hasher.mimc_scalar(node_0_2, node_0_3);
+            h
+        };
+
+        let node_2_1 = {
+            let node_0_4 = {
+                let arr = U8Array::new_empty_32();
+                ScalarExt::parse_arr(&arr).unwrap()
+            };
+
+            let node_0_5 = {
+                let arr = U8Array::new_empty_32();
+                ScalarExt::parse_arr(&arr).unwrap()
+            };
+
+            let node_0_6 = {
+                let arr = U8Array::new_empty_32();
+                ScalarExt::parse_arr(&arr).unwrap()
+            };
+
+            let node_0_7 = {
+                let arr = U8Array::new_empty_32();
+                ScalarExt::parse_arr(&arr).unwrap()
+            };
+
+            let node_1_2 = hasher.mimc_scalar(node_0_4, node_0_5);
+
+            let node_1_3 = hasher.mimc_scalar(node_0_6, node_0_7);
+
+            hasher.mimc_scalar(node_1_2, node_1_3)
+        };
+
+        let node_3_1 = {
+            let node_0_8 = {
+                let arr = U8Array::new_empty_32();
+                ScalarExt::parse_arr(&arr).unwrap()
+            };
+
+            let node_0_9 = {
+                let arr = U8Array::new_empty_32();
+                ScalarExt::parse_arr(&arr).unwrap()
+            };
+
+            let node_0_10 = {
+                let arr = U8Array::new_empty_32();
+                ScalarExt::parse_arr(&arr).unwrap()
+            };
+
+            let node_0_11 = {
+                let arr = U8Array::new_empty_32();
+                ScalarExt::parse_arr(&arr).unwrap()
+            };
+
+            let node_0_12 = {
+                let arr = U8Array::new_empty_32();
+                ScalarExt::parse_arr(&arr).unwrap()
+            };
+
+            let node_0_13 = {
+                let arr = U8Array::new_empty_32();
+                ScalarExt::parse_arr(&arr).unwrap()
+            };
+
+            let node_0_14 = {
+                let arr = U8Array::new_empty_32();
+                ScalarExt::parse_arr(&arr).unwrap()
+            };
+
+            let node_0_15 = {
+                let arr = U8Array::new_empty_32();
+                ScalarExt::parse_arr(&arr).unwrap()
+            };
+
+            //
+            let node_1_4 = hasher.mimc_scalar(node_0_8, node_0_9);
+
+            let node_1_5 = hasher.mimc_scalar(node_0_10, node_0_11);
+
+            let node_1_6 = hasher.mimc_scalar(node_0_12, node_0_13);
+
+            let node_1_7 = hasher.mimc_scalar(node_0_14, node_0_15);
+
+            //
+            let node_2_2 = hasher.mimc_scalar(node_1_4, node_1_5);
+
+            let node_2_3 = hasher.mimc_scalar(node_1_6, node_1_7);
+
+            hasher.mimc_scalar(node_2_2, node_2_3)
+        };
+
+        let node_1_0 = hasher.mimc_scalar(cm_old_1, cm_old_2);
+
+        let node_2_0 = hasher.mimc_scalar(node_1_0, node_1_1);
+
+        let node_3_0 = hasher.mimc_scalar(node_2_0, node_2_1);
+
+        let node_4_0 = hasher.mimc_scalar(node_3_0, node_3_1);
+
+        m.insert("0_0", cm_old_1);
         m.insert("1_1", node_1_1);
         m.insert("2_1", node_2_1);
         m.insert("3_1", node_3_1);
@@ -622,7 +758,7 @@ pub async fn test_coin_ownership_default_2_to_2() {
 
     let public_inputs: Vec<Scalar> = vec![
         test_context.merkle_rt_1,
-        test_context.merkle_rt_2,
+        // test_context.merkle_rt_2,
         test_context.sn_1,
         test_context.sn_2,
         test_context.cm_1,
