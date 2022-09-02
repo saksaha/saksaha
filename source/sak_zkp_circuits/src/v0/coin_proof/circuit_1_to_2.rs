@@ -1,14 +1,8 @@
-use crate::{CircuitError, Hasher, NewCoin, OldCoin, CM_TREE_DEPTH};
+use crate::{Hasher, NewCoin, OldCoin, CM_TREE_DEPTH};
 use bellman::gadgets::boolean::AllocatedBit;
 use bellman::{Circuit, ConstraintSystem, SynthesisError};
-<<<<<<< HEAD:source/sak_zkp_circuits/src/v0/coin_proof/circuits/circuit_1_to_2.rs
-use sak_crypto::{Bls12, OsRng, Scalar, ScalarExt};
-use std::fs::File;
-use std::io::Write;
-=======
 use sak_crypto::Scalar;
 use type_extension::U8Array;
->>>>>>> dev:source/sak_zkp_circuits/src/v0/coin_proof/circuit_1_to_2.rs
 
 pub const GAS: u64 = 10;
 
@@ -232,21 +226,10 @@ pub fn require_equal_val_summation<CS: ConstraintSystem<Scalar>>(
     v_1: Option<Scalar>,
     v_2: Option<Scalar>,
 ) {
-<<<<<<< HEAD:source/sak_zkp_circuits/src/v0/coin_proof/circuits/circuit_1_to_2.rs
-    let v_gas = cs
-        .alloc(
-            || "v_gas",
-            || {
-                Some(ScalarExt::parse_u64(10).unwrap())
-                    .ok_or(SynthesisError::AssignmentMissing)
-            },
-        )
-=======
     let gas = Some(Scalar::from_bytes(&U8Array::from_int(GAS)).unwrap());
 
     let v_gas = cs
         .alloc(|| "v_gas", || gas.ok_or(SynthesisError::AssignmentMissing))
->>>>>>> dev:source/sak_zkp_circuits/src/v0/coin_proof/circuit_1_to_2.rs
         .unwrap();
 
     let v_old = cs

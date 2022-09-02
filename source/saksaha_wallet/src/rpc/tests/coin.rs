@@ -57,7 +57,7 @@ async fn test_update_coin_status() {
 }
 
 // #[tokio::test(flavor = "multi_thread")]
-// async fn test_2send_tx_twice() {
+// async fn test_send_multiple_tx_pour() {
 //     sak_test_utils::init_test_log();
 
 //     // let test_credential = utils::make_test_credential().await;

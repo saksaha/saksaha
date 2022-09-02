@@ -1,10 +1,6 @@
-<<<<<<< HEAD
-pub use super::proof::*;
-use crate::{Hasher, ProofError, CM_TREE_DEPTH};
-=======
-use crate::CM_TREE_DEPTH;
->>>>>>> dev
 use sak_crypto::Scalar;
+
+use crate::{CircuitError, Hasher, CM_TREE_DEPTH};
 
 #[derive(Debug, Copy, Clone)]
 pub struct OldCoin {
@@ -102,7 +98,7 @@ impl NewCoin {
         }
     }
 
-    pub fn compute_cm(&self) -> Result<Scalar, ProofError> {
+    pub fn compute_cm(&self) -> Result<Scalar, CircuitError> {
         {
             if self.r.is_none()
                 || self.s.is_none()

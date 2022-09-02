@@ -6,9 +6,9 @@ use sak_rpc_interface::{JsonRequest, JsonResponse};
 #[tokio::test(flavor = "multi_thread")]
 async fn test_get_balance_default() {
     sak_test_utils::init_test_log();
-    let mock_context = utils::mock_wallet_context().await;
+    let test_context = utils::mock_wallet_context().await;
 
-    let rpc = mock_context.rpc;
+    let rpc = test_context.rpc;
 
     let rpc_port = rpc.get_rpc_port();
 
@@ -21,7 +21,7 @@ async fn test_get_balance_default() {
 
     let body = {
         let get_balance_req = GetBalanceRequest {
-            acc_addr: mock_context.acc_addr.clone(),
+            acc_addr: test_context.acc_addr.clone(),
         };
 
         let params = serde_json::to_vec(&get_balance_req).unwrap();
