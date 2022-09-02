@@ -3,7 +3,6 @@ use crate::Consensus;
 use crate::DistLedgerApis;
 use crate::LedgerDB;
 use crate::LedgerError;
-use crate::Runtime;
 use crate::SyncPool;
 use log::info;
 use sak_proofs::{Hasher, MerkleTree};
@@ -23,7 +22,7 @@ pub struct DistLedger {
     pub ledger_event_tx: Arc<Sender<DistLedgerEvent>>,
     // pub(crate) vm: VM,
     // pub(crate) consensus: Box<dyn Consensus + Send + Sync>,
-    runtime: Arc<Runtime>,
+    // runtime: Arc<Runtime>,
     // pub(crate) hasher: Hasher,
     // pub(crate) merkle_tree: MerkleTree,
 }
@@ -66,11 +65,11 @@ impl DistLedger {
             Arc::new(p)
         };
 
-        let runtime = {
-            let r = Runtime::init(sync_pool.clone(), ledger_event_tx.clone());
+        // let runtime = {
+        //     let r = Runtime::init(sync_pool.clone(), ledger_event_tx.clone());
 
-            Arc::new(r)
-        };
+        //     Arc::new(r)
+        // };
 
         let hasher = Hasher::new();
 
@@ -88,7 +87,7 @@ impl DistLedger {
         let dist_ledger = DistLedger {
             apis,
             ledger_event_tx,
-            runtime,
+            // runtime,
         };
 
         if let Some(bc) = genesis_block {
@@ -108,10 +107,10 @@ impl DistLedger {
     }
 
     pub async fn run(&self) {
-        let runtime = self.runtime.clone();
+        // let runtime = self.runtime.clone();
 
-        tokio::spawn(async move {
-            runtime.run().await;
-        });
+        // tokio::spawn(async move {
+        //     runtime.run().await;
+        // });
     }
 }
