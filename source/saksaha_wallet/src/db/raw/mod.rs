@@ -1,6 +1,6 @@
 mod io;
 
-use sak_kv_db::{BoundColumnFamily, ColumnFamilyDescriptor, Options, DB};
+use sak_kv_db::{BoundColumnFamily, DB};
 use std::sync::Arc;
 
 pub(crate) struct Raw {

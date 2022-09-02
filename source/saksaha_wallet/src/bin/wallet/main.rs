@@ -5,7 +5,6 @@ mod prompt;
 use log::info;
 use sak_logger::RUST_LOG_ENV;
 use saksaha_wallet::{App, AppArgs, Config, WalletError};
-use std::{thread, time::Duration};
 
 fn main() -> Result<(), WalletError> {
     {
