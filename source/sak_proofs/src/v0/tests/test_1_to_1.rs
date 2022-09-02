@@ -1,9 +1,8 @@
 use crate::{CoinProof, ProofError};
 use bellman::groth16::{self, Parameters, Proof};
-use sak_crypto::{Bls12, OsRng, Scalar, ScalarExt};
-use sak_zkp_circuits::{
-    CoinProofCircuit1to2, Hasher, MerkleTree, NewCoin, OldCoin, CM_TREE_DEPTH,
-};
+use sak_crypto::{Bls12, MerkleTree, OsRng, Scalar, ScalarExt};
+use sak_dist_ledger_meta::CM_TREE_DEPTH;
+use sak_zkp_circuits::{CoinProofCircuit1to2, Hasher, NewCoin, OldCoin};
 use std::collections::HashMap;
 use type_extension::U8Array;
 
