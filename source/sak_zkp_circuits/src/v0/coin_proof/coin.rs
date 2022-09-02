@@ -1,4 +1,3 @@
-pub use super::proof::*;
 use crate::CM_TREE_DEPTH;
 use sak_crypto::Scalar;
 

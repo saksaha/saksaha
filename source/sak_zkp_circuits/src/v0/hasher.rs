@@ -1,5 +1,5 @@
 use super::mimc;
-use crate::ProofError;
+use crate::CircuitError;
 use crate::Scalar;
 use bellman::gadgets::boolean::AllocatedBit;
 use bellman::gadgets::boolean::Boolean;
@@ -30,7 +30,7 @@ impl Hasher {
         &self,
         a: &[u8; 32],
         b: &[u8; 32],
-    ) -> Result<Scalar, ProofError> {
+    ) -> Result<Scalar, CircuitError> {
         let a = ScalarExt::parse_arr(a)?;
         let b = ScalarExt::parse_arr(b)?;
         let h = mimc::mimc(a, b, &self.constants);
@@ -42,7 +42,7 @@ impl Hasher {
         mimc::mimc(a, b, &self.constants)
     }
 
-    pub fn mimc_single(&self, a: &[u8; 32]) -> Result<Scalar, ProofError> {
+    pub fn mimc_single(&self, a: &[u8; 32]) -> Result<Scalar, CircuitError> {
         let a = ScalarExt::parse_arr(a)?;
         let b = Scalar::zero();
         let h = mimc::mimc(a, b, &self.constants);
@@ -50,7 +50,10 @@ impl Hasher {
         Ok(h)
     }
 
-    pub fn mimc_single_scalar(&self, a: Scalar) -> Result<Scalar, ProofError> {
+    pub fn mimc_single_scalar(
+        &self,
+        a: Scalar,
+    ) -> Result<Scalar, CircuitError> {
         let b = Scalar::zero();
         let h = mimc::mimc(a, b, &self.constants);
 
@@ -79,7 +82,7 @@ impl Hasher {
         &self,
         a: &[u8; 32],
         b: &[u8; 32],
-    ) -> Result<Scalar, ProofError> {
+    ) -> Result<Scalar, CircuitError> {
         let s = ScalarExt::parse_arr_wide(a, b)?;
 
         let ret = mimc::mimc_single_arg(s, &self.constants);
@@ -107,7 +110,7 @@ impl Hasher {
         a: &[u8; 32],
         b: &[u8; 32],
         c: &[u8; 32],
-    ) -> Result<Scalar, ProofError> {
+    ) -> Result<Scalar, CircuitError> {
         let a = ScalarExt::parse_arr(a)?;
         let b = ScalarExt::parse_arr(b)?;
         let c = ScalarExt::parse_arr(c)?;

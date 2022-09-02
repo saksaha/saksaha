@@ -1,9 +1,6 @@
 use log::debug;
 use sak_crypto::{Scalar, ScalarExt};
 
-pub const TREE_DEPTH: u32 = 4;
-pub const TREE_CAPACITY: u32 = 2_u32.pow(TREE_DEPTH);
-
 #[derive(Debug)]
 pub struct MerkleTree {
     pub height: u32,
@@ -28,6 +25,8 @@ impl MerkleTree {
         t
     }
 
+    // Calculates which indices and directions are needed to calculate merkle
+    // root
     pub fn generate_auth_paths(&self, idx: u128) -> Vec<Path> {
         let height = self.height;
         let mut auth_path = vec![];
