@@ -143,7 +143,20 @@ pub fn mock_pour_tc_random() -> TxCandidate {
     let merkle_tree = MerkleTree::new(CM_TREE_DEPTH as u32);
 
     let merkle_nodes2 = {
-        MerkleNodes::new(CM_TREE_DEPTH as u32);
+        let n = MerkleNodes::new(CM_TREE_DEPTH as u32);
+
+        let node_0_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
+        let node_1_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
+        let node_2_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
+        let node_3_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
+
+        n.hydrate(&[
+            ("0_1", node_0_1),
+            ("1_1", node_1_1),
+            ("2_1", node_2_1),
+            ("3_1", node_3_1),
+        ])
+        .unwrap()
     };
 
     let merkle_nodes = {

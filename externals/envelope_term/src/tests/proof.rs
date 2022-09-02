@@ -7,7 +7,6 @@ use sak_dist_ledger::{
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
 use sak_proofs::{CoinProof, Hasher, NewCoin, OldCoin, Proof};
 use sak_types::{BlockCandidate, TxCandidate};
-use std::{collections::HashMap, sync::Arc, time::Duration};
 use type_extension::U8Array;
 
 const VALIDATOR_CTR_ADDR: &'static str = "validator_contract_addr";
