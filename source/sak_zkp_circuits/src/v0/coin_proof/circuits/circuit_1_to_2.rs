@@ -4,7 +4,7 @@ use crate::{
 use bellman::gadgets::boolean::AllocatedBit;
 use bellman::groth16::{self, Parameters};
 use bellman::{Circuit, ConstraintSystem, SynthesisError};
-use sak_crypto::{Bls12, OsRng, Scalar};
+use sak_crypto::{Bls12, OsRng, Scalar, ScalarExt};
 use std::fs::File;
 use std::io::Write;
 
@@ -271,6 +271,16 @@ pub fn require_equal_val_summation<CS: ConstraintSystem<Scalar>>(
     v_1: Option<Scalar>,
     v_2: Option<Scalar>,
 ) {
+    let v_gas = cs
+        .alloc(
+            || "v_gas",
+            || {
+                Some(ScalarExt::parse_u64(10).unwrap())
+                    .ok_or(SynthesisError::AssignmentMissing)
+            },
+        )
+        .unwrap();
+
     let v_old = cs
         .alloc(
             || "v_old",
@@ -295,7 +305,7 @@ pub fn require_equal_val_summation<CS: ConstraintSystem<Scalar>>(
 
         cs.enforce(
             || "tmp = v_1 + v_2",
-            |lc| lc + v_1_new + v_2_new,
+            |lc| lc + v_1_new + v_2_new + v_gas,
             |lc| lc + CS::one(),
             |lc| lc + v_old,
         );
