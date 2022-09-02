@@ -1,7 +1,6 @@
 use clap::{command, Arg, Command};
 use saksaha_wallet::WalletError;
 
-#[derive(Debug)]
 pub(crate) struct CLIArgs {
     pub(crate) rpc_port: Option<u16>,
     pub(crate) public_key: Option<String>,
