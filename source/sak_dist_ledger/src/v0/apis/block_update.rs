@@ -481,8 +481,6 @@ async fn process_merkle_update(
                 None => apis.get_merkle_node(&curr_loc).await?,
             };
 
-            // println!("curr_loc: {}, sibling_loc: {}", curr_loc, sibling_loc,);
-
             let merkle_node =
                 apis.hasher.mimc(&curr_node, &sibling_node)?.to_bytes();
 
