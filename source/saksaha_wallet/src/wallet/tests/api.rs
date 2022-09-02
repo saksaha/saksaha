@@ -14,7 +14,7 @@ async fn test_prepare_send_tx_pour_params() {
 
     let wallet = context.wallet;
 
-    let coin_manager_lock = wallet.get_coin_manager().write().await;
+    let mut coin_manager_lock = wallet.get_coin_manager().write().await;
 
     let coin: &CoinRecord = coin_manager_lock
         .get_next_available_coin()

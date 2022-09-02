@@ -17,11 +17,17 @@ pub struct RPCConfig {
 }
 
 impl Config {
-    pub fn new(cfg_profile: &Option<String>) -> Result<Config, EnvelopeError> {
+    pub fn new(
+        cfg_profile: &Option<String>,
+        saksaha_endpoint: Option<String>,
+    ) -> Result<Config, EnvelopeError> {
         let config = if let Some(c) = cfg_profile {
+            let saksaha_endpoint =
+                saksaha_endpoint.unwrap_or(String::from("34418"));
+
             match c.as_str() {
-                "dev_local_1" => profiled::dev_local_1()?,
-                "dev_local_2" => profiled::dev_local_2()?,
+                "dev_local_1" => profiled::dev_local_1(saksaha_endpoint)?,
+                "dev_local_2" => profiled::dev_local_2(saksaha_endpoint)?,
                 _ => {
                     return Err(format!(
                         "Corresponding profiled config does not exist"
