@@ -252,6 +252,7 @@ pub async fn query_ctr(
     args: RequestArgs,
 ) -> Result<JsonResponse<QueryCtrResponse>, SaksahaSDKError> {
     let client = Client::new();
+
     let uri: Uri = { saksaha_endpoint.parse().expect("URI should be made") };
 
     let body = {

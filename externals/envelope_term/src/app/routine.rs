@@ -45,6 +45,8 @@ impl Routine {
             .saksaha_endpoint
             .ok_or("expect saksaha network endpoint")?;
 
+        println!("sak endpoint: {}", saksaha_endpoint);
+
         let envelope = {
             let evl = Envelope::init(
                 // sync_io_tx.clone(),

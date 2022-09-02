@@ -2,6 +2,7 @@ mod cli;
 mod credential;
 mod prompt;
 
+use cli::CLIArgs;
 use log::info;
 use sak_logger::RUST_LOG_ENV;
 use saksaha_wallet::{App, AppArgs, Config, WalletError};
@@ -17,7 +18,7 @@ fn main() -> Result<(), WalletError> {
 
     let cli_args = cli::get_args()?;
 
-    let config = Config::new(&cli_args.cfg_profile, cli_args.saksaha_endpoint)?;
+    let config = make_config(&cli_args)?;
 
     info!("Config created, config: {:?}", config);
 
@@ -37,4 +38,14 @@ fn main() -> Result<(), WalletError> {
     app.run(app_args)?;
 
     Ok(())
+}
+
+fn make_config(cli_args: &CLIArgs) -> Result<Config, WalletError> {
+    let mut config = Config::new(&cli_args.cfg_profile)?;
+
+    if let Some(endpoint) = &cli_args.saksaha_endpoint {
+        config.saksaha_endpoint = Some(endpoint.to_string());
+    }
+
+    Ok(config)
 }
