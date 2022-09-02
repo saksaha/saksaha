@@ -43,6 +43,10 @@ impl MerkleTreeSim {
         let merkle_paths =
             self.merkle_tree.generate_auth_paths(leaf_idx as u128);
 
+        for (h, path) in merkle_paths.iter().enumerate() {
+            println!("h: {}, path: {:?}", h, path);
+        }
+
         println!("merkle_paths: {:?}", merkle_paths);
     }
 }
