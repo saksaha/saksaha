@@ -1,5 +1,5 @@
 use crate::EnvelopeError;
-use sak_crypto::{self, PublicKey, SakKey, SecretKey, ToEncodedPoint};
+use sak_crypto::{PublicKey, SakKey, SecretKey, ToEncodedPoint};
 use sak_p2p_id::Credential as P2PCredential;
 
 pub(crate) struct Credential {

@@ -34,8 +34,6 @@ pub(in crate::rpc) async fn send_pour_tx(
 
     let wallet = &ctx.wallet;
 
-    println!("send pour tx");
-
     let res = wallet
         .send_pour_tx(rb.acc_addr, rb.ctr_addr, rb.ctr_request)
         .await;

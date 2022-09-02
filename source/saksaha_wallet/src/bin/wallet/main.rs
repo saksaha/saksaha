@@ -17,7 +17,7 @@ fn main() -> Result<(), WalletError> {
 
     let cli_args = cli::get_args()?;
 
-    let config = Config::new(&cli_args.cfg_profile)?;
+    let config = Config::new(&cli_args.cfg_profile, cli_args.saksaha_endpoint)?;
 
     info!("Config created, config: {:?}", config);
 

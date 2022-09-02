@@ -2,7 +2,7 @@ use sak_types::CoinRecord;
 
 use crate::{Config, WalletError};
 
-pub fn dev_local_1() -> Result<Config, WalletError> {
+pub fn dev_local_1(saksaha_endpoint: String) -> Result<Config, WalletError> {
     let c = Config {
         public_key: Some(String::from(
             "045739d074b8722891c307e8e75c9607e0b55a80778\
@@ -30,27 +30,6 @@ pub fn dev_local_1() -> Result<Config, WalletError> {
                         .to_string(),
                 ),
             )?,
-        ]),
-        rpc_port: Some(36612),
-        saksaha_endpoint: Some(String::from("http://localhost:34418/rpc/v0")),
-    };
-
-    Ok(c)
-}
-
-pub fn dev_local_2() -> Result<Config, WalletError> {
-    let c = Config {
-        public_key: Some(String::from(
-            "042c8d005bd935597117181d8ceceaef6d1162de78c32856\
-                89d0c36c6170634c124f7b9b911553a1f483ec565c199ea29ff1\
-                cd641f10c9a5f8c7c4d4a026db6f7b",
-        )),
-        secret: Some(String::from(
-            "224d0898389759f29ad5c9a6472b26fff86b6293889\
-                88eec457a88ce50e907a0",
-        )),
-        coin_records: Some(vec![
-            //
             CoinRecord::new(
                 0x21,
                 0x22,
@@ -67,8 +46,47 @@ pub fn dev_local_2() -> Result<Config, WalletError> {
                 ),
             )?,
         ]),
+        rpc_port: Some(36612),
+        saksaha_endpoint: Some(saksaha_endpoint),
+        // saksaha_endpoint: Some(String::from("http://localhost:34418/rpc/v0")),
+    };
+
+    Ok(c)
+}
+
+pub fn dev_local_2(saksaha_endpoint: String) -> Result<Config, WalletError> {
+    let c = Config {
+        public_key: Some(String::from(
+            "042c8d005bd935597117181d8ceceaef6d1162de78c32856\
+                89d0c36c6170634c124f7b9b911553a1f483ec565c199ea29ff1\
+                cd641f10c9a5f8c7c4d4a026db6f7b",
+        )),
+        secret: Some(String::from(
+            "224d0898389759f29ad5c9a6472b26fff86b6293889\
+                88eec457a88ce50e907a0",
+        )),
+        coin_records: None,
+        // coin_records: Some(vec![
+        //     //
+        //     CoinRecord::new(
+        //         0x21,
+        //         0x22,
+        //         0x23,
+        //         0x24,
+        //         100,
+        //         Some(1),
+        //         None,
+        //         Some(
+        //             "\
+        //         8d526423d7f7e2c1d419c3096ecee5a8\
+        //         f24c9269f018bfae35216858c19bbae1"
+        //                 .to_string(),
+        //         ),
+        //     )?,
+        // ]),
         rpc_port: Some(36613),
-        saksaha_endpoint: Some(String::from("http://localhost:34418/rpc/v0")),
+        saksaha_endpoint: Some(saksaha_endpoint),
+        // saksaha_endpoint: Some(String::from("http://localhost:34418/rpc/v0")),
     };
 
     Ok(c)
