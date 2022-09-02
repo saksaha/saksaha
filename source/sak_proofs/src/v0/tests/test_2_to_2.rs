@@ -752,9 +752,10 @@ pub async fn test_coin_ownership_default_2_to_2() {
         v: Some(test_context.v_2),
     };
 
-    let proof =
-        generate_proof_2_to_2(coin_1_old, coin_2_old, coin_1_new, coin_2_new)
-            .expect("proof should be created");
+    let proof = CoinProof::generate_proof_2_to_2(
+        coin_1_old, coin_2_old, coin_1_new, coin_2_new,
+    )
+    .expect("proof should be created");
 
     let public_inputs: Vec<Scalar> = vec![
         test_context.merkle_rt_1,
@@ -765,7 +766,12 @@ pub async fn test_coin_ownership_default_2_to_2() {
     ];
 
     assert_eq!(
-        verify_proof_2_to_2(proof, &public_inputs, &test_context.hasher),
+        CoinProof::verify_proof_2_to_2(
+            proof,
+            &public_inputs,
+            &test_context.hasher
+        )
+        .unwrap(),
         true
     );
 }
