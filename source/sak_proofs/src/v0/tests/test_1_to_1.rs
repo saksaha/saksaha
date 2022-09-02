@@ -1,16 +1,11 @@
-use crate::{ProofError, CM_TREE_DEPTH};
+use crate::{CoinProof, ProofError};
 use bellman::groth16::{self, Parameters, Proof};
 use sak_crypto::{Bls12, OsRng, Scalar, ScalarExt};
 use sak_zkp_circuits::{
-    CoinProofCircuit1to2, Hasher, MerkleTree, NewCoin, OldCoin,
+    CoinProofCircuit1to2, Hasher, MerkleTree, NewCoin, OldCoin, CM_TREE_DEPTH,
 };
 use std::collections::HashMap;
-use std::fs::File;
-use std::io::Write;
 use type_extension::U8Array;
-
-const TEST_TREE_DEPTH: u32 = 4;
-const PARAM_FILE_NAME: &str = "mimc_params";
 
 pub struct TestContext {
     pub hasher: Hasher,
@@ -366,57 +361,14 @@ pub fn mock_merkle_nodes(
     merkle_nodes
 }
 
-pub fn get_test_params(constants: &[Scalar]) -> Parameters<Bls12> {
-    let param_path = std::path::Path::new(PARAM_FILE_NAME);
-    let is_file_exist = param_path.exists();
-
-    let mut v = vec![];
-
-    if is_file_exist {
-        // read
-        v = std::fs::read(PARAM_FILE_NAME).unwrap();
-    } else {
-        // generate and write
-        let hasher = Hasher::new();
-
-        let coin_1_old = OldCoin::default();
-        let coin_1_new = NewCoin::default();
-        let coin_2_new = NewCoin::default();
-
-        let params = {
-            let c = CoinProofCircuit1to2 {
-                hasher,
-                coin_1_old,
-                coin_1_new,
-                coin_2_new,
-                constants: constants.to_vec(),
-            };
-
-            groth16::generate_random_parameters::<Bls12, _, _>(c, &mut OsRng)
-                .unwrap()
-        };
-        // write param to file
-        let mut file = File::create(PARAM_FILE_NAME).unwrap();
-
-        params.write(&mut v).unwrap();
-        // write origin buf
-        file.write_all(&v).unwrap();
-    }
-
-    let de_params = Parameters::<Bls12>::read(&v[..], false).unwrap();
-    de_params
-}
-
 fn make_proof(
-    // old coins
     coin_1_old: OldCoin,
     coin_1_new: NewCoin,
     coin_2_new: NewCoin,
 ) -> Result<Proof<Bls12>, ProofError> {
     let hasher = Hasher::new();
-
     let constants = hasher.get_mimc_constants().to_vec();
-    let de_params = get_test_params(&constants);
+    let de_params = CoinProof::get_mimc_params_1_to_2()?;
 
     let c = CoinProofCircuit1to2 {
         hasher,
@@ -444,9 +396,9 @@ fn verify_proof(
     proof: Proof<Bls12>,
     public_inputs: &[Scalar],
     hasher: &Hasher,
-) -> bool {
+) -> Result<bool, ProofError> {
     let constants = hasher.get_mimc_constants();
-    let de_params = get_test_params(&constants);
+    let de_params = CoinProof::get_mimc_params_1_to_2()?;
     let pvk = groth16::prepare_verifying_key(&de_params.vk);
 
     println!("[+] proof: {:?}", proof);
@@ -455,11 +407,11 @@ fn verify_proof(
     match groth16::verify_proof(&pvk, &proof, public_inputs) {
         Ok(_) => {
             println!("verify success!");
-            true
+            Ok(true)
         }
         Err(err) => {
             println!("verify_proof(), err: {}", err);
-            false
+            Ok(false)
         }
     }
 }
@@ -507,7 +459,7 @@ pub async fn test_coin_ownership_default_1_to_2() {
     ];
 
     assert_eq!(
-        verify_proof(proof, &public_inputs, &test_context.hasher),
+        verify_proof(proof, &public_inputs, &test_context.hasher).unwrap(),
         true
     );
 }

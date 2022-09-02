@@ -1,12 +1,11 @@
-mod circuits;
+mod circuit_1_to_2;
+mod circuit_2_to_2;
 mod coin;
-mod proof;
 
-pub use circuits::*;
+pub use circuit_1_to_2::*;
+pub use circuit_2_to_2::*;
 pub use coin::*;
 
 pub const CM_TREE_DEPTH: u32 = 4;
 
 pub const CM_TREE_CAPACITY: usize = 2_usize.pow(CM_TREE_DEPTH as u32);
-
-pub(crate) type CircuitError = Box<dyn std::error::Error + Send + Sync>;

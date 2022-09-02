@@ -1,12 +1,10 @@
 use super::WalletDBSchema;
-use crate::wallet::CoinManager;
 use crate::{credential::WalletCredential, WalletError, APP_NAME};
 use log::info;
 use sak_kv_db::{KeyValueDatabase, Options};
 use sak_types::CoinRecord;
 use sak_types::CoinStatus;
 use sak_types::Sn;
-use std::time::Duration;
 use std::{fs, path::PathBuf};
 
 pub(crate) struct WalletDB {
@@ -93,6 +91,7 @@ impl WalletDB {
         for coin in coins {
             match coin.coin_status.clone() {
                 CoinStatus::Unconfirmed => {
+                    println!("getting tx, tx_hash: {:?}", coin.tx_hash);
                     let resp = match coin.tx_hash.clone() {
                         Some(tx_hash) => saksaha::get_tx(
                             saksaha_endpoint.clone(),
@@ -100,7 +99,10 @@ impl WalletDB {
                         )
                         .await?
                         .result
-                        .ok_or("json_response error")?,
+                        .ok_or(format!(
+                            "Tx doesn't exist, tx hash: {}",
+                            tx_hash
+                        ))?,
 
                         None => {
                             return Err(format!(

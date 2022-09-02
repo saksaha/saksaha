@@ -1,6 +1,4 @@
-use crate::{
-    CircuitError, Hasher, NewCoin, OldCoin, ProofError, CM_TREE_DEPTH,
-};
+use crate::{CircuitError, Hasher, NewCoin, OldCoin, CM_TREE_DEPTH};
 use bellman::gadgets::boolean::AllocatedBit;
 use bellman::groth16::{self, Parameters};
 use bellman::{Circuit, ConstraintSystem, SynthesisError};
