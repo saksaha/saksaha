@@ -2,15 +2,14 @@ use crate::{ProofError, CM_TREE_DEPTH};
 use bellman::groth16::{self, Parameters, Proof};
 use sak_crypto::{Bls12, OsRng, Scalar, ScalarExt};
 use sak_zkp_circuits::{
-    CoinProofCircuit1to2, Hasher, MerkleTree, NewCoin, OldCoin,
+    CoinProofCircuit2to2, Hasher, MerkleTree, NewCoin, OldCoin,
 };
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::Write;
 use type_extension::U8Array;
 
-const TEST_TREE_DEPTH: u32 = 4;
-const PARAM_FILE_NAME: &str = "mimc_params";
+const PARAM_FILE_NAME: &str = "mimc_params_2to2";
 
 pub struct TestContext {
     pub hasher: Hasher,
@@ -24,8 +23,20 @@ pub struct TestContext {
     pub v_1_old: Scalar,
     pub cm_1_old: Scalar,
     pub auth_path_1: [(Scalar, bool); CM_TREE_DEPTH as usize],
-    pub merkle_rt: Scalar,
+    pub merkle_rt_1: Scalar,
     pub sn_1: Scalar,
+
+    // old coin 2
+    pub addr_pk_2_old: Scalar,
+    pub addr_sk_2_old: Scalar,
+    pub r_2_old: Scalar,
+    pub s_2_old: Scalar,
+    pub rho_2_old: Scalar,
+    pub v_2_old: Scalar,
+    pub cm_2_old: Scalar,
+    pub auth_path_2: [(Scalar, bool); CM_TREE_DEPTH as usize],
+    pub merkle_rt_2: Scalar,
+    pub sn_2: Scalar,
 
     // new coin 1
     pub addr_sk_1: Scalar,
@@ -46,7 +57,7 @@ pub struct TestContext {
     pub cm_2: Scalar,
 }
 
-pub fn make_test_context() -> TestContext {
+pub fn make_test_context_2_to_2() -> TestContext {
     let hasher = Hasher::new();
 
     let (
@@ -97,7 +108,16 @@ pub fn make_test_context() -> TestContext {
         (addr_pk, addr_sk, r, s, rho, v, cm, sn)
     };
 
-    let (addr_sk_1, addr_pk_1, r_1, s_1, rho_1, v_1, cm_1) = {
+    let (
+        addr_pk_2_old,
+        addr_sk_2_old,
+        r_2_old,
+        s_2_old,
+        rho_2_old,
+        v_2_old,
+        cm_2_old,
+        sn_2,
+    ) = {
         let addr_sk = {
             let arr = U8Array::from_int(11);
             ScalarExt::parse_arr(&arr).unwrap()
@@ -121,7 +141,7 @@ pub fn make_test_context() -> TestContext {
         };
 
         let v = {
-            let arr = U8Array::from_int(60);
+            let arr = U8Array::from_int(100);
             ScalarExt::parse_arr(&arr).unwrap()
         };
 
@@ -131,10 +151,12 @@ pub fn make_test_context() -> TestContext {
             hasher.comm2_scalar(s, v, k)
         };
 
-        (addr_sk, addr_pk, r, s, rho, v, cm)
+        let sn = hasher.mimc_scalar(addr_sk, rho);
+
+        (addr_pk, addr_sk, r, s, rho, v, cm, sn)
     };
 
-    let (addr_sk_2, addr_pk_2, r_2, s_2, rho_2, v_2, cm_2) = {
+    let (addr_sk_1, addr_pk_1, r_1, s_1, rho_1, v_1, cm_1) = {
         let addr_sk = {
             let arr = U8Array::from_int(21);
             ScalarExt::parse_arr(&arr).unwrap()
@@ -158,6 +180,43 @@ pub fn make_test_context() -> TestContext {
         };
 
         let v = {
+            let arr = U8Array::from_int(160);
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        let cm = {
+            let k = hasher.comm2_scalar(r, addr_pk, rho);
+
+            hasher.comm2_scalar(s, v, k)
+        };
+
+        (addr_sk, addr_pk, r, s, rho, v, cm)
+    };
+
+    let (addr_sk_2, addr_pk_2, r_2, s_2, rho_2, v_2, cm_2) = {
+        let addr_sk = {
+            let arr = U8Array::from_int(31);
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        let addr_pk = hasher.mimc_single_scalar(addr_sk).unwrap();
+
+        let r = {
+            let arr = U8Array::from_int(32);
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        let s = {
+            let arr = U8Array::from_int(33);
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        let rho = {
+            let arr = U8Array::from_int(34);
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        let v = {
             let arr = U8Array::from_int(40);
             ScalarExt::parse_arr(&arr).unwrap()
         };
@@ -171,16 +230,16 @@ pub fn make_test_context() -> TestContext {
         (addr_sk, addr_pk, r, s, rho, v, cm)
     };
 
-    let merkle_tree = MerkleTree::new(CM_TREE_DEPTH as u32);
+    let merkle_tree_1 = MerkleTree::new(CM_TREE_DEPTH as u32);
 
-    let merkle_nodes = mock_merkle_nodes(&hasher, cm_1_old);
+    let merkle_nodes_1 = mock_merkle_nodes(&hasher, cm_1_old);
 
-    let merkle_rt = *merkle_nodes
+    let merkle_rt_1 = *merkle_nodes_1
         .get(format!("{}_0", CM_TREE_DEPTH).as_str())
         .unwrap();
 
     let auth_path_1 = {
-        let v = merkle_tree.generate_auth_paths(0);
+        let v = merkle_tree_1.generate_auth_paths(0);
         let mut ret = [(Scalar::default(), false); CM_TREE_DEPTH as usize];
 
         v.iter().enumerate().for_each(|(idx, p)| {
@@ -193,10 +252,45 @@ pub fn make_test_context() -> TestContext {
 
             let key = format!("{}_{}", idx, p.idx);
 
-            let merkle_node = merkle_nodes.get(key.as_str()).expect(&format!(
-                "value doesn't exist in the merkle node, key: {}",
-                key
-            ));
+            let merkle_node =
+                merkle_nodes_1.get(key.as_str()).expect(&format!(
+                    "value doesn't exist in the merkle node, key: {}",
+                    key
+                ));
+
+            ret[idx] = (merkle_node.clone(), p.direction);
+        });
+
+        ret
+    };
+
+    let merkle_tree_2 = MerkleTree::new(CM_TREE_DEPTH as u32);
+
+    let merkle_nodes_2 = mock_merkle_nodes(&hasher, cm_2_old);
+
+    let merkle_rt_2 = *merkle_nodes_2
+        .get(format!("{}_0", CM_TREE_DEPTH).as_str())
+        .unwrap();
+
+    let auth_path_2 = {
+        let v = merkle_tree_2.generate_auth_paths(0);
+        let mut ret = [(Scalar::default(), false); CM_TREE_DEPTH as usize];
+
+        v.iter().enumerate().for_each(|(idx, p)| {
+            if idx >= ret.len() {
+                panic!(
+                    "Invalid assignment to a fixed sized array, idx: {}",
+                    idx
+                );
+            }
+
+            let key = format!("{}_{}", idx, p.idx);
+
+            let merkle_node =
+                merkle_nodes_2.get(key.as_str()).expect(&format!(
+                    "value doesn't exist in the merkle node, key: {}",
+                    key
+                ));
 
             ret[idx] = (merkle_node.clone(), p.direction);
         });
@@ -214,8 +308,18 @@ pub fn make_test_context() -> TestContext {
         v_1_old,
         cm_1_old,
         auth_path_1,
-        merkle_rt,
+        merkle_rt_1,
         sn_1,
+        addr_pk_2_old,
+        addr_sk_2_old,
+        r_2_old,
+        s_2_old,
+        rho_2_old,
+        v_2_old,
+        cm_2_old,
+        auth_path_2,
+        merkle_rt_2,
+        sn_2,
         addr_sk_1,
         addr_pk_1,
         r_1,
@@ -366,7 +470,7 @@ pub fn mock_merkle_nodes(
     merkle_nodes
 }
 
-pub fn get_test_params(constants: &[Scalar]) -> Parameters<Bls12> {
+pub fn get_test_params_2_to_2(constants: &[Scalar]) -> Parameters<Bls12> {
     let param_path = std::path::Path::new(PARAM_FILE_NAME);
     let is_file_exist = param_path.exists();
 
@@ -380,13 +484,15 @@ pub fn get_test_params(constants: &[Scalar]) -> Parameters<Bls12> {
         let hasher = Hasher::new();
 
         let coin_1_old = OldCoin::default();
+        let coin_2_old = OldCoin::default();
         let coin_1_new = NewCoin::default();
         let coin_2_new = NewCoin::default();
 
         let params = {
-            let c = CoinProofCircuit1to2 {
+            let c = CoinProofCircuit2to2 {
                 hasher,
                 coin_1_old,
+                coin_2_old,
                 coin_1_new,
                 coin_2_new,
                 constants: constants.to_vec(),
@@ -407,20 +513,22 @@ pub fn get_test_params(constants: &[Scalar]) -> Parameters<Bls12> {
     de_params
 }
 
-fn make_proof(
+fn make_proof_2_to_2(
     // old coins
     coin_1_old: OldCoin,
+    coin_2_old: OldCoin,
     coin_1_new: NewCoin,
     coin_2_new: NewCoin,
 ) -> Result<Proof<Bls12>, ProofError> {
     let hasher = Hasher::new();
 
     let constants = hasher.get_mimc_constants().to_vec();
-    let de_params = get_test_params(&constants);
+    let de_params = get_test_params_2_to_2(&constants);
 
-    let c = CoinProofCircuit1to2 {
+    let c = CoinProofCircuit2to2 {
         hasher,
         coin_1_old,
+        coin_2_old,
         coin_1_new,
         coin_2_new,
         constants,
@@ -440,13 +548,13 @@ fn make_proof(
     Ok(proof)
 }
 
-fn verify_proof(
+fn verify_proof_2to2(
     proof: Proof<Bls12>,
     public_inputs: &[Scalar],
     hasher: &Hasher,
 ) -> bool {
     let constants = hasher.get_mimc_constants();
-    let de_params = get_test_params(&constants);
+    let de_params = get_test_params_2_to_2(&constants);
     let pvk = groth16::prepare_verifying_key(&de_params.vk);
 
     println!("[+] proof: {:?}", proof);
@@ -465,10 +573,10 @@ fn verify_proof(
 }
 
 #[tokio::test(flavor = "multi_thread")]
-pub async fn test_coin_ownership_default_1_to_2() {
+pub async fn test_coin_ownership_default_2_to_2() {
     sak_test_utils::init_test_log();
 
-    let test_context = make_test_context();
+    let test_context = make_test_context_2_to_2();
 
     let coin_1_old = OldCoin {
         addr_pk: Some(test_context.addr_pk_1_old),
@@ -479,6 +587,17 @@ pub async fn test_coin_ownership_default_1_to_2() {
         v: Some(test_context.v_1_old),
         cm: Some(test_context.cm_1_old),
         auth_path: test_context.auth_path_1.map(|e| Some(e)),
+    };
+
+    let coin_2_old = OldCoin {
+        addr_pk: Some(test_context.addr_pk_2_old),
+        addr_sk: Some(test_context.addr_sk_2_old),
+        rho: Some(test_context.rho_2_old),
+        r: Some(test_context.r_2_old),
+        s: Some(test_context.s_2_old),
+        v: Some(test_context.v_2_old),
+        cm: Some(test_context.cm_2_old),
+        auth_path: test_context.auth_path_2.map(|e| Some(e)),
     };
 
     let coin_1_new = NewCoin {
@@ -497,17 +616,21 @@ pub async fn test_coin_ownership_default_1_to_2() {
         v: Some(test_context.v_2),
     };
 
-    let proof = make_proof(coin_1_old, coin_1_new, coin_2_new).unwrap();
+    let proof =
+        make_proof_2_to_2(coin_1_old, coin_2_old, coin_1_new, coin_2_new)
+            .unwrap();
 
     let public_inputs: Vec<Scalar> = vec![
-        test_context.merkle_rt,
+        test_context.merkle_rt_1,
+        // test_context.merkle_rt_2,
         test_context.sn_1,
+        // test_context.sn_2,
         test_context.cm_1,
         test_context.cm_2,
     ];
 
     assert_eq!(
-        verify_proof(proof, &public_inputs, &test_context.hasher),
+        verify_proof_2to2(proof, &public_inputs, &test_context.hasher),
         true
     );
 }

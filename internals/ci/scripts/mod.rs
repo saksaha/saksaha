@@ -1,5 +1,6 @@
 pub(crate) mod build;
 pub(crate) mod build_circuit_params;
+pub(crate) mod build_circuit_params_2_to_2;
 pub(crate) mod build_contracts;
 pub(crate) mod clean;
 pub(crate) mod dev;

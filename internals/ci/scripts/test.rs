@@ -12,6 +12,7 @@ pub(crate) fn run(args: Args) -> Result<(), CIError> {
         tasks::build_system_contracts()?;
         tasks::build_3rd_party_contracts()?;
         tasks::build_circuit_params()?;
+        tasks::build_circuit_params_2_to_2()?;
     }
 
     let program = "cargo";
