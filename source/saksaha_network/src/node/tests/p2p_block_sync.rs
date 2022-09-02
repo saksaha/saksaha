@@ -88,7 +88,8 @@ async fn test_block_sync_true() {
         });
     }
 
-    tokio::time::sleep(Duration::from_secs(2)).await;
+    // tokio::time::sleep(Duration::from_secs(2)).await;
+    tokio::time::sleep(Duration::from_secs(30)).await;
 
     println!("Sending a tx1 to a node_1");
 

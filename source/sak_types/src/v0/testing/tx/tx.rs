@@ -204,8 +204,6 @@ pub fn mock_pour_tc_random() -> TxCandidate {
         ret
     };
 
-    // let proof_context = make_proof_context();
-
     let coin_1_old = OldCoin {
         addr_pk: Some(addr_pk_1_old),
         addr_sk: Some(addr_sk_1_old),

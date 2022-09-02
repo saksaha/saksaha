@@ -83,7 +83,8 @@ impl DistLedgerApis {
             }
         };
 
-        let tcs = &bc.tx_candidates.clone();
+        // let tcs = &bc.tx_candidates.clone();
+        let tc_len = bc.tx_candidates.len();
 
         let mut ctr_state_update = CtrStateUpdate::new();
         let mut merkle_update = MerkleUpdate::new();
@@ -91,12 +92,10 @@ impl DistLedgerApis {
         debug!(
             "write_block, tc count: {}, next_block_height: {}, \
             next_cm_idx: {}",
-            tcs.len(),
-            next_block_height,
-            next_cm_idx,
+            tc_len, next_block_height, next_cm_idx,
         );
 
-        self.filter_tx_candidates(&mut bc, tcs)?;
+        self.filter_tx_candidates(&mut bc)?;
         let tcs = &bc.tx_candidates;
 
         let mut added_cm_count: u128 = 0;
@@ -283,18 +282,18 @@ impl DistLedgerApis {
     pub(crate) fn filter_tx_candidates(
         &self,
         bc: &mut BlockCandidate,
-        tx_candidates: &Vec<TxCandidate>,
+        // tx_candidates: &Vec<TxCandidate>,
     ) -> Result<(), LedgerError> {
         let mut valid_tx_candidates: Vec<TxCandidate> = vec![];
 
-        for tx_candidate in tx_candidates {
+        for tx_candidate in &bc.tx_candidates {
             match tx_candidate {
                 TxCandidate::Mint(_tc) => {
-                    valid_tx_candidates.push(tx_candidate.to_owned());
+                    valid_tx_candidates.push(tx_candidate.clone());
                 }
                 TxCandidate::Pour(tc) => {
                     let is_valid_sn = self.verify_sn(&tc.sn_1);
-                    let is_verified_tx = self.verify_proof(tc)?;
+                    let is_verified_tx = self.verify_proof(&tc)?;
 
                     if is_valid_sn & is_verified_tx {
                         valid_tx_candidates.push(tx_candidate.to_owned());
@@ -305,7 +304,10 @@ impl DistLedgerApis {
             };
         }
 
-        bc.update_tx_candidates(valid_tx_candidates);
+        // bc.update_tx_candidates(valid_tx_candidates);
+
+        bc.tx_candidates = valid_tx_candidates;
+
         Ok(())
     }
 }
