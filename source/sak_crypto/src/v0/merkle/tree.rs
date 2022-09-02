@@ -2,7 +2,7 @@ use crate::{CryptoError, Scalar};
 
 #[derive(Debug)]
 pub struct MerkleTree {
-    pub height: u32,
+    height: u32,
 }
 
 #[derive(Debug, Clone)]

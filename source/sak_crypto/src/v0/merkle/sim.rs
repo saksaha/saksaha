@@ -1,4 +1,5 @@
 use crate::CryptoError;
+use crate::MerkleTree;
 use crate::Scalar;
 use std::collections::HashMap;
 
@@ -11,6 +12,7 @@ pub struct MerkleTreeSim {
     height: u32,
     nodes: HashMap<TreeIdx, Scalar>,
     leaf_count: u32,
+    merkle_tree: MerkleTree,
 }
 
 impl MerkleTreeSim {
@@ -19,6 +21,7 @@ impl MerkleTreeSim {
             height,
             nodes: HashMap::new(),
             leaf_count: 0,
+            merkle_tree: MerkleTree::new(height),
         }
     }
 
@@ -33,8 +36,13 @@ impl MerkleTreeSim {
 
         self.nodes.insert(idx, cm);
 
-        self.update_root();
+        self.update_root(self.leaf_count);
     }
 
-    pub fn update_root(&self) {}
+    pub fn update_root(&self, leaf_idx: u32) {
+        let merkle_paths =
+            self.merkle_tree.generate_auth_paths(leaf_idx as u128);
+
+        println!("merkle_paths: {:?}", merkle_paths);
+    }
 }
