@@ -49,9 +49,9 @@ impl Tx {
         }
     }
 
-    pub fn get_sn(&self) -> Sn {
+    pub fn get_sns(&self) -> Vec<Sn> {
         match self {
-            Tx::Mint(_t) => U8Arr32::default(),
+            Tx::Mint(_t) => vec![U8Arr32::default()],
             Tx::Pour(t) => t.get_sn(),
         }
     }

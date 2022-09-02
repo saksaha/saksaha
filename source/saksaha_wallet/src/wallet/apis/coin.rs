@@ -229,7 +229,7 @@ impl Wallet {
 
         let json_response = saksaha::send_tx_pour(
             self.saksaha_endpoint.clone(),
-            old_sn_1,
+            vec![old_sn_1],
             vec![new_coin_1.cm.to_bytes(), new_coin_2.cm.to_bytes()],
             merkle_rt,
             pi,

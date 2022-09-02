@@ -132,11 +132,21 @@ pub(crate) fn parse_pour_tx_candidate(
         b.to_vec()
     };
 
-    let sn_1 = {
+    let sn_count = parse.next_int()?;
+
+    let mut sns = Vec::with_capacity(sn_count as usize);
+
+    for _ in 0..sn_count {
         let b = parse.next_bytes()?;
 
-        utils::convert_bytes_into_u8_32(b)?
-    };
+        sns.push(utils::convert_bytes_into_u8_32(b)?);
+    }
+
+    // let sn_1 = {
+    //     let b = parse.next_bytes()?;
+
+    //     utils::convert_bytes_into_u8_32(b)?
+    // };
 
     // let sn_2 = {
     //     let b = parse.next_bytes()?;
@@ -183,7 +193,7 @@ pub(crate) fn parse_pour_tx_candidate(
         author_sig,
         Some(ctr_addr),
         pi,
-        sn_1,
+        sns,
         cms,
         // cm_count,
         // sn_2,
@@ -262,7 +272,11 @@ pub(crate) fn put_pour_tx_candidate_into_frame(
     frame.push_bulk(Bytes::from(tc.author_sig));
     frame.push_bulk(Bytes::from(tc.ctr_addr));
     frame.push_bulk(Bytes::from(tc.pi));
-    frame.push_bulk(Bytes::copy_from_slice(&tc.sn_1));
+    frame.push_int(tc.sn_count);
+    for sn in tc.sns.iter() {
+        frame.push_bulk(Bytes::copy_from_slice(sn));
+    }
+    // frame.push_bulk(Bytes::copy_from_slice(&tc.sn_1));
     frame.push_int(tc.cm_count);
     for cm in tc.cms.iter() {
         frame.push_bulk(Bytes::copy_from_slice(cm));

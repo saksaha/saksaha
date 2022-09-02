@@ -116,7 +116,7 @@ pub fn new_empty_32_temp() -> [u8; 32] {
 
 pub async fn send_tx_pour(
     saksaha_endpoint: String,
-    sn_1: U8Arr32,
+    sns: Vec<U8Arr32>,
     cms: Vec<U8Arr32>,
     // cm_1: U8Arr32,
     // cm_2: U8Arr32,
@@ -141,7 +141,7 @@ pub async fn send_tx_pour(
             sig,
             Some(ctr_addr),
             pi,
-            sn_1,
+            sns,
             cms,
             merkle_rt,
         );

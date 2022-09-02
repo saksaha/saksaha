@@ -104,7 +104,9 @@ impl LedgerDB {
 
         let pi = self.get_pi(tx_hash)?.ok_or("pi should exist")?;
 
-        let sn_1 = self.get_sn_1(tx_hash)?.ok_or("sn_1 should exist")?;
+        // let sn_1 = self.get_sn_1(tx_hash)?.ok_or("sn_1 should exist")?;
+
+        let sns = self.get_sns(tx_hash)?.ok_or("sn_1 should exist")?;
 
         // let cm_1 = self.get_cm_1(tx_hash)?.ok_or("cm_1 should exist")?;
 
@@ -128,7 +130,7 @@ impl LedgerDB {
         }
 
         let tx_candidate = PourTxCandidate::new(
-            created_at, data, author_sig, ctr_addr, pi, sn_1, cms, merkle_rt,
+            created_at, data, author_sig, ctr_addr, pi, sns, cms, merkle_rt,
         );
 
         // let cm_idx_1 = self
@@ -238,7 +240,7 @@ impl LedgerDB {
 
         println!("tx_hash in put: {}", tx_hash);
 
-        self.batch_put_tx_hash_by_sn(batch, &tc.sn_1, tx_hash)?;
+        self.batch_put_tx_hash_by_sn(batch, &tc.sns, tx_hash)?;
 
         self.batch_put_tx_type(batch, tx_hash, tc.get_tx_type())?;
 
@@ -256,7 +258,7 @@ impl LedgerDB {
 
         self.batch_put_pi(batch, tx_hash, &tc.pi)?;
 
-        self.batch_put_sn_1(batch, tx_hash, &tc.sn_1)?;
+        self.batch_put_sns(batch, tx_hash, &tc.sns)?;
 
         // self.batch_put_sn_2(batch, tx_hash, &tc.sn_2)?;
 

@@ -1,5 +1,5 @@
 use super::values::{self, VALIDATOR, VALIDATOR_CTR_ADDR};
-use crate::{MintTxCandidate, PourTxCandidate, Tx};
+use crate::{Cm, MintTxCandidate, PourTxCandidate, Sn, Tx};
 use crate::{TxCandidate, TypesError};
 use sak_crypto::ScalarExt;
 use sak_crypto::{rand, Scalar};
@@ -14,8 +14,8 @@ use type_extension::U8Array;
 
 pub fn mock_pour_tc_custom(
     pi: Vec<u8>,
-    sn_1: U8Arr32,
-    cms: Vec<U8Arr32>,
+    sns: Vec<Sn>,
+    cms: Vec<Cm>,
     merkle_rt: U8Arr32,
 ) -> TxCandidate {
     let tc = PourTxCandidate::new(
@@ -24,7 +24,7 @@ pub fn mock_pour_tc_custom(
         String::from("author_sig_test"),
         Some(String::from("ctr_addr_test")),
         pi,
-        sn_1,
+        sns,
         cms,
         merkle_rt,
     );
@@ -34,11 +34,11 @@ pub fn mock_pour_tc_custom(
 
 pub fn mock_pour_tx_custom(
     pi: Vec<u8>,
-    sn_1: U8Arr32,
-    cms: Vec<U8Arr32>,
+    sns: Vec<Sn>,
+    cms: Vec<Cm>,
     merkle_rt: U8Arr32,
 ) -> Tx {
-    let c = mock_pour_tc_custom(pi, sn_1, cms, merkle_rt);
+    let c = mock_pour_tc_custom(pi, sns, cms, merkle_rt);
 
     c.upgrade(0)
 }
@@ -241,7 +241,7 @@ pub fn mock_pour_tc_random() -> TxCandidate {
         "author_sig".to_string(),
         None,
         pi_serialized,
-        sn_1.to_bytes(),
+        vec![sn_1.to_bytes()],
         vec![cm_1.to_bytes(), cm_2.to_bytes()],
         merkle_rt.to_bytes(),
     );
@@ -436,7 +436,7 @@ pub fn mock_pour_tc_1() -> TxCandidate {
         "author_sig".to_string(),
         None,
         pi_serialized,
-        sn_1.to_bytes(),
+        vec![sn_1.to_bytes()],
         vec![cm_1.to_bytes(), cm_2.to_bytes()],
         merkle_rt.to_bytes(),
     );
@@ -631,7 +631,7 @@ pub fn mock_pour_tc_invalid_pi() -> TxCandidate {
         "author_sig".to_string(),
         None,
         pi_serialized,
-        sn_1.to_bytes(),
+        vec![sn_1.to_bytes()],
         vec![cm_1.to_bytes(), cm_2.to_bytes()],
         merkle_rt.to_bytes(),
     );

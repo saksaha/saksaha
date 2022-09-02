@@ -39,8 +39,8 @@ impl PourTx {
             .collect::<Vec<(CmIdx, Cm)>>()
     }
 
-    pub fn get_sn(&self) -> Sn {
-        self.tx_candidate.sn_1
+    pub fn get_sn(&self) -> Vec<Sn> {
+        self.tx_candidate.get_sns().to_owned()
     }
 }
 
@@ -73,7 +73,7 @@ pub struct PourTxCandidate {
     pub pi: Vec<u8>,
 
     //
-    pub sn_1: U8Arr32,
+    // pub sn_1: U8Arr32,
 
     //
     // pub sn_2: U8Arr32,
@@ -83,6 +83,11 @@ pub struct PourTxCandidate {
 
     // //
     // pub cm_2: U8Arr32,
+    pub sns: Vec<Sn>,
+
+    //
+    pub sn_count: u128,
+
     pub cms: Vec<Cm>,
 
     //
@@ -102,12 +107,13 @@ impl PourTxCandidate {
         author_sig: String,
         ctr_addr: Option<String>,
         pi: Vec<u8>,
-        sn_1: U8Arr32,
+        sns: Vec<Sn>,
         cms: Vec<Cm>,
         // cm_count: u128,
         merkle_rt: U8Arr32,
     ) -> PourTxCandidate {
         let ctr_addr = ctr_addr.unwrap_or(String::from(""));
+        let sn_count = sns.len() as u128;
         let cm_count = cms.len() as u128;
 
         let hashable_items = vec![
@@ -126,7 +132,8 @@ impl PourTxCandidate {
             author_sig,
             ctr_addr,
             pi,
-            sn_1,
+            sns,
+            sn_count,
             cms,
             cm_count,
             merkle_rt,
@@ -153,6 +160,10 @@ impl PourTxCandidate {
     pub fn get_cms(&self) -> &Vec<Cm> {
         &self.cms
     }
+
+    pub fn get_sns(&self) -> &Vec<Sn> {
+        &self.sns
+    }
 }
 
 impl std::fmt::Display for PourTxCandidate {
@@ -173,7 +184,7 @@ impl std::fmt::Display for PourTxCandidate {
             self.ctr_addr,
             self.cms,
             self.cm_count,
-            self.sn_1,
+            self.sns,
             self.merkle_rt,
         )
     }

@@ -5,7 +5,7 @@ use sak_contract_std::{CtrCallType, CtrRequest, Storage, ERROR_PLACEHOLDER};
 use sak_crypto::{Bls12, Scalar, ScalarExt};
 use sak_proofs::{CoinProof, Hasher, Proof, CM_TREE_DEPTH};
 use sak_types::{
-    Block, BlockCandidate, CmIdx, MintTxCandidate, PourTxCandidate, Tx,
+    Block, BlockCandidate, CmIdx, MintTxCandidate, PourTxCandidate, Sn, Tx,
     TxCandidate, TxCtrOp,
 };
 use sak_vm::CtrFn;
@@ -234,8 +234,8 @@ impl DistLedgerApis {
         self.ledger_db.delete_tx(key)
     }
 
-    pub(crate) fn verify_sn(&self, sn: &[u8; 32]) -> bool {
-        match self.ledger_db.get_tx_hash_by_sn(sn) {
+    pub(crate) fn verify_sn(&self, sns: &Vec<Sn>) -> bool {
+        match self.ledger_db.get_tx_hash_by_sn(sns) {
             Ok(Some(_)) => return false,
             Ok(None) => return true,
             Err(_) => return false,
@@ -252,7 +252,9 @@ impl DistLedgerApis {
 
         public_inputs.push(ScalarExt::parse_arr(&tc.merkle_rt)?);
 
-        public_inputs.push(ScalarExt::parse_arr(&tc.sn_1)?);
+        for sn in &tc.sns {
+            public_inputs.push(ScalarExt::parse_arr(sn)?);
+        }
 
         for cm in &tc.cms {
             public_inputs.push(ScalarExt::parse_arr(cm)?);
@@ -292,7 +294,7 @@ impl DistLedgerApis {
                     valid_tx_candidates.push(tx_candidate.to_owned());
                 }
                 TxCandidate::Pour(tc) => {
-                    let is_valid_sn = self.verify_sn(&tc.sn_1);
+                    let is_valid_sn = self.verify_sn(&tc.sns);
                     let is_verified_tx = self.verify_proof(tc)?;
 
                     if is_valid_sn & is_verified_tx {

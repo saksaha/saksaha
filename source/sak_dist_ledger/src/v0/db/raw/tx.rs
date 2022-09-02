@@ -287,15 +287,18 @@ impl LedgerDB {
         }
     }
 
-    pub(crate) fn get_sn_1(
+    pub(crate) fn get_sns(
         &self,
         key: &TxHash,
-    ) -> Result<Option<[u8; 32]>, LedgerError> {
+    ) -> Result<Option<Vec<Sn>>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::SN_1)?;
 
         match self.db.get_cf(&cf, key)? {
             Some(v) => {
-                let arr = type_extension::convert_vec_into_u8_32(v)?;
+                let arr = v
+                    .chunks(32)
+                    .map(|v| type_extension::convert_vec_into_u8_32(v.to_vec()))
+                    .collect::<Result<Vec<U8Arr32>, LedgerError>>()?;
 
                 return Ok(Some(arr));
             }
@@ -305,33 +308,35 @@ impl LedgerDB {
         }
     }
 
-    pub(crate) fn get_sn_2(
-        &self,
-        db: &DB,
-        key: &TxHash,
-    ) -> Result<Option<[u8; 32]>, LedgerError> {
-        let cf = self.make_cf_handle(db, cfs::SN_2)?;
+    // pub(crate) fn get_sn_2(
+    //     &self,
+    //     db: &DB,
+    //     key: &TxHash,
+    // ) -> Result<Option<[u8; 32]>, LedgerError> {
+    //     let cf = self.make_cf_handle(db, cfs::SN_2)?;
 
-        match db.get_cf(&cf, key)? {
-            Some(v) => {
-                let arr = type_extension::convert_vec_into_u8_32(v)?;
+    //     match db.get_cf(&cf, key)? {
+    //         Some(v) => {
+    //             let arr = type_extension::convert_vec_into_u8_32(v)?;
 
-                return Ok(Some(arr));
-            }
-            None => {
-                return Ok(None);
-            }
-        }
-    }
+    //             return Ok(Some(arr));
+    //         }
+    //         None => {
+    //             return Ok(None);
+    //         }
+    //     }
+    // }
 
     pub(crate) fn get_tx_hash_by_sn(
         &self,
         // db: &DB,
-        key: &Sn,
+        key: &Vec<Sn>,
     ) -> Result<Option<String>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::TX_HASH_BY_SN)?;
 
-        match self.db.get_cf(&cf, key)? {
+        let serialized = key.iter().flatten().copied().collect::<Vec<u8>>();
+
+        match self.db.get_cf(&cf, serialized)? {
             Some(v) => {
                 let str = String::from_utf8(v)?;
 
@@ -585,12 +590,14 @@ impl LedgerDB {
         &self,
         // db: &DB,
         batch: &mut WriteBatch,
-        key: &[u8; 32],
+        key: &Vec<Sn>,
         value: &String,
     ) -> Result<(), LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::TX_HASH_BY_SN)?;
 
-        batch.put_cf(&cf, key, value);
+        let serialized = key.iter().flatten().copied().collect::<Vec<u8>>();
+
+        batch.put_cf(&cf, serialized, value);
 
         Ok(())
     }
@@ -678,15 +685,17 @@ impl LedgerDB {
         Ok(())
     }
 
-    pub(crate) fn batch_put_sn_1(
+    pub(crate) fn batch_put_sns(
         &self,
         batch: &mut WriteBatch,
         key: &TxHash,
-        value: &U8Arr32,
+        value: &Vec<Sn>,
     ) -> Result<(), LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::SN_1)?;
 
-        batch.put_cf(&cf, key, value);
+        let serialized = value.iter().flatten().copied().collect::<Vec<u8>>();
+
+        batch.put_cf(&cf, key, serialized);
 
         Ok(())
     }

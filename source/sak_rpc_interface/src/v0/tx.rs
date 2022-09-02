@@ -10,7 +10,7 @@ pub struct SendPourTxRequest {
     pub ctr_addr: Option<String>,
     #[serde(with = "serde_bytes")]
     pub pi: Vec<u8>,
-    pub sn_1: [u8; 32],
+    pub sns: Vec<[u8; 32]>,
     pub cms: Vec<[u8; 32]>,
     pub merkle_rt: [u8; 32],
 }
@@ -22,7 +22,8 @@ impl SendPourTxRequest {
         author_sig: String,
         ctr_addr: Option<String>,
         pi: Vec<u8>,
-        sn_1: U8Arr32,
+        // sn_1: U8Arr32,
+        sns: Vec<[u8; 32]>,
         // sn_2: [u8; 32],
         cms: Vec<[u8; 32]>,
         // cm_count: u128,
@@ -36,7 +37,7 @@ impl SendPourTxRequest {
             author_sig,
             ctr_addr,
             pi,
-            sn_1,
+            sns,
             cms,
             // cm_count,
             // sn_2,
