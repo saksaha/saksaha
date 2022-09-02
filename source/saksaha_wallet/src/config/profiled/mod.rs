@@ -30,6 +30,21 @@ pub fn dev_local_1(saksaha_endpoint: String) -> Result<Config, WalletError> {
                         .to_string(),
                 ),
             )?,
+            CoinRecord::new(
+                0x21,
+                0x22,
+                0x23,
+                0x24,
+                100,
+                Some(1),
+                None,
+                Some(
+                    "\
+                8d526423d7f7e2c1d419c3096ecee5a8\
+                f24c9269f018bfae35216858c19bbae1"
+                        .to_string(),
+                ),
+            )?,
         ]),
         rpc_port: Some(36612),
         saksaha_endpoint: Some(format!(
@@ -53,24 +68,25 @@ pub fn dev_local_2(saksaha_endpoint: String) -> Result<Config, WalletError> {
             "224d0898389759f29ad5c9a6472b26fff86b6293889\
                 88eec457a88ce50e907a0",
         )),
-        coin_records: Some(vec![
-            //
-            CoinRecord::new(
-                0x21,
-                0x22,
-                0x23,
-                0x24,
-                100,
-                Some(1),
-                None,
-                Some(
-                    "\
-                8d526423d7f7e2c1d419c3096ecee5a8\
-                f24c9269f018bfae35216858c19bbae1"
-                        .to_string(),
-                ),
-            )?,
-        ]),
+        coin_records: None,
+        // coin_records: Some(vec![
+        //     //
+        //     CoinRecord::new(
+        //         0x21,
+        //         0x22,
+        //         0x23,
+        //         0x24,
+        //         100,
+        //         Some(1),
+        //         None,
+        //         Some(
+        //             "\
+        //         8d526423d7f7e2c1d419c3096ecee5a8\
+        //         f24c9269f018bfae35216858c19bbae1"
+        //                 .to_string(),
+        //         ),
+        //     )?,
+        // ]),
         rpc_port: Some(36613),
         saksaha_endpoint: Some(format!(
             "http://localhost:{}/rpc/v0",

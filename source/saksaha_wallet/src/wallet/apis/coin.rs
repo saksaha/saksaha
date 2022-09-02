@@ -198,11 +198,11 @@ impl Wallet {
         ctr_addr: String,
         ctr_request: CtrRequest,
     ) -> Result<String, WalletError> {
-        self.check_balance(&acc_addr).await?;
+        // self.check_balance(&acc_addr).await?;
 
         let mut coin_manager_lock = self.get_coin_manager().write().await;
 
-        let coin: &CoinRecord = coin_manager_lock
+        let coin: &mut CoinRecord = coin_manager_lock
             .get_next_available_coin()
             .ok_or("No usable coins")?;
 
@@ -569,17 +569,17 @@ impl Wallet {
 
         let wallet_db = self.get_db();
         {
-            let coins = coin_manager_lock.coins.clone();
+            let coins = &coin_manager_lock.coins;
 
             let old_coin_sn_vec = wallet_db
                 .update_coin_status_unconfirmed_to_unused(
-                    self.saksaha_endpoint.clone(),
-                    &coins,
+                    &self.saksaha_endpoint,
+                    coins,
                 )
                 .await?;
 
             wallet_db
-                .update_coin_status_unused_to_used(old_coin_sn_vec, &coins)
+                .update_coin_status_unused_to_used(old_coin_sn_vec, coins)
                 .await?;
         }
 

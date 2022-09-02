@@ -36,10 +36,8 @@ impl CoinManager {
         Ok(m)
     }
 
-    pub fn get_next_available_coin(&self) -> Option<&CoinRecord> {
-        let vec_coins = &self.coins;
-
-        for coin in vec_coins {
+    pub fn get_next_available_coin(&mut self) -> Option<&mut CoinRecord> {
+        for coin in self.coins.iter_mut() {
             if coin.v == sak_crypto::Scalar::zero() {
                 continue;
             }
