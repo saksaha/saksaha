@@ -3,10 +3,9 @@ use crate::{
 };
 use async_trait::async_trait;
 use sak_contract_std::{CtrCallType, CtrRequest};
-use sak_crypto::{rand, Scalar, ScalarExt};
-use sak_proofs::{
-    CoinProof, Hasher, MerkleTree, NewCoin, OldCoin, CM_TREE_DEPTH,
-};
+use sak_crypto::{rand, MerkleTree, Scalar, ScalarExt};
+use sak_dist_ledger_meta::CM_TREE_DEPTH;
+use sak_proofs::{CoinProof, Hasher, NewCoin, OldCoin};
 use sak_types::{
     BlockCandidate, PourTx, PourTxCandidate, Tx, TxCandidate, WASM_MAGIC_NUMBER,
 };

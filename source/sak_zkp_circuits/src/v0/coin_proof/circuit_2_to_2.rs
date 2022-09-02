@@ -1,13 +1,9 @@
-use crate::{CircuitError, Hasher, NewCoin, OldCoin, CM_TREE_DEPTH};
+use crate::{CircuitError, Hasher, NewCoin, OldCoin};
 use bellman::gadgets::boolean::AllocatedBit;
 use bellman::groth16::{self, Parameters};
 use bellman::{Circuit, ConstraintSystem, SynthesisError};
 use sak_crypto::{Bls12, OsRng, Scalar};
-
-// const PARAM_FILE_NAME: &str = "mimc_params_1_to_2";
-
-// const CIRCUIT_PARAMS_1TO2: &[u8] =
-//     include_bytes!("../../../../../prebuild/circuit_params_1to2");
+use sak_dist_ledger_meta::{CM_TREE_DEPTH, GAS};
 
 pub struct CoinProofCircuit2to2 {
     pub hasher: Hasher,
