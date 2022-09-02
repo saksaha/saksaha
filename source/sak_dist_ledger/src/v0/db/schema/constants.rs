@@ -45,9 +45,13 @@ pub(crate) mod cfs {
 
     pub const SN_2: &str = "sn_2";
 
-    pub const CM_1: &str = "cm_1";
+    pub const CMS: &str = "cms";
 
-    pub const CM_2: &str = "cm_2";
+    pub const CM_COUNT: &str = "cm_count";
+
+    // pub const CM_1: &str = "cm_1";
+
+    // pub const CM_2: &str = "cm_2";
 
     // pub const BLOCK_CM_COUNT: &str = "block_cm_count";
 

@@ -1,8 +1,8 @@
 use crate::wallet::Wallet;
-use crate::wallet::GAS;
 use crate::WalletError;
 use core::time::Duration;
 use sak_contract_std::CtrRequest;
+use sak_crypto::encode_hex;
 use sak_crypto::Scalar;
 use sak_crypto::ScalarExt;
 use sak_proofs::CoinProof;
@@ -15,6 +15,7 @@ use sak_types::CoinStatus;
 use std::convert::TryInto;
 use type_extension::U8Arr32;
 
+<<<<<<< HEAD
 pub(crate) struct SendTxPourParams {
     saksaha_endpoint: String,
     sn_1: U8Arr32,
@@ -49,6 +50,9 @@ impl SendTxPourParams {
         }
     }
 }
+=======
+const GAS: u64 = 10;
+>>>>>>> dev
 
 impl Wallet {
     pub async fn get_balance(
@@ -125,6 +129,7 @@ impl Wallet {
         coin: &CoinRecord,
     ) -> Result<u128, WalletError> {
         let cm_idx = {
+            log::debug!("get_cm_idx call");
             let resp = saksaha::get_cm_idx(
                 self.saksaha_endpoint.clone(),
                 coin.cm.to_bytes(),
@@ -134,8 +139,21 @@ impl Wallet {
             resp.result.ok_or("")?.cm_idx.ok_or("")?
         };
 
+<<<<<<< HEAD
         Ok(cm_idx)
     }
+=======
+        let merkle_rt;
+
+        let old_coin = {
+            let auth_path = {
+                log::debug!("get_auth_path call");
+                let response = saksaha::get_auth_path(
+                    self.saksaha_endpoint.clone(),
+                    cm_idx,
+                )
+                .await?;
+>>>>>>> dev
 
     #[inline]
     pub(crate) async fn prepare_auth_path(
@@ -156,6 +174,7 @@ impl Wallet {
         Ok(auth_path)
     }
 
+<<<<<<< HEAD
     pub(crate) fn prepare_merkle_rt(
         &self,
         coin: &CoinRecord,
@@ -163,6 +182,11 @@ impl Wallet {
     ) -> Result<U8Arr32, WalletError> {
         let merkle_rt = {
             let hasher = Hasher::new();
+=======
+                    for merkle_node in auth_path.iter() {
+                        let xl_value;
+                        let xr_value;
+>>>>>>> dev
 
             let mut curr = coin.cm.to_bytes();
 
@@ -170,7 +194,22 @@ impl Wallet {
                 let xl_value;
                 let xr_value;
 
+<<<<<<< HEAD
                 let is_left: bool = merkle_node.1;
+=======
+                        println!(
+                            "[+] xl: {:?}",
+                            ScalarExt::parse_arr(&xl_value)
+                        );
+                        println!(
+                            "[+] xr: {:?}",
+                            ScalarExt::parse_arr(&xr_value)
+                        );
+                        println!("");
+
+                        curr = hasher.mimc(&xl_value, &xr_value)?.to_bytes();
+                    }
+>>>>>>> dev
 
                 if is_left {
                     xl_value = merkle_node.0;
@@ -219,7 +258,8 @@ impl Wallet {
         let mut pi_ser = Vec::new();
         pi.write(&mut pi_ser).unwrap();
 
-        println!("[!] pi serialized, len: {}", pi_ser.len());
+        // println!("[!] pi serialized, len: {}", pi_ser.len());
+        println!("[!] pi serialized: {}", encode_hex(&pi_ser));
 
         Ok(pi_ser)
     }
@@ -261,9 +301,14 @@ impl Wallet {
 
         let json_response = saksaha::send_tx_pour(
             self.saksaha_endpoint.clone(),
+<<<<<<< HEAD
             old_sn_1,
             new_coin_1.cm.to_bytes(),
             new_coin_2.cm.to_bytes(),
+=======
+            sn_1,
+            vec![new_coin_1.cm.to_bytes(), new_coin_2.cm.to_bytes()],
+>>>>>>> dev
             merkle_rt,
             pi,
             ctr_addr,
@@ -271,8 +316,9 @@ impl Wallet {
         )
         .await?;
 
-        let tx_hash =
-            json_response.result.ok_or("Value needs to be returned")?;
+        println!("error: {:?}", json_response.error);
+
+        let tx_hash = json_response.result.ok_or("Send_tx_pour failed")?;
 
         // waiting for writing new block
         tokio::time::sleep(Duration::from_millis(6000)).await;

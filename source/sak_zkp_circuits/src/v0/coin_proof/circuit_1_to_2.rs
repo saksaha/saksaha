@@ -1,17 +1,16 @@
-use crate::{
-    CircuitError, Hasher, NewCoin, OldCoin, ProofError, CM_TREE_DEPTH,
-};
+use crate::{CircuitError, Hasher, NewCoin, OldCoin, CM_TREE_DEPTH};
 use bellman::gadgets::boolean::AllocatedBit;
-use bellman::groth16::{self, Parameters};
 use bellman::{Circuit, ConstraintSystem, SynthesisError};
+<<<<<<< HEAD:source/sak_zkp_circuits/src/v0/coin_proof/circuits/circuit_1_to_2.rs
 use sak_crypto::{Bls12, OsRng, Scalar, ScalarExt};
 use std::fs::File;
 use std::io::Write;
+=======
+use sak_crypto::Scalar;
+use type_extension::U8Array;
+>>>>>>> dev:source/sak_zkp_circuits/src/v0/coin_proof/circuit_1_to_2.rs
 
-// const PARAM_FILE_NAME: &str = "mimc_params_1_to_2";
-
-// const CIRCUIT_PARAMS_1TO2: &[u8] =
-//     include_bytes!("../../../../../prebuild/circuit_params_1to2");
+pub const GAS: u64 = 10;
 
 pub struct CoinProofCircuit1to2 {
     pub hasher: Hasher,
@@ -23,44 +22,6 @@ pub struct CoinProofCircuit1to2 {
     pub coin_2_new: NewCoin,
 
     pub constants: Vec<Scalar>,
-}
-
-pub(crate) fn generate_circuit_params(
-    constants: &[Scalar],
-) -> Result<Parameters<Bls12>, CircuitError> {
-    let hasher = Hasher::new();
-
-    let coin_1_old = OldCoin::default();
-    let coin_1_new = NewCoin::default();
-    let coin_2_new = NewCoin::default();
-
-    let params = {
-        let c = CoinProofCircuit1to2 {
-            hasher,
-            coin_1_old,
-            coin_1_new,
-            coin_2_new,
-            constants: constants.to_vec(),
-        };
-
-        groth16::generate_random_parameters::<Bls12, _, _>(c, &mut OsRng)?
-    };
-
-    Ok(params)
-}
-
-pub(crate) fn get_mimc_params_1_to_2(
-    // constants: &[Scalar],
-    circuit_params: &[u8],
-) -> Result<Parameters<Bls12>, ProofError> {
-    match Parameters::<Bls12>::read(circuit_params, false) {
-        Ok(p) => Ok(p),
-        Err(err) => {
-            return Err(
-                format!("Error getting circuit params, err: {}", err).into()
-            );
-        }
-    }
 }
 
 impl Circuit<Scalar> for CoinProofCircuit1to2 {
@@ -271,6 +232,7 @@ pub fn require_equal_val_summation<CS: ConstraintSystem<Scalar>>(
     v_1: Option<Scalar>,
     v_2: Option<Scalar>,
 ) {
+<<<<<<< HEAD:source/sak_zkp_circuits/src/v0/coin_proof/circuits/circuit_1_to_2.rs
     let v_gas = cs
         .alloc(
             || "v_gas",
@@ -279,6 +241,12 @@ pub fn require_equal_val_summation<CS: ConstraintSystem<Scalar>>(
                     .ok_or(SynthesisError::AssignmentMissing)
             },
         )
+=======
+    let gas = Some(Scalar::from_bytes(&U8Array::from_int(GAS)).unwrap());
+
+    let v_gas = cs
+        .alloc(|| "v_gas", || gas.ok_or(SynthesisError::AssignmentMissing))
+>>>>>>> dev:source/sak_zkp_circuits/src/v0/coin_proof/circuit_1_to_2.rs
         .unwrap();
 
     let v_old = cs

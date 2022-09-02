@@ -1,5 +1,9 @@
+<<<<<<< HEAD
 pub use super::proof::*;
 use crate::{Hasher, ProofError, CM_TREE_DEPTH};
+=======
+use crate::CM_TREE_DEPTH;
+>>>>>>> dev
 use sak_crypto::Scalar;
 
 #[derive(Debug, Copy, Clone)]

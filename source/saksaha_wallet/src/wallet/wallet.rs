@@ -3,7 +3,6 @@ use crate::{db::WalletDB, Config, CredentialManager, WalletError};
 use colored::Colorize;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-pub const GAS: u64 = 10;
 
 pub(crate) struct Wallet {
     wallet_db: Arc<WalletDB>,
