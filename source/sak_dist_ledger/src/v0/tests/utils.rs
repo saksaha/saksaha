@@ -3,10 +3,12 @@ use crate::{
 };
 use async_trait::async_trait;
 use sak_contract_std::{CtrCallType, CtrRequest};
-use sak_crypto::{rand, Hasher, Scalar, ScalarExt};
-use sak_proofs::{CoinProof, MerkleTree, NewCoin, OldCoin, CM_TREE_DEPTH};
+use sak_crypto::{rand, Scalar, ScalarExt};
+use sak_proofs::{
+    CoinProof, Hasher, MerkleTree, NewCoin, OldCoin, CM_TREE_DEPTH,
+};
 use sak_types::{
-    BlockCandidate, PourTxCandidate, Tx, TxCandidate, WASM_MAGIC_NUMBER,
+    BlockCandidate, PourTx, PourTxCandidate, Tx, TxCandidate, WASM_MAGIC_NUMBER,
 };
 use std::collections::HashMap;
 use type_extension::U8Array;
@@ -24,20 +26,19 @@ impl Consensus for DummyPos {
     }
 }
 
-// #[cfg(test)]
-// pub(crate) fn make_dummy_genesis_block_1() -> BlockCandidate {
-//     let genesis_block = BlockCandidate {
-//         validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
-//         tx_candidates: vec![
-//             sak_types::mock_mint_tc_1(),
-//             sak_types::mock_mint_tc_2(),
-//         ],
-//         witness_sigs: vec![String::from("1"), String::from("2")],
-//         created_at: String::from("2022061515340000"),
-//     };
+#[cfg(test)]
+pub(crate) fn make_dummy_block_canidate_valid_pi(
+    tx_candidate: TxCandidate,
+) -> BlockCandidate {
+    let genesis_block = BlockCandidate {
+        validator_sig: String::from("Ox16a03c8sbfaf3cb06"),
+        tx_candidates: vec![tx_candidate],
+        witness_sigs: vec![String::from("2"), String::from("3")],
+        created_at: String::from("20220830"),
+    };
 
-//     genesis_block
-// }
+    genesis_block
+}
 
 pub(crate) async fn make_dist_ledger() -> DistLedger {
     let pos = make_dummy_pos();
@@ -120,6 +121,271 @@ pub(crate) async fn make_dummy_valid_pour_tx() -> Tx {
     //     proof_context.cm_2.to_bytes(),
     //     proof_context.merkle_rt.to_bytes(),
     // )
+}
+
+// pub(crate) async fn make_dummy_invalid_pour_tx() -> Tx {
+//     let proof_context = make_proof_context();
+
+//     let coin_1_old = OldCoin {
+//         addr_pk: Some(proof_context.addr_pk_1_old),
+//         addr_sk: Some(proof_context.addr_sk_1_old),
+//         rho: Some(proof_context.rho_1_old),
+//         r: Some(proof_context.r_1_old),
+//         s: Some(proof_context.s_1_old),
+//         v: Some(proof_context.v_1_old),
+//         cm: Some(proof_context.cm_1_old),
+//         auth_path: proof_context.auth_path_1,
+//     };
+
+//     let coin_1_new = NewCoin {
+//         addr_pk: Some(proof_context.addr_pk_1),
+//         rho: Some(proof_context.rho_1),
+//         r: Some(proof_context.r_1),
+//         s: Some(proof_context.s_1),
+//         v: Some(proof_context.v_1),
+//     };
+
+//     let coin_2_new = NewCoin {
+//         addr_pk: Some(proof_context.addr_pk_2),
+//         rho: Some(proof_context.rho_2),
+//         r: Some(proof_context.r_2),
+//         s: Some(proof_context.s_2),
+//         v: Some(proof_context.v_2),
+//     };
+
+//     let pi =
+//         CoinProof::generate_proof_1_to_2(coin_1_old, coin_1_new, coin_2_new)
+//             .unwrap();
+
+//     let pi_ser = CoinProof::serialize_pi(&pi).unwrap();
+
+//     {
+//         println!("\n[+] dummy pour_tx ");
+//         println!("[Debug] tx.pi: {:?}", pi);
+//         println!("[Debug] tx.sn_1: {:?}", proof_context.sn_1.clone(),);
+//         println!("[Debug] tx.cm_1: {:?}", proof_context.cm_1.clone(),);
+//         println!("[Debug] tx.cm_2: {:?}", proof_context.cm_2.clone(),);
+//         println!(
+//             "[Debug] tx.merkle_rt: {:?}",
+//             proof_context.merkle_rt.clone(),
+//         );
+//     }
+
+//     PourTxCandidate::mock_tx(
+//         pi_ser,
+//         proof_context.sn_1.to_bytes(),
+//         U8Array::from_int(0),
+//         proof_context.cm_2.to_bytes(),
+//         proof_context.merkle_rt.to_bytes(),
+//     )
+// }
+// PourTxCandidate::mock_tx(
+//     pi_ser,
+//     proof_context.sn_1.to_bytes(),
+//     U8Array::from_int(0),
+//     proof_context.cm_2.to_bytes(),
+//     proof_context.merkle_rt.to_bytes(),
+// )
+
+//     sak_types::mock_pour_tx_custom(
+//         pi_ser,
+//         proof_context.sn_1.to_bytes(),
+//         U8Array::from_int(0),
+//         proof_context.cm_2.to_bytes(),
+//         proof_context.merkle_rt.to_bytes(),
+//     )
+// }
+
+pub(crate) async fn make_dummy_valid_pour_tx_candidate() -> TxCandidate {
+    let proof_context = make_proof_context();
+
+    let coin_1_old = OldCoin {
+        addr_pk: Some(proof_context.addr_pk_1_old),
+        addr_sk: Some(proof_context.addr_sk_1_old),
+        rho: Some(proof_context.rho_1_old),
+        r: Some(proof_context.r_1_old),
+        s: Some(proof_context.s_1_old),
+        v: Some(proof_context.v_1_old),
+        cm: Some(proof_context.cm_1_old),
+        auth_path: proof_context.auth_path_1,
+    };
+
+    let coin_1_new = NewCoin {
+        addr_pk: Some(proof_context.addr_pk_1),
+        rho: Some(proof_context.rho_1),
+        r: Some(proof_context.r_1),
+        s: Some(proof_context.s_1),
+        v: Some(proof_context.v_1),
+    };
+
+    let coin_2_new = NewCoin {
+        addr_pk: Some(proof_context.addr_pk_2),
+        rho: Some(proof_context.rho_2),
+        r: Some(proof_context.r_2),
+        s: Some(proof_context.s_2),
+        v: Some(proof_context.v_2),
+    };
+
+    let pi =
+        CoinProof::generate_proof_1_to_2(coin_1_old, coin_1_new, coin_2_new)
+            .unwrap();
+
+    let pi_ser = CoinProof::serialize_pi(&pi).unwrap();
+
+    {
+        println!("\n[+] dummy pour_tx ");
+        println!("[Debug] tx.pi: {:?}", pi);
+        println!("[Debug] tx.sn_1: {:?}", proof_context.sn_1.clone(),);
+        println!("[Debug] tx.cm_1: {:?}", proof_context.cm_1.clone(),);
+        println!("[Debug] tx.cm_2: {:?}", proof_context.cm_2.clone(),);
+        println!(
+            "[Debug] tx.merkle_rt: {:?}",
+            proof_context.merkle_rt.clone(),
+        );
+    }
+
+    // PourTxCandidate::mock_tx_candidate(
+    //     pi_ser,
+    //     proof_context.sn_1.to_bytes(),
+    //     proof_context.cm_1.to_bytes(),
+    //     proof_context.cm_2.to_bytes(),
+    //     proof_context.merkle_rt.to_bytes(),
+    // )
+
+    sak_types::mock_pour_tc_custom(
+        pi_ser,
+        proof_context.sn_1.to_bytes(),
+        vec![proof_context.cm_1.to_bytes(), proof_context.cm_2.to_bytes()],
+        proof_context.merkle_rt.to_bytes(),
+    )
+}
+
+pub(crate) async fn make_dummy_valid_pour_tx_candidate_random() -> TxCandidate {
+    let proof_context = make_proof_context_random();
+
+    let coin_1_old = OldCoin {
+        addr_pk: Some(proof_context.addr_pk_1_old),
+        addr_sk: Some(proof_context.addr_sk_1_old),
+        rho: Some(proof_context.rho_1_old),
+        r: Some(proof_context.r_1_old),
+        s: Some(proof_context.s_1_old),
+        v: Some(proof_context.v_1_old),
+        cm: Some(proof_context.cm_1_old),
+        auth_path: proof_context.auth_path_1,
+    };
+
+    let coin_1_new = NewCoin {
+        addr_pk: Some(proof_context.addr_pk_1),
+        rho: Some(proof_context.rho_1),
+        r: Some(proof_context.r_1),
+        s: Some(proof_context.s_1),
+        v: Some(proof_context.v_1),
+    };
+
+    let coin_2_new = NewCoin {
+        addr_pk: Some(proof_context.addr_pk_2),
+        rho: Some(proof_context.rho_2),
+        r: Some(proof_context.r_2),
+        s: Some(proof_context.s_2),
+        v: Some(proof_context.v_2),
+    };
+
+    let pi =
+        CoinProof::generate_proof_1_to_2(coin_1_old, coin_1_new, coin_2_new)
+            .unwrap();
+
+    let pi_ser = CoinProof::serialize_pi(&pi).unwrap();
+
+    {
+        println!("\n[+] dummy pour_tx ");
+        println!("[Debug] tx.pi: {:?}", pi);
+        println!("[Debug] tx.sn_1: {:?}", proof_context.sn_1.clone(),);
+        println!("[Debug] tx.cm_1: {:?}", proof_context.cm_1.clone(),);
+        println!("[Debug] tx.cm_2: {:?}", proof_context.cm_2.clone(),);
+        println!(
+            "[Debug] tx.merkle_rt: {:?}",
+            proof_context.merkle_rt.clone(),
+        );
+    }
+
+    // PourTxCandidate::mock_tx_candidate(
+    //     pi_ser,
+    //     proof_context.sn_1.to_bytes(),
+    //     proof_context.cm_1.to_bytes(),
+    //     proof_context.cm_2.to_bytes(),
+    //     proof_context.merkle_rt.to_bytes(),
+    // )
+
+    sak_types::mock_pour_tc_custom(
+        pi_ser,
+        proof_context.sn_1.to_bytes(),
+        vec![proof_context.cm_1.to_bytes(), proof_context.cm_2.to_bytes()],
+        proof_context.merkle_rt.to_bytes(),
+    )
+}
+
+pub(crate) async fn make_dummy_invalid_pour_tx_candidate() -> TxCandidate {
+    let proof_context = make_proof_context();
+
+    let coin_1_old = OldCoin {
+        addr_pk: Some(proof_context.addr_pk_1_old),
+        addr_sk: Some(proof_context.addr_sk_1_old),
+        rho: Some(proof_context.rho_1_old),
+        r: Some(proof_context.r_1_old),
+        s: Some(proof_context.s_1_old),
+        v: Some(proof_context.v_1_old),
+        cm: Some(proof_context.cm_1_old),
+        auth_path: proof_context.auth_path_1,
+    };
+
+    let coin_1_new = NewCoin {
+        addr_pk: Some(proof_context.addr_pk_1),
+        rho: Some(proof_context.rho_1),
+        r: Some(proof_context.r_1),
+        s: Some(proof_context.s_1),
+        v: Some(proof_context.v_1),
+    };
+
+    let coin_2_new = NewCoin {
+        addr_pk: Some(proof_context.addr_pk_2),
+        rho: Some(proof_context.rho_2),
+        r: Some(proof_context.r_2),
+        s: Some(proof_context.s_2),
+        v: Some(proof_context.v_2),
+    };
+
+    let pi =
+        CoinProof::generate_proof_1_to_2(coin_1_old, coin_1_new, coin_2_new)
+            .unwrap();
+
+    let pi_ser = CoinProof::serialize_pi(&pi).unwrap();
+
+    {
+        println!("\n[+] dummy pour_tx ");
+        println!("[Debug] tx.pi: {:?}", pi);
+        println!("[Debug] tx.sn_1: {:?}", proof_context.sn_1.clone(),);
+        println!("[Debug] tx.cm_1: {:?}", proof_context.cm_1.clone(),);
+        println!("[Debug] tx.cm_2: {:?}", proof_context.cm_2.clone(),);
+        println!(
+            "[Debug] tx.merkle_rt: {:?}",
+            proof_context.merkle_rt.clone(),
+        );
+    }
+
+    // PourTxCandidate::mock_tx_candidate(
+    //     pi_ser,
+    //     proof_context.sn_1.to_bytes(),
+    //     U8Array::from_int(0),
+    //     proof_context.cm_2.to_bytes(),
+    //     proof_context.merkle_rt.to_bytes(),
+    // )
+
+    sak_types::mock_pour_tc_custom(
+        pi_ser,
+        proof_context.sn_1.to_bytes(),
+        vec![U8Array::from_int(0), proof_context.cm_2.to_bytes()],
+        proof_context.merkle_rt.to_bytes(),
+    )
 }
 
 pub struct ProofContext {
@@ -333,6 +599,187 @@ pub(crate) fn make_proof_context() -> ProofContext {
     }
 }
 
+pub(crate) fn make_proof_context_random() -> ProofContext {
+    let hasher = Hasher::new();
+
+    let (
+        addr_pk_1_old,
+        addr_sk_1_old,
+        r_1_old,
+        s_1_old,
+        rho_1_old,
+        v_1_old,
+        cm_1_old,
+        sn_1,
+    ) = {
+        let addr_sk =
+            ScalarExt::parse_arr(&U8Array::from_int(rand() as u64)).unwrap();
+
+        let addr_pk = hasher.mimc_single_scalar(addr_sk).unwrap();
+
+        let r =
+            ScalarExt::parse_arr(&U8Array::from_int(rand() as u64)).unwrap();
+
+        let s =
+            ScalarExt::parse_arr(&U8Array::from_int(rand() as u64)).unwrap();
+
+        let rho =
+            ScalarExt::parse_arr(&U8Array::from_int(rand() as u64)).unwrap();
+
+        let v = ScalarExt::parse_arr(&U8Array::from_int(1000)).unwrap();
+
+        let cm = {
+            let k = hasher.comm2_scalar(r, addr_pk, rho);
+
+            hasher.comm2_scalar(s, v, k)
+        };
+
+        let sn = hasher.mimc_scalar(addr_sk, rho);
+
+        (addr_pk, addr_sk, r, s, rho, v, cm, sn)
+    };
+
+    let (addr_sk_1, addr_pk_1, r_1, s_1, rho_1, v_1, cm_1) = {
+        let addr_sk =
+            ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
+                .unwrap();
+
+        let addr_pk = hasher.mimc_single_scalar(addr_sk).unwrap();
+
+        let r = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
+            .unwrap();
+
+        let s = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
+            .unwrap();
+        let rho = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
+            .unwrap();
+
+        let v = ScalarExt::parse_arr(&U8Array::from_int(600)).unwrap();
+
+        let cm = {
+            let k = hasher.comm2_scalar(r, addr_pk, rho);
+
+            hasher.comm2_scalar(s, v, k)
+        };
+
+        (addr_sk, addr_pk, r, s, rho, v, cm)
+    };
+
+    let (addr_sk_2, addr_pk_2, r_2, s_2, rho_2, v_2, cm_2) = {
+        let addr_sk =
+            ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
+                .unwrap();
+
+        let addr_pk = hasher.mimc_single_scalar(addr_sk).unwrap();
+
+        let r = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
+            .unwrap();
+
+        let s = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
+            .unwrap();
+
+        let rho = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
+            .unwrap();
+
+        let v = ScalarExt::parse_arr(&U8Array::from_int(400)).unwrap();
+
+        let cm = {
+            let k = hasher.comm2_scalar(r, addr_pk, rho);
+
+            hasher.comm2_scalar(s, v, k)
+        };
+
+        (addr_sk, addr_pk, r, s, rho, v, cm)
+    };
+
+    let merkle_tree = MerkleTree::new(CM_TREE_DEPTH as u32);
+
+    let merkle_nodes = {
+        let mut m = HashMap::new();
+
+        let node_0_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
+        let node_1_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
+        let node_2_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
+        let node_3_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
+        // let node_4_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
+
+        m.insert("0_1", node_0_1);
+        m.insert("1_1", node_1_1);
+        m.insert("2_1", node_2_1);
+        m.insert("3_1", node_3_1);
+        // m.insert("4_1", node_4_1);
+
+        let node_1_0 = hasher.mimc_scalar(cm_1_old, node_0_1);
+        let node_2_0 = hasher.mimc_scalar(node_1_0, node_1_1);
+        let node_3_0 = hasher.mimc_scalar(node_2_0, node_2_1);
+        let node_4_0 = hasher.mimc_scalar(node_3_0, node_3_1);
+        // let node_5_0 = hasher.mimc_scalar(node_4_0, node_4_1);
+
+        m.insert("1_0", node_1_0);
+        m.insert("2_0", node_2_0);
+        m.insert("3_0", node_3_0);
+        m.insert("4_0", node_4_0);
+        // m.insert("5_0", node_5_0);
+
+        m
+    };
+
+    let merkle_rt = *merkle_nodes.get("4_0").unwrap();
+
+    let auth_path_1 = {
+        let v = merkle_tree.generate_auth_paths(0);
+        let mut ret =
+            [Some((Scalar::default(), false)); CM_TREE_DEPTH as usize];
+
+        v.iter().enumerate().for_each(|(idx, p)| {
+            if idx >= ret.len() {
+                panic!(
+                    "Invalid assignment to a fixed sized array, idx: {}",
+                    idx
+                );
+            }
+
+            let key = format!("{}_{}", idx, p.idx);
+            let merkle_node = merkle_nodes.get(key.as_str()).unwrap();
+
+            ret[idx] = Some((merkle_node.clone(), p.direction));
+        });
+
+        ret
+    };
+
+    ProofContext {
+        hasher,
+        //
+        addr_pk_1_old,
+        addr_sk_1_old,
+        r_1_old,
+        s_1_old,
+        rho_1_old,
+        v_1_old,
+        cm_1_old,
+        auth_path_1,
+        merkle_rt,
+        sn_1,
+        //
+        addr_sk_1,
+        addr_pk_1,
+        r_1,
+        s_1,
+        rho_1,
+        v_1,
+        cm_1,
+        //
+        addr_sk_2,
+        addr_pk_2,
+        r_2,
+        s_2,
+        rho_2,
+        v_2,
+        cm_2,
+    }
+}
+
 pub(crate) fn make_dummy_state() -> (String, String) {
     let contract_addr = String::from("0xa1a2a3a4");
     let ctr_state = String::from("test_ctr_state");
@@ -377,8 +824,7 @@ pub(crate) fn make_dummy_block_candidate_with_query_tx(
                 Some(String::from("ctr_addr_1")),
                 vec![0],
                 U8Array::new_empty_32(),
-                U8Array::new_empty_32(),
-                U8Array::new_empty_32(),
+                vec![U8Array::new_empty_32()],
                 U8Array::new_empty_32(),
             ))
         };

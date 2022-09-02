@@ -1,13 +1,10 @@
 use super::utils;
-use crate::{
-    rpc::routes::v0::{GetTxRequest, SendMintTxRequest, SendPourTxRequest},
-    tests::TestUtil,
-};
+use crate::{rpc::routes::v0::GetTxRequest, tests::TestUtil};
 use hyper::{Body, Client, Method, Request, Uri};
-use sak_rpc_interface::{JsonRequest, JsonResponse};
-use sak_types::{
-    BlockCandidate, MintTxCandidate, PourTxCandidate, Tx, TxCandidate,
+use sak_rpc_interface::{
+    JsonRequest, JsonResponse, SendMintTxRequest, SendPourTxRequest,
 };
+use sak_types::{BlockCandidate, Tx, TxCandidate};
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_rpc_client_request_correct_get_tx() {
@@ -238,8 +235,7 @@ async fn test_rpc_reqeust_correct_send_pour_tx() {
             Some(tc_dummy.ctr_addr),
             tc_dummy.pi,
             tc_dummy.sn_1,
-            tc_dummy.cm_1,
-            tc_dummy.cm_2,
+            tc_dummy.cms,
             tc_dummy.merkle_rt,
         );
 
@@ -374,7 +370,7 @@ async fn test_rpc_reqeust_correct_send_mint_tx() {
             tc_dummy.data,
             tc_dummy.author_sig,
             Some(tc_dummy.ctr_addr),
-            tc_dummy.cm_1,
+            tc_dummy.cms,
             tc_dummy.v,
             tc_dummy.k,
             tc_dummy.s,

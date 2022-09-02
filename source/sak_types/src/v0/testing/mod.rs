@@ -1,8 +1,10 @@
 mod block;
+mod coin;
 mod tx;
 mod values;
 
 pub use block::*;
+pub use coin::*;
 pub use tx::*;
 
 pub const VALIDATOR: &[u8] =

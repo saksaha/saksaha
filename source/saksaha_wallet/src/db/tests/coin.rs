@@ -1,9 +1,9 @@
+use super::make_dummy_db;
 use crate::WalletError;
-use sak_crypto::{Hasher, Scalar, ScalarExt};
+use sak_crypto::{Scalar, ScalarExt};
+use sak_proofs::Hasher;
 use sak_types::{CoinRecord, CoinStatus};
 use type_extension::U8Array;
-
-use super::make_dummy_db;
 
 struct TestWalletCoin {
     addr_pk: Scalar,

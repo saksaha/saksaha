@@ -1,28 +1,42 @@
-use crate::{
-    get_mimc_params_1_to_2, CoinProofCircuit1to2, NewCoin, OldCoin, ProofError,
+use crate::ProofError;
+use bellman::groth16::{
+    self, Parameters, PreparedVerifyingKey, Proof, VerifyingKey,
 };
 use pairing::MultiMillerLoop;
-use sak_crypto::{
-    groth16, Bls12, Groth16VerifyingKey, Hasher, OsRng, PreparedVerifyingKey,
-    Proof, Scalar,
-};
+use sak_crypto::{Bls12, OsRng, Scalar};
+use sak_zkp_circuits::{CoinProofCircuit1to2, Hasher, NewCoin, OldCoin};
+
+const CIRCUIT_PARAMS_1TO2: &[u8] =
+    include_bytes!("../../../../prebuild/circuit_params_1to2");
 
 pub struct CoinProof;
 
 impl CoinProof {
     pub fn make_verifying_key<E: MultiMillerLoop>(
-        vk: &Groth16VerifyingKey<E>,
+        vk: &VerifyingKey<E>,
     ) -> PreparedVerifyingKey<E> {
         groth16::prepare_verifying_key(vk)
+    }
+
+    pub fn get_mimc_params_1_to_2() -> Result<Parameters<Bls12>, ProofError> {
+        match Parameters::<Bls12>::read(&CIRCUIT_PARAMS_1TO2[..], false) {
+            Ok(p) => Ok(p),
+            Err(err) => {
+                return Err(format!(
+                    "Error getting circuit params, err: {}",
+                    err
+                )
+                .into());
+            }
+        }
     }
 
     pub fn verify_proof_1_to_2(
         proof: Proof<Bls12>,
         public_inputs: &[Scalar],
-        hasher: &Hasher,
+        _hasher: &Hasher,
     ) -> Result<bool, ProofError> {
-        let constants = hasher.get_mimc_constants();
-        let de_params = get_mimc_params_1_to_2(&constants)?;
+        let de_params = Self::get_mimc_params_1_to_2()?;
         let pvk = groth16::prepare_verifying_key(&de_params.vk);
 
         let res = match groth16::verify_proof(&pvk, &proof, public_inputs) {
@@ -34,7 +48,8 @@ impl CoinProof {
             Err(err) => {
                 println!("verify_proof(), err: {}", err);
 
-                false
+                return Err(format!("verifying error, err: {}", err).into());
+                // false
             }
         };
 
@@ -48,8 +63,7 @@ impl CoinProof {
     ) -> Result<Proof<Bls12>, ProofError> {
         let hasher = Hasher::new();
         let constants = hasher.get_mimc_constants().to_vec();
-
-        let de_params = get_mimc_params_1_to_2(&constants)?;
+        let de_params = Self::get_mimc_params_1_to_2()?;
 
         let c = CoinProofCircuit1to2 {
             hasher,
