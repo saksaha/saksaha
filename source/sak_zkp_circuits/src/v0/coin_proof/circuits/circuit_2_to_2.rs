@@ -25,58 +25,18 @@ pub struct CoinProofCircuit2to2 {
     pub constants: Vec<Scalar>,
 }
 
-// pub(crate) fn generate_circuit_params_2_to_2(
-//     constants: &[Scalar],
-// ) -> Result<Parameters<Bls12>, CircuitError> {
-//     let hasher = Hasher::new();
-
-//     let coin_1_old = OldCoin::default();
-//     let coin_2_old = OldCoin::default();
-//     let coin_1_new = NewCoin::default();
-//     let coin_2_new = NewCoin::default();
-
-//     let params = {
-//         let c = CoinProofCircuit2to2 {
-//             hasher,
-//             coin_1_old,
-//             coin_2_old,
-//             coin_1_new,
-//             coin_2_new,
-//             constants: constants.to_vec(),
-//         };
-
-//         groth16::generate_random_parameters::<Bls12, _, _>(c, &mut OsRng)?
-//     };
-
-//     Ok(params)
-// }
-
-// pub(crate) fn get_mimc_params_2_to_2(
-//     // constants: &[Scalar],
-//     circuit_params: &[u8],
-// ) -> Result<Parameters<Bls12>, ProofError> {
-//     match Parameters::<Bls12>::read(circuit_params, false) {
-//         Ok(p) => Ok(p),
-//         Err(err) => {
-//             return Err(
-//                 format!("Error getting circuit params, err: {}", err).into()
-//             );
-//         }
-//     }
-// }
-
 impl Circuit<Scalar> for CoinProofCircuit2to2 {
     fn synthesize<CS: ConstraintSystem<Scalar>>(
         self,
         cs: &mut CS,
     ) -> Result<(), SynthesisError> {
-        let rho_1_old = self.coin_2_old.rho.or(Some(Scalar::default()));
-        let addr_pk_1_old = self.coin_2_old.addr_pk.or(Some(Scalar::default()));
-        let addr_sk_1_old = self.coin_2_old.addr_sk.or(Some(Scalar::default()));
-        let cm_1_old = self.coin_2_old.cm.or(Some(Scalar::default()));
-        let r_1_old = self.coin_2_old.r.or(Some(Scalar::default()));
-        let s_1_old = self.coin_2_old.s.or(Some(Scalar::default()));
-        let v_1_old = self.coin_2_old.v.or(Some(Scalar::default()));
+        let rho_1_old = self.coin_1_old.rho.or(Some(Scalar::default()));
+        let addr_pk_1_old = self.coin_1_old.addr_pk.or(Some(Scalar::default()));
+        let addr_sk_1_old = self.coin_1_old.addr_sk.or(Some(Scalar::default()));
+        let cm_1_old = self.coin_1_old.cm.or(Some(Scalar::default()));
+        let r_1_old = self.coin_1_old.r.or(Some(Scalar::default()));
+        let s_1_old = self.coin_1_old.s.or(Some(Scalar::default()));
+        let v_1_old = self.coin_1_old.v.or(Some(Scalar::default()));
 
         let rho_2_old = self.coin_2_old.rho.or(Some(Scalar::default()));
         let addr_pk_2_old = self.coin_2_old.addr_pk.or(Some(Scalar::default()));
@@ -97,35 +57,33 @@ impl Circuit<Scalar> for CoinProofCircuit2to2 {
             &self.hasher,
         );
 
-        // check_cm_commitments(
-        //     cs,
-        //     cm_2_old,
-        //     addr_pk_2_old,
-        //     rho_2_old,
-        //     r_2_old,
-        //     s_2_old,
-        //     v_2_old,
-        //     &self.hasher,
-        // );
+        check_cm_commitments(
+            cs,
+            cm_2_old,
+            addr_pk_2_old,
+            rho_2_old,
+            r_2_old,
+            s_2_old,
+            v_2_old,
+            &self.hasher,
+        );
 
         let sn_1 = self.hasher.mimc_scalar_cs(cs, addr_sk_1_old, rho_1_old);
-        // let sn_2 = self.hasher.mimc_scalar_cs(cs, addr_sk_2_old, rho_2_old);
+        let sn_2 = self.hasher.mimc_scalar_cs(cs, addr_sk_2_old, rho_2_old);
 
-        // merkle_rt_1 should be same with merkle_rt_2
-
-        let merkle_rt_1 = climb_up_tree(
+        let merkle_rt = climb_up_tree(
             cs,
             cm_1_old,
             &self.coin_1_old.auth_path,
             &self.hasher,
         );
 
-        // let merkle_rt_2 = climb_up_tree(
-        //     cs,
-        //     cm_2_old,
-        //     &self.coin_2_old.auth_path,
-        //     &self.hasher,
-        // );
+        let merkle_rt_2 = climb_up_tree(
+            cs,
+            cm_2_old,
+            &self.coin_2_old.auth_path,
+            &self.hasher,
+        );
 
         let addr_pk_1_new = self.coin_1_new.addr_pk.or(Some(Scalar::default()));
         let rho_1_new = self.coin_1_new.rho.or(Some(Scalar::default()));
@@ -187,24 +145,24 @@ impl Circuit<Scalar> for CoinProofCircuit2to2 {
 
         {
             cs.alloc_input(
-                || "merkle_rt_1",
-                || merkle_rt_1.ok_or(SynthesisError::AssignmentMissing),
+                || "merkle_rt",
+                || merkle_rt.ok_or(SynthesisError::AssignmentMissing),
             )?;
 
-            // cs.alloc_input(
-            //     || "merkle_rt_2",
-            //     || merkle_rt_2.ok_or(SynthesisError::AssignmentMissing),
-            // )?;
+            cs.alloc_input(
+                || "merkle_rt_2",
+                || merkle_rt_2.ok_or(SynthesisError::AssignmentMissing),
+            )?;
 
             cs.alloc_input(
                 || "sn_1_old",
                 || sn_1.ok_or(SynthesisError::AssignmentMissing),
             )?;
 
-            // cs.alloc_input(
-            //     || "sn_2_old",
-            //     || sn_2.ok_or(SynthesisError::AssignmentMissing),
-            // )?;
+            cs.alloc_input(
+                || "sn_2_old",
+                || sn_2.ok_or(SynthesisError::AssignmentMissing),
+            )?;
 
             cs.alloc_input(
                 || "cm_1_new",

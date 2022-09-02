@@ -180,7 +180,7 @@ pub fn make_test_context_2_to_2() -> TestContext {
         };
 
         let v = {
-            let arr = U8Array::from_int(160);
+            let arr = U8Array::from_int(120);
             ScalarExt::parse_arr(&arr).unwrap()
         };
 
@@ -622,9 +622,9 @@ pub async fn test_coin_ownership_default_2_to_2() {
 
     let public_inputs: Vec<Scalar> = vec![
         test_context.merkle_rt_1,
-        // test_context.merkle_rt_2,
+        test_context.merkle_rt_2,
         test_context.sn_1,
-        // test_context.sn_2,
+        test_context.sn_2,
         test_context.cm_1,
         test_context.cm_2,
     ];
