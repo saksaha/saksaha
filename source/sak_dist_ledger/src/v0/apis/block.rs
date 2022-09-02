@@ -109,7 +109,11 @@ impl DistLedgerApis {
                 if is_valid_sn & is_verified_tx {
                     self.sync_pool.insert_tx(tx_candidate).await?
                 } else {
-                    return Err(format!("tc is not valid").into());
+                    return Err(format!(
+                        "Is valid sn and verified tx:{}, {}",
+                        is_valid_sn, is_verified_tx
+                    )
+                    .into());
                 }
             }
         };

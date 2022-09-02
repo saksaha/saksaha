@@ -178,8 +178,6 @@ impl LedgerDB {
 
         let tx_hash = tc.get_tx_hash();
 
-        println!("put mint tx: {}", tx);
-
         // let cm_idx = self.batch_increment_cm_idx(batch, &tc.cm)?;
 
         self.batch_put_tx_type(batch, tx_hash, tc.get_tx_type())?;
@@ -191,7 +189,7 @@ impl LedgerDB {
             self.batch_put_cm_idx_cm(batch, cm_idx, cm)?;
         }
 
-        self.batch_put_cm_count(batch, tx_hash, &tc.cm_count);
+        self.batch_put_cm_count(batch, tx_hash, &tc.cm_count)?;
 
         self.batch_put_tx_created_at(batch, tx_hash, &tc.created_at)?;
 
@@ -237,6 +235,8 @@ impl LedgerDB {
         let tc = &tx.tx_candidate;
 
         let tx_hash = tc.get_tx_hash();
+
+        println!("tx_hash in put: {}", tx_hash);
 
         self.batch_put_tx_hash_by_sn(batch, &tc.sn_1, tx_hash)?;
 
