@@ -1,15 +1,8 @@
-use crate::{Scalar, ScalarExt};
-use log::debug;
+use crate::{CryptoError, Scalar};
 
 #[derive(Debug)]
 pub struct MerkleTree {
     pub height: u32,
-}
-
-#[derive(Debug, Clone)]
-pub struct Node {
-    pub val: Option<[u32; 1]>,
-    pub hash: Scalar,
 }
 
 #[derive(Debug, Clone)]

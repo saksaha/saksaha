@@ -3,9 +3,9 @@ use crate::{
     MintTxCandidate, PourTxCandidate, Tx, VALIDATOR, VALIDATOR_CTR_ADDR,
 };
 use crate::{TxCandidate, TypesError};
-use sak_crypto::ScalarExt;
+use sak_crypto::MerkleTree;
 use sak_crypto::{rand, Scalar};
-use sak_crypto::{MerkleNodes, MerkleTree};
+use sak_crypto::{MerkleTreeSim, ScalarExt};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
 use sak_proofs::CoinProof;
 use sak_proofs::Hasher;
@@ -142,21 +142,11 @@ pub fn mock_pour_tc_random() -> TxCandidate {
 
     let merkle_tree = MerkleTree::new(CM_TREE_DEPTH as u32);
 
-    let merkle_nodes2 = {
-        let n = MerkleNodes::new(CM_TREE_DEPTH as u32);
+    let mut mt_sim = MerkleTreeSim::new(CM_TREE_DEPTH as u32);
 
+    {
         let node_0_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
-        let node_1_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
-        let node_2_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
-        let node_3_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
-
-        n.hydrate(&[
-            ("0_1", node_0_1),
-            ("1_1", node_1_1),
-            ("2_1", node_2_1),
-            ("3_1", node_3_1),
-        ])
-        .unwrap()
+        mt_sim.add_leaf_node(node_0_1);
     };
 
     let merkle_nodes = {
