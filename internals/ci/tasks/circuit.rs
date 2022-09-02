@@ -8,6 +8,12 @@ use sak_zkp_circuits::{
 };
 
 pub(crate) fn build_circuit_params() -> Result<(), CIError> {
+    build_circuit_params_1_to_2()?;
+    build_circuit_params_2_to_2()?;
+    Ok(())
+}
+
+fn build_circuit_params_1_to_2() -> Result<(), CIError> {
     let start_time = Local::now();
 
     log!("Build circuit params, this may take seconds to even minutes..!");
@@ -56,7 +62,7 @@ pub(crate) fn build_circuit_params() -> Result<(), CIError> {
     Ok(())
 }
 
-pub(crate) fn build_circuit_params_2_to_2() -> Result<(), CIError> {
+fn build_circuit_params_2_to_2() -> Result<(), CIError> {
     let start_time = Local::now();
 
     log!("Build circuit params, this may take seconds to even minutes..!");

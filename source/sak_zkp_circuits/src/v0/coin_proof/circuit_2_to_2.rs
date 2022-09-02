@@ -78,13 +78,6 @@ impl Circuit<Scalar> for CoinProofCircuit2to2 {
             &self.hasher,
         );
 
-        // let merkle_rt_2 = climb_up_tree(
-        //     cs,
-        //     cm_2_old,
-        //     &self.coin_2_old.auth_path,
-        //     &self.hasher,
-        // );
-
         let addr_pk_1_new = self.coin_1_new.addr_pk.or(Some(Scalar::default()));
         let rho_1_new = self.coin_1_new.rho.or(Some(Scalar::default()));
         let r_1_new = self.coin_1_new.r.or(Some(Scalar::default()));
