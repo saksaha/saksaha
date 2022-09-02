@@ -3,6 +3,6 @@ pub mod routes;
 mod rpc;
 
 #[cfg(test)]
-mod tests;
+pub(crate) mod tests;
 
-pub use rpc::*;
+pub(crate) use rpc::*;

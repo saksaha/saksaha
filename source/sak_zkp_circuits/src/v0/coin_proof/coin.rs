@@ -1,6 +1,6 @@
-pub use super::proof::*;
-use crate::CM_TREE_DEPTH;
 use sak_crypto::Scalar;
+
+use crate::{CircuitError, Hasher, CM_TREE_DEPTH};
 
 #[derive(Debug, Copy, Clone)]
 pub struct OldCoin {
@@ -96,5 +96,33 @@ impl NewCoin {
 
             v: None,
         }
+    }
+
+    pub fn compute_cm(&self) -> Result<Scalar, CircuitError> {
+        {
+            if self.r.is_none()
+                || self.s.is_none()
+                || self.v.is_none()
+                || self.rho.is_none()
+                || self.addr_pk.is_none()
+            {
+                return Err(format!(
+                    "NewCoin has insufficient arguments for computing cm"
+                )
+                .into());
+            }
+        }
+
+        let hasher = Hasher::new();
+
+        let k = hasher.comm2_scalar(
+            self.r.unwrap(),
+            self.addr_pk.unwrap(),
+            self.rho.unwrap(),
+        );
+
+        let cm = hasher.comm2_scalar(self.s.unwrap(), self.v.unwrap(), k);
+
+        Ok(cm)
     }
 }

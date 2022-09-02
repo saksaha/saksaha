@@ -167,7 +167,7 @@ impl CoinRecord {
         Ok(coin)
     }
 
-    pub fn extract(&self) -> NewCoin {
+    pub fn extract_new_coin(&self) -> NewCoin {
         let addr_pk = self.addr_pk;
         let rho = self.rho;
         let r = self.r;
@@ -201,6 +201,10 @@ impl CoinRecord {
 
     pub fn set_coin_status_to_unconfirmed(&mut self) {
         self.coin_status = CoinStatus::Unconfirmed;
+    }
+
+    pub fn update_tx_hash(&mut self, tx_hash: String) {
+        self.tx_hash = Some(tx_hash);
     }
 }
 

@@ -1,5 +1,4 @@
 use super::WalletDBSchema;
-use crate::wallet::CoinManager;
 use crate::{credential::WalletCredential, WalletError, APP_NAME};
 use log::info;
 use sak_kv_db::{KeyValueDatabase, Options};

@@ -1,5 +1,4 @@
 use core::fmt;
-
 use sak_crypto::ScalarExt;
 use sak_proofs::Hasher;
 use type_extension::U8Array;
