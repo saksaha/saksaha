@@ -61,18 +61,13 @@ impl DistLedger {
         let sync_pool = {
             let tx = ledger_event_tx.clone();
 
-            let p = SyncPool::new(tx);
+            let p = SyncPool::new(tx, tx_sync_interval, block_sync_interval);
 
             Arc::new(p)
         };
 
         let runtime = {
-            let r = Runtime::init(
-                sync_pool.clone(),
-                ledger_event_tx.clone(),
-                tx_sync_interval,
-                block_sync_interval,
-            );
+            let r = Runtime::init(sync_pool.clone(), ledger_event_tx.clone());
 
             Arc::new(r)
         };
