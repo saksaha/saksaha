@@ -156,8 +156,7 @@ impl Wallet {
         Ok(auth_path)
     }
 
-    #[inline]
-    pub(crate) async fn prepare_merkle_rt(
+    pub(crate) fn prepare_merkle_rt(
         &self,
         coin: &CoinRecord,
         auth_path: Vec<([u8; 32], bool)>,
@@ -245,9 +244,9 @@ impl Wallet {
         let auth_path = self.prepare_auth_path(cm_idx).await?;
         // ---------------------------
 
-        let merkle_rt = self.prepare_merkle_rt(coin, auth_path.clone()).await?;
+        let merkle_rt = self.prepare_merkle_rt(coin, auth_path.clone())?;
 
-        let old_coin = self.convert_to_old_coin(coin, auth_path).await?;
+        let old_coin = self.convert_to_old_coin(coin, auth_path)?;
 
         let old_sn_1 = self.compute_sn(coin);
 
@@ -470,7 +469,7 @@ impl Wallet {
         Ok(())
     }
 
-    pub(crate) async fn convert_to_old_coin(
+    pub(crate) fn convert_to_old_coin(
         &self,
         coin: &CoinRecord,
         auth_path: Vec<([u8; 32], bool)>,
