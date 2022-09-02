@@ -4,7 +4,6 @@ mod credential;
 mod db;
 mod pconfig;
 mod rpc;
-mod tests;
 mod wallet;
 
 pub use app::*;

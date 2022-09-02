@@ -2,7 +2,6 @@ use crate::{db::WalletDB, WalletError};
 use colored::Colorize;
 use sak_types::CoinRecord;
 use sak_types::CoinStatus;
-use sak_types::TxHash;
 use std::sync::Arc;
 
 pub(crate) struct CoinManager {

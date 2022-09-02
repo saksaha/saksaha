@@ -1,4 +1,4 @@
-use crate::{CircuitError, Hasher, NewCoin, OldCoin, CM_TREE_DEPTH};
+use crate::{Hasher, NewCoin, OldCoin, CM_TREE_DEPTH};
 use bellman::gadgets::boolean::AllocatedBit;
 use bellman::{Circuit, ConstraintSystem, SynthesisError};
 use sak_crypto::Scalar;

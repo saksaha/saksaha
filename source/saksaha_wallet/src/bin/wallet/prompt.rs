@@ -1,5 +1,4 @@
 use crate::WalletError;
-use log::{error, info};
 use std::io::BufRead;
 
 pub(crate) fn run() -> Result<bool, WalletError> {

@@ -15,8 +15,6 @@ pub(crate) mod cfs {
 
     pub const COIN_STATUS: &str = "coin_status";
 
-    pub const USER_ID: &str = "user_id";
-
     pub const COIN_IDX: &str = "coin_idx";
 
     pub const CM_IDX: &str = "cm_idx";
