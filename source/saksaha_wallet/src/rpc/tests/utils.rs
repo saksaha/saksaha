@@ -16,8 +16,8 @@ pub(in crate) struct MockWalletContext {
     pub rpc: RPC,
     pub acc_addr: String,
 }
-pub(crate) async fn mock_test_context() -> TestContext {
-    let config = Config::new(&Some("dev_local_1".to_string()), &None).unwrap();
+pub(in crate) async fn mock_wallet_context() -> MockWalletContext {
+    let config = Config::new(&Some("dev_local_1".to_string()), None).unwrap();
 
     let public_key = config.public_key.clone().unwrap();
     let secret = config.secret.clone().unwrap();
