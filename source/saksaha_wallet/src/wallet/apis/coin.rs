@@ -90,15 +90,16 @@ impl Wallet {
         ctr_addr: String,
         ctr_request: CtrRequest,
     ) -> Result<String, WalletError> {
-        self.check_balance(&acc_addr).await?;
+        // self.check_balance(&acc_addr).await?;
 
         let mut coin_manager_lock = self.get_coin_manager().write().await;
 
-        let coin: &CoinRecord = coin_manager_lock
+        let coin = coin_manager_lock
             .get_next_available_coin()
             .ok_or("No usable coins")?;
 
-        let sn_1 = self.compute_sn(coin);
+        let sn_1 = self.compute_sn(&coin);
+        println!("coin?: {:?}", coin);
 
         let (mut new_coin_1, mut new_coin_2) = {
             let v = ScalarExt::into_u64(coin.v)?;
@@ -176,7 +177,7 @@ impl Wallet {
                 auth_path
             };
 
-            self.get_old_coin(coin, auth_path).await?
+            self.get_old_coin(&coin, auth_path).await?
         };
 
         println!("[+] making proof...");
@@ -190,7 +191,6 @@ impl Wallet {
         let mut pi_ser = Vec::new();
         pi.write(&mut pi_ser).unwrap();
 
-        // println!("[!] pi serialized, len: {}", pi_ser.len());
         println!("[!] pi serialized: {}", encode_hex(&pi_ser));
 
         let json_response = saksaha::send_tx_pour(
@@ -209,7 +209,13 @@ impl Wallet {
         let tx_hash = json_response.result.ok_or("Send_tx_pour failed")?;
 
         // waiting for block is written
-        tokio::time::sleep(Duration::from_millis(6000)).await;
+        // tokio::time::sleep(Duration::from_millis(6000)).await;
+
+        {
+            self.get_db()
+                .update_coin_status_unused_to_unconfirmed(coin)
+                .await?;
+        }
 
         new_coin_1.tx_hash = Some(tx_hash.clone());
         new_coin_2.tx_hash = Some(tx_hash);

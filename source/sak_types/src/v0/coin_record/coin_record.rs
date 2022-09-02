@@ -198,6 +198,10 @@ impl CoinRecord {
 
         sn
     }
+
+    pub fn set_coin_status_to_unconfirmed(&mut self) {
+        self.coin_status = CoinStatus::Unconfirmed;
+    }
 }
 
 impl std::fmt::Display for CoinRecord {

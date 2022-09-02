@@ -6,7 +6,7 @@ use sak_kv_db::{KeyValueDatabase, Options};
 use sak_types::CoinRecord;
 use sak_types::CoinStatus;
 use sak_types::Sn;
-use std::time::Duration;
+use std::{borrow::BorrowMut, sync::Arc, time::Duration};
 use std::{fs, path::PathBuf};
 
 pub(crate) struct WalletDB {
@@ -93,7 +93,8 @@ impl WalletDB {
         for coin in coins {
             match coin.coin_status.clone() {
                 CoinStatus::Unconfirmed => {
-                    println!("getting tx, tx_hash: {:?}", coin.tx_hash);
+                    println!("getting tx: {:?}", coin.tx_hash);
+
                     let resp = match coin.tx_hash.clone() {
                         Some(tx_hash) => saksaha::get_tx(
                             saksaha_endpoint.clone(),
@@ -162,6 +163,7 @@ impl WalletDB {
                 CoinStatus::Unused => {
                     let sn = coin.compute_sn();
 
+                    println!("sn used?: {:?}", sn);
                     if old_coin_sn_vec.contains(&sn) {
                         self.schema
                             .raw
@@ -169,6 +171,27 @@ impl WalletDB {
                     }
                 }
             }
+        }
+
+        Ok(())
+    }
+
+    pub async fn update_coin_status_unused_to_unconfirmed(
+        &self,
+        mut coin: CoinRecord,
+    ) -> Result<(), WalletError> {
+        match coin.coin_status {
+            CoinStatus::Unused => {
+                self.schema
+                    .raw
+                    .put_coin_status(&coin.cm, &CoinStatus::Unconfirmed)?;
+
+                coin.set_coin_status_to_unconfirmed();
+                // coin.coin_status = CoinStatus::Unconfirmed;
+                println!("coin after?: {:?}", coin);
+            }
+
+            _ => {}
         }
 
         Ok(())

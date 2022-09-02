@@ -46,7 +46,7 @@ impl CoinManager {
             }
 
             if coin.coin_status == CoinStatus::Unused {
-                return Some(&coin);
+                return Some(coin);
             }
         }
 
