@@ -47,10 +47,7 @@ pub fn dev_local_1(saksaha_endpoint: String) -> Result<Config, WalletError> {
             )?,
         ]),
         rpc_port: Some(36612),
-        saksaha_endpoint: Some(format!(
-            "http://localhost:{}/rpc/v0",
-            saksaha_endpoint
-        )),
+        saksaha_endpoint: Some(saksaha_endpoint),
         // saksaha_endpoint: Some(String::from("http://localhost:34418/rpc/v0")),
     };
 
@@ -88,10 +85,7 @@ pub fn dev_local_2(saksaha_endpoint: String) -> Result<Config, WalletError> {
         //     )?,
         // ]),
         rpc_port: Some(36613),
-        saksaha_endpoint: Some(format!(
-            "http://localhost:{}/rpc/v0",
-            saksaha_endpoint
-        )),
+        saksaha_endpoint: Some(saksaha_endpoint),
         // saksaha_endpoint: Some(String::from("http://localhost:34418/rpc/v0")),
     };
 
