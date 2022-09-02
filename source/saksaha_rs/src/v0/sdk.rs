@@ -3,7 +3,7 @@ use hyper::{Body, Client, Method, Request, Uri};
 use sak_contract_std::{CtrCallType, CtrRequest, RequestArgs};
 use sak_crypto::{Bls12, Scalar, ScalarExt};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
-use sak_proofs::{MerkleTree, NewCoin, OldCoin, Path, ProofError};
+use sak_proofs::{MerklePath, MerkleTree, NewCoin, OldCoin, ProofError};
 use sak_rpc_interface::{
     JsonRequest, JsonResponse, SendMintTxRequest, SendPourTxRequest,
 };

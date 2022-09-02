@@ -1,5 +1,7 @@
-use super::values::{self, VALIDATOR, VALIDATOR_CTR_ADDR};
-use crate::{MintTxCandidate, PourTxCandidate, Tx};
+use crate::v0::testing::values;
+use crate::{
+    MintTxCandidate, PourTxCandidate, Tx, VALIDATOR, VALIDATOR_CTR_ADDR,
+};
 use crate::{TxCandidate, TypesError};
 use sak_crypto::ScalarExt;
 use sak_crypto::{rand, Scalar};
@@ -148,13 +150,6 @@ pub fn mock_pour_tc_random() -> TxCandidate {
         let node_2_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
         let node_3_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
         // let node_4_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
-
-        // let _cm_tree_depth_lock = [
-        //     ("0_1", node_0_1),
-        //     ("1_1", node_1_1),
-        //     ("2_1", node_2_1),
-        //     ("3_1", node_3_1),
-        // ];
 
         m.insert("0_1", node_0_1);
         m.insert("1_1", node_1_1);
@@ -810,9 +805,6 @@ pub fn mock_mint_tc_deploying_contract(
     contract_data: Vec<u8>,
     ctrt_addr: String,
 ) -> TxCandidate {
-    // let tx_candidate =
-    //     MintTxCandidate::new_dummy_deploying_contract(contract_data, ctrt_addr);
-
     let hasher = Hasher::new();
 
     let rho = U8Array::new_empty_32();
