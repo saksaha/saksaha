@@ -1,9 +1,7 @@
-// use super::values::{self, VALIDATOR, VALIDATOR_CTR_ADDR};
 use crate::v0::testing::values;
 use crate::{
     Cm, MintTxCandidate, PourTxCandidate, Sn, Tx, VALIDATOR, VALIDATOR_CTR_ADDR,
 };
-// zz
 use crate::{TxCandidate, TypesError};
 use sak_crypto::MerkleTree;
 use sak_crypto::{rand, Scalar};

@@ -37,6 +37,9 @@ async fn test_insert_genesis_block_and_check_wrong_block_hash() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_write_a_genesis_block() {
+    sak_test_utils::init_test_log();
+    TestUtil::init_test(vec!["test"]);
+
     let dist_ledger = utils::make_dist_ledger().await;
 
     dist_ledger.run().await;
