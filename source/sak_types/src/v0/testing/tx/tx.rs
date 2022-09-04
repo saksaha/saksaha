@@ -59,19 +59,27 @@ pub fn mock_pour_tc_random() -> TxCandidate {
         cm_1_old,
         sn_1,
     ) = {
-        let addr_sk =
-            ScalarExt::parse_arr(&U8Array::from_int(rand() as u64)).unwrap();
+        // let addr_sk =
+        //     ScalarExt::parse_arr(&U8Array::from_int(rand() as u64)).unwrap();
+
+        let addr_sk = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
 
         let addr_pk = hasher.mimc_single_scalar(addr_sk).unwrap();
 
-        let r =
-            ScalarExt::parse_arr(&U8Array::from_int(rand() as u64)).unwrap();
+        // let r =
+        //     ScalarExt::parse_arr(&U8Array::from_int(rand() as u64)).unwrap();
 
-        let s =
-            ScalarExt::parse_arr(&U8Array::from_int(rand() as u64)).unwrap();
+        let r = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
 
-        let rho =
-            ScalarExt::parse_arr(&U8Array::from_int(rand() as u64)).unwrap();
+        // let s =
+        //     ScalarExt::parse_arr(&U8Array::from_int(rand() as u64)).unwrap();
+
+        let s = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
+
+        // let rho =
+        //     ScalarExt::parse_arr(&U8Array::from_int(rand() as u64)).unwrap();
+
+        let rho = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
 
         let v = ScalarExt::parse_arr(&U8Array::from_int(1000)).unwrap();
 

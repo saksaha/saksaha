@@ -1,6 +1,5 @@
-use core::fmt;
-
 use crate::{io::InputMode, wallet_sdk, EnvelopeError};
+use core::fmt;
 use envelope_contract::{Channel, ChatMessage};
 use log::{info, warn};
 use tui::widgets::ListState;
@@ -127,6 +126,9 @@ impl AppState {
         wallet_endpoint: String,
         user_pk: String,
     ) {
+        let my_str = String::from("");
+
+        println!("{}", my_str.clone());
         // TODO get user_id via params
         // let tmp_user_id = USER_1.to_owned();
         // let tmp_user_id = "".to_owned();
@@ -147,6 +149,7 @@ impl AppState {
         {
             Ok(resp) => {
                 info!("Success to get response from wallet");
+
                 let result = match resp.result {
                     Some(b) => {
                         info!("Updating balance, balance: {:?}", b.balance.val);

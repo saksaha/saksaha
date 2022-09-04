@@ -88,20 +88,8 @@ impl LedgerDB {
         txs: &Vec<Tx>,
         ctr_state_updates: &CtrStateUpdate,
         merkle_updates: &MerkleUpdate,
-        // ledger_cm_count: u128,
-        // updated_ledger_cm_count: u128,
     ) -> Result<String, LedgerError> {
-        let txs_string: String = txs.iter().map(|t| t.to_string()).collect();
-
-        println!(
-            "block to write, block: {:?}, \ntxs: {},\n\
-            ctr_state_updates: {:?},\n merkle_updates",
-            block,
-            txs_string,
-            ctr_state_updates,
-            // merkle_updates,
-            // updated_ledger_cm_count,
-        );
+        println!("block to write, block: {:?}", block,);
 
         let mut batch = WriteBatch::default();
 
@@ -129,14 +117,6 @@ impl LedgerDB {
 
         self.batch_put_block_hash(&mut batch, &block.block_height, block_hash)?;
 
-        // self.batch_put_block_cm_count(
-        //     &mut batch,
-        //     block_hash,
-        //     block.block_cm_count,
-        // )?;
-
-        // self.batch_put_ledger_cm_count(&mut batch, updated_ledger_cm_count)?;
-
         self.batch_put_block_height(
             &mut batch,
             block_hash,
@@ -149,14 +129,8 @@ impl LedgerDB {
             &block.merkle_rt,
         )?;
 
-        // let mut cm_idx_count: u128 = ledger_cm_count;
-
         for tx in txs {
-            // let tc = &tx.tx_candidate;
-            self.batch_put_tx(
-                &mut batch, tx,
-                // &mut cm_idx_count
-            )?;
+            self.batch_put_tx(&mut batch, tx)?;
         }
 
         for (ctr_addr, ctr_state) in ctr_state_updates {

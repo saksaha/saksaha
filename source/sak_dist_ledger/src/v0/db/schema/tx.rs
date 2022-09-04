@@ -108,12 +108,6 @@ impl LedgerDB {
 
         let sns = self.get_sns(tx_hash)?.ok_or("sn_1 should exist")?;
 
-        // let cm_1 = self.get_cm_1(tx_hash)?.ok_or("cm_1 should exist")?;
-
-        // let cm_2 = self.get_cm_2(tx_hash)?.ok_or("cm_2 should exist")?;
-
-        let cm_count = self.get_cm_count(tx_hash)?.ok_or("cms should exist")?;
-
         let cms = self.get_cms(tx_hash)?.ok_or("cms should exist")?;
 
         let merkle_rt = self
@@ -132,14 +126,6 @@ impl LedgerDB {
         let tx_candidate = PourTxCandidate::new(
             created_at, data, author_sig, ctr_addr, pi, sns, cms, merkle_rt,
         );
-
-        // let cm_idx_1 = self
-        //     .get_cm_idx_by_cm(&cm_1)?
-        //     .ok_or("cm_idx_1 does not exist")?;
-
-        // let cm_idx_2 = self
-        //     .get_cm_idx_by_cm(&cm_2)?
-        //     .ok_or("cm_idx_2 does not exist")?;
 
         let tx = Tx::Pour(PourTx::new(tx_candidate, cm_idxes));
 

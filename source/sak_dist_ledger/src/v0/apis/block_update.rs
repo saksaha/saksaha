@@ -233,11 +233,23 @@ impl DistLedgerApis {
         self.ledger_db.delete_tx(key)
     }
 
-    pub(crate) fn verify_sn(&self, sns: &Vec<Sn>) -> bool {
+    pub(crate) fn verify_sn(&self, sns: &Vec<Sn>) -> Result<bool, LedgerError> {
         match self.ledger_db.get_tx_hash_by_sn(sns) {
-            Ok(Some(_)) => return false,
-            Ok(None) => return true,
-            Err(_) => return false,
+            Ok(Some(_)) => {
+                return Err(format!(
+                    "Serial numbers already exists, sns: {:?}",
+                    sns
+                )
+                .into())
+            }
+            Ok(None) => return Ok(true),
+            Err(_) => {
+                return Err(format!(
+                    "Tx with serial numbers does not exist, sns: {:?}",
+                    sns
+                )
+                .into())
+            }
         }
     }
 
@@ -293,7 +305,7 @@ impl DistLedgerApis {
                     valid_tx_candidates.push(tx_candidate.clone());
                 }
                 TxCandidate::Pour(tc) => {
-                    let is_valid_sn = self.verify_sn(&tc.sns);
+                    let is_valid_sn = self.verify_sn(&tc.sns)?;
                     let is_verified_tx = self.verify_proof(tc)?;
 
                     if is_valid_sn & is_verified_tx {
