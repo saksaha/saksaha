@@ -284,7 +284,7 @@ impl LedgerDB {
 
         match self.db.get_cf(&cf, key)? {
             Some(v) => {
-                let arr = return Ok(Some(v));
+                return Ok(Some(v));
             }
             None => {
                 return Ok(None);

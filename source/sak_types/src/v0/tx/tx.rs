@@ -20,6 +20,13 @@ impl Tx {
         }
     }
 
+    pub fn get_cms(&self) -> &Vec<Cm> {
+        match self {
+            Tx::Mint(t) => t.tx_candidate.get_cms(),
+            Tx::Pour(t) => t.tx_candidate.get_cms(),
+        }
+    }
+
     pub fn get_data(&self) -> &Vec<u8> {
         match &self {
             Tx::Mint(t) => &t.tx_candidate.data,

@@ -1,12 +1,9 @@
 use crate::LedgerError;
 use crate::{cfs, LedgerDB};
-use sak_crypto::{Bls12, ScalarExt};
-use sak_kv_db::WriteBatch;
-use sak_proofs::CoinProof;
-use sak_proofs::{Hasher, Proof};
+use sak_kv_db::{Direction, IteratorMode, WriteBatch};
 use sak_types::{
-    Cm, CmIdx, MintTx, MintTxCandidate, PourTx, PourTxCandidate, Tx, TxCtrOp,
-    TxHash, TxType,
+    MintTx, MintTxCandidate, PourTx, PourTxCandidate, Tx, TxCtrOp, TxHash,
+    TxType,
 };
 
 impl LedgerDB {
@@ -58,7 +55,25 @@ impl LedgerDB {
 
         let cm_count = self.get_cm_count(tx_hash)?.ok_or("cms should exist")?;
 
-        let cms = self.get_cms(tx_hash)?.ok_or("cms should exist")?;
+        // let cms = self.get_cms(tx_hash)?.ok_or("cms should exist")?;
+        let cms = {
+            let mut v = vec![];
+            let cf = self.make_cf_handle(&self.db, cfs::CM)?;
+            let mut cm_iter = self.db.iterator_cf(
+                &cf,
+                IteratorMode::From(tx_hash.as_bytes(), Direction::Forward),
+            );
+
+            let (key, cm) =
+                cm_iter.next().ok_or("At least one cm should exist")?;
+
+            let mut arr: [u8; 32] = Default::default();
+            arr.clone_from_slice(&cm);
+
+            v.push(arr);
+
+            v
+        };
 
         let v = self.get_v(tx_hash)?.ok_or("v should exist")?;
 
@@ -84,12 +99,7 @@ impl LedgerDB {
         Ok(tx)
     }
 
-    fn get_pour_tx(
-        &self,
-        // db: &DB,
-        // schema: &LedgerDBSchema,
-        tx_hash: &String,
-    ) -> Result<Tx, LedgerError> {
+    fn get_pour_tx(&self, tx_hash: &String) -> Result<Tx, LedgerError> {
         let created_at = self
             .get_tx_created_at(tx_hash)?
             .ok_or("created_at does not exist")?;
@@ -104,9 +114,45 @@ impl LedgerDB {
 
         let pi = self.get_pi(tx_hash)?.ok_or("pi should exist")?;
 
-        let sns = self.get_sns(tx_hash)?.ok_or("sn_1 should exist")?;
+        // let sns = self.get_sns(tx_hash)?.ok_or("sn_1 should exist")?;
+        let sns = {
+            let mut v = vec![];
+            let cf = self.make_cf_handle(&self.db, cfs::SN)?;
+            let mut sn_iter = self.db.iterator_cf(
+                &cf,
+                IteratorMode::From(tx_hash.as_bytes(), Direction::Forward),
+            );
 
-        let cms = self.get_cms(tx_hash)?.ok_or("cms should exist")?;
+            let (key, sn) =
+                sn_iter.next().ok_or("At least one sn should exist")?;
+
+            let mut arr: [u8; 32] = Default::default();
+            arr.clone_from_slice(&sn);
+
+            v.push(arr);
+
+            v
+        };
+
+        // let cms = self.get_cms(tx_hash)?.ok_or("cms should exist")?;
+        let cms = {
+            let mut v = vec![];
+            let cf = self.make_cf_handle(&self.db, cfs::CM)?;
+            let mut cm_iter = self.db.iterator_cf(
+                &cf,
+                IteratorMode::From(tx_hash.as_bytes(), Direction::Forward),
+            );
+
+            let (key, cm) =
+                cm_iter.next().ok_or("At least one cm should exist")?;
+
+            let mut arr: [u8; 32] = Default::default();
+            arr.clone_from_slice(&cm);
+
+            v.push(arr);
+
+            v
+        };
 
         let merkle_rt = self
             .get_prf_merkle_rt(tx_hash)?
@@ -158,12 +204,12 @@ impl LedgerDB {
 
         self.batch_put_tx_type(batch, tx_hash, tc.get_tx_type())?;
 
+        // self.batch_put_cms(batch, tx_hash, &tc.cms)?;
+
         for (idx, cm) in tc.cms.iter().enumerate() {
             let key = format!("{}_{}", tx_hash, idx);
-
-            self.batch_put_cm(batch, tx, key, &cm)?;
+            self.batch_put_cm(batch, &key, &cm)?;
         }
-        // self.batch_put_cms(batch, tx_hash, &tc.cms)?;
 
         for (cm, cm_idx) in std::iter::zip(&tc.cms, &tx.cm_idxes) {
             self.batch_put_cm_cm_idx(batch, cm, cm_idx)?;
@@ -226,9 +272,17 @@ impl LedgerDB {
 
         self.batch_put_pi(batch, tx_hash, &tc.pi)?;
 
-        self.batch_put_sns(batch, tx_hash, &tc.sns)?;
+        // self.batch_put_sns(batch, tx_hash, &tc.sns)?;
+        for (idx, sn) in tc.sns.iter().enumerate() {
+            let key = format!("{}_{}", tx_hash, idx);
+            self.batch_put_sn(batch, &key, &sn)?;
+        }
 
-        self.batch_put_cms(batch, tx_hash, &tc.cms)?;
+        // self.batch_put_cms(batch, tx_hash, &tc.cms)?;
+        for (idx, cm) in tc.cms.iter().enumerate() {
+            let key = format!("{}_{}", tx_hash, idx);
+            self.batch_put_cm(batch, &key, &cm)?;
+        }
 
         for (cm, cm_idx) in std::iter::zip(&tc.cms, &tx.cm_idxes) {
             self.batch_put_cm_cm_idx(batch, cm, cm_idx)?;

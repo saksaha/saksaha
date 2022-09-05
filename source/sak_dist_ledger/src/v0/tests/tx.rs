@@ -89,14 +89,16 @@ async fn test_dist_ledger_tx_mint_put_and_get_cm_idx() {
         .await
         .unwrap();
 
-    let cm_1_idx = {
-        let cms = dist_ledger
-            .apis
-            .ledger_db
-            .get_cms(&mock_tx_hash)
-            .unwrap()
-            .expect("cms should be obtained");
+    let cms = dist_ledger
+        .apis
+        .ledger_db
+        .get_tx(&mock_tx_hash)
+        .await
+        .unwrap()
+        .expect("cms should be obtained")
+        .get_cms();
 
+    let cm_1_idx = {
         println!("cms :{:?}", cms);
 
         let cm_1_idx = dist_ledger
@@ -140,15 +142,24 @@ async fn test_dist_ledger_tx_pour_put_and_get_cm_idx() {
         .await
         .unwrap();
 
-    let cm_1_idx = {
-        let cms = dist_ledger
-            .apis
-            .ledger_db
-            .get_cms(&mock_tx_hash)
-            .unwrap()
-            .expect("cms should be obtained");
+    let cms = dist_ledger
+        .apis
+        .ledger_db
+        .get_tx(&mock_tx_hash)
+        .await
+        .unwrap()
+        .expect("tx should exist")
+        .get_cms();
 
-        println!("cms :{:?}", cms);
+    let cm_1_idx = {
+        // let cms = dist_ledger
+        //     .apis
+        //     .ledger_db
+        //     .get_cms(&mock_tx_hash)
+        //     .unwrap()
+        //     .expect("cms should be obtained");
+
+        // println!("cms :{:?}", cms);
 
         let cm_1_idx = dist_ledger
             .apis
@@ -161,12 +172,12 @@ async fn test_dist_ledger_tx_pour_put_and_get_cm_idx() {
     };
 
     let cm_2_idx = {
-        let cms = dist_ledger
-            .apis
-            .ledger_db
-            .get_cms(&mock_tx_hash)
-            .unwrap()
-            .expect("cms should be obtained");
+        // let cms = dist_ledger
+        //     .apis
+        //     .ledger_db
+        //     .get_cms(&mock_tx_hash)
+        //     .unwrap()
+        //     .expect("cms should be obtained");
 
         let cm_2_idx = dist_ledger
             .apis

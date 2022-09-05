@@ -71,6 +71,7 @@ pub struct PourTxCandidate {
     //
     pub sn_count: u128,
 
+    //
     pub cms: Vec<Cm>,
 
     //
