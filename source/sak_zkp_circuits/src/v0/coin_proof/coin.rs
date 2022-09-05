@@ -1,5 +1,5 @@
 use crate::{CircuitError, Hasher};
-use sak_crypto::Scalar;
+use sak_crypto::{rand, Scalar, ScalarExt};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
 
 #[derive(Debug, Copy, Clone)]
@@ -42,24 +42,38 @@ impl OldCoin {
         }
     }
 
-    pub fn new() -> Self {
-        OldCoin {
-            addr_pk: None,
+    pub fn new_dummy() -> Result<OldCoin, CircuitError> {
+        let hasher = Hasher::new();
 
-            addr_sk: None,
+        let addr_sk = ScalarExt::parse_u64(0)?;
+        let addr_pk = hasher.mimc_single_scalar(addr_sk)?;
+        let rho = ScalarExt::parse_u64(0)?;
+        let r = ScalarExt::parse_u64(0)?;
+        let s = ScalarExt::parse_u64(0)?;
+        let v = ScalarExt::parse_u64(0)?;
 
-            rho: None,
+        // sn : 0x46205869c121af666efa3ca1114c4f01837f407ca0b2c97c0ecaa957e5836bd6
 
-            r: None,
+        // let addr_sk = ScalarExt::parse_u64(rand() as u64)?;
+        // let addr_pk = hasher.mimc_single_scalar(addr_sk)?;
+        // let rho = ScalarExt::parse_u64(rand() as u64)?;
+        // let r = ScalarExt::parse_u64(rand() as u64)?;
+        // let s = ScalarExt::parse_u64(rand() as u64)?;
+        // let v = ScalarExt::parse_u64(rand() as u64)?;
 
-            s: None,
+        let k = hasher.comm2_scalar(r, addr_pk, rho);
+        let cm = hasher.comm2_scalar(s, v, k);
 
-            v: None,
-
-            cm: None,
-
+        Ok(OldCoin {
+            addr_pk: Some(addr_pk),
+            addr_sk: Some(addr_sk),
+            rho: Some(rho),
+            r: Some(r),
+            s: Some(s),
+            v: Some(v),
+            cm: Some(cm),
             auth_path: [None; CM_TREE_DEPTH as usize],
-        }
+        })
     }
 
     pub fn update_auth_path(
