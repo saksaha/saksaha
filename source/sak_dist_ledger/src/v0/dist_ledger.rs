@@ -59,12 +59,6 @@ impl DistLedger {
             Arc::new(p)
         };
 
-        // let runtime = {
-        //     let r = Runtime::init(sync_pool.clone(), ledger_event_tx.clone());
-
-        //     Arc::new(r)
-        // };
-
         let hasher = Hasher::new();
 
         let merkle_tree = MerkleTree::new(CM_TREE_DEPTH as u32);
@@ -99,11 +93,5 @@ impl DistLedger {
         Ok(dist_ledger)
     }
 
-    pub async fn run(&self) {
-        // let runtime = self.runtime.clone();
-
-        // tokio::spawn(async move {
-        //     runtime.run().await;
-        // });
-    }
+    pub async fn run(&self) {}
 }
