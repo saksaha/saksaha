@@ -74,38 +74,24 @@ impl DialScheduler {
         }
     }
 
-    async fn enqueue_new_addrs(&self, new_addr: &UnknownAddr) {
-        //
-        let task = DiscoveryTask::InitiateWhoAreYou {
-            addr: new_addr.clone(),
-        };
+    // async fn enqueue_new_addrs(&self, new_addr: &UnknownAddr) {
+    //     //
+    //     let task = DiscoveryTask::InitiateWhoAreYou {
+    //         addr: new_addr.clone(),
+    //     };
 
-        match self.disc_task_queue.push_back(task).await {
-            Ok(_) => {}
-            Err(err) => {
-                warn!(
-                    "Cannot enqueue a new addr, addr: {:?}, err: {}",
-                    new_addr, err
-                );
-            }
-        };
-    }
+    //     match self.disc_task_queue.push_back(task).await {
+    //         Ok(_) => {}
+    //         Err(err) => {
+    //             warn!(
+    //                 "Cannot enqueue a new addr, addr: {:?}, err: {}",
+    //                 new_addr, err
+    //             );
+    //         }
+    //     };
+    // }
 
     pub async fn run(&self) {
         self.enqueue_bootstrap_addrs(&self.bootstrap_addrs).await;
-
-        // loop
-
-        loop {
-            let time_since = SystemTime::now();
-
-            //
-
-            sak_utils_time::wait_until_min_interval(
-                time_since,
-                Duration::from_millis(DISC_DIAL_INTERVAL),
-            )
-            .await;
-        }
     }
 }
