@@ -37,7 +37,7 @@ impl Consensus for Pos {
             }
         };
 
-        let validator_str: String = serde_json::from_slice(&validator)?;
+        let validator_str: String = String::from_utf8(validator)?;
 
         if self.identity.credential.public_key_str == validator_str {
             let bc = BlockCandidate {
