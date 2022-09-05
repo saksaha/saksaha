@@ -238,8 +238,6 @@ async fn test_late_block_sync_true() {
     // let dummy_tx3 = sak_types::mock_pour_tc_3();
     let dummy_tx3 = sak_types::mock_pour_tc_random();
 
-    tokio::time::sleep(Duration::from_secs(5)).await;
-
     {
         let machine_1 = machine_1.clone();
         let local_node_1 = local_node_1.clone();
