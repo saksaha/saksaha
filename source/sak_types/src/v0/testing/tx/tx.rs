@@ -333,30 +333,34 @@ pub fn mock_pour_tc_1() -> TxCandidate {
         let node_1_1 = ScalarExt::parse_u64(0).unwrap();
         let node_2_1 = ScalarExt::parse_u64(0).unwrap();
         let node_3_1 = ScalarExt::parse_u64(0).unwrap();
-        // let node_4_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
+        let node_4_1 = ScalarExt::parse_u64(0).unwrap();
+        let node_5_1 = ScalarExt::parse_u64(0).unwrap();
 
         m.insert("0_1", node_0_1);
         m.insert("1_1", node_1_1);
         m.insert("2_1", node_2_1);
         m.insert("3_1", node_3_1);
-        // m.insert("4_1", node_4_1);
+        m.insert("4_1", node_4_1);
+        m.insert("5_1", node_5_1);
 
         let node_1_0 = hasher.mimc_scalar(cm_1_old, node_0_1);
         let node_2_0 = hasher.mimc_scalar(node_1_0, node_1_1);
         let node_3_0 = hasher.mimc_scalar(node_2_0, node_2_1);
         let node_4_0 = hasher.mimc_scalar(node_3_0, node_3_1);
-        // let node_5_0 = hasher.mimc_scalar(node_4_0, node_4_1);
+        let node_5_0 = hasher.mimc_scalar(node_4_0, node_4_1);
+        let node_6_0 = hasher.mimc_scalar(node_5_0, node_5_1);
 
         m.insert("1_0", node_1_0);
         m.insert("2_0", node_2_0);
         m.insert("3_0", node_3_0);
         m.insert("4_0", node_4_0);
-        // m.insert("5_0", node_5_0);
+        m.insert("5_0", node_5_0);
+        m.insert("6_0", node_6_0);
 
         m
     };
 
-    let merkle_rt = *merkle_nodes.get("4_0").unwrap();
+    let merkle_rt = *merkle_nodes.get("6_0").unwrap();
 
     let auth_path_1 = {
         let v = merkle_tree.generate_auth_paths(0);
@@ -374,8 +378,11 @@ pub fn mock_pour_tc_1() -> TxCandidate {
                 );
             }
 
+            let empty_node = ScalarExt::parse_u64(0).unwrap();
+
             let key = format!("{}_{}", idx, p.idx);
-            let merkle_node = merkle_nodes.get(key.as_str()).unwrap();
+            let merkle_node =
+                merkle_nodes.get(key.as_str()).unwrap_or(&empty_node);
 
             ret[idx] = Some((merkle_node.clone(), p.direction));
         });
