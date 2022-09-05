@@ -6,7 +6,7 @@ use sak_crypto::{Bls12, MerkleTree, Scalar, ScalarExt};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
 use sak_proofs::{CoinProof, Hasher, Proof};
 use sak_types::{
-    Block, BlockCandidate, CmIdx, MintTxCandidate, PourTxCandidate, Tx,
+    Block, BlockCandidate, CmIdx, MintTxCandidate, PourTxCandidate, Sn, Tx,
     TxCandidate, TxCtrOp,
 };
 use sak_vm::CtrFn;
@@ -233,11 +233,23 @@ impl DistLedgerApis {
         self.ledger_db.delete_tx(key)
     }
 
-    pub(crate) fn verify_sn(&self, sn: &[u8; 32]) -> bool {
-        match self.ledger_db.get_tx_hash_by_sn(sn) {
-            Ok(Some(_)) => return false,
-            Ok(None) => return true,
-            Err(_) => return false,
+    pub(crate) fn verify_sn(&self, sns: &Vec<Sn>) -> Result<bool, LedgerError> {
+        match self.ledger_db.get_tx_hash_by_sn(sns) {
+            Ok(Some(_)) => {
+                return Err(format!(
+                    "Serial numbers already exists, sns: {:?}",
+                    sns
+                )
+                .into())
+            }
+            Ok(None) => return Ok(true),
+            Err(_) => {
+                return Err(format!(
+                    "Tx with serial numbers does not exist, sns: {:?}",
+                    sns
+                )
+                .into())
+            }
         }
     }
 
@@ -251,7 +263,9 @@ impl DistLedgerApis {
 
         public_inputs.push(ScalarExt::parse_arr(&tc.merkle_rt)?);
 
-        public_inputs.push(ScalarExt::parse_arr(&tc.sn_1)?);
+        for sn in &tc.sns {
+            public_inputs.push(ScalarExt::parse_arr(sn)?);
+        }
 
         for cm in &tc.cms {
             public_inputs.push(ScalarExt::parse_arr(cm)?);
@@ -291,8 +305,8 @@ impl DistLedgerApis {
                     valid_tx_candidates.push(tx_candidate.clone());
                 }
                 TxCandidate::Pour(tc) => {
-                    let is_valid_sn = self.verify_sn(&tc.sn_1);
-                    let is_verified_tx = self.verify_proof(&tc)?;
+                    let is_valid_sn = self.verify_sn(&tc.sns)?;
+                    let is_verified_tx = self.verify_proof(tc)?;
 
                     if is_valid_sn & is_verified_tx {
                         valid_tx_candidates.push(tx_candidate.to_owned());
@@ -452,20 +466,30 @@ async fn process_merkle_update(
         let cm_idx = next_cm_idx + idx as u128;
         let auth_path = apis.merkle_tree.generate_auth_paths(cm_idx);
 
-        // println!("auth_path: {:?}", auth_path);
-
         let leaf_loc = format!("{}_{}", 0, cm_idx);
+
+        // println!(" *** auth_path: {:?}", auth_path);
+        // println!(" *** cm_idx: {:?}, leaf_loc:{:?}", cm_idx, leaf_loc);
 
         merkle_update.insert(leaf_loc, *cm);
 
         // let mut curr_idx = cm_idx;
         for (height, path) in auth_path.iter().enumerate() {
-            let curr_idx = path.idx;
-            let sibling_idx = match path.direction {
+            println!("auth_path(), height: {}, path: {:?}", height, path);
+
+            // let curr_idx = path.idx;
+            // let sibling_idx = match path.direction {
+            //     true => path.idx + 1,
+            //     false => path.idx - 1,
+            // };
+
+            let sibling_dir = path.direction;
+
+            let sibling_idx = path.idx;
+            let curr_idx = match sibling_dir {
                 true => path.idx + 1,
                 false => path.idx - 1,
             };
-            // let sibling_idx = path.idx;
 
             let sibling_loc = format!("{}_{}", height, sibling_idx);
             // let sibling_loc = &path.idx_label;
@@ -481,14 +505,22 @@ async fn process_merkle_update(
                 None => apis.get_merkle_node(&curr_loc).await?,
             };
 
-            let merkle_node =
-                apis.hasher.mimc(&curr_node, &sibling_node)?.to_bytes();
+            let merkle_node = match sibling_dir {
+                true => apis.hasher.mimc(&sibling_node, &curr_node)?.to_bytes(),
+                false => {
+                    apis.hasher.mimc(&curr_node, &sibling_node)?.to_bytes()
+                }
+            };
 
             let parent_idx = MerkleTree::get_parent_idx(curr_idx);
             let update_loc = format!("{}_{}", height + 1, parent_idx);
 
+            println!(
+                "merkle_update(): loc: {}, val: {:?}",
+                update_loc, merkle_node
+            );
+
             merkle_update.insert(update_loc, merkle_node);
-            // curr_idx = parent_idx;
         }
     }
 

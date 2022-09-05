@@ -1,6 +1,5 @@
-use core::fmt;
-
 use crate::{io::InputMode, wallet_sdk, EnvelopeError};
+use core::fmt;
 use envelope_contract::{Channel, ChatMessage};
 use log::{info, warn};
 use tui::widgets::ListState;
@@ -147,6 +146,7 @@ impl AppState {
         {
             Ok(resp) => {
                 info!("Success to get response from wallet");
+
                 let result = match resp.result {
                     Some(b) => {
                         info!("Updating balance, balance: {:?}", b.balance.val);
