@@ -480,7 +480,6 @@ impl LedgerDB {
 
     pub(crate) fn batch_put_tx_hash_by_sn(
         &self,
-        // db: &DB,
         batch: &mut WriteBatch,
         key: &Vec<Sn>,
         value: &String,

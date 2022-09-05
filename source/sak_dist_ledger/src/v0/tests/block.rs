@@ -1,4 +1,5 @@
-use super::{test_util::TestUtil, utils};
+use super::test_util::TestUtil;
+use crate::v0::testing;
 use sak_types::{Block, BlockCandidate};
 
 pub const REPEAT_NUM: u128 = 2;
@@ -9,7 +10,7 @@ async fn test_insert_genesis_block_and_check_wrong_block_hash() {
 
     TestUtil::init_test(vec!["test"]);
 
-    let dist_ledger = utils::make_dist_ledger().await;
+    let dist_ledger = testing::mock_dist_ledger_1().await;
 
     let gen_block = dist_ledger
         .apis
@@ -40,7 +41,7 @@ async fn test_write_a_genesis_block() {
     sak_test_utils::init_test_log();
     TestUtil::init_test(vec!["test"]);
 
-    let dist_ledger = utils::make_dist_ledger().await;
+    let dist_ledger = testing::mock_dist_ledger_1().await;
 
     dist_ledger.run().await;
 }
@@ -51,7 +52,7 @@ async fn test_write_a_new_block_after_genesis() {
 
     TestUtil::init_test(vec!["test"]);
 
-    let dist_ledger = utils::make_dist_ledger().await;
+    let dist_ledger = testing::mock_dist_ledger_1().await;
 
     dist_ledger.run().await;
 
@@ -63,16 +64,16 @@ async fn test_write_a_new_block_after_genesis() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
-async fn test_sequential_write_block() {
+async fn test_sequential_write_block_1() {
     sak_test_utils::init_test_log();
     TestUtil::init_test(vec!["test"]);
 
-    let dist_ledger = utils::make_dist_ledger().await;
+    let dist_ledger = testing::mock_dist_ledger_1().await;
 
     for i in 0..REPEAT_NUM as u64 {
         let block = BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
-            tx_candidates: vec![sak_types::mock_pour_tc_random()],
+            tx_candidates: vec![sak_types::mock_pour_tc_1()],
             witness_sigs: vec![String::from("1"), String::from("2")],
             created_at: format!("{}", i),
         };
@@ -89,7 +90,7 @@ async fn test_sequential_write_block_and_get_tx_height() {
     sak_test_utils::init_test_log();
     TestUtil::init_test(vec!["test"]);
 
-    let dist_ledger = utils::make_dist_ledger().await;
+    let dist_ledger = testing::mock_dist_ledger_1().await;
 
     for i in 0..1 as u64 {
         let block = BlockCandidate {
@@ -125,7 +126,7 @@ async fn test_write_block_and_check_merkle_rt_changed() {
     sak_test_utils::init_test_log();
     TestUtil::init_test(vec!["test"]);
 
-    let dist_ledger = utils::make_dist_ledger().await;
+    let dist_ledger = testing::mock_dist_ledger_1().await;
 
     for i in 0..REPEAT_NUM as u64 {
         let bc = BlockCandidate {
@@ -156,7 +157,7 @@ async fn test_sequential_sync_block_if_block_is_correct() {
     sak_test_utils::init_test_log();
     TestUtil::init_test(vec!["test"]);
 
-    let dist_ledger = utils::make_dist_ledger().await;
+    let dist_ledger = testing::mock_dist_ledger_1().await;
 
     for i in 1..REPEAT_NUM as u64 {
         // let txs = utils::make_dummy_txs();
