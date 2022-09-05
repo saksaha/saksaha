@@ -160,7 +160,7 @@ impl SyncPool {
                     // check functions
                     let maybe_wasm = tc.get_data();
                     if !sak_vm::is_valid_wasm(maybe_wasm) {
-                        return Err(format!("Not valid wasm data"));
+                        return Err("Not valid wasm data".to_string());
                     }
                 }
                 TxCtrOp::ContractCall => {
@@ -176,7 +176,7 @@ impl SyncPool {
             let mut tx_map_lock = self.tx_map.write().await;
 
             if tx_map_lock.contains_key(&tx_hash) {
-                return Err(format!("tx already exist"));
+                return Err("tx already exist".to_string());
             } else {
                 tx_map_lock.insert(tx_hash.clone(), tc.clone());
             };
@@ -202,7 +202,7 @@ impl SyncPool {
                 let tx_hashes: Vec<String> =
                     new_tx_hashes.write().await.drain().collect();
 
-                let ev = DistLedgerEvent::TxPoolStat(tx_hashes.clone());
+                let ev = DistLedgerEvent::TxPoolStat(tx_hashes);
 
                 match ledger_event_tx.send(ev.clone()) {
                     Ok(_) => {

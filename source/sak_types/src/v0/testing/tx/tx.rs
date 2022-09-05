@@ -358,8 +358,6 @@ pub fn mock_pour_tc_1() -> TxCandidate {
 
     let merkle_rt = *merkle_nodes.get("4_0").unwrap();
 
-    println!("\n123 mock pour tc merkle_rt: {:?}", merkle_rt.to_bytes());
-
     let auth_path_1 = {
         let v = merkle_tree.generate_auth_paths(0);
 
@@ -672,8 +670,6 @@ pub fn mock_mint_tc_1() -> TxCandidate {
 
     let cm = hasher.comm2(&s, &v, &k.to_bytes()).unwrap();
 
-    println!("mock mint tc 1 cm: {:?}", cm.to_bytes());
-
     let tx_candidate = MintTxCandidate::new(
         String::from("created_at_mint_1"),
         validator_wasm,
@@ -815,6 +811,8 @@ pub fn mock_mint_tc_dummy_old_coin() -> TxCandidate {
     let k = hasher.comm2(&r, &a_pk.to_bytes(), &rho).unwrap();
 
     let cm = hasher.comm2(&s, &v, &k.to_bytes()).unwrap();
+
+    // CM : 0x3bb4c03f8e718ec58f4f2bb2b2fb83149b5fe59a75c5c98893e40c56bb3e8deb
 
     let tx_candidate = MintTxCandidate::new(
         String::from("created_at_mint_5"),

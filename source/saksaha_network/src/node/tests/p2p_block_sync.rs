@@ -70,10 +70,6 @@ async fn test_block_sync_true() {
 
     let dummy_tx1 = sak_types::mock_pour_tc_random();
 
-    let dummy_tx2 = sak_types::mock_pour_tc_random();
-
-    tokio::time::sleep(Duration::from_secs(5)).await;
-
     {
         let machine_1 = machine_1.clone();
         let local_node_1 = local_node_1.clone();
@@ -88,9 +84,6 @@ async fn test_block_sync_true() {
         });
     }
 
-    tokio::time::sleep(Duration::from_secs(2)).await;
-    // tokio::time::sleep(Duration::from_secs(30)).await;
-
     println!("Sending a tx1 to a node_1");
 
     machine_1
@@ -101,7 +94,7 @@ async fn test_block_sync_true() {
         .await
         .expect("Node should be able to send a transaction");
 
-    tokio::time::sleep(Duration::from_secs(3)).await;
+    tokio::time::sleep(Duration::from_secs(1)).await;
 
     {
         println!("check if node1 has tx1: {}", dummy_tx1.get_tx_hash());
@@ -113,11 +106,13 @@ async fn test_block_sync_true() {
             .tx_pool_contains(dummy_tx1.get_tx_hash())
             .await;
 
-        assert_eq!(tx_pool_1_contains_tx1, true, "node 1 should contain tx1");
+        assert!(tx_pool_1_contains_tx1, "node 1 should contain tx1");
 
         println!("[Success] node_1 has tx_1 (tx sent to node_1 directly)");
 
         println!("Checking if node2 has tx: {}", dummy_tx1.get_tx_hash());
+
+        tokio::time::sleep(Duration::from_secs(2)).await;
 
         let tx_pool_2_contains_tx1 = machine_2
             .blockchain
@@ -126,10 +121,7 @@ async fn test_block_sync_true() {
             .tx_pool_contains(dummy_tx1.get_tx_hash())
             .await;
 
-        assert_eq!(
-            tx_pool_2_contains_tx1, true,
-            "tx pool 2 should contain tx 1"
-        );
+        assert!(tx_pool_2_contains_tx1, "tx pool 2 should contain tx 1");
 
         println!("[Success] node_2 has tx_1 (shared from node_1)");
     }
@@ -159,7 +151,7 @@ async fn test_block_sync_true() {
 
         println!("test 2 passed");
 
-        tokio::time::sleep(Duration::from_secs(2)).await;
+        tokio::time::sleep(Duration::from_secs(5)).await;
 
         let last_height_2 = local_node_2
             .machine
@@ -177,8 +169,6 @@ async fn test_block_sync_true() {
 
         println!("test 3 passed");
     }
-
-    tokio::time::sleep(Duration::from_secs(2)).await;
 }
 
 #[tokio::test(flavor = "multi_thread")]
