@@ -11,7 +11,6 @@ pub use tx::*;
 pub use tx_candidate::*;
 pub use tx_type::*;
 
-
 pub type TxHash = String;
 
 pub type BlockHash = String;

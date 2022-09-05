@@ -816,8 +816,6 @@ pub fn mock_mint_tc_dummy_old_coin() -> TxCandidate {
 
     let cm = hasher.comm2(&s, &v, &k.to_bytes()).unwrap();
 
-    // CM : 0x3bb4c03f8e718ec58f4f2bb2b2fb83149b5fe59a75c5c98893e40c56bb3e8deb
-
     let tx_candidate = MintTxCandidate::new(
         String::from("created_at_mint_5"),
         vec![5],

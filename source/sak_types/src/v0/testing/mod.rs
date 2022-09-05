@@ -6,6 +6,7 @@ mod values;
 pub use block::*;
 pub use coin::*;
 pub use tx::*;
+pub use values::*;
 
 pub const VALIDATOR: &[u8] =
     include_bytes!("../../../../prebuild/sak_validator.postprocess.wasm");

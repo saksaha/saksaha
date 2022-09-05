@@ -45,6 +45,23 @@ pub fn dev_local_1() -> Result<Config, WalletError> {
                         .to_string(),
                 ),
             )?,
+            // Dummy Old Coin : value 0
+            // CM : 3bb4c03f8e718ec58f4f2bb2b2fb83149b5fe59a75c5c98893e40c56bb3e8deb
+            CoinRecord::new(
+                0x0,
+                0x0,
+                0x0,
+                0x0,
+                0,
+                Some(2),
+                None,
+                Some(
+                    "\
+                d71916a3daccd319e8256f892fcec0ca\
+                fc65a1545cf55c9fc67f3c9ec7868fa2"
+                        .to_string(),
+                ),
+            )?,
         ]),
         rpc_port: Some(36612),
         saksaha_endpoint: Some(String::from("http://localhost:34418/rpc/v0")),
