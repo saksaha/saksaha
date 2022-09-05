@@ -6,7 +6,6 @@ use sak_crypto::{Bls12, ScalarExt};
 use sak_proofs::{CoinProof, Hasher, Proof};
 use sak_types::CoinRecord;
 
-
 #[tokio::test(flavor = "multi_thread")]
 async fn test_prepare_send_tx_pour_params() {
     //
