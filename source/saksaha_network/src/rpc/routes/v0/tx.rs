@@ -8,100 +8,6 @@ use sak_rpc_interface::{SendMintTxRequest, SendPourTxRequest};
 use sak_types::{MintTxCandidate, PourTxCandidate, Tx, TxCandidate};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use type_extension::U8Arr32;
-
-// #[derive(Serialize, Deserialize, Debug)]
-// pub struct SendMintTxRequest {
-//     created_at: String,
-//     #[serde(with = "serde_bytes")]
-//     data: Vec<u8>,
-//     author_sig: String,
-//     ctr_addr: Option<String>,
-//     // cm: [u8; 32],
-//     // #[serde(with = "serde_bytes")]
-//     cms: Vec<[u8; 32]>,
-//     // cm_count: u128,
-//     v: [u8; 32],
-//     k: [u8; 32],
-//     s: [u8; 32],
-// }
-
-// impl SendMintTxRequest {
-//     pub fn new(
-//         created_at: String,
-//         data: Vec<u8>,
-//         author_sig: String,
-//         ctr_addr: Option<String>,
-//         // cm: [u8; 32],
-//         cms: Vec<[u8; 32]>,
-//         // cm_count: u128,
-//         v: [u8; 32],
-//         k: [u8; 32],
-//         s: [u8; 32],
-//     ) -> SendMintTxRequest {
-//         SendMintTxRequest {
-//             created_at,
-//             data,
-//             author_sig,
-//             ctr_addr,
-//             cms,
-//             // cm_count,
-//             v,
-//             k,
-//             s,
-//         }
-//     }
-// }
-
-// #[derive(Serialize, Deserialize, Debug)]
-// pub(in crate::rpc) struct SendPourTxRequest {
-//     created_at: String,
-//     #[serde(with = "serde_bytes")]
-//     data: Vec<u8>,
-//     author_sig: String,
-//     ctr_addr: Option<String>,
-//     #[serde(with = "serde_bytes")]
-//     pi: Vec<u8>,
-//     sn_1: [u8; 32],
-//     // sn_2: [u8; 32],
-//     cms: Vec<[u8; 32]>,
-//     // cm_count: u128,
-//     // cm_1: [u8; 32],
-//     // cm_2: [u8; 32],
-//     merkle_rt: [u8; 32],
-// }
-
-// impl SendPourTxRequest {
-//     pub fn new(
-//         created_at: String,
-//         data: Vec<u8>,
-//         author_sig: String,
-//         ctr_addr: Option<String>,
-//         pi: Vec<u8>,
-//         sn_1: U8Arr32,
-//         // sn_2: [u8; 32],
-//         cms: Vec<[u8; 32]>,
-//         // cm_count: u128,
-//         // cm_1: [u8; 32],
-//         // cm_2: [u8; 32],
-//         merkle_rt: [u8; 32],
-//     ) -> SendPourTxRequest {
-//         SendPourTxRequest {
-//             created_at,
-//             data,
-//             author_sig,
-//             ctr_addr,
-//             pi,
-//             sn_1,
-//             cms,
-//             // cm_count,
-//             // sn_2,
-//             // cm_1,
-//             // cm_2,
-//             merkle_rt,
-//         }
-//     }
-// }
 
 pub(in crate::rpc) async fn send_mint_tx(
     route_state: RouteState,
@@ -167,12 +73,8 @@ pub(in crate::rpc) async fn send_pour_tx(
         rb.author_sig,
         rb.ctr_addr,
         rb.pi,
-        rb.sn_1,
+        rb.sns,
         rb.cms,
-        // rb.cm_count,
-        // rb.sn_2,
-        // rb.cm_1,
-        // rb.cm_2,
         rb.merkle_rt,
     ));
 
@@ -184,15 +86,9 @@ pub(in crate::rpc) async fn send_pour_tx(
         .send_tx(tx_candidate)
         .await
     {
-        Ok(tx_hash) => {
-            return make_success_response(route_state, tx_hash);
-        }
+        Ok(tx_hash) => make_success_response(route_state, tx_hash),
         Err(err) => {
-            return make_error_response(
-                route_state.resp,
-                Some(route_state.id),
-                err.into(),
-            );
+            make_error_response(route_state.resp, Some(route_state.id), err)
         }
     }
 }

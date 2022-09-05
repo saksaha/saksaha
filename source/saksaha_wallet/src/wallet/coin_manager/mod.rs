@@ -2,7 +2,6 @@ use crate::{db::WalletDB, WalletError};
 use colored::Colorize;
 use sak_types::CoinRecord;
 use sak_types::CoinStatus;
-use sak_types::TxHash;
 use std::sync::Arc;
 
 pub(crate) struct CoinManager {
@@ -37,16 +36,14 @@ impl CoinManager {
         Ok(m)
     }
 
-    pub fn get_next_available_coin(&self) -> Option<&CoinRecord> {
-        let vec_coins = &self.coins;
-
-        for coin in vec_coins {
+    pub fn get_next_available_coin(&mut self) -> Option<&mut CoinRecord> {
+        for coin in self.coins.iter_mut() {
             if coin.v == sak_crypto::Scalar::zero() {
                 continue;
             }
 
             if coin.coin_status == CoinStatus::Unused {
-                return Some(&coin);
+                return Some(coin);
             }
         }
 

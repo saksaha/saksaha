@@ -1,5 +1,8 @@
 use super::utils;
-use crate::{rpc::routes::v0::GetTxRequest, tests::TestUtil};
+use crate::{
+    rpc::routes::v0::{GetTxRequest, GetTxResponse},
+    tests::TestUtil,
+};
 use hyper::{Body, Client, Method, Request, Uri};
 use sak_rpc_interface::{
     JsonRequest, JsonResponse, SendMintTxRequest, SendPourTxRequest,
@@ -95,9 +98,11 @@ async fn test_rpc_client_request_correct_get_tx() {
 
     let b = hyper::body::to_bytes(resp.into_body()).await.unwrap();
 
-    let json_response = serde_json::from_slice::<JsonResponse<Tx>>(&b).unwrap();
+    let json_response =
+        serde_json::from_slice::<JsonResponse<GetTxResponse>>(&b).unwrap();
 
     let tx_from_res = json_response.result.unwrap();
+    let tx_from_res = tx_from_res.tx.unwrap();
     let tx_hash_from_res = tx_from_res.get_tx_hash();
 
     assert_eq!(&expected_tx_hash, tx_hash_from_res);
@@ -194,9 +199,10 @@ async fn test_rpc_client_request_wrong_get_tx() {
 
     let b = hyper::body::to_bytes(resp.into_body()).await.unwrap();
 
-    let json_response = serde_json::from_slice::<JsonResponse<Tx>>(&b).unwrap();
+    let json_response =
+        serde_json::from_slice::<JsonResponse<GetTxResponse>>(&b).unwrap();
 
-    assert!(json_response.result == None);
+    assert!(json_response.result.is_none());
 }
 
 #[tokio::test(flavor = "multi_thread")]
@@ -204,7 +210,6 @@ async fn test_rpc_reqeust_correct_send_pour_tx() {
     sak_test_utils::init_test_log();
     TestUtil::init_test(vec!["test"]);
 
-    // let tc_dummy = PourTxCandidate::new_dummy_m1_to_p3_p4();
     let tc_dummy = if let TxCandidate::Pour(c) = sak_types::mock_pour_tc_1() {
         c
     } else {
@@ -234,7 +239,7 @@ async fn test_rpc_reqeust_correct_send_pour_tx() {
             tc_dummy.author_sig,
             Some(tc_dummy.ctr_addr),
             tc_dummy.pi,
-            tc_dummy.sn_1,
+            tc_dummy.sns,
             tc_dummy.cms,
             tc_dummy.merkle_rt,
         );
@@ -269,9 +274,9 @@ async fn test_rpc_reqeust_correct_send_pour_tx() {
     let json_response =
         serde_json::from_slice::<JsonResponse<String>>(&b).unwrap();
 
-    let send_success = json_response.result.unwrap();
+    let result_hash = json_response.result.unwrap();
 
-    assert_eq!("success", send_success);
+    assert_eq!(expected_tc_hash, result_hash);
 
     let is_contain = machine
         .blockchain
@@ -280,7 +285,7 @@ async fn test_rpc_reqeust_correct_send_pour_tx() {
         .tx_pool_contains(&expected_tc_hash)
         .await;
 
-    assert_eq!(true, is_contain);
+    assert!(is_contain);
 }
 
 #[tokio::test(flavor = "multi_thread")]
@@ -417,7 +422,7 @@ async fn test_rpc_reqeust_correct_send_mint_tx() {
         .tx_pool_contains(&expected_tc_hash)
         .await;
 
-    assert_eq!(true, is_contain);
+    assert!(is_contain);
 }
 
 #[tokio::test(flavor = "multi_thread")]

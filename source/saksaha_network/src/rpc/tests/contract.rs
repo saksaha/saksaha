@@ -78,94 +78,10 @@ async fn test_call_contract() {
     let query_ctr_response = json_response.result.unwrap();
     let query_result = query_ctr_response.result;
 
-    println!("query_result (from rpc response) : {:?}", query_result);
+    println!(
+        "query_result (from rpc response) : {:?}",
+        std::str::from_utf8(&query_result).unwrap()
+    );
 
     assert_eq!(expected_validator.as_bytes(), query_result);
 }
-
-// #[tokio::test(flavor = "multi_thread")]
-// async fn test_rpc_request_envelope_send_pour_tx() {
-//     sak_test_utils::init_test_log();
-//     sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
-
-//     let tc_dummy = PourTxCandidate::new_dummy_m1_to_p3_p4();
-
-//     let (rpc, rpc_socket_addr, _machine) = utils::make_test_context().await;
-
-//     let client = Client::new();
-
-//     tokio::spawn(async move { rpc.run().await });
-
-//     let uri: Uri = {
-//         let u =
-//             format!("http://localhost:{}/apis/v0/", rpc_socket_addr.port(),);
-//         u.parse().expect("URI should be made")
-//     };
-
-//     let body = {
-//         let ctr_addr = ENVELOPE_CTR_ADDR.to_string();
-
-//         let mut args = HashMap::with_capacity(2);
-//         let open_ch_input = {
-//             let open_ch_input: Vec<String> = vec![
-//                 "eph_pk_str".to_string(),
-//                 "ch_id".to_string(),
-//                 "a_pk_sig_encrypted".to_string(),
-//                 "open_ch_empty".to_string(),
-//             ];
-
-//             serde_json::to_string(&open_ch_input).unwrap()
-//         };
-//         args.insert(String::from("dst_pk"), "her_pk".to_string());
-//         args.insert(String::from("serialized_input"), open_ch_input);
-
-//         let req = CtrRequest {
-//             req_type: String::from("open_channel"),
-//             args,
-//             ctr_call_type: CtrCallType::Execute,
-//         };
-
-//         let send_req = SendPourTxRequest::new(
-//             tc_dummy.created_at,
-//             serde_json::to_vec(&req).unwrap(),
-//             tc_dummy.author_sig,
-//             Some(ctr_addr),
-//             tc_dummy.pi,
-//             tc_dummy.sn_1,
-//             tc_dummy.sn_2,
-//             tc_dummy.cm_1,
-//             tc_dummy.cm_2,
-//             tc_dummy.merkle_rt,
-//         );
-
-//         let params = serde_json::to_vec(&send_req).unwrap();
-
-//         let json_request = JsonRequest {
-//             jsonrpc: "2.0".to_string(),
-//             method: "send_pour_tx".to_string(),
-//             params: Some(params),
-//             id: "test_1".to_string(),
-//         };
-
-//         let str = serde_json::to_string(&json_request).unwrap();
-
-//         Body::from(str)
-//     };
-
-//     let req = Request::builder()
-//         .method(Method::POST)
-//         .uri(uri)
-//         .body(body)
-//         .expect("request builder should be made");
-
-//     let resp = client.request(req).await.unwrap();
-
-//     let b = hyper::body::to_bytes(resp.into_body()).await.unwrap();
-
-//     let json_response =
-//         serde_json::from_slice::<JsonResponse<String>>(&b).unwrap();
-
-//     let send_success = json_response.result.unwrap();
-
-//     assert_eq!("success", send_success);
-// }

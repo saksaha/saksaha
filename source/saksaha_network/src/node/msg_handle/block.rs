@@ -1,5 +1,4 @@
 use crate::{machine::Machine, node::SaksahaNodeError};
-use log::{debug, info, warn};
 use sak_p2p_transport::{
     BlockAckMsg, BlockSynMsg, ErrorMsg, Msg, RecvReceipt, SendReceipt,
     UpgradedConn,
@@ -74,9 +73,9 @@ pub(in crate::node) async fn recv_block_syn(
     machine: &Arc<Machine>,
     mut conn_lock: RwLockWriteGuard<'_, UpgradedConn>,
 ) -> SendReceipt {
-    let mut blocks = block_syn_msg.blocks;
+    let blocks = block_syn_msg.blocks;
 
-    machine
+    let _ = machine
         .blockchain
         .dist_ledger
         .apis

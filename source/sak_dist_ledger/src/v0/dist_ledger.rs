@@ -3,10 +3,11 @@ use crate::Consensus;
 use crate::DistLedgerApis;
 use crate::LedgerDB;
 use crate::LedgerError;
-use crate::Runtime;
 use crate::SyncPool;
 use log::info;
-use sak_proofs::{Hasher, MerkleTree};
+use sak_crypto::MerkleTree;
+use sak_dist_ledger_meta::CM_TREE_DEPTH;
+use sak_proofs::Hasher;
 use sak_types::BlockCandidate;
 use sak_vm::VM;
 use std::sync::Arc;
@@ -14,18 +15,10 @@ use tokio::sync::broadcast;
 use tokio::sync::{broadcast::Sender, RwLock};
 
 const BLOCKCHAIN_EVENT_QUEUE_CAPACITY: usize = 32;
-const MERKLE_TREE_HEIGHT: usize = 16;
 
 pub struct DistLedger {
     pub apis: DistLedgerApis,
-    // pub(crate) ledger_db: LedgerDB,
-    // pub(crate) sync_pool: Arc<SyncPool>,
     pub ledger_event_tx: Arc<Sender<DistLedgerEvent>>,
-    // pub(crate) vm: VM,
-    // pub(crate) consensus: Box<dyn Consensus + Send + Sync>,
-    runtime: Arc<Runtime>,
-    // pub(crate) hasher: Hasher,
-    // pub(crate) merkle_tree: MerkleTree,
 }
 
 pub struct DistLedgerArgs {
@@ -61,25 +54,14 @@ impl DistLedger {
         let sync_pool = {
             let tx = ledger_event_tx.clone();
 
-            let p = SyncPool::new(tx);
+            let p = SyncPool::new(tx, tx_sync_interval, block_sync_interval);
 
             Arc::new(p)
         };
 
-        let runtime = {
-            let r = Runtime::init(
-                sync_pool.clone(),
-                ledger_event_tx.clone(),
-                tx_sync_interval,
-                block_sync_interval,
-            );
-
-            Arc::new(r)
-        };
-
         let hasher = Hasher::new();
 
-        let merkle_tree = MerkleTree::new(MERKLE_TREE_HEIGHT as u32);
+        let merkle_tree = MerkleTree::new(CM_TREE_DEPTH as u32);
 
         let apis = DistLedgerApis {
             ledger_db,
@@ -93,7 +75,6 @@ impl DistLedger {
         let dist_ledger = DistLedger {
             apis,
             ledger_event_tx,
-            runtime,
         };
 
         if let Some(bc) = genesis_block {
@@ -112,11 +93,5 @@ impl DistLedger {
         Ok(dist_ledger)
     }
 
-    pub async fn run(&self) {
-        let runtime = self.runtime.clone();
-
-        tokio::spawn(async move {
-            runtime.run().await;
-        });
-    }
+    pub async fn run(&self) {}
 }

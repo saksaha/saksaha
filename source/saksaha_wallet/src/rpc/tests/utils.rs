@@ -3,22 +3,20 @@ use crate::{
     credential::WalletCredential, db::WalletDB, rpc::RPC, wallet::Wallet,
     Config, CredentialManager,
 };
-use envelope_contract::{request_type, SendMsgParams};
+use envelope_contract::{request_type, Channel, OpenChParams, SendMsgParams};
 use envelope_term::ENVELOPE_CTR_ADDR;
 use hyper::{Body, Client, Method, Request, Uri};
 use sak_contract_std::CtrRequest;
+use sak_crypto::{SakKey, ToEncodedPoint};
 use sak_rpc_interface::{JsonRequest, JsonResponse};
 use std::sync::Arc;
 
-pub(crate) const RPC_PORT: u16 = 36612;
-
-pub(crate) struct TestContext {
+pub(in crate) struct MockWalletContext {
     pub wallet: Arc<Wallet>,
     pub rpc: RPC,
     pub acc_addr: String,
 }
-
-pub(crate) async fn mock_test_context() -> TestContext {
+pub(in crate) async fn mock_wallet_context() -> MockWalletContext {
     let config = Config::new(&Some("dev_local_1".to_string())).unwrap();
 
     let public_key = config.public_key.clone().unwrap();
@@ -36,7 +34,7 @@ pub(crate) async fn mock_test_context() -> TestContext {
         WalletDB::init(&credential_manager.get_credential(), true).unwrap();
 
     let wallet = {
-        let mut w = Wallet::init(credential_manager, wallet_db, config)
+        let w = Wallet::init(credential_manager, wallet_db, config)
             .await
             .unwrap();
 
@@ -45,14 +43,14 @@ pub(crate) async fn mock_test_context() -> TestContext {
 
     let rpc = RPC::init(Some(36612), wallet.clone()).await.unwrap();
 
-    TestContext {
+    MockWalletContext {
         wallet,
         rpc,
         acc_addr,
     }
 }
 
-pub(crate) async fn make_test_credential() -> CredentialManager {
+pub(crate) async fn mock_credential_manager() -> CredentialManager {
     let public_key = String::from(
         "045739d074b8722891c307e8e75c9607e0b55a80778\
                 b42ef5f4640d4949dbf3992f6083b729baef9e9545c4\
@@ -72,22 +70,60 @@ pub(crate) async fn make_test_credential() -> CredentialManager {
     m
 }
 
-pub(crate) async fn send_msg_for_test(acc_addr: &String) {
+pub(crate) async fn mock_send_pour_tx(
+    rpc_port: u16,
+    acc_addr: &String,
+) -> JsonResponse<SendTxResponse> {
     let client = Client::new();
 
     let uri: Uri = {
-        let u = format!("http://localhost:{}", RPC_PORT);
+        let u = format!("http://localhost:{}", rpc_port);
 
         u.parse().expect("URI should be made")
     };
 
     let body = {
-        let send_msg_params = SendMsgParams {
-            ch_id: String::from("ch_0"),
-            msg: String::from("hi"),
+        let (_, eph_pub_key) = SakKey::generate();
+
+        let channel = Channel::new(
+            "ch_id".to_string(),
+            sak_crypto::encode_hex(
+                &eph_pub_key.to_encoded_point(false).to_bytes(),
+            ),
+            "\
+                045739d074b8722891c307e8e75c9607\
+                e0b55a80778b42ef5f4640d4949dbf39\
+                92f6083b729baef9e9545c4e95590616\
+                fd382662a09653f2a966ff524989ae8c0f"
+                .to_string(),
+            vec![
+                "\
+                045739d074b8722891c307e8e75c9607\
+                e0b55a80778b42ef5f4640d4949dbf39\
+                92f6083b729baef9e9545c4e95590616\
+                fd382662a09653f2a966ff524989ae8c0f"
+                    .to_string(),
+                "\
+                    042c8d005bd935597117181d8ceceaef\
+                    6d1162de78c3285689d0c36c6170634c\
+                    124f7b9b911553a1f483ec565c199ea2\
+                    9ff1cd641f10c9a5f8c7c4d4a026db6f7b"
+                    .to_string(),
+            ],
+        )
+        .unwrap();
+
+        let open_ch_params = OpenChParams {
+            dst_pk: "\
+                042c8d005bd935597117181d8ceceaef\
+                6d1162de78c3285689d0c36c6170634c\
+                124f7b9b911553a1f483ec565c199ea2\
+                9ff1cd641f10c9a5f8c7c4d4a026db6f7b"
+                .to_string(),
+            open_ch: channel,
         };
 
-        let args = serde_json::to_vec(&send_msg_params).unwrap();
+        let args = serde_json::to_vec(&open_ch_params).unwrap();
 
         let ctr_request = CtrRequest {
             req_type: request_type::SEND_MSG.to_string(),
@@ -125,15 +161,20 @@ pub(crate) async fn send_msg_for_test(acc_addr: &String) {
 
     let b = hyper::body::to_bytes(resp.into_body()).await.unwrap();
 
-    let _json_response =
+    let json_response =
         serde_json::from_slice::<JsonResponse<SendTxResponse>>(&b).unwrap();
+
+    json_response
 }
 
-pub(crate) async fn update_coin_status(acc_addr: &String) -> String {
+pub(crate) async fn mock_update_coin_status(
+    rpc_port: u16,
+    acc_addr: &String,
+) -> JsonResponse<String> {
     let client = Client::new();
 
     let uri: Uri = {
-        let u = format!("http://localhost:{}", RPC_PORT);
+        let u = format!("http://localhost:{}", rpc_port);
 
         u.parse().expect("URI should be made")
     };
@@ -175,9 +216,8 @@ pub(crate) async fn update_coin_status(acc_addr: &String) -> String {
 
     let b = hyper::body::to_bytes(resp.into_body()).await.unwrap();
 
-    let _json_response =
+    let json_response =
         serde_json::from_slice::<JsonResponse<String>>(&b).unwrap();
 
-    "power".to_string()
-    // json_response.result.unwrap()
+    json_response
 }

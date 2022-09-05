@@ -1,3 +1,3 @@
 mod balance;
 mod coin;
-mod utils;
+pub(crate) mod utils;

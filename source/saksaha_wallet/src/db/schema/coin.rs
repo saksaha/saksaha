@@ -162,7 +162,7 @@ impl WalletDBSchema {
     // pub fn get_cm(
     //     &self,
     //     cm_idx: &u128,
-    // ) -> Result<Option<U8Arr32>, WalletError> {
+    // ) -> Result<Option<[u8; 32]>, WalletError> {
     //     let cf = self.make_cf_handle(&self.db, cfs::CM)?;
 
     //     // let cm_idx = cm_idx.to_be_bytes();

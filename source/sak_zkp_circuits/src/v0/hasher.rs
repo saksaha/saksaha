@@ -149,31 +149,3 @@ impl Hasher {
         mimc::mimc(r, x, &self.constants)
     }
 }
-
-struct MyCircuit {}
-
-impl<Scalar: PrimeField> Circuit<Scalar> for MyCircuit {
-    fn synthesize<CS: ConstraintSystem<Scalar>>(
-        self,
-        cs: &mut CS,
-    ) -> Result<(), SynthesisError> {
-        let bit_values: Vec<Option<bool>> = vec![None; 4];
-        Scalar::default();
-
-        let preimage_bits = bit_values
-            .into_iter()
-            .enumerate()
-            // Allocate each bit.
-            .map(|(i, b)| {
-                AllocatedBit::alloc(
-                    cs.namespace(|| format!("preimage bit {}", i)),
-                    None,
-                )
-            })
-            // Convert the AllocatedBits into Booleans (required for the sha256 gadget).
-            .map(|b| b.map(Boolean::from))
-            .collect::<Result<Vec<_>, _>>()?;
-
-        Ok(())
-    }
-}

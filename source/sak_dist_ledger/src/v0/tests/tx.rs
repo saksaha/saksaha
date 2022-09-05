@@ -1,4 +1,5 @@
-use super::{test_util::TestUtil, utils};
+use super::test_util::TestUtil;
+use crate::v0::testing;
 use sak_kv_db::WriteBatch;
 use sak_types::{BlockCandidate, Tx, TxCandidate};
 
@@ -7,7 +8,7 @@ async fn test_put_and_get_transaction() {
     sak_test_utils::init_test_log();
     TestUtil::init_test(vec!["test"]);
 
-    let dist_ledger = utils::make_dist_ledger().await;
+    let dist_ledger = testing::mock_dist_ledger_1().await;
 
     let bc = sak_types::mock_block_2();
 
@@ -46,7 +47,7 @@ async fn test_dist_ledger_put_a_single_pour_tx() {
     sak_test_utils::init_test_log();
     TestUtil::init_test(vec!["test"]);
 
-    let dist_ledger = utils::make_dist_ledger().await;
+    let dist_ledger = testing::mock_dist_ledger_1().await;
 
     let mut write_batch = WriteBatch::default();
 
@@ -56,11 +57,7 @@ async fn test_dist_ledger_put_a_single_pour_tx() {
         let _dummy_tx_hash = dist_ledger
             .apis
             .ledger_db
-            .batch_put_tx(
-                &mut write_batch,
-                &dummy_pour_tx,
-                // &mut cm_idx_count
-            )
+            .batch_put_tx(&mut write_batch, &dummy_pour_tx)
             .expect("pour_tx should be written");
     }
 }
@@ -71,7 +68,7 @@ async fn test_dist_ledger_tx_mint_put_and_get_cm_idx() {
 
     TestUtil::init_test(vec!["test"]);
 
-    let dist_ledger = utils::make_dist_ledger().await;
+    let dist_ledger = testing::mock_dist_ledger_1().await;
 
     let mint_tc = sak_types::mock_mint_tc_1();
 
@@ -124,7 +121,7 @@ async fn test_dist_ledger_tx_pour_put_and_get_cm_idx() {
 
     TestUtil::init_test(vec!["test"]);
 
-    let dist_ledger = utils::make_dist_ledger().await;
+    let dist_ledger = testing::mock_dist_ledger_1().await;
 
     let pour_tc = sak_types::mock_pour_tc_random();
 
@@ -192,9 +189,11 @@ async fn test_dist_ledger_verify_proof_success() {
     sak_test_utils::init_test_log();
     TestUtil::init_test(vec!["test"]);
 
-    let dist_ledger = utils::make_dist_ledger().await;
+    let dist_ledger = testing::mock_dist_ledger_1().await;
 
+    println!("aaaaaaa222");
     let bc_1 = sak_types::mock_block_pour_single();
+    println!("aaaaaaa");
 
     {
         let block_hash = dist_ledger
@@ -213,7 +212,7 @@ async fn test_dist_ledger_verify_proof_fail() {
     sak_test_utils::init_test_log();
     TestUtil::init_test(vec!["test"]);
 
-    let dist_ledger = utils::make_dist_ledger().await;
+    let dist_ledger = testing::mock_dist_ledger_1().await;
 
     let bc_1 = sak_types::mock_block_invalid_pour();
 
@@ -233,7 +232,7 @@ async fn test_dist_ledger_double_spending_success() {
     sak_test_utils::init_test_log();
     TestUtil::init_test(vec!["test"]);
 
-    let dist_ledger = utils::make_dist_ledger().await;
+    let dist_ledger = testing::mock_dist_ledger_1().await;
 
     let bc_1 = sak_types::mock_block_pour_random();
 
@@ -266,7 +265,7 @@ async fn test_dist_ledger_double_spending_fail() {
     sak_test_utils::init_test_log();
     TestUtil::init_test(vec!["test"]);
 
-    let dist_ledger = utils::make_dist_ledger().await;
+    let dist_ledger = testing::mock_dist_ledger_1().await;
 
     let bc_1 = sak_types::mock_block_pour_single();
 

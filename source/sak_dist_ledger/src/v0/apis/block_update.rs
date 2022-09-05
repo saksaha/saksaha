@@ -2,10 +2,11 @@ use crate::{CtrStateUpdate, DistLedgerApis, LedgerError, MerkleUpdate};
 use colored::Colorize;
 use log::{debug, info, warn};
 use sak_contract_std::{CtrCallType, CtrRequest, Storage, ERROR_PLACEHOLDER};
-use sak_crypto::{Bls12, Scalar, ScalarExt};
-use sak_proofs::{CoinProof, Hasher, Proof, CM_TREE_DEPTH};
+use sak_crypto::{Bls12, MerkleTree, Scalar, ScalarExt};
+use sak_dist_ledger_meta::CM_TREE_DEPTH;
+use sak_proofs::{CoinProof, Hasher, Proof};
 use sak_types::{
-    Block, BlockCandidate, CmIdx, MintTxCandidate, PourTxCandidate, Tx,
+    Block, BlockCandidate, CmIdx, MintTxCandidate, PourTxCandidate, Sn, Tx,
     TxCandidate, TxCtrOp,
 };
 use sak_vm::CtrFn;
@@ -82,7 +83,8 @@ impl DistLedgerApis {
             }
         };
 
-        let tcs = &bc.tx_candidates.clone();
+        // let tcs = &bc.tx_candidates.clone();
+        let tc_len = bc.tx_candidates.len();
 
         let mut ctr_state_update = CtrStateUpdate::new();
         let mut merkle_update = MerkleUpdate::new();
@@ -90,12 +92,10 @@ impl DistLedgerApis {
         debug!(
             "write_block, tc count: {}, next_block_height: {}, \
             next_cm_idx: {}",
-            tcs.len(),
-            next_block_height,
-            next_cm_idx,
+            tc_len, next_block_height, next_cm_idx,
         );
 
-        self.filter_tx_candidates(&mut bc, tcs)?;
+        self.filter_tx_candidates(&mut bc)?;
         let tcs = &bc.tx_candidates;
 
         let mut added_cm_count: u128 = 0;
@@ -140,7 +140,6 @@ impl DistLedgerApis {
 
         let (block, txs) = bc.upgrade(
             next_block_height,
-            // next_tx_height,
             next_cm_idx,
             next_merkle_rt.to_owned(),
         );
@@ -174,24 +173,7 @@ impl DistLedgerApis {
     pub async fn write_blocks(
         &self,
         mut blocks: Vec<(Block, Vec<Tx>)>,
-        // txs: Vec<Tx>,
     ) -> Result<Vec<String>, LedgerError> {
-        // let tx_candidates = txs.into_iter().map(|tx| tx.downgrade()).collect();
-
-        // let bc_candidate = BlockCandidate {
-        //     validator_sig: block.validator_sig,
-        //     tx_candidates,
-        //     witness_sigs: block.witness_sigs,
-        //     created_at: block.created_at,
-        // };
-
-        // match self.write_block(Some(bc_candidate)).await {
-        //     Ok(res) => return Ok(res),
-        //     Err(err) => {
-        //         return Err(format!("Block sync failed, err: {}", err).into());
-        //     }
-        // }
-
         let mut block_hashes = vec![];
 
         blocks.sort_by(|a, b| a.0.block_height.cmp(&b.0.block_height));
@@ -234,11 +216,23 @@ impl DistLedgerApis {
         self.ledger_db.delete_tx(key)
     }
 
-    pub(crate) fn verify_sn(&self, sn: &[u8; 32]) -> bool {
-        match self.ledger_db.get_tx_hash_by_sn(sn) {
-            Ok(Some(_)) => return false,
-            Ok(None) => return true,
-            Err(_) => return false,
+    pub(crate) fn verify_sn(&self, sns: &Vec<Sn>) -> Result<bool, LedgerError> {
+        match self.ledger_db.get_tx_hash_by_sn(sns) {
+            Ok(Some(_)) => {
+                return Err(format!(
+                    "Serial numbers already exists, sns: {:?}",
+                    sns
+                )
+                .into())
+            }
+            Ok(None) => return Ok(true),
+            Err(_) => {
+                return Err(format!(
+                    "Tx with serial numbers does not exist, sns: {:?}",
+                    sns
+                )
+                .into())
+            }
         }
     }
 
@@ -252,7 +246,9 @@ impl DistLedgerApis {
 
         public_inputs.push(ScalarExt::parse_arr(&tc.merkle_rt)?);
 
-        public_inputs.push(ScalarExt::parse_arr(&tc.sn_1)?);
+        for sn in &tc.sns {
+            public_inputs.push(ScalarExt::parse_arr(sn)?);
+        }
 
         for cm in &tc.cms {
             public_inputs.push(ScalarExt::parse_arr(cm)?);
@@ -282,17 +278,17 @@ impl DistLedgerApis {
     pub(crate) fn filter_tx_candidates(
         &self,
         bc: &mut BlockCandidate,
-        tx_candidates: &Vec<TxCandidate>,
+        // tx_candidates: &Vec<TxCandidate>,
     ) -> Result<(), LedgerError> {
         let mut valid_tx_candidates: Vec<TxCandidate> = vec![];
 
-        for tx_candidate in tx_candidates {
+        for tx_candidate in &bc.tx_candidates {
             match tx_candidate {
                 TxCandidate::Mint(_tc) => {
-                    valid_tx_candidates.push(tx_candidate.to_owned());
+                    valid_tx_candidates.push(tx_candidate.clone());
                 }
                 TxCandidate::Pour(tc) => {
-                    let is_valid_sn = self.verify_sn(&tc.sn_1);
+                    let is_valid_sn = self.verify_sn(&tc.sns)?;
                     let is_verified_tx = self.verify_proof(tc)?;
 
                     if is_valid_sn & is_verified_tx {
@@ -304,7 +300,8 @@ impl DistLedgerApis {
             };
         }
 
-        bc.update_tx_candidates(valid_tx_candidates);
+        bc.tx_candidates = valid_tx_candidates;
+
         Ok(())
     }
 }
@@ -431,15 +428,9 @@ async fn handle_pour_tx_candidate(
     process_ctr_state_update(apis, ctr_addr, data, tx_ctr_op, ctr_state_update)
         .await?;
 
-    let cm_count = process_merkle_update(
-        apis,
-        merkle_update,
-        &tc.cms,
-        // vec![&tc.cm_1, &tc.cm_2],
-        next_cm_idx,
-        // ledger_cm_count,
-    )
-    .await?;
+    let cm_count =
+        process_merkle_update(apis, merkle_update, &tc.cms, next_cm_idx)
+            .await?;
 
     Ok(cm_count)
 }
@@ -448,31 +439,24 @@ async fn process_merkle_update(
     apis: &DistLedgerApis,
     merkle_update: &mut MerkleUpdate,
     cms: &Vec<[u8; 32]>,
-    // ledger_cm_count: u128,
     next_cm_idx: CmIdx,
 ) -> Result<u128, LedgerError> {
     let cm_count = cms.len() as u128;
 
     for (idx, cm) in cms.iter().enumerate() {
-        // let leaf_idx = ledger_cm_count + idx as u128;
         let cm_idx = next_cm_idx + idx as u128;
         let auth_path = apis.merkle_tree.generate_auth_paths(cm_idx);
 
         let leaf_loc = format!("{}_{}", 0, cm_idx);
-
         merkle_update.insert(leaf_loc, *cm);
 
+        let mut curr_idx = cm_idx;
         for (height, path) in auth_path.iter().enumerate() {
-            let curr_idx = path.idx;
-            let sibling_idx = match path.direction {
-                true => path.idx + 1,
-                false => path.idx - 1,
-            };
+            // println!("auth_path(), path: {:?}", path);
 
-            let sibling_loc = format!("{}_{}", height, sibling_idx);
-            let sibling_node = match merkle_update.get(&sibling_loc) {
+            let sibling_node = match merkle_update.get(&path.node_loc) {
                 Some(n) => *n,
-                None => apis.get_merkle_node(&sibling_loc).await?,
+                None => apis.get_merkle_node(&path.node_loc).await?,
             };
 
             let curr_loc = format!("{}_{}", height, curr_idx);
@@ -481,13 +465,28 @@ async fn process_merkle_update(
                 None => apis.get_merkle_node(&curr_loc).await?,
             };
 
-            let merkle_node =
-                apis.hasher.mimc(&curr_node, &sibling_node)?.to_bytes();
+            let lv;
+            let rv;
+            if path.direction {
+                lv = sibling_node;
+                rv = curr_node;
+            } else {
+                lv = curr_node;
+                rv = sibling_node;
+            }
 
-            let parent_idx = sak_proofs::get_parent_idx(curr_idx);
+            let merkle_node = apis.hasher.mimc(&lv, &rv)?.to_bytes();
+
+            let parent_idx = MerkleTree::get_parent_idx(curr_idx);
             let update_loc = format!("{}_{}", height + 1, parent_idx);
 
+            // println!(
+            //     "merkle_update(): loc: {}, val: {:?}",
+            //     update_loc, merkle_node
+            // );
+
             merkle_update.insert(update_loc, merkle_node);
+            curr_idx = parent_idx;
         }
     }
 

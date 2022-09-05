@@ -7,20 +7,26 @@ use std::{
 };
 use tokio::sync::{broadcast::Sender, RwLock};
 
-use crate::{DistLedgerEvent, Runtime};
+use crate::DistLedgerEvent;
 
 const SYNC_POOL_CAPACITY: usize = 100;
+const TX_SYNC_INTERVAL: u64 = 2000;
+const BLOCK_SYNC_INTERVAL: u64 = 2000;
 
 pub(crate) struct SyncPool {
     new_blocks: Arc<RwLock<HashSet<(BlockHeight, BlockHash)>>>,
     tx_hash_set: Arc<RwLock<HashSet<TxHash>>>,
     tx_map: RwLock<HashMap<TxHash, TxCandidate>>,
     ledger_event_tx: Arc<Sender<DistLedgerEvent>>,
+    tx_sync_interval: Duration,
+    block_sync_interval: Duration,
 }
 
 impl SyncPool {
     pub(crate) fn new(
         ledger_event_tx: Arc<Sender<DistLedgerEvent>>,
+        tx_sync_interval: Option<u64>,
+        block_sync_interval: Option<u64>,
     ) -> SyncPool {
         let tx_hash_set = {
             let s = HashSet::new();
@@ -39,11 +45,23 @@ impl SyncPool {
             RwLock::new(m)
         };
 
+        let tx_sync_interval = match tx_sync_interval {
+            Some(i) => Duration::from_millis(i.into()),
+            None => Duration::from_millis(TX_SYNC_INTERVAL),
+        };
+
+        let block_sync_interval = match block_sync_interval {
+            Some(i) => Duration::from_millis(i.into()),
+            None => Duration::from_millis(BLOCK_SYNC_INTERVAL),
+        };
+
         SyncPool {
             new_blocks,
             tx_hash_set,
             tx_map,
             ledger_event_tx,
+            tx_sync_interval,
+            block_sync_interval,
         }
     }
 
@@ -98,8 +116,10 @@ impl SyncPool {
 
             let ledger_event_tx = self.ledger_event_tx.clone();
 
+            let block_interval = self.block_sync_interval;
+
             tokio::spawn(async move {
-                tokio::time::sleep(Duration::from_secs(2)).await;
+                tokio::time::sleep(block_interval).await;
 
                 let tx_hashes = new_blocks_set.write().await.drain().collect();
 
@@ -140,7 +160,7 @@ impl SyncPool {
                     // check functions
                     let maybe_wasm = tc.get_data();
                     if !sak_vm::is_valid_wasm(maybe_wasm) {
-                        return Err(format!("Not valid wasm data"));
+                        return Err("Not valid wasm data".to_string());
                     }
                 }
                 TxCtrOp::ContractCall => {
@@ -156,7 +176,7 @@ impl SyncPool {
             let mut tx_map_lock = self.tx_map.write().await;
 
             if tx_map_lock.contains_key(&tx_hash) {
-                return Err(format!("tx already exist"));
+                return Err("tx already exist".to_string());
             } else {
                 tx_map_lock.insert(tx_hash.clone(), tc.clone());
             };
@@ -174,13 +194,15 @@ impl SyncPool {
 
             let ledger_event_tx = self.ledger_event_tx.clone();
 
+            let tx_interval = self.tx_sync_interval;
+
             tokio::spawn(async move {
-                tokio::time::sleep(Duration::from_secs(2)).await;
+                tokio::time::sleep(tx_interval).await;
 
                 let tx_hashes: Vec<String> =
                     new_tx_hashes.write().await.drain().collect();
 
-                let ev = DistLedgerEvent::TxPoolStat(tx_hashes.clone());
+                let ev = DistLedgerEvent::TxPoolStat(tx_hashes);
 
                 match ledger_event_tx.send(ev.clone()) {
                     Ok(_) => {

@@ -1,5 +1,4 @@
 use super::test_util::TestUtil;
-use super::utils;
 use sak_vm::CtrFn;
 use sak_vm::VM;
 

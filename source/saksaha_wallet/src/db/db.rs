@@ -1,13 +1,15 @@
 use super::WalletDBSchema;
-use crate::wallet::CoinManager;
-use crate::{credential::WalletCredential, WalletError, APP_NAME};
+use crate::{
+    credential::WalletCredential, wallet::CoinManager, WalletError, APP_NAME,
+};
 use log::info;
 use sak_kv_db::{KeyValueDatabase, Options};
 use sak_types::CoinRecord;
 use sak_types::CoinStatus;
 use sak_types::Sn;
-use std::time::Duration;
+use std::{borrow::BorrowMut, sync::Arc, time::Duration};
 use std::{fs, path::PathBuf};
+use tokio::sync::RwLockWriteGuard;
 
 pub(crate) struct WalletDB {
     pub(crate) schema: WalletDBSchema,
@@ -85,16 +87,17 @@ impl WalletDB {
 
     pub async fn update_coin_status_unconfirmed_to_unused(
         &self,
-        saksaha_endpoint: String,
+        saksaha_endpoint: &String,
         coins: &Vec<CoinRecord>,
     ) -> Result<Vec<Sn>, WalletError> {
         let mut old_coin_sn_vec = Vec::<Sn>::new();
 
         for coin in coins {
-            match coin.coin_status.clone() {
+            match coin.coin_status {
                 CoinStatus::Unconfirmed => {
-                    println!("getting tx, tx_hash: {:?}", coin.tx_hash);
-                    let resp = match coin.tx_hash.clone() {
+                    println!("getting tx: {:?}", coin.tx_hash);
+
+                    let resp = match &coin.tx_hash {
                         Some(tx_hash) => saksaha::get_tx(
                             saksaha_endpoint.clone(),
                             tx_hash.clone(),
@@ -116,7 +119,10 @@ impl WalletDB {
                     };
 
                     if let Some(tx) = resp.tx {
-                        old_coin_sn_vec.push(tx.get_sn());
+                        let sns = tx.get_sns();
+                        for sn in sns {
+                            old_coin_sn_vec.push(sn);
+                        }
 
                         self.schema
                             .raw
@@ -145,6 +151,7 @@ impl WalletDB {
             }
         }
 
+        println!("sn: {:?}", old_coin_sn_vec);
         Ok(old_coin_sn_vec)
     }
 
@@ -154,13 +161,20 @@ impl WalletDB {
         coins: &Vec<CoinRecord>,
     ) -> Result<(), WalletError> {
         for coin in coins {
-            match coin.coin_status.clone() {
+            // match coin.coin_status {
+            match self
+                .schema
+                .raw
+                .get_coin_status(&coin.cm)?
+                .unwrap_or(CoinStatus::Unconfirmed)
+            {
                 CoinStatus::Unconfirmed => {}
 
                 CoinStatus::Used => {}
 
                 CoinStatus::Unused => {
                     let sn = coin.compute_sn();
+                    println!("Its sn:{:?}", sn);
 
                     if old_coin_sn_vec.contains(&sn) {
                         self.schema
@@ -169,6 +183,25 @@ impl WalletDB {
                     }
                 }
             }
+        }
+
+        Ok(())
+    }
+
+    pub async fn update_coin_status_unused_to_unconfirmed(
+        &self,
+        coin: &mut CoinRecord,
+    ) -> Result<(), WalletError> {
+        match coin.coin_status {
+            CoinStatus::Unused => {
+                self.schema
+                    .raw
+                    .put_coin_status(&coin.cm, &CoinStatus::Unconfirmed)?;
+
+                coin.set_coin_status_to_unconfirmed();
+            }
+
+            _ => {}
         }
 
         Ok(())

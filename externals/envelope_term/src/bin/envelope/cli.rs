@@ -4,6 +4,7 @@ use envelope_term::EnvelopeError;
 #[derive(Debug)]
 pub(crate) struct CLIArgs {
     pub(crate) cfg_profile: Option<String>,
+    pub(crate) saksaha_endpoint: Option<String>,
 }
 
 pub(crate) fn get_args() -> Result<CLIArgs, EnvelopeError> {
@@ -16,7 +17,15 @@ pub(crate) fn get_args() -> Result<CLIArgs, EnvelopeError> {
         None => None,
     };
 
-    Ok(CLIArgs { cfg_profile })
+    let saksaha_endpoint = match matches.value_of("saksaha-endpoint") {
+        Some(m) => Some(String::from(m)),
+        None => None,
+    };
+
+    Ok(CLIArgs {
+        cfg_profile,
+        saksaha_endpoint,
+    })
 }
 
 fn create_app<'a>() -> Command<'a> {
@@ -33,6 +42,14 @@ fn create_app<'a>() -> Command<'a> {
                     "Config profile. This dictates which 'config (credential)' \
                     to load, \n
                     e.g. 'dev_local_1'",
+                ),
+        )
+        .arg(
+            Arg::new("saksaha-endpoint") //
+                .long("saksaha-endpoint")
+                .takes_value(true)
+                .long_help(
+                    "Endpoint to which bind saksaha node",
                 ),
         )
 }

@@ -8,6 +8,7 @@ edition = "2018"
 [dependencies]
 sak_crypto = { path = "../sak_crypto" }
 sak_logger = { path = "../sak_logger" }
+sak_dist_ledger_meta = { path = "../sak_dist_ledger_meta" }
 sak_zkp_circuits = { path = "../sak_zkp_circuits" }
 type_extension = { path = "../type_extension" }
 log = "0.4.0"

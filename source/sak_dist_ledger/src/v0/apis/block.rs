@@ -1,6 +1,7 @@
 use crate::{DistLedgerApis, LedgerError};
 use sak_contract_std::Storage;
-use sak_proofs::{MerkleTree, CM_TREE_DEPTH};
+use sak_crypto::MerkleTree;
+use sak_dist_ledger_meta::CM_TREE_DEPTH;
 use sak_types::{
     Block, BlockHash, BlockHeight, Cm, CmIdx, CtrAddr, Tx, TxCandidate, TxHash,
 };
@@ -59,13 +60,6 @@ impl DistLedgerApis {
         Ok(ret)
     }
 
-    // pub async fn get_cm_by_idx(
-    //     &self,
-    //     cm_idx: &CmIdx,
-    // ) -> Result<Option<Cm>, LedgerError> {
-    //     self.ledger_db.get_cm_by_cm_idx(cm_idx)
-    // }
-
     pub async fn get_cm_idx_by_cm(
         &self,
         cm: &Cm,
@@ -102,13 +96,17 @@ impl DistLedgerApis {
                 self.sync_pool.insert_tx(tx_candidate).await?
             }
             TxCandidate::Pour(tc) => {
-                let is_valid_sn = self.verify_sn(&tc.sn_1);
+                let is_valid_sn = self.verify_sn(&tc.sns)?;
                 let is_verified_tx = self.verify_proof(&tc)?;
 
                 if is_valid_sn & is_verified_tx {
                     self.sync_pool.insert_tx(tx_candidate).await?
                 } else {
-                    return Err(format!("tc is not valid").into());
+                    return Err(format!(
+                        "Is valid sn and verified tx:{}, {}",
+                        is_valid_sn, is_verified_tx
+                    )
+                    .into());
                 }
             }
         };
@@ -128,7 +126,6 @@ impl DistLedgerApis {
         block_hash: &String,
     ) -> Result<Option<Block>, LedgerError> {
         self.ledger_db.get_block(block_hash)
-        // self.get_block(&self.kv_db.db_instance, &self.schema, block_hash)
     }
 
     pub async fn get_block_list(
@@ -265,18 +262,6 @@ impl DistLedgerApis {
     pub fn get_latest_block_height(&self) -> Result<Option<u128>, LedgerError> {
         self.ledger_db.get_latest_block_height()
     }
-
-    // pub async fn get_ledger_cm_count(
-    //     &self,
-    // ) -> Result<Option<u128>, LedgerError> {
-    //     self.ledger_db.get_ledger_cm_count()
-    // }
-
-    // pub async fn get_latest_tx_height(
-    //     &self,
-    // ) -> Result<Option<u128>, LedgerError> {
-    //     self.ledger_db.get_latest_tx_height()
-    // }
 
     pub async fn get_latest_block_merkle_rt(
         &self,
