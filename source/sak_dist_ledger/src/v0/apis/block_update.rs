@@ -466,20 +466,28 @@ async fn process_merkle_update(
         let cm_idx = next_cm_idx + idx as u128;
         let auth_path = apis.merkle_tree.generate_auth_paths(cm_idx);
 
-        // println!("auth_path: {:?}", auth_path);
-
         let leaf_loc = format!("{}_{}", 0, cm_idx);
+
+        // println!(" *** auth_path: {:?}", auth_path);
+        // println!(" *** cm_idx: {:?}, leaf_loc:{:?}", cm_idx, leaf_loc);
 
         merkle_update.insert(leaf_loc, *cm);
 
         // let mut curr_idx = cm_idx;
         for (height, path) in auth_path.iter().enumerate() {
-            let curr_idx = path.idx;
-            let sibling_idx = match path.direction {
+            // let curr_idx = path.idx;
+            // let sibling_idx = match path.direction {
+            //     true => path.idx + 1,
+            //     false => path.idx - 1,
+            // };
+
+            let sibling_dir = path.direction;
+
+            let sibling_idx = path.idx;
+            let curr_idx = match sibling_dir {
                 true => path.idx + 1,
                 false => path.idx - 1,
             };
-            // let sibling_idx = path.idx;
 
             let sibling_loc = format!("{}_{}", height, sibling_idx);
             // let sibling_loc = &path.idx_label;
@@ -495,10 +503,19 @@ async fn process_merkle_update(
                 None => apis.get_merkle_node(&curr_loc).await?,
             };
 
-            // println!("curr_loc: {}, sibling_loc: {}", curr_loc, sibling_loc,);
+            // println!("curr_node: {:?}", curr_node);
+            // println!("sibling_node: {:?}", sibling_node);
+            // println!(
+            //     "curr_loc: {}, sibling_loc: {}, silbing_dir: {}",
+            //     curr_loc, sibling_loc, sibling_dir
+            // );
 
-            let merkle_node =
-                apis.hasher.mimc(&curr_node, &sibling_node)?.to_bytes();
+            let merkle_node = match sibling_dir {
+                true => apis.hasher.mimc(&sibling_node, &curr_node)?.to_bytes(),
+                false => {
+                    apis.hasher.mimc(&curr_node, &sibling_node)?.to_bytes()
+                }
+            };
 
             let parent_idx = MerkleTree::get_parent_idx(curr_idx);
             let update_loc = format!("{}_{}", height + 1, parent_idx);

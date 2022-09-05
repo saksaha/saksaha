@@ -29,11 +29,11 @@ impl MerkleTree {
         for h in 0..height {
             let sibling_idx = Self::get_sibling_idx(curr_idx);
 
-            let direction = if sibling_idx % 2 == 0 { true } else { false };
+            let sibling_dir = if sibling_idx % 2 == 0 { true } else { false };
 
             let p = MerklePath {
                 idx: sibling_idx,
-                direction,
+                direction: sibling_dir,
                 idx_label: format!("{}_{}", h, sibling_idx),
             };
 

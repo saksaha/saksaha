@@ -91,7 +91,7 @@ async fn test_sequential_write_block_and_get_tx_height() {
 
     let dist_ledger = utils::make_dist_ledger().await;
 
-    for i in 0..REPEAT_NUM as u64 {
+    for i in 0..1 as u64 {
         let block = BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
             tx_candidates: vec![

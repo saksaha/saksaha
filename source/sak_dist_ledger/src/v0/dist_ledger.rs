@@ -15,7 +15,7 @@ use tokio::sync::broadcast;
 use tokio::sync::{broadcast::Sender, RwLock};
 
 const BLOCKCHAIN_EVENT_QUEUE_CAPACITY: usize = 32;
-const MERKLE_TREE_HEIGHT: usize = 16;
+const MERKLE_TREE_HEIGHT: usize = 4;
 
 pub struct DistLedger {
     pub apis: DistLedgerApis,
