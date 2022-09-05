@@ -117,42 +117,56 @@ pub fn make_test_context_2_to_2() -> TestContext {
         cm_2_old,
         sn_2,
     ) = {
-        let addr_sk = {
-            let arr = U8Array::from_int(11);
-            ScalarExt::parse_arr(&arr).unwrap()
-        };
+        // let addr_sk = {
+        //     let arr = U8Array::from_int(11);
+        //     ScalarExt::parse_arr(&arr).unwrap()
+        // };
 
-        let addr_pk = hasher.mimc_single_scalar(addr_sk).unwrap();
+        // let addr_pk = hasher.mimc_single_scalar(addr_sk).unwrap();
 
-        let r = {
-            let arr = U8Array::from_int(12);
-            ScalarExt::parse_arr(&arr).unwrap()
-        };
+        // let r = {
+        //     let arr = U8Array::from_int(12);
+        //     ScalarExt::parse_arr(&arr).unwrap()
+        // };
 
-        let s = {
-            let arr = U8Array::from_int(13);
-            ScalarExt::parse_arr(&arr).unwrap()
-        };
+        // let s = {
+        //     let arr = U8Array::from_int(13);
+        //     ScalarExt::parse_arr(&arr).unwrap()
+        // };
 
-        let rho = {
-            let arr = U8Array::from_int(14);
-            ScalarExt::parse_arr(&arr).unwrap()
-        };
+        // let rho = {
+        //     let arr = U8Array::from_int(14);
+        //     ScalarExt::parse_arr(&arr).unwrap()
+        // };
 
-        let v = {
-            let arr = U8Array::from_int(100);
-            ScalarExt::parse_arr(&arr).unwrap()
-        };
+        // let v = {
+        //     let arr = U8Array::from_int(100);
+        //     ScalarExt::parse_arr(&arr).unwrap()
+        // };
 
-        let cm = {
-            let k = hasher.comm2_scalar(r, addr_pk, rho);
+        // let cm = {
+        //     let k = hasher.comm2_scalar(r, addr_pk, rho);
 
-            hasher.comm2_scalar(s, v, k)
-        };
+        //     hasher.comm2_scalar(s, v, k)
+        // };
 
-        let sn = hasher.mimc_scalar(addr_sk, rho);
+        let dummy_old_coin = OldCoin::new_dummy().unwrap();
 
-        (addr_pk, addr_sk, r, s, rho, v, cm, sn)
+        let sn = hasher.mimc_scalar(
+            dummy_old_coin.addr_sk.unwrap(),
+            dummy_old_coin.rho.unwrap(),
+        );
+
+        (
+            dummy_old_coin.addr_pk.unwrap(),
+            dummy_old_coin.addr_sk.unwrap(),
+            dummy_old_coin.r.unwrap(),
+            dummy_old_coin.s.unwrap(),
+            dummy_old_coin.rho.unwrap(),
+            dummy_old_coin.v.unwrap(),
+            dummy_old_coin.cm.unwrap(),
+            sn,
+        )
     };
 
     let (addr_sk_1, addr_pk_1, r_1, s_1, rho_1, v_1, cm_1) = {
@@ -216,7 +230,7 @@ pub fn make_test_context_2_to_2() -> TestContext {
         };
 
         let v = {
-            let arr = U8Array::from_int(120);
+            let arr = U8Array::from_int(20);
             ScalarExt::parse_arr(&arr).unwrap()
         };
 
@@ -602,7 +616,7 @@ pub fn mock_merkle_nodes_cm_2(
 }
 
 #[tokio::test(flavor = "multi_thread")]
-pub async fn test_coin_ownership_default_2_to_2() {
+pub async fn test_coin_ownership_default_2_to_2_using_dummy_old() {
     sak_test_utils::init_test_log();
 
     let test_context = make_test_context_2_to_2();
@@ -649,6 +663,11 @@ pub async fn test_coin_ownership_default_2_to_2() {
         coin_1_old, coin_2_old, coin_1_new, coin_2_new,
     )
     .expect("proof should be created");
+
+    println!(
+        " ********************test_context.sn_2 : {}",
+        test_context.sn_2
+    );
 
     let public_inputs: Vec<Scalar> = vec![
         test_context.merkle_rt_1,

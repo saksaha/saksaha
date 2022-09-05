@@ -369,8 +369,6 @@ pub fn mock_pour_tc_1() -> TxCandidate {
     let auth_path_1 = {
         let v = merkle_tree.generate_auth_paths(0);
 
-        println!("auth_path_1: {:?}", v);
-
         let mut ret =
             [Some((Scalar::default(), false)); CM_TREE_DEPTH as usize];
 
@@ -864,6 +862,44 @@ pub fn mock_mint_tc_6() -> TxCandidate {
         String::from("created_at_mint_6"),
         vec![6],
         String::from("author_sig_mint_6"),
+        None,
+        vec![cm.to_bytes()],
+        v,
+        k.to_bytes(),
+        s,
+    );
+
+    TxCandidate::Mint(tx_candidate)
+}
+
+pub fn mock_mint_tc_dummy_old_coin() -> TxCandidate {
+    // let tx_candidate = MintTxCandidate::new_dummy_4();
+    let hasher = Hasher::new();
+
+    let rho = U8Array::from_int(0);
+
+    let r = U8Array::from_int(0);
+
+    let s = U8Array::from_int(0);
+
+    let v = U8Array::from_int(0);
+
+    let a_sk = U8Array::from_int(0);
+
+    let a_pk = hasher
+        .mimc_single_scalar(ScalarExt::parse_arr(&a_sk).unwrap())
+        .unwrap();
+
+    let k = hasher.comm2(&r, &a_pk.to_bytes(), &rho).unwrap();
+
+    let cm = hasher.comm2(&s, &v, &k.to_bytes()).unwrap();
+
+    // CM : 0x3bb4c03f8e718ec58f4f2bb2b2fb83149b5fe59a75c5c98893e40c56bb3e8deb
+
+    let tx_candidate = MintTxCandidate::new(
+        String::from("created_at_mint_5"),
+        vec![5],
+        String::from("author_sig_mint_5"),
         None,
         vec![cm.to_bytes()],
         v,
