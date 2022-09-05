@@ -505,13 +505,6 @@ async fn process_merkle_update(
                 None => apis.get_merkle_node(&curr_loc).await?,
             };
 
-            // println!("curr_node: {:?}", curr_node);
-            // println!("sibling_node: {:?}", sibling_node);
-            // println!(
-            //     "curr_loc: {}, sibling_loc: {}, silbing_dir: {}",
-            //     curr_loc, sibling_loc, sibling_dir
-            // );
-
             let merkle_node = match sibling_dir {
                 true => apis.hasher.mimc(&sibling_node, &curr_node)?.to_bytes(),
                 false => {
@@ -528,7 +521,6 @@ async fn process_merkle_update(
             );
 
             merkle_update.insert(update_loc, merkle_node);
-            // curr_idx = parent_idx;
         }
     }
 

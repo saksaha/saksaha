@@ -3,7 +3,6 @@ use crate::Consensus;
 use crate::DistLedgerApis;
 use crate::LedgerDB;
 use crate::LedgerError;
-use crate::Runtime;
 use crate::SyncPool;
 use log::info;
 use sak_crypto::MerkleTree;
@@ -20,7 +19,6 @@ const BLOCKCHAIN_EVENT_QUEUE_CAPACITY: usize = 32;
 pub struct DistLedger {
     pub apis: DistLedgerApis,
     pub ledger_event_tx: Arc<Sender<DistLedgerEvent>>,
-    runtime: Arc<Runtime>,
 }
 
 pub struct DistLedgerArgs {
@@ -56,21 +54,16 @@ impl DistLedger {
         let sync_pool = {
             let tx = ledger_event_tx.clone();
 
-            let p = SyncPool::new(tx);
+            let p = SyncPool::new(tx, tx_sync_interval, block_sync_interval);
 
             Arc::new(p)
         };
 
-        let runtime = {
-            let r = Runtime::init(
-                sync_pool.clone(),
-                ledger_event_tx.clone(),
-                tx_sync_interval,
-                block_sync_interval,
-            );
+        // let runtime = {
+        //     let r = Runtime::init(sync_pool.clone(), ledger_event_tx.clone());
 
-            Arc::new(r)
-        };
+        //     Arc::new(r)
+        // };
 
         let hasher = Hasher::new();
 
@@ -88,7 +81,6 @@ impl DistLedger {
         let dist_ledger = DistLedger {
             apis,
             ledger_event_tx,
-            runtime,
         };
 
         if let Some(bc) = genesis_block {
@@ -108,10 +100,10 @@ impl DistLedger {
     }
 
     pub async fn run(&self) {
-        let runtime = self.runtime.clone();
+        // let runtime = self.runtime.clone();
 
-        tokio::spawn(async move {
-            runtime.run().await;
-        });
+        // tokio::spawn(async move {
+        //     runtime.run().await;
+        // });
     }
 }
