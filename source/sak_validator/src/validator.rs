@@ -58,7 +58,7 @@ fn handle_get_validator(storage: Storage) -> Result<Vec<u8>, ContractError> {
         .get(0)
         .ok_or(format!("Validators are empty"))?;
 
-    let ret = serde_json::to_vec(validator)?;
+    let ret = validator.to_owned().into_bytes();
 
     Ok(ret)
 }

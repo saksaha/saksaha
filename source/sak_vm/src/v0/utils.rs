@@ -1,4 +1,4 @@
-use crate::{VMError, ALLOC_FN, MEMORY};
+use crate::{VMError, ALLOC_FN, EXECUTE, INIT, MEMORY, QUERY};
 use log::{error, info};
 use wasmtime::{Config, Engine, Instance, Linker, Module, Store, TypedFunc};
 
@@ -34,7 +34,7 @@ pub fn is_valid_wasm(wasm: impl AsRef<[u8]>) -> bool {
     };
 
     let _init: TypedFunc<(), (i32, i32)> = {
-        match instance.get_typed_func(&mut store, "init") {
+        match instance.get_typed_func(&mut store, INIT) {
             Ok(o) => o,
             Err(err) => {
                 return false;
@@ -43,7 +43,7 @@ pub fn is_valid_wasm(wasm: impl AsRef<[u8]>) -> bool {
     };
 
     let _query: TypedFunc<(i32, i32, i32, i32), (i32, i32)> = {
-        match instance.get_typed_func(&mut store, "query") {
+        match instance.get_typed_func(&mut store, QUERY) {
             Ok(o) => o,
             Err(err) => {
                 return false;
@@ -51,8 +51,8 @@ pub fn is_valid_wasm(wasm: impl AsRef<[u8]>) -> bool {
         }
     };
 
-    let _execute: TypedFunc<(i32, i32, i32, i32), (i32, i32)> = {
-        match instance.get_typed_func(&mut store, "execute") {
+    let _execute: TypedFunc<(i32, i32, i32, i32), (i32, i32, i32, i32)> = {
+        match instance.get_typed_func(&mut store, EXECUTE) {
             Ok(o) => o,
             Err(err) => {
                 return false;

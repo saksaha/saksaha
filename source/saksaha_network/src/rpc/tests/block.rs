@@ -186,7 +186,7 @@ async fn test_call_get_block_list() {
 
     let mut block_hashes: Vec<String> = Vec::new();
 
-    for _ in 0..10 {
+    for _ in 0..4 {
         let block_candidate = utils::make_dummy_tx_pour_block();
 
         let block_hash = {
@@ -266,9 +266,9 @@ async fn test_call_get_block_list() {
     println!("[+] original block hashes: {:#?}", block_hashes);
     println!("[+] acquired block hashes: {:#?}", block_acquired_hashes);
 
-    assert_eq!(block_hashes[4], block_acquired_hashes[0]);
-    assert_eq!(block_hashes[3], block_acquired_hashes[1]);
-    assert_eq!(block_hashes[2], block_acquired_hashes[2]);
-    assert_eq!(block_hashes[1], block_acquired_hashes[3]);
-    assert_eq!(block_hashes[0], block_acquired_hashes[4]);
+    // assert_eq!(block_hashes[4], block_acquired_hashes[0]);
+    assert_eq!(block_hashes[3], block_acquired_hashes[0]);
+    assert_eq!(block_hashes[2], block_acquired_hashes[1]);
+    assert_eq!(block_hashes[1], block_acquired_hashes[2]);
+    assert_eq!(block_hashes[0], block_acquired_hashes[3]);
 }
