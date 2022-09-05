@@ -372,13 +372,7 @@ pub fn mock_pour_tc_1() -> TxCandidate {
     let merkle_nodes = {
         let mut m = HashMap::new();
 
-        // let node_0_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
-        let node_0_1 = ScalarExt::parse_arr(&[
-            98, 199, 203, 106, 234, 239, 226, 222, 15, 94, 33, 4, 117, 163, 41,
-            227, 28, 30, 183, 199, 156, 239, 236, 77, 51, 213, 171, 117, 148,
-            96, 101, 6,
-        ])
-        .unwrap();
+        let node_0_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
         let node_1_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
         let node_2_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
         let node_3_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
@@ -407,7 +401,7 @@ pub fn mock_pour_tc_1() -> TxCandidate {
 
     let merkle_rt = *merkle_nodes.get("4_0").unwrap();
 
-    println!("mock pour tc merkle_rt: {:?}", merkle_rt.to_bytes());
+    println!("\n123 mock pour tc merkle_rt: {:?}", merkle_rt.to_bytes());
 
     let auth_path_1 = {
         let v = merkle_tree.generate_auth_paths(0);
@@ -464,6 +458,16 @@ pub fn mock_pour_tc_1() -> TxCandidate {
     let pi =
         CoinProof::generate_proof_1_to_2(coin_1_old, coin_1_new, coin_2_new)
             .unwrap();
+
+    // rt, sn, cm, cm
+    let a = CoinProof::verify_proof_1_to_2(
+        pi.clone(),
+        &[merkle_rt, sn_1, cm_1, cm_2],
+        &hasher,
+    )
+    .unwrap();
+
+    println!("33 123123 a: {}", a);
 
     let pi_serialized = CoinProof::serialize_pi(&pi).unwrap();
 

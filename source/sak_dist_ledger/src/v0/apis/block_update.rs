@@ -475,6 +475,8 @@ async fn process_merkle_update(
 
         // let mut curr_idx = cm_idx;
         for (height, path) in auth_path.iter().enumerate() {
+            println!("auth_path(), height: {}, path: {:?}", height, path);
+
             // let curr_idx = path.idx;
             // let sibling_idx = match path.direction {
             //     true => path.idx + 1,
