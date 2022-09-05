@@ -126,9 +126,6 @@ impl AppState {
         wallet_endpoint: String,
         user_pk: String,
     ) {
-        let my_str = String::from("");
-
-        println!("{}", my_str.clone());
         // TODO get user_id via params
         // let tmp_user_id = USER_1.to_owned();
         // let tmp_user_id = "".to_owned();
