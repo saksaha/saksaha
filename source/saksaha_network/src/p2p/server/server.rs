@@ -1,5 +1,7 @@
 use super::handler::Handler;
-use log::{debug, warn};
+use crate::p2p::P2PHostError;
+use colored::Colorize;
+use log::{debug, info, warn};
 use sak_p2p_discovery::AddrTable;
 use sak_p2p_id::Identity;
 use sak_p2p_peertable::PeerTable;
@@ -27,7 +29,7 @@ impl Server {
         identity: Arc<Identity>,
         peer_table: Arc<PeerTable>,
         addr_table: Arc<AddrTable>,
-    ) -> Server {
+    ) -> Result<Server, P2PHostError> {
         let p2p_max_conn_count = match p2p_max_conn_count {
             Some(c) => c.into(),
             None => MAX_CONN_COUNT,
@@ -35,13 +37,22 @@ impl Server {
 
         let conn_semaphore = Arc::new(Semaphore::new(p2p_max_conn_count));
 
-        Server {
+        let local_addr = p2p_socket.local_addr()?;
+
+        info!(
+            "Bound tcp socket for P2P host, addr: {}",
+            local_addr.to_string().yellow(),
+        );
+
+        let s = Server {
             conn_semaphore,
             p2p_socket,
             identity,
             peer_table,
             addr_table,
-        }
+        };
+
+        Ok(s)
     }
 
     async fn accept(&self) -> Result<TcpStream, String> {

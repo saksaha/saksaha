@@ -1,5 +1,6 @@
 mod block;
 mod block_hash;
+mod hello;
 mod tx;
 mod tx_hash;
 
@@ -8,8 +9,10 @@ use crate::{machine::Machine, SaksahaError};
 pub(in crate::node) use block::*;
 pub(in crate::node) use block_hash::*;
 use futures::{stream::SplitSink, SinkExt};
+pub(in crate::node) use hello::*;
 use log::{debug, info, warn};
-use sak_p2p_peertable::Peer;
+use sak_p2p_discovery::Discovery;
+use sak_p2p_peertable::{Peer, PeerTable};
 use sak_p2p_transport::{
     BlockHashSyncMsg, BlockSynMsg, ErrorMsg, Msg, SendReceipt, TxHashSyncMsg,
     TxSynMsg, UpgradedConn, UpgradedP2PCodec,
@@ -26,8 +29,16 @@ pub(in crate::node) async fn handle_msg<'a>(
     conn_lock: RwLockWriteGuard<'_, UpgradedConn>,
     task_queue: &Arc<TaskQueue<NodeTask>>,
     peer: &Arc<Peer>,
+    peer_table: &Arc<PeerTable>,
+    discovery: &Arc<Discovery>,
 ) -> Result<(), SaksahaError> {
     let receipt: SendReceipt = match msg {
+        Msg::HelloSyn(hello_msg) => {
+            hello::recv_hello_syn(
+                hello_msg, peer_table, discovery, task_queue, conn_lock,
+            )
+            .await
+        }
         Msg::TxHashSyn(tx_hash_syn) => {
             tx_hash::recv_tx_hash_syn(
                 tx_hash_syn,

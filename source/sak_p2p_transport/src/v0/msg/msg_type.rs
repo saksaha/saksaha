@@ -1,4 +1,8 @@
 pub mod MsgType {
+    pub const HELLO_SYN: &str = "hello_syn";
+
+    pub const HELLO_ACK: &str = "hello_ack";
+
     pub const HANDSHAKE_SYN: &str = "hs_syn";
 
     pub const HANDSHAKE_ACK: &str = "hs_ack";

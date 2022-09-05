@@ -872,43 +872,43 @@ pub fn mock_mint_tc_6() -> TxCandidate {
     TxCandidate::Mint(tx_candidate)
 }
 
-// pub fn mock_mint_tc_dummy_old_coin() -> TxCandidate {
-//     // let tx_candidate = MintTxCandidate::new_dummy_4();
-//     let hasher = Hasher::new();
+pub fn mock_mint_tc_dummy_old_coin() -> TxCandidate {
+    // let tx_candidate = MintTxCandidate::new_dummy_4();
+    let hasher = Hasher::new();
 
-//     let rho = U8Array::from_int(0);
+    let rho = U8Array::from_int(0);
 
-//     let r = U8Array::from_int(0);
+    let r = U8Array::from_int(0);
 
-//     let s = U8Array::from_int(0);
+    let s = U8Array::from_int(0);
 
-//     let v = U8Array::from_int(0);
+    let v = U8Array::from_int(0);
 
-//     let a_sk = U8Array::from_int(0);
+    let a_sk = U8Array::from_int(0);
 
-//     let a_pk = hasher
-//         .mimc_single_scalar(ScalarExt::parse_arr(&a_sk).unwrap())
-//         .unwrap();
+    let a_pk = hasher
+        .mimc_single_scalar(ScalarExt::parse_arr(&a_sk).unwrap())
+        .unwrap();
 
-//     let k = hasher.comm2(&r, &a_pk.to_bytes(), &rho).unwrap();
+    let k = hasher.comm2(&r, &a_pk.to_bytes(), &rho).unwrap();
 
-//     let cm = hasher.comm2(&s, &v, &k.to_bytes()).unwrap();
+    let cm = hasher.comm2(&s, &v, &k.to_bytes()).unwrap();
 
-//     // CM : 0x3bb4c03f8e718ec58f4f2bb2b2fb83149b5fe59a75c5c98893e40c56bb3e8deb
+    // CM : 0x3bb4c03f8e718ec58f4f2bb2b2fb83149b5fe59a75c5c98893e40c56bb3e8deb
 
-//     let tx_candidate = MintTxCandidate::new(
-//         String::from("created_at_mint_5"),
-//         vec![5],
-//         String::from("author_sig_mint_5"),
-//         None,
-//         vec![cm.to_bytes()],
-//         v,
-//         k.to_bytes(),
-//         s,
-//     );
+    let tx_candidate = MintTxCandidate::new(
+        String::from("created_at_mint_5"),
+        vec![5],
+        String::from("author_sig_mint_5"),
+        None,
+        vec![cm.to_bytes()],
+        v,
+        k.to_bytes(),
+        s,
+    );
 
-//     TxCandidate::Mint(tx_candidate)
-// }
+    TxCandidate::Mint(tx_candidate)
+}
 
 pub fn mock_mint_tc_deploying_contract(
     contract_data: Vec<u8>,

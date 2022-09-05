@@ -18,7 +18,6 @@ pub(crate) struct P2PDialSchedulerArgs {
 }
 
 pub(crate) struct P2PDialScheduler {
-    p2p_task_queue: Arc<TaskQueue<P2PTask>>,
     handshake_dial_loop: Arc<HandshakeDialLoop>,
 }
 
@@ -45,7 +44,6 @@ impl P2PDialScheduler {
         };
 
         let d = P2PDialScheduler {
-            p2p_task_queue: p2p_task_queue.clone(),
             handshake_dial_loop,
         };
 

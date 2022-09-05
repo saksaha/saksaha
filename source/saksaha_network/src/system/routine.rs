@@ -201,6 +201,7 @@ impl Routine {
                 config.node.mine_interval,
                 config.node.node_task_min_interval,
                 config.node.peer_register_interval,
+                p2p_host.get_discovery().clone(),
             );
 
             ln

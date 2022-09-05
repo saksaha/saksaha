@@ -6,14 +6,17 @@ use crate::{
     node::event_handle::{self, LedgerEventRoutine},
 };
 use log::{debug, error, warn};
-use sak_p2p_peertable::{Peer, PeerStatus};
+use sak_p2p_discovery::Discovery;
+use sak_p2p_peertable::{Peer, PeerStatus, PeerTable};
 use sak_task_queue::TaskQueue;
 use std::sync::Arc;
 use std::time::Duration;
 
 pub(in crate::node) struct PeerNode {
+    pub peer_table: Arc<PeerTable>,
     pub peer: Arc<Peer>,
     pub machine: Arc<Machine>,
+    pub discovery: Arc<Discovery>,
     pub node_task_min_interval: Duration,
 }
 
@@ -53,10 +56,21 @@ impl PeerNode {
         }
 
         {
-            // Late sync routine
-            let machine_clone = self.machine.clone();
+            // say hello
 
-            if let Ok(new_blocks) = machine_clone
+            let unknown_addrs = self.peer_table.get_peer_addrs().await;
+
+            if !self.peer.is_initiator {
+                node_task_queue
+                    .push_back(NodeTask::SendHelloSyn { unknown_addrs })
+                    .await?
+            }
+        }
+
+        {
+            // Late sync routine
+            if let Ok(new_blocks) = self
+                .machine
                 .blockchain
                 .dist_ledger
                 .apis
@@ -80,7 +94,7 @@ impl PeerNode {
                     let task = task?;
 
                     task::handle_task(task,
-                        &node_task_queue, conn_lock, &self.machine).await;
+                        &node_task_queue, conn_lock, &self.machine, &self.discovery).await;
                 },
                 msg_wrap = conn_lock.next_msg() => {
                     let msg_wrap = match msg_wrap {
@@ -102,6 +116,8 @@ impl PeerNode {
                                     conn_lock,
                                     &node_task_queue,
                                     &self.peer,
+                                    &self.peer_table,
+                                    &self.discovery,
                                 )
                                 .await;
                             }

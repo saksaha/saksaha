@@ -75,23 +75,6 @@ impl Envelope {
                     )
                     .await
                 }
-                Key::Enter => {
-                    let dispatcher = self.dispatcher.clone();
-                    let dispatch: Dispatch = Box::new(move |action| {
-                        let d = dispatcher.clone();
-                        Box::pin(async move {
-                            d.dispatch(action).await?;
-                            Ok::<_, SendError<Action>>(())
-                        })
-                    });
-
-                    actions::select(
-                        self.saksaha_endpoint.clone(),
-                        dispatch,
-                        state,
-                    )
-                    .await
-                }
                 _ => {
                     warn!("No action accociated to {}", key);
 
@@ -108,6 +91,11 @@ impl Envelope {
                             Ok::<_, SendError<Action>>(())
                         })
                     });
+
+                    if state.input_text.is_empty() {
+                        warn!("You must enter text");
+                        return AppReturn::Continue;
+                    }
 
                     actions::enter_in_chat(
                         self.saksaha_endpoint.clone(),
