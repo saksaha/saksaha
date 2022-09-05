@@ -1,6 +1,5 @@
 use super::SlotGuard;
-use sak_p2p_addr::AddrStatus;
-use sak_p2p_addr::KnownAddr;
+use sak_p2p_addr::{KnownAddr, UnknownAddr};
 
 pub struct DiscAddr {
     pub known_addr: KnownAddr,
@@ -10,6 +9,13 @@ pub struct DiscAddr {
 impl DiscAddr {
     pub fn get_public_key_short(&self) -> &str {
         &self.known_addr.public_key_str[..6]
+    }
+
+    pub fn downgrade(&self) -> UnknownAddr {
+        UnknownAddr::new_from_endpoint(
+            &self.known_addr.ip,
+            self.known_addr.disc_port,
+        )
     }
 }
 impl std::fmt::Display for DiscAddr {

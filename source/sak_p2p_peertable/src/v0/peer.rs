@@ -7,6 +7,7 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 
 pub struct Peer {
+    pub is_initiator: bool,
     transport: Transport,
     peer_status: RwLock<PeerStatus>,
     addr: Arc<DiscAddr>,
@@ -28,12 +29,14 @@ impl Peer {
         peer_status: RwLock<PeerStatus>,
         addr: Arc<DiscAddr>,
         peer_slot_guard: SlotGuard,
+        is_initiator: bool,
     ) -> Peer {
         Peer {
             transport,
             peer_status,
             addr,
             peer_slot_guard,
+            is_initiator,
         }
     }
 
@@ -55,6 +58,10 @@ impl Peer {
 
     pub fn get_addr(&self) -> &Arc<DiscAddr> {
         &self.addr
+    }
+
+    pub fn get_disc_endpoint(&self) -> String {
+        self.addr.known_addr.get_disc_endpoint().to_string()
     }
 
     pub async fn set_peer_status(&self, peer_status: PeerStatus) {

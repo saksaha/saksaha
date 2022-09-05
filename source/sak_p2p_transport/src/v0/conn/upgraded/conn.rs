@@ -20,7 +20,7 @@ impl UpgradedConn {
     pub async fn init(
         socket: Framed<TcpStream, UpgradedP2PCodec>,
         conn_id: String,
-        _is_initiator: bool,
+        is_initiator: bool,
     ) -> UpgradedConn {
         let conn_state = ConnState::Neutral;
 

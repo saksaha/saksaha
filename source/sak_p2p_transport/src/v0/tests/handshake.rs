@@ -6,7 +6,7 @@ use sak_p2p_id::Identity;
 use std::sync::Arc;
 use tokio::net::{TcpListener, TcpStream};
 
-async fn connect_to_endpoint(endpoint: &String) -> Conn {
+pub async fn connect_to_endpoint(endpoint: &String) -> Conn {
     match TcpStream::connect(&endpoint).await {
         Ok(s) => {
             let c = match Conn::new(s, true) {

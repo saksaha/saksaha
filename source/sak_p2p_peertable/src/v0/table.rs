@@ -1,6 +1,7 @@
 use crate::{Peer, PeerIterator, PeerTableError, Runtime, Slot, SlotGuard};
 use colored::Colorize;
 use log::{debug, error, info};
+use sak_p2p_addr::UnknownAddr;
 use std::{
     collections::{hash_map::Values, HashMap},
     sync::Arc,
@@ -101,6 +102,17 @@ impl PeerTable {
                 return None;
             }
         };
+    }
+
+    pub async fn get_peer_addrs(&self) -> Vec<UnknownAddr> {
+        let peers_map_lock = self.peer_map.read().await;
+
+        let unknown_addrs = peers_map_lock
+            .values()
+            .map(|peer| peer.get_addr().downgrade())
+            .collect();
+
+        unknown_addrs
     }
 
     pub fn get_peer_map(&self) -> &Arc<RwLock<PeerMap>> {
