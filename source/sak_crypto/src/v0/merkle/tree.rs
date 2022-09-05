@@ -7,9 +7,15 @@ pub struct MerkleTree {
 
 #[derive(Debug, Clone)]
 pub struct MerklePath {
+    // Node idx at height
     pub idx: u128,
+
+    // Relative position of sibling to curr node. e.g. 0_0 has 0_1 sibling with
+    // direction "false"
     pub direction: bool,
-    pub idx_label: String,
+
+    // Node location, e.g. 0_1 refers to the second node in the lowest height
+    pub node_loc: String,
 }
 
 impl MerkleTree {
@@ -34,7 +40,7 @@ impl MerkleTree {
             let p = MerklePath {
                 idx: sibling_idx,
                 direction: sibling_dir,
-                idx_label: format!("{}_{}", h, sibling_idx),
+                node_loc: format!("{}_{}", h, sibling_idx),
             };
 
             auth_path.push(p);
