@@ -173,24 +173,7 @@ impl DistLedgerApis {
     pub async fn write_blocks(
         &self,
         mut blocks: Vec<(Block, Vec<Tx>)>,
-        // txs: Vec<Tx>,
     ) -> Result<Vec<String>, LedgerError> {
-        // let tx_candidates = txs.into_iter().map(|tx| tx.downgrade()).collect();
-
-        // let bc_candidate = BlockCandidate {
-        //     validator_sig: block.validator_sig,
-        //     tx_candidates,
-        //     witness_sigs: block.witness_sigs,
-        //     created_at: block.created_at,
-        // };
-
-        // match self.write_block(Some(bc_candidate)).await {
-        //     Ok(res) => return Ok(res),
-        //     Err(err) => {
-        //         return Err(format!("Block sync failed, err: {}", err).into());
-        //     }
-        // }
-
         let mut block_hashes = vec![];
 
         blocks.sort_by(|a, b| a.0.block_height.cmp(&b.0.block_height));
@@ -316,8 +299,6 @@ impl DistLedgerApis {
                 }
             };
         }
-
-        // bc.update_tx_candidates(valid_tx_candidates);
 
         bc.tx_candidates = valid_tx_candidates;
 
@@ -467,36 +448,15 @@ async fn process_merkle_update(
         let auth_path = apis.merkle_tree.generate_auth_paths(cm_idx);
 
         let leaf_loc = format!("{}_{}", 0, cm_idx);
-
-        // println!(" *** auth_path: {:?}", auth_path);
-        // println!(" *** cm_idx: {:?}, leaf_loc:{:?}", cm_idx, leaf_loc);
-
         merkle_update.insert(leaf_loc, *cm);
 
-        // let mut curr_idx = cm_idx;
+        let mut curr_idx = cm_idx;
         for (height, path) in auth_path.iter().enumerate() {
-            // println!("auth_path(), height: {}, path: {:?}", height, path);
+            // println!("auth_path(), path: {:?}", path);
 
-            // let curr_idx = path.idx;
-            // let sibling_idx = match path.direction {
-            //     true => path.idx + 1,
-            //     false => path.idx - 1,
-            // };
-
-            let sibling_dir = path.direction;
-
-            let sibling_idx = path.idx;
-            let curr_idx = match sibling_dir {
-                true => path.idx + 1,
-                false => path.idx - 1,
-            };
-
-            let sibling_loc = format!("{}_{}", height, sibling_idx);
-            // let sibling_loc = &path.idx_label;
-
-            let sibling_node = match merkle_update.get(&sibling_loc) {
+            let sibling_node = match merkle_update.get(&path.node_loc) {
                 Some(n) => *n,
-                None => apis.get_merkle_node(&sibling_loc).await?,
+                None => apis.get_merkle_node(&path.node_loc).await?,
             };
 
             let curr_loc = format!("{}_{}", height, curr_idx);
@@ -505,12 +465,17 @@ async fn process_merkle_update(
                 None => apis.get_merkle_node(&curr_loc).await?,
             };
 
-            let merkle_node = match sibling_dir {
-                true => apis.hasher.mimc(&sibling_node, &curr_node)?.to_bytes(),
-                false => {
-                    apis.hasher.mimc(&curr_node, &sibling_node)?.to_bytes()
-                }
-            };
+            let lv;
+            let rv;
+            if path.direction {
+                lv = sibling_node;
+                rv = curr_node;
+            } else {
+                lv = curr_node;
+                rv = sibling_node;
+            }
+
+            let merkle_node = apis.hasher.mimc(&lv, &rv)?.to_bytes();
 
             let parent_idx = MerkleTree::get_parent_idx(curr_idx);
             let update_loc = format!("{}_{}", height + 1, parent_idx);
@@ -521,6 +486,7 @@ async fn process_merkle_update(
             // );
 
             merkle_update.insert(update_loc, merkle_node);
+            curr_idx = parent_idx;
         }
     }
 

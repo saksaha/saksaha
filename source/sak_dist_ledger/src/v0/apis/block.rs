@@ -60,13 +60,6 @@ impl DistLedgerApis {
         Ok(ret)
     }
 
-    // pub async fn get_cm_by_idx(
-    //     &self,
-    //     cm_idx: &CmIdx,
-    // ) -> Result<Option<Cm>, LedgerError> {
-    //     self.ledger_db.get_cm_by_cm_idx(cm_idx)
-    // }
-
     pub async fn get_cm_idx_by_cm(
         &self,
         cm: &Cm,
@@ -269,18 +262,6 @@ impl DistLedgerApis {
     pub fn get_latest_block_height(&self) -> Result<Option<u128>, LedgerError> {
         self.ledger_db.get_latest_block_height()
     }
-
-    // pub async fn get_ledger_cm_count(
-    //     &self,
-    // ) -> Result<Option<u128>, LedgerError> {
-    //     self.ledger_db.get_ledger_cm_count()
-    // }
-
-    // pub async fn get_latest_tx_height(
-    //     &self,
-    // ) -> Result<Option<u128>, LedgerError> {
-    //     self.ledger_db.get_latest_tx_height()
-    // }
 
     pub async fn get_latest_block_merkle_rt(
         &self,
