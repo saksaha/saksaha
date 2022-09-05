@@ -78,7 +78,7 @@ async fn test_find_arb_peer_successfully() {
         tokio::join!(mock_host_3_clone.run(), mock_local_node_3.run())
     });
 
-    tokio::time::sleep(Duration::from_secs(3)).await;
+    tokio::time::sleep(Duration::from_secs(7)).await;
 
     let check_3 = match mock_host_3
         .get_peer_table()
@@ -119,7 +119,7 @@ async fn test_find_arb_peer_successfully() {
             tokio::join!(mock_host_4_clone.run(), mock_local_node_4.run())
         });
 
-        tokio::time::sleep(Duration::from_secs(3)).await;
+        tokio::time::sleep(Duration::from_secs(7)).await;
 
         let check_5 = match mock_host_4
             .get_peer_table()
