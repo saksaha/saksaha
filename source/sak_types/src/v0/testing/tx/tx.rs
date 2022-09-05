@@ -142,30 +142,34 @@ pub fn mock_pour_tc_random() -> TxCandidate {
         let node_1_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
         let node_2_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
         let node_3_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
-        // let node_4_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
+        let node_4_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
+        let node_5_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
 
         m.insert("0_1", node_0_1);
         m.insert("1_1", node_1_1);
         m.insert("2_1", node_2_1);
         m.insert("3_1", node_3_1);
-        // m.insert("4_1", node_4_1);
+        m.insert("4_1", node_4_1);
+        m.insert("5_1", node_5_1);
 
         let node_1_0 = hasher.mimc_scalar(cm_1_old, node_0_1);
         let node_2_0 = hasher.mimc_scalar(node_1_0, node_1_1);
         let node_3_0 = hasher.mimc_scalar(node_2_0, node_2_1);
         let node_4_0 = hasher.mimc_scalar(node_3_0, node_3_1);
-        // let node_5_0 = hasher.mimc_scalar(node_4_0, node_4_1);
+        let node_5_0 = hasher.mimc_scalar(node_4_0, node_4_1);
+        let node_6_0 = hasher.mimc_scalar(node_5_0, node_5_1);
 
         m.insert("1_0", node_1_0);
         m.insert("2_0", node_2_0);
         m.insert("3_0", node_3_0);
         m.insert("4_0", node_4_0);
-        // m.insert("5_0", node_5_0);
+        m.insert("5_0", node_5_0);
+        m.insert("6_0", node_6_0);
 
         m
     };
 
-    let merkle_rt = *merkle_nodes.get("4_0").unwrap();
+    let merkle_rt = *merkle_nodes.get("6_0").unwrap();
 
     let auth_path_1 = {
         let v = merkle_tree.generate_auth_paths(0);
@@ -183,7 +187,7 @@ pub fn mock_pour_tc_random() -> TxCandidate {
             let key = format!("{}_{}", idx, p.idx);
             let merkle_node = merkle_nodes.get(key.as_str()).unwrap();
 
-            ret[idx] = Some((merkle_node.clone(), p.direction));
+            ret[idx] = Some((*merkle_node, p.direction));
         });
 
         ret
@@ -333,32 +337,34 @@ pub fn mock_pour_tc_1() -> TxCandidate {
         let node_1_1 = ScalarExt::parse_u64(0).unwrap();
         let node_2_1 = ScalarExt::parse_u64(0).unwrap();
         let node_3_1 = ScalarExt::parse_u64(0).unwrap();
-        // let node_4_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
+        let node_4_1 = ScalarExt::parse_u64(0).unwrap();
+        let node_5_1 = ScalarExt::parse_u64(0).unwrap();
 
         m.insert("0_1", node_0_1);
         m.insert("1_1", node_1_1);
         m.insert("2_1", node_2_1);
         m.insert("3_1", node_3_1);
-        // m.insert("4_1", node_4_1);
+        m.insert("4_1", node_4_1);
+        m.insert("5_1", node_5_1);
 
         let node_1_0 = hasher.mimc_scalar(cm_1_old, node_0_1);
         let node_2_0 = hasher.mimc_scalar(node_1_0, node_1_1);
         let node_3_0 = hasher.mimc_scalar(node_2_0, node_2_1);
         let node_4_0 = hasher.mimc_scalar(node_3_0, node_3_1);
-        // let node_5_0 = hasher.mimc_scalar(node_4_0, node_4_1);
+        let node_5_0 = hasher.mimc_scalar(node_4_0, node_4_1);
+        let node_6_0 = hasher.mimc_scalar(node_5_0, node_5_1);
 
         m.insert("1_0", node_1_0);
         m.insert("2_0", node_2_0);
         m.insert("3_0", node_3_0);
         m.insert("4_0", node_4_0);
-        // m.insert("5_0", node_5_0);
+        m.insert("5_0", node_5_0);
+        m.insert("6_0", node_6_0);
 
         m
     };
 
-    let merkle_rt = *merkle_nodes.get("4_0").unwrap();
-
-    println!("\n123 mock pour tc merkle_rt: {:?}", merkle_rt.to_bytes());
+    let merkle_rt = *merkle_nodes.get("6_0").unwrap();
 
     let auth_path_1 = {
         let v = merkle_tree.generate_auth_paths(0);
@@ -376,8 +382,11 @@ pub fn mock_pour_tc_1() -> TxCandidate {
                 );
             }
 
+            let empty_node = ScalarExt::parse_u64(0).unwrap();
+
             let key = format!("{}_{}", idx, p.idx);
-            let merkle_node = merkle_nodes.get(key.as_str()).unwrap();
+            let merkle_node =
+                merkle_nodes.get(key.as_str()).unwrap_or(&empty_node);
 
             ret[idx] = Some((merkle_node.clone(), p.direction));
         });
@@ -674,8 +683,6 @@ pub fn mock_mint_tc_1() -> TxCandidate {
 
     let cm = hasher.comm2(&s, &v, &k.to_bytes()).unwrap();
 
-    println!("mock mint tc 1 cm: {:?}", cm.to_bytes());
-
     let tx_candidate = MintTxCandidate::new(
         String::from("created_at_mint_1"),
         validator_wasm,
@@ -786,6 +793,77 @@ pub fn mock_mint_tc_4() -> TxCandidate {
         String::from("created_at_mint_4"),
         vec![4],
         String::from("author_sig_mint_4"),
+        None,
+        vec![cm.to_bytes()],
+        v,
+        k.to_bytes(),
+        s,
+    );
+
+    TxCandidate::Mint(tx_candidate)
+}
+
+pub fn mock_mint_tc_5() -> TxCandidate {
+    let hasher = Hasher::new();
+
+    let rho = U8Array::from_int(0x31);
+
+    let r = U8Array::from_int(0x32);
+
+    let s = U8Array::from_int(0x33);
+
+    let v = U8Array::from_int(100);
+
+    let a_sk = U8Array::from_int(0x34);
+
+    let a_pk = hasher
+        .mimc_single_scalar(ScalarExt::parse_arr(&a_sk).unwrap())
+        .unwrap();
+
+    let k = hasher.comm2(&r, &a_pk.to_bytes(), &rho).unwrap();
+
+    let cm = hasher.comm2(&s, &v, &k.to_bytes()).unwrap();
+
+    let tx_candidate = MintTxCandidate::new(
+        String::from("created_at_mint_5"),
+        vec![5],
+        String::from("author_sig_mint_5"),
+        None,
+        vec![cm.to_bytes()],
+        v,
+        k.to_bytes(),
+        s,
+    );
+
+    TxCandidate::Mint(tx_candidate)
+}
+
+pub fn mock_mint_tc_6() -> TxCandidate {
+    // let tx_candidate = MintTxCandidate::new_dummy_4();
+    let hasher = Hasher::new();
+
+    let rho = U8Array::from_int(0x41);
+
+    let r = U8Array::from_int(0x42);
+
+    let s = U8Array::from_int(0x43);
+
+    let v = U8Array::from_int(100);
+
+    let a_sk = U8Array::from_int(0x44);
+
+    let a_pk = hasher
+        .mimc_single_scalar(ScalarExt::parse_arr(&a_sk).unwrap())
+        .unwrap();
+
+    let k = hasher.comm2(&r, &a_pk.to_bytes(), &rho).unwrap();
+
+    let cm = hasher.comm2(&s, &v, &k.to_bytes()).unwrap();
+
+    let tx_candidate = MintTxCandidate::new(
+        String::from("created_at_mint_6"),
+        vec![6],
+        String::from("author_sig_mint_6"),
         None,
         vec![cm.to_bytes()],
         v,
