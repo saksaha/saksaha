@@ -15,11 +15,10 @@ async fn test_is_handshake_successful() {
         utils::run_p2p_host(vec![mock_client_1.clone(), mock_client_2.clone()])
             .await;
 
+    println!("[+] sleep 3 seconds..");
     tokio::time::sleep(Duration::from_secs(3)).await;
 
     let peer_flag_handle = tokio::spawn(async move {
-        tokio::time::sleep(Duration::from_secs(3)).await;
-
         let is_peer_registered = match mock_client_1
             .peer_table
             .get_mapped_peer(&mock_client_2.identity.credential.public_key_str)
@@ -34,6 +33,7 @@ async fn test_is_handshake_successful() {
 
     let peer_flag = peer_flag_handle.await.unwrap();
 
+    println!("res: {:?}", peer_flag);
+
     assert_eq!(peer_flag, true);
-    println!("test success!");
 }

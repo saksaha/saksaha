@@ -1,5 +1,6 @@
 use crate::p2p::{P2PHost, P2PHostArgs};
 use sak_p2p_addr::{AddrStatus, UnknownAddr};
+use sak_p2p_discovery::{Discovery, DiscoveryArgs};
 use sak_p2p_id::Identity;
 use sak_p2p_peertable::PeerTable;
 use std::sync::Arc;
@@ -11,6 +12,7 @@ pub(crate) struct P2PTestContext {
 
 #[derive(Clone)]
 pub(crate) struct P2PMockClient {
+    pub(crate) discovery: Arc<Discovery>,
     pub(crate) peer_table: Arc<PeerTable>,
     pub(crate) identity: Arc<Identity>,
     pub(crate) p2p_host: Arc<P2PHost>,
@@ -63,7 +65,7 @@ pub(crate) async fn mock_client(
         p2p_dial_interval: None,
         p2p_port: p2p_port.port(),
         p2p_max_conn_count: None,
-        bootstrap_addrs,
+        bootstrap_addrs: bootstrap_addrs.clone(),
         identity: identity.clone(),
         disc_socket,
         peer_table: peer_table.clone(),
@@ -74,7 +76,31 @@ pub(crate) async fn mock_client(
         Arc::new(h)
     };
 
+    let discovery = {
+        let (udp_socket, _) = sak_utils_net::setup_udp_socket(Some(disc_port))
+            .await
+            .unwrap();
+
+        let discovery_args = DiscoveryArgs {
+            addr_expire_duration: None,
+            addr_monitor_interval: None,
+            disc_dial_interval: None,
+            disc_table_capacity: None,
+            disc_task_interval: None,
+            disc_task_queue_capacity: None,
+            p2p_port: p2p_port.port(),
+            bootstrap_addrs,
+            identity: identity.clone(),
+            udp_socket,
+        };
+
+        let d = Discovery::init(discovery_args).await.unwrap().0;
+
+        Arc::new(d)
+    };
+
     P2PMockClient {
+        discovery,
         peer_table,
         identity,
         p2p_host,
@@ -144,36 +170,23 @@ pub(crate) async fn mock_client_2() -> P2PMockClient {
     .await
 }
 
-// pub(crate) async fn mock_client_3() -> P2PMockClient {
-//     mock_client(
-//         Some(35521), // p2p_port
-//         Some(35520), // disc_port
-//         String::from(
-//             "\
-//                 aa99cfd91cc6f3b541d28f3e0707f9c7b\
-//                 cf05cf495308294786ca450b501b5f2",
-//         ),
-//         String::from(
-//             "\
-//                 04240874d8c323c22a571f735e835ed2\
-//                 f0619893a3989e557b1c9b4c699ac92b\
-//                 84d0dc478108629c0353f2876941f90d\
-//                 4b36346bcc19c6b625422adffb53b3a6af",
-//         ),
-//         vec![UnknownAddr {
-//             ip: String::from("127.0.0.1"),
-//             disc_port: 35518,
-//             p2p_port: None,
-//             sig: None,
-//             public_key_str: Some(String::from(
-//                 "\
-//                 045739d074b8722891c307e8e75c9607e\
-//                 0b55a80778b42ef5f4640d4949dbf3992\
-//                 f6083b729baef9e9545c4e95590616fd3\
-//                 82662a09653f2a966ff524989ae8c0f",
-//             )),
-//             status: AddrStatus::Initialized,
-//         }],
-//     )
-//     .await
-// }
+pub(crate) async fn mock_client_3() -> P2PMockClient {
+    mock_client(
+        Some(35523), // p2p_port
+        Some(35522), // disc_port
+        String::from(
+            "\
+                e7f0a95afb2c782cf9247d5f24c728fa\
+                ba565ef85df6b74712005951620e95e2",
+        ),
+        String::from(
+            "\
+                04cda32b405650ba37f495713c549881\
+                2b4a4fcde863f8361c50d59c28440434\
+                415f5c8a572a8d460c22fc87ed52c7b8\
+                d8ce385b9e594502382ce833fd772c9964",
+        ),
+        vec![],
+    )
+    .await
+}

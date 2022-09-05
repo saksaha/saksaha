@@ -2,7 +2,10 @@ use super::task::DiscoveryTask;
 use log::{info, warn};
 use sak_p2p_addr::UnknownAddr;
 use sak_task_queue::TaskQueue;
-use std::{sync::Arc, time::Duration};
+use std::{
+    sync::Arc,
+    time::{Duration, SystemTime},
+};
 
 const DISC_DIAL_INTERVAL: u64 = 2000;
 
@@ -71,7 +74,38 @@ impl DialScheduler {
         }
     }
 
+    async fn enqueue_new_addrs(&self, new_addr: &UnknownAddr) {
+        //
+        let task = DiscoveryTask::InitiateWhoAreYou {
+            addr: new_addr.clone(),
+        };
+
+        match self.disc_task_queue.push_back(task).await {
+            Ok(_) => {}
+            Err(err) => {
+                warn!(
+                    "Cannot enqueue a new addr, addr: {:?}, err: {}",
+                    new_addr, err
+                );
+            }
+        };
+    }
+
     pub async fn run(&self) {
         self.enqueue_bootstrap_addrs(&self.bootstrap_addrs).await;
+
+        // loop
+
+        loop {
+            let time_since = SystemTime::now();
+
+            //
+
+            sak_utils_time::wait_until_min_interval(
+                time_since,
+                Duration::from_millis(DISC_DIAL_INTERVAL),
+            )
+            .await;
+        }
     }
 }

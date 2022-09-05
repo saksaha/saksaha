@@ -1,5 +1,4 @@
 use super::SlotGuard;
-use sak_p2p_addr::AddrStatus;
 use sak_p2p_addr::KnownAddr;
 
 pub struct DiscAddr {
