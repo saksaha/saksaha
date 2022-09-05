@@ -177,26 +177,26 @@ impl Wallet {
         Ok(pi_ser)
     }
 
-    pub(crate) fn prepare_proof_2_to_2(
-        &self,
-        old_coin_1: OldCoin,
-        old_coin_2: OldCoin,
-        new_coin_1: NewCoin,
-        new_coin_2: NewCoin,
-    ) -> Result<Vec<u8>, WalletError> {
-        println!("[+] making proof...");
+    // pub(crate) fn prepare_proof_2_to_2(
+    //     &self,
+    //     old_coin_1: OldCoin,
+    //     old_coin_2: OldCoin,
+    //     new_coin_1: NewCoin,
+    //     new_coin_2: NewCoin,
+    // ) -> Result<Vec<u8>, WalletError> {
+    //     println!("[+] making proof...");
 
-        let pi = CoinProof::generate_proof_2_to_2(
-            old_coin_1, old_coin_2, new_coin_1, new_coin_2,
-        )?;
+    //     let pi = CoinProof::generate_proof_2_to_2(
+    //         old_coin_1, old_coin_2, new_coin_1, new_coin_2,
+    //     )?;
 
-        let mut pi_ser = Vec::new();
-        pi.write(&mut pi_ser).unwrap();
+    //     let mut pi_ser = Vec::new();
+    //     pi.write(&mut pi_ser).unwrap();
 
-        println!("[!] pi serialized: {}", encode_hex(&pi_ser));
+    //     println!("[!] pi serialized: {}", encode_hex(&pi_ser));
 
-        Ok(pi_ser)
-    }
+    //     Ok(pi_ser)
+    // }
 
     pub async fn send_pour_tx(
         &self,
@@ -229,41 +229,41 @@ impl Wallet {
 
         //
 
-        let dummy_coin = CoinRecord::new_dummy();
+        // let dummy_coin = CoinRecord::new_dummy();
 
-        let dummy_cm_idx = self.prepare_cm_idx(&dummy_coin).await?;
+        // let dummy_cm_idx = self.prepare_cm_idx(&dummy_coin).await?;
 
-        let dummy_auth_path = self.prepare_auth_path(dummy_cm_idx).await?;
+        // let dummy_auth_path = self.prepare_auth_path(dummy_cm_idx).await?;
 
-        let dummy_merkle_rt =
-            self.prepare_merkle_rt(&dummy_coin, dummy_auth_path.clone())?;
+        // let dummy_merkle_rt =
+        //     self.prepare_merkle_rt(&dummy_coin, dummy_auth_path.clone())?;
 
-        let dummy_old_coin =
-            self.convert_to_old_coin(&dummy_coin, dummy_auth_path)?;
+        // let dummy_old_coin =
+        //     self.convert_to_old_coin(&dummy_coin, dummy_auth_path)?;
 
-        let dummy_old_sn_1 = self.compute_sn(&dummy_coin);
+        // let dummy_old_sn_1 = self.compute_sn(&dummy_coin);
 
         //
 
         let (mut new_coin_1, mut new_coin_2) =
             self.prepare_2_new_coin_records(coin.v)?;
 
-        let pi = self.prepare_proof_2_to_2(
-            old_coin,
-            dummy_old_coin,
-            new_coin_1.extract_new_coin(),
-            new_coin_2.extract_new_coin(),
-        )?;
-
-        // let pi = self.prepare_proof_1_to_2(
+        // let pi = self.prepare_proof_2_to_2(
         //     old_coin,
+        //     dummy_old_coin,
         //     new_coin_1.extract_new_coin(),
         //     new_coin_2.extract_new_coin(),
         // )?;
 
+        let pi = self.prepare_proof_1_to_2(
+            old_coin,
+            new_coin_1.extract_new_coin(),
+            new_coin_2.extract_new_coin(),
+        )?;
+
         let json_response = saksaha::send_tx_pour(
             self.saksaha_endpoint.clone(),
-            vec![old_sn_1, dummy_old_sn_1],
+            vec![old_sn_1],
             vec![new_coin_1.cm.to_bytes(), new_coin_2.cm.to_bytes()],
             merkle_rt,
             pi,

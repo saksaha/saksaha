@@ -26,8 +26,6 @@ impl GenesisBlock {
         let tx_mint_1 = sak_types::mock_mint_tc_3();
         let tx_mint_2 = sak_types::mock_mint_tc_4();
 
-        let tx_mint_dummy_old_coin = sak_types::mock_mint_tc_dummy_old_coin();
-
         let tx_deploy_validator = sak_types::mock_mint_tc_deploying_contract(
             validator_wasm,
             VALIDATOR_CTR_ADDR.to_string(),
@@ -42,7 +40,6 @@ impl GenesisBlock {
             tx_candidates: vec![
                 tx_mint_1,
                 tx_mint_2,
-                tx_mint_dummy_old_coin,
                 tx_deploy_validator,
                 tx_deploy_envelope,
             ],
