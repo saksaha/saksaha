@@ -37,9 +37,8 @@ impl DistLedgerApis {
                 Err(err) => {
                     return Err(format!(
                         "Genesis block failed to write, err: {}",
-                        err.to_string()
-                    )
-                    .into());
+                        err
+                    ));
                 }
             };
 
@@ -76,7 +75,12 @@ impl DistLedgerApis {
         };
 
         let next_cm_idx = match self.ledger_db.get_latest_cm_idx()? {
-            Some(i) => i + 1,
+            Some(i) => {
+                if i >= 2_u32.pow(CM_TREE_DEPTH).into() {
+                    return Err("CM idx exceeded the limit".into());
+                }
+                i + 1
+            }
             None => {
                 warn!("Cm idx does not exist. Possibly the first block");
                 0
@@ -127,16 +131,15 @@ impl DistLedgerApis {
             added_cm_count += cm_count;
         }
 
-        if let Err(err) = self.sync_pool.remove_tcs(&tcs).await {
+        if let Err(err) = self.sync_pool.remove_tcs(tcs).await {
             warn!("Error removing txs into the tx pool, err: {}", err);
         }
 
-        let next_merkle_rt = match merkle_update
-            .get(format!("{}_0", CM_TREE_DEPTH).as_str())
-        {
-            Some(r) => r,
-            None => return Err(format!("next merkle root is missing").into()),
-        };
+        let next_merkle_rt =
+            match merkle_update.get(format!("{}_0", CM_TREE_DEPTH).as_str()) {
+                Some(r) => r,
+                None => return Err("next merkle root is missing".into()),
+            };
 
         let (block, txs) = bc.upgrade(
             next_block_height,
