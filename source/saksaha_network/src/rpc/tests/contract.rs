@@ -78,7 +78,10 @@ async fn test_call_contract() {
     let query_ctr_response = json_response.result.unwrap();
     let query_result = query_ctr_response.result;
 
-    println!("query_result (from rpc response) : {:?}", query_result);
+    println!(
+        "query_result (from rpc response) : {:?}",
+        std::str::from_utf8(&query_result).unwrap()
+    );
 
     assert_eq!(expected_validator.as_bytes(), query_result);
 }

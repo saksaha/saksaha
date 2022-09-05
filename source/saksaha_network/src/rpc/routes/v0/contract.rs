@@ -41,17 +41,10 @@ pub(in crate::rpc) async fn query_ctr(
         .await
     {
         Ok(result) => {
-            return make_success_response(
-                route_state,
-                QueryCtrResponse { result },
-            );
+            make_success_response(route_state, QueryCtrResponse { result })
         }
         Err(err) => {
-            return make_error_response(
-                route_state.resp,
-                Some(route_state.id),
-                err.into(),
-            );
+            make_error_response(route_state.resp, Some(route_state.id), err)
         }
     }
 }

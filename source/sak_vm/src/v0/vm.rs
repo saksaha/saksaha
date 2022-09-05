@@ -83,7 +83,7 @@ fn invoke_query(
         wasm_bootstrap::copy_memory(&request_bytes, &instance, &mut store)?;
 
     let storage_len = storage.len();
-    let storage_bytes = storage.clone();
+    let storage_bytes = storage;
     let storage_ptr =
         wasm_bootstrap::copy_memory(&storage_bytes, &instance, &mut store)?;
 

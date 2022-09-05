@@ -1,6 +1,6 @@
 use super::utils::{self, TestContext};
 use crate::tests::TestUtil;
-use sak_types::{BlockCandidate, TxCandidate};
+use sak_types::BlockCandidate;
 use std::time::Duration;
 
 #[tokio::test(flavor = "multi_thread")]
@@ -62,35 +62,28 @@ async fn test_two_nodes_tx_pool_marshal_check_true() {
         ..
     } = test_context_2;
 
-    // let dummy_tx1 = sak_types::mock_pour_tc_m1_to_p3_p4();
     let dummy_tx1 = sak_types::mock_pour_tc_random();
 
     let dummy_tx2 = sak_types::mock_pour_tc_random();
 
-    let block = {
-        let c = BlockCandidate {
-            validator_sig: String::from(""),
-            tx_candidates: vec![dummy_tx1.clone(), dummy_tx2.clone()],
-            witness_sigs: vec![],
-            created_at: String::from(""),
-        };
-
-        c
+    let block = BlockCandidate {
+        validator_sig: String::from(""),
+        tx_candidates: vec![dummy_tx1.clone(), dummy_tx2.clone()],
+        witness_sigs: vec![],
+        created_at: String::from(""),
     };
 
     {
         let machine_1 = machine_1.clone();
         tokio::spawn(async move {
-            tokio::join!(p2p_host_1.run(), local_node_1.run(), machine_1.run(),);
+            tokio::join!(p2p_host_1.run(), local_node_1.run(), machine_1.run());
         });
 
         let machine_2 = machine_2.clone();
         tokio::spawn(async move {
-            tokio::join!(p2p_host_2.run(), local_node_2.run(), machine_2.run(),);
+            tokio::join!(p2p_host_2.run(), local_node_2.run(), machine_2.run());
         });
     }
-
-    tokio::time::sleep(Duration::from_secs(3)).await;
 
     machine_1
         .blockchain
@@ -108,7 +101,7 @@ async fn test_two_nodes_tx_pool_marshal_check_true() {
         .await
         .expect("Node should be able to send a transaction");
 
-    tokio::time::sleep(Duration::from_secs(3)).await;
+    tokio::time::sleep(Duration::from_secs(2)).await;
 
     {
         let tx_pool_2_contains_tx1 = machine_2
@@ -125,8 +118,8 @@ async fn test_two_nodes_tx_pool_marshal_check_true() {
             .tx_pool_contains(dummy_tx2.get_tx_hash())
             .await;
 
-        assert_eq!(tx_pool_2_contains_tx1, true);
-        assert_eq!(tx_pool_2_contains_tx2, true);
+        assert!(tx_pool_2_contains_tx1);
+        assert!(tx_pool_2_contains_tx2);
         println!("test1 passed");
     }
 
@@ -146,6 +139,6 @@ async fn test_two_nodes_tx_pool_marshal_check_true() {
             .tx_pool_contains(dummy_tx1.get_tx_hash())
             .await;
 
-        assert_eq!(tx_pool_1_contains_tx1, false);
+        assert!(!tx_pool_1_contains_tx1);
     }
 }
