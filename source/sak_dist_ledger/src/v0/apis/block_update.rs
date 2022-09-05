@@ -173,24 +173,7 @@ impl DistLedgerApis {
     pub async fn write_blocks(
         &self,
         mut blocks: Vec<(Block, Vec<Tx>)>,
-        // txs: Vec<Tx>,
     ) -> Result<Vec<String>, LedgerError> {
-        // let tx_candidates = txs.into_iter().map(|tx| tx.downgrade()).collect();
-
-        // let bc_candidate = BlockCandidate {
-        //     validator_sig: block.validator_sig,
-        //     tx_candidates,
-        //     witness_sigs: block.witness_sigs,
-        //     created_at: block.created_at,
-        // };
-
-        // match self.write_block(Some(bc_candidate)).await {
-        //     Ok(res) => return Ok(res),
-        //     Err(err) => {
-        //         return Err(format!("Block sync failed, err: {}", err).into());
-        //     }
-        // }
-
         let mut block_hashes = vec![];
 
         blocks.sort_by(|a, b| a.0.block_height.cmp(&b.0.block_height));
@@ -316,8 +299,6 @@ impl DistLedgerApis {
                 }
             };
         }
-
-        // bc.update_tx_candidates(valid_tx_candidates);
 
         bc.tx_candidates = valid_tx_candidates;
 

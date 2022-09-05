@@ -11,7 +11,6 @@ use std::sync::Arc;
 const APP_NAME: &'static str = "saksaha";
 
 pub struct LedgerDB {
-    // pub(crate) schema: LedgerDBSchema,
     pub(crate) db: DB,
 }
 
@@ -51,8 +50,6 @@ impl LedgerDB {
                 .into());
             }
         };
-
-        // let schema = LedgerDBSchema::new(kv_db.db_instance);
 
         let database = LedgerDB {
             db: kv_db.db_instance,
