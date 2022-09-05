@@ -29,7 +29,7 @@ pub(crate) async fn mock_client(
         .await
         .expect("p2p socket should be initialized");
 
-    let (disc_socket, disc_port) = {
+    let (udp_socket, disc_port) = {
         let (socket, socket_addr) =
             sak_utils_net::setup_udp_socket(disc_port).await.unwrap();
 
@@ -67,7 +67,7 @@ pub(crate) async fn mock_client(
         p2p_max_conn_count: None,
         bootstrap_addrs: bootstrap_addrs.clone(),
         identity: identity.clone(),
-        disc_socket,
+        disc_socket: udp_socket,
         peer_table: peer_table.clone(),
     };
 
@@ -76,28 +76,7 @@ pub(crate) async fn mock_client(
         Arc::new(h)
     };
 
-    let discovery = {
-        let (udp_socket, _) = sak_utils_net::setup_udp_socket(Some(disc_port))
-            .await
-            .unwrap();
-
-        let discovery_args = DiscoveryArgs {
-            addr_expire_duration: None,
-            addr_monitor_interval: None,
-            disc_dial_interval: None,
-            disc_table_capacity: None,
-            disc_task_interval: None,
-            disc_task_queue_capacity: None,
-            p2p_port: p2p_port.port(),
-            bootstrap_addrs,
-            identity: identity.clone(),
-            udp_socket,
-        };
-
-        let d = Discovery::init(discovery_args).await.unwrap().0;
-
-        Arc::new(d)
-    };
+    let discovery = p2p_host.get_discovery();
 
     P2PMockClient {
         discovery,

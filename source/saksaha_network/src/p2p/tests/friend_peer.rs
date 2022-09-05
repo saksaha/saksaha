@@ -40,7 +40,7 @@ async fn test_find_arb_peer_successfully() {
     let identity_3 = mock_client_3.identity.clone();
 
     {
-        let endpoint = format!("http://127.0.0.1/{}", identity_2.p2p_port);
+        let endpoint = format!("127.0.0.1:{}", identity_2.p2p_port);
 
         let conn =
             Conn::new(TcpStream::connect(&endpoint).await.unwrap(), true)
@@ -75,8 +75,6 @@ async fn test_find_arb_peer_successfully() {
 
         peer_table_3.insert_mapping(peer).await.unwrap();
     }
-
-    println!("AAAAAAAAAAAAAAAAA");
 }
 
 // #[tokio::test(flavor = "multi_thread")]

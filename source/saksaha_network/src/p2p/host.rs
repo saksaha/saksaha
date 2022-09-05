@@ -141,4 +141,8 @@ impl P2PHost {
 
         monitor
     }
+
+    pub(crate) fn get_discovery(&self) -> Arc<Discovery> {
+        self.p2p_discovery.clone()
+    }
 }
