@@ -78,8 +78,13 @@ impl CoinProof {
             Err(err) => {
                 println!("verify_proof(), err: {}", err);
 
-                return Err(format!("verifying error, err: {}", err).into());
-                // false
+                return Err(format!(
+                    "verifying error, public_inputs({}): {:?}, err: {}",
+                    public_inputs.len(),
+                    public_inputs,
+                    err
+                )
+                .into());
             }
         };
 

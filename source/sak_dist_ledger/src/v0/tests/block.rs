@@ -37,6 +37,9 @@ async fn test_insert_genesis_block_and_check_wrong_block_hash() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_write_a_genesis_block() {
+    sak_test_utils::init_test_log();
+    TestUtil::init_test(vec!["test"]);
+
     let dist_ledger = utils::make_dist_ledger().await;
 
     dist_ledger.run().await;
@@ -88,7 +91,7 @@ async fn test_sequential_write_block_and_get_tx_height() {
 
     let dist_ledger = utils::make_dist_ledger().await;
 
-    for i in 0..REPEAT_NUM as u64 {
+    for i in 0..1 as u64 {
         let block = BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
             tx_candidates: vec![

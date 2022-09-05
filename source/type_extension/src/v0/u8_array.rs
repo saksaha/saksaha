@@ -1,20 +1,17 @@
-use std::convert::TryInto;
-
 use crate::TypeExtError;
+use std::convert::TryInto;
 
 pub struct U8Array;
 
-pub type U8Arr32 = [u8; 32];
-
 impl U8Array {
-    pub fn new_empty_32() -> U8Arr32 {
+    pub fn new_empty_32() -> [u8; 32] {
         [
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         ]
     }
 
-    pub fn from_int(v: u64) -> U8Arr32 {
+    pub fn from_int(v: u64) -> [u8; 32] {
         let arr: [u8; 8] = v.to_le_bytes();
 
         let mut ret = [0u8; 32];
@@ -24,7 +21,7 @@ impl U8Array {
         ret
     }
 
-    pub fn from_hex_string(str: String) -> Result<U8Arr32, TypeExtError> {
+    pub fn from_hex_string(str: String) -> Result<[u8; 32], TypeExtError> {
         let mut tmp = str.clone();
 
         if str.len() > 64 {
@@ -40,7 +37,7 @@ impl U8Array {
 
         let tmp = tmp.as_bytes().to_vec();
 
-        let mut res: U8Arr32 = [0; 32];
+        let mut res: [u8; 32] = [0; 32];
 
         for idx in 0..32 {
             res[idx] = tmp[idx];

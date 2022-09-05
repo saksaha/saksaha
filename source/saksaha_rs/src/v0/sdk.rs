@@ -8,7 +8,6 @@ use sak_rpc_interface::{
 use sak_types::{Cm, CmIdx, Tx};
 use serde::{Deserialize, Serialize};
 use std::time;
-use type_extension::U8Arr32;
 
 pub const A: usize = 1;
 
@@ -31,93 +30,11 @@ pub fn new_empty_32_temp() -> [u8; 32] {
     ]
 }
 
-// #[derive(Serialize, Deserialize, Debug)]
-// pub struct SendPourTxRequest {
-//     created_at: String,
-//     #[serde(with = "serde_bytes")]
-//     data: Vec<u8>,
-//     author_sig: String,
-//     ctr_addr: Option<String>,
-//     #[serde(with = "serde_bytes")]
-//     pi: Vec<u8>,
-//     sn_1: [u8; 32],
-//     cm_1: [u8; 32],
-//     cm_2: [u8; 32],
-//     merkle_rt: [u8; 32],
-// }
-
-// impl SendPourTxRequest {
-//     pub fn new(
-//         created_at: String,
-//         data: Vec<u8>,
-//         author_sig: String,
-//         ctr_addr: Option<String>,
-//         pi: Vec<u8>,
-//         sn_1: [u8; 32],
-//         // sn_2: [u8; 32],
-//         cm_1: [u8; 32],
-//         cm_2: [u8; 32],
-//         merkle_rt: [u8; 32],
-//     ) -> SendPourTxRequest {
-//         SendPourTxRequest {
-//             created_at,
-//             data,
-//             author_sig,
-//             ctr_addr,
-//             pi,
-//             sn_1,
-//             // sn_2,
-//             cm_1,
-//             cm_2,
-//             merkle_rt,
-//         }
-//     }
-// }
-
-// #[derive(Serialize, Deserialize, Debug)]
-// pub struct SendMintTxRequest {
-//     created_at: String,
-//     #[serde(with = "serde_bytes")]
-//     data: Vec<u8>,
-//     author_sig: String,
-//     ctr_addr: Option<String>,
-//     cm: [u8; 32],
-//     v: [u8; 32],
-//     k: [u8; 32],
-//     s: [u8; 32],
-// }
-
-// impl SendMintTxRequest {
-//     pub fn new(
-//         created_at: String,
-//         data: Vec<u8>,
-//         author_sig: String,
-//         ctr_addr: Option<String>,
-//         cm: [u8; 32],
-//         v: [u8; 32],
-//         k: [u8; 32],
-//         s: [u8; 32],
-//     ) -> SendMintTxRequest {
-//         SendMintTxRequest {
-//             created_at,
-//             data,
-//             author_sig,
-//             ctr_addr,
-//             cm,
-//             v,
-//             k,
-//             s,
-//         }
-//     }
-// }
-
 pub async fn send_tx_pour(
     saksaha_endpoint: String,
-    sn_1: U8Arr32,
-    cms: Vec<U8Arr32>,
-    // cm_1: U8Arr32,
-    // cm_2: U8Arr32,
-    merkle_rt: U8Arr32,
+    sns: Vec<[u8; 32]>,
+    cms: Vec<[u8; 32]>,
+    merkle_rt: [u8; 32],
     pi: Vec<u8>,
     ctr_addr: String,
     ctr_request: CtrRequest,
@@ -138,7 +55,7 @@ pub async fn send_tx_pour(
             sig,
             Some(ctr_addr),
             pi,
-            sn_1,
+            sns,
             cms,
             merkle_rt,
         );
@@ -303,7 +220,7 @@ pub struct GetCmIdxResponse {
 
 pub async fn get_cm_idx(
     saksaha_endpoint: String,
-    cm: U8Arr32,
+    cm: [u8; 32],
 ) -> Result<JsonResponse<GetCmIdxResponse>, SaksahaSDKError> {
     let client = Client::new();
     let uri: Uri = { saksaha_endpoint.parse().expect("URI should be made") };
@@ -351,21 +268,6 @@ pub struct GetTxResponse {
     pub tx: Option<Tx>,
 }
 
-// #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq, Hash)]
-// pub struct PourTxCandidate {
-//     pub created_at: String,
-//     #[serde(with = "serde_bytes")]
-//     pub data: Vec<u8>,
-//     pub author_sig: String,
-//     pub ctr_addr: String,
-//     pub pi: Vec<u8>,
-//     pub sn_1: U8Arr32,
-//     pub cm_1: U8Arr32,
-//     pub cm_2: U8Arr32,
-//     pub merkle_rt: U8Arr32,
-//     tx_hash: String,
-// }
-
 pub async fn get_tx(
     saksaha_endpoint: String,
     hash: String,
@@ -405,61 +307,6 @@ pub async fn get_tx(
 
     Ok(json_response)
 }
-
-// pub fn generate_proof_1_to_2(
-//     // coin_1_old: OldCoin,
-//     coin_1_old: OldCoin,
-//     coin_1_new: NewCoin,
-//     coin_2_new: NewCoin,
-// ) -> Result<Proof<Bls12>, ProofError> {
-//     let hasher = Hasher::new();
-//     let constants = hasher.get_mimc_constants().to_vec();
-
-//     let de_params = sak_proofs::get_mimc_params_1_to_2(&constants);
-
-//     let c = CoinProofCircuit1to2 {
-//         hasher,
-//         coin_1_old,
-//         coin_1_new,
-//         coin_2_new,
-//         constants,
-//     };
-
-//     let proof = match groth16::create_random_proof(c, &de_params, &mut os_rng())
-//     {
-//         Ok(p) => p,
-//         Err(err) => {
-//             return Err(format!(
-//                 "Failed to generate groth16 proof, err: {}",
-//                 err
-//             )
-//             .into());
-//         }
-//     };
-
-//     Ok(proof)
-// }
-
-// pub async fn verify_proof_1_to_2(
-//     proof: Proof<Bls12>,
-//     public_inputs: &[Scalar],
-//     hasher: &Hasher,
-// ) -> bool {
-//     let constants = hasher.get_mimc_constants();
-//     let de_params = get_mimc_params_1_to_2(&constants);
-//     let pvk = groth16::prepare_verifying_key(&de_params.vk);
-
-//     match groth16::verify_proof(&pvk, &proof, public_inputs) {
-//         Ok(_) => {
-//             println!("verify success!");
-//             true
-//         }
-//         Err(err) => {
-//             println!("verify_proof(), err: {}", err);
-//             false
-//         }
-//     }
-// }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GetAuthPathRequest {

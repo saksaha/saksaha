@@ -9,7 +9,7 @@ use sak_types::{
     PourTxCandidate, Sn, Tx, TxCtrOp, TxHash, TxHeight, TxType,
 };
 use std::convert::TryInto;
-use type_extension::U8Arr32;
+
 
 impl LedgerDB {
     pub(crate) fn get_validator_sig(

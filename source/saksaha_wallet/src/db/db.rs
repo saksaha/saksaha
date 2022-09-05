@@ -119,7 +119,10 @@ impl WalletDB {
                     };
 
                     if let Some(tx) = resp.tx {
-                        old_coin_sn_vec.push(tx.get_sn());
+                        let sns = tx.get_sns();
+                        for sn in sns {
+                            old_coin_sn_vec.push(sn);
+                        }
 
                         self.schema
                             .raw

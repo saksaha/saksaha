@@ -138,11 +138,6 @@ impl Circuit<Scalar> for CoinProofCircuit2to2 {
                 || merkle_rt.ok_or(SynthesisError::AssignmentMissing),
             )?;
 
-            // cs.alloc_input(
-            //     || "merkle_rt_2",
-            //     || merkle_rt_2.ok_or(SynthesisError::AssignmentMissing),
-            // )?;
-
             cs.alloc_input(
                 || "sn_1_old",
                 || sn_1.ok_or(SynthesisError::AssignmentMissing),

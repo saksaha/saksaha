@@ -6,6 +6,7 @@ use crate::LedgerError;
 use crate::SyncPool;
 use log::info;
 use sak_crypto::MerkleTree;
+use sak_dist_ledger_meta::CM_TREE_DEPTH;
 use sak_proofs::Hasher;
 use sak_types::BlockCandidate;
 use sak_vm::VM;
@@ -14,18 +15,10 @@ use tokio::sync::broadcast;
 use tokio::sync::{broadcast::Sender, RwLock};
 
 const BLOCKCHAIN_EVENT_QUEUE_CAPACITY: usize = 32;
-const MERKLE_TREE_HEIGHT: usize = 16;
 
 pub struct DistLedger {
     pub apis: DistLedgerApis,
-    // pub(crate) ledger_db: LedgerDB,
-    // pub(crate) sync_pool: Arc<SyncPool>,
     pub ledger_event_tx: Arc<Sender<DistLedgerEvent>>,
-    // pub(crate) vm: VM,
-    // pub(crate) consensus: Box<dyn Consensus + Send + Sync>,
-    // runtime: Arc<Runtime>,
-    // pub(crate) hasher: Hasher,
-    // pub(crate) merkle_tree: MerkleTree,
 }
 
 pub struct DistLedgerArgs {
@@ -74,7 +67,7 @@ impl DistLedger {
 
         let hasher = Hasher::new();
 
-        let merkle_tree = MerkleTree::new(MERKLE_TREE_HEIGHT as u32);
+        let merkle_tree = MerkleTree::new(CM_TREE_DEPTH as u32);
 
         let apis = DistLedgerApis {
             ledger_db,
@@ -88,7 +81,6 @@ impl DistLedger {
         let dist_ledger = DistLedger {
             apis,
             ledger_event_tx,
-            // runtime,
         };
 
         if let Some(bc) = genesis_block {

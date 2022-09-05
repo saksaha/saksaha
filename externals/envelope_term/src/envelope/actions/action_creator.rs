@@ -20,7 +20,7 @@ use sak_rpc_interface::JsonResponse;
 use saksaha::QueryCtrResponse;
 use std::sync::Arc;
 use tokio::sync::RwLockWriteGuard;
-use type_extension::{U8Arr32, U8Array};
+use type_extension::U8Array;
 
 pub(crate) async fn restore_chat(
     saksaha_endpoint: String,
@@ -239,7 +239,7 @@ async fn send_messages(
     let my_sk = &ctx.credential.secret_key_str;
     let my_acc_addr = &ctx.credential.acc_addr;
 
-    let user_1_sk: U8Arr32 = U8Array::from_hex_string(my_sk.to_string())?;
+    let user_1_sk: [u8; 32] = U8Array::from_hex_string(my_sk.to_string())?;
 
     let selected_ch_id = state.selected_ch_id.clone();
 
@@ -381,7 +381,7 @@ async fn request_open_ch(
 
     {
         // =-=-=-=-=-= `open_ch` for initiator  =-=-=-=-=-=-=-=
-        let my_sk: U8Arr32 = U8Array::from_hex_string(my_sk)?;
+        let my_sk: [u8; 32] = U8Array::from_hex_string(my_sk)?;
 
         let open_ch = {
             let ch_id_enc = {

@@ -56,11 +56,7 @@ async fn test_dist_ledger_put_a_single_pour_tx() {
         let _dummy_tx_hash = dist_ledger
             .apis
             .ledger_db
-            .batch_put_tx(
-                &mut write_batch,
-                &dummy_pour_tx,
-                // &mut cm_idx_count
-            )
+            .batch_put_tx(&mut write_batch, &dummy_pour_tx)
             .expect("pour_tx should be written");
     }
 }

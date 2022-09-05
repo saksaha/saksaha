@@ -36,12 +36,6 @@ pub(crate) fn parse_mint_tx_candidate(
         cms.push(utils::convert_bytes_into_u8_32(b)?);
     }
 
-    // let cm = {
-    //     let p = parse.next_bytes()?;
-
-    //     utils::convert_bytes_into_u8_32(p)?
-    // };
-
     let v = {
         let p = parse.next_bytes()?;
 
@@ -82,9 +76,6 @@ pub(crate) fn parse_mint_tx_candidate(
 
 pub(crate) fn parse_mint_tx(parse: &mut Parse) -> Result<Tx, TrptError> {
     let mint_tx_candidate = parse_mint_tx_candidate(parse)?;
-
-    // let tx_height = parse.next_int()? as u128;
-    // let cm_idx_1 = parse.next_int()? as u128;
 
     let cm_count = parse.next_int()?;
 
@@ -132,17 +123,15 @@ pub(crate) fn parse_pour_tx_candidate(
         b.to_vec()
     };
 
-    let sn_1 = {
+    let sn_count = parse.next_int()?;
+
+    let mut sns = Vec::with_capacity(sn_count as usize);
+
+    for _ in 0..sn_count {
         let b = parse.next_bytes()?;
 
-        utils::convert_bytes_into_u8_32(b)?
-    };
-
-    // let sn_2 = {
-    //     let b = parse.next_bytes()?;
-
-    //     utils::convert_bytes_into_u8_32(b)?
-    // };
+        sns.push(utils::convert_bytes_into_u8_32(b)?);
+    }
 
     let cm_count = parse.next_int()?;
 
@@ -153,18 +142,6 @@ pub(crate) fn parse_pour_tx_candidate(
 
         cms.push(utils::convert_bytes_into_u8_32(b)?);
     }
-
-    // let cm_1 = {
-    //     let b = parse.next_bytes()?;
-
-    //     utils::convert_bytes_into_u8_32(b)?
-    // };
-
-    // let cm_2 = {
-    //     let b = parse.next_bytes()?;
-
-    //     utils::convert_bytes_into_u8_32(b)?
-    // };
 
     let merkle_rt = {
         let b = parse.next_bytes()?;
@@ -183,12 +160,8 @@ pub(crate) fn parse_pour_tx_candidate(
         author_sig,
         Some(ctr_addr),
         pi,
-        sn_1,
+        sns,
         cms,
-        // cm_count,
-        // sn_2,
-        // cm_1,
-        // cm_2,
         merkle_rt,
     );
 
@@ -205,8 +178,6 @@ pub(crate) fn parse_pour_tx(parse: &mut Parse) -> Result<Tx, TrptError> {
     for _ in 0..cm_count {
         cm_idxes.push(parse.next_int()?);
     }
-    // let cm_idx_1 = parse.next_int()? as u128;
-    // let cm_idx_2 = parse.next_int()? as u128;
 
     let pour_tx = PourTx {
         tx_candidate: pour_tx_candidate,
@@ -234,7 +205,6 @@ pub(crate) fn put_mint_tx_candidate_into_frame(
     for cm in tc.cms.iter() {
         frame.push_bulk(Bytes::copy_from_slice(cm));
     }
-    // frame.push_bulk(Bytes::copy_from_slice(&tc.cm_1));
     frame.push_bulk(Bytes::copy_from_slice(&tc.v));
     frame.push_bulk(Bytes::copy_from_slice(&tc.k));
     frame.push_bulk(Bytes::copy_from_slice(&tc.s));
@@ -245,8 +215,6 @@ pub(crate) fn put_mint_tx_into_frame(frame: &mut Frame, tx: MintTx) {
     let tc = tx.tx_candidate;
 
     put_mint_tx_candidate_into_frame(frame, tc);
-
-    // frame.push_int(tx.tx_height as u128);
 }
 
 pub(crate) fn put_pour_tx_candidate_into_frame(
@@ -262,13 +230,18 @@ pub(crate) fn put_pour_tx_candidate_into_frame(
     frame.push_bulk(Bytes::from(tc.author_sig));
     frame.push_bulk(Bytes::from(tc.ctr_addr));
     frame.push_bulk(Bytes::from(tc.pi));
-    frame.push_bulk(Bytes::copy_from_slice(&tc.sn_1));
+    frame.push_int(tc.sn_count);
+
+    for sn in tc.sns.iter() {
+        frame.push_bulk(Bytes::copy_from_slice(sn));
+    }
+
     frame.push_int(tc.cm_count);
+
     for cm in tc.cms.iter() {
         frame.push_bulk(Bytes::copy_from_slice(cm));
     }
-    // frame.push_bulk(Bytes::copy_from_slice(&tc.cm_1));
-    // frame.push_bulk(Bytes::copy_from_slice(&tc.cm_2));
+
     frame.push_bulk(Bytes::copy_from_slice(&tc.merkle_rt));
     frame.push_bulk(Bytes::from(tx_hash));
 }
@@ -285,6 +258,4 @@ pub(crate) fn put_pour_tx_into_frame(frame: &mut Frame, tx: PourTx) {
     for cm_idx in tx.cm_idxes {
         frame.push_int(cm_idx);
     }
-    // frame.push_int(tx.cm_idx_1);
-    // frame.push_int(tx.cm_idx_2);
 }

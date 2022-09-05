@@ -3,7 +3,7 @@ use super::CmIdx;
 use crate::Cm;
 use crate::{Tx, TxCtrOp, TxType};
 use serde::{Deserialize, Serialize};
-use type_extension::U8Arr32;
+
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct MintTx {
@@ -69,13 +69,13 @@ pub struct MintTxCandidate {
     pub cm_count: u128,
 
     //
-    pub v: U8Arr32,
+    pub v: [u8; 32],
 
     //
-    pub k: U8Arr32,
+    pub k: [u8; 32],
 
     //
-    pub s: U8Arr32,
+    pub s: [u8; 32],
 
     //
     tx_hash: String,
@@ -89,9 +89,9 @@ impl MintTxCandidate {
         ctr_addr: Option<String>,
         cms: Vec<Cm>,
         // cm_count: u128,
-        v: U8Arr32,
-        k: U8Arr32,
-        s: U8Arr32,
+        v: [u8; 32],
+        k: [u8; 32],
+        s: [u8; 32],
     ) -> MintTxCandidate {
         let ctr_addr = ctr_addr.unwrap_or(String::from(""));
         let cm_count = cms.len() as u128;

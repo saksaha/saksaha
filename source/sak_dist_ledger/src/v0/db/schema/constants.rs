@@ -3,8 +3,6 @@ pub(crate) mod keys {
 }
 
 pub(crate) mod cfs {
-    // pub const TX_HASH_BY_HEIGHT: &str = "tx_hash_by_height";
-
     pub const TX_HASH_BY_CTR_ADDR: &str = "tx_hash_by_ctr_addr";
 
     pub const TX_HASH_BY_SN: &str = "tx_hash_by_sn";
@@ -23,14 +21,6 @@ pub(crate) mod cfs {
 
     pub const CTR_ADDR: &str = "ctr_addr";
 
-    // pub const TX_HEIGHT: &str = "tx_height";
-
-    // pub const CM_IDX_1: &str = "cm_idx_1";
-
-    // pub const CM_IDX_2: &str = "cm_idx_2";
-
-    // pub const CM: &str = "cm";
-
     pub const CM_IDX: &str = "cm_idx";
 
     pub const CM_IDX_CM: &str = "cm_idx_cm";
@@ -41,21 +31,11 @@ pub(crate) mod cfs {
 
     pub const S: &str = "s";
 
-    pub const SN_1: &str = "sn_1";
-
-    pub const SN_2: &str = "sn_2";
+    pub const SNS: &str = "sns";
 
     pub const CMS: &str = "cms";
 
     pub const CM_COUNT: &str = "cm_count";
-
-    // pub const CM_1: &str = "cm_1";
-
-    // pub const CM_2: &str = "cm_2";
-
-    // pub const BLOCK_CM_COUNT: &str = "block_cm_count";
-
-    // pub const LEDGER_CM_COUNT: &str = "ledger_cm_count";
 
     pub const BLOCK_MERKLE_RT: &str = "block_merkle_rt";
 

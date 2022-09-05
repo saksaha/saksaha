@@ -3,18 +3,11 @@ use super::CmIdx;
 use crate::{Cm, Sn, Tx, TxCtrOp, TxType};
 use sak_crypto::sha3::digest::typenum::U8;
 use serde::{Deserialize, Serialize};
-use type_extension::U8Arr32;
-
-pub const GAS: u64 = 10;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct PourTx {
-    //
     pub tx_candidate: PourTxCandidate,
     pub cm_idxes: Vec<CmIdx>,
-    // pub cm_idx_1: CmIdx,
-    // pub cm_idx_2: CmIdx,
-    // pub tx_height: u128,
 }
 
 impl PourTx {
@@ -39,8 +32,8 @@ impl PourTx {
             .collect::<Vec<(CmIdx, Cm)>>()
     }
 
-    pub fn get_sn(&self) -> Sn {
-        self.tx_candidate.sn_1
+    pub fn get_sn(&self) -> Vec<Sn> {
+        self.tx_candidate.get_sns().to_owned()
     }
 }
 
@@ -73,23 +66,18 @@ pub struct PourTxCandidate {
     pub pi: Vec<u8>,
 
     //
-    pub sn_1: U8Arr32,
+    pub sns: Vec<Sn>,
 
     //
-    // pub sn_2: U8Arr32,
+    pub sn_count: u128,
 
-    //
-    // pub cm_1: U8Arr32,
-
-    // //
-    // pub cm_2: U8Arr32,
     pub cms: Vec<Cm>,
 
     //
     pub cm_count: u128,
 
     //
-    pub merkle_rt: U8Arr32,
+    pub merkle_rt: [u8; 32],
 
     //
     tx_hash: String,
@@ -102,12 +90,12 @@ impl PourTxCandidate {
         author_sig: String,
         ctr_addr: Option<String>,
         pi: Vec<u8>,
-        sn_1: U8Arr32,
+        sns: Vec<Sn>,
         cms: Vec<Cm>,
-        // cm_count: u128,
-        merkle_rt: U8Arr32,
+        merkle_rt: [u8; 32],
     ) -> PourTxCandidate {
         let ctr_addr = ctr_addr.unwrap_or(String::from(""));
+        let sn_count = sns.len() as u128;
         let cm_count = cms.len() as u128;
 
         let hashable_items = vec![
@@ -126,7 +114,8 @@ impl PourTxCandidate {
             author_sig,
             ctr_addr,
             pi,
-            sn_1,
+            sns,
+            sn_count,
             cms,
             cm_count,
             merkle_rt,
@@ -153,6 +142,10 @@ impl PourTxCandidate {
     pub fn get_cms(&self) -> &Vec<Cm> {
         &self.cms
     }
+
+    pub fn get_sns(&self) -> &Vec<Sn> {
+        &self.sns
+    }
 }
 
 impl std::fmt::Display for PourTxCandidate {
@@ -166,14 +159,14 @@ impl std::fmt::Display for PourTxCandidate {
         write!(
             f,
             "PourTx [created_at: {}, data: {:?}, author_sig: {}, ctr_addr: {},\
-            cms: {:?}, cm_count: {}, sn_1: {:?}, merkle_rt: {:?}]",
+            cms: {:?}, cm_count: {}, sns: {:?}, merkle_rt: {:?}]",
             self.created_at,
             data,
             self.author_sig,
             self.ctr_addr,
             self.cms,
             self.cm_count,
-            self.sn_1,
+            self.sns,
             self.merkle_rt,
         )
     }

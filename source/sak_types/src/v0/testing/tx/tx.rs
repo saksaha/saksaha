@@ -1,6 +1,6 @@
 use crate::v0::testing::values;
 use crate::{
-    MintTxCandidate, PourTxCandidate, Tx, VALIDATOR, VALIDATOR_CTR_ADDR,
+    Cm, MintTxCandidate, PourTxCandidate, Sn, Tx, VALIDATOR, VALIDATOR_CTR_ADDR,
 };
 use crate::{TxCandidate, TypesError};
 use sak_crypto::MerkleTree;
@@ -12,14 +12,13 @@ use sak_proofs::Hasher;
 use sak_proofs::NewCoin;
 use sak_proofs::OldCoin;
 use std::collections::HashMap;
-use type_extension::U8Arr32;
 use type_extension::U8Array;
 
 pub fn mock_pour_tc_custom(
     pi: Vec<u8>,
-    sn_1: U8Arr32,
-    cms: Vec<U8Arr32>,
-    merkle_rt: U8Arr32,
+    sns: Vec<Sn>,
+    cms: Vec<Cm>,
+    merkle_rt: [u8; 32],
 ) -> TxCandidate {
     let tc = PourTxCandidate::new(
         String::from("created_at_test"),
@@ -27,7 +26,7 @@ pub fn mock_pour_tc_custom(
         String::from("author_sig_test"),
         Some(String::from("ctr_addr_test")),
         pi,
-        sn_1,
+        sns,
         cms,
         merkle_rt,
     );
@@ -37,11 +36,11 @@ pub fn mock_pour_tc_custom(
 
 pub fn mock_pour_tx_custom(
     pi: Vec<u8>,
-    sn_1: U8Arr32,
-    cms: Vec<U8Arr32>,
-    merkle_rt: U8Arr32,
+    sns: Vec<Sn>,
+    cms: Vec<Cm>,
+    merkle_rt: [u8; 32],
 ) -> Tx {
-    let c = mock_pour_tc_custom(pi, sn_1, cms, merkle_rt);
+    let c = mock_pour_tc_custom(pi, sns, cms, merkle_rt);
 
     c.upgrade(0)
 }
@@ -88,21 +87,20 @@ pub fn mock_pour_tc_random() -> TxCandidate {
 
     let (addr_sk_1, addr_pk_1, r_1, s_1, rho_1, v_1, cm_1) = {
         let addr_sk =
-            ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
-                .unwrap();
+            ScalarExt::parse_arr(&U8Array::from_int(rand() as u64)).unwrap();
 
         let addr_pk = hasher.mimc_single_scalar(addr_sk).unwrap();
 
-        let r = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
-            .unwrap();
+        let r =
+            ScalarExt::parse_arr(&U8Array::from_int(rand() as u64)).unwrap();
 
-        let s = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
-            .unwrap();
+        let s =
+            ScalarExt::parse_arr(&U8Array::from_int(rand() as u64)).unwrap();
 
-        let rho = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
-            .unwrap();
+        let rho =
+            ScalarExt::parse_arr(&U8Array::from_int(rand() as u64)).unwrap();
 
-        let v = ScalarExt::parse_arr(&U8Array::from_int(600)).unwrap();
+        let v = ScalarExt::parse_arr(&U8Array::from_int(590)).unwrap();
 
         let cm = {
             let k = hasher.comm2_scalar(r, addr_pk, rho);
@@ -115,19 +113,18 @@ pub fn mock_pour_tc_random() -> TxCandidate {
 
     let (addr_sk_2, addr_pk_2, r_2, s_2, rho_2, v_2, cm_2) = {
         let addr_sk =
-            ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
-                .unwrap();
+            ScalarExt::parse_arr(&U8Array::from_int(rand() as u64)).unwrap();
 
         let addr_pk = hasher.mimc_single_scalar(addr_sk).unwrap();
 
-        let r = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
-            .unwrap();
+        let r =
+            ScalarExt::parse_arr(&U8Array::from_int(rand() as u64)).unwrap();
 
-        let s = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
-            .unwrap();
+        let s =
+            ScalarExt::parse_arr(&U8Array::from_int(rand() as u64)).unwrap();
 
-        let rho = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
-            .unwrap();
+        let rho =
+            ScalarExt::parse_arr(&U8Array::from_int(rand() as u64)).unwrap();
 
         let v = ScalarExt::parse_arr(&U8Array::from_int(400)).unwrap();
 
@@ -242,7 +239,7 @@ pub fn mock_pour_tc_random() -> TxCandidate {
         "author_sig".to_string(),
         None,
         pi_serialized,
-        sn_1.to_bytes(),
+        vec![sn_1.to_bytes()],
         vec![cm_1.to_bytes(), cm_2.to_bytes()],
         merkle_rt.to_bytes(),
     );
@@ -265,17 +262,19 @@ pub fn mock_pour_tc_1() -> TxCandidate {
         cm_1_old,
         sn_1,
     ) = {
-        let addr_sk = ScalarExt::parse_arr(&U8Array::from_int(0)).unwrap();
+        let addr_sk = values::get_addr_sk_1();
+
+        let addr_sk = ScalarExt::parse_arr(&addr_sk).unwrap();
 
         let addr_pk = hasher.mimc_single_scalar(addr_sk).unwrap();
 
-        let r = ScalarExt::parse_arr(&U8Array::from_int(0)).unwrap();
+        let r = ScalarExt::parse_u64(0).unwrap();
 
-        let s = ScalarExt::parse_arr(&U8Array::from_int(0)).unwrap();
+        let s = ScalarExt::parse_u64(0).unwrap();
 
-        let rho = ScalarExt::parse_arr(&U8Array::from_int(0)).unwrap();
+        let rho = ScalarExt::parse_u64(0).unwrap();
 
-        let v = ScalarExt::parse_arr(&U8Array::from_int(1000)).unwrap();
+        let v = ScalarExt::parse_u64(1000).unwrap();
 
         let cm = {
             let k = hasher.comm2_scalar(r, addr_pk, rho);
@@ -289,22 +288,19 @@ pub fn mock_pour_tc_1() -> TxCandidate {
     };
 
     let (addr_sk_1, addr_pk_1, r_1, s_1, rho_1, v_1, cm_1) = {
-        let addr_sk =
-            ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
-                .unwrap();
+        let addr_sk = values::get_addr_sk_1();
+
+        let addr_sk = ScalarExt::parse_arr(&addr_sk).unwrap();
 
         let addr_pk = hasher.mimc_single_scalar(addr_sk).unwrap();
 
-        let r = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
-            .unwrap();
+        let r = ScalarExt::parse_u64(0).unwrap();
 
-        let s = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
-            .unwrap();
+        let s = ScalarExt::parse_u64(0).unwrap();
 
-        let rho = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
-            .unwrap();
+        let rho = ScalarExt::parse_u64(0).unwrap();
 
-        let v = ScalarExt::parse_arr(&U8Array::from_int(600)).unwrap();
+        let v = ScalarExt::parse_u64(590).unwrap(); // Subtract GAS!
 
         let cm = {
             let k = hasher.comm2_scalar(r, addr_pk, rho);
@@ -316,20 +312,17 @@ pub fn mock_pour_tc_1() -> TxCandidate {
     };
 
     let (addr_sk_2, addr_pk_2, r_2, s_2, rho_2, v_2, cm_2) = {
-        let addr_sk =
-            ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
-                .unwrap();
+        let addr_sk = values::get_addr_sk_1();
+
+        let addr_sk = ScalarExt::parse_arr(&addr_sk).unwrap();
 
         let addr_pk = hasher.mimc_single_scalar(addr_sk).unwrap();
 
-        let r = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
-            .unwrap();
+        let r = ScalarExt::parse_u64(0).unwrap();
 
-        let s = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
-            .unwrap();
+        let s = ScalarExt::parse_u64(0).unwrap();
 
-        let rho = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
-            .unwrap();
+        let rho = ScalarExt::parse_u64(0).unwrap();
 
         let v = ScalarExt::parse_arr(&U8Array::from_int(400)).unwrap();
 
@@ -347,10 +340,10 @@ pub fn mock_pour_tc_1() -> TxCandidate {
     let merkle_nodes = {
         let mut m = HashMap::new();
 
-        let node_0_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
-        let node_1_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
-        let node_2_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
-        let node_3_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
+        let node_0_1 = ScalarExt::parse_u64(0).unwrap();
+        let node_1_1 = ScalarExt::parse_u64(0).unwrap();
+        let node_2_1 = ScalarExt::parse_u64(0).unwrap();
+        let node_3_1 = ScalarExt::parse_u64(0).unwrap();
         // let node_4_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
 
         m.insert("0_1", node_0_1);
@@ -376,8 +369,13 @@ pub fn mock_pour_tc_1() -> TxCandidate {
 
     let merkle_rt = *merkle_nodes.get("4_0").unwrap();
 
+    println!("\n123 mock pour tc merkle_rt: {:?}", merkle_rt.to_bytes());
+
     let auth_path_1 = {
         let v = merkle_tree.generate_auth_paths(0);
+
+        println!("auth_path_1: {:?}", v);
+
         let mut ret =
             [Some((Scalar::default(), false)); CM_TREE_DEPTH as usize];
 
@@ -437,7 +435,7 @@ pub fn mock_pour_tc_1() -> TxCandidate {
         "author_sig".to_string(),
         None,
         pi_serialized,
-        sn_1.to_bytes(),
+        vec![sn_1.to_bytes()],
         vec![cm_1.to_bytes(), cm_2.to_bytes()],
         merkle_rt.to_bytes(),
     );
@@ -632,7 +630,7 @@ pub fn mock_pour_tc_invalid_pi() -> TxCandidate {
         "author_sig".to_string(),
         None,
         pi_serialized,
-        sn_1.to_bytes(),
+        vec![sn_1.to_bytes()],
         vec![cm_1.to_bytes(), cm_2.to_bytes()],
         merkle_rt.to_bytes(),
     );
@@ -643,10 +641,10 @@ pub fn mock_pour_tc_invalid_pi() -> TxCandidate {
 }
 
 pub fn mock_mint_tc_custom(
-    cm: U8Arr32,
-    v: U8Arr32,
-    k: U8Arr32,
-    s: U8Arr32,
+    cm: [u8; 32],
+    v: [u8; 32],
+    k: [u8; 32],
+    s: [u8; 32],
 ) -> TxCandidate {
     // let tx_candidate = MintTxCandidate::new_dummy_custom(cm, v, k, s);
     let validator_wasm = VALIDATOR.to_vec();
@@ -687,6 +685,8 @@ pub fn mock_mint_tc_1() -> TxCandidate {
 
     let cm = hasher.comm2(&s, &v, &k.to_bytes()).unwrap();
 
+    println!("mock mint tc 1 cm: {:?}", cm.to_bytes());
+
     let tx_candidate = MintTxCandidate::new(
         String::from("created_at_mint_1"),
         validator_wasm,
@@ -718,6 +718,8 @@ pub fn mock_mint_tc_2() -> TxCandidate {
     let k = hasher.comm2(&r, &a_pk, &rho).unwrap();
 
     let cm = hasher.comm2(&s, &v, &k.to_bytes()).unwrap();
+
+    println!("mock mint tc 2 cm: {:?}", cm.to_bytes());
 
     let tx_candidate = MintTxCandidate::new(
         String::from("created_at_mint_2"),
