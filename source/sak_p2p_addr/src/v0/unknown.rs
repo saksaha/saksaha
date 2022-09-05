@@ -24,10 +24,10 @@ impl UnknownAddr {
         }
     }
 
-    pub fn new_from_socket_addr(addr: SocketAddr) -> UnknownAddr {
+    pub fn new_from_endpoint(ip: &String, disc_port: u16) -> UnknownAddr {
         UnknownAddr {
-            ip: addr.ip().to_string(),
-            disc_port: addr.port(),
+            ip: ip.to_string(),
+            disc_port,
             p2p_port: None,
             sig: None,
             public_key_str: None,

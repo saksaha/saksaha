@@ -115,6 +115,7 @@ pub(crate) async fn run(task: P2PTask) {
                     RwLock::new(PeerStatus::HandshakeInit),
                     addr,
                     peer_slot_guard,
+                    false,
                 );
 
                 Arc::new(p)

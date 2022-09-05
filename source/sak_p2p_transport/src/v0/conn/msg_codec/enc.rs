@@ -8,6 +8,8 @@ pub(crate) fn encode_into_frame(
 ) -> Result<&'static str, TrptError> {
     let (frame, msg_type) = match item {
         Msg::Ping(ping) => (ping.into_frame(), MsgType::PING),
+        Msg::HelloSyn(hello) => (hello.into_syn_frame(), MsgType::HELLO_SYN),
+        Msg::HelloAck(hello) => (hello.into_ack_frame(), MsgType::HELLO_SYN),
         Msg::HandshakeSyn(handshake) => {
             (handshake.into_syn_frame(), MsgType::HANDSHAKE_SYN)
         }

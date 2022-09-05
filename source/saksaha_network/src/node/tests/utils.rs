@@ -140,6 +140,7 @@ pub(crate) async fn make_test_context(
             None,
             None,
             None,
+            p2p_host.get_discovery().clone(),
         );
 
         Arc::new(ln)

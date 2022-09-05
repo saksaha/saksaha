@@ -1,24 +1,16 @@
-use crate::p2p::{P2PHost, P2PHostArgs};
-use crate::{
-    blockchain::Blockchain,
-    machine::Machine,
-    p2p::{
-        server::Server,
-        task::{runtime::P2PTaskRuntime, P2PTask},
-    },
+use crate::p2p::{
+    server::Server,
+    task::{runtime::P2PTaskRuntime, P2PTask},
 };
+use crate::p2p::{P2PHost, P2PHostArgs};
 use colored::*;
-use futures::{SinkExt, StreamExt};
 use log::info;
-use sak_crypto::{PublicKey, Signature};
 use sak_p2p_addr::{AddrStatus, UnknownAddr};
-use sak_p2p_discovery::{DiscAddr, Discovery, DiscoveryArgs};
+use sak_p2p_discovery::{Discovery, DiscoveryArgs};
 use sak_p2p_id::Identity;
 use sak_p2p_peertable::PeerTable;
-use sak_p2p_transport::Msg;
 use sak_task_queue::TaskQueue;
-use sak_types::{BlockCandidate, Tx};
-use std::{sync::Arc, time::Duration};
+use std::sync::Arc;
 
 async fn create_dummy_client(
     p2p_port: Option<u16>,
@@ -206,7 +198,9 @@ async fn create_client(
             identity.clone(),
             p2p_peer_table.clone(),
             p2p_discovery.addr_table.clone(),
-        );
+        )
+        .unwrap();
+
         Arc::new(s)
     };
 

@@ -1,6 +1,7 @@
 use super::{miner::Miner, peer_node::PeerNode};
 use crate::machine::Machine;
 use log::{info, warn};
+use sak_p2p_discovery::Discovery;
 use sak_p2p_peertable::PeerTable;
 use std::{sync::Arc, time::Duration};
 use tokio::time::Instant;
@@ -15,6 +16,7 @@ pub(crate) struct LocalNode {
     pub mine_interval: Option<u64>,
     pub node_task_interval: Duration,
     pub peer_register_interval: Duration,
+    pub discovery: Arc<Discovery>,
 }
 
 impl LocalNode {
@@ -25,6 +27,7 @@ impl LocalNode {
         mine_interval: Option<u64>,
         node_task_interval: Option<u64>,
         peer_register_interval: Option<u64>,
+        discovery: Arc<Discovery>,
     ) -> LocalNode {
         let node_task_interval = match node_task_interval {
             Some(i) => Duration::from_millis(i),
@@ -49,6 +52,7 @@ impl LocalNode {
             mine_interval,
             node_task_interval,
             peer_register_interval,
+            discovery,
         }
     }
 
@@ -80,7 +84,9 @@ impl LocalNode {
                 };
 
                 let peer_node = PeerNode {
+                    peer_table: self.peer_table.clone(),
                     peer: peer.clone(),
+                    discovery: self.discovery.clone(),
                     machine,
                     node_task_min_interval: self.node_task_interval.clone(),
                 };

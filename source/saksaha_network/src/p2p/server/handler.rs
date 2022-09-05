@@ -64,6 +64,7 @@ impl Handler {
                 RwLock::new(PeerStatus::HandshakeSuccess { at: Utc::now() }),
                 addr,
                 peer_slot_guard,
+                true,
             );
 
             Arc::new(p)
