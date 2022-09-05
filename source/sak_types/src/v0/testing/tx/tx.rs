@@ -98,21 +98,20 @@ pub fn mock_pour_tc_random() -> TxCandidate {
 
     let (addr_sk_1, addr_pk_1, r_1, s_1, rho_1, v_1, cm_1) = {
         let addr_sk =
-            ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
-                .unwrap();
+            ScalarExt::parse_arr(&U8Array::from_int(rand() as u64)).unwrap();
 
         let addr_pk = hasher.mimc_single_scalar(addr_sk).unwrap();
 
-        let r = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
-            .unwrap();
+        let r =
+            ScalarExt::parse_arr(&U8Array::from_int(rand() as u64)).unwrap();
 
-        let s = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
-            .unwrap();
+        let s =
+            ScalarExt::parse_arr(&U8Array::from_int(rand() as u64)).unwrap();
 
-        let rho = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
-            .unwrap();
+        let rho =
+            ScalarExt::parse_arr(&U8Array::from_int(rand() as u64)).unwrap();
 
-        let v = ScalarExt::parse_arr(&U8Array::from_int(600)).unwrap();
+        let v = ScalarExt::parse_arr(&U8Array::from_int(590)).unwrap();
 
         let cm = {
             let k = hasher.comm2_scalar(r, addr_pk, rho);
@@ -125,19 +124,18 @@ pub fn mock_pour_tc_random() -> TxCandidate {
 
     let (addr_sk_2, addr_pk_2, r_2, s_2, rho_2, v_2, cm_2) = {
         let addr_sk =
-            ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
-                .unwrap();
+            ScalarExt::parse_arr(&U8Array::from_int(rand() as u64)).unwrap();
 
         let addr_pk = hasher.mimc_single_scalar(addr_sk).unwrap();
 
-        let r = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
-            .unwrap();
+        let r =
+            ScalarExt::parse_arr(&U8Array::from_int(rand() as u64)).unwrap();
 
-        let s = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
-            .unwrap();
+        let s =
+            ScalarExt::parse_arr(&U8Array::from_int(rand() as u64)).unwrap();
 
-        let rho = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
-            .unwrap();
+        let rho =
+            ScalarExt::parse_arr(&U8Array::from_int(rand() as u64)).unwrap();
 
         let v = ScalarExt::parse_arr(&U8Array::from_int(400)).unwrap();
 
@@ -329,7 +327,7 @@ pub fn mock_pour_tc_1() -> TxCandidate {
         let rho = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
             .unwrap();
 
-        let v = ScalarExt::parse_arr(&U8Array::from_int(600)).unwrap();
+        let v = ScalarExt::parse_arr(&U8Array::from_int(590)).unwrap();
 
         let cm = {
             let k = hasher.comm2_scalar(r, addr_pk, rho);
