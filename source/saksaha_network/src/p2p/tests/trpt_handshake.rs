@@ -1,5 +1,4 @@
 use crate::p2p::testing::{self, MockClient};
-use crate::p2p::tests::utils;
 use crate::tests::TestUtil;
 use std::time::Duration;
 

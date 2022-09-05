@@ -1,16 +1,6 @@
 use crate::p2p::testing::{self, MockClient};
-use crate::p2p::tests::utils;
 use crate::tests::TestUtil;
-use chrono::Utc;
-use sak_p2p_addr::{AddrStatus, KnownAddr, UnknownAddr};
-use sak_p2p_discovery::DiscAddr;
-use sak_p2p_peertable::{Peer, PeerStatus};
-use sak_p2p_transport::handshake::{self, HandshakeInitArgs};
-use sak_p2p_transport::Conn;
-use std::sync::Arc;
 use std::time::Duration;
-use tokio::net::TcpStream;
-use tokio::sync::RwLock;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_find_arb_peer_successfully() {
