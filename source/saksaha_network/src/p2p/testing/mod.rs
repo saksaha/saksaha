@@ -207,3 +207,38 @@ pub(crate) async fn mock_host_3() -> MockClient {
     )
     .await
 }
+
+pub(crate) async fn mock_host_4() -> MockClient {
+    mock_client(
+        "test_4".to_string(), // app_prefix
+        Some(35525),          // p2p_port
+        Some(35524),          // disc_port
+        String::from(
+            "\
+                f56c0091e188099de0d982f9bd6132ab\
+                c9e4aa0becafb96ae169526912eb72b2",
+        ),
+        String::from(
+            "\
+                0442c686b6e87e2b38958f71d6d6e9d0\
+                d64eae30a56ae5265c02deede65e6f4f\
+                bd41b6d68ed561ea0dd878c0d388e142\
+                084f1c53edef1771fc2734b1936960894d",
+        ),
+        vec![UnknownAddr {
+            ip: String::from("127.0.0.1"),
+            disc_port: 35520,
+            p2p_port: None,
+            sig: None,
+            public_key_str: Some(String::from(
+                "\
+                04240874d8c323c22a571f735e835ed2\
+                f0619893a3989e557b1c9b4c699ac92b\
+                84d0dc478108629c0353f2876941f90d\
+                4b36346bcc19c6b625422adffb53b3a6af",
+            )),
+            status: AddrStatus::Initialized,
+        }],
+    )
+    .await
+}

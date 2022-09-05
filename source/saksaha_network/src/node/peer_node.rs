@@ -117,6 +117,7 @@ impl PeerNode {
                                     &node_task_queue,
                                     &self.peer,
                                     &self.peer_table,
+                                    &self.discovery,
                                 )
                                 .await;
                             }

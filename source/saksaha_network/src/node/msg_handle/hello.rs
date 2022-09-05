@@ -61,15 +61,15 @@ pub(in crate::node) async fn recv_hello_syn(
     // unknown_addrs: Vec<UnknownAddr>,
     hello_msg: HelloMsg,
     peer_table: &Arc<PeerTable>,
+    discovery: &Arc<Discovery>,
     task_queue: &Arc<TaskQueue<NodeTask>>,
     mut conn: RwLockWriteGuard<'_, UpgradedConn>,
 ) -> SendReceipt {
-    // enqueue
-    // task_queue
-    //     .push_back(NodeTask::SendTxSyn {
-    //         tx_hashes: tx_hash_ack.tx_hashes,
-    //     })
-    //     .await?;
+    let HelloMsg { unknown_addrs } = hello_msg;
+
+    for unknown_addr in unknown_addrs {
+        discovery.enqueue_who_are_you(&unknown_addr).await;
+    }
 
     let unknown_addrs = peer_table.get_peer_addrs().await;
 
