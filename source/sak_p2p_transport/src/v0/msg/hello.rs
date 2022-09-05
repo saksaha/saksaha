@@ -1,10 +1,12 @@
 use crate::{MsgType, TrptError};
 use bytes::{BufMut, Bytes, BytesMut};
+use sak_p2p_addr::UnknownAddr;
 use sak_p2p_frame::{Frame, Parse};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Debug)]
 pub struct HelloMsg {
+    unknown_addrs: Vec<UnknownAddr>,
     // pub instance_id: String,
     // pub src_p2p_port: u16,
     // pub src_public_key_str: String,
@@ -12,7 +14,9 @@ pub struct HelloMsg {
 }
 
 impl HelloMsg {
-    pub fn new(// src_p2p_port: u16,
+    pub fn new(
+        unknown_addrs: Vec<UnknownAddr>,
+        // src_p2p_port: u16,
         // src_public_key_str: String,
         // dst_public_key_str: String,
     ) -> Result<HelloMsg, String> {
@@ -30,14 +34,32 @@ impl HelloMsg {
         //     since_the_epoch.as_micros() % 100000,
         // );
 
-        Ok(HelloMsg {})
+        Ok(HelloMsg { unknown_addrs })
     }
 
     pub fn from_parse(parse: &mut Parse) -> Result<HelloMsg, TrptError> {
-        let src_p2p_port = {
-            let p = parse.next_int()? as u16;
-            p
-        };
+        let addr_count = parse.next_int()? as u16;
+
+        let mut v = Vec::with_capacity(addr_count as usize);
+
+        for _ in 0..addr_count {
+            let ip: String = {
+                let ip = parse.next_bytes()?;
+
+                std::str::from_utf8(ip.as_ref())?.into()
+            };
+
+            let disc_port = parse.next_int()? as u16;
+
+            let unknown_addr = UnknownAddr::new_from_endpoint(&ip, disc_port);
+
+            v.push(unknown_addr)
+        }
+
+        // let src_p2p_port = {
+        //     let p = parse.next_int()? as u16;
+        //     p
+        // };
 
         // let instance_id = {
         //     let k = parse.next_bytes()?;
@@ -55,6 +77,7 @@ impl HelloMsg {
         // };
 
         let h = HelloMsg {
+            unknown_addrs: v,
             // instance_id,
             // src_p2p_port,
             // src_public_key_str,
@@ -86,10 +109,30 @@ impl HelloMsg {
         // };
 
         frame.push_bulk(Bytes::from(msg_type));
-        // frame.push_int(self.src_p2p_port as u128);
-        // frame.push_bulk(instance_id_bytes.into());
-        // frame.push_bulk(src_public_key_bytes.into());
-        // frame.push_bulk(dst_public_key_bytes.into());
+
+        // addr count
+        let addr_count = self.unknown_addrs.len();
+        frame.push_int(addr_count as u128);
+
+        for idx in 0..addr_count {
+            // frame.push_bulk(ip);
+            // frame.push_int(disc_port);
+
+            let unknown_addr = &self.unknown_addrs[idx];
+
+            let ip = {
+                let mut ip = BytesMut::new();
+
+                ip.put(unknown_addr.ip.as_bytes());
+
+                ip
+            };
+
+            frame.push_bulk(ip.into());
+
+            frame.push_int(unknown_addr.disc_port as u128);
+        }
+
         frame
     }
 

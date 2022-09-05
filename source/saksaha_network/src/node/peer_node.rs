@@ -55,6 +55,7 @@ impl PeerNode {
 
         {
             // say hello
+
             let unknown_addrs = self.peer_table.get_peer_addrs().await;
 
             if !self.peer.is_initiator {
@@ -113,6 +114,7 @@ impl PeerNode {
                                     conn_lock,
                                     &node_task_queue,
                                     &self.peer,
+                                    &self.peer_table,
                                 )
                                 .await;
                             }

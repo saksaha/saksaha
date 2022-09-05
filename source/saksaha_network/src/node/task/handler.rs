@@ -16,8 +16,7 @@ pub(in crate::node) async fn handle_task<'a>(
 
     let res = match task {
         NodeTask::SendHelloSyn { unknown_addrs } => {
-            msg_handle::send_hello_syn(conn_lock, unknown_addrs, task_queue)
-                .await
+            msg_handle::send_hello_syn(conn_lock, unknown_addrs).await
         }
         NodeTask::SendTxHashSyn { tx_hashes } => {
             msg_handle::send_tx_hash_syn(conn_lock, tx_hashes, task_queue).await

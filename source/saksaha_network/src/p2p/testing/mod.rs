@@ -1,17 +1,30 @@
-use crate::p2p::{P2PHost, P2PHostArgs};
+use std::sync::Arc;
+
+use crate::{
+    blockchain::Blockchain,
+    machine::Machine,
+    node::LocalNode,
+    p2p::{P2PHost, P2PHostArgs},
+};
 use sak_p2p_addr::{AddrStatus, UnknownAddr};
 use sak_p2p_discovery::{Discovery, DiscoveryArgs};
 use sak_p2p_id::Identity;
 use sak_p2p_peertable::PeerTable;
-use std::sync::Arc;
+
+#[derive(Clone)]
+pub(crate) struct MockClient {
+    pub(crate) p2p_host: Arc<P2PHost>,
+    pub(crate) local_node: Arc<LocalNode>,
+}
 
 async fn mock_client(
+    app_prefix: String,
     p2p_port: Option<u16>,
     disc_port: Option<u16>,
     secret: String,
     public_key_str: String,
     bootstrap_addrs: Vec<UnknownAddr>,
-) -> Arc<P2PHost> {
+) -> MockClient {
     let (p2p_socket, p2p_port) = sak_utils_net::bind_tcp_socket(p2p_port)
         .await
         .expect("p2p socket should be initialized");
@@ -72,13 +85,41 @@ async fn mock_client(
     //     p2p_host,
     // }
 
-    p2p_host
+    let blockchain =
+        Blockchain::init(app_prefix, None, None, None, identity.clone())
+            .await
+            .unwrap();
+
+    let machine = {
+        let m = Machine { blockchain };
+
+        Arc::new(m)
+    };
+
+    let local_node = {
+        let ln = LocalNode::new(
+            peer_table,
+            machine.clone(),
+            false,
+            None,
+            None,
+            None,
+        );
+
+        Arc::new(ln)
+    };
+
+    MockClient {
+        p2p_host,
+        local_node,
+    }
 }
 
-pub(crate) async fn mock_host_1() -> Arc<P2PHost> {
+pub(crate) async fn mock_host_1() -> MockClient {
     mock_client(
-        Some(35519), // p2p_port
-        Some(35518), // disc_port
+        "test_1".to_string(), // app_prefix
+        Some(35519),          // p2p_port
+        Some(35518),          // disc_port
         String::from(
             "\
                 7297b903877a957748b74068d63d6d566\
@@ -96,10 +137,11 @@ pub(crate) async fn mock_host_1() -> Arc<P2PHost> {
     .await
 }
 
-pub(crate) async fn mock_host_2() -> Arc<P2PHost> {
+pub(crate) async fn mock_host_2() -> MockClient {
     mock_client(
-        Some(35521), // p2p_port
-        Some(35520), // disc_port
+        "test_2".to_string(), // app_prefix
+        Some(35521),          // p2p_port
+        Some(35520),          // disc_port
         String::from(
             "\
                 aa99cfd91cc6f3b541d28f3e0707f9c7b\
@@ -130,10 +172,11 @@ pub(crate) async fn mock_host_2() -> Arc<P2PHost> {
     .await
 }
 
-pub(crate) async fn mock_host_3() -> Arc<P2PHost> {
+pub(crate) async fn mock_host_3() -> MockClient {
     mock_client(
-        Some(35523), // p2p_port
-        Some(35522), // disc_port
+        "test_3".to_string(), // app_prefix
+        Some(35523),          // p2p_port
+        Some(35522),          // disc_port
         String::from(
             "\
                 e7f0a95afb2c782cf9247d5f24c728fa\

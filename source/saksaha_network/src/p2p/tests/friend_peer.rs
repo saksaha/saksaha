@@ -1,4 +1,4 @@
-use crate::p2p::testing;
+use crate::p2p::testing::{self, MockClient};
 use crate::p2p::tests::utils;
 use crate::tests::TestUtil;
 use chrono::Utc;
@@ -17,16 +17,27 @@ async fn test_find_arb_peer_successfully() {
     sak_test_utils::init_test_log();
     TestUtil::init_test(vec!["test"]);
 
-    let mock_host_1 = testing::mock_host_1().await;
-    let mock_host_2 = testing::mock_host_2().await;
+    let MockClient {
+        p2p_host: mock_host_1,
+        local_node: mock_local_node_1,
+    } = testing::mock_host_1().await;
+
+    let MockClient {
+        p2p_host: mock_host_2,
+        local_node: mock_local_node_2,
+    } = testing::mock_host_2().await;
 
     let mock_host_1_clone = mock_host_1.clone();
     let mock_host_2_clone = mock_host_2.clone();
 
-    tokio::spawn(async move { tokio::join!(mock_host_1_clone.run()) });
-    tokio::spawn(async move { tokio::join!(mock_host_2_clone.run()) });
+    tokio::spawn(async move {
+        tokio::join!(mock_host_1_clone.run(), mock_local_node_1.run())
+    });
+    tokio::spawn(async move {
+        tokio::join!(mock_host_2_clone.run(), mock_local_node_2.run())
+    });
 
-    tokio::time::sleep(Duration::from_secs(3)).await;
+    tokio::time::sleep(Duration::from_secs(7)).await;
 
     let _ = {
         let check_1 = match mock_host_1
@@ -55,11 +66,18 @@ async fn test_find_arb_peer_successfully() {
         assert_eq!(check_2, true);
     };
 
-    let mock_host_3 = testing::mock_host_3().await;
+    println!("\nMock Client 3 starts\n");
+
+    let MockClient {
+        p2p_host: mock_host_3,
+        local_node: mock_local_node_3,
+    } = testing::mock_host_3().await;
 
     let mock_host_3_clone = mock_host_3.clone();
 
-    tokio::spawn(async move { tokio::join!(mock_host_3_clone.run()) });
+    tokio::spawn(async move {
+        tokio::join!(mock_host_3_clone.run(), mock_local_node_3.run())
+    });
 
     println!("33 poower");
     tokio::time::sleep(Duration::from_secs(7)).await;
@@ -131,8 +149,15 @@ async fn test_find_friend_peer_successfully() {
     sak_test_utils::init_test_log();
     TestUtil::init_test(vec!["test"]);
 
-    let mock_host_1 = testing::mock_host_1().await;
-    let mock_host_2 = testing::mock_host_2().await;
+    let MockClient {
+        p2p_host: mock_host_1,
+        local_node: mock_local_node_1,
+    } = testing::mock_host_1().await;
+
+    let MockClient {
+        p2p_host: mock_host_2,
+        local_node: mock_local_node_2,
+    } = testing::mock_host_2().await;
 
     let mock_host_1_clone = mock_host_1.clone();
     let mock_host_2_clone = mock_host_2.clone();
