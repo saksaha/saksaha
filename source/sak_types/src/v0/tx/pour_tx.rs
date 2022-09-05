@@ -4,17 +4,10 @@ use crate::{Cm, Sn, Tx, TxCtrOp, TxType};
 use sak_crypto::sha3::digest::typenum::U8;
 use serde::{Deserialize, Serialize};
 
-
-pub const GAS: u64 = 10;
-
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct PourTx {
-    //
     pub tx_candidate: PourTxCandidate,
     pub cm_idxes: Vec<CmIdx>,
-    // pub cm_idx_1: CmIdx,
-    // pub cm_idx_2: CmIdx,
-    // pub tx_height: u128,
 }
 
 impl PourTx {
@@ -77,12 +70,6 @@ pub struct PourTxCandidate {
 
     //
     // pub sn_2: [u8; 32],
-
-    //
-    // pub cm_1: [u8; 32],
-
-    // //
-    // pub cm_2: [u8; 32],
     pub sns: Vec<Sn>,
 
     //
@@ -109,7 +96,6 @@ impl PourTxCandidate {
         pi: Vec<u8>,
         sns: Vec<Sn>,
         cms: Vec<Cm>,
-        // cm_count: u128,
         merkle_rt: [u8; 32],
     ) -> PourTxCandidate {
         let ctr_addr = ctr_addr.unwrap_or(String::from(""));

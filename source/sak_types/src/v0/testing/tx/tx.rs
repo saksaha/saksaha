@@ -272,32 +272,19 @@ pub fn mock_pour_tc_1() -> TxCandidate {
         cm_1_old,
         sn_1,
     ) = {
-        // let v = U8Array::from_int(1000);
-
-        // let s = values::get_s_1();
-
-        // let r = values::get_r_1();
-
-        // let rho = values::get_rho_1();
-
         let addr_sk = values::get_addr_sk_1();
 
-        // let addr_pk = hasher.mimc_single(&addr_sk).unwrap();
-
-        // let k = hasher.comm2(&r, &addr_pk.to_bytes(), &rho).unwrap();
-
-        // let cm = hasher.comm2(&s, &v, &k.to_bytes()).unwrap();
         let addr_sk = ScalarExt::parse_arr(&addr_sk).unwrap();
 
         let addr_pk = hasher.mimc_single_scalar(addr_sk).unwrap();
 
-        let r = ScalarExt::parse_arr(&U8Array::from_int(0)).unwrap();
+        let r = ScalarExt::parse_u64(0).unwrap();
 
-        let s = ScalarExt::parse_arr(&U8Array::from_int(0)).unwrap();
+        let s = ScalarExt::parse_u64(0).unwrap();
 
-        let rho = ScalarExt::parse_arr(&U8Array::from_int(0)).unwrap();
+        let rho = ScalarExt::parse_u64(0).unwrap();
 
-        let v = ScalarExt::parse_arr(&U8Array::from_int(1000)).unwrap();
+        let v = ScalarExt::parse_u64(1000).unwrap();
 
         let cm = {
             let k = hasher.comm2_scalar(r, addr_pk, rho);
@@ -311,22 +298,19 @@ pub fn mock_pour_tc_1() -> TxCandidate {
     };
 
     let (addr_sk_1, addr_pk_1, r_1, s_1, rho_1, v_1, cm_1) = {
-        let addr_sk =
-            ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
-                .unwrap();
+        let addr_sk = values::get_addr_sk_1();
+
+        let addr_sk = ScalarExt::parse_arr(&addr_sk).unwrap();
 
         let addr_pk = hasher.mimc_single_scalar(addr_sk).unwrap();
 
-        let r = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
-            .unwrap();
+        let r = ScalarExt::parse_u64(0).unwrap();
 
-        let s = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
-            .unwrap();
+        let s = ScalarExt::parse_u64(0).unwrap();
 
-        let rho = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
-            .unwrap();
+        let rho = ScalarExt::parse_u64(0).unwrap();
 
-        let v = ScalarExt::parse_arr(&U8Array::from_int(590)).unwrap();
+        let v = ScalarExt::parse_u64(590).unwrap(); // Subtract GAS!
 
         let cm = {
             let k = hasher.comm2_scalar(r, addr_pk, rho);
@@ -338,20 +322,17 @@ pub fn mock_pour_tc_1() -> TxCandidate {
     };
 
     let (addr_sk_2, addr_pk_2, r_2, s_2, rho_2, v_2, cm_2) = {
-        let addr_sk =
-            ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
-                .unwrap();
+        let addr_sk = values::get_addr_sk_1();
+
+        let addr_sk = ScalarExt::parse_arr(&addr_sk).unwrap();
 
         let addr_pk = hasher.mimc_single_scalar(addr_sk).unwrap();
 
-        let r = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
-            .unwrap();
+        let r = ScalarExt::parse_u64(0).unwrap();
 
-        let s = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
-            .unwrap();
+        let s = ScalarExt::parse_u64(0).unwrap();
 
-        let rho = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
-            .unwrap();
+        let rho = ScalarExt::parse_u64(0).unwrap();
 
         let v = ScalarExt::parse_arr(&U8Array::from_int(400)).unwrap();
 
@@ -369,10 +350,10 @@ pub fn mock_pour_tc_1() -> TxCandidate {
     let merkle_nodes = {
         let mut m = HashMap::new();
 
-        let node_0_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
-        let node_1_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
-        let node_2_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
-        let node_3_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
+        let node_0_1 = ScalarExt::parse_u64(0).unwrap();
+        let node_1_1 = ScalarExt::parse_u64(0).unwrap();
+        let node_2_1 = ScalarExt::parse_u64(0).unwrap();
+        let node_3_1 = ScalarExt::parse_u64(0).unwrap();
         // let node_4_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
 
         m.insert("0_1", node_0_1);

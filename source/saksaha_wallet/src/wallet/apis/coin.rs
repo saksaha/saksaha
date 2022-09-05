@@ -5,6 +5,7 @@ use sak_contract_std::CtrRequest;
 use sak_crypto::encode_hex;
 use sak_crypto::Scalar;
 use sak_crypto::ScalarExt;
+use sak_dist_ledger_meta::GAS;
 use sak_proofs::CoinProof;
 use sak_proofs::Hasher;
 use sak_proofs::NewCoin;
@@ -13,9 +14,6 @@ use sak_types::AccountBalance;
 use sak_types::CoinRecord;
 use sak_types::CoinStatus;
 use std::convert::TryInto;
-
-
-const GAS: u64 = 10;
 
 impl Wallet {
     pub async fn get_balance(
