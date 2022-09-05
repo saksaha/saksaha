@@ -72,16 +72,6 @@ pub fn mock_pour_tc_random() -> TxCandidate {
         let rho =
             ScalarExt::parse_arr(&U8Array::from_int(rand() as u64)).unwrap();
 
-        // let addr_sk = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
-
-        // let addr_pk = hasher.mimc_single_scalar(addr_sk).unwrap();
-
-        // let r = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
-
-        // let s = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
-
-        // let rho = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
-
         let v = ScalarExt::parse_arr(&U8Array::from_int(1000)).unwrap();
 
         let cm = {
@@ -436,16 +426,6 @@ pub fn mock_pour_tc_1() -> TxCandidate {
     let pi =
         CoinProof::generate_proof_1_to_2(coin_1_old, coin_1_new, coin_2_new)
             .unwrap();
-
-    // rt, sn, cm, cm
-    let a = CoinProof::verify_proof_1_to_2(
-        pi.clone(),
-        &[merkle_rt, sn_1, cm_1, cm_2],
-        &hasher,
-    )
-    .unwrap();
-
-    println!("33 123123 a: {}", a);
 
     let pi_serialized = CoinProof::serialize_pi(&pi).unwrap();
 

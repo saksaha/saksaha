@@ -35,8 +35,6 @@ impl LedgerDB {
 
         let block_merkle_rt = self.get_block_merkle_rt(&block_hash)?;
 
-        // let block_cm_count = self.get_block_cm_count(&block_hash)?;
-
         match (
             validator_sig,
             tx_hashes,
@@ -44,21 +42,9 @@ impl LedgerDB {
             created_at,
             block_height,
             block_merkle_rt,
-            // block_cm_count,
         ) {
-            (
-                Some(vs),
-                Some(th),
-                Some(ws),
-                Some(ca),
-                Some(bh),
-                Some(mr),
-                // Some(bcc),
-            ) => {
-                let b = Block::new(
-                    vs, th, ws, ca, bh, mr,
-                    // bcc
-                );
+            (Some(vs), Some(th), Some(ws), Some(ca), Some(bh), Some(mr)) => {
+                let b = Block::new(vs, th, ws, ca, bh, mr);
                 return Ok(Some(b));
             }
             (

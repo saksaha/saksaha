@@ -3,21 +3,6 @@ use crate::{LedgerError, MerkleNodeLoc};
 use sak_kv_db::{IteratorMode, WriteBatch};
 
 impl LedgerDB {
-    // pub(crate) fn batch_put_ledger_cm_count(
-    //     &self,
-    //     // db: &DB,
-    //     batch: &mut WriteBatch,
-    //     cm_count: u128,
-    // ) -> Result<(), LedgerError> {
-    //     let cf = self.make_cf_handle(&self.db, cfs::LEDGER_CM_COUNT)?;
-
-    //     let v = cm_count.to_be_bytes();
-
-    //     batch.put_cf(&cf, keys::SINGLETON, &v);
-
-    //     Ok(())
-    // }
-
     pub(crate) fn get_latest_cm_idx(
         &self,
     ) -> Result<Option<u128>, LedgerError> {

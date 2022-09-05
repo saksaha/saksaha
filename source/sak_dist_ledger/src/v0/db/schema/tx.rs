@@ -104,8 +104,6 @@ impl LedgerDB {
 
         let pi = self.get_pi(tx_hash)?.ok_or("pi should exist")?;
 
-        // let sn_1 = self.get_sn_1(tx_hash)?.ok_or("sn_1 should exist")?;
-
         let sns = self.get_sns(tx_hash)?.ok_or("sn_1 should exist")?;
 
         let cms = self.get_cms(tx_hash)?.ok_or("cms should exist")?;

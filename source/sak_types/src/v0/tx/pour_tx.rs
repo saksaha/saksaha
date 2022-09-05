@@ -66,10 +66,6 @@ pub struct PourTxCandidate {
     pub pi: Vec<u8>,
 
     //
-    // pub sn_1: [u8; 32],
-
-    //
-    // pub sn_2: [u8; 32],
     pub sns: Vec<Sn>,
 
     //
@@ -163,7 +159,7 @@ impl std::fmt::Display for PourTxCandidate {
         write!(
             f,
             "PourTx [created_at: {}, data: {:?}, author_sig: {}, ctr_addr: {},\
-            cms: {:?}, cm_count: {}, sn_1: {:?}, merkle_rt: {:?}]",
+            cms: {:?}, cm_count: {}, sns: {:?}, merkle_rt: {:?}]",
             self.created_at,
             data,
             self.author_sig,

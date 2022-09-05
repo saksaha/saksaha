@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SendPourTxRequest {
     pub created_at: String,
@@ -22,13 +21,8 @@ impl SendPourTxRequest {
         author_sig: String,
         ctr_addr: Option<String>,
         pi: Vec<u8>,
-        // sn_1: [u8; 32],
         sns: Vec<[u8; 32]>,
-        // sn_2: [u8; 32],
         cms: Vec<[u8; 32]>,
-        // cm_count: u128,
-        // cm_1: [u8; 32],
-        // cm_2: [u8; 32],
         merkle_rt: [u8; 32],
     ) -> SendPourTxRequest {
         SendPourTxRequest {
@@ -39,10 +33,6 @@ impl SendPourTxRequest {
             pi,
             sns,
             cms,
-            // cm_count,
-            // sn_2,
-            // cm_1,
-            // cm_2,
             merkle_rt,
         }
     }

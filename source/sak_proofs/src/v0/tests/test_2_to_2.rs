@@ -318,7 +318,6 @@ pub fn make_test_context_2_to_2() -> TestContext {
         v_2_old,
         cm_2_old,
         auth_path_2,
-        // merkle_rt_2,
         sn_2,
         addr_sk_1,
         addr_pk_1,
