@@ -1,6 +1,7 @@
 use super::NodeTask;
 use crate::{machine::Machine, node::msg_handle};
 use log::{debug, error, warn};
+use sak_p2p_discovery::Discovery;
 use sak_p2p_transport::UpgradedConn;
 use sak_task_queue::TaskQueue;
 use std::sync::Arc;
@@ -11,12 +12,19 @@ pub(in crate::node) async fn handle_task<'a>(
     task_queue: &Arc<TaskQueue<NodeTask>>,
     conn_lock: RwLockWriteGuard<'a, UpgradedConn>,
     machine: &Arc<Machine>,
+    discovery: &Arc<Discovery>,
 ) {
     let task_type = task.to_string();
 
     let res = match task {
         NodeTask::SendHelloSyn { unknown_addrs } => {
-            msg_handle::send_hello_syn(conn_lock, unknown_addrs).await
+            msg_handle::send_hello_syn(
+                conn_lock,
+                discovery,
+                unknown_addrs,
+                task_queue,
+            )
+            .await
         }
         NodeTask::SendTxHashSyn { tx_hashes } => {
             msg_handle::send_tx_hash_syn(conn_lock, tx_hashes, task_queue).await

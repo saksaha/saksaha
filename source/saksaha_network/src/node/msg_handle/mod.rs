@@ -31,8 +31,9 @@ pub(in crate::node) async fn handle_msg<'a>(
     peer_table: &Arc<PeerTable>,
 ) -> Result<(), SaksahaError> {
     let receipt: SendReceipt = match msg {
-        Msg::HelloSyn(tx_hash_syn) => {
-            hello::recv_hello_syn(conn_lock, peer_table).await
+        Msg::HelloSyn(hello_msg) => {
+            hello::recv_hello_syn(hello_msg, peer_table, task_queue, conn_lock)
+                .await
         }
         Msg::TxHashSyn(tx_hash_syn) => {
             tx_hash::recv_tx_hash_syn(

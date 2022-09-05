@@ -4,6 +4,7 @@ use crate::{
 };
 use log::{debug, info, warn};
 use sak_p2p_addr::UnknownAddr;
+use sak_p2p_discovery::Discovery;
 use sak_p2p_peertable::{Peer, PeerTable};
 use sak_p2p_transport::{
     HelloMsg, Msg, RecvReceipt, SendReceipt, TxHashSyncMsg, UpgradedConn,
@@ -15,7 +16,9 @@ use tokio::sync::RwLockWriteGuard;
 
 pub(in crate::node) async fn send_hello_syn(
     mut conn_lock: RwLockWriteGuard<'_, UpgradedConn>,
+    discovery: &Arc<Discovery>,
     unknown_addrs: Vec<UnknownAddr>,
+    task_queue: &Arc<TaskQueue<NodeTask>>,
 ) -> Result<RecvReceipt, SaksahaNodeError> {
     let hello_syn_msg = HelloMsg::new(unknown_addrs)?;
 
@@ -29,7 +32,7 @@ pub(in crate::node) async fn send_hello_syn(
         .get_maybe_msg()
         .ok_or("hello ack should arrive as reply")??;
 
-    let _hello_ack = match msg {
+    let hello_ack = match msg {
         Msg::HelloAck(m) => m,
         Msg::Error(m) => {
             return Err(
@@ -45,15 +48,29 @@ pub(in crate::node) async fn send_hello_syn(
         }
     };
 
-    // enqueue
+    let HelloMsg { unknown_addrs } = hello_ack;
+
+    for unknown_addr in unknown_addrs {
+        discovery.enqueue_who_are_you(&unknown_addr).await;
+    }
 
     Ok(receipt)
 }
 
 pub(in crate::node) async fn recv_hello_syn(
-    mut conn: RwLockWriteGuard<'_, UpgradedConn>,
+    // unknown_addrs: Vec<UnknownAddr>,
+    hello_msg: HelloMsg,
     peer_table: &Arc<PeerTable>,
+    task_queue: &Arc<TaskQueue<NodeTask>>,
+    mut conn: RwLockWriteGuard<'_, UpgradedConn>,
 ) -> SendReceipt {
+    // enqueue
+    // task_queue
+    //     .push_back(NodeTask::SendTxSyn {
+    //         tx_hashes: tx_hash_ack.tx_hashes,
+    //     })
+    //     .await?;
+
     let unknown_addrs = peer_table.get_peer_addrs().await;
 
     let hello_ack_msg = HelloMsg::new(unknown_addrs).unwrap();

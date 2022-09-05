@@ -6,7 +6,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Debug)]
 pub struct HelloMsg {
-    unknown_addrs: Vec<UnknownAddr>,
+    pub unknown_addrs: Vec<UnknownAddr>,
     // pub instance_id: String,
     // pub src_p2p_port: u16,
     // pub src_public_key_str: String,
@@ -20,13 +20,13 @@ impl HelloMsg {
         // src_public_key_str: String,
         // dst_public_key_str: String,
     ) -> Result<HelloMsg, String> {
-        let since_the_epoch = match SystemTime::now().duration_since(UNIX_EPOCH)
-        {
-            Ok(s) => s,
-            Err(err) => {
-                return Err(format!("Couldn't get timestamp, err: {}", err))
-            }
-        };
+        // let since_the_epoch = match SystemTime::now().duration_since(UNIX_EPOCH)
+        // {
+        //     Ok(s) => s,
+        //     Err(err) => {
+        //         return Err(format!("Couldn't get timestamp, err: {}", err))
+        //     }
+        // };
 
         // let instance_id = format!(
         //     "{}_{}",

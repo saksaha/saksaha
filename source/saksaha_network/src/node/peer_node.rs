@@ -6,6 +6,7 @@ use crate::{
     node::event_handle::{self, LedgerEventRoutine},
 };
 use log::{debug, error, warn};
+use sak_p2p_discovery::Discovery;
 use sak_p2p_peertable::{Peer, PeerStatus, PeerTable};
 use sak_task_queue::TaskQueue;
 use std::sync::Arc;
@@ -15,6 +16,7 @@ pub(in crate::node) struct PeerNode {
     pub peer_table: Arc<PeerTable>,
     pub peer: Arc<Peer>,
     pub machine: Arc<Machine>,
+    pub discovery: Arc<Discovery>,
     pub node_task_min_interval: Duration,
 }
 
@@ -92,7 +94,7 @@ impl PeerNode {
                     let task = task?;
 
                     task::handle_task(task,
-                        &node_task_queue, conn_lock, &self.machine).await;
+                        &node_task_queue, conn_lock, &self.machine, &self.discovery).await;
                 },
                 msg_wrap = conn_lock.next_msg() => {
                     let msg_wrap = match msg_wrap {
