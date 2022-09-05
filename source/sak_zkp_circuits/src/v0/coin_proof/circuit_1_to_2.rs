@@ -1,10 +1,9 @@
-use crate::{Hasher, NewCoin, OldCoin, CM_TREE_DEPTH};
+use crate::{CircuitError, Hasher, NewCoin, OldCoin};
 use bellman::gadgets::boolean::AllocatedBit;
 use bellman::{Circuit, ConstraintSystem, SynthesisError};
 use sak_crypto::Scalar;
+use sak_dist_ledger_meta::{CM_TREE_DEPTH, GAS};
 use type_extension::U8Array;
-
-pub const GAS: u64 = 10;
 
 pub struct CoinProofCircuit1to2 {
     pub hasher: Hasher,

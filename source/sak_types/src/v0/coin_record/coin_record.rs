@@ -199,6 +199,10 @@ impl CoinRecord {
         sn
     }
 
+    pub fn set_coin_status_to_unconfirmed(&mut self) {
+        self.coin_status = CoinStatus::Unconfirmed;
+    }
+
     pub fn update_tx_hash(&mut self, tx_hash: String) {
         self.tx_hash = Some(tx_hash);
     }

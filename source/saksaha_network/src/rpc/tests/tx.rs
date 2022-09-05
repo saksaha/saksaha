@@ -234,7 +234,7 @@ async fn test_rpc_reqeust_correct_send_pour_tx() {
             tc_dummy.author_sig,
             Some(tc_dummy.ctr_addr),
             tc_dummy.pi,
-            tc_dummy.sn_1,
+            tc_dummy.sns,
             tc_dummy.cms,
             tc_dummy.merkle_rt,
         );

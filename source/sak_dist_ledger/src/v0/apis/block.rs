@@ -1,6 +1,7 @@
 use crate::{DistLedgerApis, LedgerError};
 use sak_contract_std::Storage;
-use sak_proofs::{MerkleTree, CM_TREE_DEPTH};
+use sak_crypto::MerkleTree;
+use sak_dist_ledger_meta::CM_TREE_DEPTH;
 use sak_types::{
     Block, BlockHash, BlockHeight, Cm, CmIdx, CtrAddr, Tx, TxCandidate, TxHash,
 };
@@ -102,13 +103,17 @@ impl DistLedgerApis {
                 self.sync_pool.insert_tx(tx_candidate).await?
             }
             TxCandidate::Pour(tc) => {
-                let is_valid_sn = self.verify_sn(&tc.sn_1);
+                let is_valid_sn = self.verify_sn(&tc.sns)?;
                 let is_verified_tx = self.verify_proof(&tc)?;
 
                 if is_valid_sn & is_verified_tx {
                     self.sync_pool.insert_tx(tx_candidate).await?
                 } else {
-                    return Err(format!("tc is not valid").into());
+                    return Err(format!(
+                        "Is valid sn and verified tx:{}, {}",
+                        is_valid_sn, is_verified_tx
+                    )
+                    .into());
                 }
             }
         };
@@ -128,7 +133,6 @@ impl DistLedgerApis {
         block_hash: &String,
     ) -> Result<Option<Block>, LedgerError> {
         self.ledger_db.get_block(block_hash)
-        // self.get_block(&self.kv_db.db_instance, &self.schema, block_hash)
     }
 
     pub async fn get_block_list(
