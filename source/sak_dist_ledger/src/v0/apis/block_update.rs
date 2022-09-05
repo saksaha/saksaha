@@ -77,7 +77,7 @@ impl DistLedgerApis {
         let next_cm_idx = match self.ledger_db.get_latest_cm_idx()? {
             Some(i) => {
                 if i >= 2_u32.pow(CM_TREE_DEPTH).into() {
-                    return Err("CM idx exceeded the limit".into());
+                    return Err("CM idx exceeded the tree depth".into());
                 }
                 i + 1
             }
