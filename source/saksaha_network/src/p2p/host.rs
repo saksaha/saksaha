@@ -1,8 +1,8 @@
 use super::dial_scheduler::P2PDialSchedulerArgs;
 use super::task::runtime::P2PTaskRuntime;
 use super::task::P2PTask;
-use super::P2PMonitor;
 use super::{dial_scheduler::P2PDialScheduler, server::Server};
+use super::{P2PHostError, P2PMonitor};
 use sak_p2p_addr::UnknownAddr;
 use sak_p2p_discovery::{Discovery, DiscoveryArgs};
 use sak_p2p_id::Identity;
@@ -20,6 +20,7 @@ pub(crate) struct P2PHost {
     p2p_task_queue: Arc<TaskQueue<P2PTask>>,
     p2p_task_runtime: P2PTaskRuntime,
     peer_table: Arc<PeerTable>,
+    identity: Arc<Identity>,
 }
 
 pub(crate) struct P2PHostArgs {
@@ -44,7 +45,7 @@ pub(crate) struct P2PHostArgs {
 impl P2PHost {
     pub(crate) async fn init(
         p2p_host_args: P2PHostArgs,
-    ) -> Result<P2PHost, String> {
+    ) -> Result<P2PHost, P2PHostError> {
         let (p2p_task_runtime, p2p_task_queue) = {
             let p2p_task_queue = {
                 let capacity = match p2p_host_args.p2p_task_queue_capacity {
@@ -91,7 +92,7 @@ impl P2PHost {
                 p2p_host_args.identity.clone(),
                 p2p_host_args.peer_table.clone(),
                 p2p_discovery.addr_table.clone(),
-            );
+            )?;
 
             s
         };
@@ -119,6 +120,7 @@ impl P2PHost {
             p2p_task_runtime,
             p2p_server,
             peer_table: p2p_host_args.peer_table.clone(),
+            identity: p2p_host_args.identity.clone(),
         };
 
         Ok(host)
@@ -140,6 +142,14 @@ impl P2PHost {
         };
 
         monitor
+    }
+
+    pub(crate) fn get_peer_table(&self) -> &Arc<PeerTable> {
+        &self.peer_table
+    }
+
+    pub(crate) fn get_identity(&self) -> &Arc<Identity> {
+        &self.identity
     }
 
     pub(crate) fn get_discovery(&self) -> Arc<Discovery> {

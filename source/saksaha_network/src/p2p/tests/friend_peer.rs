@@ -1,3 +1,4 @@
+use crate::p2p::testing;
 use crate::p2p::tests::utils;
 use crate::tests::TestUtil;
 use chrono::Utc;
@@ -16,28 +17,62 @@ async fn test_find_arb_peer_successfully() {
     sak_test_utils::init_test_log();
     TestUtil::init_test(vec!["test"]);
 
-    let mock_client_2 = utils::mock_client_2().await;
+    let mock_host_1 = testing::mock_host_1().await;
+    let mock_host_2 = testing::mock_host_2().await;
 
-    let mock_client_3 = utils::mock_client_3().await;
+    let mock_host_1_clone = mock_host_1.clone();
+    let mock_host_2_clone = mock_host_2.clone();
 
-    let _ = utils::run_p2p_host(vec![
-        //
-        mock_client_2.clone(),
-        mock_client_3.clone(),
-    ])
-    .await;
+    tokio::spawn(async move { tokio::join!(mock_host_1_clone.run()) });
+    tokio::spawn(async move { tokio::join!(mock_host_2_clone.run()) });
 
     tokio::time::sleep(Duration::from_secs(3)).await;
 
-    let discovery_2 = mock_client_2.discovery.clone();
-    let peer_table_2 = mock_client_2.peer_table.clone();
-    let p2p_host_2 = mock_client_2.p2p_host.clone();
-    let identity_2 = mock_client_2.identity.clone();
+    let _ = {
+        let check_1 = match mock_host_1
+            .get_peer_table()
+            .get_mapped_peer(
+                &mock_host_2.get_identity().clone().credential.public_key_str,
+            )
+            .await
+        {
+            Some(_) => true,
+            None => false,
+        };
 
-    let discovery_3 = mock_client_3.discovery.clone();
-    let peer_table_3 = mock_client_3.peer_table.clone();
-    let p2p_host_3 = mock_client_3.p2p_host.clone();
-    let identity_3 = mock_client_3.identity.clone();
+        let check_2 = match mock_host_2
+            .get_peer_table()
+            .get_mapped_peer(
+                &mock_host_1.get_identity().clone().credential.public_key_str,
+            )
+            .await
+        {
+            Some(_) => true,
+            None => false,
+        };
+
+        assert_eq!(check_1, true);
+        assert_eq!(check_2, true);
+    };
+
+    let mock_host_3 = testing::mock_host_3().await;
+
+    let mock_host_3_clone = mock_host_3.clone();
+
+    tokio::spawn(async move { tokio::join!(mock_host_3_clone.run()) });
+
+    println!("33 poower");
+    tokio::time::sleep(Duration::from_secs(30)).await;
+
+    // let discovery_2 = mock_client_2.discovery.clone();
+    let peer_table_2 = mock_host_2.get_peer_table().clone();
+    // let p2p_host_2 = mock_client_2.p2p_host.clone();
+    let identity_2 = mock_host_2.get_identity();
+
+    let discovery_3 = mock_host_3.get_discovery();
+    let peer_table_3 = mock_host_3.get_peer_table();
+    // let p2p_host_3 = mock_client_3.p2p_host.clone();
+    let identity_3 = mock_host_3.get_identity();
 
     {
         let endpoint = format!("127.0.0.1:{}", identity_2.p2p_port);
@@ -47,7 +82,7 @@ async fn test_find_arb_peer_successfully() {
                 .unwrap();
 
         let handshake_init_args = HandshakeInitArgs {
-            identity: identity_3,
+            identity: identity_3.clone(),
             conn,
             public_key_str: identity_2.credential.public_key_str.clone(),
         };
@@ -82,24 +117,22 @@ async fn test_find_friend_peer_successfully() {
     sak_test_utils::init_test_log();
     TestUtil::init_test(vec!["test"]);
 
-    let mock_client_1 = utils::mock_client_1().await;
+    let mock_host_1 = testing::mock_host_1().await;
+    let mock_host_2 = testing::mock_host_2().await;
 
-    let mock_client_2 = utils::mock_client_2().await;
+    let mock_host_1_clone = mock_host_1.clone();
+    let mock_host_2_clone = mock_host_2.clone();
 
-    let _ = utils::run_p2p_host(vec![
-        //
-        mock_client_1.clone(),
-        mock_client_2.clone(),
-    ])
-    .await;
+    tokio::spawn(async move { tokio::join!(mock_host_1_clone.run()) });
+    tokio::spawn(async move { tokio::join!(mock_host_2_clone.run()) });
 
     tokio::time::sleep(Duration::from_secs(3)).await;
 
     let _ = {
-        let check_1 = match mock_client_1
-            .peer_table
+        let check_1 = match mock_host_1
+            .get_peer_table()
             .get_mapped_peer(
-                &mock_client_2.identity.clone().credential.public_key_str,
+                &mock_host_2.get_identity().clone().credential.public_key_str,
             )
             .await
         {
@@ -107,10 +140,10 @@ async fn test_find_friend_peer_successfully() {
             None => false,
         };
 
-        let check_2 = match mock_client_2
-            .peer_table
+        let check_2 = match mock_host_2
+            .get_peer_table()
             .get_mapped_peer(
-                &mock_client_1.identity.clone().credential.public_key_str,
+                &mock_host_1.get_identity().clone().credential.public_key_str,
             )
             .await
         {

@@ -198,7 +198,9 @@ async fn create_client(
             identity.clone(),
             p2p_peer_table.clone(),
             p2p_discovery.addr_table.clone(),
-        );
+        )
+        .unwrap();
+
         Arc::new(s)
     };
 
