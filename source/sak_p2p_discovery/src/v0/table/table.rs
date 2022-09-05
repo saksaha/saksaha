@@ -172,7 +172,7 @@ impl AddrTable {
         let key = &addr.known_addr.public_key_str;
 
         debug!(
-            "Insert mapping! key: {}, value: (p2p_ep: {})",
+            "Disc table insert mapping! key: {}, value: (p2p_ep: {})",
             addr.known_addr.get_public_ket_short().green(),
             addr.known_addr.get_p2p_endpoint(),
         );

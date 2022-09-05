@@ -47,6 +47,26 @@ impl DialScheduler {
         d
     }
 
+    pub async fn enqueue_who_are_you(&self, unknown_addr: &UnknownAddr) {
+        let task = DiscoveryTask::InitiateWhoAreYou {
+            addr: unknown_addr.clone(),
+        };
+
+        match self.disc_task_queue.push_back(task).await {
+            Ok(_) => {}
+            Err(err) => {
+                warn!(
+                    "Cannot enqueue a new addr, addr: {:?}, err: {}",
+                    unknown_addr, err
+                );
+            }
+        };
+    }
+
+    pub async fn run(&self) {
+        self.enqueue_bootstrap_addrs(&self.bootstrap_addrs).await;
+    }
+
     async fn enqueue_bootstrap_addrs(
         &self,
         bootstrap_addrs: &Vec<UnknownAddr>,
@@ -72,26 +92,5 @@ impl DialScheduler {
                 }
             };
         }
-    }
-
-    // async fn enqueue_new_addrs(&self, new_addr: &UnknownAddr) {
-    //     //
-    //     let task = DiscoveryTask::InitiateWhoAreYou {
-    //         addr: new_addr.clone(),
-    //     };
-
-    //     match self.disc_task_queue.push_back(task).await {
-    //         Ok(_) => {}
-    //         Err(err) => {
-    //             warn!(
-    //                 "Cannot enqueue a new addr, addr: {:?}, err: {}",
-    //                 new_addr, err
-    //             );
-    //         }
-    //     };
-    // }
-
-    pub async fn run(&self) {
-        self.enqueue_bootstrap_addrs(&self.bootstrap_addrs).await;
     }
 }

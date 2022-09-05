@@ -1,5 +1,6 @@
 mod block;
 mod block_hash;
+mod hello;
 mod tx;
 mod tx_hash;
 
@@ -8,6 +9,7 @@ use crate::{machine::Machine, SaksahaError};
 pub(in crate::node) use block::*;
 pub(in crate::node) use block_hash::*;
 use futures::{stream::SplitSink, SinkExt};
+pub(in crate::node) use hello::*;
 use log::{debug, info, warn};
 use sak_p2p_peertable::Peer;
 use sak_p2p_transport::{

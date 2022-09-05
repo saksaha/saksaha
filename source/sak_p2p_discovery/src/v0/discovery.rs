@@ -151,6 +151,10 @@ impl Discovery {
         Ok((disc, disc_port))
     }
 
+    pub async fn enqueue_who_are_you(&self, unknown_addr: &UnknownAddr) {
+        self.dial_scheduler.enqueue_who_are_you(unknown_addr).await;
+    }
+
     pub async fn run(&self) {
         tokio::join!(
             //

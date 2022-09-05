@@ -80,6 +80,7 @@ impl LocalNode {
                 };
 
                 let peer_node = PeerNode {
+                    peer_table: self.peer_table.clone(),
                     peer: peer.clone(),
                     machine,
                     node_task_min_interval: self.node_task_interval.clone(),

@@ -146,7 +146,20 @@ pub(crate) async fn mock_host_3() -> Arc<P2PHost> {
                 415f5c8a572a8d460c22fc87ed52c7b8\
                 d8ce385b9e594502382ce833fd772c9964",
         ),
-        vec![],
+        vec![UnknownAddr {
+            ip: String::from("127.0.0.1"),
+            disc_port: 35520,
+            p2p_port: None,
+            sig: None,
+            public_key_str: Some(String::from(
+                "\
+                04240874d8c323c22a571f735e835ed2\
+                f0619893a3989e557b1c9b4c699ac92b\
+                84d0dc478108629c0353f2876941f90d\
+                4b36346bcc19c6b625422adffb53b3a6af",
+            )),
+            status: AddrStatus::Initialized,
+        }],
     )
     .await
 }
