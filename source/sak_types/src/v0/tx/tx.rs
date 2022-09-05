@@ -3,7 +3,6 @@ use crate::{
     Cm, MintTx, MintTxCandidate, PourTx, PourTxCandidate, Sn, TxCandidate,
 };
 use serde::{Deserialize, Serialize};
-use type_extension::U8Arr32;
 
 pub const WASM_MAGIC_NUMBER: [u8; 4] = [0x00, 0x61, 0x73, 0x6d];
 
@@ -51,7 +50,7 @@ impl Tx {
 
     pub fn get_sns(&self) -> Vec<Sn> {
         match self {
-            Tx::Mint(_t) => vec![U8Arr32::default()],
+            Tx::Mint(_t) => vec![[0u8; 32]],
             Tx::Pour(t) => t.get_sn(),
         }
     }

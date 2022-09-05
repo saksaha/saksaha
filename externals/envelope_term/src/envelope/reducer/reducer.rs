@@ -8,7 +8,7 @@ use envelope_contract::{Channel, ChatMessage, EncryptedChatMessage};
 use log::info;
 use sak_crypto::{decode_hex, PublicKey, SecretKey};
 use tokio::sync::RwLockWriteGuard;
-use type_extension::{U8Arr32, U8Array};
+use type_extension::U8Array;
 
 pub(crate) struct Reducer;
 
@@ -312,7 +312,7 @@ fn get_messages<'a>(
             let eph_sk_encrypted: Vec<u8> = serde_json::from_str(eph_sk)?;
 
             let sk = {
-                let my_sk: U8Arr32 =
+                let my_sk: [u8; 32] =
                     U8Array::from_hex_string(my_sk.to_string())?;
 
                 let eph_sk =

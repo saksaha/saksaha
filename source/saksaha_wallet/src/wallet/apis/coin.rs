@@ -13,7 +13,7 @@ use sak_types::AccountBalance;
 use sak_types::CoinRecord;
 use sak_types::CoinStatus;
 use std::convert::TryInto;
-use type_extension::U8Arr32;
+
 
 const GAS: u64 = 10;
 
@@ -109,7 +109,7 @@ impl Wallet {
     pub(crate) async fn prepare_auth_path(
         &self,
         cm_idx: u128,
-    ) -> Result<Vec<(U8Arr32, bool)>, WalletError> {
+    ) -> Result<Vec<([u8; 32], bool)>, WalletError> {
         let auth_path = {
             let response =
                 saksaha::get_auth_path(self.saksaha_endpoint.clone(), cm_idx)
@@ -128,7 +128,7 @@ impl Wallet {
         &self,
         coin: &CoinRecord,
         auth_path: Vec<([u8; 32], bool)>,
-    ) -> Result<U8Arr32, WalletError> {
+    ) -> Result<[u8; 32], WalletError> {
         let merkle_rt = {
             let hasher = Hasher::new();
 
@@ -476,7 +476,7 @@ impl Wallet {
         Ok(o)
     }
 
-    pub(crate) fn compute_sn(&self, coin: &CoinRecord) -> U8Arr32 {
+    pub(crate) fn compute_sn(&self, coin: &CoinRecord) -> [u8; 32] {
         let sn = {
             let addr_sk = coin.addr_sk;
 

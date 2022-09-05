@@ -11,7 +11,7 @@ use sak_types::{
 
 use serde::Deserialize;
 use serde::Serialize;
-use type_extension::U8Arr32;
+
 
 impl LedgerDB {
     pub(crate) fn get_tx_type(
@@ -298,7 +298,7 @@ impl LedgerDB {
                 let arr = v
                     .chunks(32)
                     .map(|v| type_extension::convert_vec_into_u8_32(v.to_vec()))
-                    .collect::<Result<Vec<U8Arr32>, LedgerError>>()?;
+                    .collect::<Result<Vec<[u8; 32]>, LedgerError>>()?;
 
                 return Ok(Some(arr));
             }
@@ -351,7 +351,7 @@ impl LedgerDB {
     pub(crate) fn get_cms(
         &self,
         key: &TxHash,
-    ) -> Result<Option<Vec<U8Arr32>>, LedgerError> {
+    ) -> Result<Option<Vec<[u8; 32]>>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::CMS)?;
 
         match self.db.get_cf(&cf, key)? {
@@ -359,7 +359,7 @@ impl LedgerDB {
                 let arr = v
                     .chunks(32)
                     .map(|v| type_extension::convert_vec_into_u8_32(v.to_vec()))
-                    .collect::<Result<Vec<U8Arr32>, LedgerError>>()?;
+                    .collect::<Result<Vec<[u8; 32]>, LedgerError>>()?;
 
                 return Ok(Some(arr));
             }

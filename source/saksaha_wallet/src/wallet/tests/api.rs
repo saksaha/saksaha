@@ -5,7 +5,7 @@ use crate::{
 use sak_crypto::{Bls12, ScalarExt};
 use sak_proofs::{CoinProof, Hasher, Proof};
 use sak_types::CoinRecord;
-use type_extension::U8Arr32;
+
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_prepare_send_tx_pour_params() {
@@ -23,7 +23,7 @@ async fn test_prepare_send_tx_pour_params() {
 
     // let cm_idx = wallet.prepare_cm_idx(coin).await?;
     // let auth_path = wallet.prepare_auth_path(cm_idx).await?;
-    let auth_path: Vec<(U8Arr32, bool)> = vec![
+    let auth_path: Vec<([u8; 32], bool)> = vec![
         (
             [
                 183, 140, 126, 139, 38, 63, 12, 79, 128, 44, 123, 134, 90, 86,

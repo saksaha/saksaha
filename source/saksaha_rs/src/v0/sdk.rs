@@ -8,7 +8,7 @@ use sak_rpc_interface::{
 use sak_types::{Cm, CmIdx, Tx};
 use serde::{Deserialize, Serialize};
 use std::time;
-use type_extension::U8Arr32;
+
 
 pub const A: usize = 1;
 
@@ -113,11 +113,11 @@ pub fn new_empty_32_temp() -> [u8; 32] {
 
 pub async fn send_tx_pour(
     saksaha_endpoint: String,
-    sns: Vec<U8Arr32>,
-    cms: Vec<U8Arr32>,
-    // cm_1: U8Arr32,
-    // cm_2: U8Arr32,
-    merkle_rt: U8Arr32,
+    sns: Vec<[u8; 32]>,
+    cms: Vec<[u8; 32]>,
+    // cm_1: [u8; 32],
+    // cm_2: [u8; 32],
+    merkle_rt: [u8; 32],
     pi: Vec<u8>,
     ctr_addr: String,
     ctr_request: CtrRequest,
@@ -303,7 +303,7 @@ pub struct GetCmIdxResponse {
 
 pub async fn get_cm_idx(
     saksaha_endpoint: String,
-    cm: U8Arr32,
+    cm: [u8; 32],
 ) -> Result<JsonResponse<GetCmIdxResponse>, SaksahaSDKError> {
     let client = Client::new();
     let uri: Uri = { saksaha_endpoint.parse().expect("URI should be made") };
@@ -359,10 +359,10 @@ pub struct GetTxResponse {
 //     pub author_sig: String,
 //     pub ctr_addr: String,
 //     pub pi: Vec<u8>,
-//     pub sn_1: U8Arr32,
-//     pub cm_1: U8Arr32,
-//     pub cm_2: U8Arr32,
-//     pub merkle_rt: U8Arr32,
+//     pub sn_1: [u8; 32],
+//     pub cm_1: [u8; 32],
+//     pub cm_2: [u8; 32],
+//     pub merkle_rt: [u8; 32],
 //     tx_hash: String,
 // }
 

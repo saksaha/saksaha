@@ -12,14 +12,13 @@ use sak_proofs::Hasher;
 use sak_proofs::NewCoin;
 use sak_proofs::OldCoin;
 use std::collections::HashMap;
-use type_extension::U8Arr32;
 use type_extension::U8Array;
 
 pub fn mock_pour_tc_custom(
     pi: Vec<u8>,
     sns: Vec<Sn>,
     cms: Vec<Cm>,
-    merkle_rt: U8Arr32,
+    merkle_rt: [u8; 32],
 ) -> TxCandidate {
     let tc = PourTxCandidate::new(
         String::from("created_at_test"),
@@ -39,7 +38,7 @@ pub fn mock_pour_tx_custom(
     pi: Vec<u8>,
     sns: Vec<Sn>,
     cms: Vec<Cm>,
-    merkle_rt: U8Arr32,
+    merkle_rt: [u8; 32],
 ) -> Tx {
     let c = mock_pour_tc_custom(pi, sns, cms, merkle_rt);
 
@@ -681,10 +680,10 @@ pub fn mock_pour_tc_invalid_pi() -> TxCandidate {
 }
 
 pub fn mock_mint_tc_custom(
-    cm: U8Arr32,
-    v: U8Arr32,
-    k: U8Arr32,
-    s: U8Arr32,
+    cm: [u8; 32],
+    v: [u8; 32],
+    k: [u8; 32],
+    s: [u8; 32],
 ) -> TxCandidate {
     // let tx_candidate = MintTxCandidate::new_dummy_custom(cm, v, k, s);
     let validator_wasm = VALIDATOR.to_vec();

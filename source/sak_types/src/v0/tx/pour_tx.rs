@@ -3,7 +3,7 @@ use super::CmIdx;
 use crate::{Cm, Sn, Tx, TxCtrOp, TxType};
 use sak_crypto::sha3::digest::typenum::U8;
 use serde::{Deserialize, Serialize};
-use type_extension::U8Arr32;
+
 
 pub const GAS: u64 = 10;
 
@@ -73,16 +73,16 @@ pub struct PourTxCandidate {
     pub pi: Vec<u8>,
 
     //
-    // pub sn_1: U8Arr32,
+    // pub sn_1: [u8; 32],
 
     //
-    // pub sn_2: U8Arr32,
+    // pub sn_2: [u8; 32],
 
     //
-    // pub cm_1: U8Arr32,
+    // pub cm_1: [u8; 32],
 
     // //
-    // pub cm_2: U8Arr32,
+    // pub cm_2: [u8; 32],
     pub sns: Vec<Sn>,
 
     //
@@ -94,7 +94,7 @@ pub struct PourTxCandidate {
     pub cm_count: u128,
 
     //
-    pub merkle_rt: U8Arr32,
+    pub merkle_rt: [u8; 32],
 
     //
     tx_hash: String,
@@ -110,7 +110,7 @@ impl PourTxCandidate {
         sns: Vec<Sn>,
         cms: Vec<Cm>,
         // cm_count: u128,
-        merkle_rt: U8Arr32,
+        merkle_rt: [u8; 32],
     ) -> PourTxCandidate {
         let ctr_addr = ctr_addr.unwrap_or(String::from(""));
         let sn_count = sns.len() as u128;

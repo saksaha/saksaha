@@ -8,7 +8,7 @@ use sak_rpc_interface::{SendMintTxRequest, SendPourTxRequest};
 use sak_types::{MintTxCandidate, PourTxCandidate, Tx, TxCandidate};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use type_extension::U8Arr32;
+
 
 // #[derive(Serialize, Deserialize, Debug)]
 // pub struct SendMintTxRequest {
@@ -78,7 +78,7 @@ use type_extension::U8Arr32;
 //         author_sig: String,
 //         ctr_addr: Option<String>,
 //         pi: Vec<u8>,
-//         sn_1: U8Arr32,
+//         sn_1: [u8; 32],
 //         // sn_2: [u8; 32],
 //         cms: Vec<[u8; 32]>,
 //         // cm_count: u128,

@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use type_extension::U8Arr32;
+
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SendPourTxRequest {
@@ -22,7 +22,7 @@ impl SendPourTxRequest {
         author_sig: String,
         ctr_addr: Option<String>,
         pi: Vec<u8>,
-        // sn_1: U8Arr32,
+        // sn_1: [u8; 32],
         sns: Vec<[u8; 32]>,
         // sn_2: [u8; 32],
         cms: Vec<[u8; 32]>,
