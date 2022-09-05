@@ -145,7 +145,7 @@ pub(crate) async fn enter_in_chat(
 ) -> Result<(), EnvelopeError> {
     let selected_ch_id = state.selected_ch_id.clone();
 
-    if selected_ch_id != String::default() {
+    if !selected_ch_id.is_empty() {
         state.chat_input = state.input_text.drain(..).collect();
 
         send_messages(wallet_endpoint, state, ctx).await?;
@@ -167,14 +167,6 @@ pub(crate) async fn enter_in_chat(
             dispatch(Action::GetMessages(d.result)).await?;
         }
     }
-
-    // {
-    //     let resp = get_balance(saksaha_endpoint, acc_addr).await?;
-
-    //     if let Some(d) = resp.result {
-    //         dispatch(Action::UpdateBalanceSuccess(d.balance.val)).await?;
-    //     }
-    // }
 
     Ok(())
 }
