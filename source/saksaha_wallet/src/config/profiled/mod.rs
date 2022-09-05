@@ -67,32 +67,32 @@ pub fn dev_local_2() -> Result<Config, WalletError> {
         coin_records: Some(vec![
             //
             CoinRecord::new(
-                0x21,
-                0x22,
-                0x23,
-                0x24,
+                0x31,
+                0x32,
+                0x33,
+                0x34,
                 100,
-                Some(1),
+                Some(4),
                 None,
                 Some(
                     "\
-                8d526423d7f7e2c1d419c3096ecee5a8\
-                f24c9269f018bfae35216858c19bbae1"
+                d71916a3daccd319e8256f892fcec0ca\
+                fc65a1545cf55c9fc67f3c9ec7868fa2"
                         .to_string(),
                 ),
             )?,
             CoinRecord::new(
-                0x21,
-                0x22,
-                0x23,
-                0x24,
+                0x41,
+                0x42,
+                0x43,
+                0x44,
                 100,
-                Some(1),
+                Some(5),
                 None,
                 Some(
                     "\
-                8d526423d7f7e2c1d419c3096ecee5a8\
-                f24c9269f018bfae35216858c19bbae1"
+                ef7a2332b89ad814fb756f078bbf200b\
+                63c61b2250026d268a4674e818fa23f3"
                         .to_string(),
                 ),
             )?,

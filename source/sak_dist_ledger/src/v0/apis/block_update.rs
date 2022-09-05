@@ -37,9 +37,8 @@ impl DistLedgerApis {
                 Err(err) => {
                     return Err(format!(
                         "Genesis block failed to write, err: {}",
-                        err.to_string()
-                    )
-                    .into());
+                        err
+                    ));
                 }
             };
 
@@ -76,7 +75,12 @@ impl DistLedgerApis {
         };
 
         let next_cm_idx = match self.ledger_db.get_latest_cm_idx()? {
-            Some(i) => i + 1,
+            Some(i) => {
+                if i >= 2_u32.pow(CM_TREE_DEPTH).into() {
+                    return Err("CM idx exceeded the tree depth".into());
+                }
+                i + 1
+            }
             None => {
                 warn!("Cm idx does not exist. Possibly the first block");
                 0
@@ -127,16 +131,15 @@ impl DistLedgerApis {
             added_cm_count += cm_count;
         }
 
-        if let Err(err) = self.sync_pool.remove_tcs(&tcs).await {
+        if let Err(err) = self.sync_pool.remove_tcs(tcs).await {
             warn!("Error removing txs into the tx pool, err: {}", err);
         }
 
-        let next_merkle_rt = match merkle_update
-            .get(format!("{}_0", CM_TREE_DEPTH).as_str())
-        {
-            Some(r) => r,
-            None => return Err(format!("next merkle root is missing").into()),
-        };
+        let next_merkle_rt =
+            match merkle_update.get(format!("{}_0", CM_TREE_DEPTH).as_str()) {
+                Some(r) => r,
+                None => return Err("next merkle root is missing".into()),
+            };
 
         let (block, txs) = bc.upgrade(
             next_block_height,
@@ -269,7 +272,7 @@ impl DistLedgerApis {
             CoinProof::verify_proof_1_to_2(pi_des, &public_inputs, &hasher)?;
 
         if !verification_result {
-            return Err(format!("Failed to verify proof").into());
+            return Err("Failed to verify proof".into());
         };
 
         Ok(verification_result)
@@ -326,7 +329,7 @@ async fn process_ctr_state_update(
         }
 
         TxCtrOp::ContractCall => {
-            let req = CtrRequest::parse(&data)?;
+            let req = CtrRequest::parse(data)?;
 
             match req.ctr_call_type {
                 CtrCallType::Query => {
@@ -340,7 +343,7 @@ async fn process_ctr_state_update(
                         Some(previous_state) => {
                             let ctr_wasm = apis
                                 .ledger_db
-                                .get_ctr_data_by_ctr_addr(&ctr_addr)
+                                .get_ctr_data_by_ctr_addr(ctr_addr)
                                 .await?
                                 .ok_or("ctr data (wasm) should exist")?;
 
@@ -353,7 +356,7 @@ async fn process_ctr_state_update(
                                 .updated_storage
                                 .ok_or("State needs to be updated")?
                         }
-                        None => apis.execute_ctr(&ctr_addr, req).await?,
+                        None => apis.execute_ctr(ctr_addr, req).await?,
                     };
 
                     println!(
@@ -364,14 +367,13 @@ async fn process_ctr_state_update(
                     let maybe_error_placehorder = match &new_state.get(0..6) {
                         Some(ep) => ep.to_owned(),
                         None => {
-                            return Err(format!(
-                                "new_state should be bigger than 6-byte"
-                            )
-                            .into());
+                            return Err(
+                                "new_state should be bigger than 6-byte".into(),
+                            );
                         }
                     };
 
-                    if maybe_error_placehorder != &ERROR_PLACEHOLDER {
+                    if maybe_error_placehorder != ERROR_PLACEHOLDER {
                         ctr_state_update
                             .insert(ctr_addr.clone(), new_state.clone());
                     }
@@ -401,15 +403,9 @@ async fn handle_mint_tx_candidate(
     process_ctr_state_update(apis, ctr_addr, data, tx_ctr_op, ctr_state_update)
         .await?;
 
-    let cm_count = process_merkle_update(
-        apis,
-        merkle_update,
-        &tc.cms,
-        // vec![&tc.cm_1],
-        // ledger_cm_count,
-        next_cm_idx,
-    )
-    .await?;
+    let cm_count =
+        process_merkle_update(apis, merkle_update, &tc.cms, next_cm_idx)
+            .await?;
 
     Ok(cm_count)
 }
@@ -452,8 +448,6 @@ async fn process_merkle_update(
 
         let mut curr_idx = cm_idx;
         for (height, path) in auth_path.iter().enumerate() {
-            // println!("auth_path(), path: {:?}", path);
-
             let sibling_node = match merkle_update.get(&path.node_loc) {
                 Some(n) => *n,
                 None => apis.get_merkle_node(&path.node_loc).await?,

@@ -33,6 +33,8 @@ impl GenesisBlock {
             envelope_wasm,
             ENVELOPE_CTR_ADDR.to_string(),
         );
+        let tx_mint_3 = sak_types::mock_mint_tc_5();
+        let tx_mint_4 = sak_types::mock_mint_tc_6();
 
         let block_candidate = BlockCandidate {
             validator_sig: VALIDATOR_SIG.to_string(),
@@ -41,6 +43,8 @@ impl GenesisBlock {
                 tx_mint_2,
                 tx_deploy_validator,
                 tx_deploy_envelope,
+                tx_mint_3,
+                tx_mint_4,
             ],
             witness_sigs: vec![String::from("1"), String::from("2")],
             created_at: String::from("2022061515340000"),
