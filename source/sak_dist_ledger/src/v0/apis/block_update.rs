@@ -260,6 +260,8 @@ impl DistLedgerApis {
             public_inputs.push(ScalarExt::parse_arr(cm)?);
         }
 
+        println!("public_inputs: {:#?}", public_inputs);
+
         let pi_des: Proof<Bls12> = match Proof::read(&*tc.pi) {
             Ok(p) => p,
             Err(err) => {

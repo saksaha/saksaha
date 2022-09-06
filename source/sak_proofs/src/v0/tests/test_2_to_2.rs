@@ -666,11 +666,6 @@ pub async fn test_coin_ownership_default_2_to_2_using_dummy_old() {
     )
     .expect("proof should be created");
 
-    println!(
-        " ********************test_context.sn_2 : {}",
-        test_context.sn_2
-    );
-
     let public_inputs: Vec<Scalar> = vec![
         test_context.merkle_rt_1,
         test_context.sn_1,
