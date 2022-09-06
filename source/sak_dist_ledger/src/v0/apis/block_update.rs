@@ -4,6 +4,7 @@ use log::{debug, info, warn};
 use sak_contract_std::{CtrCallType, CtrRequest, Storage, ERROR_PLACEHOLDER};
 use sak_crypto::{Bls12, MerkleTree, Scalar, ScalarExt};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
+use sak_proofs::DUMMY_SN;
 use sak_proofs::{CoinProof, Hasher, Proof};
 use sak_types::{
     Block, BlockCandidate, CmIdx, MintTxCandidate, PourTxCandidate, Sn, Tx,
@@ -219,12 +220,12 @@ impl DistLedgerApis {
         self.ledger_db.delete_tx(key)
     }
 
-    pub(crate) fn verify_sn(&self, sns: &Vec<Sn>) -> Result<bool, LedgerError> {
-        match self.ledger_db.get_tx_hash_by_sn(sns) {
+    pub(crate) fn verify_sn(&self, sn: &Sn) -> Result<bool, LedgerError> {
+        match self.ledger_db.get_tx_hash_by_sn(sn) {
             Ok(Some(_)) => {
                 return Err(format!(
                     "Serial numbers already exists, sns: {:?}",
-                    sns
+                    sn
                 )
                 .into())
             }
@@ -232,7 +233,7 @@ impl DistLedgerApis {
             Err(_) => {
                 return Err(format!(
                     "Tx with serial numbers does not exist, sns: {:?}",
-                    sns
+                    sn
                 )
                 .into())
             }
@@ -305,7 +306,17 @@ impl DistLedgerApis {
                     valid_tx_candidates.push(tx_candidate.clone());
                 }
                 TxCandidate::Pour(tc) => {
-                    let is_valid_sn = self.verify_sn(&tc.sns)?;
+                    let mut is_valid_sn = true;
+                    for sn in &tc.sns {
+                        if sn == &DUMMY_SN {
+                            continue;
+                        } else {
+                            is_valid_sn = self.verify_sn(&sn)?;
+                            if !is_valid_sn {
+                                break;
+                            }
+                        }
+                    }
                     let is_verified_tx = self.verify_proof(tc)?;
 
                     if is_valid_sn & is_verified_tx {

@@ -34,11 +34,14 @@ pub async fn send_tx_pour(
     saksaha_endpoint: String,
     sns: Vec<[u8; 32]>,
     cms: Vec<[u8; 32]>,
-    merkle_rt: [u8; 32],
+    merkle_rts: Vec<[u8; 32]>,
     pi: Vec<u8>,
     ctr_addr: String,
     ctr_request: CtrRequest,
 ) -> Result<JsonResponse<String>, SaksahaSDKError> {
+    println!(" ********* sns:{:?}", sns);
+    println!(" ********* cms:{:?}", cms);
+    println!(" ********* merkle_rts:{:?}", merkle_rts);
     let client = Client::new();
     let uri: Uri = { saksaha_endpoint.parse().expect("URI should be made") };
 
@@ -57,7 +60,7 @@ pub async fn send_tx_pour(
             pi,
             sns,
             cms,
-            merkle_rt,
+            merkle_rts,
         );
 
         let params = serde_json::to_string(&send_req)?.as_bytes().to_vec();

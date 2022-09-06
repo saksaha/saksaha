@@ -75,7 +75,7 @@ pub(in crate::rpc) async fn send_pour_tx(
         rb.pi,
         rb.sns,
         rb.cms,
-        rb.merkle_rt,
+        rb.merkle_rts,
     ));
 
     match sys_handle

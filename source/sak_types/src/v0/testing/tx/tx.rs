@@ -1,6 +1,6 @@
 use crate::v0::testing::values;
 use crate::{
-    Cm, MerkleRts, MintTxCandidate, PourTxCandidate, Sn, Tx, VALIDATOR,
+    Cm, MerkleRt, MintTxCandidate, PourTxCandidate, Sn, Tx, VALIDATOR,
     VALIDATOR_CTR_ADDR,
 };
 use crate::{TxCandidate, TypesError};
@@ -19,7 +19,7 @@ pub fn mock_pour_tc_custom(
     pi: Vec<u8>,
     sns: Vec<Sn>,
     cms: Vec<Cm>,
-    merkle_rts: Vec<MerkleRts>,
+    merkle_rts: Vec<MerkleRt>,
 ) -> TxCandidate {
     let tc = PourTxCandidate::new(
         String::from("created_at_test"),
@@ -39,7 +39,7 @@ pub fn mock_pour_tx_custom(
     pi: Vec<u8>,
     sns: Vec<Sn>,
     cms: Vec<Cm>,
-    merkle_rts: Vec<MerkleRts>,
+    merkle_rts: Vec<MerkleRt>,
 ) -> Tx {
     let c = mock_pour_tc_custom(pi, sns, cms, merkle_rts);
 

@@ -114,7 +114,7 @@ impl LedgerDB {
         }
 
         let tx_candidate = PourTxCandidate::new(
-            created_at, data, author_sig, ctr_addr, pi, sns, cms, merkle_rt,
+            created_at, data, author_sig, ctr_addr, pi, sns, cms, merkle_rts,
         );
 
         let tx = Tx::Pour(PourTx::new(tx_candidate, cm_idxes));
@@ -236,7 +236,13 @@ impl LedgerDB {
 
         self.batch_put_cm_count(batch, tx_hash, &tc.cm_count)?;
 
-        self.batch_put_prf_merkle_rt(batch, tx_hash, &tc.merkle_rt)?;
+        // self.batch_put_prf_merkle_rt(batch, tx_hash, &tc.merkle_rts)?;
+
+        for (idx, merkle_rt) in tc.merkle_rts.iter().enumerate() {
+            let key = format!("{}_{}", tx_hash, idx);
+
+            self.batch_put_prf_merkle_rt(batch, &key, &merkle_rt)?;
+        }
 
         let tx_ctr_op = tc.get_ctr_op();
 
@@ -342,46 +348,46 @@ impl LedgerDB {
         Ok(v)
     }
 
-    // fn get_merkle_rts_iteratively(
-    //     &self,
-    //     tx_hash: &TxHash,
-    // ) -> Result<Vec<[u8; 32]>, LedgerError> {
-    //     let tx_hash_bytes = tx_hash.as_bytes();
-    //     let mut v = vec![];
+    fn get_merkle_rts_iteratively(
+        &self,
+        tx_hash: &TxHash,
+    ) -> Result<Vec<[u8; 32]>, LedgerError> {
+        let tx_hash_bytes = tx_hash.as_bytes();
+        let mut v = vec![];
 
-    //     let mut cm_iter = {
-    //         let cf = self.make_cf_handle(&self.db, cfs::CM)?;
-    //         self.db.iterator_cf(
-    //             &cf,
-    //             IteratorMode::From(tx_hash_bytes, Direction::Forward),
-    //         )
-    //     };
+        let mut merkle_rt_iter = {
+            let cf = self.make_cf_handle(&self.db, cfs::PRF_MERKLE_RT)?;
+            self.db.iterator_cf(
+                &cf,
+                IteratorMode::From(tx_hash_bytes, Direction::Forward),
+            )
+        };
 
-    //     loop {
-    //         let (key, cm) = if let Some(v) = cm_iter.next() {
-    //             v
-    //         } else {
-    //             break;
-    //         };
+        loop {
+            let (key, merkle_rt) = if let Some(v) = merkle_rt_iter.next() {
+                v
+            } else {
+                break;
+            };
 
-    //         if key.starts_with(tx_hash_bytes) {
-    //             let mut arr: [u8; 32] = Default::default();
-    //             arr.clone_from_slice(&cm);
+            if key.starts_with(tx_hash_bytes) {
+                let mut arr: [u8; 32] = Default::default();
+                arr.clone_from_slice(&merkle_rt);
 
-    //             v.push(arr);
-    //         } else {
-    //             break;
-    //         }
-    //     }
+                v.push(arr);
+            } else {
+                break;
+            }
+        }
 
-    //     if v.len() < 1 {
-    //         return Err(format!(
-    //             "At least one cm should exist, tx_hash: {}",
-    //             tx_hash
-    //         )
-    //         .into());
-    //     }
+        if v.len() < 1 {
+            return Err(format!(
+                "At least one merkle_rt should exist, tx_hash: {}",
+                tx_hash
+            )
+            .into());
+        }
 
-    //     Ok(v)
-    // }
+        Ok(v)
+    }
 }

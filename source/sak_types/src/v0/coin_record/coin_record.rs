@@ -169,30 +169,25 @@ impl CoinRecord {
     }
 
     pub fn new_dummy() -> CoinRecord {
-        let addr_pk = String::from(
-            "46205869c121af666efa3ca1114c4f01837f407ca0b2c97c0ecaa957e5836bd6",
-        );
-        let addr_pk =
-            ScalarExt::parse_vec(decode_hex(&addr_pk).unwrap()).unwrap();
+        let hasher = Hasher::new();
+
+        // sn : 0x46205869c121af666efa3ca1114c4f01837f407ca0b2c97c0ecaa957e5836bd6
 
         let addr_sk = Scalar::default();
+        let addr_pk = hasher.mimc_single_scalar(addr_sk).unwrap();
         let rho = Scalar::default();
         let r = Scalar::default();
         let s = Scalar::default();
         let v = Scalar::default();
-        let cm = Scalar::default();
+
+        let k = hasher.comm2_scalar(r, addr_pk, rho);
+        let cm = hasher.comm2_scalar(s, v, k);
+
         let coin_status = CoinStatus::Unused;
-        let cm_idx = Some(2);
+        let cm_idx = Some(0);
         let coin_idx = None;
 
-        let addr_pk = String::from(
-            "46205869c121af666efa3ca1114c4f01837f407ca0b2c97c0ecaa957e5836bd6",
-        );
-        let addr_pk =
-            ScalarExt::parse_vec(decode_hex(&addr_pk).unwrap()).unwrap();
-        let tx_hash = Some(String::from(
-            "d71916a3daccd319e8256f892fcec0cafc65a1545cf55c9fc67f3c9ec7868fa2",
-        ));
+        let tx_hash = None;
 
         CoinRecord {
             addr_pk,

@@ -1,6 +1,6 @@
 use super::utils;
 use super::CmIdx;
-use crate::MerkleRts;
+use crate::MerkleRt;
 use crate::{Cm, Sn, Tx, TxCtrOp, TxType};
 use serde::{Deserialize, Serialize};
 
@@ -78,7 +78,7 @@ pub struct PourTxCandidate {
     pub cm_count: u128,
 
     //
-    pub merkle_rts: Vec<MerkleRts>,
+    pub merkle_rts: Vec<MerkleRt>,
 
     //
     pub merkle_rt_count: u128,
@@ -96,7 +96,7 @@ impl PourTxCandidate {
         pi: Vec<u8>,
         sns: Vec<Sn>,
         cms: Vec<Cm>,
-        merkle_rts: Vec<MerkleRts>,
+        merkle_rts: Vec<MerkleRt>,
     ) -> PourTxCandidate {
         let ctr_addr = ctr_addr.unwrap_or(String::from(""));
         let sn_count = sns.len() as u128;

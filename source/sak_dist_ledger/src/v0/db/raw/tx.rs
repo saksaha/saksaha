@@ -1,7 +1,7 @@
 use crate::LedgerError;
 use crate::{cfs, LedgerDB};
 use sak_kv_db::WriteBatch;
-use sak_types::{Cm, CmIdx, Sn, TxHash, TxType};
+use sak_types::{Cm, CmIdx, MerkleRt, Sn, TxHash, TxType};
 
 impl LedgerDB {
     pub(crate) fn get_tx_type(
@@ -187,13 +187,13 @@ impl LedgerDB {
 
     pub(crate) fn get_tx_hash_by_sn(
         &self,
-        key: &Vec<Sn>,
+        key: &Sn,
     ) -> Result<Option<String>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::TX_HASH_BY_SN)?;
 
-        let serialized = key.iter().flatten().copied().collect::<Vec<u8>>();
+        // let serialized = key.iter().flatten().copied().collect::<Vec<u8>>();
 
-        match self.db.get_cf(&cf, serialized)? {
+        match self.db.get_cf(&cf, key)? {
             Some(v) => {
                 let str = String::from_utf8(v)?;
 
@@ -204,6 +204,26 @@ impl LedgerDB {
             }
         }
     }
+
+    // pub(crate) fn get_tx_hash_by_sn(
+    //     &self,
+    //     key: &Vec<Sn>,
+    // ) -> Result<Option<String>, LedgerError> {
+    //     let cf = self.make_cf_handle(&self.db, cfs::TX_HASH_BY_SN)?;
+
+    //     let serialized = key.iter().flatten().copied().collect::<Vec<u8>>();
+
+    //     match self.db.get_cf(&cf, serialized)? {
+    //         Some(v) => {
+    //             let str = String::from_utf8(v)?;
+
+    //             return Ok(Some(str));
+    //         }
+    //         None => {
+    //             return Ok(None);
+    //         }
+    //     }
+    // }
 
     pub(crate) fn batch_put_tx_type(
         &self,
@@ -460,7 +480,7 @@ impl LedgerDB {
         &self,
         batch: &mut WriteBatch,
         key: &TxHash,
-        value: &[u8; 32],
+        value: &MerkleRt,
     ) -> Result<(), LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::PRF_MERKLE_RT)?;
 

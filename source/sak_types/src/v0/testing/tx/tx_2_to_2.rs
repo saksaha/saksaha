@@ -1,4 +1,5 @@
 use crate::v0::testing::values;
+use crate::MockCoin;
 use crate::{
     mock_coin_custom, Cm, MintTxCandidate, PourTxCandidate, Sn, Tx, VALIDATOR,
     VALIDATOR_CTR_ADDR,
@@ -20,7 +21,6 @@ pub fn mock_pour_tc_2to2_1() -> TxCandidate {
 
     let old_coin_1 = mock_coin_custom(0, 0, 0, 0, 0); // dummy coin
     let old_coin_2 = mock_coin_custom(0x11, 0x12, 0x13, 0x14, 100);
-
     let new_coin_1 = mock_coin_custom(0x21, 0x22, 0x23, 0x24, 0);
     let new_coin_2 = mock_coin_custom(0x31, 0x32, 0x33, 0x34, 90);
 

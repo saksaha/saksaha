@@ -2,6 +2,7 @@ use crate::{DistLedgerApis, LedgerError};
 use sak_contract_std::Storage;
 use sak_crypto::MerkleTree;
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
+use sak_proofs::DUMMY_SN;
 use sak_types::{
     Block, BlockHash, BlockHeight, Cm, CmIdx, CtrAddr, Tx, TxCandidate, TxHash,
 };
@@ -96,7 +97,18 @@ impl DistLedgerApis {
                 self.sync_pool.insert_tx(tx_candidate).await?
             }
             TxCandidate::Pour(tc) => {
-                let is_valid_sn = self.verify_sn(&tc.sns)?;
+                let mut is_valid_sn = true;
+                for sn in &tc.sns {
+                    if sn == &DUMMY_SN {
+                        continue;
+                    } else {
+                        is_valid_sn = self.verify_sn(&sn)?;
+                        if !is_valid_sn {
+                            break;
+                        }
+                    }
+                }
+
                 let is_verified_tx = self.verify_proof(&tc)?;
 
                 if is_valid_sn & is_verified_tx {
