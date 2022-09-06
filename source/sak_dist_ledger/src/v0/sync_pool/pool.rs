@@ -1,3 +1,4 @@
+use crate::DistLedgerEvent;
 use log::{debug, warn};
 use sak_types::{Block, BlockHash, BlockHeight, TxCandidate, TxCtrOp, TxHash};
 use std::{
@@ -6,8 +7,6 @@ use std::{
     time::Duration,
 };
 use tokio::sync::{broadcast::Sender, RwLock};
-
-use crate::DistLedgerEvent;
 
 const SYNC_POOL_CAPACITY: usize = 100;
 const TX_SYNC_INTERVAL: u64 = 2000;
