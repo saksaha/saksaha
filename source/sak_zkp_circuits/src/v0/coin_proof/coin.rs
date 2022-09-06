@@ -82,6 +82,22 @@ impl OldCoin {
     ) {
         self.auth_path = auth_path;
     }
+
+    pub fn compute_sn(&self) -> Result<Scalar, CircuitError> {
+        let sn = {
+            let addr_sk = self.addr_sk.ok_or("Failed to get addr_sk")?;
+
+            let rho = self.rho.ok_or("Failed to get rho")?;
+
+            let hasher = Hasher::new();
+
+            let s = hasher.mimc_scalar(addr_sk, rho);
+
+            s
+        };
+
+        Ok(sn)
+    }
 }
 
 #[derive(Debug, Copy, Clone)]

@@ -25,4 +25,6 @@ pub type Sn = [u8; 32];
 
 pub type Cm = [u8; 32];
 
+pub type MerkleRts = [u8; 32];
+
 pub type CmIdx = u128;

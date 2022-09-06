@@ -247,6 +247,8 @@ pub fn make_test_context_2_to_2() -> TestContext {
 
     let merkle_nodes_1 = mock_merkle_nodes_cm_1(&hasher, cm_1_old, cm_2_old);
 
+    println!("{:#?}", merkle_nodes_1);
+
     let merkle_rt_1 = *merkle_nodes_1
         .get(format!("{}_0", CM_TREE_DEPTH).as_str())
         .unwrap();

@@ -1,6 +1,7 @@
 use crate::v0::testing::values;
 use crate::{
-    Cm, MintTxCandidate, PourTxCandidate, Sn, Tx, VALIDATOR, VALIDATOR_CTR_ADDR,
+    Cm, MerkleRts, MintTxCandidate, PourTxCandidate, Sn, Tx, VALIDATOR,
+    VALIDATOR_CTR_ADDR,
 };
 use crate::{TxCandidate, TypesError};
 use sak_crypto::MerkleTree;
@@ -18,7 +19,7 @@ pub fn mock_pour_tc_custom(
     pi: Vec<u8>,
     sns: Vec<Sn>,
     cms: Vec<Cm>,
-    merkle_rt: [u8; 32],
+    merkle_rts: Vec<MerkleRts>,
 ) -> TxCandidate {
     let tc = PourTxCandidate::new(
         String::from("created_at_test"),
@@ -28,7 +29,7 @@ pub fn mock_pour_tc_custom(
         pi,
         sns,
         cms,
-        merkle_rt,
+        merkle_rts,
     );
 
     TxCandidate::Pour(tc)
@@ -38,9 +39,9 @@ pub fn mock_pour_tx_custom(
     pi: Vec<u8>,
     sns: Vec<Sn>,
     cms: Vec<Cm>,
-    merkle_rt: [u8; 32],
+    merkle_rts: Vec<MerkleRts>,
 ) -> Tx {
-    let c = mock_pour_tc_custom(pi, sns, cms, merkle_rt);
+    let c = mock_pour_tc_custom(pi, sns, cms, merkle_rts);
 
     c.upgrade(0)
 }
@@ -235,7 +236,7 @@ pub fn mock_pour_tc_random() -> TxCandidate {
         pi_serialized,
         vec![sn_1.to_bytes()],
         vec![cm_1.to_bytes(), cm_2.to_bytes()],
-        merkle_rt.to_bytes(),
+        vec![merkle_rt.to_bytes()],
     );
 
     let c = TxCandidate::Pour(pour_tc);
@@ -434,7 +435,7 @@ pub fn mock_pour_tc_1() -> TxCandidate {
         pi_serialized,
         vec![sn_1.to_bytes()],
         vec![cm_1.to_bytes(), cm_2.to_bytes()],
-        merkle_rt.to_bytes(),
+        vec![merkle_rt.to_bytes()],
     );
 
     let c = TxCandidate::Pour(pour_tc);
@@ -629,7 +630,7 @@ pub fn mock_pour_tc_invalid_pi() -> TxCandidate {
         pi_serialized,
         vec![sn_1.to_bytes()],
         vec![cm_1.to_bytes(), cm_2.to_bytes()],
-        merkle_rt.to_bytes(),
+        vec![merkle_rt.to_bytes()],
     );
 
     let c = TxCandidate::Pour(pour_tc);

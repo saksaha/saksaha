@@ -247,7 +247,9 @@ impl DistLedgerApis {
 
         let mut public_inputs = vec![];
 
-        public_inputs.push(ScalarExt::parse_arr(&tc.merkle_rt)?);
+        for merkle_rt in &tc.merkle_rts {
+            public_inputs.push(ScalarExt::parse_arr(merkle_rt)?);
+        }
 
         for sn in &tc.sns {
             public_inputs.push(ScalarExt::parse_arr(sn)?);
@@ -268,8 +270,20 @@ impl DistLedgerApis {
             }
         };
 
-        let verification_result =
-            CoinProof::verify_proof_1_to_2(pi_des, &public_inputs, &hasher)?;
+        let verification_result: bool = false;
+
+        match &tc.merkle_rts.len() {
+            2 => {
+                let verification_result = CoinProof::verify_proof_2_to_2(
+                    pi_des,
+                    &public_inputs,
+                    &hasher,
+                )?;
+            }
+            _ => {
+                return Err(format!("Not implement yet").into());
+            }
+        }
 
         if !verification_result {
             return Err("Failed to verify proof".into());
