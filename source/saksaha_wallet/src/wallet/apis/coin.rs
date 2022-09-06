@@ -225,7 +225,7 @@ impl Wallet {
         let tx_hash = match json_response.result {
             Some(hash) => hash,
             None => {
-                self.get_db().update_coin_status_to_used(coin).await?;
+                self.get_db().update_coin_status_to_failed(coin).await?;
 
                 return Err(format!(
                     "Send transaction_pour response error: {:?}",

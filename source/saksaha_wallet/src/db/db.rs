@@ -94,37 +94,27 @@ impl WalletDB {
         let mut old_coin_sn_vec = Vec::<Sn>::new();
 
         for coin in coins {
-            match coin.coin_status {
-                CoinStatus::Unconfirmed => {
-                    let resp = match &coin.tx_hash {
-                        Some(tx_hash) => {
-                            saksaha::get_tx(
-                                saksaha_endpoint.clone(),
-                                tx_hash.clone(),
-                            )
-                            .await?
-                            .result
-                        }
-                        // Some(tx_hash) => saksaha::get_tx(
-                        //     saksaha_endpoint.clone(),
-                        //     tx_hash.clone(),
-                        // )
-                        // .await?
-                        // .result
-                        // .ok_or(format!(
-                        //     "Tx doesn't exist, tx hash: {}",
-                        //     tx_hash
-                        // ))?,
-                        None => {
-                            return Err(format!(
-                                "No tx_hash has been found in cm: {:?}",
-                                coin.cm
-                            )
-                            .into());
-                        }
-                    };
+            if coin.coin_status == CoinStatus::Unconfirmed {
+                let resp = match &coin.tx_hash {
+                    Some(tx_hash) => {
+                        saksaha::get_tx(
+                            saksaha_endpoint.clone(),
+                            tx_hash.clone(),
+                        )
+                        .await?
+                        .result
+                    }
+                    None => {
+                        return Err(format!(
+                            "No tx_hash has been found in cm: {:?}",
+                            coin.cm
+                        )
+                        .into());
+                    }
+                };
 
-                    if let Some(response) = resp {
+                match resp {
+                    Some(response) => {
                         if let Some(tx) = response.tx {
                             let sns = tx.get_sns();
                             for sn in sns {
@@ -155,11 +145,8 @@ impl WalletDB {
                             }
                         };
                     }
+                    None => return Err("No response with get_tx".into()),
                 }
-
-                CoinStatus::Used => {}
-
-                CoinStatus::Unused => {}
             }
         }
 
@@ -179,10 +166,6 @@ impl WalletDB {
                 .get_coin_status(&coin.cm)?
                 .unwrap_or(CoinStatus::Unconfirmed)
             {
-                CoinStatus::Unconfirmed => {}
-
-                CoinStatus::Used => {}
-
                 CoinStatus::Unused => {
                     let sn = coin.compute_sn();
 
@@ -192,6 +175,7 @@ impl WalletDB {
                             .put_coin_status(&coin.cm, &CoinStatus::Used)?;
                     }
                 }
+                _ => {}
             }
         }
 
@@ -213,15 +197,15 @@ impl WalletDB {
         Ok(())
     }
 
-    pub async fn update_coin_status_to_used(
+    pub async fn update_coin_status_to_failed(
         &self,
         coin: &mut CoinRecord,
     ) -> Result<(), WalletError> {
         self.schema
             .raw
-            .put_coin_status(&coin.cm, &CoinStatus::Used)?;
+            .put_coin_status(&coin.cm, &CoinStatus::Failed)?;
 
-        coin.set_coin_status_to(CoinStatus::Used);
+        coin.set_coin_status_to(CoinStatus::Failed);
 
         Ok(())
     }
