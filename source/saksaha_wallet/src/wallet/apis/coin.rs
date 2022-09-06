@@ -43,15 +43,15 @@ impl Wallet {
         println!("[coin info (w/o cm)]");
         for coin in self.get_db().schema.get_all_coins()? {
             println!(
-                // cm: {:?}\n \
                 "\
-                \tcoin_status: {:?}\tvalue: {:?}\t\
-                coin_idx: {:?}\tcm_idx: {:?}\t",
-                // coin.cm,
+               \tcoin_status: {:?}\tvalue: {:?}\t\
+                coin_idx: {:?}\tcm_idx: {:?}\t\n\
+                \tcm: {}",
                 coin.coin_status,
                 ScalarExt::into_u64(coin.v)?,
                 coin.coin_idx,
                 coin.cm_idx,
+                coin.cm,
             );
 
             if coin.coin_status == CoinStatus::Unused {

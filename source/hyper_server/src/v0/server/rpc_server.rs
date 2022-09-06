@@ -43,11 +43,11 @@ impl RPCServer {
 
             async move {
                 Ok::<_, Infallible>(service::service_fn(move |req| {
-                    debug!(
-                        "rpc, method: {}, uri: {}",
-                        req.method(),
-                        req.uri().path()
-                    );
+                    // debug!(
+                    //     "rpc, method: {}, uri: {}",
+                    //     req.method(),
+                    //     req.uri().path()
+                    // );
 
                     let ctx_clone = ctx.clone();
                     let state_machine_clone = state_machine.clone();

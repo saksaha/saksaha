@@ -11,7 +11,6 @@ const MINE_INTERVAL: u64 = 5000;
 pub(super) struct Miner {
     pub(super) machine: Arc<Machine>,
     pub(super) mine_interval: Option<u64>,
-    error_count: usize,
 }
 
 impl Miner {
@@ -19,7 +18,6 @@ impl Miner {
         Miner {
             machine,
             mine_interval,
-            error_count: 0,
         }
     }
 
@@ -36,16 +34,6 @@ impl Miner {
         );
 
         loop {
-            if self.error_count > 5 {
-                error!(
-                    "VM will shutdown, error count exceeds the threshold, \
-                    count: {}",
-                    self.error_count
-                );
-
-                return;
-            }
-
             let time_since = SystemTime::now();
 
             match self

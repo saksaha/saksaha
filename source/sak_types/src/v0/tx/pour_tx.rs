@@ -158,7 +158,7 @@ impl std::fmt::Display for PourTxCandidate {
 
         write!(
             f,
-            "PourTx [created_at: {}, data: {:?}, author_sig: {}, ctr_addr: {},\
+            "PourTx [created_at: {}, data: {:?}, author_sig: {}, ctr_addr: {}, \
             cms: {:?}, cm_count: {}, sns: {:?}, merkle_rt: {:?}]",
             self.created_at,
             data,

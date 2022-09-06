@@ -1,5 +1,6 @@
 use crate::{CoinProof, ProofError};
 use bellman::groth16::{self, Parameters, Proof};
+use log::debug;
 use sak_crypto::{Bls12, MerkleTree, OsRng, Scalar, ScalarExt};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
 use sak_zkp_circuits::{CoinProofCircuit1to2, Hasher, NewCoin, OldCoin};
@@ -396,22 +397,19 @@ fn verify_proof(
     public_inputs: &[Scalar],
     hasher: &Hasher,
 ) -> Result<bool, ProofError> {
-    let constants = hasher.get_mimc_constants();
+    // let constants = hasher.get_mimc_constants();
     let de_params = CoinProof::get_mimc_params_1_to_2()?;
     let pvk = groth16::prepare_verifying_key(&de_params.vk);
 
-    println!("[+] proof: {:?}", proof);
-    println!("[+] public input: {:?}", public_inputs);
+    // println!("[+] proof: {:?}", proof);
+    // println!("[+] public input: {:?}", public_inputs);
 
     match groth16::verify_proof(&pvk, &proof, public_inputs) {
         Ok(_) => {
-            println!("verify success!");
+            debug!("Verify success!, public input: {:?}", public_inputs);
             Ok(true)
         }
-        Err(err) => {
-            println!("verify_proof(), err: {}", err);
-            Ok(false)
-        }
+        Err(err) => Err(format!("Verify proof failed, err: {}", err).into()),
     }
 }
 
