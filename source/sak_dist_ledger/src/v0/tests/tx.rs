@@ -96,7 +96,8 @@ async fn test_dist_ledger_tx_mint_put_and_get_cm_idx() {
         .await
         .unwrap()
         .expect("cms should be obtained")
-        .get_cms();
+        .get_cms()
+        .to_owned();
 
     let cm_1_idx = {
         println!("cms :{:?}", cms);
@@ -149,7 +150,8 @@ async fn test_dist_ledger_tx_pour_put_and_get_cm_idx() {
         .await
         .unwrap()
         .expect("tx should exist")
-        .get_cms();
+        .get_cms()
+        .to_owned();
 
     let cm_1_idx = {
         // let cms = dist_ledger
