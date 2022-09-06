@@ -39,7 +39,18 @@ impl Consensus for Pos {
 
         let validator_str: String = String::from_utf8(validator)?;
 
-        if self.identity.credential.public_key_str == validator_str {
+        println!(
+            "\n[+] validator from contract: {:?}\n",
+            validator_str[1..validator_str.len() - 1].len()
+        );
+        println!(
+            "\n[+] validator my pubKey!!!!: {:?}\n",
+            self.identity.credential.public_key_str.len()
+        );
+
+        if self.identity.credential.public_key_str
+            == validator_str[1..validator_str.len() - 1]
+        {
             let bc = BlockCandidate {
                 validator_sig: String::from("1"),
                 tx_candidates,

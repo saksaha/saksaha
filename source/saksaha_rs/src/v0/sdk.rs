@@ -1,6 +1,7 @@
 use crate::SaksahaSDKError;
 use hyper::{Body, Client, Method, Request, Uri};
 use sak_contract_std::{CtrCallType, CtrRequest, RequestArgs};
+use sak_crypto::encode_hex;
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
 use sak_rpc_interface::{
     JsonRequest, JsonResponse, SendMintTxRequest, SendPourTxRequest,
@@ -39,9 +40,6 @@ pub async fn send_tx_pour(
     ctr_addr: String,
     ctr_request: CtrRequest,
 ) -> Result<JsonResponse<String>, SaksahaSDKError> {
-    println!(" ********* sns:{:?}", sns);
-    println!(" ********* cms:{:?}", cms);
-    println!(" ********* merkle_rts:{:?}", merkle_rts);
     let client = Client::new();
     let uri: Uri = { saksaha_endpoint.parse().expect("URI should be made") };
 

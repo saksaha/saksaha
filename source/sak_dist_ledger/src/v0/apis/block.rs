@@ -108,8 +108,10 @@ impl DistLedgerApis {
                         }
                     }
                 }
+                println!("double spending pass!");
 
                 let is_verified_tx = self.verify_proof(&tc)?;
+                println!("proof pass!");
 
                 if is_valid_sn & is_verified_tx {
                     self.sync_pool.insert_tx(tx_candidate).await?

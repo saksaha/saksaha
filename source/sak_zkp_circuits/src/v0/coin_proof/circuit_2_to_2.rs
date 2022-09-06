@@ -56,70 +56,15 @@ impl Circuit<Scalar> for CoinProofCircuit2to2 {
                 &self.hasher,
             );
 
-            // let sn = self.hasher.mimc_scalar_cs(cs, addr_sk_old, rho_old);
-            sns.push(self.hasher.mimc_scalar_cs(cs, addr_sk_old, rho_old));
+            let sn = self.hasher.mimc_scalar_cs(cs, addr_sk_old, rho_old);
 
-            // let merkle_rt =
-            //     climb_up_tree(cs, cm_old, &old_coin.auth_path, &self.hasher);
-            merkle_rts.push(climb_up_tree(
-                cs,
-                cm_old,
-                &old_coin.auth_path,
-                &self.hasher,
-            ));
+            sns.push(sn);
 
-            // ...
+            let merkle_rt =
+                climb_up_tree(cs, cm_old, &old_coin.auth_path, &self.hasher);
+
+            merkle_rts.push(merkle_rt);
         }
-
-        // let rho_1_old = self.coin_1_old.rho.or(Some(Scalar::default()));
-        // let addr_pk_1_old = self.coin_1_old.addr_pk.or(Some(Scalar::default()));
-        // let addr_sk_1_old = self.coin_1_old.addr_sk.or(Some(Scalar::default()));
-        // let cm_1_old = self.coin_1_old.cm.or(Some(Scalar::default()));
-        // let r_1_old = self.coin_1_old.r.or(Some(Scalar::default()));
-        // let s_1_old = self.coin_1_old.s.or(Some(Scalar::default()));
-        // let v_1_old = self.coin_1_old.v.or(Some(Scalar::default()));
-
-        // let rho_2_old = self.coin_2_old.rho.or(Some(Scalar::default()));
-        // let addr_pk_2_old = self.coin_2_old.addr_pk.or(Some(Scalar::default()));
-        // let addr_sk_2_old = self.coin_2_old.addr_sk.or(Some(Scalar::default()));
-        // let cm_2_old = self.coin_2_old.cm.or(Some(Scalar::default()));
-        // let r_2_old = self.coin_2_old.r.or(Some(Scalar::default()));
-        // let s_2_old = self.coin_2_old.s.or(Some(Scalar::default()));
-        // let v_2_old = self.coin_2_old.v.or(Some(Scalar::default()));
-
-        // check_cm_commitments(
-        //     cs,
-        //     cm_1_old,
-        //     addr_pk_1_old,
-        //     rho_1_old,
-        //     r_1_old,
-        //     s_1_old,
-        //     v_1_old,
-        //     &self.hasher,
-        // );
-
-        // check_cm_commitments(
-        //     cs,
-        //     cm_2_old,
-        //     addr_pk_2_old,
-        //     rho_2_old,
-        //     r_2_old,
-        //     s_2_old,
-        //     v_2_old,
-        //     &self.hasher,
-        // );
-
-        // let sn_1 = self.hasher.mimc_scalar_cs(cs, addr_sk_1_old, rho_1_old);
-        // let sn_2 = self.hasher.mimc_scalar_cs(cs, addr_sk_2_old, rho_2_old);
-
-        // let merkle_rt = climb_up_tree_2_to_2(
-        //     cs,
-        //     cm_1_old,
-        //     // cm_2_old,
-        //     &self.coin_1_old.auth_path,
-        //     // &self.coin_2_old.auth_path,
-        //     &self.hasher,
-        // );
 
         let addr_pk_1_new = self.coin_1_new.addr_pk.or(Some(Scalar::default()));
         let rho_1_new = self.coin_1_new.rho.or(Some(Scalar::default()));
@@ -405,8 +350,6 @@ pub fn check_cm_commitments<CS: ConstraintSystem<Scalar>>(
 
 pub fn require_equal_val_summation_2_to_2<CS: ConstraintSystem<Scalar>>(
     cs: &mut CS,
-    // v_old_1: Option<Scalar>,
-    // v_old_2: Option<Scalar>,
     old_values: Vec<Option<Scalar>>,
     v_new_1: Option<Scalar>,
     v_new_2: Option<Scalar>,

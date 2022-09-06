@@ -143,11 +143,7 @@ impl CoinProof {
         let pvk = groth16::prepare_verifying_key(&de_params.vk);
 
         let res = match groth16::verify_proof(&pvk, &proof, public_inputs) {
-            Ok(_) => {
-                println!("verify success!");
-
-                true
-            }
+            Ok(_) => true,
             Err(err) => {
                 println!("verify_proof(), err: {}", err);
 

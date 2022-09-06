@@ -1,5 +1,5 @@
 use crate::{header, RPCRouterError};
-use hyper::{ Body, Response, StatusCode};
+use hyper::{Body, Response, StatusCode};
 use sak_rpc_interface::{JsonRPCError, JsonResponse, JSON_RPC_2};
 use serde::Serialize;
 

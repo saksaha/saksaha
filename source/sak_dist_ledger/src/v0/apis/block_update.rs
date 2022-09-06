@@ -2,7 +2,7 @@ use crate::{CtrStateUpdate, DistLedgerApis, LedgerError, MerkleUpdate};
 use colored::Colorize;
 use log::{debug, info, warn};
 use sak_contract_std::{CtrCallType, CtrRequest, Storage, ERROR_PLACEHOLDER};
-use sak_crypto::{Bls12, MerkleTree, Scalar, ScalarExt};
+use sak_crypto::{encode_hex, Bls12, MerkleTree, Scalar, ScalarExt};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
 use sak_proofs::DUMMY_SN;
 use sak_proofs::{CoinProof, Hasher, Proof};
@@ -260,8 +260,6 @@ impl DistLedgerApis {
             public_inputs.push(ScalarExt::parse_arr(cm)?);
         }
 
-        println!("public_inputs: {:#?}", public_inputs);
-
         let pi_des: Proof<Bls12> = match Proof::read(&*tc.pi) {
             Ok(p) => p,
             Err(err) => {
@@ -273,23 +271,18 @@ impl DistLedgerApis {
             }
         };
 
-        let verification_result: bool = false;
-
-        match &tc.merkle_rts.len() {
+        let verification_result = match &tc.merkle_rts.len() {
             2 => {
-                let verification_result = CoinProof::verify_proof_2_to_2(
-                    pi_des,
-                    &public_inputs,
-                    &hasher,
-                )?;
+                CoinProof::verify_proof_2_to_2(pi_des, &public_inputs, &hasher)?
             }
             _ => {
-                return Err(format!("Not implement yet").into());
+                // return Err(format!("Not implement yet").into());
+                false
             }
-        }
+        };
 
         if !verification_result {
-            return Err("Failed to verify proof".into());
+            return Err("2222 Failed to verify proof".into());
         };
 
         Ok(verification_result)
