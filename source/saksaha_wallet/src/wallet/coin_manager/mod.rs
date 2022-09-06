@@ -47,7 +47,7 @@ impl CoinManager {
             }
         }
 
-        return None;
+        None
     }
 
     pub fn put_coin(

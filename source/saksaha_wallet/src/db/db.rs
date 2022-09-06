@@ -3,6 +3,7 @@ use crate::{
     credential::WalletCredential, wallet::CoinManager, WalletError, APP_NAME,
 };
 use log::info;
+use sak_crypto::ScalarExt;
 use sak_kv_db::{KeyValueDatabase, Options};
 use sak_types::CoinRecord;
 use sak_types::CoinStatus;
@@ -97,18 +98,40 @@ impl WalletDB {
                 CoinStatus::Unconfirmed => {
                     println!("getting tx: {:?}", coin.tx_hash);
 
-                    let resp = match &coin.tx_hash {
-                        Some(tx_hash) => saksaha::get_tx(
-                            saksaha_endpoint.clone(),
-                            tx_hash.clone(),
-                        )
-                        .await?
-                        .result
-                        .ok_or(format!(
-                            "Tx doesn't exist, tx hash: {}",
-                            tx_hash
-                        ))?,
+                    // println!("[coin info (w/o cm)]");
+                    // for coin in self.schema.get_all_coins()? {
+                    //     println!(
+                    //         // cm: {:?}\n \
+                    //         "\
+                    //         \tcoin_status: {:?}\tvalue: {:?}\t\
+                    //         coin_idx: {:?}\tcm_idx: {:?}\t",
+                    //         // coin.cm,
+                    //         coin.coin_status,
+                    //         ScalarExt::into_u64(coin.v)?,
+                    //         coin.coin_idx,
+                    //         coin.cm_idx,
+                    //     );
+                    // }
 
+                    let resp = match &coin.tx_hash {
+                        Some(tx_hash) => {
+                            saksaha::get_tx(
+                                saksaha_endpoint.clone(),
+                                tx_hash.clone(),
+                            )
+                            .await?
+                            .result
+                        }
+                        // Some(tx_hash) => saksaha::get_tx(
+                        //     saksaha_endpoint.clone(),
+                        //     tx_hash.clone(),
+                        // )
+                        // .await?
+                        // .result
+                        // .ok_or(format!(
+                        //     "Tx doesn't exist, tx hash: {}",
+                        //     tx_hash
+                        // ))?,
                         None => {
                             return Err(format!(
                                 "No tx_hash has been found in cm: {:?}",
@@ -118,31 +141,37 @@ impl WalletDB {
                         }
                     };
 
-                    if let Some(tx) = resp.tx {
-                        let sns = tx.get_sns();
-                        for sn in sns {
-                            old_coin_sn_vec.push(sn);
-                        }
+                    if let Some(response) = resp {
+                        if let Some(tx) = response.tx {
+                            let sns = tx.get_sns();
+                            for sn in sns {
+                                old_coin_sn_vec.push(sn);
+                            }
 
-                        self.schema
-                            .raw
-                            .put_coin_status(&coin.cm, &CoinStatus::Unused)?;
+                            self.schema.raw.put_coin_status(
+                                &coin.cm,
+                                &CoinStatus::Unused,
+                            )?;
 
-                        {
-                            let cm_idx_base = tx
-                                .get_cm_pairs()
-                                .get(0)
-                                .ok_or("expect (CmIdx, Cm)")?
-                                .0;
+                            {
+                                let cm_idx_base = tx
+                                    .get_cm_pairs()
+                                    .get(0)
+                                    .ok_or("expect (CmIdx, Cm)")?
+                                    .0;
 
-                            let cm_idx_offset =
-                                coin.cm_idx.ok_or("expect cm_idx_offset")?;
+                                let cm_idx_offset = coin
+                                    .cm_idx
+                                    .ok_or("expect cm_idx_offset")?;
 
-                            let cm_idx = cm_idx_base + cm_idx_offset;
+                                let cm_idx = cm_idx_base + cm_idx_offset;
 
-                            self.schema.raw.put_cm_idx(&coin.cm, &cm_idx)?;
-                        }
-                    };
+                                self.schema
+                                    .raw
+                                    .put_cm_idx(&coin.cm, &cm_idx)?;
+                            }
+                        };
+                    }
                 }
 
                 CoinStatus::Used => {}
@@ -192,17 +221,26 @@ impl WalletDB {
         &self,
         coin: &mut CoinRecord,
     ) -> Result<(), WalletError> {
-        match coin.coin_status {
-            CoinStatus::Unused => {
-                self.schema
-                    .raw
-                    .put_coin_status(&coin.cm, &CoinStatus::Unconfirmed)?;
+        if coin.coin_status == CoinStatus::Unused {
+            self.schema
+                .raw
+                .put_coin_status(&coin.cm, &CoinStatus::Unconfirmed)?;
 
-                coin.set_coin_status_to_unconfirmed();
-            }
-
-            _ => {}
+            coin.set_coin_status_to_unconfirmed(CoinStatus::Unconfirmed);
         }
+
+        Ok(())
+    }
+
+    pub async fn update_coin_status_to_used(
+        &self,
+        coin: &mut CoinRecord,
+    ) -> Result<(), WalletError> {
+        self.schema
+            .raw
+            .put_coin_status(&coin.cm, &CoinStatus::Used)?;
+
+        coin.set_coin_status_to_unconfirmed(CoinStatus::Used);
 
         Ok(())
     }
