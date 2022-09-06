@@ -1,17 +1,17 @@
 use crate::v0::testing::values;
 use crate::{
-    Cm, MerkleRt, MintTxCandidate, PourTxCandidate, Sn, Tx, VALIDATOR,
-    VALIDATOR_CTR_ADDR,
+    mock_coin_custom, Cm, MerkleRt, MintTxCandidate, MockCoin, PourTxCandidate,
+    Sn, Tx, VALIDATOR, VALIDATOR_CTR_ADDR,
 };
 use crate::{TxCandidate, TypesError};
 use sak_crypto::MerkleTree;
 use sak_crypto::{rand, Scalar};
 use sak_crypto::{MerkleTreeSim, ScalarExt};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
-use sak_proofs::CoinProof;
 use sak_proofs::Hasher;
 use sak_proofs::NewCoin;
 use sak_proofs::OldCoin;
+use sak_proofs::{CoinProof, DUMMY_MERKLE_RT, DUMMY_SN};
 use std::collections::HashMap;
 use type_extension::U8Array;
 
@@ -49,6 +49,16 @@ pub fn mock_pour_tx_custom(
 // TODO This should change
 pub fn mock_pour_tc_random() -> TxCandidate {
     let hasher = Hasher::new();
+
+    let dummy_coin = mock_coin_custom(0, 0, 0, 0, 0);
+    let dummy_auth_path = [
+        Some((Scalar::default(), false)),
+        Some((Scalar::default(), false)),
+        Some((Scalar::default(), false)),
+        Some((Scalar::default(), false)),
+        Some((Scalar::default(), false)),
+        Some((Scalar::default(), false)),
+    ];
 
     let (
         addr_pk_1_old,
@@ -206,6 +216,17 @@ pub fn mock_pour_tc_random() -> TxCandidate {
         auth_path: auth_path_1,
     };
 
+    let dummy_coin = OldCoin {
+        addr_pk: Some(ScalarExt::parse_arr(&dummy_coin.addr_pk).unwrap()),
+        addr_sk: Some(ScalarExt::parse_arr(&dummy_coin.addr_sk).unwrap()),
+        rho: Some(ScalarExt::parse_arr(&dummy_coin.rho).unwrap()),
+        r: Some(ScalarExt::parse_arr(&dummy_coin.r).unwrap()),
+        s: Some(ScalarExt::parse_arr(&dummy_coin.s).unwrap()),
+        v: Some(ScalarExt::parse_arr(&dummy_coin.v).unwrap()),
+        cm: Some(ScalarExt::parse_arr(&dummy_coin.cm).unwrap()),
+        auth_path: dummy_auth_path,
+    };
+
     let coin_1_new = NewCoin {
         addr_pk: Some(addr_pk_1),
         rho: Some(rho_1),
@@ -222,9 +243,10 @@ pub fn mock_pour_tc_random() -> TxCandidate {
         v: Some(v_2),
     };
 
-    let pi =
-        CoinProof::generate_proof_1_to_2(coin_1_old, coin_1_new, coin_2_new)
-            .unwrap();
+    let pi = CoinProof::generate_proof_2_to_2(
+        coin_1_old, dummy_coin, coin_1_new, coin_2_new,
+    )
+    .unwrap();
 
     let pi_serialized = CoinProof::serialize_pi(&pi).unwrap();
 
@@ -234,9 +256,9 @@ pub fn mock_pour_tc_random() -> TxCandidate {
         "author_sig".to_string(),
         None,
         pi_serialized,
-        vec![sn_1.to_bytes()],
+        vec![sn_1.to_bytes(), DUMMY_SN],
         vec![cm_1.to_bytes(), cm_2.to_bytes()],
-        vec![merkle_rt.to_bytes()],
+        vec![merkle_rt.to_bytes(), DUMMY_MERKLE_RT],
     );
 
     let c = TxCandidate::Pour(pour_tc);
@@ -246,6 +268,16 @@ pub fn mock_pour_tc_random() -> TxCandidate {
 
 pub fn mock_pour_tc_1() -> TxCandidate {
     let hasher = Hasher::new();
+
+    let dummy_coin = mock_coin_custom(0, 0, 0, 0, 0);
+    let dummy_auth_path = [
+        Some((Scalar::default(), false)),
+        Some((Scalar::default(), false)),
+        Some((Scalar::default(), false)),
+        Some((Scalar::default(), false)),
+        Some((Scalar::default(), false)),
+        Some((Scalar::default(), false)),
+    ];
 
     let (
         addr_pk_1_old,
@@ -405,6 +437,17 @@ pub fn mock_pour_tc_1() -> TxCandidate {
         auth_path: auth_path_1,
     };
 
+    let dummy_coin = OldCoin {
+        addr_pk: Some(ScalarExt::parse_arr(&dummy_coin.addr_pk).unwrap()),
+        addr_sk: Some(ScalarExt::parse_arr(&dummy_coin.addr_sk).unwrap()),
+        rho: Some(ScalarExt::parse_arr(&dummy_coin.rho).unwrap()),
+        r: Some(ScalarExt::parse_arr(&dummy_coin.r).unwrap()),
+        s: Some(ScalarExt::parse_arr(&dummy_coin.s).unwrap()),
+        v: Some(ScalarExt::parse_arr(&dummy_coin.v).unwrap()),
+        cm: Some(ScalarExt::parse_arr(&dummy_coin.cm).unwrap()),
+        auth_path: dummy_auth_path,
+    };
+
     let coin_1_new = NewCoin {
         addr_pk: Some(addr_pk_1),
         rho: Some(rho_1),
@@ -433,9 +476,9 @@ pub fn mock_pour_tc_1() -> TxCandidate {
         "author_sig".to_string(),
         None,
         pi_serialized,
-        vec![sn_1.to_bytes()],
+        vec![sn_1.to_bytes(), DUMMY_SN],
         vec![cm_1.to_bytes(), cm_2.to_bytes()],
-        vec![merkle_rt.to_bytes()],
+        vec![merkle_rt.to_bytes(), DUMMY_MERKLE_RT],
     );
 
     let c = TxCandidate::Pour(pour_tc);

@@ -44,10 +44,11 @@ impl Consensus for Pos {
             validator_str[1..validator_str.len() - 1].len()
         );
         println!(
-            "\n[+] validator my pubKey!!!!: {:?}\n",
+            "\n[+] validator my pub Key!!!!: {:?}\n",
             self.identity.credential.public_key_str.len()
         );
 
+        // aaron did it
         if self.identity.credential.public_key_str
             == validator_str[1..validator_str.len() - 1]
         {

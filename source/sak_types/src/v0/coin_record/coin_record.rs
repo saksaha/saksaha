@@ -171,8 +171,6 @@ impl CoinRecord {
     pub fn new_dummy() -> CoinRecord {
         let hasher = Hasher::new();
 
-        // sn : 0x46205869c121af666efa3ca1114c4f01837f407ca0b2c97c0ecaa957e5836bd6
-
         let addr_sk = Scalar::default();
         let addr_pk = hasher.mimc_single_scalar(addr_sk).unwrap();
         let rho = Scalar::default();

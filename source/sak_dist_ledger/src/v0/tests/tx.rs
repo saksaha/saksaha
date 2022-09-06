@@ -189,7 +189,7 @@ async fn test_dist_ledger_verify_proof_success() {
     let dist_ledger = testing::mock_dist_ledger_1().await;
 
     println!("aaaaaaa222");
-    let bc_1 = sak_types::mock_block_pour_single();
+    let bc_1 = sak_types::mock_block_pour_random();
     println!("aaaaaaa");
 
     {
