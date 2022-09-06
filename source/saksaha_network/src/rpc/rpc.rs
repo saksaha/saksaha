@@ -1,5 +1,5 @@
-use super::routes;
-use crate::{SaksahaError, SystemHandle};
+use super::{routes, RPCError};
+use crate::SystemHandle;
 use hyper_rpc_router::Router;
 use hyper_server::{cors, Middleware, RPCServer};
 use std::sync::Arc;
@@ -29,7 +29,7 @@ impl RPC {
         Ok(rpc)
     }
 
-    pub(crate) async fn run(self) -> Result<(), SaksahaError> {
+    pub(crate) async fn run(self) -> Result<(), RPCError> {
         let router = {
             let routes = routes::get_routes();
             let router = Router::new(routes);

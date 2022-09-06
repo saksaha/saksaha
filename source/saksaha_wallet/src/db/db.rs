@@ -145,7 +145,7 @@ impl WalletDB {
                             }
                         };
                     }
-                    None => return Err("No response with get_tx".into()),
+                    None => {} // return Err("No response with get_tx".into()),
                 }
             }
         }
