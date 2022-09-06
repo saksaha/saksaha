@@ -96,23 +96,6 @@ impl WalletDB {
         for coin in coins {
             match coin.coin_status {
                 CoinStatus::Unconfirmed => {
-                    println!("getting tx: {:?}", coin.tx_hash);
-
-                    // println!("[coin info (w/o cm)]");
-                    // for coin in self.schema.get_all_coins()? {
-                    //     println!(
-                    //         // cm: {:?}\n \
-                    //         "\
-                    //         \tcoin_status: {:?}\tvalue: {:?}\t\
-                    //         coin_idx: {:?}\tcm_idx: {:?}\t",
-                    //         // coin.cm,
-                    //         coin.coin_status,
-                    //         ScalarExt::into_u64(coin.v)?,
-                    //         coin.coin_idx,
-                    //         coin.cm_idx,
-                    //     );
-                    // }
-
                     let resp = match &coin.tx_hash {
                         Some(tx_hash) => {
                             saksaha::get_tx(
@@ -180,7 +163,6 @@ impl WalletDB {
             }
         }
 
-        println!("sn: {:?}", old_coin_sn_vec);
         Ok(old_coin_sn_vec)
     }
 
@@ -203,7 +185,6 @@ impl WalletDB {
 
                 CoinStatus::Unused => {
                     let sn = coin.compute_sn();
-                    println!("Its sn:{:?}", sn);
 
                     if old_coin_sn_vec.contains(&sn) {
                         self.schema
@@ -226,7 +207,7 @@ impl WalletDB {
                 .raw
                 .put_coin_status(&coin.cm, &CoinStatus::Unconfirmed)?;
 
-            coin.set_coin_status_to_unconfirmed(CoinStatus::Unconfirmed);
+            coin.set_coin_status_to(CoinStatus::Unconfirmed);
         }
 
         Ok(())
@@ -240,7 +221,7 @@ impl WalletDB {
             .raw
             .put_coin_status(&coin.cm, &CoinStatus::Used)?;
 
-        coin.set_coin_status_to_unconfirmed(CoinStatus::Used);
+        coin.set_coin_status_to(CoinStatus::Used);
 
         Ok(())
     }
