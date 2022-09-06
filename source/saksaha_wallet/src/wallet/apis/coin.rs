@@ -1,6 +1,5 @@
 use crate::wallet::Wallet;
 use crate::WalletError;
-use core::time::Duration;
 use sak_contract_std::CtrRequest;
 use sak_crypto::encode_hex;
 use sak_crypto::Scalar;
@@ -223,12 +222,21 @@ impl Wallet {
         )
         .await?;
 
-        println!("error: {:?}", json_response.error);
+        let tx_hash = match json_response.result {
+            Some(hash) => hash,
+            None => {
+                self.get_db().update_coin_status_to_failed(coin).await?;
 
-        let tx_hash = json_response.result.ok_or("Send_tx_pour failed")?;
+                return Err(format!(
+                    "Send transaction_pour response error: {:?}",
+                    json_response.error
+                )
+                .into());
+            }
+        };
+        // let tx_hash = json_response.result.ok_or("Send_tx_pour failed")?;
 
         // waiting for block is written
-        // tokio::time::sleep(Duration::from_millis(6000)).await;
 
         {
             self.get_db()
@@ -266,7 +274,7 @@ impl Wallet {
         let is_enough_balalnce = my_balance.val > GAS;
 
         if !is_enough_balalnce {
-            return Err(format!("you don't have enough coin").into());
+            return Err("you don't have enough coin".into());
         }
         Ok(())
     }
