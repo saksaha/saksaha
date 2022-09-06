@@ -5,6 +5,7 @@ pub enum CoinStatus {
     Unconfirmed,
     Unused,
     Used,
+    Failed,
 }
 
 impl std::fmt::Display for CoinStatus {
@@ -13,6 +14,7 @@ impl std::fmt::Display for CoinStatus {
             Self::Unconfirmed => "Unconfirmed".fmt(fmt),
             Self::Unused => "Unused".fmt(fmt),
             Self::Used => "Used".fmt(fmt),
+            Self::Failed => "Failed".fmt(fmt),
         }
     }
 }
@@ -23,6 +25,7 @@ impl AsRef<[u8]> for CoinStatus {
             Self::Unconfirmed => "Unconfirmed".as_ref(),
             Self::Unused => "Unused".as_ref(),
             Self::Used => "Used".as_ref(),
+            Self::Failed => "Failed".as_ref(),
         }
     }
 }
@@ -30,15 +33,15 @@ impl AsRef<[u8]> for CoinStatus {
 impl CoinStatus {
     pub fn from_u8(v: Vec<u8>) -> Result<CoinStatus, TypesError> {
         if v == "Unused".as_bytes().to_vec() {
-            return Ok(Self::Unused);
+            Ok(Self::Unused)
         } else if v == "Used".as_bytes().to_vec() {
-            return Ok(Self::Used);
+            Ok(Self::Used)
         } else if v == "Unconfirmed".as_bytes().to_vec() {
-            return Ok(Self::Unconfirmed);
+            Ok(Self::Unconfirmed)
+        } else if v == "Failed".as_bytes().to_vec() {
+            Ok(Self::Failed)
         } else {
-            return Err(
-                format!("Invalid Vec<u8> to convert into Status").into()
-            );
+            Err("Invalid Vec<u8> to convert into Status".into())
         }
     }
 }
