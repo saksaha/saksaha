@@ -154,15 +154,6 @@ async fn test_dist_ledger_tx_pour_put_and_get_cm_idx() {
         .to_owned();
 
     let cm_1_idx = {
-        // let cms = dist_ledger
-        //     .apis
-        //     .ledger_db
-        //     .get_cms(&mock_tx_hash)
-        //     .unwrap()
-        //     .expect("cms should be obtained");
-
-        // println!("cms :{:?}", cms);
-
         let cm_1_idx = dist_ledger
             .apis
             .ledger_db
@@ -174,13 +165,6 @@ async fn test_dist_ledger_tx_pour_put_and_get_cm_idx() {
     };
 
     let cm_2_idx = {
-        // let cms = dist_ledger
-        //     .apis
-        //     .ledger_db
-        //     .get_cms(&mock_tx_hash)
-        //     .unwrap()
-        //     .expect("cms should be obtained");
-
         let cm_2_idx = dist_ledger
             .apis
             .ledger_db

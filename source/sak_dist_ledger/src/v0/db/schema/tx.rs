@@ -53,27 +53,7 @@ impl LedgerDB {
 
         let ctr_addr = self.get_ctr_addr(tx_hash)?;
 
-        let cm_count = self.get_cm_count(tx_hash)?.ok_or("cms should exist")?;
-
-        // let cms = self.get_cms(tx_hash)?.ok_or("cms should exist")?;
-        let cms = {
-            let mut v = vec![];
-            let cf = self.make_cf_handle(&self.db, cfs::CM)?;
-            let mut cm_iter = self.db.iterator_cf(
-                &cf,
-                IteratorMode::From(tx_hash.as_bytes(), Direction::Forward),
-            );
-
-            let (key, cm) =
-                cm_iter.next().ok_or("At least one cm should exist")?;
-
-            let mut arr: [u8; 32] = Default::default();
-            arr.clone_from_slice(&cm);
-
-            v.push(arr);
-
-            v
-        };
+        let cms = self.get_cms_iteratively(tx_hash)?;
 
         let v = self.get_v(tx_hash)?.ok_or("v should exist")?;
 
@@ -114,45 +94,9 @@ impl LedgerDB {
 
         let pi = self.get_pi(tx_hash)?.ok_or("pi should exist")?;
 
-        // let sns = self.get_sns(tx_hash)?.ok_or("sn_1 should exist")?;
-        let sns = {
-            let mut v = vec![];
-            let cf = self.make_cf_handle(&self.db, cfs::SN)?;
-            let mut sn_iter = self.db.iterator_cf(
-                &cf,
-                IteratorMode::From(tx_hash.as_bytes(), Direction::Forward),
-            );
+        let sns = self.get_sns_iteratively(tx_hash)?;
 
-            let (key, sn) =
-                sn_iter.next().ok_or("At least one sn should exist")?;
-
-            let mut arr: [u8; 32] = Default::default();
-            arr.clone_from_slice(&sn);
-
-            v.push(arr);
-
-            v
-        };
-
-        // let cms = self.get_cms(tx_hash)?.ok_or("cms should exist")?;
-        let cms = {
-            let mut v = vec![];
-            let cf = self.make_cf_handle(&self.db, cfs::CM)?;
-            let mut cm_iter = self.db.iterator_cf(
-                &cf,
-                IteratorMode::From(tx_hash.as_bytes(), Direction::Forward),
-            );
-
-            let (key, cm) =
-                cm_iter.next().ok_or("At least one cm should exist")?;
-
-            let mut arr: [u8; 32] = Default::default();
-            arr.clone_from_slice(&cm);
-
-            v.push(arr);
-
-            v
-        };
+        let cms = self.get_cms_iteratively(tx_hash)?;
 
         let merkle_rt = self
             .get_prf_merkle_rt(tx_hash)?
@@ -204,10 +148,9 @@ impl LedgerDB {
 
         self.batch_put_tx_type(batch, tx_hash, tc.get_tx_type())?;
 
-        // self.batch_put_cms(batch, tx_hash, &tc.cms)?;
-
         for (idx, cm) in tc.cms.iter().enumerate() {
             let key = format!("{}_{}", tx_hash, idx);
+
             self.batch_put_cm(batch, &key, &cm)?;
         }
 
@@ -272,15 +215,15 @@ impl LedgerDB {
 
         self.batch_put_pi(batch, tx_hash, &tc.pi)?;
 
-        // self.batch_put_sns(batch, tx_hash, &tc.sns)?;
         for (idx, sn) in tc.sns.iter().enumerate() {
             let key = format!("{}_{}", tx_hash, idx);
+
             self.batch_put_sn(batch, &key, &sn)?;
         }
 
-        // self.batch_put_cms(batch, tx_hash, &tc.cms)?;
         for (idx, cm) in tc.cms.iter().enumerate() {
             let key = format!("{}_{}", tx_hash, idx);
+
             self.batch_put_cm(batch, &key, &cm)?;
         }
 
@@ -308,5 +251,92 @@ impl LedgerDB {
         }
 
         Ok(tx_hash.clone())
+    }
+
+    fn get_cms_iteratively(
+        &self,
+        tx_hash: &TxHash,
+    ) -> Result<Vec<[u8; 32]>, LedgerError> {
+        let tx_hash_bytes = tx_hash.as_bytes();
+        let mut v = vec![];
+
+        let mut cm_iter = {
+            let cf = self.make_cf_handle(&self.db, cfs::CM)?;
+            self.db.iterator_cf(
+                &cf,
+                IteratorMode::From(tx_hash_bytes, Direction::Forward),
+            )
+        };
+
+        loop {
+            let (key, cm) = if let Some(v) = cm_iter.next() {
+                v
+            } else {
+                break;
+            };
+
+            if key.starts_with(tx_hash_bytes) {
+                let mut arr: [u8; 32] = Default::default();
+                arr.clone_from_slice(&cm);
+
+                v.push(arr);
+            } else {
+                break;
+            }
+        }
+
+        if v.len() < 1 {
+            return Err(format!(
+                "At least one cm should exist, tx_hash: {}",
+                tx_hash
+            )
+            .into());
+        }
+
+        Ok(v)
+    }
+
+    fn get_sns_iteratively(
+        &self,
+        tx_hash: &TxHash,
+    ) -> Result<Vec<[u8; 32]>, LedgerError> {
+        let tx_hash_bytes = tx_hash.as_bytes();
+
+        let mut v = vec![];
+
+        let mut sn_iter = {
+            let cf = self.make_cf_handle(&self.db, cfs::SN)?;
+            self.db.iterator_cf(
+                &cf,
+                IteratorMode::From(tx_hash_bytes, Direction::Forward),
+            )
+        };
+
+        loop {
+            let (key, sn) = if let Some(v) = sn_iter.next() {
+                v
+            } else {
+                break;
+            };
+
+            if key.starts_with(tx_hash_bytes) {
+                let mut arr: [u8; 32] = Default::default();
+                arr.clone_from_slice(&sn);
+
+                v.push(arr);
+            } else {
+                break;
+            }
+        }
+
+        if v.len() < 1 {
+            return Err(format!(
+                "At least one sn should exist, tx_hash: {}",
+                tx_hash
+            )
+            .into());
+        }
+
+        Ok(v)
     }
 }

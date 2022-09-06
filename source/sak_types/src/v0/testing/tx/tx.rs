@@ -45,6 +45,7 @@ pub fn mock_pour_tx_custom(
     c.upgrade(0)
 }
 
+// TODO This should change
 pub fn mock_pour_tc_random() -> TxCandidate {
     let hasher = Hasher::new();
 
