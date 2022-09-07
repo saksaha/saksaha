@@ -1,5 +1,5 @@
-use super::DualNodeTestContext;
-use crate::node::tests::make_dual_node_test_context;
+use super::utils::make_dual_node_test_context;
+use super::utils::DualNodeTestContext;
 use crate::tests::TestUtil;
 use sak_dist_ledger::DistLedgerEvent;
 use std::time::Duration;

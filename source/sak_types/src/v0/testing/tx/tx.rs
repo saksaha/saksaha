@@ -681,7 +681,7 @@ pub fn mock_pour_tc_invalid_pi() -> TxCandidate {
     c
 }
 
-pub fn mock_mint_tc_custom(
+pub fn mock_mint_tc(
     cm: [u8; 32],
     v: [u8; 32],
     k: [u8; 32],
