@@ -3,6 +3,7 @@ use bytes::Bytes;
 use sak_p2p_frame::{Frame, Parse};
 use sak_types::{MintTx, MintTxCandidate, PourTx, PourTxCandidate, Tx};
 
+#[inline]
 pub(crate) fn parse_mint_tx_candidate(
     parse: &mut Parse,
 ) -> Result<MintTxCandidate, TrptError> {
@@ -74,16 +75,29 @@ pub(crate) fn parse_mint_tx_candidate(
     Ok(mint_tx_candidate)
 }
 
+#[inline]
 pub(crate) fn parse_mint_tx(parse: &mut Parse) -> Result<Tx, TrptError> {
     let mint_tx_candidate = parse_mint_tx_candidate(parse)?;
 
-    let cm_count = parse.next_int()?;
+    println!("555");
+
+    let cm_count = match parse.next_int() {
+        Ok(c) => c,
+        Err(err) => {
+            return Err(format!(
+                "Error parsing cm_count of mint_tx frame, err: {}",
+                err
+            )
+            .into())
+        }
+    };
 
     let mut cm_idxes = Vec::with_capacity(cm_count as usize);
 
     for _ in 0..cm_count {
         cm_idxes.push(parse.next_int()?);
     }
+    println!("777");
 
     let mint_tx = MintTx {
         tx_candidate: mint_tx_candidate,
@@ -215,12 +229,7 @@ pub(crate) fn put_mint_tx_candidate_into_frame(
     frame.push_bulk(Bytes::from(tx_hash));
 }
 
-pub(crate) fn put_mint_tx_into_frame(frame: &mut Frame, tx: MintTx) {
-    let tc = tx.tx_candidate;
-
-    put_mint_tx_candidate_into_frame(frame, tc);
-}
-
+#[inline]
 pub(crate) fn put_pour_tx_candidate_into_frame(
     frame: &mut Frame,
     tc: PourTxCandidate,
@@ -255,6 +264,7 @@ pub(crate) fn put_pour_tx_candidate_into_frame(
     frame.push_bulk(Bytes::from(tx_hash));
 }
 
+#[inline]
 pub(crate) fn put_pour_tx_into_frame(frame: &mut Frame, tx: PourTx) {
     let tc = tx.tx_candidate;
 

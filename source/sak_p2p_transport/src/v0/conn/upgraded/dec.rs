@@ -18,12 +18,12 @@ impl Decoder for UpgradedP2PCodec {
         &mut self,
         src: &mut BytesMut,
     ) -> Result<Option<Self::Item>, TrptError> {
-        // println!(
-        //     "\ndecoding!! conn_id: {}, src({}): {:?}",
-        //     self.conn_id,
-        //     src.len(),
-        //     src.to_vec()
-        // );
+        println!(
+            "\ndecoding!! conn_id: {}, src({}): {:?}",
+            self.conn_id,
+            src.len(),
+            src.to_vec()
+        );
 
         if src.len() <= HEADER_TOTAL_LEN {
             return Ok(None);
@@ -117,7 +117,14 @@ fn parse_msg_portion(
 
     // println!("\ndecrypt: msg_portion: {:?}", src.to_vec());
 
-    let msg = dec::decode_into_msg(src)?;
+    let msg = match dec::decode_into_msg(src) {
+        Ok(m) => m,
+        Err(err) => {
+            return Err(
+                format!("Error decoding a msg body, err: {}", err).into()
+            );
+        }
+    };
 
     Ok(msg)
 }

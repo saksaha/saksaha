@@ -15,7 +15,6 @@ impl BlockSynMsg {
         let block_count = parse.next_int()?;
 
         let mut blocks = Vec::with_capacity(block_count as usize);
-        // let mut block_cm_count = 0;
 
         for _ in 0..block_count {
             let validator_sig = {
@@ -53,6 +52,7 @@ impl BlockSynMsg {
             let mut tx_hashes = Vec::with_capacity(tx_count as usize);
 
             for _ in 0..tx_count {
+                println!("444");
                 let tx = {
                     let tx_type = {
                         let p = parse.next_bytes()?;
@@ -82,13 +82,9 @@ impl BlockSynMsg {
                     }
                 };
 
-                // block_cm_count += tx.get_cm_count();
-
                 tx_hashes.push(tx.get_tx_hash().to_owned());
                 txs.push(tx);
             }
-
-            // let block_cm_count = parse.next_int()?;
 
             let block = Block::new(
                 validator_sig,
@@ -97,7 +93,6 @@ impl BlockSynMsg {
                 created_at,
                 block_height,
                 merkle_rt,
-                // block_cm_count as u128,
             );
 
             blocks.push((block, txs));
@@ -141,7 +136,12 @@ impl BlockSynMsg {
             for tx in txs.into_iter() {
                 match tx {
                     Tx::Mint(t) => {
-                        tx_utils::put_mint_tx_into_frame(&mut frame, t);
+                        let tc = t.tx_candidate;
+
+                        tx_utils::put_mint_tx_candidate_into_frame(
+                            &mut frame, tc,
+                        );
+                        // tx_utils::put_mint_tx_into_frame(&mut frame, t);
                     }
                     Tx::Pour(t) => {
                         tx_utils::put_pour_tx_into_frame(&mut frame, t);

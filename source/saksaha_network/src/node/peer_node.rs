@@ -103,7 +103,6 @@ impl PeerNode {
                             warn!("Error retrieving msg, err: {}", err);
 
                             return Err(format!("Err: {}", err).into());
-                            // continue;
                         }
                     };
 
@@ -122,19 +121,18 @@ impl PeerNode {
                                 .await;
                             }
                             Err(err) => {
-                                warn!("Failed to parse the msg, err: {}", err);
+                                error!("Failed to parse the msg, err: {}", err);
                             }
                         },
                         None => {
-                            warn!("Peer has ended the connection");
-
                             self.peer.set_peer_status(
                                 PeerStatus::Disconnected,
                             ).await;
 
                             return Err(
                                 format!("Peer has ended the connection, \
-                                    her_public_key: {}",
+                                    conn_id: {}, her_public_key: {}",
+                                    conn_lock.get_conn_id(),
                                     self.peer.get_public_key_short()
                                 )
                                 .into());
