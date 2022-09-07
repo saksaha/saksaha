@@ -368,10 +368,10 @@ async fn process_ctr_state_update(
                         None => apis.execute_ctr(ctr_addr, req).await?,
                     };
 
-                    println!(
-                        "[+] new_state: {:?}",
-                        String::from_utf8(new_state.clone())
-                    );
+                    // println!(
+                    //     "[+] new_state: {:?}",
+                    //     String::from_utf8(new_state.clone())
+                    // );
 
                     let maybe_error_placehorder = match &new_state.get(0..6) {
                         Some(ep) => ep.to_owned(),

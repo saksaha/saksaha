@@ -395,7 +395,7 @@ fn verify_proof(
     proof: Proof<Bls12>,
     public_inputs: &[Scalar],
     hasher: &Hasher,
-) -> Result<bool, ProofError> {
+) -> Result<(), ProofError> {
     let constants = hasher.get_mimc_constants();
     let de_params = CoinProof::get_mimc_params_1_to_2()?;
     let pvk = groth16::prepare_verifying_key(&de_params.vk);
@@ -404,14 +404,8 @@ fn verify_proof(
     println!("[+] public input: {:?}", public_inputs);
 
     match groth16::verify_proof(&pvk, &proof, public_inputs) {
-        Ok(_) => {
-            println!("verify success!");
-            Ok(true)
-        }
-        Err(err) => {
-            println!("verify_proof(), err: {}", err);
-            Ok(false)
-        }
+        Ok(_) => Ok(()),
+        Err(err) => Err(format!("Verify failed, err: {}", err).into()),
     }
 }
 
@@ -457,8 +451,5 @@ pub async fn test_coin_ownership_default_1_to_2() {
         test_context.cm_2,
     ];
 
-    assert_eq!(
-        verify_proof(proof, &public_inputs, &test_context.hasher).unwrap(),
-        true
-    );
+    verify_proof(proof, &public_inputs, &test_context.hasher).unwrap();
 }
