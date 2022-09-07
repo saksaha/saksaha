@@ -11,7 +11,7 @@ tmux split-window -v
 tmux select-layout tiled
 
 tmux resize-pane -t 1 -U 15
-tmux resize-pane -t 4 -U 15
+tmux resize-pane -t 2 -U 15
 # 6 panes have been displayed
 
 # |---------------|---------------|
