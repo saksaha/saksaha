@@ -168,12 +168,12 @@ impl Wallet {
     ) -> Result<(CoinRecord, CoinRecord), WalletError> {
         let new_coin_1 = CoinRecord::new_random(
             ScalarExt::into_u64(old_value)? - GAS,
-            Some(0),
+            None,
             None,
             None,
         )?;
 
-        let new_coin_2 = CoinRecord::new_random(0, Some(1), None, None)?;
+        let new_coin_2 = CoinRecord::new_random(0, None, None, None)?;
 
         Ok((new_coin_1, new_coin_2))
     }
@@ -327,6 +327,21 @@ impl Wallet {
             coin_manager_lock.put_coin(new_coin_2)?;
 
             println!("[+] new coins have been stored in coin_manager");
+        }
+
+        println!("[coin info (w/o cm)]");
+        for coin in self.get_db().schema.get_all_coins()? {
+            println!(
+                "\
+               \tcoin_status: {:?}\tvalue: {:?}\t\
+                coin_idx: {:?}\tcm_idx: {:?}\t\n\
+                \tcm: {}",
+                coin.coin_status,
+                ScalarExt::into_u64(coin.v)?,
+                coin.coin_idx,
+                coin.cm_idx,
+                coin.cm,
+            );
         }
 
         Ok("success_power".to_string())
