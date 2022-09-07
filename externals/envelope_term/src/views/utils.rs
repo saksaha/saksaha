@@ -192,17 +192,21 @@ where
 }
 
 pub(crate) fn draw_tabs<'a>(state: &'a AppState) -> Tabs {
-    let chat_tab_name = format!("Chat #{}", state.selected_ch_id);
+    // let chat_tab_name = format!("Chat #{}", state.selected_ch_id);
 
     let labels = [
         String::from("Channels [1]"),
         String::from("Open channel [2]"),
-        chat_tab_name,
+        // chat_tab_name,
+        String::from("Chat #"),
     ]
     .iter()
     .map(|t| {
-        let tab = t.clone();
+        let mut tab = t.clone();
         if tab == format!("{}", state.view) {
+            if tab == "Chat #" {
+                tab = format!("Chat #{}", state.selected_ch_id);
+            }
             Spans::from(vec![Span::styled(
                 tab,
                 Style::default().fg(Color::Yellow),
@@ -452,6 +456,18 @@ where
     }
 
     (help_msg, input, message_panel)
+}
+
+pub(crate) fn draw_error<'a>() -> Paragraph<'a> {
+    Paragraph::new("Error!")
+        .style(Style::default().fg(Color::LightCyan))
+        .alignment(Alignment::Center)
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .style(Style::default().fg(Color::White))
+                .border_type(BorderType::Plain),
+        )
 }
 
 // pub(crate) fn __draw_help(actions: &Actions) -> Table {

@@ -1,11 +1,12 @@
 mod ch_list;
 mod chat;
+mod error;
 mod landing;
 mod open_ch;
 mod utils;
 
-use crate::envelope::{AppState, Envelope, View};
-use tokio::sync::{OwnedRwLockWriteGuard, RwLockReadGuard, RwLockWriteGuard};
+use crate::envelope::{AppState, View};
+use tokio::sync::RwLockWriteGuard;
 use tui::backend::Backend;
 use tui::Frame;
 
@@ -27,6 +28,8 @@ pub(crate) fn draw<'a, 'b, B>(
         }
         View::Chat => {
             chat::draw_chat(rect, state);
-        }
+        } // View::Error => {
+          //     chat::draw_chat(rect, state);
+          // }
     }
 }
