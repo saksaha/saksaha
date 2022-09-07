@@ -1,6 +1,6 @@
 use super::utils;
-use crate::envelope::{AppState, Envelope};
-use tokio::sync::{OwnedRwLockWriteGuard, RwLockReadGuard, RwLockWriteGuard};
+use crate::envelope::AppState;
+use tokio::sync::RwLockWriteGuard;
 use tui::backend::Backend;
 use tui::layout::{Constraint, Direction, Layout};
 use tui::Frame;
@@ -21,7 +21,7 @@ pub(crate) fn draw_ch_list<'a, B>(
             [
                 Constraint::Length(6),
                 Constraint::Min(10),
-                Constraint::Length(50),
+                Constraint::Length(15),
             ]
             .as_ref(),
         )

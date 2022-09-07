@@ -21,7 +21,7 @@ pub(crate) fn draw_open_ch<'a, B>(
             [
                 Constraint::Length(6),
                 Constraint::Min(10),
-                Constraint::Length(50),
+                Constraint::Length(15),
             ]
             .as_ref(),
         )
