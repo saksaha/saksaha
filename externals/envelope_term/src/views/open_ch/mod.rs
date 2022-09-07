@@ -13,7 +13,7 @@ pub(crate) fn draw_open_ch<'a, B>(
     B: Backend,
 {
     let size = rect.size();
-    utils::check_size(&size);
+    // utils::check_size(&size);
 
     let chunks = Layout::default()
         .direction(Direction::Vertical)

@@ -13,7 +13,7 @@ pub(crate) fn draw_chat<'a, B>(
     B: Backend,
 {
     let size = rect.size();
-    utils::check_size(&size);
+    // utils::check_size(&size);
 
     let chunks = Layout::default()
         .direction(Direction::Vertical)

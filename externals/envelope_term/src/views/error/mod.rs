@@ -1,9 +1,9 @@
 use super::utils;
-use crate::envelope::{AppState, Envelope, View};
+use crate::envelope::AppState;
 use tokio::sync::RwLockWriteGuard;
 use tui::backend::Backend;
-use tui::layout::{Alignment, Constraint, Direction, Layout, Rect};
-use tui::{symbols, Frame};
+use tui::layout::{Constraint, Direction, Layout};
+use tui::Frame;
 
 pub(crate) fn draw_error<'b, B>(
     rect: &mut Frame<B>,
@@ -13,13 +13,12 @@ pub(crate) fn draw_error<'b, B>(
     B: Backend,
 {
     let size = rect.size();
-    utils::check_size(&size);
 
     let chunks = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Min(3)].as_ref())
+        .constraints([Constraint::Max(28)])
         .split(size);
 
-    let title = utils::draw_error();
-    rect.render_widget(title, chunks[0]);
+    let error_msg = utils::draw_error();
+    rect.render_widget(error_msg, chunks[0]);
 }

@@ -11,7 +11,7 @@ pub enum View {
     ChList,
     OpenCh,
     Chat,
-    // Error,
+    Error,
 }
 
 impl fmt::Display for View {
@@ -21,7 +21,7 @@ impl fmt::Display for View {
             View::ChList => write!(f, "Channels [1]"),
             View::OpenCh => write!(f, "Open channel [2]"),
             View::Chat => write!(f, "Chat #"),
-            // View::Error => write!(f, "Error"),
+            View::Error => write!(f, "Error"),
         }
     }
 }

@@ -1,6 +1,4 @@
-use std::borrow::Cow;
-
-use crate::envelope::{actions::Action, AppState, Envelope};
+use crate::envelope::AppState;
 use crate::io::InputMode;
 use tokio::sync::RwLockWriteGuard;
 use tui::backend::Backend;
@@ -8,19 +6,18 @@ use tui::layout::{Alignment, Rect};
 use tui::style::{Color, Modifier, Style};
 use tui::text::{Span, Spans, Text};
 use tui::widgets::{
-    Block, BorderType, Borders, LineGauge, List, ListItem, Paragraph, Tabs,
+    Block, BorderType, Borders, List, ListItem, Paragraph, Tabs,
 };
 use tui::Frame;
 use tui_logger::{TuiLoggerLevelOutput, TuiLoggerWidget};
 use unicode_width::UnicodeWidthStr;
 
-pub(crate) fn check_size(rect: &Rect) {
-    if rect.width < 52 {
-        panic!("Require width >= 52, (got {})", rect.width);
+pub(crate) fn check_size<'a>(rect: &Rect) -> bool {
+    if rect.width < 52 || rect.height < 28 {
+        return false;
     }
-    if rect.height < 28 {
-        panic!("Require height >= 28, (got {})", rect.height);
-    }
+
+    return true;
 }
 
 pub(crate) fn draw_open_ch<'a, B>(
@@ -460,7 +457,7 @@ where
 
 pub(crate) fn draw_error<'a>() -> Paragraph<'a> {
     Paragraph::new("Error!")
-        .style(Style::default().fg(Color::LightCyan))
+        .style(Style::default().fg(Color::White))
         .alignment(Alignment::Center)
         .block(
             Block::default()
