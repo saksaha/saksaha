@@ -86,7 +86,7 @@ async fn bootstrap_wallet(
                 Ok(_r) => {
                     println!(
                         "\t[{}/{}] Bootstrapped a coin\n\t\tcm: {}\n\t\tval: {}",
-                        idx, coin_count, coin.cm, coin.v
+                        idx + 1, coin_count, coin.cm, coin.v
                     );
 
                     wallet.coin_manager.write().await.put_coin(coin)?;

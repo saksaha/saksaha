@@ -1,6 +1,5 @@
 use crate::DistLedgerApis;
 use crate::LedgerError;
-use log::info;
 use sak_contract_std::CtrRequest;
 use sak_types::CtrAddr;
 use sak_vm::CtrFn;

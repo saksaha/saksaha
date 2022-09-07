@@ -1,6 +1,7 @@
 use crate::SaksahaSDKError;
 use hyper::{Body, Client, Method, Request, Uri};
 use sak_contract_std::{CtrCallType, CtrRequest, RequestArgs};
+use sak_crypto::encode_hex;
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
 use sak_rpc_interface::{
     JsonRequest, JsonResponse, SendMintTxRequest, SendPourTxRequest,
@@ -34,7 +35,7 @@ pub async fn send_tx_pour(
     saksaha_endpoint: String,
     sns: Vec<[u8; 32]>,
     cms: Vec<[u8; 32]>,
-    merkle_rt: [u8; 32],
+    merkle_rts: Vec<[u8; 32]>,
     pi: Vec<u8>,
     ctr_addr: String,
     ctr_request: CtrRequest,
@@ -57,7 +58,7 @@ pub async fn send_tx_pour(
             pi,
             sns,
             cms,
-            merkle_rt,
+            merkle_rts,
         );
 
         let params = serde_json::to_string(&send_req)?.as_bytes().to_vec();

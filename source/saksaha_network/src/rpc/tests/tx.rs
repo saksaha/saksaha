@@ -241,7 +241,7 @@ async fn test_rpc_reqeust_correct_send_pour_tx() {
             tc_dummy.pi,
             tc_dummy.sns,
             tc_dummy.cms,
-            tc_dummy.merkle_rt,
+            tc_dummy.merkle_rts,
         );
 
         let params = serde_json::to_string(&send_req)

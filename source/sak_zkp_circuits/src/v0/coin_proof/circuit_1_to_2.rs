@@ -254,7 +254,7 @@ pub fn require_equal_val_summation<CS: ConstraintSystem<Scalar>>(
             .unwrap();
 
         cs.enforce(
-            || "tmp = v_1 + v_2",
+            || "tmp = v_1 + v_2 + v_gas = v_old",
             |lc| lc + v_1_new + v_2_new + v_gas,
             |lc| lc + CS::one(),
             |lc| lc + v_old,

@@ -73,7 +73,7 @@ async fn test_sequential_write_block_1() {
     for i in 0..REPEAT_NUM as u64 {
         let block = BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
-            tx_candidates: vec![sak_types::mock_pour_tc_1()],
+            tx_candidates: vec![sak_types::mock_pour_tc_random()],
             witness_sigs: vec![String::from("1"), String::from("2")],
             created_at: format!("{}", i),
         };

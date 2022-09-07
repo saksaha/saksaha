@@ -11,7 +11,7 @@ pub struct SendPourTxRequest {
     pub pi: Vec<u8>,
     pub sns: Vec<[u8; 32]>,
     pub cms: Vec<[u8; 32]>,
-    pub merkle_rt: [u8; 32],
+    pub merkle_rts: Vec<[u8; 32]>,
 }
 
 impl SendPourTxRequest {
@@ -23,7 +23,7 @@ impl SendPourTxRequest {
         pi: Vec<u8>,
         sns: Vec<[u8; 32]>,
         cms: Vec<[u8; 32]>,
-        merkle_rt: [u8; 32],
+        merkle_rts: Vec<[u8; 32]>,
     ) -> SendPourTxRequest {
         SendPourTxRequest {
             created_at,
@@ -33,7 +33,7 @@ impl SendPourTxRequest {
             pi,
             sns,
             cms,
-            merkle_rt,
+            merkle_rts,
         }
     }
 }

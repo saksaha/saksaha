@@ -4,6 +4,7 @@ use hyper_rpc_router::{
     make_error_response, make_success_response, require_params_parsed,
     require_some_params, Params, RouteState,
 };
+use sak_crypto::encode_hex;
 use sak_rpc_interface::{SendMintTxRequest, SendPourTxRequest};
 use sak_types::{MintTxCandidate, PourTxCandidate, Tx, TxCandidate};
 use serde::{Deserialize, Serialize};
@@ -75,7 +76,7 @@ pub(in crate::rpc) async fn send_pour_tx(
         rb.pi,
         rb.sns,
         rb.cms,
-        rb.merkle_rt,
+        rb.merkle_rts,
     ));
 
     match sys_handle

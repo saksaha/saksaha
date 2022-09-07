@@ -89,14 +89,17 @@ async fn test_dist_ledger_tx_mint_put_and_get_cm_idx() {
         .await
         .unwrap();
 
-    let cm_1_idx = {
-        let cms = dist_ledger
-            .apis
-            .ledger_db
-            .get_cms(&mock_tx_hash)
-            .unwrap()
-            .expect("cms should be obtained");
+    let cms = dist_ledger
+        .apis
+        .ledger_db
+        .get_tx(&mock_tx_hash)
+        .await
+        .unwrap()
+        .expect("cms should be obtained")
+        .get_cms()
+        .to_owned();
 
+    let cm_1_idx = {
         println!("cms :{:?}", cms);
 
         let cm_1_idx = dist_ledger
@@ -140,16 +143,17 @@ async fn test_dist_ledger_tx_pour_put_and_get_cm_idx() {
         .await
         .unwrap();
 
+    let cms = dist_ledger
+        .apis
+        .ledger_db
+        .get_tx(&mock_tx_hash)
+        .await
+        .unwrap()
+        .expect("tx should exist")
+        .get_cms()
+        .to_owned();
+
     let cm_1_idx = {
-        let cms = dist_ledger
-            .apis
-            .ledger_db
-            .get_cms(&mock_tx_hash)
-            .unwrap()
-            .expect("cms should be obtained");
-
-        println!("cms :{:?}", cms);
-
         let cm_1_idx = dist_ledger
             .apis
             .ledger_db
@@ -161,13 +165,6 @@ async fn test_dist_ledger_tx_pour_put_and_get_cm_idx() {
     };
 
     let cm_2_idx = {
-        let cms = dist_ledger
-            .apis
-            .ledger_db
-            .get_cms(&mock_tx_hash)
-            .unwrap()
-            .expect("cms should be obtained");
-
         let cm_2_idx = dist_ledger
             .apis
             .ledger_db
@@ -192,7 +189,7 @@ async fn test_dist_ledger_verify_proof_success() {
     let dist_ledger = testing::mock_dist_ledger_1().await;
 
     println!("aaaaaaa222");
-    let bc_1 = sak_types::mock_block_pour_single();
+    let bc_1 = sak_types::mock_block_pour_random();
     println!("aaaaaaa");
 
     {

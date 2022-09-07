@@ -4,6 +4,7 @@ use bellman::groth16::{self, Parameters};
 use bellman::{Circuit, ConstraintSystem, SynthesisError};
 use sak_crypto::{Bls12, OsRng, Scalar};
 use sak_dist_ledger_meta::{CM_TREE_DEPTH, GAS};
+use type_extension::U8Array;
 
 pub struct CoinProofCircuit2to2 {
     pub hasher: Hasher,
@@ -24,55 +25,46 @@ impl Circuit<Scalar> for CoinProofCircuit2to2 {
         self,
         cs: &mut CS,
     ) -> Result<(), SynthesisError> {
-        let rho_1_old = self.coin_1_old.rho.or(Some(Scalar::default()));
-        let addr_pk_1_old = self.coin_1_old.addr_pk.or(Some(Scalar::default()));
-        let addr_sk_1_old = self.coin_1_old.addr_sk.or(Some(Scalar::default()));
-        let cm_1_old = self.coin_1_old.cm.or(Some(Scalar::default()));
-        let r_1_old = self.coin_1_old.r.or(Some(Scalar::default()));
-        let s_1_old = self.coin_1_old.s.or(Some(Scalar::default()));
-        let v_1_old = self.coin_1_old.v.or(Some(Scalar::default()));
+        let old_coins = vec![self.coin_1_old, self.coin_2_old];
 
-        let rho_2_old = self.coin_2_old.rho.or(Some(Scalar::default()));
-        let addr_pk_2_old = self.coin_2_old.addr_pk.or(Some(Scalar::default()));
-        let addr_sk_2_old = self.coin_2_old.addr_sk.or(Some(Scalar::default()));
-        let cm_2_old = self.coin_2_old.cm.or(Some(Scalar::default()));
-        let r_2_old = self.coin_2_old.r.or(Some(Scalar::default()));
-        let s_2_old = self.coin_2_old.s.or(Some(Scalar::default()));
-        let v_2_old = self.coin_2_old.v.or(Some(Scalar::default()));
+        let mut sns: Vec<Option<Scalar>> = Vec::default();
 
-        check_cm_commitments(
-            cs,
-            cm_1_old,
-            addr_pk_1_old,
-            rho_1_old,
-            r_1_old,
-            s_1_old,
-            v_1_old,
-            &self.hasher,
-        );
+        let mut merkle_rts: Vec<Option<Scalar>> = Vec::default();
 
-        check_cm_commitments(
-            cs,
-            cm_2_old,
-            addr_pk_2_old,
-            rho_2_old,
-            r_2_old,
-            s_2_old,
-            v_2_old,
-            &self.hasher,
-        );
+        let mut old_values: Vec<Option<Scalar>> = Vec::default();
 
-        let sn_1 = self.hasher.mimc_scalar_cs(cs, addr_sk_1_old, rho_1_old);
-        let sn_2 = self.hasher.mimc_scalar_cs(cs, addr_sk_2_old, rho_2_old);
+        for old_coin in old_coins {
+            //
+            let rho_old = old_coin.rho.or(Some(Scalar::default()));
+            let addr_pk_old = old_coin.addr_pk.or(Some(Scalar::default()));
+            let addr_sk_old = old_coin.addr_sk.or(Some(Scalar::default()));
+            let cm_old = old_coin.cm.or(Some(Scalar::default()));
+            let r_old = old_coin.r.or(Some(Scalar::default()));
+            let s_old = old_coin.s.or(Some(Scalar::default()));
+            let v_old = old_coin.v.or(Some(Scalar::default()));
 
-        let merkle_rt = climb_up_tree_2_to_2(
-            cs,
-            cm_1_old,
-            cm_2_old,
-            &self.coin_1_old.auth_path,
-            &self.coin_2_old.auth_path,
-            &self.hasher,
-        );
+            old_values.push(v_old);
+
+            check_cm_commitments(
+                cs,
+                cm_old,
+                addr_pk_old,
+                rho_old,
+                r_old,
+                s_old,
+                v_old,
+                &self.hasher,
+            );
+
+            let sn = self.hasher.mimc_scalar_cs(cs, addr_sk_old, rho_old);
+
+            sns.push(sn);
+
+            let merkle_rt =
+                climb_up_tree(cs, cm_old, &old_coin.auth_path, &self.hasher);
+
+            merkle_rts.push(merkle_rt);
+        }
 
         let addr_pk_1_new = self.coin_1_new.addr_pk.or(Some(Scalar::default()));
         let rho_1_new = self.coin_1_new.rho.or(Some(Scalar::default()));
@@ -128,24 +120,27 @@ impl Circuit<Scalar> for CoinProofCircuit2to2 {
             &self.hasher,
         );
 
-        require_equal_val_summation_2_to_2(
-            cs, v_1_old, v_2_old, v_1_new, v_2_new,
-        );
+        require_equal_val_summation_2_to_2(cs, old_values, v_1_new, v_2_new);
 
         {
             cs.alloc_input(
-                || "merkle_rt",
-                || merkle_rt.ok_or(SynthesisError::AssignmentMissing),
+                || "merkle_rt_1",
+                || merkle_rts[0].ok_or(SynthesisError::AssignmentMissing),
+            )?;
+
+            cs.alloc_input(
+                || "merkle_rt_2",
+                || merkle_rts[1].ok_or(SynthesisError::AssignmentMissing),
             )?;
 
             cs.alloc_input(
                 || "sn_1_old",
-                || sn_1.ok_or(SynthesisError::AssignmentMissing),
+                || sns[0].ok_or(SynthesisError::AssignmentMissing),
             )?;
 
             cs.alloc_input(
                 || "sn_2_old",
-                || sn_2.ok_or(SynthesisError::AssignmentMissing),
+                || sns[1].ok_or(SynthesisError::AssignmentMissing),
             )?;
 
             cs.alloc_input(
@@ -215,108 +210,108 @@ pub fn climb_up_tree<CS: ConstraintSystem<Scalar>>(
     return curr;
 }
 
-pub fn climb_up_tree_2_to_2<CS: ConstraintSystem<Scalar>>(
-    cs: &mut CS,
-    leaf_1: Option<Scalar>,
-    leaf_2: Option<Scalar>,
-    auth_path_1: &[Option<(Scalar, bool)>; CM_TREE_DEPTH as usize],
-    auth_path_2: &[Option<(Scalar, bool)>; CM_TREE_DEPTH as usize],
-    hasher: &Hasher,
-) -> Option<Scalar> {
-    let mut curr_1 = leaf_1;
+// pub fn climb_up_tree_2_to_2<CS: ConstraintSystem<Scalar>>(
+//     cs: &mut CS,
+//     leaf_1: Option<Scalar>,
+//     // leaf_2: Option<Scalar>,
+//     auth_path_1: &[Option<(Scalar, bool)>; CM_TREE_DEPTH as usize],
+//     // auth_path_2: &[Option<(Scalar, bool)>; CM_TREE_DEPTH as usize],
+//     hasher: &Hasher,
+// ) -> Option<Scalar> {
+//     let leaves = [leaf_1, leaf_2];
+//     let auth_paths = [auth_path_1, auth_path_2];
 
-    for (idx, merkle_node) in auth_path_1.iter().enumerate() {
-        // println!("idx: {}, sibling: {:?}", idx, merkle_node);
+//     let mut curr = Scalar::default();
 
-        let cs = &mut cs.namespace(|| format!("height {}", idx));
+//     for leaf in leaves {
+//         let mut curr = leaf;
 
-        let cur_is_right = AllocatedBit::alloc(
-            cs.namespace(|| "cur is right"),
-            merkle_node.as_ref().map(|&(_, d)| d),
-        )
-        .expect("cur_is_right");
+//         for (idx, merkle_node) in auth_path_1.iter().enumerate() {
+//             // println!("idx: {}, sibling: {:?}", idx, merkle_node);
 
-        let xl_value;
-        let xr_value;
+//             let cs = &mut cs.namespace(|| format!("height {}", idx));
 
-        let is_right = cur_is_right.get_value().and_then(|v| {
-            if v {
-                Some(true)
-            } else {
-                Some(false)
-            }
-        });
+//             let cur_is_right = AllocatedBit::alloc(
+//                 cs.namespace(|| "cur is right"),
+//                 merkle_node.as_ref().map(|&(_, d)| d),
+//             )
+//             .expect("cur_is_right");
 
-        let temp = match *merkle_node {
-            Some(a) => a,
-            None => (Scalar::default(), false),
-        };
+//             let xl_value;
+//             let xr_value;
 
-        if match is_right {
-            Some(a) => a,
-            None => false,
-        } {
-            xl_value = Some(temp.0);
-            xr_value = curr_1;
-        } else {
-            xl_value = curr_1;
-            xr_value = Some(temp.0);
-        }
+//             let is_right = cur_is_right.get_value().and_then(|v| {
+//                 if v {
+//                     Some(true)
+//                 } else {
+//                     Some(false)
+//                 }
+//             });
 
-        curr_1 = hasher.mimc_scalar_cs(cs, xl_value, xr_value);
-    }
+//             let temp = match *merkle_node {
+//                 Some(a) => a,
+//                 None => (Scalar::default(), false),
+//             };
 
-    let mut curr_2 = leaf_2;
+//             if match is_right {
+//                 Some(a) => a,
+//                 None => false,
+//             } {
+//                 xl_value = Some(temp.0);
+//                 xr_value = curr;
+//             } else {
+//                 xl_value = curr;
+//                 xr_value = Some(temp.0);
+//             }
 
-    for (idx, merkle_node) in auth_path_2.iter().enumerate() {
-        // println!("idx: {}, sibling: {:?}", idx, merkle_node);
+//             curr = hasher.mimc_scalar_cs(cs, xl_value, xr_value);
+//         }
+//     }
 
-        let cs = &mut cs.namespace(|| format!("height {}", idx));
+//     // let mut curr_2 = leaf_2;
 
-        let cur_is_right = AllocatedBit::alloc(
-            cs.namespace(|| "cur is right"),
-            merkle_node.as_ref().map(|&(_, d)| d),
-        )
-        .expect("cur_is_right");
+//     // for (idx, merkle_node) in auth_path_2.iter().enumerate() {
+//     //     // println!("idx: {}, sibling: {:?}", idx, merkle_node);
 
-        let xl_value;
-        let xr_value;
+//     //     let cs = &mut cs.namespace(|| format!("height {}", idx));
 
-        let is_right = cur_is_right.get_value().and_then(|v| {
-            if v {
-                Some(true)
-            } else {
-                Some(false)
-            }
-        });
+//     //     let cur_is_right = AllocatedBit::alloc(
+//     //         cs.namespace(|| "cur is right"),
+//     //         merkle_node.as_ref().map(|&(_, d)| d),
+//     //     )
+//     //     .expect("cur_is_right");
 
-        let temp = match *merkle_node {
-            Some(a) => a,
-            None => (Scalar::default(), false),
-        };
+//     //     let xl_value;
+//     //     let xr_value;
 
-        if match is_right {
-            Some(a) => a,
-            None => false,
-        } {
-            xl_value = Some(temp.0);
-            xr_value = curr_2;
-        } else {
-            xl_value = curr_2;
-            xr_value = Some(temp.0);
-        }
+//     //     let is_right = cur_is_right.get_value().and_then(|v| {
+//     //         if v {
+//     //             Some(true)
+//     //         } else {
+//     //             Some(false)
+//     //         }
+//     //     });
 
-        curr_2 = hasher.mimc_scalar_cs(cs, xl_value, xr_value);
-    }
+//     //     let temp = match *merkle_node {
+//     //         Some(a) => a,
+//     //         None => (Scalar::default(), false),
+//     //     };
 
-    match (&curr_1, &curr_2) {
-        (Some(a), Some(b)) => assert_eq!(a, b),
-        (None, None) => (),
-        _ => panic!("a and b not equal"),
-    }
+//     //     if match is_right {
+//     //         Some(a) => a,
+//     //         None => false,
+//     //     } {
+//     //         xl_value = Some(temp.0);
+//     //         xr_value = curr_2;
+//     //     } else {
+//     //         xl_value = curr_2;
+//     //         xr_value = Some(temp.0);
+//     //     }
 
-    return curr_1;
-}
+//     //     curr_2 = hasher.mimc_scalar_cs(cs, xl_value, xr_value);
+//     // }
+//     Some(curr)
+// }
 
 pub fn check_cm_commitments<CS: ConstraintSystem<Scalar>>(
     cs: &mut CS,
@@ -355,22 +350,27 @@ pub fn check_cm_commitments<CS: ConstraintSystem<Scalar>>(
 
 pub fn require_equal_val_summation_2_to_2<CS: ConstraintSystem<Scalar>>(
     cs: &mut CS,
-    v_old_1: Option<Scalar>,
-    v_old_2: Option<Scalar>,
+    old_values: Vec<Option<Scalar>>,
     v_new_1: Option<Scalar>,
     v_new_2: Option<Scalar>,
 ) {
-    let v_old_1 = cs
+    let gas = Some(Scalar::from_bytes(&U8Array::from_int(GAS)).unwrap());
+
+    let v_gas = cs
+        .alloc(|| "v_gas", || gas.ok_or(SynthesisError::AssignmentMissing))
+        .unwrap();
+
+    let v_1_old = cs
         .alloc(
             || "v_old_1",
-            || v_old_1.ok_or(SynthesisError::AssignmentMissing),
+            || old_values[0].ok_or(SynthesisError::AssignmentMissing),
         )
         .unwrap();
 
-    let v_old_2 = cs
+    let v_2_old = cs
         .alloc(
             || "v_old_2",
-            || v_old_2.ok_or(SynthesisError::AssignmentMissing),
+            || old_values[1].ok_or(SynthesisError::AssignmentMissing),
         )
         .unwrap();
 
@@ -390,10 +390,10 @@ pub fn require_equal_val_summation_2_to_2<CS: ConstraintSystem<Scalar>>(
             .unwrap();
 
         cs.enforce(
-            || "tmp = v_1 + v_2",
-            |lc| lc + v_1_new + v_2_new,
+            || "v_1_old + v_2_old = v_1 + v_2 + v_gas",
+            |lc| lc + v_1_new + v_2_new + v_gas,
             |lc| lc + CS::one(),
-            |lc| lc + v_old_1 + v_old_2,
+            |lc| lc + v_1_old + v_2_old,
         );
     };
 }
