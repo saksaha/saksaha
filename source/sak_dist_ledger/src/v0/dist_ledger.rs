@@ -12,7 +12,7 @@ use sak_types::BlockCandidate;
 use sak_vm::VM;
 use std::sync::Arc;
 use tokio::sync::broadcast;
-use tokio::sync::{broadcast::Sender, RwLock};
+use tokio::sync::broadcast::Sender;
 
 const BLOCKCHAIN_EVENT_QUEUE_CAPACITY: usize = 32;
 

@@ -50,6 +50,20 @@ impl CoinManager {
         None
     }
 
+    pub fn get_dummy_coin(&mut self) -> Option<&mut CoinRecord> {
+        for coin in self.coins.iter_mut() {
+            if coin.v == sak_crypto::Scalar::zero() {
+                continue;
+            }
+
+            if coin.cm == sak_types::get_dummy_coin_cm() {
+                return Some(coin);
+            }
+        }
+
+        return None;
+    }
+
     pub fn put_coin(
         &mut self,
         coin_record: CoinRecord,

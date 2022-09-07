@@ -1,9 +1,10 @@
 use crate::{CtrStateUpdate, DistLedgerApis, LedgerError, MerkleUpdate};
 use colored::Colorize;
 use log::{debug, info, warn};
-use sak_contract_std::{CtrCallType, CtrRequest, Storage, ERROR_PLACEHOLDER};
+use sak_contract_std::{CtrCallType, CtrRequest, ERROR_PLACEHOLDER};
 use sak_crypto::{Bls12, MerkleTree, ScalarExt};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
+use sak_proofs::DUMMY_SN;
 use sak_proofs::{CoinProof, Hasher, Proof};
 use sak_types::{
     Block, BlockCandidate, CmIdx, MintTxCandidate, PourTxCandidate, Sn, Tx,
@@ -220,12 +221,12 @@ impl DistLedgerApis {
         self.ledger_db.delete_tx(key)
     }
 
-    pub(crate) fn verify_sn(&self, sns: &Vec<Sn>) -> Result<bool, LedgerError> {
-        match self.ledger_db.get_tx_hash_by_sn(sns) {
+    pub(crate) fn verify_sn(&self, sn: &Sn) -> Result<bool, LedgerError> {
+        match self.ledger_db.get_tx_hash_by_sn(sn) {
             Ok(Some(_)) => {
                 return Err(format!(
                     "Serial numbers already exists, sns: {:?}",
-                    sns
+                    sn
                 )
                 .into())
             }
@@ -233,7 +234,7 @@ impl DistLedgerApis {
             Err(_) => {
                 return Err(format!(
                     "Tx with serial numbers does not exist, sns: {:?}",
-                    sns
+                    sn
                 )
                 .into())
             }
@@ -248,7 +249,9 @@ impl DistLedgerApis {
 
         let mut public_inputs = vec![];
 
-        public_inputs.push(ScalarExt::parse_arr(&tc.merkle_rt)?);
+        for merkle_rt in &tc.merkle_rts {
+            public_inputs.push(ScalarExt::parse_arr(merkle_rt)?);
+        }
 
         for sn in &tc.sns {
             public_inputs.push(ScalarExt::parse_arr(sn)?);
@@ -269,11 +272,18 @@ impl DistLedgerApis {
             }
         };
 
-        let verification_result =
-            CoinProof::verify_proof_1_to_2(pi_des, &public_inputs, &hasher)?;
+        let verification_result = match &tc.merkle_rts.len() {
+            2 => {
+                CoinProof::verify_proof_2_to_2(pi_des, &public_inputs, &hasher)?
+            }
+            _ => {
+                // return Err(format!("Not implement yet").into());
+                false
+            }
+        };
 
         if !verification_result {
-            return Err("Failed to verify proof".into());
+            return Err("2222 Failed to verify proof".into());
         };
 
         Ok(verification_result)
@@ -288,17 +298,19 @@ impl DistLedgerApis {
                 return true;
             }
             TxCandidate::Pour(tc) => {
-                match self.verify_sn(&tc.sns) {
-                    Ok(b) => b,
-                    Err(err) => {
-                        warn!(
-                            "Tx is filtered, hash: {}, err: {}",
-                            tc.get_tx_hash(),
-                            err
-                        );
-                        return false;
-                    }
-                };
+                for sn in &tc.sns {
+                    match self.verify_sn(&sn) {
+                        Ok(b) => b,
+                        Err(err) => {
+                            warn!(
+                                "Tx is filtered, hash: {}, err: {}",
+                                tc.get_tx_hash(),
+                                err
+                            );
+                            return false;
+                        }
+                    };
+                }
 
                 match self.verify_proof(tc) {
                     Ok(b) => b,

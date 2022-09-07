@@ -39,6 +39,7 @@ impl Consensus for Pos {
 
         let validator_str: String = String::from_utf8(validator)?;
 
+        // aaron did it
         if self.identity.credential.public_key_str == validator_str {
             let bc = BlockCandidate {
                 validator_sig: String::from("1"),

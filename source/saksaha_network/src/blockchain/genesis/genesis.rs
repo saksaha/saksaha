@@ -25,6 +25,7 @@ impl GenesisBlock {
 
         let tx_mint_1 = sak_types::mock_mint_tc_3();
         let tx_mint_2 = sak_types::mock_mint_tc_4();
+
         let tx_deploy_validator = sak_types::mock_mint_tc_deploying_contract(
             validator_wasm,
             VALIDATOR_CTR_ADDR.to_string(),

@@ -326,7 +326,7 @@ fn make_test_context() -> (OldCoin, NewCoin, NewCoin, Scalar) {
 }
 
 #[tokio::test(flavor = "multi_thread")]
-pub async fn test_make_a_proof_and_verify_it() {
+pub async fn test_make_a_proof_1_to_2_and_verify_it() {
     sak_test_utils::init_test_log();
 
     let (coin_1_old, coin_1_new, coin_2_new, merkle_rt) = make_test_context();

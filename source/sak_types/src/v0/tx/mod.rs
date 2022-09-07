@@ -11,7 +11,6 @@ pub use tx::*;
 pub use tx_candidate::*;
 pub use tx_type::*;
 
-
 pub type TxHash = String;
 
 pub type BlockHash = String;
@@ -25,5 +24,7 @@ pub type TxHeight = u128;
 pub type Sn = [u8; 32];
 
 pub type Cm = [u8; 32];
+
+pub type MerkleRt = [u8; 32];
 
 pub type CmIdx = u128;
