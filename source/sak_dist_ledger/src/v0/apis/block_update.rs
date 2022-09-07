@@ -222,21 +222,25 @@ impl DistLedgerApis {
     }
 
     pub(crate) fn verify_sn(&self, sn: &Sn) -> Result<bool, LedgerError> {
-        match self.ledger_db.get_tx_hash_by_sn(sn) {
-            Ok(Some(_)) => {
-                return Err(format!(
-                    "Serial numbers already exists, sns: {:?}",
-                    sn
-                )
-                .into())
-            }
-            Ok(None) => return Ok(true),
-            Err(_) => {
-                return Err(format!(
-                    "Tx with serial numbers does not exist, sns: {:?}",
-                    sn
-                )
-                .into())
+        if sn == &DUMMY_SN {
+            return Ok(true);
+        } else {
+            match self.ledger_db.get_tx_hash_by_sn(sn) {
+                Ok(Some(_)) => {
+                    return Err(format!(
+                        "Serial numbers already exists, sns: {:?}",
+                        sn
+                    )
+                    .into())
+                }
+                Ok(None) => return Ok(true),
+                Err(_) => {
+                    return Err(format!(
+                        "Tx with serial numbers does not exist, sns: {:?}",
+                        sn
+                    )
+                    .into())
+                }
             }
         }
     }
