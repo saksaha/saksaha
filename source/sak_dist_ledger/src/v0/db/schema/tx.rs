@@ -203,8 +203,6 @@ impl LedgerDB {
 
         let tx_hash = tc.get_tx_hash();
 
-        self.batch_put_tx_hash_by_sn(batch, &tc.sns, tx_hash)?;
-
         self.batch_put_tx_type(batch, tx_hash, tc.get_tx_type())?;
 
         self.batch_put_tx_created_at(batch, tx_hash, &tc.created_at)?;
@@ -220,6 +218,7 @@ impl LedgerDB {
         for (idx, sn) in tc.sns.iter().enumerate() {
             let key = format!("{}_{}", tx_hash, idx);
 
+            self.batch_put_tx_hash_by_sn(batch, &sn, tx_hash)?;
             self.batch_put_sn(batch, &key, &sn)?;
         }
 

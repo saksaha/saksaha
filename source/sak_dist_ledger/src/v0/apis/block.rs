@@ -99,14 +99,18 @@ impl DistLedgerApis {
             TxCandidate::Pour(tc) => {
                 let mut is_valid_sn = true;
                 for sn in &tc.sns {
-                    if sn == &DUMMY_SN {
-                        continue;
-                    } else {
-                        is_valid_sn = self.verify_sn(&sn)?;
-                        if !is_valid_sn {
-                            break;
-                        }
+                    is_valid_sn = self.verify_sn(&sn)?;
+                    if !is_valid_sn {
+                        break;
                     }
+                    // if sn == &DUMMY_SN {
+                    //     continue;
+                    // } else {
+                    //     is_valid_sn = self.verify_sn(&sn)?;
+                    //     if !is_valid_sn {
+                    //         break;
+                    //     }
+                    // }
                 }
                 println!("double spending pass!");
 
