@@ -87,7 +87,6 @@ impl DistLedgerApis {
             }
         };
 
-        // let tcs = &bc.tx_candidates.clone();
         let tc_len = bc.tx_candidates.len();
 
         let mut ctr_state_update = CtrStateUpdate::new();
@@ -281,13 +280,9 @@ impl DistLedgerApis {
     pub(crate) fn filter_tx_candidates(
         &self,
         bc: &mut BlockCandidate,
-        // tx_candidates: &Vec<TxCandidate>,
     ) -> Result<(), LedgerError> {
-        // let mut valid_tx_candidates: Vec<TxCandidate> = vec![];
-
         bc.tx_candidates.retain(|tx_candidate| match tx_candidate {
             TxCandidate::Mint(_tc) => {
-                // valid_tx_candidates.push(tx_candidate.clone());
                 return true;
             }
             TxCandidate::Pour(tc) => {
@@ -318,47 +313,6 @@ impl DistLedgerApis {
                 return true;
             }
         });
-
-        // for tx_candidate in &bc.tx_candidates {
-        //     match tx_candidate {
-        //         TxCandidate::Mint(_tc) => {
-        //             valid_tx_candidates.push(tx_candidate.clone());
-        //         }
-        //         TxCandidate::Pour(tc) => {
-        //             let is_valid_sn = match self.verify_sn(&tc.sns) {
-        //                 Ok(b) => b,
-        //                 Err(err) => {
-        //                     warn!(
-        //                         "Tx is filtered, hash: {}, err: {}",
-        //                         tc.get_tx_hash(),
-        //                         err
-        //                     );
-        //                     false
-        //                 }
-        //             };
-
-        //             let is_verified_tx = match self.verify_proof(tc) {
-        //                 Ok(b) => b,
-        //                 Err(err) => {
-        //                     warn!(
-        //                         "Tx is filtered, hash: {}, err: {}",
-        //                         tc.get_tx_hash(),
-        //                         err
-        //                     );
-        //                     false
-        //                 }
-        //             };
-
-        //             if is_valid_sn && is_verified_tx {
-        //                 valid_tx_candidates.push(tx_candidate.to_owned());
-        //             } else {
-        //                 continue;
-        //             }
-        //         }
-        //     };
-        // }
-
-        // bc.tx_candidates = valid_tx_candidates;
 
         Ok(())
     }
