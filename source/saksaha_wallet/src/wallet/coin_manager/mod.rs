@@ -47,7 +47,7 @@ impl CoinManager {
             }
         }
 
-        return None;
+        None
     }
 
     pub fn get_dummy_coin(&mut self) -> Option<&mut CoinRecord> {

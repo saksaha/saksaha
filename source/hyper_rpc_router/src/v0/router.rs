@@ -1,6 +1,7 @@
 use super::{response, Handler, RouteState};
 use hyper::{Body, Request, Response};
 use hyper_server::MiddlewareResult;
+use log::debug;
 use sak_rpc_interface::JsonRequest;
 use std::{collections::HashMap, sync::Arc};
 
@@ -54,6 +55,8 @@ where
                     ));
                 }
             };
+
+            debug!("router, json_rpc, method: {}", json_request.method);
 
             let route_state = RouteState {
                 id: json_request.id,

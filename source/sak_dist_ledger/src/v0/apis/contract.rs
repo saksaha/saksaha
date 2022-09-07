@@ -1,6 +1,5 @@
 use crate::DistLedgerApis;
 use crate::LedgerError;
-use log::info;
 use sak_contract_std::CtrRequest;
 use sak_types::CtrAddr;
 use sak_vm::CtrFn;
@@ -57,7 +56,7 @@ impl DistLedgerApis {
             .updated_storage
             .ok_or("State needs to be updated after execution")?;
 
-        info!("invoke execute ctr result, next ctr_state: {:?}", state);
+        // info!("invoke execute ctr result, next ctr_state: {:?}", state);
 
         Ok(state)
     }

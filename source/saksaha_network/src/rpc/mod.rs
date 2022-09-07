@@ -1,4 +1,3 @@
-// mod router;
 mod routes;
 mod rpc;
 

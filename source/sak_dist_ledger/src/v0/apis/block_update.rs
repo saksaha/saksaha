@@ -1,8 +1,8 @@
 use crate::{CtrStateUpdate, DistLedgerApis, LedgerError, MerkleUpdate};
 use colored::Colorize;
 use log::{debug, info, warn};
-use sak_contract_std::{CtrCallType, CtrRequest, Storage, ERROR_PLACEHOLDER};
-use sak_crypto::{encode_hex, Bls12, MerkleTree, Scalar, ScalarExt};
+use sak_contract_std::{CtrCallType, CtrRequest, ERROR_PLACEHOLDER};
+use sak_crypto::{Bls12, MerkleTree, ScalarExt};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
 use sak_proofs::DUMMY_SN;
 use sak_proofs::{CoinProof, Hasher, Proof};
@@ -53,14 +53,16 @@ impl DistLedgerApis {
         &self,
         bc: Option<BlockCandidate>,
     ) -> Result<Option<String>, LedgerError> {
+        // lock();
+
         let mut bc = match bc {
             Some(bc) => bc,
             None => match self.make_block_candidate().await? {
                 Some(bc) => bc,
                 None => {
-                    debug!(
-                        "No txs to write as a block, aborting write_block()",
-                    );
+                    // debug!(
+                    //     "No txs to write as a block, aborting write_block()",
+                    // );
 
                     return Ok(None);
                 }
