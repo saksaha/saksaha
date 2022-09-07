@@ -38,7 +38,7 @@ impl std::fmt::Display for Msg {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self {
             Msg::HelloSyn(_) => write!(f, "hello_syn"),
-            Msg::HelloAck(_) => write!(f, "helloack"),
+            Msg::HelloAck(_) => write!(f, "hello_ack"),
             Msg::HandshakeSyn(_) => write!(f, "handshake_syn"),
             Msg::HandshakeAck(_) => write!(f, "handshake_ack"),
             Msg::TxHashSyn(_) => write!(f, "tx_hash_syn"),
