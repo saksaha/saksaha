@@ -59,9 +59,11 @@ pub(in crate::node) async fn send_block_syn(
             )
         }
         _ => {
-            return Err(
-                format!("Only block ack should arrive at this point").into()
-            );
+            return Err(format!(
+                "Only block ack should arrive at this point, msg: {}",
+                msg
+            )
+            .into());
         }
     };
 

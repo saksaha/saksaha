@@ -39,9 +39,11 @@ pub(in crate::node) async fn send_tx_syn<'a>(
             )
         }
         _ => {
-            return Err(
-                format!("Only tx ack should arrive at this point").into()
-            );
+            return Err(format!(
+                "Only tx ack should arrive at this point, msg: {}",
+                msg
+            )
+            .into());
         }
     };
 

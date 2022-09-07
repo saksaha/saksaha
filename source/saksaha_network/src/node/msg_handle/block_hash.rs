@@ -39,7 +39,8 @@ pub(in crate::node) async fn send_block_hash_syn(
         }
         _ => {
             return Err(format!(
-                "Only block hash ack should arrive at this point"
+                "Only block hash ack should arrive at this point, msg: {}",
+                msg,
             )
             .into());
         }
