@@ -28,42 +28,42 @@ impl WalletDBSchema {
     }
 
     pub fn get_coin(&self, cm: &Scalar) -> Result<CoinRecord, WalletError> {
-        let addr_pk = match self.raw.get_a_pk(&cm)? {
+        let addr_pk = match self.raw.get_a_pk(cm)? {
             Some(p) => p,
-            None => return Err(format!("Failed to get a_pk").into()),
+            None => return Err("Failed to get a_pk".into()),
         };
 
-        let addr_sk = match self.raw.get_a_sk(&cm)? {
+        let addr_sk = match self.raw.get_a_sk(cm)? {
             Some(s) => s,
             None => return Err(format!("Failed to get a_sk").into()),
         };
 
-        let rho = match self.raw.get_rho(&cm)? {
+        let rho = match self.raw.get_rho(cm)? {
             Some(r) => r,
             None => return Err(format!("Failed to get rho").into()),
         };
 
-        let r = match self.raw.get_r(&cm)? {
+        let r = match self.raw.get_r(cm)? {
             Some(r) => r,
             None => return Err(format!("Failed to get r").into()),
         };
 
-        let s = match self.raw.get_s(&cm)? {
+        let s = match self.raw.get_s(cm)? {
             Some(s) => s,
             None => return Err(format!("Failed to get s").into()),
         };
 
-        let v = match self.raw.get_v(&cm)? {
+        let v = match self.raw.get_v(cm)? {
             Some(v) => v,
             None => return Err(format!("Failed to get v").into()),
         };
 
-        let coin_status = match self.raw.get_coin_status(&cm)? {
+        let coin_status = match self.raw.get_coin_status(cm)? {
             Some(v) => v,
             None => return Err(format!("Failed to get coin_status").into()),
         };
 
-        let coin_idx = match self.raw.get_coin_idx(&cm)? {
+        let coin_idx = match self.raw.get_coin_idx(cm)? {
             Some(v) => v,
             None => return Err(format!("Failed to get coin_idx").into()),
         };
