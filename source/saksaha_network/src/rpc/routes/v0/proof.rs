@@ -86,6 +86,7 @@ pub(in crate::rpc) async fn get_cm_idx(
         .await
     {
         Ok(cm_idx) => {
+            println!("cm: {:?}, returned cm dix: {:?}", &rb.cm, cm_idx);
             let get_auth_path_resp = GetCmIdxResponse { cm_idx };
 
             return make_success_response(route_state, get_auth_path_resp);

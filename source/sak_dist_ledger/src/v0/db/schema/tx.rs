@@ -105,9 +105,10 @@ impl LedgerDB {
         //     .ok_or("merkle_root should exist")?;
 
         let mut cm_idxes = vec![];
+
         for cm in &cms {
             let cm_idx = self
-                .get_cm_idx_by_cm(&cm)?
+                .get_cm_idx_by_cm(cm)?
                 .ok_or("cm_idx_1 does not exist")?;
 
             cm_idxes.push(cm_idx);
