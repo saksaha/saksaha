@@ -354,14 +354,12 @@ impl LedgerDB {
     pub(crate) fn batch_put_tx_hash_by_sn(
         &self,
         batch: &mut WriteBatch,
-        key: &Vec<Sn>,
+        key: &Sn,
         value: &String,
     ) -> Result<(), LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::TX_HASH_BY_SN)?;
 
-        let serialized = key.iter().flatten().copied().collect::<Vec<u8>>();
-
-        batch.put_cf(&cf, serialized, value);
+        batch.put_cf(&cf, key, value);
 
         Ok(())
     }
