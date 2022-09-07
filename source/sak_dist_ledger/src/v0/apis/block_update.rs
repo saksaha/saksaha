@@ -90,7 +90,6 @@ impl DistLedgerApis {
             }
         };
 
-        // let tcs = &bc.tx_candidates.clone();
         let tc_len = bc.tx_candidates.len();
 
         let mut ctr_state_update = CtrStateUpdate::new();
@@ -293,39 +292,41 @@ impl DistLedgerApis {
     pub(crate) fn filter_tx_candidates(
         &self,
         bc: &mut BlockCandidate,
-        // tx_candidates: &Vec<TxCandidate>,
     ) -> Result<(), LedgerError> {
-        let mut valid_tx_candidates: Vec<TxCandidate> = vec![];
-
-        for tx_candidate in &bc.tx_candidates {
-            match tx_candidate {
-                TxCandidate::Mint(_tc) => {
-                    valid_tx_candidates.push(tx_candidate.clone());
-                }
-                TxCandidate::Pour(tc) => {
-                    let mut is_valid_sn = true;
-                    for sn in &tc.sns {
-                        if sn == &DUMMY_SN {
-                            continue;
-                        } else {
-                            is_valid_sn = self.verify_sn(&sn)?;
-                            if !is_valid_sn {
-                                break;
-                            }
+        bc.tx_candidates.retain(|tx_candidate| match tx_candidate {
+            TxCandidate::Mint(_tc) => {
+                return true;
+            }
+            TxCandidate::Pour(tc) => {
+                for sn in &tc.sns {
+                    match self.verify_sn(&sn) {
+                        Ok(b) => b,
+                        Err(err) => {
+                            warn!(
+                                "Tx is filtered, hash: {}, err: {}",
+                                tc.get_tx_hash(),
+                                err
+                            );
+                            return false;
                         }
-                    }
-                    let is_verified_tx = self.verify_proof(tc)?;
-
-                    if is_valid_sn & is_verified_tx {
-                        valid_tx_candidates.push(tx_candidate.to_owned());
-                    } else {
-                        continue;
-                    }
+                    };
                 }
-            };
-        }
 
-        bc.tx_candidates = valid_tx_candidates;
+                match self.verify_proof(tc) {
+                    Ok(b) => b,
+                    Err(err) => {
+                        warn!(
+                            "Tx is filtered, hash: {}, err: {}",
+                            tc.get_tx_hash(),
+                            err
+                        );
+                        return false;
+                    }
+                };
+
+                return true;
+            }
+        });
 
         Ok(())
     }
@@ -381,10 +382,10 @@ async fn process_ctr_state_update(
                         None => apis.execute_ctr(ctr_addr, req).await?,
                     };
 
-                    println!(
-                        "[+] new_state: {:?}",
-                        String::from_utf8(new_state.clone())
-                    );
+                    // println!(
+                    //     "[+] new_state: {:?}",
+                    //     String::from_utf8(new_state.clone())
+                    // );
 
                     let maybe_error_placehorder = match &new_state.get(0..6) {
                         Some(ep) => ep.to_owned(),
