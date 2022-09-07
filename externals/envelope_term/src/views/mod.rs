@@ -18,8 +18,6 @@ pub(crate) fn draw<'a, 'b, B>(
 ) where
     B: Backend,
 {
-    log::info!("state_view: {:?}", state.view);
-
     if !check_size(&rect.size()) {
         state.view = View::Error;
     } else {

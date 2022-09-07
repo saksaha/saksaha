@@ -413,7 +413,6 @@ where
         let content: Vec<Spans> = state
             .chats
             .iter()
-            .rev()
             .map(|m| {
                 let date = m.date.to_string();
 
