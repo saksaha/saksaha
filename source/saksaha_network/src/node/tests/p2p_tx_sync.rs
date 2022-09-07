@@ -1,9 +1,8 @@
+use super::DualNodeTestContext;
 use crate::node::tests::make_dual_node_test_context;
 use crate::tests::TestUtil;
 use sak_dist_ledger::DistLedgerEvent;
 use std::time::Duration;
-
-use super::DualNodeTestContext;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_tx_sync_true() {
