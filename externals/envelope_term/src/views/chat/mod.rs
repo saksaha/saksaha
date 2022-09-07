@@ -1,5 +1,5 @@
 use super::utils;
-use crate::envelope::{AppState, Envelope};
+use crate::envelope::AppState;
 use tokio::sync::RwLockWriteGuard;
 use tui::backend::Backend;
 use tui::layout::{Constraint, Direction, Layout};
@@ -13,7 +13,7 @@ pub(crate) fn draw_chat<'a, B>(
     B: Backend,
 {
     let size = rect.size();
-    utils::check_size(&size);
+    // utils::check_size(&size);
 
     let chunks = Layout::default()
         .direction(Direction::Vertical)
@@ -21,7 +21,7 @@ pub(crate) fn draw_chat<'a, B>(
             [
                 Constraint::Length(6),
                 Constraint::Min(10),
-                Constraint::Length(50),
+                Constraint::Length(15),
             ]
             .as_ref(),
         )

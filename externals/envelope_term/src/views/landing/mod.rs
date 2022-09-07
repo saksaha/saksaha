@@ -13,18 +13,11 @@ pub(crate) fn draw_landing<'b, B>(
     B: Backend,
 {
     let size = rect.size();
-    utils::check_size(&size);
+    // utils::check_size(&size);
 
     let chunks = Layout::default()
         .direction(Direction::Vertical)
-        .constraints(
-            [
-                Constraint::Length(4),
-                Constraint::Min(10),
-                Constraint::Length(7),
-            ]
-            .as_ref(),
-        )
+        .constraints([Constraint::Length(4), Constraint::Min(10)].as_ref())
         .split(size);
 
     let title = utils::draw_title();
