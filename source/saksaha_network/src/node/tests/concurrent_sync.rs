@@ -78,19 +78,19 @@ async fn test_concurrent_sync() {
         });
     }
 
-    let dummy_tx1 = sak_types::mock_mint_tc_1();
+    let dummy_tx1 = sak_types::mock_mint_tc_random();
 
-    println!("Sending a tx1 to a node_1");
+    println!("Sending a tx1 to a node_1, tx: {:?}", dummy_tx1);
 
-    // machine_1
-    //     .blockchain
-    //     .dist_ledger
-    //     .apis
-    //     .send_tx(dummy_tx1.clone())
-    //     .await
-    //     .expect("Node should be able to send a transaction");
+    machine_1
+        .blockchain
+        .dist_ledger
+        .apis
+        .send_tx(dummy_tx1.clone())
+        .await
+        .expect("Node should be able to send a transaction");
 
-    // tokio::time::sleep(Duration::from_secs(1)).await;
+    tokio::time::sleep(Duration::from_secs(50)).await;
 
     // {
     //     println!("check if node1 has tx1: {}", dummy_tx1.get_tx_hash());

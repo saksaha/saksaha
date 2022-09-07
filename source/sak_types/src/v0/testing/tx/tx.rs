@@ -70,7 +70,6 @@ pub fn mock_pour_tc_random() -> TxCandidate {
         cm_1_old,
         sn_1,
     ) = {
-        // let addr_sk = ScalarExt::parse_u64(0).unwrap();
         let addr_sk = ScalarExt::parse_u64(rand() as u64).unwrap();
 
         let addr_pk = hasher.mimc_single_scalar(addr_sk).unwrap();
@@ -701,6 +700,39 @@ pub fn mock_mint_tc(
         s,
     );
     //     }
+
+    TxCandidate::Mint(tx_candidate)
+}
+
+pub fn mock_mint_tc_random() -> TxCandidate {
+    let hasher = Hasher::new();
+
+    let v = ScalarExt::parse_arr(&U8Array::from_int(400)).unwrap();
+
+    let r = ScalarExt::parse_u64(rand() as u64).unwrap();
+
+    let s = ScalarExt::parse_u64(rand() as u64).unwrap();
+
+    let rho = ScalarExt::parse_u64(rand() as u64).unwrap();
+
+    let addr_sk = ScalarExt::parse_u64(rand() as u64).unwrap();
+
+    let addr_pk = hasher.mimc_single_scalar(addr_sk).unwrap();
+
+    let k = hasher.comm2_scalar(r, addr_pk, rho);
+
+    let cm = hasher.comm2_scalar(s, v, k);
+
+    let tx_candidate = MintTxCandidate::new(
+        String::from("created_at_mint_1"),
+        vec![],
+        String::from("author_sig_mint_1"),
+        None,
+        vec![cm.to_bytes()],
+        v.to_bytes(),
+        k.to_bytes(),
+        s.to_bytes(),
+    );
 
     TxCandidate::Mint(tx_candidate)
 }
