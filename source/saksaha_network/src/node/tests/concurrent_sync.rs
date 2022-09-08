@@ -1,7 +1,6 @@
-use sak_dist_ledger::DistLedgerEvent;
-
 use super::utils::{make_test_context, TestContext};
 use crate::tests::TestUtil;
+use sak_dist_ledger::DistLedgerEvent;
 use std::time::Duration;
 
 #[tokio::test(flavor = "multi_thread")]
