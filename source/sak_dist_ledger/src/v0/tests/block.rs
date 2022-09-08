@@ -161,7 +161,7 @@ async fn test_sequential_sync_block_if_block_is_correct() {
 
     for i in 1..REPEAT_NUM as u64 {
         // let txs = utils::make_dummy_txs();
-        let txs = vec![sak_types::mock_pour_tc_random().upgrade(1)];
+        let txs = vec![sak_types::mock_pour_tc_2to2_1().upgrade(1)];
 
         let block = Block::new(
             String::from("validator_sig"),

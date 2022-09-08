@@ -712,13 +712,15 @@ pub fn mock_mint_tc_1() -> TxCandidate {
 
     let v = U8Array::from_int(1000);
 
-    let s = values::get_s_1();
+    println!("v: {:?}", v);
 
-    let r = values::get_r_1();
+    let rho = U8Array::from_int(1);
 
-    let rho = values::get_rho_1();
+    let r = U8Array::from_int(2);
 
-    let addr_sk = values::get_addr_sk_1();
+    let s = U8Array::from_int(3);
+
+    let addr_sk = U8Array::from_int(4);
 
     let addr_pk = hasher.mimc_single(&addr_sk).unwrap();
 

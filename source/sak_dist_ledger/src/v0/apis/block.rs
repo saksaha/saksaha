@@ -24,13 +24,13 @@ impl DistLedgerApis {
         self.ledger_db.get_txs(tx_hashes).await
     }
 
-    pub async fn verify_merkle_rt(&self, merkle_rt: &[u8; 32]) -> bool {
-        match self.ledger_db.get_block_merkle_rt_key(merkle_rt) {
-            Ok(Some(_)) => return false,
-            Ok(None) => return true,
-            Err(_err) => return false,
-        }
-    }
+    // pub async fn verify_merkle_rt(&self, merkle_rt: &[u8; 32]) -> bool {
+    //     match self.ledger_db.get_block_merkle_rt_key(merkle_rt) {
+    //         Ok(Some(_)) => return false,
+    //         Ok(None) => return true,
+    //         Err(_err) => return false,
+    //     }
+    // }
 
     pub async fn get_merkle_node(
         &self,
@@ -117,7 +117,7 @@ impl DistLedgerApis {
                 println!("double spending pass!");
 
                 for merkle_rt in &tc.merkle_rts {
-                    is_valid_merkle_rt = self.verify_merkle_rt(merkle_rt).await;
+                    is_valid_merkle_rt = self.verify_merkle_rt(merkle_rt);
                     if !is_valid_merkle_rt {
                         break;
                     }

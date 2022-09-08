@@ -221,6 +221,18 @@ impl DistLedgerApis {
         self.ledger_db.delete_tx(key)
     }
 
+    pub(crate) fn verify_merkle_rt(&self, merkle_rt: &[u8; 32]) -> bool {
+        if merkle_rt == &DUMMY_MERKLE_RT {
+            return true;
+        } else {
+            match self.ledger_db.get_block_merkle_rt_key(merkle_rt) {
+                Ok(Some(_)) => return true,
+                Ok(None) => return false,
+                Err(_err) => return false,
+            }
+        }
+    }
+
     pub(crate) fn verify_sn(&self, sn: &Sn) -> Result<bool, LedgerError> {
         if sn == &DUMMY_SN {
             return Ok(true);
@@ -244,33 +256,6 @@ impl DistLedgerApis {
             }
         }
     }
-
-    // pub(crate) fn verify_merkle_rt(
-    //     &self,
-    //     merkle_rt: &MerkleRt,
-    // ) -> Result<bool, LedgerError> {
-    //     if merkle_rt == &DUMMY_MERKLE_RT {
-    //         return Ok(true);
-    //     } else {
-    //         match self.ledger_db.get_tx_hash_by_sn(merkle_rt) {
-    //             Ok(Some(_)) => {
-    //                 return Err(format!(
-    //                     "Serial numbers already exists, sns: {:?}",
-    //                     merkle_rt
-    //                 )
-    //                 .into())
-    //             }
-    //             Ok(None) => return Ok(true),
-    //             Err(_) => {
-    //                 return Err(format!(
-    //                     "Tx with serial numbers does not exist, sns: {:?}",
-    //                     merkle_rt
-    //                 )
-    //                 .into())
-    //             }
-    //         }
-    //     }
-    // }
 
     pub(crate) fn verify_proof(
         &self,
@@ -343,6 +328,20 @@ impl DistLedgerApis {
                     };
                 }
 
+                println!("success verify sn");
+                println!("tc : {:?}", tc);
+
+                for merkle_rt in &tc.merkle_rts {
+                    match self.verify_merkle_rt(merkle_rt) {
+                        true => {}
+                        false => {
+                            return false;
+                        }
+                    };
+                }
+
+                println!("success verify merkle_rt");
+
                 match self.verify_proof(tc) {
                     Ok(b) => b,
                     Err(err) => {
@@ -354,6 +353,8 @@ impl DistLedgerApis {
                         return false;
                     }
                 };
+
+                println!("success verify proof");
 
                 return true;
             }

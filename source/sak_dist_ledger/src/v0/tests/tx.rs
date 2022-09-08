@@ -288,3 +288,24 @@ async fn test_dist_ledger_double_spending_fail() {
         println!("[+] dummy pour_tx hash: {:?}", block_hash);
     }
 }
+
+#[tokio::test(flavor = "multi_thread")]
+#[should_panic]
+async fn test_dist_ledger_verify_merkle_rt_fail() {
+    sak_test_utils::init_test_log();
+    TestUtil::init_test(vec!["test"]);
+
+    let dist_ledger = testing::mock_dist_ledger_1().await;
+
+    let bc = BlockCandidate {
+        validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
+        tx_candidates: vec![sak_types::mock_pour_tc_random()],
+        witness_sigs: vec![String::from("1")],
+        created_at: format!("{}", 1),
+    };
+
+    match dist_ledger.apis.write_block(Some(bc)).await {
+        Ok(v) => v,
+        Err(err) => panic!("Failed to write dummy block, err: {}", err),
+    };
+}
