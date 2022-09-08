@@ -93,9 +93,7 @@ impl CoinRecord {
             s,
             v,
             cm,
-            // change it!
             coin_status: CoinStatus::Unused,
-            // coin_status: CoinStatus::Unused,
             cm_idx,
             coin_idx,
             tx_hash,
@@ -234,12 +232,33 @@ impl CoinRecord {
         sn
     }
 
-    pub fn set_coin_status_to(&mut self, status: CoinStatus) {
+    pub fn set_coin_status(&mut self, status: CoinStatus) {
         self.coin_status = status;
     }
 
     pub fn update_tx_hash(&mut self, tx_hash: String) {
         self.tx_hash = Some(tx_hash);
+    }
+
+    pub fn has_zero_value(&mut self) -> bool {
+        match self.v == Scalar::zero() {
+            true => true,
+            false => false,
+        }
+    }
+
+    pub fn is_unused(&self) -> bool {
+        match self.coin_status == CoinStatus::Unused {
+            true => true,
+            false => false,
+        }
+    }
+
+    pub fn is_unconfirmed(&self) -> bool {
+        match self.coin_status == CoinStatus::Unconfirmed {
+            true => true,
+            false => false,
+        }
     }
 }
 
