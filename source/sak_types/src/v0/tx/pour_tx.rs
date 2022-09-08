@@ -35,6 +35,10 @@ impl PourTx {
     pub fn get_sn(&self) -> Vec<Sn> {
         self.tx_candidate.get_sns().to_owned()
     }
+
+    pub fn get_cm_idxes(&self) -> &Vec<CmIdx> {
+        &self.cm_idxes
+    }
 }
 
 impl std::fmt::Display for PourTx {

@@ -4,7 +4,6 @@ use crate::Cm;
 use crate::{Tx, TxCtrOp, TxType};
 use serde::{Deserialize, Serialize};
 
-
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct MintTx {
     //
@@ -34,6 +33,10 @@ impl MintTx {
             .cloned()
             .zip(cms.iter().cloned())
             .collect::<Vec<(CmIdx, Cm)>>()
+    }
+
+    pub fn get_cm_idxes(&self) -> &Vec<CmIdx> {
+        &self.cm_idxes
     }
 }
 

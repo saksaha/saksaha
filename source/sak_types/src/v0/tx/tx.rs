@@ -61,6 +61,13 @@ impl Tx {
             Tx::Pour(t) => t.get_sn(),
         }
     }
+
+    pub fn get_cm_idxes(&self) -> &Vec<CmIdx> {
+        match self {
+            Tx::Mint(t) => t.get_cm_idxes(),
+            Tx::Pour(t) => t.get_cm_idxes(),
+        }
+    }
 }
 
 impl std::fmt::Display for Tx {
