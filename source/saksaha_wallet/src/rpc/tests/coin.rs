@@ -28,15 +28,6 @@ async fn test_send_tx() {
     println!("response: {:#?}", json_response);
 
     json_response.result.unwrap();
-
-    //
-    let wallet = mock_context.wallet;
-
-    let coin_manager = wallet.get_coin_manager().write().await;
-
-    let coins = coin_manager.get_all_coins();
-
-    println!("coins: {:#?}", coins);
 }
 
 #[tokio::test(flavor = "multi_thread")]
@@ -103,7 +94,8 @@ async fn test_send_tx_with_2_old_coins() {
 
     let coin_manager_lock = wallet.get_coin_manager().write().await;
 
-    let coins = coin_manager_lock.get_all_coins().unwrap();
+    // let coins = coin_manager_lock.get_all_coins().unwrap();
+    let coins = coin_manager_lock.coins.clone();
     assert_eq!(coins.len(), 2);
 
     let (old_coin_1, sn_1, merkle_rt_1) = {

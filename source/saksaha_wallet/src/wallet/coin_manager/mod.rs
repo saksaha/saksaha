@@ -53,8 +53,4 @@ impl CoinManager {
 
         Ok(())
     }
-
-    pub fn get_all_coins(&self) -> Result<Vec<CoinRecord>, WalletError> {
-        Ok(self.coins.clone())
-    }
 }
