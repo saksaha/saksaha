@@ -98,7 +98,7 @@ impl MintTxCandidate {
         let ctr_addr = ctr_addr.unwrap_or(String::from(""));
         let cm_count = cms.len() as u128;
 
-        let hashable_items = vec![
+        let mut hashable_items = vec![
             created_at.as_bytes(),
             data.as_slice(),
             author_sig.as_bytes(),
@@ -107,6 +107,10 @@ impl MintTxCandidate {
             &k,
             &s,
         ];
+
+        for cm in &cms {
+            hashable_items.push(cm);
+        }
 
         let tx_hash = sak_crypto::compute_hash(&hashable_items);
 

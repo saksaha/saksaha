@@ -1,3 +1,5 @@
+use sak_dist_ledger::DistLedgerEvent;
+
 use super::utils::{make_test_context, TestContext};
 use crate::tests::TestUtil;
 use std::time::Duration;
@@ -25,8 +27,8 @@ async fn test_concurrent_sync() {
                 f6083b729baef9e9545c4e95590616fd3\
                 82662a09653f2a966ff524989ae8c0f",
         ),
-        true,
-        // false,
+        // true,
+        false,
     )
     .await;
 
@@ -81,6 +83,38 @@ async fn test_concurrent_sync() {
     let mock_tx1 = sak_types::mock_mint_tc_random();
     let mock_tx2 = sak_types::mock_mint_tc_random();
     let mock_tx3 = sak_types::mock_mint_tc_random();
+    let mock_tx4 = sak_types::mock_mint_tc_random();
+    let mock_tx5 = sak_types::mock_mint_tc_random();
+    let mock_tx6 = sak_types::mock_mint_tc_random();
+
+    let mut ledger_event_rx_1 =
+        machine_1.blockchain.dist_ledger.ledger_event_tx.subscribe();
+
+    let mock_tx1_clone = sak_types::mock_mint_tc_random();
+    let mock_tx2_clone = sak_types::mock_mint_tc_random();
+    let mock_tx3_clone = sak_types::mock_mint_tc_random();
+    let mock_tx4_clone = sak_types::mock_mint_tc_random();
+    let mock_tx5_clone = sak_types::mock_mint_tc_random();
+    let mock_tx6_clone = sak_types::mock_mint_tc_random();
+
+    tokio::spawn(async move {
+        let mut v = vec![
+            mock_tx1_clone.get_tx_hash(),
+            mock_tx2_clone.get_tx_hash(),
+            mock_tx3_clone.get_tx_hash(),
+            mock_tx4_clone.get_tx_hash(),
+            mock_tx5_clone.get_tx_hash(),
+            mock_tx6_clone.get_tx_hash(),
+        ];
+
+        loop {
+            let ev = ledger_event_rx_1.recv().await.unwrap();
+            if let DistLedgerEvent::TxPoolStat(tx_hashes) = ev {
+                println!(">>tx_hashes: {:?}", tx_hashes);
+                println!("\nv: {:?}", v);
+            }
+        }
+    });
 
     println!("Sending a tx1 to a node_1, tx: {:?}", mock_tx1);
     println!("Sending a tx2 to a node_1, tx: {:?}", mock_tx2);
@@ -118,10 +152,6 @@ async fn test_concurrent_sync() {
             .await
             .expect("Node should be able to send a transaction");
     });
-
-    let mock_tx4 = sak_types::mock_mint_tc_random();
-    let mock_tx5 = sak_types::mock_mint_tc_random();
-    let mock_tx6 = sak_types::mock_mint_tc_random();
 
     println!("Sending a tx4 to a node_2, tx: {:?}", mock_tx4);
     println!("Sending a tx5 to a node_2, tx: {:?}", mock_tx5);
