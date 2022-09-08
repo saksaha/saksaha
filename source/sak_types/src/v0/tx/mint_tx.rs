@@ -34,6 +34,10 @@ impl MintTx {
             .zip(cms.iter().cloned())
             .collect::<Vec<(CmIdx, Cm)>>()
     }
+
+    pub fn get_cm_idxes(&self) -> &Vec<CmIdx> {
+        &self.cm_idxes
+    }
 }
 
 impl std::fmt::Display for MintTx {

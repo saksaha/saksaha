@@ -224,13 +224,9 @@ impl Wallet {
         ctr_addr: String,
         ctr_request: CtrRequest,
     ) -> Result<String, WalletError> {
-        // self.check_balance(&acc_addr).await?;
+        self.check_balance(&acc_addr).await?;
 
         let mut coin_manager_lock = self.get_coin_manager().write().await;
-
-        // let dummy_coin: &mut CoinRecord = coin_manager_lock
-        //     .get_dummy_coin()
-        //     .ok_or("No usable dummy coins")?;
 
         let coin: &mut CoinRecord = coin_manager_lock
             .get_next_available_coin()
@@ -329,21 +325,6 @@ impl Wallet {
             println!("[+] new coins have been stored in coin_manager");
         }
 
-        println!("[coin info (w/o cm)]");
-        for coin in self.get_db().schema.get_all_coins()? {
-            println!(
-                "\
-               \tcoin_status: {:?}\tvalue: {:?}\t\
-                coin_idx: {:?}\tcm_idx: {:?}\t\n\
-                \tcm: {}",
-                coin.coin_status,
-                ScalarExt::into_u64(coin.v)?,
-                coin.coin_idx,
-                coin.cm_idx,
-                coin.cm,
-            );
-        }
-
         Ok("success_power".to_string())
     }
 
@@ -353,7 +334,7 @@ impl Wallet {
     ) -> Result<(), WalletError> {
         let my_balance = self.get_balance(acc_addr).await?;
 
-        let is_enough_balalnce = my_balance.val > GAS;
+        let is_enough_balalnce = my_balance.val >= GAS;
 
         if !is_enough_balalnce {
             return Err("you don't have enough coin".into());

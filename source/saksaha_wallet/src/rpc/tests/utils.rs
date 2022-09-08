@@ -3,7 +3,7 @@ use crate::{
     credential::WalletCredential, db::WalletDB, rpc::RPC, wallet::Wallet,
     Config, CredentialManager,
 };
-use envelope_contract::{request_type, Channel, OpenChParams, SendMsgParams};
+use envelope_contract::{request_type, Channel, OpenChParams};
 use envelope_term::ENVELOPE_CTR_ADDR;
 use hyper::{Body, Client, Method, Request, Uri};
 use sak_contract_std::CtrRequest;
@@ -50,7 +50,10 @@ pub(in crate) async fn mock_wallet_context() -> MockWalletContext {
     }
 }
 
+pub(crate) async fn mock_node_server() {}
+
 pub(crate) async fn mock_credential_manager() -> CredentialManager {
+    // dev_local_1
     let public_key = String::from(
         "045739d074b8722891c307e8e75c9607e0b55a80778\
                 b42ef5f4640d4949dbf3992f6083b729baef9e9545c4\
@@ -82,20 +85,25 @@ pub(crate) async fn mock_send_pour_tx(
         u.parse().expect("URI should be made")
     };
 
+    //
     let body = {
         let (_, eph_pub_key) = SakKey::generate();
 
         let channel = Channel::new(
+            // ch_id
             "ch_id".to_string(),
+            // eph_key
             sak_crypto::encode_hex(
                 &eph_pub_key.to_encoded_point(false).to_bytes(),
             ),
+            // initiator_pk
             "\
                 045739d074b8722891c307e8e75c9607\
                 e0b55a80778b42ef5f4640d4949dbf39\
                 92f6083b729baef9e9545c4e95590616\
                 fd382662a09653f2a966ff524989ae8c0f"
                 .to_string(),
+            // participants
             vec![
                 "\
                 045739d074b8722891c307e8e75c9607\
@@ -104,10 +112,10 @@ pub(crate) async fn mock_send_pour_tx(
                 fd382662a09653f2a966ff524989ae8c0f"
                     .to_string(),
                 "\
-                    042c8d005bd935597117181d8ceceaef\
-                    6d1162de78c3285689d0c36c6170634c\
-                    124f7b9b911553a1f483ec565c199ea2\
-                    9ff1cd641f10c9a5f8c7c4d4a026db6f7b"
+                042c8d005bd935597117181d8ceceaef\
+                6d1162de78c3285689d0c36c6170634c\
+                124f7b9b911553a1f483ec565c199ea2\
+                9ff1cd641f10c9a5f8c7c4d4a026db6f7b"
                     .to_string(),
             ],
         )
