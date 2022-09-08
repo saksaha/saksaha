@@ -52,7 +52,6 @@ impl BlockSynMsg {
             let mut tx_hashes = Vec::with_capacity(tx_count as usize);
 
             for _ in 0..tx_count {
-                println!("444");
                 let tx = {
                     let tx_type = {
                         let p = parse.next_bytes()?;

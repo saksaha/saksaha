@@ -78,19 +78,48 @@ async fn test_concurrent_sync() {
         });
     }
 
-    let dummy_tx1 = sak_types::mock_mint_tc_random();
+    let mock_tx1 = sak_types::mock_mint_tc_random();
+    let mock_tx2 = sak_types::mock_mint_tc_random();
+    let mock_tx3 = sak_types::mock_mint_tc_random();
 
-    println!("Sending a tx1 to a node_1, tx: {:?}", dummy_tx1);
+    println!("Sending a tx1 to a node_1, tx: {:?}", mock_tx1);
+    println!("Sending a tx2 to a node_1, tx: {:?}", mock_tx2);
+    println!("Sending a tx3 to a node_1, tx: {:?}", mock_tx3);
 
-    machine_1
-        .blockchain
-        .dist_ledger
-        .apis
-        .send_tx(dummy_tx1.clone())
-        .await
-        .expect("Node should be able to send a transaction");
+    let machine_1_clone = machine_1.clone();
+    tokio::spawn(async move {
+        machine_1_clone
+            .blockchain
+            .dist_ledger
+            .apis
+            .send_tx(mock_tx1.clone())
+            .await
+            .expect("Node should be able to send a transaction");
+    });
 
-    tokio::time::sleep(Duration::from_secs(50)).await;
+    let machine_1_clone = machine_1.clone();
+    tokio::spawn(async move {
+        machine_1_clone
+            .blockchain
+            .dist_ledger
+            .apis
+            .send_tx(mock_tx2)
+            .await
+            .expect("Node should be able to send a transaction");
+    });
+
+    let machine_1_clone = machine_1.clone();
+    tokio::spawn(async move {
+        machine_1_clone
+            .blockchain
+            .dist_ledger
+            .apis
+            .send_tx(mock_tx3)
+            .await
+            .expect("Node should be able to send a transaction");
+    });
+
+    tokio::time::sleep(Duration::from_secs(40)).await;
 
     // {
     //     println!("check if node1 has tx1: {}", dummy_tx1.get_tx_hash());

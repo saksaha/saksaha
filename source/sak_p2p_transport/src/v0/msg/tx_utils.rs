@@ -78,8 +78,6 @@ pub(crate) fn parse_mint_tx_candidate(
 pub(crate) fn parse_mint_tx(parse: &mut Parse) -> Result<Tx, TrptError> {
     let mint_tx_candidate = parse_mint_tx_candidate(parse)?;
 
-    println!("555");
-
     let cm_count = match parse.next_int() {
         Ok(c) => c,
         Err(err) => {
@@ -105,25 +103,6 @@ pub(crate) fn parse_mint_tx(parse: &mut Parse) -> Result<Tx, TrptError> {
     let tx = Tx::Mint(mint_tx);
 
     Ok(tx)
-
-    // let pour_tx_candidate = parse_pour_tx_candidate(parse)?;
-
-    // let cm_count = parse.next_int()?;
-
-    // let mut cm_idxes = Vec::with_capacity(cm_count as usize);
-
-    // for _ in 0..cm_count {
-    //     cm_idxes.push(parse.next_int()?);
-    // }
-
-    // let pour_tx = PourTx {
-    //     tx_candidate: pour_tx_candidate,
-    //     cm_idxes,
-    // };
-
-    // let tx = Tx::Pour(pour_tx);
-
-    // Ok(tx)
 }
 
 pub(crate) fn parse_pour_tx_candidate(

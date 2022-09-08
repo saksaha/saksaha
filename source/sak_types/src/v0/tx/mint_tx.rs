@@ -4,7 +4,6 @@ use crate::Cm;
 use crate::{Tx, TxCtrOp, TxType};
 use serde::{Deserialize, Serialize};
 
-
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct MintTx {
     //
@@ -88,7 +87,6 @@ impl MintTxCandidate {
         author_sig: String,
         ctr_addr: Option<String>,
         cms: Vec<Cm>,
-        // cm_count: u128,
         v: [u8; 32],
         k: [u8; 32],
         s: [u8; 32],
@@ -101,6 +99,9 @@ impl MintTxCandidate {
             data.as_slice(),
             author_sig.as_bytes(),
             ctr_addr.as_bytes(),
+            &v,
+            &k,
+            &s,
         ];
 
         let tx_hash = sak_crypto::compute_hash(&hashable_items);
