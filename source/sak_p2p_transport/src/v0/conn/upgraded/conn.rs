@@ -33,10 +33,10 @@ impl UpgradedConn {
     pub async fn send(&mut self, msg: Msg) -> SendReceipt {
         let msg_type = msg.to_string();
 
-        println!(
-            "\n 11 send msg(), conn_id: {}, msg: {}",
-            self.conn_id, msg_type
-        );
+        // println!(
+        //     "\n 11 send msg(), conn_id: {}, msg: {}",
+        //     self.conn_id, msg_type
+        // );
 
         match self.socket.send(msg).await {
             Ok(_) => (),
@@ -62,7 +62,7 @@ impl UpgradedConn {
     pub async fn next_msg(&mut self) -> Result<MsgWrap, TrptError> {
         let msg = self.socket.next().await;
 
-        println!("\n 33 next_msg: conn_id: {}, msg: {:?}", self.conn_id, msg);
+        // println!("\n 33 next_msg: conn_id: {}, msg: {:?}", self.conn_id, msg);
 
         let msg_wrap = MsgWrap::new(msg);
 
