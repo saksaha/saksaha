@@ -15,15 +15,17 @@ impl BlockCandidate {
     pub fn upgrade(
         self,
         next_block_height: u128,
-        mut next_cm_idx: CmIdx,
+        next_cm_idx: CmIdx,
         next_merkle_rt: [u8; 32],
     ) -> (Block, Vec<Tx>) {
         let mut txs: Vec<Tx> = Vec::new();
         let mut tx_hashes: Vec<String> = vec![];
 
+        let mut cm_idx = next_cm_idx;
+
         for (idx, tc) in self.tx_candidates.into_iter().enumerate() {
-            let tx = tc.upgrade(next_cm_idx);
-            next_cm_idx = *tx
+            let tx = tc.upgrade(cm_idx);
+            cm_idx = *tx
                 .get_cm_idxes()
                 .last()
                 .unwrap_or(&(next_cm_idx + idx as u128 + 1))
@@ -46,11 +48,4 @@ impl BlockCandidate {
 
         (block, txs)
     }
-
-    // pub fn update_tx_candidates(
-    //     &mut self,
-    //     valid_tx_candidates: Vec<TxCandidate>,
-    // ) {
-    //     self.tx_candidates = valid_tx_candidates;
-    // }
 }
