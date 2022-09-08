@@ -136,12 +136,7 @@ impl BlockSynMsg {
             for tx in txs.into_iter() {
                 match tx {
                     Tx::Mint(t) => {
-                        let tc = t.tx_candidate;
-
-                        tx_utils::put_mint_tx_candidate_into_frame(
-                            &mut frame, tc,
-                        );
-                        // tx_utils::put_mint_tx_into_frame(&mut frame, t);
+                        tx_utils::put_mint_tx_into_frame(&mut frame, t);
                     }
                     Tx::Pour(t) => {
                         tx_utils::put_pour_tx_into_frame(&mut frame, t);

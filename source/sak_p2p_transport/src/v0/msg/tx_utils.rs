@@ -66,7 +66,6 @@ pub(crate) fn parse_mint_tx_candidate(
         author_sig,
         Some(ctr_addr),
         cms,
-        // cm_count,
         v,
         k,
         s,
@@ -97,7 +96,6 @@ pub(crate) fn parse_mint_tx(parse: &mut Parse) -> Result<Tx, TrptError> {
     for _ in 0..cm_count {
         cm_idxes.push(parse.next_int()?);
     }
-    println!("777");
 
     let mint_tx = MintTx {
         tx_candidate: mint_tx_candidate,
@@ -107,6 +105,25 @@ pub(crate) fn parse_mint_tx(parse: &mut Parse) -> Result<Tx, TrptError> {
     let tx = Tx::Mint(mint_tx);
 
     Ok(tx)
+
+    // let pour_tx_candidate = parse_pour_tx_candidate(parse)?;
+
+    // let cm_count = parse.next_int()?;
+
+    // let mut cm_idxes = Vec::with_capacity(cm_count as usize);
+
+    // for _ in 0..cm_count {
+    //     cm_idxes.push(parse.next_int()?);
+    // }
+
+    // let pour_tx = PourTx {
+    //     tx_candidate: pour_tx_candidate,
+    //     cm_idxes,
+    // };
+
+    // let tx = Tx::Pour(pour_tx);
+
+    // Ok(tx)
 }
 
 pub(crate) fn parse_pour_tx_candidate(
@@ -205,6 +222,21 @@ pub(crate) fn parse_pour_tx(parse: &mut Parse) -> Result<Tx, TrptError> {
     let tx = Tx::Pour(pour_tx);
 
     Ok(tx)
+}
+
+#[inline]
+pub(crate) fn put_mint_tx_into_frame(frame: &mut Frame, tx: MintTx) {
+    let tc = tx.tx_candidate;
+
+    let cm_count = tc.cm_count;
+
+    put_mint_tx_candidate_into_frame(frame, tc);
+
+    frame.push_int(cm_count);
+
+    for cm_idx in tx.cm_idxes {
+        frame.push_int(cm_idx);
+    }
 }
 
 pub(crate) fn put_mint_tx_candidate_into_frame(

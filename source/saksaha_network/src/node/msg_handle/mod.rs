@@ -32,7 +32,7 @@ pub(in crate::node) async fn handle_msg<'a>(
     peer_table: &Arc<PeerTable>,
     discovery: &Arc<Discovery>,
 ) -> Result<(), SaksahaError> {
-    println!("\n 22 handle_msg(): msg: {}", msg);
+    // println!("\n 22 handle_msg(): msg: {}", msg);
 
     match msg {
         Msg::HelloSyn(hello_msg) => {
