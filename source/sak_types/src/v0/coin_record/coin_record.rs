@@ -180,7 +180,8 @@ impl CoinRecord {
         let cm = hasher.comm2_scalar(s, v, k);
 
         let coin_status = CoinStatus::Unused;
-        let cm_idx = Some(0);
+        let cm_idx = None;
+        // let cm_idx = Some(0);
         let coin_idx = None;
 
         let tx_hash = None;

@@ -6,10 +6,10 @@ use log::info;
 use sak_crypto::Scalar;
 use sak_crypto::ScalarExt;
 use sak_kv_db::{KeyValueDatabase, Options};
-use sak_types::CoinRecord;
 use sak_types::CoinStatus;
 use sak_types::Sn;
-use std::{borrow::BorrowMut, sync::Arc, time::Duration};
+use sak_types::{Cm, CmIdx, CoinRecord};
+use std::{borrow::BorrowMut, collections::HashMap, sync::Arc, time::Duration};
 use std::{fs, path::PathBuf};
 use tokio::sync::RwLockWriteGuard;
 
@@ -93,64 +93,23 @@ impl WalletDB {
         coins: &Vec<CoinRecord>,
     ) -> Result<Vec<Sn>, WalletError> {
         let mut old_coin_sn_vec = Vec::<Sn>::new();
+        let mut ledger_cms = vec![];
 
         for coin in coins {
             if coin.is_unconfirmed() {
-                match &coin.tx_hash {
+                let resp = match &coin.tx_hash {
                     Some(tx_hash) => {
-                        let resp = saksaha::get_tx(
-                            saksaha_endpoint.clone(),
-                            tx_hash.clone(),
-                        )
-                        .await?
-                        .result;
+                        if !ledger_cms.contains(&tx_hash) {
+                            ledger_cms.push(tx_hash);
 
-                        match resp {
-                            Some(response) => {
-                                if let Some(tx) = response.tx {
-                                    let sns = tx.get_sns();
-                                    for sn in sns {
-                                        old_coin_sn_vec.push(sn);
-                                    }
-
-                                    self.schema.raw.put_coin_status(
-                                        &coin.cm,
-                                        &CoinStatus::Unused,
-                                    )?;
-
-                                    // calcaulte cm_idx
-                                    {
-                                        // let cm_idx_base = tx
-                                        //     .get_cm_pairs()
-                                        //     .get(0)
-                                        //     .ok_or("expect (CmIdx, Cm)")?
-                                        //     .0;
-
-                                        // let cm_idx_offset = coin
-                                        //     .cm_idx
-                                        //     .ok_or("expect cm_idx_offset")?;
-
-                                        // let cm_idx =
-                                        //     cm_idx_base + cm_idx_offset;
-
-                                        // self.schema
-                                        //     .raw
-                                        //     .put_cm_idx(&coin.cm, &cm_idx)?;
-
-                                        let cm_pairs = tx.get_cm_pairs();
-
-                                        for (cm_idx, cm) in cm_pairs.iter() {
-                                            println!("[debug]\n\tcm_idx: {:?}\n\tcm: {:?}", cm_idx, cm);
-
-                                            self.schema.raw.put_cm_idx(
-                                                &ScalarExt::parse_arr(cm)?,
-                                                &cm_idx,
-                                            )?;
-                                        }
-                                    }
-                                };
-                            }
-                            None => {} // return Err("No response with get_tx".into()),
+                            saksaha::get_tx(
+                                saksaha_endpoint.clone(),
+                                tx_hash.clone(),
+                            )
+                            .await?
+                            .result
+                        } else {
+                            continue;
                         }
                     }
                     None => {
@@ -163,6 +122,30 @@ impl WalletDB {
                         .into());
                     }
                 };
+
+                match resp {
+                    Some(response) => {
+                        if let Some(tx) = response.tx {
+                            let sns = tx.get_sns();
+                            for sn in sns {
+                                old_coin_sn_vec.push(sn);
+                            }
+
+                            self.schema.raw.put_coin_status(
+                                &coin.cm,
+                                &CoinStatus::Unused,
+                            )?;
+
+                            for (cmidx, cm) in tx.get_cm_pairs() {
+                                self.schema.raw.put_cm_idx(
+                                    &ScalarExt::parse_arr(&cm)?,
+                                    &cmidx,
+                                )?;
+                            }
+                        };
+                    }
+                    None => {} // return Err("No response with get_tx".into()),
+                }
             }
         }
 
@@ -175,14 +158,10 @@ impl WalletDB {
         coins: &Vec<CoinRecord>,
     ) -> Result<(), WalletError> {
         for coin in coins {
-            // match coin.coin_status {
-            match self
-                .schema
-                .raw
-                .get_coin_status(&coin.cm)?
-                .unwrap_or(CoinStatus::Unconfirmed)
+            if let Some(CoinStatus::Unused) =
+                self.schema.raw.get_coin_status(&coin.cm)?
             {
-                CoinStatus::Unused => {
+                {
                     let sn = coin.compute_sn();
 
                     if old_coin_sn_vec.contains(&sn) {
@@ -191,7 +170,6 @@ impl WalletDB {
                             .put_coin_status(&coin.cm, &CoinStatus::Used)?;
                     }
                 }
-                _ => {}
             }
         }
 

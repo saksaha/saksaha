@@ -168,12 +168,12 @@ impl Wallet {
     ) -> Result<(CoinRecord, CoinRecord), WalletError> {
         let new_coin_1 = CoinRecord::new_random(
             ScalarExt::into_u64(old_value)? - GAS,
-            Some(0),
+            None,
             None,
             None,
         )?;
 
-        let new_coin_2 = CoinRecord::new_random(0, Some(1), None, None)?;
+        let new_coin_2 = CoinRecord::new_random(0, None, None, None)?;
 
         Ok((new_coin_1, new_coin_2))
     }
