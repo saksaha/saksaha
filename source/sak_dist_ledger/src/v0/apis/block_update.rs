@@ -4,11 +4,11 @@ use log::{debug, info, warn};
 use sak_contract_std::{CtrCallType, CtrRequest, ERROR_PLACEHOLDER};
 use sak_crypto::{Bls12, MerkleTree, ScalarExt};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
-use sak_proofs::DUMMY_SN;
 use sak_proofs::{CoinProof, Hasher, Proof};
+use sak_proofs::{DUMMY_MERKLE_RT, DUMMY_SN};
 use sak_types::{
-    Block, BlockCandidate, CmIdx, MintTxCandidate, PourTxCandidate, Sn, Tx,
-    TxCandidate, TxCtrOp,
+    Block, BlockCandidate, CmIdx, MerkleRt, MintTxCandidate, PourTxCandidate,
+    Sn, Tx, TxCandidate, TxCtrOp,
 };
 use sak_vm::CtrFn;
 
@@ -244,6 +244,33 @@ impl DistLedgerApis {
             }
         }
     }
+
+    // pub(crate) fn verify_merkle_rt(
+    //     &self,
+    //     merkle_rt: &MerkleRt,
+    // ) -> Result<bool, LedgerError> {
+    //     if merkle_rt == &DUMMY_MERKLE_RT {
+    //         return Ok(true);
+    //     } else {
+    //         match self.ledger_db.get_tx_hash_by_sn(merkle_rt) {
+    //             Ok(Some(_)) => {
+    //                 return Err(format!(
+    //                     "Serial numbers already exists, sns: {:?}",
+    //                     merkle_rt
+    //                 )
+    //                 .into())
+    //             }
+    //             Ok(None) => return Ok(true),
+    //             Err(_) => {
+    //                 return Err(format!(
+    //                     "Tx with serial numbers does not exist, sns: {:?}",
+    //                     merkle_rt
+    //                 )
+    //                 .into())
+    //             }
+    //         }
+    //     }
+    // }
 
     pub(crate) fn verify_proof(
         &self,

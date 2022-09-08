@@ -1,6 +1,6 @@
 use crate::{DistLedgerApis, LedgerError};
 use sak_contract_std::Storage;
-use sak_crypto::MerkleTree;
+use sak_crypto::{sha3::digest::typenum::Le, MerkleTree};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
 use sak_proofs::DUMMY_SN;
 use sak_types::{
@@ -22,6 +22,14 @@ impl DistLedgerApis {
         tx_hashes: &Vec<String>,
     ) -> Result<Vec<Tx>, LedgerError> {
         self.ledger_db.get_txs(tx_hashes).await
+    }
+
+    pub async fn verify_merkle_rt(&self, merkle_rt: &[u8; 32]) -> bool {
+        match self.ledger_db.get_block_merkle_rt_key(merkle_rt) {
+            Ok(Some(_)) => return false,
+            Ok(None) => return true,
+            Err(_err) => return false,
+        }
     }
 
     pub async fn get_merkle_node(
@@ -98,31 +106,34 @@ impl DistLedgerApis {
             }
             TxCandidate::Pour(tc) => {
                 let mut is_valid_sn = true;
+                let mut is_valid_merkle_rt = true;
+
                 for sn in &tc.sns {
                     is_valid_sn = self.verify_sn(&sn)?;
                     if !is_valid_sn {
                         break;
                     }
-                    // if sn == &DUMMY_SN {
-                    //     continue;
-                    // } else {
-                    //     is_valid_sn = self.verify_sn(&sn)?;
-                    //     if !is_valid_sn {
-                    //         break;
-                    //     }
-                    // }
                 }
                 println!("double spending pass!");
 
-                let is_verified_tx = self.verify_proof(&tc)?;
+                for merkle_rt in &tc.merkle_rts {
+                    is_valid_merkle_rt = self.verify_merkle_rt(merkle_rt).await;
+                    if !is_valid_merkle_rt {
+                        break;
+                    }
+                }
+
+                println!("merkle root verification pass!");
+
+                let is_valid_tx = self.verify_proof(&tc)?;
                 println!("proof pass!");
 
-                if is_valid_sn & is_verified_tx {
+                if is_valid_merkle_rt & is_valid_sn & is_valid_tx {
                     self.sync_pool.insert_tx(tx_candidate).await?
                 } else {
                     return Err(format!(
-                        "Is valid sn and verified tx:{}, {}",
-                        is_valid_sn, is_verified_tx
+                        "Is valid sn, merkle_rt, verified tx:{}, {}, {}",
+                        is_valid_sn, is_valid_merkle_rt, is_valid_tx,
                     )
                     .into());
                 }

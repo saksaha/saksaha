@@ -115,6 +115,8 @@ impl LedgerDB {
             &block.merkle_rt,
         )?;
 
+        self.batch_put_block_merkle_rt_key(&mut batch, &block.merkle_rt)?;
+
         for tx in txs {
             self.batch_put_tx(&mut batch, tx)?;
         }
