@@ -102,7 +102,6 @@ impl PourTxCandidate {
         let sn_count = sns.len() as u128;
         let cm_count = cms.len() as u128;
         let merkle_rt_count = merkle_rts.len() as u128;
-        // sns.flatten()
 
         let hashable_items = vec![
             created_at.as_bytes(),
