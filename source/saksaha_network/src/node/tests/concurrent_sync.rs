@@ -119,6 +119,25 @@ async fn test_concurrent_sync() {
             .expect("Node should be able to send a transaction");
     });
 
+    let mock_tx4 = sak_types::mock_mint_tc_random();
+    let mock_tx5 = sak_types::mock_mint_tc_random();
+    let mock_tx6 = sak_types::mock_mint_tc_random();
+
+    println!("Sending a tx4 to a node_2, tx: {:?}", mock_tx4);
+    println!("Sending a tx5 to a node_2, tx: {:?}", mock_tx5);
+    println!("Sending a tx6 to a node_2, tx: {:?}", mock_tx6);
+
+    let machine_2_clone = machine_2.clone();
+    tokio::spawn(async move {
+        machine_2_clone
+            .blockchain
+            .dist_ledger
+            .apis
+            .send_tx(mock_tx4)
+            .await
+            .expect("Node should be able to send a transaction");
+    });
+
     tokio::time::sleep(Duration::from_secs(40)).await;
 
     // {

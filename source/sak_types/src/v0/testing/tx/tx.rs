@@ -686,7 +686,6 @@ pub fn mock_mint_tc(
     k: [u8; 32],
     s: [u8; 32],
 ) -> TxCandidate {
-    // let tx_candidate = MintTxCandidate::new_dummy_custom(cm, v, k, s);
     let validator_wasm = VALIDATOR.to_vec();
 
     let tx_candidate = MintTxCandidate::new(
@@ -699,7 +698,6 @@ pub fn mock_mint_tc(
         k,
         s,
     );
-    //     }
 
     TxCandidate::Mint(tx_candidate)
 }
