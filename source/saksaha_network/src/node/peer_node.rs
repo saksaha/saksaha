@@ -31,7 +31,6 @@ impl PeerNode {
         let node_task_queue = Arc::new(TaskQueue::new(100));
 
         {
-            // Ledger event routine
             let ledger_event_rx = {
                 let rx = self
                     .machine
@@ -57,7 +56,6 @@ impl PeerNode {
 
         {
             // say hello
-
             let unknown_addrs = self.peer_table.get_peer_addrs().await;
 
             if !self.peer.is_initiator {
@@ -87,6 +85,11 @@ impl PeerNode {
 
         loop {
             let mut conn_lock = self.peer.get_transport().conn.write().await;
+
+            println!(
+                "  >> next_msg: peer id: {}, ",
+                self.peer.get_public_key_short()
+            );
 
             tokio::select! {
                 task = node_task_queue.pop_front() => {

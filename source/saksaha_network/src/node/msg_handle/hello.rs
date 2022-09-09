@@ -64,7 +64,7 @@ pub(in crate::node) async fn recv_hello_syn(
     discovery: &Arc<Discovery>,
     task_queue: &Arc<TaskQueue<NodeTask>>,
     mut conn: RwLockWriteGuard<'_, UpgradedConn>,
-) -> SendReceipt {
+) -> Result<SendReceipt, SaksahaNodeError> {
     let HelloMsg { unknown_addrs } = hello_msg;
 
     for unknown_addr in unknown_addrs {
@@ -77,5 +77,5 @@ pub(in crate::node) async fn recv_hello_syn(
 
     let receipt = conn.send(Msg::HelloAck(hello_ack_msg)).await;
 
-    receipt
+    Ok(receipt)
 }

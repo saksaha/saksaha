@@ -110,7 +110,7 @@ async fn test_concurrent_sync() {
             let ev = ledger_event_rx_1.recv().await.unwrap();
             if let DistLedgerEvent::TxPoolStat(tx_hashes) = ev {
                 println!(">>tx_hashes: {:?}", tx_hashes);
-                println!("\nv: {:?}", v);
+                // println!("\nv: {:?}", v);
             }
         }
     });
