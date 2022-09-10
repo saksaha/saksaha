@@ -59,6 +59,8 @@ impl Decoder for UpgradedP2PCodec {
 
         let msg = parse_msg_portion(src, &mut self.in_cipher)?;
 
+        println!("decode complete, conn_id: {}, msg: {:?}", self.conn_id, msg);
+
         Ok(msg)
     }
 }

@@ -16,14 +16,14 @@ pub(in crate::node) async fn send_tx_hash_syn(
     mut conn_lock: RwLockWriteGuard<'_, UpgradedConn>,
     tx_hashes: Vec<TxHash>,
     task_queue: &Arc<TaskQueue<NodeTask>>,
-) -> Result<RecvReceipt, SaksahaNodeError> {
+) -> Result<(), SaksahaNodeError> {
     let _receipt = conn_lock
         .send(Msg::TxHashSyn(TxHashSyncMsg { tx_hashes }))
         .await;
 
-    let msg_wrap = conn_lock.next_msg().await?;
+    // let msg_wrap = conn_lock.next_msg().await?;
 
-    let receipt = msg_wrap.get_receipt();
+    // let receipt = msg_wrap.get_receipt();
 
     // let msg = msg_wrap
     //     .get_maybe_msg()
@@ -51,7 +51,7 @@ pub(in crate::node) async fn send_tx_hash_syn(
     //     })
     //     .await?;
 
-    Ok(receipt)
+    Ok(())
 }
 
 pub(in crate::node) async fn recv_tx_hash_ack(

@@ -37,6 +37,7 @@ async fn test_concurrent_sync() {
         machine: machine_1,
         ..
     } = test_context_1;
+    println!("1");
 
     let test_context_2 = make_test_context(
         app_prefix_vec[1].to_string(),

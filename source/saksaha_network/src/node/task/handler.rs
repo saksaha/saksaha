@@ -1,5 +1,8 @@
 use super::NodeTask;
-use crate::{machine::Machine, node::msg_handle};
+use crate::{
+    machine::Machine,
+    node::{msg_handle, SaksahaNodeError},
+};
 use log::{debug, error, warn};
 use sak_p2p_discovery::Discovery;
 use sak_p2p_transport::UpgradedConn;
@@ -13,7 +16,7 @@ pub(in crate::node) async fn handle_task<'a>(
     conn_lock: RwLockWriteGuard<'a, UpgradedConn>,
     machine: &Arc<Machine>,
     discovery: &Arc<Discovery>,
-) {
+) -> Result<(), SaksahaNodeError> {
     let task_type = task.to_string();
 
     let res = match task {
@@ -24,24 +27,27 @@ pub(in crate::node) async fn handle_task<'a>(
                 unknown_addrs,
                 task_queue,
             )
-            .await
+            .await?;
         }
         NodeTask::SendTxHashSyn { tx_hashes } => {
-            msg_handle::send_tx_hash_syn(conn_lock, tx_hashes, task_queue).await
+            msg_handle::send_tx_hash_syn(conn_lock, tx_hashes, task_queue)
+                .await?;
         }
         NodeTask::SendTxSyn { tx_hashes } => {
-            msg_handle::send_tx_syn(conn_lock, tx_hashes, &machine).await
+            msg_handle::send_tx_syn(conn_lock, tx_hashes, &machine).await?;
         }
         NodeTask::SendBlockHashSyn { new_blocks } => {
             msg_handle::send_block_hash_syn(conn_lock, new_blocks, task_queue)
-                .await
+                .await?;
         }
         NodeTask::SendBlockSyn { new_blocks } => {
-            msg_handle::send_block_syn(conn_lock, new_blocks, &machine).await
+            msg_handle::send_block_syn(conn_lock, new_blocks, &machine).await?;
         }
     };
 
-    if let Err(err) = res {
-        warn!("Task handle failed, task: {}, err: {}", task_type, err);
-    }
+    // if let Err(err) = res {
+    //     warn!("Task handle failed, task: {}, err: {}", task_type, err);
+    // }
+
+    Ok(())
 }
