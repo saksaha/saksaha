@@ -21,7 +21,7 @@ impl Encoder<Msg> for UpgradedP2PCodec {
     ) -> Result<(), TrptError> {
         // let msg = item.to_string();
 
-        // println!("encoding, item: {}", &item);
+        println!("encoding, item: {}", &item);
 
         let mut msg_part = BytesMut::new();
 
@@ -48,12 +48,12 @@ impl Encoder<Msg> for UpgradedP2PCodec {
 
         dst.unsplit(msg_part);
 
-        println!(
-            "\nencode(): dst, conn_id: {}, _after enc ({}): {:?}",
-            self.conn_id,
-            dst.len(),
-            dst.to_vec()
-        );
+        // println!(
+        //     "\nencode(): dst, conn_id: {}, _after enc ({}): {:?}",
+        //     self.conn_id,
+        //     dst.len(),
+        //     dst.to_vec()
+        // );
 
         return Ok(());
     }

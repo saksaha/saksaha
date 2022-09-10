@@ -17,7 +17,9 @@ pub(in crate::node) async fn handle_task<'a>(
     machine: &Arc<Machine>,
     discovery: &Arc<Discovery>,
 ) -> Result<(), SaksahaNodeError> {
-    let task_type = task.to_string();
+    // let task_type = task.to_string();
+
+    println!("handling task: {}", &task);
 
     let res = match task {
         NodeTask::SendHelloSyn { unknown_addrs } => {

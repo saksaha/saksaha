@@ -52,7 +52,6 @@ pub(in crate::node) async fn handle_msg<'a>(
             .await?;
         }
         Msg::TxHashAck(tx_hash_sync) => {
-            println!("111111");
             tx_hash::recv_tx_hash_ack(
                 tx_hash_sync,
                 // machine,

@@ -87,7 +87,7 @@ impl PeerNode {
             let mut conn_lock = self.peer.get_transport().conn.write().await;
 
             println!(
-                "  >> next_msg: peer id: {}, ",
+                "  >> loop next_msg: peer id: {}, ",
                 self.peer.get_public_key_short()
             );
 

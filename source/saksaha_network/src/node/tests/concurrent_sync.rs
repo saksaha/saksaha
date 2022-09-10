@@ -1,7 +1,7 @@
 use super::utils::{make_test_context, TestContext};
 use crate::tests::TestUtil;
 use sak_dist_ledger::DistLedgerEvent;
-use std::time::Duration;
+use std::{collections::HashMap, time::Duration};
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_concurrent_sync() {
@@ -90,28 +90,44 @@ async fn test_concurrent_sync() {
     let mut ledger_event_rx_1 =
         machine_1.blockchain.dist_ledger.ledger_event_tx.subscribe();
 
-    let mock_tx1_clone = sak_types::mock_mint_tc_random();
-    let mock_tx2_clone = sak_types::mock_mint_tc_random();
-    let mock_tx3_clone = sak_types::mock_mint_tc_random();
-    let mock_tx4_clone = sak_types::mock_mint_tc_random();
-    let mock_tx5_clone = sak_types::mock_mint_tc_random();
-    let mock_tx6_clone = sak_types::mock_mint_tc_random();
+    // let mock_tx1_clone = sak_types::mock_mint_tc_random();
+    // let mock_tx2_clone = sak_types::mock_mint_tc_random();
+    // let mock_tx3_clone = sak_types::mock_mint_tc_random();
+    // let mock_tx4_clone = sak_types::mock_mint_tc_random();
+    // let mock_tx5_clone = sak_types::mock_mint_tc_random();
+    // let mock_tx6_clone = sak_types::mock_mint_tc_random();
+
+    let mut v = HashMap::from([
+        (mock_tx1.get_tx_hash().to_string(), false),
+        (mock_tx2.get_tx_hash().to_string(), false),
+        (mock_tx3.get_tx_hash().to_string(), false),
+        (mock_tx4.get_tx_hash().to_string(), false),
+        (mock_tx5.get_tx_hash().to_string(), false),
+        (mock_tx6.get_tx_hash().to_string(), false),
+    ]);
 
     tokio::spawn(async move {
-        let mut v = vec![
-            mock_tx1_clone.get_tx_hash(),
-            mock_tx2_clone.get_tx_hash(),
-            mock_tx3_clone.get_tx_hash(),
-            mock_tx4_clone.get_tx_hash(),
-            mock_tx5_clone.get_tx_hash(),
-            mock_tx6_clone.get_tx_hash(),
-        ];
+        println!("txs: {:?}", v);
 
         loop {
+            println!("rx loop");
             let ev = ledger_event_rx_1.recv().await.unwrap();
             if let DistLedgerEvent::TxPoolStat(tx_hashes) = ev {
-                println!(">>tx_hashes: {:?}", tx_hashes);
+                println!(
+                    "  >> 1 tx_hashes ({}): {:?}",
+                    tx_hashes.len(),
+                    tx_hashes
+                );
                 // println!("\nv: {:?}", v);
+
+                for h in tx_hashes {
+                    println!("h: {}", h);
+                    if let Some(v) = v.get_mut(&h) {
+                        *v = true;
+                    }
+                }
+
+                println!("111 {:#?}", v);
             }
         }
     });
@@ -164,6 +180,17 @@ async fn test_concurrent_sync() {
             .dist_ledger
             .apis
             .send_tx(mock_tx4)
+            .await
+            .expect("Node should be able to send a transaction");
+    });
+
+    let machine_2_clone = machine_2.clone();
+    tokio::spawn(async move {
+        machine_2_clone
+            .blockchain
+            .dist_ledger
+            .apis
+            .send_tx(mock_tx5)
             .await
             .expect("Node should be able to send a transaction");
     });
