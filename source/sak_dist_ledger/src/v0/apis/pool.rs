@@ -3,9 +3,10 @@ use log::warn;
 use sak_types::{BlockCandidate, TxCandidate};
 
 impl DistLedgerApis {
-    // peer_node
     pub async fn insert_into_pool(&self, tx_candidates: Vec<TxCandidate>) {
         for tx in tx_candidates.into_iter() {
+            println!("insert into pool, tx: {}", tx.get_tx_hash());
+
             if let Err(err) = self.sync_pool.insert_tx(tx).await {
                 warn!("Tx pool insertion aborted, reason: {}", err);
             };

@@ -11,7 +11,7 @@ pub(in crate::node) async fn send_tx_syn<'a>(
     mut conn_lock: RwLockWriteGuard<'a, UpgradedConn>,
     tx_hashes: Vec<TxHash>,
     machine: &Arc<Machine>,
-) -> Result<RecvReceipt, SaksahaNodeError> {
+) -> Result<(), SaksahaNodeError> {
     let tx_candidates = machine
         .blockchain
         .dist_ledger
@@ -23,31 +23,33 @@ pub(in crate::node) async fn send_tx_syn<'a>(
 
     conn_lock.send(tx_syn_msg).await;
 
-    let msg_wrap = conn_lock.next_msg().await?;
+    println!("333333333");
 
-    let receipt = msg_wrap.get_receipt();
+    // let msg_wrap = conn_lock.next_msg().await?;
 
-    let msg = msg_wrap
-        .get_maybe_msg()
-        .ok_or(format!("tx syn needs to be followed by tx syn ack"))??;
+    // let receipt = msg_wrap.get_receipt();
 
-    let _tx_ack = match msg {
-        Msg::TxAck(m) => m,
-        Msg::Error(m) => {
-            return Err(
-                format!("Receiver returned error msg, msg: {:?}", m).into()
-            )
-        }
-        _ => {
-            return Err(format!(
-                "Only tx ack should arrive at this point, msg: {}",
-                msg
-            )
-            .into());
-        }
-    };
+    // let msg = msg_wrap
+    //     .get_maybe_msg()
+    //     .ok_or(format!("tx syn needs to be followed by tx syn ack"))??;
 
-    Ok(receipt)
+    // let _tx_ack = match msg {
+    //     Msg::TxAck(m) => m,
+    //     Msg::Error(m) => {
+    //         return Err(
+    //             format!("Receiver returned error msg, msg: {:?}", m).into()
+    //         )
+    //     }
+    //     _ => {
+    //         return Err(format!(
+    //             "Only tx ack should arrive at this point, msg: {}",
+    //             msg
+    //         )
+    //         .into());
+    //     }
+    // };
+
+    Ok(())
 }
 
 pub(in crate::node) async fn recv_tx_syn(
@@ -55,6 +57,8 @@ pub(in crate::node) async fn recv_tx_syn(
     machine: &Machine,
     mut conn_lock: RwLockWriteGuard<'_, UpgradedConn>,
 ) -> SendReceipt {
+    println!("444444, tx_syn: {:?}", tx_syn);
+
     let wrapped = || async {
         machine
             .blockchain

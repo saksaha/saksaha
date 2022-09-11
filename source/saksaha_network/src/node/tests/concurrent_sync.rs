@@ -35,6 +35,7 @@ async fn test_concurrent_sync() {
         p2p_host: p2p_host_1,
         local_node: local_node_1,
         machine: machine_1,
+        identity: identity_1,
         ..
     } = test_context_1;
     println!("1");
@@ -63,6 +64,7 @@ async fn test_concurrent_sync() {
         p2p_host: p2p_host_2,
         local_node: local_node_2,
         machine: machine_2,
+        identity: identity_2,
         ..
     } = test_context_2;
 
@@ -80,6 +82,12 @@ async fn test_concurrent_sync() {
         });
     }
 
+    println!(
+        "cli1: {}, cli2: {}",
+        identity_1.credential.get_public_key_short().unwrap(),
+        identity_2.credential.get_public_key_short().unwrap(),
+    );
+
     let mock_tx1 = sak_types::mock_mint_tc_random();
     let mock_tx2 = sak_types::mock_mint_tc_random();
     let mock_tx3 = sak_types::mock_mint_tc_random();
@@ -89,13 +97,6 @@ async fn test_concurrent_sync() {
 
     let mut ledger_event_rx_1 =
         machine_1.blockchain.dist_ledger.ledger_event_tx.subscribe();
-
-    // let mock_tx1_clone = sak_types::mock_mint_tc_random();
-    // let mock_tx2_clone = sak_types::mock_mint_tc_random();
-    // let mock_tx3_clone = sak_types::mock_mint_tc_random();
-    // let mock_tx4_clone = sak_types::mock_mint_tc_random();
-    // let mock_tx5_clone = sak_types::mock_mint_tc_random();
-    // let mock_tx6_clone = sak_types::mock_mint_tc_random();
 
     let mut v = HashMap::from([
         (mock_tx1.get_tx_hash().to_string(), false),
@@ -118,10 +119,9 @@ async fn test_concurrent_sync() {
                     tx_hashes.len(),
                     tx_hashes
                 );
-                // println!("\nv: {:?}", v);
 
                 for h in tx_hashes {
-                    println!("h: {}", h);
+                    // println!("h: {}", h);
                     if let Some(v) = v.get_mut(&h) {
                         *v = true;
                     }
@@ -192,7 +192,18 @@ async fn test_concurrent_sync() {
             .apis
             .send_tx(mock_tx5)
             .await
-            .expect("Node should be able to send a transaction");
+            .expect("node should be able to send a transaction");
+    });
+
+    let machine_2_clone = machine_2.clone();
+    tokio::spawn(async move {
+        machine_2_clone
+            .blockchain
+            .dist_ledger
+            .apis
+            .send_tx(mock_tx6)
+            .await
+            .expect("node should be able to send a transaction");
     });
 
     tokio::time::sleep(Duration::from_secs(40)).await;

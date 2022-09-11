@@ -64,6 +64,9 @@ pub(in crate::node) async fn handle_msg<'a>(
         Msg::TxSyn(tx_syn) => {
             tx::recv_tx_syn(tx_syn, machine, conn_lock).await;
         }
+        Msg::TxAck(tx_ack) => {
+            // tx::recv_tx_syn(tx_syn, machine, conn_lock).await;
+        }
         Msg::BlockHashSyn(block_hash_syn) => {
             block_hash::recv_block_hash_syn(block_hash_syn, machine, conn_lock)
                 .await;
