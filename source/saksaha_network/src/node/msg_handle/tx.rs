@@ -23,8 +23,6 @@ pub(in crate::node) async fn send_tx_syn<'a>(
 
     conn_lock.send(tx_syn_msg).await;
 
-    println!("333333333");
-
     // let msg_wrap = conn_lock.next_msg().await?;
 
     // let receipt = msg_wrap.get_receipt();
@@ -57,8 +55,6 @@ pub(in crate::node) async fn recv_tx_syn(
     machine: &Machine,
     mut conn_lock: RwLockWriteGuard<'_, UpgradedConn>,
 ) -> SendReceipt {
-    println!("444444, tx_syn: {:?}", tx_syn);
-
     let wrapped = || async {
         machine
             .blockchain

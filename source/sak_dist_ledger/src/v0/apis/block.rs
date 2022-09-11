@@ -103,19 +103,9 @@ impl DistLedgerApis {
                     if !is_valid_sn {
                         break;
                     }
-                    // if sn == &DUMMY_SN {
-                    //     continue;
-                    // } else {
-                    //     is_valid_sn = self.verify_sn(&sn)?;
-                    //     if !is_valid_sn {
-                    //         break;
-                    //     }
-                    // }
                 }
-                println!("double spending pass!");
 
                 let is_verified_tx = self.verify_proof(&tc)?;
-                println!("proof pass!");
 
                 if is_valid_sn & is_verified_tx {
                     self.sync_pool.insert_tx(tx_candidate).await?

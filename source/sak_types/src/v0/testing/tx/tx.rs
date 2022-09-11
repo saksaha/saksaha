@@ -268,16 +268,6 @@ pub fn mock_pour_tc_random() -> TxCandidate {
 pub fn mock_pour_tc_1() -> TxCandidate {
     let hasher = Hasher::new();
 
-    let dummy_coin = mock_coin_custom(0, 0, 0, 0, 0);
-    let dummy_auth_path = [
-        Some((Scalar::default(), false)),
-        Some((Scalar::default(), false)),
-        Some((Scalar::default(), false)),
-        Some((Scalar::default(), false)),
-        Some((Scalar::default(), false)),
-        Some((Scalar::default(), false)),
-    ];
-
     let (
         addr_pk_1_old,
         addr_sk_1_old,
@@ -434,17 +424,6 @@ pub fn mock_pour_tc_1() -> TxCandidate {
         v: Some(v_1_old),
         cm: Some(cm_1_old),
         auth_path: auth_path_1,
-    };
-
-    let dummy_coin = OldCoin {
-        addr_pk: Some(ScalarExt::parse_arr(&dummy_coin.addr_pk).unwrap()),
-        addr_sk: Some(ScalarExt::parse_arr(&dummy_coin.addr_sk).unwrap()),
-        rho: Some(ScalarExt::parse_arr(&dummy_coin.rho).unwrap()),
-        r: Some(ScalarExt::parse_arr(&dummy_coin.r).unwrap()),
-        s: Some(ScalarExt::parse_arr(&dummy_coin.s).unwrap()),
-        v: Some(ScalarExt::parse_arr(&dummy_coin.v).unwrap()),
-        cm: Some(ScalarExt::parse_arr(&dummy_coin.cm).unwrap()),
-        auth_path: dummy_auth_path,
     };
 
     let coin_1_new = NewCoin {

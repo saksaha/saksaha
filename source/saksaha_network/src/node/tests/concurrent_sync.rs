@@ -38,7 +38,6 @@ async fn test_concurrent_sync() {
         identity: identity_1,
         ..
     } = test_context_1;
-    println!("1");
 
     let test_context_2 = make_test_context(
         app_prefix_vec[1].to_string(),
@@ -98,7 +97,7 @@ async fn test_concurrent_sync() {
     let mut ledger_event_rx_1 =
         machine_1.blockchain.dist_ledger.ledger_event_tx.subscribe();
 
-    let mut v = HashMap::from([
+    let mut map = HashMap::from([
         (mock_tx1.get_tx_hash().to_string(), false),
         (mock_tx2.get_tx_hash().to_string(), false),
         (mock_tx3.get_tx_hash().to_string(), false),
@@ -107,8 +106,8 @@ async fn test_concurrent_sync() {
         (mock_tx6.get_tx_hash().to_string(), false),
     ]);
 
-    tokio::spawn(async move {
-        println!("txs: {:?}", v);
+    let test = tokio::spawn(async move {
+        println!("map (tx hashes to check): {:?}", map);
 
         loop {
             println!("rx loop");
@@ -121,13 +120,24 @@ async fn test_concurrent_sync() {
                 );
 
                 for h in tx_hashes {
-                    // println!("h: {}", h);
-                    if let Some(v) = v.get_mut(&h) {
+                    if let Some(v) = map.get_mut(&h) {
                         *v = true;
                     }
                 }
 
-                println!("111 {:#?}", v);
+                let mut is_owned = true;
+                for (_, v) in map.iter() {
+                    if !v {
+                        println!("  >> 33 rrr");
+                        is_owned = false;
+                    }
+                }
+
+                println!("11");
+                if is_owned {
+                    println!("22");
+                    return 0;
+                }
             }
         }
     });
@@ -206,79 +216,14 @@ async fn test_concurrent_sync() {
             .expect("node should be able to send a transaction");
     });
 
-    tokio::time::sleep(Duration::from_secs(40)).await;
+    let timeout = tokio::time::sleep(Duration::from_secs(15));
 
-    // {
-    //     println!("check if node1 has tx1: {}", dummy_tx1.get_tx_hash());
-
-    //     let tx_pool_1_contains_tx1 = machine_1
-    //         .blockchain
-    //         .dist_ledger
-    //         .apis
-    //         .tx_pool_contains(dummy_tx1.get_tx_hash())
-    //         .await;
-
-    //     assert!(tx_pool_1_contains_tx1, "node 1 should contain tx1");
-
-    //     println!("[Success] node_1 has tx_1 (tx sent to node_1 directly)");
-
-    //     println!("Checking if node2 has tx: {}", dummy_tx1.get_tx_hash());
-
-    //     tokio::time::sleep(Duration::from_secs(2)).await;
-
-    //     let tx_pool_2_contains_tx1 = machine_2
-    //         .blockchain
-    //         .dist_ledger
-    //         .apis
-    //         .tx_pool_contains(dummy_tx1.get_tx_hash())
-    //         .await;
-
-    //     assert!(tx_pool_2_contains_tx1, "tx pool 2 should contain tx 1");
-
-    //     println!("[Success] node_2 has tx_1 (shared from node_1)");
-    // }
-
-    // tokio::time::sleep(Duration::from_secs(2)).await;
-
-    // {
-    //     local_node_1
-    //         .machine
-    //         .blockchain
-    //         .dist_ledger
-    //         .apis
-    //         .write_block(None)
-    //         .await
-    //         .expect("Block should be written");
-
-    //     let last_height_1 = local_node_1
-    //         .machine
-    //         .blockchain
-    //         .dist_ledger
-    //         .apis
-    //         .get_latest_block_height()
-    //         .unwrap()
-    //         .unwrap();
-
-    //     assert_eq!(1, last_height_1);
-
-    //     println!("test 2 passed");
-
-    //     tokio::time::sleep(Duration::from_secs(5)).await;
-
-    //     let last_height_2 = local_node_2
-    //         .machine
-    //         .blockchain
-    //         .dist_ledger
-    //         .apis
-    //         .get_latest_block_height()
-    //         .unwrap()
-    //         .unwrap();
-
-    //     assert_eq!(
-    //         last_height_1, last_height_2,
-    //         "two nodes have the same latest block height"
-    //     );
-
-    //     println!("test 3 passed");
-    // }
+    tokio::select! {
+        _ = timeout => {
+            panic!("timeout");
+        },
+        _ = test => {
+            return;
+        }
+    };
 }

@@ -96,8 +96,21 @@ impl PeerNode {
 
                     let task = task?;
 
-                    task::handle_task(task,
-                        &node_task_queue, conn_lock, &self.machine, &self.discovery).await;
+                    match task::handle_task(
+                        task,
+                        &node_task_queue,
+                        conn_lock,
+                        &self.machine,
+                        &self.discovery
+                    ).await {
+                        Ok(r) => r,
+                        Err(err) => {
+                            error!(
+                                "peer node task handle failed, err: {}",
+                                err,
+                            );
+                        }
+                    };
                 },
                 msg_wrap = conn_lock.next_msg() => {
                     let msg_wrap = match msg_wrap {

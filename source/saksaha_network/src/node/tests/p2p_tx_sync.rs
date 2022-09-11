@@ -21,8 +21,6 @@ async fn test_tx_sync_true() {
         machine_2,
     } = make_dual_node_test_context(false, false).await;
 
-    let dummy_tx1 = sak_types::mock_pour_tc_1();
-
     {
         let machine_1 = machine_1.clone();
 
@@ -41,7 +39,11 @@ async fn test_tx_sync_true() {
         });
     }
 
-    println!("Sending a tx1 to a node_1");
+    let dummy_tx1 = sak_types::mock_pour_tc_random();
+    println!(
+        "Sending a tx1 to a node_1, tx_hash: {}",
+        dummy_tx1.get_tx_hash()
+    );
 
     machine_1
         .blockchain
@@ -62,11 +64,8 @@ async fn test_tx_sync_true() {
 
     log::info!("[Success] node_1 has tx_1 (tx sent to node_1 directly)");
 
-    let mut ledger_event_rx = {
-        let rx = machine_2.blockchain.dist_ledger.ledger_event_tx.subscribe();
-
-        rx
-    };
+    let mut ledger_event_rx =
+        machine_2.blockchain.dist_ledger.ledger_event_tx.subscribe();
 
     let ev =
         tokio::time::timeout(Duration::from_secs(5), ledger_event_rx.recv())
