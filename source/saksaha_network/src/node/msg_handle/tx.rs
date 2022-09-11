@@ -54,39 +54,36 @@ pub(in crate::node) async fn send_tx_syn<'a>(
     Ok(())
 }
 
-// pub(in crate::node) async fn send_tx_ack(
-//     tx_syn: TxSynMsg,
-//     machine: &Machine,
-//     mut conn_lock: RwLockWriteGuard<'_, UpgradedConn>,
-// ) -> SendReceipt {
-//     let wrapped = || async {
-//         machine
-//             .blockchain
-//             .dist_ledger
-//             .apis
-//             .insert_into_pool(tx_syn.tx_candidates)
-//             .await;
+pub(in crate::node) async fn recv_tx_ack(
+    tx_syn: TxAckMsg,
+    machine: &Machine,
+    mut conn_lock: RwLockWriteGuard<'_, UpgradedConn>,
+) -> Result<(), SaksahaNodeError> {
+    // machine
+    //     .blockchain
+    //     .dist_ledger
+    //     .apis
+    //     .insert_into_pool(tx_syn.tx_candidates)
+    //     .await;
 
-//         let tx_ack_msg = Msg::TxAck(TxAckMsg {});
+    // let tx_ack_msg = Msg::TxAck(TxAckMsg {});
 
-//         let receipt = conn_lock.send(tx_ack_msg).await;
+    // let receipt = conn_lock.send(tx_ack_msg).await;
 
-//         Ok::<_, SaksahaNodeError>(receipt)
-//     };
+    // let receipt = match wrapped().await {
+    //     Ok(r) => r,
+    //     Err(err) => {
+    //         conn_lock
+    //             .send(Msg::Error(ErrorMsg {
+    //                 error: err.to_string(),
+    //             }))
+    //             .await
+    //     }
+    // };
 
-//     let receipt = match wrapped().await {
-//         Ok(r) => r,
-//         Err(err) => {
-//             conn_lock
-//                 .send(Msg::Error(ErrorMsg {
-//                     error: err.to_string(),
-//                 }))
-//                 .await
-//         }
-//     };
-
-//     receipt
-// }
+    // receipt
+    Ok(())
+}
 
 pub(in crate::node) async fn recv_tx_syn(
     tx_syn: TxSynMsg,
@@ -103,9 +100,9 @@ pub(in crate::node) async fn recv_tx_syn(
 
     let tx_ack_msg = Msg::TxAck(TxAckMsg {});
 
-    let receipt = conn_lock.send(tx_ack_msg).await;
+    conn_lock.send(tx_ack_msg).await;
 
-    Ok::<_, SaksahaNodeError>(receipt)
+    // Ok::<_, SaksahaNodeError>(receipt)
 
     // let receipt = match wrapped().await {
     //     Ok(r) => r,
@@ -119,4 +116,6 @@ pub(in crate::node) async fn recv_tx_syn(
     // };
 
     // receipt
+
+    Ok(())
 }

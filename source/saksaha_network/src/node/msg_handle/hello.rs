@@ -19,7 +19,7 @@ pub(in crate::node) async fn send_hello_syn(
     discovery: &Arc<Discovery>,
     unknown_addrs: Vec<UnknownAddr>,
     task_queue: &Arc<TaskQueue<NodeTask>>,
-) -> Result<RecvReceipt, SaksahaNodeError> {
+) -> Result<(), SaksahaNodeError> {
     let hello_syn_msg = HelloMsg::new(unknown_addrs)?;
 
     let _receipt = conn_lock.send(Msg::HelloSyn(hello_syn_msg)).await;
@@ -28,25 +28,69 @@ pub(in crate::node) async fn send_hello_syn(
 
     let receipt = msg_wrap.get_receipt();
 
-    let msg = msg_wrap
-        .get_maybe_msg()
-        .ok_or("hello ack should arrive as reply")??;
+    // let msg = msg_wrap
+    //     .get_maybe_msg()
+    //     .ok_or("hello ack should arrive as reply")??;
 
-    let hello_ack = match msg {
-        Msg::HelloAck(m) => m,
-        Msg::Error(m) => {
-            return Err(
-                format!("Receiver returned error msg, msg: {:?}", m).into()
-            )
-        }
-        _ => {
-            return Err(format!(
-                "Only hello ack should arrive at this point, msg: {}",
-                msg,
-            )
-            .into())
-        }
-    };
+    // let hello_ack = match msg {
+    //     Msg::HelloAck(m) => m,
+    //     Msg::Error(m) => {
+    //         return Err(
+    //             format!("Receiver returned error msg, msg: {:?}", m).into()
+    //         )
+    //     }
+    //     _ => {
+    //         return Err(format!(
+    //             "Only hello ack should arrive at this point, msg: {}",
+    //             msg,
+    //         )
+    //         .into())
+    //     }
+    // };
+
+    // let HelloMsg { unknown_addrs } = hello_ack;
+
+    // for unknown_addr in unknown_addrs {
+    //     discovery.enqueue_who_are_you(&unknown_addr).await;
+    // }
+
+    // Ok(receipt)
+    Ok(())
+}
+
+pub(in crate::node) async fn recv_hello_ack(
+    hello_ack: HelloMsg,
+    peer_table: &Arc<PeerTable>,
+    discovery: &Arc<Discovery>,
+    mut conn: RwLockWriteGuard<'_, UpgradedConn>,
+) -> Result<(), SaksahaNodeError> {
+    // let hello_syn_msg = HelloMsg::new(unknown_addrs)?;
+
+    // let _receipt = conn_lock.send(Msg::HelloSyn(hello_syn_msg)).await;
+
+    // let msg_wrap = conn_lock.next_msg().await?;
+
+    // let receipt = msg_wrap.get_receipt();
+
+    // let msg = msg_wrap
+    //     .get_maybe_msg()
+    //     .ok_or("hello ack should arrive as reply")??;
+
+    // let hello_ack = match msg {
+    //     Msg::HelloAck(m) => m,
+    //     Msg::Error(m) => {
+    //         return Err(
+    //             format!("Receiver returned error msg, msg: {:?}", m).into()
+    //         )
+    //     }
+    //     _ => {
+    //         return Err(format!(
+    //             "Only hello ack should arrive at this point, msg: {}",
+    //             msg,
+    //         )
+    //         .into())
+    //     }
+    // };
 
     let HelloMsg { unknown_addrs } = hello_ack;
 
@@ -54,15 +98,13 @@ pub(in crate::node) async fn send_hello_syn(
         discovery.enqueue_who_are_you(&unknown_addr).await;
     }
 
-    Ok(receipt)
+    Ok(())
 }
 
 pub(in crate::node) async fn recv_hello_syn(
-    // unknown_addrs: Vec<UnknownAddr>,
     hello_msg: HelloMsg,
     peer_table: &Arc<PeerTable>,
     discovery: &Arc<Discovery>,
-    task_queue: &Arc<TaskQueue<NodeTask>>,
     mut conn: RwLockWriteGuard<'_, UpgradedConn>,
 ) -> Result<SendReceipt, SaksahaNodeError> {
     let HelloMsg { unknown_addrs } = hello_msg;

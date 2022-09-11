@@ -107,18 +107,9 @@ async fn test_concurrent_sync() {
     ]);
 
     let test = tokio::spawn(async move {
-        println!("map (tx hashes to check): {:?}", map);
-
         loop {
-            println!("rx loop");
             let ev = ledger_event_rx_1.recv().await.unwrap();
             if let DistLedgerEvent::TxPoolStat(tx_hashes) = ev {
-                println!(
-                    "  >> 1 tx_hashes ({}): {:?}",
-                    tx_hashes.len(),
-                    tx_hashes
-                );
-
                 for h in tx_hashes {
                     if let Some(v) = map.get_mut(&h) {
                         *v = true;
@@ -128,14 +119,11 @@ async fn test_concurrent_sync() {
                 let mut is_owned = true;
                 for (_, v) in map.iter() {
                     if !v {
-                        println!("  >> 33 rrr");
                         is_owned = false;
                     }
                 }
 
-                println!("11");
                 if is_owned {
-                    println!("22");
                     return 0;
                 }
             }
@@ -216,7 +204,7 @@ async fn test_concurrent_sync() {
             .expect("node should be able to send a transaction");
     });
 
-    let timeout = tokio::time::sleep(Duration::from_secs(15));
+    let timeout = tokio::time::sleep(Duration::from_secs(20));
 
     tokio::select! {
         _ = timeout => {

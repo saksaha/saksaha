@@ -36,10 +36,12 @@ pub(in crate::node) async fn handle_msg<'a>(
 
     match msg {
         Msg::HelloSyn(hello_msg) => {
-            hello::recv_hello_syn(
-                hello_msg, peer_table, discovery, task_queue, conn_lock,
-            )
-            .await?;
+            hello::recv_hello_syn(hello_msg, peer_table, discovery, conn_lock)
+                .await?;
+        }
+        Msg::HelloAck(hello_msg) => {
+            hello::recv_hello_ack(hello_msg, peer_table, discovery, conn_lock)
+                .await?;
         }
         Msg::TxHashSyn(tx_hash_sync) => {
             tx_hash::recv_tx_hash_syn(
@@ -58,7 +60,7 @@ pub(in crate::node) async fn handle_msg<'a>(
             tx::recv_tx_syn(tx_syn, machine, conn_lock, task_queue).await;
         }
         Msg::TxAck(tx_ack) => {
-            // tx::recv_tx_syn(tx_syn, machine, conn_lock).await;
+            tx::recv_tx_ack(tx_ack, machine, conn_lock).await;
         }
         Msg::BlockHashSyn(block_hash_syn) => {
             block_hash::recv_block_hash_syn(block_hash_syn, machine, conn_lock)
