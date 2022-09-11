@@ -15,7 +15,6 @@ async fn test_tx_sync_true() {
         p2p_host_1,
         local_node_1,
         machine_1,
-        //
         p2p_host_2,
         local_node_2,
         machine_2,
