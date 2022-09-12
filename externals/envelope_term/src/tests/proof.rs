@@ -129,7 +129,7 @@ async fn test_generate_a_proof() {
 
     let coin_1_old = generate_a_dummy_coin(100);
 
-    let tx = sak_types::mock_mint_tc_custom(
+    let tx = sak_types::mock_mint_tc(
         coin_1_old.cm,
         coin_1_old.v,
         coin_1_old.k,

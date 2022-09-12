@@ -70,7 +70,6 @@ pub fn mock_pour_tc_random() -> TxCandidate {
         cm_1_old,
         sn_1,
     ) = {
-        // let addr_sk = ScalarExt::parse_u64(0).unwrap();
         let addr_sk = ScalarExt::parse_u64(rand() as u64).unwrap();
 
         let addr_pk = hasher.mimc_single_scalar(addr_sk).unwrap();
@@ -269,16 +268,6 @@ pub fn mock_pour_tc_random() -> TxCandidate {
 pub fn mock_pour_tc_1() -> TxCandidate {
     let hasher = Hasher::new();
 
-    let dummy_coin = mock_coin_custom(0, 0, 0, 0, 0);
-    let dummy_auth_path = [
-        Some((Scalar::default(), false)),
-        Some((Scalar::default(), false)),
-        Some((Scalar::default(), false)),
-        Some((Scalar::default(), false)),
-        Some((Scalar::default(), false)),
-        Some((Scalar::default(), false)),
-    ];
-
     let (
         addr_pk_1_old,
         addr_sk_1_old,
@@ -435,17 +424,6 @@ pub fn mock_pour_tc_1() -> TxCandidate {
         v: Some(v_1_old),
         cm: Some(cm_1_old),
         auth_path: auth_path_1,
-    };
-
-    let dummy_coin = OldCoin {
-        addr_pk: Some(ScalarExt::parse_arr(&dummy_coin.addr_pk).unwrap()),
-        addr_sk: Some(ScalarExt::parse_arr(&dummy_coin.addr_sk).unwrap()),
-        rho: Some(ScalarExt::parse_arr(&dummy_coin.rho).unwrap()),
-        r: Some(ScalarExt::parse_arr(&dummy_coin.r).unwrap()),
-        s: Some(ScalarExt::parse_arr(&dummy_coin.s).unwrap()),
-        v: Some(ScalarExt::parse_arr(&dummy_coin.v).unwrap()),
-        cm: Some(ScalarExt::parse_arr(&dummy_coin.cm).unwrap()),
-        auth_path: dummy_auth_path,
     };
 
     let coin_1_new = NewCoin {
@@ -681,13 +659,12 @@ pub fn mock_pour_tc_invalid_pi() -> TxCandidate {
     c
 }
 
-pub fn mock_mint_tc_custom(
+pub fn mock_mint_tc(
     cm: [u8; 32],
     v: [u8; 32],
     k: [u8; 32],
     s: [u8; 32],
 ) -> TxCandidate {
-    // let tx_candidate = MintTxCandidate::new_dummy_custom(cm, v, k, s);
     let validator_wasm = VALIDATOR.to_vec();
 
     let tx_candidate = MintTxCandidate::new(
@@ -700,7 +677,39 @@ pub fn mock_mint_tc_custom(
         k,
         s,
     );
-    //     }
+
+    TxCandidate::Mint(tx_candidate)
+}
+
+pub fn mock_mint_tc_random() -> TxCandidate {
+    let hasher = Hasher::new();
+
+    let v = ScalarExt::parse_arr(&U8Array::from_int(400)).unwrap();
+
+    let r = ScalarExt::parse_u64(rand() as u64).unwrap();
+
+    let s = ScalarExt::parse_u64(rand() as u64).unwrap();
+
+    let rho = ScalarExt::parse_u64(rand() as u64).unwrap();
+
+    let addr_sk = ScalarExt::parse_u64(rand() as u64).unwrap();
+
+    let addr_pk = hasher.mimc_single_scalar(addr_sk).unwrap();
+
+    let k = hasher.comm2_scalar(r, addr_pk, rho);
+
+    let cm = hasher.comm2_scalar(s, v, k);
+
+    let tx_candidate = MintTxCandidate::new(
+        String::from("created_at_mint_1"),
+        vec![],
+        String::from("author_sig_mint_1"),
+        None,
+        vec![cm.to_bytes()],
+        v.to_bytes(),
+        k.to_bytes(),
+        s.to_bytes(),
+    );
 
     TxCandidate::Mint(tx_candidate)
 }

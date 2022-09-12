@@ -258,28 +258,20 @@ async fn test_handshake_works() {
 
         let mut conn_2_lock = transport_2.conn.write().await;
 
-        let msg_wrap = conn_2_lock.next_msg().await.unwrap();
+        let msg = conn_2_lock.next_msg().await.unwrap();
 
-        let maybe_msg = msg_wrap.get_maybe_msg();
+        let ping = match msg {
+            Ok(m) => match m {
+                Msg::Ping(p) => {
+                    println!("ping: {:?}, rand received!", p);
 
-        let ping = match maybe_msg {
-            Some(maybe_msg) => match maybe_msg {
-                Ok(msg) => match msg {
-                    Msg::Ping(p) => {
-                        println!("ping: {:?}, rand received!", p);
-
-                        p
-                    }
-                    _ => {
-                        panic!();
-                    }
-                },
-                Err(err) => {
-                    println!("Err: {}", err);
+                    p
+                }
+                _ => {
                     panic!();
                 }
             },
-            None => {
+            Err(_) => {
                 println!("No msg..");
                 panic!();
             }

@@ -1,4 +1,4 @@
-use sak_p2p_addr::{KnownAddr, UnknownAddr};
+use sak_p2p_addr::UnknownAddr;
 use sak_types::{BlockHash, BlockHeight, TxHash};
 
 #[derive(Debug)]

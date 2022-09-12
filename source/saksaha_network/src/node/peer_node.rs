@@ -31,7 +31,6 @@ impl PeerNode {
         let node_task_queue = Arc::new(TaskQueue::new(100));
 
         {
-            // Ledger event routine
             let ledger_event_rx = {
                 let rx = self
                     .machine
@@ -57,7 +56,6 @@ impl PeerNode {
 
         {
             // say hello
-
             let unknown_addrs = self.peer_table.get_peer_addrs().await;
 
             if !self.peer.is_initiator {
@@ -93,48 +91,50 @@ impl PeerNode {
 
                     let task = task?;
 
-                    task::handle_task(task,
-                        &node_task_queue, conn_lock, &self.machine, &self.discovery).await;
-                },
-                msg_wrap = conn_lock.next_msg() => {
-                    let msg_wrap = match msg_wrap {
-                        Ok(w) => w,
+                    match task::handle_task(
+                        task,
+                        &node_task_queue,
+                        conn_lock,
+                        &self.machine,
+                        &self.discovery
+                    ).await {
+                        Ok(r) => r,
                         Err(err) => {
-                            warn!("Error retrieving msg, err: {}", err);
-
-                            return Err(format!("Err: {}", err).into());
-                            // continue;
+                            error!(
+                                "peer node task handle failed, err: {}",
+                                err,
+                            );
                         }
                     };
-
-                    match msg_wrap.get_maybe_msg() {
-                        Some(maybe_msg) => match maybe_msg {
-                            Ok(msg) => {
+                },
+                maybe_msg = conn_lock.next_msg() => {
+                    match maybe_msg {
+                        Some(msg) => match msg {
+                            Ok(m) => {
                                 let _ = msg_handle::handle_msg(
-                                    msg,
+                                    m,
                                     &self.machine,
                                     conn_lock,
                                     &node_task_queue,
-                                    &self.peer,
+                                    // &self.peer,
                                     &self.peer_table,
                                     &self.discovery,
                                 )
                                 .await;
                             }
                             Err(err) => {
-                                warn!("Failed to parse the msg, err: {}", err);
+                                error!("Failed to parse the msg, err: {}", err);
                             }
                         },
                         None => {
-                            warn!("Peer has ended the connection");
-
                             self.peer.set_peer_status(
                                 PeerStatus::Disconnected,
                             ).await;
 
                             return Err(
                                 format!("Peer has ended the connection, \
-                                    her_public_key: {}",
+                                    conn_id: {}, her_public_key: {}",
+                                    conn_lock.get_conn_id(),
                                     self.peer.get_public_key_short()
                                 )
                                 .into());

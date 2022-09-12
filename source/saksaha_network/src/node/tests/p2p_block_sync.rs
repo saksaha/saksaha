@@ -64,10 +64,6 @@ async fn test_block_sync_true() {
         ..
     } = test_context_2;
 
-    // let dummy_tx1 = sak_types::mock_pour_tc_m1_to_p3_p4();
-
-    // let dummy_tx2 = sak_types::mock_pour_tc_2();
-
     let dummy_tx1 = sak_types::mock_pour_tc_random();
 
     {
@@ -232,10 +228,8 @@ async fn test_late_block_sync_true() {
         ..
     } = test_context_2;
 
-    // let dummy_tx1 = sak_types::mock_pour_tc_m1_to_p3_p4();
     let dummy_tx1 = sak_types::mock_pour_tc_random();
     let dummy_tx2 = sak_types::mock_pour_tc_random();
-    // let dummy_tx3 = sak_types::mock_pour_tc_3();
     let dummy_tx3 = sak_types::mock_pour_tc_random();
 
     {
