@@ -1,7 +1,6 @@
 use crate::{machine::Machine, node::SaksahaNodeError};
 use sak_p2p_transport::{
-    BlockAckMsg, BlockSynMsg, ErrorMsg, Msg, RecvReceipt, SendReceipt,
-    UpgradedConn,
+    BlockAckMsg, BlockSynMsg, ErrorMsg, Msg, UpgradedConn,
 };
 use sak_types::{BlockHash, BlockHeight};
 use std::sync::Arc;
@@ -11,7 +10,7 @@ pub(in crate::node) async fn send_block_syn(
     mut conn_lock: RwLockWriteGuard<'_, UpgradedConn>,
     new_blocks: Vec<(BlockHeight, BlockHash)>,
     machine: &Arc<Machine>,
-) -> Result<RecvReceipt, SaksahaNodeError> {
+) -> Result<(), SaksahaNodeError> {
     let block_hashes: Vec<&BlockHash> = new_blocks
         .iter()
         .map(|(_, block_hash)| block_hash)
@@ -43,38 +42,21 @@ pub(in crate::node) async fn send_block_syn(
         }))
         .await;
 
-    let msg_wrap = conn_lock.next_msg().await?;
+    Ok(())
+}
 
-    let receipt = msg_wrap.get_receipt();
-
-    let msg = msg_wrap
-        .get_maybe_msg()
-        .ok_or(format!("block syn needs to be followed by ack"))??;
-
-    let _block_ack_msg = match msg {
-        Msg::BlockAck(m) => m,
-        Msg::Error(m) => {
-            return Err(
-                format!("Receiver returned error msg, msg: {:?}", m).into()
-            )
-        }
-        _ => {
-            return Err(format!(
-                "Only block ack should arrive at this point, msg: {}",
-                msg
-            )
-            .into());
-        }
-    };
-
-    Ok(receipt)
+pub(in crate::node) async fn recv_block_ack(
+    block_ack_msg: BlockAckMsg,
+    machine: &Arc<Machine>,
+) -> Result<(), SaksahaNodeError> {
+    Ok(())
 }
 
 pub(in crate::node) async fn recv_block_syn(
     block_syn_msg: BlockSynMsg,
     machine: &Arc<Machine>,
     mut conn_lock: RwLockWriteGuard<'_, UpgradedConn>,
-) -> SendReceipt {
+) -> Result<(), SaksahaNodeError> {
     let blocks = block_syn_msg.blocks;
 
     let _ = machine
@@ -86,7 +68,7 @@ pub(in crate::node) async fn recv_block_syn(
 
     let block_ack_msg = Msg::BlockAck(BlockAckMsg {});
 
-    let receipt = conn_lock.send(block_ack_msg).await;
+    conn_lock.send(block_ack_msg).await;
 
-    receipt
+    Ok(())
 }

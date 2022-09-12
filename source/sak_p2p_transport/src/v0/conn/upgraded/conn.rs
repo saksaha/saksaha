@@ -1,4 +1,4 @@
-use crate::{Msg, MsgWrap, TrptError, UpgradedP2PCodec};
+use crate::{Msg, TrptError, UpgradedP2PCodec};
 use futures::{SinkExt, StreamExt};
 use log::warn;
 use tokio::net::TcpStream;
@@ -30,55 +30,23 @@ impl UpgradedConn {
     }
 
     #[inline]
-    pub async fn send(&mut self, msg: Msg) -> SendReceipt {
-        let msg_type = msg.to_string();
+    pub async fn send(&mut self, msg: Msg) -> Result<(), TrptError> {
+        // let msg_type = msg.to_string();
 
         // println!(
         //     "\n 11 send msg(), conn_id: {}, msg: {}",
         //     self.conn_id, msg_type
         // );
 
-        match self.socket.send(msg).await {
-            Ok(_) => (),
-            Err(err) => {
-                warn!("Msg send fail, err: {}", err);
-
-                return SendReceipt {
-                    error: Some(
-                        format!(
-                            "Sending msg: {} failed, conn_id: {}, err: {}",
-                            msg_type, self.conn_id, err
-                        )
-                        .into(),
-                    ),
-                };
-            }
-        };
-
-        SendReceipt { error: None }
+        self.socket.send(msg).await
     }
 
     #[inline]
-    pub async fn next_msg(&mut self) -> Result<MsgWrap, TrptError> {
+    pub async fn next_msg(&mut self) -> Option<Result<Msg, TrptError>> {
         let msg = self.socket.next().await;
 
         // println!("\n 33 next_msg: conn_id: {}, msg: {:?}", self.conn_id, msg);
 
-        let msg_wrap = MsgWrap::new(msg);
-
-        Ok(msg_wrap)
-    }
-}
-
-pub struct SendReceipt {
-    error: Option<TrptError>,
-}
-
-impl SendReceipt {
-    pub fn ok_or(self) -> Result<(), TrptError> {
-        match self.error {
-            Some(err) => Err(err),
-            None => Ok(()),
-        }
+        msg
     }
 }

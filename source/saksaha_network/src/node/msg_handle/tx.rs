@@ -3,9 +3,7 @@ use crate::{
     node::{task::NodeTask, SaksahaNodeError},
 };
 use log::{debug, info, warn};
-use sak_p2p_transport::{
-    ErrorMsg, Msg, RecvReceipt, SendReceipt, TxAckMsg, TxSynMsg, UpgradedConn,
-};
+use sak_p2p_transport::{ErrorMsg, Msg, TxAckMsg, TxSynMsg, UpgradedConn};
 use sak_task_queue::TaskQueue;
 use sak_types::TxHash;
 use std::sync::Arc;
@@ -27,30 +25,6 @@ pub(in crate::node) async fn send_tx_syn<'a>(
 
     conn_lock.send(tx_syn_msg).await;
 
-    // let msg_wrap = conn_lock.next_msg().await?;
-
-    // let receipt = msg_wrap.get_receipt();
-
-    // let msg = msg_wrap
-    //     .get_maybe_msg()
-    //     .ok_or(format!("tx syn needs to be followed by tx syn ack"))??;
-
-    // let _tx_ack = match msg {
-    //     Msg::TxAck(m) => m,
-    //     Msg::Error(m) => {
-    //         return Err(
-    //             format!("Receiver returned error msg, msg: {:?}", m).into()
-    //         )
-    //     }
-    //     _ => {
-    //         return Err(format!(
-    //             "Only tx ack should arrive at this point, msg: {}",
-    //             msg
-    //         )
-    //         .into());
-    //     }
-    // };
-
     Ok(())
 }
 
@@ -59,29 +33,6 @@ pub(in crate::node) async fn recv_tx_ack(
     machine: &Machine,
     mut conn_lock: RwLockWriteGuard<'_, UpgradedConn>,
 ) -> Result<(), SaksahaNodeError> {
-    // machine
-    //     .blockchain
-    //     .dist_ledger
-    //     .apis
-    //     .insert_into_pool(tx_syn.tx_candidates)
-    //     .await;
-
-    // let tx_ack_msg = Msg::TxAck(TxAckMsg {});
-
-    // let receipt = conn_lock.send(tx_ack_msg).await;
-
-    // let receipt = match wrapped().await {
-    //     Ok(r) => r,
-    //     Err(err) => {
-    //         conn_lock
-    //             .send(Msg::Error(ErrorMsg {
-    //                 error: err.to_string(),
-    //             }))
-    //             .await
-    //     }
-    // };
-
-    // receipt
     Ok(())
 }
 
@@ -89,7 +40,6 @@ pub(in crate::node) async fn recv_tx_syn(
     tx_syn: TxSynMsg,
     machine: &Machine,
     mut conn_lock: RwLockWriteGuard<'_, UpgradedConn>,
-    task_queue: &Arc<TaskQueue<NodeTask>>,
 ) -> Result<(), SaksahaNodeError> {
     machine
         .blockchain
@@ -101,21 +51,6 @@ pub(in crate::node) async fn recv_tx_syn(
     let tx_ack_msg = Msg::TxAck(TxAckMsg {});
 
     conn_lock.send(tx_ack_msg).await;
-
-    // Ok::<_, SaksahaNodeError>(receipt)
-
-    // let receipt = match wrapped().await {
-    //     Ok(r) => r,
-    //     Err(err) => {
-    //         conn_lock
-    //             .send(Msg::Error(ErrorMsg {
-    //                 error: err.to_string(),
-    //             }))
-    //             .await
-    //     }
-    // };
-
-    // receipt
 
     Ok(())
 }

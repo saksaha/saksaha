@@ -112,25 +112,16 @@ impl PeerNode {
                         }
                     };
                 },
-                msg_wrap = conn_lock.next_msg() => {
-                    let msg_wrap = match msg_wrap {
-                        Ok(w) => w,
-                        Err(err) => {
-                            warn!("Error retrieving msg, err: {}", err);
-
-                            return Err(format!("Err: {}", err).into());
-                        }
-                    };
-
-                    match msg_wrap.get_maybe_msg() {
-                        Some(maybe_msg) => match maybe_msg {
-                            Ok(msg) => {
+                maybe_msg = conn_lock.next_msg() => {
+                    match maybe_msg {
+                        Some(msg) => match msg {
+                            Ok(m) => {
                                 let _ = msg_handle::handle_msg(
-                                    msg,
+                                    m,
                                     &self.machine,
                                     conn_lock,
                                     &node_task_queue,
-                                    &self.peer,
+                                    // &self.peer,
                                     &self.peer_table,
                                     &self.discovery,
                                 )

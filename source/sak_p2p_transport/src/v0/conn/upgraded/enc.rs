@@ -21,7 +21,7 @@ impl Encoder<Msg> for UpgradedP2PCodec {
     ) -> Result<(), TrptError> {
         // let msg = item.to_string();
 
-        println!("encoding, item: {}", &item);
+        // println!("encoding, item: {}", &item);
 
         let mut msg_part = BytesMut::new();
 

@@ -17,11 +17,7 @@ pub(in crate::node) async fn handle_task<'a>(
     machine: &Arc<Machine>,
     discovery: &Arc<Discovery>,
 ) -> Result<(), SaksahaNodeError> {
-    // let task_type = task.to_string();
-
-    println!("handling task: {}", &task);
-
-    let res = match task {
+    match task {
         NodeTask::SendHelloSyn { unknown_addrs } => {
             msg_handle::send_hello_syn(
                 conn_lock,
@@ -32,24 +28,18 @@ pub(in crate::node) async fn handle_task<'a>(
             .await?;
         }
         NodeTask::SendTxHashSyn { tx_hashes } => {
-            msg_handle::send_tx_hash_syn(conn_lock, tx_hashes, task_queue)
-                .await?;
+            msg_handle::send_tx_hash_syn(conn_lock, tx_hashes).await?;
         }
         NodeTask::SendTxSyn { tx_hashes } => {
             msg_handle::send_tx_syn(conn_lock, tx_hashes, &machine).await?;
         }
         NodeTask::SendBlockHashSyn { new_blocks } => {
-            msg_handle::send_block_hash_syn(conn_lock, new_blocks, task_queue)
-                .await?;
+            msg_handle::send_block_hash_syn(conn_lock, new_blocks).await?;
         }
         NodeTask::SendBlockSyn { new_blocks } => {
             msg_handle::send_block_syn(conn_lock, new_blocks, &machine).await?;
         }
     };
-
-    // if let Err(err) = res {
-    //     warn!("Task handle failed, task: {}, err: {}", task_type, err);
-    // }
 
     Ok(())
 }
