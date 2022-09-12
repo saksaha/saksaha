@@ -28,25 +28,36 @@ impl Routine {
     ) -> Result<(), SaksahaError> {
         info!("System is starting");
 
-        let public_key = match sys_run_args.public_key {
-            Some(ref v) => v.to_string(),
-            None => {
-                if sys_run_args.cfg_profile.is_some() {
-                    return Err(format!(
-                        "'cfg_profile' and 'public_key' cannot be provided at
+        if sys_run_args.public_key.is_some()
+            && sys_run_args.cfg_profile.is_some()
+        {
+            return Err(format!(
+                "'cfg_profile' and 'public_key' cannot be provided at
                         the same time, cfg_profile: {:?}, public_key: {:?}",
-                        sys_run_args.cfg_profile, sys_run_args.public_key,
-                    )
-                    .into());
-                }
+                sys_run_args.cfg_profile, sys_run_args.public_key,
+            )
+            .into());
+        }
 
-                "default".to_string()
-            }
-        };
+        // let public_key = match sys_run_args.public_key {
+        //     Some(ref v) => v.to_string(),
+        //     None => {
+        //         if sys_run_args.cfg_profile.is_some() {
+        //             return Err(format!(
+        //                 "'cfg_profile' and 'public_key' cannot be provided at
+        //                 the same time, cfg_profile: {:?}, public_key: {:?}",
+        //                 sys_run_args.cfg_profile, sys_run_args.public_key,
+        //             )
+        //             .into());
+        //         }
 
-        info!("Resolved public_key: {}", public_key.yellow(),);
+        //         "default".to_string()
+        //     }
+        // };
 
-        let pconfig = PConfig::new(&public_key)?;
+        // info!("Resolved public_key: {}", public_key.yellow(),);
+
+        let pconfig = PConfig::new(&sys_run_args.public_key)?;
 
         let config = match &sys_run_args.cfg_profile {
             Some(cp) => match Config::load_profiled(cp, &sys_run_args) {

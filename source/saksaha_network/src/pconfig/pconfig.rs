@@ -21,7 +21,7 @@ pub struct PersistedP2PConfig {
 }
 
 impl PConfig {
-    pub fn new(public_key: &String) -> Result<PConfig, SaksahaError> {
+    pub fn new(public_key: &Option<String>) -> Result<PConfig, SaksahaError> {
         info!("Loading persisted config...");
 
         let config_file_path = fs::get_config_file_path(public_key)?;
