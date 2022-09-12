@@ -86,11 +86,6 @@ impl PeerNode {
         loop {
             let mut conn_lock = self.peer.get_transport().conn.write().await;
 
-            println!(
-                "  >> loop next_msg: peer id: {}, ",
-                self.peer.get_public_key_short()
-            );
-
             tokio::select! {
                 task = node_task_queue.pop_front() => {
 

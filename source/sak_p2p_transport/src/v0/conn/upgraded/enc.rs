@@ -6,10 +6,8 @@ use bytes::{Buf, BufMut, BytesMut};
 use chacha20::cipher::StreamCipher;
 use chacha20::ChaCha20;
 use sak_crypto::sha3::digest::core_api::CoreWrapper;
-use sak_crypto::sha3::digest::FixedOutput;
-use sak_crypto::sha3::{Digest, Keccak256, Keccak256Core};
-use std::convert::TryInto;
-use tokio_util::codec::{Decoder, Encoder};
+use sak_crypto::sha3::{Digest, Keccak256Core};
+use tokio_util::codec::Encoder;
 
 impl Encoder<Msg> for UpgradedP2PCodec {
     type Error = TrptError;
