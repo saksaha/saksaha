@@ -59,6 +59,8 @@ impl Decoder for UpgradedP2PCodec {
 
         let msg = parse_msg_portion(src, &mut self.in_cipher)?;
 
+        // println!("decode complete, conn_id: {}, msg: {:?}", self.conn_id, msg);
+
         Ok(msg)
     }
 }
@@ -117,7 +119,14 @@ fn parse_msg_portion(
 
     // println!("\ndecrypt: msg_portion: {:?}", src.to_vec());
 
-    let msg = dec::decode_into_msg(src)?;
+    let msg = match dec::decode_into_msg(src) {
+        Ok(m) => m,
+        Err(err) => {
+            return Err(
+                format!("Error decoding a msg body, err: {}", err).into()
+            );
+        }
+    };
 
     Ok(msg)
 }
