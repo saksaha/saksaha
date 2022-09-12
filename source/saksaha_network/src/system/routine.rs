@@ -3,7 +3,7 @@ use super::SaksahaError;
 use super::SystemRunArgs;
 use crate::blockchain::Blockchain;
 use crate::config::Config;
-use crate::config::ProfiledConfig;
+// use crate::config::ProfiledConfig;
 use crate::machine::Machine;
 use crate::node::LocalNode;
 use crate::p2p::{P2PHost, P2PHostArgs};
@@ -12,7 +12,7 @@ use crate::rpc::RPCArgs;
 use crate::rpc::RPC;
 use crate::system::SystemHandle;
 use colored::Colorize;
-use log::{error, info};
+use log::{error, info, warn};
 use sak_p2p_id::Identity;
 use sak_p2p_peertable::PeerTable;
 use std::sync::Arc;
@@ -26,53 +26,44 @@ impl Routine {
         &self,
         sys_run_args: SystemRunArgs,
     ) -> Result<(), SaksahaError> {
-        log::info!("System is starting");
+        info!("System is starting");
 
-        let config = {
-            let profiled_config = match &sys_run_args.cfg_profile {
-                Some(profile) => match ProfiledConfig::new(profile) {
-                    Ok(c) => c,
-                    Err(err) => {
-                        return Err(format!(
-                            "Could not create dev config, err: {}",
-                            err
-                        )
-                        .into());
-                    }
-                },
-                None => ProfiledConfig::new_empty(),
-            };
+        let public_key = match sys_run_args.public_key {
+            Some(ref v) => v.to_string(),
+            None => {
+                if sys_run_args.cfg_profile.is_some() {
+                    return Err(format!(
+                        "'cfg_profile' and 'public_key' cannot be provided at
+                        the same time, cfg_profile: {:?}, public_key: {:?}",
+                        sys_run_args.cfg_profile, sys_run_args.public_key,
+                    )
+                    .into());
+                }
 
-            let app_prefix = match &sys_run_args.app_prefix {
-                Some(ap) => ap.clone(),
-                None => profiled_config.app_prefix.clone(),
-            };
+                "default".to_string()
+            }
+        };
 
-            info!("Resolved app_prefix: {}", app_prefix.yellow(),);
+        info!("Resolved public_key: {}", public_key.yellow(),);
 
-            let pconfig = {
-                let c = match PConfig::new(&app_prefix) {
-                    Ok(p) => p,
-                    Err(err) => {
-                        error!(
-                            "Error creating a persisted configuration, err: {}",
-                            err,
-                        );
+        let pconfig = PConfig::new(&public_key)?;
 
-                        std::process::exit(1);
-                    }
-                };
-
-                info!("Persisted config loaded, conf: {:?}", c);
-
-                c
-            };
-
-            match Config::new(
-                app_prefix,
+        let config = match &sys_run_args.cfg_profile {
+            Some(cp) => match Config::load_profiled(cp, &sys_run_args) {
+                Ok(c) => c,
+                Err(err) => {
+                    return Err(format!(
+                        "Could not create dev config, err: {}",
+                        err
+                    )
+                    .into());
+                }
+            },
+            None => match Config::new(
+                // app_prefix,
                 &sys_run_args,
                 pconfig,
-                profiled_config,
+                // profiled_config,
             ) {
                 Ok(c) => c,
                 Err(err) => {
@@ -80,7 +71,7 @@ impl Routine {
                         format!("Error creating config, err: {}", err).into()
                     );
                 }
-            }
+            },
         };
 
         info!("Resolved config: {:?}", config);
@@ -176,7 +167,8 @@ impl Routine {
 
         let blockchain = {
             let b = Blockchain::init(
-                config.app_prefix,
+                // config.app_prefix,
+                config.p2p.public_key_str,
                 config.blockchain.tx_sync_interval,
                 None,
                 config.blockchain.block_sync_interval,

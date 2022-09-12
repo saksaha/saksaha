@@ -59,7 +59,8 @@ fn main() {
         peer_register_interval: cli_args.peer_register_interval,
         tx_sync_interval: cli_args.tx_sync_interval,
         block_sync_interval: cli_args.block_sync_interval,
-        app_prefix: cli_args.app_prefix,
+        public_key: cli_args.public_key,
+        // app_prefix: cli_args.app_prefix,
     };
 
     match system.run(sys_run_args) {

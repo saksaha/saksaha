@@ -21,15 +21,15 @@ pub struct PersistedP2PConfig {
 }
 
 impl PConfig {
-    pub fn new(app_prefix: &String) -> Result<PConfig, SaksahaError> {
+    pub fn new(public_key: &String) -> Result<PConfig, SaksahaError> {
         info!("Loading persisted config...");
 
-        let config_file_path = fs::get_config_file_path(app_prefix)?;
+        let config_file_path = fs::get_config_file_path(public_key)?;
 
         info!(
-            "Config file path is resolved, app_prefix: {}, \
+            "Config file path is resolved, public_key: {}, \
                 config_file_path: {:?}",
-            app_prefix, config_file_path,
+            public_key, config_file_path,
         );
 
         if config_file_path.exists() {
@@ -54,7 +54,7 @@ impl PConfig {
 
             let data = serde_yaml::to_string(&pconfig)?;
 
-            let config_path = fs::get_config_path(app_prefix)?;
+            let config_path = fs::get_config_path(public_key)?;
 
             let _ = std::fs::create_dir_all(config_path);
 

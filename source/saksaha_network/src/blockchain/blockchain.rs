@@ -11,7 +11,8 @@ pub(crate) struct Blockchain {
 
 impl Blockchain {
     pub(crate) async fn init(
-        app_prefix: String,
+        // app_prefix: String,
+        public_key: String,
         tx_sync_interval: Option<u64>,
         genesis_block: Option<GenesisBlock>,
         block_sync_interval: Option<u64>,
@@ -38,7 +39,8 @@ impl Blockchain {
         };
 
         let dist_ledger_args = DistLedgerArgs {
-            app_prefix,
+            // app_prefix,
+            public_key,
             tx_sync_interval,
             genesis_block: Some(gen_block_candidate),
             consensus,
