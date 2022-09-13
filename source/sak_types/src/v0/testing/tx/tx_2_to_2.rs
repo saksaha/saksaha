@@ -133,7 +133,7 @@ pub fn mock_pour_tc_2to2_1() -> TxCandidate {
     };
 
     let auth_path_2 = {
-        let v = merkle_tree.generate_auth_paths(0);
+        let v = merkle_tree.generate_auth_paths(1);
 
         let mut ret =
             [Some((Scalar::default(), false)); CM_TREE_DEPTH as usize];
@@ -152,6 +152,7 @@ pub fn mock_pour_tc_2to2_1() -> TxCandidate {
             let merkle_node =
                 merkle_nodes_2.get(key.as_str()).unwrap_or(&empty_node);
 
+            // println!("key:{:?}, node: {:?}", key, merkle_node);
             ret[idx] = Some((merkle_node.clone(), p.direction));
         });
 
@@ -177,7 +178,7 @@ pub fn mock_pour_tc_2to2_1() -> TxCandidate {
         s: Some(ScalarExt::parse_arr(&old_coin_2.s).unwrap()),
         v: Some(ScalarExt::parse_arr(&old_coin_2.v).unwrap()),
         cm: Some(ScalarExt::parse_arr(&old_coin_2.cm).unwrap()),
-        auth_path: auth_path_1,
+        auth_path: auth_path_2,
     };
 
     let coin_1_new = NewCoin {
@@ -207,6 +208,16 @@ pub fn mock_pour_tc_2to2_1() -> TxCandidate {
 
     let pi_serialized = CoinProof::serialize_pi(&pi).unwrap();
 
+    println!(
+        "************* coin_1_old sn:{:?}",
+        coin_1_old.compute_sn().unwrap().to_bytes()
+    );
+
+    println!(
+        "************* coin_2_old sn:{:?}",
+        coin_2_old.compute_sn().unwrap().to_bytes()
+    );
+
     let pour_tc = PourTxCandidate::new(
         "created_at".to_string(),
         vec![],
@@ -217,10 +228,7 @@ pub fn mock_pour_tc_2to2_1() -> TxCandidate {
             coin_1_old.compute_sn().unwrap().to_bytes(),
             coin_2_old.compute_sn().unwrap().to_bytes(),
         ],
-        vec![
-            coin_1_old.cm.unwrap().to_bytes(),
-            coin_2_old.cm.unwrap().to_bytes(),
-        ],
+        vec![new_coin_1.cm, new_coin_2.cm],
         vec![merkle_rt_1.to_bytes(), merkle_rt_2.to_bytes()],
     );
 

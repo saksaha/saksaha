@@ -4,7 +4,7 @@ use sak_crypto::{Scalar, ScalarExt};
 use sak_types::{Block, BlockCandidate};
 use type_extension::U8Array;
 
-pub const REPEAT_NUM: u128 = 2;
+pub const REPEAT_NUM: u128 = 1;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_insert_genesis_block_and_check_wrong_block_hash() {
@@ -75,7 +75,7 @@ async fn test_sequential_write_block_1() {
     for i in 0..REPEAT_NUM as u64 {
         let block = BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
-            tx_candidates: vec![sak_types::mock_pour_tc_random()],
+            tx_candidates: vec![sak_types::mock_pour_tc_2to2_1()],
             witness_sigs: vec![String::from("1"), String::from("2")],
             created_at: format!("{}", i),
         };
@@ -97,10 +97,7 @@ async fn test_sequential_write_block_and_get_tx_height() {
     for i in 0..1 as u64 {
         let block = BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
-            tx_candidates: vec![
-                sak_types::mock_pour_tc_random(),
-                sak_types::mock_pour_tc_random(),
-            ],
+            tx_candidates: vec![sak_types::mock_pour_tc_2to2_1()],
             witness_sigs: vec![String::from("1"), String::from("2")],
             created_at: format!("{}", i),
         };
@@ -133,7 +130,7 @@ async fn test_write_block_and_check_merkle_rt_changed() {
     for i in 0..REPEAT_NUM as u64 {
         let bc = BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
-            tx_candidates: vec![sak_types::mock_pour_tc_random()],
+            tx_candidates: vec![sak_types::mock_pour_tc_2to2_1()],
             witness_sigs: vec![String::from("1")],
             created_at: format!("{}", i),
         };
@@ -161,40 +158,10 @@ async fn test_sequential_sync_block_if_block_is_correct() {
 
     let dist_ledger = testing::mock_dist_ledger_1().await;
 
-    // let a: [u8; 32] = [
-    //     18, 115, 122, 185, 184, 142, 205, 206, 145, 186, 52, 74, 216, 45, 190,
-    //     248, 112, 182, 218, 207, 176, 230, 82, 232, 125, 18, 225, 186, 69, 114,
-    //     18, 5,
-    // ];
-
-    // let b: [u8; 32] = [
-    //     172, 232, 234, 183, 252, 190, 180, 233, 134, 42, 138, 47, 85, 226, 195,
-    //     63, 248, 79, 53, 61, 96, 22, 139, 76, 145, 208, 21, 85, 123, 143, 85,
-    //     76,
-    // ];
-
-    // let merkle_rt = [
-    //     68, 52, 16, 134, 165, 213, 99, 227, 119, 71, 230, 209, 112, 38, 146,
-    //     40, 68, 32, 39, 170, 224, 161, 161, 29, 38, 14, 23, 169, 243, 49, 128,
-    //     63,
-    // ];
-
-    // let mut a = dist_ledger.apis.hasher.mimc(&a, &b).unwrap();
-    // for i in 0..5 {
-    //     let b = Scalar::to_bytes(&a);
-    //     a = dist_ledger
-    //         .apis
-    //         .hasher
-    //         .mimc(&b, &U8Array::new_empty_32())
-    //         .unwrap();
-    //     println!("hash result: {:?}", Scalar::to_bytes(&a));
-    // }
-
-    for i in 1..REPEAT_NUM as u64 {
+    for i in 0..REPEAT_NUM as u64 {
         // let txs = utils::make_dummy_txs();
 
-        println!("repeat num: {:?}", i);
-        let txs = vec![sak_types::mock_pour_tc_2to2_1().upgrade(1)];
+        let txs = vec![sak_types::mock_pour_tc_2to2_1().upgrade(2)];
 
         let block = Block::new(
             String::from("validator_sig"),
@@ -224,5 +191,5 @@ async fn test_sequential_sync_block_if_block_is_correct() {
     let latest_block_height =
         dist_ledger.apis.get_latest_block_height().unwrap().unwrap();
 
-    assert_eq!(latest_block_height, REPEAT_NUM - 1);
+    assert_eq!(latest_block_height, REPEAT_NUM);
 }
