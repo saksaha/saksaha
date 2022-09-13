@@ -31,17 +31,15 @@ pub(crate) mod cfs {
 
     pub const S: &str = "s";
 
-    // pub const SNS: &str = "sns";
-
     pub const SN: &str = "sn";
-
-    // pub const CMS: &str = "cms";
 
     pub const CM: &str = "cm";
 
     pub const CM_COUNT: &str = "cm_count";
 
     pub const BLOCK_MERKLE_RT: &str = "block_merkle_rt";
+
+    pub const EMPTY_VALUE: &str = "empty_value";
 
     pub const PRF_MERKLE_RT: &str = "prf_merkle_rt";
 

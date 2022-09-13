@@ -1,8 +1,10 @@
 use super::test_util::TestUtil;
 use crate::v0::testing;
+use sak_crypto::{Scalar, ScalarExt};
 use sak_types::{Block, BlockCandidate};
+use type_extension::U8Array;
 
-pub const REPEAT_NUM: u128 = 2;
+pub const REPEAT_NUM: u128 = 1;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_insert_genesis_block_and_check_wrong_block_hash() {
@@ -73,7 +75,7 @@ async fn test_sequential_write_block_1() {
     for i in 0..REPEAT_NUM as u64 {
         let block = BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
-            tx_candidates: vec![sak_types::mock_pour_tc_random()],
+            tx_candidates: vec![sak_types::mock_pour_tc_2to2_1()],
             witness_sigs: vec![String::from("1"), String::from("2")],
             created_at: format!("{}", i),
         };
@@ -95,10 +97,7 @@ async fn test_sequential_write_block_and_get_tx_height() {
     for i in 0..1 as u64 {
         let block = BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
-            tx_candidates: vec![
-                sak_types::mock_pour_tc_random(),
-                sak_types::mock_pour_tc_random(),
-            ],
+            tx_candidates: vec![sak_types::mock_pour_tc_2to2_1()],
             witness_sigs: vec![String::from("1"), String::from("2")],
             created_at: format!("{}", i),
         };
@@ -131,7 +130,7 @@ async fn test_write_block_and_check_merkle_rt_changed() {
     for i in 0..REPEAT_NUM as u64 {
         let bc = BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
-            tx_candidates: vec![sak_types::mock_pour_tc_random()],
+            tx_candidates: vec![sak_types::mock_pour_tc_2to2_1()],
             witness_sigs: vec![String::from("1")],
             created_at: format!("{}", i),
         };
@@ -159,9 +158,10 @@ async fn test_sequential_sync_block_if_block_is_correct() {
 
     let dist_ledger = testing::mock_dist_ledger_1().await;
 
-    for i in 1..REPEAT_NUM as u64 {
+    for i in 0..REPEAT_NUM as u64 {
         // let txs = utils::make_dummy_txs();
-        let txs = vec![sak_types::mock_pour_tc_random().upgrade(1)];
+
+        let txs = vec![sak_types::mock_pour_tc_2to2_1().upgrade(2)];
 
         let block = Block::new(
             String::from("validator_sig"),
@@ -191,5 +191,5 @@ async fn test_sequential_sync_block_if_block_is_correct() {
     let latest_block_height =
         dist_ledger.apis.get_latest_block_height().unwrap().unwrap();
 
-    assert_eq!(latest_block_height, REPEAT_NUM - 1);
+    assert_eq!(latest_block_height, REPEAT_NUM);
 }

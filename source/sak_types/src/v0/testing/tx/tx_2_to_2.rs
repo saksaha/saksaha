@@ -1,5 +1,5 @@
 use crate::v0::testing::values;
-use crate::MockCoin;
+use crate::{get_addr_sk_1, MockCoin};
 use crate::{
     mock_coin_custom, Cm, MintTxCandidate, PourTxCandidate, Sn, Tx, VALIDATOR,
     VALIDATOR_CTR_ADDR,
@@ -14,24 +14,28 @@ use sak_proofs::Hasher;
 use sak_proofs::NewCoin;
 use sak_proofs::OldCoin;
 use std::collections::HashMap;
+use std::io::Read;
 use type_extension::U8Array;
 
 pub fn mock_pour_tc_2to2_1() -> TxCandidate {
     let hasher = Hasher::new();
 
-    let old_coin_1 = mock_coin_custom(0, 0, 0, 0, 0); // dummy coin
-    let old_coin_2 = mock_coin_custom(0x11, 0x12, 0x13, 0x14, 100);
-    let new_coin_1 = mock_coin_custom(0x21, 0x22, 0x23, 0x24, 0);
-    let new_coin_2 = mock_coin_custom(0x31, 0x32, 0x33, 0x34, 90);
+    let old_coin_1 = mock_coin_custom(0x1, 0x2, 0x3, 0x4, 1000);
+
+    let old_coin_2 = mock_coin_custom(0, 0, 0, 0, 1000); // dummy coin
+
+    let new_coin_1 = mock_coin_custom(0x21, 0x22, 0x23, 0x24, 1990);
+    let new_coin_2 = mock_coin_custom(0x31, 0x32, 0x33, 0x34, 0);
 
     let merkle_tree = MerkleTree::new(CM_TREE_DEPTH as u32);
 
     let merkle_nodes_1 = {
-        let cm = ScalarExt::parse_arr(&old_coin_1.cm).unwrap();
+        let cm_1 = ScalarExt::parse_arr(&old_coin_1.cm).unwrap();
+        let cm_2 = ScalarExt::parse_arr(&old_coin_2.cm).unwrap();
 
         let mut m = HashMap::new();
 
-        let node_0_1 = ScalarExt::parse_u64(0).unwrap();
+        let node_0_1 = cm_2;
         let node_1_1 = ScalarExt::parse_u64(0).unwrap();
         let node_2_1 = ScalarExt::parse_u64(0).unwrap();
         let node_3_1 = ScalarExt::parse_u64(0).unwrap();
@@ -45,7 +49,7 @@ pub fn mock_pour_tc_2to2_1() -> TxCandidate {
         m.insert("4_1", node_4_1);
         m.insert("5_1", node_5_1);
 
-        let node_1_0 = hasher.mimc_scalar(cm, node_0_1);
+        let node_1_0 = hasher.mimc_scalar(cm_1, cm_2);
         let node_2_0 = hasher.mimc_scalar(node_1_0, node_1_1);
         let node_3_0 = hasher.mimc_scalar(node_2_0, node_2_1);
         let node_4_0 = hasher.mimc_scalar(node_3_0, node_3_1);
@@ -63,25 +67,26 @@ pub fn mock_pour_tc_2to2_1() -> TxCandidate {
     };
 
     let merkle_nodes_2 = {
-        let cm = ScalarExt::parse_arr(&old_coin_2.cm).unwrap();
+        let cm_1 = ScalarExt::parse_arr(&old_coin_1.cm).unwrap();
+        let cm_2 = ScalarExt::parse_arr(&old_coin_2.cm).unwrap();
 
         let mut m = HashMap::new();
 
-        let node_0_1 = ScalarExt::parse_u64(0).unwrap();
+        // let node_0_1 = ScalarExt::parse_u64(0).unwrap();
         let node_1_1 = ScalarExt::parse_u64(0).unwrap();
         let node_2_1 = ScalarExt::parse_u64(0).unwrap();
         let node_3_1 = ScalarExt::parse_u64(0).unwrap();
         let node_4_1 = ScalarExt::parse_u64(0).unwrap();
         let node_5_1 = ScalarExt::parse_u64(0).unwrap();
 
-        m.insert("0_1", node_0_1);
+        m.insert("0_0", cm_1);
         m.insert("1_1", node_1_1);
         m.insert("2_1", node_2_1);
         m.insert("3_1", node_3_1);
         m.insert("4_1", node_4_1);
         m.insert("5_1", node_5_1);
 
-        let node_1_0 = hasher.mimc_scalar(cm, node_0_1);
+        let node_1_0 = hasher.mimc_scalar(cm_1, cm_2);
         let node_2_0 = hasher.mimc_scalar(node_1_0, node_1_1);
         let node_3_0 = hasher.mimc_scalar(node_2_0, node_2_1);
         let node_4_0 = hasher.mimc_scalar(node_3_0, node_3_1);
@@ -128,7 +133,7 @@ pub fn mock_pour_tc_2to2_1() -> TxCandidate {
     };
 
     let auth_path_2 = {
-        let v = merkle_tree.generate_auth_paths(0);
+        let v = merkle_tree.generate_auth_paths(1);
 
         let mut ret =
             [Some((Scalar::default(), false)); CM_TREE_DEPTH as usize];
@@ -147,6 +152,7 @@ pub fn mock_pour_tc_2to2_1() -> TxCandidate {
             let merkle_node =
                 merkle_nodes_2.get(key.as_str()).unwrap_or(&empty_node);
 
+            // println!("key:{:?}, node: {:?}", key, merkle_node);
             ret[idx] = Some((merkle_node.clone(), p.direction));
         });
 
@@ -172,7 +178,7 @@ pub fn mock_pour_tc_2to2_1() -> TxCandidate {
         s: Some(ScalarExt::parse_arr(&old_coin_2.s).unwrap()),
         v: Some(ScalarExt::parse_arr(&old_coin_2.v).unwrap()),
         cm: Some(ScalarExt::parse_arr(&old_coin_2.cm).unwrap()),
-        auth_path: auth_path_1,
+        auth_path: auth_path_2,
     };
 
     let coin_1_new = NewCoin {
@@ -202,6 +208,16 @@ pub fn mock_pour_tc_2to2_1() -> TxCandidate {
 
     let pi_serialized = CoinProof::serialize_pi(&pi).unwrap();
 
+    println!(
+        "************* coin_1_old sn:{:?}",
+        coin_1_old.compute_sn().unwrap().to_bytes()
+    );
+
+    println!(
+        "************* coin_2_old sn:{:?}",
+        coin_2_old.compute_sn().unwrap().to_bytes()
+    );
+
     let pour_tc = PourTxCandidate::new(
         "created_at".to_string(),
         vec![],
@@ -212,10 +228,7 @@ pub fn mock_pour_tc_2to2_1() -> TxCandidate {
             coin_1_old.compute_sn().unwrap().to_bytes(),
             coin_2_old.compute_sn().unwrap().to_bytes(),
         ],
-        vec![
-            coin_1_old.cm.unwrap().to_bytes(),
-            coin_2_old.cm.unwrap().to_bytes(),
-        ],
+        vec![new_coin_1.cm, new_coin_2.cm],
         vec![merkle_rt_1.to_bytes(), merkle_rt_2.to_bytes()],
     );
 

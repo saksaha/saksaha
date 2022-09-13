@@ -1,15 +1,14 @@
-use crate::{cfs, LedgerDB};
+use crate::{cfs, keys, LedgerDB};
 use crate::{LedgerError, MerkleNodeLoc};
 use sak_crypto::{Bls12, ScalarExt};
 use sak_kv_db::WriteBatch;
 use sak_kv_db::DB;
 use sak_proofs::{Hasher, Proof};
 use sak_types::{
-    BlockHash, BlockHeight, Cm, CmIdx, MintTx, MintTxCandidate, PourTx,
-    PourTxCandidate, Sn, Tx, TxCtrOp, TxHash, TxHeight, TxType,
+    BlockHash, BlockHeight, Cm, CmIdx, MerkleRt, MintTx, MintTxCandidate,
+    PourTx, PourTxCandidate, Sn, Tx, TxCtrOp, TxHash, TxHeight, TxType,
 };
 use std::convert::TryInto;
-
 
 impl LedgerDB {
     pub(crate) fn get_validator_sig(
@@ -170,6 +169,33 @@ impl LedgerDB {
         }
     }
 
+    pub(crate) fn get_block_merkle_rt_key(
+        &self,
+        // db: &DB,
+        merkle_rt: &MerkleRt,
+    ) -> Result<Option<[u8; 1]>, LedgerError> {
+        let cf = self.make_cf_handle(&self.db, cfs::EMPTY_VALUE)?;
+
+        match self.db.get_cf(&cf, merkle_rt)? {
+            Some(v) => {
+                let arr: [u8; 1] = match v.try_into() {
+                    Ok(a) => a,
+                    Err(_) => {
+                        return Err(format!(
+                            "Cannot convert singleton into an array",
+                        )
+                        .into())
+                    }
+                };
+
+                return Ok(Some(arr));
+            }
+            None => {
+                return Ok(None);
+            }
+        }
+    }
+
     pub(crate) fn get_prf_merkle_rt(
         &self,
         // db: &DB,
@@ -312,6 +338,19 @@ impl LedgerDB {
         let cf = self.make_cf_handle(&self.db, cfs::BLOCK_MERKLE_RT)?;
 
         batch.put_cf(&cf, block_hash, merkle_rt);
+
+        Ok(())
+    }
+
+    pub(crate) fn batch_put_block_merkle_rt_key(
+        &self,
+        batch: &mut WriteBatch,
+        merkle_rt: &[u8; 32],
+    ) -> Result<(), LedgerError> {
+        let cf = self.make_cf_handle(&self.db, cfs::EMPTY_VALUE)?;
+
+        let empty_value = [0u8; 1];
+        batch.put_cf(&cf, merkle_rt, empty_value);
 
         Ok(())
     }
