@@ -24,25 +24,33 @@ impl PConfig {
     pub fn new(public_key: &Option<String>) -> Result<PConfig, SaksahaError> {
         info!("Loading persisted config...");
 
-        let config_file_path = fs::get_config_file_path(public_key)?;
+        if let Some(pk) = public_key {
+            let config_file_path = fs::get_config_file_path(pk)?;
 
-        info!(
-            "Config file path is resolved, public_key: {}, \
-                config_file_path: {:?}",
-            public_key, config_file_path,
-        );
-
-        if config_file_path.exists() {
             info!(
-                "Found a config file at the path, path: {:?}",
-                config_file_path,
+                "Config file path is resolved, public_key: {}, \
+                    config_file_path: {:?}",
+                pk, config_file_path,
             );
 
-            let data = sak_fs::load(config_file_path)?;
+            if config_file_path.exists() {
+                info!(
+                    "Found a config file at the path, path: {:?}",
+                    config_file_path,
+                );
 
-            let pconfig = serde_yaml::from_slice::<PConfig>(&data)?;
+                let data = sak_fs::load(config_file_path)?;
 
-            Ok(pconfig)
+                let pconfig = serde_yaml::from_slice::<PConfig>(&data)?;
+
+                return Ok(pconfig);
+            } else {
+                return Err(format!(
+                    "config path does not exist, path: {:?}",
+                    config_file_path,
+                )
+                .into());
+            }
         } else {
             info!(
                 "Could not find a config file at the path. \
@@ -62,6 +70,45 @@ impl PConfig {
 
             Ok(pconfig)
         }
+
+        // let config_file_path = fs::get_config_file_path(public_key)?;
+
+        // info!(
+        //     "Config file path is resolved, public_key: {}, \
+        //         config_file_path: {:?}",
+        //     public_key, config_file_path,
+        // );
+
+        // if config_file_path.exists() {
+        //     info!(
+        //         "Found a config file at the path, path: {:?}",
+        //         config_file_path,
+        //     );
+
+        //     let data = sak_fs::load(config_file_path)?;
+
+        //     let pconfig = serde_yaml::from_slice::<PConfig>(&data)?;
+
+        //     Ok(pconfig)
+        // } else {
+        //     info!(
+        //         "Could not find a config file at the path. \
+        //             Creating a new one, path: {:?}",
+        //         config_file_path,
+        //     );
+
+        //     let pconfig = PConfig::create_new_config();
+
+        //     let data = serde_yaml::to_string(&pconfig)?;
+
+        //     let config_path = fs::get_config_path(public_key)?;
+
+        //     let _ = std::fs::create_dir_all(config_path);
+
+        //     sak_fs::persist(data, config_file_path)?;
+
+        //     Ok(pconfig)
+        // }
     }
 
     fn create_new_config() -> PConfig {
