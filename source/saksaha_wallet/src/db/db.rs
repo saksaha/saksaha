@@ -3,6 +3,7 @@ use crate::{
     credential::WalletCredential, wallet::CoinManager, WalletError, APP_NAME,
 };
 use log::info;
+use sak_crypto::Scalar;
 use sak_crypto::ScalarExt;
 use sak_kv_db::{KeyValueDatabase, Options};
 use sak_types::CoinStatus;
@@ -95,7 +96,7 @@ impl WalletDB {
         let mut ledger_cms = vec![];
 
         for coin in coins {
-            if coin.coin_status == CoinStatus::Unconfirmed {
+            if coin.is_unconfirmed() {
                 let resp = match &coin.tx_hash {
                     Some(tx_hash) => {
                         if !ledger_cms.contains(&tx_hash) {
@@ -113,7 +114,9 @@ impl WalletDB {
                     }
                     None => {
                         return Err(format!(
-                            "No tx_hash has been found in cm: {:?}",
+                            // "No tx_hash has been found in cm: {:?}",
+                            // coin.cm
+                            "coin (cm: {:?}) does not have tx_hash",
                             coin.cm
                         )
                         .into());
@@ -182,7 +185,7 @@ impl WalletDB {
                 .raw
                 .put_coin_status(&coin.cm, &CoinStatus::Unconfirmed)?;
 
-            coin.set_coin_status_to(CoinStatus::Unconfirmed);
+            coin.set_coin_status(CoinStatus::Unconfirmed);
         }
 
         Ok(())
@@ -196,7 +199,7 @@ impl WalletDB {
             .raw
             .put_coin_status(&coin.cm, &CoinStatus::Failed)?;
 
-        coin.set_coin_status_to(CoinStatus::Failed);
+        coin.set_coin_status(CoinStatus::Failed);
 
         Ok(())
     }

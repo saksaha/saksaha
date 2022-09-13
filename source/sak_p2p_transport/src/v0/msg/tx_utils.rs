@@ -3,6 +3,7 @@ use bytes::Bytes;
 use sak_p2p_frame::{Frame, Parse};
 use sak_types::{MintTx, MintTxCandidate, PourTx, PourTxCandidate, Tx};
 
+#[inline]
 pub(crate) fn parse_mint_tx_candidate(
     parse: &mut Parse,
 ) -> Result<MintTxCandidate, TrptError> {
@@ -65,7 +66,6 @@ pub(crate) fn parse_mint_tx_candidate(
         author_sig,
         Some(ctr_addr),
         cms,
-        // cm_count,
         v,
         k,
         s,
@@ -74,10 +74,20 @@ pub(crate) fn parse_mint_tx_candidate(
     Ok(mint_tx_candidate)
 }
 
+#[inline]
 pub(crate) fn parse_mint_tx(parse: &mut Parse) -> Result<Tx, TrptError> {
     let mint_tx_candidate = parse_mint_tx_candidate(parse)?;
 
-    let cm_count = parse.next_int()?;
+    let cm_count = match parse.next_int() {
+        Ok(c) => c,
+        Err(err) => {
+            return Err(format!(
+                "Error parsing cm_count of mint_tx frame, err: {}",
+                err
+            )
+            .into())
+        }
+    };
 
     let mut cm_idxes = Vec::with_capacity(cm_count as usize);
 
@@ -193,6 +203,21 @@ pub(crate) fn parse_pour_tx(parse: &mut Parse) -> Result<Tx, TrptError> {
     Ok(tx)
 }
 
+#[inline]
+pub(crate) fn put_mint_tx_into_frame(frame: &mut Frame, tx: MintTx) {
+    let tc = tx.tx_candidate;
+
+    let cm_count = tc.cm_count;
+
+    put_mint_tx_candidate_into_frame(frame, tc);
+
+    frame.push_int(cm_count);
+
+    for cm_idx in tx.cm_idxes {
+        frame.push_int(cm_idx);
+    }
+}
+
 pub(crate) fn put_mint_tx_candidate_into_frame(
     frame: &mut Frame,
     tc: MintTxCandidate,
@@ -215,12 +240,7 @@ pub(crate) fn put_mint_tx_candidate_into_frame(
     frame.push_bulk(Bytes::from(tx_hash));
 }
 
-pub(crate) fn put_mint_tx_into_frame(frame: &mut Frame, tx: MintTx) {
-    let tc = tx.tx_candidate;
-
-    put_mint_tx_candidate_into_frame(frame, tc);
-}
-
+#[inline]
 pub(crate) fn put_pour_tx_candidate_into_frame(
     frame: &mut Frame,
     tc: PourTxCandidate,
@@ -255,6 +275,7 @@ pub(crate) fn put_pour_tx_candidate_into_frame(
     frame.push_bulk(Bytes::from(tx_hash));
 }
 
+#[inline]
 pub(crate) fn put_pour_tx_into_frame(frame: &mut Frame, tx: PourTx) {
     let tc = tx.tx_candidate;
 

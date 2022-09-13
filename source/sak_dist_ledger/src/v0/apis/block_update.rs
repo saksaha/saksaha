@@ -299,7 +299,11 @@ impl DistLedgerApis {
         };
 
         if !verification_result {
-            return Err("2222 Failed to verify proof".into());
+            return Err(format!(
+                "Failed to verify proof, tc: {}",
+                tc.get_tx_hash()
+            )
+            .into());
         };
 
         Ok(verification_result)

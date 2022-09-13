@@ -114,7 +114,6 @@ impl DistLedgerApis {
                         break;
                     }
                 }
-                println!("double spending pass!");
 
                 for merkle_rt in &tc.merkle_rts {
                     is_valid_merkle_rt = self.verify_merkle_rt(merkle_rt);

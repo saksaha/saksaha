@@ -35,6 +35,10 @@ impl PourTx {
     pub fn get_sn(&self) -> Vec<Sn> {
         self.tx_candidate.get_sns().to_owned()
     }
+
+    pub fn get_cm_idxes(&self) -> &Vec<CmIdx> {
+        &self.cm_idxes
+    }
 }
 
 impl std::fmt::Display for PourTx {
@@ -103,13 +107,21 @@ impl PourTxCandidate {
         let cm_count = cms.len() as u128;
         let merkle_rt_count = merkle_rts.len() as u128;
 
-        let hashable_items = vec![
+        let mut hashable_items = vec![
             created_at.as_bytes(),
             data.as_slice(),
             author_sig.as_bytes(),
             ctr_addr.as_bytes(),
             &pi,
         ];
+
+        for sn in &sns {
+            hashable_items.push(sn);
+        }
+
+        for cm in &cms {
+            hashable_items.push(cm);
+        }
 
         let tx_hash = sak_crypto::compute_hash(&hashable_items);
 
