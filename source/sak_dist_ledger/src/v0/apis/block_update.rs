@@ -333,8 +333,11 @@ impl DistLedgerApis {
 
                 for merkle_rt in &tc.merkle_rts {
                     match self.verify_merkle_rt(merkle_rt) {
-                        true => {}
+                        true => {
+                            println!("verify_merkle_rt, true");
+                        }
                         false => {
+                            println!("verify_merkle_rt, false");
                             return false;
                         }
                     };
@@ -529,12 +532,12 @@ async fn process_merkle_update(
             let parent_idx = MerkleTree::get_parent_idx(curr_idx);
             let update_loc = format!("{}_{}", height + 1, parent_idx);
 
-            // println!(
-            //     "merkle_update(): loc: {}, val: {:?}",
-            //     update_loc, merkle_node
-            // );
-
+            println!(
+                "merkle_update(): loc: {}, val: {:?}",
+                update_loc, merkle_node
+            );
             merkle_update.insert(update_loc, merkle_node);
+
             curr_idx = parent_idx;
         }
     }

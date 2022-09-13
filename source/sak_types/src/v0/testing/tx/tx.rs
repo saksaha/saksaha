@@ -748,15 +748,17 @@ pub fn mock_mint_tc_2() -> TxCandidate {
 
     let v = U8Array::from_int(1000);
 
-    let s = U8Array::new_empty_32();
+    let rho = U8Array::new_empty_32();
 
     let r = U8Array::new_empty_32();
 
-    let rho = U8Array::new_empty_32();
+    let s = U8Array::new_empty_32();
 
-    let a_pk = U8Array::new_empty_32();
+    let addr_sk = U8Array::new_empty_32();
 
-    let k = hasher.comm2(&r, &a_pk, &rho).unwrap();
+    let addr_pk = hasher.mimc_single(&addr_sk).unwrap();
+
+    let k = hasher.comm2(&r, &addr_pk.to_bytes(), &rho).unwrap();
 
     let cm = hasher.comm2(&s, &v, &k.to_bytes()).unwrap();
 

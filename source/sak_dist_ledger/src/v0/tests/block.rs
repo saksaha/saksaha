@@ -159,8 +159,16 @@ async fn test_sequential_sync_block_if_block_is_correct() {
 
     let dist_ledger = testing::mock_dist_ledger_1().await;
 
+    // let hasher = Hasher::new();
+
+    // let cm = hasher.comm2(&s, &v, &k.to_bytes()).unwrap();
+
+    // let merkle_node = apis.hasher.mimc(&lv, &rv)?.to_bytes();
+
     for i in 1..REPEAT_NUM as u64 {
         // let txs = utils::make_dummy_txs();
+
+        println!("repeat num: {:?}", i);
         let txs = vec![sak_types::mock_pour_tc_2to2_1().upgrade(1)];
 
         let block = Block::new(

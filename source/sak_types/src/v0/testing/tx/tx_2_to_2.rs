@@ -20,10 +20,11 @@ use type_extension::U8Array;
 pub fn mock_pour_tc_2to2_1() -> TxCandidate {
     let hasher = Hasher::new();
 
-    let old_coin_1 = mock_coin_custom(0, 0, 0, 0, 0); // dummy coin
+    let old_coin_1 = mock_coin_custom(0x1, 0x2, 0x3, 0x4, 1000);
 
-    let old_coin_2 = mock_coin_custom(0x1, 0x2, 0x3, 0x4, 1000);
-    let new_coin_1 = mock_coin_custom(0x21, 0x22, 0x23, 0x24, 990);
+    let old_coin_2 = mock_coin_custom(0, 0, 0, 0, 1000); // dummy coin
+
+    let new_coin_1 = mock_coin_custom(0x21, 0x22, 0x23, 0x24, 1990);
     let new_coin_2 = mock_coin_custom(0x31, 0x32, 0x33, 0x34, 0);
 
     let merkle_tree = MerkleTree::new(CM_TREE_DEPTH as u32);
