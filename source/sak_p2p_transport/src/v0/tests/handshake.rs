@@ -247,6 +247,8 @@ async fn test_handshake_works() {
         let msg = PingMsg { nonce: rand };
 
         conn_1_lock.send(Msg::Ping(msg)).await.unwrap();
+
+        // conn_1_lock.send(Msg::Ping(msg)).await.ok_or().unwrap();
     });
 
     let identity_2_clone = identity_2.clone();

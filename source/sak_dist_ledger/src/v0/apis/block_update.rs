@@ -4,11 +4,11 @@ use log::{debug, info, warn};
 use sak_contract_std::{CtrCallType, CtrRequest, ERROR_PLACEHOLDER};
 use sak_crypto::{Bls12, MerkleTree, ScalarExt};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
-use sak_proofs::DUMMY_SN;
 use sak_proofs::{CoinProof, Hasher, Proof};
+use sak_proofs::{DUMMY_MERKLE_RT, DUMMY_SN};
 use sak_types::{
-    Block, BlockCandidate, CmIdx, MintTxCandidate, PourTxCandidate, Sn, Tx,
-    TxCandidate, TxCtrOp,
+    Block, BlockCandidate, CmIdx, MerkleRt, MintTxCandidate, PourTxCandidate,
+    Sn, Tx, TxCandidate, TxCtrOp,
 };
 use sak_vm::CtrFn;
 
@@ -221,6 +221,18 @@ impl DistLedgerApis {
         self.ledger_db.delete_tx(key)
     }
 
+    pub(crate) fn verify_merkle_rt(&self, merkle_rt: &[u8; 32]) -> bool {
+        if merkle_rt == &DUMMY_MERKLE_RT {
+            return true;
+        } else {
+            match self.ledger_db.get_block_merkle_rt_key(merkle_rt) {
+                Ok(Some(_)) => return true,
+                Ok(None) => return false,
+                Err(_err) => return false,
+            }
+        }
+    }
+
     pub(crate) fn verify_sn(&self, sn: &Sn) -> Result<bool, LedgerError> {
         if sn == &DUMMY_SN {
             return Ok(true);
@@ -315,6 +327,15 @@ impl DistLedgerApis {
                                 tc.get_tx_hash(),
                                 err
                             );
+                            return false;
+                        }
+                    };
+                }
+
+                for merkle_rt in &tc.merkle_rts {
+                    match self.verify_merkle_rt(merkle_rt) {
+                        true => {}
+                        false => {
                             return false;
                         }
                     };
@@ -509,8 +530,8 @@ async fn process_merkle_update(
             //     "merkle_update(): loc: {}, val: {:?}",
             //     update_loc, merkle_node
             // );
-
             merkle_update.insert(update_loc, merkle_node);
+
             curr_idx = parent_idx;
         }
     }

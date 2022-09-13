@@ -99,6 +99,7 @@ impl LedgerDB {
                 cfs::BLOCK_MERKLE_RT,
                 Options::default(),
             ),
+            ColumnFamilyDescriptor::new(cfs::EMPTY_VALUE, Options::default()),
             ColumnFamilyDescriptor::new(cfs::PRF_MERKLE_RT, Options::default()),
             ColumnFamilyDescriptor::new(cfs::MERKLE_NODE, Options::default()),
             ColumnFamilyDescriptor::new(cfs::VALIDATOR_SIG, Options::default()),
