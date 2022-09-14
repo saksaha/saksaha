@@ -24,9 +24,8 @@ pub fn dev_local_1() -> Result<Config, WalletError> {
                 Some(0),
                 None,
                 Some(
-                    "\
-                ed763fdfcdb6146d0a172363f08b6a113\
-                05cad7d78abe0c07aff9ea6369b08a8"
+                    "87b2f2ca4c9c22de99c3b4c550c2fd09\
+                    906644aa735b823bcd0446921ddec498"
                         .to_string(),
                 ),
             )?,
@@ -39,9 +38,8 @@ pub fn dev_local_1() -> Result<Config, WalletError> {
                 Some(1),
                 None,
                 Some(
-                    "\
-                8d526423d7f7e2c1d419c3096ecee5a8\
-                f24c9269f018bfae35216858c19bbae1"
+                    "5fdc798f16ae272047631de0e2d925a0\
+                    83c39689cea69e5706a09224797fc99e"
                         .to_string(),
                 ),
             )?,
@@ -93,8 +91,8 @@ pub fn dev_local_2() -> Result<Config, WalletError> {
                 None,
                 Some(
                     "\
-                d71916a3daccd319e8256f892fcec0ca\
-                fc65a1545cf55c9fc67f3c9ec7868fa2"
+                ccded931042a124c36cf26f3ea8d2d58\
+                57f96ecfd4c1b6bfa47f3911fd8c79e4"
                         .to_string(),
                 ),
             )?,
@@ -108,8 +106,8 @@ pub fn dev_local_2() -> Result<Config, WalletError> {
                 None,
                 Some(
                     "\
-                ef7a2332b89ad814fb756f078bbf200b\
-                63c61b2250026d268a4674e818fa23f3"
+                eb0907f91b7929e5454d75cac09ee314\
+                3e185a75925c69443b7348b7b831728c"
                         .to_string(),
                 ),
             )?,

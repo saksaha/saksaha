@@ -100,14 +100,16 @@ impl WalletDB {
                 let resp = match &coin.tx_hash {
                     Some(tx_hash) => {
                         if !ledger_cms.contains(&tx_hash) {
-                            ledger_cms.push(tx_hash);
-
-                            saksaha::get_tx(
+                            let res = saksaha::get_tx(
                                 saksaha_endpoint.clone(),
                                 tx_hash.clone(),
                             )
                             .await?
-                            .result
+                            .result;
+
+                            ledger_cms.push(tx_hash);
+
+                            res
                         } else {
                             continue;
                         }
@@ -131,20 +133,24 @@ impl WalletDB {
                                 old_coin_sn_vec.push(sn);
                             }
 
-                            self.schema.raw.put_coin_status(
-                                &coin.cm,
-                                &CoinStatus::Unused,
-                            )?;
-
                             for (cmidx, cm) in tx.get_cm_pairs() {
-                                self.schema.raw.put_cm_idx(
-                                    &ScalarExt::parse_arr(&cm)?,
-                                    &cmidx,
+                                let cm_array = &ScalarExt::parse_arr(&cm)?;
+
+                                self.schema.raw.put_cm_idx(cm_array, &cmidx)?;
+
+                                self.schema.raw.put_coin_status(
+                                    cm_array,
+                                    &CoinStatus::Unused,
                                 )?;
                             }
                         };
                     }
-                    None => {} // return Err("No response with get_tx".into()),
+                    None => {
+                        println!(
+                            "No response with get_tx, {:?}",
+                            &coin.tx_hash
+                        );
+                    } // return Err("No response with get_tx".into()),
                 }
             }
         }
