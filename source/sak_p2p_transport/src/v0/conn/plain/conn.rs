@@ -71,6 +71,8 @@ impl Conn {
             in_mac,
             conn_id: conn_id.to_string(),
             parsed_msg_len: None,
+            in_count: 0,
+            out_count: 0,
         });
 
         let upgraded_conn =

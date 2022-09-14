@@ -36,6 +36,7 @@ impl Decoder for UpgradedP2PCodec {
                 src,
                 &mut self.in_cipher,
                 &mut self.in_mac,
+                &mut self.in_count,
             )?;
 
             self.parsed_msg_len = Some(l);
@@ -57,7 +58,7 @@ impl Decoder for UpgradedP2PCodec {
             self.parsed_msg_len = None;
         }
 
-        let msg = parse_msg_portion(src, &mut self.in_cipher)?;
+        let msg = parse_msg_portion(src, msg_len, &mut self.in_cipher)?;
 
         // println!("decode complete, conn_id: {}, msg: {:?}", self.conn_id, msg);
 
@@ -69,10 +70,11 @@ fn parse_header_portion(
     src: &mut BytesMut,
     in_cipher: &mut ChaCha20,
     in_mac: &mut CoreWrapper<Keccak256Core>,
+    in_count: &mut usize,
 ) -> Result<u16, TrptError> {
-    let digest = &mut in_mac.finalize_reset()[..HEADER_MAC_LEN];
+    *in_count += 1;
 
-    // println!("digest: {:?}", digest.to_vec());
+    let digest = &mut in_mac.finalize_reset()[..HEADER_MAC_LEN];
 
     // XORing
     for idx in 0..HEADER_CIPHERTEXT_LEN {
@@ -81,13 +83,22 @@ fn parse_header_portion(
 
     let mac: &[u8; 15] = src[5..20].try_into()?;
 
+    // println!(
+    //     "\nparsing, mac: {:?}, digest: {:?}, in_count: {}, src ({}): {:?}",
+    //     mac.to_vec(),
+    //     digest.to_vec(),
+    //     in_count,
+    //     src.len(),
+    //     src.to_vec(),
+    // );
+
     // println!("digest after XORing: {:?}, mac: {:?}", digest.to_vec(), mac);
 
     if digest != mac {
         return Err(format!(
             "Header mac invalid. Buffer might have been tampered, \
-            mac: {:?}, digest: {:?}",
-            mac, digest,
+            mac: {:?}, digest: {:?}, in_count: {}",
+            mac, digest, in_count,
         )
         .into());
     }
@@ -111,11 +122,20 @@ fn parse_header_portion(
 
 fn parse_msg_portion(
     src: &mut BytesMut,
+    msg_len: u16,
     in_cipher: &mut ChaCha20,
 ) -> Result<Option<Msg>, TrptError> {
     src.advance(HEADER_TOTAL_LEN);
 
-    in_cipher.apply_keystream(src);
+    // println!(
+    //     "\n>> parsing msg portion, src_len: {}, msg_len: {}",
+    //     src.len(),
+    //     msg_len,
+    // );
+
+    let msg_body_len = msg_len as usize - HEADER_TOTAL_LEN;
+
+    in_cipher.apply_keystream(&mut src[..msg_body_len]);
 
     // println!("\ndecrypt: msg_portion: {:?}", src.to_vec());
 
