@@ -100,14 +100,16 @@ impl WalletDB {
                 let resp = match &coin.tx_hash {
                     Some(tx_hash) => {
                         if !ledger_cms.contains(&tx_hash) {
-                            ledger_cms.push(tx_hash);
-
-                            saksaha::get_tx(
+                            let res = saksaha::get_tx(
                                 saksaha_endpoint.clone(),
                                 tx_hash.clone(),
                             )
                             .await?
-                            .result
+                            .result;
+
+                            ledger_cms.push(tx_hash);
+
+                            res
                         } else {
                             continue;
                         }
@@ -144,7 +146,12 @@ impl WalletDB {
                             }
                         };
                     }
-                    None => {} // return Err("No response with get_tx".into()),
+                    None => {
+                        println!(
+                            "No response with get_tx, {:?}",
+                            &coin.tx_hash
+                        );
+                    } // return Err("No response with get_tx".into()),
                 }
             }
         }
