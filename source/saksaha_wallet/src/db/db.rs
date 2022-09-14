@@ -133,15 +133,14 @@ impl WalletDB {
                                 old_coin_sn_vec.push(sn);
                             }
 
-                            self.schema.raw.put_coin_status(
-                                &coin.cm,
-                                &CoinStatus::Unused,
-                            )?;
-
                             for (cmidx, cm) in tx.get_cm_pairs() {
-                                self.schema.raw.put_cm_idx(
-                                    &ScalarExt::parse_arr(&cm)?,
-                                    &cmidx,
+                                let cm_array = &ScalarExt::parse_arr(&cm)?;
+
+                                self.schema.raw.put_cm_idx(cm_array, &cmidx)?;
+
+                                self.schema.raw.put_coin_status(
+                                    cm_array,
+                                    &CoinStatus::Unused,
                                 )?;
                             }
                         };
