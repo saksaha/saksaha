@@ -45,35 +45,27 @@ prepare_saksaha_session() {
   tmux resize-pane -t 5 -U 32
 }
 
-run_nodes() {
+run_node_1() {
   tmux select-pane -t 1
   tmux send-keys "${CI} dev ${PROFILE_1}" ENTER
+}
 
-  sleep 0.5
-
+run_node_2(){
   tmux select-pane -t 2
   tmux send-keys "${CI} dev ${PROFILE_2}" ENTER
 }
 
 run_wallets() {
-  sleep 0.1
-
   tmux select-pane -t 3
   tmux send-keys "${CI} dev_wallet ${PROFILE_1}" ENTER
-
-  sleep 0.1
 
   tmux select-pane -t 4
   tmux send-keys "${CI} dev_wallet ${PROFILE_2} ${ENDPOINT_TO_NODE_2}" ENTER
 }
 
 run_evl_terms() {
-  sleep 0.1
-
   tmux select-pane -t 5
   tmux send-keys "${CI} dev_evl_term ${PROFILE_1}" ENTER
-
-  sleep 0.1
 
   tmux select-pane -t 6
   tmux send-keys "${CI} dev_evl_term ${PROFILE_2} ${ENDPOINT_TO_NODE_2}" ENTER
@@ -86,8 +78,14 @@ attach_to_saksaha_session() {
 
 prepare_saksaha_session
 
-run_nodes
+run_node_1
+
+sleep 0.5
+
+run_node_2
+
 run_wallets
 run_evl_terms
+
 
 attach_to_saksaha_session
