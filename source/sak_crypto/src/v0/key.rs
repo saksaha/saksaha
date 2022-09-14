@@ -19,4 +19,11 @@ impl SakKey {
         let h = crate::keccak256(d);
         h[24..].to_string()
     }
+
+    pub fn create_acc_addr_from_pk_str(pk: &String) -> String {
+        let pk_bytes = pk.as_bytes();
+        let d = &pk_bytes[2..];
+        let h = crate::keccak256(d);
+        h[24..].to_string()
+    }
 }

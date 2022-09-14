@@ -26,63 +26,24 @@ impl Routine {
         &self,
         sys_run_args: SystemRunArgs,
     ) -> Result<(), SaksahaError> {
-        info!("System is starting");
+        info!(
+            "System is starting, public_key: {:?}, cfg_profile: {:?}",
+            sys_run_args.public_key, sys_run_args.cfg_profile,
+        );
 
-        if sys_run_args.public_key.is_some()
-            && sys_run_args.cfg_profile.is_some()
-        {
-            return Err(format!(
-                "'cfg_profile' and 'public_key' cannot be provided at
-                        the same time, cfg_profile: {:?}, public_key: {:?}",
-                sys_run_args.cfg_profile, sys_run_args.public_key,
-            )
-            .into());
-        }
+        let config = if let Some(cp) = &sys_run_args.cfg_profile {
+            let cfg = Config::load_profiled(&cp, &sys_run_args)?;
 
-        // let public_key = match sys_run_args.public_key {
-        //     Some(ref v) => v.to_string(),
-        //     None => {
-        //         if sys_run_args.cfg_profile.is_some() {
-        //             return Err(format!(
-        //                 "'cfg_profile' and 'public_key' cannot be provided at
-        //                 the same time, cfg_profile: {:?}, public_key: {:?}",
-        //                 sys_run_args.cfg_profile, sys_run_args.public_key,
-        //             )
-        //             .into());
-        //         }
+            info!("Loaded profiled config, cfg_profile: {}", cp.yellow());
 
-        //         "default".to_string()
-        //     }
-        // };
+            cfg.persist(Some(cp))?;
+            cfg
+        } else {
+            let pconfig = PConfig::init(&sys_run_args.public_key)?;
+            let cfg = Config::new(&sys_run_args, pconfig)?;
 
-        // info!("Resolved public_key: {}", public_key.yellow(),);
-
-        let pconfig = PConfig::new(&sys_run_args.public_key)?;
-
-        let config = match &sys_run_args.cfg_profile {
-            Some(cp) => match Config::load_profiled(cp, &sys_run_args) {
-                Ok(c) => c,
-                Err(err) => {
-                    return Err(format!(
-                        "Could not create dev config, err: {}",
-                        err
-                    )
-                    .into());
-                }
-            },
-            None => match Config::new(
-                // app_prefix,
-                &sys_run_args,
-                pconfig,
-                // profiled_config,
-            ) {
-                Ok(c) => c,
-                Err(err) => {
-                    return Err(
-                        format!("Error creating config, err: {}", err).into()
-                    );
-                }
-            },
+            cfg.persist(None)?;
+            cfg
         };
 
         info!("Resolved config: {:?}", config);
