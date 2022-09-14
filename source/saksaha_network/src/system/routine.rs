@@ -3,7 +3,6 @@ use super::SaksahaError;
 use super::SystemRunArgs;
 use crate::blockchain::Blockchain;
 use crate::config::Config;
-// use crate::config::ProfiledConfig;
 use crate::machine::Machine;
 use crate::node::LocalNode;
 use crate::p2p::{P2PHost, P2PHostArgs};

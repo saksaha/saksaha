@@ -1,5 +1,4 @@
-use crate::{pconfig::PConfig, SaksahaError};
-use log::info;
+use crate::SaksahaError;
 use std::path::PathBuf;
 
 const CONFIG_FILE_NAME: &str = "config.yml";

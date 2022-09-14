@@ -1,4 +1,3 @@
-// use super::{ProfiledConfig, ProfiledP2PConfig};
 use crate::{
     config::{BlockchainConfig, Config, NodeConfig, P2PConfig, RPCConfig},
     SystemRunArgs,
@@ -7,7 +6,6 @@ use sak_p2p_addr::{AddrStatus, UnknownAddr};
 
 pub(crate) fn config(sys_run_args: &SystemRunArgs) -> Config {
     return Config {
-        // app_prefix: String::from("dev_local_2"),
         blockchain: BlockchainConfig {
             tx_sync_interval: sys_run_args.tx_sync_interval,
             block_sync_interval: sys_run_args.block_sync_interval,
