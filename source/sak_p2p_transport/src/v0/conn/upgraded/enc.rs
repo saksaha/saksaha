@@ -46,11 +46,16 @@ impl Encoder<Msg> for UpgradedP2PCodec {
 
         dst.unsplit(msg_part);
 
+        self.out_count += 1;
+
         // println!(
-        //     "\nencode(): dst, conn_id: {}, _after enc ({}): {:?}",
+        //     "\nencode(): dst, conn_id: {}, _after enc ({}): {:?}, \
+        //     out_count: {}, msg: {}",
         //     self.conn_id,
         //     dst.len(),
-        //     dst.to_vec()
+        //     dst.to_vec(),
+        //     self.out_count,
+        //     msg,
         // );
 
         return Ok(());
