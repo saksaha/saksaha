@@ -224,7 +224,7 @@ impl Wallet {
         ctr_addr: String,
         ctr_request: CtrRequest,
     ) -> Result<String, WalletError> {
-        self.check_balance(&acc_addr).await?;
+        // self.check_balance(&acc_addr).await?;
 
         let mut coin_manager_lock = self.get_coin_manager().write().await;
 
@@ -308,7 +308,6 @@ impl Wallet {
         }
 
         new_coin_1.update_tx_hash(tx_hash.clone());
-
         new_coin_2.update_tx_hash(tx_hash.clone());
 
         {

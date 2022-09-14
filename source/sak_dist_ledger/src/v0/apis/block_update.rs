@@ -140,7 +140,14 @@ impl DistLedgerApis {
         let next_merkle_rt =
             match merkle_update.get(format!("{}_0", CM_TREE_DEPTH).as_str()) {
                 Some(r) => r,
-                None => return Err("next merkle root is missing".into()),
+                None => {
+                    if tcs.is_empty() {
+                        warn!("Block contains no valid txs");
+                        return Ok(None);
+                    } else {
+                        return Err("next merkle root is missing".into());
+                    }
+                }
             };
 
         let (block, txs) = bc.upgrade(
