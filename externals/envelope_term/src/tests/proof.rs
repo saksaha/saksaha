@@ -53,7 +53,8 @@ pub(crate) async fn make_dist_ledger(block: BlockCandidate) -> DistLedger {
     let pos = make_dummy_pos();
 
     let dist_ledger_args = DistLedgerArgs {
-        app_prefix: String::from("test"),
+        // app_prefix: String::from("test"),
+        public_key: String::from("test"),
         tx_sync_interval: None,
         genesis_block: Some(block),
         consensus: pos,

@@ -1,9 +1,13 @@
+use std::path::PathBuf;
+
 use crate::{pconfig::fs, SaksahaError};
 use colored::Colorize;
-use log::info;
+use log::{info, warn};
 use sak_crypto::{SakKey, ToEncodedPoint};
 use sak_p2p_addr::UnknownAddr;
 use serde::{Deserialize, Serialize};
+
+const INDEX_FILE_ALIAS: &str = "default";
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct PConfig {
@@ -21,47 +25,127 @@ pub struct PersistedP2PConfig {
 }
 
 impl PConfig {
-    pub fn new(app_prefix: &String) -> Result<PConfig, SaksahaError> {
-        info!("Loading persisted config...");
+    pub fn init(public_key: &Option<String>) -> Result<PConfig, SaksahaError> {
+        info!("Loading persisted config..., public_key: {:?}", public_key);
 
-        let config_file_path = fs::get_config_file_path(app_prefix)?;
+        if let Some(pk) = public_key {
+            let config_file_path = fs::get_config_file_path(pk)?;
+
+            let pconfig = Self::load_pconfig(&config_file_path)?;
+
+            return Ok(pconfig);
+        } else {
+            let saksaha_path = sak_fs::get_app_root_path("saksaha")?;
+            let index_file_name = INDEX_FILE_ALIAS.to_uppercase();
+            let index_file_path = saksaha_path.join(index_file_name);
+
+            if index_file_path.exists() {
+                info!(
+                    "Found pconfig index file, path: {}",
+                    index_file_path.to_string_lossy().yellow()
+                );
+
+                let pk = std::fs::read_to_string(index_file_path)?;
+                let config_file_path = fs::get_config_file_path(&pk)?;
+                let pconfig = Self::load_pconfig(&config_file_path)?;
+
+                return Ok(pconfig);
+            } else {
+                let pconfig = PConfig::create_new_config();
+
+                Ok(pconfig)
+            }
+        }
+    }
+
+    pub fn persist(&self, alias: Option<&String>) -> Result<(), SaksahaError> {
+        let config_path = fs::get_config_path(&self.p2p.public_key)?;
+
+        if config_path.exists() {
+            warn!(
+                "PConfig already exists, discard persisting, \
+                config_path: {:?}",
+                config_path,
+            );
+
+            return Ok(());
+        }
+
+        let config_file_path = fs::get_config_file_path(&self.p2p.public_key)?;
+
+        let data = serde_yaml::to_string(&self)?;
+
+        let _ = std::fs::create_dir_all(config_path);
+
+        sak_fs::persist(&data, &config_file_path)?;
 
         info!(
-            "Config file path is resolved, app_prefix: {}, \
-                config_file_path: {:?}",
-            app_prefix, config_file_path,
+            "Persisted a pconfig, path: {}",
+            config_file_path.to_string_lossy().yellow()
+        );
+
+        let index_file_alias = INDEX_FILE_ALIAS.to_string();
+        let alias = alias.unwrap_or(&index_file_alias);
+        Self::persist_index_file(alias, &self.p2p.public_key)?;
+
+        Ok(())
+    }
+
+    fn load_pconfig(
+        config_file_path: &PathBuf,
+    ) -> Result<PConfig, SaksahaError> {
+        info!(
+            "Try loading config file, path: {}",
+            config_file_path.to_string_lossy().yellow()
         );
 
         if config_file_path.exists() {
-            info!(
-                "Found a config file at the path, path: {:?}",
-                config_file_path,
-            );
-
             let data = sak_fs::load(config_file_path)?;
 
             let pconfig = serde_yaml::from_slice::<PConfig>(&data)?;
 
-            Ok(pconfig)
+            return Ok(pconfig);
         } else {
-            info!(
-                "Could not find a config file at the path. \
-                    Creating a new one, path: {:?}",
+            return Err(format!(
+                "config path does not exist, path: {:?}",
                 config_file_path,
-            );
-
-            let pconfig = PConfig::create_new_config();
-
-            let data = serde_yaml::to_string(&pconfig)?;
-
-            let config_path = fs::get_config_path(app_prefix)?;
-
-            let _ = std::fs::create_dir_all(config_path);
-
-            sak_fs::persist(data, config_file_path)?;
-
-            Ok(pconfig)
+            )
+            .into());
         }
+    }
+
+    fn persist_index_file(
+        cfg_profile: &str,
+        public_key: &String,
+    ) -> Result<(), SaksahaError> {
+        let saksaha_path = sak_fs::get_app_root_path("saksaha")?;
+
+        let _ = std::fs::create_dir_all(&saksaha_path);
+
+        let index_file_name = cfg_profile.to_uppercase();
+        let index_file_path = saksaha_path.join(index_file_name);
+
+        if index_file_path.exists() {
+            let pk = std::fs::read_to_string(&index_file_path)?;
+
+            if &pk != public_key {
+                return Err(format!(
+                    "public key in the index file does not match, pk: {}, \
+                    public_key (cfg_profile): {}",
+                    pk, public_key
+                )
+                .into());
+            }
+        }
+
+        sak_fs::persist(public_key, &index_file_path)?;
+
+        info!(
+            "Persisted an index file for pconfig, path: {}",
+            index_file_path.to_string_lossy().yellow(),
+        );
+
+        Ok(())
     }
 
     fn create_new_config() -> PConfig {

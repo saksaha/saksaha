@@ -52,11 +52,7 @@ pub fn create_or_get_app_path(
     }
 }
 
-pub fn persist(data: String, target_path: PathBuf) -> Result<(), FSError> {
-    let target_path_str = target_path.to_string_lossy().yellow();
-
-    info!("Writing a config, target_path: {}", target_path_str,);
-
+pub fn persist(data: &String, target_path: &PathBuf) -> Result<(), FSError> {
     match std::fs::write(target_path.to_owned(), data) {
         Ok(_) => Ok(()),
         Err(err) => {
@@ -69,12 +65,7 @@ pub fn persist(data: String, target_path: PathBuf) -> Result<(), FSError> {
     }
 }
 
-pub fn load(path: PathBuf) -> Result<Vec<u8>, FSError> {
-    info!(
-        "Loading pconfig from path: {}",
-        path.to_string_lossy().yellow()
-    );
-
+pub fn load(path: &PathBuf) -> Result<Vec<u8>, FSError> {
     if !path.exists() {
         return Err(format!("Path does not exist").into());
     }
