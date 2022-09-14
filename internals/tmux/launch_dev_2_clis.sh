@@ -50,21 +50,31 @@ tmux select-pane -t 1
 tmux send-keys "${clear_node_1}" ENTER
 tmux send-keys "${run_node_1}" ENTER
 
+sleep 0.5
+
 tmux select-pane -t 2
 tmux send-keys "${clear_node_2}" ENTER
 tmux send-keys "${run_node_2}" ENTER
 
-# # wallet
+sleep 0.1
+
+# wallet
 tmux select-pane -t 3
 tmux send-keys "${clear_wallet}" ENTER
 tmux send-keys "${run_wallet_1}" ENTER
 
+sleep 0.1
+
 tmux select-pane -t 4
 tmux send-keys "${run_wallet_2} ${endpoint_to_node_2}" ENTER
 
-# # term
+sleep 0.1
+
+# term
 tmux select-pane -t 5
 tmux send-keys "${run_evl_term_1}" ENTER
+
+sleep 0.1
 
 tmux select-pane -t 6
 tmux send-keys "${run_evl_term_2} ${endpoint_to_node_2}" ENTER
