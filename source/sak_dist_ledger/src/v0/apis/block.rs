@@ -127,7 +127,7 @@ impl DistLedgerApis {
                     self.sync_pool.insert_tx(tx_candidate).await?
                 } else {
                     return Err(format!(
-                        "Is valid sn, merkle_rt, verified tx:{}, {}, {}",
+                        "Is valid sn: {}, merkle_rt: {}, verified tx:{} ",
                         is_valid_sn, is_valid_merkle_rt, is_valid_tx,
                     )
                     .into());

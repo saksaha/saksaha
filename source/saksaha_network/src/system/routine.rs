@@ -3,7 +3,6 @@ use super::SaksahaError;
 use super::SystemRunArgs;
 use crate::blockchain::Blockchain;
 use crate::config::Config;
-use crate::config::ProfiledConfig;
 use crate::machine::Machine;
 use crate::node::LocalNode;
 use crate::p2p::{P2PHost, P2PHostArgs};
@@ -12,7 +11,7 @@ use crate::rpc::RPCArgs;
 use crate::rpc::RPC;
 use crate::system::SystemHandle;
 use colored::Colorize;
-use log::{error, info};
+use log::{error, info, warn};
 use sak_p2p_id::Identity;
 use sak_p2p_peertable::PeerTable;
 use std::sync::Arc;
@@ -26,61 +25,24 @@ impl Routine {
         &self,
         sys_run_args: SystemRunArgs,
     ) -> Result<(), SaksahaError> {
-        log::info!("System is starting");
+        info!(
+            "System is starting, public_key: {:?}, cfg_profile: {:?}",
+            sys_run_args.public_key, sys_run_args.cfg_profile,
+        );
 
-        let config = {
-            let profiled_config = match &sys_run_args.cfg_profile {
-                Some(profile) => match ProfiledConfig::new(profile) {
-                    Ok(c) => c,
-                    Err(err) => {
-                        return Err(format!(
-                            "Could not create dev config, err: {}",
-                            err
-                        )
-                        .into());
-                    }
-                },
-                None => ProfiledConfig::new_empty(),
-            };
+        let config = if let Some(cp) = &sys_run_args.cfg_profile {
+            let cfg = Config::load_profiled(&cp, &sys_run_args)?;
 
-            let app_prefix = match &sys_run_args.app_prefix {
-                Some(ap) => ap.clone(),
-                None => profiled_config.app_prefix.clone(),
-            };
+            info!("Loaded profiled config, cfg_profile: {}", cp.yellow());
 
-            info!("Resolved app_prefix: {}", app_prefix.yellow(),);
+            cfg.persist(Some(cp))?;
+            cfg
+        } else {
+            let pconfig = PConfig::init(&sys_run_args.public_key)?;
+            let cfg = Config::new(&sys_run_args, pconfig)?;
 
-            let pconfig = {
-                let c = match PConfig::new(&app_prefix) {
-                    Ok(p) => p,
-                    Err(err) => {
-                        error!(
-                            "Error creating a persisted configuration, err: {}",
-                            err,
-                        );
-
-                        std::process::exit(1);
-                    }
-                };
-
-                info!("Persisted config loaded, conf: {:?}", c);
-
-                c
-            };
-
-            match Config::new(
-                app_prefix,
-                &sys_run_args,
-                pconfig,
-                profiled_config,
-            ) {
-                Ok(c) => c,
-                Err(err) => {
-                    return Err(
-                        format!("Error creating config, err: {}", err).into()
-                    );
-                }
-            }
+            cfg.persist(None)?;
+            cfg
         };
 
         info!("Resolved config: {:?}", config);
@@ -176,7 +138,8 @@ impl Routine {
 
         let blockchain = {
             let b = Blockchain::init(
-                config.app_prefix,
+                // config.app_prefix,
+                config.p2p.public_key_str,
                 config.blockchain.tx_sync_interval,
                 None,
                 config.blockchain.block_sync_interval,

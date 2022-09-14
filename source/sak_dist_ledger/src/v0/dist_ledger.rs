@@ -22,7 +22,7 @@ pub struct DistLedger {
 }
 
 pub struct DistLedgerArgs {
-    pub app_prefix: String,
+    pub public_key: String,
     pub tx_sync_interval: Option<u64>,
     pub genesis_block: Option<BlockCandidate>,
     pub consensus: Box<dyn Consensus + Send + Sync>,
@@ -34,14 +34,14 @@ impl DistLedger {
         dist_ledger_args: DistLedgerArgs,
     ) -> Result<DistLedger, LedgerError> {
         let DistLedgerArgs {
-            app_prefix,
+            public_key,
             tx_sync_interval,
             genesis_block,
             consensus,
             block_sync_interval,
         } = dist_ledger_args;
 
-        let ledger_db = LedgerDB::init(&app_prefix).await?;
+        let ledger_db = LedgerDB::init(&public_key).await?;
 
         let vm = VM::init()?;
 
