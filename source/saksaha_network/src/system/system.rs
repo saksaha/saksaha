@@ -27,7 +27,6 @@ pub struct SystemRunArgs {
     pub peer_register_interval: Option<u64>,
     pub tx_sync_interval: Option<u64>,
     pub block_sync_interval: Option<u64>,
-    // pub app_prefix: Option<String>,
     pub public_key: Option<String>,
 }
 

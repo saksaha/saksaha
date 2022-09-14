@@ -6,17 +6,6 @@ pub(super) fn create_app<'a>() -> Command<'a> {
         .author("Saksaha <elden@saksaha.com>")
         .about("Sakaha network reference implementation")
         .allow_hyphen_values(true)
-        // .arg(
-        //     Arg::new("app-prefix") //
-        //         .long("app-prefix")
-        //         .takes_value(true)
-        //         .long_help(
-        //             "Saksaha app prefix. This makes all the member paths
-        //             including db directories created under \n\
-        //             APP_PATH/{app_prefix}/{db_dirs}, as in \n\
-        //             APP_PATH/app_path/ledger.",
-        //         ),
-        // )
         .arg(
             Arg::new("public-key") //
                 .long("public-key")

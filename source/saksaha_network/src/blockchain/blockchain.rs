@@ -11,7 +11,6 @@ pub(crate) struct Blockchain {
 
 impl Blockchain {
     pub(crate) async fn init(
-        // app_prefix: String,
         public_key: String,
         tx_sync_interval: Option<u64>,
         genesis_block: Option<GenesisBlock>,

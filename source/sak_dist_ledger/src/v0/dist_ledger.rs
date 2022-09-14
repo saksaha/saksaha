@@ -22,7 +22,6 @@ pub struct DistLedger {
 }
 
 pub struct DistLedgerArgs {
-    // pub app_prefix: String,
     pub public_key: String,
     pub tx_sync_interval: Option<u64>,
     pub genesis_block: Option<BlockCandidate>,
@@ -35,7 +34,6 @@ impl DistLedger {
         dist_ledger_args: DistLedgerArgs,
     ) -> Result<DistLedger, LedgerError> {
         let DistLedgerArgs {
-            // app_prefix,
             public_key,
             tx_sync_interval,
             genesis_block,

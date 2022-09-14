@@ -12,7 +12,6 @@ pub(crate) struct CLIArgs {
     pub(crate) p2p_peer_table_capacity: Option<i16>,
     pub(crate) p2p_max_conn_count: Option<u16>,
     pub(crate) p2p_dial_interval: Option<u16>,
-    // pub(crate) app_prefix: Option<String>,
     pub(crate) public_key: Option<String>,
     pub(crate) rpc_port: Option<u16>,
     pub(crate) p2p_port: Option<u16>,
@@ -298,11 +297,6 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
         },
         None => None,
     };
-
-    // let app_prefix = match matches.value_of("app-prefix") {
-    //     Some(m) => Some(String::from(m)),
-    //     None => None,
-    // };
 
     let public_key = match matches.value_of("public-key") {
         Some(m) => Some(String::from(m)),
