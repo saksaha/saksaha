@@ -31,4 +31,6 @@ pub struct UpgradedP2PCodec {
     pub(crate) in_mac: CoreWrapper<Keccak256Core>,
     pub(crate) conn_id: String,
     pub(crate) parsed_msg_len: Option<u16>,
+    pub(crate) in_count: usize,
+    pub(crate) out_count: usize,
 }
