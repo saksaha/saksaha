@@ -18,7 +18,7 @@ async fn test_tx_sync_true() {
         p2p_host_2,
         local_node_2,
         machine_2,
-    } = make_dual_node_test_context(false, false).await;
+    } = make_dual_node_test_context(Some(false), Some(false)).await;
 
     {
         let machine_1 = machine_1.clone();
