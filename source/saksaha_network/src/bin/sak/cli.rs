@@ -18,7 +18,7 @@ pub(crate) struct CLIArgs {
     pub(crate) addr_expire_duration: Option<u64>,
     pub(crate) addr_monitor_interval: Option<u64>,
     pub(crate) cfg_profile: Option<String>,
-    pub(crate) miner: bool,
+    pub(crate) miner: Option<bool>,
     pub(crate) mine_interval: Option<u64>,
     pub(crate) node_task_min_interval: Option<u64>,
     pub(crate) peer_register_interval: Option<u64>,
@@ -229,7 +229,11 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
         None => None,
     };
 
-    let miner = matches.is_present("miner");
+    let miner = if matches.is_present("miner") {
+        Some(true)
+    } else {
+        None
+    };
 
     let mine_interval = match matches.value_of("mine-interval") {
         Some(d) => match d.parse::<u64>() {

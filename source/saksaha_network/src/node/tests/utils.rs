@@ -35,7 +35,7 @@ pub(crate) async fn make_test_context(
     disc_port: Option<u16>,
     secret: String,
     public_key_str: String,
-    miner: bool,
+    miner: Option<bool>,
 ) -> TestContext {
     let (disc_socket, disc_port) = {
         let (socket, socket_addr) =
@@ -156,8 +156,8 @@ pub(crate) async fn make_test_context(
 }
 
 pub(super) async fn make_dual_node_test_context(
-    miner_1: bool,
-    miner_2: bool,
+    miner_1: Option<bool>,
+    miner_2: Option<bool>,
 ) -> DualNodeTestContext {
     let app_prefix_vec = vec!["test_1", "test_2"];
 

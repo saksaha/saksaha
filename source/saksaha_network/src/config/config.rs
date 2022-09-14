@@ -43,7 +43,7 @@ pub(crate) struct RPCConfig {
 
 #[derive(Debug)]
 pub(crate) struct NodeConfig {
-    pub(crate) miner: bool,
+    pub(crate) miner: Option<bool>,
     pub(crate) mine_interval: Option<u64>,
     pub(crate) node_task_min_interval: Option<u64>,
     pub(crate) peer_register_interval: Option<u64>,

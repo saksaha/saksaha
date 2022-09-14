@@ -38,7 +38,6 @@ impl Blockchain {
         };
 
         let dist_ledger_args = DistLedgerArgs {
-            // app_prefix,
             public_key,
             tx_sync_interval,
             genesis_block: Some(gen_block_candidate),

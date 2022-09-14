@@ -100,7 +100,7 @@ async fn mock_client(
         let ln = LocalNode::new(
             peer_table,
             machine.clone(),
-            false,
+            Some(false),
             None,
             None,
             None,

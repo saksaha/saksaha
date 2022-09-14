@@ -67,7 +67,7 @@ pub(crate) fn config(sys_run_args: &SystemRunArgs) -> Config {
             ],
         },
         node: NodeConfig {
-            miner: sys_run_args.miner,
+            miner: sys_run_args.miner.or(Some(true)),
             mine_interval: sys_run_args.mine_interval,
             node_task_min_interval: sys_run_args.node_task_min_interval,
             peer_register_interval: sys_run_args.peer_register_interval,

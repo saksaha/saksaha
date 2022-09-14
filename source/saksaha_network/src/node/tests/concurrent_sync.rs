@@ -27,7 +27,7 @@ async fn test_concurrent_sync() {
                 82662a09653f2a966ff524989ae8c0f",
         ),
         // true,
-        false,
+        Some(false),
     )
     .await;
 
@@ -55,7 +55,7 @@ async fn test_concurrent_sync() {
                 84d0dc478108629c0353f2876941f90d\
                 4b36346bcc19c6b625422adffb53b3a6af",
         ),
-        false,
+        Some(false),
     )
     .await;
 

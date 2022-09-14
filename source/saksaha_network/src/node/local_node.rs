@@ -8,11 +8,12 @@ use tokio::time::Instant;
 
 const PEER_REGISTER_MIN_INTERVAL: u64 = 1000;
 const NODE_TASK_INTERVAL: u64 = 1000;
+const MINER: bool = false;
 
 pub(crate) struct LocalNode {
     pub peer_table: Arc<PeerTable>,
     pub machine: Arc<Machine>,
-    pub miner: bool,
+    pub miner: Option<bool>,
     pub mine_interval: Option<u64>,
     pub node_task_interval: Duration,
     pub peer_register_interval: Duration,
@@ -23,7 +24,7 @@ impl LocalNode {
     pub fn new(
         peer_table: Arc<PeerTable>,
         machine: Arc<Machine>,
-        miner: bool,
+        miner: Option<bool>,
         mine_interval: Option<u64>,
         node_task_interval: Option<u64>,
         peer_register_interval: Option<u64>,
@@ -59,8 +60,9 @@ impl LocalNode {
     pub(crate) async fn run(&self) {
         let machine = self.machine.clone();
 
-        // Miner routine
-        if self.miner {
+        let miner = self.miner.unwrap_or(MINER);
+
+        if miner {
             let mine_interval = self.mine_interval;
             tokio::spawn(async move {
                 let mut miner = Miner::init(machine, mine_interval);
