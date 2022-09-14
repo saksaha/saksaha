@@ -21,7 +21,7 @@ pub struct SystemRunArgs {
     pub addr_monitor_interval: Option<u64>,
     pub bootstrap_urls: Option<Vec<String>>,
     pub cfg_profile: Option<String>,
-    pub miner: bool,
+    pub miner: Option<bool>,
     pub mine_interval: Option<u64>,
     pub node_task_min_interval: Option<u64>,
     pub peer_register_interval: Option<u64>,
