@@ -58,7 +58,7 @@ impl Decoder for UpgradedP2PCodec {
             self.parsed_msg_len = None;
         }
 
-        let msg = parse_msg_portion(src, &mut self.in_cipher)?;
+        let msg = parse_msg_portion(src, msg_len, &mut self.in_cipher)?;
 
         // println!("decode complete, conn_id: {}, msg: {:?}", self.conn_id, msg);
 
@@ -83,14 +83,14 @@ fn parse_header_portion(
 
     let mac: &[u8; 15] = src[5..20].try_into()?;
 
-    println!(
-        "\nparsing, mac: {:?}, digest: {:?}, in_count: {}, src ({}): {:?}",
-        mac.to_vec(),
-        digest.to_vec(),
-        in_count,
-        src.len(),
-        src.to_vec(),
-    );
+    // println!(
+    //     "\nparsing, mac: {:?}, digest: {:?}, in_count: {}, src ({}): {:?}",
+    //     mac.to_vec(),
+    //     digest.to_vec(),
+    //     in_count,
+    //     src.len(),
+    //     src.to_vec(),
+    // );
 
     // println!("digest after XORing: {:?}, mac: {:?}", digest.to_vec(), mac);
 
@@ -117,18 +117,25 @@ fn parse_header_portion(
         u16::from_be_bytes(*b)
     };
 
-    println!("parsing, msg_len: {}", msg_len);
-
     Ok(msg_len)
 }
 
 fn parse_msg_portion(
     src: &mut BytesMut,
+    msg_len: u16,
     in_cipher: &mut ChaCha20,
 ) -> Result<Option<Msg>, TrptError> {
     src.advance(HEADER_TOTAL_LEN);
 
-    in_cipher.apply_keystream(src);
+    // println!(
+    //     "\n>> parsing msg portion, src_len: {}, msg_len: {}",
+    //     src.len(),
+    //     msg_len,
+    // );
+
+    let msg_body_len = msg_len as usize - HEADER_TOTAL_LEN;
+
+    in_cipher.apply_keystream(&mut src[..msg_body_len]);
 
     // println!("\ndecrypt: msg_portion: {:?}", src.to_vec());
 
