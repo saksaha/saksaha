@@ -253,7 +253,6 @@ async fn test_dist_ledger_double_spending_success() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
-#[should_panic]
 async fn test_dist_ledger_double_spending_fail() {
     sak_test_utils::init_test_log();
     TestUtil::init_test(vec!["test"]);
@@ -281,12 +280,11 @@ async fn test_dist_ledger_double_spending_fail() {
             .await
             .expect("block should be written");
 
-        println!("[+] dummy pour_tx hash: {:?}", block_hash);
+        assert_eq!(None, block_hash);
     }
 }
 
 #[tokio::test(flavor = "multi_thread")]
-#[should_panic]
 async fn test_dist_ledger_verify_merkle_rt_fail() {
     sak_test_utils::init_test_log();
     TestUtil::init_test(vec!["test"]);
@@ -300,8 +298,10 @@ async fn test_dist_ledger_verify_merkle_rt_fail() {
         created_at: format!("{}", 1),
     };
 
-    match dist_ledger.apis.write_block(Some(bc)).await {
+    let result = match dist_ledger.apis.write_block(Some(bc)).await {
         Ok(v) => v,
         Err(err) => panic!("Failed to write dummy block, err: {}", err),
     };
+
+    assert_eq!(None, result);
 }
