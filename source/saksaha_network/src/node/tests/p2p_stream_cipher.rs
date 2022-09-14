@@ -22,7 +22,7 @@ async fn test_two_nodes_talk_on_stream_cipher() {
             b42ef5f4640d4949dbf3992f6083b729baef9e9545c4\
             e95590616fd382662a09653f2a966ff524989ae8c0f",
         ),
-        true,
+        Some(true),
     )
     .await;
 
@@ -49,7 +49,7 @@ async fn test_two_nodes_talk_on_stream_cipher() {
                     84d0dc478108629c0353f2876941f90d\
                     4b36346bcc19c6b625422adffb53b3a6af",
         ),
-        false,
+        Some(false),
     )
     .await;
 
