@@ -1,14 +1,102 @@
-use crate::CoinProof;
-use crate::ProofError;
-use bellman::groth16::{self, Parameters, Proof};
-use sak_crypto::MerkleTree;
-use sak_crypto::{Bls12, OsRng, Scalar, ScalarExt};
+use bls12_381::Scalar;
+use jni::objects::{JClass, JObject, JValue};
+use jni::JNIEnv;
+use sak_crypto::{MerkleTree, ScalarExt};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
-use sak_proof_circuit::{CoinProofCircuit2to2, Hasher, NewCoin, OldCoin};
+use sak_proof_circuit::{Hasher, NewCoin, OldCoin};
 use std::collections::HashMap;
-use std::fs::File;
-use std::io::Write;
+use std::ffi::CString;
+use std::os::raw::c_char;
 use type_extension::U8Array;
+
+use crate::CoinProof;
+
+pub type Callback = unsafe extern "C" fn(*const c_char) -> ();
+
+// #[no_mangle]
+// #[allow(non_snake_case)]
+// pub extern "C" fn invokeCallbackViaJNA(callback: Callback) {
+//     let s = CString::new("Hello from Rust111").unwrap();
+//     unsafe {
+//         callback(s.as_ptr());
+//     }
+// }
+
+#[no_mangle]
+#[allow(non_snake_case)]
+pub extern "C" fn Java_com_saksaha_saksahawallet_MainActivity_invokeCallbackViaJNI(
+    env: JNIEnv,
+    _class: JClass,
+    callback: JObject,
+) {
+    // let s = String::from("Hello from Rust333");
+    let s = pi_gen_1();
+
+    // processing,
+
+    let response = env.new_string(&s).expect("Couldn't create java string!");
+    env.call_method(
+        callback,
+        "callback",
+        "(Ljava/lang/String;)V",
+        &[JValue::from(JObject::from(response))],
+    )
+    .unwrap();
+}
+
+fn pi_gen_1() -> String {
+    let test_context = make_test_context_2_to_2();
+
+    let coin_1_old = OldCoin {
+        addr_pk: Some(test_context.addr_pk_1_old),
+        addr_sk: Some(test_context.addr_sk_1_old),
+        rho: Some(test_context.rho_1_old),
+        r: Some(test_context.r_1_old),
+        s: Some(test_context.s_1_old),
+        v: Some(test_context.v_1_old),
+        cm: Some(test_context.cm_1_old),
+        auth_path: test_context.auth_path_1.map(|e| Some(e)),
+    };
+
+    let coin_2_old = OldCoin {
+        addr_pk: Some(test_context.addr_pk_2_old),
+        addr_sk: Some(test_context.addr_sk_2_old),
+        rho: Some(test_context.rho_2_old),
+        r: Some(test_context.r_2_old),
+        s: Some(test_context.s_2_old),
+        v: Some(test_context.v_2_old),
+        cm: Some(test_context.cm_2_old),
+        auth_path: test_context.auth_path_2.map(|e| Some(e)),
+    };
+
+    let coin_1_new = NewCoin {
+        addr_pk: Some(test_context.addr_pk_1),
+        rho: Some(test_context.rho_1),
+        r: Some(test_context.r_1),
+        s: Some(test_context.s_1),
+        v: Some(test_context.v_1),
+    };
+
+    let coin_2_new = NewCoin {
+        addr_pk: Some(test_context.addr_pk_2),
+        rho: Some(test_context.rho_2),
+        r: Some(test_context.r_2),
+        s: Some(test_context.s_2),
+        v: Some(test_context.v_2),
+    };
+
+    let proof = CoinProof::generate_proof_2_to_2(
+        coin_1_old, coin_2_old, coin_1_new, coin_2_new,
+    )
+    .expect("proof should be created");
+
+    let mut pi_ser = Vec::new();
+    proof.write(&mut pi_ser).unwrap();
+
+    let s: String = serde_json::to_string(&pi_ser).unwrap();
+
+    s
+}
 
 pub struct TestContext {
     pub hasher: Hasher,
@@ -117,39 +205,6 @@ pub fn make_test_context_2_to_2() -> TestContext {
         cm_2_old,
         sn_2,
     ) = {
-        // let addr_sk = {
-        //     let arr = U8Array::from_int(11);
-        //     ScalarExt::parse_arr(&arr).unwrap()
-        // };
-
-        // let addr_pk = hasher.mimc_single_scalar(addr_sk).unwrap();
-
-        // let r = {
-        //     let arr = U8Array::from_int(12);
-        //     ScalarExt::parse_arr(&arr).unwrap()
-        // };
-
-        // let s = {
-        //     let arr = U8Array::from_int(13);
-        //     ScalarExt::parse_arr(&arr).unwrap()
-        // };
-
-        // let rho = {
-        //     let arr = U8Array::from_int(14);
-        //     ScalarExt::parse_arr(&arr).unwrap()
-        // };
-
-        // let v = {
-        //     let arr = U8Array::from_int(100);
-        //     ScalarExt::parse_arr(&arr).unwrap()
-        // };
-
-        // let cm = {
-        //     let k = hasher.comm2_scalar(r, addr_pk, rho);
-
-        //     hasher.comm2_scalar(s, v, k)
-        // };
-
         let dummy_old_coin = OldCoin::new_dummy().unwrap();
 
         let sn = hasher.mimc_scalar(
@@ -471,24 +526,11 @@ pub fn mock_merkle_nodes_cm_1(
 
         let node_4_0 = hasher.mimc_scalar(node_3_0, node_3_1);
 
-        let node_4_1 = ScalarExt::parse_u64(0).unwrap();
-
-        let node_5_0 = hasher.mimc_scalar(node_4_0, node_4_1);
-
-        let node_5_1 = ScalarExt::parse_u64(0).unwrap();
-
-        let node_6_0 = hasher.mimc_scalar(node_5_0, node_5_1);
-
         m.insert("0_1", node_0_1);
         m.insert("1_1", node_1_1);
         m.insert("2_1", node_2_1);
         m.insert("3_1", node_3_1);
         m.insert("4_0", node_4_0);
-
-        m.insert("4_1", node_4_1);
-        m.insert("5_1", node_5_1);
-        m.insert("5_0", node_5_0);
-        m.insert("6_0", node_6_0);
 
         m
     };
@@ -618,153 +660,14 @@ pub fn mock_merkle_nodes_cm_2(
 
         let node_4_0 = hasher.mimc_scalar(node_3_0, node_3_1);
 
-        let node_4_1 = ScalarExt::parse_u64(0).unwrap();
-
-        let node_5_0 = hasher.mimc_scalar(node_4_0, node_4_1);
-
-        let node_5_1 = ScalarExt::parse_u64(0).unwrap();
-
-        let node_6_0 = hasher.mimc_scalar(node_5_0, node_5_1);
-
         m.insert("0_0", cm_old_1);
         m.insert("1_1", node_1_1);
         m.insert("2_1", node_2_1);
         m.insert("3_1", node_3_1);
         m.insert("4_0", node_4_0);
 
-        m.insert("4_1", node_4_1);
-        m.insert("5_1", node_5_1);
-        m.insert("5_0", node_5_0);
-        m.insert("6_0", node_6_0);
-
         m
     };
 
     merkle_nodes
-}
-
-#[tokio::test(flavor = "multi_thread")]
-pub async fn test_coin_ownership_default_2_to_2_using_dummy_old() {
-    sak_test_utils::init_test_log();
-
-    let test_context = make_test_context_2_to_2();
-
-    let coin_1_old = OldCoin {
-        addr_pk: Some(test_context.addr_pk_1_old),
-        addr_sk: Some(test_context.addr_sk_1_old),
-        rho: Some(test_context.rho_1_old),
-        r: Some(test_context.r_1_old),
-        s: Some(test_context.s_1_old),
-        v: Some(test_context.v_1_old),
-        cm: Some(test_context.cm_1_old),
-        auth_path: test_context.auth_path_1.map(|e| Some(e)),
-    };
-
-    let coin_2_old = OldCoin {
-        addr_pk: Some(test_context.addr_pk_2_old),
-        addr_sk: Some(test_context.addr_sk_2_old),
-        rho: Some(test_context.rho_2_old),
-        r: Some(test_context.r_2_old),
-        s: Some(test_context.s_2_old),
-        v: Some(test_context.v_2_old),
-        cm: Some(test_context.cm_2_old),
-        auth_path: test_context.auth_path_2.map(|e| Some(e)),
-    };
-
-    let coin_1_new = NewCoin {
-        addr_pk: Some(test_context.addr_pk_1),
-        rho: Some(test_context.rho_1),
-        r: Some(test_context.r_1),
-        s: Some(test_context.s_1),
-        v: Some(test_context.v_1),
-    };
-
-    let coin_2_new = NewCoin {
-        addr_pk: Some(test_context.addr_pk_2),
-        rho: Some(test_context.rho_2),
-        r: Some(test_context.r_2),
-        s: Some(test_context.s_2),
-        v: Some(test_context.v_2),
-    };
-
-    let proof = CoinProof::generate_proof_2_to_2(
-        coin_1_old, coin_2_old, coin_1_new, coin_2_new,
-    )
-    .expect("proof should be created");
-
-    let public_inputs: Vec<Scalar> = vec![
-        test_context.merkle_rt_1,
-        test_context.sn_1,
-        test_context.sn_2,
-        test_context.cm_1,
-        test_context.cm_2,
-    ];
-
-    assert_eq!(
-        CoinProof::verify_proof_2_to_2(
-            proof,
-            &public_inputs,
-            &test_context.hasher
-        )
-        .unwrap(),
-        true
-    );
-}
-
-#[tokio::test(flavor = "multi_thread")]
-async fn test_pi_stringify() {
-    let test_context = make_test_context_2_to_2();
-
-    let coin_1_old = OldCoin {
-        addr_pk: Some(test_context.addr_pk_1_old),
-        addr_sk: Some(test_context.addr_sk_1_old),
-        rho: Some(test_context.rho_1_old),
-        r: Some(test_context.r_1_old),
-        s: Some(test_context.s_1_old),
-        v: Some(test_context.v_1_old),
-        cm: Some(test_context.cm_1_old),
-        auth_path: test_context.auth_path_1.map(|e| Some(e)),
-    };
-
-    let coin_2_old = OldCoin {
-        addr_pk: Some(test_context.addr_pk_2_old),
-        addr_sk: Some(test_context.addr_sk_2_old),
-        rho: Some(test_context.rho_2_old),
-        r: Some(test_context.r_2_old),
-        s: Some(test_context.s_2_old),
-        v: Some(test_context.v_2_old),
-        cm: Some(test_context.cm_2_old),
-        auth_path: test_context.auth_path_2.map(|e| Some(e)),
-    };
-
-    let coin_1_new = NewCoin {
-        addr_pk: Some(test_context.addr_pk_1),
-        rho: Some(test_context.rho_1),
-        r: Some(test_context.r_1),
-        s: Some(test_context.s_1),
-        v: Some(test_context.v_1),
-    };
-
-    let coin_2_new = NewCoin {
-        addr_pk: Some(test_context.addr_pk_2),
-        rho: Some(test_context.rho_2),
-        r: Some(test_context.r_2),
-        s: Some(test_context.s_2),
-        v: Some(test_context.v_2),
-    };
-
-    let proof = CoinProof::generate_proof_2_to_2(
-        coin_1_old, coin_2_old, coin_1_new, coin_2_new,
-    )
-    .expect("proof should be created");
-
-    let mut pi_ser = Vec::new();
-    proof.write(&mut pi_ser).unwrap();
-
-    // String::from_utf8(pi_ser)
-
-    let s: String = serde_json::from_slice(&pi_ser).unwrap();
-
-    println!("123123: {}", s);
-    // s
 }
