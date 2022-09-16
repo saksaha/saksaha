@@ -7,12 +7,12 @@ use crate::SyncPool;
 use log::info;
 use sak_crypto::MerkleTree;
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
-use sak_proofs::Hasher;
+use sak_proof::Hasher;
 use sak_types::BlockCandidate;
 use sak_vm::VM;
 use std::sync::Arc;
 use tokio::sync::broadcast;
-use tokio::sync::{broadcast::Sender, RwLock};
+use tokio::sync::broadcast::Sender;
 
 const BLOCKCHAIN_EVENT_QUEUE_CAPACITY: usize = 32;
 
@@ -22,7 +22,7 @@ pub struct DistLedger {
 }
 
 pub struct DistLedgerArgs {
-    pub app_prefix: String,
+    pub public_key: String,
     pub tx_sync_interval: Option<u64>,
     pub genesis_block: Option<BlockCandidate>,
     pub consensus: Box<dyn Consensus + Send + Sync>,
@@ -34,14 +34,14 @@ impl DistLedger {
         dist_ledger_args: DistLedgerArgs,
     ) -> Result<DistLedger, LedgerError> {
         let DistLedgerArgs {
-            app_prefix,
+            public_key,
             tx_sync_interval,
             genesis_block,
             consensus,
             block_sync_interval,
         } = dist_ledger_args;
 
-        let ledger_db = LedgerDB::init(&app_prefix).await?;
+        let ledger_db = LedgerDB::init(&public_key).await?;
 
         let vm = VM::init()?;
 

@@ -52,7 +52,7 @@ async fn test_dist_ledger_put_a_single_pour_tx() {
     let mut write_batch = WriteBatch::default();
 
     {
-        let dummy_pour_tx = sak_types::mock_pour_tc_random().upgrade(0);
+        let dummy_pour_tx = sak_types::mock_pour_tc_2to2_1().upgrade(2);
 
         let _dummy_tx_hash = dist_ledger
             .apis
@@ -89,14 +89,17 @@ async fn test_dist_ledger_tx_mint_put_and_get_cm_idx() {
         .await
         .unwrap();
 
-    let cm_1_idx = {
-        let cms = dist_ledger
-            .apis
-            .ledger_db
-            .get_cms(&mock_tx_hash)
-            .unwrap()
-            .expect("cms should be obtained");
+    let cms = dist_ledger
+        .apis
+        .ledger_db
+        .get_tx(&mock_tx_hash)
+        .await
+        .unwrap()
+        .expect("cms should be obtained")
+        .get_cms()
+        .to_owned();
 
+    let cm_1_idx = {
         println!("cms :{:?}", cms);
 
         let cm_1_idx = dist_ledger
@@ -123,15 +126,15 @@ async fn test_dist_ledger_tx_pour_put_and_get_cm_idx() {
 
     let dist_ledger = testing::mock_dist_ledger_1().await;
 
-    let pour_tc = sak_types::mock_pour_tc_random();
+    let pour_tc = sak_types::mock_pour_tc_2to2_1();
 
     let mock_tx_hash = pour_tc.get_tx_hash().to_string();
 
     let block_candidate = BlockCandidate {
-        validator_sig: "validator_sig".to_string(),
+        validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
         tx_candidates: vec![pour_tc],
-        witness_sigs: vec![],
-        created_at: "created_at".to_string(),
+        witness_sigs: vec![String::from("1"), String::from("2")],
+        created_at: format!("{}", 0),
     };
 
     dist_ledger
@@ -140,16 +143,17 @@ async fn test_dist_ledger_tx_pour_put_and_get_cm_idx() {
         .await
         .unwrap();
 
+    let cms = dist_ledger
+        .apis
+        .ledger_db
+        .get_tx(&mock_tx_hash)
+        .await
+        .unwrap()
+        .expect("tx should exist")
+        .get_cms()
+        .to_owned();
+
     let cm_1_idx = {
-        let cms = dist_ledger
-            .apis
-            .ledger_db
-            .get_cms(&mock_tx_hash)
-            .unwrap()
-            .expect("cms should be obtained");
-
-        println!("cms :{:?}", cms);
-
         let cm_1_idx = dist_ledger
             .apis
             .ledger_db
@@ -161,13 +165,6 @@ async fn test_dist_ledger_tx_pour_put_and_get_cm_idx() {
     };
 
     let cm_2_idx = {
-        let cms = dist_ledger
-            .apis
-            .ledger_db
-            .get_cms(&mock_tx_hash)
-            .unwrap()
-            .expect("cms should be obtained");
-
         let cm_2_idx = dist_ledger
             .apis
             .ledger_db
@@ -191,9 +188,12 @@ async fn test_dist_ledger_verify_proof_success() {
 
     let dist_ledger = testing::mock_dist_ledger_1().await;
 
-    println!("aaaaaaa222");
-    let bc_1 = sak_types::mock_block_pour_single();
-    println!("aaaaaaa");
+    let bc_1 = BlockCandidate {
+        validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
+        tx_candidates: vec![sak_types::mock_pour_tc_2to2_1()],
+        witness_sigs: vec![String::from("1"), String::from("2")],
+        created_at: format!("{}", 0),
+    };
 
     {
         let block_hash = dist_ledger
@@ -234,24 +234,17 @@ async fn test_dist_ledger_double_spending_success() {
 
     let dist_ledger = testing::mock_dist_ledger_1().await;
 
-    let bc_1 = sak_types::mock_block_pour_random();
-
-    let bc_2 = sak_types::mock_block_pour_random();
-
-    {
-        let block_hash = dist_ledger
-            .apis
-            .write_block(Some(bc_1))
-            .await
-            .expect("block should be written");
-
-        println!("[+] dummy pour_tx hash: {:?}", block_hash);
-    }
+    let block = BlockCandidate {
+        validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
+        tx_candidates: vec![sak_types::mock_pour_tc_2to2_1()],
+        witness_sigs: vec![String::from("1"), String::from("2")],
+        created_at: format!("{}", 0),
+    };
 
     {
         let block_hash = dist_ledger
             .apis
-            .write_block(Some(bc_2))
+            .write_block(Some(block))
             .await
             .expect("block should be written");
 
@@ -260,7 +253,6 @@ async fn test_dist_ledger_double_spending_success() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
-#[should_panic]
 async fn test_dist_ledger_double_spending_fail() {
     sak_test_utils::init_test_log();
     TestUtil::init_test(vec!["test"]);
@@ -288,6 +280,28 @@ async fn test_dist_ledger_double_spending_fail() {
             .await
             .expect("block should be written");
 
-        println!("[+] dummy pour_tx hash: {:?}", block_hash);
+        assert_eq!(None, block_hash);
     }
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn test_dist_ledger_verify_merkle_rt_fail() {
+    sak_test_utils::init_test_log();
+    TestUtil::init_test(vec!["test"]);
+
+    let dist_ledger = testing::mock_dist_ledger_1().await;
+
+    let bc = BlockCandidate {
+        validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
+        tx_candidates: vec![sak_types::mock_pour_tc_random()],
+        witness_sigs: vec![String::from("1")],
+        created_at: format!("{}", 1),
+    };
+
+    let result = match dist_ledger.apis.write_block(Some(bc)).await {
+        Ok(v) => v,
+        Err(err) => panic!("Failed to write dummy block, err: {}", err),
+    };
+
+    assert_eq!(None, result);
 }

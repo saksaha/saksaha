@@ -1,6 +1,6 @@
 use crate::{DistLedgerApis, LedgerError};
 use sak_contract_std::Storage;
-use sak_crypto::MerkleTree;
+use sak_crypto::{sha3::digest::typenum::Le, MerkleTree};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
 use sak_types::{
     Block, BlockHash, BlockHeight, Cm, CmIdx, CtrAddr, Tx, TxCandidate, TxHash,
@@ -22,6 +22,14 @@ impl DistLedgerApis {
     ) -> Result<Vec<Tx>, LedgerError> {
         self.ledger_db.get_txs(tx_hashes).await
     }
+
+    // pub async fn verify_merkle_rt(&self, merkle_rt: &[u8; 32]) -> bool {
+    //     match self.ledger_db.get_block_merkle_rt_key(merkle_rt) {
+    //         Ok(Some(_)) => return false,
+    //         Ok(None) => return true,
+    //         Err(_err) => return false,
+    //     }
+    // }
 
     pub async fn get_merkle_node(
         &self,
@@ -96,15 +104,31 @@ impl DistLedgerApis {
                 self.sync_pool.insert_tx(tx_candidate).await?
             }
             TxCandidate::Pour(tc) => {
-                let is_valid_sn = self.verify_sn(&tc.sns)?;
-                let is_verified_tx = self.verify_proof(&tc)?;
+                let mut is_valid_sn = true;
+                let mut is_valid_merkle_rt = true;
 
-                if is_valid_sn & is_verified_tx {
+                for sn in &tc.sns {
+                    is_valid_sn = self.verify_sn(&sn)?;
+                    if !is_valid_sn {
+                        break;
+                    }
+                }
+
+                for merkle_rt in &tc.merkle_rts {
+                    is_valid_merkle_rt = self.verify_merkle_rt(merkle_rt);
+                    if !is_valid_merkle_rt {
+                        break;
+                    }
+                }
+
+                let is_valid_tx = self.verify_proof(&tc)?;
+
+                if is_valid_merkle_rt & is_valid_sn & is_valid_tx {
                     self.sync_pool.insert_tx(tx_candidate).await?
                 } else {
                     return Err(format!(
-                        "Is valid sn and verified tx:{}, {}",
-                        is_valid_sn, is_verified_tx
+                        "Is valid sn: {}, merkle_rt: {}, verified tx:{} ",
+                        is_valid_sn, is_valid_merkle_rt, is_valid_tx,
                     )
                     .into());
                 }

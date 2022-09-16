@@ -4,7 +4,6 @@ use crate::Cm;
 use crate::{Tx, TxCtrOp, TxType};
 use serde::{Deserialize, Serialize};
 
-
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct MintTx {
     //
@@ -34,6 +33,10 @@ impl MintTx {
             .cloned()
             .zip(cms.iter().cloned())
             .collect::<Vec<(CmIdx, Cm)>>()
+    }
+
+    pub fn get_cm_idxes(&self) -> &Vec<CmIdx> {
+        &self.cm_idxes
     }
 }
 
@@ -88,7 +91,6 @@ impl MintTxCandidate {
         author_sig: String,
         ctr_addr: Option<String>,
         cms: Vec<Cm>,
-        // cm_count: u128,
         v: [u8; 32],
         k: [u8; 32],
         s: [u8; 32],
@@ -96,12 +98,19 @@ impl MintTxCandidate {
         let ctr_addr = ctr_addr.unwrap_or(String::from(""));
         let cm_count = cms.len() as u128;
 
-        let hashable_items = vec![
+        let mut hashable_items = vec![
             created_at.as_bytes(),
             data.as_slice(),
             author_sig.as_bytes(),
             ctr_addr.as_bytes(),
+            &v,
+            &k,
+            &s,
         ];
+
+        for cm in &cms {
+            hashable_items.push(cm);
+        }
 
         let tx_hash = sak_crypto::compute_hash(&hashable_items);
 

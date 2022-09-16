@@ -20,6 +20,13 @@ impl Tx {
         }
     }
 
+    pub fn get_cms(&self) -> &Vec<Cm> {
+        match self {
+            Tx::Mint(t) => t.tx_candidate.get_cms(),
+            Tx::Pour(t) => t.tx_candidate.get_cms(),
+        }
+    }
+
     pub fn get_data(&self) -> &Vec<u8> {
         match &self {
             Tx::Mint(t) => &t.tx_candidate.data,
@@ -52,6 +59,13 @@ impl Tx {
         match self {
             Tx::Mint(_t) => vec![[0u8; 32]],
             Tx::Pour(t) => t.get_sn(),
+        }
+    }
+
+    pub fn get_cm_idxes(&self) -> &Vec<CmIdx> {
+        match self {
+            Tx::Mint(t) => t.get_cm_idxes(),
+            Tx::Pour(t) => t.get_cm_idxes(),
         }
     }
 }

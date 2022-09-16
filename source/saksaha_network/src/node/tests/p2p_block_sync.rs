@@ -25,7 +25,7 @@ async fn test_block_sync_true() {
                 f6083b729baef9e9545c4e95590616fd3\
                 82662a09653f2a966ff524989ae8c0f",
         ),
-        true,
+        Some(true),
         // false,
     )
     .await;
@@ -53,7 +53,7 @@ async fn test_block_sync_true() {
                 84d0dc478108629c0353f2876941f90d\
                 4b36346bcc19c6b625422adffb53b3a6af",
         ),
-        false,
+        Some(false),
     )
     .await;
 
@@ -63,10 +63,6 @@ async fn test_block_sync_true() {
         machine: machine_2,
         ..
     } = test_context_2;
-
-    // let dummy_tx1 = sak_types::mock_pour_tc_m1_to_p3_p4();
-
-    // let dummy_tx2 = sak_types::mock_pour_tc_2();
 
     let dummy_tx1 = sak_types::mock_pour_tc_random();
 
@@ -194,7 +190,7 @@ async fn test_late_block_sync_true() {
                 f6083b729baef9e9545c4e95590616fd3\
                 82662a09653f2a966ff524989ae8c0f",
         ),
-        true,
+        Some(true),
     )
     .await;
 
@@ -221,7 +217,7 @@ async fn test_late_block_sync_true() {
                 84d0dc478108629c0353f2876941f90d\
                 4b36346bcc19c6b625422adffb53b3a6af",
         ),
-        false,
+        Some(false),
     )
     .await;
 
@@ -232,10 +228,8 @@ async fn test_late_block_sync_true() {
         ..
     } = test_context_2;
 
-    // let dummy_tx1 = sak_types::mock_pour_tc_m1_to_p3_p4();
     let dummy_tx1 = sak_types::mock_pour_tc_random();
     let dummy_tx2 = sak_types::mock_pour_tc_random();
-    // let dummy_tx3 = sak_types::mock_pour_tc_3();
     let dummy_tx3 = sak_types::mock_pour_tc_random();
 
     {

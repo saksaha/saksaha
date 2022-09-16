@@ -1,30 +1,34 @@
 use super::{miner::Miner, peer_node::PeerNode};
 use crate::machine::Machine;
 use log::{info, warn};
+use sak_p2p_discovery::Discovery;
 use sak_p2p_peertable::PeerTable;
 use std::{sync::Arc, time::Duration};
 use tokio::time::Instant;
 
 const PEER_REGISTER_MIN_INTERVAL: u64 = 1000;
 const NODE_TASK_INTERVAL: u64 = 1000;
+const MINER: bool = false;
 
 pub(crate) struct LocalNode {
     pub peer_table: Arc<PeerTable>,
     pub machine: Arc<Machine>,
-    pub miner: bool,
+    pub miner: Option<bool>,
     pub mine_interval: Option<u64>,
     pub node_task_interval: Duration,
     pub peer_register_interval: Duration,
+    pub discovery: Arc<Discovery>,
 }
 
 impl LocalNode {
     pub fn new(
         peer_table: Arc<PeerTable>,
         machine: Arc<Machine>,
-        miner: bool,
+        miner: Option<bool>,
         mine_interval: Option<u64>,
         node_task_interval: Option<u64>,
         peer_register_interval: Option<u64>,
+        discovery: Arc<Discovery>,
     ) -> LocalNode {
         let node_task_interval = match node_task_interval {
             Some(i) => Duration::from_millis(i),
@@ -49,14 +53,16 @@ impl LocalNode {
             mine_interval,
             node_task_interval,
             peer_register_interval,
+            discovery,
         }
     }
 
     pub(crate) async fn run(&self) {
         let machine = self.machine.clone();
 
-        // Miner routine
-        if self.miner {
+        let miner = self.miner.unwrap_or(MINER);
+
+        if miner {
             let mine_interval = self.mine_interval;
             tokio::spawn(async move {
                 let mut miner = Miner::init(machine, mine_interval);
@@ -80,7 +86,9 @@ impl LocalNode {
                 };
 
                 let peer_node = PeerNode {
+                    peer_table: self.peer_table.clone(),
                     peer: peer.clone(),
+                    discovery: self.discovery.clone(),
                     machine,
                     node_task_min_interval: self.node_task_interval.clone(),
                 };

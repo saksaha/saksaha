@@ -4,10 +4,11 @@ use crate::Sn;
 use crate::TxHash;
 use crate::TypesError;
 use colored::Colorize;
+use sak_crypto::decode_hex;
 use sak_crypto::Scalar;
 use sak_crypto::ScalarExt;
-use sak_proofs::Hasher;
-use sak_proofs::NewCoin;
+use sak_proof::Hasher;
+use sak_proof::NewCoin;
 use type_extension::U8Array;
 
 pub type CoinIdx = u128;
@@ -92,9 +93,7 @@ impl CoinRecord {
             s,
             v,
             cm,
-            // change it!
             coin_status: CoinStatus::Unused,
-            // coin_status: CoinStatus::Unused,
             cm_idx,
             coin_idx,
             tx_hash,
@@ -167,6 +166,41 @@ impl CoinRecord {
         Ok(coin)
     }
 
+    pub fn new_dummy() -> CoinRecord {
+        let hasher = Hasher::new();
+
+        let addr_sk = Scalar::default();
+        let addr_pk = hasher.mimc_single_scalar(addr_sk).unwrap();
+        let rho = Scalar::default();
+        let r = Scalar::default();
+        let s = Scalar::default();
+        let v = Scalar::default();
+
+        let k = hasher.comm2_scalar(r, addr_pk, rho);
+        let cm = hasher.comm2_scalar(s, v, k);
+
+        let coin_status = CoinStatus::Unused;
+        let cm_idx = None;
+        // let cm_idx = Some(0);
+        let coin_idx = None;
+
+        let tx_hash = None;
+
+        CoinRecord {
+            addr_pk,
+            addr_sk,
+            rho,
+            r,
+            s,
+            v,
+            cm,
+            coin_status,
+            cm_idx,
+            coin_idx,
+            tx_hash,
+        }
+    }
+
     pub fn extract_new_coin(&self) -> NewCoin {
         let addr_pk = self.addr_pk;
         let rho = self.rho;
@@ -199,12 +233,33 @@ impl CoinRecord {
         sn
     }
 
-    pub fn set_coin_status_to_unconfirmed(&mut self) {
-        self.coin_status = CoinStatus::Unconfirmed;
+    pub fn set_coin_status(&mut self, status: CoinStatus) {
+        self.coin_status = status;
     }
 
     pub fn update_tx_hash(&mut self, tx_hash: String) {
         self.tx_hash = Some(tx_hash);
+    }
+
+    pub fn has_zero_value(&mut self) -> bool {
+        match self.v == Scalar::zero() {
+            true => true,
+            false => false,
+        }
+    }
+
+    pub fn is_unused(&self) -> bool {
+        match self.coin_status == CoinStatus::Unused {
+            true => true,
+            false => false,
+        }
+    }
+
+    pub fn is_unconfirmed(&self) -> bool {
+        match self.coin_status == CoinStatus::Unconfirmed {
+            true => true,
+            false => false,
+        }
     }
 }
 

@@ -2,4 +2,4 @@ mod config;
 mod profiled;
 
 pub(crate) use config::*;
-pub(crate) use profiled::*;
+pub(in crate::config) use profiled::*;

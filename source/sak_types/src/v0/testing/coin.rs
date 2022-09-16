@@ -1,6 +1,6 @@
 use core::fmt;
 use sak_crypto::ScalarExt;
-use sak_proofs::Hasher;
+use sak_proof::Hasher;
 use type_extension::U8Array;
 
 #[derive(Debug)]
@@ -20,14 +20,14 @@ impl fmt::Display for MockCoin {
         write!(
             fmt,
             "\
-            \n[!] Coin Info 
-[+] addr_sk: {:?}, 
-[+] addr_pk: {:?}, 
-[+] rho: {:?}, 
-[+] r: {:?}, 
-[+] s: {:?}, 
-[+] v: {:?}, 
-[+] k: {:?}, 
+            \n[!] Coin Info
+[+] addr_sk: {:?},
+[+] addr_pk: {:?},
+[+] rho: {:?},
+[+] r: {:?},
+[+] s: {:?},
+[+] v: {:?},
+[+] k: {:?},
 [+] cm: {:?}",
             ScalarExt::parse_arr(&self.addr_sk),
             ScalarExt::parse_arr(&self.addr_pk),
@@ -43,37 +43,51 @@ impl fmt::Display for MockCoin {
     }
 }
 
-pub fn mock_coin(value: u64) -> MockCoin {
-    let hasher = Hasher::new();
+impl MockCoin {
+    pub fn mock_coin(&self, value: u64) -> MockCoin {
+        let hasher = Hasher::new();
 
-    let addr_sk = U8Array::from_int(sak_crypto::rand() as u64).to_owned();
-    let addr_pk = hasher.mimc_single(&addr_sk).unwrap();
-    let rho = U8Array::from_int(sak_crypto::rand() as u64);
-    let r = U8Array::from_int(sak_crypto::rand() as u64);
-    let s = U8Array::from_int(sak_crypto::rand() as u64);
-    let v = U8Array::from_int(value);
+        let addr_sk = U8Array::from_int(sak_crypto::rand() as u64).to_owned();
+        let addr_pk = hasher.mimc_single(&addr_sk).unwrap();
+        let rho = U8Array::from_int(sak_crypto::rand() as u64);
+        let r = U8Array::from_int(sak_crypto::rand() as u64);
+        let s = U8Array::from_int(sak_crypto::rand() as u64);
+        let v = U8Array::from_int(value);
 
-    let k = hasher.comm2_scalar(
-        ScalarExt::parse_arr(&r).unwrap(),
-        addr_pk,
-        ScalarExt::parse_arr(&rho).unwrap(),
-    );
-    let cm = hasher.comm2_scalar(
-        ScalarExt::parse_arr(&s).unwrap(),
-        ScalarExt::parse_arr(&v).unwrap(),
-        k,
-    );
+        let k = hasher.comm2_scalar(
+            ScalarExt::parse_arr(&r).unwrap(),
+            addr_pk,
+            ScalarExt::parse_arr(&rho).unwrap(),
+        );
+        let cm = hasher.comm2_scalar(
+            ScalarExt::parse_arr(&s).unwrap(),
+            ScalarExt::parse_arr(&v).unwrap(),
+            k,
+        );
 
-    MockCoin {
-        addr_sk,
-        addr_pk: addr_pk.to_bytes(),
-        rho,
-        r,
-        s,
-        v,
-        k: k.to_bytes(),
-        cm: cm.to_bytes(),
+        MockCoin {
+            addr_sk,
+            addr_pk: addr_pk.to_bytes(),
+            rho,
+            r,
+            s,
+            v,
+            k: k.to_bytes(),
+            cm: cm.to_bytes(),
+        }
     }
+
+    // pub fn mock_coin_custom(
+    //     &self,
+    //     rho: u64,
+    //     r: u64,
+    //     s: u64,
+    //     addr_sk: u64,
+    //     value: u64,
+    // ) -> MockCoin {
+    //     let mock_coin = mock_coin_custom(rho, r, s, addr_sk, value);
+    //     mock_coin
+    // }
 }
 
 pub fn mock_coin_custom(

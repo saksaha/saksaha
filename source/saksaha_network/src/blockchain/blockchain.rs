@@ -2,7 +2,7 @@ use super::{genesis::GenesisBlock, Pos};
 use crate::SaksahaError;
 use sak_dist_ledger::{Consensus, DistLedger, DistLedgerArgs};
 use sak_p2p_id::Identity;
-use sak_proofs::CoinProof;
+use sak_proof::CoinProof;
 use std::sync::Arc;
 
 pub(crate) struct Blockchain {
@@ -11,7 +11,7 @@ pub(crate) struct Blockchain {
 
 impl Blockchain {
     pub(crate) async fn init(
-        app_prefix: String,
+        public_key: String,
         tx_sync_interval: Option<u64>,
         genesis_block: Option<GenesisBlock>,
         block_sync_interval: Option<u64>,
@@ -38,7 +38,7 @@ impl Blockchain {
         };
 
         let dist_ledger_args = DistLedgerArgs {
-            app_prefix,
+            public_key,
             tx_sync_interval,
             genesis_block: Some(gen_block_candidate),
             consensus,

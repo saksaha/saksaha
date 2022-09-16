@@ -6,7 +6,7 @@ use sak_p2p_id::Identity;
 use std::sync::Arc;
 use tokio::net::{TcpListener, TcpStream};
 
-async fn connect_to_endpoint(endpoint: &String) -> Conn {
+pub async fn connect_to_endpoint(endpoint: &String) -> Conn {
     match TcpStream::connect(&endpoint).await {
         Ok(s) => {
             let c = match Conn::new(s, true) {
@@ -246,7 +246,9 @@ async fn test_handshake_works() {
 
         let msg = PingMsg { nonce: rand };
 
-        conn_1_lock.send(Msg::Ping(msg)).await.ok_or().unwrap();
+        conn_1_lock.send(Msg::Ping(msg)).await.unwrap();
+
+        // conn_1_lock.send(Msg::Ping(msg)).await.ok_or().unwrap();
     });
 
     let identity_2_clone = identity_2.clone();
@@ -258,28 +260,20 @@ async fn test_handshake_works() {
 
         let mut conn_2_lock = transport_2.conn.write().await;
 
-        let msg_wrap = conn_2_lock.next_msg().await.unwrap();
+        let msg = conn_2_lock.next_msg().await.unwrap();
 
-        let maybe_msg = msg_wrap.get_maybe_msg();
+        let ping = match msg {
+            Ok(m) => match m {
+                Msg::Ping(p) => {
+                    println!("ping: {:?}, rand received!", p);
 
-        let ping = match maybe_msg {
-            Some(maybe_msg) => match maybe_msg {
-                Ok(msg) => match msg {
-                    Msg::Ping(p) => {
-                        println!("ping: {:?}, rand received!", p);
-
-                        p
-                    }
-                    _ => {
-                        panic!();
-                    }
-                },
-                Err(err) => {
-                    println!("Err: {}", err);
+                    p
+                }
+                _ => {
                     panic!();
                 }
             },
-            None => {
+            Err(_) => {
                 println!("No msg..");
                 panic!();
             }

@@ -1,6 +1,7 @@
 use crate::SaksahaSDKError;
 use hyper::{Body, Client, Method, Request, Uri};
 use sak_contract_std::{CtrCallType, CtrRequest, RequestArgs};
+use sak_crypto::encode_hex;
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
 use sak_rpc_interface::{
     JsonRequest, JsonResponse, SendMintTxRequest, SendPourTxRequest,
@@ -8,8 +9,6 @@ use sak_rpc_interface::{
 use sak_types::{Cm, CmIdx, Tx};
 use serde::{Deserialize, Serialize};
 use std::time;
-
-pub const A: usize = 1;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct QueryCtrRequest {
@@ -34,7 +33,7 @@ pub async fn send_tx_pour(
     saksaha_endpoint: String,
     sns: Vec<[u8; 32]>,
     cms: Vec<[u8; 32]>,
-    merkle_rt: [u8; 32],
+    merkle_rts: Vec<[u8; 32]>,
     pi: Vec<u8>,
     ctr_addr: String,
     ctr_request: CtrRequest,
@@ -57,7 +56,7 @@ pub async fn send_tx_pour(
             pi,
             sns,
             cms,
-            merkle_rt,
+            merkle_rts,
         );
 
         let params = serde_json::to_string(&send_req)?.as_bytes().to_vec();
@@ -357,34 +356,34 @@ pub async fn get_auth_path(
     Ok(json_response)
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct GenProofRequest {
-    // coin_1_old
-    pub addr_pk_1_old: [u8; 32],
-    pub addr_sk_1_old: [u8; 32],
-    pub rho_1_old: [u8; 32],
-    pub r_1_old: [u8; 32],
-    pub s_1_old: [u8; 32],
-    pub v_1_old: [u8; 32],
-    pub cm_1_old: [u8; 32],
-    pub auth_path_1_old: [Option<([u8; 32], bool)>; CM_TREE_DEPTH as usize],
+// #[derive(Serialize, Deserialize, Debug)]
+// pub struct GenProofRequest {
+//     // coin_1_old
+//     pub addr_pk_1_old: [u8; 32],
+//     pub addr_sk_1_old: [u8; 32],
+//     pub rho_1_old: [u8; 32],
+//     pub r_1_old: [u8; 32],
+//     pub s_1_old: [u8; 32],
+//     pub v_1_old: [u8; 32],
+//     pub cm_1_old: [u8; 32],
+//     pub auth_path_1_old: [Option<([u8; 32], bool)>; CM_TREE_DEPTH as usize],
 
-    // coin_1_new
-    pub addr_pk_1_new: [u8; 32],
-    pub rho_1_new: [u8; 32],
-    pub r_1_new: [u8; 32],
-    pub s_1_new: [u8; 32],
-    pub v_1_new: [u8; 32],
+//     // coin_1_new
+//     pub addr_pk_1_new: [u8; 32],
+//     pub rho_1_new: [u8; 32],
+//     pub r_1_new: [u8; 32],
+//     pub s_1_new: [u8; 32],
+//     pub v_1_new: [u8; 32],
 
-    // coin_2_new
-    pub addr_pk_2_new: [u8; 32],
-    pub rho_2_new: [u8; 32],
-    pub r_2_new: [u8; 32],
-    pub s_2_new: [u8; 32],
-    pub v_2_new: [u8; 32],
-}
+//     // coin_2_new
+//     pub addr_pk_2_new: [u8; 32],
+//     pub rho_2_new: [u8; 32],
+//     pub r_2_new: [u8; 32],
+//     pub s_2_new: [u8; 32],
+//     pub v_2_new: [u8; 32],
+// }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct GenProofResponse {
-    pub pi: Vec<Option<[u8; 32]>>,
-}
+// #[derive(Serialize, Deserialize, Debug)]
+// pub struct GenProofResponse {
+//     pub pi: Vec<Option<[u8; 32]>>,
+// }

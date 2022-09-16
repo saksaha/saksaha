@@ -1,5 +1,5 @@
 use crate::SaksahaError;
-use sak_proofs::Hasher;
+use sak_proof::Hasher;
 use sak_types::{BlockCandidate, TxCandidate};
 
 pub(crate) const VALIDATOR_SIG: &str = "validator_sig";
@@ -25,6 +25,7 @@ impl GenesisBlock {
 
         let tx_mint_1 = sak_types::mock_mint_tc_3();
         let tx_mint_2 = sak_types::mock_mint_tc_4();
+
         let tx_deploy_validator = sak_types::mock_mint_tc_deploying_contract(
             validator_wasm,
             VALIDATOR_CTR_ADDR.to_string(),
@@ -33,6 +34,8 @@ impl GenesisBlock {
             envelope_wasm,
             ENVELOPE_CTR_ADDR.to_string(),
         );
+        let tx_mint_3 = sak_types::mock_mint_tc_5();
+        let tx_mint_4 = sak_types::mock_mint_tc_6();
 
         let block_candidate = BlockCandidate {
             validator_sig: VALIDATOR_SIG.to_string(),
@@ -41,6 +44,8 @@ impl GenesisBlock {
                 tx_mint_2,
                 tx_deploy_validator,
                 tx_deploy_envelope,
+                tx_mint_3,
+                tx_mint_4,
             ],
             witness_sigs: vec![String::from("1"), String::from("2")],
             created_at: String::from("2022061515340000"),

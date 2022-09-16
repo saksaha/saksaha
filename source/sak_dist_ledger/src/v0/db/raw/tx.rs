@@ -1,16 +1,7 @@
 use crate::LedgerError;
 use crate::{cfs, LedgerDB};
-use sak_crypto::{Bls12, ScalarExt};
 use sak_kv_db::WriteBatch;
-use sak_kv_db::DB;
-use sak_proofs::{Hasher, Proof};
-use sak_types::{
-    Cm, CmIdx, MintTx, MintTxCandidate, PourTx, PourTxCandidate, Sn, Tx,
-    TxCtrOp, TxHash, TxHeight, TxType,
-};
-
-use serde::Deserialize;
-use serde::Serialize;
+use sak_types::{Cm, CmIdx, MerkleRt, Sn, TxHash, TxType};
 
 impl LedgerDB {
     pub(crate) fn get_tx_type(
@@ -122,42 +113,6 @@ impl LedgerDB {
         }
     }
 
-    // pub(crate) fn get_tx_height(
-    //     &self,
-    //     key: &TxHash,
-    // ) -> Result<Option<TxHeight>, LedgerError> {
-    //     let cf = self.make_cf_handle(&self.db, cfs::TX_HEIGHT)?;
-
-    //     match self.db.get_cf(&cf, key)? {
-    //         Some(v) => {
-    //             let height = type_extension::convert_u8_slice_into_u128(&v)?;
-
-    //             return Ok(Some(height));
-    //         }
-    //         None => {
-    //             return Ok(None);
-    //         }
-    //     }
-    // }
-
-    // pub(crate) fn get_cm_idx(
-    //     &self,
-    //     key: &TxHash,
-    // ) -> Result<Option<CmIdx>, LedgerError> {
-    //     let cf = self.make_cf_handle(&self.db, cfs::CM_IDX)?;
-
-    //     match self.db.get_cf(&cf, key)? {
-    //         Some(v) => {
-    //             let height = type_extension::convert_u8_slice_into_u128(&v)?;
-
-    //             return Ok(Some(height));
-    //         }
-    //         None => {
-    //             return Ok(None);
-    //         }
-    //     }
-    // }
-
     pub(crate) fn get_cm_idx_by_cm(
         &self,
         cm: &Cm,
@@ -175,42 +130,6 @@ impl LedgerDB {
             }
         }
     }
-
-    // pub(crate) fn get_cm_idxes_by_cms(
-    //     &self,
-    //     cms: Vec<&Cm>,
-    // ) -> Result<Option<Vec<CmIdx>>, LedgerError> {
-    //     let cf = self.make_cf_handle(&self.db, cfs::CM_IDX)?;
-
-    //     match self.db.get_cf(&cf, cm)? {
-    //         Some(v) => {
-    //             let cm_idx = type_extension::convert_u8_slice_into_u128(&v)?;
-
-    //             return Ok(Some(cm_idx));
-    //         }
-    //         None => {
-    //             return Ok(None);
-    //         }
-    //     }
-    // }
-
-    // pub(crate) fn get_cm(
-    //     &self,
-    //     key: &TxHash,
-    // ) -> Result<Option<[u8; 32]>, LedgerError> {
-    //     let cf = self.make_cf_handle(&self.db, cfs::CM)?;
-
-    //     match self.db.get_cf(&cf, key)? {
-    //         Some(v) => {
-    //             let arr = type_extension::convert_vec_into_u8_32(v)?;
-
-    //             return Ok(Some(arr));
-    //         }
-    //         None => {
-    //             return Ok(None);
-    //         }
-    //     }
-    // }
 
     pub(crate) fn get_v(
         &self,
@@ -266,36 +185,15 @@ impl LedgerDB {
         }
     }
 
-    pub(crate) fn get_sns(
-        &self,
-        key: &TxHash,
-    ) -> Result<Option<Vec<Sn>>, LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::SNS)?;
-
-        match self.db.get_cf(&cf, key)? {
-            Some(v) => {
-                let arr = v
-                    .chunks(32)
-                    .map(|v| type_extension::convert_vec_into_u8_32(v.to_vec()))
-                    .collect::<Result<Vec<[u8; 32]>, LedgerError>>()?;
-
-                return Ok(Some(arr));
-            }
-            None => {
-                return Ok(None);
-            }
-        }
-    }
-
     pub(crate) fn get_tx_hash_by_sn(
         &self,
-        key: &Vec<Sn>,
+        key: &Sn,
     ) -> Result<Option<String>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::TX_HASH_BY_SN)?;
 
-        let serialized = key.iter().flatten().copied().collect::<Vec<u8>>();
+        // let serialized = key.iter().flatten().copied().collect::<Vec<u8>>();
 
-        match self.db.get_cf(&cf, serialized)? {
+        match self.db.get_cf(&cf, key)? {
             Some(v) => {
                 let str = String::from_utf8(v)?;
 
@@ -307,44 +205,25 @@ impl LedgerDB {
         }
     }
 
-    pub(crate) fn get_cms(
-        &self,
-        key: &TxHash,
-    ) -> Result<Option<Vec<[u8; 32]>>, LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::CMS)?;
+    // pub(crate) fn get_tx_hash_by_sn(
+    //     &self,
+    //     key: &Vec<Sn>,
+    // ) -> Result<Option<String>, LedgerError> {
+    //     let cf = self.make_cf_handle(&self.db, cfs::TX_HASH_BY_SN)?;
 
-        match self.db.get_cf(&cf, key)? {
-            Some(v) => {
-                let arr = v
-                    .chunks(32)
-                    .map(|v| type_extension::convert_vec_into_u8_32(v.to_vec()))
-                    .collect::<Result<Vec<[u8; 32]>, LedgerError>>()?;
+    //     let serialized = key.iter().flatten().copied().collect::<Vec<u8>>();
 
-                return Ok(Some(arr));
-            }
-            None => {
-                return Ok(None);
-            }
-        }
-    }
+    //     match self.db.get_cf(&cf, serialized)? {
+    //         Some(v) => {
+    //             let str = String::from_utf8(v)?;
 
-    pub(crate) fn get_cm_count(
-        &self,
-        key: &TxHash,
-    ) -> Result<Option<u128>, LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::CM_COUNT)?;
-
-        match self.db.get_cf(&cf, key)? {
-            Some(v) => {
-                let cm_count = type_extension::convert_u8_slice_into_u128(&v)?;
-
-                return Ok(Some(cm_count));
-            }
-            None => {
-                return Ok(None);
-            }
-        }
-    }
+    //             return Ok(Some(str));
+    //         }
+    //         None => {
+    //             return Ok(None);
+    //         }
+    //     }
+    // }
 
     pub(crate) fn batch_put_tx_type(
         &self,
@@ -386,7 +265,6 @@ impl LedgerDB {
 
     pub(crate) fn batch_put_data(
         &self,
-        // db: &DB,
         batch: &mut WriteBatch,
         key: &TxHash,
         value: &Vec<u8>,
@@ -412,7 +290,6 @@ impl LedgerDB {
 
     pub(crate) fn batch_put_pi(
         &self,
-        // db: &DB,
         batch: &mut WriteBatch,
         key: &TxHash,
         value: &Vec<u8>,
@@ -426,7 +303,6 @@ impl LedgerDB {
 
     pub(crate) fn batch_delete_pi(
         &self,
-        // db: &DB,
         batch: &mut WriteBatch,
         key: &TxHash,
     ) -> Result<(), LedgerError> {
@@ -439,7 +315,6 @@ impl LedgerDB {
 
     pub(crate) fn batch_put_author_sig(
         &self,
-        // db: &DB,
         batch: &mut WriteBatch,
         key: &TxHash,
         value: &String,
@@ -453,7 +328,6 @@ impl LedgerDB {
 
     pub(crate) fn batch_delete_author_sig(
         &self,
-        // db: &DB,
         batch: &mut WriteBatch,
         key: &TxHash,
     ) -> Result<(), LedgerError> {
@@ -466,7 +340,6 @@ impl LedgerDB {
 
     pub(crate) fn batch_put_ctr_addr(
         &self,
-        // db: &DB,
         batch: &mut WriteBatch,
         key: &TxHash,
         value: &String,
@@ -481,14 +354,12 @@ impl LedgerDB {
     pub(crate) fn batch_put_tx_hash_by_sn(
         &self,
         batch: &mut WriteBatch,
-        key: &Vec<Sn>,
+        key: &Sn,
         value: &String,
     ) -> Result<(), LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::TX_HASH_BY_SN)?;
 
-        let serialized = key.iter().flatten().copied().collect::<Vec<u8>>();
-
-        batch.put_cf(&cf, serialized, value);
+        batch.put_cf(&cf, key, value);
 
         Ok(())
     }
@@ -562,32 +433,28 @@ impl LedgerDB {
         Ok(())
     }
 
-    pub(crate) fn batch_put_sns(
+    pub(crate) fn batch_put_sn(
         &self,
         batch: &mut WriteBatch,
         key: &TxHash,
-        value: &Vec<Sn>,
+        value: &Sn,
     ) -> Result<(), LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::SNS)?;
+        let cf = self.make_cf_handle(&self.db, cfs::SN)?;
 
-        let serialized = value.iter().flatten().copied().collect::<Vec<u8>>();
-
-        batch.put_cf(&cf, key, serialized);
+        batch.put_cf(&cf, key, value);
 
         Ok(())
     }
 
-    pub(crate) fn batch_put_cms(
+    pub(crate) fn batch_put_cm(
         &self,
         batch: &mut WriteBatch,
-        key: &TxHash,
-        value: &Vec<[u8; 32]>,
+        key: &String,
+        value: &Cm,
     ) -> Result<(), LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::CMS)?;
+        let cf = self.make_cf_handle(&self.db, cfs::CM)?;
 
-        let serialized = value.iter().flatten().copied().collect::<Vec<u8>>();
-
-        batch.put_cf(&cf, key, serialized);
+        batch.put_cf(&cf, key, value);
 
         Ok(())
     }
@@ -611,7 +478,7 @@ impl LedgerDB {
         &self,
         batch: &mut WriteBatch,
         key: &TxHash,
-        value: &[u8; 32],
+        value: &MerkleRt,
     ) -> Result<(), LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::PRF_MERKLE_RT)?;
 

@@ -6,10 +6,8 @@ use bytes::{Buf, BufMut, BytesMut};
 use chacha20::cipher::StreamCipher;
 use chacha20::ChaCha20;
 use sak_crypto::sha3::digest::core_api::CoreWrapper;
-use sak_crypto::sha3::digest::FixedOutput;
-use sak_crypto::sha3::{Digest, Keccak256, Keccak256Core};
-use std::convert::TryInto;
-use tokio_util::codec::{Decoder, Encoder};
+use sak_crypto::sha3::{Digest, Keccak256Core};
+use tokio_util::codec::Encoder;
 
 impl Encoder<Msg> for UpgradedP2PCodec {
     type Error = TrptError;
@@ -19,7 +17,7 @@ impl Encoder<Msg> for UpgradedP2PCodec {
         item: Msg,
         dst: &mut BytesMut,
     ) -> Result<(), TrptError> {
-        let msg = item.to_string();
+        // let msg = item.to_string();
 
         // println!("encoding, item: {}", &item);
 
@@ -48,11 +46,16 @@ impl Encoder<Msg> for UpgradedP2PCodec {
 
         dst.unsplit(msg_part);
 
+        self.out_count += 1;
+
         // println!(
-        //     "\nencode(): dst, conn_id: {}, _after enc ({}): {:?}",
+        //     "\nencode(): dst, conn_id: {}, _after enc ({}): {:?}, \
+        //     out_count: {}, msg: {}",
         //     self.conn_id,
         //     dst.len(),
-        //     dst.to_vec()
+        //     dst.to_vec(),
+        //     self.out_count,
+        //     msg,
         // );
 
         return Ok(());

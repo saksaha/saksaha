@@ -6,14 +6,17 @@ use crate::{
     node::event_handle::{self, LedgerEventRoutine},
 };
 use log::{debug, error, warn};
-use sak_p2p_peertable::{Peer, PeerStatus};
+use sak_p2p_discovery::Discovery;
+use sak_p2p_peertable::{Peer, PeerStatus, PeerTable};
 use sak_task_queue::TaskQueue;
 use std::sync::Arc;
 use std::time::Duration;
 
 pub(in crate::node) struct PeerNode {
+    pub peer_table: Arc<PeerTable>,
     pub peer: Arc<Peer>,
     pub machine: Arc<Machine>,
+    pub discovery: Arc<Discovery>,
     pub node_task_min_interval: Duration,
 }
 
@@ -28,7 +31,6 @@ impl PeerNode {
         let node_task_queue = Arc::new(TaskQueue::new(100));
 
         {
-            // Ledger event routine
             let ledger_event_rx = {
                 let rx = self
                     .machine
@@ -53,10 +55,20 @@ impl PeerNode {
         }
 
         {
-            // Late sync routine
-            let machine_clone = self.machine.clone();
+            // say hello
+            let unknown_addrs = self.peer_table.get_peer_addrs().await;
 
-            if let Ok(new_blocks) = machine_clone
+            if !self.peer.is_initiator {
+                node_task_queue
+                    .push_back(NodeTask::SendHelloSyn { unknown_addrs })
+                    .await?
+            }
+        }
+
+        {
+            // Late sync routine
+            if let Ok(new_blocks) = self
+                .machine
                 .blockchain
                 .dist_ledger
                 .apis
@@ -79,46 +91,50 @@ impl PeerNode {
 
                     let task = task?;
 
-                    task::handle_task(task,
-                        &node_task_queue, conn_lock, &self.machine).await;
-                },
-                msg_wrap = conn_lock.next_msg() => {
-                    let msg_wrap = match msg_wrap {
-                        Ok(w) => w,
+                    match task::handle_task(
+                        task,
+                        &node_task_queue,
+                        conn_lock,
+                        &self.machine,
+                        &self.discovery
+                    ).await {
+                        Ok(r) => r,
                         Err(err) => {
-                            warn!("Error retrieving msg, err: {}", err);
-
-                            return Err(format!("Err: {}", err).into());
-                            // continue;
+                            error!(
+                                "peer node task handle failed, err: {}",
+                                err,
+                            );
                         }
                     };
-
-                    match msg_wrap.get_maybe_msg() {
-                        Some(maybe_msg) => match maybe_msg {
-                            Ok(msg) => {
+                },
+                maybe_msg = conn_lock.next_msg() => {
+                    match maybe_msg {
+                        Some(msg) => match msg {
+                            Ok(m) => {
                                 let _ = msg_handle::handle_msg(
-                                    msg,
+                                    m,
                                     &self.machine,
                                     conn_lock,
                                     &node_task_queue,
-                                    &self.peer,
+                                    // &self.peer,
+                                    &self.peer_table,
+                                    &self.discovery,
                                 )
                                 .await;
                             }
                             Err(err) => {
-                                warn!("Failed to parse the msg, err: {}", err);
+                                error!("Failed to parse the msg, err: {}", err);
                             }
                         },
                         None => {
-                            warn!("Peer has ended the connection");
-
                             self.peer.set_peer_status(
                                 PeerStatus::Disconnected,
                             ).await;
 
                             return Err(
                                 format!("Peer has ended the connection, \
-                                    her_public_key: {}",
+                                    conn_id: {}, her_public_key: {}",
+                                    conn_lock.get_conn_id(),
                                     self.peer.get_public_key_short()
                                 )
                                 .into());

@@ -30,7 +30,7 @@ sak_p2p_id = { path = "../sak_p2p_id" }
 sak_contract_std = { path = "../sak_contract_std" }
 sak_rpc_interface = { path = "../sak_rpc_interface" }
 sak_kv_db = { path = "../sak_kv_db" }
-sak_proofs = { path = "../sak_proofs" }
+sak_proof = { path = "../sak_proof" }
 sak_utils_net = { path = "../sak_utils_net" }
 
 [dev-dependencies]

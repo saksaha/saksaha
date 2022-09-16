@@ -3,11 +3,13 @@ use crate::{
     credential::WalletCredential, wallet::CoinManager, WalletError, APP_NAME,
 };
 use log::info;
+use sak_crypto::Scalar;
+use sak_crypto::ScalarExt;
 use sak_kv_db::{KeyValueDatabase, Options};
-use sak_types::CoinRecord;
 use sak_types::CoinStatus;
 use sak_types::Sn;
-use std::{borrow::BorrowMut, sync::Arc, time::Duration};
+use sak_types::{Cm, CmIdx, CoinRecord};
+use std::{borrow::BorrowMut, collections::HashMap, sync::Arc, time::Duration};
 use std::{fs, path::PathBuf};
 use tokio::sync::RwLockWriteGuard;
 
@@ -91,67 +93,68 @@ impl WalletDB {
         coins: &Vec<CoinRecord>,
     ) -> Result<Vec<Sn>, WalletError> {
         let mut old_coin_sn_vec = Vec::<Sn>::new();
+        let mut ledger_cms = vec![];
 
         for coin in coins {
-            match coin.coin_status {
-                CoinStatus::Unconfirmed => {
-                    println!("getting tx: {:?}", coin.tx_hash);
-
-                    let resp = match &coin.tx_hash {
-                        Some(tx_hash) => saksaha::get_tx(
-                            saksaha_endpoint.clone(),
-                            tx_hash.clone(),
-                        )
-                        .await?
-                        .result
-                        .ok_or(format!(
-                            "Tx doesn't exist, tx hash: {}",
-                            tx_hash
-                        ))?,
-
-                        None => {
-                            return Err(format!(
-                                "No tx_hash has been found in cm: {:?}",
-                                coin.cm
+            if coin.is_unconfirmed() {
+                let resp = match &coin.tx_hash {
+                    Some(tx_hash) => {
+                        if !ledger_cms.contains(&tx_hash) {
+                            let res = saksaha::get_tx(
+                                saksaha_endpoint.clone(),
+                                tx_hash.clone(),
                             )
-                            .into());
+                            .await?
+                            .result;
+
+                            ledger_cms.push(tx_hash);
+
+                            res
+                        } else {
+                            continue;
                         }
-                    };
+                    }
+                    None => {
+                        return Err(format!(
+                            // "No tx_hash has been found in cm: {:?}",
+                            // coin.cm
+                            "coin (cm: {:?}) does not have tx_hash",
+                            coin.cm
+                        )
+                        .into());
+                    }
+                };
 
-                    if let Some(tx) = resp.tx {
-                        let sns = tx.get_sns();
-                        for sn in sns {
-                            old_coin_sn_vec.push(sn);
-                        }
+                match resp {
+                    Some(response) => {
+                        if let Some(tx) = response.tx {
+                            let sns = tx.get_sns();
+                            for sn in sns {
+                                old_coin_sn_vec.push(sn);
+                            }
 
-                        self.schema
-                            .raw
-                            .put_coin_status(&coin.cm, &CoinStatus::Unused)?;
+                            for (cmidx, cm) in tx.get_cm_pairs() {
+                                let cm_array = &ScalarExt::parse_arr(&cm)?;
 
-                        {
-                            let cm_idx_base = tx
-                                .get_cm_pairs()
-                                .get(0)
-                                .ok_or("expect (CmIdx, Cm)")?
-                                .0;
+                                self.schema.raw.put_cm_idx(cm_array, &cmidx)?;
 
-                            let cm_idx_offset =
-                                coin.cm_idx.ok_or("expect cm_idx_offset")?;
-
-                            let cm_idx = cm_idx_base + cm_idx_offset;
-
-                            self.schema.raw.put_cm_idx(&coin.cm, &cm_idx)?;
-                        }
-                    };
+                                self.schema.raw.put_coin_status(
+                                    cm_array,
+                                    &CoinStatus::Unused,
+                                )?;
+                            }
+                        };
+                    }
+                    None => {
+                        println!(
+                            "No response with get_tx, {:?}",
+                            &coin.tx_hash
+                        );
+                    } // return Err("No response with get_tx".into()),
                 }
-
-                CoinStatus::Used => {}
-
-                CoinStatus::Unused => {}
             }
         }
 
-        println!("sn: {:?}", old_coin_sn_vec);
         Ok(old_coin_sn_vec)
     }
 
@@ -161,20 +164,11 @@ impl WalletDB {
         coins: &Vec<CoinRecord>,
     ) -> Result<(), WalletError> {
         for coin in coins {
-            // match coin.coin_status {
-            match self
-                .schema
-                .raw
-                .get_coin_status(&coin.cm)?
-                .unwrap_or(CoinStatus::Unconfirmed)
+            if let Some(CoinStatus::Unused) =
+                self.schema.raw.get_coin_status(&coin.cm)?
             {
-                CoinStatus::Unconfirmed => {}
-
-                CoinStatus::Used => {}
-
-                CoinStatus::Unused => {
+                {
                     let sn = coin.compute_sn();
-                    println!("Its sn:{:?}", sn);
 
                     if old_coin_sn_vec.contains(&sn) {
                         self.schema
@@ -192,17 +186,26 @@ impl WalletDB {
         &self,
         coin: &mut CoinRecord,
     ) -> Result<(), WalletError> {
-        match coin.coin_status {
-            CoinStatus::Unused => {
-                self.schema
-                    .raw
-                    .put_coin_status(&coin.cm, &CoinStatus::Unconfirmed)?;
+        if coin.coin_status == CoinStatus::Unused {
+            self.schema
+                .raw
+                .put_coin_status(&coin.cm, &CoinStatus::Unconfirmed)?;
 
-                coin.set_coin_status_to_unconfirmed();
-            }
-
-            _ => {}
+            coin.set_coin_status(CoinStatus::Unconfirmed);
         }
+
+        Ok(())
+    }
+
+    pub async fn update_coin_status_to_failed(
+        &self,
+        coin: &mut CoinRecord,
+    ) -> Result<(), WalletError> {
+        self.schema
+            .raw
+            .put_coin_status(&coin.cm, &CoinStatus::Failed)?;
+
+        coin.set_coin_status(CoinStatus::Failed);
 
         Ok(())
     }

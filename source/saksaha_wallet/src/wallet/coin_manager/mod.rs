@@ -6,7 +6,6 @@ use std::sync::Arc;
 
 pub(crate) struct CoinManager {
     pub(crate) coins: Vec<CoinRecord>,
-    // pub(crate) tx_hashes: Vec<TxHash>,
 }
 
 impl CoinManager {
@@ -38,27 +37,18 @@ impl CoinManager {
 
     pub fn get_next_available_coin(&mut self) -> Option<&mut CoinRecord> {
         for coin in self.coins.iter_mut() {
-            if coin.v == sak_crypto::Scalar::zero() {
-                continue;
-            }
-
-            if coin.coin_status == CoinStatus::Unused {
+            if !coin.has_zero_value() && coin.is_unused() {
                 return Some(coin);
             }
         }
 
-        return None;
+        None
     }
 
     pub fn put_coin(
         &mut self,
         coin_record: CoinRecord,
     ) -> Result<(), WalletError> {
-        println!(
-            "[+] [coin_manager] put new coin, cm_idx: {:?}, cm: {:?}",
-            coin_record.coin_idx, coin_record.cm
-        );
-
         self.coins.push(coin_record);
 
         Ok(())

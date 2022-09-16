@@ -1,13 +1,14 @@
 use crate::{CtrStateUpdate, DistLedgerApis, LedgerError, MerkleUpdate};
 use colored::Colorize;
 use log::{debug, info, warn};
-use sak_contract_std::{CtrCallType, CtrRequest, Storage, ERROR_PLACEHOLDER};
-use sak_crypto::{Bls12, MerkleTree, Scalar, ScalarExt};
+use sak_contract_std::{CtrCallType, CtrRequest, ERROR_PLACEHOLDER};
+use sak_crypto::{Bls12, MerkleTree, ScalarExt};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
-use sak_proofs::{CoinProof, Hasher, Proof};
+use sak_proof::{CoinProof, Hasher, Proof};
+use sak_proof::{DUMMY_MERKLE_RT, DUMMY_SN};
 use sak_types::{
-    Block, BlockCandidate, CmIdx, MintTxCandidate, PourTxCandidate, Sn, Tx,
-    TxCandidate, TxCtrOp,
+    Block, BlockCandidate, CmIdx, MerkleRt, MintTxCandidate, PourTxCandidate,
+    Sn, Tx, TxCandidate, TxCtrOp,
 };
 use sak_vm::CtrFn;
 
@@ -37,9 +38,8 @@ impl DistLedgerApis {
                 Err(err) => {
                     return Err(format!(
                         "Genesis block failed to write, err: {}",
-                        err.to_string()
-                    )
-                    .into());
+                        err
+                    ));
                 }
             };
 
@@ -53,14 +53,16 @@ impl DistLedgerApis {
         &self,
         bc: Option<BlockCandidate>,
     ) -> Result<Option<String>, LedgerError> {
+        // lock();
+
         let mut bc = match bc {
             Some(bc) => bc,
             None => match self.make_block_candidate().await? {
                 Some(bc) => bc,
                 None => {
-                    debug!(
-                        "No txs to write as a block, aborting write_block()",
-                    );
+                    // debug!(
+                    //     "No txs to write as a block, aborting write_block()",
+                    // );
 
                     return Ok(None);
                 }
@@ -76,14 +78,18 @@ impl DistLedgerApis {
         };
 
         let next_cm_idx = match self.ledger_db.get_latest_cm_idx()? {
-            Some(i) => i + 1,
+            Some(i) => {
+                if i >= 2_u32.pow(CM_TREE_DEPTH).into() {
+                    return Err("CM idx exceeded the tree depth".into());
+                }
+                i + 1
+            }
             None => {
                 warn!("Cm idx does not exist. Possibly the first block");
                 0
             }
         };
 
-        // let tcs = &bc.tx_candidates.clone();
         let tc_len = bc.tx_candidates.len();
 
         let mut ctr_state_update = CtrStateUpdate::new();
@@ -127,16 +133,22 @@ impl DistLedgerApis {
             added_cm_count += cm_count;
         }
 
-        if let Err(err) = self.sync_pool.remove_tcs(&tcs).await {
+        if let Err(err) = self.sync_pool.remove_tcs(tcs).await {
             warn!("Error removing txs into the tx pool, err: {}", err);
         }
 
-        let next_merkle_rt = match merkle_update
-            .get(format!("{}_0", CM_TREE_DEPTH).as_str())
-        {
-            Some(r) => r,
-            None => return Err(format!("next merkle root is missing").into()),
-        };
+        let next_merkle_rt =
+            match merkle_update.get(format!("{}_0", CM_TREE_DEPTH).as_str()) {
+                Some(r) => r,
+                None => {
+                    if tcs.is_empty() {
+                        warn!("Block contains no valid txs");
+                        return Ok(None);
+                    } else {
+                        return Err("next merkle root is missing".into());
+                    }
+                }
+            };
 
         let (block, txs) = bc.upgrade(
             next_block_height,
@@ -216,22 +228,38 @@ impl DistLedgerApis {
         self.ledger_db.delete_tx(key)
     }
 
-    pub(crate) fn verify_sn(&self, sns: &Vec<Sn>) -> Result<bool, LedgerError> {
-        match self.ledger_db.get_tx_hash_by_sn(sns) {
-            Ok(Some(_)) => {
-                return Err(format!(
-                    "Serial numbers already exists, sns: {:?}",
-                    sns
-                )
-                .into())
+    pub(crate) fn verify_merkle_rt(&self, merkle_rt: &[u8; 32]) -> bool {
+        if merkle_rt == &DUMMY_MERKLE_RT {
+            return true;
+        } else {
+            match self.ledger_db.get_block_merkle_rt_key(merkle_rt) {
+                Ok(Some(_)) => return true,
+                Ok(None) => return false,
+                Err(_err) => return false,
             }
-            Ok(None) => return Ok(true),
-            Err(_) => {
-                return Err(format!(
-                    "Tx with serial numbers does not exist, sns: {:?}",
-                    sns
-                )
-                .into())
+        }
+    }
+
+    pub(crate) fn verify_sn(&self, sn: &Sn) -> Result<bool, LedgerError> {
+        if sn == &DUMMY_SN {
+            return Ok(true);
+        } else {
+            match self.ledger_db.get_tx_hash_by_sn(sn) {
+                Ok(Some(_)) => {
+                    return Err(format!(
+                        "Serial numbers already exists, sns: {:?}",
+                        sn
+                    )
+                    .into())
+                }
+                Ok(None) => return Ok(true),
+                Err(_) => {
+                    return Err(format!(
+                        "Tx with serial numbers does not exist, sns: {:?}",
+                        sn
+                    )
+                    .into())
+                }
             }
         }
     }
@@ -244,7 +272,9 @@ impl DistLedgerApis {
 
         let mut public_inputs = vec![];
 
-        public_inputs.push(ScalarExt::parse_arr(&tc.merkle_rt)?);
+        for merkle_rt in &tc.merkle_rts {
+            public_inputs.push(ScalarExt::parse_arr(merkle_rt)?);
+        }
 
         for sn in &tc.sns {
             public_inputs.push(ScalarExt::parse_arr(sn)?);
@@ -265,11 +295,22 @@ impl DistLedgerApis {
             }
         };
 
-        let verification_result =
-            CoinProof::verify_proof_1_to_2(pi_des, &public_inputs, &hasher)?;
+        let verification_result = match &tc.merkle_rts.len() {
+            2 => {
+                CoinProof::verify_proof_2_to_2(pi_des, &public_inputs, &hasher)?
+            }
+            _ => {
+                // return Err(format!("Not implement yet").into());
+                false
+            }
+        };
 
         if !verification_result {
-            return Err(format!("Failed to verify proof").into());
+            return Err(format!(
+                "Failed to verify proof, tc: {}",
+                tc.get_tx_hash()
+            )
+            .into());
         };
 
         Ok(verification_result)
@@ -278,29 +319,50 @@ impl DistLedgerApis {
     pub(crate) fn filter_tx_candidates(
         &self,
         bc: &mut BlockCandidate,
-        // tx_candidates: &Vec<TxCandidate>,
     ) -> Result<(), LedgerError> {
-        let mut valid_tx_candidates: Vec<TxCandidate> = vec![];
-
-        for tx_candidate in &bc.tx_candidates {
-            match tx_candidate {
-                TxCandidate::Mint(_tc) => {
-                    valid_tx_candidates.push(tx_candidate.clone());
+        bc.tx_candidates.retain(|tx_candidate| match tx_candidate {
+            TxCandidate::Mint(_tc) => {
+                return true;
+            }
+            TxCandidate::Pour(tc) => {
+                for sn in &tc.sns {
+                    match self.verify_sn(&sn) {
+                        Ok(b) => b,
+                        Err(err) => {
+                            warn!(
+                                "Tx is filtered, hash: {}, err: {}",
+                                tc.get_tx_hash(),
+                                err
+                            );
+                            return false;
+                        }
+                    };
                 }
-                TxCandidate::Pour(tc) => {
-                    let is_valid_sn = self.verify_sn(&tc.sns)?;
-                    let is_verified_tx = self.verify_proof(tc)?;
 
-                    if is_valid_sn & is_verified_tx {
-                        valid_tx_candidates.push(tx_candidate.to_owned());
-                    } else {
-                        continue;
+                for merkle_rt in &tc.merkle_rts {
+                    match self.verify_merkle_rt(merkle_rt) {
+                        true => {}
+                        false => {
+                            return false;
+                        }
+                    };
+                }
+
+                match self.verify_proof(tc) {
+                    Ok(b) => b,
+                    Err(err) => {
+                        warn!(
+                            "Tx is filtered, hash: {}, err: {}",
+                            tc.get_tx_hash(),
+                            err
+                        );
+                        return false;
                     }
-                }
-            };
-        }
+                };
 
-        bc.tx_candidates = valid_tx_candidates;
+                return true;
+            }
+        });
 
         Ok(())
     }
@@ -326,7 +388,7 @@ async fn process_ctr_state_update(
         }
 
         TxCtrOp::ContractCall => {
-            let req = CtrRequest::parse(&data)?;
+            let req = CtrRequest::parse(data)?;
 
             match req.ctr_call_type {
                 CtrCallType::Query => {
@@ -340,7 +402,7 @@ async fn process_ctr_state_update(
                         Some(previous_state) => {
                             let ctr_wasm = apis
                                 .ledger_db
-                                .get_ctr_data_by_ctr_addr(&ctr_addr)
+                                .get_ctr_data_by_ctr_addr(ctr_addr)
                                 .await?
                                 .ok_or("ctr data (wasm) should exist")?;
 
@@ -353,25 +415,24 @@ async fn process_ctr_state_update(
                                 .updated_storage
                                 .ok_or("State needs to be updated")?
                         }
-                        None => apis.execute_ctr(&ctr_addr, req).await?,
+                        None => apis.execute_ctr(ctr_addr, req).await?,
                     };
 
-                    println!(
-                        "[+] new_state: {:?}",
-                        String::from_utf8(new_state.clone())
-                    );
+                    // println!(
+                    //     "[+] new_state: {:?}",
+                    //     String::from_utf8(new_state.clone())
+                    // );
 
                     let maybe_error_placehorder = match &new_state.get(0..6) {
                         Some(ep) => ep.to_owned(),
                         None => {
-                            return Err(format!(
-                                "new_state should be bigger than 6-byte"
-                            )
-                            .into());
+                            return Err(
+                                "new_state should be bigger than 6-byte".into(),
+                            );
                         }
                     };
 
-                    if maybe_error_placehorder != &ERROR_PLACEHOLDER {
+                    if maybe_error_placehorder != ERROR_PLACEHOLDER {
                         ctr_state_update
                             .insert(ctr_addr.clone(), new_state.clone());
                     }
@@ -401,15 +462,9 @@ async fn handle_mint_tx_candidate(
     process_ctr_state_update(apis, ctr_addr, data, tx_ctr_op, ctr_state_update)
         .await?;
 
-    let cm_count = process_merkle_update(
-        apis,
-        merkle_update,
-        &tc.cms,
-        // vec![&tc.cm_1],
-        // ledger_cm_count,
-        next_cm_idx,
-    )
-    .await?;
+    let cm_count =
+        process_merkle_update(apis, merkle_update, &tc.cms, next_cm_idx)
+            .await?;
 
     Ok(cm_count)
 }
@@ -452,8 +507,6 @@ async fn process_merkle_update(
 
         let mut curr_idx = cm_idx;
         for (height, path) in auth_path.iter().enumerate() {
-            // println!("auth_path(), path: {:?}", path);
-
             let sibling_node = match merkle_update.get(&path.node_loc) {
                 Some(n) => *n,
                 None => apis.get_merkle_node(&path.node_loc).await?,
@@ -484,8 +537,8 @@ async fn process_merkle_update(
             //     "merkle_update(): loc: {}, val: {:?}",
             //     update_loc, merkle_node
             // );
-
             merkle_update.insert(update_loc, merkle_node);
+
             curr_idx = parent_idx;
         }
     }

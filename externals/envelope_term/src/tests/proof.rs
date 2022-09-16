@@ -5,7 +5,7 @@ use sak_dist_ledger::{
     Consensus, ConsensusError, DistLedger, DistLedgerApis, DistLedgerArgs,
 };
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
-use sak_proofs::{CoinProof, Hasher, NewCoin, OldCoin, Proof};
+use sak_proof::{CoinProof, Hasher, NewCoin, OldCoin, Proof};
 use sak_types::{BlockCandidate, TxCandidate};
 use type_extension::U8Array;
 
@@ -53,7 +53,8 @@ pub(crate) async fn make_dist_ledger(block: BlockCandidate) -> DistLedger {
     let pos = make_dummy_pos();
 
     let dist_ledger_args = DistLedgerArgs {
-        app_prefix: String::from("test"),
+        // app_prefix: String::from("test"),
+        public_key: String::from("test"),
         tx_sync_interval: None,
         genesis_block: Some(block),
         consensus: pos,
@@ -129,7 +130,7 @@ async fn test_generate_a_proof() {
 
     let coin_1_old = generate_a_dummy_coin(100);
 
-    let tx = sak_types::mock_mint_tc_custom(
+    let tx = sak_types::mock_mint_tc(
         coin_1_old.cm,
         coin_1_old.v,
         coin_1_old.k,

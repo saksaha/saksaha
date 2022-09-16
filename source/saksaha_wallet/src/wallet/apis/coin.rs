@@ -1,18 +1,19 @@
 use crate::wallet::Wallet;
 use crate::WalletError;
-use core::time::Duration;
 use sak_contract_std::CtrRequest;
 use sak_crypto::encode_hex;
 use sak_crypto::Scalar;
 use sak_crypto::ScalarExt;
 use sak_dist_ledger_meta::GAS;
-use sak_proofs::CoinProof;
-use sak_proofs::Hasher;
-use sak_proofs::NewCoin;
-use sak_proofs::OldCoin;
+use sak_proof::CoinProof;
+use sak_proof::Hasher;
+use sak_proof::NewCoin;
+use sak_proof::OldCoin;
+use sak_proof::DUMMY_MERKLE_RT;
+use sak_proof::DUMMY_SN;
+use sak_types::mock_coin_custom;
 use sak_types::AccountBalance;
-use sak_types::CoinRecord;
-use sak_types::CoinStatus;
+use sak_types::{CoinRecord, CoinStatus};
 use std::convert::TryInto;
 
 impl Wallet {
@@ -44,15 +45,15 @@ impl Wallet {
         println!("[coin info (w/o cm)]");
         for coin in self.get_db().schema.get_all_coins()? {
             println!(
-                // cm: {:?}\n \
                 "\
-                \tcoin_status: {:?}\tvalue: {:?}\t\
-                coin_idx: {:?}\tcm_idx: {:?}\t",
-                // coin.cm,
+               \tcoin_status: {:?}\tvalue: {:?}\t\
+                coin_idx: {:?}\tcm_idx: {:?}\t\n\
+                \tcm: {}",
                 coin.coin_status,
                 ScalarExt::into_u64(coin.v)?,
                 coin.coin_idx,
                 coin.cm_idx,
+                coin.cm,
             );
 
             if coin.coin_status == CoinStatus::Unused {
@@ -109,6 +110,25 @@ impl Wallet {
         Ok(auth_path)
     }
 
+    pub(crate) async fn prepare_dummy_auth_path(
+        &self,
+    ) -> Result<Vec<([u8; 32], bool)>, WalletError> {
+        let auth_path = {
+            let v = vec![
+                ([0u8; 32], false),
+                ([0u8; 32], false),
+                ([0u8; 32], false),
+                ([0u8; 32], false),
+                ([0u8; 32], false),
+                ([0u8; 32], false),
+            ];
+
+            v
+        };
+
+        Ok(auth_path)
+    }
+
     pub(crate) fn prepare_merkle_rt(
         &self,
         coin: &CoinRecord,
@@ -148,12 +168,12 @@ impl Wallet {
     ) -> Result<(CoinRecord, CoinRecord), WalletError> {
         let new_coin_1 = CoinRecord::new_random(
             ScalarExt::into_u64(old_value)? - GAS,
-            Some(0),
+            None,
             None,
             None,
         )?;
 
-        let new_coin_2 = CoinRecord::new_random(0, Some(1), None, None)?;
+        let new_coin_2 = CoinRecord::new_random(0, None, None, None)?;
 
         Ok((new_coin_1, new_coin_2))
     }
@@ -177,6 +197,27 @@ impl Wallet {
         Ok(pi_ser)
     }
 
+    pub(crate) fn prepare_proof_2_to_2(
+        &self,
+        old_coin_1: OldCoin,
+        old_coin_2: OldCoin,
+        new_coin_1: NewCoin,
+        new_coin_2: NewCoin,
+    ) -> Result<Vec<u8>, WalletError> {
+        println!("[+] making proof...");
+
+        let pi = CoinProof::generate_proof_2_to_2(
+            old_coin_1, old_coin_2, new_coin_1, new_coin_2,
+        )?;
+
+        let mut pi_ser = Vec::new();
+        pi.write(&mut pi_ser).unwrap();
+
+        println!("[!] pi serialized: {}", encode_hex(&pi_ser));
+
+        Ok(pi_ser)
+    }
+
     pub async fn send_pour_tx(
         &self,
         acc_addr: String,
@@ -191,11 +232,10 @@ impl Wallet {
             .get_next_available_coin()
             .ok_or("No usable coins")?;
 
-        // ---------------------------
+        //
         let cm_idx = self.prepare_cm_idx(coin).await?;
 
         let auth_path = self.prepare_auth_path(cm_idx).await?;
-        // ---------------------------
 
         let merkle_rt = self.prepare_merkle_rt(coin, auth_path.clone())?;
 
@@ -203,32 +243,63 @@ impl Wallet {
 
         let old_sn_1 = self.compute_sn(coin);
 
+        //
+
+        let dummy_coin = CoinRecord::new_dummy();
+
+        let dummy_auth_path = self.prepare_dummy_auth_path().await?;
+
+        let dummy_merkle_rt = DUMMY_MERKLE_RT;
+
+        let dummy_old_coin =
+            self.convert_to_old_coin(&dummy_coin, dummy_auth_path)?;
+
+        let dummy_old_sn_1 = DUMMY_SN;
+
+        //
+
         let (mut new_coin_1, mut new_coin_2) =
             self.prepare_2_new_coin_records(coin.v)?;
 
-        let pi = self.prepare_proof_1_to_2(
+        // let pi = self.prepare_proof_1_to_2(
+        //     old_coin,
+        //     new_coin_1.extract_new_coin(),
+        //     new_coin_2.extract_new_coin(),
+        // )?;
+
+        let pi = self.prepare_proof_2_to_2(
             old_coin,
+            dummy_old_coin,
             new_coin_1.extract_new_coin(),
             new_coin_2.extract_new_coin(),
         )?;
 
         let json_response = saksaha::send_tx_pour(
             self.saksaha_endpoint.clone(),
-            vec![old_sn_1],
+            vec![old_sn_1, dummy_old_sn_1],
             vec![new_coin_1.cm.to_bytes(), new_coin_2.cm.to_bytes()],
-            merkle_rt,
+            vec![merkle_rt, dummy_merkle_rt],
             pi,
             ctr_addr,
             ctr_request,
         )
         .await?;
 
-        println!("error: {:?}", json_response.error);
+        let tx_hash = match json_response.result {
+            Some(hash) => hash,
+            None => {
+                self.get_db().update_coin_status_to_failed(coin).await?;
 
-        let tx_hash = json_response.result.ok_or("Send_tx_pour failed")?;
+                return Err(format!(
+                    "Send transaction_pour response error: {:?}",
+                    json_response.error
+                )
+                .into());
+            }
+        };
+        // let tx_hash = json_response.result.ok_or("Send_tx_pour failed")?;
 
         // waiting for block is written
-        // tokio::time::sleep(Duration::from_millis(6000)).await;
 
         {
             self.get_db()
@@ -237,7 +308,6 @@ impl Wallet {
         }
 
         new_coin_1.update_tx_hash(tx_hash.clone());
-
         new_coin_2.update_tx_hash(tx_hash.clone());
 
         {
@@ -263,10 +333,10 @@ impl Wallet {
     ) -> Result<(), WalletError> {
         let my_balance = self.get_balance(acc_addr).await?;
 
-        let is_enough_balalnce = my_balance.val > GAS;
+        let is_enough_balalnce = my_balance.val >= GAS;
 
         if !is_enough_balalnce {
-            return Err(format!("you don't have enough coin").into());
+            return Err("you don't have enough coin".into());
         }
         Ok(())
     }
