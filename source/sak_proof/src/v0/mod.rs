@@ -13,6 +13,6 @@ pub use bls12_381::{Bls12, Scalar};
 
 // Saksaha zkp circuits
 pub use coin_proof::*;
-pub use sak_zkp_circuits::{Hasher, NewCoin, OldCoin};
+pub use sak_proof_circuit::{Hasher, NewCoin, OldCoin};
 
 pub type ProofError = Box<dyn std::error::Error + Send + Sync>;

@@ -16,7 +16,7 @@ type_extension = { path = "../type_extension" }
 sak_crypto = { path = "../sak_crypto" }
 sak_contract_std = { path = "../sak_contract_std" }
 sak_types = { path = "../sak_types" }
-sak_proofs = { path = "../sak_proofs" }
+sak_proof = { path = "../sak_proof" }
 log = "0.4"
 tui = "0.18.0"
 tui-logger = "0.8"

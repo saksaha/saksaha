@@ -5,7 +5,7 @@ use sak_dist_ledger::{
     Consensus, ConsensusError, DistLedger, DistLedgerApis, DistLedgerArgs,
 };
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
-use sak_proofs::{CoinProof, Hasher, NewCoin, OldCoin, Proof};
+use sak_proof::{CoinProof, Hasher, NewCoin, OldCoin, Proof};
 use sak_types::{BlockCandidate, TxCandidate};
 use type_extension::U8Array;
 
