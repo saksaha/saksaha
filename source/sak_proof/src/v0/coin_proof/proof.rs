@@ -4,7 +4,7 @@ use bellman::groth16::{
 };
 use pairing::MultiMillerLoop;
 use sak_crypto::{Bls12, OsRng, Scalar};
-use sak_zkp_circuits::{
+use sak_proof_circuit::{
     CoinProofCircuit1to2, CoinProofCircuit2to2, Hasher, NewCoin, OldCoin,
 };
 

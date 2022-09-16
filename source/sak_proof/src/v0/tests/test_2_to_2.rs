@@ -4,7 +4,7 @@ use bellman::groth16::{self, Parameters, Proof};
 use sak_crypto::MerkleTree;
 use sak_crypto::{Bls12, OsRng, Scalar, ScalarExt};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
-use sak_zkp_circuits::{CoinProofCircuit2to2, Hasher, NewCoin, OldCoin};
+use sak_proof_circuit::{CoinProofCircuit2to2, Hasher, NewCoin, OldCoin};
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::Write;

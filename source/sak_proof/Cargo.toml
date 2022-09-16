@@ -1,5 +1,5 @@
 [package]
-name = "sak_proofs"
+name = "sak_proof"
 version = "0.1.0"
 edition = "2018"
 
@@ -9,7 +9,7 @@ edition = "2018"
 sak_crypto = { path = "../sak_crypto" }
 sak_logger = { path = "../sak_logger" }
 sak_dist_ledger_meta = { path = "../sak_dist_ledger_meta" }
-sak_zkp_circuits = { path = "../sak_zkp_circuits" }
+sak_proof_circuit = { path = "../sak_proof_circuit" }
 type_extension = { path = "../type_extension" }
 log = "0.4.0"
 ff = "0.11"

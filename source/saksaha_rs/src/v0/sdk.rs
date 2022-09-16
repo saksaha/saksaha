@@ -10,8 +10,6 @@ use sak_types::{Cm, CmIdx, Tx};
 use serde::{Deserialize, Serialize};
 use std::time;
 
-pub const A: usize = 1;
-
 #[derive(Serialize, Deserialize, Debug)]
 pub struct QueryCtrRequest {
     pub ctr_addr: String,
@@ -358,34 +356,34 @@ pub async fn get_auth_path(
     Ok(json_response)
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct GenProofRequest {
-    // coin_1_old
-    pub addr_pk_1_old: [u8; 32],
-    pub addr_sk_1_old: [u8; 32],
-    pub rho_1_old: [u8; 32],
-    pub r_1_old: [u8; 32],
-    pub s_1_old: [u8; 32],
-    pub v_1_old: [u8; 32],
-    pub cm_1_old: [u8; 32],
-    pub auth_path_1_old: [Option<([u8; 32], bool)>; CM_TREE_DEPTH as usize],
+// #[derive(Serialize, Deserialize, Debug)]
+// pub struct GenProofRequest {
+//     // coin_1_old
+//     pub addr_pk_1_old: [u8; 32],
+//     pub addr_sk_1_old: [u8; 32],
+//     pub rho_1_old: [u8; 32],
+//     pub r_1_old: [u8; 32],
+//     pub s_1_old: [u8; 32],
+//     pub v_1_old: [u8; 32],
+//     pub cm_1_old: [u8; 32],
+//     pub auth_path_1_old: [Option<([u8; 32], bool)>; CM_TREE_DEPTH as usize],
 
-    // coin_1_new
-    pub addr_pk_1_new: [u8; 32],
-    pub rho_1_new: [u8; 32],
-    pub r_1_new: [u8; 32],
-    pub s_1_new: [u8; 32],
-    pub v_1_new: [u8; 32],
+//     // coin_1_new
+//     pub addr_pk_1_new: [u8; 32],
+//     pub rho_1_new: [u8; 32],
+//     pub r_1_new: [u8; 32],
+//     pub s_1_new: [u8; 32],
+//     pub v_1_new: [u8; 32],
 
-    // coin_2_new
-    pub addr_pk_2_new: [u8; 32],
-    pub rho_2_new: [u8; 32],
-    pub r_2_new: [u8; 32],
-    pub s_2_new: [u8; 32],
-    pub v_2_new: [u8; 32],
-}
+//     // coin_2_new
+//     pub addr_pk_2_new: [u8; 32],
+//     pub rho_2_new: [u8; 32],
+//     pub r_2_new: [u8; 32],
+//     pub s_2_new: [u8; 32],
+//     pub v_2_new: [u8; 32],
+// }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct GenProofResponse {
-    pub pi: Vec<Option<[u8; 32]>>,
-}
+// #[derive(Serialize, Deserialize, Debug)]
+// pub struct GenProofResponse {
+//     pub pi: Vec<Option<[u8; 32]>>,
+// }

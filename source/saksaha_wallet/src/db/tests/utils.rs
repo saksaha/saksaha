@@ -1,6 +1,6 @@
 use crate::{credential::WalletCredential, db::WalletDB};
 use sak_crypto::ScalarExt;
-use sak_proofs::Hasher;
+use sak_proof::Hasher;
 use sak_types::{CoinRecord, CoinStatus};
 use type_extension::U8Array;
 

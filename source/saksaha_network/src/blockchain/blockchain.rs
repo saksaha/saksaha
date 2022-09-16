@@ -2,7 +2,7 @@ use super::{genesis::GenesisBlock, Pos};
 use crate::SaksahaError;
 use sak_dist_ledger::{Consensus, DistLedger, DistLedgerArgs};
 use sak_p2p_id::Identity;
-use sak_proofs::CoinProof;
+use sak_proof::CoinProof;
 use std::sync::Arc;
 
 pub(crate) struct Blockchain {
