@@ -91,11 +91,19 @@ fn pi_gen_1() -> String {
     .expect("proof should be created");
 
     let mut pi_ser = Vec::new();
-    proof.write(&mut pi_ser).unwrap();
+    match proof.write(&mut pi_ser) {
+        Ok(_) => {
+            let s: String = match serde_json::to_string(&pi_ser) {
+                Ok(s) => s,
+                Err(err) => format!("serde fail, err: {}", err.to_string()),
+            };
 
-    let s: String = serde_json::to_string(&pi_ser).unwrap();
-
-    s
+            return s;
+        }
+        Err(err) => {
+            return format!("pi generate failed, {}", err.to_string());
+        }
+    };
 }
 
 pub struct TestContext {
@@ -526,11 +534,24 @@ pub fn mock_merkle_nodes_cm_1(
 
         let node_4_0 = hasher.mimc_scalar(node_3_0, node_3_1);
 
+        let node_4_1 = ScalarExt::parse_u64(0).unwrap();
+
+        let node_5_0 = hasher.mimc_scalar(node_4_0, node_4_1);
+
+        let node_5_1 = ScalarExt::parse_u64(0).unwrap();
+
+        let node_6_0 = hasher.mimc_scalar(node_5_0, node_5_1);
+
         m.insert("0_1", node_0_1);
         m.insert("1_1", node_1_1);
         m.insert("2_1", node_2_1);
         m.insert("3_1", node_3_1);
         m.insert("4_0", node_4_0);
+
+        m.insert("4_1", node_4_1);
+        m.insert("5_1", node_5_1);
+        m.insert("5_0", node_5_0);
+        m.insert("6_0", node_6_0);
 
         m
     };
@@ -660,11 +681,24 @@ pub fn mock_merkle_nodes_cm_2(
 
         let node_4_0 = hasher.mimc_scalar(node_3_0, node_3_1);
 
+        let node_4_1 = ScalarExt::parse_u64(0).unwrap();
+
+        let node_5_0 = hasher.mimc_scalar(node_4_0, node_4_1);
+
+        let node_5_1 = ScalarExt::parse_u64(0).unwrap();
+
+        let node_6_0 = hasher.mimc_scalar(node_5_0, node_5_1);
+
         m.insert("0_0", cm_old_1);
         m.insert("1_1", node_1_1);
         m.insert("2_1", node_2_1);
         m.insert("3_1", node_3_1);
         m.insert("4_0", node_4_0);
+
+        m.insert("4_1", node_4_1);
+        m.insert("5_1", node_5_1);
+        m.insert("5_0", node_5_0);
+        m.insert("6_0", node_6_0);
 
         m
     };
