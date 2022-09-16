@@ -4,8 +4,8 @@ use log::{debug, info, warn};
 use sak_contract_std::{CtrCallType, CtrRequest, ERROR_PLACEHOLDER};
 use sak_crypto::{Bls12, MerkleTree, ScalarExt};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
-use sak_proofs::{CoinProof, Hasher, Proof};
-use sak_proofs::{DUMMY_MERKLE_RT, DUMMY_SN};
+use sak_proof::{CoinProof, Hasher, Proof};
+use sak_proof::{DUMMY_MERKLE_RT, DUMMY_SN};
 use sak_types::{
     Block, BlockCandidate, CmIdx, MerkleRt, MintTxCandidate, PourTxCandidate,
     Sn, Tx, TxCandidate, TxCtrOp,

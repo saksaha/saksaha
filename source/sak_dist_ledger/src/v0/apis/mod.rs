@@ -5,7 +5,7 @@ mod pool;
 
 use crate::{Consensus, LedgerDB, SyncPool};
 use sak_crypto::MerkleTree;
-use sak_proofs::Hasher;
+use sak_proof::Hasher;
 use sak_vm::VM;
 use std::sync::Arc;
 

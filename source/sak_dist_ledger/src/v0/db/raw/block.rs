@@ -3,7 +3,7 @@ use crate::{LedgerError, MerkleNodeLoc};
 use sak_crypto::{Bls12, ScalarExt};
 use sak_kv_db::WriteBatch;
 use sak_kv_db::DB;
-use sak_proofs::{Hasher, Proof};
+use sak_proof::{Hasher, Proof};
 use sak_types::{
     BlockHash, BlockHeight, Cm, CmIdx, MerkleRt, MintTx, MintTxCandidate,
     PourTx, PourTxCandidate, Sn, Tx, TxCtrOp, TxHash, TxHeight, TxType,

@@ -8,10 +8,10 @@ use sak_crypto::MerkleTree;
 use sak_crypto::{rand, Scalar};
 use sak_crypto::{MerkleTreeSim, ScalarExt};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
-use sak_proofs::Hasher;
-use sak_proofs::NewCoin;
-use sak_proofs::OldCoin;
-use sak_proofs::{CoinProof, DUMMY_MERKLE_RT, DUMMY_SN};
+use sak_proof::Hasher;
+use sak_proof::NewCoin;
+use sak_proof::OldCoin;
+use sak_proof::{CoinProof, DUMMY_MERKLE_RT, DUMMY_SN};
 use std::collections::HashMap;
 use type_extension::U8Array;
 

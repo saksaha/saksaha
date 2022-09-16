@@ -7,7 +7,7 @@ use crate::SyncPool;
 use log::info;
 use sak_crypto::MerkleTree;
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
-use sak_proofs::Hasher;
+use sak_proof::Hasher;
 use sak_types::BlockCandidate;
 use sak_vm::VM;
 use std::sync::Arc;

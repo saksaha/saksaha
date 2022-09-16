@@ -1,6 +1,6 @@
 use core::fmt;
 use sak_crypto::ScalarExt;
-use sak_proofs::Hasher;
+use sak_proof::Hasher;
 use type_extension::U8Array;
 
 #[derive(Debug)]
@@ -20,14 +20,14 @@ impl fmt::Display for MockCoin {
         write!(
             fmt,
             "\
-            \n[!] Coin Info 
-[+] addr_sk: {:?}, 
-[+] addr_pk: {:?}, 
-[+] rho: {:?}, 
-[+] r: {:?}, 
-[+] s: {:?}, 
-[+] v: {:?}, 
-[+] k: {:?}, 
+            \n[!] Coin Info
+[+] addr_sk: {:?},
+[+] addr_pk: {:?},
+[+] rho: {:?},
+[+] r: {:?},
+[+] s: {:?},
+[+] v: {:?},
+[+] k: {:?},
 [+] cm: {:?}",
             ScalarExt::parse_arr(&self.addr_sk),
             ScalarExt::parse_arr(&self.addr_pk),

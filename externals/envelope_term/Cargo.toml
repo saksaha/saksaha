@@ -15,7 +15,7 @@ sak_crypto = { path = "../../source/sak_crypto" }
 sak_dist_ledger_meta = { path = "../../source/sak_dist_ledger_meta" }
 sak_types = { path = "../../source/sak_types" }
 sak_kv_db = { path = "../../source/sak_kv_db" }
-sak_proofs = { path = "../../source/sak_proofs" }
+sak_proof = { path = "../../source/sak_proof" }
 sak_p2p_id = { path = "../../source/sak_p2p_id" }
 saksaha = { path = "../../source/saksaha_rs" }
 saksaha_wallet = { path = "../../source/saksaha_wallet" }
