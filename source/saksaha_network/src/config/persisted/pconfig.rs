@@ -1,11 +1,11 @@
-use std::path::PathBuf;
-
-use crate::{pconfig::fs, SaksahaError};
+use super::fs;
+use crate::SaksahaError;
 use colored::Colorize;
 use log::{info, warn};
 use sak_crypto::{SakKey, ToEncodedPoint};
 use sak_p2p_addr::UnknownAddr;
 use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
 
 const INDEX_FILE_ALIAS: &str = "default";
 
