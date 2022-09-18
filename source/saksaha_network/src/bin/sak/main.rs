@@ -4,9 +4,14 @@ mod cli;
 use crate::cli::CLIArgs;
 use sak_logger::{terr, tinfo, RUST_LOG_ENV};
 use saksaha_network::{System, SystemRunArgs};
+use tracing_subscriber::prelude::__tracing_subscriber_SubscriberExt;
 
+use std::io;
 use tracing::info;
 use tracing_subscriber;
+// use tracing_subscriber::{fmt, subscribe::CollectExt, EnvFilter};
+use std::fs::File;
+use tracing_subscriber::{filter::LevelFilter, prelude::*, Layer};
 
 fn main() {
     println!("Saksaha is launching...");
@@ -37,6 +42,92 @@ fn main() {
 
     log::info!("power");
     println!("113");
+
+    // let dir = tempfile::tempdir().expect("Failed to create tempdir");
+
+    // let file_appender = tracing_appender::rolling::hourly(dir, "example.log");
+    // let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
+
+    // let collector = tracing_subscriber::registry()
+    //     .with(
+    //         EnvFilter::from_default_env()
+    //             .add_directive(tracing::Level::TRACE.into()),
+    //     )
+    //     .with(fmt::Subscriber::new().with_writer(io::stdout))
+    //     .with(fmt::Subscriber::new().with_writer(non_blocking));
+
+    // tracing::collect::set_global_default(collector)
+    //     .expect("Unable to set a global collector");
+
+    // let number_of_yaks = 3;
+    // // this creates a new event, outside of any spans.
+    // tracing::info!(number_of_yaks, "preparing to shave yaks");
+
+    // let number_shaved = yak_shave::shave_all(number_of_yaks);
+    // tracing::info!(
+    //     all_yaks_shaved = number_shaved == number_of_yaks,
+    //     "yak shaving completed."
+    // );
+
+    struct Config {
+        enable_log_file: bool,
+        enable_stdout: bool,
+        enable_stderr: bool,
+        // ...
+    }
+
+    // let cfg = Config::from_config_file()?;
+
+    // Based on our dynamically loaded config file, create any number of layers:
+    let mut layers = Vec::new();
+
+    // if cfg.enable_log_file {
+
+    // let dir = tempfile::tempdir().expect("Failed to create tempdir");
+    // let file_path = dir.path().join("myapp.log");
+    let file = File::create("po11.log").unwrap();
+
+    // println!("file_path: {:?}", file_path);
+
+    // let file = File::create(file_path).unwrap();
+
+    let layer = tracing_subscriber::fmt::layer()
+        .with_thread_names(true)
+        .with_target(true)
+        .json()
+        .with_writer(file)
+        // Box the layer as a type-erased trait object, so that it can
+        // be pushed to the `Vec`.
+        .boxed();
+
+    layers.push(layer);
+    // }
+
+    // if cfg.enable_stdout {
+    let layer = tracing_subscriber::fmt::layer()
+        .pretty()
+        .with_filter(LevelFilter::INFO)
+        // Box the layer as a type-erased trait object, so that it can
+        // be pushed to the `Vec`.
+        .boxed();
+
+    layers.push(layer);
+    // }
+
+    // if cfg.enable_stdout {
+    let layer = tracing_subscriber::fmt::layer()
+        .with_target(false)
+        .with_filter(LevelFilter::WARN)
+        // Box the layer as a type-erased trait object, so that it can
+        // be pushed to the `Vec`.
+        .boxed();
+
+    layers.push(layer);
+    // }
+
+    tracing_subscriber::registry().with(layers).init();
+
+    tracing::info!("power1");
 
     // let system = System {};
 
