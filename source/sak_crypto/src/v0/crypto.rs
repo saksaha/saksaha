@@ -24,7 +24,7 @@ pub fn keccak256(data: &[u8]) -> String {
     result
 }
 
-pub fn decode_hex(s: &String) -> std::result::Result<Vec<u8>, ParseIntError> {
+pub fn decode_hex(s: &String) -> Result<Vec<u8>, ParseIntError> {
     let is_odd: bool = s.len() % 2 == 1;
 
     if is_odd {
