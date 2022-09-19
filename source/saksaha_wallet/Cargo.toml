@@ -41,3 +41,7 @@ envelope_contract = { path = "../../externals/envelope_contract" }
 [[bin]]
 name = "wallet"
 path = "src/bin/wallet/main.rs"
+
+[lib]
+crate_type = ["rlib", "staticlib", "dylib"]
+doctest = false
