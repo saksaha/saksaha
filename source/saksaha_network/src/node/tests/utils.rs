@@ -30,7 +30,7 @@ pub(crate) struct DualNodeTestContext {
 }
 
 pub(crate) async fn make_test_context(
-    app_prefix: String,
+    public_key: String,
     p2p_port: Option<u16>,
     disc_port: Option<u16>,
     secret: String,
@@ -122,7 +122,7 @@ pub(crate) async fn make_test_context(
         .expect("P2P Host should be initialized");
 
     let blockchain =
-        Blockchain::init(app_prefix, None, None, None, identity.clone())
+        Blockchain::init(&public_key, None, None, None, identity.clone())
             .await
             .unwrap();
 

@@ -52,13 +52,19 @@ pub(crate) fn make_dummy_pos() -> Box<DummyPos> {
 pub(crate) async fn make_dist_ledger(block: BlockCandidate) -> DistLedger {
     let pos = make_dummy_pos();
 
+    let ledger_path = {
+        let config_dir = sak_fs::get_config_dir("SAKSAHA").unwrap();
+        config_dir.join("test").join("db/ledger")
+    };
+
     let dist_ledger_args = DistLedgerArgs {
         // app_prefix: String::from("test"),
-        public_key: String::from("test"),
+        // public_key: String::from("test"),
         tx_sync_interval: None,
         genesis_block: Some(block),
         consensus: pos,
         block_sync_interval: None,
+        ledger_path,
     };
 
     let dist_ledger = DistLedger::init(dist_ledger_args)

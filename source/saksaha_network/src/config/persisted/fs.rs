@@ -1,20 +1,21 @@
+use crate::fs;
 use crate::SaksahaError;
 use std::path::PathBuf;
 
 const CONFIG_FILE_NAME: &str = "config.yml";
 
-pub fn get_config_path(public_key: &String) -> Result<PathBuf, SaksahaError> {
-    let app_path = sak_fs::get_app_root_path("saksaha")?.join(public_key);
+// pub fn get_acc_dir(public_key: &String) -> Result<PathBuf, SaksahaError> {
+//     let acc_dir = fs::acc_dir(public_key)?;
 
-    Ok(app_path)
-}
+//     Ok(acc_dir)
+// }
 
 pub fn get_config_file_path(
-    app_prefix: &String,
+    public_key: &String,
 ) -> Result<PathBuf, SaksahaError> {
-    let app_path = sak_fs::get_app_root_path("saksaha")?.join(app_prefix);
+    let acc_dir = fs::acc_dir(public_key)?;
 
-    let config_path = app_path.join(CONFIG_FILE_NAME);
+    let config_file_path = acc_dir.join(CONFIG_FILE_NAME);
 
-    Ok(config_path)
+    Ok(config_file_path)
 }

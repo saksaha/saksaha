@@ -16,10 +16,11 @@ pub struct LedgerDB {
 
 impl LedgerDB {
     pub(crate) async fn init(
-        app_prefix: &String,
+        // app_prefix: &String,
+        db_path: &PathBuf,
     ) -> Result<LedgerDB, LedgerError> {
         let ledger_db_path = {
-            let db_path = Self::get_db_path(app_prefix)?;
+            // let db_path = Self::get_db_path(app_prefix)?;
 
             if !db_path.exists() {
                 std::fs::create_dir_all(db_path.clone())?;
@@ -60,13 +61,13 @@ impl LedgerDB {
         Ok(database)
     }
 
-    pub fn get_db_path(app_prefix: &str) -> Result<PathBuf, LedgerError> {
-        let app_path = sak_fs::get_app_root_path(APP_NAME)?.join(app_prefix);
+    // pub fn get_db_path(app_prefix: &str) -> Result<PathBuf, LedgerError> {
+    //     let app_path = sak_fs::get_app_root_path(APP_NAME)?.join(app_prefix);
 
-        let db_path = app_path.join("db").join("ledger");
+    //     let db_path = app_path.join("db").join("ledger");
 
-        Ok(db_path)
-    }
+    //     Ok(db_path)
+    // }
 
     pub(crate) fn make_cf_descriptors() -> Vec<ColumnFamilyDescriptor> {
         vec![

@@ -18,7 +18,7 @@ pub(crate) struct MockClient {
 }
 
 async fn mock_client(
-    app_prefix: String,
+    public_key: String,
     p2p_port: Option<u16>,
     disc_port: Option<u16>,
     secret: String,
@@ -86,7 +86,7 @@ async fn mock_client(
     // }
 
     let blockchain =
-        Blockchain::init(app_prefix, None, None, None, identity.clone())
+        Blockchain::init(&public_key, None, None, None, identity.clone())
             .await
             .unwrap();
 

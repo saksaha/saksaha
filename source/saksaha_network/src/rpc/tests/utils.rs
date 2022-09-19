@@ -48,7 +48,9 @@ pub(crate) async fn make_test_context() -> (RPC, SocketAddr, Arc<Machine>) {
     };
 
     let blockchain = {
-        Blockchain::init("test".to_string(), None, None, None, identity.clone())
+        let pk = String::from("test");
+
+        Blockchain::init(&pk, None, None, None, identity.clone())
             .await
             .unwrap()
     };
@@ -172,7 +174,7 @@ pub(crate) async fn make_blockchain() -> Blockchain {
     };
 
     let blockchain = Blockchain::init(
-        String::from("test"),
+        &String::from("test"),
         None,
         None,
         None,

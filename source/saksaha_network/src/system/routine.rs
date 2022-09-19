@@ -139,7 +139,7 @@ impl Routine {
         let blockchain = {
             let b = Blockchain::init(
                 // config.app_prefix,
-                config.p2p.public_key_str,
+                &config.p2p.public_key_str,
                 config.blockchain.tx_sync_interval,
                 None,
                 config.blockchain.block_sync_interval,

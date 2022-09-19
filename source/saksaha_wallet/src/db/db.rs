@@ -57,7 +57,7 @@ impl WalletDB {
         };
 
         let kv_db = match KeyValueDatabase::new(
-            wallet_db_path,
+            &wallet_db_path,
             options,
             WalletDBSchema::make_cf_descriptors(),
         ) {

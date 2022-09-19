@@ -2,12 +2,20 @@ use crate::LedgerDB;
 use log::info;
 use sak_kv_db::{Options, DB};
 
+// Later this could be some path in /tmp/
+const APP_NAME: &str = "saksaha";
+
 pub(crate) struct TestUtil;
 
 impl TestUtil {
     pub fn init_test(app_prefixes: Vec<&str>) {
         for app_prefix in app_prefixes {
-            let db_path = LedgerDB::get_db_path(app_prefix).unwrap();
+            let db_path = {
+                let config_dir = sak_fs::get_config_dir(APP_NAME).unwrap();
+                let p = config_dir.join(app_prefix).join("db/ledger");
+                p
+            };
+
             if db_path.is_dir() {
                 DB::destroy(&Options::default(), db_path).unwrap();
             }
