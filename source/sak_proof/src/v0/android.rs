@@ -12,15 +12,6 @@ use type_extension::U8Array;
 
 pub type Callback = unsafe extern "C" fn(*const c_char) -> ();
 
-// #[no_mangle]
-// #[allow(non_snake_case)]
-// pub extern "C" fn invokeCallbackViaJNA(callback: Callback) {
-//     let s = CString::new("Hello from Rust111").unwrap();
-//     unsafe {
-//         callback(s.as_ptr());
-//     }
-// }
-
 #[no_mangle]
 #[allow(non_snake_case)]
 pub extern "C" fn Java_com_saksaha_saksahawallet_MainActivity_invokeCallbackViaJNI(

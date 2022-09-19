@@ -6,6 +6,9 @@ mod merkle;
 mod random;
 mod scalar_ext;
 
+// android
+mod android;
+
 #[cfg(test)]
 mod tests;
 
