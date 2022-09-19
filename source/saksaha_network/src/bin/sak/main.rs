@@ -2,46 +2,38 @@ mod app;
 mod cli;
 
 use crate::cli::CLIArgs;
-use sak_logger::{terr, tinfo, RUST_LOG_ENV};
+use log::{error, info};
+use sak_logger::RUST_LOG_ENV;
 use saksaha_network::{System, SystemRunArgs};
-use tracing_subscriber::prelude::__tracing_subscriber_SubscriberExt;
 
-use std::io;
-use tracing::info;
-use tracing_subscriber;
-// use tracing_subscriber::{fmt, subscribe::CollectExt, EnvFilter};
-use std::fs::File;
-use tracing_subscriber::{filter::LevelFilter, prelude::*, Layer};
+// use std::io;
+// // use tracing::info;
+// use tracing_subscriber;
+// // use tracing_subscriber::{fmt, subscribe::CollectExt, EnvFilter};
+// use std::fs::File;
+// use tracing_subscriber::{filter::LevelFilter, prelude::*, Layer};
 
 fn main() {
     println!("Saksaha is launching...");
 
-    if std::env::var("RUST_LOG").is_err() {
-        std::env::set_var("RUST_LOG", RUST_LOG_ENV);
-    }
+    // if std::env::var("RUST_LOG").is_err() {
+    //     std::env::set_var("RUST_LOG", RUST_LOG_ENV);
+    // }
 
     // let _ = sak_logger::init(false);
 
-    // let cli_args: CLIArgs = match cli::get_args() {
-    //     Ok(a) => {
-    //         tinfo!("saksaha", "sak", "Arguments parsed: {:?}", a);
+    let cli_args: CLIArgs = match cli::get_args() {
+        Ok(a) => {
+            info!("cli arg parsed: {:?}", a);
 
-    //         a
-    //     }
-    //     Err(err) => {
-    //         terr!(
-    //             "saksaha",
-    //             "sak",
-    //             "Can't parse command line arguments, err: {}",
-    //             err
-    //         );
+            a
+        }
+        Err(err) => {
+            error!("Can't parse cli args, err: {}", err);
 
-    //         std::process::exit(1);
-    //     }
-    // };
-
-    log::info!("power");
-    println!("113");
+            std::process::exit(1);
+        }
+    };
 
     // let dir = tempfile::tempdir().expect("Failed to create tempdir");
 
@@ -69,100 +61,93 @@ fn main() {
     //     "yak shaving completed."
     // );
 
-    struct Config {
-        enable_log_file: bool,
-        enable_stdout: bool,
-        enable_stderr: bool,
-        // ...
-    }
-
-    // let cfg = Config::from_config_file()?;
-
     // Based on our dynamically loaded config file, create any number of layers:
-    let mut layers = Vec::new();
+    // let mut layers = Vec::new();
 
-    // if cfg.enable_log_file {
+    // // if cfg.enable_log_file {
 
-    // let dir = tempfile::tempdir().expect("Failed to create tempdir");
-    // let file_path = dir.path().join("myapp.log");
-    let file = File::create("po11.log").unwrap();
+    // // let dir = tempfile::tempdir().expect("Failed to create tempdir");
+    // // let file_path = dir.path().join("myapp.log");
 
-    // println!("file_path: {:?}", file_path);
+    // let file = File::create("po11.log").unwrap();
 
-    // let file = File::create(file_path).unwrap();
+    // // println!("file_path: {:?}", file_path);
 
-    let layer = tracing_subscriber::fmt::layer()
-        .with_thread_names(true)
-        .with_target(true)
-        .json()
-        .with_writer(file)
-        // Box the layer as a type-erased trait object, so that it can
-        // be pushed to the `Vec`.
-        .boxed();
+    // // let file = File::create(file_path).unwrap();
 
-    layers.push(layer);
-    // }
+    // let layer = tracing_subscriber::fmt::layer()
+    //     .with_thread_names(true)
+    //     .with_target(true)
+    //     .json()
+    //     .with_writer(file)
+    //     // Box the layer as a type-erased trait object, so that it can
+    //     // be pushed to the `Vec`.
+    //     .boxed();
 
-    // if cfg.enable_stdout {
-    let layer = tracing_subscriber::fmt::layer()
-        .pretty()
-        .with_filter(LevelFilter::INFO)
-        // Box the layer as a type-erased trait object, so that it can
-        // be pushed to the `Vec`.
-        .boxed();
+    // layers.push(layer);
+    // // }
 
-    layers.push(layer);
-    // }
+    // // if cfg.enable_stdout {
+    // let layer = tracing_subscriber::fmt::layer()
+    //     .pretty()
+    //     .with_filter(LevelFilter::INFO)
+    //     // Box the layer as a type-erased trait object, so that it can
+    //     // be pushed to the `Vec`.
+    //     .boxed();
 
-    // if cfg.enable_stdout {
-    let layer = tracing_subscriber::fmt::layer()
-        .with_target(false)
-        .with_filter(LevelFilter::WARN)
-        // Box the layer as a type-erased trait object, so that it can
-        // be pushed to the `Vec`.
-        .boxed();
+    // layers.push(layer);
+    // // }
 
-    layers.push(layer);
-    // }
+    // // if cfg.enable_stdout {
+    // let layer = tracing_subscriber::fmt::layer()
+    //     .with_target(false)
+    //     .with_filter(LevelFilter::WARN)
+    //     // Box the layer as a type-erased trait object, so that it can
+    //     // be pushed to the `Vec`.
+    //     .boxed();
 
-    tracing_subscriber::registry().with(layers).init();
+    // layers.push(layer);
+    // // }
 
-    tracing::info!("power1");
+    // tracing_subscriber::registry().with(layers).init();
 
-    // let system = System {};
+    // tracing::info!("power1");
 
-    // let sys_run_args = SystemRunArgs {
-    //     disc_port: cli_args.disc_port,
-    //     disc_dial_interval: cli_args.disc_dial_interval,
-    //     disc_table_capacity: cli_args.disc_table_capacity,
-    //     disc_task_interval: cli_args.disc_task_interval,
-    //     disc_task_queue_capacity: cli_args.disc_task_queue_capacity,
-    //     p2p_task_interval: cli_args.p2p_task_interval,
-    //     p2p_task_queue_capacity: cli_args.p2p_task_queue_capacity,
-    //     p2p_peer_table_capacity: cli_args.p2p_peer_table_capacity,
-    //     p2p_max_conn_count: cli_args.p2p_max_conn_count,
-    //     p2p_dial_interval: cli_args.p2p_dial_interval,
-    //     p2p_port: cli_args.p2p_port,
-    //     rpc_port: cli_args.rpc_port,
-    //     addr_expire_duration: cli_args.addr_expire_duration,
-    //     addr_monitor_interval: cli_args.addr_monitor_interval,
-    //     bootstrap_urls: cli_args.bootstrap_urls,
-    //     cfg_profile: cli_args.cfg_profile,
-    //     miner: cli_args.miner,
-    //     mine_interval: cli_args.mine_interval,
-    //     node_task_min_interval: cli_args.node_task_min_interval,
-    //     peer_register_interval: cli_args.peer_register_interval,
-    //     tx_sync_interval: cli_args.tx_sync_interval,
-    //     block_sync_interval: cli_args.block_sync_interval,
-    //     app_prefix: cli_args.app_prefix,
-    // };
+    let system = System {};
 
-    // match system.run(sys_run_args) {
-    //     Ok(_) => (),
-    //     Err(err) => {
-    //         terr!("saksaha", "Can't start the system, err: {}", err);
+    let sys_run_args = SystemRunArgs {
+        disc_port: cli_args.disc_port,
+        disc_dial_interval: cli_args.disc_dial_interval,
+        disc_table_capacity: cli_args.disc_table_capacity,
+        disc_task_interval: cli_args.disc_task_interval,
+        disc_task_queue_capacity: cli_args.disc_task_queue_capacity,
+        p2p_task_interval: cli_args.p2p_task_interval,
+        p2p_task_queue_capacity: cli_args.p2p_task_queue_capacity,
+        p2p_peer_table_capacity: cli_args.p2p_peer_table_capacity,
+        p2p_max_conn_count: cli_args.p2p_max_conn_count,
+        p2p_dial_interval: cli_args.p2p_dial_interval,
+        p2p_port: cli_args.p2p_port,
+        rpc_port: cli_args.rpc_port,
+        addr_expire_duration: cli_args.addr_expire_duration,
+        addr_monitor_interval: cli_args.addr_monitor_interval,
+        bootstrap_urls: cli_args.bootstrap_urls,
+        cfg_profile: cli_args.cfg_profile,
+        miner: cli_args.miner,
+        mine_interval: cli_args.mine_interval,
+        node_task_min_interval: cli_args.node_task_min_interval,
+        peer_register_interval: cli_args.peer_register_interval,
+        tx_sync_interval: cli_args.tx_sync_interval,
+        block_sync_interval: cli_args.block_sync_interval,
+        public_key: cli_args.public_key,
+        // app_prefix: cli_args.app_prefix,
+    };
 
-    //         std::process::exit(1);
-    //     }
-    // };
+    match system.run(sys_run_args) {
+        Ok(_) => (),
+        Err(err) => {
+            error!("Can't start the system, err: {}", err);
+
+            std::process::exit(1);
+        }
+    };
 }

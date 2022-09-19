@@ -3,6 +3,7 @@ use super::SaksahaError;
 use super::SystemRunArgs;
 use crate::blockchain::Blockchain;
 use crate::config::Config;
+use crate::fs;
 use crate::machine::Machine;
 use crate::node::LocalNode;
 use crate::p2p::{P2PHost, P2PHostArgs};
@@ -12,9 +13,19 @@ use crate::system::SystemHandle;
 use crate::PConfig;
 use colored::Colorize;
 use log::{error, info, warn};
+use sak_logger::RUST_LOG_ENV;
 use sak_p2p_id::Identity;
 use sak_p2p_peertable::PeerTable;
 use std::sync::Arc;
+
+use std::fs::File;
+use std::io;
+use tracing_subscriber;
+use tracing_subscriber::{
+    filter::{EnvFilter, LevelFilter},
+    prelude::*,
+    Layer,
+};
 
 pub(super) struct Routine {
     pub(super) shutdown_manager: ShutdownMng,
@@ -46,6 +57,10 @@ impl Routine {
         };
 
         info!("Resolved config: {:?}", config);
+
+        setup_logger(&config)?;
+
+        return Ok(());
 
         let peer_table = {
             let ps =
@@ -138,7 +153,6 @@ impl Routine {
 
         let blockchain = {
             let b = Blockchain::init(
-                // config.app_prefix,
                 &config.p2p.public_key_str,
                 config.blockchain.tx_sync_interval,
                 None,
@@ -230,4 +244,64 @@ impl Routine {
 
         Ok(())
     }
+}
+
+fn setup_logger(config: &Config) -> Result<(), SaksahaError> {
+    if std::env::var("RUST_LOG").is_err() {
+        std::env::set_var("RUST_LOG", "error");
+    }
+
+    let a = std::env::var("RUST_LOG");
+    println!("555, {:?}", a);
+
+    let public_key = &config.p2p.public_key_str;
+
+    let log_dir = {
+        let acc_dir = fs::acc_dir(public_key)?;
+        acc_dir.join("logs")
+    };
+
+    std::fs::create_dir_all(&log_dir)?;
+
+    let mut layers = Vec::new();
+
+    let log_file_path = log_dir.join("file.log");
+
+    let file = std::fs::File::create(&log_file_path).unwrap();
+
+    let layer = tracing_subscriber::fmt::layer()
+        .with_thread_names(true)
+        .with_target(true)
+        .with_writer(file)
+        // .json()
+        .with_filter(EnvFilter::from_default_env())
+        .with_filter(LevelFilter::TRACE)
+        // Box the layer as a type-erased trait object, so that it can
+        // be pushed to the `Vec`.
+        .boxed();
+
+    layers.push(layer);
+
+    // let layer = tracing_subscriber::fmt::layer()
+    //     .pretty()
+    //     .with_filter(LevelFilter::INFO)
+    //     .boxed();
+
+    // layers.push(layer);
+
+    let layer = tracing_subscriber::fmt::layer()
+        .with_target(true)
+        .with_filter(EnvFilter::from_default_env())
+        .with_filter(LevelFilter::TRACE)
+        .boxed();
+
+    layers.push(layer);
+
+    tracing_subscriber::registry().with(layers).try_init()?;
+
+    tracing::info!("info 1");
+    tracing::warn!("warn 1");
+    tracing::error!("error 1");
+
+    Ok(())
 }
