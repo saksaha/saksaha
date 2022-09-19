@@ -1,3 +1,4 @@
+use crate::CoinProof;
 use bls12_381::Scalar;
 use jni::objects::{JClass, JObject, JValue};
 use jni::JNIEnv;
@@ -8,8 +9,6 @@ use std::collections::HashMap;
 use std::ffi::CString;
 use std::os::raw::c_char;
 use type_extension::U8Array;
-
-use crate::CoinProof;
 
 pub type Callback = unsafe extern "C" fn(*const c_char) -> ();
 
