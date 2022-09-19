@@ -1,3 +1,4 @@
+mod android;
 mod coin_proof;
 
 #[cfg(test)]
@@ -14,5 +15,8 @@ pub use bls12_381::{Bls12, Scalar};
 // Saksaha zkp circuits
 pub use coin_proof::*;
 pub use sak_proof_circuit::{Hasher, NewCoin, OldCoin};
+
+// android
+pub use android::*;
 
 pub type ProofError = Box<dyn std::error::Error + Send + Sync>;
