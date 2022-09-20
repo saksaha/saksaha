@@ -26,4 +26,8 @@ impl SakKey {
         let h = crate::keccak256(d);
         h[24..].to_string()
     }
+
+    pub fn foo() -> String {
+        String::from("power 1")
+    }
 }

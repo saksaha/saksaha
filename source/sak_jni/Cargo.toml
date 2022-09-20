@@ -1,0 +1,18 @@
+[package]
+name = "sak_jni"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+jni = "0.5.2"
+sak_proof = { path = "../sak_proof" }
+sak_crypto = { path = "../sak_crypto" }
+
+[dev-dependencies]
+sak_test_utils = { path = "../sak_test_utils" }
+
+[lib]
+crate_type = ["rlib", "staticlib", "dylib"]
+doctest = false

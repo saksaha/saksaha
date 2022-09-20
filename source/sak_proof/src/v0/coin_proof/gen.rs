@@ -12,38 +12,7 @@ use type_extension::U8Array;
 
 pub type Callback = unsafe extern "C" fn(*const c_char) -> ();
 
-// #[no_mangle]
-// #[allow(non_snake_case)]
-// pub extern "C" fn invokeCallbackViaJNA(callback: Callback) {
-//     let s = CString::new("Hello from Rust111").unwrap();
-//     unsafe {
-//         callback(s.as_ptr());
-//     }
-// }
-
-#[no_mangle]
-#[allow(non_snake_case)]
-pub extern "C" fn Java_com_saksaha_saksahawallet_MainActivity_invokeCallbackViaJNI(
-    env: JNIEnv,
-    _class: JClass,
-    callback: JObject,
-) {
-    // let s = String::from("Hello from Rust333");
-    let s = pi_gen_1();
-
-    // processing,
-
-    let response = env.new_string(&s).expect("Couldn't create java string!");
-    env.call_method(
-        callback,
-        "callback",
-        "(Ljava/lang/String;)V",
-        &[JValue::from(JObject::from(response))],
-    )
-    .unwrap();
-}
-
-fn pi_gen_1() -> String {
+pub fn pi_gen_1() -> String {
     let test_context = make_test_context_2_to_2();
 
     let coin_1_old = OldCoin {
