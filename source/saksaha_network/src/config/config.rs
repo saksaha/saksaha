@@ -1,8 +1,8 @@
 // use super::profiled::ProfiledConfig;
 use super::{dev_local_1, dev_local_2};
 use crate::{system::SystemRunArgs, PConfig, PersistedP2PConfig, SaksahaError};
-use log::{info, warn};
 use sak_crypto::SakKey;
+use sak_logger::{info, warn};
 use sak_p2p_addr::UnknownAddr;
 
 #[derive(Debug)]

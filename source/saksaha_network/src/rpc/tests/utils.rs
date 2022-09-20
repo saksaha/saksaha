@@ -3,7 +3,7 @@ use crate::rpc::{RPCArgs, RPC};
 use crate::system::SystemHandle;
 use crate::{blockchain::Blockchain, machine::Machine};
 use colored::*;
-use log::info;
+use sak_logger::info;
 use sak_p2p_id::Identity;
 use sak_p2p_peertable::PeerTable;
 use sak_types::{BlockCandidate, Tx, TxCandidate};

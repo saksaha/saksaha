@@ -4,7 +4,7 @@ use crate::p2p::{
 };
 use crate::p2p::{P2PHost, P2PHostArgs};
 use colored::*;
-use log::info;
+use sak_logger::info;
 use sak_p2p_addr::{AddrStatus, UnknownAddr};
 use sak_p2p_discovery::{Discovery, DiscoveryArgs};
 use sak_p2p_id::Identity;

@@ -1,6 +1,6 @@
 use crate::machine::Machine;
 use colored::Colorize;
-use log::{error, info, warn};
+use sak_logger::{error, info, warn};
 use std::{
     sync::Arc,
     time::{Duration, SystemTime},

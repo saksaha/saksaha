@@ -12,8 +12,8 @@ use crate::rpc::RPC;
 use crate::system::SystemHandle;
 use crate::PConfig;
 use colored::Colorize;
-use log::{error, info, warn};
 use sak_logger::RUST_LOG_ENV;
+use sak_logger::{error, info, warn};
 use sak_p2p_id::Identity;
 use sak_p2p_peertable::PeerTable;
 use std::sync::Arc;
@@ -61,6 +61,8 @@ impl Routine {
 
             sak_logger::setup_logger2(&log_dir)?;
         }
+
+        tracing::info!("power 33");
 
         let peer_table = {
             let ps =

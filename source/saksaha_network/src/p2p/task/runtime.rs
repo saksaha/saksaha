@@ -1,5 +1,5 @@
 use super::{handler, P2PTask};
-use log::{debug, error};
+use sak_logger::{debug, error};
 use sak_task_queue::TaskQueue;
 use std::{
     sync::Arc,

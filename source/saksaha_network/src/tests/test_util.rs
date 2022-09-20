@@ -1,7 +1,7 @@
 use crate::fs;
-use log::info;
 use sak_dist_ledger::LedgerDB;
 use sak_kv_db::{Options, DB};
+use sak_logger::info;
 use std::path::{Path, PathBuf};
 
 pub(crate) struct TestUtil;

@@ -1,7 +1,7 @@
 use super::handler::Handler;
 use crate::p2p::P2PHostError;
 use colored::Colorize;
-use log::{debug, info, warn};
+use sak_logger::{debug, info, warn};
 use sak_p2p_discovery::AddrTable;
 use sak_p2p_id::Identity;
 use sak_p2p_peertable::PeerTable;

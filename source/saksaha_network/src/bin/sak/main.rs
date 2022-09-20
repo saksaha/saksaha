@@ -2,8 +2,8 @@ mod app;
 mod cli;
 
 use crate::cli::CLIArgs;
-use log::{error, info};
 use sak_logger::RUST_LOG_ENV;
+use sak_logger::{error, info};
 use saksaha_network::{System, SystemRunArgs};
 
 fn main() {
