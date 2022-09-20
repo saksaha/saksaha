@@ -5,7 +5,7 @@ use sak_p2p_id::Credential;
 use serde::{Deserialize, Serialize};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-#[derive(Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct WalletCredential {
     pub public_key: String,
     pub secret: String,
