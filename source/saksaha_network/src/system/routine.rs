@@ -49,7 +49,7 @@ impl Routine {
 
         info!("Resolved config: {:?}", config);
 
-        {
+        let _logger = {
             let public_key = &config.p2p.public_key_str;
 
             let log_dir = {
@@ -59,10 +59,9 @@ impl Routine {
 
             std::fs::create_dir_all(&log_dir)?;
 
-            sak_logger::setup_logger2(&log_dir)?;
-        }
-
-        tracing::info!("power 33");
+            let l = sak_logger::setup_logger2(&log_dir)?;
+            l
+        };
 
         let peer_table = {
             let ps =
