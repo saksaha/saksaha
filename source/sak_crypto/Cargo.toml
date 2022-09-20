@@ -27,5 +27,4 @@ jni = "0.5.2"
 sak_test_utils = { path = "../sak_test_utils" }
 
 [lib]
-crate_type = ["rlib", "staticlib", "dylib"]
 doctest = false

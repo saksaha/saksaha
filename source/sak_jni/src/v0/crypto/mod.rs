@@ -1,33 +1,14 @@
 use jni::objects::{JClass, JObject, JValue};
 use jni::JNIEnv;
+use sak_crypto;
 use std::ffi::CString;
 use std::os::raw::c_char;
 
 pub type Callback = unsafe extern "C" fn(*const c_char) -> ();
 
-// #[no_mangle]
-// #[allow(non_snake_case)]
-// pub extern "C" fn Java_jni_saksaha_Saksaha_func(
-//     env: JNIEnv,
-//     _class: JClass,
-//     callback: JObject,
-// ) {
-//     let s = String::from("Hello from Rust 555");
-
-//     let response = env.new_string(&s).expect("Couldn't create java string!");
-
-//     env.call_method(
-//         callback,
-//         "callback",
-//         "(Ljava/lang/String;)V",
-//         &[JValue::from(JObject::from(response))],
-//     )
-//     .unwrap();
-// }
-
 #[no_mangle]
 #[allow(non_snake_case)]
-pub extern "C" fn Java_jni_saksaha_Saksaha_generateCredential(
+pub extern "C" fn Java_jni_saksaha_sakCrypto_SakCrypto_generateCredential(
     env: JNIEnv,
     _class: JClass,
     callback: JObject,
@@ -46,7 +27,9 @@ pub extern "C" fn Java_jni_saksaha_Saksaha_generateCredential(
     //     acc_addr,
     // };
 
-    let s = String::from("Hello from Rust 555");
+    let s = sak_crypto::SakKey::foo();
+
+    // let s = String::from("Hello from Rust 111");
 
     let response = env.new_string(&s).expect("Couldn't create java string!");
 

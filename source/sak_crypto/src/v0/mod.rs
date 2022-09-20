@@ -6,8 +6,6 @@ mod merkle;
 mod random;
 mod scalar_ext;
 
-mod jni;
-
 #[cfg(test)]
 mod tests;
 
