@@ -40,3 +40,27 @@ pub extern "C" fn Java_jni_saksaha_sakCrypto_SakCrypto_generateCredential(
 
     response.into_inner()
 }
+
+#[no_mangle]
+#[allow(non_snake_case)]
+pub extern "C" fn Java_jni_saksaha_sakCrypto_SakCrypto_newRandom(
+    env: JNIEnv,
+    _class: JClass,
+    input: JString,
+    // callback: JObject,
+) -> jstring {
+    let c = sak_crypto::Credential::new_random().unwrap();
+
+    let s = serde_json::to_string(&c).unwrap();
+
+    let input: String = env
+        .get_string(input)
+        .expect("Couldn't get java string!")
+        .into();
+
+    let ret = format!("power: {}, input: {}", s, input);
+
+    let response = env.new_string(&ret).expect("Couldn't create java string!");
+
+    response.into_inner()
+}
