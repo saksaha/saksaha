@@ -62,8 +62,6 @@ impl Routine {
             sak_logger::setup_logger2(&log_dir)?;
         }
 
-        return Ok(());
-
         let peer_table = {
             let ps =
                 PeerTable::init(config.p2p.p2p_peer_table_capacity).await?;

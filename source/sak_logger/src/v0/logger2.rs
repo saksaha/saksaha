@@ -2,7 +2,8 @@ use crate::{LoggerError, RUST_LOG_ENV};
 use chrono::Local;
 use colored::Colorize;
 use std::path::PathBuf;
-use tracing::{Event, Level, Subscriber};
+pub use tracing::{debug, error, info, trace, warn};
+use tracing::{Event, Subscriber};
 use tracing_subscriber;
 use tracing_subscriber::fmt::{
     format, FmtContext, FormatEvent, FormatFields, FormattedFields,
@@ -33,6 +34,7 @@ pub fn setup_logger2(log_dir: &PathBuf) -> Result<(), LoggerError> {
     let layer = tracing_subscriber::fmt::layer()
         .event_format(ConsoleLogFormatter)
         .with_filter(EnvFilter::from_default_env())
+        .with_filter(LevelFilter::INFO)
         .boxed();
 
     layers.push(layer);
