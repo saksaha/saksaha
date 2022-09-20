@@ -1,4 +1,5 @@
-use jni::objects::{JClass, JObject, JValue};
+use jni::objects::{JClass, JObject, JString, JValue};
+use jni::sys::jstring;
 use jni::JNIEnv;
 use std::collections::HashMap;
 use std::ffi::CString;
@@ -11,17 +12,18 @@ pub type Callback = unsafe extern "C" fn(*const c_char) -> ();
 pub extern "C" fn Java_jni_saksaha_sakProof_SakProof_generateProof(
     env: JNIEnv,
     _class: JClass,
-    callback: JObject,
-) {
+    input: JString,
+) -> jstring {
     let s = sak_proof::pi_gen_1();
 
-    let response = env.new_string(&s).expect("Couldn't create java string!");
+    let input: String = env
+        .get_string(input)
+        .expect("Couldn't get java string!")
+        .into();
 
-    env.call_method(
-        callback,
-        "callback",
-        "(Ljava/lang/String;)V",
-        &[JValue::from(JObject::from(response))],
-    )
-    .unwrap();
+    let ret = format!("result: {}, input: {}", s, input);
+
+    let response = env.new_string(&ret).expect("Couldn't create java string!");
+
+    response.into_inner()
 }
