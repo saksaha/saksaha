@@ -1,9 +1,9 @@
 use crate::cfs;
 use crate::LedgerError;
-use log::info;
 use sak_kv_db::{
     BoundColumnFamily, ColumnFamilyDescriptor, KeyValueDatabase, Options, DB,
 };
+use sak_logger::info;
 use std::path::PathBuf;
 use std::sync::Arc;
 

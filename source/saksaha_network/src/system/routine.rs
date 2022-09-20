@@ -59,7 +59,7 @@ impl Routine {
 
             std::fs::create_dir_all(&log_dir)?;
 
-            let l = sak_logger::setup_logger2(&log_dir)?;
+            let l = sak_logger::setup_logger2(&log_dir, "saksaha.log")?;
             l
         };
 

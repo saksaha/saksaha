@@ -1,6 +1,6 @@
 use crate::LedgerDB;
-use log::info;
 use sak_kv_db::{Options, DB};
+use sak_logger::info;
 
 // Later this could be some path in /tmp/
 const APP_NAME: &str = "saksaha";

@@ -1,7 +1,7 @@
 use super::{response, Handler, RouteState};
 use hyper::{Body, Request, Response};
 use hyper_server::MiddlewareResult;
-use log::debug;
+use sak_logger::debug;
 use sak_rpc_interface::JsonRequest;
 use std::{collections::HashMap, sync::Arc};
 
