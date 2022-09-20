@@ -1,13 +1,7 @@
 use crate::{LoggerError, RUST_LOG_ENV};
 use chrono::Local;
 use colored::Colorize;
-use env_logger::{Builder, Env, Logger};
-use std::cmp::min;
-use std::fs::File;
-use std::io;
-use std::io::Write;
 use std::path::PathBuf;
-use std::sync::atomic::AtomicBool;
 use tracing::{Event, Level, Subscriber};
 use tracing_subscriber;
 use tracing_subscriber::fmt::{
@@ -20,22 +14,20 @@ use tracing_subscriber::{
     Layer,
 };
 
+const FILE_NAME_PREFIX: &str = "saksaha.log";
+
 pub fn setup_logger2(log_dir: &PathBuf) -> Result<(), LoggerError> {
     if std::env::var("RUST_LOG").is_err() {
         std::env::set_var("RUST_LOG", RUST_LOG_ENV);
     }
 
-    let a = std::env::var("RUST_LOG");
-    println!("rust_log, {:?}", a);
+    let rust_log_env = std::env::var("RUST_LOG");
+    println!("RUST_LOG is set to {:?}", rust_log_env);
 
     let mut layers = Vec::new();
 
-    let log_file_path = log_dir.join("file.log");
-
-    let file = std::fs::File::create(&log_file_path).unwrap();
-
     let file_appender =
-        tracing_appender::rolling::hourly(log_dir, "saksaha.log");
+        tracing_appender::rolling::daily(log_dir, FILE_NAME_PREFIX);
     let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
 
     let layer = tracing_subscriber::fmt::layer()
@@ -49,7 +41,7 @@ pub fn setup_logger2(log_dir: &PathBuf) -> Result<(), LoggerError> {
         .with_thread_names(true)
         .with_target(true)
         .event_format(FileLogFormatter)
-        .with_writer(file)
+        .with_writer(non_blocking)
         .with_filter(EnvFilter::from_default_env())
         .boxed();
 
@@ -57,9 +49,10 @@ pub fn setup_logger2(log_dir: &PathBuf) -> Result<(), LoggerError> {
 
     tracing_subscriber::registry().with(layers).try_init()?;
 
-    tracing::info!("info 2");
-    tracing::warn!("warn 2");
-    tracing::error!("error 2");
+    tracing::info!("sak_logger is initialized");
+    tracing::warn!("sak_logger is initialized");
+    tracing::error!("sak_logger is initialized");
+    tracing::debug!("sak_logger is initialized");
 
     Ok(())
 }
