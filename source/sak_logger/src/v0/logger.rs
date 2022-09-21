@@ -1,4 +1,6 @@
-use crate::v0::formatters::{ConsoleLogFormatter, FileLogFormatter};
+use crate::v0::formatters::{
+    ConsoleLogFormatter, FileLogFormatter, FileWriter, TestLogFormatter,
+};
 use crate::v0::utils;
 use crate::LoggerError;
 use colored::Colorize;
@@ -69,6 +71,7 @@ impl SakLogger {
 
         let mut layers = Vec::new();
 
+        let mut file_writers = vec![];
         let mut guards = vec![];
 
         for file_name_prefix in file_name_prefixes {
@@ -78,20 +81,17 @@ impl SakLogger {
             let (non_blocking, guard) =
                 tracing_appender::non_blocking(file_appender);
 
-            // let layer = tracing_subscriber::fmt::layer()
-            //     .event_format(FileLogFormatter)
-            //     .with_writer(non_blocking)
-            //     .with_filter(EnvFilter::from_default_env())
-            //     .boxed();
+            file_writers.push(FileWriter {
+                file_name_prefix: file_name_prefix.to_string(),
+                non_blocking,
+            });
 
-            // layers.push(layer);
             guards.push(guard);
         }
 
         let layer = tracing_subscriber::fmt::layer()
-            .event_format(ConsoleLogFormatter)
+            .event_format(TestLogFormatter { file_writers })
             .with_filter(EnvFilter::from_default_env())
-            .with_filter(LevelFilter::INFO)
             .boxed();
 
         layers.push(layer);
