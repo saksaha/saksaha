@@ -12,13 +12,13 @@ use tokio_util::codec::Framed;
 pub struct Conn {
     pub socket_addr: SocketAddr,
     pub socket: Framed<TcpStream, P2PCodec>,
-    is_initiator: bool,
+    public_key: String,
 }
 
 impl Conn {
     pub fn new(
         socket: TcpStream,
-        is_initiator: bool,
+        my_public_key: String,
     ) -> Result<Conn, TrptError> {
         let socket_addr = socket.peer_addr()?;
 
@@ -29,7 +29,7 @@ impl Conn {
         let c = Conn {
             socket_addr,
             socket,
-            is_initiator,
+            public_key: my_public_key,
         };
 
         Ok(c)
@@ -76,7 +76,7 @@ impl Conn {
         });
 
         let upgraded_conn =
-            UpgradedConn::init(socket, conn_id, self.is_initiator).await;
+            UpgradedConn::init(socket, conn_id, self.public_key).await;
 
         Ok(upgraded_conn)
     }

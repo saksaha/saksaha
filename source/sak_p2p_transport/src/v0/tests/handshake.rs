@@ -8,10 +8,16 @@ use sak_p2p_id::Identity;
 use std::sync::Arc;
 use tokio::net::{TcpListener, TcpStream};
 
-pub async fn connect_to_endpoint(endpoint: &String) -> Conn {
+pub async fn connect_to_endpoint(
+    endpoint: &String,
+    my_identity: Arc<Identity>,
+) -> Conn {
     match TcpStream::connect(&endpoint).await {
         Ok(s) => {
-            let c = match Conn::new(s, true) {
+            let c = match Conn::new(
+                s,
+                my_identity.credential.public_key_str.clone(),
+            ) {
                 Ok(c) => c,
                 Err(err) => {
                     warn!("Error creating a connection, err: {}", err);
@@ -171,7 +177,9 @@ async fn handshake_recv(
 
     let tcp_stream = accept(p2p_socket).await.unwrap();
 
-    let conn = Conn::new(tcp_stream, false).unwrap();
+    let conn =
+        Conn::new(tcp_stream, my_identity.credential.public_key_str.clone())
+            .unwrap();
 
     debug!(
         "[recv] receive handshake_syn, peer node: {:?}, conn_id: {}",
@@ -227,9 +235,7 @@ async fn test_handshake_works() {
         tcp_listener_2,
     ) = make_test_context().await;
 
-    // identity_1.credential.
-
-    let conn_2 = connect_to_endpoint(&endpoint_2).await;
+    let conn_2 = connect_to_endpoint(&endpoint_2, identity_1.clone()).await;
 
     let identity_1_clone = identity_1.clone();
     let identity_2_clone = identity_2.clone();
