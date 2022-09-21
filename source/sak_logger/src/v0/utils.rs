@@ -6,5 +6,5 @@ pub(crate) fn set_rust_log_env() {
     }
 
     let rust_log_env = std::env::var("RUST_LOG");
-    println!("RUST_LOG is set to {:?}", rust_log_env);
+    println!("sak_logger: RUST_LOG is set to {:?}", rust_log_env);
 }

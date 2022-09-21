@@ -3,6 +3,7 @@ use crate::v0::formatters::{
 };
 use crate::v0::utils;
 use crate::LoggerError;
+use colored::Colorize;
 use std::path::Path;
 pub use tracing::{debug, error, info, trace, warn};
 pub use tracing_appender::non_blocking::WorkerGuard;
@@ -23,6 +24,14 @@ impl SakLogger {
         log_dir_name: &str,
         file_name_prefix: &str,
     ) -> Result<SakLogger, LoggerError> {
+        println!(
+            "sak_logger: initializing, log_root_dir: {:?}, \
+            log_dir_name: {}, file_name_prefix: {}",
+            log_root_dir.as_ref(),
+            log_dir_name,
+            file_name_prefix
+        );
+
         utils::set_rust_log_env();
 
         let mut layers = Vec::new();
@@ -35,22 +44,31 @@ impl SakLogger {
 
         layers.push(console_log_layer);
 
-        let log_dir = log_root_dir.as_ref().join(log_dir_name).join("logs");
-        std::fs::create_dir_all(&log_dir)?;
+        let guard = {
+            let log_dir = log_root_dir.as_ref().join(log_dir_name).join("logs");
+            std::fs::create_dir_all(&log_dir)?;
 
-        let file_appender =
-            tracing_appender::rolling::daily(log_dir, file_name_prefix);
+            let file_appender =
+                tracing_appender::rolling::daily(&log_dir, file_name_prefix);
 
-        let (non_blocking, guard) =
-            tracing_appender::non_blocking(file_appender);
+            let (non_blocking, guard) =
+                tracing_appender::non_blocking(file_appender);
 
-        let file_log_layer = tracing_subscriber::fmt::layer()
-            .event_format(FileLogFormatter)
-            .with_writer(non_blocking)
-            .with_filter(EnvFilter::from_default_env())
-            .boxed();
+            let file_log_layer = tracing_subscriber::fmt::layer()
+                .event_format(FileLogFormatter)
+                .with_writer(non_blocking)
+                .with_filter(EnvFilter::from_default_env())
+                .boxed();
 
-        layers.push(file_log_layer);
+            layers.push(file_log_layer);
+
+            println!(
+                "sak_logger: log will be persisted in dir: {}",
+                log_dir.to_string_lossy().yellow(),
+            );
+
+            guard
+        };
 
         tracing_subscriber::registry().with(layers).try_init()?;
 
