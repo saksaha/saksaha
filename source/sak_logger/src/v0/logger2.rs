@@ -137,6 +137,9 @@ where
         // Format values from the event's's metadata:
         let metadata = event.metadata();
 
+        let a = std::thread::current().id();
+        println!("thread id: {:?}", a);
+
         let now = Local::now().format("%y-%m-%d %H:%M:%S");
 
         let level = match metadata.level().as_str() {
