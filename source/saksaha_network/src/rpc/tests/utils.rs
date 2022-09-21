@@ -10,7 +10,13 @@ use sak_types::{BlockCandidate, Tx, TxCandidate};
 use std::net::SocketAddr;
 use std::sync::Arc;
 
-pub(crate) async fn make_test_context() -> (RPC, SocketAddr, Arc<Machine>) {
+pub(in crate::rpc) struct TestContext {
+    rpc: RPC,
+    socket_addr: SocketAddr,
+    machine: Arc<Machine>,
+}
+
+pub(crate) async fn make_test_context() -> TestContext {
     let (disc_socket, disc_port) = {
         let (socket, socket_addr) =
             sak_utils_net::setup_udp_socket(None).await.unwrap();
@@ -122,7 +128,12 @@ pub(crate) async fn make_test_context() -> (RPC, SocketAddr, Arc<Machine>) {
         RPC::init(rpc_args).expect("RPC should be initialized")
     };
 
-    (rpc, rpc_socket_addr, machine)
+    // (rpc, rpc_socket_addr, machine)
+    TestContext {
+        rpc,
+        socket_addr: rpc_socket_addr,
+        machine,
+    }
 }
 
 pub fn make_dummy_tx_pour_block() -> BlockCandidate {

@@ -1,6 +1,7 @@
 use super::utils::make_dual_node_test_context;
 use super::utils::DualNodeTestContext;
 use crate::tests::SaksahaTestUtils;
+use sak_credential::CredentialProfile;
 use sak_dist_ledger::DistLedgerEvent;
 use sak_logger::{error, info};
 use std::time::Duration;
@@ -9,9 +10,16 @@ use std::time::Duration;
 async fn test_tx_sync_true() {
     // sak_test_utils::init_test_log();
 
-    let app_prefix_vec = vec!["test_1", "test_2"];
+    // let app_prefix_vec = vec!["test_1", "test_2"];
     // TestUtil::init_test(app_prefix_vec.clone());
-    SaksahaTestUtils::init_test(app_prefix_vec.clone());
+
+    let test_credential_1 = CredentialProfile::test_1();
+    let test_credential_2 = CredentialProfile::test_2();
+
+    SaksahaTestUtils::init_test(&[
+        &test_credential_1.public_key_str,
+        &test_credential_2.public_key_str,
+    ]);
 
     let DualNodeTestContext {
         p2p_host_1,
