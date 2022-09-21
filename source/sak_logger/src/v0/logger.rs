@@ -1,95 +1,229 @@
-use env_logger::Logger;
-use env_logger::{Builder, Env};
-use std::cmp::min;
-use std::io::Write;
-use std::sync::atomic::AtomicBool;
+use crate::v0::utils;
+use crate::{LoggerError, RUST_LOG_ENV};
+use chrono::Local;
+use colored::Colorize;
+use std::path::PathBuf;
+pub use tracing::{debug, error, info, trace, warn};
+use tracing::{Event, Subscriber};
+pub use tracing_appender::non_blocking::WorkerGuard;
+use tracing_subscriber;
+use tracing_subscriber::fmt::{
+    format, FmtContext, FormatEvent, FormatFields, FormattedFields,
+};
+use tracing_subscriber::registry::LookupSpan;
+use tracing_subscriber::{
+    filter::{EnvFilter, LevelFilter},
+    prelude::*,
+    Layer,
+};
 
-static IS_INITIALIZED: AtomicBool = AtomicBool::new(false);
+pub struct SakLogger {
+    _guards: Vec<WorkerGuard>,
+}
 
-// pub fn init(is_test: bool) -> Result<(), String> {
-//     if IS_INITIALIZED.load(std::sync::atomic::Ordering::Relaxed) {
-//         return Err(format!("Logger is already initialized"));
-//     }
+impl SakLogger {
+    pub fn init(
+        log_dir: &PathBuf,
+        file_name_prefix: &str,
+    ) -> Result<SakLogger, LoggerError> {
+        utils::set_rust_log_env();
 
-//     let rust_log = match std::env::var("RUST_LOG") {
-//         Ok(l) => l,
-//         Err(_) => {
-//             println!(
-//                 "RUST_LOG is not given. This is probably not what you \
-//                 have wanted. Some logs might be dismissed"
-//             );
+        let mut layers = Vec::new();
 
-//             "RUST_LOG_NOT_GIVEN".to_string()
-//         }
-//     };
+        let file_appender =
+            tracing_appender::rolling::daily(log_dir, file_name_prefix);
 
-//     println!("Initializing logger, RUST_LOG: {}", rust_log);
+        let (non_blocking, guard) =
+            tracing_appender::non_blocking(file_appender);
 
-//     let logger = build_logger(is_test);
+        let layer = tracing_subscriber::fmt::layer()
+            .event_format(ConsoleLogFormatter)
+            .with_filter(EnvFilter::from_default_env())
+            .with_filter(LevelFilter::INFO)
+            .boxed();
 
-//     let max_level = logger.filter();
-//     let res = sak::set_boxed_logger(Box::new(logger));
+        layers.push(layer);
 
-//     match res {
-//         Ok(_) => {
-//             log::set_max_level(max_level);
+        let layer = tracing_subscriber::fmt::layer()
+            .event_format(FileLogFormatter)
+            .with_writer(non_blocking)
+            .with_filter(EnvFilter::from_default_env())
+            .boxed();
 
-//             IS_INITIALIZED.store(true, std::sync::atomic::Ordering::Relaxed);
+        layers.push(layer);
 
-//             log::info!("Logger initialized");
+        tracing_subscriber::registry().with(layers).try_init()?;
 
-//             return Ok(());
-//         }
-//         Err(err) => {
-//             println!(
-//                 "Logger might have been already initialized, err: {}",
-//                 err
-//             );
+        tracing::info!("sak_logger is initialized");
+        tracing::warn!("sak_logger is initialized");
+        tracing::error!("sak_logger is initialized");
+        tracing::debug!("sak_logger is initialized");
 
-//             return Err(format!(
-//                 "Logger might have been initialized, err: {}",
-//                 err
-//             ));
-//         }
-//     }
-// }
+        let logger = SakLogger {
+            _guards: vec![guard],
+        };
 
-// fn build_logger(is_test: bool) -> Logger {
-//     let env = Env::default().write_style("LOG_STYLE");
+        Ok(logger)
+    }
 
-//     Builder::from_env(env)
-//         .is_test(is_test)
-//         .format(|buf, record| {
-//             let timestamp = buf.timestamp_millis();
-//             let style = buf.default_level_style(record.level());
-//             let level = format!("{:>width$}", record.level(), width = 5);
+    pub fn init_for_test(
+        log_dir: &PathBuf,
+        file_name_prefixes: &[&str],
+    ) -> Result<SakLogger, LoggerError> {
+        utils::set_rust_log_env();
 
-//             let target = {
-//                 let target = record.metadata().target();
-//                 let split: Vec<&str> = target.split("::").collect();
-//                 let len = split.len();
+        let mut layers = Vec::new();
 
-//                 if len >= 2 {
-//                     let seg1 = split[len - 1];
-//                     let seg2 = split[len - 2];
-//                     format!(
-//                         "{}/{}",
-//                         &seg2[0..min(seg2.len(), 10)],
-//                         &seg1[0..min(seg1.len(), 10)]
-//                     )
-//                 } else {
-//                     format!("{}", split[0])
-//                 }
-//             };
+        let mut guards = vec![];
 
-//             writeln!(
-//                 buf,
-//                 "{} {} {:21} {}",
-//                 timestamp,
-//                 style.value(level),
-//                 target,
-//                 record.args(),
-//             )
-//         })
-//         .build()
-// }
+        for file_name_prefix in file_name_prefixes {
+            let file_appender =
+                tracing_appender::rolling::daily(log_dir, file_name_prefix);
+
+            let (non_blocking, guard) =
+                tracing_appender::non_blocking(file_appender);
+
+            // let layer = tracing_subscriber::fmt::layer()
+            //     .event_format(FileLogFormatter)
+            //     .with_writer(non_blocking)
+            //     .with_filter(EnvFilter::from_default_env())
+            //     .boxed();
+
+            // layers.push(layer);
+            guards.push(guard);
+        }
+
+        let layer = tracing_subscriber::fmt::layer()
+            .event_format(ConsoleLogFormatter)
+            .with_filter(EnvFilter::from_default_env())
+            .with_filter(LevelFilter::INFO)
+            .boxed();
+
+        layers.push(layer);
+
+        tracing_subscriber::registry().with(layers).try_init()?;
+
+        tracing::info!("sak_logger is initialized");
+        tracing::warn!("sak_logger is initialized");
+        tracing::error!("sak_logger is initialized");
+        tracing::debug!("sak_logger is initialized");
+
+        let logger = SakLogger { _guards: guards };
+
+        Ok(logger)
+    }
+}
+
+struct ConsoleLogFormatter;
+
+impl<S, N> FormatEvent<S, N> for ConsoleLogFormatter
+where
+    S: Subscriber + for<'a> LookupSpan<'a>,
+    N: for<'a> FormatFields<'a> + 'static,
+{
+    fn format_event(
+        &self,
+        ctx: &FmtContext<'_, S, N>,
+        mut writer: format::Writer<'_>,
+        event: &Event<'_>,
+    ) -> std::fmt::Result {
+        // Format values from the event's's metadata:
+        let metadata = event.metadata();
+
+        let now = Local::now().format("%y-%m-%d %H:%M:%S");
+
+        let level = match metadata.level().as_str() {
+            "INFO" => "INFO".green(),
+            "WARN" => "WARN".yellow(),
+            "ERROR" => "ERROR".red(),
+            "DEBUG" => "DEBUG".blue(),
+            _ => "".green(),
+        };
+
+        let target = metadata.target();
+        let target_len = target.len();
+        let target = if target_len > 16 {
+            &target[target_len - 16..target_len]
+        } else {
+            &target
+        };
+
+        write!(&mut writer, "{} {:>5} {:>16}: ", now, level, target,)?;
+
+        // Format all the spans in the event's span context.
+        if let Some(scope) = ctx.event_scope() {
+            for span in scope.from_root() {
+                write!(writer, "{}", span.name())?;
+
+                // `FormattedFields` is a formatted representation of the span's
+                // fields, which is stored in its extensions by the `fmt` layer's
+                // `new_span` method. The fields will have been formatted
+                // by the same field formatter that's provided to the event
+                // formatter in the `FmtContext`.
+                let ext = span.extensions();
+                let fields = &ext
+                    .get::<FormattedFields<N>>()
+                    .expect("will never be `None`");
+
+                // Skip formatting the fields if the span had no fields.
+                if !fields.is_empty() {
+                    write!(writer, "{{{}}}", fields)?;
+                }
+                write!(writer, ": ")?;
+            }
+        }
+
+        // Write fields on the event
+        ctx.field_format().format_fields(writer.by_ref(), event)?;
+
+        writeln!(writer)
+    }
+}
+
+struct FileLogFormatter;
+
+impl<S, N> FormatEvent<S, N> for FileLogFormatter
+where
+    S: Subscriber + for<'a> LookupSpan<'a>,
+    N: for<'a> FormatFields<'a> + 'static,
+{
+    fn format_event(
+        &self,
+        ctx: &FmtContext<'_, S, N>,
+        mut writer: format::Writer<'_>,
+        event: &Event<'_>,
+    ) -> std::fmt::Result {
+        let metadata = event.metadata();
+
+        let now = Local::now().format("%y-%m-%d %H:%M:%S");
+
+        write!(
+            &mut writer,
+            "{} {:>5} {}: ",
+            now,
+            metadata.level(),
+            metadata.target()
+        )?;
+
+        if let Some(scope) = ctx.event_scope() {
+            for span in scope.from_root() {
+                write!(writer, "{}", span.name())?;
+
+                let ext = span.extensions();
+                let fields = &ext
+                    .get::<FormattedFields<N>>()
+                    .expect("will never be `None`");
+
+                if !fields.is_empty() {
+                    write!(writer, "{{{}}}", fields)?;
+                }
+                write!(writer, ": ")?;
+            }
+        }
+
+        // Write fields on the event
+        ctx.field_format().format_fields(writer.by_ref(), event)?;
+
+        writeln!(writer)
+    }
+}
