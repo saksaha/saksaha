@@ -53,8 +53,7 @@ async fn test_get_balance_default() {
 
     let b = hyper::body::to_bytes(resp.into_body()).await.unwrap();
     // }
-    let json_response =
-        serde_json::from_slice::<JsonResponse<GetBalanceResponse>>(&b).unwrap();
+    let json_response = serde_json::from_slice::<JsonResponse<GetBalanceResponse>>(&b).unwrap();
 
     let result = json_response.result.unwrap();
 

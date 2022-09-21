@@ -1,6 +1,6 @@
 use crate::{
-    BlockAckMsg, BlockHashSyncMsg, BlockSynMsg, ErrorMsg, HandshakeMsg,
-    HelloMsg, PingMsg, TxAckMsg, TxHashSyncMsg, TxSynMsg,
+    BlockAckMsg, BlockHashSyncMsg, BlockSynMsg, ErrorMsg, HandshakeMsg, HelloMsg, PingMsg,
+    TxAckMsg, TxHashSyncMsg, TxSynMsg,
 };
 
 #[derive(Debug)]
@@ -41,16 +41,12 @@ impl std::fmt::Display for Msg {
             Msg::HelloAck(_) => write!(f, "hello_ack"),
             Msg::HandshakeSyn(_) => write!(f, "handshake_syn"),
             Msg::HandshakeAck(_) => write!(f, "handshake_ack"),
-            Msg::TxHashSyn(tx_hash_sync) => write!(
-                f,
-                "tx_hash_syn, tx count: {}",
-                tx_hash_sync.tx_hashes.len()
-            ),
-            Msg::TxHashAck(tx_hash_sync) => write!(
-                f,
-                "tx_hash_ack, tx count: {}",
-                tx_hash_sync.tx_hashes.len()
-            ),
+            Msg::TxHashSyn(tx_hash_sync) => {
+                write!(f, "tx_hash_syn, tx count: {}", tx_hash_sync.tx_hashes.len())
+            }
+            Msg::TxHashAck(tx_hash_sync) => {
+                write!(f, "tx_hash_ack, tx count: {}", tx_hash_sync.tx_hashes.len())
+            }
             Msg::TxSyn(tx_syn) => {
                 write!(f, "tx_syn, tx count: {}", tx_syn.tx_candidates.len())
             }

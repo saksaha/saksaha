@@ -53,8 +53,7 @@ async fn test_update_coin_status() {
 
     tokio::spawn(async move { rpc.run().await });
 
-    let json_response =
-        utils::mock_update_coin_status(rpc_port, &acc_addr).await;
+    let json_response = utils::mock_update_coin_status(rpc_port, &acc_addr).await;
 
     println!("json_response: {:#?}", json_response);
 
@@ -160,9 +159,7 @@ async fn test_send_tx_with_2_old_coins() {
             // ch_id
             "ch_id".to_string(),
             // eph_key
-            sak_crypto::encode_hex(
-                &eph_pub_key.to_encoded_point(false).to_bytes(),
-            ),
+            sak_crypto::encode_hex(&eph_pub_key.to_encoded_point(false).to_bytes()),
             // initiator_pk
             "\
                 045739d074b8722891c307e8e75c9607\

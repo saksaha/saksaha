@@ -9,9 +9,9 @@ impl LedgerDB {
         &self,
         ctr_addr: &String,
     ) -> Result<Option<Vec<u8>>, LedgerError> {
-        let tx_hash = self.get_tx_hash_by_ctr_addr(ctr_addr)?.ok_or(
-            format!("ctr data does not exist, ctr_addr: {}", ctr_addr),
-        )?;
+        let tx_hash = self
+            .get_tx_hash_by_ctr_addr(ctr_addr)?
+            .ok_or(format!("ctr data does not exist, ctr_addr: {}", ctr_addr))?;
 
         let ctr_data = self
             .get_data(&tx_hash)?

@@ -99,11 +99,7 @@ impl Frame {
 
                 Ok(())
             }
-            actual => Err(format!(
-                "protocol error; invalid frame type byte `{}`",
-                actual
-            )
-            .into()),
+            actual => Err(format!("protocol error; invalid frame type byte `{}`", actual).into()),
         }
     }
 
@@ -137,9 +133,7 @@ impl Frame {
                     let line = get_line(src)?;
 
                     if line != b"-1" {
-                        return Err(
-                            "protocol error; invalid frame format".into()
-                        );
+                        return Err("protocol error; invalid frame format".into());
                     }
 
                     Ok(Frame::Null)
@@ -248,8 +242,7 @@ fn get_decimal(src: &mut Cursor<&[u8]>) -> Result<u128, Error> {
 
     let line = get_line(src)?;
 
-    atoi::<u128>(line)
-        .ok_or_else(|| "protocol error; invalid frame format".into())
+    atoi::<u128>(line).ok_or_else(|| "protocol error; invalid frame format".into())
 }
 
 /// Find a line

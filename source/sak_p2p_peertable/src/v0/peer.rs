@@ -67,8 +67,7 @@ impl Peer {
     pub async fn set_peer_status(&self, peer_status: PeerStatus) {
         match &peer_status {
             PeerStatus::Disconnected => {
-                let mut addr_status_lock =
-                    self.addr.known_addr.status.write().await;
+                let mut addr_status_lock = self.addr.known_addr.status.write().await;
 
                 *addr_status_lock = AddrStatus::Disconnected;
             }

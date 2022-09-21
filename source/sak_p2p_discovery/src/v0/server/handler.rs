@@ -36,10 +36,7 @@ impl Handler {
                     Ok(_) => return Ok(()),
                     Err(way_recv_err) => match way_recv_err {
                         WhoAreYouRecvError::AddrAlreadyMapped { .. } => {
-                            warn!(
-                                "Error receiving whoareyou, err: {}",
-                                way_recv_err,
-                            );
+                            warn!("Error receiving whoareyou, err: {}", way_recv_err,);
                         }
                         _ => return Err(way_recv_err.into()),
                     },

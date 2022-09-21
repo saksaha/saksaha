@@ -1,7 +1,5 @@
 use crate::{make_public_key_short, CredentialError};
-use sak_crypto::{
-    PublicKey, SakKey, SecretKey, Signature, SigningKey, ToEncodedPoint,
-};
+use sak_crypto::{PublicKey, SakKey, SecretKey, Signature, SigningKey, ToEncodedPoint};
 
 // 64 + 1 (flag for whether the key is compressed or not)
 pub const PUBLIC_KEY_LEN: usize = 64 + 1;
@@ -18,27 +16,18 @@ pub struct Credential {
 }
 
 impl Credential {
-    pub fn new(
-        secret: &String,
-        public_key_str: &String,
-    ) -> Result<Credential, CredentialError> {
+    pub fn new(secret: &String, public_key_str: &String) -> Result<Credential, CredentialError> {
         let secret_bytes = match sak_crypto::decode_hex(&secret) {
             Ok(v) => v,
             Err(err) => {
-                return Err(
-                    format!("Error making secret key, err: {}", err).into()
-                );
+                return Err(format!("Error making secret key, err: {}", err).into());
             }
         };
 
         let secret_key = match SecretKey::from_bytes(secret_bytes) {
             Ok(sk) => sk,
             Err(err) => {
-                return Err(format!(
-                    "Error creating SecretKey object, err: {}",
-                    err
-                )
-                .into());
+                return Err(format!("Error creating SecretKey object, err: {}", err).into());
             }
         };
 
@@ -46,20 +35,18 @@ impl Credential {
             let b = secret_key.public_key().to_encoded_point(false).to_bytes();
 
             if b.len() != 65 {
-                return Err(format!(
-                    "Error encoding public key into bytes, size does not fit"
-                )
-                .into());
+                return Err(
+                    format!("Error encoding public key into bytes, size does not fit").into(),
+                );
             }
 
             let mut buf = [0; 65];
             buf.clone_from_slice(&b);
             let pk_encoded = sak_crypto::encode_hex(&b);
             if &pk_encoded != public_key_str {
-                return Err(format!(
-                    "Encoded public key is different from the restored one",
-                )
-                .into());
+                return Err(
+                    format!("Encoded public key is different from the restored one",).into(),
+                );
             }
 
             buf

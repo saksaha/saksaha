@@ -1,7 +1,6 @@
 use crate::rpc::routes::v0::{SendTxRequest, SendTxResponse};
 use crate::{
-    credential::WalletCredential, db::WalletDB, rpc::RPC, wallet::Wallet,
-    Config, CredentialManager,
+    credential::WalletCredential, db::WalletDB, rpc::RPC, wallet::Wallet, Config, CredentialManager,
 };
 use envelope_contract::{request_type, Channel, OpenChParams};
 use envelope_term::ENVELOPE_CTR_ADDR;
@@ -11,27 +10,24 @@ use sak_crypto::{SakKey, ToEncodedPoint};
 use sak_rpc_interface::{JsonRequest, JsonResponse};
 use std::sync::Arc;
 
-pub(in crate) struct MockWalletContext {
+pub(crate) struct MockWalletContext {
     pub wallet: Arc<Wallet>,
     pub rpc: RPC,
     pub acc_addr: String,
 }
-pub(in crate) async fn mock_wallet_context() -> MockWalletContext {
+pub(crate) async fn mock_wallet_context() -> MockWalletContext {
     let config = Config::new(&Some("dev_local_1".to_string())).unwrap();
 
     let public_key = config.public_key.clone().unwrap();
     let secret = config.secret.clone().unwrap();
 
-    let wallet_credential =
-        WalletCredential::load(&public_key, &secret).unwrap();
+    let wallet_credential = WalletCredential::load(&public_key, &secret).unwrap();
 
-    let credential_manager =
-        CredentialManager::init(wallet_credential).unwrap();
+    let credential_manager = CredentialManager::init(wallet_credential).unwrap();
 
     let acc_addr = credential_manager.get_credential().acc_addr.clone();
 
-    let wallet_db =
-        WalletDB::init(&credential_manager.get_credential(), true).unwrap();
+    let wallet_db = WalletDB::init(&credential_manager.get_credential(), true).unwrap();
 
     let wallet = {
         let w = Wallet::init(credential_manager, wallet_db, config)
@@ -65,8 +61,7 @@ pub(crate) async fn mock_credential_manager() -> CredentialManager {
                 99fc1df5cd9e8814c66c7",
     );
 
-    let wallet_credential =
-        WalletCredential::load(&public_key, &secret).unwrap();
+    let wallet_credential = WalletCredential::load(&public_key, &secret).unwrap();
 
     let m = CredentialManager::init(wallet_credential).unwrap();
 
@@ -93,9 +88,7 @@ pub(crate) async fn mock_send_pour_tx(
             // ch_id
             "ch_id".to_string(),
             // eph_key
-            sak_crypto::encode_hex(
-                &eph_pub_key.to_encoded_point(false).to_bytes(),
-            ),
+            sak_crypto::encode_hex(&eph_pub_key.to_encoded_point(false).to_bytes()),
             // initiator_pk
             "\
                 045739d074b8722891c307e8e75c9607\
@@ -169,8 +162,7 @@ pub(crate) async fn mock_send_pour_tx(
 
     let b = hyper::body::to_bytes(resp.into_body()).await.unwrap();
 
-    let json_response =
-        serde_json::from_slice::<JsonResponse<SendTxResponse>>(&b).unwrap();
+    let json_response = serde_json::from_slice::<JsonResponse<SendTxResponse>>(&b).unwrap();
 
     json_response
 }
@@ -224,8 +216,7 @@ pub(crate) async fn mock_update_coin_status(
 
     let b = hyper::body::to_bytes(resp.into_body()).await.unwrap();
 
-    let json_response =
-        serde_json::from_slice::<JsonResponse<String>>(&b).unwrap();
+    let json_response = serde_json::from_slice::<JsonResponse<String>>(&b).unwrap();
 
     json_response
 }

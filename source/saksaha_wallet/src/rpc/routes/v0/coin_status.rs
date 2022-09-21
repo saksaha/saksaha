@@ -1,8 +1,6 @@
 use crate::rpc::ctx::RouteCtx;
 use hyper::{Body, Response};
-use hyper_rpc_router::{
-    require_params_parsed, require_some_params, Params, RouteState,
-};
+use hyper_rpc_router::{require_params_parsed, require_some_params, Params, RouteState};
 use sak_logger::debug;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -32,8 +30,7 @@ pub(in crate::rpc) async fn update_coin_status(
 
     // debug!("\tparams: {:?}", String::from_utf8(params.clone()));
 
-    let rb: UpdateCoinStatusRequest =
-        require_params_parsed!(route_state, &params);
+    let rb: UpdateCoinStatusRequest = require_params_parsed!(route_state, &params);
 
     // debug!("\trb: {:#?}", rb);
 

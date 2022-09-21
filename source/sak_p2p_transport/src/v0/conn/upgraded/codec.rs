@@ -21,8 +21,7 @@ pub(crate) const HEADER_CIPHERTEXT_LEN: usize = 5;
 
 pub(crate) const HEADER_MAC_LEN: usize = 15;
 
-pub(crate) const HEADER_TOTAL_LEN: usize =
-    HEADER_CIPHERTEXT_LEN + HEADER_MAC_LEN;
+pub(crate) const HEADER_TOTAL_LEN: usize = HEADER_CIPHERTEXT_LEN + HEADER_MAC_LEN;
 
 pub struct UpgradedP2PCodec {
     pub(crate) out_cipher: ChaCha20,

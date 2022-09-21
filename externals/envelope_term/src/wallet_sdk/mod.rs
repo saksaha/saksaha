@@ -47,8 +47,7 @@ pub async fn get_balance_from_wallet(
 
     info!("body: {:?}", b);
 
-    let json_response =
-        serde_json::from_slice::<JsonResponse<GetBalanceResponse>>(&b)?;
+    let json_response = serde_json::from_slice::<JsonResponse<GetBalanceResponse>>(&b)?;
 
     info!(":)");
 
@@ -95,8 +94,7 @@ pub async fn send_tx_pour(
 
     let b = hyper::body::to_bytes(resp.into_body()).await?;
 
-    let json_response =
-        serde_json::from_slice::<JsonResponse<SendTxResponse>>(&b)?;
+    let json_response = serde_json::from_slice::<JsonResponse<SendTxResponse>>(&b)?;
 
     Ok(json_response)
 }
@@ -135,8 +133,7 @@ pub async fn update_wallet(
 
     let b = hyper::body::to_bytes(resp.into_body()).await.unwrap();
 
-    let json_response =
-        serde_json::from_slice::<JsonResponse<String>>(&b).unwrap();
+    let json_response = serde_json::from_slice::<JsonResponse<String>>(&b).unwrap();
 
     Ok(json_response)
 }

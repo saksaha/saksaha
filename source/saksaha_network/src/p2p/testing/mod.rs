@@ -28,8 +28,7 @@ pub(crate) async fn mock_p2p_host(
         .expect("p2p socket should be initialized");
 
     let (udp_socket, disc_port) = {
-        let (socket, socket_addr) =
-            sak_utils_net::setup_udp_socket(disc_port).await.unwrap();
+        let (socket, socket_addr) = sak_utils_net::setup_udp_socket(disc_port).await.unwrap();
 
         (socket, socket_addr.port())
     };
@@ -43,9 +42,8 @@ pub(crate) async fn mock_p2p_host(
     };
 
     let identity = {
-        let id =
-            Identity::new(&secret, &public_key_str, p2p_port.port(), disc_port)
-                .expect("identity should be initialized");
+        let id = Identity::new(&secret, &public_key_str, p2p_port.port(), disc_port)
+            .expect("identity should be initialized");
 
         Arc::new(id)
     };

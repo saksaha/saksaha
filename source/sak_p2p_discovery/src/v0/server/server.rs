@@ -27,8 +27,7 @@ impl Server {
     pub fn new(server_args: ServerArgs) -> Server {
         let conn_semaphore = Arc::new(Semaphore::new(MAX_CONN_COUNT));
 
-        let addr_expire_duration =
-            Duration::from_secs(server_args.addr_expire_duration);
+        let addr_expire_duration = Duration::from_secs(server_args.addr_expire_duration);
 
         Server {
             identity: server_args.identity,
@@ -62,8 +61,7 @@ impl Server {
                             let udp_conn = self.udp_conn.clone();
                             let identity = self.identity.clone();
                             let table = self.addr_table.clone();
-                            let addr_expire_duration =
-                                self.addr_expire_duration;
+                            let addr_expire_duration = self.addr_expire_duration;
 
                             tokio::spawn(async move {
                                 match handler
@@ -80,11 +78,10 @@ impl Server {
                                     Ok(_) => (),
                                     Err(err) => {
                                         error!(
-                                        "Error processing request, addr: {}, \
+                                            "Error processing request, addr: {}, \
                                         err: {}",
-                                        socket_addr,
-                                        err
-                                    );
+                                            socket_addr, err
+                                        );
                                     }
                                 };
                             });

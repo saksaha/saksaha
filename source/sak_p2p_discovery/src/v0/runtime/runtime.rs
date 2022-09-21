@@ -20,28 +20,18 @@ impl DiscRuntime {
 
             let addr_map_lock = self.addr_table.get_addr_map_read().await;
 
-            let public_keys: Vec<PublicKey> =
-                addr_map_lock.keys().map(|k| k.clone()).collect();
+            let public_keys: Vec<PublicKey> = addr_map_lock.keys().map(|k| k.clone()).collect();
 
             drop(addr_map_lock);
 
             for public_key in public_keys.iter() {
-                let _ =
-                    drop_address_if_necessary(&self.addr_table, &public_key)
-                        .await;
+                let _ = drop_address_if_necessary(&self.addr_table, &public_key).await;
 
-                sak_utils_time::wait_until_min_interval(
-                    time_since,
-                    self.addr_monitor_interval,
-                )
-                .await;
+                sak_utils_time::wait_until_min_interval(time_since, self.addr_monitor_interval)
+                    .await;
             }
 
-            sak_utils_time::wait_until_min_interval(
-                time_since,
-                rest_after_one_iteration,
-            )
-            .await;
+            sak_utils_time::wait_until_min_interval(time_since, rest_after_one_iteration).await;
         }
     }
 }

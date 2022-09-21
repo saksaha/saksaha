@@ -34,11 +34,9 @@ where
         match self.tx.send(task).await {
             Ok(_) => return Ok(()),
             Err(err) => {
-                return Err(format!(
-                    "Cannot add a new task, task: {}, err: {}",
-                    task_str, err,
-                )
-                .into());
+                return Err(
+                    format!("Cannot add a new task, task: {}, err: {}", task_str, err,).into(),
+                );
             }
         };
     }
@@ -46,9 +44,8 @@ where
     pub async fn pop_front(&self) -> Result<T, TaskQueueError> {
         let mut rx = self.rx.lock().await;
 
-        rx.recv().await.ok_or(
-            format!("Cannot receive tasks any more. Task queue is closed.",)
-                .into(),
-        )
+        rx.recv()
+            .await
+            .ok_or(format!("Cannot receive tasks any more. Task queue is closed.",).into())
     }
 }

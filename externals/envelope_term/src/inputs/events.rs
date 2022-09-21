@@ -29,13 +29,9 @@ impl Events {
             loop {
                 // poll for tick rate duration, if no event, sent tick event.
                 if crossterm::event::poll(tick_rate).unwrap() {
-                    if let crossterm::event::Event::Key(key) =
-                        crossterm::event::read().unwrap()
-                    {
+                    if let crossterm::event::Event::Key(key) = crossterm::event::read().unwrap() {
                         let key = Key::from(key);
-                        if let Err(err) =
-                            event_tx.send(InputEvent::Input(key)).await
-                        {
+                        if let Err(err) = event_tx.send(InputEvent::Input(key)).await {
                             error!("Oops!, {}", err);
                         }
                     }

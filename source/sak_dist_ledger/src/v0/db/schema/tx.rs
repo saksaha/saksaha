@@ -1,16 +1,10 @@
 use crate::LedgerError;
 use crate::{cfs, LedgerDB};
 use sak_kv_db::{Direction, IteratorMode, WriteBatch};
-use sak_types::{
-    MintTx, MintTxCandidate, PourTx, PourTxCandidate, Tx, TxCtrOp, TxHash,
-    TxType,
-};
+use sak_types::{MintTx, MintTxCandidate, PourTx, PourTxCandidate, Tx, TxCtrOp, TxHash, TxType};
 
 impl LedgerDB {
-    pub(crate) async fn get_txs(
-        &self,
-        tx_hashes: &Vec<String>,
-    ) -> Result<Vec<Tx>, LedgerError> {
+    pub(crate) async fn get_txs(&self, tx_hashes: &Vec<String>) -> Result<Vec<Tx>, LedgerError> {
         let mut ret = vec![];
 
         for tx_hash in tx_hashes {
@@ -23,10 +17,7 @@ impl LedgerDB {
         Ok(ret)
     }
 
-    pub(crate) async fn get_tx(
-        &self,
-        tx_hash: &String,
-    ) -> Result<Option<Tx>, LedgerError> {
+    pub(crate) async fn get_tx(&self, tx_hash: &String) -> Result<Option<Tx>, LedgerError> {
         let tx_type = self
             .get_tx_type(tx_hash)?
             .ok_or(format!("Tx type does not exist, tx_hash: {}", tx_hash))?;
@@ -70,9 +61,8 @@ impl LedgerDB {
             cm_idxes.push(cm_idx);
         }
 
-        let tx_candidate = MintTxCandidate::new(
-            created_at, data, author_sig, ctr_addr, cms, v, k, s,
-        );
+        let tx_candidate =
+            MintTxCandidate::new(created_at, data, author_sig, ctr_addr, cms, v, k, s);
 
         let tx = Tx::Mint(MintTx::new(tx_candidate, cm_idxes));
 
@@ -182,11 +172,7 @@ impl LedgerDB {
 
         match tx_ctr_op {
             TxCtrOp::ContractDeploy => {
-                self.batch_put_tx_hash_by_contract_addr(
-                    batch,
-                    &tc.ctr_addr,
-                    tx_hash,
-                )?;
+                self.batch_put_tx_hash_by_contract_addr(batch, &tc.ctr_addr, tx_hash)?;
             }
             TxCtrOp::ContractCall => {}
             TxCtrOp::None => {}
@@ -248,11 +234,7 @@ impl LedgerDB {
 
         match tx_ctr_op {
             TxCtrOp::ContractDeploy => {
-                self.batch_put_tx_hash_by_contract_addr(
-                    batch,
-                    &tc.ctr_addr,
-                    tx_hash,
-                )?;
+                self.batch_put_tx_hash_by_contract_addr(batch, &tc.ctr_addr, tx_hash)?;
             }
             TxCtrOp::ContractCall => {}
             TxCtrOp::None => {}
@@ -261,19 +243,14 @@ impl LedgerDB {
         Ok(tx_hash.clone())
     }
 
-    fn get_cms_iteratively(
-        &self,
-        tx_hash: &TxHash,
-    ) -> Result<Vec<[u8; 32]>, LedgerError> {
+    fn get_cms_iteratively(&self, tx_hash: &TxHash) -> Result<Vec<[u8; 32]>, LedgerError> {
         let tx_hash_bytes = tx_hash.as_bytes();
         let mut v = vec![];
 
         let mut cm_iter = {
             let cf = self.make_cf_handle(&self.db, cfs::CM)?;
-            self.db.iterator_cf(
-                &cf,
-                IteratorMode::From(tx_hash_bytes, Direction::Forward),
-            )
+            self.db
+                .iterator_cf(&cf, IteratorMode::From(tx_hash_bytes, Direction::Forward))
         };
 
         loop {
@@ -294,30 +271,21 @@ impl LedgerDB {
         }
 
         if v.len() < 1 {
-            return Err(format!(
-                "At least one cm should exist, tx_hash: {}",
-                tx_hash
-            )
-            .into());
+            return Err(format!("At least one cm should exist, tx_hash: {}", tx_hash).into());
         }
 
         Ok(v)
     }
 
-    fn get_sns_iteratively(
-        &self,
-        tx_hash: &TxHash,
-    ) -> Result<Vec<[u8; 32]>, LedgerError> {
+    fn get_sns_iteratively(&self, tx_hash: &TxHash) -> Result<Vec<[u8; 32]>, LedgerError> {
         let tx_hash_bytes = tx_hash.as_bytes();
 
         let mut v = vec![];
 
         let mut sn_iter = {
             let cf = self.make_cf_handle(&self.db, cfs::SN)?;
-            self.db.iterator_cf(
-                &cf,
-                IteratorMode::From(tx_hash_bytes, Direction::Forward),
-            )
+            self.db
+                .iterator_cf(&cf, IteratorMode::From(tx_hash_bytes, Direction::Forward))
         };
 
         loop {
@@ -338,29 +306,20 @@ impl LedgerDB {
         }
 
         if v.len() < 1 {
-            return Err(format!(
-                "At least one sn should exist, tx_hash: {}",
-                tx_hash
-            )
-            .into());
+            return Err(format!("At least one sn should exist, tx_hash: {}", tx_hash).into());
         }
 
         Ok(v)
     }
 
-    fn get_merkle_rts_iteratively(
-        &self,
-        tx_hash: &TxHash,
-    ) -> Result<Vec<[u8; 32]>, LedgerError> {
+    fn get_merkle_rts_iteratively(&self, tx_hash: &TxHash) -> Result<Vec<[u8; 32]>, LedgerError> {
         let tx_hash_bytes = tx_hash.as_bytes();
         let mut v = vec![];
 
         let mut merkle_rt_iter = {
             let cf = self.make_cf_handle(&self.db, cfs::PRF_MERKLE_RT)?;
-            self.db.iterator_cf(
-                &cf,
-                IteratorMode::From(tx_hash_bytes, Direction::Forward),
-            )
+            self.db
+                .iterator_cf(&cf, IteratorMode::From(tx_hash_bytes, Direction::Forward))
         };
 
         loop {
@@ -381,11 +340,9 @@ impl LedgerDB {
         }
 
         if v.len() < 1 {
-            return Err(format!(
-                "At least one merkle_rt should exist, tx_hash: {}",
-                tx_hash
-            )
-            .into());
+            return Err(
+                format!("At least one merkle_rt should exist, tx_hash: {}", tx_hash).into(),
+            );
         }
 
         Ok(v)

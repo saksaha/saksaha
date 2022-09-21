@@ -9,9 +9,7 @@ pub struct BlockSynMsg {
 }
 
 impl BlockSynMsg {
-    pub(crate) fn from_parse(
-        parse: &mut Parse,
-    ) -> Result<BlockSynMsg, TrptError> {
+    pub(crate) fn from_parse(parse: &mut Parse) -> Result<BlockSynMsg, TrptError> {
         let block_count = parse.next_int()?;
 
         let mut blocks = Vec::with_capacity(block_count as usize);
@@ -35,8 +33,7 @@ impl BlockSynMsg {
             let block_height = parse.next_int()? as u128;
 
             let witness_sig_count = parse.next_int()?;
-            let mut witness_sigs =
-                Vec::with_capacity(witness_sig_count as usize);
+            let mut witness_sigs = Vec::with_capacity(witness_sig_count as usize);
 
             for _ in 0..witness_sig_count {
                 let witness_sig = {
@@ -58,12 +55,7 @@ impl BlockSynMsg {
 
                         let t = match p[..].get(0) {
                             Some(v) => v,
-                            None => {
-                                return Err(format!(
-                                    "Invalid tx type to parse, tx_type"
-                                )
-                                .into())
-                            }
+                            None => return Err(format!("Invalid tx type to parse, tx_type").into()),
                         };
                         TxType::from(*t)
                     };

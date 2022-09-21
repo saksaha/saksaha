@@ -35,9 +35,7 @@ pub(crate) fn config(sys_run_args: &SystemRunArgs) -> Config {
                 disc_port: 35518,
                 p2p_port: None,
                 sig: None,
-                public_key_str: Some(String::from(
-                    dev_local_1_credential.public_key_str,
-                )),
+                public_key_str: Some(String::from(dev_local_1_credential.public_key_str)),
                 status: AddrStatus::Initialized,
             }],
         },
