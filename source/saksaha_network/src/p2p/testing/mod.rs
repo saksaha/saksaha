@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::{
     blockchain::Blockchain,
     machine::Machine,
@@ -10,6 +8,7 @@ use sak_p2p_addr::{AddrStatus, UnknownAddr};
 use sak_p2p_discovery::{Discovery, DiscoveryArgs};
 use sak_p2p_id::Identity;
 use sak_p2p_peertable::PeerTable;
+use std::sync::Arc;
 
 // #[derive(Clone)]
 // pub(crate) struct MockClient {
