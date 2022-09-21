@@ -1,5 +1,7 @@
-use crate::p2p::testing::{self, MockClient};
+use crate::p2p::testing::{self, mock_p2p_host};
+use crate::p2p::P2PHost;
 use crate::tests::SaksahaTestUtils;
+use crate::Config;
 use sak_credential::CredentialProfile;
 use std::time::Duration;
 
@@ -16,10 +18,18 @@ async fn test_find_arb_peer_successfully() {
         &test_credential_2.public_key_str,
     ]);
 
-    let MockClient {
-        p2p_host: mock_host_1,
-        local_node: mock_local_node_1,
-    } = testing::mock_host_1().await;
+    let p2p_host_1 = mock_p2p_host(
+        p2p_port,
+        disc_port,
+        secret,
+        public_key_str,
+        bootstrap_addrs,
+    );
+
+    // let MockClient {
+    //     p2p_host: mock_host_1,
+    //     local_node: mock_local_node_1,
+    // } = testing::mock_host_1().await;
 
     let MockClient {
         p2p_host: mock_host_2,

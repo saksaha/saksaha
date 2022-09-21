@@ -22,7 +22,7 @@ pub(crate) fn config(sys_run_args: &SystemRunArgs) -> Config {
             p2p_dial_interval: sys_run_args.p2p_dial_interval,
             p2p_max_conn_count: sys_run_args.p2p_max_conn_count,
             p2p_peer_table_capacity: sys_run_args.p2p_peer_table_capacity,
-            p2p_port: sys_run_args.p2p_port,
+            p2p_port: Some(35519),
             addr_expire_duration: sys_run_args.addr_expire_duration,
             addr_monitor_interval: sys_run_args.addr_monitor_interval,
             disc_dial_interval: sys_run_args.disc_dial_interval,

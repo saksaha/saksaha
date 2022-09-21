@@ -59,4 +59,37 @@ impl CredentialProfile {
             ),
         }
     }
+
+    pub fn test_3() -> CredentialProfile {
+        CredentialProfile {
+            public_key_str: String::from(
+                "\
+                04cda32b405650ba37f495713c549881\
+                2b4a4fcde863f8361c50d59c28440434\
+                415f5c8a572a8d460c22fc87ed52c7b8\
+                d8ce385b9e594502382ce833fd772c9964",
+            ),
+            secret: String::from(
+                "e7f0a95afb2c782cf9247d5f24c728fa\
+                ba565ef85df6b74712005951620e95e2",
+            ),
+        }
+    }
+
+    pub fn test_4() -> CredentialProfile {
+        CredentialProfile {
+            public_key_str: String::from(
+                "\
+                0442c686b6e87e2b38958f71d6d6e9d0\
+                d64eae30a56ae5265c02deede65e6f4f\
+                bd41b6d68ed561ea0dd878c0d388e142\
+                084f1c53edef1771fc2734b1936960894d",
+            ),
+            secret: String::from(
+                "\
+                f56c0091e188099de0d982f9bd6132ab\
+                c9e4aa0becafb96ae169526912eb72b2",
+            ),
+        }
+    }
 }
