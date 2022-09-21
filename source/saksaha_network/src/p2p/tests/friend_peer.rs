@@ -11,14 +11,12 @@ async fn test_find_arb_peer_successfully() {
     // sak_test_utils::init_test_log();
     // TestUtil::init_test(vec!["test"]);
 
-    let test_credential_1 = CredentialProfile::test_1();
-    let test_credential_2 = CredentialProfile::test_2();
-
     let mock_config_1 = config_testing::mock_config_1();
+    let mock_config_2 = config_testing::mock_config_2();
 
     SaksahaTestUtils::init_test(&[
-        &test_credential_1.public_key_str,
-        &test_credential_2.public_key_str,
+        &mock_config_1.p2p.public_key_str,
+        &mock_config_2.p2p.public_key_str,
     ]);
 
     // let p2p_host_1 = mock_p2p_host(
