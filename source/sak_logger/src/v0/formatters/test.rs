@@ -2,29 +2,26 @@ use crate::v0::utils;
 use crate::{LoggerError, RUST_LOG_ENV};
 use chrono::Local;
 use colored::Colorize;
+use std::collections::HashMap;
 use std::path::PathBuf;
 pub use tracing::{debug, error, info, trace, warn};
-use tracing::{Event, Subscriber};
+use tracing::{Event, Metadata, Subscriber};
 use tracing_appender::non_blocking::NonBlocking;
 pub use tracing_appender::non_blocking::WorkerGuard;
 use tracing_subscriber;
+use tracing_subscriber::filter::Filtered;
 use tracing_subscriber::fmt::{
     format, FmtContext, FormatEvent, FormatFields, FormattedFields,
 };
+use tracing_subscriber::layer::{Context, Filter};
 use tracing_subscriber::registry::LookupSpan;
 use tracing_subscriber::{
     filter::{EnvFilter, LevelFilter},
-    prelude::*,
     Layer,
 };
 
 pub struct TestLogFormatter {
-    pub file_writers: Vec<FileWriter>,
-}
-
-pub struct FileWriter {
     pub log_dir_name: String,
-    pub non_blocking: NonBlocking,
 }
 
 impl<S, N> FormatEvent<S, N> for TestLogFormatter
@@ -40,13 +37,18 @@ where
     ) -> std::fmt::Result {
         let metadata = event.metadata();
 
-        let mut test_log_visitor = TestLogVisitor {
-            file_writers: &self.file_writers,
+        let now = Local::now().format("%y-%m-%d %H:%M:%S");
+
+        let mut visitor = TestLogVisitor {
+            should_log: false,
+            log_dir_name: &self.log_dir_name,
         };
 
-        event.record(&mut test_log_visitor);
+        event.record(&mut visitor);
 
-        let now = Local::now().format("%y-%m-%d %H:%M:%S");
+        if !visitor.should_log {
+            return write!(writer, "");
+        }
 
         write!(
             &mut writer,
@@ -78,17 +80,19 @@ where
     }
 }
 
-pub struct TestLogVisitor<'a> {
-    pub file_writers: &'a Vec<FileWriter>,
+struct TestLogVisitor<'a> {
+    pub should_log: bool,
+    pub log_dir_name: &'a str,
 }
 
 impl<'a> tracing::field::Visit for TestLogVisitor<'a> {
     fn record_str(&mut self, field: &tracing::field::Field, value: &str) {
-        if field.name() == "public_key" {
-            println!("field={} value={}", field.name(), value);
+        println!("field={} value={}", field.name(), value);
 
-            for file_writer in self.file_writers {
-                if file_writer.log_dir_name == value {}
+        if field.name() == "public_key" {
+            if self.log_dir_name == value {
+                println!("333 field={} value={}", field.name(), value);
+                self.should_log = true;
             }
         }
     }

@@ -7,6 +7,8 @@ use sak_proof_circuit::{CoinProofCircuit1to2, Hasher, NewCoin, OldCoin};
 use std::collections::HashMap;
 use type_extension::U8Array;
 
+use super::utils;
+
 pub struct TestContext {
     pub hasher: Hasher,
 
@@ -411,7 +413,7 @@ fn verify_proof(
 
 #[tokio::test(flavor = "multi_thread")]
 pub async fn test_coin_ownership_default_1_to_2() {
-    sak_test_utils::init_test_log();
+    utils::init_test_log();
 
     let test_context = make_test_context();
 

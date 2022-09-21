@@ -1,3 +1,4 @@
+use super::utils;
 use crate::CoinProof;
 use crate::ProofError;
 use bellman::groth16::{self, Parameters, Proof};
@@ -645,7 +646,8 @@ pub fn mock_merkle_nodes_cm_2(
 
 #[tokio::test(flavor = "multi_thread")]
 pub async fn test_coin_ownership_default_2_to_2_using_dummy_old() {
-    sak_test_utils::init_test_log();
+    // sak_test_utils::init_test_log();
+    utils::init_test_log();
 
     let test_context = make_test_context_2_to_2();
 
