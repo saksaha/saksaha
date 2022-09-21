@@ -1,13 +1,14 @@
 use super::utils::{make_test_context, TestContext};
-use crate::tests::TestUtil;
+use crate::tests::SaksahaTestUtils;
 use std::time::Duration;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_block_sync_true() {
-    sak_test_utils::init_test_log();
+    // sak_test_utils::init_test_log();
 
     let app_prefix_vec = vec!["test_1", "test_2"];
-    TestUtil::init_test(app_prefix_vec.clone());
+    // TestUtil::init_test(app_prefix_vec.clone());
+    SaksahaTestUtils::init_test(app_prefix_vec.clone());
 
     let test_context_1 = make_test_context(
         app_prefix_vec[0].to_string(),
@@ -169,10 +170,11 @@ async fn test_block_sync_true() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_late_block_sync_true() {
-    sak_test_utils::init_test_log();
+    // sak_test_utils::init_test_log();
 
     let app_prefix_vec = vec!["test_1", "test_2"];
-    TestUtil::init_test(app_prefix_vec.clone());
+    // TestUtil::init_test(app_prefix_vec.clone());
+    SaksahaTestUtils::init_test(app_prefix_vec.clone());
 
     let test_context_1 = make_test_context(
         app_prefix_vec[0].to_string(),

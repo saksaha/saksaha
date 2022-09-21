@@ -1,11 +1,14 @@
 use super::utils;
 use crate::rpc::routes::v0::{GetBalanceRequest, GetBalanceResponse};
 use hyper::{Body, Client, Method, Request, Uri};
+use sak_logger::SakLogger;
 use sak_rpc_interface::{JsonRequest, JsonResponse};
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_get_balance_default() {
-    sak_test_utils::init_test_log();
+    // sak_test_utils::init_test_log();
+    SakLogger::init_test_console().unwrap();
+
     let test_context = utils::mock_wallet_context().await;
 
     let rpc = test_context.rpc;

@@ -1,12 +1,13 @@
 use crate::p2p::testing::{self, MockClient};
-use crate::tests::TestUtil;
+use crate::tests::SaksahaTestUtils;
 use std::time::Duration;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_find_arb_peer_successfully() {
-    sak_test_utils::init_test_log();
+    // sak_test_utils::init_test_log();
+    // TestUtil::init_test(vec!["test"]);
 
-    TestUtil::init_test(vec!["test"]);
+    SaksahaTestUtils::init_test(vec!["test"]);
 
     let MockClient {
         p2p_host: mock_host_1,
@@ -164,8 +165,9 @@ async fn test_find_arb_peer_successfully() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_find_friend_peer_successfully() {
-    sak_test_utils::init_test_log();
-    TestUtil::init_test(vec!["test"]);
+    // sak_test_utils::init_test_log();
+    // TestUtil::init_test(vec!["test"]);
+    SaksahaTestUtils::init_test(vec!["test"]);
 
     let MockClient {
         p2p_host: mock_host_1,

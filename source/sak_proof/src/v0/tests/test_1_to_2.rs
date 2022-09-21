@@ -1,3 +1,4 @@
+use super::utils;
 use crate::{CoinProof, ProofError};
 use bellman::groth16::{self, Parameters, Proof};
 use sak_crypto::{Bls12, MerkleTree, OsRng, Scalar, ScalarExt};
@@ -6,8 +7,6 @@ use sak_logger::debug;
 use sak_proof_circuit::{CoinProofCircuit1to2, Hasher, NewCoin, OldCoin};
 use std::collections::HashMap;
 use type_extension::U8Array;
-
-use super::utils;
 
 pub struct TestContext {
     pub hasher: Hasher,

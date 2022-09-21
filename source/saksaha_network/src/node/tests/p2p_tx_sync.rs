@@ -1,16 +1,17 @@
 use super::utils::make_dual_node_test_context;
 use super::utils::DualNodeTestContext;
-use crate::tests::TestUtil;
+use crate::tests::SaksahaTestUtils;
 use sak_dist_ledger::DistLedgerEvent;
 use sak_logger::{error, info};
 use std::time::Duration;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_tx_sync_true() {
-    sak_test_utils::init_test_log();
+    // sak_test_utils::init_test_log();
 
     let app_prefix_vec = vec!["test_1", "test_2"];
-    TestUtil::init_test(app_prefix_vec.clone());
+    // TestUtil::init_test(app_prefix_vec.clone());
+    SaksahaTestUtils::init_test(app_prefix_vec.clone());
 
     let DualNodeTestContext {
         p2p_host_1,

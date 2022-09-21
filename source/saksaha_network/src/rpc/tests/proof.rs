@@ -1,7 +1,7 @@
 use super::utils;
 use crate::{
     rpc::routes::v0::{GetCmIdxRequest, GetCmIdxResponse},
-    tests::TestUtil,
+    tests::SaksahaTestUtils,
 };
 use hyper::{Body, Client, Method, Request, Uri};
 use sak_rpc_interface::{JsonRequest, JsonResponse};
@@ -11,9 +11,10 @@ use sak_types::{
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_rpc_client_handle_get_cm_idx() {
-    sak_test_utils::init_test_log();
+    // sak_test_utils::init_test_log();
+    // TestUtil::init_test(vec!["test"]);
 
-    TestUtil::init_test(vec!["test"]);
+    SaksahaTestUtils::init_test(vec!["test"]);
 
     let (expected_tx_hash, cms) = {
         let blockchain = utils::make_blockchain().await;

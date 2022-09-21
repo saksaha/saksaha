@@ -2,6 +2,7 @@ use crate::Conn;
 use crate::Transport;
 use crate::{handshake::*, Msg, PingMsg};
 use futures::{SinkExt, StreamExt};
+use sak_logger::SakLogger;
 use sak_logger::{debug, info, warn};
 use sak_p2p_id::Identity;
 use std::sync::Arc;
@@ -212,7 +213,8 @@ async fn handshake_recv(
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_handshake_works() {
-    sak_test_utils::init_test_log();
+    // sak_test_utils::init_test_log();
+    SakLogger::init_test_console().unwrap();
 
     let (
         identity_1,

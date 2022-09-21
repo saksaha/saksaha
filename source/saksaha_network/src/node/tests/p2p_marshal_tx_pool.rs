@@ -1,12 +1,14 @@
-use super::utils::{self, TestContext};
-use crate::tests::TestUtil;
+use super::utils;
+use super::utils::TestContext;
+use crate::tests::SaksahaTestUtils;
 use sak_types::BlockCandidate;
 use std::time::Duration;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_two_nodes_tx_pool_marshal_check_true() {
-    sak_test_utils::init_test_log();
-    TestUtil::init_test(vec!["test_1", "test_2"]);
+    // sak_test_utils::init_test_log();
+    // TestUtil::init_test(vec!["test_1", "test_2"]);
+    SaksahaTestUtils::init_test(vec!["test_1", "test_2"]);
 
     let test_context_1 = utils::make_test_context(
         "test_1".to_string(),

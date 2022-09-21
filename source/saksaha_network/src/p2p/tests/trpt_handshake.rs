@@ -1,11 +1,12 @@
 use crate::p2p::testing::{self, MockClient};
-use crate::tests::TestUtil;
+use crate::tests::SaksahaTestUtils;
 use std::time::Duration;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_is_handshake_successful() {
-    sak_test_utils::init_test_log();
-    TestUtil::init_test(vec!["test"]);
+    // sak_test_utils::init_test_log();
+    // TestUtil::init_test(vec!["test"]);
+    SaksahaTestUtils::init_test(vec!["test"]);
 
     let MockClient {
         p2p_host: mock_host_1,

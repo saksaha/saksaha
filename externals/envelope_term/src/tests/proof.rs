@@ -5,6 +5,7 @@ use sak_dist_ledger::{
     Consensus, ConsensusError, DistLedger, DistLedgerApis, DistLedgerArgs,
 };
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
+use sak_logger::SakLogger;
 use sak_proof::{CoinProof, Hasher, NewCoin, OldCoin, Proof};
 use sak_types::{BlockCandidate, TxCandidate};
 use type_extension::U8Array;
@@ -130,9 +131,10 @@ fn generate_a_dummy_coin(value: u64) -> Coin {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_generate_a_proof() {
-    sak_test_utils::init_test_log();
+    // sak_test_utils::init_test_log();
+    // TestUtil::init_test(vec!["test"]);
 
-    TestUtil::init_test(vec!["test"]);
+    SakLogger::init_test_console().unwrap();
 
     let coin_1_old = generate_a_dummy_coin(100);
 
@@ -289,9 +291,10 @@ async fn test_generate_a_proof() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_real_generate_a_proof() {
-    sak_test_utils::init_test_log();
+    // sak_test_utils::init_test_log();
+    // TestUtil::init_test(vec!["test"]);
 
-    TestUtil::init_test(vec!["test"]);
+    SakLogger::init_test_console().unwrap();
     let validator_wasm = VALIDATOR.to_vec();
     let envelope_wasm = ENVELOPE.to_vec();
 

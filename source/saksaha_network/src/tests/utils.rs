@@ -1,15 +1,22 @@
 use crate::fs;
-use sak_dist_ledger::LedgerDB;
 use sak_kv_db::{Options, DB};
-use sak_logger::info;
-use std::path::{Path, PathBuf};
+use sak_logger::{info, SakLogger};
+use std::path::PathBuf;
 
-pub(crate) struct TestUtil;
+pub struct SaksahaTestUtils {}
 
-impl TestUtil {
+impl SaksahaTestUtils {
     pub fn init_test(public_keys: Vec<&str>) {
+        let log_root_dir = fs::config_dir().unwrap();
+
+        SakLogger::init_test_persisted(
+            log_root_dir,
+            public_keys.as_slice(),
+            "saksaha.log",
+        )
+        .unwrap();
+
         for pk in public_keys {
-            // let db_path = LedgerDB::get_db_path(pk).unwrap();
             let ledger_path = get_ledger_path(&pk.to_string());
 
             if ledger_path.exists() {
