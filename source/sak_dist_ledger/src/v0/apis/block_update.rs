@@ -1,6 +1,6 @@
 use crate::{CtrStateUpdate, DistLedgerApis, LedgerError, MerkleUpdate};
 use colored::Colorize;
-use log::{debug, info, warn};
+use sak_logger::{debug, info, warn};
 use sak_contract_std::{CtrCallType, CtrRequest, ERROR_PLACEHOLDER};
 use sak_crypto::{Bls12, MerkleTree, ScalarExt};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;

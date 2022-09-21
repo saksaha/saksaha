@@ -1,6 +1,7 @@
 use crate::EnvelopeError;
 use hyper::{Body, Client, Method, Request, Uri};
 use sak_contract_std::CtrRequest;
+use sak_logger::{error, info, warn};
 use sak_rpc_interface::{JsonRequest, JsonResponse};
 use sak_types::AccountBalance;
 use saksaha_wallet::routes::v0::{SendTxRequest, SendTxResponse};
@@ -44,12 +45,12 @@ pub async fn get_balance_from_wallet(
 
     let b = hyper::body::to_bytes(resp.into_body()).await?;
 
-    log::info!("body: {:?}", b);
+    info!("body: {:?}", b);
 
     let json_response =
         serde_json::from_slice::<JsonResponse<GetBalanceResponse>>(&b)?;
 
-    log::info!(":)");
+    info!(":)");
 
     Ok(json_response)
 }

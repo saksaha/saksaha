@@ -1,5 +1,5 @@
 use super::task::DiscoveryTask;
-use log::{info, warn};
+use sak_logger::{info, warn};
 use sak_p2p_addr::UnknownAddr;
 use sak_task_queue::TaskQueue;
 use std::{

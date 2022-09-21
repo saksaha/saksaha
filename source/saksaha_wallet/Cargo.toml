@@ -9,7 +9,6 @@ default-run = "wallet"
 [dependencies]
 tokio = { version = "1.12.0", features = ["full"] }
 colored = "2"
-log = "0.4.0"
 clap = { version = "3.2.14", features = ["cargo"] }
 futures = "0.3.21"
 serde = { version = "1.0.130", features = ["derive"] }
@@ -26,7 +25,7 @@ sak_crypto = { path = "../sak_crypto" }
 sak_types = { path = "../sak_types" }
 sak_fs = { path = "../sak_fs" }
 sak_logger = { path = "../sak_logger" }
-sak_p2p_id = { path = "../sak_p2p_id" }
+sak_credential = { path = "../sak_credential" }
 sak_contract_std = { path = "../sak_contract_std" }
 sak_rpc_interface = { path = "../sak_rpc_interface" }
 sak_kv_db = { path = "../sak_kv_db" }

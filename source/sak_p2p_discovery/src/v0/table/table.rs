@@ -4,7 +4,7 @@ use super::{
 };
 use crate::AddrsIterator;
 use colored::Colorize;
-use log::debug;
+use sak_logger::debug;
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::{
     mpsc::{self, Receiver, Sender, UnboundedReceiver, UnboundedSender},

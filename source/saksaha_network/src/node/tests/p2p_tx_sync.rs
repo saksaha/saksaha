@@ -1,15 +1,25 @@
 use super::utils::make_dual_node_test_context;
 use super::utils::DualNodeTestContext;
-use crate::tests::TestUtil;
+use crate::tests::SaksahaTestUtils;
+use sak_credential::CredentialProfile;
 use sak_dist_ledger::DistLedgerEvent;
+use sak_logger::{error, info};
 use std::time::Duration;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_tx_sync_true() {
-    sak_test_utils::init_test_log();
+    // sak_test_utils::init_test_log();
 
-    let app_prefix_vec = vec!["test_1", "test_2"];
-    TestUtil::init_test(app_prefix_vec.clone());
+    // let app_prefix_vec = vec!["test_1", "test_2"];
+    // TestUtil::init_test(app_prefix_vec.clone());
+
+    let test_credential_1 = CredentialProfile::test_1();
+    let test_credential_2 = CredentialProfile::test_2();
+
+    SaksahaTestUtils::init_test(&[
+        &test_credential_1.public_key_str,
+        &test_credential_2.public_key_str,
+    ]);
 
     let DualNodeTestContext {
         p2p_host_1,
@@ -61,7 +71,7 @@ async fn test_tx_sync_true() {
 
     assert_eq!(tx_pool_1_contains_tx1, true);
 
-    log::info!("[Success] node_1 has tx_1 (tx sent to node_1 directly)");
+    info!("[Success] node_1 has tx_1 (tx sent to node_1 directly)");
 
     let mut ledger_event_rx =
         machine_2.blockchain.dist_ledger.ledger_event_tx.subscribe();
@@ -76,13 +86,13 @@ async fn test_tx_sync_true() {
 
     match ev {
         DistLedgerEvent::TxPoolStat(v) => {
-            log::info!(
+            info!(
                 "[Success] node_2 has tx_1 (shared from node_1), tx: {:?}",
                 v
             );
         }
         _ => {
-            log::error!("[panic] event: {:?}", ev);
+            error!("[panic] event: {:?}", ev);
             panic!()
         }
     }

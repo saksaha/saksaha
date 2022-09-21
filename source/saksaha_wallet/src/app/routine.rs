@@ -1,7 +1,7 @@
 use crate::credential::CredentialManager;
 use crate::db::WalletDB;
 use crate::{rpc::RPC, wallet::Wallet, AppArgs, WalletError};
-use log::info;
+use sak_logger::info;
 use std::sync::Arc;
 
 pub(crate) struct Routine {}

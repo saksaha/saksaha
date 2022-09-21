@@ -4,7 +4,7 @@ use crate::node::LocalNode;
 use crate::p2p::P2PHost;
 use crate::p2p::P2PHostArgs;
 use colored::Colorize;
-use log::debug;
+use sak_logger::debug;
 use sak_p2p_addr::AddrStatus;
 use sak_p2p_addr::UnknownAddr;
 use sak_p2p_id::Identity;
@@ -30,7 +30,7 @@ pub(crate) struct DualNodeTestContext {
 }
 
 pub(crate) async fn make_test_context(
-    app_prefix: String,
+    // public_key: String,
     p2p_port: Option<u16>,
     disc_port: Option<u16>,
     secret: String,
@@ -122,7 +122,7 @@ pub(crate) async fn make_test_context(
         .expect("P2P Host should be initialized");
 
     let blockchain =
-        Blockchain::init(app_prefix, None, None, None, identity.clone())
+        Blockchain::init(&public_key_str, None, None, None, identity.clone())
             .await
             .unwrap();
 
@@ -159,10 +159,10 @@ pub(super) async fn make_dual_node_test_context(
     miner_1: Option<bool>,
     miner_2: Option<bool>,
 ) -> DualNodeTestContext {
-    let app_prefix_vec = vec!["test_1", "test_2"];
+    // let app_prefix_vec = vec!["test_1", "test_2"];
 
     let test_context_1 = make_test_context(
-        app_prefix_vec[0].to_string(),
+        // app_prefix_vec[0].to_string(),
         Some(35519),
         Some(35518),
         String::from(
@@ -189,7 +189,7 @@ pub(super) async fn make_dual_node_test_context(
     } = test_context_1;
 
     let test_context_2 = make_test_context(
-        app_prefix_vec[1].to_string(),
+        // app_prefix_vec[1].to_string(),
         Some(35521),
         Some(35520),
         String::from(

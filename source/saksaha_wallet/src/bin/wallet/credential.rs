@@ -1,6 +1,6 @@
 use crate::prompt;
 use colored::Colorize;
-use log::info;
+use sak_logger::info;
 use saksaha_wallet::{WalletCredential, WalletError};
 
 pub fn create_or_get_credential(

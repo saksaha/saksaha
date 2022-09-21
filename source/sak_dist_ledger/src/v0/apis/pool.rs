@@ -1,5 +1,5 @@
 use crate::{DistLedgerApis, LedgerError};
-use log::warn;
+use sak_logger::warn;
 use sak_types::{BlockCandidate, TxCandidate};
 
 impl DistLedgerApis {

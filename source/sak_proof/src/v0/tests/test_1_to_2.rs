@@ -1,8 +1,9 @@
+use super::utils;
 use crate::{CoinProof, ProofError};
 use bellman::groth16::{self, Parameters, Proof};
-use log::debug;
 use sak_crypto::{Bls12, MerkleTree, OsRng, Scalar, ScalarExt};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
+use sak_logger::debug;
 use sak_proof_circuit::{CoinProofCircuit1to2, Hasher, NewCoin, OldCoin};
 use std::collections::HashMap;
 use type_extension::U8Array;
@@ -411,7 +412,7 @@ fn verify_proof(
 
 #[tokio::test(flavor = "multi_thread")]
 pub async fn test_coin_ownership_default_1_to_2() {
-    sak_test_utils::init_test_log();
+    utils::init_test_log();
 
     let test_context = make_test_context();
 

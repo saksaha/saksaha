@@ -3,6 +3,7 @@ mod config;
 mod credential;
 mod db;
 mod envelope;
+mod fs;
 mod inputs;
 mod io;
 mod views;

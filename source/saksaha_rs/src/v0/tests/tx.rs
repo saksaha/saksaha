@@ -1,6 +1,9 @@
+use sak_logger::SakLogger;
+
 #[tokio::test(flavor = "multi_thread")]
 pub async fn test_sdk_get_tx() {
-    sak_test_utils::init_test_log();
+    // sak_test_utils::init_test_log();
+    SakLogger::init_test_console().unwrap();
 
     let saksaha_endpoint = "http://localhost:34418/rpc/v0".to_string();
 

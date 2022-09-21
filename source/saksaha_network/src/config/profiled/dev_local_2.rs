@@ -2,9 +2,13 @@ use crate::{
     config::{BlockchainConfig, Config, NodeConfig, P2PConfig, RPCConfig},
     SystemRunArgs,
 };
+use sak_credential::CredentialProfile;
 use sak_p2p_addr::{AddrStatus, UnknownAddr};
 
 pub(crate) fn config(sys_run_args: &SystemRunArgs) -> Config {
+    let dev_local_1_credential = CredentialProfile::dev_local_1();
+    let dev_local_2_credential = CredentialProfile::dev_local_2();
+
     return Config {
         blockchain: BlockchainConfig {
             tx_sync_interval: sys_run_args.tx_sync_interval,
@@ -24,47 +28,18 @@ pub(crate) fn config(sys_run_args: &SystemRunArgs) -> Config {
             addr_monitor_interval: sys_run_args.addr_monitor_interval,
             disc_dial_interval: sys_run_args.disc_dial_interval,
             disc_port: None,
-            secret: String::from(
-                "224d0898389759f29ad5c9a6472b26fff86b6293889\
-                88eec457a88ce50e907a0",
-            ),
-            public_key_str: String::from(
-                "042c8d005bd935597117181d8ceceaef6d1162de78c32856\
-                89d0c36c6170634c124f7b9b911553a1f483ec565c199ea29ff1\
-                cd641f10c9a5f8c7c4d4a026db6f7b",
-            ),
-            bootstrap_addrs: vec![
-                UnknownAddr {
-                    ip: String::from("127.0.0.1"),
-                    disc_port: 35518,
-                    p2p_port: None,
-                    sig: None,
-                    public_key_str: Some(String::from(
-                        "\
-                            04715796a40b0d58fc14a3c4ebee21cb\
-                            806763066a7f1a17adbc256999764443\
-                            beb8109cfd000718535c5aa27513a2ed\
-                            afc6e8bdbe7c27edc2980f9bbc25142fc5\
-                            ",
-                    )),
-                    status: AddrStatus::Initialized,
-                },
-                UnknownAddr {
-                    ip: String::from("127.0.0.1"),
-                    disc_port: 35518,
-                    p2p_port: None,
-                    sig: None,
-                    public_key_str: Some(String::from(
-                        "\
-                            04715796a40b0d58fc14a3c4ebee21cb\
-                            806763066a7f1a17adbc256999764443\
-                            beb8109cfd000718535c5aa27513a2ed\
-                            afc6e8bdbe7c27edc2980f9bbc25142fc5\
-                            ",
-                    )),
-                    status: AddrStatus::Initialized,
-                },
-            ],
+            secret: dev_local_2_credential.secret,
+            public_key_str: dev_local_2_credential.public_key_str,
+            bootstrap_addrs: vec![UnknownAddr {
+                ip: String::from("127.0.0.1"),
+                disc_port: 35518,
+                p2p_port: None,
+                sig: None,
+                public_key_str: Some(String::from(
+                    dev_local_1_credential.public_key_str,
+                )),
+                status: AddrStatus::Initialized,
+            }],
         },
         node: NodeConfig {
             miner: sys_run_args.miner,

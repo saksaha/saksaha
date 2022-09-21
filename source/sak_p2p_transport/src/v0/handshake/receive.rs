@@ -2,7 +2,7 @@ use crate::{Conn, Msg, Transport};
 use crate::{HandshakeMsg, TrptError};
 use futures::SinkExt;
 use futures::StreamExt;
-use log::warn;
+use sak_logger::warn;
 use sak_p2p_id::Identity;
 use std::net::SocketAddr;
 use std::sync::Arc;

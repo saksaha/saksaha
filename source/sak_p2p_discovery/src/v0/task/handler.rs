@@ -1,6 +1,6 @@
 use super::DiscoveryTask;
 use crate::{whoareyou, AddrTable, Connection};
-use sak_logger::tdebug;
+use sak_logger::debug;
 use sak_p2p_id::Identity;
 use std::sync::Arc;
 
@@ -20,12 +20,7 @@ pub(crate) async fn run(
     match result {
         Ok(_) => (),
         Err(err) => {
-            tdebug!(
-                "p2p_discovery",
-                "task",
-                "WhoAreYouInit stopped, err: {}",
-                err,
-            );
+            debug!("WhoAreYouInit stopped, err: {}", err,);
         }
     }
 }

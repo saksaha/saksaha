@@ -1,7 +1,7 @@
-use crate::{WalletError, APP_NAME};
+use crate::{fs, WalletError};
 use colored::Colorize;
+use sak_credential::Credential;
 use sak_crypto::{SakKey, ToEncodedPoint};
-use sak_p2p_id::Credential;
 use serde::{Deserialize, Serialize};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -55,11 +55,12 @@ impl WalletCredential {
     }
 
     pub fn persist(&self) -> Result<(), WalletError> {
-        let app_path =
-            sak_fs::get_app_root_path(APP_NAME)?.join(&self.acc_addr);
+        // let app_path =
+        //     sak_fs::get_app_root_path(APP_NAME)?.join(&self.acc_addr);
+        let acc_dir = fs::acc_dir(&self.acc_addr)?;
 
-        if !app_path.exists() {
-            std::fs::create_dir_all(app_path.clone())?;
+        if !acc_dir.exists() {
+            std::fs::create_dir_all(acc_dir.clone())?;
         } else {
             return Err(format!("Credential has already been created").into());
         }
@@ -72,7 +73,7 @@ impl WalletCredential {
             acc_addr: self.acc_addr.clone(),
         };
 
-        let receipt_path = app_path.join("account.json");
+        let receipt_path = acc_dir.join("account.json");
 
         std::fs::write(receipt_path, serde_json::to_string_pretty(&receipt)?)?;
 

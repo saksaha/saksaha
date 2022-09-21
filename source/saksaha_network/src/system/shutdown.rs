@@ -1,4 +1,4 @@
-use log::{error, info};
+use sak_logger::{error, info};
 
 pub struct ShutdownMng;
 

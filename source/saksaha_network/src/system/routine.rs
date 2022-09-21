@@ -3,15 +3,18 @@ use super::SaksahaError;
 use super::SystemRunArgs;
 use crate::blockchain::Blockchain;
 use crate::config::Config;
+use crate::fs;
 use crate::machine::Machine;
 use crate::node::LocalNode;
 use crate::p2p::{P2PHost, P2PHostArgs};
-use crate::pconfig::PConfig;
 use crate::rpc::RPCArgs;
 use crate::rpc::RPC;
 use crate::system::SystemHandle;
+use crate::PConfig;
 use colored::Colorize;
-use log::{error, info, warn};
+use sak_logger::SakLogger;
+use sak_logger::RUST_LOG_ENV;
+use sak_logger::{error, info, warn};
 use sak_p2p_id::Identity;
 use sak_p2p_peertable::PeerTable;
 use std::sync::Arc;
@@ -46,6 +49,27 @@ impl Routine {
         };
 
         info!("Resolved config: {:?}", config);
+
+        let _logger = {
+            let public_key = &config.p2p.public_key_str;
+
+            // let log_dir = {
+            //     let acc_dir = fs::acc_dir(public_key)?;
+            //     acc_dir.join("logs")
+            // };
+
+            let log_root_dir = fs::config_dir()?;
+
+            // std::fs::create_dir_all(&log_dir)?;
+
+            let l = SakLogger::init(
+                &log_root_dir,
+                public_key.as_str(),
+                "saksaha.log",
+            )?;
+
+            l
+        };
 
         let peer_table = {
             let ps =
@@ -138,8 +162,7 @@ impl Routine {
 
         let blockchain = {
             let b = Blockchain::init(
-                // config.app_prefix,
-                config.p2p.public_key_str,
+                &config.p2p.public_key_str,
                 config.blockchain.tx_sync_interval,
                 None,
                 config.blockchain.block_sync_interval,

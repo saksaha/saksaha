@@ -2,7 +2,7 @@ use crate::{
     machine::Machine,
     node::{task::NodeTask, SaksahaNodeError},
 };
-use log::{debug, info, warn};
+use sak_logger::{debug, info, warn};
 use sak_p2p_addr::UnknownAddr;
 use sak_p2p_discovery::Discovery;
 use sak_p2p_peertable::{Peer, PeerTable};

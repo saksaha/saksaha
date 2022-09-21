@@ -1,6 +1,6 @@
 use crate::EnvelopeError;
+use sak_credential::Credential as SakCredential;
 use sak_crypto::{PublicKey, SakKey, SecretKey, ToEncodedPoint};
-use sak_p2p_id::Credential as P2PCredential;
 
 pub(crate) struct Credential {
     pub public_key: PublicKey,
@@ -17,7 +17,7 @@ impl Credential {
     ) -> Result<Credential, EnvelopeError> {
         match (public_key, secret) {
             (Some(public_key), Some(secret)) => {
-                let p2p_credential = P2PCredential::new(&secret, &public_key)?;
+                let p2p_credential = SakCredential::new(&secret, &public_key)?;
                 let acc_addr =
                     SakKey::create_acc_addr(&p2p_credential.public_key);
 

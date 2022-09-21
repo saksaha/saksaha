@@ -1,4 +1,4 @@
-use sak_logger::terr;
+use sak_logger::error;
 use std::sync::Arc;
 use tokio::sync::mpsc::UnboundedSender;
 
@@ -18,9 +18,7 @@ impl Drop for SlotGuard {
         match self.slots_tx.send(slot) {
             Ok(_) => (),
             Err(err) => {
-                terr!(
-                    "p2p_peer_table",
-                    "slot",
+                error!(
                     "Cannot send the released slot back to the queue,\
                     err: {}",
                     err,

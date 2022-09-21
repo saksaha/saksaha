@@ -1,6 +1,6 @@
 use crate::{Peer, PeerIterator, PeerTableError, Runtime, Slot, SlotGuard};
 use colored::Colorize;
-use log::{debug, error, info};
+use sak_logger::{debug, error, info};
 use sak_p2p_addr::UnknownAddr;
 use std::{
     collections::{hash_map::Values, HashMap},

@@ -2,33 +2,21 @@ mod app;
 mod cli;
 
 use crate::cli::CLIArgs;
-use sak_logger::{terr, tinfo, RUST_LOG_ENV};
+use sak_logger::RUST_LOG_ENV;
+use sak_logger::{error, info};
 use saksaha_network::{System, SystemRunArgs};
 
 fn main() {
     println!("Saksaha is launching...");
 
-    {
-        if std::env::var("RUST_LOG").is_err() {
-            std::env::set_var("RUST_LOG", RUST_LOG_ENV);
-        }
-
-        let _ = sak_logger::init(false);
-    }
-
     let cli_args: CLIArgs = match cli::get_args() {
         Ok(a) => {
-            tinfo!("saksaha", "sak", "Arguments parsed: {:?}", a);
+            info!("cli arg parsed: {:?}", a);
 
             a
         }
         Err(err) => {
-            terr!(
-                "saksaha",
-                "sak",
-                "Can't parse command line arguments, err: {}",
-                err
-            );
+            error!("Can't parse cli args, err: {}", err);
 
             std::process::exit(1);
         }
@@ -66,7 +54,7 @@ fn main() {
     match system.run(sys_run_args) {
         Ok(_) => (),
         Err(err) => {
-            terr!("saksaha", "Can't start the system, err: {}", err);
+            error!("Can't start the system, err: {}", err);
 
             std::process::exit(1);
         }

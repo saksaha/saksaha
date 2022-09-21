@@ -1,8 +1,8 @@
 use super::utils;
 use crate::{wasm_bootstrap, InvokeReceipt};
 use crate::{CtrFn, VMError, EXECUTE, INIT, MEMORY, QUERY};
-use log::{error, info};
 use sak_contract_std::{CtrRequest, InvokeResult, Storage, ERROR_PLACEHOLDER};
+use sak_logger::{error, info};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use wasmtime::{Instance, Memory, Store, TypedFunc};

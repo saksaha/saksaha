@@ -3,7 +3,7 @@ use std::io::BufRead;
 
 pub(crate) fn run() -> Result<bool, WalletError> {
     println!(
-        "\nEither public_key or secret is empty. Would you want to\
+        "\nEither public_key or secret is empty. Would you want to \
         proceed to create a new credential? (y)es, (n)o:",
     );
 

@@ -1,6 +1,7 @@
 use sak_crypto::{rand, ScalarExt};
 use sak_crypto::{MerkleTree, Scalar};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
+use sak_logger::SakLogger;
 use sak_proof::{CoinProof, Hasher, NewCoin, OldCoin};
 use std::collections::HashMap;
 use type_extension::U8Array;
@@ -327,7 +328,8 @@ fn make_test_context() -> (OldCoin, NewCoin, NewCoin, Scalar) {
 
 #[tokio::test(flavor = "multi_thread")]
 pub async fn test_make_a_proof_1_to_2_and_verify_it() {
-    sak_test_utils::init_test_log();
+    // sak_test_utils::init_test_log();
+    SakLogger::init_test_console().unwrap();
 
     let (coin_1_old, coin_1_new, coin_2_new, merkle_rt) = make_test_context();
 
@@ -344,7 +346,8 @@ pub async fn test_make_a_proof_1_to_2_and_verify_it() {
 
 #[tokio::test(flavor = "multi_thread")]
 pub async fn test_get_auth_path() {
-    sak_test_utils::init_test_log();
+    // sak_test_utils::init_test_log();
+    SakLogger::init_test_console().unwrap();
 
     let saksaha_endpoint = "http://localhost:34418/rpc/v0".to_string();
     let idx: u128 = 0;

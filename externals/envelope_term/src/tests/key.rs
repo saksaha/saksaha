@@ -1,11 +1,13 @@
 use sak_crypto::{
     decode_hex, PublicKey, SakKey, ScalarBytes, SecretKey, ToEncodedPoint,
 };
-use sak_test_utils::init_test_log;
+use sak_logger::SakLogger;
+// use sak_test_utils::init_test_log;
 
 #[test]
 fn test_recover_secret_key_from_the_credential() {
-    init_test_log();
+    // init_test_log();
+    SakLogger::init_test_console().unwrap();
 
     let (secret_key, _public_key) = SakKey::generate();
 
@@ -25,7 +27,8 @@ fn test_recover_secret_key_from_the_credential() {
 
 #[test]
 fn test_recover_public_key_from_the_credential() {
-    init_test_log();
+    // init_test_log();
+    SakLogger::init_test_console().unwrap();
 
     let (_secret_key, public_key) = SakKey::generate();
 

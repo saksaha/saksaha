@@ -1,4 +1,5 @@
-use crate::Credential;
+use crate::IdentityError;
+use sak_credential::Credential;
 
 pub struct Identity {
     pub credential: Credential,
@@ -12,7 +13,7 @@ impl Identity {
         public_key_str: &String,
         p2p_port: u16,
         disc_port: u16,
-    ) -> Result<Identity, String> {
+    ) -> Result<Identity, IdentityError> {
         let credential = Credential::new(secret, public_key_str)?;
 
         let i = Identity {

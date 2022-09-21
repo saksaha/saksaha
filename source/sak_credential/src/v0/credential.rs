@@ -1,10 +1,7 @@
+use crate::{make_public_key_short, CredentialError};
 use sak_crypto::{
     PublicKey, SakKey, SecretKey, Signature, SigningKey, ToEncodedPoint,
 };
-
-use crate::IDError;
-
-use super::utils;
 
 // 64 + 1 (flag for whether the key is compressed or not)
 pub const PUBLIC_KEY_LEN: usize = 64 + 1;
@@ -24,11 +21,13 @@ impl Credential {
     pub fn new(
         secret: &String,
         public_key_str: &String,
-    ) -> Result<Credential, String> {
+    ) -> Result<Credential, CredentialError> {
         let secret_bytes = match sak_crypto::decode_hex(&secret) {
             Ok(v) => v,
             Err(err) => {
-                return Err(format!("Error making secret key, err: {}", err));
+                return Err(
+                    format!("Error making secret key, err: {}", err).into()
+                );
             }
         };
 
@@ -38,7 +37,8 @@ impl Credential {
                 return Err(format!(
                     "Error creating SecretKey object, err: {}",
                     err
-                ));
+                )
+                .into());
             }
         };
 
@@ -48,7 +48,8 @@ impl Credential {
             if b.len() != 65 {
                 return Err(format!(
                     "Error encoding public key into bytes, size does not fit"
-                ));
+                )
+                .into());
             }
 
             let mut buf = [0; 65];
@@ -57,7 +58,8 @@ impl Credential {
             if &pk_encoded != public_key_str {
                 return Err(format!(
                     "Encoded public key is different from the restored one",
-                ));
+                )
+                .into());
             }
 
             buf
@@ -86,7 +88,7 @@ impl Credential {
         Ok(credential)
     }
 
-    pub fn get_public_key_short(&self) -> Result<&str, IDError> {
-        utils::make_public_key_short(&self.public_key_str)
+    pub fn get_public_key_short(&self) -> Result<&str, CredentialError> {
+        make_public_key_short(&self.public_key_str)
     }
 }

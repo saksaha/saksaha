@@ -2,7 +2,7 @@ use super::{check, WhoAreYou};
 use crate::{AddrTable, Connection, DiscAddr, Msg};
 use chrono::Utc;
 use futures::sink::SinkExt;
-use log::error;
+use sak_logger::error;
 use sak_p2p_addr::{AddrStatus, KnownAddr};
 use sak_p2p_id::Identity;
 use std::{net::SocketAddr, sync::Arc};

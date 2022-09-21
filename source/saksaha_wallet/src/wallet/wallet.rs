@@ -1,6 +1,7 @@
 use super::CoinManager;
 use crate::{db::WalletDB, Config, CredentialManager, WalletError};
 use colored::Colorize;
+use sak_logger::{info, warn};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
@@ -24,7 +25,7 @@ impl Wallet {
 
         let saksaha_endpoint =
             config.saksaha_endpoint.clone().unwrap_or_else(|| {
-                log::warn!(
+                warn!(
                     "saksah_endpoint is not provided, set default \
                         with port number: {}",
                     34418

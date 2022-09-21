@@ -1,6 +1,6 @@
 use chrono::Utc;
 use futures::StreamExt;
-use log::{error, warn};
+use sak_logger::{error, warn};
 use sak_p2p_discovery::AddrTable;
 use sak_p2p_id::Identity;
 use sak_p2p_peertable::{Peer, PeerStatus, PeerTable};

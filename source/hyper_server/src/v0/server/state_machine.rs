@@ -1,7 +1,7 @@
 use super::Middleware;
 use futures::Future;
 use hyper::{Body, Request, Response};
-use log::error;
+use sak_logger::error;
 use std::{pin::Pin, sync::Arc};
 
 pub enum MiddlewareResult<C> {

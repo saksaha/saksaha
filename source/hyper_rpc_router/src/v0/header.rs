@@ -2,7 +2,7 @@ use hyper::{
     header::{HeaderValue, CONTENT_TYPE},
     Body, Response,
 };
-use log::warn;
+use sak_logger::warn;
 
 pub(crate) fn add_application_json_header(resp: &mut Response<Body>) {
     let headers = resp.headers_mut();

@@ -1,4 +1,4 @@
-use crate::{WalletError, APP_NAME};
+use crate::{fs, WalletError};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
@@ -28,8 +28,9 @@ impl PConfig {
     }
 
     pub fn persist() -> Result<(), WalletError> {
-        let pconfig_fd =
-            sak_fs::get_app_root_path(APP_NAME)?.join(PCONFIG_FILE_NAME);
+        // let pconfig_fd =
+        //     sak_fs::get_app_root_path(APP_NAME)?.join(PCONFIG_FILE_NAME);
+        let pconfig_fd = get_pconfig_file_path()?;
 
         if !pconfig_fd.exists() {
             // std::fs::create_dir_all(pconfig_fd.clone())?;
@@ -48,9 +49,15 @@ impl PConfig {
     }
 
     fn get_pconfig_path() -> Result<PathBuf, WalletError> {
-        let pconfig_fd =
-            sak_fs::get_app_root_path(APP_NAME)?.join(PCONFIG_FILE_NAME);
+        // let pconfig_fd =
+        //     sak_fs::get_app_root_path(APP_NAME)?.join(PCONFIG_FILE_NAME);
+        let pconfig_fd = get_pconfig_file_path()?;
 
         Ok(pconfig_fd)
     }
+}
+
+fn get_pconfig_file_path() -> Result<PathBuf, WalletError> {
+    let p = fs::config_dir()?.join(PCONFIG_FILE_NAME);
+    Ok(p)
 }
