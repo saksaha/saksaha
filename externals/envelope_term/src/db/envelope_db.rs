@@ -3,14 +3,12 @@ use crate::{
     db::EnvelopeDBSchema,
     fs, EnvelopeError,
 };
-use log::{info, warn};
 use sak_crypto::{
     PublicKey, SakKey, SecretKey, SigningKey, ToEncodedPoint, VerifyingKey,
 };
 use sak_kv_db::{KeyValueDatabase, Options};
+use sak_logger::{info, warn};
 use std::path::PathBuf;
-
-// pub(crate) const APP_NAME: &str = "envelope";
 
 pub(crate) struct EnvelopeDB {
     pub(crate) schema: EnvelopeDBSchema,

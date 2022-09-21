@@ -1,12 +1,10 @@
 use super::WalletDBSchema;
 use crate::fs;
-use crate::{
-    credential::WalletCredential, wallet::CoinManager, WalletError, APP_NAME,
-};
-use log::info;
+use crate::{credential::WalletCredential, wallet::CoinManager, WalletError};
 use sak_crypto::Scalar;
 use sak_crypto::ScalarExt;
 use sak_kv_db::{KeyValueDatabase, Options};
+use sak_logger::info;
 use sak_types::CoinStatus;
 use sak_types::Sn;
 use sak_types::{Cm, CmIdx, CoinRecord};

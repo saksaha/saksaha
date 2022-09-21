@@ -5,6 +5,7 @@ use sak_crypto::encode_hex;
 use sak_crypto::Scalar;
 use sak_crypto::ScalarExt;
 use sak_dist_ledger_meta::GAS;
+use sak_logger::debug;
 use sak_proof::CoinProof;
 use sak_proof::Hasher;
 use sak_proof::NewCoin;
@@ -78,7 +79,7 @@ impl Wallet {
         coin: &CoinRecord,
     ) -> Result<u128, WalletError> {
         let cm_idx = {
-            log::debug!("get_cm_idx call");
+            debug!("get_cm_idx call");
             let resp = saksaha::get_cm_idx(
                 self.saksaha_endpoint.clone(),
                 coin.cm.to_bytes(),

@@ -3,6 +3,7 @@ use envelope_contract::{request_type, Channel, OpenChParams};
 use envelope_term::ENVELOPE_CTR_ADDR;
 use sak_contract_std::CtrRequest;
 use sak_crypto::{SakKey, ToEncodedPoint};
+use sak_logger::warn;
 use sak_types::CoinRecord;
 
 #[tokio::test(flavor = "multi_thread")]
@@ -55,7 +56,7 @@ async fn test_update_coin_status() {
 
     println!("json_response: {:#?}", json_response);
 
-    log::warn!(
+    warn!(
         "This test skip the step `unconfirmed to unused`\
         which need a running node"
     );

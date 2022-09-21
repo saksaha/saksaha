@@ -1,7 +1,7 @@
 use super::profiled;
 use crate::WalletError;
 use colored::Colorize;
-use log::info;
+use sak_logger::info;
 use sak_types::CoinRecord;
 
 #[derive(Debug)]

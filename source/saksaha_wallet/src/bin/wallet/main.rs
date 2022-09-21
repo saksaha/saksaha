@@ -3,7 +3,7 @@ mod credential;
 mod prompt;
 
 use cli::CLIArgs;
-use log::info;
+use sak_logger::info;
 use sak_logger::RUST_LOG_ENV;
 use saksaha_wallet::{App, AppArgs, Config, WalletError};
 

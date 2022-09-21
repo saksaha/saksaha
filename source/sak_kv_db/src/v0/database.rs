@@ -1,6 +1,6 @@
 use colored::Colorize;
-use log::info;
 use rocksdb::{ColumnFamilyDescriptor, Options, DB};
+use sak_logger::info;
 use std::path::PathBuf;
 
 pub struct KeyValueDatabase {

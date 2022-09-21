@@ -1,6 +1,6 @@
 use crate::{Msg, TrptError, UpgradedP2PCodec};
 use futures::{SinkExt, StreamExt};
-use log::warn;
+use sak_logger::warn;
 use tokio::net::TcpStream;
 use tokio_util::codec::Framed;
 

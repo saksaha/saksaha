@@ -12,6 +12,7 @@ use crate::rpc::RPC;
 use crate::system::SystemHandle;
 use crate::PConfig;
 use colored::Colorize;
+use sak_logger::SakLogger;
 use sak_logger::RUST_LOG_ENV;
 use sak_logger::{error, info, warn};
 use sak_p2p_id::Identity;
@@ -59,7 +60,7 @@ impl Routine {
 
             std::fs::create_dir_all(&log_dir)?;
 
-            let l = sak_logger::setup_logger2(&log_dir, "saksaha.log")?;
+            let l = SakLogger::init(&log_dir, "saksaha.log")?;
             l
         };
 

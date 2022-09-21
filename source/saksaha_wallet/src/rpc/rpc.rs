@@ -6,7 +6,7 @@ use crate::{
 use colored::Colorize;
 use hyper_rpc_router::Router;
 use hyper_server::{cors, Middleware, RPCServer};
-use log::{error, info, warn};
+use sak_logger::{error, info, warn};
 use std::sync::Arc;
 use tokio::net::TcpListener;
 

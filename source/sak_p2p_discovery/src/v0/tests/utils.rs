@@ -16,6 +16,10 @@ struct TestDiscArgs {
     bootstrap_addrs: Vec<UnknownAddr>,
 }
 
+pub(super) fn init() {
+    // let _ = env_logger::builder().is_test(true).try_init();
+}
+
 lazy_static! {
     static ref TEST_DISC_ARGS: Vec<TestDiscArgs> = vec![
         // 1

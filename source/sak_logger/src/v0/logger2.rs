@@ -21,7 +21,7 @@ pub struct SakLogger {
 }
 
 impl SakLogger {
-    pub fn new(
+    pub fn init(
         log_dir: &PathBuf,
         file_name_prefix: &str,
     ) -> Result<SakLogger, LoggerError> {

@@ -1,5 +1,5 @@
 use crate::{VMError, ALLOC_FN, EXECUTE, INIT, MEMORY, QUERY};
-use log::{error, info};
+use sak_logger::{error, info};
 use wasmtime::{Config, Engine, Instance, Linker, Module, Store, TypedFunc};
 
 pub fn is_valid_wasm(wasm: impl AsRef<[u8]>) -> bool {
