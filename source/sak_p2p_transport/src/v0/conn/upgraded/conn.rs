@@ -1,6 +1,6 @@
 use crate::{Msg, TrptError, UpgradedP2PCodec};
 use futures::{SinkExt, StreamExt};
-use sak_logger::warn;
+use sak_logger::{debug, info, warn};
 use tokio::net::TcpStream;
 use tokio_util::codec::Framed;
 
@@ -31,12 +31,12 @@ impl UpgradedConn {
 
     #[inline]
     pub async fn send(&mut self, msg: Msg) -> Result<(), TrptError> {
-        // let msg_type = msg.to_string();
+        let msg_type = msg.to_string();
 
-        // println!(
-        //     "\n 11 send msg(), conn_id: {}, msg: {}",
-        //     self.conn_id, msg_type
-        // );
+        info!(
+            "\n 11 send msg(), conn_id: {}, msg: {}",
+            self.conn_id, msg_type
+        );
 
         self.socket.send(msg).await
     }

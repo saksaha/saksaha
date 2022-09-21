@@ -1,7 +1,7 @@
 use crate::{fs, WalletError};
 use colored::Colorize;
+use sak_credential::Credential;
 use sak_crypto::{SakKey, ToEncodedPoint};
-use sak_p2p_id::Credential;
 use serde::{Deserialize, Serialize};
 use std::time::{SystemTime, UNIX_EPOCH};
 
