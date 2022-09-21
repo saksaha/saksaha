@@ -7,24 +7,17 @@ use std::sync::Arc;
 pub(crate) struct Routine {}
 
 impl Routine {
-    pub(crate) async fn run(
-        self,
-        app_args: AppArgs,
-    ) -> Result<(), WalletError> {
+    pub(crate) async fn run(self, app_args: AppArgs) -> Result<(), WalletError> {
         info!("Wallet main routine starts, app_args: {:?}", app_args);
 
         let rpc_port = app_args.config.rpc_port;
 
         let wallet = {
-            let credential_manager =
-                CredentialManager::init(app_args.wallet_credential)?;
+            let credential_manager = CredentialManager::init(app_args.wallet_credential)?;
 
-            let wallet_db =
-                WalletDB::init(&credential_manager.get_credential(), false)?;
+            let wallet_db = WalletDB::init(&credential_manager.get_credential(), false)?;
 
-            let w =
-                Wallet::init(credential_manager, wallet_db, app_args.config)
-                    .await?;
+            let w = Wallet::init(credential_manager, wallet_db, app_args.config).await?;
 
             Arc::new(w)
         };

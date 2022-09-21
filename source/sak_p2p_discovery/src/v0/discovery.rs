@@ -37,17 +37,12 @@ pub struct DiscoveryArgs {
 }
 
 impl Discovery {
-    pub async fn init(
-        disc_args: DiscoveryArgs,
-    ) -> Result<(Discovery, u16), String> {
+    pub async fn init(disc_args: DiscoveryArgs) -> Result<(Discovery, u16), String> {
         let (udp_conn, disc_port) = {
             let socket_addr = match disc_args.udp_socket.local_addr() {
                 Ok(a) => a,
                 Err(err) => {
-                    return Err(format!(
-                        "Cannot retrieve addr of udp socket, err: {}",
-                        err
-                    ));
+                    return Err(format!("Cannot retrieve addr of udp socket, err: {}", err));
                 }
             };
 
@@ -74,11 +69,7 @@ impl Discovery {
         let addr_table = {
             let t = match AddrTable::init(disc_args.disc_table_capacity).await {
                 Ok(t) => t,
-                Err(err) => {
-                    return Err(
-                        format!("Can't initialize Table, err: {}", err).into()
-                    )
-                }
+                Err(err) => return Err(format!("Can't initialize Table, err: {}", err).into()),
             };
 
             Arc::new(t)

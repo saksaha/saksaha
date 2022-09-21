@@ -3,9 +3,7 @@ use crate::{
     db::EnvelopeDBSchema,
     fs, EnvelopeError,
 };
-use sak_crypto::{
-    PublicKey, SakKey, SecretKey, SigningKey, ToEncodedPoint, VerifyingKey,
-};
+use sak_crypto::{PublicKey, SakKey, SecretKey, SigningKey, ToEncodedPoint, VerifyingKey};
 use sak_kv_db::{KeyValueDatabase, Options};
 use sak_logger::{info, warn};
 use std::path::PathBuf;
@@ -15,9 +13,7 @@ pub(crate) struct EnvelopeDB {
 }
 
 impl EnvelopeDB {
-    pub(crate) async fn init(
-        acc_addr: &String,
-    ) -> Result<EnvelopeDB, EnvelopeError> {
+    pub(crate) async fn init(acc_addr: &String) -> Result<EnvelopeDB, EnvelopeError> {
         let envelope_db_path = {
             let acc_dir = fs::acc_dir(acc_addr)?;
 
@@ -45,11 +41,7 @@ impl EnvelopeDB {
         ) {
             Ok(d) => d,
             Err(err) => {
-                return Err(format!(
-                    "Error initializing key value database, err: {}",
-                    err
-                )
-                .into());
+                return Err(format!("Error initializing key value database, err: {}", err).into());
             }
         };
 

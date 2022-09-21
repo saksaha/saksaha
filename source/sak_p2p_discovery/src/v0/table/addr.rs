@@ -12,10 +12,7 @@ impl DiscAddr {
     }
 
     pub fn downgrade(&self) -> UnknownAddr {
-        UnknownAddr::new_from_endpoint(
-            &self.known_addr.ip,
-            self.known_addr.disc_port,
-        )
+        UnknownAddr::new_from_endpoint(&self.known_addr.ip, self.known_addr.disc_port)
     }
 }
 impl std::fmt::Display for DiscAddr {

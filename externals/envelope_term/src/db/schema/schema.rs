@@ -1,9 +1,6 @@
 use crate::db::schema::cfs;
 
-use sak_kv_db::{
-    BoundColumnFamily, ColumnFamilyDescriptor, IteratorMode, Options,
-    WriteBatch, DB,
-};
+use sak_kv_db::{BoundColumnFamily, ColumnFamilyDescriptor, IteratorMode, Options, WriteBatch, DB};
 use std::sync::Arc;
 
 pub(crate) struct EnvelopeDBSchema {
@@ -35,9 +32,7 @@ impl EnvelopeDBSchema {
         let cf_handle = match db.cf_handle(col_name) {
             Some(h) => h,
             None => {
-                return Err(
-                    format!("Fail to open ledger colums {}", col_name,),
-                );
+                return Err(format!("Fail to open ledger colums {}", col_name,));
             }
         };
 

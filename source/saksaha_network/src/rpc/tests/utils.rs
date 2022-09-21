@@ -21,8 +21,7 @@ pub(in crate::rpc) async fn make_test_context(
     public_key_str: String,
 ) -> TestContext {
     let (disc_socket, disc_port) = {
-        let (socket, socket_addr) =
-            sak_utils_net::setup_udp_socket(None).await.unwrap();
+        let (socket, socket_addr) = sak_utils_net::setup_udp_socket(None).await.unwrap();
 
         info!(
             "Bound udp socket for P2P discovery, addr: {}",
@@ -154,13 +153,9 @@ pub fn make_dummy_tx_pour_block() -> BlockCandidate {
     tx_pour_block
 }
 
-pub(crate) async fn make_blockchain(
-    secret: &String,
-    public_key_str: &String,
-) -> Blockchain {
+pub(crate) async fn make_blockchain(secret: &String, public_key_str: &String) -> Blockchain {
     let (_disc_socket, disc_port) = {
-        let (socket, socket_addr) =
-            sak_utils_net::setup_udp_socket(None).await.unwrap();
+        let (socket, socket_addr) = sak_utils_net::setup_udp_socket(None).await.unwrap();
 
         info!(
             "Bound udp socket for P2P discovery, addr: {}",
@@ -177,15 +172,9 @@ pub(crate) async fn make_blockchain(
         Arc::new(id)
     };
 
-    let blockchain = Blockchain::init(
-        &String::from("test"),
-        None,
-        None,
-        None,
-        identity.clone(),
-    )
-    .await
-    .expect("Blockchain should be made");
+    let blockchain = Blockchain::init(&String::from("test"), None, None, None, identity.clone())
+        .await
+        .expect("Blockchain should be made");
 
     blockchain
 }

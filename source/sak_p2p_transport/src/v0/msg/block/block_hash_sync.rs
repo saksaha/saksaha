@@ -10,9 +10,7 @@ pub struct BlockHashSyncMsg {
 }
 
 impl BlockHashSyncMsg {
-    pub(crate) fn from_parse(
-        parse: &mut Parse,
-    ) -> Result<BlockHashSyncMsg, TrptError> {
+    pub(crate) fn from_parse(parse: &mut Parse) -> Result<BlockHashSyncMsg, TrptError> {
         let block_count = parse.next_int()?;
 
         let mut new_blocks = Vec::with_capacity(block_count as usize);

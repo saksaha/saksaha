@@ -12,10 +12,8 @@ use tui::Frame;
 
 use self::utils::check_size;
 
-pub(crate) fn draw<'a, 'b, B>(
-    rect: &mut Frame<'a, B>,
-    state: &mut RwLockWriteGuard<'b, AppState>,
-) where
+pub(crate) fn draw<'a, 'b, B>(rect: &mut Frame<'a, B>, state: &mut RwLockWriteGuard<'b, AppState>)
+where
     B: Backend,
 {
     if !check_size(&rect.size()) {

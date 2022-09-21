@@ -1,26 +1,20 @@
 use crate::ProofError;
-use bellman::groth16::{
-    self, Parameters, PreparedVerifyingKey, Proof, VerifyingKey,
-};
+use bellman::groth16::{self, Parameters, PreparedVerifyingKey, Proof, VerifyingKey};
 use pairing::MultiMillerLoop;
 use sak_crypto::{Bls12, OsRng, Scalar};
-use sak_proof_circuit::{
-    CoinProofCircuit1to2, CoinProofCircuit2to2, Hasher, NewCoin, OldCoin,
-};
+use sak_proof_circuit::{CoinProofCircuit1to2, CoinProofCircuit2to2, Hasher, NewCoin, OldCoin};
 
-const CIRCUIT_PARAMS_1TO2: &[u8] =
-    include_bytes!("../../../../prebuild/circuit_params_1to2");
-const CIRCUIT_PARAMS_2TO2: &[u8] =
-    include_bytes!("../../../../prebuild/circuit_params_2to2");
+const CIRCUIT_PARAMS_1TO2: &[u8] = include_bytes!("../../../../prebuild/circuit_params_1to2");
+const CIRCUIT_PARAMS_2TO2: &[u8] = include_bytes!("../../../../prebuild/circuit_params_2to2");
 
 pub const DUMMY_MERKLE_RT: [u8; 32] = [
-    247, 154, 75, 119, 90, 47, 200, 133, 182, 132, 225, 10, 46, 184, 117, 21,
-    34, 4, 99, 216, 220, 128, 7, 244, 99, 90, 167, 93, 251, 176, 236, 18,
+    247, 154, 75, 119, 90, 47, 200, 133, 182, 132, 225, 10, 46, 184, 117, 21, 34, 4, 99, 216, 220,
+    128, 7, 244, 99, 90, 167, 93, 251, 176, 236, 18,
 ];
 
 pub const DUMMY_SN: [u8; 32] = [
-    214, 107, 131, 229, 87, 169, 202, 14, 124, 201, 178, 160, 124, 64, 127,
-    131, 1, 79, 76, 17, 161, 60, 250, 110, 102, 175, 33, 193, 105, 88, 32, 70,
+    214, 107, 131, 229, 87, 169, 202, 14, 124, 201, 178, 160, 124, 64, 127, 131, 1, 79, 76, 17,
+    161, 60, 250, 110, 102, 175, 33, 193, 105, 88, 32, 70,
 ];
 
 pub struct CoinProof;
@@ -31,9 +25,7 @@ pub(crate) fn get_mimc_params_1_to_2(
     match Parameters::<Bls12>::read(&CIRCUIT_PARAMS_1TO2[..], false) {
         Ok(p) => Ok(p),
         Err(err) => {
-            return Err(
-                format!("Error getting circuit params, err: {}", err).into()
-            );
+            return Err(format!("Error getting circuit params, err: {}", err).into());
         }
     }
 }
@@ -44,17 +36,13 @@ pub(crate) fn get_mimc_params_2_to_2(
     match Parameters::<Bls12>::read(&CIRCUIT_PARAMS_2TO2[..], false) {
         Ok(p) => Ok(p),
         Err(err) => {
-            return Err(
-                format!("Error getting circuit params, err: {}", err).into()
-            );
+            return Err(format!("Error getting circuit params, err: {}", err).into());
         }
     }
 }
 
 impl CoinProof {
-    pub fn make_verifying_key<E: MultiMillerLoop>(
-        vk: &VerifyingKey<E>,
-    ) -> PreparedVerifyingKey<E> {
+    pub fn make_verifying_key<E: MultiMillerLoop>(vk: &VerifyingKey<E>) -> PreparedVerifyingKey<E> {
         groth16::prepare_verifying_key(vk)
     }
 
@@ -62,11 +50,7 @@ impl CoinProof {
         match Parameters::<Bls12>::read(&CIRCUIT_PARAMS_1TO2[..], false) {
             Ok(p) => Ok(p),
             Err(err) => {
-                return Err(format!(
-                    "Error getting circuit params, err: {}",
-                    err
-                )
-                .into());
+                return Err(format!("Error getting circuit params, err: {}", err).into());
             }
         }
     }
@@ -114,17 +98,12 @@ impl CoinProof {
             constants,
         };
 
-        let proof =
-            match groth16::create_random_proof(c, &de_params, &mut OsRng) {
-                Ok(p) => p,
-                Err(err) => {
-                    return Err(format!(
-                        "Failed to generate groth16 proof, err: {}",
-                        err
-                    )
-                    .into());
-                }
-            };
+        let proof = match groth16::create_random_proof(c, &de_params, &mut OsRng) {
+            Ok(p) => p,
+            Err(err) => {
+                return Err(format!("Failed to generate groth16 proof, err: {}", err).into());
+            }
+        };
 
         Ok(proof)
     }
@@ -170,17 +149,12 @@ impl CoinProof {
             constants,
         };
 
-        let proof =
-            match groth16::create_random_proof(c, &de_params, &mut OsRng) {
-                Ok(p) => p,
-                Err(err) => {
-                    return Err(format!(
-                        "Failed to generate groth16 proof, err: {}",
-                        err
-                    )
-                    .into());
-                }
-            };
+        let proof = match groth16::create_random_proof(c, &de_params, &mut OsRng) {
+            Ok(p) => p,
+            Err(err) => {
+                return Err(format!("Failed to generate groth16 proof, err: {}", err).into());
+            }
+        };
 
         Ok(proof)
     }

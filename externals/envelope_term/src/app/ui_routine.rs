@@ -15,10 +15,7 @@ use tui::Terminal;
 pub(super) struct UIRoutine;
 
 impl UIRoutine {
-    pub async fn run(
-        &self,
-        envelope: Arc<Envelope>,
-    ) -> Result<(), EnvelopeError> {
+    pub async fn run(&self, envelope: Arc<Envelope>) -> Result<(), EnvelopeError> {
         let mut terminal = configure_terminal()?;
 
         let tick_rate = Duration::from_millis(1000);
@@ -36,9 +33,7 @@ impl UIRoutine {
             terminal.draw(|rect| views::draw(rect, &mut state))?;
 
             let result = match events.next().await {
-                InputEvent::Input(key) => {
-                    envelope.handle_key_input(key, state).await
-                }
+                InputEvent::Input(key) => envelope.handle_key_input(key, state).await,
                 // InputEvent::Input(key) => match state.input_mode {
                 //     InputMode::Normal => {
                 //         envelope.handle_normal_key(key, state).await
@@ -64,8 +59,7 @@ impl UIRoutine {
     }
 }
 
-fn configure_terminal(
-) -> Result<Terminal<CrosstermBackend<Stdout>>, EnvelopeError> {
+fn configure_terminal() -> Result<Terminal<CrosstermBackend<Stdout>>, EnvelopeError> {
     let stdout = std::io::stdout();
 
     crossterm::terminal::enable_raw_mode()?;

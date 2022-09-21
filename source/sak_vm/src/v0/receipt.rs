@@ -41,10 +41,7 @@ impl InvokeReceipt {
         Ok(rpt)
     }
 
-    pub fn from_execute(
-        result: InvokeResult,
-        storage: Storage,
-    ) -> Result<InvokeReceipt, VMError> {
+    pub fn from_execute(result: InvokeResult, storage: Storage) -> Result<InvokeReceipt, VMError> {
         let res = try_parse_invoked(result)?;
 
         let rpt = InvokeReceipt {

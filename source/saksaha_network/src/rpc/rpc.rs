@@ -40,9 +40,7 @@ impl RPC {
         let cors = Middleware::new(Box::new(cors));
 
         let route = {
-            let m = Middleware::new(Box::new(move |req, res, ctx| {
-                router.route(req, res, ctx)
-            }));
+            let m = Middleware::new(Box::new(move |req, res, ctx| router.route(req, res, ctx)));
 
             m
         };

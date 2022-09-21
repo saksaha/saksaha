@@ -25,9 +25,7 @@ pub struct PeerTable {
 }
 
 impl PeerTable {
-    pub async fn init(
-        peer_table_capacity: Option<i16>,
-    ) -> Result<PeerTable, PeerTableError> {
+    pub async fn init(peer_table_capacity: Option<i16>) -> Result<PeerTable, PeerTableError> {
         let capacity = match peer_table_capacity {
             Some(c) => c.into(),
             None => PEER_TABLE_CAPACITY,
@@ -88,10 +86,7 @@ impl PeerTable {
         Ok(ps)
     }
 
-    pub async fn get_mapped_peer(
-        &self,
-        public_key: &PublicKey,
-    ) -> Option<Arc<Peer>> {
+    pub async fn get_mapped_peer(&self, public_key: &PublicKey) -> Option<Arc<Peer>> {
         let peers_map_lock = self.peer_map.read().await;
 
         match peers_map_lock.get(public_key) {
@@ -132,10 +127,7 @@ impl PeerTable {
                 return Ok(slot_guard);
             }
             None => {
-                return Err(format!(
-                    "Peer slots have beeen closed. Critical error"
-                )
-                .into());
+                return Err(format!("Peer slots have beeen closed. Critical error").into());
             }
         }
     }
@@ -169,8 +161,7 @@ impl PeerTable {
         let peer_map = self.peer_map.read().await;
 
         for (_, peer) in peer_map.values().enumerate() {
-            peer_vec
-                .push(peer.get_addr().known_addr.get_p2p_endpoint().clone());
+            peer_vec.push(peer.get_addr().known_addr.get_p2p_endpoint().clone());
         }
 
         peer_vec

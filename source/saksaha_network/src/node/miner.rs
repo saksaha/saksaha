@@ -50,8 +50,7 @@ impl Miner {
                 }
             };
 
-            sak_utils_time::wait_until_min_interval(time_since, mine_interval)
-                .await;
+            sak_utils_time::wait_until_min_interval(time_since, mine_interval).await;
         }
     }
 }

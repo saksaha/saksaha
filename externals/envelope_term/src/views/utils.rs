@@ -5,9 +5,7 @@ use tui::backend::Backend;
 use tui::layout::{Alignment, Rect};
 use tui::style::{Color, Modifier, Style};
 use tui::text::{Span, Spans, Text};
-use tui::widgets::{
-    Block, BorderType, Borders, List, ListItem, Paragraph, Tabs,
-};
+use tui::widgets::{Block, BorderType, Borders, List, ListItem, Paragraph, Tabs};
 use tui::Frame;
 use tui_logger::{TuiLoggerLevelOutput, TuiLoggerWidget};
 use unicode_width::UnicodeWidthStr;
@@ -114,15 +112,9 @@ where
         InputMode::Normal => (
             vec![
                 Span::raw("Press "),
-                Span::styled(
-                    "q",
-                    Style::default().add_modifier(Modifier::BOLD),
-                ),
+                Span::styled("q", Style::default().add_modifier(Modifier::BOLD)),
                 Span::raw(" to exit, "),
-                Span::styled(
-                    "i",
-                    Style::default().add_modifier(Modifier::BOLD),
-                ),
+                Span::styled("i", Style::default().add_modifier(Modifier::BOLD)),
                 Span::raw(" to start editing."),
             ],
             Style::default().add_modifier(Modifier::RAPID_BLINK),
@@ -130,15 +122,9 @@ where
         InputMode::Editing => (
             vec![
                 Span::raw("Press "),
-                Span::styled(
-                    "Esc",
-                    Style::default().add_modifier(Modifier::BOLD),
-                ),
+                Span::styled("Esc", Style::default().add_modifier(Modifier::BOLD)),
                 Span::raw(" to stop editing, "),
-                Span::styled(
-                    "Enter",
-                    Style::default().add_modifier(Modifier::BOLD),
-                ),
+                Span::styled("Enter", Style::default().add_modifier(Modifier::BOLD)),
                 Span::raw(" to record the message"),
             ],
             Style::default(),
@@ -163,8 +149,7 @@ where
         );
 
     let input_returned = {
-        let v =
-            vec![ListItem::new(content[state.image_count as usize].clone())];
+        let v = vec![ListItem::new(content[state.image_count as usize].clone())];
 
         List::new(v).block(Block::default().borders(Borders::ALL))
     };
@@ -204,15 +189,9 @@ pub(crate) fn draw_tabs<'a>(state: &'a AppState) -> Tabs {
             if tab == "Chat #" {
                 tab = format!("Chat #{}", state.selected_ch_id);
             }
-            Spans::from(vec![Span::styled(
-                tab,
-                Style::default().fg(Color::Yellow),
-            )])
+            Spans::from(vec![Span::styled(tab, Style::default().fg(Color::Yellow))])
         } else {
-            Spans::from(vec![Span::styled(
-                tab,
-                Style::default().fg(Color::White),
-            )])
+            Spans::from(vec![Span::styled(tab, Style::default().fg(Color::White))])
         }
     })
     .collect();
@@ -279,8 +258,7 @@ pub(crate) fn draw_ch_list<'a>(state: &AppState) -> List<'a> {
         .enumerate()
         .map(|(idx, i)| {
             let ch = format!("{}. {}", idx, i.channel.ch_id.to_owned());
-            ListItem::new(ch)
-                .style(Style::default().fg(Color::White).bg(Color::Black))
+            ListItem::new(ch).style(Style::default().fg(Color::White).bg(Color::Black))
         })
         .collect();
 
@@ -338,9 +316,7 @@ pub(crate) fn draw_logs<'a>() -> TuiLoggerWidget<'a> {
         .block(
             Block::default()
                 .title("Logs")
-                .border_style(
-                    Style::default().fg(Color::White).bg(Color::Black),
-                )
+                .border_style(Style::default().fg(Color::White).bg(Color::Black))
                 .borders(Borders::ALL),
         )
         .style(Style::default().fg(Color::White).bg(Color::Black))
@@ -361,15 +337,9 @@ where
         InputMode::Normal => (
             vec![
                 Span::raw("Press "),
-                Span::styled(
-                    "q",
-                    Style::default().add_modifier(Modifier::BOLD),
-                ),
+                Span::styled("q", Style::default().add_modifier(Modifier::BOLD)),
                 Span::raw(" to exit, "),
-                Span::styled(
-                    "i",
-                    Style::default().add_modifier(Modifier::BOLD),
-                ),
+                Span::styled("i", Style::default().add_modifier(Modifier::BOLD)),
                 Span::raw(" to start editing."),
             ],
             Style::default().add_modifier(Modifier::RAPID_BLINK),
@@ -377,15 +347,9 @@ where
         InputMode::Editing => (
             vec![
                 Span::raw("Press "),
-                Span::styled(
-                    "Esc",
-                    Style::default().add_modifier(Modifier::BOLD),
-                ),
+                Span::styled("Esc", Style::default().add_modifier(Modifier::BOLD)),
                 Span::raw(" to stop editing, "),
-                Span::styled(
-                    "Enter",
-                    Style::default().add_modifier(Modifier::BOLD),
-                ),
+                Span::styled("Enter", Style::default().add_modifier(Modifier::BOLD)),
                 Span::raw(" to record the message"),
             ],
             Style::default(),

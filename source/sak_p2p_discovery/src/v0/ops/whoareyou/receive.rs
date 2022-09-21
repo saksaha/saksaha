@@ -51,17 +51,14 @@ pub(crate) async fn recv_who_are_you(
         src_public_key_str: her_public_key_str,
     } = way_syn;
 
-    let her_disc_endpoint = sak_utils_net::make_endpoint(
-        &socket_addr.ip().to_string(),
-        her_disc_port,
-    );
+    let her_disc_endpoint =
+        sak_utils_net::make_endpoint(&socket_addr.ip().to_string(), her_disc_port);
 
     if check::is_my_endpoint(identity.disc_port, &her_disc_endpoint) {
         return Err(WhoAreYouRecvError::MyEndpoint);
     }
 
-    let slot_guard = match addr_table.get_mapped_addr(&her_public_key_str).await
-    {
+    let slot_guard = match addr_table.get_mapped_addr(&her_public_key_str).await {
         Some(_) => {
             return Err(WhoAreYouRecvError::AddrAlreadyMapped {
                 disc_endpoint: her_disc_endpoint.to_string(),
@@ -108,9 +105,7 @@ pub(crate) async fn recv_who_are_you(
     }
 
     let her_public_key =
-        match sak_crypto::convert_public_key_str_into_public_key(
-            &her_public_key_str,
-        ) {
+        match sak_crypto::convert_public_key_str_into_public_key(&her_public_key_str) {
             Ok(p) => p,
             Err(err) => {
                 return Err(WhoAreYouRecvError::PublicKeyCreateFail {

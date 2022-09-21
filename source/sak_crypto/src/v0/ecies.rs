@@ -26,11 +26,7 @@ pub fn derive_aes_key(
         let mut out = [0u8; 32];
         match h.expand(&[], &mut out) {
             Ok(_) => (),
-            Err(err) => {
-                return Err(
-                    format!("Could not derive aes key, err: {}", err).into()
-                )
-            }
+            Err(err) => return Err(format!("Could not derive aes key, err: {}", err).into()),
         };
 
         out
@@ -39,10 +35,7 @@ pub fn derive_aes_key(
     Ok(aes_key)
 }
 
-pub fn aes_encrypt(
-    aes_key: &[u8; 32],
-    plaintext: &[u8],
-) -> Result<Vec<u8>, CryptoError> {
+pub fn aes_encrypt(aes_key: &[u8; 32], plaintext: &[u8]) -> Result<Vec<u8>, CryptoError> {
     let iv: [u8; AES_IV_LENGTH] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
     let key = Key::from_slice(aes_key);
@@ -60,10 +53,7 @@ pub fn aes_encrypt(
     Ok(ciphertext)
 }
 
-pub fn aes_decrypt(
-    aes_key: &[u8],
-    ciphertext: &[u8],
-) -> Result<Vec<u8>, CryptoError> {
+pub fn aes_decrypt(aes_key: &[u8], ciphertext: &[u8]) -> Result<Vec<u8>, CryptoError> {
     let key = Key::from_slice(aes_key);
     let cipher = Aes256GcmSiv::new(key);
 

@@ -48,8 +48,6 @@ fn create_app<'a>() -> Command<'a> {
             Arg::new("saksaha-endpoint") //
                 .long("saksaha-endpoint")
                 .takes_value(true)
-                .long_help(
-                    "Endpoint to which bind saksaha node",
-                ),
+                .long_help("Endpoint to which bind saksaha node"),
         )
 }

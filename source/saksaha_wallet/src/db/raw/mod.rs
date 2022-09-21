@@ -16,9 +16,7 @@ impl Raw {
         let cf_handle = match db.cf_handle(col_name) {
             Some(h) => h,
             None => {
-                return Err(
-                    format!("Fail to open ledger colums {}", col_name,),
-                );
+                return Err(format!("Fail to open ledger colums {}", col_name,));
             }
         };
 

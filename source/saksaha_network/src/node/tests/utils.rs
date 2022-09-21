@@ -38,8 +38,7 @@ pub(crate) async fn make_test_context(
     miner: Option<bool>,
 ) -> TestContext {
     let (disc_socket, disc_port) = {
-        let (socket, socket_addr) =
-            sak_utils_net::setup_udp_socket(disc_port).await.unwrap();
+        let (socket, socket_addr) = sak_utils_net::setup_udp_socket(disc_port).await.unwrap();
 
         debug!(
             "Bound udp socket for P2P discovery, addr: {}",
@@ -49,9 +48,7 @@ pub(crate) async fn make_test_context(
         (socket, socket_addr.port())
     };
 
-    let (p2p_socket, p2p_port) = match sak_utils_net::bind_tcp_socket(p2p_port)
-        .await
-    {
+    let (p2p_socket, p2p_port) = match sak_utils_net::bind_tcp_socket(p2p_port).await {
         Ok((socket, socket_addr)) => {
             debug!(
                 "Bound tcp socket for P2P host, addr: {}",
@@ -121,10 +118,9 @@ pub(crate) async fn make_test_context(
         .await
         .expect("P2P Host should be initialized");
 
-    let blockchain =
-        Blockchain::init(&public_key_str, None, None, None, identity.clone())
-            .await
-            .unwrap();
+    let blockchain = Blockchain::init(&public_key_str, None, None, None, identity.clone())
+        .await
+        .unwrap();
 
     let machine = {
         let m = Machine { blockchain };

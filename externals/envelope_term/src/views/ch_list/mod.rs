@@ -60,11 +60,7 @@ pub(crate) fn draw_ch_list<'a, B>(
             .split(chunks[1]);
 
         let ch_list = utils::draw_ch_list(&state);
-        rect.render_stateful_widget(
-            ch_list,
-            body_chunks[0],
-            &mut state.ch_list_state,
-        );
+        rect.render_stateful_widget(ch_list, body_chunks[0], &mut state.ch_list_state);
 
         // let help = utils::draw_help(envelope.get_actions());
         // rect.render_widget(help, body_chunks[1]);

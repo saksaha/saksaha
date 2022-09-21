@@ -29,11 +29,7 @@ impl Consensus for Pos {
         {
             Ok(v) => v,
             Err(err) => {
-                return Err(format!(
-                    "Error retrieving a validator, err: {}",
-                    err
-                )
-                .into());
+                return Err(format!("Error retrieving a validator, err: {}", err).into());
             }
         };
 

@@ -3,9 +3,7 @@ use hyper::{Body, Client, Method, Request, Uri};
 use sak_contract_std::{CtrCallType, CtrRequest, RequestArgs};
 use sak_crypto::encode_hex;
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
-use sak_rpc_interface::{
-    JsonRequest, JsonResponse, SendMintTxRequest, SendPourTxRequest,
-};
+use sak_rpc_interface::{JsonRequest, JsonResponse, SendMintTxRequest, SendPourTxRequest};
 use sak_types::{Cm, CmIdx, Tx};
 use serde::{Deserialize, Serialize};
 use std::time;
@@ -24,8 +22,8 @@ pub struct QueryCtrResponse {
 
 pub fn new_empty_32_temp() -> [u8; 32] {
     [
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0,
     ]
 }
 
@@ -44,8 +42,7 @@ pub async fn send_tx_pour(
     let body = {
         let ctr_request = serde_json::to_vec(&ctr_request)?;
         let sig = String::from("author_sig_1");
-        let created_at =
-            String::from(format!("created_at_{:?}", time::SystemTime::now()));
+        let created_at = String::from(format!("created_at_{:?}", time::SystemTime::now()));
 
         // *** Need to change dummy values to real values
         let send_req = SendPourTxRequest::new(
@@ -200,8 +197,7 @@ pub async fn query_ctr(
 
     let b = hyper::body::to_bytes(resp.into_body()).await?;
 
-    let json_response =
-        serde_json::from_slice::<JsonResponse<QueryCtrResponse>>(&b)?;
+    let json_response = serde_json::from_slice::<JsonResponse<QueryCtrResponse>>(&b)?;
 
     // println!("json_response: {:?}", json_response);
     Ok(json_response)
@@ -251,8 +247,7 @@ pub async fn get_cm_idx(
 
     let b = hyper::body::to_bytes(resp.into_body()).await?;
 
-    let json_response =
-        serde_json::from_slice::<JsonResponse<GetCmIdxResponse>>(&b)?;
+    let json_response = serde_json::from_slice::<JsonResponse<GetCmIdxResponse>>(&b)?;
 
     Ok(json_response)
 }
@@ -301,8 +296,7 @@ pub async fn get_tx(
 
     let b = hyper::body::to_bytes(resp.into_body()).await?;
 
-    let json_response =
-        serde_json::from_slice::<JsonResponse<GetTxResponse>>(&b)?;
+    let json_response = serde_json::from_slice::<JsonResponse<GetTxResponse>>(&b)?;
 
     Ok(json_response)
 }
@@ -350,8 +344,7 @@ pub async fn get_auth_path(
 
     let b = hyper::body::to_bytes(resp.into_body()).await?;
 
-    let json_response =
-        serde_json::from_slice::<JsonResponse<GetAuthPathResponse>>(&b)?;
+    let json_response = serde_json::from_slice::<JsonResponse<GetAuthPathResponse>>(&b)?;
 
     Ok(json_response)
 }

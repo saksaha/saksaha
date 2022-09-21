@@ -18,11 +18,7 @@ pub(crate) fn get_args() -> Result<CLIArgs, WalletError> {
         Some(p) => match p.parse::<u16>() {
             Ok(port) => Some(port),
             Err(err) => {
-                return Err(format!(
-                    "Cannot parse rpc port (u16), err: {}",
-                    err,
-                )
-                .into());
+                return Err(format!("Cannot parse rpc port (u16), err: {}", err,).into());
             }
         },
         None => None,
@@ -107,8 +103,6 @@ fn create_app<'a>() -> Command<'a> {
             Arg::new("saksaha-endpoint") //
                 .long("saksaha-endpoint")
                 .takes_value(true)
-                .long_help(
-                    "Endpoint to which bind saksaha node",
-                ),
+                .long_help("Endpoint to which bind saksaha node"),
         )
 }

@@ -13,8 +13,7 @@ impl TestUtil {
             let db_path = EnvelopeDB::get_db_path(&acc_dir).unwrap();
 
             if Path::new(&db_path).exists() {
-                DB::destroy(&Options::default(), db_path)
-                    .expect("Cannot open a file for lock");
+                DB::destroy(&Options::default(), db_path).expect("Cannot open a file for lock");
             }
         }
 

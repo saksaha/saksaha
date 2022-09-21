@@ -1,7 +1,5 @@
 use sak_contract_std::{CtrCallType, CtrRequest, Storage};
-use sak_crypto::{
-    PublicKey, SakKey, SecretKey, SigningKey, ToEncodedPoint, VerifyingKey,
-};
+use sak_crypto::{PublicKey, SakKey, SecretKey, SigningKey, ToEncodedPoint, VerifyingKey};
 pub(crate) const DUMMY_CHANNEL_ID_1: &str = "ch_12";
 pub(crate) const ENVELOPE_CTR_ADDR: &'static str = "envelope_contract_addr";
 pub(crate) const ARG_SERIALIZED_INPUT: &str = "serialized_input";
@@ -16,8 +14,7 @@ where
 }
 
 pub fn pk_serialize(input: PublicKey) -> String {
-    let ret = serde_json::to_string(input.to_encoded_point(false).as_bytes())
-        .unwrap();
+    let ret = serde_json::to_string(input.to_encoded_point(false).as_bytes()).unwrap();
     ret
 }
 

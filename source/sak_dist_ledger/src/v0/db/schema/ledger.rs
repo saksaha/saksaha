@@ -2,10 +2,7 @@ use crate::{cfs, keys, LedgerDB};
 use crate::{LedgerError, MerkleNodeLoc};
 use sak_crypto::ScalarExt;
 use sak_kv_db::DB;
-use sak_kv_db::{
-    BoundColumnFamily, ColumnFamilyDescriptor, IteratorMode, Options,
-    WriteBatch,
-};
+use sak_kv_db::{BoundColumnFamily, ColumnFamilyDescriptor, IteratorMode, Options, WriteBatch};
 use sak_types::{BlockHash, CtrAddr, TxHash, TxType};
 use std::convert::TryInto;
 use std::sync::Arc;

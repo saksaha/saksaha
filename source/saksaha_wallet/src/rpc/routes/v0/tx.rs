@@ -1,8 +1,6 @@
 use crate::rpc::ctx::RouteCtx;
 use hyper::{Body, Response};
-use hyper_rpc_router::{
-    require_params_parsed, require_some_params, Params, RouteState,
-};
+use hyper_rpc_router::{require_params_parsed, require_some_params, Params, RouteState};
 use sak_contract_std::CtrRequest;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -24,11 +22,7 @@ pub(in crate::rpc) async fn send_pour_tx(
     params: Params,
     ctx: Arc<RouteCtx>,
 ) -> Response<Body> {
-    let params = require_some_params!(
-        route_state,
-        params,
-        "send_tx should contain params",
-    );
+    let params = require_some_params!(route_state, params, "send_tx should contain params",);
 
     let rb: SendTxRequest = require_params_parsed!(route_state, &params);
 
@@ -47,11 +41,7 @@ pub(in crate::rpc) async fn send_pour_tx(
         Err(err) => {
             println!("err: {}", err);
 
-            hyper_rpc_router::make_error_response(
-                route_state.resp,
-                Some(route_state.id),
-                err,
-            )
+            hyper_rpc_router::make_error_response(route_state.resp, Some(route_state.id), err)
         }
     }
 }

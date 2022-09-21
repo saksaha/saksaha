@@ -32,9 +32,7 @@ pub struct DistLedgerArgs {
 }
 
 impl DistLedger {
-    pub async fn init(
-        dist_ledger_args: DistLedgerArgs,
-    ) -> Result<DistLedger, LedgerError> {
+    pub async fn init(dist_ledger_args: DistLedgerArgs) -> Result<DistLedger, LedgerError> {
         let DistLedgerArgs {
             // public_key,
             tx_sync_interval,
@@ -84,8 +82,7 @@ impl DistLedger {
             dist_ledger.apis.insert_genesis_block(bc).await?;
         }
 
-        let latest_height =
-            dist_ledger.apis.ledger_db.get_latest_block_height()?;
+        let latest_height = dist_ledger.apis.ledger_db.get_latest_block_height()?;
 
         info!(
             "Initialized Blockchain, latest height (none if genesis \

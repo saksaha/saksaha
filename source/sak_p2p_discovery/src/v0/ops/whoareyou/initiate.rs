@@ -100,9 +100,7 @@ pub(crate) async fn handle_who_are_you_ack(
     }
 
     let her_public_key =
-        match sak_crypto::convert_public_key_str_into_public_key(
-            &her_public_key_str,
-        ) {
+        match sak_crypto::convert_public_key_str_into_public_key(&her_public_key_str) {
             Ok(p) => p,
             Err(err) => return Err(err),
         };

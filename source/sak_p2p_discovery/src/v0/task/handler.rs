@@ -12,8 +12,7 @@ pub(crate) async fn run(
 ) {
     let result = match task {
         DiscoveryTask::InitiateWhoAreYou { addr } => {
-            whoareyou::init_who_are_you(addr, identity, addr_table, udp_conn)
-                .await
+            whoareyou::init_who_are_you(addr, identity, addr_table, udp_conn).await
         }
     };
 

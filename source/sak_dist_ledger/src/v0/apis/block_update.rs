@@ -1,14 +1,14 @@
 use crate::{CtrStateUpdate, DistLedgerApis, LedgerError, MerkleUpdate};
 use colored::Colorize;
-use sak_logger::{debug, info, warn};
 use sak_contract_std::{CtrCallType, CtrRequest, ERROR_PLACEHOLDER};
 use sak_crypto::{Bls12, MerkleTree, ScalarExt};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
+use sak_logger::{debug, info, warn};
 use sak_proof::{CoinProof, Hasher, Proof};
 use sak_proof::{DUMMY_MERKLE_RT, DUMMY_SN};
 use sak_types::{
-    Block, BlockCandidate, CmIdx, MerkleRt, MintTxCandidate, PourTxCandidate,
-    Sn, Tx, TxCandidate, TxCtrOp,
+    Block, BlockCandidate, CmIdx, MerkleRt, MintTxCandidate, PourTxCandidate, Sn, Tx, TxCandidate,
+    TxCtrOp,
 };
 use sak_vm::CtrFn;
 
@@ -17,11 +17,10 @@ impl DistLedgerApis {
         &self,
         genesis_block: BlockCandidate,
     ) -> Result<Option<String>, String> {
-        let persisted_gen_block_hash = if let Some(b) =
-            match self.get_block_by_height(&0).await {
-                Ok(b) => b,
-                Err(err) => return Err(err.to_string()),
-            } {
+        let persisted_gen_block_hash = if let Some(b) = match self.get_block_by_height(&0).await {
+            Ok(b) => b,
+            Err(err) => return Err(err.to_string()),
+        } {
             let block_hash = b.get_block_hash().to_string();
 
             info!(
@@ -36,10 +35,7 @@ impl DistLedgerApis {
             let b = match self.write_block(Some(genesis_block)).await {
                 Ok(b) => b,
                 Err(err) => {
-                    return Err(format!(
-                        "Genesis block failed to write, err: {}",
-                        err
-                    ));
+                    return Err(format!("Genesis block failed to write, err: {}", err));
                 }
             };
 
@@ -137,24 +133,19 @@ impl DistLedgerApis {
             warn!("Error removing txs into the tx pool, err: {}", err);
         }
 
-        let next_merkle_rt =
-            match merkle_update.get(format!("{}_0", CM_TREE_DEPTH).as_str()) {
-                Some(r) => r,
-                None => {
-                    if tcs.is_empty() {
-                        warn!("Block contains no valid txs");
-                        return Ok(None);
-                    } else {
-                        return Err("next merkle root is missing".into());
-                    }
+        let next_merkle_rt = match merkle_update.get(format!("{}_0", CM_TREE_DEPTH).as_str()) {
+            Some(r) => r,
+            None => {
+                if tcs.is_empty() {
+                    warn!("Block contains no valid txs");
+                    return Ok(None);
+                } else {
+                    return Err("next merkle root is missing".into());
                 }
-            };
+            }
+        };
 
-        let (block, txs) = bc.upgrade(
-            next_block_height,
-            next_cm_idx,
-            next_merkle_rt.to_owned(),
-        );
+        let (block, txs) = bc.upgrade(next_block_height, next_cm_idx, next_merkle_rt.to_owned());
 
         if let Some(_b) = self.get_block(block.get_block_hash())? {
             return Err(format!(
@@ -191,21 +182,18 @@ impl DistLedgerApis {
         blocks.sort_by(|a, b| a.0.block_height.cmp(&b.0.block_height));
 
         for (block, txs) in blocks {
-            let latest_block_height =
-                self.get_latest_block_height()?.unwrap_or(0);
+            let latest_block_height = self.get_latest_block_height()?.unwrap_or(0);
 
             if block.block_height != (latest_block_height + 1) {
                 warn!(
-                "received not continuous block height, block_height: {}, received : {}",
-                latest_block_height,
-                block.block_height
-            );
+                    "received not continuous block height, block_height: {}, received : {}",
+                    latest_block_height, block.block_height
+                );
 
                 continue;
             }
 
-            let tx_candidates =
-                txs.into_iter().map(|tx| tx.downgrade()).collect();
+            let tx_candidates = txs.into_iter().map(|tx| tx.downgrade()).collect();
 
             let bc_candidate = BlockCandidate {
                 validator_sig: block.validator_sig,
@@ -246,28 +234,19 @@ impl DistLedgerApis {
         } else {
             match self.ledger_db.get_tx_hash_by_sn(sn) {
                 Ok(Some(_)) => {
-                    return Err(format!(
-                        "Serial numbers already exists, sns: {:?}",
-                        sn
-                    )
-                    .into())
+                    return Err(format!("Serial numbers already exists, sns: {:?}", sn).into())
                 }
                 Ok(None) => return Ok(true),
                 Err(_) => {
-                    return Err(format!(
-                        "Tx with serial numbers does not exist, sns: {:?}",
-                        sn
+                    return Err(
+                        format!("Tx with serial numbers does not exist, sns: {:?}", sn).into(),
                     )
-                    .into())
                 }
             }
         }
     }
 
-    pub(crate) fn verify_proof(
-        &self,
-        tc: &PourTxCandidate,
-    ) -> Result<bool, LedgerError> {
+    pub(crate) fn verify_proof(&self, tc: &PourTxCandidate) -> Result<bool, LedgerError> {
         let hasher = Hasher::new();
 
         let mut public_inputs = vec![];
@@ -287,18 +266,12 @@ impl DistLedgerApis {
         let pi_des: Proof<Bls12> = match Proof::read(&*tc.pi) {
             Ok(p) => p,
             Err(err) => {
-                return Err(format!(
-                    "Cannot deserialize the pi, err: {:?}",
-                    err
-                )
-                .into());
+                return Err(format!("Cannot deserialize the pi, err: {:?}", err).into());
             }
         };
 
         let verification_result = match &tc.merkle_rts.len() {
-            2 => {
-                CoinProof::verify_proof_2_to_2(pi_des, &public_inputs, &hasher)?
-            }
+            2 => CoinProof::verify_proof_2_to_2(pi_des, &public_inputs, &hasher)?,
             _ => {
                 // return Err(format!("Not implement yet").into());
                 false
@@ -306,20 +279,13 @@ impl DistLedgerApis {
         };
 
         if !verification_result {
-            return Err(format!(
-                "Failed to verify proof, tc: {}",
-                tc.get_tx_hash()
-            )
-            .into());
+            return Err(format!("Failed to verify proof, tc: {}", tc.get_tx_hash()).into());
         };
 
         Ok(verification_result)
     }
 
-    pub(crate) fn filter_tx_candidates(
-        &self,
-        bc: &mut BlockCandidate,
-    ) -> Result<(), LedgerError> {
+    pub(crate) fn filter_tx_candidates(&self, bc: &mut BlockCandidate) -> Result<(), LedgerError> {
         bc.tx_candidates.retain(|tx_candidate| match tx_candidate {
             TxCandidate::Mint(_tc) => {
                 return true;
@@ -329,11 +295,7 @@ impl DistLedgerApis {
                     match self.verify_sn(&sn) {
                         Ok(b) => b,
                         Err(err) => {
-                            warn!(
-                                "Tx is filtered, hash: {}, err: {}",
-                                tc.get_tx_hash(),
-                                err
-                            );
+                            warn!("Tx is filtered, hash: {}, err: {}", tc.get_tx_hash(), err);
                             return false;
                         }
                     };
@@ -351,11 +313,7 @@ impl DistLedgerApis {
                 match self.verify_proof(tc) {
                     Ok(b) => b,
                     Err(err) => {
-                        warn!(
-                            "Tx is filtered, hash: {}, err: {}",
-                            tc.get_tx_hash(),
-                            err
-                        );
+                        warn!("Tx is filtered, hash: {}, err: {}", tc.get_tx_hash(), err);
                         return false;
                     }
                 };
@@ -406,14 +364,11 @@ async fn process_ctr_state_update(
                                 .await?
                                 .ok_or("ctr data (wasm) should exist")?;
 
-                            let ctr_fn =
-                                CtrFn::Execute(req, previous_state.to_vec());
+                            let ctr_fn = CtrFn::Execute(req, previous_state.to_vec());
 
                             let receipt = vm.invoke(ctr_wasm, ctr_fn)?;
 
-                            receipt
-                                .updated_storage
-                                .ok_or("State needs to be updated")?
+                            receipt.updated_storage.ok_or("State needs to be updated")?
                         }
                         None => apis.execute_ctr(ctr_addr, req).await?,
                     };
@@ -426,15 +381,12 @@ async fn process_ctr_state_update(
                     let maybe_error_placehorder = match &new_state.get(0..6) {
                         Some(ep) => ep.to_owned(),
                         None => {
-                            return Err(
-                                "new_state should be bigger than 6-byte".into(),
-                            );
+                            return Err("new_state should be bigger than 6-byte".into());
                         }
                     };
 
                     if maybe_error_placehorder != ERROR_PLACEHOLDER {
-                        ctr_state_update
-                            .insert(ctr_addr.clone(), new_state.clone());
+                        ctr_state_update.insert(ctr_addr.clone(), new_state.clone());
                     }
                 }
             };
@@ -459,12 +411,9 @@ async fn handle_mint_tx_candidate(
     let data = &tc.data;
     let tx_ctr_op = tc.get_ctr_op();
 
-    process_ctr_state_update(apis, ctr_addr, data, tx_ctr_op, ctr_state_update)
-        .await?;
+    process_ctr_state_update(apis, ctr_addr, data, tx_ctr_op, ctr_state_update).await?;
 
-    let cm_count =
-        process_merkle_update(apis, merkle_update, &tc.cms, next_cm_idx)
-            .await?;
+    let cm_count = process_merkle_update(apis, merkle_update, &tc.cms, next_cm_idx).await?;
 
     Ok(cm_count)
 }
@@ -480,12 +429,9 @@ async fn handle_pour_tx_candidate(
     let data = &tc.data;
     let tx_ctr_op = tc.get_ctr_op();
 
-    process_ctr_state_update(apis, ctr_addr, data, tx_ctr_op, ctr_state_update)
-        .await?;
+    process_ctr_state_update(apis, ctr_addr, data, tx_ctr_op, ctr_state_update).await?;
 
-    let cm_count =
-        process_merkle_update(apis, merkle_update, &tc.cms, next_cm_idx)
-            .await?;
+    let cm_count = process_merkle_update(apis, merkle_update, &tc.cms, next_cm_idx).await?;
 
     Ok(cm_count)
 }

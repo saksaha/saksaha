@@ -84,8 +84,7 @@ async fn test_call_ctr_validator_fn_init() {
         .ok_or("Init needs to return state")
         .unwrap();
 
-    let ctr_validator_state: ValidatorStorage =
-        serde_json::from_slice(&updated_state).unwrap();
+    let ctr_validator_state: ValidatorStorage = serde_json::from_slice(&updated_state).unwrap();
 
     let validator_list_expected = vec![get_test_validator()];
 
@@ -126,8 +125,7 @@ async fn test_call_ctr_validator_fn_query() {
         .invoke(ctr_wasm, ctr_fn)
         .expect("validator should be obtained");
 
-    let validators: Vec<String> =
-        serde_json::from_slice(&receipt.result).unwrap();
+    let validators: Vec<String> = serde_json::from_slice(&receipt.result).unwrap();
 
     println!("validator expected: {:?}", test_validator_vec[0]);
 
@@ -180,8 +178,7 @@ async fn test_call_ctr_validator_fn_execute_add_validator() {
 
     let updated_storage = receipt.updated_storage.unwrap();
 
-    let validator_storage: ValidatorStorage =
-        serde_json::from_slice(&updated_storage).unwrap();
+    let validator_storage: ValidatorStorage = serde_json::from_slice(&updated_storage).unwrap();
 
     let validators = validator_storage.validators;
 

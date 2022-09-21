@@ -84,10 +84,7 @@ pub(crate) fn build_system_contracts() -> Result<(), CIError> {
     Ok(())
 }
 
-fn persist_build_receipt_file(
-    file_name: &str,
-    receipt: Vec<PathBuf>,
-) -> Result<(), CIError> {
+fn persist_build_receipt_file(file_name: &str, receipt: Vec<PathBuf>) -> Result<(), CIError> {
     let build_time = SystemTime::now();
 
     let receipt_path = Paths::prebuild()?.join(file_name);
@@ -145,8 +142,7 @@ fn build_contract(ctr: Contract) -> Result<PathBuf, CIError> {
             return Err(format!("compiled wasm does not exist").into());
         }
 
-        let wasm_dest_path =
-            Paths::prebuild()?.join(format!("{}.wasm", ctr.name));
+        let wasm_dest_path = Paths::prebuild()?.join(format!("{}.wasm", ctr.name));
 
         std::fs::copy(&wasm_path, &wasm_dest_path)?;
 
@@ -157,8 +153,7 @@ fn build_contract(ctr: Contract) -> Result<PathBuf, CIError> {
 }
 
 fn post_process_wasm(wasm_path: PathBuf) -> Result<PathBuf, CIError> {
-    let ret =
-        wasm_postprocess::make_wasm_have_multiple_returns(wasm_path, None)?;
+    let ret = wasm_postprocess::make_wasm_have_multiple_returns(wasm_path, None)?;
 
     Ok(ret)
 }

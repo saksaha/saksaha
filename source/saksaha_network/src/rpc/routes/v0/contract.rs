@@ -1,8 +1,8 @@
 use crate::system::SystemHandle;
 use hyper::{Body, Response};
 use hyper_rpc_router::{
-    make_error_response, make_success_response, require_params_parsed,
-    require_some_params, Params, RouteState,
+    make_error_response, make_success_response, require_params_parsed, require_some_params, Params,
+    RouteState,
 };
 use sak_contract_std::CtrRequest;
 use serde::{Deserialize, Serialize};
@@ -24,11 +24,7 @@ pub(in crate::rpc) async fn query_ctr(
     params: Params,
     sys_handle: Arc<SystemHandle>,
 ) -> Response<Body> {
-    let params = require_some_params!(
-        route_state,
-        params,
-        "query_ctr should contain params",
-    );
+    let params = require_some_params!(route_state, params, "query_ctr should contain params",);
 
     let rb: QueryCtrRequest = require_params_parsed!(route_state, &params);
 
@@ -40,11 +36,7 @@ pub(in crate::rpc) async fn query_ctr(
         .query_ctr(&rb.ctr_addr, rb.req)
         .await
     {
-        Ok(result) => {
-            make_success_response(route_state, QueryCtrResponse { result })
-        }
-        Err(err) => {
-            make_error_response(route_state.resp, Some(route_state.id), err)
-        }
+        Ok(result) => make_success_response(route_state, QueryCtrResponse { result }),
+        Err(err) => make_error_response(route_state.resp, Some(route_state.id), err),
     }
 }

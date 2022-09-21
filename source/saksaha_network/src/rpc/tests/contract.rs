@@ -21,11 +21,7 @@ async fn test_call_contract() {
         rpc,
         rpc_socket_addr,
         ..
-    } = utils::make_test_context(
-        test_credential_1.secret,
-        test_credential_1.public_key_str,
-    )
-    .await;
+    } = utils::make_test_context(test_credential_1.secret, test_credential_1.public_key_str).await;
 
     let client = Client::new();
 
@@ -86,8 +82,7 @@ async fn test_call_contract() {
 
     let b = hyper::body::to_bytes(resp.into_body()).await.unwrap();
 
-    let json_response =
-        serde_json::from_slice::<JsonResponse<QueryCtrResponse>>(&b).unwrap();
+    let json_response = serde_json::from_slice::<JsonResponse<QueryCtrResponse>>(&b).unwrap();
 
     let query_ctr_response = json_response.result.unwrap();
     let query_result = query_ctr_response.result;

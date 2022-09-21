@@ -20,19 +20,17 @@ impl Wallet {
     ) -> Result<Wallet, WalletError> {
         let wallet_db = Arc::new(wallet_db);
 
-        let coin_manager =
-            RwLock::new(CoinManager::init(wallet_db.clone()).await?);
+        let coin_manager = RwLock::new(CoinManager::init(wallet_db.clone()).await?);
 
-        let saksaha_endpoint =
-            config.saksaha_endpoint.clone().unwrap_or_else(|| {
-                warn!(
-                    "saksah_endpoint is not provided, set default \
+        let saksaha_endpoint = config.saksaha_endpoint.clone().unwrap_or_else(|| {
+            warn!(
+                "saksah_endpoint is not provided, set default \
                         with port number: {}",
-                    34418
-                );
+                34418
+            );
 
-                "http://localhost:34418/rpc/v0".to_string()
-            });
+            "http://localhost:34418/rpc/v0".to_string()
+        });
 
         let wallet = Wallet {
             wallet_db,
@@ -62,10 +60,7 @@ impl Wallet {
     }
 }
 
-async fn bootstrap_wallet(
-    wallet: &Wallet,
-    config: Config,
-) -> Result<(), WalletError> {
+async fn bootstrap_wallet(wallet: &Wallet, config: Config) -> Result<(), WalletError> {
     println!(
         "\n{} wallet\nConfig: {:#?}\n",
         "Bootstrapping".green(),
@@ -87,7 +82,10 @@ async fn bootstrap_wallet(
                 Ok(_r) => {
                     println!(
                         "\t[{}/{}] Bootstrapped a coin\n\t\tcm: {}\n\t\tval: {}",
-                        idx + 1, coin_count, coin.cm, coin.v
+                        idx + 1,
+                        coin_count,
+                        coin.cm,
+                        coin.v
                     );
 
                     wallet.coin_manager.write().await.put_coin(coin)?;

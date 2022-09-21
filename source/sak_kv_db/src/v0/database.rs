@@ -26,11 +26,7 @@ impl KeyValueDatabase {
             db_path_str,
         );
 
-        let db_instance = match DB::open_cf_descriptors(
-            &options,
-            &db_path_str,
-            cf_descriptors,
-        ) {
+        let db_instance = match DB::open_cf_descriptors(&options, &db_path_str, cf_descriptors) {
             Ok(db) => {
                 info!(
                     "Initialized KeyValueDatabase, path: {}",

@@ -65,8 +65,7 @@ impl Envelope {
                     })
                 });
 
-                actions::select(self.saksaha_endpoint.clone(), dispatch, state)
-                    .await
+                actions::select(self.saksaha_endpoint.clone(), dispatch, state).await
             }
             _ => {
                 return AppReturn::Continue;

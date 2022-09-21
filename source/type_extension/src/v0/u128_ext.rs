@@ -8,11 +8,7 @@ pub fn convert_u8_slice_into_u128(arr: &[u8]) -> Result<u128, TypeExtError> {
         let len = arr.len();
 
         if len > U128_BYTE_LEN {
-            return Err(format!(
-                "Number is too large (>8bytes), num: {:?}",
-                arr
-            )
-            .into());
+            return Err(format!("Number is too large (>8bytes), num: {:?}", arr).into());
         }
 
         let diff = U128_BYTE_LEN - len;
@@ -23,11 +19,7 @@ pub fn convert_u8_slice_into_u128(arr: &[u8]) -> Result<u128, TypeExtError> {
         match v.try_into() {
             Ok(a) => a,
             Err(err) => {
-                return Err(format!(
-                    "Error padding zeros to val, err: {:?}",
-                    err,
-                )
-                .into());
+                return Err(format!("Error padding zeros to val, err: {:?}", err,).into());
             }
         }
     };

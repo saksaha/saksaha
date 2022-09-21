@@ -4,10 +4,7 @@ use sak_kv_db::WriteBatch;
 use sak_types::{Cm, CmIdx, MerkleRt, Sn, TxHash, TxType};
 
 impl LedgerDB {
-    pub(crate) fn get_tx_type(
-        &self,
-        tx_hash: &TxHash,
-    ) -> Result<Option<TxType>, LedgerError> {
+    pub(crate) fn get_tx_type(&self, tx_hash: &TxHash) -> Result<Option<TxType>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::TX_TYPE)?;
 
         match self.db.get_cf(&cf, tx_hash)? {
@@ -27,10 +24,7 @@ impl LedgerDB {
         };
     }
 
-    pub(crate) fn get_tx_created_at(
-        &self,
-        key: &TxHash,
-    ) -> Result<Option<String>, LedgerError> {
+    pub(crate) fn get_tx_created_at(&self, key: &TxHash) -> Result<Option<String>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::TX_CREATED_AT)?;
 
         match self.db.get_cf(&cf, key)? {
@@ -45,10 +39,7 @@ impl LedgerDB {
         }
     }
 
-    pub(crate) fn get_data(
-        &self,
-        key: &TxHash,
-    ) -> Result<Option<Vec<u8>>, LedgerError> {
+    pub(crate) fn get_data(&self, key: &TxHash) -> Result<Option<Vec<u8>>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::DATA)?;
 
         match self.db.get_cf(&cf, key)? {
@@ -61,10 +52,7 @@ impl LedgerDB {
         }
     }
 
-    pub(crate) fn get_author_sig(
-        &self,
-        key: &TxHash,
-    ) -> Result<Option<String>, LedgerError> {
+    pub(crate) fn get_author_sig(&self, key: &TxHash) -> Result<Option<String>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::AUTHOR_SIG)?;
 
         match self.db.get_cf(&cf, key)? {
@@ -79,10 +67,7 @@ impl LedgerDB {
         }
     }
 
-    pub(crate) fn get_pi(
-        &self,
-        key: &TxHash,
-    ) -> Result<Option<Vec<u8>>, LedgerError> {
+    pub(crate) fn get_pi(&self, key: &TxHash) -> Result<Option<Vec<u8>>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::PI)?;
 
         match self.db.get_cf(&cf, key)? {
@@ -95,10 +80,7 @@ impl LedgerDB {
         }
     }
 
-    pub(crate) fn get_ctr_addr(
-        &self,
-        key: &TxHash,
-    ) -> Result<Option<String>, LedgerError> {
+    pub(crate) fn get_ctr_addr(&self, key: &TxHash) -> Result<Option<String>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::CTR_ADDR)?;
 
         match self.db.get_cf(&cf, key)? {
@@ -113,10 +95,7 @@ impl LedgerDB {
         }
     }
 
-    pub(crate) fn get_cm_idx_by_cm(
-        &self,
-        cm: &Cm,
-    ) -> Result<Option<CmIdx>, LedgerError> {
+    pub(crate) fn get_cm_idx_by_cm(&self, cm: &Cm) -> Result<Option<CmIdx>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::CM_IDX)?;
 
         match self.db.get_cf(&cf, cm)? {
@@ -131,10 +110,7 @@ impl LedgerDB {
         }
     }
 
-    pub(crate) fn get_v(
-        &self,
-        key: &TxHash,
-    ) -> Result<Option<[u8; 32]>, LedgerError> {
+    pub(crate) fn get_v(&self, key: &TxHash) -> Result<Option<[u8; 32]>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::V)?;
 
         match self.db.get_cf(&cf, key)? {
@@ -149,10 +125,7 @@ impl LedgerDB {
         }
     }
 
-    pub(crate) fn get_k(
-        &self,
-        key: &TxHash,
-    ) -> Result<Option<[u8; 32]>, LedgerError> {
+    pub(crate) fn get_k(&self, key: &TxHash) -> Result<Option<[u8; 32]>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::K)?;
 
         match self.db.get_cf(&cf, key)? {
@@ -167,10 +140,7 @@ impl LedgerDB {
         }
     }
 
-    pub(crate) fn get_s(
-        &self,
-        key: &TxHash,
-    ) -> Result<Option<[u8; 32]>, LedgerError> {
+    pub(crate) fn get_s(&self, key: &TxHash) -> Result<Option<[u8; 32]>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::S)?;
 
         match self.db.get_cf(&cf, key)? {
@@ -185,10 +155,7 @@ impl LedgerDB {
         }
     }
 
-    pub(crate) fn get_tx_hash_by_sn(
-        &self,
-        key: &Sn,
-    ) -> Result<Option<String>, LedgerError> {
+    pub(crate) fn get_tx_hash_by_sn(&self, key: &Sn) -> Result<Option<String>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::TX_HASH_BY_SN)?;
 
         // let serialized = key.iter().flatten().copied().collect::<Vec<u8>>();

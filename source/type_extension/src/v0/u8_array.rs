@@ -6,8 +6,8 @@ pub struct U8Array;
 impl U8Array {
     pub fn new_empty_32() -> [u8; 32] {
         [
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0,
         ]
     }
 
@@ -25,10 +25,7 @@ impl U8Array {
         let mut tmp = str.clone();
 
         if str.len() > 64 {
-            return Err(format!(
-                "The length of hex string should be less than 65"
-            )
-            .into());
+            return Err(format!("The length of hex string should be less than 65").into());
         }
 
         for _ in 0..(64 - str.len()) {

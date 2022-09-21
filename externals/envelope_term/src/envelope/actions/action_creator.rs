@@ -1,16 +1,13 @@
 use super::Action;
 use crate::{
-    envelope::{
-        dispatcher::Dispatch, reducer::DispatcherContext, AppState, View,
-    },
+    envelope::{dispatcher::Dispatch, reducer::DispatcherContext, AppState, View},
     wallet_sdk::{self, get_balance_from_wallet, GetBalanceResponse},
     EnvelopeError, ENVELOPE_CTR_ADDR,
 };
 use chrono::Local;
 use envelope_contract::{
     request_type::{GET_CH_LIST, GET_MSG, OPEN_CH, SEND_MSG},
-    Channel, ChatMessage, GetChListParams, GetMsgParams, OpenChParams,
-    SendMsgParams,
+    Channel, ChatMessage, GetChListParams, GetMsgParams, OpenChParams, SendMsgParams,
 };
 use log::info;
 use sak_contract_std::{CtrCallType, CtrRequest};
@@ -61,8 +58,7 @@ pub(crate) async fn select(
 
         log::info!("ch_id: {:?}", state.selected_ch_id);
 
-        let resp = get_messages(saksaha_endpoint, state.selected_ch_id.clone())
-            .await?;
+        let resp = get_messages(saksaha_endpoint, state.selected_ch_id.clone()).await?;
 
         if let Some(d) = resp.result {
             dispatch(Action::GetMessages(d.result)).await?;
@@ -84,12 +80,7 @@ pub(crate) async fn enter_in_open_ch(
 ) -> Result<(), EnvelopeError> {
     state.input_returned = state.input_text.drain(..).collect();
 
-    request_open_ch(
-        wallet_endpoint.clone(),
-        &state.input_returned,
-        ctx.clone(),
-    )
-    .await?;
+    request_open_ch(wallet_endpoint.clone(), &state.input_returned, ctx.clone()).await?;
 
     // get ch list
     // {
@@ -159,9 +150,7 @@ pub(crate) async fn enter_in_chat(
     }
 
     {
-        let resp =
-            get_messages(saksaha_endpoint.clone(), selected_ch_id.clone())
-                .await?;
+        let resp = get_messages(saksaha_endpoint.clone(), selected_ch_id.clone()).await?;
 
         if let Some(d) = resp.result {
             dispatch(Action::GetMessages(d.result)).await?;
@@ -261,8 +250,7 @@ async fn send_messages(
             let eph_sk_encrypted: Vec<u8> = serde_json::from_str(eph_sk)?;
 
             let sk = {
-                let eph_sk =
-                    sak_crypto::aes_decrypt(&user_1_sk, &eph_sk_encrypted)?;
+                let eph_sk = sak_crypto::aes_decrypt(&user_1_sk, &eph_sk_encrypted)?;
 
                 SecretKey::from_bytes(&eph_sk)?
             };
@@ -317,8 +305,7 @@ async fn send_messages(
     // let chat_msg_serialized = serde_json::to_string(&msg)?;
 
     let encrypted_msg = {
-        let encrypted_msg =
-            &sak_crypto::aes_encrypt(&aes_key, chat_msg_serialized.as_bytes())?;
+        let encrypted_msg = &sak_crypto::aes_encrypt(&aes_key, chat_msg_serialized.as_bytes())?;
 
         serde_json::to_string(encrypted_msg)?
     };
@@ -362,8 +349,7 @@ async fn request_open_ch(
 
     let (eph_sk, eph_pk) = SakKey::generate();
 
-    let eph_pk: String =
-        serde_json::to_string(eph_pk.to_encoded_point(false).as_bytes())?;
+    let eph_pk: String = serde_json::to_string(eph_pk.to_encoded_point(false).as_bytes())?;
     let my_sk = ctx.credential.secret_key_str.clone();
     let my_pk = ctx.credential.public_key_str.clone();
     // let my_sig = ctx.credential.sign();
@@ -377,23 +363,20 @@ async fn request_open_ch(
 
         let open_ch = {
             let ch_id_enc = {
-                let ch_id_enc =
-                    sak_crypto::aes_encrypt(&my_sk, &ch_id.clone().as_bytes())?;
+                let ch_id_enc = sak_crypto::aes_encrypt(&my_sk, &ch_id.clone().as_bytes())?;
 
                 serde_json::to_string(&ch_id_enc)?
             };
 
             let eph_sk_enc = {
-                let eph_sk_enc: Vec<u8> =
-                    sak_crypto::aes_encrypt(&my_sk, &eph_sk.to_bytes())?;
+                let eph_sk_enc: Vec<u8> = sak_crypto::aes_encrypt(&my_sk, &eph_sk.to_bytes())?;
 
                 // for dev, prefix is `init_`
                 format!("{}", serde_json::to_string(&eph_sk_enc)?)
             };
 
             let initiator_pk_enc = {
-                let initiator_pk_enc =
-                    sak_crypto::aes_encrypt(&my_sk, &my_pk.as_bytes())?;
+                let initiator_pk_enc = sak_crypto::aes_encrypt(&my_sk, &my_pk.as_bytes())?;
 
                 serde_json::to_string(&initiator_pk_enc)?
             };
@@ -442,10 +425,7 @@ async fn request_open_ch(
 
         let open_ch = {
             let ch_id_enc = {
-                let ch_id_enc = sak_crypto::aes_encrypt(
-                    &aes_key,
-                    &ch_id.clone().as_bytes(),
-                )?;
+                let ch_id_enc = sak_crypto::aes_encrypt(&aes_key, &ch_id.clone().as_bytes())?;
 
                 serde_json::to_string(&ch_id_enc)?
             };
@@ -453,8 +433,7 @@ async fn request_open_ch(
             let eph_pk = eph_pk;
 
             let initiator_pk_enc = {
-                let initiator_pk_enc =
-                    sak_crypto::aes_encrypt(&aes_key, &my_pk.as_bytes())?;
+                let initiator_pk_enc = sak_crypto::aes_encrypt(&aes_key, &my_pk.as_bytes())?;
 
                 serde_json::to_string(&initiator_pk_enc)?
             };
@@ -481,13 +460,7 @@ async fn request_open_ch(
             ctr_call_type: CtrCallType::Execute,
         };
 
-        wallet_sdk::send_tx_pour(
-            wallet_endpoint,
-            user_1_acc_addr,
-            ctr_addr,
-            ctr_request,
-        )
-        .await?;
+        wallet_sdk::send_tx_pour(wallet_endpoint, user_1_acc_addr, ctr_addr, ctr_request).await?;
     }
 
     Ok(())

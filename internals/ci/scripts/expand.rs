@@ -28,13 +28,11 @@ pub(crate) fn expand(dest: PathBuf) {
         }
     }
 
-    fs::create_dir_all(dest.to_owned())
-        .expect("Destination should be re-created");
+    fs::create_dir_all(dest.to_owned()).expect("Destination should be re-created");
 
     for p in ["bin", "lib"] {
-        fs::create_dir_all(dest.join(p)).unwrap_or_else(|err| {
-            panic!("{} should be created, err: {}", p, err)
-        });
+        fs::create_dir_all(dest.join(p))
+            .unwrap_or_else(|err| panic!("{} should be created, err: {}", p, err));
     }
 
     let bin_path = dest.join("bin");
@@ -92,21 +90,13 @@ fn execute_rustfmt(file_path: PathBuf) {
         });
 }
 
-fn execute_expand(
-    pkg: &str,
-    component: &str,
-    dest: PathBuf,
-    args: Vec<&str>,
-    is_rust_fmt: bool,
-) {
+fn execute_expand(pkg: &str, component: &str, dest: PathBuf, args: Vec<&str>, is_rust_fmt: bool) {
     let cmd = Cmd::new("cargo")
         .args(args)
         .stderr(Stdio::inherit())
         .stdout(Stdio::piped())
         .spawn()
-        .unwrap_or_else(|err| {
-            panic!("Command should be executed, bin: {}, err: {}", pkg, err)
-        });
+        .unwrap_or_else(|err| panic!("Command should be executed, bin: {}, err: {}", pkg, err));
 
     let file_path = dest.join(format!("{}_{}.rs", pkg, component));
     let mut f = fs::File::create(file_path.to_owned()).unwrap_or_else(|err| {

@@ -328,10 +328,9 @@ lazy_static! {
 
 async fn make_disc_args(test_disc_args: &TestDiscArgs) -> DiscoveryArgs {
     let (disc_socket, disc_port) = {
-        let (socket, socket_addr) =
-            sak_utils_net::setup_udp_socket(Some(test_disc_args.disc_port))
-                .await
-                .unwrap();
+        let (socket, socket_addr) = sak_utils_net::setup_udp_socket(Some(test_disc_args.disc_port))
+            .await
+            .unwrap();
 
         info!(
             "Bound udp socket for P2P discovery, addr: {}",

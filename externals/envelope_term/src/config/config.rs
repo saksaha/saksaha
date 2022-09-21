@@ -23,10 +23,7 @@ impl Config {
                 "dev_local_1" => profiled::dev_local_1()?,
                 "dev_local_2" => profiled::dev_local_2()?,
                 _ => {
-                    return Err(format!(
-                        "Corresponding profiled config does not exist"
-                    )
-                    .into());
+                    return Err(format!("Corresponding profiled config does not exist").into());
                 }
             }
         } else {

@@ -62,11 +62,7 @@ impl WalletDB {
         ) {
             Ok(d) => d,
             Err(err) => {
-                return Err(format!(
-                    "Error initializing key value database, err: {}",
-                    err
-                )
-                .into());
+                return Err(format!("Error initializing key value database, err: {}", err).into());
             }
         };
 
@@ -101,12 +97,9 @@ impl WalletDB {
                 let resp = match &coin.tx_hash {
                     Some(tx_hash) => {
                         if !ledger_cms.contains(&tx_hash) {
-                            let res = saksaha::get_tx(
-                                saksaha_endpoint.clone(),
-                                tx_hash.clone(),
-                            )
-                            .await?
-                            .result;
+                            let res = saksaha::get_tx(saksaha_endpoint.clone(), tx_hash.clone())
+                                .await?
+                                .result;
 
                             ledger_cms.push(tx_hash);
 
@@ -139,18 +132,14 @@ impl WalletDB {
 
                                 self.schema.raw.put_cm_idx(cm_array, &cmidx)?;
 
-                                self.schema.raw.put_coin_status(
-                                    cm_array,
-                                    &CoinStatus::Unused,
-                                )?;
+                                self.schema
+                                    .raw
+                                    .put_coin_status(cm_array, &CoinStatus::Unused)?;
                             }
                         };
                     }
                     None => {
-                        println!(
-                            "No response with get_tx, {:?}",
-                            &coin.tx_hash
-                        );
+                        println!("No response with get_tx, {:?}", &coin.tx_hash);
                     } // return Err("No response with get_tx".into()),
                 }
             }
@@ -165,9 +154,7 @@ impl WalletDB {
         coins: &Vec<CoinRecord>,
     ) -> Result<(), WalletError> {
         for coin in coins {
-            if let Some(CoinStatus::Unused) =
-                self.schema.raw.get_coin_status(&coin.cm)?
-            {
+            if let Some(CoinStatus::Unused) = self.schema.raw.get_coin_status(&coin.cm)? {
                 {
                     let sn = coin.compute_sn();
 

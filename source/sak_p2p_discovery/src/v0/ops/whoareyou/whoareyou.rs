@@ -45,9 +45,7 @@ impl WhoAreYou {
         Ok(frame)
     }
 
-    pub(crate) fn parse_frames(
-        parse: &mut Parse,
-    ) -> Result<WhoAreYou, P2PDiscError> {
+    pub(crate) fn parse_frames(parse: &mut Parse) -> Result<WhoAreYou, P2PDiscError> {
         let src_p2p_port = parse.next_int()? as u16;
 
         let src_sig = {
@@ -56,11 +54,9 @@ impl WhoAreYou {
             let s = match Signature::from_der(&sig_bytes) {
                 Ok(s) => s,
                 Err(err) => {
-                    return Err(format!(
-                        "Error parsing signature from byte array, err: {}",
-                        err
-                    )
-                    .into());
+                    return Err(
+                        format!("Error parsing signature from byte array, err: {}", err).into(),
+                    );
                 }
             };
             s
@@ -74,11 +70,9 @@ impl WhoAreYou {
             let s = match String::from_utf8(src_public_key_bytes.to_vec()) {
                 Ok(s) => s,
                 Err(err) => {
-                    return Err(format!(
-                        "Error parsing public key from byte array, err: {}",
-                        err,
-                    )
-                    .into());
+                    return Err(
+                        format!("Error parsing public key from byte array, err: {}", err,).into(),
+                    );
                 }
             };
 

@@ -4,11 +4,7 @@ use hyper::{
     Body, Method, Request, Response,
 };
 
-pub fn cors<C>(
-    req: Request<Body>,
-    mut resp: Response<Body>,
-    ctx: C,
-) -> MiddlewareResult<C> {
+pub fn cors<C>(req: Request<Body>, mut resp: Response<Body>, ctx: C) -> MiddlewareResult<C> {
     let headers = resp.headers_mut();
 
     headers.insert(

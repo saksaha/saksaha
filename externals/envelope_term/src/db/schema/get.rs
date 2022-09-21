@@ -21,10 +21,7 @@ impl EnvelopeDBSchema {
         };
     }
 
-    pub async fn get_my_pk_by_sk(
-        &self,
-        my_sk: &String,
-    ) -> Result<Option<String>, EnvelopeError> {
+    pub async fn get_my_pk_by_sk(&self, my_sk: &String) -> Result<Option<String>, EnvelopeError> {
         let cf = self.make_cf_handle(&self.db, cfs::MY_PK)?;
         match self.db.get_cf(&cf, my_sk)? {
             Some(v) => {
@@ -38,10 +35,7 @@ impl EnvelopeDBSchema {
         };
     }
 
-    pub async fn get_my_sig_by_sk(
-        &self,
-        my_sk: &String,
-    ) -> Result<Option<String>, EnvelopeError> {
+    pub async fn get_my_sig_by_sk(&self, my_sk: &String) -> Result<Option<String>, EnvelopeError> {
         let cf = self.make_cf_handle(&self.db, cfs::MY_SIG)?;
         match self.db.get_cf(&cf, my_sk)? {
             Some(v) => {

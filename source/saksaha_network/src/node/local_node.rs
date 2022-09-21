@@ -101,8 +101,7 @@ impl LocalNode {
                     }
                 });
 
-                tokio::time::sleep_until(now + self.peer_register_interval)
-                    .await;
+                tokio::time::sleep_until(now + self.peer_register_interval).await;
             }
         }
     }

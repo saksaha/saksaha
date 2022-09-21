@@ -10,9 +10,7 @@ use tracing_appender::non_blocking::NonBlocking;
 pub use tracing_appender::non_blocking::WorkerGuard;
 use tracing_subscriber;
 use tracing_subscriber::filter::Filtered;
-use tracing_subscriber::fmt::{
-    format, FmtContext, FormatEvent, FormatFields, FormattedFields,
-};
+use tracing_subscriber::fmt::{format, FmtContext, FormatEvent, FormatFields, FormattedFields};
 use tracing_subscriber::layer::{Context, Filter};
 use tracing_subscriber::registry::LookupSpan;
 use tracing_subscriber::{
@@ -104,10 +102,5 @@ impl<'a> tracing::field::Visit for TestLogVisitor<'a> {
     ) {
     }
 
-    fn record_debug(
-        &mut self,
-        _field: &tracing::field::Field,
-        _value: &dyn std::fmt::Debug,
-    ) {
-    }
+    fn record_debug(&mut self, _field: &tracing::field::Field, _value: &dyn std::fmt::Debug) {}
 }

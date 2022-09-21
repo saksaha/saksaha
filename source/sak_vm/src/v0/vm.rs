@@ -30,9 +30,7 @@ impl VM {
                 return invoke_query(instance, store, memory, request, storage)
             }
             CtrFn::Execute(request, storage) => {
-                return invoke_execute(
-                    instance, store, memory, request, storage,
-                );
+                return invoke_execute(instance, store, memory, request, storage);
             }
         };
     }
@@ -43,19 +41,14 @@ fn invoke_init(
     mut store: Store<i32>,
     memory: Memory,
 ) -> Result<InvokeReceipt, VMError> {
-    let contract_fn: TypedFunc<(), (i32, i32)> =
-        { instance.get_typed_func(&mut store, INIT)? };
+    let contract_fn: TypedFunc<(), (i32, i32)> = { instance.get_typed_func(&mut store, INIT)? };
 
     let (storage_ptr, storage_len) = contract_fn.call(&mut store, ())?;
 
     let storage: Vec<u8>;
     unsafe {
-        storage = wasm_bootstrap::read_memory(
-            &store,
-            &memory,
-            storage_ptr as u32,
-            storage_len as u32,
-        )?;
+        storage =
+            wasm_bootstrap::read_memory(&store, &memory, storage_ptr as u32, storage_len as u32)?;
     }
 
     let receipt = InvokeReceipt::from_init(storage)?;
@@ -79,13 +72,11 @@ fn invoke_query(
         (str.as_bytes().to_vec(), str.len())
     };
 
-    let request_ptr =
-        wasm_bootstrap::copy_memory(&request_bytes, &instance, &mut store)?;
+    let request_ptr = wasm_bootstrap::copy_memory(&request_bytes, &instance, &mut store)?;
 
     let storage_len = storage.len();
     let storage_bytes = storage;
-    let storage_ptr =
-        wasm_bootstrap::copy_memory(&storage_bytes, &instance, &mut store)?;
+    let storage_ptr = wasm_bootstrap::copy_memory(&storage_bytes, &instance, &mut store)?;
 
     let (result_ptr, result_len) = match contract_fn.call(
         &mut store,
@@ -109,12 +100,7 @@ fn invoke_query(
 
     let result: Vec<u8>;
     unsafe {
-        result = wasm_bootstrap::read_memory(
-            &store,
-            &memory,
-            result_ptr as u32,
-            result_len as u32,
-        )?
+        result = wasm_bootstrap::read_memory(&store, &memory, result_ptr as u32, result_len as u32)?
     }
 
     let receipt = InvokeReceipt::from_query(result)?;
@@ -139,25 +125,22 @@ fn invoke_execute(
         (vec, vec_len)
     };
 
-    let request_ptr =
-        wasm_bootstrap::copy_memory(&request_bytes, &instance, &mut store)?;
+    let request_ptr = wasm_bootstrap::copy_memory(&request_bytes, &instance, &mut store)?;
 
     let storage_len = storage.len();
     let storage_bytes = storage.clone();
 
-    let storage_ptr =
-        wasm_bootstrap::copy_memory(&storage_bytes, &instance, &mut store)?;
+    let storage_ptr = wasm_bootstrap::copy_memory(&storage_bytes, &instance, &mut store)?;
 
-    let (storage_ptr, storage_len, result_ptr, result_len) = match contract_fn
-        .call(
-            &mut store,
-            (
-                storage_ptr as i32,
-                storage_len as i32,
-                request_ptr as i32,
-                request_len as i32,
-            ),
-        ) {
+    let (storage_ptr, storage_len, result_ptr, result_len) = match contract_fn.call(
+        &mut store,
+        (
+            storage_ptr as i32,
+            storage_len as i32,
+            request_ptr as i32,
+            request_len as i32,
+        ),
+    ) {
         Ok(r) => r,
         Err(err) => {
             return Err(format!(
@@ -171,22 +154,13 @@ fn invoke_execute(
 
     let storage: Vec<u8>;
     unsafe {
-        storage = wasm_bootstrap::read_memory(
-            &store,
-            &memory,
-            storage_ptr as u32,
-            storage_len as u32,
-        )?
+        storage =
+            wasm_bootstrap::read_memory(&store, &memory, storage_ptr as u32, storage_len as u32)?
     }
 
     let result: Vec<u8>;
     unsafe {
-        result = wasm_bootstrap::read_memory(
-            &store,
-            &memory,
-            result_ptr as u32,
-            result_len as u32,
-        )?
+        result = wasm_bootstrap::read_memory(&store, &memory, result_ptr as u32, result_len as u32)?
     }
 
     let receipt = InvokeReceipt::from_execute(result, storage)?;
@@ -194,15 +168,11 @@ fn invoke_execute(
     Ok(receipt)
 }
 
-fn init_module(
-    contract_wasm: impl AsRef<[u8]>,
-) -> Result<(Instance, Store<i32>, Memory), VMError> {
+fn init_module(contract_wasm: impl AsRef<[u8]>) -> Result<(Instance, Store<i32>, Memory), VMError> {
     let (instance, mut store) = match utils::create_instance(contract_wasm) {
         Ok(r) => r,
         Err(err) => {
-            return Err(
-                format!("Error creating an instance, err: {}", err).into()
-            );
+            return Err(format!("Error creating an instance, err: {}", err).into());
         }
     };
 

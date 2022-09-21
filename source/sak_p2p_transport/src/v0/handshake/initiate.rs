@@ -125,9 +125,7 @@ pub async fn initiate_handshake(
     let her_public_key_str = handshake_ack.src_public_key_str;
     let my_secret_key = &identity.credential.secret_key;
     let her_public_key =
-        match sak_crypto::convert_public_key_str_into_public_key(
-            &her_public_key_str,
-        ) {
+        match sak_crypto::convert_public_key_str_into_public_key(&her_public_key_str) {
             Ok(pk) => pk,
             Err(err) => {
                 return Err(HandshakeInitError::PublicKeyCreateFail {
@@ -137,8 +135,7 @@ pub async fn initiate_handshake(
             }
         };
 
-    let shared_secret =
-        sak_crypto::make_shared_secret(my_secret_key, her_public_key);
+    let shared_secret = sak_crypto::make_shared_secret(my_secret_key, her_public_key);
 
     let upgraded_conn = match conn
         .upgrade(shared_secret, &[0; 12], &her_public_key_str)

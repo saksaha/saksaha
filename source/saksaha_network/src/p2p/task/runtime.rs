@@ -58,11 +58,7 @@ impl P2PTaskRuntime {
 
             handler::run(task, self.identity.clone()).await;
 
-            sak_utils_time::wait_until_min_interval(
-                time_since,
-                *task_min_interval,
-            )
-            .await;
+            sak_utils_time::wait_until_min_interval(time_since, *task_min_interval).await;
         }
     }
 }

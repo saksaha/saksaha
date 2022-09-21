@@ -5,8 +5,8 @@ use sak_kv_db::WriteBatch;
 use sak_kv_db::DB;
 use sak_proof::{Hasher, Proof};
 use sak_types::{
-    BlockHash, BlockHeight, Cm, CmIdx, MerkleRt, MintTx, MintTxCandidate,
-    PourTx, PourTxCandidate, Sn, Tx, TxCtrOp, TxHash, TxHeight, TxType,
+    BlockHash, BlockHeight, Cm, CmIdx, MerkleRt, MintTx, MintTxCandidate, PourTx, PourTxCandidate,
+    Sn, Tx, TxCtrOp, TxHash, TxHeight, TxType,
 };
 use std::convert::TryInto;
 
@@ -154,11 +154,7 @@ impl LedgerDB {
             Some(v) => {
                 let arr: [u8; 32] = match v.try_into() {
                     Ok(a) => a,
-                    Err(_) => {
-                        return Err(
-                            format!("Cannot convert cm into an array",).into()
-                        )
-                    }
+                    Err(_) => return Err(format!("Cannot convert cm into an array",).into()),
                 };
 
                 return Ok(Some(arr));
@@ -180,12 +176,7 @@ impl LedgerDB {
             Some(v) => {
                 let arr: [u8; 1] = match v.try_into() {
                     Ok(a) => a,
-                    Err(_) => {
-                        return Err(format!(
-                            "Cannot convert singleton into an array",
-                        )
-                        .into())
-                    }
+                    Err(_) => return Err(format!("Cannot convert singleton into an array",).into()),
                 };
 
                 return Ok(Some(arr));
@@ -207,11 +198,7 @@ impl LedgerDB {
             Some(v) => {
                 let arr: [u8; 32] = match v.try_into() {
                     Ok(a) => a,
-                    Err(err) => {
-                        return Err(
-                            format!("Cannot convert cm into an array",).into()
-                        )
-                    }
+                    Err(err) => return Err(format!("Cannot convert cm into an array",).into()),
                 };
 
                 return Ok(Some(arr));

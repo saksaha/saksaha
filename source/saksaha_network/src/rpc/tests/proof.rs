@@ -6,9 +6,7 @@ use crate::{
 use hyper::{Body, Client, Method, Request, Uri};
 use sak_credential::CredentialProfile;
 use sak_rpc_interface::{JsonRequest, JsonResponse};
-use sak_types::{
-    BlockCandidate, MintTxCandidate, PourTxCandidate, Tx, TxCandidate,
-};
+use sak_types::{BlockCandidate, MintTxCandidate, PourTxCandidate, Tx, TxCandidate};
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_rpc_client_handle_get_cm_idx() {
@@ -20,11 +18,9 @@ async fn test_rpc_client_handle_get_cm_idx() {
     SaksahaTestUtils::init_test(&[&test_credential_1.public_key_str]);
 
     let (expected_tx_hash, cms) = {
-        let blockchain = utils::make_blockchain(
-            &test_credential_1.secret,
-            &test_credential_1.public_key_str,
-        )
-        .await;
+        let blockchain =
+            utils::make_blockchain(&test_credential_1.secret, &test_credential_1.public_key_str)
+                .await;
 
         // let dummy_tx = sak_types::mock_pour_tc_m1_to_p3_p4();
         let dummy_tx = sak_types::mock_pour_tc_1();
@@ -110,8 +106,7 @@ async fn test_rpc_client_handle_get_cm_idx() {
 
     let b = hyper::body::to_bytes(resp.into_body()).await.unwrap();
 
-    let json_response =
-        serde_json::from_slice::<JsonResponse<GetCmIdxResponse>>(&b).unwrap();
+    let json_response = serde_json::from_slice::<JsonResponse<GetCmIdxResponse>>(&b).unwrap();
 
     let tx_from_res = json_response.result.unwrap();
 

@@ -60,12 +60,7 @@ pub fn convert_public_key_str_into_public_key(
 ) -> Result<PublicKey, String> {
     let pk_decoded = match decode_hex(public_key_str) {
         Ok(p) => p,
-        Err(err) => {
-            return Err(format!(
-                "Error decoding public key string, err: {}",
-                err
-            ))
-        }
+        Err(err) => return Err(format!("Error decoding public key string, err: {}", err)),
     };
 
     match PublicKey::from_sec1_bytes(pk_decoded.as_slice()) {
@@ -110,11 +105,7 @@ pub fn make_signature(signing_key: SigningKey, data: &[u8]) -> Signature {
     signing_key.sign(data)
 }
 
-pub fn verify(
-    verifying_key: VerifyingKey,
-    data: &[u8],
-    sig: &Signature,
-) -> Result<(), String> {
+pub fn verify(verifying_key: VerifyingKey, data: &[u8], sig: &Signature) -> Result<(), String> {
     match verifying_key.verify(data, sig) {
         Ok(_) => Ok(()),
         Err(err) => Err(err.to_string()),

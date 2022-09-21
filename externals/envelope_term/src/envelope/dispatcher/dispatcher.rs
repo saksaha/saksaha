@@ -12,15 +12,8 @@ use tokio::sync::{
 };
 
 pub(crate) type Dispatch = Box<
-    dyn Fn(
-            Action,
-        ) -> Pin<
-            Box<
-                dyn Future<Output = Result<(), SendError<Action>>>
-                    + Send
-                    + Sync,
-            >,
-        > + Send
+    dyn Fn(Action) -> Pin<Box<dyn Future<Output = Result<(), SendError<Action>>> + Send + Sync>>
+        + Send
         + Sync,
 >;
 
@@ -65,10 +58,7 @@ impl Dispatcher {
         }
     }
 
-    pub async fn dispatch(
-        &self,
-        action: Action,
-    ) -> Result<(), SendError<Action>> {
+    pub async fn dispatch(&self, action: Action) -> Result<(), SendError<Action>> {
         self.action_bus_tx.send(action).await
     }
 

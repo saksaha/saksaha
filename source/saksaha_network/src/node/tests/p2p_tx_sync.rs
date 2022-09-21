@@ -73,14 +73,12 @@ async fn test_tx_sync_true() {
 
     info!("[Success] node_1 has tx_1 (tx sent to node_1 directly)");
 
-    let mut ledger_event_rx =
-        machine_2.blockchain.dist_ledger.ledger_event_tx.subscribe();
+    let mut ledger_event_rx = machine_2.blockchain.dist_ledger.ledger_event_tx.subscribe();
 
-    let ev =
-        tokio::time::timeout(Duration::from_secs(5), ledger_event_rx.recv())
-            .await
-            .unwrap()
-            .unwrap();
+    let ev = tokio::time::timeout(Duration::from_secs(5), ledger_event_rx.recv())
+        .await
+        .unwrap()
+        .unwrap();
 
     println!("ev: {:?}", ev);
 

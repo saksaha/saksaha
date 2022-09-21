@@ -17,12 +17,9 @@ impl HandshakeMsg {
         src_public_key_str: String,
         dst_public_key_str: String,
     ) -> Result<HandshakeMsg, String> {
-        let since_the_epoch = match SystemTime::now().duration_since(UNIX_EPOCH)
-        {
+        let since_the_epoch = match SystemTime::now().duration_since(UNIX_EPOCH) {
             Ok(s) => s,
-            Err(err) => {
-                return Err(format!("Couldn't get timestamp, err: {}", err))
-            }
+            Err(err) => return Err(format!("Couldn't get timestamp, err: {}", err)),
         };
 
         let instance_id = format!(

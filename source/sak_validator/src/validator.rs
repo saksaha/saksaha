@@ -1,7 +1,7 @@
 use crate::AddValidatorParams;
 use sak_contract_std::{
-    contract_bootstrap, define_execute, define_init, define_query,
-    ContractError, CtrRequest, RequestArgs, Storage,
+    contract_bootstrap, define_execute, define_init, define_query, ContractError, CtrRequest,
+    RequestArgs, Storage,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -36,10 +36,7 @@ pub fn init2() -> Result<Vec<u8>, ContractError> {
 }
 
 define_query!();
-pub fn query2(
-    request: CtrRequest,
-    storage: Storage,
-) -> Result<Vec<u8>, ContractError> {
+pub fn query2(request: CtrRequest, storage: Storage) -> Result<Vec<u8>, ContractError> {
     match request.req_type.as_ref() {
         "get_validator" => {
             return handle_get_validator(storage);
@@ -64,10 +61,7 @@ fn handle_get_validator(storage: Storage) -> Result<Vec<u8>, ContractError> {
 }
 
 define_execute!();
-pub fn execute2(
-    request: CtrRequest,
-    storage: &mut Storage,
-) -> Result<Vec<u8>, ContractError> {
+pub fn execute2(request: CtrRequest, storage: &mut Storage) -> Result<Vec<u8>, ContractError> {
     match request.req_type.as_ref() {
         "add_validator" => {
             return handle_add_validator(storage, request.args);
@@ -82,11 +76,9 @@ fn handle_add_validator(
     storage: &mut Storage,
     args: RequestArgs,
 ) -> Result<Vec<u8>, ContractError> {
-    let mut validator_storage: ValidatorStorage =
-        serde_json::from_slice(&storage)?;
+    let mut validator_storage: ValidatorStorage = serde_json::from_slice(&storage)?;
 
-    let add_validator_params: AddValidatorParams =
-        serde_json::from_slice(&args)?;
+    let add_validator_params: AddValidatorParams = serde_json::from_slice(&args)?;
 
     validator_storage
         .validators

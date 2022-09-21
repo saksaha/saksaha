@@ -1,8 +1,8 @@
 use crate::system::SystemHandle;
 use hyper::{Body, Response};
 use hyper_rpc_router::{
-    make_error_response, make_success_response, require_params_parsed,
-    require_some_params, Params, RouteState,
+    make_error_response, make_success_response, require_params_parsed, require_some_params, Params,
+    RouteState,
 };
 use sak_types::{Cm, CmIdx};
 use serde::{Deserialize, Serialize};
@@ -23,11 +23,7 @@ pub(in crate::rpc) async fn get_auth_path(
     params: Params,
     sys_handle: Arc<SystemHandle>,
 ) -> Response<Body> {
-    let params = require_some_params!(
-        route_state,
-        params,
-        "get_auth_path should contain params",
-    );
+    let params = require_some_params!(route_state, params, "get_auth_path should contain params",);
 
     let rb: GetAuthPathRequest = require_params_parsed!(route_state, &params);
 
@@ -45,11 +41,7 @@ pub(in crate::rpc) async fn get_auth_path(
             return make_success_response(route_state, get_auth_path_resp);
         }
         Err(err) => {
-            return make_error_response(
-                route_state.resp,
-                Some(route_state.id),
-                err.into(),
-            );
+            return make_error_response(route_state.resp, Some(route_state.id), err.into());
         }
     }
 }
@@ -69,11 +61,7 @@ pub(in crate::rpc) async fn get_cm_idx(
     params: Params,
     sys_handle: Arc<SystemHandle>,
 ) -> Response<Body> {
-    let params = require_some_params!(
-        route_state,
-        params,
-        "get_cm_idx should contain params",
-    );
+    let params = require_some_params!(route_state, params, "get_cm_idx should contain params",);
 
     let rb: GetCmIdxRequest = require_params_parsed!(route_state, &params);
 
@@ -91,11 +79,7 @@ pub(in crate::rpc) async fn get_cm_idx(
             return make_success_response(route_state, get_auth_path_resp);
         }
         Err(err) => {
-            return make_error_response(
-                route_state.resp,
-                Some(route_state.id),
-                err.into(),
-            );
+            return make_error_response(route_state.resp, Some(route_state.id), err.into());
         }
     }
 }

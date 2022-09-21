@@ -9,32 +9,22 @@ pub(crate) struct UdpCodec {}
 impl Encoder<Msg> for UdpCodec {
     type Error = P2PDiscError;
 
-    fn encode(
-        &mut self,
-        msg: Msg,
-        dst: &mut BytesMut,
-    ) -> Result<(), Box<dyn Error + Sync + Send>> {
+    fn encode(&mut self, msg: Msg, dst: &mut BytesMut) -> Result<(), Box<dyn Error + Sync + Send>> {
         match &msg {
             Msg::WhoAreYouSyn(way) => {
                 let frame = match way.into_syn_frame() {
                     Ok(f) => f,
                     Err(err) => {
-                        return Err(format!(
-                            "Error creating whoareyou frame, err: {}",
-                            err
-                        )
-                        .into());
+                        return Err(format!("Error creating whoareyou frame, err: {}", err).into());
                     }
                 };
 
                 match frame_io::write_frame(dst, &frame) {
                     Ok(_) => (),
                     Err(err) => {
-                        return Err(format!(
-                            "Error writing who_are_you_syn_frame, err: {}",
-                            err
-                        )
-                        .into());
+                        return Err(
+                            format!("Error writing who_are_you_syn_frame, err: {}", err).into()
+                        );
                     }
                 };
 
@@ -44,22 +34,16 @@ impl Encoder<Msg> for UdpCodec {
                 let frame = match way.into_ack_frame() {
                     Ok(f) => f,
                     Err(err) => {
-                        return Err(format!(
-                            "Error creating whoareyou frame, err: {}",
-                            err
-                        )
-                        .into());
+                        return Err(format!("Error creating whoareyou frame, err: {}", err).into());
                     }
                 };
 
                 match frame_io::write_frame(dst, &frame) {
                     Ok(_) => (),
                     Err(err) => {
-                        return Err(format!(
-                            "Error writing who_are_you_ack_frame, err: {}",
-                            err
-                        )
-                        .into());
+                        return Err(
+                            format!("Error writing who_are_you_ack_frame, err: {}", err).into()
+                        );
                     }
                 };
 
@@ -73,10 +57,7 @@ impl Decoder for UdpCodec {
     type Item = Msg;
     type Error = P2PDiscError;
 
-    fn decode(
-        &mut self,
-        src: &mut BytesMut,
-    ) -> Result<Option<Self::Item>, P2PDiscError> {
+    fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Self::Item>, P2PDiscError> {
         if let Some(frame) = frame_io::parse_frame(src)? {
             // "cursor" like API which makes parsing the command easier.
             //
@@ -91,11 +72,7 @@ impl Decoder for UdpCodec {
                     let way = match WhoAreYou::parse_frames(&mut parse) {
                         Ok(w) => w,
                         Err(err) => {
-                            return Err(format!(
-                                "Error creating who_are_you, err: {}",
-                                err
-                            )
-                            .into());
+                            return Err(format!("Error creating who_are_you, err: {}", err).into());
                         }
                     };
 
@@ -105,11 +82,7 @@ impl Decoder for UdpCodec {
                     let way = match WhoAreYou::parse_frames(&mut parse) {
                         Ok(w) => w,
                         Err(err) => {
-                            return Err(format!(
-                                "Error creating who_are_you, err: {}",
-                                err
-                            )
-                            .into());
+                            return Err(format!("Error creating who_are_you, err: {}", err).into());
                         }
                     };
 

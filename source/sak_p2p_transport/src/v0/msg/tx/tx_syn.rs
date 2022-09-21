@@ -23,30 +23,15 @@ impl TxSynMsg {
 
                     let t = match p[..].get(0) {
                         Some(v) => v,
-                        None => {
-                            return Err(format!(
-                                "Invalid tc type to parse, tc_type"
-                            )
-                            .into())
-                        }
+                        None => return Err(format!("Invalid tc type to parse, tc_type").into()),
                     };
                     TxType::from(*t)
                 };
 
                 match tc_type {
-                    TxType::Mint => TxCandidate::Mint(
-                        tx_utils::parse_mint_tx_candidate(parse)?,
-                    ),
-                    TxType::Pour => TxCandidate::Pour(
-                        tx_utils::parse_pour_tx_candidate(parse)?,
-                    ),
-                    _ => {
-                        return Err(format!(
-                            "tx candidate type is invalid, {:?}",
-                            tc_type
-                        )
-                        .into())
-                    }
+                    TxType::Mint => TxCandidate::Mint(tx_utils::parse_mint_tx_candidate(parse)?),
+                    TxType::Pour => TxCandidate::Pour(tx_utils::parse_pour_tx_candidate(parse)?),
+                    _ => return Err(format!("tx candidate type is invalid, {:?}", tc_type).into()),
                 }
             };
 

@@ -5,11 +5,7 @@ pub fn persist(data: &String, target_path: &PathBuf) -> Result<(), FSError> {
     match std::fs::write(target_path.to_owned(), data) {
         Ok(_) => Ok(()),
         Err(err) => {
-            return Err(format!(
-                "Error writing pconfig to the path, err: {}",
-                err
-            )
-            .into());
+            return Err(format!("Error writing pconfig to the path, err: {}", err).into());
         }
     }
 }

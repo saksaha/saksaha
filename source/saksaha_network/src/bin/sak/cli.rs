@@ -36,10 +36,7 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
         Some(p) => match p.parse::<u16>() {
             Ok(port) => Some(port),
             Err(err) => {
-                return Err(format!(
-                    "Cannot parse rpc port (u16), err: {}",
-                    err,
-                ));
+                return Err(format!("Cannot parse rpc port (u16), err: {}", err,));
             }
         },
         None => None,
@@ -48,12 +45,7 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
     let disc_port = match matches.value_of("disc-port") {
         Some(p) => match p.parse::<u16>() {
             Ok(port) => Some(port),
-            Err(err) => {
-                return Err(format!(
-                    "Cannot parse the disc port (u16), err: {}",
-                    err
-                ))
-            }
+            Err(err) => return Err(format!("Cannot parse the disc port (u16), err: {}", err)),
         },
         None => None,
     };
@@ -61,12 +53,7 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
     let p2p_port = match matches.value_of("p2p-port") {
         Some(p) => match p.parse::<u16>() {
             Ok(port) => Some(port),
-            Err(err) => {
-                return Err(format!(
-                    "Cannot parse the p2p port (u16), err: {}",
-                    err
-                ))
-            }
+            Err(err) => return Err(format!("Cannot parse the p2p port (u16), err: {}", err)),
         },
         None => None,
     };
@@ -134,47 +121,44 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
         None => None,
     };
 
-    let disc_task_queue_capacity =
-        match matches.value_of("disc-task-queue-capacity") {
-            Some(i) => match i.parse::<u16>() {
-                Ok(interval) => Some(interval),
-                Err(err) => {
-                    return Err(format!(
-                        "Cannot parse disc task queue capacity (u16), err: {}",
-                        err,
-                    ))
-                }
-            },
-            None => None,
-        };
+    let disc_task_queue_capacity = match matches.value_of("disc-task-queue-capacity") {
+        Some(i) => match i.parse::<u16>() {
+            Ok(interval) => Some(interval),
+            Err(err) => {
+                return Err(format!(
+                    "Cannot parse disc task queue capacity (u16), err: {}",
+                    err,
+                ))
+            }
+        },
+        None => None,
+    };
 
-    let p2p_task_queue_capacity =
-        match matches.value_of("p2p-task-queue-capacity") {
-            Some(i) => match i.parse::<u16>() {
-                Ok(interval) => Some(interval),
-                Err(err) => {
-                    return Err(format!(
-                        "Cannot parse p2p task queue capacity (u16), err: {}",
-                        err,
-                    ))
-                }
-            },
-            None => None,
-        };
+    let p2p_task_queue_capacity = match matches.value_of("p2p-task-queue-capacity") {
+        Some(i) => match i.parse::<u16>() {
+            Ok(interval) => Some(interval),
+            Err(err) => {
+                return Err(format!(
+                    "Cannot parse p2p task queue capacity (u16), err: {}",
+                    err,
+                ))
+            }
+        },
+        None => None,
+    };
 
-    let p2p_peer_table_capacity =
-        match matches.value_of("p2p-peer-table-capacity") {
-            Some(i) => match i.parse::<i16>() {
-                Ok(interval) => Some(interval),
-                Err(err) => {
-                    return Err(format!(
-                        "Cannot parse p2p peer table capacity (u16), err: {}",
-                        err,
-                    ))
-                }
-            },
-            None => None,
-        };
+    let p2p_peer_table_capacity = match matches.value_of("p2p-peer-table-capacity") {
+        Some(i) => match i.parse::<i16>() {
+            Ok(interval) => Some(interval),
+            Err(err) => {
+                return Err(format!(
+                    "Cannot parse p2p peer table capacity (u16), err: {}",
+                    err,
+                ))
+            }
+        },
+        None => None,
+    };
 
     let p2p_max_conn_count = match matches.value_of("p2p-max-conn-count") {
         Some(i) => match i.parse::<u16>() {
@@ -215,8 +199,7 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
         None => None,
     };
 
-    let addr_monitor_interval = match matches.value_of("addr-monitor-interval")
-    {
+    let addr_monitor_interval = match matches.value_of("addr-monitor-interval") {
         Some(d) => match d.parse::<u64>() {
             Ok(d) => Some(d),
             Err(err) => {
@@ -239,8 +222,18 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
         Some(d) => match d.parse::<u64>() {
             Ok(d) => Some(d),
             Err(err) => {
+                return Err(format!("Cannot parse mine interval (u64), err: {}", err,));
+            }
+        },
+        None => None,
+    };
+
+    let node_task_min_interval = match matches.value_of("node-task-min-interval") {
+        Some(d) => match d.parse::<u64>() {
+            Ok(d) => Some(d),
+            Err(err) => {
                 return Err(format!(
-                    "Cannot parse mine interval (u64), err: {}",
+                    "Cannot parse node task min interval (u64), err: {}",
                     err,
                 ));
             }
@@ -248,42 +241,24 @@ pub(crate) fn get_args() -> Result<CLIArgs, String> {
         None => None,
     };
 
-    let node_task_min_interval =
-        match matches.value_of("node-task-min-interval") {
-            Some(d) => match d.parse::<u64>() {
-                Ok(d) => Some(d),
-                Err(err) => {
-                    return Err(format!(
-                        "Cannot parse node task min interval (u64), err: {}",
-                        err,
-                    ));
-                }
-            },
-            None => None,
-        };
-
-    let peer_register_interval =
-        match matches.value_of("peer-register-interval") {
-            Some(d) => match d.parse::<u64>() {
-                Ok(d) => Some(d),
-                Err(err) => {
-                    return Err(format!(
-                        "Cannot parse peer register interval (u64), err: {}",
-                        err,
-                    ));
-                }
-            },
-            None => None,
-        };
+    let peer_register_interval = match matches.value_of("peer-register-interval") {
+        Some(d) => match d.parse::<u64>() {
+            Ok(d) => Some(d),
+            Err(err) => {
+                return Err(format!(
+                    "Cannot parse peer register interval (u64), err: {}",
+                    err,
+                ));
+            }
+        },
+        None => None,
+    };
 
     let tx_sync_interval = match matches.value_of("tx-sync-interval") {
         Some(d) => match d.parse::<u64>() {
             Ok(d) => Some(d),
             Err(err) => {
-                return Err(format!(
-                    "Cannot parse tx sync interval (u64), err: {}",
-                    err,
-                ));
+                return Err(format!("Cannot parse tx sync interval (u64), err: {}", err,));
             }
         },
         None => None,

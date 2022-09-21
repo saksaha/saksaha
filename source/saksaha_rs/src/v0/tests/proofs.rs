@@ -9,16 +9,7 @@ use type_extension::U8Array;
 fn make_test_context() -> (OldCoin, NewCoin, NewCoin, Scalar) {
     let hasher = Hasher::new();
 
-    let (
-        addr_pk_1_old,
-        addr_sk_1_old,
-        r_1_old,
-        s_1_old,
-        rho_1_old,
-        v_1_old,
-        cm_1_old,
-        sn_1,
-    ) = {
+    let (addr_pk_1_old, addr_sk_1_old, r_1_old, s_1_old, rho_1_old, v_1_old, cm_1_old, sn_1) = {
         let addr_sk = {
             let arr = U8Array::from_int(1);
             ScalarExt::parse_arr(&arr).unwrap()
@@ -57,15 +48,7 @@ fn make_test_context() -> (OldCoin, NewCoin, NewCoin, Scalar) {
         (addr_pk, addr_sk, r, s, rho, v, cm, sn)
     };
 
-    let (
-        addr_sk_1_new,
-        addr_pk_1_new,
-        r_1_new,
-        s_1_new,
-        rho_1_new,
-        v_1_new,
-        cm_1_new,
-    ) = {
+    let (addr_sk_1_new, addr_pk_1_new, r_1_new, s_1_new, rho_1_new, v_1_new, cm_1_new) = {
         let addr_sk = {
             let arr = U8Array::from_int(11);
             ScalarExt::parse_arr(&arr).unwrap()
@@ -102,15 +85,7 @@ fn make_test_context() -> (OldCoin, NewCoin, NewCoin, Scalar) {
         (addr_sk, addr_pk, r, s, rho, v, cm)
     };
 
-    let (
-        addr_sk_2_new,
-        addr_pk_2_new,
-        r_2_new,
-        s_2_new,
-        rho_2_new,
-        v_2_new,
-        cm_2_new,
-    ) = {
+    let (addr_sk_2_new, addr_pk_2_new, r_2_new, s_2_new, rho_2_new, v_2_new, cm_2_new) = {
         let addr_sk = {
             let arr = U8Array::from_int(21);
             ScalarExt::parse_arr(&arr).unwrap()
@@ -282,10 +257,7 @@ fn make_test_context() -> (OldCoin, NewCoin, NewCoin, Scalar) {
 
         v.iter().enumerate().for_each(|(idx, p)| {
             if idx >= ret.len() {
-                panic!(
-                    "Invalid assignment to a fixed sized array, idx: {}",
-                    idx
-                );
+                panic!("Invalid assignment to a fixed sized array, idx: {}", idx);
             }
 
             let key = format!("{}_{}", idx, p.idx);

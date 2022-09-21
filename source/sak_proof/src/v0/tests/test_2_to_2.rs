@@ -60,16 +60,7 @@ pub struct TestContext {
 pub fn make_test_context_2_to_2() -> TestContext {
     let hasher = Hasher::new();
 
-    let (
-        addr_pk_1_old,
-        addr_sk_1_old,
-        r_1_old,
-        s_1_old,
-        rho_1_old,
-        v_1_old,
-        cm_1_old,
-        sn_1,
-    ) = {
+    let (addr_pk_1_old, addr_sk_1_old, r_1_old, s_1_old, rho_1_old, v_1_old, cm_1_old, sn_1) = {
         let addr_sk = {
             let arr = U8Array::from_int(1);
             ScalarExt::parse_arr(&arr).unwrap()
@@ -108,16 +99,7 @@ pub fn make_test_context_2_to_2() -> TestContext {
         (addr_pk, addr_sk, r, s, rho, v, cm, sn)
     };
 
-    let (
-        addr_pk_2_old,
-        addr_sk_2_old,
-        r_2_old,
-        s_2_old,
-        rho_2_old,
-        v_2_old,
-        cm_2_old,
-        sn_2,
-    ) = {
+    let (addr_pk_2_old, addr_sk_2_old, r_2_old, s_2_old, rho_2_old, v_2_old, cm_2_old, sn_2) = {
         // let addr_sk = {
         //     let arr = U8Array::from_int(11);
         //     ScalarExt::parse_arr(&arr).unwrap()
@@ -153,10 +135,7 @@ pub fn make_test_context_2_to_2() -> TestContext {
 
         let dummy_old_coin = OldCoin::new_dummy().unwrap();
 
-        let sn = hasher.mimc_scalar(
-            dummy_old_coin.addr_sk.unwrap(),
-            dummy_old_coin.rho.unwrap(),
-        );
+        let sn = hasher.mimc_scalar(dummy_old_coin.addr_sk.unwrap(), dummy_old_coin.rho.unwrap());
 
         (
             dummy_old_coin.addr_pk.unwrap(),
@@ -260,19 +239,15 @@ pub fn make_test_context_2_to_2() -> TestContext {
 
         v.iter().enumerate().for_each(|(idx, p)| {
             if idx >= ret.len() {
-                panic!(
-                    "Invalid assignment to a fixed sized array, idx: {}",
-                    idx
-                );
+                panic!("Invalid assignment to a fixed sized array, idx: {}", idx);
             }
 
             let key = format!("{}_{}", idx, p.idx);
 
-            let merkle_node =
-                merkle_nodes_1.get(key.as_str()).expect(&format!(
-                    "value doesn't exist in the merkle node, key: {}",
-                    key
-                ));
+            let merkle_node = merkle_nodes_1.get(key.as_str()).expect(&format!(
+                "value doesn't exist in the merkle node, key: {}",
+                key
+            ));
 
             ret[idx] = (merkle_node.clone(), p.direction);
         });
@@ -292,19 +267,15 @@ pub fn make_test_context_2_to_2() -> TestContext {
 
         v.iter().enumerate().for_each(|(idx, p)| {
             if idx >= ret.len() {
-                panic!(
-                    "Invalid assignment to a fixed sized array, idx: {}",
-                    idx
-                );
+                panic!("Invalid assignment to a fixed sized array, idx: {}", idx);
             }
 
             let key = format!("{}_{}", idx, p.idx);
 
-            let merkle_node =
-                merkle_nodes_2.get(key.as_str()).expect(&format!(
-                    "value doesn't exist in the merkle node, key: {}",
-                    key
-                ));
+            let merkle_node = merkle_nodes_2.get(key.as_str()).expect(&format!(
+                "value doesn't exist in the merkle node, key: {}",
+                key
+            ));
 
             ret[idx] = (merkle_node.clone(), p.direction);
         });
@@ -689,10 +660,8 @@ pub async fn test_coin_ownership_default_2_to_2_using_dummy_old() {
         v: Some(test_context.v_2),
     };
 
-    let proof = CoinProof::generate_proof_2_to_2(
-        coin_1_old, coin_2_old, coin_1_new, coin_2_new,
-    )
-    .expect("proof should be created");
+    let proof = CoinProof::generate_proof_2_to_2(coin_1_old, coin_2_old, coin_1_new, coin_2_new)
+        .expect("proof should be created");
 
     let public_inputs: Vec<Scalar> = vec![
         test_context.merkle_rt_1,
@@ -703,12 +672,7 @@ pub async fn test_coin_ownership_default_2_to_2_using_dummy_old() {
     ];
 
     assert_eq!(
-        CoinProof::verify_proof_2_to_2(
-            proof,
-            &public_inputs,
-            &test_context.hasher
-        )
-        .unwrap(),
+        CoinProof::verify_proof_2_to_2(proof, &public_inputs, &test_context.hasher).unwrap(),
         true
     );
 }
@@ -755,10 +719,8 @@ async fn test_pi_stringify() {
         v: Some(test_context.v_2),
     };
 
-    let proof = CoinProof::generate_proof_2_to_2(
-        coin_1_old, coin_2_old, coin_1_new, coin_2_new,
-    )
-    .expect("proof should be created");
+    let proof = CoinProof::generate_proof_2_to_2(coin_1_old, coin_2_old, coin_1_new, coin_2_new)
+        .expect("proof should be created");
 
     let mut pi_ser = Vec::new();
     proof.write(&mut pi_ser).unwrap();

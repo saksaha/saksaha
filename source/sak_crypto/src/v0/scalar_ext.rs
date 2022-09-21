@@ -15,10 +15,7 @@ impl ScalarExt {
         }
     }
 
-    pub fn parse_arr_wide(
-        arr1: &[u8; 32],
-        arr2: &[u8; 32],
-    ) -> Result<Scalar, CryptoError> {
+    pub fn parse_arr_wide(arr1: &[u8; 32], arr2: &[u8; 32]) -> Result<Scalar, CryptoError> {
         let ret = {
             let mut r: [u8; 64] = [0; 64];
             let (one, two) = r.split_at_mut(arr1.len());

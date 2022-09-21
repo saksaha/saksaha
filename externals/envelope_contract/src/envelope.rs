@@ -1,11 +1,10 @@
 use crate::{
     request_type::{GET_CH_LIST, GET_MSG, OPEN_CH, SEND_MSG},
-    EnvelopeStorage, GetChListParams, GetMsgParams, OpenChParams,
-    SendMsgParams,
+    EnvelopeStorage, GetChListParams, GetMsgParams, OpenChParams, SendMsgParams,
 };
 use sak_contract_std::{
-    contract_bootstrap, define_execute, define_init, define_query,
-    ContractError, CtrRequest, InvokeResult, RequestArgs, Storage,
+    contract_bootstrap, define_execute, define_init, define_query, ContractError, CtrRequest,
+    InvokeResult, RequestArgs, Storage,
 };
 use std::collections::HashMap;
 
@@ -28,10 +27,7 @@ pub fn init2() -> Result<Storage, ContractError> {
 }
 
 define_query!();
-pub fn query2(
-    request: CtrRequest,
-    storage: Storage,
-) -> Result<Vec<u8>, ContractError> {
+pub fn query2(request: CtrRequest, storage: Storage) -> Result<Vec<u8>, ContractError> {
     match request.req_type.as_ref() {
         GET_MSG => {
             return get_msgs(storage, request.args);
@@ -40,18 +36,13 @@ pub fn query2(
             return get_ch_list(storage, request.args);
         }
         _ => {
-            return Err(
-                format!("Wrong request type has been found in query").into()
-            );
+            return Err(format!("Wrong request type has been found in query").into());
         }
     }
 }
 
 define_execute!();
-pub fn execute2(
-    request: CtrRequest,
-    storage: &mut Storage,
-) -> Result<InvokeResult, ContractError> {
+pub fn execute2(request: CtrRequest, storage: &mut Storage) -> Result<InvokeResult, ContractError> {
     match request.req_type.as_ref() {
         OPEN_CH => {
             return handle_open_channel(storage, request.args);
@@ -60,18 +51,12 @@ pub fn execute2(
             return handle_send_msg(storage, request.args);
         }
         _ => {
-            return Err(format!(
-                "Wrong request type has been found in execution"
-            )
-            .into());
+            return Err(format!("Wrong request type has been found in execution").into());
         }
     }
 }
 
-fn get_msgs(
-    storage: Storage,
-    args: RequestArgs,
-) -> Result<Vec<u8>, ContractError> {
+fn get_msgs(storage: Storage, args: RequestArgs) -> Result<Vec<u8>, ContractError> {
     let evl_storage: EnvelopeStorage = serde_json::from_slice(&storage)?;
 
     let get_msg_params: GetMsgParams = serde_json::from_slice(&args)?;
@@ -106,10 +91,7 @@ fn get_msgs(
     Ok(ret)
 }
 
-fn get_ch_list(
-    storage: Storage,
-    args: RequestArgs,
-) -> Result<Vec<u8>, ContractError> {
+fn get_ch_list(storage: Storage, args: RequestArgs) -> Result<Vec<u8>, ContractError> {
     let evl_storage: EnvelopeStorage = serde_json::from_slice(&storage)?;
 
     let get_ch_list_params: GetChListParams = serde_json::from_slice(&args)?;
@@ -149,8 +131,7 @@ fn handle_open_channel(
     storage: &mut Storage,
     args: RequestArgs,
 ) -> Result<InvokeResult, ContractError> {
-    let mut evl_storage: EnvelopeStorage = match serde_json::from_slice(storage)
-    {
+    let mut evl_storage: EnvelopeStorage = match serde_json::from_slice(storage) {
         Ok(s) => s,
         Err(err) => {
             return Err(format!(
@@ -163,11 +144,7 @@ fn handle_open_channel(
 
     let open_ch_params: OpenChParams = match serde_json::from_slice(&args) {
         Ok(p) => p,
-        Err(err) => {
-            return Err(
-                format!("Could not parse open ch params, err: {}", err).into()
-            )
-        }
+        Err(err) => return Err(format!("Could not parse open ch params, err: {}", err).into()),
     };
 
     let dst_pk = open_ch_params.dst_pk;
@@ -233,33 +210,17 @@ fn handle_open_channel(
 
     *storage = match serde_json::to_vec(&evl_storage) {
         Ok(s) => s,
-        Err(err) => {
-            return Err(format!(
-                "Cannot serialize envelope storage, err: {}",
-                err
-            )
-            .into())
-        }
+        Err(err) => return Err(format!("Cannot serialize envelope storage, err: {}", err).into()),
     };
 
     Ok(vec![])
 }
 
-fn handle_send_msg(
-    storage: &mut Storage,
-    args: RequestArgs,
-) -> Result<Vec<u8>, ContractError> {
-    let mut evl_storage: EnvelopeStorage =
-        match serde_json::from_slice(&storage) {
-            Ok(e) => e,
-            Err(err) => {
-                return Err(format!(
-                    "Failed to restore evl_storage, err: {:?}",
-                    err
-                )
-                .into())
-            }
-        };
+fn handle_send_msg(storage: &mut Storage, args: RequestArgs) -> Result<Vec<u8>, ContractError> {
+    let mut evl_storage: EnvelopeStorage = match serde_json::from_slice(&storage) {
+        Ok(e) => e,
+        Err(err) => return Err(format!("Failed to restore evl_storage, err: {:?}", err).into()),
+    };
 
     let send_msg_params: SendMsgParams = serde_json::from_slice(&args)?;
 

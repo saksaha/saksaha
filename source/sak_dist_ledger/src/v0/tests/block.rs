@@ -191,8 +191,7 @@ async fn test_sequential_sync_block_if_block_is_correct() {
         };
     }
 
-    let latest_block_height =
-        dist_ledger.apis.get_latest_block_height().unwrap().unwrap();
+    let latest_block_height = dist_ledger.apis.get_latest_block_height().unwrap().unwrap();
 
     assert_eq!(latest_block_height, REPEAT_NUM);
 }

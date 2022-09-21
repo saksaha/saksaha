@@ -7,9 +7,7 @@ pub use tracing::{debug, error, info, trace, warn};
 use tracing::{Event, Subscriber};
 pub use tracing_appender::non_blocking::WorkerGuard;
 use tracing_subscriber;
-use tracing_subscriber::fmt::{
-    format, FmtContext, FormatEvent, FormatFields, FormattedFields,
-};
+use tracing_subscriber::fmt::{format, FmtContext, FormatEvent, FormatFields, FormattedFields};
 use tracing_subscriber::registry::LookupSpan;
 use tracing_subscriber::{
     filter::{EnvFilter, LevelFilter},

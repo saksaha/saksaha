@@ -17,23 +17,15 @@ impl DistLedgerApis {
         self.sync_pool.contains_tx(tx_hash).await
     }
 
-    pub async fn get_tx_pool_diff(
-        &self,
-        tx_hashes: Vec<String>,
-    ) -> Vec<String> {
+    pub async fn get_tx_pool_diff(&self, tx_hashes: Vec<String>) -> Vec<String> {
         self.sync_pool.get_tx_pool_diff(tx_hashes).await
     }
 
-    pub async fn get_txs_from_pool(
-        &self,
-        tx_hashes: Vec<String>,
-    ) -> Vec<TxCandidate> {
+    pub async fn get_txs_from_pool(&self, tx_hashes: Vec<String>) -> Vec<TxCandidate> {
         self.sync_pool.get_txs(tx_hashes).await
     }
 
-    pub(crate) async fn make_block_candidate(
-        &self,
-    ) -> Result<Option<BlockCandidate>, LedgerError> {
+    pub(crate) async fn make_block_candidate(&self) -> Result<Option<BlockCandidate>, LedgerError> {
         let tx_candidates = self.sync_pool.get_all_txs().await?;
 
         if tx_candidates.is_empty() {

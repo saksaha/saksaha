@@ -4,10 +4,7 @@ use sak_kv_db::WriteBatch;
 use sak_types::{Block, BlockHash, BlockHeight, Tx};
 
 impl LedgerDB {
-    pub async fn get_blocks(
-        &self,
-        block_hashes: Vec<&String>,
-    ) -> Result<Vec<Block>, LedgerError> {
+    pub async fn get_blocks(&self, block_hashes: Vec<&String>) -> Result<Vec<Block>, LedgerError> {
         let mut ret = vec![];
         for block_hash in block_hashes {
             match self.get_block(block_hash)? {
@@ -19,10 +16,7 @@ impl LedgerDB {
         Ok(ret)
     }
 
-    pub fn get_block(
-        &self,
-        block_hash: &String,
-    ) -> Result<Option<Block>, LedgerError> {
+    pub fn get_block(&self, block_hash: &String) -> Result<Option<Block>, LedgerError> {
         let validator_sig = self.get_validator_sig(&block_hash)?;
 
         let tx_hashes = self.get_tx_hashes(&block_hash)?;
@@ -81,39 +75,19 @@ impl LedgerDB {
 
         let block_hash = block.get_block_hash();
 
-        self.batch_put_validator_sig(
-            &mut batch,
-            block_hash,
-            &block.validator_sig,
-        )?;
+        self.batch_put_validator_sig(&mut batch, block_hash, &block.validator_sig)?;
 
-        self.batch_put_witness_sigs(
-            &mut batch,
-            block_hash,
-            &block.witness_sigs,
-        )?;
+        self.batch_put_witness_sigs(&mut batch, block_hash, &block.witness_sigs)?;
 
         self.batch_put_tx_hashes(&mut batch, block_hash, &block.tx_hashes)?;
 
-        self.batch_put_block_created_at(
-            &mut batch,
-            block_hash,
-            &block.created_at,
-        )?;
+        self.batch_put_block_created_at(&mut batch, block_hash, &block.created_at)?;
 
         self.batch_put_block_hash(&mut batch, &block.block_height, block_hash)?;
 
-        self.batch_put_block_height(
-            &mut batch,
-            block_hash,
-            &block.block_height,
-        )?;
+        self.batch_put_block_height(&mut batch, block_hash, &block.block_height)?;
 
-        self.batch_put_block_merkle_rt(
-            &mut batch,
-            block_hash,
-            &block.merkle_rt,
-        )?;
+        self.batch_put_block_merkle_rt(&mut batch, block_hash, &block.merkle_rt)?;
 
         self.batch_put_block_merkle_rt_key(&mut batch, &block.merkle_rt)?;
 

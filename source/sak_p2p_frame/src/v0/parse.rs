@@ -36,13 +36,7 @@ impl Parse {
     pub fn new(frame: Frame) -> Result<Parse, ParseError> {
         let array = match frame {
             Frame::Array(array) => array,
-            frame => {
-                return Err(format!(
-                    "protocol error; expected array, got {:?}",
-                    frame
-                )
-                .into())
-            }
+            frame => return Err(format!("protocol error; expected array, got {:?}", frame).into()),
         };
 
         Ok(Parse {
@@ -115,15 +109,9 @@ impl Parse {
             Frame::Integer(v) => Ok(v),
             // Simple and bulk frames must be parsed as integers. If the parsing
             // fails, an error is returned.
-            Frame::Simple(data) => {
-                atoi::<u128>(data.as_bytes()).ok_or_else(|| MSG.into())
-            }
+            Frame::Simple(data) => atoi::<u128>(data.as_bytes()).ok_or_else(|| MSG.into()),
             Frame::Bulk(data) => atoi::<u128>(&data).ok_or_else(|| MSG.into()),
-            frame => Err(format!(
-                "protocol error; expected int frame but got {:?}",
-                frame
-            )
-            .into()),
+            frame => Err(format!("protocol error; expected int frame but got {:?}", frame).into()),
         }
     }
 
@@ -132,8 +120,7 @@ impl Parse {
         if self.parts.next().is_none() {
             Ok(())
         } else {
-            Err("protocol error; expected end of frame, but there was more"
-                .into())
+            Err("protocol error; expected end of frame, but there was more".into())
         }
     }
 }
@@ -153,9 +140,7 @@ impl From<&str> for ParseError {
 impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            ParseError::EndOfStream => {
-                "protocol error; unexpected end of stream".fmt(f)
-            }
+            ParseError::EndOfStream => "protocol error; unexpected end of stream".fmt(f),
             ParseError::Other(err) => err.fmt(f),
         }
     }

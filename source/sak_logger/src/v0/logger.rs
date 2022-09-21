@@ -1,6 +1,4 @@
-use crate::v0::formatters::{
-    ConsoleLogFormatter, FileLogFormatter, TestLogFormatter,
-};
+use crate::v0::formatters::{ConsoleLogFormatter, FileLogFormatter, TestLogFormatter};
 use crate::v0::utils;
 use crate::LoggerError;
 use colored::Colorize;
@@ -48,11 +46,9 @@ impl SakLogger {
             let log_dir = log_root_dir.as_ref().join(log_dir_name).join("logs");
             std::fs::create_dir_all(&log_dir)?;
 
-            let file_appender =
-                tracing_appender::rolling::daily(&log_dir, file_name_prefix);
+            let file_appender = tracing_appender::rolling::daily(&log_dir, file_name_prefix);
 
-            let (non_blocking, guard) =
-                tracing_appender::non_blocking(file_appender);
+            let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
 
             let file_log_layer = tracing_subscriber::fmt::layer()
                 .event_format(FileLogFormatter)
@@ -136,11 +132,9 @@ impl SakLogger {
             let log_dir = log_root_dir.as_ref().join(log_dir_name).join("logs");
             std::fs::create_dir_all(&log_dir)?;
 
-            let file_appender =
-                tracing_appender::rolling::daily(&log_dir, file_name_prefix);
+            let file_appender = tracing_appender::rolling::daily(&log_dir, file_name_prefix);
 
-            let (non_blocking, guard) =
-                tracing_appender::non_blocking(file_appender);
+            let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
 
             println!("sak_logger is writing to log_dir: {:?}", log_dir);
 
