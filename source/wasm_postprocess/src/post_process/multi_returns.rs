@@ -15,8 +15,7 @@ pub fn make_wasm_have_multiple_returns(
 
     let args = vec![init_arg, query_arg, execute];
 
-    let output_path =
-        write_out_wasm_returning_multi_value(src_path, output_path, args)?;
+    let output_path = write_out_wasm_returning_multi_value(src_path, output_path, args)?;
 
     Ok(output_path)
 }
@@ -48,14 +47,11 @@ fn get_val_type(raw_type: &&str) -> Result<ValType, PostProcessError> {
 ///     return_value_type_1 return_value_type_2 return_value_type_n
 ///
 /// Each separate by whitespace.
-fn parse_args(
-    args: &[String],
-) -> Result<Vec<(String, Vec<ValType>)>, PostProcessError> {
+fn parse_args(args: &[String]) -> Result<Vec<(String, Vec<ValType>)>, PostProcessError> {
     let transformations = args
         .iter()
         .map(|raw_input| {
-            let mut input_split: Vec<&str> =
-                raw_input.split_whitespace().collect();
+            let mut input_split: Vec<&str> = raw_input.split_whitespace().collect();
 
             let function_name = input_split.remove(0).to_string();
 
@@ -69,10 +65,10 @@ fn parse_args(
 
             if val_types.len() < 2 {
                 return Err(format!(
-                "there must be at least two return types for function `{}`, \
+                    "there must be at least two return types for function `{}`, \
                 else it's not a multi-value return",
-                function_name,
-            )
+                    function_name,
+                )
                 .into());
             }
 
@@ -140,43 +136,33 @@ fn write_out_wasm_returning_multi_value(
     {
         Ok(m) => m,
         Err(err) => {
-            return Err(format!(
-                "Cannot parse input file as proper wasm, err: {}",
-                err
-            )
-            .into());
+            return Err(format!("Cannot parse input file as proper wasm, err: {}", err).into());
         }
     };
 
-    let shadow_stack_pointer =
-        wasm_bindgen_wasm_conventions::get_shadow_stack_pointer(&module)
-            .ok_or("cannot get shadow stack pointer")?;
+    let shadow_stack_pointer = wasm_bindgen_wasm_conventions::get_shadow_stack_pointer(&module)
+        .ok_or("cannot get shadow stack pointer")?;
 
     let memory = wasm_bindgen_wasm_conventions::get_memory(&module)?;
 
-    let to_xform =
-        transformations
-            .iter()
-            .map(|(function_name, result_types)| {
-                println!(
-                    "[postprocess] Make `{}` function return `{:?}`.",
-                    function_name, result_types
-                );
+    let to_xform = transformations
+        .iter()
+        .map(|(function_name, result_types)| {
+            println!(
+                "[postprocess] Make `{}` function return `{:?}`.",
+                function_name, result_types
+            );
 
-                let (_export_id, function_id) =
-                    get_ids_by_name(&module, function_name)?;
+            let (_export_id, function_id) = get_ids_by_name(&module, function_name)?;
 
-                Ok((function_id, 0, result_types.to_vec()))
-            })
-            .collect::<Result<
-                Vec<(FunctionId, usize, Vec<ValType>)>,
-                PostProcessError>>()?;
+            Ok((function_id, 0, result_types.to_vec()))
+        })
+        .collect::<Result<Vec<(FunctionId, usize, Vec<ValType>)>, PostProcessError>>()?;
 
     let export_ids: Vec<ExportId> = transformations
         .iter()
         .map(|(function_name, _)| {
-            let (export_id, _function_id) =
-                get_ids_by_name(&module, function_name)?;
+            let (export_id, _function_id) = get_ids_by_name(&module, function_name)?;
 
             Ok(export_id)
         })

@@ -18,8 +18,7 @@ impl Credential {
         match (public_key, secret) {
             (Some(public_key), Some(secret)) => {
                 let p2p_credential = SakCredential::new(&secret, &public_key)?;
-                let acc_addr =
-                    SakKey::create_acc_addr(&p2p_credential.public_key);
+                let acc_addr = SakKey::create_acc_addr(&p2p_credential.public_key);
 
                 let c = Credential {
                     public_key: p2p_credential.public_key,
@@ -43,11 +42,8 @@ impl Credential {
         let (secret_key, public_key) = SakKey::generate();
         let acc_addr = SakKey::create_acc_addr(&public_key);
 
-        let public_key_str = sak_crypto::encode_hex(
-            &public_key.to_encoded_point(false).as_bytes(),
-        );
-        let secret_key_str =
-            sak_crypto::encode_hex(&secret_key.to_bytes() as &[u8]);
+        let public_key_str = sak_crypto::encode_hex(&public_key.to_encoded_point(false).as_bytes());
+        let secret_key_str = sak_crypto::encode_hex(&secret_key.to_bytes() as &[u8]);
 
         let c = Credential {
             public_key,

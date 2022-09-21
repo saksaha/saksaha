@@ -47,10 +47,7 @@ impl UnknownAddr {
                 }
             },
             None => {
-                return Err(format!(
-                    "url might be of a short form, url: {}",
-                    url
-                ));
+                return Err(format!("url might be of a short form, url: {}", url));
             }
         };
 

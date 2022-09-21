@@ -106,16 +106,12 @@ impl WalletDBSchema {
     }
 
     pub fn put_coin(&self, coin: &CoinRecord) -> Result<(), WalletError> {
-        let next_coin_idx = coin.coin_idx.unwrap_or(
-            self.raw.get_latest_coin_idx()?.map(|v| v + 1).unwrap_or(0),
-        );
+        let next_coin_idx = coin
+            .coin_idx
+            .unwrap_or(self.raw.get_latest_coin_idx()?.map(|v| v + 1).unwrap_or(0));
 
         if self.raw.get_r(&coin.cm)?.is_some() {
-            return Err(format!(
-                "Coin of that cm is already persisted, cm: {}",
-                &coin.cm,
-            )
-            .into());
+            return Err(format!("Coin of that cm is already persisted, cm: {}", &coin.cm,).into());
         };
 
         let mut batch = WriteBatch::default();
@@ -134,11 +130,8 @@ impl WalletDBSchema {
         self.raw
             .batch_put_a_sk(&mut batch, &coin.cm, &coin.addr_sk)?;
 
-        self.raw.batch_put_coin_status(
-            &mut batch,
-            &coin.cm,
-            &coin.coin_status,
-        )?;
+        self.raw
+            .batch_put_coin_status(&mut batch, &coin.cm, &coin.coin_status)?;
 
         self.raw
             .batch_put_coin_idx(&mut batch, &coin.cm, &next_coin_idx)?;

@@ -2,24 +2,16 @@ use crate::{DistLedgerApis, LedgerError};
 use sak_contract_std::Storage;
 use sak_crypto::{sha3::digest::typenum::Le, MerkleTree};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
-use sak_types::{
-    Block, BlockHash, BlockHeight, Cm, CmIdx, CtrAddr, Tx, TxCandidate, TxHash,
-};
+use sak_types::{Block, BlockHash, BlockHeight, Cm, CmIdx, CtrAddr, Tx, TxCandidate, TxHash};
 
 const GET_BLOCK_HASH_LIST_DEFAULT_SIZE: u128 = 10;
 
 impl DistLedgerApis {
-    pub async fn get_blocks(
-        &self,
-        block_hashes: Vec<&String>,
-    ) -> Result<Vec<Block>, LedgerError> {
+    pub async fn get_blocks(&self, block_hashes: Vec<&String>) -> Result<Vec<Block>, LedgerError> {
         self.ledger_db.get_blocks(block_hashes).await
     }
 
-    pub async fn get_txs(
-        &self,
-        tx_hashes: &Vec<String>,
-    ) -> Result<Vec<Tx>, LedgerError> {
+    pub async fn get_txs(&self, tx_hashes: &Vec<String>) -> Result<Vec<Tx>, LedgerError> {
         self.ledger_db.get_txs(tx_hashes).await
     }
 
@@ -31,17 +23,11 @@ impl DistLedgerApis {
     //     }
     // }
 
-    pub async fn get_merkle_node(
-        &self,
-        location: &String,
-    ) -> Result<[u8; 32], LedgerError> {
+    pub async fn get_merkle_node(&self, location: &String) -> Result<[u8; 32], LedgerError> {
         self.ledger_db.get_merkle_node(location)
     }
 
-    pub async fn get_auth_path(
-        &self,
-        cm_idx: &u128,
-    ) -> Result<Vec<([u8; 32], bool)>, LedgerError> {
+    pub async fn get_auth_path(&self, cm_idx: &u128) -> Result<Vec<([u8; 32], bool)>, LedgerError> {
         let merkle_tree = MerkleTree::new(CM_TREE_DEPTH);
 
         let auth_path_idx = merkle_tree.generate_auth_paths(cm_idx.to_owned());
@@ -54,11 +40,7 @@ impl DistLedgerApis {
             let merkle_node = match self.get_merkle_node(&key).await {
                 Ok(m) => m,
                 Err(err) => {
-                    return Err(format!(
-                        "Couldn't get the merkle node value, err: {}",
-                        err
-                    )
-                    .into())
+                    return Err(format!("Couldn't get the merkle node value, err: {}", err).into())
                 }
             };
 
@@ -68,21 +50,17 @@ impl DistLedgerApis {
         Ok(ret)
     }
 
-    pub async fn get_cm_idx_by_cm(
-        &self,
-        cm: &Cm,
-    ) -> Result<Option<CmIdx>, LedgerError> {
+    pub async fn get_cm_idx_by_cm(&self, cm: &Cm) -> Result<Option<CmIdx>, LedgerError> {
         self.ledger_db.get_cm_idx_by_cm(cm)
     }
 
     pub async fn get_latest_block_hash(
         &self,
     ) -> Result<Option<(BlockHeight, BlockHash)>, LedgerError> {
-        let latest_block_height =
-            match self.ledger_db.get_latest_block_height()? {
-                Some(h) => h,
-                None => return Ok(None),
-            };
+        let latest_block_height = match self.ledger_db.get_latest_block_height()? {
+            Some(h) => h,
+            None => return Ok(None),
+        };
 
         let latest_block_hash = match self
             .ledger_db
@@ -95,14 +73,9 @@ impl DistLedgerApis {
         Ok(Some((latest_block_height, latest_block_hash)))
     }
 
-    pub async fn send_tx(
-        &self,
-        tx_candidate: TxCandidate,
-    ) -> Result<TxHash, LedgerError> {
+    pub async fn send_tx(&self, tx_candidate: TxCandidate) -> Result<TxHash, LedgerError> {
         let tx_hash = match tx_candidate.clone() {
-            TxCandidate::Mint(_) => {
-                self.sync_pool.insert_tx(tx_candidate).await?
-            }
+            TxCandidate::Mint(_) => self.sync_pool.insert_tx(tx_candidate).await?,
             TxCandidate::Pour(tc) => {
                 let mut is_valid_sn = true;
                 let mut is_valid_merkle_rt = true;
@@ -138,17 +111,11 @@ impl DistLedgerApis {
         Ok(tx_hash)
     }
 
-    pub async fn get_tx(
-        &self,
-        tx_hash: &String,
-    ) -> Result<Option<Tx>, LedgerError> {
+    pub async fn get_tx(&self, tx_hash: &String) -> Result<Option<Tx>, LedgerError> {
         self.ledger_db.get_tx(tx_hash).await
     }
 
-    pub fn get_block(
-        &self,
-        block_hash: &String,
-    ) -> Result<Option<Block>, LedgerError> {
+    pub fn get_block(&self, block_hash: &String) -> Result<Option<Block>, LedgerError> {
         self.ledger_db.get_block(block_hash)
     }
 
@@ -159,9 +126,7 @@ impl DistLedgerApis {
     ) -> Result<Vec<Block>, LedgerError> {
         let latest_bh = match self.get_latest_block_height()? {
             Some(bh) => bh,
-            None => {
-                return Err(format!("Cannot find latest block height").into())
-            }
+            None => return Err(format!("Cannot find latest block height").into()),
         };
 
         let upper = match offset {
@@ -205,40 +170,27 @@ impl DistLedgerApis {
                     }
                 },
                 Err(err) => {
-                    return Err(format!(
-                        "Block hash at height ({}) does not exist",
-                        err
-                    )
-                    .into())
+                    return Err(format!("Block hash at height ({}) does not exist", err).into())
                 }
             }
         }
 
-        let block_hash_list_tmp: Vec<&BlockHash> =
-            block_hash_list.iter().collect();
+        let block_hash_list_tmp: Vec<&BlockHash> = block_hash_list.iter().collect();
 
         let block_list = match self.get_blocks(block_hash_list_tmp).await {
             Ok(bl) => bl,
             Err(err) => {
-                return Err(format!(
-                    "some of the block_hashes in ({:?}) is wrong",
-                    err
-                )
-                .into())
+                return Err(format!("some of the block_hashes in ({:?}) is wrong", err).into())
             }
         };
 
         Ok(block_list)
     }
 
-    pub async fn get_all_blocks(
-        &self,
-    ) -> Result<Vec<(BlockHeight, BlockHash)>, LedgerError> {
+    pub async fn get_all_blocks(&self) -> Result<Vec<(BlockHeight, BlockHash)>, LedgerError> {
         let latest_bh = match self.get_latest_block_height()? {
             Some(bh) => bh,
-            None => {
-                return Err(format!("Cannot find latest block height").into())
-            }
+            None => return Err(format!("Cannot find latest block height").into()),
         };
 
         let mut block_hash_list: Vec<(BlockHeight, BlockHash)> = Vec::new();
@@ -247,21 +199,14 @@ impl DistLedgerApis {
             match self.get_block_by_height(&block_height).await {
                 Ok(maybe_block) => match maybe_block {
                     Some(block) => {
-                        block_hash_list.push((
-                            block_height,
-                            block.get_block_hash().to_string(),
-                        ));
+                        block_hash_list.push((block_height, block.get_block_hash().to_string()));
                     }
                     None => {
                         break;
                     }
                 },
                 Err(err) => {
-                    return Err(format!(
-                        "Block hash at height ({}) does not exist",
-                        err
-                    )
-                    .into())
+                    return Err(format!("Block hash at height ({}) does not exist", err).into())
                 }
             }
         }
@@ -287,14 +232,11 @@ impl DistLedgerApis {
         self.ledger_db.get_latest_block_height()
     }
 
-    pub async fn get_latest_block_merkle_rt(
-        &self,
-    ) -> Result<Option<[u8; 32]>, LedgerError> {
-        let latest_block_height =
-            match self.ledger_db.get_latest_block_height()? {
-                Some(h) => h,
-                None => return Ok(None),
-            };
+    pub async fn get_latest_block_merkle_rt(&self) -> Result<Option<[u8; 32]>, LedgerError> {
+        let latest_block_height = match self.ledger_db.get_latest_block_height()? {
+            Some(h) => h,
+            None => return Ok(None),
+        };
 
         let latest_block_hash = match self
             .ledger_db
@@ -310,8 +252,7 @@ impl DistLedgerApis {
             }
         };
 
-        let latest_merkle_rt =
-            self.ledger_db.get_block_merkle_rt(&latest_block_hash)?;
+        let latest_merkle_rt = self.ledger_db.get_block_merkle_rt(&latest_block_hash)?;
 
         Ok(latest_merkle_rt)
     }

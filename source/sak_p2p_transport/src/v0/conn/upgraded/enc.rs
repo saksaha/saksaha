@@ -1,6 +1,6 @@
 use crate::{
-    dec, enc, Msg, TrptError, UpgradedP2PCodec, HEADER_CIPHERTEXT_LEN,
-    HEADER_MAC_LEN, HEADER_TOTAL_LEN, MSG_LEN,
+    dec, enc, Msg, TrptError, UpgradedP2PCodec, HEADER_CIPHERTEXT_LEN, HEADER_MAC_LEN,
+    HEADER_TOTAL_LEN, MSG_LEN,
 };
 use bytes::{Buf, BufMut, BytesMut};
 use chacha20::cipher::StreamCipher;
@@ -12,11 +12,7 @@ use tokio_util::codec::Encoder;
 impl Encoder<Msg> for UpgradedP2PCodec {
     type Error = TrptError;
 
-    fn encode(
-        &mut self,
-        item: Msg,
-        dst: &mut BytesMut,
-    ) -> Result<(), TrptError> {
+    fn encode(&mut self, item: Msg, dst: &mut BytesMut) -> Result<(), TrptError> {
         // let msg = item.to_string();
 
         // println!("encoding, item: {}", &item);
@@ -25,12 +21,7 @@ impl Encoder<Msg> for UpgradedP2PCodec {
 
         enc::encode_into_frame(item, &mut msg_part)?;
 
-        write_header_and_header_mac(
-            dst,
-            msg_part.len(),
-            &mut self.out_mac,
-            &mut self.out_cipher,
-        )?;
+        write_header_and_header_mac(dst, msg_part.len(), &mut self.out_mac, &mut self.out_cipher)?;
 
         // println!(
         //     "\nencode(): before enc (msg_part), conn_id: {}, msg({}): {}, \
@@ -102,10 +93,7 @@ fn write_msg_len(dst: &mut BytesMut, msg_len: usize) {
 }
 
 #[inline]
-fn write_header_mac<'a>(
-    dst: &mut BytesMut,
-    out_mac: &mut CoreWrapper<Keccak256Core>,
-) {
+fn write_header_mac<'a>(dst: &mut BytesMut, out_mac: &mut CoreWrapper<Keccak256Core>) {
     let digest = &mut out_mac.finalize_reset()[..HEADER_MAC_LEN];
 
     // println!("digest: {:?}", digest.to_vec());

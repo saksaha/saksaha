@@ -16,11 +16,7 @@ async fn test_rpc_client_request_correct_status() {
         rpc,
         rpc_socket_addr,
         ..
-    } = utils::make_test_context(
-        test_credential_1.secret,
-        test_credential_1.public_key_str,
-    )
-    .await;
+    } = utils::make_test_context(test_credential_1.secret, test_credential_1.public_key_str).await;
 
     let client = Client::new();
 

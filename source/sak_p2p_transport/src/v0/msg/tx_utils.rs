@@ -4,9 +4,7 @@ use sak_p2p_frame::{Frame, Parse};
 use sak_types::{MintTx, MintTxCandidate, PourTx, PourTxCandidate, Tx};
 
 #[inline]
-pub(crate) fn parse_mint_tx_candidate(
-    parse: &mut Parse,
-) -> Result<MintTxCandidate, TrptError> {
+pub(crate) fn parse_mint_tx_candidate(parse: &mut Parse) -> Result<MintTxCandidate, TrptError> {
     let data = {
         let p = parse.next_bytes()?;
         p.to_vec()
@@ -60,16 +58,8 @@ pub(crate) fn parse_mint_tx_candidate(
         std::str::from_utf8(p.as_ref())?.into()
     };
 
-    let mint_tx_candidate = MintTxCandidate::new(
-        created_at,
-        data,
-        author_sig,
-        Some(ctr_addr),
-        cms,
-        v,
-        k,
-        s,
-    );
+    let mint_tx_candidate =
+        MintTxCandidate::new(created_at, data, author_sig, Some(ctr_addr), cms, v, k, s);
 
     Ok(mint_tx_candidate)
 }
@@ -81,11 +71,7 @@ pub(crate) fn parse_mint_tx(parse: &mut Parse) -> Result<Tx, TrptError> {
     let cm_count = match parse.next_int() {
         Ok(c) => c,
         Err(err) => {
-            return Err(format!(
-                "Error parsing cm_count of mint_tx frame, err: {}",
-                err
-            )
-            .into())
+            return Err(format!("Error parsing cm_count of mint_tx frame, err: {}", err).into())
         }
     };
 
@@ -105,9 +91,7 @@ pub(crate) fn parse_mint_tx(parse: &mut Parse) -> Result<Tx, TrptError> {
     Ok(tx)
 }
 
-pub(crate) fn parse_pour_tx_candidate(
-    parse: &mut Parse,
-) -> Result<PourTxCandidate, TrptError> {
+pub(crate) fn parse_pour_tx_candidate(parse: &mut Parse) -> Result<PourTxCandidate, TrptError> {
     let data = {
         let p = parse.next_bytes()?;
         p.to_vec()
@@ -218,10 +202,7 @@ pub(crate) fn put_mint_tx_into_frame(frame: &mut Frame, tx: MintTx) {
     }
 }
 
-pub(crate) fn put_mint_tx_candidate_into_frame(
-    frame: &mut Frame,
-    tc: MintTxCandidate,
-) {
+pub(crate) fn put_mint_tx_candidate_into_frame(frame: &mut Frame, tc: MintTxCandidate) {
     let tx_hash = tc.get_tx_hash().to_string();
     let tc_type = vec![tc.get_tx_type() as u8];
 
@@ -241,10 +222,7 @@ pub(crate) fn put_mint_tx_candidate_into_frame(
 }
 
 #[inline]
-pub(crate) fn put_pour_tx_candidate_into_frame(
-    frame: &mut Frame,
-    tc: PourTxCandidate,
-) {
+pub(crate) fn put_pour_tx_candidate_into_frame(frame: &mut Frame, tc: PourTxCandidate) {
     let tx_hash = tc.get_tx_hash().to_string();
     let tc_type = vec![tc.get_tx_type() as u8];
 

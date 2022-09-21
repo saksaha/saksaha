@@ -86,10 +86,7 @@ pub fn write_decimal(dst: &mut BytesMut, val: u128) -> Result<(), String> {
     match write!(&mut buf, "{}", val) {
         Ok(_) => (),
         Err(err) => {
-            return Err(format!(
-                "Could not write decimal into buf, err: {}",
-                err,
-            ));
+            return Err(format!("Could not write decimal into buf, err: {}", err,));
         }
     };
 

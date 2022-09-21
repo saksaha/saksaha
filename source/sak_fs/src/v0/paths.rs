@@ -13,9 +13,6 @@ pub fn get_config_dir(app_name: &str) -> Result<PathBuf, FSError> {
 
         return Ok(config_dir.to_path_buf());
     } else {
-        return Err(format!(
-            "No valid app (config) path provided by the operating system"
-        )
-        .into());
+        return Err(format!("No valid app (config) path provided by the operating system").into());
     }
 }

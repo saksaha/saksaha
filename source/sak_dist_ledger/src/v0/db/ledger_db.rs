@@ -1,8 +1,6 @@
 use crate::cfs;
 use crate::LedgerError;
-use sak_kv_db::{
-    BoundColumnFamily, ColumnFamilyDescriptor, KeyValueDatabase, Options, DB,
-};
+use sak_kv_db::{BoundColumnFamily, ColumnFamilyDescriptor, KeyValueDatabase, Options, DB};
 use sak_logger::info;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -37,20 +35,15 @@ impl LedgerDB {
             o
         };
 
-        let kv_db = match KeyValueDatabase::new(
-            ledger_db_path,
-            options,
-            Self::make_cf_descriptors(),
-        ) {
-            Ok(d) => d,
-            Err(err) => {
-                return Err(format!(
-                    "Error initializing key value database, err: {}",
-                    err
-                )
-                .into());
-            }
-        };
+        let kv_db =
+            match KeyValueDatabase::new(ledger_db_path, options, Self::make_cf_descriptors()) {
+                Ok(d) => d,
+                Err(err) => {
+                    return Err(
+                        format!("Error initializing key value database, err: {}", err).into(),
+                    );
+                }
+            };
 
         let database = LedgerDB {
             db: kv_db.db_instance,
@@ -71,18 +64,12 @@ impl LedgerDB {
 
     pub(crate) fn make_cf_descriptors() -> Vec<ColumnFamilyDescriptor> {
         vec![
-            ColumnFamilyDescriptor::new(
-                cfs::TX_HASH_BY_CTR_ADDR,
-                Options::default(),
-            ),
+            ColumnFamilyDescriptor::new(cfs::TX_HASH_BY_CTR_ADDR, Options::default()),
             ColumnFamilyDescriptor::new(cfs::TX_HASH_BY_SN, Options::default()),
             ColumnFamilyDescriptor::new(cfs::PI, Options::default()),
             ColumnFamilyDescriptor::new(cfs::AUTHOR_SIG, Options::default()),
             ColumnFamilyDescriptor::new(cfs::TX_CREATED_AT, Options::default()),
-            ColumnFamilyDescriptor::new(
-                cfs::BLOCK_CREATED_AT,
-                Options::default(),
-            ),
+            ColumnFamilyDescriptor::new(cfs::BLOCK_CREATED_AT, Options::default()),
             ColumnFamilyDescriptor::new(cfs::DATA, Options::default()),
             ColumnFamilyDescriptor::new(cfs::CTR_ADDR, Options::default()),
             ColumnFamilyDescriptor::new(cfs::TX_TYPE, Options::default()),
@@ -96,10 +83,7 @@ impl LedgerDB {
             ColumnFamilyDescriptor::new(cfs::SN, Options::default()),
             ColumnFamilyDescriptor::new(cfs::CM, Options::default()),
             ColumnFamilyDescriptor::new(cfs::CM_COUNT, Options::default()),
-            ColumnFamilyDescriptor::new(
-                cfs::BLOCK_MERKLE_RT,
-                Options::default(),
-            ),
+            ColumnFamilyDescriptor::new(cfs::BLOCK_MERKLE_RT, Options::default()),
             ColumnFamilyDescriptor::new(cfs::EMPTY_VALUE, Options::default()),
             ColumnFamilyDescriptor::new(cfs::PRF_MERKLE_RT, Options::default()),
             ColumnFamilyDescriptor::new(cfs::MERKLE_NODE, Options::default()),
@@ -120,9 +104,7 @@ impl LedgerDB {
         let cf_handle = match db.cf_handle(col_name) {
             Some(h) => h,
             None => {
-                return Err(
-                    format!("Fail to open ledger colums {}", col_name,),
-                );
+                return Err(format!("Fail to open ledger colums {}", col_name,));
             }
         };
 

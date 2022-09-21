@@ -9,9 +9,7 @@ pub(crate) struct CoinManager {
 }
 
 impl CoinManager {
-    pub async fn init(
-        wallet_db: Arc<WalletDB>,
-    ) -> Result<CoinManager, WalletError> {
+    pub async fn init(wallet_db: Arc<WalletDB>) -> Result<CoinManager, WalletError> {
         let coins = wallet_db.schema.get_all_coins()?;
 
         let coin_count = coins.len();
@@ -45,10 +43,7 @@ impl CoinManager {
         None
     }
 
-    pub fn put_coin(
-        &mut self,
-        coin_record: CoinRecord,
-    ) -> Result<(), WalletError> {
+    pub fn put_coin(&mut self, coin_record: CoinRecord) -> Result<(), WalletError> {
         self.coins.push(coin_record);
 
         Ok(())

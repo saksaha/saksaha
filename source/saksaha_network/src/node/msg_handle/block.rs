@@ -1,7 +1,5 @@
 use crate::{machine::Machine, node::SaksahaNodeError};
-use sak_p2p_transport::{
-    BlockAckMsg, BlockSynMsg, ErrorMsg, Msg, UpgradedConn,
-};
+use sak_p2p_transport::{BlockAckMsg, BlockSynMsg, ErrorMsg, Msg, UpgradedConn};
 use sak_types::{BlockHash, BlockHeight};
 use std::sync::Arc;
 use tokio::sync::RwLockWriteGuard;

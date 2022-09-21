@@ -13,9 +13,7 @@ impl PeerIterator {
         match peer {
             Some(p) => Ok(p),
             None => {
-                return Err(
-                    format!("Peer rx has been closed, fatal error").into()
-                );
+                return Err(format!("Peer rx has been closed, fatal error").into());
             }
         }
     }

@@ -72,11 +72,7 @@ impl DiscTaskRuntime {
             )
             .await;
 
-            sak_utils_time::wait_until_min_interval(
-                time_since,
-                disc_task_interval,
-            )
-            .await;
+            sak_utils_time::wait_until_min_interval(time_since, disc_task_interval).await;
         }
     }
 }

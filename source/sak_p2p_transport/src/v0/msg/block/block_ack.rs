@@ -8,9 +8,7 @@ use sak_types::{Block, Tx, TxType};
 pub struct BlockAckMsg {}
 
 impl BlockAckMsg {
-    pub(crate) fn from_parse(
-        parse: &mut Parse,
-    ) -> Result<BlockAckMsg, TrptError> {
+    pub(crate) fn from_parse(parse: &mut Parse) -> Result<BlockAckMsg, TrptError> {
         let msg = BlockAckMsg {};
 
         Ok(msg)

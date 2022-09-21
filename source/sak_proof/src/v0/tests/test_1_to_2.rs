@@ -45,16 +45,7 @@ pub struct TestContext {
 pub fn make_test_context() -> TestContext {
     let hasher = Hasher::new();
 
-    let (
-        addr_pk_1_old,
-        addr_sk_1_old,
-        r_1_old,
-        s_1_old,
-        rho_1_old,
-        v_1_old,
-        cm_1_old,
-        sn_1,
-    ) = {
+    let (addr_pk_1_old, addr_sk_1_old, r_1_old, s_1_old, rho_1_old, v_1_old, cm_1_old, sn_1) = {
         let addr_sk = {
             let arr = U8Array::from_int(1);
             ScalarExt::parse_arr(&arr).unwrap()
@@ -181,10 +172,7 @@ pub fn make_test_context() -> TestContext {
 
         v.iter().enumerate().for_each(|(idx, p)| {
             if idx >= ret.len() {
-                panic!(
-                    "Invalid assignment to a fixed sized array, idx: {}",
-                    idx
-                );
+                panic!("Invalid assignment to a fixed sized array, idx: {}", idx);
             }
 
             let key = format!("{}_{}", idx, p.idx);
@@ -229,10 +217,7 @@ pub fn make_test_context() -> TestContext {
     }
 }
 
-pub fn mock_merkle_nodes(
-    hasher: &Hasher,
-    cm_old: Scalar,
-) -> HashMap<&'static str, Scalar> {
+pub fn mock_merkle_nodes(hasher: &Hasher, cm_old: Scalar) -> HashMap<&'static str, Scalar> {
     let merkle_nodes = {
         let mut m = HashMap::new();
 
@@ -382,11 +367,7 @@ fn make_proof(
     let proof = match groth16::create_random_proof(c, &de_params, &mut OsRng) {
         Ok(p) => p,
         Err(err) => {
-            return Err(format!(
-                "Failed to generate groth16 proof, err: {}",
-                err
-            )
-            .into());
+            return Err(format!("Failed to generate groth16 proof, err: {}", err).into());
         }
     };
 

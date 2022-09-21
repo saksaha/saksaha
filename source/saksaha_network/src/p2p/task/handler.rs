@@ -18,9 +18,7 @@ pub(crate) async fn run(task: P2PTask, my_identity: Arc<Identity>) {
         } => {
             let known_addr = &addr.known_addr;
 
-            if let Some(p) =
-                peer_table.get_mapped_peer(&known_addr.public_key_str).await
-            {
+            if let Some(p) = peer_table.get_mapped_peer(&known_addr.public_key_str).await {
                 debug!(
                     "Peer already mapped, public_key: {}",
                     p.get_public_key_short()
@@ -55,15 +53,9 @@ pub(crate) async fn run(task: P2PTask, my_identity: Arc<Identity>) {
 
             let conn = match TcpStream::connect(&endpoint).await {
                 Ok(s) => {
-                    let c = match Conn::new(
-                        s,
-                        my_identity.credential.public_key_str.clone(),
-                    ) {
+                    let c = match Conn::new(s, my_identity.credential.public_key_str.clone()) {
                         Ok(c) => {
-                            debug!(
-                                "Successfully connected to endpoint: {}",
-                                &endpoint,
-                            );
+                            debug!("Successfully connected to endpoint: {}", &endpoint,);
 
                             c
                         }
@@ -96,11 +88,7 @@ pub(crate) async fn run(task: P2PTask, my_identity: Arc<Identity>) {
                 public_key_str: known_addr.public_key_str.clone(),
             };
 
-            let transport = match handshake::initiate_handshake(
-                handshake_init_args,
-            )
-            .await
-            {
+            let transport = match handshake::initiate_handshake(handshake_init_args).await {
                 Ok(t) => t,
                 Err(err) => {
                     warn!(

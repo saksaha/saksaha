@@ -22,10 +22,8 @@ fn main() -> Result<(), WalletError> {
 
     info!("Config created, config: {:?}", config);
 
-    let wallet_credential = credential::create_or_get_credential(
-        &config.public_key,
-        &config.secret,
-    )?;
+    let wallet_credential =
+        credential::create_or_get_credential(&config.public_key, &config.secret)?;
 
     let app_args = AppArgs {
         rpc_port: cli_args.rpc_port,

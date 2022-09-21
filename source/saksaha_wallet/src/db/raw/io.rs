@@ -13,10 +13,7 @@ use sak_types::TxHash;
 impl Raw {
     pub(crate) fn get_coin_iter(
         &self,
-    ) -> Result<
-        DBIteratorWithThreadMode<DBWithThreadMode<MultiThreaded>>,
-        WalletError,
-    > {
+    ) -> Result<DBIteratorWithThreadMode<DBWithThreadMode<MultiThreaded>>, WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::CM)?;
 
         let iter = self.db.iterator_cf(&cf, sak_kv_db::IteratorMode::Start);
@@ -24,17 +21,14 @@ impl Raw {
         Ok(iter)
     }
 
-    pub(crate) fn get_latest_coin_idx(
-        &self,
-    ) -> Result<Option<CoinIdx>, WalletError> {
+    pub(crate) fn get_latest_coin_idx(&self) -> Result<Option<CoinIdx>, WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::CM)?;
 
         let mut iter = self.db.iterator_cf(&cf, sak_kv_db::IteratorMode::End);
 
         match iter.next() {
             Some((c_idx, _cm)) => {
-                let coin_idx =
-                    type_extension::convert_u8_slice_into_u128(&c_idx)?;
+                let coin_idx = type_extension::convert_u8_slice_into_u128(&c_idx)?;
 
                 return Ok(Some(coin_idx));
             }
@@ -42,10 +36,7 @@ impl Raw {
         }
     }
 
-    pub(crate) fn get_coin_idx(
-        &self,
-        cm: &Scalar,
-    ) -> Result<Option<CoinIdx>, WalletError> {
+    pub(crate) fn get_coin_idx(&self, cm: &Scalar) -> Result<Option<CoinIdx>, WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::COIN_IDX)?;
 
         let cm = cm.to_bytes();
@@ -62,10 +53,7 @@ impl Raw {
         };
     }
 
-    pub(crate) fn get_tx_hash(
-        &self,
-        cm: &Scalar,
-    ) -> Result<Option<TxHash>, WalletError> {
+    pub(crate) fn get_tx_hash(&self, cm: &Scalar) -> Result<Option<TxHash>, WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::TX_HASH)?;
 
         let cm = cm.to_bytes();
@@ -82,10 +70,7 @@ impl Raw {
         };
     }
 
-    pub(crate) fn get_coin_status(
-        &self,
-        cm: &Scalar,
-    ) -> Result<Option<CoinStatus>, WalletError> {
+    pub(crate) fn get_coin_status(&self, cm: &Scalar) -> Result<Option<CoinStatus>, WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::COIN_STATUS)?;
 
         let cm = cm.to_bytes();
@@ -102,10 +87,7 @@ impl Raw {
         };
     }
 
-    pub(crate) fn get_cm(
-        &self,
-        coin_idx: &CoinIdx,
-    ) -> Result<Option<Scalar>, WalletError> {
+    pub(crate) fn get_cm(&self, coin_idx: &CoinIdx) -> Result<Option<Scalar>, WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::CM)?;
 
         let coin_idx = coin_idx.to_be_bytes();
@@ -123,10 +105,7 @@ impl Raw {
         };
     }
 
-    pub(crate) fn get_cm_idx(
-        &self,
-        cm: &Scalar,
-    ) -> Result<Option<u128>, WalletError> {
+    pub(crate) fn get_cm_idx(&self, cm: &Scalar) -> Result<Option<u128>, WalletError> {
         let cf = self.make_cf_handle(&self.db, cfs::CM_IDX)?;
 
         let cm = cm.to_bytes();
@@ -311,11 +290,7 @@ impl Raw {
         Ok(())
     }
 
-    pub(crate) fn put_cm_idx(
-        &self,
-        cm: &Scalar,
-        cm_idx: &u128,
-    ) -> Result<(), WalletError> {
+    pub(crate) fn put_cm_idx(&self, cm: &Scalar, cm_idx: &u128) -> Result<(), WalletError> {
         let mut batch = WriteBatch::default();
 
         let cf = self.make_cf_handle(&self.db, cfs::CM_IDX)?;

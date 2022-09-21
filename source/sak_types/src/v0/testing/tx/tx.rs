@@ -1,7 +1,7 @@
 use crate::v0::testing::values;
 use crate::{
-    mock_coin_custom, Cm, MerkleRt, MintTxCandidate, MockCoin, PourTxCandidate,
-    Sn, Tx, VALIDATOR, VALIDATOR_CTR_ADDR,
+    mock_coin_custom, Cm, MerkleRt, MintTxCandidate, MockCoin, PourTxCandidate, Sn, Tx, VALIDATOR,
+    VALIDATOR_CTR_ADDR,
 };
 use crate::{TxCandidate, TypesError};
 use sak_crypto::MerkleTree;
@@ -60,16 +60,7 @@ pub fn mock_pour_tc_random() -> TxCandidate {
         Some((Scalar::default(), false)),
     ];
 
-    let (
-        addr_pk_1_old,
-        addr_sk_1_old,
-        r_1_old,
-        s_1_old,
-        rho_1_old,
-        v_1_old,
-        cm_1_old,
-        sn_1,
-    ) = {
+    let (addr_pk_1_old, addr_sk_1_old, r_1_old, s_1_old, rho_1_old, v_1_old, cm_1_old, sn_1) = {
         let addr_sk = ScalarExt::parse_u64(rand() as u64).unwrap();
 
         let addr_pk = hasher.mimc_single_scalar(addr_sk).unwrap();
@@ -184,15 +175,11 @@ pub fn mock_pour_tc_random() -> TxCandidate {
 
     let auth_path_1 = {
         let v = merkle_tree.generate_auth_paths(0);
-        let mut ret =
-            [Some((Scalar::default(), false)); CM_TREE_DEPTH as usize];
+        let mut ret = [Some((Scalar::default(), false)); CM_TREE_DEPTH as usize];
 
         v.iter().enumerate().for_each(|(idx, p)| {
             if idx >= ret.len() {
-                panic!(
-                    "Invalid assignment to a fixed sized array, idx: {}",
-                    idx
-                );
+                panic!("Invalid assignment to a fixed sized array, idx: {}", idx);
             }
 
             let key = format!("{}_{}", idx, p.idx);
@@ -242,10 +229,8 @@ pub fn mock_pour_tc_random() -> TxCandidate {
         v: Some(v_2),
     };
 
-    let pi = CoinProof::generate_proof_2_to_2(
-        coin_1_old, dummy_coin, coin_1_new, coin_2_new,
-    )
-    .unwrap();
+    let pi =
+        CoinProof::generate_proof_2_to_2(coin_1_old, dummy_coin, coin_1_new, coin_2_new).unwrap();
 
     let pi_serialized = CoinProof::serialize_pi(&pi).unwrap();
 
@@ -268,16 +253,7 @@ pub fn mock_pour_tc_random() -> TxCandidate {
 pub fn mock_pour_tc_1() -> TxCandidate {
     let hasher = Hasher::new();
 
-    let (
-        addr_pk_1_old,
-        addr_sk_1_old,
-        r_1_old,
-        s_1_old,
-        rho_1_old,
-        v_1_old,
-        cm_1_old,
-        sn_1,
-    ) = {
+    let (addr_pk_1_old, addr_sk_1_old, r_1_old, s_1_old, rho_1_old, v_1_old, cm_1_old, sn_1) = {
         let addr_sk = values::get_addr_sk_1();
 
         let addr_sk = ScalarExt::parse_arr(&addr_sk).unwrap();
@@ -392,22 +368,17 @@ pub fn mock_pour_tc_1() -> TxCandidate {
     let auth_path_1 = {
         let v = merkle_tree.generate_auth_paths(0);
 
-        let mut ret =
-            [Some((Scalar::default(), false)); CM_TREE_DEPTH as usize];
+        let mut ret = [Some((Scalar::default(), false)); CM_TREE_DEPTH as usize];
 
         v.iter().enumerate().for_each(|(idx, p)| {
             if idx >= ret.len() {
-                panic!(
-                    "Invalid assignment to a fixed sized array, idx: {}",
-                    idx
-                );
+                panic!("Invalid assignment to a fixed sized array, idx: {}", idx);
             }
 
             let empty_node = ScalarExt::parse_u64(0).unwrap();
 
             let key = format!("{}_{}", idx, p.idx);
-            let merkle_node =
-                merkle_nodes.get(key.as_str()).unwrap_or(&empty_node);
+            let merkle_node = merkle_nodes.get(key.as_str()).unwrap_or(&empty_node);
 
             ret[idx] = Some((merkle_node.clone(), p.direction));
         });
@@ -442,9 +413,7 @@ pub fn mock_pour_tc_1() -> TxCandidate {
         v: Some(v_2),
     };
 
-    let pi =
-        CoinProof::generate_proof_1_to_2(coin_1_old, coin_1_new, coin_2_new)
-            .unwrap();
+    let pi = CoinProof::generate_proof_1_to_2(coin_1_old, coin_1_new, coin_2_new).unwrap();
 
     let pi_serialized = CoinProof::serialize_pi(&pi).unwrap();
 
@@ -467,16 +436,7 @@ pub fn mock_pour_tc_1() -> TxCandidate {
 pub fn mock_pour_tc_invalid_pi() -> TxCandidate {
     let hasher = Hasher::new();
 
-    let (
-        addr_pk_1_old,
-        addr_sk_1_old,
-        r_1_old,
-        s_1_old,
-        rho_1_old,
-        v_1_old,
-        cm_1_old,
-        sn_1,
-    ) = {
+    let (addr_pk_1_old, addr_sk_1_old, r_1_old, s_1_old, rho_1_old, v_1_old, cm_1_old, sn_1) = {
         let addr_sk = ScalarExt::parse_arr(&U8Array::from_int(0)).unwrap();
 
         let addr_pk = hasher.mimc_single_scalar(addr_sk).unwrap();
@@ -501,20 +461,15 @@ pub fn mock_pour_tc_invalid_pi() -> TxCandidate {
     };
 
     let (addr_sk_1, addr_pk_1, r_1, s_1, rho_1, v_1, cm_1) = {
-        let addr_sk =
-            ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
-                .unwrap();
+        let addr_sk = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100)).unwrap();
 
         let addr_pk = hasher.mimc_single_scalar(addr_sk).unwrap();
 
-        let r = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
-            .unwrap();
+        let r = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100)).unwrap();
 
-        let s = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
-            .unwrap();
+        let s = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100)).unwrap();
 
-        let rho = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
-            .unwrap();
+        let rho = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100)).unwrap();
 
         let v = ScalarExt::parse_arr(&U8Array::from_int(600)).unwrap();
 
@@ -528,20 +483,15 @@ pub fn mock_pour_tc_invalid_pi() -> TxCandidate {
     };
 
     let (addr_sk_2, addr_pk_2, r_2, s_2, rho_2, v_2, cm_2) = {
-        let addr_sk =
-            ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
-                .unwrap();
+        let addr_sk = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100)).unwrap();
 
         let addr_pk = hasher.mimc_single_scalar(addr_sk).unwrap();
 
-        let r = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
-            .unwrap();
+        let r = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100)).unwrap();
 
-        let s = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
-            .unwrap();
+        let s = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100)).unwrap();
 
-        let rho = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100))
-            .unwrap();
+        let rho = ScalarExt::parse_arr(&U8Array::from_int(rand() as u64 / 100)).unwrap();
 
         let v = ScalarExt::parse_arr(&U8Array::from_int(400)).unwrap();
 
@@ -590,15 +540,11 @@ pub fn mock_pour_tc_invalid_pi() -> TxCandidate {
 
     let auth_path_1 = {
         let v = merkle_tree.generate_auth_paths(0);
-        let mut ret =
-            [Some((Scalar::default(), false)); CM_TREE_DEPTH as usize];
+        let mut ret = [Some((Scalar::default(), false)); CM_TREE_DEPTH as usize];
 
         v.iter().enumerate().for_each(|(idx, p)| {
             if idx >= ret.len() {
-                panic!(
-                    "Invalid assignment to a fixed sized array, idx: {}",
-                    idx
-                );
+                panic!("Invalid assignment to a fixed sized array, idx: {}", idx);
             }
 
             let key = format!("{}_{}", idx, p.idx);
@@ -637,9 +583,7 @@ pub fn mock_pour_tc_invalid_pi() -> TxCandidate {
         v: Some(v_2),
     };
 
-    let pi =
-        CoinProof::generate_proof_1_to_2(coin_1_old, coin_1_new, coin_2_new)
-            .unwrap();
+    let pi = CoinProof::generate_proof_1_to_2(coin_1_old, coin_1_new, coin_2_new).unwrap();
 
     let pi_serialized = CoinProof::serialize_pi(&pi).unwrap();
 
@@ -659,12 +603,7 @@ pub fn mock_pour_tc_invalid_pi() -> TxCandidate {
     c
 }
 
-pub fn mock_mint_tc(
-    cm: [u8; 32],
-    v: [u8; 32],
-    k: [u8; 32],
-    s: [u8; 32],
-) -> TxCandidate {
+pub fn mock_mint_tc(cm: [u8; 32], v: [u8; 32], k: [u8; 32], s: [u8; 32]) -> TxCandidate {
     let validator_wasm = VALIDATOR.to_vec();
 
     let tx_candidate = MintTxCandidate::new(
@@ -968,10 +907,7 @@ pub fn mock_mint_tc_dummy_old_coin() -> TxCandidate {
     TxCandidate::Mint(tx_candidate)
 }
 
-pub fn mock_mint_tc_deploying_contract(
-    contract_data: Vec<u8>,
-    ctrt_addr: String,
-) -> TxCandidate {
+pub fn mock_mint_tc_deploying_contract(contract_data: Vec<u8>, ctrt_addr: String) -> TxCandidate {
     let hasher = Hasher::new();
 
     let rho = U8Array::new_empty_32();

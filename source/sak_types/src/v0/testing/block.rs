@@ -36,10 +36,7 @@ pub fn mock_block(tx_candidates: Vec<TxCandidate>) -> BlockCandidate {
 pub fn mock_block_pour_random() -> BlockCandidate {
     let block = BlockCandidate {
         validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
-        tx_candidates: vec![
-            crate::mock_pour_tc_random(),
-            crate::mock_pour_tc_random(),
-        ],
+        tx_candidates: vec![crate::mock_pour_tc_random(), crate::mock_pour_tc_random()],
         witness_sigs: vec![String::from("1"), String::from("2")],
         created_at: String::from("2022061515340000"),
     };

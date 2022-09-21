@@ -136,20 +136,13 @@ impl NewCoin {
                 || self.rho.is_none()
                 || self.addr_pk.is_none()
             {
-                return Err(format!(
-                    "NewCoin has insufficient arguments for computing cm"
-                )
-                .into());
+                return Err(format!("NewCoin has insufficient arguments for computing cm").into());
             }
         }
 
         let hasher = Hasher::new();
 
-        let k = hasher.comm2_scalar(
-            self.r.unwrap(),
-            self.addr_pk.unwrap(),
-            self.rho.unwrap(),
-        );
+        let k = hasher.comm2_scalar(self.r.unwrap(), self.addr_pk.unwrap(), self.rho.unwrap());
 
         let cm = hasher.comm2_scalar(self.s.unwrap(), self.v.unwrap(), k);
 

@@ -92,10 +92,8 @@ impl Server {
                 }
             };
 
-            let conn = match Conn::new(
-                socket,
-                self.identity.credential.public_key_str.to_string(),
-            ) {
+            let conn = match Conn::new(socket, self.identity.credential.public_key_str.to_string())
+            {
                 Ok(c) => {
                     debug!(
                         "Accepted a tcp connection from source, \
