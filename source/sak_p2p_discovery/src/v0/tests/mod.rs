@@ -10,7 +10,8 @@ mod test {
     use tokio::time::Duration;
 
     fn init() {
-        let _ = env_logger::builder().is_test(true).try_init();
+        // let _ = env_logger::builder().is_test(true).try_init();
+        // sak_logger::setup_logger2();
     }
 
     #[tokio::test(flavor = "multi_thread")]

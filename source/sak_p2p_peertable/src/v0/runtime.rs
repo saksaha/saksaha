@@ -1,5 +1,5 @@
 use crate::{PeerMap, PeerStatus, PeerTableError};
-use log::debug;
+use sak_logger::debug;
 use std::{
     sync::Arc,
     time::{Duration, SystemTime},

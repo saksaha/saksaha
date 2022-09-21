@@ -1,17 +1,31 @@
-use super::utils;
+use super::utils::{self, TestContext};
 use crate::blockchain::GenesisBlock;
 use crate::rpc::routes::v0::{QueryCtrRequest, QueryCtrResponse};
-use crate::tests::TestUtil;
+use crate::tests::SaksahaTestUtils;
 use hyper::{Body, Client, Method, Request, Uri};
 use sak_contract_std::{CtrCallType, CtrRequest};
+use sak_credential::CredentialProfile;
 use sak_rpc_interface::{JsonRequest, JsonResponse};
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_call_contract() {
-    sak_test_utils::init_test_log();
-    TestUtil::init_test(vec!["test"]);
+    // sak_test_utils::init_test_log();
+    // TestUtil::init_test(vec!["test"]);
+    // SaksahaTestUtils::init_test(vec!["test"]);
 
-    let (rpc, rpc_socket_addr, _machine) = utils::make_test_context().await;
+    let test_credential_1 = CredentialProfile::test_1();
+
+    SaksahaTestUtils::init_test(&[&test_credential_1.public_key_str]);
+
+    let TestContext {
+        rpc,
+        rpc_socket_addr,
+        ..
+    } = utils::make_test_context(
+        test_credential_1.secret,
+        test_credential_1.public_key_str,
+    )
+    .await;
 
     let client = Client::new();
 

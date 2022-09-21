@@ -1,7 +1,7 @@
 use super::handler::Handler;
 use crate::{AddrTable, Connection};
 use futures::StreamExt;
-use sak_logger::{terr, tinfo, twarn};
+use sak_logger::{error, info, warn};
 use sak_p2p_id::Identity;
 use std::{sync::Arc, time::Duration};
 use tokio::sync::Semaphore;
@@ -40,11 +40,7 @@ impl Server {
     }
 
     pub async fn run(&self) {
-        tinfo!(
-            "p2p_discovery",
-            "server",
-            "P2P discovery server starts to accept requests",
-        );
+        info!("P2P discovery server starts to accept requests",);
 
         self.run_loop().await;
     }
@@ -83,9 +79,7 @@ impl Server {
                                 {
                                     Ok(_) => (),
                                     Err(err) => {
-                                        terr!(
-                                        "p2p_discovery",
-                                        "server",
+                                        error!(
                                         "Error processing request, addr: {}, \
                                         err: {}",
                                         socket_addr,
@@ -96,12 +90,7 @@ impl Server {
                             });
                         }
                         Err(err) => {
-                            twarn!(
-                                "p2p_discovery",
-                                "server",
-                                "Error parsing message, err: {}",
-                                err
-                            );
+                            warn!("Error parsing message, err: {}", err);
                         }
                     };
                 }

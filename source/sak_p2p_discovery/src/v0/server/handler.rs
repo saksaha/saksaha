@@ -2,7 +2,7 @@ use crate::{
     whoareyou::{self, WhoAreYouRecvError},
     AddrTable, Connection, Msg, P2PDiscError,
 };
-use log::warn;
+use sak_logger::warn;
 use sak_p2p_id::Identity;
 use std::{net::SocketAddr, sync::Arc, time::Duration};
 use tokio::sync::Semaphore;

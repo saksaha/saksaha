@@ -3,14 +3,23 @@ use crate::rpc::{RPCArgs, RPC};
 use crate::system::SystemHandle;
 use crate::{blockchain::Blockchain, machine::Machine};
 use colored::*;
-use log::info;
+use sak_logger::info;
 use sak_p2p_id::Identity;
 use sak_p2p_peertable::PeerTable;
 use sak_types::{BlockCandidate, Tx, TxCandidate};
 use std::net::SocketAddr;
 use std::sync::Arc;
 
-pub(crate) async fn make_test_context() -> (RPC, SocketAddr, Arc<Machine>) {
+pub(in crate::rpc) struct TestContext {
+    pub rpc: RPC,
+    pub rpc_socket_addr: SocketAddr,
+    pub machine: Arc<Machine>,
+}
+
+pub(in crate::rpc) async fn make_test_context(
+    secret: String,
+    public_key_str: String,
+) -> TestContext {
     let (disc_socket, disc_port) = {
         let (socket, socket_addr) =
             sak_utils_net::setup_udp_socket(None).await.unwrap();
@@ -27,18 +36,18 @@ pub(crate) async fn make_test_context() -> (RPC, SocketAddr, Arc<Machine>) {
         .await
         .expect("rpc socket should be initialized");
 
-    let secret = String::from(
-        "aa99cfd91cc6f3b541d28f3e0707f9c7bcf05cf495308294786ca450b501b5f2",
-    );
+    // let secret = String::from(
+    //     "aa99cfd91cc6f3b541d28f3e0707f9c7bcf05cf495308294786ca450b501b5f2",
+    // );
 
-    let public_key_str = String::from(
-        "\
-                04240874d8c323c22a571f735e835ed2\
-                f0619893a3989e557b1c9b4c699ac92b\
-                84d0dc478108629c0353f2876941f90d\
-                4b36346bcc19c6b625422adffb53b3a6af\
-                ",
-    );
+    // let public_key_str = String::from(
+    //     "\
+    //             04240874d8c323c22a571f735e835ed2\
+    //             f0619893a3989e557b1c9b4c699ac92b\
+    //             84d0dc478108629c0353f2876941f90d\
+    //             4b36346bcc19c6b625422adffb53b3a6af\
+    //             ",
+    // );
 
     let identity = {
         let id = Identity::new(&secret, &public_key_str, 1, disc_port)
@@ -48,7 +57,9 @@ pub(crate) async fn make_test_context() -> (RPC, SocketAddr, Arc<Machine>) {
     };
 
     let blockchain = {
-        Blockchain::init("test".to_string(), None, None, None, identity.clone())
+        let pk = String::from("test");
+
+        Blockchain::init(&pk, None, None, None, identity.clone())
             .await
             .unwrap()
     };
@@ -120,7 +131,12 @@ pub(crate) async fn make_test_context() -> (RPC, SocketAddr, Arc<Machine>) {
         RPC::init(rpc_args).expect("RPC should be initialized")
     };
 
-    (rpc, rpc_socket_addr, machine)
+    // (rpc, rpc_socket_addr, machine)
+    TestContext {
+        rpc,
+        rpc_socket_addr,
+        machine,
+    }
 }
 
 pub fn make_dummy_tx_pour_block() -> BlockCandidate {
@@ -138,7 +154,10 @@ pub fn make_dummy_tx_pour_block() -> BlockCandidate {
     tx_pour_block
 }
 
-pub(crate) async fn make_blockchain() -> Blockchain {
+pub(crate) async fn make_blockchain(
+    secret: &String,
+    public_key_str: &String,
+) -> Blockchain {
     let (_disc_socket, disc_port) = {
         let (socket, socket_addr) =
             sak_utils_net::setup_udp_socket(None).await.unwrap();
@@ -151,19 +170,6 @@ pub(crate) async fn make_blockchain() -> Blockchain {
         (socket, socket_addr.port())
     };
 
-    let secret = String::from(
-        "aa99cfd91cc6f3b541d28f3e0707f9c7bcf05cf495308294786ca450b501b5f2",
-    );
-
-    let public_key_str = String::from(
-        "\
-                04240874d8c323c22a571f735e835ed2\
-                f0619893a3989e557b1c9b4c699ac92b\
-                84d0dc478108629c0353f2876941f90d\
-                4b36346bcc19c6b625422adffb53b3a6af\
-                ",
-    );
-
     let identity = {
         let id = Identity::new(&secret, &public_key_str, 1, disc_port)
             .expect("identity should be initialized");
@@ -172,7 +178,7 @@ pub(crate) async fn make_blockchain() -> Blockchain {
     };
 
     let blockchain = Blockchain::init(
-        String::from("test"),
+        &String::from("test"),
         None,
         None,
         None,

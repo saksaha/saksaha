@@ -9,7 +9,7 @@ use crate::{machine::Machine, SaksahaError};
 pub(in crate::node) use block::*;
 pub(in crate::node) use block_hash::*;
 pub(in crate::node) use hello::*;
-use log::{debug, info, warn};
+use sak_logger::{debug, info, warn};
 use sak_p2p_discovery::Discovery;
 use sak_p2p_peertable::{Peer, PeerTable};
 use sak_p2p_transport::{

@@ -60,6 +60,7 @@ impl P2PHost {
             let runtime = P2PTaskRuntime::new(
                 p2p_task_queue.clone(),
                 p2p_host_args.p2p_task_interval,
+                p2p_host_args.identity.clone(),
             );
 
             (runtime, p2p_task_queue)

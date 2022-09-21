@@ -1,5 +1,5 @@
 use super::{genesis::GenesisBlock, Pos};
-use crate::SaksahaError;
+use crate::{fs, SaksahaError};
 use sak_dist_ledger::{Consensus, DistLedger, DistLedgerArgs};
 use sak_p2p_id::Identity;
 use sak_proof::CoinProof;
@@ -11,7 +11,7 @@ pub(crate) struct Blockchain {
 
 impl Blockchain {
     pub(crate) async fn init(
-        public_key: String,
+        public_key: &String,
         tx_sync_interval: Option<u64>,
         genesis_block: Option<GenesisBlock>,
         block_sync_interval: Option<u64>,
@@ -37,12 +37,18 @@ impl Blockchain {
             (genesis_block.block_candidate, consensus)
         };
 
+        let ledger_path = {
+            let acc_dir = fs::acc_dir(public_key)?;
+            acc_dir.join("db/ledger")
+        };
+
         let dist_ledger_args = DistLedgerArgs {
-            public_key,
+            // public_key,
             tx_sync_interval,
             genesis_block: Some(gen_block_candidate),
             consensus,
             block_sync_interval,
+            ledger_path,
         };
 
         let dist_ledger = {

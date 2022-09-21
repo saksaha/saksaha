@@ -3,7 +3,7 @@ use super::server::{Server, ServerArgs};
 use super::task::runtime::DiscTaskRuntime;
 use crate::{AddrTable, Connection, DiscRuntime};
 use colored::Colorize;
-use log::info;
+use sak_logger::info;
 use sak_p2p_addr::UnknownAddr;
 use sak_p2p_id::Identity;
 use sak_task_queue::TaskQueue;

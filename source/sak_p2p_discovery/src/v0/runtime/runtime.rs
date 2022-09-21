@@ -1,6 +1,6 @@
 use crate::AddrTable;
 use crate::PublicKey;
-use log::debug;
+use sak_logger::debug;
 use sak_p2p_addr::AddrStatus;
 use std::sync::Arc;
 use std::time::Duration;

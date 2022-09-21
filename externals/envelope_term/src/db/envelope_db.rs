@@ -1,16 +1,14 @@
 use crate::{
     credential::{self, Credential},
     db::EnvelopeDBSchema,
-    EnvelopeError,
+    fs, EnvelopeError,
 };
-use log::{info, warn};
 use sak_crypto::{
     PublicKey, SakKey, SecretKey, SigningKey, ToEncodedPoint, VerifyingKey,
 };
 use sak_kv_db::{KeyValueDatabase, Options};
+use sak_logger::{info, warn};
 use std::path::PathBuf;
-
-pub(crate) const APP_NAME: &str = "envelope";
 
 pub(crate) struct EnvelopeDB {
     pub(crate) schema: EnvelopeDBSchema,
@@ -21,7 +19,9 @@ impl EnvelopeDB {
         acc_addr: &String,
     ) -> Result<EnvelopeDB, EnvelopeError> {
         let envelope_db_path = {
-            let db_path = Self::get_db_path(acc_addr)?;
+            let acc_dir = fs::acc_dir(acc_addr)?;
+
+            let db_path = Self::get_db_path(&acc_dir)?;
 
             if !db_path.exists() {
                 std::fs::create_dir_all(db_path.clone())?;
@@ -39,7 +39,7 @@ impl EnvelopeDB {
         };
 
         let kv_db = match KeyValueDatabase::new(
-            envelope_db_path,
+            &envelope_db_path,
             options,
             EnvelopeDBSchema::make_cf_descriptors(),
         ) {
@@ -62,10 +62,12 @@ impl EnvelopeDB {
         Ok(database)
     }
 
-    pub fn get_db_path(app_prefix: &str) -> Result<PathBuf, EnvelopeError> {
-        let app_path = sak_fs::get_app_root_path(APP_NAME)?.join(app_prefix);
+    pub fn get_db_path(acc_dir: &PathBuf) -> Result<PathBuf, EnvelopeError> {
+        // let app_path = sak_fs::get_app_root_path(APP_NAME)?.join(app_prefix);
 
-        let db_path = app_path.join("db");
+        // let db_path = app_path.join("db");
+
+        let db_path = acc_dir.join("db");
 
         Ok(db_path)
     }
