@@ -13,7 +13,7 @@ fn main() -> Result<(), WalletError> {
             std::env::set_var("RUST_LOG", RUST_LOG_ENV);
         }
 
-        let _ = sak_logger::init(false);
+        // let _ = sak_logger::init(false);
     }
 
     let cli_args = cli::get_args()?;

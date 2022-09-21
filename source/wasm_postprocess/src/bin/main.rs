@@ -11,7 +11,7 @@ fn main() -> ExitCode {
             std::env::set_var("RUST_LOG", RUST_LOG_ENV);
         }
 
-        sak_logger::init(false);
+        // sak_logger::init(false);
     }
 
     let app = Command::new("Sak Wasm post processor")

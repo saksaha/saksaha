@@ -2,6 +2,7 @@ use super::utils::make_dual_node_test_context;
 use super::utils::DualNodeTestContext;
 use crate::tests::TestUtil;
 use sak_dist_ledger::DistLedgerEvent;
+use sak_logger::{error, info};
 use std::time::Duration;
 
 #[tokio::test(flavor = "multi_thread")]
@@ -61,7 +62,7 @@ async fn test_tx_sync_true() {
 
     assert_eq!(tx_pool_1_contains_tx1, true);
 
-    log::info!("[Success] node_1 has tx_1 (tx sent to node_1 directly)");
+    info!("[Success] node_1 has tx_1 (tx sent to node_1 directly)");
 
     let mut ledger_event_rx =
         machine_2.blockchain.dist_ledger.ledger_event_tx.subscribe();
@@ -76,13 +77,13 @@ async fn test_tx_sync_true() {
 
     match ev {
         DistLedgerEvent::TxPoolStat(v) => {
-            log::info!(
+            info!(
                 "[Success] node_2 has tx_1 (shared from node_1), tx: {:?}",
                 v
             );
         }
         _ => {
-            log::error!("[panic] event: {:?}", ev);
+            error!("[panic] event: {:?}", ev);
             panic!()
         }
     }

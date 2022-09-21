@@ -191,7 +191,7 @@ async fn handshake_recv(
             Ok(t) => {
                 info!(
                     "[recv] peer successfuly constructs a `shared \
-                secret key` after handshaking"
+                    secret key` after handshaking"
                 );
 
                 t

@@ -1,4 +1,4 @@
-use crate::{fs, WalletError, APP_NAME};
+use crate::{fs, WalletError};
 use colored::Colorize;
 use sak_crypto::{SakKey, ToEncodedPoint};
 use sak_p2p_id::Credential;

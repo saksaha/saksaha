@@ -1,4 +1,4 @@
-use crate::{fs, WalletError, APP_NAME};
+use crate::{fs, WalletError};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
