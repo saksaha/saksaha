@@ -13,6 +13,7 @@ sak_kv_db = { path = "../sak_kv_db" }
 sak_dist_ledger = { path = "../sak_dist_ledger" }
 sak_fs = { path = "../sak_fs" }
 sak_proof = { path = "../sak_proof" }
+sak_credential = { path = "../sak_credential" }
 sak_p2p_addr = { path = "../sak_p2p_addr" }
 sak_p2p_peertable = { path = "../sak_p2p_peertable" }
 sak_p2p_id = { path = "../sak_p2p_id" }
