@@ -27,27 +27,27 @@ impl SakLogger {
 
         let mut layers = Vec::new();
 
+        let console_log_layer = tracing_subscriber::fmt::layer()
+            .event_format(ConsoleLogFormatter)
+            .with_filter(EnvFilter::from_default_env())
+            .with_filter(LevelFilter::INFO)
+            .boxed();
+
+        layers.push(console_log_layer);
+
         let file_appender =
             tracing_appender::rolling::daily(log_dir, file_name_prefix);
 
         let (non_blocking, guard) =
             tracing_appender::non_blocking(file_appender);
 
-        let layer = tracing_subscriber::fmt::layer()
-            .event_format(ConsoleLogFormatter)
-            .with_filter(EnvFilter::from_default_env())
-            .with_filter(LevelFilter::INFO)
-            .boxed();
-
-        layers.push(layer);
-
-        let layer = tracing_subscriber::fmt::layer()
+        let file_log_layer = tracing_subscriber::fmt::layer()
             .event_format(FileLogFormatter)
             .with_writer(non_blocking)
             .with_filter(EnvFilter::from_default_env())
             .boxed();
 
-        layers.push(layer);
+        layers.push(file_log_layer);
 
         tracing_subscriber::registry().with(layers).try_init()?;
 
@@ -64,8 +64,8 @@ impl SakLogger {
     }
 
     pub fn init_for_test(
-        log_dir: &PathBuf,
-        file_name_prefixes: &[&str],
+        log_dirs: &[PathBuf],
+        file_name_prefix: &str,
     ) -> Result<SakLogger, LoggerError> {
         utils::set_rust_log_env();
 
@@ -74,7 +74,7 @@ impl SakLogger {
         let mut file_writers = vec![];
         let mut guards = vec![];
 
-        for file_name_prefix in file_name_prefixes {
+        for log_dir in log_dirs {
             let file_appender =
                 tracing_appender::rolling::daily(log_dir, file_name_prefix);
 

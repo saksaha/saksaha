@@ -3,6 +3,9 @@ mod logger;
 mod macros;
 mod utils;
 
+#[cfg(test)]
+mod tests;
+
 pub use logger::*;
 
 pub type LoggerError = Box<dyn std::error::Error + Send + Sync>;
