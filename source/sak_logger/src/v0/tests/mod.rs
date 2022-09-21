@@ -10,11 +10,12 @@ fn test_test_logger() {
         tempdir
     };
 
-    let log_dirs = &[test_dir.join("test_1"), test_dir.join("test_2")];
+    SakLogger::init_for_test(&test_dir, &["test_1", "test_2"], "saksaha.log")
+        .unwrap();
 
-    SakLogger::init_for_test(log_dirs, "saksaha.log").unwrap();
-
-    tracing::info!(a_field = 33333333, "power 3131");
+    tracing::info!(public_key = "power", "power 3131");
+    tracing::info!(public_key2 = "power2", "power 3131");
+    tracing::info!(public_key2 = 222, "power 3131");
 
     tracing::info!(target: "13113", "44444444444444444444444444444444");
 

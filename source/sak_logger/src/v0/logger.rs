@@ -1,5 +1,6 @@
 use crate::v0::formatters::{
     ConsoleLogFormatter, FileLogFormatter, FileWriter, TestLogFormatter,
+    TestLogVisitor,
 };
 use crate::v0::utils;
 use crate::LoggerError;
@@ -20,7 +21,8 @@ pub struct SakLogger {
 
 impl SakLogger {
     pub fn init(
-        log_dir: &PathBuf,
+        log_root_dir: &PathBuf,
+        log_dir_name: &str,
         file_name_prefix: &str,
     ) -> Result<SakLogger, LoggerError> {
         utils::set_rust_log_env();
@@ -34,6 +36,9 @@ impl SakLogger {
             .boxed();
 
         layers.push(console_log_layer);
+
+        let log_dir = log_root_dir.join(log_dir_name).join("logs");
+        std::fs::create_dir_all(&log_dir)?;
 
         let file_appender =
             tracing_appender::rolling::daily(log_dir, file_name_prefix);
@@ -64,7 +69,8 @@ impl SakLogger {
     }
 
     pub fn init_for_test(
-        log_dirs: &[PathBuf],
+        log_root_dir: &PathBuf,
+        log_dir_names: &[&str],
         file_name_prefix: &str,
     ) -> Result<SakLogger, LoggerError> {
         utils::set_rust_log_env();
@@ -74,7 +80,10 @@ impl SakLogger {
         let mut file_writers = vec![];
         let mut guards = vec![];
 
-        for log_dir in log_dirs {
+        for log_dir_name in log_dir_names {
+            let log_dir = log_root_dir.join(log_dir_name).join("logs");
+            std::fs::create_dir_all(&log_dir)?;
+
             let file_appender =
                 tracing_appender::rolling::daily(log_dir, file_name_prefix);
 
@@ -82,15 +91,17 @@ impl SakLogger {
                 tracing_appender::non_blocking(file_appender);
 
             file_writers.push(FileWriter {
-                file_name_prefix: file_name_prefix.to_string(),
+                log_dir_name: log_dir_name.to_string(),
                 non_blocking,
             });
 
             guards.push(guard);
         }
 
+        let test_log_formatter = TestLogFormatter { file_writers };
+
         let layer = tracing_subscriber::fmt::layer()
-            .event_format(TestLogFormatter { file_writers })
+            .event_format(test_log_formatter)
             .with_filter(EnvFilter::from_default_env())
             .boxed();
 

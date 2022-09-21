@@ -53,14 +53,21 @@ impl Routine {
         let _logger = {
             let public_key = &config.p2p.public_key_str;
 
-            let log_dir = {
-                let acc_dir = fs::acc_dir(public_key)?;
-                acc_dir.join("logs")
-            };
+            // let log_dir = {
+            //     let acc_dir = fs::acc_dir(public_key)?;
+            //     acc_dir.join("logs")
+            // };
 
-            std::fs::create_dir_all(&log_dir)?;
+            let log_root_dir = fs::config_dir()?;
 
-            let l = SakLogger::init(&log_dir, "saksaha.log")?;
+            // std::fs::create_dir_all(&log_dir)?;
+
+            let l = SakLogger::init(
+                &log_root_dir,
+                public_key.as_str(),
+                "saksaha.log",
+            )?;
+
             l
         };
 

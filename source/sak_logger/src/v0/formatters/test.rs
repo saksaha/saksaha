@@ -23,7 +23,7 @@ pub struct TestLogFormatter {
 }
 
 pub struct FileWriter {
-    pub file_name_prefix: String,
+    pub log_dir_name: String,
     pub non_blocking: NonBlocking,
 }
 
@@ -40,7 +40,11 @@ where
     ) -> std::fmt::Result {
         let metadata = event.metadata();
 
-        event.record(&mut PrintlnVisitor);
+        let mut test_log_visitor = TestLogVisitor {
+            file_writers: &self.file_writers,
+        };
+
+        event.record(&mut test_log_visitor);
 
         let now = Local::now().format("%y-%m-%d %H:%M:%S");
 
@@ -74,42 +78,32 @@ where
     }
 }
 
-struct PrintlnVisitor;
+pub struct TestLogVisitor<'a> {
+    pub file_writers: &'a Vec<FileWriter>,
+}
 
-impl tracing::field::Visit for PrintlnVisitor {
-    fn record_f64(&mut self, field: &tracing::field::Field, value: f64) {
-        println!("  field={} value={}", field.name(), value)
-    }
-
-    fn record_i64(&mut self, field: &tracing::field::Field, value: i64) {
-        println!("  field={} value={}", field.name(), value)
-    }
-
-    fn record_u64(&mut self, field: &tracing::field::Field, value: u64) {
-        println!("  field={} value={}", field.name(), value)
-    }
-
-    fn record_bool(&mut self, field: &tracing::field::Field, value: bool) {
-        println!("  field={} value={}", field.name(), value)
-    }
-
+impl<'a> tracing::field::Visit for TestLogVisitor<'a> {
     fn record_str(&mut self, field: &tracing::field::Field, value: &str) {
-        println!("  field={} value={}", field.name(), value)
+        if field.name() == "public_key" {
+            println!("field={} value={}", field.name(), value);
+
+            for file_writer in self.file_writers {
+                if file_writer.log_dir_name == value {}
+            }
+        }
     }
 
     fn record_error(
         &mut self,
-        field: &tracing::field::Field,
-        value: &(dyn std::error::Error + 'static),
+        _field: &tracing::field::Field,
+        _value: &(dyn std::error::Error + 'static),
     ) {
-        println!("  field={} value={}", field.name(), value)
     }
 
     fn record_debug(
         &mut self,
-        field: &tracing::field::Field,
-        value: &dyn std::fmt::Debug,
+        _field: &tracing::field::Field,
+        _value: &dyn std::fmt::Debug,
     ) {
-        println!("  field={} value={:?}", field.name(), value)
     }
 }
