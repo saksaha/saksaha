@@ -22,8 +22,8 @@ async fn test_rpc_client_request_correct_get_tx() {
 
     let expected_tx_hash = {
         let blockchain = utils::make_blockchain(
-            test_credential_1.secret,
-            test_credential_1.public_key_str,
+            &test_credential_1.secret,
+            &test_credential_1.public_key_str,
         )
         .await;
 
@@ -136,8 +136,8 @@ async fn test_rpc_client_request_wrong_get_tx() {
 
     let _expected_tx_hash = {
         let blockchain = utils::make_blockchain(
-            test_credential_1.secret,
-            test_credential_1.public_key_str,
+            &test_credential_1.secret,
+            &test_credential_1.public_key_str,
         )
         .await;
 

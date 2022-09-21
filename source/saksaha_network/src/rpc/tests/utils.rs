@@ -11,9 +11,9 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 
 pub(in crate::rpc) struct TestContext {
-    rpc: RPC,
-    rpc_socket_addr: SocketAddr,
-    machine: Arc<Machine>,
+    pub rpc: RPC,
+    pub rpc_socket_addr: SocketAddr,
+    pub machine: Arc<Machine>,
 }
 
 pub(in crate::rpc) async fn make_test_context(
@@ -155,8 +155,8 @@ pub fn make_dummy_tx_pour_block() -> BlockCandidate {
 }
 
 pub(crate) async fn make_blockchain(
-    secret: String,
-    public_key_str: String,
+    secret: &String,
+    public_key_str: &String,
 ) -> Blockchain {
     let (_disc_socket, disc_port) = {
         let (socket, socket_addr) =
@@ -169,19 +169,6 @@ pub(crate) async fn make_blockchain(
 
         (socket, socket_addr.port())
     };
-
-    // let secret = String::from(
-    //     "aa99cfd91cc6f3b541d28f3e0707f9c7bcf05cf495308294786ca450b501b5f2",
-    // );
-
-    // let public_key_str = String::from(
-    //     "\
-    //             04240874d8c323c22a571f735e835ed2\
-    //             f0619893a3989e557b1c9b4c699ac92b\
-    //             84d0dc478108629c0353f2876941f90d\
-    //             4b36346bcc19c6b625422adffb53b3a6af\
-    //             ",
-    // );
 
     let identity = {
         let id = Identity::new(&secret, &public_key_str, 1, disc_port)

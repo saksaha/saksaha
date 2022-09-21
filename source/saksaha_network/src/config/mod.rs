@@ -1,6 +1,7 @@
 mod config;
 mod persisted;
 mod profiled;
+pub(crate) mod testing;
 
 pub(crate) use config::*;
 pub use persisted::*;

@@ -21,8 +21,8 @@ async fn test_rpc_client_handle_get_cm_idx() {
 
     let (expected_tx_hash, cms) = {
         let blockchain = utils::make_blockchain(
-            test_credential_1.secret,
-            test_credential_1.public_key_str,
+            &test_credential_1.secret,
+            &test_credential_1.public_key_str,
         )
         .await;
 
@@ -65,8 +65,8 @@ async fn test_rpc_client_handle_get_cm_idx() {
         rpc_socket_addr,
         ..
     } = utils::make_test_context(
-        test_credential_1.secret,
-        test_credential_1.public_key_str,
+        test_credential_1.secret.to_string(),
+        test_credential_1.public_key_str.to_string(),
     )
     .await;
 
