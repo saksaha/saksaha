@@ -1,9 +1,10 @@
-use super::utils;
+use super::utils::{self, TestContext};
 use crate::{
     rpc::routes::v0::{GetCmIdxRequest, GetCmIdxResponse},
     tests::SaksahaTestUtils,
 };
 use hyper::{Body, Client, Method, Request, Uri};
+use sak_credential::CredentialProfile;
 use sak_rpc_interface::{JsonRequest, JsonResponse};
 use sak_types::{
     BlockCandidate, MintTxCandidate, PourTxCandidate, Tx, TxCandidate,
@@ -14,10 +15,16 @@ async fn test_rpc_client_handle_get_cm_idx() {
     // sak_test_utils::init_test_log();
     // TestUtil::init_test(vec!["test"]);
 
-    SaksahaTestUtils::init_test(vec!["test"]);
+    let test_credential_1 = CredentialProfile::test_1();
+
+    SaksahaTestUtils::init_test(&[&test_credential_1.public_key_str]);
 
     let (expected_tx_hash, cms) = {
-        let blockchain = utils::make_blockchain().await;
+        let blockchain = utils::make_blockchain(
+            test_credential_1.secret,
+            test_credential_1.public_key_str,
+        )
+        .await;
 
         // let dummy_tx = sak_types::mock_pour_tc_m1_to_p3_p4();
         let dummy_tx = sak_types::mock_pour_tc_1();
@@ -53,7 +60,15 @@ async fn test_rpc_client_handle_get_cm_idx() {
         (old_tx_hash.clone(), cms)
     };
 
-    let (rpc, rpc_socket_addr, _machine) = utils::make_test_context().await;
+    let TestContext {
+        rpc,
+        rpc_socket_addr,
+        ..
+    } = utils::make_test_context(
+        test_credential_1.secret,
+        test_credential_1.public_key_str,
+    )
+    .await;
 
     let client = Client::new();
 

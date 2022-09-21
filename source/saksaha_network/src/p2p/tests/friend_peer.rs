@@ -1,5 +1,6 @@
 use crate::p2p::testing::{self, MockClient};
 use crate::tests::SaksahaTestUtils;
+use sak_credential::CredentialProfile;
 use std::time::Duration;
 
 #[tokio::test(flavor = "multi_thread")]
@@ -7,7 +8,13 @@ async fn test_find_arb_peer_successfully() {
     // sak_test_utils::init_test_log();
     // TestUtil::init_test(vec!["test"]);
 
-    SaksahaTestUtils::init_test(vec!["test"]);
+    let test_credential_1 = CredentialProfile::test_1();
+    let test_credential_2 = CredentialProfile::test_2();
+
+    SaksahaTestUtils::init_test(&[
+        &test_credential_1.public_key_str,
+        &test_credential_2.public_key_str,
+    ]);
 
     let MockClient {
         p2p_host: mock_host_1,

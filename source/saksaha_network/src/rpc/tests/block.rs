@@ -1,9 +1,10 @@
-use super::utils;
+use super::utils::{self, TestContext};
 use crate::{
     rpc::routes::v0::{GetBlockListResponse, GetBlockResponse},
     tests::SaksahaTestUtils,
 };
 use hyper::{Body, Client, Method, Request, Uri};
+use sak_credential::CredentialProfile;
 use sak_rpc_interface::{JsonRequest, JsonResponse};
 use sak_types::BlockHash;
 
@@ -11,9 +12,19 @@ use sak_types::BlockHash;
 async fn test_call_get_block_with_good_params() {
     // sak_test_utils::init_test_log();
     // TestUtil::init_test(vec!["test"]);
-    SaksahaTestUtils::init_test(vec!["test"]);
+    // SaksahaTestUtils::init_test(vec!["test"]);
 
-    let (rpc, rpc_socket_addr, machine) = utils::make_test_context().await;
+    let test_credential_1 = CredentialProfile::test_1();
+
+    let TestContext {
+        rpc,
+        rpc_socket_addr,
+        machine,
+    } = utils::make_test_context(
+        test_credential_1.secret,
+        test_credential_1.public_key_str,
+    )
+    .await;
 
     tokio::spawn(async move { rpc.run().await });
 
@@ -89,9 +100,21 @@ async fn test_call_get_block_with_good_params() {
 async fn test_call_get_block_with_wrong_params() {
     // sak_test_utils::init_test_log();
     // TestUtil::init_test(vec!["test"]);
-    SaksahaTestUtils::init_test(vec!["test"]);
+    // SaksahaTestUtils::init_test(vec!["test"]);
 
-    let (rpc, rpc_socket_addr, machine) = utils::make_test_context().await;
+    let test_credential_1 = CredentialProfile::test_1();
+
+    SaksahaTestUtils::init_test(&[&test_credential_1.public_key_str]);
+
+    let utils::TestContext {
+        rpc,
+        rpc_socket_addr,
+        machine,
+    } = utils::make_test_context(
+        test_credential_1.secret,
+        test_credential_1.public_key_str,
+    )
+    .await;
 
     tokio::spawn(async move { rpc.run().await });
 
@@ -181,9 +204,21 @@ async fn test_call_get_block_with_wrong_params() {
 async fn test_call_get_block_list() {
     // sak_test_utils::init_test_log();
     // TestUtil::init_test(vec!["test"]);
-    SaksahaTestUtils::init_test(vec!["test"]);
+    // SaksahaTestUtils::init_test(vec!["test"]);
 
-    let (rpc, rpc_socket_addr, machine) = utils::make_test_context().await;
+    let test_credential_1 = CredentialProfile::test_1();
+
+    SaksahaTestUtils::init_test(&[&test_credential_1.public_key_str]);
+
+    let TestContext {
+        rpc,
+        rpc_socket_addr,
+        machine,
+    } = utils::make_test_context(
+        test_credential_1.secret,
+        test_credential_1.public_key_str,
+    )
+    .await;
 
     tokio::spawn(async move { rpc.run().await });
 
