@@ -2,11 +2,18 @@ use crate::{CryptoError, PublicKey, SecretKey};
 use aes_gcm_siv::aead::{Aead, NewAead};
 use aes_gcm_siv::{Aes256GcmSiv, Key, Nonce}; // Or `Aes128GcmSiv`
 use hkdf::Hkdf;
+use serde::{Deserialize, Serialize};
 use sha2::Sha256;
 
 pub const AES_IV_LENGTH: usize = 12;
 
 pub const AES_TAG_LENGTH: usize = 16;
+
+#[derive(Serialize, Deserialize)]
+pub struct SharedSecretParams {
+    pub sk: String,
+    pub pk: String,
+}
 
 pub fn derive_aes_key(
     my_secret: SecretKey,
@@ -33,6 +40,12 @@ pub fn derive_aes_key(
     };
 
     Ok(aes_key)
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct AesParams {
+    pub key: String,
+    pub data: String,
 }
 
 pub fn aes_encrypt(aes_key: &[u8; 32], plaintext: &[u8]) -> Result<Vec<u8>, CryptoError> {
