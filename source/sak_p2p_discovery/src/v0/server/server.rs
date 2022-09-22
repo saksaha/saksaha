@@ -1,7 +1,7 @@
 use super::handler::Handler;
 use crate::{AddrTable, Connection};
 use futures::StreamExt;
-use sak_logger::{terr, tinfo, twarn};
+use sak_logger::{error, info, warn};
 use sak_p2p_id::Identity;
 use std::{sync::Arc, time::Duration};
 use tokio::sync::Semaphore;
@@ -27,8 +27,7 @@ impl Server {
     pub fn new(server_args: ServerArgs) -> Server {
         let conn_semaphore = Arc::new(Semaphore::new(MAX_CONN_COUNT));
 
-        let addr_expire_duration =
-            Duration::from_secs(server_args.addr_expire_duration);
+        let addr_expire_duration = Duration::from_secs(server_args.addr_expire_duration);
 
         Server {
             identity: server_args.identity,
@@ -40,11 +39,7 @@ impl Server {
     }
 
     pub async fn run(&self) {
-        tinfo!(
-            "p2p_discovery",
-            "server",
-            "P2P discovery server starts to accept requests",
-        );
+        info!("P2P discovery server starts to accept requests",);
 
         self.run_loop().await;
     }
@@ -66,8 +61,7 @@ impl Server {
                             let udp_conn = self.udp_conn.clone();
                             let identity = self.identity.clone();
                             let table = self.addr_table.clone();
-                            let addr_expire_duration =
-                                self.addr_expire_duration;
+                            let addr_expire_duration = self.addr_expire_duration;
 
                             tokio::spawn(async move {
                                 match handler
@@ -83,25 +77,17 @@ impl Server {
                                 {
                                     Ok(_) => (),
                                     Err(err) => {
-                                        terr!(
-                                        "p2p_discovery",
-                                        "server",
-                                        "Error processing request, addr: {}, \
+                                        error!(
+                                            "Error processing request, addr: {}, \
                                         err: {}",
-                                        socket_addr,
-                                        err
-                                    );
+                                            socket_addr, err
+                                        );
                                     }
                                 };
                             });
                         }
                         Err(err) => {
-                            twarn!(
-                                "p2p_discovery",
-                                "server",
-                                "Error parsing message, err: {}",
-                                err
-                            );
+                            warn!("Error parsing message, err: {}", err);
                         }
                     };
                 }

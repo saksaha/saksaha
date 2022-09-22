@@ -90,13 +90,7 @@ impl MockCoin {
     // }
 }
 
-pub fn mock_coin_custom(
-    rho: u64,
-    r: u64,
-    s: u64,
-    addr_sk: u64,
-    value: u64,
-) -> MockCoin {
+pub fn mock_coin_custom(rho: u64, r: u64, s: u64, addr_sk: u64, value: u64) -> MockCoin {
     let hasher = Hasher::new();
 
     let addr_sk = U8Array::from_int(addr_sk).to_owned();

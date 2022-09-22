@@ -7,9 +7,7 @@ pub struct CredentialManager {
 }
 
 impl CredentialManager {
-    pub fn init(
-        wallet_credential: WalletCredential,
-    ) -> Result<CredentialManager, WalletError> {
+    pub fn init(wallet_credential: WalletCredential) -> Result<CredentialManager, WalletError> {
         let m = CredentialManager {
             candidates: vec![wallet_credential.acc_addr.clone()],
             credential: wallet_credential,

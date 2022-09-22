@@ -1,11 +1,12 @@
-use std::path::PathBuf;
-
-use crate::{pconfig::fs, SaksahaError};
+use super::fs;
+use crate::fs as crate_fs;
+use crate::SaksahaError;
 use colored::Colorize;
-use log::{info, warn};
 use sak_crypto::{SakKey, ToEncodedPoint};
+use sak_logger::{info, warn};
 use sak_p2p_addr::UnknownAddr;
 use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
 
 const INDEX_FILE_ALIAS: &str = "default";
 
@@ -35,9 +36,9 @@ impl PConfig {
 
             return Ok(pconfig);
         } else {
-            let saksaha_path = sak_fs::get_app_root_path("saksaha")?;
+            let config_dir = crate_fs::config_dir()?;
             let index_file_name = INDEX_FILE_ALIAS.to_uppercase();
-            let index_file_path = saksaha_path.join(index_file_name);
+            let index_file_path = config_dir.join(index_file_name);
 
             if index_file_path.exists() {
                 info!(
@@ -59,13 +60,13 @@ impl PConfig {
     }
 
     pub fn persist(&self, alias: Option<&String>) -> Result<(), SaksahaError> {
-        let config_path = fs::get_config_path(&self.p2p.public_key)?;
+        let acc_dir = crate_fs::acc_dir(&self.p2p.public_key)?;
 
-        if config_path.exists() {
+        if acc_dir.exists() {
             warn!(
                 "PConfig already exists, discard persisting, \
-                config_path: {:?}",
-                config_path,
+                acc_dir: {:?}",
+                acc_dir,
             );
 
             return Ok(());
@@ -75,7 +76,7 @@ impl PConfig {
 
         let data = serde_yaml::to_string(&self)?;
 
-        let _ = std::fs::create_dir_all(config_path);
+        let _ = std::fs::create_dir_all(acc_dir);
 
         sak_fs::persist(&data, &config_file_path)?;
 
@@ -91,9 +92,7 @@ impl PConfig {
         Ok(())
     }
 
-    fn load_pconfig(
-        config_file_path: &PathBuf,
-    ) -> Result<PConfig, SaksahaError> {
+    fn load_pconfig(config_file_path: &PathBuf) -> Result<PConfig, SaksahaError> {
         info!(
             "Try loading config file, path: {}",
             config_file_path.to_string_lossy().yellow()
@@ -106,24 +105,19 @@ impl PConfig {
 
             return Ok(pconfig);
         } else {
-            return Err(format!(
-                "config path does not exist, path: {:?}",
-                config_file_path,
-            )
-            .into());
+            return Err(
+                format!("config path does not exist, path: {:?}", config_file_path,).into(),
+            );
         }
     }
 
-    fn persist_index_file(
-        cfg_profile: &str,
-        public_key: &String,
-    ) -> Result<(), SaksahaError> {
-        let saksaha_path = sak_fs::get_app_root_path("saksaha")?;
+    fn persist_index_file(cfg_profile: &str, public_key: &String) -> Result<(), SaksahaError> {
+        let acc_dir = crate_fs::acc_dir(public_key)?;
 
-        let _ = std::fs::create_dir_all(&saksaha_path);
+        let _ = std::fs::create_dir_all(&acc_dir);
 
         let index_file_name = cfg_profile.to_uppercase();
-        let index_file_path = saksaha_path.join(index_file_name);
+        let index_file_path = acc_dir.join(index_file_name);
 
         if index_file_path.exists() {
             let pk = std::fs::read_to_string(&index_file_path)?;
@@ -152,8 +146,7 @@ impl PConfig {
         let (sk, pk) = SakKey::generate();
 
         let secret_str = sak_crypto::encode_hex(&sk.to_bytes() as &[u8]);
-        let public_key_str =
-            sak_crypto::encode_hex(&pk.to_encoded_point(false).to_bytes());
+        let public_key_str = sak_crypto::encode_hex(&pk.to_encoded_point(false).to_bytes());
 
         let acc_addr = SakKey::create_acc_addr(&pk);
 

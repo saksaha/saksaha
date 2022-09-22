@@ -49,8 +49,7 @@ pub(crate) fn copy_memory(
         .get_typed_func(&mut *store, ALLOC_FN)
         .expect("expected alloc function not found");
 
-    let guest_ptr_offset =
-        alloc.call(&mut *store, bytes.len() as i32)? as isize;
+    let guest_ptr_offset = alloc.call(&mut *store, bytes.len() as i32)? as isize;
 
     unsafe {
         let raw = memory.data_ptr(&mut *store).offset(guest_ptr_offset);

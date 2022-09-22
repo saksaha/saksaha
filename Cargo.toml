@@ -3,6 +3,7 @@
 members = [
   "source/sak_logger",
   "source/saksaha_network",
+  "source/sak_credential",
   "source/sak_crypto",
   "source/sak_jni",
   "source/sak_proof",

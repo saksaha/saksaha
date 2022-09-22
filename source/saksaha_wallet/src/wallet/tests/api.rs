@@ -1,7 +1,4 @@
-use crate::{
-    tests::utils::mock_wallet_context,
-    wallet::tests::utils::mock_open_ch_ctr_request,
-};
+use crate::{tests::utils::mock_wallet_context, wallet::tests::utils::mock_open_ch_ctr_request};
 use sak_crypto::{Bls12, ScalarExt};
 use sak_proof::{CoinProof, Hasher, Proof};
 use sak_types::CoinRecord;
@@ -25,31 +22,29 @@ async fn test_prepare_send_tx_pour_params() {
     let auth_path: Vec<([u8; 32], bool)> = vec![
         (
             [
-                183, 140, 126, 139, 38, 63, 12, 79, 128, 44, 123, 134, 90, 86,
-                52, 66, 107, 188, 120, 39, 129, 98, 243, 225, 235, 181, 185,
-                137, 218, 223, 139, 32,
+                183, 140, 126, 139, 38, 63, 12, 79, 128, 44, 123, 134, 90, 86, 52, 66, 107, 188,
+                120, 39, 129, 98, 243, 225, 235, 181, 185, 137, 218, 223, 139, 32,
             ],
             false,
         ),
         (
             [
-                65, 41, 64, 119, 6, 86, 234, 216, 5, 188, 193, 203, 203, 171,
-                4, 65, 82, 46, 182, 40, 171, 80, 229, 44, 254, 179, 48, 201,
-                104, 216, 191, 50,
+                65, 41, 64, 119, 6, 86, 234, 216, 5, 188, 193, 203, 203, 171, 4, 65, 82, 46, 182,
+                40, 171, 80, 229, 44, 254, 179, 48, 201, 104, 216, 191, 50,
             ],
             false,
         ),
         (
             [
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0,
             ],
             false,
         ),
         (
             [
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0,
             ],
             false,
         ),
@@ -61,8 +56,7 @@ async fn test_prepare_send_tx_pour_params() {
 
     let old_sn_1 = wallet.compute_sn(coin);
 
-    let (new_coin_1, new_coin_2) =
-        wallet.prepare_2_new_coin_records(coin.v).unwrap();
+    let (new_coin_1, new_coin_2) = wallet.prepare_2_new_coin_records(coin.v).unwrap();
 
     let pi_ser = wallet
         .prepare_proof_1_to_2(
@@ -86,8 +80,7 @@ async fn test_prepare_send_tx_pour_params() {
 
         let hasher = Hasher::new();
 
-        let res = CoinProof::verify_proof_1_to_2(pi, &public_inputs, &hasher)
-            .unwrap();
+        let res = CoinProof::verify_proof_1_to_2(pi, &public_inputs, &hasher).unwrap();
 
         assert_eq!(res, true);
     }

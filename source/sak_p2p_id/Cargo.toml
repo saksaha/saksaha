@@ -7,6 +7,7 @@ edition = "2018"
 
 [dependencies]
 sak_logger = { path = "../sak_logger" }
+sak_credential = { path = "../sak_credential" }
 sak_crypto = { path = "../sak_crypto" }
 chrono = "0.4"
 serde = { version = "1.0.130", features = ["derive"] }

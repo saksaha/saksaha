@@ -1,6 +1,6 @@
 use super::{handler, DiscoveryTask};
 use crate::{AddrTable, Connection};
-use sak_logger::{tdebug, terr};
+use sak_logger::{debug, error};
 use sak_p2p_id::Identity;
 use sak_task_queue::TaskQueue;
 use std::{
@@ -50,14 +50,12 @@ impl DiscTaskRuntime {
 
             let task = match task_queue.pop_front().await {
                 Ok(t) => {
-                    tdebug!("p2p_discovery", "task", "Pop DiscTask - {}", t,);
+                    debug!("Pop DiscTask - {}", t,);
 
                     t
                 }
                 Err(err) => {
-                    terr!(
-                        "p2p_discovery",
-                        "task",
+                    error!(
                         "Cannot handle p2p discovery task any more, \
                                 err: {}",
                         err,
@@ -74,11 +72,7 @@ impl DiscTaskRuntime {
             )
             .await;
 
-            sak_utils_time::wait_until_min_interval(
-                time_since,
-                disc_task_interval,
-            )
-            .await;
+            sak_utils_time::wait_until_min_interval(time_since, disc_task_interval).await;
         }
     }
 }

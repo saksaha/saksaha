@@ -1,9 +1,7 @@
 use crate::rpc::ctx::RouteCtx;
 use hyper::{Body, Response};
-use hyper_rpc_router::{
-    require_params_parsed, require_some_params, Params, RouteState,
-};
-use log::debug;
+use hyper_rpc_router::{require_params_parsed, require_some_params, Params, RouteState};
+use sak_logger::debug;
 use sak_types::AccountBalance;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -25,11 +23,7 @@ pub(in crate::rpc) async fn get_balance(
 ) -> Response<Body> {
     debug!("get_balance request handling");
 
-    let params = require_some_params!(
-        route_state,
-        params,
-        "get_balance should contain params",
-    );
+    let params = require_some_params!(route_state, params, "get_balance should contain params",);
 
     debug!("params: {:?}", String::from_utf8(params.clone()));
 

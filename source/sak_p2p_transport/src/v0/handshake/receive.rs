@@ -2,7 +2,7 @@ use crate::{Conn, Msg, Transport};
 use crate::{HandshakeMsg, TrptError};
 use futures::SinkExt;
 use futures::StreamExt;
-use log::warn;
+use sak_logger::warn;
 use sak_p2p_id::Identity;
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -118,9 +118,7 @@ pub async fn receive_handshake(
     let my_secret_key = &identity.credential.secret_key;
 
     let her_public_key =
-        match sak_crypto::convert_public_key_str_into_public_key(
-            &her_public_key_str,
-        ) {
+        match sak_crypto::convert_public_key_str_into_public_key(&her_public_key_str) {
             Ok(pk) => pk,
             Err(err) => {
                 return Err(HandshakeRecvError::PublicKeyCreateFail {
@@ -130,8 +128,7 @@ pub async fn receive_handshake(
             }
         };
 
-    let shared_secret =
-        sak_crypto::make_shared_secret(my_secret_key, her_public_key);
+    let shared_secret = sak_crypto::make_shared_secret(my_secret_key, her_public_key);
 
     let upgraded_conn = match conn
         .upgrade(shared_secret, &[0; 12], &her_public_key_str)

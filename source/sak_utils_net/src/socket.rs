@@ -2,9 +2,7 @@ pub use super::check::*;
 use std::net::SocketAddr;
 use tokio::net::{TcpListener, UdpSocket};
 
-pub async fn setup_udp_socket(
-    port: Option<u16>,
-) -> Result<(UdpSocket, SocketAddr), String> {
+pub async fn setup_udp_socket(port: Option<u16>) -> Result<(UdpSocket, SocketAddr), String> {
     let port = match port {
         Some(p) => p,
         None => 0,
@@ -27,19 +25,14 @@ pub async fn setup_udp_socket(
             (s, local_addr)
         }
         Err(err) => {
-            return Err(format!(
-                "Couldn't open UdpSocket, err: {}",
-                err.to_string()
-            ));
+            return Err(format!("Couldn't open UdpSocket, err: {}", err.to_string()));
         }
     };
 
     Ok((udp_socket, port))
 }
 
-pub async fn bind_tcp_socket(
-    port: Option<u16>,
-) -> Result<(TcpListener, SocketAddr), String> {
+pub async fn bind_tcp_socket(port: Option<u16>) -> Result<(TcpListener, SocketAddr), String> {
     let (tcp_listener, tcp_port) = {
         let port = match port {
             Some(p) => p,
@@ -58,9 +51,7 @@ pub async fn bind_tcp_socket(
                     ))
                 }
             },
-            Err(err) => {
-                return Err(format!("Can't bind tcp listener, err: {}", err))
-            }
+            Err(err) => return Err(format!("Can't bind tcp listener, err: {}", err)),
         }
     };
 

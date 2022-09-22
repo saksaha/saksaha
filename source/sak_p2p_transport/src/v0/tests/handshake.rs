@@ -2,22 +2,24 @@ use crate::Conn;
 use crate::Transport;
 use crate::{handshake::*, Msg, PingMsg};
 use futures::{SinkExt, StreamExt};
+use sak_logger::SakLogger;
+use sak_logger::{debug, info, warn};
 use sak_p2p_id::Identity;
 use std::sync::Arc;
 use tokio::net::{TcpListener, TcpStream};
 
-pub async fn connect_to_endpoint(endpoint: &String) -> Conn {
+pub async fn connect_to_endpoint(endpoint: &String, my_identity: Arc<Identity>) -> Conn {
     match TcpStream::connect(&endpoint).await {
         Ok(s) => {
-            let c = match Conn::new(s, true) {
+            let c = match Conn::new(s, my_identity.credential.public_key_str.clone()) {
                 Ok(c) => c,
                 Err(err) => {
-                    log::warn!("Error creating a connection, err: {}", err);
+                    warn!("Error creating a connection, err: {}", err);
                     panic!()
                 }
             };
 
-            log::debug!(
+            debug!(
                 "(caller) TCP connected to destination for test, \
                         peer_addr: {:?}",
                 c.socket_addr,
@@ -26,10 +28,9 @@ pub async fn connect_to_endpoint(endpoint: &String) -> Conn {
             c
         }
         Err(err) => {
-            log::warn!(
+            warn!(
                 "Error connecting to p2p_endpoint ({}), err: {}",
-                &endpoint,
-                err,
+                &endpoint, err,
             );
             panic!()
         }
@@ -128,7 +129,7 @@ async fn handshake_init(
     my_identity: Arc<Identity>,
     her_identity: Arc<Identity>,
 ) -> Transport {
-    log::debug!(
+    debug!(
         "[init] send handshake_syn, peer node: {:?}",
         conn.socket_addr
     );
@@ -141,13 +142,11 @@ async fn handshake_init(
 
     let transport = match initiate_handshake(handshake_init_args).await {
         Ok(t) => {
-            log::info!(
-                "[init] peer successfuly constructs a `shared secret key` after handshaking"
-            );
+            info!("[init] peer successfuly constructs a `shared secret key` after handshaking");
             t
         }
         Err(err) => {
-            log::warn!(
+            warn!(
                 "Error processing InitiateHandshake, discarding, \
                         err: {}",
                 err,
@@ -170,50 +169,49 @@ async fn handshake_recv(
 
     let tcp_stream = accept(p2p_socket).await.unwrap();
 
-    let conn = Conn::new(tcp_stream, false).unwrap();
+    let conn = Conn::new(tcp_stream, my_identity.credential.public_key_str.clone()).unwrap();
 
-    log::debug!(
+    debug!(
         "[recv] receive handshake_syn, peer node: {:?}, conn_id: {}",
-        conn.socket_addr,
-        conn_id,
+        conn.socket_addr, conn_id,
     );
 
     let handshake_recv_args = HandshakeRecvArgs {
         identity: my_identity.to_owned(),
     };
 
-    log::debug!(
+    debug!(
         "[recv] send handshake_ack, peer node: {:?}",
         conn.socket_addr
     );
 
-    let (transport, her_public_key_str) =
-        match receive_handshake(handshake_recv_args, conn).await {
-            Ok(t) => {
-                log::info!(
-                    "[recv] peer successfuly constructs a `shared \
-                secret key` after handshaking"
-                );
+    let (transport, her_public_key_str) = match receive_handshake(handshake_recv_args, conn).await {
+        Ok(t) => {
+            info!(
+                "[recv] peer successfuly constructs a `shared \
+                    secret key` after handshaking"
+            );
 
-                t
-            }
-            Err(err) => {
-                log::warn!(
-                    "Error processing InitiateHandshake, discarding, \
+            t
+        }
+        Err(err) => {
+            warn!(
+                "Error processing InitiateHandshake, discarding, \
                             err: {}",
-                    err,
-                );
+                err,
+            );
 
-                panic!();
-            }
-        };
+            panic!();
+        }
+    };
 
     (transport, her_public_key_str)
 }
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_handshake_works() {
-    sak_test_utils::init_test_log();
+    // sak_test_utils::init_test_log();
+    SakLogger::init_test_console().unwrap();
 
     let (
         identity_1,
@@ -226,9 +224,7 @@ async fn test_handshake_works() {
         tcp_listener_2,
     ) = make_test_context().await;
 
-    // identity_1.credential.
-
-    let conn_2 = connect_to_endpoint(&endpoint_2).await;
+    let conn_2 = connect_to_endpoint(&endpoint_2, identity_1.clone()).await;
 
     let identity_1_clone = identity_1.clone();
     let identity_2_clone = identity_2.clone();
@@ -237,8 +233,7 @@ async fn test_handshake_works() {
 
     // send
     let t1 = tokio::spawn(async move {
-        let transport_1 =
-            handshake_init(conn_2, identity_1_clone, identity_2_clone).await;
+        let transport_1 = handshake_init(conn_2, identity_1_clone, identity_2_clone).await;
 
         println!("preparing to send msg,");
 
@@ -255,8 +250,7 @@ async fn test_handshake_works() {
 
     //recv
     let t2 = tokio::spawn(async move {
-        let (transport_2, _) =
-            handshake_recv(tcp_listener_2, identity_2_clone).await;
+        let (transport_2, _) = handshake_recv(tcp_listener_2, identity_2_clone).await;
 
         let mut conn_2_lock = transport_2.conn.write().await;
 

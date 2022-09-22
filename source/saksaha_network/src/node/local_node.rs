@@ -1,6 +1,6 @@
 use super::{miner::Miner, peer_node::PeerNode};
 use crate::machine::Machine;
-use log::{info, warn};
+use sak_logger::{info, warn};
 use sak_p2p_discovery::Discovery;
 use sak_p2p_peertable::PeerTable;
 use std::{sync::Arc, time::Duration};
@@ -101,8 +101,7 @@ impl LocalNode {
                     }
                 });
 
-                tokio::time::sleep_until(now + self.peer_register_interval)
-                    .await;
+                tokio::time::sleep_until(now + self.peer_register_interval).await;
             }
         }
     }

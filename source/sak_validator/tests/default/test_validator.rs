@@ -1,4 +1,5 @@
 use sak_contract_std::{CtrCallType, CtrRequest, Storage};
+use sak_logger::SakLogger;
 use sak_validator::{AddValidatorParams, ValidatorStorage};
 use sak_vm::{CtrFn, VM};
 use std::collections::HashMap;
@@ -66,7 +67,8 @@ fn get_test_validator_state(validators: Vec<String>) -> Storage {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_call_ctr_validator_fn_init() {
-    sak_test_utils::init_test_log();
+    // sak_test_utils::init_test_log();
+    SakLogger::init_test_console().unwrap();
 
     let vm = VM::init().expect("VM should be initiated");
 
@@ -82,8 +84,7 @@ async fn test_call_ctr_validator_fn_init() {
         .ok_or("Init needs to return state")
         .unwrap();
 
-    let ctr_validator_state: ValidatorStorage =
-        serde_json::from_slice(&updated_state).unwrap();
+    let ctr_validator_state: ValidatorStorage = serde_json::from_slice(&updated_state).unwrap();
 
     let validator_list_expected = vec![get_test_validator()];
 
@@ -124,8 +125,7 @@ async fn test_call_ctr_validator_fn_query() {
         .invoke(ctr_wasm, ctr_fn)
         .expect("validator should be obtained");
 
-    let validators: Vec<String> =
-        serde_json::from_slice(&receipt.result).unwrap();
+    let validators: Vec<String> = serde_json::from_slice(&receipt.result).unwrap();
 
     println!("validator expected: {:?}", test_validator_vec[0]);
 
@@ -178,8 +178,7 @@ async fn test_call_ctr_validator_fn_execute_add_validator() {
 
     let updated_storage = receipt.updated_storage.unwrap();
 
-    let validator_storage: ValidatorStorage =
-        serde_json::from_slice(&updated_storage).unwrap();
+    let validator_storage: ValidatorStorage = serde_json::from_slice(&updated_storage).unwrap();
 
     let validators = validator_storage.validators;
 
@@ -189,32 +188,3 @@ async fn test_call_ctr_validator_fn_execute_add_validator() {
 
     assert!(validators.contains(&get_dummy_validator_4()));
 }
-
-// #[tokio::test(flavor = "multi_thread")]
-// async fn test_deploy_ctr_and_invoke_execute_and_query_when_dist_ledger_writes_new_blocks(
-// ) {
-//     sak_test_utils::init_test_log();
-// sak_test_utils::init_test_config(&vec![String::from("test")]).unwrap();
-
-//     let dist_ledger = utils::make_dist_ledger().await;
-
-//     dist_ledger.run().await;
-
-//     println!("\n[+] Block1: Deploying test validator contract");
-
-//     dist_ledger
-//         .apis
-//         .write_block(utils::make_dummy_block_candidate_1())
-//         .await
-//         .expect("Block_1 must be written");
-
-//     println!("\n[+] Block2: Execute::add_validator");
-
-//     dist_ledger
-//         .apis
-//         .write_block(utils::make_dummy_block_candidate_calling_validator_ctr())
-//         .await
-//         .expect("Block_2 must be written");
-
-//     println!("\n[+] Block3: Query::get_validator");
-// }

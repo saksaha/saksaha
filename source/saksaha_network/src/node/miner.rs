@@ -1,6 +1,6 @@
 use crate::machine::Machine;
 use colored::Colorize;
-use log::{error, info, warn};
+use sak_logger::{error, info, warn};
 use std::{
     sync::Arc,
     time::{Duration, SystemTime},
@@ -50,8 +50,7 @@ impl Miner {
                 }
             };
 
-            sak_utils_time::wait_until_min_interval(time_since, mine_interval)
-                .await;
+            sak_utils_time::wait_until_min_interval(time_since, mine_interval).await;
         }
     }
 }

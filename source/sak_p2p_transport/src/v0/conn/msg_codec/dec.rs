@@ -1,23 +1,14 @@
 use crate::{
-    BlockAckMsg, BlockHashSyncMsg, BlockSynMsg, ErrorMsg, HandshakeMsg,
-    HelloMsg, Msg, MsgType, PingMsg, TrptError, TxAckMsg, TxHashSyncMsg,
-    TxSynMsg,
+    BlockAckMsg, BlockHashSyncMsg, BlockSynMsg, ErrorMsg, HandshakeMsg, HelloMsg, Msg, MsgType,
+    PingMsg, TrptError, TxAckMsg, TxHashSyncMsg, TxSynMsg,
 };
 use bytes::BytesMut;
 use sak_p2p_frame::{frame_io, Parse};
 
-pub(crate) fn decode_into_msg(
-    src: &mut BytesMut,
-) -> Result<Option<Msg>, TrptError> {
+pub(crate) fn decode_into_msg(src: &mut BytesMut) -> Result<Option<Msg>, TrptError> {
     let maybe_frame = match frame_io::parse_frame(src) {
         Ok(f) => f,
-        Err(err) => {
-            return Err(format!(
-                "Error parsing the frame, original_err: {}",
-                err
-            )
-            .into())
-        }
+        Err(err) => return Err(format!("Error parsing the frame, original_err: {}", err).into()),
     };
 
     if let Some(frame) = maybe_frame {
@@ -28,11 +19,9 @@ pub(crate) fn decode_into_msg(
         let msg = match parse_msg(&msg_type, parse) {
             Ok(m) => m,
             Err(err) => {
-                return Err(format!(
-                    "Error parsing msg, msg_type: {}, err: {}",
-                    msg_type, err
-                )
-                .into());
+                return Err(
+                    format!("Error parsing msg, msg_type: {}, err: {}", msg_type, err).into(),
+                );
             }
         };
 
@@ -102,11 +91,7 @@ fn parse_msg(msg_type: &String, mut parse: Parse) -> Result<Msg, TrptError> {
             Msg::Error(error)
         }
         _ => {
-            return Err(format!(
-                "Frame does have invalid msg_type, type: {}",
-                msg_type
-            )
-            .into());
+            return Err(format!("Frame does have invalid msg_type, type: {}", msg_type).into());
         }
     };
 

@@ -54,9 +54,7 @@ pub(crate) fn get_rho_4() -> [u8; 32] {
 }
 
 pub fn get_dummy_coin_cm() -> Scalar {
-    let cm_str = String::from(
-        "3bb4c03f8e718ec58f4f2bb2b2fb83149b5fe59a75c5c98893e40c56bb3e8deb",
-    );
+    let cm_str = String::from("3bb4c03f8e718ec58f4f2bb2b2fb83149b5fe59a75c5c98893e40c56bb3e8deb");
 
     let cm = decode_hex(&cm_str).unwrap();
 

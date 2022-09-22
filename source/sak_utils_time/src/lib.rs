@@ -1,10 +1,7 @@
-use sak_logger::terr;
+use sak_logger::error;
 use std::time::{Duration, SystemTime};
 
-pub async fn wait_until_min_interval(
-    time_since: SystemTime,
-    min_interval: Duration,
-) {
+pub async fn wait_until_min_interval(time_since: SystemTime, min_interval: Duration) {
     match time_since.elapsed() {
         Ok(d) => {
             if d < min_interval {
@@ -13,12 +10,7 @@ pub async fn wait_until_min_interval(
             }
         }
         Err(err) => {
-            terr!(
-                "p2p_discovery",
-                "task",
-                "Calculating the time elapsed fail, err: {}",
-                err
-            );
+            error!("Calculating the time elapsed fail, err: {}", err);
 
             tokio::time::sleep(min_interval).await;
         }

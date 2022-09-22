@@ -3,11 +3,13 @@ use envelope_contract::{request_type, Channel, OpenChParams};
 use envelope_term::ENVELOPE_CTR_ADDR;
 use sak_contract_std::CtrRequest;
 use sak_crypto::{SakKey, ToEncodedPoint};
+use sak_logger::{warn, SakLogger};
 use sak_types::CoinRecord;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_send_tx() {
-    sak_test_utils::init_test_log();
+    // sak_test_utils::init_test_log();
+    SakLogger::init_test_console().unwrap();
 
     let acc_addr = {
         let credential_manager = utils::mock_credential_manager().await;
@@ -32,7 +34,8 @@ async fn test_send_tx() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_update_coin_status() {
-    sak_test_utils::init_test_log();
+    // sak_test_utils::init_test_log();
+    SakLogger::init_test_console().unwrap();
 
     let acc_addr = {
         let credential_manager = utils::mock_credential_manager().await;
@@ -50,12 +53,11 @@ async fn test_update_coin_status() {
 
     tokio::spawn(async move { rpc.run().await });
 
-    let json_response =
-        utils::mock_update_coin_status(rpc_port, &acc_addr).await;
+    let json_response = utils::mock_update_coin_status(rpc_port, &acc_addr).await;
 
     println!("json_response: {:#?}", json_response);
 
-    log::warn!(
+    warn!(
         "This test skip the step `unconfirmed to unused`\
         which need a running node"
     );
@@ -63,7 +65,8 @@ async fn test_update_coin_status() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_print_dummy_merkle_rt() {
-    sak_test_utils::init_test_log();
+    // sak_test_utils::init_test_log();
+    SakLogger::init_test_console().unwrap();
 
     // let test_credential = utils::make_test_credential().await;
 
@@ -88,7 +91,8 @@ async fn test_print_dummy_merkle_rt() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_send_tx_with_2_old_coins() {
-    sak_test_utils::init_test_log();
+    // sak_test_utils::init_test_log();
+    SakLogger::init_test_console().unwrap();
 
     let MockWalletContext { wallet, .. } = utils::mock_wallet_context().await;
 
@@ -155,9 +159,7 @@ async fn test_send_tx_with_2_old_coins() {
             // ch_id
             "ch_id".to_string(),
             // eph_key
-            sak_crypto::encode_hex(
-                &eph_pub_key.to_encoded_point(false).to_bytes(),
-            ),
+            sak_crypto::encode_hex(&eph_pub_key.to_encoded_point(false).to_bytes()),
             // initiator_pk
             "\
                 045739d074b8722891c307e8e75c9607\

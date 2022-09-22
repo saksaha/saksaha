@@ -2,6 +2,7 @@ mod app;
 mod config;
 mod credential;
 mod db;
+mod fs;
 mod pconfig;
 mod rpc;
 mod wallet;

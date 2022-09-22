@@ -3,15 +3,18 @@ use super::SaksahaError;
 use super::SystemRunArgs;
 use crate::blockchain::Blockchain;
 use crate::config::Config;
+use crate::fs;
 use crate::machine::Machine;
 use crate::node::LocalNode;
 use crate::p2p::{P2PHost, P2PHostArgs};
-use crate::pconfig::PConfig;
 use crate::rpc::RPCArgs;
 use crate::rpc::RPC;
 use crate::system::SystemHandle;
+use crate::PConfig;
 use colored::Colorize;
-use log::{error, info, warn};
+use sak_logger::SakLogger;
+use sak_logger::RUST_LOG_ENV;
+use sak_logger::{error, info, warn};
 use sak_p2p_id::Identity;
 use sak_p2p_peertable::PeerTable;
 use std::sync::Arc;
@@ -21,10 +24,7 @@ pub(super) struct Routine {
 }
 
 impl Routine {
-    pub(super) async fn run(
-        &self,
-        sys_run_args: SystemRunArgs,
-    ) -> Result<(), SaksahaError> {
+    pub(super) async fn run(&self, sys_run_args: SystemRunArgs) -> Result<(), SaksahaError> {
         info!(
             "System is starting, public_key: {:?}, cfg_profile: {:?}",
             sys_run_args.public_key, sys_run_args.cfg_profile,
@@ -47,9 +47,25 @@ impl Routine {
 
         info!("Resolved config: {:?}", config);
 
+        let _logger = {
+            let public_key = &config.p2p.public_key_str;
+
+            // let log_dir = {
+            //     let acc_dir = fs::acc_dir(public_key)?;
+            //     acc_dir.join("logs")
+            // };
+
+            let log_root_dir = fs::config_dir()?;
+
+            // std::fs::create_dir_all(&log_dir)?;
+
+            let l = SakLogger::init(&log_root_dir, public_key.as_str(), "saksaha.log")?;
+
+            l
+        };
+
         let peer_table = {
-            let ps =
-                PeerTable::init(config.p2p.p2p_peer_table_capacity).await?;
+            let ps = PeerTable::init(config.p2p.p2p_peer_table_capacity).await?;
 
             Arc::new(ps)
         };
@@ -66,41 +82,37 @@ impl Routine {
             (socket, socket_addr.port())
         };
 
-        let (rpc_socket, _) =
-            match sak_utils_net::bind_tcp_socket(config.rpc.rpc_port).await {
-                Ok((socket, socket_addr)) => {
-                    info!(
-                        "Bound tcp socket for RPC, addr: {}",
-                        socket_addr.to_string().yellow(),
-                    );
+        let (rpc_socket, _) = match sak_utils_net::bind_tcp_socket(config.rpc.rpc_port).await {
+            Ok((socket, socket_addr)) => {
+                info!(
+                    "Bound tcp socket for RPC, addr: {}",
+                    socket_addr.to_string().yellow(),
+                );
 
-                    (socket, socket_addr)
-                }
-                Err(err) => {
-                    error!("Could not bind a tcp socket for RPC, err: {}", err);
+                (socket, socket_addr)
+            }
+            Err(err) => {
+                error!("Could not bind a tcp socket for RPC, err: {}", err);
 
-                    return Err(err.into());
-                }
-            };
+                return Err(err.into());
+            }
+        };
 
-        let (p2p_socket, p2p_port) =
-            match sak_utils_net::bind_tcp_socket(config.p2p.p2p_port).await {
-                Ok((socket, socket_addr)) => {
-                    info!(
-                        "Bound tcp socket for P2P host, addr: {}",
-                        socket_addr.to_string().yellow(),
-                    );
+        let (p2p_socket, p2p_port) = match sak_utils_net::bind_tcp_socket(config.p2p.p2p_port).await
+        {
+            Ok((socket, socket_addr)) => {
+                info!(
+                    "Bound tcp socket for P2P host, addr: {}",
+                    socket_addr.to_string().yellow(),
+                );
 
-                    (socket, socket_addr.port())
-                }
-                Err(err) => {
-                    error!(
-                        "Could not bind a tcp socket for P2P Host, err: {}",
-                        err
-                    );
-                    return Err(err.into());
-                }
-            };
+                (socket, socket_addr.port())
+            }
+            Err(err) => {
+                error!("Could not bind a tcp socket for P2P Host, err: {}", err);
+                return Err(err.into());
+            }
+        };
 
         let identity = {
             let i = Identity::new(
@@ -138,8 +150,7 @@ impl Routine {
 
         let blockchain = {
             let b = Blockchain::init(
-                // config.app_prefix,
-                config.p2p.public_key_str,
+                &config.p2p.public_key_str,
                 config.blockchain.tx_sync_interval,
                 None,
                 config.blockchain.block_sync_interval,
@@ -195,12 +206,7 @@ impl Routine {
         };
 
         let system_thread = tokio::spawn(async move {
-            let _ = tokio::join!(
-                rpc.run(),
-                p2p_host.run(),
-                local_node.run(),
-                machine.run(),
-            );
+            let _ = tokio::join!(rpc.run(), p2p_host.run(), local_node.run(), machine.run(),);
         });
 
         tokio::select!(

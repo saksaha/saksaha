@@ -6,8 +6,7 @@ mod utils;
 use crate::{
     paths::Paths,
     scripts::{
-        build, build_circuit_params, build_contracts, clean, dev, dev_evl_term,
-        dev_wallet, test,
+        build, build_circuit_params, build_contracts, clean, dev, dev_evl_term, dev_wallet, test,
     },
 };
 
@@ -102,11 +101,7 @@ fn run_script() -> Result<(), CIError> {
             build_circuit_params::run(args)?;
         }
         _ => {
-            return Err(format!(
-                "Could not find the script of name: {}",
-                second_arg,
-            )
-            .into());
+            return Err(format!("Could not find the script of name: {}", second_arg,).into());
         }
     };
 

@@ -24,8 +24,5 @@ pub(in crate::rpc) async fn get_status(
 
     let peer_vec = sys_handle.p2p_monitor.peer_table.get_status().await;
 
-    return make_success_response(
-        route_state,
-        GetNodeStatusResponse { addr_vec, peer_vec },
-    );
+    return make_success_response(route_state, GetNodeStatusResponse { addr_vec, peer_vec });
 }

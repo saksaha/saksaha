@@ -50,12 +50,7 @@ impl Envelope {
                         })
                     });
 
-                    actions::restore_chat(
-                        self.saksaha_endpoint.clone(),
-                        dispatch,
-                        state,
-                    )
-                    .await
+                    actions::restore_chat(self.saksaha_endpoint.clone(), dispatch, state).await
                 }
                 Key::Char('$') => {
                     let dispatcher = self.dispatcher.clone();

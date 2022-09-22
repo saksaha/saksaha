@@ -1,5 +1,5 @@
 use crate::p2p::task::P2PTask;
-use log::error;
+use sak_logger::error;
 use sak_p2p_discovery::AddrsIterator;
 use sak_p2p_id::Identity;
 use sak_p2p_peertable::PeerTable;
@@ -34,12 +34,10 @@ impl HandshakeDialLoop {
                 Ok(addr) => {
                     let known_addr = &addr.known_addr;
 
-                    let my_public_key_str =
-                        &self.identity.credential.public_key_str;
+                    let my_public_key_str = &self.identity.credential.public_key_str;
                     let her_public_key_str = &known_addr.public_key_str;
 
-                    let is_my_public_key_greater_than_hers =
-                        my_public_key_str > her_public_key_str;
+                    let is_my_public_key_greater_than_hers = my_public_key_str > her_public_key_str;
 
                     let task = P2PTask::InitiateHandshake {
                         addr,
@@ -63,18 +61,11 @@ impl HandshakeDialLoop {
                     }
                 }
                 Err(err) => {
-                    error!(
-                        "Error (fatal) getting next addr node, err: {}",
-                        err
-                    );
+                    error!("Error (fatal) getting next addr node, err: {}", err);
                 }
             };
 
-            sak_utils_time::wait_until_min_interval(
-                time_since,
-                p2p_dial_interval,
-            )
-            .await;
+            sak_utils_time::wait_until_min_interval(time_since, p2p_dial_interval).await;
         }
     }
 }

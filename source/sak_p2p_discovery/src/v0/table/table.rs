@@ -4,7 +4,7 @@ use super::{
 };
 use crate::AddrsIterator;
 use colored::Colorize;
-use log::debug;
+use sak_logger::debug;
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::{
     mpsc::{self, Receiver, Sender, UnboundedReceiver, UnboundedSender},
@@ -29,9 +29,7 @@ pub struct AddrTable {
 }
 
 impl AddrTable {
-    pub(crate) async fn init(
-        disc_table_capacity: Option<u16>,
-    ) -> Result<AddrTable, String> {
+    pub(crate) async fn init(disc_table_capacity: Option<u16>) -> Result<AddrTable, String> {
         let addr_map = {
             let m = HashMap::new();
 
@@ -57,10 +55,7 @@ impl AddrTable {
                 match slots_tx.send(slot) {
                     Ok(_) => (),
                     Err(err) => {
-                        return Err(format!(
-                            "Error initializing slots queue, err: {}",
-                            err
-                        ));
+                        return Err(format!("Error initializing slots queue, err: {}", err));
                     }
                 };
             }
@@ -95,10 +90,7 @@ impl AddrTable {
         Ok(table)
     }
 
-    pub async fn get_mapped_addr(
-        &self,
-        public_key_str: &String,
-    ) -> Option<Arc<DiscAddr>> {
+    pub async fn get_mapped_addr(&self, public_key_str: &String) -> Option<Arc<DiscAddr>> {
         let addr_map = self.addr_map.read().await;
 
         addr_map.get(public_key_str).map(|n| n.clone())
@@ -118,21 +110,16 @@ impl AddrTable {
             }
             None => {
                 return Err(format!(
-                "All slots channels have been closed. Unexpected circumstance",
-            ))
+                    "All slots channels have been closed. Unexpected circumstance",
+                ))
             }
         }
     }
 
-    pub(crate) async fn enqueue_known_addr(
-        &self,
-        node: Arc<DiscAddr>,
-    ) -> Result<(), String> {
+    pub(crate) async fn enqueue_known_addr(&self, node: Arc<DiscAddr>) -> Result<(), String> {
         match self.known_addrs_tx.send(node).await {
             Ok(_) => Ok(()),
-            Err(err) => {
-                Err(format!("Could not enqueue known addr, err: {}", err))
-            }
+            Err(err) => Err(format!("Could not enqueue known addr, err: {}", err)),
         }
     }
 
@@ -156,8 +143,7 @@ impl AddrTable {
             }
         };
 
-        let it =
-            AddrsIterator::init(self.known_addrs_rx.clone(), addrs_it_lock);
+        let it = AddrsIterator::init(self.known_addrs_rx.clone(), addrs_it_lock);
 
         Ok(it)
     }
@@ -191,26 +177,19 @@ impl AddrTable {
         return Ok(addr_map.insert(key.to_string(), addr.clone()));
     }
 
-    pub(crate) async fn get_addr_map_write(
-        &self,
-    ) -> OwnedRwLockWriteGuard<AddrMap> {
+    pub(crate) async fn get_addr_map_write(&self) -> OwnedRwLockWriteGuard<AddrMap> {
         let addr_map = self.addr_map.clone().write_owned().await;
 
         addr_map
     }
 
-    pub(crate) async fn get_addr_map_read(
-        &self,
-    ) -> OwnedRwLockReadGuard<AddrMap> {
+    pub(crate) async fn get_addr_map_read(&self) -> OwnedRwLockReadGuard<AddrMap> {
         let addr_map = self.addr_map.clone().read_owned().await;
 
         addr_map
     }
 
-    pub(crate) async fn remove_mapping(
-        &self,
-        public_key_str: &String,
-    ) -> Option<Arc<DiscAddr>> {
+    pub(crate) async fn remove_mapping(&self, public_key_str: &String) -> Option<Arc<DiscAddr>> {
         let mut addr_map = self.addr_map.write().await;
 
         addr_map.remove(public_key_str)

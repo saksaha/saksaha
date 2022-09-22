@@ -1,9 +1,7 @@
 use crate::credential::Credential;
 use crate::inputs::events::Events;
 use crate::inputs::InputEvent;
-// use crate::io::handler::IoAsyncHandler;
 use crate::io::InputMode;
-// use crate::io::IoEvent;
 use crate::views;
 use crate::AppArgs;
 use crate::EnvelopeError;
@@ -39,8 +37,7 @@ impl Routine {
             Arc::new(c)
         };
 
-        let wallet_endpoint =
-            config.wallet_endpoint.ok_or("expect wallet endpoint")?;
+        let wallet_endpoint = config.wallet_endpoint.ok_or("expect wallet endpoint")?;
         let saksaha_endpoint = config
             .saksaha_endpoint
             .ok_or("expect saksaha network endpoint")?;

@@ -26,11 +26,7 @@ impl Hasher {
         return &self.constants;
     }
 
-    pub fn mimc(
-        &self,
-        a: &[u8; 32],
-        b: &[u8; 32],
-    ) -> Result<Scalar, CircuitError> {
+    pub fn mimc(&self, a: &[u8; 32], b: &[u8; 32]) -> Result<Scalar, CircuitError> {
         let a = ScalarExt::parse_arr(a)?;
         let b = ScalarExt::parse_arr(b)?;
         let h = mimc::mimc(a, b, &self.constants);
@@ -50,10 +46,7 @@ impl Hasher {
         Ok(h)
     }
 
-    pub fn mimc_single_scalar(
-        &self,
-        a: Scalar,
-    ) -> Result<Scalar, CircuitError> {
+    pub fn mimc_single_scalar(&self, a: Scalar) -> Result<Scalar, CircuitError> {
         let b = Scalar::zero();
         let h = mimc::mimc(a, b, &self.constants);
 
@@ -78,11 +71,7 @@ impl Hasher {
         mimc::mimc_cs(cs, a, b, &self.constants)
     }
 
-    pub fn prf2(
-        &self,
-        a: &[u8; 32],
-        b: &[u8; 32],
-    ) -> Result<Scalar, CircuitError> {
+    pub fn prf2(&self, a: &[u8; 32], b: &[u8; 32]) -> Result<Scalar, CircuitError> {
         let s = ScalarExt::parse_arr_wide(a, b)?;
 
         let ret = mimc::mimc_single_arg(s, &self.constants);
@@ -105,12 +94,7 @@ impl Hasher {
         self.mimc_scalar_cs(cs, z, x)
     }
 
-    pub fn comm2(
-        &self,
-        a: &[u8; 32],
-        b: &[u8; 32],
-        c: &[u8; 32],
-    ) -> Result<Scalar, CircuitError> {
+    pub fn comm2(&self, a: &[u8; 32], b: &[u8; 32], c: &[u8; 32]) -> Result<Scalar, CircuitError> {
         let a = ScalarExt::parse_arr(a)?;
         let b = ScalarExt::parse_arr(b)?;
         let c = ScalarExt::parse_arr(c)?;

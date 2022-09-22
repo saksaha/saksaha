@@ -1,11 +1,13 @@
 use super::{
-    ARG_CH_ID, ARG_SERIALIZED_INPUT, DUMMY_CHANNEL_ID_1, DUMMY_CHANNEL_ID_2,
-    DUMMY_CHANNEL_ID_3, ENVELOPE_CONTRACT,
+    constants::{
+        ARG_CH_ID, ARG_DST_PK, ARG_SERIALIZED_INPUT, DUMMY_CHANNEL_ID_1, DUMMY_CHANNEL_ID_2,
+        DUMMY_CHANNEL_ID_3, ENVELOPE_CONTRACT,
+    },
+    utils::init_test_log,
 };
 use envelope_contract::{
-    request_type::OPEN_CH, Channel, ChannelId, ChatMessage,
-    EncryptedChatMessage, EnvelopeStorage, GetChListParams, GetMsgParams,
-    OpenChParams, SendMsgParams,
+    request_type::OPEN_CH, Channel, ChannelId, ChatMessage, EncryptedChatMessage, EnvelopeStorage,
+    GetChListParams, GetMsgParams, OpenChParams, SendMsgParams,
 };
 use sak_contract_std::{CtrCallType, CtrRequest, Storage};
 use sak_vm::{CtrFn, VM};
@@ -103,7 +105,9 @@ fn make_mock_open_ch() -> Channel {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_messenger_get_msgs() {
-    sak_test_utils::init_test_log();
+    // sak_test_utils::init_test_log();
+    init_test_log();
+
     let vm = VM::init().expect("VM should be initiated");
 
     let test_dummy_messege = get_multi_messages();
@@ -146,7 +150,9 @@ async fn test_messenger_get_msgs() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_messenger_get_ch_list() {
-    sak_test_utils::init_test_log();
+    // sak_test_utils::init_test_log();
+    init_test_log();
+
     let vm = VM::init().expect("VM should be initiated");
 
     let her_pk = get_her_pk();
@@ -180,8 +186,7 @@ async fn test_messenger_get_ch_list() {
 
         let receipt = vm.invoke(ctr_wasm, ctr_fn).unwrap();
 
-        let open_ch_data_vec: Vec<Channel> =
-            serde_json::from_slice(&receipt.result).unwrap();
+        let open_ch_data_vec: Vec<Channel> = serde_json::from_slice(&receipt.result).unwrap();
 
         println!("expected channel id : {:?}", vec![DUMMY_CHANNEL_ID_1]);
 
@@ -196,7 +201,9 @@ async fn test_messenger_get_ch_list() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_messenger_open_channel() {
-    sak_test_utils::init_test_log();
+    // sak_test_utils::init_test_log();
+
+    init_test_log();
     let vm = VM::init().expect("VM should be initiated");
 
     let new_pk = "abcdef".to_string();
@@ -247,8 +254,7 @@ async fn test_messenger_open_channel() {
             .ok_or("State needs to be updated, ")
             .unwrap();
 
-        let storage: EnvelopeStorage =
-            serde_json::from_slice(&updated_storage).unwrap();
+        let storage: EnvelopeStorage = serde_json::from_slice(&updated_storage).unwrap();
 
         // let envelope_storage: EnvelopeStorage =
         //     serde_json::from_slice(&storage).unwrap();
@@ -269,7 +275,9 @@ async fn test_messenger_open_channel() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_messenger_send_msg() {
-    sak_test_utils::init_test_log();
+    // sak_test_utils::init_test_log();
+
+    init_test_log();
     let vm = VM::init().expect("VM should be initiated");
 
     let dummy_messeges = get_multi_messages();
@@ -320,11 +328,9 @@ async fn test_messenger_send_msg() {
             String::from_utf8(updated_storage.clone())
         );
 
-        let storage: Storage =
-            serde_json::from_slice(&updated_storage).unwrap();
+        let storage: Storage = serde_json::from_slice(&updated_storage).unwrap();
 
-        let envelope_storage: EnvelopeStorage =
-            serde_json::from_slice(&storage).unwrap();
+        let envelope_storage: EnvelopeStorage = serde_json::from_slice(&storage).unwrap();
 
         let chats = envelope_storage.chats.get(DUMMY_CHANNEL_ID_3).unwrap();
 
@@ -340,7 +346,9 @@ async fn test_messenger_send_msg() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_messenger_open_channel_me_and_you() {
-    sak_test_utils::init_test_log();
+    // sak_test_utils::init_test_log();
+
+    init_test_log();
     let vm = VM::init().expect("VM should be initiated");
 
     let my_pk = "my_pk".to_string();
@@ -436,21 +444,18 @@ async fn test_messenger_open_channel_me_and_you() {
             .ok_or("State needs to be updated, ")
             .unwrap();
 
-        let storage_1: EnvelopeStorage =
-            serde_json::from_slice(&updated_storage_1).unwrap();
+        let storage_1: EnvelopeStorage = serde_json::from_slice(&updated_storage_1).unwrap();
 
         let updated_storage_2 = receipt_2
             .updated_storage
             .ok_or("State needs to be updated, ")
             .unwrap();
 
-        let storage_2: EnvelopeStorage =
-            serde_json::from_slice(&updated_storage_2).unwrap();
+        let storage_2: EnvelopeStorage = serde_json::from_slice(&updated_storage_2).unwrap();
 
         println!("updated channel_1 id: {:?}", storage_1);
         println!("updated channel_2 id: {:?}", storage_2);
-        let open_ch_reqs_1 =
-            storage_1.open_ch_reqs.get(&my_pk).unwrap().get(0).unwrap();
+        let open_ch_reqs_1 = storage_1.open_ch_reqs.get(&my_pk).unwrap().get(0).unwrap();
 
         let open_ch_reqs_2 = storage_2
             .open_ch_reqs

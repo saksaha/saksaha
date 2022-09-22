@@ -53,8 +53,7 @@ macro_rules! return_err_4 {
         match $obj {
             Ok(r) => r,
             Err(err) => {
-                let mut err =
-                    sak_contract_std::make_error_vec(err.into(), $msg);
+                let mut err = sak_contract_std::make_error_vec(err.into(), $msg);
 
                 let err_ptr = err.as_mut_ptr();
                 let err_len = err.len();
@@ -65,12 +64,7 @@ macro_rules! return_err_4 {
                 let empty_vec_ptr = empty_vec.as_mut_ptr();
                 let empty_vec_len = empty_vec.len();
 
-                return (
-                    err_ptr,
-                    err_len as i32,
-                    empty_vec_ptr,
-                    empty_vec_len as i32,
-                );
+                return (err_ptr, err_len as i32, empty_vec_ptr, empty_vec_len as i32);
             }
         }
     };
@@ -81,10 +75,8 @@ macro_rules! define_init {
     () => {
         #[no_mangle]
         pub unsafe extern "C" fn init() -> (*mut u8, i32) {
-            let storage: Result<
-                sak_contract_std::Storage,
-                sak_contract_std::ContractError,
-            > = init2();
+            let storage: Result<sak_contract_std::Storage, sak_contract_std::ContractError> =
+                init2();
 
             let mut storage = sak_contract_std::return_err_2!(storage);
 
@@ -122,13 +114,10 @@ macro_rules! define_query {
 
             let request = serde_json::from_slice(&request);
 
-            let request: sak_contract_std::CtrRequest =
-                sak_contract_std::return_err_2!(request);
+            let request: sak_contract_std::CtrRequest = sak_contract_std::return_err_2!(request);
 
-            let result: Result<
-                sak_contract_std::InvokeResult,
-                sak_contract_std::ContractError,
-            > = query2(request, storage);
+            let result: Result<sak_contract_std::InvokeResult, sak_contract_std::ContractError> =
+                query2(request, storage);
 
             {
                 let mut result: sak_contract_std::InvokeResult =
@@ -170,22 +159,14 @@ macro_rules! define_execute {
             let request = serde_json::from_slice(&request);
 
             let request: sak_contract_std::CtrRequest =
-                sak_contract_std::return_err_4!(
-                    request,
-                    "serde request parsing fail"
-                );
+                sak_contract_std::return_err_4!(request, "serde request parsing fail");
 
-            let result: Result<
-                sak_contract_std::InvokeResult,
-                sak_contract_std::ContractError,
-            > = execute2(request, &mut storage);
+            let result: Result<sak_contract_std::InvokeResult, sak_contract_std::ContractError> =
+                execute2(request, &mut storage);
 
             {
                 let mut result: sak_contract_std::InvokeResult =
-                    sak_contract_std::return_err_4!(
-                        result,
-                        "serde result parsing fail"
-                    );
+                    sak_contract_std::return_err_4!(result, "serde result parsing fail");
 
                 let result_ptr = result.as_mut_ptr();
                 let result_len = result.len();

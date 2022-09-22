@@ -8,10 +8,7 @@ pub struct RouteState {
     pub resp: Response<Body>,
 }
 
-pub fn make_success_response<D: Serialize>(
-    route_state: RouteState,
-    result: D,
-) -> Response<Body> {
+pub fn make_success_response<D: Serialize>(route_state: RouteState, result: D) -> Response<Body> {
     let mut resp = route_state.resp;
 
     header::add_application_json_header(&mut resp);
@@ -29,11 +26,7 @@ pub fn make_success_response<D: Serialize>(
         let body_str = match serde_json::to_string(&response) {
             Ok(s) => s,
             Err(err) => {
-                return make_serialize_err_response(
-                    resp,
-                    route_state.id,
-                    Some(err.into()),
-                );
+                return make_serialize_err_response(resp, route_state.id, Some(err.into()));
             }
         };
 

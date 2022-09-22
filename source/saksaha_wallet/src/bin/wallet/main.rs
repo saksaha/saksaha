@@ -3,7 +3,7 @@ mod credential;
 mod prompt;
 
 use cli::CLIArgs;
-use log::info;
+use sak_logger::info;
 use sak_logger::RUST_LOG_ENV;
 use saksaha_wallet::{App, AppArgs, Config, WalletError};
 
@@ -13,7 +13,7 @@ fn main() -> Result<(), WalletError> {
             std::env::set_var("RUST_LOG", RUST_LOG_ENV);
         }
 
-        let _ = sak_logger::init(false);
+        // let _ = sak_logger::init(false);
     }
 
     let cli_args = cli::get_args()?;
@@ -22,10 +22,8 @@ fn main() -> Result<(), WalletError> {
 
     info!("Config created, config: {:?}", config);
 
-    let wallet_credential = credential::create_or_get_credential(
-        &config.public_key,
-        &config.secret,
-    )?;
+    let wallet_credential =
+        credential::create_or_get_credential(&config.public_key, &config.secret)?;
 
     let app_args = AppArgs {
         rpc_port: cli_args.rpc_port,

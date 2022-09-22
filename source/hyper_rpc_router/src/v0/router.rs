@@ -1,7 +1,7 @@
 use super::{response, Handler, RouteState};
 use hyper::{Body, Request, Response};
 use hyper_server::MiddlewareResult;
-use log::debug;
+use sak_logger::debug;
 use sak_rpc_interface::JsonRequest;
 use std::{collections::HashMap, sync::Arc};
 
@@ -19,12 +19,7 @@ where
         Router { route_map }
     }
 
-    pub fn route(
-        &self,
-        req: Request<Body>,
-        resp: Response<Body>,
-        ctx: C,
-    ) -> MiddlewareResult<C> {
+    pub fn route(&self, req: Request<Body>, resp: Response<Body>, ctx: C) -> MiddlewareResult<C> {
         let route_map = self.route_map.clone();
 
         let result = Box::pin(async move {
@@ -33,11 +28,7 @@ where
             let rb = match hyper::body::to_bytes(req.into_body()).await {
                 Ok(b) => b,
                 Err(err) => {
-                    return Ok(response::make_error_response(
-                        resp,
-                        None,
-                        err.into(),
-                    ));
+                    return Ok(response::make_error_response(resp, None, err.into()));
                 }
             };
 
@@ -47,11 +38,7 @@ where
                     return Ok(response::make_error_response(
                         resp,
                         None,
-                        format!(
-                            "Failed to parse as json_request, err: {}",
-                            err
-                        )
-                        .into(),
+                        format!("Failed to parse as json_request, err: {}", err).into(),
                     ));
                 }
             };

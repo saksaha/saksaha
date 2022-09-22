@@ -1,12 +1,13 @@
-use super::test_util::TestUtil;
+use super::utils;
 use crate::v0::testing;
 use sak_kv_db::WriteBatch;
 use sak_types::{BlockCandidate, Tx, TxCandidate};
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_put_and_get_transaction() {
-    sak_test_utils::init_test_log();
-    TestUtil::init_test(vec!["test"]);
+    // sak_test_utils::init_test_log();
+    // TestUtil::init_test(vec!["test"]);
+    utils::init_test(vec!["test"]);
 
     let dist_ledger = testing::mock_dist_ledger_1().await;
 
@@ -44,8 +45,9 @@ async fn test_put_and_get_transaction() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_dist_ledger_put_a_single_pour_tx() {
-    sak_test_utils::init_test_log();
-    TestUtil::init_test(vec!["test"]);
+    // sak_test_utils::init_test_log();
+    // TestUtil::init_test(vec!["test"]);
+    utils::init_test(vec!["test"]);
 
     let dist_ledger = testing::mock_dist_ledger_1().await;
 
@@ -64,9 +66,9 @@ async fn test_dist_ledger_put_a_single_pour_tx() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_dist_ledger_tx_mint_put_and_get_cm_idx() {
-    sak_test_utils::init_test_log();
-
-    TestUtil::init_test(vec!["test"]);
+    // sak_test_utils::init_test_log();
+    // TestUtil::init_test(vec!["test"]);
+    utils::init_test(vec!["test"]);
 
     let dist_ledger = testing::mock_dist_ledger_1().await;
 
@@ -120,9 +122,9 @@ async fn test_dist_ledger_tx_mint_put_and_get_cm_idx() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_dist_ledger_tx_pour_put_and_get_cm_idx() {
-    sak_test_utils::init_test_log();
-
-    TestUtil::init_test(vec!["test"]);
+    // sak_test_utils::init_test_log();
+    // TestUtil::init_test(vec!["test"]);
+    utils::init_test(vec!["test"]);
 
     let dist_ledger = testing::mock_dist_ledger_1().await;
 
@@ -183,8 +185,9 @@ async fn test_dist_ledger_tx_pour_put_and_get_cm_idx() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_dist_ledger_verify_proof_success() {
-    sak_test_utils::init_test_log();
-    TestUtil::init_test(vec!["test"]);
+    // sak_test_utils::init_test_log();
+    // TestUtil::init_test(vec!["test"]);
+    utils::init_test(vec!["test"]);
 
     let dist_ledger = testing::mock_dist_ledger_1().await;
 
@@ -209,8 +212,9 @@ async fn test_dist_ledger_verify_proof_success() {
 #[tokio::test(flavor = "multi_thread")]
 #[should_panic]
 async fn test_dist_ledger_verify_proof_fail() {
-    sak_test_utils::init_test_log();
-    TestUtil::init_test(vec!["test"]);
+    // sak_test_utils::init_test_log();
+    // TestUtil::init_test(vec!["test"]);
+    utils::init_test(vec!["test"]);
 
     let dist_ledger = testing::mock_dist_ledger_1().await;
 
@@ -229,8 +233,9 @@ async fn test_dist_ledger_verify_proof_fail() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_dist_ledger_double_spending_success() {
-    sak_test_utils::init_test_log();
-    TestUtil::init_test(vec!["test"]);
+    // sak_test_utils::init_test_log();
+    // TestUtil::init_test(vec!["test"]);
+    utils::init_test(vec!["test"]);
 
     let dist_ledger = testing::mock_dist_ledger_1().await;
 
@@ -254,8 +259,9 @@ async fn test_dist_ledger_double_spending_success() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_dist_ledger_double_spending_fail() {
-    sak_test_utils::init_test_log();
-    TestUtil::init_test(vec!["test"]);
+    // sak_test_utils::init_test_log();
+    // TestUtil::init_test(vec!["test"]);
+    utils::init_test(vec!["test"]);
 
     let dist_ledger = testing::mock_dist_ledger_1().await;
 
@@ -286,8 +292,9 @@ async fn test_dist_ledger_double_spending_fail() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_dist_ledger_verify_merkle_rt_fail() {
-    sak_test_utils::init_test_log();
-    TestUtil::init_test(vec!["test"]);
+    // sak_test_utils::init_test_log();
+    // TestUtil::init_test(vec!["test"]);
+    utils::init_test(vec!["test"]);
 
     let dist_ledger = testing::mock_dist_ledger_1().await;
 

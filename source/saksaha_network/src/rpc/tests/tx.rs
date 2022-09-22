@@ -1,21 +1,27 @@
-use super::utils;
+use super::utils::{self, TestContext};
 use crate::{
     rpc::routes::v0::{GetTxRequest, GetTxResponse},
-    tests::TestUtil,
+    tests::SaksahaTestUtils,
 };
 use hyper::{Body, Client, Method, Request, Uri};
-use sak_rpc_interface::{
-    JsonRequest, JsonResponse, SendMintTxRequest, SendPourTxRequest,
-};
+use sak_credential::CredentialProfile;
+use sak_rpc_interface::{JsonRequest, JsonResponse, SendMintTxRequest, SendPourTxRequest};
 use sak_types::{BlockCandidate, Tx, TxCandidate};
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_rpc_client_request_correct_get_tx() {
-    sak_test_utils::init_test_log();
-    TestUtil::init_test(vec!["test"]);
+    // sak_test_utils::init_test_log();
+    // TestUtil::init_test(vec!["test"]);
+    // SaksahaTestUtils::init_test(vec!["test"]);
+
+    let test_credential_1 = CredentialProfile::test_1();
+
+    SaksahaTestUtils::init_test(&[&test_credential_1.public_key_str]);
 
     let expected_tx_hash = {
-        let blockchain = utils::make_blockchain().await;
+        let blockchain =
+            utils::make_blockchain(&test_credential_1.secret, &test_credential_1.public_key_str)
+                .await;
 
         // let dummy_tx = sak_types::mock_pour_tc_m1_to_p3_p4();
         let dummy_tx = sak_types::mock_pour_tc_1();
@@ -51,17 +57,18 @@ async fn test_rpc_client_request_correct_get_tx() {
         old_tx_hash.clone()
     };
 
-    let (rpc, rpc_socket_addr, _machine) = utils::make_test_context().await;
+    let TestContext {
+        rpc,
+        rpc_socket_addr,
+        ..
+    } = utils::make_test_context(test_credential_1.secret, test_credential_1.public_key_str).await;
 
     let client = Client::new();
 
     tokio::spawn(async move { rpc.run().await });
 
     let uri: Uri = {
-        let u = format!(
-            "http://localhost:{}/apis/v0/get_tx",
-            rpc_socket_addr.port()
-        );
+        let u = format!("http://localhost:{}/apis/v0/get_tx", rpc_socket_addr.port());
 
         u.parse().expect("URI should be made")
     };
@@ -98,8 +105,7 @@ async fn test_rpc_client_request_correct_get_tx() {
 
     let b = hyper::body::to_bytes(resp.into_body()).await.unwrap();
 
-    let json_response =
-        serde_json::from_slice::<JsonResponse<GetTxResponse>>(&b).unwrap();
+    let json_response = serde_json::from_slice::<JsonResponse<GetTxResponse>>(&b).unwrap();
 
     let tx_from_res = json_response.result.unwrap();
     let tx_from_res = tx_from_res.tx.unwrap();
@@ -110,11 +116,16 @@ async fn test_rpc_client_request_correct_get_tx() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_rpc_client_request_wrong_get_tx() {
-    sak_test_utils::init_test_log();
-    TestUtil::init_test(vec!["test"]);
+    // sak_test_utils::init_test_log();
+    // TestUtil::init_test(vec!["test"]);
+    let test_credential_1 = CredentialProfile::test_1();
+
+    SaksahaTestUtils::init_test(&[&test_credential_1.public_key_str]);
 
     let _expected_tx_hash = {
-        let blockchain = utils::make_blockchain().await;
+        let blockchain =
+            utils::make_blockchain(&test_credential_1.secret, &test_credential_1.public_key_str)
+                .await;
 
         // let dummy_tx = sak_types::mock_pour_tc_m1_to_p3_p4();
         let dummy_tx = sak_types::mock_pour_tc_1();
@@ -150,17 +161,18 @@ async fn test_rpc_client_request_wrong_get_tx() {
         old_tx_hash.clone()
     };
 
-    let (rpc, rpc_socket_addr, _machine) = utils::make_test_context().await;
+    let TestContext {
+        rpc,
+        rpc_socket_addr,
+        ..
+    } = utils::make_test_context(test_credential_1.secret, test_credential_1.public_key_str).await;
 
     let client = Client::new();
 
     tokio::spawn(async move { rpc.run().await });
 
     let uri: Uri = {
-        let u = format!(
-            "http://localhost:{}/apis/v0/get_tx",
-            rpc_socket_addr.port()
-        );
+        let u = format!("http://localhost:{}/apis/v0/get_tx", rpc_socket_addr.port());
 
         u.parse().expect("URI should be made")
     };
@@ -199,16 +211,18 @@ async fn test_rpc_client_request_wrong_get_tx() {
 
     let b = hyper::body::to_bytes(resp.into_body()).await.unwrap();
 
-    let json_response =
-        serde_json::from_slice::<JsonResponse<GetTxResponse>>(&b).unwrap();
+    let json_response = serde_json::from_slice::<JsonResponse<GetTxResponse>>(&b).unwrap();
 
     assert!(json_response.result.is_none());
 }
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_rpc_reqeust_correct_send_pour_tx() {
-    sak_test_utils::init_test_log();
-    TestUtil::init_test(vec!["test"]);
+    // sak_test_utils::init_test_log();
+    // TestUtil::init_test(vec!["test"]);
+    let test_credential_1 = CredentialProfile::test_1();
+
+    SaksahaTestUtils::init_test(&[&test_credential_1.public_key_str]);
 
     let tc_dummy = if let TxCandidate::Pour(c) = sak_types::mock_pour_tc_1() {
         c
@@ -218,7 +232,11 @@ async fn test_rpc_reqeust_correct_send_pour_tx() {
 
     let expected_tc_hash = tc_dummy.get_tx_hash().clone();
 
-    let (rpc, rpc_socket_addr, machine) = utils::make_test_context().await;
+    let TestContext {
+        rpc,
+        rpc_socket_addr,
+        machine,
+    } = utils::make_test_context(test_credential_1.secret, test_credential_1.public_key_str).await;
 
     tokio::spawn(async move { rpc.run().await });
 
@@ -271,8 +289,7 @@ async fn test_rpc_reqeust_correct_send_pour_tx() {
 
     let b = hyper::body::to_bytes(resp.into_body()).await.unwrap();
 
-    let json_response =
-        serde_json::from_slice::<JsonResponse<String>>(&b).unwrap();
+    let json_response = serde_json::from_slice::<JsonResponse<String>>(&b).unwrap();
 
     let result_hash = json_response.result.unwrap();
 
@@ -290,10 +307,17 @@ async fn test_rpc_reqeust_correct_send_pour_tx() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_rpc_reqeust_wrong_send_pour_tx() {
-    sak_test_utils::init_test_log();
-    TestUtil::init_test(vec!["test"]);
+    // sak_test_utils::init_test_log();
+    // TestUtil::init_test(vec!["test"]);
+    let test_credential_1 = CredentialProfile::test_1();
 
-    let (rpc, rpc_socket_addr, _machine) = utils::make_test_context().await;
+    SaksahaTestUtils::init_test(&[&test_credential_1.public_key_str]);
+
+    let TestContext {
+        rpc,
+        rpc_socket_addr,
+        ..
+    } = utils::make_test_context(test_credential_1.secret, test_credential_1.public_key_str).await;
 
     tokio::spawn(async move { rpc.run().await });
 
@@ -337,16 +361,18 @@ async fn test_rpc_reqeust_wrong_send_pour_tx() {
 
     let b = hyper::body::to_bytes(resp.into_body()).await.unwrap();
 
-    let json_response =
-        serde_json::from_slice::<JsonResponse<String>>(&b).unwrap();
+    let json_response = serde_json::from_slice::<JsonResponse<String>>(&b).unwrap();
 
     assert!(json_response.result == None);
 }
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_rpc_reqeust_correct_send_mint_tx() {
-    sak_test_utils::init_test_log();
-    TestUtil::init_test(vec!["test"]);
+    // sak_test_utils::init_test_log();
+    // TestUtil::init_test(vec!["test"]);
+    let test_credential_1 = CredentialProfile::test_1();
+
+    SaksahaTestUtils::init_test(&[&test_credential_1.public_key_str]);
 
     // let tc_dummy = MintTxCandidate::new_dummy_2();
     let tc_dummy = sak_types::mock_mint_tc_1()
@@ -355,7 +381,11 @@ async fn test_rpc_reqeust_correct_send_mint_tx() {
 
     let expected_tc_hash = tc_dummy.get_tx_hash().clone();
 
-    let (rpc, rpc_socket_addr, machine) = utils::make_test_context().await;
+    let TestContext {
+        rpc,
+        rpc_socket_addr,
+        machine,
+    } = utils::make_test_context(test_credential_1.secret, test_credential_1.public_key_str).await;
 
     tokio::spawn(async move { rpc.run().await });
 
@@ -408,8 +438,7 @@ async fn test_rpc_reqeust_correct_send_mint_tx() {
 
     let b = hyper::body::to_bytes(resp.into_body()).await.unwrap();
 
-    let json_response =
-        serde_json::from_slice::<JsonResponse<String>>(&b).unwrap();
+    let json_response = serde_json::from_slice::<JsonResponse<String>>(&b).unwrap();
 
     let send_success = json_response.result.unwrap();
 
@@ -427,10 +456,17 @@ async fn test_rpc_reqeust_correct_send_mint_tx() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_rpc_reqeust_wrong_send_mint_tx() {
-    sak_test_utils::init_test_log();
-    TestUtil::init_test(vec!["test"]);
+    // sak_test_utils::init_test_log();
+    // TestUtil::init_test(vec!["test"]);
+    let test_credential_1 = CredentialProfile::test_1();
 
-    let (rpc, rpc_socket_addr, _machine) = utils::make_test_context().await;
+    SaksahaTestUtils::init_test(&[&test_credential_1.public_key_str]);
+
+    let TestContext {
+        rpc,
+        rpc_socket_addr,
+        ..
+    } = utils::make_test_context(test_credential_1.secret, test_credential_1.public_key_str).await;
 
     tokio::spawn(async move { rpc.run().await });
 
@@ -474,8 +510,7 @@ async fn test_rpc_reqeust_wrong_send_mint_tx() {
 
     let b = hyper::body::to_bytes(resp.into_body()).await.unwrap();
 
-    let json_response =
-        serde_json::from_slice::<JsonResponse<String>>(&b).unwrap();
+    let json_response = serde_json::from_slice::<JsonResponse<String>>(&b).unwrap();
 
     assert!(json_response.result == None);
 }

@@ -1,6 +1,6 @@
 use chrono::Utc;
 use futures::StreamExt;
-use log::{error, warn};
+use sak_logger::{error, warn};
 use sak_p2p_discovery::AddrTable;
 use sak_p2p_id::Identity;
 use sak_p2p_peertable::{Peer, PeerStatus, PeerTable};
@@ -37,8 +37,7 @@ impl Handler {
         };
 
         let (transport, her_public_key_str) =
-            match handshake::receive_handshake(handshake_recv_args, conn).await
-            {
+            match handshake::receive_handshake(handshake_recv_args, conn).await {
                 Ok(t) => t,
                 Err(err) => {
                     warn!("Error receiving handshake, err: {}", err);

@@ -4,8 +4,7 @@ use crate::SystemHandle;
 use hyper_rpc_router::{Handler, Path};
 use std::{collections::HashMap, sync::Arc};
 
-pub(in crate::rpc) fn get_routes(
-) -> HashMap<&'static str, Handler<Arc<SystemHandle>>> {
+pub(in crate::rpc) fn get_routes() -> HashMap<&'static str, Handler<Arc<SystemHandle>>> {
     let paths: Vec<Path<Arc<SystemHandle>>> = vec![
         Path {
             method: "send_mint_tx",

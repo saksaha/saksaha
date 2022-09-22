@@ -2,7 +2,7 @@ use crate::Discovery;
 use crate::DiscoveryArgs;
 use colored::*;
 use lazy_static::lazy_static;
-use log::info;
+use sak_logger::info;
 use sak_p2p_addr::AddrStatus;
 use sak_p2p_addr::UnknownAddr;
 use sak_p2p_id::Identity;
@@ -14,6 +14,10 @@ struct TestDiscArgs {
     disc_port: u16,
     p2p_port: u16,
     bootstrap_addrs: Vec<UnknownAddr>,
+}
+
+pub(super) fn init() {
+    // let _ = env_logger::builder().is_test(true).try_init();
 }
 
 lazy_static! {
@@ -324,10 +328,9 @@ lazy_static! {
 
 async fn make_disc_args(test_disc_args: &TestDiscArgs) -> DiscoveryArgs {
     let (disc_socket, disc_port) = {
-        let (socket, socket_addr) =
-            sak_utils_net::setup_udp_socket(Some(test_disc_args.disc_port))
-                .await
-                .unwrap();
+        let (socket, socket_addr) = sak_utils_net::setup_udp_socket(Some(test_disc_args.disc_port))
+            .await
+            .unwrap();
 
         info!(
             "Bound udp socket for P2P discovery, addr: {}",
@@ -363,10 +366,6 @@ async fn make_disc_args(test_disc_args: &TestDiscArgs) -> DiscoveryArgs {
     };
 
     args
-}
-
-pub(super) fn init() {
-    let _ = env_logger::builder().is_test(true).try_init();
 }
 
 #[derive(Debug)]

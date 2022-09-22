@@ -43,9 +43,7 @@ impl Reducer {
 }
 
 /// We use dummy implementation here, just wait 1s
-fn do_initialize<'a>(
-    mut state: RwLockWriteGuard<'a, AppState>,
-) -> Result<(), EnvelopeError> {
+fn do_initialize<'a>(mut state: RwLockWriteGuard<'a, AppState>) -> Result<(), EnvelopeError> {
     info!("🚀 Initializing the application");
 
     // tokio::time::sleep(Duration::from_secs(1)).await;
@@ -124,10 +122,7 @@ fn up_ch<'a>(mut state: RwLockWriteGuard<'a, AppState>) {
     state.ch_list_state.select(Some(i));
 }
 
-fn messages_scroll<'a>(
-    mut state: RwLockWriteGuard<'a, AppState>,
-    movement: ScrollMovement,
-) {
+fn messages_scroll<'a>(mut state: RwLockWriteGuard<'a, AppState>, movement: ScrollMovement) {
     log::info!("{}", state.scroll_messages_view);
     match movement {
         ScrollMovement::Up => {
@@ -167,9 +162,8 @@ fn get_ch_list<'a>(
         };
 
         let initiator_pk_decrypted: String = {
-            let initiator_pk_decrypted: Vec<u8> = serde_json::from_str(
-                &new_ch.channel.initiator_pk.clone().as_str(),
-            )?;
+            let initiator_pk_decrypted: Vec<u8> =
+                serde_json::from_str(&new_ch.channel.initiator_pk.clone().as_str())?;
 
             log::info!("[test] key\n{}", encode_hex(&my_sk));
 
@@ -191,16 +185,12 @@ fn get_ch_list<'a>(
 
         if ctx.credential.public_key_str == initiator_pk_decrypted {
             let ch_id_decrypted = {
-                let ch_id: Vec<u8> = serde_json::from_str(
-                    &new_ch.channel.ch_id.clone().as_str(),
-                )?;
+                let ch_id: Vec<u8> = serde_json::from_str(&new_ch.channel.ch_id.clone().as_str())?;
 
-                match String::from_utf8(
-                    match sak_crypto::aes_decrypt(&my_sk, &ch_id) {
-                        Ok(v) => v,
-                        Err(_) => vec![],
-                    },
-                ) {
+                match String::from_utf8(match sak_crypto::aes_decrypt(&my_sk, &ch_id) {
+                    Ok(v) => v,
+                    Err(_) => vec![],
+                }) {
                     Ok(ch_id_decrypted) => ch_id_decrypted,
                     Err(_) => String::default(),
                 }
@@ -222,8 +212,7 @@ fn get_ch_list<'a>(
                 };
 
                 let eph_pub_key = {
-                    let eph_key: Vec<u8> =
-                        serde_json::from_str(&new_ch.channel.eph_key.as_str())?;
+                    let eph_key: Vec<u8> = serde_json::from_str(&new_ch.channel.eph_key.as_str())?;
 
                     PublicKey::from_sec1_bytes(&eph_key)?
                 };
@@ -232,17 +221,14 @@ fn get_ch_list<'a>(
             };
 
             let ch_id_decrypted = {
-                let ch_id: Vec<u8> = serde_json::from_str(
-                    &new_ch.channel.ch_id.clone().as_str(),
-                )?;
+                let ch_id: Vec<u8> = serde_json::from_str(&new_ch.channel.ch_id.clone().as_str())?;
 
                 String::from_utf8(sak_crypto::aes_decrypt(&aes_key, &ch_id)?)?
             };
 
             let sig_decrypted: String = {
-                let sig: Vec<u8> = serde_json::from_str(
-                    &new_ch.channel.initiator_pk.clone().as_str(),
-                )?;
+                let sig: Vec<u8> =
+                    serde_json::from_str(&new_ch.channel.initiator_pk.clone().as_str())?;
 
                 String::from_utf8(sak_crypto::aes_decrypt(&aes_key, &sig)?)?
             };
@@ -285,11 +271,7 @@ fn get_messages<'a>(
         match serde_json::from_slice::<Vec<EncryptedChatMessage>>(&data) {
             Ok(c) => c.into_iter().map(|m| m).collect(),
             Err(err) => {
-                return Err(format!(
-                    "failed to deserialize vec<string>, err: {:?}",
-                    err
-                )
-                .into());
+                return Err(format!("failed to deserialize vec<string>, err: {:?}", err).into());
             }
         };
 
@@ -325,8 +307,7 @@ fn get_messages<'a>(
                     convert_vec_into_u8_32(sk)?
                 };
 
-                let eph_sk =
-                    sak_crypto::aes_decrypt(&my_sk, &eph_sk_encrypted)?;
+                let eph_sk = sak_crypto::aes_decrypt(&my_sk, &eph_sk_encrypted)?;
 
                 SecretKey::from_bytes(&eph_sk)?
             };
@@ -369,12 +350,10 @@ fn get_messages<'a>(
     let mut chat_msg: Vec<ChatMessage> = vec![];
 
     for encrypted_chat_msg in encrypted_chat_msg_vec.into_iter() {
-        let encrypted_chat_msg: Vec<u8> =
-            serde_json::from_str(&encrypted_chat_msg)?;
+        let encrypted_chat_msg: Vec<u8> = serde_json::from_str(&encrypted_chat_msg)?;
 
         let chat_msg_ser: String = {
-            let chat_msg =
-                sak_crypto::aes_decrypt(&aes_key, &encrypted_chat_msg)?;
+            let chat_msg = sak_crypto::aes_decrypt(&aes_key, &encrypted_chat_msg)?;
 
             String::from_utf8(chat_msg)?
         };

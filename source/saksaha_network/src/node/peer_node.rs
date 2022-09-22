@@ -5,7 +5,7 @@ use crate::{
     machine::Machine,
     node::event_handle::{self, LedgerEventRoutine},
 };
-use log::{debug, error, warn};
+use sak_logger::{debug, error, warn};
 use sak_p2p_discovery::Discovery;
 use sak_p2p_peertable::{Peer, PeerStatus, PeerTable};
 use sak_task_queue::TaskQueue;
