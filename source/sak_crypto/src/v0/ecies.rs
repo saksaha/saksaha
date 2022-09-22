@@ -9,6 +9,12 @@ pub const AES_IV_LENGTH: usize = 12;
 
 pub const AES_TAG_LENGTH: usize = 16;
 
+#[derive(Serialize, Deserialize)]
+pub struct SharedSecretParams {
+    pub sk: String,
+    pub pk: String,
+}
+
 pub fn derive_aes_key(
     my_secret: SecretKey,
     her_public: PublicKey,

@@ -165,13 +165,6 @@ fn get_ch_list<'a>(
             let initiator_pk_decrypted: Vec<u8> =
                 serde_json::from_str(&new_ch.channel.initiator_pk.clone().as_str())?;
 
-            log::info!("[test] key\n{}", encode_hex(&my_sk));
-
-            log::info!(
-                "[test] ciphertext\n{}",
-                encode_hex(&initiator_pk_decrypted)
-            );
-
             match String::from_utf8(
                 match sak_crypto::aes_decrypt(&my_sk, &initiator_pk_decrypted) {
                     Ok(v) => v,

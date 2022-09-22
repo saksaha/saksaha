@@ -1,7 +1,9 @@
 use jni::objects::{JClass, JObject, JString, JValue};
 use jni::sys::{jbyteArray, jstring};
 use jni::JNIEnv;
-use sak_crypto::{self, decode_hex, encode_hex, AesParams};
+use sak_crypto::{
+    self, decode_hex, encode_hex, AesParams, PublicKey, SecretKey, SharedSecretParams,
+};
 use std::collections::HashMap;
 use std::ffi::CString;
 use std::os::raw::c_char;
@@ -105,7 +107,6 @@ pub extern "C" fn Java_jni_saksaha_sakCrypto_SakCrypto_aesDecrypt(
 ) -> jbyteArray {
     let str: String = env.get_string(input).unwrap().into();
 
-    // let map: HashMap<String, String> = serde_json::from_str(&str).unwrap();
     let aes_params: AesParams = serde_json::from_str(&str).unwrap();
 
     let key = {
@@ -148,5 +149,52 @@ pub extern "C" fn Java_jni_saksaha_sakCrypto_SakCrypto_aesDecrypt(
     };
 
     let response = env.byte_array_from_slice(&plaintext).unwrap();
+    response.into()
+}
+
+#[no_mangle]
+#[allow(non_snake_case)]
+pub extern "C" fn Java_jni_saksaha_sakCrypto_SakCrypto_makeSharedSecret(
+    env: JNIEnv,
+    _class: JClass,
+
+    // serialized json format string
+    input: JString,
+    // callback: JObject,
+) -> jbyteArray {
+    let str: String = env.get_string(input).unwrap().into();
+
+    let aes_params: SharedSecretParams = serde_json::from_str(&str).unwrap();
+
+    let sk = {
+        let sk = aes_params.sk;
+
+        let sk = match decode_hex(&sk) {
+            Ok(k) => k,
+            Err(_err) => {
+                vec![11; 32]
+            }
+        };
+
+        SecretKey::from_bytes(sk).unwrap()
+    };
+
+    let pk = {
+        let pk = aes_params.pk;
+
+        let pk: Vec<u8> = match serde_json::from_str(&pk.as_str()) {
+            Ok(ct) => ct,
+            Err(err) => err.to_string().as_bytes().to_vec(),
+        };
+
+        PublicKey::from_sec1_bytes(&pk).unwrap()
+    };
+
+    let shared_secret = match sak_crypto::derive_aes_key(sk, pk) {
+        Ok(ss) => ss,
+        Err(_err) => [33u8; 32],
+    };
+
+    let response = env.byte_array_from_slice(&shared_secret).unwrap();
     response.into()
 }
