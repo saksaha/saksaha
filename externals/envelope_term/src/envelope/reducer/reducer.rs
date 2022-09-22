@@ -6,9 +6,9 @@ use crate::{
 };
 use envelope_contract::{Channel, ChatMessage, EncryptedChatMessage};
 use log::info;
-use sak_crypto::{decode_hex, PublicKey, SecretKey};
+use sak_crypto::{decode_hex, encode_hex, PublicKey, SecretKey};
 use tokio::sync::RwLockWriteGuard;
-use type_extension::U8Array;
+use type_extension::{convert_vec_into_u8_32, U8Array};
 
 pub(crate) struct Reducer;
 
@@ -163,13 +163,20 @@ fn get_ch_list<'a>(
         let my_sk = {
             let s = ctx.credential.secret_key_str.to_string();
 
-            U8Array::from_hex_string(s)?
+            decode_hex(&s)?
         };
 
         let initiator_pk_decrypted: String = {
             let initiator_pk_decrypted: Vec<u8> = serde_json::from_str(
                 &new_ch.channel.initiator_pk.clone().as_str(),
             )?;
+
+            log::info!("[test] key\n{}", encode_hex(&my_sk));
+
+            log::info!(
+                "[test] ciphertext\n{}",
+                encode_hex(&initiator_pk_decrypted)
+            );
 
             match String::from_utf8(
                 match sak_crypto::aes_decrypt(&my_sk, &initiator_pk_decrypted) {
@@ -312,8 +319,11 @@ fn get_messages<'a>(
             let eph_sk_encrypted: Vec<u8> = serde_json::from_str(eph_sk)?;
 
             let sk = {
-                let my_sk: [u8; 32] =
-                    U8Array::from_hex_string(my_sk.to_string())?;
+                let my_sk: [u8; 32] = {
+                    let sk = decode_hex(&my_sk.to_string())?;
+
+                    convert_vec_into_u8_32(sk)?
+                };
 
                 let eph_sk =
                     sak_crypto::aes_decrypt(&my_sk, &eph_sk_encrypted)?;

@@ -20,29 +20,4 @@ impl U8Array {
 
         ret
     }
-
-    pub fn from_hex_string(str: String) -> Result<[u8; 32], TypeExtError> {
-        let mut tmp = str.clone();
-
-        if str.len() > 64 {
-            return Err(format!(
-                "The length of hex string should be less than 65"
-            )
-            .into());
-        }
-
-        for _ in 0..(64 - str.len()) {
-            tmp = format!("0{}", str);
-        }
-
-        let tmp = tmp.as_bytes().to_vec();
-
-        let mut res: [u8; 32] = [0; 32];
-
-        for idx in 0..32 {
-            res[idx] = tmp[idx];
-        }
-
-        Ok([0; 32])
-    }
 }
