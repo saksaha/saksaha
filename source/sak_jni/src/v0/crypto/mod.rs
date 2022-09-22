@@ -1,7 +1,7 @@
 use jni::objects::{JClass, JObject, JString, JValue};
 use jni::sys::{jbyteArray, jstring};
 use jni::JNIEnv;
-use sak_crypto::{self, decode_hex, encode_hex};
+use sak_crypto::{self, decode_hex, encode_hex, AesParams};
 use std::collections::HashMap;
 use std::ffi::CString;
 use std::os::raw::c_char;
@@ -105,15 +105,13 @@ pub extern "C" fn Java_jni_saksaha_sakCrypto_SakCrypto_aesDecrypt(
 ) -> jbyteArray {
     let str: String = env.get_string(input).unwrap().into();
 
-    let map: HashMap<String, String> = serde_json::from_str(&str).unwrap();
+    // let map: HashMap<String, String> = serde_json::from_str(&str).unwrap();
+    let aes_params: AesParams = serde_json::from_str(&str).unwrap();
 
     let key = {
-        let a = match map.get("key") {
-            Some(k) => k.to_owned(),
-            None => "No_Key".to_string(),
-        };
+        let k = aes_params.key;
 
-        match decode_hex(&a) {
+        match decode_hex(&k) {
             Ok(k) => k,
             Err(_err) => {
                 vec![11; 32]
@@ -122,17 +120,14 @@ pub extern "C" fn Java_jni_saksaha_sakCrypto_SakCrypto_aesDecrypt(
     };
 
     let ciphertext = {
-        let a = match map.get("ciphertext") {
-            Some(ct) => ct.to_owned(),
-            None => "No_CT".to_string(),
-        };
+        let ct = aes_params.data;
 
-        let b: Vec<u8> = match serde_json::from_str(&a.as_str()) {
+        let ct: Vec<u8> = match serde_json::from_str(&ct.as_str()) {
             Ok(ct) => ct,
             Err(err) => err.to_string().as_bytes().to_vec(),
         };
 
-        b
+        ct
     };
 
     let plaintext = match sak_crypto::aes_decrypt(&key, &ciphertext) {
