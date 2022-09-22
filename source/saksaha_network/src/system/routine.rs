@@ -14,7 +14,7 @@ use crate::PConfig;
 use colored::Colorize;
 use sak_logger::SakLogger;
 use sak_logger::RUST_LOG_ENV;
-use sak_logger::{error, info, warn};
+use sak_logger::{debug, error, info, warn};
 use sak_p2p_id::Identity;
 use sak_p2p_peertable::PeerTable;
 use std::sync::Arc;
@@ -23,21 +23,33 @@ pub(super) struct Routine {
     pub(super) shutdown_manager: ShutdownMng,
 }
 
+const LOGO: &str = r#"
+___________________________________________________________
+      __     __     _    _     __     __     _     _   __  
+    /    )   / |    /  ,'    /    )   / |    /    /    / | 
+----\-------/__|---/_.'------\-------/__|---/___ /----/__|-
+     \     /   |  /  \        \     /   |  /    /    /   | 
+_(____/___/____|_/____\___(____/___/____|_/____/____/____|_
+"#;
+
 impl Routine {
     pub(super) async fn run(&self, sys_run_args: SystemRunArgs) -> Result<(), SaksahaError> {
-        info!(
-            "System is starting, public_key: {:?}, cfg_profile: {:?}",
-            sys_run_args.public_key, sys_run_args.cfg_profile,
-        );
+        println!("{}\n", LOGO.magenta());
 
         let config = if let Some(cp) = &sys_run_args.cfg_profile {
-            let cfg = Config::load_profiled(&cp, &sys_run_args)?;
+            println!("Loading profiled config, cfg_profile: {}", cp.yellow());
 
-            info!("Loaded profiled config, cfg_profile: {}", cp.yellow());
+            let cfg = Config::load_profiled(&cp, &sys_run_args)?;
 
             cfg.persist(Some(cp))?;
             cfg
         } else {
+            println!(
+                "Config profile is not given. We will generate a new random\n\
+                config. If you have provided public_key, Saksaha will load \n\
+                persisted config from the designated location.\n"
+            );
+
             let pconfig = PConfig::init(&sys_run_args.public_key)?;
             let cfg = Config::new(&sys_run_args, pconfig)?;
 
@@ -45,20 +57,19 @@ impl Routine {
             cfg
         };
 
-        info!("Resolved config: {:?}", config);
+        println!("{} succesfully loaded\n", "Saksaha config".yellow());
+
+        println!(
+            "{}: {} \n{}: {}",
+            "Public key".cyan(),
+            config.p2p.public_key_str,
+            "Secret".cyan(),
+            config.p2p.secret,
+        );
 
         let _logger = {
             let public_key = &config.p2p.public_key_str;
-
-            // let log_dir = {
-            //     let acc_dir = fs::acc_dir(public_key)?;
-            //     acc_dir.join("logs")
-            // };
-
             let log_root_dir = fs::config_dir()?;
-
-            // std::fs::create_dir_all(&log_dir)?;
-
             let l = SakLogger::init(&log_root_dir, public_key.as_str(), "saksaha.log")?;
 
             l

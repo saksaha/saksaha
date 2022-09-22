@@ -23,7 +23,8 @@ impl SakLogger {
         file_name_prefix: &str,
     ) -> Result<SakLogger, LoggerError> {
         println!(
-            "sak_logger: initializing, log_root_dir: {:?}, \
+            ":::::::::::::: Sak logger ::::::::::::::\n\
+            sak_logger: initializing, log_root_dir: {:?}, \
             log_dir_name: {}, file_name_prefix: {}",
             log_root_dir.as_ref(),
             log_dir_name,
