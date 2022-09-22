@@ -1,5 +1,5 @@
 use jni::objects::{JClass, JObject, JString, JValue};
-use jni::sys::jstring;
+use jni::sys::{jbyteArray, jstring};
 use jni::JNIEnv;
 use sak_crypto;
 use std::ffi::CString;
@@ -63,4 +63,31 @@ pub extern "C" fn Java_jni_saksaha_sakCrypto_SakCrypto_newRandom(
     let response = env.new_string(&ret).expect("Couldn't create java string!");
 
     response.into_inner()
+}
+
+#[no_mangle]
+#[allow(non_snake_case)]
+pub extern "C" fn Java_jni_saksaha_sakCrypto_SakCrypto_foo(
+    env: JNIEnv,
+    _class: JClass,
+    input: JString,
+) -> jbyteArray {
+    // let c = sak_crypto::Credential::new_random().unwrap();
+
+    // let s = serde_json::to_string(&c).unwrap();
+
+    // let input: String = env
+    //     .get_string(input)
+    //     .expect("Couldn't get java string!")
+    //     .into();
+
+    // let ret = format!("power: {}, input: {}", s, input);
+
+    let ret = vec![2, 3, 11, 2];
+
+    let response = env
+        .byte_array_from_slice(&ret)
+        .expect("Couldn't create java string!");
+
+    response
 }
