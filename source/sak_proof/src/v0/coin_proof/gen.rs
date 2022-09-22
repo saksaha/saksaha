@@ -12,7 +12,7 @@ use type_extension::U8Array;
 
 pub type Callback = unsafe extern "C" fn(*const c_char) -> ();
 
-pub fn pi_gen_1() -> String {
+pub fn pi_gen_1() -> Vec<u8> {
     let test_context = make_test_context_2_to_2();
 
     let coin_1_old = OldCoin {
@@ -57,19 +57,8 @@ pub fn pi_gen_1() -> String {
         .expect("proof should be created");
 
     let mut pi_ser = Vec::new();
-    match proof.write(&mut pi_ser) {
-        Ok(_) => {
-            let s: String = match serde_json::to_string(&pi_ser) {
-                Ok(s) => s,
-                Err(err) => format!("serde fail, err: {}", err.to_string()),
-            };
-
-            return s;
-        }
-        Err(err) => {
-            return format!("pi generate failed, {}", err.to_string());
-        }
-    };
+    proof.write(&mut pi_ser).expect("pi should be serialized");
+    pi_ser
 }
 
 pub struct TestContext {
@@ -96,7 +85,7 @@ pub struct TestContext {
     pub v_2_old: Scalar,
     pub cm_2_old: Scalar,
     pub auth_path_2: [(Scalar, bool); CM_TREE_DEPTH as usize],
-    // pub merkle_rt_2: Scalar,
+    pub merkle_rt_2: Scalar,
     pub sn_2: Scalar,
 
     // new coin 1
@@ -238,7 +227,7 @@ pub fn make_test_context_2_to_2() -> TestContext {
         };
 
         let v = {
-            let arr = U8Array::from_int(20);
+            let arr = U8Array::from_int(10);
             ScalarExt::parse_arr(&arr).unwrap()
         };
 
@@ -334,6 +323,7 @@ pub fn make_test_context_2_to_2() -> TestContext {
         v_2_old,
         cm_2_old,
         auth_path_2,
+        merkle_rt_2,
         sn_2,
         addr_sk_1,
         addr_pk_1,

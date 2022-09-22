@@ -1,5 +1,5 @@
 use jni::objects::{JClass, JObject, JString, JValue};
-use jni::sys::jstring;
+use jni::sys::{jbyteArray, jstring};
 use jni::JNIEnv;
 use std::collections::HashMap;
 use std::ffi::CString;
@@ -13,17 +13,18 @@ pub extern "C" fn Java_jni_saksaha_sakProof_SakProof_generateProof(
     env: JNIEnv,
     _class: JClass,
     input: JString,
-) -> jstring {
-    let s = sak_proof::pi_gen_1();
+) -> jbyteArray {
+    let ret = sak_proof::pi_gen_1();
 
-    let input: String = env
-        .get_string(input)
-        .expect("Couldn't get java string!")
-        .into();
+    // let ret = vec![0, 12, 255, 128, 127, 111];
 
-    let ret = format!("result: {}, input: {}", s, input);
+    // let response = env
+    //     .byte_array_from_slice(&ret)
+    //     .expect("Couldn't create java string!");
 
-    let response = env.new_string(&ret).expect("Couldn't create java string!");
+    let response = env
+        .byte_array_from_slice(&ret)
+        .expect("Couldn't create java string!");
 
-    response.into_inner()
+    response
 }
