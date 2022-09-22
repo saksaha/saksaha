@@ -1,7 +1,8 @@
 use jni::objects::{JClass, JObject, JString, JValue};
 use jni::sys::{jbyteArray, jstring};
 use jni::JNIEnv;
-use sak_crypto;
+use sak_crypto::{self, decode_hex, encode_hex};
+use std::collections::HashMap;
 use std::ffi::CString;
 use std::os::raw::c_char;
 
@@ -90,4 +91,67 @@ pub extern "C" fn Java_jni_saksaha_sakCrypto_SakCrypto_foo(
         .expect("Couldn't create java string!");
 
     response
+}
+
+#[no_mangle]
+#[allow(non_snake_case)]
+pub extern "C" fn Java_jni_saksaha_sakCrypto_SakCrypto_aesDecrypt(
+    env: JNIEnv,
+    _class: JClass,
+
+    // serialized json format string
+    input: JString,
+    // callback: JObject,
+) -> jbyteArray {
+    let str: String = env.get_string(input).unwrap().into();
+
+    let map: HashMap<String, String> = serde_json::from_str(&str).unwrap();
+
+    let key = {
+        let a = match map.get("key") {
+            Some(k) => k.to_owned(),
+            None => "No_Key".to_string(),
+        };
+
+        match decode_hex(&a) {
+            Ok(k) => k,
+            Err(_err) => {
+                vec![11; 32]
+            }
+        }
+    };
+
+    let ciphertext = {
+        let a = match map.get("ciphertext") {
+            Some(ct) => ct.to_owned(),
+            None => "No_CT".to_string(),
+        };
+
+        let b: Vec<u8> = match serde_json::from_str(&a.as_str()) {
+            Ok(ct) => ct,
+            Err(err) => err.to_string().as_bytes().to_vec(),
+        };
+
+        b
+    };
+
+    let plaintext = match sak_crypto::aes_decrypt(&key, &ciphertext) {
+        Ok(pt) => pt,
+        Err(err) => {
+            let err_msg = err.to_string();
+
+            let key_msg = encode_hex(&key);
+
+            let ct_msg = encode_hex(&ciphertext);
+
+            let error_u8_vec = format!("\nerr: {}\nkey: {}\nct: {}", err_msg, key_msg, ct_msg)
+                .as_bytes()
+                .to_vec();
+
+            error_u8_vec
+        }
+    };
+
+    let response = env.byte_array_from_slice(&plaintext).unwrap();
+    response.into()
 }
