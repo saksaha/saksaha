@@ -7,7 +7,6 @@ edition = "2018"
 
 [dependencies]
 colored = "2"
-log = "0.4.0"
 directories = "3.0"
 sak_logger = { path = "../sak_logger" }
 serde = { version = "1.0.130", features = ["derive"] }
